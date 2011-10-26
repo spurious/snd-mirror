@@ -13960,7 +13960,109 @@ time, so that the displayed results are
 	x)))
   (test (hi 0) 3))
 
+(define __p__ 123)
 
+(let ((__p__ 321))
+  (set! __p__ 432))
+
+(if (not (= __p__ 123)) (format #t "__p__: ~A~%" __p__))
+
+(let ()
+  (define (args) (values __p__ (* __p__ 2)))
+  (let ((__p__ 0)
+	(q 1))
+    (call-with-values args (lambda (a b) (set! __p__ a) (set! q b)))
+    (if (not (= __p__ 123)) (format #t "    local __p__: ~A~%" __p__))
+    (set! __p__ 432)
+    (call-with-values args (lambda (__p__ q) (set! __p__ 321)))
+    (if (not (= __p__ 432)) (format #t "    local __p__: ~A~%" __p__))))
+
+(if (not (= __p__ 123)) (format #t "__p__: ~A~%" __p__))
+
+(let ()
+  (define-macro (args a b) `(values ,a ,b))
+  (define (sp a b)
+    (set! a 121))
+  (define (pq __p__ q) 
+    (set! __p__ q))
+  (sp (args __p__ __p__))
+  (pq (args __p__ 567)))
+
+(if (not (= __p__ 123)) (format #t "__p__: ~A~%" __p__))
+
+(let ((__p__ 321))
+  (eval '(set! __p__ 432) (global-environment))
+  (if (not (= __p__ 321)) (format #t "    local __p__: ~A~%" __p__))
+  (eval '(set! __p__ 123))
+  (if (not (= __p__ 123)) (format #t "    local __p__: ~A~%" __p__)))
+
+(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+
+(let ()
+  (eval '(let ((__p__ 321)) (set! __p__ 456)) (global-environment)))
+
+(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+
+(let ((__p__ (values __p__)))
+  (if (not (= __p__ 432)) (format #t "    local __p__: ~A~%" __p__))
+  (set! __p__ 123))
+
+(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+
+(let ()
+  (define (sp __p__ q) (values __p__ q))
+  (call-with-values (lambda () (sp __p__ (* __p__ 2))) (let ((__p__ 1)) (lambda (a b) (set! __p__ a)))))
+
+(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+
+(let ((lst (list __p__ (* __p__ 2))))
+  (define-macro (sp a) `(set! __p__ ,a))
+  (let ((__p__ 0)
+	(q 1))
+    (define (pq a) (set! __p__ a))
+    (map sp (list __p__ q))
+    (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__))
+    (for-each sp (list __p__ q))
+    (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__))
+    (map sp lst)
+    (if (not (= __p__ (* 432 2))) (format #t "    local __p__: ~A~%" __p__))
+    (for-each sp lst)
+    (if (not (= __p__ (* 432 2))) (format #t "    local __p__: ~A~%" __p__))
+    (set! __p__ 0)
+    (set! q 1)
+    (map pq (list __p__ q))
+    (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__))
+    (for-each pq (list __p__ q))
+    (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__))
+    (map pq lst)
+    (if (not (= __p__ (* 432 2))) (format #t "    local __p__: ~A~%" __p__))
+    (for-each pq lst)
+    (if (not (= __p__ (* 432 2))) (format #t "    local __p__: ~A~%" __p__))))
+
+(if (not (= __p__ 432)) (format #t "__p__: ~A~%" __p__))
+
+(let ((__p__ 1))
+  (eval `(define (__p__ a) (+ a ,__p__)) (global-environment))
+  (if (not (= __p__ 1)) (format #t "    local __p__: ~A~%" __p__)))
+
+(if (not (procedure? __p__)) (format #t "__p__: ~A~%" __p__))
+(if (not (= (__p__ 2) 3)) (format #t "(__p__ 2): ~A~%" (__p__ 2)))
+
+(let ((__p__ 1))
+  (eval `(define __p__ 32))
+  (if (not (= __p__ 32)) (format #t "    local __p__: ~A~%" __p__)))
+
+(if (not (procedure? __p__)) (format #t "__p__: ~A~%" __p__))
+(if (not (= (__p__ 2) 3)) (format #t "(__p__ 2): ~A~%" (__p__ 2)))
+
+(let ((__p__ 1))
+  (eval `(define __p__ 32) (current-environment))
+  (if (not (= __p__ 32)) (format #t "    local __p__: ~A~%" __p__)))
+
+(if (not (procedure? __p__)) (format #t "__p__: ~A~%" __p__))
+(if (not (= (__p__ 2) 3)) (format #t "(__p__ 2): ~A~%" (__p__ 2)))
+
+    
 
 
 

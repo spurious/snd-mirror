@@ -1286,7 +1286,7 @@
 (CFNC "GdkWindow* gdk_window_new GdkWindow* parent GdkWindowAttr* attributes gint attributes_mask")
 (CFNC "void gdk_window_destroy GdkWindow* window")
 (CFNC "GdkWindowType gdk_window_get_window_type GdkWindow* window")
-(CFNC "GdkWindow* gdk_window_at_pointer gint* [win_x] gint* [win_y]")
+;;; 3.3.2 (CFNC "GdkWindow* gdk_window_at_pointer gint* [win_x] gint* [win_y]")
 (CFNC "void gdk_window_show GdkWindow* window")
 (CFNC "void gdk_window_hide GdkWindow* window")
 (CFNC "void gdk_window_withdraw GdkWindow* window")
@@ -1318,7 +1318,7 @@
 (CFNC-gtk2 "GdkWindow* gdk_window_lookup GdkNativeWindow anid")
 (CFNC "void gdk_window_get_root_origin GdkWindow* window gint* [x] gint* [y]")
 (CFNC "void gdk_window_get_frame_extents GdkWindow* window GdkRectangle* rect")
-(CFNC "GdkWindow* gdk_window_get_pointer GdkWindow* window gint* [x] gint* [y] GdkModifierType* [mask]")
+;;; 3.3.2 (CFNC "GdkWindow* gdk_window_get_pointer GdkWindow* window gint* [x] gint* [y] GdkModifierType* [mask]")
 (CFNC "GdkWindow* gdk_window_get_parent GdkWindow* window")
 (CFNC "GdkWindow* gdk_window_get_toplevel GdkWindow* window")
 (CFNC "GList* gdk_window_get_children GdkWindow* window")
@@ -2105,16 +2105,16 @@
 ;;; (CFNC "GtkWidget* gtk_gamma_curve_new void")
 ;;; 2.90.6 (CFNC "GdkGC* gtk_gc_get gint depth GdkColormap* colormap GdkGCValues* values GdkGCValuesMask values_mask")
 ;;; 2.90.6 (CFNC "void gtk_gc_release GdkGC* gc")
-(CCAST "GTK_HANDLE_BOX(obj)" "GtkHandleBox*")
-(CCHK "GTK_IS_HANDLE_BOX(obj)" "GtkHandleBox*")
+;;; 3.3.2 (CCAST "GTK_HANDLE_BOX(obj)" "GtkHandleBox*")
+;;; 3.3.2 (CCHK "GTK_IS_HANDLE_BOX(obj)" "GtkHandleBox*")
 ;;;;(CFNC "GType gtk_handle_box_get_type void")
-(CFNC "GtkWidget* gtk_handle_box_new void")
-(CFNC "void gtk_handle_box_set_shadow_type GtkHandleBox* handle_box GtkShadowType type")
-(CFNC "GtkShadowType gtk_handle_box_get_shadow_type GtkHandleBox* handle_box")
-(CFNC "void gtk_handle_box_set_handle_position GtkHandleBox* handle_box GtkPositionType position")
-(CFNC "GtkPositionType gtk_handle_box_get_handle_position GtkHandleBox* handle_box")
-(CFNC "void gtk_handle_box_set_snap_edge GtkHandleBox* handle_box GtkPositionType edge")
-(CFNC "GtkPositionType gtk_handle_box_get_snap_edge GtkHandleBox* handle_box")
+;;; 3.3.2 (CFNC "GtkWidget* gtk_handle_box_new void")
+;;; 3.3.2 (CFNC "void gtk_handle_box_set_shadow_type GtkHandleBox* handle_box GtkShadowType type")
+;;; 3.3.2 (CFNC "GtkShadowType gtk_handle_box_get_shadow_type GtkHandleBox* handle_box")
+;;; 3.3.2 (CFNC "void gtk_handle_box_set_handle_position GtkHandleBox* handle_box GtkPositionType position")
+;;; 3.3.2 (CFNC "GtkPositionType gtk_handle_box_get_handle_position GtkHandleBox* handle_box")
+;;; 3.3.2 (CFNC "void gtk_handle_box_set_snap_edge GtkHandleBox* handle_box GtkPositionType edge")
+;;; 3.3.2 (CFNC "GtkPositionType gtk_handle_box_get_snap_edge GtkHandleBox* handle_box")
 ;;; 3.1.6 (CCAST "GTK_HBUTTON_BOX(obj)" "GtkHButtonBox*")
 ;;; 3.1.6 (CCHK "GTK_IS_HBUTTON_BOX(obj)" "GtkHButtonBox*")
 ;;; 3.1.6 ;;;;(CFNC "GType gtk_hbutton_box_get_type void")
@@ -2416,8 +2416,8 @@
 ;; see note in makexg.scm -- no user data here, so this requires special handling
 (CFNC "void gtk_menu_detach GtkMenu* menu")
 (CFNC "GtkWidget* gtk_menu_get_attach_widget GtkMenu* menu")
-(CFNC "void gtk_menu_set_tearoff_state GtkMenu* menu gboolean torn_off")
-(CFNC "gboolean gtk_menu_get_tearoff_state GtkMenu* menu")
+;;; 3.3.2 (CFNC "void gtk_menu_set_tearoff_state GtkMenu* menu gboolean torn_off")
+;;; 3.3.2 (CFNC "gboolean gtk_menu_get_tearoff_state GtkMenu* menu")
 (CFNC "void gtk_menu_set_title GtkMenu* menu gchar* title")
 (CFNC "gchar* gtk_menu_get_title GtkMenu* menu")
 (CFNC "void gtk_menu_reorder_child GtkMenu* menu GtkWidget* child gint position")
@@ -2993,27 +2993,27 @@
 ;(CFNC-gtk2 "void gtk_paint_resize_grip GtkStyle* style GdkWindow* window GtkStateType state_type GdkRectangle* area GtkWidget* widget gchar* detail GdkWindowEdge edge gint x gint y gint width gint height")
 ;;; (CFNC-gtk2 "GtkBorder* gtk_border_copy GtkBorder* border")
 ;;; (CFNC-gtk2 "void gtk_border_free GtkBorder* border")
-(CCAST "GTK_TABLE(obj)" "GtkTable*")
-(CCHK "GTK_IS_TABLE(obj)" "GtkTable*")
-;;;;(CFNC "GType gtk_table_get_type void")
-(CFNC "GtkWidget* gtk_table_new guint rows guint columns gboolean homogeneous")
-(CFNC "void gtk_table_resize GtkTable* table guint rows guint columns")
-(CFNC "void gtk_table_attach GtkTable* table GtkWidget* child guint left_attach guint right_attach guint top_attach guint bottom_attach GtkAttachOptions xoptions GtkAttachOptions yoptions guint xpadding guint ypadding")
-(CFNC "void gtk_table_attach_defaults GtkTable* table GtkWidget* widget guint left_attach guint right_attach guint top_attach guint bottom_attach")
-(CFNC "void gtk_table_set_row_spacing GtkTable* table guint row guint spacing")
-(CFNC "guint gtk_table_get_row_spacing GtkTable* table guint row")
-(CFNC "void gtk_table_set_col_spacing GtkTable* table guint column guint spacing")
-(CFNC "guint gtk_table_get_col_spacing GtkTable* table guint column")
-(CFNC "void gtk_table_set_row_spacings GtkTable* table guint spacing")
-(CFNC "guint gtk_table_get_default_row_spacing GtkTable* table")
-(CFNC "void gtk_table_set_col_spacings GtkTable* table guint spacing")
-(CFNC "guint gtk_table_get_default_col_spacing GtkTable* table")
-(CFNC "void gtk_table_set_homogeneous GtkTable* table gboolean homogeneous")
-(CFNC "gboolean gtk_table_get_homogeneous GtkTable* table")
-(CCAST "GTK_TEAROFF_MENU_ITEM(obj)" "GtkTearoffMenuItem*")
-(CCHK "GTK_IS_TEAROFF_MENU_ITEM(obj)" "GtkTearoffMenuItem*")
-;;;;(CFNC "GType gtk_tearoff_menu_item_get_type void")
-(CFNC "GtkWidget* gtk_tearoff_menu_item_new void")
+;;; 3.3.2 (CCAST "GTK_TABLE(obj)" "GtkTable*")
+;;; 3.3.2 (CCHK "GTK_IS_TABLE(obj)" "GtkTable*")
+;;; 3.3.2 ;;;;(CFNC "GType gtk_table_get_type void")
+;;; 3.3.2 (CFNC "GtkWidget* gtk_table_new guint rows guint columns gboolean homogeneous")
+;;; 3.3.2 (CFNC "void gtk_table_resize GtkTable* table guint rows guint columns")
+;;; 3.3.2 (CFNC "void gtk_table_attach GtkTable* table GtkWidget* child guint left_attach guint right_attach guint top_attach guint bottom_attach GtkAttachOptions xoptions GtkAttachOptions yoptions guint xpadding guint ypadding")
+;;; 3.3.2 (CFNC "void gtk_table_attach_defaults GtkTable* table GtkWidget* widget guint left_attach guint right_attach guint top_attach guint bottom_attach")
+;;; 3.3.2 (CFNC "void gtk_table_set_row_spacing GtkTable* table guint row guint spacing")
+;;; 3.3.2 (CFNC "guint gtk_table_get_row_spacing GtkTable* table guint row")
+;;; 3.3.2 (CFNC "void gtk_table_set_col_spacing GtkTable* table guint column guint spacing")
+;;; 3.3.2 (CFNC "guint gtk_table_get_col_spacing GtkTable* table guint column")
+;;; 3.3.2 (CFNC "void gtk_table_set_row_spacings GtkTable* table guint spacing")
+;;; 3.3.2 (CFNC "guint gtk_table_get_default_row_spacing GtkTable* table")
+;;; 3.3.2 (CFNC "void gtk_table_set_col_spacings GtkTable* table guint spacing")
+;;; 3.3.2 (CFNC "guint gtk_table_get_default_col_spacing GtkTable* table")
+;;; 3.3.2 (CFNC "void gtk_table_set_homogeneous GtkTable* table gboolean homogeneous")
+;;; 3.3.2 (CFNC "gboolean gtk_table_get_homogeneous GtkTable* table")
+;;; 3.3.2 (CCAST "GTK_TEAROFF_MENU_ITEM(obj)" "GtkTearoffMenuItem*")
+;;; 3.3.2 (CCHK "GTK_IS_TEAROFF_MENU_ITEM(obj)" "GtkTearoffMenuItem*")
+;;; 3.3.2 ;;;;(CFNC "GType gtk_tearoff_menu_item_get_type void")
+;;; 3.3.2 (CFNC "GtkWidget* gtk_tearoff_menu_item_new void")
 (CCAST "GTK_TEXT_BUFFER(obj)" "GtkTextBuffer*")
 (CCHK "GTK_IS_TEXT_BUFFER(obj)" "GtkTextBuffer*")
 ;;;;(CFNC "GType gtk_text_buffer_get_type void")
@@ -4931,8 +4931,8 @@
 (CFNC "void gtk_entry_completion_set_text_column GtkEntryCompletion* completion gint column") 
 ;;;;(CFNC "GType gtk_ui_manager_get_type void") 
 ;(CFNC "GtkUIManager* gtk_ui_manager_new void") 
-;(CFNC "void gtk_ui_manager_set_add_tearoffs GtkUIManager* self gboolean add_tearoffs") 
-;(CFNC "gboolean gtk_ui_manager_get_add_tearoffs GtkUIManager* self") 
+;;; 3.3.2 ;(CFNC "void gtk_ui_manager_set_add_tearoffs GtkUIManager* self gboolean add_tearoffs") 
+;;; 3.3.2 ;(CFNC "gboolean gtk_ui_manager_get_add_tearoffs GtkUIManager* self") 
 ;(CFNC "void gtk_ui_manager_insert_action_group GtkUIManager* self GtkActionGroup* action_group gint pos") 
 ;(CFNC "void gtk_ui_manager_remove_action_group GtkUIManager* self GtkActionGroup* action_group") 
 ;(CFNC "GList* gtk_ui_manager_get_action_groups GtkUIManager* self") 
@@ -5227,8 +5227,8 @@
 (CFNC "gint gtk_combo_box_get_wrap_width GtkComboBox* combo_box")
 (CFNC "gint gtk_combo_box_get_row_span_column GtkComboBox* combo_box")
 (CFNC "gint gtk_combo_box_get_column_span_column GtkComboBox* combo_box")
-(CFNC "gboolean gtk_combo_box_get_add_tearoffs GtkComboBox* combo_box")
-(CFNC "void gtk_combo_box_set_add_tearoffs GtkComboBox* combo_box gboolean add_tearoffs")
+;;; 3.3.2 (CFNC "gboolean gtk_combo_box_get_add_tearoffs GtkComboBox* combo_box")
+;;; 3.3.2 (CFNC "void gtk_combo_box_set_add_tearoffs GtkComboBox* combo_box gboolean add_tearoffs")
 ;;; (CFNC "void gtk_combo_box_set_row_separator_column GtkComboBox* combo_box gint column")
 ;;; (CFNC "gint gtk_combo_box_get_row_separator_column GtkComboBox* combo_box")
 ;;; changed in 2.5.1
@@ -6964,7 +6964,7 @@
 ;;; out 2.15.0 (CFNC-2134 "GtkWidget* gtk_font_selection_dialog_get_apply_button GtkFontSelectionDialog* fsd")
 ;;; 3.1.12 (CFNC-2134 "GtkWidget* gtk_font_selection_dialog_get_cancel_button GtkFontSelectionDialog* fsd")
 
-(CFNC-2134 "gboolean gtk_handle_box_get_child_detached GtkHandleBox* handle_box")
+;;; 3.3.2 (CFNC-2134 "gboolean gtk_handle_box_get_child_detached GtkHandleBox* handle_box")
 (CFNC-2134 "GdkWindow* gtk_layout_get_bin_window GtkLayout* layout")
 (CFNC-2134 "gchar* gtk_menu_get_accel_path GtkMenu* menu" 'const)
 (CFNC-2134 "gint gtk_menu_get_monitor GtkMenu* menu")
@@ -7443,7 +7443,7 @@
 (CFNC-300 "GdkWindow* gtk_button_get_event_window GtkButton* button")
 ;;; 3.1.12 (CFNC-300 "GtkWidget* gtk_font_selection_dialog_get_font_selection GtkFontSelectionDialog* fsd")
 (CFNC-300 "GtkWidget* gtk_message_dialog_get_message_area GtkMessageDialog* message_dialog")
-(CFNC-300 "void gtk_table_get_size GtkTable* table guint* [rows] guint* [columns]")
+;;; 3.3.2 (CFNC-300 "void gtk_table_get_size GtkTable* table guint* [rows] guint* [columns]")
 
 (CINT-300 "GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH" "GtkSizeRequestMode")
 (CINT-300 "GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT" "GtkSizeRequestMode")
@@ -8301,6 +8301,24 @@
 
 ;;; void gtk_font_chooser_set_filter_func GtkFontChooser* fontchooser GtkFontFilterFuncfilter gpointer user_data GDestroyNotify destroy)
 
+
+#|
+;;; gtk 3.3.2
++ GdkModifierType gdk_keymap_get_modifier_mask       (GdkKeymap           *keymap,
++                                                     GdkModifierIntent    intent);
++ typedef enum
++ {
++   GDK_MODIFIER_INTENT_PRIMARY_ACCELERATOR,
++   GDK_MODIFIER_INTENT_CONTEXT_MENU,
++   GDK_MODIFIER_INTENT_EXTEND_SELECTION,
++   GDK_MODIFIER_INTENT_MODIFY_SELECTION,
++   GDK_MODIFIER_INTENT_NO_TEXT_INPUT
++ } GdkModifierIntent;
+
++   GTK_REGION_ONLY    = 1 << 4,
+(GtkRegionFlags)
+
+|#
 
 
 

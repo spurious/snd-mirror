@@ -6283,7 +6283,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     increment = XEN_TO_C_DOUBLE(x_increment);
   else increment = 0.06; /* was .03 */
 
-  counts = 100; /* was 100, then 50 */
+  counts = 50; /* 100? */
   orig_incr = increment;
   incr_mult = INCR_DOWN;
   file = "test.data";

@@ -3309,12 +3309,12 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
 	    vector_element(ge, i) = sc->NIL;
 	}
       global_slot(variable) = slot;
-      local_slot(variable) = slot;
-      set_global(variable);
-      symbol_id(variable) = 0;
-      /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
-       *   s7->symbol_table->object.vector.elements[1746]->object.cons.car->object.cons.car->object.string.global_slot is (hi . \"hiho\")
-       */
+      if (symbol_id(variable) == 0) /* never defined locally? */
+	{
+	  local_slot(variable) = slot;
+	  set_global(variable);
+	}
+      /* symbol_id(variable) = 0; */
     }
   else 
     {
@@ -21450,7 +21450,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
 
 static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
 {
-  /* TODO: add s7test tests for procedure-name */
+  /* TODO: add s7test tests for procedure-name (and error for non-proc?) */
   #define H_procedure_name "(procedure-name proc) returns the name of the procedure or closure proc, if it can be found."
   return(s7_make_string(sc, s7_procedure_name(sc, car(args))));
 }
