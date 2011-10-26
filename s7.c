@@ -511,7 +511,7 @@ enum{OP_NOT_AN_OP, HOP_NOT_AN_OP,
      OPT_MAX_DEFINED
 };
 
-#if 1
+#if 0
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
   {  
      "not_an_op", "h_not_an_op",
@@ -28868,13 +28868,13 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				  set_optimized(car(x));
 				  set_optimize_data(car(x), op);
 				  set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
-
+				  /*
 				  if (op == OP_SAFE_C_ZZ)
 				    {
 				      fprintf(stderr, "pp->zz: %s %s %s\n", opt_names[optimize_data(cadar(x))], opt_names[optimize_data(caddar(x))], DISPLAY(car(x)));
 				      fprintf(stderr, " ecdrs: %p %p\n", ecdr(cadar(x)), ecdr(caddar(x)));
 				    }
-
+				  */
 				}
 			      else
 				{
@@ -28886,10 +28886,10 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				    set_optimize_data(car(x), OP_SAFE_C_DD);
 				  else 
 				    {
-
+				      /*
 				      fprintf(stderr, "zz: %s %s %s\n", opt_names[optimize_data(cadar(x))], opt_names[optimize_data(caddar(x))], DISPLAY(car(x)));
 				      fprintf(stderr, " ecdrs: %p %p\n", ecdr(cadar(x)), ecdr(caddar(x)));
-
+				      */
 				      set_optimize_data(car(x), OP_SAFE_C_ZZ);
 				    }
 				  set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x))); /* was func */
