@@ -979,6 +979,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 		       4, 4);
+	widget_set_hexpand(frame, true);
 	gtk_widget_show(frame);
 
 	size = num_colormaps();
@@ -990,7 +991,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       }
 
       cutoff_box = gtk_hbox_new(false, 0);
-	gtk_table_attach(GTK_TABLE(outer_table), cutoff_box, 0, 3, 1, 2,
+      gtk_table_attach(GTK_TABLE(outer_table), cutoff_box, 0, 3, 1, 2,
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 		       0, 0);
@@ -1015,7 +1016,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       ccd_invert = gtk_check_button_new_with_label("invert");
       SG_SIGNAL_CONNECT(ccd_invert, "toggled", invert_color_callback, NULL);
 
-	gtk_table_attach(GTK_TABLE(outer_table), ccd_invert, 0, 3, 2, 3,
+      gtk_table_attach(GTK_TABLE(outer_table), ccd_invert, 0, 3, 2, 3,
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 		       0, 0);

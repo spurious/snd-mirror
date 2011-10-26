@@ -5193,7 +5193,7 @@ static gboolean vf_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpoint
       int x, y;
       GdkModifierType state;
       if (EVENT_IS_HINT(ev))
-	gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &state);
+	window_get_pointer(ev, &x, &y, &state);
       else
 	{
 	  x = (int)(EVENT_X(ev));

@@ -18735,6 +18735,20 @@ abs     1       2
      (test (procedure-arity arg) 'error))
    (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
+  (test (let () (define (hi a) a) (procedure-name hi)) "hi")
+  (test (let () (define (hi a) a) (procedure-name 'hi)) "hi")
+  (test (procedure-name abs) "abs")
+  (test (procedure-name 'abs) "abs")
+  (test (procedure-name quasiquote) "quasiquote")
+  (test (procedure-name -s7-symbol-table-locked?) "-s7-symbol-table-locked?")
+  (test (let ((a abs)) (procedure-name a)) "abs")
+  (test (let () (define hi (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) (procedure-name hi)) "hi")
+  (test (let () (define* (hi (a 1)) a) (let ((b #f)) (set! b hi) (procedure-name b))) "hi")
+  (for-each
+   (lambda (arg)
+     (test (procedure-name arg) ""))
+   (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
   (define (for-each-subset func args)
     (let* ((arity (procedure-arity func))
 	   (min-args (car arity))

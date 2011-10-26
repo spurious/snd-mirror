@@ -511,7 +511,7 @@ enum{OP_NOT_AN_OP, HOP_NOT_AN_OP,
      OPT_MAX_DEFINED
 };
 
-#if 0
+#if 1
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
   {  
      "not_an_op", "h_not_an_op",
@@ -17446,6 +17446,31 @@ static s7_pointer g_memq_any(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
+
+static s7_pointer memq_car;
+static s7_pointer g_memq_car(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, obj;
+
+  obj = finder(sc, cadar(args));
+  if (!is_pair(obj))
+    return(s7_wrong_type_arg_error(sc, "car", 0, cadar(args), "a pair"));
+  obj = car(obj);
+  x = cadr(cadr(args));
+
+  while (true)
+    {
+      if (obj == car(x)) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      if (obj == car(x)) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+    }
+  return(sc->F);
+}
+
 static s7_pointer memq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((is_pair(caddr(expr))) &&
@@ -17453,6 +17478,15 @@ static s7_pointer memq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (is_pair(cadr(caddr(expr)))))
     {
       int len;
+
+      if ((is_pair(cadr(expr))) &&
+	  (optimize_data(cadr(expr)) == HOP_SAFE_C_S) &&
+	  (c_call(cadr(expr)) == g_car))
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(memq_car);
+	}
+
       len = s7_list_length(sc, cadr(caddr(expr)));
       if (len > 0)
 	{
@@ -21430,7 +21464,13 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
       return(c_macro_name(proc));
 
     case T_SYMBOL:
-      return(s7_procedure_name(sc, finder(sc, proc)));
+      {
+	s7_pointer slot;
+	slot = find_symbol(sc, proc); /* we don't want unbound-variable errors here */
+	if (!is_null(slot))
+	  return(s7_procedure_name(sc, slot_value(slot)));
+	return(NULL);
+      }
 
     case T_C_OBJECT:
       if (object_type(proc) == pws_tag)
@@ -21439,6 +21479,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
 	  f = (s7_pws_t *)object_value(proc);
 	  return(f->name);
 	}
+      return(NULL);
 
       /* T_MACRO et all don't have an easily accessible name -- I suppose we could
        *   search the current environment?
@@ -21450,7 +21491,6 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
 
 static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
 {
-  /* TODO: add s7test tests for procedure-name (and error for non-proc?) */
   #define H_procedure_name "(procedure-name proc) returns the name of the procedure or closure proc, if it can be found."
   return(s7_make_string(sc, s7_procedure_name(sc, car(args))));
 }
@@ -28345,6 +28385,8 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(memq_4) = c_function_class(f);
   memq_any = s7_make_function(sc, "memq", g_memq_any, 2, 0, false, "memq optimization");
   c_function_class(memq_any) = c_function_class(f);
+  memq_car = s7_make_function(sc, "memq", g_memq_car, 2, 0, false, "memq optimization");
+  c_function_class(memq_car) = c_function_class(f);
 
 
   /* member */
@@ -28826,13 +28868,13 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				  set_optimized(car(x));
 				  set_optimize_data(car(x), op);
 				  set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
-				  /*
+
 				  if (op == OP_SAFE_C_ZZ)
 				    {
 				      fprintf(stderr, "pp->zz: %s %s %s\n", opt_names[optimize_data(cadar(x))], opt_names[optimize_data(caddar(x))], DISPLAY(car(x)));
 				      fprintf(stderr, " ecdrs: %p %p\n", ecdr(cadar(x)), ecdr(caddar(x)));
 				    }
-				  */
+
 				}
 			      else
 				{
@@ -28844,10 +28886,10 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				    set_optimize_data(car(x), OP_SAFE_C_DD);
 				  else 
 				    {
-				      /*
+
 				      fprintf(stderr, "zz: %s %s %s\n", opt_names[optimize_data(cadar(x))], opt_names[optimize_data(caddar(x))], DISPLAY(car(x)));
 				      fprintf(stderr, " ecdrs: %p %p\n", ecdr(cadar(x)), ecdr(caddar(x)));
-				      */
+
 				      set_optimize_data(car(x), OP_SAFE_C_ZZ);
 				    }
 				  set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x))); /* was func */
@@ -28926,6 +28968,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				  set_unsafe(car(x));
 				  set_optimize_data(car(x), ((is_safe_closure(closure_body(func)) ? OP_SAFE_CLOSURE_opSq_S : OP_CLOSURE_opSq_S)));
 				  ecdr(car(x)) = func;
+				  fcdr(car(x)) = caddar(x);
 				  return(false); 
 				}
 			      if ((is_symbol(cadar(x))) &&
@@ -34164,7 +34207,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_opSq_S:
 		  {
 		    s7_pointer val1;
-		    val1 = finder(sc, caddr(code));
+		    val1 = finder(sc, fcdr(code));
 		    car(sc->T1_1) = finder(sc, cadr(cadr(code)));
 		    car(sc->T2_1) = c_call(cadr(code))(sc, sc->T1_1);
 		    car(sc->T2_2) = val1;
@@ -34637,7 +34680,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_CLOSURE_opSq_S:
 		  {
 		    s7_pointer args;
-		    car(sc->T2_2) = finder(sc, caddr(code));
+		    car(sc->T2_2) = finder(sc, fcdr(code));
 		    args = cadr(code);
 		    car(sc->T1_1) = finder(sc, cadr(args));
 		    car(sc->T2_1) = c_call(args)(sc, sc->T1_1);
@@ -34943,6 +34986,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  optimize_data(code) = OP_SAFE_CLOSURE_opSq_S;
 			else optimize_data(code) = OP_CLOSURE_opSq_S;
 			ecdr(code) = f;
+			fcdr(code) = caddr(code);
 			goto OPT_EVAL;
 		      }
 		  }

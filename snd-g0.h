@@ -41,6 +41,35 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define activate_widget(Wid) gtk_widget_show(Wid)
 #define deactivate_widget(Wid) gtk_widget_hide(Wid)
 
+
+/* no accessors: */
+#define EVENT_WINDOW(Ev)      (Ev)->window
+#define EVENT_BUTTON(Ev)      (Ev)->button
+#define EVENT_TYPE(Ev)        (Ev)->type
+#define EVENT_KEYVAL(Ev)      (Ev)->keyval
+#define EVENT_IS_HINT(Ev)     (Ev)->is_hint
+
+#if (!HAVE_GTK_3)
+#define EVENT_AREA_WIDTH(Ev)  (Ev)->area.width
+#define EVENT_AREA_HEIGHT(Ev) (Ev)->area.height
+#endif
+
+#if (HAVE_GTK_3) && defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define EVENT_STATE(Ev) ({ GdkModifierType Type;  gdk_event_get_state((GdkEvent *)Ev, &Type); Type; })
+  #define EVENT_TIME(Ev) gdk_event_get_time((GdkEvent *)Ev)
+  #define EVENT_X(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); x; })
+  #define EVENT_Y(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); y; })
+  /* there's also gtk_get_event_widget */
+#else
+  #define EVENT_STATE(Ev) (Ev)->state
+  #define EVENT_TIME(Ev) (Ev)->time
+  #define EVENT_X(Ev) (Ev)->x
+  #define EVENT_Y(Ev) (Ev)->y
+#endif
+
+
+/* gtk 3.n changes -- nearly every widget used in Snd has been deprecated...
+ */
 #ifndef GTK_IS_VBOX
 #define GTK_IS_VBOX(Obj) GTK_IS_BOX(Obj)
 #define GTK_IS_HBOX(Obj) GTK_IS_BOX(Obj)
@@ -60,6 +89,30 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define gtk_hpaned_new() gtk_paned_new(GTK_ORIENTATION_HORIZONTAL)
 #define gtk_vseparator_new() gtk_separator_new(GTK_ORIENTATION_VERTICAL)
 #define gtk_hseparator_new() gtk_separator_new(GTK_ORIENTATION_HORIZONTAL)
+#endif
+
+#ifndef GTK_IS_TABLE
+
+/* 3.4: table widget replaced by grid (also box eventually, I think) */
+#define GTK_TABLE(Obj) GTK_GRID(Obj)
+#define GTK_IS_TABLE(Obj) GTK_IS_GRID(Obj)
+#define gtk_table_new(Rows, Cols, Homogeneous) gtk_grid_new()
+#define gtk_table_set_homogeneous(Obj, Val) do {gtk_grid_set_row_homogeneous(Obj, Val); gtk_grid_set_column_homogeneous(Obj, Val);} while (0)
+#define gtk_table_set_row_spacings(Obj, Val) gtk_grid_set_row_spacing(Obj, Val)
+#define gtk_table_set_col_spacings(Obj, Val) gtk_grid_set_column_spacing(Obj, Val)
+#define gtk_table_attach_defaults(Obj, Wid, Left, Right, Top, Bottom) gtk_grid_attach(Obj, Wid, Left, Top, Right - Left, Bottom - Top)
+#define gtk_table_attach(Obj, Wid, Left, Right, Top, Bottom, XOptions, YOptions, Xpad, YPad) gtk_grid_attach(Obj, Wid, Left, Top, Right - Left, Bottom - Top)
+
+#define window_get_pointer(Event, X, Y, Mask) gdk_window_get_device_position(EVENT_WINDOW(Event), gdk_event_get_device((GdkEvent *)Event), X, Y, Mask)
+#define widget_set_hexpand(Wid, Val) gtk_widget_set_hexpand(Wid, Val)
+#define widget_set_vexpand(Wid, Val) gtk_widget_set_vexpand(Wid, Val)
+
+#else
+
+#define window_get_pointer(Event, X, Y, Mask) gdk_window_get_pointer(EVENT_WINDOW(Event), X, Y, Mask)
+#define widget_set_hexpand(Wid, Val) 
+#define widget_set_vexpand(Wid, Val) 
+
 #endif
 
 
@@ -104,19 +157,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define TOGGLE_BUTTON_ACTIVE(Button) gtk_toggle_button_get_active((GTK_TOGGLE_BUTTON(Button)))
 #define BIN_CHILD(Bin) gtk_bin_get_child(GTK_BIN(Bin))
 
-#if (HAVE_GTK_3) && defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define EVENT_STATE(Ev) ({ GdkModifierType Type;  gdk_event_get_state((GdkEvent *)Ev, &Type); Type; })
-  #define EVENT_TIME(Ev) gdk_event_get_time((GdkEvent *)Ev)
-  #define EVENT_X(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); x; })
-  #define EVENT_Y(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); y; })
-  /* there's also gtk_get_event_widget */
-#else
-  #define EVENT_STATE(Ev) (Ev)->state
-  #define EVENT_TIME(Ev) (Ev)->time
-  #define EVENT_X(Ev) (Ev)->x
-  #define EVENT_Y(Ev) (Ev)->y
-#endif
-
 #if HAVE_GTK_3
   #define DRAW_SIGNAL "draw"
 #else
@@ -130,18 +170,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #else
   #define SET_CAN_FOCUS(Wid) GTK_WIDGET_SET_FLAGS(Wid, GTK_CAN_FOCUS)
   #define UNSET_CAN_FOCUS(Wid) GTK_WIDGET_UNSET_FLAGS(Wid, GTK_CAN_FOCUS)
-#endif
-
-/* no accessors: */
-#define EVENT_WINDOW(Ev)      (Ev)->window
-#define EVENT_BUTTON(Ev)      (Ev)->button
-#define EVENT_TYPE(Ev)        (Ev)->type
-#define EVENT_KEYVAL(Ev)      (Ev)->keyval
-#define EVENT_IS_HINT(Ev)     (Ev)->is_hint
-
-#if (!HAVE_GTK_3)
-#define EVENT_AREA_WIDTH(Ev)  (Ev)->area.width
-#define EVENT_AREA_HEIGHT(Ev) (Ev)->area.height
 #endif
 
 #define idle_t guint

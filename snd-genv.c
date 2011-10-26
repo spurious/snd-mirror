@@ -491,7 +491,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
   if (BUTTON1_PRESSED(EVENT_STATE(ev)))
     {
       if (EVENT_IS_HINT(ev))
-	gdk_window_get_pointer(EVENT_WINDOW(ev), &evx, &evy, &state);
+	window_get_pointer(ev, &evx, &evy, &state);
       else
 	{
 	  evx = (int)(EVENT_X(ev));

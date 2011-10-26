@@ -639,7 +639,7 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   int x, y;
   GdkModifierType key_state;
 
-  gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &key_state);
+  window_get_pointer(ev, &x, &y, &key_state);
   key_state = (GdkModifierType)(EVENT_STATE(ev));
   keysym = EVENT_KEYVAL(ev);
   theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
@@ -658,7 +658,7 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   int x, y;
   GdkModifierType key_state;
 
-  gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &key_state);
+  window_get_pointer(ev, &x, &y, &key_state);
   key_state = (GdkModifierType)(EVENT_STATE(ev));
   keysym = EVENT_KEYVAL(ev);
   theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
@@ -693,7 +693,7 @@ static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer d
   GdkModifierType state;
 
   if (EVENT_IS_HINT(ev))
-    gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &state);
+    window_get_pointer(ev, &x, &y, &state);
   else
     {
       x = (int)(EVENT_X(ev));
@@ -810,6 +810,10 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       set_user_int_data(G_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
       SET_CAN_FOCUS(cw[W_graph]);
+
+      widget_set_hexpand(cw[W_graph], true);
+      widget_set_vexpand(cw[W_graph], true);
+
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
@@ -902,6 +906,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
       adjs[W_zy_adj] = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);   /* 0 -> 1 (upside down) */
       cw[W_zy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_zy_adj]));
+      widget_set_vexpand(cw[W_zy], true);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_zy], 0, 1, 0, 1, 
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 
@@ -916,6 +921,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
       adjs[W_sy_adj] = (GtkAdjustment *)gtk_adjustment_new(0.5, 0.0, 1.01, 0.001, 0.01, .01);
       cw[W_sy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_sy_adj]));
+      widget_set_vexpand(cw[W_sy], true);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_sy], 1, 2, 0, 1, 
 		       (GtkAttachOptions)(GTK_FILL), 
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL | GTK_SHRINK), 

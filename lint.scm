@@ -827,9 +827,9 @@
 		     (eq? sym (cdr tree))))))
       
       
-      (define (remove x lst) 
+      (define (remove x lst)
 	(cond ((null? lst) '()) 
-	      ((eq? (car lst) x) (cdr lst)) 
+	      ((eqv? (car lst) x) (cdr lst)) ; x might be a number so eq? is not safe
 	      (else (cons (car lst) 
 			  (remove x (cdr lst))))))
       

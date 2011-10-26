@@ -1285,7 +1285,7 @@ static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gp
       GdkModifierType state;
       env_editor *edp;
       if (EVENT_IS_HINT(ev))
-	gdk_window_get_pointer(EVENT_WINDOW(ev), &evx, &evy, &state);
+	window_get_pointer(ev, &evx, &evy, &state);
       else
 	{
 	  evx = (int)(EVENT_X(ev));
