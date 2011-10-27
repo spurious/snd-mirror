@@ -4,7 +4,6 @@
 ;(set! (hook-functions *load-hook*) (list (lambda (filename) (format #t "loading ~S~%" filename))))
 (set! (hook-functions *unbound-variable-hook*) '())
 
-
 ;;; --------------------------------------------------------------------------------
 ;;; get indexer.data
 
@@ -102,6 +101,7 @@
 (load "musglyphs.scm")	   
 (load "zip.scm")
 (load "nb.scm")
+
 
 (let ()
   (define (report-places)

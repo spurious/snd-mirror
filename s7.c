@@ -657,6 +657,7 @@ typedef struct s7_port_t {
   token_t (*read_semicolon)(s7_scheme *sc, s7_pointer port);       /* internal skip-to-semicolon reader */
   int (*read_white_space)(s7_scheme *sc, s7_pointer port);         /* internal skip white space reader */
   s7_pointer (*read_name)(s7_scheme *sc, s7_pointer pt, bool atom_case);
+  s7_pointer (*read_line)(s7_scheme *sc, s7_pointer pt, bool eol_case);
 } s7_port_t;
 
 
@@ -1298,6 +1299,7 @@ struct s7_scheme {
 #define port_data(p)                  (p)->object.port->data
 #define port_original_input_string(p) (p)->object.port->orig_str
 #define port_read_character(p)        (p)->object.port->read_character
+#define port_read_line(p)             (p)->object.port->read_line
 #define port_write_character(p)       (p)->object.port->write_character
 #define port_read_semicolon(p)        (p)->object.port->read_semicolon
 #define port_read_white_space(p)      (p)->object.port->read_white_space
@@ -13526,7 +13528,7 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* read character functions */
+/* -------- read character functions -------- */
 
 static int file_read_char(s7_scheme *sc, s7_pointer port)
 {
@@ -13556,7 +13558,94 @@ static int output_read_char(s7_scheme *sc, s7_pointer port)
 }
 
 
-/* write character functions */
+/* -------- read line functions -------- */
+
+static s7_pointer output_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
+{
+  return(s7_wrong_type_arg_error(sc, "read-line", 0, port, "an input port"));
+}
+
+
+static s7_pointer function_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
+{
+  return((*(port_input_function(port)))(sc, S7_READ_LINE, port));
+}
+
+
+static s7_pointer stdin_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
+{
+  if (sc->read_line_buf == NULL)
+    {
+      sc->read_line_buf_size = 256;
+      sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
+    }
+
+  if (fgets(sc->read_line_buf, sc->read_line_buf_size, stdin) != NULL)
+    return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
+  return(s7_make_string_with_length(sc, NULL, 0));
+}
+
+
+static s7_pointer file_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
+{
+  int i;
+  if (sc->read_line_buf == NULL)
+    {
+      sc->read_line_buf_size = 256;
+      sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
+    }
+
+  for (i = 0; ; i++)
+    {
+      int c;
+      if (i >= sc->read_line_buf_size)
+	{
+	  sc->read_line_buf_size *= 2;
+	  sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
+	}
+      c = fgetc(port_file(port)); /* not unsigned char! -- could be EOF */
+      if (c == EOF)
+	{
+	  if (i == 0)
+	    return(sc->EOF_OBJECT);
+	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
+	}
+      sc->read_line_buf[i] = (char)c;
+      if (c == '\n')
+	{
+	  port_line_number(port)++;
+	  if (!with_eol) i--;
+	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
+	}
+    }
+  return(sc->EOF_OBJECT);
+}
+
+
+static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
+{
+  unsigned int i, port_len, port_start;
+
+  port_len = port_string_length(port);
+  port_start = port_string_point(port);
+
+  for (i = port_start; i < port_len; i++)
+    if (port_string(port)[i] == '\n')
+      {
+	port_line_number(port)++;
+	port_string_point(port) = i + 1;
+	return(s7_make_terminated_string_with_length(sc, (char *)(port_string(port) + port_start), ((with_eol) ? i + 1 : i) - port_start));
+      }
+      
+  port_string_point(port) = port_len;
+  if (i == port_start)
+    return(sc->EOF_OBJECT);
+  
+  return(s7_make_terminated_string_with_length(sc, (char *)(port_string(port) + port_start), i - port_start));
+}
+
+
+/* -------- write character functions -------- */
 
 static void string_write_char(s7_scheme *sc, int c, s7_pointer pt)
 {
@@ -13715,7 +13804,7 @@ static s7_pointer file_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 #define WITH_SHARP false
 #define NO_SHARP true
 
-static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
+static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool atom_case)
 {
   /* sc->strbuf[0] has the 1st char of the string we're reading */
 
@@ -13731,112 +13820,137 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
   
   if ((!atom_case) &&             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
       (k == 1) && 
-      (*orig_str == '\\'))         
+      (*orig_str == '\\'))
     {
       /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
       sc->strbuf[1] = orig_str[1];
       sc->strbuf[2] = '\0';
       return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
     }
-  else 
-    {
-      if (port_needs_free(pt)) 
-	{
-	  /* port_string was allocated (and read from a file) so we can mess with it directly */
-	  s7_pointer result;
-	  char endc;
-	  
-	  endc = orig_str[k];
-	  orig_str[k] = '\0';
-	  
-	  if (atom_case)
-	    {
-	      switch (*orig_str)
-		{
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-		case '.': case '+': case '-':
-		  result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK);
-		  break;
-		  
-		case '#':
-		  result = make_sharp_constant(sc, (char *)(orig_str + 1), UNNESTED_SHARP, BASE_10);
-		  break;
-		  
-		default:
-		  /* result = make_symbol(sc, orig_str); 
-		   *    expanded for speed
-		   */
-		  {
-		    int location;
-		    s7_pointer x; 
-		    unsigned int loc = 0;
-		    const char *c; 
-		    
-		    /* expanding these two calls saves a lot of time */
-		    /* location = symbol_table_hash(orig_str, &loc); */
-		    /* result = symbol_table_find_by_name(sc, orig_str, location); */
-		    
-		    for (c = orig_str; *c; c++) 
-		      loc = *c + loc * HASH_MULT;
-		    location = loc % SYMBOL_TABLE_SIZE; 
-		    
-		    result = sc->NIL;
-		    for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
-		      { 
-			const char *s; 
-			s = symbol_name(car(x)); 
-			if ((s[0] == orig_str[0]) &&
-			    (strings_are_equal(orig_str, s)))
-			  /* the string lengths here are k (for orig_str) and symbol_name_length(car(x)),
-			   *   but checking that these are equal before calling strcmp is slower?!?
-			   */
-			  {
-			    result = car(x);
-			    break;
-			  }
-		      }
-		    
-		    if (is_null(result))
-		      {
-			if (sc->symbol_table_is_locked)
-			  result = sc->F;
-			else 
-			  {
-			    result = new_symbol(sc, orig_str, location); 
-			    symbol_hash(result) = loc;
-			  }
-		      }
-		  }
-		  break;
-		}
-	    }
-	  else result = make_sharp_constant(sc, orig_str, UNNESTED_SHARP, BASE_10);
-	  
-	  orig_str[k] = endc;
-	  if (*str != 0) port_string_point(pt)--;
-	  /* skipping the null has one minor consequence:
-	   *    (let ((str "(+ 1 2 3)")) (set! (str 2) #\null) (eval-string str)) ; "(+\x001 2 3)" -> 6
-	   *    (let ((str "(+ 1 2 3)")) (set! (str 3) #\null) (eval-string str)) ; "(+ \x00 2 3)" -> missing paren error
-	   */
-	  return(result);
-	}
-      
-      /* eval_c_string string is a constant so we can't set and unset the token's end char */
-      if ((k + 1) >= sc->strbuf_size)
-	resize_strbuf(sc);
-      
-      memcpy((void *)(sc->strbuf), (void *)orig_str, k);
-      if (*str != 0) port_string_point(pt)--;
-      sc->strbuf[k] = '\0';
-    }
+
+  /* eval_c_string string is a constant so we can't set and unset the token's end char */
+  if ((k + 1) >= sc->strbuf_size)
+    resize_strbuf(sc);
+  
+  memcpy((void *)(sc->strbuf), (void *)orig_str, k);
+  if (*str != 0) port_string_point(pt)--;
+  sc->strbuf[k] = '\0';
 
   if (atom_case)
     return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK));
-
   return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
 }
 
+
+static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
+{
+  /* port_string was allocated (and read from a file) so we can mess with it directly */
+  unsigned int k = 0;
+  char *orig_str, *str;
+  s7_pointer result;
+  char endc;
+  
+  orig_str = (char *)(port_string(pt) + port_string_point(pt) - 1);
+  str = (char *)(orig_str + 1);
+  
+  while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
+  k = str - orig_str;
+  port_string_point(pt) += k;
+  
+  if (!atom_case)             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
+    {
+      if ((k == 1) && 
+	  (*orig_str == '\\'))
+	{
+	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
+	  sc->strbuf[1] = orig_str[1];
+	  sc->strbuf[2] = '\0';
+	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
+	}
+
+      /* port_string was allocated (and read from a file) so we can mess with it directly */
+      s7_pointer result;
+      char endc;
+      
+      endc = orig_str[k];
+      orig_str[k] = '\0';
+      result = make_sharp_constant(sc, orig_str, UNNESTED_SHARP, BASE_10);
+      
+      orig_str[k] = endc;
+      if (*str != 0) port_string_point(pt)--;
+      return(result);
+    }
+
+  endc = orig_str[k];
+  orig_str[k] = '\0';
+  
+  switch (*orig_str)
+    {
+    case '0': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9':
+    case '.': case '+': case '-':
+      result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK);
+      break;
+      
+    case '#':
+      result = make_sharp_constant(sc, (char *)(orig_str + 1), UNNESTED_SHARP, BASE_10);
+      break;
+      
+    default:
+      /* result = make_symbol(sc, orig_str); 
+       *    expanded for speed
+       */
+      {
+	int location;
+	s7_pointer x; 
+	unsigned int loc = 0;
+	const char *c; 
+	
+	/* expanding these two calls saves a lot of time */
+	/* location = symbol_table_hash(orig_str, &loc); */
+	/* result = symbol_table_find_by_name(sc, orig_str, location); */
+	
+	for (c = orig_str; *c; c++) 
+	  loc = *c + loc * HASH_MULT;
+	location = loc % SYMBOL_TABLE_SIZE; 
+	
+	result = sc->NIL;
+	for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
+	  { 
+	    const char *s; 
+	    s = symbol_name(car(x)); 
+	    if ((s[0] == orig_str[0]) &&
+		(strings_are_equal(orig_str, s)))
+	      /* the string lengths here are k (for orig_str) and symbol_name_length(car(x)),
+	       *   but checking that these are equal before calling strcmp is slower?!?
+	       */
+	      {
+		result = car(x);
+		break;
+	      }
+	  }
+	if (is_null(result))
+	  {
+	    if (sc->symbol_table_is_locked)
+	      result = sc->F;
+	    else 
+	      {
+		result = new_symbol(sc, orig_str, location); 
+		symbol_hash(result) = loc;
+	      }
+	  }
+      }
+      break;
+    }
+  
+  orig_str[k] = endc;
+  if (*str != 0) port_string_point(pt)--;
+  /* skipping the null has one minor consequence:
+   *    (let ((str "(+ 1 2 3)")) (set! (str 2) #\null) (eval-string str)) ; "(+\x001 2 3)" -> 6
+   *    (let ((str "(+ 1 2 3)")) (set! (str 3) #\null) (eval-string str)) ; "(+ \x00 2 3)" -> missing paren error
+   */
+  return(result);
+}
 
 
 
@@ -13890,6 +14004,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_string_point(port) = 0;
       port_needs_free(port) = true;
       port_read_character(port) = string_read_char;
+      port_read_line(port) = string_read_line;
       port_read_semicolon(port) = string_read_semicolon;
       port_read_white_space(port) = string_read_white_space;
       port_read_name(port) = string_read_name;
@@ -13900,6 +14015,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_type(port) = FILE_PORT;
       port_needs_free(port) = false;
       port_read_character(port) = file_read_char;
+      port_read_line(port) = file_read_line;
       port_read_semicolon(port) = file_read_semicolon;
       port_read_white_space(port) = file_read_white_space;
       port_read_name(port) = file_read_name;
@@ -13978,6 +14094,7 @@ static void make_standard_ports(s7_scheme *sc)
   port_file(x) = stdout;
   port_needs_free(x) = false;
   port_read_character(x) = output_read_char;
+  port_read_line(x) = output_read_line;
   port_write_character(x) = stdout_write_char;
   sc->standard_output = x;
 
@@ -13994,6 +14111,7 @@ static void make_standard_ports(s7_scheme *sc)
   port_file(x) = stderr;
   port_needs_free(x) = false;
   port_read_character(x) = output_read_char;
+  port_read_line(x) = output_read_line;
   port_write_character(x) = stderr_write_char;
   sc->standard_error = x;
 
@@ -14011,6 +14129,7 @@ static void make_standard_ports(s7_scheme *sc)
   port_file(x) = stdin;
   port_needs_free(x) = false;
   port_read_character(x) = file_read_char;
+  port_read_line(x) = stdin_read_line;
   port_read_semicolon(x) = file_read_semicolon;
   port_read_white_space(x) = file_read_white_space;
   port_read_name(x) = file_read_name;
@@ -14057,6 +14176,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   port_file(x) = fp;
   port_needs_free(x) = false;
   port_read_character(x) = output_read_char;
+  port_read_line(x) = output_read_line;
   port_write_character(x) = file_write_char;
   add_output_port(sc, x);
   return(x);
@@ -14098,9 +14218,10 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   port_file_number(x) = -1;
   port_needs_free(x) = false;
   port_read_character(x) = string_read_char;
+  port_read_line(x) = string_read_line;
   port_read_semicolon(x) = string_read_semicolon;
   port_read_white_space(x) = string_read_white_space;
-  port_read_name(x) = string_read_name;
+  port_read_name(x) = string_read_name_no_free;
   port_write_character(x) = input_write_char;
   add_input_port(sc, x);
   return(x);
@@ -14135,6 +14256,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_string_point(x) = 0;
   port_needs_free(x) = true;
   port_read_character(x) = output_read_char;
+  port_read_line(x) = output_read_line;
   port_write_character(x) = string_write_char;
   add_output_port(sc, x);
   return(x);
@@ -14182,6 +14304,7 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
   port_needs_free(x) = false;
   port_input_function(x) = function;
   port_read_character(x) = function_read_char;
+  port_read_line(x) = function_read_line;
   port_write_character(x) = input_write_char;
   add_input_port(sc, x);
   return(x);
@@ -14200,6 +14323,7 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
   port_needs_free(x) = false;
   port_output_function(x) = function;
   port_read_character(x) = output_read_char;
+  port_read_line(x) = output_read_line;
   port_write_character(x) = function_write_char;
   add_output_port(sc, x);
   return(x);
@@ -14293,7 +14417,7 @@ int s7_peek_char(s7_scheme *sc, s7_pointer port)
   return(c);
 }
 
-/* TODO: add opts for read/write/peek? char line byte? [currently function_read_char is called if peek]
+/* TODO: add opts for read/write/peek? char byte? [currently function_read_char is called if peek]
  */
 
 static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
@@ -14341,7 +14465,6 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 
   s7_pointer port;
-  unsigned int i;
   bool with_eol = false;
 
   if (is_not_null(args))
@@ -14364,86 +14487,9 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
     }
   else port = sc->input_port;
 
-  if (is_function_port(port))
-    return((*(port_input_function(port)))(sc, S7_READ_LINE, port));
-
-  if (sc->read_line_buf == NULL)
-    {
-      sc->read_line_buf_size = 256;
-      sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
-    }
-
-  if (port == sc->standard_input)
-    {
-      if (fgets(sc->read_line_buf, sc->read_line_buf_size, stdin) != NULL)
-	return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
-      return(s7_make_string_with_length(sc, NULL, 0));
-    }
-
-  if (is_file_port(port))
-    {
-      for (i = 0; ; i++)
-	{
-	  int c;
-	  if (i >= sc->read_line_buf_size)
-	    {
-	      sc->read_line_buf_size *= 2;
-	      sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
-	    }
-	  c = fgetc(port_file(port)); /* not unsigned char! -- could be EOF */
-	  if (c == EOF)
-	    {
-	      if (i == 0)
-		return(sc->EOF_OBJECT);
-	      return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
-	    }
-	  sc->read_line_buf[i] = (char)c;
-	  if (c == '\n')
-	    {
-	      port_line_number(port)++;
-	      if (!with_eol) i--;
-	      return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
-	    }
-	}
-    }
-  else
-    {
-      unsigned int port_len;
-
-      if (!(port_string(port)))
-	return(sc->EOF_OBJECT);
-      port_len = port_string_length(port);
-
-      for (i = 0; ; i++)
-	{
-	  int c;
-	  if (i >= sc->read_line_buf_size) /* here and above I was using i+1 */
-	    {
-	      sc->read_line_buf_size *= 2;
-	      sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
-	    }
-
-	  if (port_len <= port_string_point(port))
-	    c = EOF;
-	  else c = (unsigned char)port_string(port)[port_string_point(port)++];
-
-	  if (c == EOF)
-	    {
-	      if (i == 0)
-		return(sc->EOF_OBJECT);
-	      return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
-	    }
-	  sc->read_line_buf[i] = (char)c;
-	  if (c == '\n')
-	    {
-	      port_line_number(port)++;
-	      if (!with_eol) i--;
-	      return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
-	    }
-	}
-    }
-  return(sc->EOF_OBJECT);
+  return(port_read_line(port)(sc, port, with_eol));
 }
+
 
 
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
@@ -32150,6 +32196,9 @@ static s7_pointer check_do(s7_scheme *sc)
 			     */
 			    (c_function_call(slot_value(global_slot(car(step_expr)))) == g_add) &&
 			    (c_function_call(slot_value(global_slot(car(end)))) == g_equal))
+
+			  /* TODO: geq case */
+
 			  {
 			    /* we're stepping by +1 and going to =
 			     *   the final integer check has to wait until run time (symbol value dependent)
