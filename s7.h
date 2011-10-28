@@ -451,8 +451,6 @@ const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);       /* (
 typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, unsigned char c, s7_pointer port));  
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port));
-void *s7_port_data(s7_pointer port);
-void *s7_port_set_data(s7_pointer port, void *stuff);
 
 int s7_read_char(s7_scheme *sc, s7_pointer port);                           /* (read-char port) */
 int s7_peek_char(s7_scheme *sc, s7_pointer port);                           /* (peek-char port) */

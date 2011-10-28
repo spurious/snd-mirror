@@ -78,7 +78,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define GTK_IS_VSCALE(Obj) GTK_IS_SCALE(Obj)
 #define GTK_IS_HSCALE(Obj) GTK_IS_SCALE(Obj)
 
-/* TODO: vbox looks like crap because it doesn't change size when its parent does! */
+/* TODO: vbox looks like crap because it doesn't change size when its parent does! -- needs h|vexpand? */
 #define gtk_vbox_new(H, S) gtk_box_new(GTK_ORIENTATION_VERTICAL, S)
 #define gtk_hbox_new(H, S) gtk_box_new(GTK_ORIENTATION_HORIZONTAL, S)
 #define gtk_vscrollbar_new(S) gtk_scrollbar_new(GTK_ORIENTATION_VERTICAL, S)
