@@ -2,16 +2,16 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sat Jul 30 18:28:51 CEST 2011
+# Changed: Sat Oct 29 00:08:43 CEST 2011
 
 # Commentary:
 #
 # Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 #
 # Tested with Snd 12.x
-#             Ruby 1.8.0/7, 1.9.2/4
+#             Ruby 1.8.0/7, 1.9.2, 2.0.0
 #             Motif 2.3.0 X11R6
-#             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+#             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -809,7 +809,7 @@ module Snd_Gtk
     attr_reader :scale
 
     def add_scale(title, low, init, high, scale, kind)
-      tbl = Rgtk_table_new(3, 1, false)
+      tbl = Rgtk_grid_new()
       Rgtk_box_pack_start(RGTK_BOX(@parent), tbl, false, false, 4)
       Rgtk_widget_show(tbl)
       @scale = case kind
@@ -821,19 +821,19 @@ module Snd_Gtk
                end
       scl = Rgtk_scale_new(RGTK_ORIENTATION_HORIZONTAL, RGTK_ADJUSTMENT(@scale))
       sclscl = RGTK_SCALE(scl)
-      tbltbl = RGTK_TABLE(tbl)
+      tbltbl = RGTK_GRID(tbl)
       unless provided?(:gtk3)
         Rgtk_range_set_update_policy(RGTK_RANGE(sclscl), RGTK_UPDATE_CONTINUOUS)
       end
       Rgtk_scale_set_value_pos(sclscl, RGTK_POS_TOP)
-      expand_fill = RGTK_EXPAND | RGTK_FILL
+      # expand_fill = RGTK_EXPAND | RGTK_FILL
       case kind
       when :log
         Rgtk_scale_set_digits(sclscl, 0)
         Rgtk_scale_set_draw_value(sclscl, false)
         log_lab = Rgtk_label_new("%1.2f" % init)
         Rgtk_misc_set_alignment(RGTK_MISC(log_lab), 0.0, 0.0)
-        Rgtk_table_attach(tbltbl, log_lab, 0, 1, 0, 1, expand_fill, expand_fill, 0, 0)
+        Rgtk_grid_attach(tbltbl, log_lab, 0, 1, 1, 1)
         Rgtk_widget_show(log_lab)
         add_callback(@scale, "value_changed") do |w, d|
           val = Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(@scale))
@@ -854,9 +854,10 @@ module Snd_Gtk
       end
       label = Rgtk_label_new(title)
       Rgtk_misc_set_alignment(RGTK_MISC(label), 0.0, 0.0)
-      Rgtk_table_attach(tbltbl, scl, 0, 1, 1, 2, expand_fill, expand_fill, 0, 0)
+      Rgtk_widget_set_hexpand(scl, true)
+      Rgtk_grid_attach(tbltbl, scl, 1, 1, 1, 1)
       Rgtk_widget_show(scl)
-      Rgtk_table_attach(tbltbl, label, 0, 1, 2, 3, expand_fill, expand_fill, 0, 0)
+      Rgtk_grid_attach(tbltbl, label, 1, 1, 1, 1)
       Rgtk_widget_show(label)
       Rgtk_widget_set_name(scl, title)
     end

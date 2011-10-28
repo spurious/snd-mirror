@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Jul 30 18:30:55 CEST 2011
+\ Changed: Sat Oct 29 00:05:35 CEST 2011
 
 \ Commentary:
 \
@@ -1345,7 +1345,7 @@ $" Go Away" constant eff-dismiss-string
     sliders length 1 = if
       #f #f
     else
-      2 sliders length #f Fgtk_table_new dup FGTK_TABLE
+      Fgtk_grid_new dup FGTK_GRID
     then { table tabtab }
     0 { slider }
     dialog FGTK_DIALOG Fgtk_dialog_get_content_area FGTK_BOX { box }
@@ -1353,8 +1353,8 @@ $" Go Away" constant eff-dismiss-string
     mainform Fgtk_widget_show drop
     table if
       mainform FGTK_BOX table #f #f 4 Fgtk_box_pack_start drop
-      tabtab 4 Fgtk_table_set_row_spacings drop
-      tabtab 4 Fgtk_table_set_col_spacings drop
+      tabtab 4 Fgtk_grid_set_row_spacing drop
+      tabtab 4 Fgtk_grid_set_column_spacing drop
       table Fgtk_widget_show drop
     then
     sliders map
@@ -1390,7 +1390,7 @@ $" Go Away" constant eff-dismiss-string
       then Fgtk_adjustment_new { adj }
       FGTK_ORIENTATION_HORIZONTAL adj FGTK_ADJUSTMENT Fgtk_scale_new { scale }
       table if
-  	tabtab label 0 1 slider dup 1+ FGTK_FILL FGTK_SHRINK or dup 0 0 Fgtk_table_attach drop
+  	tabtab label 0 slider 1 1 Fgtk_grid_attach drop
       else
   	mainform FGTK_BOX hbox  #f #f 2 Fgtk_box_pack_start drop
   	hbox Fgtk_widget_show drop
@@ -1418,8 +1418,8 @@ $" Go Away" constant eff-dismiss-string
       then Fgtk_scale_set_digits drop
       sclscl use-log not Fgtk_scale_set_draw_value drop
       table if
-  	tabtab scale 1 2 slider dup 1+ FGTK_FILL FGTK_EXPAND or FGTK_SHRINK or dup 0 0
-  	Fgtk_table_attach drop
+	scale FGTK_WIDGET #t Fgtk_widget_set_hexpand drop
+  	tabtab scale 1 slider 1 1 Fgtk_grid_attach drop
   	slider 1+ to slider
       else
   	hbox FGTK_BOX scale #t #t 0 Fgtk_box_pack_start drop
