@@ -1337,7 +1337,7 @@
 					      (< min-epos epos))
 					 (set! epos min-epos))
 				     (set! (names name) (string-append file "#" (checked-substring dline 0 (- epos 1))))
-				     (let ((target (vector-ref names name)))
+				     (let ((target (names name)))
 				       (do ((i 0 (+ i 1)))
 					   ((= i name))
 					 (if (string=? (vector-ref names i) target)

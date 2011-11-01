@@ -62682,21 +62682,21 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 
-19-Oct-11:
-157,767,560,680
-15,963,482,321  ???:sin [/lib64/libm-2.12.so]
-15,282,626,391  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
-10,366,603,378  s7.c:eval [/home/bil/snd-12/snd]
- 9,395,802,772  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
- 8,904,504,267  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,831,391,241  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,220,780,172  io.c:mus_write_1 [/home/bil/snd-12/snd]
- 6,401,528,077  s7.c:eval'2 [/home/bil/snd-12/snd]
+31-Oct-11:
+156,966,854,340
+15,967,094,861  ???:sin [/lib64/libm-2.12.so]
+14,495,927,444  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+ 9,946,551,994  s7.c:eval [/home/bil/snd-12/snd]
+ 9,086,318,311  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+ 8,904,504,943  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,831,757,843  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,226,898,879  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 6,453,276,392  s7.c:eval'2 [/home/bil/snd-12/snd]
  2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
- 2,765,680,944  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
- 2,745,410,190  ???:cos [/lib64/libm-2.12.so]
- 2,647,093,041  clm.c:mus_src [/home/bil/snd-12/snd]
- 2,187,184,814  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
- 2,178,594,168  s7.c:gc [/home/bil/snd-12/snd]
+ 2,765,054,977  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
+ 2,737,670,170  ???:cos [/lib64/libm-2.12.so]
+ 2,647,115,920  clm.c:mus_src [/home/bil/snd-12/snd]
+ 2,214,208,126  s7.c:gc [/home/bil/snd-12/snd]
+ 2,194,810,401  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
 |#
 
