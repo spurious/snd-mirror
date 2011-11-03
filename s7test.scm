@@ -5526,6 +5526,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((L '#(#(1 2 3) #(4 5 6)))) (eq? (car (catch #t (lambda () (set! ((L)) 32) L) (lambda args args))) 'wrong-number-of-args)) #t)
 (test (let ((L '#(#(1 2 3) #(4 5 6)))) (eq? (car (catch #t (lambda () (set! ((L 1) 2)) L) (lambda args args))) 'syntax-error)) #t)
 
+(let ((v #(1 2 3))) (define (vr v a) (vector-ref v (+ a 1))) (test (vr v 1) 3))
 
 
 ;;; vector-fill!
@@ -13352,6 +13353,7 @@ time, so that the displayed results are
 (test (define (hi: a) a) 'error)
 (test (define (#b1 a) a) 'error)
 (test (define (hi #b1) #b1) 'error)
+(test (define () 1) 'error)
 (test (let() (define #(hi a) a)) 'error)
 (test (let () (define hi (lambda args args)) (hi 1 . 2)) 'error)
 (test (let () (define . 1) 1) 'error)
