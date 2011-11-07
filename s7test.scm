@@ -35384,6 +35384,7 @@ abs     1       2
 (num-test (truncate 9223372036854775807) 9223372036854775807)
 (num-test (truncate most-negative-fixnum) most-negative-fixnum)
 (num-test (truncate most-positive-fixnum) most-positive-fixnum)
+(num-test (truncate 1+0i) 1)
 
 (if with-bignums
     (begin
@@ -39902,6 +39903,7 @@ abs     1       2
 (num-test (rationalize 0.00000001 1e-16) 1/100000000)
 (num-test (rationalize 0.1 0) 1/10)
 (num-test (rationalize 0.1 .00000000000000001) 1/10)
+(num-test (/ 0.(rationalize .1)) 0.0)
 
 (num-test (rationalize .1 0) 1/10)
 ;;; but (rationalize 0.1 0) -> 1526457681181556/15264576811815559? independent of precision

@@ -58,7 +58,7 @@
  *        sinh, cosh, tanh, asinh, acosh, atanh
  *        read-line, read-byte, write-byte, *stdin*, *stdout*, and *stderr*
  *        logior, logxor, logand, lognot, ash, integer-length, integer-decode-float, nan?, infinite?
- *        procedure-source, procedure-arity, procedure-documentation, help
+ *        procedure-source, procedure-arity, procedure-documentation, procedure-name, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
  *        symbol-table, symbol->value, global-environment, current-environment, procedure-environment, initial-environment, environment?
  *        provide, provided?, defined?
@@ -428,7 +428,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
   };
 
 
-#if 1
+#if 0
 static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_NO_OP", 
   "OP_READ_INTERNAL", "OP_EVAL", 
@@ -578,7 +578,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
 };
 
 
-#if 1
+#if 0
 static const char *opt_names[OPT_MAX_DEFINED + 1] =
   {  
      "not_an_op", "h_not_an_op",
@@ -666,7 +666,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
 #endif
 
-#define WITH_COUNTS 1
+#define WITH_COUNTS 0
 #if WITH_COUNTS
 static int counts[65000];
 static void init_counts(void) {int i;for (i=0;i<65000;i++) counts[i]=0;}
@@ -12823,6 +12823,7 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if WITH_OPTIMIZATION
 static bool scheme_strequal(s7_pointer s1, s7_pointer s2)
 {
   int i, len, len2;
@@ -12841,6 +12842,7 @@ static bool scheme_strequal(s7_pointer s1, s7_pointer s2)
 
   return(true);
 }
+#endif
 
 
 static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
@@ -42459,8 +42461,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
       }
       
-      
+
+#if WITH_OPTIMIZATION      
     CASE1:
+#endif
     case OP_CASE1: 
       {
 	s7_pointer x, y;

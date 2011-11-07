@@ -39559,48 +39559,6 @@ EDITS: 1
 	  (snd-display #__line__ ";save-edit-history ptree 1: ~A?" (edit-fragment 1)))
       (close-sound nind))
     
-    (let ((ind (open-sound "oboe.snd")))
-      (set! (speed-control ind) 2/3)
-      (set! (filter-control-envelope ind) (list 0.0 0.0 1.0 1.0))
-      (set! (sound-property :hi ind) 12345)
-      (insert-samples 0 100 (make-vct 100 .1) ind 0) ; need data to force save-state-hook to be called
-      (set! (hook-functions save-state-hook) '())
-      (hook-push save-state-hook (lambda (filename) "savehook.snd"))
-      (save-state "s61.scm")
-      (close-sound ind)
-      (if (not (file-exists? "savehook.snd"))
-	  (snd-display #__line__ ";save-state-hook redirect failed? ~A" (hook-functions save-state-hook))
-	  (begin
-	    (load (string-append cwd "s61.scm"))
-	    (set! ind (find-sound "oboe.snd"))
-	    (if (not (sound? ind))
-		(snd-display #__line__ ";save-state after hook restored but no sound?")
-		(begin
-		  (if (fneq (speed-control ind) .6667) (snd-display #__line__ ";save-state w/hook speed: ~A" (speed-control ind)))
-		  (if (or (not (number? (sound-property :hi ind)))
-			  (not (= (sound-property :hi ind) 12345)))
-		      (snd-display #__line__ ";save-state w/hook hi: ~A" (sound-property :hi ind)))
-		  (if (not (feql (filter-control-envelope ind) (list 0.0 0.0 1.0 1.0)))
-		      (snd-display #__line__ ";save-state w/hook filter env: ~A" (filter-control-envelope ind)))
-		  ;; now check that save-state-hook is not called by other funcs
-		  (set! (hook-functions save-state-hook) '())
-		  (hook-push save-state-hook (lambda (file) (snd-display #__line__ ";bogus save-state-hook call!") "edit-list-to-function-saved.snd"))
-		  (let ()
-		    (if (file-exists? "edit-list-to-function-saved.snd")
-			(begin
-			  (snd-display #__line__ ";edit-list->function called save-state-hook")
-			  (delete-file "edit-list-to-function-saved.snd"))))
-		  (save-edit-history "save-edit-history-saved.scm" ind 0)
-		  (if (file-exists? "edit-list-to-function-saved.snd")
-		      (begin
-			(snd-display #__line__ ";save-edit-history called save-state-hook")
-			(delete-file "edit-list-to-function-saved.snd")))
-		  (delete-file "save-edit-history-saved.scm")
-		  (delete-file "savehook.snd")
-		  (close-sound ind)))))
-      (delete-file "s61.scm")
-      (set! (hook-functions save-state-hook) '()))
-    
     (add-sound-file-extension "ogg")
     (add-sound-file-extension "OGG")
     (add-sound-file-extension "sf")

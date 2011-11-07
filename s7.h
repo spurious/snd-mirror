@@ -835,7 +835,6 @@ void s7_mark_object(s7_pointer p);
  * 6-Oct:     changed s7_make_closure args: split the code argument in two (args and body).
  *               s7_make_closure(... code ...) is now s7_make_closure(... car(code), cdr(code) ...)
  *            s7_is_environment.
- * 29-Aug:    more optimization experiments.
  * 19-Aug:    s7_function_chooser_data.
  * 11-Aug:    s7_symbol_accessor functions. s7_cxxxxr.
  * 9-Aug:     s7_function_chooser, s7_function_choice, s7_function_choice_set_direct.
