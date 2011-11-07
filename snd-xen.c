@@ -2439,8 +2439,9 @@ static s7_pointer g_string_vector_position(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_string_list_position_1(s7_scheme *sc, s7_pointer args, bool ci, const char *name)
 {
   const char *s1;
-  s7_pointer p;
+  s7_pointer p, str;
   int i, start = 0;
+  unsigned int len;
 
   if (!s7_is_string(s7_car(args)))
     return(s7_wrong_type_arg_error(sc, name, 1, s7_car(args), "a string"));
@@ -2464,22 +2465,32 @@ static s7_pointer g_string_list_position_1(s7_scheme *sc, s7_pointer args, bool 
     }
   
   s1 = s7_string(s7_car(args));
+  len = s7_string_length(s7_car(args));
+
+  if (start > 0)
+    for (i = 0; (i < start) && (s7_is_pair(p)); p = s7_cdr(p), i++);
 
   if (!ci)
     {
-      for (i = 0; s7_is_pair(p); p = s7_cdr(p), i++)
-	if ((i >= start) &&
-	    (s7_is_string(s7_car(p))) &&
-	    (mus_strcmp(s1, s7_string(s7_car(p)))))
-	  return(s7_make_integer(sc, i));
+      for (i = start; s7_is_pair(p); p = s7_cdr(p), i++)
+	{
+	  str = s7_car(p);
+	  if ((s7_is_string(str)) &&
+	      (len == s7_string_length(str)) &&
+	      (mus_strcmp(s1, s7_string(str))))
+	    return(s7_make_integer(sc, i));
+	}
     }
   else
     {
-      for (i = 0; s7_is_pair(p); p = s7_cdr(p), i++)
-	if ((i >= start) &&
-	    (s7_is_string(s7_car(p))) &&
-	    (strcasecmp(s1, s7_string(s7_car(p))) == 0))
-	  return(s7_make_integer(sc, i));
+      for (i = start; s7_is_pair(p); p = s7_cdr(p), i++)
+	{
+	  str = s7_car(p);
+	  if ((s7_is_string(str)) &&
+	      (len == s7_string_length(str)) &&
+	      (strcasecmp(s1, s7_string(str)) == 0))
+	    return(s7_make_integer(sc, i));
+	}
     }
   return(s7_f(sc));
 }
