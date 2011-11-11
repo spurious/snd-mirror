@@ -14557,6 +14557,13 @@ time, so that the displayed results are
 (test (let* ((pi 3)) pi) 'error)
 (test (letrec ((pi 3)) pi) 'error)
 
+(test (let hiho ((a 3) (hiho 4)) a) 3)
+(test (let hiho ((hiho 4)) hiho) 4)                ; guile=4
+(test (let hiho ((hiho hiho)) hiho) 'error)        ; guile sez error
+(test (let ((hiho 4) (hiho 5)) hiho) 'error)       ; guile sez error
+(test (let hiho ((a (hiho 1))) a) 'error)          ; guile sez error
+(test (let hiho ((hiho 3)) (hiho hiho)) 'error)    ; guile sez error
+
 (test (let) 'error)
 (test (let*) 'error)
 (test (letrec) 'error)
