@@ -11661,6 +11661,8 @@ time, so that the displayed results are
 (test (let ((sum 0)) ((do ((i 0 (+ i 1))) ((> i 64) (lambda () sum)) (set! sum (+ sum i))))) 2080)
 (test (do ((lst '() (cons i lst)) (i 0 (+ i 1))) ((> i 6) (reverse lst))) '(0 1 2 3 4 5 6))
 
+(test (let ((x (do ((i 0 (+ i 1))) (#t)))) x) '()) ; guile: #<unspecified>
+
 (test (let ((lst '(1 2 3))
 	    (v (vector 0 0 0)))
 	(do ((l lst (map (lambda (a) (+ a 1)) (cdr l))))
@@ -11698,6 +11700,7 @@ time, so that the displayed results are
 (let () (define (jtest11) (let ((j (cons 1 2))) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (set! j (cons 0 i)))))) (test (jtest11) '(0 . 3)))
 ;; (let ((f #f)) (define (jtest12) (do ((i 0 (+ i 1))) ((= i 10) (f)) (if (= i 3) (set! f (lambda () i))))) (test (jtest12) 3))
 ;; this lambda business is a separate issue (s7 returns 10 here)
+
 
 (test (let () (define (step-it a) (+ a 1)) (define (hi) (do ((i 0 (step-it i))) ((= i 3) i))) (hi) (hi)) 3)
 
@@ -13363,6 +13366,7 @@ time, so that the displayed results are
 (let () (test (if (and (define x 3) (define y 4)) (+ x y)) 7))
 (let () (test (if (not (and (define x 2) (define y 4))) (+ x y) (if (define x 3) x)) 3))
 (let () (test (if (and (define x 2) (not (define y 4))) (+ x y) (- x y)) -2))
+(test (let () (define (f a) (lambda () a)) (+ ((f 1)) ((f 2)))) 3)
 
 ;; y combinator example from some CS website
 (let ()
@@ -22085,6 +22089,9 @@ abs     1       2
 	  #f)))
   (let ((val (tc-18 0 32)))
     (test (and (= val 32) (> max-stack 28)) #t)))
+
+(test (let ((f #f)) (let tr ((i 10)) (if (= i 3) (set! f (lambda () i))) (if (> i 0) (tr (- i 1)))) (f)) 3)
+(test (let ((f '())) (let tr ((i 4)) (set! f (cons i f)) (if (> i 0) (tr (- i 1)))) f) '(0 1 2 3 4))
 
 
 
