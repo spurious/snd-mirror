@@ -791,6 +791,7 @@ typedef struct s7_cell {
       unsigned int length;
       unsigned int hash;  
       char *svalue;
+      bool needs_free;
     } string;
     
     s7_num_t number;
@@ -1326,10 +1327,11 @@ struct s7_scheme {
 /* we need 64-bits here, I think, since we don't want this thing to wrap around, and frames are created at a great rate 
  *    callgrind says this is faster than an unsigned int!
  */
-#define string_value(p)               ((p)->object.string.svalue)
-#define string_length(p)              ((p)->object.string.length)
-#define string_hash(p)                ((p)->object.string.hash)
-#define character(p)                  ((p)->object.chr)
+#define string_value(p)               (p)->object.string.svalue
+#define string_length(p)              (p)->object.string.length
+#define string_hash(p)                (p)->object.string.hash
+#define string_needs_free(p)          (p)->object.string.needs_free
+#define character(p)                  (p)->object.chr
 
 #define is_symbol(p)                  (type(p) == T_SYMBOL)
 #define symbol_name_cell(p)           (p)->object.sym.name
@@ -1644,6 +1646,7 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(s7_scheme *sc, const char *file);
 static const char *type_name(s7_pointer arg);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
+static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int len);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
@@ -1868,9 +1871,14 @@ static void sweep(s7_scheme *sc)
     {
       for (i = 0, j = 0; i < sc->strings_loc; i++)
 	{
-	  if (type(sc->strings[i]) == 0)
-	    free(string_value(sc->strings[i]));
-	  else sc->strings[j++] = sc->strings[i];
+	  s7_pointer s1;
+	  s1 = sc->strings[i];
+	  if (type(s1) == 0)
+	    {
+	      if (string_needs_free(s1))
+		free(string_value(s1));
+	    }
+	  else sc->strings[j++] = s1;
 	}
       sc->strings_loc = j;
     }
@@ -3266,6 +3274,23 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
    */
   return(s7_make_string_with_length(sc, symbol_name(sym), symbol_name_length(sym)));    /* return a copy */
 }
+
+#if WITH_OPTIMIZATION
+static s7_pointer symbol_to_string_uncopied;
+static s7_pointer g_symbol_to_string_uncopied(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer sym, x;
+
+  sym = car(args);
+  if (!is_symbol(sym))
+    return(s7_wrong_type_arg_error(sc, "symbol->string", 0, sym, "a symbol"));
+
+  x = make_string_uncopied_with_length(sc, symbol_name(sym), symbol_name_length(sym)); 
+  string_needs_free(x) = false;
+  return(x);
+}
+#endif
+
 
 
 static s7_pointer g_string_to_symbol_1(s7_scheme *sc, s7_pointer args, const char *caller)
@@ -12490,6 +12515,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   else string_value(x)[0] = 0;
   string_length(x) = len;
   string_hash(x) = 0;
+  string_needs_free(x) = true;
   add_string(sc, x);
   return(x);
 }
@@ -12506,6 +12532,7 @@ static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const cha
   string_value(x)[len] = 0;
   string_length(x) = len;
   string_hash(x) = 0;
+  string_needs_free(x) = true;
   add_string(sc, x);
   return(x);
 }
@@ -12519,6 +12546,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
   string_value(x) = str;
   string_length(x) = len;
   string_hash(x) = 0;
+  string_needs_free(x) = true; /*assume caller has passed us a copy */
   add_string(sc, x);
   return(x);
 }
@@ -12532,6 +12560,7 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str)
   string_value(x) = (char *)str;
   string_length(x) = safe_strlen(str);
   string_hash(x) = 0;
+  string_needs_free(x) = false;
   return(x);
 }
 
@@ -12552,6 +12581,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   string_value(x)[len] = 0;
   string_hash(x) = 0;
   string_length(x) = len;
+  string_needs_free(x) = true;
   add_string(sc, x);
   return(x);
 }
@@ -12599,6 +12629,7 @@ s7_pointer s7_make_permanent_string(const char *str)
       string_length(x) = 0;
     }
   string_hash(x) = 0;
+  string_needs_free(x) = false;
   return(x);
 }
 
@@ -12819,7 +12850,9 @@ end: (substring \"01234\" 1 2) -> \"1\""
   return(x);
 }
 
+
 /* (set! (substring...) ...)? -- might require allocation
+ *   to implement substring_uncopied we'd need to make sure the lack of a trailing null can't confuse anyone
  */
 
 
@@ -22904,7 +22937,6 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       /* one problematic case: #<unspecified> is currently not equal to (values) but they print the same.
        *   case T_UNTYPED: return((s7_is_unspecified(sc, x)) && (s7_is_unspecified(sc, y)))
        */
-
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
@@ -22916,18 +22948,12 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 
     case T_VECTOR:
     case T_HASH_TABLE:
-      if (vector_length(x) != vector_length(y))
-	return(false);
-      /* fall through */
+      return((vector_length(x) == vector_length(y)) &&
+	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
 
     case T_PAIR:
-      {
-	shared_info *ci;
-	bool result;
-	ci = new_shared_info(sc);
-	result = structures_are_equal(sc, x, y, ci);
-	return(result);
-      }
+      return((type(car(x)) == type(car(y))) &&
+	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
 
     case T_HOOK:
       return(hooks_are_equal(sc, x, y));
@@ -22935,7 +22961,6 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     case T_C_POINTER:
       return(raw_pointer(x) == raw_pointer(y));
     }
-
   return(false); /* we already checked that x != y (port etc) */
 }
 
@@ -28397,6 +28422,20 @@ static s7_pointer string_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
     {
       if (s7_is_string(caddr(expr)))
 	return(string_less_s_ic);
+      
+      /* TODO: extend this to other string comparisons, string-ref, write/display/format, equal? string-append
+       *       also substring as arg -- recognized at chooser time?
+       */
+      if ((is_pair(cadr(expr))) &&
+	  (is_optimized(cadr(expr))) &&
+	  (c_call(cadr(expr)) == g_symbol_to_string))
+	set_c_function(cadr(expr), symbol_to_string_uncopied);
+
+      if ((is_pair(caddr(expr))) &&
+	  (is_optimized(caddr(expr))) &&
+	  (c_call(caddr(expr)) == g_symbol_to_string))
+	set_c_function(caddr(expr), symbol_to_string_uncopied);
+
       return(string_less_2);
     }
   return(f);
@@ -28488,6 +28527,25 @@ static s7_pointer string_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s
 	return(string_ci_leq_s_ic);
       return(string_ci_leq_2);
     }
+  return(f);
+}
+
+
+static s7_pointer string_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((is_pair(cadr(expr))) &&
+      (is_optimized(cadr(expr))) &&
+      (c_call(cadr(expr)) == g_symbol_to_string))
+    set_c_function(cadr(expr), symbol_to_string_uncopied);
+  return(f);
+}
+
+static s7_pointer string_append_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((is_pair(cadr(expr))) &&
+      (is_optimized(cadr(expr))) &&
+      (c_call(cadr(expr)) == g_symbol_to_string))
+    set_c_function(cadr(expr), symbol_to_string_uncopied);
   return(f);
 }
 
@@ -28814,6 +28872,22 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(string_ci_geq_s_ic) = c_function_class(f);
   string_ci_geq_2 = s7_make_function(sc, "string-ci>=?", g_string_ci_geq_2, 2, 0, false, "string-ci>=? optimization");
   c_function_class(string_ci_geq_2) = c_function_class(f);
+
+
+  /* string-ref */
+  f = slot_value(global_slot(make_symbol(sc, "string-ref")));
+  c_function_chooser(f) = string_ref_chooser;
+
+
+  /* string-append */
+  f = slot_value(global_slot(make_symbol(sc, "string-append")));
+  c_function_chooser(f) = string_append_chooser;
+
+
+  /* symbol->string experiment */
+  f = slot_value(global_slot(make_symbol(sc, "symbol->string")));
+  symbol_to_string_uncopied = s7_make_function(sc, "symbol->string", g_symbol_to_string_uncopied, 1, 0, false, "symbol->string optimization");
+  c_function_class(symbol_to_string_uncopied) = c_function_class(f);
 
 
   /* abs */
@@ -29857,28 +29931,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		  (is_safe_procedure(func)));
 	  */
 	  
-	  /* TODO: can this happen? */
-	  if ((!is_optimized(car(x))) &&
-	      (pairs == 2) &&
-	      (bad_pairs == 0) &&
-	      (is_c_function(func)) &&
-	      ((is_safe_procedure(func)) ||
-	       (c_function_call(func) == g_member) ||
-	       (c_function_call(func) == g_assoc)))
-	    {
-	      set_optimized(car(x));
-	      if ((optimize_data_match(cadar(x), OP_SAFE_C_C)) &&
-		  (optimize_data_match(caddar(x), OP_SAFE_C_C)))
-		set_optimize_data(car(x), OP_SAFE_C_DD);
-	      else 
-		{
-		  /* fprintf(stderr, "use zz: %s\n", DISPLAY_80(car(x)));  */
-		  set_optimize_data(car(x), OP_SAFE_C_ZZ);
-		}
-	      set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x))); /* was func */
-	      return(true);
-	    }
-
 	  if ((!is_optimized(car(x))) &&
 	      (pairs == 2) &&
 	      (is_c_function(func)) &&
@@ -37865,9 +37917,47 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		  
 		case HOP_READ_S:
-		  car(sc->T1_1) = finder(sc, cadr(code));
-		  sc->value = g_read(sc, sc->T1_1);
-		  goto START;
+		  {
+		    s7_pointer port;
+		    port = finder(sc, cadr(code));
+		    
+		    if (!is_input_port(port)) /* was also not stdin */
+		      s7_wrong_type_arg_error(sc, "read", 0, port, "an input port");
+		    if (port_is_closed(port))
+		      s7_wrong_type_arg_error(sc, "read", 0, port, "an open input port");
+		    
+		    if (is_function_port(port))
+		      sc->value = (*(port_input_function(port)))(sc, S7_READ, port);
+		    else
+		      {
+			if ((is_string_port(port)) &&
+			    (port_string_length(port) <= port_string_point(port)))
+			  sc->value = sc->EOF_OBJECT;
+			else
+			  {
+			    push_input_port(sc, port);
+			    push_stack(sc, OP_READ_DONE, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
+			    sc->tok = token(sc);
+			    switch (sc->tok)
+			      {
+			      case TOKEN_EOF:
+				goto START;
+				
+			      case TOKEN_RIGHT_PAREN:
+				read_error(sc, "unexpected close paren");
+				
+			      case TOKEN_COMMA:
+				read_error(sc, "unexpected comma");
+				
+			      default:
+				sc->value = read_expression(sc);
+				sc->current_line = port_line_number(sc->input_port);  /* this info is used to track down missing close parens */
+				sc->current_file = port_filename(sc->input_port);
+			      }
+			  }
+		      }
+		    goto START;
+		  }
 
 
 		case OP_C_ALL_G:
@@ -42311,6 +42401,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
       
+      /* SOMEDAY: the cons here is unnecessary -- this could use slot_pending_value instead
+       */
     case OP_LETREC1:    /* letrec -- calculate parameters */
       sc->args = cons(sc, sc->value, sc->args);
       if (is_pair(sc->code)) 
@@ -49817,4 +49909,8 @@ the error type and the info passed to the error handler.");
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX SAFE_C_CQ
  *
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
+ *
+ * lint     13424 ->  1251
+ * bench    52019 -> 12852
+ * index    44300 ->  6564
  */
