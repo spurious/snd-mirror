@@ -354,7 +354,8 @@ enum {OP_NO_OP,
       OP_SAFE_IF_IS_EOF_P_P, OP_IF_O_P, OP_IF_O_P_P, OP_SAFE_IF_ANDX_P, OP_SAFE_IF_ORX_P,
       OP_SAFE_C_P_1, OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4,
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS,
-      OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_O2, OP_LET_R_P, OP_LET_OX_P, OP_LET_UNKNOWN_S_P,
+      OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_O2, OP_LET_R_P, OP_LET_OX_P, OP_LET_UNKNOWN_S_P, 
+      OP_LET_READ_CHAR_P, OP_LET_CAR_P,
       OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1,
       OP_SAFE_C_ZXX_1, OP_SAFE_C_XZX_1, OP_SAFE_C_XXZ_1, 
       OP_SAFE_C_ZZX_1, OP_SAFE_C_ZZX_2, OP_SAFE_C_ZXZ_1, OP_SAFE_C_ZXZ_2, OP_SAFE_C_XZZ_1, OP_SAFE_C_XZZ_2, 
@@ -424,6 +425,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe-c-p-1", "eval-args-p-1", "eval-args-p-2", "eval-args-p-3", "eval-args-p-4",
    "increment-1", "decrement-1", "set-cdr", "set-cons",
    "let-o", "let-o1", "let-r", "let-all-r", "let-c-d", "let-o-p", "let-o2", "let-r-p", "let-ox-p", "let-unknown-s-p",
+   "let-read-char-p", "let-car-p",
    "safe-c-zz-1", "safe-c-zz-2", "safe-c-sz-1", "safe-c-zs-1",
    "safe-c-zxx-1", "safe-c-xzx-1", "safe-c-xxz-1", 
    "safe-c-zzx-1", "safe-c-zzx-2", "safe-c-zxz-1", "safe-c-zxz-2", "safe-c-xzz-1", "safe-c-xzz-2", 
@@ -486,7 +488,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_IS_EOF_P_P", "OP_IF_O_P", "OP_IF_O_P_P", "SAFE_IF_ANDX_P", "SAFE_IF_ORX_P",
   "OP_SAFE_C_P_1", "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4",
   "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CDR", "OP_SET_CONS",
-  "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_O2", "OP_LET_R_P", "OP_LET_OX_P", "OP_LET_UNKNOWN_S_P",
+  "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_O2", "OP_LET_R_P", "OP_LET_OX_P", "OP_LET_UNKNOWN_S_P", 
+  "OP_LET_READ_CHAR_P", "OP_LET_CAR_P",
   "OP_SAFE_C_ZZ_1", "OP_SAFE_C_ZZ_2", "OP_SAFE_C_SZ_1", "OP_SAFE_C_ZS_1",
   "OP_SAFE_C_ZXX_1", "OP_SAFE_C_XZX_1", "OP_SAFE_C_XXZ_1", 
   "OP_SAFE_C_ZZX_1", "OP_SAFE_C_ZZX_2", "OP_SAFE_C_ZXZ_1", "OP_SAFE_C_ZXZ_2", "OP_SAFE_C_XZZ_1", "OP_SAFE_C_XZZ_2", 
@@ -550,7 +553,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_C_S_opSq, HOP_C_S_opSq, OP_C_opSq_CC, HOP_C_opSq_CC, 
       OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2,
       OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq,
-      OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S,
+      OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, 
       
       OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_opCq, HOP_VECTOR_opCq, 
       OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_opCq, HOP_STRING_opCq, 
@@ -828,7 +831,7 @@ typedef struct s7_cell {
     } sym;
 
     struct {               /* slots (bindings) */
-      s7_pointer sym, val, nxt, pending_value;
+      s7_pointer sym, val, nxt, pending_value, expr;
     } slt;
 
     struct {               /* environments (frames) */
@@ -985,7 +988,7 @@ struct s7_scheme {
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P;
   s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_X, SAFE_IF_IS_SYMBOL_P_P, SAFE_IF_IS_EOF_P_P;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS;
-  s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_R_P, LET_OX_P, LET_UNKNOWN_S_P;
+  s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_R_P, LET_OX_P, LET_UNKNOWN_S_P, LET_READ_CHAR_P, LET_CAR_P;
   s7_pointer SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES, DOTIMES_C_C, SAFE_DO, SIMPLE_DO_P, SAFE_SIMPLE_DO;
   s7_pointer DOX;
   int safe_do_level, safe_do_ids_size;
@@ -1352,6 +1355,7 @@ struct s7_scheme {
 #define slot_symbol(p)                (p)->object.slt.sym
 #define next_slot(p)                  (p)->object.slt.nxt
 #define slot_pending_value(p)         (p)->object.slt.pending_value
+#define slot_expression(p)            (p)->object.slt.expr
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_opcode(p)              ((p)->hloc)
@@ -12853,6 +12857,7 @@ end: (substring \"01234\" 1 2) -> \"1\""
 
 /* (set! (substring...) ...)? -- might require allocation
  *   to implement substring_uncopied we'd need to make sure the lack of a trailing null can't confuse anyone
+ *   this is also the case for read-line.
  */
 
 
@@ -13782,6 +13787,11 @@ static s7_pointer g_is_eof_object(s7_scheme *sc, s7_pointer args)
 }
 
 
+static int closed_port_read_char(s7_scheme *sc, s7_pointer port);
+static s7_pointer closed_port_read_line(s7_scheme *sc, s7_pointer port, bool with_eol);
+static void closed_port_write_char(s7_scheme *sc, int c, s7_pointer port);
+static void closed_port_display(s7_scheme *sc, const char *s, s7_pointer port);
+
 void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 {
   if ((is_immutable(p)) ||
@@ -13812,6 +13822,10 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
     }
 
   /* if input string, someone else is dealing with GC */
+  port_read_character(p) = closed_port_read_char;
+  port_read_line(p) = closed_port_read_line;
+  port_write_character(p) = closed_port_write_char;
+  port_display(p) = closed_port_display;
   port_is_closed(p) = true;
 }
 
@@ -13866,6 +13880,10 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 	  port_needs_free(p) = false;
 	}
     }
+  port_read_character(p) = closed_port_read_char;
+  port_read_line(p) = closed_port_read_line;
+  port_write_character(p) = closed_port_write_char;
+  port_display(p) = closed_port_display;
   port_is_closed(p) = true;
 }
 
@@ -13913,11 +13931,25 @@ static int output_read_char(s7_scheme *sc, s7_pointer port)
 }
 
 
+static int closed_port_read_char(s7_scheme *sc, s7_pointer port)
+{
+  s7_wrong_type_arg_error(sc, "read-char", 0, port, "an open port");
+  return(0);
+}
+
+
+
 /* -------- read line functions -------- */
 
 static s7_pointer output_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 {
   return(s7_wrong_type_arg_error(sc, "read-line", 0, port, "an input port"));
+}
+
+
+static s7_pointer closed_port_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
+{
+  return(s7_wrong_type_arg_error(sc, "read-line", 0, port, "an open port"));
 }
 
 
@@ -14054,6 +14086,13 @@ static void input_write_char(s7_scheme *sc, int c, s7_pointer port)
 }
 
 
+static void closed_port_write_char(s7_scheme *sc, int c, s7_pointer port)
+{
+  s7_wrong_type_arg_error(sc, "write-char", 0, port, "an open port");
+}
+
+
+
 /* -------- write string functions -------- */
 
 static void input_display(s7_scheme *sc, const char *s, s7_pointer port)
@@ -14061,10 +14100,15 @@ static void input_display(s7_scheme *sc, const char *s, s7_pointer port)
   s7_wrong_type_arg_error(sc, "write", 0, port, "an output port");
 }
 
+static void closed_port_display(s7_scheme *sc, const char *s, s7_pointer port)
+{
+  s7_wrong_type_arg_error(sc, "write", 0, port, "an open port");
+}
+
 
 static void file_display(s7_scheme *sc, const char *s, s7_pointer port)
 {
-  if ((s) && (!port_is_closed(port)))
+  if (s)
     {
       if (port_position(port) > 0)
 	{
@@ -14079,7 +14123,7 @@ static void file_display(s7_scheme *sc, const char *s, s7_pointer port)
 
 static void string_display(s7_scheme *sc, const char *s, s7_pointer port)
 {
-  if ((s) && (!port_is_closed(port)))
+  if (s)
     {
       for (; *s; s++)
 	string_write_char(sc, *s, port);
@@ -14089,7 +14133,7 @@ static void string_display(s7_scheme *sc, const char *s, s7_pointer port)
 
 static void function_display(s7_scheme *sc, const char *s, s7_pointer port)
 {
-  if ((s) && (!port_is_closed(port)))
+  if (s)
     {
       for (; *s; s++)
 	(*(port_output_function(port)))(sc, *s, port);
@@ -14850,8 +14894,25 @@ int s7_peek_char(s7_scheme *sc, s7_pointer port)
 }
 
 
-static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
+static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
 {
+  #define H_read_char "(read-char (port (current-input-port))) returns the next character in the input port"
+
+  s7_pointer port;
+
+  if (is_not_null(args))
+    port = car(args);
+  else port = sc->input_port;
+  if (!is_input_port(port))
+    return(s7_wrong_type_arg_error(sc, "read-char", 0, port, "an input port"));
+
+  return(chars[port_read_character(port)(sc, port)]);
+}
+
+
+static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
+{
+  #define H_peek_char "(peek-char (port (current-input-port))) returns the next character in the input port, but does not remove it from the input stream"
   int c;
   s7_pointer port;
 
@@ -14860,32 +14921,12 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
   else port = sc->input_port;
 
   if (!is_input_port(port))
-    return(s7_wrong_type_arg_error(sc, (peek) ? "peek-char" : "read-char", 0, port, "an input port"));
+    return(s7_wrong_type_arg_error(sc, "peek-char", 0, port, "an input port"));
   if (port_is_closed(port))
-    return(s7_wrong_type_arg_error(sc, (peek) ? "peek-char" : "read-char", 0, port, "an open input port"));
+    return(s7_wrong_type_arg_error(sc, "peek-char", 0, port, "an open input port"));
       
-  if (peek)
-    c = s7_peek_char(sc, port);
-  else c = port_read_character(port)(sc, port);
-
-  if (c == EOF)
-    return(sc->EOF_OBJECT); 
-
-  return(s7_make_character(sc, (unsigned char)c));
-}
-
-
-static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
-{
-  #define H_read_char "(read-char (port (current-input-port))) returns the next character in the input port"
-  return(g_read_char_1(sc, args, false));
-}
-
-
-static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
-{
-  #define H_peek_char "(peek-char (port (current-input-port))) returns the next character in the input port, but does not remove it from the input stream"
-  return(g_read_char_1(sc, args, true));
+  c = s7_peek_char(sc, port);
+  return(chars[c]);
 }
 
 
@@ -14902,8 +14943,6 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
       port = car(args);
       if (!is_input_port(port))
 	return(s7_wrong_type_arg_error(sc, "read-line", (is_null(cdr(args))) ? 0 : 1, port, "an input port"));
-      if (port_is_closed(port))
-	return(s7_wrong_type_arg_error(sc, "read-line", (is_null(cdr(args))) ? 0 : 1, port, "an open input port"));
 
       if (is_not_null(cdr(args)))
 	{
@@ -14916,7 +14955,6 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 	}
     }
   else port = sc->input_port;
-
   return(port_read_line(port)(sc, port, with_eol));
 }
 
@@ -14944,6 +14982,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
   return(s7_wrong_type_arg_error(sc, "read", 0, port, "an input port"));
 }
 
+/* TODO: port-specific read funcs */
 
 static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 {
@@ -16296,8 +16335,6 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
       port = car(args);
       if (!is_output_port(port))
 	return(s7_wrong_type_arg_error(sc, "newline", 0, port, "an output port"));
-      if (port_is_closed(port))
-	return(s7_wrong_type_arg_error(sc, "newline", 0, port, "an open output port"));
     }
   else port = sc->output_port;
   
@@ -16309,21 +16346,21 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_write_char "(write-char char (port (current-output-port))) writes char to the output port"
-  s7_pointer port;
+  s7_pointer port, chr;
   
-  if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "write-char", (is_null(cdr(args))) ? 0 : 1, car(args), "a character"));
+  chr = car(args);
+  if (!s7_is_character(chr))
+    return(s7_wrong_type_arg_error(sc, "write-char", (is_null(cdr(args))) ? 0 : 1, chr, "a character"));
   
   if (is_pair(cdr(args)))
     {
       port = cadr(args);
       if (!is_output_port(port))
 	return(s7_wrong_type_arg_error(sc, "write-char port", 2, port, "an output port"));
-      if (port_is_closed(port))
-	return(s7_wrong_type_arg_error(sc, "write-char port", 2, port, "an open output port"));
     }
   else port = sc->output_port;
-  s7_write_char(sc, s7_character(car(args)), port);
+
+  s7_write_char(sc, s7_character(chr), port);
   return(sc->UNSPECIFIED);
 }
 
@@ -16356,8 +16393,6 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
       port = cadr(args);
       if (!is_output_port(port))
 	return(s7_wrong_type_arg_error(sc, "write port", 2, port, "an output port"));
-      if (port_is_closed(port))
-	return(s7_wrong_type_arg_error(sc, "write port", 2, port, "an open output port"));
     }
   else port = sc->output_port;
   write_or_display(sc, car(args), port, USE_WRITE);
@@ -16381,8 +16416,6 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
       port = cadr(args);
       if (!is_output_port(port))
 	return(s7_wrong_type_arg_error(sc, "display port", 2, port, "an output port"));
-      if (port_is_closed(port))
-	return(s7_wrong_type_arg_error(sc, "display port", 2, port, "an open output port"));
     }
   else port = sc->output_port;
   write_or_display(sc, car(args), port, USE_DISPLAY);
@@ -16402,8 +16435,6 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 
   if (!is_input_port(port))
     return(s7_wrong_type_arg_error(sc, "read-byte", 0, port, "an input port"));
-  if (port_is_closed(port))
-    return(s7_wrong_type_arg_error(sc, "read-byte", 0, port, "an open input port"));
 
   c = port_read_character(port)(sc, port);
   if (c == EOF)
@@ -28424,7 +28455,7 @@ static s7_pointer string_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 	return(string_less_s_ic);
       
       /* TODO: extend this to other string comparisons, string-ref, write/display/format, equal? string-append
-       *       also substring as arg -- recognized at chooser time?
+       *       also substring as arg -- recognized at chooser time? (problem is s[len]=0)
        */
       if ((is_pair(cadr(expr))) &&
 	  (is_optimized(cadr(expr))) &&
@@ -31741,7 +31772,16 @@ static s7_pointer check_let(s7_scheme *sc)
 				  (is_h_safe_c_s(cadr(binding))))
 				{
 				  if (is_one_liner(cdr(sc->code)))
-				    car(ecdr(sc->code)) = sc->LET_R_P;
+				    {
+				      if (c_call(cadr(binding)) == g_read_char)
+					car(ecdr(sc->code)) = sc->LET_READ_CHAR_P;
+				      else 
+					{
+					  if (c_call(cadr(binding)) == g_car)
+					    car(ecdr(sc->code)) = sc->LET_CAR_P;
+					  else car(ecdr(sc->code)) = sc->LET_R_P;
+					}
+				    }
 				  else car(ecdr(sc->code)) = sc->LET_R;
 				  fcdr(sc->code) = cadr(cadr(binding));
 				}
@@ -31953,7 +31993,16 @@ static s7_pointer check_let_star(s7_scheme *sc)
 			      (is_h_safe_c_s(cadr(binding))))
 			    {
 			      if (is_one_liner(cdr(sc->code)))
-				car(ecdr(sc->code)) = sc->LET_R_P;
+				{
+				  if (c_call(cadr(binding)) == g_read_char)
+				    car(ecdr(sc->code)) = sc->LET_READ_CHAR_P;
+				  else 
+				    {
+				      if (c_call(cadr(binding)) == g_car)
+					car(ecdr(sc->code)) = sc->LET_CAR_P;
+				      else car(ecdr(sc->code)) = sc->LET_R_P;
+				    }
+				}
 			      else car(ecdr(sc->code)) = sc->LET_R;
 			      fcdr(sc->code) = cadr(cadr(binding));
 			    }
@@ -34333,8 +34382,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     * it's possible to preset the frame and its entry so that this allocation happens only
 	     *   once per for-each call, but then for-each is like do in that exported args are equivalenced.
 	     *   Since the savings isn't huge, I guess I'll go ahead and allocate every time.
-	     *
-	     * TODO: but can we re-use sc->args as the slot?
 	     */
 	    s7_pointer code;
 	    code = sc->code;
@@ -34995,61 +35042,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    since all these exprs are local, we don't need to jump until the body
        */
       {
-	s7_pointer y, vars;
-	/* get the init values, make a new frame, load up the slots.  We need a new list
-	 *    here in any case for the frame.
-	 */
-	sc->args = sc->NIL;
+	s7_pointer frame, vars, slot;
+	NEW_FRAME(sc, sc->envir, frame); /* new frame is not tied into the symbol lookup process yet */
 	for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
 	  {
-	    sc->args = cons(sc, init_dox_eval(sc, cadar(vars)), sc->args);
-	    ecdr(sc->args) = caar(vars);
+	    NEW_CELL_NO_CHECK(sc, slot);	
+	    slot_symbol(slot) = caar(vars);
+	    slot_value(slot) = init_dox_eval(sc, cadar(vars));
+	    slot_expression(slot) = cddar(vars);
+	    set_type(slot, T_SLOT | T_IMMUTABLE);
+	    next_slot(slot) = environment_slots(frame);
+	    environment_slots(frame) = slot;
 	  }
-	/* TODO: can this and pending_value be used elsewhere?
-	 */
-
-	NEW_FRAME(sc, sc->envir, sc->envir);
-	y = sc->args;
-	while (is_pair(y))
+	sc->envir = frame;
+	for (slot = environment_slots(frame); is_slot(slot); slot = next_slot(slot))
 	  {
-	    s7_pointer sym, args, val;
-
-	    sym = ecdr(y);
-	    val = car(y);
-	    args = cdr(y);
-
-	    slot_symbol(y) = sym;
-	    if (symbol_has_accessor(sym))
-	      slot_value(y) = call_symbol_bind(sc, sym, val); /* this might change sc->value */
-	    else slot_value(y) = val;
-	    set_type(y, T_SLOT | T_IMMUTABLE);
-	    next_slot(y) = environment_slots(sc->envir);
-	    environment_slots(sc->envir) = y;
-	    symbol_id(sym) = frame_id(sc->envir);
-	    local_slot(sym) = y;
-
-	    /* fprintf(stderr, "initial: %s\n", DISPLAY(y)); */
-	    y = args;
+	    symbol_id(slot_symbol(slot)) = frame_id(frame);    
+	    local_slot(slot_symbol(slot)) = slot;
 	  }
-	goto DOX_END;
       }
+      goto DOX_END;
 	
 
       case OP_DOX_STEP:
 	{
-	  s7_pointer vars, slot;
-	  for (vars = car(sc->code), slot = environment_slots(sc->envir); is_pair(vars); vars = cdr(vars), slot = next_slot(slot))
+	  s7_pointer slot;
+	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	    {
-	      if (is_pair(cddar(vars)))
-		{
-		  slot_pending_value(slot) = step_dox_eval(sc, caddar(vars));
-		  /* I don't think this needs GC protection -- everything here is safe, 
-		   *    but if it does, mark_slot almost never happens, compared to slot creation.
-		   */
-		  /* fprintf(stderr, "step %s -> %s %s from %s\n", DISPLAY(slot), DISPLAY(caar(vars)), DISPLAY(slot_pending_value(slot)), DISPLAY(caddar(vars))); */
-		}
+	      if (is_pair(slot_expression(slot)))
+		slot_pending_value(slot) = step_dox_eval(sc, car(slot_expression(slot)));
 	      else slot_pending_value(slot) = slot_value(slot);
-	      /* TODO: is this needed? if no increment expr, we could preset pending_value above */
 	    }
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	    slot_value(slot) = slot_pending_value(slot);
@@ -35070,6 +35092,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 
       
+	/* TODO: use slot_pending_value, slot_expression, not this extra list
+	 */
     #define DO_VAR_SLOT(P) ecdr(P)
     #define DO_VAR_NEW_VALUE(P) cdr(P)
     #define DO_VAR_STEP_EXPR(P) car(P)
@@ -35390,24 +35414,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       /* fall through */
 
-#if WITH_COUNTS && 0
-      if ((is_pair(sc->code)) &&
-	  (!is_null(cdr(sc->code))) &&
-	  (is_pair(car(sc->code))))
-	{
-	  s7_pointer p;
-	  counts[0]++;
-	  p = car(sc->code);
-	  if (typeflag(car(p)) == SYNTACTIC_TYPE)
-	    counts[syntax_opcode(car(p))]++;
-	  else
-	    {
-	      if (is_optimized(p))
-		counts[1000 + optimize_data(p)]++;
-	    }
-	}
-      else counts[1]++;
-#endif
       /* 1st statement of more than 1:
        * s7: [75467, 240203] OP_DEFINE_UNCHECKED: 18129 OP_SET_UNCHECKED: 6842 OP_SET_SYMBOL_P: 3125 OP_SAFE_IF_CC_P: 11265 OP_SAFE_IF1: 5325 h_safe_c_sss: 4400
        * lg: [828113, 286974] OP_IF_B_P: 173866 closure_ss: 105271 closure_all_s: 83812 OP_SAFE_IF_CC_P_P: 67182
@@ -41855,6 +41861,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = cadr(sc->code);
 	goto EVAL_PAIR;
       }
+
+    case OP_LET_CAR_P:
+      {
+	s7_pointer val;
+	val = finder(sc, fcdr(sc->code));
+	if (!is_pair(val)) 
+	  s7_wrong_type_arg_error(sc, "car", 0, val, "a pair");
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), car(val));
+	sc->code = cadr(sc->code);
+	goto EVAL_PAIR;
+      }
+
+    case OP_LET_READ_CHAR_P:
+      {
+	s7_pointer port;
+
+	port = finder(sc, fcdr(sc->code));
+	if (!is_input_port(port)) /* perhaps (read-char 123)? */
+	  s7_wrong_type_arg_error(sc, "read-char", 0, port, "an input port");
+
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), chars[port_read_character(port)(sc, port)]);
+	sc->code = cadr(sc->code);
+	goto EVAL_PAIR;
+      }
+
 
     case OP_LET_O:
       push_stack(sc, OP_LET_O1, caaar(sc->code), cdr(sc->code));
@@ -48964,7 +48995,9 @@ s7_scheme *s7_init(void)
   real(number(real_zero)) = (s7_Double)0.0;
 
   /* keep the characters out of the heap */
-  chars = (s7_pointer *)malloc(NUM_CHARS * sizeof(s7_pointer));
+  chars = (s7_pointer *)malloc((NUM_CHARS + 1) * sizeof(s7_pointer));
+  chars[0] = sc->EOF_OBJECT;
+  chars++;
   {
     s7_cell *cells;
     cells = (s7_cell *)calloc(NUM_CHARS, sizeof(s7_cell));
@@ -49103,6 +49136,8 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_IS_EOF_P_P =    assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_EOF_P_P);  
   sc->LET_R =                 assign_internal_syntax(sc, "let",     OP_LET_R);  
   sc->LET_R_P =               assign_internal_syntax(sc, "let",     OP_LET_R_P);  
+  sc->LET_CAR_P =             assign_internal_syntax(sc, "let",     OP_LET_CAR_P);  
+  sc->LET_READ_CHAR_P =       assign_internal_syntax(sc, "let",     OP_LET_READ_CHAR_P);  
   sc->LET_ALL_R =             assign_internal_syntax(sc, "let",     OP_LET_ALL_R);  
   sc->LET_O =                 assign_internal_syntax(sc, "let",     OP_LET_O);  
   sc->LET_O_P =               assign_internal_syntax(sc, "let",     OP_LET_O_P);  
@@ -49911,6 +49946,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 ->  1251
- * bench    52019 -> 12852
- * index    44300 ->  6564
+ * bench    52019 -> 12605
+ * index    44300 ->  6538
  */

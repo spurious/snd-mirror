@@ -11615,6 +11615,8 @@ time, so that the displayed results are
 (test (do ((i 0 j) (j 0 (+ j 1))) ((= j 3) i)) 2) ; uh, lessee... lexical scoping...
 (test (do ((i 1 j) (j 0 k) (k 0 m) (m 0 (+ i j k))) ((> m 10) (list i j k m))) (list 4 5 8 11))
 (test (let ((i 10) (j 11) (k 12)) (do ((i i j) (j j k) (k k m) (m (+ i j k) (+ i j k))) ((> m 100) (list i j k m)))) (list 33 56 78 122))
+(test (let ((x 0) (i 3)) (do ((i i (+ i 1))) ((= i 6)) (do ((i i (+ i 1))) ((= i 7)) (set! x (+ x i)))) x) 44)
+(test (let () (define (hi) (let ((x 0) (i 3)) (do ((i i (+ i 1))) ((= i 6)) (do ((i i (+ i 1))) ((= i 7)) (set! x (+ x i)))) x)) (hi)) 44)
 (test (do ((i 0 (let () (set! j 3) (+ i 1))) (j 0 (+ j 1))) ((= i 3) j)) 4)
 (test (let ((i 0)) (do () ((= i 3) (* i 2)) (set! i (+ i 1)))) 6)
 (num-test (do ((i 0 (- i 1))) ((= i -3) i)) -3)
