@@ -14797,7 +14797,7 @@ time, so that the displayed results are
 
 (test (letrec* ()) 'error)
 (test (letrec* ((x 1 x)) x) 'error)
-(test (letrec ((x (let () (set! y 1) y)) (y (let () (set! y (+ y 1)) y))) (list x y)) '(1 2)) ; !
+;(test (letrec ((x (let () (set! y 1) y)) (y (let () (set! y (+ y 1)) y))) (list x y)) '(1 2)) ; ! this depends on letrec binding order
 
 (test (letrec ((x 1) (y x)) (list x y)) '(1 #<undefined>)) ; guile says '(1 1)
 (test (letrec ((y x) (x 1)) (list x y)) '(1 #<undefined>)) ; guile says '(1 1)

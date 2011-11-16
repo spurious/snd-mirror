@@ -204,7 +204,7 @@
 
 
 
-#define DEBUGGING 1
+#define DEBUGGING 0
 #define PRINTING 0
 
 
@@ -519,7 +519,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_ALL_S, HOP_SAFE_CLOSURE_ALL_S, OP_SAFE_CLOSURE_ALL_C, HOP_SAFE_CLOSURE_ALL_C, OP_SAFE_CLOSURE_ALL_G, HOP_SAFE_CLOSURE_ALL_G, 
       
       OP_SAFE_C_opSAFE_CLOSURE_SSq, HOP_SAFE_C_opSAFE_CLOSURE_SSq, OP_SAFE_C_opSAFE_CLOSURE_opSq_Sq, HOP_SAFE_C_opSAFE_CLOSURE_opSq_Sq,
-      OP_SAFE_CLOSURE_S_1, HOP_SAFE_CLOSURE_S_1, OP_SAFE_CLOSURE_opCq, HOP_SAFE_CLOSURE_opCq, 
+      OP_SAFE_CLOSURE_opCq, HOP_SAFE_CLOSURE_opCq, 
       
       
       OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
@@ -608,7 +608,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_closure_all_s", "h_safe_closure_all_s", "safe_closure_all_c", "h_safe_closure_all_c", "safe_closure_all_g", "h_safe_closure_all_g", 
 
      "safe_c_opsafe_closure_ssq", "h_safe_c_opsafe_closure_ssq", "safe_c_opsafe_closure_opsq_sq", "h_safe_c_opsafe_closure_opsq_sq",
-     "safe_closure_s_1", "h_safe_closure_s_1", "safe_closure_opcq", "h_safe_closure_opcq", 
+     "safe_closure_opcq", "h_safe_closure_opcq", 
 
      "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s",
      "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
@@ -11068,7 +11068,7 @@ static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
       break;
 
     default:
-      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) <= y)));
+      return(s7_wrong_type_arg_error(sc, "<=", 1, car(args), "a number"));  
     }
   return(sc->T);
 }
@@ -11169,7 +11169,7 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
       break;
 
     default:
-      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) > y)));
+      return(s7_wrong_type_arg_error(sc, ">", 1, car(args), "a number"));  
     }
   return(sc->T);
 }
@@ -11360,7 +11360,7 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
       break;
 
     default:
-      return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) >= y)));
+      return(s7_wrong_type_arg_error(sc, ">=", 1, car(args), "a number"));  
     }
   return(sc->T);
 }
@@ -12904,6 +12904,8 @@ static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
 {
   /* tricky here because str[i] must be treated as unsigned
    *   (string<? (string (integer->char #xf0)) (string (integer->char #x70)))
+   * also null or lack thereof does not say anything about the string end
+   *   so we have to go by its length.
    */
   int i, len, len1, len2;
   char *str1, *str2;
@@ -13200,7 +13202,8 @@ static s7_pointer g_string_leq_2(s7_scheme *sc, s7_pointer args)
 
 static int scheme_strcasecmp(s7_pointer s1, s7_pointer s2)
 {
-  /* same as scheme_strcmp -- watch out for unwanted sign! */
+  /* same as scheme_strcmp -- watch out for unwanted sign! and lack of trailing null (length sets string end).
+   */
   int i, len, len1, len2;
   char *str1, *str2;
 
@@ -14012,28 +14015,44 @@ static s7_pointer file_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 {
   unsigned int i, port_len, port_start;
+  char *port_str;
 
   /* this string can be left uncopied if port_needs_free(port), then the sc->strings
    *   array checked when the port is closed, and any held strings copied.  But 
    *   even in a best case (make-index.scm), the savings is small.
+   *
+   * perhaps dont free port string until GC sweep, sweep strings ahead of ports, do the holder check just before free
+   *   but this fails because FFI code (snd-xen.c) assumes strings end in null.  This will mess up uncopied substring too...
    */
 
   port_len = port_string_length(port);
   port_start = port_string_point(port);
+  port_str = port_string(port);
 
   for (i = port_start; i < port_len; i++)
-    if (port_string(port)[i] == '\n')
+    if (port_str[i] == '\n')
       {
 	port_line_number(port)++;
 	port_string_point(port) = i + 1;
-	return(s7_make_terminated_string_with_length(sc, (char *)(port_string(port) + port_start), ((with_eol) ? i + 1 : i) - port_start));
+	return(s7_make_terminated_string_with_length(sc, (char *)(port_str + port_start), ((with_eol) ? i + 1 : i) - port_start));
       }
       
   port_string_point(port) = port_len;
   if (i == port_start)
     return(sc->EOF_OBJECT);
+
+#if 0
+  if (port_needs_free(port))
+    {
+      /* here and above like this, and don't free port string until GC */
+      s7_pointer result;
+      result = make_string_uncopied_with_length(sc, (char *)(port_str + port_start), i - port_start);
+      string_needs_free(result) = false;
+      return(result);
+    }
+#endif
   
-  return(s7_make_terminated_string_with_length(sc, (char *)(port_string(port) + port_start), i - port_start));
+  return(s7_make_terminated_string_with_length(sc, (char *)(port_str + port_start), i - port_start));
 }
 
 
@@ -14415,13 +14434,9 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
       break;
     }
   
-#if 0
-  orig_str[k] = endc;
-  if (*str != 0) port_string_point(pt)--;
-#else
   (*str) = endc;
   if (endc != 0) port_string_point(pt)--;
-#endif
+
   /* skipping the null has one minor consequence:
    *    (let ((str "(+ 1 2 3)")) (set! (str 2) #\null) (eval-string str)) ; "(+\x001 2 3)" -> 6
    *    (let ((str "(+ 1 2 3)")) (set! (str 3) #\null) (eval-string str)) ; "(+ \x00 2 3)" -> missing paren error
@@ -26071,10 +26086,6 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 }
 
 /* extending this to map made little difference */
-
-/* TODO: safe case here (make env direct), what about safe_closure_1_arg, similarly closure?
- */
-
 #endif
 
 
@@ -28454,8 +28465,10 @@ static s7_pointer string_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       if (s7_is_string(caddr(expr)))
 	return(string_less_s_ic);
       
-      /* TODO: extend this to other string comparisons, string-ref, write/display/format, equal? string-append
+      /* to extend this to other string comparisons, [string-ref], write/display/format, equal? [string-append]
        *       also substring as arg -- recognized at chooser time? (problem is s[len]=0)
+       *       so we can only do this if the caller ignores trailing chars (i.e. null is not end marker)
+       *       I think all s7-internal string ops are safe in this regard, but FFI code is not!
        */
       if ((is_pair(cadr(expr))) &&
 	  (is_optimized(cadr(expr))) &&
@@ -29327,11 +29340,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
 		      if (is_symbol(cadar(x)))
-			{
-			  if (is_one_liner(closure_body(func)))
-			    set_optimize_data(car(x), ((is_safe_closure(closure_body(func))) ? OP_SAFE_CLOSURE_S_1 : OP_CLOSURE_S));
-			  else set_optimize_data(car(x), ((is_safe_closure(closure_body(func))) ? OP_SAFE_CLOSURE_S : OP_CLOSURE_S));
-			}
+			set_optimize_data(car(x), ((is_safe_closure(closure_body(func))) ? OP_SAFE_CLOSURE_S : OP_CLOSURE_S));
 		      else set_optimize_data(car(x), ((is_safe_closure(closure_body(func))) ? OP_SAFE_CLOSURE_C : OP_CLOSURE_C));
 		      ecdr(car(x)) = func;
 		      return(false); 
@@ -33391,6 +33400,12 @@ static s7_pointer check_do(s7_scheme *sc)
 	body = cddr(sc->code);
 
 #if PRINTING
+	/* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
+	 *   in OP_DOTIMES, for example, if init value is not an integer, it goes to OP_SIMPLE_DO
+ 	 * remaining optimizable cases: we can step by 1 and use = for end, and yet simple_do(_p) calls the functions
+ 	 * geq happens as often as =, and -1 as step
+ 	 * also cdr as step to is_null as end
+	 */
 	if ((!is_pair(end)) || (!is_pair(car(end))) ||
 	    (!is_pair(vars)) ||
 	    (!is_null(cdr(vars))))
@@ -33492,6 +33507,9 @@ static s7_pointer check_do(s7_scheme *sc)
 			    car(ecdr(sc->code)) = sc->SIMPLE_DO_P;
 			  }
 
+			/* TODO: simple do but move the +1 checks up here
+			 */
+
 			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
 			  {
 			    if (is_p_case)
@@ -33504,7 +33522,9 @@ static s7_pointer check_do(s7_scheme *sc)
 				 ((s7_is_integer(cadr(step_expr))) &&
 				  (s7_integer(cadr(step_expr)) == 1))) &&
 				(c_function_class(ecdr(step_expr)) == add_class) &&
-				(c_function_class(ecdr(end)) == equal_class))
+				((c_function_class(ecdr(end)) == equal_class) ||
+				 (ecdr(end) == geq_2)))
+				  
 			      {
 				/* we're stepping by +1 and going to =
 				 *   the final integer check has to wait until run time (symbol value dependent)
@@ -33514,7 +33534,8 @@ static s7_pointer check_do(s7_scheme *sc)
 				/* PERHAPS: safe do with no need to jump?
 				 */
 				
-				if (!has_set) 
+				if ((!has_set) &&
+				    (c_function_class(ecdr(end)) == equal_class))
 				{
 				  car(ecdr(sc->code)) = sc->DOTIMES;
 
@@ -34801,7 +34822,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  end_val = finder(sc, end);
 	else end_val = end;
 
-	if (s7_integer(init_val) == s7_integer(end_val))
+	if ((s7_integer(init_val) == s7_integer(end_val)) ||
+	    ((s7_integer(init_val) > s7_integer(end_val)) &&
+	     (ecdr(car(cadr(sc->code))) == geq_2)))
 	  {
 	    sc->code = cdr(cadr(sc->code));
 	    goto BEGIN;
@@ -34824,7 +34847,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_Int step;
 	step = s7_integer(slot_value(car(sc->args))) + 1;
 	slot_set_value(car(sc->args), make_integer(sc, step));
-	if (step == s7_integer(slot_value(cdr(sc->args))))
+	if ((step == s7_integer(slot_value(cdr(sc->args)))) ||
+	    ((step > s7_integer(slot_value(cdr(sc->args)))) &&
+	     (ecdr(car(cadr(sc->code))) == geq_2)))	      
 	  {
 	    finalize_safe_do(sc);
 	    sc->code = cdr(cadr(sc->code));
@@ -35525,27 +35550,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   * but... we can't use ecdr reliably -- the saved pointer might be to an old version not GC'd etc.
 		   */
 		  
-		case OP_SAFE_CLOSURE_C:
-		  if (!function_is_ok(code))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_C;
-		      goto OPT_EVAL;
-		    }
-		  
-		case HOP_SAFE_CLOSURE_C:
-		  car(sc->T1_1) = cadr(code);
-		  goto SAFE_CLOSURE_ONE;
-		  
-		  
-		case OP_SAFE_CLOSURE_Q:
-		  if (!function_is_ok(code))
-		    break;
-		  
-		case HOP_SAFE_CLOSURE_Q:
-		  car(sc->T1_1) = cadr(cadr(code));
-		  goto SAFE_CLOSURE_ONE;
-		  
-		  
 		case OP_SAFE_CLOSURE_S:
 		  if (!function_is_ok(code))
 		    {
@@ -35555,32 +35559,48 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  
 		case HOP_SAFE_CLOSURE_S:
-		  car(sc->T1_1) = finder(sc, cadr(code));
-		  goto SAFE_CLOSURE_ONE;
-		  
-		  
-		case OP_SAFE_CLOSURE_S_1:
-		  if (!function_is_ok(code))
-		    {
-		      /* fprintf(stderr, "%d, %s: unknown_s\n", __LINE__, DISPLAY_80(code)); */
-		      optimize_data(code) = OP_UNKNOWN_S;
-		      goto OPT_EVAL;
-		    }
-		  
-		case HOP_SAFE_CLOSURE_S_1:
+		  /* since a tail call is safe, we can't change the current env's frame_id until
+		   *   after we do this lookup -- it might be the current func's arg, and we're
+		   *   about to call the same func.
+		   */
 		  {
 		    s7_pointer env, x;
 		    env = closure_environment(ecdr(code));
-		    frame_id(env) = ++frame_number;
 		    x = environment_slots(env);
 		    slot_value(x) = finder(sc, cadr(code));
+		    frame_id(env) = ++frame_number;
 		    symbol_id(slot_symbol(x)) = frame_number;
 		    local_slot(slot_symbol(x)) = x;
 		    sc->envir = env;
-		    sc->code = car(closure_body(ecdr(code)));
-		    sc->cur_code = sc->code;
-		    goto EVAL_PAIR;
+		    sc->code = closure_body(ecdr(code));
+		    if (is_one_liner(sc->code))
+		      {
+			sc->code = car(sc->code);
+			goto EVAL_PAIR;
+		      }
+		    goto BEGIN;
 		  }
+		  
+		  
+		case OP_SAFE_CLOSURE_C:
+		  if (!function_is_ok(code))
+		    {
+		      optimize_data(code) = OP_UNKNOWN_C;
+		      goto OPT_EVAL;
+		    }
+		  
+		case HOP_SAFE_CLOSURE_C:
+		  sc->value = cadr(code);
+		  goto SAFE_CLOSURE_ONE;
+		  
+		  
+		case OP_SAFE_CLOSURE_Q:
+		  if (!function_is_ok(code))
+		    break;
+		  
+		case HOP_SAFE_CLOSURE_Q:
+		  sc->value = cadr(cadr(code));
+		  goto SAFE_CLOSURE_ONE;
 		  
 		  
 		case OP_SAFE_CLOSURE_opCq:
@@ -35593,7 +35613,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		  
 		case HOP_SAFE_CLOSURE_opCq:
-		  car(sc->T1_1) = c_call(cadr(code))(sc, cdr(cadr(code)));
+		  sc->value = c_call(cadr(code))(sc, cdr(cadr(code)));
 		  goto SAFE_CLOSURE_ONE;
 
 
@@ -35608,21 +35628,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case HOP_SAFE_CLOSURE_opSq:
 		  car(sc->T1_1) = finder(sc, cadr(cadr(code)));
-		  car(sc->T1_1) = c_call(cadr(code))(sc, sc->T1_1);
+		  sc->value = c_call(cadr(code))(sc, sc->T1_1);
 		  /* goto SAFE_CLOSURE_ONE; */
 		  
 		  
 		SAFE_CLOSURE_ONE:
 		  {
 		    s7_pointer env, x;
-		    env = closure_environment(ecdr(sc->code));
+		    env = closure_environment(ecdr(code));
 		    frame_id(env) = ++frame_number;
 		    x = environment_slots(env);
-		    slot_value(x) = car(sc->T1_1);
+		    slot_value(x) = sc->value;
 		    symbol_id(slot_symbol(x)) = frame_number;
 		    local_slot(slot_symbol(x)) = x;
 		    sc->envir = env;
-		    sc->code = closure_body(ecdr(sc->code));
+		    sc->code = closure_body(ecdr(code));
 		    goto BEGIN;
 		  }
 
@@ -35915,7 +35935,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  
 		case HOP_CLOSURE_C:
-		  car(sc->T1_1) = cadr(code);
+		  sc->value = cadr(code);
 		  goto UNSAFE_CLOSURE_ONE;
 		  
 
@@ -35924,9 +35944,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		  
 		case HOP_CLOSURE_Q:
-		  car(sc->T1_1) = cadr(cadr(code));
+		  sc->value = cadr(cadr(code));
 		  goto UNSAFE_CLOSURE_ONE;
 		  
+
+		case OP_CLOSURE_opCq:
+		  if (!function_is_ok(code))
+		    {
+		      optimize_data(code) = OP_UNKNOWN_opCq;
+		      goto OPT_EVAL;
+		    }
+		  if (!indirect_c_function_is_ok(sc, cadr(code)))
+		    break;
+		  
+		case HOP_CLOSURE_opCq:
+		  sc->value = c_call(cadr(code))(sc, cdr(cadr(code)));
+		  goto UNSAFE_CLOSURE_ONE;
+		  
+
+		case OP_CLOSURE_opSq:
+		  if (!function_is_ok(code))
+		    {
+		      optimize_data(code) = OP_UNKNOWN_opSq;
+		      goto OPT_EVAL;
+		    }
+		  if (!indirect_c_function_is_ok(sc, cadr(code)))
+		    break;
+		  
+		case HOP_CLOSURE_opSq:
+		  car(sc->T1_1) = finder(sc, cadr(cadr(code)));
+		  sc->value = c_call(cadr(code))(sc, sc->T1_1);
+		  goto UNSAFE_CLOSURE_ONE;
+		  
+
 
 		case OP_CLOSURE_S:
 		  if (!function_is_ok(code))
@@ -35936,12 +35986,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 
 		case HOP_CLOSURE_S:
-		  car(sc->T1_1) = finder(sc, cadr(code));
+		  sc->value = finder(sc, cadr(code));
 		  /* goto UNSAFE_CLOSURE_ONE; */
 		  
 		UNSAFE_CLOSURE_ONE:
 		  {
-		    s7_pointer frame, slot, args, sym, val, rest;
+		    s7_pointer frame, slot, args, sym, rest;
 		    
 		    if (sc->stack_end >= sc->stack_resize_trigger)
 		      increase_stack_size(sc);
@@ -35951,13 +36001,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_pair(args))
 		      {
 			sym = car(args);
-			val = car(sc->T1_1);
 			rest = cdr(args);
 		      }
 		    else
 		      {
 			sym = args;
-			val = list_1(sc, car(sc->T1_1));
+			sc->value = list_1(sc, sc->value);
 			rest = sc->NIL;
 		      }
 		    
@@ -35972,8 +36021,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    symbol_id(sym) = frame_number;	
 		    local_slot(sym) = slot;
 		    if (symbol_has_accessor(sym))
-		      slot_value(slot) = call_symbol_bind(sc, sym, val);
-		    else slot_value(slot) = val;
+		      slot_value(slot) = call_symbol_bind(sc, sym, sc->value);
+		    else slot_value(slot) = sc->value;
 		    set_type(slot, T_SLOT | T_IMMUTABLE);
 		    next_slot(slot) = sc->NIL;
 		    environment_slots(frame) = slot;
@@ -36307,35 +36356,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto UNSAFE_CLOSURE;
 		  }
 
-
-		case OP_CLOSURE_opCq:
-		  if (!function_is_ok(code))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_opCq;
-		      goto OPT_EVAL;
-		    }
-		  if (!indirect_c_function_is_ok(sc, cadr(code)))
-		    break;
-		  
-		case HOP_CLOSURE_opCq:
-		  car(sc->T1_1) = c_call(cadr(code))(sc, cdr(cadr(code)));
-		  goto UNSAFE_CLOSURE_ONE;
-		  
-
-		case OP_CLOSURE_opSq:
-		  if (!function_is_ok(code))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_opSq;
-		      goto OPT_EVAL;
-		    }
-		  if (!indirect_c_function_is_ok(sc, cadr(code)))
-		    break;
-		  
-		case HOP_CLOSURE_opSq:
-		  car(sc->T1_1) = finder(sc, cadr(cadr(code)));
-		  car(sc->T1_1) = c_call(cadr(code))(sc, sc->T1_1);
-		  goto UNSAFE_CLOSURE_ONE;
-		  
 
 		case OP_CLOSURE_opSq_S:
 		  if (!function_is_ok(code))
@@ -41984,8 +42004,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if ((index < string_length(val)) &&
 		    (index >= 0))
 		  {
-		    sc->value = s7_make_character(sc, ((unsigned char *)string_value(val))[index]);
-		    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), sc->value);
+		    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), chars[(unsigned char)(string_value(val)[index])]);
 		    sc->code = cadr(sc->code);
 		    goto EVAL_PAIR;
 		  }
@@ -42421,50 +42440,46 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * which means that (letrec ((x x)) x) is not an error!
        */
       sc->envir = new_frame_in_env(sc, sc->envir); 
-      sc->args = sc->NIL;
-      sc->value = sc->code;
-      sc->code = car(sc->code);
-
-      {
-	s7_pointer x;
-	for (x = sc->code; is_not_null(x); x = cdr(x))
-	  add_slot(sc, caar(x), sc->UNDEFINED);
-      }
-
-      
-      /* SOMEDAY: the cons here is unnecessary -- this could use slot_pending_value instead
-       */
-    case OP_LETREC1:    /* letrec -- calculate parameters */
-      sc->args = cons(sc, sc->value, sc->args);
-      if (is_pair(sc->code)) 
-	{ 
-	  push_stack(sc, OP_LETREC1, sc->args, cdr(sc->code));
-	  sc->code = cadar(sc->code);
+      if (is_pair(car(sc->code)))
+	{
+	  s7_pointer x;
+	  for (x = car(sc->code); is_not_null(x); x = cdr(x))
+	    {
+	      s7_pointer slot;
+	      slot = add_slot(sc, caar(x), sc->UNDEFINED);
+	      slot_pending_value(slot) = sc->UNDEFINED;
+	      slot_expression(slot) = cadar(x);
+	    }
+	  sc->args = environment_slots(sc->envir);
+	  push_stack(sc, OP_LETREC1, sc->args, sc->code);
+	  sc->code = slot_expression(sc->args);
 	  goto EVAL;
-	} 
-      sc->args = safe_reverse_in_place(sc, sc->args); 
-      sc->code = car(sc->args);
-      sc->args = cdr(sc->args);
-      
-      {
-	s7_pointer x, y;
-	for (x = car(sc->code), y = sc->args; is_not_null(y); x = cdr(x), y = cdr(y))
-	  {
-	    s7_pointer slot;
-	    slot = find_local_symbol(sc, sc->envir, caar(x));
-	    /* local_slot is not safe here: (letrec ((x 1) (y (let ((x 2)) x))) ...)
-	     */
-	    if (symbol_has_accessor(slot_symbol(slot)))
-	      slot_set_value(slot, call_symbol_bind(sc, slot_symbol(slot), car(y)));
-	    else slot_set_value(slot, car(y));
+	}
+      sc->code = cdr(sc->code);
+      goto BEGIN;
 
-	    typeflag(y) = 0;                          /* this was allocated above in the cons, so we can release it now */
-	    (*(sc->free_heap_top++)) = y;
-	  }
-	sc->args = sc->NIL; /* probably unnecessary */
-	sc->code = cdr(sc->code);
-	goto BEGIN;
-      }
+    case OP_LETREC1:
+      slot_pending_value(sc->args) = sc->value;
+      sc->args = next_slot(sc->args);
+      if (is_slot(sc->args))
+	{
+	  push_stack(sc, OP_LETREC1, sc->args, sc->code);
+	  sc->code = slot_expression(sc->args);
+	  goto EVAL;
+	}
+      else
+	{
+	  s7_pointer slot;
+	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
+	    {
+	      if (symbol_has_accessor(slot_symbol(slot)))
+		slot_set_value(slot, call_symbol_bind(sc, slot_symbol(slot), slot_pending_value(slot)));
+	      else slot_set_value(slot, slot_pending_value(slot));
+	    }
+	  sc->code = cdr(sc->code);
+	  goto BEGIN;
+	}
+
       
 
       /* -------------------------------- COND -------------------------------- */      
@@ -49946,6 +49961,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 ->  1251
- * bench    52019 -> 12605
- * index    44300 ->  6538
+ * bench    52019 -> 12473
+ * index    44300 ->  6532
  */
