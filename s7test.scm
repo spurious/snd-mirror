@@ -13632,6 +13632,7 @@ time, so that the displayed results are
 (test (let () (define (hi a) (log (values 1 2) a)) (hi 2)) 'error)
 (test (let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values b a))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2)) 'error)
 (test (let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values b))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2)) 8)
+(test (let () (define (hi) (+ (values 1 2) (values 3 4))) (hi)) 10)
 
 (test (let ((str "hi")) (string-set! (values str 0 #\x)) str) "xi")
 (test (values if) if)

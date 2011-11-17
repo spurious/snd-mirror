@@ -686,7 +686,7 @@ static void init_counts(void) {int i;for (i=0;i<65000;i++) counts[i]=0;}
 static void report_counts(void) 
 {
   int i;
-  for (i=0;i<65000;i++) if (counts[i]>0) fprintf(stderr, "%s: %d\n", (i >= 1000) ? opt_names[i - 1000] : real_op_names[i], counts[i]);
+  for (i=0;i<65000;i++) if (counts[i]>0) fprintf(stderr, "%d: %d\n", i, counts[i]);
 }
 #endif
 
@@ -1158,13 +1158,6 @@ struct s7_scheme {
  *    on only for a very short time.
  */
 
-#define T_PENDING_REMOVAL             (1 << (TYPE_BITS + 9))
-#define is_pending_removal(p)         ((typeflag(p) & T_PENDING_REMOVAL) != 0)
-#define set_pending_removal(p)        typeflag(p) |= T_PENDING_REMOVAL
-#define clear_pending_removal(p)      typeflag(p) &= ~(T_PENDING_REMOVAL)
-/* this bit is for circle checks during removal of a global function from the heap
- */
-
 #define T_KEYWORD                     (1 << (TYPE_BITS + 10))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
@@ -1254,7 +1247,7 @@ struct s7_scheme {
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x40000000
+#define UNUSED_BITS                   0x40020000
 
 #define set_type(p, f)                typeflag(p) = f
 
@@ -2786,84 +2779,45 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 
   /* (catch #t (lambda () (set! *safety* "hi")) (lambda args args)) */
 
-  if (is_pending_removal(x)) return;
-  set_pending_removal(x);
-
-  /* the procedure body being removed can be circular, so we need this bit to warn us
-   *   that we've already seen this node.  We have to go out to the leaves and remove
-   *   nodes in reverse order because the GC might be called while we're at it.  The
-   *   top node is globally accessible, so the GC will not move anything if we work
-   *   backwards.  But working backwards means we have to watch out for circles explicitly.
-   *   The bit is unset later since the caller might change a removed procedure's body
-   *   directly, and we want the subsequent redefinition to see anything new in the
-   *   otherwise removed nodes. 
-   */
-
+  loc = x->hloc; /* punned to syntax_opcode... is this necessary? */
+  if (loc == NOT_IN_HEAP) return;
+  
   switch (type(x))
     {
     case T_PAIR:
+      x->hloc = NOT_IN_HEAP;
+      sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
+      (*sc->free_heap_top++) = sc->heap[loc];
+      sc->heap[loc]->hloc = loc;
+
       s7_remove_from_heap(sc, car(x));
       s7_remove_from_heap(sc, cdr(x));
-      break;
-
-    case T_UNTYPED:
-    case T_NIL:
-    case T_BOOLEAN:
-      return;
-      /* not break! */
-
-    case T_STRING:
-    case T_NUMBER:
-    case T_CHARACTER:
-    case T_C_OBJECT:
-    case T_C_OPT_ARGS_FUNCTION:
-    case T_C_RST_ARGS_FUNCTION:
-    case T_C_LST_ARGS_FUNCTION:
-    case T_C_ANY_ARGS_FUNCTION:
-    case T_C_FUNCTION:
-    case T_C_MACRO:
-    case T_C_POINTER:
-    case T_HOOK:
-    case T_COUNTER:
-    case T_SLOT:
-    case T_ENVIRONMENT:
-      break;
-
-    case T_SYMBOL:
-    case T_SYNTAX:
-      /* here hloc is usually NOT_IN_HEAP, but in the syntax case can be the syntax op code */
-      clear_pending_removal(x);
       return;
 
-    case T_CLOSURE:
-    case T_CLOSURE_STAR:
-    case T_MACRO:
-    case T_BACRO:
-      s7_remove_from_heap(sc, closure_args(x));
-      s7_remove_from_heap(sc, closure_body(x));
-      break;
-
-      /* not sure any of these can exist as code-level constants */
-    case T_CONTINUATION:
-    case T_GOTO:
-    case T_INPUT_PORT:
-    case T_OUTPUT_PORT:
-    case T_CATCH:
-    case T_DYNAMIC_WIND:
-      break;
 
     case T_HASH_TABLE:
       {
 	s7_Int i;
+	x->hloc = NOT_IN_HEAP;
+	sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
+	(*sc->free_heap_top++) = sc->heap[loc];
+	sc->heap[loc]->hloc = loc;
+
 	for (i = 0; i < hash_table_length(x); i++)
 	  if (is_not_null(hash_table_elements(x)[i]))
 	    s7_remove_from_heap(sc, hash_table_elements(x)[i]);
       }
-      break;
+      return;
 
     case T_VECTOR:
       {
 	s7_Int i;
+	/* this actually can happen! */
+	x->hloc = NOT_IN_HEAP;
+	sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
+	(*sc->free_heap_top++) = sc->heap[loc];
+	sc->heap[loc]->hloc = loc;
+
 	if ((!vector_is_multidimensional(x)) ||
 	    (shared_vector(x) == sc->F))
 	  {
@@ -2871,18 +2825,35 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	      s7_remove_from_heap(sc, vector_element(x, i));
 	  }
       }
-      break;
-    }
+      return;
 
-  clear_pending_removal(x);
-  loc = x->hloc;
-  if (loc != NOT_IN_HEAP)
-    {
+    case T_SYMBOL:
+    case T_SYNTAX:
+      /* here hloc is usually NOT_IN_HEAP, but in the syntax case can be the syntax op code.
+       */
+      return;
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_MACRO:
+    case T_BACRO:
       x->hloc = NOT_IN_HEAP;
       sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
       (*sc->free_heap_top++) = sc->heap[loc];
       sc->heap[loc]->hloc = loc;
+
+      s7_remove_from_heap(sc, closure_args(x));
+      s7_remove_from_heap(sc, closure_body(x));
+      return;
+
+    default:
+      break;
     }
+
+  x->hloc = NOT_IN_HEAP;
+  sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
+  (*sc->free_heap_top++) = sc->heap[loc];
+  sc->heap[loc]->hloc = loc;
 }
 
 
@@ -15522,7 +15493,7 @@ static char *describe_type_bits(s7_pointer obj)
    */
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(obj),
 	   typeflag(obj),
@@ -15547,7 +15518,6 @@ static char *describe_type_bits(s7_pointer obj)
 	   is_one_liner(obj) ?          " one-liner" : "",
 	   is_simple(obj) ?             " simple" : "",
 	   needs_copied_args(obj) ?     " copy-args" : "",
-	   is_pending_removal(obj) ?    " removed" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
   return(buf);
 }
@@ -24304,7 +24274,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   if (arg_n > 0)
     {
       list_set(sc, sc->WRONG_TYPE_ARG_INFO, 1, make_protected_string(sc, caller));
-      list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, (arg_n < NUM_SMALL_INTS) ? small_int(arg_n) : make_integer(sc, arg_n));
+      list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, make_integer(sc, arg_n));
       list_set(sc, sc->WRONG_TYPE_ARG_INFO, 3, arg);
       list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, (is_vowel(type_name(arg))) ? "n" : ""));
       list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, type_name(arg)));
@@ -24332,7 +24302,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   if (arg_n > 0)
     {
       list_set(sc, sc->OUT_OF_RANGE_INFO, 1, make_protected_string(sc, caller));
-      list_set(sc, sc->OUT_OF_RANGE_INFO, 2, (arg_n < NUM_SMALL_INTS) ? small_int(arg_n) : make_integer(sc, arg_n));
+      list_set(sc, sc->OUT_OF_RANGE_INFO, 2, make_integer(sc, arg_n));
       list_set(sc, sc->OUT_OF_RANGE_INFO, 3, arg);
       list_set(sc, sc->OUT_OF_RANGE_INFO, 4, make_protected_string(sc, descr));
       return(s7_error(sc, sc->OUT_OF_RANGE, sc->OUT_OF_RANGE_INFO));
@@ -29542,10 +29512,14 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		}
 	    }
 	  /* -- left now are unsafe callers -- arg might be a symbol or constant or quoted thing -- should these be optimized?
-
+	   * (list (list sym #f #f)) (quot (car (car args))) (1- (1- x)) (list (cons x y)) (list (list this-node))
+	   * closure*: (fill-in score)
+	   * unknown arg: (alphanumeric? (line (+ i 1)))
+	   */
+	  /*
 	  if (!is_optimized(car(x)))
 	    fprintf(stderr, "1 case: %s\n", DISPLAY_80(car(x)));
-	   */
+	  */
 	  break; 
 
 
@@ -30028,6 +30002,12 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	  
 	  /*
 	    also g_member/assoc with safe closure 3rd arg is safe
+	    closure* all arg choices (CS SS SOX in index)
+	    (fneq (car b) (vct-ref a i))
+	    SP case in all: (try-peval example1 (list ...))
+	    QS case: (reduce-global '+ const), SQ case: (gen-type boolean-con '())
+	    unopt arg cases: (memq (const-value (cadr exp)) '(#f ()))
+	    set-car! and set-cdr!?  (set-cdr! (cdr elem) info)
 	  */
 	  /*
 	  if (!is_optimized(car(x)))
@@ -30324,6 +30304,10 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 #endif
 	  
+	  /* closure*: (checked-substring dline 0 epos)
+	   * (safe-)closure(?): (matrix-ref a mm (vector-ref l1 k))  (matrix-ref a (+ i 1) 0) (href harr (+ x 3) (+ y 1))
+	   * unsafe: (list 'implies (- n 1) n)
+	   */
 	  /*
 	  if (!is_optimized(car(x)))
 	    fprintf(stderr, "3 case: %s\n", DISPLAY_80(car(x)));
@@ -30445,6 +30429,12 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		  set_c_function(car(x), new_func);
 		}
 	    }
+
+	  /* closure*: (offset-channel off beg dur index chn)
+	   * closure with opt args: (lint-walk-body name line-number head (cddr form) (append vars env))
+	   * why this: (apply format #t (string-append "  ~A (line ~D): " str "~%") name line args)
+	   * why this: (+ -1 b g (- (* a g))) (* 0.5 index (- r r1) (+ one (cos modphase)))
+	   */
 	  /*
 	  if (!is_optimized(car(x)))
 	    fprintf(stderr, "%d case: %s\n", s7_list_length(sc, cdar(x)), DISPLAY_80(car(x)));
@@ -31381,6 +31371,8 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x)
 	  ((is_unsafe(x)) &&
 	   (!is_hop_safe_closure(x))))
 	{
+	  /* PERHAPS: can we flag tail-calls in unsafe closures, then handle the call later via env reuse?
+	   */
 	  if (car(x) == func) /* try to catch safe tail recursive call */
 	    {
 	      s7_pointer p;
@@ -41867,7 +41859,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    goto START;
 	  }
-	sc->value = c_call(sc->code)(sc, safe_reverse_in_place(sc, cons(sc, sc->value, p)));
+	
+	/* (define (hi) (+ (values 1 2) (values 3 4)))
+	 *
+	 * c_call(sc->code) here refers to the fcdr field which is g_add_2, but we have any number of args from a values call
+	 *   the original (unoptimized) function is not directly accessible: ecdr is the holder of sc->code,
+	 *   its type is T_C_FUNCTION, so ecdr(sc->code).object.ffptr points to the g_add_2 function data,
+	 *   which is not helpful (the class doesn't give us a backpointer).  car(sc->code) is a symbol, its
+	 *   local|global_slot points to a slot, slot_value(local_slot(car(sc-code))) is our original function?!?!
+	 *   so we want c_function_call(slot_value(local_slot(car(sc->code)))), I guess.  Surely this could be simpler.
+	 *   And safer -- what if someone defines + at top-level after using it in this case?  Perhaps add orig_func
+	 *   field to ffptr info, then c_original_function_call(sc->code)(...).
+	 */
+
+	sc->value = c_function_call(slot_value(global_slot(car(sc->code))))(sc, safe_reverse_in_place(sc, cons(sc, sc->value, p)));
 	goto START;
       }
 #endif
@@ -48922,51 +48927,65 @@ s7_scheme *s7_init(void)
   set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   frame_id(sc->NIL) = -1;
+  sc->NIL->hloc = NOT_IN_HEAP;
   
   set_type(sc->GC_NIL, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->GC_NIL) = cdr(sc->GC_NIL) = sc->UNSPECIFIED;
+  sc->GC_NIL->hloc = NOT_IN_HEAP;
   
   set_type(sc->T, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
+  sc->T->hloc = NOT_IN_HEAP;
   
   set_type(sc->F, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
+  sc->F->hloc = NOT_IN_HEAP;
   
   set_type(sc->EOF_OBJECT, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
-  
+  sc->EOF_OBJECT->hloc = NOT_IN_HEAP;  
+
   set_type(sc->UNSPECIFIED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
+  sc->UNSPECIFIED->hloc = NOT_IN_HEAP;
   
   set_type(sc->UNDEFINED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
+  sc->UNDEFINED->hloc = NOT_IN_HEAP;
   
   set_type(sc->NO_VALUE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->NO_VALUE) = cdr(sc->NO_VALUE) = sc->UNSPECIFIED;
+  sc->NO_VALUE->hloc = NOT_IN_HEAP;
 
   set_type(sc->ELSE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
   car(sc->ELSE) = cdr(sc->ELSE) = sc->UNSPECIFIED;
+  sc->ELSE->hloc = NOT_IN_HEAP;
   /* "else" is added to the global environment below -- can't do it here
    *    because the symbol table and environment don't exist yet.
    */
 
   set_type(sc->TEMP_CELL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   cdr(sc->TEMP_CELL) = sc->NIL;
+  sc->TEMP_CELL->hloc = NOT_IN_HEAP;
 
   set_type(sc->TEMP_CELL_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->TEMP_CELL_1) = cdr(sc->TEMP_CELL_1) = sc->NIL;
   car(sc->TEMP_CELL) = sc->TEMP_CELL_1;
+  sc->TEMP_CELL_1->hloc = NOT_IN_HEAP;
   
   set_type(sc->TEMP_CELL_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->TEMP_CELL_2) = cdr(sc->TEMP_CELL_2) = sc->NIL;
+  sc->TEMP_CELL_2->hloc = NOT_IN_HEAP;
 
   set_type(sc->TEMP_CELL_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->TEMP_CELL_3) = cdr(sc->TEMP_CELL_3) = sc->NIL;
+  sc->TEMP_CELL_3->hloc = NOT_IN_HEAP;
 
   sc->T1_1 = &sc->_T1_1;
   set_type(sc->T1_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T1_1) = sc->NIL;
   cdr(sc->T1_1) = sc->NIL;
+  sc->T1_1->hloc = NOT_IN_HEAP;
 
   sc->T2_1 = &sc->_T2_1;
   sc->T2_2 = &sc->_T2_2;
@@ -48974,9 +48993,11 @@ s7_scheme *s7_init(void)
   set_type(sc->T2_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T2_1) = sc->NIL;
   cdr(sc->T2_1) = sc->T2_2;
+  sc->T2_1->hloc = NOT_IN_HEAP;
   set_type(sc->T2_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T2_2) = sc->NIL;
   cdr(sc->T2_2) = sc->NIL;
+  sc->T2_2->hloc = NOT_IN_HEAP;
 
   sc->T3_1 = &sc->_T3_1;
   sc->T3_2 = &sc->_T3_2;
@@ -48985,12 +49006,15 @@ s7_scheme *s7_init(void)
   set_type(sc->T3_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T3_1) = sc->NIL;
   cdr(sc->T3_1) = sc->T3_2;
+  sc->T3_1->hloc = NOT_IN_HEAP;
   set_type(sc->T3_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T3_2) = sc->NIL;
   cdr(sc->T3_2) = sc->T3_3;
+  sc->T3_2->hloc = NOT_IN_HEAP;
   set_type(sc->T3_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T3_3) = sc->NIL;
   cdr(sc->T3_3) = sc->NIL;
+  sc->T3_3->hloc = NOT_IN_HEAP;
 
   sc->input_port_stack = sc->NIL;
   sc->code = sc->NIL;
@@ -50073,5 +50097,5 @@ the error type and the info passed to the error handler.");
  *
  * lint     13424 ->  1247
  * bench    52019 -> 12235
- * index    44300 ->  6527
+ * index    44300 ->  6512
  */
