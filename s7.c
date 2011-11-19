@@ -523,7 +523,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, OP_CLOSURE_ALL_C, HOP_CLOSURE_ALL_C, OP_CLOSURE_ALL_G, HOP_CLOSURE_ALL_G, 
       OP_CLOSURE_CDR_S, HOP_CLOSURE_CDR_S, 
 
-      OP_TCLOSURE_opSq_S, HOP_TCLOSURE_opSq_S,
+      OP_TCLOSURE_S, HOP_TCLOSURE_S, OP_TCLOSURE_opSq_S, HOP_TCLOSURE_opSq_S,
       
       OP_SAFE_THUNK, HOP_SAFE_THUNK,
       OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_Q, HOP_SAFE_CLOSURE_Q, 
@@ -615,7 +615,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "closure_all_s", "h_closure_all_s", "closure_all_c", "h_closure_all_c", "closure_all_g", "h_closure_all_g",
      "closure_cdr_s", "h_closure_cdr_s",
 
-     "tclosure_opsq_s", "h_tclosure_opsq_s", 
+     "tclosure_s", "h_tclosure_s", "tclosure_opsq_s", "h_tclosure_opsq_s", 
 
      "safe_thunk", "h_safe_thunk",
      "safe_closure_s", "h_safe_closure_s", "safe_closure_c", "h_safe_closure_c", "safe_closure_q", "h_safe_closure_q", 
@@ -22062,8 +22062,8 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 	     (safe_list_length(sc, closure_args(x)) == args));
 
     case T_CLOSURE_STAR:
-      return((is_symbol(closure_args(x))) ||
-	     (safe_list_length(sc, closure_args(x)) >= args));
+    return((is_symbol(closure_args(x))) ||
+	   (safe_list_length(sc, closure_args(x)) >= args));
 
     case T_C_OBJECT:
       if (object_type(x) == pws_tag)
@@ -31316,7 +31316,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	      break;
 	      
 	    case OP_LET:
-	      if (is_symbol(cadr(x))) /* TODO: check for tail calls here? */
+	      if (is_symbol(cadr(x)))
 		{
 		  s7_pointer p;
 		  for (p = cdddr(x); is_not_null(cdr(p)); p = cdr(p));
@@ -31438,7 +31438,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		if ((is_pair(car(p))) &&
 		    (!is_optimized(car(p))))
 		  return(false);
-	      
+
 	      if ((at_end) && (is_null(p)))
 		{
 		  /* we still miss a few cases, and need more unknown optimizations, or set them here
@@ -31452,9 +31452,8 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 			  UNBOLD_TEXT);
 		  */
 		  set_tail_call(x);
+		  return(true);
 		}
-
-	      return(is_null(p));
 	    }
 	  
 	  if ((is_symbol(car(x))) &&
@@ -36102,6 +36101,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto UNSAFE_CLOSURE_ONE;
 		  
 
+
 		case OP_CLOSURE_CDR_S:
 		  if (!function_is_ok(code))
 		    {
@@ -36501,77 +36501,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 
-		  /* (define (hi a b) (eval '(+ 1 2)) (if (null? a) b (hi (cdr a) b))) 
-		   * (hi '(1 2) 321)
-		   */
-		case OP_TCLOSURE_opSq_S:
-		  if (!function_is_ok(code))
-		    {
-		      optimize_data(code) = OP_UNKNOWN_opSq_S;
-		      goto OPT_EVAL;
-		    }
-		  if (!indirect_c_function_is_ok(sc, cadr(code)))
-		    break;
-		  
-		case HOP_TCLOSURE_opSq_S:
-		  {
-		    s7_pointer args, slot;
-		    car(sc->T2_2) = finder(sc, fcdr(code));
-		    args = cadr(code);
-		    car(sc->T1_1) = finder(sc, cadr(args));
-		    car(sc->T2_1) = c_call(args)(sc, sc->T1_1);
-
-		    /* call without new frame */
-
-		    sc->code = ecdr(sc->code);
-		    while (next_environment(sc->envir) != closure_environment(sc->code))
-		      sc->envir = next_environment(sc->envir);
-
-		    args = closure_args(sc->code);
-		    slot = environment_slots(sc->envir);
-		    fprintf(stderr, "args: %s, slot: %s %s\n", DISPLAY(args), DISPLAY(slot), DISPLAY(next_slot(slot)));
-		    abort();
-
-		    if (is_pair(args))
-		      {
-			bool reversed;
-			reversed = (slot_symbol(slot) != car(args));
-
-			slot_value(slot) = car((reversed) ? sc->T2_2 : sc->T2_1);
-			fprintf(stderr, "%s\n", DISPLAY(slot));
-
-			slot = next_slot(slot);
-			args = cdr(args);
-			if (is_pair(args))
-			  slot_value(slot) = car((reversed) ? sc->T2_1 : sc->T2_2);
-			else slot_value(slot) = list_1(sc, car((reversed) ? sc->T2_1: sc->T2_2));
-			fprintf(stderr, "%s\n", DISPLAY(slot));
-
-			args = cdr(args);
-			if (!is_null(args))
-			  {
-			    slot = next_slot(slot);
-			    slot_value(slot) = sc->NIL;
-			  }
-		      }
-		    else 
-		      {
-			slot_value(slot) = list_2(sc, car(sc->T2_1), car(sc->T2_2));
-		      }
-		    next_slot(slot) = sc->NIL;
-		    
-		    sc->code = closure_body(sc->code);
-		    if (is_one_liner(sc->code))
-		      {
-			sc->code = car(sc->code);
-			sc->cur_code = sc->code;
-			goto EVAL_PAIR;
-		      }
-		    goto BEGIN;
-
-		  }
-
-
 		case OP_CLOSURE_opSq_S:
 		  if (!function_is_ok(code))
 		    {
@@ -36612,6 +36541,146 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 
+		  /* -------------------------------------------------------------------------------- */
+		case OP_TCLOSURE_S:
+		  if (!function_is_ok(code))
+		    {
+		      optimize_data(code) = OP_UNKNOWN_S;
+		      goto OPT_EVAL;
+		    }
+
+		case HOP_TCLOSURE_S:
+		  sc->value = finder(sc, cadr(code));
+		  goto TCLOSURE_ONE;
+
+
+		TCLOSURE_ONE:
+		  {
+		    s7_pointer args, slot;
+		    sc->code = ecdr(sc->code);
+		    while (next_environment(sc->envir) != closure_environment(sc->code))
+		      sc->envir = next_environment(sc->envir);
+
+		    args = closure_args(sc->code);
+		    slot = environment_slots(sc->envir);
+
+		    if (is_pair(args))
+		      {
+			slot_value(slot) = sc->value;
+			args = cdr(args);
+			if (!is_null(args))
+			  {
+			    slot = next_slot(slot);
+			    slot_value(slot) = sc->NIL;
+			  }
+		      }
+		    else 
+		      {
+			slot_value(slot) = list_1(sc, sc->value);
+		      }
+		    next_slot(slot) = sc->NIL;
+		    
+		    sc->code = closure_body(sc->code);
+		    if (is_one_liner(sc->code))
+		      {
+			sc->code = car(sc->code);
+			sc->cur_code = sc->code;
+			goto EVAL_PAIR;
+		      }
+		    goto BEGIN;
+		  }
+
+		  /* (define (hi a b) (eval '(+ 1 2)) (if (null? a) b (hi (cdr a) b))) 
+		   * (hi '(1 2) 321)
+		   *
+		   * (define (n1) (let hi ((a '(1 2)) (b 321)) (eval '(+ 1 2)) (if (null? a) b (hi (cdr a) b))))
+		   * (n1)
+		   */
+		case OP_TCLOSURE_opSq_S:
+		  if (!function_is_ok(code))
+		    {
+		      optimize_data(code) = OP_UNKNOWN_opSq_S;
+		      /* fprintf(stderr, "%s unknown\n", DISPLAY(code)); */
+		      goto OPT_EVAL;
+		    }
+		  if (!indirect_c_function_is_ok(sc, cadr(code)))
+		    break;
+		  
+		case HOP_TCLOSURE_opSq_S:
+		  car(sc->T2_2) = finder(sc, fcdr(code));
+		  car(sc->T1_1) = finder(sc, cadr(cadr(code)));
+		  car(sc->T2_1) = c_call(cadr(code))(sc, sc->T1_1);
+		  goto TCLOSURE_TWO;
+
+		TCLOSURE_TWO:
+		  {
+		    s7_pointer args, slot;
+		    /* call without new frame */
+
+		    sc->code = ecdr(sc->code);
+		    while (next_environment(sc->envir) != closure_environment(sc->code))
+		      sc->envir = next_environment(sc->envir);
+
+		    args = closure_args(sc->code);
+		    slot = environment_slots(sc->envir);
+
+		    /* if func above, code: (hi (cdr a) b)
+		     *                args: (a b)
+		     *                sc->envir: #<slot: b 321> #<slot: a #<pair>> ()
+		     *                next up:   #<slot: __func__ hi> ()
+		     *
+		     * if named let, code: #<closure>
+		     *               args: (a b)
+		     *               sc->envir: #<slot: b 321> #<slot: a #<pair>> ()
+		     *               next up: #<slot: hi #<closure>>
+		     */
+
+		    /* fprintf(stderr, "args: %s, slot: %s %s\n", DISPLAY(args), DISPLAY(slot), DISPLAY(next_slot(slot))); */
+
+		    if (is_pair(args))
+		      {
+			bool reversed;
+			reversed = (slot_symbol(slot) != car(args));
+			/*
+			if (!reversed)
+			  fprintf(stderr, "not reversed: %s\n", DISPLAY(code));
+			*/
+
+			slot_value(slot) = car((reversed) ? sc->T2_2 : sc->T2_1);
+			/* fprintf(stderr, "%s\n", DISPLAY(slot)); */
+
+			slot = next_slot(slot);
+			args = cdr(args);
+			if (is_pair(args))
+			  slot_value(slot) = car((reversed) ? sc->T2_1 : sc->T2_2);
+			else slot_value(slot) = list_1(sc, car((reversed) ? sc->T2_1: sc->T2_2));
+			/* fprintf(stderr, "%s\n", DISPLAY(slot)); */
+
+			args = cdr(args);
+			if (!is_null(args))
+			  {
+			    slot = next_slot(slot);
+			    slot_value(slot) = sc->NIL;
+			  }
+		      }
+		    else 
+		      {
+			slot_value(slot) = list_2(sc, car(sc->T2_1), car(sc->T2_2));
+		      }
+		    next_slot(slot) = sc->NIL;
+		    
+		    sc->code = closure_body(sc->code);
+		    if (is_one_liner(sc->code))
+		      {
+			sc->code = car(sc->code);
+			sc->cur_code = sc->code;
+			goto EVAL_PAIR;
+		      }
+		    goto BEGIN;
+		  }
+
+
+		  /* -------------------------------------------------------------------------------- */
 		case OP_UNKNOWN_S:
 		case HOP_UNKNOWN_S:
 		  {
@@ -36658,7 +36727,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    if (is_safe_closure(closure_body(f)))
 			      optimize_data(code) = OP_SAFE_CLOSURE_S;
-			    else optimize_data(code) = OP_CLOSURE_S;
+			    else 
+			      {
+				if (is_tail_call(code))
+				  optimize_data(code) = OP_TCLOSURE_S;
+				else optimize_data(code) = OP_CLOSURE_S;
+			      }
 			    ecdr(code) = f;
 			    goto OPT_EVAL;
 			  }
@@ -36988,7 +37062,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  optimize_data(code) = OP_SAFE_CLOSURE_opSq_S;
 			else 
 			  {
-			    if ((false) && (is_tail_call(code)))
+			    if (is_tail_call(code))
 			      optimize_data(code) = OP_TCLOSURE_opSq_S;
 			    else optimize_data(code) = OP_CLOSURE_opSq_S;
 			  }
@@ -42505,11 +42579,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer x;
 		for (x = cadr(sc->code), sc->args = sc->NIL; is_pair(x); x = cdr(x)) 
 		  sc->args = cons(sc, caar(x), sc->args);
-
-		/* fprintf(stderr, "make closure: %s\n", DISPLAY(sc->args)); */
-
 		sc->x = make_closure(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code), T_CLOSURE);
-	    
 		add_slot(sc, car(sc->code), sc->x); 
 		sc->code = cddr(sc->code);
 		sc->x = sc->NIL;
@@ -42569,7 +42639,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* we need to check the current environment for ridiculous cases like
 	       *    (let hiho ((hiho 4)) hiho) -- I guess hiho is 4
 	       */
-	      s7_pointer let_name = car(sc->code);
+	      s7_pointer let_name;
+	      let_name = car(sc->code);
+	      sc->envir = new_frame_in_env(sc, sc->envir);
+
+	      sc->w = sc->NIL;
+	      for (x = cadr(sc->code); is_pair(x); x = cdr(x)) 
+		sc->w = cons(sc, caar(x), sc->w);
+
+	      sc->x = make_closure(sc, safe_reverse_in_place(sc, sc->w), cddr(sc->code), T_CLOSURE);
+	      add_slot(sc, let_name, sc->x); 
+	      sc->x = sc->NIL;
+	      
+	      sc->envir = new_frame_in_env(sc, sc->envir);
 	      for (x = cadr(sc->code); is_not_null(y); x = cdr(x)) 
 		{
 		  s7_pointer sym, args, val;
@@ -42591,15 +42673,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  local_slot(sym) = y;
 		  
 		  y = args;
-		}
-	      
-	      if (!is_null(let_name))
-		{
-		  for (x = cadr(sc->code), sc->args = sc->NIL; is_pair(x); x = cdr(x)) 
-		    sc->args = cons(sc, caar(x), sc->args);
-		  sc->x = make_closure(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code), T_CLOSURE);
-		  add_slot(sc, car(sc->code), sc->x); 
-		  sc->x = sc->NIL;
 		}
 	      sc->code = cddr(sc->code);
 	    }
