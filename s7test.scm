@@ -28723,6 +28723,16 @@ abs     1       2
 	(test-t (equal (substitute-if 0 evenp '((1) (2) (3) (4)) :start 2 :key car) '((1) (2) (3) 0)))
 	(test-t (equal (substitute-if 9 oddp '(1 2 4 1 3 4 5)) '(9 2 4 9 9 4 9)))
 	(test-t (equal (substitute-if 9 evenp '(1 2 4 1 3 4 5) :count 1 :from-end t) '(1 2 4 1 3 9 5)))
+
+(if (not (equal (substitute-if 9 evenp '(1 2 4 1 3 4 5) :count 1 :from-end t) '(1 2 4 1 3 9 5)))
+    (begin
+      (format #t ";    (evenp 3): ~A~%" (evenp 3))
+      (format #t ";    (keyword? :count): ~A, (keyword? :from-end): ~A~%" (keyword? :count) (keyword? :from-end))
+      (format #t ";    t == #t? ~A ~A~%" (equal? t #t) (equal t #t))
+      (format #t ";    (substitute-if 9 evenp '(1 2 4 1 3 4 5) :count 1 :from-end t): ~A~%" (substitute-if 9 evenp '(1 2 4 1 3 4 5) :count 1 :from-end t))
+      (format #t ";    (equal ... ): ~A~%" (equal (substitute-if 9 evenp '(1 2 4 1 3 4 5) :count 1 :from-end t) '(1 2 4 1 3 9 5)))
+      (format #t ";    (procedure-source substitute-if): ~A~%" (procedure-source substitute-if))))
+
 	(test-t (let ((some-things (list 'a 'car 'b 'cdr 'c)))
 		  (and (equal (nsubstitute-if "function was here" fboundp some-things
 					      :count 1 :from-end t)
