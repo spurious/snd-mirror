@@ -505,8 +505,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
 #endif   
 
 
-/* TODO: check the equal business in s7test!
- * TODO: unknown no-args -> op_tthunk
+/* TODO: unknown no-args -> op_tthunk
  */
 
 
@@ -17845,7 +17844,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       x = cdr(x);
       if (!is_pair(x)) return(sc->F);
 
-      /* PERHAPS: here an in member, it would be faster to split out the target type and search only
+      /* PERHAPS: here and in member, it would be faster to split out the target type and search only
        *   for that: pair_is_equal, string_is_equal, etc.  At least pass the type as an arg.
        */
       
@@ -29474,7 +29473,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			    {
 			      /* fprintf(stderr, "%s: safe of bad 1: %s\n", opt_names[optimize_data(cadar(x))], DISPLAY_80(car(x))); */
 			      
-			      if (is_optimized(cadar(x))) /* TODO: check the rest of these! */
+			      if (is_optimized(cadar(x))) 
 				{
 				  if (optimize_data_match(cadar(x), OP_SAFE_CLOSURE_SS))
 				    {
@@ -34078,9 +34077,14 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 
 #define function_is_ok(Code) (fs(sc, car(Code)) == ecdr(Code))
 
+#define check_tfunction(Code) \
+  if ((frame_id(sc->envir) != symbol_id(car(Code))) || \
+      (slot_value(local_slot(car(Code))) != ecdr(Code))) \
+    ecdr(Code) = fs(sc, car(Code))
+
 #else
 
-static s7_pointer fs_1(s7_scheme *sc, s7_pointer hdl)
+static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 {
   /* like finder, but no unbound-variable error */
   s7_pointer x;	
@@ -34133,12 +34137,18 @@ static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
      (((frame_id(sc->envir) == symbol_id(car(_code_))) && \
        (slot_value(local_slot(car(_code_))) == ecdr(_code_))) || \
       ({ s7_pointer _val_; \
-         _val_ = fs_1(sc, car(_code_)); \
+         _val_ = fs(sc, car(_code_)); \
          ((_val_ == ecdr(_code_)) || \
           (function_is_ok_1(sc, _code_, _val_))); })); })
 
+#define check_tfunction(Code) \
+  if ((frame_id(sc->envir) != symbol_id(car(Code))) || \
+      (slot_value(local_slot(car(Code))) != ecdr(Code))) \
+    ecdr(Code) = fs(sc, car(Code))
+
 #endif
 #endif
+
 
 
 static void annotate_expansion(s7_scheme *sc, s7_pointer p)
@@ -36600,8 +36610,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  /* -------------------------------------------------------------------------------- */
 		case OP_TCLOSURE_S:
-		  if (!function_is_ok(code))
-		    ecdr(code) = finder(sc, car(code));
+		  check_tfunction(code);
 
 		case HOP_TCLOSURE_S:
 		  sc->value = finder(sc, cadr(code));
@@ -36609,8 +36618,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_TCLOSURE_opCq:
-		  if (!function_is_ok(code))
-		    ecdr(code) = finder(sc, car(code));
+		  check_tfunction(code);
 		  if (!indirect_c_function_is_ok(sc, cadr(code)))
 		    break;
 		  
@@ -36620,8 +36628,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_TCLOSURE_opSq:
-		  if (!function_is_ok(code))
-		    ecdr(code) = finder(sc, car(code));
+		  check_tfunction(code);
 		  if (!indirect_c_function_is_ok(sc, cadr(code)))
 		    break;
 		  
@@ -36632,12 +36639,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_TCLOSURE_CDR_S:
-		  if (!function_is_ok(code))
-		    ecdr(code) = finder(sc, car(code));
-		  if (!indirect_c_function_is_ok(sc, cadr(code)))
+		  /* PERHAPS: carry this through the other cases: we always need check_tfunction, but the c_function check only if not HOP */
+		  if (!indirect_c_function_is_ok(sc, cadr(code))) 
 		    break;
 		  
 		case HOP_TCLOSURE_CDR_S:
+		  check_tfunction(code);
 		  {
 		    s7_pointer p;
 		    p = finder(sc, cadr(cadr(code)));
@@ -36650,21 +36657,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		TCLOSURE_ONE:
 		  {
-		    s7_pointer args, slot;
+		    s7_pointer args, slot, e, target_env;
 
 		    code = ecdr(code);
-		    while (next_environment(sc->envir) != closure_environment(code))
+		    target_env = closure_environment(code);
+		    e = sc->envir;
+		    while (next_environment(e) != target_env)
 		      {
-			s7_pointer e;
-			e = sc->envir;
-			sc->envir = next_environment(e);
-			
 			typeflag(e) = 0;
 			(*(sc->free_heap_top++)) = e;
-
+			e = next_environment(e);
 		      }
-		    /* TODO: can these be released? (also the trailing current env, if any) and in the safe_closure tail case also */
-		    slot = environment_slots(sc->envir);
+		    slot = environment_slots(e);
+		    sc->envir = e;
+		    /* the extra slots can also be released, but in my tests that rarely happens, so checking for them slows us down */
 
 		    args = closure_args(code);
 		    if (is_pair(args))
@@ -36693,8 +36699,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_TCLOSURE_SS:
-		  if (!function_is_ok(code))
-		    ecdr(code) = finder(sc, car(code));
+		  check_tfunction(code);
 		  
 		case HOP_TCLOSURE_SS:
 		  car(sc->T2_1) = finder(sc, cadr(code));
@@ -36709,8 +36714,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   * (n1)
 		   */
 		case OP_TCLOSURE_opSq_S:
-		  if (!function_is_ok(code))
-		    ecdr(code) = finder(sc, car(code));
+		  check_tfunction(code);
 		  if (!indirect_c_function_is_ok(sc, cadr(code)))
 		    break;
 		  
@@ -36722,8 +36726,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_TCLOSURE_S_opSq:
-		  if (!function_is_ok(code))
-		    ecdr(code) = finder(sc, car(code));
+		  check_tfunction(code);
 		  if (!indirect_c_function_is_ok(sc, caddr(code)))
 		    break;
 		  
@@ -36740,16 +36743,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		TCLOSURE_TWO:
 		  {
-		    s7_pointer args, slot;
+		    s7_pointer args, slot, e, target_env;
 		    /* call without new frame */
 
 		    code = ecdr(code);
-		    while (next_environment(sc->envir) != closure_environment(code))
-		      sc->envir = next_environment(sc->envir);
+		    target_env = closure_environment(code);
+		    e = sc->envir;
+		    while (next_environment(e) != target_env)
+		      {
+			typeflag(e) = 0;
+			(*(sc->free_heap_top++)) = e;
+			e = next_environment(e);
+		      }
+		    slot = environment_slots(e);
+		    sc->envir = e;
 
 		    args = closure_args(code);
-		    slot = environment_slots(sc->envir);
-
 		    /* if func above, code: (hi (cdr a) b)
 		     *                args: (a b)
 		     *                sc->envir: #<slot: b 321> #<slot: a #<pair>> ()
@@ -36760,9 +36769,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		     *               sc->envir: #<slot: b 321> #<slot: a #<pair>> ()
 		     *               next up: #<slot: hi #<closure>>
 		     */
-
-		    /* fprintf(stderr, "args: %s, slot: %s %s\n", DISPLAY(args), DISPLAY(slot), DISPLAY(next_slot(slot))); */
-
 		    if (is_pair(args))
 		      {
 			bool reversed;
@@ -37178,7 +37184,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (is_tail_call(code))
 			      {
 				if (c_call(cadr(code)) == g_cdr)
-				  optimize_data(code) = OP_TCLOSURE_CDR_S;
+				  optimize_data(code) = (OP_TCLOSURE_CDR_S + (optimize_data(code) & 1));
 				else optimize_data(code) = OP_TCLOSURE_opSq;
 			      }
 			    else
@@ -39954,7 +39960,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto START;
 
-      /* TODO: safe_c_pp zp pz (zz exists)
+      /* TODO: safe_c_zp pz (zz exists)
        */
 #endif
       
@@ -40447,7 +40453,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else add_slot(sc, x, z); /* the rest arg */
 	  }
 	  sc->code = closure_body(sc->code);
-	  /* TODO: should the unsafe one-liners check begin-hook?
+	  /* TODO: should the unsafe (non-tcall?) one-liners check begin-hook?
 	   */
 	  if (is_one_liner(sc->code))
 	    {
@@ -50497,6 +50503,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 ->  1240
- * bench    52019 -> 11805
+ * bench    52019 -> 11697
  * index    44300 ->  6510
  */
