@@ -348,7 +348,7 @@ static int add_new_type(const char *new_type)
     {
       int i;
       type_names_size += 8;
-      type_names = (const char **)realloc(type_names, type_names_size * sizeof(const char *));
+      type_names = (const char **)realloc(type_names, type_names_size * sizeof(char *));
       for (i = last_type + 1; i < type_names_size; i++) type_names[i] = NULL;
     }
   last_type++;
@@ -17285,7 +17285,8 @@ static s7_pointer g_set_optimization(s7_pointer val)
 {
   #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 6 is the max, 0 = no optimization)"
   XEN_ASSERT_TYPE(s7_is_integer(val), val, 1, S_setB S_optimization, "an integer");
-  set_optimization(mus_iclamp(0, (int)s7_number_to_integer(val), 6));
+  set_optimization(mus_iclamp(0, (int)s7_number_to_integer(val), 6)); 
+  /* set_optimization(0); */
   optimizing = (optimization(ss) > 0);
   return(val);
 }

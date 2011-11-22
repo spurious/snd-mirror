@@ -508,9 +508,6 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
 #endif   
 
 
-/* TODO: unknown no-args -> op_tthunk
- */
-
 
 #if WITH_OPTIMIZATION
 enum{SAFE_C_P, SAFE_C_PP, SAFE_C_CP, SAFE_C_SP, SAFE_C_PC, SAFE_C_PS, SAFE_C_PQ, SAFE_C_QP};
@@ -740,8 +737,8 @@ typedef struct s7_num_t {
     } fraction_value;
     
     struct {
-      s7_Double real;
-      s7_Double imag;
+      s7_Double rl;
+      s7_Double im;
     } complex_value;
     
     unsigned long ul_value; /* these two are not used by s7 in any way */
@@ -1549,8 +1546,8 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define denominator(n)                n.value.fraction_value.denominator
 #define fraction(n)                   (((long double)numerator(n)) / ((long double)denominator(n)))
 
-#define real_part(n)                  n.value.complex_value.real
-#define imag_part(n)                  n.value.complex_value.imag
+#define real_part(n)                  n.value.complex_value.rl
+#define imag_part(n)                  n.value.complex_value.im
 #define integer(n)                    n.value.integer_value
 #define complex_real_part(p)          real_part(number(p))
 #define complex_imag_part(p)          imag_part(number(p))
@@ -4295,7 +4292,6 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
       s7_pointer x;
 
       op = stack_op(sc->stack, i);
-
       switch (op)
 	{
 	case OP_DYNAMIC_WIND:
@@ -5713,7 +5709,7 @@ static double ipow(int x, int y)
     {
       if (y >= 0)
 	return(pepow[x][y]);
-      return(mepow[x][-y]);      /* PERHAPS: we could use C's negative indexing here to speed this up slightly */
+      return(mepow[x][-y]);
     }
   return(pow((double)x, (double)y));
 }
@@ -7724,7 +7720,11 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
       return(s7_make_real(sc, sin(real(a))));
 
     default:
+#if WITH_COMPLEX
       return(s7_from_c_complex(sc, csin(real_part(a) + (imag_part(a) * _Complex_I))));
+#else
+      return(s7_make_real(sc, 0.0));
+#endif
     }
 
   /* sin is totally inaccurate over about 1e18.  There's a way to get true results,
@@ -7765,7 +7765,11 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
       return(s7_make_real(sc, cos(real(a))));
 
     default:
+#if WITH_COMPLEX
       return(s7_from_c_complex(sc, ccos(real_part(a) + (imag_part(a) * _Complex_I))));
+#else
+      return(s7_make_real(sc, 0.0));
+#endif
     }
 }
 
@@ -10339,7 +10343,11 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
       break;
 
     default:
+#ifndef _MSC_VER
       return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) == y)));
+#else
+      if ((imag_part(a) == 0.0) && (real_part(a) == y)) return(sc->T); else return(sc->F);
+#endif
     }
   return(sc->T);
 }
@@ -10422,7 +10430,11 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 	  break;
 	  
 	default: 
+#ifndef _MSC_VER
 	  return(make_boolean(sc, (imag_part(b) == 0.0) && (real_part(b) == integer(a))));
+#else
+	  if ((imag_part(b) == 0.0) && (real_part(b) == integer(a))) return(sc->T); else return(sc->F);
+#endif
 	  break;
 	}
       break;
@@ -10463,7 +10475,11 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 	  break;
 	  
 	default:
+#ifndef _MSC_VER
 	  return(make_boolean(sc, (imag_part(b) == 0.0) && (real_part(b) == real(a))));
+#else
+	  if ((imag_part(b) == 0.0) && (real_part(b) == real(a))) return(sc->T); else return(sc->F);
+#endif
 	  break;
 	}
       break;
@@ -10471,6 +10487,7 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
     default:
       switch (type_b)
 	{
+#ifndef _MSC_VER
 	case NUM_INT:
 	  return(make_boolean(sc, (imag_part(a) == 0.0) && (real_part(a) == integer(b))));
 	  break;
@@ -10487,6 +10504,24 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 	default:
 	  return(make_boolean(sc, (real_part(a) == real_part(b)) && (imag_part(a) == imag_part(b))));
 	  break;
+#else
+	case NUM_INT:
+	  if ((imag_part(a) == 0.0) && (real_part(a) == integer(b))) return(sc->T); else return(sc->F);
+	  break;
+	  
+	case NUM_RATIO:
+	  if ((imag_part(a) == 0.0) && (real_part(a) == fraction(b))) return(sc->T); else return(sc->F);
+	  break;
+	  
+	case NUM_REAL:
+	case NUM_REAL2:
+	  if ((imag_part(a) == 0.0) && (real_part(a) == real(b))) return(sc->T); else return(sc->F);
+	  break;
+	  
+	default:
+	  if ((real_part(a) == real_part(b)) && (imag_part(a) == imag_part(b))) return(sc->T); else return(sc->F);
+	  break;
+#endif
 	}
       break;
     }
@@ -14368,6 +14403,9 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
   
   if (!atom_case)             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
     {
+      s7_pointer result;
+      char endc;
+
       if ((k == 1) && 
 	  (*orig_str == '\\'))
 	{
@@ -14378,8 +14416,6 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 	}
 
       /* port_string was allocated (and read from a file) so we can mess with it directly */
-      s7_pointer result;
-      char endc;
       
       endc = orig_str[k];
       orig_str[k] = '\0';
@@ -17895,10 +17931,6 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       x = cdr(x);
       if (!is_pair(x)) return(sc->F);
 
-      /* PERHAPS: here and in member, it would be faster to split out the target type and search only
-       *   for that: pair_is_equal, string_is_equal, etc.  At least pass the type as an arg.
-       */
-      
       y = cdr(y);
       if (x == y) return(sc->F);
     }
@@ -19095,11 +19127,6 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
  * (vset v i s)
  * (vset v i (vref v j)) (vset v (+ i 1) (vref v (+ j 1)))
  * (vset v (+ i 1) s)
- */
-
-/* TODO: vector_ref_ss vector_set_s_ic_g vector_set_sss vector_set_s_s_vector_ref_ss or the equivalent (shared v)
- *
- * TODO: does collapsing a vector-set! into safe_c_c confuse the safe do checker?
  */
 #endif
 
@@ -33473,9 +33500,6 @@ static bool is_init_dox_safe(s7_scheme *sc, s7_pointer p)
 	 (op == HOP_SAFE_C_SS) ||
 	 (op == HOP_SAFE_C_QS) ||
 	 (op == HOP_SAFE_C_S_opCq));
-
-  /* TODO: are we forgetting UNCHECKED somewhere -- it's reporting not simple many times [while macro expansion?]
-   */
 }
 
 static s7_pointer init_dox_eval(s7_scheme *sc, s7_pointer code)
@@ -33871,9 +33895,6 @@ static s7_pointer check_do(s7_scheme *sc)
 			    (is_pair(car(body))) &&
 			    (is_syntactic(caar(body))))
 			  car(ecdr(sc->code)) = sc->SIMPLE_DO_P;
-
-			/* TODO: simple do but move the +1 checks up here
-			 */
 
 			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
 			  {
@@ -36839,7 +36860,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case HOP_TCLOSURE_S:
 		  sc->value = find_symbol_or_bust(sc, fcdr(code)); 
-		  /* hmmm -- unsafe-closure tail-call seems unlikely in a safe do loop... TODO: closure/unknown lookups too? any unsafe case! hop_c_* etc */
 		  goto TCLOSURE_ONE;
 
 
@@ -36865,12 +36885,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_TCLOSURE_CDR_S:
-		  /* PERHAPS: carry this through the other cases: we always need check_tfunction, but the c_function check only if not HOP */
 		  if (!indirect_c_function_is_ok(sc, cadr(code))) 
 		    break;
 		  
 		case HOP_TCLOSURE_CDR_S:
-		  check_tfunction(code);
+		  check_tfunction(code); /* this needs to be here (rather than above) unless the unknown_s code is changed */
 		  {
 		    s7_pointer p;
 		    p = find_symbol_or_bust(sc, fcdr(code));
@@ -41193,12 +41212,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      switch (number_type(val))
 		{
 		case NUM_INT:
-		  sc->value = make_integer(sc, integer(number(val)) + 1); 
-		  slot_set_value(sc->y, sc->value);
-		  /* this can't be optimized to treat sc->y's value as a mutable integer 
-		   * also, we have to set sc->value, since s7.html says set! returns the value.
-		   */
-		  goto START;
+		  /* sc->value = make_integer(sc, integer(number(val)) + 1); */
+		  {
+		    s7_Int n;
+		    n = integer(number(val)) + 1;
+		    if ((n & ~(NUM_SMALL_INTS - 1)) == 0)
+		      sc->value = small_int(n);
+		    else
+		      {
+			s7_pointer x;
+			NEW_CELL(sc, x);
+			set_type(x, T_NUMBER);
+			number_type(x) = NUM_INT;
+			integer(number(x)) = n;
+			sc->value = x;
+		      }
+		    slot_set_value(sc->y, sc->value);
+		    /* this can't be optimized to treat sc->y's value as a mutable integer 
+		     * also, we have to set sc->value, since s7.html says set! returns the value.
+		     */
+		    goto START;
+		  }
 		  
 		case NUM_REAL:
 		case NUM_REAL2:
@@ -41718,201 +41752,199 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_SAFE_IF_ANDX_P:
-      /* PERHAPS: since SAFER_AND can't involve call/cc or jump anywhere,
-       *   couldn't we simply jump there from here, then jump back here?
-       */
-	{
-	  s7_pointer p;
-	  for (p = cdar(sc->code); is_pair(p); p = cdr(p))
-	    {
-	      s7_pointer val, code, args;
-	      code = car(p);
-	      switch (optimize_data(code))
-		{
-		case HOP_SAFE_C_C:
-		  sc->value = c_call(code)(sc, cdr(code));
-		  break;
+      {
+	s7_pointer p;
+	for (p = cdar(sc->code); is_pair(p); p = cdr(p))
+	  {
+	    s7_pointer val, code, args;
+	    code = car(p);
+	    switch (optimize_data(code))
+	      {
+	      case HOP_SAFE_C_C:
+		sc->value = c_call(code)(sc, cdr(code));
+		break;
+		
+	      case HOP_SAFE_C_S:
+		car(sc->T1_1) = finder(sc, cadr(code));
+		sc->value = c_call(code)(sc, sc->T1_1);
+		break;
+		
+	      case HOP_SAFE_IS_PAIR_S:
+		sc->value = make_boolean(sc, is_pair(finder(sc, cadr(code))));
+		break;
+		
+	      case HOP_SAFE_IS_SYMBOL_S:
+		sc->value = make_boolean(sc, is_symbol(finder(sc, cadr(code))));
+		break;
+		
+	      case HOP_SAFE_NOT_S:
+		sc->value = make_boolean(sc, is_false(sc, finder(sc, cadr(code))));
+		break;
+		
+	      case HOP_SAFE_C_SC:
+		args = cdr(code);
+		car(sc->T2_1) = finder(sc, car(args));
+		car(sc->T2_2) = cadr(args);
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      case HOP_SAFE_C_CS:
+		args = cdr(code);
+		car(sc->T2_2) = finder(sc, cadr(args));
+		car(sc->T2_1) = car(args);
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      case HOP_SAFE_C_SS:
+		args = cdr(code);
+		val = finder(sc, car(args));
+		car(sc->T2_2) = finder(sc, cadr(args));
+		car(sc->T2_1) = val;
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      case HOP_SAFE_C_SQ:
+		args = cdr(code);
+		car(sc->T2_1) = finder(sc, car(args));
+		car(sc->T2_2) = cadr(cadr(args));
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      case HOP_SAFE_C_opSq:
+		args = cadr(code);
+		car(sc->T1_1) = finder(sc, cadr(args));
+		car(sc->T1_1) = c_call(args)(sc, sc->T1_1);
+		sc->value = c_call(code)(sc, sc->T1_1);
+		break;
+		
+	      case HOP_SAFE_C_opSq_opSq:
+		args = cdr(code);
+		car(sc->T1_1) = finder(sc, cadr(car(args)));
+		sc->temp4 = c_call(car(args))(sc, sc->T1_1);
+		args = cadr(args);
+		car(sc->T1_1) = finder(sc, cadr(args));
+		car(sc->T2_2) = c_call(args)(sc, sc->T1_1);
+		car(sc->T2_1) = sc->temp4;
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      default:
+		fprintf(stderr, "oops: if_and_x: %s\n", DISPLAY_80(code));
+		break;
+	      }
+	    
+	    if (is_false(sc, sc->value))
+	      {
+		sc->value = sc->UNSPECIFIED;
+		goto START;
+	      }
+	  }
+	if (is_true(sc, sc->value))
+	  {
+	    sc->code = cadr(sc->code);
+	    goto EVAL_PAIR;
+	  }
+	sc->value = sc->UNSPECIFIED;
+	goto START;
+      }
 
-		case HOP_SAFE_C_S:
-		  car(sc->T1_1) = finder(sc, cadr(code));
-		  sc->value = c_call(code)(sc, sc->T1_1);
-		  break;
-
-		case HOP_SAFE_IS_PAIR_S:
-		  sc->value = make_boolean(sc, is_pair(finder(sc, cadr(code))));
-		  break;
-
-		case HOP_SAFE_IS_SYMBOL_S:
-		  sc->value = make_boolean(sc, is_symbol(finder(sc, cadr(code))));
-		  break;
-
-		case HOP_SAFE_NOT_S:
-		  sc->value = make_boolean(sc, is_false(sc, finder(sc, cadr(code))));
-		  break;
-
-		case HOP_SAFE_C_SC:
-		  args = cdr(code);
-		  car(sc->T2_1) = finder(sc, car(args));
-		  car(sc->T2_2) = cadr(args);
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		case HOP_SAFE_C_CS:
-		  args = cdr(code);
-		  car(sc->T2_2) = finder(sc, cadr(args));
-		  car(sc->T2_1) = car(args);
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		case HOP_SAFE_C_SS:
-		  args = cdr(code);
-		  val = finder(sc, car(args));
-		  car(sc->T2_2) = finder(sc, cadr(args));
-		  car(sc->T2_1) = val;
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		case HOP_SAFE_C_SQ:
-		  args = cdr(code);
-		  car(sc->T2_1) = finder(sc, car(args));
-		  car(sc->T2_2) = cadr(cadr(args));
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		case HOP_SAFE_C_opSq:
-		  args = cadr(code);
-		  car(sc->T1_1) = finder(sc, cadr(args));
-		  car(sc->T1_1) = c_call(args)(sc, sc->T1_1);
-		  sc->value = c_call(code)(sc, sc->T1_1);
-		  break;
-
-		case HOP_SAFE_C_opSq_opSq:
-		  args = cdr(code);
-		  car(sc->T1_1) = finder(sc, cadr(car(args)));
-		  sc->temp4 = c_call(car(args))(sc, sc->T1_1);
-		  args = cadr(args);
-		  car(sc->T1_1) = finder(sc, cadr(args));
-		  car(sc->T2_2) = c_call(args)(sc, sc->T1_1);
-		  car(sc->T2_1) = sc->temp4;
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		default:
-		  fprintf(stderr, "oops: if_and_x: %s\n", DISPLAY_80(code));
-		  break;
-		}
-
-	      if (is_false(sc, sc->value))
-		{
-		  sc->value = sc->UNSPECIFIED;
-		  goto START;
-		}
-	    }
-	  if (is_true(sc, sc->value))
-	    {
-	      sc->code = cadr(sc->code);
-	      goto EVAL_PAIR;
-	    }
-	  sc->value = sc->UNSPECIFIED;
-	  goto START;
-	}
 
     case OP_SAFE_IF_ORX_P:
-	{
-	  s7_pointer p;
-	  for (p = cdar(sc->code); is_pair(p); p = cdr(p))
-	    {
-	      s7_pointer val, code, args;
-	      code = car(p);
-	      switch (optimize_data(code))
-		{
-		case HOP_SAFE_C_C:
-		  sc->value = c_call(code)(sc, cdr(code));
-		  break;
-
-		case HOP_SAFE_C_S:
-		  car(sc->T1_1) = finder(sc, cadr(code));
-		  sc->value = c_call(code)(sc, sc->T1_1);
-		  break;
-
-		case HOP_SAFE_IS_PAIR_S:
-		  sc->value = make_boolean(sc, is_pair(finder(sc, cadr(code))));
-		  break;
-
-		case HOP_SAFE_IS_SYMBOL_S:
-		  sc->value = make_boolean(sc, is_symbol(finder(sc, cadr(code))));
-		  break;
-
-		case HOP_SAFE_NOT_S:
-		  sc->value = make_boolean(sc, is_false(sc, finder(sc, cadr(code))));
-		  break;
-
-		case HOP_SAFE_C_SC:
-		  args = cdr(code);
-		  car(sc->T2_1) = finder(sc, car(args));
-		  car(sc->T2_2) = cadr(args);
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		case HOP_SAFE_C_CS:
-		  args = cdr(code);
-		  car(sc->T2_2) = finder(sc, cadr(args));
-		  car(sc->T2_1) = car(args);
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		case HOP_SAFE_C_SS:
-		  args = cdr(code);
-		  val = finder(sc, car(args));
-		  car(sc->T2_2) = finder(sc, cadr(args));
-		  car(sc->T2_1) = val;
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		case HOP_SAFE_C_SQ:
-		  args = cdr(code);
-		  car(sc->T2_1) = finder(sc, car(args));
-		  car(sc->T2_2) = cadr(cadr(args));
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		case HOP_SAFE_C_opSq:
-		  args = cadr(code);
-		  car(sc->T1_1) = finder(sc, cadr(args));
-		  car(sc->T1_1) = c_call(args)(sc, sc->T1_1);
-		  sc->value = c_call(code)(sc, sc->T1_1);
-		  break;
-
-		case HOP_SAFE_C_opSq_opSq:
-		  args = cdr(code);
-		  car(sc->T1_1) = finder(sc, cadr(car(args)));
-		  sc->temp4 = c_call(car(args))(sc, sc->T1_1);
-		  args = cadr(args);
-		  car(sc->T1_1) = finder(sc, cadr(args));
-		  car(sc->T2_2) = c_call(args)(sc, sc->T1_1);
-		  car(sc->T2_1) = sc->temp4;
-		  sc->value = c_call(code)(sc, sc->T2_1);
-		  break;
-
-		default:
-		  fprintf(stderr, "oops: if_and_x: %s\n", DISPLAY_80(code));
-		  break;
-		}
-
-	      if (is_true(sc, sc->value))
-		{
-		  sc->code = cadr(sc->code);
-		  goto EVAL_PAIR;
-		}
-	    }
-	  if (is_true(sc, sc->value))
-	    {
-	      sc->code = cadr(sc->code);
-	      goto EVAL_PAIR;
-	    }
-	  sc->value = sc->UNSPECIFIED;
-	  goto START;
-	}
+      {
+	s7_pointer p;
+	for (p = cdar(sc->code); is_pair(p); p = cdr(p))
+	  {
+	    s7_pointer val, code, args;
+	    code = car(p);
+	    switch (optimize_data(code))
+	      {
+	      case HOP_SAFE_C_C:
+		sc->value = c_call(code)(sc, cdr(code));
+		break;
+		
+	      case HOP_SAFE_C_S:
+		car(sc->T1_1) = finder(sc, cadr(code));
+		sc->value = c_call(code)(sc, sc->T1_1);
+		break;
+		
+	      case HOP_SAFE_IS_PAIR_S:
+		sc->value = make_boolean(sc, is_pair(finder(sc, cadr(code))));
+		break;
+		
+	      case HOP_SAFE_IS_SYMBOL_S:
+		sc->value = make_boolean(sc, is_symbol(finder(sc, cadr(code))));
+		break;
+		
+	      case HOP_SAFE_NOT_S:
+		sc->value = make_boolean(sc, is_false(sc, finder(sc, cadr(code))));
+		break;
+		
+	      case HOP_SAFE_C_SC:
+		args = cdr(code);
+		car(sc->T2_1) = finder(sc, car(args));
+		car(sc->T2_2) = cadr(args);
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      case HOP_SAFE_C_CS:
+		args = cdr(code);
+		car(sc->T2_2) = finder(sc, cadr(args));
+		car(sc->T2_1) = car(args);
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      case HOP_SAFE_C_SS:
+		args = cdr(code);
+		val = finder(sc, car(args));
+		car(sc->T2_2) = finder(sc, cadr(args));
+		car(sc->T2_1) = val;
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      case HOP_SAFE_C_SQ:
+		args = cdr(code);
+		car(sc->T2_1) = finder(sc, car(args));
+		car(sc->T2_2) = cadr(cadr(args));
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      case HOP_SAFE_C_opSq:
+		args = cadr(code);
+		car(sc->T1_1) = finder(sc, cadr(args));
+		car(sc->T1_1) = c_call(args)(sc, sc->T1_1);
+		sc->value = c_call(code)(sc, sc->T1_1);
+		break;
+		
+	      case HOP_SAFE_C_opSq_opSq:
+		args = cdr(code);
+		car(sc->T1_1) = finder(sc, cadr(car(args)));
+		sc->temp4 = c_call(car(args))(sc, sc->T1_1);
+		args = cadr(args);
+		car(sc->T1_1) = finder(sc, cadr(args));
+		car(sc->T2_2) = c_call(args)(sc, sc->T1_1);
+		car(sc->T2_1) = sc->temp4;
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+		
+	      default:
+		fprintf(stderr, "oops: if_and_x: %s\n", DISPLAY_80(code));
+		break;
+	      }
+	    
+	    if (is_true(sc, sc->value))
+	      {
+		sc->code = cadr(sc->code);
+		goto EVAL_PAIR;
+	      }
+	  }
+	if (is_true(sc, sc->value))
+	  {
+	    sc->code = cadr(sc->code);
+	    goto EVAL_PAIR;
+	  }
+	sc->value = sc->UNSPECIFIED;
+	goto START;
+      }
 #endif
 
 
@@ -50796,6 +50828,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 ->  1240
- * bench    52019 -> 10971
+ * bench    52019 -> 10907
  * index    44300 ->  6085
  */

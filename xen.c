@@ -1564,7 +1564,7 @@ XEN xen_s7_c_to_xen_string(const char *str)
 #endif
 
 
-static const char **constant_names = NULL, **constant_helps = NULL;
+static char **constant_names = NULL, **constant_helps = NULL;
 static int constant_size = 0, constant_top = -1;
 
 void xen_s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value, const char *help)
@@ -1576,16 +1576,16 @@ void xen_s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value, c
       if (constant_size == 0)
 	{
 	  constant_size = 128;
-	  constant_names = (const char **)calloc(constant_size, sizeof(const char *));
-	  constant_helps = (const char **)calloc(constant_size, sizeof(const char *));
+	  constant_names = (char **)calloc(constant_size, sizeof(char *));
+	  constant_helps = (char **)calloc(constant_size, sizeof(char *));
 	}
       else
 	{
 	  int i;
 	  i = constant_size;
 	  constant_size += 128;
-	  constant_names = (const char **)realloc(constant_names, constant_size * sizeof(const char *));
-	  constant_helps = (const char **)realloc(constant_helps, constant_size * sizeof(const char *));
+	  constant_names = (char **)realloc(constant_names, constant_size * sizeof(char *));
+	  constant_helps = (char **)realloc(constant_helps, constant_size * sizeof(char *));
 	  for (; i < constant_size; i++)
 	    {
 	      constant_names[i] = NULL;
