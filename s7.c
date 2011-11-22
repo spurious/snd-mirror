@@ -352,8 +352,8 @@ enum {OP_NO_OP,
       OP_SAFE_OR_S, OP_SAFER_OR_S, OP_SAFER_OR_C, OP_SAFER_OR_CEQ,
       OP_SAFE_AND_S, OP_SAFE_CASE_S, OP_SAFE_FOR_EACH, OP_SAFER_OR_X, OP_SAFER_AND_X, OP_COND_SIMPLER,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_DOTIMES_C_C,
-      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_SAFE_SIMPLE_DO_STEP, OP_DOX, OP_DOX_STEP,
-      OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, OP_SAFE_IF_CC_X, 
+      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP,
+      OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, OP_SAFE_IF_CEQ_P_P, OP_SAFE_IF_CEQ_P, OP_SAFE_IF_CC_X, 
       OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_CS_Q_P,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P,
@@ -423,8 +423,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe-or-s", "safer-or-s", "safer-or-c", "safer-or-ceq",
    "safe-and-s", "safe-case-s", "safe-for-each", "safe-or-x", "safe-and-x",
    "simple-do", "simple-do-step", "dotimes", "dotimes-step", "simple-dotimes", "safe-do", "safe-do-step", "dotimes-c-c",
-   "simple-do-p", "simple-do-step-p", "safe-simple-do", "safe-simple-do-step", "dox", "safe-dox-p", "dox-step",
-   "safe-if1-1", "safe-if2-1", "safe-if-p-x-p", "safe-if-p-p-p", "safe-if-p-x", 
+   "simple-do-p", "simple-do-step-p", "safe-simple-do", "dox", "safe-dox-p", "dox-step",
+   "safe-if1-1", "safe-if2-1", "safe-if-p-x-p", "safe-if-p-p-p", "safe-if-ceq-p-p", "safe-if-ceq-p", "safe-if-p-x", 
    "safe-if-r-p-p", "safe-if-r-x-p", "safe-if-p-p", "safe-if-r-p", "safe-if-r-p-x", "safe-if-r-q-p",
    "safe-if-sq-p", "safe-if-sq-p-p", "safe-if-ss-p", "safe-if-ss-p-p", "safe-if-sc-p", "safe-if-sc-p-p", 
    "safe-if-is-pair-p", "safe-if-is-pair-p-x", "safe-if-is-pair-p-p", "safe-if-c-ss-p",
@@ -488,8 +488,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_OR_S", "OP_SAFER_OR_S", "OP_SAFER_OR_C", "OP_SAFER_OR_CEQ",
   "OP_SAFE_AND_S", "OP_SAFE_CASE_S", "OP_SAFE_FOR_EACH", "OP_SAFER_OR_X", "OP_SAFER_AND_X", "OP_COND_SIMPLER",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_DOTIMES", "OP_DOTIMES_STEP", "OP_SIMPLE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_DOTIMES_C_C",
-  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_SAFE_SIMPLE_DO_STEP", "OP_DOX", "OP_DOX_STEP",
-  "OP_SAFE_IF1_1", "OP_SAFE_IF2_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", "OP_SAFE_IF_CC_X", 
+  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP",
+  "OP_SAFE_IF1_1", "OP_SAFE_IF2_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", "OP_SAFE_IF_CEQ_P_P", "OP_SAFE_IF_CEQ_P", "OP_SAFE_IF_CC_X", 
   "OP_SAFE_IF_CS_P_P", "OP_SAFE_IF_CS_X_P", "OP_SAFE_IF_CC_P", "OP_SAFE_IF_CS_P", "OP_SAFE_IF_CS_P_X", "OP_SAFE_IF_CS_Q_P",
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P",
@@ -1011,7 +1011,7 @@ struct s7_scheme {
 
 #if WITH_OPTIMIZATION
   s7_pointer SAFE_OR_S, SAFER_OR_S, SAFER_OR_C, SAFER_OR_CEQ, SAFE_AND_S, SAFE_CASE_S, SAFER_OR_X, SAFER_AND_X, COND_SIMPLER;
-  s7_pointer SAFE_IF1, SAFE_IF2, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P, SAFE_IF_CC_X;
+  s7_pointer SAFE_IF1, SAFE_IF2, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P, SAFE_IF_CEQ_P_P, SAFE_IF_CEQ_P, SAFE_IF_CC_X;
   s7_pointer SAFE_IF_CS_P_P, SAFE_IF_CS_X_P, SAFE_IF_CC_P, SAFE_IF_CS_P, SAFE_IF_CS_P_X, SAFE_IF_CS_Q_P;
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P;
@@ -12258,7 +12258,20 @@ static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, const 
 static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_equal "(char=? char ...) returns #t if all the character arguments are equal"
-  return(g_char_cmp(sc, args, 0, "char=?", false));
+
+  int i;
+  s7_pointer x, y;
+  
+  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))  
+    if (!s7_is_character(car(x)))
+      return(s7_wrong_type_arg_error(sc, "char=?", i, car(x), "a character"));
+  
+  y = car(args);
+  for (x = cdr(args); is_not_null(x); x = cdr(x))
+    if (car(x) != y)
+      return(sc->F);
+  return(sc->T);
+
 }	
 
 
@@ -12299,7 +12312,7 @@ static s7_pointer g_char_equal_s_ic(s7_scheme *sc, s7_pointer args)
   c = finder(sc, car(args));
   if (!s7_is_character(c))
     return(s7_wrong_type_arg_error(sc, "char=?", 1, car(args), "a character"));
-  return(make_boolean(sc, character(c) == character(cadr(args))));
+  return(make_boolean(sc, c == cadr(args)));
 }
 
 static s7_pointer g_char_equal_2(s7_scheme *sc, s7_pointer args)
@@ -12308,7 +12321,7 @@ static s7_pointer g_char_equal_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char=?", 1, car(args), "a character"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "char=?", 2, cadr(args), "a character"));
-  return(make_boolean(sc, character(car(args)) == character(cadr(args))));
+  return(make_boolean(sc, car(args) == cadr(args)));
 }
 
 
@@ -17839,6 +17852,39 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
     return(s7_assq(sc, obj, x));
 
   y = x;
+  if (s7_is_string(obj))
+    {
+      s7_pointer val;
+      while (true)
+	{
+	  if (is_pair(car(x)))
+	    {
+	      val = caar(x);
+	      if ((val == obj) ||
+		  ((s7_is_string(val)) &&
+		   (scheme_strings_are_equal(obj, val))))
+		return(car(x));
+	    }
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+
+	  if (is_pair(car(x)))
+	    {
+	      val = caar(x);
+	      if ((val == obj) ||
+		  ((s7_is_string(val)) &&
+		   (scheme_strings_are_equal(obj, val))))
+		return(car(x));
+	    }
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+      
+	  y = cdr(y);
+	  if (x == y) return(sc->F);
+	}
+      return(sc->F);
+    }
+
   while (true)
     {
       if ((is_pair(car(x))) && (s7_is_equal(sc, obj, caar(x)))) return(car(x));
@@ -18104,7 +18150,32 @@ static s7_pointer g_memv(s7_scheme *sc, s7_pointer args)
 static s7_pointer member(s7_scheme *sc, s7_pointer obj, s7_pointer x)
 {
   s7_pointer y;
+
   y = x;
+  if (s7_is_string(obj))
+    {
+      while (true)
+	{
+	  if ((obj == car(x)) ||
+	      ((s7_is_string(car(x))) &&
+	       (scheme_strings_are_equal(obj, car(x)))))
+	    return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+
+	  if ((obj == car(x)) ||
+	      ((s7_is_string(car(x))) &&
+	       (scheme_strings_are_equal(obj, car(x)))))
+	    return(x);
+	  x = cdr(x);
+	  if (!is_pair(x)) return(sc->F);
+      
+	  y = cdr(y);
+	  if (x == y) return(sc->F);
+	}
+      return(sc->F);
+    }
+
   while (true)
     {
       if (s7_is_equal(sc, obj, car(x))) return(x);
@@ -28540,7 +28611,6 @@ static s7_pointer string_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(string_equal_vref_s);
 	}
-
       return(string_equal_2);
     }
   return(f);
@@ -28553,7 +28623,7 @@ static s7_pointer string_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       if (s7_is_string(caddr(expr)))
 	return(string_less_s_ic);
       
-      /* to extend this to other string comparisons, [string-ref], write/display/format, equal? [string-append]
+      /* TODO: to extend this to other string comparisons, [string-ref], write/display/format, equal? [string-append]
        *       also substring as arg -- recognized at chooser time? (problem is s[len]=0)
        *       so we can only do this if the caller ignores trailing chars (i.e. null is not end marker)
        *       I think all s7-internal string ops are safe in this regard, but FFI code is not!
@@ -32581,7 +32651,11 @@ static s7_pointer check_if(s7_scheme *sc)
  		  if (is_optimized(test))
 		    {
 		      if (optimize_data(test) == HOP_SAFE_C_C)
-			car(ecdr(sc->code)) = sc->SAFE_IF_CC_P_P;
+			{
+			  if (c_call(test) == g_char_equal_s_ic)
+			    car(ecdr(sc->code)) = sc->SAFE_IF_CEQ_P_P;
+			  else car(ecdr(sc->code)) = sc->SAFE_IF_CC_P_P;
+			}
 		      else 
 			{
 			  if (is_h_safe_c_s(test))
@@ -32666,7 +32740,11 @@ static s7_pointer check_if(s7_scheme *sc)
 		      if (is_optimized(test))
 			{
 			  if (optimize_data(test) == HOP_SAFE_C_C)
-			    car(ecdr(sc->code)) = sc->SAFE_IF_CC_P;
+			    {
+			      if (c_call(test) == g_char_equal_s_ic)
+				car(ecdr(sc->code)) = sc->SAFE_IF_CEQ_P;
+			      else car(ecdr(sc->code)) = sc->SAFE_IF_CC_P;
+			    }
 			  else 
 			    {
 			      if (is_h_safe_c_s(test))
@@ -33812,9 +33890,13 @@ static s7_pointer check_do(s7_scheme *sc)
 				 ((s7_is_integer(cadr(step_expr))) &&
 				  (s7_integer(cadr(step_expr)) == 1))) &&
 				(c_function_class(ecdr(step_expr)) == add_class) &&
+#if WITH_GMP
+				(c_function_class(ecdr(end)) == equal_class)
+#else
 				((c_function_class(ecdr(end)) == equal_class) ||
-				 (ecdr(end) == geq_2)))
-				  
+				 (ecdr(end) == geq_2))
+#endif
+				)
 			      {
 				/* we're stepping by +1 and going to =
 				 *   the final integer check has to wait until run time (symbol value dependent)
@@ -35138,9 +35220,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  end_val = finder(sc, end);
 	else end_val = end;
 
+#if WITH_GMP
+	if (s7_integer(init_val) == s7_integer(end_val))
+#else
 	if ((s7_integer(init_val) == s7_integer(end_val)) ||
 	    ((s7_integer(init_val) > s7_integer(end_val)) &&
 	     (ecdr(car(cadr(sc->code))) == geq_2)))
+#endif
 	  {
 	    sc->code = cdr(cadr(sc->code));
 	    goto BEGIN;
@@ -35163,9 +35249,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_Int step;
 	step = s7_integer(slot_value(car(sc->args))) + 1;
 	slot_set_value(car(sc->args), make_integer(sc, step));
+#if WITH_GMP
+	if (step == s7_integer(slot_value(cdr(sc->args))))
+#else
 	if ((step == s7_integer(slot_value(cdr(sc->args)))) ||
 	    ((step > s7_integer(slot_value(cdr(sc->args)))) &&
-	     (ecdr(car(cadr(sc->code))) == geq_2)))	      
+	     (ecdr(car(cadr(sc->code))) == geq_2)))
+#endif	      
 	  {
 	    finalize_safe_do(sc);
 	    sc->code = cdr(cadr(sc->code));
@@ -38385,12 +38475,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case HOP_SAFE_C_ALL_X:
 		  {
-		    s7_pointer args;
+		    s7_pointer args, val;
 		    int i;
+		    val = sc->NIL; /* make gcc happy */
 
 		    for (i = 0, args = cdr(code); is_pair(args); i++, args = cdr(args))
 		      {
-			s7_pointer arg, val;
+			s7_pointer arg;
 			arg = car(args);
 			if (is_pair(arg))
 			  {
@@ -42149,6 +42240,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+    case OP_SAFE_IF_CEQ_P:
+      {
+	s7_pointer c;
+	c = finder(sc, cadar(sc->code));
+	if (!s7_is_character(c))
+	  return(s7_wrong_type_arg_error(sc, "char=?", 1, cadar(sc->code), "a character"));
+	if (c == caddar(sc->code))
+	  {
+	    sc->code = cadr(sc->code);
+	    goto EVAL_PAIR;
+	  }
+	else sc->value = sc->UNSPECIFIED;
+	goto START;
+      }
+
+
     case OP_SAFE_IF_CC_P_P:
       {
 	s7_pointer code;
@@ -42156,6 +42263,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(car(code))(sc, cdar(code))))
 	  sc->code = cadr(code);
 	else sc->code = caddr(code);
+	goto EVAL_PAIR;
+      }
+
+
+    case OP_SAFE_IF_CEQ_P_P:
+      {
+	s7_pointer c;
+	c = finder(sc, cadar(sc->code));
+	if (!s7_is_character(c))
+	  return(s7_wrong_type_arg_error(sc, "char=?", 1, cadar(sc->code), "a character"));
+	if (c == caddar(sc->code))
+	  sc->code = cadr(sc->code);
+	else sc->code = caddr(sc->code);
 	goto EVAL_PAIR;
       }
 
@@ -43808,15 +43928,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SAFER_OR_CEQ:
 	{
 	  s7_pointer sym, code;
-	  unsigned char c;
 
 	  sym = finder(sc, cadar(sc->code));
 	  if (!s7_is_character(sym))
 	    s7_wrong_type_arg_error(sc, "char=?", 1, cadar(sc->code), "a character");
-	  c = character(sym);
 
 	  for (code = sc->code; is_pair(code); code = cdr(code))
-	    if (c == character(caddar(code)))
+	    if (sym == caddar(code))
 	      {
 		sc->value = sc->T;
 		goto START;
@@ -49844,7 +49962,9 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_CC_X =          assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_X);  
   sc->SAFE_IF_CC_X_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_X_P);  
   sc->SAFE_IF_CC_P =          assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_P);  
+  sc->SAFE_IF_CEQ_P =         assign_internal_syntax(sc, "if",      OP_SAFE_IF_CEQ_P);  
   sc->SAFE_IF_CC_P_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_P_P);  
+  sc->SAFE_IF_CEQ_P_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CEQ_P_P);  
   sc->SAFE_IF_CS_P =          assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P);  
   sc->SAFE_IF_CS_P_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P_P);  
   sc->SAFE_IF_CS_Q_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_Q_P);  
@@ -50676,6 +50796,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 ->  1240
- * bench    52019 -> 11030
- * index    44300 ->  6395
+ * bench    52019 -> 10971
+ * index    44300 ->  6085
  */

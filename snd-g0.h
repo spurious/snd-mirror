@@ -70,12 +70,19 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 /* gtk 3.n changes -- nearly every widget used in Snd has been deprecated...
  */
-#ifndef GTK_IS_VBOX
+#ifdef GTK_IS_FONT_CHOOSER_WIDGET
+/* can't use GTK_IS_VBOX here because it is now always defined, and blathers constantly during compilation */
+#undef GTK_IS_VBOX
 #define GTK_IS_VBOX(Obj) GTK_IS_BOX(Obj)
+#undef GTK_IS_HBOX
 #define GTK_IS_HBOX(Obj) GTK_IS_BOX(Obj)
+#undef GTK_IS_VPANED
 #define GTK_IS_VPANED(Obj) GTK_IS_PANED(Obj)
+#undef GTK_IS_HPANED
 #define GTK_IS_HPANED(Obj) GTK_IS_PANED(Obj)
+#undef GTK_IS_VSCALE
 #define GTK_IS_VSCALE(Obj) GTK_IS_SCALE(Obj)
+#undef GTK_IS_HSCALE
 #define GTK_IS_HSCALE(Obj) GTK_IS_SCALE(Obj)
 
 /* TODO: vbox looks like crap because it doesn't change size when its parent does! -- needs h|vexpand? */
@@ -89,12 +96,11 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define gtk_hpaned_new() gtk_paned_new(GTK_ORIENTATION_HORIZONTAL)
 #define gtk_vseparator_new() gtk_separator_new(GTK_ORIENTATION_VERTICAL)
 #define gtk_hseparator_new() gtk_separator_new(GTK_ORIENTATION_HORIZONTAL)
-#endif
-
-#ifndef GTK_IS_TABLE
 
 /* 3.4: table widget replaced by grid (also box eventually, I think) */
+#undef GTK_TABLE
 #define GTK_TABLE(Obj) GTK_GRID(Obj)
+#undef GTK_IS_TABLE
 #define GTK_IS_TABLE(Obj) GTK_IS_GRID(Obj)
 #define gtk_table_new(Rows, Cols, Homogeneous) gtk_grid_new()
 #define gtk_table_set_homogeneous(Obj, Val) do {gtk_grid_set_row_homogeneous(Obj, Val); gtk_grid_set_column_homogeneous(Obj, Val);} while (0)

@@ -1772,7 +1772,7 @@
 (CCHK "GTK_IS_DIALOG(obj)" "GtkDialog*")
 ;;;;(CFNC "GType gtk_dialog_get_type void")
 (CFNC "GtkWidget* gtk_dialog_new void")
-(CFNC-PA "GtkWidget* gtk_dialog_new_with_buttons gchar* title GtkWindow* @parent GtkDialogFlags flags etc #buttons" 0 10 '("gchar*" "int"))
+;;; in 3.3.4 this is generating a warning (CFNC-PA "GtkWidget* gtk_dialog_new_with_buttons gchar* title GtkWindow* @parent GtkDialogFlags flags etc #buttons" 0 10 '("gchar*" "int"))
 ;;; ... at init arg, then list arg name, min len, max len, step, then types within step 
 (CFNC "void gtk_dialog_add_action_widget GtkDialog* dialog GtkWidget* child gint response_id")
 (CFNC "GtkWidget* gtk_dialog_add_button GtkDialog* dialog gchar* button_text gint response_id")
@@ -3755,7 +3755,7 @@
 (CFNC "AtkObject* gtk_widget_get_accessible GtkWidget* widget")
 (CFNC-gtk2 "void gtk_widget_set_colormap GtkWidget* widget GdkColormap* colormap")
 (CFNC "gint gtk_widget_get_events GtkWidget* widget")
-(CFNC "void gtk_widget_get_pointer GtkWidget* widget gint* [x] gint* [y]")
+(CFNC-gtk2 "void gtk_widget_get_pointer GtkWidget* widget gint* [x] gint* [y]")
 (CFNC "gboolean gtk_widget_is_ancestor GtkWidget* widget GtkWidget* ancestor")
 (CFNC "gboolean gtk_widget_translate_coordinates GtkWidget* src_widget GtkWidget* dest_widget gint src_x gint src_y gint* [dest_x] gint* [dest_y]")
 (CFNC "gboolean gtk_widget_hide_on_delete GtkWidget* widget")
@@ -8313,10 +8313,47 @@
 +   GDK_MODIFIER_INTENT_EXTEND_SELECTION,
 +   GDK_MODIFIER_INTENT_MODIFY_SELECTION,
 +   GDK_MODIFIER_INTENT_NO_TEXT_INPUT
+    GDK_MODIFIER_INTENT_SHIFT_GROUP
 + } GdkModifierIntent;
 
 +   GTK_REGION_ONLY    = 1 << 4,
 (GtkRegionFlags)
+
+
+;;; gtk 3.3.4
+
+(CINT "GDK_WINDOW_STATE_FOCUSED" "GdkWindowState")
+
+!   GTK_STATE_FLAG_WINDOW_UNFOCUSED = 1 << 6
+  } GtkStateFlags;
+ 
++ void gdk_window_begin_resize_drag_for_device (GdkWindow     *window,
++                                               GdkWindowEdge  edge,
++                                               GdkDevice     *device,
++                                               gint           button,
++                                               gint           root_x,
++                                               gint           root_y,
++                                               guint32        timestamp);
++ void gdk_window_begin_move_drag_for_device   (GdkWindow     *window,
++                                               GdkDevice     *device,
++                                               gint           button,
++                                               gint           root_x,
++                                               gint           root_y,
++                                               guint32        timestamp);
++ void gtk_accelerator_parse_with_keycode       (const gchar     *accelerator,
++                                                guint           *accelerator_key,
++                                                guint          **accelerator_codes,
++                                                GdkModifierType *accelerator_mods);
++ gchar*	 gtk_accelerator_name_with_keycode    (GdkDisplay      *display,
++                                                guint            accelerator_key,
++                                                guint            keycode,
++                                                GdkModifierType  accelerator_mods);
++ gchar*   gtk_accelerator_get_label_with_keycode (GdkDisplay      *display,
++                                                  guint            accelerator_key,
++                                                  guint            keycode,
++                                                  GdkModifierType  accelerator_mods);
+
+also GTK_DISABLE_DEPRECATED has been removed
 
 |#
 

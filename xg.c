@@ -523,11 +523,8 @@ XM_TYPE_PTR_1(GtkContainer_, GtkContainer*)
 #define C_TO_XEN_GtkResizeMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkResizeMode(Arg) (GtkResizeMode)(XEN_TO_C_INT(Arg))
 #define XEN_GtkResizeMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkWindow_, GtkWindow*)
-#define XEN_TO_C_GtkDialogFlags(Arg) (GtkDialogFlags)(XEN_TO_C_INT(Arg))
-#define XEN_GtkDialogFlags_P(Arg) XEN_INTEGER_P(Arg)
-#define XEN_etc_P(Arg) (XEN_LIST_P(Arg))
 XM_TYPE_PTR_1(GtkDialog_, GtkDialog*)
+#define XEN_etc_P(Arg) (XEN_LIST_P(Arg))
 #define XEN_TO_C_GtkDestDefaults(Arg) (GtkDestDefaults)(XEN_TO_C_INT(Arg))
 #define XEN_GtkDestDefaults_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkTargetList_, GtkTargetList*)
@@ -643,6 +640,7 @@ XM_TYPE_PTR_1(GtkAllocation_, GtkAllocation*)
 #define XEN_TO_C_GtkDirectionType(Arg) (GtkDirectionType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkDirectionType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_2(AtkObject_, AtkObject*)
+XM_TYPE_PTR(GtkWindow_, GtkWindow*)
 #define C_TO_XEN_GtkWindowType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkWindowType(Arg) (GtkWindowType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkWindowType_P(Arg) XEN_INTEGER_P(Arg)
@@ -5036,40 +5034,6 @@ static XEN gxg_gtk_dialog_new(void)
 {
   #define H_gtk_dialog_new "GtkWidget* gtk_dialog_new( void)"
   return(C_TO_XEN_GtkWidget_(gtk_dialog_new()));
-}
-
-static XEN gxg_gtk_dialog_new_with_buttons(XEN title, XEN parent, XEN flags, XEN buttons)
-{
-  #define H_gtk_dialog_new_with_buttons "GtkWidget* gtk_dialog_new_with_buttons(gchar* title, GtkWindow* parent, \
-GtkDialogFlags flags, etc buttons)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 1, "gtk_dialog_new_with_buttons", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GtkWindow__P(parent) || XEN_FALSE_P(parent), parent, 2, "gtk_dialog_new_with_buttons", "GtkWindow*");
-  XEN_ASSERT_TYPE(XEN_GtkDialogFlags_P(flags), flags, 3, "gtk_dialog_new_with_buttons", "GtkDialogFlags");
-  if (XEN_NOT_BOUND_P(buttons)) buttons = XEN_FALSE; 
-  else XEN_ASSERT_TYPE(XEN_etc_P(buttons), buttons, 4, "gtk_dialog_new_with_buttons", "etc");
-  {
-    int etc_len = 0;
-    GtkWidget* result = NULL;
-    gchar* p_arg0;
-    GtkWindow* p_arg1;
-    GtkDialogFlags p_arg2;
-    if (XEN_LIST_P(buttons)) etc_len = XEN_LIST_LENGTH(buttons);
-    if (etc_len > 10) XEN_OUT_OF_RANGE_ERROR("gtk_dialog_new_with_buttons", 3, buttons, "... list too long (max len: 10)");
-    if ((etc_len % 2) != 0) XEN_OUT_OF_RANGE_ERROR("gtk_dialog_new_with_buttons", 3, buttons, "... list len must be multiple of 2");
-    p_arg0 = XEN_TO_C_gchar_(title);
-    p_arg1 = XEN_TO_C_GtkWindow_(parent);
-    p_arg2 = XEN_TO_C_GtkDialogFlags(flags);
-    switch (etc_len)
-      {
-        case 0: result = gtk_dialog_new_with_buttons(p_arg0, p_arg1, p_arg2, NULL); break;
-        case 2: result = gtk_dialog_new_with_buttons(p_arg0, p_arg1, p_arg2, XLS(buttons, 0), XLI(buttons, 1), NULL); break;
-        case 4: result = gtk_dialog_new_with_buttons(p_arg0, p_arg1, p_arg2, XLS(buttons, 0), XLI(buttons, 1), XLS(buttons, 2), XLI(buttons, 3), NULL); break;
-        case 6: result = gtk_dialog_new_with_buttons(p_arg0, p_arg1, p_arg2, XLS(buttons, 0), XLI(buttons, 1), XLS(buttons, 2), XLI(buttons, 3), XLS(buttons, 4), XLI(buttons, 5), NULL); break;
-        case 8: result = gtk_dialog_new_with_buttons(p_arg0, p_arg1, p_arg2, XLS(buttons, 0), XLI(buttons, 1), XLS(buttons, 2), XLI(buttons, 3), XLS(buttons, 4), XLI(buttons, 5), XLS(buttons, 6), XLI(buttons, 7), NULL); break;
-        case 10: result = gtk_dialog_new_with_buttons(p_arg0, p_arg1, p_arg2, XLS(buttons, 0), XLI(buttons, 1), XLS(buttons, 2), XLI(buttons, 3), XLS(buttons, 4), XLI(buttons, 5), XLS(buttons, 6), XLI(buttons, 7), XLS(buttons, 8), XLI(buttons, 9), NULL); break;
-      }
-    return(C_TO_XEN_GtkWidget_(result));
-  }
 }
 
 static XEN gxg_gtk_dialog_add_action_widget(XEN dialog, XEN child, XEN response_id)
@@ -13292,16 +13256,6 @@ static XEN gxg_gtk_widget_get_events(XEN widget)
   #define H_gtk_widget_get_events "gint gtk_widget_get_events(GtkWidget* widget)"
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_events", "GtkWidget*");
   return(C_TO_XEN_gint(gtk_widget_get_events(XEN_TO_C_GtkWidget_(widget))));
-}
-
-static XEN gxg_gtk_widget_get_pointer(XEN widget, XEN ignore_x, XEN ignore_y)
-{
-  #define H_gtk_widget_get_pointer "void gtk_widget_get_pointer(GtkWidget* widget, gint* [x], gint* [y])"
-  gint ref_x;
-  gint ref_y;
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_pointer", "GtkWidget*");
-  gtk_widget_get_pointer(XEN_TO_C_GtkWidget_(widget), &ref_x, &ref_y);
-  return(XEN_LIST_2(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y)));
 }
 
 static XEN gxg_gtk_widget_is_ancestor(XEN widget, XEN ancestor)
@@ -31595,6 +31549,16 @@ static XEN gxg_gtk_widget_set_colormap(XEN widget, XEN colormap)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_widget_get_pointer(XEN widget, XEN ignore_x, XEN ignore_y)
+{
+  #define H_gtk_widget_get_pointer "void gtk_widget_get_pointer(GtkWidget* widget, gint* [x], gint* [y])"
+  gint ref_x;
+  gint ref_y;
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_pointer", "GtkWidget*");
+  gtk_widget_get_pointer(XEN_TO_C_GtkWidget_(widget), &ref_x, &ref_y);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_x), C_TO_XEN_gint(ref_y)));
+}
+
 static XEN gxg_gtk_widget_set_style(XEN widget, XEN style)
 {
   #define H_gtk_widget_set_style "void gtk_widget_set_style(GtkWidget* widget, GtkStyle* style)"
@@ -35538,7 +35502,6 @@ XEN_NARGIFY_1(gxg_gtk_container_check_resize_w, gxg_gtk_container_check_resize)
 XEN_ARGIFY_3(gxg_gtk_container_foreach_w, gxg_gtk_container_foreach)
 XEN_NARGIFY_1(gxg_gtk_container_get_children_w, gxg_gtk_container_get_children)
 XEN_NARGIFY_0(gxg_gtk_dialog_new_w, gxg_gtk_dialog_new)
-XEN_ARGIFY_4(gxg_gtk_dialog_new_with_buttons_w, gxg_gtk_dialog_new_with_buttons)
 XEN_NARGIFY_3(gxg_gtk_dialog_add_action_widget_w, gxg_gtk_dialog_add_action_widget)
 XEN_NARGIFY_3(gxg_gtk_dialog_add_button_w, gxg_gtk_dialog_add_button)
 XEN_NARGIFY_2(gxg_gtk_dialog_add_buttons_w, gxg_gtk_dialog_add_buttons)
@@ -36413,7 +36376,6 @@ XEN_NARGIFY_1(gxg_gtk_widget_get_visual_w, gxg_gtk_widget_get_visual)
 XEN_NARGIFY_1(gxg_gtk_widget_get_settings_w, gxg_gtk_widget_get_settings)
 XEN_NARGIFY_1(gxg_gtk_widget_get_accessible_w, gxg_gtk_widget_get_accessible)
 XEN_NARGIFY_1(gxg_gtk_widget_get_events_w, gxg_gtk_widget_get_events)
-XEN_ARGIFY_3(gxg_gtk_widget_get_pointer_w, gxg_gtk_widget_get_pointer)
 XEN_NARGIFY_2(gxg_gtk_widget_is_ancestor_w, gxg_gtk_widget_is_ancestor)
 XEN_ARGIFY_6(gxg_gtk_widget_translate_coordinates_w, gxg_gtk_widget_translate_coordinates)
 XEN_NARGIFY_1(gxg_gtk_widget_hide_on_delete_w, gxg_gtk_widget_hide_on_delete)
@@ -38474,6 +38436,7 @@ XEN_NARGIFY_2(gxg_gtk_widget_size_request_w, gxg_gtk_widget_size_request)
 XEN_NARGIFY_2(gxg_gtk_widget_get_child_requisition_w, gxg_gtk_widget_get_child_requisition)
 XEN_NARGIFY_1(gxg_gtk_widget_get_colormap_w, gxg_gtk_widget_get_colormap)
 XEN_NARGIFY_2(gxg_gtk_widget_set_colormap_w, gxg_gtk_widget_set_colormap)
+XEN_ARGIFY_3(gxg_gtk_widget_get_pointer_w, gxg_gtk_widget_get_pointer)
 XEN_NARGIFY_2(gxg_gtk_widget_set_style_w, gxg_gtk_widget_set_style)
 XEN_NARGIFY_1(gxg_gtk_widget_ensure_style_w, gxg_gtk_widget_ensure_style)
 XEN_NARGIFY_1(gxg_gtk_widget_get_style_w, gxg_gtk_widget_get_style)
@@ -39566,7 +39529,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_container_foreach_w gxg_gtk_container_foreach
 #define gxg_gtk_container_get_children_w gxg_gtk_container_get_children
 #define gxg_gtk_dialog_new_w gxg_gtk_dialog_new
-#define gxg_gtk_dialog_new_with_buttons_w gxg_gtk_dialog_new_with_buttons
 #define gxg_gtk_dialog_add_action_widget_w gxg_gtk_dialog_add_action_widget
 #define gxg_gtk_dialog_add_button_w gxg_gtk_dialog_add_button
 #define gxg_gtk_dialog_add_buttons_w gxg_gtk_dialog_add_buttons
@@ -40441,7 +40403,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_widget_get_settings_w gxg_gtk_widget_get_settings
 #define gxg_gtk_widget_get_accessible_w gxg_gtk_widget_get_accessible
 #define gxg_gtk_widget_get_events_w gxg_gtk_widget_get_events
-#define gxg_gtk_widget_get_pointer_w gxg_gtk_widget_get_pointer
 #define gxg_gtk_widget_is_ancestor_w gxg_gtk_widget_is_ancestor
 #define gxg_gtk_widget_translate_coordinates_w gxg_gtk_widget_translate_coordinates
 #define gxg_gtk_widget_hide_on_delete_w gxg_gtk_widget_hide_on_delete
@@ -42502,6 +42463,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_widget_get_child_requisition_w gxg_gtk_widget_get_child_requisition
 #define gxg_gtk_widget_get_colormap_w gxg_gtk_widget_get_colormap
 #define gxg_gtk_widget_set_colormap_w gxg_gtk_widget_set_colormap
+#define gxg_gtk_widget_get_pointer_w gxg_gtk_widget_get_pointer
 #define gxg_gtk_widget_set_style_w gxg_gtk_widget_set_style
 #define gxg_gtk_widget_ensure_style_w gxg_gtk_widget_ensure_style
 #define gxg_gtk_widget_get_style_w gxg_gtk_widget_get_style
@@ -43601,7 +43563,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_container_foreach, gxg_gtk_container_foreach_w, 2, 1, 0, H_gtk_container_foreach);
   XG_DEFINE_PROCEDURE(gtk_container_get_children, gxg_gtk_container_get_children_w, 1, 0, 0, H_gtk_container_get_children);
   XG_DEFINE_PROCEDURE(gtk_dialog_new, gxg_gtk_dialog_new_w, 0, 0, 0, H_gtk_dialog_new);
-  XG_DEFINE_PROCEDURE(gtk_dialog_new_with_buttons, gxg_gtk_dialog_new_with_buttons_w, 3, 1, 0, H_gtk_dialog_new_with_buttons);
   XG_DEFINE_PROCEDURE(gtk_dialog_add_action_widget, gxg_gtk_dialog_add_action_widget_w, 3, 0, 0, H_gtk_dialog_add_action_widget);
   XG_DEFINE_PROCEDURE(gtk_dialog_add_button, gxg_gtk_dialog_add_button_w, 3, 0, 0, H_gtk_dialog_add_button);
   XG_DEFINE_PROCEDURE(gtk_dialog_add_buttons, gxg_gtk_dialog_add_buttons_w, 2, 0, 0, H_gtk_dialog_add_buttons);
@@ -44476,7 +44437,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_settings, gxg_gtk_widget_get_settings_w, 1, 0, 0, H_gtk_widget_get_settings);
   XG_DEFINE_PROCEDURE(gtk_widget_get_accessible, gxg_gtk_widget_get_accessible_w, 1, 0, 0, H_gtk_widget_get_accessible);
   XG_DEFINE_PROCEDURE(gtk_widget_get_events, gxg_gtk_widget_get_events_w, 1, 0, 0, H_gtk_widget_get_events);
-  XG_DEFINE_PROCEDURE(gtk_widget_get_pointer, gxg_gtk_widget_get_pointer_w, 1, 2, 0, H_gtk_widget_get_pointer);
   XG_DEFINE_PROCEDURE(gtk_widget_is_ancestor, gxg_gtk_widget_is_ancestor_w, 2, 0, 0, H_gtk_widget_is_ancestor);
   XG_DEFINE_PROCEDURE(gtk_widget_translate_coordinates, gxg_gtk_widget_translate_coordinates_w, 4, 2, 0, H_gtk_widget_translate_coordinates);
   XG_DEFINE_PROCEDURE(gtk_widget_hide_on_delete, gxg_gtk_widget_hide_on_delete_w, 1, 0, 0, H_gtk_widget_hide_on_delete);
@@ -46537,6 +46497,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_child_requisition, gxg_gtk_widget_get_child_requisition_w, 2, 0, 0, H_gtk_widget_get_child_requisition);
   XG_DEFINE_PROCEDURE(gtk_widget_get_colormap, gxg_gtk_widget_get_colormap_w, 1, 0, 0, H_gtk_widget_get_colormap);
   XG_DEFINE_PROCEDURE(gtk_widget_set_colormap, gxg_gtk_widget_set_colormap_w, 2, 0, 0, H_gtk_widget_set_colormap);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_pointer, gxg_gtk_widget_get_pointer_w, 1, 2, 0, H_gtk_widget_get_pointer);
   XG_DEFINE_PROCEDURE(gtk_widget_set_style, gxg_gtk_widget_set_style_w, 2, 0, 0, H_gtk_widget_set_style);
   XG_DEFINE_PROCEDURE(gtk_widget_ensure_style, gxg_gtk_widget_ensure_style_w, 1, 0, 0, H_gtk_widget_ensure_style);
   XG_DEFINE_PROCEDURE(gtk_widget_get_style, gxg_gtk_widget_get_style_w, 1, 0, 0, H_gtk_widget_get_style);
@@ -49029,7 +48990,7 @@ void Init_libxg(void)
       #else
         XEN_YES_WE_HAVE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("25-Oct-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Nov-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
