@@ -266,6 +266,8 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
 
 static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
 {
+  /* TODO: if the only path to this is through object_set, the type check is unneeded
+   */
   return(g_vct_set(obj, XEN_CAR(args), XEN_CADR(args)));
 }
 

@@ -3370,7 +3370,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
     slot_symbol(_slot_) = Symbol;\
     symbol_id(slot_symbol(_slot_)) = frame_id(Frame);	\
     local_slot(slot_symbol(_slot_)) = _slot_;\
-    slot_value(_slot_) = Value;\
+    slot_set_value(_slot_, Value);	\
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
     environment_slots(Frame) = _slot_;\
@@ -3392,7 +3392,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
       slot_symbol(_slot_) = Symbol;\
       symbol_id(slot_symbol(_slot_)) = frame_number;	\
       local_slot(slot_symbol(_slot_)) = _slot_;\
-      slot_value(_slot_) = Value;\
+      slot_set_value(_slot_, Value);	\
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
       environment_slots(_x_) = _slot_;\
@@ -3405,7 +3405,7 @@ static s7_pointer permanent_slot(s7_pointer symbol, s7_pointer value)
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
   slot_symbol(x) = symbol;
-  slot_value(x) = value;
+  slot_set_value(x, value);
   set_type(x, T_SLOT | T_IMMUTABLE);
   return(x);
 }
@@ -3467,7 +3467,7 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
 
       NEW_CELL(sc, slot);
       slot_symbol(slot) = variable;
-      slot_value(slot) = value;
+      slot_set_value(slot, value);
       set_type(slot, T_SLOT | T_IMMUTABLE);
       next_slot(slot) = environment_slots(env);
       environment_slots(env) = slot;
@@ -3488,7 +3488,7 @@ static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value)
 
   NEW_CELL(sc, y);
   slot_symbol(y) = variable;
-  slot_value(y) = value;
+  slot_set_value(y, value);
   set_type(y, T_SLOT | T_IMMUTABLE);
   next_slot(y) = environment_slots(sc->envir);
   environment_slots(sc->envir) = y;
@@ -5125,6 +5125,8 @@ s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error)
 }
 
 
+
+#if (!WITH_GCC)
 static s7_Double num_to_real(s7_num_t n)
 {
   if (n.type >= NUM_REAL)
@@ -5133,6 +5135,9 @@ static s7_Double num_to_real(s7_num_t n)
     return((s7_Double)integer(n));
   return(fraction(n));
 }
+#else
+#define num_to_real(_n_) ({ s7_num_t N; N = _n_; ((N.type >= NUM_REAL) ? real(N) : ((N.type == NUM_INT) ? ((s7_Double)integer(N)) : (s7_Double)(fraction(N)))); })
+#endif
 
 
 static s7_Int num_to_numerator(s7_num_t n)
@@ -8982,7 +8987,6 @@ static s7_pointer add_ratios(s7_scheme *sc, s7_num_t a, s7_num_t b)
 	  ((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
 	  ((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
 	return(s7_make_real(sc, ((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2)));
-      return(s7_make_ratio(sc, n1 * d2 + n2 * d1, d1 * d2));
     }
   return(s7_make_ratio(sc, n1 * d2 + n2 * d1, d1 * d2));
 }
@@ -9587,7 +9591,6 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 
 #if WITH_OPTIMIZATION
 static s7_pointer multiply_2, multiply_i2, multiply_f2;
-
 static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
@@ -9736,7 +9739,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
   if (is_null(cdr(args)))
     {
       if (s7_is_zero(car(args)))
-	return(division_by_zero_error(sc, "/", car(args)));
+	return(division_by_zero_error(sc, "/", args));
       return(s7_invert(sc, car(args)));
     }
 #endif
@@ -9753,7 +9756,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 #endif
 
       if (s7_is_zero(car(x)))
-	return(division_by_zero_error(sc, "/", car(x)));
+	return(division_by_zero_error(sc, "/", args));
       /* to be consistent, I suppose we should search first for NaNs in the divisor list.
        *   (* 0 0/0) is NaN, so (/ 1 0 0/0) should equal (/ 1 0/0) = NaN.  But the whole
        *   thing is ridiculous.
@@ -12936,28 +12939,6 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if WITH_OPTIMIZATION
-static bool scheme_strequal(s7_pointer s1, s7_pointer s2)
-{
-  int i, len, len2;
-  char *str1, *str2;
-
-  len = string_length(s1);
-  len2 = string_length(s2);
-  if (len != len2) return(false);
-
-  str1 = string_value(s1);
-  str2 = string_value(s2);
-
-  for (i = 0; i < len; i++)
-    if ((unsigned char)(str1[i]) != (unsigned char )(str2[i]))
-      return(false);
-
-  return(true);
-}
-#endif
-
-
 static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
 {
   /* tricky here because str[i] must be treated as unsigned
@@ -13039,14 +13020,9 @@ static bool scheme_strings_are_equal(s7_pointer x, s7_pointer y)
   char *xstr, *ystr;
   unsigned int i, len;
 
-  if (x == y)
-    return(true);
-
   len = string_length(x);
   if (string_length(y) != len) 
     return(false);
-  if (len == 0)
-    return(true);
 
   xstr = string_value(x);
   ystr = string_value(y);
@@ -13144,7 +13120,7 @@ static s7_pointer g_string_equal_s_ic(s7_scheme *sc, s7_pointer args)
 {
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string=?", 1, car(args), "a string"));
-  return(make_boolean(sc, scheme_strequal(car(args), cadr(args))));
+  return(make_boolean(sc, scheme_strings_are_equal(car(args), cadr(args))));
 }
 
 static s7_pointer g_string_equal_vref_s(s7_scheme *sc, s7_pointer args)
@@ -13172,7 +13148,7 @@ static s7_pointer g_string_equal_vref_s(s7_scheme *sc, s7_pointer args)
   target = finder(sc, cadr(args));
   if (!s7_is_string(target))
     return(s7_wrong_type_arg_error(sc, "string=?", 2, target, "a string"));
-  return(make_boolean(sc, scheme_strequal(vstr, target)));
+  return(make_boolean(sc, scheme_strings_are_equal(vstr, target)));
 }
 
 static s7_pointer g_string_equal_2(s7_scheme *sc, s7_pointer args)
@@ -13181,7 +13157,7 @@ static s7_pointer g_string_equal_2(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string=?", 1, car(args), "a string"));
   if (!s7_is_string(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "string=?", 2, cadr(args), "a string"));
-  return(make_boolean(sc, scheme_strequal(car(args), cadr(args))));
+  return(make_boolean(sc, scheme_strings_are_equal(car(args), cadr(args))));
 }
 
 
@@ -27527,7 +27503,7 @@ static s7_pointer lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, 
 				   make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
 				   closure_name(sc, sc->code), sc->y, sc->args)));
 	  }
-	slot_value(x) = val;
+	slot_set_value(x, val);
 	return(val);
       }
   return(sc->NO_VALUE);
@@ -27645,7 +27621,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 				      if (is_not_checked(x))
 					{
 					  set_checked(x);
-					  slot_value(x) = car(sc->y);
+					  slot_set_value(x, car(sc->y));
 					}
 				      else 
 					{
@@ -28298,6 +28274,9 @@ static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int args, 
 
 static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  /* fprintf(stderr, "add %s\n", DISPLAY(expr)); */
+  /* (+ s f) (+ (* s s) s) (+ s s) (+ s (* s s))
+   */
   if (args == 1)
     return(add_1);
 
@@ -28332,9 +28311,11 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
     {
       if (caddr(expr) == small_int(2))
 	return(multiply_i2);
+
       if ((s7_is_real(caddr(expr))) &&
 	  (s7_real(caddr(expr)) == 2.0))
 	return(multiply_f2);
+
       return(multiply_2);
     }
   return(f);
@@ -34875,7 +34856,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, OP_SAFE_FOR_EACH, cdr(sc->args), sc->code);
 
 	  x = environment_slots(env);
-	  slot_value(x) = arg;
+	  slot_set_value(x, arg);
 	  symbol_id(slot_symbol(x)) = id;
 	  local_slot(slot_symbol(x)) = x;
 	  sc->envir = env;
@@ -35083,7 +35064,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    lets = ecdr(cadar(lets));
 		    
 		  SIMPLE_DOTIMES_LOOP:
-		    slot_value(p) = c_function_call(lets)(sc, let_var);
+		    slot_set_value(p, c_function_call(lets)(sc, let_var));
 		    c_function_call(func)(sc, body);
 		    numerator(number(stepper))++;
 		    if (numerator(number(stepper)) == denominator(number(stepper)))
@@ -35313,7 +35294,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer slot;
 	    NEW_CELL_NO_CHECK(sc, slot);
 	    slot_symbol(slot) = end;
-	    slot_value(slot) = end;
+	    slot_set_value(slot, end);
 	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), slot);
 	  }
@@ -35382,7 +35363,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer slot;
 	    NEW_CELL_NO_CHECK(sc, slot);
 	    slot_symbol(slot) = end;
-	    slot_value(slot) = end;
+	    slot_set_value(slot, end);
 	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), slot);
 	  }
@@ -35446,7 +35427,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer slot;
 	    NEW_CELL_NO_CHECK(sc, slot);
 	    slot_symbol(slot) = end;
-	    slot_value(slot) = end;
+	    slot_set_value(slot, end);
 	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), slot);
 	  }
@@ -35504,7 +35485,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    NEW_CELL_NO_CHECK(sc, slot);	
 	    slot_symbol(slot) = caar(vars);
-	    slot_value(slot) = init_dox_eval(sc, cadar(vars));
+	    slot_set_value(slot, init_dox_eval(sc, cadar(vars)));
 	    slot_expression(slot) = cddar(vars);
 	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    next_slot(slot) = environment_slots(frame);
@@ -35530,7 +35511,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else slot_pending_value(slot) = slot_value(slot);
 	    }
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
-	    slot_value(slot) = slot_pending_value(slot);
+	    slot_set_value(slot, slot_pending_value(slot));
 	}
 
       DOX_END:
@@ -35737,10 +35718,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer old_value;
 		old_value = sc->value;
-		slot_value(y) = call_symbol_bind(sc, sym, val); /* this might change sc->value */
+		slot_set_value(y, call_symbol_bind(sc, sym, val)); /* this might change sc->value */
 		sc->value = old_value;
 	      }
-	    else slot_value(y) = val;
+	    else slot_set_value(y, val);
 
 	    /* PERHAPS: var access checks during the step section? 
 	     *
@@ -35991,23 +35972,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case HOP_SAFE_CLOSURE_S:
 		  /* since a tail call is safe, we can't change the current env's frame_id until
-		   *   after we do this lookup -- it might be the current func's arg, and we're
+		   *   after we do the lookup -- it might be the current func's arg, and we're
 		   *   about to call the same func.
 		   */
 		  {
 		    s7_pointer env, x;
+
 		    env = closure_environment(ecdr(code));
 		    x = environment_slots(env);
-		    slot_value(x) = finder(sc, fcdr(code));
-		    if (is_tail_call(code))
-		      {
-		      }
-		    else
-		      {
+		    slot_set_value(x, finder(sc, fcdr(code)));
+
 		    frame_id(env) = ++frame_number;
 		    symbol_id(slot_symbol(x)) = frame_number;
 		    local_slot(slot_symbol(x)) = x;
-		      }
 		    sc->envir = env;
 		    sc->code = closure_body(ecdr(code));
 		    if (is_one_liner(sc->code))
@@ -36075,7 +36052,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    env = closure_environment(ecdr(code));
 		    frame_id(env) = ++frame_number;
 		    x = environment_slots(env);
-		    slot_value(x) = sc->value;
+		    slot_set_value(x, sc->value);
 		    symbol_id(slot_symbol(x)) = frame_number;
 		    local_slot(slot_symbol(x)) = x;
 		    sc->envir = env;
@@ -36111,12 +36088,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    frame_id(env) = id;
 		    
 		    x = environment_slots(env);
-		    slot_value(x) = car(sc->T2_1);
+		    slot_set_value(x, car(sc->T2_1));
 		    symbol_id(slot_symbol(x)) = id;
 		    local_slot(slot_symbol(x)) = x; /* this is not redundant */
 		    
 		    x = next_slot(x);
-		    slot_value(x) = car(sc->T2_2);
+		    slot_set_value(x, car(sc->T2_2));
 		    symbol_id(slot_symbol(x)) = id;
 		    local_slot(slot_symbol(x)) = x; 
 		    
@@ -36235,7 +36212,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    
 		    for (x = environment_slots(env), z = sc->args; is_slot(x); x = next_slot(x), z = cdr(z))
 		      {
-			slot_value(x) = car(z);
+			slot_set_value(x, car(z));
 			symbol_id(slot_symbol(x)) = id;
 			local_slot(slot_symbol(x)) = x;
 		      }
@@ -36478,8 +36455,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    symbol_id(sym) = frame_number;	
 		    local_slot(sym) = slot;
 		    if (symbol_has_accessor(sym))
-		      slot_value(slot) = call_symbol_bind(sc, sym, sc->value);
-		    else slot_value(slot) = sc->value;
+		      slot_set_value(slot, call_symbol_bind(sc, sym, sc->value));
+		    else slot_set_value(slot, sc->value);
 		    set_type(slot, T_SLOT | T_IMMUTABLE);
 		    next_slot(slot) = sc->NIL;
 		    environment_slots(frame) = slot;
@@ -36545,8 +36522,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    symbol_id(sym) = frame_number;	
 		    local_slot(sym) = slot1;
 		    if (symbol_has_accessor(sym))
-		      slot_value(slot1) = call_symbol_bind(sc, sym, val);
-		    else slot_value(slot1) = val;
+		      slot_set_value(slot1, call_symbol_bind(sc, sym, val));
+		    else slot_set_value(slot1, val);
 		    set_type(slot1, T_SLOT | T_IMMUTABLE);
 		    environment_slots(frame) = slot1;
 		    
@@ -36571,8 +36548,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			symbol_id(sym) = frame_number;	
 			local_slot(sym) = slot2;
 			if (symbol_has_accessor(sym))
-			  slot_value(slot2) = call_symbol_bind(sc, sym, val);
-			else slot_value(slot2) = val;
+			  slot_set_value(slot2, call_symbol_bind(sc, sym, val));
+			else slot_set_value(slot2, val);
 			set_type(slot2, T_SLOT | T_IMMUTABLE);
 			next_slot(slot2) = sc->NIL;
 			next_slot(slot1) = slot2;
@@ -36718,8 +36695,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			symbol_id(sym) = id;
 			local_slot(sym) = z;
 			if (symbol_has_accessor(sym))
-			  slot_value(z) = call_symbol_bind(sc, sym, val);
-			else slot_value(z) = val;
+			  slot_set_value(z, call_symbol_bind(sc, sym, val));
+			else slot_set_value(z, val);
 			set_type(z, T_SLOT | T_IMMUTABLE);
 			next_slot(z) = environment_slots(e);
 			environment_slots(e) = z;
@@ -36920,15 +36897,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    args = closure_args(code);
 		    if (is_pair(args))
 		      {
-			slot_value(slot) = sc->value;
+			slot_set_value(slot, sc->value);
 			args = cdr(args);
 			if (!is_null(args))
 			  {
 			    slot = next_slot(slot);
-			    slot_value(slot) = sc->NIL;
+			    slot_set_value(slot, sc->NIL);
 			  }
 		      }
-		    else slot_value(slot) = list_1(sc, sc->value);
+		    else slot_set_value(slot, list_1(sc, sc->value));
 		    next_slot(slot) = sc->NIL;
 		    
 		    sc->code = closure_body(code);
@@ -37023,26 +37000,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  fprintf(stderr, "not reversed: %s\n", DISPLAY(code));
 			*/
 
-			slot_value(slot) = car((reversed) ? sc->T2_2 : sc->T2_1);
-			/* fprintf(stderr, "%s\n", DISPLAY(slot)); */
-
+			slot_set_value(slot, car((reversed) ? sc->T2_2 : sc->T2_1));
 			slot = next_slot(slot);
 			args = cdr(args);
 			if (is_pair(args))
-			  slot_value(slot) = car((reversed) ? sc->T2_1 : sc->T2_2);
-			else slot_value(slot) = list_1(sc, car((reversed) ? sc->T2_1: sc->T2_2));
-			/* fprintf(stderr, "%s\n", DISPLAY(slot)); */
+			  slot_set_value(slot, car((reversed) ? sc->T2_1 : sc->T2_2));
+			else slot_set_value(slot, list_1(sc, car((reversed) ? sc->T2_1: sc->T2_2)));
 
 			args = cdr(args);
 			if (!is_null(args))
 			  {
 			    slot = next_slot(slot);
-			    slot_value(slot) = sc->NIL;
+			    slot_set_value(slot, sc->NIL);
 			  }
 		      }
 		    else 
 		      {
-			slot_value(slot) = list_2(sc, car(sc->T2_1), car(sc->T2_2));
+			slot_set_value(slot, list_2(sc, car(sc->T2_1), car(sc->T2_2)));
 		      }
 		    next_slot(slot) = sc->NIL;
 		    
@@ -40592,7 +40566,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    return(s7_error(sc, 
 				    sc->WRONG_NUMBER_OF_ARGS, 
 				    list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
-		  slot_value(x) = car(z);
+		  slot_set_value(x, car(z));
 		  symbol_id(slot_symbol(x)) = id;
 		  local_slot(slot_symbol(x)) = x;
 		}
@@ -40683,8 +40657,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		symbol_id(sym) = id;
 		local_slot(sym) = z;
 		if (symbol_has_accessor(sym))
-		  slot_value(z) = call_symbol_bind(sc, sym, val);
-		else slot_value(z) = val;
+		  slot_set_value(z, call_symbol_bind(sc, sym, val));
+		else slot_set_value(z, val);
 		set_type(z, T_SLOT | T_IMMUTABLE);
 		next_slot(z) = environment_slots(e);
 		environment_slots(e) = z;
@@ -41068,7 +41042,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      slot_symbol(y) = sc->__FUNC__;
 	      symbol_id(slot_symbol(y)) = frame_id(x);
 	      local_slot(slot_symbol(y)) = y;
-	      slot_value(y) = sc->x;
+	      slot_set_value(y, sc->x);
 	      set_type(y, T_SLOT | T_IMMUTABLE);
 	      next_slot(y) = sc->NIL;
 	      environment_slots(x) = y;
@@ -43109,8 +43083,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  slot_symbol(y) = sym;
 		  if (symbol_has_accessor(sym))
-		    slot_value(y) = call_symbol_bind(sc, sym, val);
-		  else slot_value(y) = val;
+		    slot_set_value(y, call_symbol_bind(sc, sym, val));
+		  else slot_set_value(y, val);
 		  set_type(y, T_SLOT | T_IMMUTABLE);
 		  next_slot(y) = environment_slots(sc->envir);
 		  environment_slots(sc->envir) = y;
@@ -43142,8 +43116,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  symbol_id(sym) = id;
 		  local_slot(sym) = y;
 		  if (symbol_has_accessor(sym))
-		    slot_value(y) = call_symbol_bind(sc, sym, val);
-		  else slot_value(y) = val;
+		    slot_set_value(y, call_symbol_bind(sc, sym, val));
+		  else slot_set_value(y, val);
 		  set_type(y, T_SLOT | T_IMMUTABLE);
 		  next_slot(y) = environment_slots(e);
 		  environment_slots(e) = y;
@@ -43206,8 +43180,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	symbol_id(slot_symbol(y)) = frame_id(x);
 	local_slot(slot_symbol(y)) = y;
 	if (symbol_has_accessor(slot_symbol(y)))
-	  slot_value(y) = call_symbol_bind(sc, slot_symbol(y), sc->value);
-	else slot_value(y) = sc->value;
+	  slot_set_value(y, call_symbol_bind(sc, slot_symbol(y), sc->value));
+	else slot_set_value(y, sc->value);
 	set_type(y, T_SLOT | T_IMMUTABLE);
 	next_slot(y) = sc->NIL;
 	environment_slots(x) = y;

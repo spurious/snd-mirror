@@ -8230,34 +8230,38 @@ static XEN g_copy_sampler(XEN obj)
 }
 
 
-static snd_fd *xen_to_any_sampler(XEN obj)
-{
-  if (XEN_MIX_P(obj))
-    return(xen_mix_to_snd_fd(obj));
-  return(XEN_TO_SAMPLER(obj));
-}
-
-
 static XEN g_next_sample(XEN obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_next_sample, "a sampler");
-  return(C_TO_XEN_DOUBLE(protected_next_sample(xen_to_any_sampler(obj))));
+
+  if (SAMPLER_P(obj))
+    return(C_TO_XEN_DOUBLE(protected_next_sample((snd_fd *)XEN_OBJECT_REF(obj))));
+  if (mix_sampler_p(obj))
+    return(C_TO_XEN_DOUBLE(protected_next_sample(xen_mix_to_snd_fd(obj))));
+
+  XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_next_sample, "a sampler");
+  return(XEN_ZERO);
 }
 
 
 static XEN g_read_sample(XEN obj)
 {
   #define H_read_sample "(" S_read_sample " reader): read sample from reader"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_read_sample, "a sampler");
-  return(C_TO_XEN_DOUBLE(read_sample(xen_to_any_sampler(obj))));
+  if (SAMPLER_P(obj))
+    return(C_TO_XEN_DOUBLE(read_sample((snd_fd *)XEN_OBJECT_REF(obj))));
+  if (mix_sampler_p(obj))
+    return(C_TO_XEN_DOUBLE(read_sample(xen_mix_to_snd_fd(obj))));
+
+  XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_read_sample, "a sampler");
+  return(XEN_ZERO);
 }
 
 
 #if HAVE_SCHEME
 static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
 {
-  return(g_read_sample(obj));
+  /* we can only get here if obj is already known to be a sampler */
+  return(C_TO_XEN_DOUBLE(read_sample((snd_fd *)XEN_OBJECT_REF(obj))));
 }
 #endif
 
@@ -8265,8 +8269,13 @@ static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
 static XEN g_previous_sample(XEN obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader): previous sample from reader"
-  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_previous_sample, "a sampler");
-  return(C_TO_XEN_DOUBLE(protected_previous_sample(xen_to_any_sampler(obj))));
+  if (SAMPLER_P(obj))
+    return(C_TO_XEN_DOUBLE(protected_previous_sample((snd_fd *)XEN_OBJECT_REF(obj))));
+  if (mix_sampler_p(obj))
+    return(C_TO_XEN_DOUBLE(protected_previous_sample(xen_mix_to_snd_fd(obj))));
+
+  XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_previous_sample, "a sampler");
+  return(XEN_ZERO);
 }
 
 

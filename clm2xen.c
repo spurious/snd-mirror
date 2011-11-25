@@ -6611,6 +6611,8 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
 
 /* ---------------- src ---------------- */
 
+static XEN xen_one, xen_minus_one;
+
 static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
   /* if this is called, it's a callback from C, where ptr is a mus_xen object whose vcts[0]
@@ -6631,7 +6633,7 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
       (gn->vcts) && 
       (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
       (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
-    return(XEN_TO_C_DOUBLE_OR_ELSE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_XEN_INT(direction)), 0.0));
+    return(XEN_TO_C_DOUBLE_OR_ELSE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one), 0.0));
   /* the "or else" is crucial here -- this can be called unprotected in clm.c make_src during setup, and
    *   an uncaught error there clobbers our local error chain.
    */
@@ -12050,6 +12052,10 @@ static void mus_xen_init(void)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #endif
 
+  xen_one = C_TO_XEN_INT(1);
+  XEN_PROTECT_FROM_GC(xen_one);
+  xen_minus_one = C_TO_XEN_INT(-1);
+  XEN_PROTECT_FROM_GC(xen_minus_one);
 
 #if HAVE_FORTH
   fth_set_object_inspect(mus_xen_tag, print_mus_xen);

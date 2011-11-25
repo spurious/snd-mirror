@@ -21781,7 +21781,7 @@ abs     1       2
 	 (descr (cadr val))
 	 (cur-info *error-info*))
     (test tag 'division-by-zero)
-    (test descr '("~A: division by zero, ~A" "/" 0.0)) ; this changes...
+    (test descr '("~A: division by zero, ~A" "/" (1 0.0))) ; this changes...
     (test (vector? cur-info) #t)
     (test (> (length cur-info) 5) #t)
     (test tag (cur-info 0))
@@ -56695,6 +56695,15 @@ but it's the printout that is at fault:
 (test (+ 1 2 . 3) 'error)
 (test (+ 1 . 2) 'error)
 
+;;; an optimizer test
+(let ()
+  (define (hi a b c)
+    (+ (+ 1 (* 2 b))
+       (+ a (* b c))
+       (+ (* a b) c)
+       (+ (* a 3) 4)))
+  (num-test (hi 5 6 7) 116))
+  
 
 
 ;;; --------------------------------------------------------------------------------

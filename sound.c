@@ -254,7 +254,7 @@ int mus_sample_bits(void)
 
 typedef struct {
   char *file_name;  /* full path -- everything is keyed to this name */
-  int table_pos;
+  int table_pos, file_name_length;
   mus_long_t *aux_comment_start, *aux_comment_end;
   int *loop_modes, *loop_starts, *loop_ends;
   int markers, base_detune, base_note;
@@ -293,7 +293,7 @@ static void free_sound_file(sound_file *sf)
 
 static sound_file *add_to_sound_table(const char *name)
 {
-  int i, pos = -1;
+  int i, len, pos = -1;
 
   for (i = 0; i < sound_table_size; i++)
     if (sound_table[i] == NULL) 
@@ -317,8 +317,10 @@ static sound_file *add_to_sound_table(const char *name)
 
   sound_table[pos] = (sound_file *)calloc(1, sizeof(sound_file));
   sound_table[pos]->table_pos = pos;
-  sound_table[pos]->file_name = (char *)calloc(strlen(name) + 1, sizeof(char));
+  len = strlen(name);
+  sound_table[pos]->file_name = (char *)calloc(len + 1, sizeof(char));
   strcpy(sound_table[pos]->file_name, name);
+  sound_table[pos]->file_name_length = len;
 
   return(sound_table[pos]);
 }
@@ -343,13 +345,15 @@ int mus_sound_prune(void)
 
 int mus_sound_forget(const char *name)
 {
-  int i, len;
+  int i, len, short_len = 0;
   bool free_name = false;
   char *short_name = NULL;
+
   if (name == NULL) return(MUS_ERROR);
+  len = strlen(name);
+
   if (name[0] == '/')
     {
-      len = strlen(name);
       for (i = 0; i < len; i++)
 	if (name[i] == '/')
 	  short_name = (char *)(name + i + 1);
@@ -359,13 +363,17 @@ int mus_sound_forget(const char *name)
       short_name = mus_expand_filename(name);
       free_name = true;
     }
+  if (short_name) 
+    short_len = strlen(short_name);
 
   if (name)
     {
       for (i = 0; i < sound_table_size; i++)
 	if ((sound_table[i]) &&
-	    ((strcmp(name, sound_table[i]->file_name) == 0) ||
+	    (((sound_table[i]->file_name_length == len) &&
+	      (strcmp(name, sound_table[i]->file_name) == 0)) ||
 	     ((short_name) && 
+	      (sound_table[i]->file_name_length == short_len) &&
 	      (strcmp(short_name, sound_table[i]->file_name) == 0))))
 	  {
 	    free_sound_file(sound_table[i]);
@@ -415,12 +423,14 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 
 static sound_file *find_sound_file(const char *name)
 {
-  int i;
+  int i, len;
 
   if (!name) return(NULL);
+  len = strlen(name);
 
   for (i = 0; i < sound_table_size; i++)
     if ((sound_table[i]) &&
+	(sound_table[i]->file_name_length == len) &&
 	(strcmp(name, sound_table[i]->file_name) == 0))
       {
 	check_write_date(name, sound_table[i]);

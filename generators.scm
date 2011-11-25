@@ -2102,8 +2102,10 @@
   (declare (gen eoddcos) (fm float))
   (let* ((a (eoddcos-r gen))
 	 (sinha (sinh a)))
-    (/ (atan (/ (oscil (eoddcos-osc gen) fm) sinha))
-       (atan (/ 1.0 sinha))))) ; normalization
+    (if (zero? sinha)
+	0.0 ; just a guess
+	(/ (atan (/ (oscil (eoddcos-osc gen) fm) sinha))
+	   (atan (/ 1.0 sinha)))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
