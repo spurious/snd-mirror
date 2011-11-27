@@ -6612,6 +6612,11 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
 /* ---------------- src ---------------- */
 
 static XEN xen_one, xen_minus_one;
+#if HAVE_SCHEME
+  static XEN as_needed_arglist;
+/* I guess these functions can be called recursively -- maybe we need a list of these?
+ */
+#endif
 
 static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
@@ -6633,7 +6638,14 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
       (gn->vcts) && 
       (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
       (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
+#if HAVE_SCHEME
+    {
+      s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
+      return(XEN_TO_C_DOUBLE_OR_ELSE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__), 0.0));
+    }
+#else
     return(XEN_TO_C_DOUBLE_OR_ELSE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one), 0.0));
+#endif
   /* the "or else" is crucial here -- this can be called unprotected in clm.c make_src during setup, and
    *   an uncaught error there clobbers our local error chain.
    */
@@ -12036,7 +12048,6 @@ static void init_choosers(s7_scheme *sc)
 /* -------------------------------------------------------------------------------- */
 
 
-
 static void mus_xen_init(void)
 {
   mus_initialize();
@@ -12048,6 +12059,8 @@ static void mus_xen_init(void)
 #if HAVE_SCHEME
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
 				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, s7_mus_fill);
+  as_needed_arglist = XEN_LIST_1(XEN_ZERO);
+  XEN_PROTECT_FROM_GC(as_needed_arglist);
 #else
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #endif
