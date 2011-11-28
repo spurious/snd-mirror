@@ -7031,46 +7031,45 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;; guile gets this result, but prints it as: ((6 2 8) (7 5) (1 5) (4 5 1 5) ((2 8) 5))
 
 
-(let ()
-  (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
-    ;; apply func to every permutation of vals: 
-    ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
-    (define (pinner cur nvals len)
-      (if (= len 1)
-	  (apply func (cons (car nvals) cur))
-	  (do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
-	      ((= i len))
-	    (let ((start nvals))
-	      (set! nvals (cdr nvals))
-	      (let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
-		(set! (cdr start) (cdr nvals))      ; splice out that element and 
-		(pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down
-		(set! (cdr start) nvals))))))       ; restore original circle
-    (let ((len (length vals)))
-      (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
-      (pinner '() vals len)
-      (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
+(define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
+  ;; apply func to every permutation of vals: 
+  ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
+  (define (pinner cur nvals len)
+    (if (= len 1)
+	(apply func (cons (car nvals) cur))
+	(do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+	    ((= i len))
+	  (let ((start nvals))
+	    (set! nvals (cdr nvals))
+	    (let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
+	      (set! (cdr start) (cdr nvals))      ; splice out that element and 
+	      (pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down
+	      (set! (cdr start) nvals))))))       ; restore original circle
+  (let ((len (length vals)))
+    (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+    (pinner '() vals len)
+    (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
 
   ;; t224 applies this to +/*
 
-  (let ((perms '((3 1 2) (1 3 2) (1 2 3) (2 1 3) (2 3 1) (3 2 1)))
-	(pos '()))
-    (for-each-permutation
-     (lambda args
-       (call-with-exit
-	(lambda (ok)
-	  (let ((ctr 0))
-	    (for-each
-	     (lambda (a)
-	       (if (equal? a args)
-		   (begin
-		     (set! pos (cons ctr pos))
-		     (ok)))
-	       (set! ctr (+ ctr 1)))
-	     perms)))))
-     '(1 2 3))
-    (test pos '(5 4 3 2 1 0)))
-  )
+(let ((perms '((3 1 2) (1 3 2) (1 2 3) (2 1 3) (2 3 1) (3 2 1)))
+      (pos '()))
+  (for-each-permutation
+   (lambda args
+     (call-with-exit
+      (lambda (ok)
+	(let ((ctr 0))
+	  (for-each
+	   (lambda (a)
+	     (if (equal? a args)
+		 (begin
+		   (set! pos (cons ctr pos))
+		   (ok)))
+	     (set! ctr (+ ctr 1)))
+	   perms)))))
+   '(1 2 3))
+  (test pos '(5 4 3 2 1 0)))
+
 
 
 
@@ -54706,6 +54705,17 @@ abs     1       2
 (num-test (* 92233720/9221 -92233720/9221 9221/92233720 -9221/92233720) 1)
 (num-test (* 9221/92233720 -9221/92233720 92233720/9221 -92233720/9221) 1)
 
+(for-each-permutation 
+ (lambda (a b c d)
+   (if (not (= (* a b c d) 0.25+0.25i))
+       (format #t "~A: (* ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d (* a b c d))))
+ '(1 1/2 0.5 1+i))
+
+(test (integer? (* 7/1000 1000/999 999/7 most-positive-fixnum)) #t)
+(num-test (* 7/1000 1000/999 999/7 most-positive-fixnum) most-positive-fixnum)
+;;; this should be an integer I think: (* 7/1000000 1/999 999/7 (- most-positive-fixnum 775807))
+;;;   PREHAPS: also (* 7/100000000000 1/999 999/7 (- most-positive-fixnum 36854775807)) and so on
+
 (num-test (* -0.2554913394465045E0 0.27042187315261135E0) -6.909044658739340841916780452607499999997E-2)
 (num-test (* -0.4489211233229662E0 -0.42892136850270857E0) 1.925518625654598642702435865603340000003E-1)
 (num-test (* -0.44586465919973783E0 -0.15168042462027043E0) 6.762894083058839862686475970136690000031E-2)
@@ -56034,6 +56044,18 @@ abs     1       2
 (num-test (+ 2/2) 2/2)
 (num-test (+ 362880) 362880)
 (num-test (+ 362880/1234) 362880/1234)
+
+(for-each-permutation 
+ (lambda (a b c d)
+   (if (not (= (+ a b c d) 3+i))
+       (format #t "~A: (+ ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d (+ a b c d))))
+ '(1 1/2 0.5 1+i))
+
+(test (integer? (+ 1/100 99/100 (- most-positive-fixnum 2))) #t)
+(test (integer? (+ 1/1000 999/1000 (- most-positive-fixnum 9223372036854775807))) #t)
+(num-test (+ 1/1000 999/1000 (- most-positive-fixnum 9223372036854775807)) 1)
+(test (integer? (+ 1/1000 999/1000 (- most-positive-fixnum 9200000000000000000))) #t)
+(num-test (+ 1/1000 999/1000 (- most-positive-fixnum 9200000000000000000)) 23372036854775808)
 
 (test (< (+ 0.7 8388608) 8388609) #t) ; false in clisp!
 
@@ -57492,6 +57514,12 @@ but it's the printout that is at fault:
 (num-test (- 3 4) -1 )
 (num-test (- 3) -3 )
 
+(for-each-permutation 
+ (lambda (a b c d)
+   (if (not (= (- a b c d) (- a (+ b c d))))
+       (format #t "~A: ~A != ~A?~%" (port-line-number) (- a b c d) (- a (+ b c d)))))
+ '(1 1/2 0.5 1+i))
+
 (num-test (- -1.797693134862315699999999999999999999998E308 -9223372036854775808) -1.797693134862315699999999999999999999998E308)
 (num-test (- -9223372036854775808 -9223372036854775808) 0)
 (num-test (- -9223372036854775808 5.551115123125783999999999999999999999984E-17) -9.223372036854775808000000000000000055511E18)
@@ -58516,6 +58544,12 @@ but it's the printout that is at fault:
 (num-test (/ 2/2) 2/2)
 (num-test (/ 362880) 1/362880)
 (num-test (/ 362880/1234) 1234/362880)
+
+(for-each-permutation 
+ (lambda (a b c d)
+   (if (not (= (/ a b c d) (/ a (* b c d))))
+       (format #t "~A: ~A != ~A?~%" (port-line-number) (/ a b c d) (/ a (* b c d)))))
+ '(1 1/2 0.5 1+i))
 
 (num-test (/ -9223372036854775808 5.551115123125783999999999999999999999984E-17) -1.661534994731144452653560599947843044136E35)
 (num-test (/ 1.110223024625156799999999999999999999997E-16 -9223372036854775808) -1.203706215242022689593248685469006886702E-35)
