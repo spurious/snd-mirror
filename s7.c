@@ -1569,10 +1569,10 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 
 #define integer(p)            p->object.number.integer_value
-#define real(p)                  p->object.number.real_value
-#define numerator(p)            p->object.number.fraction_value.numerator
-#define denominator(p)          p->object.number.fraction_value.denominator
-#define fraction(p)             (((long double)numerator(p)) / ((long double)denominator(p)))
+#define real(p)               p->object.number.real_value
+#define numerator(p)          p->object.number.fraction_value.numerator
+#define denominator(p)        p->object.number.fraction_value.denominator
+#define fraction(p)           (((long double)numerator(p)) / ((long double)denominator(p)))
 #define real_part(p)          p->object.number.complex_value.rl
 #define imag_part(p)          p->object.number.complex_value.im
 
@@ -50941,7 +50941,7 @@ the error type and the info passed to the error handler.");
  *
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
- * lint     13424 ->  1240
- * bench    52019 -> 10907
- * index    44300 ->  6085
+ * lint     13424 ->  1237
+ * bench    52019 -> 10803
+ * index    44300 ->  6002
  */
