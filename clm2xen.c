@@ -1891,31 +1891,26 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
 {
   #define H_oscil "(" S_oscil " gen (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
   s7_pointer obj;
+  mus_any *osc;
+  mus_xen *ox;
+
   obj = s7_car(args);
-  if (s7_object_type(obj) == mus_xen_tag)
+  ox = (mus_xen *)s7_object_value_with_error(s7, obj, mus_xen_tag, S_oscil, 1);
+  osc = (mus_any *)(ox->gen);
+  if (mus_oscil_p(osc))
     {
-      mus_any *osc;
-      osc = (mus_any *)(((mus_xen *)s7_object_value(obj))->gen);
-      if (mus_oscil_p(osc))
-	{
-	  if (!s7_is_pair(s7_cdr(args)))
-	    return(s7_make_real(sc, mus_oscil_unmodulated(osc)));
-	  args = s7_cdr(args);
-	  obj = s7_car(args);
-	  if (s7_is_number(obj))
-	    {
-	      double fm;
-	      fm = s7_number_to_real(obj);
-	      if (!s7_is_pair(s7_cdr(args)))
-		return(s7_make_real(sc, mus_oscil_fm(osc, fm)));
-	      args = s7_cdr(args);
-	      obj = s7_car(args);
-	      if (s7_is_number(obj))
-		return(s7_make_real(sc, mus_oscil(osc, fm, s7_number_to_real(obj))));
-	      XEN_ASSERT_TYPE(false, obj, XEN_ARG_3, S_oscil, "a number");
-	    }
-	  XEN_ASSERT_TYPE(false, obj, XEN_ARG_2, S_oscil, "a number");
-	}
+      double fm, pm;
+      args = s7_cdr(args);
+      if (s7_is_null(s7, args))
+	return(s7_make_real(sc, mus_oscil_unmodulated(osc)));
+
+      fm = s7_number_to_real_with_error(s7, s7_car(args), S_oscil, 2);
+      args = s7_cdr(args);
+      if (s7_is_null(s7, args))
+	return(s7_make_real(sc, mus_oscil_fm(osc, fm)));
+
+      pm = s7_number_to_real_with_error(s7, s7_car(args), S_oscil, 3);
+      return(s7_make_real(sc, mus_oscil(osc, fm, pm)));
     }
   XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
   return(s7_f(sc));
@@ -3524,17 +3519,25 @@ static XEN g_formant(XEN gen, XEN input, XEN freq)
 {
   #define H_formant "(" S_formant " gen (input 0.0) freq-in-radians): next sample from resonator generator"
   mus_float_t in1 = 0.0;
+  mus_any *g;
+  mus_xen *gx;
 
-  XEN_ASSERT_TYPE((MUS_XEN_P(gen) && (mus_formant_p(XEN_TO_MUS_ANY(gen)))), gen, XEN_ARG_1, S_formant, "a formant generator");
-
+#if HAVE_SCHEME
+  in1 = s7_number_to_real_with_error(s7, input, S_formant, 2);
+  gx = (mus_xen *)s7_object_value_with_error(s7, gen, mus_xen_tag, S_formant, 1);
+  g = (mus_any *)(gx->gen);
+  XEN_ASSERT_TYPE(mus_formant_p(g), gen, XEN_ARG_1, S_formant, "a formant generator");
+#else
+  XEN_ASSERT_TYPE((MUS_XEN_P(gen) && (mus_formant_p(g = XEN_TO_MUS_ANY(gen)))), gen, XEN_ARG_1, S_formant, "a formant generator");
   if (XEN_NUMBER_P(input)) 
     in1 = XEN_TO_C_DOUBLE(input); 
   else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_formant, "a number");
+#endif
+ 
+  if (XEN_BOUND_P(freq))
+    return(C_TO_XEN_DOUBLE(mus_formant_with_frequency(g, in1, XEN_TO_C_DOUBLE(freq))));
 
-  if (XEN_NUMBER_P(freq)) 
-    return(C_TO_XEN_DOUBLE(mus_formant_with_frequency(XEN_TO_MUS_ANY(gen), in1, XEN_TO_C_DOUBLE(freq))));
-
-  return(C_TO_XEN_DOUBLE(mus_formant(XEN_TO_MUS_ANY(gen), in1)));
+  return(C_TO_XEN_DOUBLE(mus_formant(g, in1)));
 }
 
 
@@ -3837,10 +3840,18 @@ static XEN g_frame_ref(XEN uf1, XEN uchan)
 static XEN g_frame_set(XEN uf1, XEN uchan, XEN val)
 {
   #define H_frame_set "(" S_frame_set " f chan val) sets frame f's chan-th sample to val: f[chan] = val"
+  mus_float_t x;
+
   XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_frame_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_frame_set, "a frame");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(uchan), uchan, XEN_ARG_2, S_frame_set, "an integer");
+
+#if HAVE_SCHEME
+  x = s7_number_to_real_with_error(s7, val, S_frame_set, 3);
+#else
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_frame_set, "a number");
-  return(C_TO_XEN_DOUBLE(mus_frame_set((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_INT(uchan), XEN_TO_C_DOUBLE(val))));
+  x = XEN_TO_C_DOUBLE(val);
+#endif
+  return(C_TO_XEN_DOUBLE(mus_frame_set((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_INT(uchan), x)));
 }
 
 
@@ -5538,7 +5549,12 @@ static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp
   mus_float_t inv;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frame), frame, XEN_ARG_1, caller, "an integer");
+#if HAVE_SCHEME
+  inv = s7_number_to_real_with_error(s7, val, caller, 2);
+#else
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a number");
+  inv = XEN_TO_C_DOUBLE(val);
+#endif
 
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_3, C_TO_XEN_INT(chn), "must be >= 0");    
@@ -5546,8 +5562,6 @@ static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp
   pos = XEN_TO_C_LONG_LONG(frame);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
-
-  inv = XEN_TO_C_DOUBLE(val);
 
   if (XEN_NOT_BOUND_P(outp))
     outp = mus_clm_output();

@@ -204,7 +204,7 @@
 
 
 
-#define DEBUGGING 1
+#define DEBUGGING 0
 #define PRINTING 0
 
 #define BOLD_TEXT "\033[1m"
@@ -1070,8 +1070,9 @@ struct s7_scheme {
 
 
 
-/* T_SIMPLE and is_c_function and is_number can be array lookups, as can T_PROCEDURE(?), T_ANY_MACRO(?)
- *  what about T_EXPANSION? T_KEYWORD? T_COPY_ARGS?
+/* PERHAPS: is_c_function can be array lookup, as can T_PROCEDURE(?), T_ANY_MACRO(?)
+ *  what about T_EXPANSION? T_KEYWORD? T_COPY_ARGS? or checks like typeflag against T_PROCEDURE|T_ANY_MACRO
+ *  the array lookup has exactly the same computational cost as the bit check
  */
 
 #define T_UNTYPED              0
@@ -1127,6 +1128,7 @@ struct s7_scheme {
 
 
 static bool t_number_p[BUILT_IN_TYPES], t_real_p[BUILT_IN_TYPES], t_rational_p[BUILT_IN_TYPES];
+static bool t_simple_p[BUILT_IN_TYPES];
 
 static void init_types(void)
 {
@@ -1136,6 +1138,8 @@ static void init_types(void)
       t_number_p[i] = false;
       t_real_p[i] = false;
       t_rational_p[i] = false;
+
+      t_simple_p[i] = false;
     }
   t_number_p[T_INTEGER] = true;
   t_number_p[T_RATIO] = true;
@@ -1148,6 +1152,19 @@ static void init_types(void)
   t_real_p[T_INTEGER] = true;
   t_real_p[T_RATIO] = true;
   t_real_p[T_REAL] = true;
+
+  t_simple_p[T_NIL] = true;
+  t_simple_p[T_UNTYPED] = true;
+  t_simple_p[T_BOOLEAN] = true;
+  t_simple_p[T_CHARACTER] = true;
+  t_simple_p[T_SYMBOL] = true;
+  t_simple_p[T_SYNTAX] = true;
+  t_simple_p[T_C_MACRO] = true;
+  t_simple_p[T_C_FUNCTION] = true;
+  t_simple_p[T_C_ANY_ARGS_FUNCTION] = true;
+  t_simple_p[T_C_OPT_ARGS_FUNCTION] = true;
+  t_simple_p[T_C_RST_ARGS_FUNCTION] = true;
+  t_simple_p[T_C_LST_ARGS_FUNCTION] = true;
 }
 
 /* T_STACK, T_SLOT, and T_COUNTER are internal (stacks, bindings, map circular list checks)
@@ -1162,6 +1179,7 @@ static void init_types(void)
 #define is_real(P)                    t_real_p[type(P)]
 #define is_rational(P)                t_rational_p[type(P)]
 
+#define is_simple(P)                  t_simple_p[type(P)]
 
 
 #define NOT_IN_HEAP -1
@@ -1234,7 +1252,7 @@ static void init_types(void)
 
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 11))
 #define is_syntactic(p)               ((typeflag(p) & T_SYNTACTIC) != 0)
-#define SYNTACTIC_TYPE                (T_SYMBOL | T_SIMPLE | T_DONT_EVAL_ARGS | T_SYNTACTIC)
+#define SYNTACTIC_TYPE                (T_SYMBOL | T_DONT_EVAL_ARGS | T_SYNTACTIC)
 /* this marks symbols that represent syntax objects 
  */
 
@@ -1302,11 +1320,6 @@ static void init_types(void)
 /* this marks something that might mess with its argument list
  */
 
-#define T_SIMPLE                      (1 << (TYPE_BITS + 21))
-#define is_simple(p)                  ((typeflag(p) & T_SIMPLE) != 0)
-/* stuff where equal? is eq? 
- */
-
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 /* #define is_marked(p)               (typeflag(p) >= T_GC_MARK) */ /* exactly the same speed? */ 
@@ -1315,8 +1328,7 @@ static void init_types(void)
 /* using bit 23 for this makes a big difference in the GC
  */
 
-/* #define UNUSED_BITS                   0x40020000 */
-#define UNUSED_BITS                   0x40000000
+#define UNUSED_BITS                   0x60000000
 
 #define set_type(p, f)                typeflag(p) = f
 
@@ -1575,6 +1587,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define fraction(p)           (((long double)numerator(p)) / ((long double)denominator(p)))
 #define real_part(p)          p->object.number.complex_value.rl
 #define imag_part(p)          p->object.number.complex_value.im
+#define as_c_complex(p)       (real_part(p) + (imag_part(p) * _Complex_I))
 
 
 #define S7_LLONG_MAX 9223372036854775807LL
@@ -3115,7 +3128,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   x = (s7_cell *)permanent_calloc(sizeof(s7_extended_cell));
   x->hloc = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
-  set_type(x, T_SYMBOL | T_SIMPLE);
+  set_type(x, T_SYMBOL);
   global_slot(x) = sc->NIL;
   local_slot(x) = sc->NIL;
   symbol_id(x) = 0;
@@ -4692,9 +4705,9 @@ static bool isinf(s7_Double x) {return((x == x) && (isnan(x - x)));}
   typedef double complex s7_Complex;
 #endif
 
-/* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
-
-/* FreeBSD supplies cabs carg cimag creal conj csqrt, so can we assume those exist if complex.h exists?
+/* Trigonometric functions. 
+ *    FreeBSD's math library does not include the complex form of the trig funcs.
+ *    FreeBSD supplies cabs carg cimag creal conj csqrt, so can we assume those exist if complex.h exists?
  */
 
 #if 0
@@ -4873,7 +4886,7 @@ bool s7_is_number(s7_pointer p)
 
 bool s7_is_integer(s7_pointer p) 
 { 
-  return(type(p) == T_INTEGER);
+  return(is_integer(p));
 }
 
 
@@ -4894,30 +4907,6 @@ bool s7_is_ratio(s7_pointer p)
   return(type(p) == T_RATIO);
 }
 
-
-static bool s7_is_nan(s7_pointer x)
-{
-  if (s7_is_number(x))
-    {
-      switch (type(x))
-	{
-	case T_INTEGER:
-	case T_RATIO:
-	  return(false);
-	  
-	case T_REAL:
-	  return(isnan(real(x)));
-	  
-	default:
-	  return((isnan(real_part(x))) || (isnan(imag_part(x))));
-	}
-    }
-  return(false);
-}
-
-/* A Jaffer would add !nan here (as opposed to s7_is_number), but currently
- *   s7 thinks a NaN is a real, and a real is complex.  I assume in SCM (real? +nan.0) is #f.
- */
 
 bool s7_is_complex(s7_pointer p)
 {
@@ -5402,18 +5391,36 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 #if (!WITH_GMP)
 s7_Double s7_number_to_real(s7_pointer x)
 {
-  if (!s7_is_number(x))
-    return(0.0); 
-  /* what to do?? -- to return #f or throw an error, we need the s7_scheme pointer
-   *   some sort of check is needed for FFI calls -- not a number -> segfault
-   */
-
   switch (type(x))
     {
-    case T_INTEGER: return((s7_Double)s7_integer(x));
-    case T_RATIO:   return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
-    case T_REAL:    return(s7_real(x));
-    default:        return(real_part(x));
+    case T_INTEGER: return((s7_Double)integer(x));
+    case T_RATIO:   return((s7_Double)numerator(x) / (s7_Double)denominator(x));
+    case T_REAL:    return(real(x));
+    case T_COMPLEX: return(real_part(x));
+    default:        return(0.0);
+      /* what to do with a non-number? -- to return #f or throw an error, we need the s7_scheme pointer
+       *   some sort of check is needed for FFI calls -- not a number -> segfault
+       */
+    }
+}
+
+
+s7_Double s7_number_to_real_with_error(s7_scheme *sc, s7_pointer x, const char *caller, int arg_num)
+{
+  switch (type(x))
+    {
+    case T_INTEGER: return((s7_Double)integer(x));
+    case T_RATIO:   return((s7_Double)numerator(x) / (s7_Double)denominator(x));
+    case T_REAL:    return(real(x));
+    case T_COMPLEX: return(real_part(x));
+
+    case T_UNTYPED:
+      if (x == sc->UNDEFINED)
+	return(0.0);
+
+    default:        
+      s7_wrong_type_arg_error(sc, caller, arg_num, x, "a real");
+      return(0.0);
     }
 }
 
@@ -5422,10 +5429,11 @@ s7_Int s7_number_to_integer(s7_pointer x)
 {
   switch (type(x))
     {
-    case T_INTEGER: return(s7_integer(x));
-    case T_RATIO:   return((s7_Int)((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x)));
-    case T_REAL:    return((s7_Int)s7_real(x));
-    default:        return((s7_Int)real_part(x));
+    case T_INTEGER: return(integer(x));
+    case T_RATIO:   return((s7_Int)((s7_Double)numerator(x) / (s7_Double)denominator(x)));
+    case T_REAL:    return((s7_Int)real(x));
+    case T_COMPLEX: return((s7_Int)real_part(x));
+    default:        return(0);
     }
 }
 
@@ -5607,9 +5615,9 @@ static bool s7_is_negative(s7_pointer obj)
 {
   switch (type(obj))
     {
-    case T_INTEGER: return(s7_integer(obj) < 0);
-    case T_RATIO:   return(s7_numerator(obj) < 0);
-    default:        return(s7_real(obj) < 0);
+    case T_INTEGER: return(integer(obj) < 0);
+    case T_RATIO:   return(numerator(obj) < 0);
+    default:        return(real(obj) < 0);
     }
 }
 
@@ -5618,9 +5626,9 @@ static bool s7_is_positive(s7_pointer x)
 {
   switch (type(x))
     {
-    case T_INTEGER: return(s7_integer(x) > 0);
-    case T_RATIO:   return(s7_numerator(x) > 0);
-    default:        return(s7_real(x) > 0.0);
+    case T_INTEGER: return(integer(x) > 0);
+    case T_RATIO:   return(numerator(x) > 0);
+    default:        return(real(x) > 0.0);
     }
 }
 #endif
@@ -5630,8 +5638,8 @@ static bool s7_is_zero(s7_pointer x)
 {
   switch (type(x))
     {
-    case T_INTEGER: return(s7_integer(x) == 0);
-    case T_REAL:    return(s7_real(x) == 0.0);
+    case T_INTEGER: return(integer(x) == 0);
+    case T_REAL:    return(real(x) == 0.0);
     default:        return(false); /* ratios and complex numbers here are already collapsed into integers and reals */
     }
 }
@@ -5641,8 +5649,8 @@ static bool s7_is_one(s7_pointer x)
   {
   switch (type(x))
     {
-    case T_INTEGER: return(s7_integer(x) == 1);
-    case T_REAL:    return(s7_real(x) == 1.0);
+    case T_INTEGER: return(integer(x) == 1);
+    case T_REAL:    return(real(x) == 1.0);
     default:        return(false);
     }
 }
@@ -5813,14 +5821,14 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
       p = (char *)malloc(len * sizeof(char));
       snprintf(p, len, 
 	       (sizeof(int) >= sizeof(s7_Int)) ? "%*d" : "%*lld",
-	       width, s7_integer(obj));
+	       width, integer(obj));
       break;
       
     case T_RATIO:
       p = (char *)malloc(128 * sizeof(char));
       len = snprintf(p, 128,
 		     (sizeof(int) >= sizeof(s7_Int)) ? "%d/%d" : "%lld/%lld", 
-		     s7_numerator(obj), s7_denominator(obj));
+		     numerator(obj), denominator(obj));
       if (width > len)
 	{
 	  char *p1;
@@ -5918,8 +5926,8 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
     case T_RATIO:
       {
 	char n[128], d[128];
-	s7_Int_to_string(n, s7_numerator(obj), radix, 0);
-	s7_Int_to_string(d, s7_denominator(obj), radix, 0);
+	s7_Int_to_string(n, numerator(obj), radix, 0);
+	s7_Int_to_string(d, denominator(obj), radix, 0);
 	p = (char *)malloc(256 * sizeof(char));
 	len = snprintf(p, 256, "%s/%s", n, d);
       }
@@ -7333,14 +7341,34 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 
   s7_pointer x;
   x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) < 0)
+	{
+#if WITH_GMP
+	  if (integer(x) == S7_LLONG_MIN)
+	    return(big_negate(sc, list_1(sc, promote_number(sc, T_BIG_INTEGER, x))));
+#endif	
+	  return(make_integer(sc, -integer(x)));
+	}
+      return(x);
 
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "abs", 0, x, "a real"));
+    case T_RATIO:
+      if (numerator(x) < 0)
+	return(s7_make_ratio(sc, -numerator(x), denominator(x)));
+      return(x);
 
-  if (s7_is_negative(x))
-    return(s7_negate(sc, x));
-  return(x);
+    case T_REAL:
+      if (real(x) < 0.0)
+	return(s7_make_real(sc, -real(x)));
+      return(x);
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "abs", 0, x, "a real"));
+    }
 }
+
 
 #if WITH_OPTIMIZATION
 static s7_pointer abs_sub_ss;
@@ -7399,17 +7427,35 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   x = car(args);
 
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "magnitude", 0, x, "a number"));
-
-  if (s7_is_real(x))
+  switch (type(x))
     {
-      if (s7_is_negative(x))
-	return(s7_negate(sc, x));
+    case T_INTEGER:
+      if (integer(x) < 0)
+	{
+#if WITH_GMP
+	  if (integer(x) == S7_LLONG_MIN)
+	    return(big_negate(sc, list_1(sc, promote_number(sc, T_BIG_INTEGER, x))));
+#endif	
+	  return(make_integer(sc, -integer(x)));
+	}
       return(x);
-    }
 
-  return(s7_make_real(sc, hypot(imag_part(x), real_part(x))));
+    case T_RATIO:
+      if (numerator(x) < 0)
+	return(s7_make_ratio(sc, -numerator(x), denominator(x)));
+      return(x);
+
+    case T_REAL:
+      if (real(x) < 0.0)
+	return(s7_make_real(sc, -real(x)));
+      return(x);
+
+    case T_COMPLEX:
+      return(s7_make_real(sc, hypot(imag_part(x), real_part(x))));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "magnitude", 0, x, "a number"));
+    }
 }
 
 
@@ -7417,39 +7463,41 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 {
   #define H_angle "(angle z) returns the angle of z"
   s7_pointer x;
-  s7_Double f;
-
   /* (angle inf+infi) -> 0.78539816339745 ? */
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "angle", 0, x, "a number"));
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) < 0)
+	return(s7_make_real(sc, M_PI));
+      return(small_int(0));
 
-  if (!s7_is_real(x))
-    return(s7_make_real(sc, atan2(imag_part(x), real_part(x))));
+    case T_RATIO:
+      if (numerator(x) < 0)
+	return(s7_make_real(sc, M_PI));
+      return(small_int(0));
 
-  f = number_to_real(x);
-  if (isnan(f)) return(x);
+    case T_REAL:
+      if (isnan(real(x))) return(x);
+      if (real(x) < 0.0)
+	return(s7_make_real(sc, M_PI));
+      return(real_zero);
 
-  if (f < 0.0)
-    return(s7_make_real(sc, M_PI));
-  if (is_rational(x))
-    return(small_int(0));
+    case T_COMPLEX:
+      return(s7_make_real(sc, atan2(imag_part(x), real_part(x))));
 
-  return(real_zero);
+    default:
+      return(s7_wrong_type_arg_error(sc, "angle", 0, x, "a number"));
+    }
 }
 
 
 static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 {
   #define H_rationalize "(rationalize x err) returns the ratio with lowest denominator within err of x"
-  s7_Double err, rat;
-  s7_Int numer = 0, denom = 1;
+  s7_Double err;
   s7_pointer x;
-
-  x = car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "rationalize", (is_null(cdr(args))) ? 0 : 1, x, "a real"));
 
   if (is_not_null(cdr(args)))
     {
@@ -7462,47 +7510,61 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
     }
   else err = default_rationalize_error;
 
-  if (s7_is_integer(x))
+  x = car(args);
+  switch (type(x))
     {
-      s7_Int a, b, pa;
-      if (err < 1.0) return(x);
-      a = s7_integer(x);
-      if (a < 0) pa = -a; else pa = a;
-      if (err >= pa) return(small_int(0));
-      b = (s7_Int)err;
-      pa -= b;
-      if (a < 0)
-	return(make_integer(sc, -pa));
-      return(make_integer(sc, pa));
+    case T_INTEGER:
+      {
+	s7_Int a, b, pa;
+	if (err < 1.0) return(x);
+	a = s7_integer(x);
+	if (a < 0) pa = -a; else pa = a;
+	if (err >= pa) return(small_int(0));
+	b = (s7_Int)err;
+	pa -= b;
+	if (a < 0)
+	  return(make_integer(sc, -pa));
+	return(make_integer(sc, pa));
+      }
+
+    case T_RATIO:
+      if (err == 0.0)
+	return(x);
+
+    case T_REAL:
+      {
+	s7_Double rat;
+	s7_Int numer = 0, denom = 1;
+
+	rat = s7_number_to_real(x);
+
+	if ((isnan(rat)) || (isinf(rat)))
+	  return(s7_wrong_type_arg_error(sc, "rationalize", (is_null(cdr(args))) ? 0 : 1, x, "a normal real"));
+
+	if (err >= s7_Double_abs(rat)) 
+	  return(small_int(0));
+
+	if ((rat > 9.2233720368548e+18) || (rat < -9.2233720368548e+18))
+	  return(s7_out_of_range_error(sc, "rationalize", 1, x, "a real between most-negative-fixnum and most-positive-fixnum"));
+
+	if ((s7_Double_abs(rat) + s7_Double_abs(err)) < 1.0e-18)
+	  err = 1.0e-18;
+	/* (/ 1.0 most-positive-fixnum) is 1.0842021e-19, so if we let err be less than that,
+	 * (rationalize 1e-19 1e-20) hangs, but this only affects the initial ceiling, I believe.
+	 */
+
+	if (s7_Double_abs(rat) < s7_Double_abs(err))
+	  return(small_int(0));
+
+	if (c_rationalize(rat, err, &numer, &denom))
+	  return(s7_make_ratio(sc, numer, denom));
+
+	return(sc->F);
+      }
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "rationalize", (is_null(cdr(args))) ? 0 : 1, x, "a real"));
     }
-
-  if ((err == 0.0) &&                 /* (rationalize (/ 1 most-positive-fixnum) 0) */
-      (s7_is_ratio(x)))
-    return(x);
-
-  rat = s7_number_to_real(x);
-
-  if ((isnan(rat)) || (isinf(rat)))
-    return(s7_wrong_type_arg_error(sc, "rationalize", (is_null(cdr(args))) ? 0 : 1, x, "a normal real"));
-  if (isnan(err))
-    return(s7_wrong_type_arg_error(sc, "rationalize error limit,", 2, cadr(args), "a normal real"));
-  if (err >= s7_Double_abs(rat)) return(small_int(0));
-
-  if ((rat > 9.2233720368548e+18) || (rat < -9.2233720368548e+18))
-    return(s7_out_of_range_error(sc, "rationalize", 1, x, "a real between most-negative-fixnum and most-positive-fixnum"));
-
-  if ((s7_Double_abs(rat) + s7_Double_abs(err)) < 1.0e-18)
-    err = 1.0e-18;
-  /* (/ 1.0 most-positive-fixnum) is 1.0842021e-19, so if we let err be less than that,
-   * (rationalize 1e-19 1e-20) hangs, but this only affects the initial ceiling, I believe.
-   */
-
-  if (s7_Double_abs(rat) < s7_Double_abs(err))
-    return(small_int(0));
-
-  if (c_rationalize(rat, err, &numer, &denom))
-    return(s7_make_ratio(sc, numer, denom));
-  return(sc->F);
 }
 
 
@@ -7564,16 +7626,27 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "exp", 0, x, "a number"));
-  if (x == small_int(0)) return(small_int(1));                       /* (exp 0) -> 1 */
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(1));                       /* (exp 0) -> 1 */
+      return(s7_make_real(sc, exp((s7_Double)(integer(x)))));
 
-  if (s7_is_real(x))
-    return(s7_make_real(sc, exp(number_to_real(x))));
-  return(s7_from_c_complex(sc, cexp(s7_complex(x))));
-  /* this is inaccurate for large arguments:
-   *   (exp 0+1e20i) -> -0.66491178990701-0.74692189125949i, not 7.639704044417283004001468027378811228331E-1-6.45251285265780844205811711312523007406E-1i
-   */
+    case T_RATIO:
+      return(s7_make_real(sc, exp((s7_Double)fraction(x))));
+
+    case T_REAL:
+      return(s7_make_real(sc, exp(real(x))));
+
+    case T_COMPLEX:
+      return(s7_from_c_complex(sc, cexp(as_c_complex(x))));
+      /* this is inaccurate for large arguments:
+       *   (exp 0+1e20i) -> -0.66491178990701-0.74692189125949i, not 7.639704044417283004001468027378811228331E-1-6.45251285265780844205811711312523007406E-1i
+       */
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "exp", 0, x, "a number"));
+    }
 }
 
 
@@ -7653,27 +7726,27 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "sin", 0, x, "a number"));
-
   switch (type(x))
     {
-    case T_INTEGER:
-      if (x == small_int(0)) return(x);                                 /* (sin 0) -> 0 */
-      return(s7_make_real(sc, sin((s7_Double)integer(x))));
-      
-    case T_RATIO:
-      return(s7_make_real(sc, sin(fraction(x))));
-
     case T_REAL:
       return(s7_make_real(sc, sin(real(x))));
 
-    default:
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(0));                      /* (sin 0) -> 0 */
+      return(s7_make_real(sc, sin((s7_Double)integer(x))));
+      
+    case T_RATIO:
+      return(s7_make_real(sc, sin((s7_Double)(fraction(x)))));
+
+    case T_COMPLEX:
 #if WITH_COMPLEX
       return(s7_from_c_complex(sc, csin(real_part(x) + (imag_part(x) * _Complex_I))));
 #else
       return(s7_make_real(sc, 0.0));
 #endif
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "sin", 0, x, "a number"));
     }
 
   /* sin is totally inaccurate over about 1e18.  There's a way to get true results,
@@ -7695,27 +7768,27 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "cos", 0, x, "a number"));
-
   switch (type(x))
     {
-    case T_INTEGER:
-      if (x == small_int(0)) return(small_int(1));                     /* (cos 0) -> 1 */
-      return(s7_make_real(sc, cos((s7_Double)integer(x))));
-      
-    case T_RATIO:
-      return(s7_make_real(sc, cos(fraction(x))));
-
     case T_REAL:
       return(s7_make_real(sc, cos(real(x))));
 
-    default:
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(1));                     /* (cos 0) -> 1 */
+      return(s7_make_real(sc, cos((s7_Double)integer(x))));
+      
+    case T_RATIO:
+      return(s7_make_real(sc, cos((s7_Double)(fraction(x)))));
+
+    case T_COMPLEX:
 #if WITH_COMPLEX
       return(s7_from_c_complex(sc, ccos(real_part(x) + (imag_part(x) * _Complex_I))));
 #else
       return(s7_make_real(sc, 0.0));
 #endif
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "cos", 0, x, "a number"));
     }
 }
 
@@ -7726,19 +7799,28 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "tan", 0, x, "a number"));
-  if (x == small_int(0)) return(x);                                /* (tan 0) -> 0 */
+  switch (type(x))
+    {
+    case T_REAL:
+      return(s7_make_real(sc, tan(real(x))));
+      
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(0));                      /* (tan 0) -> 0 */
+      return(s7_make_real(sc, tan((s7_Double)(integer(x)))));
 
-  if (s7_is_real(x))
-    return(s7_make_real(sc, tan(number_to_real(x))));
+    case T_RATIO:
+      return(s7_make_real(sc, tan((s7_Double)(fraction(x)))));
 
-  if (imag_part(x) > 350.0)
-    return(s7_make_complex(sc, 0.0, 1.0));
-  if (imag_part(x) < -350.0)
-    return(s7_make_complex(sc, 0.0, -1.0));
+    case T_COMPLEX:
+      if (imag_part(x) > 350.0)
+	return(s7_make_complex(sc, 0.0, 1.0));
+      if (imag_part(x) < -350.0)
+	return(s7_make_complex(sc, 0.0, -1.0));
+      return(s7_from_c_complex(sc, ctan(as_c_complex(x))));
 
-  return(s7_from_c_complex(sc, ctan(s7_complex(x))));
+    default:
+      return(s7_wrong_type_arg_error(sc, "tan", 0, x, "a number"));
+    }
 }
 
 
@@ -7748,47 +7830,52 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
   s7_pointer n;
 
   n = car(args);
-  if (!s7_is_number(n))
-    return(s7_wrong_type_arg_error(sc, "asin", 0, n, "a number"));
-  if (n == small_int(0)) return(n);
-
-  if (s7_is_real(n))
+  switch (type(n))
     {
-      s7_Double x, absx, recip;
-      s7_Complex result;
-      x = number_to_real(n);
-      absx = s7_Double_abs(x);
-      if (absx <= 1.0)
-	return(s7_make_real(sc, asin(x)));
+    case T_INTEGER:
+      if (integer(n) == 0) return(small_int(0));                    /* (asin 0) -> 0 */
       
-      /* otherwise use maxima code: */
-      recip = 1.0 / absx;
-      result = (M_PI / 2.0) - (_Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip)))));
-      if (x < 0.0)
-	return(s7_from_c_complex(sc, -result));
-      return(s7_from_c_complex(sc, result));
-    }
+    case T_REAL:
+    case T_RATIO:
+      {
+	s7_Double x, absx, recip;
+	s7_Complex result;
+	x = number_to_real(n);
+	absx = s7_Double_abs(x);
+	if (absx <= 1.0)
+	  return(s7_make_real(sc, asin(x)));
+      
+	/* otherwise use maxima code: */
+	recip = 1.0 / absx;
+	result = (M_PI / 2.0) - (_Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip)))));
+	if (x < 0.0)
+	  return(s7_from_c_complex(sc, -result));
+	return(s7_from_c_complex(sc, result));
+      }
 
+    case T_COMPLEX:
 #if WITH_COMPLEX
-  /* if either real or imag part is very large, use explicit formula, not casin */
-  /*   this code taken from sbcl's src/code/irrat.lisp */
-  /* break is around x+70000000i */
+      /* if either real or imag part is very large, use explicit formula, not casin */
+      /*   this code taken from sbcl's src/code/irrat.lisp */
+      /* break is around x+70000000i */
 
-  if ((s7_Double_abs(real_part(n)) > 1.0e7) ||
-      (s7_Double_abs(imag_part(n)) > 1.0e7))
-    {
-      s7_Complex sq1mz, sq1pz, z;
-
-      z = s7_complex(n);
-      sq1mz = csqrt(1.0 - z);
-      sq1pz = csqrt(1.0 + z);
-      return(s7_make_complex(sc, 
-			     atan(real_part(n) / creal(sq1mz * sq1pz)),
-			     asinh(cimag(sq1pz * conj(sq1mz)))));
-    }
+      if ((s7_Double_abs(real_part(n)) > 1.0e7) ||
+	  (s7_Double_abs(imag_part(n)) > 1.0e7))
+	{
+	  s7_Complex sq1mz, sq1pz, z;
+	  z = as_c_complex(n);
+	  sq1mz = csqrt(1.0 - z);
+	  sq1pz = csqrt(1.0 + z);
+	  return(s7_make_complex(sc, 
+				 atan(real_part(n) / creal(sq1mz * sq1pz)),
+				 asinh(cimag(sq1pz * conj(sq1mz)))));
+	}
 #endif
+      return(s7_from_c_complex(sc, casin(as_c_complex(n))));
 
-  return(s7_from_c_complex(sc, casin(s7_complex(n))));
+    default:
+      return(s7_wrong_type_arg_error(sc, "asin", 0, n, "a number"));
+    }
 }
 
 
@@ -7798,46 +7885,51 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
   s7_pointer n;
 
   n = car(args);
-  if (!s7_is_number(n))
-    return(s7_wrong_type_arg_error(sc, "acos", 0, n, "a number"));
-  if (n == small_int(1)) return(small_int(0));
-
-  if (s7_is_real(n))
+  switch (type(n))
     {
-      s7_Double x, absx, recip;
-      s7_Complex result;
-      x = number_to_real(n);
-      absx = s7_Double_abs(x);
-      if (absx <= 1.0)
-	return(s7_make_real(sc, acos(x)));
+    case T_INTEGER:
+      if (integer(n) == 1) return(small_int(0));
+
+    case T_REAL:
+    case T_RATIO:
+      {
+	s7_Double x, absx, recip;
+	s7_Complex result;
+	x = number_to_real(n);
+	absx = s7_Double_abs(x);
+	if (absx <= 1.0)
+	  return(s7_make_real(sc, acos(x)));
       
-      /* else follow maxima again: */
-      recip = 1.0 / absx;
-      if (x > 0.0)
-	result = _Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
-      else result = M_PI - _Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
-      return(s7_from_c_complex(sc, result));
-    }
+	/* else follow maxima again: */
+	recip = 1.0 / absx;
+	if (x > 0.0)
+	  result = _Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
+	else result = M_PI - _Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
+	return(s7_from_c_complex(sc, result));
+      }
 
+    case T_COMPLEX:
 #if WITH_COMPLEX
-  /* if either real or imag part is very large, use explicit formula, not cacos */
-  /*   this code taken from sbcl's src/code/irrat.lisp */
+      /* if either real or imag part is very large, use explicit formula, not cacos */
+      /*   this code taken from sbcl's src/code/irrat.lisp */
 
-  if ((s7_Double_abs(real_part(n)) > 1.0e7) ||
-      (s7_Double_abs(imag_part(n)) > 1.0e7))
-    {
-      s7_Complex sq1mz, sq1pz, z;
-
-      z = s7_complex(n);
-      sq1mz = csqrt(1.0 - z);
-      sq1pz = csqrt(1.0 + z);
-      return(s7_make_complex(sc, 
-			     2.0 * atan(creal(sq1mz) / creal(sq1pz)),
-			     asinh(cimag(sq1mz * conj(sq1pz)))));
-    }
+      if ((s7_Double_abs(real_part(n)) > 1.0e7) ||
+	  (s7_Double_abs(imag_part(n)) > 1.0e7))
+	{
+	  s7_Complex sq1mz, sq1pz, z;
+	  z = as_c_complex(n);
+	  sq1mz = csqrt(1.0 - z);
+	  sq1pz = csqrt(1.0 + z);
+	  return(s7_make_complex(sc, 
+				 2.0 * atan(creal(sq1mz) / creal(sq1pz)),
+				 asinh(cimag(sq1mz * conj(sq1pz)))));
+	}
 #endif
+      return(s7_from_c_complex(sc, cacos(s7_complex(n))));
 
-  return(s7_from_c_complex(sc, cacos(s7_complex(n))));
+    default:
+      return(s7_wrong_type_arg_error(sc, "acos", 0, n, "a number"));
+    }
 }
 
 
@@ -7851,24 +7943,31 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!is_pair(cdr(args)))
     {
-      if (!s7_is_number(x))
-	return(s7_wrong_type_arg_error(sc, "atan", 0, x, "a number"));
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (integer(x) == 0) return(small_int(0));                /* (atan 0) -> 0 */
+	  
+	case T_REAL:
+	case T_RATIO:
+	  return(s7_make_real(sc, atan(number_to_real(x))));
 
-      if (x == small_int(0)) return(x);                                /* (atan 0) -> 0 */
-      if (s7_is_real(x))
-	return(s7_make_real(sc, atan(number_to_real(x))));
+	case T_COMPLEX:
+	  return(s7_from_c_complex(sc, catan(as_c_complex(x))));
 
-      return(s7_from_c_complex(sc, catan(s7_complex(x))));
-    } 
+	default:
+	  return(s7_wrong_type_arg_error(sc, "atan", 0, x, "a number"));
+	}
+    }
 
-  y = cadr(args);
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "atan", 1, x, "a real"));
+
+  y = cadr(args);
   if (!s7_is_real(y))
     return(s7_wrong_type_arg_error(sc, "atan", 2, y, "a real"));
 
-  return(s7_make_real(sc, atan2(number_to_real(x), 
-				number_to_real(y))));
+  return(s7_make_real(sc, atan2(number_to_real(x), number_to_real(y))));
 }  
 
 
@@ -7878,13 +7977,21 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "sinh", 0, x, "a number"));
-  if (x == small_int(0)) return(x);                              /* (sinh 0) -> 0 */
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(0));                    /* (sinh 0) -> 0 */
 
-  if (s7_is_real(x))
-    return(s7_make_real(sc, sinh(number_to_real(x))));
-  return(s7_from_c_complex(sc, csinh(s7_complex(x))));
+    case T_REAL:
+    case T_RATIO:
+      return(s7_make_real(sc, sinh(number_to_real(x))));
+
+    case T_COMPLEX:
+      return(s7_from_c_complex(sc, csinh(as_c_complex(x))));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "sinh", 0, x, "a number"));
+    }
 }
 
 
@@ -7894,22 +8001,29 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "cosh", 0, x, "a number"));
-  if (x == small_int(0)) return(small_int(1));                    /* (cosh 0) -> 1 */
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(1));                   /* (cosh 0) -> 1 */
 
-  /* this is not completely correct when optimization kicks in.
-   * :(define (hi) (do ((i 0 (+ i 1))) ((= i 1)) (display (cosh i))))
-   * hi
-   * :(hi)
-   * 1.0()
-   * :(cosh 0)
-   * 1
-   */
+    case T_REAL:
+    case T_RATIO:
+      /* this is not completely correct when optimization kicks in.
+       * :(define (hi) (do ((i 0 (+ i 1))) ((= i 1)) (display (cosh i))))
+       * hi
+       * :(hi)
+       * 1.0()
+       * :(cosh 0)
+       * 1
+       */
+      return(s7_make_real(sc, cosh(number_to_real(x))));
 
-  if (s7_is_real(x))
-    return(s7_make_real(sc, cosh(number_to_real(x))));
-  return(s7_from_c_complex(sc, ccosh(s7_complex(x))));
+    case T_COMPLEX:
+      return(s7_from_c_complex(sc, ccosh(as_c_complex(x))));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "cosh", 0, x, "a number"));
+    }
 }
 
 
@@ -7919,19 +8033,25 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "tanh", 0, x, "a number"));
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(0));                   /* (tanh 0) -> 0 */
 
-  if (x == small_int(0)) return(x);                                /* (tanh 0) -> 0 */
-  if (s7_is_real(x))
-    return(s7_make_real(sc, tanh(number_to_real(x))));
+    case T_REAL:
+    case T_RATIO:
+      return(s7_make_real(sc, tanh(number_to_real(x))));
 
-  if (real_part(x) > 350.0)
-    return(s7_make_real(sc, 1.0));               /* closer than 0.0 which is what ctanh is about to return! */
-  if (real_part(x) < -350.0)
-    return(s7_make_real(sc, -1.0));              /* closer than -0.0 which is what ctanh is about to return! */
+    case T_COMPLEX:
+      if (real_part(x) > 350.0)
+	return(s7_make_real(sc, 1.0));               /* closer than 0.0 which is what ctanh is about to return! */
+      if (real_part(x) < -350.0)
+	return(s7_make_real(sc, -1.0));              /* closer than -0.0 which is what ctanh is about to return! */
+      return(s7_from_c_complex(sc, ctanh(as_c_complex(x))));
 
-  return(s7_from_c_complex(sc, ctanh(s7_complex(x))));
+    default:
+      return(s7_wrong_type_arg_error(sc, "tanh", 0, x, "a number"));
+    }
 }
 
 
@@ -7941,13 +8061,21 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "asinh", 0, x, "a number"));
-  if (x == small_int(0)) return(x);
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(0));
 
-  if (s7_is_real(x))
-    return(s7_make_real(sc, asinh(number_to_real(x))));
-  return(s7_from_c_complex(sc, casinh(s7_complex(x))));
+    case T_REAL:
+    case T_RATIO:
+      return(s7_make_real(sc, asinh(number_to_real(x))));
+
+    case T_COMPLEX:
+      return(s7_from_c_complex(sc, casinh(as_c_complex(x))));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "asinh", 0, x, "a number"));
+    }
 }
 
 
@@ -7957,14 +8085,22 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "acosh", 0, x, "a number"));
-  if (x == small_int(1)) return(small_int(0));
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) == 1) return(small_int(0));
 
-  if ((s7_is_real(x)) &&
-      (number_to_real(x) >= 1.0))
-    return(s7_make_real(sc, acosh(number_to_real(x))));
-  return(s7_from_c_complex(sc, cacosh(s7_complex(x))));
+    case T_REAL:
+    case T_RATIO:
+      if (number_to_real(x) >= 1.0)
+	return(s7_make_real(sc, acosh(number_to_real(x))));
+
+    case T_COMPLEX:
+      return(s7_from_c_complex(sc, cacosh(s7_complex(x)))); /* not as_c_complex because x might not be complex */
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "acosh", 0, x, "a number"));
+    }
 }
 
 
@@ -7974,20 +8110,27 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "atanh", 0, x, "a number"));
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) == 0) return(small_int(0));                    /* (atanh 0) -> 0 */
 
-  if (x == small_int(0)) return(x);                                /* (atanh 0) -> 0 */
-  if ((s7_is_real(x)) &&
-      (s7_Double_abs(number_to_real(x)) < 1.0))
-    return(s7_make_real(sc, atanh(number_to_real(x))));
+    case T_REAL:
+    case T_RATIO:
+      if (s7_Double_abs(number_to_real(x)) < 1.0)
+	return(s7_make_real(sc, atanh(number_to_real(x))));
 
-  /* if we can't distinguish x from 1.0 even with long doubles, we'll get inf.0:
-   *    (atanh 9223372036854775/9223372036854776) -> 18.714973875119
-   *    (atanh 92233720368547758/92233720368547757) -> inf.0
-   */
+      /* if we can't distinguish x from 1.0 even with long doubles, we'll get inf.0:
+       *    (atanh 9223372036854775/9223372036854776) -> 18.714973875119
+       *    (atanh 92233720368547758/92233720368547757) -> inf.0
+       */
 
-  return(s7_from_c_complex(sc, catanh(s7_complex(x))));
+    case T_COMPLEX:
+      return(s7_from_c_complex(sc, catanh(s7_complex(x))));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "atanh", 0, x, "a number"));
+    }
 }
 
 
@@ -7998,9 +8141,6 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
   s7_Double sqx;
 
   n = car(args);
-  if (!s7_is_number(n))
-    return(s7_wrong_type_arg_error(sc, "sqrt", 0, n, "a number"));
-
   switch (type(n))
     {
     case T_INTEGER:
@@ -8041,10 +8181,13 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       return(s7_make_complex(sc, 0.0, sqrt(-real(n))));
       break;
 
-    default:
+    case T_COMPLEX:
+      return(s7_from_c_complex(sc, csqrt(as_c_complex(n))));
       break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "sqrt", 0, n, "a number"));
     }
-  return(s7_from_c_complex(sc, csqrt(s7_complex(n))));
 }
 
 
@@ -8257,13 +8400,13 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 
   if (!is_pair(cdr(args)))
     {
-      if (!s7_is_rational(car(args)))
+      if (!is_rational(car(args)))
 	return(s7_wrong_type_arg_error(sc, "lcm", 1, car(args), "an integer or ratio"));
       return(g_abs(sc, args));
     }
 
   for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
-    if (!s7_is_rational(car(x)))
+    if (!is_rational(car(x)))
       return(s7_wrong_type_arg_error(sc, "lcm", i, car(x), "an integer or ratio"));
     else rats = ((rats) || (type(car(x)) == T_RATIO));
 
@@ -8271,7 +8414,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
     {
       for (x = args; is_not_null(x); x = cdr(x)) 
 	{
-	  n = c_lcm(n, s7_integer(car(x)));
+	  n = c_lcm(n, integer(car(x)));
 	  if (n < 0) return(s7_out_of_range_error(sc, "lcm from", 0, args, "result is too large"));
 	  if (n == 0)
 	    return(small_int(0));
@@ -8305,13 +8448,13 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 
   if (!is_pair(cdr(args)))
     {
-      if (!s7_is_rational(car(args)))
+      if (!is_rational(car(args)))
 	return(s7_wrong_type_arg_error(sc, "gcd", 1, car(args), "an integer or ratio"));
       return(g_abs(sc, args));
     }
 
   for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
-    if (!s7_is_rational(car(x)))
+    if (!is_rational(car(x)))
       return(s7_wrong_type_arg_error(sc, "gcd", i, car(x), "an integer"));
     else rats = ((rats) || (type(car(x)) == T_RATIO));
   
@@ -8319,7 +8462,7 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
     {
       for (x = args; is_not_null(x); x = cdr(x)) 
 	{
-	  n = c_gcd(n, s7_integer(car(x)));
+	  n = c_gcd(n, integer(car(x)));
 	  if (n < 0) return(s7_out_of_range_error(sc, "gcd from", 0, args, "intermediate result is too large"));
 	  if (n == 1) return(small_int(1));
 	}
@@ -8523,9 +8666,6 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "floor", 0, x, "a number"));
-
   switch (type(x))
     {
     case T_INTEGER:   
@@ -8557,8 +8697,11 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	return(make_integer(sc, (s7_Int)floor(real(x)))); 
       }
 
-    default:
+    case T_COMPLEX:
       return(s7_wrong_type_arg_error(sc, "floor", 0, x, "a real"));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "floor", 0, x, "a number"));
     }
 }
 
@@ -8569,9 +8712,6 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "ceiling", 0, x, "a real"));
-
   switch (type(x))
     {
     case T_INTEGER:   
@@ -8586,7 +8726,7 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 	return(make_integer(sc, val + 1));
       }
 
-    default:        
+    case T_REAL:
       {
 	s7_Double z;
 	z = real(x);
@@ -8596,6 +8736,12 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 	  return(s7_out_of_range_error(sc, "ceiling", 0, x, "argument is infinite"));
 	return(make_integer(sc, (s7_Int)ceil(real(x)))); 
       }
+
+    case T_COMPLEX:
+      return(s7_wrong_type_arg_error(sc, "ceiling", 0, x, "a real"));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "ceiling", 0, x, "a number"));
     }
 }
 
@@ -8606,9 +8752,6 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "truncate", 0, x, "a real"));
-
   switch (type(x))
     {
     case T_INTEGER: 
@@ -8617,7 +8760,7 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
     case T_RATIO: 
       return(make_integer(sc, (s7_Int)(numerator(x) / denominator(x)))); /* C "/" already truncates */
 
-    default: 
+    case T_REAL:
       {
 	s7_Double z;
 	z = real(x);
@@ -8627,6 +8770,12 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 	  return(s7_out_of_range_error(sc, "truncate", 0, x, "argument is infinite"));
 	return(s7_truncate(sc, "truncate", real(x))); 
       }
+
+    case T_COMPLEX:
+      return(s7_wrong_type_arg_error(sc, "truncate", 0, x, "a real"));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "truncate", 0, x, "a number"));
     }
 }
 
@@ -8651,9 +8800,6 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "round", 0, x, "a real"));
-
   switch (type(x))
     {
     case T_INTEGER: 
@@ -8679,7 +8825,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 	return(make_integer(sc, truncated));
       }
 
-    default: 
+    case T_REAL:
       {
 	s7_Double z;
 	z = real(x);
@@ -8689,6 +8835,13 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 	  return(s7_out_of_range_error(sc, "round", 0, x, "argument is infinite"));
 	return(make_integer(sc, (s7_Int)round_per_R5RS(z)));
       }
+
+
+    case T_COMPLEX:
+      return(s7_wrong_type_arg_error(sc, "round", 0, x, "a real"));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "round", 0, x, "a number"));
     }
 }
 
@@ -8830,8 +8983,8 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
   int i, ret_type, new_type;
   s7_pointer x, p;
 
-  s7_Int num_a = 0, den_a = 1;
-  s7_Double rl_a = 0.0, im_a = 0.0;
+  s7_Int num_a, den_a = 1;
+  s7_Double rl_a, im_a = 0.0;
 
 #if (!WITH_GMP)
   if (is_null(args))
@@ -9055,13 +9208,7 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
-
   y = cadr(args);
-  if (!s7_is_number(y))
-    return(s7_wrong_type_arg_error(sc, "+", 2, y, "a number"));
-
   switch (type(x))
     {
     case T_INTEGER: 
@@ -9070,16 +9217,18 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: return(make_integer(sc, integer(x) + integer(y)));
 	case T_RATIO:   return(add_ratios(sc, x, y));
 	case T_REAL:    return(s7_make_real(sc, integer(x) + real(y)));
-	default:        return(s7_make_complex(sc, integer(x) + real_part(y), imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, integer(x) + real_part(y), imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "+", 2, y, "a number"));
 	}
       
     case T_RATIO:
       switch (type(y))
 	{
 	case T_INTEGER:
-	case T_RATIO:  return(add_ratios(sc, x, y));
-	case T_REAL:   return(s7_make_real(sc, fraction(x) + real(y)));
-	default:       return(s7_make_complex(sc, fraction(x) + real_part(y), imag_part(y)));
+	case T_RATIO:   return(add_ratios(sc, x, y));
+	case T_REAL:    return(s7_make_real(sc, fraction(x) + real(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, fraction(x) + real_part(y), imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "+", 2, y, "a number"));
 	}
       
     case T_REAL:
@@ -9088,17 +9237,22 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: return(s7_make_real(sc, real(x) + integer(y)));
 	case T_RATIO:   return(s7_make_real(sc, real(x) + fraction(y)));
 	case T_REAL:    return(s7_make_real(sc, real(x) + real(y)));
-	default:        return(s7_make_complex(sc, real(x) + real_part(y), imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, real(x) + real_part(y), imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "+", 2, y, "a number"));
 	}
 
-    default:
+    case T_COMPLEX:
       switch (type(y))
 	{
 	case T_INTEGER: return(s7_make_complex(sc, real_part(x) + integer(y), imag_part(x)));
 	case T_RATIO:   return(s7_make_complex(sc, real_part(x) + fraction(y), imag_part(x)));
 	case T_REAL:    return(s7_make_complex(sc, real_part(x) + real(y), imag_part(x)));
-	default:        return(s7_make_complex(sc, real_part(x) + real_part(y), imag_part(x) + imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + real_part(y), imag_part(x) + imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "+", 2, y, "a number"));
 	}
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
     }
   return(x);
 }
@@ -9148,53 +9302,32 @@ static s7_pointer g_add_3(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer add1(s7_scheme *sc, s7_pointer x)
+static s7_pointer add1(s7_scheme *sc, s7_pointer x, int arg_num)
 {
   switch (type(x))
     {
-    case T_INTEGER: 
-      return(make_integer(sc, integer(x) + 1));
-      break;
-      
-    case T_RATIO:
-      return(add_ratios(sc, x, small_int(1)));
-      
-    case T_REAL:
-      return(s7_make_real(sc, real(x) + 1.0));
-      break;
-      
-    default:
-      return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
-      break;
+    case T_INTEGER: return(make_integer(sc, integer(x) + 1));
+    case T_RATIO:   return(add_ratios(sc, x, small_int(1)));
+    case T_REAL:    return(s7_make_real(sc, real(x) + 1.0));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
+    default:        return(s7_wrong_type_arg_error(sc, "+", arg_num, x, "a number"));
     }
   return(x);
 }
 
 static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x;
-  x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
-  return(add1(sc, x));
+  return(add1(sc, car(args), 1));
 }
 
 static s7_pointer g_add_cs1(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x;
-  x = finder(sc, car(args));
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
-  return(add1(sc, x));
+  return(add1(sc, finder(sc, car(args)), 1));
 }
 
 static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x;
-  x = cadr(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "+", 2, x, "a number"));
-  return(add1(sc, x));
+  return(add1(sc, cadr(args), 2));
 }
 
 static s7_pointer g_add_csn(s7_scheme *sc, s7_pointer args)
@@ -9203,16 +9336,14 @@ static s7_pointer g_add_csn(s7_scheme *sc, s7_pointer args)
   s7_Int n;
 
   x = finder(sc, car(args));
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
   n = s7_integer(cadr(args));
-
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) + n));
     case T_RATIO:   return(add_ratios(sc, x, cadr(args)));
     case T_REAL:    return(s7_make_real(sc, real(x) + n));
-    default:        return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
+    default:        return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
     }
   return(x);
 }
@@ -9414,9 +9545,30 @@ static s7_pointer subtract_1, subtract_s1, subtract_cs1, subtract_2, subtract_cs
 
 static s7_pointer g_subtract_1(s7_scheme *sc, s7_pointer args)
 {
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "-", 1, car(args), "a number"));
-  return(s7_negate(sc, car(args)));
+  s7_pointer p;
+
+  p = car(args);
+  switch (type(p))
+    {
+    case T_INTEGER: 
+#if WITH_GMP
+      if (integer(p) == S7_LLONG_MIN)
+	return(big_negate(sc, list_1(sc, promote_number(sc, T_BIG_INTEGER, p))));
+#endif	
+      return(make_integer(sc, -integer(p)));
+      
+    case T_RATIO:
+      return(s7_make_ratio(sc, -numerator(p), denominator(p)));
+      
+    case T_REAL:
+      return(s7_make_real(sc, -real(p)));
+      
+    case T_COMPLEX:
+      return(s7_make_complex(sc, -real_part(p), -imag_part(p)));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "-", 1, car(args), "a number"));
+    }
 }
 
 static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
@@ -9424,13 +9576,7 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "-", 1, x, "a number"));
-
   y = cadr(args);
-  if (!s7_is_number(y))
-    return(s7_wrong_type_arg_error(sc, "-", 2, y, "a number"));
-
   switch (type(x))
     {
     case T_INTEGER: 
@@ -9439,7 +9585,8 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: return(make_integer(sc, integer(x) - integer(y)));
 	case T_RATIO:   return(g_subtract(sc, args));
 	case T_REAL:    return(s7_make_real(sc, integer(x) - real(y)));
-	default:        return(s7_make_complex(sc, integer(x) - real_part(y), -imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, integer(x) - real_part(y), -imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "-", 2, y, "a number"));
 	}
       
     case T_RATIO:
@@ -9448,7 +9595,8 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER:
 	case T_RATIO:   return(g_subtract(sc, args));
 	case T_REAL:    return(s7_make_real(sc, fraction(x) - real(y)));
-	default:        return(s7_make_complex(sc, fraction(x) - real_part(y), -imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, fraction(x) - real_part(y), -imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "-", 2, y, "a number"));
 	}
       
     case T_REAL:
@@ -9457,50 +9605,48 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: return(s7_make_real(sc, real(x) - integer(y)));
 	case T_RATIO:   return(s7_make_real(sc, real(x) - fraction(y)));
 	case T_REAL:    return(s7_make_real(sc, real(x) - real(y)));
-	default:        return(s7_make_complex(sc, real(x) - real_part(y), -imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, real(x) - real_part(y), -imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "-", 2, y, "a number"));
 	}
 
-    default:
+    case T_COMPLEX:
       switch (type(y))
 	{
 	case T_INTEGER: return(s7_make_complex(sc, real_part(x) - integer(y), imag_part(x)));
 	case T_RATIO:   return(s7_make_complex(sc, real_part(x) - fraction(y), imag_part(x)));
 	case T_REAL:    return(s7_make_complex(sc, real_part(x) - real(y), imag_part(x)));
-	default:        return(s7_make_complex(sc, real_part(x) - real_part(y), imag_part(x) - imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - real_part(y), imag_part(x) - imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "-", 2, y, "a number"));
 	}
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "-", 1, x, "a number"));
     }
   return(x);
 }
 
 
-static s7_pointer sub1(s7_scheme *sc, s7_pointer x)
+static s7_pointer sub1(s7_scheme *sc, s7_pointer x, int arg_num)
 {
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) - 1));
     case T_RATIO:   return(subtract_ratios(sc, x, small_int(1)));
     case T_REAL:    return(s7_make_real(sc, real(x) - 1.0));
-    default:        return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
+    default:        return(s7_wrong_type_arg_error(sc, "-", arg_num, x, "a number"));
     }
   return(x);
 }
 
 static s7_pointer g_subtract_cs1(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x;
-  x = finder(sc, car(args));
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "-", 1, x, "a number"));
-  return(sub1(sc, x));
+  return(sub1(sc, finder(sc, car(args)), 1));
 }
 
 static s7_pointer g_subtract_s1(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x;
-  x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "-", 1, x, "a number"));
-  return(sub1(sc, x));
+  return(sub1(sc, car(args), 1));
 }
 
 static s7_pointer g_subtract_csn(s7_scheme *sc, s7_pointer args)
@@ -9509,16 +9655,14 @@ static s7_pointer g_subtract_csn(s7_scheme *sc, s7_pointer args)
   s7_Int n;
 
   x = finder(sc, car(args));
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "-", 1, x, "a number"));
   n = s7_integer(cadr(args));
-
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) - n));
     case T_RATIO:   return(subtract_ratios(sc, x, cadr(args)));
     case T_REAL:    return(s7_make_real(sc, real(x) - n));
-    default:        return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
+    default:        return(s7_wrong_type_arg_error(sc, "-", 1, x, "a number"));
     }
   return(x);
 }
@@ -9734,13 +9878,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
-
   y = cadr(args);
-  if (!s7_is_number(y))
-    return(s7_wrong_type_arg_error(sc, "*", 2, y, "a number"));
-
   switch (type(x))
     {
     case T_INTEGER: 
@@ -9749,7 +9887,8 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: return(make_integer(sc, integer(x) * integer(y)));
 	case T_RATIO:   return(g_multiply(sc, args));
 	case T_REAL:    return(s7_make_real(sc, integer(x) * real(y)));
-	default:        return(s7_make_complex(sc, integer(x) * real_part(y), integer(x) * imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, integer(x) * real_part(y), integer(x) * imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "*", 2, y, "a number"));
 	}
       
     case T_RATIO:
@@ -9758,7 +9897,8 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER:
 	case T_RATIO:    return(g_multiply(sc, args));
 	case T_REAL:     return(s7_make_real(sc, fraction(x) * real(y)));
-	default:         return(s7_make_complex(sc, fraction(x) * real_part(y), fraction(x) * imag_part(y)));
+	case T_COMPLEX:  return(s7_make_complex(sc, fraction(x) * real_part(y), fraction(x) * imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "*", 2, y, "a number"));
 	}
       
     case T_REAL:
@@ -9767,16 +9907,17 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: return(s7_make_real(sc, real(x) * integer(y)));
 	case T_RATIO:   return(s7_make_real(sc, real(x) * fraction(y)));
 	case T_REAL:    return(s7_make_real(sc, real(x) * real(y)));
-	default:        return(s7_make_complex(sc, real(x) * real_part(y), real(x) * imag_part(y)));
+	case T_COMPLEX: return(s7_make_complex(sc, real(x) * real_part(y), real(x) * imag_part(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "*", 2, y, "a number"));
 	}
 
-    default:
+    case T_COMPLEX:
       switch (type(y))
 	{
 	case T_INTEGER: return(s7_make_complex(sc, real_part(x) * integer(y), imag_part(x) * integer(y)));
 	case T_RATIO:   return(s7_make_complex(sc, real_part(x) * fraction(y), imag_part(x) * fraction(y)));
 	case T_REAL:    return(s7_make_complex(sc, real_part(x) * real(y), imag_part(x) * real(y)));
-	default:
+	case T_COMPLEX:
 	  {
 	    s7_Double r1, r2, i1, i2;
 	    r1 = real_part(x);
@@ -9785,7 +9926,11 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	    i2 = imag_part(y);
 	    return(s7_make_complex(sc, r1 * r2 - i1 * i2, r1 * i2 + r2 * i1));
 	  }
+	default:        return(s7_wrong_type_arg_error(sc, "*", 2, y, "a number"));
 	}
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));      
     }
   return(x);
 }
@@ -9796,15 +9941,13 @@ static s7_pointer g_multiply_i2(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
-
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) * 2));
     case T_RATIO:   return(s7_make_ratio(sc, numerator(x) * 2, denominator(x)));
     case T_REAL:    return(s7_make_real(sc, real(x) * 2.0));
-    default:        return(s7_make_complex(sc, real_part(x) * 2.0, imag_part(x) * 2.0));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * 2.0, imag_part(x) * 2.0));
+    default:        return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
     }
   return(x);
 }
@@ -9814,15 +9957,13 @@ static s7_pointer g_multiply_f2(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
-
   switch (type(x))
     {
     case T_INTEGER: return(s7_make_real(sc, integer(x) * 2.0));
     case T_RATIO:   return(s7_make_real(sc, numerator(x) * 2.0 / denominator(x)));
     case T_REAL:    return(s7_make_real(sc, real(x) * 2.0));
-    default:        return(s7_make_complex(sc, real_part(x) * 2.0, imag_part(x) * 2.0));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * 2.0, imag_part(x) * 2.0));
+    default:        return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
     }
   return(x);
 }
@@ -10343,9 +10484,6 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
   s7_pointer x, p;
 
   p = car(args);
-  if (!s7_is_number(p))
-    return(s7_wrong_type_arg_error(sc, "=", 1, p, "a number"));
-  
   type_a = type(p);
 
   x = cdr(args);
@@ -10356,9 +10494,6 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
       bool equal = true;
 
       tmp = car(x);
-      if (!s7_is_number(tmp))
-	  return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));
-
       type_b = type(tmp);
 
       switch (type_a)
@@ -10378,16 +10513,23 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      equal = (integer(p) == real(tmp));
 	      break;
 
-	    default: 
-	      equal = ((imag_part(tmp) == 0.0) &&
+	    case T_COMPLEX:
+	      equal = ((imag_part(tmp) == 0.0) && /* TODO: can this actually happen?? */
 		       (real_part(tmp) == integer(p)));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));	      
 	    }
 	  break;
       
 	case T_RATIO:  
 	  switch (type_b)
 	    {
+	    case T_INTEGER:
+	      equal = false;
+	      break;
+
 	    case T_RATIO:
 	      equal = ((numerator(p) == numerator(tmp)) &&
 		       (denominator(p) == denominator(tmp)));
@@ -10397,9 +10539,12 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      equal = (fraction(p) == real(tmp));
 	      break;
 
-	    default:
+	    case T_COMPLEX:
 	      equal = false;
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));	      
 	    }
 	  break;
       
@@ -10418,14 +10563,17 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      equal = (real(p) == real(tmp));
 	      break;
 
-	    default:
+	    case T_COMPLEX:
 	      equal = ((imag_part(tmp) == 0.0) &&
 		       (real_part(tmp) == real(p)));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));	      
 	    }
 	  break;
       
-	default:
+	case T_COMPLEX:
 	  switch (type_b)
 	    {
 	    case T_INTEGER:
@@ -10443,12 +10591,18 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 		       (real_part(p) == real(tmp)));
 	      break;
 
-	    default:
+	    case T_COMPLEX:
 	      equal = ((real_part(p) == real_part(tmp)) &&
 		       (imag_part(p) == imag_part(tmp)));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));	      
 	    }
 	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "=", 1, p, "a number"));
 	}
 
       if (!equal)
@@ -10480,11 +10634,7 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
   s7_pointer val;
 
   val = finder(sc, car(args));
-  if (!s7_is_number(val))
-    return(s7_wrong_type_arg_error(sc, "=", 1, car(args), "a number"));
-  
   y = s7_integer(cadr(args));
-
   switch (type(val))
     {
     case T_INTEGER:
@@ -10498,12 +10648,15 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, real(val) == y));
       break;
 
-    default:
+    case T_COMPLEX:
 #ifndef _MSC_VER
       return(make_boolean(sc, (imag_part(val) == 0.0) && (real_part(val) == y)));
 #else
       if ((imag_part(val) == 0.0) && (real_part(val) == y)) return(sc->T); else return(sc->F);
 #endif
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "=", 1, car(args), "a number"));
     }
   return(sc->T);
 }
@@ -10547,19 +10700,14 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
+
 static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 {
   int type_a, type_b;
   s7_pointer x, y;
 
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "=", 1, x, "a number"));
-
   y = cadr(args);
-  if (!s7_is_number(y))
-    return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));
-  
   type_a = type(x);
   type_b = type(y);
 
@@ -10568,108 +10716,70 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
     case T_INTEGER:
       switch (type_b)
 	{
-	case T_INTEGER: 
-	  return(make_boolean(sc, integer(x) == integer(y)));
-	  break;
-	  
-	case T_RATIO:
-	  return(sc->F);
-	  break;
-	  
-	case T_REAL:
-	  return(make_boolean(sc, integer(x) == real(y)));
-	  break;
-	  
-	default: 
+	case T_INTEGER: return(make_boolean(sc, integer(x) == integer(y)));
+	case T_RATIO:   return(sc->F);
+	case T_REAL:    return(make_boolean(sc, integer(x) == real(y)));
+	case T_COMPLEX:
 #ifndef _MSC_VER
 	  return(make_boolean(sc, (imag_part(y) == 0.0) && (real_part(y) == integer(x))));
 #else
 	  if ((imag_part(y) == 0.0) && (real_part(y) == integer(x))) return(sc->T); else return(sc->F);
 #endif
 	  break;
+
+	default:        return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
 	}
       break;
       
     case T_RATIO:  
       switch (type_b)
 	{
-	case T_RATIO:
-	  return(make_boolean(sc, (numerator(x) == numerator(y)) && (denominator(x) == denominator(y))));
-	  break;
-	  
-	case T_REAL:
-	  return(make_boolean(sc, fraction(x) == real(y)));
-	  break;
-	  
-	default:
-	  return(sc->F);
-	  break;
+	case T_INTEGER: return(sc->F);
+	case T_RATIO:   return(make_boolean(sc, (numerator(x) == numerator(y)) && (denominator(x) == denominator(y))));
+	case T_REAL:    return(make_boolean(sc, fraction(x) == real(y)));
+	case T_COMPLEX: return(sc->F);
+	default:        return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
 	}
       break;
       
     case T_REAL:    
       switch (type_b)
 	{
-	case T_INTEGER:
-	  return(make_boolean(sc, real(x) == integer(y)));
-	  break;
-	  
-	case T_RATIO:
-	  return(make_boolean(sc, real(x) == fraction(y)));
-	  break;
-	  
-	case T_REAL:
-	  return(make_boolean(sc, real(x) == real(y)));
-	  break;
-	  
-	default:
+	case T_INTEGER: return(make_boolean(sc, real(x) == integer(y)));
+	case T_RATIO:   return(make_boolean(sc, real(x) == fraction(y)));
+	case T_REAL:    return(make_boolean(sc, real(x) == real(y)));
+	case T_COMPLEX:
 #ifndef _MSC_VER
 	  return(make_boolean(sc, (imag_part(y) == 0.0) && (real_part(y) == real(x))));
 #else
 	  if ((imag_part(y) == 0.0) && (real_part(y) == real(x))) return(sc->T); else return(sc->F);
 #endif
 	  break;
+
+	default:        return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
 	}
       break;
       
-    default:
+    case T_COMPLEX:
       switch (type_b)
 	{
 #ifndef _MSC_VER
-	case T_INTEGER:
-	  return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == integer(y))));
-	  break;
-	  
-	case T_RATIO:
-	  return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == fraction(y))));
-	  break;
-	  
-	case T_REAL:
-	  return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == real(y))));
-	  break;
-	  
-	default:
-	  return(make_boolean(sc, (real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))));
-	  break;
+	case T_INTEGER:  return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == integer(y))));
+	case T_RATIO:    return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == fraction(y))));
+	case T_REAL:     return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == real(y))));
+	case T_COMPLEX:  return(make_boolean(sc, (real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))));
 #else
-	case T_INTEGER:
-	  if ((imag_part(x) == 0.0) && (real_part(x) == integer(y))) return(sc->T); else return(sc->F);
-	  break;
-	  
-	case T_RATIO:
-	  if ((imag_part(x) == 0.0) && (real_part(x) == fraction(y))) return(sc->T); else return(sc->F);
-	  break;
-	  
-	case T_REAL:
-	  if ((imag_part(x) == 0.0) && (real_part(x) == real(y))) return(sc->T); else return(sc->F);
-	  break;
-	  
-	default:
-	  if ((real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))) return(sc->T); else return(sc->F);
-	  break;
+	case T_INTEGER: if ((imag_part(x) == 0.0) && (real_part(x) == integer(y))) return(sc->T); else return(sc->F);
+	case T_RATIO:   if ((imag_part(x) == 0.0) && (real_part(x) == fraction(y))) return(sc->T); else return(sc->F);
+	case T_REAL:    if ((imag_part(x) == 0.0) && (real_part(x) == real(y))) return(sc->T); else return(sc->F);
+	case T_COMPLEX: if ((real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))) return(sc->T); else return(sc->F);
 #endif
+	default:        return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
 	}
       break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "=", 1, x, "a number"));
     }
   return(sc->F);
 }
@@ -10685,17 +10795,26 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
   s7_pointer x, p;
 
   p = car(args);
-  if (!s7_is_real(p))
-    return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", 1, p, "a real"));
-
   type_a = type(p);
-  if ((type_a > T_RATIO) && 
-      (isnan(real(p))))
+
+  switch (type_a)
     {
-      for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	if (!s7_is_real(car(x)))
-	  return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
-      return(sc->F);
+    case T_INTEGER:
+    case T_RATIO:
+      break;
+      
+    case T_REAL:
+      if (isnan(real(p)))
+	{
+	  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
+	    if (!s7_is_real(car(x)))
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
+	  return(sc->F);
+	}
+      break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", 1, p, "a real"));
     }
 
   i = 2;
@@ -10706,17 +10825,7 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
       bool less = true;
 
       tmp = car(x);
-      if (!s7_is_real(tmp))
-	return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, tmp, "a real"));
-
       type_b = type(tmp);
-      if ((type_b > T_RATIO) && (isnan(real(tmp))))
-	{
-	  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	    if (!s7_is_real(car(x)))
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
-	  return(sc->F);
-	}
 
       switch (type_a)
 	{
@@ -10748,9 +10857,19 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 		}
 	      break;
 
-	    default:
+	    case T_REAL:
+	      if (isnan(real(tmp)))
+		{
+		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
+		    if (!s7_is_real(car(x)))
+		      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
+		  return(sc->F);
+		}
 	      less = (integer(p) < real(tmp));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, tmp, "a real"));
 	    }
 	  break;
 
@@ -10820,13 +10939,23 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      }
 	      break;
 
-	    default:
+	    case T_REAL:
+	      if (isnan(real(tmp)))
+		{
+		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
+		    if (!s7_is_real(car(x)))
+		      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
+		  return(sc->F);
+		}
 	      less = (fraction(p) < real(tmp));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, tmp, "a real"));
 	    }
 	  break;
 
-	default:
+	case T_REAL:
 	  switch (type_b)
 	    {
 	    case T_INTEGER: 
@@ -10837,9 +10966,19 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      less = (real(p) < fraction(tmp)); /* (< 1.0 9223372036854775806/9223372036854775807) */
 	      break;
 
-	    default:
+	    case T_REAL:
+	      if (isnan(real(tmp)))
+		{
+		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
+		    if (!s7_is_real(car(x)))
+		      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
+		  return(sc->F);
+		}
 	      less = (real(p) < real(tmp));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, tmp, "a real"));
 	    }
 	  break;
 	}
@@ -10891,17 +11030,25 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
   /* (>= nan.0 inf.0) returns #t, but in Guile it's #f (and others similar) */
 
   p = car(args);
-  if (!s7_is_real(p))
-    return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", 1, p, "a real"));
-
   type_a = type(p);
-  if ((type_a > T_RATIO) && 
-      (isnan(real(p))))
+  switch (type_a)
     {
-      for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	if (!s7_is_real(car(x)))
-	  return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
-      return(sc->F);
+    case T_INTEGER:
+    case T_RATIO:
+      break;
+      
+    case T_REAL:
+      if (isnan(real(p)))
+	{
+	  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
+	    if (!s7_is_real(car(x)))
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
+	  return(sc->F);
+	}
+      break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", 1, p, "a real"));
     }
 
   i = 2;
@@ -10912,17 +11059,7 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
       bool greater = true;
 
       tmp = car(x);
-      if (!s7_is_real(tmp))
-	return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, tmp, "a real"));
-
       type_b = type(tmp);
-      if ((type_b > T_RATIO) && (isnan(real(tmp))))
-	{
-	  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	    if (!s7_is_real(car(x)))
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
-	  return(sc->F);
-	}
 
       /* the ">" operator here is a problem.
        *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
@@ -10930,6 +11067,7 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
        *   :(> 0 most-negative-fixnum)
        *   #f
        */
+
       switch (type_a)
 	{
 	case T_INTEGER:
@@ -10959,9 +11097,19 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 		}
 	      break;
 
-	    default:
+	    case T_REAL:
+	      if (isnan(real(tmp)))
+		{
+		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
+		    if (!s7_is_real(car(x)))
+		      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
+		  return(sc->F);
+		}
 	      greater = (integer(p) > real(tmp));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, tmp, "a real"));	      
 	    }
 	  break;
 
@@ -11018,13 +11166,23 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      }
 	      break;
 
-	    default:
+	    case T_REAL:
+	      if (isnan(real(tmp)))
+		{
+		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
+		    if (!s7_is_real(car(x)))
+		      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
+		  return(sc->F);
+		}
 	      greater = (fraction(p) > real(tmp));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, tmp, "a real"));	      
 	    }
 	  break;
 
-	default:
+	case T_REAL:
 	  switch (type_b)
 	    {
 	    case T_INTEGER: 
@@ -11037,9 +11195,19 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	       */
 	      break;
 
-	    default:
+	    case T_REAL:
+	      if (isnan(real(tmp)))
+		{
+		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
+		    if (!s7_is_real(car(x)))
+		      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
+		  return(sc->F);
+		}
 	      greater = (real(p) > real(tmp));
 	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, tmp, "a real"));	      
 	    }
 	  break;
 	}
@@ -11050,7 +11218,6 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 	    if (!s7_is_real(car(x)))
 	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
-
 	  return(sc->F);
 	}
 
@@ -11089,11 +11256,8 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "<", 1, x, "a number"));  
   y = s7_integer(cadr(args));
-
-  switch (type(car(args)))
+  switch (type(x))
     {
     case T_INTEGER:
       return(make_boolean(sc, integer(x) < y));
@@ -11116,8 +11280,11 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, real(x) < y));
       break;
 
-    default:
+    case T_COMPLEX:
       return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) < y)));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "<", 1, x, "a number"));  
     }
   return(sc->T);
 }
@@ -11163,13 +11330,7 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
 
   x = car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "<", 1, x, "a real"));
-  
   y = cadr(args);
-  if (!s7_is_real(y))
-    return(s7_wrong_type_arg_error(sc, "<", 2, y, "a real"));
-
   switch (type(x))
     {
     case T_INTEGER:
@@ -11183,10 +11344,13 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
 	  return(g_less_1(sc, false, args));
 	  break;
 	  
-	default:
+	case T_REAL:
 	  if (isnan(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) < real(y)));
 	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<", 2, y, "a real"));	  
 	}
       break;
       
@@ -11194,24 +11358,32 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
       return(g_less_1(sc, false, args));
       break;
       
-    default:
-      if (isnan(real(x))) return(sc->F);
+    case T_REAL:
       switch (type(y))
 	{
 	case T_INTEGER: 
+	  if (isnan(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) < integer(y)));
 	  break;
 	  
 	case T_RATIO:
+	  if (isnan(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) < fraction(y)));
 	  break;
 	  
-	default:
+	case T_REAL:
+	  if (isnan(real(x))) return(sc->F);
 	  if (isnan(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) < real(y)));
 	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<", 2, y, "a real"));	  
 	}
       break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "<", 1, x, "a real"));      
     }
 
   return(sc->T);
@@ -11224,8 +11396,6 @@ static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, "<=", 1, x, "a number"));  
   y = s7_integer(cadr(args));
 
   switch (type(x))
@@ -11252,7 +11422,7 @@ static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
       break;
 
     default:
-      return(s7_wrong_type_arg_error(sc, "<=", 1, car(args), "a number"));  
+      return(s7_wrong_type_arg_error(sc, "<=", 1, x, "a real"));  
     }
   return(sc->T);
 }
@@ -11263,12 +11433,7 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
 
   x = car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "<=", 1, x, "a real"));
-  
   y = cadr(args);
-  if (!s7_is_real(y))
-    return(s7_wrong_type_arg_error(sc, "<=", 2, y, "a real"));
 
   switch (type(x))
     {
@@ -11283,10 +11448,13 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
 	  return(g_greater_1(sc, true, args));
 	  break;
 	  
-	default:
+	case T_REAL:
 	  if (isnan(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) <= real(y)));
 	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<=", 2, y, "a real"));	  
 	}
       break;
       
@@ -11294,24 +11462,32 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
       return(g_greater_1(sc, true, args));
       break;
       
-    default:
-      if (isnan(real(x))) return(sc->F);
+    case T_REAL:
       switch (type(y))
 	{
 	case T_INTEGER: 
+	  if (isnan(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= integer(y)));
 	  break;
 	  
 	case T_RATIO:
+	  if (isnan(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= fraction(y)));
 	  break;
 	  
-	default:
+	case T_REAL:
+	  if (isnan(real(x))) return(sc->F);
 	  if (isnan(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= real(y)));
 	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<=", 2, y, "a real"));	  
 	}
       break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "<=", 1, x, "a real"));
     }
 
   return(sc->T);
@@ -11324,11 +11500,7 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, ">", 1, x, "a number"));  
-
   y = s7_integer(cadr(args));
-
   switch (type(x))
     {
     case T_INTEGER:
@@ -11365,30 +11537,26 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
 
   x = car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, ">", 1, x, "a real"));
-
   y = cadr(args);
-  if (!s7_is_real(y))
-    return(s7_wrong_type_arg_error(sc, ">", 2, y, "a real"));
 
   switch (type(x))
     {
     case T_INTEGER:
       switch (type(y))
 	{
-	case T_INTEGER:
+	case T_INTEGER: 
 	  return(make_boolean(sc, integer(x) > integer(y)));
-	  break;
-	  
-	case T_RATIO: 
+
+	case T_RATIO:   
 	  return(g_greater_1(sc, false, args));
-	  break;
-	  
-	default:
+
+	case T_REAL:
 	  if (isnan(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) > real(y)));
 	  break;
+
+	default:       
+	  return(s7_wrong_type_arg_error(sc, ">", 2, y, "a real"));
 	}
       break;
       
@@ -11396,24 +11564,32 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
       return(g_greater_1(sc, false, args));
       break;
       
-    default:
-      if (isnan(real(x))) return(sc->F);
+    case T_REAL:
       switch (type(y))
 	{
 	case T_INTEGER: 
+	  if (isnan(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) > integer(y)));
 	  break;
 	  
 	case T_RATIO:
+	  if (isnan(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) > fraction(y)));
 	  break;
 	  
-	default:
+	case T_REAL:
+	  if (isnan(real(x))) return(sc->F);
 	  if (isnan(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) > real(y)));
 	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">", 2, y, "a real"));
 	}
       break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, ">", 1, x, "a real"));
     }
 
   return(sc->T);
@@ -11447,12 +11623,7 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
 
   x = car(args);
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, ">=", 1, x, "a real"));
-
   y = cadr(args);
-  if (!s7_is_real(y))
-    return(s7_wrong_type_arg_error(sc, ">=", 2, y, "a real"));
 
   switch (type(x))
     {
@@ -11467,10 +11638,13 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
 	  return(g_less_1(sc, true, args));
 	  break;
 	  
-	default:
+	case T_REAL:
 	  if (isnan(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) >= real(y)));
 	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">=", 2, y, "a real"));	  
 	}
       break;
       
@@ -11478,24 +11652,32 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
       return(g_less_1(sc, true, args));
       break;
       
-    default:
-      if (isnan(real(x))) return(sc->F);
+    case T_REAL:
       switch (type(y))
 	{
 	case T_INTEGER: 
+	  if (isnan(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= integer(y)));
 	  break;
 	  
 	case T_RATIO:
+	  if (isnan(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= fraction(y)));
 	  break;
 	  
-	default:
+	case T_REAL:
+	  if (isnan(real(x))) return(sc->F);
 	  if (isnan(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= real(y)));
 	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">=", 2, y, "a real"));	  
 	}
       break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, ">=", 1, x, "a real"));
     }
 
   return(sc->T);
@@ -11515,8 +11697,6 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   x = car(args);
-  if (!s7_is_number(x))
-    return(s7_wrong_type_arg_error(sc, ">=", 1, x, "a number"));  
   y = s7_integer(cadr(args));
 
   switch (type(x))
@@ -11543,11 +11723,10 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
       break;
 
     default:
-      return(s7_wrong_type_arg_error(sc, ">=", 1, car(args), "a number"));  
+      return(s7_wrong_type_arg_error(sc, ">=", 1, x, "a real"));  
     }
   return(sc->T);
 }
-
 #endif
 #endif
 
@@ -11557,12 +11736,21 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_real_part "(real-part num) returns the real part of num"
   s7_pointer p;
+
   p = car(args);
-  if (!s7_is_number(p))
-    return(s7_wrong_type_arg_error(sc, "real-part", 0, p, "a number"));
-  if (is_real(p))
-    return(p);                                      /* if num is real, real-part should return it as is (not exact->inexact) */
-  return(s7_make_real(sc, real_part(p)));
+  switch (type(p))
+    {
+    case T_INTEGER:
+    case T_RATIO:
+    case T_REAL:
+      return(p);
+
+    case T_COMPLEX:
+      return(s7_make_real(sc, real_part(p)));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "real-part", 0, p, "a number"));
+    }
 }
 
 
@@ -11570,19 +11758,16 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_imag_part "(imag-part num) returns the imaginary part of num"
   s7_pointer p;
-
-  p = car(args);
-  if (!s7_is_number(p))
-    return(s7_wrong_type_arg_error(sc, "imag-part", 0, p, "a number"));
-
   /* currently (imag-part nan.0) -> 0.0 ? it's true but maybe confusing */
 
+  p = car(args);
   switch (type(p))
     {
     case T_INTEGER:   
-    case T_RATIO: return(small_int(0));
-    case T_REAL:  return(real_zero);
-    default:      return(s7_make_real(sc, imag_part(p)));
+    case T_RATIO:   return(small_int(0));
+    case T_REAL:    return(real_zero);
+    case T_COMPLEX: return(s7_make_real(sc, imag_part(p)));
+    default:        return(s7_wrong_type_arg_error(sc, "imag-part", 0, p, "a number"));
     }
 }
 
@@ -11590,18 +11775,48 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
 {
   #define H_numerator "(numerator rat) returns the numerator of the rational number rat"
-  if (!s7_is_rational(car(args)))
-    return(s7_wrong_type_arg_error(sc, "numerator", 0, car(args), "a rational"));
-  return(make_integer(sc, number_to_numerator(car(args))));
+  s7_pointer x;
+
+  x = car(args);
+  switch (type(x))
+    {
+    case T_RATIO:
+      return(make_integer(sc, numerator(x)));
+      
+    case T_INTEGER:
+      return(x);
+
+    case T_REAL:
+    case T_COMPLEX:
+      return(s7_wrong_type_arg_error(sc, "numerator", 0, x, "a rational"));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "numerator", 0, x, "a number"));
+    }
 }
 
 
 static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
 {
   #define H_denominator "(denominator rat) returns the denominator of the rational number rat"
-  if (!s7_is_rational(car(args)))
-    return(s7_wrong_type_arg_error(sc, "denominator", 0, car(args), "a rational"));
-  return(make_integer(sc, number_to_denominator(car(args))));
+  s7_pointer x;
+
+  x = car(args);
+  switch (type(x))
+    {
+    case T_RATIO:
+      return(make_integer(sc, denominator(x)));
+      
+    case T_INTEGER:
+      return(small_int(1));
+
+    case T_REAL:
+    case T_COMPLEX:
+      return(s7_wrong_type_arg_error(sc, "denominator", 0, x, "a rational"));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "denominator", 0, x, "a number"));
+    }
 }
 
 
@@ -11609,7 +11824,25 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
-  return(make_boolean(sc, s7_is_nan(car(args))));
+  /* s7 thinks a NaN is a real. */
+  s7_pointer x;
+
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER:
+    case T_RATIO:
+      return(sc->F);
+	  
+    case T_REAL:
+      return(make_boolean(sc, isnan(real(x))));
+	  
+    case T_COMPLEX:
+      return(make_boolean(sc, (isnan(real_part(x))) || (isnan(imag_part(x)))));
+
+    default:
+      return(sc->F);
+    }
 }
 
 
@@ -11618,9 +11851,21 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
   #define H_is_infinite "(infinite? obj) returns #t if obj is an infinite real"
   s7_pointer x;
   x = car(args);
-  if (!s7_is_number(x))
-    return(sc->F);
-  return(make_boolean(sc, (isinf(s7_real_part(x))) || (isinf(s7_imag_part(x)))));
+  switch (type(x))
+    {
+    case T_INTEGER:
+    case T_RATIO:
+      return(sc->F);
+
+    case T_REAL:
+      return(make_boolean(sc, isinf(real(x))));
+
+    case T_COMPLEX:
+      return(make_boolean(sc, (isinf(real_part(x))) || (isinf(imag_part(x)))));
+
+    default:
+      return(sc->F);
+    }
 }
 #endif
 
@@ -11628,7 +11873,7 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_number(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_number "(number? obj) returns #t if obj is a number"
-  return(make_boolean(sc, s7_is_number(car(args))));
+  return(make_boolean(sc, s7_is_number(car(args))));    /* we need the s7_* versions here for the GMP case */
 }
 
 
@@ -11649,7 +11894,7 @@ static s7_pointer g_is_real(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_complex "(complex? obj) returns #t if obj is a number"
-  return(make_boolean(sc, s7_is_complex(car(args))));
+  return(make_boolean(sc, s7_is_number(car(args))));
 }
 
 
@@ -11669,7 +11914,7 @@ static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
   #define H_is_even "(even? int) returns #t if the integer int is even"
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "even?", 0, car(args), "an integer"));
-  return(make_boolean(sc, (s7_integer(car(args)) & 1) == 0));
+  return(make_boolean(sc, (integer(car(args)) & 1) == 0));
 
   /* extension to gaussian integers: odd if a+b is odd? */
 }
@@ -11680,7 +11925,7 @@ static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
   #define H_is_odd "(odd? int) returns #t if the integer int is odd"
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "odd?", 0, car(args), "an integer"));
-  return(make_boolean(sc, (s7_integer(car(args)) & 1) == 1));
+  return(make_boolean(sc, (integer(car(args)) & 1) == 1));
 }
 
 
@@ -11688,18 +11933,41 @@ static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_zero "(zero? num) returns #t if the number num is zero"
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "zero?", 0, car(args), "a number"));
-  return(make_boolean(sc, s7_is_zero(car(args))));
+  s7_pointer x;
+
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER: 
+      return(make_boolean(sc, integer(x) == 0));
+
+    case T_REAL:    
+      return(make_boolean(sc, real(x) == 0.0));
+
+    case T_RATIO:
+    case T_COMPLEX:
+      /* ratios and complex numbers are already collapsed into integers and reals */
+      return(sc->F);
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "zero?", 0, x, "a number"));
+    }
 }
 
 
 static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_positive "(positive? num) returns #t if the real number num is positive (greater than 0)"
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "positive?", 0, car(args), "a real"));
-  return(make_boolean(sc, s7_is_positive(car(args))));
+  s7_pointer x;
+  
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_boolean(sc, integer(x) > 0));
+    case T_RATIO:   return(make_boolean(sc, numerator(x) > 0));
+    case T_REAL:    return(make_boolean(sc, real(x) > 0.0));
+    default:        return(s7_wrong_type_arg_error(sc, "positive?", 0, x, "a real"));
+    }
 }
 
 
@@ -11747,40 +12015,79 @@ static s7_pointer g_is_zero_logand_ss(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
+
 static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_negative "(negative? num) returns #t if the real number num is negative (less than 0)"
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "negative?", 0, car(args), "a real"));
-  return(make_boolean(sc, s7_is_negative(car(args))));
+  s7_pointer x;
+  
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_boolean(sc, integer(x) < 0));
+    case T_RATIO:   return(make_boolean(sc, numerator(x) < 0));
+    case T_REAL:    return(make_boolean(sc, real(x) < 0.0));
+    default:        return(s7_wrong_type_arg_error(sc, "negative?", 0, x, "a real"));
+    }
 }
 
 
 static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5"
+  s7_pointer x;
+  
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER:
+      return(s7_make_real(sc, (s7_Double)(integer(x))));
 
-  if (!s7_is_number(car(args)))   /* apparently (exact->inexact 1+i) is not an error */
-    return(s7_wrong_type_arg_error(sc, "exact->inexact", 0, car(args), "a number"));
+    case T_RATIO:
+      return(s7_make_real(sc, (s7_Double)(fraction(x))));
 
-  if (s7_is_rational(car(args)))
-    return(exact_to_inexact(sc, car(args)));
+    case T_REAL:
+    case T_COMPLEX:              /* apparently (exact->inexact 1+i) is not an error */
+      return(x);
 
-  return(car(args));
+    default:
+      return(s7_wrong_type_arg_error(sc, "exact->inexact", 0, car(args), "a number"));
+    }
 }
 
 
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
+  s7_pointer x;
 
-  if (s7_is_rational(car(args)))        /* (inexact->exact -2305843009213693952/4611686018427387903) which will confuse s7_real below */
-    return(car(args));
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER:
+    case T_RATIO:
+      return(x);                /* (inexact->exact -2305843009213693952/4611686018427387903) which will confuse s7_real below */
 
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, car(args), "a real number"));
+    case T_REAL:
+      {
+	s7_Int numer = 0, denom = 1;
+	s7_Double val;
 
-  return(inexact_to_exact(sc, car(args)));
+	val = real(x);
+	if ((isinf(val)) || (isnan(val)))
+	  return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, x, "a normal real"));
+
+	if ((val > S7_LLONG_MAX) ||
+	    (val < S7_LLONG_MIN))
+	  return(s7_out_of_range_error(sc, "inexact->exact", 0, x, "too large to express as an integer"));
+
+	if (c_rationalize(val, default_rationalize_error, &numer, &denom))
+	  return(s7_make_ratio(sc, numer, denom));
+      }
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, x, "a real number"));
+    }
 }
 #endif
 /* (!WITH_GMP) */
@@ -11789,24 +12096,62 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_exact "(exact? num) returns #t if num is exact (an integer or a ratio)"
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "exact?", 0, car(args), "a number"));
-  return(make_boolean(sc, s7_is_exact(car(args))));
+  s7_pointer x;
+  
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER:
+    case T_RATIO:
+      return(sc->T);
+
+    case T_REAL:
+    case T_COMPLEX:
+      return(sc->F);
+
+#if WITH_GMP
+    case T_C_OBJECT:
+      if (s7_is_number(x))
+	return(make_boolean(sc, s7_is_rational(x)));
+#endif
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "exact?", 0, x, "a number"));
+    }
 }
 
 
 static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_inexact "(inexact? num) returns #t if num is inexact (neither an integer nor a ratio)"
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "inexact?", 0, car(args), "a number"));
-  return(make_boolean(sc, s7_is_inexact(car(args))));
+  s7_pointer x;
+  
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER:
+    case T_RATIO:
+      return(sc->F);
+
+    case T_REAL:
+    case T_COMPLEX:
+      return(sc->T);
+
+#if WITH_GMP
+    case T_C_OBJECT:
+      if (s7_is_number(x))
+	return(make_boolean(sc, !s7_is_rational(x)));
+#endif
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "inexact?", 0, x, "a number"));
+    }
 }
 
 
 bool s7_is_ulong(s7_pointer arg) 
 {
-  return(s7_is_integer(arg));
+  return(is_integer(arg));
 }
 
 
@@ -11828,7 +12173,7 @@ s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n)
 
 bool s7_is_ulong_long(s7_pointer arg) 
 {
-  return(s7_is_integer(arg));
+  return(is_integer(arg));
 }
 
 
@@ -12178,10 +12523,6 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
   s7_pointer num, state;
   s7_rng_t *r;
 
-  num = car(args);
-  if (!s7_is_number(num))
-    return(s7_wrong_type_arg_error(sc, "random bounds,", (is_null(cdr(args))) ? 0 : 1, num, "a number"));
-
   if (is_not_null(cdr(args)))
     {
       state = cadr(args);
@@ -12201,10 +12542,11 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
     }
   else r = s7_default_rng(sc);
 
+  num = car(args);
   switch (type(num))
     {
     case T_INTEGER:
-      return(make_integer(sc, (s7_Int)(s7_integer(num) * next_random(r))));
+      return(make_integer(sc, (s7_Int)(integer(num) * next_random(r))));
 
     case T_RATIO:
       {
@@ -12215,7 +12557,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	 *    error is (say) 1e-6 and the fraction is (say) 9000000/9223372036854775807,
 	 *    c_rationalize will always return 0.
 	 */
-	x = (s7_Double)s7_numerator(num) / (s7_Double)s7_denominator(num);
+	x = (s7_Double)numerator(num) / (s7_Double)denominator(num);
 
 	error = 1e-6 * s7_Double_abs(x);
 	if (error > 1e-6)
@@ -12230,12 +12572,14 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
       }
 
     case T_REAL:
-      return(s7_make_real(sc, s7_real(num) * next_random(r)));
+      return(s7_make_real(sc, real(num) * next_random(r)));
 
-    default: 
+    case T_COMPLEX:
       return(s7_make_complex(sc, real_part(num) * next_random(r), imag_part(num) * next_random(r)));
-    }
 
+    default:
+      return(s7_wrong_type_arg_error(sc, "random bounds,", (is_null(cdr(args))) ? 0 : 1, num, "a number"));
+    }
   return(sc->F);
 }
 
@@ -15694,7 +16038,7 @@ static char *describe_type_bits(s7_pointer obj)
    */
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(obj),
 	   typeflag(obj),
@@ -15717,7 +16061,6 @@ static char *describe_type_bits(s7_pointer obj)
 	   is_setter(obj) ?             " setter" : "",
 	   has_table(obj) ?             " function-table" : "",
 	   is_one_liner(obj) ?          " one-liner" : "",
-	   is_simple(obj) ?             " simple" : "",
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_tail_call(obj) ?          " tail-call" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
@@ -20537,7 +20880,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 	ftype = T_C_RST_ARGS_FUNCTION;
     }
   
-  set_type(x, ftype | T_PROCEDURE | T_SIMPLE);
+  set_type(x, ftype | T_PROCEDURE);
 
   c_function(x) = ptr;
   c_function_call(x) = f;
@@ -21332,6 +21675,16 @@ static bool object_is_applicable(s7_pointer x)
 void *s7_object_value(s7_pointer obj)
 {
   return(object_value(obj));
+}
+
+
+void * s7_object_value_with_error(s7_scheme *sc, s7_pointer obj, int tag, const char *caller, int arg_num)
+{
+  if ((is_c_object(obj)) &&
+      (object_type(obj) == tag))
+    return(object_value(obj));
+  s7_wrong_type_arg_error(sc, caller, arg_num, obj, object_types[tag].name);
+  return(NULL);
 }
 
 
@@ -27520,7 +27873,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   symbol_hash(x) = loc;
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE); 
+  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = op;
   cdr(syn) = syn; /* this saves us an error check in the main eval section */
   car(syn) = x;
@@ -27543,7 +27896,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   x = (s7_cell *)permanent_calloc(sizeof(s7_extended_cell));
   x->hloc = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
-  set_type(x, T_SYMBOL | T_SIMPLE);
+  set_type(x, T_SYMBOL);
 
   global_slot(x) = sc->NIL;
   local_slot(x) = sc->NIL;
@@ -27553,7 +27906,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   symbol_accessor(x) = -1;
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS | T_SIMPLE); 
+  set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = op;
   cdr(syn) = syn; 
   car(syn) = s7_make_symbol(sc, name);
@@ -45804,9 +46157,9 @@ s7_Double s7_number_to_real(s7_pointer x)
 
   switch (type(x))
     {
-    case T_INTEGER: return((s7_Double)s7_integer(x));
-    case T_RATIO:   return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
-    case T_REAL:    return(s7_real(x));
+    case T_INTEGER: return((s7_Double)integer(x));
+    case T_RATIO:   return((s7_Double)numerator(x) / (s7_Double)denominator(x));
+    case T_REAL:    return(real(x));
     default:        return(real_part(x));
     }
 }
@@ -45828,9 +46181,9 @@ s7_Int s7_number_to_integer(s7_pointer x)
 
   switch (type(x))
     {
-    case T_INTEGER: return(s7_integer(x));
-    case T_RATIO:   return((s7_Int)s7_numerator(x) / (s7_Double)s7_denominator(x));
-    case T_REAL:    return((s7_Int)s7_real(x));
+    case T_INTEGER: return(integer(x));
+    case T_RATIO:   return((s7_Int)numerator(x) / (s7_Double)denominator(x));
+    case T_REAL:    return((s7_Int)real(x));
     default:        return((s7_Int)real_part(x));
     }
 }
@@ -46001,10 +46354,10 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
 
       if (is_c_object(a))
 	a1 = (mpq_t *)s7_object_value(a);
-      else a1 = s7_Ints_to_mpq(s7_numerator(a), s7_denominator(a));
+      else a1 = s7_Ints_to_mpq(numerator(a), denominator(a));
       if (is_c_object(b))
 	b1 = (mpq_t *)s7_object_value(b);
-      else b1 = s7_Ints_to_mpq(s7_numerator(b), s7_denominator(b));
+      else b1 = s7_Ints_to_mpq(numerator(b), denominator(b));
 
       result = (mpq_cmp(*a1, *b1) == 0);
 
@@ -46315,8 +46668,8 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
 	  return(mpz_to_big_ratio(sc, S7_BIG_INTEGER(x)));
 	}
       if (type(x) == T_INTEGER)
-	return(s7_ratio_to_big_ratio(sc, s7_integer(x), 1));
-      return(s7_ratio_to_big_ratio(sc, s7_numerator(x), s7_denominator(x)));
+	return(s7_ratio_to_big_ratio(sc, integer(x), 1));
+      return(s7_ratio_to_big_ratio(sc, numerator(x), denominator(x)));
       break;
 
     case T_BIG_REAL:
@@ -46367,10 +46720,10 @@ static s7_pointer to_big(s7_scheme *sc, s7_pointer x)
   switch (type(x))
     {
     case T_INTEGER:
-      return(s7_Int_to_big_integer(sc, s7_integer(x)));
+      return(s7_Int_to_big_integer(sc, integer(x)));
       
     case T_RATIO:
-      return(s7_ratio_to_big_ratio(sc, s7_numerator(x), s7_denominator(x)));
+      return(s7_ratio_to_big_ratio(sc, numerator(x), denominator(x)));
 
     case T_REAL:
       return(s7_number_to_big_real(sc, x));
@@ -48105,9 +48458,9 @@ static bool s7_is_positive(s7_pointer obj)
 
   switch (type(obj))
     {
-    case T_INTEGER: return(s7_integer(obj) > 0);
-    case T_RATIO:   return(s7_numerator(obj) > 0);
-    default:        return(s7_real(obj) > 0);
+    case T_INTEGER: return(integer(obj) > 0);
+    case T_RATIO:   return(numerator(obj) > 0);
+    default:        return(real(obj) > 0);
     }
   return(false);
 }
@@ -48139,9 +48492,9 @@ static bool s7_is_negative(s7_pointer obj)
 
   switch (type(obj))
     {
-    case T_INTEGER: return(s7_integer(obj) < 0);
-    case T_RATIO:   return(s7_numerator(obj) < 0);
-    default:        return(s7_real(obj) < 0);
+    case T_INTEGER: return(integer(obj) < 0);
+    case T_RATIO:   return(numerator(obj) < 0);
+    default:        return(real(obj) < 0);
     }
   return(false); /* need s7_scheme pointer to return an error */
 }
@@ -49768,40 +50121,40 @@ s7_scheme *s7_init(void)
   sc->TEMP_CELL_2 = &sc->_TEMP_CELL_2;
   sc->TEMP_CELL_3 = &sc->_TEMP_CELL_3;
 
-  set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   frame_id(sc->NIL) = -1;
   sc->NIL->hloc = NOT_IN_HEAP;
   
-  set_type(sc->GC_NIL, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->GC_NIL, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
   car(sc->GC_NIL) = cdr(sc->GC_NIL) = sc->UNSPECIFIED;
   sc->GC_NIL->hloc = NOT_IN_HEAP;
   
-  set_type(sc->T, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->T, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
   sc->T->hloc = NOT_IN_HEAP;
   
-  set_type(sc->F, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->F, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   sc->F->hloc = NOT_IN_HEAP;
   
-  set_type(sc->EOF_OBJECT, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->EOF_OBJECT, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
   sc->EOF_OBJECT->hloc = NOT_IN_HEAP;  
 
-  set_type(sc->UNSPECIFIED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->UNSPECIFIED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   sc->UNSPECIFIED->hloc = NOT_IN_HEAP;
   
-  set_type(sc->UNDEFINED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->UNDEFINED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   sc->UNDEFINED->hloc = NOT_IN_HEAP;
   
-  set_type(sc->NO_VALUE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->NO_VALUE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
   car(sc->NO_VALUE) = cdr(sc->NO_VALUE) = sc->UNSPECIFIED;
   sc->NO_VALUE->hloc = NOT_IN_HEAP;
 
-  set_type(sc->ELSE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE);
+  set_type(sc->ELSE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
   car(sc->ELSE) = cdr(sc->ELSE) = sc->UNSPECIFIED;
   sc->ELSE->hloc = NOT_IN_HEAP;
   /* "else" is added to the global environment below -- can't do it here
@@ -49997,7 +50350,7 @@ s7_scheme *s7_init(void)
       {
 	s7_pointer p;
 	p = &cells[i];
-	typeflag(p) = T_IMMUTABLE | T_CHARACTER | T_SIMPLE;
+	typeflag(p) = T_IMMUTABLE | T_CHARACTER;
 	p->hloc = NOT_IN_HEAP;
 	character(p) = (unsigned char)i;
 	chars[i] = p;
@@ -50942,6 +51295,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 ->  1237
- * bench    52019 -> 10803
+ * bench    52019 -> 10725
  * index    44300 ->  6002
  */

@@ -499,10 +499,17 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
   #define H_vct_setB "(" S_vct_setB " v n val): sets element of vct v to val, v[n] = val"
   vct *v;
   mus_long_t loc;
+  double x;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_setB, "a vct");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
+
+#if HAVE_SCHEME
+  x = s7_number_to_real_with_error(s7, val, S_vct_setB, 3);
+#else
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
+  x = XEN_TO_C_DOUBLE(val);
+#endif
 
   v = XEN_TO_VCT(obj);
   loc = XEN_TO_C_LONG_LONG(pos);
@@ -512,7 +519,7 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
   if (loc >= v->length)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A >= vct-length?");
 
-  v->data[loc] = XEN_TO_C_DOUBLE(val);
+  v->data[loc] = x;
   return(val);
 }
 
