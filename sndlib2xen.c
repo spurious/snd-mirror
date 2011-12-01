@@ -1758,38 +1758,6 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 }
 #endif
 
-#if HAVE_SCHEME
-static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val);
-static XEN g_sound_data_copy(XEN obj);
-static XEN g_sound_data_fillB(XEN sdobj, XEN scl);
-
-static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
-{
-  return(g_sound_data_ref(obj, XEN_CAR(args), XEN_CADR(args)));
-}
-
-static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
-{
-  return(g_sound_data_set(obj, XEN_CAR(args), XEN_CADR(args), XEN_CADDR(args)));
-}
-
-static XEN s7_sound_data_length(s7_scheme *sc, XEN obj)
-{
-  return(g_sound_data_length(obj));
-}
-
-static XEN s7_sound_data_copy(s7_scheme *sc, XEN obj)
-{
-  return(g_sound_data_copy(obj));
-}
-
-static XEN s7_sound_data_fill(s7_scheme *sc, XEN obj, XEN val)
-{
-  return(g_sound_data_fillB(obj, val));
-}
-#endif
-
-
 static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data sd's i-th element in channel chan to val: sd[chan][i] = val"
@@ -1824,6 +1792,91 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   sd->data[chn][loc] = XEN_TO_C_DOUBLE(val);
   return(val);
 }
+
+
+#if HAVE_SCHEME
+static XEN g_sound_data_copy(XEN obj);
+static XEN g_sound_data_fillB(XEN sdobj, XEN scl);
+
+static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
+{
+  sound_data *sd;
+  mus_long_t loc;
+  int chn;
+
+  sd = (sound_data *)s7_object_value(obj);
+  chn = s7_number_to_integer_with_error(s7, XEN_CAR(args), S_sound_data_ref, XEN_ARG_2);
+
+  if (chn < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, XEN_CAR(args), "~A: invalid channel");
+  if (chn >= sd->chans)
+    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref ": chan: ~A >= sound-data chans, ~A"),
+			 XEN_CAR(args),
+			 C_TO_XEN_INT(sd->chans)));
+
+  loc = s7_number_to_integer_with_error(s7, XEN_CADR(args), S_sound_data_ref, XEN_ARG_3);
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, XEN_CADR(args), "~A: invalid frame");
+  if (loc >= sd->length)
+    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref ": frame: ~A >= sound-data length, ~A"),
+			 XEN_CADR(args),
+			 C_TO_XEN_LONG_LONG(sd->length)));
+
+  return(C_TO_XEN_DOUBLE(sd->data[chn][loc]));
+}
+
+static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
+{
+  sound_data *sd;
+  int chn;
+  mus_long_t loc;
+  mus_float_t x;
+  s7_pointer val;
+
+  sd = (sound_data *)s7_object_value(obj);
+  chn = s7_number_to_integer_with_error(s7, XEN_CAR(args), S_sound_data_setB, XEN_ARG_2);
+
+  if (chn < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, XEN_CAR(args), "~A: invalid channel");
+  if (chn >= sd->chans)
+    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": chan: ~A >= sound-data chans, ~A"),
+			 XEN_CAR(args),
+			 C_TO_XEN_INT(sd->chans)));
+
+  loc = s7_number_to_integer_with_error(s7, XEN_CADR(args), S_sound_data_setB, XEN_ARG_3);
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, XEN_CADR(args), "~A: invalid frame");
+  if (loc >= sd->length)
+    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": frame: ~A >= sound-data length, ~A"),
+			 XEN_CADR(args),
+			 C_TO_XEN_LONG_LONG(sd->length)));
+
+  val = XEN_CADDR(args);
+  x = s7_number_to_real_with_error(s7, val, S_sound_data_setB, XEN_ARG_4);
+
+  sd->data[chn][loc] = x;
+  return(val);
+}
+
+static XEN s7_sound_data_length(s7_scheme *sc, XEN obj)
+{
+  return(g_sound_data_length(obj));
+}
+
+static XEN s7_sound_data_copy(s7_scheme *sc, XEN obj)
+{
+  return(g_sound_data_copy(obj));
+}
+
+static XEN s7_sound_data_fill(s7_scheme *sc, XEN obj, XEN val)
+{
+  return(g_sound_data_fillB(obj, val));
+}
+#endif
 
 
 sound_data *sound_data_scale(sound_data *sd, mus_float_t scaler)

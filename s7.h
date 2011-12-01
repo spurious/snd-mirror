@@ -339,6 +339,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* 
 s7_Double s7_number_to_real(s7_pointer x);                                   /* x can be any kind of number */
 s7_Int s7_number_to_integer(s7_pointer x);
 s7_Double s7_number_to_real_with_error(s7_scheme *sc, s7_pointer x, const char *caller, int arg_num);
+s7_Int s7_number_to_integer_with_error(s7_scheme *sc, s7_pointer x, const char *caller, int arg_num);
 
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */

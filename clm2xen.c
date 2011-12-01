@@ -61,6 +61,12 @@
 #define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) \
   if (XEN_BOUND_P(Xen_Arg)) C_Val = s7_number_to_real_with_error(s7, Xen_Arg, Caller, ArgNum)
 
+#define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
+  C_Val = s7_number_to_real_with_error(s7, Xen_Arg, Caller, ArgNum)
+
+#define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum)		\
+  C_Val = s7_number_to_integer_with_error(s7, Xen_Arg, Caller, ArgNum)
+
 #define XEN_TO_C_GENERATOR(Xen_Arg, C_Val, Checker, Caller, Descr)		\
   C_Val = ((mus_any *)(((mus_xen *)s7_object_value_with_error(s7, Xen_Arg, mus_xen_tag, Caller, 1))->gen)); \
   XEN_ASSERT_TYPE(Checker(C_Val), Xen_Arg, XEN_ARG_1, Caller, Descr)
@@ -69,6 +75,12 @@
 
 #define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) \
    if (XEN_NUMBER_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(Xen_Arg), Xen_Arg, ArgNum, Caller, "a number")
+
+#define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
+   if (XEN_NUMBER_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "a number")
+
+#define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
+  if (XEN_INTEGER_P(Xen_Arg)) C_Val = XEN_TO_C_INT(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "an integer")
 
 #define XEN_TO_C_GENERATOR(Xen_Arg, C_Val, Checker, Caller, Descr) \
   XEN_ASSERT_TYPE((MUS_XEN_P(Xen_Arg) && (Checker(C_Val = XEN_TO_MUS_ANY(Xen_Arg)))), Xen_Arg, XEN_ARG_1, Caller, Descr)
@@ -1894,12 +1906,13 @@ static XEN g_oscil(XEN os, XEN fm, XEN pm)
 {
   #define H_oscil "(" S_oscil " gen (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
   mus_float_t fm1 = 0.0, pm1 = 0.0;
+  mus_any *g;
 
-  XEN_ASSERT_TYPE((MUS_XEN_P(os)) && (mus_oscil_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_oscil, "an oscil");
+  XEN_TO_C_GENERATOR(os, g, mus_oscil_p, S_oscil, "an oscil");
   XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_oscil, XEN_ARG_2);
   XEN_TO_C_DOUBLE_IF_BOUND(pm, pm1, S_oscil, XEN_ARG_3);
 
-  return(C_TO_XEN_DOUBLE(mus_oscil(XEN_TO_MUS_ANY(os), fm1, pm1)));
+  return(C_TO_XEN_DOUBLE(mus_oscil(g, fm1, pm1)));
 }
 
 #else
@@ -3675,11 +3688,13 @@ static XEN g_set_formant_radius_and_frequency(XEN gen, XEN rad, XEN frq)
 {
   #define H_mus_set_formant_radius_and_frequency  "(" S_mus_set_formant_radius_and_frequency  " gen radius frequency): set (" S_formant " \
 generator) gen's radius and frequency"
+  mus_any *g;
+  mus_float_t radius, frequency;
 
-  XEN_ASSERT_TYPE((MUS_XEN_P(gen) && (mus_formant_p(XEN_TO_MUS_ANY(gen)))), gen, XEN_ARG_1, S_mus_set_formant_radius_and_frequency, "a formant generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(rad), rad, XEN_ARG_2, S_mus_set_formant_radius_and_frequency, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(frq), frq, XEN_ARG_3, S_mus_set_formant_radius_and_frequency, "a number");
-  mus_set_formant_radius_and_frequency(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(rad), XEN_TO_C_DOUBLE(frq));
+  XEN_TO_C_GENERATOR(gen, g, mus_formant_p, S_mus_set_formant_radius_and_frequency, "a formant generator");
+  XEN_TO_C_DOUBLE_OR_ERROR(rad, radius, S_mus_set_formant_radius_and_frequency, XEN_ARG_2);
+  XEN_TO_C_DOUBLE_OR_ERROR(frq, frequency, S_mus_set_formant_radius_and_frequency, XEN_ARG_3);
+  mus_set_formant_radius_and_frequency(g, radius, frequency);
   return(rad);
 }
 
@@ -3897,9 +3912,12 @@ if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
 static XEN g_frame_ref(XEN uf1, XEN uchan)
 {
   #define H_frame_ref "(" S_frame_ref " f chan): f[chan] (the chan-th sample in frame f"
-  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_frame_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_frame_ref, "a frame");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(uchan), uchan, XEN_ARG_2, S_frame_ref, "an integer");
-  return(C_TO_XEN_DOUBLE(mus_frame_ref((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_INT(uchan))));
+  mus_any *g;
+  int chan;
+
+  XEN_TO_C_GENERATOR(uf1, g, mus_frame_p, S_frame_ref, "a frame");
+  XEN_TO_C_INTEGER_OR_ERROR(uchan, chan, S_frame_ref, XEN_ARG_2);
+  return(C_TO_XEN_DOUBLE(mus_frame_ref(g, chan)));
 }
 
 
@@ -3907,17 +3925,14 @@ static XEN g_frame_set(XEN uf1, XEN uchan, XEN val)
 {
   #define H_frame_set "(" S_frame_set " f chan val) sets frame f's chan-th sample to val: f[chan] = val"
   mus_float_t x;
+  mus_any *g;
+  int chan;
 
-  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_frame_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_frame_set, "a frame");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(uchan), uchan, XEN_ARG_2, S_frame_set, "an integer");
+  XEN_TO_C_GENERATOR(uf1, g, mus_frame_p, S_frame_set, "a frame");
+  XEN_TO_C_INTEGER_OR_ERROR(uchan, chan, S_frame_set, XEN_ARG_2);
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_frame_set, XEN_ARG_3);
 
-#if HAVE_SCHEME
-  x = s7_number_to_real_with_error(s7, val, S_frame_set, 3);
-#else
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_frame_set, "a number");
-  x = XEN_TO_C_DOUBLE(val);
-#endif
-  return(C_TO_XEN_DOUBLE(mus_frame_set((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_INT(uchan), x)));
+  return(C_TO_XEN_DOUBLE(mus_frame_set(g, chan, x)));
 }
 
 
@@ -3934,26 +3949,30 @@ static XEN g_mixer_p(XEN obj)
 static XEN g_mixer_ref(XEN uf1, XEN in, XEN out)
 {
   #define H_mixer_ref "(" S_mixer_ref " m in out): m[in, out], the mixer coefficient at location (in, out)"
-  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_ref, "a mixer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_2, S_mixer_ref, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_3, S_mixer_ref, "an integer");
-  return(C_TO_XEN_DOUBLE(mus_mixer_ref((mus_any *)XEN_TO_MUS_ANY(uf1),
-				       XEN_TO_C_INT(in),
-				       XEN_TO_C_INT(out))));
+  mus_any *g;
+  int i_chan, o_chan;
+
+  XEN_TO_C_GENERATOR(uf1, g, mus_mixer_p, S_mixer_ref, "a mixer");
+  XEN_TO_C_INTEGER_OR_ERROR(in, i_chan, S_mixer_ref, XEN_ARG_2);
+  XEN_TO_C_INTEGER_OR_ERROR(out, o_chan, S_mixer_ref, XEN_ARG_3);
+
+  return(C_TO_XEN_DOUBLE(mus_mixer_ref(g, i_chan, o_chan)));
 }
 
 
 static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val)
 {
   #define H_mixer_set "(" S_mixer_set " m in out val): set m[in, out] = val"
-  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_set, "a mixer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(in), in, XEN_ARG_2, S_mixer_set, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(out), out, XEN_ARG_3, S_mixer_set, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_mixer_set, "a number");
-  return(C_TO_XEN_DOUBLE(mus_mixer_set((mus_any *)XEN_TO_MUS_ANY(uf1),
-				       XEN_TO_C_INT(in),
-				       XEN_TO_C_INT(out),
-				       XEN_TO_C_DOUBLE(val))));
+  mus_any *g;
+  int i_chan, o_chan;
+  mus_float_t x;
+
+  XEN_TO_C_GENERATOR(uf1, g, mus_mixer_p, S_mixer_set, "a mixer");
+  XEN_TO_C_INTEGER_OR_ERROR(in, i_chan, S_mixer_set, XEN_ARG_2);
+  XEN_TO_C_INTEGER_OR_ERROR(out, o_chan, S_mixer_set, XEN_ARG_3);
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_mixer_set, XEN_ARG_4);
+
+  return(C_TO_XEN_DOUBLE(mus_mixer_set(g, i_chan, o_chan, x)));
 }
 
 
@@ -5450,11 +5469,17 @@ static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- 
 static XEN clm_output_slot = NULL, clm_reverb_slot = NULL;
 XEN mus_clm_output(void) {return(s7_symbol_slot_value(s7, clm_output_slot));}
 XEN mus_clm_reverb(void) {return(s7_symbol_slot_value(s7, clm_reverb_slot));}
+
+#define CLM_OUTPUT s7_symbol_slot_value(s7, clm_output_slot)
+#define CLM_REVERB s7_symbol_slot_value(s7, clm_reverb_slot)
 #endif
 
 #if (!HAVE_SCHEME)
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(S_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(S_reverb));}
+
+#define CLM_OUTPUT XEN_VARIABLE_REF(S_output)
+#define CLM_REVERB XEN_VARIABLE_REF(S_reverb)
 #endif
 
 static XEN g_input_p(XEN obj) 
@@ -5624,23 +5649,17 @@ static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp
   mus_long_t pos;
   mus_float_t inv;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(frame), frame, XEN_ARG_1, caller, "an integer");
-#if HAVE_SCHEME
-  inv = s7_number_to_real_with_error(s7, val, caller, 2);
-#else
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a number");
-  inv = XEN_TO_C_DOUBLE(val);
-#endif
-
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_3, C_TO_XEN_INT(chn), "must be >= 0");    
 
-  pos = XEN_TO_C_LONG_LONG(frame);
+  XEN_TO_C_INTEGER_OR_ERROR(frame, pos, caller, XEN_ARG_1);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
 
+  XEN_TO_C_DOUBLE_OR_ERROR(val, inv, caller, XEN_ARG_2);
+
   if (XEN_NOT_BOUND_P(outp))
-    outp = mus_clm_output();
+    outp = CLM_OUTPUT;
 
   return(out_any_2(outp, pos, inv, chn, caller, val));
 }
@@ -6364,10 +6383,10 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     }
 
   if (XEN_NOT_BOUND_P(keys3))
-    keys3 = mus_clm_output();
+    keys3 = CLM_OUTPUT;
 
   if (XEN_NOT_BOUND_P(keys4))
-    keys4 = mus_clm_reverb();
+    keys4 = CLM_REVERB;
 
   /* try to default output to *output* and reverb to *reverb*, if they're currently set and not closed */
   /*   mus_close is actually mus_close_file = sample_to_file_end = free and nullify obufs so we're hoping dynamic-wind works... */
@@ -6581,10 +6600,10 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   XEN_ASSERT_TYPE(XEN_LIST_P(dloc_list) && (XEN_LIST_LENGTH(dloc_list) == 11), dloc_list, XEN_ARG_1, S_make_move_sound, "a dlocsig list");
 
   if (XEN_NOT_BOUND_P(outp))
-    outp = mus_clm_output();
+    outp = CLM_OUTPUT;
 
   if (XEN_NOT_BOUND_P(revp))
-    revp = mus_clm_reverb();
+    revp = CLM_REVERB;
 
   if (MUS_XEN_P(outp))
     {
@@ -9585,7 +9604,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
 	  args = caddr(args);
 	  GET_GENERATOR(cadr(args), delay, false, d);
 	  GET_REAL(caddr(args), delay, false, val);
-	  return(out_any_2(mus_clm_output(), pos, scl * mus_delay_unmodulated_noz(d, val), 0, "outa", xen_zero));
+	  return(out_any_2(CLM_OUTPUT, pos, scl * mus_delay_unmodulated_noz(d, val), 0, "outa", xen_zero));
 	}
       syms = s7_expression_make_data(sc, args, 7);
     }
@@ -9694,7 +9713,7 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
 	  GET_GENERATOR(cadr(args), polywave, false, t);
 	  args = caddr(args);
 	  GET_GENERATOR(cadr(args), env, false, e2);
-	  return(out_any_2(mus_clm_output(), pos, mus_env(e1) * mus_polywave(t, mus_env(e2)), 0, "outa", xen_zero));
+	  return(out_any_2(CLM_OUTPUT, pos, mus_env(e1) * mus_polywave(t, mus_env(e2)), 0, "outa", xen_zero));
 	}
 
       syms = s7_expression_make_data(sc, args, 5);

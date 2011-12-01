@@ -234,8 +234,6 @@ bool mus_vct_equalp(vct *v1, vct *v2)
 static XEN g_vct_fill(XEN obj, XEN val);
 
 #if (HAVE_SCHEME)
-static XEN g_vct_ref(XEN obj, XEN pos);
-static XEN g_vct_set(XEN obj, XEN pos, XEN val);
 static XEN g_vct_length(XEN obj);
 static XEN g_vct_copy(XEN obj);
 
@@ -251,10 +249,8 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
   s7_pointer pos;
 
   v = XEN_TO_VCT(obj);
-
   pos = XEN_CAR(args);
-  XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
-  loc = XEN_TO_C_LONG_LONG(pos);
+  loc = s7_number_to_integer_with_error(s7, pos, S_vct_ref, XEN_ARG_2);
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
@@ -266,9 +262,24 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
 
 static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
 {
-  /* TODO: if the only path to this is through object_set, the type check is unneeded
-   */
-  return(g_vct_set(obj, XEN_CAR(args), XEN_CADR(args)));
+  vct *v;
+  mus_long_t loc;
+  double x;
+  s7_pointer pos, val;
+
+  v = XEN_TO_VCT(obj);
+  pos = XEN_CAR(args);
+  loc = s7_number_to_integer_with_error(s7, pos, S_vct_setB, XEN_ARG_2);
+
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
+  if (loc >= v->length)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A too high?");
+
+  val = XEN_CADR(args);
+  x = s7_number_to_real_with_error(s7, val, S_vct_setB, XEN_ARG_3);
+  v->data[loc] = x;
+  return(val);
 }
 
 static XEN s7_mus_vct_length(s7_scheme *sc, XEN obj)
