@@ -4639,6 +4639,8 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 #define s7_fabsl(x) (((x) < 0.0) ? -(x) : (x))
 /* fabsl doesn't exist in netBSD! */
 
+static bool is_NaN(s7_Double x) {return(x != x);}
+/* callgrind says this is faster than isnan, I think (very confusing data...) */
 
 #ifdef _MSC_VER
 /* need to provide inverse hyperbolic trig funcs and cbrt */
@@ -4675,13 +4677,7 @@ double cbrt(double x)
   return(-pow(-x, 1.0 / 3.0));
 }
 
-static bool isnan(s7_Double x) {return(x != x);}
-/* isnan shows up prominently in callgrind output for s7test, but it's not due to anything
- *    in this file.  If I replace all the local isnan's with is_nan based on this function,
- *    the callgrind value scarcely changes -- I guess the math library is calling it a lot.
- */
-
-static bool isinf(s7_Double x) {return((x == x) && (isnan(x - x)));}
+static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
 
 #endif
 
@@ -5369,7 +5365,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 	s7_Double val;
 
 	val = s7_real(x);
-	if ((isinf(val)) || (isnan(val)))
+	if ((isinf(val)) || (is_NaN(val)))
 	  return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, x, "a normal real"));
 
 	if ((val > S7_LLONG_MAX) ||
@@ -5943,7 +5939,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 
 	x = s7_real(obj);
 
-	if (isnan(x))
+	if (is_NaN(x))
 	  return(copy_string("nan.0"));
 	if (isinf(x))
 	  {
@@ -6208,8 +6204,8 @@ static bool is_abnormal(s7_pointer x)
   return((!s7_is_number(x)) ||
 	 (isinf(s7_real_part(x))) || 
 	 (isinf(s7_imag_part(x))) ||
-	 (isnan(s7_real_part(x))) || 
-	 (isnan(s7_imag_part(x))));
+	 (is_NaN(s7_real_part(x))) || 
+	 (is_NaN(s7_imag_part(x))));
 }
 
 
@@ -7479,7 +7475,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
       return(small_int(0));
 
     case T_REAL:
-      if (isnan(real(x))) return(x);
+      if (is_NaN(real(x))) return(x);
       if (real(x) < 0.0)
 	return(s7_make_real(sc, M_PI));
       return(real_zero);
@@ -7504,7 +7500,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
       if (!s7_is_real(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "rationalize error limit,", 2, cadr(args), "a real"));
       err = s7_number_to_real(cadr(args));
-      if (isnan(err))
+      if (is_NaN(err))
 	return(s7_out_of_range_error(sc, "rationalize", 2, cadr(args), "error term is NaN"));
       if (err < 0.0) err = -err;
     }
@@ -7538,7 +7534,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 
 	rat = s7_number_to_real(x);
 
-	if ((isnan(rat)) || (isinf(rat)))
+	if ((is_NaN(rat)) || (isinf(rat)))
 	  return(s7_wrong_type_arg_error(sc, "rationalize", (is_null(cdr(args))) ? 0 : 1, x, "a normal real"));
 
 	if (err >= s7_Double_abs(rat)) 
@@ -7590,7 +7586,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
     return(s7_negate(sc, car(args)));
 
   mag = number_to_real(car(args));
-  if ((isnan(mag)) || (isnan(ang)) || (isinf(ang)))
+  if ((is_NaN(mag)) || (is_NaN(ang)) || (isinf(ang)))
     return(s7_make_real(sc, NAN));
 
   return(s7_make_complex(sc, mag * cos(ang), mag * sin(ang)));
@@ -8174,7 +8170,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_REAL:
-      if (isnan(real(n)))
+      if (is_NaN(real(n)))
 	return(s7_make_real(sc, NAN));
       if (real(n) >= 0.0)
 	return(s7_make_real(sc, sqrt(real(n))));
@@ -8259,7 +8255,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  /* (Clisp gives divide-by-zero error here, Guile returns inf.0) */
 
 	  if ((!s7_is_rational(pw)) &&                         /* (expt 0 most-positive-fixnum) */
-	      (isnan(s7_real(pw))))                            /* (expt 0 +nan.0) */
+	      (is_NaN(s7_real(pw))))                            /* (expt 0 +nan.0) */
 	    return(pw);
 	}
       else
@@ -8362,8 +8358,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       x = number_to_real(n);
       y = number_to_real(pw);
 
-      if (isnan(x)) return(n);
-      if (isnan(y)) return(pw);
+      if (is_NaN(x)) return(n);
+      if (is_NaN(y)) return(pw);
       if (y == 0.0) return(s7_make_real(sc, 1.0));
 
       if ((x > 0.0) ||
@@ -8556,7 +8552,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
     {
       s7_Double rx;
       rx = real(x);
-      if ((isinf(rx)) || (isnan(rx)))
+      if ((isinf(rx)) || (is_NaN(rx)))
 	return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a normal real"));
     }
 
@@ -8564,7 +8560,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
     {
       s7_Double ry;
       ry = real(y);
-      if ((isinf(ry)) || (isnan(ry)))
+      if ((isinf(ry)) || (is_NaN(ry)))
 	return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
 
       /* if infs allowed we need to return infs/nans, else:
@@ -8597,10 +8593,10 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
     return(division_by_zero_error(sc, "remainder", args));
 
   if ((!is_rational(ap)) &&
-      (isnan(real(ap))))                                 /* (remainder 1 (string->number "nan.0")) */
+      (is_NaN(real(ap))))                                 /* (remainder 1 (string->number "nan.0")) */
     return(s7_wrong_type_arg_error(sc, "remainder", 1, ap, "a normal real"));
   if ((!is_rational(bp)) &&
-      (isnan(real(bp))))
+      (is_NaN(real(bp))))
     return(s7_wrong_type_arg_error(sc, "remainder", 2, bp, "a normal real"));
 
   if (type(ap) > type(bp))
@@ -8686,7 +8682,7 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
       {
 	s7_Double z;
 	z = real(x);
-	if (isnan(z))
+	if (is_NaN(z))
 	  return(s7_out_of_range_error(sc, "floor", 0, x, "argument is NaN"));
 	if (isinf(z))
 	  return(s7_out_of_range_error(sc, "floor", 0, x, "argument is infinite"));
@@ -8730,7 +8726,7 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
       {
 	s7_Double z;
 	z = real(x);
-	if (isnan(z))
+	if (is_NaN(z))
 	  return(s7_out_of_range_error(sc, "ceiling", 0, x, "argument is NaN"));
 	if (isinf(z))
 	  return(s7_out_of_range_error(sc, "ceiling", 0, x, "argument is infinite"));
@@ -8764,7 +8760,7 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
       {
 	s7_Double z;
 	z = real(x);
-	if (isnan(z))
+	if (is_NaN(z))
 	  return(s7_out_of_range_error(sc, "truncate", 0, x, "argument is NaN"));
 	if (isinf(z))
 	  return(s7_out_of_range_error(sc, "truncate", 0, x, "argument is infinite"));
@@ -8829,7 +8825,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
       {
 	s7_Double z;
 	z = real(x);
-	if (isnan(z))
+	if (is_NaN(z))
 	  return(s7_out_of_range_error(sc, "round", 0, x, "argument is NaN"));
 	if (isinf(z))
 	  return(s7_out_of_range_error(sc, "round", 0, x, "argument is infinite"));
@@ -8939,10 +8935,10 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	s7_Double ax, bx, cx;
 
 	ax = number_to_real(ap);
-	if (isnan(ax)) return(ap);
+	if (is_NaN(ax)) return(ap);
 
 	bx = number_to_real(bp);
-	if (isnan(bx)) return(bp);
+	if (is_NaN(bx)) return(bp);
 
 	if ((isinf(ax)) || (isinf(bx)))
 	  return(s7_make_real(sc, NAN));
@@ -9209,6 +9205,11 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 
   x = car(args);
   y = cadr(args);
+
+  /* this costs more than it saves, and we need to clear typeflag to be safe
+   *     if ((x == (*(sc->free_heap_top))) || (y == (*(sc->free_heap_top)))) {sc->free_heap_top++;}
+   */
+
   switch (type(x))
     {
     case T_INTEGER: 
@@ -10225,7 +10226,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
   ret_type = type(ap);
 
   if ((ret_type > T_RATIO) && 
-      (isnan(real(ap))))
+      (is_NaN(real(ap))))
     {
       for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
 	if (!s7_is_real(car(x)))
@@ -10329,7 +10330,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
       
 	default:
 	  if ((type(bp) > T_RATIO) && 
-	      (isnan(real(bp))))
+	      (is_NaN(real(bp))))
 	    {
 	      for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x))
 		if (!s7_is_real(car(x)))
@@ -10371,7 +10372,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
   result = ap;
   ret_type = type(ap);
   if ((ret_type > T_RATIO) && 
-      (isnan(real(ap)))) 
+      (is_NaN(real(ap)))) 
     {
       for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
 	if (!s7_is_real(car(x)))
@@ -10452,7 +10453,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 
 	default:
 	  if ((type(bp) > T_RATIO) && 
-	      (isnan(real(bp)))) 
+	      (is_NaN(real(bp)))) 
 	    {
 	      for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x))
 		if (!s7_is_real(car(x)))
@@ -10804,7 +10805,7 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
       break;
       
     case T_REAL:
-      if (isnan(real(p)))
+      if (is_NaN(real(p)))
 	{
 	  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 	    if (!s7_is_real(car(x)))
@@ -10858,7 +10859,7 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      break;
 
 	    case T_REAL:
-	      if (isnan(real(tmp)))
+	      if (is_NaN(real(tmp)))
 		{
 		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 		    if (!s7_is_real(car(x)))
@@ -10940,7 +10941,7 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      break;
 
 	    case T_REAL:
-	      if (isnan(real(tmp)))
+	      if (is_NaN(real(tmp)))
 		{
 		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 		    if (!s7_is_real(car(x)))
@@ -10967,7 +10968,7 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      break;
 
 	    case T_REAL:
-	      if (isnan(real(tmp)))
+	      if (is_NaN(real(tmp)))
 		{
 		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 		    if (!s7_is_real(car(x)))
@@ -11038,7 +11039,7 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
       break;
       
     case T_REAL:
-      if (isnan(real(p)))
+      if (is_NaN(real(p)))
 	{
 	  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 	    if (!s7_is_real(car(x)))
@@ -11098,7 +11099,7 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      break;
 
 	    case T_REAL:
-	      if (isnan(real(tmp)))
+	      if (is_NaN(real(tmp)))
 		{
 		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 		    if (!s7_is_real(car(x)))
@@ -11167,7 +11168,7 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      break;
 
 	    case T_REAL:
-	      if (isnan(real(tmp)))
+	      if (is_NaN(real(tmp)))
 		{
 		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 		    if (!s7_is_real(car(x)))
@@ -11196,7 +11197,7 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      break;
 
 	    case T_REAL:
-	      if (isnan(real(tmp)))
+	      if (is_NaN(real(tmp)))
 		{
 		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
 		    if (!s7_is_real(car(x)))
@@ -11345,7 +11346,7 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
 	  break;
 	  
 	case T_REAL:
-	  if (isnan(real(y))) return(sc->F);
+	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) < real(y)));
 	  break;
 
@@ -11362,18 +11363,18 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
       switch (type(y))
 	{
 	case T_INTEGER: 
-	  if (isnan(real(x))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) < integer(y)));
 	  break;
 	  
 	case T_RATIO:
-	  if (isnan(real(x))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) < fraction(y)));
 	  break;
 	  
 	case T_REAL:
-	  if (isnan(real(x))) return(sc->F);
-	  if (isnan(real(y))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
+	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) < real(y)));
 	  break;
 
@@ -11449,7 +11450,7 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
 	  break;
 	  
 	case T_REAL:
-	  if (isnan(real(y))) return(sc->F);
+	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) <= real(y)));
 	  break;
 
@@ -11466,18 +11467,18 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
       switch (type(y))
 	{
 	case T_INTEGER: 
-	  if (isnan(real(x))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= integer(y)));
 	  break;
 	  
 	case T_RATIO:
-	  if (isnan(real(x))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= fraction(y)));
 	  break;
 	  
 	case T_REAL:
-	  if (isnan(real(x))) return(sc->F);
-	  if (isnan(real(y))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
+	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= real(y)));
 	  break;
 
@@ -11551,7 +11552,7 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
 	  return(g_greater_1(sc, false, args));
 
 	case T_REAL:
-	  if (isnan(real(y))) return(sc->F);
+	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) > real(y)));
 	  break;
 
@@ -11568,18 +11569,18 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
       switch (type(y))
 	{
 	case T_INTEGER: 
-	  if (isnan(real(x))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) > integer(y)));
 	  break;
 	  
 	case T_RATIO:
-	  if (isnan(real(x))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) > fraction(y)));
 	  break;
 	  
 	case T_REAL:
-	  if (isnan(real(x))) return(sc->F);
-	  if (isnan(real(y))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
+	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) > real(y)));
 	  break;
 
@@ -11639,7 +11640,7 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
 	  break;
 	  
 	case T_REAL:
-	  if (isnan(real(y))) return(sc->F);
+	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) >= real(y)));
 	  break;
 
@@ -11656,18 +11657,18 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
       switch (type(y))
 	{
 	case T_INTEGER: 
-	  if (isnan(real(x))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= integer(y)));
 	  break;
 	  
 	case T_RATIO:
-	  if (isnan(real(x))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= fraction(y)));
 	  break;
 	  
 	case T_REAL:
-	  if (isnan(real(x))) return(sc->F);
-	  if (isnan(real(y))) return(sc->F);
+	  if (is_NaN(real(x))) return(sc->F);
+	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= real(y)));
 	  break;
 
@@ -11835,10 +11836,10 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 	  
     case T_REAL:
-      return(make_boolean(sc, isnan(real(x))));
+      return(make_boolean(sc, is_NaN(real(x))));
 	  
     case T_COMPLEX:
-      return(make_boolean(sc, (isnan(real_part(x))) || (isnan(imag_part(x)))));
+      return(make_boolean(sc, (is_NaN(real_part(x))) || (is_NaN(imag_part(x)))));
 
     default:
       return(sc->F);
@@ -12074,7 +12075,7 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 	s7_Double val;
 
 	val = real(x);
-	if ((isinf(val)) || (isnan(val)))
+	if ((isinf(val)) || (is_NaN(val)))
 	  return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, x, "a normal real"));
 
 	if ((val > S7_LLONG_MAX) ||
@@ -12242,7 +12243,7 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
     {
       decode_float_t num;
       num.value.real_value = s7_number_to_real(arg);
-      if ((isnan(num.value.real_value)) || (isinf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
+      if ((is_NaN(num.value.real_value)) || (isinf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
 	return(s7_out_of_range_error(sc, "integer-decode-float", 0, arg, "a real that s7_Double can handle"));
       ix = num.value.integer_value;
     }
@@ -20788,6 +20789,7 @@ void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size)
 
 void **s7_expression_data(s7_pointer expr)
 {
+  /* the has_table check should protect against leftover garbage in the optimize_data_index field */
   if (has_table(expr))
     return(tables[optimize_data_index(expr)]);
   return(NULL);
@@ -29867,8 +29869,13 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 {
   int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0;
   s7_pointer p;
+  bool func_is_safe, func_is_c_function, func_is_closure;
 
-  if (is_closure(func))  /* can't depend on ecdr here because it might not be global, or might be redefined locally */
+  func_is_safe = is_safe_procedure(func);
+  func_is_c_function = is_c_function(func);
+  func_is_closure = is_closure(func);
+
+  if (func_is_closure)  /* can't depend on ecdr here because it might not be global, or might be redefined locally */
     hop = 0;
   /* this choice is at least consistent with the unoptimized case, and the ecdr(code) value is not
    *   GC'd without our noticing it.  But it means that the top-level functions behave differently
@@ -29876,8 +29883,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
    *   the total computing in lg.scm.  If we go with accepting the hop value as is, we have to 
    *   gc protect the current value somehow -- where to put it?
    */
-
-  /* fprintf(stderr, "    func: %s, e: %s\n", DISPLAY_80(car(x)), DISPLAY_80(e));  */
 
   for (p = cdar(x); is_pair(p); p = cdr(p), args++)
     {
@@ -29887,7 +29892,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	  if (!is_checked(car(p)))
 	    {
 	      bool opt;
- 	      opt = optimize_expression(sc, p, hop, e);
+	      opt = optimize_expression(sc, p, hop, e);
  	      if (!opt) 
 		{
 		  bad_pairs++;
@@ -29942,17 +29947,17 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	{
 	  /* -------------------------------------------------------------------------------- */
 	case 0: 
-	  if (is_c_function(func))
+	  if (func_is_c_function)
 	    {
 	      set_optimized(car(x));
 	      set_optimize_data(car(x), OP_SAFE_C_C);
 	      set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
-	      if (is_safe_procedure(func))
+	      if (func_is_safe)
 		return(true);
 	      set_unsafe(car(x));
 	      return(false);
 	    }
-	  if ((is_closure(func)) &&
+	  if ((func_is_closure) &&
 	      (is_null(closure_args(func)))) /* no rest arg funny business */
 	    {
 	      set_optimized(car(x));
@@ -29978,9 +29983,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	case 1:
 	  if (pairs == 0)
 	    {
-	      if (is_c_function(func))
+	      if (func_is_c_function)
 		{
-		  if (is_safe_procedure(func))
+		  if (func_is_safe)
 		    {     
 		      set_optimized(car(x));
 		      if (symbols == 0)
@@ -30015,7 +30020,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		}
 	      else
 		{
-		  if (is_closure(func))
+		  if (func_is_closure)
 		    {
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
@@ -30050,9 +30055,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      if (bad_pairs == 0)
 		{
 		  /* we can optimize whatever the arg involves */
-		  if (is_c_function(func))
+		  if (func_is_c_function)
 		    {
-		      if (is_safe_procedure(func))
+		      if (func_is_safe)
 			{
 			  int op;
 			  op = combine_ops(sc, SAFE_C_P, car(x), cadar(x));
@@ -30066,7 +30071,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    }
 		  else
 		    {
-		      if ((is_closure(func)) &&
+		      if ((func_is_closure) &&
 			  ((is_safe_c_s(cadar(x))) ||
 			   (optimize_data_match(cadar(x), OP_SAFE_C_C))))
 			{
@@ -30095,9 +30100,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		{
 		  if (quotes == 1)
 		    {
-		      if (is_c_function(func))
+		      if (func_is_c_function)
 			{
-			  if (is_safe_procedure(func))
+			  if (func_is_safe)
 			    {
 			      set_optimized(car(x));
 			      set_optimize_data(car(x), OP_SAFE_C_Q);
@@ -30114,7 +30119,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			}
 		      else
 			{
-			  if (is_closure(func))
+			  if (func_is_closure)
 			    {
 			      set_optimized(car(x));
 			      set_unsafe(car(x));
@@ -30126,9 +30131,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    }
 		  else
 		    {
-		      if (is_c_function(func))
+		      if (func_is_c_function)
 			{
-			  if (is_safe_procedure(func))
+			  if (func_is_safe)
 			    {
 			      /* fprintf(stderr, "%s: safe of bad 1: %s\n", opt_names[optimize_data(cadar(x))], DISPLAY_80(car(x))); */
 			      
@@ -30197,9 +30202,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      (pairs == 1) &&
 	      /* (bad_pairs == 1) && */
 	      (quotes == 0) &&
-	      (is_c_function(func)))
+	      (func_is_c_function))
 	    {
-	      if (is_safe_procedure(func))
+	      if (func_is_safe)
 		{
 		  set_optimized(car(x));
 		  if (bad_pairs == 0)
@@ -30250,9 +30255,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	  /* fprintf(stderr, "quote: %d, pair: %d (bad: %d), sym: %d in %s\n", quotes, pairs, bad_pairs, symbols, s7_object_to_c_string(sc, car(x)));  */
 	  if (pairs == 0)
 	    {
-	      if (is_c_function(func))
+	      if (func_is_c_function)
 		{
-		  if ((is_safe_procedure(func)) ||
+		  if ((func_is_safe) ||
 		      (c_function_call(func) == g_member) || /* the unsafe case has a 3rd arg */
 		      (c_function_call(func) == g_assoc))
 		    {
@@ -30293,7 +30298,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		}
 	      else
 		{
-		  if ((is_closure(func)) &&
+		  if ((func_is_closure) &&
 		      (s7_list_length(sc, closure_args(func)) == 2))
 		    {
 		      set_optimized(car(x));
@@ -30323,9 +30328,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		{
 		  if (pairs == 2)
 		    {
-		      if (is_c_function(func))
+		      if (func_is_c_function)
 			{
-			  if ((is_safe_procedure(func)) ||
+			  if ((func_is_safe) ||
 			      (c_function_call(func) == g_member) ||
 			      (c_function_call(func) == g_assoc))
 			    {
@@ -30377,7 +30382,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			}
 		      else
 			{
-			  if ((is_closure(func)) &&
+			  if ((func_is_closure) &&
 			      (is_safe_c_s(cadar(x))) &&
 			      (is_safe_c_s(caddar(x))))
 			    {
@@ -30398,9 +30403,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    }
 		  if (pairs == 1)
 		    {
-		      if (is_c_function(func))
+		      if (func_is_c_function)
 			{
-			  if ((is_safe_procedure(func)) ||
+			  if ((func_is_safe) ||
 			      (c_function_call(func) == g_member) ||
 			      (c_function_call(func) == g_assoc))
 			    {
@@ -30444,7 +30449,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			}
 		      else
 			{
-			  if ((is_closure(func)) &&
+			  if ((func_is_closure) &&
 			      (s7_list_length(sc, closure_args(func)) == 2))
 			    {
 			      if ((is_symbol(caddar(x))) &&
@@ -30474,9 +30479,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		{
 		  if ((bad_pairs == 1) && (quotes == 1))
 		    {
-		      if (is_c_function(func))
+		      if (func_is_c_function)
 			{
-			  if ((is_safe_procedure(func)) ||
+			  if ((func_is_safe) ||
 			      (c_function_call(func) == g_member) ||
 			      (c_function_call(func) == g_assoc))
 			    {
@@ -30532,9 +30537,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    {
 		      if (quotes == 2)
 			{
-			  if (is_c_function(func))
+			  if (func_is_c_function)
 			    {
-			      if ((is_safe_procedure(func)) ||
+			      if ((func_is_safe) ||
 				  (c_function_call(func) == g_member) ||
 				  (c_function_call(func) == g_assoc))
 				{
@@ -30558,7 +30563,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			      (is_pair(cadar(x))) &&
 			      (caadar(x) == sc->LAMBDA))
 			    {
-			      if (is_c_function(func))
+			      if (func_is_c_function)
 				{
 				  if (is_symbol(caddar(x)))
 				    {
@@ -30598,7 +30603,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				  (is_pair(caddar(x))) &&
 				  (car(caddar(x)) == sc->LAMBDA))
 				{
-				  if (is_c_function(func))
+				  if (func_is_c_function)
 				    {
 				      set_optimized(car(x));
 				      set_unsafe(car(x));
@@ -30621,8 +30626,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      /* (bad_pairs == 1) && */
 	      (quotes == 0) &&
 	      (symbols == 1) &&
-	      (is_c_function(func)) &&
-	      ((is_safe_procedure(func)) ||
+	      (func_is_c_function) &&
+	      ((func_is_safe) ||
 	       (c_function_call(func) == g_member) ||
 	       (c_function_call(func) == g_assoc)))
 	    {
@@ -30651,8 +30656,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      /* (bad_pairs == 1) && */
 	      (quotes == 0) &&
 	      (symbols == 0) &&
-	      (is_c_function(func)) &&
-	      ((is_safe_procedure(func)) ||
+	      (func_is_c_function) &&
+	      ((func_is_safe) ||
 	       (c_function_call(func) == g_member) ||
 	       (c_function_call(func) == g_assoc)))
 	    {
@@ -30680,14 +30685,14 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		  !is_optimized(car(x)),
 		  (pairs == 2),
 		  (bad_pairs == 0),
-		  (is_c_function(func)),
-		  (is_safe_procedure(func)));
+		  (func_is_c_function),
+		  (func_is_safe));
 	  */
 	  
 	  if ((!is_optimized(car(x))) &&
 	      (pairs == 2) &&
-	      (is_c_function(func)) &&
-	      ((is_safe_procedure(func)) ||
+	      (func_is_c_function) &&
+	      ((func_is_safe) ||
 	       (c_function_call(func) == g_member) ||
 	       (c_function_call(func) == g_assoc)))
 	    {
@@ -30741,9 +30746,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	  /* here quotes in safe functions are somewhat rare: list-ref, format, etc */
 	  if (pairs == 0)
 	    {
-	      if (is_c_function(func))
+	      if (func_is_c_function)
 		{
-		  if (is_safe_procedure(func))
+		  if (func_is_safe)
 		    {
 		      set_optimized(car(x));
 		      if (symbols == 0)
@@ -30759,7 +30764,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		}
 	      else
 		{
-		  if ((is_closure(func)) &&
+		  if ((func_is_closure) &&
 		      (s7_list_length(sc, closure_args(func)) == 3) &&
 		      (symbols == 3))
 		    {
@@ -30775,9 +30780,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
 	  if ((pairs == 1) &&
 	      (bad_pairs == 0) &&
-	      (is_c_function(func)))
+	      (func_is_c_function))
 	    {
-	      if (is_safe_procedure(func))
+	      if (func_is_safe)
 		{
 		  set_optimized(car(x));		  
 		  if (is_pair(cadar(x)))
@@ -30844,8 +30849,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
 	  if ((pairs == 2) &&
 	      (bad_pairs == 0) &&
-	      (is_c_function(func)) &&
-	      (is_safe_procedure(func)))
+	      (func_is_c_function) &&
+	      (func_is_safe))
 	    {
 	      set_optimized(car(x));		  
 	      if (!is_pair(cadddr(car(x))))
@@ -30904,8 +30909,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
 	  if ((pairs == 3) &&
 	      (bad_pairs == 0) &&
-	      (is_c_function(func)) &&
-	      (is_safe_procedure(func)))
+	      (func_is_c_function) &&
+	      (func_is_safe))
 	    {
 	      set_optimized(car(x));		  
 	      if ((optimize_data_match(cadar(x), OP_SAFE_C_C)) &&
@@ -30941,7 +30946,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      (is_pair(car(cdddr(car(x))))) &&
 	      (car(car(cdddr(car(x)))) == sc->LAMBDA))
 	    {
-	      if (is_c_function(func))
+	      if (func_is_c_function)
 		{
 		  set_optimized(car(x));
 		  set_unsafe(car(x));
@@ -30958,9 +30963,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	  if ((!is_optimized(car(x))) &&
 	      (pairs == (quotes + c_s_count(car(x)))))
 	    {
-	      if (is_c_function(func))
+	      if (func_is_c_function)
 		{
-		  if (is_safe_procedure(func))
+		  if (func_is_safe)
 		    {
 		      set_optimized(car(x));
 		      set_optimize_data(car(x), OP_SAFE_C_ALL_G);
@@ -30981,7 +30986,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		}
 	      else
 		{
-		  if ((is_closure(func)) &&
+		  if ((func_is_closure) &&
 		      (s7_list_length(sc, closure_args(func)) == 3))
 		    {
 		      set_optimized(car(x));
@@ -30994,8 +30999,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 
 	  if ((!is_optimized(car(x))) &&
-	      (is_c_function(func)) &&
-	      (is_safe_procedure(func)) &&
+	      (func_is_c_function) &&
+	      (func_is_safe) &&
 	      (pairs == (quotes + orx_count(car(x)))))
 	    {
 	      set_optimized(car(x));
@@ -31006,8 +31011,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 #if 0
 	  if ((!is_optimized(car(x))) &&
 	      (pairs == 3) &&
-	      (is_c_function(func)) &&
-	      (is_safe_procedure(func)) &&
+	      (func_is_c_function) &&
+	      (func_is_safe) &&
 	      (is_optimized(cadar(x))) &&
 	      (is_optimized(caddar(x))) &&
 	      (is_optimized(cadddar(x))) &&
@@ -31039,9 +31044,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	  /* -------------------------------------------------------------------------------- */
 	default:
 	  if (bad_pairs > quotes) return(false);
-	  if (is_c_function(func))
+	  if (func_is_c_function)
 	    {
-	      if (is_safe_procedure(func))
+	      if (func_is_safe)
 		{
 		  if (pairs == 0)
 		    {
@@ -31069,7 +31074,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 	  else
 	    {
-	      if ((is_closure(func)) &&
+	      if ((func_is_closure) &&
 		  (pairs == 0) &&
 		  ((symbols == args) || (symbols == 0)) &&
 		  (args < GC_TRIGGER_SIZE))
@@ -31088,9 +31093,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      (args < GC_TRIGGER_SIZE) &&
 	      (pairs == (quotes + c_s_count(car(x)))))
 	    {
-	      if (is_c_function(func))
+	      if (func_is_c_function)
 		{
-		  if (is_safe_procedure(func))
+		  if (func_is_safe)
 		    {
 		      set_optimized(car(x));
 		      set_optimize_data(car(x), OP_SAFE_C_ALL_G);
@@ -31110,7 +31115,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		  /* none of the closures can skip the ecdr=func check via hop
 		   *    unless they are globally defined.
 		   */
-		  if ((is_closure(func)) &&
+		  if ((func_is_closure) &&
 		      (s7_list_length(sc, closure_args(func)) == args))
 		    {
 		      set_optimized(car(x));
@@ -31123,8 +31128,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 
 	  if ((!is_optimized(car(x))) &&
-	      (is_c_function(func)) &&
-	      (is_safe_procedure(func)) &&
+	      (func_is_c_function) &&
+	      (func_is_safe) &&
 	      (args < GC_TRIGGER_SIZE) &&
 	      (pairs == (quotes + orx_count(car(x)))))
 	    {
@@ -31135,8 +31140,8 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
 	  if ((!is_optimized(car(x))) &&
 	      (bad_pairs == 0) &&
-	      (is_c_function(func)) &&
-	      (is_safe_procedure(func)))
+	      (func_is_c_function) &&
+	      (func_is_safe))
 	    {
 	      /* give caller's optimizer a chance at it */
 	      s7_pointer new_func;
@@ -46810,7 +46815,7 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
        *    (rationalize (bignum "0.1") 0) should return 1/10 not 3602879701896397/36028797018963968
        */
     case T_REAL:
-      if (isnan(real(p))) return(p);
+      if (is_NaN(real(p))) return(p);
       return(string_to_big_real(sc, s7_string(car(args)), (is_pair(cdr(args))) ? s7_integer(cadr(args)) : 10));
 
     default:      
@@ -47451,7 +47456,7 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
       double x;
       x = mpfr_get_d(S7_BIG_REAL(p), GMP_RNDN);
       /* mpfr_get_d returns inf or -inf if the arg is too large for a double */
-      if (isnan(x)) return(p);
+      if (is_NaN(x)) return(p);
       if (x >= 0.0)
 	return(real_zero);
       return(big_pi(sc));
@@ -47528,7 +47533,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
   mpfr_init_set(ang, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
   y = mpfr_get_d(ang, GMP_RNDN);
 
-  if (isnan(y))
+  if (is_NaN(y))
     {
       mpfr_clear(ang);
       return(s7_make_real(sc, NAN));
@@ -47537,7 +47542,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
   mpfr_init_set(mag, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
   x = mpfr_get_d(mag, GMP_RNDN);
 
-  if (isnan(x))
+  if (is_NaN(x))
     {
       mpfr_clear(ang);
       mpfr_clear(mag);
@@ -47603,7 +47608,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 
       p0 = promote_number(sc, T_BIG_REAL, p0);
       x = mpfr_get_d(S7_BIG_REAL(p0), GMP_RNDN);
-      if (isnan(x))
+      if (is_NaN(x))
 	return(s7_make_real(sc, NAN));
 
       if (p1) 
@@ -47617,7 +47622,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	   *  :(= 1.0 (+ 1.0 (bignum "1e-16")))
 	   *  #f
 	   */
-	  if (isnan(y))
+	  if (is_NaN(y))
 	    return(s7_make_real(sc, NAN));
 	  if (y == 0.0)
 	    return(s7_out_of_range_error(sc, "log base,", 2, p1, "can't be 0.0"));
@@ -48519,10 +48524,10 @@ static s7_pointer big_is_nan(s7_scheme *sc, s7_pointer args)
   if (s7_is_number(x))
     {
 #ifndef _MSC_VER
-      return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
+      return(make_boolean(sc, (is_NaN(s7_real_part(x))) || (is_NaN(s7_imag_part(x)))));
 #else
       /* is this actually different from isinf below? */
-      if (isnan(s7_real_part(x)) || isnan(s7_imag_part(x)))
+      if (is_NaN(s7_real_part(x)) || is_NaN(s7_imag_part(x)))
 	return(sc->T);
       else return(sc->F);
 #endif
@@ -48760,7 +48765,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
       else mpfr_init_set_d(error, s7_number_to_real(p1), GMP_RNDN);
 
       err_x = mpfr_get_d(error, GMP_RNDN);
-      if (isnan(err_x))
+      if (is_NaN(err_x))
 	return(s7_out_of_range_error(sc, "rationalize", 2, cadr(args), "error term is NaN"));
       if (mpfr_inf_p(error) != 0)
 	return(small_int(0));
@@ -48774,7 +48779,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
   else mpfr_init_set_d(ux, s7_number_to_real(p0), GMP_RNDN);
 
   xx = mpfr_get_d(ux, GMP_RNDN);  
-  if (isnan(xx))
+  if (is_NaN(xx))
     return(s7_out_of_range_error(sc, "rationalize", 1, car(args), "argument is NaN"));
   if (mpfr_inf_p(ux) != 0)
     return(s7_out_of_range_error(sc, "rationalize", 1, car(args), "argument is infinite"));
@@ -49541,12 +49546,12 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    case T_REAL:
-	      if (isnan(real(p)))  /* (= (bignum "3") 1/0) */
+	      if (is_NaN(real(p)))  /* (= (bignum "3") 1/0) */
 		return(sc->F);
 
 	    default:
-	      if ((isnan(real_part(p))) ||
-		  (isnan(imag_part(p))))
+	      if ((is_NaN(real_part(p))) ||
+		  (is_NaN(imag_part(p))))
 		return(sc->F);
 	    }
 	  result_type = normal_type_to_result_type(result_type, type(p));
@@ -51294,7 +51299,7 @@ the error type and the info passed to the error handler.");
  *
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
- * lint     13424 ->  1237
- * bench    52019 -> 10725
- * index    44300 ->  6002
+ * lint     13424 ->  1235
+ * bench    52019 -> 10694
+ * index    44300 ->  6000
  */
