@@ -56051,6 +56051,12 @@ abs     1       2
        (format #t "~A: (+ ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d (+ a b c d))))
  '(1 1/2 0.5 1+i))
 
+(for-each-permutation 
+ (lambda (a b c d e f g h)
+   (if (not (zero? (+ a b c d e f g h)))
+       (format #t "~A: (+ ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d e f g h (+ a b c d e f g h))))
+ '(1 1/2 0.5 1+i -1/2 -1 -0.5 -1-i))
+
 (test (integer? (+ 1/100 99/100 (- most-positive-fixnum 2))) #t)
 (test (integer? (+ 1/1000 999/1000 (- most-positive-fixnum 9223372036854775807))) #t)
 (num-test (+ 1/1000 999/1000 (- most-positive-fixnum 9223372036854775807)) 1)

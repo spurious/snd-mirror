@@ -1733,6 +1733,13 @@ static s7_pointer (*finder)(s7_scheme *sc, s7_pointer symbol);
 #define finder(Sc, Sym) find_symbol_or_bust(Sc, Sym)
 #endif
 
+static int position_of(s7_pointer p, s7_pointer args)
+{
+  int i;
+  for (i = 1; p != args; i++, args = cdr(args));
+  return(i);
+}
+
 
 
 
@@ -8406,7 +8413,6 @@ static s7_Int c_lcm(s7_Int a, s7_Int b)
 static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 {
   #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
-  int i;
   s7_Int n = 1, d = 0;
   bool rats = false;
   s7_pointer x;
@@ -8421,9 +8427,9 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
       return(g_abs(sc, args));
     }
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     if (!is_rational(car(x)))
-      return(s7_wrong_type_arg_error(sc, "lcm", i, car(x), "an integer or ratio"));
+      return(s7_wrong_type_arg_error(sc, "lcm", position_of(x, args), car(x), "an integer or ratio"));
     else rats = ((rats) || (type(car(x)) == T_RATIO));
 
   if (!rats)
@@ -8454,7 +8460,6 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 {
   #define H_gcd "(gcd ...) returns the greatest common divisor of its rational arguments"
-  int i;
   bool rats = false;
   s7_Int n = 0, d = 1;
   s7_pointer x;
@@ -8469,9 +8474,9 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
       return(g_abs(sc, args));
     }
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     if (!is_rational(car(x)))
-      return(s7_wrong_type_arg_error(sc, "gcd", i, car(x), "an integer"));
+      return(s7_wrong_type_arg_error(sc, "gcd", position_of(x, args), car(x), "an integer"));
     else rats = ((rats) || (type(car(x)) == T_RATIO));
   
   if (!rats)
@@ -8993,6 +8998,12 @@ static int reduce_fraction(s7_Int *numer, s7_Int *denom)
 }
 
 
+
+/* TODO: code-as-type-choice to multiply/subtract/divide, maybe equal/min/max etc, check add_3 (see ret_type)
+ * TODO: a2-m and m2-a cases
+ */
+
+
 static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 {
   #define H_add "(+ ...) adds its arguments"
@@ -9020,6 +9031,11 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
       num_a = integer(x);
 
     ADD_INTEGERS:
+#if WITH_GMP
+      if ((num_a > S7_LONG_MAX) ||
+	  (num_a < S7_LONG_MIN))
+	return(big_add(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), p)));
+#endif
       x = car(p);
       p = cdr(p);
 
@@ -9050,19 +9066,20 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 	  
 	default:
-	  {
-	    int i;
-	    for (i = 1; p != args; i++, args = cdr(args));
-	    return(s7_wrong_type_arg_error(sc, "+", i, x, "a number"));
-	  }
+	  return(s7_wrong_type_arg_error(sc, "+", position_of(p, args) - 1, x, "a number")); /* p is 1 past the current arg */
 	}
       break;
 
     case T_RATIO:
       num_a = numerator(x);
       den_a = denominator(x);
-
     ADD_RATIOS:
+#if WITH_GMP
+      if ((num_a > S7_LONG_MAX) ||
+	  (den_a > S7_LONG_MAX) ||
+	  (num_a < S7_LONG_MIN))
+	return(big_add(sc, cons(sc, s7_ratio_to_big_ratio(sc, num_a, den_a), p)));
+#endif
       x = car(p);
       p = cdr(p);
 
@@ -9146,11 +9163,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 	  
 	default:
-	  {
-	    int i;
-	    for (i = 1; p != args; i++, args = cdr(args));
-	    return(s7_wrong_type_arg_error(sc, "+", i, x, "a number"));
-	  }
+	  return(s7_wrong_type_arg_error(sc, "+", position_of(p, args) - 1, x, "a number"));
 	}
       break;
 
@@ -9185,11 +9198,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 	  
 	default:
-	  {
-	    int i;
-	    for (i = 1; p != args; i++, args = cdr(args));
-	    return(s7_wrong_type_arg_error(sc, "+", i, x, "a number"));
-	  }
+	  return(s7_wrong_type_arg_error(sc, "+", position_of(p, args) - 1, x, "a number"));
 	}
       break;
 
@@ -9227,11 +9236,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 	  
 	default:
-	  {
-	    int i;
-	    for (i = 1; p != args; i++, args = cdr(args));
-	    return(s7_wrong_type_arg_error(sc, "+", i, x, "a number"));
-	  }
+	  return(s7_wrong_type_arg_error(sc, "+", position_of(p, args) - 1, x, "a number"));
 	}
       break;
 
@@ -10595,8 +10600,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    case T_COMPLEX:
-	      equal = ((imag_part(tmp) == 0.0) && /* TODO: can this actually happen?? */
-		       (real_part(tmp) == integer(p)));
+	      equal = false;            /* T_COMPLEX can't happen unless there is a non-zero imaginary part */
 	      break;
 
 	    default:
@@ -10645,8 +10649,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    case T_COMPLEX:
-	      equal = ((imag_part(tmp) == 0.0) &&
-		       (real_part(tmp) == real(p)));
+	      equal = false;
 	      break;
 
 	    default:
@@ -10658,18 +10661,9 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	  switch (type_b)
 	    {
 	    case T_INTEGER:
-	      equal = ((imag_part(p) == 0.0) &&
-		       (real_part(p) == integer(tmp)));
-	      break;
-
 	    case T_RATIO:
-	      equal = ((imag_part(p) == 0.0) &&
-		       (real_part(p) == fraction(tmp)));
-	      break;
-
 	    case T_REAL:
-	      equal = ((imag_part(p) == 0.0) &&
-		       (real_part(p) == real(tmp)));
+	      equal = false;
 	      break;
 
 	    case T_COMPLEX:
@@ -10730,11 +10724,7 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_COMPLEX:
-#ifndef _MSC_VER
-      return(make_boolean(sc, (imag_part(val) == 0.0) && (real_part(val) == y)));
-#else
-      if ((imag_part(val) == 0.0) && (real_part(val) == y)) return(sc->T); else return(sc->F);
-#endif
+      return(sc->F);
 
     default:
       return(s7_wrong_type_arg_error(sc, "=", 1, car(args), "a number"));
@@ -10800,14 +10790,7 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: return(make_boolean(sc, integer(x) == integer(y)));
 	case T_RATIO:   return(sc->F);
 	case T_REAL:    return(make_boolean(sc, integer(x) == real(y)));
-	case T_COMPLEX:
-#ifndef _MSC_VER
-	  return(make_boolean(sc, (imag_part(y) == 0.0) && (real_part(y) == integer(x))));
-#else
-	  if ((imag_part(y) == 0.0) && (real_part(y) == integer(x))) return(sc->T); else return(sc->F);
-#endif
-	  break;
-
+	case T_COMPLEX: return(sc->F);
 	default:        return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
 	}
       break;
@@ -10829,14 +10812,7 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: return(make_boolean(sc, real(x) == integer(y)));
 	case T_RATIO:   return(make_boolean(sc, real(x) == fraction(y)));
 	case T_REAL:    return(make_boolean(sc, real(x) == real(y)));
-	case T_COMPLEX:
-#ifndef _MSC_VER
-	  return(make_boolean(sc, (imag_part(y) == 0.0) && (real_part(y) == real(x))));
-#else
-	  if ((imag_part(y) == 0.0) && (real_part(y) == real(x))) return(sc->T); else return(sc->F);
-#endif
-	  break;
-
+	case T_COMPLEX: return(sc->F);
 	default:        return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
 	}
       break;
@@ -10844,18 +10820,20 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
     case T_COMPLEX:
       switch (type_b)
 	{
+	case T_INTEGER:
+	case T_RATIO:
+	case T_REAL:
+	  return(sc->F);
+
 #ifndef _MSC_VER
-	case T_INTEGER:  return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == integer(y))));
-	case T_RATIO:    return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == fraction(y))));
-	case T_REAL:     return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) == real(y))));
-	case T_COMPLEX:  return(make_boolean(sc, (real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))));
+	case T_COMPLEX: 
+	  return(make_boolean(sc, (real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))));
 #else
-	case T_INTEGER: if ((imag_part(x) == 0.0) && (real_part(x) == integer(y))) return(sc->T); else return(sc->F);
-	case T_RATIO:   if ((imag_part(x) == 0.0) && (real_part(x) == fraction(y))) return(sc->T); else return(sc->F);
-	case T_REAL:    if ((imag_part(x) == 0.0) && (real_part(x) == real(y))) return(sc->T); else return(sc->F);
-	case T_COMPLEX: if ((real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))) return(sc->T); else return(sc->F);
+	case T_COMPLEX: 
+	  if ((real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))) return(sc->T); else return(sc->F);
 #endif
-	default:        return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
 	}
       break;
 
@@ -11362,10 +11340,8 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_COMPLEX:
-      return(make_boolean(sc, (imag_part(x) == 0.0) && (real_part(x) < y)));
-
     default:
-      return(s7_wrong_type_arg_error(sc, "<", 1, x, "a number"));  
+      return(s7_wrong_type_arg_error(sc, "<", 1, x, "a real number"));  
     }
   return(sc->T);
 }
@@ -12342,12 +12318,11 @@ static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
   #define H_logior "(logior int ...) returns the bitwise OR of its integer arguments (the bits that are on in any of the arguments)"
   s7_Int result = 0;
-  int i; 
   s7_pointer x;
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))
+  for (x = args; is_not_null(x); x = cdr(x))
     if (!s7_is_integer(car(x)))
-      return(s7_wrong_type_arg_error(sc, "logior", i, car(x), "an integer"));
+      return(s7_wrong_type_arg_error(sc, "logior", position_of(x, args), car(x), "an integer"));
     else result |= s7_integer(car(x));
 
   return(make_integer(sc, result));
@@ -12358,12 +12333,11 @@ static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 {
   #define H_logxor "(logxor int ...) returns the bitwise XOR of its integer arguments (the bits that are on in an odd number of the arguments)"
   s7_Int result = 0;
-  int i;
   s7_pointer x;
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))
+  for (x = args; is_not_null(x); x = cdr(x))
     if (!s7_is_integer(car(x)))
-      return(s7_wrong_type_arg_error(sc, "logxor", i, car(x), "an integer"));
+      return(s7_wrong_type_arg_error(sc, "logxor", position_of(x, args), car(x), "an integer"));
     else result ^= s7_integer(car(x));
 
   return(make_integer(sc, result));
@@ -12374,12 +12348,11 @@ static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
 {
   #define H_logand "(logand int ...) returns the bitwise AND of its integer arguments (the bits that are on in every argument)"
   s7_Int result = -1;
-  int i;
   s7_pointer x;
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))
+  for (x = args; is_not_null(x); x = cdr(x))
     if (!s7_is_integer(car(x)))
-      return(s7_wrong_type_arg_error(sc, "logand", i, car(x), "an integer"));
+      return(s7_wrong_type_arg_error(sc, "logand", position_of(x, args), car(x), "an integer"));
     else result &= s7_integer(car(x));
 
   return(make_integer(sc, result));
@@ -12818,13 +12791,12 @@ static int charcmp(unsigned char c1, unsigned char c2, bool ci)
 
 static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, const char *name, bool ci)
 {
-  int i;
   s7_pointer x;
   unsigned char last_chr;
   
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))  
+  for (x = args; is_not_null(x); x = cdr(x))  
     if (!s7_is_character(car(x)))
-      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
+      return(s7_wrong_type_arg_error(sc, name, position_of(x, args), car(x), "a character"));
   
   last_chr = character(car(args));
   for (x = cdr(args); is_not_null(x); x = cdr(x))
@@ -12839,13 +12811,12 @@ static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, const char
 
 static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name, bool ci)
 {
-  int i;
   s7_pointer x;
   unsigned char last_chr;
   
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))  
+  for (x = args; is_not_null(x); x = cdr(x))  
     if (!s7_is_character(car(x)))
-      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
+      return(s7_wrong_type_arg_error(sc, name, position_of(x, args), car(x), "a character"));
   
   last_chr = character(car(args));
   for (x = cdr(args); is_not_null(x); x = cdr(x))
@@ -12862,12 +12833,11 @@ static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_equal "(char=? char ...) returns #t if all the character arguments are equal"
 
-  int i;
   s7_pointer x, y;
   
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))  
+  for (x = args; is_not_null(x); x = cdr(x))  
     if (!s7_is_character(car(x)))
-      return(s7_wrong_type_arg_error(sc, "char=?", i, car(x), "a character"));
+      return(s7_wrong_type_arg_error(sc, "char=?", position_of(x, args), car(x), "a character"));
   
   y = car(args);
   for (x = cdr(args); is_not_null(x); x = cdr(x))
@@ -13389,7 +13359,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, const char *name)
 {
-  int i, len = 0;
+  int len = 0;
   s7_pointer x, newstr;
   char *pos;
   
@@ -13397,10 +13367,10 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, const char *
     return(s7_make_string_with_length(sc, "", 0));
   
   /* get length for new string */
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     {
       if (!s7_is_string(car(x)))
-	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
+	return(s7_wrong_type_arg_error(sc, name, position_of(x, args), car(x), "a string"));
       len += string_length(car(x));
     }
   
@@ -13542,12 +13512,11 @@ static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
 
 static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
-  int i;
   s7_pointer x, y;
   
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))  
+  for (x = args; is_not_null(x); x = cdr(x))  
     if (!s7_is_string(car(x)))
-      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
+      return(s7_wrong_type_arg_error(sc, name, position_of(x, args), car(x), "a string"));
   
   y = car(args);
   for (x = cdr(args); is_not_null(x); x = cdr(x))
@@ -13562,12 +13531,11 @@ static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const ch
 
 static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
-  int i;
   s7_pointer x, y;
   
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))  
+  for (x = args; is_not_null(x); x = cdr(x))  
     if (!s7_is_string(car(x)))
-      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
+      return(s7_wrong_type_arg_error(sc, name, position_of(x, args), car(x), "a string"));
   
   y = car(args);
   for (x = cdr(args); is_not_null(x); x = cdr(x))
@@ -13608,7 +13576,7 @@ static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
    */
   
   s7_pointer x, y;
-  unsigned int i, len;
+  unsigned int len;
   bool happy = true;
   char *ystr;
   
@@ -13619,12 +13587,12 @@ static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
   len = string_length(y);
   ystr = string_value(y);
 
-  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) 
+  for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
       if (y != car(x))
 	{
 	  if (!s7_is_string(car(x)))
-	    return(s7_wrong_type_arg_error(sc, "string=?", i, car(x), "a string"));
+	    return(s7_wrong_type_arg_error(sc, "string=?", position_of(x, args), car(x), "a string"));
 	  if (happy)
 	    {
 	      if (string_length(car(x)) != len)
@@ -13855,12 +13823,11 @@ static bool scheme_strequal_ci(s7_pointer s1, s7_pointer s2)
 
 static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
-  int i;
   s7_pointer x, y;
   
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))  
+  for (x = args; is_not_null(x); x = cdr(x))  
     if (!s7_is_string(car(x)))
-      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
+      return(s7_wrong_type_arg_error(sc, name, position_of(x, args), car(x), "a string"));
   
   y = car(args);
   if (val == 0)
@@ -13884,12 +13851,11 @@ static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, const
 
 static s7_pointer g_string_ci_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
-  int i;
   s7_pointer x, y;
   
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x))  
+  for (x = args; is_not_null(x); x = cdr(x))  
     if (!s7_is_string(car(x)))
-      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
+      return(s7_wrong_type_arg_error(sc, name, position_of(x, args), car(x), "a string"));
   
   y = car(args);
   for (x = cdr(args); is_not_null(x); x = cdr(x))
@@ -19044,7 +19010,6 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
   /* but weirdly (append '() 1) returns 1 
    */
   s7_pointer x, y;
-  int i;
 
   if (is_null(args)) 
     return(sc->NIL);
@@ -19053,7 +19018,7 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
     return(car(args)); 
   
   x = sc->NIL;
-  for (i = 1, y = args; is_not_null(y); i++, y = cdr(y)) 
+  for (y = args; is_not_null(y); y = cdr(y)) 
     {
       /* the original version used s7_append but that copies the arguments too many times if there are 3 or more lists */
       s7_pointer p;
@@ -19062,7 +19027,7 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 
       p = car(y);
       if (!is_proper_list(sc, p))
-	return(s7_wrong_type_arg_error(sc, "append", i, p, "a proper list"));
+	return(s7_wrong_type_arg_error(sc, "append", position_of(y, args), p, "a proper list"));
 
       while (is_not_null(p))
 	{
@@ -19708,7 +19673,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	len = s7_integer(car(x));
       else
 	{
-	  int i, dims;
+	  int dims;
 
 	  dims = s7_list_length(sc, x);
 	  if (dims <= 0)                /* 0 if circular, negative if dotted */
@@ -19716,13 +19681,13 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	  if (dims > MAX_VECTOR_DIMENSIONS)
 	    return(s7_out_of_range_error(sc, "make-vector dimension list,", (is_null(cdr(args))) ? 0 : 1, x, "less than 512 dimensions"));
 
-	  for (i = 1, len = 1, y = x; is_not_null(y); y = cdr(y), i++)
+	  for (len = 1, y = x; is_not_null(y); y = cdr(y))
 	    {
 	      if (!s7_is_integer(car(y)))
-		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "an integer"));
+		return(s7_wrong_type_arg_error(sc, "make-vector", position_of(y, x), car(y), "an integer"));
 	      len *= s7_integer(car(y));
 	      if (len < 0)
-		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "a non-negative integer"));
+		return(s7_wrong_type_arg_error(sc, "make-vector", position_of(y, x), car(y), "a non-negative integer"));
 	    }
 	}
     }
@@ -20502,7 +20467,7 @@ static s7_pointer g_hash_table(s7_scheme *sc, s7_pointer args)
   #define H_hash_table "(hash-table ...) returns a hash-table containing the cons's passed as its arguments. \
 That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with the two key/value pairs preinstalled."
 
-  int i, len, ht_loc;
+  int len, ht_loc;
   s7_pointer x, ht;
   
   len = s7_list_length(sc, args);
@@ -20510,7 +20475,7 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
   if (is_not_null(args))
     {
       ht_loc = s7_gc_protect(sc, ht); /* hash_table_set can cons, so we need to protect this */
-      for (x = args, i = 1; i <= len; x = cdr(x), i++) 
+      for (x = args; is_pair(x); x = cdr(x)) 
 	{
 	  if (is_pair(car(x)))
 	    s7_hash_table_set(sc, ht, caar(x), cdar(x));
@@ -20519,7 +20484,7 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 	      if (is_not_null(car(x)))
 		{
 		  s7_gc_unprotect_at(sc, ht_loc);
-		  return(s7_wrong_type_arg_error(sc, "hash-table", i, car(x), "a pair: (key value)"));
+		  return(s7_wrong_type_arg_error(sc, "hash-table", position_of(x, args), car(x), "a pair: (key value)"));
 		}
 	    }
 	}
@@ -23257,24 +23222,24 @@ first function in the list, or '(0 0 #f) if there are no functions.  All the oth
 must be compatible with the arity of the first."
 
   s7_pointer x, hook;
-  int i, gc_loc;
+  int gc_loc;
   
   if (is_null(args))
     return(s7_make_hook(sc, 0, 0, false, NULL));
 
-  for (i = 1, x = args; is_pair(x); x = cdr(x), i++)
+  for (x = args; is_pair(x); x = cdr(x))
     if (!is_function_with_arity(car(x)))
-      return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "a function"));
+      return(s7_wrong_type_arg_error(sc, "hook", position_of(x, args), car(x), "a function"));
 
   hook = g_make_hook(sc, cons(sc, s7_procedure_arity(sc, car(args)), sc->NIL));
   hook_functions(hook) = args;
   gc_loc = s7_gc_protect(sc, hook);
   
-  for (i = 2, x = cdr(args); is_pair(x); x = cdr(x), i++)
+  for (x = cdr(args); is_pair(x); x = cdr(x))
     if (!function_arity_ok(sc, hook, car(x)))
       {
 	s7_gc_unprotect_at(sc, gc_loc);
-	return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "compatible function"));
+	return(s7_wrong_type_arg_error(sc, "hook", position_of(x, args), car(x), "compatible function"));
       }
   s7_gc_unprotect_at(sc, gc_loc);
   return(hook);
@@ -26511,7 +26476,7 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 Each object can be a list (the normal case), string, vector, hash-table, or any applicable object."
 
   /* (for-each (lambda (n) (format #t "~A " n)) (vct 1.0 2.0 3.0)) */
-  s7_Int i, len = 0; 
+  s7_Int len = 0; 
   /* "int" here is unhappy on 64-bit machines, and "long int" is unhappy on 32-bit machines, so try long long int.
    *    string_length is an int.
    */
@@ -26599,23 +26564,22 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
     }
   else 
     {
-      for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
+      for (x = cdr(args); is_not_null(x); x = cdr(x))
 	{
 	  s7_Int nlen;
 	  if (!is_sequence(sc, car(x)))
-	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a sequence"));
+	    return(s7_wrong_type_arg_error(sc, "for-each", position_of(x, args), car(x), "a sequence"));
 
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
-	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, hash-table, or applicable object"));
-	  if ((i == 2) || (nlen < len))
+	    return(s7_wrong_type_arg_error(sc, "for-each", position_of(x, args), car(x), "a vector, list, string, hash-table, or applicable object"));
+	  if ((x == cdr(args)) || (nlen < len))
 	    len = nlen;
 	  if (len == 0) 
 	    {
-	      int k;
-	      for (k = i + 1, x = cdr(x); is_not_null(x); x = cdr(x), k++)
+	      for (x = cdr(x); is_not_null(x); x = cdr(x))
 		if (!is_sequence(sc, car(x)))
-		  return(s7_wrong_type_arg_error(sc, "for-each", k, car(x), "a sequence"));
+		  return(s7_wrong_type_arg_error(sc, "for-each", position_of(x, args), car(x), "a sequence"));
 	      break;   /* need error check below */
 	    }
 	}
@@ -26635,7 +26599,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
       if (is_not_null(cddr(args)))
 	{
-	  for (i = 3, x = cddr(args); is_not_null(x); x = cdr(x), i++)
+	  for (x = cddr(args); is_not_null(x); x = cdr(x))
 	    {
 	      sc->x = cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
 
@@ -26898,7 +26862,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
   #define H_map "(map proc object . objects) applies proc to a list made up of the next element of each of its arguments, returning \
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
 
-  s7_Int i, len;
+  s7_Int len;
   s7_pointer obj, x;
   sc->code = car(args);
 
@@ -26957,9 +26921,9 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, hash-table, or applicable object"));
 
-  for (i = 2, x = cddr(args); is_not_null(x); x = cdr(x), i++)
+  for (x = cddr(args); is_not_null(x); x = cdr(x))
     if (!is_sequence(sc, car(x)))
-      return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a sequence"));
+      return(s7_wrong_type_arg_error(sc, "map", position_of(x, args), car(x), "a sequence"));
 
   if (len != 0)
     {
@@ -26973,13 +26937,13 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       
       if (is_not_null(cddr(args)))
 	{
-	  for (i = 3, x = cddr(args); is_not_null(x); x = cdr(x), i++)
+	  for (x = cddr(args); is_not_null(x); x = cdr(x))
 	    {
 	      s7_Int nlen;
 	      
 	      nlen = applicable_length(sc, car(x));
 	      if (nlen < 0)
-		return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a vector, list, string, hash-table, or applicable object"));
+		return(s7_wrong_type_arg_error(sc, "map", position_of(x, args), car(x), "a vector, list, string, hash-table, or applicable object"));
 	      if (nlen < len) len = nlen;
 	      if (len == 0) break; /* need error check below */
 	      
@@ -28886,10 +28850,13 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
       return(add_2);
     }
 
+  /*
 #if (!WITH_GMP)
   if (args == 3)
     return(add_3);
 #endif
+  */
+
 
   return(f);
 }
@@ -36573,7 +36540,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_CLOSURE_S:
 		  if (!function_is_ok(code))
 		    {
-		      /* fprintf(stderr, "%d, %s: unknown_s\n", __LINE__, DISPLAY_80(code)); */
 		      optimize_data(code) = OP_UNKNOWN_S;
 		      goto OPT_EVAL;
 		    }
@@ -46988,7 +46954,7 @@ static s7_Int add_max = 0;
 
 static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
 {
-  int i, result_type = T_INTEGER;
+  int result_type = T_INTEGER;
   s7_pointer x, result;
 
   if (is_null(args))
@@ -46997,14 +46963,14 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
   if ((is_null(cdr(args))) && (s7_is_number(car(args))))
     return(car(args));
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     {
       s7_pointer p;
       p = car(x);
       if (!is_number(p))
 	{
 	  if (!IS_BIG(p))
-	    return(s7_wrong_type_arg_error(sc, "+", i, p, "a number"));
+	    return(s7_wrong_type_arg_error(sc, "+", position_of(x, args), p, "a number"));
 	  else result_type = big_tag_to_result_type(result_type, object_type(p));
 	}
       else result_type = normal_type_to_result_type(result_type, type(p));
@@ -47101,7 +47067,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
 {
-  int i, result_type = T_INTEGER;
+  int result_type = T_INTEGER;
   s7_pointer x, result;
 
   if (!s7_is_number(car(args)))
@@ -47110,14 +47076,14 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
   if (is_null(cdr(args))) 
     return(big_negate(sc, args));
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     {
       s7_pointer p;
       p = car(x);
       if (!is_number(p))
 	{
 	  if (!IS_BIG(p))
-	    return(s7_wrong_type_arg_error(sc, "-", i, p, "a number"));
+	    return(s7_wrong_type_arg_error(sc, "-", position_of(x, args), p, "a number"));
 	  else result_type = big_tag_to_result_type(result_type, object_type(p));
 	}
       else result_type = normal_type_to_result_type(result_type, type(p));
@@ -47167,7 +47133,7 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
 {
-  int i, result_type = T_INTEGER;
+  int result_type = T_INTEGER;
   s7_pointer x, result;
 
   if (is_null(args))
@@ -47176,14 +47142,14 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
   if ((is_null(cdr(args))) && (s7_is_number(car(args))))
     return(car(args));
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     {
       s7_pointer p;
       p = car(x);
       if (!is_number(p))
 	{
 	  if (!IS_BIG(p))
-	    return(s7_wrong_type_arg_error(sc, "*", i, p, "a number"));
+	    return(s7_wrong_type_arg_error(sc, "*", position_of(x, args), p, "a number"));
 	  else result_type = big_tag_to_result_type(result_type, object_type(p));
 	}
       else result_type = normal_type_to_result_type(result_type, type(p));
@@ -47308,7 +47274,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 {
-  int i, result_type = T_INTEGER;
+  int result_type = T_INTEGER;
   s7_pointer x, divisor, result;
 
   if (!s7_is_number(car(args)))
@@ -47317,14 +47283,14 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
   if (is_null(cdr(args))) 
     return(big_invert(sc, args));
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     {
       s7_pointer p;
       p = car(x);
       if (!is_number(p))
 	{
 	  if (!IS_BIG(p))
-	    return(s7_wrong_type_arg_error(sc, "/", i, p, "a number"));
+	    return(s7_wrong_type_arg_error(sc, "/", position_of(x, args), p, "a number"));
 	  else result_type = big_tag_to_result_type(result_type, object_type(p));
 	}
       else result_type = normal_type_to_result_type(result_type, type(p));
@@ -48824,13 +48790,12 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_bits(s7_scheme *sc, s7_pointer args, const char *name, int start, s7_function g_bits, 
 			   void (*mpz_bits)(mpz_ptr, mpz_srcptr, mpz_srcptr))
 {
-  int i;
   s7_pointer x;
   bool use_bigs = false;
-  for (i = 1, x = args; is_not_null(x); x = cdr(x), i++)
+  for (x = args; is_not_null(x); x = cdr(x))
     {
       if (!s7_is_integer(car(x)))
-	return(s7_wrong_type_arg_error(sc, name, i, car(x), "an integer"));  
+	return(s7_wrong_type_arg_error(sc, name, position_of(x, args), car(x), "an integer"));  
       if ((is_c_object(car(x))) &&
 	  (object_type(car(x)) == big_integer_tag))
 	use_bigs = true;
@@ -49669,17 +49634,17 @@ static s7_pointer big_greater_or_equal(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
 {
-  int i, result_type = T_INTEGER;
+  int result_type = T_INTEGER;
   s7_pointer x, y, result;
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     {
       s7_pointer p;
       p = car(x);
       if (!is_number(p))
 	{
 	  if (!IS_BIG(p))
-	    return(s7_wrong_type_arg_error(sc, "=", i, p, "a number"));
+	    return(s7_wrong_type_arg_error(sc, "=", position_of(x, args), p, "a number"));
 	  else result_type = big_tag_to_result_type(result_type, object_type(p));
 	}
       else 
@@ -49738,13 +49703,12 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 {
   #define H_gcd "(gcd ...) returns the greatest common divisor of its rational arguments"
-  int i;
   bool rats = false;
   s7_pointer x;
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     if (!s7_is_rational(car(x)))
-      return(s7_wrong_type_arg_error(sc, "gcd", i, car(x), "an integer or ratio"));
+      return(s7_wrong_type_arg_error(sc, "gcd", position_of(x, args), car(x), "an integer or ratio"));
     else rats = ((rats) || (!s7_is_integer(car(x))));
 
   if (is_null(cdr(args)))    /* (gcd -2305843009213693951/4611686018427387903) */
@@ -49804,12 +49768,11 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 {
   #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
   s7_pointer x;
-  int i;
   bool rats = false;
 
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
+  for (x = args; is_not_null(x); x = cdr(x)) 
     if (!s7_is_rational(car(x)))
-      return(s7_wrong_type_arg_error(sc, "lcm", i, car(x), "an integer or ratio"));
+      return(s7_wrong_type_arg_error(sc, "lcm", position_of(x, args), car(x), "an integer or ratio"));
     else rats = ((rats) || (!s7_is_integer(car(x))));
   
    if (is_null(cdr(args)))    /* (lcm -2305843009213693951/4611686018427387903) */
@@ -51445,6 +51408,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 ->  1235
- * bench    52019 -> 10694
- * index    44300 ->  6000
+ * bench    52019 -> 10691
+ * index    44300 ->  5960
  */
