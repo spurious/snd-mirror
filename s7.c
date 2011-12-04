@@ -1093,6 +1093,9 @@ struct s7_scheme {
 #define T_BIG_COMPLEX         13
 /* only used in WITH_GMP case -- need to be in this order, will never be a cell type (actual type is T_C_OBJECT)
  *   (they're used only for internal type promotion decisions)
+ *
+ * the great plan, if I live long enough, is to use these eventually in place of the current bignum tags
+ *   collapsing those c_objects into an extension of the number union in s7_cell.
  */
 
 #define T_STRING              14
@@ -1585,6 +1588,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define numerator(p)          p->object.number.fraction_value.numerator
 #define denominator(p)        p->object.number.fraction_value.denominator
 #define fraction(p)           (((long double)numerator(p)) / ((long double)denominator(p)))
+#define inverted_fraction(p)  (((long double)denominator(p)) / ((long double)numerator(p)))
 #define real_part(p)          p->object.number.complex_value.rl
 #define imag_part(p)          p->object.number.complex_value.im
 #define as_c_complex(p)       (real_part(p) + (imag_part(p) * _Complex_I))
@@ -8999,8 +9003,11 @@ static int reduce_fraction(s7_Int *numer, s7_Int *denom)
 
 
 
-/* TODO: code-as-type-choice to multiply/subtract/divide, maybe equal/min/max etc, check add_3 (see ret_type)
+/* ---------------------------------------- add ---------------------------------------- */
+
+/* TODO: code-as-type-choice maybe equal/min/max etc
  * TODO: a2-m and m2-a cases
+ * TODO: s7test permute args cases for add|sub|mul|div+big
  */
 
 
@@ -9127,22 +9134,12 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 			 */
 			goto ADD_REALS;
 		      }
-		    else 
-		      {
-			if (is_null(p))
-			  return(s7_make_ratio(sc, n1 * d2 + n2 * d1, d1 * d2));
-			num_a = n1 * d2 + n2 * d1;
-			den_a = d1 * d2;
-		      }
 		  }
-		else
 #endif
-		  {
-		    if (is_null(p))
-		      return(s7_make_ratio(sc, n1 * d2 + n2 * d1, d1 * d2));
-		    num_a = n1 * d2 + n2 * d1;
-		    den_a = d1 * d2;
-		  }
+		if (is_null(p))
+		  return(s7_make_ratio(sc, n1 * d2 + n2 * d1, d1 * d2));
+		num_a = n1 * d2 + n2 * d1;
+		den_a = d1 * d2;
 	      }
 	    /* (+ 1/100 99/100 (- most-positive-fixnum 2)) should not be converted to real
 	     */
@@ -9157,8 +9154,8 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_REALS;
 	  
 	case T_COMPLEX:
-	  if (is_null(p)) return(s7_make_complex(sc, ((long double)num_a / (long double)den_a) + real(x), imag_part(x)));
-	  rl_a = ((long double)num_a / (long double)den_a) + real(x);
+	  if (is_null(p)) return(s7_make_complex(sc, ((long double)num_a / (long double)den_a) + real_part(x), imag_part(x)));
+	  rl_a = ((long double)num_a / (long double)den_a) + real_part(x);
 	  im_a = imag_part(x);
 	  goto ADD_COMPLEX;
 	  
@@ -9248,7 +9245,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
 
 #if WITH_OPTIMIZATION
-static s7_pointer add_1, add_2, add_3, add_1s, add_s1, add_cs1, add_csn;
+static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_csn;
 
 static s7_pointer add_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
@@ -9344,50 +9341,6 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_add_3(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer x, y, z;
-  int ret_type;
-
-  x = car(args);
-  if (!is_number(x))
-    return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
-  args = cdr(args);
-
-  y = car(args);
-  if (!is_number(y))
-    return(s7_wrong_type_arg_error(sc, "+", 2, y, "a number"));
-  args = cdr(args);
-
-  z = car(args);
-  if (!is_number(z))
-    return(s7_wrong_type_arg_error(sc, "+", 3, z, "a number"));
-
-  if (type(x) > type(y))
-    ret_type = type(x);
-  else ret_type = type(y);
-  if (type(z) > ret_type)
-    ret_type = type(z);
-
-  switch (ret_type)
-    {
-    case T_INTEGER: 
-      return(make_integer(sc, integer(x) + integer(y) + integer(z)));
-      
-    case T_RATIO:
-      return(add_ratios(sc, add_ratios(sc, x, y), z)); /* this protects against int args */
-
-    case T_REAL:
-      return(s7_make_real(sc, number_to_real(x) + number_to_real(y) + number_to_real(z)));
-
-    default:
-      return(s7_make_complex(sc, 
-			     number_to_real_part(x) + number_to_real_part(y) + number_to_real_part(z), 
-			     number_to_imag_part(x) + number_to_imag_part(y) + number_to_imag_part(z)));
-    }
-}
-
-
 static s7_pointer add1(s7_scheme *sc, s7_pointer x, int arg_num)
 {
   switch (type(x))
@@ -9443,122 +9396,106 @@ static s7_pointer g_add_csn(s7_scheme *sc, s7_pointer args)
 
 
 
+/* ---------------------------------------- subtract ---------------------------------------- */
 
 static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 {
   #define H_subtract "(- x1 ...) subtracts its trailing arguments from the first, or negates the first if only one argument is given"
-  int i, ret_type, new_type;
   s7_pointer x, p;
+  s7_Int num_a, den_a;
+  s7_Double rl_a, im_a;
 
-  s7_Int num_a = 0, den_a = 1;
-  s7_Double rl_a = 0.0, im_a = 0.0;
+  x = car(args);
+  p = cdr(args);
 
-  p = car(args);
-  x = cdr(args);
 #if (!WITH_GMP)
-  if (is_null(x))
+  if (is_null(p))
     {
-      if (!is_number(p))
-	return(s7_wrong_type_arg_error(sc, "+", 1, p, "a number"));
-      return(s7_negate(sc, p));
+      if (!is_number(x))
+	return(s7_wrong_type_arg_error(sc, "-", 0, x, "a number"));
+      return(s7_negate(sc, x));
     }
 #endif
-  ret_type = type(p);
 
-  switch (ret_type)
+  switch (type(x))
     {
     case T_INTEGER:
-      num_a = integer(p);
+      num_a = integer(x);
+
+    SUBTRACT_INTEGERS:
+#if WITH_GMP
+      if ((num_a > S7_LONG_MAX) ||
+	  (num_a < S7_LONG_MIN))
+	return(big_subtract(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), p)));
+#endif
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (is_null(p)) return(make_integer(sc, num_a - integer(x)));
+	  num_a -= integer(x);
+	  goto SUBTRACT_INTEGERS;
+	  
+	case T_RATIO:
+	  if (is_null(p)) return(s7_make_ratio(sc, (num_a * denominator(x)) - numerator(x), denominator(x)));
+	  den_a = denominator(x);
+	  num_a = (num_a * denominator(x)) - numerator(x);
+	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    goto SUBTRACT_INTEGERS;
+	  goto SUBTRACT_RATIOS;
+	  
+	case T_REAL:
+	  if (is_null(p)) return(s7_make_real(sc, num_a - real(x)));
+	  rl_a = (s7_Double)num_a - real(x);
+	  goto SUBTRACT_REALS;
+	  
+	case T_COMPLEX:
+	  if (is_null(p)) return(s7_make_complex(sc, num_a - real_part(x), -imag_part(x)));
+	  rl_a = (s7_Double)num_a - real_part(x);
+	  im_a = -imag_part(x);
+	  goto SUBTRACT_COMPLEX;
+	  
+	default:
+	  return(s7_wrong_type_arg_error(sc, "-", position_of(p, args) - 1, x, "a number")); /* p is 1 past the current arg */
+	}
       break;
 
     case T_RATIO:
-      num_a = numerator(p);
-      den_a = denominator(p);
-      break;
-
-    case T_REAL:
-      rl_a = real(p);
-      break;
-
-    case T_COMPLEX:
-      rl_a = real_part(p);
-      im_a = imag_part(p);
-      break;
-
-    default:
-      return(s7_wrong_type_arg_error(sc, "+", 1, p, "a number"));
-    }
-
-  i = 2;
-
-  while (true)
-    {
+      num_a = numerator(x);
+      den_a = denominator(x);
+    SUBTRACT_RATIOS:
 #if WITH_GMP
-      switch (ret_type)
+      if ((num_a > S7_LONG_MAX) ||
+	  (den_a > S7_LONG_MAX) ||
+	  (num_a < S7_LONG_MIN))
+	return(big_subtract(sc, cons(sc, s7_ratio_to_big_ratio(sc, num_a, den_a), p)));
+#endif
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
 	{
 	case T_INTEGER:
-	  if ((num_a > S7_LONG_MAX) ||
-	      (num_a < S7_LONG_MIN))
-	    return(big_subtract(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), x)));
-	  break;
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a - (den_a * integer(x)), den_a));
+	  num_a -= (den_a * integer(x));
+	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    goto SUBTRACT_INTEGERS;
+	  goto SUBTRACT_RATIOS;
 
-	case T_RATIO:
-	  if ((num_a > S7_LONG_MAX) ||
-	      (den_a > S7_LONG_MAX) ||
-	      (num_a < S7_LONG_MIN))
-	    return(big_subtract(sc, cons(sc, s7_ratio_to_big_ratio(sc, num_a, den_a), x)));
-	  break;
-	}
-#endif
-
-      p = car(x);
-      if (!is_number(p))
-	return(s7_wrong_type_arg_error(sc, "+", i, p, "a number"));
-      new_type = type(p);
-
-      if (new_type > ret_type)
-	{
-	  if (new_type > T_RATIO)
-	    {
-	      switch (ret_type)
-		{
-		case T_INTEGER:
-		  rl_a = (s7_Double)num_a;
-		  break;
-
-		case T_RATIO:
-		  rl_a = ((long double)num_a / ((long double)den_a));
-		  break;
-
-		default:
-		  break;
-		}
-	    }
-	  ret_type = new_type;
-	}
-      x = cdr(x);
-  
-      switch (ret_type)
-	{
-	case T_INTEGER: 
-	  if (is_null(x))
-	    return(make_integer(sc, num_a - integer(p)));
-	  num_a -= integer(p);
-	  break;
-      
 	case T_RATIO:
 	  {
 	    s7_Int d1, d2, n1, n2;
 	    d1 = den_a;
 	    n1 = num_a;
-	    d2 = number_to_denominator(p);
-	    n2 = number_to_numerator(p);
-
+	    d2 = denominator(x);
+	    n2 = numerator(x);
 	    if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
 	      {
-		if (is_null(x))
+		if (is_null(p))
 		  return(s7_make_ratio(sc, n1 - n2, d1));
-		num_a -= n2;
+		num_a -= n2;                  /* d1 can't be zero */
 	      }
 	    else
 	      {
@@ -9574,55 +9511,115 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 			((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
 			((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
 		      {
-			if (is_null(x))
+			if (is_null(p))
 			  return(s7_make_real(sc, ((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2)));
-			ret_type = T_REAL;
 			rl_a = ((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2);
-		      }
-		    else 
-		      {
-			if (is_null(x))
-			  return(s7_make_ratio(sc, n1 * d2 - n2 * d1, d1 * d2));
-			num_a = n1 * d2 - n2 * d1;
-			den_a = d1 * d2;
+			goto SUBTRACT_REALS;
 		      }
 		  }
-		else 
 #endif
-		  {
-		    if (is_null(x))
-		      return(s7_make_ratio(sc, n1 * d2 - n2 * d1, d1 * d2));
-		    num_a = n1 * d2 - n2 * d1;
-		    den_a = d1 * d2;
-		  }
+		if (is_null(p))
+		  return(s7_make_ratio(sc, n1 * d2 - n2 * d1, d1 * d2));
+		num_a = n1 * d2 - n2 * d1;
+		den_a = d1 * d2;
 	      }
-	    if (ret_type != T_REAL)
-	      ret_type = reduce_fraction(&num_a, &den_a);
+	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    goto SUBTRACT_INTEGERS;
+	  goto SUBTRACT_RATIOS;
 	  }
-	  break;
-      
-	case T_REAL:
-	  if (is_null(x))
-	    return(s7_make_real(sc, rl_a - number_to_real(p)));
-	  rl_a -= number_to_real(p);
-	  break;
-      
-	case T_COMPLEX:
-	  if (is_null(x))
-	    return(s7_make_complex(sc, rl_a - number_to_real_part(p), im_a - number_to_imag_part(p)));
-	  rl_a -= number_to_real_part(p);
-	  im_a -= number_to_imag_part(p);
-	  if (im_a == 0.0)
-	    ret_type = T_REAL;
-	  break;
 
+	case T_REAL:
+	  if (is_null(p)) return(s7_make_real(sc, ((long double)num_a / (long double)den_a) - real(x)));
+	  rl_a = ((long double)num_a / (long double)den_a) - real(x);
+	  goto SUBTRACT_REALS;
+	  
+	case T_COMPLEX:
+	  if (is_null(p)) return(s7_make_complex(sc, ((long double)num_a / (long double)den_a) - real_part(x), -imag_part(x)));
+	  rl_a = ((long double)num_a / (long double)den_a) - real_part(x);
+	  im_a = -imag_part(x);
+	  goto SUBTRACT_COMPLEX;
+	  
 	default:
-	  return(s7_wrong_type_arg_error(sc, "-", i, p, "a number"));
+	  return(s7_wrong_type_arg_error(sc, "-", position_of(p, args) - 1, x, "a number"));
 	}
-      i++;
+      break;
+
+    case T_REAL:
+      rl_a = real(x);
+
+    SUBTRACT_REALS:
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (is_null(p)) return(s7_make_real(sc, rl_a - integer(x)));
+	  rl_a -= (s7_Double)integer(x);
+	  goto SUBTRACT_REALS;
+
+	case T_RATIO:
+	  if (is_null(p)) return(s7_make_real(sc, rl_a - fraction(x)));
+	  rl_a -= (s7_Double)fraction(x);
+	  goto SUBTRACT_REALS;
+
+	case T_REAL:
+	  if (is_null(p)) return(s7_make_real(sc, rl_a - real(x)));
+	  rl_a -= real(x);
+	  goto SUBTRACT_REALS;
+	  
+	case T_COMPLEX:
+	  if (is_null(p)) return(s7_make_complex(sc, rl_a - real_part(x), -imag_part(x)));
+	  rl_a -= real_part(x);
+	  im_a = -imag_part(x);
+	  goto SUBTRACT_COMPLEX;
+	  
+	default:
+	  return(s7_wrong_type_arg_error(sc, "-", position_of(p, args) - 1, x, "a number"));
+	}
+      break;
+
+    case T_COMPLEX:
+      rl_a = real_part(x);
+      im_a = imag_part(x);
+
+    SUBTRACT_COMPLEX:
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (is_null(p)) return(s7_make_complex(sc, rl_a - integer(x), im_a));
+	  rl_a -= (s7_Double)integer(x);
+	  goto SUBTRACT_COMPLEX;
+
+	case T_RATIO:
+	  if (is_null(p)) return(s7_make_complex(sc, rl_a - fraction(x), im_a));
+	  rl_a -= (s7_Double)fraction(x);
+	  goto SUBTRACT_COMPLEX;
+
+	case T_REAL:
+	  if (is_null(p)) return(s7_make_complex(sc, rl_a - real(x), im_a));
+	  rl_a -= real(x);
+	  goto SUBTRACT_COMPLEX;
+	  
+	case T_COMPLEX:
+	  if (is_null(p)) return(s7_make_complex(sc, rl_a - real_part(x), im_a - imag_part(x)));
+	  rl_a -= real_part(x);
+	  im_a -= imag_part(x);
+	  if (im_a == 0.0)
+	    goto SUBTRACT_REALS;
+	  goto SUBTRACT_COMPLEX;
+	  
+	default:
+	  return(s7_wrong_type_arg_error(sc, "-", position_of(p, args) - 1, x, "a number"));
+	}
+      break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "-", 1, x, "a number"));
     }
-  return(s7_error(sc, make_symbol(sc, "internal-error"),
-		  list_2(sc, make_protected_string(sc, "s7 mishandled subtraction: ~S\n"), args)));
 }
 
 
@@ -9756,144 +9753,120 @@ static s7_pointer g_subtract_csn(s7_scheme *sc, s7_pointer args)
 
 
 
+/* ---------------------------------------- multiply ---------------------------------------- */
+
 static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 {
   #define H_multiply "(* ...) multiplies its arguments"
-
-  int i, ret_type, new_type;
   s7_pointer x, p;
-
-  s7_Int num_a = 0, den_a = 1;
-  s7_Double rl_a = 0.0, im_a = 0.0;
+  s7_Int num_a, den_a;
+  s7_Double rl_a, im_a;
 
 #if (!WITH_GMP)
   if (is_null(args))
     return(small_int(1));
 #endif
-
-  x = cdr(args);
-  p = car(args);
-  if (is_null(x))
+    
+  x = car(args);
+  p = cdr(args);
+  if (is_null(p))
     {
-      if (!is_number(p))
-	return(s7_wrong_type_arg_error(sc, "*", 1, p, "a number"));
-      return(p);
+      if (!is_number(x))
+	return(s7_wrong_type_arg_error(sc, "*", 0, x, "a number"));
+      return(x);
     }
-  ret_type = type(p);
 
-  switch (ret_type)
+  switch (type(x))
     {
     case T_INTEGER:
-      num_a = integer(p);
-      break;
+      num_a = integer(x);
 
-    case T_RATIO:
-      num_a = numerator(p);
-      den_a = denominator(p);
-      break;
-
-    case T_REAL:
-      rl_a = real(p);
-      break;
-
-    case T_COMPLEX:
-      rl_a = real_part(p);
-      im_a = imag_part(p);
-      break;
-
-    default:
-      return(s7_wrong_type_arg_error(sc, "*", 1, p, "a number"));
-    }
-
-  i = 2;
-
-  while (true)
-    {
+    MULTIPLY_INTEGERS:
 #if WITH_GMP
-      s7_pointer old_x;
-      old_x = x;
-      switch (ret_type)
+      if ((num_a > S7_LONG_MAX) ||
+	  (num_a < S7_LONG_MIN))
+	return(big_multiply(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), p)));
+#endif
+      x = car(p);
+      p = cdr(p);
+      switch (type(x))
 	{
 	case T_INTEGER:
-	  if ((num_a > S7_LONG_MAX) ||
-	      (num_a < S7_LONG_MIN))
-	    return(big_multiply(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), x)));
-	  break;
-
-	case T_RATIO:
-	  if ((num_a > S7_LONG_MAX) ||
-	      (den_a > S7_LONG_MAX) ||
-	      (num_a < S7_LONG_MIN))
-	    return(big_multiply(sc, cons(sc, s7_ratio_to_big_ratio(sc, num_a, den_a), x)));
-	  break;
-	}
-#endif
-      p = car(x);
-      if (!is_number(p))
-	return(s7_wrong_type_arg_error(sc, "*", i, p, "a number"));
-      new_type = type(p);
-
-      if (new_type > ret_type)
-	{
-	  if (new_type > T_RATIO)
-	    {
-	      switch (ret_type)
-		{
-		case T_INTEGER:
-		  rl_a = (s7_Double)num_a;
-		  break;
-
-		case T_RATIO:
-		  rl_a = ((long double)num_a / ((long double)den_a));
-		  break;
-
-		default:
-		  break;
-		}
-	    }
-	  ret_type = new_type;
-	}
-      x = cdr(x);
-  
-      switch (ret_type)
-	{
-	case T_INTEGER: 
 #if WITH_GMP
-	  if ((integer(p) > S7_LONG_MAX) ||
-	      (integer(p) < S7_LONG_MIN))
-	    return(big_multiply(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), old_x)));
-
-	  if (is_null(x))
-	    return(make_integer(sc, num_a * integer(p)));
-	  num_a *= integer(p);
-#else
+	  if ((integer(x) > S7_LONG_MAX) ||
+	      (integer(x) < S7_LONG_MIN))
+	    return(big_multiply(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), cons(sc, x, p))));
+#endif
+#if 0
 	  if (sc->safety != 0)
 	    {
 	      bool a_signed;                                 /* (* 524288 19073486328125) -> -8446744073709551616 */
-	      a_signed = (((num_a < 0) && (integer(p) > 0)) ||
-			  ((num_a > 0) && (integer(p) < 0)));
-	      num_a *= integer(p);
+	      a_signed = (((num_a < 0) && (integer(x) > 0)) ||
+			  ((num_a > 0) && (integer(x) < 0)));
+	      num_a *= integer(x);
 	      if (a_signed != (num_a < 0))
 		return(s7_out_of_range_error(sc, "* with ", 0, args, "result is too large"));
-	      if (is_null(x))
+	      if (is_null(p))
 		return(make_integer(sc, num_a));
 	    }
-	  else
-	    {
-	      if (is_null(x))
-		return(make_integer(sc, num_a * integer(p)));
-	      num_a *= integer(p);
-	    }
 #endif
-	  break;
-      
+	  if (is_null(p)) return(make_integer(sc, num_a * integer(x)));
+	  num_a *= integer(x);
+	  goto MULTIPLY_INTEGERS;
+
+	case T_RATIO:
+	  if (is_null(p)) return(s7_make_ratio(sc, numerator(x) * num_a, denominator(x)));
+	  den_a = denominator(x);
+	  num_a *= numerator(x);
+	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    goto MULTIPLY_INTEGERS;
+	  goto MULTIPLY_RATIOS;
+	  
+	case T_REAL:
+	  if (is_null(p)) return(s7_make_real(sc, num_a * real(x)));
+	  rl_a = num_a * real(x);
+	  goto MULTIPLY_REALS;
+	  
+	case T_COMPLEX:
+	  if (is_null(p)) return(s7_make_complex(sc, num_a * real_part(x), num_a * imag_part(x)));
+	  rl_a = num_a * real_part(x);
+	  im_a = num_a * imag_part(x);
+	  goto MULTIPLY_COMPLEX;
+	  
+	default:
+	  return(s7_wrong_type_arg_error(sc, "*", position_of(p, args) - 1, x, "a number")); /* p is 1 past the current arg */
+	}
+      break;
+
+    case T_RATIO:
+      num_a = numerator(x);
+      den_a = denominator(x);
+    MULTIPLY_RATIOS:
+#if WITH_GMP
+      if ((num_a > S7_LONG_MAX) ||
+	  (den_a > S7_LONG_MAX) ||
+	  (num_a < S7_LONG_MIN))
+	return(big_multiply(sc, cons(sc, s7_ratio_to_big_ratio(sc, num_a, den_a), p)));
+#endif
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a * integer(x), den_a));
+	  num_a *= integer(x);
+	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    goto MULTIPLY_INTEGERS;
+	  goto MULTIPLY_RATIOS;
+
 	case T_RATIO:
 	  {
 	    s7_Int d1, d2, n1, n2;
 	    d1 = den_a;
 	    n1 = num_a;
-	    d2 = number_to_denominator(p);
-	    n2 = number_to_numerator(p);
+	    d2 = denominator(x);
+	    n2 = numerator(x);
 #if (!WITH_GMP)
 	    if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		(n1 > s7_int_max) || (n2 > s7_int_max) ||     /*    (* 1/524288 1/19073486328125) for example */
@@ -9902,58 +9875,132 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 		if ((integer_length(d1) + integer_length(d2) > s7_int_bits) ||
 		    (integer_length(n1) + integer_length(n2) > s7_int_bits))
 		  {
-		    if (is_null(x))
+		    if (is_null(p))
 		      return(s7_make_real(sc, ((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2)));
-		    ret_type = T_REAL;
 		    rl_a = ((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2);
-		  }
-		else
-		  {
-		    if (is_null(x))
-		      return(s7_make_ratio(sc, n1 * n2, d1 * d2));
-		    num_a *= n2;
-		    den_a *= d2;
+		    goto MULTIPLY_REALS;
 		  }
 	      }
-	    else
 #endif
-	      {
-		if (is_null(x))
-		  return(s7_make_ratio(sc, n1 * n2, d1 * d2));
-		num_a *= n2;
-		den_a *= d2;
-	      }
-	    if (ret_type != T_REAL)
-	      ret_type = reduce_fraction(&num_a, &den_a);
+	    if (is_null(p)) return(s7_make_ratio(sc, n1 * n2, d1 * d2));
+	    num_a *= n2;
+	    den_a *= d2;
+	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	      goto MULTIPLY_INTEGERS;
+	    goto MULTIPLY_RATIOS;
 	  }
-	  break;
-      
+
 	case T_REAL:
-	  if (is_null(x))
-	    return(s7_make_real(sc, rl_a * number_to_real(p)));
-	  rl_a *= number_to_real(p);
-	  break;
-      
+	  if (is_null(p)) return(s7_make_real(sc, ((long double)num_a / (long double)den_a) * real(x)));
+	  rl_a = ((long double)num_a / (long double)den_a) * real(x);
+	  goto MULTIPLY_REALS;
+	  
+	case T_COMPLEX:
+	  {
+	    s7_Double frac;
+	    frac = ((long double)num_a / (long double)den_a);
+	    if (is_null(p)) return(s7_make_complex(sc, frac * real_part(x), frac * imag_part(x)));
+	    rl_a = frac * real_part(x);
+	    im_a = frac * imag_part(x);
+	    goto MULTIPLY_COMPLEX;
+	  }
+	  
 	default:
+	  return(s7_wrong_type_arg_error(sc, "*", position_of(p, args) - 1, x, "a number"));
+	}
+      break;
+
+    case T_REAL:
+      rl_a = real(x);
+
+    MULTIPLY_REALS:
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (is_null(p)) return(s7_make_real(sc, rl_a * integer(x)));
+	  rl_a *= integer(x);
+	  goto MULTIPLY_REALS;
+
+	case T_RATIO:
+	  if (is_null(p)) return(s7_make_real(sc, rl_a * fraction(x)));
+	  rl_a *= (s7_Double)fraction(x);
+	  goto MULTIPLY_REALS;
+
+	case T_REAL:
+	  if (is_null(p)) return(s7_make_real(sc, rl_a * real(x)));
+	  rl_a *= real(x);
+	  goto MULTIPLY_REALS;
+	  
+	case T_COMPLEX:
+	  if (is_null(p)) return(s7_make_complex(sc, rl_a * real_part(x), rl_a * imag_part(x)));
+	  im_a = rl_a * imag_part(x);
+	  rl_a *= real_part(x);
+	  goto MULTIPLY_COMPLEX;
+	  
+	default:
+	  return(s7_wrong_type_arg_error(sc, "*", position_of(p, args) - 1, x, "a number"));
+	}
+      break;
+
+    case T_COMPLEX:
+      rl_a = real_part(x);
+      im_a = imag_part(x);
+
+    MULTIPLY_COMPLEX:
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (is_null(p)) return(s7_make_complex(sc, rl_a * integer(x), im_a * integer(x)));
+	  rl_a *= integer(x);
+	  im_a *= integer(x);
+	  goto MULTIPLY_COMPLEX;
+
+	case T_RATIO:
+	  {
+	    s7_Double frac;
+	    frac = fraction(x);
+	    if (is_null(p)) return(s7_make_complex(sc, rl_a * frac, im_a * frac));
+	    rl_a *= frac;
+	    im_a *= frac;
+	    goto MULTIPLY_COMPLEX;
+	  }
+
+	case T_REAL:
+	  if (is_null(p)) return(s7_make_complex(sc, rl_a * real(x), im_a * real(x)));
+	  rl_a *= real(x);
+	  im_a *= real(x);
+	  goto MULTIPLY_COMPLEX;
+	  
+	case T_COMPLEX:
 	  {
 	    s7_Double r1, r2, i1, i2;
 	    r1 = rl_a;
 	    i1 = im_a;
-	    r2 = number_to_real_part(p);
-	    i2 = number_to_imag_part(p);
-	    if (is_null(x))
+	    r2 = real_part(x);
+	    i2 = imag_part(x);
+	    if (is_null(p))
 	      return(s7_make_complex(sc, r1 * r2 - i1 * i2, r1 * i2 + r2 * i1));
 	    rl_a = r1 * r2 - i1 * i2;
 	    im_a = r1 * i2 + r2 * i1;
 	    if (im_a == 0.0)
-	      ret_type = T_REAL;
+	      goto MULTIPLY_REALS;
+	    goto MULTIPLY_COMPLEX;
 	  }
-	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "*", position_of(p, args) - 1, x, "a number"));
 	}
-      i++;
+      break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
     }
-  return(s7_error(sc, make_symbol(sc, "internal-error"),
-		  list_2(sc, make_protected_string(sc, "s7 mishandled multiplication: ~S\n"), args)));
 }
 
 
@@ -9983,7 +10030,12 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER:
 	case T_RATIO:    return(g_multiply(sc, args));
 	case T_REAL:     return(s7_make_real(sc, fraction(x) * real(y)));
-	case T_COMPLEX:  return(s7_make_complex(sc, fraction(x) * real_part(y), fraction(x) * imag_part(y)));
+	case T_COMPLEX:  
+	  {
+	    s7_Double frac;
+	    frac = fraction(x);
+	    return(s7_make_complex(sc, frac * real_part(y), frac * imag_part(y)));
+	  }
 	default:        return(s7_wrong_type_arg_error(sc, "*", 2, y, "a number"));
 	}
       
@@ -10001,7 +10053,12 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
       switch (type(y))
 	{
 	case T_INTEGER: return(s7_make_complex(sc, real_part(x) * integer(y), imag_part(x) * integer(y)));
-	case T_RATIO:   return(s7_make_complex(sc, real_part(x) * fraction(y), imag_part(x) * fraction(y)));
+	case T_RATIO:   
+	  {
+	    s7_Double frac;
+	    frac = fraction(y);
+	    return(s7_make_complex(sc, real_part(x) * frac, imag_part(x) * frac));
+	  }
 	case T_REAL:    return(s7_make_complex(sc, real_part(x) * real(y), imag_part(x) * real(y)));
 	case T_COMPLEX:
 	  {
@@ -10058,164 +10115,159 @@ static s7_pointer g_multiply_f2(s7_scheme *sc, s7_pointer args)
 
 
 
+/* ---------------------------------------- divide ---------------------------------------- */
+
 static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 {
   #define H_divide "(/ x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
-  int i, ret_type, new_type;
   s7_pointer x, p;
+  s7_Int num_a, den_a;
+  s7_Double rl_a, im_a;
 
-  s7_Int num_a = 0, den_a = 1;
-  s7_Double rl_a = 0.0, im_a = 0.0;
-
-  p = car(args);
-  x = cdr(args);
-#if (!WITH_GMP)
-  if (is_null(x))
+  x = car(args);
+  p = cdr(args);
+  if (is_null(p))
     {
-      if (!is_number(p))
-	return(s7_wrong_type_arg_error(sc, "/", 1, p, "a number"));
-      if (s7_is_zero(p))
+      if (!is_number(x))
+	return(s7_wrong_type_arg_error(sc, "/", 0, x, "a number"));
+      if (s7_is_zero(x))
 	return(division_by_zero_error(sc, "/", args));
-      return(s7_invert(sc, p));
+      return(s7_invert(sc, x));
     }
-#endif
-  ret_type = type(p);
 
-  switch (ret_type)
+  switch (type(x))
     {
     case T_INTEGER:
-      num_a = integer(p);
+      num_a = integer(x);
+      if (num_a == 0)
+	{
+	  bool return_nan = false, return_real_zero = false;
+	  for (; is_pair(p); p = cdr(p))
+	    {
+	      if (!is_number(car(p)))
+		return(s7_wrong_type_arg_error(sc, "/", position_of(p, args), car(p), "a number"));
+	      if (type(car(p)) > T_RATIO)
+		{
+		  return_real_zero = true;		  
+		  if (is_NaN(real(car(p))))
+		    return_nan = true;
+		}
+	    }
+	  if (return_nan)
+	    return(s7_make_real(sc, NAN));
+	  if (return_real_zero)
+	    return(real_zero);
+	  return(small_int(0));
+	}
+
+    DIVIDE_INTEGERS:
+#if WITH_GMP
+      if ((num_a > S7_LONG_MAX) ||
+	  (num_a < S7_LONG_MIN))
+	return(big_divide(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), p)));
+#endif
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (integer(x) == 0)
+	    return(division_by_zero_error(sc, "/", args));
+
+	  /* to be consistent, I suppose we should search first for NaNs in the divisor list.
+	   *   (* 0 0/0) is NaN, so (/ 1 0 0/0) should equal (/ 1 0/0) = NaN.  But the whole
+	   *   thing is ridiculous.
+	   */
+	  
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a, integer(x)));
+	  den_a = integer(x);
+	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    goto DIVIDE_INTEGERS;
+	  goto DIVIDE_RATIOS;
+	  
+	case T_RATIO:
+	  if ((num_a > S7_LONG_MAX) ||
+	      (denominator(x) > S7_LONG_MAX) ||
+	      (num_a < S7_LONG_MIN))
+	    {
+	      den_a = 1;
+	      goto RATIO_OVER_RATIO;
+	    }
+
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a * denominator(x), numerator(x)));
+	  den_a = numerator(x);
+	  num_a *= denominator(x);
+	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    goto DIVIDE_INTEGERS;
+	  goto DIVIDE_RATIOS;
+	  
+	case T_REAL:
+	  rl_a = (s7_Double)num_a;
+	  if (real(x) == 0.0)
+	    return(division_by_zero_error(sc, "/", args));
+	  if (is_null(p)) return(s7_make_real(sc, rl_a / real(x)));
+	  rl_a /= real(x);
+	  goto DIVIDE_REALS;
+	  
+	case T_COMPLEX:
+	  {
+	    s7_Double i2, r2, den;
+	    rl_a = (s7_Double)num_a;
+	    r2 = real_part(x);
+	    i2 = imag_part(x);
+	    den = 1.0 / (r2 * r2 + i2 * i2);
+	    /* we could avoid the squaring (see Knuth II p613 16)
+	     *    not a big deal: (/ 1.0e308+1.0e308i 2.0e308+2.0e308i) => nan
+	     *    (gmp case is ok here) 
+	     */
+	    if (is_null(p))
+	      return(s7_make_complex(sc, rl_a * r2 * den, -(rl_a * i2 * den)));
+	    im_a = -rl_a * i2 * den;
+	    rl_a *= r2 * den;
+	    goto DIVIDE_COMPLEX;
+	  }
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "/", position_of(p, args) - 1, x, "a number")); /* p is 1 past the current arg */
+	}
       break;
 
     case T_RATIO:
-      num_a = numerator(p);
-      den_a = denominator(p);
-      break;
-
-    case T_REAL:
-      rl_a = real(p);
-      break;
-
-    case T_COMPLEX:
-      rl_a = real_part(p);
-      im_a = imag_part(p);
-      break;
-
-    default:
-      return(s7_wrong_type_arg_error(sc, "/", 1, p, "a number"));
-    }
-
-  i = 2;
-
-  while (true)
-    {
-      p = car(x);
-#if (!WITH_GMP)
-      if (!is_number(p))
-	return(s7_wrong_type_arg_error(sc, "/", i, p, "a number"));
-#endif
-
-      if (s7_is_zero(p))
-	return(division_by_zero_error(sc, "/", args));
-      /* to be consistent, I suppose we should search first for NaNs in the divisor list.
-       *   (* 0 0/0) is NaN, so (/ 1 0 0/0) should equal (/ 1 0/0) = NaN.  But the whole
-       *   thing is ridiculous.
-       */
-
+      num_a = numerator(x);
+      den_a = denominator(x);
+    DIVIDE_RATIOS:
 #if WITH_GMP
-      switch (ret_type)
+      if ((num_a > S7_LONG_MAX) ||
+	  (den_a > S7_LONG_MAX) ||
+	  (num_a < S7_LONG_MIN))
+	return(big_divide(sc, cons(sc, s7_ratio_to_big_ratio(sc, num_a, den_a), p)));
+#endif
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
 	{
 	case T_INTEGER:
-	  if ((num_a > S7_LONG_MAX) ||
-	      (num_a < S7_LONG_MIN))
-	    return(big_divide(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), x)));
-	  break;
+	  if (integer(x) == 0)
+	    return(division_by_zero_error(sc, "/", args));
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a * integer(x)));
+	  den_a *= integer(x);
+	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    goto DIVIDE_INTEGERS;
+	  goto DIVIDE_RATIOS;
 
-	case T_RATIO:
-	  if ((num_a > S7_LONG_MAX) ||
-	      (den_a > S7_LONG_MAX) ||
-	      (num_a < S7_LONG_MIN))
-	    return(big_divide(sc, cons(sc, s7_ratio_to_big_ratio(sc, num_a, den_a), x)));
-	  break;
-	}
-#endif
-
-      new_type = type(p);
-
-      if (new_type > ret_type)
-	{
-	  if (new_type > T_RATIO)
-	    {
-	      switch (ret_type)
-		{
-		case T_INTEGER:
-		  rl_a = (s7_Double)num_a;
-		  break;
-
-		case T_RATIO:
-		  rl_a = ((long double)num_a / ((long double)den_a));
-		  break;
-
-		default:
-		  break;
-		}
-	    }
-	  ret_type = new_type;
-	}
-      x = cdr(x);
-  
-      switch (ret_type)
-	{
-	case T_INTEGER: 
-#if (!WITH_GMP)
-	  if (integer(p) == S7_LLONG_MIN)
-	    {
-	      if (num_a == integer(p))
-		{
-		  if (is_null(x))
-		    return(small_int(1));
-		  num_a = 1;
-		}
-	      else
-		{
-		  if (is_null(x))
-		    {
-		      if (num_a & 1)
-			return(s7_make_ratio(sc, num_a, integer(p) + 1));
-		      else return(s7_make_ratio(sc, num_a / 2, integer(p) / 2));
-		    }
-		  else
-		    {
-		      if (num_a & 1)
-			den_a = integer(p) + 1;
-		      else 
-			{
-			  num_a /= 2;
-			  den_a = integer(p) / 2;
-			}
-		    }
-		}
-	    }
-	  else
-#endif
-	    {
-	      if (is_null(x))
-		return(s7_make_ratio(sc, num_a, integer(p)));
-	      den_a = integer(p);  /* b checked for 0 above */
-	    }
-	  break;
-
+	RATIO_OVER_RATIO:
 	case T_RATIO:
 	  {
 	    s7_Int d1, d2, n1, n2;
 	    d1 = den_a;
 	    n1 = num_a;
-	    d2 = number_to_denominator(p);
-	    n2 = number_to_numerator(p);
-
-	    if (d1 == d2)
+	    d2 = denominator(x);
+	    n2 = numerator(x);
+	    if (d1 == d2)  
 	      {
-		if (is_null(x))
+		if (is_null(p))
 		  return(s7_make_ratio(sc, n1, n2));
 		den_a = n2;
 	      }
@@ -10229,276 +10281,464 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 		    if ((integer_length(d1) + integer_length(n2) > s7_int_bits) ||
 			(integer_length(d2) + integer_length(n1) > s7_int_bits))
 		      {
-			if (is_null(x))
-			  return(s7_make_real(sc, ((long double)n1 / (long double)d1) / ((long double)n2 / (long double)d2)));
-			ret_type = T_REAL;
-			rl_a = ((long double)n1 / (long double)d1) / ((long double)n2 / (long double)d2);
-		      }
-		    else 
-		      {
-			if (is_null(x))
-			  return(s7_make_ratio(sc, n1 * d2, d1 * n2));
-			num_a *= d2;
-			den_a *= n2;
+			s7_Double r1, r2;
+			r1 = ((long double)num_a / (long double)den_a);
+			r2 = inverted_fraction(x);
+			if (is_null(p))
+			  return(s7_make_real(sc, r1 * r2));
+			rl_a = r1 * r2;
+			goto DIVIDE_REALS;
 		      }
 		  }
-		else
 #endif
-		  {
-		    if (is_null(x))
-		      return(s7_make_ratio(sc, n1 * d2, d1 * n2));
-		    num_a *= d2;
-		    den_a *= n2;
-		  }
+		if (is_null(p))
+		  return(s7_make_ratio(sc, n1 * d2, d1 * n2));
+		num_a *= d2;
+		den_a *= n2;
 	      }
-	    if (ret_type != T_REAL)
-	      ret_type = reduce_fraction(&num_a, &den_a);
+	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	      goto DIVIDE_INTEGERS;
+	    goto DIVIDE_RATIOS;
 	  }
-	  break;
-      
+
 	case T_REAL:
-	  if (is_null(x))
-	    return(s7_make_real(sc, rl_a / number_to_real(p)));
-	  rl_a /= number_to_real(p);
-	  break;
-      
+	  {
+	    s7_Double r1;
+	    if (real(x) == 0.0)
+	      return(division_by_zero_error(sc, "/", args));
+	    r1 = ((long double)num_a / (long double)den_a);
+	    if (is_null(p)) return(s7_make_real(sc, r1 / real(x)));
+	    rl_a = r1 / real(x);
+	    goto DIVIDE_REALS;
+	  }
+	  
+	case T_COMPLEX:
+	  {
+	    s7_Double den, i2, r2;
+	    rl_a = ((long double)num_a / (long double)den_a);
+	    r2 = real_part(x);
+	    i2 = imag_part(x);
+	    den = 1.0 / (r2 * r2 + i2 * i2);
+	    if (is_null(p))
+	      return(s7_make_complex(sc, rl_a * r2 * den, -rl_a * i2 * den));
+	    im_a = -rl_a * i2 * den;
+	    rl_a *= r2 * den;
+	    goto DIVIDE_COMPLEX;
+	  }
+	  
 	default:
+	  return(s7_wrong_type_arg_error(sc, "/", position_of(p, args) - 1, x, "a number"));
+	}
+      break;
+
+    case T_REAL:
+      rl_a = real(x);
+      if (rl_a == 0)
+	{
+	  bool return_nan = false;
+	  for (; is_pair(p); p = cdr(p))
+	    {
+	      if (!is_number(car(p)))
+		return(s7_wrong_type_arg_error(sc, "/", position_of(p, args), car(p), "a number"));
+	      if ((type(car(p)) == T_REAL) && 
+		  (is_NaN(real(car(p)))))
+		return_nan = true;
+	    }
+	  if (return_nan)
+	    return(s7_make_real(sc, NAN));
+	  return(real_zero);
+	}
+
+    DIVIDE_REALS:
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  if (integer(x) == 0)
+	    return(division_by_zero_error(sc, "/", args));
+	  if (is_null(p)) return(s7_make_real(sc, rl_a / integer(x)));
+	  rl_a /= (s7_Double)integer(x);
+	  goto DIVIDE_REALS;
+
+	case T_RATIO:
+	  if (is_null(p)) return(s7_make_real(sc, rl_a * inverted_fraction(x)));
+	  rl_a *= (s7_Double)inverted_fraction(x);
+	  goto DIVIDE_REALS;
+
+	case T_REAL:
+	  if (real(x) == 0.0)
+	    return(division_by_zero_error(sc, "/", args));
+	  if (is_null(p)) return(s7_make_real(sc, rl_a / real(x)));
+	  rl_a /= real(x);
+	  goto DIVIDE_REALS;
+	  
+	case T_COMPLEX:
+	  {
+	    s7_Double den, r2, i2;
+	    r2 = real_part(x);
+	    i2 = imag_part(x);
+	    den = 1.0 / (r2 * r2 + i2 * i2);
+	    if (is_null(p))
+	      return(s7_make_complex(sc, rl_a * r2 * den, -rl_a * i2 * den));
+	    im_a = -rl_a * i2 * den;
+	    rl_a *= r2 * den;
+	    goto DIVIDE_COMPLEX;
+	  }
+	  
+	default:
+	  return(s7_wrong_type_arg_error(sc, "/", position_of(p, args) - 1, x, "a number"));
+	}
+      break;
+
+    case T_COMPLEX:
+      rl_a = real_part(x);
+      im_a = imag_part(x);
+
+    DIVIDE_COMPLEX:
+      x = car(p);
+      p = cdr(p);
+
+      switch (type(x))
+	{
+	case T_INTEGER:
+	  {
+	    s7_Double r1;
+	    if (integer(x) == 0)
+	      return(division_by_zero_error(sc, "/", args));
+	    r1 = 1.0 / (s7_Double)integer(x);
+	    if (is_null(p)) return(s7_make_complex(sc, rl_a * r1, im_a * r1));
+	    rl_a *= r1;
+	    im_a *= r1;
+	    goto DIVIDE_COMPLEX;
+	  }
+
+	case T_RATIO:
+	  {
+	    s7_Double frac;
+	    frac = inverted_fraction(x);
+	    if (is_null(p)) return(s7_make_complex(sc, rl_a * frac, im_a * frac));
+	    rl_a *= frac;
+	    im_a *= frac;
+	    goto DIVIDE_COMPLEX;
+	  }
+
+	case T_REAL:
+	  {
+	    s7_Double r1;
+	    if (real(x) == 0.0)
+	      return(division_by_zero_error(sc, "/", args));
+	    r1 = 1.0 / real(x);
+	    if (is_null(p)) return(s7_make_complex(sc, rl_a * r1, im_a * r1));
+	    rl_a *= r1;
+	    im_a *= r1;
+	    goto DIVIDE_COMPLEX;
+	  }
+
+	case T_COMPLEX:
 	  {
 	    s7_Double r1, r2, i1, i2, den;
 	    r1 = rl_a;
 	    i1 = im_a;
-	    r2 = number_to_real_part(p);
-	    i2 = number_to_imag_part(p);
-	    den = (r2 * r2 + i2 * i2);
-
-	    /* we could avoid the squaring (see Knuth II p613 16)
-	     *    not a big deal: (/ 1.0e308+1.0e308i 2.0e308+2.0e308i) => nan
-	     *    (gmp case is ok here) 
-	     */
-	    if (is_null(x))
-	      return(s7_make_complex(sc, (r1 * r2 + i1 * i2) / den, (r2 * i1 - r1 * i2) / den));
-
-	    rl_a = (r1 * r2 + i1 * i2) / den;
-	    im_a = (r2 * i1 - r1 * i2) / den;
-	    if (im_a == 0.0)
-	      ret_type = T_REAL;
+	    r2 = real_part(x);
+	    i2 = imag_part(x);
+	    den = 1.0 / (r2 * r2 + i2 * i2);
+	    if (is_null(p))
+	      return(s7_make_complex(sc, (r1 * r2 + i1 * i2) * den, (r2 * i1 - r1 * i2) * den));
+	    rl_a = (r1 * r2 + i1 * i2) * den;
+	    im_a = (r2 * i1 - r1 * i2) * den;
+	    goto DIVIDE_COMPLEX;
 	  }
-	  break;
+	  
+	default:
+	  return(s7_wrong_type_arg_error(sc, "/", position_of(p, args) - 1, x, "a number"));
 	}
-      i++;
+      break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "/", 1, x, "a number"));
     }
-  return(s7_error(sc, make_symbol(sc, "internal-error"),
-		  list_2(sc, make_protected_string(sc, "s7 mishandled division: ~S\n"), args)));
 }
 
 
 
+/* ---------------------------------------- max/min ---------------------------------------- */
+
 static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 {
   #define H_max "(max ...) returns the maximum of its arguments"
-  int i, ret_type;
-  s7_pointer x, ap, bp, result;
 
-  ap = car(args);
-  if (!s7_is_real(ap))
-    return(s7_wrong_type_arg_error(sc, "max", (is_null(cdr(args))) ? 0 : 1, ap, "a real"));
+  s7_pointer x, y, p;
+  s7_Int num_a, num_b, den_a, den_b;
 
-  x = cdr(args);
-  if (is_null(x))
-    return(ap);
-
-  result = ap;
-  ret_type = type(ap);
-
-  if ((ret_type > T_RATIO) && 
-      (is_NaN(real(ap))))
+  x = car(args);
+  p = cdr(args);
+  
+  switch (type(x))
     {
-      for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
-	if (!s7_is_real(car(x)))
-	  return(s7_wrong_type_arg_error(sc, "max", i, car(x), "a real"));
-      return(s7_make_real(sc, NAN));
-    }
-
-  i = 2;
-  while (true)
-    {
-      bp = car(x);
-      if (!s7_is_real(bp))
-	return(s7_wrong_type_arg_error(sc, "max", i, bp, "a real"));
-
-      if (type(bp) > ret_type)
-	ret_type = type(bp);
-
-      switch (ret_type)
+    case T_INTEGER:
+    MAX_INTEGERS:
+      if (is_null(p)) return(x);
+      y = car(p);
+      p = cdr(p);
+      
+      switch (type(y))
 	{
-	case T_INTEGER:
-	  if (integer(ap) < integer(bp))
-	    {
-	      ap = bp;
-	      result = bp;
-	    }
-	  break;
-      
+	case T_INTEGER: 
+	  if (integer(x) < integer(y)) x = y;
+	  goto MAX_INTEGERS;
+
 	case T_RATIO:
-	  {
-	    s7_Int num_a, num_b, den_a, den_b;
-	    num_a = number_to_numerator(ap);
-	    num_b = number_to_numerator(bp);
-	    den_a = number_to_denominator(ap);
-	    den_b = number_to_denominator(bp);
-
-	    /* there are tricky cases here where long ints outrun doubles:
-	     *   (max 92233720368547758/9223372036854775807 92233720368547757/9223372036854775807)
-	     * which should be 92233720368547758/9223372036854775807) but 1st the fraction gets reduced
-	     * to 13176245766935394/1317624576693539401, so we fall into the double comparison, and
-	     * there we should be comparing 
-	     *    9.999999999999999992410584792601468961145E-3 and
-	     *    9.999999999999999883990367544051025548645E-3
-	     * but if using doubles we get 
-	     *    0.010000000000000000208166817117 and
-	     *    0.010000000000000000208166817117
-	     * that is, we can't distinguish these two fractions once they're coerced to doubles.
-	     *
-	     * Even long doubles fail in innocuous-looking cases:
-	     *     (min 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
-	     *     (max 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
-	     *
-	     * Another consequence: outside gmp, we can't handle cases like
-	     *    (max 9223372036854776/9223372036854775807 #i9223372036854775/9223372036854775000)
-	     *    (max #i9223372036854776/9223372036854775807 9223372036854775/9223372036854775000)
-	     * I guess if the user is using "inexact" numbers (#i...), he accepts their inexactness.
-	     */
-
-	    if (den_a == den_b)
-	      {
-		if (num_a < num_b)
-		  {
-		    ap = bp;
-		    result = bp;
-		  }
-	      }
-	    else
-	      {
-		if (num_a == num_b)
-		  {
-		    if (((num_a >= 0) &&
-			 (den_a > den_b)) ||
-			((num_a < 0) &&
-			 (den_a < den_b)))
-		      {
-			ap = bp;
-			result = bp;
-		      }
-		  }
-		else
-		  {
-		    s7_Int vala, valb;
-		    vala = num_a / den_a;
-		    valb = num_b / den_b;
-
-		    if (!((vala > valb) ||
-			  ((vala == valb) && (type(bp) == T_INTEGER))))
-		      {
-			if ((valb > vala) ||
-			    ((vala == valb) && (type(ap) == T_INTEGER)) ||
-			    /* sigh -- both are ratios and the int parts are equal */
-			    (((long double)(num_a % den_a) / (long double)den_a) <= ((long double)(num_b % den_b) / (long double)den_b)))
-			  {
-			    ap = bp;
-			    result = bp;
-			  }
-		      }
-		  }
-	      }
-	  }
-	  break;
-      
-	default:
-	  if ((type(bp) > T_RATIO) && 
-	      (is_NaN(real(bp))))
+	  num_a = integer(x);
+	  den_a = 1;
+	  num_b = numerator(y);
+	  den_b = denominator(y);
+	  goto RATIO_MAX_RATIO;
+	  
+	case T_REAL:    
+	  if (is_NaN(real(y)))
 	    {
-	      for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x))
-		if (!s7_is_real(car(x)))
-		  return(s7_wrong_type_arg_error(sc, "max", i, car(x), "a real"));
-	      return(s7_make_real(sc, NAN));
+	      for (; is_not_null(p); p = cdr(p))
+		if (!is_real(car(p)))
+		  return(s7_wrong_type_arg_error(sc, "max", position_of(p, args), car(p), "a real"));
+	      return(y);
 	    }
-	  if (number_to_real(ap) < number_to_real(bp))
+	  if (integer(x) < real(y)) 
 	    {
-	      ap = bp;
-	      result = bp;
+	      x = y; 
+	      goto MAX_REALS;
 	    }
-	  break;
+	  goto MAX_INTEGERS;
+
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "max", position_of(p, args) - 1, y, "a real"));
 	}
 
-      x = cdr(x);
-      if (is_null(x))
-	return(result);
 
-      i++;
+    case T_RATIO:
+    MAX_RATIOS:
+      if (is_null(p)) return(x);
+      y = car(p);
+      p = cdr(p);
+      
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  num_a = numerator(x);
+	  den_a = denominator(x);
+	  num_b = integer(y);
+	  den_b = 1;
+	  goto RATIO_MAX_RATIO;
+	  
+	case T_RATIO:
+	  num_a = numerator(x);
+	  den_a = denominator(x);
+	  num_b = numerator(y);
+	  den_b = denominator(y);
+	  
+	RATIO_MAX_RATIO:
+	  /* there are tricky cases here where long ints outrun doubles:
+	   *   (max 92233720368547758/9223372036854775807 92233720368547757/9223372036854775807)
+	   * which should be 92233720368547758/9223372036854775807) but 1st the fraction gets reduced
+	   * to 13176245766935394/1317624576693539401, so we fall into the double comparison, and
+	   * there we should be comparing 
+	   *    9.999999999999999992410584792601468961145E-3 and
+	   *    9.999999999999999883990367544051025548645E-3
+	   * but if using doubles we get 
+	   *    0.010000000000000000208166817117 and
+	   *    0.010000000000000000208166817117
+	   * that is, we can't distinguish these two fractions once they're coerced to doubles.
+	   *
+	   * Even long doubles fail in innocuous-looking cases:
+	   *     (min 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
+	   *     (max 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
+	   *
+	   * Another consequence: outside gmp, we can't handle cases like
+	   *    (max 9223372036854776/9223372036854775807 #i9223372036854775/9223372036854775000)
+	   *    (max #i9223372036854776/9223372036854775807 9223372036854775/9223372036854775000)
+	   * I guess if the user is using "inexact" numbers (#i...), he accepts their inexactness.
+	   */
+	  
+	  if (den_a == den_b)
+	    {
+	      if (num_a < num_b)
+		x = y;
+	    }
+	  else
+	    {
+	      if (num_a == num_b)
+		{
+		  if (((num_a >= 0) &&
+		       (den_a > den_b)) ||
+		      ((num_a < 0) &&
+		       (den_a < den_b)))
+		    x = y;
+		}
+	      else
+		{
+		  s7_Int vala, valb;
+		  vala = num_a / den_a;
+		  valb = num_b / den_b;
+		  
+		  if (!((vala > valb) ||
+			((vala == valb) && (type(y) == T_INTEGER))))
+		    {
+		      if ((valb > vala) ||
+			  ((vala == valb) && (type(x) == T_INTEGER)) ||
+			  /* sigh -- both are ratios and the int parts are equal */
+			  (((long double)(num_a % den_a) / (long double)den_a) <= ((long double)(num_b % den_b) / (long double)den_b)))
+			x = y;
+		    }
+		}
+	    }
+	  if (type(x) == T_RATIO)
+	    goto MAX_RATIOS;
+	  goto MAX_INTEGERS;
+
+	case T_REAL:
+	  if (fraction(x) < real(y))
+	    {
+	      x = y;
+	      goto MAX_REALS;
+	    }
+	  goto MAX_RATIOS;
+
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "max", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_REAL:
+      if (is_NaN(real(x)))
+	{
+	  for (; is_not_null(p); p = cdr(p))
+	    if (!is_real(car(p)))
+	      return(s7_wrong_type_arg_error(sc, "max", position_of(p, args), car(p), "a real"));
+	  return(x);
+	}
+
+    MAX_REALS:
+      if (is_null(p)) return(x);
+      y = car(p);
+      p = cdr(p);
+      
+      switch (type(y))
+	{
+	case T_INTEGER: 
+	  if (real(x) < integer(y))
+	    {
+	      x = y;
+	      goto MAX_INTEGERS;
+	    }
+	  goto MAX_REALS;
+
+	case T_RATIO:
+	  if (real(x) < fraction(y))
+	    {
+	      x = y;
+	      goto MAX_RATIOS;
+	    }
+	  goto MAX_REALS;
+
+	case T_REAL:
+	  if (is_NaN(real(y)))
+	    {
+	      for (; is_not_null(p); p = cdr(p))
+		if (!is_real(car(p)))
+		  return(s7_wrong_type_arg_error(sc, "max", position_of(p, args), car(p), "a real"));
+	      return(y);
+	    }
+	  if (real(x) < real(y)) x = y;
+	  goto MAX_REALS;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "max", position_of(p, args) - 1, y, "a real"));
+	}
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "max", 1, x, "a real"));
     }
-  return(result);
 }
 
 
 static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 {
   #define H_min "(min ...) returns the minimum of its arguments"
-  int i, ret_type;
-  s7_pointer x, ap, bp, result;
 
-  ap = car(args);
-  if (!s7_is_real(ap))
-    return(s7_wrong_type_arg_error(sc, "min", (is_null(cdr(args))) ? 0 : 1, ap, "a real"));
+  s7_pointer x, y, p;
+  s7_Int num_a, num_b, den_a, den_b;
 
-  x = cdr(args);
-  if (is_null(x))
-    return(ap);
-
-  result = ap;
-  ret_type = type(ap);
-  if ((ret_type > T_RATIO) && 
-      (is_NaN(real(ap)))) 
+  x = car(args);
+  p = cdr(args);
+  
+  switch (type(x))
     {
-      for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
-	if (!s7_is_real(car(x)))
-	  return(s7_wrong_type_arg_error(sc, "min", i, car(x), "a real"));
-      return(s7_make_real(sc, NAN));
-    }
-  i = 2;
-  while (true)
-    {
-      bp = car(x);
-      if (!s7_is_real(bp))
-	return(s7_wrong_type_arg_error(sc, "min", i, bp, "a real"));
+    case T_INTEGER:
+    MIN_INTEGERS:
+      if (is_null(p)) return(x);
+      y = car(p);
+      p = cdr(p);
+      
+      switch (type(y))
+	{
+	case T_INTEGER: 
+	  if (integer(x) > integer(y)) x = y;
+	  goto MIN_INTEGERS;
 
-      if (type(bp) > ret_type)
-	ret_type = type(bp);
+	case T_RATIO:
+	  num_a = integer(x);
+	  den_a = 1;
+	  num_b = numerator(y);
+	  den_b = denominator(y);
+	  goto RATIO_MIN_RATIO;
+	  
+	case T_REAL:    
+	  if (is_NaN(real(y)))
+	    {
+	      for (; is_not_null(p); p = cdr(p))
+		if (!is_real(car(p)))
+		  return(s7_wrong_type_arg_error(sc, "min", position_of(p, args), car(p), "a real"));
+	      return(y);
+	    }
+	  if (integer(x) > real(y)) 
+	    {
+	      x = y; 
+	      goto MIN_REALS;
+	    }
+	  goto MIN_INTEGERS;
 
-      switch (ret_type)
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "min", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_RATIO:
+    MIN_RATIOS:
+      if (is_null(p)) return(x);
+      y = car(p);
+      p = cdr(p);
+      
+      switch (type(y))
 	{
 	case T_INTEGER:
-	  if (integer(ap) > integer(bp))
-	    {
-	      ap = bp;
-	      result = bp;
-	    }
-	  break;
-      
+	  num_a = numerator(x);
+	  den_a = denominator(x);
+	  num_b = integer(y);
+	  den_b = 1;
+	  goto RATIO_MIN_RATIO;
+	  
 	case T_RATIO:
-	  {
-	    s7_Int num_a, num_b, den_a, den_b;
-	    num_a = number_to_numerator(ap);
-	    num_b = number_to_numerator(bp);
-	    den_a = number_to_denominator(ap);
-	    den_b = number_to_denominator(bp);
-	    /* there are tricky cases here where long ints outrun doubles */
+	  num_a = numerator(x);
+	  den_a = denominator(x);
+	  num_b = numerator(y);
+	  den_b = denominator(y);
+	  
+	RATIO_MIN_RATIO:
 	    if (den_a == den_b)
 	      {
 		if (num_a > num_b)
-		  {
-		    ap = bp;
-		    result = bp;
-		  }
+		  x = y;
 	      }
 	    else
 	      {
@@ -10508,10 +10748,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 			 (den_a < den_b)) ||
 			((num_a < 0) &&
 			 (den_a > den_b)))
-		      {
-			ap = bp;
-			result = bp;
-		      }
+		      x = y;
 		  }
 		else
 		  {
@@ -10520,48 +10757,87 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 		    valb = num_b / den_b;
 
 		    if (!((vala < valb) ||
-			  ((vala == valb) && (type(ap) == T_INTEGER))))
+			  ((vala == valb) && (type(x) == T_INTEGER))))
 		      {
 			if ((valb < vala) ||
-			    ((vala == valb) && (type(bp) == T_INTEGER)) ||
-			    /* sigh -- both are ratios and the int parts are equal (see comment under g_max above) */
+			    ((vala == valb) && (type(y) == T_INTEGER)) ||
 			    (((long double)(num_a % den_a) / (long double)den_a) >= ((long double)(num_b % den_b) / (long double)den_b)))
-			  {
-			    ap = bp;
-			    result = bp;
-			  }
+			  x = y;
 		      }
 		  }
 	      }
-	  }
-	  break;
+	  if (type(x) == T_RATIO)
+	    goto MIN_RATIOS;
+	  goto MIN_INTEGERS;
 
-	default:
-	  if ((type(bp) > T_RATIO) && 
-	      (is_NaN(real(bp)))) 
+	case T_REAL:
+	  if (fraction(x) > real(y))
 	    {
-	      for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x))
-		if (!s7_is_real(car(x)))
-		  return(s7_wrong_type_arg_error(sc, "min", i, car(x), "a real"));
-	      return(s7_make_real(sc, NAN));
+	      x = y;
+	      goto MIN_REALS;
 	    }
-	  if (number_to_real(ap) > number_to_real(bp))
-	    {
-	      ap = bp;
-	      result = bp;
-	    }
-	  break;
+	  goto MIN_RATIOS;
+
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "min", position_of(p, args) - 1, y, "a real"));
 	}
 
-      x = cdr(x);
-      if (is_null(x))
-	return(result);
 
-      i++;
+    case T_REAL:
+      if (is_NaN(real(x)))
+	{
+	  for (; is_not_null(p); p = cdr(p))
+	    if (!is_real(car(p)))
+	      return(s7_wrong_type_arg_error(sc, "min", position_of(p, args), car(p), "a real"));
+	  return(x);
+	}
+
+    MIN_REALS:
+      if (is_null(p)) return(x);
+      y = car(p);
+      p = cdr(p);
+      
+      switch (type(y))
+	{
+	case T_INTEGER: 
+	  if (real(x) > integer(y))
+	    {
+	      x = y;
+	      goto MIN_INTEGERS;
+	    }
+	  goto MIN_REALS;
+
+	case T_RATIO:
+	  if (real(x) > fraction(y))
+	    {
+	      x = y;
+	      goto MIN_RATIOS;
+	    }
+	  goto MIN_REALS;
+
+	case T_REAL:
+	  if (is_NaN(real(y)))
+	    {
+	      for (; is_not_null(p); p = cdr(p))
+		if (!is_real(car(p)))
+		  return(s7_wrong_type_arg_error(sc, "min", position_of(p, args), car(p), "a real"));
+	      return(y);
+	    }
+	  if (real(x) > real(y)) x = y;
+	  goto MIN_REALS;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "min", position_of(p, args) - 1, y, "a real"));
+	}
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "min", 1, x, "a real"));
     }
-  return(result);
 }
 
+
+
+/* ---------------------------------------- = > < >= <= ---------------------------------------- */
 
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 {
@@ -10774,18 +11050,15 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 {
-  int type_a, type_b;
   s7_pointer x, y;
 
   x = car(args);
   y = cadr(args);
-  type_a = type(x);
-  type_b = type(y);
 
-  switch (type_a)
+  switch (type(x))
     {
     case T_INTEGER:
-      switch (type_b)
+      switch (type(y))
 	{
 	case T_INTEGER: return(make_boolean(sc, integer(x) == integer(y)));
 	case T_RATIO:   return(sc->F);
@@ -10796,18 +11069,18 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_RATIO:  
-      switch (type_b)
+      switch (type(y))
 	{
 	case T_INTEGER: return(sc->F);
 	case T_RATIO:   return(make_boolean(sc, (numerator(x) == numerator(y)) && (denominator(x) == denominator(y))));
-	case T_REAL:    return(make_boolean(sc, fraction(x) == real(y)));
+	case T_REAL:    return(make_boolean(sc, fraction(x) == real(y)));            /* this could avoid the divide via numerator == denominator * x */
 	case T_COMPLEX: return(sc->F);
 	default:        return(s7_wrong_type_arg_error(sc, "=", 2, y, "a number"));	  
 	}
       break;
       
     case T_REAL:    
-      switch (type_b)
+      switch (type(y))
 	{
 	case T_INTEGER: return(make_boolean(sc, real(x) == integer(y)));
 	case T_RATIO:   return(make_boolean(sc, real(x) == fraction(y)));
@@ -10818,7 +11091,7 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_COMPLEX:
-      switch (type_b)
+      switch (type(y))
 	{
 	case T_INTEGER:
 	case T_RATIO:
@@ -28850,14 +29123,6 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
       return(add_2);
     }
 
-  /*
-#if (!WITH_GMP)
-  if (args == 3)
-    return(add_3);
-#endif
-  */
-
-
   return(f);
 }
 
@@ -29335,8 +29600,6 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(add_1) = c_function_class(f);
   add_2 = s7_make_function(sc, "+", g_add_2, 2, 0, false, "+ optimization");
   c_function_class(add_2) = c_function_class(f);
-  add_3 = s7_make_function(sc, "+", g_add_3, 3, 0, false, "+ optimization");
-  c_function_class(add_3) = c_function_class(f);
   add_1s = s7_make_function(sc, "+", g_add_1s, 2, 0, false, "+ optimization");
   c_function_class(add_1s) = c_function_class(f);
   add_s1 = s7_make_function(sc, "+", g_add_s1, 2, 0, false, "+ optimization");

@@ -1758,6 +1758,8 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 }
 #endif
 
+/* TODO: use new macros in g_sound_data_set|apply
+ */
 static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data sd's i-th element in channel chan to val: sd[chan][i] = val"

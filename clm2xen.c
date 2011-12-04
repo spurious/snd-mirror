@@ -1204,16 +1204,17 @@ static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
 
 static XEN mus_xen_apply(s7_scheme *sc, XEN gen, XEN args)
 {
-  mus_float_t arg1 = 0.0, arg2 = 0.0;
-  int len;
-  len = XEN_LIST_LENGTH(args);
-  if ((len > 0) &&
-      (XEN_NUMBER_P(XEN_CAR(args))))
-    arg1 = XEN_TO_C_DOUBLE(XEN_CAR(args));
-  if ((len > 1) &&
-      (XEN_NUMBER_P(XEN_CADR(args))))
-    arg2 = XEN_TO_C_DOUBLE(XEN_CADR(args));
-  return(C_TO_XEN_DOUBLE(mus_run(XEN_TO_MUS_ANY(gen), arg1, arg2)));
+  mus_float_t arg1, arg2;
+  if (s7_is_pair(args))
+    {
+      arg1 = s7_number_to_real(s7_car(args));
+      args = s7_cdr(args);
+      if (s7_is_pair(args))
+	arg2 = s7_number_to_real(s7_car(args));
+      else arg2 = 0.0;
+      return(s7_make_real(s7, mus_run(XEN_TO_MUS_ANY(gen), arg1, arg2)));
+    }
+  return(s7_make_real(s7, mus_run(XEN_TO_MUS_ANY(gen), 0.0, 0.0)));
 }
 
 static XEN s7_mus_set(s7_scheme *sc, XEN obj, XEN args)

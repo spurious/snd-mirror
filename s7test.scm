@@ -12672,6 +12672,12 @@ time, so that the displayed results are
 
 (test (let ((x 0)) (let ((y (case 1 ((2) (set! x (+ x 3))) ((1) (set! x (+ x 4)) (+ x 2))))) (list x y))) '(4 6))
 
+(if with-bignums
+    (begin
+      (test (case 8819522415901031498123 ((1) 2) ((8819522415901031498123) 3) (else 4)) 3) 
+      (test (case -9223372036854775809 ((1 9223372036854775807) 2) (else 3)) 3)
+      ))
+
 ;;; one thing that will hang case I think: circular key list
 
 
@@ -17837,6 +17843,7 @@ why are these different (read-time `#() ? )
 (let ((old-safety *safety*))
   (set! *safety* 1)
   (test (sort! #(1 2 3) (lambda (a b) (and #t (= a b)))) 'error)
+  ;(test (* 524288 19073486328125) 'error)  ; maybe someday...
   (set! *safety* old-safety))
 
 (if (defined? 'make-vct)
@@ -31136,7 +31143,7 @@ abs     1       2
 (test (nan? (/ -1 nan.0 -inf.0)) #t)
 (test (nan? (/ -inf.0 -inf.0)) #t)
 (test (nan? (/ 0 nan.0)) #t)
-(test (nan? (/ 0 (log 0))) #t)
+;(test (nan? (/ 0 (log 0))) #t) ;why not just 0.0?
 (test (nan? (/ inf.0 -inf.0)) #t)
 (test (nan? (/ inf.0 inf.0)) #t)
 (test (nan? (/ inf.0 nan.0)) #t)
@@ -54707,14 +54714,20 @@ abs     1       2
 
 (for-each-permutation 
  (lambda (a b c d)
-   (if (not (= (* a b c d) 0.25+0.25i))
+   (if (not (< (magnitude (- (* a b c d) 0.25+0.25i)) 1e-15))
        (format #t "~A: (* ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d (* a b c d))))
  '(1 1/2 0.5 1+i))
+
+(for-each-permutation 
+ (lambda (a b c d e f g h)
+   (if (not (< (magnitude (- (* a b c d e f g h) 1.0)) 1e-15))
+       (format #t "~A: (* ~A ~A ~A ~A ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d e f g h (* a b c d e f g h))))
+ '(5 1/3 0.5 1+i 1/5 3 2.0 0.5-0.5i))
 
 (test (integer? (* 7/1000 1000/999 999/7 most-positive-fixnum)) #t)
 (num-test (* 7/1000 1000/999 999/7 most-positive-fixnum) most-positive-fixnum)
 ;;; this should be an integer I think: (* 7/1000000 1/999 999/7 (- most-positive-fixnum 775807))
-;;;   PREHAPS: also (* 7/100000000000 1/999 999/7 (- most-positive-fixnum 36854775807)) and so on
+;;;   PERHAPS: also (* 7/100000000000 1/999 999/7 (- most-positive-fixnum 36854775807)) and so on
 
 (num-test (* -0.2554913394465045E0 0.27042187315261135E0) -6.909044658739340841916780452607499999997E-2)
 (num-test (* -0.4489211233229662E0 -0.42892136850270857E0) 1.925518625654598642702435865603340000003E-1)
@@ -56054,7 +56067,7 @@ abs     1       2
 (for-each-permutation 
  (lambda (a b c d e f g h)
    (if (not (zero? (+ a b c d e f g h)))
-       (format #t "~A: (+ ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d e f g h (+ a b c d e f g h))))
+       (format #t "~A: (+ ~A ~A ~A ~A ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d e f g h (+ a b c d e f g h))))
  '(1 1/2 0.5 1+i -1/2 -1 -0.5 -1-i))
 
 (test (integer? (+ 1/100 99/100 (- most-positive-fixnum 2))) #t)
@@ -57525,6 +57538,12 @@ but it's the printout that is at fault:
    (if (not (= (- a b c d) (- a (+ b c d))))
        (format #t "~A: ~A != ~A?~%" (port-line-number) (- a b c d) (- a (+ b c d)))))
  '(1 1/2 0.5 1+i))
+
+(for-each-permutation 
+ (lambda (a b c d e f g h)
+   (if (not (= (- a b c d e f g h) (+ a (- (+ b c d e f g h)))))
+       (format #t "~A: (- ~A ~A ~A ~A ~A ~A ~A ~A) -> ~A?~%" (port-line-number) a b c d e f g h (- a b c d e f g h))))
+ '(1 1/2 0.5 1+i -1/2 -1 -0.5 -1-i))
 
 (num-test (- -1.797693134862315699999999999999999999998E308 -9223372036854775808) -1.797693134862315699999999999999999999998E308)
 (num-test (- -9223372036854775808 -9223372036854775808) 0)
