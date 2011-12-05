@@ -9005,9 +9005,7 @@ static int reduce_fraction(s7_Int *numer, s7_Int *denom)
 
 /* ---------------------------------------- add ---------------------------------------- */
 
-/* TODO: code-as-type-choice maybe equal/min/max etc
- * TODO: a2-m and m2-a cases
- * TODO: s7test permute args cases for add|sub|mul|div+big
+/* TODO: a2-m and m2-a cases
  */
 
 
@@ -10842,140 +10840,144 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_equal "(= z1 ...) returns #t if all its arguments are equal"
-  int i, type_a, type_b;
   s7_pointer x, p;
+  s7_Int num_a, den_a;
+  s7_Double rl_a, im_a;
 
-  p = car(args);
-  type_a = type(p);
+  x = car(args);
+  p = cdr(args);
 
-  x = cdr(args);
-  i = 2;
-  while (true)
+  switch (type(x))
     {
-      s7_pointer tmp;
-      bool equal = true;
-
-      tmp = car(x);
-      type_b = type(tmp);
-
-      switch (type_a)
+    case T_INTEGER:
+      num_a = integer(x);
+      while (true)
 	{
-	case T_INTEGER:
-	  switch (type_b)
+	  x = car(p);
+	  p = cdr(p);
+	  switch (type(x))
 	    {
 	    case T_INTEGER: 
-	      equal = (integer(p) == integer(tmp));
+	      if (num_a != integer(x)) goto NOT_EQUAL; 
 	      break;
 
-	    case T_RATIO:
-	      equal = false;
+	    case T_RATIO:   
+	    case T_COMPLEX: 
+	      goto NOT_EQUAL;                          
 	      break;
-
-	    case T_REAL:
-	      equal = (integer(p) == real(tmp));
-	      break;
-
-	    case T_COMPLEX:
-	      equal = false;            /* T_COMPLEX can't happen unless there is a non-zero imaginary part */
+	      
+	    case T_REAL:    
+	      if (num_a != real(x)) goto NOT_EQUAL;    
 	      break;
 
 	    default:
-	      return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));	      
+	      return(s7_wrong_type_arg_error(sc, "=", position_of(p, args) - 1, x, "a number"));	      
 	    }
-	  break;
-      
-	case T_RATIO:  
-	  switch (type_b)
-	    {
-	    case T_INTEGER:
-	      equal = false;
-	      break;
-
-	    case T_RATIO:
-	      equal = ((numerator(p) == numerator(tmp)) &&
-		       (denominator(p) == denominator(tmp)));
-	      break;
-
-	    case T_REAL:
-	      equal = (fraction(p) == real(tmp));
-	      break;
-
-	    case T_COMPLEX:
-	      equal = false;
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));	      
-	    }
-	  break;
-      
-	case T_REAL:    
-	  switch (type_b)
-	    {
-	    case T_INTEGER:
-	      equal = (real(p) == integer(tmp));
-	      break;
-
-	    case T_RATIO:
-	      equal = (real(p) == fraction(tmp));
-	      break;
-
-	    case T_REAL:
-	      equal = (real(p) == real(tmp));
-	      break;
-
-	    case T_COMPLEX:
-	      equal = false;
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));	      
-	    }
-	  break;
-      
-	case T_COMPLEX:
-	  switch (type_b)
-	    {
-	    case T_INTEGER:
-	    case T_RATIO:
-	    case T_REAL:
-	      equal = false;
-	      break;
-
-	    case T_COMPLEX:
-	      equal = ((real_part(p) == real_part(tmp)) &&
-		       (imag_part(p) == imag_part(tmp)));
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));	      
-	    }
-	  break;
-
-	default:
-	  return(s7_wrong_type_arg_error(sc, "=", 1, p, "a number"));
+	  if (is_null(p))
+	    return(sc->T);
 	}
 
-      if (!equal)
+    case T_RATIO:
+      num_a = numerator(x);
+      den_a = denominator(x);
+      rl_a = 0.0;
+      while (true)
 	{
-	  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	    if (!s7_is_number(car(x)))
-	      return(s7_wrong_type_arg_error(sc, "=", i, car(x), "a number"));
-	  
-	  return(sc->F);
+	  x = car(p);
+	  p = cdr(p);
+	  switch (type(x))
+	    {
+	    case T_INTEGER: 
+	    case T_COMPLEX: 
+	      goto NOT_EQUAL;
+	      break;
+
+	    case T_RATIO:   
+	      if ((num_a != numerator(x)) || (den_a != denominator(x)))	goto NOT_EQUAL;
+	      break;
+
+	    case T_REAL:
+	      if (rl_a == 0.0)
+		rl_a = ((long double)num_a) / ((long double)den_a);
+	      if (rl_a != real(x)) goto NOT_EQUAL;
+	      break;
+
+	    default:        
+	      return(s7_wrong_type_arg_error(sc, "=", position_of(p, args) - 1, x, "a number"));	      
+	    }
+	  if (is_null(p))
+	    return(sc->T);
 	}
 
-      x = cdr(x);
-      if (is_null(x))
-	return(sc->T);
+    case T_REAL:
+      rl_a = real(x);
+      while (true)
+	{
+	  x = car(p);
+	  p = cdr(p);
+	  switch (type(x))
+	    {
+	    case T_INTEGER: 
+	      if (rl_a != integer(x)) goto NOT_EQUAL; 
+	      break;
 
-      p = tmp;
-      type_a = type_b;
-      i++;
+	    case T_RATIO:
+	      if (rl_a != fraction(x)) goto NOT_EQUAL;
+	      break;
+	      
+	    case T_REAL:    
+	      if (rl_a != real(x)) goto NOT_EQUAL;    
+	      break;
+
+	    case T_COMPLEX: 
+	      goto NOT_EQUAL;                          
+	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, "=", position_of(p, args) - 1, x, "a number"));	      
+	    }
+	  if (is_null(p))
+	    return(sc->T);
+	}
+      
+    case T_COMPLEX:
+      rl_a = real_part(x);
+      im_a = imag_part(x);
+      while (true)
+	{
+	  x = car(p);
+	  p = cdr(p);
+	  switch (type(x))
+	    {
+	    case T_INTEGER: 
+	    case T_RATIO:
+	    case T_REAL:
+	      goto NOT_EQUAL;
+	      break;
+
+	    case T_COMPLEX: 
+	      if ((rl_a != real_part(x)) || (im_a != imag_part(x)))
+		goto NOT_EQUAL;
+	      break;
+
+	    default:
+	      return(s7_wrong_type_arg_error(sc, "=", position_of(p, args) - 1, x, "a number"));	      
+	    }
+	  if (is_null(p))
+	    return(sc->T);
+	}
+      
+    default:
+      return(s7_wrong_type_arg_error(sc, "=", 1, x, "a number"));
     }
 
-  return(sc->T);
+ NOT_EQUAL:
+  for (; is_pair(p); p = cdr(p))
+    if (!s7_is_number(car(p)))
+      return(s7_wrong_type_arg_error(sc, "=", position_of(p, args), car(p), "a number"));
+  return(sc->F);
 }
+
 
 #if WITH_OPTIMIZATION
 static s7_pointer equal_s_ic, equal_length_ic, equal_2;
@@ -11121,227 +11123,595 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 
 
 #if (!WITH_GMP)
-static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
-{
-  int i, type_a, type_b;
-  s7_pointer x, p;
-
-  p = car(args);
-  type_a = type(p);
-
-  switch (type_a)
-    {
-    case T_INTEGER:
-    case T_RATIO:
-      break;
-      
-    case T_REAL:
-      if (is_NaN(real(p)))
-	{
-	  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	    if (!s7_is_real(car(x)))
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
-	  return(sc->F);
-	}
-      break;
-
-    default:
-      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", 1, p, "a real"));
-    }
-
-  i = 2;
-  x = cdr(args);
-  while (true)
-    {
-      s7_pointer tmp;
-      bool less = true;
-
-      tmp = car(x);
-      type_b = type(tmp);
-
-      switch (type_a)
-	{
-	case T_INTEGER:
-	  switch (type_b)
-	    {
-	    case T_INTEGER:
-	      less = (integer(p) < integer(tmp));
-	      break;
-
-	    case T_RATIO: 
-	      /* no gmp here, but this can overflow: (< 9223372036 1/9223372036), but conversion to real is also problematic
-	       */
-	      if ((integer(p) >= 0) && (numerator(tmp) < 0))
-		less = false;
-	      else
-		{
-		  if ((integer(p) <= 0) && (numerator(tmp) > 0))
-		    less = true;
-		  else
-		    {
-		      if ((integer(p) < S7_LONG_MAX) && 
-			  (integer(p) > S7_LONG_MIN) && 
-			  (denominator(tmp) < S7_LONG_MAX) && 
-			  (denominator(tmp) > S7_LONG_MIN))
-			less = ((integer(p) * denominator(tmp)) < numerator(tmp));
-		      else less = (integer(p) < fraction(tmp));
-		    }
-		}
-	      break;
-
-	    case T_REAL:
-	      if (is_NaN(real(tmp)))
-		{
-		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-		    if (!s7_is_real(car(x)))
-		      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
-		  return(sc->F);
-		}
-	      less = (integer(p) < real(tmp));
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, tmp, "a real"));
-	    }
-	  break;
-
-	case T_RATIO:
-	  switch (type_b)
-	    {
-	    case T_INTEGER: 
-	      /* same case as above (sigh) */
-	      if ((integer(tmp) >= 0) && (numerator(p) < 0))
-		less = true;
-	      else
-		{
-		  if ((integer(tmp) <= 0) && (numerator(p) > 0))
-		    less = false;
-		  else
-		    {
-		      if ((integer(tmp) < S7_LONG_MAX) && 
-			  (integer(tmp) > S7_LONG_MIN) && 
-			  (denominator(p) < S7_LONG_MAX) && 
-			  (denominator(p) > S7_LONG_MIN))
-			less = (numerator(p) < (integer(tmp) * denominator(p)));
-		      else less = (fraction(p) < integer(tmp));
-		    }
-		}
-	      break;
-
-	    case T_RATIO:
-	      /* conversion to real and < is not safe here (see comment under g_greater) */
-	      {
-		s7_Int d1, d2, n1, n2;
-		d1 = number_to_denominator(p);
-		n1 = number_to_numerator(p);
-		d2 = number_to_denominator(tmp);
-		n2 = number_to_numerator(tmp);
-
-		if (d1 == d2)                    
-		  less = (n1 < n2);
-		else
-		  {
-		    if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
-			(n1 > s7_int_max) || (n2 > s7_int_max) ||
-			(n1 < s7_int_min) || (n2 < s7_int_min))
-		      {
-			int d1bits, d2bits;
-			d1bits = integer_length(d1);
-			d2bits = integer_length(d2);
-			if (((d1bits + d2bits) > s7_int_bits) ||
-			    ((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
-			    ((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
-			  less = (fraction(p) < fraction(tmp));   
-      
-			  /* (< 21053343141/6701487259 3587785776203/1142027682075) -> #f because even long doubles aren't enough here 
-			   * (= 21053343141/6701487259 3587785776203/1142027682075) is #f because it checks the actual ints and
-			   * (> 21053343141/6701487259 3587785776203/1142027682075) is #f just like the < case.
-			   * similarly
-			   * (min 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
-			   * (max 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
-			   *
-			   * if we print the long double results as integers, both are -3958705157555305931
-			   *    so there's not a lot I can do in the non-gmp case.
-			   */
-			else less = ((n1 * d2) < (n2 * d1));
-		      }
-		    else
-		      less = ((n1 * d2) < (n2 * d1));
-		  }
-	      }
-	      break;
-
-	    case T_REAL:
-	      if (is_NaN(real(tmp)))
-		{
-		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-		    if (!s7_is_real(car(x)))
-		      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
-		  return(sc->F);
-		}
-	      less = (fraction(p) < real(tmp));
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, tmp, "a real"));
-	    }
-	  break;
-
-	case T_REAL:
-	  switch (type_b)
-	    {
-	    case T_INTEGER: 
-	      less = (real(p) < integer(tmp));
-	      break;
-
-	    case T_RATIO:
-	      less = (real(p) < fraction(tmp)); /* (< 1.0 9223372036854775806/9223372036854775807) */
-	      break;
-
-	    case T_REAL:
-	      if (is_NaN(real(tmp)))
-		{
-		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-		    if (!s7_is_real(car(x)))
-		      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
-		  return(sc->F);
-		}
-	      less = (real(p) < real(tmp));
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, tmp, "a real"));
-	    }
-	  break;
-	}
-      
-      if (reversed) less = !less;
-      if (!less)
-	{
-	  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	    if (!s7_is_real(car(x)))
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
-
-	  return(sc->F);
-	}
-
-      x = cdr(x);
-      if (is_null(x))
-	return(sc->T);
-      
-      i++;
-      p = tmp;
-      type_a = type_b;
-    }
-
-  return(sc->T);
-}
-
 
 static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_less "(< x1 ...) returns #t if its arguments are in increasing order"
-  return(g_less_1(sc, false, args));
+  s7_pointer x, y, p;
+
+  x = car(args);
+  p = cdr(args);
+
+  switch (type(x))
+    {
+    case T_INTEGER:
+    INTEGER_LESS:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(x) >= integer(y)) goto NOT_LESS;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_LESS;
+
+	case T_RATIO:
+	  /* no gmp here, but this can overflow: (< 9223372036 1/9223372036), but conversion to real is also problematic
+	   */
+	  if ((integer(x) >= 0) && (numerator(y) < 0)) goto NOT_LESS;  /* (< 1 -1/2), ratio numerator can't be 0 */
+	  if ((integer(x) <= 0) && (numerator(y) > 0))                 /* (< 0 1/2) */
+	    {
+	      if (is_null(p)) return(sc->T);
+	      x = y;
+	      goto RATIO_LESS;
+	    }
+	  if ((integer(x) < S7_LONG_MAX) && 
+	      (integer(x) > S7_LONG_MIN) && 
+	      (denominator(y) < S7_LONG_MAX) && 
+	      (denominator(y) > S7_LONG_MIN))
+	    {
+	      if ((integer(x) * denominator(y)) >= numerator(y)) goto NOT_LESS;
+	    }
+	  else
+	    {
+	      if (integer(x) >= fraction(y)) goto NOT_LESS;
+	    }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_LESS;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_LESS;
+	  if (integer(x) >= real(y)) goto NOT_LESS;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_LESS;
+
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_RATIO:
+    RATIO_LESS:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if ((numerator(x) > 0) && (integer(y) <= 0)) goto NOT_LESS;
+	  if ((numerator(x) < 0) && (integer(y) >= 0)) 
+	    {
+	      if (is_null(p)) return(sc->T);
+	      x = y;
+	      goto INTEGER_LESS;
+	    }
+	  if ((integer(y) < S7_LONG_MAX) && 
+	      (integer(y) > S7_LONG_MIN) && 
+	      (denominator(x) < S7_LONG_MAX) && 
+	      (denominator(x) > S7_LONG_MIN))
+	    {
+	      if (numerator(x) >= (integer(y) * denominator(x))) goto NOT_LESS;
+	    }
+	  else
+	    {
+	      if (fraction(x) >= integer(y)) goto NOT_LESS;
+	    }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_LESS;
+
+	case T_RATIO:
+	  /* conversion to real and >= is not safe here (see comment under g_greater) */
+	  {
+	    s7_Int d1, d2, n1, n2;
+	    d1 = denominator(x);
+	    n1 = numerator(x);
+	    d2 = denominator(y);
+	    n2 = numerator(y);
+	    if (d1 == d2)       
+	      {
+		if (n1 >= n2) goto NOT_LESS;
+	      }
+	    else
+	      {
+		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+		    (n1 < s7_int_min) || (n2 < s7_int_min))
+		  {
+		    int d1bits, d2bits;
+		    d1bits = integer_length(d1);
+		    d2bits = integer_length(d2);
+		    if (((d1bits + d2bits) > s7_int_bits) ||
+			((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+			((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+		      {
+			if (fraction(x) >= fraction(y)) goto NOT_LESS;
+      
+			/* (< 21053343141/6701487259 3587785776203/1142027682075) -> #f because even long doubles aren't enough here 
+			 * (= 21053343141/6701487259 3587785776203/1142027682075) is #f because it checks the actual ints and
+			 * (> 21053343141/6701487259 3587785776203/1142027682075) is #f just like the < case.
+			 * similarly
+			 * (min 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
+			 * (max 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
+			 *
+			 * if we print the long double results as integers, both are -3958705157555305931
+			 *    so there's not a lot I can do in the non-gmp case.
+			 */
+		      }
+		    else 
+		      {
+			if ((n1 * d2) >= (n2 * d1)) goto NOT_LESS;
+		      }
+		  }
+		else
+		  {
+		    if ((n1 * d2) >=  (n2 * d1)) goto NOT_LESS;
+		  }
+	      }
+	  }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_LESS;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_LESS;
+	  if (fraction(x) >= real(y)) goto NOT_LESS;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_LESS;
+	  
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_REAL:
+      if (is_NaN(real(x))) goto NOT_LESS;
+
+    REAL_LESS:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (real(x) >= integer(y)) goto NOT_LESS;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_LESS;
+
+	case T_RATIO:
+	  if (real(x) >= fraction(y)) goto NOT_LESS;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_LESS;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_LESS;
+	  if (real(x) >= real(y)) goto NOT_LESS;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_LESS;
+
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_COMPLEX:
+    default:
+      return(s7_wrong_type_arg_error(sc, "<", 1, x, "a real"));
+    }
+
+ NOT_LESS:
+  for (; is_pair(p); p = cdr(p))
+    if (!is_real(car(p)))
+      return(s7_wrong_type_arg_error(sc, "<", position_of(p, args), car(p), "a real"));
+  return(sc->F);
+}
+
+
+
+static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
+{
+  #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
+  s7_pointer x, y, p;
+
+  x = car(args);
+  p = cdr(args);
+
+  switch (type(x))
+    {
+    case T_INTEGER:
+    INTEGER_LEQ:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(x) > integer(y)) goto NOT_LEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_LEQ;
+
+	case T_RATIO:
+	  /* no gmp here, but this can overflow: (< 9223372036 1/9223372036), but conversion to real is also problematic
+	   */
+	  if ((integer(x) >= 0) && (numerator(y) < 0)) goto NOT_LEQ;  /* (< 1 -1/2), ratio numerator can't be 0 */
+	  if ((integer(x) <= 0) && (numerator(y) > 0))                 /* (< 0 1/2) */
+	    {
+	      if (is_null(p)) return(sc->T);
+	      x = y;
+	      goto RATIO_LEQ;
+	    }
+	  if ((integer(x) < S7_LONG_MAX) && 
+	      (integer(x) > S7_LONG_MIN) && 
+	      (denominator(y) < S7_LONG_MAX) && 
+	      (denominator(y) > S7_LONG_MIN))
+	    {
+	      if ((integer(x) * denominator(y)) > numerator(y)) goto NOT_LEQ;
+	    }
+	  else
+	    {
+	      if (integer(x) > fraction(y)) goto NOT_LEQ;
+	    }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_LEQ;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_LEQ;
+	  if (integer(x) > real(y)) goto NOT_LEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_LEQ;
+
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<=", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_RATIO:
+    RATIO_LEQ:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if ((numerator(x) > 0) && (integer(y) <= 0)) goto NOT_LEQ;
+	  if ((numerator(x) < 0) && (integer(y) >= 0)) 
+	    {
+	      if (is_null(p)) return(sc->T);
+	      x = y;
+	      goto INTEGER_LEQ;
+	    }
+	  if ((integer(y) < S7_LONG_MAX) && 
+	      (integer(y) > S7_LONG_MIN) && 
+	      (denominator(x) < S7_LONG_MAX) && 
+	      (denominator(x) > S7_LONG_MIN))
+	    {
+	      if (numerator(x) > (integer(y) * denominator(x))) goto NOT_LEQ;
+	    }
+	  else
+	    {
+	      if (fraction(x) > integer(y)) goto NOT_LEQ;
+	    }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_LEQ;
+
+	case T_RATIO:
+	  {
+	    s7_Int d1, d2, n1, n2;
+	    d1 = denominator(x);
+	    n1 = numerator(x);
+	    d2 = denominator(y);
+	    n2 = numerator(y);
+	    if (d1 == d2)       
+	      {
+		if (n1 > n2) goto NOT_LEQ;
+	      }
+	    else
+	      {
+		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+		    (n1 < s7_int_min) || (n2 < s7_int_min))
+		  {
+		    int d1bits, d2bits;
+		    d1bits = integer_length(d1);
+		    d2bits = integer_length(d2);
+		    if (((d1bits + d2bits) > s7_int_bits) ||
+			((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+			((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+		      {
+			if (fraction(x) > fraction(y)) goto NOT_LEQ;
+		      }
+		    else 
+		      {
+			if ((n1 * d2) > (n2 * d1)) goto NOT_LEQ;
+		      }
+		  }
+		else
+		  {
+		    if ((n1 * d2) >  (n2 * d1)) goto NOT_LEQ;
+		  }
+	      }
+	  }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_LEQ;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_LEQ;
+	  if (fraction(x) > real(y)) goto NOT_LEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_LEQ;
+	  
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<=", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_REAL:
+      if (is_NaN(real(x))) goto NOT_LEQ;
+
+    REAL_LEQ:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (real(x) > integer(y)) goto NOT_LEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_LEQ;
+
+	case T_RATIO:
+	  if (real(x) > fraction(y)) goto NOT_LEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_LEQ;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_LEQ;
+	  if (real(x) > real(y)) goto NOT_LEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_LEQ;
+
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, "<=", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_COMPLEX:
+    default:
+      return(s7_wrong_type_arg_error(sc, "<=", 1, x, "a real"));
+    }
+
+ NOT_LEQ:
+  for (; is_pair(p); p = cdr(p))
+    if (!is_real(car(p)))
+      return(s7_wrong_type_arg_error(sc, "<=", position_of(p, args), car(p), "a real"));
+  return(sc->F);
+}
+
+
+static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
+{
+  #define H_greater "(> x1 ...) returns #t if its arguments are in decreasing order"
+  s7_pointer x, y, p;
+
+  x = car(args);
+  p = cdr(args);
+
+  switch (type(x))
+    {
+    case T_INTEGER:
+    INTEGER_GREATER:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(x) <= integer(y)) goto NOT_GREATER;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_GREATER;
+
+	case T_RATIO:
+	  /* no gmp here, but this can overflow: (< 9223372036 1/9223372036), but conversion to real is also problematic
+	   */
+	  if ((integer(x) <= 0) && (numerator(y) > 0)) goto NOT_GREATER; 
+	  if ((integer(x) >= 0) && (numerator(y) < 0)) 
+	    {
+	      if (is_null(p)) return(sc->T);
+	      x = y;
+	      goto RATIO_GREATER;
+	    }
+	  if ((integer(x) < S7_LONG_MAX) && 
+	      (integer(x) > S7_LONG_MIN) && 
+	      (denominator(y) < S7_LONG_MAX) && 
+	      (denominator(y) > S7_LONG_MIN))
+	    {
+	      if ((integer(x) * denominator(y)) <= numerator(y)) goto NOT_GREATER;
+	    }
+	  else
+	    {
+	      if (integer(x) <= fraction(y)) goto NOT_GREATER;
+	    }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_GREATER;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_GREATER;
+	  if (integer(x) <= real(y)) goto NOT_GREATER;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_GREATER;
+
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_RATIO:
+    RATIO_GREATER:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if ((numerator(x) < 0) && (integer(y) >= 0)) goto NOT_GREATER;
+	  if ((numerator(x) > 0) && (integer(y) <= 0))
+	    {
+	      if (is_null(p)) return(sc->T);
+	      x = y;
+	      goto INTEGER_GREATER;
+	    }
+	  if ((integer(y) < S7_LONG_MAX) && 
+	      (integer(y) > S7_LONG_MIN) && 
+	      (denominator(x) < S7_LONG_MAX) && 
+	      (denominator(x) > S7_LONG_MIN))
+	    {
+	      if (numerator(x) <= (integer(y) * denominator(x))) goto NOT_GREATER;
+	    }
+	  else
+	    {
+	      if (fraction(x) <= integer(y)) goto NOT_GREATER;
+	    }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_GREATER;
+
+	case T_RATIO:
+	  {
+	    s7_Int d1, d2, n1, n2;
+	    d1 = denominator(x);
+	    n1 = numerator(x);
+	    d2 = denominator(y);
+	    n2 = numerator(y);
+	    if (d1 == d2)       
+	      {
+		if (n1 <= n2) goto NOT_GREATER;
+	      }
+	    else
+	      {
+		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+		    (n1 < s7_int_min) || (n2 < s7_int_min))
+		  {
+		    int d1bits, d2bits;
+		    d1bits = integer_length(d1);
+		    d2bits = integer_length(d2);
+		    if (((d1bits + d2bits) > s7_int_bits) ||
+			((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+			((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+		      {
+			if (fraction(x) <= fraction(y)) goto NOT_GREATER;
+      
+			/* (< 21053343141/6701487259 3587785776203/1142027682075) -> #f because even long doubles aren't enough here 
+			 * (= 21053343141/6701487259 3587785776203/1142027682075) is #f because it checks the actual ints and
+			 * (> 21053343141/6701487259 3587785776203/1142027682075) is #f just like the < case.
+			 * similarly
+			 * (min 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
+			 * (max 21053343141/6701487259 3587785776203/1142027682075) -> 3587785776203/1142027682075
+			 *
+			 * if we print the long double results as integers, both are -3958705157555305931
+			 *    so there's not a lot I can do in the non-gmp case.
+			 */
+		      }
+		    else 
+		      {
+			if ((n1 * d2) <= (n2 * d1)) goto NOT_GREATER;
+		      }
+		  }
+		else
+		  {
+		    if ((n1 * d2) <=  (n2 * d1)) goto NOT_GREATER;
+		  }
+	      }
+	  }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_GREATER;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_GREATER;
+	  if (fraction(x) <= real(y)) goto NOT_GREATER;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_GREATER;
+	  
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_REAL:
+      if (is_NaN(real(x))) goto NOT_GREATER;
+
+    REAL_GREATER:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (real(x) <= integer(y)) goto NOT_GREATER;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_GREATER;
+
+	case T_RATIO:
+	  if (real(x) <= fraction(y)) goto NOT_GREATER;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_GREATER;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_GREATER;
+	  if (real(x) <= real(y)) goto NOT_GREATER;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_GREATER;
+
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_COMPLEX:
+    default:
+      return(s7_wrong_type_arg_error(sc, ">", 1, x, "a real"));
+    }
+
+ NOT_GREATER:
+  for (; is_pair(p); p = cdr(p))
+    if (!is_real(car(p)))
+      return(s7_wrong_type_arg_error(sc, ">", position_of(p, args), car(p), "a real"));
+  return(sc->F);
 }
 
 
@@ -11350,234 +11720,192 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
   #define H_greater_or_equal "(>= x1 ...) returns #t if its arguments are in decreasing order"
   /* (>= 1+i 1+i) is an error which seems unfortunate
    */
-  return(g_less_1(sc, true, args));  
-}
+  s7_pointer x, y, p;
 
+  x = car(args);
+  p = cdr(args);
 
-static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
-{
-  int i, type_a, type_b;
-  s7_pointer x, p;
-
-  /* (>= nan.0 inf.0) returns #t, but in Guile it's #f (and others similar) */
-
-  p = car(args);
-  type_a = type(p);
-  switch (type_a)
+  switch (type(x))
     {
     case T_INTEGER:
-    case T_RATIO:
-      break;
-      
-    case T_REAL:
-      if (is_NaN(real(p)))
-	{
-	  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	    if (!s7_is_real(car(x)))
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
-	  return(sc->F);
-	}
-      break;
-
-    default:
-      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", 1, p, "a real"));
-    }
-
-  i = 2;
-  x = cdr(args);
-  while (true)
-    {
-      s7_pointer tmp;
-      bool greater = true;
-
-      tmp = car(x);
-      type_b = type(tmp);
-
-      /* the ">" operator here is a problem.
-       *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
-       *   so, to keep ratios honest, we'll subtract and compare against 0.  But that can cause problems:
-       *   :(> 0 most-negative-fixnum)
-       *   #f
-       */
-
-      switch (type_a)
+    INTEGER_GEQ:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
 	{
 	case T_INTEGER:
-	  switch (type_b)
-	    {
-	    case T_INTEGER:
-	      greater = (integer(p) > integer(tmp));
-	      break;
-
-	    case T_RATIO: 
-	      /* see comment above */
-	      if ((integer(p) >= 0) && (numerator(tmp) < 0))
-		greater = true;
-	      else
-		{
-		  if ((integer(p) <= 0) && (numerator(tmp) > 0))
-		    greater = false;
-		  else
-		    {
-		      if ((integer(p) < S7_LONG_MAX) && 
-			  (integer(p) > S7_LONG_MIN) && 
-			  (denominator(tmp) < S7_LONG_MAX) && 
-			  (denominator(tmp) > S7_LONG_MIN))
-			greater = ((integer(p) * denominator(tmp)) > numerator(tmp));
-		      else greater = (integer(p) > fraction(tmp));
-		    }
-		}
-	      break;
-
-	    case T_REAL:
-	      if (is_NaN(real(tmp)))
-		{
-		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-		    if (!s7_is_real(car(x)))
-		      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
-		  return(sc->F);
-		}
-	      greater = (integer(p) > real(tmp));
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, tmp, "a real"));	      
-	    }
-	  break;
+	  if (integer(x) < integer(y)) goto NOT_GEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_GEQ;
 
 	case T_RATIO:
-	  switch (type_b)
+	  /* no gmp here, but this can overflow: (< 9223372036 1/9223372036), but conversion to real is also problematic
+	   */
+	  if ((integer(x) <= 0) && (numerator(y) > 0)) goto NOT_GEQ; 
+	  if ((integer(x) >= 0) && (numerator(y) < 0)) 
 	    {
-	    case T_INTEGER: 
-	      if ((integer(tmp) >= 0) && (numerator(p) < 0))
-		greater = false;
-	      else
-		{
-		  if ((integer(tmp) <= 0) && (numerator(p) > 0))
-		    greater = true;
-		  else
-		    {
-		      if ((integer(tmp) < S7_LONG_MAX) && 
-			  (integer(tmp) > S7_LONG_MIN) && 
-			  (denominator(p) < S7_LONG_MAX) && 
-			  (denominator(p) > S7_LONG_MIN))
-			greater = (numerator(p) > (integer(tmp) * denominator(p)));
-		      else greater = (fraction(p) > integer(tmp));
-		    }
-		}
-	      break;
-
-	    case T_RATIO:
-	      {
-		s7_Int d1, d2, n1, n2;
-		d1 = number_to_denominator(p);
-		n1 = number_to_numerator(p);
-		d2 = number_to_denominator(tmp);
-		n2 = number_to_numerator(tmp);
-
-		if (d1 == d2)                    
-		  greater = (n1 > n2);
-		else
-		  {
-		    if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
-			(n1 > s7_int_max) || (n2 > s7_int_max) ||
-			(n1 < s7_int_min) || (n2 < s7_int_min))
-		      {
-			int d1bits, d2bits;
-			d1bits = integer_length(d1);
-			d2bits = integer_length(d2);
-			if (((d1bits + d2bits) > s7_int_bits) ||
-			    ((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
-			    ((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
-			  greater = (fraction(p) > fraction(tmp));
-			else greater = ((n1 * d2) > (n2 * d1));
-		      }
-		    else
-		      greater = ((n1 * d2) > (n2 * d1));
-		  }
-	      }
-	      break;
-
-	    case T_REAL:
-	      if (is_NaN(real(tmp)))
-		{
-		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-		    if (!s7_is_real(car(x)))
-		      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
-		  return(sc->F);
-		}
-	      greater = (fraction(p) > real(tmp));
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, tmp, "a real"));	      
+	      if (is_null(p)) return(sc->T);
+	      x = y;
+	      goto RATIO_GEQ;
 	    }
-	  break;
+	  if ((integer(x) < S7_LONG_MAX) && 
+	      (integer(x) > S7_LONG_MIN) && 
+	      (denominator(y) < S7_LONG_MAX) && 
+	      (denominator(y) > S7_LONG_MIN))
+	    {
+	      if ((integer(x) * denominator(y)) < numerator(y)) goto NOT_GEQ;
+	    }
+	  else
+	    {
+	      if (integer(x) < fraction(y)) goto NOT_GEQ;
+	    }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_GEQ;
 
 	case T_REAL:
-	  switch (type_b)
-	    {
-	    case T_INTEGER: 
-	      greater = (real(p) > integer(tmp));
-	      break;
+	  if (is_NaN(real(y))) goto NOT_GEQ;
+	  if (integer(x) < real(y)) goto NOT_GEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_GEQ;
 
-	    case T_RATIO:
-	      greater = (real(p) > fraction(tmp));
-	      /* as always fraction is trouble: (> (* 4201378396/6659027209 1.0) 6189245291/9809721694) got #f but expected #t
-	       */
-	      break;
-
-	    case T_REAL:
-	      if (is_NaN(real(tmp)))
-		{
-		  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-		    if (!s7_is_real(car(x)))
-		      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
-		  return(sc->F);
-		}
-	      greater = (real(p) > real(tmp));
-	      break;
-
-	    default:
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, tmp, "a real"));	      
-	    }
-	  break;
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">=", position_of(p, args) - 1, y, "a real"));
 	}
 
-      if (reversed) greater = !greater;
-      if (!greater)
+
+    case T_RATIO:
+    RATIO_GEQ:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
 	{
-	  for (i++, x = cdr(x); is_not_null(x); i++, x = cdr(x)) /* check trailing args for bad type */
-	    if (!s7_is_real(car(x)))
-	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
-	  return(sc->F);
+	case T_INTEGER:
+	  if ((numerator(x) < 0) && (integer(y) >= 0)) goto NOT_GEQ;
+	  if ((numerator(x) > 0) && (integer(y) <= 0))
+	    {
+	      if (is_null(p)) return(sc->T);
+	      x = y;
+	      goto INTEGER_GEQ;
+	    }
+	  if ((integer(y) < S7_LONG_MAX) && 
+	      (integer(y) > S7_LONG_MIN) && 
+	      (denominator(x) < S7_LONG_MAX) && 
+	      (denominator(x) > S7_LONG_MIN))
+	    {
+	      if (numerator(x) < (integer(y) * denominator(x))) goto NOT_GEQ;
+	    }
+	  else
+	    {
+	      if (fraction(x) < integer(y)) goto NOT_GEQ;
+	    }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_GEQ;
+
+	case T_RATIO:
+	  {
+	    s7_Int d1, d2, n1, n2;
+	    d1 = denominator(x);
+	    n1 = numerator(x);
+	    d2 = denominator(y);
+	    n2 = numerator(y);
+	    if (d1 == d2)       
+	      {
+		if (n1 < n2) goto NOT_GEQ;
+	      }
+	    else
+	      {
+		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+		    (n1 < s7_int_min) || (n2 < s7_int_min))
+		  {
+		    int d1bits, d2bits;
+		    d1bits = integer_length(d1);
+		    d2bits = integer_length(d2);
+		    if (((d1bits + d2bits) > s7_int_bits) ||
+			((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+			((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+		      {
+			if (fraction(x) < fraction(y)) goto NOT_GEQ;
+		      }
+		    else 
+		      {
+			if ((n1 * d2) < (n2 * d1)) goto NOT_GEQ;
+		      }
+		  }
+		else
+		  {
+		    if ((n1 * d2) <  (n2 * d1)) goto NOT_GEQ;
+		  }
+	      }
+	  }
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_GEQ;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_GEQ;
+	  if (fraction(x) < real(y)) goto NOT_GEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_GEQ;
+	  
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">=", position_of(p, args) - 1, y, "a real"));
 	}
 
-      x = cdr(x);
-      if (is_null(x))
-	return(sc->T);
 
-      i++;
-      p = tmp;
-      type_a = type_b;
+    case T_REAL:
+      if (is_NaN(real(x))) goto NOT_GEQ;
+
+    REAL_GEQ:
+      y = car(p);
+      p = cdr(p);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (real(x) < integer(y)) goto NOT_GEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto INTEGER_GEQ;
+
+	case T_RATIO:
+	  if (real(x) < fraction(y)) goto NOT_GEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto RATIO_GEQ;
+
+	case T_REAL:
+	  if (is_NaN(real(y))) goto NOT_GEQ;
+	  if (real(x) < real(y)) goto NOT_GEQ;
+	  if (is_null(p)) return(sc->T);
+	  x = y;
+	  goto REAL_GEQ;
+
+	case T_COMPLEX:
+	default:
+	  return(s7_wrong_type_arg_error(sc, ">=", position_of(p, args) - 1, y, "a real"));
+	}
+
+
+    case T_COMPLEX:
+    default:
+      return(s7_wrong_type_arg_error(sc, ">=", 1, x, "a real"));
     }
 
-  return(sc->T);
+ NOT_GEQ:
+  for (; is_pair(p); p = cdr(p))
+    if (!is_real(car(p)))
+      return(s7_wrong_type_arg_error(sc, ">=", position_of(p, args), car(p), "a real"));
+  return(sc->F);
+
 }
 
-
-static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
-{
-  #define H_greater "(> x1 ...) returns #t if its arguments are in decreasing order"
-  return(g_greater_1(sc, false, args));
-}
-
-
-static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
-{
-  #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
-  return(g_greater_1(sc, true, args));  
-}
 
 
 #if WITH_OPTIMIZATION
@@ -11671,7 +11999,7 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
 	  break;
 	  
 	case T_RATIO: 
-	  return(g_less_1(sc, false, args));
+	  return(g_less(sc, args));
 	  break;
 	  
 	case T_REAL:
@@ -11685,7 +12013,7 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_RATIO:
-      return(g_less_1(sc, false, args));
+      return(g_less(sc, args));
       break;
       
     case T_REAL:
@@ -11775,7 +12103,7 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
 	  break;
 	  
 	case T_RATIO: 
-	  return(g_greater_1(sc, true, args));
+	  return(g_less_or_equal(sc, args));
 	  break;
 	  
 	case T_REAL:
@@ -11789,7 +12117,7 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_RATIO:
-      return(g_greater_1(sc, true, args));
+      return(g_less_or_equal(sc, args));
       break;
       
     case T_REAL:
@@ -11878,7 +12206,7 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
 	  return(make_boolean(sc, integer(x) > integer(y)));
 
 	case T_RATIO:   
-	  return(g_greater_1(sc, false, args));
+	  return(g_greater(sc, args));
 
 	case T_REAL:
 	  if (is_NaN(real(y))) return(sc->F);
@@ -11891,7 +12219,7 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_RATIO:
-      return(g_greater_1(sc, false, args));
+      return(g_greater(sc, args));
       break;
       
     case T_REAL:
@@ -11965,7 +12293,7 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
 	  break;
 	  
 	case T_RATIO: 
-	  return(g_less_1(sc, true, args));
+	  return(g_greater_or_equal(sc, args));
 	  break;
 	  
 	case T_REAL:
@@ -11979,7 +12307,7 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_RATIO:
-      return(g_less_1(sc, true, args));
+      return(g_greater_or_equal(sc, args));
       break;
       
     case T_REAL:
@@ -12062,6 +12390,8 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
 
 
 
+/* ---------------------------------------- real-part imag-part ---------------------------------------- */
+
 static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_real_part "(real-part num) returns the real part of num"
@@ -12101,6 +12431,8 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
     }
 }
 
+
+/* ---------------------------------------- numerator denominator ---------------------------------------- */
 
 static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
 {
@@ -12149,6 +12481,8 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
     }
 }
 
+
+/* ---------------------------------------- nan? infinite? ---------------------------------------- */
 
 #if (!WITH_GMP)
 static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args) 
@@ -12200,6 +12534,9 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+
+/* ---------------------------------------- number? complex? integer? rational? real?  ---------------------------------------- */
+
 static s7_pointer g_is_number(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_number "(number? obj) returns #t if obj is a number"
@@ -12239,6 +12576,8 @@ static s7_pointer g_is_rational(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* ---------------------------------------- even? odd?---------------------------------------- */
+
 static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_even "(even? int) returns #t if the integer int is even"
@@ -12258,6 +12597,8 @@ static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, (integer(car(args)) & 1) == 1));
 }
 
+
+/* ---------------------------------------- zero? positive? negative? ---------------------------------------- */
 
 #if (!WITH_GMP)
 static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
@@ -12361,6 +12702,8 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
     }
 }
 
+
+/* ---------------------------------------- exact<->inexact exact? inexact? ---------------------------------------- */
 
 static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 {
@@ -51671,6 +52014,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 ->  1235
- * bench    52019 -> 10691
- * index    44300 ->  5960
+ * bench    52019 -> 10695
+ * index    44300 ->  5950
  */

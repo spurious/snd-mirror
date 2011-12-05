@@ -3399,7 +3399,16 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		  }
 	      }
 	  }
+
+	/* fprintf(stderr, "unopt: %lld %s\n", num, s7_object_to_c_string(s7, s7_car(source))); 
+	 */
+	/* symbol case (use local env)
+	 * simple gen case (filter g y) etc 
+	 * +/- arg real, * arg sym
+	 * read-sample sym
+	 */
       }
+
       if (optimization(ss) > 0)
 	{
 	  struct ptree *pt = NULL;
@@ -3414,6 +3423,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	      else free(err_str); /* and fallback on normal evaluator */
 	    }
 	}
+
 #endif
 
       sp = cp->sound;
