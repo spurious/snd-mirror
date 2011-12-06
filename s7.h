@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.98"
-#define S7_DATE "30-Nov-11"
+#define S7_VERSION "1.99"
+#define S7_DATE "7-Dec-11"
 
 
 typedef long long int s7_Int;
@@ -338,10 +338,6 @@ s7_Double s7_real(s7_pointer p);                                             /* 
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> Scheme real */
 s7_Double s7_number_to_real(s7_pointer x);                                   /* x can be any kind of number */
 s7_Int s7_number_to_integer(s7_pointer x);
-
-s7_Double s7_number_to_real_with_error(s7_pointer x, bool *error);
-s7_Int s7_number_to_integer_with_error(s7_pointer x, bool *error);
-
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
 unsigned long s7_ulong(s7_pointer p);                                        /* Scheme unsigned long -> C */
@@ -736,8 +732,6 @@ void *s7_object_value(s7_pointer obj);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
 
-void * s7_object_value_with_error(s7_pointer obj, int tag, bool *error);
-  
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
    * s7_new_type describes the type for Scheme:
@@ -837,7 +831,6 @@ void * s7_object_value_with_error(s7_pointer obj, int tag, bool *error);
  * 
  *        s7 changes
  *
- * 30-Nov:    s7_number_to_real_with_error.
  * 26-Oct:    s7_procedure_name.
  * 6-Oct:     changed s7_make_closure args: split the code argument in two (args and body).
  *               s7_make_closure(... code ...) is now s7_make_closure(... car(code), cdr(code) ...)

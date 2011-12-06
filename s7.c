@@ -5437,34 +5437,6 @@ s7_Int s7_number_to_integer(s7_pointer x)
 }
 
 
-s7_Double s7_number_to_real_with_error(s7_pointer x, bool *error)
-{
-  switch (type(x))
-    {
-    case T_INTEGER: return((s7_Double)integer(x));
-    case T_RATIO:   return((s7_Double)numerator(x) / (s7_Double)denominator(x));
-    case T_REAL:    return(real(x));
-    default:        
-      (*error) = true;
-      return(0.0);
-    }
-}
-
-
-s7_Int s7_number_to_integer_with_error(s7_pointer x, bool *error)
-{
-  switch (type(x))
-    {
-    case T_INTEGER: return(integer(x));
-    case T_RATIO:   return((s7_Int)((s7_Double)numerator(x) / (s7_Double)denominator(x)));
-    case T_REAL:    return((s7_Int)real(x));
-    default:        
-      (*error) = true;
-      return(0);
-    }
-}
-
-
 s7_Int s7_numerator(s7_pointer x)
 {
   if (type(x) == T_RATIO)
@@ -7597,30 +7569,105 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer x, y;
   s7_Double ang, mag;
   #define H_make_polar "(make-polar mag ang) returns a complex number with magnitude mag and angle ang"
   
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-polar magnitude,", 1, car(args), "a real"));
-  if (!s7_is_real(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "make-polar angle,", 2, cadr(args), "a real"));
+  x = car(args);
+  y = cadr(args);
 
-  if ((car(args) == small_int(0)) &&            /* (make-polar 0 1) -> 0 */
-      (is_rational(cadr(args))))
-    return(small_int(0));
+  switch (type(x))
+    {
+    case T_INTEGER:
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(x) == 0) return(x);            /* (make-polar 0 1) -> 0 */
+	  if (integer(y) == 0) return(x);            /* (make-polar 1 0) -> 1 */
+	  mag = (s7_Double)integer(x);
+	  ang = (s7_Double)integer(y);
+	  break;
 
-  ang = number_to_real(cadr(args));
+	case T_RATIO:
+	  if (integer(x) == 0) return(x);
+	  mag = (s7_Double)integer(x);
+	  ang = (s7_Double)fraction(y);
+	  break;
 
-  if (ang == 0.0)
-    return(car(args));                          /* (make-polar 1 0) -> 1 */
-  if ((ang == M_PI) || (ang == -M_PI))
-    return(s7_negate(sc, car(args)));
+	case T_REAL:
+	  ang = real(y);
+	  if (ang == 0.0) return(x);
+	  if (is_NaN(ang)) return(y);
+	  if (isinf(ang)) return(s7_make_real(sc, NAN));
+	  if ((ang == M_PI) || (ang == -M_PI)) return(make_integer(sc, -integer(x)));
+	  mag = (s7_Double)integer(x);
+	  break;
 
-  mag = number_to_real(car(args));
-  if ((is_NaN(mag)) || (is_NaN(ang)) || (isinf(ang)))
-    return(s7_make_real(sc, NAN));
+	default:
+	  return(s7_wrong_type_arg_error(sc, "make-polar angle,", 2, y, "a real"));  
+	}
+      break;
+
+    case T_RATIO:
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(y) == 0) return(x);
+	  mag = (s7_Double)fraction(x);
+	  ang = (s7_Double)integer(y);
+	  break;
+
+	case T_RATIO:
+	  mag = (s7_Double)fraction(x);
+	  ang = (s7_Double)fraction(y);
+	  break;
+
+	case T_REAL:
+	  ang = real(y);
+	  if (ang == 0.0) return(x);
+	  if (is_NaN(ang)) return(y);
+	  if (isinf(ang)) return(s7_make_real(sc, NAN));
+	  if ((ang == M_PI) || (ang == -M_PI)) return(s7_make_ratio(sc, -numerator(x), denominator(x)));
+	  mag = fraction(x);
+	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "make-polar angle,", 2, y, "a real"));  
+	}
+      break;
+
+    case T_REAL:
+      mag = real(x);
+      if (is_NaN(mag)) return(x);
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(y) == 0) return(x);
+	  ang = (s7_Double)integer(y);
+	  break;
+
+	case T_RATIO:
+	  ang = (s7_Double)fraction(y);
+	  break;
+
+	case T_REAL:
+	  ang = real(y);
+	  if (ang == 0.0) return(x);
+	  if (is_NaN(ang)) return(y);
+	  if (isinf(ang)) return(s7_make_real(sc, NAN));
+	  break;
+
+	default:
+	  return(s7_wrong_type_arg_error(sc, "make-polar angle,", 2, y, "a real"));  
+	}
+      break;
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "make-polar magnitude,", 1, x, "a real"));
+    }
 
   return(s7_make_complex(sc, mag * cos(ang), mag * sin(ang)));
+
   /* since sin is inaccurate for large arguments, so is make-polar:
    *    (make-polar 1.0 1e40) -> -0.76267273202438+0.64678458842683i, not 8.218988919070239214448025364432557517335E-1-5.696334009536363273080341815735687231337E-1i
    */
@@ -7629,21 +7676,44 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 {
-  s7_Double imag;
+  s7_pointer x, y;
   #define H_make_rectangular "(make-rectangular x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
   
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-rectangular real part,", 1, car(args), "a real"));
-  if (!s7_is_real(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "make-rectangular imaginary part,", 2, cadr(args), "a real"));
-  
-  imag = number_to_real(cadr(args));
-  if (imag == 0.0)
-    return(car(args)); /* this preserves type: (make-rectangular 1 0) -> 1 */
+  x = car(args);
+  y = cadr(args);
 
-  return(s7_make_complex(sc, 
-			 number_to_real(car(args)), 
-			 imag));
+  switch (type(y))
+    {
+    case T_INTEGER:
+      switch (type(x))
+	{
+	case T_INTEGER: if (integer(y) == 0) return(x); return(s7_make_complex(sc, (s7_Double)integer(x), (s7_Double)integer(y)));
+	case T_RATIO:   if (integer(y) == 0) return(x); return(s7_make_complex(sc, (s7_Double)fraction(x), (s7_Double)integer(y)));
+	case T_REAL:    if (integer(y) == 0) return(x); return(s7_make_complex(sc, real(x), (s7_Double)integer(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "make-rectangular real part,", 1, x, "a real"));
+	}
+      
+    case T_RATIO:
+      switch (type(x))
+	{
+	case T_INTEGER: return(s7_make_complex(sc, (s7_Double)integer(x), (s7_Double)fraction(y)));
+	case T_RATIO:   return(s7_make_complex(sc, (s7_Double)fraction(x), (s7_Double)fraction(y)));
+	case T_REAL:    return(s7_make_complex(sc, real(x), (s7_Double)fraction(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "make-rectangular real part,", 1, x, "a real"));
+	}
+
+    case T_REAL:
+      switch (type(x))
+	{
+	case T_INTEGER: if (real(y) == 0.0) return(x); return(s7_make_complex(sc, (s7_Double)integer(x), real(y)));
+	case T_RATIO:   if (real(y) == 0.0) return(x); return(s7_make_complex(sc, (s7_Double)fraction(x), real(y)));
+	case T_REAL:    if (real(y) == 0.0) return(x); return(s7_make_complex(sc, real(x), real(y)));
+	default:        return(s7_wrong_type_arg_error(sc, "make-rectangular real part,", 1, x, "a real"));
+	}
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "make-rectangular imaginary part,", 2, y, "a real"));  
+    }
 }
 
 
@@ -8249,6 +8319,9 @@ static bool int_pow_ok(s7_Int x, s7_Int y)
 }
 
 
+/* PERHAPS: expt fixed, atan, g_greater_abs et al?
+ */
+
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
   #define H_expt "(expt z1 z2) returns z1^z2"
@@ -8518,171 +8591,296 @@ static s7_pointer s7_truncate(s7_scheme *sc, const char *caller, s7_Double xf)  
 }
 
 
-static s7_pointer quotient(s7_scheme *sc, const char *caller, s7_pointer x, s7_pointer y)
-{
-  /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib */
-  int ret_type;
-
-  if (type(x) > type(y))
-    ret_type = type(x);
-  else ret_type = type(y);
-
-  switch (ret_type)
-    {
-    case T_INTEGER:
-      return(make_integer(sc, integer(x) / integer(y)));
-
-    case T_RATIO:
-      {
-	s7_Int d1, d2, n1, n2;
-	d1 = number_to_denominator(x);
-	n1 = number_to_numerator(x);
-	d2 = number_to_denominator(y);
-	n2 = number_to_numerator(y);
-	if (d1 == d2)
-	  return(make_integer(sc, n1 / n2));              /* (quotient 3/9223372036854775807 1/9223372036854775807) */
-	if (n1 == n2)
-	  return(make_integer(sc, d2 / d1));              /* (quotient 9223372036854775807/2 9223372036854775807/8) */
-
-	if ((integer_length(n1) + integer_length(d2) >= s7_int_bits) ||
-	    (integer_length(n2) + integer_length(d1) >= s7_int_bits))
-	  return(s7_truncate(sc, caller, number_to_real(x) / number_to_real(y)));
-	/* this can lose:
-	 *   (quotient 1 2305843009213693952/4611686018427387903) -> 2, not 1
-	 *   (quotient 21053343141/6701487259 3587785776203/1142027682075) -> 1, not 0
-	 */
-
-	return(make_integer(sc, (n1 * d2) / (n2 * d1)));  /* (quotient 922337203685477580 1/3) */
-      }
-      
-    default:
-      return(s7_truncate(sc, caller, number_to_real(x) / number_to_real(y)));
-    }
-}
-
 
 static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 {
   #define H_quotient "(quotient x1 x2) returns the integer quotient of x1 and x2; (quotient 4 3) = 1"
-  
+  /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib 
+   */  
   s7_pointer x, y;
+  s7_Int d1, d2, n1, n2;
+
   x = car(args);
   y = cadr(args);
 
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a real"));
-  if (!s7_is_real(y))
-    return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a real"));
-
-  if (s7_is_zero(y))
-    return(division_by_zero_error(sc, "quotient", args));
-
-  if (!is_rational(x))
+  switch (type(x))
     {
-      s7_Double rx;
-      rx = real(x);
-      if ((isinf(rx)) || (is_NaN(rx)))
+    case T_INTEGER:
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(y) == 0) 
+	    return(division_by_zero_error(sc, "quotient", args));
+	  return(make_integer(sc, integer(x) / integer(y)));
+
+	case T_RATIO:
+	  n1 = integer(x);
+	  d1 = 1;
+	  n2 = numerator(y);
+	  d2 = denominator(y);
+	  goto RATIO_QUO_RATIO;
+
+	case T_REAL:
+	  if (real(y) == 0.0) 
+	    return(division_by_zero_error(sc, "quotient", args));
+	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	    return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
+	  return(s7_truncate(sc, "quotient", (s7_Double)integer(x) / real(y)));
+
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a real"));
+	}
+
+    case T_RATIO:
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(y) == 0) 
+	    return(division_by_zero_error(sc, "quotient", args));
+	  n1 = numerator(x);
+	  d1 = denominator(x);
+	  n2 = integer(y);
+	  d2 = 1;
+	  goto RATIO_QUO_RATIO;
+
+	case T_RATIO:
+	  n1 = numerator(x);
+	  d1 = denominator(x);
+	  n2 = numerator(y);
+	  d2 = denominator(y);
+	RATIO_QUO_RATIO:
+	  if (d1 == d2)
+	    return(make_integer(sc, n1 / n2));              /* (quotient 3/9223372036854775807 1/9223372036854775807) */
+	  if (n1 == n2)
+	    return(make_integer(sc, d2 / d1));              /* (quotient 9223372036854775807/2 9223372036854775807/8) */
+
+	  if ((integer_length(n1) + integer_length(d2) >= s7_int_bits) ||
+	      (integer_length(n2) + integer_length(d1) >= s7_int_bits))
+	    return(s7_truncate(sc, "quotient", ((long double)n1 / (long double)n2) * ((long double)d2 / (long double)d1)));
+	  /* this can lose:
+	   *   (quotient 1 2305843009213693952/4611686018427387903) -> 2, not 1
+	   *   (quotient 21053343141/6701487259 3587785776203/1142027682075) -> 1, not 0
+	   */
+	  return(make_integer(sc, (n1 * d2) / (n2 * d1)));  /* (quotient 922337203685477580 1/3) */
+
+	case T_REAL:
+	  if (real(y) == 0.0) 
+	    return(division_by_zero_error(sc, "quotient", args));
+	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	    return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
+	  return(s7_truncate(sc, "quotient", (s7_Double)fraction(x) / real(y)));
+
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a real"));
+	}
+
+    case T_REAL:
+      if ((isinf(real(x))) || (is_NaN(real(x))))
 	return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a normal real"));
-    }
-
-  if (!is_rational(y))
-    {
-      s7_Double ry;
-      ry = real(y);
-      if ((isinf(ry)) || (is_NaN(ry)))
-	return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
 
       /* if infs allowed we need to return infs/nans, else:
        *    (quotient inf.0 1e-309) -> -9223372036854775808
        *    (quotient inf.0 inf.0) -> -9223372036854775808
        */
-    }
 
-  return(quotient(sc, "quotient", car(args), cadr(args)));
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(y) == 0) 
+	    return(division_by_zero_error(sc, "quotient", args));
+	  return(s7_truncate(sc, "quotient", real(x) / (s7_Double)integer(y)));
+
+	case T_RATIO:
+	  return(s7_truncate(sc, "quotient", real(x) / (s7_Double)fraction(y)));
+
+	case T_REAL:
+	  if (real(y) == 0.0) 
+	    return(division_by_zero_error(sc, "quotient", args));
+	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	    return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
+	  return(s7_truncate(sc, "quotient", real(x) / real(y)));
+
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a real"));
+	}
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a real"));
+    }
 }
 
 
 static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 {
   #define H_remainder "(remainder x1 x2) returns the integer remainder of x1 and x2; (remainder 10 3) = 1"
-  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
+  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib 
+   */
+  s7_pointer x, y;
+  s7_Int quo, d1, d2, n1, n2;
+  s7_Double pre_quo;
 
-  s7_pointer ap, bp;
-  int typ;
-  
-  ap = car(args);
-  if (!s7_is_real(ap))
-    return(s7_wrong_type_arg_error(sc, "remainder", 1, ap, "a real"));
+  x = car(args);
+  y = cadr(args);
 
-  bp = cadr(args);
-  if (!s7_is_real(bp))
-    return(s7_wrong_type_arg_error(sc, "remainder", 2, bp, "a real"));
-
-  if (s7_is_zero(bp))
-    return(division_by_zero_error(sc, "remainder", args));
-
-  if ((!is_rational(ap)) &&
-      (is_NaN(real(ap))))                                 /* (remainder 1 (string->number "nan.0")) */
-    return(s7_wrong_type_arg_error(sc, "remainder", 1, ap, "a normal real"));
-  if ((!is_rational(bp)) &&
-      (is_NaN(real(bp))))
-    return(s7_wrong_type_arg_error(sc, "remainder", 2, bp, "a normal real"));
-
-  if (type(ap) > type(bp))
-    typ = type(ap);
-  else typ = type(bp);
-
-  switch (typ)
+  switch (type(x))
     {
-    case T_INTEGER: 
-      return(make_integer(sc, integer(ap) % integer(bp)));
+    case T_INTEGER:
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(y) == 0) 
+	    return(division_by_zero_error(sc, "remainder", args));
+	  return(make_integer(sc, integer(x) % integer(y)));
 
-    case T_RATIO: 
-      {
-	/* as usual with ratios, there are lots of tricky cases */
-	s7_Int quo, n1, n2, d1, d2;
+	case T_RATIO:
+	  n1 = integer(x);
+	  d1 = 1;
+	  n2 = numerator(y);
+	  d2 = denominator(y);
+	  goto RATIO_REM_RATIO;
 
-	quo = s7_integer(quotient(sc, "remainder", ap, bp));
-	if (quo == 0)
-	  return(ap);
+	case T_REAL:
+	  if (real(y) == 0.0) 
+	    return(division_by_zero_error(sc, "remainder", args));
+	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	    return(s7_wrong_type_arg_error(sc, "remainder", 2, y, "a normal real"));
 
-	d1 = number_to_denominator(ap);
-	n1 = number_to_numerator(ap);
-	d2 = number_to_denominator(bp);
-	n2 = number_to_numerator(bp);
+	  pre_quo = (s7_Double)integer(x) / real(y);
+	  if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
+	    return(s7_out_of_range_error(sc, "remainder", 0, args, "too large to express as an integer"));
+	  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+	  return(s7_make_real(sc, integer(x) - real(y) * quo));
 
-	if ((d1 == d2) &&
-	    ((integer_length(n2) + integer_length(quo)) < s7_int_bits))
-	  return(s7_make_ratio(sc, n1 - n2 * quo, d1));
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "remainder", 2, y, "a real"));
+	}
+
+    case T_RATIO:
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(y) == 0) 
+	    return(division_by_zero_error(sc, "remainder", args));
+	  n1 = numerator(x);
+	  d1 = denominator(x);
+	  n2 = integer(y);
+	  d2 = 1;
+	  goto RATIO_REM_RATIO;
+
+	case T_RATIO:
+	  n1 = numerator(x);
+	  d1 = denominator(x);
+	  n2 = numerator(y);
+	  d2 = denominator(y);
+	RATIO_REM_RATIO:
+	  if (d1 == d2)
+	    quo = (s7_Int)(n1 / n2);
+	  else
+	    {
+	      if (n1 == n2)
+		quo = (s7_Int)(d2 / d1);
+	      else
+		{
+		  if ((integer_length(n1) + integer_length(d2) >= s7_int_bits) ||
+		      (integer_length(n2) + integer_length(d1) >= s7_int_bits))
+		    {
+		      pre_quo = ((long double)n1 / (long double)n2) * ((long double)d2 / (long double)d1);
+		      if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
+			return(s7_out_of_range_error(sc, "remainder", 0, args, "too large to express as an integer"));
+		      if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+		    }
+		  else quo = (n1 * d2) / (n2 * d1);
+		}
+	    }
+	  if (quo == 0)
+	    return(x);
+
+	  if ((d1 == d2) &&
+	      ((integer_length(n2) + integer_length(quo)) < s7_int_bits))
+	    return(s7_make_ratio(sc, n1 - n2 * quo, d1));
       
-	if ((integer_length(n1) + integer_length(d2) < s7_int_bits) &&
-	    (integer_length(d1) + integer_length(d2) < s7_int_bits) &&
-	    (integer_length(n2) + integer_length(d1) + integer_length(quo) < s7_int_bits))
-	  return(s7_make_ratio(sc, n1 * d2 - n2 * d1 * quo, d1 * d2));
+	  if ((integer_length(n1) + integer_length(d2) < s7_int_bits) &&
+	      (integer_length(d1) + integer_length(d2) < s7_int_bits) &&
+	      (integer_length(n2) + integer_length(d1) + integer_length(quo) < s7_int_bits))
+	    return(s7_make_ratio(sc, n1 * d2 - n2 * d1 * quo, d1 * d2));
+	  return(s7_out_of_range_error(sc, "remainder", 0, args, "intermediate (a/b) is too large"));
 
-	return(s7_out_of_range_error(sc, "remainder", 0, ap, "intermediate (a/b) is too large"));
-      }
+	case T_REAL:
+	  {
+	    s7_Double frac;
+	    if (real(y) == 0.0) 
+	      return(division_by_zero_error(sc, "remainder", args));
+	    if ((isinf(real(y))) || (is_NaN(real(y))))
+	      return(s7_wrong_type_arg_error(sc, "remainder", 2, y, "a normal real"));
+	    frac = fraction(x);
+	    pre_quo = frac / real(y);
+	    if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
+	      return(s7_out_of_range_error(sc, "remainder", 0, args, "too large to express as an integer"));
+	    if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+	    return(s7_make_real(sc, frac - real(y) * quo));
+	  }
+
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "remainder", 2, y, "a real"));
+	}
+
+    case T_REAL:
+      if ((isinf(real(x))) || (is_NaN(real(x))))
+	return(s7_wrong_type_arg_error(sc, "remainder", 1, x, "a normal real"));
+
+      switch (type(y))
+	{
+	case T_INTEGER:
+	  if (integer(y) == 0) 
+	    return(division_by_zero_error(sc, "remainder", args));
+	  pre_quo = real(x) / (s7_Double)integer(y);
+	  if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
+	    return(s7_out_of_range_error(sc, "remainder", 0, args, "too large to express as an integer"));
+	  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+	  return(s7_make_real(sc, real(x) - integer(y) * quo));
+
+	case T_RATIO:
+	  {
+	    s7_Double frac;
+	    frac = fraction(y);
+	    pre_quo = real(x) / frac;
+	    if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
+	      return(s7_out_of_range_error(sc, "remainder", 0, args, "too large to express as an integer"));
+	    if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+	    return(s7_make_real(sc, real(x) - frac * quo));
+	  }
+
+	case T_REAL:
+	  if (real(y) == 0.0) 
+	    return(division_by_zero_error(sc, "remainder", args));
+	  if ((isinf(real(y))) || (is_NaN(real(y))))
+	    return(s7_wrong_type_arg_error(sc, "remainder", 2, y, "a normal real"));
+
+	  pre_quo = real(x) / real(y);
+	  if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
+	    return(s7_out_of_range_error(sc, "remainder", 0, args, "too large to express as an integer"));
+	  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+
+	  return(s7_make_real(sc, real(x) - real(y) * quo));
+
+	  /* see under sin -- this calculation is completely bogus if "a" is large
+	   * (quotient 1e22 (* 2 pi)) -> -9223372036854775808 -- should this return arithmetic-overflow?
+	   *          but it should be 1591549430918953357688, 
+	   * (remainder 1e22 (* 2 pi)) -> 1.0057952155665e+22
+	   * -- the "remainder" is greater than the original argument!
+	   * Clisp gives 0.0 here, as does sbcl
+	   * currently s7 throws an error (out-of-range).
+	   */
+
+	default:        
+	  return(s7_wrong_type_arg_error(sc, "remainder", 2, y, "a real"));
+	}
 
     default:
-      {
-	s7_Int quo;
-	quo = s7_integer(quotient(sc, "remainder", ap, bp));
-	if (quo == 0)
-	  return(ap);
-	
-	return(s7_make_real(sc, number_to_real(ap) - number_to_real(bp) * quo));
-
-      /* see under sin -- this calculation is completely bogus if "a" is large
-       * (quotient 1e22 (* 2 pi)) -> -9223372036854775808 -- should this return arithmetic-overflow?
-       *          but it should be 1591549430918953357688, 
-       * (remainder 1e22 (* 2 pi)) -> 1.0057952155665e+22
-       * -- the "remainder" is greater than the original argument!
-       * Clisp gives 0.0 here, as does sbcl
-       * currently s7 throws an error (out-of-range).
-       */
-      }
+      return(s7_wrong_type_arg_error(sc, "remainder", 1, x, "a real"));
     }
 }
+
 
 
 static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
@@ -9286,7 +9484,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
 
 #if WITH_OPTIMIZATION
-static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_csn;
+static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_si, add_is, add_sf, add_fs;
 
 static s7_pointer add_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
@@ -9410,13 +9608,13 @@ static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
   return(add1(sc, cadr(args), 2));
 }
 
-static s7_pointer g_add_csn(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_add_si(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   s7_Int n;
 
   x = finder(sc, car(args));
-  n = s7_integer(cadr(args));
+  n = integer(cadr(args));
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) + n));
@@ -9424,6 +9622,60 @@ static s7_pointer g_add_csn(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(s7_make_real(sc, real(x) + n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
     default:        return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
+    }
+  return(x);
+}
+
+static s7_pointer g_add_is(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Int n;
+
+  x = finder(sc, cadr(args));
+  n = integer(car(args));
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_integer(sc, integer(x) + n));
+    case T_RATIO:   return(add_ratios(sc, x, cadr(args)));
+    case T_REAL:    return(s7_make_real(sc, real(x) + n));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
+    default:        return(s7_wrong_type_arg_error(sc, "+", 2, x, "a number"));
+    }
+  return(x);
+}
+
+static s7_pointer g_add_sf(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Double n;
+
+  x = finder(sc, car(args));
+  n = real(cadr(args));
+  switch (type(x))
+    {
+    case T_INTEGER: return(s7_make_real(sc, integer(x) + n));
+    case T_RATIO:   return(s7_make_real(sc, fraction(x) + n));
+    case T_REAL:    return(s7_make_real(sc, real(x) + n));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
+    default:        return(s7_wrong_type_arg_error(sc, "+", 1, x, "a number"));
+    }
+  return(x);
+}
+
+static s7_pointer g_add_fs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Double n;
+
+  x = finder(sc, cadr(args));
+  n = real(car(args));
+  switch (type(x))
+    {
+    case T_INTEGER: return(s7_make_real(sc, integer(x) + n));
+    case T_RATIO:   return(s7_make_real(sc, fraction(x) + n));
+    case T_REAL:    return(s7_make_real(sc, real(x) + n));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
+    default:        return(s7_wrong_type_arg_error(sc, "+", 2, x, "a number"));
     }
   return(x);
 }
@@ -10046,7 +10298,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 
 
 #if WITH_OPTIMIZATION
-static s7_pointer multiply_2, multiply_i2, multiply_fs, multiply_sf;
+static s7_pointer multiply_2, multiply_fs, multiply_sf, multiply_is, multiply_si;
 #if (!WITH_GMP)
   static s7_pointer sqr_ss;
 #endif
@@ -10123,18 +10375,40 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_multiply_i2(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_multiply_si(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
+  s7_Int n;
 
-  x = car(args);
+  x = finder(sc, car(args));
+  n = integer(cadr(args));
+
   switch (type(x))
     {
-    case T_INTEGER: return(make_integer(sc, integer(x) * 2));
-    case T_RATIO:   return(s7_make_ratio(sc, numerator(x) * 2, denominator(x)));
-    case T_REAL:    return(s7_make_real(sc, real(x) * 2.0));
-    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * 2.0, imag_part(x) * 2.0));
+    case T_INTEGER: return(make_integer(sc, integer(x) * n));
+    case T_RATIO:   return(s7_make_ratio(sc, numerator(x) * n, denominator(x)));
+    case T_REAL:    return(s7_make_real(sc, real(x) * n));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * n, imag_part(x) * n));
     default:        return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
+    }
+  return(x);
+}
+
+static s7_pointer g_multiply_is(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Int n;
+
+  x = finder(sc, cadr(args));
+  n = integer(car(args));
+
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_integer(sc, integer(x) * n));
+    case T_RATIO:   return(s7_make_ratio(sc, numerator(x) * n, denominator(x)));
+    case T_REAL:    return(s7_make_real(sc, real(x) * n));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * n, imag_part(x) * n));
+    default:        return(s7_wrong_type_arg_error(sc, "*", 2, x, "a number"));
     }
   return(x);
 }
@@ -10172,7 +10446,7 @@ static s7_pointer g_multiply_sf(s7_scheme *sc, s7_pointer args)
     case T_RATIO:   return(s7_make_real(sc, numerator(x) * scl / denominator(x)));
     case T_REAL:    return(s7_make_real(sc, real(x) * scl));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * scl, imag_part(x) * scl));
-    default:        return(s7_wrong_type_arg_error(sc, "*", 1, x, "a number"));
+    default:        return(s7_wrong_type_arg_error(sc, "*", 2, x, "a number"));
     }
   return(x);
 }
@@ -20751,8 +21025,10 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   s7_pointer x;
   unsigned int hash_len, loc;
+
   hash_len = (int)hash_table_length(table) - 1;
   loc = hash_loc(sc, key) & hash_len;
+
   for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
     if (s7_is_equal(sc, caar(x), key))
       return(car(x));
@@ -20823,18 +21099,21 @@ static s7_pointer hash_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
 static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   #define HASH_FLOAT_EPSILON 1.0e-12
-  if ((s7_is_real(key)) && 
-      (!s7_is_rational(key)))
+  /* give the equality check some room.  We only get here if key is T_REAL.
+   */
+
+  if (type(key) == T_REAL)
     {
-      /* give the equality check some room */
       s7_Double keyval;
       s7_pointer x;
       int hash_len, loc;
+
       hash_len = (int)hash_table_length(table) - 1;
-      loc = (int)floor(s7_real(key));
+      loc = (int)floor(real(key));
       if (loc < 0) loc = -loc;
       loc &= hash_len;
-      keyval = s7_real(key);
+      keyval = real(key);
+
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (fabs(s7_real(caar(x)) - keyval) < HASH_FLOAT_EPSILON)
 	  return(car(x));
@@ -22383,16 +22662,6 @@ static bool object_is_applicable(s7_pointer x)
 void *s7_object_value(s7_pointer obj)
 {
   return(object_value(obj));
-}
-
-
-void * s7_object_value_with_error(s7_pointer obj, int tag, bool *error)
-{
-  if ((is_c_object(obj)) &&
-      (object_type(obj) == tag))
-    return(object_value(obj));
-  (*error) = true;
-  return(NULL);
 }
 
 
@@ -29502,11 +29771,33 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	    }
 	  return(add_s1);
 	}
+
       if ((s7_is_integer(caddr(expr))) &&
 	  (is_symbol(cadr(expr))))
 	{
 	  optimize_data(expr) = HOP_SAFE_C_C;
-	  return(add_csn);
+	  return(add_si);
+	}
+
+      if ((s7_is_integer(cadr(expr))) &&
+	  (is_symbol(caddr(expr))))
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(add_is);
+	}
+
+      if ((type(caddr(expr)) == T_REAL) &&
+	  (is_symbol(cadr(expr))))
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(add_sf);
+	}
+
+      if ((type(cadr(expr)) == T_REAL) &&
+	  (is_symbol(caddr(expr))))
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(add_fs);
 	}
 
       /* fprintf(stderr, "add2: %s\n", DISPLAY_80(expr)); */
@@ -29521,8 +29812,19 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 {
   if (args == 2)
     {
-      if (caddr(expr) == small_int(2))
-	return(multiply_i2);
+      if ((is_symbol(cadr(expr))) &&
+	  (s7_is_integer(caddr(expr))))
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(multiply_si);
+	}
+
+      if ((is_symbol(caddr(expr))) &&
+	  (s7_is_integer(cadr(expr))))
+	{
+	  optimize_data(expr) = HOP_SAFE_C_C;
+	  return(multiply_is);
+	}
 
       if ((type(cadr(expr)) == T_REAL) &&
 	  (is_symbol(caddr(expr))))
@@ -30013,8 +30315,14 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(add_s1) = c_function_class(f);
   add_cs1 = s7_make_function(sc, "+", g_add_cs1, 2, 0, false, "+ optimization");
   c_function_class(add_cs1) = c_function_class(f);
-  add_csn = s7_make_function(sc, "+", g_add_csn, 2, 0, false, "+ optimization");
-  c_function_class(add_csn) = c_function_class(f);
+  add_si = s7_make_function(sc, "+", g_add_si, 2, 0, false, "+ optimization");
+  c_function_class(add_si) = c_function_class(f);
+  add_is = s7_make_function(sc, "+", g_add_is, 2, 0, false, "+ optimization");
+  c_function_class(add_is) = c_function_class(f);
+  add_sf = s7_make_function(sc, "+", g_add_sf, 2, 0, false, "+ optimization");
+  c_function_class(add_sf) = c_function_class(f);
+  add_fs = s7_make_function(sc, "+", g_add_fs, 2, 0, false, "+ optimization");
+  c_function_class(add_fs) = c_function_class(f);
   
 
   /* - */
@@ -30039,8 +30347,10 @@ static void init_choosers(s7_scheme *sc)
 
   multiply_2 = s7_make_function(sc, "*", g_multiply_2, 2, 0, false, "* optimization");
   c_function_class(multiply_2) = c_function_class(f);
-  multiply_i2 = s7_make_function(sc, "*", g_multiply_i2, 2, 0, false, "* optimization");
-  c_function_class(multiply_i2) = c_function_class(f);
+  multiply_is = s7_make_function(sc, "*", g_multiply_is, 2, 0, false, "* optimization");
+  c_function_class(multiply_is) = c_function_class(f);
+  multiply_si = s7_make_function(sc, "*", g_multiply_si, 2, 0, false, "* optimization");
+  c_function_class(multiply_si) = c_function_class(f);
   multiply_fs = s7_make_function(sc, "*", g_multiply_fs, 2, 0, false, "* optimization");
   c_function_class(multiply_fs) = c_function_class(f);
   multiply_sf = s7_make_function(sc, "*", g_multiply_sf, 2, 0, false, "* optimization");

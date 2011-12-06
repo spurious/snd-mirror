@@ -32726,6 +32726,14 @@ abs     1       2
 (test (make-rectangular) 'error)
 (test (make-rectangular 1.0 1.0+0.1i) 'error)
 (test (make-rectangular 1.0+0.1i 1.0) 'error)
+(for-each
+ (lambda (x)
+   (test (make-rectangular x 0-i) 'error))
+ (list 0 1 1/2 1.0 0.0 0+i))
+(for-each
+ (lambda (x)
+   (test (make-rectangular 0-i x) 'error))
+ (list 0 1 pi (- pi) 1/2 0.0 1.0 0+i))
 
 
 
@@ -33237,6 +33245,14 @@ abs     1       2
 (test (make-polar) 'error)
 (test (make-polar 1.0 1.0+0.1i) 'error)
 (test (make-polar 1.0+0.1i 0.0) 'error)
+(for-each
+ (lambda (x)
+   (test (make-polar x 0-i) 'error))
+ (list 0 1 1/2 1.0 0.0 0+i))
+(for-each
+ (lambda (x)
+   (test (make-polar 0-i x) 'error))
+ (list 0 1 1/2 pi (- pi) 0.0 1.0 0+i))
 
 
 

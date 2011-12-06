@@ -247,12 +247,12 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
   vct *v;
   mus_long_t loc;
   s7_pointer pos;
-  bool err = false;
 
   v = XEN_TO_VCT(obj);
+
   pos = XEN_CAR(args);
-  loc = s7_number_to_integer_with_error(pos, &err);
-  XEN_ASSERT_TYPE(!err, pos, XEN_ARG_2, S_vct_ref, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
+  loc = s7_number_to_integer(pos);
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
@@ -268,12 +268,12 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
   mus_long_t loc;
   double x;
   s7_pointer pos, val;
-  bool err = false;
 
   v = XEN_TO_VCT(obj);
+
   pos = XEN_CAR(args);
-  loc = s7_number_to_integer_with_error(pos, &err);
-  XEN_ASSERT_TYPE(!err, pos, XEN_ARG_2, S_vct_setB, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
+  loc = s7_number_to_integer(pos);
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A < 0?");
@@ -281,8 +281,8 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A too high?");
 
   val = XEN_CADR(args);
-  x = s7_number_to_real_with_error(val, &err);
-  XEN_ASSERT_TYPE(!err, val, XEN_ARG_3, S_vct_setB, "a real");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real");
+  x = s7_number_to_real(val);
 
   v->data[loc] = x;
   return(val);
@@ -520,18 +520,9 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_setB, "a vct");
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
-
-#if HAVE_SCHEME
-  {
-    bool err = false;
-    x = s7_number_to_real_with_error(val, &err);
-    XEN_ASSERT_TYPE(!err, val, XEN_ARG_3, S_vct_setB, "a real number");
-  }
-#else
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
-  x = XEN_TO_C_DOUBLE(val);
-#endif
 
+  x = XEN_TO_C_DOUBLE(val);
   v = XEN_TO_VCT(obj);
   loc = XEN_TO_C_LONG_LONG(pos);
 

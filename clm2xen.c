@@ -54,62 +54,13 @@
 
 
 #if HAVE_SCHEME
-
 #define DISPLAY(Expr) s7_object_to_c_string(sc, Expr)
 #define DISPLAY_80(Expr) s7_object_to_c_string(sc, Expr)
+#endif
+
 
 #define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) \
-  do { \
-      if (XEN_BOUND_P(Xen_Arg)) \
-        { \
-         bool err = false; \
-         C_Val = s7_number_to_real_with_error(Xen_Arg, &err); \
-         if (err) s7_wrong_type_arg_error(s7, Caller, ArgNum, Xen_Arg, "a real"); \
-        } \
-     } while (0)
-
-#define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
-  do { \
-      bool err = false; \
-      C_Val = s7_number_to_real_with_error(Xen_Arg, &err); \
-      if (err) s7_wrong_type_arg_error(s7, Caller, ArgNum, Xen_Arg, "a real");\
-     } while (0)
-
-#define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum)		\
-  do { \
-      bool err = false; \
-      C_Val = s7_number_to_integer_with_error(Xen_Arg, &err); \
-      if (err) s7_wrong_type_arg_error(s7, Caller, ArgNum, Xen_Arg, "a real"); \
-     } while (0)
-
-#define XEN_TO_C_GENERATOR(Xen_Arg, C_Val, Checker, Caller, Descr)		\
-  do { \
-    bool err = false; \
-    mus_xen *_Gen_; \
-    _Gen_ = ((mus_xen *)s7_object_value_with_error(Xen_Arg, mus_xen_tag, &err)); \
-    if (err) \
-       s7_wrong_type_arg_error(s7, Caller, XEN_ARG_1, Xen_Arg, Descr); \
-    else \
-      { \
-        C_Val = (mus_any *)(_Gen_->gen);				\
-        XEN_ASSERT_TYPE(Checker(C_Val), Xen_Arg, XEN_ARG_1, Caller, Descr); \
-      } \
-  } while (0)
-
-#define XEN_TO_C_ANY_GENERATOR(Xen_Arg, C_Val, Caller, Descr)		\
-  do { \
-    bool err = false; \
-    mus_xen *_Gen_; \
-    _Gen_ = ((mus_xen *)s7_object_value_with_error(Xen_Arg, mus_xen_tag, &err)); \
-    if (err) \
-       s7_wrong_type_arg_error(s7, Caller, XEN_ARG_1, Xen_Arg, Descr); \
-    else C_Val = (mus_any *)(_Gen_->gen);			       \
-  } while (0)
-
-#else
-
-#define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) \
-   if (XEN_NUMBER_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(Xen_Arg), Xen_Arg, ArgNum, Caller, "a number")
+  if (XEN_BOUND_P(Xen_Arg)) {if (XEN_NUMBER_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "a number");}
 
 #define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
    if (XEN_NUMBER_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "a number")
@@ -123,7 +74,6 @@
 #define XEN_TO_C_ANY_GENERATOR(Xen_Arg, C_Val, Caller, Descr) \
   XEN_ASSERT_TYPE((MUS_XEN_P(Xen_Arg)) && (C_Val = XEN_TO_MUS_ANY(Xen_Arg)), Xen_Arg, XEN_ARG_1, Caller, Descr)
 
-#endif
 
 
 #define MAX_ARGLIST_LEN 24
@@ -2052,30 +2002,33 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
   #define H_oscil "(" S_oscil " gen (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
   s7_pointer obj;
   mus_any *osc;
-  mus_xen *ox;
-  bool err = false;
 
   obj = s7_car(args);
-  ox = (mus_xen *)s7_object_value_with_error(obj, mus_xen_tag, &err);
-  if (err) s7_wrong_type_arg_error(s7, S_oscil, 1, obj, "an oscil"); 
+  if (s7_object_type(obj) != mus_xen_tag)
+    s7_wrong_type_arg_error(s7, S_oscil, 1, obj, "an oscil"); 
+  osc = (mus_any *)(((mus_xen *)s7_object_value(obj))->gen);
 
-  osc = (mus_any *)(ox->gen);
   if (mus_oscil_p(osc))
     {
+      s7_pointer p;
       double fm, pm;
       args = s7_cdr(args);
       if (s7_is_null(s7, args))
 	return(s7_make_real(sc, mus_oscil_unmodulated(osc)));
 
-      fm = s7_number_to_real_with_error(s7_car(args), &err);
-      if (err) s7_wrong_type_arg_error(s7, S_oscil, 2, s7_car(args), "a real"); 
+      p = s7_car(args);
+      if (!s7_is_real(p))
+	s7_wrong_type_arg_error(s7, S_oscil, 2, p, "a real"); 
+      fm = s7_number_to_real(p);
 
       args = s7_cdr(args);
       if (s7_is_null(s7, args))
 	return(s7_make_real(sc, mus_oscil_fm(osc, fm)));
+      p = s7_car(args);
+      if (!s7_is_real(p))
+	s7_wrong_type_arg_error(s7, S_oscil, 3, p, "a real"); 
+      pm = s7_number_to_real(p);
 
-      pm = s7_number_to_real_with_error(s7_car(args), &err);
-      if (err) s7_wrong_type_arg_error(s7, S_oscil, 3, s7_car(args), "a real"); 
       return(s7_make_real(sc, mus_oscil(osc, fm, pm)));
     }
   XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
