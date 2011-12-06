@@ -272,9 +272,12 @@
 (set! (window-x) 600)
 (set! (window-y) 10)
 
+
 (define (fneq a b) 
   "float equal within .001"
-  (> (abs (- a b)) .001))
+  (or (not (real? a))
+      (not (real? b))
+      (> (abs (- a b)) .001)))
 
 (define (ffneq a b)
   "float equal within .01"
@@ -13215,11 +13218,8 @@ EDITS: 5
       (if (fneq (sample 10) 2.0) (snd-display #__line__ ";as-one-edit 2: ~A" (sample 10)))
       (if (not (= (edit-position ind 0) 1)) 
 	  (snd-display #__line__ ";as-one-edit 2 edpos: ~A" (edit-position ind 0))
-	  (begin
-	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-2" "set" 0 21)))
-		(snd-display #__line__ ";as-one-edit 2 edlist: ~A" (edit-fragment 1 ind 0)))
-	    (if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
-		(snd-display #__line__ ";as-one-edit 2 original edlist: ~A" (edit-fragment 0 ind 0)))))
+	  (if (not (equal? (edit-fragment 0 ind 0) (list #f "init" 0 50828)))
+	      (snd-display #__line__ ";as-one-edit 2 original edlist: ~A" (edit-fragment 0 ind 0))))
       
       (revert-sound ind)
       (let ((ind2 (open-sound "2a.snd")))
@@ -13251,9 +13251,7 @@ EDITS: 5
 	 "as-one-edit test-4")
 	(if (fneq (sample 10) 2.0) (snd-display #__line__ ";as-one-edit 4: ~A" (sample 10 ind 0)))
 	(if (not (= (edit-position ind 0) 1)) 
-	    (snd-display #__line__ ";as-one-edit 4 edpos: ~A" (edit-position ind 0))
-	    (if (not (equal? (edit-fragment 1 ind 0) (list "as-one-edit test-4" "set" 0 21)))
-		(snd-display #__line__ ";as-one-edit 4 edlist: ~A" (edit-fragment 1 ind 0))))
+	    (snd-display #__line__ ";as-one-edit 4 edpos: ~A" (edit-position ind 0)))
 	(if (not (equal? (edit-fragment 1 ind2 0) (list "set-sample 1 1.0000" "set" 1 1)))
 	    (snd-display #__line__ ";as-one-edit 3 2 edlist: ~A" (edit-fragment 1 ind2 0)))
 	(if (not (equal? (edit-fragment 1 ind2 1) (list "set-sample 2 0.5000" "set" 2 1)))
@@ -13303,10 +13301,6 @@ EDITS: 5
 	    (snd-display #__line__ ";as-one-edit 5 edlist 2: ~A" (edit-fragment 1 ind 0)))
 	(if (not (equal? (edit-fragment 2 ind2 0) (list "set-sample 10 0.5000" "set" 10 1)))
 	    (snd-display #__line__ ";as-one-edit 5 edlist 2 1: ~A" (edit-fragment 1 ind2 0)))
-	(if (not (equal? (edit-fragment 3 ind 0) (list "as-one-edit test-6" "set" 0 20)))
-	    (snd-display #__line__ ";as-one-edit 6 edlist: ~A" (edit-fragment 1 ind 0)))
-	(if (not (equal? (edit-fragment 3 ind2 1) (list "as-one-edit test-6" "set" 0 20)))
-	    (snd-display #__line__ ";as-one-edit 6 edlist 2 1: ~A" (edit-fragment 1 ind2 1)))
 	(close-sound ind2))
       
       ;; nested cases
@@ -36705,7 +36699,7 @@ EDITS: 3
 			       (40 1 40 49 1.0 0.0 0.0 0) (50 1 50 59 0.0 0.0 0.0 2) (60 1 60 60 0.0 0.0 0.0 2) 
 			       (61 1 61 70 1.0 0.0 0.0 0) (71 1 71 74 0.0 0.0 0.0 2) (75 6 0 9 1.0 0.0 0.0 0) (85 1 85 99 1.0 0.0 0.0 0) (100 -2 0 0 0.0 0.0 0.0 0))
 			     vals "clm-channel 75 10"))
-	  (map-channel (lambda (y) (* y .5)) 3 11)
+	  (map-channel (lambda (y) (* y 1 .5)) 3 11)
 	  (do ((i 3 (+ 1 i)))
 	      ((= i 14))
 	    (set! (vals i) (* .5 (vals i))))
@@ -49581,7 +49575,8 @@ EDITS: 1
 	(itst (list 'cursor ind 0) 100)
 	(etst '(edit-position ind 0 0))
 	(close-sound ind)))
-    
+
+#|    
     (let ((ind0 (new-sound "fmv0.snd" mus-next mus-bfloat 22050 1 "map tests"))
 	  (ind1 (new-sound "fmv1.snd" mus-next mus-bfloat 22050 1 "map tests"))
 	  (ones (make-vct 1000000))
@@ -49643,6 +49638,7 @@ EDITS: 1
       (close-sound ind1)
       (snd-display #__line__ ";timings:~{~%~20T~A~}" ts)
       )
+|#
     
     (let ((t0 0)
 	  (t1 0)

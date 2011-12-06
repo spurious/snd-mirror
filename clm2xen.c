@@ -59,20 +59,52 @@
 #define DISPLAY_80(Expr) s7_object_to_c_string(sc, Expr)
 
 #define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) \
-  if (XEN_BOUND_P(Xen_Arg)) C_Val = s7_number_to_real_with_error(s7, Xen_Arg, Caller, ArgNum)
+  do { \
+      if (XEN_BOUND_P(Xen_Arg)) \
+        { \
+         bool err = false; \
+         C_Val = s7_number_to_real_with_error(Xen_Arg, &err); \
+         if (err) s7_wrong_type_arg_error(s7, Caller, ArgNum, Xen_Arg, "a real"); \
+        } \
+     } while (0)
 
 #define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
-  C_Val = s7_number_to_real_with_error(s7, Xen_Arg, Caller, ArgNum)
+  do { \
+      bool err = false; \
+      C_Val = s7_number_to_real_with_error(Xen_Arg, &err); \
+      if (err) s7_wrong_type_arg_error(s7, Caller, ArgNum, Xen_Arg, "a real");\
+     } while (0)
 
 #define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum)		\
-  C_Val = s7_number_to_integer_with_error(s7, Xen_Arg, Caller, ArgNum)
+  do { \
+      bool err = false; \
+      C_Val = s7_number_to_integer_with_error(Xen_Arg, &err); \
+      if (err) s7_wrong_type_arg_error(s7, Caller, ArgNum, Xen_Arg, "a real"); \
+     } while (0)
 
 #define XEN_TO_C_GENERATOR(Xen_Arg, C_Val, Checker, Caller, Descr)		\
-  C_Val = ((mus_any *)(((mus_xen *)s7_object_value_with_error(s7, Xen_Arg, mus_xen_tag, Caller, 1))->gen)); \
-  XEN_ASSERT_TYPE(Checker(C_Val), Xen_Arg, XEN_ARG_1, Caller, Descr)
+  do { \
+    bool err = false; \
+    mus_xen *_Gen_; \
+    _Gen_ = ((mus_xen *)s7_object_value_with_error(Xen_Arg, mus_xen_tag, &err)); \
+    if (err) \
+       s7_wrong_type_arg_error(s7, Caller, XEN_ARG_1, Xen_Arg, Descr); \
+    else \
+      { \
+        C_Val = (mus_any *)(_Gen_->gen);				\
+        XEN_ASSERT_TYPE(Checker(C_Val), Xen_Arg, XEN_ARG_1, Caller, Descr); \
+      } \
+  } while (0)
 
 #define XEN_TO_C_ANY_GENERATOR(Xen_Arg, C_Val, Caller, Descr)		\
-  C_Val = ((mus_any *)(((mus_xen *)s7_object_value_with_error(s7, Xen_Arg, mus_xen_tag, Caller, 1))->gen))
+  do { \
+    bool err = false; \
+    mus_xen *_Gen_; \
+    _Gen_ = ((mus_xen *)s7_object_value_with_error(Xen_Arg, mus_xen_tag, &err)); \
+    if (err) \
+       s7_wrong_type_arg_error(s7, Caller, XEN_ARG_1, Xen_Arg, Descr); \
+    else C_Val = (mus_any *)(_Gen_->gen);			       \
+  } while (0)
 
 #else
 
@@ -458,56 +490,63 @@ const char *mus_fft_window_xen_name(mus_fft_window_t i) {return(fft_window_xen_n
 static XEN g_radians_to_hz(XEN val) 
 {
   #define H_radians_to_hz "(" S_radians_to_hz " rads): convert radians per sample to frequency in Hz: rads * srate / (2 * pi)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_radians_to_hz, "a number");
-  return(C_TO_XEN_DOUBLE(mus_radians_to_hz(XEN_TO_C_DOUBLE(val))));
+  mus_float_t x;
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_radians_to_hz, XEN_ONLY_ARG);
+  return(C_TO_XEN_DOUBLE(mus_radians_to_hz(x)));
 }
 
 
 static XEN g_hz_to_radians(XEN val) 
 {
   #define H_hz_to_radians "(" S_hz_to_radians " hz): convert frequency in Hz to radians per sample: hz * 2 * pi / srate"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_hz_to_radians, "a number"); 
-  return(C_TO_XEN_DOUBLE(mus_hz_to_radians(XEN_TO_C_DOUBLE(val))));
+  mus_float_t x;
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_hz_to_radians, XEN_ONLY_ARG);
+  return(C_TO_XEN_DOUBLE(mus_hz_to_radians(x)));
 }
 
 
 static XEN g_radians_to_degrees(XEN val) 
 {
   #define H_radians_to_degrees "(" S_radians_to_degrees " rads): convert radians to degrees: rads * 360 / (2 * pi)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_radians_to_degrees, "a number"); 
-  return(C_TO_XEN_DOUBLE(mus_radians_to_degrees(XEN_TO_C_DOUBLE(val))));
+  mus_float_t x;
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_radians_to_degrees, XEN_ONLY_ARG);
+  return(C_TO_XEN_DOUBLE(mus_radians_to_degrees(x)));
 }
 
 
 static XEN g_degrees_to_radians(XEN val) 
 {
   #define H_degrees_to_radians "(" S_degrees_to_radians " deg): convert degrees to radians: deg * 2 * pi / 360"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_degrees_to_radians, "a number"); 
-  return(C_TO_XEN_DOUBLE(mus_degrees_to_radians(XEN_TO_C_DOUBLE(val))));
+  mus_float_t x;
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_degrees_to_radians, XEN_ONLY_ARG);
+  return(C_TO_XEN_DOUBLE(mus_degrees_to_radians(x)));
 }
 
 
 static XEN g_db_to_linear(XEN val) 
 {
   #define H_db_to_linear "(" S_db_to_linear " db): convert decibel value db to linear value: pow(10, db / 20)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_db_to_linear, "a number");
-  return(C_TO_XEN_DOUBLE(mus_db_to_linear(XEN_TO_C_DOUBLE(val))));
+  mus_float_t x;
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_db_to_linear, XEN_ONLY_ARG);
+  return(C_TO_XEN_DOUBLE(mus_db_to_linear(x)));
 }
 
 
 static XEN g_linear_to_db(XEN val) 
 {
   #define H_linear_to_db "(" S_linear_to_db " lin): convert linear value to decibels: 20 * log10(lin)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_linear_to_db, "a number");
-  return(C_TO_XEN_DOUBLE(mus_linear_to_db(XEN_TO_C_DOUBLE(val))));
+  mus_float_t x;
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_linear_to_db, XEN_ONLY_ARG);
+  return(C_TO_XEN_DOUBLE(mus_linear_to_db(x)));
 }
 
 
 static XEN g_seconds_to_samples(XEN val) 
 {
   #define H_seconds_to_samples "(" S_seconds_to_samples " secs): use " S_mus_srate " to convert seconds to samples"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_seconds_to_samples, "a number");
-  return(C_TO_XEN_LONG_LONG(mus_seconds_to_samples(XEN_TO_C_DOUBLE(val))));
+  mus_float_t x;
+  XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_seconds_to_samples, XEN_ONLY_ARG);
+  return(C_TO_XEN_LONG_LONG(mus_seconds_to_samples(x)));
 }
 
 
@@ -1732,7 +1771,7 @@ static XEN g_mus_set_length(XEN gen, XEN val)
   mus_xen *ms;
 
   if (XEN_LIST_P(gen)) return(call_set_method(gen, val, S_mus_length));
-  XEN_TO_C_ANY_GENERATOR(gen, ptr, S_setB S_mus_length, XEN_ARG_1);
+  XEN_TO_C_ANY_GENERATOR(gen, ptr, S_setB S_mus_length, "a generator");
   XEN_TO_C_INTEGER_OR_ERROR(val, len, S_setB S_mus_length, XEN_ARG_2);
 
   if (len <= 0)
@@ -2014,9 +2053,12 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
   s7_pointer obj;
   mus_any *osc;
   mus_xen *ox;
+  bool err = false;
 
   obj = s7_car(args);
-  ox = (mus_xen *)s7_object_value_with_error(s7, obj, mus_xen_tag, S_oscil, 1);
+  ox = (mus_xen *)s7_object_value_with_error(obj, mus_xen_tag, &err);
+  if (err) s7_wrong_type_arg_error(s7, S_oscil, 1, obj, "an oscil"); 
+
   osc = (mus_any *)(ox->gen);
   if (mus_oscil_p(osc))
     {
@@ -2025,12 +2067,15 @@ static XEN g_oscil_w(s7_scheme *sc, s7_pointer args)
       if (s7_is_null(s7, args))
 	return(s7_make_real(sc, mus_oscil_unmodulated(osc)));
 
-      fm = s7_number_to_real_with_error(s7, s7_car(args), S_oscil, 2);
+      fm = s7_number_to_real_with_error(s7_car(args), &err);
+      if (err) s7_wrong_type_arg_error(s7, S_oscil, 2, s7_car(args), "a real"); 
+
       args = s7_cdr(args);
       if (s7_is_null(s7, args))
 	return(s7_make_real(sc, mus_oscil_fm(osc, fm)));
 
-      pm = s7_number_to_real_with_error(s7, s7_car(args), S_oscil, 3);
+      pm = s7_number_to_real_with_error(s7_car(args), &err);
+      if (err) s7_wrong_type_arg_error(s7, S_oscil, 3, s7_car(args), "a real"); 
       return(s7_make_real(sc, mus_oscil(osc, fm, pm)));
     }
   XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, S_oscil, "an oscil");
@@ -6891,15 +6936,10 @@ included an 'input' argument, input-function is ignored."
   XEN_TO_C_GENERATOR(obj, g, mus_src_p, S_src, "an src generator");
 
   gn = XEN_TO_MUS_XEN(obj);
-
-  if (XEN_NUMBER_P(pm)) 
-    {
-      pm1 = XEN_TO_C_DOUBLE(pm); 
-      /* if sr_change (pm1) is ridiculous, complain! */
-      if ((pm1 > SRC_CHANGE_MAX) || (pm1 < -SRC_CHANGE_MAX))
-	XEN_OUT_OF_RANGE_ERROR(S_src, XEN_ARG_2, pm, "src change ~A too large");
-    }
-  else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_2, S_src, "a number");
+  XEN_TO_C_DOUBLE_IF_BOUND(pm, pm1, S_src, XEN_ARG_2);
+  /* if sr_change (pm1) is ridiculous, complain! */
+  if ((pm1 > SRC_CHANGE_MAX) || (pm1 < -SRC_CHANGE_MAX))
+    XEN_OUT_OF_RANGE_ERROR(S_src, XEN_ARG_2, pm, "src change ~A too large");
 
   if (XEN_PROCEDURE_P(func))
     {

@@ -1758,11 +1758,11 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 }
 #endif
 
-/* TODO: use new macros in g_sound_data_set|apply
- */
+
 static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 {
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data sd's i-th element in channel chan to val: sd[chan][i] = val"
+#if (!HAVE_SCHEME)
   sound_data *sd;
   int chn;
   mus_long_t loc;
@@ -1792,6 +1792,42 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 			 C_TO_XEN_LONG_LONG(sd->length)));
 
   sd->data[chn][loc] = XEN_TO_C_DOUBLE(val);
+
+#else
+  /* copied from the set case below */
+  sound_data *sd;
+  int chn;
+  mus_long_t loc;
+  bool err = false;
+  mus_float_t x;
+
+  sd = (sound_data *)s7_object_value(obj);
+  chn = s7_number_to_integer_with_error(chan, &err);
+  XEN_ASSERT_TYPE(!err, chan, XEN_ARG_2, S_sound_data_setB, "an integer");
+
+  if (chn < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, chan, "~A: invalid channel");
+  if (chn >= sd->chans)
+    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": chan: ~A >= sound-data chans, ~A"),
+			 chan,
+			 C_TO_XEN_INT(sd->chans)));
+
+  loc = s7_number_to_integer_with_error(frame_num, &err);
+  XEN_ASSERT_TYPE(!err, frame_num, XEN_ARG_3, S_sound_data_setB, "an integer");
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, frame_num, "~A: invalid frame");
+  if (loc >= sd->length)
+    XEN_ERROR(XEN_ERROR_TYPE("out-of-range"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_setB ": frame: ~A >= sound-data length, ~A"),
+			 frame_num,
+			 C_TO_XEN_LONG_LONG(sd->length)));
+
+  x = s7_number_to_real_with_error(val, &err);
+  XEN_ASSERT_TYPE(!err, val, XEN_ARG_4, S_sound_data_setB, "a number");
+  sd->data[chn][loc] = x;
+#endif
+
   return(val);
 }
 
@@ -1805,9 +1841,11 @@ static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
   sound_data *sd;
   mus_long_t loc;
   int chn;
+  bool err = false;
 
   sd = (sound_data *)s7_object_value(obj);
-  chn = s7_number_to_integer_with_error(s7, XEN_CAR(args), S_sound_data_ref, XEN_ARG_2);
+  chn = s7_number_to_integer_with_error(XEN_CAR(args), &err);
+  XEN_ASSERT_TYPE(!err, XEN_CAR(args), XEN_ARG_2, S_sound_data_ref, "an integer");
 
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, XEN_CAR(args), "~A: invalid channel");
@@ -1817,7 +1855,9 @@ static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
 			 XEN_CAR(args),
 			 C_TO_XEN_INT(sd->chans)));
 
-  loc = s7_number_to_integer_with_error(s7, XEN_CADR(args), S_sound_data_ref, XEN_ARG_3);
+  loc = s7_number_to_integer_with_error(XEN_CADR(args), &err);
+  XEN_ASSERT_TYPE(!err, XEN_CADR(args), XEN_ARG_3, S_sound_data_ref, "an integer");
+
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, XEN_CADR(args), "~A: invalid frame");
   if (loc >= sd->length)
@@ -1834,11 +1874,13 @@ static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
   sound_data *sd;
   int chn;
   mus_long_t loc;
-  mus_float_t x;
   s7_pointer val;
+  bool err = false;
+  mus_float_t x;
 
   sd = (sound_data *)s7_object_value(obj);
-  chn = s7_number_to_integer_with_error(s7, XEN_CAR(args), S_sound_data_setB, XEN_ARG_2);
+  chn = s7_number_to_integer_with_error(XEN_CAR(args), &err);
+  XEN_ASSERT_TYPE(!err, XEN_CAR(args), XEN_ARG_2, S_sound_data_setB, "an integer");
 
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, XEN_CAR(args), "~A: invalid channel");
@@ -1848,7 +1890,8 @@ static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
 			 XEN_CAR(args),
 			 C_TO_XEN_INT(sd->chans)));
 
-  loc = s7_number_to_integer_with_error(s7, XEN_CADR(args), S_sound_data_setB, XEN_ARG_3);
+  loc = s7_number_to_integer_with_error(XEN_CADR(args), &err);
+  XEN_ASSERT_TYPE(!err, XEN_CADR(args), XEN_ARG_3, S_sound_data_setB, "an integer");
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, XEN_CADR(args), "~A: invalid frame");
   if (loc >= sd->length)
@@ -1858,9 +1901,9 @@ static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
 			 C_TO_XEN_LONG_LONG(sd->length)));
 
   val = XEN_CADDR(args);
-  x = s7_number_to_real_with_error(s7, val, S_sound_data_setB, XEN_ARG_4);
-
-  sd->data[chn][loc] = x;
+  x = s7_number_to_real_with_error(val, &err);
+  XEN_ASSERT_TYPE(!err, val, XEN_ARG_4, S_sound_data_setB, "a real");
+  sd->data[chn][loc] = x; 
   return(val);
 }
 

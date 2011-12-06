@@ -247,10 +247,12 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
   vct *v;
   mus_long_t loc;
   s7_pointer pos;
+  bool err = false;
 
   v = XEN_TO_VCT(obj);
   pos = XEN_CAR(args);
-  loc = s7_number_to_integer_with_error(s7, pos, S_vct_ref, XEN_ARG_2);
+  loc = s7_number_to_integer_with_error(pos, &err);
+  XEN_ASSERT_TYPE(!err, pos, XEN_ARG_2, S_vct_ref, "an integer");
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
@@ -266,18 +268,22 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
   mus_long_t loc;
   double x;
   s7_pointer pos, val;
+  bool err = false;
 
   v = XEN_TO_VCT(obj);
   pos = XEN_CAR(args);
-  loc = s7_number_to_integer_with_error(s7, pos, S_vct_setB, XEN_ARG_2);
+  loc = s7_number_to_integer_with_error(pos, &err);
+  XEN_ASSERT_TYPE(!err, pos, XEN_ARG_2, S_vct_setB, "an integer");
 
   if (loc < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A < 0?");
   if (loc >= v->length)
-    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A too high?");
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A too high?");
 
   val = XEN_CADR(args);
-  x = s7_number_to_real_with_error(s7, val, S_vct_setB, XEN_ARG_3);
+  x = s7_number_to_real_with_error(val, &err);
+  XEN_ASSERT_TYPE(!err, val, XEN_ARG_3, S_vct_setB, "a real");
+
   v->data[loc] = x;
   return(val);
 }
@@ -516,7 +522,11 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
   XEN_ASSERT_TYPE(XEN_LONG_LONG_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
 
 #if HAVE_SCHEME
-  x = s7_number_to_real_with_error(s7, val, S_vct_setB, 3);
+  {
+    bool err = false;
+    x = s7_number_to_real_with_error(val, &err);
+    XEN_ASSERT_TYPE(!err, val, XEN_ARG_3, S_vct_setB, "a real number");
+  }
 #else
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
   x = XEN_TO_C_DOUBLE(val);

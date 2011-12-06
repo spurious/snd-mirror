@@ -3269,13 +3269,303 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 }
 
 
+
+static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
+{
+  snd_info *sp;
+  int i, rpt = 0, rpt4, ofd, datumb;
+  char *filename;
+  file_info *hdr;
+  mus_long_t kp, samps = 0;
+  int j = 0;
+  bool reporting = false;
+  io_error_t io_err = IO_NO_ERROR;
+  XEN res = XEN_FALSE;
+  
+  sp = cp->sound;
+  reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
+  if (reporting) start_progress_report(cp);
+  rpt4 = MAX_BUFFER_SIZE / 4;
+  
+  filename = snd_tempnam();
+  hdr = make_temp_header(filename, SND_SRATE(cp->sound), 1, 0, S_map_channel);
+  ofd = open_temp_file(filename, 1, hdr, &io_err);
+  if (ofd == -1)
+    snd_error("%s: %s (temp file) %s: %s", 
+	      S_map_channel,
+	      (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+	      filename, 
+	      snd_open_strerror());
+  else
+    {
+      int err = MUS_NO_ERROR;
+      mus_sample_t **data;
+      
+#if HAVE_SCHEME
+      s7_pointer arg_list;
+      int gc_loc;
+      arg_list = XEN_LIST_1(XEN_FALSE);
+      gc_loc = s7_gc_protect(s7, arg_list);
+#endif
+      
+      data = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
+      data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
+      datumb = mus_bytes_per_sample(hdr->format);
+      ss->stopped_explicitly = false;
+      
+      for (kp = 0; kp < num; kp++)
+	{
+	  /* changed here to remove catch 24-Mar-02 */
+#if HAVE_SCHEME
+	  s7_set_car(arg_list, C_TO_XEN_DOUBLE((double)read_sample(sf)));
+	  if (kp == 0)
+	    res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+	  else res = s7_apply_function(s7, proc, arg_list);
+#else
+	  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
+#endif
+	  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
+	    {
+	      samps++;
+	      data[0][j++] = XEN_TO_C_DOUBLE(res);
+	      if (j == MAX_BUFFER_SIZE)
+		{
+		  err = mus_file_write(ofd, 0, j - 1, 1, data);
+		  j = 0;
+		  if (err != MUS_NO_ERROR) break;
+		}
+	    }
+	  else
+	    {
+	      if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+		{
+		  if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
+		    break;
+		  else
+		    {
+		      if (MUS_VCT_P(res))
+			{
+			  vct *v;
+			  v = XEN_TO_VCT(res);
+			  for (i = 0; i < v->length; i++) 
+			    {
+			      data[0][j++] = v->data[i];
+			      if (j == MAX_BUFFER_SIZE)
+				{
+				  err = mus_file_write(ofd, 0, j - 1, 1, data);
+				  j = 0;
+				  if (err != MUS_NO_ERROR) break;
+				}
+			    }
+			  samps += v->length - 1;
+			}
+		      else
+			{
+			  close_temp_file(filename, ofd, hdr->type, samps * datumb);
+			  sf = free_snd_fd(sf);
+			  if (reporting) finish_progress_report(cp);
+			  snd_remove(filename, REMOVE_FROM_CACHE);
+			  free(filename);
+			  free(data[0]);
+			  free(data);
+#if HAVE_SCHEME
+			  s7_gc_unprotect_at(s7, gc_loc);
+#endif
+			  
+			  XEN_ERROR(BAD_TYPE,
+				    XEN_LIST_3(C_TO_XEN_STRING("~A: result of procedure must be a (non-complex) number, boolean, or vct: ~A"),
+					       C_TO_XEN_STRING(caller),
+					       res));
+			}
+		    }
+		}
+	    }
+	  if (reporting) 
+	    {
+	      rpt++;
+	      if (rpt > rpt4)
+		{
+		  progress_report(cp, (mus_float_t)((double)kp / (double)num));
+		  if (!(sp->active))
+		    {
+		      ss->stopped_explicitly = true;
+		      break;
+		    }
+		  rpt = 0;		    
+		}
+	    }
+	  if (ss->stopped_explicitly) break;
+	}
+      
+#if HAVE_SCHEME
+      s7_gc_unprotect_at(s7, gc_loc);
+#endif
+      if (j > 0) 
+	mus_file_write(ofd, 0, j - 1, 1, data);
+      close_temp_file(filename, ofd, hdr->type, samps * datumb);
+      
+      free_file_info(hdr);
+      free(data[0]);
+      free(data);
+      
+      sf = free_snd_fd(sf);
+      
+      if (reporting) finish_progress_report(cp);
+      if (ss->stopped_explicitly) 
+	ss->stopped_explicitly = false;
+      else
+	{
+	  if (cp->active < CHANNEL_HAS_EDIT_LIST)
+	    {
+	      snd_remove(filename, REMOVE_FROM_CACHE);
+	      free(filename);
+	      XEN_ERROR(NO_SUCH_CHANNEL,
+			XEN_LIST_2(C_TO_XEN_STRING("~A: can't edit closed channel!"),
+				   C_TO_XEN_STRING(caller)));
+	      return(XEN_FALSE);
+	    }
+	  
+	  if (samps == num)
+	    file_change_samples(beg, samps, filename, cp, 0, DELETE_ME, caller, pos);
+	  else
+	    {
+	      delete_samples(beg, num, cp, pos);
+	      if (samps > 0)
+		{
+		  int cured;
+		  cured = cp->edit_ctr;
+		  file_insert_samples(beg, samps, filename, cp, 0, DELETE_ME, caller, cp->edit_ctr);
+		  backup_edit_list(cp);
+		  if (cp->edit_ctr > cured)
+		    backup_edit_list(cp);
+		  ripple_trailing_marks(cp, beg, num, samps);
+		}
+	      else snd_remove(filename, REMOVE_FROM_CACHE);
+	    }
+	}
+    }
+  free(filename);
+  return(res);
+}
+
+
+static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
+{
+  /* not temp_file -- use resizable buffer */
+  int i, data_pos = 0, kp;
+  mus_long_t cur_size;
+  mus_sample_t *data = NULL;
+  XEN res = XEN_FALSE;
+
+#if HAVE_SCHEME
+  s7_pointer arg_list;
+  int gc_loc;
+
+  arg_list = XEN_LIST_1(XEN_FALSE);
+  gc_loc = s7_gc_protect(s7, arg_list);
+#endif
+  
+  data = (mus_sample_t *)calloc(num, sizeof(mus_sample_t));
+  cur_size = num;
+  
+  for (kp = 0; kp < num; kp++)
+    {
+#if HAVE_SCHEME
+      s7_set_car(arg_list, C_TO_XEN_DOUBLE((double)read_sample(sf)));
+      if (kp == 0)
+	res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
+      else res = s7_apply_function(s7, proc, arg_list);
+#else
+      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
+#endif
+      if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
+	{
+	  if (data_pos >= cur_size)
+	    {
+	      cur_size *= 2;
+	      data = (mus_sample_t *)realloc(data, cur_size * sizeof(mus_sample_t));
+	    }
+	  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
+	}
+      else
+	{
+	  if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+	    {
+	      if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
+		break;
+	      else
+		{
+		  if (MUS_VCT_P(res))
+		    {
+		      vct *v;
+		      v = XEN_TO_VCT(res);
+		      for (i = 0; i < v->length; i++)
+			{
+			  if (data_pos >= cur_size)
+			    {
+			      cur_size *= 2;
+			      data = (mus_sample_t *)realloc(data, cur_size * sizeof(mus_sample_t));
+			    }
+			  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(v->data[i]);
+			}
+		    }
+		  else
+		    {
+		      if (data) {free(data); data = NULL;}
+		      sf = free_snd_fd(sf);
+#if HAVE_SCHEME
+		      s7_gc_unprotect_at(s7, gc_loc);
+#endif
+		      XEN_ERROR(BAD_TYPE,
+				XEN_LIST_3(C_TO_XEN_STRING("~A: result of procedure must be a number, boolean, or vct: ~A"),
+					   C_TO_XEN_STRING(caller),
+					   res));
+		    }
+		}
+	    }
+	}
+    }
+  sf = free_snd_fd(sf);
+#if HAVE_SCHEME
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
+  if (cp->active < CHANNEL_HAS_EDIT_LIST)
+    {
+      if (data) {free(data); data = NULL;} 
+      XEN_ERROR(NO_SUCH_CHANNEL,
+		XEN_LIST_2(C_TO_XEN_STRING("~A: can't edit closed channel!"),
+			   C_TO_XEN_STRING(caller)));
+      return(XEN_FALSE);
+    }
+  if (data_pos == num)
+    change_samples(beg, data_pos, data, cp, caller, pos);
+  else
+    {
+      /* the version above truncates to the new length... */
+      delete_samples(beg, num, cp, pos);
+      if (data_pos > 0)
+	{
+	  int cured;
+	  cured = cp->edit_ctr;
+	  insert_samples(beg, data_pos, data, cp, caller, cp->edit_ctr);
+	  backup_edit_list(cp);
+	  if (cp->edit_ctr > cured)
+	    backup_edit_list(cp);
+	  ripple_trailing_marks(cp, beg, num, data_pos);
+	}
+    }
+  if (data) {free(data); data = NULL;}
+  return(res);
+}
+
+
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, const char *fallback_caller) 
 { 
   chan_info *cp;
   const char *caller;
   mus_long_t beg = 0, end = 0, dur = 0;
   mus_long_t num;
-  int rpt = 0, i, pos;
+  int pos;
   bool temp_file = false, backup = false;
   XEN res = XEN_FALSE;
   XEN proc = XEN_FALSE;
@@ -3312,7 +3602,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
     {
       snd_fd *sf = NULL;
       char *errmsg = NULL;
-      snd_info *sp;
 
       errmsg = procedure_ok(proc, 1, caller, "", 1);
       if (errmsg)
@@ -3344,16 +3633,37 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    s7_pointer arg, body;
 	    body = s7_cdr(s7_cdr(s7_car(source)));
 	    /* fprintf(stderr, "%s %s\n", s7_object_to_c_string(s7, source), s7_object_to_c_string(s7, body)); */
-
+	    
 	    /* look for (lambda (y) <constant>) */
-	    if ((s7_is_real(s7_car(body))) &&
+	    if (((s7_is_real(s7_car(body))) || (s7_is_symbol(s7_car(body)))) &&
 		(num <= MAX_BUFFER_SIZE))
 	      {
 		mus_sample_t x;
 		int data_pos;
 		mus_sample_t *data;
+		
+		if (s7_is_real(s7_car(body)))
+		  x = MUS_DOUBLE_TO_SAMPLE(s7_number_to_real(s7_car(body)));
+		else
+		  {
+		    /* (let ((scl 0.5)) (map-channel (lambda (y) scl)))
+		     */
+		    s7_pointer sym, val;
+		    
+		    sym = s7_car(body);
+		    arg = s7_car(s7_cdr(s7_car(source)));
+		    if ((s7_is_pair(arg)) &&
+			(sym == s7_car(arg)))
+		      goto TRY_RUN;
+		    /* not necessarily a no-op -- pos might be an earlier edit that we are moving up in the tree
+		     */
+		    
+		    val = s7_symbol_local_value(s7, sym, s7_cdr(source));
+		    if (s7_is_real(val))
+		      x = MUS_DOUBLE_TO_SAMPLE(s7_number_to_real(val));
+		    else goto TRY_RUN;
+		  }
 		data = (mus_sample_t *)malloc(num * sizeof(mus_sample_t));
-		x = MUS_DOUBLE_TO_SAMPLE(s7_number_to_real(s7_car(body)));
 		for (data_pos = 0; data_pos < num; data_pos++)
 		  data[data_pos] = x;
 		change_samples(beg, data_pos, data, cp, caller, pos);
@@ -3361,7 +3671,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		free(data);
 		return(s7_car(body));
 	      }
-
+	    
 	    /* look for (lambda (y) (* y <constant>)) or (lambda (y) (* <constant> y)) */
 	    if ((s7_is_null(s7, s7_cdr(body))) &&
 		(s7_is_pair(s7_car(body))) &&
@@ -3399,316 +3709,39 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		  }
 	      }
 	  }
-
 	/* fprintf(stderr, "unopt: %lld %s\n", num, s7_object_to_c_string(s7, s7_car(source))); 
 	 */
-	/* symbol case (use local env)
+	/* 
 	 * simple gen case (filter g y) etc 
 	 * +/- arg real, * arg sym
 	 * read-sample sym
 	 */
+ TRY_RUN:
+	if (optimization(ss) > 0)
+	  {
+	    struct ptree *pt = NULL;
+	    pt = mus_run_form_to_ptree_1_f(source);
+	    if (pt)
+	      {
+		char *err_str;
+		err_str = run_channel(cp, pt, beg, num, pos, caller, S_map_channel);
+		mus_run_free_ptree(pt);
+		if (err_str == NULL)
+		  return(XEN_ZERO);
+		else free(err_str); /* and fallback on normal evaluator */
+	      }
+	  }
       }
-
-      if (optimization(ss) > 0)
-	{
-	  struct ptree *pt = NULL;
-	  pt = mus_run_form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(proc_and_list));
-	  if (pt)
-	    {
-	      char *err_str;
-	      err_str = run_channel(cp, pt, beg, num, pos, caller, S_map_channel);
-	      mus_run_free_ptree(pt);
-	      if (err_str == NULL)
-		return(XEN_ZERO);
-	      else free(err_str); /* and fallback on normal evaluator */
-	    }
-	}
-
 #endif
 
-      sp = cp->sound;
       sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
       if (sf == NULL) 
 	return(XEN_TRUE);
 
       temp_file = (num > MAX_BUFFER_SIZE);
       if (temp_file)
-	{
-	  int rpt4, ofd, datumb;
-	  char *filename;
-	  file_info *hdr;
-	  mus_long_t kp, samps = 0;
-	  int j = 0;
-	  bool reporting = false;
-	  io_error_t io_err = IO_NO_ERROR;
-
-	  reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
-	  if (reporting) start_progress_report(cp);
-	  rpt4 = MAX_BUFFER_SIZE / 4;
-
-	  filename = snd_tempnam();
-	  hdr = make_temp_header(filename, SND_SRATE(cp->sound), 1, 0, S_map_channel);
-	  ofd = open_temp_file(filename, 1, hdr, &io_err);
-	  if (ofd == -1)
-	    snd_error("%s: %s (temp file) %s: %s", 
-		      S_map_channel,
-		      (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
-		      filename, 
-		      snd_open_strerror());
-	  else
-	    {
-	      int err = MUS_NO_ERROR;
-	      mus_sample_t **data;
-
-#if HAVE_SCHEME
-	      s7_pointer arg_list;
-	      int gc_loc;
-	      arg_list = XEN_LIST_1(XEN_FALSE);
-	      gc_loc = s7_gc_protect(s7, arg_list);
-#endif
-
-	      data = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
-	      data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
-	      datumb = mus_bytes_per_sample(hdr->format);
-	      ss->stopped_explicitly = false;
-
-	      for (kp = 0; kp < num; kp++)
-		{
-		  /* changed here to remove catch 24-Mar-02 */
-#if HAVE_SCHEME
-		  s7_set_car(arg_list, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-		  if (kp == 0)
-		    res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
-		  else res = s7_apply_function(s7, proc, arg_list);
-#else
-		  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-#endif
-		  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
-		    {
-		      samps++;
-		      data[0][j++] = XEN_TO_C_DOUBLE(res);
-		      if (j == MAX_BUFFER_SIZE)
-			{
-			  err = mus_file_write(ofd, 0, j - 1, 1, data);
-			  j = 0;
-			  if (err != MUS_NO_ERROR) break;
-			}
-		    }
-		  else
-		    {
-		      if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
-			{
-			  if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
-			    break;
-			  else
-			    {
-			      if (MUS_VCT_P(res))
-				{
-				  vct *v;
-				  v = XEN_TO_VCT(res);
-				  for (i = 0; i < v->length; i++) 
-				    {
-				      data[0][j++] = v->data[i];
-				      if (j == MAX_BUFFER_SIZE)
-					{
-					  err = mus_file_write(ofd, 0, j - 1, 1, data);
-					  j = 0;
-					  if (err != MUS_NO_ERROR) break;
-					}
-				    }
-				  samps += v->length - 1;
-				}
-			      else
-				{
-				  close_temp_file(filename, ofd, hdr->type, samps * datumb);
-				  sf = free_snd_fd(sf);
-				  if (reporting) finish_progress_report(cp);
-				  snd_remove(filename, REMOVE_FROM_CACHE);
-				  free(filename);
-				  free(data[0]);
-				  free(data);
-#if HAVE_SCHEME
-				  s7_gc_unprotect_at(s7, gc_loc);
-#endif
-				  
-				  XEN_ERROR(BAD_TYPE,
-					    XEN_LIST_3(C_TO_XEN_STRING("~A: result of procedure must be a (non-complex) number, boolean, or vct: ~A"),
-						       C_TO_XEN_STRING(caller),
-						       res));
-				}
-			    }
-			}
-		    }
-		  if (reporting) 
-		    {
-		      rpt++;
-		      if (rpt > rpt4)
-			{
-			  progress_report(cp, (mus_float_t)((double)kp / (double)num));
-			  if (!(sp->active))
-			    {
-			      ss->stopped_explicitly = true;
-			      break;
-			    }
-			  rpt = 0;		    
-			}
-		    }
-		  if (ss->stopped_explicitly) break;
-		}
-
-#if HAVE_SCHEME
-	      s7_gc_unprotect_at(s7, gc_loc);
-#endif
-	      if (j > 0) 
-		mus_file_write(ofd, 0, j - 1, 1, data);
-	      close_temp_file(filename, ofd, hdr->type, samps * datumb);
-
-	      free_file_info(hdr);
-	      free(data[0]);
-	      free(data);
-
-	      sf = free_snd_fd(sf);
-
-	      if (reporting) finish_progress_report(cp);
-	      if (ss->stopped_explicitly) 
-		ss->stopped_explicitly = false;
-	      else
-		{
-		  if (cp->active < CHANNEL_HAS_EDIT_LIST)
-		    {
-		      snd_remove(filename, REMOVE_FROM_CACHE);
-		      free(filename);
-		      XEN_ERROR(NO_SUCH_CHANNEL,
-				XEN_LIST_2(C_TO_XEN_STRING("~A: can't edit closed channel!"),
-					   C_TO_XEN_STRING(caller)));
-		      return(XEN_FALSE);
-		    }
-
-		  if (samps == num)
-		    file_change_samples(beg, samps, filename, cp, 0, DELETE_ME, caller, pos);
-		  else
-		    {
-		      delete_samples(beg, num, cp, pos);
-		      if (samps > 0)
-			{
-			  int cured;
-			  cured = cp->edit_ctr;
-			  file_insert_samples(beg, samps, filename, cp, 0, DELETE_ME, caller, cp->edit_ctr);
-			  backup_edit_list(cp);
-			  if (cp->edit_ctr > cured)
-			    backup_edit_list(cp);
-			  ripple_trailing_marks(cp, beg, num, samps);
-			}
-		      else snd_remove(filename, REMOVE_FROM_CACHE);
-		    }
-		}
-	    }
-	  free(filename);
-	}
-      else
-	{
-	  /* not temp_file -- use resizable buffer */
-	  int data_pos = 0, kp;
-	  mus_long_t cur_size;
-	  mus_sample_t *data = NULL;
-#if HAVE_SCHEME
-	  s7_pointer arg_list;
-	  int gc_loc;
-	  arg_list = XEN_LIST_1(XEN_FALSE);
-	  gc_loc = s7_gc_protect(s7, arg_list);
-#endif
-
-	  data = (mus_sample_t *)calloc(num, sizeof(mus_sample_t));
-	  cur_size = num;
-
-	  for (kp = 0; kp < num; kp++)
-	    {
-#if HAVE_SCHEME
-	      s7_set_car(arg_list, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-	      if (kp == 0)
-		res = s7_call_with_location(s7, proc, arg_list, c__FUNCTION__, __FILE__, __LINE__);
-	      else res = s7_apply_function(s7, proc, arg_list);
-#else
-	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-#endif
-	      if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
-		{
-		  if (data_pos >= cur_size)
-		    {
-		      cur_size *= 2;
-		      data = (mus_sample_t *)realloc(data, cur_size * sizeof(mus_sample_t));
-		    }
-		  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
-		}
-	      else
-		{
-		  if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
-		    {
-		      if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
-			break;
-		      else
-			{
-			  if (MUS_VCT_P(res))
-			    {
-			      vct *v;
-			      v = XEN_TO_VCT(res);
-			      for (i = 0; i < v->length; i++)
-				{
-				  if (data_pos >= cur_size)
-				    {
-				      cur_size *= 2;
-				      data = (mus_sample_t *)realloc(data, cur_size * sizeof(mus_sample_t));
-				    }
-				  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(v->data[i]);
-				}
-			    }
-			  else
-			    {
-			      if (data) {free(data); data = NULL;}
-			      sf = free_snd_fd(sf);
-#if HAVE_SCHEME
-			      s7_gc_unprotect_at(s7, gc_loc);
-#endif
-			      XEN_ERROR(BAD_TYPE,
-					XEN_LIST_3(C_TO_XEN_STRING("~A: result of procedure must be a number, boolean, or vct: ~A"),
-						   C_TO_XEN_STRING(caller),
-						   res));
-			    }
-			}
-		    }
-		}
-	    }
-	  sf = free_snd_fd(sf);
-#if HAVE_SCHEME
-	  s7_gc_unprotect_at(s7, gc_loc);
-#endif
-	  if (cp->active < CHANNEL_HAS_EDIT_LIST)
-	    {
-	      if (data) {free(data); data = NULL;} 
-	      XEN_ERROR(NO_SUCH_CHANNEL,
-			XEN_LIST_2(C_TO_XEN_STRING("~A: can't edit closed channel!"),
-				   C_TO_XEN_STRING(caller)));
-	      return(XEN_FALSE);
-	    }
-	  if (data_pos == num)
-	    change_samples(beg, data_pos, data, cp, caller, pos);
-	  else
-	    {
-	      /* the version above truncates to the new length... */
-	      delete_samples(beg, num, cp, pos);
-	      if (data_pos > 0)
-		{
-		  int cured;
-		  cured = cp->edit_ctr;
-		  insert_samples(beg, data_pos, data, cp, caller, cp->edit_ctr);
-		  backup_edit_list(cp);
-		  if (cp->edit_ctr > cured)
-		    backup_edit_list(cp);
-		  ripple_trailing_marks(cp, beg, num, data_pos);
-		}
-	    }
-	  if (data) {free(data); data = NULL;}
-	}
+	res = map_channel_to_temp_file(cp, sf, proc, beg, num, pos, caller);
+      else res = map_channel_to_buffer(cp, sf, proc, beg, num, pos, caller);
 
       if (backup)
 	backup_edit_list(cp);

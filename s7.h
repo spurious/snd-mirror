@@ -338,8 +338,9 @@ s7_Double s7_real(s7_pointer p);                                             /* 
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> Scheme real */
 s7_Double s7_number_to_real(s7_pointer x);                                   /* x can be any kind of number */
 s7_Int s7_number_to_integer(s7_pointer x);
-s7_Double s7_number_to_real_with_error(s7_scheme *sc, s7_pointer x, const char *caller, int arg_num);
-s7_Int s7_number_to_integer_with_error(s7_scheme *sc, s7_pointer x, const char *caller, int arg_num);
+
+s7_Double s7_number_to_real_with_error(s7_pointer x, bool *error);
+s7_Int s7_number_to_integer_with_error(s7_pointer x, bool *error);
 
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
@@ -732,9 +733,10 @@ int s7_new_type_x(const char *name,
 bool s7_is_object(s7_pointer p);
 int s7_object_type(s7_pointer obj);
 void *s7_object_value(s7_pointer obj);
-void * s7_object_value_with_error(s7_scheme *sc, s7_pointer obj, int tag, const char *caller, int arg_num);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
+
+void * s7_object_value_with_error(s7_pointer obj, int tag, bool *error);
   
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
