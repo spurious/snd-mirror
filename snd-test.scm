@@ -49576,7 +49576,7 @@ EDITS: 1
 	(etst '(edit-position ind 0 0))
 	(close-sound ind)))
 
-#|    
+
     (let ((ind0 (new-sound "fmv0.snd" mus-next mus-bfloat 22050 1 "map tests"))
 	  (ind1 (new-sound "fmv1.snd" mus-next mus-bfloat 22050 1 "map tests"))
 	  (ones (make-vct 1000000))
@@ -49638,7 +49638,7 @@ EDITS: 1
       (close-sound ind1)
       (snd-display #__line__ ";timings:~{~%~20T~A~}" ts)
       )
-|#
+
     
     (let ((t0 0)
 	  (t1 0)

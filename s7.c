@@ -912,7 +912,7 @@ typedef struct {
 } format_data;
 
 static s7_pointer *small_ints, *chars;
-static s7_pointer real_zero; 
+static s7_pointer real_zero, real_NaN, real_pi, real_one; 
 
 struct s7_scheme {  
   opcode_t op;                        /* making this global is much slower! */
@@ -1168,6 +1168,10 @@ static void init_types(void)
   t_simple_p[T_C_OPT_ARGS_FUNCTION] = true;
   t_simple_p[T_C_RST_ARGS_FUNCTION] = true;
   t_simple_p[T_C_LST_ARGS_FUNCTION] = true;
+  /* not completely sure about the next ones */
+  t_simple_p[T_ENVIRONMENT] = true;
+  t_simple_p[T_INPUT_PORT] = true;
+  t_simple_p[T_OUTPUT_PORT] = true;
 }
 
 /* T_STACK, T_SLOT, and T_COUNTER are internal (stacks, bindings, map circular list checks)
@@ -1348,6 +1352,7 @@ static void init_types(void)
 #define is_pair(p)                    (type(p) == T_PAIR)
 #define is_null(p)                    (p == sc->NIL)
 #define is_not_null(p)                (p != sc->NIL)
+
 #define car(p)                        ((p)->object.cons.car)
 #define cdr(p)                        ((p)->object.cons.cdr)
 #define ecdr(p)                       ((p)->object.cons.ecdr)
@@ -1357,6 +1362,7 @@ static void init_types(void)
 #define cadr(p)                       car(cdr(p))
 #define cdar(p)                       cdr(car(p))
 #define cddr(p)                       cdr(cdr(p))
+
 #define caaar(p)                      car(car(car(p)))
 #define cadar(p)                      car(cdr(car(p)))
 #define cdadr(p)                      cdr(car(cdr(p)))
@@ -1365,6 +1371,7 @@ static void init_types(void)
 #define cdaar(p)                      cdr(car(car(p)))
 #define cdddr(p)                      cdr(cdr(cdr(p)))
 #define cddar(p)                      cdr(cdr(car(p)))
+
 #define caaadr(p)                     car(car(car(cdr(p))))
 #define caadar(p)                     car(car(cdr(car(p))))
 #define cadaar(p)                     car(cdr(car(car(p))))
@@ -1374,8 +1381,6 @@ static void init_types(void)
 #define caddar(p)                     car(cdr(cdr(car(p))))
 #define cdadar(p)                     cdr(car(cdr(car(p))))
 #define cdaddr(p)                     cdr(car(cdr(cdr(p))))
-#define cadddar(p)                    car(cdr(cdr(cdr(car(p)))))
-
 #define caaaar(p)                     car(car(car(car(p))))
 #define cadadr(p)                     car(cdr(car(cdr(p))))
 #define cdaadr(p)                     cdr(car(car(cdr(p))))
@@ -1383,6 +1388,9 @@ static void init_types(void)
 #define cdddar(p)                     cdr(cdr(cdr(car(p))))
 #define cddadr(p)                     cdr(cdr(car(cdr(p))))
 #define cddaar(p)                     cdr(cdr(car(car(p))))
+
+#define cadddar(p)                    car(cdr(cdr(cdr(car(p)))))
+
 
 
 #if WITH_GCC
@@ -1460,8 +1468,6 @@ static void init_types(void)
 #define hash_table_elements(p)        (p)->object.vector.elements
 #define hash_table_entries(p)         (p)->object.vector.vextra.entries
 #define hash_table_function(p)        (p)->object.vector.hash_func
-
-#define small_int(Val)                small_ints[Val]
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
@@ -1583,15 +1589,17 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #endif
 
 
-#define integer(p)            p->object.number.integer_value
-#define real(p)               p->object.number.real_value
-#define numerator(p)          p->object.number.fraction_value.numerator
-#define denominator(p)        p->object.number.fraction_value.denominator
-#define fraction(p)           (((long double)numerator(p)) / ((long double)denominator(p)))
-#define inverted_fraction(p)  (((long double)denominator(p)) / ((long double)numerator(p)))
-#define real_part(p)          p->object.number.complex_value.rl
-#define imag_part(p)          p->object.number.complex_value.im
-#define as_c_complex(p)       (real_part(p) + (imag_part(p) * _Complex_I))
+#define small_int(Val)                small_ints[Val]
+
+#define integer(p)                    p->object.number.integer_value
+#define real(p)                       p->object.number.real_value
+#define numerator(p)                  p->object.number.fraction_value.numerator
+#define denominator(p)                p->object.number.fraction_value.denominator
+#define fraction(p)                   (((long double)numerator(p)) / ((long double)denominator(p)))
+#define inverted_fraction(p)          (((long double)denominator(p)) / ((long double)numerator(p)))
+#define real_part(p)                  p->object.number.complex_value.rl
+#define imag_part(p)                  p->object.number.complex_value.im
+#define as_c_complex(p)               (real_part(p) + (imag_part(p) * _Complex_I))
 
 
 #define S7_LLONG_MAX 9223372036854775807LL
@@ -5258,6 +5266,17 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
 }
 
 
+static s7_pointer make_permanent_real(s7_Double n) 
+{
+  s7_pointer x;
+  x = (s7_pointer)calloc(1, sizeof(s7_cell));
+  set_type(x, T_IMMUTABLE | T_REAL);
+  x->hloc = NOT_IN_HEAP;
+  real(x) = n;
+  return(x);
+}
+
+
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n) 
 {
   if ((rl != real_zero) &&
@@ -5312,7 +5331,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
       if (a & 1)
 	{
 	  if (a == 1)
-	    return(s7_make_real(sc, NAN));
+	    return(real_NaN);
 	  /* not an error here because 1/9223372036854775808 might be in a block of unevaluated code */
 	  b = b + 1;
 	}
@@ -6204,11 +6223,24 @@ static s7_pointer g_sharp_readers_set(s7_scheme *sc, s7_pointer args)
 
 static bool is_abnormal(s7_pointer x)
 {
-  return((!s7_is_number(x)) ||
-	 (isinf(s7_real_part(x))) || 
-	 (isinf(s7_imag_part(x))) ||
-	 (is_NaN(s7_real_part(x))) || 
-	 (is_NaN(s7_imag_part(x))));
+  switch (type(x))
+    {
+    case T_INTEGER:
+    case T_RATIO:
+      return(false);
+
+    case T_REAL:
+      return(isinf(real(x)) || 
+	     is_NaN(real(x)));
+
+    case T_COMPLEX:
+      return(((isinf(s7_real_part(x))) || 
+	      (isinf(s7_imag_part(x))) ||
+	      (is_NaN(s7_real_part(x))) || 
+	      (is_NaN(s7_imag_part(x)))));
+    default:
+      return(true);
+    }
 }
 
 
@@ -7124,7 +7156,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		else rl = (s7_Double)num / (s7_Double)den;
 	      }
 	    else rl = (s7_Double)string_to_integer(q, radix, &overflow);
-	    if (overflow) return(s7_make_real(sc, NAN));
+	    if (overflow) return(real_NaN);
 	  }
 	if (rl == -0.0) rl = 0.0;
 	
@@ -7148,7 +7180,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		else im = (s7_Double)num / (s7_Double)den;
 	      }
 	    else im = (s7_Double)string_to_integer(plus, radix, &overflow);
-	    if (overflow) return(s7_make_real(sc, NAN));
+	    if (overflow) return(real_NaN);
 	  }
 	if ((has_plus_or_minus == -1) && 
 	    (im != 0.0))
@@ -7208,7 +7240,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	if ((n == 0) && (d != 0))                        /* 0/100000000000000000000000000000000000000 */
 	  return(small_int(0));
 	if ((d == 0) || (overflow))
-	  return(s7_make_real(sc, NAN));
+	  return(real_NaN);
 	/* it would be neat to return 1 from 10000000000000000000000000000/10000000000000000000000000000 
 	 *   but q is the entire number ('/' included) and slash1 is the stuff after the '/', and every 
 	 *   big number comes through here, so there's no clean and safe way to check that q == slash1.
@@ -7278,7 +7310,7 @@ the 'radix' argument is ignored: (string->number \"#x11\" 2) -> 17 not 3."
     {
     case 'n':
       if (safe_strcmp(str, "nan.0") == 0)
-	return(s7_make_real(sc, NAN));
+	return(real_NaN);
       break;
 
     case 'i':
@@ -7469,18 +7501,18 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
     {
     case T_INTEGER:
       if (integer(x) < 0)
-	return(s7_make_real(sc, M_PI));
+	return(real_pi);
       return(small_int(0));
 
     case T_RATIO:
       if (numerator(x) < 0)
-	return(s7_make_real(sc, M_PI));
+	return(real_pi);
       return(small_int(0));
 
     case T_REAL:
       if (is_NaN(real(x))) return(x);
       if (real(x) < 0.0)
-	return(s7_make_real(sc, M_PI));
+	return(real_pi);
       return(real_zero);
 
     case T_COMPLEX:
@@ -7598,7 +7630,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 	  ang = real(y);
 	  if (ang == 0.0) return(x);
 	  if (is_NaN(ang)) return(y);
-	  if (isinf(ang)) return(s7_make_real(sc, NAN));
+	  if (isinf(ang)) return(real_NaN);
 	  if ((ang == M_PI) || (ang == -M_PI)) return(make_integer(sc, -integer(x)));
 	  mag = (s7_Double)integer(x);
 	  break;
@@ -7626,7 +7658,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 	  ang = real(y);
 	  if (ang == 0.0) return(x);
 	  if (is_NaN(ang)) return(y);
-	  if (isinf(ang)) return(s7_make_real(sc, NAN));
+	  if (isinf(ang)) return(real_NaN);
 	  if ((ang == M_PI) || (ang == -M_PI)) return(s7_make_ratio(sc, -numerator(x), denominator(x)));
 	  mag = fraction(x);
 	  break;
@@ -7654,7 +7686,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 	  ang = real(y);
 	  if (ang == 0.0) return(x);
 	  if (is_NaN(ang)) return(y);
-	  if (isinf(ang)) return(s7_make_real(sc, NAN));
+	  if (isinf(ang)) return(real_NaN);
 	  break;
 
 	default:
@@ -7837,9 +7869,9 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 
     case T_COMPLEX:
 #if WITH_COMPLEX
-      return(s7_from_c_complex(sc, csin(real_part(x) + (imag_part(x) * _Complex_I))));
+      return(s7_from_c_complex(sc, csin(as_c_complex(x))));
 #else
-      return(s7_make_real(sc, 0.0));
+      return(real_zero);
 #endif
 
     default:
@@ -7879,9 +7911,9 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 
     case T_COMPLEX:
 #if WITH_COMPLEX
-      return(s7_from_c_complex(sc, ccos(real_part(x) + (imag_part(x) * _Complex_I))));
+      return(s7_from_c_complex(sc, ccos(as_c_complex(x))));
 #else
-      return(s7_make_real(sc, 0.0));
+      return(real_zero);
 #endif
 
     default:
@@ -8141,7 +8173,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
 
     case T_COMPLEX:
       if (real_part(x) > 350.0)
-	return(s7_make_real(sc, 1.0));               /* closer than 0.0 which is what ctanh is about to return! */
+	return(real_one);               /* closer than 0.0 which is what ctanh is about to return! */
       if (real_part(x) < -350.0)
 	return(s7_make_real(sc, -1.0));              /* closer than -0.0 which is what ctanh is about to return! */
       return(s7_from_c_complex(sc, ctanh(as_c_complex(x))));
@@ -8272,7 +8304,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
       if (is_NaN(real(n)))
-	return(s7_make_real(sc, NAN));
+	return(real_NaN);
       if (real(n) >= 0.0)
 	return(s7_make_real(sc, sqrt(real(n))));
       return(s7_make_complex(sc, 0.0, sqrt(-real(n))));
@@ -8391,7 +8423,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  /* (expt +nan.0 0) ?? */
 	  if (is_rational(n))
 	    return(small_int(1));
-	  return(s7_make_real(sc, 1.0));
+	  return(real_one);
 	}
 
       if (type(n) == T_INTEGER)
@@ -8464,7 +8496,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       if (is_NaN(x)) return(n);
       if (is_NaN(y)) return(pw);
-      if (y == 0.0) return(s7_make_real(sc, 1.0));
+      if (y == 0.0) return(real_one);
 
       if ((x > 0.0) ||
 	  ((y - floor(y)) < 1.0e-16))
@@ -9114,7 +9146,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  b = real(y);
 	  if (b == 0.0) return(x);
 	  if (is_NaN(b)) return(y);
-	  if (isinf(b)) return(s7_make_real(sc, NAN));
+	  if (isinf(b)) return(real_NaN);
 	  a = (s7_Double)integer(x);
 	  return(s7_make_real(sc, a - b * (s7_Int)floor(a / b)));
 
@@ -9183,7 +9215,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  b = real(y);
 	  if (b == 0.0) return(x);
 	  if (is_NaN(b)) return(y);
-	  if (isinf(b)) return(s7_make_real(sc, NAN));
+	  if (isinf(b)) return(real_NaN);
 	  a = fraction(x);
 	  return(s7_make_real(sc, a - b * (s7_Int)floor(a / b)));
 
@@ -9194,7 +9226,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
     case T_REAL:
       a = real(x);
       if (is_NaN(a)) return(x);
-      if (isinf(a)) return(s7_make_real(sc, NAN));
+      if (isinf(a)) return(real_NaN);
 
       switch (type(y))
 	{
@@ -9211,7 +9243,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  b = real(y);
 	  if (b == 0.0) return(x);
 	  if (is_NaN(b)) return(y);
-	  if (isinf(b)) return(s7_make_real(sc, NAN));
+	  if (isinf(b)) return(real_NaN);
 	  return(s7_make_real(sc, a - b * (s7_Int)floor(a / b)));
 
 	default:
@@ -10514,7 +10546,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 		}
 	    }
 	  if (return_nan)
-	    return(s7_make_real(sc, NAN));
+	    return(real_NaN);
 	  if (return_real_zero)
 	    return(real_zero);
 	  return(small_int(0));
@@ -10705,7 +10737,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 		return_nan = true;
 	    }
 	  if (return_nan)
-	    return(s7_make_real(sc, NAN));
+	    return(real_NaN);
 	  return(real_zero);
 	}
 
@@ -47588,7 +47620,7 @@ static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const 
   if (!overflow)
     {
       if (d == 0)
-	return(s7_make_real(sc, NAN));
+	return(real_NaN);
 
       n = string_to_integer(nstr, radix, &overflow);
       if (!overflow)
@@ -48632,7 +48664,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
   if (is_NaN(y))
     {
       mpfr_clear(ang);
-      return(s7_make_real(sc, NAN));
+      return(real_NaN);
     }
 
   mpfr_init_set(mag, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
@@ -48642,7 +48674,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
     {
       mpfr_clear(ang);
       mpfr_clear(mag);
-      return(s7_make_real(sc, NAN));
+      return(real_NaN);
     }
 
   if ((x == 0.0) || (y == 0.0))
@@ -48705,7 +48737,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
       p0 = promote_number(sc, T_BIG_REAL, p0);
       x = mpfr_get_d(S7_BIG_REAL(p0), GMP_RNDN);
       if (is_NaN(x))
-	return(s7_make_real(sc, NAN));
+	return(real_NaN);
 
       if (p1) 
 	{
@@ -48719,7 +48751,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	   *  #f
 	   */
 	  if (is_NaN(y))
-	    return(s7_make_real(sc, NAN));
+	    return(real_NaN);
 	  if (y == 0.0)
 	    return(s7_out_of_range_error(sc, "log base,", 2, p1, "can't be 0.0"));
 	}
@@ -48957,7 +48989,7 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args,
   if (tan_case == TRIG_TANH_CHECK)
     {
       if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 350, 1))) > 0)
-	return(s7_make_real(sc, 1.0));
+	return(real_one);
       if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), -350, 1))) < 0)
 	return(s7_make_real(sc, -1.0));
     }
@@ -49094,7 +49126,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  if (s7_is_rational(x))
 	    return(small_int(1));
-	  return(s7_make_real(sc, 1.0));
+	  return(real_one);
 	}
 
       if (yval == 1)
@@ -51432,10 +51464,10 @@ s7_scheme *s7_init(void)
       }
   }
 
-  real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
-  typeflag(real_zero) = T_IMMUTABLE | T_REAL;
-  real_zero->hloc = NOT_IN_HEAP;
-  real(real_zero) = (s7_Double)0.0;
+  real_zero = make_permanent_real(0.0);
+  real_one = make_permanent_real(1.0);
+  real_NaN = make_permanent_real(NAN);
+  real_pi = make_permanent_real(3.1415926535897932384626433832795029L); /* M_PI is not good enough for s7_Double = long double */
 
   /* keep the characters out of the heap */
   chars = (s7_pointer *)malloc((NUM_CHARS + 1) * sizeof(s7_pointer));
@@ -52253,11 +52285,11 @@ the error type and the info passed to the error handler.");
     for (i = 2; i < 17; i++)
       s7_int_digits_by_radix[i] = (int)(floor(((top == 8) ? S7_LOG_LLONG_MAX : S7_LOG_LONG_MAX) / log((double)i)));
 
-    s7_define_constant(sc, "most-positive-fixnum", make_integer(sc, (top == 8) ? S7_LLONG_MAX : ((top == 4) ? S7_LONG_MAX : S7_SHORT_MAX)));
-    s7_define_constant(sc, "most-negative-fixnum", make_integer(sc, (top == 8) ? S7_LLONG_MIN : ((top == 4) ? S7_LONG_MIN : S7_SHORT_MIN)));
+    s7_define_constant(sc, "most-positive-fixnum", make_permanent_integer((top == 8) ? S7_LLONG_MAX : ((top == 4) ? S7_LONG_MAX : S7_SHORT_MAX)));
+    s7_define_constant(sc, "most-negative-fixnum", make_permanent_integer((top == 8) ? S7_LLONG_MIN : ((top == 4) ? S7_LONG_MIN : S7_SHORT_MIN)));
 
     if (top == 4) default_rationalize_error = 1.0e-6;
-    s7_define_constant(sc, "pi", s7_make_real(sc, 3.1415926535897932384626433832795029L)); /* M_PI is not good enough for s7_Double = long double */
+    s7_define_constant(sc, "pi", real_pi);
 
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }

@@ -62630,6 +62630,21 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? (would need check for invalid args)
+in C:
+	    s7_pointer p;
+	    unsigned long long int NAN_1, NAN_0;
+	    s7_Double f_NAN_0, f_NAN_1;
+	    p = s7_make_real(sc, NAN);
+	    f_NAN_0 = real(p);
+	    NAN_0 = integer(p);
+	    NAN_1 = integer(p) | 1;
+	    f_NAN_1 = (* ((s7_Double*)(&NAN_1)));
+	    fprintf(stderr, "%llx %f %d, %llx %f %d\n", NAN_0, f_NAN_0, is_NaN(f_NAN_0), NAN_1, f_NAN_1, is_NaN(f_NAN_1));
+
+7ff8000000000000 nan 1, 7ff8000000000001 nan 1
+
+so we can use these low order bits to mark where the NaN was created
+but I think we get NaN's implicitly and s7_make_real does not check
 
 in non-gmp, 
   (+ most-negative-fixnum -1 most-positive-fixnum) is the same as 
