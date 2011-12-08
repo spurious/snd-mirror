@@ -55294,6 +55294,10 @@ abs     1       2
       (val2 (catch #t (lambda () (* 1.0 -0.0)) (lambda args 'error))))
   (test (equal? val1 val2) #t))
 
+(if with-bignums
+    (num-test (let ((n 40) (s 1)) (do ((i 0 (+ i 1))) ((= i n) s) (set! s (* s 2/3)))) 549755813888/4052555153018976267)
+    (num-test (let ((n 40) (s 1)) (do ((i 0 (+ i 1))) ((= i n) s) (set! s (* s 2/3)))) 9.043772683816628192400549525035572818665E-8))
+    
 (test (* 0 1 "hi") 'error)
 (test (* 0.0 "hi") 'error)
 (test (* 0.0+0.0i "hi") 'error)

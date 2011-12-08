@@ -6238,6 +6238,16 @@ static bool is_abnormal(s7_pointer x)
 	      (isinf(s7_imag_part(x))) ||
 	      (is_NaN(s7_real_part(x))) || 
 	      (is_NaN(s7_imag_part(x)))));
+
+#if WITH_GMP
+    case T_C_OBJECT:
+      return((!s7_is_number(x)) ||
+	     (isinf(s7_real_part(x))) || 
+	     (isinf(s7_imag_part(x))) ||
+	     (isnan(s7_real_part(x))) || 
+	     (isnan(s7_imag_part(x))));
+#endif
+
     default:
       return(true);
     }
@@ -9104,7 +9114,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 static s7_Int c_mod(s7_Int x, s7_Int y)
 {
   s7_Int z;
-  if (y == 0) return(x); /* else arithmetic exception */
+  /* if (y == 0) return(x); */ /* else arithmetic exception, but we're checking for this elsewhere */
   z = x % y;
   if (((y < 0) && (z > 0)) ||
       ((y > 0) && (z < 0)))
@@ -9168,7 +9178,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	case T_RATIO:
 	  n1 = numerator(x);
 	  d1 = denominator(x);
-	  n2 = numerator(y);
+	  n2 = numerator(y); /* can't be 0 */
 	  d2 = denominator(y);
 	  if (d1 == d2)
 	    return(s7_make_ratio(sc, c_mod(n1, n2), d1));
@@ -14134,6 +14144,7 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str)
 
 static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill) 
 {
+  /* a permanent nil_string object saved almost nothing */
   s7_pointer x;
   NEW_CELL(sc, x);
   set_type(x, T_STRING);
@@ -16530,7 +16541,6 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
   return(s7_wrong_type_arg_error(sc, "read", 0, port, "an input port"));
 }
 
-/* TODO: port-specific read funcs */
 
 static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 {
@@ -29832,7 +29842,19 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  return(add_fs);
 	}
 
-      /* fprintf(stderr, "add2: %s\n", DISPLAY_80(expr)); */
+#if 0
+      /* in snd-test, apparently (+ int (* int int)) is very common, but I think it is fake: (sound-data-set! sd chn i (+ i (* chn 10))) and so on
+       */
+      if ((!is_pair(cadr(expr))) &&
+	  (is_pair(caddr(expr))) &&
+	  (is_optimized(caddr(expr))) &&
+	  (optimize_data(caddr(expr)) == HOP_SAFE_C_C) &&
+	  ((c_call(caddr(expr)) == g_multiply_is) || (c_call(caddr(expr)) == g_multiply_si)))
+	{
+	  fprintf(stderr, "add2 si + p %s: %s\n", (is_optimized(caddr(expr))) ? opt_names[optimize_data(caddr(expr))] : "unopt", DISPLAY_80(expr)); 
+	}
+#endif
+
       return(add_2);
     }
 
@@ -29940,6 +29962,7 @@ static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	      return(equal_s_ic);
 	    }
 	}
+      /* fprintf(stderr, "=2: %s\n", DISPLAY_80(expr)); */
       return(equal_2);
     }
   return(f);
@@ -30025,6 +30048,7 @@ static s7_pointer geq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	    }
 	  return(geq_s_ic);
 	}
+      /* fprintf(stderr, ">=2: %s\n", DISPLAY_80(expr)); */
       return(geq_2);
     }
   return(f);
@@ -47261,67 +47285,6 @@ s7_Int s7_number_to_integer(s7_pointer x)
 }
 
 
-s7_Double s7_number_to_real_with_error(s7_scheme *sc, s7_pointer x, const char *caller, int arg_num)
-{
-  switch (type(x))
-    {
-    case T_INTEGER: return((s7_Double)integer(x));
-    case T_RATIO:   return((s7_Double)numerator(x) / (s7_Double)denominator(x));
-    case T_REAL:    return(real(x));
-    case T_COMPLEX: return(real_part(x));
-
-    case T_C_OBJECT:
-      if (object_type(x) == big_real_tag)
-	return((s7_Double)mpfr_get_d(S7_BIG_REAL(x), GMP_RNDN));
-
-      if (object_type(x) == big_integer_tag)
-	return((s7_Double)big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
-
-      if (object_type(x) == big_ratio_tag)
-	return((s7_Double)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
-
-    case T_UNTYPED:
-      if (x == sc->UNDEFINED)
-	return(0.0);
-
-    default:        
-      s7_wrong_type_arg_error(sc, caller, arg_num, x, "a real");
-      return(0.0);
-    }
-}
-
-
-s7_Int s7_number_to_integer_with_error(s7_scheme *sc, s7_pointer x, const char *caller, int arg_num)
-{
-  switch (type(x))
-    {
-    case T_INTEGER: return(integer(x));
-    case T_RATIO:   return((s7_Int)((s7_Double)numerator(x) / (s7_Double)denominator(x)));
-    case T_REAL:    return((s7_Int)real(x));
-    case T_COMPLEX: return((s7_Int)real_part(x));
-      
-    case T_C_OBJECT:
-      if (object_type(x) == big_integer_tag)
-	return(big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
-
-      if (object_type(x) == big_real_tag)
-	return((s7_Int)mpfr_get_d(S7_BIG_REAL(x), GMP_RNDN));
-
-      if (object_type(x) == big_ratio_tag)
-	return((s7_Int)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
-
-    case T_UNTYPED:
-      if (x == sc->UNDEFINED)
-	return(0);
-
-    default:        
-      s7_wrong_type_arg_error(sc, caller, arg_num, x, "an integer");
-      return(0);
-    }
-}
-
-
-
 s7_Int s7_numerator(s7_pointer x)
 {
   if (is_c_object(x))
@@ -52381,6 +52344,13 @@ the error type and the info passed to the error handler.");
                         	   (else (loop (cdr clauses))))))))");
 
   /* fprintf(stderr, "size: %d %d, max op: %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_extended_cell), OP_MAX_DEFINED); */
+  /* 64 bit machine: size: 48 72, max op: 263 */
+#if WITH_GMP
+  /* fprintf(stderr, "sizes: %d %d %d %d\n", sizeof(mpz_t), sizeof(mpq_t), sizeof(mpfr_t), sizeof(mpc_t)); */
+  /* sizes: 16 32 32 64 
+   *   which means if we embed mpc_t in the s7_cell number union, it will grow by 24 bytes? 72 from 48
+   */
+#endif
   save_initial_environment(sc);
 
   return(sc);
@@ -52407,6 +52377,19 @@ the error type and the info passed to the error handler.");
  *
  * T_REAL|INTEGER|COMPLEX|CHAR|STRING|_VECTOR
  *   then a package tying all gsl into s7 or fftw etc
+ *
+ * for vcts (which aren't assumed C-side like frames/mixers in clm.c and sound-data in sndlib)
+ *   T_REAL_VECTOR
+ *   mus_vct_print_length = *vector-print-length*
+ *   mus_vct_p = s7_is_real_vector, g_vct_p as now (MUS_VCT_P -> s7_is_real_vector)
+ *   free/mark/print/add(for sweep)/equal?/fill/copy/length/reverse/for-each+map for T_REAL_VECTOR
+ *   s7_real_vector_elements -> double array
+ *   s7_make_real_vector, s7_real_vector_length
+ *   would vector-ref|set  know about these? 
+ *   how would the wrappers work?  (arayy from elsewhere, not freed upon GC, etc)
+ * so what does this gain us?  
+ *   The implicit ref/set could be direct as in current vectors
+ *   slightly simpler GC/free handling perhaps
  */
 
 /* TODO: the symbol-access stuff is not fully implemented
