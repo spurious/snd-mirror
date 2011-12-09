@@ -15189,6 +15189,20 @@ time, so that the displayed results are
 	    (if (<= w 1024) (c w) r))))
       '(2048 1024 512 256 128 64 32 16 8 4 2))
 
+(test (let ((c #f))
+	(let ((r '()))
+	  (let ((w (let ((v 1))
+		     (set! v (+ (values v (call-with-current-continuation
+				 (lambda (c0) (set! c c0) v)))
+				v))
+		     (set! r (cons v r))
+		     v)))
+	    (if (<= w 1024) (c w) r))))
+      '(2047 1023 511 255 127 63 31 15 7 3))
+
+;;; the 1st v is 1, the 3rd reflects the previous call/cc which reflects the
+;;;    env+slot that had the subsequent set! -- wierd.
+
 (test (let ((cc #f)
 	    (r '()))
 	(let ((s (list 1 2 3 4 (call/cc (lambda (c) (set! cc c) 5)) 6 7 8)))

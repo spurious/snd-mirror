@@ -23555,11 +23555,12 @@ EDITS: 2
 	       ((= chan chans))
 	     (if (or (< ((mus-data loc) chan) 0.0)
 		     (> ((mus-data loc) chan) 1.0))
-		 (snd-display #__line__ ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan ((mus-data loc) chan) (mus-data loc)))
+		 (format #t ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan ((mus-data loc) chan) (mus-data loc)))
+	     ;; not snd-display here -- we're in run
 	     (let ((diff (abs (- ((mus-data loc) chan) (last chan)))))
 	       (set! (last chan) ((mus-data loc) chan))
 	       (if (> diff .002)
-		   (snd-display #__line__ ";locsig, increment ~F in chan ~D with deg ~F~%" diff chan x))))))))
+		   (format #t ";locsig, increment ~F in chan ~D with deg ~F~%" diff chan x))))))))
     
     (for-each 
      (lambda (chans)
