@@ -30968,15 +30968,14 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
   if (func_is_closure) /* can't depend on ecdr here because it might not be global, or might be redefined locally */
     {
-      if (!is_global(caar(x)))
+      if ((!is_global(caar(x))) ||
+	  (direct_memq(caar(x), e)))
 	hop = 0;
+      /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
+       *   of the current function being optimized from being confused with some previous definition
+       *   of the same name.
+       */
     }
-  /* this choice is at least consistent with the unoptimized case, and the ecdr(code) value is not
-   *   GC'd without our noticing it.  But it means that the top-level functions behave differently
-   *   from these closures, and that consistency costs a lot -- the symbol value lookups are 3% of
-   *   the total computing in lg.scm.  If we go with accepting the hop value as is, we have to 
-   *   gc protect the current value somehow -- where to put it?
-   */
 
   for (p = cdar(x); is_pair(p); p = cdr(p), args++)
     {
@@ -34659,8 +34658,8 @@ static s7_pointer check_define(s7_scheme *sc)
 	set_one_liner(cdr(sc->code));
 
 #if WITH_OPTIMIZATION
-      /* fprintf(stderr, "optimize: %s\n", DISPLAY(x)); */
-      optimize(sc, cdr(sc->code), 1, collect_collisions(sc, cdar(sc->code), sc->NIL));
+      /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(x), DISPLAY(sc->code)); */
+      optimize(sc, cdr(sc->code), 1, collect_collisions(sc, cdar(sc->code), list_1(sc, x)));
 
       /* if the body is safe, we can optimize the calling sequence */
       {
@@ -37538,6 +37537,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   at this point, it's sc->code we care about; sc->args is not relevant.
        */
       /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
+
       sc->cur_code = sc->code;               /* in case an error occurs, this helps tell us where we are */
 
       if (is_pair(sc->code))
@@ -38754,8 +38754,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  optimize_data(code) = OP_TCLOSURE_S;
 				else optimize_data(code) = OP_CLOSURE_S;
 			      }
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = cadr(code);
@@ -38844,8 +38846,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  optimize_data(code) = OP_SAFE_CLOSURE_C;
 				else optimize_data(code) = OP_CLOSURE_C;
 
+#if 1
 				if (is_global(car(code)))
 				  optimize_data(code) |= 1;
+#endif
 
 				ecdr(code) = f;
 				goto OPT_EVAL;
@@ -38897,8 +38901,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  optimize_data(code) = OP_TCLOSURE_SS;
 				else optimize_data(code) = OP_CLOSURE_SS;
 			      }
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = caddr(code);
@@ -38939,8 +38945,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (is_safe_closure(closure_body(f)))
 			      optimize_data(code) = OP_SAFE_CLOSURE_SC;
 			    else optimize_data(code) = OP_CLOSURE_SC;
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = caddr(code);
@@ -38981,8 +38989,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (is_safe_closure(closure_body(f)))
 			      optimize_data(code) = OP_SAFE_CLOSURE_CS;
 			    else optimize_data(code) = OP_CLOSURE_CS;
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = caddr(code);
@@ -39023,8 +39033,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (is_safe_closure(closure_body(f)))
 			      optimize_data(code) = OP_SAFE_CLOSURE_CC;
 			    else optimize_data(code) = OP_CLOSURE_CC;
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = caddr(code);
@@ -39065,8 +39077,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (is_safe_closure(closure_body(f)))
 			      optimize_data(code) = OP_SAFE_CLOSURE_SSS;
 			    else optimize_data(code) = OP_CLOSURE_SSS;
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = cadddr(code);
@@ -39146,8 +39160,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				      optimize_data(code) = OP_TCLOSURE_opCq;
 				    else optimize_data(code) = OP_CLOSURE_opCq;
 				  }
+#if 1
 				if (is_global(car(code)))
 				  optimize_data(code) |= 1;
+#endif
 
 				ecdr(code) = f;
 				goto OPT_EVAL;
@@ -39216,8 +39232,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    else optimize_data(code) = OP_CLOSURE_opSq;
 				  }
 			      }
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = cadr(cadr(code));
@@ -39263,8 +39281,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  optimize_data(code) = OP_TCLOSURE_opSq_S;
 				else optimize_data(code) = OP_CLOSURE_opSq_S;
 			      }
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = caddr(code);
@@ -39284,6 +39304,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
+
 		    if (args_match(sc, f, 2))
 		      {
 			switch (type(f))
@@ -39293,12 +39314,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      optimize_data(code) = OP_SAFE_CLOSURE_S_opSq;
 			    else 
 			      {
+#if 1
 				if (is_tail_call(code))
 				  optimize_data(code) = OP_TCLOSURE_S_opSq;
-				else optimize_data(code) = OP_CLOSURE_S_opSq;
+				else 
+#endif
+				  optimize_data(code) = OP_CLOSURE_S_opSq;
 			      }
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    goto OPT_EVAL;
@@ -39338,8 +39364,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (is_safe_closure(closure_body(f)))
 			      optimize_data(code) = OP_SAFE_CLOSURE_opSq_opSq;
 			    else optimize_data(code) = OP_CLOSURE_opSq_opSq;
+#if 1
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
+#endif
 
 			    ecdr(code) = f;
 			    fcdr(code) = cadr(caddr(code));
