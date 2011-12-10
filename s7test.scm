@@ -12012,6 +12012,29 @@ time, so that the displayed results are
 		     #f))))))
 (call-cc-do-test)
 
+(define (__a-func__ a)
+  (format #t ";oops called first a-func by mistake: ~A~%" a)
+  (if (> a 0)
+      (__a-func__ (- a 1))))
+
+(define (__a-func__ a)
+  (if (> a 0)
+      (__a-func__ (- a 1))))
+
+(__a-func__ 3)
+
+(define (__c-func__ a)
+  (format #t ";oops called first __c-func__ by mistake: ~A~%" a)
+  (if (> a 0)
+      (__c-func__ (- a 1))))
+  
+(let ()
+  (define (__c-func__ a)
+    (if (> a 0)
+	(__c-func__ (- a 1))))
+  
+  (__c-func__ 3))
+
 ;;; more optimizer checks
 (let () (define (do-test-1) (do ((i 0 (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test-1))) "0123456789"))
 (let () (define (do-test-2) (do ((i 0 (+ 1 i))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test-2))) "0123456789"))
