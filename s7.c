@@ -3783,6 +3783,53 @@ in that frame and its value."
 }
 
 
+static char *display_locals(s7_scheme *sc)
+{
+  /* intended for use in gdb -- perhaps useful in scheme?
+   *    PERHAPS: (display (current-environment)) could show slots rather than the useless #<environment>
+   *      would need circle checks here!
+   *      also equal? e1 e2 could traverse these lists [reverse? copy? fill?!? length]
+   *      cdr(e)? or perhaps next-environment etc? -- we have environment->list, perhaps add environments->list?
+   *
+   * currently:
+   *    :(display (current-environment))
+   *    #<unspecified>
+   *
+   *    :(length (current-environment))
+   *    ;length argument, #<environment>, is an environment but should be a list, vector, string, or hash-table
+   *    ;    (length (current-environment))
+   *    same error for reverse, fill! similar
+   *
+   *    :(let ((a 3) (b 2)) (environment->list (current-environment)))
+   *    (((b . 2) (a . 3)))
+   *
+   *    :(current-environment)
+   *    #<environment>
+   *
+   *    :(copy (current-environment))
+   *    #<environment>
+   *
+   *    :(constant? (current-environment))
+   *    #t
+   */
+  s7_pointer e;
+  int spaces;
+  for (e = sc->envir, spaces = 0; is_environment(e); e = next_environment(e), spaces += 2)
+    {
+      s7_pointer s;
+      for (s = environment_slots(e); is_slot(s); s = next_slot(s))
+	{
+	  int i;
+	  char *str;
+	  for (i = 0; i < spaces; i++) fprintf(stderr, " ");
+	  fprintf(stderr, "%s\n", str = s7_object_to_c_string(sc, s));
+	  if (str) free(str);
+	}
+    }
+  return("");
+}
+
+
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
 { 
   s7_pointer x;	
@@ -18602,6 +18649,7 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
   index = s7_integer(ind);
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-ref index,", 2, ind, "should be non-negative"));
+
   if (index > MAX_LIST_LENGTH)
     return(s7_out_of_range_error(sc, "list-ref index,", 2, ind, "should be a reasonable integer"));
   
@@ -18665,6 +18713,7 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
   index = s7_integer(ind);
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-set!", arg_num, ind, "index should be non-negative"));
+
   if (index > MAX_LIST_LENGTH)
     return(s7_out_of_range_error(sc, "list-set! index,", arg_num, ind, "should be a reasonable integer"));
   
@@ -29927,9 +29976,11 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	{
 	  if (is_symbol(cadr(expr)))
 	    {
+	      /* fprintf(stderr, "subtract_cs1: %s\n", DISPLAY(expr)); */
 	      optimize_data(expr) = HOP_SAFE_C_C;
 	      return(subtract_cs1);
 	    }
+	  /* fprintf(stderr, "subtract_s1: %s\n", DISPLAY(expr));  */
 	  return(subtract_s1);
 	}
       if ((s7_is_integer(caddr(expr))) &&
@@ -32498,6 +32549,8 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 			  if (symbols == 1)
 			    set_optimize_data(car(x), OP_UNKNOWN_S);
 			  else set_optimize_data(car(x), OP_UNKNOWN_C);
+			  ecdr(car(x)) = NULL;
+
 			  /* hooboy -- we get here in let bindings...
 			   *
 			   * to save access to the caller, we'd need to pass it as an arg to optimize_expression
@@ -32523,6 +32576,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 			      else set_optimize_data(car(x), OP_UNKNOWN_CS);
 			    }
 			}
+		      ecdr(car(x)) = NULL;
 		      return(false); 
 		    }
 		  
@@ -32532,6 +32586,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
 		      set_optimize_data(car(x), OP_UNKNOWN_SSS);
+		      ecdr(car(x)) = NULL;
 		      return(false); 
 		    }
 		}
@@ -32549,6 +32604,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
 		      set_optimize_data(car(x), OP_UNKNOWN_opSq);
+		      ecdr(car(x)) = NULL;
 		      return(false); 
 		    }
 		  
@@ -32561,6 +32617,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		      set_unsafe(car(x));
 		      /* fprintf(stderr, "opCq: %s\n", DISPLAY(car(x)));  */
 		      set_optimize_data(car(x), OP_UNKNOWN_opCq);
+		      ecdr(car(x)) = NULL;
 		      return(false); 
 		    }
 		  
@@ -32575,6 +32632,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 			  set_optimized(car(x));
 			  set_unsafe(car(x));
 			  set_optimize_data(car(x), OP_UNKNOWN_opSq_S);
+			  ecdr(car(x)) = NULL;
 			  return(false); 
 			}
 		      if ((is_pair(caddar(x))) &&
@@ -32584,6 +32642,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 			  set_optimized(car(x));
 			  set_unsafe(car(x));
 			  set_optimize_data(car(x), OP_UNKNOWN_S_opSq);
+			  ecdr(car(x)) = NULL;
 			  return(false); 
 			}
 		    }
@@ -32599,6 +32658,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
 		      set_optimize_data(car(x), OP_UNKNOWN_opSq_opSq);
+		      ecdr(car(x)) = NULL;
 		      return(false); 
 		    }
 		}
@@ -34831,8 +34891,16 @@ static s7_pointer check_set(s7_scheme *sc)
 		      if ((!symbol_has_accessor(car(sc->code))) &&
 			  /* (!is_global(car(sc->code))) && */ /* we use find_symbol to get the slot, so this should be ok */
 			  (is_optimized(cadr(sc->code))) &&
+			  (!is_unsafe(cadr(sc->code))) &&
 			  (is_not_null(cdr(cadr(sc->code)))))               /* (set! x (y)) */
 			{
+			  /* the "!is_unsafe" check is needed in case OP_UNKNOWN_SC gets here --
+			   *   it (formerly) did not clear or set the e|fcdr fields, so they may contain
+			   *   garbage which can confuse the check below.  I now 
+			   *   clear ecdr.  (We can get here with an unknown op if previously
+			   *   + was redefined locally, for example, so the optimizer wants to
+			   *   delay the decision until runtime).
+			   */
 			  if (is_not_null(cddr(cadr(sc->code))))
 			    {
 			      if ((caddr(cadr(sc->code)) == small_int(1)) &&
@@ -34840,12 +34908,18 @@ static s7_pointer check_set(s7_scheme *sc)
 				{
 				  if ((ecdr(cadr(sc->code)) == add_s1) ||
 				      (ecdr(cadr(sc->code)) == add_cs1))
-				    car(ecdr(sc->code)) = sc->INCREMENT_1;
+				    {
+				      /* fprintf(stderr, "%p use increment for %s %p %p %p %p\n", cadr(sc->code), DISPLAY(sc->code), add_s1, add_cs1, subtract_s1, subtract_cs1); */
+				      car(ecdr(sc->code)) = sc->INCREMENT_1;
+				    }
 				  else 
 				    {
 				      if ((ecdr(cadr(sc->code)) == subtract_s1) ||
 					  (ecdr(cadr(sc->code)) == subtract_cs1))
-					car(ecdr(sc->code)) = sc->DECREMENT_1;
+					{
+					  /* fprintf(stderr, "%p use decrement for %s %p %p %p %p\n", cadr(sc->code), DISPLAY(sc->code), add_s1, add_cs1, subtract_s1, subtract_cs1); */
+					  car(ecdr(sc->code)) = sc->DECREMENT_1;
+					}
 				    }
 				}
 			      else
@@ -43074,11 +43148,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      car(sc->T3_1) = obj;
 	      car(sc->T3_2) = arg;
 	      car(sc->T3_3) = value;
-#if DEBUGGING
-	      if ((s7_is_integer(arg)) &&
-		  (integer(arg) < 0))
-		abort();
-#endif
 	      sc->value = g_vector_set(sc, sc->T3_1);
 	      break;
 	      
@@ -43086,11 +43155,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      car(sc->T3_1) = obj;
 	      car(sc->T3_2) = arg;
 	      car(sc->T3_3) = value;
-#if DEBUGGING
-	      if ((s7_is_integer(arg)) &&
-		  (integer(arg) < 0))
-		abort();
-#endif
 	      sc->value = g_string_set(sc, sc->T3_1);
 	      break;
 
@@ -43098,11 +43162,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      car(sc->T3_1) = obj;
 	      car(sc->T3_2) = arg;
 	      car(sc->T3_3) = value;
-#if DEBUGGING
-	      if ((s7_is_integer(arg)) &&
-		  (integer(arg) < 0))
-		abort();
-#endif
 	      sc->value = g_list_set(sc, sc->T3_1);
 	      break;
 
@@ -43468,8 +43527,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *    old: 2.32, new: 1.77 (1.50 direct), (12.2): 1.07
 	       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
 	       */
-	      
-
 	      if (cdar(sc->code) != sc->NIL)
 		{
 		  push_op_stack(sc, sc->LIST_SET);
@@ -52825,7 +52882,7 @@ the error type and the info passed to the error handler.");
  *
  * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
  *
- * these are currently scarcely ever used: SAFE_C_opQSq C_XDX SAFE_C_CQ
+ * these are currently scarcely ever used: SAFE_C_opQSq C_XDX SAFE_C_CQ SAFER_OR_CEQ
  *
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
