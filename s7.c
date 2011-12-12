@@ -714,7 +714,7 @@ static void init_counts(void) {int i;for (i=0;i<65000;i++) counts[i]=0;}
 static void report_counts(void) 
 {
   int i;
-  for (i=0;i<65000;i++) if (counts[i]>0) fprintf(stderr, "%s: %d\n", real_op_names[i], counts[i]);
+  for (i=0;i<65000;i++) if (counts[i]>0) fprintf(stderr, "%s: %d\n", opt_names[i], counts[i]);
 }
 #endif
 
@@ -1095,7 +1095,7 @@ struct s7_scheme {
 #define T_BIG_RATIO           11
 #define T_BIG_REAL            12
 #define T_BIG_COMPLEX         13
-/* only used in WITH_GMP case -- need to be in this order, will never be a cell type (actual type is T_C_OBJECT)
+/* only used in WITH_GMP case -- need to be in this order, will never (currently) be a cell type (actual type is T_C_OBJECT)
  *   (they're used only for internal type promotion decisions)
  *
  * the great plan, if I live long enough, is to use these eventually in place of the current bignum tags
@@ -3811,6 +3811,8 @@ static char *display_locals(s7_scheme *sc)
    *
    *    :(constant? (current-environment))
    *    #t
+   *
+   * TODO: use DISPLAY_80 or 40 here and in similar cases
    */
   s7_pointer e;
   int spaces;
@@ -6143,19 +6145,25 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 
 #define CTABLE_SIZE 256
-static bool *exponent_table, *slashify_table, *char_ok_in_a_name, *white_space;
+static bool *exponent_table, *slashify_table, *char_ok_in_a_name, *white_space, *not_eol;
 static int *digits;
 
 static void init_ctables(void)
 {
   int i;
 
+  not_eol = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   exponent_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   slashify_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   char_ok_in_a_name = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   white_space = (bool *)permanent_calloc((CTABLE_SIZE + 1) * sizeof(bool));
   white_space++;    /* leave white_space[-1] false for white_space[EOF] */
   
+  for (i = 1; i < CTABLE_SIZE; i++)
+    not_eol[i] = true;
+  not_eol[0] = false;
+  not_eol['\n'] = false;
+
   for (i = 1; i < CTABLE_SIZE; i++)
     char_ok_in_a_name[i] = true;
   char_ok_in_a_name[0] = false;
@@ -13275,6 +13283,8 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
 }
 
 
+/* ---------------------------------------- integer-length, integer-decode-float ---------------------------------------- */
+
 static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_length "(integer-length arg) returns the number of bits required to represent the integer 'arg': (ceiling (log (abs arg) 2))"
@@ -13338,6 +13348,11 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 		make_integer(sc, ((ix & 0x8000000000000000LL) != 0) ? -1 : 1)));
 }
 
+
+/* ---------------------------------------- logand, logior, logxor, lognot, ash ---------------------------------------- */
+
+/* PERHAPS: add logbit? CL (logbitp index int) using 2^index
+ */
 
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
@@ -13430,6 +13445,8 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
   return(make_integer(sc, arg1 >> -arg2));
 }
 
+
+/* ---------------------------------------- random ---------------------------------------- */
 
 /* random numbers.  The simple version used in clm.c is probably adequate,
  *   but here I'll use Marsaglia's MWC algorithm as an experiment.
@@ -15784,11 +15801,15 @@ static token_t file_read_semicolon(s7_scheme *sc, s7_pointer pt)
 
 static token_t string_read_semicolon(s7_scheme *sc, s7_pointer pt)
 {
-  int c;
+  unsigned char c;
   char *orig_str, *str;      
   str = (char *)(port_string(pt) + port_string_point(pt));
   orig_str = str;
-  do {c = *str++;} while ((c != '\n') && (c != 0));
+  do {c = (unsigned char)(*str++);} while (not_eol[c]);
+  /* the type casts are not otiose -- funny chars > 127 can become negative integers 
+   *   use of an array lookup here is 25% faster than the equivalent 'or'
+   *   earlier version: do {c = *str++;} while ((c != '\n') && (c != 0));
+   */
   port_string_point(pt) += (str - orig_str);
   port_line_number(pt)++;
   if (c == 0)
@@ -25106,16 +25127,20 @@ static void format_append_char(format_data *dat, char c)
 static void format_append_string(format_data *dat, const char *str)
 {
   const char *s;
+  int loc, len;
   if (!str) return;
-  for (s = str; (*s) != 0; s++)
+  len = dat->len - 3;
+  for (loc = dat->loc, s = str; (*s) != 0; loc++, s++)
     {
-      if (dat->len <= dat->loc + 2)
+      if (len < loc)
 	{
 	  dat->len *= 2;
 	  dat->str = (char *)realloc(dat->str, dat->len * sizeof(char));
+	  len = dat->len - 3;
 	}
-      dat->str[dat->loc++] = (*s);
+      dat->str[loc] = (*s);
     }
+  dat->loc = loc;
 }
 
 
@@ -33812,13 +33837,19 @@ static s7_pointer check_let(s7_scheme *sc)
 				{
 				  if (is_one_liner(cdr(sc->code)))
 				    {
-				      if (c_call(cadr(binding)) == g_read_char)
-					car(ecdr(sc->code)) = sc->LET_READ_CHAR_P;
-				      else 
+				      car(ecdr(sc->code)) = sc->LET_R_P;
+				      if (is_syntactic(caadr(sc->code)))
 					{
-					  if (c_call(cadr(binding)) == g_car)
-					    car(ecdr(sc->code)) = sc->LET_CAR_P;
-					  else car(ecdr(sc->code)) = sc->LET_R_P;
+					  if (c_call(cadr(binding)) == g_read_char)
+					    car(ecdr(sc->code)) = sc->LET_READ_CHAR_P;
+					  else 
+					    {
+					      if (c_call(cadr(binding)) == g_car)
+						car(ecdr(sc->code)) = sc->LET_CAR_P;
+					      /* TODO: here the data field is not used, I believe, and we could
+					       *   store either car(binding) or syntax_opcode?  Will the latter change?
+					       */
+					    }
 					}
 				    }
 				  else car(ecdr(sc->code)) = sc->LET_R;
@@ -34033,13 +34064,16 @@ static s7_pointer check_let_star(s7_scheme *sc)
 			    {
 			      if (is_one_liner(cdr(sc->code)))
 				{
-				  if (c_call(cadr(binding)) == g_read_char)
-				    car(ecdr(sc->code)) = sc->LET_READ_CHAR_P;
-				  else 
+				  car(ecdr(sc->code)) = sc->LET_R_P;
+				  if (is_syntactic(caadr(sc->code)))
 				    {
-				      if (c_call(cadr(binding)) == g_car)
-					car(ecdr(sc->code)) = sc->LET_CAR_P;
-				      else car(ecdr(sc->code)) = sc->LET_R_P;
+				      if (c_call(cadr(binding)) == g_read_char)
+					car(ecdr(sc->code)) = sc->LET_READ_CHAR_P;
+				      else 
+					{
+					  if (c_call(cadr(binding)) == g_car)
+					    car(ecdr(sc->code)) = sc->LET_CAR_P;
+					}
 				    }
 				}
 			      else car(ecdr(sc->code)) = sc->LET_R;
@@ -34397,7 +34431,8 @@ static s7_pointer check_if(s7_scheme *sc)
 					car(ecdr(sc->code)) = sc->SAFE_IF_IS_SYMBOL_P_P;
 				      else
 					{
-					  if (c_call(test) == g_is_eof_object)
+					  if ((c_call(test) == g_is_eof_object) &&
+					      (is_syntactic(car(f))))
 					    car(ecdr(sc->code)) = sc->SAFE_IF_IS_EOF_P_P;
 					  else car(ecdr(sc->code)) = sc->SAFE_IF_CS_P_P;
 					}
@@ -36586,7 +36621,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), car(args));
 	    push_stack(sc, OP_FOR_EACH_SIMPLER, cdr(args), code);
 	    sc->code = car(closure_body(code));
-	    goto EVAL_PAIR;
+	    goto EVAL_PAIR; /* lg: mostly syn */
 	  }
 	sc->value = sc->UNSPECIFIED;
 	goto START;
@@ -37762,6 +37797,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_one_liner(sc->code))
 		      {
 			sc->code = car(sc->code);
+			/* lg: none
+			 */
 			goto EVAL_PAIR;
 		      }
 		    goto BEGIN;
@@ -37788,7 +37825,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    local_slot(slot_symbol(x)) = x;
 		    sc->envir = env;
 		    sc->code = car(closure_body(ecdr(code)));
-		    goto EVAL_PAIR;
+		    /* lg: syn: 39750 h_safe_c_sq: 45690
+		     * in: syn: 23871
+		     * al: syn: 4534616 h_safe_c_c: 456347 h_safe_c_ss: 863554 [h_safe_c_s: 4467]
+		     */
+		    goto EVAL_PAIR; /* all: syn */
 		  }
 		  
 		  
@@ -37853,6 +37894,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    local_slot(slot_symbol(x)) = x;
 		    sc->envir = env;
 		    sc->code = closure_body(ecdr(code));
+
+		    /* if (is_one_liner(sc->code))
+		     * lg: 20243 syn
+		     * in: none
+		     * al: unopt: 124269
+		     */
 		    goto BEGIN;
 		  }
 
@@ -37900,7 +37947,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			sc->code = car(sc->code);
 			sc->cur_code = sc->code;
-			goto EVAL_PAIR;
+			goto EVAL_PAIR; /* lg: syn */
 		      }
 		    goto BEGIN;
 		  }
@@ -38268,7 +38315,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			sc->code = car(sc->code);
 			sc->cur_code = sc->code;
-			goto EVAL_PAIR;
+			goto EVAL_PAIR; /* lg/all: syn */
 		      }
 		    goto BEGIN;
 		  }
@@ -38363,7 +38410,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			sc->code = car(sc->code);
 			sc->cur_code = sc->code;
-			goto EVAL_PAIR;
+			goto EVAL_PAIR; /* lg: syn */
 		      }
 		    goto BEGIN;
 		  }
@@ -38709,7 +38756,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			sc->code = car(sc->code);
 			sc->cur_code = sc->code;
-			goto EVAL_PAIR;
+			goto EVAL_PAIR; /* all: syn */
 		      }
 		    goto BEGIN;
 		  }
@@ -38821,7 +38868,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			sc->code = car(sc->code);
 			sc->cur_code = sc->code;
-			goto EVAL_PAIR;
+			goto EVAL_PAIR; /* all: syn */
 		      }
 		    goto BEGIN;
 		  }
@@ -40783,7 +40830,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_P:
 		  push_stack(sc, OP_EVAL_ARGS_P_1, sc->NIL, code); /* catch values etc */
 		  sc->code = cadr(code);
-		  goto EVAL_PAIR;
+		  goto EVAL_PAIR; /* in: syn */
 		  
 
 		case OP_SAFE_C_PS:
@@ -40793,7 +40840,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_PS:
 		  push_stack(sc, OP_EVAL_ARGS_P_3, sc->NIL, code);
 		  sc->code = cadr(code);
-		  goto EVAL_PAIR;
+		  goto EVAL_PAIR; /* in: opt */
 		  
 
 		case OP_SAFE_C_PC:
@@ -40803,7 +40850,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_PC:
 		  push_stack(sc, OP_EVAL_ARGS_P_4, sc->NIL, code);
 		  sc->code = cadr(code);
-		  goto EVAL_PAIR;
+		  goto EVAL_PAIR; /* in: opt */
 		  
 
 		case OP_SAFE_C_SP:
@@ -40813,7 +40860,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_SP:
 		  push_stack(sc, OP_EVAL_ARGS_P_2, list_1(sc, finder(sc, cadr(code))), code);
 		  sc->code = caddr(code);
-		  goto EVAL_PAIR;
+		  goto EVAL_PAIR; /* lg/in: opt */
 		  
 
 		case OP_SAFE_C_CP:
@@ -43360,7 +43407,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * lg: closure_sss: 176901 h_safe_c_opssq_s: 12762 h_safe_c_c: 4882
        * in: h_safe_c_ps: 175863 h_safe_c_cs: 26220 but not opt: 116946
        */
-      goto EVAL_PAIR;
+      goto EVAL_PAIR; /* lg: opt */
 
 
     case OP_SET2:
@@ -43746,7 +43793,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL_PAIR;
 	    }
 	sc->code = caddr(sc->code);
-	goto EVAL_PAIR;
+	goto EVAL_PAIR; /* all: syn */
       }
 #endif
 
@@ -43755,7 +43802,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_true(sc, sc->value))
 	sc->code = car(sc->code);
       else sc->code = cadr(sc->code);
-      goto EVAL_PAIR;
+      goto EVAL_PAIR; /* all: syn */
 	
 
     case OP_IF_P_P:
@@ -44056,7 +44103,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * lg: closure_s: 32814
        * in: h_safe_c_ss: 124044 h_safe_c_opsq: 37136
        */
-      goto EVAL_PAIR;
+      goto EVAL_PAIR; /* all: opt */
 
     case OP_IF_PXP:
       if (is_true(sc, sc->value))
@@ -44314,7 +44361,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
 	sc->code = caddr(code);
-	goto EVAL_PAIR;
+	goto EVAL_PAIR; /* all: opt */
       }
 
 
@@ -44385,7 +44432,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
 	sc->code = caddr(code);
-	goto EVAL_PAIR;
+	goto EVAL_PAIR; /* all: syn */
       }
 
 
@@ -44451,11 +44498,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL_PAIR;
 
     case OP_SAFE_IF_IS_EOF_P_P:
-      if (finder(sc, fcdr(sc->code)) == sc->EOF_OBJECT)
-	sc->code = cadr(sc->code);
-      else sc->code = caddr(sc->code);
-      goto EVAL_PAIR;
-
+      {
+	s7_pointer code;
+	code = sc->code;
+	if (finder(sc, fcdr(code)) == sc->EOF_OBJECT)
+	  {
+	    sc->code = cadr(code);
+	    goto EVAL_PAIR;
+	  }
+	code = caddr(code);
+	sc->op = (opcode_t)syntax_opcode(car(code));
+	sc->code = cdr(code);
+	goto START_WITHOUT_POP_STACK; /* this is begin... */
+      }
 
     case OP_SAFE_IF_CS_Q_P:
       car(sc->T1_1) = finder(sc, fcdr(sc->code));
@@ -44473,9 +44528,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_true(sc, c_call(car(sc->code))(sc, sc->T1_1)))
 	{
 	  sc->code = cadr(sc->code);
-	  goto EVAL_PAIR;
+	  goto EVAL_PAIR; /* in: syn */
 	}
-      else sc->value = sc->UNSPECIFIED;
+      sc->value = sc->UNSPECIFIED;
       goto START;
 
     case OP_SAFE_IF_CSQ_P:
@@ -44486,7 +44541,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cadr(sc->code);
 	  goto EVAL_PAIR;
 	}
-      else sc->value = sc->UNSPECIFIED;
+      sc->value = sc->UNSPECIFIED;
       goto START;
 
     case OP_SAFE_IF_CSQ_P_P:
@@ -44506,7 +44561,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cadr(sc->code);
 	  goto EVAL_PAIR;
 	}
-      else sc->value = sc->UNSPECIFIED;
+      sc->value = sc->UNSPECIFIED;
       goto START;
 
     case OP_SAFE_IF_CSS_P_P:
@@ -44526,7 +44581,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cadr(sc->code);
 	  goto EVAL_PAIR;
 	}
-      else sc->value = sc->UNSPECIFIED;
+      sc->value = sc->UNSPECIFIED;
       goto START;
 
     case OP_SAFE_IF_CSC_P_P:
@@ -44538,14 +44593,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL_PAIR;
 
 
-
     case OP_SAFE_IF_IS_PAIR_P:
       if (is_pair(finder(sc, fcdr(sc->code))))
 	{
 	  sc->code = cadr(sc->code);
 	  goto EVAL_PAIR;
 	}
-      else sc->value = sc->UNSPECIFIED;
+      sc->value = sc->UNSPECIFIED;
       goto START;
 
     case OP_SAFE_IF_IS_SYMBOL_P:
@@ -44712,7 +44766,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	val = finder(sc, cadr(binding));
 	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), val);
 	sc->code = cadr(sc->code);
-	goto EVAL_PAIR;
+	goto EVAL_PAIR; /* lg: opt */
       }
 
 
@@ -44754,26 +44808,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_LET_CAR_P:
       {
-	s7_pointer val;
-	val = finder(sc, fcdr(sc->code));
+	s7_pointer val, code;
+	code = sc->code;
+	val = finder(sc, fcdr(code));
 	if (!is_pair(val)) 
 	  s7_wrong_type_arg_error(sc, "car", 0, val, "a pair");
-	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), car(val));
-	sc->code = cadr(sc->code);
-	goto EVAL_PAIR;
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(code), car(val));
+	code = cadr(code);
+	sc->op = (opcode_t)syntax_opcode(car(code));
+	sc->code = cdr(code);
+	goto START_WITHOUT_POP_STACK;
       }
 
     case OP_LET_READ_CHAR_P:
       {
-	s7_pointer port;
-
-	port = finder(sc, fcdr(sc->code));
+	s7_pointer port, code;
+	code = sc->code;
+	port = finder(sc, fcdr(code));
 	if (!is_input_port(port)) /* perhaps (read-char 123)? */
 	  s7_wrong_type_arg_error(sc, "read-char", 0, port, "an input port");
-
-	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), chars[port_read_character(port)(sc, port)]);
-	sc->code = cadr(sc->code);
-	goto EVAL_PAIR;
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(code), chars[port_read_character(port)(sc, port)]);
+	code = cadr(code);
+	sc->op = (opcode_t)syntax_opcode(car(code));
+	sc->code = cdr(code);
+	goto START_WITHOUT_POP_STACK;
       }
 
 
@@ -44802,7 +44860,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_O2:
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, sc->args, sc->value);
       /* sc->code = cadr(sc->code); */
-      goto EVAL_PAIR;
+      goto EVAL_PAIR; /* all: syn */
 
 
     case OP_LET_OX_P:
@@ -44876,7 +44934,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), chars[(unsigned char)(string_value(val)[index])]);
 		    sc->code = cadr(sc->code);
-		    goto EVAL_PAIR;
+		    goto EVAL_PAIR; /* in: syn */
 		  }
 	      }
 	    break;
@@ -44894,7 +44952,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = c_call(expr)(sc, sc->T1_1);
 		NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), sc->value);
 		sc->code = cadr(sc->code);
-		goto EVAL_PAIR;
+		goto EVAL_PAIR; /* in: syn */
 	      }
 	    break;
 	    
@@ -45117,7 +45175,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		push_stack(sc, OP_LET1, sc->args, cdr(sc->code));
 		sc->code = x;
-		goto EVAL_PAIR;
+		goto EVAL_PAIR; /* lg: opt */
 	      }
 	    
 	    if (is_symbol(x))
@@ -52886,7 +52944,7 @@ the error type and the info passed to the error handler.");
  *
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
- * lint     13424 ->  1232
- * bench    52019 -> 10107
- * index    44300 ->  5822
+ * lint     13424 -> 1231
+ * bench    52019 -> 9999
+ * index    44300 -> 5822
  */
