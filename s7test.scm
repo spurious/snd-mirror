@@ -12063,7 +12063,20 @@ time, so that the displayed results are
 (let ((end 10)) (define (do-test-20A) (do ((i 0 (+ 1 i))) ((= end i)) (set! end 8) (display i))) (test (with-output-to-string (lambda () (do-test-20A))) "01234567"))
 
 (let () (define (do-test-21) (do ((i 0 (+ i 1))) ((= i 3)) (with-environment (global-environment) (+ 1 2)))) (do-test-21))
+(let ((v (vector 0 0 0))) (define (hi a) (do ((i 0 (+ i 1))) ((> i a)) (vector-set! v i 1))) (hi 2) (test v (vector 1 1 1)))
 
+(let () ; dotimes_c_c case can't involve set so we use write-char
+  (define (hi a) 
+    (do ((i 0 (+ i 1))) 
+	((= i a)) 
+      (write-char #\a))) 
+  (with-output-to-file "tmp1.r5rs" 
+    (lambda () 
+      (hi 3)))
+  (let ((str (with-input-from-file "tmp1.r5rs" 
+	       (lambda () 
+		 (read-line)))))
+    (test str "aaa")))
 
 
 

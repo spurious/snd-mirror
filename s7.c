@@ -3030,31 +3030,7 @@ static void stack_reset(s7_scheme *sc)
 #define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
 #define stack_op(Stack, Loc)          ((opcode_t)(vector_element(Stack, Loc)))
 
-#if 0
-static void pop_stack(s7_scheme *sc) 
-{ 
-  /* avoid "if..then" here and in push_stack -- these 2 are called a zillion times 
-   *   using pointer decrements here is not faster
-   */
-  sc->stack_end -= 4;
-  sc->op =    (opcode_t)(sc->stack_end[3]);
-  sc->args =  sc->stack_end[2];
-  sc->envir = sc->stack_end[1];
-  sc->code =  sc->stack_end[0];
-} 
-
-static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code)
-{ 
-  sc->stack_end[0] = code;
-  sc->stack_end[1] = sc->envir;
-  sc->stack_end[2] = args;
-  sc->stack_end[3] = (s7_pointer)op;
-  sc->stack_end += 4;
-}
-
-#else
-
-/* surprisingly, these macros are faster.  If the s7_scheme struct is set up to reflect the
+/* these macros are faster than the equivalent simple function calls.  If the s7_scheme struct is set up to reflect the
  *    stack order [code envir args op], we can use memcpy here: 
  *      #define pop_stack(Sc) do {Sc->stack_end -= 4; memcpy((void *)Sc, (void *)(Sc->stack_end), 4 * sizeof(s7_pointer));} while (0)
  *    but it is only slightly faster (.2% at best)!
@@ -3069,6 +3045,14 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   Sc->op =    (opcode_t)(Sc->stack_end[3]); \
   } while (0)
 
+#define pop_stack_no_op(Sc) \
+  do { \
+  Sc->stack_end -= 4; \
+  Sc->code =  Sc->stack_end[0]; \
+  Sc->envir = Sc->stack_end[1]; \
+  Sc->args =  Sc->stack_end[2]; \
+  } while (0)
+
 #define push_stack(Sc, Op, Args, Code) \
   do { \
   Sc->stack_end[0] = Code; \
@@ -3078,7 +3062,14 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   Sc->stack_end += 4; \
   } while (0)
 
-#endif
+#define push_stack_no_args(Sc, Op, Code) \
+  do { \
+  Sc->stack_end[0] = Code; \
+  Sc->stack_end[1] = Sc->envir; \
+  Sc->stack_end[3] = (s7_pointer)Op; \
+  Sc->stack_end += 4; \
+  } while (0)
+
 
 
 static void increase_stack_size(s7_scheme *sc)
@@ -3832,7 +3823,7 @@ static char *display_locals(s7_scheme *sc)
 	  if (str) free(str);
 	}
     }
-  return("");
+  return((char *)"");
 }
 
 
@@ -28848,10 +28839,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	    return(missing_close_paren_error(sc));
 
 	  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
-	  /* all these push_stacks that don't care about code/args look wasteful, but if a read error
-	   *   occurs, we need clean info in the error handler, so it's tricky to optimize this.
-	   *   (and if we do optimize it, it saves maybe %1 of the total stack time).
-	   */
+	  /* here we need to clear args, but code is ignored */
 
 	  if (sc->stack_end >= sc->stack_resize_trigger)
 	    increase_stack_size(sc);
@@ -35823,6 +35811,7 @@ static s7_pointer check_do(s7_scheme *sc)
 				      (is_pair(car(body))))
 				    {
 #if PRINTING
+				      /* (define (hi a b) (do ((i 0 (+ i 1))) ((= i a)) (vector-set! b i a))) */
 				      fprintf(stderr, "    dotimes: %s\n", opt_names[optimize_data(car(body))]);
 #endif				      
 
@@ -35948,8 +35937,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	  car(ecdr(sc->code)) = sc->DOX;
 
 #if PRINTING
-	  /* TODO: (vector-set s s c) as c_c case, c_c as simple also c_s an safe_simple -- dox_body 
-	   */
 	  fprintf(stderr, "dox optimizable: %s\n", DISPLAY_80(sc->code));
 	  if ((safe_list_length(sc, body) == 1) &&
 	      (is_pair(car(body))) &&
@@ -36306,13 +36293,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    *   To get there, the cdr(code) step in is_syntactic needs to be spread out to all the branches but
    *   all the current pops and jumps assume the cdr, op_begin would explicitly jump back here, no op_eval, 
    *   current trailers would be outside? and where would eval args go?  Huge change, might save 1% if lucky.
+   *
+   * a better savings: about half the cases don't care about args or op, so perhaps pop_stack could be
+   *   spread over the branches, but then how to handle the no-pop-stack case?  pop_stack_no_args here
+   *   might work -- the direct cases are all syntactic, so args won't matter.
    */
 
  START:
   pop_stack(sc);
 
  START_WITHOUT_POP_STACK:
-  /* fprintf(stderr, "at start: %s\n", DISPLAY(sc->code)) */
   switch (sc->op) 
     {
     case OP_READ_INTERNAL:
@@ -36943,7 +36933,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  add_slot(sc, caar(let_var), sc->UNDEFINED);
 		
 		stepper = slot_value(sc->args);
-		func = ecdr(caddr(caddr(sc->code)));
+		/* func = ecdr(caddr(caddr(sc->code))); */
+		func = caddr(caddr(sc->code));
 		body = cdr(caddr(caddr(sc->code)));
 		lets = car(cdaddr(sc->code));
 		
@@ -36960,7 +36951,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    
 		    /* (with-sound () (fm-violin 0 .0001 440 .1))
 		     */
-		    c_function_call(func)(sc, body);
+		    c_call(func)(sc, body);
 		    numerator(stepper)++;
 		    if (numerator(stepper) == denominator(stepper))
 		      {
@@ -36974,11 +36965,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    p = environment_slots(sc->envir);
 		    let_var = cdadar(lets);
-		    lets = ecdr(cadar(lets));
+		    lets = cadar(lets);
 		    
 		  SIMPLE_DOTIMES_LOOP:
-		    slot_set_value(p, c_function_call(lets)(sc, let_var));
-		    c_function_call(func)(sc, body); /* TODO: c_call here? */
+		    slot_set_value(p, c_call(lets)(sc, let_var));
+		    c_call(func)(sc, body);
 		    numerator(stepper)++;
 		    if (numerator(stepper) == denominator(stepper))
 		      {
@@ -37003,6 +36994,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DOTIMES_C_C:
       {
 	s7_pointer vars, init_val, func, body, stepper;
+
 	vars = car(sc->code);
 	init_val = cadr(car(vars));
 	if (is_symbol(init_val))
@@ -37040,7 +37032,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 	      DOTIMES_C_C_LOOP:
 		/* eval body  (cddr(sc->code)) */
-		/* c_function_call(func)(sc, body); */ /* TODO: test c_call! */
 		c_call(func)(sc, body);
 		numerator(stepper)++;
 		if (numerator(stepper) == denominator(stepper))
@@ -37259,7 +37250,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	/* body is safe in this case, step and end exprs are easy
 	 */
 
-	s7_pointer init, end, end_test, body, step, args, val, val2, s1, s2, cadr_step, caddr_step, car_args, cadr_args, caddr_args;
+	s7_pointer init, end, end_test, body, step, args, val, val2, s1, s2, cadr_step, caddr_step;
+	s7_pointer car_args = sc->NIL, cadr_args = sc->NIL, caddr_args = sc->NIL;
 	bool cadr_step_is_symbol;
 
 	sc->envir = new_frame_in_env(sc, sc->envir);
@@ -37367,7 +37359,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     SIMPLE_DO_OPT:
     case OP_SIMPLE_DO_OPT:
       {
-	s7_pointer init, end, end_test, body, step, args, val, val2, s1, s2, cadr_step, caddr_step, car_args, cadr_args, caddr_args;
+	s7_pointer init, end, end_test, body, step, args, val, val2, s1, s2, cadr_step, caddr_step;
+	s7_pointer car_args = sc->NIL, cadr_args = sc->NIL, caddr_args = sc->NIL;
 	bool cadr_step_is_symbol;
 	sc->envir = new_frame_in_env(sc, sc->envir);
 	
@@ -37670,7 +37663,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  
 	  sc->value = sc->NIL;
-	  pop_stack(sc); 
+	  pop_stack_no_op(sc); 
 	  goto DO_END;
 	}
       push_stack(sc, OP_DO_STEP2, sc->args, sc->code);
@@ -37920,7 +37913,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      s7_quit(sc);
 	      return(sc->F);
 	    }
-	  pop_stack(sc);
+	  pop_stack_no_op(sc);
 	  sc->op = op; /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error_with_name */
 	}
       /* fall through */
@@ -37959,7 +37952,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * and moving the is_pair(code) check out (via check_begin etc) is troublesome because
 	   *    do loops (perhaps others) assume they can fall into begin without any null body check.
 	   */
-	  push_stack(sc, OP_BEGIN1, sc->NIL, cdr(sc->code)); 
+	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code)); 
+	  /* this is slightly less than optimal because a stacktrace may show bogus args, but
+	   *    I think the speed differences outweighs that.  In most cases, this is by far the
+	   *    main push_stack call.
+	   */
 	}
       sc->code = car(sc->code);
 
@@ -43139,7 +43136,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    /* end of default arg evaluations */
 
-	    pop_stack(sc);                                /* get original args and code back */
+	    pop_stack_no_op(sc);                          /* get original args and code back */
 	    lambda_star_set_args(sc);                     /* load up current arg vals */
 	    sc->code = closure_body(sc->code);            /* evaluate the function body */
 	    if (is_one_liner(sc->code))
@@ -43624,7 +43621,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       /* else use standard set */
-      push_stack(sc, OP_SET1, sc->NIL, car(sc->code)); 
+      push_stack_no_args(sc, OP_SET1, car(sc->code));
       sc->code = cadr(sc->code);
       goto EVAL_PAIR;
 
@@ -43656,7 +43653,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       /* else use standard set */
-      push_stack(sc, OP_SET1, sc->NIL, car(sc->code)); 
+      push_stack_no_args(sc, OP_SET1, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL_PAIR;
 
@@ -43678,7 +43675,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       /* else use standard set */
-      push_stack(sc, OP_SET1, sc->NIL, car(sc->code)); 
+      push_stack_no_args(sc, OP_SET1, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL_PAIR;
 
@@ -43696,7 +43693,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       /* else use standard set */
-      push_stack(sc, OP_SET1, sc->NIL, car(sc->code)); 
+      push_stack_no_args(sc, OP_SET1, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL_PAIR;
 
@@ -43742,7 +43739,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
     case OP_SET_SYMBOL_P:
-      push_stack(sc, OP_SET1, sc->NIL, car(sc->code)); 
+      push_stack_no_args(sc, OP_SET1, car(sc->code)); 
       sc->code = cadr(sc->code);
       /* s7: mostly not opt
        * lg: closure_sss: 176901 h_safe_c_opssq_s: 12762 h_safe_c_c: 4882
@@ -43984,7 +43981,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	x = cadr(sc->code);
 	if (is_pair(x))
 	  {
-	    push_stack(sc, OP_SET1, sc->NIL, car(sc->code));
+	    push_stack_no_args(sc, OP_SET1, car(sc->code));
 	    sc->code = x;
 	    goto EVAL_PAIR;
 	  }
@@ -44052,7 +44049,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_IF:
       check_if(sc);
-      push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_IF1, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
 
@@ -44071,13 +44068,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_IF_P_P_P:
-      push_stack(sc, OP_IF_PPP, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
 #if WITH_OPTIMIZATION
     case OP_IF_O_P_P:
-      push_stack(sc, OP_IF_PPP, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = car(sc->code);
       if (!is_optimized(sc->code))
 	goto EVAL_PAIR;
@@ -44093,7 +44090,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer code;
 	code = sc->code;
-	push_stack(sc, OP_IF_PPP, sc->NIL, cdr(code));
+	push_stack_no_args(sc, OP_IF_PPP, cdr(code));
 	code = car(code);
 	sc->op = (opcode_t)syntax_opcode(car(code));
 	/* lg: OP_SAFER_OR_C: 27195
@@ -44106,13 +44103,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_IF_ANDP_P_P:
-      push_stack(sc, OP_IF_PPP, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = cdar(sc->code);
       goto AND_P;
 
 
     case OP_IF_ORP_P_P:
-      push_stack(sc, OP_IF_PPP, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = cdar(sc->code);
       goto OR_P;
 
@@ -44148,7 +44145,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
 
     case OP_IF_P_P:
-      push_stack(sc, OP_IF_PP, sc->NIL, cadr(sc->code));
+      push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
@@ -44160,7 +44157,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * sn: h_safe_c_s_opsq: 2752660
        * in: h_safe_c_opssq_s: 2153849 (string=? (vector-ref...) target)
        */
-      push_stack(sc, OP_IF_PP, sc->NIL, cadr(sc->code));
+      push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = car(sc->code);
       if (!is_optimized(sc->code))
 	goto EVAL_PAIR;
@@ -44368,7 +44365,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer code;
 	code = sc->code;
-	push_stack(sc, OP_IF_PP, sc->NIL, cadr(code));
+	push_stack_no_args(sc, OP_IF_PP, cadr(code));
 	code = car(code);
 	sc->op = (opcode_t)syntax_opcode(car(code));
 
@@ -44383,13 +44380,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_IF_ANDP_P:
-      push_stack(sc, OP_IF_PP, sc->NIL, cadr(sc->code));
+      push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = cdar(sc->code);
       goto AND_P;
 
 
     case OP_IF_ORP_P:
-      push_stack(sc, OP_IF_PP, sc->NIL, cadr(sc->code));
+      push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = cdar(sc->code);
       goto OR_P;
 
@@ -44422,7 +44419,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_IF_P_P_X:
-      push_stack(sc, OP_IF_PPX, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_IF_PPX, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL_PAIR;
       
@@ -44439,7 +44436,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_IF_P_X_P:
-      push_stack(sc, OP_IF_PXP, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_IF_PXP, cdr(sc->code));
       sc->code = car(sc->code);
       /* s7: h_safe_c_sc: 872
        * lg: closure_s: 32814
@@ -44464,7 +44461,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_IF_P_X:
-      push_stack(sc, OP_IF_PX, sc->NIL, cadr(sc->code));
+      push_stack_no_args(sc, OP_IF_PX, cadr(sc->code));
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
@@ -44480,7 +44477,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_IF_P_X_X:
-      push_stack(sc, OP_IF_PXX, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_IF_PXX, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
@@ -44645,7 +44642,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 #if WITH_OPTIMIZATION
     case OP_SAFE_IF2:
-      push_stack(sc, OP_SAFE_IF2_1, sc->NIL, cdr(sc->code));
+      push_stack_no_args(sc, OP_SAFE_IF2_1, cdr(sc->code));
       sc->code = car(sc->code);
       if (!is_optimized(sc->code))
 	goto EVAL_PAIR;
@@ -44661,7 +44658,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	
 
     case OP_SAFE_IF1:
-      push_stack(sc, OP_SAFE_IF1_1, sc->NIL, cadr(sc->code));
+      push_stack_no_args(sc, OP_SAFE_IF1_1, cadr(sc->code));
       sc->code = car(sc->code); 
       if (!is_optimized(sc->code))
 	goto EVAL_PAIR;
@@ -45572,7 +45569,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* this push_stack/goto can't be optimized away via a local optimize_data case statement
 		 *    because any c_call can trigger an embedded call on the evaluator (for example,
 		 *    open-sound involves both hooks, and s7_load if the corresponding .scm code exists),
-		 *    so we have to protect sc->code and sc->args via the stack.  
+		 *    so we have to protect sc->code and sc->args via the stack.  (I subsequently added
+		 *    some protection here, but debugging this is hard, and the gain is not huge).
 		 */
 	      }
 	    if (is_symbol(x))
@@ -45854,13 +45852,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	} 
 	  
-      push_stack(sc, OP_COND1, sc->NIL, sc->code);
+      push_stack_no_args(sc, OP_COND1, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
       
       
     case OP_COND_SIMPLE:
-      push_stack(sc, OP_COND1_SIMPLE, sc->NIL, sc->code);
+      push_stack_no_args(sc, OP_COND1_SIMPLE, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
       
@@ -45887,7 +45885,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	} 
       if (is_pair(caar(sc->code)))
 	{
-	  push_stack(sc, OP_COND1_SIMPLE, sc->NIL, sc->code);
+	  push_stack_no_args(sc, OP_COND1_SIMPLE, sc->code);
 	  sc->code = caar(sc->code);
 	  goto EVAL_PAIR;
 	}
@@ -46033,7 +46031,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 
 	if (is_not_null(cdr(sc->code)))
-	  push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
+	  push_stack_no_args(sc, OP_AND1, cdr(sc->code));
 	sc->code = p;
 	goto EVAL_PAIR;
       }
@@ -46054,7 +46052,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_AND_P:
       if (is_not_null(cdr(sc->code)))
-	push_stack(sc, OP_AND_P1, sc->NIL, cdr(sc->code)); 
+	push_stack_no_args(sc, OP_AND_P1, cdr(sc->code)); 
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
@@ -46139,7 +46137,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      default:
 		if (is_not_null(cdr(sc->code)))
-		  push_stack(sc, OP_AND_P1, sc->NIL, cdr(sc->code)); 
+		  push_stack_no_args(sc, OP_AND_P1, cdr(sc->code)); 
 		sc->code = code;
 		goto OPT_EVAL;
 		/* lg: h_safe_c_opsafe_closure_opsq_sq: 18989 h_safe_c_opsqq: 5475 h_safe_c_opssq: 5002
@@ -46160,7 +46158,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     * al: OP_SAFER_OR_X: 49599
 	     */
 	    if (is_not_null(cdr(sc->code)))
-	      push_stack(sc, OP_AND_P1, sc->NIL, cdr(sc->code)); 
+	      push_stack_no_args(sc, OP_AND_P1, cdr(sc->code)); 
 	    sc->code = code;
 	    goto EVAL_PAIR;
 	  }
@@ -46310,7 +46308,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       if (is_not_null(cdr(sc->code)))
-	push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code)); 
+	push_stack_no_args(sc, OP_OR1, cdr(sc->code)); 
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
@@ -46329,7 +46327,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_OR_P:
       if (is_not_null(cdr(sc->code)))
-	push_stack(sc, OP_OR_P1, sc->NIL, cdr(sc->code)); 
+	push_stack_no_args(sc, OP_OR_P1, cdr(sc->code)); 
       sc->code = car(sc->code);
       goto EVAL_PAIR;
 
@@ -46414,7 +46412,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      default:
 		if (is_not_null(cdr(sc->code)))
-		  push_stack(sc, OP_OR_P1, sc->NIL, cdr(sc->code)); 
+		  push_stack_no_args(sc, OP_OR_P1, cdr(sc->code)); 
 		sc->code = code;
 		goto OPT_EVAL;
 		/* s7: h_safe_c_p: 4144 safe_c_opscq: 1632
@@ -46435,7 +46433,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     * lg: OP_AND_P: 271373
 	     */
 	    if (is_not_null(cdr(sc->code)))
-	      push_stack(sc, OP_OR_P1, sc->NIL, cdr(sc->code)); 
+	      push_stack_no_args(sc, OP_OR_P1, cdr(sc->code)); 
 	    sc->code = code;
 	    goto EVAL_PAIR;
 	  }
@@ -46853,7 +46851,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	else
 	  {
-	    push_stack(sc, OP_CASE1, sc->NIL, cdr(sc->code));
+	    push_stack_no_args(sc, OP_CASE1, cdr(sc->code));
 	    sc->code = carc;
 	    goto EVAL_PAIR;
 	  }
@@ -53340,11 +53338,11 @@ the error type and the info passed to the error handler.");
  *
  * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
  *
- * these are currently scarcely ever used: SAFE_C_opQSq C_XDX SAFE_C_CQ SAFER_OR_CEQ
+ * these are currently scarcely ever used: SAFE_C_opQSq C_XDX SAFE_C_CQ SAFER_OR_CEQ[this is used as a marker]
  *
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
- * lint     13424 -> 1231
- * bench    52019 -> 9696
- * index    44300 -> 5813
+ * lint     13424 -> 1225
+ * bench    52019 -> 9657
+ * index    44300 -> 5799
  */

@@ -6137,7 +6137,7 @@ static s7_pointer define_closure(s7_scheme *sc, const char *name, s7_pointer fun
    *
    *   s7_make_closure's arguments are the closure args and body, and
    *   the closure's environment.  For the args, we'll use '(y), and
-   *   the body is '(f y));  for the the environment, we'll augment 
+   *   the body is '(f y));  for the environment, we'll augment 
    *   the current environment with '((x . x_value) (f . func)).
    */
   s7_define(sc, 
