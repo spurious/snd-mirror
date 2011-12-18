@@ -590,23 +590,23 @@
 		 (if in-href
 		     (set! in-name #t))
 		 (set! in-href #f)))
-	    (if (char=? c #\<)
-		(begin
-		 (if in-name
-		     (begin
-		      (set! (outstr j) #\})
-		      (incf j)
-		      (set! in-name #f)))
-		 (set! in-bracket #t)
-		 (if (or (and (< (+ i 7) len) 
-			      (string=? "<a href" (checked-substring xref i (+ i 7))))
-			 (and (< (+ i 17) len) 
-			      (string=? "<a class=def href" (checked-substring xref i (+ i 17))))
-			 (and (< (+ i 19) len) 
-			      (string=? "<a class=quiet href" (checked-substring xref i (+ i 19)))))
-		     (begin
-		      (if need-start
-			  (begin
+	    (case c
+	      ((#\<)
+	       (if in-name
+		   (begin
+		     (set! (outstr j) #\})
+		     (incf j)
+		     (set! in-name #f)))
+	       (set! in-bracket #t)
+	       (if (or (and (< (+ i 7) len) 
+			    (string=? "<a href" (checked-substring xref i (+ i 7))))
+		       (and (< (+ i 17) len) 
+			    (string=? "<a class=def href" (checked-substring xref i (+ i 17))))
+		       (and (< (+ i 19) len) 
+			    (string=? "<a class=quiet href" (checked-substring xref i (+ i 19)))))
+		   (begin
+		     (if need-start
+			 (begin
 			   (set! (outstr j) #\,)
 			   (incf j)
 			   (set! (outstr j) #\newline)
@@ -618,43 +618,50 @@
 			   (set! (outstr j) #\")
 			   (incf j)
 			   (set! need-start #f)))
-		      (set! in-href #t)
-		      (set! (outstr j) #\{)
-		      (incf j))))
-		(if (char=? c #\&)
-		    (if (and (< (+ i 4) len) 
-			     (string=? (substring xref i (+ i 4)) "&gt;"))
-			(begin
-			 (set! (outstr j) #\>)
-			 (incf j)
-			 (set! i (+ i 3)))) ; incf'd again below
-		    (if (char=? c #\newline)
-			(begin
-			 (set! (outstr j) #\")
-			 (incf j)
-			 (set! need-start #t))
-			(if (char=? c #\")
-			    (begin
-			     (set! (outstr j) #\\)
-			     (incf j)
-			     (set! (outstr j) c)
-			     (incf j))
-			    (begin
-			     (if need-start
-				 (begin
-				  (set! (outstr j) #\,)
-				  (incf j)
-				  (set! (outstr j) #\newline)
-				  (incf j)
-				  (set! (outstr j) #\space)
-				  (incf j)	    
-				  (set! (outstr j) #\space)
-				  (incf j)	    
-				  (set! (outstr j) #\")
-				  (incf j)
-				  (set! need-start #f)))
-			     (set! (outstr j) c)
-			     (incf j))))))))
+		     (set! in-href #t)
+		     (set! (outstr j) #\{)
+		     (incf j))))
+
+	      ((#\&)
+	       (if (and (< (+ i 4) len) 
+			(string=? (substring xref i (+ i 4)) "&gt;"))
+		   (begin
+		     (set! (outstr j) #\>)
+		     (incf j)
+		     (set! i (+ i 3))))) ; incf'd again below
+
+	      ((#\newline)
+	       (begin
+		 (set! (outstr j) #\")
+		 (incf j)
+		 (set! need-start #t)))
+
+	      ((#\")
+	       (begin
+		 (set! (outstr j) #\\)
+		 (incf j)
+		 (set! (outstr j) c)
+		 (incf j)))
+
+	      (else
+	       (begin
+		 (if need-start
+		     (begin
+		       (set! (outstr j) #\,)
+		       (incf j)
+		       (set! (outstr j) #\newline)
+		       (incf j)
+		       (set! (outstr j) #\space)
+		       (incf j)	    
+		       (set! (outstr j) #\space)
+		       (incf j)	    
+		       (set! (outstr j) #\")
+		       (incf j)
+		       (set! need-start #f)))
+		 (set! (outstr j) c)
+		 (incf j))))
+	    )
+	)
       (incf i))
     (list 
      (checked-substring outstr 0 j)
@@ -1092,89 +1099,89 @@
 			 (do ((i 0 (+ i 1)))
 			     ((>= i len))
 			   (let ((c (line i)))
+			     (case c
+			       ((#\<)
+				(if (and (not (= openctr 0))
+					 (not (> p-quotes 0)))
+				    (if (not in-comment) 
+					(format #t "~A[~D]: ~A has unclosed <?~%" file linectr line)))
+				(incf openctr)
+				(if (and (< i (- len 3))
+					 (char=? (line (+ i 1)) #\!)
+					 (char=? (line (+ i 2)) #\-)
+					 (char=? (line (+ i 3)) #\-))
+				    (begin
+				      (incf comments)
+				      (if (> comments 1)
+					  (begin 
+					    (format #t "~A[~D]: nested <!--?~%" file linectr)
+					    (decf comments)))
+				      (set! in-comment #t)))
+				(if (and (not in-comment)
+					 (< i (- len 1))
+					 (char=? (line (+ i 1)) #\space))
+				    (format #t "~A[~D]: '< ' in ~A?~%" file linectr line)))
+			       
+			       ;; else c != <
+			       
+			       ((#\>)
+				
+				(decf openctr)
+				(if (and (>= i 2)
+					 (char=? (line (- i 1)) #\-)
+					 (char=? (line (- i 2)) #\-))
+				    (begin
+				      (set! in-comment #f)
+				      (decf comments)
+				      (if (< comments 0)
+					  (begin
+					    (format #t "~A[~D]: extra -->?~%" file linectr)
+					    (set! comments 0))))
+				    (if (and (not (= openctr 0))
+					     (not (> p-quotes 0)))
+					(if (not in-comment) 
+					    (format #t "~A[~D]: ~A has unmatched >?~%" file linectr line))))
+				(set! openctr 0)
+				(if (and (not in-comment)
+					 (>= i 2)
+					 (char=? (line (- i 1)) #\-)
+					 (not (char=? (line (- i 2)) #\-))
+					 (< i (- len 1))
+					 (alphanumeric? (line (+ i 1))))
+				    (format #t "~A[~D]: untranslated '>': ~A~%" file linectr line)))
+			       
+			       ;; else c != < or >
+			       
+			       ((#\&)
+				(if (and (not in-comment)
+					 (not (string-ci=? "&gt;" (checked-substring line i (+ i 4))))
+					 (not (string-ci=? "&lt;" (checked-substring line i (+ i 4))))
+					 (not (string-ci=? "&amp;" (checked-substring line i (+ i 5))))
+					 (not (string-ci=? "&micro;" (checked-substring line i (+ i 7))))
+					 (not (string-ci=? "&quot;" (checked-substring line i (+ i 6))))
+					 (not (string-ci=? "&ouml;" (checked-substring line i (+ i 6))))
+					 (not (string-ci=? "&mdash;" (checked-substring line i (+ i 7))))
+					 (not (string-ci=? "&&" (checked-substring line i (+ i 2))))
+					 (not (string-ci=? "& " (checked-substring line i (+ i 2))))) ; following char -- should skip this
+				    (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
+			       
+			       ((#\()
+				(incf p-parens))
+			       
+			       ((#\)) 
+				(decf p-parens))
+			       
+			       ((#\{) 
+				(incf p-curlys))
+			       
+			       ((#\})
+				(decf p-curlys))
+			       
+			       ((#\")
+				(if (or (= i 0)
+					(not (char=? (line (- i 1)) #\\)))
+				    (incf p-quotes))))))
 
-			     (if (char=? c #\<)
-				 (begin
-				   (if (and (not (= openctr 0))
-					    (not (> p-quotes 0)))
-				       (if (not in-comment) 
-					   (format #t "~A[~D]: ~A has unclosed <?~%" file linectr line)))
-				   (incf openctr)
-				   (if (and (< i (- len 3))
-					    (char=? (line (+ i 1)) #\!)
-					    (char=? (line (+ i 2)) #\-)
-					    (char=? (line (+ i 3)) #\-))
-				       (begin
-					 (incf comments)
-					 (if (> comments 1)
-					     (begin 
-					       (format #t "~A[~D]: nested <!--?~%" file linectr)
-					       (decf comments)))
-					 (set! in-comment #t)))
-				   (if (and (not in-comment)
-					    (< i (- len 1))
-					    (char=? (line (+ i 1)) #\space))
-				       (format #t "~A[~D]: '< ' in ~A?~%" file linectr line)))
-
-				 ;; else c != <
-				 
-				 (if (char=? c #\>)
-				     (begin
-				       (decf openctr)
-				       (if (and (>= i 2)
-						(char=? (line (- i 1)) #\-)
-						(char=? (line (- i 2)) #\-))
-					   (begin
-					     (set! in-comment #f)
-					     (decf comments)
-					     (if (< comments 0)
-						 (begin
-						   (format #t "~A[~D]: extra -->?~%" file linectr)
-						   (set! comments 0))))
-					   (if (and (not (= openctr 0))
-						    (not (> p-quotes 0)))
-					       (if (not in-comment) 
-						   (format #t "~A[~D]: ~A has unmatched >?~%" file linectr line))))
-				       (set! openctr 0)
-				       (if (and (not in-comment)
-						(>= i 2)
-						(char=? (line (- i 1)) #\-)
-						(not (char=? (line (- i 2)) #\-))
-						(< i (- len 1))
-						(alphanumeric? (line (+ i 1))))
-					   (format #t "~A[~D]: untranslated '>': ~A~%" file linectr line)))
-
-				     ;; else c != < or >
-
-				     (if (char=? c #\&)
-					 (if (and (not in-comment)
-						  (not (string-ci=? "&gt;" (checked-substring line i (+ i 4))))
-						  (not (string-ci=? "&lt;" (checked-substring line i (+ i 4))))
-						  (not (string-ci=? "&amp;" (checked-substring line i (+ i 5))))
-						  (not (string-ci=? "&micro;" (checked-substring line i (+ i 7))))
-						  (not (string-ci=? "&quot;" (checked-substring line i (+ i 6))))
-						  (not (string-ci=? "&ouml;" (checked-substring line i (+ i 6))))
-						  (not (string-ci=? "&mdash;" (checked-substring line i (+ i 7))))
-						  (not (string-ci=? "&&" (checked-substring line i (+ i 2))))
-						  (not (string-ci=? "& " (checked-substring line i (+ i 2))))) ; following char -- should skip this
-					     (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line))
-
-					 (if (char=? c #\() 
-					     (incf p-parens)
-
-					     (if (char=? c #\)) 
-						 (decf p-parens)
-
-						 (if (char=? c #\{) 
-						     (incf p-curlys)
-
-						     (if (char=? c #\}) 
-							 (decf p-curlys)
-
-							 (if (and (char=? c #\")
-								  (or (= i 0)
-								      (not (char=? (line (- i 1)) #\\))))
-							     (incf p-quotes)))))))))))
 			 ;; end line scan
 			 (if (not in-comment)
 			     (let ((start #f)
@@ -1333,7 +1340,7 @@
 					     (string-position "</A>" dline))))
 			       ;;actually should look for close double quote
 			       (if (not epos) 
-				   (format #t "~A[~D]: <a name but no </a> for ~A~%" file linectr dline)
+				   (begin (format #t "~A[~D]: <a name> but no </a> for ~A~%" file linectr dline) (abort))
 				   (let ((min-epos (char-position #\space dline)))
 				     (set! epos (char-position #\> dline))
 				     (if (and (number? min-epos)
