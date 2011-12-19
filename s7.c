@@ -714,25 +714,10 @@ static int counts[65000];
 static void init_counts(void) {int i;for (i=0;i<65000;i++) counts[i]=0;}
 static void report_counts(void) 
 {
-  int i, mx, mxloc;
-  while (true)
-    {
-      mx = 0;
-      for (i=0;i<OP_MAX_DEFINED;i++)
-	{
-	  if (counts[i]>mx)
-	    {
-	      mx = counts[i];
-	      mxloc = i;
-	    }
-	}
-      if (mx>0) 
-	{
-	  fprintf(stderr, "%s: %d\n", real_op_names[mxloc], mx);
-	  counts[mxloc] = 0;
-	}
-      else return;
-    }
+  int i;
+  for (i=0;i<65000;i++)
+    if (counts[i]>0)
+      fprintf(stderr, "%d: %d\n", i, counts[i]);
 }
 #endif
 
@@ -29344,32 +29329,9 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
  */
 
 
-/* duplicated lookups
- * f  OP_EVAL_ARGS4: 14841
- * lg OP_LET_ALL_R: 178160 OP_AND_P: 171768 OP_OR_P: 142374 OP_SAFE_IF_IS_PAIR_P_X: 136689 [and more or/and cases]
- * in [OP_SAFE_IF_CEQ_P_P: 18591624] OP_IF_ANDP_P: 2272310 OP_IF_ORCEQ_P: 2251145 OP_IF_ANDP_P_2: 256492 [also set_cons|symbol]
- * al OP_IF_ORCEQ_P_P: 4460054 OP_LET_CAR_P: 3906961 [OP_SAFE_IF_CSC_X_P: 2935684] OP_OR_P: 556679 OP_COND_SIMPLER: 407769
- */
-#if WITH_COUNTS
-static s7_pointer last_symbol = NULL, last_envir = NULL;
-#endif
-
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl) 
 {
   s7_pointer x;
-#if WITH_COUNTS
-  if ((hdl == last_symbol) &&
-      (sc->envir == last_envir))
-    {
-      counts[sc->op]++;
-      /* fprintf(stderr, "%s %s %s\n", symbol_name(hdl), real_op_names[sc->op], DISPLAY_80(sc->code)); */
-    }
-  else 
-    {
-      last_symbol = hdl;
-      last_envir = sc->envir;
-    }
-#endif
 
   if (frame_id(sc->envir) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));
@@ -33958,6 +33920,7 @@ static s7_pointer check_let(s7_scheme *sc)
 				}
 			      else 
 				{
+				  fcdr(sc->code) = cadr(binding);
 				  if (is_one_liner(cdr(sc->code)))
 				    {
 				      /* (define (hi a b) (let ((x (a b))) (char=? x #\a))) */
@@ -33967,12 +33930,14 @@ static s7_pointer check_let(s7_scheme *sc)
 					{
 					  if ((is_optimized(cadr(binding))) &&
 					      (optimize_data_match(cadr(binding), OP_UNKNOWN_S)))
-					    car(ecdr(sc->code)) = sc->LET_UNKNOWN_S_P;
+					    {
+					      car(ecdr(sc->code)) = sc->LET_UNKNOWN_S_P;
+					      fcdr(sc->code) = caar(sc->code);
+					    }
 					  else car(ecdr(sc->code)) = sc->LET_O_P;
 					}
 				    }
 				  else car(ecdr(sc->code)) = sc->LET_O;
-				  fcdr(sc->code) = cadr(binding);
 				}
 #else
 			      car(ecdr(sc->code)) = sc->LET_UNCHECKED;
@@ -34181,6 +34146,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 			    }
 			  else 
 			    {
+			      fcdr(sc->code) = cadr(binding);
 			      if (is_one_liner(cdr(sc->code)))
 				{
 				  if (is_letx_safe(cadr(binding)))
@@ -34189,12 +34155,14 @@ static s7_pointer check_let_star(s7_scheme *sc)
 				    {
 				      if ((is_optimized(cadr(binding))) &&
 					  (optimize_data_match(cadr(binding), OP_UNKNOWN_S)))
-					car(ecdr(sc->code)) = sc->LET_UNKNOWN_S_P;
+					{
+					  car(ecdr(sc->code)) = sc->LET_UNKNOWN_S_P;
+					  fcdr(sc->code) = caar(sc->code);
+					}
 				      else car(ecdr(sc->code)) = sc->LET_O_P;
 				    }
 				}
 			      else car(ecdr(sc->code)) = sc->LET_O;
-			      fcdr(sc->code) = cadr(binding);
 			    }
 #else
 			  car(ecdr(sc->code)) = sc->LET_STAR_UNCHECKED;
@@ -45617,9 +45585,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_UNKNOWN_S_P:
       {
 	s7_pointer val, ind, binding, expr;
+	s7_Int index;
 	/* sc->code is the let statement without the let: (((char (string index))) body) where body is one expression
 	 */
-	binding = caar(sc->code);
+	binding = fcdr(sc->code);
 	expr = cadr(binding);
 	val = finder(sc, car(expr));
 	switch (type(val))
@@ -45628,14 +45597,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    ind = finder(sc, cadr(expr));
 	    if (s7_is_integer(ind))
 	      {
-		s7_Int index;
 		index = s7_integer(ind);
 		if ((index < string_length(val)) &&
 		    (index >= 0))
 		  {
 		    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), chars[(unsigned char)(string_value(val)[index])]);
 		    sc->code = cadr(sc->code);
-		    goto EVAL_PAIR; /* in: syn */
+		    goto EVAL_PAIR;
+		  }
+	      }
+	    break;
+
+	  case T_VECTOR:
+	    if (!vector_is_multidimensional(val))
+	      {
+		ind = finder(sc, cadr(expr));
+		if (s7_is_integer(ind))
+		  {
+		    index = s7_integer(ind);
+		    if ((index < vector_length(val)) &&
+			(index >= 0))
+		      {
+			NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), vector_elements(val)[index]);
+			sc->code = cadr(sc->code);
+			goto EVAL_PAIR;
+		      }
+		    s7_out_of_range_error(sc, "vector-ref index,", 1, cadr(expr), "between 0 and vector length");
 		  }
 	      }
 	    break;
@@ -45660,6 +45647,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  default:
 	    break;
 	  }
+
 	car(ecdr(sc->code)) = sc->LET_UNCHECKED;
 	goto LET_UNCHECKED;
       }
@@ -53668,6 +53656,6 @@ the error type and the info passed to the error handler.");
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * lint     13424 -> 1221
- * bench    52019 -> 8984
+ * bench    52019 -> 7848
  * index    44300 -> 5009
  */
