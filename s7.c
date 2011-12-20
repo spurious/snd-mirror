@@ -3486,7 +3486,7 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
+s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value) 
 { 
   s7_pointer slot;
 
@@ -3505,7 +3505,7 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
 	}
 
       ge = sc->global_env;
-      slot = permanent_slot(variable, value);
+      slot = permanent_slot(symbol, value);
       vector_element(ge, vector_fill_pointer(ge)++) = slot;
       if (vector_fill_pointer(ge) >= vector_length(ge))
 	{
@@ -3515,37 +3515,39 @@ static void add_slot_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer va
 	  for (i = vector_fill_pointer(ge); i < vector_length(ge); i++)
 	    vector_element(ge, i) = sc->NIL;
 	}
-      global_slot(variable) = slot;
-      if (symbol_id(variable) == 0) /* never defined locally? */
+      global_slot(symbol) = slot;
+      if (symbol_id(symbol) == 0) /* never defined locally? */
 	{
-	  local_slot(variable) = slot;
-	  set_global(variable);
+	  local_slot(symbol) = slot;
+	  set_global(symbol);
 	}
-      /* symbol_id(variable) = 0; */
+      /* symbol_id(symbol) = 0; */
     }
   else 
     {
-      set_local(variable);
+      set_local(symbol);
 
       NEW_CELL(sc, slot);
-      slot_symbol(slot) = variable;
+      slot_symbol(slot) = symbol;
       slot_set_value(slot, value);
       set_type(slot, T_SLOT | T_IMMUTABLE);
       next_slot(slot) = environment_slots(env);
       environment_slots(env) = slot;
-      symbol_id(variable) = frame_id(env);
-      local_slot(variable) = slot;
+      symbol_id(symbol) = frame_id(env);
+      local_slot(symbol) = slot;
     }
 
   /* there are about the same number of frames as local variables -- this
    *   strikes me as surprising, but it holds up across a lot of code.
    */
+
+  return(slot);
 } 
 
 
 static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
-  /* this is called when it is guaranteed that there is a local environment and we need the new slot */
+  /* this is called when it is guaranteed that there is a local environment */
   s7_pointer y;
 
   NEW_CELL(sc, y);
@@ -3619,7 +3621,7 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   for (i = 0; (i < INITIAL_ENV_ENTRIES) && (is_slot(inits[i])); i++)
     if ((!is_global(slot_symbol(inits[i]))) ||                                             /* it's shadowed locally */
 	(slot_value(inits[i]) != slot_value(global_slot(slot_symbol(inits[i])))))   /* it's not shadowed, but has been changed globally */
-      add_slot_to_environment(sc, sc->w, slot_symbol(inits[i]), slot_value(inits[i]));
+      s7_make_slot(sc, sc->w, slot_symbol(inits[i]), slot_value(inits[i]));
                          
   /* if (set! + -) then + needs to be overridden, but the local bit isn't set,
    *   so we have to check the actual values in the non-local case.
@@ -3662,7 +3664,7 @@ environment."
       }
 
   for (x = cdr(args); is_not_null(x); x = cdr(x))
-    add_slot_to_environment(sc, e, caar(x), cdar(x));
+    s7_make_slot(sc, e, caar(x), cdar(x));
 
   if (gc_loc != -1)
     s7_gc_unprotect_at(sc, gc_loc);
@@ -3672,16 +3674,21 @@ environment."
 
 s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindings)
 {
-  s7_pointer x, new_e;
-  int gc_loc;
+  s7_pointer new_e;
   
   new_e = new_frame_in_env(sc, e);
-  gc_loc = s7_gc_protect(sc, new_e);
+  if (!is_null(bindings))
+    {
+      s7_pointer x;
+      int gc_loc;
+      gc_loc = s7_gc_protect(sc, new_e);
 
-  for (x = bindings; is_not_null(x); x = cdr(x))
-    add_slot_to_environment(sc, new_e, caar(x), cdar(x));
+      for (x = bindings; is_not_null(x); x = cdr(x))
+	s7_make_slot(sc, new_e, caar(x), cdar(x));
 
-  s7_gc_unprotect_at(sc, gc_loc);
+      s7_gc_unprotect_at(sc, gc_loc);
+    }
+
   return(new_e);
 }
 
@@ -3784,17 +3791,13 @@ static char *display_locals(s7_scheme *sc)
   /* intended for use in gdb -- perhaps useful in scheme?
    *    PERHAPS: (display (current-environment)) could show slots rather than the useless #<environment>
    *      would need circle checks here!
-   *      also equal? e1 e2 could traverse these lists [reverse? copy? fill?!? length]
-   *      cdr(e)? or perhaps next-environment etc? -- we have environment->list, perhaps add environments->list?
+   *      also equal? e1 e2 could traverse these lists
    *
    * currently:
    *    :(display (current-environment))
    *    #<unspecified>
    *
-   *    :(length (current-environment))
-   *    ;length argument, #<environment>, is an environment but should be a list, vector, string, or hash-table
-   *    ;    (length (current-environment))
-   *    same error for reverse, fill! similar
+   *    type error for reverse, fill!
    *
    *    :(let ((a 3) (b 2)) (environment->list (current-environment)))
    *    (((b . 2) (a . 3)))
@@ -3809,6 +3812,16 @@ static char *display_locals(s7_scheme *sc)
    *    #t
    *
    * TODO: use DISPLAY_80 or 40 here and in similar cases
+   *
+   * (copy e) -> a new env with copied slots, but not vals? [an out-of-context env unless we copy the entire list]
+   * (reverse e) -> error
+   * (fill! e) -> error
+   * (equal? e1 e2) -> traverse slots
+   * object->string of e: #<environment --then the slots here-- >
+   * in stacktrace:
+   *   only show function calls (not cur_code -- in fact is cur_code useful anymore?)
+   *   in between show envs as in this function
+   * for-each map and member for slot list traversal
    */
   s7_pointer e;
   int spaces;
@@ -3849,15 +3862,22 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
 } 
 
 
-s7_pointer s7_symbol_slot(s7_scheme *sc, s7_pointer symbol)
+s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol)
 {
   return(find_symbol(sc, symbol));
 }
 
 
-s7_pointer s7_symbol_slot_value(s7_scheme *sc, s7_pointer slot)
+s7_pointer s7_slot_value(s7_scheme *sc, s7_pointer slot)
 {
   return(slot_value(slot));
+}
+
+
+s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value)
+{
+  slot_set_value(slot, value);
+  return(value);
 }
 
 
@@ -4004,6 +4024,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
   return(p);
 }
 
+
 #define MAKE_CLOSURE(Sc, X, Args, Code, Env)	\
   do { \
        NEW_CELL(Sc, X); \
@@ -4078,7 +4099,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
   x = find_local_symbol(sc, envir, symbol);
   if (is_slot(x)) 
     slot_set_value(x, value); 
-  else add_slot_to_environment(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
+  else s7_make_slot(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
 }
 
 
@@ -4136,7 +4157,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   typeflag(sym) |= (T_IMMUTABLE); 
   free(name);
   
-  add_slot_to_environment(sc, sc->NIL, sym, sym); /* make it global, not in the local env! */
+  s7_make_slot(sc, sc->NIL, sym, sym); /* make it global, not in the local env! */
 
   return(sym);
 }
@@ -5334,6 +5355,13 @@ s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n)
       (type(rl) > T_RATIO))
     real(rl) = n;
   else rl = s7_make_real(sc, n);
+  return(rl);
+}
+
+
+s7_pointer s7_set_real(s7_pointer rl, s7_Double x)
+{
+  real(rl) = x;
   return(rl);
 }
 
@@ -24823,6 +24851,14 @@ list has infinite length."
     case T_C_OBJECT:
       return(object_length(sc, car(args)));
 
+    case T_ENVIRONMENT:
+      {
+	int i;
+	s7_pointer p;
+	for (i = 0, p = environment_slots(lst); is_slot(p); i++, p = next_slot(p));
+	return(make_integer(sc, i));
+      }
+
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
     }
@@ -27271,6 +27307,30 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 }
 
 
+s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
+{
+  /* TODO: error handling */
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
+  /* sc->args = sc->NIL; */ /* TODO: args is irrelevant I think */
+  sc->code = code;
+  sc->envir = e;
+  eval(sc, OP_BEGIN);
+  return(sc->value);
+}
+
+
+s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
+{
+  /* TODO: error handling */
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
+  /* sc->args = sc->NIL; */ /* TODO: args is irrelevant I think */
+  sc->code = form;
+  sc->envir = e;
+  eval(sc, OP_EVAL);
+  return(sc->value);
+}
+
+
 static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval "(eval code (env (current-environment))) evaluates code in the environment env. 'env' \
@@ -27806,7 +27866,7 @@ static s7_pointer g_for_each_3(s7_scheme *sc, s7_pointer args)
 
   closure_environment(func) = new_frame_in_env(sc, closure_environment(func));
   for (arg = closure_args(func); is_pair(arg); arg = cdr(arg))
-    add_slot_to_environment(sc, closure_environment(func), car(arg), sc->NIL);
+    s7_make_slot(sc, closure_environment(func), car(arg), sc->NIL);
   environment_slots(closure_environment(func)) = reverse_slots(sc, environment_slots(closure_environment(func)));
   
   push_stack(sc, OP_SAFE_FOR_EACH, obj, car(args));
@@ -27850,6 +27910,17 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 
 /* extending this to map made little difference */
 #endif
+
+
+bool s7_code_is_safe(s7_scheme *sc, s7_pointer body)
+{
+#if WITH_OPTIMIZATION
+  bool bad_set = false;
+  return(body_is_safe(sc, sc->NIL, body, is_null(cdr(body)), &bad_set));
+#else
+  return(false);
+#endif
+}
 
 
 static bool next_map(s7_scheme *sc)
@@ -38073,9 +38144,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		case OP_NOT_AN_OP:
 		case HOP_NOT_AN_OP:
-		  fprintf(stderr, "bad op in opt_eval: op %d, is_opt: %d, %s %s\n",
- 			  optimize_data(code), is_optimized(code), DISPLAY_80(code), DISPLAY_80(sc->cur_code));
-		  abort();
 		  break;
 		  
 		case OP_THUNK:
@@ -42923,10 +42991,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* drop into ... */
 
 	case T_C_ANY_ARGS_FUNCTION:                 /* -------- C-based function that can take any number of arguments -------- */
-	  /*
-	    if (strcmp(DISPLAY(sc->code), "list") == 0)
-	      fprintf(stderr, "(%s %s) %s %d\n", DISPLAY(sc->code), DISPLAY(sc->args), DISPLAY(sc->cur_code), is_optimized(sc->cur_code));
-	  */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
 	  goto START;
 
@@ -43410,7 +43474,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if 0
       if (is_null(global_slot(sc->value)))
 	{
-	  add_slot_to_environment(sc, sc->NIL, sc->value, slot_value(sc->x));
+	  s7_make_slot(sc, sc->NIL, sc->value, slot_value(sc->x));
 	  /* fprintf(stderr, "ad: %s: %s %s\n", DISPLAY(sc->value), DISPLAY(sc->x), DISPLAY(global_slot(sc->value))); */
 	}
 #endif
@@ -43542,7 +43606,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  s7_pointer arg;
 		  closure_environment(val) = new_frame_in_env(sc, closure_environment(val));
 		  for (arg = closure_args(val); is_pair(arg); arg = cdr(arg))
-		    add_slot_to_environment(sc, closure_environment(val), car(arg), sc->NIL);
+		    s7_make_slot(sc, closure_environment(val), car(arg), sc->NIL);
 		  environment_slots(closure_environment(val)) = reverse_slots(sc, environment_slots(closure_environment(val)));
 		}
 	      
@@ -43552,7 +43616,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  ADD_SLOT(sc->envir, sc->code, val);
 		  set_local(sc->code);
 		}
-	      else add_slot_to_environment(sc, sc->envir, sc->code, val);
+	      else s7_make_slot(sc, sc->envir, sc->code, val);
 	    }
 	  }
 	else
@@ -43568,7 +43632,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->x = find_local_symbol(sc, sc->envir, sc->code);
 	    if (is_slot(sc->x))
 	      slot_set_value(sc->x, val); 
-	    else add_slot_to_environment(sc, sc->envir, sc->code, val);
+	    else s7_make_slot(sc, sc->envir, sc->code, val);
 	  }
       }
 
@@ -45608,25 +45672,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    break;
 
-	  case T_VECTOR:
-	    if (!vector_is_multidimensional(val))
-	      {
-		ind = finder(sc, cadr(expr));
-		if (s7_is_integer(ind))
-		  {
-		    index = s7_integer(ind);
-		    if ((index < vector_length(val)) &&
-			(index >= 0))
-		      {
-			NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), vector_elements(val)[index]);
-			sc->code = cadr(sc->code);
-			goto EVAL_PAIR;
-		      }
-		    s7_out_of_range_error(sc, "vector-ref index,", 1, cadr(expr), "between 0 and vector length");
-		  }
-	      }
-	    break;
-
 	  case T_C_FUNCTION:
 	  case T_C_ANY_ARGS_FUNCTION:
 	  case T_C_OPT_ARGS_FUNCTION:
@@ -47037,7 +47082,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = find_local_symbol(sc, sc->envir, sc->code); 
       if (is_slot(sc->x))
 	slot_set_value(sc->x, sc->value); 
-      else add_slot_to_environment(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
+      else s7_make_slot(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
 
       if ((sc->op == OP_DEFINE_BACRO) ||
 	  (sc->op == OP_DEFINE_BACRO_STAR))
@@ -52879,7 +52924,7 @@ s7_scheme *s7_init(void)
   sc->QQ_APPEND =       make_symbol(sc, "{append}");
   sc->MULTIVECTOR =     make_symbol(sc, "{multivector}");
 
-  add_slot_to_environment(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
+  s7_make_slot(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
 
   sc->VECTOR = make_symbol(sc, "vector");
   typeflag(sc->VECTOR) |= T_SETTER; 
@@ -53657,5 +53702,5 @@ the error type and the info passed to the error handler.");
  *
  * lint     13424 -> 1221
  * bench    52019 -> 7848
- * index    44300 -> 5009
+ * index    44300 -> 5003
  */

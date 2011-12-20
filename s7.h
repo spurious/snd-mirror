@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.99"
-#define S7_DATE "7-Dec-11"
+#define S7_VERSION "1.100"
+#define S7_DATE "20-Dec-11"
 
 
 typedef long long int s7_Int;
@@ -164,6 +164,10 @@ void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc));
    *   see s7.html#replrescue and (in the Snd package) snd-listener.c for examples.
    *   s7_begin_hook returns the current begin_hook function or NULL.
    */
+
+s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e);
+s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e);
+bool s7_code_is_safe(s7_scheme *sc, s7_pointer body);
 
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
 
@@ -498,10 +502,10 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 void *s7_symbol_accessor_data(s7_pointer sym);
 void s7_symbol_set_accessor_data(s7_pointer sym, void *val);
 
-  /* these two may go away -- purely experimental */
-s7_pointer s7_symbol_slot(s7_scheme *sc, s7_pointer symbol);
-s7_pointer s7_symbol_slot_value(s7_scheme *sc, s7_pointer slot);
-  /* these are for optimizations of symbol lookup */
+s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
+s7_pointer s7_slot_value(s7_scheme *sc, s7_pointer slot);
+s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
+s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
@@ -593,6 +597,7 @@ void **s7_expression_data(s7_pointer expr);
 void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size);
 
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
+s7_pointer s7_set_real(s7_pointer rl, s7_Double x);
 
 bool s7_in_safe_do(s7_scheme *sc);
 bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol);
@@ -831,6 +836,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 21-Dec:    s7_eval, s7_make_slot, s7_slot_set_value.
+ *            changed s7_symbol_slot to s7_slot, and s7_symbol_slot_value to s7_slot_value.
  * 26-Oct:    s7_procedure_name.
  * 6-Oct:     changed s7_make_closure args: split the code argument in two (args and body).
  *               s7_make_closure(... code ...) is now s7_make_closure(... car(code), cdr(code) ...)

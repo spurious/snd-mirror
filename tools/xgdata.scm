@@ -1518,7 +1518,7 @@
 (CCAST "GTK_ACCESSIBLE(obj)" "GtkAccessible*")
 (CCHK "GTK_IS_ACCESSIBLE(obj)" "GtkAccessible*")
 ;;;;(CFNC "GType gtk_accessible_get_type void")
-(CFNC "void gtk_accessible_connect_widget_destroyed GtkAccessible* accessible")
+;;; 3.3.6 (CFNC "void gtk_accessible_connect_widget_destroyed GtkAccessible* accessible")
 (CCAST "GTK_ADJUSTMENT(obj)" "GtkAdjustment*")
 (CCHK "GTK_IS_ADJUSTMENT(obj)" "GtkAdjustment*")
 ;;;;(CFNC "GType gtk_adjustment_get_type void")
@@ -8354,6 +8354,57 @@
 +                                                  GdkModifierType  accelerator_mods);
 
 also GTK_DISABLE_DEPRECATED has been removed
+
+
+
+;;; gtk 3.3.6
+the scale troughs are changed -- in prefs they're all green or gray now?
+
++ void         gdk_screen_get_monitor_workarea  (GdkScreen    *screen,
++                                                gint          monitor_num,
++                                                GdkRectangle *dest);
++ 
+ 
+new header files: [gactionmuxer.h gactionobservable.h gactionobserver.h] gtkapplicationwindow.h [gtkmodelmenu.h] [gtkmodelmenuitem.h]
+
++ GMenuModel *     gtk_application_get_app_menu  (GtkApplication    *application);
++ void             gtk_application_set_app_menu  (GtkApplication    *application,
++                                                 GMenuModel        *model);
++ 
++ GMenuModel *     gtk_application_get_menubar   (GtkApplication    *application);
++ void             gtk_application_set_menubar   (GtkApplication    *application,
++                                                 GMenuModel        *model);
++ 
++ void             gtk_application_add_accelerator    (GtkApplication  *application,
++                                                      const gchar     *accelerator,
++                                                      const gchar     *action_name,
++                                                      GVariant        *parameter);
++ void             gtk_application_remove_accelerator (GtkApplication *application,
++                                                      const gchar    *action_name,
++                                                      GVariant       *parameter);
++ 
+!   GTK_CELL_RENDERER_EXPANDABLE  = 1 << 5,
+!   GTK_CELL_RENDERER_EXPANDED    = 1 << 6
+  } GtkCellRendererState;
++ gchar *             gtk_entry_completion_compute_prefix         (GtkEntryCompletion          *completion,
++                                                                  const char                  *key);
++ void              gtk_scale_set_has_origin     (GtkScale        *scale,
++                                                 gboolean         has_origin);
++ gboolean          gtk_scale_get_has_origin     (GtkScale        *scale);
+ + void       gtk_window_set_hide_titlebar_when_maximized (GtkWindow   *window,
++                                                         gboolean     setting);
++ gboolean   gtk_window_get_hide_titlebar_when_maximized (GtkWindow   *window);
+
+
+#define GTK_APPLICATION_WINDOW(inst)           (G_TYPE_CHECK_INSTANCE_CAST ((inst), \
+                                                GTK_TYPE_APPLICATION_WINDOW, GtkApplicationWindow))
+#define GTK_IS_APPLICATION_WINDOW(inst)        (G_TYPE_CHECK_INSTANCE_TYPE ((inst), \
+                                                GTK_TYPE_APPLICATION_WINDOW))
+GtkWidget * gtk_application_window_new               (GtkApplication      *application);
+
+void        gtk_application_window_set_show_menubar (GtkApplicationWindow *window,
+                                                     gboolean              show_menubar);
+gboolean    gtk_application_window_get_show_menubar (GtkApplicationWindow *window);
 
 |#
 

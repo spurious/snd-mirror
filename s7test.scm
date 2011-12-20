@@ -13353,6 +13353,7 @@ time, so that the displayed results are
 (test (let ((x 2)) (define f (lambda (y) (+ y x))) (f 3)) 5)
 (begin (define r5rstest-plus (lambda (x y) (+ x y))) (define r5rstest-x 32))
 (test (r5rstest-plus r5rstest-x 3) 35)
+(test (let ((x 2.0)) (define (hi a) (set! a 3.0)) (hi x) x) 2.0)
 
 (test (let () (define (asdf a) (define (asdf a) (+ a 1)) (+ a (asdf a))) (asdf 4)) 9)
 (test (let ((asdf 1)) (define (asdf a) (define (asdf a) (+ a 1)) (+ a (asdf a))) (asdf 4)) 9)
@@ -21063,6 +21064,9 @@ abs     1       2
 ;;; augment-environment
 ;;; with-environment
 ;;; environment->list
+
+(test (let () (length (current-environment))) 0)
+(test (let ((a 1) (b 2) (c 3)) (length (current-environment))) 3)
 
 (for-each
  (lambda (arg)

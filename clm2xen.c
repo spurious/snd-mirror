@@ -5555,11 +5555,11 @@ static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- 
 
 #if (HAVE_SCHEME)
 static XEN clm_output_slot = NULL, clm_reverb_slot = NULL;
-XEN mus_clm_output(void) {return(s7_symbol_slot_value(s7, clm_output_slot));}
-XEN mus_clm_reverb(void) {return(s7_symbol_slot_value(s7, clm_reverb_slot));}
+XEN mus_clm_output(void) {return(s7_slot_value(s7, clm_output_slot));}
+XEN mus_clm_reverb(void) {return(s7_slot_value(s7, clm_reverb_slot));}
 
-#define CLM_OUTPUT s7_symbol_slot_value(s7, clm_output_slot)
-#define CLM_REVERB s7_symbol_slot_value(s7, clm_reverb_slot)
+#define CLM_OUTPUT s7_slot_value(s7, clm_output_slot)
+#define CLM_REVERB s7_slot_value(s7, clm_reverb_slot)
 #endif
 
 #if (!HAVE_SCHEME)
@@ -8504,7 +8504,7 @@ XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
 #define cadar(E)  s7_cadar(E)
-#define slot_value(E) s7_symbol_slot_value(s7, E)
+#define slot_value(E) s7_slot_value(s7, E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
@@ -8551,7 +8551,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
          _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
        if (!_Val_) \
          { \
-           _Val_ = s7_symbol_slot(sc, _Obj_); \
+           _Val_ = s7_slot(sc, _Obj_); \
            if (s7_is_do_local_or_global(sc, _Obj_)) \
  	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
            if (!s7_is_number(slot_value(_Val_))) \
@@ -8566,7 +8566,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
          _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
        if (!_Val_) \
          { \
-           _Val_ = s7_symbol_slot(sc, _Obj_); \
+           _Val_ = s7_slot(sc, _Obj_); \
            if (s7_is_do_local_or_global(sc, _Obj_)) \
  	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
            if (!s7_is_real(slot_value(_Val_))) \
@@ -8581,7 +8581,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
          _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
        if (!_Val_) \
          { \
-           _Val_ = s7_symbol_slot(sc, _Obj_); \
+           _Val_ = s7_slot(sc, _Obj_); \
            if (s7_is_do_local_or_global(sc, _Obj_)) \
  	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
            if (!s7_is_integer(slot_value(_Val_))) \
@@ -9131,7 +9131,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
       sym = cadr(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[1] = s7_symbol_slot(sc, sym);
+	  syms[1] = s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_integer(slot_value((s7_pointer)syms[1])), sym, XEN_ARG_2, "locsig", "an integer");
 	  syms[2] = NULL;
 	}
@@ -9160,7 +9160,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
       sym = cadr(vargs);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[7] = s7_symbol_slot(sc, sym);
+	  syms[7] = s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[7])), sym, XEN_ARG_2, "polywave", "a real");
 	  syms[8] = NULL;
 	}
@@ -9307,7 +9307,7 @@ static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
       sym = s7_caddar(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[4] = s7_symbol_slot(sc, sym);
+	  syms[4] = s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[4])), sym, XEN_ARG_2, "comb", "a real");
 	  syms[5] = NULL;
 	}
@@ -9382,7 +9382,7 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
       sym = cadr(vargs);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[3] = s7_symbol_slot(sc, sym);
+	  syms[3] = s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_integer(slot_value((s7_pointer)syms[3])), sym, XEN_ARG_1, "ina", "an integer");
 	  syms[4] = NULL;
 	}
@@ -9500,7 +9500,7 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
       sym = s7_caddar(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[4] = s7_symbol_slot(sc, sym);
+	  syms[4] = s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[4])), sym, XEN_ARG_2, "comb", "a real");
 	  syms[5] = NULL;
 	}
@@ -9568,7 +9568,7 @@ static s7_pointer g_mul_s_ina_reverb_2(s7_scheme *sc, s7_pointer args)
     scl_ptr = (s7_pointer)s7_symbol_accessor_data(sym);
   if (!scl_ptr)
     {
-      scl_ptr = s7_symbol_slot(sc, sym);
+      scl_ptr = s7_slot(sc, sym);
       if (s7_is_do_local_or_global(sc, sym))
 	s7_symbol_set_accessor_data(sym, (void *)scl_ptr);
       if (!s7_is_real(slot_value(scl_ptr)))
@@ -9697,7 +9697,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       sym = car(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[0] = (void *)s7_symbol_slot(sc, sym);
+	  syms[0] = (void *)s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_integer(slot_value((s7_pointer)syms[0])), sym, XEN_ARG_1, "outa", "an integer");
 	  syms[1] = NULL;
 	}
@@ -9711,7 +9711,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       sym = cadr(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[2] = (void *)s7_symbol_slot(sc, sym);
+	  syms[2] = (void *)s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[2])), sym, XEN_ARG_1, "*", "a real");
 	  syms[3] = NULL;
 	}
@@ -9728,7 +9728,7 @@ static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
       sym = caddr(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[5] = s7_symbol_slot(sc, sym);
+	  syms[5] = s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_real(slot_value((s7_pointer)syms[5])), sym, XEN_ARG_2, "delay", "a real");
 	  syms[6] = NULL;
 	}
@@ -9807,7 +9807,7 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
       sym = car(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
-	  syms[0] = (void *)s7_symbol_slot(sc, sym);
+	  syms[0] = (void *)s7_slot(sc, sym);
 	  XEN_ASSERT_TYPE(s7_is_integer(slot_value((s7_pointer)syms[0])), sym, XEN_ARG_1, "outa", "an integer");
 	  syms[1] = NULL;
 	}
@@ -12729,8 +12729,8 @@ static void mus_xen_init(void)
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
 #if HAVE_SCHEME
   /* these are globals in s7, so they aren't going to move */
-  clm_output_slot = s7_symbol_slot(s7, clm_output);
-  clm_reverb_slot = s7_symbol_slot(s7, clm_reverb);
+  clm_output_slot = s7_slot(s7, clm_output);
+  clm_reverb_slot = s7_slot(s7, clm_reverb);
 #endif
 
 #if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!_MSC_VER)
