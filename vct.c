@@ -704,6 +704,7 @@ v. " vct_map_example " is the same as " vct_fill_example
 #if HAVE_SCHEME && USE_SND
   {
     struct ptree *pt = NULL;
+
     if ((optimization(ss)) > 0)
       {
 	pt = mus_run_form_to_ptree_0_f(XEN_PROCEDURE_SOURCE(proc));
@@ -720,8 +721,31 @@ v. " vct_map_example " is the same as " vct_fill_example
     v->data[0] = XEN_TO_C_DOUBLE(s7_call_with_location(s7, proc, XEN_EMPTY_LIST, c__FUNCTION__, __FILE__, __LINE__));
     /* s7_call gives us elaborate error checks, but subsequent calls can be direct, I hope
      */
-    for (i = 1; i < v->length; i++) 
-      v->data[i] = XEN_TO_C_DOUBLE(s7_apply_function(s7, proc, XEN_EMPTY_LIST));
+    {
+      s7_pointer source, body, e;
+      s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
+
+      source = s7_procedure_source(s7, proc);
+      if (s7_is_pair(source))
+	{
+	  body = s7_cddar(source);
+	  e = s7_cdr(source);
+	  if (s7_is_null(s7, s7_cdr(body)))
+	    {
+	      eval = s7_eval_form;
+	      body = s7_car(body);
+	    }
+	  else eval = s7_eval;
+
+	  for (i = 1; i < v->length; i++) 
+	    v->data[i] = XEN_TO_C_DOUBLE(eval(s7, body, e));
+	}
+      else
+	{
+	for (i = 1; i < v->length; i++) 
+	  v->data[i] = XEN_TO_C_DOUBLE(s7_apply_function(s7, proc, XEN_EMPTY_LIST));
+	}
+    }
   }
 #else
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");

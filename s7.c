@@ -5359,13 +5359,6 @@ s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n)
 }
 
 
-s7_pointer s7_set_real(s7_pointer rl, s7_Double x)
-{
-  real(rl) = x;
-  return(rl);
-}
-
-
 s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
 {
   s7_pointer x;
@@ -27912,17 +27905,6 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 #endif
 
 
-bool s7_code_is_safe(s7_scheme *sc, s7_pointer body)
-{
-#if WITH_OPTIMIZATION
-  bool bad_set = false;
-  return(body_is_safe(sc, sc->NIL, body, is_null(cdr(body)), &bad_set));
-#else
-  return(false);
-#endif
-}
-
-
 static bool next_map(s7_scheme *sc)
 {
   s7_pointer y, z, vargs;
@@ -33287,7 +33269,9 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
   if (is_syntactic(car(x)))
     {
       /* here we can't depend on the syntax settings */
+
       if (syntax_opcode(car(x)) < OP_SAFE_IF1)
+
 	{
 	  switch (syntax_opcode(car(x)))
 	    {
@@ -33446,7 +33430,13 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	       * TODO: what about trailers?
 	       * (let () (define (hi1 a) (define (ho1 b) b) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
 	       */
-	      /* fprintf(stderr, "%sno good: %s, %s %s, %p %p%s\n", BOLD_TEXT, DISPLAY(x), DISPLAY(func), DISPLAY(caadr(x)), caadr(x), func, UNBOLD_TEXT); */
+	      
+	      /* TODO: fix this  !!
+		 
+	      fprintf(stderr, "%s %s no good: %s, %s %s, %p %p%s\n", 
+		      BOLD_TEXT, real_op_names[syntax_opcode(car(x))], DISPLAY(x), DISPLAY(func), DISPLAY(caadr(x)), caadr(x), func, UNBOLD_TEXT);
+	      */
+
 	      if ((is_pair(cdr(x))) &&
 		  ((cadr(x) == func) ||
 		   ((is_pair(cadr(x))) && (caadr(x) == func))))
@@ -35059,7 +35049,7 @@ static s7_pointer check_set(s7_scheme *sc)
       if (!is_symbol(car(sc->code)))                                 /* (set! 12345 1) */
 	return(eval_error(sc, "set! can't change ~S", car(sc->code)));
     }
-  
+
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
@@ -35131,6 +35121,7 @@ static s7_pointer check_set(s7_scheme *sc)
 				      if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BEGIN1)
 					car(ecdr(sc->code)) = sc->INCREMENT_2;
 				      else car(ecdr(sc->code)) = sc->INCREMENT_1;
+
 				    }
 				  else 
 				    {
@@ -35179,6 +35170,7 @@ static s7_pointer check_set(s7_scheme *sc)
 	    }
 	}
     }
+
   return(sc->code);
 }
 
@@ -43740,7 +43732,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      switch (type(val))
 		{
 		case T_INTEGER:
-		  /* sc->value = make_integer(sc, integer(number(val)) + 1); */
+		  /* sc->value = make_integer(sc, integer(val) + 1); */
 		  {
 		    s7_Int n;
 		    n = integer(val) + 1;
@@ -47313,6 +47305,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->value = sc->UNSPECIFIED;
 	goto START;
       }
+
+      /* TODO: for small ints and chars, we should have a vector where the unset cases are else (#<unspecified> if none)
+       *   but where to store the it safely?
+       *   at least add a small_int case
+       */
 
 
 

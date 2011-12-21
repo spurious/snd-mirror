@@ -167,7 +167,6 @@ void s7_set_begin_hook(s7_scheme *sc, bool (*hook)(s7_scheme *sc));
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e);
 s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e);
-bool s7_code_is_safe(s7_scheme *sc, s7_pointer body);
 
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
 
@@ -597,7 +596,7 @@ void **s7_expression_data(s7_pointer expr);
 void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size);
 
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
-s7_pointer s7_set_real(s7_pointer rl, s7_Double x);
+
 
 bool s7_in_safe_do(s7_scheme *sc);
 bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol);
