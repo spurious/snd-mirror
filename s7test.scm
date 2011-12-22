@@ -12707,6 +12707,15 @@ time, so that the displayed results are
 (test (case 0 ((1) #t) ((else) #f) ((0) 0)) 0)
 
 (test (let ((x 0)) (let ((y (case 1 ((2) (set! x (+ x 3))) ((1) (set! x (+ x 4)) (+ x 2))))) (list x y))) '(4 6))
+(let ()
+  (define (hi a)
+    (case a
+      ((0) 1)
+      ((1) 2)
+      (else 3)))
+  (test (hi 1) 2)
+  (test (hi 2) 3)
+  (test (hi "hi") 3))
 
 (if with-bignums
     (begin

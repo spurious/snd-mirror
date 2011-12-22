@@ -8149,12 +8149,135 @@ any success.
 
 <p>Next great idea: try random initial phases.  This actually works better than it has
 any right to, but again the results are disappointing.  You can run random phases until
-hell freezes over and only get to n^.6 or slightly less.  I now realize that this 
-approach fails because the minima are like tiny cuspy cracks in a huge n-dimensional
+hell freezes over and only get to n^.6 or slightly less.  And the long term trend of
+this process can dampen one's optimism.  Here's a graph where we've taken 100 stabs
+at each case of N harmonics, N from 3 to 2000, using randomly chosen initial phases, and tracked the
+minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
+(log minimum N) and so on):
+</p>
+
+<img src="pix/averages.png" alt="average peaks from n=3 to 2000">
+
+<!--
+(define pi2 (/ pi 2))
+(define data-file "test.data")
+(set! (print-length) 1000000)
+
+(define (get-fft-size choice n1 mult)
+  (let ((n (if (eq? choice :all) n1
+	       (if (not (eq? choice :prime)) (* 2 n1)
+		   (vector-ref primes n1)))))
+    (min (expt 2 21) 
+	 (expt 2 (ceiling (/ (log (* n mult)) (log 2)))))))
+
+(define (get-peak choice n cur-phases)
+  (let* ((fft-mult 128)
+	 (size (get-fft-size choice n fft-mult))
+	 (fft-rl (make-vct size))
+	 (fft-im (make-vct size))
+	 (nc (if (eq? choice :all) 0
+		 (if (eq? choice :odd) 1
+		     (if (eq? choice :even) 2 3)))))
+
+    (clear-array fft-rl)
+    (clear-array fft-im)
+		 
+    (do ((m 0 (+ m 1)))
+	((= m n))
+      (let ((phi (+ (* pi (vector-ref cur-phases m)) pi2))
+	    (bin (if (= nc 0) (+ m 1)
+		     (if (= nc 1) (+ 1 (* m 2))
+			 (if (= nc 2) (max 1 (* m 2))
+			     (vector-ref primes m))))))
+	(vct-set! fft-rl bin (cos phi))
+	(vct-set! fft-im bin (sin phi))))
+    (vct-peak (mus-fft fft-rl fft-im size -1))))
+
+
+(let ((tries 100)
+      (file (open-output-file data-file "w")))
+  (do ((n 2000 (+ n 1)))
+      ((= n 3000))
+    (let ((phases (make-vector n 0.0))
+	  (sqrt-n (sqrt n)))
+      (let ((min-peak n)
+	    (max-peak 0.0)
+	    (sum 0.0))
+	(do ((try 0 (+ try 1)))
+	    ((= try tries))
+	  (fill! phases 0.0)
+	  (do ((k 1 (+ k 1)))
+	      ((= k n))
+	    (vector-set! phases k (random pi)))
+	  (let ((pk (get-peak :all n phases)))
+
+	    (if (> pk n)
+		(format #t "    ;oops: n: ~D, pk: ~F~%" n pk))
+	    (if (< pk sqrt-n)
+		(begin
+		  (format file "    ;;~D: ~F (~F) from ~A~%" n pk sqrt-n phases)
+		  (format #t "    ;~D: ~F (~F) from ~A~%" n pk sqrt-n phases)))
+
+	    (set! sum (+ sum pk))
+	    (if (< pk min-peak)
+		(set! min-peak pk))
+	    (if (> pk max-peak)
+		(set! max-peak pk))))
+	(set! sum (/ sum tries))
+	(format file "(~D ~,3F ~,3F ~,3F (~,3F ~,3F ~,3F))~%" n (log min-peak n) (log sum n) (log max-peak n) min-peak sum max-peak)
+	(if (zero? (modulo n 10))
+	    (format #t "~A: ~,3F ~,3F ~,3F (~,3F ~,3F ~,3F)~%" n (log min-peak n) (log sum n) (log max-peak n) min-peak sum max-peak))
+	)))
+  (close-output-port file))
+
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+
+(define white (make-color 1 1 1))
+
+;;; turn off clipping 
+(set! (mus-clipping) #f)
+(set! *clm-clipped* #f)
+(set! (with-inset-graph) #f)
+
+;;; these hooks may be drawing the graph in the upper right corner, which we don't want for now
+(set! (hook-functions after-graph-hook) '())
+(set! (hook-functions mouse-click-hook) '())
+(set! (hook-functions update-hook) '())
+
+;;; tell Snd not to try to load the data file
+(set! (script-arg) (+ 1 (script-arg)))
+
+(let ((ind (find-sound
+	    (with-sound (:channels 3 :data-format mus-lfloat)
+			(let ((samp 0))	    
+			  (call-with-input-file 
+			      (list-ref (script-args) 1) ; invocation arg = text file of data ("snd graph-averages.scm peaks.data")
+			    (lambda (file)
+			      (let loop ((data (read file)))
+				(if (pair? data)
+				    (begin
+				      (out-any samp (list-ref data 1) 0) 
+				      (out-any samp (list-ref data 2) 1)
+				      (out-any samp (list-ref data 3) 2)
+				      (set! samp (+ 1 samp))
+				      (loop (read file))))))))))))
+  
+  (set! (channel-style ind) channels-superimposed)
+  (set! (selected-graph-color) white)
+  (set! (graph-color) white)
+
+  (do ((chan 0 (+ 1 chan)))
+      ((= chan 3))
+    (set! (x-axis-style ind chan) x-axis-in-samples)
+    (set! (x-axis-label ind chan) "N")
+    (set! (y-bounds ind chan) (list .5 1.0))))
+
+-->
+
+<p>I now think (after much staring at graphs) that
+the minima are tiny cracks in a huge N-dimensional
 block of stuff that is all nearly the same.  If you look at the n=5 graph above, you'll
 see that the floor is getting flat, and this becomes more noticeable as n increases.
-</p>
-<p>
 Here's an attempt to display this aspect of the peak values.  In the next graph,
 the y axis is the peak value with n=100, the x axis is the number of tests, and we've
 sorted the tests by peak.  Each test is centered around a known excellent minimum
@@ -8172,7 +8295,7 @@ So, brute force and random flailing fail.
 
 <img src="pix/8way.png" alt="histogram of 100 reduced 8 times">
 
-<p>What to do? As the saying goes, "an hour in the library is worth 6 months at the bench".
+<p>What to do? 
 There are a bunch of papers on this subject, but the best I found was:
 Horner and Beauchamp, "a genetic algorithm-based method
 for synthesis of low peak amplitude signals", J. Acoustic. Soc. Am Vol 99 No 1 Jan 96, online
