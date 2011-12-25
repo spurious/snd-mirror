@@ -8506,6 +8506,17 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~1.D" 123) 'error)
 (test (format #f "~20,'-1D" 123) 'error)
 
+(for-each
+ (lambda (directive)
+   (for-each 
+    (lambda (arg)
+      (test (format #f directive arg) 'error)
+      (test (format #f directive) 'error))
+    (list "hi" #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+	  #f #t (if #f #f) (lambda (a) (+ a 1)))))
+ (list "~D" "~F" "~G" "~X" "~B" "~O" "~E" "~P"))
+
+
 (test (format #f "hiho~%ha") (string-append "hiho" (string #\newline) "ha"))
 (test (format #f "~%") (string #\newline))
 (test (format #f "~%ha") (string-append (string #\newline) "ha"))

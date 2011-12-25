@@ -2,6 +2,7 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
+/* TODO: put "show-controls" out of the way! */
 
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 

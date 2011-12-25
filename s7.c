@@ -13367,9 +13367,6 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 
 /* ---------------------------------------- logand, logior, logxor, lognot, ash ---------------------------------------- */
 
-/* PERHAPS: add logbit? CL (logbitp index int) using 2^index, but that order strikes me as backwards
- */
-
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
   #define H_logior "(logior int ...) returns the bitwise OR of its integer arguments (the bits that are on in any of the arguments)"
@@ -13422,6 +13419,35 @@ static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "lognot", 0, car(args), "an integer"));
   return(make_integer(sc, ~s7_integer(car(args))));
 }
+
+
+/* PERHAPS: add logbit? CL (logbitp index int) using 2^index, but that order strikes me as backwards
+ *          lots of schemes have this -- would also need the gmp version (mpz_tstbit?  there's also mpz_setbit)
+ *          at least gmp got the arg order right!
+ *
+ *   int mpz_tstbit (mpz_t @var{op}, mp_bitcnt_t @var{bit_index})
+ *   Test bit @var{bit_index} in @var{op} and return 0 or 1 accordingly.
+ */
+#if 0
+static s7_pointer g_logbitp(s7_scheme *sc, s7_pointer args)
+{
+  #define H_logbitp "(logbit? int index) returns #t if the index-th bit is on in int, otherwise #f. The argument \
+order here follows gmp, and is the opposite of the CL convention."
+  s7_Int index, num;
+
+  if (!s7_is_integer(car(args)))
+    return(s7_wrong_type_arg_error(sc, "logbit?", 1, car(args), "an integer"));
+  num = s7_integer(car(args));
+
+  if (!s7_is_integer(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "logbit?", 2, cadr(args), "an integer"));
+  index = s7_integer(cadr(args));
+  if (index < 0)
+    return(s7_out_of_range_error(sc, "logbit?", 2, cadr(args), "index must be non-negative"));
+
+  return(make_boolean(sc, (((1 << index) & num) != 0)));
+}
+#endif
 
 
 static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
@@ -17455,6 +17481,7 @@ static bool has_structure(s7_pointer p)
   return((type(p) == T_PAIR) ||
 	 (type(p) == T_VECTOR) ||
 	 (type(p) == T_HASH_TABLE));
+  /* PERHAPS: environment */
 }
 
 #define INITIAL_SHARED_INFO_SIZE 8
@@ -19823,7 +19850,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
    *            (member #\a "123123abnfc" char=?) -> "abnfc"
    *            (member "abc" "123abc321" string=?) -> "abc321" but there's the string length complication
    *            (member 1 #(0 1 2) =) ? -- for c_objects (ffi) we would need a substring equivalent
-   *            and what would it do for a hash-table?
+   *            and what would it do for a hash-table? or an environment?
    */
 
   s7_pointer x, y, obj;
@@ -21305,8 +21332,6 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 /* this may be too big -- smaller is faster in lint (even 31).  Perhaps we need *hash-table-default-size*?
  */
 
-/* PERHAPS: e/fcdr or car/fcdr for key/value would save the cons
- */
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
@@ -25134,11 +25159,14 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 
 /* -------------------------------- format -------------------------------- */
 
-static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *dat)
+static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *dat, bool in_error_handler)
 {
   int len;
   char *errmsg;
   s7_pointer x;
+
+  if (in_error_handler)       /* actually, this must be an internal bug, but don't call s7_error recursively! */
+    return(copy_string(msg)); /* this will be freed in by the string sweep in the GC */
 
   if (dat->loc == 0)
     {
@@ -25214,13 +25242,13 @@ static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const cha
     {
       tmp = (char *)(str + i);
       if (sscanf(tmp, "%d", &arg1) < 1)
-	format_error(sc, "bad number?", str, args, fdat);
+	format_error(sc, "bad number?", str, args, fdat, false);
 
       for (i = i + 1; i < str_len - 1; i++)
 	if (!isdigit(str[i]))
 	  break;
       if (i >= str_len)
-	format_error(sc, "numeric argument, but no directive!", str, args, fdat);
+	format_error(sc, "numeric argument, but no directive!", str, args, fdat, false);
     }
   *cur_i = i;
   return(arg1);
@@ -25280,7 +25308,7 @@ static bool s7_is_one_or_big_one(s7_pointer p);
 static char *truncate_string(char *form, int len, bool use_write);
 
 
-static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg, int fdepth)
+static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg, int fdepth, bool in_error_handler)
 {
   #define INITIAL_FORMAT_LENGTH 128
   int i = 0, str_len = 0;
@@ -25321,7 +25349,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
     {
       if ((is_not_null(args)) &&
 	  (next_arg == NULL))
-	return(format_error(sc, "too many arguments", str, args, fdat));
+	return(format_error(sc, "too many arguments", str, args, fdat, in_error_handler));
     }
   else
     {
@@ -25330,7 +25358,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 	  if (str[i] == '~')
 	    {
 	      if (i == str_len - 1)
-		return(format_error(sc, "control string ends in tilde", str, args, fdat));
+		return(format_error(sc, "control string ends in tilde", str, args, fdat, in_error_handler));
 
 	      switch (str[i + 1])
 		{
@@ -25377,9 +25405,9 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		case '@':                           /* -------- plural, 'y' or 'ies' -------- */
 		  i += 2;
 		  if ((str[i] != 'P') && (str[i] != 'p'))
-		    return(format_error(sc, "unknown '@' directive", str, args, fdat));
+		    return(format_error(sc, "unknown '@' directive", str, args, fdat, in_error_handler));
 		  if (!s7_is_number(car(fdat->args)))   /* CL accepts non numbers here */
-		    return(format_error(sc, "'@P' directive argument is not an integer", str, args, fdat));
+		    return(format_error(sc, "'@P' directive argument is not an integer", str, args, fdat, in_error_handler));
 
 		  if (!s7_is_one_or_big_one(car(fdat->args)))
 		    format_append_string(fdat, "ies");
@@ -25390,7 +25418,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 		case 'P': case 'p':                 /* -------- plural in 's' -------- */
 		  if (!s7_is_real(car(fdat->args)))
-		    return(format_error(sc, "'P' directive argument is not a real number", str, args, fdat));
+		    return(format_error(sc, "'P' directive argument is not a real number", str, args, fdat, in_error_handler));
 		  if (!s7_is_one_or_big_one(car(fdat->args)))
 		    format_append_char(fdat, 's');
 		  i++;
@@ -25402,7 +25430,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    int k, curly_len = -1, curly_nesting = 1;
 
 		    if (is_null(fdat->args))
-		      return(format_error(sc, "missing argument", str, args, fdat));
+		      return(format_error(sc, "missing argument", str, args, fdat, in_error_handler));
 
 		    for (k = i + 2; k < str_len - 1; k++)
 		      if (str[k] == '~')
@@ -25424,7 +25452,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			}
 
 		    if (curly_len == -1)
-		      return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
+		      return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat, in_error_handler));
 
 		    /* what about cons's here?  I can't see any way in CL either to specify the car or cdr of a cons within the format string 
 		     *   (cons 1 2) is applicable: ((cons 1 2) 0) -> 1
@@ -25441,7 +25469,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			    int curly_gc;
 
 			    if (!is_proper_list(sc, curly_arg))
-			      return(format_error(sc, "'{' directive argument should be a proper list or something we can turn into a list", str, args, fdat));
+			      return(format_error(sc, "'{' directive argument should be a proper list or something we can turn into a list", 
+						  str, args, fdat, in_error_handler));
 			    curly_gc = s7_gc_protect(sc, curly_arg);
 
 			    curly_str = (char *)malloc(curly_len * sizeof(char));
@@ -25452,14 +25481,14 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			    while (is_not_null(curly_arg))
 			      {
 				s7_pointer new_arg = sc->NIL;
-				tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg, fdepth + 1);
+				tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg, fdepth + 1, in_error_handler);
 				format_append_string(fdat, tmp);
 				if (tmp) free(tmp);
 				if (curly_arg == new_arg)
 				  {
 				    if (curly_str) free(curly_str);
 				    s7_gc_unprotect_at(sc, curly_gc);
-				    return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
+				    return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat, in_error_handler));
 				  }
 				curly_arg = new_arg;
 			      }
@@ -25475,19 +25504,19 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  break;
 		  
 		case '}':
-		  return(format_error(sc, "unmatched '}'", str, args, fdat));
+		  return(format_error(sc, "unmatched '}'", str, args, fdat, in_error_handler));
 
 		case 'C': case 'c':
 		  {
 		    s7_pointer obj;
 		    
 		    if (is_null(fdat->args))
-		      return(format_error(sc, "~C: missing argument", str, args, fdat));
+		      return(format_error(sc, "~~C: missing argument", str, args, fdat, in_error_handler));
 		    i++;
 		    obj = car(fdat->args);
 		    
 		    if (!s7_is_character(obj))
-		      return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
+		      return(format_error(sc, "'C' directive requires a character argument", str, args, fdat, in_error_handler));
 		    
 		    tmp = atom_to_c_string(sc, obj, false);
 		    format_append_string(fdat, tmp);
@@ -25522,7 +25551,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			width = format_read_integer(sc, &i, str_len, str, args, fdat);
 			if ((width < 0) ||  /* sccanf is 32 bit so (format #f "~922337203685477580F" pi) gets a width of -1 or some such number */
 			    (width > MAX_STRING_LENGTH))
-			  return(format_error(sc, "numeric argument too large", str, args, fdat));
+			  return(format_error(sc, "numeric argument too large", str, args, fdat, in_error_handler));
 		      }
 
 		    if (str[i] == ',')
@@ -25533,7 +25562,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			    precision = format_read_integer(sc, &i, str_len, str, args, fdat);
 			    if ((precision < 0) ||
 				(precision > MAX_STRING_LENGTH)) /* needed in 32-bit case */
-			      return(format_error(sc, "numeric argument too large", str, args, fdat));
+			      return(format_error(sc, "numeric argument too large", str, args, fdat, in_error_handler));
 			  }
 			/* is (format #f "~12,12D" 1) an error?  The precision has no use here. */
 			else
@@ -25557,9 +25586,9 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			  s7_pointer obj;
 			  
 			  if (is_null(fdat->args))
-			    return(format_error(sc, "missing argument", str, args, fdat));
+			    return(format_error(sc, "missing argument", str, args, fdat, in_error_handler));
 			  if (precision != -1)
-			    return(format_error(sc, "extra numeric argument", str, args, fdat));
+			    return(format_error(sc, "extra numeric argument", str, args, fdat, in_error_handler));
 
 			  obj = car(fdat->args);
 			  
@@ -25622,27 +25651,27 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			/* -------- numbers -------- */
 		      case 'F': case 'f':
 			if (is_null(fdat->args))
-			  return(format_error(sc, "~F: missing argument", str, args, fdat));
+			  return(format_error(sc, "~~F: missing argument", str, args, fdat, in_error_handler));
 			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~F: numeric argument required", str, args, fdat));
+			  return(format_error(sc, "~~F: numeric argument required", str, args, fdat, in_error_handler));
 
 			format_number(sc, fdat, 10, width, precision, 'f', pad);
 			break;
 
 		      case 'G': case 'g':
 			if (is_null(fdat->args))
-			  return(format_error(sc, "~G: missing argument", str, args, fdat));
+			  return(format_error(sc, "~~G: missing argument", str, args, fdat, in_error_handler));
 			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~G: numeric argument required", str, args, fdat));
+			  return(format_error(sc, "~~G: numeric argument required", str, args, fdat, in_error_handler));
 
 			format_number(sc, fdat, 10, width, precision, 'g', pad);
 			break;
 
 		      case 'E': case 'e':
 			if (is_null(fdat->args))
-			  return(format_error(sc, "~E: missing argument", str, args, fdat));
+			  return(format_error(sc, "~~E: missing argument", str, args, fdat, in_error_handler));
 			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~E: numeric argument required", str, args, fdat));
+			  return(format_error(sc, "~~E: numeric argument required", str, args, fdat, in_error_handler));
 
 			format_number(sc, fdat, 10, width, precision, 'e', pad);
 			break;
@@ -25655,50 +25684,50 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			 */
 		      case 'D': case 'd':
 			if (is_null(fdat->args))
-			  return(format_error(sc, "~D: missing argument", str, args, fdat));
+			  return(format_error(sc, "~~D: missing argument", str, args, fdat, in_error_handler));
 			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~D: numeric argument required", str, args, fdat));
+			  return(format_error(sc, "~~D: numeric argument required", str, args, fdat, in_error_handler));
 
 			format_number(sc, fdat, 10, width, precision, 'd', pad);
 			break;
 
 		      case 'O': case 'o':
 			if (is_null(fdat->args))
-			  return(format_error(sc, "~O: missing argument", str, args, fdat));
+			  return(format_error(sc, "~~O: missing argument", str, args, fdat, in_error_handler));
 			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~O: numeric argument required", str, args, fdat));
+			  return(format_error(sc, "~~O: numeric argument required", str, args, fdat, in_error_handler));
 
 			format_number(sc, fdat, 8, width, precision, 'o', pad);
 			break;
 
 		      case 'X': case 'x':
 			if (is_null(fdat->args))
-			  return(format_error(sc, "~X: missing argument", str, args, fdat));
+			  return(format_error(sc, "~~X: missing argument", str, args, fdat, in_error_handler));
 			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~X: numeric argument required", str, args, fdat));
+			  return(format_error(sc, "~~X: numeric argument required", str, args, fdat, in_error_handler));
 
 			format_number(sc, fdat, 16, width, precision, 'x', pad);
 			break;
 
 		      case 'B': case 'b':
 			if (is_null(fdat->args))
-			  return(format_error(sc, "~B: missing argument", str, args, fdat));
+			  return(format_error(sc, "~~B: missing argument", str, args, fdat, in_error_handler));
 			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~B: numeric argument required", str, args, fdat));
+			  return(format_error(sc, "~~B: numeric argument required", str, args, fdat, in_error_handler));
 
 			format_number(sc, fdat, 2, width, precision, 'b', pad);
 			break;
 		      
 		      default:
 			if (width > 0)
-			  return(format_error(sc, "format directive does not take a numeric argument", str, args, fdat));
-			return(format_error(sc, "unimplemented format directive", str, args, fdat));
+			  return(format_error(sc, "format directive does not take a numeric argument", str, args, fdat, in_error_handler));
+			return(format_error(sc, "unimplemented format directive", str, args, fdat, in_error_handler));
 		      }
 		  }
 		  break;
 
 		default:
-		  return(format_error(sc, "unimplemented format directive", str, args, fdat));
+		  return(format_error(sc, "unimplemented format directive", str, args, fdat, in_error_handler));
 		}
 	    }
 	  else 
@@ -25720,7 +25749,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
   else
     {
       if (is_not_null(fdat->args))
-	return(format_error(sc, "too many arguments", str, args, fdat));
+	return(format_error(sc, "too many arguments", str, args, fdat, in_error_handler));
     }
   if (i < str_len)
     format_append_char(fdat, str[i]);    /* possible trailing ~ is sent out */
@@ -25733,7 +25762,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 }
 
 
-static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char *in_str, s7_pointer args)
+static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char *in_str, s7_pointer args, bool in_error_handler)
 {
   s7_pointer result;
 
@@ -25746,7 +25775,7 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
       return(make_protected_string(sc, ""));
     }
 
-  result = make_string_uncopied(sc, format_to_c_string(sc, in_str, args, NULL, 0));
+  result = make_string_uncopied(sc, format_to_c_string(sc, in_str, args, NULL, 0, in_error_handler));
 
   if (out_loc != sc->F)
     s7_display(sc, result, out_loc);
@@ -25777,7 +25806,7 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
   pt = car(args);
 
   if (s7_is_string(pt))
-    return(format_to_output(sc, sc->F, s7_string(pt), cdr(args)));
+    return(format_to_output(sc, sc->F, s7_string(pt), cdr(args), false));
 
   if (!s7_is_string(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "format control string,", 2, cadr(args), "a string"));
@@ -25787,7 +25816,7 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
 	 (!port_is_closed(pt)))))
     return(s7_wrong_type_arg_error(sc, "format", 1, pt, "#f, #t, or an open output port"));
 
-  return(format_to_output(sc, (pt == sc->T) ? sc->output_port : pt, s7_string(cadr(args)), cddr(args)));
+  return(format_to_output(sc, (pt == sc->T) ? sc->output_port : pt, s7_string(cadr(args)), cddr(args), false));
 }
 
 
@@ -26621,7 +26650,7 @@ GOT_CATCH:
 
 	  if ((!s7_is_list(sc, info)) ||
 	      (!s7_is_string(car(info))))
-	    format_to_output(sc, error_port, "\n;~A ~A", list_2(sc, type, info));
+	    format_to_output(sc, error_port, "\n;~A ~A", list_2(sc, type, info), type == sc->FORMAT_ERROR);
 	  else
 	    {
 	      const char *carstr;
@@ -26644,10 +26673,10 @@ GOT_CATCH:
 		  len += 8;
 		  errstr = (char *)malloc(len * sizeof(char));
 		  snprintf(errstr, len, "\n;%s", s7_string(car(info)));
-		  format_to_output(sc, error_port, errstr, cdr(info));
+		  format_to_output(sc, error_port, errstr, cdr(info), type == sc->FORMAT_ERROR);
 		  free(errstr);
 		}
-	      else format_to_output(sc, error_port, "\n;~A ~A", list_2(sc, type, info));
+	      else format_to_output(sc, error_port, "\n;~A ~A", list_2(sc, type, info), type == sc->FORMAT_ERROR);
 	    }
 	  
 	  /* now display location at end */
@@ -26663,12 +26692,14 @@ GOT_CATCH:
 	      
 	      if (filename)
 		format_to_output(sc, error_port, "\n;  ~A[~D]",
-				 list_2(sc, make_protected_string(sc, filename), make_integer(sc, line)));
+				 list_2(sc, make_protected_string(sc, filename), make_integer(sc, line)), 
+				 type == sc->FORMAT_ERROR);
 	      else 
 		{
 		  if (line > 0)
 		    format_to_output(sc, error_port, "\n;  line ~D", 
-				     list_1(sc, make_integer(sc, line)));
+				     list_1(sc, make_integer(sc, line)), 
+				     type == sc->FORMAT_ERROR);
 		}
 	    }
 	  else
@@ -26681,7 +26712,8 @@ GOT_CATCH:
 				   list_3(sc, 
 					  make_protected_string(sc, call_name), 
 					  make_protected_string(sc, call_file), 
-					  make_integer(sc, call_line)));
+					  make_integer(sc, call_line)), 
+				   type == sc->FORMAT_ERROR);
 		}
 	    }
 	  s7_newline(sc, error_port);
@@ -26689,7 +26721,8 @@ GOT_CATCH:
 	  if (is_pair(vector_element(sc->error_info, ERROR_CODE)))
 	    {
 	      format_to_output(sc, error_port, ";    ~A", 
-			       list_1(sc, vector_element(sc->error_info, ERROR_CODE)));
+			       list_1(sc, vector_element(sc->error_info, ERROR_CODE)),
+			       type == sc->FORMAT_ERROR);
 	      s7_newline(sc, error_port);
 
 	      if (s7_is_string(vector_element(sc->error_info, ERROR_CODE_FILE)))
@@ -26697,7 +26730,8 @@ GOT_CATCH:
 		  format_to_output(sc, error_port, ";    [~S, line ~D]",
 				   list_2(sc, 
 					  vector_element(sc->error_info, ERROR_CODE_FILE), 
-					  vector_element(sc->error_info, ERROR_CODE_LINE)));
+					  vector_element(sc->error_info, ERROR_CODE_LINE)), 
+				   type == sc->FORMAT_ERROR);
 		  s7_newline(sc, error_port);
 		}
 	    }
@@ -47403,11 +47437,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->value = sc->UNSPECIFIED;
 	goto START;
       }
-
-      /* TODO: for small ints and chars, we should have a vector where the unset cases are else (#<unspecified> if none)
-       *   but where to store the it safely?
-       *   at least add a small_int case
-       */
 
 
 
