@@ -8279,7 +8279,10 @@ But we can always do better than n^.6 simply by using phases 0.0938*i*i - 0.35*i
 where "i" is the harmonic number counting from 0.
 This little formula gives results as low as n^.541 (at n=2076), and it is always below n^.6 if n is large enough.
 Lots of such formulas get us down to n^.53 or, as n gets larger, .52:
-0.837760996*i*i + 1.66047414*i gives a peak of 320 with n=65536! 
+in the all harmonic case, if n=65536, 
+4.5547029e-05*i*i + 0.640075398*i gives a peak of 309.9, and
+-4.697190e-05*i*i + 1.357080536*i peaks at 303.6 (n^.515).  If n=131072, 
+2.09440276*i*i + 1.4462367*i peaks at 438.7 (n^.516).
 </p>
 
 
@@ -8359,102 +8362,22 @@ the search each time from the new best point, slowly reducing the search radius 
 </small>
 </td></tr></table>
 
-<p>The "fpsap" function is the genetic algorithm mentioned earlier, written in C.  Here
-is a Scheme version of that same algorithm, but for simplicity, we
-are searching for a coefficient that gives us an expression that matches some data:
+<p>The "fpsap" function is the genetic algorithm mentioned earlier, written in C.
+Here is the GA code used to find the initial-phase polynomials mentioned above:
 </p>
 
 <table border=1 bordercolor="lightgray" hspace=40 cellpadding=4>
 <tr><td bgcolor="#fbfbf0">
 <small>
 <pre>
-(define (expr data)
-  ;; find the best coefficient, assuming the data is (* coeff (data i))
-  (let* ((range 1.0)
-	 (data-size (length data))
-	 (population-size 100)
-	 (population (make-vector population-size)))
-      
-    (define (initial-generation) 
-      ;; start with a bunch of random coefficients
-      (do ((i 0 (+ i 1)))
-	  ((= i population-size))
-	(set! (population i) (- (random range) (/ range 2)))))
-
-    (define (next-generation)
-      ;; find the best coeffs, use them to choose the next, overwriting the worst
-
-      (let ((distances (make-vector population-size 0.0))) ; get sum of error^2 for each coeff
-	(do ((i 0 (+ i 1)))
-	    ((= i population-size))
-	  (let ((coeff (population i)))
-	    (let ((dist 0.0))
-	      (do ((k 0 (+ k 1)))
-		  ((= k data-size))
-		(let ((err (- (data k) (* coeff k))))
-		  (set! dist (+ dist (* err err)))))
-	      (set! (distances i) (cons dist i)))))
-
-	(sort! distances (lambda (a b)                     ; sort coeffs by error
-			   (&lt; (car a) (car b))))
-
-	(do ((i (/ population-size 2) (+ i 1))             ; replace bad coeffs using good coeffs
-	     (j 0 (+ j 1)))
-	    ((= i population-size))
-	    (let ((coeff (population (cdr (distances j))))
-		  (loc (cdr (distances i))))
-	      (set! (population loc) (+ coeff (- (random range) (/ range 2))))))
-	(distances 0)))                                    ; return current best case
-
-    ;; set up our population of coeffs
-    (initial-generation)
-    
-    ;; run the genetic algorithm for awhile, slowly reducing the randomness (the "range")
-    (let ((last-dist population-size)
-	  (best #f))
-      (do ((i 0 (+ i 1)))
-	  ((= i 100))
-	(set! best (next-generation))
-	(let ((new-dist (car best)))
-	  (if (&lt; (abs (- new-dist last-dist)) range)
-	      (set! range (* range 0.9)))
-	  (set! last-dist new-dist)))
-
-      (list (population (cdr best)) (car best)))))
-</pre>
-</small>
-</td></tr></table>
-
-<p>Now we can hand "expr" some data, and it will find the coefficient that
-we used to generate that data:
-</p>
-
-<pre>
-    :(expr (let ((v (make-vector 100))) (do ((i 0 (+ i 1))) ((= i 100)) (set! (v i) (* i <em class=red>2.0</em>))) v))
-    (<em class=red>1.999999995715</em> 6.0289304754354e-12)
-</pre>
-
-<p>If you push this a little, you'll notice that our range (1.0) coupled with
-the number of generations (100) limits how far afield we can wander in our coefficient
-search.  And surely we need to add the possibility of a constant offset! 
-Very distracting! (see expr.scm for more code).
-</p>
-
-<p>The equivalent code that I use to search for the polynomials mentioned above is:
-</p>
-
-<table border=1 bordercolor="lightgray" hspace=40 cellpadding=4>
-<tr><td bgcolor="#fbfbf0">
-<small>
-<pre>
-(define (piterate choice n) ; (piterate :all 4096)
+(define (piterate choice n)   ; (piterate :all 4096)
   (let* ((size 1000)
 	 (pop (make-vector size))
 	 (phases (make-vector n 0.0)))
     ;; initialize our set of choices		   
     (do ((i 0 (+ i 1)))
 	((= i size))
-      (let ((f1 (random 1.0))
+      (let ((f1 (random 1.0)) ; or (- 1.0 (random 2.0)) and also below
 	    (f2 (random 1.0)))
 	(do ((k 0 (+ k 1)))
 	    ((= k n))
@@ -8622,62 +8545,6 @@ Very distracting! (see expr.scm for more code).
   )
 
 -->
-
-
-<p>
-This method got me about two thirds of the square roots I was searching for, and once
-again I was stuck.  In January, February, and March 2011, I was able to scrape only a total of about 2.0 off the
-distance from my best case minima to the square roots, and progress was getting exponentially slower.
-By Spring Break 2011, I had decided that I couldn't justify the bother and expense of running 150 jobs, just to go down .01
-after a full day of computing.  I was saying "oh well, I sure tried", and preparing to shut down the project,
-but just for kicks I tried a few last desperate experiments.
-One such experiment set the minimum generation mutation
-size to 0.0001.  This number sets the maximum change allowed in a phase when a new generation is being prepared,
-so it sets how far a generational step can progress.
-I had used .001 for two years thinking anything less was pointless.  My FFTs were set to give me .001 of
-accuracy, and surely making the increment tiny would only
-make the search slower!  
-That change essentially sped up the search by about a year; at one point I got 7 square roots in
-a single day!  Then we were back to the slow grind again.  
-</p>
-
-<p>Since much of the data looked good to
-me (the waveforms were FM-like in that they had many equal peaks), I decided to try the expression
-finder mentioned above (poly-expr in expr.scm) to see if there was any pattern in the initial phase data.  The values look
-almost random.
-There are regularities, especially in the even-harmonic case, but nothing I could just look at
-and pin down in a math expression.  
-The poly-expr distance calculation was:
-</p>
-<pre>
-      (define (distance coeffs power)
-	(let ((dist 0.0))
-	  (do ((k 0 (+ k 1)))
-	      ((= k data-size) dist)
-	    (let ((err (modulo (- (data k) (poly coeffs (* xscale k) power)) 2.0))) 
-	    ;; the factor of pi has been divided out of the data, hence the mod 2.0
-	      (if (&gt; err 1.0)
-		  (set! err (- 2.0 err)))
-	      (set! dist (+ dist (* err err)))))))
-</pre>
-<p>and the overall driver:
-</p>
-<pre>
-      (define* (all-poly? i (gens 100) (pow 2))
-        (let* ((min-vals (get-best :all i))
-               (all-phases (find-other-mins (car min-vals) (cadr min-vals))))
-          (do ((k 0 (+ k 1)))
-              ((= k 4))
-            (let ((vals (cadr (all-phases k))))
-              (poly-expr vals gens pow 1.0)))))
-</pre>
-<p>
-But the best it could do was a straight line at 0.0.  I interpret
-this to mean that the phases are in fact randomly distributed around 0.0, at least from a
-polynomial's point of view.  High order polynomials produced smaller errors, as you'd expect,
-but didn't look meaningful.  Iterated functions did not do any better than polynomials.
-</p>
-
 <br><br>
 
 
@@ -8781,11 +8648,11 @@ of harmonics, then the minimum peak amplitude, then <code>(log peak n)</code>.
 100  9.937   0.4986    | 92    9.553   0.4991   | 50   7.622   0.5192   | 80    11.451  0.5564
 59   7.639   0.4986    | 38    6.144   0.4991   | 48   7.467   0.5193   | 61    9.848   0.5564
 121  10.931  0.4987    | 94    9.656   0.4991   | 41   6.881   0.5194   | 10    3.602   0.5565
-118  10.796  0.4987    | 96    9.760   0.4991   | 36   6.432   0.5194   | 111   13.766  0.5568
-117  10.751  0.4987    | 120   10.911  0.4992   | 52   7.786   0.5194   | 56    9.408   0.5569
-107  10.283  0.4987    | 113   10.590  0.4992   | 43   7.055   0.5195   | 101   13.068  0.5569
-75   8.613   0.4987    | 73    8.516   0.4992   | 32   6.061   0.5199   | 123   14.606  0.5572
-7    2.639   0.4988    | 68    8.221   0.4993   | 33   6.163   0.5201   | 112   13.865  0.5572
+107  10.282  0.4987    | 96    9.760   0.4991   | 36   6.432   0.5194   | 111   13.766  0.5568
+118  10.796  0.4987    | 120   10.911  0.4992   | 52   7.786   0.5194   | 56    9.408   0.5569
+117  10.751  0.4987    | 113   10.590  0.4992   | 43   7.055   0.5195   | 101   13.068  0.5569
+75   8.613   0.4987    | 68    8.220   0.4992   | 32   6.061   0.5199   | 123   14.606  0.5572
+7    2.639   0.4988    | 73    8.516   0.4992   | 33   6.163   0.5201   | 112   13.865  0.5572
 106  10.238  0.4988    | 54    7.328   0.4993   | 29   5.766   0.5203   | 65    10.249  0.5575
 124  11.072  0.4988    | 116   10.735  0.4993   | 35   6.362   0.5205   | 89    12.219  0.5576
 67   8.146   0.4989    | 95    9.717   0.4993   | 26   5.452   0.5206   | 125   14.772  0.5577
@@ -8800,15 +8667,15 @@ of harmonics, then the minimum peak amplitude, then <code>(log peak n)</code>.
 115  10.683  0.4992    | 75    8.650   0.4997   | 28   5.732   0.5240   | 57    9.570   0.5586
 97   9.817   0.4993    | 93    9.631   0.4997   | 25   5.403   0.5241   | 120   14.506  0.5587
 58   7.594   0.4993    | 122   11.036  0.4998   | 22   5.055   0.5242   | 115   14.170  0.5587
-111  10.507  0.4994    | 99    9.943   0.4999   | 256  18.305  0.5243   | 113   14.036  0.5588
-113  10.606  0.4995    | 87    9.321   0.4999   | 18   4.569   0.5257   | 126   14.920  0.5588
+111  10.507  0.4994    | 87    9.321   0.4998   | 256  18.305  0.5243   | 113   14.036  0.5588
+113  10.606  0.4995    | 99    9.943   0.4999   | 18   4.569   0.5257   | 126   14.920  0.5588
 72   8.473   0.4997    | 127   11.268  0.5000   | 20   4.839   0.5264   | 100   13.116  0.5589
-119  10.894  0.4997    | 112   10.583  0.5000   | 17   4.463   0.5280   | 99    13.089  0.5597
-125  11.166  0.4997    | 126   11.232  0.5001   | 16   4.325   0.5282   | 124   14.877  0.5601
-102  10.088  0.4998    | 119   10.918  0.5002   | 19   4.741   0.5286   | 103   13.424  0.5603
-110  10.482  0.4999    | 121   11.012  0.5002   | 15   4.192   0.5292   | 114   14.214  0.5604
-128  11.309  0.4999    | 66    8.137   0.5004   | 2048 56.936  0.5301   | 102   13.399  0.5611
-109  10.439  0.5000    | 98    9.919   0.5004   | 1024 40.560  0.5342   | 118   14.545  0.5612
+119  10.894  0.4997    | 112   10.583  0.5000   | 2048 55.643  0.5271   | 99    13.089  0.5597
+125  11.166  0.4997    | 126   11.232  0.5001   | 17   4.463   0.5280   | 124   14.877  0.5601
+102  10.088  0.4998    | 119   10.918  0.5002   | 16   4.325   0.5282   | 103   13.424  0.5603
+110  10.482  0.4999    | 121   11.012  0.5002   | 19   4.741   0.5286   | 114   14.214  0.5604
+128  11.309  0.4999    | 66    8.137   0.5004   | 15   4.192   0.5292   | 102   13.399  0.5611
+109  10.439  0.5000    | 98    9.919   0.5004   | 1024 39.364  0.5299   | 118   14.545  0.5612
 123  11.090  0.5000    | 84    9.186   0.5005   | 14   4.097   0.5344   | 122   14.845  0.5615
 101  10.060  0.5002    | 123   11.122  0.5006   | 12   3.787   0.5359   | 116   14.467  0.5621
 87   9.337   0.5002    | 124   11.193  0.5011   | 13   3.973   0.5378   | 117   14.601  0.5630
@@ -8816,12 +8683,12 @@ of harmonics, then the minimum peak amplitude, then <code>(log peak n)</code>.
 93   9.669   0.5006    | 111   10.608  0.5014   | 11   3.656   0.5406   | 4     2.192   0.5662
 256  16.287  0.5032    | 3     1.739   0.5035   | 10   3.559   0.5513   | 8     3.263   0.5687
 4    2.039   0.5139    | 4     2.045   0.5161   | 8    3.198   0.5590   | 256   24.216  0.5747
-1024 36.175  0.5177    | 6     2.523   0.5164   | 9    3.454   0.5641   | 7     3.062   0.5750
-2048 53.517  0.5220    | 5     2.307   0.5195   | 7    3.047   0.5726   | 6     2.805   0.5757
-6    2.549   0.5223    | 256   17.973  0.5210   | 6    2.837   0.5820   | 512   39.246  0.5883
-5    2.343   0.5292    | 2048  56.680  0.5295   | 5    2.605   0.5948   | 2048  96.439  0.5992
-512  27.582  0.5317    | 1024  40.231  0.5330   | 3    2.021   0.6406   | 1024  65.946  0.6043
-3    1.980   0.6217    | 512   28.729  0.5383   | 4    2.431   0.6406   | 3     1.980   0.6217
+1024 36.049  0.5172    | 6     2.523   0.5164   | 9    3.454   0.5641   | 7     3.062   0.5750
+2048 53.394  0.5217    | 512   25.536  0.5194   | 7    3.047   0.5726   | 6     2.805   0.5757
+6    2.549   0.5223    | 5     2.307   0.5195   | 6    2.837   0.5820   | 512   39.246  0.5883
+512  26.262  0.5239    | 256   17.865  0.5199   | 5    2.605   0.5948   | 2048  96.439  0.5992
+5    2.343   0.5292    | 2048  53.957  0.5231   | 3    2.021   0.6406   | 1024  65.946  0.6043
+3    1.980   0.6217    | 1024  38.620  0.5271   | 4    2.431   0.6406   | 3     1.980   0.6217
 2    1.760   0.8156    | 2     1.539   0.6220   | 2    1.760   0.8157   | 2     1.760   0.8156
 </pre>
 </td></tr></table>

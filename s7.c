@@ -21305,7 +21305,8 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 /* this may be too big -- smaller is faster in lint (even 31).  Perhaps we need *hash-table-default-size*?
  */
 
-
+/* PERHAPS: e/fcdr or car/fcdr for key/value would save the cons
+ */
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
