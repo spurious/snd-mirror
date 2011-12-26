@@ -25406,8 +25406,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  i += 2;
 		  if ((str[i] != 'P') && (str[i] != 'p'))
 		    return(format_error(sc, "unknown '@' directive", str, args, fdat, in_error_handler));
-		  if (!s7_is_number(car(fdat->args)))   /* CL accepts non numbers here */
-		    return(format_error(sc, "'@P' directive argument is not an integer", str, args, fdat, in_error_handler));
+		  if (!s7_is_real(car(fdat->args)))        /* CL accepts non numbers here */
+		    return(format_error(sc, "'@P' directive argument is not a real number", str, args, fdat, in_error_handler));
 
 		  if (!s7_is_one_or_big_one(car(fdat->args)))
 		    format_append_string(fdat, "ies");
