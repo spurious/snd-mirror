@@ -566,9 +566,6 @@ GtkWidget *add_menu(void)
   ml[v_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_menu), view_cascade_menu);
 
-  view_controls_menu = add_menu_item(view_cascade_menu, "Show controls", NULL, (GCallback)view_controls_callback);
-  ml[v_controls_menu] = "Show controls";
-
 #if HAVE_EXTENSION_LANGUAGE
   view_listener_menu = add_menu_item(view_cascade_menu, "Open listener", NULL, (GCallback)view_listener_callback);
   ml[v_listener_menu] = "Open listener";
@@ -585,6 +582,9 @@ GtkWidget *add_menu(void)
 
   view_color_orientation_menu = add_menu_item(view_cascade_menu, "Color/Orientation", NULL, (GCallback)view_color_orientation_callback_1);
   ml[v_color_orientation_menu] = "Color/Orientation";
+
+  view_controls_menu = add_menu_item(view_cascade_menu, "Show controls", NULL, (GCallback)view_controls_callback);
+  ml[v_controls_menu] = "Show controls";
 
   view_sep2_menu = add_menu_separator(view_cascade_menu);
   ml[v_sep2_menu] = NULL;

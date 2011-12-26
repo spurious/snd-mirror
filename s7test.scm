@@ -8516,122 +8516,117 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	  #f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list "~D" "~F" "~G" "~X" "~B" "~O" "~E" "~P"))
 
-#|
-;;; TODO: make sure we test all these cases [also check nan/inf
-
-:(format #f "~,1" 123)
+(test (format #f "~,1" 123) 'error)
 ;format "~,1" 123: numeric argument, but no directive!
 ;    (format #f "~,1" 123)
 
-:(format #f "~,123456789123456789123456789d" 1)
+(test (format #f "~,123456789123456789123456789d" 1) 'error)
 ;format "~,123456789123456789123456789d" 1: numeric argument too large
 ;    (format #t "~,123456789123456789123456789d" 1)
 
-(format #f "~D" 1 2)
+(test (format #f "~D" 1 2) 'error)
 ;format: "~D" 1 2
-            ^: too many arguments
+;           ^: too many arguments
 ;    (format #f "~D" 1 2)
 
-:(format "~D~" 1)
+(test (format "~D~" 1) 'error)
 ;format: "~D~" 1
-            ^: control string ends in tilde
+;           ^: control string ends in tilde
 ;    (format "~D~" 1)
 
-:(format #f "~@D" 1)
+(test (format #f "~@D" 1) 'error)
 ;format "~@D" 1: unknown '@' directive
 ;    (format #f "~@D" 1)
 
-:(format #f "~@p" #\a)
+(test (format #f "~@p" #\a) 'error)
 ;format "~@p" #\a: '@P' directive argument is not an integer
 ;    (format #f "~@p" #\a)
 
-:(format #f "~P" 1+i)
+(test (format #f "~P" 1+i) 'error)
 ;format "~P" 1+1i: 'P' directive argument is not a real number
 ;    (format #f "~P" 1+1i)
 
-:(format #f "~@p" 0+i)
+(test (format #f "~P" (real-part (log 0))) "s")
+
+(test (format #f "~@p" 0+i) 'error)
 ;format "~@p" 0+1i: '@P' directive argument is not a real number
 ;    (format #f "~@p" 0+1i)
 
-:(format #f "~{~}")
+(test (format #f "~{~}") 'error)
 ;format "~{~}": missing argument
 ;    (format #f "~{~}")
 
-:(format #f "~{~a" '(1 2 3))
+(test (format #f "~{~a" '(1 2 3)) 'error)
 ;format "~{~a" (1 2 3): '{' directive, but no matching '}'
 ;    (format #f "~{~a" '(1 2 3))
 
-:(format #f "~{~a~}" '(1 . 2))
+(test (format #f "~{~a~}" '(1 . 2)) 'error)
 ;format "~{~a~}" (1 . 2): '{' directive argument should be a proper list or something we can turn into a list
 ;    (format #f "~{~a~}" '(1 . 2))
 
-:(let ((lst (cons 1 2))) (set-cdr! lst lst) (format #f "~{~A~}" lst))
+(test (let ((lst (cons 1 2))) (set-cdr! lst lst) (format #f "~{~A~}" lst)) 'error)
 ;format "~{~A~}" #1=(1 . #1#): '{' directive argument should be a proper list or something we can turn into a list
 ;    (format #f "~{~A~}" lst)
 
-:(format #f "~{~a~}" 'asdf)
+(test (format #f "~{~a~}" 'asdf) 'error)
 ;format "~{~a~}" asdf: '{' directive argument should be a proper list or something we can turn into a list
 ;    (format #f "~{~a~}" 'asdf)
 
-:(format #f "~{~a~}" '())
-""
-
-:(format #f "~{asd~}" '(1 2 3))
+(test (format #f "~{~a~}" '()) "")
+(test (format #f "~{asd~}" '(1 2 3)) 'error)
 ;format: "~{asd~}" (1 2 3)
-              ^: '{...}' doesn't consume any arguments!
+;             ^: '{...}' doesn't consume any arguments!
 ;    (format #f "~{asd~}" '(1 2 3))
 
-:(format #f "~}" '(1 2 3))
+(test (format #f "~}" '(1 2 3)) 'error)
 ;format "~}" (1 2 3): unmatched '}'
 ;    (format #f "~}" '(1 2 3))
 
-:(format #f "~C")
+(test (format #f "~C") 'error)
 ;format "~C": ~C: missing argument
 ;    (format #f "~C")
 
-:(format #f "~A ~C" #\a)
+(test (format #f "~A ~C" #\a) 'error)
 ;format: "~A ~C" #\a
-             ^: ~C: missing argument
+;            ^: ~C: missing argument
 ;    (format #f "~A ~C" #\a)
 
-:(format #f "~C" 1)
+(test (format #f "~C" 1) 'error)
 ;format "~C" 1: 'C' directive requires a character argument
 ;    (format #f "~C" 1)
 
-:(format #f "~C" #<eof>)
+(test (format #f "~C" #<eof>) 'error)
 ;format "~C" #<eof>: 'C' directive requires a character argument
 ;    (format #f "~C" #<eof>)
 
-:(format #f "~1,9223372036854775807f" 1)
+(test (format #f "~1,9223372036854775807f" 1) 'error)
 ;format "~1,9223372036854775807f" 1: numeric argument too large
 ;    (format #f "~1,9223372036854775807f" 1)
 
-:(format #f "~1,2A" 1)
+(test (format #f "~1,2A" 1) 'error)
 ;format "~1,2A" 1: extra numeric argument
 ;    (format #f "~1,2A" 1)
 
-:(format #f "~F" #\a)
+(test (format #f "~F" #\a) 'error)
 ;format "~F" #\a: ~F: numeric argument required
 ;    (format #f "~F" #\a)
 
-:(format #f "~1,")
+(test (format #f "~1,") 'error)
 ;format "~1,": format directive does not take a numeric argument
 ;    (format #f "~1,")
 
-:(format #f "~-1,")
+(test (format #f "~-1,") 'error)
 ;format "~-1,": unimplemented format directive
 ;    (format #f "~-1,")
 
-:(format #f "~L" 1)
+(test (format #f "~L" 1) 'error)
 ;format "~L" 1: unimplemented format directive
 ;    (format #f "~L" 1)
 
-:(format #f "~A" 1 2)
+(test (format #f "~A" 1 2) 'error)
 ;format: "~A" 1 2
-            ^: too many arguments
+;           ^: too many arguments
 ;    (format #f "~A" 1 2)
-
-|#
 
 (test (format #f "hiho~%ha") (string-append "hiho" (string #\newline) "ha"))
 (test (format #f "~%") (string #\newline))

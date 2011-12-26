@@ -4067,8 +4067,6 @@ the current sample, the vct returned by 'init-func', and the current read direct
   return(proc_and_list);
 }
 
-char *display_locals(s7_scheme *sc);
-
 
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, bool counting, XEN edpos, int arg_pos, XEN s_dur)

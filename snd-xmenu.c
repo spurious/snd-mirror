@@ -2,8 +2,6 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
-/* TODO: put "show-controls" out of the way! */
-
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
 
@@ -618,10 +616,6 @@ Widget add_menu(void)
   XtSetArg(high_args[high_n], XmNuserData, (XtPointer)2); high_n++;
   view_cascade_menu = XtCreateManagedWidget("View", xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
-  view_controls_menu = XtCreateManagedWidget("Show controls", xmPushButtonWidgetClass, view_menu, main_args, main_n);
-  XtAddCallback(view_controls_menu, XmNactivateCallback, view_controls_callback, NULL);
-  XtVaSetValues(view_controls_menu, XmNmnemonic, 'S', NULL);
-
 #if HAVE_EXTENSION_LANGUAGE
   view_listener_menu = XtCreateManagedWidget("Open listener", xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_listener_menu, XmNactivateCallback, view_listener_callback, NULL);
@@ -641,6 +635,10 @@ Widget add_menu(void)
 
   view_color_orientation_menu = XtCreateManagedWidget("Color/Orientation", xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_color_orientation_menu, XmNactivateCallback, view_color_orientation_callback_1, NULL);
+
+  view_controls_menu = XtCreateManagedWidget("Show controls", xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_controls_menu, XmNactivateCallback, view_controls_callback, NULL);
+  XtVaSetValues(view_controls_menu, XmNmnemonic, 'S', NULL);
 
   view_sep2_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, view_menu, sep_args, j);
 

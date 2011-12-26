@@ -7821,8 +7821,6 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 -->
 
 <p>n=6 is even more beautiful and complex, but the graph is too large to include here.
-My conclusion from looking at these landscapes:
-we aren't likely to stumble on a function that gives us the initial phases!
 </p>
 
 
@@ -7830,8 +7828,7 @@ we aren't likely to stumble on a function that gives us the initial phases!
 <tr><td bgcolor="#fbfbf0">
 <small>
 <pre>
-;;; You can get a good feel for how these peaks behave by using mix and
-;;;    with-temp-sound to create a draggable mix object for each component:
+;;; use mix and with-temp-sound to create a draggable mix object for each component.
 
 (load "peak-phases.scm")
 (set! (with-mix-tags) #t)     ; drag the tag to change the harmonic's initial phase
@@ -8275,7 +8272,7 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 -->
 
 <p>The trend continues upwards as N goes to 100000; it probably approaches 1 in the limit.
-But we can always do better than n^.6 simply by using phases 0.0938*i*i - 0.35*i
+But we can always do better than n^.6 by using phases 0.0938*i*i - 0.35*i
 where "i" is the harmonic number counting from 0.
 This little formula gives results as low as n^.541 (at n=2076), and it is always below n^.6 if n is large enough.
 Lots of such formulas get us down to n^.53 or, as n gets larger, .52:
@@ -8283,17 +8280,19 @@ in the all harmonic case, if n=65536,
 4.5547029e-05*i*i + 0.640075398*i gives a peak of 309.9, and
 -4.697190e-05*i*i + 1.357080536*i peaks at 303.6 (n^.515).  If n=131072, 
 2.09440276*i*i + 1.4462367*i peaks at 438.7 (n^.516).
+(A linear equation in "i" here is simply phase shift in the sum of sines formula mentioned
+earlier, so given x*i, as x goes from 0 to pi/2, the peak goes from .7245*n to n).
 </p>
 
 
 <!-- TODO: show this in the same form as the random case above but going to 100000 -->
 
 <p>But I haven't found polynomials that get all the way to the square root.  Especially
-for n < 500, they can't seem to get below n^.54, and we want n^.5.
+for n &lt; 500, they can't seem to get below n^.53, and we want n^.5.
 I now think (after much staring at graphs) that
 the minima are tiny cracks in a huge N-dimensional
-block of stuff that is all nearly the same.  If you look at the n=5 graph above, you'll
-see that the floor is getting flat, and this becomes more noticeable as n increases.
+block of stuff that is all nearly the same.  The n=5 graph above shows 
+that the floor is getting flat, and this becomes more noticeable as n increases.
 Here's an attempt to display this aspect of the peak values.  In the next graph,
 the y axis is the peak value with n=100, the x axis is the number of tests, and we've
 sorted the tests by peak.  Each test is centered around a known excellent minimum
@@ -8838,7 +8837,7 @@ case where all the initial phases are 0.0 in black:
 
 
 <p>
-As you increase "n", the minimum peak amplitude waveform approaches
+As N increases, the minimum peak amplitude waveform can approach
 white noise (in sound as well as appearance); here is a small portion of one period when n=65536 (the prescaling peak was 704):
 </p>
 
@@ -8848,7 +8847,10 @@ white noise (in sound as well as appearance); here is a small portion of one per
 </td></tr></table>
 <br>
 
+<p>but the waveforms generated from the initial-phase polynomials are very regular:
+</p>
 
+<!-- TODO: graph of poly case -->
 
 <br><br>
 
