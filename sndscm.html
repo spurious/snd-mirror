@@ -8280,8 +8280,12 @@ in the all harmonic case, if n=65536,
 4.5547029e-05*i*i + 0.640075398*i gives a peak of 309.9, and
 -4.697190e-05*i*i + 1.357080536*i peaks at 303.6 (n^.515).  If n=131072, 
 2.09440276*i*i + 1.4462367*i peaks at 438.7 (n^.516).
-(A linear equation in "i" here is simply phase shift in the sum of sines formula mentioned
-earlier, so given x*i, as x goes from 0 to pi/2, the peak goes from .7245*n to n).
+A good quadratic for each n, in the all harmonics case, 
+seems to be 3.16xxx*i*i - 1.5xxx*i where the x's are very slowly
+decreasing as n increases.  In the odd harmonics case, it's 3.16xxx*i*i - 0.2xxx*i,
+and even harmonics 3.16xxx*i*i - 3.1xxx*i.  Very interesting...
+A linear equation in "i" here is simply phase offset in the sum of sines formula mentioned
+earlier, so given an initial phase of x*i, as x goes from 0 to pi/2, the peak goes from .7245*n to n.
 </p>
 
 
@@ -8697,7 +8701,7 @@ of harmonics, then the minimum peak amplitude, then <code>(log peak n)</code>.
 <p>These values
 represent about 500 GHz years of computing, 
 possible only at an enlightened institution like CCRMA.
-Here is a graph of the peaks (as of March, 2011), followed by a graph of
+Here is a graph of the peaks (as of December, 2011), followed by a graph of
 the exponent vs n (n^y = peak amp). 
 </p>
 
