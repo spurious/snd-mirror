@@ -204,7 +204,7 @@
 
 
 
-#define DEBUGGING 1
+#define DEBUGGING 0
 #define PRINTING 0
 
 #define BOLD_TEXT "\033[1m"
@@ -3815,12 +3815,12 @@ static char *display_locals(s7_scheme *sc)
    * (copy e) -> a new env with copied slots, but not vals? [an out-of-context env unless we copy the entire list]
    * (reverse e) -> error
    * (fill! e) -> error
-   * (equal? e1 e2) -> traverse slots
+   * (equal? e1 e2) -> traverse slots [currently envs are t_simple_p]
    * object->string of e: #<environment --then the slots here-- >
    * in stacktrace:
    *   only show function calls (not cur_code -- in fact is cur_code useful anymore?)
    *   in between show envs as in this function
-   * for-each map and member for slot list traversal
+   * for-each map and member for slot list traversal (assq also makes sense)
    */
   s7_pointer e;
   int spaces;
@@ -25512,6 +25512,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    
 		    if (is_null(fdat->args))
 		      return(format_error(sc, "~~C: missing argument", str, args, fdat, in_error_handler));
+		    /* the "~~" here and below protects against "~C" being treated as a directive */
 		    i++;
 		    obj = car(fdat->args);
 		    
@@ -27194,7 +27195,9 @@ output is sent to the current-output-port."
     }
   else obj = sc->F;
 
-  /* *error-info* is the special case here */
+  /* *error-info* is the special case here
+   *   TODO: this is way to hard to use, and appears to repeat the local vars
+   */
   if (s7_is_vector(obj))
     {
       if (vector_length(obj) < ERROR_INFO_SIZE)
@@ -33848,12 +33851,16 @@ static s7_pointer check_case(s7_scheme *sc)
 	    }
 	  else 
 	    {
+#if (!WITH_GMP)
+	      /* OP_CASE_INT assumes non-gmp ints */
 	      if ((is_symbol(car(sc->code))) &&
 		  (!has_feed_to) &&
 		  (keys_int) &&
 		  (keys_single))
 		car(ecdr(sc->code)) = sc->CASE_INT;
-	      else car(ecdr(sc->code)) = sc->CASE_UNCHECKED;
+	      else 
+#endif
+		car(ecdr(sc->code)) = sc->CASE_UNCHECKED;
 	    }
 	}
     }
@@ -38170,8 +38177,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
 
-      sc->cur_code = sc->code;               /* in case an error occurs, this helps tell us where we are */
-
       if (is_pair(sc->code))
 	{
 	  /* we jump here when we already know sc->code is a pair */
@@ -38181,6 +38186,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (typeflag(car(sc->code)) == SYNTACTIC_TYPE) /* this is much faster than checking is_synactic */
 	    {
+	      sc->cur_code = sc->code;               /* in case an error occurs, this helps tell us where we are */
+
 	      sc->op = (opcode_t)syntax_opcode(car(sc->code));
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
@@ -38196,6 +38203,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    OPT_EVAL:
 	      code = sc->code;
+	      sc->cur_code = code;
 
 	      switch (optimize_data(code))
 		{
@@ -38443,7 +38451,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_one_liner(sc->code))
 		      {
 			sc->code = car(sc->code);
-			sc->cur_code = sc->code;
 			goto EVAL_PAIR; 
 			/* lg: syn: OP_SAFER_OR_X: 319892 
 			 * al: OP_IF_P_X_P: 24986
@@ -38565,7 +38572,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_one_liner(sc->code))
 		      {
 			sc->code = car(sc->code);
-			sc->cur_code = sc->code;
 			goto EVAL_PAIR;
 		      }
 		    goto BEGIN;
@@ -38814,7 +38820,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_one_liner(sc->code))
 		      {
 			sc->code = car(sc->code);
-			sc->cur_code = sc->code;
 			goto EVAL_PAIR; 
 			/* lg: OP_LET_C: 27987 OP_IF_P_X_P: 27322 OP_LET_OX_P: 21230 OP_SAFE_IF_IS_PAIR_P_X: 27178
 			 * al: OP_IF_P_X_P: 2692749 OP_COND_SIMPLER: 261496 OP_IF_P_X_P: 2692749 OP_IF_ORP_P_P: 219828
@@ -38912,7 +38917,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_one_liner(sc->code))
 		      {
 			sc->code = car(sc->code);
-			sc->cur_code = sc->code;
 			goto EVAL_PAIR; 
 			/* lg: OP_LET_O_P: 107534 OP_SAFE_IF_IS_PAIR_P_P: 87672
 			 * al: OP_COND_SIMPLE: 219331 OP_NAMED_LET: 221049 OP_COND_SIMPLER: 201751
@@ -39058,7 +39062,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (is_one_liner(sc->code))
 		    {
 		      sc->code = car(sc->code);
-		      sc->cur_code = sc->code;
 		      goto EVAL_PAIR;
 		    }
 		  goto BEGIN;
@@ -39261,7 +39264,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_one_liner(code))
 		      {
 			sc->code = car(code);
-			sc->cur_code = sc->code;
 			goto EVAL_PAIR; 
 			/* all: OP_LET_READ_CHAR_P: 4460056
 			 */
@@ -39389,7 +39391,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_one_liner(code))
 		      {
 			sc->code = car(code);
-			sc->cur_code = sc->code;
 			goto EVAL_PAIR; 
 		      }
 
@@ -39581,8 +39582,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		  /* split current in 2: current is default, and runs until a problem is noticed, then throws us here
-		   *   unknown gets the new value and goes to the old form, doing the lookup everytime.  Perhaps
-		   *   fcdr can be back to caddr.  So new form is OP and old is HOP.
+		   *   unknown gets the new value and goes to the old form, doing the lookup everytime. 
 		   */
 		  
 		case OP_UNKNOWN_SS:
@@ -42109,7 +42109,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_one_liner(sc->code))
 		      {
 			sc->code = car(sc->code);
-			sc->cur_code = sc->code;
 			goto EVAL_PAIR;
 		      }
 		    goto BEGIN;
@@ -42379,6 +42378,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code));  */
 
 	  /* trailers */
+	  sc->cur_code = sc->code;
 
 	  {
 	    s7_pointer carc;
@@ -43174,7 +43174,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_one_liner(sc->code))
 		{
 		  sc->code = car(sc->code);
-		  sc->cur_code = sc->code;
 		  goto EVAL_PAIR;
 		}
 	      goto BEGIN;
@@ -43270,7 +43269,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_one_liner(sc->code))
 	    {
 	      sc->code = car(sc->code);
-	      sc->cur_code = sc->code;
 	      goto EVAL_PAIR;
 	    }
 	  goto BEGIN;
@@ -43350,7 +43348,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_one_liner(sc->code))
 	      {
 		sc->code = car(sc->code);
-		sc->cur_code = sc->code;
 		goto EVAL_PAIR;
 	      }
 	    goto BEGIN;
@@ -44721,7 +44718,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->UNSPECIFIED;  
       goto START;  
       /* lg 469613  OP_BEGIN1: 446942
-       * in 3128150 OP_BEGIN1: 717010 OP_SIMPLE_DO_STEP_P: 2400713 PERHAPS!
+       * in 3128150 OP_BEGIN1: 717010 OP_SIMPLE_DO_STEP_P: 2400713
        */
       
     case OP_IF_P_P_X:
@@ -45614,7 +45611,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	code = sc->code;
 	port = finder(sc, fcdr(code));
-	if (!is_input_port(port)) /* perhaps (read-char 123)? */
+	if (!is_input_port(port)) /* (read-char 123)? */
 	  s7_wrong_type_arg_error(sc, "read-char", 0, port, "an input port");
 
 	c = chars[port_read_character(port)(sc, port)];
@@ -46097,7 +46094,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_one_liner(sc->code))
 	  {
 	    sc->code = car(sc->code);
-	    sc->cur_code = sc->code;
 	    goto EVAL_PAIR;
 	  }
 	goto BEGIN;
@@ -46473,7 +46469,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* counts[stack_op(sc->stack, s7_stack_top(sc) - 1)]++; */
 	  goto START; 
 	  /* lg 329702, OP_IF_PP: 101657
-	   * in 3044565 OP_IF_PP: 2928624 PERHAPS
+	   * in 3044565 OP_IF_PP: 2928624
 	   */
 	}
       /* fall through */
@@ -53825,8 +53821,9 @@ the error type and the info passed to the error handler.");
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  *
  * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
+ * how does safe do interact with C-g?
  *
- * lint     13424 -> 1220
- * bench    52019 -> 7804
- * index    44300 -> 5023
+ * lint     13424 -> 1231
+ * bench    52019 -> 7875
+ * index    44300 -> 4988
  */

@@ -8281,9 +8281,7 @@ in the all harmonic case, if n=65536,
 -4.697190e-05*i*i + 1.357080536*i peaks at 303.6 (n^.515).  If n=131072, 
 2.09440276*i*i + 1.4462367*i peaks at 438.7 (n^.516).
 A good quadratic for each n, in the all harmonics case, 
-seems to be 3.16xxx*i*i - 1.5xxx*i where the x's are very slowly
-decreasing as n increases.  In the odd harmonics case, it's 3.16xxx*i*i - 0.2xxx*i,
-and even harmonics 3.16xxx*i*i - 3.1xxx*i.  Very interesting...
+is (pi+pi/n)*i*i - i*pi/2.  The odd case is (pi+pi/n)*i*i, or slightly better (pi+pi/n)*i*i - i/10.
 A linear equation in "i" here is simply phase offset in the sum of sines formula mentioned
 earlier, so given an initial phase of x*i, as x goes from 0 to pi/2, the peak goes from .7245*n to n.
 </p>
