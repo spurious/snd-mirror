@@ -13814,6 +13814,7 @@ time, so that the displayed results are
 (test ((values '(1 (2 3)) 1 1)) 3)
 (test (let ((x #(32 33))) ((values x 0))) 32)
 (test (+ 1 (apply values '(2 3 4))) 10)
+(test (eq? (values) (apply values '())) #t)
 (test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
 (test (apply begin '(1 2 3)) 3)
 (test (let ((x 1)) ((values set!) x 32) x) 32)
@@ -13878,6 +13879,12 @@ time, so that the displayed results are
  (lambda (arg)
    (test (values arg) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (apply values arg) 'error)
+   (test (apply values (list arg)) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t '(1 . 2)))
 
 (for-each
  (lambda (arg)

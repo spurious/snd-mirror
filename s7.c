@@ -204,7 +204,7 @@
 
 
 
-#define DEBUGGING 0
+#define DEBUGGING 1
 #define PRINTING 0
 
 #define BOLD_TEXT "\033[1m"
@@ -28262,6 +28262,8 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
     {
       if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_SET1)  /* (set! var (values)) */
 	return(eval_error(sc, "set!: can't assign (values) to something", args));
+
+      /* fprintf(stderr, "values nil: %s %s %s\n", real_op_names[stack_op(sc->stack, s7_stack_top(sc) - 1)], DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
       return(sc->NO_VALUE); 
     }
 
@@ -28271,6 +28273,28 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
    *   Guile complains ("too few values returned to continuation") in the call/cc case, and
    *   (equal? (if #f #f) (* (values))) complains "Zero values returned to single-valued continuation"
    *   so perhaps call/cc should also return #<unspecified> -- I don't know what is best.
+   *
+   * a note in the scheme bboard:
+   *
+   *  This would work in s7:
+   *
+   *  (define (print-concat . args) 
+   *    (if (or (null? args)               ; (print-concat)
+   *            (eq? (car args) (values))) ; (print-concat arg1 ...)
+   *        (newline) 
+   *      (begin 
+   *        (display (car args)) 
+   *        (print-concat (apply values (cdr args))))))
+   *  
+   *  but it's a bit ugly.  I think (values) should be the same as
+   *  (apply values '()). It's currently #<unspecified>, mainly for
+   *  historical reasons (a lot of the code s7 is used with
+   *  assumes that behavior).  If (values) simply vanished,
+   *  then code like (abs -1 (values)) is not an error.
+   *  If it returned nil, you get inconsistencies elsewhere:
+   *  (values) now is the same as (values '()) which is
+   *  (apply values '(())).  This also affects quasiquote 
+   *  (s7 uses (apply values ...) for unquote-splicing).
    */
   
   if (is_null(cdr(args)))
@@ -33852,7 +33876,7 @@ static s7_pointer check_case(s7_scheme *sc)
 	  else 
 	    {
 #if (!WITH_GMP)
-	      /* OP_CASE_INT assumes non-gmp ints */
+	      /* OP_CASE_INT assumes non-gmp ints for the selector */
 	      if ((is_symbol(car(sc->code))) &&
 		  (!has_feed_to) &&
 		  (keys_int) &&

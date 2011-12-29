@@ -483,7 +483,6 @@ XM_TYPE_PTR(GObject_, GObject*)
 XM_TYPE_PTR(GSList_, GSList*)
 XM_TYPE_PTR_2(GtkAccelGroupEntry_, GtkAccelGroupEntry*)
 XM_TYPE_PTR_1(GtkAccelLabel_, GtkAccelLabel*)
-XM_TYPE_PTR_1(GtkAccessible_, GtkAccessible*)
 XM_TYPE_PTR(GtkAdjustment_, GtkAdjustment*)
 XM_TYPE_PTR_1(GtkAlignment_, GtkAlignment*)
 #define XEN_TO_C_GtkArrowType(Arg) (GtkArrowType)(XEN_TO_C_INT(Arg))
@@ -849,6 +848,7 @@ XM_TYPE_1(GtkToolPaletteDragTargets, GtkToolPaletteDragTargets)
 
 #if HAVE_GTK_COMBO_BOX_NEW_WITH_AREA
 XM_TYPE_PTR_1(GdkModifierType_, GdkModifierType*)
+XM_TYPE_PTR_1(GtkAccessible_, GtkAccessible*)
 XM_TYPE_PTR_2(GdkDeviceManager_, GdkDeviceManager*)
 XM_TYPE_PTR(GdkDevice_, GdkDevice*)
 XM_TYPE_PTR_1(GtkMessageDialog_, GtkMessageDialog*)
@@ -4011,14 +4011,6 @@ GtkAccelMapForeach func)"
     xm_unprotect_at(loc);
     return(XEN_FALSE);
    }
-}
-
-static XEN gxg_gtk_accessible_connect_widget_destroyed(XEN accessible)
-{
-  #define H_gtk_accessible_connect_widget_destroyed "void gtk_accessible_connect_widget_destroyed(GtkAccessible* accessible)"
-  XEN_ASSERT_TYPE(XEN_GtkAccessible__P(accessible), accessible, 1, "gtk_accessible_connect_widget_destroyed", "GtkAccessible*");
-  gtk_accessible_connect_widget_destroyed(XEN_TO_C_GtkAccessible_(accessible));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_adjustment_changed(XEN adjustment)
@@ -35393,7 +35385,6 @@ XEN_NARGIFY_1(gxg_gtk_accel_map_load_fd_w, gxg_gtk_accel_map_load_fd)
 XEN_NARGIFY_1(gxg_gtk_accel_map_save_fd_w, gxg_gtk_accel_map_save_fd)
 XEN_NARGIFY_1(gxg_gtk_accel_map_add_filter_w, gxg_gtk_accel_map_add_filter)
 XEN_NARGIFY_2(gxg_gtk_accel_map_foreach_unfiltered_w, gxg_gtk_accel_map_foreach_unfiltered)
-XEN_NARGIFY_1(gxg_gtk_accessible_connect_widget_destroyed_w, gxg_gtk_accessible_connect_widget_destroyed)
 XEN_NARGIFY_1(gxg_gtk_adjustment_changed_w, gxg_gtk_adjustment_changed)
 XEN_NARGIFY_1(gxg_gtk_adjustment_value_changed_w, gxg_gtk_adjustment_value_changed)
 XEN_NARGIFY_3(gxg_gtk_adjustment_clamp_page_w, gxg_gtk_adjustment_clamp_page)
@@ -39420,7 +39411,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_accel_map_save_fd_w gxg_gtk_accel_map_save_fd
 #define gxg_gtk_accel_map_add_filter_w gxg_gtk_accel_map_add_filter
 #define gxg_gtk_accel_map_foreach_unfiltered_w gxg_gtk_accel_map_foreach_unfiltered
-#define gxg_gtk_accessible_connect_widget_destroyed_w gxg_gtk_accessible_connect_widget_destroyed
 #define gxg_gtk_adjustment_changed_w gxg_gtk_adjustment_changed
 #define gxg_gtk_adjustment_value_changed_w gxg_gtk_adjustment_value_changed
 #define gxg_gtk_adjustment_clamp_page_w gxg_gtk_adjustment_clamp_page
@@ -43454,7 +43444,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_accel_map_save_fd, gxg_gtk_accel_map_save_fd_w, 1, 0, 0, H_gtk_accel_map_save_fd);
   XG_DEFINE_PROCEDURE(gtk_accel_map_add_filter, gxg_gtk_accel_map_add_filter_w, 1, 0, 0, H_gtk_accel_map_add_filter);
   XG_DEFINE_PROCEDURE(gtk_accel_map_foreach_unfiltered, gxg_gtk_accel_map_foreach_unfiltered_w, 2, 0, 0, H_gtk_accel_map_foreach_unfiltered);
-  XG_DEFINE_PROCEDURE(gtk_accessible_connect_widget_destroyed, gxg_gtk_accessible_connect_widget_destroyed_w, 1, 0, 0, H_gtk_accessible_connect_widget_destroyed);
   XG_DEFINE_PROCEDURE(gtk_adjustment_changed, gxg_gtk_adjustment_changed_w, 1, 0, 0, H_gtk_adjustment_changed);
   XG_DEFINE_PROCEDURE(gtk_adjustment_value_changed, gxg_gtk_adjustment_value_changed_w, 1, 0, 0, H_gtk_adjustment_value_changed);
   XG_DEFINE_PROCEDURE(gtk_adjustment_clamp_page, gxg_gtk_adjustment_clamp_page_w, 3, 0, 0, H_gtk_adjustment_clamp_page);
@@ -48990,7 +48979,7 @@ void Init_libxg(void)
       #else
         XEN_YES_WE_HAVE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Nov-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Dec-11"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

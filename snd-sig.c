@@ -3306,7 +3306,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
       s7_pointer arg_list;
       int gc_loc;
       bool use_apply;
-      s7_pointer source, arg, body, e, slot, val;
+      s7_pointer source, arg, body, e, slot;
       s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
       
       source = s7_procedure_source(s7, proc);
@@ -3317,7 +3317,6 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	  e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
 	  gc_loc = s7_gc_protect(s7, e);
 	  slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
-	  val = s7_slot_value(s7, slot);
 	  use_apply = false;
 	  if (s7_is_null(s7, s7_cdr(body)))
 	    {
@@ -3497,7 +3496,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 #if HAVE_SCHEME
   int gc_loc;
   bool use_apply;
-  s7_pointer arg_list, source, arg, body, e, slot, val;
+  s7_pointer arg_list, source, arg, body, e, slot;
   s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
 
   arg_list = xen_nil;
@@ -3514,7 +3513,6 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
-      val = s7_slot_value(s7, slot);
       use_apply = false;
       if (s7_is_null(s7, s7_cdr(body)))
 	{
@@ -4167,7 +4165,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   s7_pointer arg_list;
   int gc_loc;
   bool use_apply;
-  s7_pointer source, arg, body, e, slot, val;
+  s7_pointer source, arg, body, e, slot;
   s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
 
   arg_list = xen_nil;
@@ -4184,7 +4182,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       e = s7_augment_environment(s7, s7_cdr(source), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
-      val = s7_slot_value(s7, slot);
       use_apply = false;
       if (s7_is_null(s7, s7_cdr(body)))
 	{

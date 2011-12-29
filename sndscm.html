@@ -8281,7 +8281,9 @@ in the all harmonic case, if n=65536,
 -4.697190e-05*i*i + 1.357080536*i peaks at 303.6 (n^.515).  If n=131072, 
 2.09440276*i*i + 1.4462367*i peaks at 438.7 (n^.516).
 A good quadratic for each n, in the all harmonics case, 
-is (pi+pi/n)*i*i - i*pi/2.  The odd case is (pi+pi/n)*i*i, or slightly better (pi+pi/n)*i*i - i/10.
+is (pi+pi/n)*i*i - i*pi/2.  The corresponding odd harmonics version is (pi+pi/n)*i*i, or slightly better (pi+pi/n)*i*i - i/10.
+These do better as n increases, but I don't think they reach n^.5.  If n=4000000,
+the peak is at 2408.9 (n^.512).  
 A linear equation in "i" here is simply phase offset in the sum of sines formula mentioned
 earlier, so given an initial phase of x*i, as x goes from 0 to pi/2, the peak goes from .7245*n to n.
 </p>
@@ -8289,8 +8291,7 @@ earlier, so given an initial phase of x*i, as x goes from 0 to pi/2, the peak go
 
 <!-- TODO: show this in the same form as the random case above but going to 100000 -->
 
-<p>But I haven't found polynomials that get all the way to the square root.  Especially
-for n &lt; 500, they can't seem to get below n^.53, and we want n^.5.
+<p>I haven't found any polynomials that get all the way to the square root. 
 I now think (after much staring at graphs) that
 the minima are tiny cracks in a huge N-dimensional
 block of stuff that is all nearly the same.  The n=5 graph above shows 
