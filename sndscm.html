@@ -8282,6 +8282,8 @@ in the all harmonic case, if n=65536,
 2.09440276*i*i + 1.4462367*i peaks at 438.7 (n^.516).
 A good quadratic for each n, in the all harmonics case, 
 is (pi+pi/n)*i*i - i*pi/2.  The corresponding odd harmonics version is (pi+pi/n)*i*i, or slightly better (pi+pi/n)*i*i - i/10.
+(Except for the pi/n term, the rest just marches through the quadrants in order, so this is the
+same as (pi*(((mod(i,4)/2)+(i*i/n)))).
 These do better as n increases, but I don't think they reach n^.5.  If n=4000000,
 the peak is at 2408.9 (n^.512).  
 A linear equation in "i" here is simply phase offset in the sum of sines formula mentioned

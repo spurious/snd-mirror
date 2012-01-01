@@ -785,6 +785,31 @@ XEN g_vct_peak(XEN obj)
 }
 
 
+#define S_vct_peak_and_location "vct-peak-and-location"
+
+static XEN g_vct_peak_and_location(XEN obj)
+{
+  #define H_vct_peak_and_location "(" S_vct_peak_and_location " v): max of abs of elements of v and its position in v"
+  mus_float_t val = 0.0, absv;
+  mus_long_t i, loc = 0;
+  vct *v;
+
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_peak, "a vct");
+  v = XEN_TO_VCT(obj);
+
+  for (i = 0; i < v->length; i++)
+    {
+      absv = fabs(v->data[i]);
+      if (absv > val) 
+	{
+	  val = absv;
+	  loc = i;
+	}
+    }
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(val), C_TO_XEN_INT(loc)));
+}
+
+
 static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 {
   #define H_vct_subseq "(" S_vct_subseq " v start :optional end vnew): v[start..end], placed in vnew if given or new vct"
@@ -1030,6 +1055,7 @@ XEN_NARGIFY_2(g_vct_subtract_w, g_vct_subtract)
 XEN_NARGIFY_2(g_vct_offset_w, g_vct_offset)
 XEN_NARGIFY_2(g_vct_mapB_w, g_vct_mapB)
 XEN_NARGIFY_1(g_vct_peak_w, g_vct_peak)
+XEN_NARGIFY_1(g_vct_peak_and_location_w, g_vct_peak_and_location)
 XEN_ARGIFY_4(g_vct_move_w, g_vct_move)
 XEN_ARGIFY_4(g_vct_subseq_w, g_vct_subseq)
 XEN_VARGIFY(g_vct_w, g_vct)
@@ -1056,6 +1082,7 @@ XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
 #define g_vct_offset_w g_vct_offset
 #define g_vct_mapB_w g_vct_mapB
 #define g_vct_peak_w g_vct_peak
+#define g_vct_peak_and_location_w g_vct_peak_and_location
 #define g_vct_move_w g_vct_move
 #define g_vct_subseq_w g_vct_subseq
 #define g_vct_w g_vct
@@ -1398,6 +1425,7 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_subtractB,     g_vct_subtract_w,  2, 0, 0, H_vct_subtractB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_offsetB,       g_vct_offset_w,    2, 0, 0, H_vct_offsetB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_peak,          g_vct_peak_w,      1, 0, 0, H_vct_peak);
+  XEN_DEFINE_SAFE_PROCEDURE(S_vct_peak_and_location, g_vct_peak_and_location_w, 1, 0, 0, H_vct_peak_and_location);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_moveB,         g_vct_move_w,      3, 1, 0, H_vct_moveB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
