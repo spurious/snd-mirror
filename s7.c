@@ -1203,7 +1203,6 @@ static void init_types(void)
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
  */
 #define dont_copy(p)                  ((!is_pair(p)) || (is_immutable(p)) || (p->hloc == NOT_IN_HEAP))
-#define dont_copy_cdr(p)              ((typeflag(p) & (T_PROCEDURE | T_ANY_MACRO)) != 0)
 /* dont_copy means the object is not copied when saved in a continuation */
 
 
@@ -4298,7 +4297,8 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
     car(nobj) = car(obj);
   else car(nobj) = copy_object(sc, car(obj));
   
-  if ((dont_copy(cdr(obj))) || (dont_copy_cdr(obj)))
+  if ((dont_copy(cdr(obj))) ||
+      ((typeflag(obj) & (T_PROCEDURE | T_ANY_MACRO)) != 0))
     cdr(nobj) = cdr(obj); /* closure_environment in func cases */
   else cdr(nobj) = copy_object(sc, cdr(obj));
   
