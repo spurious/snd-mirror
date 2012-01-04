@@ -4271,7 +4271,7 @@ void save_edits_now(snd_info *sp)
   dialog = unsaved_edits_dialog(sp);
   if (!dialog)
     {
-      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, question);
+      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, (const gchar *)question);
       SG_SIGNAL_CONNECT(dialog, "response", unsaved_edits_activate, (gpointer)sp);
       save_unsaved_edits_dialog(dialog, sp);
     }

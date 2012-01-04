@@ -42641,7 +42641,7 @@ EDITS: 1
 		    (if (bignum? (car arg))
 			(set! (v i) (car arg))
 			(set! (v i) (bignum (number->string (car arg))))))))
-	      
+
 	      ;; -------- -1 -1 at 1
 	      (let ((rl (make-vector 8))
 		    (im (make-vector 8)))
@@ -42709,6 +42709,7 @@ EDITS: 1
 		  (set! (rl i) (bignum "0.0")) 
 		  (set! (im i) (bignum "0.0")))
 		(set! (rl 1) (bignum "1.0"))
+
 		(bignum-fft rl im 64 -1)
 		(let ((happy #t))
 		  (do ((i 0 (+ i 1)))
@@ -42728,6 +42729,7 @@ EDITS: 1
 				  (if (> cerr serr)
 				      (vector-ref rl i)
 				      (vector-ref im i)))))))
+
 		(bignum-fft rl im 64)
 		(let ((crl (make-vector 64 (bignum "0.0")))
 		      (cim (make-vector 64 (bignum "0.0"))))
@@ -42748,10 +42750,12 @@ EDITS: 1
 		  (set! (crl i) (+ (vector-ref rl i) 0.0)) ; try to force a copy
 		  (set! (im i) (random (bignum "1.0") rs))
 		  (set! (cim i) (+ (vector-ref im i) 0.0)))
+
 		(bignum-fft rl im 64 1)
 		(if (or (vectors-equal? rl crl)
 			(vectors-equal? im cim))
 		    (snd-display #__line__ ";big-fft random not copied?:~%rl: ~A~%    ~A~%im: ~A~%    ~A~%" rl crl im cim))
+
 		(bignum-fft rl im 64 -1)
 		(do ((i 0 (+ i 1)))
 		    ((= i 64))

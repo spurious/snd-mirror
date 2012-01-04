@@ -9470,8 +9470,10 @@ a2" 3) "132")
 
 (if with-bignums
     (begin
-      (test (format #f "~P" (bignum "1")) "s")
-      (test (format #f "~P" (bignum "1.0")) "s")
+      (test (format #f "~P" (bignum "1")) "")
+      (test (format #f "~P" (bignum "1.0")) "")
+      (test (format #f "~P" (bignum "2")) "s")
+      (test (format #f "~P" (bignum "2.0")) "s")
       (test (format #f "~10,' D" (bignum "1")) "         1")
       (test (format #f "~10,' D" (bignum "3/4")) "       3/4")
       (test (format #f "~10,'.D" (bignum "3/4")) ".......3/4")
@@ -21786,6 +21788,8 @@ abs     1       2
 ;; generic length/reverse/copy/fill!
 ;;; copy
 ;;; fill!
+
+;;; TODO: this needs to test that copied bignums are not eq? to originals
 
 (test (length (list 1 2)) 2)
 (test (length "hiho") 4)
