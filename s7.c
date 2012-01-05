@@ -57,7 +57,7 @@
  *        random for any numeric type and any numeric argument, including 0 ferchrissake!
  *        sinh, cosh, tanh, asinh, acosh, atanh
  *        read-line, read-byte, write-byte, *stdin*, *stdout*, and *stderr*
- *        logior, logxor, logand, lognot, ash, integer-length, integer-decode-float, nan?, infinite?
+ *        logior, logxor, logand, lognot, logbit?, ash, integer-length, integer-decode-float, nan?, infinite?
  *        procedure-source, procedure-arity, procedure-documentation, procedure-name, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
  *        symbol-table, symbol->value, global-environment, current-environment, procedure-environment, initial-environment, environment?
@@ -3837,6 +3837,8 @@ static char *display_locals(s7_scheme *sc)
    *   only show function calls (not cur_code -- in fact is cur_code useful anymore?)
    *   in between show envs as in this function
    * for-each map and member for slot list traversal (assq also makes sense)
+   *
+   * format ~{~} ? if applicable: ((current-environment) 'x) as if a hash-table?
    */
   s7_pointer e;
   int spaces;
@@ -13389,7 +13391,7 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 }
 
 
-/* ---------------------------------------- logand, logior, logxor, lognot, ash ---------------------------------------- */
+/* ---------------------------------------- logand, logior, logxor, lognot, logbit?, ash ---------------------------------------- */
 
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
@@ -13445,33 +13447,46 @@ static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* PERHAPS: add logbit? CL (logbitp index int) using 2^index, but that order strikes me as backwards
- *          lots of schemes have this -- would also need the gmp version (mpz_tstbit?  there's also mpz_setbit)
- *          at least gmp got the arg order right!
- *
- *   int mpz_tstbit (mpz_t @var{op}, mp_bitcnt_t @var{bit_index})
- *   Test bit @var{bit_index} in @var{op} and return 0 or 1 accordingly.
+/* logbit?  CL is (logbitp index int) using 2^index, but that order strikes me as backwards
+ *   at least gmp got the arg order right!
  */
-#if 0
-static s7_pointer g_logbitp(s7_scheme *sc, s7_pointer args)
+
+static s7_pointer g_logbit(s7_scheme *sc, s7_pointer args)
 {
-  #define H_logbitp "(logbit? int index) returns #t if the index-th bit is on in int, otherwise #f. The argument \
-order here follows gmp, and is the opposite of the CL convention."
-  s7_Int index, num;
+  #define H_logbit "(logbit? int index) returns #t if the index-th bit is on in int, otherwise #f. The argument \
+order here follows gmp, and is the opposite of the CL convention.  (logbit? int bit) is the same as (not (zero? (logand int (ash 1 bit))))."
 
-  if (!s7_is_integer(car(args)))
-    return(s7_wrong_type_arg_error(sc, "logbit?", 1, car(args), "an integer"));
-  num = s7_integer(car(args));
+  s7_pointer x, y;
+  s7_Int index;      /* index in gmp is mp_bitcnt which is an unsigned long int */
 
-  if (!s7_is_integer(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "logbit?", 2, cadr(args), "an integer"));
-  index = s7_integer(cadr(args));
+  x = car(args);
+  y = cadr(args);
+
+  if (!s7_is_integer(y))
+    return(s7_wrong_type_arg_error(sc, "logbit?", 2, y, "an integer"));
+  index = s7_integer(y);
   if (index < 0)
-    return(s7_out_of_range_error(sc, "logbit?", 2, cadr(args), "index must be non-negative"));
+    return(s7_out_of_range_error(sc, "logbit?", 2, y, "index must be non-negative"));
 
-  return(make_boolean(sc, (((1 << index) & num) != 0)));
-}
+#if WITH_GMP
+  if (type(x) == T_BIG_INTEGER)
+    return(make_boolean(sc, (mpz_tstbit(big_integer(x), index) != 0)));
 #endif
+  
+  if (index >= s7_int_bits)           /* not sure about the >: (logbit? -1 64) ?? */
+    return(make_boolean(sc, integer(x) < 0));
+
+  /* :(zero? (logand most-positive-fixnum (ash 1 63)))
+   *   -> ash argument 2, 63, is out of range (shift is too large) 
+   *   so logbit? has a wider range than the logand/ash shuffle above.
+   */
+
+  if (!s7_is_integer(x))
+    return(s7_wrong_type_arg_error(sc, "logbit?", 1, x, "an integer"));
+
+  /* all these long long ints are necessary, else C turns it into an int, gets confused about signs etc */
+  return(make_boolean(sc, ((((long long int)(1LL << (long long int)index)) & (long long int)integer(x)) != 0)));
+}
 
 
 static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
@@ -37508,7 +37523,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    sc->code = cdr(cadr(code));
 	    goto BEGIN;
-	    /* TODO: split perhaps -- it's always a pair */
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP, args, code);
 	sc->code = cddr(code);
@@ -37689,7 +37703,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    sc->code = cdr(cadr(sc->code));
 	    goto BEGIN;
-	    /* TODO: split perhaps -- it's always a pair */
 	  }
 
 	switch (optimize_data(body))
@@ -37802,7 +37815,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    sc->code = cdr(cadr(code));
 	    goto BEGIN;
-	    /* TODO: split perhaps -- it's always a pair */
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP_P, args, code);
 	code = caddr(code);
@@ -53489,6 +53501,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "lognot",                    g_lognot,                   1, 0, false, H_lognot);
   s7_define_safe_function(sc, "ash",                       g_ash,                      2, 0, false, H_ash);
 #endif
+  s7_define_safe_function(sc, "logbit?",                   g_logbit,                   2, 0, false, H_logbit);
 
   s7_define_safe_function(sc, "random-state->list",        s7_random_state_to_list,    0, 1, false, H_random_state_to_list);
   s7_define_safe_function(sc, "integer-decode-float",      g_integer_decode_float,     1, 0, false, H_integer_decode_float);

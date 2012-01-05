@@ -894,7 +894,7 @@
 				  (expand (cdr expr)))
 			    expr))))
 		
-		(define (bool-walk form func)
+		(define (bool-walk form func) 
 		  (if (and (pair? form)
 			   (memq (car form) '(and or not)))
 		      (for-each
@@ -940,9 +940,8 @@
 							,@(let ((pos -1))
 							    (map (lambda (var)
 								   (set! pos (+ pos 1))
-								   (if (zero? (logand ctr (ash 1 pos)))
-								       #f
-								       (vector-ref nonf pos)))
+								   (and (logbit? ctr pos) 
+									(vector-ref nonf pos)))
 								 vars)))))
 			(if (not (member (vector-ref v ctr) vals))
 			    (set! vals (cons (vector-ref v ctr) vals))))

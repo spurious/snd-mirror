@@ -103,6 +103,14 @@
 (define ints-312 '())
 (define strings-312 '())
 
+(define funcs-336 '())
+(define casts-336 '())
+(define checks-336 '())
+(define names-336 '())
+(define types-336 '())
+(define ints-336 '())
+(define strings-336 '())
+
 (define funcs-gtk2 '())
 (define casts-gtk2 '())
 (define checks-gtk2 '())
@@ -211,6 +219,7 @@
 	;; "GtkRecentFilterInfo*" 
 	;;    this one depends on c++
 	"GtkFontChooser*" "GtkFontChooserDialog*"
+	"GdkModifierIntent" "guint**" "GtkApplication*" "GVariant*" "GtkApplicationWindow*"
 	))
 
 (define no-xen-p 
@@ -450,6 +459,7 @@
 				((300)                (set! types-300 (cons type types-300)))
 				((310)                (set! types-310 (cons type types-310)))
 				((312)                (set! types-312 (cons type types-312)))
+				((336)                (set! types-336 (cons type types-336)))
 				((gtk2)               (set! types-gtk2 (cons type types-gtk2)))
 				((cairo)              (set! cairo-types (cons type cairo-types)))
 				((cairo-810)          (set! cairo-types-810 (cons type cairo-types-810)))
@@ -920,6 +930,7 @@
 	(cons "GdkPropertyState" "INT")
 	(cons "GtkScrollablePolicy" "INT")
 
+	(cons "GdkModifierIntent" "INT")
 	))
 
 (define (type-it type)
@@ -1201,6 +1212,20 @@
 	    (set! funcs-312 (cons (list name type strs args) funcs-312)))
 	(set! names (cons (cons name (func-type strs)) names))))))
 
+(define* (CFNC-336 data spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (let ((type (car-str data)))
+      (if (not (member type all-types))
+	  (begin
+	    (set! all-types (cons type all-types))
+	    (set! types-336 (cons type types-336))))
+      (let ((strs (parse-args args 336)))
+	(if spec
+	    (set! funcs-336 (cons (list name type strs args spec) funcs-336))
+	    (set! funcs-336 (cons (list name type strs args) funcs-336)))
+	(set! names (cons (cons name (func-type strs)) names))))))
+
 (define* (CFNC-gtk2 data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1365,6 +1390,13 @@
 	(set! strings-312 (cons name strings-312))
 	(set! names-312 (cons (cons name 'string) names-312)))))
 
+(define (CSTR-336 name)
+  (if (assoc name names-336)
+      (no-way "~A CSTR-336~%" name)
+      (begin
+	(set! strings-336 (cons name strings-336))
+	(set! names-336 (cons (cons name 'string) names-336)))))
+
 
 (define (CDBL name)
   (if (assoc name names)
@@ -1491,6 +1523,14 @@
 	(set! ints-312 (cons name ints-312))
 	(set! names (cons (cons name 'int) names)))))
 
+(define* (CINT-336 name type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-336~%" name)
+      (begin
+	(set! ints-336 (cons name ints-336))
+	(set! names (cons (cons name 'int) names)))))
+
 (define* (CINT-gtk2 name type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1589,6 +1629,13 @@
 	(set! casts-312 (cons (list name type) casts-312))
 	(set! names (cons (cons name 'def) names)))))
 
+(define (CCAST-336 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-336~%" name)
+      (begin
+	(set! casts-336 (cons (list name type) casts-336))
+	(set! names (cons (cons name 'def) names)))))
+
 (define (CCAST-gtk2 name type)
   (if (assoc name names)
       (no-way "~A CCAST-gtk2~%" name)
@@ -1650,6 +1697,13 @@
       (no-way "~A CCHK-312~%" name)
       (begin
 	(set! checks-312 (cons (list name type) checks-312))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK-336 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-336~%" name)
+      (begin
+	(set! checks-336 (cons (list name type) checks-336))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK-gtk2 name type)
@@ -1781,6 +1835,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-336 dpy thunk)
+  (dpy "#if HAVE_GTK_APPLICATION_WINDOW_NEW~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 (define (with-gtk2 dpy thunk)
   (dpy "#if (!HAVE_GTK_3)~%")
   (thunk)
@@ -1807,29 +1866,29 @@
 
 
 
-(define all-types (list types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-300 types-310 types-312 types-gtk2
+(define all-types (list types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-300 types-310 types-312 types-336 types-gtk2
 			cairo-types cairo-types-810 cairo-types-912))
-(define all-type-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-300 with-310 with-312 with-gtk2
+(define all-type-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-300 with-310 with-312 with-336 with-gtk2
 			     with-cairo with-cairo-810 with-cairo-912))
 
-(define all-funcs (list funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-300 funcs-310 funcs-312 funcs-gtk2
+(define all-funcs (list funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-300 funcs-310 funcs-312 funcs-336 funcs-gtk2
 			cairo-funcs cairo-png-funcs cairo-funcs-810 cairo-funcs-912))
-(define all-func-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-300 with-310 with-312 with-gtk2
+(define all-func-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-300 with-310 with-312 with-336 with-gtk2
 			     with-cairo with-cairo-png with-cairo-810 with-cairo-912))
 
-(define all-ints (list ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-300 ints-310 ints-312 ints-gtk2
+(define all-ints (list ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-300 ints-310 ints-312 ints-336 ints-gtk2
 		       cairo-ints cairo-ints-810 cairo-ints-912))
-(define all-int-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-300 with-310 with-312 with-gtk2
+(define all-int-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-300 with-310 with-312 with-336 with-gtk2
 			    with-cairo with-cairo-810 with-cairo-912))
 
-(define all-casts (list casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-300 casts-310 casts-312 casts-gtk2))
-(define all-cast-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-300 with-310 with-312 with-gtk2))
+(define all-casts (list casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-300 casts-310 casts-312 casts-336 casts-gtk2))
+(define all-cast-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-300 with-310 with-312 with-336 with-gtk2))
 
-(define all-checks (list checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-300 checks-310 checks-312 checks-gtk2))
-(define all-check-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-300 with-310 with-312 with-gtk2))
+(define all-checks (list checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-300 checks-310 checks-312 checks-336 checks-gtk2))
+(define all-check-withs (list with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-300 with-310 with-312 with-336 with-gtk2))
 
-(define all-strings (list strings-213 strings-2134 strings-2150 strings-300 strings-310 strings-312 cairo-strings-912))
-(define all-string-withs (list with-213 with-2134 with-2150 with-300 with-310 with-312 with-cairo-912))
+(define all-strings (list strings-213 strings-2134 strings-2150 strings-300 strings-310 strings-312 strings-336 cairo-strings-912))
+(define all-string-withs (list with-213 with-2134 with-2150 with-300 with-310 with-312 with-336 with-cairo-912))
 
 (define all-ulongs (list ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173 ulongs-gtk2))
 (define all-ulong-withs (list with-213 with-2134 with-2150 with-2173 with-gtk2))

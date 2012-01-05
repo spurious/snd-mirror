@@ -894,6 +894,16 @@ XM_TYPE_PTR_1(GtkOverlay_, GtkOverlay*)
 XM_TYPE_PTR_1(GtkFontChooser_, GtkFontChooser*)
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+#define XEN_TO_C_GdkModifierIntent(Arg) (GdkModifierIntent)(XEN_TO_C_INT(Arg))
+#define XEN_GdkModifierIntent_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(guint__, guint**)
+XM_TYPE_PTR(GMenuModel_, GMenuModel*)
+XM_TYPE_PTR_1(GtkApplication_, GtkApplication*)
+XM_TYPE_PTR_1(GVariant_, GVariant*)
+XM_TYPE_PTR_1(GtkApplicationWindow_, GtkApplicationWindow*)
+#endif
+
 #if (!HAVE_GTK_3)
 XM_TYPE_PTR(GdkColormap_, GdkColormap*)
 #define C_TO_XEN_GdkDragProtocol(Arg) C_TO_XEN_INT(Arg)
@@ -30676,6 +30686,221 @@ static XEN gxg_gtk_font_chooser_widget_new(void)
 
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+static XEN gxg_gdk_keymap_get_modifier_mask(XEN keymap, XEN intent)
+{
+  #define H_gdk_keymap_get_modifier_mask "GdkModifierType gdk_keymap_get_modifier_mask(GdkKeymap* keymap, \
+GdkModifierIntent intent)"
+  XEN_ASSERT_TYPE(XEN_GdkKeymap__P(keymap), keymap, 1, "gdk_keymap_get_modifier_mask", "GdkKeymap*");
+  XEN_ASSERT_TYPE(XEN_GdkModifierIntent_P(intent), intent, 2, "gdk_keymap_get_modifier_mask", "GdkModifierIntent");
+  return(C_TO_XEN_GdkModifierType(gdk_keymap_get_modifier_mask(XEN_TO_C_GdkKeymap_(keymap), XEN_TO_C_GdkModifierIntent(intent))));
+}
+
+static XEN gxg_gdk_window_begin_resize_drag_for_device(XEN window, XEN edge, XEN device, XEN button, XEN root_x, XEN root_y, XEN timestamp)
+{
+  #define H_gdk_window_begin_resize_drag_for_device "void gdk_window_begin_resize_drag_for_device(GdkWindow* window, \
+GdkWindowEdge edge, GdkDevice* device, gint button, gint root_x, gint root_y, guint32 timestamp)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_resize_drag_for_device", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkWindowEdge_P(edge), edge, 2, "gdk_window_begin_resize_drag_for_device", "GdkWindowEdge");
+  XEN_ASSERT_TYPE(XEN_GdkDevice__P(device), device, 3, "gdk_window_begin_resize_drag_for_device", "GdkDevice*");
+  XEN_ASSERT_TYPE(XEN_gint_P(button), button, 4, "gdk_window_begin_resize_drag_for_device", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(root_x), root_x, 5, "gdk_window_begin_resize_drag_for_device", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(root_y), root_y, 6, "gdk_window_begin_resize_drag_for_device", "gint");
+  XEN_ASSERT_TYPE(XEN_guint32_P(timestamp), timestamp, 7, "gdk_window_begin_resize_drag_for_device", "guint32");
+  gdk_window_begin_resize_drag_for_device(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkWindowEdge(edge), XEN_TO_C_GdkDevice_(device), 
+                                          XEN_TO_C_gint(button), XEN_TO_C_gint(root_x), XEN_TO_C_gint(root_y), XEN_TO_C_guint32(timestamp));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_begin_move_drag_for_device(XEN window, XEN device, XEN button, XEN root_x, XEN root_y, XEN timestamp)
+{
+  #define H_gdk_window_begin_move_drag_for_device "void gdk_window_begin_move_drag_for_device(GdkWindow* window, \
+GdkDevice* device, gint button, gint root_x, gint root_y, guint32 timestamp)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_move_drag_for_device", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkDevice__P(device), device, 2, "gdk_window_begin_move_drag_for_device", "GdkDevice*");
+  XEN_ASSERT_TYPE(XEN_gint_P(button), button, 3, "gdk_window_begin_move_drag_for_device", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(root_x), root_x, 4, "gdk_window_begin_move_drag_for_device", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(root_y), root_y, 5, "gdk_window_begin_move_drag_for_device", "gint");
+  XEN_ASSERT_TYPE(XEN_guint32_P(timestamp), timestamp, 6, "gdk_window_begin_move_drag_for_device", "guint32");
+  gdk_window_begin_move_drag_for_device(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkDevice_(device), XEN_TO_C_gint(button), 
+                                        XEN_TO_C_gint(root_x), XEN_TO_C_gint(root_y), XEN_TO_C_guint32(timestamp));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_accelerator_parse_with_keycode(XEN accelerator, XEN accelerator_key, XEN accelerator_codes, XEN accelerator_mods)
+{
+  #define H_gtk_accelerator_parse_with_keycode "void gtk_accelerator_parse_with_keycode(gchar* accelerator, \
+guint* accelerator_key, guint** accelerator_codes, GdkModifierType* accelerator_mods)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(accelerator), accelerator, 1, "gtk_accelerator_parse_with_keycode", "gchar*");
+  XEN_ASSERT_TYPE(XEN_guint__P(accelerator_key), accelerator_key, 2, "gtk_accelerator_parse_with_keycode", "guint*");
+  XEN_ASSERT_TYPE(XEN_guint___P(accelerator_codes), accelerator_codes, 3, "gtk_accelerator_parse_with_keycode", "guint**");
+  XEN_ASSERT_TYPE(XEN_GdkModifierType__P(accelerator_mods), accelerator_mods, 4, "gtk_accelerator_parse_with_keycode", "GdkModifierType*");
+  gtk_accelerator_parse_with_keycode((const gchar*)XEN_TO_C_gchar_(accelerator), XEN_TO_C_guint_(accelerator_key), XEN_TO_C_guint__(accelerator_codes), 
+                                     XEN_TO_C_GdkModifierType_(accelerator_mods));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_accelerator_name_with_keycode(XEN display, XEN accelerator_key, XEN keycode, XEN accelerator_mods)
+{
+  #define H_gtk_accelerator_name_with_keycode "gchar* gtk_accelerator_name_with_keycode(GdkDisplay* display, \
+guint accelerator_key, guint keycode, GdkModifierType accelerator_mods)"
+  XEN_ASSERT_TYPE(XEN_GdkDisplay__P(display), display, 1, "gtk_accelerator_name_with_keycode", "GdkDisplay*");
+  XEN_ASSERT_TYPE(XEN_guint_P(accelerator_key), accelerator_key, 2, "gtk_accelerator_name_with_keycode", "guint");
+  XEN_ASSERT_TYPE(XEN_guint_P(keycode), keycode, 3, "gtk_accelerator_name_with_keycode", "guint");
+  XEN_ASSERT_TYPE(XEN_GdkModifierType_P(accelerator_mods), accelerator_mods, 4, "gtk_accelerator_name_with_keycode", "GdkModifierType");
+  return(C_TO_XEN_gchar_(gtk_accelerator_name_with_keycode(XEN_TO_C_GdkDisplay_(display), XEN_TO_C_guint(accelerator_key), 
+                                                           XEN_TO_C_guint(keycode), XEN_TO_C_GdkModifierType(accelerator_mods))));
+}
+
+static XEN gxg_gtk_accelerator_get_label_with_keycode(XEN display, XEN accelerator_key, XEN keycode, XEN accelerator_mods)
+{
+  #define H_gtk_accelerator_get_label_with_keycode "gchar* gtk_accelerator_get_label_with_keycode(GdkDisplay* display, \
+guint accelerator_key, guint keycode, GdkModifierType accelerator_mods)"
+  XEN_ASSERT_TYPE(XEN_GdkDisplay__P(display), display, 1, "gtk_accelerator_get_label_with_keycode", "GdkDisplay*");
+  XEN_ASSERT_TYPE(XEN_guint_P(accelerator_key), accelerator_key, 2, "gtk_accelerator_get_label_with_keycode", "guint");
+  XEN_ASSERT_TYPE(XEN_guint_P(keycode), keycode, 3, "gtk_accelerator_get_label_with_keycode", "guint");
+  XEN_ASSERT_TYPE(XEN_GdkModifierType_P(accelerator_mods), accelerator_mods, 4, "gtk_accelerator_get_label_with_keycode", "GdkModifierType");
+  return(C_TO_XEN_gchar_(gtk_accelerator_get_label_with_keycode(XEN_TO_C_GdkDisplay_(display), XEN_TO_C_guint(accelerator_key), 
+                                                                XEN_TO_C_guint(keycode), XEN_TO_C_GdkModifierType(accelerator_mods))));
+}
+
+static XEN gxg_gdk_screen_get_monitor_workarea(XEN screen, XEN monitor_num, XEN dest)
+{
+  #define H_gdk_screen_get_monitor_workarea "void gdk_screen_get_monitor_workarea(GdkScreen* screen, \
+gint monitor_num, GdkRectangle* dest)"
+  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 1, "gdk_screen_get_monitor_workarea", "GdkScreen*");
+  XEN_ASSERT_TYPE(XEN_gint_P(monitor_num), monitor_num, 2, "gdk_screen_get_monitor_workarea", "gint");
+  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(dest), dest, 3, "gdk_screen_get_monitor_workarea", "GdkRectangle*");
+  gdk_screen_get_monitor_workarea(XEN_TO_C_GdkScreen_(screen), XEN_TO_C_gint(monitor_num), XEN_TO_C_GdkRectangle_(dest));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_application_get_app_menu(XEN application)
+{
+  #define H_gtk_application_get_app_menu "GMenuModel* gtk_application_get_app_menu(GtkApplication* application)"
+  XEN_ASSERT_TYPE(XEN_GtkApplication__P(application), application, 1, "gtk_application_get_app_menu", "GtkApplication*");
+  return(C_TO_XEN_GMenuModel_(gtk_application_get_app_menu(XEN_TO_C_GtkApplication_(application))));
+}
+
+static XEN gxg_gtk_application_set_app_menu(XEN application, XEN model)
+{
+  #define H_gtk_application_set_app_menu "void gtk_application_set_app_menu(GtkApplication* application, \
+GMenuModel* model)"
+  XEN_ASSERT_TYPE(XEN_GtkApplication__P(application), application, 1, "gtk_application_set_app_menu", "GtkApplication*");
+  XEN_ASSERT_TYPE(XEN_GMenuModel__P(model), model, 2, "gtk_application_set_app_menu", "GMenuModel*");
+  gtk_application_set_app_menu(XEN_TO_C_GtkApplication_(application), XEN_TO_C_GMenuModel_(model));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_application_get_menubar(XEN application)
+{
+  #define H_gtk_application_get_menubar "GMenuModel* gtk_application_get_menubar(GtkApplication* application)"
+  XEN_ASSERT_TYPE(XEN_GtkApplication__P(application), application, 1, "gtk_application_get_menubar", "GtkApplication*");
+  return(C_TO_XEN_GMenuModel_(gtk_application_get_menubar(XEN_TO_C_GtkApplication_(application))));
+}
+
+static XEN gxg_gtk_application_set_menubar(XEN application, XEN model)
+{
+  #define H_gtk_application_set_menubar "void gtk_application_set_menubar(GtkApplication* application, \
+GMenuModel* model)"
+  XEN_ASSERT_TYPE(XEN_GtkApplication__P(application), application, 1, "gtk_application_set_menubar", "GtkApplication*");
+  XEN_ASSERT_TYPE(XEN_GMenuModel__P(model), model, 2, "gtk_application_set_menubar", "GMenuModel*");
+  gtk_application_set_menubar(XEN_TO_C_GtkApplication_(application), XEN_TO_C_GMenuModel_(model));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_application_add_accelerator(XEN application, XEN accelerator, XEN action_name, XEN parameter)
+{
+  #define H_gtk_application_add_accelerator "void gtk_application_add_accelerator(GtkApplication* application, \
+gchar* accelerator, gchar* action_name, GVariant* parameter)"
+  XEN_ASSERT_TYPE(XEN_GtkApplication__P(application), application, 1, "gtk_application_add_accelerator", "GtkApplication*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(accelerator), accelerator, 2, "gtk_application_add_accelerator", "gchar*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(action_name), action_name, 3, "gtk_application_add_accelerator", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GVariant__P(parameter), parameter, 4, "gtk_application_add_accelerator", "GVariant*");
+  gtk_application_add_accelerator(XEN_TO_C_GtkApplication_(application), (const gchar*)XEN_TO_C_gchar_(accelerator), (const gchar*)XEN_TO_C_gchar_(action_name), 
+                                  XEN_TO_C_GVariant_(parameter));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_application_remove_accelerator(XEN application, XEN action_name, XEN parameter)
+{
+  #define H_gtk_application_remove_accelerator "void gtk_application_remove_accelerator(GtkApplication* application, \
+gchar* action_name, GVariant* parameter)"
+  XEN_ASSERT_TYPE(XEN_GtkApplication__P(application), application, 1, "gtk_application_remove_accelerator", "GtkApplication*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(action_name), action_name, 2, "gtk_application_remove_accelerator", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GVariant__P(parameter), parameter, 3, "gtk_application_remove_accelerator", "GVariant*");
+  gtk_application_remove_accelerator(XEN_TO_C_GtkApplication_(application), (const gchar*)XEN_TO_C_gchar_(action_name), XEN_TO_C_GVariant_(parameter));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_entry_completion_compute_prefix(XEN completion, XEN key)
+{
+  #define H_gtk_entry_completion_compute_prefix "gchar* gtk_entry_completion_compute_prefix(GtkEntryCompletion* completion, \
+char* key)"
+  XEN_ASSERT_TYPE(XEN_GtkEntryCompletion__P(completion), completion, 1, "gtk_entry_completion_compute_prefix", "GtkEntryCompletion*");
+  XEN_ASSERT_TYPE(XEN_char__P(key), key, 2, "gtk_entry_completion_compute_prefix", "char*");
+  return(C_TO_XEN_gchar_(gtk_entry_completion_compute_prefix(XEN_TO_C_GtkEntryCompletion_(completion), (const char*)XEN_TO_C_char_(key))));
+}
+
+static XEN gxg_gtk_scale_set_has_origin(XEN scale, XEN has_origin)
+{
+  #define H_gtk_scale_set_has_origin "void gtk_scale_set_has_origin(GtkScale* scale, gboolean has_origin)"
+  XEN_ASSERT_TYPE(XEN_GtkScale__P(scale), scale, 1, "gtk_scale_set_has_origin", "GtkScale*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(has_origin), has_origin, 2, "gtk_scale_set_has_origin", "gboolean");
+  gtk_scale_set_has_origin(XEN_TO_C_GtkScale_(scale), XEN_TO_C_gboolean(has_origin));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_scale_get_has_origin(XEN scale)
+{
+  #define H_gtk_scale_get_has_origin "gboolean gtk_scale_get_has_origin(GtkScale* scale)"
+  XEN_ASSERT_TYPE(XEN_GtkScale__P(scale), scale, 1, "gtk_scale_get_has_origin", "GtkScale*");
+  return(C_TO_XEN_gboolean(gtk_scale_get_has_origin(XEN_TO_C_GtkScale_(scale))));
+}
+
+static XEN gxg_gtk_window_set_hide_titlebar_when_maximized(XEN window, XEN setting)
+{
+  #define H_gtk_window_set_hide_titlebar_when_maximized "void gtk_window_set_hide_titlebar_when_maximized(GtkWindow* window, \
+gboolean setting)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_set_hide_titlebar_when_maximized", "GtkWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(setting), setting, 2, "gtk_window_set_hide_titlebar_when_maximized", "gboolean");
+  gtk_window_set_hide_titlebar_when_maximized(XEN_TO_C_GtkWindow_(window), XEN_TO_C_gboolean(setting));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_window_get_hide_titlebar_when_maximized(XEN window)
+{
+  #define H_gtk_window_get_hide_titlebar_when_maximized "gboolean gtk_window_get_hide_titlebar_when_maximized(GtkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_get_hide_titlebar_when_maximized", "GtkWindow*");
+  return(C_TO_XEN_gboolean(gtk_window_get_hide_titlebar_when_maximized(XEN_TO_C_GtkWindow_(window))));
+}
+
+static XEN gxg_gtk_application_window_new(XEN application)
+{
+  #define H_gtk_application_window_new "GtkWidget* gtk_application_window_new(GtkApplication* application)"
+  XEN_ASSERT_TYPE(XEN_GtkApplication__P(application), application, 1, "gtk_application_window_new", "GtkApplication*");
+  return(C_TO_XEN_GtkWidget_(gtk_application_window_new(XEN_TO_C_GtkApplication_(application))));
+}
+
+static XEN gxg_gtk_application_window_set_show_menubar(XEN window, XEN show_menubar)
+{
+  #define H_gtk_application_window_set_show_menubar "void gtk_application_window_set_show_menubar(GtkApplicationWindow* window, \
+gboolean show_menubar)"
+  XEN_ASSERT_TYPE(XEN_GtkApplicationWindow__P(window), window, 1, "gtk_application_window_set_show_menubar", "GtkApplicationWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(show_menubar), show_menubar, 2, "gtk_application_window_set_show_menubar", "gboolean");
+  gtk_application_window_set_show_menubar(XEN_TO_C_GtkApplicationWindow_(window), XEN_TO_C_gboolean(show_menubar));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_application_window_get_show_menubar(XEN window)
+{
+  #define H_gtk_application_window_get_show_menubar "gboolean gtk_application_window_get_show_menubar(GtkApplicationWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkApplicationWindow__P(window), window, 1, "gtk_application_window_get_show_menubar", "GtkApplicationWindow*");
+  return(C_TO_XEN_gboolean(gtk_application_window_get_show_menubar(XEN_TO_C_GtkApplicationWindow_(window))));
+}
+
+#endif
+
 #if (!HAVE_GTK_3)
 static XEN gxg_gdk_colormap_new(XEN visual, XEN allocate)
 {
@@ -34456,6 +34681,10 @@ static XEN gxg_GTK_FONT_CHOOSER_DIALOG(XEN obj) {return((WRAPPED_OBJECT_P(obj)) 
 static XEN gxg_GTK_FONT_CHOOSER_WIDGET(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFontChooserWidget_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+static XEN gxg_GTK_APPLICATION_WINDOW(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkApplicationWindow_"), XEN_CADR(obj)) : XEN_FALSE);}
+#endif
+
 #if (!HAVE_GTK_3)
 static XEN gxg_GDK_COLORMAP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColormap_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_DRAWABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkDrawable_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34642,6 +34871,10 @@ static XEN gxg_GTK_IS_OVERLAY(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P
 static XEN gxg_GTK_IS_FONT_CHOOSER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_CHOOSER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_FONT_CHOOSER_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_CHOOSER_DIALOG((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_FONT_CHOOSER_WIDGET(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_CHOOSER_WIDGET((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+#endif
+
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+static XEN gxg_GTK_IS_APPLICATION_WINDOW(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_APPLICATION_WINDOW((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 #if (!HAVE_GTK_3)
@@ -38342,6 +38575,30 @@ XEN_NARGIFY_2(gxg_gtk_font_chooser_set_show_preview_entry_w, gxg_gtk_font_choose
 XEN_NARGIFY_0(gxg_gtk_font_chooser_widget_new_w, gxg_gtk_font_chooser_widget_new)
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+XEN_NARGIFY_2(gxg_gdk_keymap_get_modifier_mask_w, gxg_gdk_keymap_get_modifier_mask)
+XEN_NARGIFY_7(gxg_gdk_window_begin_resize_drag_for_device_w, gxg_gdk_window_begin_resize_drag_for_device)
+XEN_NARGIFY_6(gxg_gdk_window_begin_move_drag_for_device_w, gxg_gdk_window_begin_move_drag_for_device)
+XEN_NARGIFY_4(gxg_gtk_accelerator_parse_with_keycode_w, gxg_gtk_accelerator_parse_with_keycode)
+XEN_NARGIFY_4(gxg_gtk_accelerator_name_with_keycode_w, gxg_gtk_accelerator_name_with_keycode)
+XEN_NARGIFY_4(gxg_gtk_accelerator_get_label_with_keycode_w, gxg_gtk_accelerator_get_label_with_keycode)
+XEN_NARGIFY_3(gxg_gdk_screen_get_monitor_workarea_w, gxg_gdk_screen_get_monitor_workarea)
+XEN_NARGIFY_1(gxg_gtk_application_get_app_menu_w, gxg_gtk_application_get_app_menu)
+XEN_NARGIFY_2(gxg_gtk_application_set_app_menu_w, gxg_gtk_application_set_app_menu)
+XEN_NARGIFY_1(gxg_gtk_application_get_menubar_w, gxg_gtk_application_get_menubar)
+XEN_NARGIFY_2(gxg_gtk_application_set_menubar_w, gxg_gtk_application_set_menubar)
+XEN_NARGIFY_4(gxg_gtk_application_add_accelerator_w, gxg_gtk_application_add_accelerator)
+XEN_NARGIFY_3(gxg_gtk_application_remove_accelerator_w, gxg_gtk_application_remove_accelerator)
+XEN_NARGIFY_2(gxg_gtk_entry_completion_compute_prefix_w, gxg_gtk_entry_completion_compute_prefix)
+XEN_NARGIFY_2(gxg_gtk_scale_set_has_origin_w, gxg_gtk_scale_set_has_origin)
+XEN_NARGIFY_1(gxg_gtk_scale_get_has_origin_w, gxg_gtk_scale_get_has_origin)
+XEN_NARGIFY_2(gxg_gtk_window_set_hide_titlebar_when_maximized_w, gxg_gtk_window_set_hide_titlebar_when_maximized)
+XEN_NARGIFY_1(gxg_gtk_window_get_hide_titlebar_when_maximized_w, gxg_gtk_window_get_hide_titlebar_when_maximized)
+XEN_NARGIFY_1(gxg_gtk_application_window_new_w, gxg_gtk_application_window_new)
+XEN_NARGIFY_2(gxg_gtk_application_window_set_show_menubar_w, gxg_gtk_application_window_set_show_menubar)
+XEN_NARGIFY_1(gxg_gtk_application_window_get_show_menubar_w, gxg_gtk_application_window_get_show_menubar)
+#endif
+
 #if (!HAVE_GTK_3)
 XEN_NARGIFY_2(gxg_gdk_colormap_new_w, gxg_gdk_colormap_new)
 XEN_NARGIFY_0(gxg_gdk_colormap_get_system_w, gxg_gdk_colormap_get_system)
@@ -38936,6 +39193,10 @@ XEN_NARGIFY_1(gxg_GTK_FONT_CHOOSER_DIALOG_w, gxg_GTK_FONT_CHOOSER_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_FONT_CHOOSER_WIDGET_w, gxg_GTK_FONT_CHOOSER_WIDGET)
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+XEN_NARGIFY_1(gxg_GTK_APPLICATION_WINDOW_w, gxg_GTK_APPLICATION_WINDOW)
+#endif
+
 #if (!HAVE_GTK_3)
 XEN_NARGIFY_1(gxg_GDK_COLORMAP_w, gxg_GDK_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
@@ -39122,6 +39383,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_OVERLAY_w, gxg_GTK_IS_OVERLAY)
 XEN_NARGIFY_1(gxg_GTK_IS_FONT_CHOOSER_w, gxg_GTK_IS_FONT_CHOOSER)
 XEN_NARGIFY_1(gxg_GTK_IS_FONT_CHOOSER_DIALOG_w, gxg_GTK_IS_FONT_CHOOSER_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_IS_FONT_CHOOSER_WIDGET_w, gxg_GTK_IS_FONT_CHOOSER_WIDGET)
+#endif
+
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+XEN_NARGIFY_1(gxg_GTK_IS_APPLICATION_WINDOW_w, gxg_GTK_IS_APPLICATION_WINDOW)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -42368,6 +42633,30 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_font_chooser_widget_new_w gxg_gtk_font_chooser_widget_new
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+#define gxg_gdk_keymap_get_modifier_mask_w gxg_gdk_keymap_get_modifier_mask
+#define gxg_gdk_window_begin_resize_drag_for_device_w gxg_gdk_window_begin_resize_drag_for_device
+#define gxg_gdk_window_begin_move_drag_for_device_w gxg_gdk_window_begin_move_drag_for_device
+#define gxg_gtk_accelerator_parse_with_keycode_w gxg_gtk_accelerator_parse_with_keycode
+#define gxg_gtk_accelerator_name_with_keycode_w gxg_gtk_accelerator_name_with_keycode
+#define gxg_gtk_accelerator_get_label_with_keycode_w gxg_gtk_accelerator_get_label_with_keycode
+#define gxg_gdk_screen_get_monitor_workarea_w gxg_gdk_screen_get_monitor_workarea
+#define gxg_gtk_application_get_app_menu_w gxg_gtk_application_get_app_menu
+#define gxg_gtk_application_set_app_menu_w gxg_gtk_application_set_app_menu
+#define gxg_gtk_application_get_menubar_w gxg_gtk_application_get_menubar
+#define gxg_gtk_application_set_menubar_w gxg_gtk_application_set_menubar
+#define gxg_gtk_application_add_accelerator_w gxg_gtk_application_add_accelerator
+#define gxg_gtk_application_remove_accelerator_w gxg_gtk_application_remove_accelerator
+#define gxg_gtk_entry_completion_compute_prefix_w gxg_gtk_entry_completion_compute_prefix
+#define gxg_gtk_scale_set_has_origin_w gxg_gtk_scale_set_has_origin
+#define gxg_gtk_scale_get_has_origin_w gxg_gtk_scale_get_has_origin
+#define gxg_gtk_window_set_hide_titlebar_when_maximized_w gxg_gtk_window_set_hide_titlebar_when_maximized
+#define gxg_gtk_window_get_hide_titlebar_when_maximized_w gxg_gtk_window_get_hide_titlebar_when_maximized
+#define gxg_gtk_application_window_new_w gxg_gtk_application_window_new
+#define gxg_gtk_application_window_set_show_menubar_w gxg_gtk_application_window_set_show_menubar
+#define gxg_gtk_application_window_get_show_menubar_w gxg_gtk_application_window_get_show_menubar
+#endif
+
 #if (!HAVE_GTK_3)
 #define gxg_gdk_colormap_new_w gxg_gdk_colormap_new
 #define gxg_gdk_colormap_get_system_w gxg_gdk_colormap_get_system
@@ -42962,6 +43251,10 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_FONT_CHOOSER_WIDGET_w gxg_GTK_FONT_CHOOSER_WIDGET
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+#define gxg_GTK_APPLICATION_WINDOW_w gxg_GTK_APPLICATION_WINDOW
+#endif
+
 #if (!HAVE_GTK_3)
 #define gxg_GDK_COLORMAP_w gxg_GDK_COLORMAP
 #define gxg_GDK_DRAWABLE_w gxg_GDK_DRAWABLE
@@ -43148,6 +43441,10 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_IS_FONT_CHOOSER_w gxg_GTK_IS_FONT_CHOOSER
 #define gxg_GTK_IS_FONT_CHOOSER_DIALOG_w gxg_GTK_IS_FONT_CHOOSER_DIALOG
 #define gxg_GTK_IS_FONT_CHOOSER_WIDGET_w gxg_GTK_IS_FONT_CHOOSER_WIDGET
+#endif
+
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+#define gxg_GTK_IS_APPLICATION_WINDOW_w gxg_GTK_IS_APPLICATION_WINDOW
 #endif
 
 #if (!HAVE_GTK_3)
@@ -46401,6 +46698,30 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_font_chooser_widget_new, gxg_gtk_font_chooser_widget_new_w, 0, 0, 0, H_gtk_font_chooser_widget_new);
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+  XG_DEFINE_PROCEDURE(gdk_keymap_get_modifier_mask, gxg_gdk_keymap_get_modifier_mask_w, 2, 0, 0, H_gdk_keymap_get_modifier_mask);
+  XG_DEFINE_PROCEDURE(gdk_window_begin_resize_drag_for_device, gxg_gdk_window_begin_resize_drag_for_device_w, 7, 0, 0, H_gdk_window_begin_resize_drag_for_device);
+  XG_DEFINE_PROCEDURE(gdk_window_begin_move_drag_for_device, gxg_gdk_window_begin_move_drag_for_device_w, 6, 0, 0, H_gdk_window_begin_move_drag_for_device);
+  XG_DEFINE_PROCEDURE(gtk_accelerator_parse_with_keycode, gxg_gtk_accelerator_parse_with_keycode_w, 4, 0, 0, H_gtk_accelerator_parse_with_keycode);
+  XG_DEFINE_PROCEDURE(gtk_accelerator_name_with_keycode, gxg_gtk_accelerator_name_with_keycode_w, 4, 0, 0, H_gtk_accelerator_name_with_keycode);
+  XG_DEFINE_PROCEDURE(gtk_accelerator_get_label_with_keycode, gxg_gtk_accelerator_get_label_with_keycode_w, 4, 0, 0, H_gtk_accelerator_get_label_with_keycode);
+  XG_DEFINE_PROCEDURE(gdk_screen_get_monitor_workarea, gxg_gdk_screen_get_monitor_workarea_w, 3, 0, 0, H_gdk_screen_get_monitor_workarea);
+  XG_DEFINE_PROCEDURE(gtk_application_get_app_menu, gxg_gtk_application_get_app_menu_w, 1, 0, 0, H_gtk_application_get_app_menu);
+  XG_DEFINE_PROCEDURE(gtk_application_set_app_menu, gxg_gtk_application_set_app_menu_w, 2, 0, 0, H_gtk_application_set_app_menu);
+  XG_DEFINE_PROCEDURE(gtk_application_get_menubar, gxg_gtk_application_get_menubar_w, 1, 0, 0, H_gtk_application_get_menubar);
+  XG_DEFINE_PROCEDURE(gtk_application_set_menubar, gxg_gtk_application_set_menubar_w, 2, 0, 0, H_gtk_application_set_menubar);
+  XG_DEFINE_PROCEDURE(gtk_application_add_accelerator, gxg_gtk_application_add_accelerator_w, 4, 0, 0, H_gtk_application_add_accelerator);
+  XG_DEFINE_PROCEDURE(gtk_application_remove_accelerator, gxg_gtk_application_remove_accelerator_w, 3, 0, 0, H_gtk_application_remove_accelerator);
+  XG_DEFINE_PROCEDURE(gtk_entry_completion_compute_prefix, gxg_gtk_entry_completion_compute_prefix_w, 2, 0, 0, H_gtk_entry_completion_compute_prefix);
+  XG_DEFINE_PROCEDURE(gtk_scale_set_has_origin, gxg_gtk_scale_set_has_origin_w, 2, 0, 0, H_gtk_scale_set_has_origin);
+  XG_DEFINE_PROCEDURE(gtk_scale_get_has_origin, gxg_gtk_scale_get_has_origin_w, 1, 0, 0, H_gtk_scale_get_has_origin);
+  XG_DEFINE_PROCEDURE(gtk_window_set_hide_titlebar_when_maximized, gxg_gtk_window_set_hide_titlebar_when_maximized_w, 2, 0, 0, H_gtk_window_set_hide_titlebar_when_maximized);
+  XG_DEFINE_PROCEDURE(gtk_window_get_hide_titlebar_when_maximized, gxg_gtk_window_get_hide_titlebar_when_maximized_w, 1, 0, 0, H_gtk_window_get_hide_titlebar_when_maximized);
+  XG_DEFINE_PROCEDURE(gtk_application_window_new, gxg_gtk_application_window_new_w, 1, 0, 0, H_gtk_application_window_new);
+  XG_DEFINE_PROCEDURE(gtk_application_window_set_show_menubar, gxg_gtk_application_window_set_show_menubar_w, 2, 0, 0, H_gtk_application_window_set_show_menubar);
+  XG_DEFINE_PROCEDURE(gtk_application_window_get_show_menubar, gxg_gtk_application_window_get_show_menubar_w, 1, 0, 0, H_gtk_application_window_get_show_menubar);
+#endif
+
 #if (!HAVE_GTK_3)
   XG_DEFINE_PROCEDURE(gdk_colormap_new, gxg_gdk_colormap_new_w, 2, 0, 0, H_gdk_colormap_new);
   XG_DEFINE_PROCEDURE(gdk_colormap_get_system, gxg_gdk_colormap_get_system_w, 0, 0, 0, H_gdk_colormap_get_system);
@@ -46986,6 +47307,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_FONT_CHOOSER_WIDGET, gxg_GTK_FONT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_FONT_CHOOSER_WIDGET obj) casts obj to GTK_FONT_CHOOSER_WIDGET");
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+  XG_DEFINE_PROCEDURE(GTK_APPLICATION_WINDOW, gxg_GTK_APPLICATION_WINDOW_w, 1, 0, 0, "(GTK_APPLICATION_WINDOW obj) casts obj to GTK_APPLICATION_WINDOW");
+#endif
+
 #if (!HAVE_GTK_3)
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, "(GDK_COLORMAP obj) casts obj to GDK_COLORMAP");
   XG_DEFINE_PROCEDURE(GDK_DRAWABLE, gxg_GDK_DRAWABLE_w, 1, 0, 0, "(GDK_DRAWABLE obj) casts obj to GDK_DRAWABLE");
@@ -47181,6 +47506,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_FONT_CHOOSER, gxg_GTK_IS_FONT_CHOOSER_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER");
   XG_DEFINE_PROCEDURE(GTK_IS_FONT_CHOOSER_DIALOG, gxg_GTK_IS_FONT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_IS_FONT_CHOOSER_WIDGET, gxg_GTK_IS_FONT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER_WIDGET");
+#endif
+
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+  XG_DEFINE_PROCEDURE(GTK_IS_APPLICATION_WINDOW, gxg_GTK_IS_APPLICATION_WINDOW_w, 1, 0, 0, "(GTK_IS_APPLICATION_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_APPLICATION_WINDOW");
 #endif
 
 #if (!HAVE_GTK_3)
@@ -48314,6 +48643,20 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_SIZE_REQUEST_CONSTANT_SIZE);
 #endif
 
+#if HAVE_GTK_APPLICATION_WINDOW_NEW
+  DEFINE_INTEGER(GDK_MODIFIER_INTENT_PRIMARY_ACCELERATOR);
+  DEFINE_INTEGER(GDK_MODIFIER_INTENT_CONTEXT_MENU);
+  DEFINE_INTEGER(GDK_MODIFIER_INTENT_EXTEND_SELECTION);
+  DEFINE_INTEGER(GDK_MODIFIER_INTENT_MODIFY_SELECTION);
+  DEFINE_INTEGER(GDK_MODIFIER_INTENT_NO_TEXT_INPUT);
+  DEFINE_INTEGER(GDK_MODIFIER_INTENT_SHIFT_GROUP);
+  DEFINE_INTEGER(GTK_REGION_ONLY);
+  DEFINE_INTEGER(GDK_WINDOW_STATE_FOCUSED);
+  DEFINE_INTEGER(GTK_STATE_FLAG_WINDOW_UNFOCUSED);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_EXPANDABLE);
+  DEFINE_INTEGER(GTK_CELL_RENDERER_EXPANDED);
+#endif
+
 #if (!HAVE_GTK_3)
   DEFINE_INTEGER(GDK_DRAG_PROTO_MOTIF);
   DEFINE_INTEGER(GDK_DRAG_PROTO_XDND);
@@ -48979,7 +49322,7 @@ void Init_libxg(void)
       #else
         XEN_YES_WE_HAVE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Dec-11"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Jan-12"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

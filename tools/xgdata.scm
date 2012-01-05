@@ -8302,111 +8302,50 @@
 ;;; void gtk_font_chooser_set_filter_func GtkFontChooser* fontchooser GtkFontFilterFuncfilter gpointer user_data GDestroyNotify destroy)
 
 
-#|
+
 ;;; gtk 3.3.2
-+ GdkModifierType gdk_keymap_get_modifier_mask       (GdkKeymap           *keymap,
-+                                                     GdkModifierIntent    intent);
-+ typedef enum
-+ {
-+   GDK_MODIFIER_INTENT_PRIMARY_ACCELERATOR,
-+   GDK_MODIFIER_INTENT_CONTEXT_MENU,
-+   GDK_MODIFIER_INTENT_EXTEND_SELECTION,
-+   GDK_MODIFIER_INTENT_MODIFY_SELECTION,
-+   GDK_MODIFIER_INTENT_NO_TEXT_INPUT
-    GDK_MODIFIER_INTENT_SHIFT_GROUP
-+ } GdkModifierIntent;
-
-+   GTK_REGION_ONLY    = 1 << 4,
-(GtkRegionFlags)
-
-
-;;; gtk 3.3.4
-
-(CINT "GDK_WINDOW_STATE_FOCUSED" "GdkWindowState")
-
-!   GTK_STATE_FLAG_WINDOW_UNFOCUSED = 1 << 6
-  } GtkStateFlags;
- 
-+ void gdk_window_begin_resize_drag_for_device (GdkWindow     *window,
-+                                               GdkWindowEdge  edge,
-+                                               GdkDevice     *device,
-+                                               gint           button,
-+                                               gint           root_x,
-+                                               gint           root_y,
-+                                               guint32        timestamp);
-+ void gdk_window_begin_move_drag_for_device   (GdkWindow     *window,
-+                                               GdkDevice     *device,
-+                                               gint           button,
-+                                               gint           root_x,
-+                                               gint           root_y,
-+                                               guint32        timestamp);
-+ void gtk_accelerator_parse_with_keycode       (const gchar     *accelerator,
-+                                                guint           *accelerator_key,
-+                                                guint          **accelerator_codes,
-+                                                GdkModifierType *accelerator_mods);
-+ gchar*	 gtk_accelerator_name_with_keycode    (GdkDisplay      *display,
-+                                                guint            accelerator_key,
-+                                                guint            keycode,
-+                                                GdkModifierType  accelerator_mods);
-+ gchar*   gtk_accelerator_get_label_with_keycode (GdkDisplay      *display,
-+                                                  guint            accelerator_key,
-+                                                  guint            keycode,
-+                                                  GdkModifierType  accelerator_mods);
-
-also GTK_DISABLE_DEPRECATED has been removed
-
-
-
 ;;; gtk 3.3.6
-the scale troughs are changed -- in prefs they're all green or gray now?
+;;; the scale troughs are changed -- in prefs they're all green or gray now?
 
-+ void         gdk_screen_get_monitor_workarea  (GdkScreen    *screen,
-+                                                gint          monitor_num,
-+                                                GdkRectangle *dest);
-+ 
+(CCAST-336 "GTK_APPLICATION_WINDOW" "GtkApplicationWindow*")
+(CCHK-336 "GTK_IS_APPLICATION_WINDOW" "GtkApplicationWindow*")
+
+(CINT-336 "GDK_MODIFIER_INTENT_PRIMARY_ACCELERATOR" "GdkModifierIntent")
+(CINT-336 "GDK_MODIFIER_INTENT_CONTEXT_MENU" "GdkModifierIntent")
+(CINT-336 "GDK_MODIFIER_INTENT_EXTEND_SELECTION" "GdkModifierIntent")
+(CINT-336 "GDK_MODIFIER_INTENT_MODIFY_SELECTION" "GdkModifierIntent")
+(CINT-336 "GDK_MODIFIER_INTENT_NO_TEXT_INPUT" "GdkModifierIntent")
+(CINT-336 "GDK_MODIFIER_INTENT_SHIFT_GROUP" "GdkModifierIntent")
+
+(CINT-336 "GTK_REGION_ONLY" "GtkRegionFlags")
+(CINT-336 "GDK_WINDOW_STATE_FOCUSED" "GdkWindowState")
+(CINT-336 "GTK_STATE_FLAG_WINDOW_UNFOCUSED" "GtkStateFlags")
  
-new header files: [gactionmuxer.h gactionobservable.h gactionobserver.h] gtkapplicationwindow.h [gtkmodelmenu.h] [gtkmodelmenuitem.h]
+(CINT-336 "GTK_CELL_RENDERER_EXPANDABLE" "GtkCellRendererState")
+(CINT-336 "GTK_CELL_RENDERER_EXPANDED" "GtkCellRendererState")
 
-+ GMenuModel *     gtk_application_get_app_menu  (GtkApplication    *application);
-+ void             gtk_application_set_app_menu  (GtkApplication    *application,
-+                                                 GMenuModel        *model);
-+ 
-+ GMenuModel *     gtk_application_get_menubar   (GtkApplication    *application);
-+ void             gtk_application_set_menubar   (GtkApplication    *application,
-+                                                 GMenuModel        *model);
-+ 
-+ void             gtk_application_add_accelerator    (GtkApplication  *application,
-+                                                      const gchar     *accelerator,
-+                                                      const gchar     *action_name,
-+                                                      GVariant        *parameter);
-+ void             gtk_application_remove_accelerator (GtkApplication *application,
-+                                                      const gchar    *action_name,
-+                                                      GVariant       *parameter);
-+ 
-!   GTK_CELL_RENDERER_EXPANDABLE  = 1 << 5,
-!   GTK_CELL_RENDERER_EXPANDED    = 1 << 6
-  } GtkCellRendererState;
-+ gchar *             gtk_entry_completion_compute_prefix         (GtkEntryCompletion          *completion,
-+                                                                  const char                  *key);
-+ void              gtk_scale_set_has_origin     (GtkScale        *scale,
-+                                                 gboolean         has_origin);
-+ gboolean          gtk_scale_get_has_origin     (GtkScale        *scale);
- + void       gtk_window_set_hide_titlebar_when_maximized (GtkWindow   *window,
-+                                                         gboolean     setting);
-+ gboolean   gtk_window_get_hide_titlebar_when_maximized (GtkWindow   *window);
+(CFNC-336 "GdkModifierType gdk_keymap_get_modifier_mask GdkKeymap* keymap GdkModifierIntent intent")
+(CFNC-336 "void gdk_window_begin_resize_drag_for_device GdkWindow* window GdkWindowEdge edge GdkDevice* device gint button gint root_x gint root_y guint32 timestamp")
+(CFNC-336 "void gdk_window_begin_move_drag_for_device GdkWindow* window GdkDevice* device gint button gint root_x gint root_y guint32 timestamp")
+(CFNC-336 "void gtk_accelerator_parse_with_keycode gchar* accelerator guint* accelerator_key guint** accelerator_codes GdkModifierType* accelerator_mods" 'const)
+(CFNC-336 "gchar* gtk_accelerator_name_with_keycode GdkDisplay* display guint accelerator_key guint keycode GdkModifierType accelerator_mods")
+(CFNC-336 "gchar* gtk_accelerator_get_label_with_keycode GdkDisplay* display guint accelerator_key guint keycode GdkModifierType accelerator_mods")
+(CFNC-336 "void gdk_screen_get_monitor_workarea GdkScreen* screen gint monitor_num GdkRectangle* dest")
+(CFNC-336 "GMenuModel* gtk_application_get_app_menu GtkApplication* application")
+(CFNC-336 "void gtk_application_set_app_menu GtkApplication* application GMenuModel* model")
+(CFNC-336 "GMenuModel* gtk_application_get_menubar GtkApplication* application")
+(CFNC-336 "void gtk_application_set_menubar GtkApplication* application GMenuModel* model")
+(CFNC-336 "void gtk_application_add_accelerator GtkApplication* application gchar* accelerator gchar* action_name GVariant* parameter" 'const)
+(CFNC-336 "void gtk_application_remove_accelerator GtkApplication* application gchar* action_name GVariant* parameter" 'const)
+(CFNC-336 "gchar* gtk_entry_completion_compute_prefix GtkEntryCompletion* completion char* key" 'const)
+(CFNC-336 "void gtk_scale_set_has_origin GtkScale* scale gboolean has_origin")
+(CFNC-336 "gboolean gtk_scale_get_has_origin GtkScale* scale")
+(CFNC-336 "void gtk_window_set_hide_titlebar_when_maximized GtkWindow* window gboolean setting")
+(CFNC-336 "gboolean gtk_window_get_hide_titlebar_when_maximized GtkWindow* window")
+(CFNC-336 "GtkWidget* gtk_application_window_new GtkApplication* application")
+(CFNC-336 "void gtk_application_window_set_show_menubar GtkApplicationWindow* window gboolean show_menubar")
+(CFNC-336 "gboolean gtk_application_window_get_show_menubar GtkApplicationWindow* window")
 
-
-#define GTK_APPLICATION_WINDOW(inst)           (G_TYPE_CHECK_INSTANCE_CAST ((inst), \
-                                                GTK_TYPE_APPLICATION_WINDOW, GtkApplicationWindow))
-#define GTK_IS_APPLICATION_WINDOW(inst)        (G_TYPE_CHECK_INSTANCE_TYPE ((inst), \
-                                                GTK_TYPE_APPLICATION_WINDOW))
-GtkWidget * gtk_application_window_new               (GtkApplication      *application);
-
-void        gtk_application_window_set_show_menubar (GtkApplicationWindow *window,
-                                                     gboolean              show_menubar);
-gboolean    gtk_application_window_get_show_menubar (GtkApplicationWindow *window);
-
-|#
 
 
 
@@ -8731,7 +8670,7 @@ gboolean    gtk_application_window_get_show_menubar (GtkApplicationWindow *windo
 
 
 
-;;; as of 2.91.7, here are the xg-undefined names from gtk *.h
+;;; as of 2.91.7 here are the xg-undefined names from gtk*.h
 
 (CFNC-319 "void gtk_app_chooser_button_set_show_default_item GtkAppChooserButton* self gboolean setting")
 (CFNC-319 "gboolean gtk_app_chooser_button_get_show_default_item GtkAppChooserButton* self")
@@ -9023,8 +8962,8 @@ gtkrecentmanager: gtk_recent_info_get_gicon
 ;; fgrep "GTK_" *.h >> names
 ;; then get rid of all the obvious junk
 
-;; omit gtkrc.h, gtkcellarea*, gtkstylecontext.h, gtkstyle.h, gtkrbtree.h (internal to gtktreeview), gtktimeline.h
-;;      gtktextlayout.h (all internal), gtktexttypes.h, gtktrayicon.h, gtkrecentchooserutils.h, gtksearch*.h
+;; omit gtkrc.h gtkcellarea* gtkstylecontext.h, gtkstyle.h, gtkrbtree.h (internal to gtktreeview), gtktimeline.h
+;;     gtktextlayout.h (all internal), gtktexttypes.h, gtktrayicon.h, gtkrecentchooserutils.h, gtksearch*.h
 ;;      gtkmodules.h, gtkquery.h, gtktextsegment.h, gtkbuilder.h, gtkbuilable.h, gtkapplication.h, gtkuimanager.h
 ;;      gtksizerequest.h, gtkoffscreenwindow.h, gtkthemingengine.h, gtkwidgetpath.h, gtkpathbar.h, gtkmountoperation.h
 ;;      gtkhsv.h (not used anywhere?)

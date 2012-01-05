@@ -24260,7 +24260,7 @@ abs     1       2
 	(define rem remainder)
 
 	(define (logtest i1 i2) (not (zero? (logand i1 i2))))
-	(define (logbitp index integer) (logtest (expt 2 index) integer))
+	(define (logbitp index integer) (logbit? integer index)) ;(logtest (expt 2 index) integer))
 	(define (lognand n1 n2) (lognot (logand n1 n2)))
 	(define (lognor n1 n2) (lognot (logior n1 n2)))
 	(define (logandc1 n1 n2) (logand (lognot n1) n2))
@@ -31337,9 +31337,11 @@ abs     1       2
 (test (logior -inf.0 inf.0) 'error)
 (test (logior nan.0 inf.0) 'error)
 (test (logior nan.0 nan.0) 'error)
-(test (lognot -inf.0 inf.0) 'error)
-(test (lognot nan.0 inf.0) 'error)
-(test (lognot nan.0 nan.0) 'error)
+(test (lognot -inf.0) 'error)
+(test (lognot nan.0) 'error)
+(test (logbit? -inf.0 inf.0) 'error)
+(test (logbit? nan.0 inf.0) 'error)
+(test (logbit? nan.0 nan.0) 'error)
 (test (logxor -inf.0 inf.0) 'error)
 (test (logxor nan.0 inf.0) 'error)
 (test (logxor nan.0 nan.0) 'error)
@@ -31518,7 +31520,7 @@ abs     1       2
    (test (op inf.0) 'error)
    (test (op nan.0) 'error))
  (list even? odd? numerator denominator lcm gcd inexact->exact
-       logior logxor logand lognot ash integer-length))
+       logior logxor logand lognot logbit? ash integer-length))
 
 (let ((d1 1e-312)
       (d2 1e-316)
@@ -34896,7 +34898,7 @@ abs     1       2
 	(if (not (equal? val 'error))
 	    (format #t ";(~A ~A) -> ~A?~%" op arg val))))
     (list "hi" _ht_ '() '(1 2) #f (integer->char 65) 'a-symbol (make-vector 3) 3.14 3/4 3.1+i abs #\f (lambda (a) (+ a 1)))))
- (list logior logand lognot logxor ash integer-length))
+ (list logior logand lognot logxor logbit? ash integer-length))
 
 (for-each
  (lambda (op)
@@ -34906,7 +34908,7 @@ abs     1       2
 	(if (not (equal? val 'error))
 	    (format #t ";(~A ~A) -> ~A?~%" op arg val))))
     (list "hi" _ht_ '() '(1 2) #f (integer->char 65) 'a-symbol (make-vector 3) 3.14 -1/2 1+i abs #\f (lambda (a) (+ a 1)))))
- (list logior logand logxor lognot))
+ (list logior logand logxor lognot logbit?))
 
 
 (num-test (lognot 0) -1)
@@ -35446,6 +35448,67 @@ abs     1       2
 		    (format #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts n))
 		    (format #t ";(simple-log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts)))))))))
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; logbit?
+;;; --------------------------------------------------------------------------------
+
+(test (logbit? 0 1) #f)
+(test (logbit? 0 0) #f)
+(test (logbit? 0 -1) 'error)
+(test (logbit? #b101 1) #f)
+(test (logbit? #b101 0) #t)
+(test (logbit? 1 3 6) 'error)
+(test (logbit? -1 3) #t)
+(test (logbit? -1 0) #t)
+(test (logbit? -6 0) #f)
+(test (logbit? -6 3) #t)
+(test (logbit? 4 1) #f)
+(test (logbit? 1 1) #f)
+(test (logbit? 1 0) #t)
+(test (logbit? -9223372036854775808 1) #f)
+(test (logbit? most-positive-fixnum 31) #t)
+(test (logbit? most-positive-fixnum 68) #f)
+(test (logbit? most-positive-fixnum 63) #f)
+(test (logbit? most-positive-fixnum 62) #t)
+(test (logbit? (ash 1 12) 12) #t)
+(test (logbit? (ash 1 12) 11) #f)
+(test (logbit? (ash 1 32) 32) #t)
+(test (logbit? (ash 1 31) 31) #t)
+(test (logbit? (ash 1 31) 30) #f)
+(test (logbit? (ash 1 31) 32) #f)
+(test (logbit? (ash 1 32) 31) #f)
+(test (logbit? (ash 1 62) 62) #t)
+(test (logbit? (ash 1 62) 61) #f)
+(test (logbit? -1 most-negative-fixnum) 'error)
+(test (logbit? most-negative-fixnum 63) #t)
+(test (logbit? most-negative-fixnum 62) #f)
+(test (logbit? -31 63) #t)
+(test (logbit? 1 most-positive-fixnum) #f)
+
+(test (logbit? -1 64) #t) ; hmmm
+(test (logbit? 1 64) #f)
+
+(if with-bignums
+    (begin
+      (test (logbit? (ash 1 64) 64) #t)
+      (test (logbit? (ash 1 64) 63) #f)
+      (test (logbit? most-negative-fixnum 63) #t)
+      (test (logbit? (bignum "-1") 64) #t)
+      ))
+
+(test (logbit? 0 1.0) 'error)
+(test (logbit? 1+i) 'error)
+(test (logbit? 1+i 0) 'error)
+(test (logbit? 0 1/2) 'error)
+(test (logbit? 1.0 0) 'error)
+(test (logbit? 1/2 0) 'error)
+(test (logbit? 0 #\a) 'error)
+(test (logbit? 0 "hi") 'error)
+(test (logbit? #f '()) 'error)
 
 
 
@@ -62559,7 +62622,7 @@ etc
       sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
       number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
       numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
-      logior logxor logand lognot ash integer-length
+      logior logxor logand lognot logbit? ash integer-length
       + - * / quotient remainder
       expt = max min modulo < > <= >= lcm gcd 
       ))))
@@ -62611,7 +62674,7 @@ etc
 	    sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
 	    number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
 	    numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
-	    logior logxor logand lognot ash integer-length
+	    logior logxor logand lognot logbit? ash integer-length
 	    + - * / quotient remainder
 	    expt = max min modulo < > <= >= lcm gcd 
 	    ))))))
@@ -62628,14 +62691,14 @@ etc
 	      make-polar make-rectangular magnitude angle real-part imag-part numerator denominator rationalize abs
 	      exp log sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh sqrt floor ceiling truncate
 	      round lcm gcd + - * / max min quotient remainder modulo = < > <= >= even? odd? zero? positive? negative?
-	      infinite? inexact->exact exact->inexact integer-length logior logxor logand lognot
+	      infinite? inexact->exact exact->inexact integer-length logior logxor logand lognot logbit?
 	      ash integer-decode-float exact? inexact? number? integer? real? complex? rational? nan?; number->string expt
 	      ))
       (func-names (list
 		   'make-polar 'make-rectangular 'magnitude 'angle 'real-part 'imag-part 'numerator 'denominator 'rationalize 'abs
 		   'exp 'log 'sin 'cos 'tan 'asin 'acos 'atan 'sinh 'cosh 'tanh 'asinh 'acosh 'atanh 'sqrt 'floor 'ceiling 'truncate
 		   'round 'lcm 'gcd '+ '- '* '/ 'max 'min 'quotient 'remainder 'modulo '= '< '> '<= '>= 'even? 'odd? 'zero? 'positive? 'negative?
-		   'infinite? 'inexact->exact 'exact->inexact 'integer-length 'logior 'logxor 'logand 'lognot
+		   'infinite? 'inexact->exact 'exact->inexact 'integer-length 'logior 'logxor 'logand 'lognot 'logbit?
 		   'ash 'integer-decode-float 'exact? 'inexact? 'number? 'integer? 'real? 'complex? 'rational? 'nan?; 'number->string 'expt
 		   ))
       (args (list 0 1 -1)))

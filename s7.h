@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.100"
-#define S7_DATE "20-Dec-11"
+#define S7_VERSION "1.101"
+#define S7_DATE "6-Jan-11"
 
 
 typedef long long int s7_Int;
@@ -815,7 +815,7 @@ void s7_mark_object(s7_pointer p);
  *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm list list->string list->vector list-tail log logand 
- *    logior lognot logxor magnitude make-hash-table-iterator make-list make-polar
+ *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memq memv min modulo nan? negative? not odd? port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
  *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
@@ -835,6 +835,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 6-Jan-12:  added (scheme side) logbit?.
+ * --------
  * 21-Dec:    s7_eval, s7_make_slot, s7_slot_set_value.
  *            changed s7_symbol_slot to s7_slot, and s7_symbol_slot_value to s7_slot_value.
  * 26-Oct:    s7_procedure_name.
