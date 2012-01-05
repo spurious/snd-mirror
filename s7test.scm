@@ -21724,6 +21724,25 @@ abs     1       2
 (test (make-procedure-with-setter (lambda () 1) (lambda (a) a) (lambda () 2)) 'error)
 (test (make-procedure-with-setter (lambda () 1) 2) 'error)
 
+(let ()
+  (define pws-args (make-procedure-with-setter
+		    (lambda args args)
+		    (lambda args (set-car! args 0) args)))
+  (let ((lst (list 1 2 3)))
+    (let ((l1 (apply pws-args lst)))
+      (test l1 '(1 2 3))
+      (set-car! l1 32)
+      (test lst '(1 2 3))
+      (set! (pws-args l1) 3)
+      (test l1 '(32 2 3))
+      (test lst '(1 2 3))
+      (let ()
+	(define (pws1)
+	  (pws-args lst))
+	(let ((l2 (pws1)))
+	  (set! l2 (pws1))
+	  (test lst '(1 2 3)))))))
+
 (for-each
  (lambda (arg)
    (test (make-procedure-with-setter arg (lambda () #f)) 'error)
@@ -21789,8 +21808,6 @@ abs     1       2
 ;;; copy
 ;;; fill!
 
-;;; TODO: this needs to test that copied bignums are not eq? to originals
-
 (test (length (list 1 2)) 2)
 (test (length "hiho") 4)
 (test (length (vector 1 2)) 2)
@@ -21841,6 +21858,14 @@ abs     1       2
 (test (copy if) if)
 (test (copy quote) quote)
 
+(if with-bignums
+    (begin
+      (test (let ((x (bignum "1"))) (eq? x (copy x))) #f)
+      (test (let ((x (bignum "1/2"))) (eq? x (copy x))) #f)
+      (test (let ((x (bignum "1.0"))) (eq? x (copy x))) #f)
+      (test (let ((x (bignum "1+i"))) (eq? x (copy x))) #f)))
+(test (let ((x 1)) (eq? x (copy x))) #t) ; not sure this should be tested
+(test (let ((x "str")) (eq? x (copy x))) #f)
 
 (test (reverse "hi") "ih")
 (test (reverse "") "")

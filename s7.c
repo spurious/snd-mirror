@@ -19883,6 +19883,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
    *            (member "abc" "123abc321" string=?) -> "abc321" but there's the string length complication
    *            (member 1 #(0 1 2) =) ? -- for c_objects (ffi) we would need a substring equivalent
    *            and what would it do for a hash-table? or an environment?
+   * also the 3 arg version can implement position, find, etc
    */
 
   s7_pointer x, y, obj;
@@ -19958,10 +19959,6 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 static s7_pointer member_sq;
 static s7_pointer g_member_sq(s7_scheme *sc, s7_pointer args)
 {
-  /* PERHAPS: here it's a quoted (constant) list, so we could predigest it, I suppose --
-   *   if it's just 1 type, check 1st for obj=that type, etc
-   */
-
   s7_pointer obj, lst;
   lst = cadr(cadr(args));
   obj = finder(sc, car(args));
@@ -38190,6 +38187,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if ((*(sc->begin_hook))(sc))
 	    {
 	      s7_quit(sc);
+	      /* don't call gc here -- perhaps at restart somehow? */
 	      return(sc->F);
 	    }
 	  pop_stack_no_op(sc);
@@ -40391,7 +40389,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  /* are these actually safe? we can call either pws_apply or call_s_object_getter here,
 		   *   which will copy args (via OP_APPLY I think) in the pws_apply case.
-		   *   TODO: why are we copying in the pws_apply case??
 		   */
 		case OP_C_OBJECT_C:
 		case HOP_C_OBJECT_C:
@@ -44021,8 +44018,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_SET_CONS:
-      /* TODO: why the c_ss check? */
-      if ((optimize_data(cadr(sc->code)) != OP_SAFE_C_SS) ||
+      if ((optimize_data(cadr(sc->code)) != OP_SAFE_C_SS) || /* it's safe if hop_safe_c_ss, so if op_safe_c_ss we check? */
 	  (indirect_c_function_is_ok(sc, cadr(sc->code))))
 	{
 	  s7_pointer y;
@@ -44038,6 +44034,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_SET1, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL_PAIR;
+
 
     case OP_SET_SYMBOL_R:
       sc->temp4 = sc->code;
@@ -51106,26 +51103,21 @@ static s7_pointer big_is_zero_1(s7_scheme *sc, s7_pointer p)
       return(make_boolean(sc, integer(p) == 0));
 
     case T_RATIO:
+    case T_BIG_RATIO:
       return(sc->F);
 
     case T_REAL:    
       return(make_boolean(sc, real(p) == 0.0));
 
     case T_COMPLEX:
+    case T_BIG_COMPLEX:
       return(sc->F);
 
     case T_BIG_INTEGER:
       return(make_boolean(sc, mpz_cmp_ui(big_integer(p), 0) == 0));
 
-    case T_BIG_RATIO:
-      /* TODO: shouldn't this and the big complex case be false? */
-      return(make_boolean(sc, mpq_cmp_ui(big_ratio(p), 0, 1) == 0));
-
     case T_BIG_REAL:
       return(make_boolean(sc, mpfr_zero_p(big_real(p))));
-
-    case T_BIG_COMPLEX:
-      return(make_boolean(sc, mpc_cmp_si_si(big_complex(p), 0, 0) == 0));
 
     default:
       return(s7_wrong_type_arg_error(sc, "zero?", 0, p, "a number"));
