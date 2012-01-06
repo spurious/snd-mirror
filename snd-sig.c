@@ -3541,7 +3541,6 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
       
       /* TODO: avoid use_apply and set_safe somehow
        * TODO: doc s7_eval et al
-       * TODO: besides 3 uses in this file, vct.c has s7_apply_function (XEN_CALL?)
        */
       if (use_apply)
 	{

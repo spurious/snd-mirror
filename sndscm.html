@@ -8292,9 +8292,7 @@ earlier, so given an initial phase of x*i, as x goes from 0 to pi/2, the peak go
 </p>
 
 
-<!-- TODO: show this in the same form as the random case above but going to 100000 -->
-
-<p>I haven't found any polynomials that get all the way to the square root. 
+<p>I haven't found any functions that get all the way to the square root. 
 I now think (after much staring at graphs) that
 the minima are tiny cracks in a huge N-dimensional
 block of stuff that is all nearly the same.  The n=5 graph above shows 
@@ -8853,10 +8851,37 @@ white noise (in sound as well as appearance); here is a small portion of one per
 </td></tr></table>
 <br>
 
-<p>but the waveforms generated from the initial-phase polynomials are very regular:
+<p>but the waveforms generated from the initial-phase polynomials look more regular (this is with n=64):
 </p>
 
-<!-- TODO: graph of poly case -->
+<table hspace=40 border=0><tr><td>
+<img src="pix/s64pi.png" alt="64 harmonics using pi/n formula">
+</td></tr></table>
+<br>
+
+<!--
+(define (try n a b)
+  (let ((gens (make-vector n #f))
+	(sr (if (< n 1000) 44100 (* n 128))))
+    (with-sound (:statistics #t :srate sr)
+      (do ((i 0 (+ i 1)))
+	  ((= i n))
+        (set! (gens i) (make-oscil (+ 1 (* i 1)) 
+				   (+ (* a i i) (* b i)))))
+      (run		
+       (do ((i 0 (+ i 1)))
+	   ((= i sr))
+	 (let ((sum 0.0))
+	   (do ((k 0 (+ k 1)))
+	       ((= k n))
+	     (set! sum (+ sum (oscil (gens k)))))
+	   (outa i (* 1.0 sum))))))
+    (list (log (maxamp) n) (* 1.0 (/ (maxamp-position) sr)))))
+
+    (try 100 (+ pi (/ pi 100)) (/ pi -2.0))
+     same settings as above but
+     (set! (x-axis-label) "n=64, initial-phase: (pi+pi/64)*i*i - pi*i/2")
+-->
 
 <br><br>
 

@@ -21980,9 +21980,6 @@ static void clear_table(s7_pointer expr)
     memset((void *)(tables[loc]), 0, table_sizes[loc] * sizeof(void **));
 }
 
-/* TODO: get rid of safe_do_level
- * TODO: GC no-longer-accessible function tables [keep a list and check after gc sweep?]
- */
 
 void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size)
 {
@@ -27253,7 +27250,7 @@ output is sent to the current-output-port."
   else obj = sc->F;
 
   /* *error-info* is the special case here
-   *   TODO: this is way to hard to use, and appears to repeat the local vars
+   *   TODO: this is way too hard to use, and appears to repeat the local vars
    */
   if (s7_is_vector(obj))
     {
@@ -54058,7 +54055,7 @@ the error type and the info passed to the error handler.");
  *   s7_real_vector_elements -> double array
  *   s7_make_real_vector, s7_real_vector_length
  *   would vector-ref|set  know about these? 
- *   how would the wrappers work?  (arayy from elsewhere, not freed upon GC, etc)
+ *   how would the wrappers work?  (array from elsewhere, not freed upon GC, etc)
  * so what does this gain us?  
  *   The implicit ref/set could be direct as in current vectors
  *   slightly simpler GC/free handling perhaps

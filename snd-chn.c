@@ -6083,7 +6083,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 #if (!USE_NO_GUI)
   if (cp->graph_time_p)
     {
-      int grf_width, width, x_offset, y_offset, grf_height, height, chan_offset; /* , grf_chn = 0; */
+      int grf_width, width, x_offset, y_offset, grf_height, height, chan_offset;
       bool new_peaks;
       inset_graph_info_t *info;
       mus_long_t frames;
@@ -6106,7 +6106,6 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	chan_offset += 10;
       y_offset = chan_offset + snd_round(height * 0.5);
 
-      /* if (cp->sound->channel_style == CHANNELS_SEPARATE) grf_chn = cp->chan; */ /* TODO: is this leftover from something? */
       new_peaks = ((cp->axis->cp) && (cp->axis->cp->new_peaks));
       /* new_peaks is set during update_graph if we just finished a new peak-env */
       frames = CURRENT_SAMPLES(cp);
