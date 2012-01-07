@@ -2422,12 +2422,16 @@ make-hash-table-iterator internally).
 </p>
 
 <pre>
-(define (hash-table-&gt;alist table)
-  (map (lambda (x) x) table)) ; clearer perhaps than (map values table), append would also work here
+    (define (hash-table-&gt;alist table)
+      (map (lambda (x) x) table)) ; clearer perhaps than (map values table), append would also work here
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
 <code>(fill! table '())</code> removes all entries from the hash-table.
+</p>
+
+<p>Two hash-tables are equal if they have the same keys with the same values.  This is independent
+of the table sizes, or the order in which the key/value pairs were added.
 </p>
 
 </blockquote>
@@ -4661,7 +4665,7 @@ have any number after, for example, #b:
 <pre>
    remove even? and odd?
    remove the 4-way cxxxxr functions
-   add file-exists?, directory?, and delete-file
+   add file?, directory?, and delete-file
    remove string-length, vector-length, and hash-table-size.
    remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
      set-car!|cdr!, and set-current-output|input|error-port.

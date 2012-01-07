@@ -3413,6 +3413,18 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- environments -------------------------------- */
 
+  /* possible additions:
+   * (copy e) -> a new env with copied slots, but not vals? [an out-of-context env unless we copy the entire list]
+   * (reverse e) -> error
+   * (fill! e) -> error
+   * (equal? e1 e2) -> traverse slots [currently envs are t_simple_p -- would order matter?]
+   * for-each map and member for slot list traversal (assq also makes sense)
+   * in stacktrace:
+   *   only show function calls (not cur_code -- in fact is cur_code useful anymore?)
+   *   in between show envs
+   * environment-iterator as in hash-table?
+   */
+
 static unsigned long long int frame_number = 0;
 
 #define NEW_FRAME(Sc, Old_Env, New_Env)  \
@@ -3498,6 +3510,15 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_environment "(environment? obj) returns #t if obj is an environment."
   return(make_boolean(sc, is_environment(car(args))));
+}
+
+
+static int environment_length(s7_pointer e)
+{
+  int i;
+  s7_pointer p;
+  for (i = 0, p = environment_slots(e); is_slot(p); i++, p = next_slot(p));
+  return(i);
 }
 
 
@@ -3783,6 +3804,29 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
 }
 
 
+static s7_pointer local_environment_to_list(s7_scheme *sc, s7_pointer env)
+{
+  s7_pointer x;
+
+  sc->w = sc->NIL;
+  if (env == sc->global_env)
+    {
+      unsigned int i;
+      for (i = 0; i < vector_fill_pointer(env); i++)
+	if (is_slot(vector_element(env, i)))
+	  sc->w = cons(sc, list_2(sc, slot_symbol(vector_element(env, i)), slot_value(vector_element(env, i))), sc->w);
+    }
+  else
+    {
+      for (x = environment_slots(env); is_slot(x); x = next_slot(x))
+	sc->w = cons(sc, list_2(sc, slot_symbol(x), slot_value(x)), sc->w);
+    }
+  x = sc->w;
+  sc->w = sc->NIL;
+  return(x);
+}
+
+
 static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_environment_to_list "(environment->list env) returns env as a list of lists.  The outer lists \
@@ -3801,61 +3845,15 @@ in that frame and its value."
 }
 
 
+#if 0
 static char *display_locals(s7_scheme *sc)
 {
-  /* intended for use in gdb -- perhaps useful in scheme?
-   *    PERHAPS: (display (current-environment)) could show slots rather than the useless #<environment>
-   *      would need circle checks here!
-   *      also equal? e1 e2 could traverse these lists
-   *
-   * currently:
-   *    :(display (current-environment))
-   *    #<unspecified>
-   *
-   *    type error for reverse, fill!
-   *
-   *    :(let ((a 3) (b 2)) (environment->list (current-environment)))
-   *    (((b . 2) (a . 3)))
-   *
-   *    :(current-environment)
-   *    #<environment>
-   *
-   *    :(copy (current-environment))
-   *    #<environment>
-   *
-   *    :(constant? (current-environment))
-   *    #t
-   *
-   * TODO: use DISPLAY_80 or 40 here and in similar cases
-   *
-   * (copy e) -> a new env with copied slots, but not vals? [an out-of-context env unless we copy the entire list]
-   * (reverse e) -> error
-   * (fill! e) -> error
-   * (equal? e1 e2) -> traverse slots [currently envs are t_simple_p]
-   * object->string of e: #<environment --then the slots here-- >
-   * in stacktrace:
-   *   only show function calls (not cur_code -- in fact is cur_code useful anymore?)
-   *   in between show envs as in this function
-   * for-each map and member for slot list traversal (assq also makes sense)
-   *
-   * format ~{~} ? if applicable: ((current-environment) 'x) as if a hash-table?
-   */
   s7_pointer e;
-  int spaces;
   for (e = sc->envir, spaces = 0; is_environment(e); e = next_environment(e), spaces += 2)
-    {
-      s7_pointer s;
-      for (s = environment_slots(e); is_slot(s); s = next_slot(s))
-	{
-	  int i;
-	  char *str;
-	  for (i = 0; i < spaces; i++) fprintf(stderr, " ");
-	  fprintf(stderr, "%s\n", str = s7_object_to_c_string(sc, s));
-	  if (str) free(str);
-	}
-    }
+    fprintf(stderr, "%s\n", str = s7_object_to_c_string(sc, e));
   return((char *)"");
 }
+#endif
 
 
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
@@ -17714,17 +17712,21 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, shared_info *ci);
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci);
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci);
+static char *environment_to_c_string(s7_scheme *sc, s7_pointer e, shared_info *ci);
 
 static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, bool to_file, shared_info *ci)
 {
   if (s7_is_vector(obj))
     return(vector_to_c_string(sc, obj, to_file, ci));
 
+  if (is_pair(obj))
+    return(list_to_c_string(sc, obj, ci));
+
   if (s7_is_hash_table(obj))
     return(hash_table_to_c_string(sc, obj, to_file, ci));
 
-  if (is_pair(obj))
-    return(list_to_c_string(sc, obj, ci));
+  if (is_environment(obj))
+    return(environment_to_c_string(sc, obj, ci));
 
   return(atom_to_c_string(sc, obj, use_write));
 }
@@ -17864,13 +17866,63 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
 }
 
 
-static s7_pointer vector_or_hash_table_to_string(s7_scheme *sc, s7_pointer vect)
+static char *environment_to_c_string(s7_scheme *sc, s7_pointer e, shared_info *ci)
 {
-  s7_pointer result;
-  shared_info *ci = NULL;
-  ci = make_shared_info(sc, vect);
-  result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, vect, USE_WRITE, WITH_ELLIPSES, ci));
-  return(result);
+  s7_pointer p;
+  s7_Int i, len, bufsize = 0;
+  char **elements = NULL;
+  char *buf;
+  
+  if (e == sc->global_env)
+    return(copy_string("#<global-environment>"));
+
+  len = environment_length(e);
+  if (len == 0)
+    return(copy_string("#<environment>"));
+  
+  elements = (char **)calloc(len * 2, sizeof(char *));
+  for (i = 0, p = environment_slots(e); is_slot(p); i += 2, p = next_slot(p))
+    {
+      elements[i] = symbol_name(slot_symbol(p));
+      bufsize += symbol_name_length(slot_symbol(p));
+      elements[i + 1] = object_to_c_string_with_circle_check(sc, slot_value(p), USE_WRITE, WITH_ELLIPSES, ci);
+      bufsize += safe_strlen(elements[i + 1]);
+    }
+
+  bufsize += (len * 8 + 16); 
+  buf = (char *)malloc(bufsize * sizeof(char));
+  sprintf(buf, "#<environment: ");
+  for (i = 0; i < 2 * (len - 1); i += 2)
+    {
+      if (elements[i])
+	{
+	  strcat(buf, "(");
+	  strcat(buf, elements[i]);
+	  strcat(buf, " ");
+	  strcat(buf, elements[i + 1]);
+	  free(elements[i + 1]);
+	  strcat(buf, ") ");
+	}
+    }
+  len = 2 * (len - 1);
+  if (elements[len])
+    {
+      strcat(buf, "(");
+      strcat(buf, elements[len]);
+      strcat(buf, " ");
+      strcat(buf, elements[len + 1]);
+      free(elements[len + 1]);
+      strcat(buf, ")");
+    }
+  free(elements);
+  strcat(buf, ">");
+  return(buf);
+}
+
+
+static s7_pointer structure_to_string(s7_scheme *sc, s7_pointer vect)
+{
+  return(make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, vect, USE_WRITE, WITH_ELLIPSES, make_shared_info(sc, vect))));
 }
 
 
@@ -18005,24 +18057,12 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 }
 
 
-static s7_pointer list_as_string(s7_scheme *sc, s7_pointer lst)
-{
-  s7_pointer result;
-  shared_info *ci;
-  ci = make_shared_info(sc, lst);
-  result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, lst, USE_WRITE, WITH_ELLIPSES, ci));
-  return(result);
-}
-
-
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
-  char *result;
   shared_info *ci = NULL;
   if (has_structure(obj))
     ci = make_shared_info(sc, obj);
-  result = object_to_c_string_with_circle_check(sc, obj, USE_WRITE, WITH_ELLIPSES, ci);
-  return(result);
+  return(object_to_c_string_with_circle_check(sc, obj, USE_WRITE, WITH_ELLIPSES, ci));
 }
 
 
@@ -18030,15 +18070,15 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
   char *str;
   if ((s7_is_vector(obj)) ||
-      (s7_is_hash_table(obj)))
-    return(vector_or_hash_table_to_string(sc, obj));
-
-  if (is_pair(obj))
-    return(list_as_string(sc, obj));
+      (is_pair(obj)) ||
+      (s7_is_hash_table(obj)) ||
+      (is_environment(obj)))
+    return(structure_to_string(sc, obj));
 
   str = atom_to_c_string(sc, obj, use_write);
   if (str)
     return(make_string_uncopied(sc, str));
+
   return(s7_make_string_with_length(sc, "", 0)); 
   /* else segfault in (string->symbol (object->string "" #f))
    *   this can't be optimized to make_string_uncopied -- gc trouble (attempt to free unallocated pointer)
@@ -20728,7 +20768,6 @@ static s7_pointer g_vector_set_ref(s7_scheme *sc, s7_pointer args)
   vec1 = finder(sc, car(args));
   if (!s7_is_vector(vec1))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
-  /* TODO: multidim cases here */
 
   vec2 = finder(sc, cadr(caddr(args)));
   if (!s7_is_vector(vec2))
@@ -20737,6 +20776,7 @@ static s7_pointer g_vector_set_ref(s7_scheme *sc, s7_pointer args)
   ind = finder(sc, cadr(args));
   if (!s7_is_integer(ind))
     return(s7_wrong_type_arg_error(sc, "vector-set! index,", 2, cadr(args), "an integer"));
+
   index = s7_integer(ind);
   if ((index < 0) ||
       (index >= vector_length(vec1)) ||
@@ -20744,6 +20784,10 @@ static s7_pointer g_vector_set_ref(s7_scheme *sc, s7_pointer args)
     return(s7_out_of_range_error(sc, "vector-set! index,", 2, ind, "should be between 0 and the vector length"));
 
   val = vector_element(vec2, index);
+
+  if (vector_is_multidimensional(vec1))
+    return(g_vector_set(sc, list_3(sc, vec1, ind, val)));
+
   vector_element(vec1, index) = val;
   return(val);
 }
@@ -21745,6 +21789,47 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
   hash_table_entries(table) = 0;
   hash_table_function(table) = hash_empty;
   return(table);
+}
+
+
+static bool hash_tables_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
+{
+  s7_pointer *lists;
+  int i, len;
+
+  if (hash_table_entries(x) != hash_table_entries(y))
+    return(false);
+  if (hash_table_entries(x) == 0)
+    return(true);
+  if (hash_table_function(x) != hash_table_function(y))
+    return(false);
+
+  len = vector_length(x);
+  lists = vector_elements(x);
+
+  for (i = 0; i < len; i++)
+    {
+      s7_pointer p;
+      for (p = lists[i]; is_not_null(p); p = cdr(p))
+	{
+	  s7_pointer key, x_val, y_val;
+
+	  key = caar(p);
+	  x_val = cdar(p);
+	  y_val = (*hash_table_function(y))(sc, y, key);
+
+	  if (is_null(y_val))
+	    return(false);
+	  if (!s7_is_equal(sc, x_val, cdr(y_val)))
+	    return(false);
+	}
+    }
+
+  /* if we get here, every key/value in x has a corresponding key/value in y, and the number of entries match,
+   *   so surely the tables are equal??
+   */
+
+  return(true);
 }
 
 
@@ -24828,9 +24913,11 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       return(numbers_are_eqv(x, y));
 
     case T_VECTOR:
-    case T_HASH_TABLE:
       return((vector_length(x) == vector_length(y)) &&
 	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
+
+    case T_HASH_TABLE:
+      return(hash_tables_are_equal(sc, x, y));
 
     case T_PAIR:
 #if (!WITH_GMP)
@@ -24913,12 +25000,7 @@ list has infinite length."
       return(object_length(sc, car(args)));
 
     case T_ENVIRONMENT:
-      {
-	int i;
-	s7_pointer p;
-	for (i = 0, p = environment_slots(lst); is_slot(p); i++, p = next_slot(p));
-	return(make_integer(sc, i));
-      }
+      return(make_integer(sc, environment_length(car(args))));
 
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
@@ -25169,7 +25251,10 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(hook_functions(obj));
 
     case T_ENVIRONMENT:
-      return(s7_environment_to_list(sc, obj));
+      /* not s7_environment_to_list here because that returns the entire chain of envs
+       *    (let ((a 32) (b #(1 2 3))) (format #f "~{~{var: ~A, value: ~A~}~^ ~}" (current-environment)))
+       */
+      return(local_environment_to_list(sc, obj));
 
     case T_C_OBJECT:
       {
@@ -27886,6 +27971,14 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
 
 #if WITH_OPTIMIZATION
+
+static bool is_lambda(s7_scheme *sc, s7_pointer sym)
+{
+  return((sym == sc->LAMBDA) && (symbol_id(sym) == 0));
+  /* symbol_id==0 means it has never been rebound (T_GLOBAL might not be set for initial stuff) */
+}
+
+
 /* also call-with-exit/catch/map etc */
 
 static s7_pointer for_each_1;
@@ -27893,9 +27986,6 @@ static s7_pointer g_for_each_1(s7_scheme *sc, s7_pointer args)
 {
   /* 1st arg is (lambda (sym) ...) when sym has no complications, only 2 args passed
    */
-
-  /* PERHAPS: I suppose we should make sure lambda is still sc->LAMBDA */
-
   s7_pointer obj;
   s7_Int len;
 
@@ -27958,13 +28048,14 @@ static s7_pointer g_for_each_3(s7_scheme *sc, s7_pointer args)
 }
 
 /* (let () (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) a) lst))) (hi)) */
+
 static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
     {
       s7_pointer lexpr;
       lexpr = cadr(expr);
-      if (car(lexpr) == sc->LAMBDA)
+      if (is_lambda(sc, car(lexpr)))
 	{
 	  s7_pointer largs, lbody;
 	  largs = cadr(lexpr);
@@ -30521,11 +30612,6 @@ static s7_pointer string_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       if (s7_is_string(caddr(expr)))
 	return(string_less_s_ic);
       
-      /* TODO: to extend this to other string comparisons, [string-ref], write/display/format, equal? [string-append]
-       *       also substring as arg -- recognized at chooser time? (problem is s[len]=0)
-       *       so we can only do this if the caller ignores trailing chars (i.e. null is not end marker)
-       *       I think all s7-internal string ops are safe in this regard, but FFI code is not!
-       */
       if ((is_pair(cadr(expr))) &&
 	  (is_optimized(cadr(expr))) &&
 	  (c_call(cadr(expr)) == g_symbol_to_string))
@@ -31594,7 +31680,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			  else
 			    {
 			      if ((is_pair(cadar(x))) &&
-				  (caadar(x) == sc->LAMBDA))
+				  (is_lambda(sc, caadar(x))))
 				{
 				  set_optimized(car(x));
 				  set_unsafe(car(x));
@@ -31965,7 +32051,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			{
 			  if ((bad_pairs == 1) &&
 			      (is_pair(cadar(x))) &&
-			      (caadar(x) == sc->LAMBDA))
+			      (is_lambda(sc, caadar(x))))
 			    {
 			      if (func_is_c_function)
 				{
@@ -32003,9 +32089,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			      if ((bad_pairs == 2) &&
 				  (quotes == 0) &&
 				  (is_pair(cadar(x))) &&
-				  (caadar(x) == sc->LAMBDA) &&
+				  (is_lambda(sc, caadar(x))) &&
 				  (is_pair(caddar(x))) &&
-				  (car(caddar(x)) == sc->LAMBDA))
+				  (is_lambda(sc, car(caddar(x)))))
 				{
 				  if (func_is_c_function)
 				    {
@@ -32346,9 +32432,9 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      (symbols == 0) &&
 	      (quotes == 0) &&
 	      (is_pair(caddar(x))) &&
-	      (car(caddar(x)) == sc->LAMBDA) &&
+	      (is_lambda(sc, car(caddar(x)))) &&
 	      (is_pair(car(cdddr(car(x))))) &&
-	      (car(car(cdddr(car(x)))) == sc->LAMBDA))
+	      (is_lambda(sc, car(car(cdddr(car(x)))))))
 	    {
 	      if (func_is_c_function)
 		{
@@ -36918,7 +37004,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->x);
 		sc->code = closure_body(code);
 		goto BEGIN;
-		/* PERHAPS: split */
 	      }
 	  }
 	sc->value = safe_reverse_in_place(sc, counter_result(args));
@@ -42822,26 +42907,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else
 	{
 	  /* here we need an argnum check since values could have appended any number of args
-	   * (let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values b a))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
 	   */
 	  unsigned int len;
 	  len = safe_list_length(sc, sc->args); 
+
 	  /* can values return an improper or circular list?  I don't think so:
 	   *   (values 1 . 2) -> improper arg list error (same with apply values)
-	   */
-
-	  /* fprintf(stderr, "len: %d, args: %d, %s\n", len, c_function_all_args(ecdr(sc->code)), DISPLAY(sc->args)); */
-
-	  /* TODO: (values) here ! 
-	   * :(let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
-	   * ;expt power, argument 2, #<unspecified>, is an untyped but should be a number
 	   *
-	   * also:
-	   * :(s7-version (values))
-	   * ;s7-version: too many arguments: (#<unspecified>)
-	   * :(exp (values) 0.0)
-	   *;exp: too many arguments: (#<unspecified> 0.0)
+	   * currently (values) does not simply erase itself:
+	   *
+	   *   :(let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
+	   *   ;expt power, argument 2, #<unspecified>, is an untyped but should be a number
+	   *  
+	   *   :(s7-version (values))
+	   *   ;s7-version: too many arguments: (#<unspecified>)
+	   *
+	   *   :(exp (values) 0.0)
+	   *   ;exp: too many arguments: (#<unspecified> 0.0)
+	   *
+	   * map is explicitly a special case, and surely it is more confusing to have (values) scattered at random.
+	   * also this is consistent with the unoptimized version
 	   */
+
 	  if (c_function_all_args(ecdr(sc->code)) < (len + 1)) /* + 1 because we have the last arg waiting */
 	    return(s7_error(sc, 
 			    sc->WRONG_NUMBER_OF_ARGS, 
@@ -42851,9 +42938,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->args);
 	}
       goto START;
-
-      /* TODO: safe_c_zp pz (zz exists)
-       */
 #endif
       
     case OP_EVAL_ARGS3:
@@ -46107,8 +46191,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      add_slot(sc, let_name, sc->x); 
 	      sc->x = sc->NIL;
 
-	      /* PERHAPS: use sc->w below for the symbols */
-	      
 	      sc->envir = new_frame_in_env(sc, sc->envir);
 	      for (x = cadr(sc->code); is_not_null(y); x = cdr(x)) 
 		{

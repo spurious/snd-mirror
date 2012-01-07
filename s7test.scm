@@ -7116,6 +7116,63 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (hash-table-set! arg 'key 32) 'error))
  (list "hi" '() -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
+(let ((ht1 (make-hash-table 31))
+      (ht2 (make-hash-table 31)))
+  (if (not (equal? ht1 ht2))
+      (format #t ";ht1 and ht2 are empty, but not equal??~%"))
+
+      ;; these 1st tests take advantage of s7's hashing function
+  (hash-table-set! ht1 'abc 1)
+  (hash-table-set! ht1 'abcabc 2)
+  (hash-table-set! ht1 'abcabcabc 3)
+  (hash-table-set! ht2 'abcabcabc 3)  
+  (hash-table-set! ht2 'abcabc 2) 
+  (hash-table-set! ht2 'abc 1)
+  (if (not (equal? ht1 ht2))
+      (format #t ";ht1 and ht2 have the same key value pairs, but are not equal??~%"))
+  
+  (set! ht2 (make-hash-table 31))
+  (hash-table-set! ht2 'abc 1)
+  (hash-table-set! ht2 'abcabc 2) 
+  (hash-table-set! ht2 'abcabcabc 3)  
+  (if (not (equal? ht1 ht2))
+      (format #t ";ht1 and ht2 have the same key value pairs in the same order, but are not equal??~%"))
+  
+  (hash-table-set! ht2 'abc "1")
+  (if (equal? ht1 ht2) 
+      (format #t ";ht1 and ht2 are equal but values are not~%"))
+  (hash-table-set! ht2 'abc 1)
+  (if (not (equal? ht1 ht2))
+      (format #t ";after reset ht1 and ht2 have the same key value pairs in the same order, but are not equal??~%"))
+  (hash-table-set! ht2 1 'abc)
+  (if (equal? ht1 ht2)
+      (format #t ";ht1 and ht2 are equal but entries are not~%"))
+  (hash-table-set! ht1 1 'abc)
+  (if (not (equal? ht1 ht2))
+      (format #t ";after add ht1 and ht2 have the same key value pairs, but are not equal??~%"))
+
+      ;; these should force chaining in any case
+  (set! ht1 (make-hash-table 31))
+  (set! ht2 (make-hash-table 60))
+  (do ((i 0 (+ i 1)))
+      ((= i 100))
+    (hash-table-set! ht1 i (* i 2))
+    (hash-table-set! ht2 i (* i 2)))
+  (if (not (equal? ht1 ht2))
+      (format #t ";ht1 and ht2 have the same (integer) key value pairs in the same order, but are not equal??~%"))
+  
+  (set! ht2 (make-hash-table 31))
+  (do ((i 99 (- i 1)))
+      ((< i 0))
+    (hash-table-set! ht2 i (* i 2)))
+  (if (not (equal? ht1 ht2))
+      (format #t ";ht1 and ht2 have the same (integer) key value pairs, but are not equal??~%"))
+  
+  (fill! ht1 '())
+  (set! ht2 (make-hash-table))
+  (if (not (equal? ht1 ht2))
+      (format #t ";ht1 and ht2 are now empty, but not equal??~%")))
+
 (let ((ht (make-hash-table))
       (l1 '(x y z))
       (l2 '(y x z)))
@@ -7186,7 +7243,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (let ((ht1 (make-hash-table 653))
       (ht2 (make-hash-table 277)))
-  (test (equal? ht1 ht2) #f)
+  (test (equal? ht1 ht2) #t) ; equal? because both are empty
   (hash-table-set! ht1 'key 'hiho)
   (hash-table-set! ht2 (hash-table-ref ht1 'key) 3.14)
   (test (>= (hash-table-size ht1) 653) #t)
@@ -13863,6 +13920,7 @@ time, so that the displayed results are
 (test (map (lambda (x) (if #f x (values))) (list 1 2)) '())
 (test (map (lambda (x) (if #f x (begin (values)))) (list 1 2)) '())
 (test (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) '(1 20 3 60))
+(test (map (lambda (x) (if (odd? x) (values x (* x 20)) (if #f #f))) (list 1 2 3 4)) '(1 20 #<unspecified> 3 60 #<unspecified>))
 (test (map (lambda (x) (if (odd? x) (apply values '(1 2 3)) (values))) (list 1 2 3 4)) '(1 2 3 1 2 3))
 (test (object->string (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4))) "(1 20 3 60)") ; make sure no "values" floats through
 (test (map (lambda (x) (if (odd? x) (values x (* x 20) (cons x (+ x 1))) (values))) (list 1 2 3 4 5 6)) '(1 20 (1 . 2) 3 60 (3 . 4) 5 100 (5 . 6)))
@@ -21268,6 +21326,11 @@ abs     1       2
 (test (equal? (global-environment) (global-environment)) #t)
 (test (equal? (global-environment) (initial-environment)) #f)
 (test (equal? (current-environment) (initial-environment)) #f)
+
+(test (let () (format #f "~A" (current-environment))) "#<environment>") 
+(test (let ((a 32) (b '(1 2 3))) (format #f "~A" (current-environment))) "#<environment: (b (1 2 3)) (a 32)>")
+(test (format #f "~A" (global-environment)) "#<global-environment>")
+(test (let ((a 32) (b #(1 2 3))) (format #f "~{~{var: ~A, value: ~A~}~^ ~}" (current-environment))) "var: a, value: 32 var: b, value: #(1 2 3)")
 
 (test (let () (augment-environment! (initial-environment) (cons 'a 32)) (symbol->value 'a (initial-environment))) #<undefined>)
 (test (let ((caar 123)) (+ caar (with-environment (initial-environment) (caar '((2) 3))))) 125)
@@ -31041,6 +31104,7 @@ abs     1       2
       (test (integer? 9223372036854775808.1+1.5i) #f)
       (test (integer? 9223372036854775808/3) #f)
       (test (integer? 9223372036854775808/9223372036854775808) #t)
+      (test (integer? 21345678912345678912345678913456789123456789123456789) #t)
       ))
 
 (test (integer?) 'error)
@@ -35489,7 +35553,7 @@ abs     1       2
 (test (logbit? -31 63) #t)
 (test (logbit? 1 most-positive-fixnum) #f)
 
-(test (logbit? -1 64) #t) ; hmmm
+(test (logbit? -1 64) #t)
 (test (logbit? 1 64) #f)
 
 (if with-bignums
@@ -55026,8 +55090,10 @@ abs     1       2
 
 (test (integer? (* 7/1000 1000/999 999/7 most-positive-fixnum)) #t)
 (num-test (* 7/1000 1000/999 999/7 most-positive-fixnum) most-positive-fixnum)
-;;; this should be an integer I think: (* 7/1000000 1/999 999/7 (- most-positive-fixnum 775807))
-;;;   PERHAPS: also (* 7/100000000000 1/999 999/7 (- most-positive-fixnum 36854775807)) and so on
+(test (integer? (* 7/1000000 1/999 999/7 (- most-positive-fixnum 775807))) #t)
+(num-test (* 7/1000000 1/999 999/7 (- most-positive-fixnum 775807)) 9223372036854)
+(test (integer? (* 7/100000000000 1/999 999/7 (- most-positive-fixnum 36854775807))) #t)
+(num-test (* 7/100000000000 1/999 999/7 (- most-positive-fixnum 36854775807)) 92233720)
 
 (num-test (* -0.2554913394465045E0 0.27042187315261135E0) -6.909044658739340841916780452607499999997E-2)
 (num-test (* -0.4489211233229662E0 -0.42892136850270857E0) 1.925518625654598642702435865603340000003E-1)
@@ -62886,6 +62952,20 @@ etc
 (test (let () (define (hi) (let ((car 1) (cdr 2) (list '(1 2 3))) (+ car cdr (cadr list)))) (hi)) 5)
 (test (let () (define (hi) (letrec ((null? (lambda (car cdr) (+ car cdr)))) (null? 1 2))) (hi)) 3)
 (test (let () (define (hi) (letrec ((append (lambda (car list) (car list)))) (append cadr '(1 2 3)))) (hi)) 2)
+
+
+;;; check optimizer 
+(let ((lst (list 1 2 3)) 
+      (old-lambda lambda)
+      (ho #f)
+      (val #f))
+  (let* ((lambda 1))
+    (define (hi) 
+      (for-each (lambda (a) (display a)) lst))
+    (set! val (+ lambda 2))
+    (set! ho hi))
+  (test val 3)
+  (test (ho) 'error))
 
 
 
