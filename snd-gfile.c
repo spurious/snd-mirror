@@ -2066,8 +2066,12 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       slist_select(fdat->header_list, fdat->header_pos);
     }
 
-  /* data format */
+  /* data format */ 
+#if HAVE_GTK_3
+  fdat->format_list = slist_new_with_title("     data type     ", form, (const char **)formats, nformats, BOX_PACK);
+#else
   fdat->format_list = slist_new_with_title("data type", form, (const char **)formats, nformats, BOX_PACK);
+#endif
   fdat->format_list->select_callback = update_data_format_list;
   fdat->format_list->select_callback_data = (void *)fdat;
   slist_select(fdat->format_list, fdat->format_pos);

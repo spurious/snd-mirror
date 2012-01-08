@@ -1,9 +1,6 @@
 #include "snd.h"
 
 
-/* TODO: in gtk3, after hide listener, it stays that way
- */
-
 static GtkWidget *listener_text = NULL;
 static int printout_end = 0;
 
@@ -1070,9 +1067,19 @@ bool listener_exists(void)
 
 int listener_height(void) 
 {
+#if HAVE_GTK_3
+  /* SOMEDAY: there is still a problem if the listener is the only active pane
+   *          and probably every other use of widget_height needs to be fixed for gtk3
+   */
+  int hgt, pos;
+  hgt = widget_height(SOUND_PANE(ss));
+  pos = gtk_paned_get_position(GTK_PANED(SOUND_PANE(ss)));
+  return(hgt - pos);
+#else
   if ((listener_text) && (widget_is_active(listener_text)))
     return(widget_height(listener_text));
   else return(0);
+#endif
 }
 
 

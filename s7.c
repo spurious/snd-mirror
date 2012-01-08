@@ -1087,7 +1087,7 @@ struct s7_scheme {
 
 
 
-/* PERHAPS: is_c_function can be array lookup, as can T_PROCEDURE(?), T_ANY_MACRO(?)
+/* is_c_function can be array lookup, as can T_PROCEDURE(?), T_ANY_MACRO(?)
  *  what about T_EXPANSION? T_KEYWORD? T_COPY_ARGS? or checks like typeflag against T_PROCEDURE|T_ANY_MACRO
  *  the array lookup has exactly the same computational cost as the bit check
  */
@@ -3412,18 +3412,6 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- environments -------------------------------- */
-
-  /* possible additions:
-   * (copy e) -> a new env with copied slots, but not vals? [an out-of-context env unless we copy the entire list]
-   * (reverse e) -> error
-   * (fill! e) -> error
-   * (equal? e1 e2) -> traverse slots [currently envs are t_simple_p -- would order matter?]
-   * for-each map and member for slot list traversal (assq also makes sense)
-   * in stacktrace:
-   *   only show function calls (not cur_code -- in fact is cur_code useful anymore?)
-   *   in between show envs
-   * environment-iterator as in hash-table?
-   */
 
 static unsigned long long int frame_number = 0;
 
@@ -8451,7 +8439,7 @@ static bool int_pow_ok(s7_Int x, s7_Int y)
 }
 
 
-/* PERHAPS: expt fixed, atan, g_greater_abs et al?
+/* PERHAPS: expt fixed
  */
 
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
@@ -8460,10 +8448,10 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
   s7_pointer n, pw;
   
   n = car(args);
-  pw = cadr(args);
-
   if (!s7_is_number(n))
     return(s7_wrong_type_arg_error(sc, "expt", 1, n, "a number"));
+
+  pw = cadr(args);
   if (!s7_is_number(pw))
     return(s7_wrong_type_arg_error(sc, "expt power,", 2, pw, "a number"));
 
@@ -17526,7 +17514,6 @@ static bool has_structure(s7_pointer p)
   return((type(p) == T_PAIR) ||
 	 (type(p) == T_VECTOR) ||
 	 (type(p) == T_HASH_TABLE));
-  /* PERHAPS: environment */
 }
 
 #define INITIAL_SHARED_INFO_SIZE 8
@@ -27223,8 +27210,7 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
     {
       sc->x = s7_reverse(sc, sc->args);
       syntax_msg = missing_close_paren_syntax_check(sc, sc->x);
-
-      /* PERHAPS: if syntax_msg is null, we didn't find the problem, so perhaps show it indented?
+      /* if syntax_msg is null, we didn't find the problem, so perhaps show it indented?
        */
     }
 
@@ -34763,10 +34749,6 @@ static s7_pointer check_if(s7_scheme *sc)
 			{
 			  if (is_h_safe_c_s(test))
 			    {
-			      /*
-			      fprintf(stderr, " rpp (1): %s %s\n", (is_optimized(t)) ? opt_names[optimize_data(t)] : "unopt", DISPLAY_80(t));
-			      fprintf(stderr, " rpp (2): %s %s\n", (is_optimized(f)) ? opt_names[optimize_data(f)] : "unopt", DISPLAY_80(f));
-			      */
 			      if ((car(t) == sc->QUOTE) || 
 				  (car(t) == sc->QUOTE_UNCHECKED))
 				{
@@ -37965,7 +37947,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 
       
-	/* TODO: use slot_pending_value, slot_expression, not this extra list
+	/* we could use slot_pending_value, slot_expression, not this extra list, but the list seems simpler.
 	 */
     #define DO_VAR_SLOT(P) ecdr(P)
     #define DO_VAR_NEW_VALUE(P) cdr(P)
@@ -43423,9 +43405,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else add_slot(sc, x, z); /* the rest arg */
 	  }
 	  sc->code = closure_body(sc->code);
-	  /* TODO: should the unsafe (non-tcall?) one-liners check begin-hook?
-	   */
-	  if (is_one_liner(sc->code))
+	  if ((is_one_liner(sc->code)) &&
+	      (!(sc->begin_hook))) /* perhaps this could be moved to the optimizer pass */
 	    {
 	      sc->code = car(sc->code);
 	      goto EVAL_PAIR;
@@ -45064,7 +45045,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else sc->value = cadr(sc->code);
 	    }
 	}
-      /* is this always going to OP_EVAL_ARGS4? */
+      /* this this amost always going to OP_EVAL_ARGS4 (once in a while it's OP_MAP_SIMPLE) */
       goto START;
 
 
@@ -46453,7 +46434,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = splice_in_values(sc, multiple_value(sc->value));
 	      goto START;
 	    }
-	  goto BEGIN; /* PERHAPS: split */
+	  goto BEGIN;
 	}
 
       sc->code = cdr(sc->code);
@@ -53445,7 +53426,7 @@ s7_scheme *s7_init(void)
   
   s7_define_safe_function(sc, "global-environment",        g_global_environment,       0, 0, false, H_global_environment);
   s7_define_safe_function(sc, "current-environment",       g_current_environment,      0, 0, false, H_current_environment);
-  s7_define_constant_function(sc, "initial-environment",   g_initial_environment,   0, 0, false, H_initial_environment);
+  s7_define_constant_function(sc, "initial-environment",   g_initial_environment,      0, 0, false, H_initial_environment);
   s7_define_function(sc, "augment-environment",            g_augment_environment,      1, 0, true,  H_augment_environment);
   s7_define_function(sc, "augment-environment!",           g_augment_environment_direct, 1, 0, true,  H_augment_environment_direct);
   s7_define_safe_function(sc, "environment?",              g_is_environment,           1, 0, false, H_is_environment);
@@ -53506,9 +53487,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "with-input-from-string",         g_with_input_from_string,   2, 0, false, H_with_input_from_string);
   s7_define_function(sc, "with-input-from-file",           g_with_input_from_file,     2, 0, false, H_with_input_from_file);
   
-  s7_define_function(sc, "call-with-output-string",  g_call_with_output_string,  1, 0, false, H_call_with_output_string);
+  s7_define_function(sc, "call-with-output-string",        g_call_with_output_string,  1, 0, false, H_call_with_output_string);
   s7_define_function(sc, "call-with-output-file",          g_call_with_output_file,    2, 0, false, H_call_with_output_file);
-  s7_define_function(sc, "with-output-to-string",    g_with_output_to_string,    1, 0, false, H_with_output_to_string);
+  s7_define_function(sc, "with-output-to-string",          g_with_output_to_string,    1, 0, false, H_with_output_to_string);
   s7_define_function(sc, "with-output-to-file",            g_with_output_to_file,      2, 0, false, H_with_output_to_file);
   
   

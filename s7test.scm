@@ -21315,6 +21315,9 @@ abs     1       2
 (test (current-environment 1) 'error)
 (test (global-environment 1) 'error)
 (test (initial-environment 1) 'error)
+(test (set! (current-environment) 1) 'error)
+(test (set! (global-environment) 1) 'error)
+(test (set! (initial-environment) 1) 'error)
 (test (let () (set! initial-environment 2)) 'error)
 (test (let ((initial-environment 2)) initial-environment) 'error)
 
