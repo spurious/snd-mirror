@@ -17699,7 +17699,6 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, shared_info *ci);
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci);
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci);
-static char *environment_to_c_string(s7_scheme *sc, s7_pointer e, shared_info *ci);
 
 static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, bool to_file, shared_info *ci)
 {
@@ -17712,8 +17711,10 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_wri
   if (s7_is_hash_table(obj))
     return(hash_table_to_c_string(sc, obj, to_file, ci));
 
-  if (is_environment(obj))
-    return(environment_to_c_string(sc, obj, ci));
+  /* it might be nice to print environments here as slots, but circle checks become a nightmare:
+   *   (let ((lst (list 1 2 3))) (list-set! lst 1 (current-environment)) lst) 
+   *   if we add T_ENVIRONMENT to has_structure, we need to extend all the circle check code.
+   */
 
   return(atom_to_c_string(sc, obj, use_write));
 }
@@ -17849,60 +17850,6 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
     strcat(buf, " ...");
   strcat(buf, ")");
 
-  return(buf);
-}
-
-
-static char *environment_to_c_string(s7_scheme *sc, s7_pointer e, shared_info *ci)
-{
-  s7_pointer p;
-  s7_Int i, len, bufsize = 0;
-  char **elements = NULL;
-  char *buf;
-  
-  if (e == sc->global_env)
-    return(copy_string("#<global-environment>"));
-
-  len = environment_length(e);
-  if (len == 0)
-    return(copy_string("#<environment>"));
-  
-  elements = (char **)calloc(len * 2, sizeof(char *));
-  for (i = 0, p = environment_slots(e); is_slot(p); i += 2, p = next_slot(p))
-    {
-      elements[i] = symbol_name(slot_symbol(p));
-      bufsize += symbol_name_length(slot_symbol(p));
-      elements[i + 1] = object_to_c_string_with_circle_check(sc, slot_value(p), USE_WRITE, WITH_ELLIPSES, ci);
-      bufsize += safe_strlen(elements[i + 1]);
-    }
-
-  bufsize += (len * 8 + 16); 
-  buf = (char *)malloc(bufsize * sizeof(char));
-  sprintf(buf, "#<environment: ");
-  for (i = 0; i < 2 * (len - 1); i += 2)
-    {
-      if (elements[i])
-	{
-	  strcat(buf, "(");
-	  strcat(buf, elements[i]);
-	  strcat(buf, " ");
-	  strcat(buf, elements[i + 1]);
-	  free(elements[i + 1]);
-	  strcat(buf, ") ");
-	}
-    }
-  len = 2 * (len - 1);
-  if (elements[len])
-    {
-      strcat(buf, "(");
-      strcat(buf, elements[len]);
-      strcat(buf, " ");
-      strcat(buf, elements[len + 1]);
-      free(elements[len + 1]);
-      strcat(buf, ")");
-    }
-  free(elements);
-  strcat(buf, ">");
   return(buf);
 }
 
@@ -33617,8 +33564,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	    (*bad_set) = true;
 	  return(false);
 	  
-	  /* TODO: what about a macro? */
-	  
 	default:
 	  /* try to catch weird cases like: 
 	   * (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
@@ -33670,6 +33615,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  /* fcdr(x) = NULL; */
 		  return(true);
 		}
+	      return(false);
 	    }
 	  
 	  if (is_symbol(car(x)))
@@ -33705,13 +33651,8 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  s7_pointer f;
 		  f = find_symbol(sc, car(x));
 		  if ((is_slot(f)) &&
-		      (is_syntax(slot_value(f))))
+		      ((is_syntax(slot_value(f))) || (is_any_macro(slot_value(f)))))
 		    (*bad_set) = true;
-		  /*
-		    fprintf(stderr, "bad case: %s %s %s %s %d\n", 
-		    DISPLAY(car(x)), describe_type_bits(car(x)), 
-		    DISPLAY(f), describe_type_bits(slot_value(f)), is_syntax(slot_value(f)));
-		  */
 		}
 	    }
 	  return(false);

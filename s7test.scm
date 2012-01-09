@@ -21329,10 +21329,20 @@ abs     1       2
 (test (equal? (global-environment) (global-environment)) #t)
 (test (equal? (global-environment) (initial-environment)) #f)
 (test (equal? (current-environment) (initial-environment)) #f)
+(let ((e #f) (g #f))
+  (set! e (current-environment))
+  (set! g (global-environment))
+  (if (not (equal? e (current-environment))) ; test here introduces a new environment
+      (format #t ";(equal? e (current-environment)) -> #f?~%"))
+  (test g (global-environment))
+  (test (equal? e g) #f)
+  (let ()
+    (if (equal? e (current-environment))
+	(format #t ";2nd case (equal? e (current-environment)) -> #t?~%"))))
 
 (test (let () (format #f "~A" (current-environment))) "#<environment>") 
-(test (let ((a 32) (b '(1 2 3))) (format #f "~A" (current-environment))) "#<environment: (b (1 2 3)) (a 32)>")
-(test (format #f "~A" (global-environment)) "#<global-environment>")
+(test (let ((a 32) (b '(1 2 3))) (format #f "~A" (current-environment))) "#<environment>")
+(test (format #f "~A" (global-environment)) "#<environment>")
 (test (let ((a 32) (b #(1 2 3))) (format #f "~{~{var: ~A, value: ~A~}~^ ~}" (current-environment))) "var: a, value: 32 var: b, value: #(1 2 3)")
 
 (test (let () (augment-environment! (initial-environment) (cons 'a 32)) (symbol->value 'a (initial-environment))) #<undefined>)
