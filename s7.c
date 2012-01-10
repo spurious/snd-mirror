@@ -1625,10 +1625,10 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define as_c_complex(p)               (real_part(p) + (imag_part(p) * _Complex_I))
 
 #if WITH_GMP
-#define big_integer(p)               (p->object.number.big_integer)
-#define big_ratio(p)                 (p->object.number.big_ratio)
-#define big_real(p)                  (p->object.number.big_real)
-#define big_complex(p)               (p->object.number.big_complex)
+  #define big_integer(p)             (p->object.number.big_integer)
+  #define big_ratio(p)               (p->object.number.big_ratio)
+  #define big_real(p)                (p->object.number.big_real)
+  #define big_complex(p)             (p->object.number.big_complex)
 #endif
 
 
@@ -8438,9 +8438,6 @@ static bool int_pow_ok(s7_Int x, s7_Int y)
 	 (int_nth_roots[y] >= s7_Int_abs(x)));
 }
 
-
-/* PERHAPS: expt fixed
- */
 
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
@@ -18155,16 +18152,20 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     port = cadr(args);
   else port = sc->output_port;
+
   if ((!is_output_port(port)) ||
       (is_string_port(port)))
     return(s7_wrong_type_arg_error(sc, "write-byte port", 2, port, "an output file or function port"));
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, "write-byte port", 2, port, "an open output port"));
 
+  s7_write_char(sc, (int)(s7_integer(car(args))), port);
+#if 0
+  /* this segfaults if port is *stdout* */
   if (is_file_port(port))
     file_write_char(sc, (unsigned char)s7_integer(car(args)), port);
   else (*(port_output_function(port)))(sc, (char)s7_integer(car(args)), port);
-
+#endif
   return(car(args));
 }
 
@@ -19867,11 +19868,11 @@ static s7_pointer g_member(s7_scheme *sc, s7_pointer args)
   #define H_member "(member obj list (func #f)) looks for obj in list and returns the list from that point if it is found, otherwise #f. \
 member uses equal?  If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
 
-  /* PERHAPS: this could be extended to accept sequences:
-   *            (member #\a "123123abnfc" char=?) -> "abnfc"
-   *            (member "abc" "123abc321" string=?) -> "abc321" but there's the string length complication
-   *            (member 1 #(0 1 2) =) ? -- for c_objects (ffi) we would need a substring equivalent
-   *            and what would it do for a hash-table? or an environment?
+  /* this could be extended to accept sequences:
+   *    (member #\a "123123abnfc" char=?) -> "abnfc"
+   *    (member "abc" "123abc321" string=?) -> "abc321" but there's the string length complication
+   *    (member 1 #(0 1 2) =) ? -- for c_objects (ffi) we would need a substring equivalent
+   *      and what would it do for a hash-table? or an environment?
    * also the 3 arg version can implement position, find, etc
    */
 
@@ -22286,7 +22287,9 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_procedure_environment(s7_pointer p)    
 { 
-  return(closure_environment(p));
+  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
+    return(closure_environment(p));
+  return(p); /* we need an s7_scheme arg! */
 }
 
 
@@ -27775,8 +27778,8 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	      push_stack(sc, OP_FOR_EACH_SIMPLE, obj, sc->code);
 	      return(sc->UNSPECIFIED);
 
-	      /* PERHAPS: this, and map, across a string (say) or other sequence involving
-	       *          only 1 arg could be optimized in the same way. OP_FOR_EACH|MAP_STRING|VECTOR|C_OBJECT
+	      /* this, and map, across a string (say) or other sequence involving
+	       *   only 1 arg could be optimized in the same way. OP_FOR_EACH|MAP_STRING|VECTOR|C_OBJECT
 	       */
 
 	      /* if len is 1 can't we just call apply?
@@ -30217,7 +30220,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 #endif
       /* fprintf(stderr, "mul2: %s\n", DISPLAY_80(expr)); */
 
-      /* TODO: in clm, gen * gen of any sort is real * real: (* (env ampf) (polywave gen1 (+ (env frqf) ...)))
+      /* in clm, gen * gen of any sort is real * real: (* (env ampf) (polywave gen1 (+ (env frqf) ...)))
        *       or even (* mx (polynomial pcoeffs (* amp sig)))
        *       how to handle constants? (* 0.25 3030)
        *       (* r (sin mx)) (* 0.5 (+ x0 x1)) (* x2 (+ 38.027264 x2))
@@ -35106,47 +35109,52 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error(sc, "define* is restricted to functions: (define* ~{~S~^ ~})", sc->code));
       
       x = car(sc->code);
-      if (!is_symbol(x))                                             /* (define 3 a) */
+      if (!is_symbol(x))                                                        /* (define 3 a) */
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
-      if (is_keyword(x))                                                /* (define :hi 1) */
+      if (is_keyword(x))                                                        /* (define :hi 1) */
 	return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
-      if (is_syntactic(x))                                              /* (define and a) */
+      if (is_syntactic(x))                                                      /* (define and a) */
 	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
     }
   else
     {
+      int len;
       x = caar(sc->code);
-      if (!is_symbol(x))                                             /* (define (3 a) a) */
+      if (!is_symbol(x))                                                        /* (define (3 a) a) */
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
-      if (is_syntactic(x))                                              /* (define (and a) a) */
+      if (is_syntactic(x))                                                      /* (define (and a) a) */
 	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
       
       if (sc->op == OP_DEFINE_STAR)
 	check_lambda_star_args(sc, cdar(sc->code));
       else check_lambda_args(sc, cdar(sc->code));
 
-      if ((is_pair(cdr(sc->code))) &&
-	  (is_pair(cadr(sc->code))) &&
-	  (is_null(cddr(sc->code))))
+      len = s7_list_length(sc, cdr(sc->code));
+      if (len < 0)                                                               /* (define (hi) 1 . 2) */
+	return(eval_error_with_name(sc, "~A: function body messed up, ~A", sc->code));
+
+      if ((len == 1) &&
+	  (is_pair(cadr(sc->code))))
 	set_one_liner(cdr(sc->code));
 
 #if WITH_OPTIMIZATION
-      /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(x), DISPLAY(sc->code)); */
-      optimize(sc, cdr(sc->code), 1, collect_collisions(sc, cdar(sc->code), list_1(sc, x)));
-
-      /* if the body is safe, we can optimize the calling sequence */
-      {
-	bool bad_set = false;
-	if ((sc->op == OP_DEFINE) &&
-	    (is_proper_list(sc, cdar(sc->code))) &&
-	    (is_safe_arg_list(sc, cdar(sc->code))) &&
-	    (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set)))
-	  {
-	    /* (define (hi a) (+ a 1) (hi (- a 1))) */
-	    /* fprintf(stderr, "%s is safe\n", DISPLAY_80(sc->code)); */
-	    set_safe_closure(cdr(sc->code));
-	  }
-      }
+      if (len > 0)  /* i.e. not circular */
+	{
+	  bool bad_set = false;
+	  /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(x), DISPLAY(sc->code)); */
+	  optimize(sc, cdr(sc->code), 1, collect_collisions(sc, cdar(sc->code), list_1(sc, x)));
+	  
+	  /* if the body is safe, we can optimize the calling sequence */
+	  if ((sc->op == OP_DEFINE) &&
+	      (is_proper_list(sc, cdar(sc->code))) &&
+	      (is_safe_arg_list(sc, cdar(sc->code))) &&
+	      (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set)))
+	    {
+	      /* (define (hi a) (+ a 1) (hi (- a 1))) */
+	      /* fprintf(stderr, "%s is safe\n", DISPLAY_80(sc->code)); */
+	      set_safe_closure(cdr(sc->code));
+	    }
+	}
 #endif
     }
 
@@ -36084,9 +36092,6 @@ static s7_pointer check_do(s7_scheme *sc)
 				 */
 
 				car(ecdr(sc->code)) = sc->SAFE_DO;
-				/* PERHAPS: safe do with no need to jump?
-				 */
-				
 				if ((!has_set) &&
 				    (c_function_class(ecdr(end)) == equal_class))
 				{
@@ -36412,20 +36417,15 @@ static s7_pointer check_cond(s7_scheme *sc)
 			((!is_symbol(clause)) ||
 			 ((clause != sc->ELSE) &&
 			  (s7_symbol_value(sc, clause) != sc->ELSE))))
-		      {
-			xopt = false;
-			/* fprintf(stderr, "%s is not ok\n", DISPLAY_80(caar(p))); */
-		      }
+		      xopt = false;
 		  }
 	      }
 	    if (xopt)
-	      {
-		/* fprintf(stderr, "%s is simpler\n", DISPLAY_80(sc->code)); */
-		car(ecdr(sc->code)) = sc->COND_SIMPLER;
-	      }
+	      car(ecdr(sc->code)) = sc->COND_SIMPLER;
 	  }
-	  /* TODO: cond as if then else or 2 choices (ie no loop in cond) COND|CASE_2 and COND|CASE_3
+	  /* perhaps cond as if then else or 2 choices (ie no loop in cond) COND|CASE_2 and COND|CASE_3
 	   *   similarly in case if (say) 2 or 3 choices unroll the loop
+	   *   but these are rare and the current overhead is not huge.
 	   */
 #endif
 	}
@@ -38084,7 +38084,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else slot_set_value(y, val);
 
-	    /* PERHAPS: var access checks during the step section? 
+	    /* var access checks during the step section? 
 	     *
 	     * to embed here, we need x, y, (sc->args? sc->code?), sc->value
 	     *
@@ -39615,7 +39615,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      }
 			    break;
 			    
-			    /* PERHAPS: here cadr can only be a non-negative integer, and in the pair case, car is optimizable
+			    /* here cadr can only be a non-negative integer, and in the pair case, car is optimizable
 			     *   (so precheck could save check in OP_STRING|PAIR|VECTOR|etc|_C)
 			     */
 			  case T_STRING:
@@ -54068,18 +54068,16 @@ the error type and the info passed to the error handler.");
 /* TODO: the symbol-access stuff is not fully implemented
  *       t342.scm for tests, augment env, closure arg names, do step?
  *       what about recursion during this process (i.e. ref to accessed var in accessor)? -- infinite loop possible here!
- *       PERHAPS: block recursive call on accessor?
+ *       block recursive call on accessor? -- how? (no dynamic vars, so no clean way to disable)
  *       are optimized calls ok in this regard?
  *       all call_symbol_bind uses really should be embedded
+ *       call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * (set! (procedure-setter abs) ...)?
  *
  * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
- *
- * TODO: call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
- * how does safe do interact with C-g?
  *
  * lint     13424 -> 1231
  * bench    52019 -> 7875

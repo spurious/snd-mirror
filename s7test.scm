@@ -6998,12 +6998,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	      (#t 
 	       (set! old (procedure-source fact))
 	       (set! fact (apply lambda '(n)
-				       `((cond 
-					 ,@(butlast (cdr (car (cdr (cdr old)))))
-					 ((= n ,n) ,(let ()
-						      (set! result (* n (fact (- n 1))))
-						      result))
-					 ,@(last (cdr (car (cdr (cdr old)))))))))
+				 `((cond 
+				    ,@(butlast (cdr (car (cdr (cdr old)))))
+				    ((= n ,n) ,(let ()
+						 (set! result (* n (fact (- n 1))))
+						 result))
+				    ,@(last (cdr (car (cdr (cdr old)))))))))
 	       result)))))
 
   (test (fact 3) 6)
@@ -9931,6 +9931,8 @@ a2" 3) "132")
  (list write display write-char))
 	 
 (test (write-byte 0 *stdin*) 'error)
+(test (write-byte (char->integer #\space) *stdout*) (char->integer #\space))
+(test (write-byte (char->integer #\space) *stderr*) (char->integer #\space))
 (test (newline *stdin*) 'error)
 (test (format *stdin* "hiho") 'error)
 
@@ -12540,6 +12542,8 @@ time, so that the displayed results are
 (test (cond (define #f)) #f)
 (test (let () (cond ((> 2 1) (define x 32) x) (#t 1)) x) 32) ; ? a bit strange
 (test (let ((x 1)) (+ x (cond ((> x 0) (define x 32) x)) x)) 65)
+(test (cond (("hi" 1))) #\i)
+(test (cond (()())) ())
 
 (for-each
  (lambda (arg)
@@ -13297,6 +13301,7 @@ time, so that the displayed results are
 (test (begin . ()) (begin))
 (test (begin . 1) 'error)
 (test (begin 1 . 2) 'error)
+(test (begin ("hi" 1)) #\i)
 
 (if (equal? (begin 1) 1)
     (begin
@@ -13376,6 +13381,7 @@ time, so that the displayed results are
 (test (apply min '(1 2 3 5 4 0 9)) 0)
 (test (apply min 1 2 4 3 '(4 0 9)) 0)
 (test (apply vector 1 2 '(3)) '#(1 2 3))
+(test (apply vector '()) #())
 (test (apply (lambda (x . y) x) (list 1 2 3)) 1)
 (test (apply * (list 2 (apply + 1 2 '(3)))) 12)
 (test (apply (if (> 3 2) + -) '(3 2)) 5)
@@ -13396,6 +13402,16 @@ time, so that the displayed results are
 (test ((apply cdr '((1 2) (3 4)) ()) 0) '(3 4))
 (test ((apply car '((1 2) (3 4)) ()) 1) 2)
 (test ((apply cadr '((1 2) (3 4)) ()) 1) 4)
+(test (apply append '()) '())
+(test (apply apply append '()) '())
+(test (apply apply apply append '(())) '())
+(test (apply apply + ()) 0)
+(test (apply apply * ()) 1)
+(test (apply apply not not () ()) #f)
+(test (apply apply apply eq? eq? eq? () () ()) #t)
+(test (apply apply apply list list list () () ()) (list list list))
+(test (apply apply vector cons (list '1 '2) ()) (vector cons 1 2))
+(test (apply apply procedure-arity equal? () ()) '(2 0 #f))
 
 (test (apply +) 0)
 (test (apply + #f) 'error)
@@ -13596,6 +13612,8 @@ time, so that the displayed results are
 (test (let () (define . 1) 1) 'error)
 (test (let () (define func (do () (#t (lambda (y) 2)))) (func 1)) 2)
 (test (let () (define* x 3)) 'error)
+(test (let () (define (hi) 1 . 2)) 'error)
+(test (let () (define (hi) (1) . "hi")) 'error)
 
 (let () (test (if (and (define x 3) (define y 4)) (+ x y)) 7))
 (let () (test (if (not (and (define x 2) (define y 4))) (+ x y) (if (define x 3) x)) 3))

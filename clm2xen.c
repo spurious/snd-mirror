@@ -8808,10 +8808,10 @@ MUS_PHASE_VOCODER,
 
 /* for the noz part, run seems to be checking that safety==0 -- this is zdly!
  *   that the gen arg is correct, but we check that too.
- * perhaps size must be > 0?  -- TODO: make this choice at init time (how?)
+ * perhaps size must be > 0?  -- make this choice at init time (how?)
  */
 
-/* PERHAPS: clm changes: the list-as-generator business needs to be fixed
+/* clm changes: the list-as-generator business needs to be fixed
  *         see snd_to_sample in snd-edits for an example, defgenerator is in ws.scm
  *         need to export mus_make_class_tag to ffi for the type, then add a way
  *         to associate a xen func with a class field via a wrapper.  We also need
