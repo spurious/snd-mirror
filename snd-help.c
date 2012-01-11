@@ -3118,18 +3118,21 @@ static char *snd_finder(const char *name, bool got_help)
 
   for (i = 0; (!fgrep) && (i < dir_len); i++)
     {
-      const char *path;
-      path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
-      if (!path) continue;
+      if (XEN_STRING_P(XEN_LIST_REF(dirs, i))) /* *load-path* might have garbage */
+	{
+	  const char *path;
+	  path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
+	  if (!path) continue;
 
-      for (a_def = 0; (!fgrep) && (a_def < NUM_DEFINES); a_def++)
-	fgrep = call_grep(defines[a_def], name, TRAILER, path, tempfile);
+	  for (a_def = 0; (!fgrep) && (a_def < NUM_DEFINES); a_def++)
+	    fgrep = call_grep(defines[a_def], name, TRAILER, path, tempfile);
 #if HAVE_SCHEME
-      if (!fgrep)
-	fgrep = call_grep("(define (", name, ")", path, tempfile);
-      if (!fgrep)
-	fgrep = call_grep("(define ", name, "\n", path, tempfile);
+	  if (!fgrep)
+	    fgrep = call_grep("(define (", name, ")", path, tempfile);
+	  if (!fgrep)
+	    fgrep = call_grep("(define ", name, "\n", path, tempfile);
 #endif
+	}
     }
   snd_remove(tempfile, IGNORE_CACHE);
   free(tempfile);
@@ -3603,6 +3606,9 @@ and its value is returned."
 
   char *str = NULL, *subject = NULL;
   int min_diff = 1000;
+
+  if (XEN_KEYWORD_P(text))
+    return(C_TO_XEN_STRING("keyword"));
 
 #if HAVE_RUBY
   if (XEN_STRING_P(text))

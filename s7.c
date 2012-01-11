@@ -765,7 +765,6 @@ typedef struct s7_func_t {
   unsigned int required_args, optional_args, all_args;
   bool rest_arg;
   s7_pointer setter;
-  s7_pointer arity_list;
 #if WITH_OPTIMIZATION
   unsigned int id;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
@@ -1528,7 +1527,6 @@ static void init_types(void)
 #define c_function_optional_args(f)   (f)->object.ffptr->optional_args
 #define c_function_has_rest_arg(f)    (f)->object.ffptr->rest_arg
 #define c_function_all_args(f)        (f)->object.ffptr->all_args
-#define c_function_arity_list(f)      (f)->object.ffptr->arity_list
 #define c_function_setter(f)          (f)->object.ffptr->setter
 #if WITH_OPTIMIZATION
 #define c_function_class(f)           (f)->object.ffptr->id
@@ -8513,50 +8511,79 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  return(real_one);
 	}
 
-      if (type(n) == T_INTEGER)
+      switch (type(n))
 	{
-	  s7_Int x;
-	  x = s7_integer(n);
-	  if (x == 1)
-	    return(n);
-	  
-	  if (x == -1)
-	    {
-	      if (s7_Int_abs(y) & 1)
-		return(n);
-	      return(small_int(1));
-	    }
+	case T_INTEGER:
+	  {
+	    s7_Int x;
+	    x = s7_integer(n);
+	    if (x == 1)
+	      return(n);
+	    
+	    if (x == -1)
+	      {
+		if (y == S7_LLONG_MIN)
+		  return(small_int(1));
+		
+		if (s7_Int_abs(y) & 1)
+		  return(n);
+		return(small_int(1));
+	      }
+	    
+	    if (y == S7_LLONG_MIN)
+	      return(small_int(0));                      /* (expt x most-negative-fixnum) !! */
+	    
+	    if (int_pow_ok(x, s7_Int_abs(y)))
+	      {
+		if (y > 0)
+		  return(make_integer(sc, int_to_int(x, y)));
+		return(s7_make_ratio(sc, 1, int_to_int(x, -y)));
+	      }
+	  }
+	  break;
 
-	  if (y == S7_LLONG_MIN)
-	    return(small_int(0));                      /* (expt x most-negative-fixnum) !! */
-
-	  if (int_pow_ok(x, s7_Int_abs(y)))
-	    {
-	      if (y > 0)
-		return(make_integer(sc, int_to_int(x, y)));
-	      return(s7_make_ratio(sc, 1, int_to_int(x, -y)));
-	    }
-	}
-      else
-	{
-	  if (type(n) == T_RATIO)
-	    {
-	      s7_Int nm, dn;
-	      
-	      nm = numerator(n);
-	      dn = denominator(n);
-
-	      if ((int_pow_ok(nm, s7_Int_abs(y))) &&
-		  (int_pow_ok(dn, s7_Int_abs(y))))
-		{
-		  if (y > 0)
-		    return(s7_make_ratio(sc, int_to_int(nm, y), int_to_int(dn, y)));
-		  return(s7_make_ratio(sc, int_to_int(dn, -y), int_to_int(nm, -y)));
-		}
-	    }
+	case T_RATIO:
+	  {
+	    s7_Int nm, dn;
+	    
+	    nm = numerator(n);
+	    dn = denominator(n);
+	    
+	    if (y == S7_LLONG_MIN)
+	      {
+		if (s7_Int_abs(nm) > dn)
+		  return(small_int(0));              /* (expt 4/3 most-negative-fixnum) -> 0? */
+		return(s7_make_real(sc, INFINITY));  /* (expt 3/4 most-negative-fixnum) -> inf? */
+	      }
+	    
+	    if ((int_pow_ok(nm, s7_Int_abs(y))) &&
+		(int_pow_ok(dn, s7_Int_abs(y))))
+	      {
+		if (y > 0)
+		  return(s7_make_ratio(sc, int_to_int(nm, y), int_to_int(dn, y)));
+		return(s7_make_ratio(sc, int_to_int(dn, -y), int_to_int(nm, -y)));
+	      }
+	  }
+	  break;
 	  /* occasionally int^rat can be int but it happens so infrequently it's probably not worth checking
 	   *  one possibly easy case: (expt 1 1/2) -> 1 etc
 	   */
+
+	case T_REAL:
+	  /* (expt -1.0 most-positive-fixnum) should be -1.0
+	   * (expt -1.0 (+ (expt 2 53) 1)) -> -1.0
+	   * (expt -1.0 (- 1 (expt 2 54))) -> -1.0
+	   */
+	  if (s7_real(n) == -1.0)
+	    {
+	      if (y == S7_LLONG_MIN)
+		return(real_one);
+		
+	      if (s7_Int_abs(y) & 1)
+		return(n);
+	      return(real_one);
+	    }
+	  break;
 	}
     }
 
@@ -18800,8 +18827,6 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
 
   if (!is_pair(lst))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a pair"));
-  if (is_immutable(lst))
-    return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a mutable pair"));
 
   ind = car(args);
   if (!s7_is_integer(ind))
@@ -18846,8 +18871,6 @@ static s7_pointer g_list_set_ic(s7_scheme *sc, s7_pointer args)
   lst = car(args);
   if (!is_pair(lst))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a pair"));
-  if (is_immutable(lst))
-    return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a mutable pair"));
 
   index = s7_integer(cadr(args));
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
@@ -18943,8 +18966,6 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "set-car!", 1, p, "a pair"));
-  if (is_immutable(p))              /* (set-car! (procedure-arity cons) 1) !! or (define-constant c (list 1 2 3)) (set-car! c 2) */
-    return(s7_wrong_type_arg_error(sc, "set-car!", 1, p, "a mutable pair"));
   
   car(p) = cadr(args);
   return(cadr(args));
@@ -18959,8 +18980,6 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, p, "a pair"));
-  if (is_immutable(p))              /* (set-cdr! (procedure-arity cons) 1) !! */
-    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, p, "a mutable pair"));
   
   cdr(p) = cadr(args);
   return(cadr(args));
@@ -21119,8 +21138,6 @@ If its first argument is a list, the list is copied (despite the '!')."
       break;
 
     case T_VECTOR:
-      if (is_immutable(data))
-	return(s7_wrong_type_arg_error(sc, "sort!", 1, data, "a mutable vector"));
       len = vector_length(data);
 
       if ((is_safe_procedure(lessp)) &&
@@ -22157,7 +22174,6 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   if (rest_arg)
     c_function_all_args(x) = 10000000;
   else c_function_all_args(x) = required_args + optional_args;
-  c_function_arity_list(x) = sc->NIL;
 
 #if WITH_OPTIMIZATION
   c_function_class(x) = ++f_class;
@@ -22624,19 +22640,13 @@ static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 {
   if (is_c_function(x))
-    {
-      if (is_null(c_function_arity_list(x)))
-	{
-	  c_function_arity_list(x) = 
-	    permanent_cons(make_permanent_integer(c_function_required_args(x)),
- 	      permanent_cons(make_permanent_integer(c_function_optional_args(x)),
-  	        permanent_cons(make_boolean(sc, c_function_has_rest_arg(x)), sc->NIL,
-			       T_PAIR | T_IMMUTABLE),
-			     T_PAIR | T_IMMUTABLE),
-			   T_PAIR | T_IMMUTABLE);
-	}
-      return(c_function_arity_list(x));
-    }
+    return(list_3(sc, 
+		  make_integer(sc, c_function_required_args(x)),
+		  make_integer(sc, c_function_optional_args(x)),
+		  make_boolean(sc, c_function_has_rest_arg(x))));
+  /* this was optimized to be a permanent immutable list, but makes a mess of all the setters,
+   *   and then there are cases like: (fill! (append (list 1) (procedure-arity abs)) 0)
+   */
 
   if ((is_closure(x)) ||
       (is_closure_star(x)) ||
@@ -23424,18 +23434,6 @@ In each case, the argument is the value of the object, not the object itself."
 		    }
 		  func_loc = s7_gc_protect(sc, func); /* this ought to be faster in the mark phase than checking every function field of every scheme type(?) */
 		  proc_args = s7_procedure_arity(sc, func);
-#if DEBUGGING
-		  if ((!is_pair(proc_args)) ||
-		      (!s7_is_integer(car(proc_args))) ||
-		      (!is_pair(cdr(proc_args))) ||
-		      (!s7_is_integer(cadr(proc_args))) ||
-		      (!is_pair(cddr(proc_args))) ||
-		      (!s7_is_boolean(caddr(proc_args))))
-		    {
-		      fprintf(stderr, "proc passed to make-type: %s\n", DISPLAY(proc_args));
-		      abort();
-		    }
-#endif
 		  nargs = s7_integer(car(proc_args)) + s7_integer(cadr(proc_args));
 		  rest_arg = (caddr(proc_args) != sc->F);
 		}
@@ -43634,13 +43632,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_slot(sc->x))
 	set_immutable(slot_symbol(sc->x));
 
-#if DEBUGGING
-      if ((!is_immutable(slot_value(sc->x))) &&
-	  (has_structure(slot_value(sc->x))))
-	{
-	  fprintf(stderr, "%s value %s is mutable\n", DISPLAY(sc->value), DISPLAY_80(slot_value(sc->x)));
-	}
-#endif
       /* if we have define-constant of a symbol that is purely local, then reload the file containing that code,
        *   the symbol itself is immutable, but the original local slot has vanished, so we can't compare (below)
        *   against the old value.  Should define-constant always be global?  Otherwise we need to keep track of
@@ -43649,6 +43640,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * but the following code is confusing because the definition leaks out -- not sure what to do here.
        *   perhaps a separate global table of these?  Also, redefinition of a constant local closure won't
        *   work unless we check equality of the functions!
+       *
+       * another question: (define-constant c (list 1 2 3)) but the list contents are settable
        */
 #if 0
       if (is_null(global_slot(sc->value)))
