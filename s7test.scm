@@ -2970,6 +2970,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (symbol? (string->symbol "0")) #t)
 (test (symbol? (symbol "0")) #t)
+(test (symbol? (symbol ".")) #t) ; hmmm
+(test (let () (define |.| 1) (+ |.| 2)) 3)
 (test (string->symbol "0e") '0e)
 (test (string->symbol "1+") '1+)
 (test (symbol? (string->symbol "1+i")) #t)
@@ -3666,6 +3668,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (length '(1 2 . 3)) -2)
 (test (length) 'error)
 (test (length '(1 2 3) #(1 2 3)) 'error)
+(test (integer? (length (procedure-environment cons))) #t)
 
 
 
@@ -3934,6 +3937,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x (list 1 2))) (set-car! x (list 3 4)) x) '((3 4) 2))
 (test (let ((x (cons 1 2))) (set-car! x (list 3 4)) x) '((3 4) . 2))
 (test (let ((x (cons (list 1 2) 3))) (set-car! (car x) (list 3 4)) x) '(((3 4) 2) . 3))
+(test (let ((lst (list 1 2 3))) (set! (car lst) 32) lst) '(32 2 3))
 
 (test (set-car! '() 32) 'error)
 (test (set-car! () 32) 'error)
@@ -3942,6 +3946,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (set-car! #f 32) 'error)
 (test (set-car!) 'error)
 (test (set-car! '(1 2) 1 2) 'error)
+(test (set-car! (procedure-arity cons) 1) 'error)
+
 (test (let ((c (cons 1 2))) (set-car! c #\a) (car c)) #\a)
 (test (let ((c (cons 1 2))) (set-car! c #()) (car c)) #())
 (test (let ((c (cons 1 2))) (set-car! c #f) (car c)) #f)
@@ -3966,6 +3972,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((x (list 1 2))) (set-cdr! x (list 4 5)) x) '(1 4 5))
 (test (let ((x (cons 1 2))) (set-cdr! x (list 4 5)) x) '(1 4 5)) ;!
 (test (let ((x (cons 1 2))) (set-cdr! x (cons 4 5)) x) '(1 4 . 5))
+(test (let ((lst (list 1 2 3))) (set! (cdr lst) 32) lst) (cons 1 32))
 
 (test (set-cdr! '() 32) 'error)
 (test (set-cdr! () 32) 'error)
@@ -3974,6 +3981,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (set-cdr! #f 32) 'error)
 (test (set-cdr!) 'error)
 (test (set-cdr! '(1 2) 1 2) 'error)
+(test (set-cdr! (procedure-arity cons) 1) 'error)
+
 (test (let ((c (cons 1 2))) (set-cdr! c #\a) (cdr c)) #\a)
 (test (let ((c (cons 1 2))) (set-cdr! c #()) (cdr c)) #())
 (test (let ((c (cons 1 2))) (set-cdr! c #f) (cdr c)) #f)
@@ -4165,6 +4174,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (list-set! '(1 2 . 3) 1 23) 23)
 (test (list-set! '(1 2 . 3) 2 23) 'error)
 (test (set! ('(1 2 . 3) 1) 23) 23)
+(test (list-set! (procedure-arity cons) 0 1) 'error)
+(test (set! (list-ref (procedure-arity cons) 0) 1) 'error)
 
 (for-each
  (lambda (arg)
@@ -7842,6 +7853,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; write
 (test (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) 224)
 
+
 (test (call-with-input-string
        "1234567890"
        (lambda (p)
@@ -7867,6 +7879,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-line p)))) #t)
 (test (load "empty-file") #<unspecified>)
 (test (call-with-input-file "empty-file" (lambda (p) (port-closed? p))) #f)
+(test (eof-object? (call-with-input-string "" (lambda (p) (read p)))) #t)
 
 (let ()
   (define (io-func) (lambda (p) (eof-object? (read-line p))))
@@ -7925,11 +7938,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (call-with-input-file "empty-file" p1) #t))
 
 
-(test (reverse *stdin*) 'error)
-(test (fill! (current-output-port)) 'error)
-(test (length *stderr*) 'error)
-
-;; these apparently jump out of the enclosing load too
+;;; load
 (for-each
  (lambda (arg)
    (test (load arg) 'error)
@@ -7941,6 +7950,67 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (load "not a file") 'error)
 (test (load "") 'error)
 (test (load "/home/bil/cl") 'error)
+
+(call-with-output-file "empty-file" (lambda (p) (write '(+ 1 2 3) p)))
+(let ((x 4))
+  (test (+ x (load "empty-file")) 10))
+
+(call-with-output-file "empty-file" (lambda (p) (write '(list 1 2 3) p)))
+(let ((x 4))
+  (test (cons x (load "empty-file")) '(4 1 2 3)))
+
+(call-with-output-file "empty-file" (lambda (p) (write '(values 1 2 3) p)))
+(let ((x 4))
+  (test (+ x (load "empty-file")) 10))
+(test (+ 4 (eval (call-with-input-file "empty-file" (lambda (p) (read p))))) 10)
+
+(call-with-output-file "empty-file" (lambda (p) (write '(+ x 1) p)))
+(let ((x 2))
+  (test (load "empty-file" (current-environment)) 3))
+
+(call-with-output-file "empty-file" (lambda (p) (write '(set! x 1) p)))
+(let ((x 2))
+  (load "empty-file" (current-environment))
+  (test x 1))
+
+(call-with-output-file "empty-file" (lambda (p) (write '(define (hi a) (values a 2)) p) (write '(hi x) p)))
+(let ((x 4))
+  (test (+ x (load "empty-file" (current-environment))) 10))
+
+(let ((x 1)
+      (e #f))
+  (set! e (current-environment))
+  (let ((x 4))
+    (test (+ x (load "empty-file" e)) 7)))
+
+(let ()
+  (let ()
+    (call-with-output-file "empty-file" (lambda (p) (write '(define (load_hi a) (+ a 1)) p)))
+    (load "empty-file" (current-environment))
+    (test (load_hi 2) 3))
+  (test (defined? 'load_hi) #f))
+
+(let ()
+  (apply load '("empty-file"))
+  (test (load_hi 2) 3))
+
+(call-with-output-file "empty-file" (lambda (p) (display "\"empty-file\"" p)))
+(test (load (load "empty-file")) "empty-file")
+
+#|
+(let ((c #f)
+      (i 0)
+      (e #f))
+  (set! e (current-environment))
+  (call-with-output-file "empty-file" (lambda (p) (write '(call/cc (lambda (c1) (set! c c1) (set! i (+ i 1)))) p)))
+  (load "empty-file" e)
+  (test (c) 'error)) ; ;read-error ("our input port got clobbered!")
+|#
+
+
+(test (reverse *stdin*) 'error)
+(test (fill! (current-output-port)) 'error)
+(test (length *stderr*) 'error)
 
 (test (output-port? (current-input-port)) #f)
 (test (output-port? *stdin*) #f)
@@ -8561,6 +8631,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "~-1D" 123) 'error)
 (test (format #f "~+1D" 123) 'error)
 (test (format #f "~1.D" 123) 'error)
+(test (format #f "~1+iD" 123) 'error)
+(test (format #f "~1/2D" 123) 'error)
+(test (format #f "~1/1D" 123) 'error)
 (test (format #f "~20,'-1D" 123) 'error)
 
 (for-each
@@ -9518,6 +9591,27 @@ a2" 3) "132")
 (test (format #f "~20x" 17+23i) "          11.0+17.0i")
 (test (length (format #f "~20x" 17+23i)) 20)
 
+(test (format #f "~{~{~A~^~} ~}" (hash-table '((a . 1) (b . 2)))) "(a . 1)(b . 2) ")
+(test (format #f "~{~{~A~^~}~^~}" (hash-table '((a . 1) (b . 2)))) "(a . 1)(b . 2)")
+(test (format #f "~{~{~A~^ ~}~^~}" (hash-table '((a . 1) (b . 2)))) "(a . 1) (b . 2)")
+(test (format #f "~{~{~{~A~^~} ~}~}" #(())) "")
+(test (format #f "~{~{~{~P~^~} ~}~}" '((()))) " ")
+(test (format #f "~{~{~{~P~^~}~}~}" '(((2 3 4)))) "sss")
+(test (apply format #f "~T~~{~{~{~*~~0~1~*~}~@~}" '(())) "~{")
+(test (format #f "~{~S}%~}" '(a b c)) "a}%b}%c}%")
+(test (format #f "~&~^%~F." 0) "%0.")
+(test (format #f "1~^2") "1")
+(test (apply format #f "~P~d~B~~" '(1 2 3)) "211~")
+(test (format #f "~T1~~^~P" 0) "1~^s")
+(test (format #f "1\ 2") "12")
+(test (format #f "~S~^~{~^" '(+ x 1)) "(+ x 1)")
+(test (format #f "1~^~{2") "1")
+(test (format #f "~A~{~0~g~@~B~}" '() '()) "()")
+(test (format #f "1~^~^~^2") "1")
+(test (format #f "~{~{~~}~~,~}~*" '(()) '(())) "~,")
+(test (format #f "~~S~S~T~~C~g~~" 0 0) "~S0~C0~")
+(test (format #f "~{~~e~}~~{~*~~" "" "") "~{~")
+
 (let ()
   (define* (clean-string e (precision 3))
     (format #f (format #f "(~~{~~,~DF~~^ ~~})" precision) e))
@@ -10343,6 +10437,8 @@ a2" 3) "132")
 			);#|
 	       x) 12.0)
 (test (let ((\x00}< 1) (@:\t{ 2)) (+ \x00}< @:\t{)) 3)
+(test (let ((| 1) (|| 2) (||| 3)) (+ || | |||)) 6)
+(test (let ((|a#||#b| 1)) |a#||#b|) 1)
 (test (let ((?#||#\ 1) (\n\r\t 2) (.1e+2+ie 3)) (+ ?#||#\ \n\r\t .1e+2+ie)) 6)
 (test (let ((@,@'[1] 1) (\,| 2)) (+ @,@'[1] \,|)) 3)
 (test (list"0"0()#()#\a"""1"'x(list)+(cons"""")#f) (list "0" 0 () #() #\a "" "1" 'x (list) + '("" . "") #f))
@@ -11639,6 +11735,9 @@ this prints:
 (test (let ((ht (hash-table '(a . 1) '(b . 2)))) (let ((lst (map (lambda (c) (cdr c)) ht))) (or (equal? lst '(1 2)) (equal? lst '(2 1))))) #t)
 (test (let ((ht (hash-table '(a . 1) '(b . 2)))) (map ht '(a b))) '(1 2))
 
+(test (map '((1 2) (3 4)) #(1) #(1)) '(4))
+(test (map (quasiquote ((1 2) (3 4))) #(1) #(1 2)) '(4))
+
 (let ((pws (make-procedure-with-setter (lambda (a) a) (lambda (a b) b))))
   (test (map append pws) 'error)
   (test (map pws '(1 2 3)) '(1 2 3)))
@@ -12748,8 +12847,8 @@ time, so that the displayed results are
 (test (let ((x 1)) (case x (('x) "hi") (else "ho"))) "ho")
 (test (let ((x 1)) (case 'x ((x) "hi") (else "ho"))) "hi")
 (test (case '() ((()) 1)) 1)
-;;; but not (case #() ((#()) 1)) because (eqv? #() #()) is #f
-(test (let ((x '(1))) (eval `(case ',x ((,x) 1) (else 0)))) 1)    ; but we can overcome that!
+(test (case #() ((#()) 1) (else 2)) 2)
+(test (let ((x '(1))) (eval `(case ',x ((,x) 1) (else 0)))) 1)    ; but we can overcome that! (also via apply)
 (test (let ((x #())) (eval `(case ',x ((,x) 1) (else 0)))) 1)
 (test (case ''2 (('2) 1) (else 0)) 0)
 (test (let ((otherwise else)) (case 1 ((0) 123) (otherwise 321))) 321)
@@ -12819,9 +12918,10 @@ time, so that the displayed results are
 (test (case 1.0 ((#i1) 2) ((1e0) 3) ((1.0) 4) (else 5)) 2)
 (test (case 1 ((#i1) 2) ((1e0) 3) ((1.0) 4) (else 5)) 5)
 
-; case use eqv? -- why not case-equal?
+; case uses eqv? -- why not case-equal?
 (test (case "" (("") 1)) #<unspecified>)
 (test (case abs ((abs) 1)) #<unspecified>)
+(test (case (if #f #f) ((1) 1) ((#<unspecified>) 2) (else 3)) 2)
 
 (test (case) 'error)
 (test (case 1) 'error)
@@ -12853,8 +12953,8 @@ time, so that the displayed results are
 (test (case 1 ((1 2)) (else 3)) 'error)
 (test (case 1 ('(1 2) 3) (else 4)) 4)
 (test (case 1 (('1 2) 3) (else 4)) 4)
-;;; (test (case 1 ((1 . 2) 3) (else 4)) 'error) ; ?? in guile it's an error
-;;; (test (case 1 ((1 2 . 3) 3) (else 4)) 'error)
+(test (case 1 ((1 . 2) 3) (else 4)) 'error) ; ?? in guile it's an error
+(test (case 1 ((1 2 . 3) 3) (else 4)) 'error)
 (test (case 1 (('1 . 2) 3) (else 4)) 'error)
 (test (case 1 ((1 . (2)) 3) (else 4)) 3)
 (test (case 1 ((1 2) . (3)) (else 4)) 3)
@@ -12874,6 +12974,7 @@ time, so that the displayed results are
 (test (case 1 ((2) 3) (1 . 2) ((1) 2)) 'error)
 (test (case 1 ((2) 3) (1) ((1) 2)) 'error)
 (test (case 1 ((2) 3) ((1)) ((1) 2)) 'error)
+(test (case 1 ((1) 2) ((1) 3)) 2) ; should this be an errror?
 
 (test (case 'case ((case) 1) ((cond) 3)) 1)
 (test (case 101 ((0 1 2) 200) ((3 4 5 6) 600) ((7) 700) ((8) 800) ((9 10 11 12 13) 1300) ((14 15 16) 1600) ((17 18 19 20) 2000) ((21 22 23 24 25) 2500) ((26 27 28 29) 2900) ((30 31 32) 3200) ((33 34 35) 3500) ((36 37 38 39) 3900) ((40) 4000) ((41 42) 4200) ((43) 4300) ((44 45 46) 4600) ((47 48 49 50 51) 5100) ((52 53 54) 5400) ((55) 5500) ((56 57) 5700) ((58 59 60) 6000) ((61 62) 6200) ((63 64 65) 6500) ((66 67 68 69) 6900) ((70 71 72 73) 7300) ((74 75 76 77) 7700) ((78 79 80) 8000) ((81) 8100) ((82 83) 8300) ((84 85 86 87) 8700) ((88 89 90 91 92) 9200) ((93 94 95) 9500) ((96 97 98) 9800) ((99) 9900) ((100 101 102) 10200) ((103 104 105 106 107) 10700) ((108 109) 10900) ((110 111) 11100) ((112 113 114 115) 11500) ((116) 11600) ((117) 11700) ((118) 11800) ((119 120) 12000) ((121 122 123 124 125) 12500) ((126 127) 12700) ((128) 12800) ((129 130) 13000) ((131 132) 13200) ((133 134 135 136) 13600) ((137 138) 13800)) 10200)
@@ -12890,6 +12991,9 @@ time, so that the displayed results are
 (test (let ((else 3)) (case else ((3) else))) 3)
 (test (case 0 ((1) #t) ((2 else 3) #f) ((0) 0)) 0) ; should this be an error? (it isn't in Guile)
 (test (case 0 ((1) #t) ((else) #f) ((0) 0)) 0)
+(test (apply case 1 '(((0) -1) ((1) 2))) 2)
+(test (let ((x #(1))) (apply case x (list (list (list #()) 1) (list (list #(1)) 2) (list (list x) 3) (list 'else 4)))) 3)
+
 
 (test (let ((x 0)) (let ((y (case 1 ((2) (set! x (+ x 3))) ((1) (set! x (+ x 4)) (+ x 2))))) (list x y))) '(4 6))
 (let ()
@@ -17463,7 +17567,9 @@ why are these different (read-time `#() ? )
     (apply define (symbol "3") '(32))
     (test (symbol->value (symbol "3")) 32) ; hmmm
     (apply define (list (symbol "3") (lambda () 32)))
-    (test (symbol->value (symbol "3")) 32))
+    (test (symbol->value (symbol "3")) 32)
+    (apply define (symbol ".") '(123))
+    (test (+ (symbol->value (symbol ".")) 321) 444))
 |#
 
   (test (keyword? '3) #f)
@@ -17560,6 +17666,7 @@ why are these different (read-time `#() ? )
 (test (keyword? (gensym)) #f)
 (test (let* ((a (gensym)) (b a)) (eq? a b)) #t)
 (test (let* ((a (gensym)) (b a)) (eqv? a b)) #t)
+(test (keyword? (symbol->keyword (gensym))) #t)
 
 (let ((sym (gensym)))
   (test (eval `(let ((,sym 32)) (+ ,sym 1))) 33))
@@ -17567,6 +17674,12 @@ why are these different (read-time `#() ? )
 (let ((sym1 (gensym))
       (sym2 (gensym)))
   (test (eval `(let ((,sym1 32) (,sym2 1)) (+ ,sym1 ,sym2))) 33))
+(test (eval (let ((var (gensym "a b c"))) `(let ((,var 2)) (+ ,var 1)))) 3)
+(test (eval (let ((var (gensym ""))) `(let ((,var 2)) (+ ,var 1)))) 3)
+(test (eval (let ((var (gensym "."))) `(let ((,var 2)) (+ ,var 1)))) 3)
+(test (eval (let ((var (gensym "{"))) `(let ((,var 2)) (+ ,var 1)))) 3)
+(test (eval (let ((var (gensym "}"))) `(let ((,var 2)) (+ ,var 1)))) 3)
+(test (eval (let ((var (gensym (string #\newline)))) `(let ((,var 2)) (+ ,var 1)))) 3)
 
 (test (let ((hi (gensym))) (eq? hi (string->symbol (symbol->string hi)))) #t)
 (test (let () (define-macro (hi a) (let ((var (gensym ";"))) `(let ((,var ,a)) (+ 1 ,var)))) (hi 1)) 2)
@@ -19038,7 +19151,7 @@ abs     1       2
   (for-each
    (lambda (arg)
      (test (procedure-name arg) ""))
-   (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+   (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
   (define (for-each-subset func args)
     (let* ((arity (procedure-arity func))
@@ -21306,7 +21419,14 @@ abs     1       2
   (test (environment? (procedure-environment ho)) #t)
   (test (environment? (procedure-environment f1)) #t)
   (test (environment? (procedure-environment f2)) #t)
-  (test (environment? (procedure-environment abs)) #t))
+  (test (environment? (procedure-environment abs)) #t)
+  (test (length (procedure-environment ho)) 1)
+  (test (> (length (procedure-environment abs)) 1000) #t)
+  (test (fill! (procedure-environment abs) 0) 'error)
+  (test (reverse (procedure-environment abs)) 'error)
+  (test (fill! (procedure-environment ho) 0) 'error)
+  (test (reverse (procedure-environment ho)) 'error))
+
 
 (let ()
   (apply augment-environment! (current-environment)
@@ -21360,6 +21480,8 @@ abs     1       2
 
 (test (let () (format #f "~A" (current-environment))) "#<environment>") 
 (test (let ((a 32) (b '(1 2 3))) (format #f "~A" (current-environment))) "#<environment>")
+(test (let ((a 1)) (object->string (current-environment))) "#<environment>")
+(test (let ((a 1)) (object->string (global-environment))) "#<environment>")
 (test (format #f "~A" (global-environment)) "#<environment>")
 (test (let ((a 32) (b #(1 2 3))) (format #f "~{~{var: ~A, value: ~A~}~^ ~}" (current-environment))) "var: a, value: 32 var: b, value: #(1 2 3)")
 

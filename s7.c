@@ -3501,10 +3501,12 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-static int environment_length(s7_pointer e)
+static int environment_length(s7_scheme *sc, s7_pointer e)
 {
   int i;
   s7_pointer p;
+  if (e == sc->global_env)
+    return(vector_fill_pointer(e));
   for (i = 0, p = environment_slots(e); is_slot(p); i++, p = next_slot(p));
   return(i);
 }
@@ -16843,11 +16845,13 @@ defaults to the global environment.  To load into the current environment instea
 
   if (is_not_null(cdr(args))) 
     {
-      if (!is_environment(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "load", 2, cadr(args), "an environment"));
-      if (is_pair(cadr(args)))
-	sc->envir = cadr(args);
-      else sc->envir = sc->NIL;
+      s7_pointer e;
+      e = cadr(args);
+      if (!is_environment(e))
+	return(s7_wrong_type_arg_error(sc, "load", 2, e, "an environment"));
+      if (e == sc->global_env)
+	sc->envir = sc->NIL;
+      else sc->envir = e;
     }
   else sc->envir = sc->NIL;
   
@@ -17003,11 +17007,13 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   
   if (is_not_null(cdr(args)))
     {
-      if (!is_environment(cadr(args)))
- 	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
-      if (cadr(args) == sc->global_env)
+      s7_pointer e;
+      e = cadr(args);
+      if (!is_environment(e))
+ 	return(s7_wrong_type_arg_error(sc, "eval-string", 2, e, "an environment"));
+      if (e == sc->global_env)
 	sc->envir = sc->NIL;
-      else sc->envir = cadr(args);
+      else sc->envir = e;
     }
 
   port = s7_open_input_string(sc, s7_string(car(args)));
@@ -18002,8 +18008,7 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   char *str;
   if ((s7_is_vector(obj)) ||
       (is_pair(obj)) ||
-      (s7_is_hash_table(obj)) ||
-      (is_environment(obj)))
+      (s7_is_hash_table(obj)))
     return(structure_to_string(sc, obj));
 
   str = atom_to_c_string(sc, obj, use_write);
@@ -18792,8 +18797,11 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
   s7_pointer p, ind;
 
   /* (let ((L '((1 2 3) (4 5 6)))) (list-set! L 1 2 32) L) */
+
   if (!is_pair(lst))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a pair"));
+  if (is_immutable(lst))
+    return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a mutable pair"));
 
   ind = car(args);
   if (!s7_is_integer(ind))
@@ -18838,6 +18846,8 @@ static s7_pointer g_list_set_ic(s7_scheme *sc, s7_pointer args)
   lst = car(args);
   if (!is_pair(lst))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a pair"));
+  if (is_immutable(lst))
+    return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a mutable pair"));
 
   index = s7_integer(cadr(args));
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
@@ -18928,11 +18938,15 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_car "(set-car! pair val) sets the pair's first element to val"
+  s7_pointer p;
+
+  p = car(args);
+  if (!is_pair(p))
+    return(s7_wrong_type_arg_error(sc, "set-car!", 1, p, "a pair"));
+  if (is_immutable(p))              /* (set-car! (procedure-arity cons) 1) !! or (define-constant c (list 1 2 3)) (set-car! c 2) */
+    return(s7_wrong_type_arg_error(sc, "set-car!", 1, p, "a mutable pair"));
   
-  if (!is_pair(car(args)))  
-    return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a pair"));
-  
-  caar(args) = cadr(args);
+  car(p) = cadr(args);
   return(cadr(args));
 }
 
@@ -18940,11 +18954,15 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_cdr "(set-cdr! pair val) sets the pair's second element to val"
+  s7_pointer p;
+
+  p = car(args);
+  if (!is_pair(p))
+    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, p, "a pair"));
+  if (is_immutable(p))              /* (set-cdr! (procedure-arity cons) 1) !! */
+    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, p, "a mutable pair"));
   
-  if (!is_pair(car(args))) 
-    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a pair"));
-  
-  cdar(args) = cadr(args);
+  cdr(p) = cadr(args);
   return(cadr(args));
 }
 
@@ -23406,6 +23424,18 @@ In each case, the argument is the value of the object, not the object itself."
 		    }
 		  func_loc = s7_gc_protect(sc, func); /* this ought to be faster in the mark phase than checking every function field of every scheme type(?) */
 		  proc_args = s7_procedure_arity(sc, func);
+#if DEBUGGING
+		  if ((!is_pair(proc_args)) ||
+		      (!s7_is_integer(car(proc_args))) ||
+		      (!is_pair(cdr(proc_args))) ||
+		      (!s7_is_integer(cadr(proc_args))) ||
+		      (!is_pair(cddr(proc_args))) ||
+		      (!s7_is_boolean(caddr(proc_args))))
+		    {
+		      fprintf(stderr, "proc passed to make-type: %s\n", DISPLAY(proc_args));
+		      abort();
+		    }
+#endif
 		  nargs = s7_integer(car(proc_args)) + s7_integer(cadr(proc_args));
 		  rest_arg = (caddr(proc_args) != sc->F);
 		}
@@ -23861,9 +23891,11 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
 
     case T_SYMBOL:
       {
-	s7_pointer slot;
+	s7_pointer slot; 
 	slot = find_symbol(sc, proc); /* we don't want unbound-variable errors here */
-	if (!is_null(slot))
+	if ((!is_null(slot)) &&
+	    (proc != slot_value(slot)) &&       /* (procedure-name :hi) -> infinite loop */
+	    (is_procedure(slot_value(slot))))   /* a symbol -> symbol -> back to 1st?? */
 	  return(s7_procedure_name(sc, slot_value(slot)));
 	return(NULL);
       }
@@ -24937,7 +24969,7 @@ list has infinite length."
       return(object_length(sc, car(args)));
 
     case T_ENVIRONMENT:
-      return(make_integer(sc, environment_length(car(args))));
+      return(make_integer(sc, environment_length(sc, car(args))));
 
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
@@ -25440,6 +25472,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 	      switch (str[i + 1])
 		{
 		case '%':                           /* -------- newline -------- */
+		  /* sbcl apparently accepts numeric args here (including 0) */
 		  format_append_char(fdat, '\n');
 		  i++;
 		  break;
@@ -27450,12 +27483,13 @@ pass (global-environment):\n\
   
   if (is_not_null(cdr(args)))
     {
-      if (!is_environment(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
-
-      if (cadr(args) == sc->global_env)
+      s7_pointer e;
+      e = cadr(args);
+      if (!is_environment(e))
+	return(s7_wrong_type_arg_error(sc, "eval", 2, e, "an environment"));
+      if (e == sc->global_env)
 	sc->envir = sc->NIL;
-      else sc->envir = cadr(args);
+      else sc->envir = e;
     }
   sc->code = car(args);
 
@@ -36678,6 +36712,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       s7_close_input_port(sc, sc->input_port);
       pop_input_port(sc);
       sc->current_file = NULL;
+
+      if (is_multiple_value(sc->value))                    /* (load "file") where "file" is (values 1 2 3) */
+	sc->value = splice_in_values(sc, multiple_value(sc->value));
       goto START;
       
 
@@ -43597,6 +43634,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_slot(sc->x))
 	set_immutable(slot_symbol(sc->x));
 
+#if DEBUGGING
+      if ((!is_immutable(slot_value(sc->x))) &&
+	  (has_structure(slot_value(sc->x))))
+	{
+	  fprintf(stderr, "%s value %s is mutable\n", DISPLAY(sc->value), DISPLAY_80(slot_value(sc->x)));
+	}
+#endif
       /* if we have define-constant of a symbol that is purely local, then reload the file containing that code,
        *   the symbol itself is immutable, but the original local slot has vanished, so we can't compare (below)
        *   against the old value.  Should define-constant always be global?  Otherwise we need to keep track of
