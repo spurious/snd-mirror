@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.101"
-#define S7_DATE "6-Jan-11"
+#define S7_VERSION "1.102"
+#define S7_DATE "12-Jan-11"
 
 
 typedef long long int s7_Int;
@@ -728,6 +728,7 @@ int s7_new_type_x(const char *name,
 		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
 		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj),
 		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
 
 bool s7_is_object(s7_pointer p);
@@ -835,6 +836,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 12-Jan:    added reverse argument to s7_new_type_x.  This is needed because an object might implement
+ *              the apply and set methods, but they might refer to different things.
  * 6-Jan-12:  added (scheme side) logbit?.
  * --------
  * 21-Dec:    s7_eval, s7_make_slot, s7_slot_set_value.

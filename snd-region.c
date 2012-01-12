@@ -1436,7 +1436,7 @@ static XEN s7_xen_region_length(s7_scheme *sc, XEN obj)
 static void init_xen_region(void)
 {
 #if HAVE_SCHEME
-  xen_region_tag = XEN_MAKE_OBJECT_TYPE("<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, s7_xen_region_length, NULL, NULL);
+  xen_region_tag = XEN_MAKE_OBJECT_TYPE("<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, s7_xen_region_length, NULL, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_region_tag = XEN_MAKE_OBJECT_TYPE("XenRegion", sizeof(xen_region));

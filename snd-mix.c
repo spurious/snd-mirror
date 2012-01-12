@@ -2664,7 +2664,7 @@ static XEN s7_xen_mix_copy(s7_scheme *sc, s7_pointer obj)
 static void init_xen_mix(void)
 {
 #if HAVE_SCHEME
-  xen_mix_tag = XEN_MAKE_OBJECT_TYPE("<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, s7_xen_mix_copy, NULL);
+  xen_mix_tag = XEN_MAKE_OBJECT_TYPE("<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, s7_xen_mix_copy, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_mix_tag = XEN_MAKE_OBJECT_TYPE("XenMix", sizeof(xen_mix));
@@ -3981,7 +3981,7 @@ void g_init_mix(void)
   init_xen_mix();
 
 #if HAVE_SCHEME
-  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL);
+  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL, NULL);
 #else
   mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampler", sizeof(mix_fd));
 #endif

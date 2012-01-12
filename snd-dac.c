@@ -2780,7 +2780,7 @@ static XEN s7_xen_player_length(s7_scheme *sc, XEN player)
 static void init_xen_player(void)
 {
 #if HAVE_SCHEME
-  xen_player_tag = XEN_MAKE_OBJECT_TYPE("<player>", print_xen_player, free_xen_player, s7_xen_player_equalp, NULL, NULL, NULL, s7_xen_player_length, NULL, NULL);
+  xen_player_tag = XEN_MAKE_OBJECT_TYPE("<player>", print_xen_player, free_xen_player, s7_xen_player_equalp, NULL, NULL, NULL, s7_xen_player_length, NULL, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_player_tag = XEN_MAKE_OBJECT_TYPE("XenPlayer", sizeof(xen_player));

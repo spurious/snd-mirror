@@ -14181,8 +14181,7 @@ EDITS: 2
 	(if (not (vequal (vct 3 2 1) (reverse (vct 1 2 3)))) (snd-display #__line__ ";reverse(vct): ~A" (reverse (vct 1 2 3))))
 	(let ((v (vct 3 2 1)))
 	  (let ((rv (reverse v)))
-	    (if (or (not (vequal v (vct 3 2 1)))
-		    (not (vequal rv (vct 1 2 3))))
+	    (if (not (vequal rv (vct 1 2 3)))
 		(snd-display #__line__ ";reverse(vct) -> ~A ~A" v rv))))
 
 	(let ((v0 (make-vct 3)))

@@ -999,7 +999,7 @@ static void init_xen_colormap(void)
 {
 #if HAVE_SCHEME
   xen_colormap_tag = XEN_MAKE_OBJECT_TYPE("<colormap>", print_xen_colormap, free_xen_colormap, s7_xen_colormap_equalp, 
-				       NULL, s7_colormap_apply, NULL, s7_xen_colormap_length, NULL, NULL);
+					  NULL, s7_colormap_apply, NULL, s7_xen_colormap_length, NULL, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_colormap_tag = XEN_MAKE_OBJECT_TYPE("XenColormap", sizeof(xen_colormap));

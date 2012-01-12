@@ -10,11 +10,13 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 9
-#define XEN_VERSION "3.9"
+#define XEN_MINOR_VERSION 10
+#define XEN_VERSION "3.10"
 
 /* HISTORY:
  *
+ *  12-Jan-12: added reverse argument to s7 version of XEN_MAKE_OBJECT_TYPE.
+ *  --------
  *  20-Oct:    XEN_LONG_LONG_P.
  *  5-Jun-11:  XEN_DEFINE_SAFE_PROCEDURE, an experiment with s7.
  *  --------
@@ -1407,8 +1409,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a)                           s7_make_symbol(s7, a)
 
 #define XEN_MARK_OBJECT_TYPE                                          void
-#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Fill) \
-                                                                      s7_new_type_x(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Fill)
+#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Reverse, Fill) \
+                                                                      s7_new_type_x(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Reverse, Fill)
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
                                                                       static void Wrapped_Free(void *obj) {Original_Free((Type *)obj);}
 #define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \

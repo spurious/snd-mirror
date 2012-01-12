@@ -2062,7 +2062,7 @@ static XEN s7_xen_mark_copy(s7_scheme *sc, s7_pointer obj)
 static void init_xen_mark(void)
 {
 #if HAVE_SCHEME
-  xen_mark_tag = XEN_MAKE_OBJECT_TYPE("<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL);
+  xen_mark_tag = XEN_MAKE_OBJECT_TYPE("<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_mark_tag = XEN_MAKE_OBJECT_TYPE("XenMark", sizeof(xen_mark));

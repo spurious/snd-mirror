@@ -2199,7 +2199,7 @@ static void init_xen_transform(void)
 {
 #if HAVE_SCHEME
   xen_transform_tag = XEN_MAKE_OBJECT_TYPE("<transform>", print_xen_transform, free_xen_transform, s7_xen_transform_equalp, 
-				       NULL, NULL, NULL, s7_xen_transform_length, NULL, NULL);
+					   NULL, NULL, NULL, s7_xen_transform_length, NULL, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_transform_tag = XEN_MAKE_OBJECT_TYPE("XenTransform", sizeof(xen_transform));

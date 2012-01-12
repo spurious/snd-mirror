@@ -4465,17 +4465,18 @@ static XEN g_wave_train_p(XEN obj)
 
 /* ---------------- waveshaping ---------------- */
 
-enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST, NEGATIVE_NUMBER_IN_LIST};
+enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST, NEGATIVE_NUMBER_IN_LIST, HUGE_NUMBER_IN_LIST};
 
 static const char *list_to_partials_error_to_string(int code)
 {
   switch (code)
     {
-    case NO_PROBLEM_IN_LIST:          return("~A: nothing wrong with partials list?? ~A");                   break;
-    case NULL_LIST:                   return("~A: partials list is null, ~A");                               break;
-    case ODD_LENGTH_LIST:             return("~A: partials list has an odd number of elements: ~A");         break;
-    case NON_NUMBER_IN_LIST:          return("~A: partials list has a non-numerical element: ~A");           break;
-    case NEGATIVE_NUMBER_IN_LIST:     return("~A: partials list has a partial number that is negative: ~A"); break;
+    case NO_PROBLEM_IN_LIST:          return("~A: nothing wrong with partials list?? ~A");                    break;
+    case NULL_LIST:                   return("~A: partials list is null, ~A");                                break;
+    case ODD_LENGTH_LIST:             return("~A: partials list has an odd number of elements: ~A");          break;
+    case NON_NUMBER_IN_LIST:          return("~A: partials list has a non-numerical element: ~A");            break;
+    case NEGATIVE_NUMBER_IN_LIST:     return("~A: partials list has a partial number that is negative: ~A");  break;
+    case HUGE_NUMBER_IN_LIST:         return("~A: partials list has a partial number that is too large: ~A"); break;
     }
   return("~A: unknown error, ~A");
 }
@@ -4526,7 +4527,15 @@ static mus_float_t *list_to_partials(XEN harms, int *npartials, int *error_code)
 	maxpartial = curpartial;
     }
 
+  if (maxpartial > 10000000)
+    {
+      (*error_code) = NEGATIVE_NUMBER_IN_LIST;
+      return(NULL);
+    }
+
   partials = (mus_float_t *)calloc(maxpartial + 1, sizeof(mus_float_t));
+  /* TODO: here and elsewhere? this won't be null until we touch it in linux
+   */
   if (partials == NULL)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
@@ -5427,8 +5436,17 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 		    {
 		      XEN el;
 		      el = XEN_CAR(lst);
-		      brkpts[i] = XEN_TO_C_DOUBLE(XEN_CAR(el));
-		      brkpts[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
+		      if ((XEN_PAIR_P(el)) &&
+			  (XEN_NUMBER_P(XEN_CAR(el))) &&
+			  (XEN_PAIR_P(XEN_CDR(el))) &&
+			  (XEN_NUMBER_P(XEN_CADR(el))))
+			{
+			  brkpts[i] = XEN_TO_C_DOUBLE(XEN_CAR(el));
+			  brkpts[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
+			}
+		      else XEN_ERROR(BAD_TYPE, 
+				     XEN_LIST_2(C_TO_XEN_STRING(S_make_env ": odd breakpoints list? ~A"), 
+						keys[0]));
 		    }
 		}
 	    }
@@ -12253,8 +12271,9 @@ static void mus_xen_init(void)
 #endif
 
 #if HAVE_SCHEME
+  /* PERHAPS: s7_mus_reverse? */
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
-				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, s7_mus_fill);
+				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, NULL, s7_mus_fill);
   as_needed_arglist = XEN_LIST_1(XEN_ZERO);
   XEN_PROTECT_FROM_GC(as_needed_arglist);
 #else

@@ -1043,7 +1043,7 @@ static void init_xen_selection(void)
   xen_selection_tag = XEN_MAKE_OBJECT_TYPE("<selection>", 
 					   print_xen_selection, free_xen_selection, s7_xen_selection_equalp, 
 					   NULL, NULL, NULL, s7_xen_selection_length, 
-					   s7_xen_selection_copy, s7_xen_selection_fill);
+					   s7_xen_selection_copy, NULL, s7_xen_selection_fill);
 #else
 #if HAVE_RUBY
   xen_selection_tag = XEN_MAKE_OBJECT_TYPE("XenSelection", sizeof(xen_selection));

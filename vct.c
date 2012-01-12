@@ -236,6 +236,7 @@ static XEN g_vct_fill(XEN obj, XEN val);
 #if (HAVE_SCHEME)
 static XEN g_vct_length(XEN obj);
 static XEN g_vct_copy(XEN obj);
+static XEN g_vct_reverse(XEN obj, XEN len);
 
 static bool s7_mus_vct_equalp(void *uv1, void *uv2)
 {
@@ -296,6 +297,11 @@ static XEN s7_mus_vct_length(s7_scheme *sc, XEN obj)
 static XEN s7_mus_vct_copy(s7_scheme *sc, XEN obj)
 {
   return(g_vct_copy(obj));
+}
+
+static XEN s7_mus_vct_reverse(s7_scheme *sc, XEN obj)
+{
+  return(g_vct_reverse(obj, XEN_UNDEFINED));
 }
 
 static XEN s7_mus_vct_fill(s7_scheme *sc, XEN obj, XEN val)
@@ -1347,7 +1353,7 @@ void mus_vct_init(void)
 #if HAVE_SCHEME
   vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, NULL, 
 				 s7_mus_vct_apply, s7_mus_vct_set, s7_mus_vct_length, 
-				 s7_mus_vct_copy, s7_mus_vct_fill);
+				 s7_mus_vct_copy, s7_mus_vct_reverse, s7_mus_vct_fill);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #endif

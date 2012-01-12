@@ -2655,7 +2655,7 @@ static void init_xen_sound(void)
 {
 #if HAVE_SCHEME
   xen_sound_tag = XEN_MAKE_OBJECT_TYPE("<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, 
-				       NULL, NULL, NULL, s7_xen_sound_length, s7_xen_sound_copy, s7_xen_sound_fill);
+				       NULL, NULL, NULL, s7_xen_sound_length, s7_xen_sound_copy, NULL, s7_xen_sound_fill);
 #else
 #if HAVE_RUBY
   xen_sound_tag = XEN_MAKE_OBJECT_TYPE("XenSound", sizeof(xen_sound));

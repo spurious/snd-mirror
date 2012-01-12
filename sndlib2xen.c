@@ -2661,8 +2661,9 @@ void mus_sndlib_xen_initialize(void)
   mus_sound_initialize();
 
 #if HAVE_SCHEME
+  /* PERHAPS: s7_sound_data_reverse */
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, NULL, 
-					sound_data_apply, s7_sound_data_set, s7_sound_data_length, s7_sound_data_copy, s7_sound_data_fill);
+					sound_data_apply, s7_sound_data_set, s7_sound_data_length, s7_sound_data_copy, NULL, s7_sound_data_fill);
 #else
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
 #endif

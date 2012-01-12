@@ -330,7 +330,7 @@ enum {OP_NO_OP,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
-      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, OP_SORT_OBJECT,
+      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, 
       OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_HOOK_APPLY, 
       OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
       
@@ -403,7 +403,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "trace-return", "error-hook-quit", "trace-hook-quit", "with-environment", "with-environment", "define-expansion",
    "for-each", "for-each", "for-each", "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
-   "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!",
+   "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", 
    "eval-string", "eval-string", "hook-apply", 
    "member", "assoc", "member", "assoc",
    
@@ -469,7 +469,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
   
   "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
-  "OP_GET_OUTPUT_STRING", "OP_SORT", "OP_SORT1", "OP_SORT2", "OP_SORT3", "OP_SORT4", "OP_SORT_TWO", "OP_SORT_OBJECT",
+  "OP_GET_OUTPUT_STRING", "OP_SORT", "OP_SORT1", "OP_SORT2", "OP_SORT3", "OP_SORT4", "OP_SORT_TWO", 
   "OP_EVAL_STRING_1", "OP_EVAL_STRING_2", "OP_HOOK_APPLY", 
   "OP_MEMBER_IF", "OP_ASSOC_IF", "OP_MEMBER_IF1", "OP_ASSOC_IF1",
   
@@ -1757,7 +1757,6 @@ static bool s7_is_positive(s7_pointer obj);
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
 static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
-static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static bool is_pws(s7_pointer obj);
 static token_t token(s7_scheme *sc);
@@ -8476,12 +8475,12 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  /* (Clisp gives divide-by-zero error here, Guile returns inf.0) */
 
 	  if ((!s7_is_rational(pw)) &&                         /* (expt 0 most-positive-fixnum) */
-	      (is_NaN(s7_real(pw))))                            /* (expt 0 +nan.0) */
+	      (is_NaN(s7_real(pw))))                           /* (expt 0 +nan.0) */
 	    return(pw);
 	}
       else
 	{                                                      /* (expt 0 a+bi) */
-	  if (real_part(pw) < 0.0)                     /* (expt 0 -1+i) */
+	  if (real_part(pw) < 0.0)                             /* (expt 0 -1+i) */
 	    return(division_by_zero_error(sc, "expt", args));  
 	}
 
@@ -21138,6 +21137,12 @@ If its first argument is a list, the list is copied (despite the '!')."
       break;
 
     case T_VECTOR:
+      /* (sort! (symbol-table) (lambda (a b) (< (length a) (length b)))) 
+       * but this is harmless because (symbol-table) copies the vector -- are there any other cases?
+       *
+       * if (is_immutable(data)) 
+       *   return(s7_wrong_type_arg_error(sc, "sort!", 1, data, "a mutable vector"));
+       */
       len = vector_length(data);
 
       if ((is_safe_procedure(lessp)) &&
@@ -21151,15 +21156,8 @@ If its first argument is a list, the list is copied (despite the '!')."
 	}
       break;
 
-    case T_C_OBJECT:
-      {
-	s7_pointer vect;
-	vect = object_to_vector(sc, data);                      /* this can raise an error */
-	len = vector_length(vect);
-	push_stack(sc, OP_SORT_OBJECT, sc->args, list_2(sc, car(args), vect)); /* gc protect, OP_SORT_OBJECT calls vector_to_object */
-	car(args) = vect;
-	break;
-      }
+      /* SOMEDAY: to sort c/s objects requires another arg to s7_new_type_x and make-type
+       */
     }
 
   if (len < 2) return(data);
@@ -22770,11 +22768,9 @@ typedef struct {
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*length)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
+  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-  s7_pointer print_func, equal_func, getter_func, setter_func, length_func, copy_func, fill_func;
-  /*
-  char *(*scheme_print)(s7_scheme *sc, s7_pointer obj);
-  */
+  s7_pointer print_func, equal_func, getter_func, setter_func, length_func, copy_func, reverse_func, fill_func;
 } s7_object_t;
 
 
@@ -22863,6 +22859,7 @@ int s7_new_type(const char *name,
 
   object_types[tag].length = fallback_length;
   object_types[tag].copy = NULL;
+  object_types[tag].reverse = NULL;
   object_types[tag].fill = NULL;
   object_types[tag].print_func = NULL;
   object_types[tag].length_func = NULL;
@@ -22870,6 +22867,7 @@ int s7_new_type(const char *name,
   object_types[tag].getter_func = NULL;
   object_types[tag].setter_func = NULL;
   object_types[tag].copy_func = NULL;
+  object_types[tag].reverse_func = NULL;
   object_types[tag].fill_func = NULL;
   return(tag);
 }
@@ -22884,6 +22882,7 @@ int s7_new_type_x(const char *name,
 		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
 		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj),
 		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer val))
 {
   int tag;
@@ -22894,6 +22893,7 @@ int s7_new_type_x(const char *name,
   else object_types[tag].length = fallback_length;
 
   object_types[tag].copy = copy;
+  object_types[tag].reverse = reverse;
   object_types[tag].fill = fill;
   return(tag);
 }
@@ -23009,159 +23009,16 @@ static s7_pointer object_copy(s7_scheme *sc, s7_pointer obj)
 }
 
 
-#define SAVE_X_Y_Z(X, Y, Z)	     \
-  do {                               \
-    X = ((is_null(sc->x)) ? -1 : s7_gc_protect(sc, sc->x));	\
-    Y = ((is_null(sc->y)) ? -1 : s7_gc_protect(sc, sc->y));	\
-    Z = ((is_null(sc->z)) ? -1 : s7_gc_protect(sc, sc->z));	\
-  } while (0)
-
-#define RESTORE_X_Y_Z(X, Y, Z)                \
-  do {                                        \
-    if (X == -1) sc->x = sc->NIL; else {sc->x = s7_gc_protected_at(sc, X); s7_gc_unprotect_at(sc, X);} \
-    if (Y == -1) sc->y = sc->NIL; else {sc->y = s7_gc_protected_at(sc, Y); s7_gc_unprotect_at(sc, Y);} \
-    if (Z == -1) sc->z = sc->NIL; else {sc->z = s7_gc_protected_at(sc, Z); s7_gc_unprotect_at(sc, Z);} \
-    } while (0)
-
-
 static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
 {
-  /* someday this should be embedded in the evaluator
-   *    it's called only in g_reverse.
-   */
   int tag;
   tag = object_type(obj);
-  if ((object_types[tag].copy) &&
-      (object_types[tag].length) &&
-      (object_types[tag].set) &&
-      (object_types[tag].apply))
-    {
-      s7_pointer new_obj, i_args, j_args, i_set_args, j_set_args;
-      int new_obj_gc_loc, i_gc_loc, j_gc_loc, i_set_gc_loc, j_set_gc_loc;
-      s7_Int i, j, len;
-      int save_x = -1, save_y = -1, save_z = -1;
+  if (object_types[tag].reverse)
+    return((*(object_types[tag].reverse))(sc, obj));
 
-      SAVE_X_Y_Z(save_x, save_y, save_z);
-
-      new_obj = object_copy(sc, obj);
-      new_obj_gc_loc = s7_gc_protect(sc, new_obj);
-      len = s7_integer(object_length(sc, obj));
-
-      i_args = list_1(sc, make_mutable_integer(sc, 0));
-      i_gc_loc = s7_gc_protect(sc, i_args);
-      j_args = list_1(sc, make_mutable_integer(sc, len - 1));
-      j_gc_loc = s7_gc_protect(sc, j_args);
-      i_set_args = list_2(sc, car(i_args), sc->NIL);
-      i_set_gc_loc = s7_gc_protect(sc, i_set_args);
-      j_set_args = list_2(sc, car(j_args), sc->NIL);
-      j_set_gc_loc = s7_gc_protect(sc, j_set_args);
-      /* all that to reduce consing during the loop! */
-
-      for (i = 0, j = len - 1; i < j; i++, j--)
-	{
-	  s7_pointer tmp;
-	  integer(car(i_args)) = i;
-	  integer(car(j_args)) = j;
-
-	  tmp = (*(object_ref(obj)))(sc, obj, i_args);         /* tmp = obj[i] */
-	  cadr(i_set_args) = (*(object_ref(obj)))(sc, obj, j_args);
-	  (*(object_set(new_obj)))(sc, new_obj, i_set_args);         /* obj[i] = obj[j] */
-	  cadr(j_set_args) = tmp;
-	  (*(object_set(new_obj)))(sc, new_obj, j_set_args);         /* obj[j] = tmp */
-	}
-
-      s7_gc_unprotect_at(sc, i_gc_loc);
-      s7_gc_unprotect_at(sc, j_gc_loc);
-      s7_gc_unprotect_at(sc, i_set_gc_loc);
-      s7_gc_unprotect_at(sc, j_set_gc_loc);
-      s7_gc_unprotect_at(sc, new_obj_gc_loc);
-      RESTORE_X_Y_Z(save_x, save_y, save_z);
-		     
-      return(new_obj);
-    }
-
-  return(s7_wrong_type_arg_error(sc, "reverse", 0, obj, "a reversible object"));
+  return(eval_error(sc, "attempt to reverse ~A?", obj));
 }
 
-
-static s7_pointer object_to_vector(s7_scheme *sc, s7_pointer obj)
-{
-  int tag;
-  tag = object_type(obj);
-  if ((object_types[tag].length) &&
-      (object_types[tag].set) &&
-      (object_types[tag].apply))
-    {
-      s7_pointer vect, i_args;
-      int vect_gc_loc, i_gc_loc;
-      s7_Int i, len;
-      int save_x = -1, save_y = -1, save_z = -1;
-
-      SAVE_X_Y_Z(save_x, save_y, save_z);
-
-      len = s7_integer(object_length(sc, obj));
-      vect = make_vector_1(sc, len, FILLED, true);
-      /* this needs to fill the vector right now (hence FILLED above) because otherwise if the GC is called
-       *    while we're filling it (via s7_mus_vct_apply for example which calls s7_make_real which allocates)
-       *    mark_vector will try to call S7_MARK on a random set of bits!
-       */
-      vect_gc_loc = s7_gc_protect(sc, vect);
-
-      i_args = list_1(sc, make_mutable_integer(sc, 0));
-      i_gc_loc = s7_gc_protect(sc, i_args);
-
-      for (i = 0; i < len; i++)
-	{
-	  integer(car(i_args)) = i;
-	  vector_element(vect, i) = (*(object_ref(obj)))(sc, obj, i_args);
-	}
-
-      RESTORE_X_Y_Z(save_x, save_y, save_z);
-      s7_gc_unprotect_at(sc, i_gc_loc);
-      s7_gc_unprotect_at(sc, vect_gc_loc);
-
-      return(vect);
-    }
-  return(s7_wrong_type_arg_error(sc, "object->vector", 0, obj, "an object with length, set!, and get functions"));
-}
-
-
-static s7_pointer vector_to_object(s7_scheme *sc, s7_pointer vect, s7_pointer obj)
-{
-  int tag;
-  tag = object_type(obj);
-  if ((object_types[tag].length) &&
-      (object_types[tag].set) &&
-      (object_types[tag].apply))
-    {
-      s7_pointer i_args, i_set_args;
-      int i_gc_loc, i_set_gc_loc;
-      s7_Int i, len;
-      int save_x = -1, save_y = -1, save_z = -1;
-
-      SAVE_X_Y_Z(save_x, save_y, save_z);
-
-      len = vector_length(vect);
-      i_args = list_1(sc, make_mutable_integer(sc, 0));
-      i_gc_loc = s7_gc_protect(sc, i_args);
-      i_set_args = list_2(sc, car(i_args), sc->NIL);
-      i_set_gc_loc = s7_gc_protect(sc, i_set_args);
-
-      for (i = 0; i < len; i++)
-	{
-	  integer(car(i_args)) = i;
-	  cadr(i_set_args) = vector_element(vect, i);
-	  (*(object_set(obj)))(sc, obj, i_set_args);
-	}
-
-      RESTORE_X_Y_Z(save_x, save_y, save_z);
-      s7_gc_unprotect_at(sc, i_gc_loc);
-      s7_gc_unprotect_at(sc, i_set_gc_loc);
-
-      return(obj);
-    }
-  return(s7_wrong_type_arg_error(sc, "vector->object", 0, obj, "an object with length, set!, and get functions"));
-}
 
 
 
@@ -23232,6 +23089,20 @@ static s7_pointer g_internal_object_set(s7_scheme *sc, s7_pointer args)
 }
 
 
+#define SAVE_X_Y_Z(X, Y, Z)	     \
+  do {                               \
+    X = ((is_null(sc->x)) ? -1 : s7_gc_protect(sc, sc->x));	\
+    Y = ((is_null(sc->y)) ? -1 : s7_gc_protect(sc, sc->y));	\
+    Z = ((is_null(sc->z)) ? -1 : s7_gc_protect(sc, sc->z));	\
+  } while (0)
+
+#define RESTORE_X_Y_Z(X, Y, Z)                \
+  do {                                        \
+    if (X == -1) sc->x = sc->NIL; else {sc->x = s7_gc_protected_at(sc, X); s7_gc_unprotect_at(sc, X);} \
+    if (Y == -1) sc->y = sc->NIL; else {sc->y = s7_gc_protected_at(sc, Y); s7_gc_unprotect_at(sc, Y);} \
+    if (Z == -1) sc->z = sc->NIL; else {sc->z = s7_gc_protected_at(sc, Z); s7_gc_unprotect_at(sc, Z);} \
+    } while (0)
+
 static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
 {
   s_type_t *obj;
@@ -23289,6 +23160,21 @@ static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
   new_obj->type = obj->type;
 
   new_obj->value = s7_call(sc, object_types[new_obj->type].copy_func, sc->s_function_args);
+  return(s7_make_object(sc, new_obj->type, (void *)new_obj));
+}
+
+
+static s7_pointer call_s_object_reverse(s7_scheme *sc, s7_pointer a)
+{
+  s_type_t *obj, *new_obj;
+
+  obj = (s_type_t *)s7_object_value(a);
+  car(sc->s_function_args) = obj->value;
+
+  new_obj = (s_type_t *)calloc(1, sizeof(s_type_t));
+  new_obj->type = obj->type;
+
+  new_obj->value = s7_call(sc, object_types[new_obj->type].reverse_func, sc->s_function_args);
   return(s7_make_object(sc, new_obj->type, (void *)new_obj));
 }
 
@@ -23384,7 +23270,7 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_type "(make-type print equal getter setter length name copy fill) returns a new type object, \
+  #define H_make_type "(make-type print equal getter setter length name copy reverse fill) returns a new type object, \
 a list of three functions: ?, make, and ref.  The '?' function returns #t if passed an argument of the new type, \
 the 'make' function creates a new object of that type, and the 'ref' function returns the value of that object.\
 The optional arguments to make-type are functions that specify how objects of the new type display themselves (print, 1 argument), \
@@ -23531,7 +23417,20 @@ In each case, the argument is the value of the object, not the object itself."
 		  object_types[tag].copy = call_s_object_copy;
 		  break;
 
-		case 7:                 /* fill */
+		case 7:                 /* reverse */
+		  if ((s7_integer(car(proc_args)) > 1) || 
+		      ((nargs == 0) && (!rest_arg)))
+		    {
+		      s7_gc_unprotect_at(sc, args_loc);
+		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				      list_2(sc, make_protected_string(sc, "make-type :reverse procedure, ~A, should take at one argument"), func)));
+		    }
+		  object_types[tag].reverse_func = func;
+		  object_types[tag].reverse = call_s_object_reverse;
+		  break;
+
+		case 8:                 /* fill */
 		  if ((s7_integer(car(proc_args)) > 2) || 
 		      ((nargs < 2) && (!rest_arg)))
 		    {
@@ -25084,7 +24983,6 @@ also accepts a string or vector argument."
 
     case T_C_OBJECT:
       return(object_reverse(sc, p));
-      break;
 
     default:
       return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list, string, vector, or hash-table"));
@@ -36892,11 +36790,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SORT4:
       /* sc->value is the sort vector which needs to be turned into a list */
       sc->value = s7_vector_to_list(sc, sc->value);
-      goto START;
-
-    case OP_SORT_OBJECT:
-      /* sc->value is the sorted vector which needs to be loaded back into the original object */
-      sc->value = vector_to_object(sc, sc->value, car(sc->code));
       goto START;
 
     case OP_SORT_TWO:
@@ -53546,7 +53439,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "exact?",                    g_is_exact,                 1, 0, false, H_is_exact);
   s7_define_safe_function(sc, "inexact?",                  g_is_inexact,               1, 0, false, H_is_inexact);
 
-  rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL);
+  rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
 
   s7_define_safe_function(sc, "number?",                   g_is_number,                1, 0, false, H_is_number);
   s7_define_safe_function(sc, "integer?",                  g_is_integer,               1, 0, false, H_is_integer);
@@ -53772,7 +53665,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, s_type_make_name,                 s_type_make,                2, 0, false, "internal object creation");
   s7_define_function(sc, s_type_ref_name,                  s_type_ref,                 2, 0, false, "internal object value");
 
-  s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy fill", H_make_type);
+  s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy reverse fill", H_make_type);
   set_global(make_symbol(sc, "length"));
   set_global(make_symbol(sc, "copy"));
 

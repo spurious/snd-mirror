@@ -18068,6 +18068,8 @@ why are these different (read-time `#() ? )
 (test (sort! '(3 2 1) (lambda (a) #f)) 'error)
 (test (sort! '(3 2 1) (lambda* (a) #f)) 'error)
 (test (sort! '(3 1 2 4) (lambda args (< (car args) (cadr args)))) '(1 2 3 4))
+(test (vector? (sort! (symbol-table) (lambda (a b) (< (length a) (length b))))) #t) ; (symbol-table) copies the table
+(test (sort! (global-environment) <) 'error)
 
 (test (equal? (sort! (vector 3 4 8 2 0 1 5 9 7 6) <) (vector 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! '#() <) '#()) #t)
@@ -18222,21 +18224,6 @@ why are these different (read-time `#() ? )
   ;(test (* 524288 19073486328125) 'error)  ; maybe someday...
   (set! *safety* old-safety))
 
-(if (defined? 'make-vct)
-    (let ((v (vct 1 4 2 34 2)))
-      (test (length v) 5)
-      (test (v 1) 4.0)
-      (sort! v <)
-      (test v (vct 1 2 2 4 34))
-      (set! (v 1) 32)
-      (sort! v >)
-      (test v (vct 34 32 4 2 1))
-      (test v (copy v))
-      (test (reverse v) (vct 1 2 4 32 34))
-      (test (object->string v) "#<vct[len=5]: 34.000 32.000 4.000 2.000 1.000>")
-      (test (fill! v 1.0) (vct 1 1 1 1 1))
-      ))
-
 (let* ((vtype (make-type :getter vector-ref
 			 :setter vector-set!
 			 :length vector-length))
@@ -18249,12 +18236,7 @@ why are these different (read-time `#() ? )
     (set! (v1 2) 111)
     (set! (v1 3) 1111)
     (set! (v1 4) 11111)
-    (set! (v1 5) -1)
-    (sort! v1 <)
-    (test (v1 0) -1)
-    (test (v1 3) 111)))
-	   
-
+    (set! (v1 5) -1)))
 
 
 
@@ -20861,7 +20843,7 @@ abs     1       2
       (define float-vector #f)
       
       (let* ((fv-type (make-type 
-		       :getter vector-ref :length length :copy copy :fill fill!
+		       :getter vector-ref :length length :copy copy :fill fill! :reverse reverse
 		       :setter (lambda (obj index value)
 				 (if (not (real? value))
 				     (error 'wrong-type-arg-error "float-vector element must be real: ~S" value))
@@ -21416,7 +21398,7 @@ abs     1       2
   (test (environment? (procedure-environment f2)) #t)
   (test (environment? (procedure-environment abs)) #t)
   (test (length (procedure-environment ho)) 1)
-  (test (> (length (procedure-environment abs)) 1000) #t)
+  (test (> (length (procedure-environment abs)) 100) #t)
   (test (fill! (procedure-environment abs) 0) 'error)
   (test (reverse (procedure-environment abs)) 'error)
   (test (fill! (procedure-environment ho) 0) 'error)
