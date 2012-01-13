@@ -25459,7 +25459,7 @@ EDITS: 2
 	    (let ((tag (catch #t
 			      (lambda ()
 				(set! (vf1 0) (make-oscil))
-				(set! (vf2 1) (sqrt -1.0))
+				(set! (vf2 1) 0+i)
 				(mus-mix-1 (make-mix-output "fmv.snd" k) (make-mix-input "fmv2.snd" k) 0 12 0 (make-mixer 2 1.0 1.0 1.0 1.0) vf))
 			      (lambda args (car args)))))
 	      (if (not (eq? tag 'bad-type))
@@ -25975,11 +25975,11 @@ EDITS: 2
 		    (for-each
 		     (lambda (arg2)
 		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error 0+i (make-delay 32)
 			   (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			   )))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error 0+i (make-delay 32)
 			(lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			))
@@ -25997,7 +25997,7 @@ EDITS: 2
 					     (func gen)
 					     (set! (func gen) arg1)))
 					 (lambda args #f)))
-				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 3/4 'mus-error (sqrt -1.0)
+				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 3/4 'mus-error 0+i
 				      (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 				      '() '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 				      (lambda (a) a)))
@@ -26043,7 +26043,7 @@ EDITS: 2
 	    
 	    (let ((random-args (list 
 				(expt 2.0 21.5) (expt 2.0 -18.0)
-				1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .1 .2 .3)  '#(0 1) 3/4 (sqrt -1.0) (make-delay 32)
+				1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .1 .2 .3)  '#(0 1) 3/4 0+i (make-delay 32)
 				(lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 '() 32 '(1 . 2)
 				))
 		  (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-table-lookup make-triangle-wave
@@ -45722,7 +45722,7 @@ EDITS: 1
     (etst '(+ 1.0 0.1+i))
     (etst '(abs 0+i))
     (ftst '(abs 1+0i) 1.0)
-					;	    (etsta '(lambda (y) (+ 1 y)) (sqrt -1.0))
+					;	    (etsta '(lambda (y) (+ 1 y)) 0+i)
 					; this now returns #f and optimization hook sends a warning
     
     (itst '(- 2 3) -1)
@@ -59770,7 +59770,7 @@ EDITS: 1
 		       (lambda () (n arg))
 		       (lambda args (car args))))
 	      xm-procs1))
-	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
+	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error 0+i (make-delay 32)
 		 (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t '() (make-vector 0)))
 	  
 	  ;; ---------------- 2 Args
@@ -59785,9 +59785,9 @@ EDITS: 1
 			  (lambda args (car args))))
 		 xm-procs2))
 	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) '#(0 1) 3/4 
-		    (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0))))
+		    0+i (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0))))
 	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) '#(0 1) 3/4 
-		 (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0)))
+		 0+i (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0)))
 	  
 	  (if all-args
 	      (begin
@@ -59805,11 +59805,11 @@ EDITS: 1
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  xm-procs3))
-		       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+		       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 0+i (make-delay 32) 
 			     :start -1 0 #f #t '() (make-vector 0))))
-		    (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+		    (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 0+i (make-delay 32) 
 			  :phase -1 0 #f #t '() (make-vector 0))))
-		 (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
+		 (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 0+i (make-delay 32) 
 		       :channels -1 0 #f #t '() (make-vector 0)))
 		))
 	  
@@ -60014,7 +60014,7 @@ EDITS: 1
 		       (lambda () (n arg))
 		       (lambda args (car args))))
 	      gl-procs))
-	   (list (list 0 1) (sqrt -1.0)))
+	   (list (list 0 1) 0+i))
 	  
 	  (if (not (null? glu-procs))
 	      (begin
@@ -60026,7 +60026,7 @@ EDITS: 1
 			     (lambda () (n arg))
 			     (lambda args (car args))))
 		    gl-procs))
-		 (list (list 0 1) (sqrt -1.0)))
+		 (list (list 0 1) 0+i))
 		
 		(let ((ind (open-sound "oboe.snd")))
 		  (glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
@@ -60551,7 +60551,7 @@ EDITS: 1
 				      reverb-control-scale reverb-control? save-controls select-sound short-file-name
 				      sound-loop-info soundfont-info speed-control speed-control-style speed-control-tones srate
 				      channel-style start-progress-report sync sound-properties swap-channels)))
-		    (list vct-5 (sqrt -1.0) 1.5 "hiho" delay-32))
+		    (list vct-5 0+i 1.5 "hiho" delay-32))
 	  
 	  (for-each (lambda (arg)
 		      (let ((ctr 0))
@@ -60575,7 +60575,7 @@ EDITS: 1
 					reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 					reverb-control-scale reverb-control? sound-loop-info soundfont-info speed-control
 					speed-control-style speed-control-tones srate channel-style sync))))
-		    (list vct-5 (sqrt -1.0) 1.5 "hiho" delay-32))
+		    (list vct-5 0+i 1.5 "hiho" delay-32))
 	  
 	  (let ((index (open-sound "obtest.snd")))
 	    (for-each (lambda (arg)
@@ -60597,7 +60597,7 @@ EDITS: 1
 					  reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 					  reverb-control-scale reverb-control? speed-control speed-control-style speed-control-tones
 					  channel-style sync))))
-		      (list vct-5 (sqrt -1.0) "hiho" delay-32))
+		      (list vct-5 0+i "hiho" delay-32))
 	    (close-sound index))
 	  
 	  (for-each (lambda (arg)
@@ -60610,7 +60610,7 @@ EDITS: 1
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display #__line__ ";vct 0 wrong-type-arg ~A: ~A ~A" n tag arg))))
 				(list make-vct vct-copy vct-length vct->list vct-peak)))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1) delay-32))
+		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) '#(0 1) delay-32))
 	  
 	  (for-each (lambda (arg1)
 		      (for-each (lambda (arg2)
@@ -60625,8 +60625,8 @@ EDITS: 1
 							     (eq? tag 'mus-error)))
 						    (snd-display #__line__ ";vct 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2))))
 					    (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
-				(list vct-5 "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1) delay-32)))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1) delay-32))
+				(list vct-5 "hiho" 0+i 1.5 (list 1 0) '#(0 1) delay-32)))
+		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) '#(0 1) delay-32))
 	  
 	  (for-each (lambda (arg)
 		      (for-each (lambda (n)
@@ -60638,7 +60638,7 @@ EDITS: 1
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display #__line__ ";vct 2 wrong-type-arg ~A: ~A" n tag))))
 				(list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) (list 1 0) '#(0 1) delay-32))
+		    (list (make-vector 1) "hiho" 0+i (list 1 0) '#(0 1) delay-32))
 	  
 	  (let ((tag
 		 (catch #t
@@ -60673,7 +60673,7 @@ EDITS: 1
 				      square-wave? src? ncos? nsin? table-lookup? 
 				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? ssb-am?
 				      sampler? region-sampler? vct? )))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
+		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) '#(0 1)))
 	  
 	  
 	  (for-each (lambda (n)
@@ -60747,7 +60747,7 @@ EDITS: 1
 					sawtooth-wave nrxysin nrxycos square-wave src 
 					ncos nsin table-lookup tap triangle-wave
 					two-pole two-zero wave-train ssb-am))))
-		    (list (make-vector 1) color-95 (sqrt -1.0) (list 1.0)))
+		    (list (make-vector 1) color-95 0+i (list 1.0)))
 	  
 	  
 	  (for-each (lambda (n)
@@ -61140,7 +61140,7 @@ EDITS: 1
 				  (list region-chans region-home region-frames 
 					region-position region-maxamp region-maxamp-position region-sample 
 					region->vct region-srate forget-region))))
-		    (list vct-5 '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
+		    (list vct-5 '#(0 1) 0+i "hiho" (list 0 1)))
 	  
 	  (let ((ctr 0))
 	    (for-each (lambda (n)
@@ -61687,7 +61687,7 @@ EDITS: 1
 	   procs0)
 	  (dismiss-all-dialogs)
 	  
-	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
+	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error 0+i delay-32
 				  (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
 				  '() '3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 				  (lambda (a) #f) abs
@@ -61696,11 +61696,10 @@ EDITS: 1
 				  (let ((x 3)) (lambda (y) (+ x y))) (lambda args args)
 				  "" (make-hash-table 256)
 				  #<undefined> #<unspecified> #<eof>
-				  (make-random-state 1234)
-				  ))
-		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 -1.0
-				 (sqrt -1.0) delay-32 :feedback -1 0 1 "" 'hi (lambda (a) (+ a 1)) -64 #f #t '() vector-0))
-		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t "" '()))
+				  (make-random-state 1234) (vct) (vector)))
+		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 -1.0 (vct) (vector) (list) (string)
+				 0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))
+		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 0+i delay-32 -1 0 1 #f #t (vct) "" '()))
 		 (less-args (if all-args main-args few-args)))
 	    
 	    ;; ---------------- 1 Arg
@@ -61971,7 +61970,7 @@ EDITS: 1
 					(list 1.5 -1 1234 #f '() delay-32)))
 				     (list "/hiho" -1 1234 '() vct-5 delay-32)))
 				  (list #t #f -1 1234 '() vct-3 delay-32)))
-			       (list (sqrt -1.0) 1234 0 -1 '() delay-32)))
+			       (list 0+i 1234 0 -1 '() delay-32)))
 			    (list 1.5 -1 #f 1234 vct-3 '() delay-32)))
 			 (list 2 #f #t 1234 vct-5 -1 delay-32)))
 		      (list #f #t -1 1234 vct-3 delay-32)))
@@ -62012,7 +62011,7 @@ EDITS: 1
 					      (list 1.5 -1 #f 1234 delay-32)))
 					   (list "/hiho" -1 1234 delay-32)))
 					(list #t #f vct-3 1234 delay-32)))
-				     (list (sqrt -1.0) #f -1 vct-5 delay-32)))
+				     (list 0+i #f -1 vct-5 delay-32)))
 				  (list 1.5 #f -1 1234 '() delay-32)))
 			       (list -2 #f 1234 vct-3 delay-32)))
 			    (list #f #t '() 1234 vct-5 delay-32)))

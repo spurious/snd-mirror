@@ -2562,14 +2562,20 @@ static XEN s7_xen_sound_copy(s7_scheme *sc, XEN obj)
   sp = get_sp(obj);
   if (sp)
     {
+      io_error_t err;
       char *name;
       name = snd_tempnam();
       if (mus_header_writable(sp->hdr->type, sp->hdr->format))
-	save_edits_without_display(sp, name, sp->hdr->type, sp->hdr->format, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
-      else save_edits_without_display(sp, name, MUS_NEXT, MUS_OUT_FORMAT, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
+	err = save_edits_without_display(sp, name, sp->hdr->type, sp->hdr->format, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
+      else err = save_edits_without_display(sp, name, MUS_NEXT, MUS_OUT_FORMAT, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
       sp = snd_open_file(name, FILE_READ_WRITE);
       free(name);
-      return(new_xen_sound(sp->index));
+      if (sp)
+	return(new_xen_sound(sp->index));
+      if (SERIOUS_IO_ERROR(err))
+	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+		  XEN_LIST_2(C_TO_XEN_STRING("copy sound: can't save edits, ~A"),
+			     C_TO_XEN_STRING(io_error_name(err))));
     }
   return(XEN_FALSE);
 }
@@ -5821,6 +5827,8 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 
   fullname = mus_expand_filename(XEN_TO_C_STRING(filename));
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
+  if (chn < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_channel_amp_envs, XEN_ARG_2, chan, "must be >= 0");
   len = XEN_TO_C_INT_OR_ELSE(pts, 0);
 
   /* look for sp->filename = fullname
@@ -5903,37 +5911,41 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   sp = make_sound_readable(fullname, false);
   if (fullname) free(fullname);
   fullname = NULL;
-  if (sp)
+  if ((sp) &&
+      (chn < sp->nchans))
     {
       env_state *es;
       XEN peak = XEN_FALSE;
       cp = sp->chans[chn];
-      es = make_env_state(cp, cp->edits[0]->samples);
-      if (es)
+      if (cp)
 	{
-#if (!USE_NO_GUI)
-	  if (XEN_PROCEDURE_P(done_func))
+	  es = make_env_state(cp, cp->edits[0]->samples);
+	  if (es)
 	    {
-	      int id;
-	      env_tick *et;
-	      et = (env_tick *)calloc(1, sizeof(env_tick));
-	      et->cp = cp;
-	      et->es = es;
-	      et->func = done_func;
-	      et->func_gc_loc = snd_protect(done_func);
-	      et->len = len;
-	      et->filename = filename;
-	      id = (int)BACKGROUND_ADD(tick_it, (any_pointer_t)et);
-	      return(C_TO_XEN_INT(id));
-	    }
+#if (!USE_NO_GUI)
+	      if (XEN_PROCEDURE_P(done_func))
+		{
+		  int id;
+		  env_tick *et;
+		  et = (env_tick *)calloc(1, sizeof(env_tick));
+		  et->cp = cp;
+		  et->es = es;
+		  et->func = done_func;
+		  et->func_gc_loc = snd_protect(done_func);
+		  et->len = len;
+		  et->filename = filename;
+		  id = (int)BACKGROUND_ADD(tick_it, (any_pointer_t)et);
+		  return(C_TO_XEN_INT(id));
+		}
 #endif
-	  while (!(tick_peak_env(cp, es))) {};
-	  es = free_env_state(es);
-	  peak = g_peak_env_info_to_vcts(cp->edits[0]->peak_env, len);
+	      while (!(tick_peak_env(cp, es))) {};
+	      es = free_env_state(es);
+	      peak = g_peak_env_info_to_vcts(cp->edits[0]->peak_env, len);
+	    }
+	  cp->active = CHANNEL_INACTIVE;
+	  completely_free_snd_info(sp);
+	  return(peak);
 	}
-      cp->active = CHANNEL_INACTIVE;
-      completely_free_snd_info(sp);
-      return(peak);
     }
   return(XEN_FALSE);
 }

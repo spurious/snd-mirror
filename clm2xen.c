@@ -774,7 +774,8 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
       n = (mus_long_t)pow(2.0, np);
     }
 
-  mus_fft(v1->data, v2->data, n, sign);
+  if (n > 0)
+    mus_fft(v1->data, v2->data, n, sign);
   /*
    * in fftw, there's the extra complex array allocation, so for n = 2^29
    *   (and doubles for vcts as well as fftw), we need 24.6 Gbytes, and the FFT
@@ -872,7 +873,8 @@ and type determines how the spectral data is scaled:\n\
   if ((type < 0) || (type > 2))
     XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, utype, "type must be 0..2");
   
-  mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, (mus_spectrum_t)type);
+  if (n > 0)
+    mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, (mus_spectrum_t)type);
   return(url);
 }
 
@@ -884,7 +886,8 @@ static XEN g_autocorrelate(XEN reals)
   vct *v1 = NULL;
   XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct");
   v1 = XEN_TO_VCT(reals);
-  mus_autocorrelate(v1->data, v1->length);
+  if (v1->length > 0)
+    mus_autocorrelate(v1->data, v1->length);
   return(reals);
 }
 
@@ -904,7 +907,8 @@ static XEN g_correlate(XEN data1, XEN data2)
     size = v1->length;
   else size = v2->length;
 
-  mus_correlate(v1->data, v2->data, size);
+  if (size > 0)
+    mus_correlate(v1->data, v2->data, size);
   return(data1);
 }
 
@@ -944,8 +948,8 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
       np = (int)nf;
       n = (int)pow(2.0, np);
     }
-
-  mus_convolution(v1->data, v2->data, n);
+  if (n > 0)
+    mus_convolution(v1->data, v2->data, n);
   return(url1);
 }
 
@@ -956,7 +960,8 @@ static XEN g_clear_array(XEN arr)
   vct *v;
   XEN_ASSERT_TYPE(MUS_VCT_P(arr), arr, XEN_ONLY_ARG, S_clear_array, "a vct");
   v = XEN_TO_VCT(arr);
-  mus_clear_array(v->data, v->length);
+  if (v->length > 0)
+    mus_clear_array(v->data, v->length);
   return(arr);
 }
 
@@ -995,7 +1000,8 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 	len = v->length;
     }
   else len = v->length;
-
+  if (len == 0)
+    return(C_TO_XEN_DOUBLE(0.0));
   return(C_TO_XEN_DOUBLE(mus_array_interp(v->data, XEN_TO_C_DOUBLE(phase), len)));
 }
 
@@ -1031,6 +1037,8 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
 	len = v->length;
     }
   else len = v->length;
+  if (len == 0)
+    return(C_TO_XEN_DOUBLE(0.0));
 
   if (XEN_NUMBER_P(yn1))
     y = XEN_TO_C_DOUBLE(yn1);
@@ -4555,6 +4563,11 @@ mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
   mus_float_t *partials = NULL;
 
   len = v->length;
+  if (len == 0)
+    {
+      (*error_code) = NULL_LIST;
+      return(NULL);
+    }
   if (len & 1)
     {
       (*error_code) = ODD_LENGTH_LIST;

@@ -18437,13 +18437,26 @@ static bool symbol_is_in_arg_list(s7_pointer sym, s7_pointer lst)
 
 s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 {
-  s7_pointer x;
+  s7_pointer x, y;
 
-  for (x = lst; is_pair(x); x = cdr(x))
-    if ((is_pair(s7_car(x))) &&
-	(s7_is_equal(sc, sym, car(car(x)))))
-      return(car(x));
+  if (!is_pair(lst))
+    return(sc->F);
 
+  x = lst;
+  y = lst;
+  while (true)
+    {
+      if ((is_pair(car(x))) && (s7_is_equal(sc, sym, caar(x)))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+      
+      if ((is_pair(car(x))) && (s7_is_equal(sc, sym, caar(x)))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      y = cdr(y);
+      if (x == y) return(sc->F);
+    }
   return(sc->F);
 }
 
@@ -26058,7 +26071,7 @@ static const char *type_name(s7_pointer arg)
     case T_C_POINTER:    return("c-pointer");
     case T_CHARACTER:    return("character");
     case T_VECTOR:       return("vector");
-    case T_BACRO:
+    case T_BACRO:        return("bacro");
     case T_MACRO:        return("macro");
     case T_CATCH:        return("catch");
     case T_DYNAMIC_WIND: return("dynamic-wind");
@@ -53873,7 +53886,11 @@ the error type and the info passed to the error handler.");
    *   (let () (define-macro (hi a) `(+ ,a 1)) (macroexpand (hi 2)))
    */
   s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
-
+  /*
+   * it's possible to clobber this definition via (for example):
+   *   (set-car! (cddr (procedure-source macroexpand)) '(0))
+   */
+  
   /* quasiquote
    */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");

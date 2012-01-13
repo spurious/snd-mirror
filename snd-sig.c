@@ -5324,9 +5324,9 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
 
   v = XEN_TO_VCT(data);
   n = XEN_TO_C_INT_OR_ELSE(len, v->length);
-  if (n <= 0)
-    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length ~A <= 0?");
   if (n > v->length) n = v->length;
+  if (n <= 0)
+    XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 3, len, "length ~A <= 0 or vct length == 0?");
 
   if (XEN_BOOLEAN_P(linear_or_dB)) linear = XEN_TO_C_BOOLEAN(linear_or_dB);
   if (XEN_BOOLEAN_P(in_place)) in_data = XEN_TO_C_BOOLEAN(in_place);
