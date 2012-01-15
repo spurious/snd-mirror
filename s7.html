@@ -3522,7 +3522,9 @@ just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
 use augment-environment!.  Both of these functions accept nil as the
 'env' argument.  In this case, they return an environment containing
-only the bindings you pass in.
+only the bindings you pass in.  augment-environment is borrowed from
+Common Lisp.  More consistent with other s7 functions (such as hash-table)
+would be <code>(define (environment . args) (apply augment-environment '() args))</code>.
 </p>
 
 <p>It is possible in Scheme to redefine built-in functions such as car.

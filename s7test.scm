@@ -5295,6 +5295,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector-ref '#() 1) 'error)
 (test (vector-ref #(1 2 3) (floor .1)) 1)
 (test (vector-ref #(1 2 3) (floor 0+0i)) 1)
+(test (vector-ref #10D((((((((((0 1)))))))))) 0 0 0 0 0 0 0 0 0 1) 1)
 
 (test (#(1 2) 1) 2)
 (test (#(1 2) 1 2) 'error)
@@ -9146,9 +9147,7 @@ a2" 3) "132")
     (let ((str (string-append "~" (number->string i) "A")))
       (let ((nstr (format #f str v)))
 	(format *stderr* "~D: ~A: ~D~%" i nstr (length nstr))))))
-|#
 
-#|
 (do ((i 0 (+ i 1))) ((= i 256)) 
   (let ((chr (integer->char i)))
     (format #t "~D: ~A ~A ~D~%" i (format #f "~S" (string chr)) (string chr) (length (format #f "~S" (string chr))))))
@@ -10584,9 +10583,7 @@ a2" 3) "132")
 		  (check-strs str1 str2)
 		  (set! strs (cons (list str1 str2) strs))
 		  (set! strs (cons (list str2 str1) strs))))))))))
-|#
 
-#|
 (do ((i 0 (+ i 1)))
     ((= i 256))
   (if (and (not (= i (char->integer #\))))
@@ -11533,10 +11530,8 @@ this prints:
 (test (map (lambda (a b) (a b)) (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) (list 1 2 3)) '(2 4 27))
 (test (map apply (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) '((1) (2) (3))) '(2 4 27))
 
-#|
-(let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val))
-((#3=(1) #2=(2) #1=(3)) (#1# #2# #3#))
-|#
+;;; (let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val)) -> ((#3=(1) #2=(2) #1=(3)) (#1# #2# #3#))
+
 
 (test (map list "hi") '((#\h) (#\i)))
 (test (map string "hi") '("h" "i"))
@@ -17144,7 +17139,7 @@ who says the continuation has to restart the map from the top?
   (test `(1 2 . ,(list 3 4)) '(1 2 3 4))
   (test `(,@quasi2 . ,quasi3) '(a b c d))
   (test `#(,(cons 1 2) 3) '#((1 . 2) 3))
-;  (test `#(,quasi0 3) '#(99 3))
+;  (test `#(,quasi0 3) '#(99 3)) ; and (let ((quasi0 99)) (quasiquote #(,quasi0 3))) -> #((unquote quasi0) 3)
 ;  (test `#(,(+ quasi0 1) 3) '#(100 3))
 ;  (test `#(3 ,quasi1) '#(3 101))
 ;  (test `#(3 ,(+ quasi1 1)) '#(3 102))
@@ -17279,6 +17274,10 @@ who says the continuation has to restart the map from the top?
 ;(test (let ((x '(1 2 3))) `#(0 ,x)) '#(0 (1 2 3)))
 ;(test (let ((x '(1 2 3))) `#(0 . ,x)) '#(0 1 2 3))
 
+;; unbound variable x, but (let ((x '(1 2 3))) (quasiquote #(0 . ,x))) -> #(0 unquote x)
+;; so ` and (quasiquote...) are not the same because they're handled at different points in the reader(?)
+
+
 (test `#(,most-positive-fixnum 2) #(9223372036854775807 2))
 
 (test (let () (define-macro (tryqv . lst) `(map abs ',lst)) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
@@ -17311,6 +17310,10 @@ who says the continuation has to restart the map from the top?
        "(` ,- .(1))" "(+(`,-( *)))" "( /(`,- 1))" "(`(1 -1)1)" "(*( -(/(*))))" "(- -1(-(+)))" "(* ``,,-1)" "(-(+(+))1)" "( +(*(-(*))))"
        "(-(+)`0(*))" "(-(+(+(*))))" "(-(+ .(01)))" "(/(*(-(* ))))" "(/ (-(* 1)))" "( /(-(/(*))))" "(+ -1 0/1)" "(/(-( +(*))))" "(*( -(`,*)))"
        "(* 1(/ 1)-1)" "(+ 0(- ',01))" "(+(-(-(+ -1))))" "(- 0(/(+(* ))))" "(-(+)( *)0)"
+       "(`,- '01/1)" "(`, - ',,1)"  "(/ .(`-1 1))"  "(- ``,,'`1)" "(- 10 0011)" "(-(- ``1 0))" "( -(/ 01/1))" "(-(- 1)`,0)" "(/(/ -1 .()))" 
+       "(/ ,,``-1)" "( `,`, - 1)" "(- .(`1/01  ))" "('(-1) ',``0)" "('( ,/ -1 )1)" "(- ,,`,`0 +1)" "(`(-1) `,0)" "(+(* (-(*))))"
+       "(-(`,* ,,1))" "(+(+ 0)-1)" "(+(-(+ ,1)))" "(* ,`-01/1)" "(*(- '` `1))" "(-(*(* 1 1)))" "(-(*(/ .(1))))" "(-(- 1(*)-1))" 
+       "(- -00 (* 1))" "(- (*(+ ,01)))" "(-(*), +1(* ))" 
        ))
 
 #|
@@ -17355,7 +17358,7 @@ who says the continuation has to restart the map from the top?
 		     (lambda args
 		       'error)))
 	  (set! (-s7-symbol-table-locked?) #f))))))
-#|
+|#
 
 (test (= 1 '+1 `+1 '`1 `01 ``1) #t)
 (test (''- 1) '-)
@@ -17374,14 +17377,24 @@ who says the continuation has to restart the map from the top?
 (test (- `,-1) 1)
 ;;; some weirder cases...
 (test (begin . `''1) ''1)
-(test (`,@''1) 1)
-(test (`,@ `'1) 1)
-(test (`,@''.'.) '.'.)
+					;(test (`,@''1) 1) 
+					;  (syntax-error ("attempt to apply the ~A ~S to ~S?" "symbol" quote (1))) ??
+					;  (({apply} {values} ''values 1)) got error but expected 1
+					;(test (`,@ `'1) 1)
+					;  (({apply} {values} ''values 1)) got error but expected 1
+					;(test (`,@''.'.) '.'.)
+					;  (({apply} {values} ''values .'.)) got error but expected .'.
 (test #(`,1) #(1))
 (test `#(,@'(1)) #(1))
 (test `#(,`,@''1) #(quote 1))
 (test `#(,@'(1 2 3)) #(1 2 3))
 (test `#(,`,@'(1 2 3)) #(1 2 3)) ; but #(`,@'(1 2 3)) -> #(({apply} {values} '(1 2 3)))
+(test `#(,`#(1 2 3)) #(#(1 2 3)))
+(test `#(,`#(1 ,(+ 2 3))) #(#(1 5)))
+(test (quasiquote #(,`#(1 ,(+ 2 3)))) #(#(1 5)))
+(test `#(,`#(1 ,(+ `,@'(2 3)))) #(#(1 5)))
+(test `#(1 `,,(+ 2 3)) #(1 5))
+
 (test (apply . `''1) 'error) ; '(quote quote 1)) ; (apply {list} 'quote ({list} 'quote 1)) -> ;quote: too many arguments '1
 (test (apply - 1( )) -1)               ; (apply - 1 ())
 (num-test (apply - 1.()) -1.0)
@@ -17427,10 +17440,11 @@ who says the continuation has to restart the map from the top?
 (test (object->string (list 'quote 1 2)) "(quote 1 2)")
 (test (object->string (list 'quote 'quote 1)) "(quote quote 1)")
 (test (object->string (list 'quote 1 2 3)) "(quote 1 2 3)")
-;;; but (object->string (list 'quote 1)) -> "'1" -- is this correct?
-;;; (equal? (quote 1) '1) -> #t and (equal? (list 'quote 1) ''1) -> #t
+(test (object->string (list 'quote 1)) "'1") ; confusing but this is (quote 1)
+(test (equal? (quote 1) '1) #t)
+(test (equal? (list 'quote 1) ''1) #t)
+(test (equal? (list 'quote 1) '''1) #f)
 ;;; see comment s7.c in list_to_c_string -- we're following Clisp here
-(test (object->string (list 'quote 1)) "'1")
 (test (object->string (cons 'quote 1)) "(quote . 1)")
 (test (object->string (list 'quote)) "(quote)")
 (let ((lst (list 'quote 1)))
@@ -17441,33 +17455,29 @@ who says the continuation has to restart the map from the top?
   (test (object->string lst) "#1=(quote . #1#)"))
 (test (object->string quasiquote) "quasiquote")
 
-
 ;; from Guile mailing list
 (test (let ((v '(\())))
 	(and (pair? v)
-	     (symbol? (car v)) ; \
+	     (symbol? (car v)) ; \ -> ((symbol "\\") ())
 	     (null? (cadr v))))
       #t)
 ;; this gets a read-error in Snd because the listener gets confused
 
-#|
-unquote outside qq:
-(',- 1)
-(',1 1 )
-(',,= 1) -> (unquote =)
-(',@1 1) -> 1
-#(,1) -> #((unquote 1)) i.e. vector has 1 element the list '(unquote 1)
-#(,@1) -> #((unquote ({apply} {values} 1)))
-#(,,,1) -> #((unquote (unquote (unquote 1))))
-is this a bug?
-#(`'`1) -> #(({list} 'quote 1))
+(test #(,1) #(1))
+(test #(,,,1) #(1))
+(test #(`'`1) #(''1))
+(test `#(,@(list 1 2 3)) #(1 2 3)) ; but #(,@(list 1 2 3)) -> #((unquote ({apply} {values} (list 1 2 3))))
+(test (',- 1) '-) ; this is implicit indexing
 
-why are these different (read-time `#() ? )
-:`#(,@(list 1 2 3))
-#(1 2 3)
-:(quasiquote #(,@(list 1 2 3)))
-#((unquote ({apply} {values} (list 1 2 3))))
+#|
+(',,= 1) -> (unquote =)
+(test (equal? (car (',,= 1)) 'unquote) #t) ; but that's kinda horrible
+
+(',@1 1) -> ({apply} {values} 1)
+#(,@1) -> #((unquote ({apply} {values} 1)))
+(quasiquote #(,@(list 1 2 3))) -> #((unquote ({apply} {values} (list 1 2 3))))
 |#
+
 
 (test (quasiquote) 'error)
 (test (quasiquote 1 2 3) 'error)
@@ -17525,6 +17535,8 @@ why are these different (read-time `#() ? )
 (test `(+ ,@(map sqrt '(1 4 9)) 2) '(+ 1 2 3 2))
 (test `(+ ,(sqrt 9) 4) '(+ 3 4))
 (test `(+ ,(apply values (map sqrt '(1 4 9))) 2) '(+ 1 2 3 2))
+
+
 
 
 
@@ -21557,6 +21569,12 @@ abs     1       2
 (test (eval (list + 'a (eval (list - 'b) (augment-environment (initial-environment) (cons 'b 1)))) 
 	    (augment-environment (initial-environment) (cons 'a 2))) 
       1)
+
+(let ()
+  (define (environment . args) 
+    (apply augment-environment () args))
+  (let ((e (environment '(a . 1) '(b . 2))))
+    (test (eval '(+ a b 3) e) 6)))
 
 (test (let ((a 1)) (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32)))) 33)
 (test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32))) a)) 34)
@@ -51134,7 +51152,6 @@ abs     1       2
       (num-test (sqrt 0+340282366920938463463374607431768211456i) 1.304381782533278221234957180625250836888E19+1.304381782533278221234957180625250836888E19i)
       ))
 
-
 (test (sqrt) 'error)
 (test (sqrt "hi") 'error)
 (test (sqrt 1.0+23.0i 1.0+23.0i) 'error)
@@ -51754,6 +51771,13 @@ abs     1       2
 (test (exp) 'error)
 (test (exp "hi") 'error)
 (test (exp 1.0+23.0i 1.0+23.0i) 'error)
+
+(if (not with-bignums)
+    (begin
+      (test (infinite? (exp (expt 2 16))) #t)
+      (test (infinite? (exp (expt 2 54))) #t)
+      (test (infinite? (exp (exp 1e3))) #t)
+      ))
 
 (if with-bignums
     (begin
@@ -53630,6 +53654,23 @@ abs     1       2
 (num-test (expt -1 most-negative-fixnum) 1)
 (test (expt 1 most-positive-fixnum) 1)
 (test (expt -1 most-positive-fixnum) -1)
+
+(num-test (expt 0+i (+ 0 (expt 2 16))) 1.0)
+(num-test (expt 0+i (+ 1 (expt 2 16))) 0+i)
+(num-test (expt 0+i (+ 2 (expt 2 16))) -1.0)
+(num-test (expt 0+i (+ 3 (expt 2 16))) 0-i)
+(num-test (expt 0-i (+ 0 (expt 2 16))) 1.0)
+(num-test (expt 0-i (+ 1 (expt 2 16))) 0-i)
+(num-test (expt 0-i (+ 2 (expt 2 16))) -1.0)
+(num-test (expt 0-i (+ 3 (expt 2 16))) 0+i)
+(num-test (expt 0+i (+ 0 (expt 2 54))) 1.0)
+(num-test (expt 0+i (+ 1 (expt 2 54))) 0+i)
+(num-test (expt 0+i (+ 2 (expt 2 54))) -1.0)
+(num-test (expt 0+i (+ 3 (expt 2 54))) 0-i)
+(num-test (expt 0-i (+ 0 (expt 2 54))) 1.0)
+(num-test (expt 0-i (+ 1 (expt 2 54))) 0-i)
+(num-test (expt 0-i (+ 2 (expt 2 54))) -1.0)
+(num-test (expt 0-i (+ 3 (expt 2 54))) 0+i)
 
 (let ((val1 (catch #t (lambda () (expt 0.0 0.0)) (lambda args 'error)))
       (val2 (catch #t (lambda () (expt 0.0 -0.0)) (lambda args 'error))))

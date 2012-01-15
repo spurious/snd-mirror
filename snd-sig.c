@@ -5611,13 +5611,19 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, const char *caller, bool over_selection)
 {
   chan_info *cp;
+
   ASSERT_CHANNEL(caller, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, caller);
   if (!cp) return(XEN_FALSE);
+
   if (XEN_NUMBER_P(ratio_or_env))
     {
       mus_float_t ratio;
+
       ratio = XEN_TO_C_DOUBLE(ratio_or_env);
+      if ((isnan(ratio)) || (isinf(ratio)))
+	XEN_OUT_OF_RANGE_ERROR(caller, 1, ratio_or_env, "src ratio must be a normal number");
+
       if (ratio != 1.0)
 	src_env_or_num(cp, NULL, ratio,
 		       true, caller,

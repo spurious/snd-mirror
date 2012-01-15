@@ -1756,7 +1756,6 @@ static bool s7_is_negative(s7_pointer obj);
 static bool s7_is_positive(s7_pointer obj);
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
 static bool args_match(s7_scheme *sc, s7_pointer x, int args);
-static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static bool is_pws(s7_pointer obj);
 static token_t token(s7_scheme *sc);
@@ -3715,6 +3714,9 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
   return(new_e);
 }
 
+
+/* (define (environment . args) (apply augment-environment '() args))
+ */
 
 static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 {
@@ -8565,7 +8567,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  }
 	  break;
 	  /* occasionally int^rat can be int but it happens so infrequently it's probably not worth checking
-	   *  one possibly easy case: (expt 1 1/2) -> 1 etc
+	   *  one possibly easy case: (expt 1 1/2) -> 1 (-1?) etc
 	   */
 
 	case T_REAL:
@@ -8581,6 +8583,24 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	      if (s7_Int_abs(y) & 1)
 		return(n);
 	      return(real_one);
+	    }
+	  break;
+
+	case T_COMPLEX:
+	  if ((s7_real_part(n) == 0.0) &&
+	      ((s7_imag_part(n) == 1.0) ||
+	       (s7_imag_part(n) == -1.0)))
+	    {
+	      bool yp, np;
+	      yp = (y > 0);
+	      np = (s7_imag_part(n) > 0.0);
+	      switch (s7_Int_abs(y) % 4)
+		{
+		case 0: return(real_one);
+		case 1: return(s7_make_complex(sc, 0.0, (yp == np) ? 1.0 : -1.0));
+		case 2: return(s7_make_real(sc, -1.0));
+		case 3: return(s7_make_complex(sc, 0.0, (yp == np) ? -1.0 : 1.0));
+		}
 	    }
 	  break;
 	}
@@ -23141,7 +23161,7 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
  *      [hard to fix -- very low level access to the method (atom_to_c_string)]
  *
  *    (call-with-exit (lambda (exit) (copy ((cadr (make-type :copy (lambda (a) (exit 32)))) 1))))
- *      [called in object_reverse and s7_copy, g_copy calls s7_copy]
+ *      [called in s7_copy, g_copy calls s7_copy]
  *      [hard to fix because hash-tables use s7_copy -- needs at least expansion of g_copy]
  *      [  and in g_copy we'd need another operator OP_S7_MAKE_OBJECT maybe, to handle the ]
  *      [  result = s7_make_object(sc, new_obj->type, (void *)new_obj) business after the  ]
@@ -23154,8 +23174,6 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
  *      [callable via s7_is_equal and s7_is_equal_ci]
  *      [hard to fix: g_is_equal calls s7_is_equal, but here I think we could split out s_object_equal if equal_func exists]
  *      [  but that requires a separate copy of s7_is_equal etc]
- *
- *    reverse uses length and copy
  *
  * the *#readers*, *unbound-variable-hook* funcs have the same problem [symbol-bind]
  *   [reader funcs are s7_call'ed in check_sharp_readers called from make_sharp_constant]
@@ -28680,6 +28698,12 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	  if ((c == '#') &&
 	      (last_char == '|'))
 	    break;
+#if 0
+	  /* can't decide about this... */
+	  if ((c == '|') &&
+	      (last_char == '#'))
+	    fprintf(stderr, "#| encountered inside #| block\n");
+#endif
 	  last_char = c;
 	}
       if (c == EOF)
@@ -53823,5 +53847,5 @@ the error type and the info passed to the error handler.");
  *
  * lint     13424 -> 1231 [1237]
  * bench    52019 -> 7875 [8268]
- * index    44300 -> 4988
+ * index    44300 -> 4988 [4992]
  */
