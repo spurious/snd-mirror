@@ -21576,6 +21576,18 @@ abs     1       2
   (let ((e (environment '(a . 1) '(b . 2))))
     (test (eval '(+ a b 3) e) 6)))
 
+(test (eval 'a (augment-environment () '(a . 1) '(a . 2))) 'error)
+(test (eval 'a (augment-environment! () '(a . 1) '(a . 2))) 'error)
+(test (eval 'pi (augment-environment () '(pi . 1) '(a . 2))) 'error)
+(test (eval 'pi (augment-environment! () '(pi . 1) '(a . 2))) 'error)
+(test (eval 'pi (augment-environment () (cons 'pi pi))) pi)
+(test (eval 'pi (augment-environment! () (cons 'pi pi))) pi)
+
+(let ()
+  (define-constant _a_constant_ 32)
+  (test (eval '_a_constant_ (augment-environment () (cons '_a_constant_ 1))) 'error)
+  (test (eval '_a_constant_ (augment-environment () (cons '_a_constant_ 32))) 32))
+
 (test (let ((a 1)) (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32)))) 33)
 (test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32))) a)) 34)
 (test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32) (cons 'a 12))) a)) 45)

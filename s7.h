@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.102"
-#define S7_DATE "12-Jan-12"
+#define S7_VERSION "1.103"
+#define S7_DATE "16-Jan-12"
 
 
 typedef long long int s7_Int;
@@ -312,9 +312,10 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a);                          /* 
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b);             /* (append a b) */
 s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num);              /* (list-ref lst num) */
 s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val); /* (list-set! lst num val) */
-s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst);          /* (assoc sym lst) */
-s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst);         /* (member sym lst) */
-
+s7_pointer s7_assoc(s7_scheme *sc, s7_pointer obj, s7_pointer lst);          /* (assoc obj lst) */
+s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x);             /* (assq obj lst) */
+s7_pointer s7_member(s7_scheme *sc, s7_pointer obj, s7_pointer lst);         /* (member obj lst) */
+s7_pointer s7_memq(s7_scheme *sc, s7_pointer obj, s7_pointer x);             /* (memq obj lst) */
 
 bool s7_is_string(s7_pointer p);                                             /* (string? p) */
 const char *s7_string(s7_pointer p);                                         /* Scheme string -> C string (do not free the string) */
@@ -807,7 +808,7 @@ void s7_mark_object(s7_pointer p);
 
 /* the following Scheme functions are not currently exported to C:
  *
- *    * + - / < <= = > >= abs acos acosh angle ash asin asinh assq assv atan atanh 
+ *    * + - / < <= = > >= abs acos acosh angle ash asin asinh assv atan atanh 
  *    augment-environment! call-with-exit call-with-input-file call-with-input-string 
  *    call-with-output-file call-with-output-string catch ceiling char->integer char-alphabetic? 
  *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
@@ -817,7 +818,7 @@ void s7_mark_object(s7_pointer p);
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm list list->string list->vector list-tail log logand 
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
- *    make-rectangular map max memq memv min modulo nan? negative? not odd? port-closed? 
+ *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
  *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-ref 

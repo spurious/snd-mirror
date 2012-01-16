@@ -1752,8 +1752,6 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
 static void pop_input_port(s7_scheme *sc);
-static bool s7_is_negative(s7_pointer obj);
-static bool s7_is_positive(s7_pointer obj);
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
 static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
@@ -3655,6 +3653,8 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+/* should these two augment-envs check for symbol accessors?
+ */
 
 static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
 {
@@ -3677,13 +3677,26 @@ environment."
     }
 
   for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
-    if ((!is_pair(car(x))) ||
-	(!is_symbol(caar(x))))
-      {
-	if (gc_loc != -1)
-	  s7_gc_unprotect_at(sc, gc_loc);
-	return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair: '(symbol . value)"));
-      }
+    {
+      s7_pointer sym, val;
+      if ((!is_pair(car(x))) ||
+	  (!is_symbol(caar(x))))
+	{
+	  if (gc_loc != -1)
+	    s7_gc_unprotect_at(sc, gc_loc);
+	  return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair: '(symbol . value)"));
+	}
+
+      sym = caar(x);
+      if ((is_pair(cdr(x))) &&
+	  (s7_assq(sc, sym, cdr(x)) != sc->F))
+	return(s7_wrong_type_arg_error(sc, "augment-environment!", i, caar(x), "a symbol not already added to the environment"));
+
+      val = cdar(x);
+      if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
+	  (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
+	return(s7_wrong_type_arg_error(sc, "augment-environment!", i, caar(x), "mutable symbol"));
+    }
 
   for (x = cdr(args); is_not_null(x); x = cdr(x))
     s7_make_slot(sc, e, caar(x), cdar(x));
@@ -3716,6 +3729,9 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 
 
 /* (define (environment . args) (apply augment-environment '() args))
+ * 
+ * currently (eval 'a (augment-environment () '(a . 1) '(a . 2))) -> 2,
+ *   but should it be an error?
  */
 
 static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
@@ -3747,14 +3763,25 @@ new environment."
     }
 
   for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
-    if ((!is_pair(car(x))) ||
-	(!is_symbol(caar(x))))
-      {
-	if (gc_loc != -1)
-	  s7_gc_unprotect_at(sc, gc_loc);
-	return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
-      }
+    {
+      s7_pointer sym, val;
+      if ((!is_pair(car(x))) ||
+	  (!is_symbol(caar(x))))
+	{
+	  if (gc_loc != -1)
+	    s7_gc_unprotect_at(sc, gc_loc);
+	  return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
+	}
+      sym = caar(x);
+      if ((is_pair(cdr(x))) &&
+	  (s7_assq(sc, sym, cdr(x)) != sc->F))
+	return(s7_wrong_type_arg_error(sc, "augment-environment", i, caar(x), "a symbol not already added to the environment"));
 
+      val = cdar(x);
+      if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
+	  (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
+	return(s7_wrong_type_arg_error(sc, "augment-environment", i, caar(x), "mutable symbol"));
+    }
   if (gc_loc != -1)
     s7_gc_unprotect_at(sc, gc_loc);
 
@@ -19414,7 +19441,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
+s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
 {
   s7_pointer y;
   y = x;
@@ -19639,7 +19666,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 
 /* ---------------- member, memv, memq ---------------- */
 
-static s7_pointer s7_memq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
+s7_pointer s7_memq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
 {
   s7_pointer y;
   y = x;
@@ -50390,6 +50417,9 @@ static s7_pointer big_exp(s7_scheme *sc, s7_pointer args)
   return(big_trig(sc, args, mpfr_exp, mpc_exp, TRIG_NO_CHECK, "exp"));
 }
 
+
+static bool s7_is_negative(s7_pointer obj);
+static bool s7_is_positive(s7_pointer obj);
 
 static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 {
