@@ -997,7 +997,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer FEED_TO;                 /* => */
-  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, HASH_TABLE_ITERATE;
+  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, HASH_TABLE_ITERATE, ENVIRONMENT_SET;
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
@@ -3859,6 +3859,65 @@ in that frame and its value."
 
   return(s7_environment_to_list(sc, env));
 }
+
+/* TODO: doc/test applicable e */
+
+static s7_pointer environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
+{
+  /* (let ((a 1)) ((current-environment) 'a)) */
+  s7_pointer y;
+  for (y = environment_slots(env); is_slot(y); y = next_slot(y))
+    if (slot_symbol(y) == symbol)
+      return(cdr(y));
+  return(sc->UNDEFINED);
+}
+
+
+static s7_pointer environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
+{
+  s7_pointer y;
+  for (y = environment_slots(env); is_slot(y); y = next_slot(y))
+    if (slot_symbol(y) == symbol)
+      {
+	cdr(y) = value;
+	return(value);
+      }
+  return(sc->UNDEFINED);
+}
+
+
+static s7_pointer g_environment_set(s7_scheme *sc, s7_pointer args)
+{
+  /* (let ((a 1)) (set! ((current-environment) 'a) 32) a) */
+  s7_pointer sym;
+
+  sym = cadr(args);
+  if (!is_symbol(sym))
+    return(s7_wrong_type_arg_error(sc, "environment set!", 2, sym, "a symbol"));
+
+  return(environment_set(sc, car(args), sym, caddr(args)));
+}
+
+
+static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
+{
+  if (is_environment(env))
+    {
+      s7_pointer x, new_e;
+      int gc_loc;
+
+      new_e = new_frame_in_env(sc, next_environment(env));
+      gc_loc = s7_gc_protect(sc, new_e);
+
+      for (x = environment_slots(env); is_slot(x); x = next_slot(x))
+	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
+      
+      s7_gc_unprotect_at(sc, gc_loc);      
+      return(new_e);
+    }
+  return(sc->NIL);
+}
+
 
 
 #if 0
@@ -11597,6 +11656,9 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
     case T_C_OBJECT:
       return(make_boolean(sc, s7_integer(object_length(sc, val)) == ilen));
 
+    case T_ENVIRONMENT:
+      return(make_boolean(sc, environment_length(sc, val) == ilen));
+
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, val, "a list, vector, string, or hash-table"));
     }
@@ -12530,6 +12592,9 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
     case T_C_OBJECT:
       return(make_boolean(sc, s7_integer(object_length(sc, val)) < ilen));
 
+    case T_ENVIRONMENT:
+      return(make_boolean(sc, environment_length(sc, val) < ilen));
+
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, val, "a list, vector, string, or hash-table"));
     }
@@ -13211,6 +13276,7 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
     case T_NIL:
     case T_STRING:
     case T_HASH_TABLE:
+    case T_ENVIRONMENT:
       return(sc->F);
 
     case T_C_OBJECT:
@@ -23914,6 +23980,7 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 
     case T_STRING:
     case T_HASH_TABLE:
+    case T_ENVIRONMENT:
       return(args == 1);
       
     case T_PAIR:
@@ -24734,6 +24801,7 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
     case T_VECTOR:
     case T_HASH_TABLE:
     case T_ENVIRONMENT:
+      /* TODO: is this active? */
     case T_PAIR:
       return(structures_are_equal(sc, x, y, ci));
 
@@ -24959,6 +25027,9 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_HASH_TABLE:              /* this has to copy nearly everything */
       return(hash_table_copy(sc, obj));
       
+    case T_ENVIRONMENT:             /* this copies only the local env and points to outer envs */
+      return(environment_copy(sc, obj));
+
     case T_VECTOR:
       return(vector_copy(sc, obj)); /* "shallow" copy */
 
@@ -27585,6 +27656,9 @@ static s7_Int applicable_length(s7_scheme *sc, s7_pointer obj)
     case T_HASH_TABLE:
       return(hash_table_entries(obj));
 
+    case T_ENVIRONMENT:
+      return(environment_length(sc, obj));
+
     case T_NIL:
       return(0);
     }
@@ -27646,6 +27720,8 @@ static bool next_for_each(s7_scheme *sc)
       case T_CLOSURE: /* hash-table via an iterator */
 	car(x) = g_hash_table_iterate(sc, hash_table_iterate_args(car(y)));  /* cdadadar? I suppose this accessor could be optimized */
 	break;
+
+	/* TODO: env case here and in map */
 
       case T_STRING:
 	car(x) = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
@@ -39525,6 +39601,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    goto OPT_EVAL;
 			  }
 			break;
+
+			/* TODO env case */
 			
 		      case T_HASH_TABLE:
 			optimize_data(code) = OP_HASH_TABLE_S;
@@ -39609,6 +39687,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    optimize_data(code) = OP_C_OBJECT_C;
 			    ecdr(code) = f;
 			    goto OPT_EVAL;
+
+			    /* TODO: env case */
 			    
 			  case T_HASH_TABLE:
 			    optimize_data(code) = OP_HASH_TABLE_C;
@@ -39910,6 +39990,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    optimize_data(code) = OP_C_OBJECT_opCq;
 			    ecdr(code) = f;
 			    goto OPT_EVAL;
+
+			    /* TODO: env case */
 			    
 			  case T_HASH_TABLE:
 			    optimize_data(code) = OP_HASH_TABLE_opCq;
@@ -43403,7 +43485,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_HOOK:                              /* -------- hook -------- */
 	  if (is_pair(hook_functions(sc->code)))
 	    {
-	      /* fprintf(stderr, "%s %s\n", DISPLAY(hook_functions(sc->code)), DISPLAY(sc->args)); */
 	      sc->code = hook_functions(sc->code);
 	      push_stack(sc, OP_HOOK_APPLY, sc->args, cdr(sc->code));
 	      sc->code = car(sc->code);
@@ -43415,6 +43496,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else sc->value = sc->UNSPECIFIED;
 	  goto START;
 
+
 	case T_C_OBJECT:                          /* -------- applicable (new-type) object -------- */
 	  sc->value = (*(object_ref(sc->code)))(sc, sc->code, sc->args);
 	  /* pws_apply, fallback_ref, or call_s_object_getter
@@ -43422,6 +43504,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *    so it's not obvious how to avoid the jump.
 	   */
 	  goto START;
+
 
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of indices 
@@ -43499,6 +43582,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(s7_wrong_number_of_args_error(sc, "not enough args for hash-table-ref (via hash table as applicable object): ~A", sc->args));
 	      sc->value = g_hash_table_ref(sc, cons(sc, sc->code, sc->args));
 	    }
+	  goto START;
+
+
+	case T_ENVIRONMENT:
+	  if (is_null(cdr(sc->args)))
+	    {
+	      if (is_symbol(car(sc->args)))
+		sc->value = environment_ref(sc, sc->code, car(sc->args));
+	      else return(s7_wrong_type_arg_error(sc, "environment application", 1, car(sc->args), "a symbol"));
+	    }
+	  else return(s7_wrong_number_of_args_error(sc, "environment as applicable object takes one argument: ~A", sc->args));
 	  goto START;
 
 
@@ -43802,6 +43896,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      car(sc->T3_3) = value;
 	      sc->value = g_hash_table_set(sc, sc->T3_1);
 	      break;
+
+	      /* TODO: env case? */
 
 	    case T_C_OPT_ARGS_FUNCTION:
 	    case T_C_RST_ARGS_FUNCTION:
@@ -44181,6 +44277,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = cadar(sc->code);
 		}
 	      else sc->code = cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      break;
+
+
+	    case T_ENVIRONMENT:
+	      sc->code = cons(sc, sc->ENVIRONMENT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
 	      break;
 
 
@@ -53660,6 +53761,10 @@ the error type and the info passed to the error handler.");
     
     sc->HASH_TABLE_SET = s7_symbol_value(sc, sym = make_symbol(sc, "hash-table-set!"));
     typeflag(sc->HASH_TABLE_SET) |= T_SETTER; 
+    set_setter(sym);
+
+    sc->ENVIRONMENT_SET = s7_make_function(sc, "(environment-set!)", g_environment_set, 3, 0, false, "internal setter for environments");
+    typeflag(sc->ENVIRONMENT_SET) |= T_SETTER; 
     set_setter(sym);
 
     sym = make_symbol(sc, "cons");
