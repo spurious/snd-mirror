@@ -21416,9 +21416,7 @@ abs     1       2
 (test (environment? (augment-environment '())) #t)
 (test (environment? (augment-environment! '())) #t)
 (test (environment? (augment-environment (augment-environment '()) '(a . 1))) #t)
-(test (environment? (augment-environment! (augment-environment! '()) '(a . 1))) #t)
 (test (environment? (augment-environment '() '(a . 1))) #t)
-(test (environment? (augment-environment! '() '(a . 1))) #t)
 (let ((f1 (lambda (a) (+ a 1)))
       (f2 (lambda* ((a 2)) (+ a 1))))
   (define (hi a) (+ a 1))
@@ -21436,7 +21434,6 @@ abs     1       2
   (test (fill! (procedure-environment ho) 0) 'error)
   (test (reverse (procedure-environment ho)) 'error))
 
-
 (let ()
   (apply augment-environment! (current-environment)
 	 (with-environment (initial-environment)
@@ -21448,7 +21445,7 @@ abs     1       2
 		    (cons (string->symbol 
 			   (string-append "library:" (symbol->string (car binding))))
 			  (cdr binding)))
-		  (car (environment->list (current-environment)))))))
+		  (environment->list (current-environment))))))
   (test (library:lognor 1 2) -4))
 
 
@@ -21492,7 +21489,7 @@ abs     1       2
 (test (let ((a 1)) (object->string (current-environment))) "#<environment>")
 (test (let ((a 1)) (object->string (global-environment))) "#<environment>")
 (test (format #f "~A" (global-environment)) "#<environment>")
-(test (let ((a 32) (b #(1 2 3))) (format #f "~{~{var: ~A, value: ~A~}~^ ~}" (current-environment))) "var: a, value: 32 var: b, value: #(1 2 3)")
+(test (let ((a 32) (b #(1 2 3))) (format #f "~{~A~^ ~}" (current-environment))) "(a . 32) (b . #(1 2 3))")
 
 (test (let () (augment-environment! (initial-environment) (cons 'a 32)) (symbol->value 'a (initial-environment))) #<undefined>)
 (test (let ((caar 123)) (+ caar (with-environment (initial-environment) (caar '((2) 3))))) 125)
@@ -21509,7 +21506,7 @@ abs     1       2
 			 (+ val caar))))) ; -105
 	   (caar '((30) 3)))) ; 30 + 19
       49)
-      
+
 #|
 (let ((old+ +))
   (let ((vals 

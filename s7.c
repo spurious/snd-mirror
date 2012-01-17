@@ -3510,7 +3510,8 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 { 
   s7_pointer slot;
 
-  if (!is_environment(env))
+  if ((!is_environment(env)) ||
+      (env == sc->global_env))
     {
       s7_pointer ge;
 
@@ -3639,7 +3640,7 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   inits = vector_elements(sc->initial_env);
 
   for (i = 0; (i < INITIAL_ENV_ENTRIES) && (is_slot(inits[i])); i++)
-    if ((!is_global(slot_symbol(inits[i]))) ||                                             /* it's shadowed locally */
+    if ((!is_global(slot_symbol(inits[i]))) ||                                      /* it's shadowed locally */
 	(slot_value(inits[i]) != slot_value(global_slot(slot_symbol(inits[i])))))   /* it's not shadowed, but has been changed globally */
       s7_make_slot(sc, sc->w, slot_symbol(inits[i]), slot_value(inits[i]));
                          
@@ -3663,29 +3664,22 @@ arguments (each a cons: symbol . value) directly to the environment env, and ret
 environment."
 
   s7_pointer x, e;
-  int i, gc_loc = -1;
+  int i;
 
   e = car(args);
-  if (!is_environment(e))
+  if (is_null(e))
+    e = sc->global_env;
+  else
     {
-      if (is_null(e))       /* the empty environment */
-	{
-	  e = new_frame_in_env(sc, sc->NIL);
-	  gc_loc = s7_gc_protect(sc, e);
-	}
-      else return(s7_wrong_type_arg_error(sc, "augment-environment!", 1, e, "an environment"));
+      if (!is_environment(e))
+	return(s7_wrong_type_arg_error(sc, "augment-environment!", 1, e, "an environment"));
     }
-
   for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
     {
       s7_pointer sym, val;
       if ((!is_pair(car(x))) ||
 	  (!is_symbol(caar(x))))
-	{
-	  if (gc_loc != -1)
-	    s7_gc_unprotect_at(sc, gc_loc);
-	  return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair: '(symbol . value)"));
-	}
+	return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair: '(symbol . value)"));
 
       sym = caar(x);
       if ((is_pair(cdr(x))) &&
@@ -3697,12 +3691,21 @@ environment."
 	  (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
 	return(s7_wrong_type_arg_error(sc, "augment-environment!", i, caar(x), "mutable symbol"));
     }
-
-  for (x = cdr(args); is_not_null(x); x = cdr(x))
-    s7_make_slot(sc, e, caar(x), cdar(x));
-
-  if (gc_loc != -1)
-    s7_gc_unprotect_at(sc, gc_loc);
+  
+  if (e == sc->global_env)
+    {
+      for (x = cdr(args); is_not_null(x); x = cdr(x))
+	{
+	  if (is_slot(global_slot(caar(x))))
+	    slot_set_value(global_slot(caar(x)), cdar(x));
+	  else s7_make_slot(sc, e, caar(x), cdar(x));
+	}
+    }
+  else
+    {
+      for (x = cdr(args); is_not_null(x); x = cdr(x))
+	s7_make_slot(sc, e, caar(x), cdar(x));
+    }
   return(e);
 }
 
@@ -3710,8 +3713,12 @@ environment."
 s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindings)
 {
   s7_pointer new_e;
-  
-  new_e = new_frame_in_env(sc, e);
+  /* fprintf(stderr, "e: %p, slots: %p, next: %p\n", e, environment_slots(e), next_environment(e)); */
+
+  if (e == sc->global_env)
+    new_e = new_frame_in_env(sc, sc->NIL);
+  else new_e = new_frame_in_env(sc, e);
+
   if (!is_null(bindings))
     {
       s7_pointer x;
@@ -3724,6 +3731,7 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
       s7_gc_unprotect_at(sc, gc_loc);
     }
 
+  /* fprintf(stderr, "new_e: %p, slots: %p, next: %p\n", new_e, environment_slots(new_e), next_environment(new_e)); */
   return(new_e);
 }
 
@@ -3741,25 +3749,15 @@ arguments (each a cons: symbol . value) to the environment env, and returns the 
 new environment."
 
   s7_pointer e, x;
-  int i, gc_loc = -1;
+  int i;
 
   e = car(args);
-  if (!is_environment(e))
-    {
-      if (is_null(e))       /* the empty environment */
-	{
-	  e = new_frame_in_env(sc, sc->NIL);
-	  gc_loc = s7_gc_protect(sc, e);
-	}
-      else return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
-    }
+  if (is_null(e))
+    e = sc->global_env;
   else
     {
-      if (e == sc->global_env)
-	{
-	  e = new_frame_in_env(sc, sc->NIL);
-	  gc_loc = s7_gc_protect(sc, e);
-	}
+      if (!is_environment(e))
+	return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
     }
 
   for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
@@ -3767,11 +3765,8 @@ new environment."
       s7_pointer sym, val;
       if ((!is_pair(car(x))) ||
 	  (!is_symbol(caar(x))))
-	{
-	  if (gc_loc != -1)
-	    s7_gc_unprotect_at(sc, gc_loc);
-	  return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
-	}
+	return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
+
       sym = caar(x);
       if ((is_pair(cdr(x))) &&
 	  (s7_assq(sc, sym, cdr(x)) != sc->F))
@@ -3782,8 +3777,6 @@ new environment."
 	  (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
 	return(s7_wrong_type_arg_error(sc, "augment-environment", i, caar(x), "mutable symbol"));
     }
-  if (gc_loc != -1)
-    s7_gc_unprotect_at(sc, gc_loc);
 
   return(s7_augment_environment(sc, e, cdr(args)));
 }
@@ -3792,6 +3785,7 @@ new environment."
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
 {
   s7_pointer x;
+
   sc->w = sc->NIL;
   if (env == sc->global_env)
     {
@@ -3799,43 +3793,11 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
       for (i = 0; i < vector_fill_pointer(env); i++)
 	if (is_slot(vector_element(env, i)))
 	  sc->w = cons(sc, cons(sc, slot_symbol(vector_element(env, i)), slot_value(vector_element(env, i))), sc->w);
-      x = sc->w;
-    }
-  else
-    {
-      for (x = env; is_environment(x); x = next_environment(x)) 
-	{
-	  s7_pointer y;
-	  sc->z = sc->NIL;
-	  for (y = environment_slots(x); is_slot(y); y = next_slot(y))
-	    sc->z = cons(sc, cons(sc, slot_symbol(y), slot_value(y)), sc->z);
-	  sc->w = cons(sc, safe_reverse_in_place(sc, sc->z), sc->w);
-	}
-  
-      x = safe_reverse_in_place(sc, sc->w);
-      sc->z = sc->NIL;
-    }
-  sc->w = sc->NIL;
-  return(x);
-}
-
-
-static s7_pointer local_environment_to_list(s7_scheme *sc, s7_pointer env)
-{
-  s7_pointer x;
-
-  sc->w = sc->NIL;
-  if (env == sc->global_env)
-    {
-      unsigned int i;
-      for (i = 0; i < vector_fill_pointer(env); i++)
-	if (is_slot(vector_element(env, i)))
-	  sc->w = cons(sc, list_2(sc, slot_symbol(vector_element(env, i)), slot_value(vector_element(env, i))), sc->w);
     }
   else
     {
       for (x = environment_slots(env); is_slot(x); x = next_slot(x))
-	sc->w = cons(sc, list_2(sc, slot_symbol(x), slot_value(x)), sc->w);
+	sc->w = cons(sc, cons(sc, slot_symbol(x), slot_value(x)), sc->w);
     }
   x = sc->w;
   sc->w = sc->NIL;
@@ -3845,14 +3807,9 @@ static s7_pointer local_environment_to_list(s7_scheme *sc, s7_pointer env)
 
 static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 {
-  #define H_environment_to_list "(environment->list env) returns env as a list of lists.  The outer lists \
-represent the frames working from the innermost up, and the inner lists are lists of cons's with each symbol \
-in that frame and its value."
+  #define H_environment_to_list "(environment->list env) returns env's bindings as a list of cons's: '(symbol . value)."
 
   s7_pointer env;
-  /* but... the same symbol can be in the global environment more than once (top-level redefinition)
-   *   should this return only the 1st slot?
-   */
   env = car(args);
   if (!is_environment(env))
     return(s7_wrong_type_arg_error(sc, "environment->list", 0, env, "an environment"));
@@ -3860,15 +3817,18 @@ in that frame and its value."
   return(s7_environment_to_list(sc, env));
 }
 
-/* TODO: doc/test applicable e */
+/* TODO: doc/test applicable e, outer-env */
 
 static s7_pointer environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   /* (let ((a 1)) ((current-environment) 'a)) */
-  s7_pointer y;
-  for (y = environment_slots(env); is_slot(y); y = next_slot(y))
-    if (slot_symbol(y) == symbol)
-      return(cdr(y));
+  s7_pointer x, y;
+
+  for (x = env; is_environment(x); x = next_environment(x))
+    for (y = environment_slots(x); is_slot(y); y = next_slot(y))
+      if (slot_symbol(y) == symbol)
+	return(cdr(y));
+
   return(sc->UNDEFINED);
 }
 
@@ -3918,6 +3878,46 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
   return(sc->NIL);
 }
 
+
+
+static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
+{
+  #define H_global_environment "(global-environment) returns the current top-level definitions (symbol bindings). \
+It is a hash-table."
+  return(sc->global_env);
+}
+
+/* as with the symbol-table, this function can lead to disaster -- user could
+ *   clobber the environment etc.  But we want it to be editable and augmentable,
+ *   so I guess I'll leave it alone.  (See current|procedure-environment as well).
+ */
+
+
+static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_current_environment "(current-environment) returns the current definitions (symbol bindings)"
+
+  if (is_environment(sc->envir))
+    return(sc->envir);
+  return(sc->global_env);
+}
+
+/* TODO: doc/test outer-environment (also NEWS s7.h etc)
+ */
+static s7_pointer g_outer_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_outer_environment "(outer-environment env) returns the environment that contains env."
+  s7_pointer env;
+
+  env = car(args);
+  if (!is_environment(env))
+    return(s7_wrong_type_arg_error(sc, "outer-environment", 0, env, "an environment"));  
+
+  if ((env == sc->global_env) ||
+      (is_null(next_environment(env))))
+    return(sc->global_env);
+  return(next_environment(env));
+}
 
 
 #if 0
@@ -4060,29 +4060,6 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
   if (is_slot(x))
     slot_set_value(x, val);
   return(val);
-}
-
-
-static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
-{
-  #define H_global_environment "(global-environment) returns the current top-level definitions (symbol bindings). \
-It is a hash-table."
-  return(sc->global_env);
-}
-
-/* as with the symbol-table, this function can lead to disaster -- user could
- *   clobber the environment etc.  But we want it to be editable and augmentable,
- *   so I guess I'll leave it alone.  (See current|procedure-environment as well).
- */
-
-
-static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
-{
-  #define H_current_environment "(current-environment) returns the current definitions (symbol bindings)"
-
-  if (is_environment(sc->envir))
-    return(sc->envir);
-  return(sc->global_env);
 }
 
 
@@ -25245,10 +25222,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(hook_functions(obj));
 
     case T_ENVIRONMENT:
-      /* not s7_environment_to_list here because that returns the entire chain of envs
-       *    (let ((a 32) (b #(1 2 3))) (format #f "~{~{var: ~A, value: ~A~}~^ ~}" (current-environment)))
-       */
-      return(local_environment_to_list(sc, obj));
+      return(s7_environment_to_list(sc, obj));
 
     case T_C_OBJECT:
       {
@@ -43660,13 +43634,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *
        * another question: (define-constant c (list 1 2 3)) but the list contents are settable
        */
-#if 0
-      if (is_null(global_slot(sc->value)))
-	{
-	  s7_make_slot(sc, sc->NIL, sc->value, slot_value(sc->x));
-	  /* fprintf(stderr, "ad: %s: %s %s\n", DISPLAY(sc->value), DISPLAY(sc->x), DISPLAY(global_slot(sc->value))); */
-	}
-#endif
       goto START;
 
 
@@ -53258,6 +53225,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "symbol->value",             g_symbol_to_value,          1, 1, false, H_symbol_to_value);
   s7_define_function_with_setter(sc, "symbol-access",      g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
   
+  s7_define_safe_function(sc, "outer-environment",         g_outer_environment,        1, 0, false, H_outer_environment);
   s7_define_safe_function(sc, "global-environment",        g_global_environment,       0, 0, false, H_global_environment);
   s7_define_safe_function(sc, "current-environment",       g_current_environment,      0, 0, false, H_current_environment);
   s7_define_constant_function(sc, "initial-environment",   g_initial_environment,      0, 0, false, H_initial_environment);

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.103"
-#define S7_DATE "16-Jan-12"
+#define S7_VERSION "1.104"
+#define S7_DATE "18-Jan-12"
 
 
 typedef long long int s7_Int;
@@ -837,6 +837,10 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 18-Jan:    s7_environment_to_list and environment->list return just the local environment's
+ *               bindings.
+ *            outer-environment returns the environment enclosing its argument (an environment).
+ *            environments are now applicable objects.
  * 12-Jan:    added reverse argument to s7_new_type_x.  This is needed because an object might implement
  *              the apply and set methods, but they might refer to different things.
  * 6-Jan-12:  added (scheme side) logbit?.

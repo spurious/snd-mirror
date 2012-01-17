@@ -3681,8 +3681,8 @@ and its value is returned."
 		const char *url = NULL;
 		s7_pointer x;
 		
-		/* (cdr (assoc '__func__ (car (environment->list (procedure-environment func))))) => (name file line) or name */
-		x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_car(s7_environment_to_list(s7, s7_procedure_environment(sym)))));
+		/* (cdr (assoc '__func__ (environment->list (procedure-environment func)))) => (name file line) or name */
+		x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_environment_to_list(s7, s7_procedure_environment(sym))));
 		
 		if (s7_is_pair(x))
 		  {

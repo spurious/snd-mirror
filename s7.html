@@ -1646,6 +1646,8 @@ simple way for multiple functions to share a closure.
 Maybe it rates a macro:
 </p>
 
+<!-- TODO: change all these begin/let pairs to use bacro/outer-environment -->
+
 <pre>
 (define-macro (blet* names bindings . body)
   `(begin
@@ -3385,13 +3387,13 @@ Here's a more useful example; it adds trace and local variable info for debuggin
 		   (list (car source)
 			 (cadr source)
 			 (caddr source)
-			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (car (environment-&gt;list (current-environment)))))
+			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (environment-&gt;list (current-environment))))
 		   (cdddr source))
 		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
 		  (append 
 		   (list (car source)
 			 (cadr source)
-			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (car (environment-&gt;list (current-environment)))))
+			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (environment-&gt;list (current-environment))))
 		   (cddr source)))
 	      (cons (proc-walk (car source))
 		    (proc-walk (cdr source))))
@@ -3404,7 +3406,7 @@ Here's a more useful example; it adds trace and local variable info for debuggin
 	       (let ((,result #&lt;undefined&gt;))
 		 (dynamic-wind
 		     (lambda ()       ; upon entry, show procedure name and args
-		       (format #t "(~A~{ ~A~})~%" ',proc (caddr (environment-&gt;list (current-environment)))))
+		       (format #t "(~A~{ ~A~})~%" ',proc (environment-&gt;list (outer-environment (outer-environment (current-environment))))))
 		     (lambda ()
 		       (set! ,result (,new-body ,@(cadr orig)))
 		       ,result)
@@ -3493,7 +3495,7 @@ Environments are first class objects in s7.
 
   (<a name="augmentenvironment">augment-environment</a> env . bindings)   add bindings to env
   (<a name="augmentenvironment!">augment-environment!</a> env . bindings)
-  (<a name="environmenttolist">environment-&gt;list</a> env)       return the environment as a list of lists of (symbol . value) cons's
+  (<a name="environmenttolist">environment-&gt;list</a> env)       return the environment bindings as a list of (symbol . value) cons's
   (<a name="symboltovalue">symbol-&gt;value</a> sym (env (current-environment)))
   (<a name="definedp">defined?</a> sym (env (current-environment)))
   (<a name="symboltable">symbol-table</a>)
@@ -3592,7 +3594,7 @@ its bindings are exported into the current environment:
 (apply augment-environment! (current-environment)
   (with-environment (initial-environment)
     (load "any-library.scm" (current-environment))
-    (car (environment-&gt;list (current-environment))))) ; these are the bindings introduced by loading the library
+    (environment-&gt;list (current-environment)))) ; these are the bindings introduced by loading the library
 </pre>
 
 <p>To do the same thing, but prepend "library:" to each name:
@@ -3606,7 +3608,7 @@ its bindings are exported into the current environment:
 	   (cons (string-&gt;symbol 
 		  (string-append "library:" (symbol-&gt;string (car binding))))
 		 (cdr binding)))
-	 (car (environment-&gt;list (current-environment))))))
+	 (environment-&gt;list (current-environment)))))
 </pre>
 
 <p>That's all there is to it!
@@ -3670,6 +3672,106 @@ where we only feed in a few constants, I bet it segfaults!
 	 lst)))))
 </pre>
 
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Here is yet another object system.  Each class and instance is an environment, conceptually simply a
+list of names and associated values. (This section is
+work-in-progress...).
+</p>
+
+<pre>
+(define-bacro (define-class class-name inherited-classes slots methods)
+  `(let ((outer-env (outer-environment (current-environment)))
+	 (new-methods ())
+	 (new-slots ()))
+    (for-each
+     (lambda (class)
+       (set! new-slots (append (environment-&gt;list class) new-slots))
+       (do ((e (outer-environment class) (outer-environment e)))
+	   ((or (not (environment? e))
+		(eq? e (global-environment))))
+	 (set! new-methods (append (environment-&gt;list e) new-methods)))
+       (set! (class 'inheritors) (cons ',class-name (class 'inheritors))))
+     ,inherited-classes)
+
+    (set! new-slots 
+	  (append (map (lambda (slot)
+			 (if (pair? slot)
+			     (cons (car slot) (cadr slot))
+			     (cons slot #f)))
+		       ,slots)
+		  (list (cons 'class-name ',class-name)
+			(cons 'inheritors ()))
+		  (reverse! new-slots)))
+
+    (set! new-methods 
+	  (append (map (lambda (method)
+			 (if (pair? method)
+			     (cons (car method) (cadr method))
+			     (cons method #f)))
+		       ,methods)
+		  (list (cons 'print (lambda* (obj (port #t))
+				       (format port "#&lt;~A: ~{~A~^ ~}&gt;" 
+					       ',class-name
+					       (map (lambda (slot)
+						      (if (or (eq? (car slot) 'class-name)
+							      (eq? (car slot) 'inheritors))
+							  (values)
+							  (list (car slot) (cdr slot))))
+						    (environment-&gt;list obj))))))
+		  (reverse! new-methods)))
+
+    (augment-environment! outer-env
+      ;; define the class (an environment with the slots and methods)
+      (cons ',class-name 
+	    (apply augment-environment
+		   (apply augment-environment () new-methods)
+		   new-slots))
+
+      ;; define class-name? type check
+      (cons (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
+	    (lambda (obj)
+	      (and (environment? obj)
+		   (eq? (obj 'class-name) ',class-name)))))
+
+    (augment-environment! outer-env
+      ;; define the make-instance function for this class
+      (cons (string-&gt;symbol (string-append "make-" (symbol-&gt;string ',class-name)))
+	    (apply lambda* (map (lambda (slot)
+				  (if (pair? slot)
+				      (if (or (eq? (car slot) 'class-name)
+					      (eq? (car slot) 'inheritors))
+					  (values) ; omit these two from the make-instance args
+					  (list (car slot) (cdr slot)))
+				      (list slot #f)))
+				new-slots)
+		   `((let ((new-obj (copy ,,class-name)))
+		      ,@(map (lambda (slot)
+			       (if (or (eq? (car slot) 'class-name)
+				       (eq? (car slot) 'inheritors))
+				   (values)
+				   `(set! (new-obj ',(car slot)) ,(car slot))))
+			     new-slots)
+		      new-obj))))
+      )
+
+    ',class-name))
+
+&gt; (define-class class-1 () '((a 1) (b 2)) (list (list 'add (lambda (obj) (with-environment obj (+ a b))))))
+class-1
+&gt; (define v (make-class-1 :a 32))
+v 
+&gt; ((v 'print) v)  ; environments are applicable objects much like hash-tables
+"#&lt;class-1: (b 2) (a 32)&gt;"
+&gt; ((v 'add) v)
+34
+</pre>
+</blockquote>
+</small>
 
 </dd>
 <br><br>
@@ -5928,7 +6030,7 @@ int main(int argc, char **argv)
   /* those two symbols are now defined in the new environment */
 
   /* add "lib-exports" to the global environment */
-  s7_define_variable(s7, "lib-exports", s7_car(<em class=red>s7_environment_to_list</em>(s7, new_env)));
+  s7_define_variable(s7, "lib-exports", <em class=red>s7_environment_to_list</em>(s7, new_env));
 
   if (argc == 2)
     {
@@ -6212,7 +6314,7 @@ int main(int argc, char **argv)
  *   &gt; (procedure-source closure-1)
  *   (lambda (y) (f y))
  *   &gt; (environment-&gt;list (procedure-environment closure-1))
- *   (((f . #&lt;closure function&gt;) (x . 32)))
+ *   ((f . #&lt;closure function&gt;) (x . 32))
  */
 </pre>
 </td></tr></table>
