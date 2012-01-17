@@ -3481,7 +3481,7 @@ this in procedure-arity?
 
 <dd><p>An environment holds symbols and their values.  The global environment, for example,
 holds all the variables that are defined at the top level.
-Environments are first class objects in s7.  
+Environments are first class (and applicable) objects in s7.  
 </p>
 
 <pre>
@@ -3490,6 +3490,7 @@ Environments are first class objects in s7.
   (<a name="currentenvironment">current-environment</a>)         the currently visible variables and their values
   (<a name="procedureenvironment">procedure-environment</a> proc)  the environment at the time when proc was defined
   (<a name="initialenvironment">initial-environment</a>)         the current environment, but all built-in functions have their original values
+  (<a name="outerenvironment">outer-environment</a> env)       the environment that encloses the environment env
 
   (<a name="withenvironment">with-environment</a> env . body) evaluate body in the environment env 
 
@@ -3498,7 +3499,6 @@ Environments are first class objects in s7.
   (<a name="environmenttolist">environment-&gt;list</a> env)       return the environment bindings as a list of (symbol . value) cons's
   (<a name="symboltovalue">symbol-&gt;value</a> sym (env (current-environment)))
   (<a name="definedp">defined?</a> sym (env (current-environment)))
-  (<a name="symboltable">symbol-table</a>)
 </pre>
 
 <A NAME="augmentenv"></A>
@@ -3523,9 +3523,8 @@ To add or change a symbol's value, use augment-environment:
 just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
 use augment-environment!.  Both of these functions accept nil as the
-'env' argument.  In this case, they return an environment containing
-only the bindings you pass in.  augment-environment is borrowed from
-Common Lisp.  More consistent with other s7 functions (such as hash-table)
+'env' argument as shorthand for (global-environment).
+Augment-environment is a bad name; more consistent with other s7 functions (such as hash-table)
 would be <code>(define (environment . args) (apply augment-environment '() args))</code>.
 </p>
 
@@ -3614,63 +3613,6 @@ its bindings are exported into the current environment:
 <p>That's all there is to it!
 </p>
 
-<p>
-<code>(symbol-table)</code> returns the symbol table, a vector of lists of symbols.
-Here we scan the symbol table looking for any function that doesn't have documentation:
-</p>
-
-<pre>
-       (let ((st (<em class=red>symbol-table</em>)))
-         (do ((i 0 (+ i 1))) 
-             ((= i (vector-length st)))
-           (let ((lst (vector-ref st i)))
-             (for-each 
-               (lambda (sym)
-       	         (if (<em class=red>defined?</em> sym)
-	             (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-	               (if (and (procedure? val)
-			        (string=? "" (procedure-documentation val)))
-		           (format #t "~A " sym)))))
-               lst))))
-</pre>
-
-<p>But geez how boring can something be?  Nobody cares about procedure-documentation!
-Here's a better example, an automatic software torture tester.  Even in kiddie mode
-where we only feed in a few constants, I bet it segfaults!
-</p>
-
-<pre>
-(let ((constants (list #f #t pi () 1 1.5 3/2 1.5+i)))
-
-  (define (autotest func args args-left)
-    (catch #t (lambda () (apply func args)) (lambda any #f))
-    (if (&gt; args-left 0)
-	(for-each
-	 (lambda (c)
-	   (autotest func (cons c args) (- args-left 1)))
-	 constants)))
-
-  (let ((st (<em class=red>symbol-table</em>)))
-    (do ((i 0 (+ i 1))) 
-	((= i (length st)))
-      (let ((lst (st i)))
-	(for-each 
-	 (lambda (sym)
-	   (if (<em class=red>defined?</em> sym)
-	       (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-		 (if (procedure? val)
-		     (let* ((arity (procedure-arity val))
-			    (req (car arity))
-			    (opt (cadr arity))
-			    (rst (caddr arity)))
-		       (if (or (&gt; (+ opt req) 4)
-		       	       (member (symbol-&gt;string sym) '("trace" "exit" "abort")))
-			   (format #t ";skip ~A for now~%" sym) ; no time! no time!
-			   (begin
-			     (format #t ";whack on ~A...~%" sym)
-			     (autotest val '() (+ req opt 1 (if rst 1 0))))))))))
-	 lst)))))
-</pre>
 
 <small>
 <blockquote>
@@ -3679,19 +3621,22 @@ where we only feed in a few constants, I bet it segfaults!
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Here is yet another object system.  Each class and instance is an environment, conceptually simply a
-list of names and associated values. (This section is
-work-in-progress...).
+list of names and associated values.  To make an instance of a class, copy it.  To inherit from
+another class, concatenate the environments. To access a field or a method, use the implicit
+indexing syntax with the field or method name.  To evaluate a form in the context of the instance
+(using fields directly as in CL's with-slots, I think), use with-environment.
 </p>
 
 <pre>
-(define-bacro (define-class class-name inherited-classes slots methods)
+(define-bacro* (define-class class-name inherited-classes slots (methods ()))
+  ;; a bacro is needed so that the calling environment is accessible via outer-environment
   `(let ((outer-env (outer-environment (current-environment)))
 	 (new-methods ())
 	 (new-slots ()))
     (for-each
      (lambda (class)
        (set! new-slots (append (environment-&gt;list class) new-slots))
-       (do ((e (outer-environment class) (outer-environment e)))
+       (do ((e (outer-environment (outer-environment class)) (outer-environment e)))
 	   ((or (not (environment? e))
 		(eq? e (global-environment))))
 	 (set! new-methods (append (environment-&gt;list e) new-methods)))
@@ -3704,8 +3649,6 @@ work-in-progress...).
 			     (cons (car slot) (cadr slot))
 			     (cons slot #f)))
 		       ,slots)
-		  (list (cons 'class-name ',class-name)
-			(cons 'inheritors ()))
 		  (reverse! new-slots)))
 
     (set! new-methods 
@@ -3718,10 +3661,7 @@ work-in-progress...).
 				       (format port "#&lt;~A: ~{~A~^ ~}&gt;" 
 					       ',class-name
 					       (map (lambda (slot)
-						      (if (or (eq? (car slot) 'class-name)
-							      (eq? (car slot) 'inheritors))
-							  (values)
-							  (list (car slot) (cdr slot))))
+						      (list (car slot) (cdr slot)))
 						    (environment-&gt;list obj))))))
 		  (reverse! new-methods)))
 
@@ -3729,8 +3669,10 @@ work-in-progress...).
       ;; define the class (an environment with the slots and methods)
       (cons ',class-name 
 	    (apply augment-environment
-		   (apply augment-environment () new-methods)
-		   new-slots))
+		   (augment-environment (apply augment-environment () (reverse new-methods))
+		    (cons 'class-name ',class-name)
+		    (cons 'inheritors ()))
+		   (reverse new-slots)))
 
       ;; define class-name? type check
       (cons (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
@@ -3743,25 +3685,21 @@ work-in-progress...).
       (cons (string-&gt;symbol (string-append "make-" (symbol-&gt;string ',class-name)))
 	    (apply lambda* (map (lambda (slot)
 				  (if (pair? slot)
-				      (if (or (eq? (car slot) 'class-name)
-					      (eq? (car slot) 'inheritors))
-					  (values) ; omit these two from the make-instance args
-					  (list (car slot) (cdr slot)))
+				      (list (car slot) (cdr slot))
 				      (list slot #f)))
 				new-slots)
 		   `((let ((new-obj (copy ,,class-name)))
 		      ,@(map (lambda (slot)
-			       (if (or (eq? (car slot) 'class-name)
-				       (eq? (car slot) 'inheritors))
-				   (values)
-				   `(set! (new-obj ',(car slot)) ,(car slot))))
+			       `(set! (new-obj ',(car slot)) ,(car slot)))
 			     new-slots)
-		      new-obj))))
-      )
-
+		      new-obj)))))
     ',class-name))
 
-&gt; (define-class class-1 () '((a 1) (b 2)) (list (list 'add (lambda (obj) (with-environment obj (+ a b))))))
+&gt; (define-class class-1 () 
+       '((a 1) (b 2)) 
+       (list (list 'add (lambda (obj) 
+                          (with-environment obj
+                            (+ a b))))))
 class-1
 &gt; (define v (make-class-1 :a 32))
 v 
@@ -3769,10 +3707,24 @@ v
 "#&lt;class-1: (b 2) (a 32)&gt;"
 &gt; ((v 'add) v)
 34
+&gt; (define-class class-2 (list class-1)
+       '((c 3)) 
+       (list (list 'multiply (lambda (obj) 
+                               (with-environment obj 
+                                 (* a b c))))))
+class-2
+&gt; (define v2 (make-class-2 :a 32))
+v2
+&gt; ((v2 'print) v2)
+"#&lt;class-2: (c 3) (a 32) (b 2)&gt;"
+&gt; ((v2 'multiply) v2)
+192
+&gt; ((v2 'add) v2)    ; inherited from class-1
+34
+
 </pre>
 </blockquote>
 </small>
-
 </dd>
 <br><br>
 
@@ -4119,6 +4071,68 @@ A keyword is a symbol that starts or ends with a colon. The colon
 is considered to be a part of the symbol name.  A keyword is a constant that evaluates to itself.
 </p>
 
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>
+<code>(<a name="symboltable">symbol-table</a>)</code> returns the symbol table, a vector of lists of symbols.
+Here we scan the symbol table looking for any function that doesn't have documentation:
+</p>
+
+<pre>
+       (let ((st (<em class=red>symbol-table</em>)))
+         (do ((i 0 (+ i 1))) 
+             ((= i (vector-length st)))
+           (let ((lst (vector-ref st i)))
+             (for-each 
+               (lambda (sym)
+       	         (if (<em class=red>defined?</em> sym)
+	             (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+	               (if (and (procedure? val)
+			        (string=? "" (procedure-documentation val)))
+		           (format #t "~A " sym)))))
+               lst))))
+</pre>
+
+<p>But geez how boring can something be?  Nobody cares about procedure-documentation!
+Here's a better example, an automatic software torture tester.  Even in kiddie mode
+where we only feed in a few constants, I bet it segfaults!
+</p>
+
+<pre>
+(let ((constants (list #f #t pi () 1 1.5 3/2 1.5+i)))
+
+  (define (autotest func args args-left)
+    (catch #t (lambda () (apply func args)) (lambda any #f))
+    (if (&gt; args-left 0)
+	(for-each
+	 (lambda (c)
+	   (autotest func (cons c args) (- args-left 1)))
+	 constants)))
+
+  (let ((st (<em class=red>symbol-table</em>)))
+    (do ((i 0 (+ i 1))) 
+	((= i (length st)))
+      (let ((lst (st i)))
+	(for-each 
+	 (lambda (sym)
+	   (if (<em class=red>defined?</em> sym)
+	       (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+		 (if (procedure? val)
+		     (let* ((arity (procedure-arity val))
+			    (req (car arity))
+			    (opt (cadr arity))
+			    (rst (caddr arity)))
+		       (if (or (&gt; (+ opt req) 4)
+		       	       (member (symbol-&gt;string sym) '("trace" "exit" "abort")))
+			   (format #t ";skip ~A for now~%" sym) ; no time! no time!
+			   (begin
+			     (format #t ";whack on ~A...~%" sym)
+			     (autotest val '() (+ req opt 1 (if rst 1 0))))))))))
+	 lst)))))
+</pre>
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -4798,7 +4812,7 @@ Here's an idle thought:
 71
 </pre>
 
-<p>or perhaps better, use augment-environment!
+<p>or perhaps better, use define-bacro with augment-environment! as in the object system example above.
 </p>
 
 

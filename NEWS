@@ -1,8 +1,21 @@
-Snd 12.7
+Snd 12.8
 
-s7 is faster, but not enough so to remove the run macro.
-  This business has taken longer than I expected.
+s7: added logbit? (using gmp arg order, not CL)
 
-checked: gtk 3.3.4|6, sbcl 1.0.54
+    added reverse argument (in C) to s7_new_type_x and (in scheme) to make-type.  
+      This is needed because an object might implement the apply and set methods, 
+      but they might refer to different things (I should have noticed this a long
+      time ago...)
 
-Thanks!: Rick Taube, Michael Edwards, Mike Scholz
+    s7_environment_to_list and environment->list return just the local environment's
+      bindings.  They used to crawl up the environment chain, but that can now be
+      done with outer-environment.
+
+    outer-environment returns the environment enclosing its argument (an environment).
+
+    added an object system example in the environments section of s7.html.
+      It's based on environments as classes/instances.
+
+checked: sbcl 1.0.55
+
+Thanks!: 
