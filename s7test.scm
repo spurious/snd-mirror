@@ -21573,8 +21573,8 @@ abs     1       2
   (let ((e (environment '(a . 1) '(b . 2))))
     (test (eval '(+ a b 3) e) 6)))
 
-(test (eval 'a (augment-environment () '(a . 1) '(a . 2))) 'error)
-(test (eval 'a (augment-environment! () '(a . 1) '(a . 2))) 'error)
+;(test (eval 'a (augment-environment () '(a . 1) '(a . 2))) 'error) ; no longer an error, mainly for repl's convenience
+;(test (eval 'a (augment-environment! () '(a . 1) '(a . 2))) 'error)
 (test (eval 'pi (augment-environment () '(pi . 1) '(a . 2))) 'error)
 (test (eval 'pi (augment-environment! () '(pi . 1) '(a . 2))) 'error)
 (test (eval 'pi (augment-environment () (cons 'pi pi))) pi)

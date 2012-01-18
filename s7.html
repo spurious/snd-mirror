@@ -3628,51 +3628,74 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 </p>
 
 <pre>
-(define-bacro* (define-class class-name inherited-classes slots (methods ()))
+(define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
   ;; a bacro is needed so that the calling environment is accessible via outer-environment
+  
   `(let ((outer-env (outer-environment (current-environment)))
 	 (new-methods ())
 	 (new-slots ()))
+
     (for-each
      (lambda (class)
+       ;; each class is a set of nested environments, the innermost (first in the list)
+       ;;   holds the local slots which are copied each time an instance is created,
+       ;;   the next holds the class slots (global to all instances, not copied);
+       ;;   these hold the class name and other such info.  The remainin environments
+       ;;   hold the methods, with the localmost method first.  So in this loop, we
+       ;;   are gathering the local slots and all the methods of the inherited
+       ;;   classes, and will splice them together below as a new class.
+
        (set! new-slots (append (environment-&gt;list class) new-slots))
        (do ((e (outer-environment (outer-environment class)) (outer-environment e)))
 	   ((or (not (environment? e))
 		(eq? e (global-environment))))
 	 (set! new-methods (append (environment-&gt;list e) new-methods)))
+
        (set! (class 'inheritors) (cons ',class-name (class 'inheritors))))
      ,inherited-classes)
 
-    (set! new-slots 
-	  (append (map (lambda (slot)
-			 (if (pair? slot)
-			     (cons (car slot) (cadr slot))
-			     (cons slot #f)))
-		       ,slots)
-		  (reverse! new-slots)))
+     (let ((remove-duplicates 
+	    (lambda (lst)         ; if multiple local slots with same name, take the localmost
+	      (letrec ((rem-dup
+			(lambda (lst nlst)
+			  (cond ((null? lst) nlst)
+				((assq (caar lst) nlst) (rem-dup (cdr lst) nlst))
+				(else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
+		(reverse (rem-dup lst ()))))))
+       (set! new-slots 
+	     (remove-duplicates
+	      (append (map (lambda (slot)
+			     (if (pair? slot)
+				 (cons (car slot) (cadr slot))
+				 (cons slot #f)))
+			   ,slots)                    ; the incoming new slots, #f is the default value
+		      new-slots))))                   ; the inherited slots
 
     (set! new-methods 
 	  (append (map (lambda (method)
 			 (if (pair? method)
 			     (cons (car method) (cadr method))
 			     (cons method #f)))
-		       ,methods)
+		       ,methods)                     ; the incoming new methods
+
+		  ;; add a print method for this class. 
 		  (list (cons 'print (lambda* (obj (port #t))
 				       (format port "#&lt;~A: ~{~A~^ ~}&gt;" 
 					       ',class-name
 					       (map (lambda (slot)
 						      (list (car slot) (cdr slot)))
 						    (environment-&gt;list obj))))))
-		  (reverse! new-methods)))
+		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
 
-    (augment-environment! outer-env
-      ;; define the class (an environment with the slots and methods)
-      (cons ',class-name 
-	    (apply augment-environment
-		   (augment-environment (apply augment-environment () (reverse new-methods))
-		    (cons 'class-name ',class-name)
-		    (cons 'inheritors ()))
-		   (reverse new-slots)))
+    (augment-environment! outer-env                  
+      (cons ',class-name                             ; define the class class-name in the calling environment
+	    (apply augment-environment               ; the local slots
+		   (augment-environment              ; the global slots
+		    (apply augment-environment ()    ; the methods
+			   (reverse new-methods))
+		    (cons 'class-name ',class-name)  ; class-name slot
+		    (cons 'inheritors ())) 
+		   new-slots))
 
       ;; define class-name? type check
       (cons (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
@@ -3681,7 +3704,8 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 		   (eq? (obj 'class-name) ',class-name)))))
 
     (augment-environment! outer-env
-      ;; define the make-instance function for this class
+      ;; define the make-instance function for this class.  
+      ;;   Each slot is a keyword argument to the make function.
       (cons (string-&gt;symbol (string-append "make-" (symbol-&gt;string ',class-name)))
 	    (apply lambda* (map (lambda (slot)
 				  (if (pair? slot)
