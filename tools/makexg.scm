@@ -145,7 +145,8 @@
 
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
-		     "gtk_key_snooper_remove"))
+		     ;"gtk_key_snooper_remove"
+		     ))
 
 (define no-c-to-xen 
   (list "CellLayoutDataFunc" "GClosureNotify" "GDestroyNotify" "GError**" "GParamSpec*" "GQuark*" "GSignalAccumulator"
@@ -220,6 +221,7 @@
 	;;    this one depends on c++
 	"GtkFontChooser*" "GtkFontChooserDialog*"
 	"GdkModifierIntent" "guint**" "GtkApplication*" "GVariant*" "GtkApplicationWindow*"
+	"GdkEventKey*"
 	))
 
 (define no-xen-p 
@@ -517,11 +519,11 @@
 					;			      "func1"
 					;			      (parse-args "lambda_data func_info" 'callback)
 					;			      'semi-permanent)
-			(list 'GtkKeySnoopFunc
-			      "gint"
-			      "snoop_func"
-			      (parse-args "GtkWidget* widget GdkEventKey* event lambda_data func_info" 'callback)
-			      'semi-permanent)
+					;			(list 'GtkKeySnoopFunc
+					;			      "gint"
+					;			      "snoop_func"
+					;			      (parse-args "GtkWidget* widget GdkEventKey* event lambda_data func_info" 'callback)
+					;			      'semi-permanent)
 			(list 'GtkMenuPositionFunc
 			      "void"
 			      "menu_position_func"

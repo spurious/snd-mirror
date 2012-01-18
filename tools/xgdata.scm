@@ -75,7 +75,7 @@
 ;;;;(CFNC "GType gdk_colormap_get_type void")
 
 (CFNC "GdkVisual* gdk_visual_get_system void") ; -- moved ahead of the gtk2 stuff
-(CFNC "GdkColor* gdk_color_copy GdkColor* color")
+(CFNC-gtk2 "GdkColor* gdk_color_copy GdkColor* color")
 
 (CFNC-gtk2 "GdkColormap* gdk_colormap_new GdkVisual* visual gboolean allocate")
 (CFNC-gtk2 "GdkColormap* gdk_colormap_get_system void")
@@ -86,10 +86,10 @@
 ;;; 2.90.6 (CFNC "void gdk_colormap_query_color GdkColormap* colormap gulong pixel GdkColor* result")
 (CFNC-gtk2 "GdkVisual* gdk_colormap_get_visual GdkColormap* colormap")
 
-(CFNC "void gdk_color_free GdkColor* color")
-(CFNC "gint gdk_color_parse gchar* spec GdkColor* color")
-(CFNC "guint gdk_color_hash GdkColor* colora")
-(CFNC "gboolean gdk_color_equal GdkColor* colora GdkColor* colorb")
+(CFNC-gtk2 "void gdk_color_free GdkColor* color")
+(CFNC-gtk2 "gint gdk_color_parse gchar* spec GdkColor* color")
+(CFNC-gtk2 "guint gdk_color_hash GdkColor* colora")
+(CFNC-gtk2 "gboolean gdk_color_equal GdkColor* colora GdkColor* colorb")
 ;;;;(CFNC "GType gdk_color_get_type void")
 (CINT "GDK_X_CURSOR" "GdkCursorType")
 (CINT "GDK_ARROW" "GdkCursorType")
@@ -1363,7 +1363,7 @@
 (CFNC "void gdk_window_set_title GdkWindow* window gchar* title")
 (CFNC "void gdk_window_set_role GdkWindow* window gchar* role")
 (CFNC "void gdk_window_set_transient_for GdkWindow* window GdkWindow* parent")
-(CFNC "void gdk_window_set_background GdkWindow* window GdkColor* color")
+(CFNC-gtk2 "void gdk_window_set_background GdkWindow* window GdkColor* color")
 (CFNC-gtk2 "void gdk_window_set_back_pixmap GdkWindow* window GdkPixmap* pixmap gboolean parent_relative")
 (CFNC "void gdk_window_set_cursor GdkWindow* window GdkCursor* cursor")
 (CFNC "void gdk_window_get_user_data GdkWindow* window gpointer* [data]")
@@ -1703,17 +1703,17 @@
 (CFNC "void gtk_color_selection_set_has_opacity_control GtkColorSelection* colorsel gboolean has_opacity")
 (CFNC "gboolean gtk_color_selection_get_has_palette GtkColorSelection* colorsel")
 (CFNC "void gtk_color_selection_set_has_palette GtkColorSelection* colorsel gboolean has_palette")
-(CFNC "void gtk_color_selection_set_current_color GtkColorSelection* colorsel GdkColor* color")
+(CFNC-gtk2 "void gtk_color_selection_set_current_color GtkColorSelection* colorsel GdkColor* color")
 (CFNC "void gtk_color_selection_set_current_alpha GtkColorSelection* colorsel guint16 alpha")
-(CFNC "void gtk_color_selection_get_current_color GtkColorSelection* colorsel GdkColor* color")
+(CFNC-gtk2 "void gtk_color_selection_get_current_color GtkColorSelection* colorsel GdkColor* color")
 (CFNC "guint16 gtk_color_selection_get_current_alpha GtkColorSelection* colorsel")
-(CFNC "void gtk_color_selection_set_previous_color GtkColorSelection* colorsel GdkColor* color")
+(CFNC-gtk2 "void gtk_color_selection_set_previous_color GtkColorSelection* colorsel GdkColor* color")
 (CFNC "void gtk_color_selection_set_previous_alpha GtkColorSelection* colorsel guint16 alpha")
-(CFNC "void gtk_color_selection_get_previous_color GtkColorSelection* colorsel GdkColor* color")
+(CFNC-gtk2 "void gtk_color_selection_get_previous_color GtkColorSelection* colorsel GdkColor* color")
 (CFNC "guint16 gtk_color_selection_get_previous_alpha GtkColorSelection* colorsel")
 (CFNC "gboolean gtk_color_selection_is_adjusting GtkColorSelection* colorsel")
-(CFNC "gboolean gtk_color_selection_palette_from_string gchar* str GdkColor** [colors] gint* [n_colors]")
-(CFNC "gchar* gtk_color_selection_palette_to_string GdkColor* colors gint n_colors" 'free)
+(CFNC-gtk2 "gboolean gtk_color_selection_palette_from_string gchar* str GdkColor** [colors] gint* [n_colors]")
+(CFNC-gtk2 "gchar* gtk_color_selection_palette_to_string GdkColor* colors gint n_colors" 'free)
 ;;; out 2.3 (CFNC "GtkColorSelectionChangePaletteFunc gtk_color_selection_set_change_palette_hook GtkColorSelectionChangePaletteFunc func")
 ;;; out 2.3 (CCAST "GTK_COMBO(obj)" "GtkCombo*")
 ;;; out 2.3 (CCHK "GTK_IS_COMBO(obj)" "GtkCombo*")
@@ -2389,8 +2389,8 @@
 ;;; out 2.3 (CFNC "void gtk_idle_remove_by_data xen data")
 ;;; out 2.3 ;(CFNC "guint gtk_input_add_full gint source GdkInputCondition condition GdkInputFunction func GtkCallbackMarshal marshal lambda_data func_info GtkDestroyNotify destroy")
 ;;; out 2.3 (CFNC "void gtk_input_remove guint input_handler_id")
-(CFNC "guint gtk_key_snooper_install GtkKeySnoopFunc func lambda_data #func_info")
-(CFNC "void gtk_key_snooper_remove guint snooper_handler_id")
+;;; 3.3.8 (CFNC "guint gtk_key_snooper_install GtkKeySnoopFunc func lambda_data #func_info")
+;;; 3.3.8 (CFNC "void gtk_key_snooper_remove guint snooper_handler_id")
 (CFNC "GdkEvent* gtk_get_current_event void")
 (CFNC "guint32 gtk_get_current_event_time void")
 (CFNC "gboolean gtk_get_current_event_state GdkModifierType* [state]")
@@ -4907,10 +4907,10 @@
 (CFNC "void gtk_font_button_set_show_size GtkFontButton* font_button gboolean show_size") 
 ;;;;(CFNC "GType gtk_color_button_get_type void")
 (CFNC "GtkWidget* gtk_color_button_new void") 
-(CFNC "GtkWidget* gtk_color_button_new_with_color GdkColor* color") 
-(CFNC "void gtk_color_button_set_color GtkColorButton* color_button GdkColor* color") 
+(CFNC-gtk2 "GtkWidget* gtk_color_button_new_with_color GdkColor* color") 
 (CFNC "void gtk_color_button_set_alpha GtkColorButton* color_button guint16 alpha") 
-(CFNC "void gtk_color_button_get_color GtkColorButton* color_button GdkColor* color") 
+(CFNC-gtk2 "void gtk_color_button_set_color GtkColorButton* color_button GdkColor* color") 
+(CFNC-gtk2 "void gtk_color_button_get_color GtkColorButton* color_button GdkColor* color") 
 (CFNC "guint16 gtk_color_button_get_alpha GtkColorButton* color_button") 
 (CFNC "void gtk_color_button_set_use_alpha GtkColorButton* color_button gboolean use_alpha") 
 (CFNC "gboolean gtk_color_button_get_use_alpha GtkColorButton* color_button") 
@@ -5215,7 +5215,7 @@
 (CFNC "void gtk_cell_view_set_displayed_row GtkCellView* cell_view GtkTreePath* path")
 (CFNC "GtkTreePath* gtk_cell_view_get_displayed_row GtkCellView* cell_view")
 (CFNC-gtk2 "gboolean gtk_cell_view_get_size_of_row GtkCellView* cell_view GtkTreePath* path GtkRequisition* requisition") ; assumes requisition is alloc'd
-(CFNC "void gtk_cell_view_set_background_color GtkCellView* cell_view GdkColor* color")
+(CFNC-gtk2 "void gtk_cell_view_set_background_color GtkCellView* cell_view GdkColor* color")
 ;;; out 2.5.6 (CFNC "void gtk_cell_view_set_cell_data GtkCellView* cellview")
 ;;; out 2.17.2 (CFNC "GList* gtk_cell_view_get_cell_renderers GtkCellView* cellview") ; FREE (g_list_free)
 
@@ -6722,7 +6722,7 @@
 (CFNC "void pango_cairo_error_underline_path cairo_t* cr gdouble x gdouble y gdouble width gdouble height")
 
 ;(CFNC "cairo_t* gdk_cairo_create GdkDrawable* drawable") -- moved up
-(CFNC "void gdk_cairo_set_source_color cairo_t* cr GdkColor* color")
+(CFNC-gtk2 "void gdk_cairo_set_source_color cairo_t* cr GdkColor* color")
 (CFNC "void gdk_cairo_set_source_pixbuf cairo_t* cr GdkPixbuf* pixbuf gdouble pixbuf_x gdouble pixbuf_y")
 ;;; 2.91.0 (CFNC "void gdk_cairo_set_source_pixmap cairo_t* cr GdkPixmap* pixmap double pixmap_x double pixmap_y")
 (CFNC "void gdk_cairo_rectangle cairo_t* cr GdkRectangle* rectangle")
@@ -6765,7 +6765,7 @@
 (CINT "GTK_DRAG_RESULT_ERROR" "GtkDragResult")
 
 
-(CFNC "gchar* gdk_color_to_string GdkColor* color")
+(CFNC-gtk2 "gchar* gdk_color_to_string GdkColor* color")
 (CFNC "void gdk_event_request_motions GdkEventMotion* event")
 (CFNC "void gdk_notify_startup_complete_with_id gchar* startup_id")
 
@@ -6989,7 +6989,7 @@
 (CFNC-2134 "GdkModifierType gtk_accel_group_get_modifier_mask GtkAccelGroup* accel_group")
 
 
-(STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")
+;;; 3.3.8 (STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")
 ;;; out 2.90.4 (STRUCT-make "GdkCursor GdkCursorType type guint ref_count")
 ;;; (STRUCT-make "GdkPoint gint x gint y")
 ;;; (STRUCT-make "GdkRectangle gint x gint y gint width gint height")
@@ -8319,7 +8319,7 @@
 
 (CINT-336 "GTK_REGION_ONLY" "GtkRegionFlags")
 (CINT-336 "GDK_WINDOW_STATE_FOCUSED" "GdkWindowState")
-(CINT-336 "GTK_STATE_FLAG_WINDOW_UNFOCUSED" "GtkStateFlags")
+;;; (CINT-336 "GTK_STATE_FLAG_WINDOW_UNFOCUSED" "GtkStateFlags")
  
 (CINT-336 "GTK_CELL_RENDERER_EXPANDABLE" "GtkCellRendererState")
 (CINT-336 "GTK_CELL_RENDERER_EXPANDED" "GtkCellRendererState")
@@ -8346,6 +8346,19 @@
 (CFNC-336 "void gtk_application_window_set_show_menubar GtkApplicationWindow* window gboolean show_menubar")
 (CFNC-336 "gboolean gtk_application_window_get_show_menubar GtkApplicationWindow* window")
 
+
+#|
+;;; 3.3.8 GdkColor deprecated, so all existing refs above need -gtk2
+gtkactionable.h
+gtkresources.h
+(CINT-338 "GTK_STATE_FLAG_BACKDROP" "GtkStateFlags")
++ GtkWidget* gtk_image_new_from_resource  (const gchar     *resource_path);
++ void gtk_image_set_from_resource  (GtkImage        *image,
++                                    const gchar     *resource_path);
++ void       gtk_window_set_attached_to          (GtkWindow           *window, 
++                                                 GtkWidget           *attach_widget);
++ GtkWidget *gtk_window_get_attached_to          (GtkWindow           *window);
+|#
 
 
 

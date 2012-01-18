@@ -13,7 +13,6 @@
  *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
  *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)
- *    (GdkColor pixel red green blue): GdkColor struct
  *    (GtkTextIter): GtkTextIter struct
  *    (GtkTreeIter): GtkTreeIter struct
  *    (PangoRectangle): PangoRectangle struct
@@ -228,7 +227,6 @@ static void define_xm_obj(void)
 #define XEN_GtkDestroyNotify_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 1)))
 #define XEN_GdkFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GdkEventFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
-#define XEN_GtkKeySnoopFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GtkMenuPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 5)))
 #define XEN_GtkTextTagTableForeach_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
 #define XEN_GtkAccelMapForeach_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 5)))
@@ -264,7 +262,6 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GtkDestroyNotify(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_destroy_func
 #define XEN_TO_C_GdkFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_filter_func
 #define XEN_TO_C_GdkEventFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_event_func
-#define XEN_TO_C_GtkKeySnoopFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_snoop_func
 #define XEN_TO_C_GtkMenuPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_menu_position_func
 #define XEN_TO_C_GtkTextTagTableForeach(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_text_tag_table_foreach
 #define XEN_TO_C_GtkAccelMapForeach(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_accel_map_foreach
@@ -330,7 +327,6 @@ XM_TYPE_PTR(GtkAccelKey_, GtkAccelKey*)
 XM_TYPE_PTR(GClosure_, GClosure*)
 XM_TYPE_PTR(GtkWidget_, GtkWidget*)
 XM_TYPE_PTR_2(GdkXEvent_, GdkXEvent*)
-XM_TYPE_PTR(GdkEventKey_, GdkEventKey*)
 XM_TYPE_PTR(GtkMenu_, GtkMenu*)
 #define C_TO_XEN_gint(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint(Arg) (gint)(XEN_TO_C_INT(Arg))
@@ -400,7 +396,6 @@ XM_TYPE_1(GSignalEmissionHook, GSignalEmissionHook)
 #define XEN_TO_C_GSignalMatchType(Arg) (GSignalMatchType)(XEN_TO_C_INT(Arg))
 #define XEN_GSignalMatchType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkVisual_, GdkVisual*)
-XM_TYPE_PTR(GdkColor_, GdkColor*)
 XM_TYPE_PTR(GdkCursor_, GdkCursor*)
 #define C_TO_XEN_GdkCursorType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkCursorType(Arg) (GdkCursorType)(XEN_TO_C_INT(Arg))
@@ -550,6 +545,7 @@ XM_TYPE_PTR_1(GtkImage_, GtkImage*)
 XM_TYPE_PTR_1(GtkImageMenuItem_, GtkImageMenuItem*)
 XM_TYPE_PTR(GtkIMContext_, GtkIMContext*)
 XM_TYPE_PTR(PangoAttrList_, PangoAttrList*)
+XM_TYPE_PTR_1(GdkEventKey_, GdkEventKey*)
 XM_TYPE_PTR_1(GtkIMContextSimple_, GtkIMContextSimple*)
 XM_TYPE_PTR_1(guint16_, guint16*)
 XM_TYPE_PTR_1(GtkIMMulticontext_, GtkIMMulticontext*)
@@ -905,6 +901,7 @@ XM_TYPE_PTR_1(GtkApplicationWindow_, GtkApplicationWindow*)
 #endif
 
 #if (!HAVE_GTK_3)
+XM_TYPE_PTR(GdkColor_, GdkColor*)
 XM_TYPE_PTR(GdkColormap_, GdkColormap*)
 #define C_TO_XEN_GdkDragProtocol(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkDragProtocol(Arg) (GdkDragProtocol)(XEN_TO_C_INT(Arg))
@@ -1148,16 +1145,6 @@ static void gxg_event_func(GdkEvent* event, gpointer func_info)
              C_TO_XEN_GdkEvent_(event),
              XEN_CADR((XEN)func_info),
              c__FUNCTION__);
-}
-
-static gint gxg_snoop_func(GtkWidget* widget, GdkEventKey* event, gpointer func_info)
-{
-  if (!XEN_LIST_P((XEN)func_info)) return((gint)0);
-  return(XEN_TO_C_gint(XEN_CALL_3(XEN_CAR((XEN)func_info),
-                                  C_TO_XEN_GtkWidget_(widget),
-                                  C_TO_XEN_GdkEventKey_(event),
-                                  XEN_CADR((XEN)func_info),
-                                  c__FUNCTION__)));
 }
 
 static void gxg_menu_position_func(GtkMenu* menu, gint* x, gint* y, gboolean* push, gpointer func_info)
@@ -1861,44 +1848,6 @@ static XEN gxg_gdk_visual_get_system(void)
 {
   #define H_gdk_visual_get_system "GdkVisual* gdk_visual_get_system( void)"
   return(C_TO_XEN_GdkVisual_(gdk_visual_get_system()));
-}
-
-static XEN gxg_gdk_color_copy(XEN color)
-{
-  #define H_gdk_color_copy "GdkColor* gdk_color_copy(GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 1, "gdk_color_copy", "GdkColor*");
-  return(C_TO_XEN_GdkColor_(gdk_color_copy(XEN_TO_C_GdkColor_(color))));
-}
-
-static XEN gxg_gdk_color_free(XEN color)
-{
-  #define H_gdk_color_free "void gdk_color_free(GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 1, "gdk_color_free", "GdkColor*");
-  gdk_color_free(XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_color_parse(XEN spec, XEN color)
-{
-  #define H_gdk_color_parse "gint gdk_color_parse(gchar* spec, GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(spec), spec, 1, "gdk_color_parse", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_color_parse", "GdkColor*");
-  return(C_TO_XEN_gint(gdk_color_parse(XEN_TO_C_gchar_(spec), XEN_TO_C_GdkColor_(color))));
-}
-
-static XEN gxg_gdk_color_hash(XEN colora)
-{
-  #define H_gdk_color_hash "guint gdk_color_hash(GdkColor* colora)"
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(colora), colora, 1, "gdk_color_hash", "GdkColor*");
-  return(C_TO_XEN_guint(gdk_color_hash(XEN_TO_C_GdkColor_(colora))));
-}
-
-static XEN gxg_gdk_color_equal(XEN colora, XEN colorb)
-{
-  #define H_gdk_color_equal "gboolean gdk_color_equal(GdkColor* colora, GdkColor* colorb)"
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(colora), colora, 1, "gdk_color_equal", "GdkColor*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(colorb), colorb, 2, "gdk_color_equal", "GdkColor*");
-  return(C_TO_XEN_gboolean(gdk_color_equal(XEN_TO_C_GdkColor_(colora), XEN_TO_C_GdkColor_(colorb))));
 }
 
 static XEN gxg_gdk_cursor_new(XEN cursor_type)
@@ -3175,15 +3124,6 @@ static XEN gxg_gdk_window_set_transient_for(XEN window, XEN parent)
   XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_transient_for", "GdkWindow*");
   XEN_ASSERT_TYPE(XEN_GdkWindow__P(parent), parent, 2, "gdk_window_set_transient_for", "GdkWindow*");
   gdk_window_set_transient_for(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkWindow_(parent));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_set_background(XEN window, XEN color)
-{
-  #define H_gdk_window_set_background "void gdk_window_set_background(GdkWindow* window, GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_background", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_window_set_background", "GdkColor*");
-  gdk_window_set_background(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkColor_(color));
   return(XEN_FALSE);
 }
 
@@ -4835,16 +4775,6 @@ gboolean has_palette)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_color_selection_set_current_color(XEN colorsel, XEN color)
-{
-  #define H_gtk_color_selection_set_current_color "void gtk_color_selection_set_current_color(GtkColorSelection* colorsel, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_set_current_color", "GtkColorSelection*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_selection_set_current_color", "GdkColor*");
-  gtk_color_selection_set_current_color(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_color_selection_set_current_alpha(XEN colorsel, XEN alpha)
 {
   #define H_gtk_color_selection_set_current_alpha "void gtk_color_selection_set_current_alpha(GtkColorSelection* colorsel, \
@@ -4855,31 +4785,11 @@ guint16 alpha)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_color_selection_get_current_color(XEN colorsel, XEN color)
-{
-  #define H_gtk_color_selection_get_current_color "void gtk_color_selection_get_current_color(GtkColorSelection* colorsel, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_get_current_color", "GtkColorSelection*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_selection_get_current_color", "GdkColor*");
-  gtk_color_selection_get_current_color(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_color_selection_get_current_alpha(XEN colorsel)
 {
   #define H_gtk_color_selection_get_current_alpha "guint16 gtk_color_selection_get_current_alpha(GtkColorSelection* colorsel)"
   XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_get_current_alpha", "GtkColorSelection*");
   return(C_TO_XEN_guint16(gtk_color_selection_get_current_alpha(XEN_TO_C_GtkColorSelection_(colorsel))));
-}
-
-static XEN gxg_gtk_color_selection_set_previous_color(XEN colorsel, XEN color)
-{
-  #define H_gtk_color_selection_set_previous_color "void gtk_color_selection_set_previous_color(GtkColorSelection* colorsel, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_set_previous_color", "GtkColorSelection*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_selection_set_previous_color", "GdkColor*");
-  gtk_color_selection_set_previous_color(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_color_selection_set_previous_alpha(XEN colorsel, XEN alpha)
@@ -4889,16 +4799,6 @@ guint16 alpha)"
   XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_set_previous_alpha", "GtkColorSelection*");
   XEN_ASSERT_TYPE(XEN_guint16_P(alpha), alpha, 2, "gtk_color_selection_set_previous_alpha", "guint16");
   gtk_color_selection_set_previous_alpha(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_guint16(alpha));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_color_selection_get_previous_color(XEN colorsel, XEN color)
-{
-  #define H_gtk_color_selection_get_previous_color "void gtk_color_selection_get_previous_color(GtkColorSelection* colorsel, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_get_previous_color", "GtkColorSelection*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_selection_get_previous_color", "GdkColor*");
-  gtk_color_selection_get_previous_color(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkColor_(color));
   return(XEN_FALSE);
 }
 
@@ -4914,36 +4814,6 @@ static XEN gxg_gtk_color_selection_is_adjusting(XEN colorsel)
   #define H_gtk_color_selection_is_adjusting "gboolean gtk_color_selection_is_adjusting(GtkColorSelection* colorsel)"
   XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_is_adjusting", "GtkColorSelection*");
   return(C_TO_XEN_gboolean(gtk_color_selection_is_adjusting(XEN_TO_C_GtkColorSelection_(colorsel))));
-}
-
-static XEN gxg_gtk_color_selection_palette_from_string(XEN str, XEN ignore_colors, XEN ignore_n_colors)
-{
-  #define H_gtk_color_selection_palette_from_string "gboolean gtk_color_selection_palette_from_string(gchar* str, \
-GdkColor** [colors], gint* [n_colors])"
-  GdkColor* ref_colors = NULL;
-  gint ref_n_colors;
-  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "gtk_color_selection_palette_from_string", "gchar*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gtk_color_selection_palette_from_string(XEN_TO_C_gchar_(str), &ref_colors, &ref_n_colors));
-    return(XEN_LIST_3(result, C_TO_XEN_GdkColor_(ref_colors), C_TO_XEN_gint(ref_n_colors)));
-   }
-}
-
-static XEN gxg_gtk_color_selection_palette_to_string(XEN colors, XEN n_colors)
-{
-  #define H_gtk_color_selection_palette_to_string "gchar* gtk_color_selection_palette_to_string(GdkColor* colors, \
-gint n_colors)"
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(colors), colors, 1, "gtk_color_selection_palette_to_string", "GdkColor*");
-  XEN_ASSERT_TYPE(XEN_gint_P(n_colors), n_colors, 2, "gtk_color_selection_palette_to_string", "gint");
-  {
-   gchar* result;
-   XEN rtn;
-   result = gtk_color_selection_palette_to_string(XEN_TO_C_GdkColor_(colors), XEN_TO_C_gint(n_colors));
-   rtn = C_TO_XEN_gchar_(result);
-   g_free(result);
-   return(rtn);
-  }
 }
 
 static XEN gxg_gtk_container_set_border_width(XEN container, XEN border_width)
@@ -6874,33 +6744,6 @@ static XEN gxg_gtk_grab_remove(XEN widget)
   #define H_gtk_grab_remove "void gtk_grab_remove(GtkWidget* widget)"
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_grab_remove", "GtkWidget*");
   gtk_grab_remove(XEN_TO_C_GtkWidget_(widget));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_key_snooper_install(XEN func, XEN func_info)
-{
-  #define H_gtk_key_snooper_install "guint gtk_key_snooper_install(GtkKeySnoopFunc func, lambda_data func_info)"
-  XEN_ASSERT_TYPE(XEN_GtkKeySnoopFunc_P(func), func, 1, "gtk_key_snooper_install", "GtkKeySnoopFunc");
-  if (XEN_NOT_BOUND_P(func_info)) func_info = XEN_FALSE; 
-  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_info), func_info, 2, "gtk_key_snooper_install", "lambda_data");
-  {
-    XEN result = XEN_FALSE;
-    int loc;
-    XEN gxg_ptr = XEN_LIST_5(func, func_info, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
-    result = C_TO_XEN_guint(gtk_key_snooper_install(XEN_TO_C_GtkKeySnoopFunc(func), XEN_TO_C_lambda_data(func_info)));
-    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("idler"), result, C_TO_XEN_INT(loc)));
-    return(result);
-   }
-}
-
-static XEN gxg_gtk_key_snooper_remove(XEN snooper_handler_id)
-{
-  #define H_gtk_key_snooper_remove "void gtk_key_snooper_remove(guint snooper_handler_id)"
-  XEN_ASSERT_TYPE(XEN_guint_P(snooper_handler_id), snooper_handler_id, 1, "gtk_key_snooper_remove", "guint");
-  gtk_key_snooper_remove(XEN_TO_C_guint(snooper_handler_id));
-  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(snooper_handler_id)));
   return(XEN_FALSE);
 }
 
@@ -17087,23 +16930,6 @@ static XEN gxg_gtk_color_button_new(void)
   return(C_TO_XEN_GtkWidget_(gtk_color_button_new()));
 }
 
-static XEN gxg_gtk_color_button_new_with_color(XEN color)
-{
-  #define H_gtk_color_button_new_with_color "GtkWidget* gtk_color_button_new_with_color(GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 1, "gtk_color_button_new_with_color", "GdkColor*");
-  return(C_TO_XEN_GtkWidget_(gtk_color_button_new_with_color(XEN_TO_C_GdkColor_(color))));
-}
-
-static XEN gxg_gtk_color_button_set_color(XEN color_button, XEN color)
-{
-  #define H_gtk_color_button_set_color "void gtk_color_button_set_color(GtkColorButton* color_button, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkColorButton__P(color_button), color_button, 1, "gtk_color_button_set_color", "GtkColorButton*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_button_set_color", "GdkColor*");
-  gtk_color_button_set_color(XEN_TO_C_GtkColorButton_(color_button), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_color_button_set_alpha(XEN color_button, XEN alpha)
 {
   #define H_gtk_color_button_set_alpha "void gtk_color_button_set_alpha(GtkColorButton* color_button, \
@@ -17111,16 +16937,6 @@ guint16 alpha)"
   XEN_ASSERT_TYPE(XEN_GtkColorButton__P(color_button), color_button, 1, "gtk_color_button_set_alpha", "GtkColorButton*");
   XEN_ASSERT_TYPE(XEN_guint16_P(alpha), alpha, 2, "gtk_color_button_set_alpha", "guint16");
   gtk_color_button_set_alpha(XEN_TO_C_GtkColorButton_(color_button), XEN_TO_C_guint16(alpha));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_color_button_get_color(XEN color_button, XEN color)
-{
-  #define H_gtk_color_button_get_color "void gtk_color_button_get_color(GtkColorButton* color_button, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkColorButton__P(color_button), color_button, 1, "gtk_color_button_get_color", "GtkColorButton*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_button_get_color", "GdkColor*");
-  gtk_color_button_get_color(XEN_TO_C_GtkColorButton_(color_button), XEN_TO_C_GdkColor_(color));
   return(XEN_FALSE);
 }
 
@@ -19083,16 +18899,6 @@ static XEN gxg_gtk_cell_view_get_displayed_row(XEN cell_view)
   #define H_gtk_cell_view_get_displayed_row "GtkTreePath* gtk_cell_view_get_displayed_row(GtkCellView* cell_view)"
   XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_get_displayed_row", "GtkCellView*");
   return(C_TO_XEN_GtkTreePath_(gtk_cell_view_get_displayed_row(XEN_TO_C_GtkCellView_(cell_view))));
-}
-
-static XEN gxg_gtk_cell_view_set_background_color(XEN cell_view, XEN color)
-{
-  #define H_gtk_cell_view_set_background_color "void gtk_cell_view_set_background_color(GtkCellView* cell_view, \
-GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_set_background_color", "GtkCellView*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_cell_view_set_background_color", "GdkColor*");
-  gtk_cell_view_set_background_color(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_window_enable_synchronized_configure(XEN window)
@@ -24090,15 +23896,6 @@ gdouble y, gdouble width, gdouble height)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gdk_cairo_set_source_color(XEN cr, XEN color)
-{
-  #define H_gdk_cairo_set_source_color "void gdk_cairo_set_source_color(cairo_t* cr, GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_set_source_color", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_cairo_set_source_color", "GdkColor*");
-  gdk_cairo_set_source_color(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkColor_(color));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gdk_cairo_set_source_pixbuf(XEN cr, XEN pixbuf, XEN pixbuf_x, XEN pixbuf_y)
 {
   #define H_gdk_cairo_set_source_pixbuf "void gdk_cairo_set_source_pixbuf(cairo_t* cr, GdkPixbuf* pixbuf, \
@@ -24118,13 +23915,6 @@ static XEN gxg_gdk_cairo_rectangle(XEN cr, XEN rectangle)
   XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_cairo_rectangle", "GdkRectangle*");
   gdk_cairo_rectangle(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkRectangle_(rectangle));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_color_to_string(XEN color)
-{
-  #define H_gdk_color_to_string "gchar* gdk_color_to_string(GdkColor* color)"
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 1, "gdk_color_to_string", "GdkColor*");
-  return(C_TO_XEN_gchar_(gdk_color_to_string(XEN_TO_C_GdkColor_(color))));
 }
 
 static XEN gxg_gdk_event_request_motions(XEN event)
@@ -30902,6 +30692,13 @@ static XEN gxg_gtk_application_window_get_show_menubar(XEN window)
 #endif
 
 #if (!HAVE_GTK_3)
+static XEN gxg_gdk_color_copy(XEN color)
+{
+  #define H_gdk_color_copy "GdkColor* gdk_color_copy(GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 1, "gdk_color_copy", "GdkColor*");
+  return(C_TO_XEN_GdkColor_(gdk_color_copy(XEN_TO_C_GdkColor_(color))));
+}
+
 static XEN gxg_gdk_colormap_new(XEN visual, XEN allocate)
 {
   #define H_gdk_colormap_new "GdkColormap* gdk_colormap_new(GdkVisual* visual, gboolean allocate)"
@@ -30951,6 +30748,37 @@ static XEN gxg_gdk_colormap_get_visual(XEN colormap)
   #define H_gdk_colormap_get_visual "GdkVisual* gdk_colormap_get_visual(GdkColormap* colormap)"
   XEN_ASSERT_TYPE(XEN_GdkColormap__P(colormap), colormap, 1, "gdk_colormap_get_visual", "GdkColormap*");
   return(C_TO_XEN_GdkVisual_(gdk_colormap_get_visual(XEN_TO_C_GdkColormap_(colormap))));
+}
+
+static XEN gxg_gdk_color_free(XEN color)
+{
+  #define H_gdk_color_free "void gdk_color_free(GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 1, "gdk_color_free", "GdkColor*");
+  gdk_color_free(XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_color_parse(XEN spec, XEN color)
+{
+  #define H_gdk_color_parse "gint gdk_color_parse(gchar* spec, GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(spec), spec, 1, "gdk_color_parse", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_color_parse", "GdkColor*");
+  return(C_TO_XEN_gint(gdk_color_parse(XEN_TO_C_gchar_(spec), XEN_TO_C_GdkColor_(color))));
+}
+
+static XEN gxg_gdk_color_hash(XEN colora)
+{
+  #define H_gdk_color_hash "guint gdk_color_hash(GdkColor* colora)"
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(colora), colora, 1, "gdk_color_hash", "GdkColor*");
+  return(C_TO_XEN_guint(gdk_color_hash(XEN_TO_C_GdkColor_(colora))));
+}
+
+static XEN gxg_gdk_color_equal(XEN colora, XEN colorb)
+{
+  #define H_gdk_color_equal "gboolean gdk_color_equal(GdkColor* colora, GdkColor* colorb)"
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(colora), colora, 1, "gdk_color_equal", "GdkColor*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(colorb), colorb, 2, "gdk_color_equal", "GdkColor*");
+  return(C_TO_XEN_gboolean(gdk_color_equal(XEN_TO_C_GdkColor_(colora), XEN_TO_C_GdkColor_(colorb))));
 }
 
 static XEN gxg_gdk_cursor_ref(XEN cursor)
@@ -31236,6 +31064,15 @@ static XEN gxg_gdk_set_sm_client_id(XEN sm_client_id)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_window_set_background(XEN window, XEN color)
+{
+  #define H_gdk_window_set_background "void gdk_window_set_background(GdkWindow* window, GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_set_background", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_window_set_background", "GdkColor*");
+  gdk_window_set_background(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gdk_window_set_back_pixmap(XEN window, XEN pixmap, XEN parent_relative)
 {
   #define H_gdk_window_set_back_pixmap "void gdk_window_set_back_pixmap(GdkWindow* window, GdkPixmap* pixmap, \
@@ -31327,6 +31164,76 @@ GtkCellRendererState flags)"
   gtk_cell_renderer_render(XEN_TO_C_GtkCellRenderer_(cell), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkRectangle_(background_area), 
                            XEN_TO_C_GdkRectangle_(cell_area), XEN_TO_C_GdkRectangle_(expose_area), XEN_TO_C_GtkCellRendererState(flags));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_selection_set_current_color(XEN colorsel, XEN color)
+{
+  #define H_gtk_color_selection_set_current_color "void gtk_color_selection_set_current_color(GtkColorSelection* colorsel, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_set_current_color", "GtkColorSelection*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_selection_set_current_color", "GdkColor*");
+  gtk_color_selection_set_current_color(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_selection_get_current_color(XEN colorsel, XEN color)
+{
+  #define H_gtk_color_selection_get_current_color "void gtk_color_selection_get_current_color(GtkColorSelection* colorsel, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_get_current_color", "GtkColorSelection*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_selection_get_current_color", "GdkColor*");
+  gtk_color_selection_get_current_color(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_selection_set_previous_color(XEN colorsel, XEN color)
+{
+  #define H_gtk_color_selection_set_previous_color "void gtk_color_selection_set_previous_color(GtkColorSelection* colorsel, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_set_previous_color", "GtkColorSelection*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_selection_set_previous_color", "GdkColor*");
+  gtk_color_selection_set_previous_color(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_selection_get_previous_color(XEN colorsel, XEN color)
+{
+  #define H_gtk_color_selection_get_previous_color "void gtk_color_selection_get_previous_color(GtkColorSelection* colorsel, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkColorSelection__P(colorsel), colorsel, 1, "gtk_color_selection_get_previous_color", "GtkColorSelection*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_selection_get_previous_color", "GdkColor*");
+  gtk_color_selection_get_previous_color(XEN_TO_C_GtkColorSelection_(colorsel), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_selection_palette_from_string(XEN str, XEN ignore_colors, XEN ignore_n_colors)
+{
+  #define H_gtk_color_selection_palette_from_string "gboolean gtk_color_selection_palette_from_string(gchar* str, \
+GdkColor** [colors], gint* [n_colors])"
+  GdkColor* ref_colors = NULL;
+  gint ref_n_colors;
+  XEN_ASSERT_TYPE(XEN_gchar__P(str), str, 1, "gtk_color_selection_palette_from_string", "gchar*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_color_selection_palette_from_string(XEN_TO_C_gchar_(str), &ref_colors, &ref_n_colors));
+    return(XEN_LIST_3(result, C_TO_XEN_GdkColor_(ref_colors), C_TO_XEN_gint(ref_n_colors)));
+   }
+}
+
+static XEN gxg_gtk_color_selection_palette_to_string(XEN colors, XEN n_colors)
+{
+  #define H_gtk_color_selection_palette_to_string "gchar* gtk_color_selection_palette_to_string(GdkColor* colors, \
+gint n_colors)"
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(colors), colors, 1, "gtk_color_selection_palette_to_string", "GdkColor*");
+  XEN_ASSERT_TYPE(XEN_gint_P(n_colors), n_colors, 2, "gtk_color_selection_palette_to_string", "gint");
+  {
+   gchar* result;
+   XEN rtn;
+   result = gtk_color_selection_palette_to_string(XEN_TO_C_GdkColor_(colors), XEN_TO_C_gint(n_colors));
+   rtn = C_TO_XEN_gchar_(result);
+   g_free(result);
+   return(rtn);
+  }
 }
 
 static XEN gxg_gtk_drag_dest_set_proxy(XEN widget, XEN proxy_window, XEN protocol, XEN use_coordinates)
@@ -32048,6 +31955,33 @@ static XEN gxg_gdk_screen_get_system_colormap(XEN screen)
   return(C_TO_XEN_GdkColormap_(gdk_screen_get_system_colormap(XEN_TO_C_GdkScreen_(screen))));
 }
 
+static XEN gxg_gtk_color_button_new_with_color(XEN color)
+{
+  #define H_gtk_color_button_new_with_color "GtkWidget* gtk_color_button_new_with_color(GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 1, "gtk_color_button_new_with_color", "GdkColor*");
+  return(C_TO_XEN_GtkWidget_(gtk_color_button_new_with_color(XEN_TO_C_GdkColor_(color))));
+}
+
+static XEN gxg_gtk_color_button_set_color(XEN color_button, XEN color)
+{
+  #define H_gtk_color_button_set_color "void gtk_color_button_set_color(GtkColorButton* color_button, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkColorButton__P(color_button), color_button, 1, "gtk_color_button_set_color", "GtkColorButton*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_button_set_color", "GdkColor*");
+  gtk_color_button_set_color(XEN_TO_C_GtkColorButton_(color_button), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_color_button_get_color(XEN color_button, XEN color)
+{
+  #define H_gtk_color_button_get_color "void gtk_color_button_get_color(GtkColorButton* color_button, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkColorButton__P(color_button), color_button, 1, "gtk_color_button_get_color", "GtkColorButton*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_color_button_get_color", "GdkColor*");
+  gtk_color_button_get_color(XEN_TO_C_GtkColorButton_(color_button), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gtk_cell_view_get_size_of_row(XEN cell_view, XEN path, XEN requisition)
 {
   #define H_gtk_cell_view_get_size_of_row "gboolean gtk_cell_view_get_size_of_row(GtkCellView* cell_view, \
@@ -32058,6 +31992,16 @@ GtkTreePath* path, GtkRequisition* requisition)"
   return(C_TO_XEN_gboolean(gtk_cell_view_get_size_of_row(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkTreePath_(path), XEN_TO_C_GtkRequisition_(requisition))));
 }
 
+static XEN gxg_gtk_cell_view_set_background_color(XEN cell_view, XEN color)
+{
+  #define H_gtk_cell_view_set_background_color "void gtk_cell_view_set_background_color(GtkCellView* cell_view, \
+GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_set_background_color", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gtk_cell_view_set_background_color", "GdkColor*");
+  gtk_cell_view_set_background_color(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gtk_style_lookup_color(XEN style, XEN color_name, XEN color)
 {
   #define H_gtk_style_lookup_color "gboolean gtk_style_lookup_color(GtkStyle* style, gchar* color_name, \
@@ -32066,6 +32010,22 @@ GdkColor* color)"
   XEN_ASSERT_TYPE(XEN_gchar__P(color_name), color_name, 2, "gtk_style_lookup_color", "gchar*");
   XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 3, "gtk_style_lookup_color", "GdkColor*");
   return(C_TO_XEN_gboolean(gtk_style_lookup_color(XEN_TO_C_GtkStyle_(style), XEN_TO_C_gchar_(color_name), XEN_TO_C_GdkColor_(color))));
+}
+
+static XEN gxg_gdk_cairo_set_source_color(XEN cr, XEN color)
+{
+  #define H_gdk_cairo_set_source_color "void gdk_cairo_set_source_color(cairo_t* cr, GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_set_source_color", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 2, "gdk_cairo_set_source_color", "GdkColor*");
+  gdk_cairo_set_source_color(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkColor_(color));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_color_to_string(XEN color)
+{
+  #define H_gdk_color_to_string "gchar* gdk_color_to_string(GdkColor* color)"
+  XEN_ASSERT_TYPE(XEN_GdkColor__P(color), color, 1, "gdk_color_to_string", "GdkColor*");
+  return(C_TO_XEN_gchar_(gdk_color_to_string(XEN_TO_C_GdkColor_(color))));
 }
 
 #endif
@@ -35256,75 +35216,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
   return(XEN_FALSE);
 }
 
-
-static XEN gxg_pixel(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ONLY_ARG, "pixel", "GdkColor");
-  return(C_TO_XEN_guint32((guint32)((XEN_TO_C_GdkColor_(ptr))->pixel)));
-}
-
-static XEN gxg_red(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ONLY_ARG, "red", "GdkColor");
-  return(C_TO_XEN_guint16((guint16)((XEN_TO_C_GdkColor_(ptr))->red)));
-}
-
-static XEN gxg_green(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ONLY_ARG, "green", "GdkColor");
-  return(C_TO_XEN_guint16((guint16)((XEN_TO_C_GdkColor_(ptr))->green)));
-}
-
-static XEN gxg_blue(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ONLY_ARG, "blue", "GdkColor");
-  return(C_TO_XEN_guint16((guint16)((XEN_TO_C_GdkColor_(ptr))->blue)));
-}
-
-static XEN gxg_set_pixel(XEN ptr, XEN val)
-{
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ARG_1, "pixel", "GdkColor");
-  (XEN_TO_C_GdkColor_(ptr))->pixel = XEN_TO_C_guint32(val);
-  return(val);
-}
-
-static XEN gxg_set_red(XEN ptr, XEN val)
-{
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ARG_1, "red", "GdkColor");
-  (XEN_TO_C_GdkColor_(ptr))->red = XEN_TO_C_guint16(val);
-  return(val);
-}
-
-static XEN gxg_set_green(XEN ptr, XEN val)
-{
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ARG_1, "green", "GdkColor");
-  (XEN_TO_C_GdkColor_(ptr))->green = XEN_TO_C_guint16(val);
-  return(val);
-}
-
-static XEN gxg_set_blue(XEN ptr, XEN val)
-{
-  XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ARG_1, "blue", "GdkColor");
-  (XEN_TO_C_GdkColor_(ptr))->blue = XEN_TO_C_guint16(val);
-  return(val);
-}
-static XEN gxg_make_GdkColor(XEN arglist)
-{
-  GdkColor* result;
-  int i, len;
-  result = (GdkColor*)calloc(1, sizeof(GdkColor));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->pixel = XEN_TO_C_guint32(XEN_LIST_REF(arglist, 0));
-      case 1: result->red = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 1));
-      case 2: result->green = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 2));
-      case 3: result->blue = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 3));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkColor_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
-}
-
 static XEN gxg_make_GtkTextIter(void)
 {
   GtkTextIter* result;
@@ -35398,11 +35289,6 @@ XEN_NARGIFY_1(gxg_g_signal_handlers_destroy_w, gxg_g_signal_handlers_destroy)
 XEN_NARGIFY_1(gxg_g_object_ref_w, gxg_g_object_ref)
 XEN_NARGIFY_1(gxg_g_object_unref_w, gxg_g_object_unref)
 XEN_NARGIFY_0(gxg_gdk_visual_get_system_w, gxg_gdk_visual_get_system)
-XEN_NARGIFY_1(gxg_gdk_color_copy_w, gxg_gdk_color_copy)
-XEN_NARGIFY_1(gxg_gdk_color_free_w, gxg_gdk_color_free)
-XEN_NARGIFY_2(gxg_gdk_color_parse_w, gxg_gdk_color_parse)
-XEN_NARGIFY_1(gxg_gdk_color_hash_w, gxg_gdk_color_hash)
-XEN_NARGIFY_2(gxg_gdk_color_equal_w, gxg_gdk_color_equal)
 XEN_NARGIFY_1(gxg_gdk_cursor_new_w, gxg_gdk_cursor_new)
 XEN_NARGIFY_3(gxg_gdk_drag_status_w, gxg_gdk_drag_status)
 XEN_NARGIFY_3(gxg_gdk_drop_reply_w, gxg_gdk_drop_reply)
@@ -35542,7 +35428,6 @@ XEN_NARGIFY_1(gxg_gdk_window_end_paint_w, gxg_gdk_window_end_paint)
 XEN_NARGIFY_2(gxg_gdk_window_set_title_w, gxg_gdk_window_set_title)
 XEN_NARGIFY_2(gxg_gdk_window_set_role_w, gxg_gdk_window_set_role)
 XEN_NARGIFY_2(gxg_gdk_window_set_transient_for_w, gxg_gdk_window_set_transient_for)
-XEN_NARGIFY_2(gxg_gdk_window_set_background_w, gxg_gdk_window_set_background)
 XEN_NARGIFY_2(gxg_gdk_window_set_cursor_w, gxg_gdk_window_set_cursor)
 XEN_ARGIFY_2(gxg_gdk_window_get_user_data_w, gxg_gdk_window_get_user_data)
 XEN_ARGIFY_3(gxg_gdk_window_get_position_w, gxg_gdk_window_get_position)
@@ -35705,17 +35590,11 @@ XEN_NARGIFY_1(gxg_gtk_color_selection_get_has_opacity_control_w, gxg_gtk_color_s
 XEN_NARGIFY_2(gxg_gtk_color_selection_set_has_opacity_control_w, gxg_gtk_color_selection_set_has_opacity_control)
 XEN_NARGIFY_1(gxg_gtk_color_selection_get_has_palette_w, gxg_gtk_color_selection_get_has_palette)
 XEN_NARGIFY_2(gxg_gtk_color_selection_set_has_palette_w, gxg_gtk_color_selection_set_has_palette)
-XEN_NARGIFY_2(gxg_gtk_color_selection_set_current_color_w, gxg_gtk_color_selection_set_current_color)
 XEN_NARGIFY_2(gxg_gtk_color_selection_set_current_alpha_w, gxg_gtk_color_selection_set_current_alpha)
-XEN_NARGIFY_2(gxg_gtk_color_selection_get_current_color_w, gxg_gtk_color_selection_get_current_color)
 XEN_NARGIFY_1(gxg_gtk_color_selection_get_current_alpha_w, gxg_gtk_color_selection_get_current_alpha)
-XEN_NARGIFY_2(gxg_gtk_color_selection_set_previous_color_w, gxg_gtk_color_selection_set_previous_color)
 XEN_NARGIFY_2(gxg_gtk_color_selection_set_previous_alpha_w, gxg_gtk_color_selection_set_previous_alpha)
-XEN_NARGIFY_2(gxg_gtk_color_selection_get_previous_color_w, gxg_gtk_color_selection_get_previous_color)
 XEN_NARGIFY_1(gxg_gtk_color_selection_get_previous_alpha_w, gxg_gtk_color_selection_get_previous_alpha)
 XEN_NARGIFY_1(gxg_gtk_color_selection_is_adjusting_w, gxg_gtk_color_selection_is_adjusting)
-XEN_ARGIFY_3(gxg_gtk_color_selection_palette_from_string_w, gxg_gtk_color_selection_palette_from_string)
-XEN_NARGIFY_2(gxg_gtk_color_selection_palette_to_string_w, gxg_gtk_color_selection_palette_to_string)
 XEN_NARGIFY_2(gxg_gtk_container_set_border_width_w, gxg_gtk_container_set_border_width)
 XEN_NARGIFY_1(gxg_gtk_container_get_border_width_w, gxg_gtk_container_get_border_width)
 XEN_NARGIFY_2(gxg_gtk_container_add_w, gxg_gtk_container_add)
@@ -35931,8 +35810,6 @@ XEN_NARGIFY_0(gxg_gtk_false_w, gxg_gtk_false)
 XEN_NARGIFY_1(gxg_gtk_grab_add_w, gxg_gtk_grab_add)
 XEN_NARGIFY_0(gxg_gtk_grab_get_current_w, gxg_gtk_grab_get_current)
 XEN_NARGIFY_1(gxg_gtk_grab_remove_w, gxg_gtk_grab_remove)
-XEN_ARGIFY_2(gxg_gtk_key_snooper_install_w, gxg_gtk_key_snooper_install)
-XEN_NARGIFY_1(gxg_gtk_key_snooper_remove_w, gxg_gtk_key_snooper_remove)
 XEN_NARGIFY_0(gxg_gtk_get_current_event_w, gxg_gtk_get_current_event)
 XEN_NARGIFY_0(gxg_gtk_get_current_event_time_w, gxg_gtk_get_current_event_time)
 XEN_ARGIFY_1(gxg_gtk_get_current_event_state_w, gxg_gtk_get_current_event_state)
@@ -37035,10 +36912,7 @@ XEN_NARGIFY_2(gxg_gtk_font_button_set_show_style_w, gxg_gtk_font_button_set_show
 XEN_NARGIFY_1(gxg_gtk_font_button_get_show_size_w, gxg_gtk_font_button_get_show_size)
 XEN_NARGIFY_2(gxg_gtk_font_button_set_show_size_w, gxg_gtk_font_button_set_show_size)
 XEN_NARGIFY_0(gxg_gtk_color_button_new_w, gxg_gtk_color_button_new)
-XEN_NARGIFY_1(gxg_gtk_color_button_new_with_color_w, gxg_gtk_color_button_new_with_color)
-XEN_NARGIFY_2(gxg_gtk_color_button_set_color_w, gxg_gtk_color_button_set_color)
 XEN_NARGIFY_2(gxg_gtk_color_button_set_alpha_w, gxg_gtk_color_button_set_alpha)
-XEN_NARGIFY_2(gxg_gtk_color_button_get_color_w, gxg_gtk_color_button_get_color)
 XEN_NARGIFY_1(gxg_gtk_color_button_get_alpha_w, gxg_gtk_color_button_get_alpha)
 XEN_NARGIFY_2(gxg_gtk_color_button_set_use_alpha_w, gxg_gtk_color_button_set_use_alpha)
 XEN_NARGIFY_1(gxg_gtk_color_button_get_use_alpha_w, gxg_gtk_color_button_get_use_alpha)
@@ -37251,7 +37125,6 @@ XEN_NARGIFY_1(gxg_gtk_cell_view_new_with_pixbuf_w, gxg_gtk_cell_view_new_with_pi
 XEN_NARGIFY_2(gxg_gtk_cell_view_set_model_w, gxg_gtk_cell_view_set_model)
 XEN_NARGIFY_2(gxg_gtk_cell_view_set_displayed_row_w, gxg_gtk_cell_view_set_displayed_row)
 XEN_NARGIFY_1(gxg_gtk_cell_view_get_displayed_row_w, gxg_gtk_cell_view_get_displayed_row)
-XEN_NARGIFY_2(gxg_gtk_cell_view_set_background_color_w, gxg_gtk_cell_view_set_background_color)
 XEN_NARGIFY_1(gxg_gdk_window_enable_synchronized_configure_w, gxg_gdk_window_enable_synchronized_configure)
 XEN_NARGIFY_1(gxg_gdk_window_configure_finished_w, gxg_gdk_window_configure_finished)
 XEN_NARGIFY_1(gxg_gtk_combo_box_get_wrap_width_w, gxg_gtk_combo_box_get_wrap_width)
@@ -37807,10 +37680,8 @@ XEN_NARGIFY_3(gxg_pango_cairo_glyph_string_path_w, gxg_pango_cairo_glyph_string_
 XEN_NARGIFY_2(gxg_pango_cairo_layout_line_path_w, gxg_pango_cairo_layout_line_path)
 XEN_NARGIFY_2(gxg_pango_cairo_layout_path_w, gxg_pango_cairo_layout_path)
 XEN_NARGIFY_5(gxg_pango_cairo_error_underline_path_w, gxg_pango_cairo_error_underline_path)
-XEN_NARGIFY_2(gxg_gdk_cairo_set_source_color_w, gxg_gdk_cairo_set_source_color)
 XEN_NARGIFY_4(gxg_gdk_cairo_set_source_pixbuf_w, gxg_gdk_cairo_set_source_pixbuf)
 XEN_NARGIFY_2(gxg_gdk_cairo_rectangle_w, gxg_gdk_cairo_rectangle)
-XEN_NARGIFY_1(gxg_gdk_color_to_string_w, gxg_gdk_color_to_string)
 XEN_NARGIFY_1(gxg_gdk_event_request_motions_w, gxg_gdk_event_request_motions)
 XEN_NARGIFY_1(gxg_gdk_notify_startup_complete_with_id_w, gxg_gdk_notify_startup_complete_with_id)
 XEN_NARGIFY_4(gxg_gdk_threads_add_idle_full_w, gxg_gdk_threads_add_idle_full)
@@ -38600,11 +38471,16 @@ XEN_NARGIFY_1(gxg_gtk_application_window_get_show_menubar_w, gxg_gtk_application
 #endif
 
 #if (!HAVE_GTK_3)
+XEN_NARGIFY_1(gxg_gdk_color_copy_w, gxg_gdk_color_copy)
 XEN_NARGIFY_2(gxg_gdk_colormap_new_w, gxg_gdk_colormap_new)
 XEN_NARGIFY_0(gxg_gdk_colormap_get_system_w, gxg_gdk_colormap_get_system)
 XEN_ARGIFY_6(gxg_gdk_colormap_alloc_colors_w, gxg_gdk_colormap_alloc_colors)
 XEN_NARGIFY_4(gxg_gdk_colormap_alloc_color_w, gxg_gdk_colormap_alloc_color)
 XEN_NARGIFY_1(gxg_gdk_colormap_get_visual_w, gxg_gdk_colormap_get_visual)
+XEN_NARGIFY_1(gxg_gdk_color_free_w, gxg_gdk_color_free)
+XEN_NARGIFY_2(gxg_gdk_color_parse_w, gxg_gdk_color_parse)
+XEN_NARGIFY_1(gxg_gdk_color_hash_w, gxg_gdk_color_hash)
+XEN_NARGIFY_2(gxg_gdk_color_equal_w, gxg_gdk_color_equal)
 XEN_NARGIFY_1(gxg_gdk_cursor_ref_w, gxg_gdk_cursor_ref)
 XEN_NARGIFY_1(gxg_gdk_cursor_unref_w, gxg_gdk_cursor_unref)
 XEN_NARGIFY_0(gxg_gdk_drag_context_new_w, gxg_gdk_drag_context_new)
@@ -38632,6 +38508,7 @@ XEN_NARGIFY_1(gxg_gdk_window_lookup_w, gxg_gdk_window_lookup)
 XEN_NARGIFY_4(gxg_gdk_window_set_icon_w, gxg_gdk_window_set_icon)
 XEN_ARGIFY_4(gxg_gdk_window_get_internal_paint_info_w, gxg_gdk_window_get_internal_paint_info)
 XEN_NARGIFY_1(gxg_gdk_set_sm_client_id_w, gxg_gdk_set_sm_client_id)
+XEN_NARGIFY_2(gxg_gdk_window_set_background_w, gxg_gdk_window_set_background)
 XEN_NARGIFY_3(gxg_gdk_window_set_back_pixmap_w, gxg_gdk_window_set_back_pixmap)
 XEN_ARGIFY_6(gxg_gdk_window_get_geometry_w, gxg_gdk_window_get_geometry)
 XEN_NARGIFY_6(gxg_gtk_adjustment_new_w, gxg_gtk_adjustment_new)
@@ -38639,6 +38516,12 @@ XEN_NARGIFY_3(gxg_gtk_bindings_activate_w, gxg_gtk_bindings_activate)
 XEN_NARGIFY_4(gxg_gtk_binding_set_activate_w, gxg_gtk_binding_set_activate)
 XEN_ARGIFY_7(gxg_gtk_cell_renderer_get_size_w, gxg_gtk_cell_renderer_get_size)
 XEN_NARGIFY_7(gxg_gtk_cell_renderer_render_w, gxg_gtk_cell_renderer_render)
+XEN_NARGIFY_2(gxg_gtk_color_selection_set_current_color_w, gxg_gtk_color_selection_set_current_color)
+XEN_NARGIFY_2(gxg_gtk_color_selection_get_current_color_w, gxg_gtk_color_selection_get_current_color)
+XEN_NARGIFY_2(gxg_gtk_color_selection_set_previous_color_w, gxg_gtk_color_selection_set_previous_color)
+XEN_NARGIFY_2(gxg_gtk_color_selection_get_previous_color_w, gxg_gtk_color_selection_get_previous_color)
+XEN_ARGIFY_3(gxg_gtk_color_selection_palette_from_string_w, gxg_gtk_color_selection_palette_from_string)
+XEN_NARGIFY_2(gxg_gtk_color_selection_palette_to_string_w, gxg_gtk_color_selection_palette_to_string)
 XEN_NARGIFY_4(gxg_gtk_drag_dest_set_proxy_w, gxg_gtk_drag_dest_set_proxy)
 XEN_NARGIFY_4(gxg_gtk_drag_source_set_icon_w, gxg_gtk_drag_source_set_icon)
 XEN_NARGIFY_6(gxg_gtk_drag_set_icon_pixmap_w, gxg_gtk_drag_set_icon_pixmap)
@@ -38716,8 +38599,14 @@ XEN_NARGIFY_2(gxg_gtk_window_add_embedded_xid_w, gxg_gtk_window_add_embedded_xid
 XEN_NARGIFY_1(gxg_gdk_screen_get_default_colormap_w, gxg_gdk_screen_get_default_colormap)
 XEN_NARGIFY_2(gxg_gdk_screen_set_default_colormap_w, gxg_gdk_screen_set_default_colormap)
 XEN_NARGIFY_1(gxg_gdk_screen_get_system_colormap_w, gxg_gdk_screen_get_system_colormap)
+XEN_NARGIFY_1(gxg_gtk_color_button_new_with_color_w, gxg_gtk_color_button_new_with_color)
+XEN_NARGIFY_2(gxg_gtk_color_button_set_color_w, gxg_gtk_color_button_set_color)
+XEN_NARGIFY_2(gxg_gtk_color_button_get_color_w, gxg_gtk_color_button_get_color)
 XEN_NARGIFY_3(gxg_gtk_cell_view_get_size_of_row_w, gxg_gtk_cell_view_get_size_of_row)
+XEN_NARGIFY_2(gxg_gtk_cell_view_set_background_color_w, gxg_gtk_cell_view_set_background_color)
 XEN_NARGIFY_3(gxg_gtk_style_lookup_color_w, gxg_gtk_style_lookup_color)
+XEN_NARGIFY_2(gxg_gdk_cairo_set_source_color_w, gxg_gdk_cairo_set_source_color)
+XEN_NARGIFY_1(gxg_gdk_color_to_string_w, gxg_gdk_color_to_string)
 #endif
 
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
@@ -39400,15 +39289,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_RC_STYLE_w, gxg_GTK_IS_RC_STYLE)
 XEN_NARGIFY_1(gxg_GTK_IS_STYLE_w, gxg_GTK_IS_STYLE)
 #endif
 
-XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
-XEN_NARGIFY_1(gxg_green_w, gxg_green)
-XEN_NARGIFY_1(gxg_red_w, gxg_red)
-XEN_NARGIFY_1(gxg_pixel_w, gxg_pixel)
-XEN_NARGIFY_2(gxg_set_blue_w, gxg_set_blue)
-XEN_NARGIFY_2(gxg_set_green_w, gxg_set_green)
-XEN_NARGIFY_2(gxg_set_red_w, gxg_set_red)
-XEN_NARGIFY_2(gxg_set_pixel_w, gxg_set_pixel)
-XEN_VARGIFY(gxg_make_GdkColor_w, gxg_make_GdkColor)
 XEN_NARGIFY_0(gxg_make_GtkTextIter_w, gxg_make_GtkTextIter)
 XEN_NARGIFY_0(gxg_make_GtkTreeIter_w, gxg_make_GtkTreeIter)
 XEN_NARGIFY_0(gxg_make_PangoRectangle_w, gxg_make_PangoRectangle)
@@ -39456,11 +39336,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_g_object_ref_w gxg_g_object_ref
 #define gxg_g_object_unref_w gxg_g_object_unref
 #define gxg_gdk_visual_get_system_w gxg_gdk_visual_get_system
-#define gxg_gdk_color_copy_w gxg_gdk_color_copy
-#define gxg_gdk_color_free_w gxg_gdk_color_free
-#define gxg_gdk_color_parse_w gxg_gdk_color_parse
-#define gxg_gdk_color_hash_w gxg_gdk_color_hash
-#define gxg_gdk_color_equal_w gxg_gdk_color_equal
 #define gxg_gdk_cursor_new_w gxg_gdk_cursor_new
 #define gxg_gdk_drag_status_w gxg_gdk_drag_status
 #define gxg_gdk_drop_reply_w gxg_gdk_drop_reply
@@ -39600,7 +39475,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gdk_window_set_title_w gxg_gdk_window_set_title
 #define gxg_gdk_window_set_role_w gxg_gdk_window_set_role
 #define gxg_gdk_window_set_transient_for_w gxg_gdk_window_set_transient_for
-#define gxg_gdk_window_set_background_w gxg_gdk_window_set_background
 #define gxg_gdk_window_set_cursor_w gxg_gdk_window_set_cursor
 #define gxg_gdk_window_get_user_data_w gxg_gdk_window_get_user_data
 #define gxg_gdk_window_get_position_w gxg_gdk_window_get_position
@@ -39763,17 +39637,11 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_color_selection_set_has_opacity_control_w gxg_gtk_color_selection_set_has_opacity_control
 #define gxg_gtk_color_selection_get_has_palette_w gxg_gtk_color_selection_get_has_palette
 #define gxg_gtk_color_selection_set_has_palette_w gxg_gtk_color_selection_set_has_palette
-#define gxg_gtk_color_selection_set_current_color_w gxg_gtk_color_selection_set_current_color
 #define gxg_gtk_color_selection_set_current_alpha_w gxg_gtk_color_selection_set_current_alpha
-#define gxg_gtk_color_selection_get_current_color_w gxg_gtk_color_selection_get_current_color
 #define gxg_gtk_color_selection_get_current_alpha_w gxg_gtk_color_selection_get_current_alpha
-#define gxg_gtk_color_selection_set_previous_color_w gxg_gtk_color_selection_set_previous_color
 #define gxg_gtk_color_selection_set_previous_alpha_w gxg_gtk_color_selection_set_previous_alpha
-#define gxg_gtk_color_selection_get_previous_color_w gxg_gtk_color_selection_get_previous_color
 #define gxg_gtk_color_selection_get_previous_alpha_w gxg_gtk_color_selection_get_previous_alpha
 #define gxg_gtk_color_selection_is_adjusting_w gxg_gtk_color_selection_is_adjusting
-#define gxg_gtk_color_selection_palette_from_string_w gxg_gtk_color_selection_palette_from_string
-#define gxg_gtk_color_selection_palette_to_string_w gxg_gtk_color_selection_palette_to_string
 #define gxg_gtk_container_set_border_width_w gxg_gtk_container_set_border_width
 #define gxg_gtk_container_get_border_width_w gxg_gtk_container_get_border_width
 #define gxg_gtk_container_add_w gxg_gtk_container_add
@@ -39989,8 +39857,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_grab_add_w gxg_gtk_grab_add
 #define gxg_gtk_grab_get_current_w gxg_gtk_grab_get_current
 #define gxg_gtk_grab_remove_w gxg_gtk_grab_remove
-#define gxg_gtk_key_snooper_install_w gxg_gtk_key_snooper_install
-#define gxg_gtk_key_snooper_remove_w gxg_gtk_key_snooper_remove
 #define gxg_gtk_get_current_event_w gxg_gtk_get_current_event
 #define gxg_gtk_get_current_event_time_w gxg_gtk_get_current_event_time
 #define gxg_gtk_get_current_event_state_w gxg_gtk_get_current_event_state
@@ -41093,10 +40959,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_font_button_get_show_size_w gxg_gtk_font_button_get_show_size
 #define gxg_gtk_font_button_set_show_size_w gxg_gtk_font_button_set_show_size
 #define gxg_gtk_color_button_new_w gxg_gtk_color_button_new
-#define gxg_gtk_color_button_new_with_color_w gxg_gtk_color_button_new_with_color
-#define gxg_gtk_color_button_set_color_w gxg_gtk_color_button_set_color
 #define gxg_gtk_color_button_set_alpha_w gxg_gtk_color_button_set_alpha
-#define gxg_gtk_color_button_get_color_w gxg_gtk_color_button_get_color
 #define gxg_gtk_color_button_get_alpha_w gxg_gtk_color_button_get_alpha
 #define gxg_gtk_color_button_set_use_alpha_w gxg_gtk_color_button_set_use_alpha
 #define gxg_gtk_color_button_get_use_alpha_w gxg_gtk_color_button_get_use_alpha
@@ -41309,7 +41172,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_cell_view_set_model_w gxg_gtk_cell_view_set_model
 #define gxg_gtk_cell_view_set_displayed_row_w gxg_gtk_cell_view_set_displayed_row
 #define gxg_gtk_cell_view_get_displayed_row_w gxg_gtk_cell_view_get_displayed_row
-#define gxg_gtk_cell_view_set_background_color_w gxg_gtk_cell_view_set_background_color
 #define gxg_gdk_window_enable_synchronized_configure_w gxg_gdk_window_enable_synchronized_configure
 #define gxg_gdk_window_configure_finished_w gxg_gdk_window_configure_finished
 #define gxg_gtk_combo_box_get_wrap_width_w gxg_gtk_combo_box_get_wrap_width
@@ -41865,10 +41727,8 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_pango_cairo_layout_line_path_w gxg_pango_cairo_layout_line_path
 #define gxg_pango_cairo_layout_path_w gxg_pango_cairo_layout_path
 #define gxg_pango_cairo_error_underline_path_w gxg_pango_cairo_error_underline_path
-#define gxg_gdk_cairo_set_source_color_w gxg_gdk_cairo_set_source_color
 #define gxg_gdk_cairo_set_source_pixbuf_w gxg_gdk_cairo_set_source_pixbuf
 #define gxg_gdk_cairo_rectangle_w gxg_gdk_cairo_rectangle
-#define gxg_gdk_color_to_string_w gxg_gdk_color_to_string
 #define gxg_gdk_event_request_motions_w gxg_gdk_event_request_motions
 #define gxg_gdk_notify_startup_complete_with_id_w gxg_gdk_notify_startup_complete_with_id
 #define gxg_gdk_threads_add_idle_full_w gxg_gdk_threads_add_idle_full
@@ -42658,11 +42518,16 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #endif
 
 #if (!HAVE_GTK_3)
+#define gxg_gdk_color_copy_w gxg_gdk_color_copy
 #define gxg_gdk_colormap_new_w gxg_gdk_colormap_new
 #define gxg_gdk_colormap_get_system_w gxg_gdk_colormap_get_system
 #define gxg_gdk_colormap_alloc_colors_w gxg_gdk_colormap_alloc_colors
 #define gxg_gdk_colormap_alloc_color_w gxg_gdk_colormap_alloc_color
 #define gxg_gdk_colormap_get_visual_w gxg_gdk_colormap_get_visual
+#define gxg_gdk_color_free_w gxg_gdk_color_free
+#define gxg_gdk_color_parse_w gxg_gdk_color_parse
+#define gxg_gdk_color_hash_w gxg_gdk_color_hash
+#define gxg_gdk_color_equal_w gxg_gdk_color_equal
 #define gxg_gdk_cursor_ref_w gxg_gdk_cursor_ref
 #define gxg_gdk_cursor_unref_w gxg_gdk_cursor_unref
 #define gxg_gdk_drag_context_new_w gxg_gdk_drag_context_new
@@ -42690,6 +42555,7 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gdk_window_set_icon_w gxg_gdk_window_set_icon
 #define gxg_gdk_window_get_internal_paint_info_w gxg_gdk_window_get_internal_paint_info
 #define gxg_gdk_set_sm_client_id_w gxg_gdk_set_sm_client_id
+#define gxg_gdk_window_set_background_w gxg_gdk_window_set_background
 #define gxg_gdk_window_set_back_pixmap_w gxg_gdk_window_set_back_pixmap
 #define gxg_gdk_window_get_geometry_w gxg_gdk_window_get_geometry
 #define gxg_gtk_adjustment_new_w gxg_gtk_adjustment_new
@@ -42697,6 +42563,12 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_binding_set_activate_w gxg_gtk_binding_set_activate
 #define gxg_gtk_cell_renderer_get_size_w gxg_gtk_cell_renderer_get_size
 #define gxg_gtk_cell_renderer_render_w gxg_gtk_cell_renderer_render
+#define gxg_gtk_color_selection_set_current_color_w gxg_gtk_color_selection_set_current_color
+#define gxg_gtk_color_selection_get_current_color_w gxg_gtk_color_selection_get_current_color
+#define gxg_gtk_color_selection_set_previous_color_w gxg_gtk_color_selection_set_previous_color
+#define gxg_gtk_color_selection_get_previous_color_w gxg_gtk_color_selection_get_previous_color
+#define gxg_gtk_color_selection_palette_from_string_w gxg_gtk_color_selection_palette_from_string
+#define gxg_gtk_color_selection_palette_to_string_w gxg_gtk_color_selection_palette_to_string
 #define gxg_gtk_drag_dest_set_proxy_w gxg_gtk_drag_dest_set_proxy
 #define gxg_gtk_drag_source_set_icon_w gxg_gtk_drag_source_set_icon
 #define gxg_gtk_drag_set_icon_pixmap_w gxg_gtk_drag_set_icon_pixmap
@@ -42774,8 +42646,14 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gdk_screen_get_default_colormap_w gxg_gdk_screen_get_default_colormap
 #define gxg_gdk_screen_set_default_colormap_w gxg_gdk_screen_set_default_colormap
 #define gxg_gdk_screen_get_system_colormap_w gxg_gdk_screen_get_system_colormap
+#define gxg_gtk_color_button_new_with_color_w gxg_gtk_color_button_new_with_color
+#define gxg_gtk_color_button_set_color_w gxg_gtk_color_button_set_color
+#define gxg_gtk_color_button_get_color_w gxg_gtk_color_button_get_color
 #define gxg_gtk_cell_view_get_size_of_row_w gxg_gtk_cell_view_get_size_of_row
+#define gxg_gtk_cell_view_set_background_color_w gxg_gtk_cell_view_set_background_color
 #define gxg_gtk_style_lookup_color_w gxg_gtk_style_lookup_color
+#define gxg_gdk_cairo_set_source_color_w gxg_gdk_cairo_set_source_color
+#define gxg_gdk_color_to_string_w gxg_gdk_color_to_string
 #endif
 
 #define gxg_cairo_create_w gxg_cairo_create
@@ -43458,15 +43336,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_GTK_IS_STYLE_w gxg_GTK_IS_STYLE
 #endif
 
-#define gxg_blue_w gxg_blue
-#define gxg_green_w gxg_green
-#define gxg_red_w gxg_red
-#define gxg_pixel_w gxg_pixel
-#define gxg_set_blue_w gxg_set_blue
-#define gxg_set_green_w gxg_set_green
-#define gxg_set_red_w gxg_set_red
-#define gxg_set_pixel_w gxg_set_pixel
-#define gxg_make_GdkColor_w gxg_make_GdkColor
 #define gxg_make_GtkTextIter_w gxg_make_GtkTextIter
 #define gxg_make_GtkTreeIter_w gxg_make_GtkTreeIter
 #define gxg_make_PangoRectangle_w gxg_make_PangoRectangle
@@ -43521,11 +43390,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(g_object_ref, gxg_g_object_ref_w, 1, 0, 0, H_g_object_ref);
   XG_DEFINE_PROCEDURE(g_object_unref, gxg_g_object_unref_w, 1, 0, 0, H_g_object_unref);
   XG_DEFINE_PROCEDURE(gdk_visual_get_system, gxg_gdk_visual_get_system_w, 0, 0, 0, H_gdk_visual_get_system);
-  XG_DEFINE_PROCEDURE(gdk_color_copy, gxg_gdk_color_copy_w, 1, 0, 0, H_gdk_color_copy);
-  XG_DEFINE_PROCEDURE(gdk_color_free, gxg_gdk_color_free_w, 1, 0, 0, H_gdk_color_free);
-  XG_DEFINE_PROCEDURE(gdk_color_parse, gxg_gdk_color_parse_w, 2, 0, 0, H_gdk_color_parse);
-  XG_DEFINE_PROCEDURE(gdk_color_hash, gxg_gdk_color_hash_w, 1, 0, 0, H_gdk_color_hash);
-  XG_DEFINE_PROCEDURE(gdk_color_equal, gxg_gdk_color_equal_w, 2, 0, 0, H_gdk_color_equal);
   XG_DEFINE_PROCEDURE(gdk_cursor_new, gxg_gdk_cursor_new_w, 1, 0, 0, H_gdk_cursor_new);
   XG_DEFINE_PROCEDURE(gdk_drag_status, gxg_gdk_drag_status_w, 3, 0, 0, H_gdk_drag_status);
   XG_DEFINE_PROCEDURE(gdk_drop_reply, gxg_gdk_drop_reply_w, 3, 0, 0, H_gdk_drop_reply);
@@ -43665,7 +43529,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_title, gxg_gdk_window_set_title_w, 2, 0, 0, H_gdk_window_set_title);
   XG_DEFINE_PROCEDURE(gdk_window_set_role, gxg_gdk_window_set_role_w, 2, 0, 0, H_gdk_window_set_role);
   XG_DEFINE_PROCEDURE(gdk_window_set_transient_for, gxg_gdk_window_set_transient_for_w, 2, 0, 0, H_gdk_window_set_transient_for);
-  XG_DEFINE_PROCEDURE(gdk_window_set_background, gxg_gdk_window_set_background_w, 2, 0, 0, H_gdk_window_set_background);
   XG_DEFINE_PROCEDURE(gdk_window_set_cursor, gxg_gdk_window_set_cursor_w, 2, 0, 0, H_gdk_window_set_cursor);
   XG_DEFINE_PROCEDURE(gdk_window_get_user_data, gxg_gdk_window_get_user_data_w, 1, 1, 0, H_gdk_window_get_user_data);
   XG_DEFINE_PROCEDURE(gdk_window_get_position, gxg_gdk_window_get_position_w, 1, 2, 0, H_gdk_window_get_position);
@@ -43828,17 +43691,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_color_selection_set_has_opacity_control, gxg_gtk_color_selection_set_has_opacity_control_w, 2, 0, 0, H_gtk_color_selection_set_has_opacity_control);
   XG_DEFINE_PROCEDURE(gtk_color_selection_get_has_palette, gxg_gtk_color_selection_get_has_palette_w, 1, 0, 0, H_gtk_color_selection_get_has_palette);
   XG_DEFINE_PROCEDURE(gtk_color_selection_set_has_palette, gxg_gtk_color_selection_set_has_palette_w, 2, 0, 0, H_gtk_color_selection_set_has_palette);
-  XG_DEFINE_PROCEDURE(gtk_color_selection_set_current_color, gxg_gtk_color_selection_set_current_color_w, 2, 0, 0, H_gtk_color_selection_set_current_color);
   XG_DEFINE_PROCEDURE(gtk_color_selection_set_current_alpha, gxg_gtk_color_selection_set_current_alpha_w, 2, 0, 0, H_gtk_color_selection_set_current_alpha);
-  XG_DEFINE_PROCEDURE(gtk_color_selection_get_current_color, gxg_gtk_color_selection_get_current_color_w, 2, 0, 0, H_gtk_color_selection_get_current_color);
   XG_DEFINE_PROCEDURE(gtk_color_selection_get_current_alpha, gxg_gtk_color_selection_get_current_alpha_w, 1, 0, 0, H_gtk_color_selection_get_current_alpha);
-  XG_DEFINE_PROCEDURE(gtk_color_selection_set_previous_color, gxg_gtk_color_selection_set_previous_color_w, 2, 0, 0, H_gtk_color_selection_set_previous_color);
   XG_DEFINE_PROCEDURE(gtk_color_selection_set_previous_alpha, gxg_gtk_color_selection_set_previous_alpha_w, 2, 0, 0, H_gtk_color_selection_set_previous_alpha);
-  XG_DEFINE_PROCEDURE(gtk_color_selection_get_previous_color, gxg_gtk_color_selection_get_previous_color_w, 2, 0, 0, H_gtk_color_selection_get_previous_color);
   XG_DEFINE_PROCEDURE(gtk_color_selection_get_previous_alpha, gxg_gtk_color_selection_get_previous_alpha_w, 1, 0, 0, H_gtk_color_selection_get_previous_alpha);
   XG_DEFINE_PROCEDURE(gtk_color_selection_is_adjusting, gxg_gtk_color_selection_is_adjusting_w, 1, 0, 0, H_gtk_color_selection_is_adjusting);
-  XG_DEFINE_PROCEDURE(gtk_color_selection_palette_from_string, gxg_gtk_color_selection_palette_from_string_w, 1, 2, 0, H_gtk_color_selection_palette_from_string);
-  XG_DEFINE_PROCEDURE(gtk_color_selection_palette_to_string, gxg_gtk_color_selection_palette_to_string_w, 2, 0, 0, H_gtk_color_selection_palette_to_string);
   XG_DEFINE_PROCEDURE(gtk_container_set_border_width, gxg_gtk_container_set_border_width_w, 2, 0, 0, H_gtk_container_set_border_width);
   XG_DEFINE_PROCEDURE(gtk_container_get_border_width, gxg_gtk_container_get_border_width_w, 1, 0, 0, H_gtk_container_get_border_width);
   XG_DEFINE_PROCEDURE(gtk_container_add, gxg_gtk_container_add_w, 2, 0, 0, H_gtk_container_add);
@@ -44054,8 +43911,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_grab_add, gxg_gtk_grab_add_w, 1, 0, 0, H_gtk_grab_add);
   XG_DEFINE_PROCEDURE(gtk_grab_get_current, gxg_gtk_grab_get_current_w, 0, 0, 0, H_gtk_grab_get_current);
   XG_DEFINE_PROCEDURE(gtk_grab_remove, gxg_gtk_grab_remove_w, 1, 0, 0, H_gtk_grab_remove);
-  XG_DEFINE_PROCEDURE(gtk_key_snooper_install, gxg_gtk_key_snooper_install_w, 1, 1, 0, H_gtk_key_snooper_install);
-  XG_DEFINE_PROCEDURE(gtk_key_snooper_remove, gxg_gtk_key_snooper_remove_w, 1, 0, 0, H_gtk_key_snooper_remove);
   XG_DEFINE_PROCEDURE(gtk_get_current_event, gxg_gtk_get_current_event_w, 0, 0, 0, H_gtk_get_current_event);
   XG_DEFINE_PROCEDURE(gtk_get_current_event_time, gxg_gtk_get_current_event_time_w, 0, 0, 0, H_gtk_get_current_event_time);
   XG_DEFINE_PROCEDURE(gtk_get_current_event_state, gxg_gtk_get_current_event_state_w, 0, 1, 0, H_gtk_get_current_event_state);
@@ -45158,10 +45013,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_font_button_get_show_size, gxg_gtk_font_button_get_show_size_w, 1, 0, 0, H_gtk_font_button_get_show_size);
   XG_DEFINE_PROCEDURE(gtk_font_button_set_show_size, gxg_gtk_font_button_set_show_size_w, 2, 0, 0, H_gtk_font_button_set_show_size);
   XG_DEFINE_PROCEDURE(gtk_color_button_new, gxg_gtk_color_button_new_w, 0, 0, 0, H_gtk_color_button_new);
-  XG_DEFINE_PROCEDURE(gtk_color_button_new_with_color, gxg_gtk_color_button_new_with_color_w, 1, 0, 0, H_gtk_color_button_new_with_color);
-  XG_DEFINE_PROCEDURE(gtk_color_button_set_color, gxg_gtk_color_button_set_color_w, 2, 0, 0, H_gtk_color_button_set_color);
   XG_DEFINE_PROCEDURE(gtk_color_button_set_alpha, gxg_gtk_color_button_set_alpha_w, 2, 0, 0, H_gtk_color_button_set_alpha);
-  XG_DEFINE_PROCEDURE(gtk_color_button_get_color, gxg_gtk_color_button_get_color_w, 2, 0, 0, H_gtk_color_button_get_color);
   XG_DEFINE_PROCEDURE(gtk_color_button_get_alpha, gxg_gtk_color_button_get_alpha_w, 1, 0, 0, H_gtk_color_button_get_alpha);
   XG_DEFINE_PROCEDURE(gtk_color_button_set_use_alpha, gxg_gtk_color_button_set_use_alpha_w, 2, 0, 0, H_gtk_color_button_set_use_alpha);
   XG_DEFINE_PROCEDURE(gtk_color_button_get_use_alpha, gxg_gtk_color_button_get_use_alpha_w, 1, 0, 0, H_gtk_color_button_get_use_alpha);
@@ -45374,7 +45226,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_cell_view_set_model, gxg_gtk_cell_view_set_model_w, 2, 0, 0, H_gtk_cell_view_set_model);
   XG_DEFINE_PROCEDURE(gtk_cell_view_set_displayed_row, gxg_gtk_cell_view_set_displayed_row_w, 2, 0, 0, H_gtk_cell_view_set_displayed_row);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_displayed_row, gxg_gtk_cell_view_get_displayed_row_w, 1, 0, 0, H_gtk_cell_view_get_displayed_row);
-  XG_DEFINE_PROCEDURE(gtk_cell_view_set_background_color, gxg_gtk_cell_view_set_background_color_w, 2, 0, 0, H_gtk_cell_view_set_background_color);
   XG_DEFINE_PROCEDURE(gdk_window_enable_synchronized_configure, gxg_gdk_window_enable_synchronized_configure_w, 1, 0, 0, H_gdk_window_enable_synchronized_configure);
   XG_DEFINE_PROCEDURE(gdk_window_configure_finished, gxg_gdk_window_configure_finished_w, 1, 0, 0, H_gdk_window_configure_finished);
   XG_DEFINE_PROCEDURE(gtk_combo_box_get_wrap_width, gxg_gtk_combo_box_get_wrap_width_w, 1, 0, 0, H_gtk_combo_box_get_wrap_width);
@@ -45930,10 +45781,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_cairo_layout_line_path, gxg_pango_cairo_layout_line_path_w, 2, 0, 0, H_pango_cairo_layout_line_path);
   XG_DEFINE_PROCEDURE(pango_cairo_layout_path, gxg_pango_cairo_layout_path_w, 2, 0, 0, H_pango_cairo_layout_path);
   XG_DEFINE_PROCEDURE(pango_cairo_error_underline_path, gxg_pango_cairo_error_underline_path_w, 5, 0, 0, H_pango_cairo_error_underline_path);
-  XG_DEFINE_PROCEDURE(gdk_cairo_set_source_color, gxg_gdk_cairo_set_source_color_w, 2, 0, 0, H_gdk_cairo_set_source_color);
   XG_DEFINE_PROCEDURE(gdk_cairo_set_source_pixbuf, gxg_gdk_cairo_set_source_pixbuf_w, 4, 0, 0, H_gdk_cairo_set_source_pixbuf);
   XG_DEFINE_PROCEDURE(gdk_cairo_rectangle, gxg_gdk_cairo_rectangle_w, 2, 0, 0, H_gdk_cairo_rectangle);
-  XG_DEFINE_PROCEDURE(gdk_color_to_string, gxg_gdk_color_to_string_w, 1, 0, 0, H_gdk_color_to_string);
   XG_DEFINE_PROCEDURE(gdk_event_request_motions, gxg_gdk_event_request_motions_w, 1, 0, 0, H_gdk_event_request_motions);
   XG_DEFINE_PROCEDURE(gdk_notify_startup_complete_with_id, gxg_gdk_notify_startup_complete_with_id_w, 1, 0, 0, H_gdk_notify_startup_complete_with_id);
   XG_DEFINE_PROCEDURE(gdk_threads_add_idle_full, gxg_gdk_threads_add_idle_full_w, 4, 0, 0, H_gdk_threads_add_idle_full);
@@ -46723,11 +46572,16 @@ static void define_functions(void)
 #endif
 
 #if (!HAVE_GTK_3)
+  XG_DEFINE_PROCEDURE(gdk_color_copy, gxg_gdk_color_copy_w, 1, 0, 0, H_gdk_color_copy);
   XG_DEFINE_PROCEDURE(gdk_colormap_new, gxg_gdk_colormap_new_w, 2, 0, 0, H_gdk_colormap_new);
   XG_DEFINE_PROCEDURE(gdk_colormap_get_system, gxg_gdk_colormap_get_system_w, 0, 0, 0, H_gdk_colormap_get_system);
   XG_DEFINE_PROCEDURE(gdk_colormap_alloc_colors, gxg_gdk_colormap_alloc_colors_w, 5, 1, 0, H_gdk_colormap_alloc_colors);
   XG_DEFINE_PROCEDURE(gdk_colormap_alloc_color, gxg_gdk_colormap_alloc_color_w, 4, 0, 0, H_gdk_colormap_alloc_color);
   XG_DEFINE_PROCEDURE(gdk_colormap_get_visual, gxg_gdk_colormap_get_visual_w, 1, 0, 0, H_gdk_colormap_get_visual);
+  XG_DEFINE_PROCEDURE(gdk_color_free, gxg_gdk_color_free_w, 1, 0, 0, H_gdk_color_free);
+  XG_DEFINE_PROCEDURE(gdk_color_parse, gxg_gdk_color_parse_w, 2, 0, 0, H_gdk_color_parse);
+  XG_DEFINE_PROCEDURE(gdk_color_hash, gxg_gdk_color_hash_w, 1, 0, 0, H_gdk_color_hash);
+  XG_DEFINE_PROCEDURE(gdk_color_equal, gxg_gdk_color_equal_w, 2, 0, 0, H_gdk_color_equal);
   XG_DEFINE_PROCEDURE(gdk_cursor_ref, gxg_gdk_cursor_ref_w, 1, 0, 0, H_gdk_cursor_ref);
   XG_DEFINE_PROCEDURE(gdk_cursor_unref, gxg_gdk_cursor_unref_w, 1, 0, 0, H_gdk_cursor_unref);
   XG_DEFINE_PROCEDURE(gdk_drag_context_new, gxg_gdk_drag_context_new_w, 0, 0, 0, H_gdk_drag_context_new);
@@ -46755,6 +46609,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_icon, gxg_gdk_window_set_icon_w, 4, 0, 0, H_gdk_window_set_icon);
   XG_DEFINE_PROCEDURE(gdk_window_get_internal_paint_info, gxg_gdk_window_get_internal_paint_info_w, 1, 3, 0, H_gdk_window_get_internal_paint_info);
   XG_DEFINE_PROCEDURE(gdk_set_sm_client_id, gxg_gdk_set_sm_client_id_w, 1, 0, 0, H_gdk_set_sm_client_id);
+  XG_DEFINE_PROCEDURE(gdk_window_set_background, gxg_gdk_window_set_background_w, 2, 0, 0, H_gdk_window_set_background);
   XG_DEFINE_PROCEDURE(gdk_window_set_back_pixmap, gxg_gdk_window_set_back_pixmap_w, 3, 0, 0, H_gdk_window_set_back_pixmap);
   XG_DEFINE_PROCEDURE(gdk_window_get_geometry, gxg_gdk_window_get_geometry_w, 1, 5, 0, H_gdk_window_get_geometry);
   XG_DEFINE_PROCEDURE(gtk_adjustment_new, gxg_gtk_adjustment_new_w, 6, 0, 0, H_gtk_adjustment_new);
@@ -46762,6 +46617,12 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_binding_set_activate, gxg_gtk_binding_set_activate_w, 4, 0, 0, H_gtk_binding_set_activate);
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_get_size, gxg_gtk_cell_renderer_get_size_w, 3, 4, 0, H_gtk_cell_renderer_get_size);
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_render, gxg_gtk_cell_renderer_render_w, 7, 0, 0, H_gtk_cell_renderer_render);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_current_color, gxg_gtk_color_selection_set_current_color_w, 2, 0, 0, H_gtk_color_selection_set_current_color);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_current_color, gxg_gtk_color_selection_get_current_color_w, 2, 0, 0, H_gtk_color_selection_get_current_color);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_set_previous_color, gxg_gtk_color_selection_set_previous_color_w, 2, 0, 0, H_gtk_color_selection_set_previous_color);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_get_previous_color, gxg_gtk_color_selection_get_previous_color_w, 2, 0, 0, H_gtk_color_selection_get_previous_color);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_palette_from_string, gxg_gtk_color_selection_palette_from_string_w, 1, 2, 0, H_gtk_color_selection_palette_from_string);
+  XG_DEFINE_PROCEDURE(gtk_color_selection_palette_to_string, gxg_gtk_color_selection_palette_to_string_w, 2, 0, 0, H_gtk_color_selection_palette_to_string);
   XG_DEFINE_PROCEDURE(gtk_drag_dest_set_proxy, gxg_gtk_drag_dest_set_proxy_w, 4, 0, 0, H_gtk_drag_dest_set_proxy);
   XG_DEFINE_PROCEDURE(gtk_drag_source_set_icon, gxg_gtk_drag_source_set_icon_w, 4, 0, 0, H_gtk_drag_source_set_icon);
   XG_DEFINE_PROCEDURE(gtk_drag_set_icon_pixmap, gxg_gtk_drag_set_icon_pixmap_w, 6, 0, 0, H_gtk_drag_set_icon_pixmap);
@@ -46839,8 +46700,14 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_screen_get_default_colormap, gxg_gdk_screen_get_default_colormap_w, 1, 0, 0, H_gdk_screen_get_default_colormap);
   XG_DEFINE_PROCEDURE(gdk_screen_set_default_colormap, gxg_gdk_screen_set_default_colormap_w, 2, 0, 0, H_gdk_screen_set_default_colormap);
   XG_DEFINE_PROCEDURE(gdk_screen_get_system_colormap, gxg_gdk_screen_get_system_colormap_w, 1, 0, 0, H_gdk_screen_get_system_colormap);
+  XG_DEFINE_PROCEDURE(gtk_color_button_new_with_color, gxg_gtk_color_button_new_with_color_w, 1, 0, 0, H_gtk_color_button_new_with_color);
+  XG_DEFINE_PROCEDURE(gtk_color_button_set_color, gxg_gtk_color_button_set_color_w, 2, 0, 0, H_gtk_color_button_set_color);
+  XG_DEFINE_PROCEDURE(gtk_color_button_get_color, gxg_gtk_color_button_get_color_w, 2, 0, 0, H_gtk_color_button_get_color);
   XG_DEFINE_PROCEDURE(gtk_cell_view_get_size_of_row, gxg_gtk_cell_view_get_size_of_row_w, 3, 0, 0, H_gtk_cell_view_get_size_of_row);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_set_background_color, gxg_gtk_cell_view_set_background_color_w, 2, 0, 0, H_gtk_cell_view_set_background_color);
   XG_DEFINE_PROCEDURE(gtk_style_lookup_color, gxg_gtk_style_lookup_color_w, 3, 0, 0, H_gtk_style_lookup_color);
+  XG_DEFINE_PROCEDURE(gdk_cairo_set_source_color, gxg_gdk_cairo_set_source_color_w, 2, 0, 0, H_gdk_cairo_set_source_color);
+  XG_DEFINE_PROCEDURE(gdk_color_to_string, gxg_gdk_color_to_string_w, 1, 0, 0, H_gdk_color_to_string);
 #endif
 
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -47527,11 +47394,6 @@ static void define_functions(void)
 
 static void define_structs(void)
 {
-  XG_DEFINE_ACCESSOR(blue, gxg_blue_w, gxg_set_blue_w, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(green, gxg_green_w, gxg_set_green_w, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(red, gxg_red_w, gxg_set_red_w, 1, 0, 2, 0);
-  XG_DEFINE_ACCESSOR(pixel, gxg_pixel_w, gxg_set_pixel_w, 1, 0, 2, 0);
-  XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor_w, 0, 0, 1, "(GdkColor ...): a new GdkColor struct");
   XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter_w, 0, 0, 0, "(GtkTextIter): a new GtkTextIter struct");
   XG_DEFINE_PROCEDURE(GtkTreeIter, gxg_make_GtkTreeIter_w, 0, 0, 0, "(GtkTreeIter): a new GtkTreeIter struct");
   XG_DEFINE_PROCEDURE(PangoRectangle, gxg_make_PangoRectangle_w, 0, 0, 0, "(PangoRectangle): a new PangoRectangle struct");
@@ -48652,7 +48514,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_MODIFIER_INTENT_SHIFT_GROUP);
   DEFINE_INTEGER(GTK_REGION_ONLY);
   DEFINE_INTEGER(GDK_WINDOW_STATE_FOCUSED);
-  DEFINE_INTEGER(GTK_STATE_FLAG_WINDOW_UNFOCUSED);
   DEFINE_INTEGER(GTK_CELL_RENDERER_EXPANDABLE);
   DEFINE_INTEGER(GTK_CELL_RENDERER_EXPANDED);
 #endif
@@ -49322,7 +49183,7 @@ void Init_libxg(void)
       #else
         XEN_YES_WE_HAVE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("12-Jan-12"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("18-Jan-12"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
