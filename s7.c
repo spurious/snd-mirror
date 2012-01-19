@@ -3827,13 +3827,14 @@ static s7_pointer environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symb
 
 static s7_pointer environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
-  s7_pointer y;
-  for (y = environment_slots(env); is_slot(y); y = next_slot(y))
-    if (slot_symbol(y) == symbol)
-      {
-	cdr(y) = value;
-	return(value);
-      }
+  s7_pointer x, y;
+  for (x = env; is_environment(x); x = next_environment(x))
+    for (y = environment_slots(x); is_slot(y); y = next_slot(y))
+      if (slot_symbol(y) == symbol)
+	{
+	  cdr(y) = value;
+	  return(value);
+	}
   return(sc->UNDEFINED);
 }
 

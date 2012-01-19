@@ -15745,6 +15745,48 @@ time, so that the displayed results are
 (test (call-with-exit (lambda (return) #f) 1) 'error)
 (test (+ (call-with-exit ((lambda () (lambda (k) (k 1 2 3)))))) 6)
 
+(test (call-with-exit (lambda (c) (0 (c 1)))) 1)
+(test (call-with-exit (lambda (k) (k "foo"))) "foo")
+(test (call-with-exit (lambda (k) "foo")) "foo")
+(test (call-with-exit (lambda (k) (k "foo") "oops")) "foo")
+(test (let ((memb (lambda (x ls)
+		    (call-with-exit
+		     (lambda (break)
+		       (do ((ls ls (cdr ls)))
+			   ((null? ls) #f)
+			 (if (equal? x (car ls))
+			     (break ls))))))))
+	(list (memb 'd '(a b c))
+	      (memb 'b '(a b c))))
+      '(#f (b c)))
+
+(let ((x 1))
+  (define y (call-with-exit (lambda (return) (set! x (return 32)))))
+  (test (and (= x 1) (= y 32)) #t)
+  (set! y (call-with-exit (lambda (return) ((lambda (a b c) (set! x a)) 1 2 (return 33)))))
+  (test (and (= x 1) (= y 33)) #t)
+  (set! y (call-with-exit (lambda (return) ((lambda (a b) (return a) (set! x b)) 2 3))))
+  (test (and (= x 1) (= y 2)) #t))
+
+(test (apply "hi" '(1 2)) 'error)
+(test ("hi" 1 2) 'error)
+(test (apply '(1 2) '(1 2)) 'error)
+(test ((list 1 2 3) 1 2) 'error)
+
+(test (apply "hi" '(1)) #\i)
+(test ("hi" 1) #\i)
+(test (apply '(1 2) '(1)) 2)
+(test ((list 1 2 3) 1) 2)
+
+(test (let ((pi 3)) pi) 'error)
+(test (let ((:key 1)) :key) 'error)
+(test (let ((:3 1)) 1) 'error)
+(test (let ((3 1)) 1) 'error)
+(test (let ((3: 1)) 1) 'error)
+(test (let ((optional: 1)) 1) 'error)
+(test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
+
+
 (test (let ((x 0))
 	(define (quit z1) (z1 1) (set! x 1))
 	(call-with-exit
@@ -21402,6 +21444,7 @@ abs     1       2
 ;;; augment-environment
 ;;; with-environment
 ;;; environment->list
+;;; outer-environment
 
 (test (let () (length (current-environment))) 0)
 (test (let ((a 1) (b 2) (c 3)) (length (current-environment))) 3)
@@ -21676,7 +21719,8 @@ abs     1       2
 (test (with-environment (current-environment)) 'error) ; ?? perhaps this should be #<unspecified> 
 (for-each
  (lambda (arg)
-   (test (with-environment arg #f) 'error))
+   (test (with-environment arg #f) 'error)
+   (test (outer-environment arg) 'error))
  (list -1 #\a #(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 (test (with-environment (augment-environment (augment-environment '()) '(a . 1)) 1) 1)
@@ -21833,46 +21877,235 @@ abs     1       2
               (error 'oops) x)) 
 	  (lambda args x)))
       0)
-(test (call-with-exit (lambda (c) (0 (c 1)))) 1)
-(test (call-with-exit (lambda (k) (k "foo"))) "foo")
-(test (call-with-exit (lambda (k) "foo")) "foo")
-(test (call-with-exit (lambda (k) (k "foo") "oops")) "foo")
-(test (let ((memb (lambda (x ls)
-		    (call-with-exit
-		     (lambda (break)
-		       (do ((ls ls (cdr ls)))
-			   ((null? ls) #f)
-			 (if (equal? x (car ls))
-			     (break ls))))))))
-	(list (memb 'd '(a b c))
-	      (memb 'b '(a b c))))
-      '(#f (b c)))
 
-(let ((x 1))
-  (define y (call-with-exit (lambda (return) (set! x (return 32)))))
-  (test (and (= x 1) (= y 32)) #t)
-  (set! y (call-with-exit (lambda (return) ((lambda (a b c) (set! x a)) 1 2 (return 33)))))
-  (test (and (= x 1) (= y 33)) #t)
-  (set! y (call-with-exit (lambda (return) ((lambda (a b) (return a) (set! x b)) 2 3))))
-  (test (and (= x 1) (= y 2)) #t))
 
-(test (apply "hi" '(1 2)) 'error)
-(test ("hi" 1 2) 'error)
-(test (apply '(1 2) '(1 2)) 'error)
-(test ((list 1 2 3) 1 2) 'error)
+;;; objects as environments
 
-(test (apply "hi" '(1)) #\i)
-(test ("hi" 1) #\i)
-(test (apply '(1 2) '(1)) 2)
-(test ((list 1 2 3) 1) 2)
+(define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
+  ;; a bacro is needed so that the calling environment is accessible via outer-environment
+  
+  `(let ((outer-env (outer-environment (current-environment)))
+	 (new-methods ())
+	 (new-slots ()))
 
-(test (let ((pi 3)) pi) 'error)
-(test (let ((:key 1)) :key) 'error)
-(test (let ((:3 1)) 1) 'error)
-(test (let ((3 1)) 1) 'error)
-(test (let ((3: 1)) 1) 'error)
-(test (let ((optional: 1)) 1) 'error)
-(test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
+    (for-each
+     (lambda (class)
+       ;; each class is a set of nested environments, the innermost (first in the list)
+       ;;   holds the local slots which are copied each time an instance is created,
+       ;;   the next holds the class slots (global to all instances, not copied);
+       ;;   these hold the class name and other such info.  The remaining environments
+       ;;   hold the methods, with the localmost method first.  So in this loop, we
+       ;;   are gathering the local slots and all the methods of the inherited
+       ;;   classes, and will splice them together below as a new class.
+
+       (set! new-slots (append (environment->list class) new-slots))
+       (do ((e (outer-environment (outer-environment class)) (outer-environment e)))
+	   ((or (not (environment? e))
+		(eq? e (global-environment))))
+	 (set! new-methods (append (environment->list e) new-methods))))
+     ,inherited-classes)
+
+     (let ((remove-duplicates 
+	    (lambda (lst)         ; if multiple local slots with same name, take the localmost
+	      (letrec ((rem-dup
+			(lambda (lst nlst)
+			  (cond ((null? lst) nlst)
+				((assq (caar lst) nlst) (rem-dup (cdr lst) nlst))
+				(else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
+		(reverse (rem-dup lst ()))))))
+       (set! new-slots 
+	     (remove-duplicates
+	      (append (map (lambda (slot)
+			     (if (pair? slot)
+				 (cons (car slot) (cadr slot))
+				 (cons slot #f)))
+			   ,slots)                    ; the incoming new slots, #f is the default value
+		      new-slots))))                   ; the inherited slots
+
+    (set! new-methods 
+	  (append (map (lambda (method)
+			 (if (pair? method)
+			     (cons (car method) (cadr method))
+			     (cons method #f)))
+		       ,methods)                     ; the incoming new methods
+
+		  ;; add a print method for this class. 
+		  (list (cons 'print (lambda* (obj (port #f))
+				       (format port "#<~A: ~{~A~^ ~}>" 
+					       ',class-name
+					       (map (lambda (slot)
+						      (list (car slot) (cdr slot)))
+						    (environment->list obj))))))
+		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
+
+    (let ((new-class (apply augment-environment           ; the local slots
+		       (augment-environment               ; the global slots
+		         (apply augment-environment ()    ; the methods
+			   (reverse new-methods))
+		         (cons 'class-name ',class-name)  ; class-name slot
+			 (cons 'inheritors ())) 
+		       new-slots)))
+
+      (augment-environment! outer-env                  
+        (cons ',class-name new-class)                     ; define the class as class-name in the calling environment
+
+	;; define class-name? type check
+	(cons (string->symbol (string-append (symbol->string ',class-name) "?"))
+	      (lambda (obj)
+		(and (environment? obj)
+		     (eq? (obj 'class-name) ',class-name)))))
+
+      (augment-environment! outer-env
+        ;; define the make-instance function for this class.  
+        ;;   Each slot is a keyword argument to the make function.
+        (cons (string->symbol (string-append "make-" (symbol->string ',class-name)))
+	      (apply lambda* (map (lambda (slot)
+				    (if (pair? slot)
+					(list (car slot) (cdr slot))
+					(list slot #f)))
+				  new-slots)
+		     `((let ((new-obj (copy ,,class-name)))
+			 ,@(map (lambda (slot)
+				  `(set! (new-obj ',(car slot)) ,(car slot)))
+				new-slots)
+			 new-obj)))))
+
+      ;; save inheritance info for this class for subsequent define-method
+      (for-each
+       (lambda (class)
+	 (set! (class 'inheritors) (cons new-class (class 'inheritors))))
+       ,inherited-classes)
+
+    ',class-name)))
+
+
+(define-macro (define-generic name)
+  `(define ,name (lambda args (apply ((car args) ',name) args))))
+
+
+(define-bacro (define-method name-and-args . body)
+  `(let* ((outer-env (outer-environment (current-environment)))
+	  (method-name (car ',name-and-args))
+	  (method-args (cdr ',name-and-args))
+	  (object (caar method-args))
+	  (class (symbol->value (cadar method-args)))
+	  (method (apply lambda* method-args ',body)))
+
+     ;; define the method as a normal-looking function
+     (augment-environment! outer-env
+       (cons method-name 
+	     (apply lambda* method-args 
+		    `(((,object ',method-name)
+		       ,@(map (lambda (arg)
+				(if (pair? arg) (car arg) arg))
+			      method-args))))))
+     
+     ;; add the method to the class
+     (augment-environment! (outer-environment (outer-environment class))
+       (cons method-name method))
+
+     ;; if there are inheritors, add it to them as well
+     (for-each
+      (lambda (inheritor) 
+	(if (not (eq? (inheritor method-name) #<undefined>)) ; defined? goes to the global env
+	    (set! (inheritor method-name) method)
+	    (augment-environment! (outer-environment (outer-environment inheritor))
+   	      (cons method-name method))))
+      (class 'inheritors))
+
+     method-name))
+
+     
+(let ()
+
+  (define-class class-1 () 
+    '((a 1) (b 2)) 
+    (list (list 'add (lambda (obj) 
+		       (with-environment obj
+			 (+ a b))))))
+
+  (let ()
+    (test (class-1? class-1) #t)
+    (test (class-1 'a) 1)
+    (test (class-1 'b) 2)
+    (test (class-1 'class-name) 'class-1)
+    (test (class-1 'divide) #<undefined>)
+    (test (class-1 'inheritors) ())
+    (test ((class-1 'add) class-1) 3)
+    (test ((class-1 'print) class-1) "#<class-1: (a 1) (b 2)>"))
+
+  (let ((v (make-class-1)))
+    (test (class-1? v) #t)
+    (test (v 'a) 1)
+    (test (v 'b) 2)
+    (test (v 'class-name) 'class-1)
+    (test (v 'inheritors) ())
+    (test ((v 'add) v) 3)
+    (test ((v 'print) v) "#<class-1: (b 2) (a 1)>"))
+
+  (let ((v (make-class-1 :a 32)))
+    (test (class-1? v) #t)
+    (test (v 'a) 32)
+    (test (v 'b) 2)
+    (test (v 'class-name) 'class-1)
+    (test (v 'inheritors) ())
+    (test ((v 'add) v) 34)
+    (test ((v 'print) v) "#<class-1: (b 2) (a 32)>"))
+
+  (let ((v (make-class-1 32 3)))
+    (test (class-1? v) #t)
+    (test (v 'a) 32)
+    (test (v 'b) 3)
+    (test (v 'class-name) 'class-1)
+    (test (v 'inheritors) ())
+    (test ((v 'add) v) 35)
+    (test ((v 'print) v) "#<class-1: (b 3) (a 32)>"))
+
+  (define-generic add)
+
+  (let ()
+    (test (add class-1) 3)
+    (test (add (make-class-1 :b 0)) 1)
+    (test (add 2) 'error)
+    (test (print 2) 'error)
+    (test ((v 'add) 2) 'error))
+
+  (define-class class-2 (list class-1)
+    '((c 3)) 
+    (list (list 'multiply (lambda (obj) 
+			    (with-environment obj 
+                              (* a b c))))))
+
+  (let ((v (make-class-2 :a 32)))
+    (test (class-1? v) #f)
+    (test (class-2? v) #t)
+    (test (v 'a) 32)
+    (test (v 'b) 2)
+    (test (v 'c) 3)
+    (test (v 'class-name) 'class-2)
+    (test (v 'inheritors) ())
+    (test (class-1 'inheritors) (list class-2))
+    (test ((v 'add) v) 34)
+    (test ((v 'print) v) "#<class-2: (b 2) (a 32) (c 3)>")
+    (test ((v 'multiply) v) 192)
+    (test (add v) 34))
+
+  (define-method (subtract (obj class-1)) 
+    (with-environment obj 
+      (- a b)))
+
+  (let ((v1 (make-class-1))
+	(v2 (make-class-2)))
+    (test (subtract v1) -1)
+    (test (subtract v2) -1))
+
+  (define-class class-3 (list class-2) 
+    () 
+    (list (list 'multiply (lambda (obj num) 
+			    (* num ((class-2 'multiply) obj) (add obj))))))
+
+
+  )
 
 
 ;;; make-procedure-with-setter
