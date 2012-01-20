@@ -3798,6 +3798,17 @@ v2
 subtract
 &gt; (subtract v2)  ; class-2 inherits from class-1 so it knows about subtract
 30
+&gt; (define v1 (make-class-1))
+v1
+&gt; (augment-environment! v1      ; change the add method just in this instance
+       (cons 'add (lambda (obj) 
+                    (with-environment obj
+                      (+ 1 a (* 2 b))))))
+#&lt;environment&gt;
+&gt; (add v1)
+6
+&gt; (add v)                       ; other class-1 instances are not affected
+34
 
 </pre>
 </blockquote>

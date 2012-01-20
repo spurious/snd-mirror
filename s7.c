@@ -582,6 +582,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_C_OBJECT_C, HOP_C_OBJECT_C, OP_C_OBJECT_S, HOP_C_OBJECT_S, OP_C_OBJECT_opCq, HOP_C_OBJECT_opCq, 
       OP_PAIR_C, HOP_PAIR_C, OP_PAIR_S, HOP_PAIR_S, OP_PAIR_opCq, HOP_PAIR_opCq, 
       OP_HASH_TABLE_C, HOP_HASH_TABLE_C, OP_HASH_TABLE_S, HOP_HASH_TABLE_S, OP_HASH_TABLE_opCq, HOP_HASH_TABLE_opCq, 
+      OP_ENVIRONMENT_S, HOP_ENVIRONMENT_S, 
       
       OP_UNKNOWN_C, HOP_UNKNOWN_C, OP_UNKNOWN_S, HOP_UNKNOWN_S,
       OP_UNKNOWN_SS, HOP_UNKNOWN_SS, OP_UNKNOWN_SSS, HOP_UNKNOWN_SSS, 
@@ -677,6 +678,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "c_object_c", "h_c_object_c", "c_object_s", "h_c_object_s", "c_object_opcq", "h_c_object_opcq", 
      "pair_c", "h_pair_c", "pair_s", "h_pair_s", "pair_opcq", "h_pair_opcq", 
      "hash_table_c", "h_hash_table_c", "hash_table_s", "h_hash_table_s", "hash_table_opcq", "h_hash_table_opcq", 
+     "environment_s", "h_environment_s", 
      
      "unknown_c", "h_unknown_c", "unknown_s", "h_unknown_s",
      "unknown_ss", "h_unknown_ss", "unknown_sss", "h_unknown_sss", 
@@ -3809,7 +3811,6 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
   return(s7_environment_to_list(sc, env));
 }
 
-/* TODO: doc/test applicable e, outer-env */
 
 static s7_pointer environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
@@ -3895,8 +3896,7 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
   return(sc->global_env);
 }
 
-/* TODO: doc/test outer-environment (also NEWS s7.h etc)
- */
+
 static s7_pointer g_outer_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_outer_environment "(outer-environment env) returns the environment that contains env."
@@ -24768,10 +24768,9 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
     case T_COUNTER:
       return(counter_count(x) == counter_count(y)); /* ?? */
 
+    case T_ENVIRONMENT:
     case T_VECTOR:
     case T_HASH_TABLE:
-    case T_ENVIRONMENT:
-      /* TODO: is this active? */
     case T_PAIR:
       return(structures_are_equal(sc, x, y, ci));
 
@@ -24807,39 +24806,75 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
   else add_equal_ref(ci, x, y);
   
   /* now compare the elements of the structures. */
-  if (is_pair(x))
-    return((s7_is_equal_tracking_circles(sc, car(x), car(y), ci)) &&
-	   (s7_is_equal_tracking_circles(sc, cdr(x), cdr(y), ci)));
+  switch (type(x))
+    {
+    case T_PAIR:
+      return((s7_is_equal_tracking_circles(sc, car(x), car(y), ci)) &&
+	     (s7_is_equal_tracking_circles(sc, cdr(x), cdr(y), ci)));
 
-  /* vector or hash table */
-  {
-    s7_Int i, len;
-    len = vector_length(x);
-    if (len != vector_length(y)) return(false);
-
-    if (s7_is_vector(x))
+    case T_VECTOR:
+    case T_HASH_TABLE:
       {
-	/* there's one special case: shared vectors can have 1 dimension but include the dimension info */
-	int x_dims = 1, y_dims = 1, j;
-
-	if (vector_is_multidimensional(x))
-	  x_dims = vector_ndims(x);
-	if (vector_is_multidimensional(y))
-	  y_dims = vector_ndims(y);
-
-	if (x_dims != y_dims)
-	  return(false);
-
-	if (x_dims > 1)
-	  for (j = 0; j < x_dims; j++)
-	    if (vector_dimension(x, j) != vector_dimension(y, j))
+	s7_Int i, len;
+	len = vector_length(x);
+	if (len != vector_length(y)) return(false);
+	
+	if (s7_is_vector(x))
+	  {
+	    /* there's one special case: shared vectors can have 1 dimension but include the dimension info */
+	    int x_dims = 1, y_dims = 1, j;
+	    
+	    if (vector_is_multidimensional(x))
+	      x_dims = vector_ndims(x);
+	    if (vector_is_multidimensional(y))
+	      y_dims = vector_ndims(y);
+	    
+	    if (x_dims != y_dims)
 	      return(false);
+	    
+	    if (x_dims > 1)
+	      for (j = 0; j < x_dims; j++)
+		if (vector_dimension(x, j) != vector_dimension(y, j))
+		  return(false);
+	  }
+	
+	for (i = 0; i < len; i++)
+	  if (!(s7_is_equal_tracking_circles(sc, vector_element(x, i), vector_element(y, i), ci)))
+	    return(false);
       }
 
-    for (i = 0; i < len; i++)
-      if (!(s7_is_equal_tracking_circles(sc, vector_element(x, i), vector_element(y, i), ci)))
-	return(false);
-  }
+    case T_ENVIRONMENT:
+      {
+	/*
+	  (let ((e1 #f) (e2 #f))
+	    (let ((a 1)) (set! e1 (current-environment)))
+            (let ((a 1)) (set! e2 (current-environment))) 
+            (equal? e1 e2))
+	*/
+	s7_pointer ex, ey;
+	for (ex = x, ey = y; is_environment(ex) && is_environment(ey); ex = next_environment(ex), ey = next_environment(ey))
+	  {
+	    s7_pointer px, py;
+	    if (ex == ey)
+	      return(true);
+	    if ((ex == sc->global_env) ||
+		(ey == sc->global_env))
+	      return(false);
+	    /* currently order matters, unlike hash-tables */
+	    for (px = environment_slots(ex), py = environment_slots(ey); is_slot(px) && is_slot(py); px = next_slot(px), py = next_slot(py))
+	      if ((slot_symbol(px) != slot_symbol(py)) ||
+		  (!(s7_is_equal_tracking_circles(sc, slot_value(px), slot_value(py), ci))))
+		return(false);
+	    if ((is_slot(px)) ||
+		(is_slot(py)))
+	      return(false);
+	  }
+	if ((is_environment(ex)) ||
+	    (is_environment(ey)))
+	  return(false);
+	return(true);
+      }
+    }
   return(true);
 }
 
@@ -24873,6 +24908,9 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     case T_REAL:
     case T_COMPLEX:
       return(numbers_are_eqv(x, y));
+
+    case T_ENVIRONMENT:
+      return(structures_are_equal(sc, x, y, new_shared_info(sc)));
 
     case T_VECTOR:
       return((vector_length(x) == vector_length(y)) &&
@@ -33313,6 +33351,7 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 	    case OP_HASH_TABLE_S:
 	    case OP_C_OBJECT_C:
 	    case OP_C_OBJECT_S:
+	    case OP_ENVIRONMENT_S:
 	      break;
 	      
 	    case OP_SAFE_IS_PAIR_S:
@@ -39569,7 +39608,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-			/* TODO env case */
+		      case T_ENVIRONMENT:
+			optimize_data(code) = OP_ENVIRONMENT_S;
+			ecdr(code) = f;
+			goto OPT_EVAL;
 			
 		      case T_HASH_TABLE:
 			optimize_data(code) = OP_HASH_TABLE_S;
@@ -39655,13 +39697,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    ecdr(code) = f;
 			    goto OPT_EVAL;
 
-			    /* TODO: env case */
-			    
 			  case T_HASH_TABLE:
 			    optimize_data(code) = OP_HASH_TABLE_C;
 			    ecdr(code) = f;
 			    goto OPT_EVAL;
 			    break;
+
+			    /* no need for t_environment here because its argument can't be a constant */
 			    
 			  default:
 			    break;
@@ -39958,8 +40000,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    ecdr(code) = f;
 			    goto OPT_EVAL;
 
-			    /* TODO: env case */
-			    
 			  case T_HASH_TABLE:
 			    optimize_data(code) = OP_HASH_TABLE_opCq;
 			    ecdr(code) = f;
@@ -40366,6 +40406,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      break;
 
 		    sc->value = s7_hash_table_ref(sc, s, find_symbol_or_bust(sc, cadr(code)));
+		    goto START;
+		  }
+		  
+
+		case OP_ENVIRONMENT_S:
+		case HOP_ENVIRONMENT_S:
+		  {
+		    s7_pointer s;
+		    s = find_symbol_or_bust(sc, car(code));
+		    if (!is_environment(s))
+		      break;
+
+		    sc->value = environment_ref(sc, s, find_symbol_or_bust(sc, cadr(code)));
 		    goto START;
 		  }
 		  
@@ -43801,7 +43854,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_SET_PAIR:
       /* car(sc->code) is a pair, caar(code) is the object with a setter, it has one (safe) argument, and one safe value to set
-       *   (set! (str i) #\a)
+       *   (set! (str i) #\a) in a function (both inner things need to be symbols to get here)
        *   the inner list is a proper list, with no embedded list at car.
        */
       {
@@ -43857,7 +43910,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = g_hash_table_set(sc, sc->T3_1);
 	      break;
 
-	      /* TODO: env case? */
+	    case T_ENVIRONMENT:
+	      /* (set! (env sym) val) */
+	      sc->value = environment_set(sc, obj, arg, value);
+	      break;
 
 	    case T_C_OPT_ARGS_FUNCTION:
 	    case T_C_RST_ARGS_FUNCTION:

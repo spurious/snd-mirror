@@ -21515,7 +21515,7 @@ abs     1       2
 (test (eqv? (global-environment) (initial-environment)) #f)
 (test (equal? (global-environment) (global-environment)) #t)
 (test (equal? (global-environment) (initial-environment)) #f)
-(test (equal? (current-environment) (initial-environment)) #f)
+;(test (equal? (current-environment) (initial-environment)) #f)
 (let ((e #f) (g #f))
   (set! e (current-environment))
   (set! g (global-environment))
@@ -21717,6 +21717,11 @@ abs     1       2
 (test (with-environment 1) 'error)
 (test (with-environment () 1) 'error)
 (test (with-environment (current-environment)) 'error) ; ?? perhaps this should be #<unspecified> 
+(test (outer-environment) 'error)
+(test (outer-environment (current-environment) #f) 'error)
+(test (eq? (outer-environment (global-environment)) (global-environment)) #t)
+(test (set! (outer-environment (current-environment)) #f) 'error)
+
 (for-each
  (lambda (arg)
    (test (with-environment arg #f) 'error)
@@ -21878,6 +21883,44 @@ abs     1       2
 	  (lambda args x)))
       0)
 
+(let ((a 1)) 
+  (test ((current-environment) 'a) 1)
+  (set! ((current-environment) 'a) 32)
+  (test ((current-environment) 'a) 32))
+
+(let () (test (equal? (current-environment) (global-environment)) #f))
+(test (let ((a 1)) (let ((e (current-environment))) (set! (e 'a) 2)) a) 2)
+(let () (define (hi e) (set! (e 'a) 2)) (test (let ((a 1)) (hi (current-environment)) a) 2))
+(let () (define (hi) (let ((a 1)) (let ((e (current-environment)) (i 'a)) (set! (e i) #\a)) a)) (hi) (hi) (test (hi) #\a))
+
+(test (let ((a 1)) (let ((e (current-environment))) (e :hi))) #<undefined>) ; ?? perhaps it should always be :hi?
+
+(let ((e1 #f) (e2 #f))
+  (let ((a 1)) (set! e1 (current-environment)))
+  (let ((a 1)) (set! e2 (current-environment))) 
+  (test (equal? e1 e2) #t))
+
+(let ((e1 #f) (e2 #f))
+  (let ((a 1)) (set! e1 (current-environment)))
+  (let ((a 2)) (set! e2 (current-environment))) 
+  (test (equal? e1 e2) #f))
+
+(let ((e1 #f) (e2 #f))
+  (let ((a 1)) (set! e1 (current-environment)))
+  (let ((a 1) (b 2)) (set! e2 (current-environment))) 
+  (test (equal? e1 e2) #f))
+
+(let ((e1 #f) (e2 #f))
+  (let ((a 1) (b 2)) (set! e1 (current-environment)))
+  (let ((a 1) (b 2)) (set! e2 (current-environment))) 
+  (test (equal? e1 e2) #t))
+
+(let ((e1 #f) (e2 #f))
+  (let () (set! e1 (current-environment)))
+  (let ((a 1)) (set! e2 (current-environment))) 
+  (test (equal? e1 e2) #f))
+
+
 
 ;;; objects as environments
 
@@ -22025,6 +22068,7 @@ abs     1       2
 			 (+ a b))))))
 
   (let ()
+    (test (environment? (outer-environment (current-environment))) #t)
     (test (class-1? class-1) #t)
     (test (class-1 'a) 1)
     (test (class-1 'b) 2)
@@ -22032,7 +22076,8 @@ abs     1       2
     (test (class-1 'divide) #<undefined>)
     (test (class-1 'inheritors) ())
     (test ((class-1 'add) class-1) 3)
-    (test ((class-1 'print) class-1) "#<class-1: (a 1) (b 2)>"))
+    (test ((class-1 'print) class-1) "#<class-1: (a 1) (b 2)>")
+    (test (format #f "~{~A~^ ~}" class-1) "(a . 1) (b . 2)"))
 
   (let ((v (make-class-1)))
     (test (class-1? v) #t)
@@ -22041,7 +22086,12 @@ abs     1       2
     (test (v 'class-name) 'class-1)
     (test (v 'inheritors) ())
     (test ((v 'add) v) 3)
-    (test ((v 'print) v) "#<class-1: (b 2) (a 1)>"))
+    (test ((v 'print) v) "#<class-1: (b 2) (a 1)>")
+    (test (format #f "~{~A~^ ~}" v) "(b . 2) (a . 1)")
+    (set! (v 'a) 32)
+    (test ((v 'add) v) 34)
+    (test (equal? v v) #t)
+    (test (equal? v (make-class-1 :a 32)) #t))
 
   (let ((v (make-class-1 :a 32)))
     (test (class-1? v) #t)
@@ -22079,6 +22129,8 @@ abs     1       2
   (let ((v (make-class-2 :a 32)))
     (test (class-1? v) #f)
     (test (class-2? v) #t)
+    (test (equal? v (make-class-1 :a 32)) #f)
+    (test (equal? v (make-class-2 :a 32)) #t)
     (test (v 'a) 32)
     (test (v 'b) 2)
     (test (v 'c) 3)
@@ -22099,12 +22151,35 @@ abs     1       2
     (test (subtract v1) -1)
     (test (subtract v2) -1))
 
+  (let ((v1 (make-class-1))
+	(v2 (make-class-1)))
+    (test (add v1) 3)
+    (test (add v2) 3)
+    (augment-environment! v2 (cons 'add (lambda (obj) (with-environment obj (+ 1 a (* 2 b))))))
+    (test (add v1) 3)
+    (test (add v2) 6))
+
   (define-class class-3 (list class-2) 
     () 
     (list (list 'multiply (lambda (obj num) 
 			    (* num ((class-2 'multiply) obj) (add obj))))))
 
-
+  (let ((v (make-class-3)))
+    (test (class-1? v) #f)
+    (test (class-2? v) #f)
+    (test (class-3? v) #t)
+    (test (v 'a) 1)
+    (test (v 'b) 2)
+    (test (v 'c) 3)
+    (test (v 'class-name) 'class-3)
+    (test (v 'inheritors) ())
+    (test (class-1 'inheritors) (list class-2))
+    (test (class-2 'inheritors) (list class-3))
+    (test ((v 'add) v) 3)
+    (test ((v 'print) v) "#<class-3: (b 2) (a 1) (c 3)>")
+    (test ((v 'multiply) v) 'error)
+    (test ((v 'multiply) v 4) (* 4 6 3))
+    (test (add v) 3))
   )
 
 
@@ -36106,6 +36181,28 @@ abs     1       2
   (test (>0? 1) #t)
   (test (let ((x 1) (y 321)) (<=> x y) (list x y)) (list 321 1))
   )
+
+(let ()
+
+  (define (bit-reverse int)
+    ;; from "Hacker's Delight" Henry Warren p101, but 64 bit
+    (let ((x int))
+      (set! x (logior (ash (logand x #x5555555555555555) 1)
+		      (ash (logand x #xAAAAAAAAAAAAAAAA) -1)))
+      (set! x (logior (ash (logand x #x3333333333333333) 2)
+		      (ash (logand x #xCCCCCCCCCCCCCCCC) -2)))
+      (set! x (logior (ash (logand x #x0F0F0F0F0F0F0F0F) 4)
+		      (ash (logand x #xF0F0F0F0F0F0F0F0) -4)))
+      (set! x (logior (ash (logand x #x00FF00FF00FF00FF) 8)
+		      (ash (logand x #xFF00FF00FF00FF00) -8)))
+      (set! x (logior (ash (logand x #x0000FFFF0000FFFF) 16)
+		      (ash (logand x #xFFFF0000FFFF0000) -16)))
+      (logior (ash (logand x #x00000000FFFFFFFF) 32)
+	      (ash (logand x #xFFFFFFFF00000000) -32))))
+
+  (let ((x (ash (bit-reverse #x01234566) -32)))
+    (num-test x  1721943168)))
+
 
 ;; from CL spec
 (test (let ((str ""))
