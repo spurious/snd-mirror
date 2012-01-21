@@ -3675,8 +3675,9 @@ and its value is returned."
 	  {
 	    str = (char *)s7_procedure_documentation(s7, sym);
 
-	    if ((str == NULL) || 
-		(mus_strlen(str) == 0))
+	    if (((str == NULL) || 
+		 (mus_strlen(str) == 0)) &&
+		(s7_procedure_environment(sym) != sym))
 	      {
 		const char *url = NULL;
 		s7_pointer x;

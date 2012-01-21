@@ -1646,8 +1646,6 @@ simple way for multiple functions to share a closure.
 Maybe it rates a macro:
 </p>
 
-<!-- TODO: change all these begin/let pairs to use bacro/outer-environment -->
-
 <pre>
 (define-macro (blet* names bindings . body)
   `(begin
@@ -1768,9 +1766,9 @@ cadr
 </pre>
 
 <p>To get the setter from a procedure-with-setter (for procedure-arity for example),
-use procedure-setter.
+use procedure-setter.  If procedure-setter were settable, there would be no need
+for make-procedure-with-setter; hmmm.
 </p>
-
 
 <small>
 <blockquote>
@@ -3691,7 +3689,8 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 		         (apply augment-environment ()    ; the methods
 			   (reverse new-methods))
 		         (cons 'class-name ',class-name)  ; class-name slot
-			 (cons 'inheritors ())) 
+			 (cons 'inherited ,inherited-classes)
+			 (cons 'inheritors ()))           ; classes that inherit from this class
 		       new-slots)))
 
       (augment-environment! outer-env                  
@@ -3719,12 +3718,13 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 			 new-obj)))))
 
       ;; save inheritance info for this class for subsequent define-method
-      (for-each
-       (lambda (class)
-	 (set! (class 'inheritors) (cons new-class (class 'inheritors))))
-       ,inherited-classes)
-
-    ',class-name)))
+      (letrec ((add-inheritor (lambda (class)
+				(for-each add-inheritor (class 'inherited))
+				(if (not (memq new-class (class 'inheritors)))
+				    (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
+	(for-each add-inheritor ,inherited-classes))
+    
+      ',class-name)))
 
 
 (define-macro (define-generic name)
@@ -3737,6 +3737,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 	  (method-args (cdr ',name-and-args))
 	  (object (caar method-args))
 	  (class (symbol-&gt;value (cadar method-args)))
+	  (old-method (class method-name))
 	  (method (apply lambda* method-args ',body)))
 
      ;; define the method as a normal-looking function
@@ -3752,11 +3753,12 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
      (augment-environment! (outer-environment (outer-environment class))
        (cons method-name method))
 
-     ;; if there are inheritors, add it to them as well
+     ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
      (for-each
-      (lambda (inheritor)
+      (lambda (inheritor) 
 	(if (not (eq? (inheritor method-name) #&lt;undefined&gt;)) ; defined? goes to the global env
-	    (set! (inheritor method-name) method)
+	    (if (eq? (inheritor method-name) old-method)
+		(set! (inheritor method-name) method))
 	    (augment-environment! (outer-environment (outer-environment inheritor))
    	      (cons method-name method))))
       (class 'inheritors))
@@ -3772,8 +3774,10 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 class-1
 &gt; (define v (make-class-1 :a 32))
 v 
+&gt; (v 'a)                         ; to set the 'a slot, (set! (v 'a) 0) 
+32
 &gt; ((v 'print) v)                 ; environments are applicable objects much like hash-tables
-"#&lt;class-1: (b 2) (a 32)&gt;"
+"#&lt;class-1: (b 2) (a 32)&gt;"       ;   so (v 'print) is v's print method
 &gt; ((v 'add) v)
 34
 &gt; (define-generic add)
@@ -3809,7 +3813,14 @@ v1
 6
 &gt; (add v)                       ; other class-1 instances are not affected
 34
-
+&gt; (define-class class-3 (list class-2) () 
+    (list (list 'multiply (lambda (obj num) 
+			    (* num 
+			       ((class-2 'multiply) obj) ; method combination 
+			       (add obj))))))
+class-3
+&gt; ((class-3 'multiply) class-3 10)
+180                               ; (* 10 (* 1 2 3) (+ 1 2))
 </pre>
 </blockquote>
 </small>

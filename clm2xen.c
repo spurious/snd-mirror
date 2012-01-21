@@ -12284,7 +12284,6 @@ static void mus_xen_init(void)
 #endif
 
 #if HAVE_SCHEME
-  /* PERHAPS: s7_mus_reverse? */
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
 				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, NULL, s7_mus_fill);
   as_needed_arglist = XEN_LIST_1(XEN_ZERO);

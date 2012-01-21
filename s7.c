@@ -27334,7 +27334,7 @@ output is sent to the current-output-port."
   else obj = sc->F;
 
   /* *error-info* is the special case here
-   *   TODO: this is way too hard to use, and appears to repeat the local vars
+   *   TODO: stacktrace + *error-info* is too hard to use, and appears to repeat the local vars
    */
   if (s7_is_vector(obj))
     {
@@ -53957,30 +53957,6 @@ the error type and the info passed to the error handler.");
  *    (let ((lst (list #(1 2) #(3 4)))) (lst 0 1))
  *    ;list-ref argument 1, #(1 2), is vector but should be a pair
  *    ;    (lst 0 1)
- */
-
-/* we need an aliased vector type that looks like a vector in scheme
- *   but actually is an overlay on C floats/doubles/ints/etc
- *
- * with this, I can collapse out all the endless array types in Snd/sndlib
- *   at least in s7-Snd.  mixer -> multidim aliased vector, frame/vct->aliased vector,
- *   perhaps sound-data->multidim?  Also all the mus-data cases.
- *
- * T_REAL|INTEGER|COMPLEX|CHAR|STRING|_VECTOR
- *   then a package tying all gsl into s7 or fftw etc
- *
- * for vcts (which aren't assumed C-side like frames/mixers in clm.c and sound-data in sndlib)
- *   T_REAL_VECTOR
- *   mus_vct_print_length = *vector-print-length*
- *   mus_vct_p = s7_is_real_vector, g_vct_p as now (MUS_VCT_P -> s7_is_real_vector)
- *   free/mark/print/add(for sweep)/equal?/fill/copy/length/reverse/for-each+map for T_REAL_VECTOR
- *   s7_real_vector_elements -> double array
- *   s7_make_real_vector, s7_real_vector_length
- *   would vector-ref|set  know about these? 
- *   how would the wrappers work?  (array from elsewhere, not freed upon GC, etc)
- * so what does this gain us?  
- *   The implicit ref/set could be direct as in current vectors
- *   slightly simpler GC/free handling perhaps
  */
 
 /* TODO: the symbol-access stuff is not fully implemented

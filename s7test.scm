@@ -14012,6 +14012,13 @@ time, so that the displayed results are
 (test (let ((x 1)) ((values set!) x 32) x) 32)
 (let ((x 0)) (test (list (set! x 10)) (call-with-values (lambda () (set! x 10)) list))) ; from r7rs discussion
 
+(let ()
+  (define (curry function . args) 
+    (lambda more-args 
+      (function (apply values args) (apply values more-args)))) ; unfortunately this doesn't handle 0 args
+  (test ((curry + 1 2) 3 4) 10))
+
+
 (test (or (values #t #f) #f) #t)
 (test (or (values #f #f) #f) #f)
 (test (or (values #f #t) #f) #t)
@@ -21986,7 +21993,8 @@ abs     1       2
 		         (apply augment-environment ()    ; the methods
 			   (reverse new-methods))
 		         (cons 'class-name ',class-name)  ; class-name slot
-			 (cons 'inheritors ())) 
+			 (cons 'inherited ,inherited-classes)
+			 (cons 'inheritors ()))           ; classes that inherit from this class
 		       new-slots)))
 
       (augment-environment! outer-env                  
@@ -22014,12 +22022,13 @@ abs     1       2
 			 new-obj)))))
 
       ;; save inheritance info for this class for subsequent define-method
-      (for-each
-       (lambda (class)
-	 (set! (class 'inheritors) (cons new-class (class 'inheritors))))
-       ,inherited-classes)
-
-    ',class-name)))
+      (letrec ((add-inheritor (lambda (class)
+				(for-each add-inheritor (class 'inherited))
+				(if (not (memq new-class (class 'inheritors)))
+				    (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
+	(for-each add-inheritor ,inherited-classes))
+    
+      ',class-name)))
 
 
 (define-macro (define-generic name)
@@ -22032,6 +22041,7 @@ abs     1       2
 	  (method-args (cdr ',name-and-args))
 	  (object (caar method-args))
 	  (class (symbol->value (cadar method-args)))
+	  (old-method (class method-name))
 	  (method (apply lambda* method-args ',body)))
 
      ;; define the method as a normal-looking function
@@ -22047,17 +22057,17 @@ abs     1       2
      (augment-environment! (outer-environment (outer-environment class))
        (cons method-name method))
 
-     ;; if there are inheritors, add it to them as well
+     ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
      (for-each
       (lambda (inheritor) 
 	(if (not (eq? (inheritor method-name) #<undefined>)) ; defined? goes to the global env
-	    (set! (inheritor method-name) method)
+	    (if (eq? (inheritor method-name) old-method)
+		(set! (inheritor method-name) method))
 	    (augment-environment! (outer-environment (outer-environment inheritor))
    	      (cons method-name method))))
       (class 'inheritors))
 
      method-name))
-
      
 (let ()
 
@@ -22142,15 +22152,6 @@ abs     1       2
     (test ((v 'multiply) v) 192)
     (test (add v) 34))
 
-  (define-method (subtract (obj class-1)) 
-    (with-environment obj 
-      (- a b)))
-
-  (let ((v1 (make-class-1))
-	(v2 (make-class-2)))
-    (test (subtract v1) -1)
-    (test (subtract v2) -1))
-
   (let ((v1 (make-class-1))
 	(v2 (make-class-1)))
     (test (add v1) 3)
@@ -22162,7 +22163,9 @@ abs     1       2
   (define-class class-3 (list class-2) 
     () 
     (list (list 'multiply (lambda (obj num) 
-			    (* num ((class-2 'multiply) obj) (add obj))))))
+			    (* num 
+			       ((class-2 'multiply) obj) 
+			       (add obj))))))
 
   (let ((v (make-class-3)))
     (test (class-1? v) #f)
@@ -22173,13 +22176,35 @@ abs     1       2
     (test (v 'c) 3)
     (test (v 'class-name) 'class-3)
     (test (v 'inheritors) ())
-    (test (class-1 'inheritors) (list class-2))
+    (test (class-1 'inheritors) (list class-3 class-2))
     (test (class-2 'inheritors) (list class-3))
     (test ((v 'add) v) 3)
     (test ((v 'print) v) "#<class-3: (b 2) (a 1) (c 3)>")
     (test ((v 'multiply) v) 'error)
     (test ((v 'multiply) v 4) (* 4 6 3))
     (test (add v) 3))
+
+  (define-method (subtract (obj class-1)) 
+    (with-environment obj 
+      (- a b)))
+
+  (let ((v1 (make-class-1))
+	(v2 (make-class-2))
+	(v3 (make-class-3)))
+    (test (subtract v1) -1)
+    (test (subtract v2) -1)
+    (test (subtract v3) -1))
+
+  ;; class-2|3 have their own multiply so...
+  (define-method (multiply (obj class-1)) (with-environment obj (* a b 100)))
+
+  (let ((v1 (make-class-1))
+	(v2 (make-class-2))
+	(v3 (make-class-3)))
+    (test (multiply v1) 200)
+    (test (multiply v2) 6)
+    (test (multiply v3) 'error))
+
   )
 
 
