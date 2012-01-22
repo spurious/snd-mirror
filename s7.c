@@ -3853,6 +3853,22 @@ static s7_pointer g_environment_set(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer reverse_slots(s7_scheme *sc, s7_pointer list)
+{
+  s7_pointer p = list, result, q;
+  result = sc->NIL;
+
+  while (is_slot(p))
+    {
+      q = next_slot(p);
+      next_slot(p) = result;
+      result = p;
+      p = q;
+    }
+  return(result);
+}
+
+
 static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 {
   if (is_environment(env))
@@ -3865,6 +3881,7 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 
       for (x = environment_slots(env); is_slot(x); x = next_slot(x))
 	ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
+      environment_slots(new_e) = reverse_slots(sc, environment_slots(new_e));
       
       s7_gc_unprotect_at(sc, gc_loc);      
       return(new_e);
@@ -4266,7 +4283,8 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* for uninterpreted pointers */
+
+/* ---------------- uninterpreted pointers ---------------- */
 
 bool s7_is_c_pointer(s7_pointer arg) 
 {
@@ -18605,22 +18623,6 @@ static s7_pointer reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer li
 }
 
 
-static s7_pointer reverse_slots(s7_scheme *sc, s7_pointer list)
-{
-  s7_pointer p = list, result, q;
-  result = sc->NIL;
-
-  while (is_slot(p))
-    {
-      q = next_slot(p);
-      next_slot(p) = result;
-      result = p;
-      p = q;
-    }
-  return(result);
-}
-
-
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe" here means we guarantee this list is unproblematic */
 {
   s7_pointer p = list, result, q;
@@ -27746,8 +27748,6 @@ static bool next_for_each(s7_scheme *sc)
 	car(x) = g_hash_table_iterate(sc, hash_table_iterate_args(car(y)));  /* cdadadar? I suppose this accessor could be optimized */
 	break;
 
-	/* TODO: env case here and in map */
-
       case T_STRING:
 	car(x) = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
 	break;
@@ -27784,6 +27784,7 @@ static bool is_sequence(s7_scheme *sc, s7_pointer p)
 	 (s7_is_vector(p)) ||
 	 (s7_is_string(p)) ||
 	 (s7_is_hash_table(p)) ||
+	 (is_environment(p)) ||
 	 (is_c_object(p)));
 }
 
@@ -27926,7 +27927,13 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       sc->x = list_1(sc, sc->NIL);
       if (s7_is_hash_table(obj))
 	sc->z = list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
-      else sc->z = list_1(sc, obj);
+      else 
+	{ 
+	  /* (let ((a 1) (b 2)) (for-each (lambda (slot) (format #t "~A~%" slot)) (current-environment))) */
+	  if (is_environment(obj))
+	    sc->z = list_1(sc, s7_environment_to_list(sc, obj));
+	  else sc->z = list_1(sc, obj);
+	}
 
       /* we have to copy the args if any of them is a list:
        *     (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
@@ -27941,7 +27948,12 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
 	      if (s7_is_hash_table(car(x)))
 		sc->z = cons_unchecked(sc, g_make_hash_table_iterator(sc, x), sc->z);
-	      else sc->z = cons_unchecked(sc, car(x), sc->z);
+	      else
+		{
+		  if (is_environment(car(x)))
+		    sc->z = cons(sc, s7_environment_to_list(sc, car(x)), sc->z);
+		  else sc->z = cons_unchecked(sc, car(x), sc->z);
+		}
 	    }
 	}
     }
@@ -27956,6 +27968,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  (s7_is_string(sc->code)) ||
 	  (s7_is_vector(sc->code)) ||
 	  (s7_is_hash_table(sc->code)) ||
+	  (is_environment(sc->code)) ||
 	  (is_hook(sc->code)) ||
 	  (is_syntax(sc->code)))
 	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
@@ -28271,7 +28284,12 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     {
       if (s7_is_hash_table(obj))
 	sc->z = list_1(sc, g_make_hash_table_iterator(sc, cdr(args)));
-      else sc->z = list_1(sc, obj);
+      else 
+	{
+	  if (is_environment(obj))
+	    sc->z = list_1(sc, s7_environment_to_list(sc, obj));
+	  else sc->z = list_1(sc, obj);
+	}
 
       /* we have to copy the args if any of them is a list:
        * (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y))
@@ -28291,7 +28309,12 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      
 	      if (s7_is_hash_table(car(x)))
 		sc->z = cons(sc, g_make_hash_table_iterator(sc, x), sc->z);
-	      else sc->z = cons_unchecked(sc, car(x), sc->z);
+	      else
+		{
+		  if (is_environment(car(x)))
+		    sc->z = cons_unchecked(sc, s7_environment_to_list(sc, car(x)), sc->z);
+		  else sc->z = cons_unchecked(sc, car(x), sc->z);
+		}
 	    }
 	}
     }
@@ -28303,6 +28326,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  (s7_is_string(sc->code)) ||
 	  (s7_is_vector(sc->code)) ||
 	  (s7_is_hash_table(sc->code)) ||
+	  (is_environment(sc->code)) ||
 	  (is_hook(sc->code)) ||
 	  (is_syntax(sc->code)))
 	return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */

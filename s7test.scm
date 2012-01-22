@@ -3043,6 +3043,22 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (symbol) 'error)
 (test (symbol "hi" "ho") 'error)
 
+(let ()
+  (define-macro (string-case selector . clauses)
+    `(case (symbol ,selector)
+       ,@(map (lambda (clause)
+		(if (pair? (car clause))
+		    `(,(map symbol (car clause)) ,@(cdr clause))
+		    clause))
+	      clauses)))
+
+  (test (let ((str "hi"))
+	  (string-case str
+            (("hi" "ho") 1 2 3)
+	    (("hiho") 2)
+	    (else 4)))
+	3))
+
 
 
 ;;; symbol->value
@@ -21547,6 +21563,12 @@ abs     1       2
     (if (equal? e (current-environment))
 	(format #t ";2nd case (equal? e (current-environment)) -> #t?~%"))))
 
+(test (let ((a 1) (b 2)) (map cdr (current-environment))) '(1 2))
+(test (let () (map cdr (current-environment))) '())
+(test (let ((vals ())) (let ((a 1) (b 2)) (for-each (lambda (slot) (set! vals (cons (cdr slot) vals))) (current-environment))) vals) '(2 1))
+(test (let ((a '(1 2 3)) (b '(3 4 5)) (c '(6 7 8))) (map + a b c (apply values (map cdr (current-environment))))) '(20 26 32))
+(test (let ((a 1) (b 2) (c 3)) (map (lambda (a b) (+ a (cdr b))) (list 1 2 3) (current-environment))) '(2 4 6))
+
 (test (let () (format #f "~A" (current-environment))) "#<environment>") 
 (test (let ((a 32) (b '(1 2 3))) (format #f "~A" (current-environment))) "#<environment>")
 (test (let ((a 1)) (object->string (current-environment))) "#<environment>")
@@ -21918,7 +21940,8 @@ abs     1       2
 (let ((e1 #f) (e2 #f))
   (let ((a 1)) (set! e1 (current-environment)))
   (let ((a 1)) (set! e2 (current-environment))) 
-  (test (equal? e1 e2) #t))
+  (test (equal? e1 e2) #t)
+  (test (eqv? e1 e2) #f))
 
 (let ((e1 #f) (e2 #f))
   (let ((a 1)) (set! e1 (current-environment)))
@@ -21942,7 +21965,7 @@ abs     1       2
 
 
 
-;;; objects as environments
+;;; environments as objects
 
 (define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
   ;; a bacro is needed so that the calling environment is accessible via outer-environment
@@ -22048,6 +22071,12 @@ abs     1       2
   `(define ,name (lambda args (apply ((car args) ',name) args))))
 
 
+(define-macro (define-slot-accessor name slot)
+  `(define ,name (make-procedure-with-setter 
+                   (lambda (obj) (obj ',slot)) 
+		   (lambda (obj val) (set! (obj ',slot) val)))))
+
+
 (define-bacro (define-method name-and-args . body)
   `(let* ((outer-env (outer-environment (current-environment)))
 	  (method-name (car ',name-and-args))
@@ -22090,6 +22119,8 @@ abs     1       2
 		       (with-environment obj
 			 (+ a b))))))
 
+  (define-slot-accessor slot-a a)
+
   (let ()
     (test (environment? (outer-environment (current-environment))) #t)
     (test (class-1? class-1) #t)
@@ -22109,12 +22140,16 @@ abs     1       2
     (test (v 'class-name) 'class-1)
     (test (v 'inheritors) ())
     (test ((v 'add) v) 3)
-    (test ((v 'print) v) "#<class-1: (b 2) (a 1)>")
-    (test (format #f "~{~A~^ ~}" v) "(b . 2) (a . 1)")
+    (test ((v 'print) v) "#<class-1: (a 1) (b 2)>")
+    (test (format #f "~{~A~^ ~}" v) "(a . 1) (b . 2)")
     (set! (v 'a) 32)
     (test ((v 'add) v) 34)
     (test (equal? v v) #t)
-    (test (equal? v (make-class-1 :a 32)) #t))
+    (test (equal? v (make-class-1 :a 32)) #t)
+    (test (slot-a v) 32)
+    (set! (slot-a v) 1)
+    (test (slot-a v) 1)
+    (test (map cdr v) '(1 2)))
 
   (let ((v (make-class-1 :a 32)))
     (test (class-1? v) #t)
@@ -22123,7 +22158,7 @@ abs     1       2
     (test (v 'class-name) 'class-1)
     (test (v 'inheritors) ())
     (test ((v 'add) v) 34)
-    (test ((v 'print) v) "#<class-1: (b 2) (a 32)>"))
+    (test ((v 'print) v) "#<class-1: (a 32) (b 2)>"))
 
   (let ((v (make-class-1 32 3)))
     (test (class-1? v) #t)
@@ -22132,7 +22167,7 @@ abs     1       2
     (test (v 'class-name) 'class-1)
     (test (v 'inheritors) ())
     (test ((v 'add) v) 35)
-    (test ((v 'print) v) "#<class-1: (b 3) (a 32)>"))
+    (test ((v 'print) v) "#<class-1: (a 32) (b 3)>"))
 
   (define-generic add)
 
@@ -22161,7 +22196,7 @@ abs     1       2
     (test (v 'inheritors) ())
     (test (class-1 'inheritors) (list class-2))
     (test ((v 'add) v) 34)
-    (test ((v 'print) v) "#<class-2: (b 2) (a 32) (c 3)>")
+    (test ((v 'print) v) "#<class-2: (c 3) (a 32) (b 2)>")
     (test ((v 'multiply) v) 192)
     (test (add v) 34))
 
@@ -22192,7 +22227,7 @@ abs     1       2
     (test (class-1 'inheritors) (list class-3 class-2))
     (test (class-2 'inheritors) (list class-3))
     (test ((v 'add) v) 3)
-    (test ((v 'print) v) "#<class-3: (b 2) (a 1) (c 3)>")
+    (test ((v 'print) v) "#<class-3: (c 3) (a 1) (b 2)>")
     (test ((v 'multiply) v) 'error)
     (test ((v 'multiply) v 4) (* 4 6 3))
     (test (add v) 3))
@@ -22443,6 +22478,7 @@ abs     1       2
 (test (nan? (copy 1/0)) #t)
 (test (copy if) if)
 (test (copy quote) quote)
+(test (let ((a 1) (b 2)) (equal? (copy (current-environment)) (current-environment))) #t)
 
 (if with-bignums
     (begin

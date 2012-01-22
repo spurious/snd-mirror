@@ -3623,13 +3623,13 @@ A class might be thought of as a template for instances, but
 there's actually no difference between them.  To make an instance of a class, copy it.  To inherit from
 another class, concatenate the environments. To access (get or set) a field or a method, use the implicit
 indexing syntax with the field or method name.  To evaluate a form in the context of an instance
-(CL's with-slots), use with-environment.  
+(CL's with-slots), use with-environment. To run through all the fields, use map or for-each.
 </p>
 
 <pre>
 (define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
   ;; a bacro is needed so that the calling environment is accessible via outer-environment
-  
+  ;;   we could also use the begin/let shuffle, but it's too embarrassing
   `(let ((outer-env (outer-environment (current-environment)))
 	 (new-methods ())
 	 (new-slots ()))
@@ -3731,6 +3731,12 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
   `(define ,name (lambda args (apply ((car args) ',name) args))))
 
 
+(define-macro (define-slot-accessor name slot)
+  `(define ,name (make-procedure-with-setter 
+                   (lambda (obj) (obj ',slot)) 
+		   (lambda (obj val) (set! (obj ',slot) val)))))
+
+
 (define-bacro (define-method name-and-args . body)
   `(let* ((outer-env (outer-environment (current-environment)))
 	  (method-name (car ',name-and-args))
@@ -3777,13 +3783,19 @@ v
 &gt; (v 'a)                         ; to set the 'a slot, (set! (v 'a) 0) 
 32
 &gt; ((v 'print) v)                 ; environments are applicable objects much like hash-tables
-"#&lt;class-1: (b 2) (a 32)&gt;"       ;   so (v 'print) is v's print method
+"#&lt;class-1: (a 32) (b 2)&gt;"       ;   so (v 'print) is v's print method
 &gt; ((v 'add) v)
 34
 &gt; (define-generic add)
 add
 &gt; (add v)                        ; syntactic sugar for ((v 'add) v)
 34
+&gt; (define-slot-accessor slot-a a) ; more sugar!
+slot-a
+&gt; (slot-a v)                     ; same as (v 'a), set via (set! (slot-a v) 123)
+32
+&gt; (map car v)                    ; map and for-each work with environments
+(a b)                               ;   map cdr would return '(32 2) in this case
 &gt; (define-class class-2 (list class-1)
        '((c 3)) 
        (list (list 'multiply (lambda (obj) 
@@ -3793,7 +3805,7 @@ class-2
 &gt; (define v2 (make-class-2 :a 32))
 v2
 &gt; ((v2 'print) v2)
-"#&lt;class-2: (b 2) (a 32) (c 3)&gt;"
+"#&lt;class-2: (c 3) (a 32) (b 2)&gt;"
 &gt; ((v2 'multiply) v2)
 192
 &gt; (add v2)                      ; inherited from class-1
