@@ -804,6 +804,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;   mus-order if "n" or "order"
 ;;;   mus-offset if "ratio" (mimics nrxy*)
 
+;;; SOMEDAY: rewrite generators as objects using the environment-as-object stuff
+;;;    this would require C-side accessors?
+
 (define (find-if pred l)
   (cond ((null? l) #f)
 	((pred (car l)) (car l))

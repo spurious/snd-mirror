@@ -275,6 +275,7 @@
 (test (eq? car cdr) #f)
 (test (let ((x (lambda () 1))) (eq? x x)) #t)
 (test (let ((x (lambda () 1))) (let ((y x)) (eq? x y))) #t)
+(test (let ((x (lambda () 1))) (let ((y (lambda () 1))) (eq? x y))) #f)
 (test (eq? 'abc 'abc) #t)
 (test (eq? eq? eq?) #t)
 (test (eq? (if #f 1) 1) #f)
@@ -321,6 +322,18 @@
 (test (eq? *stdin* *stdin*) #t)
 (test (eq? *stdout* *stderr*) #f)
 (test (eq? else else) #t)
+
+(test (eq? (string) (string)) #f)
+(test (eq? (string) "") #f)
+(test (eq? (vector) (vector)) #f)
+(test (eq? (vector) #()) #f)
+(test (eq? (list) (list)) #t)
+(test (eq? (list) ()) #t)
+(test (eq? (hash-table) (hash-table)) #f)
+(test (eq? (current-environment) (current-environment)) #t)
+(test (eq? (global-environment) (global-environment)) #t)
+(test (eq? (procedure-environment abs) (procedure-environment abs)) #t) ; or any other built-in...
+(test (eq? letrec* letrec*) #t)
 
 (display ";this should display #t: ")
 (begin #| ; |# (display #t))
@@ -36062,7 +36075,8 @@ abs     1       2
 (test (logbit? most-negative-fixnum 62) #f)
 (test (logbit? -31 63) #t)
 (test (logbit? 1 most-positive-fixnum) #f)
-
+(test (logbit? 0 most-positive-fixnum) #f)
+(test (logbit? -1 most-positive-fixnum) #t)
 (test (logbit? -1 64) #t)
 (test (logbit? 1 64) #f)
 
@@ -36083,6 +36097,18 @@ abs     1       2
 (test (logbit? 0 #\a) 'error)
 (test (logbit? 0 "hi") 'error)
 (test (logbit? #f '()) 'error)
+(test (logbit?) 'error)
+(test (logbit? 0) 'error)
+
+(do ((i 0 (+ i 1))) 
+    ((= i 100)) 
+  (let ((x (random most-positive-fixnum)) ; or most-negative-fixnum
+	(index (random 63))) 
+    (let ((on? (logbit? x index))
+	  (ash? (not (zero? (logand x (ash 1 index))))))
+      (if (not (eq? on? ash?))
+	  (format #t "(logbit? ~A ~A): ~A ~A~%" x index on? ash?)))))
+
 
 
 

@@ -8358,6 +8358,9 @@ gtkresources.h
 + void       gtk_window_set_attached_to          (GtkWindow           *window, 
 +                                                 GtkWidget           *attach_widget);
 + GtkWidget *gtk_window_get_attached_to          (GtkWindow           *window);
+
+;;; 3.3.10 nothing new
+
 |#
 
 

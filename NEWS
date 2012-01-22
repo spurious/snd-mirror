@@ -16,6 +16,6 @@ s7: added logbit? (using gmp arg order, not CL)
     added an object system example in the environments section of s7.html.
       It's based on environments as classes/instances.
 
-checked: sbcl 1.0.55, gtk 3.3.8
+checked: sbcl 1.0.55, gtk 3.3.8|10
 
 Thanks!: 

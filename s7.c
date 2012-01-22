@@ -16269,9 +16269,10 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   size = ftell(fp);
   rewind(fp);
 
-  /* pseudo files (under /proc for example) have size=0, but we can read them, so don't assume a 0 length file is empty */
+  /* pseudo files (under /proc for example) have size=0, but we can read them, so don't assume a 0 length file is empty 
+   */
 
-  if ((size != 0) &&
+  if ((size > 0) &&                /* if (size != 0) we get (open-input-file "/dev/tty") -> (open "/dev/tty") read 0 bytes of an expected -1? */
       ((max_size < 0) || (size < max_size)))
     {
       size_t bytes;
@@ -23825,6 +23826,25 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
   #define H_procedure_setter "(procedure-setter obj) returns the setter associated with obj, or #f"
   return(s7_procedure_setter(sc, car(args)));
 }
+
+/* if this were settable, 
+ *    (define (make-procedure-with-setter g s) (set! (procedure-setter g) s) g)
+ *    (define (procedure-with-setter? g) (procedure? (procedure-setter g)))
+ *
+ * for c-function both sides? there's 
+ *   c_function_setter(getter) = setter;
+ * for scheme both sides
+ *   getter->scheme_setter = setter;
+ * but this assumes getter has a pws struct already -- perhaps append after env in closure list?
+ *
+ * pws is really aimed at C FFI but there we have C both sides!
+ *   in scheme, it's currently used in with-sound for wsdat refs and in generators for field access
+ *              dlocsig for fields, enved for channel-envelope, examp for cursor stuff,
+ *              extensions for channel-sync, and similarly elsewhere.
+ *
+ * hooks are also clumsy and not the right thing, but aimed at C
+ *   could hooks be environments?  watchers, or-hooks, error (cerror) handlers
+ */
 
 
 static s7_pointer g_is_procedure_with_setter(s7_scheme *sc, s7_pointer args)
