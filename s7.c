@@ -2925,7 +2925,8 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_VECTOR:
       {
 	s7_Int i;
-	/* this actually can happen! */
+	/* this can happen if a global function has an explicit vector constant.
+	 */
 	x->hloc = NOT_IN_HEAP;
 	sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
 	(*sc->free_heap_top++) = sc->heap[loc];
@@ -2938,6 +2939,9 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	      s7_remove_from_heap(sc, vector_element(x, i));
 	  }
       }
+      return;
+
+    case T_ENVIRONMENT:
       return;
 
     case T_SYMBOL:
