@@ -12893,7 +12893,7 @@ the current frame's variables.  If it's not a segfault, you can
 <p>Then get the error to happen, at which point you should fall into gdb
 where you can type "where" and so on.  If the problem involves X, you
 may need to run -sync.  If Gtk, run --g-fatal-errors.  If Snd gets hung
-and you need to type C-C to get out, 
+and you need to type C-C to get out (that is, C-g doesn't interrupt the loop), 
 </p>
 <pre>
     gdb snd

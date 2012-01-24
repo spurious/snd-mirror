@@ -335,6 +335,12 @@
 (test (eq? (procedure-environment abs) (procedure-environment abs)) #t) ; or any other built-in...
 (test (eq? letrec* letrec*) #t)
 
+(test (eq? (string #\a) (string #\a)) #f)
+(test (eq? "a" "a") #f)
+(test (eq? #(1) #(1)) #f)
+(test (let ((a "hello") (b "hello")) (eq? a b)) #f)
+(test (let ((a "foo")) (eq? a (copy a))) #f)
+
 (display ";this should display #t: ")
 (begin #| ; |# (display #t))
 (newline)
@@ -420,6 +426,26 @@
 (test (let ((sym 'a)) (define (hi a) (eq? (cdr a) sym)) (hi '(a a))) #f)
 (test (let ((sym 'a)) (define (hi a) (eq? (cdr a) sym)) (hi '(a . a))) #t)
 (test (let ((sym 'a)) (define (hi a) (eq? (cdr a) sym)) (hi '(a . b))) #f)
+
+(for-each
+ (lambda (arg)
+   (let ((x arg)
+	 (y arg))
+     (if (not (eq? x x))
+	 (format #t ";(eq? x x) of ~A -> #f?~%" x))
+     (if (not (eq? x arg))
+	 (format #t ";(eq? x arg) of ~A ~A -> #f?~%" x arg))
+     (if (not (eq? x y))
+	 (format #t ";(eq? x y) of ~A ~A -> #f?~%" x y))))
+ ;; actually I hear that #f is ok here for numbers
+ (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+       3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
+#|
+:'(1(1))
+(1 (1))
+:'(1#(1))
+(1# (1))
+|#
 
 
 ;;; eqv?
@@ -2663,6 +2689,46 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
+(define (substring? pattern target) ; taken from net somewhere (umich?) with changes for s7, see also snd-xen.c apropos definition
+  (define (build-shift-vector pattern)
+    (let* ((pat-len (length pattern))
+	   (shift-vec (make-vector 256 (+ pat-len 1)))
+	   (max-pat-index (- pat-len 1)))
+      (let loop ((index 0))
+	(set! (shift-vec (char->integer (pattern index))) (- pat-len index))
+	(if (< index max-pat-index)
+	    (loop (+ index 1))
+	    shift-vec))))
+  (if (or (not (string? pattern))
+	  (not (string? target)))
+      (error 'wrong-type-arg "substring? args should be strings: ~S ~S" pattern target)
+      (let ((pat-len (length pattern)))
+	(if (zero? pat-len)
+	    0
+	    (let ((shift-vec (build-shift-vector pattern)))
+	      (let* ((tar-len (length target))
+		     (max-tar-index (- tar-len 1))
+		     (max-pat-index (- pat-len 1)))
+		(let outer ((start-index 0))
+		  (if (> (+ pat-len start-index) tar-len)
+		      #f
+		      (let inner ((p-ind 0) (t-ind start-index))
+			(cond
+			 ((> p-ind max-pat-index) #f)           ; nothing left to check
+			 ((char=? (pattern p-ind) (target t-ind))
+			  (if (= p-ind max-pat-index)
+			      start-index                       ; success -- return start index of match
+			      (inner (+ p-ind 1) (+ t-ind 1)))) ; keep checking
+			 ((> (+ pat-len start-index) max-tar-index) #f) ; fail
+			 (else (outer (+ start-index (shift-vec (char->integer (target (+ start-index pat-len)))))))))))))))))
+
+(test (substring? "hiho" "test hiho test") 5)
+(test (substring? "hiho" "test hihptest") #f)
+(test (substring? "hiho" "test hih") #f)
+(test (substring? "hiho" "") #f)
+(test (substring? "hiho" "hiho") 0)
+(test (substring? "" "hiho") 0)
+(test (substring? "abc" 'abc) 'error)
 
 
 ;;; string-append
@@ -21512,6 +21578,183 @@ abs     1       2
   (test (reverse (procedure-environment abs)) 'error)
   (test (fill! (procedure-environment ho) 0) 'error)
   (test (reverse (procedure-environment ho)) 'error))
+
+#|
+(if (defined? '1+) (test (procedure-name "1+") "1+"))
+(if (defined? 'identity) (test (procedure-name identity) "identity"))
+(test (procedure-name "cddr-1" "cddr-1")
+
+
+;;; TODO: procedure-environment is a mess
+
+(test (let () (define (func3 a b) (+ a b)) (environment->list (procedure-environment func3))) '((b) (a)))
+or is it ((__func__ . func3)) in context?
+
+;;; troubles:
+(let ((func1 (lambda (a b) (+ a b)))) (symbol->value '__func__ (procedure-environment func1))) -> #<undefined>
+(let ((func1 (lambda (a b) (+ a b)))) (eq? (procedure-environment func1) (global-environment))) -> #t
+
+(letrec ((func1 (lambda (a b) (+ a b)))) (eq? (procedure-environment func1) (global-environment))) -> #f
+(letrec ((func1 (lambda (a b) (+ a b)))) (environment->list (procedure-environment func1))) -> ((func1 . #<closure>))
+
+(let () (define* (func4 (a 1) b) (+ a b)) (environment->list (procedure-environment func4))) -> ((__func__ . func4))
+(let () (define-macro (func4 a b) `(+ ,a ,b)) (environment->list (procedure-environment func4))) -> ((func4 . #<macro>))
+
+(let () (let ((func2 (lambda (a b) (+ a b)))) (environment->list (procedure-environment func2)))) -> ()
+
+;;; useless:
+(eq? (procedure-environment abs) (global-environment)) -> #t
+(eq? (procedure-environment cond-expand) (global-environment)) -> #t
+
+(procedure-environment #<continuation>) -> #<global-environment>
+(procedure-environment #<goto>) -> #<global-environment>
+and setter of pws is either global or ()
+
+;;; a bug:
+:(procedure-environment quasiquote)
+;procedure-environment argument, quasiquote, is a macro but should be a procedure or a macro
+;    (procedure-environment quasiquote)
+
+;;; bad English:
+:(procedure-environment quote)
+;procedure-environment argument, quote, is a syntax but should be a procedure or a macro
+;    (procedure-environment quote)
+
+;;; but:
+(procedure-environment values) -> global env! (like catch/dynamic-wnd it's a procedure)
+
+:(procedure-environment (vct 1 2))
+#<environment>
+:(procedure-environment (vector 1 2))
+;procedure-environment argument, #(1 2), is a vector but should be a procedure or a macro
+;    (vector 1 2)
+
+:(environment->list (procedure-environment (cadr (make-type))))
+((print . #f) (equal . #f) (getter . #f) (setter . #f) (length . #f) (name . #f) (copy . #f) (reverse . #f) (fill . #f))
+   but that's make-type's arglist??
+:(environment->list (procedure-environment make-type))
+((__func__ . make-type))
+
+
+:(let ((a 1)) (define-macro (m1 b) `(+ ,a ,b)) (environment->list (procedure-environment m1)))
+((a . 1) (m1 . #<macro>))
+:(let ((a 1)) (define (m1 b) (+ a b)) (environment->list (procedure-environment m1)))
+((b))
+:(let ((a 1)) (define (m1 b) (+ a b)) (environment->list (outer-environment (procedure-environment m1))))
+((__func__ . m1))
+
+
+also
+
+(procedure-documentation quasiquote) -> quasiquote
+(procedure-documentation macroexpand) -> ""  ; also cond-expand
+
+
+load-hook-test name [unmatched]: #<closure>
+make-mixer! documentation [no matched name]: (make-mixer chans val0 val1 ...): make a new mixer object with chans inputs and outputs, initializing the scalars from the rest of the arguments:
+add-mark! documentation [no matched name]: (add-mark samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark.
+
+channel-sync: [no doc]
+last-pair name [unmatched]: #<closure>
+procedure-setter-arity: [no doc]
+procedure-setter-arity name [unmatched]: #<closure>
+
+class-1?: [no doc]
+class-1? name [unmatched]: #<closure>
+class-1? env: ((new-class . #<environment>))
+
+multiply: [no doc]
+multiply name [unmatched]: #<closure>
+multiply env: ((method . #<closure>))
+
+for-each-permutation: [no doc]
+
+
+
+(let ((st (symbol-table)) 
+      (p (open-output-file "pinfo")))
+  (do ((i 0 (+ i 1))) 
+      ((= i (vector-length st)))
+    (let ((lst (vector-ref st i)))
+      (for-each 
+       (lambda (sym)
+	 (if (defined? sym)
+	     (let ((val (symbol->value sym)))
+	       (format p "---------------- ~A ----------------~%" sym)
+	       (catch #t 
+		      (lambda () 
+			(let ((str (procedure-documentation val))
+			      (sym-name (symbol->string sym)))
+			  (if (procedure? val)
+			      (if (= (length str) 0)
+				  (format p "~A: [no doc]~%" sym)
+				  (let ((pos (substring? sym-name str)))
+				    (if (and (not pos)
+					     (not (char-upper-case? (sym-name 0)))
+					     (not (char=? (sym-name 0) #\.))
+					     (not (char=? (sym-name 0) #\[)))
+					(format p "~A documentation [no matched name]: ~A~%" sym str))))
+			      (if (> (length str) 0)
+				  (format p "~A (not a procedure) documentation: ~A~%" str)))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A documentation: error: ~A~%" sym (apply format #f (cadr args))))))
+	       (catch #t 
+		      (lambda () 
+			(let ((str (procedure-name val)))
+			  (if (= (length str) 0)
+			      (if (procedure? val)
+				  (format p "~A: [no name]~%" sym))
+			      (if (not (string=? str (symbol->string sym)))
+				  (format p "~A name [unmatched]: ~A~%" sym str)))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A name: error: ~A~%" sym (apply format #f (cadr args))))))
+	       (catch #t 
+		      (lambda () 
+			(let ((lst (procedure-source val)))
+			  (if (not lst)
+			      (if (procedure? val)
+				  (format p "~A: [no source]~%" sym))
+			      (if (and (not (pair? lst))
+				       (not (null? lst)))
+				  (format p "~A source: ~A~%" sym lst)))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A source: error: ~A~%" sym (apply format #f (cadr args))))))
+	       (catch #t 
+		      (lambda () 
+			(let ((lst (procedure-arity val)))
+			  (if (not lst)
+			      (if (procedure? val)
+				  (format p "~A: [no arity]~%" sym))
+			      (if (not (pair? lst))
+				  (format p "~A arity: ~A~%" sym lst)))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A arity: error: ~A~%" sym (apply format #f (cadr args))))))
+	       (catch #t 
+		      (lambda () 
+			(let ((pe (procedure-environment val)))
+			  (if (not pe)
+			      (if (procedure? val)
+				  (format p "~A: [no environment]~%" sym))
+			      (if (not (environment? pe))
+				  (format p "~A environment:~%" sym pe)
+				  (if (not (eq? (global-environment) pe))
+				      (format p "~A env: ~A~%" sym (environment->list pe)))))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A environment: error: ~A~%" sym (apply format #f (cadr args))))))
+	       )))
+       lst)))
+  (close-output-port p))
+
+
+;;; also TODO: (load "afile") or (load "afile.") (no .scm) seems to refuse to load it
+;;;  or is it the tilde? (load "~/test/...")
+|#
+
 
 (let ()
   (apply augment-environment! (current-environment)

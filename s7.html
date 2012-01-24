@@ -3982,6 +3982,8 @@ for an example.
 </p>
 
 <p>s7 also includes current-error-port and set-current-error-port.
+The default IO ports are *stdin*, *stdout*, and *stderr*.  The end-of-file
+object is #&lt;eof&gt;.
 </p>
 
 
@@ -4992,6 +4994,7 @@ compile-time flags:
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
     HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
     WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
+                                   if someone defends these exponent markers, ask him to read 1l11+11l1i
 </pre>
 
 <p>See the comment at the start of s7.c for more information about these switches.

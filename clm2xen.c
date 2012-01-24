@@ -3911,6 +3911,9 @@ static XEN g_make_frame(XEN arglist)
 
 static XEN g_make_frame_unchecked(XEN arglist)
 {
+  #define H_make_frame_unchecked "(make-frame! chans val0 val1 ...): return a new frame object \
+with chans samples, each sample set from the trailing arguments (defaulting to 0.0).  Unlike make-frame, \
+make-frame! ignores mus-max-malloc and tries to create a frame of any size."
   return(g_make_frame_1(arglist, false));
 }
 
@@ -12558,7 +12561,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_wave_train_p,   g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
   XEN_DEFINE_PROCEDURE(S_make_frame,          g_make_frame_w,            0, 0, 1, H_make_frame);
-  XEN_DEFINE_PROCEDURE(S_make_frame "!",      g_make_frame_unchecked_w,  0, 0, 1, H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_make_frame "!",      g_make_frame_unchecked_w,  0, 0, 1, H_make_frame_unchecked);
   XEN_DEFINE_PROCEDURE(S_frame,               g_frame_w,                 0, 0, 1, H_frame);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_p,        g_frame_p_w,        1, 0, 0, H_frame_p);

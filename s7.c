@@ -2908,20 +2908,6 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       return;
 
 
-    case T_HASH_TABLE:
-      {
-	s7_Int i;
-	x->hloc = NOT_IN_HEAP;
-	sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
-	(*sc->free_heap_top++) = sc->heap[loc];
-	sc->heap[loc]->hloc = loc;
-
-	for (i = 0; i < hash_table_length(x); i++)
-	  if (is_not_null(hash_table_elements(x)[i]))
-	    s7_remove_from_heap(sc, hash_table_elements(x)[i]);
-      }
-      return;
-
     case T_VECTOR:
       {
 	s7_Int i;
@@ -2941,6 +2927,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       }
       return;
 
+    case T_HASH_TABLE:
     case T_ENVIRONMENT:
       return;
 
@@ -17536,7 +17523,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   
     case T_CLOSURE:
     case T_CLOSURE_STAR:
-      return(copy_string(c_closure_name(sc, obj)));
+      return(copy_string(c_closure_name(sc, obj))); /* this looks for __func__ */
   
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
@@ -22265,7 +22252,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   c_function(x) = ptr;
   c_function_call(x) = f;
   c_function_setter(x) = sc->F;
-  c_function_name(x) = name;       /* (procedure-name proc) => (format #f "~A" proc) */
+  c_function_name(x) = name;   /* (procedure-name proc) => (format #f "~A" proc) */
   if (doc)
     c_function_documentation(x) = make_permanent_string(doc);
 
@@ -22594,7 +22581,7 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 
   if ((!is_procedure(p)) &&
       (!s7_is_macro(sc, p)))
-    return(s7_wrong_type_arg_error(sc, "procedure-doucmentation", 0, car(args), "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, car(args), "a procedure"));
   return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
 }
 
@@ -23560,21 +23547,21 @@ In each case, the argument is the value of the object, not the object itself."
      */
     car(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
 			       list_1(sc, list_3(sc, sc->S_IS_TYPE, make_integer(sc, tag), sc->S_TYPE_ARG)),
-			           T_CLOSURE);
+			       T_CLOSURE);
 
     /* make method: (lambda* (arg) (s_type_make tag arg))
      *   returns an object of the new type with its value specified by arg (defaults to #f)
      */
     cadr(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
 				list_1(sc, list_3(sc, sc->S_TYPE_MAKE, make_integer(sc, tag), sc->S_TYPE_ARG)),
-				    T_CLOSURE_STAR);
+				T_CLOSURE_STAR);
 
     /* ref method: (lambda (arg) (s_type_ref arg))
      *   returns the value passed to make above 
      */
     caddr(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
 				 list_1(sc, list_3(sc, sc->S_TYPE_REF, make_integer(sc, tag), sc->S_TYPE_ARG)),
-				     T_CLOSURE);
+				 T_CLOSURE);
     s7_gc_unprotect_at(sc, result_loc);
     return(result);
   }
@@ -25197,7 +25184,7 @@ static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 
 static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 {
-  #define H_fill "(fill obj val) fills obj with the value val"
+  #define H_fill "(fill! obj val) fills obj with the value val"
 
   switch (type(car(args)))
     {

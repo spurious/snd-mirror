@@ -2895,17 +2895,18 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   XEN_EVAL_C_STRING("\
         (define* (apropos name port)\
+          \"(apropos name (port #f)) looks for 'name' as a part of any symbol name, and sends matches to 'port'\"\
           (define (substring? subs s)\
             (let* ((start 0)\
-	           (ls (string-length s))\
-	           (lu (string-length subs))\
+	           (ls (length s))\
+	           (lu (length subs))\
 	           (limit (- ls lu)))\
               (let loop ((i start))\
 	        (cond ((> i limit) #f)\
 	              ((do ((j i (+ j 1))\
 	        	    (k 0 (+ k 1)))\
 	        	   ((or (= k lu)\
-	        		(not (char=? (string-ref subs k) (string-ref s j))))\
+	        		(not (char=? (subs k) (s j))))\
 	        	    (= k lu))) i)\
 	              (else (loop (+ i 1)))))))\
           (define (apropos-1 e)\

@@ -8349,17 +8349,16 @@
 
 #|
 ;;; 3.3.8 GdkColor deprecated, so all existing refs above need -gtk2
-gtkactionable.h
-gtkresources.h
+
 (CINT-338 "GTK_STATE_FLAG_BACKDROP" "GtkStateFlags")
-+ GtkWidget* gtk_image_new_from_resource  (const gchar     *resource_path);
-+ void gtk_image_set_from_resource  (GtkImage        *image,
-+                                    const gchar     *resource_path);
-+ void       gtk_window_set_attached_to          (GtkWindow           *window, 
-+                                                 GtkWidget           *attach_widget);
-+ GtkWidget *gtk_window_get_attached_to          (GtkWindow           *window);
+
+(CFNC-338 "GtkWidget* gtk_image_new_from_resource gchar* resource_path" 'const)
+(CFNC-338 "void gtk_image_set_from_resource GtkImage* image gchar* resource_path" 'const)
+(CFNC-338 "void gtk_window_set_attached_to GtkWindow* window GtkWidget* attach_widget")
+(FCDN-338 "GtkWidget* gtk_window_get_attached_to GtkWindow* window")
 
 ;;; 3.3.10 nothing new
+
 
 |#
 
