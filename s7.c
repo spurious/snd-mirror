@@ -16981,18 +16981,42 @@ defaults to the global environment.  To load into the current environment instea
 			   make_protected_string(sc, "load's first argument, ~S, should be a filename"),
 			   name)));
 
-  /* TODO: if not windoze, expand tilde etc */
-
   if (is_directory(fname))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    list_2(sc, make_protected_string(sc, "load argument, ~S, is a directory"), name)));
 
   fp = fopen(fname, "r");
+
+#if WITH_GCC
   if (!fp)
-    fp = search_load_path(sc, fname);
+    {
+      /* catch one special case, "~/..." since it causes 99.9% of the "can't load ..." errors
+       */
+      if ((fname[0] == '~') &&
+	  (fname[1] == '/'))
+	{
+	  char *home;
+	  home = getenv("HOME");
+	  if (home)
+	    {
+	      char *filename;
+	      filename = (char *)calloc(safe_strlen(fname) + safe_strlen(home) + 1, sizeof(char));
+	      strcpy(filename, home);
+	      strcat(filename, (char *)(fname + 1));
+	      fp = fopen(filename, "r");
+	      free(filename);
+	    }
+	}
+    }
+#endif
+
   if (!fp)
-    return(file_error(sc, "load", "can't open", fname));
-  
+    {
+      fp = search_load_path(sc, fname);
+      if (!fp)
+	return(file_error(sc, "load", "can't open", fname));
+    }
+
   port = load_file(sc, fp, fname);
   port_file_number(port) = remember_file_name(sc, fname);
   push_input_port(sc, port);
@@ -25022,7 +25046,7 @@ list has infinite length."
   return(small_int(0));
 }
 
-/* what about (length file)? 
+/* what about (length file)?  input port, read_file gets the file length, so perhaps save it
  */
 
 

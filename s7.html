@@ -2224,6 +2224,62 @@ vector-dimensions returns a list of the dimensions.
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
+<p>Conway's game of Life:
+</p>
+
+<pre>
+(define* (life (width 40) (height 40))
+  (let ((state0 (make-vector (list width height) 0))
+	(state1 (make-vector (list width height) 0)))
+
+    ;; initialize with some random pattern
+    (do ((x 0 (+ x 1)))
+	((= x width))
+      (do ((y 0 (+ y 1)))
+	  ((= y height))
+	(set! (state0 x y) (if (&lt; (random 100) 15) 1 0))))
+
+    (do () ()
+      ;; show current state (using terminal escape sequences)
+      (format *stderr* "~C[H" #\escape)           ; ESC H = tab set
+      (do ((y 0 (+ y 1)))
+	  ((= y height))
+	(do ((x 0 (+ x 1)))
+	    ((= x width))
+	  (if (zero? (state0 x y))
+	      (format *stderr* "  ")              ; ESC 07m below = inverse
+	      (format *stderr* "~C[07m  ~C[m" #\escape #\escape)))
+	(format *stderr* "~C[E" #\escape))        ; ESC E = next line
+
+      ;; get the next state
+      (do ((x 1 (+ x 1)))
+	  ((= x (- width 1)))
+	(do ((y 1 (+ y 1)))
+	    ((= y (- height 1)))
+	  (let ((n (+ (state0 (- x 1) (- y 1))
+		      (state0 x       (- y 1))
+		      (state0 (+ x 1) (- y 1))
+		      (state0 (- x 1) y)      
+		      (state0 (+ x 1) y)      
+		      (state0 (- x 1) (+ y 1))
+		      (state0 x       (+ y 1))
+		      (state0 (+ x 1) (+ y 1)))))
+	    (set! (state1 x y) 
+		  (if (or (= n 3) 
+			  (and (= n 2)
+			       (not (zero? (state0 x y)))))
+		      1 0)))))
+      (do ((x 0 (+ x 1)))
+	  ((= x width))
+	(do ((y 0 (+ y 1)))
+	    ((= y height))
+	  (set! (state0 x y) (state1 x y)))))))
+</pre>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>Multidimensional vector constant syntax is modelled after CL: #nd(...) or #nD(...) 
 signals that the lists specify the elements of an 'n' dimensional vector: <code>#2D((1 2 3) (4 5 6))</code>
 </p>

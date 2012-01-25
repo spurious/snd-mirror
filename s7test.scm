@@ -18153,7 +18153,8 @@ who says the continuation has to restart the map from the top?
       (set! *vector-print-length* old-vlen)))
 
 
-;;; -------- sort!
+
+;;; --------------------------------------------------------------------------------
 ;;; sort!
 
 (test (sort! '(2 3) <) '(2 3))
@@ -18552,7 +18553,7 @@ who says the continuation has to restart the map from the top?
 
 
 
-;;; -------- catch --------
+;;; --------------------------------------------------------------------------------
 ;;; catch
 
 (define (catch-test sym)
@@ -18702,6 +18703,7 @@ abs     1       2
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; error
 
 (test (catch #t (lambda () (error 'oops 1)) (let () (lambda args (caadr args)))) 1)
@@ -19414,6 +19416,7 @@ abs     1       2
 	(list 1 2 2))
 
 
+;;; --------------------------------------------------------------------------------
 ;;; trace 
 ;;; untrace
 ;;; *trace-hook*
@@ -19467,7 +19470,9 @@ abs     1       2
 
 
 
+;;; --------------------------------------------------------------------------------
   ;;; procedure-arity
+
   (test (procedure-arity car) '(1 0 #f))
   (test (procedure-arity 'car) '(1 0 #f))
   (test (procedure-arity +) '(0 0 #t))
@@ -19599,7 +19604,9 @@ abs     1       2
 
 
 
+;;; --------------------------------------------------------------------------------
   ;;; procedure-source
+
   (for-each
    (lambda (arg)
      (eval-string (format #f "(define (func) ~S)" arg))
@@ -19626,7 +19633,9 @@ abs     1       2
 
 
 
+;;; --------------------------------------------------------------------------------
   ;;; procedure-name
+
   (test (let () (define (hi a) a) (procedure-name hi)) "hi")
   (test (let () (define (hi a) a) (procedure-name 'hi)) "hi")
   (test (procedure-name abs) "abs")
@@ -19647,7 +19656,9 @@ abs     1       2
 
 
 
+;;; --------------------------------------------------------------------------------
   ;;; procedure-documentation
+
   (test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
   (test (string=? (let () (define (hi) "this is a string" 1) (help hi)) "this is a string") #t)
   (test (string=? (let () (define (hi) "this is a string") (procedure-documentation hi)) "this is a string") #t)
@@ -19712,7 +19723,10 @@ abs     1       2
   (test (procedure-documentation hook-functions) "(hook-functions hook) returns the list of functions on the hook. It is settable;  (set! (hook-functions hook) (cons func (hook-functions hook))) adds func to the current list.")
 
 
+
+;;; --------------------------------------------------------------------------------
   ;;; procedure-environment
+
   (let ((f1 (lambda (a) (+ a 1)))
 	(f2 (lambda* ((a 2)) (+ a 1))))
     (define (hi a) (+ a 1))
@@ -19854,6 +19868,146 @@ abs     1       2
 	    notes))
 	2)
 
+#|
+;;; TODO: procedure-environment is a mess but it's hard to test
+
+(test (let () (define (func3 a b) (+ a b)) (environment->list (procedure-environment func3))) '((b) (a)))
+or is it ((__func__ . func3)) in context?
+
+;;; troubles:
+(let ((func1 (lambda (a b) (+ a b)))) (symbol->value '__func__ (procedure-environment func1))) -> #<undefined>
+(let ((func1 (lambda (a b) (+ a b)))) (eq? (procedure-environment func1) (global-environment))) -> #t
+
+(letrec ((func1 (lambda (a b) (+ a b)))) (eq? (procedure-environment func1) (global-environment))) -> #f
+(letrec ((func1 (lambda (a b) (+ a b)))) (environment->list (procedure-environment func1))) -> ((func1 . #<closure>))
+
+(let () (define* (func4 (a 1) b) (+ a b)) (environment->list (procedure-environment func4))) -> ((__func__ . func4))
+(let () (define-macro (func4 a b) `(+ ,a ,b)) (environment->list (procedure-environment func4))) -> ((func4 . #<macro>))
+
+(let () (let ((func2 (lambda (a b) (+ a b)))) (environment->list (procedure-environment func2)))) -> ()
+
+(procedure-environment #<continuation>) -> #<global-environment>
+(procedure-environment #<goto>) -> #<global-environment>
+and setter of pws is either global or ()
+
+;;; bad English:
+:(procedure-environment quote)
+;procedure-environment argument, quote, is a syntax but should be a procedure or a macro
+;    (procedure-environment quote)
+
+;;; but:
+(procedure-environment values) -> global env! (like catch/dynamic-wnd it's a procedure)
+
+:(procedure-environment (vct 1 2))
+#<environment>
+:(procedure-environment (vector 1 2))
+;procedure-environment argument, #(1 2), is a vector but should be a procedure or a macro
+;    (vector 1 2)
+
+:(environment->list (procedure-environment (cadr (make-type))))
+((print . #f) (equal . #f) (getter . #f) (setter . #f) (length . #f) (name . #f) (copy . #f) (reverse . #f) (fill . #f))
+   but that's make-type's arglist??
+:(environment->list (procedure-environment make-type))
+((__func__ . make-type))
+
+
+:(let ((a 1)) (define-macro (m1 b) `(+ ,a ,b)) (environment->list (procedure-environment m1)))
+((a . 1) (m1 . #<macro>))
+:(let ((a 1)) (define (m1 b) (+ a b)) (environment->list (procedure-environment m1)))
+((b))
+:(let ((a 1)) (define (m1 b) (+ a b)) (environment->list (outer-environment (procedure-environment m1))))
+((__func__ . m1))
+
+
+(procedure-documentation macroexpand) -> ""  ; also cond-expand
+|#
+
+#|
+;;; this checks existing procedures
+(let ((st (symbol-table)) 
+      (p (open-output-file "pinfo")))
+  (do ((i 0 (+ i 1))) 
+      ((= i (vector-length st)))
+    (let ((lst (vector-ref st i)))
+      (for-each 
+       (lambda (sym)
+	 (if (defined? sym)
+	     (let ((val (symbol->value sym)))
+	       (format p "---------------- ~A ----------------~%" sym)
+	       (catch #t 
+		      (lambda () 
+			(let ((str (procedure-documentation val))
+			      (sym-name (symbol->string sym)))
+			  (if (procedure? val)
+			      (if (= (length str) 0)
+				  (format p "~A: [no doc]~%" sym)
+				  (let ((pos (substring? sym-name str)))
+				    (if (and (not pos)
+					     (not (char-upper-case? (sym-name 0)))
+					     (not (char=? (sym-name 0) #\.))
+					     (not (char=? (sym-name 0) #\[)))
+					(format p "~A documentation [no matched name]: ~A~%" sym str))))
+			      (if (> (length str) 0)
+				  (format p "~A (not a procedure) documentation: ~A~%" str)))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A documentation: error: ~A~%" sym (apply format #f (cadr args))))))
+	       (catch #t 
+		      (lambda () 
+			(let ((str (procedure-name val)))
+			  (if (= (length str) 0)
+			      (if (procedure? val)
+				  (format p "~A: [no name]~%" sym))
+			      (if (not (string=? str (symbol->string sym)))
+				  (format p "~A name [unmatched]: ~A~%" sym str)))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A name: error: ~A~%" sym (apply format #f (cadr args))))))
+	       (catch #t 
+		      (lambda () 
+			(let ((lst (procedure-source val)))
+			  (if (not lst)
+			      (if (procedure? val)
+				  (format p "~A: [no source]~%" sym))
+			      (if (and (not (pair? lst))
+				       (not (null? lst)))
+				  (format p "~A source: ~A~%" sym lst)))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A source: error: ~A~%" sym (apply format #f (cadr args))))))
+	       (catch #t 
+		      (lambda () 
+			(let ((lst (procedure-arity val)))
+			  (if (not lst)
+			      (if (procedure? val)
+				  (format p "~A: [no arity]~%" sym))
+			      (if (not (pair? lst))
+				  (format p "~A arity: ~A~%" sym lst)))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A arity: error: ~A~%" sym (apply format #f (cadr args))))))
+	       (catch #t 
+		      (lambda () 
+			(let ((pe (procedure-environment val)))
+			  (if (not pe)
+			      (if (procedure? val)
+				  (format p "~A: [no environment]~%" sym))
+			      (if (not (environment? pe))
+				  (format p "~A environment:~%" sym pe)
+				  (if (not (eq? (global-environment) pe))
+				      (format p "~A env: ~A~%" sym (environment->list pe)))))))
+		      (lambda args
+			(if (procedure? val)
+			    (format p "~A environment: error: ~A~%" sym (apply format #f (cadr args))))))
+	       )))
+       lst)))
+  (close-output-port p))
+|#
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; continuation?
 
   (for-each
    (lambda (arg)
@@ -19872,7 +20026,9 @@ abs     1       2
   (test (continuation?) 'error)
   (test (continuation? 1 2) 'error)
 
+
   
+;;; --------------------------------------------------------------------------------
 ;;; s7-version
 
   (test (string? (s7-version)) #t)
@@ -19880,6 +20036,7 @@ abs     1       2
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; eval
 ;;; eval-string
 
@@ -21647,7 +21804,11 @@ abs     1       2
 (test (let () (define (__c1__ a) a) (__c1__ 3)) 'error)
 (test (let () (set! __c1__ 3)) 'error)
 
+
+
+;;; --------------------------------------------------------------------------------
 ;;; constant?
+
 (test (constant? '__c1__) #t)
 (test (constant? pi) #t)
 (test (constant? 'pi) #t) ; take that, Clisp!
@@ -21733,7 +21894,10 @@ abs     1       2
 ;; that is, hi is the constant as a vector, not the vector elements
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; defined?
+
 (test (defined? 'pi) #t)
 (test (defined? 'pi (global-environment)) #t)
 (test (defined? 'abs (global-environment)) #t)
@@ -21772,6 +21936,8 @@ abs     1       2
 (test (defined? quote) 'error)
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; environment?
 ;;; global-environment
 ;;; initial-environment
@@ -21798,62 +21964,6 @@ abs     1       2
 
 
 #|
-;;; TODO: procedure-environment is a mess but it's hard to test
-
-(test (let () (define (func3 a b) (+ a b)) (environment->list (procedure-environment func3))) '((b) (a)))
-or is it ((__func__ . func3)) in context?
-
-;;; troubles:
-(let ((func1 (lambda (a b) (+ a b)))) (symbol->value '__func__ (procedure-environment func1))) -> #<undefined>
-(let ((func1 (lambda (a b) (+ a b)))) (eq? (procedure-environment func1) (global-environment))) -> #t
-
-(letrec ((func1 (lambda (a b) (+ a b)))) (eq? (procedure-environment func1) (global-environment))) -> #f
-(letrec ((func1 (lambda (a b) (+ a b)))) (environment->list (procedure-environment func1))) -> ((func1 . #<closure>))
-
-(let () (define* (func4 (a 1) b) (+ a b)) (environment->list (procedure-environment func4))) -> ((__func__ . func4))
-(let () (define-macro (func4 a b) `(+ ,a ,b)) (environment->list (procedure-environment func4))) -> ((func4 . #<macro>))
-
-(let () (let ((func2 (lambda (a b) (+ a b)))) (environment->list (procedure-environment func2)))) -> ()
-
-
-(procedure-environment #<continuation>) -> #<global-environment>
-(procedure-environment #<goto>) -> #<global-environment>
-and setter of pws is either global or ()
-
-;;; bad English:
-:(procedure-environment quote)
-;procedure-environment argument, quote, is a syntax but should be a procedure or a macro
-;    (procedure-environment quote)
-
-;;; but:
-(procedure-environment values) -> global env! (like catch/dynamic-wnd it's a procedure)
-
-:(procedure-environment (vct 1 2))
-#<environment>
-:(procedure-environment (vector 1 2))
-;procedure-environment argument, #(1 2), is a vector but should be a procedure or a macro
-;    (vector 1 2)
-
-:(environment->list (procedure-environment (cadr (make-type))))
-((print . #f) (equal . #f) (getter . #f) (setter . #f) (length . #f) (name . #f) (copy . #f) (reverse . #f) (fill . #f))
-   but that's make-type's arglist??
-:(environment->list (procedure-environment make-type))
-((__func__ . make-type))
-
-
-:(let ((a 1)) (define-macro (m1 b) `(+ ,a ,b)) (environment->list (procedure-environment m1)))
-((a . 1) (m1 . #<macro>))
-:(let ((a 1)) (define (m1 b) (+ a b)) (environment->list (procedure-environment m1)))
-((b))
-:(let ((a 1)) (define (m1 b) (+ a b)) (environment->list (outer-environment (procedure-environment m1))))
-((__func__ . m1))
-
-
-(procedure-documentation macroexpand) -> ""  ; also cond-expand
-
-
-how does letrec interact with load+env? especially current-env
-
 if t423.scm is
 (define (t423-1 a b) (+ a b))
 (define t423-2 423)
@@ -21893,91 +22003,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 3
 :(let () (let ((t423-1 #t)) (let* ((a (load "t423.scm" (current-environment)))) a) (t423-1 2 1)))
 3
-
-
-
-;;; also TODO: (load "afile") or (load "afile.") (no .scm) seems to refuse to load it
-;;;  or is it the tilde? (load "~/test/...")
-
-
-(let ((st (symbol-table)) 
-      (p (open-output-file "pinfo")))
-  (do ((i 0 (+ i 1))) 
-      ((= i (vector-length st)))
-    (let ((lst (vector-ref st i)))
-      (for-each 
-       (lambda (sym)
-	 (if (defined? sym)
-	     (let ((val (symbol->value sym)))
-	       (format p "---------------- ~A ----------------~%" sym)
-	       (catch #t 
-		      (lambda () 
-			(let ((str (procedure-documentation val))
-			      (sym-name (symbol->string sym)))
-			  (if (procedure? val)
-			      (if (= (length str) 0)
-				  (format p "~A: [no doc]~%" sym)
-				  (let ((pos (substring? sym-name str)))
-				    (if (and (not pos)
-					     (not (char-upper-case? (sym-name 0)))
-					     (not (char=? (sym-name 0) #\.))
-					     (not (char=? (sym-name 0) #\[)))
-					(format p "~A documentation [no matched name]: ~A~%" sym str))))
-			      (if (> (length str) 0)
-				  (format p "~A (not a procedure) documentation: ~A~%" str)))))
-		      (lambda args
-			(if (procedure? val)
-			    (format p "~A documentation: error: ~A~%" sym (apply format #f (cadr args))))))
-	       (catch #t 
-		      (lambda () 
-			(let ((str (procedure-name val)))
-			  (if (= (length str) 0)
-			      (if (procedure? val)
-				  (format p "~A: [no name]~%" sym))
-			      (if (not (string=? str (symbol->string sym)))
-				  (format p "~A name [unmatched]: ~A~%" sym str)))))
-		      (lambda args
-			(if (procedure? val)
-			    (format p "~A name: error: ~A~%" sym (apply format #f (cadr args))))))
-	       (catch #t 
-		      (lambda () 
-			(let ((lst (procedure-source val)))
-			  (if (not lst)
-			      (if (procedure? val)
-				  (format p "~A: [no source]~%" sym))
-			      (if (and (not (pair? lst))
-				       (not (null? lst)))
-				  (format p "~A source: ~A~%" sym lst)))))
-		      (lambda args
-			(if (procedure? val)
-			    (format p "~A source: error: ~A~%" sym (apply format #f (cadr args))))))
-	       (catch #t 
-		      (lambda () 
-			(let ((lst (procedure-arity val)))
-			  (if (not lst)
-			      (if (procedure? val)
-				  (format p "~A: [no arity]~%" sym))
-			      (if (not (pair? lst))
-				  (format p "~A arity: ~A~%" sym lst)))))
-		      (lambda args
-			(if (procedure? val)
-			    (format p "~A arity: error: ~A~%" sym (apply format #f (cadr args))))))
-	       (catch #t 
-		      (lambda () 
-			(let ((pe (procedure-environment val)))
-			  (if (not pe)
-			      (if (procedure? val)
-				  (format p "~A: [no environment]~%" sym))
-			      (if (not (environment? pe))
-				  (format p "~A environment:~%" sym pe)
-				  (if (not (eq? (global-environment) pe))
-				      (format p "~A env: ~A~%" sym (environment->list pe)))))))
-		      (lambda args
-			(if (procedure? val)
-			    (format p "~A environment: error: ~A~%" sym (apply format #f (cadr args))))))
-	       )))
-       lst)))
-  (close-output-port p))
 |#
 
 
@@ -22724,7 +22749,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   )
 
 
+;;; --------------------------------------------------------------------------------
 ;;; make-procedure-with-setter
+
 (test (let ((local 123))
 	(define pws-test (make-procedure-with-setter
 			  (lambda () local)
@@ -22893,7 +22920,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 
 
-;; generic length/reverse/copy/fill!
+
+;;; --------------------------------------------------------------------------------
+;;; generic length/reverse/copy/fill!
 ;;; copy
 ;;; fill!
 
@@ -23120,7 +23149,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 ;(test (dynamic-wind (lambda () (gc)) (lambda () (gc) #f) (lambda () (gc))) #f)
 
 
-;;; -------- tail recursion tests
+
+;;; --------------------------------------------------------------------------------
+;;; tail recursion tests
 
 (let ((max-stack 0))
   (define (tc-1 a c) 
