@@ -16981,6 +16981,8 @@ defaults to the global environment.  To load into the current environment instea
 			   make_protected_string(sc, "load's first argument, ~S, should be a filename"),
 			   name)));
 
+  /* TODO: if not windoze, expand tilde etc */
+
   if (is_directory(fname))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    list_2(sc, make_protected_string(sc, "load argument, ~S, is a directory"), name)));
@@ -22434,9 +22436,7 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
 			list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args))));
     }
 
-  if ((!is_procedure(p)) && 
-      (!is_macro(p)) &&
-      (!is_bacro(p)))
+  if ((typeflag(p) & (T_PROCEDURE | T_ANY_MACRO)) == 0)
     return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, car(args), "a procedure or a macro"));
 
   if ((is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p)) &&
@@ -28631,6 +28631,11 @@ static bool is_simple_code(s7_scheme *sc, s7_pointer form)
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
+  #define H_quasiquote "(quasiquote arg) is the same as `arg.  If arg is a list, it can contain \
+comma (\"unquote\") and comma-atsign (\"unquote-splicing\") to pre-evaluate portions of the list. \
+unquoted expressions are evaluated and plugged into the list, unquote-splicing evaluates the expression \
+and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -> (1 2 3 4)."
+
   if (!is_pair(form))
     {
       if (!is_symbol(form))
@@ -53899,7 +53904,7 @@ the error type and the info passed to the error handler.");
   
   /* quasiquote
    */
-  s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
+  s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
   /* letrec* -- the less said the better...
    */

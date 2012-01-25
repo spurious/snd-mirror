@@ -39,8 +39,11 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define channel-sync
   (make-procedure-with-setter
-   (lambda (snd chn) (channel-property 'sync snd chn))
-   (lambda (snd chn val) (set! (channel-property 'sync snd chn) val))))
+   (lambda (snd chn) 
+     "(channel-sync snd chn) returns the sync property of that channel (it is not actually used anywhere)"
+     (channel-property 'sync snd chn))
+   (lambda (snd chn val) 
+     (set! (channel-property 'sync snd chn) val))))
 
 
 

@@ -2359,6 +2359,9 @@ static XEN g_add_mark(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync)
 
 static XEN g_add_mark_unchecked(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync)
 {
+  #define H_add_mark_unchecked "(add-mark! samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark.\
+Unlike add-mark, add-mark! does not check for an invalid sample number."
+
   return(g_add_mark_1(samp_n, snd, chn_n, name, sync, false));
 }
 
@@ -2930,7 +2933,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE(S_mark_home,       g_mark_home_w,       1, 0, 0, H_mark_home); 
   XEN_DEFINE_PROCEDURE(S_marks,           g_marks_w,           0, 3, 0, H_marks);
   XEN_DEFINE_PROCEDURE(S_add_mark,        g_add_mark_w,        0, 5, 0, H_add_mark);
-  XEN_DEFINE_PROCEDURE(S_add_mark "!",    g_add_mark_unchecked_w, 0, 5, 0, H_add_mark);
+  XEN_DEFINE_PROCEDURE(S_add_mark "!",    g_add_mark_unchecked_w, 0, 5, 0, H_add_mark_unchecked);
   XEN_DEFINE_PROCEDURE(S_delete_mark,     g_delete_mark_w,     1, 0, 0, H_delete_mark);
   XEN_DEFINE_PROCEDURE(S_delete_marks,    g_delete_marks_w,    0, 2, 0, H_delete_marks);
   XEN_DEFINE_PROCEDURE(S_syncd_marks,     g_syncd_marks_w,     1, 0, 0, H_syncd_marks);

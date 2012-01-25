@@ -4359,6 +4359,10 @@ static XEN g_make_mixer(XEN arglist)
 
 static XEN g_make_mixer_unchecked(XEN arglist)
 {
+  #define H_make_mixer_unchecked "(make-mixer! chans val0 val1 ...): make a new mixer object \
+with chans inputs and outputs, initializing the scalars from the rest of the arguments.  make-mixer! \
+ignores mus-max-malloc and tries to return a mixer of any size."
+
   return(g_make_mixer_1(arglist, false));
 }
 
@@ -12577,7 +12581,7 @@ static void mus_xen_init(void)
 
 
   XEN_DEFINE_PROCEDURE(S_make_mixer,        g_make_mixer_w,           0, 0, 1, H_make_mixer);
-  XEN_DEFINE_PROCEDURE(S_make_mixer "!",    g_make_mixer_unchecked_w, 0, 0, 1, H_make_mixer);
+  XEN_DEFINE_PROCEDURE(S_make_mixer "!",    g_make_mixer_unchecked_w, 0, 0, 1, H_make_mixer_unchecked);
   XEN_DEFINE_PROCEDURE(S_mixer,             g_mixer_w,                0, 0, 1, H_mixer);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_p,      g_mixer_p_w,              1, 0, 0, H_mixer_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,       2, 1, 0, H_mixer_multiply);

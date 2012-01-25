@@ -227,10 +227,8 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; GENERIC STUFF
-;;; --------------------------------------------------------------------------------
-
 ;;; eq?
+
 (test (eq? 'a 3) #f)
 (test (eq? #t 't) #f)
 (test (eq? "abs" 'abc) #f)
@@ -448,7 +446,10 @@
 |#
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; eqv?
+
 (test (eqv? 'a 3) #f)
 (test (eqv? #t 't) #f)
 (test (eqv? "abs" 'abc) #f)
@@ -585,7 +586,9 @@
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; equal?
+
 (test (equal? 'a 3) #f)
 (test (equal? #t 't) #f)
 (test (equal? "abs" 'abc) #f)
@@ -767,7 +770,10 @@
       ))
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; boolean?
+
 (test (boolean? #f) #t)
 (test (boolean? #t) #t)
 (test (boolean? 0) #f)
@@ -806,7 +812,10 @@
 ;(test (boolean? else) #f) ; this could also be an error -> unbound variable, like (symbol? else)
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; not
+
 (test (not #f) #t)
 (test (not #t) #f)
 (test (not (not #t)) #t)
@@ -838,7 +847,9 @@
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; symbol?
+
 (test (symbol? 't) #t)
 (test (symbol? "t") #f)
 (test (symbol? '(t)) #f)
@@ -907,7 +918,10 @@
       7)
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; procedure?
+
 (test (procedure? car) #t)
 (test (procedure? procedure?) #t)
 (test (procedure? 'car) #f)
@@ -960,7 +974,9 @@
 (test (eqv? '#\  #\space) #t)
 (test (eqv? #\newline '#\newline) #t)
 
+;;; --------------------------------------------------------------------------------
 ;;; char?
+
 (test (char? #\a) #t)
 (test (char? #\() #t)
 (test (char? #\space) #t)
@@ -1062,6 +1078,12 @@
 (test (eval-string (string-append "(char? " (format #f "#\\~C" (integer->char 127)) ")")) #t)
 (test (apply char? (list (integer->char 255))) #t)
 
+(test (char? #\escape) #t)
+(test (char? #\alarm) #t)
+(test (char? #\backspace) #t)
+(test (char? #\delete) #t)
+(test (char=? #\delete #\backspace) #f)
+
 (num-test (let ((str (make-string 258 #\space)))
 	    (do ((i 1 (+ i 1)))
 		((= i 256))
@@ -1076,7 +1098,9 @@
       (mixed-a-to-z (list #\a #\B #\c #\D #\e #\F #\g #\H #\I #\j #\K #\L #\m #\n #\O #\p #\Q #\R #\s #\t #\U #\v #\X #\y #\Z))
       (digits (list #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)))
   
+;;; --------------------------------------------------------------------------------
 ;;; char-upper-case?
+
   (test (char-upper-case? #\a) #f)
   (test (char-upper-case? #\A) #t)
   
@@ -1101,8 +1125,11 @@
   (test (char-upper-case? #\a #\b) 'error)
   (test (char-upper-case #\a) 'error)
 
+
   
+;;; --------------------------------------------------------------------------------
 ;;; char-lower-case?
+
   (test (char-lower-case? #\A) #f)
   (test (char-lower-case? #\a) #t)
   
@@ -1136,7 +1163,9 @@
 
 
   
+;;; --------------------------------------------------------------------------------
 ;;; char-upcase
+
   (test (char-upcase #\A) #\A)
   (test (char-upcase #\a) #\A)
   (test (char-upcase #\?) #\?)
@@ -1148,9 +1177,14 @@
   (test (char-upcase #\%) #\%)
   (test (char-upcase #\0) #\0)
   (test (char-upcase #\_) #\_)
+  (test (char-upcase #\?) #\?)
   (test (char-upcase #\space) #\space)
   (test (char-upcase #\newline) #\newline)
   (test (char-upcase #\null) #\null)
+  (test (char-upper-case? (char-upcase #\?)) #f) ; !
+  (test (char-lower-case? (char-downcase #\?)) #f)
+  (test (char-upper-case? (char-upcase #\_)) #f)
+  (test (or (char-upper-case? #\?) (char-lower-case? #\?)) #f)
   
   (for-each
    (lambda (arg1 arg2)
@@ -1176,7 +1210,9 @@
 
 
   
+;;; --------------------------------------------------------------------------------
 ;;; char-downcase
+
   (test (char-downcase #\A) #\a)
   (test (char-downcase #\a) #\a)
   (test (char-downcase #\?) #\?)
@@ -1203,7 +1239,9 @@
   (test (char-downcase #\a #\b) 'error)  
 
 
+;;; --------------------------------------------------------------------------------
 ;;; char-numeric?  
+
   (test (char-numeric? #\a) #f)
   (test (char-numeric? #\5) #t)
   (test (char-numeric? #\A) #f)
@@ -1236,7 +1274,9 @@
   (test (char-numeric? #\a #\b) 'error)  
 
   
+;;; --------------------------------------------------------------------------------
 ;;; char-whitespace?
+
   (test (char-whitespace? #\a) #f)
   (test (char-whitespace? #\A) #f)
   (test (char-whitespace? #\z) #f)
@@ -1272,7 +1312,9 @@
   (test (char-whitespace? #\a #\b) 'error)   
  
   
+;;; --------------------------------------------------------------------------------
 ;;; char-alphabetic?
+
   (test (char-alphabetic? #\a) #t)
   (test (char-alphabetic? #\$) #f)
   (test (char-alphabetic? #\A) #t)
@@ -1381,7 +1423,9 @@
    (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
 
 
+;;; --------------------------------------------------------------------------------
 ;;; char=?
+
   (test (char=? #\d #\d) #t)
   (test (char=? #\A #\a) #f)
   (test (char=? #\d #\x) #f)
@@ -1411,7 +1455,9 @@
   (test (char=? #\a #\b 0) 'error)
   
 
+;;; --------------------------------------------------------------------------------
 ;;; char<?  
+
   (test (char<? #\z #\0) #f)
   (test (char<? #\d #\x) #t)
   (test (char<? #\d #\d) #f)
@@ -1444,7 +1490,9 @@
   
   
 
+;;; --------------------------------------------------------------------------------
 ;;; char<=?
+
   (test (char<=? #\d #\x) #t)
   (test (char<=? #\d #\d) #t)
   
@@ -1477,7 +1525,9 @@
 
 
   
+;;; --------------------------------------------------------------------------------
 ;;; char>?
+
   (test (char>? #\e #\d) #t)
   (test (char>? #\z #\a) #t)
   (test (char>? #\A #\B) #f)
@@ -1509,7 +1559,9 @@
 
   
   
+;;; --------------------------------------------------------------------------------
 ;;; char>=?
+
   (test (char>=? #\e #\d) #t)
   (test (char>=? #\A #\B) #f)
   (test (char>=? #\a #\b) #f)
@@ -1539,7 +1591,9 @@
 
   
   
+;;; --------------------------------------------------------------------------------
 ;;; char-ci=?
+
   (test (char-ci=? #\A #\B) #f)
   (test (char-ci=? #\a #\B) #f)
   (test (char-ci=? #\A #\b) #f)
@@ -1563,7 +1617,9 @@
   
 
   
+;;; --------------------------------------------------------------------------------
 ;;; char-ci<?
+
   (test (char-ci<? #\A #\B) #t)
   (test (char-ci<? #\a #\B) #t)
   (test (char-ci<? #\A #\b) #t)
@@ -1615,7 +1671,9 @@
 
 
   
+;;; --------------------------------------------------------------------------------
 ;;; char-ci>?
+
   (test (char-ci>? #\A #\B) #f)
   (test (char-ci>? #\a #\B) #f)
   (test (char-ci>? #\A #\b) #f)
@@ -1644,7 +1702,9 @@
   (test (char-ci>? #\d #\C #\a) #t)
   
   
+;;; --------------------------------------------------------------------------------
 ;;; char-ci<=?
+
   (test (char-ci<=? #\A #\B) #t)
   (test (char-ci<=? #\a #\B) #t)
   (test (char-ci<=? #\A #\b) #t)
@@ -1676,7 +1736,9 @@
 
 
   
+;;; --------------------------------------------------------------------------------
 ;;; char-ci>=?
+
   (test (char-ci>=? #\A #\B) #f)
   (test (char-ci>=? #\a #\B) #f)
   (test (char-ci>=? #\A #\b) #f)
@@ -1711,8 +1773,10 @@
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; integer->char
 ;;; char->integer
+
 (test (integer->char (char->integer #\.)) #\.)
 (test (integer->char (char->integer #\A)) #\A)
 (test (integer->char (char->integer #\a)) #\a)
@@ -1758,7 +1822,9 @@
 ;;; STRINGS
 ;;; --------------------------------------------------------------------------------
 
+;;; --------------------------------------------------------------------------------
 ;;; string?
+
 (test (string? "abc") #t)
 (test (string? ':+*/-) #f)
 (test (string? "das ist einer der teststrings") #t)
@@ -1781,7 +1847,9 @@
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string=?
+
 (test (string=? "foo" "foo") #t)
 (test (string=? "foo" "FOO") #f)
 (test (string=? "foo" "bar") #f)
@@ -1880,7 +1948,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string<?
+
 (test (string<? "aaaa" "aaab") #t)
 (test (string<? "aaaa" "aaaaa") #t)
 (test (string<? "" "abcdefgh") #t)
@@ -1930,7 +2000,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string>?
+
 (test (string>? "aaab" "aaaa") #t)
 (test (string>? "aaaaa" "aaaa") #t)
 (test (string>? "" "abcdefgh") #f)
@@ -1979,7 +2051,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string<=?
+
 (test (string<=? "aaa" "aaaa") #t)
 (test (string<=? "aaaaa" "aaaa") #f)
 (test (string<=? "a" "abcdefgh") #t)
@@ -2026,7 +2100,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string>=?
+
 (test (string>=? "aaaaa" "aaaa") #t)
 (test (string>=? "aaaa" "aaaa") #t)
 (test (string>=? "aaa" "aaaa") #f)
@@ -2076,7 +2152,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string-ci=?
+
 (test (string-ci=? "A" "B") #f)
 (test (string-ci=? "a" "B") #f)
 (test (string-ci=? "A" "b") #f)
@@ -2134,7 +2212,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	  (format #t "> : ~S ~S~%" str1 str2)))))
 |#
 
+
+;;; --------------------------------------------------------------------------------
 ;;; string-ci<?
+
 (test (string-ci<? "a" "Aa") #t)
 (test (string-ci<? "A" "B") #t)
 (test (string-ci<? "a" "B") #t)
@@ -2185,8 +2266,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
-
+;;; --------------------------------------------------------------------------------
 ;;; string-ci>?
+
 (test (string-ci>? "Aaa" "AA") #t)
 (test (string-ci>? "A" "B") #f)
 (test (string-ci>? "a" "B") #f)
@@ -2230,8 +2312,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
-
+;;; --------------------------------------------------------------------------------
 ;;; string-ci<=?
+
 (test (string-ci<=? "A" "B") #t)
 (test (string-ci<=? "a" "B") #t)
 (test (string-ci<=? "A" "b") #t)
@@ -2273,8 +2356,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
-
+;;; --------------------------------------------------------------------------------
 ;;; string-ci>=?
+
 (test (string-ci>=? "A" "B") #f)
 (test (string-ci>=? "a" "B") #f)
 (test (string-ci>=? "A" "b") #f)
@@ -2318,8 +2402,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
-
+;;; --------------------------------------------------------------------------------
 ;;; string-length
+
 (test (string-length "abc") 3)
 (test (string-length "") 0)
 (test (string-length (string)) 0)
@@ -2360,8 +2445,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
-
+;;; --------------------------------------------------------------------------------
 ;;; string
+
 (for-each
  (lambda (arg)
    (test (string #\a arg) 'error)
@@ -2386,7 +2472,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; make-string
+
 (test (make-string 0) "")
 (test (make-string 3 #\a) "aaa")
 (test (make-string 0 #\a) "")
@@ -2420,7 +2509,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string-ref
+
 (test (string-ref "abcdef-dg1ndh" 0) #\a)
 (test (string-ref "abcdef-dg1ndh" 1) #\b)
 (test (string-ref "abcdef-dg1ndh" 6) #\-)
@@ -2471,7 +2562,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string-copy
+
 (test (let ((hi (string-copy "hi"))) (string-set! hi 0 #\H) hi) "Hi")
 (test (let ((hi (string-copy "hi"))) (string-set! hi 1 #\H) hi) "hH")
 (test (let ((hi (string-copy "\"\\\""))) (string-set! hi 0 #\a) hi) "a\\\"")
@@ -2499,7 +2592,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string-set!
+
 (let ((str (make-string 10 #\x)))
   (string-set! str 3 (integer->char 0))
   (test (string=? str "xxx") #f)
@@ -2568,7 +2663,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; string-fill!
+
 (test (string-fill! "hiho" #\c) #\c)
 (test (string-fill! "" #\a) #\a)
 (test (string-fill! "hiho" #\a) #\a)
@@ -2599,7 +2696,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; substring
+
 (test (substring "ab" 0 0) "")
 (test (substring "ab" 1 1) "")
 (test (substring "ab" 2 2) "")
@@ -2731,7 +2830,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (substring? "abc" 'abc) 'error)
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; string-append
+
 (test (string-append "hi" "ho") "hiho")
 (test (string-append "hi") "hi")
 (test (string-append "hi" "") "hi")
@@ -2869,8 +2971,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 |#
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; string->list
 ;;; list->string
+
 (test (string->list "abc") (list #\a #\b #\c))
 (test (string->list "") '())
 (test (string->list (make-string 0)) '())
@@ -3014,8 +3119,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; symbol->string
 ;;; string->symbol
+
 (test (symbol->string 'hi) "hi")
 (test (string->symbol (symbol->string 'hi)) 'hi)
 (test (eq? (string->symbol "hi") 'hi) #t)
@@ -3127,7 +3234,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; symbol->value
+
 (let ((sym 0))
   (test (symbol->value 'sym) 0)
   (for-each
@@ -3221,11 +3330,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+
 ;;; --------------------------------------------------------------------------------
 ;;; LISTS
 ;;; --------------------------------------------------------------------------------
 
+
+;;; --------------------------------------------------------------------------------
 ;;; cons
+
 (test (cons 'a '()) '(a))
 (test (cons '(a) '(b c d)) '((a) b c d))
 (test (cons "a" '(b c)) '("a" b c))
@@ -3257,7 +3370,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; car
+
 (test (car (list 1 2 3)) 1)
 (test (car (cons 1 2)) 1)
 (test (car (list 1)) 1)
@@ -3296,7 +3411,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; cdr
+
 (test (cdr (list 1 2 3)) '(2 3))
 (test (cdr (cons 1 2)) 2)
 (test (cdr (list 1)) '())
@@ -3371,7 +3488,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		    ))
 
 
+;;; --------------------------------------------------------------------------------
 ;;; cxr
+
 (define (caar-1 x) (car (car x)))
 (define (cadr-1 x) (car (cdr x)))
 (define (cdar-1 x) (cdr (car x)))
@@ -3736,7 +3855,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; length
+
 (test (length (list 'a 'b 'c 'd 'e 'f)) 6)
 (test (length (list 'a 'b 'c 'd)) 4)
 (test (length (list 'a (list 'b 'c) 'd)) 3)
@@ -3767,7 +3888,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; reverse
+
 (test (reverse '(a b c d)) '(d c b a))
 (test (reverse '(a b c))  '(c b a))
 (test (reverse '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
@@ -3835,7 +3958,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; reverse!
+
 (test (reverse! '(1 . 2)) 'error)
 (test (reverse! (cons 1 2)) 'error)
 (test (reverse! (cons 1 (cons 2 3))) 'error)
@@ -3880,7 +4005,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; pair?
+
 (test (pair? 'a) #f)
 (test (pair? '()) #f)
 (test (pair? '(a b c)) #t)
@@ -3924,7 +4052,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; list?
+
 (test (list? 'a) #f)
 (test (list? '()) #t)
 (test (list? '(a b c)) #t)
@@ -3967,7 +4097,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; null?
+
 (test (null? 'a) '#f)
 (test (null? '()) #t)
 (test (null? '(a b c)) #f)
@@ -4012,7 +4144,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; set-car!
+
 (test (let ((x (cons 1 2))) (set-car! x 3) x) (cons 3 2))
 (test (let ((x (list 1 2))) (set-car! x 3) x) (list 3 2))
 (test (let ((x (list (list 1 2) 3))) (set-car! x 22) x) (list 22 3))
@@ -4048,7 +4182,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((c (cons 1 2))) (set-car! c _ht_) (car c)) _ht_)
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; set-cdr!
+
 (test (let ((x (cons 1 2))) (set-cdr! x 3) x) (cons 1 3))
 (test (let ((x (list 1 2))) (set-cdr! x 3) x) (cons 1 3))
 (test (let ((x (list (list 1 2) 3))) (set-cdr! x 22) x) '((1 2) . 22))
@@ -4085,7 +4222,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; list-ref
+
 (test (list-ref (list 1 2) 1) 2)
 (test (list-ref '(a b c d) 2) 'c)
 (test (list-ref (cons 1 2) 0) 1) ; !!
@@ -4247,7 +4386,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; list-set!
+
 (test (let ((x (list 1))) (list-set! x 0 2) x) (list 2))
 (test (let ((x (cons 1 2))) (list-set! x 0 3) x) '(3 . 2))
 (test (let ((x (cons 1 2))) (list-set! x 1 3) x) 'error)
@@ -4366,7 +4507,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; list
+
 (test (let ((tree1 (list 1 (list 1 2) (list (list 1 2 3)) (list (list (list 1 2 3 4)))))) tree1) '(1 (1 2) ((1 2 3)) (((1 2 3 4)))))
 (test (let ((tree2 (list "one" (list "one" "two") (list (list "one" "two" "three"))))) tree2) '("one" ("one" "two") (("one" "two" "three"))))
 (test (let ((tree1 (list 1 (list 1 2) (list 1 2 3) (list 1 2 3 4)))) tree1) '(1 (1 2) (1 2 3) (1 2 3 4)))
@@ -4391,7 +4534,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; list-tail
+
 (test (list-tail '(1 2 3) 0) '(1 2 3))
 (test (list-tail '(1 2 3) 2) '(3))
 (test (list-tail '(1 2 3) 3) '())
@@ -4461,7 +4607,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; assq
+
 (let ((e '((a 1) (b 2) (c 3))))
   (test (assq 'a e) '(a 1))
   (test (assq 'b e) '(b 2))
@@ -4518,7 +4666,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (assq #(1) even) #f))
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; assv
+
 (test (assv 1 '(1 2 . 3)) #f)
 (test (assv 1 '((1 2) . 3)) '(1 2))
 
@@ -4586,7 +4737,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; assoc
+
 (let ((e '((a 1) (b 2) (c 3))))
   (test (assoc 'a e) '(a 1))
   (test (assoc 'b e) '(b 2))
@@ -4724,7 +4877,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; memq
+
 (test (memq 'a '(a b c)) '(a b c))
 (test (memq 'a (list 'a 'b 'c)) '(a b c))
 (test (memq 'b '(a b c)) '(b c))
@@ -4788,7 +4943,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; memv
+
 (test (memv 101 '(100 101 102)) '(101 102))
 (test (memv 101 (list 100 101 102)) '(101 102))
 (test (memv 3.4 '(1.2 2.3 3.4 4.5)) '(3.4 4.5))
@@ -4831,7 +4989,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; member
+
 (test (member (list 'a) '(b (a) c)) '((a) c))
 (test (member "b" '("a" "c" "b")) '("b"))
 (test (member 1 '(3 2 1 4)) '(1 4))
@@ -5037,7 +5197,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; append
+
 (test (append '(a b c) '()) '(a b c))
 (test (append '() '(a b c)) '(a b c))
 (test (append '(a b) '(c d)) '(a b c d))
@@ -5127,44 +5289,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
-(test (eval-string "(list #b)") 'error)
-(test (eval-string "(char? #\\spaces)") 'error)
-(test (eval-string "(car '( . 1))") 'error)
-(test (eval-string "(car '(. ))") 'error)
-(test (eval-string "(car '( . ))") 'error)
-(test (eval-string "(car '(. . . ))") 'error)
-(test (eval-string "'#( . 1)") 'error)
-(test (eval-string "'(1 2 . )") 'error)
-(test (eval-string "'#(1 2 . )") 'error)
-(test (eval-string "(+ 1 . . )") 'error)
-(test (eval-string "(car '(1 . ))") 'error)
-(test (eval-string "(car '(1 . . 2))") 'error)
-(test (eval-string "'#( . )") 'error)
-(test (eval-string "'#(1 . )") 'error)
-(test (eval-string "'#(. . . )") 'error)
-(test (eval-string "'#(1 . . 2)") 'error)
-(test (eval-string "'(. 1)") 'error)
-(test (eval-string "'#(. 1)") 'error)
-(test (eval-string "'(. )") 'error)
-(test (eval-string "'#(. )") 'error)
-(test (eval-string "(list 1 . 2)") 'error)
-(test (eval-string "(+ 1 . 2)") 'error)
-(test (eval-string "(car '@#`')") 'error)
-(test (eval-string "(list . )") 'error)
-(test (eval-string "'#( .)") 'error)
-(test (eval-string "(car '( .))") 'error)
-(test (eval-string "(let ((. 3)) .)") 'error)
-(test (eval-string "#0d()") 'error)
-(test (eval-string "`#0d()") 'error)
-(test (eval-string "'#t:") 'error) ; guile interprets this as #t : and complains unbound variable :
-(test (eval-string "#t1") 'error)  ;   similarly this is #t 1 in guile
-(test (eval-string "'#(1 . 2)") 'error)
-(test (eval-string "#(1 2 . 3)") 'error)
-(test (eval-string "'#'") 'error)
-(test (eval-string "#b") 'error)
-
-
-
 
 
 ;;; --------------------------------------------------------------------------------
@@ -5172,7 +5296,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; --------------------------------------------------------------------------------
 
 
+;;; --------------------------------------------------------------------------------
 ;;; vector?
+
 (test (vector? (make-vector 6)) #t)
 (test (vector? (make-vector 6 #\a)) #t)
 (test (vector? (make-vector 0)) #t)
@@ -5208,7 +5334,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; make-vector
+
 (test (let ((v (make-vector 3 #f))) (and (vector? v) (= (vector-length v) 3) (eq? (vector-ref v 1) #f))) #t)
 (test (let ((v (make-vector 1 1))) (and (vector? v) (= (vector-length v) 1) (vector-ref v 0))) 1)
 (test (let ((v (make-vector 0 1))) (and (vector? v) (= (vector-length v) 0))) #t)
@@ -5253,7 +5381,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; vector
+
 (test (vector 1 2 3) '#(1 2 3))
 (test (vector 1 '(2) 3) '#(1 (2) 3))
 (test (vector) '#())
@@ -5279,8 +5409,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; vector->list
 ;;; list->vector
+
 (test (vector->list '#(0)) (list 0))
 (test (vector->list (vector)) '())
 (test (vector->list '#(a b c)) '(a b c))
@@ -5338,7 +5470,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; vector-length
+
 (test (vector-length (vector)) 0)
 (test (vector-length (vector 1)) 1)
 (test (vector-length (make-vector 128)) 128)
@@ -5362,7 +5496,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; vector-ref
+
 (test (vector-ref '#(1 1 2 3 5 8 13 21) 5) 8)
 (test (vector-ref '#(1 1 2 3 5 8 13 21) (let ((i (round (* 2 (acos -1))))) (if (inexact? i) (inexact->exact i)  i))) 13)
 (test (let ((v (make-vector 1 0))) (vector-ref v 0)) 0)
@@ -5504,7 +5640,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (apply min (#(1 #\a (3)) (#(1 2) 1))) 3) ; i.e vector ref here 2 levels -- (#(1 2) 1) is 2 and (#(1 #\a (3)) 2) is (3) 
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; vector-set!
+
 (test (let ((vec (vector 0 '(2 2 2 2) "Anna"))) (vector-set! vec 1 '("Sue" "Sue")) vec) '#(0 ("Sue" "Sue") "Anna"))
 (test (let ((v (vector 1 2 3))) (vector-set! v 1 32) v) '#(1 32 3))
 (let ((v (make-vector 8 #f)))
@@ -5632,7 +5771,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (let ((v #(1 2 3))) (define (vr v a) (vector-ref v (+ a 1))) (test (vr v 1) 3))
 
 
+
+;;; --------------------------------------------------------------------------------
 ;;; vector-fill!
+
 (test (fill! (vector 1 2) 4) 4)
 
 (test (let ((v (vector 1 2 3))) (vector-fill! v 0) v) '#(0 0 0))
@@ -5742,7 +5884,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (map (lambda (n) (map (lambda (m) (* m n)) (vector 1 2 3))) (vector 4 5 6)) '((4 8 12) (5 10 15) (6 12 18)))
 (test (call/cc (lambda (return) (map (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
 (test (call/cc (lambda (return) (map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
-
 
 
 (test (vector? (symbol-table)) #t)
@@ -6052,7 +6193,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (vector-set! v 1 2 3 4) 'error)
   (test (v 1 1 1) 'error)
   (test (set! (v 1 1 1) 1) 'error))
-
 
 
 (let ((v1 (make-vector '(3 2) 0))
@@ -7135,7 +7275,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
-  ;; apply func to every permutation of vals: 
+  "(for-each-permutation func vals) applies func to every permutation of vals"
   ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
   (define (pinner cur nvals len)
     (if (= len 1)
@@ -7906,6 +8046,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (set! (hook-functions h1) (list p1))
   (h1 123)
   (test x 123))
+
 
 
 
@@ -13479,11 +13620,6 @@ time, so that the displayed results are
 (test ((lambda (a) a) #<eof>) #<eof>)
 (test ((lambda () (let ((a #<undefined>)) a))) #<undefined>)
 
-(let ()
-  (define (hi a) (+ a x))
-  ;(format #t "hi: ~S~%" (procedure-source hi))
-  (test ((apply let '((x 32)) (list (procedure-source hi))) 12) 44))
-;; i.e. make a closure from (let ((x 32)) <procedure-source hi>)
 
 
 
@@ -19246,6 +19382,91 @@ abs     1       2
 
   (test (let () (define-macro (hi a a) `(+ ,a 1)) (hi 1 2)) 'error)
 
+  (test (let ((c 1)) 
+	  (define* (a :optional (b c)) b) 
+	  (set! c 2) 
+	  (a))
+	2)
+  
+  (test (let ((c 1)) 
+	  (define* (a :optional (b c)) b) 
+	  (let ((c 32)) 
+	    (a)))
+	1)
+  
+  (test (let ((c 1)) 
+	  (define* (a (b (+ c 1))) b) 
+	  (set! c 2) 
+	  (a))
+	3)
+  
+  (test (let ((c 1))
+	  (define* (a (b (+ c 1))) b)
+	  (set! c 2)
+	  (let ((c 123))
+	    (a)))
+	3)
+  
+  (test (let* ((cc 1)
+	       (c (lambda () (set! cc (+ cc 1)) cc)))
+	  (define* (a (b (c))) b)
+	  (list cc (a) cc))
+	(list 1 2 2))
+
+
+;;; trace 
+;;; untrace
+;;; *trace-hook*
+
+  (for-each
+   (lambda (arg)
+     (test (trace arg) 'error)
+     (test (untrace arg) 'error))
+   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+  (let ((sum 0))
+    (define (hiho a b c) (* a b c))
+    (set! *trace-hook* (lambda (f args) (set! sum (apply + args))))
+    (trace hiho)
+    (hiho 2 3 4)
+    (untrace hiho)
+    (set! *trace-hook* '())
+    (test sum 9))
+
+  (test (hook-arity *trace-hook*) '(2 0 #f))
+  (test (hook-documentation *trace-hook*) "*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.")
+  (test (hook-functions *trace-hook*) '())
+
+  (let ((sum 0))
+    (define (hiho a b c) (* a b c))
+    (set! *trace-hook* (list (lambda (f args) (set! sum (apply + args)))))
+    (trace hiho)
+    (hiho 2 3 4)
+    (untrace hiho)
+    (set! *trace-hook* '())
+    (test sum 9))
+
+  (for-each
+   (lambda (arg)
+     (test (set! *trace-hook* arg) 'error)
+     (test (set! *unbound-variable-hook* arg) 'error)
+     (test (set! *error-hook* arg) 'error)
+     (test (set! *load-hook* arg) 'error)
+
+     (test (set! (hook-functions *trace-hook*) arg) 'error)
+     (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
+     (test (set! (hook-functions *error-hook*) arg) 'error)
+     (test (set! (hook-functions *load-hook*) arg) 'error)
+
+     (test (set! (hook-functions *trace-hook*) (list arg)) 'error)
+     (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
+     (test (set! (hook-functions *error-hook*) (list arg)) 'error)
+     (test (set! (hook-functions *load-hook*) (list arg)) 'error)
+     )
+   (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
+
+
+
   ;;; procedure-arity
   (test (procedure-arity car) '(1 0 #f))
   (test (procedure-arity 'car) '(1 0 #f))
@@ -19291,20 +19512,6 @@ abs     1       2
    (lambda (arg)
      (test (procedure-arity arg) 'error))
    (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
-
-  (test (let () (define (hi a) a) (procedure-name hi)) "hi")
-  (test (let () (define (hi a) a) (procedure-name 'hi)) "hi")
-  (test (procedure-name abs) "abs")
-  (test (procedure-name 'abs) "abs")
-  (test (procedure-name quasiquote) "quasiquote")
-  (test (procedure-name -s7-symbol-table-locked?) "-s7-symbol-table-locked?")
-  (test (let ((a abs)) (procedure-name a)) "abs")
-  (test (let () (define hi (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) (procedure-name hi)) "hi")
-  (test (let () (define* (hi (a 1)) a) (let ((b #f)) (set! b hi) (procedure-name b))) "hi")
-  (for-each
-   (lambda (arg)
-     (test (procedure-name arg) ""))
-   (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
   (define (for-each-subset func args)
     (let* ((arity (procedure-arity func))
@@ -19390,84 +19597,9 @@ abs     1       2
   (test (let ((x 0)) (snarf (lambda a (set! x (apply + a))) '(1 2 3 4)) x) 10)
   (test (let ((x 0)) (snarf (lambda* (a b (c 0)) (set! x (+ x a b c))) '(1 2)) x) 3)
 
-  (test (let ((c 1)) 
-	  (define* (a :optional (b c)) b) 
-	  (set! c 2) 
-	  (a))
-	2)
-  
-  (test (let ((c 1)) 
-	  (define* (a :optional (b c)) b) 
-	  (let ((c 32)) 
-	    (a)))
-	1)
-  
-  (test (let ((c 1)) 
-	  (define* (a (b (+ c 1))) b) 
-	  (set! c 2) 
-	  (a))
-	3)
-  
-  (test (let ((c 1))
-	  (define* (a (b (+ c 1))) b)
-	  (set! c 2)
-	  (let ((c 123))
-	    (a)))
-	3)
-  
-  (test (let* ((cc 1)
-	       (c (lambda () (set! cc (+ cc 1)) cc)))
-	  (define* (a (b (c))) b)
-	  (list cc (a) cc))
-	(list 1 2 2))
 
-  (for-each
-   (lambda (arg)
-     (test (trace arg) 'error)
-     (test (untrace arg) 'error))
-   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
-  (let ((sum 0))
-    (define (hiho a b c) (* a b c))
-    (set! *trace-hook* (lambda (f args) (set! sum (apply + args))))
-    (trace hiho)
-    (hiho 2 3 4)
-    (untrace hiho)
-    (set! *trace-hook* '())
-    (test sum 9))
-
-  (test (hook-arity *trace-hook*) '(2 0 #f))
-  (test (hook-documentation *trace-hook*) "*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.")
-  (test (hook-functions *trace-hook*) '())
-
-  (let ((sum 0))
-    (define (hiho a b c) (* a b c))
-    (set! *trace-hook* (list (lambda (f args) (set! sum (apply + args)))))
-    (trace hiho)
-    (hiho 2 3 4)
-    (untrace hiho)
-    (set! *trace-hook* '())
-    (test sum 9))
-
-  (for-each
-   (lambda (arg)
-     (test (set! *trace-hook* arg) 'error)
-     (test (set! *unbound-variable-hook* arg) 'error)
-     (test (set! *error-hook* arg) 'error)
-     (test (set! *load-hook* arg) 'error)
-
-     (test (set! (hook-functions *trace-hook*) arg) 'error)
-     (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
-     (test (set! (hook-functions *error-hook*) arg) 'error)
-     (test (set! (hook-functions *load-hook*) arg) 'error)
-
-     (test (set! (hook-functions *trace-hook*) (list arg)) 'error)
-     (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
-     (test (set! (hook-functions *error-hook*) (list arg)) 'error)
-     (test (set! (hook-functions *load-hook*) (list arg)) 'error)
-     )
-   (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
-
+  ;;; procedure-source
   (for-each
    (lambda (arg)
      (eval-string (format #f "(define (func) ~S)" arg))
@@ -19475,7 +19607,47 @@ abs     1       2
        (let ((val (func)))
 	 (test val arg))))
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) ':hi "hi"))
-  
+
+  (for-each
+   (lambda (arg)
+     (test (procedure-source arg) 'error))
+   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+  (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
+  (test (procedure-source) 'error)
+  (test (procedure-source abs abs) 'error)
+  (test (procedure-source quasiquote) 'error)
+  (test (let () (define-macro (hi a) `(+ 1 ,a)) (cadr (caddr (procedure-source hi)))) '(lambda (a) ({list} '+ 1 a)))
+
+  (let ()
+    (define (hi a) (+ a x))
+    (test ((apply let '((x 32)) (list (procedure-source hi))) 12) 44))
+  ;; i.e. make a closure from (let ((x 32)) <procedure-source hi>)
+
+
+
+  ;;; procedure-name
+  (test (let () (define (hi a) a) (procedure-name hi)) "hi")
+  (test (let () (define (hi a) a) (procedure-name 'hi)) "hi")
+  (test (procedure-name abs) "abs")
+  (test (procedure-name 'abs) "abs")
+  (test (procedure-name quasiquote) "quasiquote")
+  (test (procedure-name -s7-symbol-table-locked?) "-s7-symbol-table-locked?")
+  (test (let ((a abs)) (procedure-name a)) "abs")
+  (test (let () (define hi (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) (procedure-name hi)) "hi")
+  (test (let () (define* (hi (a 1)) a) (let ((b #f)) (set! b hi) (procedure-name b))) "hi")
+  (for-each
+   (lambda (arg)
+     (test (procedure-name arg) ""))
+   (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+  ;;(if (defined? '1+) (test (procedure-name "1+") "1+"))
+  ;;(if (defined? 'identity) (test (procedure-name identity) "identity"))
+  ;;(test (procedure-name "cddr-1") "cddr-1")
+
+
+
+  ;;; procedure-documentation
   (test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
   (test (string=? (let () (define (hi) "this is a string" 1) (help hi)) "this is a string") #t)
   (test (string=? (let () (define (hi) "this is a string") (procedure-documentation hi)) "this is a string") #t)
@@ -19489,7 +19661,80 @@ abs     1       2
   (let ()
     (define-macro (amac a) "this is a string" `(+ ,a 1))
     (test (procedure-documentation amac) "this is a string"))
+  (let ()
+    (define-macro* (amac (a 1)) "this is a string" `(+ ,a 1))
+    (test (procedure-documentation amac) "this is a string"))
+  (let ()
+    (define-bacro (amac a) "this is a string" `(+ ,a 1))
+    (test (procedure-documentation amac) "this is a string"))
+  (let ()
+    (define-bacro* (amac (a 1)) "this is a string" `(+ ,a 1))
+    (test (procedure-documentation amac) "this is a string"))
+  
+  (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
+  (test (string=? (help abs) "(abs x) returns the absolute value of the real number x") #t)
+  (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
+  (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
+	  (list (hi 1) (procedure-documentation hi)))
+	(list 2 "this is a test"))
+  (test (procedure-documentation (lambda* (a b) "docs" a)) "docs")
+  (test (procedure-documentation (lambda* (a b) "" a)) "")
+  (test (procedure-documentation (lambda* (a b) a)) "")
+  (test (procedure-documentation (call-with-exit (lambda (c) c))) "")
+  (test (procedure-documentation (call/cc (lambda (c) c))) "")
+  (test (procedure-documentation) 'error)
+  (test (procedure-documentation abs abs) 'error)
 
+  (if (not (provided? 'snd))
+      (for-each
+       (lambda (arg)
+	 (test (procedure-documentation arg) 'error)
+	 (test (help arg) #f))
+       (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi" :hi)))
+  
+  ;; (test (procedure-with-setter? symbol-access) #t)
+  (test (procedure-documentation symbol-access) "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a symbol accesses its current binding.")
+  
+  (test (procedure-arity) 'error)
+  (test (procedure-arity abs abs) 'error)
+  (test (procedure-arity (call-with-exit (lambda (c) c))) '(0 0 #t))
+  (test (procedure-arity (call/cc (lambda (c) c))) '(0 0 #t))
+  
+  (let ((p (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) (+ a b)))))
+    (test (object->string (procedure-source p)) "(lambda (a) (+ a 1))")
+    (let ((p1 p)
+	  (p2 (make-procedure-with-setter (lambda (a) "pws doc" (+ a 1)) (lambda (a b) (+ a b)))))
+      (test (equal? p p1) #t)
+      (test (equal? p1 p2) #f)
+      (test (procedure-documentation p2) "pws doc")
+      (test (apply p2 '(2)) 3)))
+
+  (test (procedure-documentation hook-functions) "(hook-functions hook) returns the list of functions on the hook. It is settable;  (set! (hook-functions hook) (cons func (hook-functions hook))) adds func to the current list.")
+
+
+  ;;; procedure-environment
+  (let ((f1 (lambda (a) (+ a 1)))
+	(f2 (lambda* ((a 2)) (+ a 1))))
+    (define (hi a) (+ a 1))
+    (define* (ho (a 1)) (+ a 1))
+    (test (environment? (procedure-environment hi)) #t)
+    (test (null? (environment->list (procedure-environment hi))) #f)
+    (test (environment? (procedure-environment ho)) #t)
+    (test (environment? (procedure-environment f1)) #t)
+    (test (environment? (procedure-environment f2)) #t)
+    (test (environment? (procedure-environment abs)) #t)
+    (test (length (procedure-environment ho)) 1)
+    (test (> (length (procedure-environment abs)) 100) #t)
+    (test (fill! (procedure-environment abs) 0) 'error)
+    (test (reverse (procedure-environment abs)) 'error)
+    (test (fill! (procedure-environment ho) 0) 'error)
+    (test (reverse (procedure-environment ho)) 'error))
+
+  (test (procedure-environment quasiquote) (global-environment))
+  (test (procedure-environment lambda) 'error)
+  (test (procedure-environment abs) (global-environment))
+  (test (procedure-environment cond-expand) (global-environment))
+  
   (for-each
    (lambda (arg)
      (test (procedure-environment arg) 'error))
@@ -19628,11 +19873,51 @@ abs     1       2
   (test (continuation? 1 2) 'error)
 
   
+;;; s7-version
+
   (test (string? (s7-version)) #t)
   (test (s7-version 1) 'error)
 
+
+
 ;;; eval
 ;;; eval-string
+
+  (test (eval-string "(list #b)") 'error)
+  (test (eval-string "(char? #\\spaces)") 'error)
+  (test (eval-string "(car '( . 1))") 'error)
+  (test (eval-string "(car '(. ))") 'error)
+  (test (eval-string "(car '( . ))") 'error)
+  (test (eval-string "(car '(. . . ))") 'error)
+  (test (eval-string "'#( . 1)") 'error)
+  (test (eval-string "'(1 2 . )") 'error)
+  (test (eval-string "'#(1 2 . )") 'error)
+  (test (eval-string "(+ 1 . . )") 'error)
+  (test (eval-string "(car '(1 . ))") 'error)
+  (test (eval-string "(car '(1 . . 2))") 'error)
+  (test (eval-string "'#( . )") 'error)
+  (test (eval-string "'#(1 . )") 'error)
+  (test (eval-string "'#(. . . )") 'error)
+  (test (eval-string "'#(1 . . 2)") 'error)
+  (test (eval-string "'(. 1)") 'error)
+  (test (eval-string "'#(. 1)") 'error)
+  (test (eval-string "'(. )") 'error)
+  (test (eval-string "'#(. )") 'error)
+  (test (eval-string "(list 1 . 2)") 'error)
+  (test (eval-string "(+ 1 . 2)") 'error)
+  (test (eval-string "(car '@#`')") 'error)
+  (test (eval-string "(list . )") 'error)
+  (test (eval-string "'#( .)") 'error)
+  (test (eval-string "(car '( .))") 'error)
+  (test (eval-string "(let ((. 3)) .)") 'error)
+  (test (eval-string "#0d()") 'error)
+  (test (eval-string "`#0d()") 'error)
+  (test (eval-string "'#t:") 'error) ; guile interprets this as #t : and complains unbound variable :
+  (test (eval-string "#t1") 'error)  ;   similarly this is #t 1 in guile
+  (test (eval-string "'#(1 . 2)") 'error)
+  (test (eval-string "#(1 2 . 3)") 'error)
+  (test (eval-string "'#'") 'error)
+  (test (eval-string "#b") 'error)
 
   (test (eval-string "(+ 1 2)") 3)
   (test (eval '(+ 1 2)) 3)
@@ -19730,58 +20015,6 @@ abs     1       2
    (lambda (arg)
      (test (eval-string "(+ 1 2)" arg) 'error))
    (list -1 0 1 512 #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i 'hi abs "hi" :hi '#(()) (lambda () 1)))
-
-  
-  (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
-  (test (string=? (help abs) "(abs x) returns the absolute value of the real number x") #t)
-  (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
-  (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
-	  (list (hi 1) (procedure-documentation hi)))
-	(list 2 "this is a test"))
-  (test (procedure-documentation (lambda* (a b) "docs" a)) "docs")
-  (test (procedure-documentation (lambda* (a b) "" a)) "")
-  (test (procedure-documentation (lambda* (a b) a)) "")
-  (test (procedure-documentation (call-with-exit (lambda (c) c))) "")
-  (test (procedure-documentation (call/cc (lambda (c) c))) "")
-  (test (procedure-arity (call-with-exit (lambda (c) c))) '(0 0 #t))
-  (test (procedure-arity (call/cc (lambda (c) c))) '(0 0 #t))
-  
-  
-  (if (not (provided? 'snd))
-      (for-each
-       (lambda (arg)
-	 (test (procedure-documentation arg) 'error)
-	 (test (help arg) #f))
-       (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi" :hi)))
-  
-  (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
-  ;; (test (procedure-with-setter? symbol-access) #t)
-  (test (procedure-documentation symbol-access) "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a symbol accesses its current binding.")
-  
-  (for-each
-   (lambda (arg)
-     (test (procedure-source arg) 'error))
-   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
-
-  (test (procedure-documentation) 'error)
-  (test (procedure-documentation abs abs) 'error)
-  (test (procedure-arity) 'error)
-  (test (procedure-arity abs abs) 'error)
-  (test (procedure-source) 'error)
-  (test (procedure-source abs abs) 'error)
-  (test (procedure-source quasiquote) 'error)
-  (test (let () (define-macro (hi a) `(+ 1 ,a)) (cadr (caddr (procedure-source hi)))) '(lambda (a) ({list} '+ 1 a)))
-
-  (let ((p (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) (+ a b)))))
-    (test (object->string (procedure-source p)) "(lambda (a) (+ a 1))")
-    (let ((p1 p)
-	  (p2 (make-procedure-with-setter (lambda (a) "pws doc" (+ a 1)) (lambda (a b) (+ a b)))))
-      (test (equal? p p1) #t)
-      (test (equal? p1 p2) #f)
-      (test (procedure-documentation p2) "pws doc")
-      (test (apply p2 '(2)) 3)))
-
-  (test (procedure-documentation hook-functions) "(hook-functions hook) returns the list of functions on the hook. It is settable;  (set! (hook-functions hook) (cons func (hook-functions hook))) adds func to the current list.")
 
   (test (make-list 0) '())
   (test (make-list 0 123) '())
@@ -21562,30 +21795,10 @@ abs     1       2
 (test (environment? (augment-environment! '())) #t)
 (test (environment? (augment-environment (augment-environment '()) '(a . 1))) #t)
 (test (environment? (augment-environment '() '(a . 1))) #t)
-(let ((f1 (lambda (a) (+ a 1)))
-      (f2 (lambda* ((a 2)) (+ a 1))))
-  (define (hi a) (+ a 1))
-  (define* (ho (a 1)) (+ a 1))
-  (test (environment? (procedure-environment hi)) #t)
-  (test (null? (environment->list (procedure-environment hi))) #f)
-  (test (environment? (procedure-environment ho)) #t)
-  (test (environment? (procedure-environment f1)) #t)
-  (test (environment? (procedure-environment f2)) #t)
-  (test (environment? (procedure-environment abs)) #t)
-  (test (length (procedure-environment ho)) 1)
-  (test (> (length (procedure-environment abs)) 100) #t)
-  (test (fill! (procedure-environment abs) 0) 'error)
-  (test (reverse (procedure-environment abs)) 'error)
-  (test (fill! (procedure-environment ho) 0) 'error)
-  (test (reverse (procedure-environment ho)) 'error))
+
 
 #|
-(if (defined? '1+) (test (procedure-name "1+") "1+"))
-(if (defined? 'identity) (test (procedure-name identity) "identity"))
-(test (procedure-name "cddr-1" "cddr-1")
-
-
-;;; TODO: procedure-environment is a mess
+;;; TODO: procedure-environment is a mess but it's hard to test
 
 (test (let () (define (func3 a b) (+ a b)) (environment->list (procedure-environment func3))) '((b) (a)))
 or is it ((__func__ . func3)) in context?
@@ -21602,18 +21815,10 @@ or is it ((__func__ . func3)) in context?
 
 (let () (let ((func2 (lambda (a b) (+ a b)))) (environment->list (procedure-environment func2)))) -> ()
 
-;;; useless:
-(eq? (procedure-environment abs) (global-environment)) -> #t
-(eq? (procedure-environment cond-expand) (global-environment)) -> #t
 
 (procedure-environment #<continuation>) -> #<global-environment>
 (procedure-environment #<goto>) -> #<global-environment>
 and setter of pws is either global or ()
-
-;;; a bug:
-:(procedure-environment quasiquote)
-;procedure-environment argument, quasiquote, is a macro but should be a procedure or a macro
-;    (procedure-environment quasiquote)
 
 ;;; bad English:
 :(procedure-environment quote)
@@ -21644,31 +21849,55 @@ and setter of pws is either global or ()
 ((__func__ . m1))
 
 
-also
-
-(procedure-documentation quasiquote) -> quasiquote
 (procedure-documentation macroexpand) -> ""  ; also cond-expand
 
 
-load-hook-test name [unmatched]: #<closure>
-make-mixer! documentation [no matched name]: (make-mixer chans val0 val1 ...): make a new mixer object with chans inputs and outputs, initializing the scalars from the rest of the arguments:
-add-mark! documentation [no matched name]: (add-mark samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark.
+how does letrec interact with load+env? especially current-env
 
-channel-sync: [no doc]
-last-pair name [unmatched]: #<closure>
-procedure-setter-arity: [no doc]
-procedure-setter-arity name [unmatched]: #<closure>
+if t423.scm is
+(define (t423-1 a b) (+ a b))
+(define t423-2 423)
+t423-2
 
-class-1?: [no doc]
-class-1? name [unmatched]: #<closure>
-class-1? env: ((new-class . #<environment>))
+then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are globals now
 
-multiply: [no doc]
-multiply name [unmatched]: #<closure>
-multiply env: ((method . #<closure>))
+:(let((a (load "t423.scm")) (b (t423-1 a 1))) b)
+;a: unbound variable
+;    (t423-1 a 1)
 
-for-each-permutation: [no doc]
+:(letrec ((a (load "t423.scm")) (b (t423-1 a 1))) b)
+;+ argument 1, #<undefined>, is an untyped but should be a number
+;    (+ a b)
+;    ["t423.scm", line 1]
 
+:(letrec* ((a (load "t423.scm")) (b (t423-1 a 1))) b)
+424
+
+:(letrec ((a (load "t423.scm"))) (t423-1 a 1))
+424
+
+:(letrec ((a (load "t423.scm") (current-environment))) (t423-1 a 1))
+;letrec variable declaration has more than one value?: (a (load "t423.scm") (current-environment))
+;    (letrec ((a (load "t423.scm") (current-environment)) (b 1)) (t423-1 a 1))
+
+; and let/let*/letrec* also
+
+:(let () (let () (let* ((a (load "t423.scm" (outer-environment (current-environment))))) a) (t423-1 2 1)))
+3
+:(let () (let () (let* ((a (load "t423.scm" (outer-environment (current-environment))))) a) 1) (t423-1 2 1))
+3
+:(let () (let () (let* ((a (load "t423.scm" (current-environment)))) a) 1) (t423-1 2 1))
+;t423-1: unbound variable
+;    (t423-1 2 1)
+:(let () (let () (let* ((a (load "t423.scm" (current-environment)))) a) (t423-1 2 1)))
+3
+:(let () (let ((t423-1 #t)) (let* ((a (load "t423.scm" (current-environment)))) a) (t423-1 2 1)))
+3
+
+
+
+;;; also TODO: (load "afile") or (load "afile.") (no .scm) seems to refuse to load it
+;;;  or is it the tilde? (load "~/test/...")
 
 
 (let ((st (symbol-table)) 
@@ -21749,10 +21978,6 @@ for-each-permutation: [no doc]
 	       )))
        lst)))
   (close-output-port p))
-
-
-;;; also TODO: (load "afile") or (load "afile.") (no .scm) seems to refuse to load it
-;;;  or is it the tilde? (load "~/test/...")
 |#
 
 
