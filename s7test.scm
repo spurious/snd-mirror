@@ -13816,7 +13816,7 @@ time, so that the displayed results are
 (test (apply call-with-exit (list (lambda (exit) (exit 1) 32))) 1)
 (test (apply catch (list #t (lambda () 1) (lambda args 'error))) 1)
 (test (apply eval '((+ 1 2))) 3)
-(test (apply eval '()) 'error) ; (eval) is an error -- should it be? (eval ()) is ()
+(test (apply eval '()) 'error) ; (eval) is an error -- should it be? (eval ()) is () so perhaps (following values), (eval) -> #<unspecified>?
 (test (apply eval '(())) '())
 (test (apply eval-string '("(+ 1 2)")) 3) 
 (test (let () (apply begin '((define x 1) (define y x) (+ x y)))) 2)

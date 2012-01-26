@@ -2206,7 +2206,7 @@ vector-dimensions returns a list of the dimensions.
 
 <pre>
 (define (matrix-multiply A B)
-  ;; assume square matrices and so on here for simplicity
+  ;; assume square matrices and so on for simplicity
   (let* ((size (car (vector-dimensions A)))
 	 (C (make-vector (list size size) 0)))
     (do ((i 0 (+ i 1)))
@@ -2240,7 +2240,7 @@ vector-dimensions returns a list of the dimensions.
 	(set! (state0 x y) (if (&lt; (random 100) 15) 1 0))))
 
     (do () ()
-      ;; show current state (using terminal escape sequences)
+      ;; show current state (using terminal escape sequences, borrowed from the Rosetta C code)
       (format *stderr* "~C[H" #\escape)           ; ESC H = tab set
       (do ((y 0 (+ y 1)))
 	  ((= y height))
@@ -2259,8 +2259,8 @@ vector-dimensions returns a list of the dimensions.
 	  (let ((n (+ (state0 (- x 1) (- y 1))
 		      (state0 x       (- y 1))
 		      (state0 (+ x 1) (- y 1))
-		      (state0 (- x 1) y)      
-		      (state0 (+ x 1) y)      
+		      (state0 (- x 1)    y)      
+		      (state0 (+ x 1)    y)      
 		      (state0 (- x 1) (+ y 1))
 		      (state0 x       (+ y 1))
 		      (state0 (+ x 1) (+ y 1)))))

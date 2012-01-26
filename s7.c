@@ -28504,6 +28504,8 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
    *  (values) now is the same as (values '()) which is
    *  (apply values '(())).  This also affects quasiquote 
    *  (s7 uses (apply values ...) for unquote-splicing).
+   *
+   * But that makes me think that (eval) should return #<unspecified>. What about (eval-string)?
    */
   
   if (is_null(cdr(args)))
