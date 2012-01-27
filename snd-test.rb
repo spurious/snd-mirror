@@ -2,16 +2,16 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Feb 18 10:18:34 CET 2005
-# Changed: Sun May 29 12:24:34 CEST 2011
+# Changed: Thu Jan 26 18:24:59 CET 2012
 
 # Commentary:
 #
 # Tested with:
-#   Snd version 12.2 of 30-May-11
+#   Snd version 12.8 of 27-Jan-12
 #   ruby 1.8.0 (2003-08-04)
-#   ruby 1.8.7 (2010-08-16 patchlevel 302)
-#   ruby 1.9.2p136 (2010-12-25 revision 30365)
-#   ruby 1.9.3dev (2011-05-29 trunk 31779)
+#   ruby 1.8.7 (2011-12-28 patchlevel 357)
+#   ruby 1.9.3p0 (2011-10-30 revision 33570)
+#   ruby 2.0.0dev (2012-01-26 trunk 34378)
 
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
@@ -122,6 +122,7 @@ $with_test_nogui  = provided? :snd_nogui
 $with_test_gui    = (not $with_test_nogui)
 $with_test_motif  = provided? :snd_motif
 $with_test_gtk    = provided? :snd_gtk
+$with_test_gtk3   = provided? :gtk3
 $with_test_ladspa = provided? :snd_ladspa
 $with_test_gl     = provided? :gl
 $with_test_gl2ps  = provided? :gl2ps
@@ -3128,7 +3129,7 @@ def test_04_00
   [[Mus_aiff,  Mus_b24int],
    [Mus_ircam, Mus_mulaw],
    [Mus_next,  Mus_alaw],
-   [Mus_next,  Mus_bdouble]].each do |type, fmt|
+   [Mus_next,  Mus_ldouble]].each do |type, fmt|
     save_sound_as("test.snd", ob, type, fmt)
     ab = open_sound("test.snd")
     check_it.call(ab, type, fmt)
@@ -9746,7 +9747,7 @@ def test_05_25
       snd_display("C-x c w/o marks: %s?", res)
     end
   end
-  add_mark(123)
+  Snd.catch do add_mark(123) end
   key(key_to_int(?u), 4)
   key(key_to_int(?6), 4)
   key(key_to_int(?j), 4)
@@ -12855,6 +12856,9 @@ def test_08_00
   end
   set_mus_file_buffer_size($default_file_buffer_size)
   if (res = mus_array_print_length) != 8
+    snd_display("mus_array_print_length: %s?", res)
+  end
+  if (res = mus_array_print_length) != 12
     snd_display("mus_array_print_length: %s?", res)
   end
   set_mus_array_print_length(32)
@@ -24094,7 +24098,13 @@ def test_13_00
     snd_display("search_procedure C-s C-s cursor: %s?", cursor(ind, 0))
   end
   set_search_procedure(ind, lambda do |n| n > 0.2 end)
-  set_cursor(0, ind, 0)
+  unless $with_test_gtk3
+    # otherwise:
+    # FIXME (Cairo segfault)
+    # Assertion failed: (! surface->finished), function _cairo_surface_begin_modification, file cairo-surface.c, line 385.
+    # Abort (core dumped)
+    set_cursor(0, ind, 0)
+  end
   key(key_to_int(?s), 4, ind, 0)
   key(key_to_int(?s), 4, ind, 0)
   if cursor(ind, 0).nonzero?
@@ -24405,7 +24415,7 @@ def test_13_01
   end
   set_expand_control?(true, ind)
   set_reverb_control?(true, ind)
-  play(ind, :wait, true)
+  # play(ind, :wait, true)
   set_expand_control?(false, ind)
   set_reverb_control?(false, ind)
   unless spl
@@ -24433,7 +24443,7 @@ def test_13_01
     set_reverb_control_lowpass(0.02)
     set_reverb_control_feedback(0.02)
   end
-  play(ind, :wait, true)
+  # play(ind, :wait, true)
   $play_hook.reset_hook!
   $start_playing_hook.add_hook!("snd-test") do |snd| true end
   play("4.aiff")
@@ -26485,7 +26495,7 @@ def test_15_01
   prefix_it(1000, id)
   key(key_to_int(?x), 4, id)
   key(key_to_int(?b), 4, id)
-  if (left = left_sample(id)) != 0
+  if (left = left_sample(id)) != 1000
     snd_display("u1000: %s?", left)
   end
   prefix_it(0, id)
@@ -30305,54 +30315,6 @@ def test_19_00
     snd_display("IO.readlines (file2string): %s?", res)
   end
   close_sound(nind)
-  #
-  ind = open_sound("oboe.snd")
-  set_speed_control(Rational(2, 3).to_f, ind)
-  set_filter_control_envelope([0.0, 0.0, 1.0, 1.0], ind)
-  set_sound_property(:hi, 12345, ind)
-  insert_samples(0, 100, Vct.new(100, 0.1), ind, 0)
-  $save_state_hook.reset_hook!
-  $save_state_hook.add_hook!("snd-test") do |fname| "savehook.snd" end
-  save_state("s61.rb")
-  close_sound(ind)
-  if File.exists?("savehook.snd")
-    load("s61.rb")
-    ind = find_sound("oboe.snd")
-    if sound?(ind)
-      if fneq(res = speed_control(ind), Rational(2, 3).to_f)
-        snd_display("save_state w/hook speed: %s?", res)
-      end
-      if (res = sound_property(:hi, ind)) != 12345
-        snd_display("save_state w/hook property hi: %s?", res)
-      end
-      if (res = filter_control_envelope(ind)) != [0.0, 0.0, 1.0, 1.0]
-        snd_display("save_state w/hook filter env: %s?", res)
-      end
-      $save_state_hook.reset_hook!
-      $save_state_hook.add_hook!("snd-test") do |fname|
-        snd_display("bogus $save_state_hook call!")
-        "edit-list-to-function-saved.snd"
-      end
-      func = edit_list2function(ind, 0)
-      if File.exists?("edit-list-to-function-saved.snd")
-        snd_display("edit_list2function called $save_state_hook")
-        delete_file("edit-list-to-function-saved.snd")
-      end
-      save_edit_history("save-edit-history-saved.rb", ind, 0)
-      if File.exists?("edit-list-to-function-saved.snd")
-        snd_display("save_edit_history called $save_state_hook")
-        delete_file("edit-list-to-function-saved.snd")
-      end
-      delete_files("save-edit-history-saved.rb", "savehook.snd")
-      close_sound(ind)
-    else
-      snd_display("save_state after hook restored but no sound?")
-    end
-  else
-    snd_display("$save_state_hook redirect failed: %s?", $save_state_hook.inspect)
-  end
-  delete_file("s61.rb")
-  $save_state_hook.reset_hook!
   # 
   add_sound_file_extension("ogg")
   add_sound_file_extension("OGG")
@@ -34830,7 +34792,7 @@ end
 def test_23_00
   set_mus_srate($clm_srate = 22050)
   set_default_output_srate(22050)
-  with_sound(:reverb, :nrev) do
+  with_sound(:reverb, :nrev, :play, false) do
     fmt1 = [0, 1200, 100, 1000]
     fmt2 = [0, 2250, 100, 1800]
     fmt3 = [0, 4500, 100, 4500]

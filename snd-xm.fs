@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Sat Jul 30 18:31:36 CEST 2011
+\ Changed: Thu Jan 26 16:38:31 CET 2012
 
 \ Commentary:
 \
@@ -10,8 +10,8 @@
 \
 \ Tested with Snd 12.x
 \             Fth 1.2.x
-\             Motif 2.3.0 X11R6
-\             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+\             Motif 2.3.3 X11R6
+\             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \ 
 \ Motif and Gtk:
 \
@@ -23,8 +23,6 @@
 \ load-font                ( name -- fid|#f )
 \ host-name                ( -- host )
 \ add-main-pane            ( name class args -- wid )
-\ white-pixel      	   ( -- pix )
-\ black-pixel      	   ( -- pix )
 \ raise-dialog             ( dialog -- )
 \ activate-dialog          ( dialog -- )
 \ show-disk-space          ( snd -- )
@@ -33,6 +31,8 @@
 \ 
 \ main-dpy                 ( -- dpy )
 \ current-screen   	   ( -- scr )
+\ white-pixel      	   ( -- pix )
+\ black-pixel      	   ( -- pix )
 \ screen-depth     	   ( -- n )
 \ 
 \ children->array          ( widget -- array )
@@ -167,16 +167,6 @@ previous
     pane name Fgtk_widget_set_name drop
     pane
   ;
-
-  : get-color-pixel ( name -- pix )
-    { name }
-    FGdkColor { tmp }
-    name tmp Fgdk_color_parse drop
-    tmp Fgdk_color_copy
-  ;
-
-  : white-pixel ( -- pix ) "white" get-color-pixel ;
-  : black-pixel ( -- pix ) "black" get-color-pixel ;
 
   \ --- bring possibly-obscured dialog to top ---
 

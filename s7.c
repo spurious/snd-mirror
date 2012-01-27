@@ -53964,40 +53964,38 @@ the error type and the info passed to the error handler.");
 
 
   /* cond-expand (uses *features*) */
-  s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)    \n\
-                          ;; taken from MIT scheme?              \n\
-                                                                 \n\
-                          (define (got? fr)                      \n\
-                            (cond                                \n\
-                             ((memq fr *features*) #t)           \n\
-                             ((not (pair? fr)) #f)               \n\
-                             ((eq? 'and (car fr))                \n\
-                              (let loop ((clauses (cdr fr)))     \n\
-                        	(or (null? clauses)              \n\
-                        	    (and (got? (car clauses))    \n\
-                        		 (loop (cdr clauses))))))\n\
-                             ((eq? 'or (car fr))                 \n\
-                              (let loop ((clauses (cdr fr)))     \n\
-                        	(and (pair? clauses)             \n\
-                        	     (or (got? (car clauses))    \n\
-                        		 (loop (cdr clauses))))))\n\
-                             ((eq? 'not (car fr))                \n\
-                              (not (got? (and (pair? (cdr fr))   \n\
-                        		      (cadr fr)))))      \n\
-                             (else #f)))                         \n\
-                                                                 \n\
-                          (let loop ((clauses clauses))          \n\
-                            (if (pair? clauses)                  \n\
+  s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)              \n\
+                          ;; taken from MIT scheme?                        \n\
+                          (define (got? fr)                                \n\
+                            (cond                                          \n\
+                             ((memq fr *features*) #t)                     \n\
+                             ((not (pair? fr)) #f)                         \n\
+                             ((eq? 'and (car fr))                          \n\
+                              (let loop ((clauses (cdr fr)))               \n\
+                        	(or (null? clauses)                        \n\
+                        	    (and (got? (car clauses))              \n\
+                        		 (loop (cdr clauses))))))          \n\
+                             ((eq? 'or (car fr))                           \n\
+                              (let loop ((clauses (cdr fr)))               \n\
+                        	(and (pair? clauses)                       \n\
+                        	     (or (got? (car clauses))              \n\
+                        		 (loop (cdr clauses))))))          \n\
+                             ((eq? 'not (car fr))                          \n\
+                              (not (got? (and (pair? (cdr fr))             \n\
+                        		      (cadr fr)))))                \n\
+                             (else #f)))                                   \n\
+                          (let loop ((clauses clauses))                    \n\
+                            (if (pair? clauses)                            \n\
                         	(let* ((feature (if (pair? (car clauses))  \n\
                         			    (caar clauses)         \n\
                         			    (error 'wrong-type-arg \"cond-expand clause ~A is not a list\" (car clauses))))\n\
                         	       (code (cons 'begin (cdar clauses))))\n\
-                        	  (cond                          \n\
-                        	   ((and (eq? 'else feature)     \n\
-                        		 (null? (cdr clauses)))  \n\
-                        	    code)                        \n\
-                        	   ((got? (unoptimize feature))  \n\
-                        	    code)                        \n\
+                        	  (cond                                    \n\
+                        	   ((and (eq? 'else feature)               \n\
+                        		 (null? (cdr clauses)))            \n\
+                        	    code)                                  \n\
+                        	   ((got? (unoptimize feature))            \n\
+                        	    code)                                  \n\
                         	   (else (loop (cdr clauses))))))))");
 
   /* fprintf(stderr, "size: %d %d, max op: %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_extended_cell), OP_MAX_DEFINED); */

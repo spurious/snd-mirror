@@ -8,7 +8,6 @@
 ;;;   A Jaffer's r4rstest.scm (the inspiration for this...)
 ;;;   guile test suite
 ;;;   gauche test suite
-;;;   gambit test suite
 ;;;   sacla test suite
 ;;;   Kent Dybvig's "The Scheme Programming Language"
 ;;;   Brad Lucier (who also pointed out many bugs)
@@ -3122,6 +3121,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; --------------------------------------------------------------------------------
 ;;; symbol->string
 ;;; string->symbol
+;;; symbol
 
 (test (symbol->string 'hi) "hi")
 (test (string->symbol (symbol->string 'hi)) 'hi)
@@ -3232,6 +3232,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	    (else 4)))
 	3))
 
+(let ()
+  (apply define (list (symbol "(#)") 3))
+  (test (eval (symbol "(#)")) 3))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3279,8 +3283,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test ((symbol->value (define (hi a) (+ a 1))) 2) 3)
 (test ((symbol->value (define-macro (hi a) `(+ ,a 1))) 2) 3)
 (test (let ((mac (symbol->value (define-macro (hi a) `(+ ,a 1))))) (mac 3)) 4)
-
-
 
 (test (let ((name "hiho"))
 	(string-set! name 2 #\null)
@@ -4102,6 +4104,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (null? 'a) '#f)
 (test (null? '()) #t)
+(test (null? ()) #t)
 (test (null? '(a b c)) #f)
 (test (null? (cons 1 2)) #f)
 (test (null? ''()) #f)
@@ -4131,6 +4134,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (null? "") #f)
 (test (null? lambda) #f)
 (test (null? cons) #f)
+(test (null? (begin)) #t)
+(test (null? (cdr (list 1))) #t)
+(test (null? (cdr (cons '() '(())))) #f)
 
 (test (null? () '()) 'error)
 (test (null?) 'error)
@@ -4175,6 +4181,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (set-car! #f 32) 'error)
 (test (set-car!) 'error)
 (test (set-car! '(1 2) 1 2) 'error)
+(test (let ((lst (list 1 2))) (set-car! lst (values 2 3)) lst) 'error)
 
 (test (let ((c (cons 1 2))) (set-car! c #\a) (car c)) #\a)
 (test (let ((c (cons 1 2))) (set-car! c #()) (car c)) #())
@@ -7776,24 +7783,28 @@ zzy" (lambda (p) (eval (read p))))) 32)
     `(define ,f (let ((ht (make-hash-table))
 		      (old-f ,f))
 		  (lambda args
-		    (let ((val (ht args)))
-		      (if val
-			  (val 0)
-			  (let ((new-val (apply old-f args)))
-			    (set! (ht args) (list new-val))
-			    new-val)))))))
+		    (or (ht args)
+			(let ((new-val (apply old-f args)))
+			  (set! (ht args) new-val)
+			  new-val))))))
 
   (define (our-abs num) (abs num))
   (memoize our-abs)
   (num-test (our-abs -1) 1)
   (with-environment (procedure-environment our-abs)
-    (test (ht '(-1)) '(1))))		    
+    (test (ht '(-1)) 1)))
 
 
 (let ((ht (make-hash-table)))
   (test (eq? (car (catch #t (lambda () (set! (ht) 2)) (lambda args args))) 'wrong-number-of-args) #t)
   (test (eq? (car (catch #t (lambda () (set! (ht 0 0) 2)) (lambda args args))) 'wrong-number-of-args) #t)
   (test (eq? (car (catch #t (lambda () (set! ((ht 0) 0) 2)) (lambda args args))) 'syntax-error) #t))
+
+(let ()
+  (define (merge-hash-tables . tables)
+    (apply hash-table (apply append (map (lambda (table) (map values table)) tables))))
+  (let ((ht (merge-hash-tables (hash-table '(a . 1) '(b . 2)) (hash-table '(c . 3)))))
+    (test (ht 'c) 3)))
 
 
 
@@ -14249,6 +14260,22 @@ time, so that the displayed results are
       (function (apply values args) (apply values more-args)))) ; unfortunately this doesn't handle 0 args
   (test ((curry + 1 2) 3 4) 10))
 
+(let ()
+  (define (curry function . args)
+    (if (null? args)
+	function
+	(lambda more-args
+	  (if (null? more-args)
+	      (apply function args)
+	      (function (apply values args) (apply values more-args))))))
+  (test ((curry + 1 2) 3 4) 10)
+  (test ((curry + 2) 3 4) 9)
+  (test ((curry +) 3 4) 7)
+  (test ((curry +)) 0)
+  (test ((curry + 1 2)) 3)
+  (test ((curry + 1)) 1)
+  (test ((curry +) 1) 1))
+
 
 (test (or (values #t #f) #f) #t)
 (test (or (values #f #f) #f) #f)
@@ -15035,6 +15062,7 @@ time, so that the displayed results are
 (test (let ((hi: 1)) hi) 'error)
 (let ((1.0+2j (lambda (a) (+ a 1.0+2i))))
   (num-test (1.0+2j 3+i) 4.0+3i))
+(test (let ((*1.11* 3)) *1.11*) 3)
 
 (test (let func ((a 1) (b 2)) (set! b a) (if (> b 0) (func (- a 1) b)) b) 1)
 (test (let func ((a 1) (b 2)) (set! b a) (if (> b 0) (func (- a 1) b) b)) 0)
@@ -17958,6 +17986,7 @@ who says the continuation has to restart the map from the top?
 
 
 
+;;; --------------------------------------------------------------------------------
 ;;; gensym
 (for-each
  (lambda (arg)
@@ -18009,6 +18038,10 @@ who says the continuation has to restart the map from the top?
   (test (apply func (list (symbol->keyword funny-name) 2)) 3))
 
 
+
+;;; --------------------------------------------------------------------------------
+;;; provided?
+;;; provide
 
 (test (provided?) 'error)
 (test (or (null? *features*) (pair? *features*)) #t)
@@ -18637,6 +18670,13 @@ who says the continuation has to restart the map from the top?
 (test (let ((str (list 1 2))) (catch #t (lambda () (catch str (lambda () (error str)) (lambda args 1))) (lambda args 2))) 1)
 (test (let ((str "hi")) (catch #t (lambda () (catch str (lambda () (error str)) (lambda args 1))) (lambda args 2))) 2) ; this doesn't make sense
 (test (let () (abs (catch #t (lambda () -1) (lambda args 0)))) 1)
+
+
+(let ()
+  (define-macro (catch-all . body) 
+    `(catch #t (lambda () ,@body) (lambda args args)))
+  (let ((val (catch-all (+ 1 asdf))))
+    (test (car val) 'syntax-error)))
 
 #|
 (for-each 
@@ -19650,9 +19690,14 @@ abs     1       2
      (test (procedure-name arg) ""))
    (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
-  ;;(if (defined? '1+) (test (procedure-name "1+") "1+"))
-  ;;(if (defined? 'identity) (test (procedure-name identity) "identity"))
-  ;;(test (procedure-name "cddr-1") "cddr-1")
+  (if (defined? '1+) (test (procedure-name 1+) "1+"))
+  (if (defined? 'identity) (test (procedure-name identity) "identity"))
+  (test (procedure-name cddr-1) "cddr-1")
+  (test (cddr-1 '(1 2 3 4)) (cddr '(1 2 3 4)))
+  (test (procedure-name cddr) "cddr")
+
+  ;; (let () (define-macro (hiho a) `(+ ,a 1)) (procedure-name hiho)) -> ""
+
 
 
 
@@ -22162,6 +22207,20 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   (define-constant _a_constant_ 32)
   (test (eval '_a_constant_ (augment-environment () (cons '_a_constant_ 1))) 'error)
   (test (eval '_a_constant_ (augment-environment () (cons '_a_constant_ 32))) 32))
+
+(let ()
+  (define-bacro (value->symbol val)
+    `(call-with-exit
+      (lambda (return)
+	(do ((e (current-environment) (outer-environment e))) ()
+	  (for-each 
+	   (lambda (slot)
+	     (if (equal? ,val (cdr slot))
+		 (return (car slot))))
+	   e)
+	  (if (eq? e (global-environment))
+	      (return #f))))))
+  (test (let ((a 1) (b "hi")) (value->symbol "hi")) 'b))
 
 (test (let ((a 1)) (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32)))) 33)
 (test (let ((a 1)) (+ (eval-string "(+ a b)" (augment-environment (current-environment) (cons 'b 32))) a)) 34)
@@ -61635,6 +61694,13 @@ etc....
 (test (number->string 16 17) 'error)
 (test (number->string -0. 11 -) 'error)
 (test (string->number "11" 2 -) 'error)
+
+(test (string->number "1.0F") #f)
+(test (string->number "1F") #f)
+(test (string->number "1d") #f)
+(test (string->number "1.0L") #f)
+(test (string->number "1.0+1.0Ei") #f)
+(test (string->number "0xff") #f)
 
 ;; duplicate various non-digit chars
 (for-each

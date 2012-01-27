@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun May 29 12:20:53 CEST 2011
+\ Changed: Thu Jan 26 17:40:05 CET 2012
 
 \ Commentary:
 \
 \ Tested with:
-\   Snd version 12.2 of 30-May-11
-\   FTH 1.2.9 (07-May-2011)
+\   Snd version 12.8 of 27-Jan-12
+\   FTH 1.2.9 (26-Jan-2012)
 
 \
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
@@ -600,29 +600,6 @@ reset-all-hooks
   "test-forth.output" save-listener drop
   original-prompt set-listener-prompt drop
 ;
-
-SIGSEGV lambda: { sig -- }
-  stack-reset
-  "" #f snd-test-message
-  *last-exception* if
-    backtrace
-    "" #f snd-test-message
-  then
-  $" Segmentation fault (signal no %d)" #( sig ) snd-test-message
-  "" #f snd-test-message
-  finish-snd-test
-  2 snd-exit drop
-; signal drop
-
-SIGILL lambda: { sig -- }
-  stack-reset
-  backtrace
-  "" #f snd-test-message
-  $" Illegal instruction (signal no %d)" #( sig ) snd-test-message
-  "" #f snd-test-message
-  finish-snd-test
-  2 snd-exit drop
-; signal drop
 
 SIGINT lambda: { sig -- }
   stack-reset
@@ -1715,7 +1692,7 @@ black-and-white-colormap constant *better-colormap*
       initval sym set-execute drop
     loop
   end-each
-  \ 
+  \
   #( *with-test-gui* if
        #( <'> amp-control 1.0 '( -1.0 123.123 ) )
      then
@@ -2644,7 +2621,7 @@ black-and-white-colormap constant *better-colormap*
   #( #( mus-aiff  mus-b24int )
      #( mus-ircam mus-mulaw )
      #( mus-next  mus-alaw )
-     #( mus-next  mus-bdouble ) ) to types
+     #( mus-next  mus-ldouble ) ) to types
   nil { fmt }
   types each to vals
     vals 0 array-ref to typ
@@ -4532,7 +4509,7 @@ half-pi fnegate constant -half-pi
 
 : freq-peak { beg ind size -- lst }
   beg size ind 0 channel->vct { data }
-  data blackman2-window size snd-spectrum { spectr }
+  data blackman2-window size #t 0.0 #f #t snd-spectrum { spectr }
   0.0 { peak0 }
   0 { pk0loc }
   size 2/ 0 ?do
@@ -7765,7 +7742,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       then
     then
   end-each
-  #( vct-5 -1.0 csqrt 1.5 "hiho" ) { args-1 }
+  #( vct-5 0+i 1.5 "hiho" ) { args-1 }
   nil { arg }
   args-1 each to arg
     prcs-1 each to prc
@@ -7824,7 +7801,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   ind close-sound drop
-  #( 1 make-array "hiho" -1.0 csqrt 1.5 #( 1 0 ) #( 0 1 ) ) { args-2 }
+  #( 1 make-array "hiho" 0+i 1.5 #( 1 0 ) #( 0 1 ) ) { args-2 }
   args-2 each to arg
     #( <'> make-vct <'> vct-copy <'> vct-length <'> vct->list <'> vct-peak ) each to prc
       arg prc #t nil fth-catch to tag
@@ -7949,9 +7926,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> triangle-wave <'> two-pole <'> two-zero <'> wave-train <'> ssb-am ) { clm-prcs-1 }
   \ FIXME
   \ 'bad-type added for      #( 1 1 1 ) partials->wave
-  \ 'out-of-range added for  -1.0 csqrt make-frame
-  \                          -1.0 csqrt make-moving-average
-  #( 1 make-array color-95 -1.0 csqrt 1 1.0 make-vct ) each to arg
+  \ 'out-of-range added for  0+i make-frame
+  \                          0+i make-moving-average
+  #( 1 make-array color-95 0+i 1 1.0 make-vct ) each to arg
     clm-prcs-1 each to prc
       arg prc #t nil fth-catch to tag
       stack-reset
@@ -8854,9 +8831,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     $" procs10: %3d %s"  #( procs10 length 10fncs )             snd-test-message
   then
   #( 1.5 #( 0 1 ) 1234 #t )                     { random-args }
-  #( 1.5 #( 0 1 ) 1234 vct-3 color-95 -1.0 csqrt delay-32 :feedback #f ) { main-args }
-  #( 1.5 #( 0 1 ) 1234 -1.0 csqrt delay-32 #t ) { few-args }
-  #( 1.5 vct-3 -1.0 csqrt )                     { fewer-args }
+  #( 1.5 #( 0 1 ) 1234 vct-3 color-95 0+i delay-32 :feedback #f ) { main-args }
+  #( 1.5 #( 0 1 ) 1234 0+i delay-32 #t ) { few-args }
+  #( 1.5 vct-3 0+i )                     { fewer-args }
   all-args if main-args else few-args then      { less-args }
   nil nil nil nil nil nil nil { arg1 arg2 arg3 arg4 tm prc tag }
   gc-run
@@ -9166,9 +9143,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 
 : 30-test
   #( 1.5 #( 0 1 ) 1234 #t )                     { random-args }
-  #( 1.5 #( 0 1 ) 1234 vct-3 color-95 -1.0 csqrt delay-32 :feedback #f ) { main-args }
-  #( 1.5 #( 0 1 ) 1234 -1.0 csqrt delay-32 #t ) { few-args }
-  #( 1.5 vct-3 -1.0 csqrt )                     { fewer-args }
+  #( 1.5 #( 0 1 ) 1234 vct-3 color-95 0+i delay-32 :feedback #f ) { main-args }
+  #( 1.5 #( 0 1 ) 1234 0+i delay-32 #t ) { few-args }
+  #( 1.5 vct-3 0+i )                     { fewer-args }
   fewer-args { less-args }
   fewer-args to random-args
   fewer-args to few-args

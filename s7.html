@@ -2480,7 +2480,10 @@ make-hash-table-iterator internally).
 
 <pre>
     (define (hash-table-&gt;alist table)
-      (map (lambda (x) x) table)) ; clearer perhaps than (map values table), append would also work here
+      (map values table))
+
+  (define (merge-hash-tables . tables)
+    (apply hash-table (apply append (map (lambda (table) (map values table)) tables))))
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
@@ -2578,7 +2581,13 @@ In s7, multiple values are spliced directly into the caller's argument list.
     (let ((local-vars (map (lambda (n) (gensym)) vars)))
       `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))
 
-  ;; let*-values is defined as a macro at the end of s7.c (commented out)
+  (define (curry function . args)
+    (if (null? args)
+	function
+	(lambda more-args
+	  (if (null? more-args)
+	      (apply function args)
+	      (function (apply values args) (apply values more-args))))))
 </pre>
 
 
@@ -3129,6 +3138,9 @@ via the error function, and can be trapped and dealt with via <a name="catch">ca
   (lambda args (string-&gt;number "inf.0")))
 
 -&gt; inf.0
+
+(define-macro (catch-all . body)
+  `(<em class=red>catch</em> #t (lambda () ,@body) (lambda args args)))
 </pre>
 
 <p>
@@ -3580,6 +3592,7 @@ use augment-environment!.  Both of these functions accept nil as the
 'env' argument as shorthand for (global-environment).
 Augment-environment is a bad name; more consistent with other s7 functions (such as hash-table)
 would be <code>(define (environment . args) (apply augment-environment '() args))</code>.
+Or add an environment argument to define and friends?  Or use Sail's "context" instead of "environment"?
 </p>
 
 <p>It is possible in Scheme to redefine built-in functions such as car.
@@ -3890,6 +3903,27 @@ class-3
 &gt; ((class-3 'multiply) class-3 10)
 180                               ; (* 10 (* 1 2 3) (+ 1 2))
 </pre>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<pre>
+(define-bacro (value-&gt;symbol val)
+  `(call-with-exit
+    (lambda (return)
+      (do ((e (current-environment) (outer-environment e))) ()
+	(for-each 
+	 (lambda (slot)
+	   (if (equal? ,val (cdr slot))
+	       (return (car slot))))
+	 e)
+	(if (eq? e (global-environment))
+	    (return #f))))))
+
+&gt; (let ((a 1) (b "hi")) (value-&gt;symbol "hi"))
+b
+</pre>
+
 </blockquote>
 </small>
 </dd>
