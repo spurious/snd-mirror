@@ -1,5 +1,48 @@
 ;;; backwards compatibility for snd 11
 
+
+;;; these are carried forward from snd10.scm
+
+(define sine-summation nrxysin)
+(define sine-summation? nrxysin?)
+
+(define sum-of-sines nsin)
+(define sum-of-sines? nsin?)
+
+(define sum-of-cosines ncos)
+(define sum-of-cosines? ncos?)
+
+(define* (make-sum-of-sines (sines 1) (frequency 0.0) (initial-phase 0.0))
+  (let ((gen (make-nsin :frequency frequency :n sines)))
+    (set! (mus-phase gen) initial-phase)
+    gen))
+
+(define* (make-sum-of-cosines (cosines 1) (frequency 0.0) (initial-phase 0.0))
+  (let ((gen (make-ncos :frequency frequency :n cosines)))
+    (set! (mus-phase gen) initial-phase)
+    gen))
+
+(define* (make-sine-summation (frequency 0.0) (initial-phase 0.0) (n 1) (a 0.5) (ratio 1.0))
+  (let ((gen (make-nrxysin :frequency frequency :ratio ratio :n n :r a)))
+    (set! (mus-phase gen) initial-phase)
+    gen))
+
+(if (not (defined? 'in-hz)) (define in-hz hz->radians))
+
+(define copy-sample-reader copy-sampler)
+(define free-sample-reader free-sampler)
+(define make-mix-sample-reader make-mix-sampler)
+(define make-region-sample-reader make-region-sampler)
+(define make-sample-reader make-sampler)
+(define mix-sample-reader? mix-sampler?)
+(define region-sample-reader? region-sampler?)
+(define sample-reader-at-end? sampler-at-end?)
+(define sample-reader-home sampler-home)
+(define sample-reader? sampler?)
+(define sample-reader-position sampler-position)
+
+
+
 ;;; -------- with-mix --------
 ;;;
 ;;; weird syntax = with-mix (with-sound-args) file-name start-in-output &body body

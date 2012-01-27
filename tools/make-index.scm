@@ -15,7 +15,7 @@
 					;(load "snd6.scm")
 					;(load "snd9.scm")
 					;(load "snd8.scm")
-(load "snd10.scm")
+					;(load "snd10.scm")
 (load "analog-filter.scm")	   
 					; (load "new-backgrounds.scm")
 (load "animals.scm")		   

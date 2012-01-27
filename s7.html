@@ -2482,8 +2482,8 @@ make-hash-table-iterator internally).
     (define (hash-table-&gt;alist table)
       (map values table))
 
-  (define (merge-hash-tables . tables)
-    (apply hash-table (apply append (map (lambda (table) (map values table)) tables))))
+    (define (merge-hash-tables . tables)
+      (apply hash-table (apply append (map (lambda (table) (map values table)) tables))))
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
@@ -3907,8 +3907,14 @@ class-3
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+
+<table border=1 bordercolor="lightgray" vspace=10 hspace=0 cellspacing=2 cellpadding=5>
+<tr>
+<td bgcolor="#f2f4ff">
 <pre>
 (define-bacro (value-&gt;symbol val)
+   ;; here the current-environment is the calling environment
   `(call-with-exit
     (lambda (return)
       (do ((e (current-environment) (outer-environment e))) ()
@@ -3920,9 +3926,35 @@ class-3
 	(if (eq? e (global-environment))
 	    (return #f))))))
 
-&gt; (let ((a 1) (b "hi")) (value-&gt;symbol "hi"))
+&gt; (let ((a 1) (b "hi")) 
+    (value-&gt;symbol "hi"))
 b
 </pre>
+</td>
+<td width=20></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+
+(define (value-&gt;symbol val env)
+  ;; here we have to pass in the current-environment
+  (call-with-exit
+   (lambda (return)
+     (for-each 
+      (lambda (slot)
+	(if (equal? val (cdr slot))
+	    (return (car slot))))
+      env)
+     (and (not (eq? env (global-environment)))
+	  (value-&gt;symbol val (outer-environment env))))))
+
+&gt; (let ((a 1) (b "hi")) 
+    (value-&gt;symbol "hi" (current-environment)))
+b
+</pre>
+</td>
+</tr>
+</table>
 
 </blockquote>
 </small>

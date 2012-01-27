@@ -282,7 +282,7 @@
   "snd-gtk.scm"
   "snd-motif.scm"
   "snd-test.scm"
-  "snd10.scm"
+;  "snd10.scm"
   "snd11.scm"
   "snd12.scm"
   "snddiff.scm"

@@ -459,10 +459,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+27-Jan:  removed snd10.scm.\n\
+30-Dec:  Snd 12.7.\n\
 8-Nov:   Snd 12.6\n\
 29-Sep:  Snd 12.5.\n\
-19-Aug:  Snd 12.4.\n\
-18-Aug:  removed snd9.scm.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

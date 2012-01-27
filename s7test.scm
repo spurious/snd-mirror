@@ -35950,6 +35950,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (integer-length 1/2) 'error)
 (test (integer-length 1.2) 'error)
 (test (integer-length 1+2i) 'error)
+(test (integer-length 1/0) 'error)
+(test (integer-length (log 0)) 'error)
 
 (if with-bignums
     (begin
@@ -36033,9 +36035,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (integer-decode-float (expt 2.0 52)) (list #x10000000000000 0 1))
 (test (integer-decode-float 1e23) '(5960464477539062 24 1))
 
-;(test (integer-decode-float 1/0) '(6755399441055744 972 1))
-;(test (integer-decode-float (real-part (log 0))) '(4503599627370496 972 -1))
-
 (if with-bignums
     (begin
       (test (integer-decode-float 2.225e-308) '(9007049763458157 -1075 1))
@@ -36046,7 +36045,15 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       ;(test (integer-decode-float (bignum "1/0")) 'error) -- see above: (6755399441055744 972 1)
       (test (integer-decode-float 0+92233720368547758081.0i) 'error)
       (test (integer-decode-float 92233720368547758081/123) 'error)
+      )
+    (begin
+      (test (integer-decode-float 1/0) '(6755399441055744 972 1))
+      (test (integer-decode-float (real-part (log 0))) '(4503599627370496 972 -1))
+      (test (integer-decode-float (- (real-part (log 0)))) '(4503599627370496 972 1))
+      (test (integer-decode-float (/ (real-part (log 0)) (real-part (log 0)))) '(6755399441055744 972 -1))
+      (test (integer-decode-float (- (/ (real-part (log 0)) (real-part (log 0))))) '(6755399441055744 972 1))
       ))
+
 
 (do ((i 0 (+ i 1)))
     ((= i 100))
@@ -36362,7 +36369,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		(if (= counts 1)
 		    (format #t ";(log-1-of ~{~D~^ ~}) -> ~A,  [#b~B, counts = 1 but we're off]~%" ints result (ash 1 b)))))))))
   
-#|
+
   (define (log-n-1-of . ints) ; bits on in exactly n-1 of ints
     (let ((len (length ints)))
       (cond ((= len 0) 
@@ -36573,7 +36580,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're on]~%" n ints result (ash 1 b) counts))
 		(if (and (> len 1) (= counts n))
 		    (format #t ";(log-n-of ~D ~{~D~^ ~}) -> ~A,  [#b~B, counts: ~D but we're off]~%" n ints result (ash 1 b) counts))))))))
-|#  
+
 
   (define (simple-log-n-of n . ints)     ; bits on in exactly n of ints
     (let ((len (length ints)))
@@ -53499,6 +53506,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (log 9.0 3.0) 2.0)
 (num-test (log 9223372036854775807) 4.366827237527655449317720343461657334526E1)
 (num-test (log pi) 1.14472988584940)
+(num-test (log (/ 1+i)) (log (/ 1 1+i)))
 (test (< (real-part (log 0.0)) (real-part (- (log 0.0)))) #t)
 (test (infinite? (random (log 0.0))) #t) ; should (random inf.0 inf.0) be 0?
 ;(num-test (log 1 1) 'error) ; (expt 1 0) is 1 but so is (expt 1 1) -- an ambiguous case (returns NaN in gmp)
