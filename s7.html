@@ -3590,9 +3590,10 @@ just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
 use augment-environment!.  Both of these functions accept nil as the
 'env' argument as shorthand for (global-environment).
-Augment-environment is a bad name; more consistent with other s7 functions (such as hash-table)
+Augment-environment is a bad name.  More consistent with other s7 functions (such as hash-table)
 would be <code>(define (environment . args) (apply augment-environment '() args))</code>.
-Or add an environment argument to define and friends?  Or use Sail's "context" instead of "environment"?
+or perhaps use the name make-environment?
+Or add an environment argument to define and friends (in the C FFI, s7_define takes an environment argument)?  Or use Sail's "context" instead of "environment"?
 </p>
 
 <p>It is possible in Scheme to redefine built-in functions such as car.
@@ -6268,7 +6269,7 @@ int main(int argc, char **argv)
    *   accessible from Scheme via the global variable "lib-exports"
    */
   
-  new_env = <em class=red>s7_augment_environment</em>(s7, s7_cons(s7, s7_current_environment(s7), s7_nil(s7)), s7_nil(s7));
+  new_env = <em class=red>s7_augment_environment</em>(s7, s7_current_environment(s7), s7_nil(s7));
   /* make a private environment for func1 and var1 below (this is our "namespace") */
   s7_gc_protect(s7, new_env);
 

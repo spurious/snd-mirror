@@ -32,7 +32,7 @@
  *        in sndlib, the run macro works giving s7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.html for a simple example)
- *        lists, strings, vectors, and hash-tables are (set-)applicable objects
+ *        lists, strings, vectors, hash-tables, and environments are (set-)applicable objects
  *        true multiple-values
  *        multidimensional vectors
  *        hooks (conditions)
@@ -3725,6 +3725,42 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 }
 
 
+#if 0
+typedef struct c_example_t {
+  s7_Int integer_value;
+  s7_Double real_value;
+} c_example_t;
+
+static s7_pointer c_struct_to_s7_object(s7_scheme *sc, c_example_t *p)
+{
+  return(s7_augment_environment(sc, s7_nil(sc), 
+				s7_cons(sc, s7_make_symbol(sc, "integer_value"), s7_make_integer(sc, p->integer_value)),
+				s7_cons(sc, s7_make_symbol(sc, "real_value"), s7_make_real(sc, p->real_value)),
+
+  /* now in scheme, (p 'integer_value) gives that field, but how to automate? how to set the C side from scheme?
+   *    pws seems redundant, ((p 'integer_value) p) is redundant
+   *    local (to the object) symbol_accessor: integer_value -> s7_make_integer(sc, unwrap_p->integer_value)
+   * so we need env-local accessors, at least from C
+   *    all these implicit refs (anything outside with-environment) go through environment_ref|set
+   *    and how to tell (e sym) wants to evaluate the pws as if it were (sym e)?  maybe an extension of env: T_C_ENVIRONMENT?
+   *
+   * ultimately we want to replace hooks with objects where all hook functions take no args and return nothing,
+   *   but handle all exchange through the object.  Currently hooks are bad because the caller (on both sides)
+   *   has to remember how many arguments each takes, and what they mean and what the return value means, and
+   *   when there are lots of hooks (Snd has nearly 100), what all the names are.  Similarly, all the C struct
+   *   accesses have to go through the pws mechanism which requires endless documentation and naming and C-side boilplate.
+   *   And ideally C and Scheme would share access paths, and names (xg.c for example) -- only one name to remember.
+   *
+   *   snd_state->sounds[selected_sound]->chans[0]->edits[current_edit]->time_graph->axis_x0 or some such path to
+   *   (axis-x0 (graphs (edits (channels (sounds *snd* (selected-sound *snd*)) 0) current-edit) time-graph))
+   *
+   * 1st step: define a constant *snd*
+   * snd-xen.c has g_snd_sound_pointer which is sort of like sounds above
+   */
+}
+#endif
+
+
 /* (define (environment . args) (apply augment-environment '() args))
  * 
  * currently (eval 'a (augment-environment () '(a . 1) '(a . 2))) -> 2,
@@ -3895,6 +3931,12 @@ It is a hash-table."
  */
 
 
+s7_pointer s7_global_environment(s7_scheme *sc) 
+{
+  return(sc->global_env);
+}
+
+
 static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_current_environment "(current-environment) returns the current definitions (symbol bindings)"
@@ -3902,6 +3944,12 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
   if (is_environment(sc->envir))
     return(sc->envir);
   return(sc->global_env);
+}
+
+
+s7_pointer s7_current_environment(s7_scheme *sc) 
+{
+  return(sc->envir);
 }
 
 
@@ -4102,18 +4150,6 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
        set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
       } while (0)
 
-
-
-s7_pointer s7_global_environment(s7_scheme *sc) 
-{
-  return(sc->global_env);
-}
-
-
-s7_pointer s7_current_environment(s7_scheme *sc) 
-{
-  return(sc->envir);
-}
 
 
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)

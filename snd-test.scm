@@ -4170,8 +4170,8 @@
     (hook-push open-raw-sound-hook (lambda (a b) #t))
     (set! (hook-functions bad-header-hook) '())
     (hook-push bad-header-hook (lambda (n) #t))
-    (if (null? (hook-functions open-raw-sound-hook)) (snd-display #__line__ ";add-hook open-raw-sound-hook failed??"))
-    (if (null? (hook-functions bad-header-hook)) (snd-display #__line__ ";add-hook bad-header-hook failed??"))
+    (if (null? (hook-functions open-raw-sound-hook)) (snd-display #__line__ ";add hook open-raw-sound-hook failed??"))
+    (if (null? (hook-functions bad-header-hook)) (snd-display #__line__ ";add hook bad-header-hook failed??"))
     (let* ((magic-words (list ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
 			      "FVER" "NONE" "ULAW" "ulaw" "ima4" "raw " "sowt" "in32" "in24" "ni23" "fl32"
 			      "FL32" "fl64" "twos" "ALAW" "alaw" "APPL" "CLM " "RIFF" "RIFX" "WAVE" "fmt "

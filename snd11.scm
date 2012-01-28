@@ -1,6 +1,33 @@
 ;;; backwards compatibility for snd 11
 
 
+;;; old Guile-style hook functions
+(define (hook-empty? hook) 
+  (null? (hook-functions hook)))
+
+(define (reset-hook! hook) 
+  (set! (hook-functions hook) '()))
+
+(define (run-hook . args) 
+  (hook-apply (car args) (cdr args)))
+
+(define hook->list hook-functions)
+
+(define* (add-hook! hook func (at-end #f))
+  (set! (hook-functions hook)
+	(if (not at-end)
+	    (cons func (hook-functions hook))
+	    (append (hook-functions hook) (list func)))))
+
+(define (remove-hook! hook func)
+  (set! (hook-functions hook)
+	(let loop ((l (hook-functions hook))
+		   (result '()))
+	  (cond ((null? l) (reverse! result))
+		((eq? func (car l)) (loop (cdr l) result))
+		(else (loop (cdr l) (cons (car l) result)))))))
+
+
 ;;; these are carried forward from snd10.scm
 
 (define sine-summation nrxysin)

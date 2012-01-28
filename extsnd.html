@@ -1758,11 +1758,10 @@ This hook is called after Snd has saved its state (<a href="#savestate">save-sta
 program.  See <a href="sndscm.html#wssavestate">ws-save-state</a> in ws.scm.  It uses this sequence:
 <br>
 <pre>
-(lambda (filename)
-  (let ((fd (open filename (logior O_RDWR O_APPEND)))) ; open to write at the end
-    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> fd "~%~%;;; save-state stuff here ~%")
+  (let ((fd (open-output-file filename "a"))) ; "a" = append
+    (format fd "~%~%;;; from ws.scm~%")
     ...
-    (close fd)))
+    (close-output-port fd))
 </pre>
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -2702,7 +2701,7 @@ This hook is called each time some Snd-generated response ('text') is about to b
 If the function returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt.
 The prompt is important!  Snd uses it to find the current form to evaluate, so if your print hook function
 forgets to include it, you can end up with a comatose listener.  To get out of this state, include
-the prompt by hand (i.e. type in the shell that Snd started in, "&gt;(reset-hook! print-hook)").
+the prompt by hand (i.e. type in the shell that Snd started in, "&gt;(hook-clear print-hook)").
 This is intended to make it possible to
 distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, but both should be handled
 in some other way &mdash; I should rewrite this part of Snd.
@@ -2987,7 +2986,7 @@ up protected portions of the edit history:
   "(protect snd chn) disallows any edits before the current one"
   (let* ((edit-pos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn))
          (hook (<em class=red>edit-hook</em> snd chn)))
-    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_reset_hook_tip)">reset-hook!</a> hook)
+    (hook-clear hook)
     (hook-push hook 
       (lambda ()
         (let ((val (&lt; (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn) edit-pos)))
@@ -2996,7 +2995,7 @@ up protected portions of the edit history:
 
 (define* (unprotect snd chn)
   "(unprotect snd chn) allows edits at any edit history position"
-  (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_reset_hook_tip)">reset-hook!</a> (<em class=red>edit-hook</em> snd chn)))
+  (hook-clear (<em class=red>edit-hook</em> snd chn)))
 </pre></td></tr></table>
 
 <a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.

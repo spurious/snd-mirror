@@ -1928,7 +1928,8 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
   XEN_DEFINE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
 
-  /* backwards compatibility (guile hook functions) */
+#if 0
+  /* backwards compatibility (guile hook functions) -- these have been moved to snd11.scm */
   XEN_EVAL_C_STRING("(define (hook-empty? hook) (null? (hook-functions hook)))");
   XEN_EVAL_C_STRING("(define (reset-hook! hook) (set! (hook-functions hook) '()))");
   XEN_EVAL_C_STRING("(define (run-hook . args) (hook-apply (car args) (cdr args)))");
@@ -1945,8 +1946,9 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 	                       (cond ((null? l) (reverse! result))\n\
 		                     ((eq? func (car l)) (loop (cdr l) result))\n\
 		                     (else (loop (cdr l) (cons (car l) result)))))))");
+#endif
 
-  /* these three to replace add-hook! and remove-hook! */
+  /* these three to replace add-hook!, reset-hook!, and remove-hook! */
   XEN_EVAL_C_STRING("(define (hook-push hook func) \n\
                        \"(hook-push hook func) adds func to hook's function list\" \n\
                        (set! (hook-functions hook) (cons func (hook-functions hook))))");
@@ -1954,7 +1956,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
                        \"(hook-append hook func) adds func to the end of hook's function list\" \n\
                        (set! (hook-functions hook) (append (hook-functions hook) (list func))))");
   XEN_EVAL_C_STRING("(define hook-remove remove-hook!)");
-
+  XEN_EVAL_C_STRING("(define (hook-clear hook) (set! (hook-functions hook) '()))");
 
   XEN_EVAL_C_STRING("(define load-from-path load)");
   XEN_EVAL_C_STRING("(define (1+ x) \"add 1 to arg\" (+ x 1))");
