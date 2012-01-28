@@ -2788,7 +2788,7 @@ void g_xen_initialize(void)
 
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-" PROC_FALSE " result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
-  (add-hook! " S_print_hook "\n\
+  (hook-push " S_print_hook "\n\
     (lambda (msg) \n\
       (" S_snd_print "\n\
         (format #f \"~A~%[~A]~%~A\" \n\
@@ -2938,7 +2938,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 \
 (let ((saved-listener-prompt (listener-prompt)))\
   (set! break-exit (lambda ()\
-		     (reset-hook! read-hook)\
+		     (hook-clear read-hook)\
 		     (set! (listener-prompt) saved-listener-prompt)\
 		     #f))\
   (set! break-enter (lambda ()\
@@ -2951,7 +2951,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
      (call/cc\
       (lambda (return)\
 	(set! break-ok return)      ; save current program loc so (break-ok) continues from the break\n\
-	(add-hook! read-hook        ; anything typed in the listener is evaluated in the environment of the break call\n\
+	(hook-push read-hook        ; anything typed in the listener is evaluated in the environment of the break call\n\
 		   (lambda (str)\
 		     (eval-string str __break__)))\
 	(error 'snd-top-level)))    ; jump back to the top level\n\

@@ -84,7 +84,7 @@ static void run_after_graph_hook(chan_info *cp)
 	     XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 			C_TO_XEN_INT(cp->chan)),
 	     S_after_graph_hook);
-  /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
+  /* (hook-push after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
 }
 
 
@@ -3854,7 +3854,7 @@ static void display_channel_data_with_size(chan_info *cp,
 				      C_TO_XEN_DOUBLE(cp->axis->y0),
 				      C_TO_XEN_DOUBLE(cp->axis->y1)),
 			   S_graph_hook);
-      /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
+      /* (hook-push graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
       ss->graph_hook_active = false;
       if (XEN_TRUE_P(res)) return;
     }
@@ -7635,7 +7635,7 @@ WITH_THREE_SETTER_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
 static XEN g_edit_hook(XEN snd, XEN chn_n) 
 {
   #if HAVE_SCHEME
-    #define edit_hook_example "(add-hook! (" S_edit_hook " snd chn) (lambda () (" S_snd_print " \";about to edit\") #f))"
+    #define edit_hook_example "(hook-push (" S_edit_hook " snd chn) (lambda () (" S_snd_print " \";about to edit\") #f))"
   #endif
   #if HAVE_RUBY
     #define edit_hook_example "edit_hook(snd, chn).add_hook!(\"hook-test\") do | | snd_print(\"about to edit\"); false end"
@@ -7656,7 +7656,7 @@ the edit is aborted. \n  " edit_hook_example
 static XEN g_after_edit_hook(XEN snd, XEN chn_n) 
 {
   #if HAVE_SCHEME
-    #define after_edit_hook_example "(add-hook! (" S_after_edit_hook " snd chn) (lambda () (" S_snd_print " \";just edited\")))"
+    #define after_edit_hook_example "(hook-push (" S_after_edit_hook " snd chn) (lambda () (" S_snd_print " \";just edited\")))"
   #endif
   #if HAVE_RUBY
     #define after_edit_hook_example "after_edit_hook(snd, chn).add_hook!(\"hook-test\") do | | snd_print(\"just edited\") end"

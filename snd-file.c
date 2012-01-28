@@ -1582,7 +1582,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 }
 
 
-/* (add-hook! open-hook (lambda (f) (display f) #f)) */
+/* (hook-push open-hook (lambda (f) (display f) #f)) */
 
 snd_info *snd_open_file(const char *filename, read_only_t read_only)
 {
@@ -6285,14 +6285,14 @@ before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just
 #if HAVE_SCHEME
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
 but before data has been read. \n\
-  (add-hook! " S_during_open_hook "\n\
+  (hook-push " S_during_open_hook "\n\
     (lambda (fd name reason) \n\
       (if (= (" S_mus_sound_header_type " name) " S_mus_raw ")\n\
           (set! (" S_mus_file_prescaler " fd) 500.0))))"
 
   #define H_after_open_hook S_after_open_hook " (snd): called just before the new file's window is displayed. \
 This provides a way to set various sound-specific defaults. \n\
-  (add-hook! " S_after_open_hook "\n\
+  (hook-push " S_after_open_hook "\n\
     (lambda (snd) \n\
       (if (> (" S_channels " snd) 1) \n\
           (set! (" S_channel_style " snd) " S_channels_combined "))))"

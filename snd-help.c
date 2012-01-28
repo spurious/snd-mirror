@@ -3997,7 +3997,7 @@ it returns a string, it replaces 'help-string' (the default help)"
 #if HAVE_SCHEME
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, each function gets the previous function's output as its input.\n\
-  (add-hook! " S_output_comment_hook "\n\
+  (hook-push " S_output_comment_hook "\n\
     (lambda (str)\n\
       (string-append str \": written \"\n\
         (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\

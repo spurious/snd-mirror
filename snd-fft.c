@@ -2428,9 +2428,9 @@ an integer, it is used as the starting point of the transform.  The following \
 somewhat brute-force code shows a way to have the transform reflect the position \
 of a moving mark:\n\
   (define transform-position #f)\n\
-  (add-hook! " S_before_transform_hook "\n\
+  (hook-push " S_before_transform_hook "\n\
     (lambda (snd chn) transform-position))\n\
-  (add-hook! " S_mark_drag_hook "\n\
+  (hook-push " S_mark_drag_hook "\n\
     (lambda (id)\n\
       (set! transform-position (" S_mark_sample " id))\n\
       (" S_update_transform_graph ")))"

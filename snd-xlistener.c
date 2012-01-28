@@ -1540,7 +1540,7 @@ void g_init_gxlistener(void)
 #if HAVE_SCHEME
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
 enters the lisp listener pane:\n\
-  (add-hook! " S_mouse_enter_listener_hook "\n\
+  (hook-push " S_mouse_enter_listener_hook "\n\
     (lambda (widget)\n\
       (" S_focus_widget " widget)))"
 #endif
@@ -1567,7 +1567,7 @@ leaves the lisp listener pane"
 
 #if HAVE_SCHEME
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
-(add-hook! " S_mouse_enter_text_hook "\n\
+(hook-push " S_mouse_enter_text_hook "\n\
   (lambda (w)\n\
     (" S_focus_widget " w)))"
 #endif

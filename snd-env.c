@@ -1842,7 +1842,7 @@ is 'reason' which can be " S_enved_move_point ", " S_enved_delete_point ", \
 or " S_enved_add_point ".  This hook makes it possible to define attack \
 and decay portions in the envelope editor, or use functions such as \
 stretch-envelope from env.scm: \n\
- (add-hook! " S_enved_hook "\n\
+ (hook-push " S_enved_hook "\n\
    (lambda (env pt x y reason)\n\
      (if (= reason " S_enved_move_point ")\n\
          (let* ((old-x (list-ref env (* pt 2)))\n\
