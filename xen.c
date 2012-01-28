@@ -1955,8 +1955,14 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_EVAL_C_STRING("(define (hook-append hook func) \n\
                        \"(hook-append hook func) adds func to the end of hook's function list\" \n\
                        (set! (hook-functions hook) (append (hook-functions hook) (list func))))");
-  XEN_EVAL_C_STRING("(define hook-remove remove-hook!)");
   XEN_EVAL_C_STRING("(define (hook-clear hook) (set! (hook-functions hook) '()))");
+  XEN_EVAL_C_STRING("(define (hook-remove hook func) \n\
+                       (set! (hook-functions hook)\n\
+	                     (let loop ((l (hook-functions hook))\n\
+		                        (result '()))\n\
+	                       (cond ((null? l) (reverse! result))\n\
+		                     ((eq? func (car l)) (loop (cdr l) result))\n\
+		                     (else (loop (cdr l) (cons (car l) result)))))))");
 
   XEN_EVAL_C_STRING("(define load-from-path load)");
   XEN_EVAL_C_STRING("(define (1+ x) \"add 1 to arg\" (+ x 1))");
