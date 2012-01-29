@@ -526,6 +526,10 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
   gtk_widget_modify_bg(w, type, rgb_to_gdk_color(color));
 #else
   gtk_widget_override_background_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_INSENSITIVE, (GdkRGBA *)color);
 #endif
 }
 
@@ -536,6 +540,10 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
   gtk_widget_modify_fg(w, type, rgb_to_gdk_color(color));
 #else
   gtk_widget_override_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)color);
+  gtk_widget_override_color(w, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)color);
+  gtk_widget_override_color(w, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)color);
+  gtk_widget_override_color(w, GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
+  gtk_widget_override_color(w, GTK_STATE_FLAG_INSENSITIVE, (GdkRGBA *)color);
 #endif
 }
 
@@ -546,6 +554,10 @@ void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
   gtk_widget_modify_base(w, type, rgb_to_gdk_color(color));
 #else
   gtk_widget_override_background_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_INSENSITIVE, (GdkRGBA *)color);
 #endif
 }
 
@@ -976,13 +988,21 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 
 
 #if HAVE_GTK_3
-static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider;
+static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider;
 void add_white_button_style(GtkWidget *w)
 {
   GtkStyleContext *c;
   c = gtk_widget_get_style_context(w);
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(wb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   gtk_widget_set_name(w, "white_button");
+}
+
+void add_highlight_button_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(hl_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  gtk_widget_set_name(w, "highlight_button");
 }
 
 void add_listener_style(GtkWidget *w)
@@ -1000,6 +1020,10 @@ void add_dialog_style(GtkWidget *w)
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(dialog_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 #else
+void add_highlight_button_style(GtkWidget *w)
+{
+}
+
 void add_white_button_style(GtkWidget *w) 
 {
   gtk_widget_set_name(w, "white_button");
@@ -1344,6 +1368,19 @@ void init_gtk(void)
     "}\n"
     "GtkButton#white_button:prelight { \n"
     "  background-image: -gtk-gradient (linear, left top, right bottom, from(#ffffff), to(rgb(200, 225, 255)));\n"
+    "}\n",
+    -1, NULL);
+
+  hl_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(hl_provider),
+    "GtkButton#highlight_button { \n"
+    "  padding-top: 0;\n"
+    "  padding-bottom: 0;\n"
+    "  border-width: 0;\n"
+    "  background-color: #fffff0;\n"
+    "}\n"
+    "GtkButton#highlight_button:prelight { \n"
+    "  background-image: -gtk-gradient (linear, left top, right bottom, from(#fffff0), to(rgb(200, 225, 255)));\n"
     "}\n",
     -1, NULL);
 

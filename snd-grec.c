@@ -313,6 +313,12 @@ widget_t record_file(void)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(recorder)), record_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(recorder)), help_button, true, true, 10);
 
+#if HAVE_GTK_3
+      add_highlight_button_style(quit_button);
+      add_highlight_button_style(record_button);
+      add_highlight_button_style(help_button);
+#endif
+
       SG_SIGNAL_CONNECT(quit_button, "clicked", quit_recorder, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", recorder_help, NULL);
       SG_SIGNAL_CONNECT(record_button, "clicked", start_or_stop_recorder, NULL);

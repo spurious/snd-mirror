@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO: in gtk3, the "srate" display is gray
+/* TODO: in gtk3, all the backgrounds are gray
  */
 
 /* -------- region browser -------- */
@@ -472,6 +472,14 @@ static void make_region_dialog(void)
 
   save_as_button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
   gtk_widget_set_name(save_as_button, "dialog_button");
+
+#if HAVE_GTK_3
+  add_highlight_button_style(help_button);
+  add_highlight_button_style(dismiss_button);
+  add_highlight_button_style(insert_button);
+  add_highlight_button_style(save_as_button);
+  add_highlight_button_style(mix_button);
+#endif
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), dismiss_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), insert_button, true, true, 4);

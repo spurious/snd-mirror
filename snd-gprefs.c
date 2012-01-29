@@ -168,8 +168,17 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
 {
   GtkWidget *w;
 
+#if (!HAVE_GTK_3)
   w = gtk_label_new(label);
   gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.0);
+#else
+  w = gtk_button_new_with_label(label);
+  widget_modify_bg(w, GTK_STATE_NORMAL, ss->highlight_color);
+  widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->light_blue);
+  add_highlight_button_style(w);
+  gtk_misc_set_alignment(GTK_MISC(BIN_CHILD(w)), 1.0, 0.0);
+#endif
+
   gtk_size_group_add_widget(label_group, w);
   gtk_box_pack_start(GTK_BOX(box), w, PACK_1, PACK_2, 0);
   gtk_widget_show(w);
@@ -184,7 +193,14 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
 static void make_row_inner_label(prefs_info *prf, const char *label, GtkWidget *box)
 {
   GtkWidget *w;
+#if (!HAVE_GTK_3)
   w = gtk_label_new(label);
+#else
+  w = gtk_button_new_with_label(label);
+  widget_modify_bg(w, GTK_STATE_NORMAL, ss->highlight_color);
+  widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->light_blue);
+  add_highlight_button_style(w);
+#endif
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 4);
   gtk_widget_show(w);
 }
@@ -391,12 +407,14 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 
   row = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  add_highlight_button_style(row);
   gtk_widget_show(row);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
+  add_highlight_button_style(hb);
   gtk_widget_show(hb);
 
   make_row_middle_separator(hb);
@@ -435,12 +453,14 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
 
   row = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  add_highlight_button_style(row);
   gtk_widget_show(row);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
+  add_highlight_button_style(hb);
   gtk_widget_show(hb);
 
   make_row_middle_separator(hb);
@@ -948,12 +968,14 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
 
   row = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  add_highlight_button_style(row);
   gtk_widget_show(row);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
+  add_highlight_button_style(hb);
   gtk_widget_show(hb);
 
   make_row_middle_separator(hb);
@@ -1346,13 +1368,25 @@ static void make_top_level_label(const char *label, GtkWidget *parent)
   gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 6);
   gtk_widget_show(w1);
 
-  w2 = gtk_label_new(label);
   str = mus_format("<b>%s</b>", label);
+
+#if (!HAVE_GTK_3)
+  w2 = gtk_label_new(label);
   gtk_label_set_markup(GTK_LABEL(w2), str);
   gtk_label_set_use_markup(GTK_LABEL(w2), true);
+  gtk_misc_set_alignment(GTK_MISC(w2), 0.01, 0.5);
+#else
+  w2 = gtk_button_new_with_label(label);
+  widget_modify_bg(w2, GTK_STATE_NORMAL, ss->highlight_color);
+  widget_modify_bg(w2, GTK_STATE_PRELIGHT, ss->light_blue);
+  add_highlight_button_style(w2);
+  gtk_label_set_markup(GTK_LABEL(BIN_CHILD(w2)), str);
+  gtk_label_set_use_markup(GTK_LABEL(BIN_CHILD(w2)), true);
+  gtk_misc_set_alignment(GTK_MISC(BIN_CHILD(w2)), 0.01, 0.5);
+#endif
+
   free(str);
 
-  gtk_misc_set_alignment(GTK_MISC(w2), 0.01, 0.5);
   gtk_box_pack_start(GTK_BOX(parent), w2, false, false, 0);
   gtk_widget_show(w2);
 
@@ -1372,8 +1406,9 @@ static GtkWidget *make_top_level_box(GtkWidget *topics)
   gtk_box_pack_start(GTK_BOX(topics), frame, true, true, 0);
   gtk_widget_show(frame);
 
-  w = gtk_vbox_new(false, 0);
+  w = gtk_vbox_new(false, 2);
   gtk_container_add(GTK_CONTAINER(frame), w);
+  add_highlight_button_style(w);
   gtk_widget_show(w);
   return(w);
 }
@@ -1388,13 +1423,25 @@ static void make_inner_label(const char *label, GtkWidget *parent)
   gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 4);
   gtk_widget_show(w1);
 
-  w = gtk_label_new(label);
   str = mus_format("<b>%s</b>", label);
+
+#if (!HAVE_GTK_3)
+  w = gtk_label_new(label);
   gtk_label_set_markup(GTK_LABEL(w), str);
   gtk_label_set_use_markup(GTK_LABEL(w), true);
+  gtk_misc_set_alignment(GTK_MISC(w), 0.0, 0.5);
+#else
+  w = gtk_button_new_with_label(label);
+  widget_modify_bg(w, GTK_STATE_NORMAL, ss->highlight_color);
+  widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->light_blue);
+  add_highlight_button_style(w);
+  gtk_label_set_markup(GTK_LABEL(BIN_CHILD(w)), str);
+  gtk_label_set_use_markup(GTK_LABEL(BIN_CHILD(w)), true);
+  gtk_misc_set_alignment(GTK_MISC(BIN_CHILD(w)), 0.0, 0.5);
+#endif
+
   free(str);
 
-  gtk_misc_set_alignment(GTK_MISC(w), 0.0, 0.5);
   gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
   gtk_widget_show(w);
 
@@ -1562,6 +1609,16 @@ widget_t make_preferences_dialog(void)
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), saveB, true, true, 10);
 #endif
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), helpB, true, true, 10);
+
+#if HAVE_GTK_3
+  add_highlight_button_style(dismissB);
+  add_highlight_button_style(revertB);
+  add_highlight_button_style(clearB);
+#if HAVE_EXTENSION_LANGUAGE
+  add_highlight_button_style(saveB);
+#endif
+  add_highlight_button_style(helpB);
+#endif
 
   SG_SIGNAL_CONNECT(preferences_dialog, "delete_event", preferences_delete_callback, NULL);
   SG_SIGNAL_CONNECT(dismissB, "clicked", preferences_dismiss_callback, NULL);

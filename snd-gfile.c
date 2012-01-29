@@ -395,6 +395,14 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   else fs->ok_button = gtk_button_new_from_stock(stock);
   gtk_widget_set_name(fs->ok_button, "dialog_button");
 
+#if HAVE_GTK_3
+  add_highlight_button_style(fs->ok_button);
+  add_highlight_button_style(fs->cancel_button);
+  add_highlight_button_style(fs->mkdir_button);
+  add_highlight_button_style(fs->help_button);
+  if (with_extract) add_highlight_button_style(fs->extract_button);
+#endif
+
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->ok_button, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->cancel_button, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->mkdir_button, true, true, 10);
@@ -3387,6 +3395,13 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), resetB, true, true, 10);
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), helpB, true, true, 10);
 
+#if HAVE_GTK_3
+  add_highlight_button_style(cancelB);
+  add_highlight_button_style(helpB);
+  add_highlight_button_style(resetB);
+  add_highlight_button_style(okB);
+#endif
+
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
 
   rp->rdat = make_file_data_panel(DIALOG_CONTENT_AREA(rp->dialog), "data-form", 
@@ -3693,6 +3708,13 @@ widget_t make_new_file_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), cancel_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), reset_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), help_button, true, true, 10);
+
+#if HAVE_GTK_3
+      add_highlight_button_style(help_button);
+      add_highlight_button_style(cancel_button);
+      add_highlight_button_style(reset_button);
+      add_highlight_button_style(new_file_ok_button);
+#endif
 
       hform = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(new_file_dialog)), hform, false, false, 4);
@@ -4033,6 +4055,12 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), cancel_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), help_button, true, true, 10);
 
+#if HAVE_GTK_3
+      add_highlight_button_style(help_button);
+      add_highlight_button_style(cancel_button);
+      add_highlight_button_style(ep->save_button);
+#endif
+
       ep->edat = make_file_data_panel(DIALOG_CONTENT_AREA(ep->dialog), "Edit Header", 
 				      WITH_CHANNELS_FIELD, 
 				      hdr->type, 
@@ -4142,6 +4170,10 @@ static void create_post_it_monolog(void)
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(post_it_dialog)), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
+
+#if HAVE_GTK_3
+  add_highlight_button_style(ok_button);
+#endif
 
   post_it_text = make_scrolled_text(DIALOG_CONTENT_AREA(post_it_dialog), false, 2, true);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
@@ -5282,6 +5314,13 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), dismissB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), resetB, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), helpB, true, true, 10);
+
+#if HAVE_GTK_3
+      add_highlight_button_style(helpB);
+      add_highlight_button_style(newB);
+      add_highlight_button_style(dismissB);
+      add_highlight_button_style(resetB);
+#endif
 
       SG_SIGNAL_CONNECT(vdat->dialog, "delete_event", view_files_delete_callback, (gpointer)vdat);
       SG_SIGNAL_CONNECT(dismissB, "clicked", view_files_dismiss_callback, (gpointer)vdat);

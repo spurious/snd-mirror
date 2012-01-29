@@ -1,9 +1,5 @@
 /* transform settings dialog */
 
-/* TODO: in gtk3, the bottom of the "type" list is gray 
- *       and the silly thing gives (vertical) expansion space to the bottom buttons!
- */
-
 #include "snd.h"
 
 /* when options window expanded vertically, graph gets less than half (empty space in button box) 
@@ -327,7 +323,7 @@ void make_transform_type_list(void)
 	  }
       if (!transform_list)
 	{
-	  transform_list = slist_new_with_title_and_table_data("type", outer_table, transform_names, j, TABLE_ATTACH, 0, 3, 0, 3);
+	  transform_list = slist_new_with_title_and_table_data("type", outer_table, transform_names, j, TABLE_ATTACH, 0, 3, 0, 4);
 	  transform_list->select_callback = transform_browse_callback;
 	}
       else
@@ -904,6 +900,12 @@ GtkWidget *make_transform_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), dismiss_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), help_button, false, true, 10);
 
+#if HAVE_GTK_3
+      add_highlight_button_style(dismiss_button);
+      add_highlight_button_style(color_button);
+      add_highlight_button_style(help_button);
+#endif
+
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_transform_callback, NULL);
       SG_SIGNAL_CONNECT(color_button, "clicked", color_orientation_transform_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", help_transform_callback, NULL);
@@ -912,7 +914,7 @@ GtkWidget *make_transform_dialog(bool managed)
       gtk_widget_show(color_button);
       gtk_widget_show(help_button);
 
-      outer_table = gtk_table_new(8, 11, false); /* rows cols */
+      outer_table = gtk_table_new(16, 11, false); /* rows cols */
       gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(transform_dialog)), outer_table);
       gtk_table_set_row_spacings(GTK_TABLE(outer_table), 16);
       gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
@@ -929,12 +931,12 @@ GtkWidget *make_transform_dialog(bool managed)
       make_transform_type_list();
 
       /* SIZE */
-      size_list = slist_new_with_title_and_table_data("size", outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 3, 6, 0, 3);
+      size_list = slist_new_with_title_and_table_data("size", outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 3, 6, 0, 6);
       size_list->select_callback = size_browse_callback;
 
       /* DISPLAY */
       display_frame = gtk_frame_new(NULL);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 6, 11, 0, 4);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 6, 11, 0, 7);
       gtk_frame_set_shadow_type(GTK_FRAME(display_frame), GTK_SHADOW_IN);
 
       {
@@ -1062,12 +1064,12 @@ GtkWidget *make_transform_dialog(bool managed)
 
 
       /* WINDOWS */
-      window_list = slist_new_with_title_and_table_data("window", outer_table, (const char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 3, 3, 6);
+      window_list = slist_new_with_title_and_table_data("window", outer_table, (const char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 3, 6, 12);
       window_list->select_callback = window_browse_callback;
 
       
       /* WAVELETS */
-      wavelet_list = slist_new_with_title_and_table_data("wavelet", outer_table, (const char **)wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 3, 6, 3, 6);
+      wavelet_list = slist_new_with_title_and_table_data("wavelet", outer_table, (const char **)wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 3, 6, 6, 12);
       wavelet_list->select_callback = wavelet_browse_callback;
 
       
@@ -1076,7 +1078,7 @@ GtkWidget *make_transform_dialog(bool managed)
       {
 	GtkWidget *alpha_scale, *beta_scale, *ab_box, *ab_frame, *ab_label;
 	ab_frame = gtk_frame_new(NULL);
-	gtk_table_attach_defaults(GTK_TABLE(outer_table), ab_frame, 0, 6, 6, 7);
+	gtk_table_attach_defaults(GTK_TABLE(outer_table), ab_frame, 0, 6, 12, 14);
 	gtk_frame_set_shadow_type(GTK_FRAME(ab_frame), GTK_SHADOW_IN);
 	
 	ab_box = gtk_vbox_new(false, 2);
@@ -1139,7 +1141,7 @@ GtkWidget *make_transform_dialog(bool managed)
       /* SPECTRUM_START/END */
 
       se_frame = gtk_frame_new(NULL);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), se_frame, 0, 6, 7, 8);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), se_frame, 0, 6, 14, 16);
       gtk_frame_set_shadow_type(GTK_FRAME(se_frame), GTK_SHADOW_IN);
 
       se_box = gtk_vbox_new(false, 2);
@@ -1202,7 +1204,7 @@ GtkWidget *make_transform_dialog(bool managed)
 	GtkWidget *graph_frame, *g_vbox;
 
 	graph_frame = gtk_frame_new(NULL);
-	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 6, 11, 4, 8);
+	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 6, 11, 7, 16);
 	gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
 	gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_IN);
 

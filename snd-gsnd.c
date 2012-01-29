@@ -2455,6 +2455,12 @@ void make_controls_dialog(void)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), reset_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(controls_dialog)), help_button, false, true, 10);
 
+#if HAVE_GTK_3
+  add_highlight_button_style(dismiss_button);
+  add_highlight_button_style(reset_button);
+  add_highlight_button_style(help_button);
+#endif
+
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", controls_dismiss_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", controls_help_callback, NULL);
       SG_SIGNAL_CONNECT(reset_button, "clicked", controls_reset_callback, NULL);

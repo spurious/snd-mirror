@@ -14520,8 +14520,27 @@ time, so that the displayed results are
 	  (2nd 1 0)
 	  (2nd (fib-1 (- n 1)))))
     (1st (fib-1 n)))
-  (test (fib 8) 21)
-  (test (fib 13) 233))
+
+  (define (real-fib n)
+    (let ((phi (/ (+ 1 (sqrt 5)) 2)))
+      (floor (/ (- (expt phi n)        ; "floor" to return an integer
+		   (expt (- 1 phi) n)) 
+		(sqrt 5)))))
+
+  (test (fib 8) (real-fib 8))
+  (test (fib 13) (real-fib 13)))
+
+(let ()
+  (define (cfib z) ; wikipedia "generalized fibonacci numbers"
+    (let ((phi (/ (+ 1 (sqrt 5)) 2))) 
+      (/ (- (expt phi z) 
+	    (* (expt phi (- z)) (cos (* pi z))))
+	 (sqrt 5))))
+  
+  (num-test (cfib 3) 2.0)
+  (num-test (cfib 8) 21.0)
+  (num-test (cfib 3+4i) -5248.5113072837-14195.962288353i))
+
 
 (let ()
   (define (flatten lst) ; flatten via values and map

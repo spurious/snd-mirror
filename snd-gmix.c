@@ -674,6 +674,9 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_set_name(dismiss_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
+#if HAVE_GTK_3
+      add_highlight_button_style(dismiss_button);
+#endif
       gtk_widget_show(dismiss_button);
       set_stock_button_label(dismiss_button, "Go Away");
 
@@ -681,18 +684,27 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_set_name(apply_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_env_callback, NULL);
+#if HAVE_GTK_3
+      add_highlight_button_style(apply_button);
+#endif
       gtk_widget_show(apply_button);
 
       copy_button = sg_button_new_from_stock_with_label("Copy mix", GTK_STOCK_COPY);
       gtk_widget_set_name(copy_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), copy_button, false, true, 10);
       SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_callback, NULL);
+#if HAVE_GTK_3
+      add_highlight_button_style(copy_button);
+#endif
       gtk_widget_show(copy_button);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "dialog_button");
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
+#if HAVE_GTK_3
+      add_highlight_button_style(help_button);
+#endif
       gtk_widget_show(help_button);
 
       /* normally hidden error indication at top */

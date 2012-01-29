@@ -82,15 +82,15 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#generalizedset">generalized set!</a>
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
   <li><a href="#hashtables">hash tables</a>
-  <li><a href="#hooks">hooks</a>
+  <li><a href="#environments">environments</a>
   <li><a href="#multiplevalues">multiple-values</a>
   <li><a href="#callwithexit1">call-with-exit</a>
   <li><a href="#format1">format</a>
-  <li><a href="#errors">errors, stacktrace, trace</a>
+  <li><a href="#hooks">hooks</a>
   <li><a href="#procedureinfo">procedure info</a>
-  <li><a href="#environments">environments</a>
   <li><a href="#evalstring">eval</a>
   <li><a href="#IO">string IO</a>
+  <li><a href="#errors">errors, stacktrace, trace</a>
   <li><a href="#miscellanea">miscellanea</a>
   <li><a href="#FFIexamples">FFI examples</a>
   <ul>
@@ -2503,45 +2503,436 @@ of the table sizes, or the order in which the key/value pairs were added.
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<A NAME="hooks"></a>
+<A NAME="environments"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hooks</h4></td></tr></table>
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>environments</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
-<dd>
-
-<pre>
-    (<a name="makehook">make-hook</a> (arity (0 0 #f)) (documentation ""))  ; make a new hook
-    (<a name="hook">hook</a> ...)                                       ; make a hook, the args are functions
-    (<a name="hookp">hook?</a> obj)                                      ; return #t if obj is a hook
-    (<a name="hookfunctions">hook-functions</a> hook)                            ; the hook's list of functions
-    (<a name="hookarity">hook-arity</a> hook)                                ; the hook's arity list: (required optional rest)
-    (<a name="hookdocumentation">hook-documentation</a> hook)                        ; the hook's documentation string
-    (<a name="hookapply">hook-apply</a> hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
-</pre>
-
-<p>A hook holds a list of functions.  When something interesting happens,
-the hook is invoked, and it applies its arguments to each function in the list.
-In GUI toolkits hooks are called callback-lists, in CL conditions,
-in other contexts watchpoints or signals.  s7 itself has several
-hooks: *trace-hook*, *error-hook*, *unbound-variable-hook*, and *load-hook*.
-A hook is created with make-hook or hook, called either as an applicable object
-or via hook-apply, and recognized via hook?.  The list of functions is accessed
-via hook-functions.  All the functions on the list have to be compatible with
-the way the hook itself is invoked, so the hook has an arity, hook-arity.
+<dd><p>An environment holds symbols and their values.  The global environment, for example,
+holds all the variables that are defined at the top level.
+Environments are first class (and applicable) objects in s7.  
 </p>
 
 <pre>
-&gt; (let ((h (make-hook '(1 0 #f) "an example hook")))     ; 1 required arg and no others
-    (set! (hook-functions h)                             ; add 1 function to the hook's list
-      (list (lambda (x) (format #t "x is ~A" x))))
-    (h 23))                                              ; invoke the hook's functions with argument 23
-"x is 23"
+  (<a name="environmentp">environment?</a> obj)            #t if obj is an environment
+  (<a name="globalenvironment">global-environment</a>)          the top-level environment
+  (<a name="currentenvironment">current-environment</a>)         the currently visible variables and their values
+  (<a name="procedureenvironment">procedure-environment</a> proc)  the environment at the time when proc was defined
+  (<a name="initialenvironment">initial-environment</a>)         the current environment, but all built-in functions have their original values
+  (<a name="outerenvironment">outer-environment</a> env)       the environment that encloses the environment env
+
+  (<a name="withenvironment">with-environment</a> env . body) evaluate body in the environment env 
+
+  (<a name="augmentenvironment">augment-environment</a> env . bindings)   add bindings to env
+  (<a name="augmentenvironment!">augment-environment!</a> env . bindings)
+  (<a name="environmenttolist">environment-&gt;list</a> env)       return the environment bindings as a list of (symbol . value) cons's
+  (<a name="symboltovalue">symbol-&gt;value</a> sym (env (current-environment)))
+  (<a name="definedp">defined?</a> sym (env (current-environment)))
 </pre>
 
+<A NAME="augmentenv"></A>
+<p><code>(with-environment env . body)</code> evaluates its body in the environment env.
+There are several examples of its use in the <a href="#macros">macro</a> section.
+defined? returns #t if the symbol is defined in the environment, and
+symbol-&gt;value returns the value associated with it.
+To add or change a symbol's value, use augment-environment:
+</p>
+
+<pre>
+(let ((a 1)) 
+  (eval '(+ a b) 
+         (<em class=red>augment-environment</em>
+           (current-environment) 
+           (cons 'b 32)))) ; add 'b with the value 32 to this environment
+
+-&gt; 33
+</pre>
+
+<p>augment-environment does not change the environment passed to it.  It
+just prepends the new bindings, shadowing any old ones,
+as if you had called "let".  To add the bindings directly to the environment,
+use augment-environment!.  Both of these functions accept nil as the
+'env' argument as shorthand for (global-environment).
+Augment-environment is a bad name.  
+Perhaps these would be better:
+</p>
+
+<pre>
+    (define (make-environment parent . args) (apply augment-environment parent args))
+    (define (environment . slots) (apply augment-environment () args))
+    (define (define-in-environment env symbol value) (augment-environment! env (cons symbol value)))
+    (define next-environment outer-environment)
+</pre>
+
+<br>
+<p>It is possible in Scheme to redefine built-in functions such as car.
+To ensure that some code sees the original built-in function definitions,
+wrap it in <code>(with-environment (initial-environment) ...)</code>:
+</p>
+<pre>
+&gt; (let ((caar 123)) 
+    (+ caar (with-environment (initial-environment) 
+              (caar '((2) 3)))))
+125
+</pre>
+
+<p>
+with-environment and initial-environment are constants, so you can
+use them in any context without worrying about whether they've been redefined.
+I think these functions can implement the notions of libraries,
+separate namespaces, or modules.  
+Here's one way: first the library writer just writes his library.
+The normal user simply loads it.  The abnormal user worries about everything,
+so first he loads the library in a local let to make sure no bindings escape 
+to pollute his code, and then he
+uses initial-environment to
+make sure that none of his bindings pollute the library code:
+</p>
+
+<pre>
+(let ()
+  (with-environment (initial-environment)
+    (load "any-library.scm" (current-environment)) ; by default load puts stuff in the global environment
+    ...))
+</pre>
+
+<p>Now Abnormal User can do what he wants with the library entities.
+Say he wants to use "lognor" under the name "bitwise-not-or", and
+all the other functions are of no interest:
+</p>
+
+<pre>
+(begin
+  (define bitwise-not-or #f)
+  (let ()
+    (with-environment (initial-environment)
+      (load "any-library.scm" (current-environment))
+      (set! bitwise-not-or (symbol-&gt;value 'lognor)))))
+</pre>
+
+<p>Or equivalently:
+</p>
+
+<pre>
+(augment-environment! (current-environment)
+  (cons 'bitwise-not-or 
+    (symbol-&gt;value 'lognor
+      (with-environment (initial-environment)
+        (load "any-library.scm" (current-environment))
+        (current-environment)))))
+</pre>
+
+<p>Say he wants to make sure the library is cleanly loaded, but all
+its bindings are exported into the current environment:
+</p>
+
+<pre>
+(apply augment-environment! (current-environment)
+  (with-environment (initial-environment)
+    (load "any-library.scm" (current-environment))
+    (environment-&gt;list (current-environment)))) ; these are the bindings introduced by loading the library
+</pre>
+
+<p>To do the same thing, but prepend "library:" to each name:
+</p>
+
+<pre>
+(apply augment-environment! (current-environment)
+  (with-environment (initial-environment)
+    (load "any-library.scm" (current-environment))
+    (map (lambda (binding)
+	   (cons (string-&gt;symbol 
+		  (string-append "library:" (symbol-&gt;string (car binding))))
+		 (cdr binding)))
+	 (environment-&gt;list (current-environment)))))
+</pre>
+
+<p>That's all there is to it!
+</p>
+
+
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Here is yet another object system.  Each class and each instance is an environment.
+A class might be thought of as a template for instances, but
+there's actually no difference between them.  To make an instance of a class, copy it.  To inherit from
+another class, concatenate the environments. To access (get or set) a field or a method, use the implicit
+indexing syntax with the field or method name.  To evaluate a form in the context of an instance
+(CL's with-slots), use with-environment. To run through all the fields, use map or for-each.
+</p>
+
+<pre>
+(define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
+  ;; a bacro is needed so that the calling environment is accessible via outer-environment
+  ;;   we could also use the begin/let shuffle, but it's too embarrassing
+  `(let ((outer-env (outer-environment (current-environment)))
+	 (new-methods ())
+	 (new-slots ()))
+
+    (for-each
+     (lambda (class)
+       ;; each class is a set of nested environments, the innermost (first in the list)
+       ;;   holds the local slots which are copied each time an instance is created,
+       ;;   the next holds the class slots (global to all instances, not copied);
+       ;;   these hold the class name and other such info.  The remaining environments
+       ;;   hold the methods, with the localmost method first.  So in this loop, we
+       ;;   are gathering the local slots and all the methods of the inherited
+       ;;   classes, and will splice them together below as a new class.
+
+       (set! new-slots (append (environment-&gt;list class) new-slots))
+       (do ((e (outer-environment (outer-environment class)) (outer-environment e)))
+	   ((or (not (environment? e))
+		(eq? e (global-environment))))
+	 (set! new-methods (append (environment-&gt;list e) new-methods))))
+     ,inherited-classes)
+
+     (let ((remove-duplicates 
+	    (lambda (lst)         ; if multiple local slots with same name, take the localmost
+	      (letrec ((rem-dup
+			(lambda (lst nlst)
+			  (cond ((null? lst) nlst)
+				((assq (caar lst) nlst) (rem-dup (cdr lst) nlst))
+				(else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
+		(reverse (rem-dup lst ()))))))
+       (set! new-slots 
+	     (remove-duplicates
+	      (append (map (lambda (slot)
+			     (if (pair? slot)
+				 (cons (car slot) (cadr slot))
+				 (cons slot #f)))
+			   ,slots)                    ; the incoming new slots, #f is the default value
+		      new-slots))))                   ; the inherited slots
+
+    (set! new-methods 
+	  (append (map (lambda (method)
+			 (if (pair? method)
+			     (cons (car method) (cadr method))
+			     (cons method #f)))
+		       ,methods)                     ; the incoming new methods
+
+		  ;; add a print method for this class. 
+		  (list (cons 'print (lambda* (obj (port #f))
+				       (format port "#&lt;~A: ~{~A~^ ~}&gt;" 
+					       ',class-name
+					       (map (lambda (slot)
+						      (list (car slot) (cdr slot)))
+						    (environment-&gt;list obj))))))
+		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
+
+    (let ((new-class (apply augment-environment           ; the local slots
+		       (augment-environment               ; the global slots
+		         (apply augment-environment ()    ; the methods
+			   (reverse new-methods))
+		         (cons 'class-name ',class-name)  ; class-name slot
+			 (cons 'inherited ,inherited-classes)
+			 (cons 'inheritors ()))           ; classes that inherit from this class
+		       new-slots)))
+
+      (augment-environment! outer-env                  
+        (cons ',class-name new-class)                     ; define the class as class-name in the calling environment
+
+	;; define class-name? type check
+	(cons (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
+	      (lambda (obj)
+		(and (environment? obj)
+		     (eq? (obj 'class-name) ',class-name)))))
+
+      (augment-environment! outer-env
+        ;; define the make-instance function for this class.  
+        ;;   Each slot is a keyword argument to the make function.
+        (cons (string-&gt;symbol (string-append "make-" (symbol-&gt;string ',class-name)))
+	      (apply lambda* (map (lambda (slot)
+				    (if (pair? slot)
+					(list (car slot) (cdr slot))
+					(list slot #f)))
+				  new-slots)
+		     `((let ((new-obj (copy ,,class-name)))
+			 ,@(map (lambda (slot)
+				  `(set! (new-obj ',(car slot)) ,(car slot)))
+				new-slots)
+			 new-obj)))))
+
+      ;; save inheritance info for this class for subsequent define-method
+      (letrec ((add-inheritor (lambda (class)
+				(for-each add-inheritor (class 'inherited))
+				(if (not (memq new-class (class 'inheritors)))
+				    (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
+	(for-each add-inheritor ,inherited-classes))
+    
+      ',class-name)))
+
+
+(define-macro (define-generic name)
+  `(define ,name (lambda args (apply ((car args) ',name) args))))
+
+
+(define-macro (define-slot-accessor name slot)
+  `(define ,name (make-procedure-with-setter 
+                   (lambda (obj) (obj ',slot)) 
+		   (lambda (obj val) (set! (obj ',slot) val)))))
+
+
+(define-bacro (define-method name-and-args . body)
+  `(let* ((outer-env (outer-environment (current-environment)))
+	  (method-name (car ',name-and-args))
+	  (method-args (cdr ',name-and-args))
+	  (object (caar method-args))
+	  (class (symbol-&gt;value (cadar method-args)))
+	  (old-method (class method-name))
+	  (method (apply lambda* method-args ',body)))
+
+     ;; define the method as a normal-looking function
+     (augment-environment! outer-env
+       (cons method-name 
+	     (apply lambda* method-args 
+		    `(((,object ',method-name)
+		       ,@(map (lambda (arg)
+				(if (pair? arg) (car arg) arg))
+			      method-args))))))
+     
+     ;; add the method to the class
+     (augment-environment! (outer-environment (outer-environment class))
+       (cons method-name method))
+
+     ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
+     (for-each
+      (lambda (inheritor) 
+	(if (not (eq? (inheritor method-name) #&lt;undefined&gt;)) ; defined? goes to the global env
+	    (if (eq? (inheritor method-name) old-method)
+		(set! (inheritor method-name) method))
+	    (augment-environment! (outer-environment (outer-environment inheritor))
+   	      (cons method-name method))))
+      (class 'inheritors))
+
+     method-name))
+
+
+&gt; (define-class class-1 () 
+       '((a 1) (b 2)) 
+       (list (list 'add (lambda (obj) 
+                          (with-environment obj
+                            (+ a b))))))
+class-1
+&gt; (define v (make-class-1 :a 32))
+v 
+&gt; (v 'a)                         ; to set the 'a slot, (set! (v 'a) 0) 
+32
+&gt; ((v 'print) v)                 ; environments are applicable objects much like hash-tables
+"#&lt;class-1: (a 32) (b 2)&gt;"       ;   so (v 'print) is v's print method
+&gt; ((v 'add) v)
+34
+&gt; (define-generic add)
+add
+&gt; (add v)                        ; syntactic sugar for ((v 'add) v)
+34
+&gt; (define-slot-accessor slot-a a) ; more sugar!
+slot-a
+&gt; (slot-a v)                     ; same as (v 'a), set via (set! (slot-a v) 123)
+32
+&gt; (map car v)                    ; map and for-each work with environments
+(a b)                               ;   map cdr would return '(32 2) in this case
+&gt; (define-class class-2 (list class-1)
+       '((c 3)) 
+       (list (list 'multiply (lambda (obj) 
+                               (with-environment obj 
+                                 (* a b c))))))
+class-2
+&gt; (define v2 (make-class-2 :a 32))
+v2
+&gt; ((v2 'print) v2)
+"#&lt;class-2: (c 3) (a 32) (b 2)&gt;"
+&gt; ((v2 'multiply) v2)
+192
+&gt; (add v2)                      ; inherited from class-1
+34
+&gt; (define-method (subtract (obj class-1)) (with-environment obj (- a b)))
+subtract
+&gt; (subtract v2)  ; class-2 inherits from class-1 so it knows about subtract
+30
+&gt; (define v1 (make-class-1))
+v1
+&gt; (augment-environment! v1      ; change the add method just in this instance
+       (cons 'add (lambda (obj) 
+                    (with-environment obj
+                      (+ 1 a (* 2 b))))))
+#&lt;environment&gt;
+&gt; (add v1)
+6
+&gt; (add v)                       ; other class-1 instances are not affected
+34
+&gt; (define-class class-3 (list class-2) () 
+    (list (list 'multiply (lambda (obj num) 
+			    (* num 
+			       ((class-2 'multiply) obj) ; method combination 
+			       (add obj))))))
+class-3
+&gt; ((class-3 'multiply) class-3 10)
+180                               ; (* 10 (* 1 2 3) (+ 1 2))
+</pre>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+
+<table border=1 bordercolor="lightgray" vspace=10 hspace=0 cellspacing=2 cellpadding=5>
+<tr>
+<td bgcolor="#f2f4ff">
+<small><pre>
+(define-bacro (value-&gt;symbol val)
+   ;; here the current-environment is the calling environment
+  `(call-with-exit
+    (lambda (return)
+      (do ((e (current-environment) (outer-environment e))) ()
+	(for-each 
+	 (lambda (slot)
+	   (if (equal? ,val (cdr slot))
+	       (return (car slot))))
+	 e)
+	(if (eq? e (global-environment))
+	    (return #f))))))
+
+&gt; (let ((a 1) (b "hi")) 
+    (value-&gt;symbol "hi"))
+b
+</pre></small>
+</td>
+<td width=20></td>
+
+<td bgcolor="#fbfbf0">
+<small><pre>
+
+(define (value-&gt;symbol val env)
+  ;; here we have to pass in the current-environment
+  (call-with-exit
+   (lambda (return)
+     (for-each 
+      (lambda (slot)
+	(if (equal? val (cdr slot))
+	    (return (car slot))))
+      env)
+     (and (not (eq? env (global-environment)))
+	  (value-&gt;symbol val (outer-environment env))))))
+
+&gt; (let ((a 1) (b "hi")) 
+    (value-&gt;symbol "hi" (current-environment)))
+b
+</pre></small>
+</td>
+</tr>
+</table>
+
+</blockquote>
+</small>
 </dd>
 <br><br>
+
+
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -3106,7 +3497,413 @@ a modern GUI will leave formatting decisions to a text or table widget.
 
 </blockquote>
 </small>
+</dd>
+<br><br>
 
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<A NAME="hooks"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hooks</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd>
+
+<pre>
+    (<a name="makehook">make-hook</a> (arity (0 0 #f)) (documentation ""))  ; make a new hook
+    (<a name="hook">hook</a> ...)                                       ; make a hook, the args are functions
+    (<a name="hookp">hook?</a> obj)                                      ; return #t if obj is a hook
+    (<a name="hookfunctions">hook-functions</a> hook)                            ; the hook's list of functions
+    (<a name="hookarity">hook-arity</a> hook)                                ; the hook's arity list: (required optional rest)
+    (<a name="hookdocumentation">hook-documentation</a> hook)                        ; the hook's documentation string
+    (<a name="hookapply">hook-apply</a> hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
+</pre>
+
+<p>A hook holds a list of functions.  When something interesting happens,
+the hook is invoked, and it applies its arguments to each function in the list.
+In GUI toolkits hooks are called callback-lists, in CL conditions,
+in other contexts watchpoints or signals.  s7 itself has several
+hooks: *trace-hook*, *error-hook*, *unbound-variable-hook*, and *load-hook*.
+A hook is created with make-hook or hook, called either as an applicable object
+or via hook-apply, and recognized via hook?.  The list of functions is accessed
+via hook-functions.  All the functions on the list have to be compatible with
+the way the hook itself is invoked, so the hook has an arity, hook-arity.
+</p>
+
+<pre>
+&gt; (let ((h (make-hook '(1 0 #f) "an example hook")))     ; 1 required arg and no others
+    (set! (hook-functions h)                             ; add 1 function to the hook's list
+      (list (lambda (x) (format #t "x is ~A" x))))
+    (h 23))                                              ; invoke the hook's functions with argument 23
+"x is 23"
+</pre>
+
+</dd>
+<br><br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<A NAME="procedureinfo"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure info</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<pre>
+  (<a name="procedurename">procedure-name</a> proc)
+  (<a name="proceduresource">procedure-source</a> proc)
+  (<a name="procedurearity">procedure-arity</a> proc)
+  (<a name="proceduredocumentation">procedure-documentation</a> proc)
+  (<a name="proceduresetter">procedure-setter</a> proc)
+  (procedure-environment proc)
+</pre>
+
+<dd><p>procedure-source, procedure-arity, procedure-setter, procedure-documentation, and help provide a look into a
+Scheme function.
+procedure-documentation returns the documentation string associated with a procedure: the initial string in the
+function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
+procedure-setter returns the set function associated with a procedure (set-car! with car, for example).
+procedure-source returns the source, as a list, of a procedure. procedure-environment returns
+a procedure's environment.  procedure-name returns the procedure's name.
+</p>
+
+<pre>
+&gt; (define* (add-2 a (b 32)) "add-2 adds its 2 args" (+ a b))
+add-2
+
+&gt; (procedure-documentation add-2)
+"add-2 adds its 2 args"
+
+&gt; (procedure-arity add-2)
+(0 2 #f)
+
+&gt; (procedure-source add-2)
+(lambda* (a (b 32)) "add-2 adds its 2 args" (+ a b))
+</pre>
+
+<p>We can use procedure-environment and <a href="#__func__">__func__</a> to 
+write a function that tells us where the source is for a function:
+</p>
+
+<pre>
+(define (where-is func)
+  (let ((addr (symbol-&gt;value <em class=red>'__func__</em> (<em class=red>procedure-environment</em> func))))
+    (if (not (pair? addr))
+	"not found"
+	(format #f "~A is at line ~D of ~A" (car addr) (caddr addr) (cadr addr)))))
+
+&gt; (where-is enveloped-mix)
+"enveloped-mix is at line 68 of extensions.scm"
+</pre>
+
+
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>procedure-source returns the actual function source &mdash;
+more fun than a barrel of monkeys. Here is a self-modifying factorial function:
+</p>
+
+<pre>
+(define fact         ; Reini Urban, http://autocad.xarch.at/lisp/self-mod.lsp.txt
+  (let ((old '())
+	(result '()))
+
+    (define (last lst)
+      (list-tail lst (- (length lst) 1)))
+
+    (define (butlast lis)
+      (let ((len (length lis)))
+	(if (&lt;= len 1) '()
+	    (let ((result '()))
+	      (do ((i 0 (+ i 1))
+		   (lst lis (cdr lst)))
+		  ((= i (- len 1)) (reverse result))
+		(set! result (cons (car lst) result)))))))
+
+    (lambda (n)
+      (cond ((zero? n) 1)
+	    (#t 
+	     (set! old (<em class=red>procedure-source</em> fact))
+	     (set! fact (apply lambda '(n)
+			  `((cond 
+			    ,@(butlast (cdr (car (cdr (cdr old)))))
+			    ((= n ,n) ,(let ()
+					 (set! result (* n (fact (- n 1))))
+					 result))
+			    ,@(last (cdr (car (cdr (cdr old)))))))))
+	     result)))))
+</pre>
+
+<p>If you modify the procedure source directly, it is safest to redefine the procedure (as above)
+so that everything in s7 knows about the change.  
+<a href="#augmentenv">augment-environment</a> serves a similar purpose when editing environments.
+Here's a more useful example; it adds trace and local variable info for debugging:
+</p>
+
+<pre>
+(define-macro (procedure-annotate proc)
+  (let ((orig (<em class=red>procedure-source</em> proc)))
+
+    (define (proc-walk source)
+      (if (pair? source)
+	  (if (or (eq? (car source) 'let)     ; if let or let*, show local variables
+		  (eq? (car source) 'let*))
+	      (if (symbol? (cadr source))
+		  ;; (let name vars . body) -&gt; (let name vars print-vars . body)
+		  (append 
+		   (list (car source)
+			 (cadr source)
+			 (caddr source)
+			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (environment-&gt;list (current-environment))))
+		   (cdddr source))
+		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
+		  (append 
+		   (list (car source)
+			 (cadr source)
+			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (environment-&gt;list (current-environment))))
+		   (cddr source)))
+	      (cons (proc-walk (car source))
+		    (proc-walk (cdr source))))
+	  source))
+
+    (let* ((new-body (proc-walk orig))
+	   (result (gensym))
+	   (new-source 
+	    `(lambda ,(cadr orig)
+	       (let ((,result #&lt;undefined&gt;))
+		 (dynamic-wind
+		     (lambda ()       ; upon entry, show procedure name and args
+		       (format #t "(~A~{ ~A~})~%" ',proc (environment-&gt;list (outer-environment (outer-environment (current-environment))))))
+		     (lambda ()
+		       (set! ,result (,new-body ,@(cadr orig)))
+		       ,result)
+		     (lambda ()       ; at exit, show result
+		       (if (eq? ,result #&lt;undefined&gt;)
+			   (format #t "  ~A returns early~%")
+			   (format #t "  ~A returns ~A~%" ',proc ,result))))))))
+
+      `(set! ,proc (eval ,new-source)))))
+			 
+&gt; (define (hi a) (let ((b 12)) (+ b a)))
+hi
+&gt; (procedure-annotate hi)
+#&lt;closure&gt;
+&gt; (let ((x 32)) (+ 1 (hi x)))
+45
+;; printing: 
+(hi (a . 32))
+    (let ((b . 12)) ...)
+  hi returns 44
+</pre>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
+rather than a boolean.  I haven't run into a case where it matters.  Another odd case: 
+<code>(procedure-arity (lambda* (:allow-other-keys) #f))</code>.  How should we indicate
+this in procedure-arity?
+</p>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<pre>
+(define (for-each-subset func args)
+  ;; form each subset of args, apply func to the subsets that fit its arity
+  (let* ((arity (<em class=red>procedure-arity</em> func))
+	 (min-args (car arity))                      ; required args
+	 (max-args (if (caddr arity)                 ; rest arg?
+		       (length args)
+		       (+ min-args (cadr arity)))))  ; required+optional
+    (define (subset source dest len)
+      (if (null? source)
+	  (if (&lt;= min-args len max-args)             ; does this subset fit?
+	      (apply func dest))
+	(begin
+	  (subset (cdr source) (cons (car source) dest) (+ len 1))
+	  (subset (cdr source) dest len))))
+    (subset args '() 0)))
+</pre>
+
+
+</blockquote>
+</small>
+
+
+</dd>
+<br><br>
+
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<A NAME="evalstring"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>eval</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd>
+
+<p>
+<b>eval</b> evaluates its argument, a list representing a piece of code.  It takes an optional
+second argument, the environment in which the evaluation should take place.  <b>eval-string</b>
+is similar, but its argument is a string.
+</p>
+
+<pre>
+&gt; (eval '(+ 1 2))
+3
+
+&gt; (eval-string "(+ 1 2)")
+3
+</pre>
+
+<small>
+<blockquote>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>The environment argument is mainly useful in debugging.  A breakpoint can be set, for
+example, then any input is evaluated in the environment of the break.  Say we have the
+following code in ex.scm:
+</p>
+
+<pre>
+(define-macro (break)
+  `(let ((break-env (<em class=red>current-environment</em>))
+	 (prompt (format #f "~%~A &gt; " (if (defined? '__func__) __func__ "break"))))
+     (call-with-exit
+      (lambda (return)
+	(do () ()                       ; our debugger's own REPL
+	  (display prompt)              ; show where we stopped
+	  (let ((str (read-line '())))  ; read a line of input, :go -&gt; exit the debugger
+	    ;; the nil argument to read-line makes sure that we read C's stdin.  In any normal
+	    ;;    program, we'd get the string from a text widget.
+	    (if (&gt; (length str) 0)
+		(catch #t               ; try to handle typing mistakes etc
+		       (lambda ()
+			 (let ((val (<em class=red>eval-string</em> str <em class=red>break-env</em>)))
+			   (if (eq? val :go)
+			       (return))
+			   (write val)))
+		       (lambda args
+			 (format #t "error: ~A" args))))))))))
+
+;; now some random code that has a breakpoint
+(define (a-function b)
+  (let ((x 32))
+    (do ((i 0 (+ i 1)))
+	((= i 10))
+      (if (= i 3)
+	  (<em class=red>break</em>)))
+    x))
+
+(a-function 123)
+(display "done!") (newline)
+</pre>
+
+<p>
+Start up a REPL, and:
+</p>
+
+<pre>
+&gt; (load "ex.scm")
+(a-function "ex.scm" 26) &gt; x    ; here we're in the debugger
+32
+(a-function "ex.scm" 26) &gt; (+ b i)
+126
+(a-function "ex.scm" 26) &gt; :go
+done!
+</pre>
+
+</blockquote>
+</small>
+</dd>
+<br><br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<A NAME="IO"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>IO functions</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd>
+<p>Besides files, ports can also represent strings and functions.  The string port functions
+are:
+</p>
+
+<pre>
+    (with-output-to-string thunk)         ; open a string port as current-output-port, call thunk, return string
+    (with-input-from-string string thunk) ; open string as current-input-port, call thunk
+    (call-with-output-string proc)        ; open a string port, apply proc to it, return string
+    (call-with-input-string string proc)  ; open string as current-input-port, apply proc to it
+    (open-output-string)                  ; open a string output port
+    (get-output-string port)              ; return output accumulated in the string output port
+    (open-input-string string)            ; open a string input port reading string
+</pre>
+
+<pre>
+(let ((result #f) 
+      (p (<em class=red>open-output-string</em>)))
+  (format p "this ~A ~C test ~D" "is" #\a 3)
+  (set! result (<em class=red>get-output-string</em> p))
+  (close-output-port p)
+  result)
+-&gt; "this is a test 3"
+</pre>
+
+<p>Other functions:
+</p>
+
+<ul>
+<li>read-byte and write-byte: binary IO, named "read-u8" and "write-u8" in r6rs, I think
+<li>read-line: line-at-a-time reads (for write-line, use format or for-each with write-char).
+</ul>
+
+<p>The variable <a name="vectorprintlength">*vector-print-length*</a> sets
+the upper limit on how many vector elements are printed by object-&gt;string and format.
+</p>
+
+<p>When running s7 behind a GUI, you often want input to come from and output to go to
+arbitrary widgets. The function ports provide a way to redirect IO.  See <a href="#functionportexample">below</a>
+for an example.
+</p>
+
+<p>s7 also includes current-error-port and set-current-error-port.
+The default IO ports are *stdin*, *stdout*, and *stderr*.  The end-of-file
+object is #&lt;eof&gt;.
+</p>
+
+
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>binary-io.scm in the Snd package has functions that read and write integers and floats in
+both endian choices in a variety of sizes.  Besides read-byte and write-byte, it uses
+integer-decode-float, and the various bitwise operators.
+</p>
+
+</blockquote>
+</small>
 
 </dd>
 <br><br>
@@ -3345,802 +4142,6 @@ traced function call (that is, global to the function, not the function's local 
 <br><br>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="procedureinfo"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure info</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<pre>
-  (<a name="procedurename">procedure-name</a> proc)
-  (<a name="proceduresource">procedure-source</a> proc)
-  (<a name="procedurearity">procedure-arity</a> proc)
-  (<a name="proceduredocumentation">procedure-documentation</a> proc)
-  (<a name="proceduresetter">procedure-setter</a> proc)
-  (procedure-environment proc)
-</pre>
-
-<dd><p>procedure-source, procedure-arity, procedure-setter, procedure-documentation, and help provide a look into a
-Scheme function.
-procedure-documentation returns the documentation string associated with a procedure: the initial string in the
-function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
-procedure-setter returns the set function associated with a procedure (set-car! with car, for example).
-procedure-source returns the source, as a list, of a procedure. procedure-environment returns
-a procedure's environment.  procedure-name returns the procedure's name.
-</p>
-
-<pre>
-&gt; (define* (add-2 a (b 32)) "add-2 adds its 2 args" (+ a b))
-add-2
-
-&gt; (procedure-documentation add-2)
-"add-2 adds its 2 args"
-
-&gt; (procedure-arity add-2)
-(0 2 #f)
-
-&gt; (procedure-source add-2)
-(lambda* (a (b 32)) "add-2 adds its 2 args" (+ a b))
-</pre>
-
-<p>We can use procedure-environment and <a href="#__func__">__func__</a> to 
-write a function that tells us where the source is for a function:
-</p>
-
-<pre>
-(define (where-is func)
-  (let ((addr (symbol-&gt;value <em class=red>'__func__</em> (<em class=red>procedure-environment</em> func))))
-    (if (not (pair? addr))
-	"not found"
-	(format #f "~A is at line ~D of ~A" (car addr) (caddr addr) (cadr addr)))))
-
-&gt; (where-is enveloped-mix)
-"enveloped-mix is at line 68 of extensions.scm"
-</pre>
-
-
-<small>
-<blockquote>
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>procedure-source returns the actual function source &mdash;
-more fun than a barrel of monkeys. Here is a self-modifying factorial function:
-</p>
-
-<pre>
-(define fact         ; Reini Urban, http://autocad.xarch.at/lisp/self-mod.lsp.txt
-  (let ((old '())
-	(result '()))
-
-    (define (last lst)
-      (list-tail lst (- (length lst) 1)))
-
-    (define (butlast lis)
-      (let ((len (length lis)))
-	(if (&lt;= len 1) '()
-	    (let ((result '()))
-	      (do ((i 0 (+ i 1))
-		   (lst lis (cdr lst)))
-		  ((= i (- len 1)) (reverse result))
-		(set! result (cons (car lst) result)))))))
-
-    (lambda (n)
-      (cond ((zero? n) 1)
-	    (#t 
-	     (set! old (<em class=red>procedure-source</em> fact))
-	     (set! fact (apply lambda '(n)
-			  `((cond 
-			    ,@(butlast (cdr (car (cdr (cdr old)))))
-			    ((= n ,n) ,(let ()
-					 (set! result (* n (fact (- n 1))))
-					 result))
-			    ,@(last (cdr (car (cdr (cdr old)))))))))
-	     result)))))
-</pre>
-
-<p>If you modify the procedure source directly, it is safest to redefine the procedure (as above)
-so that everything in s7 knows about the change.  
-<a href="#augmentenv">augment-environment</a> serves a similar purpose when editing environments.
-Here's a more useful example; it adds trace and local variable info for debugging:
-</p>
-
-<pre>
-(define-macro (procedure-annotate proc)
-  (let ((orig (<em class=red>procedure-source</em> proc)))
-
-    (define (proc-walk source)
-      (if (pair? source)
-	  (if (or (eq? (car source) 'let)     ; if let or let*, show local variables
-		  (eq? (car source) 'let*))
-	      (if (symbol? (cadr source))
-		  ;; (let name vars . body) -&gt; (let name vars print-vars . body)
-		  (append 
-		   (list (car source)
-			 (cadr source)
-			 (caddr source)
-			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (environment-&gt;list (current-environment))))
-		   (cdddr source))
-		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
-		  (append 
-		   (list (car source)
-			 (cadr source)
-			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (environment-&gt;list (current-environment))))
-		   (cddr source)))
-	      (cons (proc-walk (car source))
-		    (proc-walk (cdr source))))
-	  source))
-
-    (let* ((new-body (proc-walk orig))
-	   (result (gensym))
-	   (new-source 
-	    `(lambda ,(cadr orig)
-	       (let ((,result #&lt;undefined&gt;))
-		 (dynamic-wind
-		     (lambda ()       ; upon entry, show procedure name and args
-		       (format #t "(~A~{ ~A~})~%" ',proc (environment-&gt;list (outer-environment (outer-environment (current-environment))))))
-		     (lambda ()
-		       (set! ,result (,new-body ,@(cadr orig)))
-		       ,result)
-		     (lambda ()       ; at exit, show result
-		       (if (eq? ,result #&lt;undefined&gt;)
-			   (format #t "  ~A returns early~%")
-			   (format #t "  ~A returns ~A~%" ',proc ,result))))))))
-
-      `(set! ,proc (eval ,new-source)))))
-			 
-&gt; (define (hi a) (let ((b 12)) (+ b a)))
-hi
-&gt; (procedure-annotate hi)
-#&lt;closure&gt;
-&gt; (let ((x 32)) (+ 1 (hi x)))
-45
-;; printing: 
-(hi (a . 32))
-    (let ((b . 12)) ...)
-  hi returns 44
-</pre>
-
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
-rather than a boolean.  I haven't run into a case where it matters.  Another odd case: 
-<code>(procedure-arity (lambda* (:allow-other-keys) #f))</code>.  How should we indicate
-this in procedure-arity?
-</p>
-
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<pre>
-(define (for-each-subset func args)
-  ;; form each subset of args, apply func to the subsets that fit its arity
-  (let* ((arity (<em class=red>procedure-arity</em> func))
-	 (min-args (car arity))                      ; required args
-	 (max-args (if (caddr arity)                 ; rest arg?
-		       (length args)
-		       (+ min-args (cadr arity)))))  ; required+optional
-    (define (subset source dest len)
-      (if (null? source)
-	  (if (&lt;= min-args len max-args)             ; does this subset fit?
-	      (apply func dest))
-	(begin
-	  (subset (cdr source) (cons (car source) dest) (+ len 1))
-	  (subset (cdr source) dest len))))
-    (subset args '() 0)))
-</pre>
-
-
-</blockquote>
-</small>
-
-
-</dd>
-<br><br>
-
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="environments"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>environments</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>An environment holds symbols and their values.  The global environment, for example,
-holds all the variables that are defined at the top level.
-Environments are first class (and applicable) objects in s7.  
-</p>
-
-<pre>
-  (<a name="environmentp">environment?</a> obj)            #t if obj is an environment
-  (<a name="globalenvironment">global-environment</a>)          the top-level environment
-  (<a name="currentenvironment">current-environment</a>)         the currently visible variables and their values
-  (<a name="procedureenvironment">procedure-environment</a> proc)  the environment at the time when proc was defined
-  (<a name="initialenvironment">initial-environment</a>)         the current environment, but all built-in functions have their original values
-  (<a name="outerenvironment">outer-environment</a> env)       the environment that encloses the environment env
-
-  (<a name="withenvironment">with-environment</a> env . body) evaluate body in the environment env 
-
-  (<a name="augmentenvironment">augment-environment</a> env . bindings)   add bindings to env
-  (<a name="augmentenvironment!">augment-environment!</a> env . bindings)
-  (<a name="environmenttolist">environment-&gt;list</a> env)       return the environment bindings as a list of (symbol . value) cons's
-  (<a name="symboltovalue">symbol-&gt;value</a> sym (env (current-environment)))
-  (<a name="definedp">defined?</a> sym (env (current-environment)))
-</pre>
-
-<A NAME="augmentenv"></A>
-<p><code>(with-environment env . body)</code> evaluates its body in the environment env.
-There are several examples of its use in the <a href="#macros">macro</a> section.
-defined? returns #t if the symbol is defined in the environment, and
-symbol-&gt;value returns the value associated with it.
-To add or change a symbol's value, use augment-environment:
-</p>
-
-<pre>
-(let ((a 1)) 
-  (eval '(+ a b) 
-         (<em class=red>augment-environment</em>
-           (current-environment) 
-           (cons 'b 32)))) ; add 'b with the value 32 to this environment
-
--&gt; 33
-</pre>
-
-<p>augment-environment does not change the environment passed to it.  It
-just prepends the new bindings, shadowing any old ones,
-as if you had called "let".  To add the bindings directly to the environment,
-use augment-environment!.  Both of these functions accept nil as the
-'env' argument as shorthand for (global-environment).
-Augment-environment is a bad name.  
-Perhaps these would be better:
-</p>
-
-<pre>
-    (define (make-environment parent . args) (apply augment-environment parent args))
-    (define (environment . slots) (apply augment-environment () args))
-    (define (define-in-environment env symbol value) (augment-environment! env (cons symbol value)))
-    (define next-environment outer-environment)
-</pre>
-
-<br>
-<p>It is possible in Scheme to redefine built-in functions such as car.
-To ensure that some code sees the original built-in function definitions,
-wrap it in <code>(with-environment (initial-environment) ...)</code>:
-</p>
-<pre>
-&gt; (let ((caar 123)) 
-    (+ caar (with-environment (initial-environment) 
-              (caar '((2) 3)))))
-125
-</pre>
-
-<p>
-with-environment and initial-environment are constants, so you can
-use them in any context without worrying about whether they've been redefined.
-I think these functions can implement the notions of libraries,
-separate namespaces, or modules.  
-Here's one way: first the library writer just writes his library.
-The normal user simply loads it.  The abnormal user worries about everything,
-so first he loads the library in a local let to make sure no bindings escape 
-to pollute his code, and then he
-uses initial-environment to
-make sure that none of his bindings pollute the library code:
-</p>
-
-<pre>
-(let ()
-  (with-environment (initial-environment)
-    (load "any-library.scm" (current-environment)) ; by default load puts stuff in the global environment
-    ...))
-</pre>
-
-<p>Now Abnormal User can do what he wants with the library entities.
-Say he wants to use "lognor" under the name "bitwise-not-or", and
-all the other functions are of no interest:
-</p>
-
-<pre>
-(begin
-  (define bitwise-not-or #f)
-  (let ()
-    (with-environment (initial-environment)
-      (load "any-library.scm" (current-environment))
-      (set! bitwise-not-or (symbol-&gt;value 'lognor)))))
-</pre>
-
-<p>Or equivalently:
-</p>
-
-<pre>
-(augment-environment! (current-environment)
-  (cons 'bitwise-not-or 
-    (symbol-&gt;value 'lognor
-      (with-environment (initial-environment)
-        (load "any-library.scm" (current-environment))
-        (current-environment)))))
-</pre>
-
-<p>Say he wants to make sure the library is cleanly loaded, but all
-its bindings are exported into the current environment:
-</p>
-
-<pre>
-(apply augment-environment! (current-environment)
-  (with-environment (initial-environment)
-    (load "any-library.scm" (current-environment))
-    (environment-&gt;list (current-environment)))) ; these are the bindings introduced by loading the library
-</pre>
-
-<p>To do the same thing, but prepend "library:" to each name:
-</p>
-
-<pre>
-(apply augment-environment! (current-environment)
-  (with-environment (initial-environment)
-    (load "any-library.scm" (current-environment))
-    (map (lambda (binding)
-	   (cons (string-&gt;symbol 
-		  (string-append "library:" (symbol-&gt;string (car binding))))
-		 (cdr binding)))
-	 (environment-&gt;list (current-environment)))))
-</pre>
-
-<p>That's all there is to it!
-</p>
-
-
-<small>
-<blockquote>
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>Here is yet another object system.  Each class and each instance is an environment.
-A class might be thought of as a template for instances, but
-there's actually no difference between them.  To make an instance of a class, copy it.  To inherit from
-another class, concatenate the environments. To access (get or set) a field or a method, use the implicit
-indexing syntax with the field or method name.  To evaluate a form in the context of an instance
-(CL's with-slots), use with-environment. To run through all the fields, use map or for-each.
-</p>
-
-<pre>
-(define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
-  ;; a bacro is needed so that the calling environment is accessible via outer-environment
-  ;;   we could also use the begin/let shuffle, but it's too embarrassing
-  `(let ((outer-env (outer-environment (current-environment)))
-	 (new-methods ())
-	 (new-slots ()))
-
-    (for-each
-     (lambda (class)
-       ;; each class is a set of nested environments, the innermost (first in the list)
-       ;;   holds the local slots which are copied each time an instance is created,
-       ;;   the next holds the class slots (global to all instances, not copied);
-       ;;   these hold the class name and other such info.  The remaining environments
-       ;;   hold the methods, with the localmost method first.  So in this loop, we
-       ;;   are gathering the local slots and all the methods of the inherited
-       ;;   classes, and will splice them together below as a new class.
-
-       (set! new-slots (append (environment-&gt;list class) new-slots))
-       (do ((e (outer-environment (outer-environment class)) (outer-environment e)))
-	   ((or (not (environment? e))
-		(eq? e (global-environment))))
-	 (set! new-methods (append (environment-&gt;list e) new-methods))))
-     ,inherited-classes)
-
-     (let ((remove-duplicates 
-	    (lambda (lst)         ; if multiple local slots with same name, take the localmost
-	      (letrec ((rem-dup
-			(lambda (lst nlst)
-			  (cond ((null? lst) nlst)
-				((assq (caar lst) nlst) (rem-dup (cdr lst) nlst))
-				(else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
-		(reverse (rem-dup lst ()))))))
-       (set! new-slots 
-	     (remove-duplicates
-	      (append (map (lambda (slot)
-			     (if (pair? slot)
-				 (cons (car slot) (cadr slot))
-				 (cons slot #f)))
-			   ,slots)                    ; the incoming new slots, #f is the default value
-		      new-slots))))                   ; the inherited slots
-
-    (set! new-methods 
-	  (append (map (lambda (method)
-			 (if (pair? method)
-			     (cons (car method) (cadr method))
-			     (cons method #f)))
-		       ,methods)                     ; the incoming new methods
-
-		  ;; add a print method for this class. 
-		  (list (cons 'print (lambda* (obj (port #f))
-				       (format port "#&lt;~A: ~{~A~^ ~}&gt;" 
-					       ',class-name
-					       (map (lambda (slot)
-						      (list (car slot) (cdr slot)))
-						    (environment-&gt;list obj))))))
-		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
-
-    (let ((new-class (apply augment-environment           ; the local slots
-		       (augment-environment               ; the global slots
-		         (apply augment-environment ()    ; the methods
-			   (reverse new-methods))
-		         (cons 'class-name ',class-name)  ; class-name slot
-			 (cons 'inherited ,inherited-classes)
-			 (cons 'inheritors ()))           ; classes that inherit from this class
-		       new-slots)))
-
-      (augment-environment! outer-env                  
-        (cons ',class-name new-class)                     ; define the class as class-name in the calling environment
-
-	;; define class-name? type check
-	(cons (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
-	      (lambda (obj)
-		(and (environment? obj)
-		     (eq? (obj 'class-name) ',class-name)))))
-
-      (augment-environment! outer-env
-        ;; define the make-instance function for this class.  
-        ;;   Each slot is a keyword argument to the make function.
-        (cons (string-&gt;symbol (string-append "make-" (symbol-&gt;string ',class-name)))
-	      (apply lambda* (map (lambda (slot)
-				    (if (pair? slot)
-					(list (car slot) (cdr slot))
-					(list slot #f)))
-				  new-slots)
-		     `((let ((new-obj (copy ,,class-name)))
-			 ,@(map (lambda (slot)
-				  `(set! (new-obj ',(car slot)) ,(car slot)))
-				new-slots)
-			 new-obj)))))
-
-      ;; save inheritance info for this class for subsequent define-method
-      (letrec ((add-inheritor (lambda (class)
-				(for-each add-inheritor (class 'inherited))
-				(if (not (memq new-class (class 'inheritors)))
-				    (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
-	(for-each add-inheritor ,inherited-classes))
-    
-      ',class-name)))
-
-
-(define-macro (define-generic name)
-  `(define ,name (lambda args (apply ((car args) ',name) args))))
-
-
-(define-macro (define-slot-accessor name slot)
-  `(define ,name (make-procedure-with-setter 
-                   (lambda (obj) (obj ',slot)) 
-		   (lambda (obj val) (set! (obj ',slot) val)))))
-
-
-(define-bacro (define-method name-and-args . body)
-  `(let* ((outer-env (outer-environment (current-environment)))
-	  (method-name (car ',name-and-args))
-	  (method-args (cdr ',name-and-args))
-	  (object (caar method-args))
-	  (class (symbol-&gt;value (cadar method-args)))
-	  (old-method (class method-name))
-	  (method (apply lambda* method-args ',body)))
-
-     ;; define the method as a normal-looking function
-     (augment-environment! outer-env
-       (cons method-name 
-	     (apply lambda* method-args 
-		    `(((,object ',method-name)
-		       ,@(map (lambda (arg)
-				(if (pair? arg) (car arg) arg))
-			      method-args))))))
-     
-     ;; add the method to the class
-     (augment-environment! (outer-environment (outer-environment class))
-       (cons method-name method))
-
-     ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
-     (for-each
-      (lambda (inheritor) 
-	(if (not (eq? (inheritor method-name) #&lt;undefined&gt;)) ; defined? goes to the global env
-	    (if (eq? (inheritor method-name) old-method)
-		(set! (inheritor method-name) method))
-	    (augment-environment! (outer-environment (outer-environment inheritor))
-   	      (cons method-name method))))
-      (class 'inheritors))
-
-     method-name))
-
-
-&gt; (define-class class-1 () 
-       '((a 1) (b 2)) 
-       (list (list 'add (lambda (obj) 
-                          (with-environment obj
-                            (+ a b))))))
-class-1
-&gt; (define v (make-class-1 :a 32))
-v 
-&gt; (v 'a)                         ; to set the 'a slot, (set! (v 'a) 0) 
-32
-&gt; ((v 'print) v)                 ; environments are applicable objects much like hash-tables
-"#&lt;class-1: (a 32) (b 2)&gt;"       ;   so (v 'print) is v's print method
-&gt; ((v 'add) v)
-34
-&gt; (define-generic add)
-add
-&gt; (add v)                        ; syntactic sugar for ((v 'add) v)
-34
-&gt; (define-slot-accessor slot-a a) ; more sugar!
-slot-a
-&gt; (slot-a v)                     ; same as (v 'a), set via (set! (slot-a v) 123)
-32
-&gt; (map car v)                    ; map and for-each work with environments
-(a b)                               ;   map cdr would return '(32 2) in this case
-&gt; (define-class class-2 (list class-1)
-       '((c 3)) 
-       (list (list 'multiply (lambda (obj) 
-                               (with-environment obj 
-                                 (* a b c))))))
-class-2
-&gt; (define v2 (make-class-2 :a 32))
-v2
-&gt; ((v2 'print) v2)
-"#&lt;class-2: (c 3) (a 32) (b 2)&gt;"
-&gt; ((v2 'multiply) v2)
-192
-&gt; (add v2)                      ; inherited from class-1
-34
-&gt; (define-method (subtract (obj class-1)) (with-environment obj (- a b)))
-subtract
-&gt; (subtract v2)  ; class-2 inherits from class-1 so it knows about subtract
-30
-&gt; (define v1 (make-class-1))
-v1
-&gt; (augment-environment! v1      ; change the add method just in this instance
-       (cons 'add (lambda (obj) 
-                    (with-environment obj
-                      (+ 1 a (* 2 b))))))
-#&lt;environment&gt;
-&gt; (add v1)
-6
-&gt; (add v)                       ; other class-1 instances are not affected
-34
-&gt; (define-class class-3 (list class-2) () 
-    (list (list 'multiply (lambda (obj num) 
-			    (* num 
-			       ((class-2 'multiply) obj) ; method combination 
-			       (add obj))))))
-class-3
-&gt; ((class-3 'multiply) class-3 10)
-180                               ; (* 10 (* 1 2 3) (+ 1 2))
-</pre>
-
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-
-<table border=1 bordercolor="lightgray" vspace=10 hspace=0 cellspacing=2 cellpadding=5>
-<tr>
-<td bgcolor="#f2f4ff">
-<small><pre>
-(define-bacro (value-&gt;symbol val)
-   ;; here the current-environment is the calling environment
-  `(call-with-exit
-    (lambda (return)
-      (do ((e (current-environment) (outer-environment e))) ()
-	(for-each 
-	 (lambda (slot)
-	   (if (equal? ,val (cdr slot))
-	       (return (car slot))))
-	 e)
-	(if (eq? e (global-environment))
-	    (return #f))))))
-
-&gt; (let ((a 1) (b "hi")) 
-    (value-&gt;symbol "hi"))
-b
-</pre></small>
-</td>
-<td width=20></td>
-
-<td bgcolor="#fbfbf0">
-<small><pre>
-
-(define (value-&gt;symbol val env)
-  ;; here we have to pass in the current-environment
-  (call-with-exit
-   (lambda (return)
-     (for-each 
-      (lambda (slot)
-	(if (equal? val (cdr slot))
-	    (return (car slot))))
-      env)
-     (and (not (eq? env (global-environment)))
-	  (value-&gt;symbol val (outer-environment env))))))
-
-&gt; (let ((a 1) (b "hi")) 
-    (value-&gt;symbol "hi" (current-environment)))
-b
-</pre></small>
-</td>
-</tr>
-</table>
-
-</blockquote>
-</small>
-</dd>
-<br><br>
-
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="evalstring"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>eval</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd>
-
-<p>
-<b>eval</b> evaluates its argument, a list representing a piece of code.  It takes an optional
-second argument, the environment in which the evaluation should take place.  <b>eval-string</b>
-is similar, but its argument is a string.
-</p>
-
-<pre>
-&gt; (eval '(+ 1 2))
-3
-
-&gt; (eval-string "(+ 1 2)")
-3
-</pre>
-
-<small>
-<blockquote>
-
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>The environment argument is mainly useful in debugging.  A breakpoint can be set, for
-example, then any input is evaluated in the environment of the break.  Say we have the
-following code in ex.scm:
-</p>
-
-<pre>
-(define-macro (break)
-  `(let ((break-env (<em class=red>current-environment</em>))
-	 (prompt (format #f "~%~A &gt; " (if (defined? '__func__) __func__ "break"))))
-     (call-with-exit
-      (lambda (return)
-	(do () ()                       ; our debugger's own REPL
-	  (display prompt)              ; show where we stopped
-	  (let ((str (read-line '())))  ; read a line of input, :go -&gt; exit the debugger
-	    ;; the nil argument to read-line makes sure that we read C's stdin.  In any normal
-	    ;;    program, we'd get the string from a text widget.
-	    (if (&gt; (length str) 0)
-		(catch #t               ; try to handle typing mistakes etc
-		       (lambda ()
-			 (let ((val (<em class=red>eval-string</em> str <em class=red>break-env</em>)))
-			   (if (eq? val :go)
-			       (return))
-			   (write val)))
-		       (lambda args
-			 (format #t "error: ~A" args))))))))))
-
-;; now some random code that has a breakpoint
-(define (a-function b)
-  (let ((x 32))
-    (do ((i 0 (+ i 1)))
-	((= i 10))
-      (if (= i 3)
-	  (<em class=red>break</em>)))
-    x))
-
-(a-function 123)
-(display "done!") (newline)
-</pre>
-
-<p>
-Start up a REPL, and:
-</p>
-
-<pre>
-&gt; (load "ex.scm")
-(a-function "ex.scm" 26) &gt; x    ; here we're in the debugger
-32
-(a-function "ex.scm" 26) &gt; (+ b i)
-126
-(a-function "ex.scm" 26) &gt; :go
-done!
-</pre>
-
-</blockquote>
-</small>
-</dd>
-<br><br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="IO"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>IO functions</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd>
-<p>Besides files, ports can also represent strings and functions.  The string port functions
-are:
-</p>
-
-<pre>
-    (with-output-to-string thunk)         ; open a string port as current-output-port, call thunk, return string
-    (with-input-from-string string thunk) ; open string as current-input-port, call thunk
-    (call-with-output-string proc)        ; open a string port, apply proc to it, return string
-    (call-with-input-string string proc)  ; open string as current-input-port, apply proc to it
-    (open-output-string)                  ; open a string output port
-    (get-output-string port)              ; return output accumulated in the string output port
-    (open-input-string string)            ; open a string input port reading string
-</pre>
-
-<pre>
-(let ((result #f) 
-      (p (<em class=red>open-output-string</em>)))
-  (format p "this ~A ~C test ~D" "is" #\a 3)
-  (set! result (<em class=red>get-output-string</em> p))
-  (close-output-port p)
-  result)
--&gt; "this is a test 3"
-</pre>
-
-<p>Other functions:
-</p>
-
-<ul>
-<li>read-byte and write-byte: binary IO, named "read-u8" and "write-u8" in r6rs, I think
-<li>read-line: line-at-a-time reads (for write-line, use format or for-each with write-char).
-</ul>
-
-<p>The variable <a name="vectorprintlength">*vector-print-length*</a> sets
-the upper limit on how many vector elements are printed by object-&gt;string and format.
-</p>
-
-<p>When running s7 behind a GUI, you often want input to come from and output to go to
-arbitrary widgets. The function ports provide a way to redirect IO.  See <a href="#functionportexample">below</a>
-for an example.
-</p>
-
-<p>s7 also includes current-error-port and set-current-error-port.
-The default IO ports are *stdin*, *stdout*, and *stderr*.  The end-of-file
-object is #&lt;eof&gt;.
-</p>
-
-
-<small>
-<blockquote>
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>binary-io.scm in the Snd package has functions that read and write integers and floats in
-both endian choices in a variety of sizes.  Besides read-byte and write-byte, it uses
-integer-decode-float, and the various bitwise operators.
-</p>
-
-</blockquote>
-</small>
-
-</dd>
-<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->

@@ -903,6 +903,12 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), reset_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), help_button, false, true, 10);
 
+#if HAVE_GTK_3
+      add_highlight_button_style(dismiss_button);
+      add_highlight_button_style(reset_button);
+      add_highlight_button_style(help_button);
+#endif
+
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_color_orientation_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", help_color_orientation_callback, NULL);
       SG_SIGNAL_CONNECT(reset_button, "clicked", reset_color_orientation_callback, NULL);
@@ -931,6 +937,14 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       outer_table = gtk_table_new(3, 5, true); /* this seems backwards! */
       gtk_box_pack_end(GTK_BOX(colorbox), outer_table, false, false, 4);
+
+#if HAVE_GTK_3
+      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 12);
+#else
+      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 8);
+#endif
+      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
+
       gtk_widget_show(outer_table);
 
       scale_box = gtk_vbox_new(false, 0);

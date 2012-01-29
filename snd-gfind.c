@@ -170,10 +170,19 @@ static void make_edit_find_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(edit_find_dialog)), next_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(edit_find_dialog)), previous_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(edit_find_dialog)), help_button, true, true, 10);
+
+#if HAVE_GTK_3
+      add_highlight_button_style(cancelB);
+      add_highlight_button_style(help_button);
+      add_highlight_button_style(previous_button);
+      add_highlight_button_style(next_button);
+#endif
+
       SG_SIGNAL_CONNECT(cancelB, "clicked", edit_find_dismiss, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", edit_find_help, NULL);
       SG_SIGNAL_CONNECT(next_button, "clicked", edit_find_next, NULL);
       SG_SIGNAL_CONNECT(previous_button, "clicked", edit_find_previous, NULL);
+
       gtk_widget_show(cancelB);
       gtk_widget_show(next_button);
       gtk_widget_show(previous_button);
