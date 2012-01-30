@@ -760,6 +760,9 @@ GtkWidget *make_mix_dialog(void)
       nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
       gtk_widget_set_name(nextb, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), nextb, false, true, 6);
+#if HAVE_GTK_3
+      add_highlight_button_style(nextb);
+#endif
       SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
       gtk_widget_show(nextb);
       set_stock_button_label(nextb, "Next");
@@ -767,6 +770,9 @@ GtkWidget *make_mix_dialog(void)
       previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
       gtk_widget_set_name(previousb, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), previousb, false, true, 6);
+#if HAVE_GTK_3
+      add_highlight_button_style(previousb);
+#endif
       SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
       gtk_widget_show(previousb);
       set_stock_button_label(previousb, "Previous");
@@ -781,7 +787,12 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_speed_event);
       SG_SIGNAL_CONNECT(w_speed_event, "button_press_event", mix_speed_click_callback, NULL);
       
+#if (!HAVE_GTK_3)
       w_speed_label = gtk_label_new("speed:");
+#else
+      w_speed_label = gtk_button_new_with_label("speed:");
+      add_highlight_button_style(w_speed_label);
+#endif
       gtk_container_add(GTK_CONTAINER(w_speed_event), w_speed_label);
       gtk_widget_show(w_speed_label);
 
@@ -821,7 +832,12 @@ GtkWidget *make_mix_dialog(void)
       SG_SIGNAL_CONNECT(w_amp_event, "button_press_event", mix_amp_click_callback, NULL);
       
       mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", "amp:");
+#if (!HAVE_GTK_3)
       w_amp_label = gtk_label_new(amplab);
+#else
+      w_amp_label = gtk_button_new_with_label("amp:");
+      add_highlight_button_style(w_amp_label);
+#endif
       gtk_container_add(GTK_CONTAINER(w_amp_event), w_amp_label);
       gtk_widget_show(w_amp_label);
       

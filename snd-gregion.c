@@ -119,13 +119,29 @@ static void make_region_labels(file_info *hdr)
   if (hdr == NULL) return;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
+#if (!HAVE_GTK_3)
   set_label(srate_text, str);
+#else
+  set_button_label(srate_text, str);
+#endif
   mus_snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
+#if (!HAVE_GTK_3)
   set_label(chans_text, str);
+#else
+  set_button_label(chans_text, str);
+#endif
   mus_snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
+#if (!HAVE_GTK_3)
   set_label(length_text, str);
+#else
+  set_button_label(length_text, str);
+#endif
   mus_snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
+#if (!HAVE_GTK_3)
   set_label(maxamp_text, str);
+#else
+  set_button_label(maxamp_text, str);
+#endif
   free(str);
 }
 
@@ -519,7 +535,12 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(formw), tophbox, false, false, 4);
   gtk_widget_show(tophbox);
 
+#if (!HAVE_GTK_3)
   plw = gtk_label_new("play"); 
+#else
+  plw = gtk_button_new_with_label("play"); 
+  add_highlight_button_style(plw);
+#endif
   gtk_box_pack_start(GTK_BOX(tophbox), plw, false, false, 2);
   gtk_widget_show(plw);
 
@@ -571,33 +592,63 @@ static void make_region_dialog(void)
   gtk_widget_show(labbox);
   widget_modify_bg(labbox, GTK_STATE_NORMAL, ss->highlight_color);
 
+#if (!HAVE_GTK_3)
   srate_text = gtk_label_new("srate:");
   sg_left_justify_label(srate_text);
+#else
+  srate_text = gtk_button_new_with_label("srate:");
+  add_highlight_button_style(srate_text);
+  sg_left_justify_button(srate_text);
+#endif
   gtk_box_pack_start(GTK_BOX(labbox), srate_text, false, false, 2);
   gtk_widget_show(srate_text);
 
+#if (!HAVE_GTK_3)
   chans_text = gtk_label_new("chans:");
   sg_left_justify_label(chans_text);
+#else
+  chans_text = gtk_button_new_with_label("chans:");
+  add_highlight_button_style(chans_text);
+  sg_left_justify_button(chans_text);
+#endif
   gtk_box_pack_start(GTK_BOX(labbox), chans_text, false, false, 2);
   gtk_widget_show(chans_text);
 
+#if (!HAVE_GTK_3)
   length_text = gtk_label_new("length:");
   sg_left_justify_label(length_text);
+#else
+  length_text = gtk_button_new_with_label("length:");
+  add_highlight_button_style(length_text);
+  sg_left_justify_button(length_text);
+#endif
   gtk_box_pack_start(GTK_BOX(labbox), length_text, false, false, 2);
   gtk_widget_show(length_text);
 
+#if (!HAVE_GTK_3)
   maxamp_text = gtk_label_new("maxamp:");
   sg_left_justify_label(maxamp_text);
+#else
+  maxamp_text = gtk_button_new_with_label("maxamp:");
+  add_highlight_button_style(maxamp_text);
+  sg_left_justify_button(maxamp_text);
+#endif
   gtk_box_pack_start(GTK_BOX(labbox), maxamp_text, false, false, 2);
   gtk_widget_show(maxamp_text);
 
   edit_button = gtk_button_new_with_label("edit");
+#if HAVE_GTK_3
+  add_highlight_button_style(edit_button);
+#endif
   SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
   gtk_widget_show(edit_button);
   widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->lighter_blue);
 
   unlist_button = gtk_button_new_with_label("unlist");
+#if HAVE_GTK_3
+  add_highlight_button_style(unlist_button);
+#endif
   SG_SIGNAL_CONNECT(unlist_button, "clicked", region_unlist_callback, NULL);
   gtk_box_pack_start(GTK_BOX(infobox), unlist_button, true, true, 2);
   gtk_widget_show(unlist_button);

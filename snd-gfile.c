@@ -5284,7 +5284,8 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB, *resetB;
 
       vdat->dialog = snd_gtk_dialog_new();
-
+      add_dialog_style(vdat->dialog);
+      widget_modify_bg(vdat->dialog, GTK_STATE_NORMAL, ss->basic_color);
       {
 	char *filestr = NULL;
 	filestr = mus_format("%s %d", "Files", vdat->index + 1);
@@ -5374,7 +5375,13 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_start(GTK_BOX(fileform), tophbox, false, false, 4);
       gtk_widget_show(tophbox);
 
+#if (!HAVE_GTK_3)
       plw = gtk_label_new("play"); 
+#else
+      plw = gtk_button_new_with_label("play");
+      add_highlight_button_style(plw);
+#endif
+
       gtk_box_pack_start(GTK_BOX(tophbox), plw, false, false, 5);
       gtk_widget_show(plw);
 
@@ -5404,6 +5411,15 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  vdat->sort_items[i] = gtk_menu_item_new_with_label("unused");
 	  gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->sort_items[i]);
 	}
+
+#if 0
+      add_highlight_button_style(vdat->a_to_z);
+      add_highlight_button_style(vdat->z_to_a);
+      add_highlight_button_style(vdat->new_to_old);
+      add_highlight_button_style(vdat->old_to_new);
+      add_highlight_button_style(vdat->small_to_big);
+      add_highlight_button_style(vdat->big_to_small);
+#endif
 
       gtk_widget_show(vdat->a_to_z);
       gtk_widget_show(vdat->z_to_a);
@@ -5455,6 +5471,11 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_start(GTK_BOX(bbox), vdat->updateB, true, true, 1);
       gtk_box_pack_end(GTK_BOX(bbox), vdat->clearB, true, true, 1);
 
+#if HAVE_GTK_3
+      add_highlight_button_style(vdat->updateB);
+      add_highlight_button_style(vdat->clearB);
+#endif
+
       SG_SIGNAL_CONNECT(vdat->updateB, "clicked", view_files_update_callback, (gpointer)vdat);
       SG_SIGNAL_CONNECT(vdat->clearB, "clicked", view_files_clear_callback, (gpointer)vdat);
 
@@ -5466,7 +5487,12 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_end(GTK_BOX(fileform), addbox, false, false, 0);
       gtk_widget_show(addbox);
 
+#if HAVE_GTK_3
+      add_label = gtk_button_new_with_label("add:");
+      add_highlight_button_style(add_label);
+#else
       add_label = gtk_label_new("add:");
+#endif
       gtk_box_pack_start(GTK_BOX(addbox), add_label, false, false, 4);
       gtk_widget_show(add_label);
 
@@ -5518,6 +5544,11 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(lbox), vdat->openB, true, true, 1);
 	gtk_box_pack_end(GTK_BOX(lbox), vdat->removeB, true, true, 1);
 
+#if HAVE_GTK_3
+	add_highlight_button_style(vdat->openB);
+	add_highlight_button_style(vdat->removeB);
+#endif
+
 	SG_SIGNAL_CONNECT(vdat->openB, "clicked", view_files_open_selected_callback, (gpointer)vdat);
 	SG_SIGNAL_CONNECT(vdat->removeB, "clicked", view_files_remove_selected_callback, (gpointer)vdat);
 
@@ -5556,6 +5587,11 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(lbox1), vdat->mixB, true, true, 1);
 	gtk_box_pack_end(GTK_BOX(lbox1), vdat->insertB, true, true, 1);
 
+#if HAVE_GTK_3
+	add_highlight_button_style(vdat->mixB);
+	add_highlight_button_style(vdat->insertB);
+#endif
+
 	SG_SIGNAL_CONNECT(vdat->mixB, "clicked", view_files_mix_selected_callback, (gpointer)vdat);
 	SG_SIGNAL_CONNECT(vdat->insertB, "clicked", view_files_insert_selected_callback, (gpointer)vdat);
 
@@ -5568,6 +5604,9 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	vdat->at_cursor_button = gtk_radio_button_new_with_label(NULL, "at cursor");
 	widget_modify_bg(vdat->at_cursor_button, GTK_STATE_PRELIGHT, ss->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_cursor_button, false, false, 0);
+#if HAVE_GTK_3
+	add_highlight_button_style(vdat->at_cursor_button);
+#endif
 	gtk_widget_show(vdat->at_cursor_button);
 	SG_SIGNAL_CONNECT(vdat->at_cursor_button, "clicked", view_files_at_cursor_callback, (gpointer)vdat);
 

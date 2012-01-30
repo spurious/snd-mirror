@@ -23,7 +23,7 @@ var extsnd_aftergraphhook_tip = "<code>after-graph-hook (snd chn)</code>: called
 
 var extsnd_afteropenhook_tip = "<code>after-open-hook (snd)</code>: called just before the new file's window is displayed.<br>" +
                                " This provides a way to set various sound-specific defaults. <pre>" +
-                               "  (add-hook! after-open-hook<br>" + 
+                               "  (hook-push after-open-hook<br>" + 
                                "    (lambda (snd) <br>" +
                                "      (if (> (channels snd) 1) <br>" +
                                "          (set! (channel-style snd) channels-combined))))</pre>";
@@ -172,7 +172,7 @@ var extsnd_drawstring_tip = "<code>(draw-string text x0 y0 snd chn (ax time-grap
 
 var extsnd_duringopenhook_tip = "<code>during-open-hook (fd name reason)</code>:<br>" +
                                 " called after file is opened, but before data has been read.<br>" +
-                                "<pre> (add-hook! during-open-hook<br>" +
+                                "<pre> (hook-push during-open-hook<br>" +
                                 "    (lambda (fd name reason) <br>" +
                                 "      (if (= (mus-sound-header-type name) mus-raw)<br>" +
                                 "          (set! (mus-file-prescaler fd) 500.0))))</pre>";
@@ -484,7 +484,7 @@ var extsnd_opensound_tip = "<code>(open-sound filename)</code>: open filename <b
 
 var extsnd_optimizationhook_tip = "<code>optimization-hook (msg)</code>: called if the run macro encounters something it can't optimize.<br>" +
                                   " 'msg' is a string description of the offending form:<br>" +
-                                  "<code>  (add-hook! optimization-hook (lambda (msg) (snd-print msg)))</code>.<br>" +
+                                  "<code>  (hook-push optimization-hook (lambda (msg) (snd-print msg)))</code>.<br>" +
                                   "  You can often slightly rewrite the form to make run happy.";
 
 var extsnd_padchannel_tip = "<code>(pad-channel beg dur snd chn edpos)</code>: insert dur zeros at beg in snd's chn";
@@ -1450,5 +1450,3 @@ var scheme_format_tip = "<code>(format destination control-string :rest args)</c
                         "produces:<br><br>" +
                         "<code>\"A: #&lt;vct[len=2]: 3.140 3.140&gt;, D: 32, F: 1.5<br>" +
                         "\"</code>.";
-
-var scheme_reset_hook_tip = "<code>(reset-hook! hook)</code>: removes all functions from 'hook'.";

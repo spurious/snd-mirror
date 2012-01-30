@@ -79,6 +79,30 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 /* gdk_gc_set_foreground(Prf->label->style->black_gc, ss->red) no effect? */
 
 
+static GtkWidget *make_basic_row(GtkWidget *box)
+{
+#if HAVE_GTK_3
+  GtkWidget *row, *r;
+  r = gtk_button_new();
+  gtk_widget_set_hexpand(GTK_WIDGET(r), true);
+  gtk_box_pack_start(GTK_BOX(box), r, false, false, 0);
+  add_highlight_button_style(r);
+  gtk_widget_show(r);
+  
+  row = gtk_hbox_new(false, 0);
+  gtk_container_add(GTK_CONTAINER(r), row);
+  gtk_widget_set_hexpand(GTK_WIDGET(row), true);
+  gtk_widget_show(row);
+#else
+  GtkWidget *row;
+  row = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  gtk_widget_show(row);
+#endif
+
+  return(row);
+}
+
 static void set_radio_button(prefs_info *prf, int which)
 {
   if ((which >= 0) && (which < prf->num_buttons))
@@ -168,17 +192,12 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
 {
   GtkWidget *w;
 
-#if (!HAVE_GTK_3)
   w = gtk_label_new(label);
+#if (!HAVE_GTK_3)
   gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.0);
 #else
-  w = gtk_button_new_with_label(label);
-  widget_modify_bg(w, GTK_STATE_NORMAL, ss->highlight_color);
-  widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->light_blue);
-  add_highlight_button_style(w);
-  gtk_misc_set_alignment(GTK_MISC(BIN_CHILD(w)), 1.0, 0.0);
+  gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
 #endif
-
   gtk_size_group_add_widget(label_group, w);
   gtk_box_pack_start(GTK_BOX(box), w, PACK_1, PACK_2, 0);
   gtk_widget_show(w);
@@ -193,14 +212,7 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
 static void make_row_inner_label(prefs_info *prf, const char *label, GtkWidget *box)
 {
   GtkWidget *w;
-#if (!HAVE_GTK_3)
   w = gtk_label_new(label);
-#else
-  w = gtk_button_new_with_label(label);
-  widget_modify_bg(w, GTK_STATE_NORMAL, ss->highlight_color);
-  widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->light_blue);
-  add_highlight_button_style(w);
-#endif
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 4);
   gtk_widget_show(w);
 }
@@ -405,16 +417,12 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  add_highlight_button_style(row);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
-  add_highlight_button_style(hb);
   gtk_widget_show(hb);
 
   make_row_middle_separator(hb);
@@ -451,16 +459,12 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
   prf->toggle_func = toggle_func;
   prf->toggle2_func = toggle2_func;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  add_highlight_button_style(row);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
-  add_highlight_button_style(hb);
   gtk_widget_show(hb);
 
   make_row_middle_separator(hb);
@@ -584,9 +588,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -621,9 +623,7 @@ static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -664,9 +664,7 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -704,9 +702,7 @@ static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, cons
   prf->var_name = varname;
   prf->text_func = text_func;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -790,9 +786,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
 
@@ -825,9 +819,7 @@ static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const 
   prf->arrow_up_func = arrow_up_func;
   prf->arrow_down_func = arrow_down_func;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
 
@@ -887,9 +879,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   prf->var_name = varname;
   prf->scale_max = max_val;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -934,9 +924,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -966,10 +954,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  add_highlight_button_style(row);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -1006,9 +991,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
 
@@ -1047,9 +1030,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -1092,6 +1073,19 @@ static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
 }
 
 
+#if HAVE_GTK_3
+static void display_color(GtkWidget *w, color_t pixel)
+{
+  cairo_t *cr;
+  cr = gdk_cairo_create(WIDGET_TO_WINDOW(w));
+  cairo_set_source_rgba(cr, pixel->red, pixel->green, pixel->blue, pixel->alpha);
+  cairo_rectangle(cr, 0, 0, widget_width(w), widget_height(w));
+  cairo_fill(cr);
+  cairo_destroy(cr);
+}
+#endif
+
+
 static void scale_set_color(prefs_info *prf, color_t pixel)
 {
   float r = 0.0, g = 0.0, b = 0.0;
@@ -1102,7 +1096,11 @@ static void scale_set_color(prefs_info *prf, color_t pixel)
   ADJUSTMENT_SET_VALUE(prf->gadj, g);
   float_to_textfield(prf->btxt, b);
   ADJUSTMENT_SET_VALUE(prf->badj, b);
+#if HAVE_GTK_3
+  display_color(prf->color, pixel);
+#else
   widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
+#endif
 }
 
 
@@ -1116,7 +1114,11 @@ static void reflect_color(prefs_info *prf)
   b = ADJUSTMENT_VALUE(prf->badj);
 
   current_color = rgb_to_color(r, g, b);
-  widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_color);
+#if HAVE_GTK_3
+  display_color(prf->color, current_color);
+#else
+  widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_color); 
+#endif
 
   float_to_textfield(prf->rtxt, r);
   float_to_textfield(prf->gtxt, g);
@@ -1214,6 +1216,24 @@ static void prefs_call_color_func_callback(GtkWidget *w, gpointer context)
 }
 
 
+#if HAVE_GTK_3
+static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  mus_float_t r, g, b;
+  color_info *current_color;
+
+  r = ADJUSTMENT_VALUE(prf->radj);
+  g = ADJUSTMENT_VALUE(prf->gadj);
+  b = ADJUSTMENT_VALUE(prf->badj);
+
+  current_color = rgb_to_color(r, g, b);
+  display_color(prf->color, current_color);
+  return(false);
+}
+#endif
+
+
 static prefs_info *prefs_color_selector_row(const char *label, const char *varname, 
 					    color_t current_pixel,
 					    GtkWidget *box,
@@ -1228,9 +1248,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   pixel_to_rgb(current_pixel, &r, &g, &b);
 
   /* first row */
-  row = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
-  gtk_widget_show(row);
+  row = make_basic_row(box);
 
   prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
@@ -1249,9 +1267,18 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
     gtk_size_group_add_widget(prf->color_texts, frame);
 
     prf->color = gtk_drawing_area_new();
-    gtk_widget_set_events(prf->color, GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+    /* gtk_widget_set_events(prf->color, GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK); */
+    gtk_widget_set_events(prf->color, GDK_ALL_EVENTS_MASK);
+
     gtk_container_add(GTK_CONTAINER(frame), prf->color);
+#if HAVE_GTK_3
+    SG_SIGNAL_CONNECT(prf->color, DRAW_SIGNAL, drawer_expose, prf);
+
+    gtk_widget_set_hexpand(GTK_WIDGET(prf->color), true);
+    gtk_widget_set_vexpand(GTK_WIDGET(prf->color), true);
+#else
     widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_pixel);
+#endif
     gtk_widget_show(prf->color);
     gtk_widget_show(frame);
   }
@@ -1377,8 +1404,6 @@ static void make_top_level_label(const char *label, GtkWidget *parent)
   gtk_misc_set_alignment(GTK_MISC(w2), 0.01, 0.5);
 #else
   w2 = gtk_button_new_with_label(label);
-  widget_modify_bg(w2, GTK_STATE_NORMAL, ss->highlight_color);
-  widget_modify_bg(w2, GTK_STATE_PRELIGHT, ss->light_blue);
   add_highlight_button_style(w2);
   gtk_label_set_markup(GTK_LABEL(BIN_CHILD(w2)), str);
   gtk_label_set_use_markup(GTK_LABEL(BIN_CHILD(w2)), true);
@@ -1432,8 +1457,6 @@ static void make_inner_label(const char *label, GtkWidget *parent)
   gtk_misc_set_alignment(GTK_MISC(w), 0.0, 0.5);
 #else
   w = gtk_button_new_with_label(label);
-  widget_modify_bg(w, GTK_STATE_NORMAL, ss->highlight_color);
-  widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->light_blue);
   add_highlight_button_style(w);
   gtk_label_set_markup(GTK_LABEL(BIN_CHILD(w)), str);
   gtk_label_set_use_markup(GTK_LABEL(BIN_CHILD(w)), true);

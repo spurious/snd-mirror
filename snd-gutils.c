@@ -1019,6 +1019,7 @@ void add_dialog_style(GtkWidget *w)
   c = gtk_widget_get_style_context(w);
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(dialog_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
+
 #else
 void add_highlight_button_style(GtkWidget *w)
 {
@@ -1397,8 +1398,9 @@ void init_gtk(void)
     "  background-image: -gtk-gradient (linear, left top, right bottom, from(rgb(250, 250, 230)), to(rgb(235, 235, 210)));\n"
     "}\n",
     -1, NULL);
-		
+
 /* TODO: overall background color (gradient?), also how to reflect colors (in prefs as well)
-*/
+ *   attempt here to set menuitem bgcolor/border-width failed
+ */
 }
 #endif

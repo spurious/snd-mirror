@@ -621,6 +621,10 @@ void snd_doit(int argc, char **argv)
 	  if (sound_style(ss) == SOUNDS_HORIZONTAL)
 	    SOUND_PANE_BOX(ss) = gtk_hbox_new(false, 0);
 	  else SOUND_PANE_BOX(ss) = gtk_vbox_new(false, 0);
+#if HAVE_GTK_3
+	  gtk_widget_set_hexpand(GTK_WIDGET(SOUND_PANE_BOX(ss)), true);
+	  gtk_widget_set_vexpand(GTK_WIDGET(SOUND_PANE_BOX(ss)), true);
+#endif
 	}
       gtk_paned_add1(GTK_PANED(SOUND_PANE(ss)), SOUND_PANE_BOX(ss));
       gtk_widget_show(SOUND_PANE_BOX(ss));
