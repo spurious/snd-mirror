@@ -781,6 +781,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       if (!main)
 	{
 	  cw[W_main_window] = gtk_hpaned_new();
+	  add_paned_style(cw[W_main_window]);
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
 	  cp->edhist_list = slist_new(cw[W_main_window], NULL, 0, PANED_ADD1);

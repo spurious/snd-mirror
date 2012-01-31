@@ -525,11 +525,7 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 #if (!HAVE_GTK_3)
   gtk_widget_modify_bg(w, type, rgb_to_gdk_color(color));
 #else
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)color);
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)color);
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)color);
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_INSENSITIVE, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_ACTIVE | GTK_STATE_FLAG_PRELIGHT | GTK_STATE_FLAG_SELECTED | GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
 #endif
 }
 
@@ -539,11 +535,7 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 #if (!HAVE_GTK_3)
   gtk_widget_modify_fg(w, type, rgb_to_gdk_color(color));
 #else
-  gtk_widget_override_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)color);
-  gtk_widget_override_color(w, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)color);
-  gtk_widget_override_color(w, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)color);
-  gtk_widget_override_color(w, GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
-  gtk_widget_override_color(w, GTK_STATE_FLAG_INSENSITIVE, (GdkRGBA *)color);
+  gtk_widget_override_color(w, GTK_STATE_FLAG_ACTIVE | GTK_STATE_FLAG_PRELIGHT | GTK_STATE_FLAG_SELECTED | GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
 #endif
 }
 
@@ -553,11 +545,7 @@ void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 #if (!HAVE_GTK_3)
   gtk_widget_modify_base(w, type, rgb_to_gdk_color(color));
 #else
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)color);
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_PRELIGHT, (GdkRGBA *)color);
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_SELECTED, (GdkRGBA *)color);
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
-  gtk_widget_override_background_color(w, GTK_STATE_FLAG_INSENSITIVE, (GdkRGBA *)color);
+  gtk_widget_override_background_color(w, GTK_STATE_FLAG_ACTIVE | GTK_STATE_FLAG_PRELIGHT | GTK_STATE_FLAG_SELECTED | GTK_STATE_FLAG_FOCUSED, (GdkRGBA *)color);
 #endif
 }
 
@@ -988,7 +976,9 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 
 
 #if HAVE_GTK_3
-static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider;
+static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider, *tb_provider;
+static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider;
+
 void add_white_button_style(GtkWidget *w)
 {
   GtkStyleContext *c;
@@ -1020,7 +1010,63 @@ void add_dialog_style(GtkWidget *w)
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(dialog_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
+void add_toolbar_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(tb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
+void add_paned_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(pd_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
+void add_red_scale_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(rsc_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
+void add_green_scale_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(gsc_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
+void add_blue_scale_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(bsc_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
 #else
+
+void add_red_scale_style(GtkWidget *w)
+{
+}
+
+void add_green_scale_style(GtkWidget *w)
+{
+}
+
+void add_blue_scale_style(GtkWidget *w)
+{
+}
+
+void add_toolbar_style(GtkWidget *w)
+{
+}
+
+void add_paned_style(GtkWidget *w)
+{
+}
+
 void add_highlight_button_style(GtkWidget *w)
 {
 }
@@ -1374,7 +1420,7 @@ void init_gtk(void)
 
   hl_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(hl_provider),
-    "GtkButton#highlight_button { \n"
+    "GtkEventBox, GtkButton#highlight_button { \n"
     "  padding-top: 0;\n"
     "  padding-bottom: 0;\n"
     "  border-width: 0;\n"
@@ -1399,8 +1445,43 @@ void init_gtk(void)
     "}\n",
     -1, NULL);
 
-/* TODO: overall background color (gradient?), also how to reflect colors (in prefs as well)
- *   attempt here to set menuitem bgcolor/border-width failed
- */
+  tb_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(tb_provider),
+    "GtkToolbar, GtkMenuBar, GtkMenu { \n"
+    "  border-width: 0;\n"
+    "  background-color: #fffff0;\n"
+    "}\n",
+    -1, NULL);
+
+  rsc_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(rsc_provider),
+    "GtkScale { \n"
+    "  background-image: -gtk-gradient (linear, left top, right bottom, from(rgb(250, 250, 230)), to(rgb(160, 0, 0)));\n"
+    "}\n",
+    -1, NULL);
+
+  gsc_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(gsc_provider),
+    "GtkScale { \n"
+    "  background-image: -gtk-gradient (linear, left top, right bottom, from(rgb(250, 250, 230)), to(rgb(0, 160, 0)));\n"
+    "}\n",
+    -1, NULL);
+
+  bsc_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(bsc_provider),
+    "GtkScale { \n"
+    "  background-image: -gtk-gradient (linear, left top, right bottom, from(rgb(250, 250, 230)), to(rgb(0, 0, 160)));\n"
+    "}\n",
+    -1, NULL);
+
+  /* I wanted to make the handle larger and set its color to #90ee90 -- no way!
+   */
+  pd_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(pd_provider),
+    "GtkPaned { \n"
+    "  background-color: #fffff0;\n"
+    "}\n",
+    -1, NULL);
+
 }
 #endif

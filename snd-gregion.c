@@ -516,6 +516,7 @@ static void make_region_dialog(void)
   gtk_widget_show(save_as_button);
 
   region_grf = gtk_vpaned_new();
+  add_paned_style(region_grf);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(region_dialog)), region_grf, true, true, 0);
   gtk_widget_show(region_grf);
 

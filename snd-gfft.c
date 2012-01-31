@@ -1007,7 +1007,7 @@ GtkWidget *make_transform_dialog(bool managed)
 	
 	
 	vb = gtk_vbox_new(false, 0);
-	gtk_container_add(GTK_CONTAINER(hb), vb);	
+	gtk_container_add(GTK_CONTAINER(hb), vb);
 	
 	pk_lab = snd_gtk_highlight_label_new("max peaks");
 	gtk_box_pack_start(GTK_BOX(vb), pk_lab, false, false, 0);

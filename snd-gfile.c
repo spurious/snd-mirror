@@ -437,6 +437,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   /* -------- directory and file lists -------- */
   fs->panes = gtk_hpaned_new();
+  add_paned_style(fs->panes);
   gtk_container_set_border_width(GTK_CONTAINER(fs->panes), 2);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), fs->panes, true, true, 10);
   gtk_widget_show(fs->panes);
@@ -545,6 +546,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
       if (fs->file_dir_items == NULL)
 	{
 	  fs->dirs_menu = gtk_menu_new();
+	  add_toolbar_style(fs->dirs_menu);
 	  fs->file_dir_items = (GtkWidget **)calloc(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
 	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	    {
@@ -651,6 +653,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 	{
 	  /* set up the default menu items */
 	  fs->files_menu = gtk_menu_new();
+	  add_toolbar_style(fs->files_menu);
 	  fs->file_list_items = (GtkWidget **)calloc(SORT_XEN, sizeof(GtkWidget *));
 	  fs->file_list_items_size = SORT_XEN;
 	  for (i = 0; i < SORT_XEN; i++)
@@ -5337,12 +5340,13 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       mainform = gtk_hpaned_new();
       gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(vdat->dialog)), mainform, true, true, 0);
       gtk_widget_set_name(mainform, "the_unpane");
+      add_paned_style(mainform);
       gtk_widget_show(mainform);
 
       {
 	GtkWidget *lmargin, *rmargin;
 	/* these exist solely to put some blank space around the handle */
-
+#if (!HAVE_GTK_3)
 	lmargin = gtk_hbox_new(false, 0); 
 	gtk_paned_add1(GTK_PANED(mainform), lmargin);	
 	gtk_widget_show(lmargin);
@@ -5358,6 +5362,29 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	fileform = gtk_vbox_new(false, 0);
 	gtk_box_pack_start(GTK_BOX(rmargin), fileform, true, true, 4);
 	gtk_widget_show(fileform);
+#else
+	lmargin = gtk_event_box_new(); 
+	gtk_paned_add1(GTK_PANED(mainform), lmargin);	
+	add_highlight_button_style(lmargin);
+	gtk_widget_show(lmargin);
+
+	rmargin = gtk_event_box_new();
+	gtk_paned_add2(GTK_PANED(mainform), rmargin);	
+	add_highlight_button_style(rmargin);
+	gtk_widget_show(rmargin);
+
+	leftform = gtk_vbox_new(false, 0);
+	gtk_container_add(GTK_CONTAINER(lmargin), leftform);
+	gtk_widget_set_hexpand(GTK_WIDGET(lmargin), true);
+	gtk_widget_set_vexpand(GTK_WIDGET(lmargin), true);
+	gtk_widget_show(leftform);
+
+	fileform = gtk_vbox_new(false, 0);
+	gtk_container_add(GTK_CONTAINER(rmargin), fileform);
+	gtk_widget_set_hexpand(GTK_WIDGET(rmargin), true);
+	gtk_widget_set_vexpand(GTK_WIDGET(rmargin), true);
+	gtk_widget_show(fileform);
+#endif
       }
 
       /* files section: play files | files */
@@ -5387,9 +5414,11 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       sbar = gtk_menu_bar_new();
       gtk_box_pack_end(GTK_BOX(tophbox), sbar, false, false, 0);
+      add_toolbar_style(sbar);
       gtk_widget_show(sbar);
 
       vdat->smenu = gtk_menu_new();
+      add_toolbar_style(vdat->smenu);
       vdat->a_to_z = gtk_menu_item_new_with_label("a..z");
       vdat->z_to_a = gtk_menu_item_new_with_label("z..a");
       vdat->new_to_old = gtk_menu_item_new_with_label("new..old");
@@ -5411,15 +5440,6 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  vdat->sort_items[i] = gtk_menu_item_new_with_label("unused");
 	  gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->sort_items[i]);
 	}
-
-#if 0
-      add_highlight_button_style(vdat->a_to_z);
-      add_highlight_button_style(vdat->z_to_a);
-      add_highlight_button_style(vdat->new_to_old);
-      add_highlight_button_style(vdat->old_to_new);
-      add_highlight_button_style(vdat->small_to_big);
-      add_highlight_button_style(vdat->big_to_small);
-#endif
 
       gtk_widget_show(vdat->a_to_z);
       gtk_widget_show(vdat->z_to_a);
@@ -5447,6 +5467,10 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       }
 
       vdat->file_list = gtk_vbox_new(false, 0);
+#if HAVE_GTK_3
+      gtk_widget_set_hexpand(GTK_WIDGET(vdat->file_list), true);
+      gtk_widget_set_vexpand(GTK_WIDGET(vdat->file_list), true);
+#endif
 
       cww = gtk_scrolled_window_new(NULL, NULL);
       gtk_box_pack_start(GTK_BOX(fileform), cww, true, true, 0);
@@ -5565,6 +5589,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_widget_show(spacer);
 	}
 
+#if (!HAVE_GTK_3)
 	/* framed stuff */
 	frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
@@ -5572,6 +5597,18 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	widget_modify_bg(frame, GTK_STATE_NORMAL, ss->zoom_color);
 	gtk_widget_show(frame);
 	gtk_box_pack_start(GTK_BOX(leftform), frame, false, false, 0);
+#else
+	{
+	  GtkWidget *top_sep;
+	  top_sep = gtk_vseparator_new();
+	  gtk_box_pack_start(GTK_BOX(leftform), top_sep, false, false, 4);
+	  gtk_widget_show(top_sep);
+	}
+	frame = gtk_event_box_new();
+	add_highlight_button_style(frame);
+	gtk_widget_show(frame);
+	gtk_box_pack_start(GTK_BOX(leftform), frame, false, false, 0);
+#endif
 	
 	lbox2 = gtk_vbox_new(false, 0);
 	gtk_container_add(GTK_CONTAINER(frame), lbox2);
@@ -5654,12 +5691,20 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 
 	{
 	  GtkWidget *ampH, *ampL, *speedH, *speedL, *gframe;
-
+#if HAVE_GTK_3
+	  {
+	    GtkWidget *top_sep;
+	    top_sep = gtk_vseparator_new();
+	    gtk_box_pack_start(GTK_BOX(leftform), top_sep, false, false, 8);
+	    gtk_widget_show(top_sep);
+	  }
+#endif
 	  /* AMP */
 	  ampH = gtk_hbox_new(false, 2);
 	  gtk_box_pack_start(GTK_BOX(leftform), ampH, false, false, 4);
       
 	  vdat->amp_event = gtk_event_box_new();
+	  add_highlight_button_style(vdat->amp_event);
 	  gtk_box_pack_start(GTK_BOX(ampH), vdat->amp_event, false, false, 4);
 	  gtk_widget_show(vdat->amp_event);
 	  SG_SIGNAL_CONNECT(vdat->amp_event, "button_press_event", vf_amp_click_callback, (gpointer)vdat);
@@ -5688,6 +5733,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_box_pack_start(GTK_BOX(leftform), speedH, false, false, 4);
       
 	  vdat->speed_event = gtk_event_box_new();
+	  add_highlight_button_style(vdat->speed_event);
 	  gtk_box_pack_start(GTK_BOX(speedH), vdat->speed_event, false, false, 4);
 	  gtk_widget_show(vdat->speed_event);
 	  SG_SIGNAL_CONNECT(vdat->speed_event, "button_press_event", vf_speed_click_callback, (gpointer)vdat);
@@ -5697,6 +5743,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_widget_show(speedL);
 
 	  vdat->speed_label_event = gtk_event_box_new();
+	  add_highlight_button_style(vdat->speed_label_event);
 	  gtk_box_pack_start(GTK_BOX(speedH), vdat->speed_label_event, false, false, 4);
 	  gtk_widget_show(vdat->speed_label_event);
 	  SG_SIGNAL_CONNECT(vdat->speed_label_event, "button_press_event", vf_speed_label_click_callback, (gpointer)vdat);
@@ -5720,6 +5767,14 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_widget_show(vdat->speed_scrollbar);
 	  gtk_widget_show(speedH);
 
+#if HAVE_GTK_3
+	  {
+	    GtkWidget *top_sep;
+	    top_sep = gtk_vseparator_new();
+	    gtk_box_pack_start(GTK_BOX(leftform), top_sep, false, false, 4);
+	    gtk_widget_show(top_sep);
+	  }
+#endif
 
 	  /* GRAPH (frame) */
 	  gframe = gtk_frame_new(NULL);

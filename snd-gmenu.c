@@ -427,6 +427,7 @@ GtkWidget *add_menu(void)
   ml[m_menu] = NULL;
   add_drag_and_drop(main_menu, menu_drop_watcher, menu_drag_watcher, NULL);
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), main_menu, false, true, 0);
+  add_toolbar_style(main_menu);
   gtk_widget_show(main_menu);
 
 
@@ -438,6 +439,7 @@ GtkWidget *add_menu(void)
   gtk_widget_show(file_menu);
 
   file_cascade_menu = gtk_menu_new();
+  add_toolbar_style(file_cascade_menu);
   ml[f_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_menu), file_cascade_menu);
 
@@ -452,6 +454,7 @@ GtkWidget *add_menu(void)
   gtk_widget_hide(file_open_recent_menu);
   
   file_open_recent_cascade_menu = gtk_menu_new();
+  add_toolbar_style(file_open_recent_cascade_menu);
   ml[f_open_recent_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_open_recent_menu), file_open_recent_cascade_menu);
 
@@ -507,6 +510,7 @@ GtkWidget *add_menu(void)
   gtk_widget_show(edit_menu);
 
   edit_cascade_menu = gtk_menu_new();
+  add_toolbar_style(edit_cascade_menu);
   ml[e_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(edit_menu), edit_cascade_menu);
   
@@ -563,6 +567,7 @@ GtkWidget *add_menu(void)
   gtk_widget_show(view_menu);
 
   view_cascade_menu = gtk_menu_new();
+  add_toolbar_style(view_cascade_menu);
   ml[v_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_menu), view_cascade_menu);
 
@@ -594,6 +599,7 @@ GtkWidget *add_menu(void)
   ml[v_graph_style_menu] = "Graph style";
 
   view_graph_style_cascade_menu = gtk_menu_new();
+  add_toolbar_style(view_graph_style_cascade_menu);
   ml[v_graph_style_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_graph_style_menu), view_graph_style_cascade_menu);
 
@@ -631,6 +637,7 @@ GtkWidget *add_menu(void)
   ml[v_combine_menu] = "Channel style";
 
   view_combine_cascade_menu = gtk_menu_new();
+  add_toolbar_style(view_combine_cascade_menu);
   ml[v_combine_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_combine_menu), view_combine_cascade_menu);
 
@@ -654,6 +661,7 @@ GtkWidget *add_menu(void)
   ml[v_x_axis_menu] = "X axis units";
 
   view_x_axis_cascade_menu = gtk_menu_new();
+  add_toolbar_style(view_x_axis_cascade_menu);
   ml[v_x_axis_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_x_axis_menu), view_x_axis_cascade_menu);
 
@@ -680,6 +688,7 @@ GtkWidget *add_menu(void)
   ml[v_axes_menu] = "Axes";
 
   view_axes_cascade_menu = gtk_menu_new();
+  add_toolbar_style(view_axes_cascade_menu);
   ml[v_axes_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_axes_menu), view_axes_cascade_menu);
 
@@ -706,6 +715,7 @@ GtkWidget *add_menu(void)
   ml[v_focus_style_menu] = "Zoom focus";
 
   view_focus_cascade_menu = gtk_menu_new();
+  add_toolbar_style(view_focus_cascade_menu);
   ml[v_focus_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_focus_style_menu), view_focus_cascade_menu);
 
@@ -731,6 +741,7 @@ GtkWidget *add_menu(void)
   gtk_widget_show(options_menu);
 
   options_cascade_menu = gtk_menu_new();
+  add_toolbar_style(options_cascade_menu);
   ml[o_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(options_menu), options_cascade_menu);
 
@@ -766,6 +777,7 @@ GtkWidget *add_menu(void)
   /* gtk_menu_item_set_right_justified(GTK_MENU_ITEM(help_menu), true); */
 
   help_cascade_menu = gtk_menu_new();
+  add_toolbar_style(help_cascade_menu);
   ml[h_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(help_menu), help_cascade_menu);
 
@@ -911,6 +923,7 @@ void post_basic_popup_menu(void *e)
   if (!basic_popup_menu)
     {
       basic_popup_menu = gtk_menu_new();
+      add_toolbar_style(basic_popup_menu);
       gtk_widget_set_events(basic_popup_menu, GDK_ALL_EVENTS_MASK);
       gtk_widget_show(basic_popup_menu);
 
@@ -1070,6 +1083,7 @@ void post_selection_popup_menu(void *e)
   if (!selection_popup_menu)
     {
       selection_popup_menu = gtk_menu_new();
+      add_toolbar_style(selection_popup_menu);
       gtk_widget_set_events(selection_popup_menu, GDK_ALL_EVENTS_MASK);
       gtk_widget_show(selection_popup_menu);
 
@@ -1182,6 +1196,7 @@ void post_fft_popup_menu(void *e)
     {
       GtkWidget *outer_menu, *cascade_menu;
       fft_popup_menu = gtk_menu_new();
+      add_toolbar_style(fft_popup_menu);
       gtk_widget_set_events(fft_popup_menu, GDK_ALL_EVENTS_MASK);
       gtk_widget_show(fft_popup_menu);
 
@@ -1189,6 +1204,7 @@ void post_fft_popup_menu(void *e)
 
       outer_menu = add_menu_item(fft_popup_menu, "Size", NULL, NULL);
       cascade_menu = gtk_menu_new();
+      add_toolbar_style(cascade_menu);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
 
       add_menu_item(cascade_menu, "16",      NULL, (GCallback)fft_size_16_callback);
@@ -1204,6 +1220,7 @@ void post_fft_popup_menu(void *e)
 
       outer_menu = add_menu_item(fft_popup_menu, "Window", NULL, NULL);
       cascade_menu = gtk_menu_new();
+      add_toolbar_style(cascade_menu);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
 
       add_menu_item(cascade_menu, "rectangular",     NULL, (GCallback)fft_window_rectangular_callback);
@@ -1230,6 +1247,7 @@ void post_fft_popup_menu(void *e)
 
       outer_menu = add_menu_item(fft_popup_menu, "Graph type", NULL, NULL);
       cascade_menu = gtk_menu_new();
+      add_toolbar_style(cascade_menu);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
 
       add_menu_item(cascade_menu, "one fft",     NULL, (GCallback)fft_graph_once_callback);
@@ -1239,6 +1257,7 @@ void post_fft_popup_menu(void *e)
 
       outer_menu = add_menu_item(fft_popup_menu, "Transform type", NULL, NULL);
       cascade_menu = gtk_menu_new();
+      add_toolbar_style(cascade_menu);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
 
       add_menu_item(cascade_menu, "fourier",         NULL, (GCallback)fft_type_fourier_callback);
@@ -1249,6 +1268,7 @@ void post_fft_popup_menu(void *e)
 
       outer_menu = add_menu_item(fft_popup_menu, "Colormap", NULL, NULL);
       cascade_menu = gtk_menu_new();
+      add_toolbar_style(cascade_menu);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(outer_menu), cascade_menu);
 
       add_menu_item(cascade_menu, "gray",    NULL, (GCallback)fft_gray_callback);
@@ -1449,6 +1469,10 @@ void show_toolbar(void)
   if (!toolbar)
     {
       toolbar = gtk_toolbar_new();
+#if HAVE_GTK_3
+      add_toolbar_style(toolbar);
+      gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), 2);
+#endif
       gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), toolbar, false, false, 0); /* MAIN_PANE = top level vbox */
       gtk_box_reorder_child(GTK_BOX(MAIN_PANE(ss)), toolbar, 1);            /* put toolbar just under the top level menubar */
 
@@ -1625,6 +1649,7 @@ int g_add_to_main_menu(const char *label, int slot)
       add_option(m, new_menu + 1, label, slot);
     }
   mc = gtk_menu_new();
+  add_toolbar_style(mc);
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(m), mc);
   new_menu++;
   added_menus[new_menu] = m; /* was mc -- 1-Mar-06 */

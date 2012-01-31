@@ -608,6 +608,7 @@ void snd_doit(int argc, char **argv)
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
       SOUND_PANE(ss) = gtk_vpaned_new();
+      add_paned_style(SOUND_PANE(ss));
       gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)), 0);
       gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), SOUND_PANE(ss));
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)

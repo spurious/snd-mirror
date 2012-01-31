@@ -1644,6 +1644,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   if (make_widgets)
     {
       SND_PANE(sp) = gtk_vpaned_new();
+      add_paned_style(SND_PANE(sp));
       set_user_int_data(G_OBJECT(SND_PANE(sp)), sp->index);
       gtk_container_set_border_width(GTK_CONTAINER(SND_PANE(sp)), 4); /* this is the outer margin of each sound's box -- 6 seems slightly large */
       /* I tried putting a frame around the entire pane, but it looked fussy, and the frame bottom cut into the filter widget! */

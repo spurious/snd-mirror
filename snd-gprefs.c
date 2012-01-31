@@ -83,7 +83,7 @@ static GtkWidget *make_basic_row(GtkWidget *box)
 {
 #if HAVE_GTK_3
   GtkWidget *row, *r;
-  r = gtk_button_new();
+  r = gtk_event_box_new(); /* not button! */
   gtk_widget_set_hexpand(GTK_WIDGET(r), true);
   gtk_box_pack_start(GTK_BOX(box), r, false, false, 0);
   add_highlight_button_style(r);
@@ -960,7 +960,6 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
-  add_highlight_button_style(hb);
   gtk_widget_show(hb);
 
   make_row_middle_separator(hb);
@@ -1267,13 +1266,10 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
     gtk_size_group_add_widget(prf->color_texts, frame);
 
     prf->color = gtk_drawing_area_new();
-    /* gtk_widget_set_events(prf->color, GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK); */
-    gtk_widget_set_events(prf->color, GDK_ALL_EVENTS_MASK);
-
     gtk_container_add(GTK_CONTAINER(frame), prf->color);
+
 #if HAVE_GTK_3
     SG_SIGNAL_CONNECT(prf->color, DRAW_SIGNAL, drawer_expose, prf);
-
     gtk_widget_set_hexpand(GTK_WIDGET(prf->color), true);
     gtk_widget_set_vexpand(GTK_WIDGET(prf->color), true);
 #else
@@ -1309,8 +1305,12 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
   gtk_widget_set_name(prf->rscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
+#if (!HAVE_GTK_3)
   widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color);   /* this is the slider except when clicked */
   widget_modify_bg(prf->rscl, GTK_STATE_PRELIGHT, rscl_color); /* this is the slider when clicked */
+#else
+  add_red_scale_style(prf->rscl);
+#endif
   gtk_widget_show(prf->rscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->rscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->rscl), false);
@@ -1319,8 +1319,12 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
   gtk_widget_set_name(prf->gscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
+#if (!HAVE_GTK_3)
   widget_modify_bg(prf->gscl, GTK_STATE_NORMAL, gscl_color);
   widget_modify_bg(prf->gscl, GTK_STATE_PRELIGHT, gscl_color);
+#else
+  add_green_scale_style(prf->gscl);
+#endif
   gtk_widget_show(prf->gscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->gscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->gscl), false);
@@ -1329,8 +1333,12 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
   gtk_widget_set_name(prf->bscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);
+#if (!HAVE_GTK_3)
   widget_modify_bg(prf->bscl, GTK_STATE_NORMAL, bscl_color);
   widget_modify_bg(prf->bscl, GTK_STATE_PRELIGHT, bscl_color);
+#else
+  add_blue_scale_style(prf->bscl);
+#endif
   gtk_widget_show(prf->bscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->bscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->bscl), false);
@@ -1433,7 +1441,6 @@ static GtkWidget *make_top_level_box(GtkWidget *topics)
 
   w = gtk_vbox_new(false, 2);
   gtk_container_add(GTK_CONTAINER(frame), w);
-  add_highlight_button_style(w);
   gtk_widget_show(w);
   return(w);
 }

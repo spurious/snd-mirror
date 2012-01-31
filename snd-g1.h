@@ -292,6 +292,11 @@ color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
   GdkColor *rgb_to_gdk_color(color_t col);
 #endif
 void add_highlight_button_style(GtkWidget *w);
+void add_toolbar_style(GtkWidget *w);
+void add_paned_style(GtkWidget *w);
+void add_red_scale_style(GtkWidget *w);
+void add_green_scale_style(GtkWidget *w);
+void add_blue_scale_style(GtkWidget *w);
 void add_white_button_style(GtkWidget *w);
 void add_listener_style(GtkWidget *w);
 void add_dialog_style(GtkWidget *w);
