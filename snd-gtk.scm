@@ -55,7 +55,8 @@
     (and (car val)
 	 (substring (val 4) 0 (val 3)))))
 
-
+#|
+;; these are not used, and GdkColor is obsolete
 (define red-pixel
   (let ((tmp (GdkColor)))
     (gdk_color_parse "red" tmp)
@@ -70,6 +71,7 @@
   (let ((tmp (GdkColor)))
     (gdk_color_parse "black" tmp)
     (gdk_color_copy tmp)))
+|#
 
 
 ;;; -------- display-scanned-synthesis --------

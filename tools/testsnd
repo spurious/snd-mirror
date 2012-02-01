@@ -85,19 +85,6 @@ make xg
 ./snd --version
 ./snd -l snd-test 9
 
-echo ' -------------------------------- static gsl -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-static-gsl '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-static-gsl LDFLAGS="-L/usr/X11R6/lib"
-make
-make xm
-echo ' '
-echo ' '
-./snd --version
-./snd -l snd-test 6
-
 echo ' '
 date
 echo ' -------------------------------- configure without optimization -------------------------------- '

@@ -1323,6 +1323,9 @@ void add_tooltip(GtkWidget *w, const char *tip)
 }
 
 
+/* suddenly in 3.3.12 the icon backgrounds are gray and everything has endless white space around it! 
+ */
+
 static void add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, GCallback callback)
 {
   GtkToolItem *w;
@@ -1471,7 +1474,7 @@ void show_toolbar(void)
       toolbar = gtk_toolbar_new();
 #if HAVE_GTK_3
       add_toolbar_style(toolbar);
-      gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), 2);
+      gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
 #endif
       gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), toolbar, false, false, 0); /* MAIN_PANE = top level vbox */
       gtk_box_reorder_child(GTK_BOX(MAIN_PANE(ss)), toolbar, 1);            /* put toolbar just under the top level menubar */

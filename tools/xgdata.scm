@@ -8358,7 +8358,8 @@
 (FCDN-338 "GtkWidget* gtk_window_get_attached_to GtkWindow* window")
 
 ;;; 3.3.10 nothing new
-
+;;; 3.3.12
+(CFNC-338 "void gtk_about_dialog_add_credit_section GtkAboutDialog* about gchar* section_name gchar** people" 'const)
 
 |#
 

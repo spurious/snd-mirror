@@ -1692,6 +1692,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* -------- NAME FIELDS -------- */
 
       CLOSE_BUTTON(sp) = gtk_button_new();
+#if HAVE_GTK_3
+      add_highlight_button_style(CLOSE_BUTTON(sp));
+#endif
       gtk_button_set_relief(GTK_BUTTON(CLOSE_BUTTON(sp)), GTK_RELIEF_NONE);
       gtk_button_set_image(GTK_BUTTON(CLOSE_BUTTON(sp)), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), CLOSE_BUTTON(sp), false, false, 8);
@@ -1700,6 +1703,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 
       NAME_EVENT_BOX(sp) = gtk_event_box_new();
+#if HAVE_GTK_3
+      add_highlight_button_style(NAME_EVENT_BOX(sp));
+#endif
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_EVENT_BOX(sp), false, false, 5);
       gtk_widget_show(NAME_EVENT_BOX(sp));
       SG_SIGNAL_CONNECT(NAME_EVENT_BOX(sp), "button_press_event", name_click_callback, sp);

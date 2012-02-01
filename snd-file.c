@@ -1676,7 +1676,7 @@ void snd_close_file(snd_info *sp)
 
   for (i = 0; i < sp->nchans; i++) 
     sp->chans[i]->squelch_update = true;
-  check_for_event(); 
+  /* check_for_event(); */
 
   sp->file_watcher = fam_unmonitor_file(sp->filename, sp->file_watcher);
 

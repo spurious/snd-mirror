@@ -459,6 +459,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+2-Feb:   Snd 12.8.\n\
 27-Jan:  removed snd10.scm.\n\
 30-Dec:  Snd 12.7.\n\
 8-Nov:   Snd 12.6\n\
