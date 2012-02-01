@@ -11805,6 +11805,21 @@ this prints:
 (test (map (lambda (a b) (+ a b)) (list 1 2) (list 1 2) (list 1 2)) 'error)
 (test (map (lambda (a b) (+ a b)) (list 1 2) (cons 1 2)) '(2))
 
+(test (map (lambda* (x . args) args) '(1 2 3)) '(() () ()))
+(test (map (lambda (x . args) args) '(1 2 3)) '(() () ()))
+(test (map (lambda* (x . args) (list x args)) '(1 2 3)) '((1 ()) (2 ()) (3 ())))
+(test (map (lambda (x . args) (list x args)) '(1 2 3)) '((1 ()) (2 ()) (3 ())))
+(test (map (lambda args args) '(1 2 3)) '((1) (2) (3)))
+(test (map (lambda* args args) '(1 2 3)) '((1) (2) (3)))
+(test (map (lambda (x y . args) args) '(1 2 3)) 'error)
+(test (map (lambda* (x y . args) args) '(1 2 3)) '(() () ())) ; all args are optional in lambda*
+(test (map (lambda (x y . args) args) '(1 2 3) '(4 5 6)) '(() () ()))
+(test (map (lambda* (x y . args) args) '(1 2 3) '(4 5 6)) '(() () ()))
+(test (map (lambda (x y . args) (list x y args)) '(1 2 3) '(4 5 6)) '((1 4 ()) (2 5 ()) (3 6 ())))
+(test (map (lambda* (x y . args) (list x y args)) '(1 2 3) '(4 5 6)) '((1 4 ()) (2 5 ()) (3 6 ())))
+(test (map (lambda (x y . args) (list x y args)) '(1 2 3) '(4 5 6) '(7 8 9)) '((1 4 (7)) (2 5 (8)) (3 6 (9))))
+(test (map (lambda* (x y . args) (list x y args)) '(1 2 3) '(4 5 6) '(7 8 9)) '((1 4 (7)) (2 5 (8)) (3 6 (9))))
+
 (test (map (lambda . (x y z 8)) '(1 2 3))  'error) ; (y unbound) but other schemes ignore unused args
 (test (map (lambda . (x 8)) '(1 2)) '(8 8)) 
 
@@ -19571,6 +19586,11 @@ abs     1       2
   (test (procedure-arity (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) '(1 0 #f))
   (test (procedure-arity (make-procedure-with-setter (lambda (a . b) a) (lambda (a b) a))) '(1 0 #t))
   (test (procedure-arity (make-procedure-with-setter (lambda* (a :optional b) a) (lambda (a b) a))) '(0 2 #f))
+  
+  (test (procedure-arity (lambda (x . args) x)) '(1 0 #t))
+  (test (procedure-arity (lambda (x y . args) x)) '(2 0 #t))
+  (test (procedure-arity (lambda* (x . args) x)) '(0 1 #t))
+  (test (procedure-arity (lambda* (x y . args) x)) '(0 2 #t))
     
   (for-each
    (lambda (arg)

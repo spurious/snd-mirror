@@ -27906,7 +27906,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       if (len > 0)                                                    /* a proper list arg */
 	{
 	  if ((type(sc->code) == T_CLOSURE) &&                        /* not lambda* that might get confused about arg names */
-	      (is_pair(closure_args(sc->code))) &&                    /* not a rest arg */
+	      (is_proper_list(sc, closure_args(sc->code))) &&         /* not a rest arg: not is_pair: (lambda (x . args) arg) */
 	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! */
 	      (!symbol_has_accessor(car(closure_args(sc->code)))) &&  /* not wrapped in an accessor */
 	      (safe_list_length(sc, closure_args(sc->code)) == 1))    /* closure takes just one arg */
@@ -28286,7 +28286,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       if (len > 0)                                                    /* a proper list arg */
 	{
 	  if ((type(sc->code) == T_CLOSURE) &&                        /* not lambda* that might get confused about arg names */
-	      (is_pair(closure_args(sc->code))) &&                    /* not a rest arg */
+	      (is_proper_list(sc, closure_args(sc->code))) &&         /* not a rest arg, not is_pair here: (lambda (x . args) args) */
 	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! */
 	      (!symbol_has_accessor(car(closure_args(sc->code)))) &&  /* not wrapped in an accessor */
 	      (safe_list_length(sc, closure_args(sc->code)) == 1))    /* closure takes just one arg */
@@ -31630,7 +31630,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			  if ((is_optimized(body)) &&
 			      (optimize_data(body) == HOP_SAFE_C_C) &&
 			      (ecdr(body) == vector_ref_ic) &&
-			      (is_pair(closure_args(func))) &&
+			      (is_proper_list(sc, closure_args(func))) &&
 			      (cadr(body) == car(closure_args(func))))
 			    set_optimize_data(car(x), OP_SAFE_CLOSURE_S_vref); /* structs often use vectors + constant offsets */
 			  else set_optimize_data(car(x), OP_SAFE_CLOSURE_S_one);
@@ -43469,7 +43469,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    unsigned long long int id;
 	    e = sc->envir;
 	    id = frame_id(e);
-	    
+
 	    for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
 	      {
 		s7_pointer sym, args, val;
@@ -45768,8 +45768,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_LET_OX_P:
       {
-	s7_pointer val, args, code;
-	code = fcdr(sc->code);
+	s7_pointer val, args, code, sc_code;
+	sc_code = sc->code; /* save across possible embedded eval? */
+	code = fcdr(sc_code);
 	switch (optimize_data(code))
 	  {
 	  case HOP_SAFE_C_C:
@@ -45810,8 +45811,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    break;
 	  }
 	
-	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), sc->value);
-	sc->code = cadr(sc->code);
+	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc_code), sc->value);
+	sc->code = cadr(sc_code);
 	/* lg: h_call_with_exit if opt
 	 */
 	goto EVAL_PAIR;

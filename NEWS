@@ -18,5 +18,5 @@ s7: added logbit? (using gmp arg order, not CL)
 
 checked: sbcl 1.0.55, gtk 3.3.8|10|12
 
-Thanks!: Mike Scholz.
+Thanks!: Mike Scholz, Rick Taube.
 
