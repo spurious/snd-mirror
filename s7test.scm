@@ -20177,6 +20177,9 @@ and setter of pws is either global or ()
   (test (eval-string #t) 'error)
   (test (eval #(+ 1 2)) #(+ 1 2))
 
+  (let () (define e1 (let ((a 10)) (current-environment))) (test (eval 'a e1) 10)) ; from andy wingo
+  (let () (define e1 (let ((a 10)) (current-environment))) (eval '(set! a 32) e1) (test (eval 'a e1) 32))
+
   (test (eval '(begin (define __eval_var__ 1) __eval_var__) (global-environment)) 1)
   (test (let () __eval_var__) 1)
   (test (eval-string "(begin (define __eval_var1__ 12) __eval_var1__)" (global-environment)) 12)
@@ -22702,6 +22705,49 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
      method-name))
      
+(define-bacro (define-method-with-next-method name-and-args . body)
+  `(let* ((outer-env (outer-environment (current-environment)))
+	  (method-name (car ',name-and-args))
+	  (method-args (cdr ',name-and-args))
+	  (object (caar method-args))
+	  (class (symbol->value (cadar method-args)))
+	  (old-method (class method-name))
+	  (arg-names (map (lambda (arg)
+			    (if (pair? arg) (car arg) arg))
+			  method-args))
+	  (next-class (and (pair? (class 'inherited))
+			   (car (class 'inherited)))) ; or perhaps the last member of this list?
+	  (nwrap-body (if next-class
+			  `((let ((call-next-method 
+				   (lambda new-args 
+				     (apply (,next-class ',method-name)
+					    (or new-args ,arg-names)))))
+			      ,@',body))
+			  ',body))
+	  (method (apply lambda* method-args nwrap-body)))
+
+     ;; define the method as a normal-looking function
+     (augment-environment! outer-env
+       (cons method-name 
+	     (apply lambda* method-args 
+		    `(((,object ',method-name) ,@arg-names)))))
+     
+     ;; add the method to the class
+     (augment-environment! (outer-environment (outer-environment class))
+       (cons method-name method))
+
+     ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
+     (for-each
+      (lambda (inheritor) 
+	(if (not (eq? (inheritor method-name) #<undefined>)) ; defined? goes to the global env
+	    (if (eq? (inheritor method-name) old-method)
+		(set! (inheritor method-name) method))
+	    (augment-environment! (outer-environment (outer-environment inheritor))
+   	      (cons method-name method))))
+      (class 'inheritors))
+
+     method-name))
+
 (let ()
 
   (define-class class-1 () 
@@ -22843,6 +22889,14 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (multiply v1) 200)
     (test (multiply v2) 6)
     (test (multiply v3) 'error))
+
+  (define-method-with-next-method (add-1 (obj class-1)) (+ (obj 'a) 1))
+  (define-method-with-next-method (add-1 (obj class-2)) (+ 1 (call-next-method)))
+  (define-method-with-next-method (add-1 (obj class-3)) (+ 1 (call-next-method obj)))
+  
+  (test (add-1 (make-class-1)) 2)
+  (test (add-1 (make-class-2)) 3)
+  (test (add-1 (make-class-3)) 4)
 
   )
 

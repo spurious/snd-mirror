@@ -2787,6 +2787,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 	  (method (apply lambda* method-args ',body)))
 
      ;; define the method as a normal-looking function
+     ;; s7test.scm has define-method-with-next-method that implements call-next-method here
      (augment-environment! outer-env
        (cons method-name 
 	     (apply lambda* method-args 
