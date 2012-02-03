@@ -1330,19 +1330,6 @@ static XEN g_snd_global_state(void)
 }
 
 
-#if MUS_DEBUGGING
-static XEN g_snd_sound_pointer(XEN snd)
-{
-  /* (XtCallCallbacks (cadr (sound-widgets 0)) XmNactivateCallback (snd-sound-pointer 0)) */
-  int s;
-  s = XEN_TO_C_INT(snd);
-  if ((s < ss->max_sounds) && (s >= 0) && (ss->sounds[s]))
-    return(XEN_WRAP_C_POINTER(ss->sounds[s]));
-  return(XEN_FALSE);
-}
-#endif
-
-
 #if (!HAVE_SCHEME)
 /* fmod is the same as modulo in s7:
    (do ((i 0 (+ i 1))) 
@@ -2534,10 +2521,6 @@ XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
 XEN_NARGIFY_1(g_add_source_file_extension_w, g_add_source_file_extension)
 
-#if MUS_DEBUGGING
-  XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
-#endif
-
 #if (!HAVE_SCHEME)
 XEN_NARGIFY_2(g_fmod_w, g_fmod)
 #endif
@@ -2592,9 +2575,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_little_endian_w g_little_endian
 #define g_snd_global_state_w g_snd_global_state
 #define g_add_source_file_extension_w g_add_source_file_extension
-#if MUS_DEBUGGING
-  #define g_snd_sound_pointer_w g_snd_sound_pointer
-#endif
 
 #if (!HAVE_SCHEME)
 #define g_fmod_w g_fmod
@@ -2712,10 +2692,6 @@ void g_xen_initialize(void)
   XEN_PROTECT_FROM_GC(ss->snd_selection_hook);
 
   ss->effects_hook = XEN_DEFINE_HOOK(S_effects_hook, 0, "called when something changes that the effects dialogs care about");
-
-#if MUS_DEBUGGING
-  XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
-#endif
 
   Init_sndlib();
 

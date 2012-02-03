@@ -4762,11 +4762,16 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   if (!is_procedure(car(args)))                              /* this includes continuations */
     return(s7_wrong_type_arg_error(sc, "call-with-exit", 0, car(args), "a procedure"));
 
+  /* PERHAPS: include the procedure-arity check above.  Currently
+   *    (call-with-exit (lambda (a b) (a 1)))
+   *    ;(lambda (a b) (a 1)): not enough arguments: (lambda (a b) (a 1))
+   *    ;    (lambda (a b) (a 1))
+   * which seems confused, but (lambda (a b) ...) is called with the #<goto> as its only argument.
+   */
+
   x = make_goto(sc);
   push_stack(sc, OP_DEACTIVATE_GOTO, x, sc->NIL); /* this means call-with-exit is not tail-recursive */
   push_stack(sc, OP_APPLY, cons_unchecked(sc, x, sc->NIL), car(args));
-
-  /* fprintf(stderr, "call-with-exit %s %s\n", DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
   
   /* if the lambda body calls the argument as a function, 
    *   it is applied to its arguments, apply notices that it is a goto, and...
@@ -42344,10 +42349,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  return(s7_error(sc, 
 					  sc->WRONG_NUMBER_OF_ARGS, 
 					  list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, args, sc->cur_code)));
-			if (!is_null(cdr(args)))
+
+			if (is_pair(cdr(args))) /* not_null here is confused by rest args */
 			  return(s7_error(sc, 
 					  sc->WRONG_NUMBER_OF_ARGS, 
 					  list_3(sc, sc->TOO_MANY_ARGUMENTS, args, sc->cur_code)));
+
 			NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(args), go);
 		      }
 		    sc->code = cdr(cdadr(code));
@@ -43376,6 +43383,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
+	  /* fprintf(stderr, "apply closure %s %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
 #if 0
 	  /* this check takes longer than the code saves */
 

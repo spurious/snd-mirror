@@ -176,17 +176,6 @@ void top_level_catch(int ignore)
 {
   longjmp(top_level_jump, 1);
 }
-
-
-#if MUS_DEBUGGING
-static void trap_xt_error(String message)
-{
-  fprintf(stderr, "%s", message);
-  XEN_ERROR(XEN_ERROR_TYPE("xt-error"),
-	    XEN_LIST_2(C_TO_XEN_STRING("Xt error: ~A"),
-		       C_TO_XEN_STRING(message)));
-}
-#endif
 #endif
 
 
@@ -930,10 +919,6 @@ void snd_doit(int argc, char **argv)
 	snd_error_without_format("Caught top level error (will try to continue):\n");
       else ss->jump_ok = false;
     }
-
-#if MUS_DEBUGGING
-  XtAppSetErrorHandler(MAIN_APP(ss), trap_xt_error);
-#endif
 #endif
 
   if (ss->startup_errors)

@@ -28,7 +28,6 @@
 
 <!-- INDEX s7doc:s7 scheme -->
 
-
 <br>
 
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -839,8 +838,14 @@ macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
 </pre>
 
 <p>returns 144 because "+" has turned into "*", and "a" is the internal "a",
-not the argument "a".  We get <code>(* 12 12)</code> where we probably expected <code>(+ 12 1)</code>.
-It is possible to use gensym to clean this up, but that makes the macro 
+not the argument "a".  We get <code>(* 12 12)</code> where we might have expected
+<code>(+ 12 1)</code>.  Although this example is silly, the problem is real in Scheme
+because Scheme has no reserved words and only one name space.  Since macros and functions (not to mention
+continuations) look the same when called in the code,
+and since we might be loading any
+number of libraries written by others, it's impossible to tell what names
+this external code depends on.  
+It is possible to use gensym to clean up the macro, but that makes it
 unreadable in all but the simplest cases.  It is also possible, but not very easy, to
 write a macro to do the gensymification for us, but in s7 it is much more straightforward
 to use the environment functions.
@@ -2483,7 +2488,9 @@ make-hash-table-iterator internally).
       (map values table))
 
     (define (merge-hash-tables . tables)
-      (apply hash-table (apply append (map (lambda (table) (map values table)) tables))))
+      (apply hash-table 
+        (apply append 
+          (map hash-table-&gt;alist tables))))
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
@@ -2787,7 +2794,8 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 	  (method (apply lambda* method-args ',body)))
 
      ;; define the method as a normal-looking function
-     ;; s7test.scm has define-method-with-next-method that implements call-next-method here
+     ;;   s7test.scm has define-method-with-next-method that implements call-next-method here
+     ;;   it also has make-instance 
      (augment-environment! outer-env
        (cons method-name 
 	     (apply lambda* method-args 
@@ -2876,6 +2884,7 @@ class-3
 180                               ; (* 10 (* 1 2 3) (+ 1 2))
 </pre>
 
+<br>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>

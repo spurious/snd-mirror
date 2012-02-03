@@ -361,7 +361,6 @@ void snd_exit(int val)
 
 /* ---------------- file alteration monitor (fam or gamin) ---------------- */
 #if HAVE_FAM
-#define MUS_DEBUGGING_FAM 0
 
 /* one confusing thing: if user deletes the file we're monitoring, apparently Linux doesn't
  *   actually delete it, though a directory monitor reports the deletion; the file itself
@@ -372,26 +371,6 @@ void snd_exit(int val)
  */
 
 static bool fam_already_warned = false;
-
-#if MUS_DEBUGGING_FAM
-static char *fam_event_name(int code)
-{
-  switch (code)
-    {
-    case FAMChanged:        return("Changed");        break;
-    case FAMDeleted:        return("Deleted");        break;
-    case FAMCreated:        return("Created");        break;
-    case FAMMoved:          return("Moved");          break;
-    case FAMStartExecuting: return("StartExecuting"); break;
-    case FAMStopExecuting:  return("StopExecuting");  break;
-    case FAMAcknowledge:    return("Acknowledge");    break;
-    case FAMExists:         return("Exists");         break;
-    case FAMEndExist:       return("EndExist");       break;
-    }
-  return("unknown");
-}
-#endif
-
 
 static const char *fam_error_to_string(int err)
 {
@@ -430,9 +409,6 @@ static void fam_check(void)
 		      fprintf(stderr, "no fam user data!");
 		    else 
 		      {
-#if MUS_DEBUGGING_FAM
-			fprintf(stderr, "fam %s: %d (%s): %p\n", fe.filename, fe.code, fam_event_name(fe.code), fp);
-#endif
 			(*(fp->action))(fp, &fe);
 		      }
 		  }
@@ -525,9 +501,6 @@ fam_info *fam_monitor_file(const char *filename, void *data, void (*action)(stru
   rp = fam_monitor();
   if (rp)
     {
-#if MUS_DEBUGGING_FAM
-      fprintf(stderr, "monitor %s\n", filename);
-#endif
       fp = make_fam_info(rp, data, action);
 #if MUS_DEBUGGING
       fp->filename = mus_strdup(filename);
@@ -590,9 +563,6 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
   int err;
   if (fp)
     {
-#if MUS_DEBUGGING_FAM
-      fprintf(stderr, "unmonitor %s: %p %p\n", filename, fp, fp->rp);
-#endif
 #if MUS_DEBUGGING
       if (fp->filename) {free(fp->filename); fp->filename = NULL;}
 #endif
@@ -635,13 +605,6 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
   if (fp) free(fp);
   return(NULL);
 }
-
-#if MUS_DEBUGGING_FAM
-static char *fam_event_name(int code)
-{
-  return("no fam!");
-}
-#endif
 #endif
 
 

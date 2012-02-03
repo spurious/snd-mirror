@@ -1447,7 +1447,7 @@ void init_gtk(void)
 
   tb_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(tb_provider),
-    "GtkToolbar, GtkMenuBar, GtkMenu { \n"
+    "GtkToolbar, GtkMenuBar, GtkMenu, GtkToolButton, GtkToolItem { \n"
     "  border-width: 0;\n"
     "  background-color: #fffff0;\n"
     "}\n",

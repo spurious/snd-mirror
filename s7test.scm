@@ -36,7 +36,7 @@
 
 (define (ok? otst ola oexp)
   (let ((result (catch #t ola
-		       (lambda args 
+		       (lambda args
 			 (if (not (eq? oexp 'error)) 
 			     (begin (display args) (newline)))
 			 'error))))
@@ -5100,6 +5100,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (member 4 '((1 2) (3 5) 7) (lambda (a b) (assoc a (map (lambda (c) (cons (+ c 1) c)) b)))) '((3 5) 7))
 (test (let ((f #f)) (member 'a '(a b c) (lambda (a b) (if (eq? b 'a) (set! f (lambda () b))) (eq? a 123))) (f)) 'a)
 (test (let ((i 0) (f (make-vector 3))) (member 'a '(a b c) (lambda (a b) (vector-set! f i b) (set! i (+ i 1)) (eq? a 123))) f) #(a b c))
+(test (member 1 '(0 1 2) (lambda (a b . c) (= a b))) '(1 2))
+(test (member 1 '(0 1 2) (lambda* (a b c) (= a b))) '(1 2))
+(test (member 1 '(0 1 2) (lambda (a) (= a b))) 'error)
+(test (member 1 '(0 1 2) (lambda a (= (car a) (cadr a)))) '(1 2))
 
 (test (member 4 '(1 2 3 4 . 5)) '(4 . 5))
 (test (member 4 '(1 2 3 4 . 5) =) '(4 . 5))
@@ -11819,6 +11823,7 @@ this prints:
 (test (map (lambda* (x y . args) (list x y args)) '(1 2 3) '(4 5 6)) '((1 4 ()) (2 5 ()) (3 6 ())))
 (test (map (lambda (x y . args) (list x y args)) '(1 2 3) '(4 5 6) '(7 8 9)) '((1 4 (7)) (2 5 (8)) (3 6 (9))))
 (test (map (lambda* (x y . args) (list x y args)) '(1 2 3) '(4 5 6) '(7 8 9)) '((1 4 (7)) (2 5 (8)) (3 6 (9))))
+(test (map (lambda* (x y :rest args) (list x y args)) '(1 2 3) '(4 5 6) '(7 8 9)) '((1 4 (7)) (2 5 (8)) (3 6 (9))))
 
 (test (map (lambda . (x y z 8)) '(1 2 3))  'error) ; (y unbound) but other schemes ignore unused args
 (test (map (lambda . (x 8)) '(1 2)) '(8 8)) 
@@ -11861,6 +11866,20 @@ this prints:
 
 (test (map (lambda (a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
 	     (max a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
+	   (list 6 7 8 9 10)
+	   (list 21 22 23 24 25)
+	   (list 16 17 18 19 20)
+	   (list 11 12 13 14 15)
+	   (list 26 27 28 29 30)
+	   (list 1 2 3 4 5)
+	   (list 36 37 38 39 40)
+	   (list 41 42 43 44 45)
+	   (list 46 47 48 49 50)
+	   (list 31 32 33 34 35))
+      (list 46 47 48 49 50))
+  
+(test (map (lambda (a1 a2 a3 a4 a5 a6 a7 a8 a9 . a10)
+	     (apply max a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
 	   (list 6 7 8 9 10)
 	   (list 21 22 23 24 25)
 	   (list 16 17 18 19 20)
@@ -16045,6 +16064,10 @@ time, so that the displayed results are
 (test (call-with-exit (lambda (return) #f) 1) 'error)
 (test (+ (call-with-exit ((lambda () (lambda (k) (k 1 2 3)))))) 6)
 
+(test (call-with-exit (lambda (a . b) (a 1))) 1)
+(test (call/cc (lambda (a . b) (a 1))) 1) 
+(test (call-with-exit (lambda* (a b) (a 1))) 1)
+
 (test (call-with-exit (lambda (c) (0 (c 1)))) 1)
 (test (call-with-exit (lambda (k) (k "foo"))) "foo")
 (test (call-with-exit (lambda (k) "foo")) "foo")
@@ -18445,6 +18468,7 @@ who says the continuation has to restart the map from the top?
 (test (sort! #2d((1 4) (3 2)) >) #2D((4 3) (2 1))) ; ??!!?? this is not what anyone would expect
 (test (sort! '(3 2 1) (lambda (a b c) #f)) 'error)
 (test (sort! '(3 2 1) (lambda* (a b c) (< a b))) '(1 2 3))
+(test (sort! '(3 2 1) (lambda (a b . c) (< a b))) '(1 2 3))
 (test (sort! '(3 2 1) (lambda (a) #f)) 'error)
 (test (sort! '(3 2 1) (lambda* (a) #f)) 'error)
 (test (sort! '(3 1 2 4) (lambda args (< (car args) (cadr args)))) '(1 2 3 4))
@@ -22664,6 +22688,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (define-macro (define-generic name)
   `(define ,name (lambda args (apply ((car args) ',name) args))))
 
+(define (make-instance class . args)
+  (let* ((cls (if (symbol? class) (symbol->value class) class))
+	 (make (symbol->value (string->symbol (string-append "make-" (symbol->string (cls 'class-name)))))))
+    (apply make args)))
 
 (define-macro (define-slot-accessor name slot)
   `(define ,name (make-procedure-with-setter 
@@ -22897,6 +22925,17 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   (test (add-1 (make-class-1)) 2)
   (test (add-1 (make-class-2)) 3)
   (test (add-1 (make-class-3)) 4)
+
+  (test ((make-instance class-1) 'class-name) 'class-1)
+  (test ((make-instance 'class-1) 'class-name) 'class-1)
+  (test ((make-instance class-2) 'class-name) 'class-2)
+  (test ((make-instance class-1 :a 123) 'class-name) 'class-1)
+
+  (test ((make-instance class-1) 'b) 2)
+  (test ((make-instance 'class-1) 'b) 2)
+  (test ((make-instance class-1 :b 12 :a 123) 'b) 12)
+
+  (test ((make-instance 'class-3 :a "hi" :c 21) 'c) 21)
 
   )
 
@@ -64191,6 +64230,7 @@ etc
 (test (let ((env +) (x 0)) (define (hi) (do ((i 0 (+ i 3))) ((> i 9) (+ 1 2 3)) (+ x 1))) (hi) (hi)) 6)
 (test (let * ((i 0)) (if (< i 1) (* (+ i 1))) i) 0)
 (test (let ((car if)) (car #t 0 1)) 0)
+(test (call-with-exit (lambda (abs) (abs -1))) -1)
 
 (test (let ((sqrt (lambda (a) (* a a)))) `(+ ,@(map sqrt '(1 4 9)) 2)) '(+ 1 16 81 2))
 (test (let ((sqrt (lambda (a) (* a a)))) `(+ ,(sqrt 9) 4)) '(+ 81 4))

@@ -244,7 +244,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
       }
   if (k == -1)
     {
-#if MUS_DEBUGGING
+#if 0
       fprintf(stderr, "failed drop attempt:\n");
       for (i = 0; i < num_targets; i++) 
 	fprintf(stderr, "  target %d = %s\n", i, 
