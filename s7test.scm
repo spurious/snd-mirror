@@ -10676,6 +10676,7 @@ a2" 3) "132")
 (test (car `(,.1e0)) .1)
 (test (car `(,.1E0)) .1)
 (test (let ((x "hi")) (set! x"asdf") x) "asdf")
+(test (let* ((x "hi") (y x)) (set! x "asdf") y) "hi")
 (test (let ((x 1)) (set! x(list 1 2)) x) '(1 2))
 (num-test (let ((x 1)) (set!;"
 			x;)
@@ -11039,12 +11040,16 @@ this prints:
 (test (object->string catch) "catch")
 (test (object->string lambda) "lambda")
 (test (object->string dynamic-wind) "dynamic-wind")
+(test (object->string quasiquote) "quasiquote")
 ;(test (object->string else) "else") ; this depends on previous code
 (test (object->string do) "do")
 
 (for-each
  (lambda (arg)
-   (test (object->string 1 arg) 'error))
+   (test (object->string 1 arg) 'error)
+   (test (object->string arg) (with-output-to-string (lambda () (write arg))))
+   (test (object->string arg #t) (with-output-to-string (lambda () (write arg))))
+   (test (object->string arg #f) (with-output-to-string (lambda () (display arg)))))
  (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i '() (list 1 2 3) '(1 . 2)))
 
 (test (symbol? (string->symbol (object->string "" #f))) #t)
@@ -11891,6 +11896,34 @@ this prints:
 	   (list 46 47 48 49 50)
 	   (list 31 32 33 34 35))
       (list 46 47 48 49 50))
+
+(test (map (lambda* (a1 a2 a3 . a10)
+	     (apply max a1 a2 a3 a10))
+	   (list 6 7 8 9 10)
+	   (list 21 22 23 24 25)
+	   (list 16 17 18 19 20)
+	   (list 11 12 13 14 15)
+	   (list 26 27 28 29 30)
+	   (list 1 2 3 4 5)
+	   (list 36 37 38 39 40)
+	   (list 41 42 43 44 45)
+	   (list 46 47 48 49 50)
+	   (list 31 32 33 34 35))
+      (list 46 47 48 49 50))
+
+(test (map (lambda args
+	     (apply max args))
+	   (list 6 7 8 9 10)
+	   (list 21 22 23 24 25)
+	   (list 16 17 18 19 20)
+	   (list 11 12 13 14 15)
+	   (list 26 27 28 29 30)
+	   (list 1 2 3 4 5)
+	   (list 36 37 38 39 40)
+	   (list 41 42 43 44 45)
+	   (list 46 47 48 49 50)
+	   (list 31 32 33 34 35))
+      (list 46 47 48 49 50))
   
 (test (map map (list abs) (list (list -1))) '((1)))
 (test (map map (list map) (list (list abs)) (list (list (list -1)))) '(((1))))
@@ -12094,11 +12127,11 @@ this prints:
    (set! results
          (cons (map (lambda (x)
                       (call/cc (lambda (k)
-                                 (unless resume (set! resume k))
+                                 (if (not resume) (set! resume k))
                                  0)))
                     '(#f #f))
                results ))
-   (display results)(newline)
+   (display results) (newline)
    (if resume
        (let ((resume* resume))
          (set! resume #f)
@@ -12110,6 +12143,12 @@ time, so that the displayed results are
    ((0 0))
    ((1 0) (0 0))
    ((1 1) (1 0) (0 0))
+
+in s7:
+((0 0))
+((1 0) (0 0))
+((0 . #1=(1 1)) #1# (0 0))
+
 |#
 
 
@@ -12703,6 +12742,12 @@ time, so that the displayed results are
 (test (set! (1 2) #t) 'error)
 (test (set! _not_a_var_ 1) 'error)
 (test (set! (_not_a_pws_) 1) 'error)
+(test (let ((x 1)) (set! ((lambda () 'x)) 3) x) 'error)
+(test (let ((x '(1 2 3))) (set! (((lambda () 'x)) 0) 3) x) '(3 2 3))
+(test (let ((x '(1 2 3))) (set! (((lambda () x)) 0) 3) x) '(3 2 3)) ; ?? 
+(test (let ((x '(1 2 3))) (set! ('x 0) 3) x) '(3 2 3)) ; ???  I suppose that's similar to
+(test (let ((x '((1 2 3)))) (set! ((car x) 0) 3) x) '((3 2 3)))
+(test (let ((x '((1 2 3)))) (set! ('(1 2 3) 0) 32) x) '((1 2 3))) ; this still looks wrong... (expands to (list-set! '(1 2 3) 0 3) I guess)
 
 (test (let ((a (lambda (x) (set! a 3) x))) (list (a 1) a)) 'error)
 (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error)            
@@ -12717,7 +12762,8 @@ time, so that the displayed results are
 (test (set! (cons 1 2) 3) 'error)
 (test (let ((var 1) (val 2)) (set! var set!) (var val 3) val) 3)
 (test (let ((var 1) (val 2)) (set! var +) (var val 3)) 5)
-(test (let ((sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 1))
+(test (let ((sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 1)
+	    (sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456780 3))
 	(set! sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 2)
 	sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)
       2)
@@ -12788,7 +12834,9 @@ time, so that the displayed results are
 
 (for-each
  (lambda (arg)
-   (test (or arg) arg))
+   (test (or arg) arg)
+   (test (or #f arg) arg)
+   (test (or arg (error "oops or ")) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) #<eof> #<unspecified> '(1 . 2)))
 
 (test (call-with-input-file "s7test.scm"
@@ -12852,7 +12900,9 @@ time, so that the displayed results are
 
 (for-each
  (lambda (arg)
-   (test (and arg) arg))
+   (test (and arg) arg)
+   (test (and #t arg) arg)
+   (test (and arg #t) #t))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
 (test (call-with-input-file "s7test.scm"
@@ -23167,6 +23217,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (copy if) if)
 (test (copy quote) quote)
 (test (let ((a 1) (b 2)) (equal? (copy (current-environment)) (current-environment))) #t)
+(test (copy (global-environment)) (global-environment))
+(test (copy (procedure-environment abs)) (global-environment))
+(test (copy (procedure-environment macroexpand)) (global-environment))
+(test (copy (procedure-environment quasiquote)) (global-environment))
+(test (eval '(+ a 1) (copy (augment-environment (current-environment) '(a . 2)))) 3)
 
 (if with-bignums
     (begin
@@ -64318,6 +64373,13 @@ etc
 
 
 #|
+;;; why the sign change? or lack thereof?
+  :1+0/0i
+  1-nani
+  :1-0/0i
+  1nani
+
+
 (define (mu) ; infinite loop if bignums
   (let* ((x 1)
 	 (xp (+ x 1)))

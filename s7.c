@@ -3903,6 +3903,9 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
       s7_pointer x, new_e;
       int gc_loc;
 
+      if (env == sc->global_env)   /* (copy (global-environment)) or (copy (procedure-environment abs)) etc */
+	return(sc->global_env);
+
       new_e = new_frame_in_env(sc, next_environment(env));
       gc_loc = s7_gc_protect(sc, new_e);
 
