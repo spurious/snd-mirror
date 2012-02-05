@@ -113,7 +113,7 @@
  *   #define WITH_COMPLEX 1
  *   #define HAVE_COMPLEX_TRIG 0
  *
- *   Some systems (freeBSD) have complex.h, but not the trig funcs, so
+ *   Some systems (FreeBSD) have complex.h, but some random subset of the trig funcs, so
  *   WITH_COMPLEX means we can find
  *
  *      cimag creal cabs csqrt carg conj
@@ -121,6 +121,9 @@
  *   and HAVE_COMPLEX_TRIG means we have
  *
  *      cacos cacosh casin casinh catan catanh ccos ccosh cexp clog cpow csin csinh ctan ctanh
+ * 
+ *   except in FreeBSD where HAVE_SYS_PARAM_H needs to be defined so we can find the 
+ *   FreeBSD version number.
  *
  * When WITH_COMPLEX is 0 or undefined, the complex functions are stubs that simply return their
  *   argument -- this will be very confusing for the s7 user because, for example, (sqrt -2)
@@ -131,6 +134,13 @@
  *
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.8.0 or later)
+ *
+ * so the incoming (non-s7-specific) compile-time switches are
+ *     WITH_COMPLEX, WITH_COMPLEX_TRIG, HAVE_STDBOOL_H, HAVE_SYS_PARAM_H, SIZEOF_VOID_P, 
+ *     HAVE_GETTIMEOFDAY, HAVE_LSTAT
+ *
+ * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__,
+ *     (and __FreeBSD_version if HAVE_SYS_PARAM_H)
  */
 
 
@@ -709,20 +719,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
 #endif
 
-#define WITH_COUNTS 0
-#if WITH_COUNTS
-static int counts[65000];
-static void init_counts(void) {int i;for (i=0;i<65000;i++) counts[i]=0;}
-static void report_counts(void) 
-{
-  int i;
-  for (i=0;i<65000;i++)
-    if (counts[i]>0)
-      fprintf(stderr, "%d: %d\n", i, counts[i]);
-}
-#endif
-
-
 
 #define NUM_SMALL_INTS 2048
 #define NUM_CHARS 256
@@ -1145,10 +1141,7 @@ struct s7_scheme {
 
 static bool t_number_p[BUILT_IN_TYPES], t_real_p[BUILT_IN_TYPES], t_rational_p[BUILT_IN_TYPES];
 static bool t_simple_p[BUILT_IN_TYPES];
-
-#if WITH_GMP
-  static bool t_big_number_p[BUILT_IN_TYPES];
-#endif
+static bool t_big_number_p[BUILT_IN_TYPES];
 
 static void init_types(void)
 {
@@ -1173,12 +1166,10 @@ static void init_types(void)
   t_real_p[T_RATIO] = true;
   t_real_p[T_REAL] = true;
 
-#if WITH_GMP
   t_big_number_p[T_BIG_INTEGER] = true;
   t_big_number_p[T_BIG_RATIO] = true;
   t_big_number_p[T_BIG_REAL] = true;
   t_big_number_p[T_BIG_COMPLEX] = true;
-#endif
 
   t_simple_p[T_NIL] = true;
   t_simple_p[T_UNTYPED] = true;
@@ -1209,6 +1200,12 @@ static void init_types(void)
 #define is_integer(P)                 (type(P) == T_INTEGER)
 #define is_real(P)                    t_real_p[type(P)]
 #define is_rational(P)                t_rational_p[type(P)]
+
+#define is_big_number(p)              t_big_number_p[type(p)]
+#define is_big_integer(p)             (type(p) == T_BIG_INTEGER)
+#define is_big_ratio(p)               (type(p) == T_BIG_RATIO)
+#define is_big_real(p)                (type(p) == T_BIG_REAL)
+#define is_big_complex(p)             (type(p) == T_BIG_COMPLEX)
 
 #define is_simple(P)                  t_simple_p[type(P)]
 
@@ -4949,7 +4946,16 @@ static s7_Complex csqrt(s7_Complex z)
 
 #if (!HAVE_COMPLEX_TRIG)
 
+#if HAVE_SYS_PARAM_H 
+  /* needed in FreeBSD */
+  #include <sys/param.h> 
+#endif 
+
+
 #if (!__cplusplus)
+#if (!defined(__FreeBSD_version)) || (__FreeBSD_version < 1000000)
+/* FreeBSD 9 doesn't have csin ccos ctan, but 10 does */
+
 static s7_Complex csin(s7_Complex z) 
 { 
   return(sin(creal(z)) * cosh(cimag(z)) + (cos(creal(z)) * sinh(cimag(z))) * _Complex_I); 
@@ -4972,8 +4978,12 @@ static s7_Complex ccosh(s7_Complex z)
 { 
   return(cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I); 
 } 
-#endif
 
+#endif /* FreeBSD 9 */
+#endif /* c++ */
+
+
+#if (!defined(__FreeBSD_version)) || (__FreeBSD_version < 1000000)
 
 static s7_Complex ctan(s7_Complex z) 
 { 
@@ -4986,12 +4996,18 @@ static s7_Complex ctanh(s7_Complex z)
   return(csinh(z) / ccosh(z)); 
 } 
 
+#endif /* FreeBSD 9 */
+
 
 #if (!__cplusplus)
+#if (!defined(__FreeBSD_version)) || (__FreeBSD_version < 900000)
+/* FreeBSD 8 doesn't have cexp, but 9 does */
+
 static s7_Complex cexp(s7_Complex z) 
 { 
   return(exp(creal(z)) * cos(cimag(z)) + (exp(creal(z)) * sin(cimag(z))) * _Complex_I); 
 } 
+#endif /* FreeBSD 8 */
 
 
 static s7_Complex clog(s7_Complex z) 
@@ -5011,7 +5027,8 @@ static s7_Complex cpow(s7_Complex x, s7_Complex y)
   
   return(nr * cos(ntheta) + (nr * sin(ntheta)) * _Complex_I); /* make-polar */ 
 } 
-#endif
+
+#endif /* c++ */
 
 
 static s7_Complex casin(s7_Complex z) 
@@ -16997,7 +17014,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 
 static bool is_directory(const char *filename)
 {
-#if HAVE_WINDOZE
+#ifdef _MSC_VER
   return(false);
 
 #else
@@ -17840,7 +17857,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
       else
 	{
 	  int i, plen;
-	  plen = s7_vector_print_length(sc);
+	  plen = s7_vector_print_length(sc); /* TODO: what?? we need all the pointers for the equality checks */
 	  if (plen > vector_length(top))
 	    plen = vector_length(top);
 	  for (i = 0; i < plen; i++)
@@ -17850,6 +17867,11 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
     }
   return(ci);
 }
+
+/* (let ((v1 (make-vector 16 0)) (v2 (make-vector 16 0))) (set! (v2 12) v2) (set! (v1 12) v1) (equal? v1 v2)) -> #t
+ *  is that correct?  Guile gets stackoverflow (1.8.n)
+ * (let ((lst1 (list 1)) (lst2 (list 1))) (set-cdr! lst1 lst1) (set-cdr! lst2 lst2) (equal? lst1 lst2)) -> #t
+ */
 
 
 static shared_info *new_shared_info(s7_scheme *sc)
@@ -22072,6 +22094,11 @@ static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file
   char *buf;
   s7_pointer iterator, iter_loc;
   
+  
+  /* if hash is a member of ci, just print its number
+   * (let ((ht (hash-table '(a . 1)))) (hash-table-set! ht 'b ht))
+   */
+
   len = hash_table_entries(hash);
   if (len == 0)
     return(copy_string("#<hash-table>"));
@@ -24895,7 +24922,7 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
       return(numbers_are_eqv(x, y));
 
     case T_COUNTER:
-      return(counter_count(x) == counter_count(y)); /* ?? */
+      return(counter_count(x) == counter_count(y)); /* ?? not in s7_is_equal because it only occurs in a structure?? */
 
     case T_ENVIRONMENT:
     case T_VECTOR:
@@ -24941,8 +24968,9 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
       return((s7_is_equal_tracking_circles(sc, car(x), car(y), ci)) &&
 	     (s7_is_equal_tracking_circles(sc, cdr(x), cdr(y), ci)));
 
-    case T_VECTOR:
     case T_HASH_TABLE:
+      /* TODO: shouldn't this be hash_tables_are_equal with a tracker? is copy(ht) equal ht? can copy handle circle hash? */
+    case T_VECTOR:
       {
 	s7_Int i, len;
 	len = vector_length(x);
@@ -25047,6 +25075,8 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 
     case T_HASH_TABLE:
       return(hash_tables_are_equal(sc, x, y));
+      /* TODO: does this hang if the hash-table contains itself?
+       */
 
     case T_PAIR:
 #if (!WITH_GMP)
@@ -25087,45 +25117,165 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if 0
-static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
+
+
+static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
+
+static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
-  #define H_is_morally_equal "(morally-equal? obj1 obj2) returns #t if obj1 is close enough to obj2."
-  s7_pointer x, y;
+  /* here we know x and y are pointers to the same type of structure */
+  int ref_x, ref_y;
 
-  x = car(args);
-  y = cadr(args);
+  ref_x = peek_shared_ref(ci, x);
+  ref_y = peek_shared_ref(ci, y);
 
+  if ((ref_x != 0) && (ref_y != 0))
+    return(ref_x == ref_y);
+  
+  if ((ref_x != 0) || (ref_y != 0))
+    {
+      /* try to harmonize the new guy -- there can be more than one structure equal to the current one */
+      if (ref_x != 0)
+	add_shared_ref(ci, y, ref_x);
+      else add_shared_ref(ci, x, ref_y);
+    }
+  else add_equal_ref(ci, x, y);
+  
+  /* now compare the elements of the structures. */
+  switch (type(x))
+    {
+    case T_PAIR:
+      return((s7_is_morally_equal_1(sc, car(x), car(y), ci)) &&
+	     (s7_is_morally_equal_1(sc, cdr(x), cdr(y), ci)));
+
+    case T_HASH_TABLE:
+      /* TODO: this is not right for hash tables */
+
+    case T_VECTOR:
+      {
+	s7_Int i, len;
+
+	len = vector_length(x);
+	if (len != vector_length(y)) return(false);
+	if (len == 0) return(true);
+
+	if (s7_is_vector(x))
+	  {
+	    /* there's one special case: shared vectors can have 1 dimension but include the dimension info */
+	    int x_dims = 1, y_dims = 1, j;
+	    
+	    if (vector_is_multidimensional(x))
+	      x_dims = vector_ndims(x);
+	    if (vector_is_multidimensional(y))
+	      y_dims = vector_ndims(y);
+	    
+	    if (x_dims != y_dims)
+	      return(false);
+	    
+	    if (x_dims > 1)
+	      for (j = 0; j < x_dims; j++)
+		if (vector_dimension(x, j) != vector_dimension(y, j))
+		  return(false);
+	  }
+	
+	for (i = 0; i < len; i++)
+	  if (!(s7_is_morally_equal_1(sc, vector_element(x, i), vector_element(y, i), ci)))
+	    return(false);
+      }
+
+    case T_ENVIRONMENT:
+      {
+	/*
+	  (let ((e1 #f) (e2 #f))
+	    (let ((a 1)) (set! e1 (current-environment)))
+            (let ((a 1)) (set! e2 (current-environment))) 
+            (equal? e1 e2))
+	*/
+	s7_pointer ex, ey;
+	for (ex = x, ey = y; is_environment(ex) && is_environment(ey); ex = next_environment(ex), ey = next_environment(ey))
+	  {
+	    s7_pointer px, py;
+	    if (ex == ey)
+	      return(true);
+	    if ((ex == sc->global_env) ||
+		(ey == sc->global_env))
+	      return(false);
+	    /* currently order matters, unlike hash-tables */
+	    for (px = environment_slots(ex), py = environment_slots(ey); is_slot(px) && is_slot(py); px = next_slot(px), py = next_slot(py))
+	      if ((slot_symbol(px) != slot_symbol(py)) ||
+		  (!(s7_is_morally_equal_1(sc, slot_value(px), slot_value(py), ci))))
+		return(false);
+	    if ((is_slot(px)) ||
+		(is_slot(py)))
+	      return(false);
+	  }
+	if ((is_environment(ex)) ||
+	    (is_environment(ey)))
+	  return(false);
+	return(true);
+      }
+    }
+  return(true);
+}
+
+
+static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
   if (x == y) 
-    return(sc->T);
+    return(true);
+
+  if ((type(x) != type(y)) &&
+      (!is_number(x)) && 
+      (!is_big_number(x)))
+    return(false);
 
   switch (type(x))
     {
     case T_STRING:
-      return(make_boolean(sc, (s7_is_string(y)) && (scheme_strings_are_equal(x, y))));
+      return(make_boolean(sc, scheme_strings_are_equal(x, y)));
 
     case T_C_OBJECT:
-      return(make_boolean(sc, (is_c_object(y)) && (objects_are_equal(sc, x, y))));
+      return(make_boolean(sc, objects_are_equal(sc, x, y)));
 
     case T_HOOK:
-      return(make_boolean(sc, (is_hook(y)) && (hooks_are_equal(sc, x, y))));
+      return(make_boolean(sc, hooks_are_equal(sc, x, y)));
 
     case T_C_POINTER:
-      return(make_boolean(sc, (s7_is_c_pointer(y)) && (raw_pointer(x) == raw_pointer(y))));
+      return(make_boolean(sc, raw_pointer(x) == raw_pointer(y)));
 
     case T_INPUT_PORT:
-      return(make_boolean(sc, ((port_is_closed(x)) &&
-			       (is_input_port(y)) &&
+      return(make_boolean(sc, ((port_is_closed(x)) &&     /* closed ports of same type are morally equal */
 			       (port_type(x) == port_type(y)) &&
 			       (port_is_closed(y)))));
 
     case T_OUTPUT_PORT:
       return(make_boolean(sc, ((port_is_closed(x)) &&
-			       (is_output_port(y)) &&
 			       (port_type(x) == port_type(y)) &&
 			       (port_is_closed(y)))));
 
+    case T_HASH_TABLE:
+      return(hash_tables_are_equal(sc, x, y)); 
 
+
+      /* -------- */
+
+    case T_ENVIRONMENT:
+      return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
+
+    case T_VECTOR:
+      if (vector_length(x) == vector_length(y))
+	{
+	  if (vector_length(x) == 0)   /* all empty vectors are morally equal */
+	    return(true);
+	  return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
+	}
+      return(false);
+
+    case T_PAIR:
+      return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
+
+
+      /* -------- */
 
     case T_REAL:
     case T_BIG_REAL:
@@ -25133,8 +25283,8 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
 	{
 	  if (((is_real(y)) || (is_big_real(y))) &&
 	      (is_NaN(s7_real_part(y))))
-	    return(sc->T);
-	  return(sc->F);
+	    return(true);
+	  return(false);
 	}
 
       /* not big yet */
@@ -25144,8 +25294,8 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
 	      (isinf(real(y))) &&
 	      (((real(x) > 0.0) && (real(y) > 0.0)) ||
 	       ((real(x) < 0.0) && (real(y) < 0.0))))
-	    return(sc->T);
-	  return(sc->F);
+	    return(true);
+	  return(false);
 	}
 
     case T_COMPLEX:
@@ -25159,9 +25309,11 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
     case T_RATIO:
     case T_BIG_INTEGER:
     case T_BIG_RATIO:
+#if 0
       if ((is_number(y)) || (is_big_number(y)))
 	return(g_equal(sc, args)); /* big ? */
-      return(sc->F);
+#endif
+      return(false);
 
   /* big_equal if either is bignum 
    *   any NaN == any other NaN
@@ -25169,35 +25321,24 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
    *   otherwise use =, check complex as real and imag for NaN etc
    */
       if (numbers_are_eqv(x, y))
-	return(sc->T);
+	return(true);
 
 
       /* morally-equal for all structures */
     case T_CLOSURE:
       /* also other cases here T_CLOSURE_STAR, maybe T_MACRO etc -- check args/env/body
        */
-
-    case T_ENVIRONMENT:
-      return(structures_are_equal(sc, x, y, new_shared_info(sc)));
-
-    case T_VECTOR:
-      /* all empty vectors are morally-equal */
-      return((vector_length(x) == vector_length(y)) &&
-	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
-
-    case T_HASH_TABLE:
-      return(hash_tables_are_equal(sc, x, y)); 
-
-    case T_PAIR:
-#if (!WITH_GMP)
-      return((type(car(x)) == type(car(y))) &&
-	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
-#else
-      return(structures_are_equal(sc, x, y, new_shared_info(sc)));
-#endif
+      return(false);
 
     }
-  return(sc->F);
+  return(false);
+}
+
+
+static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_morally_equal "(morally-equal? obj1 obj2) returns #t if obj1 is close enough to obj2."
+  return(make_boolean(sc, s7_is_morally_equal_1(sc, car(args), cadr(args), NULL)));
 }
 
 /* 
@@ -25205,7 +25346,7 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
  *   morally-equal? -- also #() and #2d(), empty hash-tables? 2closures same source+same env+same args?
  *   need structures_are_morally_equal and doc/test
  */
-#endif
+
 
 
 
@@ -27867,9 +28008,6 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
-#if WITH_COUNTS
-  report_counts();
-#endif
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -48191,13 +48329,6 @@ mpz_t  *s7_big_integer(s7_pointer x) {return(&big_integer(x));}
 mpq_t  *s7_big_ratio(s7_pointer x)   {return(&big_ratio(x));}
 mpc_t  *s7_big_complex(s7_pointer x) {return(&big_complex(x));}
 
-#define is_big_number(p)  t_big_number_p[type(p)]
-#define is_big_integer(p) (type(p) == T_BIG_INTEGER)
-#define is_big_ratio(p)   (type(p) == T_BIG_RATIO)
-#define is_big_real(p)    (type(p) == T_BIG_REAL)
-#define is_big_complex(p) (type(p) == T_BIG_COMPLEX)
-
-
 bool s7_is_number(s7_pointer p)
 {
   return((is_number(p)) || (is_big_number(p)));
@@ -53036,10 +53167,6 @@ s7_scheme *s7_init(void)
   init_pows();
   init_uppers();
 
-#if WITH_COUNTS
-  init_counts();
-#endif
-
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
   
   sc->gc_off = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
@@ -53921,6 +54048,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "eq?",                       g_is_eq,                    2, 0, false, H_is_eq);
   s7_define_safe_function(sc, "eqv?",                      g_is_eqv,                   2, 0, false, H_is_eqv);
   s7_define_safe_function(sc, "equal?",                    g_is_equal,                 2, 0, false, H_is_equal);
+  s7_define_safe_function(sc, "morally-equal?",            g_is_morally_equal,         2, 0, false, H_is_morally_equal);
   
   s7_define_safe_function(sc, "s7-version",                g_s7_version,               0, 0, false, H_s7_version);
 

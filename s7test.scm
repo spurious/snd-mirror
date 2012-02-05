@@ -7345,6 +7345,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; HASH-TABLES
 ;;; --------------------------------------------------------------------------------
 
+;;; TODO: (define global-env (global-environment)) (equal? global-env (global-environment)) -> #t and e->list also works
+
 (let ((ht (make-hash-table)))
   (test (hash-table? ht) #t)
   (test (equal? ht ht) #t)
@@ -8080,6 +8082,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (set! (hook-functions h1) (list p1))
   (h1 123)
   (test x 123))
+
+
+;;; TODO: (hash-table-set! ht 'a ht) hangs (indirect set also hangs)
+;;;  it's hung trying to print something -- hash_table_to_c_string 22094 
+;;; but (define h1 (make-hash-table)) (hash-table-set! h1 "hi" h1) is ok?
+;;; #1=#<hash-table ("hi" . #1#)>
+;;; :(equal? h1 (copy h1)) #t -- how can this work??
 
 
 

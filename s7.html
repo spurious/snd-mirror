@@ -5139,13 +5139,18 @@ compile-time flags:
 
 <pre>
     HAVE_STDBOOL_H                 1 if you have stdbool.h
+    HAVE_SYS_PARAM_H               1 if you're running FreeBSD
+    HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
+    HAVE_LSTAT                     1 if you want the load function to be able to tell a normal file from a directory
+    SIZEOF_VOID_P                  8 (default) or 4, but it's not a big deal (a minor optimization of a switch statement)
+
     WITH_GMP                       1 if you want multiprecision arithmetic (requires gmp, mpfr, and mpc, default is 0)
     WITH_COMPLEX                   1 if your compiler supports complex numbers
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
-    HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
     WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
                                    if someone defends these exponent markers, ask him to read 1l11+11l1i
+    WITH_OPTIMIZATION              1 (default) to turn on some elaborate internal optimizations
 </pre>
 
 <p>See the comment at the start of s7.c for more information about these switches.
