@@ -1495,10 +1495,10 @@ static void init_types(void)
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
-#define is_string_port(p)             ((p)->object.port->type == STRING_PORT)
-#define is_file_port(p)               ((p)->object.port->type == FILE_PORT)
-#define is_function_port(p)           ((p)->object.port->type == FUNCTION_PORT)
 #define port_type(p)                  (p)->object.port->type
+#define is_string_port(p)             (port_type(p) == STRING_PORT)
+#define is_file_port(p)               (port_type(p) == FILE_PORT)
+#define is_function_port(p)           (port_type(p) == FUNCTION_PORT)
 #define port_line_number(p)           (p)->object.port->line_number
 #define port_filename(p)              (p)->object.port->filename
 #define port_file(p)                  (p)->object.port->file
@@ -13684,6 +13684,7 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
  *     (make-random-state seed type) ??
  *   to save the current seed, use copy
  *   to save it across load, random-state->list and list->random-state.
+ *   random-state? returns #t if its arg is one of these guys
  */
 
 typedef struct {
@@ -13714,7 +13715,12 @@ static void free_rng(void *val)
 
 static bool equal_rng(void *val1, void *val2)
 {
-  return(val1 == val2);
+  s7_rng_t *r1 = (s7_rng_t *)val1;
+  s7_rng_t *r2 = (s7_rng_t *)val2;
+
+  return((val1 == val2) ||
+	 ((r1->ran_seed == r2->ran_seed) &&
+	  (r1->ran_carry == r2->ran_carry)));
 }
 
 
@@ -13759,6 +13765,24 @@ static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
       return(s7_make_object(sc, rng_tag, (void *)new_r));
     }
   /* I can't find a way to copy a gmp random generator */
+  return(sc->F);
+}
+
+
+static s7_pointer g_is_random_state(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_random_state "(random-state? obj) returns #t if obj is a random-state object (from make-random-state)."
+  s7_pointer obj;
+  obj = car(args);
+  if (is_c_object(obj))
+    {
+      if (object_type(obj) == rng_tag) 
+	return(sc->T);
+#if WITH_GMP
+      if (object_type(obj) == big_rng_tag)
+	return(sc->T);
+#endif      
+    }
   return(sc->F);
 }
 
@@ -22014,6 +22038,30 @@ returns the next (key . value) pair in the hash-table each time it is called.  W
 }
 
 
+static s7_pointer g_is_hash_table_iterator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_hash_table_iterator "(hash-table-iterator? obj) returns #t if obj is a hash-table iterator."
+  s7_pointer obj;
+
+  obj = car(args);
+  /* we need to clamber around in the procedure source */
+  if ((is_closure(obj)) &&
+      (is_null(closure_args(obj))))
+    {
+      s7_pointer source;
+      source = closure_body(obj);
+      if ((is_pair(source)) &&
+	  (is_pair(car(source))) &&
+	  (caar(source) == sc->HASH_TABLE_ITERATE))
+	return(sc->T);
+    }
+  return(sc->F);
+}
+
+/*  are hash-table-iterators ever equal? -- they are closures
+ */
+
+
 #define hash_table_iterate_args(H) cdadar(closure_body(H))
 
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci)
@@ -25037,6 +25085,128 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
   #define H_is_equal "(equal? obj1 obj2) returns #t if obj1 is equal to obj2"
   return(make_boolean(sc, s7_is_equal(sc, car(args), cadr(args))));
 }
+
+
+#if 0
+static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_morally_equal "(morally-equal? obj1 obj2) returns #t if obj1 is close enough to obj2."
+  s7_pointer x, y;
+
+  x = car(args);
+  y = cadr(args);
+
+  if (x == y) 
+    return(sc->T);
+
+  switch (type(x))
+    {
+    case T_STRING:
+      return(make_boolean(sc, (s7_is_string(y)) && (scheme_strings_are_equal(x, y))));
+
+    case T_C_OBJECT:
+      return(make_boolean(sc, (is_c_object(y)) && (objects_are_equal(sc, x, y))));
+
+    case T_HOOK:
+      return(make_boolean(sc, (is_hook(y)) && (hooks_are_equal(sc, x, y))));
+
+    case T_C_POINTER:
+      return(make_boolean(sc, (s7_is_c_pointer(y)) && (raw_pointer(x) == raw_pointer(y))));
+
+    case T_INPUT_PORT:
+      return(make_boolean(sc, ((port_is_closed(x)) &&
+			       (is_input_port(y)) &&
+			       (port_type(x) == port_type(y)) &&
+			       (port_is_closed(y)))));
+
+    case T_OUTPUT_PORT:
+      return(make_boolean(sc, ((port_is_closed(x)) &&
+			       (is_output_port(y)) &&
+			       (port_type(x) == port_type(y)) &&
+			       (port_is_closed(y)))));
+
+
+
+    case T_REAL:
+    case T_BIG_REAL:
+      if (is_NaN(s7_real_part(x)))
+	{
+	  if (((is_real(y)) || (is_big_real(y))) &&
+	      (is_NaN(s7_real_part(y))))
+	    return(sc->T);
+	  return(sc->F);
+	}
+
+      /* not big yet */
+      if (isinf(real(x)))
+	{
+	  if ((is_real(y)) &&
+	      (isinf(real(y))) &&
+	      (((real(x) > 0.0) && (real(y) > 0.0)) ||
+	       ((real(x) < 0.0) && (real(y) < 0.0))))
+	    return(sc->T);
+	  return(sc->F);
+	}
+
+    case T_COMPLEX:
+    case T_BIG_COMPLEX:
+      /* same but each part separately */
+
+
+      /* else all those fall through */
+	
+    case T_INTEGER:
+    case T_RATIO:
+    case T_BIG_INTEGER:
+    case T_BIG_RATIO:
+      if ((is_number(y)) || (is_big_number(y)))
+	return(g_equal(sc, args)); /* big ? */
+      return(sc->F);
+
+  /* big_equal if either is bignum 
+   *   any NaN == any other NaN
+   *   +inf == +inf, -inf == -inf
+   *   otherwise use =, check complex as real and imag for NaN etc
+   */
+      if (numbers_are_eqv(x, y))
+	return(sc->T);
+
+
+      /* morally-equal for all structures */
+    case T_CLOSURE:
+      /* also other cases here T_CLOSURE_STAR, maybe T_MACRO etc -- check args/env/body
+       */
+
+    case T_ENVIRONMENT:
+      return(structures_are_equal(sc, x, y, new_shared_info(sc)));
+
+    case T_VECTOR:
+      /* all empty vectors are morally-equal */
+      return((vector_length(x) == vector_length(y)) &&
+	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
+
+    case T_HASH_TABLE:
+      return(hash_tables_are_equal(sc, x, y)); 
+
+    case T_PAIR:
+#if (!WITH_GMP)
+      return((type(car(x)) == type(car(y))) &&
+	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
+#else
+      return(structures_are_equal(sc, x, y, new_shared_info(sc)));
+#endif
+
+    }
+  return(sc->F);
+}
+
+/* 
+ * TODO: morally-equal? treats NaNs as equal, and (same sign) infs, uses = for other numbers (so morally-equal? 3 3.0) is #t)
+ *   morally-equal? -- also #() and #2d(), empty hash-tables? 2closures same source+same env+same args?
+ *   need structures_are_morally_equal and doc/test
+ */
+#endif
+
 
 
 
@@ -52554,6 +52724,7 @@ static void free_big_rng(void *val)
 static bool equal_big_rng(void *val1, void *val2)
 {
   return(val1 == val2);
+  /* I don't think the state is accessible, so we can't mimic the normal rng_t case */
 }
 
   
@@ -53534,6 +53705,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "inexact?",                  g_is_inexact,               1, 0, false, H_is_inexact);
 
   rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
+  s7_define_function(sc, "random-state?",                  g_is_random_state,          1, 0, false, H_is_random_state);
 
   s7_define_safe_function(sc, "number?",                   g_is_number,                1, 0, false, H_is_number);
   s7_define_safe_function(sc, "integer?",                  g_is_integer,               1, 0, false, H_is_integer);
@@ -53687,6 +53859,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "hash-table-set!",           g_hash_table_set,           3, 0, false, H_hash_table_set);
   s7_define_safe_function(sc, "hash-table-size",           g_hash_table_size,          1, 0, false, H_hash_table_size);
   s7_define_safe_function(sc, "make-hash-table-iterator",  g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
+  s7_define_safe_function(sc, "hash-table-iterator?",      g_is_hash_table_iterator,   1, 0, false, H_is_hash_table_iterator);
 
 
   s7_define_safe_function(sc, "hook?",                     g_is_hook,                  1, 0, false, H_is_hook);

@@ -318,6 +318,7 @@
 (test (let ((f (lambda () (cons 1 (string #\H))))) (eq? (f) (f))) #f)
 (test (eq? *stdin* *stdin*) #t)
 (test (eq? *stdout* *stderr*) #f)
+(test (eq? *stdin* *stderr*) #f)
 (test (eq? else else) #t)
 
 (test (eq? (string) (string)) #f)
@@ -331,6 +332,11 @@
 (test (eq? (global-environment) (global-environment)) #t)
 (test (eq? (procedure-environment abs) (procedure-environment abs)) #t) ; or any other built-in...
 (test (eq? letrec* letrec*) #t)
+
+(test (eq? (current-input-port) (current-input-port)) #t)
+(test (eq? (current-error-port) (current-error-port)) #t)
+(test (eq? (current-output-port) (current-output-port)) #t)
+(test (eq? (current-input-port) (current-output-port)) #f)
 
 (test (eq? (string #\a) (string #\a)) #f)
 (test (eq? "a" "a") #f)
@@ -762,6 +768,12 @@
 (test (equal? (make-string 3) (make-string 3)) #t)
 (test (equal? (make-list 3) (make-list 3)) #t)
 (test (equal? (make-vector 3) (make-vector 3)) #t)
+(test (equal? (make-random-state 100) (make-random-state 100)) #t)
+
+(test (equal? (current-input-port) (current-input-port)) #t)
+(test (equal? (current-input-port) (current-output-port)) #f)
+(test (equal? *stdin* *stderr*) #f)
+
 
 (if with-bignums
     (begin
@@ -7344,6 +7356,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (hash-table-ref ht "123") #f)
   (let ((ht1 (copy ht)))
     (test (hash-table? ht1) #t)
+    (test (hash-table-iterator? ht1) #f)
+    (test (hash-table-iterator? (make-hash-table-iterator ht1)) #t)
     (test (= (length ht) (length ht1)) #t)
     (test (equal? ht ht1) #t)
     (test (eq? ht ht) #t)
@@ -7367,6 +7381,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (for-each
  (lambda (arg)
+   (test (hash-table-iterator? arg) #f)
    (test (hash-table-set! arg 'key 32) 'error))
  (list "hi" '() -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
@@ -7564,6 +7579,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (set! (ht 123) "123")
  (set! (ht 456) "456")
  (define hti (make-hash-table-iterator ht))
+ (test (hash-table-iterator? hti) #t)
  (let ((vals (list (hti) (hti))))
    (if (not (equal? (sort! vals (lambda (a b) (< (car a) (car b)))) '((123 . "123") (456 . "456"))))
        (format #t ";hash-table-iterator: ~A~%" vals))
@@ -7576,6 +7592,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (make-hash-table-iterator) 'error)
 (test (make-hash-table-iterator (make-hash-table) 1) 'error)
+(test (hash-table-iterator?) 'error)
+(test (hash-table-iterator? 1 2) 'error)
 
 (let ((ht1 (make-hash-table))
       (ht2 (make-hash-table)))
@@ -7736,6 +7754,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	(format #t ";hash-table for-each cases: ~A~%" cases)))
   (let ((iter1 (make-hash-table-iterator ht1))
 	(iter2 (make-hash-table-iterator ht2)))
+    (test (hash-table-iterator? iter2) #t)
     (let ((cases 0))
       (do ((a (iter1) (iter1))
 	   (b (iter2) (iter2)))
@@ -61180,6 +61199,23 @@ but it's the printout that is at fault:
 (test (make-random-state 1.0) 'error)
 (test (make-random-state 1+i) 'error)
 (test (make-random-state 3/4) 'error)
+(test (random-state? (make-random-state 100)) #t)
+(test (random-state?) 'error)
+(test (random-state? (make-random-state 100) 100) 'error)
+
+(let ((r1 (make-random-state 100))
+      (r2 (make-random-state 100))
+      (r3 (make-random-state 200)))
+  (test (random-state? r3) #t)
+  (test (equal? r1 r2) #t)
+  (test (equal? r1 r3) #f)
+  (random 1.0 r1)
+  (test (equal? r1 r2) #f)
+  (random 1.0 r2)
+  (test (equal? r1 r2) #t)
+  (test (equal? (copy r1) r1) #t)
+  (test (random-state? r2) #t)
+  (test (random-state? (copy r1)) #t))
 
 (for-each
  (lambda (arg)
@@ -61187,13 +61223,14 @@ but it's the printout that is at fault:
    (test (random 1.0 arg) 'error)
    (test (make-random-state arg) 'error)
    (test (random-state->list arg) 'error)
+   (test (random-state? arg) #f)
    )
  (list "hi" _ht_ '() '(1 2) #f (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)) (if #f #f) :hi #<eof> #<undefined>))
 
 (let ((r1 (make-random-state 1234))
       (r2 (make-random-state 1234)))
   (test (eq? r1 r2) #f)
-  (test (equal? r1 r2) #f)
+  (test (equal? r1 r2) #t)
   (test (eq? r2 r2) #t)
   (test (equal? r1 r1) #t)
   (test ((object->string r1) 1) #\<)
@@ -61267,8 +61304,10 @@ but it's the printout that is at fault:
 (if with-bignums
     (begin
       (let ((r1 (make-random-state (expt 2 70))))
+	(test (random-state? r1) #t)
 	(test ((object->string r1) 1) #\<)
 	(test (eq? r1 r1) #t)
+	(test (equal? r1 r1) #t)
 	(let ((val1 (random 10000000 r1))
 	      (val2 (random 10000000 r1)))
 	  (test (not (= val1 val2)) #t)))))

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.104"
-#define S7_DATE "18-Jan-12"
+#define S7_VERSION "1.105"
+#define S7_DATE "6-Feb-12"
 
 
 typedef long long int s7_Int;
@@ -837,6 +837,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 6-Feb:     random-state?, hash-table-iterator?, and morally-equal?
  * 18-Jan:    s7_environment_to_list and environment->list return just the local environment's
  *               bindings.
  *            outer-environment returns the environment enclosing its argument (an environment).
