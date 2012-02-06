@@ -780,6 +780,130 @@
       (test (equal? (/ (* 5 most-positive-fixnum) (* 3 most-negative-fixnum)) -46116860184273879035/27670116110564327424) #t)
       ))
 
+(let ((lst1 '())
+      (lst2 '()))
+  (if (not (eq? lst1 lst2)) (format #t ";nils are not eq?~%"))
+  (if (not (eqv? lst1 lst2)) (format #t ";nils are not eqv?~%"))
+  (if (not (equal? lst1 lst2)) (format #t ";nils are not equal?~%"))
+
+  (let ((v1 (make-vector 100 #f))
+	(v2 (make-vector 100 #f)))
+    (if (not (equal? v1 v2)) (format #t ";base vectors are not equal?~%"))
+
+    (let ((h1 (make-hash-table))
+	  (h2 (make-hash-table)))
+      (if (not (equal? h1 h2)) (format #t ";base hash-tables are not equal?~%"))
+
+      (let ((e1 (augment-environment (current-environment)))
+	    (e2 (augment-environment (current-environment))))
+	(if (not (equal? e1 e2)) (format #t ";base environments are not equal?~%"))
+
+	(let ((ctr 0))
+	  (for-each
+	   (lambda (arg1 arg2)
+	     ;; make sure the args are eq? to themselves
+	     ;; if equal? and equal to copy place in lst1, place copy in lst2, check that they are still equal
+	     ;;     similarly for vector, hash-table, envs
+	   (let ((a1 arg1)
+		 (a2 arg2))
+	     (if (not (eq? a1 arg1)) (format #t ";~A is not eq? to itself? ~A~%" arg1 a1))
+
+	     (if (equal? a1 a2)
+		 (begin
+		   (if (and (eq? a1 a2) (not (eqv? a1 a2))) (format #t ";~A is eq? and equal? but not eqv?? ~A~%" a1 a2))
+		   (set! lst1 (cons a1 lst1))
+		   (set! lst2 (cons a2 lst2))
+		   (set! (v1 ctr) a1)
+		   (set! (v2 ctr) a2)
+		   (let* ((sym1 (string->symbol (string-append "symbol-" (number->string ctr))))
+			  (sym2 (copy sym1)))
+		     (set! (h1 sym1) a1)
+		     (set! (h2 sym2) a2)
+		     (augment-environment! e1 (cons sym1 a1))
+		     (augment-environment! e2 (cons sym2 a2))
+
+		     (if (not (equal? lst1 lst2))
+			 (begin
+			   (format #t ";add ~A to lists, now not equal?~%" a1)
+			   (set! lst1 (cdr lst1))
+			   (set! lst2 (cdr lst2))))
+		     (if (not (equal? v1 v2))
+			 (begin
+			   (format #t ";add ~A to vectors, now not equal?~%" a1)
+			   (set! (v1 ctr) #f)
+			   (set! (v2 ctr) #f)))
+		     (if (not (equal? h1 h2))
+			 (begin
+			   (format #t ";add ~A to hash-tables, now not equal?~%" a1)
+			   (set! (h1 sym1) #f)
+			   (set! (h2 sym2) #f)))
+		     (if (not (equal? e1 e2))
+			 (begin
+			   (format #t ";add ~A to environments, now not equal?~%" a1)
+			   (eval `(set! ,sym1 #f) e1)
+			   (eval `(set! ,sym2 #f) e2)))
+		     ))
+		 (format #t ";~A is not equal to ~A~%" a1 a2))
+	     (set! ctr (+ ctr 1))))
+
+	 (list "hi" ""
+	       (integer->char 65) #\space #\newline #\null
+	       1 3/4 1.0 1+i pi most-negative-fixnum most-positive-fixnum (real-part (log 0)) 1/0 1e18
+	       'a-symbol 
+	       (make-vector 3 #f) #() #2d((1 2) (3 4))
+	       abs quasiquote macroexpand make-type hook-functions 
+	       (hash-table '(a . 1) '(b . 2)) (hash-table)
+	       (augment-environment (current-environment) '(a . 1)) (global-environment)
+	       #f #t :hi 
+	       #<eof> #<undefined> #<unspecified>
+	       (make-random-state 1234)
+	       (cons 1 2) '() '(1) (list (cons 1 2)) '(1 2 . 3) 
+	       (let ((lst (cons 1 2))) (set-cdr! lst lst) lst)
+	       )
+	 (list (string #\h #\i) (string)
+	       #\A #\space #\newline (integer->char 0)
+	       (- 2 1) (/ 3 4) 1.0 1+i pi -9223372036854775808 9223372036854775807 (real-part (log 0)) 1/0 1e18
+	       (string->symbol "a-symbol")
+	       (vector #f #f #f) (vector)  #2d((1 2) (3 4))
+	       abs quasiquote macroexpand make-type hook-functions 
+	       (let ((h (make-hash-table 31))) (set! (h 'a) 1) (set! (h 'b) 2) h) (make-hash-table 123)
+	       (augment-environment (current-environment) '(a . 1)) (global-environment)
+	       #f #t :hi 
+	       #<eof> #<undefined> (if #f #f)
+	       (make-random-state 1234)
+	       '(1 . 2) (list) (list 1) (list (cons 1 2)) '(1 2 . 3) 
+	       (let ((lst (cons 1 2))) (set-cdr! lst lst) lst)
+	       ))
+	  
+	  (set! (v1 ctr) lst1)
+	  (set! (v2 ctr) lst2)
+	  (set! ctr (+ ctr 1))
+	  (if (not (equal? v1 v2))
+	      (format #t ";add lists to vectors, now vectors not equal?~%")
+	      (begin
+		(set! lst1 (cons v1 lst1))
+		(set! lst2 (cons v2 lst2))
+		(if (not (equal? lst1 lst2))
+		    (begin
+		      (format #t ";add vectors to lists, now lists not equal?~%")
+		      (set! (h1 'lst1) lst1)
+		      (set! (h2 'lst2) lst2)
+		      (if (not (equal? h1 h2))
+			  (format #t ";add lists to hash-tables, not hash-tables not equal?~%")
+			  (begin
+			    (set! (v1 ctr) v1)
+			    (set! (v2 ctr) v2)
+			    (set! ctr (+ ctr 1))
+			    (if (not (equal? v1 v2))
+				(format #t ";add vectors to themselves, now vectors not equal?~%"))
+			    (if (not (equal? lst1 lst2))
+				(format #t ";add vectors to themselves, now lists not equal?~%"))
+			    (set! (h1 'h1) h1)
+			    (set! (h2 'h2) h2)
+			    (if (not (equal? h1 h2))
+				(format #t ";add hash-tables to themselves, not hash-tables not equal?~%"))
+			    )))))))))))
+
 
 
 ;;; --------------------------------------------------------------------------------

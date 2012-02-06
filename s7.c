@@ -24863,7 +24863,7 @@ bool s7_is_eq(s7_pointer obj1, s7_pointer obj2)
 
 bool s7_is_eqv(s7_pointer a, s7_pointer b) 
 {
-  if (a == b) 
+  if (a == b)
     return(true);
   
 #if WITH_GMP
@@ -24895,8 +24895,12 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 
 static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
-  if (x == y) 
+  if (x == y)    
     return(true);
+  /* since we have one internal NaN, (equal? +nan.0 +nan.0) -> #t which seems like a bug,
+   *   but Guile is similar: (let ((x +nan.0)) (equal? x x)) -> #t, whereas (equal? +nan.0 +nan.0) -> #f
+   *   and (let ((x +nan.0)) (= x x)) -> #f in Guile
+   */
   
 #if WITH_GMP
   if (big_numbers_are_eqv(x, y))
@@ -25037,7 +25041,7 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 
 bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
-  if (x == y) 
+  if ((x == y) && (!is_number(x)))  /* (equal? 1/0 1/0) should be #f */
     return(true);
   
 #if WITH_GMP
@@ -25279,45 +25283,45 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
 
 
-      /* -------- */
-
-    case T_REAL:
-    case T_BIG_REAL:
-      if (is_NaN(s7_real_part(x)))
-	{
-	  if (((is_real(y)) || (is_big_real(y))) &&
-	      (is_NaN(s7_real_part(y))))
-	    return(true);
-	  return(false);
-	}
-      /* infs are already ok */
-
-    case T_COMPLEX:
-    case T_BIG_COMPLEX:
-      /* same but each part separately */
-
-
-      /* else all those fall through */
-	
     case T_INTEGER:
     case T_RATIO:
     case T_BIG_INTEGER:
     case T_BIG_RATIO:
-#if 0
-      if ((is_number(y)) || (is_big_number(y)))
-	return(g_equal(sc, args)); /* big ? */
-#endif
-      return(false);
+      if ((!is_number(y)) && 
+	  (!is_big_number(y)))
+	return(false);
+      return(g_equal(sc, list_2(sc, x, y)) == sc->T);
 
-  /* big_equal if either is bignum 
-   *   any NaN == any other NaN
-   *   +inf == +inf, -inf == -inf
-   *   otherwise use =, check complex as real and imag for NaN etc
-   */
-      if (numbers_are_eqv(x, y))
-	return(true);
+    case T_REAL:
+    case T_BIG_REAL:
+    case T_COMPLEX:
+    case T_BIG_COMPLEX:
+      if ((!is_number(y)) && 
+	  (!is_big_number(y)))
+	return(false);
 
-
+      if (g_equal(sc, list_2(sc, x, y)) == sc->F) /* maybe use a preset cons here if speed actually matters in this case */
+	{
+	  s7_Double r1, i1, r2, i2;
+	  if ((is_rational(y)) ||
+	      (is_big_integer(y)) ||
+	      (is_big_ratio(y)))
+	    return(false);
+	  
+	  /* now we know they're both non-rational and not = */
+	  r1 = s7_real_part(x);
+	  r2 = s7_real_part(y);
+	  if ((r1 == r2) || 
+	      ((is_NaN(r1)) && (is_NaN(r2))))
+	    {
+	      i1 = s7_imag_part(x);
+	      i2 = s7_imag_part(y);
+	      return((i1 == i2) || 
+		     ((is_NaN(i1)) && (is_NaN(i2))));
+	    }
+	  return(false);
+	}
+      return(true);
 
     case T_CLOSURE:
       /* also other cases here T_CLOSURE_STAR, maybe T_MACRO etc -- check args/env/body
@@ -25336,19 +25340,7 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, s7_is_morally_equal_1(sc, car(args), cadr(args), NULL)));
 }
 
-/* 
- * TODO: morally-equal? treats NaNs as equal, and (same sign) infs, uses = for other numbers (so morally-equal? 3 3.0) is #t)
- *   morally-equal? -- also #() and #2d(), empty hash-tables? 2closures same source+same env+same args?
- *   need structures_are_morally_equal and doc/test
-:(let ((x (lambda () #f)) (y (lambda () #f))) (equal? x y))
-#f
-
-Several things about equal? are annoying.  (equal? 2 2.0) is #f, but (= 2 2.0) is #t. 
-NaNs are indistinguishable, yet not always equal.  
-Closed ports are not equal, yet nothing can be done with them.
-#() is not equal to #2d().  We can't easily write our own equality checker because
-it has to be smart about circular lists and so on.  So, in s7, if one thing is basically the same as
-some other thing, they satisfy the function morally-equal?
+/* TODO: test morally-equal?
  */
 
 

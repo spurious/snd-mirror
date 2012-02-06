@@ -4430,6 +4430,39 @@ where we only feed in a few constants, I bet it segfaults!
 <p><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
 </p>
 
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<pre>
+    (<b><a name="morallyequalp">morally-equal?</a></b> x y)
+</pre>
+
+<p>Say we want to check that two different computations came to the same result, and that result might
+involve circular structures.  We can't use equal?
+</p>
+<pre>
+    &gt; (equal? 2 2.0)
+    #f
+    &gt; (= 2 2.0)
+    #t
+    &gt; (let ((x +nan.0)) (equal? x x))
+    #t
+    &gt; (let ((x +nan.0)) (= x x))
+    #f
+</pre>
+<p>
+Who could predict <code>(equal? +nan.0 +nan.0)</code>?
+Leaving aside numbers, 
+closed ports are not equal, yet nothing can be done with them.
+And #() is not equal to #2d().  
+Since there might be circles, it is not easy to write
+a replacement equality checker in Scheme.
+So, in s7, if one thing is basically the same as
+some other thing, they satisfy the function morally-equal?.
+</p>
+
+
 <!--
 <p>
 <b>define-expansion</b> defines read-time macros, which are just dangerous enough that
