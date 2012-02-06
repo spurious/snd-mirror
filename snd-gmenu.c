@@ -1330,7 +1330,7 @@ static void add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, 
 {
   GtkToolItem *w;
   w = gtk_tool_button_new_from_stock(stock);
-  add_toolbar_style(w); /* why is this a no-op? it was ok until 3.3.12 */
+  add_toolbar_style(GTK_WIDGET(w)); /* why is this a no-op? it was ok until 3.3.12 */
   gtk_toolbar_insert(GTK_TOOLBAR(bar), w, -1); /* -1 = at end */
   add_tooltip(GTK_WIDGET(w), tip);
   gtk_widget_show(GTK_WIDGET(w));

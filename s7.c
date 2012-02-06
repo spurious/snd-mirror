@@ -139,7 +139,7 @@
  *     WITH_COMPLEX, WITH_COMPLEX_TRIG, HAVE_STDBOOL_H, HAVE_SYS_PARAM_H, SIZEOF_VOID_P, 
  *     HAVE_GETTIMEOFDAY, HAVE_LSTAT
  *
- * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__,
+ * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__,
  *     (and __FreeBSD_version if HAVE_SYS_PARAM_H)
  */
 
@@ -221,8 +221,7 @@
 #define UNBOLD_TEXT "\033[22m"
 
 
-#define WITH_GCC defined(__GNUC__)
-
+#define WITH_GCC defined(__GNUC__) || defined(__clang__)
 
 
 
@@ -25149,7 +25148,12 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	     (s7_is_morally_equal_1(sc, cdr(x), cdr(y), ci)));
 
     case T_HASH_TABLE:
-      /* TODO: this is not right for hash tables */
+      /* TODO: this is not right for hash tables:
+	 :(let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2) (equal? h1 h2))
+	 #t
+	 :(let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2) (equal? (list h1) (list h2)))
+	 #f
+       */
 
     case T_VECTOR:
       {
@@ -25286,17 +25290,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	    return(true);
 	  return(false);
 	}
-
-      /* not big yet */
-      if (isinf(real(x)))
-	{
-	  if ((is_real(y)) &&
-	      (isinf(real(y))) &&
-	      (((real(x) > 0.0) && (real(y) > 0.0)) ||
-	       ((real(x) < 0.0) && (real(y) < 0.0))))
-	    return(true);
-	  return(false);
-	}
+      /* infs are already ok */
 
     case T_COMPLEX:
     case T_BIG_COMPLEX:
@@ -25324,9 +25318,10 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	return(true);
 
 
-      /* morally-equal for all structures */
+
     case T_CLOSURE:
       /* also other cases here T_CLOSURE_STAR, maybe T_MACRO etc -- check args/env/body
+       *   check args/type, then return(structures_are_morally_equal(sc, closure_body(x), closure_body(y), (ci) ? ci : new_shared_info(sc)));
        */
       return(false);
 
@@ -25345,6 +25340,15 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
  * TODO: morally-equal? treats NaNs as equal, and (same sign) infs, uses = for other numbers (so morally-equal? 3 3.0) is #t)
  *   morally-equal? -- also #() and #2d(), empty hash-tables? 2closures same source+same env+same args?
  *   need structures_are_morally_equal and doc/test
+:(let ((x (lambda () #f)) (y (lambda () #f))) (equal? x y))
+#f
+
+Several things about equal? are annoying.  (equal? 2 2.0) is #f, but (= 2 2.0) is #t. 
+NaNs are indistinguishable, yet not always equal.  
+Closed ports are not equal, yet nothing can be done with them.
+#() is not equal to #2d().  We can't easily write our own equality checker because
+it has to be smart about circular lists and so on.  So, in s7, if one thing is basically the same as
+some other thing, they satisfy the function morally-equal?
  */
 
 

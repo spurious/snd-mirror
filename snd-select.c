@@ -756,8 +756,10 @@ static timeout_result_t watch_selection_button = 0;
 
 void cancel_selection_watch(void)
 {
+#if (!USE_NO_GUI)
   if (watch_selection_button)
     TIMEOUT_REMOVE(watch_selection_button);
+#endif
   watch_selection_button = 0;
 }
 

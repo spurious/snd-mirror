@@ -8087,9 +8087,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; TODO: (hash-table-set! ht 'a ht) hangs (indirect set also hangs)
 ;;;  it's hung trying to print something -- hash_table_to_c_string 22094 
 ;;; but (define h1 (make-hash-table)) (hash-table-set! h1 "hi" h1) is ok?
+;;;    that is the string key prints out ok, but not the symbol key!
+;;;
 ;;; #1=#<hash-table ("hi" . #1#)>
 ;;; :(equal? h1 (copy h1)) #t -- how can this work??
-
+;;; hash-table key can also be itself!
 
 
 
@@ -57064,7 +57066,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   (test (equal? val1 val2) #t))
 
 (if with-bignums
-    (num-test (let ((n 40) (s 1)) (do ((i 0 (+ i 1))) ((= i n) s) (set! s (* s 2/3)))) 549755813888/4052555153018976267)
+    (begin
+      (num-test (let ((n 40) (s 1)) (do ((i 0 (+ i 1))) ((= i n) s) (set! s (* s 2/3)))) 1099511627776/12157665459056928801)
+      (num-test (expt 2 40) 1099511627776)
+      (num-test (expt 3 40) 12157665459056928801)
+      )
     (num-test (let ((n 40) (s 1)) (do ((i 0 (+ i 1))) ((= i n) s) (set! s (* s 2/3)))) 9.043772683816628192400549525035572818665E-8))
     
 (test (* 0 1 "hi") 'error)

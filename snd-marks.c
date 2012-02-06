@@ -414,7 +414,9 @@ static void start_mark_watching(chan_info *cp, mark *mp)
 
 static void cancel_mark_watch(chan_info *cp)
 {
+#if (!USE_NO_GUI)
   if (watch_mouse_button) TIMEOUT_REMOVE(watch_mouse_button);
+#endif
   watch_mouse_button = 0;
   watching_mouse = false;
   moving_mark = NULL;
