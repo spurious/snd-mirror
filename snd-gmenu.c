@@ -1324,6 +1324,8 @@ void add_tooltip(GtkWidget *w, const char *tip)
 
 
 /* suddenly in 3.3.12 the icon backgrounds are gray and everything has endless white space around it! 
+ * now in 3.3.14, the whitespace is gone, but the backgrounds are following a different (white-base) cairo pattern -- sigh...
+ *   and previously gray backgrounds are now black? 
  */
 
 static void add_to_toolbar(GtkWidget *bar, const gchar *stock, const char *tip, GCallback callback)

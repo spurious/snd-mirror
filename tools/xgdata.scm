@@ -8361,6 +8361,8 @@
 ;;; 3.3.12
 (CFNC-338 "void gtk_about_dialog_add_credit_section GtkAboutDialog* about gchar* section_name gchar** people" 'const)
 
+;;; 3.3.14 nothing new
+
 |#
 
 

@@ -781,141 +781,6 @@
       ))
 
 
-;;; try a bunch of combinations
-(define old-readers *#readers*)
-
-(set! *#readers* 
-      (cons (cons #\_ (lambda (str)
-			(if (string=? str "__line__")
-			    (port-line-number)
-			    #f)))
-	    *#readers*))
-
-(let ((lst1 '())
-      (lst2 '()))
-  (if (not (eq? lst1 lst2)) (format #t ";~A: nils are not eq?~%" #__line__))
-  (if (not (eqv? lst1 lst2)) (format #t ";~A: nils are not eqv?~%" #__line__))
-  (if (not (equal? lst1 lst2)) (format #t ";~A: nils are not equal?~%" #__line__))
-
-  (let ((v1 (make-vector 100 #f))
-	(v2 (make-vector 100 #f)))
-    (if (not (equal? v1 v2)) (format #t ";~A: base vectors are not equal?~%" #__line__))
-
-    (let ((h1 (make-hash-table))
-	  (h2 (make-hash-table)))
-      (if (not (equal? h1 h2)) (format #t ";~A: base hash-tables are not equal?~%" #__line__))
-
-      (let ((e1 (augment-environment (current-environment)))
-	    (e2 (augment-environment (current-environment))))
-	(if (not (equal? e1 e2)) (format #t ";~A: base environments are not equal?~%" #__line__))
-
-	(let ((ctr 0))
-	  (for-each
-	   (lambda (arg1 arg2)
-	     ;; make sure the args are eq? to themselves
-	     ;; if equal? and equal to copy place in lst1, place copy in lst2, check that they are still equal
-	     ;;     similarly for vector, hash-table, envs
-	   (let ((a1 arg1)
-		 (a2 arg2))
-	     (if (not (eq? a1 arg1)) (format #t ";~A: ~A is not eq? to itself? ~A~%" #__line__ arg1 a1))
-
-	     (if (equal? a1 a2)
-		 (begin
-		   (if (and (eq? a1 a2) (not (eqv? a1 a2))) (format #t ";~A: ~A is eq? and equal? but not eqv?? ~A~%" #__line__ a1 a2))
-		   (set! lst1 (cons a1 lst1))
-		   (set! lst2 (cons a2 lst2))
-		   (set! (v1 ctr) a1)
-		   (set! (v2 ctr) a2)
-		   (let* ((sym1 (string->symbol (string-append "symbol-" (number->string ctr))))
-			  (sym2 (copy sym1)))
-		     (set! (h1 sym1) a1)
-		     (set! (h2 sym2) a2)
-		     (augment-environment! e1 (cons sym1 a1))
-		     (augment-environment! e2 (cons sym2 a2))
-
-		     (if (not (equal? lst1 lst2))
-			 (begin
-			   (format #t ";~A: add ~A to lists, now not equal?~%" #__line__ a1)
-			   (set! lst1 (cdr lst1))
-			   (set! lst2 (cdr lst2))))
-		     (if (not (equal? v1 v2))
-			 (begin
-			   (format #t ";~A: add ~A to vectors, now not equal?~%" #__line__ a1)
-			   (set! (v1 ctr) #f)
-			   (set! (v2 ctr) #f)))
-		     (if (not (equal? h1 h2))
-			 (begin
-			   (format #t ";~A: add ~A to hash-tables, now not equal?~%" #__line__ a1)
-			   (set! (h1 sym1) #f)
-			   (set! (h2 sym2) #f)))
-		     (if (not (equal? e1 e2))
-			 (begin
-			   (format #t ";~A: add ~A to environments, now not equal?~%" #__line__ a1)
-			   (eval `(set! ,sym1 #f) e1)
-			   (eval `(set! ,sym2 #f) e2)))
-		     ))
-		 (format #t ";~A: ~A is not equal to ~A~%" #__line__ a1 a2))
-	     (set! ctr (+ ctr 1))))
-
-	 (list "hi" ""
-	       (integer->char 65) #\space #\newline #\null
-	       1 3/4 1.0 1+i pi most-negative-fixnum most-positive-fixnum (real-part (log 0)) 1e18
-	       'a-symbol 
-	       (make-vector 3 #f) #() #2d((1 2) (3 4))
-	       abs quasiquote macroexpand make-type hook-functions 
-	       (hash-table '(a . 1) '(b . 2)) (hash-table)
-	       (augment-environment (current-environment) '(a . 1)) (global-environment)
-	       #f #t :hi 
-	       #<eof> #<undefined> #<unspecified>
-	       (make-random-state 1234)
-	       (cons 1 2) '() '(1) (list (cons 1 2)) '(1 2 . 3) 
-	       (let ((lst (cons 1 2))) (set-cdr! lst lst) lst)
-	       )
-	 (list (string #\h #\i) (string)
-	       #\A #\space #\newline (integer->char 0)
-	       (- 2 1) (/ 3 4) 1.0 1+i pi -9223372036854775808 9223372036854775807 (real-part (log 0)) 1e18
-	       (string->symbol "a-symbol")
-	       (vector #f #f #f) (vector)  #2d((1 2) (3 4))
-	       abs quasiquote macroexpand make-type hook-functions 
-	       (let ((h (make-hash-table 31))) (set! (h 'a) 1) (set! (h 'b) 2) h) (make-hash-table 123)
-	       (augment-environment (current-environment) '(a . 1)) (global-environment)
-	       #f #t :hi 
-	       #<eof> #<undefined> (if #f #f)
-	       (make-random-state 1234)
-	       '(1 . 2) (list) (list 1) (list (cons 1 2)) '(1 2 . 3) 
-	       (let ((lst (cons 1 2))) (set-cdr! lst lst) lst)
-	       ))
-	  
-	  (set! (v1 ctr) lst1)
-	  (set! (v2 ctr) lst2)
-	  (set! ctr (+ ctr 1))
-	  (if (not (equal? v1 v2))
-	      (format #t ";~A: add lists to vectors, now vectors not equal?~%" #__line__)
-	      (begin
-		(set! lst1 (cons v1 lst1))
-		(set! lst2 (cons v2 lst2)) ; TODO: also lists to themselves here
-		(if (not (equal? lst1 lst2))
-		    (begin
-		      (format #t ";~A: add vectors to lists, now lists not equal?~%" #__line__)
-		      (set! (h1 'lst1) lst1)
-		      (set! (h2 'lst2) lst2)
-		      (if (not (equal? h1 h2))
-			  (format #t ";~A: add lists to hash-tables, not hash-tables not equal?~%" #__line__)
-			  (begin
-			    (set! (v1 ctr) v1)
-			    (set! (v2 ctr) v2)
-			    (set! ctr (+ ctr 1))
-			    (if (not (equal? v1 v2))
-				(format #t ";~A: add vectors to themselves, now vectors not equal?~%" #__line__))
-			    (if (not (equal? lst1 lst2))
-				(format #t ";~A: add vectors to themselves, now lists not equal?~%" #__line__))
-			    (set! (h1 'h1) h1)
-			    (set! (h2 'h2) h2)
-			    (if (not (equal? h1 h2))
-				(format #t ";~A: add hash-tables to themselves, not hash-tables not equal?~%" #__line__))
-			    )))))))))))
-(set! *#readers* old-readers)
-
 
 ;;; --------------------------------------------------------------------------------
 ;;; morally-equal?
@@ -1035,6 +900,20 @@
 (test (morally-equal? 0/0+i 0/0+i) #t)
 (test (morally-equal? 0/0+i 0/0-i) #f)
 
+(test (morally-equal? (list 3) (list 3.0)) #t)
+(test (morally-equal? (list 3.0) (list 3.0)) #t)
+(test (morally-equal? (list 3-4i) (list 3-4i)) #t)
+(test (morally-equal? (list 1/0) (list 0/0)) #t)
+(test (morally-equal? (list (log 0)) (list (log 0))) #t)
+(test (morally-equal? (list 0/0+i) (list 0/0+i)) #t)
+
+(test (morally-equal? (vector 3) (vector 3.0)) #t)
+(test (morally-equal? (vector 3.0) (vector 3.0)) #t)
+(test (morally-equal? (vector 3-4i) (vector 3-4i)) #t)
+(test (morally-equal? (vector 1/0) (vector 0/0)) #t)
+(test (morally-equal? (vector (log 0)) (vector (log 0))) #t)
+(test (morally-equal? (vector 0/0+i) (vector 0/0+i)) #t)
+
 (test (morally-equal? (string #\c) "c") #t)
 (test (morally-equal? morally-equal? morally-equal?) #t)
 (test (morally-equal? (cons 1 (cons 2 3)) '(1 2 . 3)) #t)
@@ -1097,6 +976,154 @@
 (test (morally-equal? (current-input-port) (current-input-port)) #t)
 (test (morally-equal? (current-input-port) (current-output-port)) #f)
 (test (morally-equal? *stdin* *stderr*) #f)
+
+
+;;; ----------------
+;;; try a bunch of combinations
+(define old-readers *#readers*)
+
+(set! *#readers* 
+      (cons (cons #\_ (lambda (str)
+			(if (string=? str "__line__")
+			    (port-line-number)
+			    #f)))
+	    *#readers*))
+
+(let ((lst1 '())
+      (lst2 '()))
+  (if (not (eq? lst1 lst2)) (format #t ";~A: nils are not eq?~%" #__line__))
+  (if (not (eqv? lst1 lst2)) (format #t ";~A: nils are not eqv?~%" #__line__))
+  (if (not (equal? lst1 lst2)) (format #t ";~A: nils are not equal?~%" #__line__))
+
+  (let ((v1 (make-vector 100 #f))
+	(v2 (make-vector 100 #f)))
+    (if (not (equal? v1 v2)) (format #t ";~A: base vectors are not equal?~%" #__line__))
+
+    (let ((h1 (make-hash-table))
+	  (h2 (make-hash-table)))
+      (if (not (equal? h1 h2)) (format #t ";~A: base hash-tables are not equal?~%" #__line__))
+
+      (let ((e1 (augment-environment (current-environment)))
+	    (e2 (augment-environment (current-environment))))
+	(if (not (equal? e1 e2)) (format #t ";~A: base environments are not equal?~%" #__line__))
+
+	(let ((ctr 0))
+	  (for-each
+	   (lambda (arg1 arg2)
+	     ;; make sure the args are eq? to themselves
+	     ;; if equal? and equal to copy place in lst1, place copy in lst2, check that they are still equal
+	     ;;     similarly for vector, hash-table, envs
+	   (let ((a1 arg1)
+		 (a2 arg2))
+	     (if (not (eq? a1 arg1)) 
+		 (format #t ";~A: ~A is not eq? to itself? ~A~%" #__line__ arg1 a1))
+	     (if (and (eq? a1 a2) (not (eqv? a1 a2)))
+		 (format #t ";~A: ~A is eq? but not eqv? ~A~%" #__line__ a1 a2))
+
+	     (if (equal? a1 a2)
+		 (begin
+		   (if (and (eq? a1 a2) (not (eqv? a1 a2))) 
+		       (format #t ";~A: ~A is eq? and equal? but not eqv?? ~A~%" #__line__ a1 a2))
+		   (if (not (morally-equal? a1 a2))
+		       (format #t ";~A: ~A is equal? but not morally-equal? ~A~%" #__line__ a1 a2))
+		   (set! lst1 (cons a1 lst1))
+		   (set! lst2 (cons a2 lst2))
+		   (set! (v1 ctr) a1)
+		   (set! (v2 ctr) a2)
+		   (let* ((sym1 (string->symbol (string-append "symbol-" (number->string ctr))))
+			  (sym2 (copy sym1)))
+		     (set! (h1 sym1) a1)
+		     (set! (h2 sym2) a2)
+		     (augment-environment! e1 (cons sym1 a1))
+		     (augment-environment! e2 (cons sym2 a2))
+
+		     (if (not (equal? lst1 lst2))
+			 (begin
+			   (format #t ";~A: add ~A to lists, now not equal?~%" #__line__ a1)
+			   (set! lst1 (cdr lst1))
+			   (set! lst2 (cdr lst2))))
+		     (if (not (equal? v1 v2))
+			 (begin
+			   (format #t ";~A: add ~A to vectors, now not equal?~%" #__line__ a1)
+			   (set! (v1 ctr) #f)
+			   (set! (v2 ctr) #f)))
+		     (if (not (equal? h1 h2))
+			 (begin
+			   (format #t ";~A: add ~A to hash-tables, now not equal?~%" #__line__ a1)
+			   (set! (h1 sym1) #f)
+			   (set! (h2 sym2) #f)))
+		     (if (not (equal? e1 e2))
+			 (begin
+			   (format #t ";~A: add ~A to environments, now not equal?~%" #__line__ a1)
+			   (eval `(set! ,sym1 #f) e1)
+			   (eval `(set! ,sym2 #f) e2)))
+		     ))
+		 (begin
+		   (if (eq? a1 arg1) (format #t ";~A: ~A is eq? but not equal? ~A~%" #__line__ a1 a2))
+		   (if (eqv? a1 arg1) (format #t ";~A: ~A is eqv? but not equal? ~A~%" #__line__ a1 a2))
+		   (format #t ";~A: ~A is not equal to ~A~%" #__line__ a1 a2)))
+
+	     (set! ctr (+ ctr 1))))
+
+	 (list "hi" ""
+	       (integer->char 65) #\space #\newline #\null
+	       1 3/4 1.0 1+i pi most-negative-fixnum most-positive-fixnum (real-part (log 0)) 1e18
+	       'a-symbol 
+	       (make-vector 3 #f) #() #2d((1 2) (3 4))
+	       abs quasiquote macroexpand make-type hook-functions 
+	       (hash-table '(a . 1) '(b . 2)) (hash-table)
+	       (augment-environment (current-environment) '(a . 1)) (global-environment)
+	       #f #t :hi 
+	       #<eof> #<undefined> #<unspecified>
+	       (make-random-state 1234)
+	       (cons 1 2) '() '(1) (list (cons 1 2)) '(1 2 . 3) 
+	       (let ((lst (cons 1 2))) (set-cdr! lst lst) lst)
+	       )
+	 (list (string #\h #\i) (string)
+	       #\A #\space #\newline (integer->char 0)
+	       (- 2 1) (/ 3 4) 1.0 1+i pi -9223372036854775808 9223372036854775807 (real-part (log 0)) 1e18
+	       (string->symbol "a-symbol")
+	       (vector #f #f #f) (vector)  #2d((1 2) (3 4))
+	       abs quasiquote macroexpand make-type hook-functions 
+	       (let ((h (make-hash-table 31))) (set! (h 'a) 1) (set! (h 'b) 2) h) (make-hash-table 123)
+	       (augment-environment (current-environment) '(a . 1)) (global-environment)
+	       #f #t :hi 
+	       #<eof> #<undefined> (if #f #f)
+	       (make-random-state 1234)
+	       '(1 . 2) (list) (list 1) (list (cons 1 2)) '(1 2 . 3) 
+	       (let ((lst (cons 1 2))) (set-cdr! lst lst) lst)
+	       ))
+	  
+	  (set! (v1 ctr) lst1)
+	  (set! (v2 ctr) lst2)
+	  (set! ctr (+ ctr 1))
+	  (if (not (equal? v1 v2))
+	      (format #t ";~A: add lists to vectors, now vectors not equal?~%" #__line__)
+	      (begin
+		(set! lst1 (cons v1 lst1))
+		(set! lst2 (cons v2 lst2)) ; TODO: also lists to themselves here and add morally-equal? tests
+		(if (not (equal? lst1 lst2))
+		    (begin
+		      (format #t ";~A: add vectors to lists, now lists not equal?~%" #__line__)
+		      (set! (h1 'lst1) lst1)
+		      (set! (h2 'lst2) lst2)
+		      (if (not (equal? h1 h2))
+			  (format #t ";~A: add lists to hash-tables, not hash-tables not equal?~%" #__line__)
+			  (begin
+			    (set! (v1 ctr) v1)
+			    (set! (v2 ctr) v2)
+			    (set! ctr (+ ctr 1))
+			    (if (not (equal? v1 v2))
+				(format #t ";~A: add vectors to themselves, now vectors not equal?~%" #__line__))
+			    (if (not (equal? lst1 lst2))
+				(format #t ";~A: add vectors to themselves, now lists not equal?~%" #__line__))
+			    (set! (h1 'h1) h1)
+			    (set! (h2 'h2) h2)
+			    (if (not (equal? h1 h2))
+				(format #t ";~A: add hash-tables to themselves, not hash-tables not equal?~%" #__line__))
+			    )))))))))))
+(set! *#readers* old-readers)
+
 
 
 
@@ -8403,14 +8430,28 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test x 123))
 
 
-;;; TODO: (hash-table-set! ht 'a ht) hangs (indirect set also hangs)
-;;;  it's hung trying to print something -- hash_table_to_c_string 22094 
-;;; but (define h1 (make-hash-table)) (hash-table-set! h1 "hi" h1) is ok?
-;;;    that is the string key prints out ok, but not the symbol key!
+;;; TODO: add these to s7test;
+;;; (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) ht) -> #1=#<hash-table (a . #1#)>
+;;; (let ((h1 (make-hash-table))) (hash-table-set! h1 "hi" h1) h1) -> #1=#<hash-table ("hi" . #1#)>
 ;;;
-;;; #1=#<hash-table ("hi" . #1#)>
 ;;; :(equal? h1 (copy h1)) #t -- how can this work??
 ;;; hash-table key can also be itself!
+;;; (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) ht) -> #1=#<hash-table (#1# . 1)>
+;;; but
+;;; (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) (copy ht))
+;;; #<hash-table (#1=#<hash-table (#1# . 1)> . 1)>
+;;;  this is just a printout issue I think
+;;; check rtn val and (set (ht ht) ht) rtn val
+;;; (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) (ht ht)) -> 1
+;;; (let ((ht (make-hash-table))) (hash-table-set! ht ht ht) (equal? (ht ht) ht)) -> #t
+
+#|
+/* TODO: add these to s7test I think
+ * (let ((v1 (make-vector 16 0)) (v2 (make-vector 16 0))) (set! (v2 12) v2) (set! (v1 12) v1) (equal? v1 v2)) -> #t
+ *  is that correct?  Guile gets stackoverflow (1.8.n)
+ * (let ((lst1 (list 1)) (lst2 (list 1))) (set-cdr! lst1 lst1) (set-cdr! lst2 lst2) (equal? lst1 lst2)) -> #t
+ */
+|#
 
 
 
@@ -8960,23 +9001,23 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (list "\"\\x" "\"\\x0" "`(+ ," "`(+ ,@" "#2d(" "#\\"))
 
 (let ((loadit "tmp1.r5rs"))
-  (let ((p (open-output-file loadit)))
-    (display "(define s7test-var 314) (define (s7test-func) 314) (define-macro (s7test-mac a) `(+ ,a 2))" p)
-    (newline p)
-    (close-output-port p)
+  (let ((p1 (open-output-file loadit)))
+    (display "(define s7test-var 314) (define (s7test-func) 314) (define-macro (s7test-mac a) `(+ ,a 2))" p1)
+    (newline p1)
+    (close-output-port p1)
     (load loadit)
     (test (= s7test-var 314) #t)
     (test (s7test-func) 314)
     (test (s7test-mac 1) 3)
-    (set! p (open-output-file loadit)) ; hopefully this starts a new file
-    (display "(define s7test-var 3) (define (s7test-func) 3) (define-macro (s7test-mac a) `(+ ,a 1))" p)
-    (newline p)
-    (close-output-port p)
-    (load loadit)
-    (test (= s7test-var 3) #t)
-    (test (s7test-func) 3)
-    (test (s7test-mac 1) 2)
-    ))
+    (let ((p2 (open-output-file loadit))) ; hopefully this starts a new file
+      (display "(define s7test-var 3) (define (s7test-func) 3) (define-macro (s7test-mac a) `(+ ,a 1))" p2)
+      (newline p2)
+      (close-output-port p2)
+      (load loadit)
+      (test (= s7test-var 3) #t)
+      (test (s7test-func) 3)
+      (test (s7test-mac 1) 2)
+      (test (morally-equal? p1 p2) #t))))
 
 (test (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) 224)
 

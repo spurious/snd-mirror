@@ -17820,8 +17820,14 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
 }
 
 
+static s7_pointer g_hash_table_iterate(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_make_hash_table_iterator(s7_scheme *sc, s7_pointer args);
+#define hash_table_iterate_args(H) cdadar(closure_body(H))
+
+
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 {
+  /* this only pertains to printing */
   int i, ref = -1;
   s7_pointer *p, *objs_end;
   
@@ -17846,31 +17852,53 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
       ci->objs[ci->top++] = top;
 
       /* now search the rest of this structure */
-      if (is_pair(top))
+      switch (type(top))
 	{
+	case T_PAIR:
 	  if (has_structure(car(top)))
 	    collect_shared_info(sc, ci, car(top));
 	  if (has_structure(cdr(top)))
 	    collect_shared_info(sc, ci, cdr(top));
-	}
-      else
-	{
-	  int i, plen;
-	  plen = s7_vector_print_length(sc); /* TODO: what?? we need all the pointers for the equality checks */
-	  if (plen > vector_length(top))
-	    plen = vector_length(top);
-	  for (i = 0; i < plen; i++)
-	    if (has_structure(vector_element(top, i)))
-	      collect_shared_info(sc, ci, vector_element(top, i));
+	  break;
+	  
+	case T_VECTOR:
+	  {
+	    int i, plen;
+
+	    plen = s7_vector_print_length(sc); /* all stringification follows the print length */
+	    if (plen > vector_length(top))
+	      plen = vector_length(top);
+
+	    for (i = 0; i < plen; i++)
+	      if (has_structure(vector_element(top, i)))
+		collect_shared_info(sc, ci, vector_element(top, i));
+	  }
+	  break;
+	  
+	case T_HASH_TABLE:
+	  {
+	    s7_pointer iterator, iter_loc;
+	    int gc_iter;
+
+	    iterator = g_make_hash_table_iterator(sc, list_1(sc, top));
+	    gc_iter = s7_gc_protect(sc, iterator);
+	    iter_loc = hash_table_iterate_args(iterator);
+
+	    while (true)
+	      {
+		s7_pointer x;
+		x = g_hash_table_iterate(sc, iter_loc);
+		if (is_null(x)) break;
+		if (has_structure(x))
+		  collect_shared_info(sc, ci, x);
+	      }
+	    s7_gc_unprotect_at(sc, gc_iter);
+	  }
+	  break;
 	}
     }
   return(ci);
 }
-
-/* (let ((v1 (make-vector 16 0)) (v2 (make-vector 16 0))) (set! (v2 12) v2) (set! (v1 12) v1) (equal? v1 v2)) -> #t
- *  is that correct?  Guile gets stackoverflow (1.8.n)
- * (let ((lst1 (list 1)) (lst2 (list 1))) (set-cdr! lst1 lst1) (set-cdr! lst2 lst2) (equal? lst1 lst2)) -> #t
- */
 
 
 static shared_info *new_shared_info(s7_scheme *sc)
@@ -21965,47 +21993,6 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 }
 
 
-static bool hash_tables_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
-{
-  s7_pointer *lists;
-  int i, len;
-
-  if (hash_table_entries(x) != hash_table_entries(y))
-    return(false);
-  if (hash_table_entries(x) == 0)
-    return(true);
-  if (hash_table_function(x) != hash_table_function(y))
-    return(false);
-
-  len = vector_length(x);
-  lists = vector_elements(x);
-
-  for (i = 0; i < len; i++)
-    {
-      s7_pointer p;
-      for (p = lists[i]; is_not_null(p); p = cdr(p))
-	{
-	  s7_pointer key, x_val, y_val;
-
-	  key = caar(p);
-	  x_val = cdar(p);
-	  y_val = (*hash_table_function(y))(sc, y, key);
-
-	  if (is_null(y_val))
-	    return(false);
-	  if (!s7_is_equal(sc, x_val, cdr(y_val)))
-	    return(false);
-	}
-    }
-
-  /* if we get here, every key/value in x has a corresponding key/value in y, and the number of entries match,
-   *   so surely the tables are equal??
-   */
-
-  return(true);
-}
-
-
 static s7_pointer g_hash_table_iterate(s7_scheme *sc, s7_pointer args)
 {
   /* internal func pointed to by sc->HASH_TABLE_ITERATE */
@@ -22082,8 +22069,6 @@ static s7_pointer g_is_hash_table_iterator(s7_scheme *sc, s7_pointer args)
 /*  are hash-table-iterators ever equal? -- they are closures
  */
 
-
-#define hash_table_iterate_args(H) cdadar(closure_body(H))
 
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci)
 {
@@ -24944,6 +24929,47 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
 }
 
 
+static bool hash_tables_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  s7_pointer *lists;
+  int i, len;
+
+  if (hash_table_entries(x) != hash_table_entries(y))
+    return(false);
+  if (hash_table_entries(x) == 0)
+    return(true);
+  if (hash_table_function(x) != hash_table_function(y))
+    return(false);
+
+  len = vector_length(x);
+  lists = vector_elements(x);
+
+  for (i = 0; i < len; i++)
+    {
+      s7_pointer p;
+      for (p = lists[i]; is_not_null(p); p = cdr(p))
+	{
+	  s7_pointer key, x_val, y_val;
+
+	  key = caar(p);
+	  x_val = cdar(p);
+	  y_val = (*hash_table_function(y))(sc, y, key);
+
+	  if (is_null(y_val))
+	    return(false);
+	  if (!s7_is_equal_tracking_circles(sc, x_val, cdr(y_val), ci))
+	    return(false);
+	}
+    }
+
+  /* if we get here, every key/value in x has a corresponding key/value in y, and the number of entries match,
+   *   so surely the tables are equal??
+   */
+
+  return(true);
+}
+
+
 static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   /* here we know x and y are pointers to the same type of structure */
@@ -24972,35 +24998,34 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 	     (s7_is_equal_tracking_circles(sc, cdr(x), cdr(y), ci)));
 
     case T_HASH_TABLE:
-      /* TODO: shouldn't this be hash_tables_are_equal with a tracker? is copy(ht) equal ht? can copy handle circle hash? */
+      return(hash_tables_are_equal(sc, x, y, ci));
+
     case T_VECTOR:
       {
 	s7_Int i, len;
+	int x_dims = 1, y_dims = 1, j;
+
 	len = vector_length(x);
 	if (len != vector_length(y)) return(false);
-	
-	if (s7_is_vector(x))
-	  {
-	    /* there's one special case: shared vectors can have 1 dimension but include the dimension info */
-	    int x_dims = 1, y_dims = 1, j;
+
+	/* there's one special case: shared vectors can have 1 dimension but include the dimension info */
+	if (vector_is_multidimensional(x))
+	  x_dims = vector_ndims(x);
+	if (vector_is_multidimensional(y))
+	  y_dims = vector_ndims(y);
 	    
-	    if (vector_is_multidimensional(x))
-	      x_dims = vector_ndims(x);
-	    if (vector_is_multidimensional(y))
-	      y_dims = vector_ndims(y);
+	if (x_dims != y_dims)
+	  return(false);
 	    
-	    if (x_dims != y_dims)
+	if (x_dims > 1)
+	  for (j = 0; j < x_dims; j++)
+	    if (vector_dimension(x, j) != vector_dimension(y, j))
 	      return(false);
-	    
-	    if (x_dims > 1)
-	      for (j = 0; j < x_dims; j++)
-		if (vector_dimension(x, j) != vector_dimension(y, j))
-		  return(false);
-	  }
 	
 	for (i = 0; i < len; i++)
 	  if (!(s7_is_equal_tracking_circles(sc, vector_element(x, i), vector_element(y, i), ci)))
 	    return(false);
+	return(true);
       }
 
     case T_ENVIRONMENT:
@@ -25012,19 +25037,24 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
             (equal? e1 e2))
 	*/
 	s7_pointer ex, ey;
+
 	for (ex = x, ey = y; is_environment(ex) && is_environment(ey); ex = next_environment(ex), ey = next_environment(ey))
 	  {
 	    s7_pointer px, py;
+
 	    if (ex == ey)
 	      return(true);
+
 	    if ((ex == sc->global_env) ||
 		(ey == sc->global_env))
 	      return(false);
+
 	    /* currently order matters, unlike hash-tables */
 	    for (px = environment_slots(ex), py = environment_slots(ey); is_slot(px) && is_slot(py); px = next_slot(px), py = next_slot(py))
 	      if ((slot_symbol(px) != slot_symbol(py)) ||
 		  (!(s7_is_equal_tracking_circles(sc, slot_value(px), slot_value(py), ci))))
 		return(false);
+
 	    if ((is_slot(px)) ||
 		(is_slot(py)))
 	      return(false);
@@ -25032,6 +25062,7 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 	if ((is_environment(ex)) ||
 	    (is_environment(ey)))
 	  return(false);
+
 	return(true);
       }
     }
@@ -25077,9 +25108,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
 
     case T_HASH_TABLE:
-      return(hash_tables_are_equal(sc, x, y));
-      /* TODO: does this hang if the hash-table contains itself?
-       */
+      return(hash_tables_are_equal(sc, x, y, new_shared_info(sc)));
 
     case T_PAIR:
 #if (!WITH_GMP)
@@ -25153,9 +25182,9 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 
     case T_HASH_TABLE:
       /* TODO: this is not right for hash tables:
-	 :(let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2) (equal? h1 h2))
-	 #t
-	 :(let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2) (equal? (list h1) (list h2)))
+	 :(let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2.0) (morally-equal? h1 h2))
+	 #f
+	 :(let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1.0) (set! (h2 'b) 2) (morally-equal? (list h1) (list h2)))
 	 #f
        */
 
@@ -25189,6 +25218,7 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	for (i = 0; i < len; i++)
 	  if (!(s7_is_morally_equal_1(sc, vector_element(x, i), vector_element(y, i), ci)))
 	    return(false);
+	return(true);
       }
 
     case T_ENVIRONMENT:
@@ -25262,7 +25292,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	     (port_is_closed(y)));
 
     case T_HASH_TABLE:
-      return(hash_tables_are_equal(sc, x, y)); 
+      return(hash_tables_are_equal(sc, x, y, (ci) ? ci : new_shared_info(sc))); 
 
     case T_ENVIRONMENT:
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
