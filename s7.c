@@ -25240,32 +25240,29 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
   switch (type(x))
     {
     case T_STRING:
-      return(make_boolean(sc, scheme_strings_are_equal(x, y)));
+      return(scheme_strings_are_equal(x, y));
 
     case T_C_OBJECT:
-      return(make_boolean(sc, objects_are_equal(sc, x, y)));
+      return(objects_are_equal(sc, x, y));
 
     case T_HOOK:
-      return(make_boolean(sc, hooks_are_equal(sc, x, y)));
+      return(hooks_are_equal(sc, x, y));
 
     case T_C_POINTER:
-      return(make_boolean(sc, raw_pointer(x) == raw_pointer(y)));
+      return(raw_pointer(x) == raw_pointer(y));
 
     case T_INPUT_PORT:
-      return(make_boolean(sc, ((port_is_closed(x)) &&     /* closed ports of same type are morally equal */
-			       (port_type(x) == port_type(y)) &&
-			       (port_is_closed(y)))));
-
+      return((port_is_closed(x)) &&     /* closed ports of same type are morally equal */
+	     (port_type(x) == port_type(y)) &&
+	     (port_is_closed(y)));
+  
     case T_OUTPUT_PORT:
-      return(make_boolean(sc, ((port_is_closed(x)) &&
-			       (port_type(x) == port_type(y)) &&
-			       (port_is_closed(y)))));
+      return((port_is_closed(x)) &&
+	     (port_type(x) == port_type(y)) &&
+	     (port_is_closed(y)));
 
     case T_HASH_TABLE:
       return(hash_tables_are_equal(sc, x, y)); 
-
-
-      /* -------- */
 
     case T_ENVIRONMENT:
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
@@ -25281,7 +25278,6 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 
     case T_PAIR:
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
-
 
     case T_INTEGER:
     case T_RATIO:
@@ -25300,7 +25296,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  (!is_big_number(y)))
 	return(false);
 
-      if (g_equal(sc, list_2(sc, x, y)) == sc->F) /* maybe use a preset cons here if speed actually matters in this case */
+      if (g_equal(sc, list_2(sc, x, y)) == sc->F) /* maybe use a preset cons here and above if speed actually matters in this case */
 	{
 	  s7_Double r1, i1, r2, i2;
 	  if ((is_rational(y)) ||
@@ -25324,11 +25320,11 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       return(true);
 
     case T_CLOSURE:
-      /* also other cases here T_CLOSURE_STAR, maybe T_MACRO etc -- check args/env/body
-       *   check args/type, then return(structures_are_morally_equal(sc, closure_body(x), closure_body(y), (ci) ? ci : new_shared_info(sc)));
-       */
-      return(false);
-
+    case T_CLOSURE_STAR:
+      return((type(y) == type(x)) &&
+	     (s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), NULL)) &&
+	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), NULL)) &&
+	     (s7_is_morally_equal_1(sc, closure_body(x), closure_body(y), NULL)));
     }
   return(false);
 }
@@ -25339,10 +25335,6 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
   #define H_is_morally_equal "(morally-equal? obj1 obj2) returns #t if obj1 is close enough to obj2."
   return(make_boolean(sc, s7_is_morally_equal_1(sc, car(args), cadr(args), NULL)));
 }
-
-/* TODO: test morally-equal?
- */
-
 
 
 

@@ -195,6 +195,10 @@ AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
 AC_CHECK_DECLS(hypot,,,[#include <math.h>]) 
 AC_CHECK_DECLS(isnan,,,[#include <math.h>])
 
+AC_SEARCH_LIBS([dlopen], [c, dl], [AC_DEFINE([HAVE_DLOPEN], [1])]) 
+# If this macro finds dlopen, HAVE_DLOPEN is defined (for use eg. in 
+# snd-xen.c), if a lib is required, the macro adds it silently to LIBS
+
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
 # AC_TYPE_SSIZE_T -- in the docs, but apparently doesn't actually work
@@ -1468,9 +1472,12 @@ case "$host" in
 	AC_DEFINE(MUS_LINUX)
         LDSO_FLAGS="-shared"
         LIBS="$LIBS -lm"
-	if test "$ac_cv_header_dlfcn_h" = yes ; then 
-	  LDFLAGS="$LDFLAGS -ldl" 
-	fi 
+#
+# -ldl is now handled by LIBS
+#	if test "$ac_cv_header_dlfcn_h" = yes ; then 
+#	  LDFLAGS="$LDFLAGS -ldl" 
+#	fi 
+#
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -1551,7 +1558,7 @@ case "$host" in
         ;;
     *-*-solaris*) 
 	AC_DEFINE(MUS_SUN)
-	LIBS="$LIBS -lm -ldl"
+#	LIBS="$LIBS -lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	AUDIO_SYSTEM=Sun
 	LDSO_FLAGS="-G"
@@ -1987,16 +1994,16 @@ fi
 
 if test "$ac_snd_have_extension_language" = no ; then
   if test "$ac_snd_have_gui" = no ; then
-    if test "$ac_cv_header_dlfcn_h" = yes ; then
-      LDFLAGS="$LDFLAGS -ldl"
-    fi
+#    if test "$ac_cv_header_dlfcn_h" = yes ; then
+#      LDFLAGS="$LDFLAGS -ldl"
+#    fi
     AC_MSG_WARN([Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
   fi
 fi
 
-if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
-  LDFLAGS="$LDFLAGS -ldl"
-fi
+# if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
+#   LDFLAGS="$LDFLAGS -ldl"
+# fi
 
 
 AC_SUBST(CFLAGS)
@@ -2013,6 +2020,7 @@ AC_MSG_RESULT([
   Snd version ...........: $VERSION
   CFLAGS ................: $CFLAGS
   LDFLAGS ...............:$LDFLAGS
+  LIBS...................: $LIBS
   prefix.................: ${prefix}
   extension language.....: $LOCAL_LANGUAGE
   audio system...........: $AUDIO_SYSTEM

@@ -159,7 +159,7 @@ static void main_snd_help(const char *subject, ...)
   #include <gnu/libc-version.h>
 #endif
 
-#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
+#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H && HAVE_DLOPEN
   #include <ladspa.h>
 #endif
 
@@ -376,7 +376,7 @@ char *version_info(void)
                         snd_itoa(XpmVersion), ".", 
                         snd_itoa(XpmRevision),
 #endif
-#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
+#if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H && HAVE_DLOPEN
 	  "\n    LADSPA: ",
   #ifdef LADSPA_HINT_DEFAULT_MASK
 	  "1.1",

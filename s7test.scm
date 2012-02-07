@@ -780,23 +780,34 @@
       (test (equal? (/ (* 5 most-positive-fixnum) (* 3 most-negative-fixnum)) -46116860184273879035/27670116110564327424) #t)
       ))
 
+
+;;; try a bunch of combinations
+(define old-readers *#readers*)
+
+(set! *#readers* 
+      (cons (cons #\_ (lambda (str)
+			(if (string=? str "__line__")
+			    (port-line-number)
+			    #f)))
+	    *#readers*))
+
 (let ((lst1 '())
       (lst2 '()))
-  (if (not (eq? lst1 lst2)) (format #t ";nils are not eq?~%"))
-  (if (not (eqv? lst1 lst2)) (format #t ";nils are not eqv?~%"))
-  (if (not (equal? lst1 lst2)) (format #t ";nils are not equal?~%"))
+  (if (not (eq? lst1 lst2)) (format #t ";~A: nils are not eq?~%" #__line__))
+  (if (not (eqv? lst1 lst2)) (format #t ";~A: nils are not eqv?~%" #__line__))
+  (if (not (equal? lst1 lst2)) (format #t ";~A: nils are not equal?~%" #__line__))
 
   (let ((v1 (make-vector 100 #f))
 	(v2 (make-vector 100 #f)))
-    (if (not (equal? v1 v2)) (format #t ";base vectors are not equal?~%"))
+    (if (not (equal? v1 v2)) (format #t ";~A: base vectors are not equal?~%" #__line__))
 
     (let ((h1 (make-hash-table))
 	  (h2 (make-hash-table)))
-      (if (not (equal? h1 h2)) (format #t ";base hash-tables are not equal?~%"))
+      (if (not (equal? h1 h2)) (format #t ";~A: base hash-tables are not equal?~%" #__line__))
 
       (let ((e1 (augment-environment (current-environment)))
 	    (e2 (augment-environment (current-environment))))
-	(if (not (equal? e1 e2)) (format #t ";base environments are not equal?~%"))
+	(if (not (equal? e1 e2)) (format #t ";~A: base environments are not equal?~%" #__line__))
 
 	(let ((ctr 0))
 	  (for-each
@@ -806,11 +817,11 @@
 	     ;;     similarly for vector, hash-table, envs
 	   (let ((a1 arg1)
 		 (a2 arg2))
-	     (if (not (eq? a1 arg1)) (format #t ";~A is not eq? to itself? ~A~%" arg1 a1))
+	     (if (not (eq? a1 arg1)) (format #t ";~A: ~A is not eq? to itself? ~A~%" #__line__ arg1 a1))
 
 	     (if (equal? a1 a2)
 		 (begin
-		   (if (and (eq? a1 a2) (not (eqv? a1 a2))) (format #t ";~A is eq? and equal? but not eqv?? ~A~%" a1 a2))
+		   (if (and (eq? a1 a2) (not (eqv? a1 a2))) (format #t ";~A: ~A is eq? and equal? but not eqv?? ~A~%" #__line__ a1 a2))
 		   (set! lst1 (cons a1 lst1))
 		   (set! lst2 (cons a2 lst2))
 		   (set! (v1 ctr) a1)
@@ -824,31 +835,31 @@
 
 		     (if (not (equal? lst1 lst2))
 			 (begin
-			   (format #t ";add ~A to lists, now not equal?~%" a1)
+			   (format #t ";~A: add ~A to lists, now not equal?~%" #__line__ a1)
 			   (set! lst1 (cdr lst1))
 			   (set! lst2 (cdr lst2))))
 		     (if (not (equal? v1 v2))
 			 (begin
-			   (format #t ";add ~A to vectors, now not equal?~%" a1)
+			   (format #t ";~A: add ~A to vectors, now not equal?~%" #__line__ a1)
 			   (set! (v1 ctr) #f)
 			   (set! (v2 ctr) #f)))
 		     (if (not (equal? h1 h2))
 			 (begin
-			   (format #t ";add ~A to hash-tables, now not equal?~%" a1)
+			   (format #t ";~A: add ~A to hash-tables, now not equal?~%" #__line__ a1)
 			   (set! (h1 sym1) #f)
 			   (set! (h2 sym2) #f)))
 		     (if (not (equal? e1 e2))
 			 (begin
-			   (format #t ";add ~A to environments, now not equal?~%" a1)
+			   (format #t ";~A: add ~A to environments, now not equal?~%" #__line__ a1)
 			   (eval `(set! ,sym1 #f) e1)
 			   (eval `(set! ,sym2 #f) e2)))
 		     ))
-		 (format #t ";~A is not equal to ~A~%" a1 a2))
+		 (format #t ";~A: ~A is not equal to ~A~%" #__line__ a1 a2))
 	     (set! ctr (+ ctr 1))))
 
 	 (list "hi" ""
 	       (integer->char 65) #\space #\newline #\null
-	       1 3/4 1.0 1+i pi most-negative-fixnum most-positive-fixnum (real-part (log 0)) 1/0 1e18
+	       1 3/4 1.0 1+i pi most-negative-fixnum most-positive-fixnum (real-part (log 0)) 1e18
 	       'a-symbol 
 	       (make-vector 3 #f) #() #2d((1 2) (3 4))
 	       abs quasiquote macroexpand make-type hook-functions 
@@ -862,7 +873,7 @@
 	       )
 	 (list (string #\h #\i) (string)
 	       #\A #\space #\newline (integer->char 0)
-	       (- 2 1) (/ 3 4) 1.0 1+i pi -9223372036854775808 9223372036854775807 (real-part (log 0)) 1/0 1e18
+	       (- 2 1) (/ 3 4) 1.0 1+i pi -9223372036854775808 9223372036854775807 (real-part (log 0)) 1e18
 	       (string->symbol "a-symbol")
 	       (vector #f #f #f) (vector)  #2d((1 2) (3 4))
 	       abs quasiquote macroexpand make-type hook-functions 
@@ -879,30 +890,214 @@
 	  (set! (v2 ctr) lst2)
 	  (set! ctr (+ ctr 1))
 	  (if (not (equal? v1 v2))
-	      (format #t ";add lists to vectors, now vectors not equal?~%")
+	      (format #t ";~A: add lists to vectors, now vectors not equal?~%" #__line__)
 	      (begin
 		(set! lst1 (cons v1 lst1))
-		(set! lst2 (cons v2 lst2))
+		(set! lst2 (cons v2 lst2)) ; TODO: also lists to themselves here
 		(if (not (equal? lst1 lst2))
 		    (begin
-		      (format #t ";add vectors to lists, now lists not equal?~%")
+		      (format #t ";~A: add vectors to lists, now lists not equal?~%" #__line__)
 		      (set! (h1 'lst1) lst1)
 		      (set! (h2 'lst2) lst2)
 		      (if (not (equal? h1 h2))
-			  (format #t ";add lists to hash-tables, not hash-tables not equal?~%")
+			  (format #t ";~A: add lists to hash-tables, not hash-tables not equal?~%" #__line__)
 			  (begin
 			    (set! (v1 ctr) v1)
 			    (set! (v2 ctr) v2)
 			    (set! ctr (+ ctr 1))
 			    (if (not (equal? v1 v2))
-				(format #t ";add vectors to themselves, now vectors not equal?~%"))
+				(format #t ";~A: add vectors to themselves, now vectors not equal?~%" #__line__))
 			    (if (not (equal? lst1 lst2))
-				(format #t ";add vectors to themselves, now lists not equal?~%"))
+				(format #t ";~A: add vectors to themselves, now lists not equal?~%" #__line__))
 			    (set! (h1 'h1) h1)
 			    (set! (h2 'h2) h2)
 			    (if (not (equal? h1 h2))
-				(format #t ";add hash-tables to themselves, not hash-tables not equal?~%"))
+				(format #t ";~A: add hash-tables to themselves, not hash-tables not equal?~%" #__line__))
 			    )))))))))))
+(set! *#readers* old-readers)
+
+
+;;; --------------------------------------------------------------------------------
+;;; morally-equal?
+
+(test (morally-equal? 'a 3) #f)
+(test (morally-equal? #t 't) #f)
+(test (morally-equal? "abs" 'abc) #f)
+(test (morally-equal? "hi" '(hi)) #f)
+(test (morally-equal? "()" '()) #f)
+(test (morally-equal? '(1) '(1)) #t)
+(test (morally-equal? '(#f) '(#f)) #t)
+(test (morally-equal? '(()) '(() . ())) #t)
+(test (morally-equal? #\a #\b) #f)
+(test (morally-equal? #\a #\a) #t)
+(test (let ((x (string-ref "hi" 0))) (morally-equal? x x)) #t)
+(test (morally-equal? #t #t) #t)
+(test (morally-equal? #f #f) #t)
+(test (morally-equal? #f #t) #f)
+(test (morally-equal? (null? '()) #t) #t)
+(test (morally-equal? (null? '(a)) #f) #t)
+(test (morally-equal? (cdr '(a)) '()) #t)
+(test (morally-equal? 'a 'a) #t)
+(test (morally-equal? 'a 'b) #f)
+(test (morally-equal? 'a (string->symbol "a")) #t)
+(test (morally-equal? '(a) '(b)) #f)
+(test (morally-equal? '(a) '(a)) #t)
+(test (let ((x '(a . b))) (morally-equal? x x)) #t)
+(test (let ((x (cons 'a 'b))) (morally-equal? x x)) #t)
+(test (morally-equal? (cons 'a 'b) (cons 'a 'b)) #t)
+(test (morally-equal?(cons 'a 'b)(cons 'a 'b)) #t) ; no space
+(test (morally-equal? "abc" "cba") #f)
+(test (morally-equal? "abc" "abc") #t)
+(test (let ((x "hi")) (morally-equal? x x)) #t)
+(test (morally-equal? (string #\h #\i) (string #\h #\i)) #t)
+(test (morally-equal? '#(a) '#(b)) #f)
+(test (morally-equal? '#(a) '#(a)) #t)
+(test (let ((x (vector 'a))) (morally-equal? x x)) #t)
+(test (morally-equal? (vector 'a) (vector 'a)) #t)
+(test (morally-equal? '#(1 2) (vector 1 2)) #t)
+(test (morally-equal? '#(1.0 2/3) (vector 1.0 2/3)) #t)
+(test (morally-equal? '#(1 2) (vector 1 2.0)) #t)
+(test (morally-equal? '(1 . 2) (cons 1 2)) #t)
+(test (morally-equal? '(1 #||# . #||# 2) (cons 1 2)) #t)
+(test (- '#||#1) -1) ; hmm
+(test (morally-equal? '#(1 "hi" #\a) (vector 1 "hi" #\a)) #t)
+(test (morally-equal? '#((1 . 2)) (vector (cons 1 2))) #t)
+(test (morally-equal? '#(1 "hi" #\a (1 . 2)) (vector 1 "hi" #\a (cons 1 2))) #t)
+(test (morally-equal? '#(#f hi (1 2) 1 "hi" #\a (1 . 2)) (vector #f 'hi (list 1 2) 1 "hi" #\a (cons 1 2))) #t)
+(test (morally-equal? '#(#(1) #(1)) (vector (vector 1) (vector 1))) #t)
+(test (morally-equal? '#(()) (vector '())) #t)
+(test (morally-equal? '#("hi" "ho") (vector "hi" '"ho")) #t)
+(test (morally-equal? `#(1) '#(1)) #t)
+(test (morally-equal? ``#(1) #(1)) #t)
+(test (morally-equal? '`#(1) #(1)) #t)
+(test (morally-equal? ''#(1) #(1)) #f)
+(test (morally-equal? ''#(1) '#(1)) #f)
+(test (morally-equal? (list 1 "hi" #\a) '(1 "hi" #\a)) #t)
+(test (morally-equal? (list 1.0 2/3) '(1.0 2/3)) #t)
+(test (morally-equal? (list 1 2) '(1 2.0)) #t)
+(test (morally-equal? '#(1.0+1.0i) (vector 1.0+1.0i)) #t)
+(test (morally-equal? (list 1.0+1.0i) '(1.0+1.0i)) #t)
+(test (morally-equal? '((())) (list (list (list)))) #t)
+(test (morally-equal? car car) #t)
+(test (morally-equal? car cdr) #f)
+(test (let ((x (lambda () 1))) (morally-equal? x x)) #t)
+(test (morally-equal? (lambda () 1) (lambda () 1)) #t)
+(test (morally-equal? 9/2 9/2) #t)
+(test (morally-equal? #((())) #((()))) #t)
+(test (morally-equal? "123""123") #t);no space
+(test (morally-equal? """") #t)#|nospace|#
+(test (morally-equal? #()#()) #t)
+(test (morally-equal? #()()) #f)
+(test (morally-equal? ()"") #f)
+(test (morally-equal? "hi""hi") #t)
+(test (morally-equal? #<eof> #<eof>) #t)
+(test (morally-equal? #<undefined> #<undefined>) #t)
+(test (morally-equal? #<unspecified> #<unspecified>) #t)
+(test (morally-equal? (if #f #f) #<unspecified>) #t)
+(test (morally-equal? #<eof> #<undefined>) #f)
+(test (morally-equal? #<eof> '()) #f)
+(test (let () (define-macro (hi a) `(+ 1 ,a)) (morally-equal? hi hi)) #t)
+(test (let () (define (hi a) (+ 1 a)) (morally-equal? hi hi)) #t)
+(test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (morally-equal? x x)) #t)
+(test (morally-equal? ``"" '"") #t)
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (x) x)))) (morally-equal? pws pws)) #t)
+(test (morally-equal? if :if) #f)
+(test (morally-equal? (list 'abs 'cons) '(abs cons)) #t)
+
+(test (morally-equal? most-positive-fixnum most-positive-fixnum) #t)
+(test (morally-equal? most-positive-fixnum most-negative-fixnum) #f)
+(test (morally-equal? pi pi) #t)
+(test (morally-equal? 9223372036854775807 9223372036854775806) #f)
+(test (morally-equal? 9223372036854775807 -9223372036854775808) #f)
+(test (morally-equal? -9223372036854775808 -9223372036854775808) #t)
+(test (morally-equal? 123456789/2 123456789/2) #t)
+(test (morally-equal? 123456789/2 123456787/2) #f)
+(test (morally-equal? -123456789/2 -123456789/2) #t)
+(test (morally-equal? 2/123456789 2/123456789) #t)
+(test (morally-equal? -2/123456789 -2/123456789) #t)
+(test (morally-equal? 2147483647/2147483646 2147483647/2147483646) #t)
+(test (morally-equal? 3/4 12/16) #t)
+(test (morally-equal? 1/1 1) #t)
+(test (morally-equal? 312689/99532 833719/265381) #f)
+(test (let ((x 3.141)) (morally-equal? x x)) #t)
+(test (let ((x 1+i)) (morally-equal? x x)) #t)
+(test (let* ((x 3.141) (y x)) (morally-equal? x y)) #t)
+(test (let* ((x 1+i) (y x)) (morally-equal? x y)) #t)
+(test (let* ((x 3/4) (y x)) (morally-equal? x y)) #t)
+
+(test (let ((x 3.141)) (morally-equal? x x)) #t)
+(test (morally-equal? 3 3) #t)
+(test (morally-equal? 3 3.0) #t)
+(test (morally-equal? 3.0 3.0) #t)
+(test (morally-equal? 3-4i 3-4i) #t)
+(test (morally-equal? 1/0 0/0) #t)
+(test (morally-equal? (log 0) (log 0)) #t)
+(test (morally-equal? 0/0+i 0/0+i) #t)
+(test (morally-equal? 0/0+i 0/0-i) #f)
+
+(test (morally-equal? (string #\c) "c") #t)
+(test (morally-equal? morally-equal? morally-equal?) #t)
+(test (morally-equal? (cons 1 (cons 2 3)) '(1 2 . 3)) #t)
+(test (morally-equal? '() '()) #t)
+(test (morally-equal? '() (list)) #t)
+(test (morally-equal? (cdr '   ''0) '((quote 0))) #t)
+(test (morally-equal? "\n" "\n") #t)
+(test (morally-equal? #f ((lambda () #f))) #t)
+(test (morally-equal? (+) 0) #t)
+(test (morally-equal? (recompose 32 list '(1)) (recompose 32 list (list 1))) #t)
+(test (morally-equal? (recompose 100 list '(1)) (recompose 100 list (list 1))) #t)
+(test (morally-equal? (recompose 32 vector 1) (recompose 32 vector 1)) #t)
+(test (morally-equal? (reinvert 32 list vector 1) (reinvert 32 list vector 1)) #t)
+(test (morally-equal? (recompose 32 (lambda (a) (cons 1 a)) '()) (recompose 32 (lambda (a) (cons 1 a)) '())) #t)
+(test (morally-equal? (recompose 32 (lambda (a) (list 1 a)) '()) (recompose 32 (lambda (a) (list 1 a)) '())) #t)
+
+(test (morally-equal? "asd""asd") #t) ; is this the norm?
+(let ((streq (lambda (a b) (morally-equal? a b)))) (test (streq "asd""asd") #t))
+
+(let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector 1) (list 1) 'f 't #\t)))
+  (do ((i 0 (+ i 1)))
+      ((= i (- (vector-length things) 1)))
+    (do ((j (+ i 1) (+ j 1)))
+	((= j (vector-length things)))
+      (if (morally-equal? (vector-ref things i) (vector-ref things j))
+	  (format #t ";(morally-equal? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+
+(test (morally-equal?) 'error)
+(test (morally-equal? #t) 'error)
+(test (morally-equal? #t #t #t) 'error)
+(test (equal #t #t) 'error)
+
+(test (call-with-exit (lambda (return) (return (morally-equal? return return)))) #t)
+(test (call-with-exit (lambda (return) (call-with-exit (lambda (quit) (return (morally-equal? return quit)))))) #f)
+(test (call/cc (lambda (return) (return (morally-equal? return return)))) #t)
+(test (let hiho ((i 0)) (morally-equal? hiho hiho)) #t)
+(test (let hiho ((i 0)) (let hoho ((i 0)) (morally-equal? hiho hoho))) #f)
+(test (morally-equal? + *) #f)
+(test (morally-equal? lambda lambda) #t)
+(test (morally-equal? lambda lambda*) #f)
+(test (morally-equal? let let) #t)
+(test (morally-equal? let letrec) #f)
+(test (morally-equal? define define) #t)
+(test (morally-equal? + ((lambda (a) a) +)) #t)
+(test (let ((x "hi")) (define (hi) x) (morally-equal? (hi) (hi))) #t)
+
+(test (morally-equal? 
+       (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) (list) (cons 1 2) abs quasiquote 3 3/4 1.0+1.0i #\f (if #f #f) #<eof> #<undefined>)
+       (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) (list) (cons 1 2) abs quasiquote 3 3/4 1.0+1.0i #\f (if #f #f) #<eof> #<undefined>))
+      #t)
+(test (morally-equal? 
+       (vector "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs quasiquote 3 3/4 1.0+1.0i #\f (if #f #f) #<eof> #<undefined>)
+       (vector "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs quasiquote 3 3/4 1.0+1.0i #\f (if #f #f) #<eof> #<undefined>))
+      #t)
+(test (morally-equal? (make-string 3) (make-string 3)) #t)
+(test (morally-equal? (make-list 3) (make-list 3)) #t)
+(test (morally-equal? (make-vector 3) (make-vector 3)) #t)
+(test (morally-equal? (make-random-state 100) (make-random-state 100)) #t)
+
+(test (morally-equal? (current-input-port) (current-input-port)) #t)
+(test (morally-equal? (current-input-port) (current-output-port)) #f)
+(test (morally-equal? *stdin* *stderr*) #f)
+
 
 
 
@@ -5431,7 +5626,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (append arg) arg)
    (test (append '() arg) arg)
    (test (append '() '() '() arg) arg))
- (list "hi" #\a #f 'a-symbol _ht_ (make-vector 3) abs 1 3.14 3/4 1.0+1.0i 0/0 #t #<unspecified> #<eof> '() #() (list 1 2) (cons 1 2) #(0) (lambda (a) (+ a 1))))
+ (list "hi" #\a #f 'a-symbol _ht_ (make-vector 3) abs 1 3.14 3/4 1.0+1.0i #t #<unspecified> #<eof> '() #() (list 1 2) (cons 1 2) #(0) (lambda (a) (+ a 1))))
 (test (append not) not)
 
 
@@ -32276,9 +32471,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (equal? +inf.0 inf.0) #t)
 (test (equal? +inf.0 -inf.0) #f)
 (test (equal? nan.0 inf.0) #f)
-(test (= nan.0 nan.0) #f) ; equal? is #t I guess because they are the same object, i.e. (eq? nan.0 nan.0) -> #t
+(test (= nan.0 nan.0) #f) 
 (test (equal? inf.0 nan.0) #f)
-(test (equal? nan.0 nan.0) (eqv? nan.0 nan.0)) ; these are confusing: (equal? 0/0 0/0) is a different case
+; (test (equal? nan.0 nan.0) (eqv? nan.0 nan.0)) ; these are confusing: (equal? 0/0 0/0) is a different case
 
 
 

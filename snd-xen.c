@@ -1231,7 +1231,7 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 
 
 
-#if HAVE_SCHEME && HAVE_DLFCN_H
+#if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid */
 
@@ -2506,7 +2506,7 @@ static s7_pointer g_string_ci_list_position(s7_scheme *sc, s7_pointer args)
 
 
 #ifdef XEN_ARGIFY_1
-#if HAVE_SCHEME && HAVE_DLFCN_H
+#if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
   XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
   XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
   XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
@@ -2561,7 +2561,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #else
 /* not argify */
 
-#if HAVE_SCHEME && HAVE_DLFCN_H
+#if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
   #define g_dlopen_w g_dlopen
   #define g_dlclose_w g_dlclose
   #define g_dlerror_w g_dlerror
@@ -2836,14 +2836,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   mus_init_run(); /* this needs to be called after Snd's run-optimizable functions are defined (sampler_p for example) */
 #endif
 
-#if HAVE_SCHEME && HAVE_DLFCN_H
+#if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
   XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, H_dlopen);
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, H_dlclose);
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, H_dlerror);
   XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, H_dlinit);
 #endif
 
-#if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H
+#if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H && HAVE_DLOPEN
   g_ladspa_to_snd();
 #endif
 

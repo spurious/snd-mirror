@@ -4526,6 +4526,66 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
+$as_echo_n "checking for library containing dlopen... " >&6; }
+if ${ac_cv_search_dlopen+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char dlopen ();
+int
+main ()
+{
+return dlopen ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' c, dl; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_dlopen=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_dlopen+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_dlopen+:} false; then :
+
+else
+  ac_cv_search_dlopen=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
+$as_echo "$ac_cv_search_dlopen" >&6; }
+ac_res=$ac_cv_search_dlopen
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  $as_echo "#define HAVE_DLOPEN 1" >>confdefs.h
+
+fi
+
+# If this macro finds dlopen, HAVE_DLOPEN is defined (for use eg. in
+# snd-xen.c), if a lib is required, the macro adds it silently to LIBS
+
 ac_fn_c_check_type "$LINENO" "mode_t" "ac_cv_type_mode_t" "$ac_includes_default"
 if test "x$ac_cv_type_mode_t" = xyes; then :
 
@@ -9791,9 +9851,12 @@ case "$host" in
 
         LDSO_FLAGS="-shared"
         LIBS="$LIBS -lm"
-	if test "$ac_cv_header_dlfcn_h" = yes ; then
-	  LDFLAGS="$LDFLAGS -ldl"
-	fi
+#
+# -ldl is now handled by LIBS
+#	if test "$ac_cv_header_dlfcn_h" = yes ; then
+#	  LDFLAGS="$LDFLAGS -ldl"
+#	fi
+#
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -9931,7 +9994,7 @@ $as_echo "$alsa_ok" >&6; }
     *-*-solaris*)
 	$as_echo "#define MUS_SUN 1" >>confdefs.h
 
-	LIBS="$LIBS -lm -ldl"
+#	LIBS="$LIBS -lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	AUDIO_SYSTEM=Sun
 	LDSO_FLAGS="-G"
@@ -11197,17 +11260,17 @@ fi
 
 if test "$ac_snd_have_extension_language" = no ; then
   if test "$ac_snd_have_gui" = no ; then
-    if test "$ac_cv_header_dlfcn_h" = yes ; then
-      LDFLAGS="$LDFLAGS -ldl"
-    fi
+#    if test "$ac_cv_header_dlfcn_h" = yes ; then
+#      LDFLAGS="$LDFLAGS -ldl"
+#    fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&5
 $as_echo "$as_me: WARNING: Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&2;}
   fi
 fi
 
-if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
-  LDFLAGS="$LDFLAGS -ldl"
-fi
+# if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
+#   LDFLAGS="$LDFLAGS -ldl"
+# fi
 
 
 
@@ -12514,6 +12577,7 @@ fi
   Snd version ...........: $VERSION
   CFLAGS ................: $CFLAGS
   LDFLAGS ...............:$LDFLAGS
+  LIBS...................: $LIBS
   prefix.................: ${prefix}
   extension language.....: $LOCAL_LANGUAGE
   audio system...........: $AUDIO_SYSTEM
@@ -12528,6 +12592,7 @@ $as_echo "
   Snd version ...........: $VERSION
   CFLAGS ................: $CFLAGS
   LDFLAGS ...............:$LDFLAGS
+  LIBS...................: $LIBS
   prefix.................: ${prefix}
   extension language.....: $LOCAL_LANGUAGE
   audio system...........: $AUDIO_SYSTEM
