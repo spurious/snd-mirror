@@ -862,8 +862,7 @@
 	  (format ofil "<html>
 <head>
 <title>Snd Index</title>
-<style type=\"text/css\">
-<!-- 
+<style>
 	EM.red {color:red; font-style:normal}
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
@@ -876,7 +875,6 @@
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
--->
 </style>
 </head>
 <body bgcolor=white>

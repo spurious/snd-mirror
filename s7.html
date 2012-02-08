@@ -3,13 +3,14 @@
 
 <head>
 <title>s7</title>
-<style type="text/css">
-<!-- 
+
+<style>
 	EM.red {color:red; font-style:normal}
         EM.error {color:chocolate; font-style:normal}
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
 	EM.emdef {font-weight: bold; font-style: normal}
+
 	H1 {text-align: center}
 	UL {list-style-type: none}
 
@@ -17,11 +18,23 @@
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
-	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
+
+	A.def {font-weight: bold; 
+	       font-style: normal; 
+	       text-decoration:none; 
+	       text-color:black;
+	       }
 
 	EM.green {color:green; font-style:normal}
--->
 
+	DIV.indented {background-color: #F8F8F0; 
+	              padding-left: 0.5cm; 
+	              padding-right: 0.5cm; 
+		      padding-top: 0.5cm; 
+		      margin-bottom: 0.5cm;
+		      padding-bottom: 0.5cm;
+		      border: 1px solid gray;
+		      }
 </style>
 </head>
 <body bgcolor=white>
@@ -68,8 +81,11 @@ as an inexact integer.
 
 <p>This file assumes you know about Scheme and all its problems,
 and want a quick tour of where s7 is different.  (Well, it was quick once upon a time).
+I originally used blockquote and a small font for scholia, but now I have to squint
+to read the tiny text, so less-than-vital commentaries are shown in the normal font, but 
+indented and in a sort of brownish background.
 </p>
-
+<br>
 <ul>
   <li><a href="#multiprecision">multiprecision arithmetic</a>
   <li><a href="#math">math functions</a>
@@ -173,11 +189,14 @@ Its argument is a string representing the desired number:
 1.12312312312312312312312312300000000009E0
 </pre>
 
-<small>
-<blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<blockquote> 
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>In the non-gmp case, if s7 is built using doubles (s7_Double in s7.h), the float "epsilon" is
 around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- (bignum-precision))).
@@ -221,10 +240,8 @@ but reals are limited by bignum-precision.  This means, for example, that
 &gt; (floor (+ 0.9999999995 (expt 2.0 23)))
 8388609
 </pre>
-
+</div> 
 </blockquote>
-</small>
-
 
 </dd>
 <br><br>
@@ -293,11 +310,13 @@ Other math-related differences between s7 and r5rs:
 1/2
 </pre>
 
-<small>
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>The exponent itself is always in base 10; this follows gmp usage.
 Since Scheme uses "@" for its useless polar notation, s7 doesn't use it for the exponent marker, but that
@@ -319,19 +338,23 @@ radix is greater than 10.
 
 <p>Perhaps s7 should use "@"!
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Should s7 predefine the numbers +inf.0, -inf.0, and nan.0?  It doesn't currently, but you can
 get them via log:
 </p>
 
 <pre>
-(define -inf.0 (real-part (log 0.0)))
-(define +inf.0 (- (real-part (log 0.0))))
-(define nan.0 (/ +inf.0 +inf.0))
+(define -inf.0 (real-part (log 0.0))) 
+(define +inf.0 (- (real-part (log 0.0)))) ; or (atanh 1.0)
+(define nan.0 (/ +inf.0 +inf.0))          ; or 1/0
 </pre>
 
 <p>But what is <code>(/ 1.0 0.0)</code>?  s7 gives a "division by zero" error here, and also in <code>(/ 1 0)</code>.
@@ -359,10 +382,14 @@ scheme@(guile-user)&gt;  (&lt; (/ 1.0 -0.0) -1e100 1e100 (/ 1.0 0.0))
 How can they be equal? In s7, the sign
 of -0.0 is ignored, and they really are equal.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>The <a name="random">random</a> function takes a range and an optional state, and returns a number 
 between zero and the range, of the same type as the range.  It is perfectly reasonable
@@ -399,10 +426,14 @@ r1
 <p>copy the random-state to save a spot in a random number sequence, or save the random-state as a list via
 random-state-&gt;list, then to restart from that point, apply make-random-state to that list.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <pre>
 (define (log-n-of n . ints)     ; return the bits on in exactly n of ints
@@ -431,9 +462,10 @@ random-state-&gt;list, then to restart from that point, apply make-random-state 
     apply a function to a truncated portion of a sequence (a vector for example).  Currently
     we'd need subvector->list; what about subvector/sublist? subsequence?
 -->
+</div>
 
 </blockquote>
-</small>
+
 
 </dd>
 <br><br>
@@ -503,10 +535,14 @@ hiho
 32
 </pre>
 
-<small>
+
 <blockquote>
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>If you want a version of define* that insists
 that any arguments before the keyword :optional are required:
@@ -545,9 +581,14 @@ hi
 <!--
   perhaps if :optional occurs in the arglist, make the preceding ones required by changing the arity?
 -->
+</div>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>If a define* argument's default value is an expression, it is evaluated in the definition environment at
 the time of the procedure call:
@@ -575,9 +616,14 @@ c
 &gt; (a)
 123
 </pre>
+</div>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>To try to catch what I believe are usually mistakes, I added two
 error checks.  One is triggered if you set the same parameter twice
@@ -603,10 +649,14 @@ argument keyword: <code>(f :a :c)</code>, or make the default value a keyword:
 <code>(define* (f (a :c) ...))</code>.
 To turn off this error check, add :allow-other-keys at the end of the parameter list.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>s7's lambda* arglist handling is not the same as CL's lambda-list.  First,
 you can have more than one :rest parameter:
@@ -649,9 +699,9 @@ f
 &gt; (f :a 1)
 (:a 1)
 </pre>
+</div>
 
 </blockquote>
-</small>
 
 </dd>
 <br><br>
@@ -752,10 +802,14 @@ expanded into:
 (lambda ({defmac}-18) (apply (lambda (a) ({list} '+ a 1)) (cdr {defmac}-18)))
 </pre>
 
-<small>
+
 <blockquote>
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>I hesitate to mention this, but macros are first-class entities in s7.  You can
 pass one as a function argument, apply it to a list, return it from a function,
@@ -784,10 +838,14 @@ make-mac
     (x 2))
 3
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Backquote (quasiquote) in s7 is almost trivial.  Constants are unchanged, symbols are quoted,
 ",arg" becomes "arg", and ",@arg" becomes "(apply values arg)" &mdash; hooray for real multiple values!
@@ -819,10 +877,14 @@ hi
 and handle a few tricky details (similarly for "{values}" and "{apply}").  There is no unquote-splicing
 macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>s7 macros are not hygienic.  For example,
 </p>
@@ -1059,11 +1121,14 @@ By the way, bacros solve part of our original problem:
 <p>We could also, for example, <code>(define-constant [+] +)</code> when we
 start, then only use [+] in our macros.  
 </p>
+</div>
 
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>There is another problem with macros: accidental loops.  Take the following
 example; we're trying to write a macro that defines a function
@@ -1105,11 +1170,14 @@ f
 <p>The moral of this story is: if you see a circular list in macroexpand, break
 the loop! 
 </p>
+</div>
 
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>But we should end on a happy note.  Here is Peter Seibel's once-only macro:
 </p>
@@ -1203,12 +1271,10 @@ to quote the result (if the result does not already evaluate to itself):
 
 
 -->
-
-
+</div>
 
 
 </blockquote>
-</small>
 
 </dd>
 <br><br>
@@ -1481,12 +1547,15 @@ enum
 2
 </pre>
 
-<small>
+
 <blockquote>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Here is define-record using make-type.  It has a few Common Lisp extensions:
 </p>
@@ -1585,10 +1654,15 @@ point
     (list (point? pt) (point-x pt) (point-y pt)))
 (#t 1.0 3.0)
 </pre>	
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>In the next example, we define a float-vector type:
 </p>
@@ -1640,10 +1714,14 @@ point
 &gt; (map + (list 1 2 3) (float-vector 1 2 3)) ; we have a getter and length, so map and for-each will work
 (2.0 4.0 6.0)
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>I seem to be using the same construct over and over; a begin to hold the names defined in the outer
 environment, a let to hold internal stuff, and set!s to give the names values.  It's a clumsy, but 
@@ -1701,9 +1779,9 @@ v
 &gt; (adjust-vector v 10 #f)
 #(#f 32.0 #f #f #f #f #f #f #f #f)
 </pre>
+</div>
 
 </blockquote>
-</small>
 
 </dd>
 <br><br>
@@ -1775,12 +1853,14 @@ use procedure-setter.  If procedure-setter were settable, there would be no need
 for make-procedure-with-setter; hmmm.
 </p>
 
-<small>
 <blockquote>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Here is a pretty example of make-procedure-with-setter:
 </p>
@@ -1905,14 +1985,16 @@ for make-procedure-with-setter; hmmm.
 
 (hi) -&gt; "start all done"
 </pre>
+</div>
 
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
-<p>
-I wonder if it would be more consistent to use the
+<div class="indented">
+
+<p>I wonder if it would be more consistent to use the
 name "procedure/setter" in place of "make-procedure-with-setter".
 Its syntax is closer to
 vector than make-vector, for example.  
@@ -1932,9 +2014,10 @@ Even better: "dilambda":
 
 <p>"bilambda" would mix Latin and Greek since the Romans used "el", not "lambda", according to Wikipedia.
 </p>
+</div>
 
 </blockquote>
-</small>
+
 <br>
 
 </dd>
@@ -2021,12 +2104,13 @@ I like this syntax:  the less noise, the better!
 "1x3"
 </pre>
 
-<small>
 <blockquote>
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
 so is <code>(cond (1 =&gt; "hi"))</code>!  Even though a string, list, or vector is "applicable", it is
@@ -2037,8 +2121,9 @@ accept anything that apply can handle, so
 </p>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <p>The applicable object syntax makes it easy to write generic functions.
 For example, s7test.scm has implementations of Common Lisp's sequence functions.
@@ -2102,9 +2187,14 @@ Here's an FFT procedure that accepts lists or vectors, or any similar object:
         &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
         #(1+1i -1+1i -1-1i 1-1i)
 </pre>
+</div>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>There is one place where list-set! and friends are not the same as set!: the former
 evaluate their first argument, but set! does not (with a quibble; see below):
@@ -2137,10 +2227,14 @@ And of course:
     x) 
 (3 2)
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>By my count, around 20 of the Scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside the numeric functions).  s7 extends that list with map, for-each, reverse,
@@ -2150,9 +2244,10 @@ to compare strings and lists, as well as numbers.  In map and for-each, however,
 types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>,
 or even <code>(&gt; 1 0+i)</code>.
 </p>
+</div>
 
 </blockquote>
-</small>
+
 </dd>
 
 <br><br>
@@ -2200,11 +2295,14 @@ vector-dimensions returns a list of the dimensions.
     6
 </pre>
 
-<small>
+
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>matrix multiplication:
 </p>
@@ -2224,10 +2322,14 @@ vector-dimensions returns a list of the dimensions.
 	    (set! sum (+ sum (* (A i k) (B k j)))))
 	  (set! (C i j) sum))))))
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Conway's game of Life:
 </p>
@@ -2280,10 +2382,14 @@ vector-dimensions returns a list of the dimensions.
 	    ((= y height))
 	  (set! (state0 x y) (state1 x y)))))))
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Multidimensional vector constant syntax is modelled after CL: #nd(...) or #nD(...) 
 signals that the lists specify the elements of an 'n' dimensional vector: <code>#2D((1 2 3) (4 5 6))</code>
@@ -2308,10 +2414,14 @@ equal to a 1-dimensional empty vector.
     &gt; (equal? #() #3D())
     #f
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>To save on costly parentheses, and make it easier to write generic multidimensional sequence functions,
 you can use this same syntax with lists.
@@ -2352,10 +2462,15 @@ in the latter case, you can't clobber one of the inner vectors.
 &gt; (let ((V #2d((1 2 3) (4 5 6)))) (set! (V 1) 32) V)
 ;not enough args for vector-set!: (#2D((1 2 3) (4 5 6)) 1 32)
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Using lists to display the inner vectors may not be optimal, especially when the elements are also lists:
 </p>
@@ -2372,10 +2487,15 @@ Perhaps we could use different colors?  Or different size parentheses?
 #2D<em class=green>(</em><em class=red>(</em>(0) (0) ((0))<em class=red>)</em> <em class=red>(</em>(0) 0 ((0))<em class=red>)</em><em class=green>)</em>
 #2D<big><big>(</big>(</big>(0) (0) ((0))<big>)</big> <big>(</big>(0) 0 ((0))<big>)<big>)</big></big>
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>I'm not sure how to handle vector-&gt;list and list-&gt;vector in the multidimensional case.
 Currently, vector-&gt;list flattens the vector, and list-&gt;vector always returns a
@@ -2406,9 +2526,10 @@ This also affects format and sort!:
 it expects each index in a case like this to refer to the same kind of object.
 It wants you to use: <code>(let ((v #("abc" "def"))) ((v 0) 2))</code>.  
 </p>
+</div>
 
 </blockquote>
-</small>
+
 </dd>
 <br><br>
 
@@ -2455,11 +2576,13 @@ returns #t if passed one of these iterators.
 </p>
 
 
-<small>
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Since hash-tables accept the same applicable-object syntax that vectors use, we can 
 treat a hash-table as, for example, a sparse array:
@@ -2475,10 +2598,14 @@ make-sparse-array
    (list (arr 1032) (arr -23)))
 ("1032" "-23")
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>map and for-each accept hash-table arguments. On each iteration, the map or for-each function is passed
 an entry, <code>'(key . value)</code>, in whatever order the entries are encountered in the table.  (Both use
@@ -2502,9 +2629,9 @@ make-hash-table-iterator internally).
 <p>Two hash-tables are equal if they have the same keys with the same values.  This is independent
 of the table sizes, or the order in which the key/value pairs were added.
 </p>
+</div>
 
 </blockquote>
-</small>
 
 </dd>
 <br><br>
@@ -2661,11 +2788,13 @@ its bindings are exported into the current environment:
 </p>
 
 
-<small>
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Here is yet another object system.  Each class and each instance is an environment.
 A class might be thought of as a template for instances, but
@@ -2885,17 +3014,20 @@ class-3
 &gt; ((class-3 'multiply) class-3 10)
 180                               ; (* 10 (* 1 2 3) (+ 1 2))
 </pre>
+</div>
 
 <br>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
+<div class="indented">
 
 <table border=1 bordercolor="lightgray" vspace=10 hspace=0 cellspacing=2 cellpadding=5>
 <tr>
 <td bgcolor="#f2f4ff">
-<small><pre>
+<pre>
 (define-bacro (value-&gt;symbol val)
    ;; here the current-environment is the calling environment
   `(call-with-exit
@@ -2912,12 +3044,12 @@ class-3
 &gt; (let ((a 1) (b "hi")) 
     (value-&gt;symbol "hi"))
 b
-</pre></small>
+</pre>
 </td>
 <td width=20></td>
 
 <td bgcolor="#fbfbf0">
-<small><pre>
+<pre>
 
 (define (value-&gt;symbol val env)
   ;; here we have to pass in the current-environment
@@ -2934,13 +3066,14 @@ b
 &gt; (let ((a 1) (b "hi")) 
     (value-&gt;symbol "hi" (current-environment)))
 b
-</pre></small>
+</pre>
 </td>
 </tr>
 </table>
 
+</div>
+
 </blockquote>
-</small>
 </dd>
 <br><br>
 
@@ -2994,11 +3127,14 @@ In s7, multiple values are spliced directly into the caller's argument list.
 </pre>
 
 
-<small>
+
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>There aren't that many real uses for multiple-values in Scheme.  Nearly all can be replaced by
 a normal list.  There are two cases, however, that can't be handled easily with a list.
@@ -3054,10 +3190,14 @@ as soon as the arguments are spliced into some caller's arguments.
 
 <p>Internally, s7 uses <code>(apply values ...)</code> to implement unquote splicing (",@") in quasiquote.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>In some Schemes, values behaves like CL's prog1:
 </p>
@@ -3153,10 +3293,14 @@ s7 handles it this way:
 
 <p>Now, what have I missed?
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Since set! does not evaluate its first argument, and
 there is no setter for "values", <code>(set! (values x) ...)</code> is not
@@ -3164,10 +3308,14 @@ the same as <code>(set! x ...)</code>.  <code>(string-set! (values string) ...)<
 works because string-set! does evaluate its first argument.  <code>((values + 1 2) (values 3 4) 5)</code>
 is 15, as anyone would expect.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>I wrote all that and said "nobody needs multiple values!".  In desperation,
 </p>
@@ -3176,7 +3324,7 @@ is 15, as anyone would expect.
 
 <tr>
 <td bgcolor="#f2f4ff">
-<small><pre>
+<pre>
 (define (flatten lst)
   (define (flatten-1 lst)
     (cond ((null? lst) (values))
@@ -3184,18 +3332,18 @@ is 15, as anyone would expect.
 	  (#t (values (flatten-1 (car lst))
 		      (flatten-1 (cdr lst))))))
   (map values (list (flatten-1 lst))))
-</pre></small>
+</pre>
 </td>
 <td width=40></td>
 
 <td bgcolor="#fbfbf0">
-<small><pre>
+<pre>
 (define (boring-flatten x)
   (cond ((null? x) '())
         ((not (pair? x)) (list x))
         (#t (append (boring-flatten (car x))
 		    (boring-flatten (cdr x))))))
-</pre></small>
+</pre>
 </td>
 </tr>
 </table>
@@ -3226,10 +3374,10 @@ is 15, as anyone would expect.
 	      (set! (cdr (list-tail lst (- len 2))) '()))
 	  lst))))
 </pre>
-
+</div>
 
 </blockquote>
-</small>
+
 </dd>
 <br><br>
 
@@ -3298,20 +3446,22 @@ from a simple procedure.  Otherwise, it blithely announces that
 it is continuing from the point of the error, but then fails to do so.
 </p>
 
-<small>
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>The call-with-exit function's argument (the "continuation") is only valid
 within the call-with-exit function.  In call/cc, you can save it, then call it later
 to jump back, but if you try that with call-with-exit (from outside the call-with-exit function's body), you'll get an error.
 This is similar to trying to read from a closed input port. 
 </p>
+</div>
 
 </blockquote>
-</small>
 
 
 </dd>
@@ -3366,12 +3516,14 @@ This is similar to trying to read from a closed input port.
 also sends it to *stdout*.  To send the string to *stderr* instead, <code>(format *stderr* ...)</code>.
 </p>
 
-<small>
+
 <blockquote>
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Floats can occur in any base, so:
 </p>
@@ -3419,13 +3571,14 @@ floats in the "~X" case.  So in s7,
 &gt; (format #f "~{~C~^ ~}" "hiho")
 "h i h o"
 </pre>
+</div>
 
 
 </blockquote>
-</small>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <p>object-&gt;string returns the string representation of its argument:
 </p>
@@ -3438,11 +3591,14 @@ floats in the "~X" case.  So in s7,
 "\"hiho\""
 </pre>
 
-<small>
+
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>I added object-&gt;string to s7 before deciding to include format.  format excites a
 vague disquiet &mdash; why do we need this ancient unlispy thing?
@@ -3506,9 +3662,10 @@ a modern GUI will leave formatting decisions to a text or table widget.
 
 -->
 
+</div>
 
 </blockquote>
-</small>
+
 </dd>
 <br><br>
 
@@ -3612,11 +3769,13 @@ write a function that tells us where the source is for a function:
 </pre>
 
 
-<small>
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>procedure-source returns the actual function source &mdash;
 more fun than a barrel of monkeys. Here is a self-modifying factorial function:
@@ -3714,20 +3873,28 @@ hi
     (let ((b . 12)) ...)
   hi returns 44
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
 rather than a boolean.  I haven't run into a case where it matters.  Another odd case: 
 <code>(procedure-arity (lambda* (:allow-other-keys) #f))</code>.  How should we indicate
 this in procedure-arity?
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <pre>
 (define (for-each-subset func args)
@@ -3746,11 +3913,9 @@ this in procedure-arity?
 	  (subset (cdr source) dest len))))
     (subset args '() 0)))
 </pre>
-
+</div>
 
 </blockquote>
-</small>
-
 
 </dd>
 <br><br>
@@ -3781,12 +3946,14 @@ is similar, but its argument is a string.
 3
 </pre>
 
-<small>
+
 <blockquote>
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>The environment argument is mainly useful in debugging.  A breakpoint can be set, for
 example, then any input is evaluated in the environment of the break.  Say we have the
@@ -3840,9 +4007,10 @@ Start up a REPL, and:
 (a-function "ex.scm" 26) &gt; :go
 done!
 </pre>
+</div>
 
 </blockquote>
-</small>
+
 </dd>
 <br><br>
 
@@ -3903,19 +4071,21 @@ object is #&lt;eof&gt;.
 </p>
 
 
-<small>
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>binary-io.scm in the Snd package has functions that read and write integers and floats in
 both endian choices in a variety of sizes.  Besides read-byte and write-byte, it uses
 integer-decode-float, and the various bitwise operators.
 </p>
 
+</div>
 </blockquote>
-</small>
 
 </dd>
 <br><br>
@@ -3979,11 +4149,13 @@ additional info about that error:
 </ul>
 
 
-<small>
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>To find a variable's value at the point of the error:
 </p>
@@ -4015,13 +4187,13 @@ additional info about that error:
 	     (cons 'args args))    ; add the error handler args
 	    (list args x y)))))    ; we have access to 'y'
 </pre>
+</div>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 </blockquote>
-</small>
-
 
 
 <p>The hook <a name="errorhook">*error-hook*</a> provides a way to specialize error reporting.
@@ -4077,8 +4249,9 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 </pre>
 
 <!--
-<small>
+
 <blockquote>
+<div class="indented">
 <p>Sly evil-doers can subvert this hook to provide something similar to Common Lisp's symbol-macros:
 </p>
 <pre>
@@ -4096,8 +4269,8 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 0.64985453979392
 </pre>
 
+</div>
 </blockquote>
-</small>
 -->
 
 <p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
@@ -4195,8 +4368,9 @@ the directory:
 		      (set! <em class=red>*load-path*</em> (cons directory-name *load-path*)))))))))
 </pre>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 
 <p>As in Common Lisp, <b><a name="featureslist">*features*</a></b> is a list describing what is currently loaded into s7.  You can
@@ -4212,8 +4386,9 @@ at startup *features* is:
 #t
 </pre>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 
 
@@ -4286,8 +4461,9 @@ I need to know where something unexpected happened.  So:
 
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 
 <p>(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.
@@ -4324,8 +4500,9 @@ function passed as its second argument to choose the new ordering.
 but vectors are sorted in place.  
 </p>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 
 <p>
@@ -4337,8 +4514,9 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <p>
 <code>(<a name="symboltable">symbol-table</a>)</code> returns the symbol table, a vector of lists of symbols.
@@ -4399,8 +4577,9 @@ where we only feed in a few constants, I bet it segfaults!
 </pre>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 
 <p><b>help</b> tries to find information about its argument.
@@ -4424,15 +4603,17 @@ where we only feed in a few constants, I bet it segfaults!
 </pre>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <p><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
 </p>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <pre>
     (<b><a name="morallyequalp">morally-equal?</a></b> x y)
@@ -4473,8 +4654,9 @@ bind it to something else, which is asking for confusion).
 </p>
 -->
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 
 <p>Some other differences from r5rs:
@@ -4502,11 +4684,14 @@ bind it to something else, which is asking for confusion).
 <li>case accepts => much like cond (the function argument is the selector).
 </ul>
 
-<small>
+
 <blockquote>
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
 so you rarely need to quote it.  <code>(eq? () '())</code> is #t.
@@ -4536,11 +4721,14 @@ to keep it from being evaluated, but
 
 <!-- there's another sense in which '() is a constant: you can't apply it to anything. ('() 0) -> error
 -->
+</div>
 
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Schemes also vary in handling trailing arguments:
 <code>(* 0 "hi")</code> in Guile returns 0, but s7 gives an error.  
@@ -4549,10 +4737,14 @@ to keep it from being evaluated, but
 error in Guile, and 1 in s7!
 Because it flushes trailing arguments, Guile returns 0 from <code>(* 0 +inf.0)</code>, but I think it should return NaN.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>And a harder one... How should s7 treat this:
 <code>(string-set! "hiho" 1 #\z)</code>, or 
@@ -4651,11 +4843,15 @@ it is GC'd.  Here is an example:
 few times.  You can turn off the optimization in question by setting the variable <b>*safety*</b>
 to 1.  *safety* defaults to 0.  (Also, if *safety* is not 0, sort! is safe from infinite loops).
 </p>
+</div>
 
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>s7 handles circular lists and vectors and dotted lists with its customary aplomb.  
 You can pass them to memq, or print them, for example; you can even evaluate them.  
@@ -4708,10 +4904,14 @@ the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
     (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
 </pre>
 <br>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>s7 and Snd use "*" in a variable name, *features* for example, to indicate
 that the variable is predefined.  It may occur unprotected in a macro, for
@@ -4798,11 +4998,15 @@ These symbols are not just an optimization of string comparison:
 
 <p>I hope that makes you as happy as it makes me!
 </p>
+</div>
 
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>The built-in syntactic names, such as "begin", are almost first-class citizens.
 </p>
@@ -4886,13 +5090,17 @@ Currently, you can't set! a built-in syntactic object to some new value:
 I hope this kind of thing is not actually very useful, but let me
 know if you need it.  The issue is purely one of speed.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
-<p>
-In s7, there is only one kind of begin statement,
+<div class="indented">
+
+<p>In s7, there is only one kind of begin statement,
 and it can contain both definitions and expressions.  These are evaluated in the order
 in which they occur, and in the environment at the point of the evaluation.  I think
 of it as being a little REPL.  begin does not introduce a new frame in
@@ -4909,11 +5117,14 @@ the current environment, so defines happen at the enclosing level.
          x))                   ; defines in begin are in the enclosing environment so
    4                           ;   we get 4
 </pre>
+</div>
 
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>I can't find the right tone for this section; this is the 400-th revision; I wish I were a better writer!
 I think the exact/inexact distinction in Scheme is confused and useless, and leads
@@ -5001,10 +5212,14 @@ have any number after, for example, #b:
 
 <p>Speaking of #b and friends, what should <code>(string-&gt;number "#xffff" 2)</code> return?
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>r7rs:
 </p>
@@ -5053,10 +5268,14 @@ have any number after, for example, #b:
   with-exception-handler null-environment
 -->
 </pre>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Here are some additional changes I'd make to s7 if I didn't care about compatibility with other Schemes:
 </p>
@@ -5085,11 +5304,14 @@ have any number after, for example, #b:
    remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
      set-car!|cdr!, and set-current-output|input|error-port.
 </pre>
+</div>
 
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>Scheme needs a more elegant way to define functions that share a closure.  The begin+define+let+set! shuffle used
 above is an embarrassment.
@@ -5111,10 +5333,15 @@ Here's an idle thought:
 
 <p>or perhaps better, use define-bacro with augment-environment! as in the object system example above.
 </p>
+</div>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
+
+<div class="indented">
 
 <p>s7 originally had multithreading support, but I removed it in August, 2011.
 It turned out to be less useful than I hoped,
@@ -5129,12 +5356,14 @@ Last but not least, the effort to make the non-threaded
 s7 faster messed up parts of the threaded version.  Rather than
 waste a lot of time fixing this, I chose to flush multithreading.
 </p>
+</div>
 
 
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
+<div class="indented">
 
 <p>"Life", a poem.
 </p>
@@ -5147,9 +5376,9 @@ waste a lot of time fixing this, I chose to flush multithreading.
 (do ((do do do)) (do do do))
 (*(*)(*) (+)(+) 1)
 </pre>
-
+</div>
 </blockquote>
-</small>
+
 
 </dd>
 <br>
@@ -5221,13 +5450,18 @@ The examples that follow show:
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
-<p>
+
 <A NAME="repl"></a>
-First, a bare REPL:
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>A simple listener</h4></td></tr></table>
+</td></tr></table>
+
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5330,12 +5564,18 @@ See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook t
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="defun"></a>
-<p>Define a function with arguments and a returned value, and a variable:
-</p>
+
+<table border=0 bordercolor="lightgreen" width=60% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Define a function with arguments and a returned value, and a variable</h4></td></tr></table>
+</td></tr></table>
+<br>
+
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5397,12 +5637,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="defvar"></a>
-<p>Call a Scheme-defined function from C, and get/set Scheme variable values in C:
-</p>
+<table border=0 bordercolor="lightgreen" width=70% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Call a Scheme-defined function from C, and get/set Scheme variable values in C</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5447,12 +5691,17 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="juce"></a>
-<p>C++ and Juce, from Rick Taube:
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>C++ and Juce, from Rick Taube</h4></td></tr></table>
+</td></tr></table>
+<br>
+
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5488,12 +5737,16 @@ int main(int argc, const char* argv[])
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="sndlib"></a>
-<p>Load sndlib using the XEN functions and macros into an s7 repl:
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Load sndlib using the XEN functions and macros into an s7 repl</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5591,12 +5844,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="pwstype"></a>
-<p>Add a new Scheme type and procedure-with-setters:
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Add a new Scheme type and procedure-with-setters</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5773,12 +6030,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="functionportexample"></a>
-<p>Redirect output (and input) to a C procedure:
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Redirect output (and input) to a C procedure</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5842,12 +6103,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="extendop"></a>
-<p>Extend a built-in operator ("+" in this case):
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Extend a built-in operator ("+" in this case)</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5913,12 +6178,17 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="definestar1"></a>
-<p>C-side define* (s7_define_function_star):
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>C-side define* (s7_define_function_star)</h4></td></tr></table>
+</td></tr></table>
+<br>
+
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5975,12 +6245,17 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="definemacro1"></a>
-<p>C-side define-macro (s7_define_macro):
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>C-side define-macro (s7_define_macro)</h4></td></tr></table>
+</td></tr></table>
+<br>
+
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6034,13 +6309,17 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="signal"></a>
-<p>Signal handling (C-C to break out of an infinite loop), and s7_make_continuation
-to pick up where we were interrupted:
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Signal handling and continuations</h4></td></tr></table>
+</td></tr></table>
+<br>
+
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6127,12 +6406,17 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="vector"></a>
-<p>Multidimensional vector element access:
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Multidimensional vector element access</h4></td></tr></table>
+</td></tr></table>
+<br>
+
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6219,12 +6503,17 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="notify"></a>
-<p>Notification from Scheme that a given Scheme variable has been set.
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Notification from Scheme that a given Scheme variable has been set</h4></td></tr></table>
+</td></tr></table>
+<br>
+
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6300,12 +6589,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="namespace"></a>
-<p>Load C defined stuff into a separate namespace.
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Load C defined stuff into a separate namespace</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6409,12 +6702,17 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="Cerrors"></a>
-<p>Handle scheme errors in C.
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Handle scheme errors in C</h4></td></tr></table>
+</td></tr></table>
+<br>
+
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6524,10 +6822,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="closure"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Closures in C</h4></td></tr></table>
+</td></tr></table>
+<br>
 <p>We often have hooks or callback lists in Scheme, and would like to place a C-defined
 s7 function on such a list.  If the C-side function does not have
 any state, we can just add its name to the list, but if it is effectively a closure, we have a problem.  C itself does not
@@ -6639,12 +6943,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="testhook"></a>
-<p>C and Scheme hook handling.
-</p>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>C and Scheme hooks</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6719,10 +7027,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="cload"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Load a shared library</h4></td></tr></table>
+</td></tr></table>
+<br>
 <p>We can use dlopen to load a shared library, and dlsym to initialize
 that library in our main program.  The tricky part is to conjure up the right
 compiler and loader flags.
@@ -6838,10 +7152,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="gmpex"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>Bignums in C</h4></td></tr></table>
+</td></tr></table>
+<br>
 <p>Bignum support depends on gmp, mpfr, and mpc.  In this example, we define "add-1" which adds
 1 to any kind of number.  The s7_big_* functions return the underlying gmp/mpfr/mpc pointer,
 so we have to copy that into a new number before adding.
@@ -6974,10 +7294,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="gtkrepl"></A>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>gtk-based repl</h4></td></tr></table>
+</td></tr></table>
+<br>
 <p>In this example, we use Gtk to make a window with a scrolled text widget, running s7
 in a read-eval-print loop.  I've tried to make this as short as possible; see Snd for
 a much more elaborate REPL.  From s7's point of view, the only tricky part involves
@@ -7191,10 +7517,16 @@ int main(int argc, char **argv)
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="gtkschemerepl"></A>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>scheme-based repl (using gtk)</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <p>In the same vein, we can use libxm's Gtk/s7 bindings to make the REPL in Scheme.
 Here is the same code, but now using libxm; first the C side, called gtkex.c:
@@ -7346,10 +7678,16 @@ There are several things that may change once Gtk settles down.
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="s7inathread"></A>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>s7 and pthreads</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <p>There is one major flaw in the two preceding REPLs; if s7 gets caught in an infinite loop (via
 <code>(do () ())</code> for example), you have to kill the main program to stop it.  We could use
@@ -7638,10 +7976,16 @@ So...
 
 
 
-<table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+-->
 
 <A NAME="replrescue"></A>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<h4>begin-hook</h4></td></tr></table>
+</td></tr></table>
+<br>
 
 <p>
 Common Lisp has something called "evalhook" that makes it possible

@@ -4825,6 +4825,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer s7_ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den);
   static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p);
   static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x);
+  static s7_pointer big_equal(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_negate(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_invert(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_inexact_to_exact(s7_scheme *sc, s7_pointer args);
@@ -25347,7 +25348,11 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       if ((!is_number(y)) && 
 	  (!is_big_number(y)))
 	return(false);
+#if WITH_GMP
+      return(big_equal(sc, list_2(sc, x, y)) == sc->T);
+#else
       return(g_equal(sc, list_2(sc, x, y)) == sc->T);
+#endif
 
     case T_REAL:
     case T_BIG_REAL:
@@ -25356,8 +25361,11 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       if ((!is_number(y)) && 
 	  (!is_big_number(y)))
 	return(false);
-
+#if WITH_GMP
+      if (big_equal(sc, list_2(sc, x, y)) == sc->F)
+#else
       if (g_equal(sc, list_2(sc, x, y)) == sc->F) /* maybe use a preset cons here and above if speed actually matters in this case */
+#endif
 	{
 	  s7_Double r1, i1, r2, i2;
 	  if ((is_rational(y)) ||
