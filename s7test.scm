@@ -1101,7 +1101,7 @@
 	      (format #t ";~A: add lists to vectors, now vectors not equal?~%" #__line__)
 	      (begin
 		(set! lst1 (cons v1 lst1))
-		(set! lst2 (cons v2 lst2)) ; TODO: also lists to themselves here and add morally-equal? tests
+		(set! lst2 (cons v2 lst2)) 
 		(if (not (equal? lst1 lst2))
 		    (begin
 		      (format #t ";~A: add vectors to lists, now lists not equal?~%" #__line__)
@@ -7682,6 +7682,18 @@ zzy" (lambda (p) (eval (read p))))) 32)
    '(1 2 3))
   (test pos '(5 4 3 2 1 0)))
 
+(test (let ((v1 (make-vector 16 0)) 
+	    (v2 (make-vector 16 0))) 
+	(set! (v2 12) v2) 
+	(set! (v1 12) v1) 
+	(equal? v1 v2))        ; hmmm -- not sure this is correct
+      #t)
+(test (let ((lst1 (list 1)) 
+	    (lst2 (list 1))) 
+	(set-cdr! lst1 lst1) 
+	(set-cdr! lst2 lst2) 
+	(equal? lst1 lst2))
+      #t)
 
 
 
@@ -7690,8 +7702,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; --------------------------------------------------------------------------------
 ;;; HASH-TABLES
 ;;; --------------------------------------------------------------------------------
-
-;;; TODO: (define global-env (global-environment)) (equal? global-env (global-environment)) -> #t and e->list also works
 
 (let ((ht (make-hash-table)))
   (test (hash-table? ht) #t)
@@ -8429,29 +8439,17 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (h1 123)
   (test x 123))
 
+(test (let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2.0) (morally-equal? h1 h2)) #t)
+(test (let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1.0) (set! (h2 'b) 2) (morally-equal? (list h1) (list h2))) #t)
 
-;;; TODO: add these to s7test;
-;;; (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) ht) -> #1=#<hash-table (a . #1#)>
-;;; (let ((h1 (make-hash-table))) (hash-table-set! h1 "hi" h1) h1) -> #1=#<hash-table ("hi" . #1#)>
-;;;
-;;; :(equal? h1 (copy h1)) #t -- how can this work??
-;;; hash-table key can also be itself!
-;;; (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) ht) -> #1=#<hash-table (#1# . 1)>
-;;; but
-;;; (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) (copy ht))
-;;; #<hash-table (#1=#<hash-table (#1# . 1)> . 1)>
-;;;  this is just a printout issue I think
-;;; check rtn val and (set (ht ht) ht) rtn val
-;;; (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) (ht ht)) -> 1
-;;; (let ((ht (make-hash-table))) (hash-table-set! ht ht ht) (equal? (ht ht) ht)) -> #t
+(test (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) (ht ht)) 1)
+(test (let ((ht (make-hash-table))) (hash-table-set! ht ht ht) (equal? (ht ht) ht)) #t)
 
-#|
-/* TODO: add these to s7test I think
- * (let ((v1 (make-vector 16 0)) (v2 (make-vector 16 0))) (set! (v2 12) v2) (set! (v1 12) v1) (equal? v1 v2)) -> #t
- *  is that correct?  Guile gets stackoverflow (1.8.n)
- * (let ((lst1 (list 1)) (lst2 (list 1))) (set-cdr! lst1 lst1) (set-cdr! lst2 lst2) (equal? lst1 lst2)) -> #t
- */
-|#
+(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (object->string ht)) "#1=#<hash-table (a . #1#)>")
+(test (let ((h1 (make-hash-table))) (hash-table-set! h1 "hi" h1) (object->string h1)) "#1=#<hash-table (\"hi\" . #1#)>")
+(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (morally-equal? ht (copy ht))) #t)
+(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (equal? ht (copy ht))) #t)
+
 
 
 
@@ -22606,6 +22604,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   (let ()
     (if (equal? e (current-environment))
 	(format #t ";2nd case (equal? e (current-environment)) -> #t?~%"))))
+
+(let ()
+  (define global-env (global-environment)) 
+  (test (equal? global-env (global-environment)) #t)
+  (test (equal? (list global-env) (list (global-environment))) #t)
+  (test (morally-equal? global-env (global-environment)) #t)
+  (test (morally-equal? (list global-env) (list (global-environment))) #t))
 
 (test (let ((a 1) (b 2)) (map cdr (current-environment))) '(1 2))
 (test (let () (map cdr (current-environment))) '())

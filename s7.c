@@ -73,6 +73,7 @@
  *        make-type creates a new scheme type
  *        symbol-access modifies symbol value lookup
  *        member and assoc accept an optional 3rd argument, the comparison function
+ *        morally-equal?
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -25153,6 +25154,46 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 
+static bool hash_tables_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  s7_pointer *lists;
+  int i, len;
+
+  if (hash_table_entries(x) != hash_table_entries(y))
+    return(false);
+  if (hash_table_entries(x) == 0)
+    return(true);
+  /* can't precheck the function here (2 != 2.0) */
+
+  len = vector_length(x);
+  lists = vector_elements(x);
+
+  for (i = 0; i < len; i++)
+    {
+      s7_pointer p;
+      for (p = lists[i]; is_not_null(p); p = cdr(p))
+	{
+	  s7_pointer key, x_val, y_val;
+
+	  key = caar(p);
+	  x_val = cdar(p);
+	  y_val = (*hash_table_function(y))(sc, y, key);
+
+	  if (is_null(y_val))
+	    return(false);
+	  if (!s7_is_morally_equal_1(sc, x_val, cdr(y_val), ci))
+	    return(false);
+	}
+    }
+
+  /* if we get here, every key/value in x has a corresponding key/value in y, and the number of entries match,
+   *   so surely the tables are equal??
+   */
+
+  return(true);
+}
+
+
 static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   /* here we know x and y are pointers to the same type of structure */
@@ -25181,39 +25222,29 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	     (s7_is_morally_equal_1(sc, cdr(x), cdr(y), ci)));
 
     case T_HASH_TABLE:
-      /* TODO: this is not right for hash tables:
-	 :(let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2.0) (morally-equal? h1 h2))
-	 #f
-	 :(let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1.0) (set! (h2 'b) 2) (morally-equal? (list h1) (list h2)))
-	 #f
-       */
+      return(hash_tables_are_morally_equal(sc, x, y, ci));
 
     case T_VECTOR:
       {
 	s7_Int i, len;
+	int x_dims = 1, y_dims = 1, j;
 
 	len = vector_length(x);
 	if (len != vector_length(y)) return(false);
 	if (len == 0) return(true);
 
-	if (s7_is_vector(x))
-	  {
-	    /* there's one special case: shared vectors can have 1 dimension but include the dimension info */
-	    int x_dims = 1, y_dims = 1, j;
+	if (vector_is_multidimensional(x))
+	  x_dims = vector_ndims(x);
+	if (vector_is_multidimensional(y))
+	  y_dims = vector_ndims(y);
 	    
-	    if (vector_is_multidimensional(x))
-	      x_dims = vector_ndims(x);
-	    if (vector_is_multidimensional(y))
-	      y_dims = vector_ndims(y);
+	if (x_dims != y_dims)
+	  return(false);
 	    
-	    if (x_dims != y_dims)
+	if (x_dims > 1)
+	  for (j = 0; j < x_dims; j++)
+	    if (vector_dimension(x, j) != vector_dimension(y, j))
 	      return(false);
-	    
-	    if (x_dims > 1)
-	      for (j = 0; j < x_dims; j++)
-		if (vector_dimension(x, j) != vector_dimension(y, j))
-		  return(false);
-	  }
 	
 	for (i = 0; i < len; i++)
 	  if (!(s7_is_morally_equal_1(sc, vector_element(x, i), vector_element(y, i), ci)))
@@ -25292,7 +25323,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	     (port_is_closed(y)));
 
     case T_HASH_TABLE:
-      return(hash_tables_are_equal(sc, x, y, (ci) ? ci : new_shared_info(sc))); 
+      return(hash_tables_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc))); 
 
     case T_ENVIRONMENT:
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));

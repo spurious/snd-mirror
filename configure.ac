@@ -66,7 +66,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
-#   --with-profiling      add code to keep profiling stats (s7)
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 
 #--------------------------------------------------------------------------------
@@ -90,7 +89,6 @@ AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Li
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
 AC_ARG_WITH(portaudio,   [  --with-portaudio 		  use portaudio, default=no])
-AC_ARG_WITH(profiling,   [  --with-profiling		  add code to keep profiling stats (s7 only)])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
@@ -1835,9 +1833,6 @@ AC_ARG_ENABLE(snd-debug,
     VL_PROG_CC_WARNINGS()
   fi)
 
-if test "$with_profiling" = yes ; then
-  AC_DEFINE(WITH_PROFILING)
-fi
 
 
 

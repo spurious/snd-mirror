@@ -750,7 +750,6 @@ with_ladspa
 with_float_samples
 with_pulseaudio
 with_portaudio
-with_profiling
 with_gsl
 with_fftw
 with_fam
@@ -1433,7 +1432,6 @@ Optional Packages:
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
   --with-pulseaudio 		  use PulseAudio, default=no
   --with-portaudio 		  use portaudio, default=no
-  --with-profiling		  add code to keep profiling stats (s7 only)
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-fam		  use libfam (Gamin), default=yes
@@ -4037,7 +4035,6 @@ _ACEOF
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
-#   --with-profiling      add code to keep profiling stats (s7)
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 
 #--------------------------------------------------------------------------------
@@ -4154,12 +4151,6 @@ fi
 # Check whether --with-portaudio was given.
 if test "${with_portaudio+set}" = set; then :
   withval=$with_portaudio;
-fi
-
-
-# Check whether --with-profiling was given.
-if test "${with_profiling+set}" = set; then :
-  withval=$with_profiling;
 fi
 
 
@@ -10988,10 +10979,6 @@ $as_echo "$vl_cv_prog_cc_warnings" >&6; }
 fi
 
 
-if test "$with_profiling" = yes ; then
-  $as_echo "#define WITH_PROFILING 1" >>confdefs.h
-
-fi
 
 
 
