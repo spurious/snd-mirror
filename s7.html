@@ -10,6 +10,7 @@
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
 	EM.emdef {font-weight: bold; font-style: normal}
+	EM.green {color:green; font-style:normal}
 
 	H1 {text-align: center}
 	UL {list-style-type: none}
@@ -25,14 +26,12 @@
 	       text-color:black;
 	       }
 
-	EM.green {color:green; font-style:normal}
-
 	DIV.indented {background-color: #F8F8F0; 
 	              padding-left: 0.5cm; 
 	              padding-right: 0.5cm; 
 		      padding-top: 0.5cm; 
-		      margin-bottom: 0.5cm;
 		      padding-bottom: 0.5cm;
+		      margin-bottom: 0.5cm;
 		      border: 1px solid gray;
 		      }
 </style>
@@ -43,7 +42,7 @@
 
 <br>
 
-<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <A NAME="s7doc"></a>
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>s7</h2></td></tr></table>
 </td></tr></table>
@@ -81,8 +80,8 @@ as an inexact integer.
 
 <p>This file assumes you know about Scheme and all its problems,
 and want a quick tour of where s7 is different.  (Well, it was quick once upon a time).
-I originally used blockquote and a small font for scholia, but now I have to squint
-to read the tiny text, so less-than-vital commentaries are shown in the normal font, but 
+I originally used a small font for scholia, but now I have to squint
+to read that tiny text, so less-than-vital commentaries are shown in the normal font, but 
 indented and in a sort of brownish background.
 </p>
 <br>
@@ -141,8 +140,8 @@ indented and in a sort of brownish background.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="multiprecision"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiprecision arithmetic</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiprecision arithmetic</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -192,7 +191,7 @@ Its argument is a string representing the desired number:
 
 <blockquote> 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -250,8 +249,8 @@ but reals are limited by bignum-precision.  This means, for example, that
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="math"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>math functions</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>math functions</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -312,7 +311,7 @@ Other math-related differences between s7 and r5rs:
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -341,7 +340,7 @@ radix is greater than 10.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -385,7 +384,7 @@ of -0.0 is ignored, and they really are equal.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -429,7 +428,7 @@ random-state-&gt;list, then to restart from that point, apply make-random-state 
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -474,8 +473,8 @@ random-state-&gt;list, then to restart from that point, apply make-random-state 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="define*"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define*, lambda*</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define*, lambda*</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -538,7 +537,7 @@ hiho
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -584,7 +583,7 @@ hi
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -619,7 +618,7 @@ c
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -652,7 +651,7 @@ To turn off this error check, add :allow-other-keys at the end of the parameter 
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -710,8 +709,8 @@ f
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="macros"></a>
-<table border=0 bordercolor="lightgreen" width=80% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>macros</h4></td></tr></table>
+<table border=0 width="80%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>macros</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -805,7 +804,7 @@ expanded into:
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -841,7 +840,7 @@ make-mac
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -880,7 +879,7 @@ macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -1124,7 +1123,7 @@ start, then only use [+] in our macros.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -1173,7 +1172,7 @@ the loop!
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -1283,8 +1282,8 @@ to quote the result (if the result does not already evaluate to itself):
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="constants"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-constant, constant?, symbol-access</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-constant, constant?, symbol-access</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -1423,8 +1422,8 @@ with this mechanism, including property lists.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="maketype1"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-type</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-type</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -1551,7 +1550,7 @@ enum
 <blockquote>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -1658,7 +1657,7 @@ point
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -1717,7 +1716,7 @@ point
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -1791,8 +1790,8 @@ v
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="pws"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure-with-setter</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure-with-setter</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -1856,7 +1855,7 @@ for make-procedure-with-setter; hmmm.
 <blockquote>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -1988,7 +1987,7 @@ for make-procedure-with-setter; hmmm.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2027,8 +2026,8 @@ Even better: "dilambda":
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="generalizedset"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>applicable objects, generalized set!, generic functions</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>applicable objects, generalized set!, generic functions</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -2106,7 +2105,7 @@ I like this syntax:  the less noise, the better!
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2121,7 +2120,7 @@ accept anything that apply can handle, so
 </p>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2190,7 +2189,7 @@ Here's an FFT procedure that accepts lists or vectors, or any similar object:
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2230,7 +2229,7 @@ And of course:
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2256,8 +2255,8 @@ or even <code>(&gt; 1 0+i)</code>.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="multidimensionalvectors"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multidimensional vectors</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multidimensional vectors</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -2298,7 +2297,7 @@ vector-dimensions returns a list of the dimensions.
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2325,7 +2324,7 @@ vector-dimensions returns a list of the dimensions.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2385,7 +2384,7 @@ vector-dimensions returns a list of the dimensions.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2417,7 +2416,7 @@ equal to a 1-dimensional empty vector.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2466,7 +2465,7 @@ in the latter case, you can't clobber one of the inner vectors.
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2491,7 +2490,7 @@ Perhaps we could use different colors?  Or different size parentheses?
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2537,8 +2536,8 @@ It wants you to use: <code>(let ((v #("abc" "def"))) ((v 0) 2))</code>.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="hashtables"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hash-tables</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hash-tables</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -2578,7 +2577,7 @@ returns #t if passed one of these iterators.
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2601,7 +2600,7 @@ make-sparse-array
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -2640,8 +2639,8 @@ of the table sizes, or the order in which the key/value pairs were added.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="environments"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>environments</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>environments</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -2790,7 +2789,7 @@ its bindings are exported into the current environment:
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3018,13 +3017,13 @@ class-3
 
 <br>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <div class="indented">
 
-<table border=1 bordercolor="lightgray" vspace=10 hspace=0 cellspacing=2 cellpadding=5>
+<table border=1 vspace=10 hspace=0 cellspacing=2 cellpadding=5>
 <tr>
 <td bgcolor="#f2f4ff">
 <pre>
@@ -3083,8 +3082,8 @@ b
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="multiplevalues"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiple-values</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiple-values</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -3130,7 +3129,7 @@ In s7, multiple values are spliced directly into the caller's argument list.
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3193,7 +3192,7 @@ as soon as the arguments are spliced into some caller's arguments.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3296,7 +3295,7 @@ s7 handles it this way:
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3311,7 +3310,7 @@ is 15, as anyone would expect.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3320,7 +3319,7 @@ is 15, as anyone would expect.
 <p>I wrote all that and said "nobody needs multiple values!".  In desperation,
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f2f4ff">
@@ -3386,8 +3385,8 @@ is 15, as anyone would expect.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="callwithexit1"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>call-with-exit and continuation?</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>call-with-exit and continuation?</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -3448,7 +3447,7 @@ it is continuing from the point of the error, but then fails to do so.
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3471,8 +3470,8 @@ This is similar to trying to read from a closed input port.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="format1"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>format, object-&gt;string</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>format, object-&gt;string</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -3519,7 +3518,7 @@ also sends it to *stdout*.  To send the string to *stderr* instead, <code>(forma
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3576,7 +3575,7 @@ floats in the "~X" case.  So in s7,
 
 </blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3594,7 +3593,7 @@ floats in the "~X" case.  So in s7,
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3673,8 +3672,8 @@ a modern GUI will leave formatting decisions to a text or table widget.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="hooks"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hooks</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hooks</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -3716,8 +3715,8 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="procedureinfo"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure info</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure info</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -3771,7 +3770,7 @@ write a function that tells us where the source is for a function:
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3873,10 +3872,10 @@ hi
     (let ((b . 12)) ...)
   hi returns 44
 </pre>
+
 </div>
 
-
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3890,7 +3889,7 @@ this in procedure-arity?
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -3925,8 +3924,8 @@ this in procedure-arity?
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="evalstring"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>eval</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>eval</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -3949,7 +3948,7 @@ is similar, but its argument is a string.
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -4018,8 +4017,8 @@ done!
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="IO"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>IO functions</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>IO functions</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -4073,7 +4072,7 @@ object is #&lt;eof&gt;.
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -4094,8 +4093,8 @@ integer-decode-float, and the various bitwise operators.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="errors"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>error handling</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>error handling</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -4151,7 +4150,7 @@ additional info about that error:
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -4189,7 +4188,7 @@ additional info about that error:
 </pre>
 </div>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -4332,8 +4331,8 @@ traced function call (that is, global to the function, not the function's local 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <A NAME="miscellanea"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>miscellanea</h4></td></tr></table>
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>miscellanea</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -4368,10 +4367,9 @@ the directory:
 		      (set! <em class=red>*load-path*</em> (cons directory-name *load-path*)))))))))
 </pre>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
 
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>As in Common Lisp, <b><a name="featureslist">*features*</a></b> is a list describing what is currently loaded into s7.  You can
 check it with the <b>provided?</b> function, or add something to it with <b>provide</b>.  In my version of Snd,
@@ -4386,11 +4384,9 @@ at startup *features* is:
 #t
 </pre>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
-
-
 
 <p>Multi-line and in-line comments can be enclosed in #| and |#.
 <code>(+ #| add |# 1 2)</code>.
@@ -4461,10 +4457,8 @@ I need to know where something unexpected happened.  So:
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
-
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+ <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.
 </p>
@@ -4500,10 +4494,8 @@ function passed as its second argument to choose the new ordering.
 but vectors are sorted in place.  
 </p>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
-
 
 <p>
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
@@ -4514,9 +4506,8 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
 
 <p>
 <code>(<a name="symboltable">symbol-table</a>)</code> returns the symbol table, a vector of lists of symbols.
@@ -4577,10 +4568,8 @@ where we only feed in a few constants, I bet it segfaults!
 </pre>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
-
 
 <p><b>help</b> tries to find information about its argument.
 </p>
@@ -4603,24 +4592,24 @@ where we only feed in a few constants, I bet it segfaults!
 </pre>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
 
 <p><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
 </p>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
 
 <pre>
     (<b><a name="morallyequalp">morally-equal?</a></b> x y)
 </pre>
 
-<p>Say we want to check that two different computations came to the same result, and that result might
-involve circular structures.  We can't use equal?
+<p>morally-equal? is a technical term taken from higher math where it is usually
+followed by an exercise for the reader. 
+Say we want to check that two different computations came to the same result, and that result might
+involve circular structures.  Will equal? be our friend?
 </p>
 <pre>
     &gt; (equal? 2 2.0)
@@ -4632,17 +4621,27 @@ involve circular structures.  We can't use equal?
     &gt; (let ((x +nan.0)) (= x x))
     #f
 </pre>
-<p>
-Who could predict <code>(equal? +nan.0 +nan.0)</code>?
+
+<p>No! Who can predict <code>(equal? +nan.0 +nan.0)</code>?
 Leaving aside numbers, 
 closed ports are not equal, yet nothing can be done with them.
-And #() is not equal to #2d().  
+And #() is not equal to #2d().  And two closures are never equal, even if their
+arguments, environments, and bodies are equal.
 Since there might be circles, it is not easy to write
 a replacement equality checker in Scheme.
 So, in s7, if one thing is basically the same as
 some other thing, they satisfy the function morally-equal?.
 </p>
 
+<pre>
+&gt; (morally-equal? 2 2.0)
+#t
+&gt; (morally-equal? 1/0 1/0)
+#t
+&gt; (morally-equal? (lambda () #f) (lambda () #f))
+#t
+</pre>
+<br>
 
 <!--
 <p>
@@ -4654,10 +4653,9 @@ bind it to something else, which is asking for confusion).
 </p>
 -->
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
--->
 
+<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Some other differences from r5rs:
 </p>
@@ -4687,7 +4685,7 @@ bind it to something else, which is asking for confusion).
 
 <blockquote>
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -4724,7 +4722,7 @@ to keep it from being evaluated, but
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -4740,7 +4738,7 @@ Because it flushes trailing arguments, Guile returns 0 from <code>(* 0 +inf.0)</
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -4847,7 +4845,7 @@ to 1.  *safety* defaults to 0.  (Also, if *safety* is not 0, sort! is safe from 
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -4907,7 +4905,7 @@ the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5002,7 +5000,7 @@ These symbols are not just an optimization of string comparison:
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5094,7 +5092,7 @@ know if you need it.  The issue is purely one of speed.
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5120,7 +5118,7 @@ the current environment, so defines happen at the enclosing level.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5215,7 +5213,7 @@ have any number after, for example, #b:
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5271,7 +5269,7 @@ have any number after, for example, #b:
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5307,7 +5305,7 @@ have any number after, for example, #b:
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5337,7 +5335,7 @@ Here's an idle thought:
 
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5359,7 +5357,7 @@ waste a lot of time fixing this, I chose to flush multithreading.
 </div>
 
 
-<!-- <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
@@ -5389,7 +5387,7 @@ waste a lot of time fixing this, I chose to flush multithreading.
 
 <!-- -------------------------------------------------------------------------------- -->
 <A NAME="FFIexamples"></a>
-<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h3>FFI examples</h3></td></tr></table>
 </td></tr></table>
 
@@ -5450,20 +5448,20 @@ The examples that follow show:
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 
 <A NAME="repl"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>A simple listener</h4></td></tr></table>
 </td></tr></table>
 
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -5536,7 +5534,7 @@ customized indefinitely.  See, for example, snd-inf.el in the Snd package.
 <p>To read stdin while working in a GUI-based program is trickier.  In glib/gtk, you can use
 something like this:
 </p>
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 static gboolean read_stdin(GIOChannel *source, GIOCondition condition, gpointer data)
@@ -5564,20 +5562,20 @@ See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook t
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="defun"></a>
 
-<table border=0 bordercolor="lightgreen" width=60% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="60%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Define a function with arguments and a returned value, and a variable</h4></td></tr></table>
 </td></tr></table>
 <br>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -5637,18 +5635,18 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="defvar"></a>
-<table border=0 bordercolor="lightgreen" width=70% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="70%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Call a Scheme-defined function from C, and get/set Scheme variable values in C</h4></td></tr></table>
 </td></tr></table>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -5691,19 +5689,19 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="juce"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>C++ and Juce, from Rick Taube</h4></td></tr></table>
 </td></tr></table>
 <br>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 int main(int argc, const char* argv[]) 
@@ -5737,18 +5735,18 @@ int main(int argc, const char* argv[])
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="sndlib"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Load sndlib using the XEN functions and macros into an s7 repl</h4></td></tr></table>
 </td></tr></table>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -5844,18 +5842,18 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="pwstype"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Add a new Scheme type and procedure-with-setters</h4></td></tr></table>
 </td></tr></table>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6030,18 +6028,18 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="functionportexample"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Redirect output (and input) to a C procedure</h4></td></tr></table>
 </td></tr></table>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6103,18 +6101,18 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="extendop"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Extend a built-in operator ("+" in this case)</h4></td></tr></table>
 </td></tr></table>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6178,19 +6176,19 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="definestar1"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>C-side define* (s7_define_function_star)</h4></td></tr></table>
 </td></tr></table>
 <br>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6245,19 +6243,19 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="definemacro1"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>C-side define-macro (s7_define_macro)</h4></td></tr></table>
 </td></tr></table>
 <br>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6309,19 +6307,19 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="signal"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Signal handling and continuations</h4></td></tr></table>
 </td></tr></table>
 <br>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6406,19 +6404,19 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="vector"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Multidimensional vector element access</h4></td></tr></table>
 </td></tr></table>
 <br>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6503,19 +6501,19 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="notify"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Notification from Scheme that a given Scheme variable has been set</h4></td></tr></table>
 </td></tr></table>
 <br>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6589,18 +6587,18 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="namespace"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Load C defined stuff into a separate namespace</h4></td></tr></table>
 </td></tr></table>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6702,19 +6700,19 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="Cerrors"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Handle scheme errors in C</h4></td></tr></table>
 </td></tr></table>
 <br>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6822,13 +6820,13 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="closure"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Closures in C</h4></td></tr></table>
 </td></tr></table>
 <br>
@@ -6842,7 +6840,7 @@ a normal Scheme list of functions.  So in the next example, we define a closure
 in C using s7_make_closure.  
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -6943,18 +6941,18 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="testhook"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>C and Scheme hooks</h4></td></tr></table>
 </td></tr></table>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -7027,13 +7025,13 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="cload"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Load a shared library</h4></td></tr></table>
 </td></tr></table>
 <br>
@@ -7043,7 +7041,7 @@ compiler and loader flags.
 First we define a module that defines a new s7 function, add-1:
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -7069,7 +7067,7 @@ void init_ex(s7_scheme *sc)  /* this needs to be globally accessible (not "stati
 <p>And here is our main program:
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -7152,13 +7150,13 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="gmpex"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>Bignums in C</h4></td></tr></table>
 </td></tr></table>
 <br>
@@ -7167,7 +7165,7 @@ int main(int argc, char **argv)
 so we have to copy that into a new number before adding.
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -7294,13 +7292,13 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="gtkrepl"></A>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>gtk-based repl</h4></td></tr></table>
 </td></tr></table>
 <br>
@@ -7310,7 +7308,7 @@ a much more elaborate REPL.  From s7's point of view, the only tricky part invol
 catching errors.
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -7517,13 +7515,13 @@ int main(int argc, char **argv)
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="gtkschemerepl"></A>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>scheme-based repl (using gtk)</h4></td></tr></table>
 </td></tr></table>
 <br>
@@ -7532,7 +7530,7 @@ int main(int argc, char **argv)
 Here is the same code, but now using libxm; first the C side, called gtkex.c:
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -7567,7 +7565,7 @@ rapidly toward gtk3, and libxm is running along behind panting and complaining.
 There are several things that may change once Gtk settles down.
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 (gtk_init 0 #f)
@@ -7678,13 +7676,13 @@ There are several things that may change once Gtk settles down.
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="s7inathread"></A>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>s7 and pthreads</h4></td></tr></table>
 </td></tr></table>
 <br>
@@ -7697,7 +7695,7 @@ to keep running while we clean up the s7 problem.  So, in the next example, we u
 thread for the s7 evaluation:
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 #include &lt;stdlib.h&gt;
@@ -7976,13 +7974,13 @@ So...
 
 
 
-<!-- <table border=0 vspace=8 width=30% hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+<!-- <table border=0 vspace=8 width="30%" hspace=100 cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 -->
 
 <A NAME="replrescue"></A>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
+<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
 <h4>begin-hook</h4></td></tr></table>
 </td></tr></table>
 <br>
@@ -7996,7 +7994,7 @@ to insert your own function into eval.  In s7, we have a "begin_hook" which sits
 
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 /* terminal-based REPL, 
@@ -8101,7 +8099,7 @@ int main(int argc, char **argv)
 
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 /* Gtk-based REPL using s7_begin_hook 
@@ -8337,7 +8335,7 @@ begin_hook function, insert its own function to do something useful, then that f
 replace itself with the original:
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
 <pre>
 static bool (*current_begin_hook)(s7_scheme *sc);       /* this will be the saved original function */

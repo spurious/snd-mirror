@@ -9,6 +9,7 @@
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
 	H1 {text-align: center}
+	DIV.centered {text-align: center}
 	UL {list-style-type: none}
 	EM.emdef {font-weight: bold; font-style: normal; padding-right: 0.2cm}
 
@@ -99,12 +100,12 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 <br>
 
 
-<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 </td></tr></table>
 
 <br>
-<table border=8 bordercolor="lightsteelblue" cellpadding=8 hspace=20>
+<table border=8 cellpadding=8 hspace=20>
 
 <tr><td colspan=3><center><a href="#introduction">Introduction</a></center></td></tr>
 
@@ -196,7 +197,7 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 
 <br><br>
 
-<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
+<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A class=def NAME="introduction">Introduction</a></h2></td></tr></table>
 </td></tr></table>
 
@@ -614,7 +615,7 @@ snd-rt:
 <A NAME="oscildoc"></A>
 <!-- ---------------------------------------- OSCIL ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>oscil</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>oscil</h3></div></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-oscil">make-oscil</a> (frequency *clm-default-frequency*) (initial-phase 0.0)
@@ -623,7 +624,7 @@ snd-rt:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -1067,7 +1068,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 <A NAME="envdoc"></A>
 <!-- ---------------------------------------- ENV ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>env</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>env</h3></div></td></tr></table>
 <br>
 
 <pre>
@@ -1089,7 +1090,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -1432,7 +1433,7 @@ the broadening.
 
 <br>
 
-<table border=3 bordercolor="tan" hspace=40 vspace=10><th bgcolor="beige">Envelopes</th><tr><td>
+<table border=3 hspace=40 vspace=10><th bgcolor="beige">Envelopes</th><tr><td>
 <blockquote><small>
 <br>
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
@@ -1472,7 +1473,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 <A NAME="table-lookupdoc"></A>
 <!-- ---------------------------------------- TABLE-LOOKUP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>table-lookup</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>table-lookup</h3></div></td></tr></table>
 <br>
 
 <pre>
@@ -1490,7 +1491,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -1865,7 +1866,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 <A NAME="polywavedoc"></A>
 <!-- ---------------------------------------- POLYWAVE, POLYSHAPE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polywave, polyshape</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>polywave, polyshape</h3></div></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-polywave">make-polywave</a> 
@@ -1894,7 +1895,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
   <em class=emdef>mus-chebyshev-u-sum</em> x u-coeffs
 </pre>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -2637,7 +2638,7 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 <A NAME="sawtoothdoc"></A>
 <!-- ---------------------------------------- SAWTOOTH ETC ---------------------------------------- -->
 
-<table width="70%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></center></td></tr></table>
+<table width="70%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></div></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-triangle-wave">make-triangle-wave</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
@@ -2658,7 +2659,7 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -3365,7 +3366,7 @@ for more dicussion about using these generators as FM modulators.
 <A NAME="ncosdoc"></A>
 <!-- ---------------------------------------- NCOS, NSIN ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ncos and nsin</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>ncos and nsin</h3></div></td></tr></table>
 <br>
 
 <pre>
@@ -3379,7 +3380,7 @@ for more dicussion about using these generators as FM modulators.
 </pre>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -4299,7 +4300,7 @@ reflection, please send it to me, and I'll add it to this collection.
 <A NAME="nrxydoc"></A>
 <!-- ---------------------------------------- NRXYSIN and NRXYCOS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>nrxysin and nrxycos</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>nrxysin and nrxycos</h3></div></td></tr></table>
 
 <br>
 <pre>
@@ -4317,7 +4318,7 @@ reflection, please send it to me, and I'll add it to this collection.
 </pre>
 <br>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -4509,7 +4510,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 <A NAME="ssb-amdoc"></A>
 <!-- ---------------------------------------- SSB-AM ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ssb-am</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>ssb-am</h3></div></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-ssb-am">make-ssb-am</a> (frequency *clm-default-frequency*) (order 40)
@@ -4518,7 +4519,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -4746,7 +4747,7 @@ We would replace the current make-ssb-am line with:
 <A NAME="wave-traindoc"></A>
 <!-- ---------------------------------------- WAVE-TRAIN ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>wave-train</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>wave-train</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-wave-train">make-wave-train</a> 
@@ -4763,7 +4764,7 @@ We would replace the current make-ssb-am line with:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -4955,7 +4956,7 @@ trigger, and mus-reset to restart an envelope.
 <A NAME="randdoc"></A>
 <!-- ---------------------------------------- RAND, RAND-INTERP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>rand, rand-interp</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>rand, rand-interp</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-rand">make-rand</a> 
@@ -4981,7 +4982,7 @@ trigger, and mus-reset to restart an envelope.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -5401,7 +5402,7 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 <A NAME="two-zerodoc"></A>
 <!-- ---------------------------------------- SIMPLE FILTERS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>one-pole, one-zero, two-pole, two-zero</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>one-pole, one-zero, two-pole, two-zero</h3></div></td></tr></table>
 
 <pre>
    <a class=def name="make-one-pole">make-one-pole</a> a0 b1    ; b1 &lt; 0.0 gives lowpass, b1 &gt; 0.0 gives highpass
@@ -5422,7 +5423,7 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -5599,7 +5600,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 <A NAME="formantdoc"></A>
 <!-- ---------------------------------------- FORMANT ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>formant</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>formant</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-formant">make-formant</a> 
@@ -5614,7 +5615,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -5856,7 +5857,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 <A NAME="iir-filterdoc"></A>
 <!-- ---------------------------------------- FILTERS ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>filter, iir-filter, fir-filter</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>filter, iir-filter, fir-filter</h3></div></td></tr></table>
 
 <pre>
    <a class=def name="make-filter">make-filter</a> order xcoeffs ycoeffs
@@ -5875,7 +5876,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -5998,7 +5999,7 @@ get to the envelope.
 
 <br>
 
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="beige">Filters</th>
+<table border=3 hspace=40><th bgcolor="beige">Filters</th>
 <tr><td>
 <blockquote><small>
 <br>
@@ -6037,7 +6038,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <A NAME="delaydoc"></A>
 <!-- ---------------------------------------- DELAY ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>delay, tap</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>delay, tap</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-delay">make-delay</a> 
@@ -6054,7 +6055,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6196,7 +6197,7 @@ and is the basis for about a dozen extensions (comb and friends below).
 <A NAME="notchdoc"></A>
 <!-- ---------------------------------------- COMB, NOTCH ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>comb, notch</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>comb, notch</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-comb">make-comb</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
@@ -6213,7 +6214,7 @@ and is the basis for about a dozen extensions (comb and friends below).
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6428,7 +6429,7 @@ in the feedback loop:
 <A NAME="all-passdoc"></A>
 <!-- ---------------------------------------- ALL-PASS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>all-pass</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>all-pass</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-all-pass">make-all-pass</a> 
@@ -6444,7 +6445,7 @@ in the feedback loop:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=12 cellpadding=5>
+<table border=1 hspace=20 cellspacing=12 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6573,7 +6574,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
 <A NAME="moving-averagedoc"></A>
 <!-- ---------------------------------------- MOVING-AVERAGE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>moving-average</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>moving-average</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-moving-average">make-moving-average</a> size initial-contents (initial-element 0.0)
@@ -6582,7 +6583,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6698,7 +6699,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 <A NAME="srcdoc"></A>
 <!-- ---------------------------------------- SRC ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>src</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>src</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-src">make-src</a> input (srate 1.0) (width 5)
@@ -6707,7 +6708,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6928,7 +6929,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 <A NAME="convolvedoc"></A>
 <!-- ---------------------------------------- CONVOLVE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>convolve</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>convolve</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-convolve">make-convolve</a> input filter fft-size filter-size
@@ -6939,7 +6940,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -7106,7 +7107,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 <!-- ---------------------------------------- GRANULATE ---------------------------------------- -->
 
 <!-- INDEX grains:Granular synthesis --><A class=def NAME="grains"></a>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>granulate</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>granulate</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-granulate">make-granulate</a>   
@@ -7125,7 +7126,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -7384,7 +7385,7 @@ In the following example, we use the edit function to reverse every other grain:
 <A NAME="phase-vocoderdoc"></A>
 <!-- ---------------------------------------- PHASE-VOCODER ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>phase-vocoder</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>phase-vocoder</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-phase-vocoder">make-phase-vocoder</a> input (fft-size 512) (overlap 4) (interp 128) (pitch 1.0) analyze edit synthesize
@@ -7393,7 +7394,7 @@ In the following example, we use the edit function to reverse every other grain:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -7585,7 +7586,7 @@ moving-spectrum in generators.scm.
 <A NAME="asymmetric-fmdoc"></A>
 <!-- ---------------------------------------- ASYMMETRIC-FM ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>asymmetric-fm</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>asymmetric-fm</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> 
@@ -7598,7 +7599,7 @@ moving-spectrum in generators.scm.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -7715,7 +7716,7 @@ would be tricky to get time-varying indices.  In this instrument we sweep "r" wi
 <A NAME="framedoc"></A>
 <!-- ---------------------------------------- FRAME, MIXER ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>frames and mixers</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>frames and mixers</h3></div></td></tr></table>
 
 <p>
 There are two special data types in CLM: frames and mixers.
@@ -7877,7 +7878,7 @@ unnecessary, and mixer-set! and frame-set! can be replaced with set!:
 <A NAME="filetosampledoc"></A>
 <!-- ---------------------------------------- FILE->SAMPLE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sound IO</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>sound IO</h3></div></td></tr></table>
 
 <p>Sound file IO is based on a set of file readers and writers that deal either in samples, frames, or vcts.
 The six functions are file-&gt;sample, sample-&gt;file, file-&gt;frame, frame-&gt;file, array-&gt;file, and file-&gt;array.
@@ -7918,7 +7919,7 @@ object.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -8038,7 +8039,7 @@ and you forget to call mus-close, the GC will eventually do it for you.
 <A NAME="readindoc"></A>
 <!-- ---------------------------------------- READIN ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>readin</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>readin</h3></div></td></tr></table>
 
 <pre>
  <a class=def name="make-readin">make-readin</a> file (channel 0) (start 0) (direction 1) size
@@ -8047,7 +8048,7 @@ and you forget to call mus-close, the GC will eventually do it for you.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -8138,7 +8139,7 @@ readin and <a href="#env">env</a>:
 <A NAME="out-anydoc"></A>
 <!-- ---------------------------------------- IN-ANY, OUT-ANY ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>in-any, out-any</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>in-any, out-any</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="out-any">out-any</a> loc data channel (output *output*)
@@ -8153,7 +8154,7 @@ readin and <a href="#env">env</a>:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -8301,7 +8302,7 @@ use its :output argument:
 <!-- ---------------------------------------- LOCSIG ---------------------------------------- -->
 
 <!-- INDEX make-locsig:Sound placement -->
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>locsig</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>locsig</h3></div></td></tr></table>
 
 <pre>
  <a class=def name="make-locsig">make-locsig</a> 
@@ -8325,7 +8326,7 @@ use its :output argument:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -8487,7 +8488,7 @@ Here is an example of move-locsig:
 <A NAME="move-sounddoc"></A>
 <!-- ---------------------------------------- MOVE-SOUND ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>move-sound</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>move-sound</h3></div></td></tr></table>
 
 <pre>
  <a class=def name="make-move-sound">make-move-sound</a> dlocs-list (output *output*) (revout *reverb*)
@@ -8561,7 +8562,7 @@ frequency, for any generator that has some sort of frequency field.
 The generic functions are:
 </p>
 
-<table bordercolor="#f2f4ff" border=2 cellpadding=10 hspace=40><tr><td>
+<table border=2 cellpadding=10 hspace=40><tr><td>
 
 <table cellspacing=0 cellpadding=0>
 <tr><td bgcolor="#f2f4ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">channel being read/written</td></tr>
@@ -10687,7 +10688,7 @@ This function determines how many mixer elements are printed by mus-describe.
 
 <!-- ---------------------------------------- POLYNOMIAL ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polynomial</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>polynomial</h3></div></td></tr></table>
 
 <pre>
    <a class=def name="polynomial">polynomial</a> coeffs x
@@ -10743,7 +10744,7 @@ Here's a generator that uses polynomial to produce a Blackman4 waveform (see als
 
 <!-- ---------------------------------------- ARRAY-INTERP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>array-interp, dot-product</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>array-interp, dot-product</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="array-interp">array-interp</a> fn x size
@@ -10814,7 +10815,7 @@ The "type" argument is one of the interpolation types (<code>mus-interp-linear</
 
 <!-- ---------------------------------------- CONTRAST-ENHANCEMENT ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>contrast-enhancement</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>contrast-enhancement</h3></div></td></tr></table>
 
 <pre>
    <a class=def name="contrast-enhancement">contrast-enhancement</a> in-samp (fm-index 1.0)
@@ -10853,7 +10854,7 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 
 <!-- ---------------------------------------- AMPLITUDE-MODULATE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ring-modulate, amplitude-modulate</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>ring-modulate, amplitude-modulate</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="ring-modulate">ring-modulate</a> in1 in2                  ; returns <code>(* in1 in2)</code>
@@ -10861,7 +10862,7 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 vspace=10 cellspacing=8 cellpadding=5>
+<table border=1 hspace=20 vspace=10 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -10944,7 +10945,7 @@ The upper sidebands may foldover (alias); if it's a problem, low-pass filter the
 
 <!-- ---------------------------------------- FFT ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>FFT (fourier transform)</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>FFT (fourier transform)</h3></div></td></tr></table>
 <pre>
   <a class=def Name="fft">mus-fft</a> rdat idat fftsize sign
   <a class=def name="make-fft-window">make-fft-window</a> type size (beta 0.0) (alpha 0.0)
@@ -11024,7 +11025,7 @@ or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 correlate performs an in-place cross-correlation of data1 and data2 (see, for example, <a href="sndscm.html#snddiffdoc">snddiff</a>).
 </p>
 
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="beige">FFTs</th><tr><td>
+<table border=3 hspace=40><th bgcolor="beige">FFTs</th><tr><td>
 <small><blockquote>
 Hartley transform in Scheme: <a href="sndscm.html#dht">dht</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
@@ -11062,7 +11063,7 @@ test 23 in snd-test.
 </p>
 
 
-<table border=8 bordercolor="lightgreen" cellpadding=2 hspace=10>
+<table border=8 cellpadding=2 hspace=10>
 <tr><th width=120 bgcolor="beige">instrument</th><th bgcolor="beige">function</th><th bgcolor="beige">CL</th><th bgcolor="beige">Scheme</th><th bgcolor="beige">Ruby</th><th bgcolor="beige">Forth</th></tr>
 <tr><td>complete-add</td>      
     <td>additive synthesis</td>

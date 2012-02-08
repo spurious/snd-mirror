@@ -4915,23 +4915,20 @@
 
 #|
 :(load "test-phases.scm")
+test-all-phases
 :(test-all-phases #f)
-
-;all peaks... Mon 02-Jan-2012 03:37
+;all peaks... Wed 08-Feb-2012 06:43
 ;all 125: peak-phases value: 11.165791, current: 11.167941510286, diff: 0.0021505102855066
 (0.0021505102855066 125)
-;odd peaks... Mon 02-Jan-2012 03:45
-;odd 117: peak-phases value: 10.793469, current: 10.795579308294, diff: 0.0021103082937639
-(0.0021103082937639 117)
-;even peaks... Mon 02-Jan-2012 03:54
+;odd peaks... Wed 08-Feb-2012 06:51
+(0.0016873156292583 125)
+;even peaks... Wed 08-Feb-2012 06:59
 ;even 124: peak-phases value: 11.839819, current: 11.842004575693, diff: 0.0021855756934652
 ;even 126: peak-phases value: 11.981489, current: 11.983725455888, diff: 0.0022364558875729
 (0.0022364558875729 126)
-;prime peaks... Mon 02-Jan-2012 04:01
-;prime 1024: peak-phases value: 65.946146, current: 65.942410609187, diff: -0.0037353908127074
-;prime 2048: peak-phases value: 96.438678, current: 96.298049559193, diff: -0.14062844080694
-(0.14062844080694 2048)
-;all done! Mon 02-Jan-2012 04:07
+;prime peaks... Wed 08-Feb-2012 07:06
+(0.0019755826091483 2048)
+;all done! Wed 08-Feb-2012 07:12
 |#
 
 ;;; gad161: clean-up-evens

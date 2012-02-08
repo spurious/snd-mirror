@@ -870,6 +870,7 @@
 	EM.def {font-weight: bold; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+        DIV.centered {text-align: center}
 
 	A {text-decoration:none}
 	A:hover {text-decoration:underline}
@@ -879,8 +880,8 @@
 </head>
 <body bgcolor=white>
 
-<table border=0 bordercolor=\"lightgreen\" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor=\"lightgreen\">
-<table width=100% border=0><tr><td bgcolor=\"beige\" align=\"center\" valign=\"middle\"><h1>Index</h1></td></tr></table>
+<table border=0 width=\"100%\" cellpadding=2 cellspacing=0><tr><td bgcolor=\"lightgreen\">
+<table width=\"100%\" border=0><tr><td bgcolor=\"beige\" align=\"center\" valign=\"middle\"><h1>Index</h1></td></tr></table>
 </td></tr></table>
 
 <br>
@@ -904,7 +905,7 @@
 				      " bgcolor=\"lightgreen\""
 				      ""))
 			      (if (ind-char name)
-				  "<center>"
+				  "<div class=\"centered\">"
 				  "<em class=tab>")
 			      (if (ind-char name)
 				  (ind-char name)
@@ -918,7 +919,7 @@
 ;				  "")
 ;; this looks kinda dumb
 			      (if (ind-char name)
-				  "</center>"
+				  "</div>"
 				  "</em>")
 			      )
 		      (if (ind-indexed name) 
