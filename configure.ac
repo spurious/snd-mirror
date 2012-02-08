@@ -1583,7 +1583,7 @@ case "$host" in
 	LIBS="$LIBS -lm"
 	AUDIO_SYSTEM=OSS
 	if test "$GCC" = yes ; then
-	  SO_LD="gcc"
+	  SO_LD="$CC"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
           LDSO_FLAGS="-shared"
         fi
@@ -1599,7 +1599,7 @@ case "$host" in
         AC_DEFINE(MUS_NETBSD)
 	AUDIO_SYSTEM=NetBSD
 	if test "$GCC" = yes ; then
-	  SO_LD="gcc"
+	  SO_LD="$CC"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
           LDSO_FLAGS="-shared"
         fi

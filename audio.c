@@ -6510,6 +6510,8 @@ int mus_audio_close(int line)
 }
 
 
+static int netbsd_default_outputs = (AUDIO_HEADPHONE | AUDIO_LINE_OUT | AUDIO_SPEAKER); 
+
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
 {
   int line, encode;

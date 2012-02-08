@@ -859,7 +859,8 @@
       
       (call-with-output-file output
         (lambda (ofil)
-	  (format ofil "<html>
+	  (format ofil "<!DOCTYPE html>
+<html>
 <head>
 <title>Snd Index</title>
 <style>
