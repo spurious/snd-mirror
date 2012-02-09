@@ -619,7 +619,7 @@ snd-rt:
 
 
 <A NAME="oscildoc"></A>
-<!-- ---------------------------------------- OSCIL ---------------------------------------- -->
+<!-- ******************************** OSCIL ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>oscil</h3></div></td></tr></table>
 <br>
@@ -1072,7 +1072,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 
 
 <A NAME="envdoc"></A>
-<!-- ---------------------------------------- ENV ---------------------------------------- -->
+<!-- ******************************** ENV ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>env</h3></div></td></tr></table>
 <br>
@@ -1477,7 +1477,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 
 
 <A NAME="table-lookupdoc"></A>
-<!-- ---------------------------------------- TABLE-LOOKUP ---------------------------------------- -->
+<!-- ******************************** TABLE-LOOKUP ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>table-lookup</h3></div></td></tr></table>
 <br>
@@ -1870,7 +1870,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 
 <A NAME="polyshapedoc"></A>
 <A NAME="polywavedoc"></A>
-<!-- ---------------------------------------- POLYWAVE, POLYSHAPE ---------------------------------------- -->
+<!-- ******************************** POLYWAVE, POLYSHAPE ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>polywave, polyshape</h3></div></td></tr></table>
 <br>
@@ -2642,7 +2642,7 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 
 
 <A NAME="sawtoothdoc"></A>
-<!-- ---------------------------------------- SAWTOOTH ETC ---------------------------------------- -->
+<!-- ******************************** SAWTOOTH ETC ******************************** -->
 
 <table width="70%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></div></td></tr></table>
 <br>
@@ -2828,7 +2828,7 @@ A more reasonable square-wave can be generated via
                - ----------------------     ----------------------
                            2                          2
              %e                         - %e
-(%o41)       -----------------------------------------------------
+(%o41)       ********************************-------------
                      %i x     - %i x              %i x     - %i x
                %i (%e     - %e      )       %i (%e     - %e      )
                ----------------------     - ----------------------
@@ -2847,7 +2847,7 @@ A more reasonable square-wave can be generated via
 (%i44) demoivre(%o42);
                 %i (%i sin(x) + cos(x))     %i (cos(x) - %i sin(x))
               %e                        - %e
-(%o44)      - -----------------------------------------------------
+(%o44)      - ********************************-------------
                 %i (%i sin(x) + cos(x))     %i (cos(x) - %i sin(x))
               %e                        + %e
 
@@ -2904,15 +2904,15 @@ A more reasonable square-wave can be generated via
                      6                  120
          7        5        3       7
    (272 B  + 560 B  + 182 B  + B) x
- - ---------------------------------
+ - ********************************-
                  5040
           9          7          5         3       9
    (7936 B  + 22848 B  + 15456 B  + 1640 B  + B) x
- + ------------------------------------------------
+ + ********************************--------
                         362880
             11            9            7           5          3       11
    (353792 B   + 1309440 B  + 1382304 B  + 399520 B  + 14762 B  + B) x
- - ---------------------------------------------------------------------
+ - ****************************************************************-----
                                  39916800
                13              11              9             7             5
  + ((22368256 B   + 101184512 B   + 146395392 B  + 74524736 B  + 10106096 B
@@ -2975,7 +2975,7 @@ A more reasonable square-wave can be generated via
                      %i y        %i x          - %i y        - %i x
                 %i %e     + %i %e         %i %e       + %i %e
               %e                      - %e
-(%o5)       - -----------------------------------------------------
+(%o5)       - ********************************-------------
                      %i y        %i x          - %i y        - %i x
                 %i %e     + %i %e         %i %e       + %i %e
               %e                      + %e
@@ -3370,7 +3370,7 @@ for more dicussion about using these generators as FM modulators.
 
 
 <A NAME="ncosdoc"></A>
-<!-- ---------------------------------------- NCOS, NSIN ---------------------------------------- -->
+<!-- ******************************** NCOS, NSIN ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ncos and nsin</h3></div></td></tr></table>
 <br>
@@ -4304,7 +4304,7 @@ reflection, please send it to me, and I'll add it to this collection.
 
 
 <A NAME="nrxydoc"></A>
-<!-- ---------------------------------------- NRXYSIN and NRXYCOS ---------------------------------------- -->
+<!-- ******************************** NRXYSIN and NRXYCOS ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>nrxysin and nrxycos</h3></div></td></tr></table>
 
@@ -4514,7 +4514,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 
 
 <A NAME="ssb-amdoc"></A>
-<!-- ---------------------------------------- SSB-AM ---------------------------------------- -->
+<!-- ******************************** SSB-AM ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ssb-am</h3></div></td></tr></table>
 <br>
@@ -4751,7 +4751,7 @@ We would replace the current make-ssb-am line with:
 
 
 <A NAME="wave-traindoc"></A>
-<!-- ---------------------------------------- WAVE-TRAIN ---------------------------------------- -->
+<!-- ******************************** WAVE-TRAIN ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>wave-train</h3></div></td></tr></table>
 
@@ -4960,7 +4960,7 @@ trigger, and mus-reset to restart an envelope.
 
 
 <A NAME="randdoc"></A>
-<!-- ---------------------------------------- RAND, RAND-INTERP ---------------------------------------- -->
+<!-- ******************************** RAND, RAND-INTERP ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>rand, rand-interp</h3></div></td></tr></table>
 
@@ -5406,7 +5406,7 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 <A NAME="one-zerodoc"></A>
 <A NAME="two-poledoc"></A>
 <A NAME="two-zerodoc"></A>
-<!-- ---------------------------------------- SIMPLE FILTERS ---------------------------------------- -->
+<!-- ******************************** SIMPLE FILTERS ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>one-pole, one-zero, two-pole, two-zero</h3></div></td></tr></table>
 
@@ -5604,7 +5604,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 
 
 <A NAME="formantdoc"></A>
-<!-- ---------------------------------------- FORMANT ---------------------------------------- -->
+<!-- ******************************** FORMANT ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>formant</h3></div></td></tr></table>
 
@@ -5861,7 +5861,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 <A NAME="filterdoc"></A>
 <A NAME="fir-filterdoc"></A>
 <A NAME="iir-filterdoc"></A>
-<!-- ---------------------------------------- FILTERS ---------------------------------------- -->
+<!-- ******************************** FILTERS ******************************** -->
 <br>
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>filter, iir-filter, fir-filter</h3></div></td></tr></table>
 
@@ -6042,7 +6042,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 
 
 <A NAME="delaydoc"></A>
-<!-- ---------------------------------------- DELAY ---------------------------------------- -->
+<!-- ******************************** DELAY ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>delay, tap</h3></div></td></tr></table>
 
@@ -6201,7 +6201,7 @@ and is the basis for about a dozen extensions (comb and friends below).
 
 <A NAME="combdoc"></A>
 <A NAME="notchdoc"></A>
-<!-- ---------------------------------------- COMB, NOTCH ---------------------------------------- -->
+<!-- ******************************** COMB, NOTCH ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>comb, notch</h3></div></td></tr></table>
 
@@ -6433,7 +6433,7 @@ in the feedback loop:
 
 
 <A NAME="all-passdoc"></A>
-<!-- ---------------------------------------- ALL-PASS ---------------------------------------- -->
+<!-- ******************************** ALL-PASS ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>all-pass</h3></div></td></tr></table>
 
@@ -6578,7 +6578,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
 
 
 <A NAME="moving-averagedoc"></A>
-<!-- ---------------------------------------- MOVING-AVERAGE ---------------------------------------- -->
+<!-- ******************************** MOVING-AVERAGE ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>moving-average</h3></div></td></tr></table>
 
@@ -6703,7 +6703,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 
 
 <A NAME="srcdoc"></A>
-<!-- ---------------------------------------- SRC ---------------------------------------- -->
+<!-- ******************************** SRC ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>src</h3></div></td></tr></table>
 
@@ -6933,7 +6933,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 
 
 <A NAME="convolvedoc"></A>
-<!-- ---------------------------------------- CONVOLVE ---------------------------------------- -->
+<!-- ******************************** CONVOLVE ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>convolve</h3></div></td></tr></table>
 
@@ -7110,7 +7110,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 
 
 <A NAME="granulatedoc"></A>
-<!-- ---------------------------------------- GRANULATE ---------------------------------------- -->
+<!-- ******************************** GRANULATE ******************************** -->
 
 <!-- INDEX grains:Granular synthesis --><A class=def NAME="grains"></a>
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>granulate</h3></div></td></tr></table>
@@ -7389,7 +7389,7 @@ In the following example, we use the edit function to reverse every other grain:
 
 
 <A NAME="phase-vocoderdoc"></A>
-<!-- ---------------------------------------- PHASE-VOCODER ---------------------------------------- -->
+<!-- ******************************** PHASE-VOCODER ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>phase-vocoder</h3></div></td></tr></table>
 
@@ -7590,7 +7590,7 @@ moving-spectrum in generators.scm.
 
 
 <A NAME="asymmetric-fmdoc"></A>
-<!-- ---------------------------------------- ASYMMETRIC-FM ---------------------------------------- -->
+<!-- ******************************** ASYMMETRIC-FM ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>asymmetric-fm</h3></div></td></tr></table>
 
@@ -7720,7 +7720,7 @@ would be tricky to get time-varying indices.  In this instrument we sweep "r" wi
 <!-- INDEX framedoc:mixers -->
 
 <A NAME="framedoc"></A>
-<!-- ---------------------------------------- FRAME, MIXER ---------------------------------------- -->
+<!-- ******************************** FRAME, MIXER ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>frames and mixers</h3></div></td></tr></table>
 
@@ -7882,7 +7882,7 @@ unnecessary, and mixer-set! and frame-set! can be replaced with set!:
 
 
 <A NAME="filetosampledoc"></A>
-<!-- ---------------------------------------- FILE->SAMPLE ---------------------------------------- -->
+<!-- ******************************** FILE->SAMPLE ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>sound IO</h3></div></td></tr></table>
 
@@ -8043,7 +8043,7 @@ and you forget to call mus-close, the GC will eventually do it for you.
 
 
 <A NAME="readindoc"></A>
-<!-- ---------------------------------------- READIN ---------------------------------------- -->
+<!-- ******************************** READIN ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>readin</h3></div></td></tr></table>
 
@@ -8143,7 +8143,7 @@ readin and <a href="#env">env</a>:
 
 <A NAME="in-anydoc"></A>
 <A NAME="out-anydoc"></A>
-<!-- ---------------------------------------- IN-ANY, OUT-ANY ---------------------------------------- -->
+<!-- ******************************** IN-ANY, OUT-ANY ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>in-any, out-any</h3></div></td></tr></table>
 
@@ -8305,7 +8305,7 @@ use its :output argument:
 
 
 <A NAME="locsigdoc"></A>
-<!-- ---------------------------------------- LOCSIG ---------------------------------------- -->
+<!-- ******************************** LOCSIG ******************************** -->
 
 <!-- INDEX make-locsig:Sound placement -->
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>locsig</h3></div></td></tr></table>
@@ -8492,7 +8492,7 @@ Here is an example of move-locsig:
 
 
 <A NAME="move-sounddoc"></A>
-<!-- ---------------------------------------- MOVE-SOUND ---------------------------------------- -->
+<!-- ******************************** MOVE-SOUND ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>move-sound</h3></div></td></tr></table>
 
@@ -8557,7 +8557,7 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Generic Functions</h2></td></tr></table>
 <A NAME="genericfunctions"></A>
 
-<!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
+<!-- ******************************** GENERIC FUNCTIONS ******************************** -->
 
 
 <p>Besides the 30 or so built-in generators, there are around 100 others defined in generators.scm. If we
@@ -8651,7 +8651,7 @@ will search that list for their name, and use the functions that follow to imple
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Other Generators</h2></td></tr></table>
 <A NAME="othergenerators"></A>
 
-<!-- ---------------------------------------- OTHER GENERATORS ---------------------------------------- -->
+<!-- ******************************** OTHER GENERATORS ******************************** -->
 
 <p>(this section is work in progress...)
 </p>
@@ -9494,14 +9494,14 @@ by the inverse of this, so it is always between -1 and 1.
             X      n X      (n + 1) X              n X      (n + 1) X
         cos(-) sin(---) sin(--------- + A)   n cos(---) sin(--------- + A)
             2       2           2                   2           2
-(%o2) - ---------------------------------- + -----------------------------
+(%o2) - ********************************-- + -----------------------------
                          2 X                                 X
                     2 sin (-)                          2 sin(-)
                            2                                 2
                                                         n X      (n + 1) X
                                             (n + 1) sin(---) cos(--------- + A)
                                                          2           2
-                                          + -----------------------------------
+                                          + ********************************---
                                                                X
                                                          2 sin(-)
                                                                2
@@ -10578,7 +10578,7 @@ Here is an example that produces abs(oscil):
 
 
 
-<!-- ---------------------------------------- FUNCTIONS ---------------------------------------- -->
+<!-- ******************************** FUNCTIONS ******************************** -->
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2><a class=def NAME="otherfunctions">Other Functions</a></h2></td></tr></table>
 
@@ -10692,7 +10692,7 @@ This function determines how many mixer elements are printed by mus-describe.
 
 
 
-<!-- ---------------------------------------- POLYNOMIAL ---------------------------------------- -->
+<!-- ******************************** POLYNOMIAL ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>polynomial</h3></div></td></tr></table>
 
@@ -10748,7 +10748,7 @@ Here's a generator that uses polynomial to produce a Blackman4 waveform (see als
 
 
 
-<!-- ---------------------------------------- ARRAY-INTERP ---------------------------------------- -->
+<!-- ******************************** ARRAY-INTERP ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>array-interp, dot-product</h3></div></td></tr></table>
 
@@ -10819,7 +10819,7 @@ The "type" argument is one of the interpolation types (<code>mus-interp-linear</
 
 
 
-<!-- ---------------------------------------- CONTRAST-ENHANCEMENT ---------------------------------------- -->
+<!-- ******************************** CONTRAST-ENHANCEMENT ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>contrast-enhancement</h3></div></td></tr></table>
 
@@ -10858,7 +10858,7 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 
 
 
-<!-- ---------------------------------------- AMPLITUDE-MODULATE ---------------------------------------- -->
+<!-- ******************************** AMPLITUDE-MODULATE ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ring-modulate, amplitude-modulate</h3></div></td></tr></table>
 
@@ -10949,7 +10949,7 @@ The upper sidebands may foldover (alias); if it's a problem, low-pass filter the
 
 
 
-<!-- ---------------------------------------- FFT ---------------------------------------- -->
+<!-- ******************************** FFT ******************************** -->
 
 <table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>FFT (fourier transform)</h3></div></td></tr></table>
 <pre>

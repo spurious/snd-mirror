@@ -254,14 +254,14 @@ functions that there is no difference in run-time computational expense or accur
 (2.47456807755109 0.0168174412101507 99627)
 
 ;;; the difference is proportional to the inverse square of the sampling rate,
-;;;   which I interpret as caused by the "centering" -- it is hard to say what
+;;;   which I interpret as caused by the "centering"; it is hard to say what
 ;;;   the "true" or effective FM modulator initial-phase is, so a naive comparison
 ;;;   with the bessel functions makes FM look "inaccurate".  We can turn the
 ;;;   tables by using cos, and a PM modulator initial phase of
 ;;;       (+ pi (* 0.5 (+ pi (hz->radians mfreq))))
 ;;;   (to match outputs), then complain that PM is inaccurate. Just to add to 
 ;;;   the confusion, in the latter case, the difference seems to be directly 
-;;;   proportional to srate(?) -- enough...
+;;;   proportional to srate(?); enough...
 
 -->
 
@@ -496,7 +496,7 @@ the fft peak values given above)
   J6(2.0) = 0.001 -&gt; 0.002
 </pre>
 <small><center>(A larger FFT reduces the mismatch)</center></small>
-<!-- well, sort of -- almost exact: Dolph-Chebyshev window, B=0.9, (also Blackman10), size=2^22, srate=1000000, carfreq=1000 -->
+<!-- well, sort of; almost exact: Dolph-Chebyshev window, B=0.9, (also Blackman10), size=2^22, srate=1000000, carfreq=1000 -->
 </td>
 <td>
 <pre>
@@ -876,8 +876,8 @@ real and imaginary parts &mdash; unexplored territory!
 (/ (bes-in 5 3) (bes-in 0 3))
 0.0186868169578955 [.018]
 
-;(with-sound (:clipped #f :statistics #t) (fpmc 0 2 1000.0 1.0 0.1 6.0+3.0i 0.5)) -- shows same cancellation as earlier 3+1 case
-;(with-sound (:clipped #f :statistics #t :srate (* 4 16384)) (fpmc 0 2 1000.0 1.0 0.1 6.0+3.0i 0.5)) -- need srate change to get freqs rounded correctly
+;(with-sound (:clipped #f :statistics #t) (fpmc 0 2 1000.0 1.0 0.1 6.0+3.0i 0.5)); shows same cancellation as earlier 3+1 case
+;(with-sound (:clipped #f :statistics #t :srate (* 4 16384)) (fpmc 0 2 1000.0 1.0 0.1 6.0+3.0i 0.5)); need srate change to get freqs rounded correctly
 
 (fm-a+bi 1000 1000 100 6.0 3.0 0.5 #f)
 ;add -0.00533062568641282 from J-6(6.0) = 0.245836863364327 and I6(3.0) = 0.0216835897328909
@@ -927,7 +927,7 @@ real and imaginary parts &mdash; unexplored territory!
 ;add 0.0800703403091294 from J6(6.0) = 0.245836863364327 and I-4(3.0) = 0.325705181937936
 ;add 0.0-0.0118191420664103i from J7(6.0) = 0.129586651841481 and I-5(3.0) = 0.0912064776615134
 ;add -0.00122581649816301 from J8(6.0) = 0.0565319909324618 and I-6(3.0) = 0.0216835897328909
-(-2.33443662315078-1.48617977275652i -1.91030819795365) [(/ 1.91 2.19) = .872 -- .874]
+(-2.33443662315078-1.48617977275652i -1.91030819795365) [(/ 1.91 2.19) = .872 == .874]
 
 (fm-a+bi 1300 1000 100 6.0 3.0 0.5 #f)
 ;add -0.0-0.00159941567462897i from J-4(6.0) = 0.357641594780961 and I7(3.0) = 0.00447211872994957
@@ -943,7 +943,7 @@ real and imaginary parts &mdash; unexplored territory!
 ;add -0.0+0.235942821877827i from J6(6.0) = 0.245836863364327 and I-3(3.0) = 0.959753629496008
 ;add 0.0422070440147574 from J7(6.0) = 0.129586651841481 and I-4(3.0) = 0.325705181937936
 ;add 0.0-0.00515608376814245i from J8(6.0) = 0.0565319909324618 and I-5(3.0) = 0.0912064776615134
-(0.502475925962626-2.31154049748365i -0.90453228576051) [(/ (/ 0.90 2.19) = 0.411 -- .413]
+(0.502475925962626-2.31154049748365i -0.90453228576051) [(/ (/ 0.90 2.19) = 0.411 == .413]
 
 (fm-a+bi 1400 1000 100 6.0 3.0 0.5 #f)
 ;add 0.00526636304188694 from J-2(6.0) = -0.242873209960185 and I6(3.0) = 0.0216835897328909
@@ -958,11 +958,11 @@ real and imaginary parts &mdash; unexplored territory!
 ;add -0.0+0.124371259439097i from J7(6.0) = 0.129586651841481 and I-3(3.0) = 0.959753629496008
 ;add 0.0184127623919712 from J8(6.0) = 0.0565319909324618 and I-4(3.0) = 0.325705181937936
 ;add 0.0-0.00193041464863622i from J9(6.0) = 0.0211653239784174 and I-5(3.0) = 0.0912064776615134
-(1.81180116486504-0.564042995574322i 0.623879084645359) [(/ 0.623 2.19) = 0.284 -- .287]
+(1.81180116486504-0.564042995574322i 0.623879084645359) [(/ 0.623 2.19) = 0.284 == .287]
 
-1500: [(/ 0.936 2.19) = 0.427 -- .428]
-1600: [(/ 0.496 2.19) = 0.226 -- .228]
-1700: [(/ 0.102 2.19) = 0.047 -- .047]
+1500: [(/ 0.936 2.19) = 0.427 == .428]
+1600: [(/ 0.496 2.19) = 0.226 == .228]
+1700: [(/ 0.102 2.19) = 0.047 == .047]
 -->
 
 <br>
@@ -1963,7 +1963,7 @@ J_{2000}(2000) = .035
 <!-- J100000(100000) = .0096
      J1000000(1000000) = .0044
      J10000000(10000000) = .002
-     after that they are repeating -- factor of 10 -> factor of 2 in result -- probably an artifact
+     after that they are repeating; factor of 10 -> factor of 2 in result; probably an artifact
 -->
 
 <img src="pix/fmeq28.png" alt="Jn vals" hspace=20>
@@ -2086,8 +2086,8 @@ The take-home message is: "keep the index below 1.0!".
 
 (with-sound (:srate 44100 :data-format mus-ldouble :channels 5 :statistics #t :clipped #f) (feedbk 0 2 100.0 1.0 1.22))
  channel 2 (outc) is our actual per-sample phase increment; notice that at the trouble spot it
- is zigzagging itself, and after interspersed 0's, finally dips negative -- then the bounces start
- (at the bad spot y goes from -.57 to -.59 but the phase incr is .014 -- we back up).
+ is zigzagging itself, and after interspersed 0's, finally dips negative, then the bounces start
+ (at the bad spot y goes from -.57 to -.59 but the phase incr is .014, we back up).
 
 :(samps 9096)
 (129.160781860352 129.596038818359 2.01292452402413e-4 -0.435052901506424 129.160980224609)
@@ -2258,8 +2258,8 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
          (set! sqsum (+ sqsum sq)))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmsq 0 1 1000 .5 .1 1 (+ (* 0.5 pi) .005)))
-;; almost a match -- the pi/2 triangle amp is to take into account the square wave's internal table size (2 pi)
-;;   there is a drift in sqsum that eventually turns around -- raise srate to 441000 and it goes away
+;; almost a match, the pi/2 triangle amp is to take into account the square wave's internal table size (2 pi)
+;;   there is a drift in sqsum that eventually turns around, raise srate to 441000 and it goes away
 
 
 ;; FM(e^x)=PM(e^x):

@@ -13,6 +13,12 @@
         EM.listener {color:darkblue; font-style: normal}
 	EM.emdef {font-weight: bold; font-style: normal}
 	EM.green {color:green; font-style:normal}
+	EM.big {font-size: 20px;
+	        font-style: normal;
+		}
+	EM.bigger {font-size: 30px;
+                   font-style: normal;
+		   }
 
 	H1 {text-align: center}
 	UL {list-style-type: none}
@@ -28,6 +34,8 @@
 	       text-color:black;
 	       }
 
+        PRE.indented {padding-left: 1.0cm;}
+
 	DIV.indented {background-color: #F8F8F0; 
 	              padding-left: 0.5cm; 
 	              padding-right: 0.5cm; 
@@ -38,23 +46,43 @@
 		      -moz-border-radius: 20px;
 		      -webkit-border-radius: 20px;
 		      }
+        DIV.header {margin-top: 60px;
+	            margin-bottom: 30px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #eefdee; /* lightgreen */
+		    padding-left: 30px;
+	           }
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
+        DIV.separator {margin-top: 30px;
+	               margin-bottom: 10px;
+	               border: 2px solid #00ff00; /* green */
+		       background-color: #f5f5dc; /* beige */
+		       padding-top: 4px;
+		       width: 30%;
+		      -moz-border-radius: 4px;
+		      -webkit-border-radius: 4px;
+		      } 
         TD.green {background-color: lightgreen}
 	TD.bluish {background-color: #f2f4ff}
-
-	DT.spaced {margin-top: 50px}
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 20px; 
+                   }
 </style>
 </head>
-<body bgcolor=white>
+<body class="body">
 
 <!-- INDEX s7doc:s7 scheme -->
 
-<br>
-
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<A NAME="s7doc"></a>
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>s7</h2></td></tr></table>
-</td></tr></table>
-
+<div class="topheader"><A NAME="s7doc">s7</a></div>
 
 <p>s7 is a Scheme implementation intended as an extension language
 for other applications, primarily Snd and Common Music.  It exists as just two files, s7.c and
@@ -92,7 +120,7 @@ I originally used a small font for scholia, but now I have to squint
 to read that tiny text, so less-than-vital commentaries are shown in the normal font, but 
 indented and in a sort of brownish background.
 </p>
-<br>
+
 <ul>
   <li><a href="#multiprecision">multiprecision arithmetic</a>
   <li><a href="#math">math functions</a>
@@ -141,17 +169,11 @@ indented and in a sort of brownish background.
       <li><a href="#replrescue">begin_hook to the rescue!</a>
   </ul>
 </ul>
-<dl>
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="multiprecision"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiprecision arithmetic</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd>
+<!-- ******************************************************************************** -->
+<div class="header"><A NAME="multiprecision"><h4>multiprecision arithmetic</h4></a></div>
+
 <p>All numeric types, integers, ratios, reals, and complex numbers are supported.
 The basic integer and real
 types are defined in s7.h, defaulting to long long int and double.  
@@ -165,16 +187,13 @@ enabled, the following functions are included: bignum, bignum?, and bignum-preci
 pi automatically reflects the current bignum-precision:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; pi
 3.141592653589793238462643383279502884195E0
-
 &gt; (bignum-precision)
 128
-
 &gt; (set! (bignum-precision) 256)
 256
-
 &gt; pi
 3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0
 </pre>
@@ -186,10 +205,9 @@ either include enough digits to overflow the default types, or use the <a name="
 Its argument is a string representing the desired number:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (bignum "123456789123456789")
 123456789123456789
-
 &gt; (bignum "1.123123123123123123123123123")
 1.12312312312312312312312312300000000009E0
 </pre>
@@ -203,7 +221,7 @@ around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- (
 So in the default case (precision = 128), using gmp:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (= 1.0 (+ 1.0 (expt 2.0 -128)))
 #t
 &gt; (= 1.0 (+ 1.0 (expt 2.0 -127)))
@@ -213,7 +231,7 @@ So in the default case (precision = 128), using gmp:
 <p>and in the non-gmp case:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (= 1.0 (+ 1.0 (expt 2 -53)))
 #t
 &gt; (= 1.0 (+ 1.0 (expt 2 -52)))
@@ -224,7 +242,7 @@ So in the default case (precision = 128), using gmp:
 but reals are limited by bignum-precision.  This means, for example, that
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (floor 1e56) ; bignum-precision is 128
 99999999999999999999999999999999999999927942405962072064
 &gt; (set! (bignum-precision) 256)
@@ -236,26 +254,23 @@ but reals are limited by bignum-precision.  This means, for example, that
 <p>The non-gmp case is similar, but it's easy to find the edge cases:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (floor (+ 0.9999999995 (expt 2.0 23)))
 8388609
 </pre>
 </div> 
 </blockquote>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="math"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>math functions</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="math"><h4>math functions</h4></a></div>
+
+
+<p>
 s7 includes:
 </p>
 
@@ -285,7 +300,7 @@ Other math-related differences between s7 and r5rs:
 <li>rationalize returns a ratio! 
 </ul>
 
-<pre>
+<pre class="indented">
 &gt; (exact? 1.0)
 #f
 &gt; (rational? 1.5)
@@ -320,7 +335,7 @@ s7 could perhaps substitute "s" in this case, but instead it just prohibits expo
 radix is greater than 10.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (string-&gt;number "1e9" 2)  ; (expt 2 9)
 512.0
 &gt; (string-&gt;number "1e1" 12) ; "e" is not a digit in base 12
@@ -342,7 +357,7 @@ radix is greater than 10.
 get them via log:
 </p>
 
-<pre>
+<pre class="indented">
 (define -inf.0 (real-part (log 0.0))) 
 (define +inf.0 (- (real-part (log 0.0)))) ; or (atanh 1.0)
 (define nan.0 (/ +inf.0 +inf.0))          ; or 1/0
@@ -358,7 +373,7 @@ and so on &mdash; what a mess!  This mess was made a lot worse than it needs to 
 0.0 equals -0.0, so we can't tell them apart, but that they produce different results in nearly every use!  
 </p>
 
-<pre>
+<pre class="indented">
 scheme@(guile-user)&gt; (= -0.0 0.0)
 #t
 scheme@(guile-user)&gt; (negative? -0.0)
@@ -385,7 +400,7 @@ to use a range of 0, in which case random returns 0.
 random uses some default state initialized from the current time.  <a name="randomstatep">random-state?</a> returns #t if passed a random state object.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (random 0)
 0
 &gt; (random 1.0)
@@ -450,18 +465,15 @@ random-state-&gt;list, then to restart from that point, apply make-random-state 
 </blockquote>
 
 
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="define*"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define*, lambda*</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p><a name="definestar">define*</a> and <a name="lambdastar">lambda*</a>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="define*"><h4>define*, lambda*</h4></a></div>
+
+
+<p><a name="definestar">define*</a> and <a name="lambdastar">lambda*</a>
 are extensions of define and lambda that make it easier to
 to deal with optional, keyword, and rest arguments.  
 The syntax is very simple: every argument to define* has a default value
@@ -476,7 +488,7 @@ You can use
 :optional and :key, but they are ignored.  
 </p>
 
-<pre>
+<pre class="indented">
 (<em class=red>define*</em> (hi a (b 32) (c "hi")) (list a b c))
 </pre>
 
@@ -490,7 +502,7 @@ This is called an optional-key list in CLM.  So, taking the function
 above as an example:
 </p>
 
-<pre>
+<pre class="indented">
 (hi 1) -&gt; '(1 32 "hi")
 (hi :b 2 :a 3) -&gt; '(3 2 "hi")
 (hi 3 2 1) -&gt; '(3 2 1)
@@ -499,7 +511,7 @@ above as an example:
 <p>See s7test.scm for many examples.
 </p>
 
-<pre>
+<pre class="indented">
 (<em class=red>define*</em> (make-parameter initial-value converter)
   (let ((value (if (procedure? converter) (converter initial-value) initial-value)))
     (<em class=red>lambda*</em> ((val #&lt;unspecified&gt;))
@@ -526,7 +538,7 @@ hiho
 that any arguments before the keyword :optional are required:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (define** declarations . forms)
   (let ((name (car declarations))
 	(args (cdr declarations)))
@@ -568,7 +580,7 @@ hi
 the time of the procedure call:
 </p>
 
-<pre>
+<pre class="indented">
 (let ((c 1))
   (define* (a (b (+ c 1))) b)
   (set! c 2)
@@ -580,7 +592,7 @@ the time of the procedure call:
 to use variables that are undefined at the definition point:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define* (a (b c)) b)
 a
 &gt; c
@@ -600,14 +612,14 @@ in the same call, and the other if an unknown keyword is encountered
 in the key position.  These problems arise in a case such as
 </p>
 
-<pre>
+<pre class="indented">
 (define* (f (a 1) (b 2)) (list a b))
 </pre>
 
 <p>You could do any of the following by accident:
 </p>
 
-<pre>
+<pre class="indented">
 (f 1 :a 2)  ; what is a?
 (f :b 1 2)  ; what is b?
 (f :c 3)    ; did you really want a to be :c and b to be 3?
@@ -627,7 +639,7 @@ To turn off this error check, add :allow-other-keys at the end of the parameter 
 you can have more than one :rest parameter:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5)
 (1 (2 3 4 5) (3 4 5))
 </pre>
@@ -636,7 +648,7 @@ you can have more than one :rest parameter:
 argument:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32)
 (32 1 ())
 
@@ -650,7 +662,7 @@ The :rest argument is needed in cases like these because we can't use expression
 such as:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; ((lambda* ((a 3) . b c) (list a b c)) 1 2 3 4 5)
 stray dot?
 </pre>
@@ -658,7 +670,7 @@ stray dot?
 <p>Yet another nit: the :rest argument is not considered a keyword argument, so
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define* (f :rest a) a)
 f
 &gt; (f :a 1)
@@ -668,23 +680,20 @@ f
 
 </blockquote>
 
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="macros"></a>
-<table border=0 width="80%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>macros</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p><a name="definemacro">define-macro</a>, <a name="definemacrostar">define-macro*</a>, 
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="macros"><h4>macros</h4></a></div>
+
+
+<p><a name="definemacro">define-macro</a>, <a name="definemacrostar">define-macro*</a>, 
 defmacro, defmacro*, <a name="macroexpand">macroexpand</a>, <a name="gensym">gensym</a>, and <a name="macrop">macro?</a>
 implement the standard (CL-style) macro definers.  
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (add-1 arg) `(+ 1 ,arg))
 (defmacro add-1 (arg) `(+ 1 ,arg))
 </pre>
@@ -692,7 +701,7 @@ implement the standard (CL-style) macro definers.
 <p>macroexpand can help debug a macro:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-macro (add-1 arg) `(+ 1 ,arg))
 add-1
 &gt; (macroexpand (add-1 32))
@@ -703,7 +712,7 @@ add-1
 giving the new symbol name's prefix.
 </p>
 
-<pre>
+<pre class="indented">
 (defmacro pop! (sym)
   (let ((v (<em class=red>gensym</em>)))
     `(let ((,v (car ,sym)))
@@ -714,7 +723,7 @@ giving the new symbol name's prefix.
 <p>As in define*, the starred forms give optional and keyword arguments:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-macro* (add-2 a (b 2)) `(+ ,a ,b))
 add-2
 &gt; (add-2 1 3)
@@ -733,7 +742,7 @@ when, loop, dotimes, do*, enum, pushnew, and defstruct.
 We can use it, and other macro-related stuff to make a version of macroexpand-all:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (fully-expand form)
   (define (expand form)
     (if (pair? form)
@@ -759,7 +768,7 @@ procedure-source of that macro, that is, the function that the macro definition
 expanded into:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (hi a) `(+ ,a 1))
 
 &gt; (procedure-source hi)
@@ -776,7 +785,7 @@ pass one as a function argument, apply it to a list, return it from a function,
 and assign it to a variable:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-macro (hi a) `(+ ,a 1))
 hi
 &gt; (apply hi '(4))
@@ -808,7 +817,7 @@ make-mac
 It's almost as easy to write the actual macro body as the backquoted version of it. 
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-macro (hi a) `(+ 1 ,a))
 hi
 &gt; (procedure-source hi)
@@ -841,7 +850,7 @@ macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
 <p>s7 macros are not hygienic.  For example,
 </p>
 
-<pre>
+<pre class="indented">
   (define-macro (mac b) 
     `(let ((a 12)) 
        (+ a ,b)))
@@ -869,7 +878,7 @@ the definition environment, not the calling environment.  We then augment that e
 with the macro arguments getting their values from the call-time environment:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (define-immaculo name-and-args . body)
   (let* ((gensyms (map (lambda (g) (gensym)) (cdr name-and-args)))
 	 (args (cdr (copy name-and-args)))
@@ -890,7 +899,7 @@ with the macro arguments getting their values from the call-time environment:
 use <code>(apply values body)</code> in place of ",@body".
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-immaculo (mac b) `(let ((a 12)) (+ a b)))
 mac
 &gt; (let ((a 21) (+ *)) (mac a))
@@ -901,7 +910,7 @@ mac
 If the slight difference in syntax is a problem
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (define-immaculo name-and-args . body)
   (let* ((gensyms (map (lambda (g) (gensym)) (cdr name-and-args)))
 	 (args (cdr (copy name-and-args)))
@@ -969,7 +978,7 @@ value, then plug that symbol into <code>(set! var-value val)</code>.  For exampl
 after expansion we want something like:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((x 32) (y 'x)) 
     (eval (list 'set! y 123)) ; (symbol-set! y 123) ideally
     (list x y))
@@ -980,7 +989,7 @@ after expansion we want something like:
 into (set! x 123) takes place in a context where "y" is defined:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((x 32) (y 'x))
     (define-macro (symbol-set! var val)
       `(set! ,(symbol-&gt;value var) ,val))
@@ -993,7 +1002,7 @@ into (set! x 123) takes place in a context where "y" is defined:
 "var" may not be defined in the environment where the initial list is created:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-macro (symbol-set! var val)
     `(set! ,(symbol-&gt;value var) ,val))
 symbol-set!
@@ -1007,7 +1016,7 @@ symbol-set!
 <p>Exactly the same thing happens in CL:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (defmacro symbol-set (var val) `(setf ,(eval var) ,val))
 SYMBOL-SET
 &gt; (let ((x 32) (y 'x)) (symbol-set y 123))
@@ -1020,7 +1029,7 @@ Since this is a step backward for computer science, I've called these
 dirty macros, "bacros":
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-bacro (symbol-set! var val) 
    `(set! ,(symbol-&gt;value var) ,val))
 symbol-set!
@@ -1033,7 +1042,7 @@ symbol-set!
 <p>Or maybe "hacro"?  Use eval in place of symbol-&gt;value, and...
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((x #(1 2 3)) 
         (y `(x 1))) 
     (symbol-set! y 123) 
@@ -1045,7 +1054,7 @@ symbol-set!
 By the way, bacros solve part of our original problem:
 </p>
 
-<pre>
+<pre class="indented">
   (define-bacro (mac b) 
     `(let ((a 12)) 
        (+ a ,(symbol-&gt;value b))))
@@ -1057,7 +1066,7 @@ By the way, bacros solve part of our original problem:
 <p>returns 13! No variable capture! Perhaps we can massage this idea a bit:
 </p>
 
-<pre>
+<pre class="indented">
 (set! *#readers*
   (cons (cons #\_ (lambda (str)
 		    `(with-environment 
@@ -1083,7 +1092,7 @@ example; we're trying to write a macro that defines a function
 that returns its argument in a list statement.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-macro (hang arg) `(define ,arg `(list (cdr ,,arg)))) ; obvious, no?
 hang
 
@@ -1104,7 +1113,7 @@ circular list in its definition!  This is surprisingly easy to do by accident.
 Here's one way out:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-macro (hang arg) `(define ,arg `(list ,,@(cdr arg))))
 hang
 &gt; (macroexpand (hang (f a)))
@@ -1126,7 +1135,7 @@ the loop!
 <p>But we should end on a happy note.  Here is Peter Seibel's once-only macro:
 </p>
 
-<pre>
+<pre class="indented">
   (defmacro once-only (names . body)
     (let ((gensyms (map (lambda (n) (gensym)) names)))
       `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
@@ -1138,7 +1147,7 @@ the loop!
 <p>From the land of sparkling bacros:
 </p>
 
-<pre>
+<pre class="indented">
 (define-bacro (once-only names . body)
   `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
      ,@body))
@@ -1220,22 +1229,19 @@ to quote the result (if the result does not already evaluate to itself):
 
 </blockquote>
 
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="constants"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-constant, constant?, symbol-access</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p><a name="defineconstant">define-constant</a> defines a constant and <a name="constantp">constant?</a> returns #t if its argument
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="constants"><h4>define-constant, constant?, symbol-access</h4></a></div>
+
+
+<p><a name="defineconstant">define-constant</a> defines a constant and <a name="constantp">constant?</a> returns #t if its argument
 is a constant.  A constant in s7 is really constant: it can't be set or rebound.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-constant var 32)
 var
 
@@ -1250,7 +1256,7 @@ var
 become constants:
 </p>
 
-<pre>
+<pre class="indented">
  (define (func a) (let ((cvar (+ a 1))) cvar))
  (define-constant cvar 23)
  (func 1)
@@ -1277,7 +1283,7 @@ We could replace define-constant, and add
 local constants with:
 </p>
 
-<pre>
+<pre class="indented">
 (define constant-access 
   (list #f
 	(lambda (symbol new-value) 
@@ -1306,7 +1312,7 @@ local constants with:
 <p>In the next example, we restrict the values a variable can take to integers:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (define-integer var value)
   `(begin
      (define ,var ,value)
@@ -1333,7 +1339,7 @@ int
 and in between, call the previous set accessor, if any, after reporting the set:
 </p>
 
-<pre>
+<pre class="indented">
 (define (trace var)
   (let* ((cur-access (<em class=red>symbol-access</em> var))
 	 (cur-set (and cur-access (cadr cur-access))))
@@ -1359,18 +1365,15 @@ We could implement all kinds of things
 with this mechanism, including property lists.
 </p>
 
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="maketype1"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-type</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="maketype1"><h4>make-type</h4></a></div>
+
+
+<p>
 <b><a name="maketype">make-type</a></b>, borrowed from Alaric Snell-Pym,
 returns a type-object: a list of three functions
 '?, 'make, and 'ref.  The <b>?</b> func returns #t if its argument
@@ -1380,7 +1383,7 @@ when passed that object.
 </p>
 
 <A NAME="recordexample"></a>
-<pre>
+<pre class="indented">
 (define special-value ((cadr (<em class=red>make-type</em>)) 'special))
 ;; now special-value's value can't be eq? to any other Scheme object
 
@@ -1448,7 +1451,7 @@ fill its value with.
 So, remembering that (cadr type) is the make function:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; ((cadr (make-type)) 3.14)
 #&lt;anonymous-type 3.14&gt;
 
@@ -1465,7 +1468,7 @@ So, remembering that (cadr type) is the make function:
 <p>The last is easier to read if we separate out the steps:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let* ((type (make-type 
                  :getter (lambda (a b) 
                            (vector-ref a b))))   ; make a new type with its own getter function
@@ -1478,7 +1481,7 @@ So, remembering that (cadr type) is the make function:
 if you supply the length and getter functions to make-type.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define-macro (enum . args)
      `(for-each define ',args ((cadr (make-type :getter (lambda (a b) b) 
                                                 :length (lambda (a) ,(length args)))))))
@@ -1713,24 +1716,21 @@ v
 
 </blockquote>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="pws"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure-with-setter</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p>A <a name="procedurewithsetter">procedure-with-setter</a> consists of two functions, the "getter" and the "setter".
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="pws"><h4>procedure-with-setter</h4></a></div>
+
+
+<p>A <a name="procedurewithsetter">procedure-with-setter</a> consists of two functions, the "getter" and the "setter".
 The getter is called when the object is encountered as a function, and the setter when
 it is set:
 </p>
 
-<pre>
+<pre class="indented">
 (define xx (let ((x 32))
              (<em class=red>make-procedure-with-setter</em>
                (lambda () x) 
@@ -1743,12 +1743,12 @@ it is set:
 <p>The setter's last argument is the value passed to set!.  That is, 
 </p>
 
-<pre>
+<pre class="indented">
 (define v123 
   (let ((vect (vector 1 2 3)))
     (make-procedure-with-setter
       (lambda (index) 
-        (vector-ref vect index))     ; using explicit indexing -- (vect index) is the same (see "generalized set!" below)
+        (vector-ref vect index))     ; using explicit indexing &mdash; (vect index) is the same (see "generalized set!" below)
       (lambda (index value) 
         (vector-set! vect index value)))))
 
@@ -1763,7 +1763,7 @@ it is set:
 <p>make-procedure-with-setter can add generalized set! support to any function:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define cadr (make-procedure-with-setter 
                  cadr 
                  (lambda (lst val) 
@@ -1790,10 +1790,10 @@ for make-procedure-with-setter; hmmm.
 <p>Here is a pretty example of make-procedure-with-setter:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (c?r path)
   ;; "path" is a list and "X" marks the spot in it that we are trying to access
-  ;; (a (b ((c X)))) -- anything after the X is ignored, other symbols are just placeholders
+  ;; (a (b ((c X)))) &mdash; anything after the X is ignored, other symbols are just placeholders
   ;; c?r returns a procedure-with-setter that gets/sets X
 
   (define (X-marks-the-spot accessor tree)
@@ -1848,12 +1848,10 @@ for make-procedure-with-setter; hmmm.
 (lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))
 </pre>	
 
-<br>
-
 <p>We can extend c?r into something incredibly useful!  A goto implementation using circular lists:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (define-with-goto name-and-args . body)
   ;; run through the body collecting label accessors, (label name)
   ;; run through getting goto positions, (goto name)
@@ -1922,7 +1920,7 @@ vector than make-vector, for example.
 Even better: "dilambda":
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (dilambda getter setter)
   `(make-procedure-with-setter
      (lambda ,@getter)
@@ -1939,20 +1937,14 @@ Even better: "dilambda":
 
 </blockquote>
 
-<br>
-
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="generalizedset"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>applicable objects, generalized set!, generic functions</h4></td></tr></table>
-</td></tr></table>
-</dt>
+<!-- ******************************************************************************** -->
 
-<dd><p>procedure-with-setters can be viewed as one generalization of set!.  Another
+<div class="header"><A NAME="generalizedset"><h4>applicable objects, generalized set!, generic functions</h4></a></div>
+
+
+<p>procedure-with-setters can be viewed as one generalization of set!.  Another
 treats objects as having predefined get and set functions.  In s7
 lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined objects
 are both applicable and settable.  newLisp calls this implicit indexing, Gauche implements it
@@ -1968,7 +1960,7 @@ as <code>(list-set! lst 1 2)</code>.
 I like this syntax:  the less noise, the better!
 </p>
 
-<pre>
+<pre class="indented">
 ;; an example taken from R Cox's website
 
 (define dense (make-vector 128))
@@ -2008,7 +2000,7 @@ I like this syntax:  the less noise, the better!
 <p>Some more examples:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((lst (list 1 2 3)))
     (set! (lst 1) 32)
     (list (lst 0) (lst 1)))
@@ -2042,7 +2034,7 @@ For example, s7test.scm has implementations of Common Lisp's sequence functions.
 length, copy, reverse, fill!, map and for-each are generic in this sense (map always returns a list).
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4))
 (5 -3 9)
 
@@ -2108,7 +2100,7 @@ Here's an FFT procedure that accepts lists or vectors, or any similar object:
 evaluate their first argument, but set! does not (with a quibble; see below):
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((str "hi")) (string-set! (let () str) 1 #\a) str)
 "ha"
 
@@ -2129,7 +2121,7 @@ expression, and tries again.  So the second case above is the only one that won'
 And of course:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((x (list 1 2))) 
     (set! ((((lambda () (list x))) 0) 0) 3) 
     x) 
@@ -2152,26 +2144,23 @@ or even <code>(&gt; 1 0+i)</code>.
 
 </blockquote>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="multidimensionalvectors"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multidimensional vectors</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="multidimensionalvectors"><h4>multidimensional vectors</h4></a></div>
+
+
+<p>
 s7 supports
 vectors with any number of dimensions.  It is here, in particular, that the generalized
 set! stuff shines.  make-vector's second argument can be a list of dimensions, rather than
 an integer as in the one dimensional case:
 </p>
 
-<pre>
+<pre class="indented">
     (make-vector (list 2 3 4))
     (make-vector '(2 3) 1.0)
     (vector-dimensions (make-vector (list 2 3 4))) -&gt; (2 3 4)
@@ -2184,7 +2173,7 @@ set it.  vector-length (or just length) returns the total number of elements.
 vector-dimensions returns a list of the dimensions.
 </p>
 
-<pre>
+<pre class="indented">
     &gt; (define v (make-vector '(2 3) 1.0))
     #2D((1.0 1.0 1.0) (1.0 1.0 1.0))
 
@@ -2286,7 +2275,7 @@ vector-dimensions returns a list of the dimensions.
 signals that the lists specify the elements of an 'n' dimensional vector: <code>#2D((1 2 3) (4 5 6))</code>
 </p>
 
-<pre>
+<pre class="indented">
     &gt; (vector-ref #2D((1 2 3) (4 5 6)) 1 2)
     6
 
@@ -2298,7 +2287,7 @@ signals that the lists specify the elements of an 'n' dimensional vector: <code>
 equal to a 1-dimensional empty vector.
 </p>
 
-<pre>
+<pre class="indented">
     &gt; (make-vector '(10 0 3))
     #3D()
 
@@ -2314,7 +2303,7 @@ equal to a 1-dimensional empty vector.
 you can use this same syntax with lists.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((L '((1 2 3) (4 5 6))))
     (L 1 0))              ; same as (list-ref (list-ref L 1) 0) or ((L 1) 0)
 4
@@ -2328,7 +2317,7 @@ you can use this same syntax with lists.
 <p>Or with vectors of vectors, of course:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((V '#(#(1 2 3) #(4 5 6)))) 
     (V 1 2))              ; same as (vector-ref (vector-ref V 1) 2) or ((V 1) 2)
 6
@@ -2342,7 +2331,7 @@ you can use this same syntax with lists.
 in the latter case, you can't clobber one of the inner vectors. 
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((V '#(#(1 2 3) #(4 5 6)))) (set! (V 1) 32) V)
 #(#(1 2 3) 32)
 
@@ -2358,7 +2347,7 @@ in the latter case, you can't clobber one of the inner vectors.
 <p>Using lists to display the inner vectors may not be optimal, especially when the elements are also lists:
 </p>
 
-<pre>
+<pre class="indented">
 #2D(((0) (0) ((0))) ((0) 0 ((0))))
 </pre>
 
@@ -2366,9 +2355,9 @@ in the latter case, you can't clobber one of the inner vectors.
 Perhaps we could use different colors?  Or different size parentheses?
 </p>
 
-<pre>
+<pre class="indented">
 #2D<em class=green>(</em><em class=red>(</em>(0) (0) ((0))<em class=red>)</em> <em class=red>(</em>(0) 0 ((0))<em class=red>)</em><em class=green>)</em>
-#2D<big><big>(</big>(</big>(0) (0) ((0))<big>)</big> <big>(</big>(0) 0 ((0))<big>)<big>)</big></big>
+#2D<em class="bigger">(</em><em class="big">(</em>(0) (0) ((0))<em class="big">)</em> <em class="big">(</em>(0) 0 ((0))<em class="big">)</em><em class="bigger">)</em>
 </pre>
 </div>
 
@@ -2381,7 +2370,7 @@ Currently, vector-&gt;list flattens the vector, and list-&gt;vector always retur
 one dimensional vector, so the two are not inverses.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (vector-&gt;list #2d((1 2) (3 4)))
 (1 2 3 4)             ; should this be '((1 2) (3 4)) or '(#(1 2) #(3 4))?
 &gt; (list-&gt;vector '(#(1 2) #(3 4))) ; what about '((1 2) (3 4))?
@@ -2392,7 +2381,7 @@ one dimensional vector, so the two are not inverses.
 This also affects format and sort!:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (format #f "~{~A~^ ~}" #2d((1 2) (3 4)))
 "1 2 3 4"
 
@@ -2409,18 +2398,14 @@ It wants you to use: <code>(let ((v #("abc" "def"))) ((v 0) 2))</code>.
 
 </blockquote>
 
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="hashtables"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hash-tables</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><br>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="hashtables"><h4>hash-tables</h4></a></div>
+
+
 <ul>
 <li>(<a name="makehashtable">make-hash-table</a> (size 512))
 <li>(<a name="hashtable">hash-table</a> ...)
@@ -2438,7 +2423,7 @@ Each hash-table keeps track of the keys it contains, optimizing the search where
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
 </p>
 
-<pre>
+<pre class="indented">
 (let ((ht (make-hash-table)))
   (set! (ht "hi") 123)
   (ht "hi"))
@@ -2462,7 +2447,7 @@ returns #t if passed one of these iterators.
 treat a hash-table as, for example, a sparse array:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define make-sparse-array make-hash-table)
 make-sparse-array
 
@@ -2482,7 +2467,7 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
 make-hash-table-iterator internally).
 </p>
 
-<pre>
+<pre class="indented">
     (define (hash-table-&gt;alist table)
       (map values table))
 
@@ -2503,23 +2488,20 @@ of the table sizes, or the order in which the key/value pairs were added.
 
 </blockquote>
 
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="environments"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>environments</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p>An environment holds symbols and their values.  The global environment, for example,
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="environments"><h4>environments</h4></a></div>
+
+
+<p>An environment holds symbols and their values.  The global environment, for example,
 holds all the variables that are defined at the top level.
 Environments are first class (and applicable) objects in s7.  
 </p>
 
-<pre>
+<pre class="indented">
   (<a name="environmentp">environment?</a> obj)            #t if obj is an environment
   (<a name="globalenvironment">global-environment</a>)          the top-level environment
   (<a name="currentenvironment">current-environment</a>)         the currently visible variables and their values
@@ -2544,7 +2526,7 @@ symbol-&gt;value returns the value associated with it.
 To add or change a symbol's value, use augment-environment:
 </p>
 
-<pre>
+<pre class="indented">
 (let ((a 1)) 
   (eval '(+ a b) 
          (<em class=red>augment-environment</em>
@@ -2563,19 +2545,18 @@ Augment-environment is a bad name.
 Perhaps these would be better:
 </p>
 
-<pre>
+<pre class="indented">
     (define (make-environment parent . args) (apply augment-environment parent args))
     (define (environment . slots) (apply augment-environment () args))
     (define (define-in-environment env symbol value) (augment-environment! env (cons symbol value)))
     (define next-environment outer-environment)
 </pre>
 
-<br>
 <p>It is possible in Scheme to redefine built-in functions such as car.
 To ensure that some code sees the original built-in function definitions,
 wrap it in <code>(with-environment (initial-environment) ...)</code>:
 </p>
-<pre>
+<pre class="indented">
 &gt; (let ((caar 123)) 
     (+ caar (with-environment (initial-environment) 
               (caar '((2) 3)))))
@@ -2595,7 +2576,7 @@ uses initial-environment to
 make sure that none of his bindings pollute the library code:
 </p>
 
-<pre>
+<pre class="indented">
 (let ()
   (with-environment (initial-environment)
     (load "any-library.scm" (current-environment)) ; by default load puts stuff in the global environment
@@ -2607,7 +2588,7 @@ Say he wants to use "lognor" under the name "bitwise-not-or", and
 all the other functions are of no interest:
 </p>
 
-<pre>
+<pre class="indented">
 (begin
   (define bitwise-not-or #f)
   (let ()
@@ -2619,7 +2600,7 @@ all the other functions are of no interest:
 <p>Or equivalently:
 </p>
 
-<pre>
+<pre class="indented">
 (augment-environment! (current-environment)
   (cons 'bitwise-not-or 
     (symbol-&gt;value 'lognor
@@ -2632,7 +2613,7 @@ all the other functions are of no interest:
 its bindings are exported into the current environment:
 </p>
 
-<pre>
+<pre class="indented">
 (apply augment-environment! (current-environment)
   (with-environment (initial-environment)
     (load "any-library.scm" (current-environment))
@@ -2642,7 +2623,7 @@ its bindings are exported into the current environment:
 <p>To do the same thing, but prepend "library:" to each name:
 </p>
 
-<pre>
+<pre class="indented">
 (apply augment-environment! (current-environment)
   (with-environment (initial-environment)
     (load "any-library.scm" (current-environment))
@@ -2817,6 +2798,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
      method-name))
 
 
+
 &gt; (define-class class-1 () 
        '((a 1) (b 2)) 
        (list (list 'add (lambda (obj) 
@@ -2881,7 +2863,6 @@ class-3
 </pre>
 </div>
 
-<br>
 
 <div class="indented">
 
@@ -2935,23 +2916,20 @@ b
 </div>
 
 </blockquote>
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="multiplevalues"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiple-values</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="multiplevalues"><h4>multiple-values</h4></a></div>
+
+
+<p>
 In s7, multiple values are spliced directly into the caller's argument list.
 </p>
 
-<pre>
+<pre class="indented">
   &gt; (+ (values 1 2 3) 4)
   10
   &gt; (string-ref ((lambda () (values "abcd" 2))))
@@ -2997,7 +2975,7 @@ First, you can use "values" to return any number of values, including 0,
 from map's function application:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3))
 (1 20 3 60)
 
@@ -3011,7 +2989,7 @@ stop evaluating their arguments as soon as they hit #t ('or') or #f ('and').
 By wrapping the arguments in 'values', you can force all of them to be evaluated:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((x 1)) 
     (and (let () #f)             ; this returns #f so
          (let () (set! x 3) #f)) ;   this is never evaluated
@@ -3032,7 +3010,7 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
 <p>At the top-level, since there's nothing to splice into, you simply get your values back:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (values 1 (list 1 2) (+ 3 4 5))
 (values 1 (1 2) 12)
 </pre>
@@ -3053,7 +3031,7 @@ as soon as the arguments are spliced into some caller's arguments.
 <p>In some Schemes, values behaves like CL's prog1:
 </p>
 
-<pre>
+<pre class="indented">
 (not s7)&gt; (let ((x 1)) (cond ((values #f (set! x 2) #t) 3) (#t x)))
 2
 (not s7)&gt; (if (values #f #t) 1 2)
@@ -3067,7 +3045,7 @@ equivalent uses of "cond" and "if" should give the same result.
 Currently in s7, where a test is in progress, only <code>(values #f)</code> is the same as #f.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (if (values #f #f) 1 2)            ; (values #f #f) is not #f
 1
 &gt; (cond ((values #f #f) 1) (#t 2))
@@ -3097,7 +3075,7 @@ is an error, but that would be hasty &mdash;
 our troubles have only begun.  First, "cond" can omit the expressions that follow the test, unlike "if":
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (cond (3))
 3
 </pre>
@@ -3105,7 +3083,7 @@ our troubles have only begun.  First, "cond" can omit the expressions that follo
 <p>and even trickier, "cond" can pass the test value to a function:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (cond (3 =&gt; +))
 3
 </pre>
@@ -3114,7 +3092,7 @@ our troubles have only begun.  First, "cond" can omit the expressions that follo
 receives one argument, so
 </p>
 
-<pre>
+<pre class="indented">
 (not s7)&gt; (cond ((values 1 2) =&gt; +))
 1
 </pre>
@@ -3127,7 +3105,7 @@ looks like a wasted opportunity.
 s7 handles it this way:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (+ 1 (cond ((values 2 3))) 4)   ; trailing values are not ignored
 10
 &gt; (cond ((values 1 2 3) =&gt; +))
@@ -3137,7 +3115,7 @@ s7 handles it this way:
 <p>Of course, it is unproblematic that the expression can itself involve multiple values:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (+ (cond (#t (values 1 2))))
 3
 </pre>
@@ -3221,22 +3199,19 @@ is 15, as anyone would expect.
 
 </blockquote>
 
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="callwithexit1"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>call-with-exit and continuation?</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p><b><a name="callwithexit">call-with-exit</a></b> is call/cc without the ability to jump back into the original context,
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="callwithexit1"><h4>call-with-exit and continuation?</h4></a></div>
+
+
+<p><b><a name="callwithexit">call-with-exit</a></b> is call/cc without the ability to jump back into the original context,
 similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "catch" for error handling).
 </p>
 
-<pre>
+<pre class="indented">
 (define (find-first-even-number arg)
   (<em class=red>call-with-exit</em>
    (lambda (return)
@@ -3262,7 +3237,7 @@ the very beginning, but it's needed if you want to write a continuable error
 handler.  Here is a sketch of the situation:
 </p>
 
-<pre>
+<pre class="indented">
 (let ()
   (catch #t
 	 (lambda ()
@@ -3301,28 +3276,25 @@ This is similar to trying to read from a closed input port.
 </blockquote>
 
 
-</dd>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="format1"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>format, object-&gt;string</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p>s7's built-in <a name="format">format</a> function is very close to that in srfi-48.
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="format1"><h4>format, object-&gt;string</h4></a></div>
+
+
+<p>s7's built-in <a name="format">format</a> function is very close to that in srfi-48.
 </p>
 
-<pre>
+<pre class="indented">
 (format #f "~A ~D ~F" 'hi 123 3.14)
 -&gt; "hi 123 3.140000"
 </pre>
 
 
 <p>The format directives (tilde chars) are:</p>
-<pre>
+<pre class="indented">
 ~%        insert newline
 ~&amp;        insert newline if preceding char was not newline
 ~~        insert tilde
@@ -3360,7 +3332,7 @@ also sends it to *stdout*.  To send the string to *stderr* instead, <code>(forma
 <p>Floats can occur in any base, so:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; #xf.c
 15.75
 </pre>
@@ -3369,7 +3341,7 @@ also sends it to *stdout*.  To send the string to *stderr* instead, <code>(forma
 an error.  In CL, it is equivalent to using ~A which is perverse.  But 
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (number-&gt;string 1.25 16)
 "1.4"
 </pre>
@@ -3378,7 +3350,7 @@ an error.  In CL, it is equivalent to using ~A which is perverse.  But
 floats in the "~X" case.  So in s7, 
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (format #f "~X" 21)
 "15"
 
@@ -3399,7 +3371,7 @@ floats in the "~X" case.  So in s7,
 <p>The curly bracket directive applies to anything you can map over, not just lists:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (format #f "~{~C~^ ~}" "hiho")
 "h i h o"
 </pre>
@@ -3411,7 +3383,7 @@ floats in the "~X" case.  So in s7,
 <p>object-&gt;string returns the string representation of its argument:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (object-&gt;string "hiho")
 "\"hiho\""
 
@@ -3429,7 +3401,7 @@ vague disquiet &mdash; why do we need this ancient unlispy thing?
 We can almost replace it with:
 </p>
 
-<pre>
+<pre class="indented">
 (define (objects-&gt;string . objects)
   (apply string-append (map (lambda (obj) (object-&gt;string obj #f)) objects)))
 </pre>
@@ -3439,7 +3411,7 @@ I wonder whether formatted string output still matters outside a REPL.  Even in 
 a modern GUI will leave formatting decisions to a text or table widget.
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (string-&gt;objects str . objs)
   `(with-input-from-string ,str
      (lambda ()
@@ -3490,21 +3462,18 @@ a modern GUI will leave formatting decisions to a text or table widget.
 
 </blockquote>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="hooks"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hooks</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd>
+<!-- ******************************************************************************** -->
 
-<pre>
+<div class="header"><A NAME="hooks"><h4>hooks</h4></a></div>
+
+
+
+
+<pre class="indented">
     (<a name="makehook">make-hook</a> (arity (0 0 #f)) (documentation ""))  ; make a new hook
     (<a name="hook">hook</a> ...)                                       ; make a hook, the args are functions
     (<a name="hookp">hook?</a> obj)                                      ; return #t if obj is a hook
@@ -3525,7 +3494,7 @@ via hook-functions.  All the functions on the list have to be compatible with
 the way the hook itself is invoked, so the hook has an arity, hook-arity.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((h (make-hook '(1 0 #f) "an example hook")))     ; 1 required arg and no others
     (set! (hook-functions h)                             ; add 1 function to the hook's list
       (list (lambda (x) (format #t "x is ~A" x))))
@@ -3533,19 +3502,16 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 "x is 23"
 </pre>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="procedureinfo"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure info</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<pre>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="procedureinfo"><h4>procedure info</h4></a></div>
+
+
+<pre class="indented">
   (<a name="procedurename">procedure-name</a> proc)
   (<a name="proceduresource">procedure-source</a> proc)
   (<a name="procedurearity">procedure-arity</a> proc)
@@ -3554,7 +3520,7 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
   (procedure-environment proc)
 </pre>
 
-<dd><p>procedure-source, procedure-arity, procedure-setter, procedure-documentation, and help provide a look into a
+<p>procedure-source, procedure-arity, procedure-setter, procedure-documentation, and help provide a look into a
 Scheme function.
 procedure-documentation returns the documentation string associated with a procedure: the initial string in the
 function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
@@ -3563,7 +3529,7 @@ procedure-source returns the source, as a list, of a procedure. procedure-enviro
 a procedure's environment.  procedure-name returns the procedure's name.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (define* (add-2 a (b 32)) "add-2 adds its 2 args" (+ a b))
 add-2
 
@@ -3581,7 +3547,7 @@ add-2
 write a function that tells us where the source is for a function:
 </p>
 
-<pre>
+<pre class="indented">
 (define (where-is func)
   (let ((addr (symbol-&gt;value <em class=red>'__func__</em> (<em class=red>procedure-environment</em> func))))
     (if (not (pair? addr))
@@ -3601,7 +3567,7 @@ write a function that tells us where the source is for a function:
 more fun than a barrel of monkeys. Here is a self-modifying factorial function:
 </p>
 
-<pre>
+<pre class="indented">
 (define fact         ; Reini Urban, http://autocad.xarch.at/lisp/self-mod.lsp.txt
   (let ((old '())
 	(result '()))
@@ -3638,7 +3604,7 @@ so that everything in s7 knows about the change.
 Here's a more useful example; it adds trace and local variable info for debugging:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (procedure-annotate proc)
   (let ((orig (<em class=red>procedure-source</em> proc)))
 
@@ -3731,19 +3697,16 @@ this in procedure-arity?
 
 </blockquote>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="evalstring"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>eval</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="evalstring"><h4>eval</h4></a></div>
+
+
+
 
 <p>
 <b>eval</b> evaluates its argument, a list representing a piece of code.  It takes an optional
@@ -3751,7 +3714,7 @@ second argument, the environment in which the evaluation should take place.  <b>
 is similar, but its argument is a string.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (eval '(+ 1 2))
 3
 
@@ -3770,7 +3733,7 @@ example, then any input is evaluated in the environment of the break.  Say we ha
 following code in ex.scm:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (break)
   `(let ((break-env (<em class=red>current-environment</em>))
 	 (prompt (format #f "~%~A &gt; " (if (defined? '__func__) __func__ "break"))))
@@ -3808,7 +3771,7 @@ following code in ex.scm:
 Start up a REPL, and:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (load "ex.scm")
 (a-function "ex.scm" 26) &gt; x    ; here we're in the debugger
 32
@@ -3821,24 +3784,21 @@ done!
 
 </blockquote>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="IO"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>IO functions</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd>
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="IO"><h4>IO functions</h4></a></div>
+
+
+
 <p>Besides files, ports can also represent strings and functions.  The string port functions
 are:
 </p>
 
-<pre>
+<pre class="indented">
     (with-output-to-string thunk)         ; open a string port as current-output-port, call thunk, return string
     (with-input-from-string string thunk) ; open string as current-input-port, call thunk
     (call-with-output-string proc)        ; open a string port, apply proc to it, return string
@@ -3848,7 +3808,7 @@ are:
     (open-input-string string)            ; open a string input port reading string
 </pre>
 
-<pre>
+<pre class="indented">
 (let ((result #f) 
       (p (<em class=red>open-output-string</em>)))
   (format p "this ~A ~C test ~D" "is" #\a 3)
@@ -3894,23 +3854,20 @@ integer-decode-float, and the various bitwise operators.
 </div>
 </blockquote>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="errors"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>error handling</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p>s7's error handling mimics that of Guile.  An error is signalled
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="errors"><h4>error handling</h4></a></div>
+
+
+<p>s7's error handling mimics that of Guile.  An error is signalled
 via the error function, and can be trapped and dealt with via <a name="catch">catch</a>.
 </p>
 
-<pre>
+<pre class="indented">
 (<em class=red>catch</em> 'wrong-number-of-args
   (lambda ()     ; code protected by the catch
     (abs 1 2))
@@ -3964,21 +3921,21 @@ additional info about that error:
 <p>To find a variable's value at the point of the error:
 </p>
 
-<pre>
+<pre class="indented">
 (symbol-&gt;value var (vector-ref *error-info* 5))
 </pre>
 
 <p>To print the stack at the point of the error:
 </p>
 
-<pre>
+<pre class="indented">
 (stacktrace *error-info*)
 </pre>
 
 <p>To evaluate the error handler in the environment of the error:
 </p>
 
-<pre>
+<pre class="indented">
 (let ((x 1))
   (catch #t
 	 (lambda ()
@@ -4002,7 +3959,7 @@ Its functions take two arguments, the values passed by the error function:
 the error type and whatever other info accompanies it.
 </p>
 
-<pre>
+<pre class="indented">
 (set! (hook-functions *error-hook*) (list (lambda (tag args) (apply format #t args))))
 </pre>
 
@@ -4012,7 +3969,7 @@ or a continuation to
 show the continuation stack. 
 </p>
 
-<pre>
+<pre class="indented">
     (let ()
       (define (a1 a) (+ a #\c))
       (define (a2 b) (+ b (a1 b)))
@@ -4039,7 +3996,7 @@ Its functions take one argument,
 the unbound symbol.  In Snd, this is used to implement autoloading:
 </p>
 
-<pre>
+<pre class="indented">
 (set! (hook-functions <em class=red>*unbound-variable-hook*</em>)
   (list (lambda (sym)
           ;; add your own symbol checks here
@@ -4055,7 +4012,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 <div class="indented">
 <p>Sly evil-doers can subvert this hook to provide something similar to Common Lisp's symbol-macros:
 </p>
-<pre>
+<pre class="indented">
 &gt; (set! (hook-functions *unbound-variable-hook*)
     (list (lambda (sym)
             (if (eq? sym 'hiho)
@@ -4081,7 +4038,7 @@ There's a s7 lint checker: lint.scm in the Snd tarball.
 
 <p><a name="trace">trace</a> and untrace provide tracing:
 </p>
-<pre>
+<pre class="indented">
     (define (hiho arg) 
       (if (&gt; arg 0) 
           (+ 1 (hiho (- arg 1))) 
@@ -4113,7 +4070,7 @@ function and the list of current arguments.  The hook's functions are evaluated 
 traced function call (that is, global to the function, not the function's local environment).
 </p>
 
-<pre>
+<pre class="indented">
     (define (hiho a b c) (* a b c))
     (set! (hook-functions *trace-hook*) (list (lambda (f args) (format #t "sum of args: ~A~%" (apply + args)))))
     (trace hiho)
@@ -4124,26 +4081,23 @@ traced function call (that is, global to the function, not the function's local 
      24
 </pre>
 
-</dd>
 
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt class="spaced">
-<A NAME="miscellanea"></a>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>miscellanea</h4></td></tr></table>
-</td></tr></table>
-</dt>
 
-<dd><p><b><a name="loadpath">*load-path*</a></b> is a list of directories to search when loading a file.
+<!-- ******************************************************************************** -->
+
+<div class="header"><A NAME="miscellanea"><h4>miscellanea</h4></a></div>
+
+
+<p><b><a name="loadpath">*load-path*</a></b> is a list of directories to search when loading a file.
 <b><a name="loadhook">*load-hook*</a></b> is a hook whose functions are called just before a file is loaded.  
 The hook function argument is the filename.
 While loading, the port-filename and port-line-number of the current-input-port can tell you
 where you are in the file.
 </p>
 
-<pre>
+<pre class="indented">
 (set! (hook-functions *load-hook*) (list (lambda (name) (format #t "loading ~S...~%" name))))
 </pre>
 
@@ -4152,7 +4106,7 @@ to the *load-path* variable so that subsequent loads don't need to specify
 the directory:
 </p>
 
-<pre>
+<pre class="indented">
 (set! (hook-functions <em class=red>*load-hook*</em>)
   (list (lambda (filename)
           (let ((pos -1)
@@ -4176,7 +4130,7 @@ check it with the <b>provided?</b> function, or add something to it with <b>prov
 at startup *features* is:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; *features*
 (snd12 snd snd-s7 snd-motif gsl alsa xm clm4 clm sndlib gmp s7)
 
@@ -4185,8 +4139,7 @@ at startup *features* is:
 </pre>
 
 
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
 <p>Multi-line and in-line comments can be enclosed in #| and |#.
 <code>(+ #| add |# 1 2)</code>.
@@ -4203,7 +4156,7 @@ passed in is not the complete #-expression, the function can use read-char or re
 rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 </p>
 
-<pre>
+<pre class="indented">
 (set! *#readers* 
       (cons (cons #\t (lambda (str) 
                         (string-&gt;number (substring str 1) 12)))
@@ -4222,7 +4175,7 @@ sequence, there are many cases that aren't errors, and the file is no longer bei
 I need to know where something unexpected happened.  So:
 </p>
 
-<pre>
+<pre class="indented">
 (set! *#readers* 
       (cons (cons #\_ (lambda (str)
 			(if (string=? str "__line__")
@@ -4236,7 +4189,7 @@ I need to know where something unexpected happened.  So:
 <p>Here's a reader macro for read-time evaluation:
 </p>
 
-<pre>
+<pre class="indented">
 (set! *#readers*
   (cons (cons #\. (lambda (str)
 		    (if (string=? str ".") (eval (read)) #f)))
@@ -4248,7 +4201,7 @@ I need to know where something unexpected happened.  So:
 
 <p>To return no value from a reader, use <code>(values)</code>.
 </p>
-<pre>
+<pre class="indented">
     &gt; (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
     ((#\; . #&lt;closure&gt;))
     &gt; (+ 1 #;(* 2 3) 4)
@@ -4256,9 +4209,7 @@ I need to know where something unexpected happened.  So:
 </pre>
 
 
-
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
- <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
 <p>(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.
 </p>
@@ -4269,7 +4220,7 @@ it modifies the list passed to it in the process of reversing its contents.
 function passed as its second argument to choose the new ordering.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (sort! (list 3 4 8 2 0 1 5 9 7 6) &lt;)
 (0 1 2 3 4 5 6 7 8 9)
 
@@ -4294,8 +4245,7 @@ function passed as its second argument to choose the new ordering.
 but vectors are sorted in place.  
 </p>
 
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
 <p>
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
@@ -4306,15 +4256,14 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 
 
 
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
 <p>
 <code>(<a name="symboltable">symbol-table</a>)</code> returns the symbol table, a vector of lists of symbols.
 Here we scan the symbol table looking for any function that doesn't have documentation:
 </p>
 
-<pre>
+<pre class="indented">
        (let ((st (<em class=red>symbol-table</em>)))
          (do ((i 0 (+ i 1))) 
              ((= i (vector-length st)))
@@ -4334,7 +4283,7 @@ Here's a better example, an automatic software torture tester.  Even in kiddie m
 where we only feed in a few constants, I bet it segfaults!
 </p>
 
-<pre>
+<pre class="indented">
 (let ((constants (list #f #t pi () 1 1.5 3/2 1.5+i)))
 
   (define (autotest func args args-left)
@@ -4368,13 +4317,12 @@ where we only feed in a few constants, I bet it segfaults!
 </pre>
 
 
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
 <p><b>help</b> tries to find information about its argument.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (help 'caadar)
 "(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -&gt; 2"
 </pre>
@@ -4382,7 +4330,7 @@ where we only feed in a few constants, I bet it segfaults!
 <p>If the initial expression in a function body is a string constant, it is assumed to be a documentation string (accessible via help or procedure-documentation):
 </p>
 
-<pre>
+<pre class="indented">
 (define (add1 a)
   "(add1 a) adds 1 to its argument"
   (+ a 1))
@@ -4392,17 +4340,15 @@ where we only feed in a few constants, I bet it segfaults!
 </pre>
 
 
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
 <p><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
 </p>
 
 
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
-<pre>
+<pre class="indented">
     (<b><a name="morallyequalp">morally-equal?</a></b> x y)
 </pre>
 
@@ -4411,7 +4357,7 @@ followed by an exercise for the reader.
 Say we want to check that two different computations came to the same result, and that result might
 involve circular structures.  Will equal? be our friend?
 </p>
-<pre>
+<pre class="indented">
     &gt; (equal? 2 2.0)
     #f
     &gt; (= 2 2.0)
@@ -4433,7 +4379,7 @@ So, in s7, if one thing is basically the same as
 some other thing, they satisfy the function morally-equal?.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (morally-equal? 2 2.0)
 #t
 &gt; (morally-equal? 1/0 1/0)
@@ -4441,7 +4387,7 @@ some other thing, they satisfy the function morally-equal?.
 &gt; (morally-equal? (lambda () #f) (lambda () #f))
 #t
 </pre>
-<br>
+
 
 <!--
 <p>
@@ -4454,8 +4400,7 @@ bind it to something else, which is asking for confusion).
 -->
 
 
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
 <p>Some other differences from r5rs:
 </p>
@@ -4497,7 +4442,7 @@ acceptable in that regard.  One place where the quote matters is in a case state
 evaluated but the key is not:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (case '() ((()) 2) (else 1))
 2
 &gt; (case '() (('()) 2) (else 1)) ; (eqv? '() ''()) is #f
@@ -4544,7 +4489,7 @@ Guile and Common Lisp accept all three, but that leads to weird cases where we c
 into a function's body:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((x (lambda () '(1 2 3)))) (list-set! (x) 1 32) (x))
 (1 32 3) ; s7, Guile
 
@@ -4560,7 +4505,7 @@ But it's possible to reach into a function's closure, even when the
 closed-over thing is a constant:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
 (1 32 3)
 
@@ -4574,7 +4519,7 @@ closed-over thing is a constant:
 <p>And it's possible to reach into a constant list via list-set! (or set-car! of course):
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let* ((x '(1 2)) (y (list x)) (z (car y))) (list-set! z 1 32) (list x y z))
 ((1 32) ((1 32)) (1 32))
 </pre>
@@ -4587,7 +4532,7 @@ If we flush "immutable constant" because it is a ham-fisted, whack-it-with-a-sho
 the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly an error:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (setf (elt (symbol-name 'xyz) 1) #\X)
 *** - Attempt to modify a read-only string: "XYZ"
 </pre>
@@ -4595,7 +4540,7 @@ the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly
 <p>And in Guile:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (string-set! (symbol-&gt;string 'symbol-&gt;string) 1 #\X)
 ERROR: string is read-only: "symbol-&gt;string"
 </pre>
@@ -4608,7 +4553,7 @@ returns a copy of the string.
 One simple way to ensure immutability is to use copy:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
 "hiho"
 </pre>
@@ -4619,7 +4564,7 @@ set some member of it to something that needs GC protection, nobody in the heap 
 it is GC'd.  Here is an example:
 </p>
 
-<pre>
+<pre class="indented">
 (define (bad-idea)
   (let ((lst '(1 2 3)))              ; or #(1 2 3) and vector-ref|set
     (let ((result (list-ref lst 1)))
@@ -4644,7 +4589,7 @@ You can pass them to memq, or print them, for example; you can even evaluate the
 The print syntax is borrowed from CL:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((lst (list 1 2 3))) 
     (set! (cdr (cdr (cdr lst))) lst) 
     lst)
@@ -4669,7 +4614,7 @@ the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 <p>Here's an amusing use of circular lists:
 </p>
 
-<pre>
+<pre class="indented">
 (define (for-each-permutation func vals)
   ;; apply func to every permutation of vals: 
   ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
@@ -4689,7 +4634,6 @@ the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
     (pinner '() vals len)
     (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
 </pre>
-<br>
 </div>
 
 
@@ -4715,7 +4659,7 @@ name, but ".." is.
 These weird symbols have to be printed sometimes:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (list 1 (string-&gt;symbol (string #\; #\" #\\)) 2)
 (1 ;"\ 2)            <!-- " -->
 &gt; (list 1 (string-&gt;symbol (string #\.)) 2)
@@ -4726,7 +4670,7 @@ These weird symbols have to be printed sometimes:
 In CL and some Schemes:
 </p>
 
-<pre>
+<pre class="indented">
 [1]&gt; (list 1 (intern (coerce (list #\; #\" #\\) 'string)) 2) ; thanks to Rob Warnock
 (1 |;"\\| 2)        <!-- " -->
 [2]&gt; (equalp 'A '|A|) ; in CL case matters here
@@ -4737,7 +4681,7 @@ T
 I think I'll use "symbol" instead:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (list 1 (string-&gt;symbol (string #\; #\" #\\)) 2)
 (1 (symbol ";\"\\") 2)       <!-- " -->
 </pre>
@@ -4754,7 +4698,7 @@ but then one vertical bar is trouble.
 These symbols are not just an optimization of string comparison:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (hi a) 
   (let ((funny-name (string-&gt;symbol (string #\;))))
     `(let ((,funny-name ,a)) (+ 1 ,funny-name))))
@@ -4791,7 +4735,7 @@ These symbols are not just an optimization of string comparison:
 <p>The built-in syntactic names, such as "begin", are almost first-class citizens.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((progn begin)) 
     (progn 
       (define x 1) 
@@ -4822,7 +4766,7 @@ These symbols are not just an optimization of string comparison:
 <p>We can snap together program fragments ("look Ma, no macros!"):
 </p>
 
-<pre>
+<pre class="indented">
 (let* ((x 3) 
        (arg '(x)) 
        (body `((+ ,x x 1)))) 
@@ -4845,7 +4789,7 @@ These symbols are not just an optimization of string comparison:
 new function or macro, you need to use either eval or symbol-&gt;value:
 </p>
 
-<pre>
+<pre class="indented">
 &gt; ((symbol-&gt;value (apply define-macro '((m a) `(+ 1 ,a)))) 3)
 4
 &gt; ((symbol-&gt;value (apply define '((hi a) (+ a 1)))) 3)
@@ -4855,7 +4799,7 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 <p>This gives us a way to make anonymous macros, just as lambda returns an anonymous function:
 </p>
 
-<pre>
+<pre class="indented">
 (define-macro (mu args . body)
   (let ((m (gensym)))
     `(symbol-&gt;value (apply define-macro '((,m ,@args) ,@body)))))
@@ -4884,7 +4828,7 @@ of it as being a little REPL.  begin does not introduce a new frame in
 the current environment, so defines happen at the enclosing level.
 </p>
 
-<pre>
+<pre class="indented">
 &gt; (let ((y 2)) 
       (let ((x 1)) 
         (begin 
@@ -4909,7 +4853,7 @@ expressed equally well as a ratio (floats are approximations)".  In s7 it's: "is
 otherwise "rational?" is the same as "real?":
 </p>
 
-<pre>
+<pre class="indented">
 (not-s7-scheme)&gt; (rational? (sqrt 2))
 #t
 </pre>
@@ -4923,7 +4867,7 @@ its fractional part is explicitly zero!  But +nan.0...
 And then there's:
 </p>
 
-<pre>
+<pre class="indented">
 (not-s7-scheme)&gt; (integer? 9007199254740993.1)
 #t
 </pre>
@@ -4934,7 +4878,7 @@ fractional part can be non-zero).
 In one Scheme:
 </p>
 
-<pre>
+<pre class="indented">
 (not-s7-scheme)&gt; (vector-ref #(0) (floor 0.1))
 ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a programmer mistake"!]
 </pre>
@@ -4942,7 +4886,7 @@ ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a pro
 <p>Not to worry, I'll use inexact-&gt;exact:
 </p>
 
-<pre>
+<pre class="indented">
 (not-s7-scheme)&gt; (inexact-&gt;exact 0.1)
 3602879701896397/36028797018963968                  ; [why? "floats are ratios"!]
 </pre>
@@ -4964,7 +4908,7 @@ If we discard the exact/inexact distinction,
 we can maintain backwards compatibility via:
 </p>
 
-<pre>
+<pre class="indented">
     (define exact? rational?)
     (define (inexact? x) (not (rational? x)))
     (define inexact-&gt;exact rationalize) ; or floor
@@ -4975,7 +4919,7 @@ we can maintain backwards compatibility via:
 have any number after, for example, #b:
 </p>
 
-<pre>
+<pre class="indented">
     &gt; #b1.1
     1.5
     &gt; #b1e2
@@ -4996,7 +4940,6 @@ have any number after, for example, #b:
 </p>
 
 <pre>
-
   (define vector-map map) (define vector-for-each for-each) (define copy-vector copy) (define (vector-&gt;string vect) (apply string (vector-&gt;list vect)))
   (define string-map map) (define string-for-each for-each) (define (string-&gt;vector str) (apply vector (string-&gt;list str)))
   (define copy-list copy)
@@ -5048,7 +4991,7 @@ have any number after, for example, #b:
 <p>Here are some additional changes I'd make to s7 if I didn't care about compatibility with other Schemes:
 </p>
 
-<pre>
+<pre class="indented">
    remove the exact/inexact distinction including #i and #e
    remove `#(...) support (quasiquoted vector constants)
    remove *-ci functions
@@ -5064,7 +5007,7 @@ have any number after, for example, #b:
 <p>and perhaps:
 </p>
 
-<pre>
+<pre class="indented">
    remove even? and odd?
    remove the 4-way cxxxxr functions
    add file?, directory?, and delete-file
@@ -5083,7 +5026,7 @@ above is an embarrassment.
 Here's an idle thought:
 </p>
 
-<pre>
+<pre class="indented">
 (define f1 (let ((x 23))
 	     (lambda (a)
 	       (+ x a))))
@@ -5127,7 +5070,7 @@ waste a lot of time fixing this, I chose to flush multithreading.
 <p>"Life", a poem.
 </p>
 
-<pre>
+<pre class="indented">
 (+(*(+))(*)(+(+)(+)(*)))
 (((((lambda () (lambda () (lambda () (lambda () 1))))))))
 (+ (((lambda () values)) 1 2 3))
@@ -5139,17 +5082,10 @@ waste a lot of time fixing this, I chose to flush multithreading.
 </blockquote>
 
 
-</dd>
-<br>
-
-</dl>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<A NAME="FFIexamples"></a>
-<table vspace=30 border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h3>FFI examples</h3></td></tr></table>
-</td></tr></table>
+<!-- ******************************************************************************** -->
+<div class="header"><A NAME="FFIexamples"><h4>FFI examples</h4></a></div>
 
 <p>s7 exists only to serve as an extension of some other application, so
 it is primarily a foreign function interface.  s7.h has lots of comments about the individual
@@ -5157,7 +5093,7 @@ functions.  Here I'll collect some complete examples.  s7.c depends on the follo
 compile-time flags:
 </p>
 
-<pre>
+<pre class="indented">
     HAVE_STDBOOL_H                 1 if you have stdbool.h
     HAVE_SYS_PARAM_H               1 if you're running FreeBSD
     HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
@@ -5208,13 +5144,7 @@ The examples that follow show:
 
 
 
-<A NAME="repl"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>A simple listener</h4></td></tr></table>
-</td></tr></table>
-
-<br>
+<div class="header"><A NAME="repl"><h4>A simple listener</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5277,7 +5207,7 @@ int main(int argc, char **argv)
  */
 </pre>
 </td></tr></table>
-<br>
+
 <p>Since this reads stdin and writes stdout, it can be run as a Scheme subjob of emacs.
 One (inconvenient) way to do this is to set the emacs variable scheme-program-name to
 the name of the exectuable created above ("doc7"), then call the emacs function run-scheme:
@@ -5317,14 +5247,7 @@ See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook t
 
 
 
-<A NAME="defun"></a>
-
-<table vspace=30 border=0 width="60%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Define a function with arguments and a returned value, and a variable</h4></td></tr></table>
-</td></tr></table>
-<br>
-
+<div class="header"><A NAME="defun"><h4>Define a function with arguments and a returned value, and a variable</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5385,12 +5308,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="defvar"></a>
-<table vspace=30 border=0 width="70%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Call a Scheme-defined function from C, and get/set Scheme variable values in C</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="defvar"><h4>Call a Scheme-defined function from C, and get/set Scheme variable values in C</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5435,13 +5353,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="juce"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>C++ and Juce, from Rick Taube</h4></td></tr></table>
-</td></tr></table>
-<br>
-
+<div class="header"><A NAME="juce"><h4>C++ and Juce, from Rick Taube</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5477,12 +5389,7 @@ int main(int argc, const char* argv[])
 
 
 
-<A NAME="sndlib"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Load sndlib using the XEN functions and macros into an s7 repl</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="sndlib"><h4>Load sndlib using the XEN functions and macros into an s7 repl</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5580,12 +5487,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="pwstype"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Add a new Scheme type and procedure-with-setters</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="pwstype"><h4>Add a new Scheme type and procedure-with-setters</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5762,12 +5664,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="functionportexample"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Redirect output (and input) to a C procedure</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="functionportexample"><h4>Redirect output (and input) to a C procedure</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5831,12 +5728,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="extendop"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Extend a built-in operator ("+" in this case)</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="extendop"><h4>Extend a built-in operator ("+" in this case)</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5902,13 +5794,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="definestar1"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>C-side define* (s7_define_function_star)</h4></td></tr></table>
-</td></tr></table>
-<br>
-
+<div class="header"><A NAME="definestar1"><h4>C-side define* (s7_define_function_star)</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -5965,13 +5851,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="definemacro1"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>C-side define-macro (s7_define_macro)</h4></td></tr></table>
-</td></tr></table>
-<br>
-
+<div class="header"><A NAME="definemacro1"><h4>C-side define-macro (s7_define_macro)</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6025,13 +5905,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="signal"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Signal handling and continuations</h4></td></tr></table>
-</td></tr></table>
-<br>
-
+<div class="header"><A NAME="signal"><h4>Signal handling and continuations</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6118,13 +5992,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="vector"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Multidimensional vector element access</h4></td></tr></table>
-</td></tr></table>
-<br>
-
+<div class="header"><A NAME="vector"><h4>Multidimensional vector element access</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6211,13 +6079,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="notify"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Notification from Scheme that a given Scheme variable has been set</h4></td></tr></table>
-</td></tr></table>
-<br>
-
+<div class="header"><A NAME="notify"><h4>Notification from Scheme that a given Scheme variable has been set</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6293,12 +6155,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="namespace"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Load C defined stuff into a separate namespace</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="namespace"><h4>Load C defined stuff into a separate namespace</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6402,13 +6259,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="Cerrors"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Handle scheme errors in C</h4></td></tr></table>
-</td></tr></table>
-<br>
-
+<div class="header"><A NAME="Cerrors"><h4>Handle scheme errors in C</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6518,12 +6369,8 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="closure"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Closures in C</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="closure"><h4>Closures in C</h4></a></div>
+
 <p>We often have hooks or callback lists in Scheme, and would like to place a C-defined
 s7 function on such a list.  If the C-side function does not have
 any state, we can just add its name to the list, but if it is effectively a closure, we have a problem.  C itself does not
@@ -6635,12 +6482,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="testhook"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>C and Scheme hooks</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="testhook"><h4>C and Scheme hooks</h4></a></div>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -6715,12 +6557,8 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="cload"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Load a shared library</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="cload"><h4>Load a shared library</h4></a></div>
+
 <p>We can use dlopen to load a shared library, and dlsym to initialize
 that library in our main program.  The tricky part is to conjure up the right
 compiler and loader flags.
@@ -6836,12 +6674,8 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="gmpex"></a>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>Bignums in C</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="gmpex"><h4>Bignums in C</h4></a></div>
+
 <p>Bignum support depends on gmp, mpfr, and mpc.  In this example, we define "add-1" which adds
 1 to any kind of number.  The s7_big_* functions return the underlying gmp/mpfr/mpc pointer,
 so we have to copy that into a new number before adding.
@@ -6974,12 +6808,8 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="gtkrepl"></A>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>gtk-based repl</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="gtkrepl"><h4>gtk-based repl</h4></A></div>
+
 <p>In this example, we use Gtk to make a window with a scrolled text widget, running s7
 in a read-eval-print loop.  I've tried to make this as short as possible; see Snd for
 a much more elaborate REPL.  From s7's point of view, the only tricky part involves
@@ -7193,12 +7023,7 @@ int main(int argc, char **argv)
 
 
 
-<A NAME="gtkschemerepl"></A>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>scheme-based repl (using gtk)</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="gtkschemerepl"><h4>scheme-based repl (using gtk)</h4></A></div>
 
 <p>In the same vein, we can use libxm's Gtk/s7 bindings to make the REPL in Scheme.
 Here is the same code, but now using libxm; first the C side, called gtkex.c:
@@ -7350,12 +7175,7 @@ There are several things that may change once Gtk settles down.
 
 
 
-<A NAME="s7inathread"></A>
-<table vspace=30 border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>s7 and pthreads</h4></td></tr></table>
-</td></tr></table>
-<br>
+<div class="header"><A NAME="s7inathread"><h4>s7 and pthreads</h4></A></div>
 
 <p>There is one major flaw in the two preceding REPLs; if s7 gets caught in an infinite loop (via
 <code>(do () ())</code> for example), you have to kill the main program to stop it.  We could use
@@ -7640,17 +7460,12 @@ trigger arbitrary Scheme code, it would be completely unreasonable to wrap these
 around every bit of code that might touch the user interface (consider the xg module!).
 So...
 </p>
-<br>
 
 
 
 
-<A NAME="replrescue"></A>
-<table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle">
-<h4>begin-hook</h4></td></tr></table>
-</td></tr></table>
-<br>
+
+<div class="header"><A NAME="replrescue"><h4>begin-hook</h4></A></div>
 
 <p>
 Common Lisp has something called "evalhook" that makes it possible
@@ -7764,7 +7579,6 @@ int main(int argc, char **argv)
 </pre>
 </td></tr></table>
 
-<br>
 
 <table border=1 hspace=20 cellspacing=2 cellpadding=16>
 <tr><td bgcolor="#fbfbf0">
@@ -7807,7 +7621,7 @@ static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {exit(0);
 static bool begin_hook(s7_scheme *sc)
 {
   C_c_typed = false;
-  if (gtk_events_pending()) /* this is very slow -- see snd-listener.c for a work-around */
+  if (gtk_events_pending()) /* this is very slow &mdash; see snd-listener.c for a work-around */
     gtk_main_iteration();
   return(C_c_typed);
 }</em>
