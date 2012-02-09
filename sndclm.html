@@ -3,7 +3,7 @@
 <html>
 <head>
 <title>CLM</title>
-<style>
+<style type="text/css">
 	EM.red {color:red; font-style: normal}
 	EM.gen {font-weight: bold; font-style: normal}
         EM.error {color:chocolate; font-style: normal}
@@ -23,6 +23,10 @@
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black; padding-right: 0.2cm}
 	A.olddef {font-style: normal; text-decoration:none; color:gray; padding-right: 0.2cm}
 	EM.gray {color:gray; font-style: normal}
+
+        TD.green {background-color: lightgreen}
+	TD.bluish {background-color: #f2f4ff}
+	TD.beige {background-color: beige}
 </style>
 
 
@@ -102,8 +106,8 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 <br>
 
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
+<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
+<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
 </td></tr></table>
 
 <br>
@@ -199,8 +203,8 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 
 <br><br>
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A class=def NAME="introduction">Introduction</a></h2></td></tr></table>
+<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
+<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A class=def NAME="introduction">Introduction</a></h2></td></tr></table>
 </td></tr></table>
 
 <table border=0 hspace=100 vspace=20><tr><td>
@@ -617,7 +621,7 @@ snd-rt:
 <A NAME="oscildoc"></A>
 <!-- ---------------------------------------- OSCIL ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>oscil</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>oscil</h3></div></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-oscil">make-oscil</a> (frequency *clm-default-frequency*) (initial-phase 0.0)
@@ -679,7 +683,7 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>oscil methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>oscil methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>1 (no set!)</td></tr>
@@ -1070,7 +1074,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 <A NAME="envdoc"></A>
 <!-- ---------------------------------------- ENV ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>env</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>env</h3></div></td></tr></table>
 <br>
 
 <pre>
@@ -1148,7 +1152,7 @@ lambda: ( -- )
 
 <table border=0 hspace=40 vspace=20><tr><td>
 <table border=1 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>env methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>env methods</center></td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>number of calls so far on this env</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>base</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>breakpoint list</td></tr>
@@ -1383,9 +1387,9 @@ and glissando is frequency modulation.  Both cause a broadening of the spectral 
 <img src="pix/frqenvspectrum.png" alt="frq env spectrum" onmouseout="UnTip()" onmouseover="Tip('fft size: 65536, Blackman10 window.<br><br><pre>(with-sound (:srate 10000)<br>  (let* ((ampf (make-env \'(0 0 10 0 11 1 25 1 26 0 40 0) <br>			 :duration 40<br>			 :scaler (hz-&gt;radians 200)))<br>	 (osc (make-oscil 100))<br>	 (samps (seconds-&gt;samples 40))<br>	 (start (seconds-&gt;samples 0))<br>	 (end (+ start samps)))<br>    (do ((i 0 (+ 1 i)))<br>	((= i end))<br>      (outa (+ i start) (oscil osc (env ampf))))))<br></pre>')">
 </td></tr>
 <tr>
-<td bgcolor="#f2f4ff"><small><center>truncated pyramid amplitude envelope<br>multiplied by sinusoid at 50Hz</center></small>
+<td class="bluish"><small><center>truncated pyramid amplitude envelope<br>multiplied by sinusoid at 50Hz</center></small>
 </td><td></td>
-<td bgcolor="#f2f4ff"><small><center>truncated pyramid frquency envelope<br>sinusoid from 100Hz to 300Hz</center></small>
+<td class="bluish"><small><center>truncated pyramid frquency envelope<br>sinusoid from 100Hz to 300Hz</center></small>
 </td>
 </tr></table>
 
@@ -1475,7 +1479,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 <A NAME="table-lookupdoc"></A>
 <!-- ---------------------------------------- TABLE-LOOKUP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>table-lookup</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>table-lookup</h3></div></td></tr></table>
 <br>
 
 <pre>
@@ -1545,7 +1549,7 @@ make-table-lookup-with-env (defined in generators.scm) returns a new table-looku
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>table-lookup methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>table-lookup methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>wave vct</td></tr>
@@ -1868,7 +1872,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 <A NAME="polywavedoc"></A>
 <!-- ---------------------------------------- POLYWAVE, POLYSHAPE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>polywave, polyshape</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>polywave, polyshape</h3></div></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-polywave">make-polywave</a> 
@@ -2016,7 +2020,7 @@ in phase and amplitude at run-time by setting a vct value.
 
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>polywave methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>polywave methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>index (polywave only)</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -2640,7 +2644,7 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 <A NAME="sawtoothdoc"></A>
 <!-- ---------------------------------------- SAWTOOTH ETC ---------------------------------------- -->
 
-<table width="70%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></div></td></tr></table>
+<table width="70%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></div></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-triangle-wave">make-triangle-wave</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
@@ -2707,7 +2711,7 @@ lambda: ( -- )
 
 
 <table border=1 align=left hspace=40 vspace=20 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>saw-tooth and friends' methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>saw-tooth and friends' methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
@@ -2996,11 +3000,11 @@ A more reasonable square-wave can be generated via
 
 <table border=1 hspace=20 vspace=10>
 <tr>
-<td bgcolor="#f2f4ff"><center>B: 1.0</center></td>
+<td class="bluish"><center>B: 1.0</center></td>
 <td width=16></td>
-<td bgcolor="#f2f4ff"><center>B: 3.0</center></td>
+<td class="bluish"><center>B: 3.0</center></td>
 <td width=16></td>
-<td bgcolor="#f2f4ff"><center>B: 100.0</center></td>
+<td class="bluish"><center>B: 100.0</center></td>
 </tr>
 <tr>
 <td>
@@ -3368,7 +3372,7 @@ for more dicussion about using these generators as FM modulators.
 <A NAME="ncosdoc"></A>
 <!-- ---------------------------------------- NCOS, NSIN ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>ncos and nsin</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ncos and nsin</h3></div></td></tr></table>
 <br>
 
 <pre>
@@ -3437,7 +3441,7 @@ cancel except the last.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>ncos methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>ncos methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>(/ 1.0 cosines)</td></tr>
@@ -3612,7 +3616,7 @@ for J1(B/(n*k))) approach 0.
 <tr><td>
 
 <table border=1 cellpadding=4>
-<tr><td colspan=3 bgcolor="#f2f4ff"><center>4 components: (ncfm x 1000 100 3.0 4)</center></td></tr>
+<tr><td colspan=3 class="bluish"><center>4 components: (ncfm x 1000 100 3.0 4)</center></td></tr>
 <tr><td>x=1000</td><td> 0.81</td><td> 0.81 from J0(3/(4*k)) '(0 0 0 0)</td></tr>
 <tr><td>x=900</td><td>-0.44</td><td>-0.32 from J1(3/4)*J0s  '(-1 0 0 0)</td></tr>
 <tr><td>x=800</td><td>-0.14</td><td>-0.16 from J1(3/8)*J0s  '(0 -1 0 0)</td></tr>
@@ -3622,7 +3626,7 @@ for J1(B/(n*k))) approach 0.
 </td><td width=20></td><td>
 
 <table border=1 cellpadding=4>
-<tr><td colspan=3 bgcolor="#f2f4ff"><center>24 components: (ncfm x 1000 100 3.0 24)</center></td></tr>
+<tr><td colspan=3 class="bluish"><center>24 components: (ncfm x 1000 100 3.0 24)</center></td></tr>
 <tr><td>x=1000</td><td>0.99</td><td> 0.99 from J0(3/(24*k)) '(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
 <tr><td>x=900</td><td>-0.06</td><td>-0.06 from J1(3/24)*J0s '(-1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
 <tr><td>x=800</td><td>-0.03</td><td>-0.03 from J1(3/48)*J0s '(0 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
@@ -3879,9 +3883,9 @@ but perhaps a filter is a simpler approach.  There are a lot more of these "kern
 
 <table border=1 hspace=20 cellspacing=4>
 <tr>
-<td bgcolor="#f2f4ff"><center>ncos2 (Fejer, n=10)</center></td>
-<td bgcolor="#f2f4ff"><center>npcos (Poussin, n=5)</center></td>
-<td bgcolor="#f2f4ff"><center>ncos4 (Jackson, n=10)</center></td>
+<td class="bluish"><center>ncos2 (Fejer, n=10)</center></td>
+<td class="bluish"><center>npcos (Poussin, n=5)</center></td>
+<td class="bluish"><center>ncos4 (Jackson, n=10)</center></td>
 </tr><tr>
 <td><img src="pix/fejer.png" alt="fejer sum"></td>
 <td><img src="pix/poussin.png" alt="poussin sum"></td>
@@ -3899,7 +3903,7 @@ the peak amp is nsin-max(n) + abs(sin(initial-phase))*(1 - nsin-max(n)).
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>nsin methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>nsin methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>dependent on number of sines</td></tr>
@@ -4107,7 +4111,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 
 <table border=1 hspace=20 vspace=10><tr><td>
 <table border=0 hspace=40 vspace=10>
-<tr><td colspan=3 bgcolor="#f2f4ff"><center><h4>various sums</h4></center></td></tr>
+<tr><td colspan=3 class="bluish"><center><h4>various sums</h4></center></td></tr>
 
 
 <tr>
@@ -4302,7 +4306,7 @@ reflection, please send it to me, and I'll add it to this collection.
 <A NAME="nrxydoc"></A>
 <!-- ---------------------------------------- NRXYSIN and NRXYCOS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>nrxysin and nrxycos</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>nrxysin and nrxycos</h3></div></td></tr></table>
 
 <br>
 <pre>
@@ -4366,7 +4370,7 @@ lambda: ( -- )
 
 <tr><td>
 <table align=left border=1 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>nrxysin methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>nrxysin methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"r" parameter; sideband scaler</td></tr>
@@ -4402,7 +4406,7 @@ lambda: ( -- )
 <table border=1 hspace=40><tr><td>
 <img src="pix/sinesummation.png" alt="nxry formula">
 </td></tr>
-<tr><td bgcolor="#f2f4ff"><center>nrxysin, n=5, r=0.5</center></td></tr>
+<tr><td class="bluish"><center>nrxysin, n=5, r=0.5</center></td></tr>
 </table></td></tr>
 </table>
 
@@ -4512,7 +4516,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 <A NAME="ssb-amdoc"></A>
 <!-- ---------------------------------------- SSB-AM ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>ssb-am</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ssb-am</h3></div></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-ssb-am">make-ssb-am</a> (frequency *clm-default-frequency*) (order 40)
@@ -4577,7 +4581,7 @@ phase-vocoder or granular synthesis kludges.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>ssb-am methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>ssb-am methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase (of embedded sin osc) in radians</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>embedded delay line size</td></tr>
@@ -4749,7 +4753,7 @@ We would replace the current make-ssb-am line with:
 <A NAME="wave-traindoc"></A>
 <!-- ---------------------------------------- WAVE-TRAIN ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>wave-train</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>wave-train</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-wave-train">make-wave-train</a> 
@@ -4832,7 +4836,7 @@ make-wave-train-with-env (defined in generators.scm) returns a new wave-train ge
 </p>
 
 <table border=1 cellpadding=4 hspace=40 vspace=10 align=left>
-<tr><td colspan=2 bgcolor="beige"><center>wave-train methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>wave-train methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>wave array (no set!)</td></tr>
@@ -4958,7 +4962,7 @@ trigger, and mus-reset to restart an envelope.
 <A NAME="randdoc"></A>
 <!-- ---------------------------------------- RAND, RAND-INTERP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>rand, rand-interp</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>rand, rand-interp</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-rand">make-rand</a> 
@@ -5051,7 +5055,7 @@ mus-rand-seed provides access to the seed for mus-random's random number generat
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>rand and rand-interp methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>rand and rand-interp methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>amplitude arg used in make-&lt;gen&gt;</td></tr>
@@ -5105,14 +5109,14 @@ both reflect that in their spectra (spectrum y axis is in dB):
 <td><img src="pix/sqsq.png" alt="sqwave spectrum"></td><td width=20></td><td><img src="pix/tritri.png" alt="triwave spectrum"></td>
 </tr>
 <tr>
-<td bgcolor="#f2f4ff"><center>square-wave (freq=1000)</center></td><td></td><td bgcolor="#f2f4ff"><center>triangle-wave (freq=1000)</center></td>
+<td class="bluish"><center>square-wave (freq=1000)</center></td><td></td><td class="bluish"><center>triangle-wave (freq=1000)</center></td>
 </tr>
 
 <tr>
 <td><img src="pix/randsq.png" alt="rand spectrum"></td><td></td><td><img src="pix/randtri.png" alt="rand-interp spectrum"></td>
 </tr>
 <tr>
-<td bgcolor="#f2f4ff"><center>rand (freq=2000)</center></td><td></td><td bgcolor="#f2f4ff"><center>rand-interp (freq=2000)</center></td>
+<td class="bluish"><center>rand (freq=2000)</center></td><td></td><td class="bluish"><center>rand-interp (freq=2000)</center></td>
 </tr>
 </table>
 
@@ -5256,9 +5260,9 @@ See also <a href="#green-noise">green-noise</a> &mdash; bounded brownian noise t
 <tr><td>
 <table border=0>
 <tr>
-<td bgcolor="#f2f4ff"><center>random</center></td>
-<td bgcolor="#f2f4ff"><center>rand</center></td>
-<td bgcolor="#f2f4ff"><center>rand-interp</center></td>
+<td class="bluish"><center>random</center></td>
+<td class="bluish"><center>rand</center></td>
+<td class="bluish"><center>rand-interp</center></td>
 </tr><tr>
 <td><img src="pix/random.png" alt="random spectrum"></td>
 <td><img src="pix/rand.png" alt="rand spectrum"></td>
@@ -5267,9 +5271,9 @@ See also <a href="#green-noise">green-noise</a> &mdash; bounded brownian noise t
 </td></tr><tr><td>
 <table border=0>
 <tr>
-<td bgcolor="#f2f4ff"><center>1/f</center></td>
-<td bgcolor="#f2f4ff"><center>brownian</center></td>
-<td bgcolor="#f2f4ff"><center>green</center></td>
+<td class="bluish"><center>1/f</center></td>
+<td class="bluish"><center>brownian</center></td>
+<td class="bluish"><center>green</center></td>
 </tr><tr>
 <td><img src="pix/1f.png" alt="1/f spectrum"></td>
 <td><img src="pix/brownian.png" alt="brownian spectrum"></td>
@@ -5404,7 +5408,7 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 <A NAME="two-zerodoc"></A>
 <!-- ---------------------------------------- SIMPLE FILTERS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>one-pole, one-zero, two-pole, two-zero</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>one-pole, one-zero, two-pole, two-zero</h3></div></td></tr></table>
 
 <pre>
    <a class=def name="make-one-pole">make-one-pole</a> a0 b1    ; b1 &lt; 0.0 gives lowpass, b1 &gt; 0.0 gives highpass
@@ -5479,7 +5483,7 @@ excellent.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>simple filter methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>simple filter methods</center></td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>a0, a1, a2 in equations</td></tr>
 <tr><td><em class=gen>mus-ycoeff</em></td><td>b1, b2 in equations</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>1 or 2 (no set!)</td></tr>
@@ -5602,7 +5606,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 <A NAME="formantdoc"></A>
 <!-- ---------------------------------------- FORMANT ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>formant</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>formant</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-formant">make-formant</a> 
@@ -5671,7 +5675,7 @@ lambda: ( -- )
 <table border=0>
 <tr><td>
 <table border=1 hspace=40 vspace=16 cellpadding=4 align=left>
-<tr><td colspan=2 bgcolor="beige"><center>formant methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>formant methods</center></td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>formant radius</td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>formant center frequency</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>2 (no set!)</td></tr>
@@ -5859,7 +5863,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 <A NAME="iir-filterdoc"></A>
 <!-- ---------------------------------------- FILTERS ---------------------------------------- -->
 <br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>filter, iir-filter, fir-filter</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>filter, iir-filter, fir-filter</h3></div></td></tr></table>
 
 <pre>
    <a class=def name="make-filter">make-filter</a> order xcoeffs ycoeffs
@@ -5930,7 +5934,7 @@ order (it is the size of the coefficient array).
 
 <table border=0 hspace=20 cellspacing=20><tr><td>
 <table border=1 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>general filter methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>general filter methods</center></td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>filter order</td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>x (input) coeff</td></tr>
 <tr><td><em class=gen>mus-xcoeffs</em></td><td>x (input) coeffs</td></tr>
@@ -6040,7 +6044,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <A NAME="delaydoc"></A>
 <!-- ---------------------------------------- DELAY ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>delay, tap</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>delay, tap</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-delay">make-delay</a> 
@@ -6129,7 +6133,7 @@ mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>delay methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>delay methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no set!)</td></tr>
@@ -6199,7 +6203,7 @@ and is the basis for about a dozen extensions (comb and friends below).
 <A NAME="notchdoc"></A>
 <!-- ---------------------------------------- COMB, NOTCH ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>comb, notch</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>comb, notch</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-comb">make-comb</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
@@ -6279,7 +6283,7 @@ and the other arguments are also handled as in <a href="#delay">delay</a>.
 
 <table border=0><tr><td>
 <table border=1 hspace=40 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>comb, filtered-comb, and notch methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>comb, filtered-comb, and notch methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no set!)</td></tr>
@@ -6431,7 +6435,7 @@ in the feedback loop:
 <A NAME="all-passdoc"></A>
 <!-- ---------------------------------------- ALL-PASS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>all-pass</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>all-pass</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-all-pass">make-all-pass</a> 
@@ -6505,7 +6509,7 @@ comb filter.  If both scale terms are 0.0, we get a pure delay line.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>all-pass methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>all-pass methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no set!)</td></tr>
@@ -6576,7 +6580,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
 <A NAME="moving-averagedoc"></A>
 <!-- ---------------------------------------- MOVING-AVERAGE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>moving-average</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>moving-average</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-moving-average">make-moving-average</a> size initial-contents (initial-element 0.0)
@@ -6650,7 +6654,7 @@ lambda: ( -- )
 </p>
 
 <table align=left border=1 hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>moving-average methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>moving-average methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of table</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>table of last 'size' values</td></tr>
@@ -6701,7 +6705,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 <A NAME="srcdoc"></A>
 <!-- ---------------------------------------- SRC ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>src</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>src</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-src">make-src</a> input (srate 1.0) (width 5)
@@ -6820,7 +6824,7 @@ ratio between the old sampling rate and the new;  an srate of 2 causes the sound
 </p>
 
 <table border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>src methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>src methods</center></td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
 </table>
 
@@ -6931,7 +6935,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 <A NAME="convolvedoc"></A>
 <!-- ---------------------------------------- CONVOLVE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>convolve</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>convolve</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-convolve">make-convolve</a> input filter fft-size filter-size
@@ -7048,7 +7052,7 @@ called whenever convolve needs input.
 </p>
 
 <table border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>convolve methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>convolve methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft size used in the convolution</td></tr>
 </table>
 
@@ -7109,7 +7113,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 <!-- ---------------------------------------- GRANULATE ---------------------------------------- -->
 
 <!-- INDEX grains:Granular synthesis --><A class=def NAME="grains"></a>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>granulate</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>granulate</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-granulate">make-granulate</a>   
@@ -7239,7 +7243,7 @@ similar to the freeze function.
 </p>
 
 <table align=left border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>granulate methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>granulate methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>time (seconds) between output grains (hop)</td></tr>
 <tr><td><em class=gen>mus-ramp</em></td><td>length (samples) of grain envelope ramp segment</td></tr>
 <tr><td><em class=gen>mus-hop</em></td><td>time (samples)  between output grains (hop)</td></tr>
@@ -7387,7 +7391,7 @@ In the following example, we use the edit function to reverse every other grain:
 <A NAME="phase-vocoderdoc"></A>
 <!-- ---------------------------------------- PHASE-VOCODER ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>phase-vocoder</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>phase-vocoder</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-phase-vocoder">make-phase-vocoder</a> input (fft-size 512) (overlap 4) (interp 128) (pitch 1.0) analyze edit synthesize
@@ -7490,7 +7494,7 @@ lambda: ( -- )
 
 
 <table border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>phase-vocoder methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>phase-vocoder methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>pitch shift</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft-size</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>interp</td></tr>
@@ -7588,7 +7592,7 @@ moving-spectrum in generators.scm.
 <A NAME="asymmetric-fmdoc"></A>
 <!-- ---------------------------------------- ASYMMETRIC-FM ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>asymmetric-fm</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>asymmetric-fm</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> 
@@ -7651,7 +7655,7 @@ that we get a sum of cosines, and can therefore easily normalize the peak amplit
 
 
 <table align=left border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>asymmetric-fm methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>asymmetric-fm methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"r" parameter; sideband scaler</td></tr>
@@ -7718,7 +7722,7 @@ would be tricky to get time-varying indices.  In this instrument we sweep "r" wi
 <A NAME="framedoc"></A>
 <!-- ---------------------------------------- FRAME, MIXER ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>frames and mixers</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>frames and mixers</h3></div></td></tr></table>
 
 <p>
 There are two special data types in CLM: frames and mixers.
@@ -7762,7 +7766,7 @@ sound data input and output.
 
 <A NAME="framemuschannels"></A>
 <table border=1 cellpadding=4 hspace=40 vspace=20>
-<tr><td colspan=2 bgcolor="beige"><center>frame and mixer methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>frame and mixer methods</center></td></tr>
 <tr><td><em class=gen>mus-channels</em></td><td>number of channels accommodated</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-channels</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>frame data (vct)</td></tr>
@@ -7880,7 +7884,7 @@ unnecessary, and mixer-set! and frame-set! can be replaced with set!:
 <A NAME="filetosampledoc"></A>
 <!-- ---------------------------------------- FILE->SAMPLE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>sound IO</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>sound IO</h3></div></td></tr></table>
 
 <p>Sound file IO is based on a set of file readers and writers that deal either in samples, frames, or vcts.
 The six functions are file-&gt;sample, sample-&gt;file, file-&gt;frame, frame-&gt;file, array-&gt;file, and file-&gt;array.
@@ -8041,7 +8045,7 @@ and you forget to call mus-close, the GC will eventually do it for you.
 <A NAME="readindoc"></A>
 <!-- ---------------------------------------- READIN ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>readin</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>readin</h3></div></td></tr></table>
 
 <pre>
  <a class=def name="make-readin">make-readin</a> file (channel 0) (start 0) (direction 1) size
@@ -8094,7 +8098,7 @@ lambda: ( -- )
 
 
 <table border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>readin methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>readin methods</center></td></tr>
 <tr><td><em class=gen>mus-channel</em></td><td>channel arg to make-readin (no set!)</td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>current location in file</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>sample increment (direction arg to make-readin)</td></tr>
@@ -8141,7 +8145,7 @@ readin and <a href="#env">env</a>:
 <A NAME="out-anydoc"></A>
 <!-- ---------------------------------------- IN-ANY, OUT-ANY ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>in-any, out-any</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>in-any, out-any</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="out-any">out-any</a> loc data channel (output *output*)
@@ -8304,7 +8308,7 @@ use its :output argument:
 <!-- ---------------------------------------- LOCSIG ---------------------------------------- -->
 
 <!-- INDEX make-locsig:Sound placement -->
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>locsig</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>locsig</h3></div></td></tr></table>
 
 <pre>
  <a class=def name="make-locsig">make-locsig</a> 
@@ -8381,7 +8385,7 @@ by scaling the respective channel amplitudes
 </p> 
 
 <table border=1 cellpadding=4 hspace=40>
-<tr><td colspan=2 bgcolor="beige"><center>locsig methods</center></td></tr>
+<tr><td colspan=2 class="beige"><center>locsig methods</center></td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>output scalers (a vct)</td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>reverb scaler</td></tr>
 <tr><td><em class=gen>mus-xcoeffs</em></td><td>reverb scalers (a vct)</td></tr>
@@ -8490,7 +8494,7 @@ Here is an example of move-locsig:
 <A NAME="move-sounddoc"></A>
 <!-- ---------------------------------------- MOVE-SOUND ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>move-sound</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>move-sound</h3></div></td></tr></table>
 
 <pre>
  <a class=def name="make-move-sound">make-move-sound</a> dlocs-list (output *output*) (revout *reverb*)
@@ -8567,32 +8571,32 @@ The generic functions are:
 <table border=2 cellpadding=10 hspace=40><tr><td>
 
 <table cellspacing=0 cellpadding=0>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">channel being read/written</td></tr>
+<tr><td class="bluish"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f2f4ff"></td><td class="bluish">channel being read/written</td></tr>
 <tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-data">mus-data</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">vct of data</td></tr>
+<tr><td class="bluish"><a class=def name="mus-data">mus-data</a></td><td class="bluish"></td><td class="bluish">vct of data</td></tr>
 <tr><td><a class=def name="mus-describe">mus-describe</a></td><td></td><td>description of current state</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-feedback">mus-feedback</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">feedback coefficient</td></tr>
+<tr><td class="bluish"><a class=def name="mus-feedback">mus-feedback</a></td><td class="bluish"></td><td class="bluish">feedback coefficient</td></tr>
 <tr><td><a class=def name="mus-feedforward">mus-feedforward</a></td><td></td><td>feedforward coefficient</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-file-name">mus-file-name</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">file being read/written</td></tr>
+<tr><td class="bluish"><a class=def name="mus-file-name">mus-file-name</a></td><td class="bluish"></td><td class="bluish">file being read/written</td></tr>
 <tr><td><a class=def name="mus-frequency">mus-frequency</a></td><td></td><td>frequency (Hz)</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">hop size for block processing</td></tr>
+<tr><td class="bluish"><a class=def name="mus-hop">mus-hop</a></td><td class="bluish"></td><td class="bluish">hop size for block processing</td></tr>
 <tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-interp-type">mus-interp-type</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">interpolation type (mus-interp-linear, etc)</td></tr>
+<tr><td class="bluish"><a class=def name="mus-interp-type">mus-interp-type</a></td><td class="bluish"></td><td class="bluish">interpolation type (mus-interp-linear, etc)</td></tr>
 <tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data length</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-location">mus-location</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">sample location for reads/writes</td></tr>
+<tr><td class="bluish"><a class=def name="mus-location">mus-location</a></td><td class="bluish"></td><td class="bluish">sample location for reads/writes</td></tr>
 <tr><td><a class=def name="mus-name">mus-name</a></td><td></td><td>generator name ("oscil")</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-offset">mus-offset</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">envelope offset</td></tr>
+<tr><td class="bluish"><a class=def name="mus-offset">mus-offset</a></td><td class="bluish"></td><td class="bluish">envelope offset</td></tr>
 <tr><td><a class=def name="mus-order">mus-order</a></td><td></td><td>filter order</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-phase">mus-phase</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">phase (radians)</td></tr>
+<tr><td class="bluish"><a class=def name="mus-phase">mus-phase</a></td><td class="bluish"></td><td class="bluish">phase (radians)</td></tr>
 <tr><td><a class=def name="mus-ramp">mus-ramp</a></td><td></td><td>granulate grain envelope ramp setting</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-reset">mus-reset</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">set gen to default starting state</td></tr>
+<tr><td class="bluish"><a class=def name="mus-reset">mus-reset</a></td><td class="bluish"></td><td class="bluish">set gen to default starting state</td></tr>
 <tr><td><a class=def name="mus-run">mus-run</a></td><td></td><td>run any generator</td></tr>
 <tr><td><a class=def name="mus-scaler">mus-scaler</a></td><td></td><td>scaler, normally on an amplitude</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-width">mus-width</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">width of interpolation tables, etc</td></tr>
+<tr><td class="bluish"><a class=def name="mus-width">mus-width</a></td><td class="bluish"></td><td class="bluish">width of interpolation tables, etc</td></tr>
 <tr><td><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td></td><td>x (input) coefficient</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">vct of x (input) coefficients</td></tr>
+<tr><td class="bluish"><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td class="bluish"></td><td class="bluish">vct of x (input) coefficients</td></tr>
 <tr><td><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td></td><td>y (output, feedback) coefficient</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">vct of y (feedback) coefficients</td></tr>
+<tr><td class="bluish"><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td class="bluish"></td><td class="bluish">vct of y (feedback) coefficients</td></tr>
 </table>
 
 </td></tr></table>
@@ -10690,7 +10694,7 @@ This function determines how many mixer elements are printed by mus-describe.
 
 <!-- ---------------------------------------- POLYNOMIAL ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>polynomial</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>polynomial</h3></div></td></tr></table>
 
 <pre>
    <a class=def name="polynomial">polynomial</a> coeffs x
@@ -10746,7 +10750,7 @@ Here's a generator that uses polynomial to produce a Blackman4 waveform (see als
 
 <!-- ---------------------------------------- ARRAY-INTERP ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>array-interp, dot-product</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>array-interp, dot-product</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="array-interp">array-interp</a> fn x size
@@ -10817,7 +10821,7 @@ The "type" argument is one of the interpolation types (<code>mus-interp-linear</
 
 <!-- ---------------------------------------- CONTRAST-ENHANCEMENT ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>contrast-enhancement</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>contrast-enhancement</h3></div></td></tr></table>
 
 <pre>
    <a class=def name="contrast-enhancement">contrast-enhancement</a> in-samp (fm-index 1.0)
@@ -10856,7 +10860,7 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 
 <!-- ---------------------------------------- AMPLITUDE-MODULATE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>ring-modulate, amplitude-modulate</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ring-modulate, amplitude-modulate</h3></div></td></tr></table>
 
 <pre>
   <a class=def name="ring-modulate">ring-modulate</a> in1 in2                  ; returns <code>(* in1 in2)</code>
@@ -10947,7 +10951,7 @@ The upper sidebands may foldover (alias); if it's a problem, low-pass filter the
 
 <!-- ---------------------------------------- FFT ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><div class="centered"><h3>FFT (fourier transform)</h3></div></td></tr></table>
+<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>FFT (fourier transform)</h3></div></td></tr></table>
 <pre>
   <a class=def Name="fft">mus-fft</a> rdat idat fftsize sign
   <a class=def name="make-fft-window">make-fft-window</a> type size (beta 0.0) (alpha 0.0)

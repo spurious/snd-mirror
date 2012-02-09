@@ -1,7 +1,7 @@
 <html>
 <head>
 <title>Snd Quick Overview</title>
-<style>
+<style type="text/css">
 	EM.red {color:red; font-style: normal}
         EM.error {color:chocolate; font-style: normal}
         EM.narg {color:darkgreen; font-style: normal}
@@ -16,6 +16,8 @@
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
+
+	TH.green {background-color: lightgreen}
 </style>
 </head>
 <body bgcolor=white>
@@ -40,7 +42,7 @@
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen"><a class=quiet href="extsnd.html#colors">Colors</a></th><tr><td>
+<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#colors">Colors</a></th><tr><td>
 <blockquote><small><br>
 Other color-related stuff:<br>
 Color names: <a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a><br>
@@ -60,7 +62,7 @@ Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Conversions</th><tr><td>
+<table border=3 hspace=40><th class="green">Conversions</th><tr><td>
 <table border=0 cellspacing=0 cellpadding=0><tr>
 <td>
 <blockquote><small><br>
@@ -129,7 +131,7 @@ Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Copying</th><tr><td>
+<table border=3 hspace=40><th class="green">Copying</th><tr><td>
 <blockquote><small>
 <br>
 copy file: in Ruby: File.copy or File.syscopy<br>
@@ -150,7 +152,7 @@ copy vector: <a href="extsnd.html#vectortovct">vector-&gt;vct</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Cursor</th><tr><td>
+<table border=3 hspace=40><th class="green">Cursor</th><tr><td>
 <blockquote><small>
 <br>
 Tracking cursor: <a href="extsnd.html#withtrackingcursor">with-tracking-cursor</a><br>
@@ -169,7 +171,7 @@ tracking cursor updating: <a href="extsnd.html#cursorupdateinterval">cursor-upda
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Deletions</th><tr><td>
+<table border=3 hspace=40><th class="green">Deletions</th><tr><td>
 <small><blockquote>
 delete a file: in scheme delete-file or Ruby's File.delete<br>
 delete a region: <a href="extsnd.html#forgetregion">forget-region</a><br>
@@ -189,7 +191,7 @@ Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! str
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Envelopes</th><tr><td>
+<table border=3 hspace=40><th class="green">Envelopes</th><tr><td>
 <blockquote><small>
 <br>
 envelope sound: <a href="extsnd.html#envchannel">env-channel</a>, <a href="extsnd.html#envsound">env-sound</a><br>
@@ -217,7 +219,7 @@ step envelope in pitch: <a href="sndclm.html#rxyk!cos">brassy</a> in generators.
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">FFTs</th><tr><td>
+<table border=3 hspace=40><th class="green">FFTs</th><tr><td>
 <small><blockquote>
 Snd fft function: <a href="extsnd.html#fft">fft</a><br>
 CLM fft function: <a href="sndclm.html#fft">mus-fft</a><br>
@@ -255,7 +257,7 @@ apply function to spectrum, inverse fft: <a href="sndscm.html#filterfft">filter-
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Filters</th><tr><td>
+<table border=3 hspace=40><th class="green">Filters</th><tr><td>
 <blockquote><small>
 <br>
 filter a sound: <a href="extsnd.html#filtersound">filter-sound</a>, <a href="extsnd.html#filterchannel">filter-channel</a>, and <a href="extsnd.html#clmchannel">clm-channel</a><br>
@@ -296,7 +298,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Insertions</th><tr><td>
+<table border=3 hspace=40><th class="green">Insertions</th><tr><td>
 <small><blockquote>
 insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a><br>
 insert a silence: <a href="extsnd.html#padchannel">pad-channel</a>, <a href="extsnd.html#insertsilence">insert-silence</a>, <a href="sndscm.html#padsound">pad-sound</a><br>
@@ -312,7 +314,7 @@ insert sound-data: <a href="sndscm.html#insertsounddata">insert-sound-data</a><b
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen"><a class=quiet href="extsnd.html#sndmarks">Marks</a></th><tr><td>
+<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#sndmarks">Marks</a></th><tr><td>
 <blockquote><small>
 <br>
 global find-mark: <a href="sndscm.html#marknametoid">mark-name-&gt;id</a><br>
@@ -337,7 +339,7 @@ show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Maxamps</th><tr><td>
+<table border=3 hspace=40><th class="green">Maxamps</th><tr><td>
 <blockquote><small>
 <br>
 Sound file maxamp: <a href="extsnd.html#mussoundmaxamp">mus-sound-maxamp</a><br>
@@ -354,7 +356,7 @@ maxamp locations: <a href="extsnd.html#maxampposition">maxamp-position</a>, <a h
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen"><a class=quiet href="extsnd.html#sndmixes">Mixing</a></th><tr><td>
+<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#sndmixes">Mixing</a></th><tr><td>
 <blockquote><small>
 <br>
 mix sound file: <a href="extsnd.html#mix">mix</a> or drag-and-drop it where you want it mixed<br>
@@ -384,7 +386,7 @@ with-sound (a notelist) expanded into mixes: <a href="sndscm.html#withmixedsound
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Play</th><tr><td>
+<table border=3 hspace=40><th class="green">Play</th><tr><td>
 <small><blockquote>
 play from cursor: C-q and example above<br>
 play from cursor with tracking cursor: <a href="extsnd.html#pfc">pfc</a> above<br>
@@ -413,7 +415,7 @@ play an external file: (play "file")<br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Random numbers</th><tr><td>
+<table border=3 hspace=40><th class="green">Random numbers</th><tr><td>
 <blockquote><small>
 <br>
 generators, arbitrary distributions, fractals, 1/f: <a href="sndclm.html#randdoc">rand and rand-interp</a>, <a href="sndclm.html#round-interp">round-interp</a><br>
@@ -433,7 +435,7 @@ brown and pink noise: <a href="sndclm.html#brown-noise">brown-noise</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen"><a class=quiet href="extsnd.html#sndregions">Regions</a></th><tr><td>
+<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#sndregions">Regions</a></th><tr><td>
 <small><blockquote>
 Max length of region list: <a href="extsnd.html#maxregions">max-regions</a><br>
 Whether selection creates a region: <a href="extsnd.html#selectioncreatesregion">selection-creates-region</a><br>
@@ -452,7 +454,7 @@ region-play-list and region-play-sequence in examp.scm<br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Resampling</th><tr><td>
+<table border=3 hspace=40><th class="green">Resampling</th><tr><td>
 <small><blockquote>
 resample channel: <a href="extsnd.html#srcchannel">src-channel</a><br>
 resample all chans: <a href="extsnd.html#srcsound">src-sound</a><br>
@@ -478,7 +480,7 @@ linear src: linear-src-channel in dsp.scm<br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Reverbs</th><tr><td>
+<table border=3 hspace=40><th class="green">Reverbs</th><tr><td>
 <blockquote><small>
 <br>
 freeverb: <a href="sndscm.html#freeverbdoc">freeverb.scm, freeverb.rb</a><br>
@@ -495,7 +497,7 @@ convolution reverb: <a href="extsnd.html#convolvewith">conrev</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Reversing</th><tr><td>
+<table border=3 hspace=40><th class="green">Reversing</th><tr><td>
 <blockquote><small>
 <br>
 reverse channel: <a href="extsnd.html#reversechannel">reverse-channel</a>, <a href="extsnd.html#reversesound">reverse-sound</a><br>
@@ -517,7 +519,7 @@ reverse a frame: <a href="sndscm.html#framereverse">frame-reverse</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Saving</th><tr><td>
+<table border=3 hspace=40><th class="green">Saving</th><tr><td>
 <small><blockquote>
 save sound: <a href="extsnd.html#savesound">save-sound</a><br>
 save all sounds: <code>(for-each save-sound (sounds))</code><br>
@@ -548,7 +550,7 @@ save the current fft peak info: <a href="extsnd.html#peaks">peaks</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Searches</th><tr><td>
+<table border=3 hspace=40><th class="green">Searches</th><tr><td>
 <blockquote><small>
 <br>
 find a mark: <a href="extsnd.html#findmark">find-mark</a><br>
@@ -572,7 +574,7 @@ Scheme find: find-if<br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen"><a class=quiet href="extsnd.html#sndregions">Selections</a></th><tr><td>
+<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#sndregions">Selections</a></th><tr><td>
 <small><blockquote>
 show the current selection: <a href="extsnd.html#showselection">show-selection</a><br>
 color of selected portion: <a href="extsnd.html#selectioncolor">selection-color</a><br>
@@ -603,7 +605,7 @@ unselect everything: <a href="extsnd.html#unselectall">unselect-all</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Smoothing</th><tr><td>
+<table border=3 hspace=40><th class="green">Smoothing</th><tr><td>
 <small><blockquote>
 smooth channel: <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
 smooth all channels: <a href="extsnd.html#smoothsound">smooth-sound</a><br>
@@ -618,7 +620,7 @@ smooth over click: <a href="sndscm.html#removeclicks">remove-clicks</a> in examp
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Time Domain Display</th><tr><td>
+<table border=3 hspace=40><th class="green">Time Domain Display</th><tr><td>
 <blockquote><small>
 <br>
 Built-in keyboard commands: <a href="snd.html#movewindow">Moving the Window</a><br>
@@ -642,7 +644,7 @@ Axis description: <a href="extsnd.html#axisinfo">axis-info</a><br>
 
 
 <br>
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Undo</th><tr><td>
+<table border=3 hspace=40><th class="green">Undo</th><tr><td>
 <small><blockquote>
 undo edit: <a href="extsnd.html#undo">undo</a> and <a href="extsnd.html#undochannel">undo-channel</a><br>
 undo all edits: <a href="extsnd.html#revertsound">revert-sound</a><br>

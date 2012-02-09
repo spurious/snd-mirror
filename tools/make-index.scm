@@ -863,7 +863,7 @@
 <html>
 <head>
 <title>Snd Index</title>
-<style>
+<style type=\"text/css\">
 	EM.red {color:red; font-style:normal}
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
@@ -877,12 +877,15 @@
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
+
+        TD.green {background-color: lightgreen}
+	TD.beige {background-color: beige}
 </style>
 </head>
 <body bgcolor=white>
 
-<table border=0 width=\"100%\" cellpadding=2 cellspacing=0><tr><td bgcolor=\"lightgreen\">
-<table width=\"100%\" border=0><tr><td bgcolor=\"beige\" align=\"center\" valign=\"middle\"><h1>Index</h1></td></tr></table>
+<table border=0 width=\"100%\" cellpadding=2 cellspacing=0><tr><td class=\"green\">
+<table width=\"100%\" border=0><tr><td class=\"beige\" align=\"center\" valign=\"middle\"><h1>Index</h1></td></tr></table>
 </td></tr></table>
 
 <br>
@@ -903,7 +906,7 @@
 			      (if (not (ind-name name))
 				  ""
 				  (if (not (ind-sortby name))
-				      " bgcolor=\"lightgreen\""
+				      " class=\"green\""
 				      ""))
 			      (if (ind-char name)
 				  "<div class=\"centered\">"
