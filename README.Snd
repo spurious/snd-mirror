@@ -340,6 +340,10 @@ from the 'play' button complaining about data formats, probably
 that it can't handle big-endian shorts.
 
 
+In OpenBSD, use pulseaudio:
+ ./configure --with-gmp --with-gtk --with-pulseaudio CFLAGS=-ftrampolines LDFLAGS=-pthread 
+
+
 The Record dialog only works in Linux (OSS, perhaps ALSA), Sun (not x86),
 some SGI systems, and perhaps Mac OSX.  In Linux, someone below the level
 of my code randomly switches input between the microphone and the line-in

@@ -2826,7 +2826,9 @@ static void alsa_describe_audio_state_1(void)
 #define AUDIO_OK 1
 
 #include <sys/types.h>
-#include <stropts.h>
+#ifdef SUNOS
+  #include <stropts.h>
+#endif
 #include <sys/filio.h>
 
 #ifdef SUNOS
@@ -3008,7 +3010,9 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     }
   /* man audio sez the play.buffer_size field is not currently supported */
   /* but since the default buffer size is 8180! we need ioctl(audio_fd, I_SETSIG, ...) */
+#ifdef SUNOS
   ioctl(audio_fd, I_FLUSH, FLUSHR);
+#endif
   return(audio_fd);
 }
 

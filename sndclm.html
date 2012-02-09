@@ -27,6 +27,7 @@
         TD.green {background-color: lightgreen}
 	TD.bluish {background-color: #f2f4ff}
 	TD.beige {background-color: beige}
+	TD.brownish {background-color: #fbfbf0}
 </style>
 
 
@@ -645,7 +646,7 @@ snd-rt:
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   gen = make_oscil(440.0);
@@ -835,9 +836,9 @@ it produces a sinusoid with (usually very elaborate) amplitude and frequency env
 </pre>
 </td></tr></table>
 
-</td></tr><tr><td bgcolor="#fbfbf0">
+</td></tr><tr><td class="brownish">
 
-<table border=0 hspace=20><tr><td bgcolor="#fbfbf0">
+<table border=0 hspace=20><tr><td class="brownish">
 <pre>
 def ruby_bird(start, dur, freq, freqskew, amp, freq_envelope, amp_envelope)
   gls_env = make_env(:envelope, freq_envelope, :scaler, hz2radians(freqskew), :duration, dur)
@@ -1115,7 +1116,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   gen = make_oscil(440.0);
@@ -1510,7 +1511,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 </pre>
 </td>
 </tr><tr>
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   gen = make_table_lookup(440.0, :wave, partials2wave([1.0, 0.5, 2.0, 0.5]));
@@ -1917,7 +1918,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   gen = make_polywave(440.0,
@@ -2681,7 +2682,7 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   gen = make_triangle_wave(440.0);
@@ -3401,7 +3402,7 @@ for more dicussion about using these generators as FM modulators.
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   gen = make_ncos(440.0, 10);
@@ -4339,7 +4340,7 @@ reflection, please send it to me, and I'll add it to this collection.
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   gen = make_nrxycos(440.0, 1.0, 10, 0.5);
@@ -4542,7 +4543,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true, :srate, 44100) do
   shifter = make_ssb_am(440.0, 20);
@@ -4792,7 +4793,7 @@ We would replace the current make-ssb-am line with:
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   v = make_vct(64);
@@ -5007,7 +5008,7 @@ trigger, and mus-reset to restart an envelope.
 
 </tr><tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true, :channels, 2) do
   ran1 = make_rand(5.0, hz2radians(220.0));
@@ -5446,7 +5447,7 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   flt = make_two_pole(1000.0, 0.999);
@@ -5638,7 +5639,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   flt = make_firmant(1000.0, 0.999);
@@ -5898,7 +5899,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 
 </tr><tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   flt = make_iir_filter(3, vct(0.0, -1.978, 0.998));
@@ -6081,7 +6082,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   dly = make_delay(seconds2samples(0.5));
@@ -6237,7 +6238,7 @@ and is the basis for about a dozen extensions (comb and friends below).
 
 </tr><tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   cmb = make_comb(0.4, seconds2samples(0.4));
@@ -6467,7 +6468,7 @@ in the feedback loop:
 </td>
 </tr>
 <tr>
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   alp = make_all_pass(-0.4, 0.4, seconds2samples(0.4));
@@ -6610,7 +6611,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
 
 </tr><tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   avg = make_moving_average(4410);
@@ -6731,7 +6732,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true, :srate, 22050) do
   rd = make_readin("oboe.snd");
@@ -6775,7 +6776,7 @@ lambda: ( -- )
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   osc = make_oscil(440.0);
@@ -6963,7 +6964,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true, :statistics, true) do
   rd = make_readin("oboe.snd");
@@ -7010,7 +7011,7 @@ lambda: ( -- )
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   tempfile = convolve_files("oboe.snd", 
@@ -7147,7 +7148,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   rd = make_readin("oboe.snd");
@@ -7193,7 +7194,7 @@ lambda: ( -- )
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   osc = make_oscil(440.0);
@@ -7416,7 +7417,7 @@ In the following example, we use the edit function to reverse every other grain:
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   rd = make_readin("oboe.snd");
@@ -7461,7 +7462,7 @@ lambda: ( -- )
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true, :srate, 22050) do
   rd = make_readin("oboe.snd");
@@ -7620,7 +7621,7 @@ moving-spectrum in generators.scm.
 </tr>
 <tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   fm = make_asymmetric_fm(440.0, 0.0, 0.9, 0.5);
@@ -7947,7 +7948,7 @@ object.
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:channels, 2) do
   input = make_file2frame("stereo.snd");
@@ -8069,7 +8070,7 @@ and you forget to call mus-close, the GC will eventually do it for you.
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   reader = make_readin("oboe.snd");
@@ -8176,7 +8177,7 @@ readin and <a href="#env">env</a>:
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   infile = make_file2sample("oboe.snd");
@@ -8349,7 +8350,7 @@ use its :output argument:
 
 <td width=4></td>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true, :channels, 2) do
   loc = make_locsig(60.0, :output, $output);
@@ -10884,7 +10885,7 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 
 </tr><tr>
 
-<td bgcolor="#fbfbf0">
+<td class="brownish">
 <pre>
 with_sound(:play, true) do
   osc1 = make_oscil(440.0);

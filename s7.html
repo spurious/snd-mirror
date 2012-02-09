@@ -19,6 +19,7 @@
 	EM.bigger {font-size: 30px;
                    font-style: normal;
 		   }
+        EM.noem {font-style: normal}
 
 	H1 {text-align: center}
 	UL {list-style-type: none}
@@ -73,6 +74,21 @@
 		      } 
         TD.green {background-color: lightgreen}
 	TD.bluish {background-color: #f2f4ff}
+	DIV.bluishbordered {background-color: #f2f4ff;
+	                   border: 1px solid #000000;
+			   padding-left: 10px;
+			   padding-right: 10px;
+			   padding-top: 10px;
+			   padding-bottom: 10px;
+			   }
+	TD.brownish {background-color: #fbfbf0}
+	DIV.brownishbordered {background-color: #fbfbf0;
+	                   border: 1px solid #000000;
+			   padding-left: 10px;
+			   padding-right: 10px;
+			   padding-top: 10px;
+			   padding-bottom: 10px;
+			   }
         BODY.body {background-color: #ffffff;    /* white */
 	           margin-left: 20px; 
                    }
@@ -82,7 +98,7 @@
 
 <!-- INDEX s7doc:s7 scheme -->
 
-<div class="topheader"><A NAME="s7doc">s7</a></div>
+<div class="topheader" id="s7doc">s7</div>
 
 <p>s7 is a Scheme implementation intended as an extension language
 for other applications, primarily Snd and Common Music.  It exists as just two files, s7.c and
@@ -172,7 +188,7 @@ indented and in a sort of brownish background.
 
 
 <!-- ******************************************************************************** -->
-<div class="header"><A NAME="multiprecision"><h4>multiprecision arithmetic</h4></a></div>
+<div class="header" id="multiprecision"><h4>multiprecision arithmetic</h4></div>
 
 <p>All numeric types, integers, ratios, reals, and complex numbers are supported.
 The basic integer and real
@@ -183,7 +199,7 @@ s7 can be built with multiprecision support
 for all types,  using the gmp, mpfr, and mpc libraries (set WITH_GMP to 1 in s7.c).  
 If multiprecision arithmetic is
 enabled, the following functions are included: bignum, bignum?, and bignum-precision.
-<a name="bignumprecision">bignum-precision</a>, which defaults to 128, sets the number of bits each float takes.
+<em class="noem" id="bignumprecision"><!-- <a name="bignumprecision">bignum-precision</a> -->bignum-precision</em>, which defaults to 128, sets the number of bits each float takes.
 pi automatically reflects the current bignum-precision:
 </p>
 
@@ -199,9 +215,9 @@ pi automatically reflects the current bignum-precision:
 </pre>
 
 <p>
-<a name="bignump">bignum?</a> returns #t if its argument is a big number of some type; I use "bignum" 
+<em class="noem" id="bignump"><!-- <a name="bignump">bignum?</a> -->bignum?</em> returns #t if its argument is a big number of some type; I use "bignum" 
 for any big number, not just integers.  To create a big number,
-either include enough digits to overflow the default types, or use the <a name="bignum">bignum</a> function.
+either include enough digits to overflow the default types, or use the <em class="noem" id="bignum"><!-- <a name="bignum">bignum</a> -->bignum</em> function.
 Its argument is a string representing the desired number:
 </p>
 
@@ -267,7 +283,7 @@ but reals are limited by bignum-precision.  This means, for example, that
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="math"><h4>math functions</h4></a></div>
+<div class="header" id="math"><h4>math functions</h4></div>
 
 
 <p>
@@ -393,11 +409,11 @@ of -0.0 is ignored, and they really are equal.
 
 <div class="indented">
 
-<p>The <a name="random">random</a> function takes a range and an optional state, and returns a number 
+<p>The <em class="noem" id="random"><!-- <a name="random">random</a> -->random</em> function takes a range and an optional state, and returns a number 
 between zero and the range, of the same type as the range.  It is perfectly reasonable
 to use a range of 0, in which case random returns 0.
-<a name="makerandomstate">make-random-state</a> creates a new random state from a seed.  If no state is passed,
-random uses some default state initialized from the current time.  <a name="randomstatep">random-state?</a> returns #t if passed a random state object.
+<em class="noem" id="makerandomstate"><!-- <a name="makerandomstate">make-random-state</a> -->make-random-state</em> creates a new random state from a seed.  If no state is passed,
+random uses some default state initialized from the current time.  <em class="noem" id="randomstatep"><!-- <a name="randomstatep">random-state?</a> -->random-state?</em> returns #t if passed a random state object.
 </p>
 
 <pre class="indented">
@@ -470,10 +486,11 @@ random-state-&gt;list, then to restart from that point, apply make-random-state 
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="define*"><h4>define*, lambda*</h4></a></div>
+<div class="header" id="define*"><h4>define*, lambda*</h4></div>
 
 
-<p><a name="definestar">define*</a> and <a name="lambdastar">lambda*</a>
+<p><em class="noem" id="definestar"><!-- <a name="definestar">define*</a> -->define*</em> and
+ <em class="noem" id="lambdastar"><!-- <a name="lambdastar">lambda*</a> -->lambda*</em>
 are extensions of define and lambda that make it easier to
 to deal with optional, keyword, and rest arguments.  
 The syntax is very simple: every argument to define* has a default value
@@ -685,11 +702,14 @@ f
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="macros"><h4>macros</h4></a></div>
+<div class="header" id="macros"><h4>macros</h4></div>
 
 
-<p><a name="definemacro">define-macro</a>, <a name="definemacrostar">define-macro*</a>, 
-defmacro, defmacro*, <a name="macroexpand">macroexpand</a>, <a name="gensym">gensym</a>, and <a name="macrop">macro?</a>
+<p><em class="noem" id="definemacro"><!-- <a name="definemacro">define-macro</a> -->define-macro</em>, 
+<em class="noem" id="definemacrostar"><!-- <a name="definemacrostar">define-macro*</a> -->define-macro*</em>, 
+defmacro, defmacro*, <em class="noem" id="macroexpand"><!-- <a name="macroexpand">macroexpand</a> -->macroexpand</em>, 
+<em class="noem" id="gensym"><!-- <a name="gensym">gensym</a> -->gensym</em>, and 
+<em class="noem" id="macrop"><!-- <a name="macrop">macro?</a> -->macro?</em>
 implement the standard (CL-style) macro definers.  
 </p>
 
@@ -1234,10 +1254,11 @@ to quote the result (if the result does not already evaluate to itself):
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="constants"><h4>define-constant, constant?, symbol-access</h4></a></div>
+<div class="header" id="constants"><h4>define-constant, constant?, symbol-access</h4></div>
 
 
-<p><a name="defineconstant">define-constant</a> defines a constant and <a name="constantp">constant?</a> returns #t if its argument
+<p><em class="noem" id="defineconstant"><!-- <a name="defineconstant">define-constant</a> -->define-constant</em> defines a constant and 
+<em class="noem" id="constantp"><!-- <a name="constantp">constant?</a> -->constant?</em> returns #t if its argument
 is a constant.  A constant in s7 is really constant: it can't be set or rebound.
 </p>
 
@@ -1274,7 +1295,7 @@ or in C; I wanted this many years ago in Snd).  The notification function is esp
 you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
 All of these cases modify
 the path between a symbol and its value.  
-s7 gives you a handle on that path via the procedure-with-setter <b><a name="symbolaccess">symbol-access</a></b>.
+s7 gives you a handle on that path via the procedure-with-setter <b><em class="noem" id="symbolaccess"><!-- <a name="symbolaccess">symbol-access</a> -->symbol-access</em></b>.
 <code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
 changes them.  The accessor-list is a list of three functions, the get, set, and bind functions.
 The set and bind functions take two arguments, the symbol in question
@@ -1370,11 +1391,9 @@ with this mechanism, including property lists.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="maketype1"><h4>make-type</h4></a></div>
+<div class="header" id="maketype1"><h4>make-type</h4></div>
 
-
-<p>
-<b><a name="maketype">make-type</a></b>, borrowed from Alaric Snell-Pym,
+<p><em class="noem" id="maketype"><!-- <a name="maketype">make-type</a> -->make-type</em>, borrowed from Alaric Snell-Pym,
 returns a type-object: a list of three functions
 '?, 'make, and 'ref.  The <b>?</b> func returns #t if its argument
 is of the new type, the <b>make</b> function returns a new object of the new type with the
@@ -1382,8 +1401,7 @@ value of the argument to the make function, and the <b>ref</b> function returns 
 when passed that object. 
 </p>
 
-<A NAME="recordexample"></a>
-<pre class="indented">
+<pre class="indented" id="recordexample">
 (define special-value ((cadr (<em class=red>make-type</em>)) 'special))
 ;; now special-value's value can't be eq? to any other Scheme object
 
@@ -1722,11 +1740,10 @@ v
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="pws"><h4>procedure-with-setter</h4></a></div>
+<div class="header" id="pws"><h4>procedure-with-setter</h4></div>
 
-
-<p>A <a name="procedurewithsetter">procedure-with-setter</a> consists of two functions, the "getter" and the "setter".
-The getter is called when the object is encountered as a function, and the setter when
+<p>A <em class="noem" id="procedurewithsetter"><!-- <a name="procedurewithsetter">procedure-with-setter</a> -->procedure-with-setter</em> 
+consists of two functions, the "getter" and the "setter".The getter is called when the object is encountered as a function, and the setter when
 it is set:
 </p>
 
@@ -1941,7 +1958,7 @@ Even better: "dilambda":
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="generalizedset"><h4>applicable objects, generalized set!, generic functions</h4></a></div>
+<div class="header" id="generalizedset"><h4>applicable objects, generalized set!, generic functions</h4></div>
 
 
 <p>procedure-with-setters can be viewed as one generalization of set!.  Another
@@ -2150,7 +2167,7 @@ or even <code>(&gt; 1 0+i)</code>.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="multidimensionalvectors"><h4>multidimensional vectors</h4></a></div>
+<div class="header" id="multidimensionalvectors"><h4>multidimensional vectors</h4></div>
 
 
 <p>
@@ -2403,18 +2420,18 @@ It wants you to use: <code>(let ((v #("abc" "def"))) ((v 0) 2))</code>.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="hashtables"><h4>hash-tables</h4></a></div>
+<div class="header" id="hashtables"><h4>hash-tables</h4></div>
 
 
 <ul>
-<li>(<a name="makehashtable">make-hash-table</a> (size 512))
-<li>(<a name="hashtable">hash-table</a> ...)
-<li>(<a name="hashtableref">hash-table-ref</a> ht key)
-<li>(<a name="hashtableset">hash-table-set!</a> ht key value)
-<li>(<a name="hashtablep">hash-table?</a> obj)
-<li>(<a name="hashtablesize">hash-table-size</a> ht)
-<li>(<a name="hashtableiterator">make-hash-table-iterator</a> ht)
-<li>(<a name="hashtableiteratorp">hash-table-iterator?</a> obj)
+<li>(<em class="noem" id="makehashtable"><!-- <a name="makehashtable">make-hash-table</a> -->make-hash-table</em> (size 512))
+<li>(<em class="noem" id="hashtable"><!-- <a name="hashtable">hash-table</a> -->hash-table</em> ...)
+<li>(<em class="noem" id="hashtableref"><!-- <a name="hashtableref">hash-table-ref</a> -->hash-table-ref</em> ht key)
+<li>(<em class="noem" id="hashtableset"><!-- <a name="hashtableset">hash-table-set!</a> -->hash-table-set!</em> ht key value)
+<li>(<em class="noem" id="hashtablep"><!-- <a name="hashtablep">hash-table?</a> -->hash-table?</em> obj)
+<li>(<em class="noem" id="hashtablesize"><!-- <a name="hashtablesize">hash-table-size</a> -->hash-table-size</em> ht)
+<li>(<em class="noem" id="hashtableiterator"><!-- <a name="hashtableiterator">make-hash-table-iterator</a> -->make-hash-table-iterator</em> ht)
+<li>(<em class="noem" id="hashtableiteratorp"><!-- <a name="hashtableiteratorp">hash-table-iterator?</a> -->hash-table-iterator?</em> obj)
 </ul>
 
 <p>
@@ -2493,7 +2510,7 @@ of the table sizes, or the order in which the key/value pairs were added.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="environments"><h4>environments</h4></a></div>
+<div class="header" id="environments"><h4>environments</h4></div>
 
 
 <p>An environment holds symbols and their values.  The global environment, for example,
@@ -2502,24 +2519,24 @@ Environments are first class (and applicable) objects in s7.
 </p>
 
 <pre class="indented">
-  (<a name="environmentp">environment?</a> obj)            #t if obj is an environment
-  (<a name="globalenvironment">global-environment</a>)          the top-level environment
-  (<a name="currentenvironment">current-environment</a>)         the currently visible variables and their values
-  (<a name="procedureenvironment">procedure-environment</a> proc)  the environment at the time when proc was defined
-  (<a name="initialenvironment">initial-environment</a>)         the current environment, but all built-in functions have their original values
-  (<a name="outerenvironment">outer-environment</a> env)       the environment that encloses the environment env
+  (<em class="noem" id="environmentp"><!-- <a name="environmentp">environment?</a> -->environment?</em> obj)            #t if obj is an environment
+  (<em class="noem" id="globalenvironment"><!-- <a name="globalenvironment">global-environment</a> -->global-environment</em>)          the top-level environment
+  (<em class="noem" id="currentenvironment"><!-- <a name="currentenvironment">current-environment</a> -->current-environment</em>)         the currently visible variables and their values
+  (<em class="noem" id="procedureenvironment"><!-- <a name="procedureenvironment">procedure-environment</a> -->procedure-environment</em> proc)  the environment at the time when proc was defined
+  (<em class="noem" id="initialenvironment"><!-- <a name="initialenvironment">initial-environment</a> -->initial-environment</em>)         the current environment, but all built-in functions have their original values
+  (<em class="noem" id="outerenvironment"><!-- <a name="outerenvironment">outer-environment</a> -->outer-environment</em> env)       the environment that encloses the environment env
 
-  (<a name="withenvironment">with-environment</a> env . body) evaluate body in the environment env 
+  (<em class="noem" id="withenvironment"><!-- <a name="withenvironment">with-environment</a> -->with-environment</em> env . body) evaluate body in the environment env 
 
-  (<a name="augmentenvironment">augment-environment</a> env . bindings)   add bindings to env
-  (<a name="augmentenvironment!">augment-environment!</a> env . bindings)
-  (<a name="environmenttolist">environment-&gt;list</a> env)       return the environment bindings as a list of (symbol . value) cons's
-  (<a name="symboltovalue">symbol-&gt;value</a> sym (env (current-environment)))
-  (<a name="definedp">defined?</a> sym (env (current-environment)))
+  (<em class="noem" id="augmentenvironment"><!-- <a name="augmentenvironment">augment-environment</a> -->augment-environment</em> env . bindings)   add bindings to env
+  (<em class="noem" id="augmentenvironment!"><!-- <a name="augmentenvironment!">augment-environment!</a> -->augment-environment!</em> env . bindings)
+  (<em class="noem" id="environmenttolist"><!-- <a name="environmenttolist">environment-&gt;list</a> -->environment-&gt;list</em> env)       return the environment bindings as a list of (symbol . value) cons's
+  (<em class="noem" id="symboltovalue"><!-- <a name="symboltovalue">symbol-&gt;value</a> -->symbol-&gt;value</em> sym (env (current-environment)))
+  (<em class="noem" id="definedp"><!-- <a name="definedp">defined?</a> -->defined?</em> sym (env (current-environment)))
 </pre>
 
-<A NAME="augmentenv"></A>
-<p><code>(with-environment env . body)</code> evaluates its body in the environment env.
+
+<p id="augmentenv"><code>(with-environment env . body)</code> evaluates its body in the environment env.
 There are several examples of its use in the <a href="#macros">macro</a> section.
 defined? returns #t if the symbol is defined in the environment, and
 symbol-&gt;value returns the value associated with it.
@@ -2865,10 +2882,8 @@ class-3
 
 
 <div class="indented">
-
-<table border=1 vspace=10 hspace=0 cellspacing=2 cellpadding=5>
-<tr>
-<td class="bluish">
+<table><tr><td>
+<div class="bluishbordered">
 <pre>
 (define-bacro (value-&gt;symbol val)
    ;; here the current-environment is the calling environment
@@ -2887,10 +2902,11 @@ class-3
     (value-&gt;symbol "hi"))
 b
 </pre>
+</div>
 </td>
-<td width=20></td>
+<td></td>
 
-<td bgcolor="#fbfbf0">
+<td><div class="brownishbordered">
 <pre>
 
 (define (value-&gt;symbol val env)
@@ -2909,6 +2925,7 @@ b
     (value-&gt;symbol "hi" (current-environment)))
 b
 </pre>
+</div>
 </td>
 </tr>
 </table>
@@ -2922,7 +2939,7 @@ b
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="multiplevalues"><h4>multiple-values</h4></a></div>
+<div class="header" id="multiplevalues"><h4>multiple-values</h4></div>
 
 
 <p>
@@ -3141,10 +3158,8 @@ is 15, as anyone would expect.
 <p>I wrote all that and said "nobody needs multiple values!".  In desperation,
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=5>
-
-<tr>
-<td class="bluish">
+<table><tr><td>
+<div class="bluishbordered">
 <pre>
 (define (flatten lst)
   (define (flatten-1 lst)
@@ -3154,10 +3169,12 @@ is 15, as anyone would expect.
 		      (flatten-1 (cdr lst))))))
   (map values (list (flatten-1 lst))))
 </pre>
+</div>
 </td>
-<td width=40></td>
+<td></td>
 
-<td bgcolor="#fbfbf0">
+<td>
+<div class="brownishbordered">
 <pre>
 (define (boring-flatten x)
   (cond ((null? x) '())
@@ -3165,6 +3182,7 @@ is 15, as anyone would expect.
         (#t (append (boring-flatten (car x))
 		    (boring-flatten (cdr x))))))
 </pre>
+</div>
 </td>
 </tr>
 </table>
@@ -3204,10 +3222,10 @@ is 15, as anyone would expect.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="callwithexit1"><h4>call-with-exit and continuation?</h4></a></div>
+<div class="header" id="callwithexit1"><h4>call-with-exit and continuation?</h4></div>
 
 
-<p><b><a name="callwithexit">call-with-exit</a></b> is call/cc without the ability to jump back into the original context,
+<p><b><em class="noem" id="callwithexit"><!-- <a name="callwithexit">call-with-exit</a> -->call-with-exit</em></b> is call/cc without the ability to jump back into the original context,
 similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "catch" for error handling).
 </p>
 
@@ -3281,10 +3299,10 @@ This is similar to trying to read from a closed input port.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="format1"><h4>format, object-&gt;string</h4></a></div>
+<div class="header" id="format1"><h4>format, object-&gt;string</h4></div>
 
 
-<p>s7's built-in <a name="format">format</a> function is very close to that in srfi-48.
+<p>s7's built-in <em class="noem" id="format"><!-- <a name="format">format</a> -->format</em> function is very close to that in srfi-48.
 </p>
 
 <pre class="indented">
@@ -3468,19 +3486,19 @@ a modern GUI will leave formatting decisions to a text or table widget.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="hooks"><h4>hooks</h4></a></div>
+<div class="header" id="hooks"><h4>hooks</h4></div>
 
 
 
 
 <pre class="indented">
-    (<a name="makehook">make-hook</a> (arity (0 0 #f)) (documentation ""))  ; make a new hook
-    (<a name="hook">hook</a> ...)                                       ; make a hook, the args are functions
-    (<a name="hookp">hook?</a> obj)                                      ; return #t if obj is a hook
-    (<a name="hookfunctions">hook-functions</a> hook)                            ; the hook's list of functions
-    (<a name="hookarity">hook-arity</a> hook)                                ; the hook's arity list: (required optional rest)
-    (<a name="hookdocumentation">hook-documentation</a> hook)                        ; the hook's documentation string
-    (<a name="hookapply">hook-apply</a> hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
+    (<em class="noem" id="makehook"><!-- <a name="makehook">make-hook</a> -->make-hook</em> (arity (0 0 #f)) (documentation ""))  ; make a new hook
+    (<em class="noem" id="hook"><!-- <a name="hook">hook</a> -->hook</em> ...)                                       ; make a hook, the args are functions
+    (<em class="noem" id="hookp"><!-- <a name="hookp">hook?</a> -->hook?</em> obj)                                      ; return #t if obj is a hook
+    (<em class="noem" id="hookfunctions"><!-- <a name="hookfunctions">hook-functions</a> -->hook-functions</em> hook)                            ; the hook's list of functions
+    (<em class="noem" id="hookarity"><!-- <a name="hookarity">hook-arity</a> -->hook-arity</em> hook)                                ; the hook's arity list: (required optional rest)
+    (<em class="noem" id="hookdocumentation"><!-- <a name="hookdocumentation">hook-documentation</a> -->hook-documentation</em> hook)                        ; the hook's documentation string
+    (<em class="noem" id="hookapply"><!-- <a name="hookapply">hook-apply</a> -->hook-apply</em> hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
 </pre>
 
 <p>A hook holds a list of functions.  When something interesting happens,
@@ -3508,15 +3526,15 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="procedureinfo"><h4>procedure info</h4></a></div>
+<div class="header" id="procedureinfo"><h4>procedure info</h4></div>
 
 
 <pre class="indented">
-  (<a name="procedurename">procedure-name</a> proc)
-  (<a name="proceduresource">procedure-source</a> proc)
-  (<a name="procedurearity">procedure-arity</a> proc)
-  (<a name="proceduredocumentation">procedure-documentation</a> proc)
-  (<a name="proceduresetter">procedure-setter</a> proc)
+  (<em class="noem" id="procedurename"><!-- <a name="procedurename">procedure-name</a> -->procedure-name</em> proc)
+  (<em class="noem" id="proceduresource"><!-- <a name="proceduresource">procedure-source</a> -->procedure-source</em> proc)
+  (<em class="noem" id="procedurearity"><!-- <a name="procedurearity">procedure-arity</a> -->procedure-arity</em> proc)
+  (<em class="noem" id="proceduredocumentation"><!-- <a name="proceduredocumentation">procedure-documentation</a> -->procedure-documentation</em> proc)
+  (<em class="noem" id="proceduresetter"><!-- <a name="proceduresetter">procedure-setter</a> -->procedure-setter</em> proc)
   (procedure-environment proc)
 </pre>
 
@@ -3703,10 +3721,7 @@ this in procedure-arity?
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="evalstring"><h4>eval</h4></a></div>
-
-
-
+<div class="header" id="evalstring"><h4>eval</h4></div>
 
 <p>
 <b>eval</b> evaluates its argument, a list representing a piece of code.  It takes an optional
@@ -3790,7 +3805,7 @@ done!
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="IO"><h4>IO functions</h4></a></div>
+<div class="header" id="IO"><h4>IO functions</h4></div>
 
 
 
@@ -3826,7 +3841,7 @@ are:
 <li>read-line: line-at-a-time reads (for write-line, use format or for-each with write-char).
 </ul>
 
-<p>The variable <a name="vectorprintlength">*vector-print-length*</a> sets
+<p>The variable <em class="noem" id="vectorprintlength"><!-- <a name="vectorprintlength">*vector-print-length*</a> -->*vector-print-length*</em> sets
 the upper limit on how many vector elements are printed by object-&gt;string and format.
 </p>
 
@@ -3860,11 +3875,11 @@ integer-decode-float, and the various bitwise operators.
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="errors"><h4>error handling</h4></a></div>
+<div class="header" id="errors"><h4>error handling</h4></div>
 
 
 <p>s7's error handling mimics that of Guile.  An error is signalled
-via the error function, and can be trapped and dealt with via <a name="catch">catch</a>.
+via the error function, and can be trapped and dealt with via <em class="noem" id="catch"><!-- <a name="catch">catch</a> -->catch</em>.
 </p>
 
 <pre class="indented">
@@ -3898,7 +3913,7 @@ a format control string, apply format to it and the other arguments, and
 send that info to the current-error-port.
 </p>
 
-<p>When an error is encountered, the variable <a name="errorinfo">*error-info*</a>, a vector, contains
+<p>When an error is encountered, the variable <em class="noem" id="errorinfo"><!-- <a name="errorinfo">*error-info*</a> -->*error-info*</em>, a vector, contains
 additional info about that error:
 </p>
 
@@ -3954,7 +3969,7 @@ additional info about that error:
 </blockquote>
 
 
-<p>The hook <a name="errorhook">*error-hook*</a> provides a way to specialize error reporting.
+<p>The hook <em class="noem" id="errorhook"><!-- <a name="errorhook">*error-hook*</a> -->*error-hook*</em> provides a way to specialize error reporting.
 Its functions take two arguments, the values passed by the error function:
 the error type and whatever other info accompanies it.
 </p>
@@ -3963,7 +3978,7 @@ the error type and whatever other info accompanies it.
 (set! (hook-functions *error-hook*) (list (lambda (tag args) (apply format #t args))))
 </pre>
 
-<p><a name="stacktrace">stacktrace</a> can be called anytime to see the chain of function calls.  Its optional argument
+<p><em class="noem" id="stacktrace"><!-- <a name="stacktrace">stacktrace</a> -->stacktrace</em> can be called anytime to see the chain of function calls.  Its optional argument
 can be *error-info* to show the stack at the point of the last error,
 or a continuation to
 show the continuation stack. 
@@ -3987,9 +4002,9 @@ show the continuation stack.
 See also trace below.  There is a break macro defined in Snd (snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
 <!-- INDEX autoload:autoload -->
-<A NAME="autoload"></A>
-There's yet another hook, <a name="unboundvariablehook">*unbound-variable-hook*</a>, which is called
-before the error is signalled
+
+<em class="noem" id="autoload">There's</em> yet another hook, 
+<em class="noem" id="unboundvariablehook"><!-- <a name="unboundvariablehook">*unbound-variable-hook*</a> -->*unbound-variable-hook*</em>, which is calledbefore the error is signalled
 when an unbound variable
 is encountered.
 Its functions take one argument,
@@ -4036,7 +4051,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 There's a s7 lint checker: lint.scm in the Snd tarball.
 </p>
 
-<p><a name="trace">trace</a> and untrace provide tracing:
+<p><em class="noem" id="trace"><!-- <a name="trace">trace</a> -->trace</em> and untrace provide tracing:
 </p>
 <pre class="indented">
     (define (hiho arg) 
@@ -4064,7 +4079,7 @@ turns this off.  To trace a function that is internal to another function, put t
 trace and untrace calls in the enclosing function.
 </p>
 
-<p>There is also a hook, <a name="tracehook">*trace-hook*</a>.  It takes functions
+<p>There is also a hook, <em class="noem" id="tracehook"><!-- <a name="tracehook">*trace-hook*</a> -->*trace-hook*</em>.  It takes functions
 of 2 arguments, the currently traced
 function and the list of current arguments.  The hook's functions are evaluated in the environment of the
 traced function call (that is, global to the function, not the function's local environment).
@@ -4087,11 +4102,11 @@ traced function call (that is, global to the function, not the function's local 
 
 <!-- ******************************************************************************** -->
 
-<div class="header"><A NAME="miscellanea"><h4>miscellanea</h4></a></div>
+<div class="header" id="miscellanea"><h4>miscellanea</h4></div>
 
 
-<p><b><a name="loadpath">*load-path*</a></b> is a list of directories to search when loading a file.
-<b><a name="loadhook">*load-hook*</a></b> is a hook whose functions are called just before a file is loaded.  
+<p><b><em class="noem" id="loadpath"><!-- <a name="loadpath">*load-path*</a> -->*load-path*</em></b> is a list of directories to search when loading a file.
+<b><em class="noem" id="loadhook"><!-- <a name="loadhook">*load-hook*</a> -->*load-hook*</em></b> is a hook whose functions are called just before a file is loaded.  
 The hook function argument is the filename.
 While loading, the port-filename and port-line-number of the current-input-port can tell you
 where you are in the file.
@@ -4122,10 +4137,9 @@ the directory:
 </pre>
 
 
-<table border=0 vspace=8 width="30%" cellpadding=0 cellspacing=0><tr><td class="green">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+<div class="separator"></div>
 
-<p>As in Common Lisp, <b><a name="featureslist">*features*</a></b> is a list describing what is currently loaded into s7.  You can
+<p>As in Common Lisp, <b><em class="noem" id="featureslist"><!-- <a name="featureslist">*features*</a> -->*features*</em></b> is a list describing what is currently loaded into s7.  You can
 check it with the <b>provided?</b> function, or add something to it with <b>provide</b>.  In my version of Snd,
 at startup *features* is:
 </p>
@@ -4146,7 +4160,7 @@ at startup *features* is:
 </p>
 
 <p>Leaving aside these two cases, and the booleans, #f and #t, you can specify your own handlers for 
-tokens that start with "#".  <b><a name="sharpreaders">*#readers*</a></b> is a list of pairs: <code>(char . func)</code>.
+tokens that start with "#".  <b><em class="noem" id="sharpreaders"><!-- <a name="sharpreaders">*#readers*</a> -->*#readers*</em></b> is a list of pairs: <code>(char . func)</code>.
 "char" refers to the first character after the sharp sign (#). "func" is a function of
 one argument, the string that follows the #-sign up to the next delimiter.  "func" is called
 when #&lt;char&gt; is encountered.  If it returns something other than #f, the #-expression
@@ -4259,7 +4273,7 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 <div class="separator"></div>
 
 <p>
-<code>(<a name="symboltable">symbol-table</a>)</code> returns the symbol table, a vector of lists of symbols.
+<code>(<em class="noem" id="symboltable"><!-- <a name="symboltable">symbol-table</a> -->symbol-table</em>)</code> returns the symbol table, a vector of lists of symbols.
 Here we scan the symbol table looking for any function that doesn't have documentation:
 </p>
 
@@ -4349,7 +4363,7 @@ where we only feed in a few constants, I bet it segfaults!
 <div class="separator"></div>
 
 <pre class="indented">
-    (<b><a name="morallyequalp">morally-equal?</a></b> x y)
+    (<b><em class="noem" id="morallyequalp"><!-- <a name="morallyequalp">morally-equal?</a> -->morally-equal?</em></b> x y)
 </pre>
 
 <p>morally-equal? is a technical term taken from higher math where it is usually
@@ -4412,7 +4426,7 @@ bind it to something else, which is asking for confusion).
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment (use initial-environment), null-environment, or interaction-environment (use current-environment).
 <li>no transcript-on or transcript-off.
-<li><A NAME="__func__">__func__</a> is the name (or name and location) of the function currently being defined or called, as in C.
+<li><em class="noem" id="__func__"><!-- <A NAME="__func__">__func__</a> -->__func__</em> is the name (or name and location) of the function currently being defined or called, as in C.
 <li>begin returns the value of the last form; it can contain both definitions and other statements.
 <li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are first-class objects.
 <li>for-each and map accept different length arguments; the operation stops when any argument reaches its end.
@@ -5085,7 +5099,7 @@ waste a lot of time fixing this, I chose to flush multithreading.
 
 
 <!-- ******************************************************************************** -->
-<div class="header"><A NAME="FFIexamples"><h4>FFI examples</h4></a></div>
+<div class="header" id="FFIexamples"><h4>FFI examples</h4></div>
 
 <p>s7 exists only to serve as an extension of some other application, so
 it is primarily a foreign function interface.  s7.h has lots of comments about the individual
@@ -5144,10 +5158,10 @@ The examples that follow show:
 
 
 
-<div class="header"><A NAME="repl"><h4>A simple listener</h4></a></div>
+<div class="header" id="repl"><h4>A simple listener</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table><tr><td>
+<div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5206,6 +5220,7 @@ int main(int argc, char **argv)
  *    &gt; (exit)
  */
 </pre>
+</div>
 </td></tr></table>
 
 <p>Since this reads stdin and writes stdout, it can be run as a Scheme subjob of emacs.
@@ -5219,8 +5234,8 @@ customized indefinitely.  See, for example, snd-inf.el in the Snd package.
 <p>To read stdin while working in a GUI-based program is trickier.  In glib/gtk, you can use
 something like this:
 </p>
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 static gboolean read_stdin(GIOChannel *source, GIOCondition condition, gpointer data)
 {
@@ -5237,7 +5252,7 @@ stdin_id = g_io_add_watch_full(channel,         /* and call read_stdin above if 
 			       (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
 			       <em class=red>read_stdin</em>, NULL, NULL);
 g_io_channel_unref(channel);
-</pre>
+</pre></div>
 </td></tr></table>
 
 <p>If we accidentally get into an infinite loop in our REPL, we have to exit the program.
@@ -5247,10 +5262,10 @@ See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook t
 
 
 
-<div class="header"><A NAME="defun"><h4>Define a function with arguments and a returned value, and a variable</h4></a></div>
+<div class="header" id="defun"><h4>Define a function with arguments and a returned value, and a variable</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5303,15 +5318,15 @@ int main(int argc, char **argv)
  *    3
  *    &gt; (exit)
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
-<div class="header"><A NAME="defvar"><h4>Call a Scheme-defined function from C, and get/set Scheme variable values in C</h4></a></div>
+<div class="header" id="defvar"><h4>Call a Scheme-defined function from C, and get/set Scheme variable values in C</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5347,16 +5362,16 @@ int main(int argc, char **argv)
  *    now an-integer: 32
  *    (add1 2): 3
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="juce"><h4>C++ and Juce, from Rick Taube</h4></a></div>
+<div class="header" id="juce"><h4>C++ and Juce, from Rick Taube</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 int main(int argc, const char* argv[]) 
 { 
@@ -5383,16 +5398,16 @@ int main(int argc, const char* argv[])
   std::cout &lt;&lt; "Bye!\n"; 
   return 0; 
 } 
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="sndlib"><h4>Load sndlib using the XEN functions and macros into an s7 repl</h4></a></div>
+<div class="header" id="sndlib"><h4>Load sndlib using the XEN functions and macros into an s7 repl</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5481,16 +5496,16 @@ int main(int argc, char **argv)
  *
  * you might also need -lgsl -lgslcblas
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="pwstype"><h4>Add a new Scheme type and procedure-with-setters</h4></a></div>
+<div class="header" id="pwstype"><h4>Add a new Scheme type and procedure-with-setters</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5658,16 +5673,16 @@ int main(int argc, char **argv)
  *    #t
  *    : (exit)
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="functionportexample"><h4>Redirect output (and input) to a C procedure</h4></a></div>
+<div class="header" id="functionportexample"><h4>Redirect output (and input) to a C procedure</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5722,16 +5737,16 @@ int main(int argc, char **argv)
  *    a                             ; here I typed "a" in the shell
  *    [#] [\] [a] 
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="extendop"><h4>Extend a built-in operator ("+" in this case)</h4></a></div>
+<div class="header" id="extendop"><h4>Extend a built-in operator ("+" in this case)</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5788,16 +5803,16 @@ int main(int argc, char **argv)
  *    &gt; (+ "hi" "ho")
  *    "hiho"
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="definestar1"><h4>C-side define* (s7_define_function_star)</h4></a></div>
+<div class="header" id="definestar1"><h4>C-side define* (s7_define_function_star)</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5845,16 +5860,16 @@ int main(int argc, char **argv)
  *    &gt; (plus :blue 3 :red 1)
  *    5
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="definemacro1"><h4>C-side define-macro (s7_define_macro)</h4></a></div>
+<div class="header" id="definemacro1"><h4>C-side define-macro (s7_define_macro)</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5899,16 +5914,16 @@ int main(int argc, char **argv)
  *    &gt; (plus 2 3)
  *    5
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="signal"><h4>Signal handling and continuations</h4></a></div>
+<div class="header" id="signal"><h4>Signal handling and continuations</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5986,16 +6001,16 @@ int main(int argc, char **argv)
  *    &gt; (+ 1 2)
  *    3
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="vector"><h4>Multidimensional vector element access</h4></a></div>
+<div class="header" id="vector"><h4>Multidimensional vector element access</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6073,16 +6088,16 @@ int main(int argc, char **argv)
 
 /* vect[0,0,0]: 0, vect[1,1,1]: 32
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="notify"><h4>Notification from Scheme that a given Scheme variable has been set</h4></a></div>
+<div class="header" id="notify"><h4>Notification from Scheme that a given Scheme variable has been set</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6149,16 +6164,16 @@ int main(int argc, char **argv)
  *    notified-var set to 32
  *    32
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="namespace"><h4>Load C defined stuff into a separate namespace</h4></a></div>
+<div class="header" id="namespace"><h4>Load C defined stuff into a separate namespace</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6253,16 +6268,16 @@ int main(int argc, char **argv)
  *     &gt; (func2 1)  
  *     2
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="Cerrors"><h4>Handle scheme errors in C</h4></a></div>
+<div class="header" id="Cerrors"><h4>Handle scheme errors in C</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6363,13 +6378,13 @@ int main(int argc, char **argv)
  * so now the *error-hook* code handles both the error reporting and
  *   the value returned ('our-error in this case).
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="closure"><h4>Closures in C</h4></a></div>
+<div class="header" id="closure"><h4>Closures in C</h4></div>
 
 <p>We often have hooks or callback lists in Scheme, and would like to place a C-defined
 s7 function on such a list.  If the C-side function does not have
@@ -6381,8 +6396,8 @@ a normal Scheme list of functions.  So in the next example, we define a closure
 in C using s7_make_closure.  
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6476,16 +6491,16 @@ int main(int argc, char **argv)
  *   &gt; (environment-&gt;list (procedure-environment closure-1))
  *   ((f . #&lt;closure function&gt;) (x . 32))
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="testhook"><h4>C and Scheme hooks</h4></a></div>
+<div class="header" id="testhook"><h4>C and Scheme hooks</h4></div>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6551,13 +6566,13 @@ int main(int argc, char **argv)
  *    arg is 1
  *    1
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="cload"><h4>Load a shared library</h4></a></div>
+<div class="header" id="cload"><h4>Load a shared library</h4></div>
 
 <p>We can use dlopen to load a shared library, and dlsym to initialize
 that library in our main program.  The tricky part is to conjure up the right
@@ -6565,8 +6580,8 @@ compiler and loader flags.
 First we define a module that defines a new s7 function, add-1:
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6585,14 +6600,14 @@ void init_ex(s7_scheme *sc)  /* this needs to be globally accessible (not "stati
   s7_define_function(sc, "add-1", add_1, 1, 0, false, "(add-1 x) adds 1 to x");
 }
 
-</pre>
+</pre></div>
 </td></tr></table>
 
 <p>And here is our main program:
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6668,21 +6683,21 @@ int main(int argc, char **argv)
  *   &gt; (add-1 2)
  *   3
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="gmpex"><h4>Bignums in C</h4></a></div>
+<div class="header" id="gmpex"><h4>Bignums in C</h4></div>
 
 <p>Bignum support depends on gmp, mpfr, and mpc.  In this example, we define "add-1" which adds
 1 to any kind of number.  The s7_big_* functions return the underlying gmp/mpfr/mpc pointer,
 so we have to copy that into a new number before adding.
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6802,13 +6817,13 @@ int main(int argc, char **argv)
  *   &gt; (add-1 (bignum "1.5+i"))
  *   2.500E0+1.000E0i
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="gtkrepl"><h4>gtk-based repl</h4></A></div>
+<div class="header" id="gtkrepl"><h4>gtk-based repl</h4></div>
 
 <p>In this example, we use Gtk to make a window with a scrolled text widget, running s7
 in a read-eval-print loop.  I've tried to make this as short as possible; see Snd for
@@ -6816,8 +6831,8 @@ a much more elaborate REPL.  From s7's point of view, the only tricky part invol
 catching errors.
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -7017,20 +7032,20 @@ int main(int argc, char **argv)
  *   gcc -o listener listener.c s7.o -lm -I. &lt;insert all the gtk flags and libraries here&gt;
  */
 
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="gtkschemerepl"><h4>scheme-based repl (using gtk)</h4></A></div>
+<div class="header" id="gtkschemerepl"><h4>scheme-based repl (using gtk)</h4></div>
 
 <p>In the same vein, we can use libxm's Gtk/s7 bindings to make the REPL in Scheme.
 Here is the same code, but now using libxm; first the C side, called gtkex.c:
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -7056,7 +7071,7 @@ int main(int argc, char **argv)
  *   gcc -o gtkex gtkex.c libxg.so -lm -I.
  *   ;; you may need to include the libxm directory above
  */
-</pre>
+</pre></div>
 </td></tr></table>
 
 <p>And here is gtkex.scm.  The main problem with this code is that Gtk is moving
@@ -7064,8 +7079,8 @@ rapidly toward gtk3, and libxm is running along behind panting and complaining.
 There are several things that may change once Gtk settles down.
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 (gtk_init 0 #f)
 
@@ -7169,13 +7184,13 @@ There are several things that may change once Gtk settles down.
 	(gtk_main)))))
 
 ;; build gtkex as above, then run it and it will load/run this code
-</pre>
+</pre></div>
 </td></tr></table>
 
 
 
 
-<div class="header"><A NAME="s7inathread"><h4>s7 and pthreads</h4></A></div>
+<div class="header" id="s7inathread"><h4>s7 and pthreads</h4></div>
 
 <p>There is one major flaw in the two preceding REPLs; if s7 gets caught in an infinite loop (via
 <code>(do () ())</code> for example), you have to kill the main program to stop it.  We could use
@@ -7185,8 +7200,8 @@ to keep running while we clean up the s7 problem.  So, in the next example, we u
 thread for the s7 evaluation:
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -7420,7 +7435,7 @@ int main(int argc, char **argv)
   gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
   gtk_main();
 }
-</pre>
+</pre></div>
 </td></tr></table>
 
 
@@ -7465,7 +7480,7 @@ So...
 
 
 
-<div class="header"><A NAME="replrescue"><h4>begin-hook</h4></A></div>
+<div class="header" id="replrescue"><h4>begin-hook</h4></div>
 
 <p>
 Common Lisp has something called "evalhook" that makes it possible
@@ -7476,8 +7491,8 @@ to insert your own function into eval.  In s7, we have a "begin_hook" which sits
 
 
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 /* terminal-based REPL, 
  *    an expansion of the <a href="#repl">read-eval-print loop</a> program above.
@@ -7576,12 +7591,12 @@ int main(int argc, char **argv)
   if (use_begin_hook)
     tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
 }
-</pre>
+</pre></div>
 </td></tr></table>
 
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 /* Gtk-based REPL using s7_begin_hook 
  */
@@ -7786,7 +7801,7 @@ int main(int argc, char **argv)
   gdk_window_resize(gtk_widget_get_window(shell), 400, 200);
   gtk_main();
 }
-</pre>
+</pre></div>
 </td></tr></table>
 
 <p>In the Gtk case above, begin_hook itself checks the user-interface (via gtk_main_iteration), so a key_press event
@@ -7816,8 +7831,8 @@ begin_hook function, insert its own function to do something useful, then that f
 replace itself with the original:
 </p>
 
-<table border=1 hspace=20 cellspacing=2 cellpadding=16>
-<tr><td bgcolor="#fbfbf0">
+<table>
+<tr><td><div class="brownishbordered">
 <pre>
 static bool (*current_begin_hook)(s7_scheme *sc);       /* this will be the saved original function */
 
@@ -7834,7 +7849,7 @@ static void listener_stacktrace_callback(...)           /* the usual callback bo
   if (current_begin_hook)                               /* s7 is running, so... */
     s7_set_begin_hook(s7, stacktrace_begin_hook);       /*   insert our stacktrace function in its place */
 }
-</pre>
+</pre></div>
 </td></tr></table>
 
 </body>

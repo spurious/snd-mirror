@@ -1222,7 +1222,7 @@
 									   (if (string-ci-list-position closer
 											  (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
 												"a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
-												"em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th"))
+												"em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th" "div"))
 									       (begin
 										 (if (not (string-ci=? (car commands) closer))
 										     (format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
@@ -1406,12 +1406,16 @@
     ;; end file scan
     
     (format #t "found ~D names and ~D references~%" name href)
+#|
+    ;; this no longer works because HTML5 does not have the name attribute
     (do ((h 0 (+ h 1)))
 	((= h href))
       (if (and (string? (hrefs h))
 	       (not (string-vector-position (hrefs h) names))
 	       (char-position #\# (hrefs h)))
-	  (format #t "undef'd: ~A (~A: ~A)~%" (hrefs h) (refs h) (lines h))))))
+	  (format #t "undef'd: ~A (~A: ~A)~%" (hrefs h) (refs h) (lines h))))
+|#
+    ))
 
 
 (html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"
