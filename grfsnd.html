@@ -11,6 +11,7 @@
 	EM.emdef {font-weight: bold; font-style: normal; padding-right: 0.2cm}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+        EM.noem {font-style: normal}
 
 	A {text-decoration:none}
 	A:hover {text-decoration:underline}
@@ -40,6 +41,25 @@
 		    padding-top: 10px;
 		    padding-bottom: 10px;
 	           }
+        DIV.header {margin-top: 50px;
+	            margin-bottom: 10px;
+		    font-size: 20px;
+		    font-weight: bold;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    text-align: center;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
+        DIV.innerheader {margin-top: 60px;
+	            margin-bottom: 30px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #eefdee; /* lightgreen */
+		    padding-left: 30px;
+		    width: 50%;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
 	DIV.related {text-align:center;
 	             border: 1px solid lightgray;
 		     margin-bottom: 1.0cm;
@@ -52,11 +72,8 @@
 </head>
 <body class="body">
 
-<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
-<script language=JavaScript type="text/javascript" src="wz_data.js"></script>
-
-
-<!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (make-index.scm) -->
+<script type="text/javascript" src="wz_tooltip.js"></script>
+<script type="text/javascript" src="wz_data.js"></script>
 
 <div class="topheader" id="grfsndcontents">Snd Customization and Extension Part 2</div>
 
@@ -144,19 +161,18 @@ related documentation: &nbsp;
   </ul>
 
 </td></tr></table>
-<br>
+
 
 <!-- INDEX sndandruby:Ruby -->
 <!-- INDEX sndandforth:Forth -->
 <!-- INDEX sndwithcm:Common Music -->
 
-<table border=0 width="100%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="startup">Snd Startup</a></h2></td></tr></table>
-</td></tr></table>
+<div class="header" id="startup">Snd startup</div>
 
-<br>
 <!-- INDEX sndswitches:Invocation flags -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndswitches">Snd invocation flags</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndswitches">Snd invocation flags</div>
+
 
 <p>Snd recognizes the following switches in its command line:
 </p>
@@ -233,11 +249,12 @@ snd oboe.snd
 </table>
 
 
-<br>
-<br>
 
 <!-- INDEX sndinitfile:Initialization file -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndinitfile">The initialization file</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndinitfile">The initialization file</div>
+
+
 <p>
 When Snd starts, it looks for an initialization file, normally named "~/.snd".
 This optional file is
@@ -731,9 +748,10 @@ For more temporary situations, you can use the environment variable SND_PATH.
 It is a colon-separated list of directories that will be added to the load path when Snd starts.
 </p>
 
-<br><br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconfigurationswitches">Configuration choices</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndconfigurationswitches">Configuration choices</div>
+
 
 <p>The configuration process is controlled by a set of switches, some specific to Snd.  The
 latter are (configure --help):
@@ -828,8 +846,8 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td class="bluish">gl</td><td class="bluish">OpenGL callable from Scheme/Ruby/Forth (--with-gl switch)</td></tr>
 <tr><td>snd-ladspa</td><td>LADSPA loaded (--with-ladspa, but also the default in Linux if ladspa.h can be found)</td></tr>
 <tr><td class="bluish">sndlib</td><td class="bluish">sndlib module (always included)</td></tr>
-<tr><td><A NAME="sndmotiffeature">snd-motif</a></td><td>Motif used as GUI toolkit (--with-motif, usually the default if Motif can be found)</td></tr>
-<tr><td class="bluish"><A NAME="sndgtkfeature">snd-gtk</a></td><td class="bluish">Gtk+ used as GUI toolkit (--with-gtk)</td></tr>
+<tr><td id="sndmotiffeature">snd-motif</td><td>Motif used as GUI toolkit (--with-motif, usually the default if Motif can be found)</td></tr>
+<tr><td class="bluish" id="sndgtkfeature">snd-gtk</td><td class="bluish">Gtk+ used as GUI toolkit (--with-gtk)</td></tr>
 <tr><td>snd-nogui</td><td>No GUI built-in (--with-no-gui, or neither Motif nor Gtk+ found)</td></tr>
 <tr><td class="bluish">snd-forth</td><td class="bluish">Forth as extension language (--with-forth)</td></tr>
 <tr><td>snd-ruby</td><td>Ruby as extension language (--with-ruby)</td></tr>
@@ -850,9 +868,10 @@ Depending on how Snd is configured, any of the following symbols may be "provide
     Ruby:    provided? :snd-gtk
     Forth:   "snd-gtk" defined?
 </pre>
-<br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndenvvars">Environment variables</a></h3></td></tr></table>
+
+
+<div class="innerheader" id=sndenvvars">Environment variables</div>
 
 <p>There are several environment variables specific to Snd:
 </p>
@@ -868,15 +887,14 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td>AUDIODEV</td><td>audio device name (Sun and related drivers)</td></tr>
 </table>
 
-<br>
 
-<table border=0 width="100%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="snddynamic">Runtime modules and external programs</a></h2></td></tr></table>
-</td></tr></table>
-<br>
+
+
+<div class="header" id="snddynamic">Runtime modules and external programs</div>
 
 <!-- INDEX emacssnd:Emacs and Snd -->
-<table width="100%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="emacssnd">Snd as an Emacs subjob</a></h3></td></tr></table>
+
+<div class="innerheader" id="emacssnd">Snd as an Emacs subjob</div>
 
 <p>Snd watches stdin; any input received
 is evaluated as if typed in Snd's listener; any subsequent output
@@ -885,8 +903,9 @@ Snd in this manner,  but the real reason for this is to make it possible to run 
 The simplest way to enable that is to use <a href="sndscm.html#dotemacs">inf-snd.el</a> by Michael
 Scholz.  It starts with a long and detailed commentary.
 </p>
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="dynamic">Dynamically loaded modules</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="dynamic">Dynamically loaded modules</div>
 
 <p>You can import shared object files into Snd at any time.
 </p>
@@ -896,8 +915,8 @@ Scholz.  It starts with a long and detailed commentary.
 </pre>
 
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndaswidget">Snd as a Widget</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndaswidget">Snd as a widget</div>
 
 <p>To include the entire Snd editor as a widget in some other program,
 first compile it with -DSND_AS_WIDGET. Then load it into your program,
@@ -924,8 +943,8 @@ In Gtk, the arguments are different, but the basic idea is the same:
 </pre>
 
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithclm">Snd and CLM</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndwithclm">Snd and CLM</div>
 
 <p>The files clm.c, clm.h, and clm2xen.c implement <a href="sndclm.html#sndclmtop">CLM</a> (a Music V implementation),
 always included in Snd.
@@ -1160,11 +1179,11 @@ you're reading and writing a temp file, calling the instruments within with-soun
 The special generator snd-&gt;sample provides a way to redirect
 the CLM input handlers (<a class=quiet href="sndclm.html#in-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_in_any_tip)">in-any</a> in particular) to a Snd sound (via its index).
 </p>
-<br><br>
 
 
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithcm">Snd and Common Music</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndwithcm">Snd and Common Music</div>
 
 <p>You can load Common Music into Snd.  The only real "gotcha" is that Snd's
 ws.scm has to be loaded before cm's clm2.scm.  I load ws.scm in my init file,
@@ -1271,8 +1290,7 @@ It's also possible to load sndlib into cm.  Here's a note from Rick:
 
 
 
-<br><br><br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></td></tr></table>
+<div class="innerheader" id="sndwithmotif">Snd and Motif</div>
 
 <p>It is possible to add your own user-interface elements using the xm module
 included with Snd.  'make xm' should create
@@ -1399,9 +1417,10 @@ create_scale_dialog $Snd_widgets[1]
 
 <p>All of Snd is at your disposal once this module is loaded.
 </p>
-<br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithgtk">Snd and Gtk+</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="sndwithgtk">Snd and Gtk+</div>
 
 <p>There are tons of examples of using the gtk module.  snd-gtk.scm is one
 place to start.  All of gtk and cairo, and much of pango and glib are accessible from the
@@ -1496,10 +1515,11 @@ friends:
                 "gtk-double-click-time" #f))
 </pre></td></tr></table>
 
-<br>
+
 
 <!-- INDEX sndwithnogui:Scripting -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithnogui">Snd with no GUI and as scripting engine</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndwithnogui">Snd with no GUI and as scripting engine</div>
 
 <p>If Snd is built without a graphical user interface (by specifying
 --with-no-gui to configure),
@@ -1737,10 +1757,10 @@ into a bunch of mono files:
 (<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
 </pre></td></tr></table>
 
-<br>
-<br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandruby">Snd with Ruby</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="sndandruby">Snd with Ruby</div>
 
 <p>Ruby is an extension language described as an "object-oriented Perl".
 It provides a different syntax from that of Scheme; most of the *.scm (Scheme)
@@ -1861,9 +1881,10 @@ catch incomplete expressions).  And it appears that in Ruby, variables defined
 within a file are considered local to that file(?).
 For Ruby as an Emacs subjob, see inf-snd.el.
 </p>
-<br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandforth">Snd with Forth</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="sndandforth">Snd with Forth</div>
 
 <p>Snd can be built with Forth as its extension language.  Forth is available at:
 </p>
@@ -1894,10 +1915,10 @@ instrument: src-simp { start dur amp sr sr-env fname -- }
 0.0 1.5 0.5 0.2 sr-env array-&gt;list fyow-snd ' src-simp with-sound
 </pre></td></tr></table>
 
-<br><br>
 
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndands7">Snd with s7</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndands7">Snd with s7</div>
 
 <p>s7 is a Scheme implementation included in the Snd tarball and described in <a href="s7.html">s7.html</a>.  It is now the Snd default extension language.
 </p>
@@ -1905,11 +1926,14 @@ instrument: src-simp { start dur amp sr sr-env fname -- }
 <p>
 The s7 initialization file is ~/.snd_s7.
 </p>
-<br><br>
+
+
+
 
 
 <!-- INDEX sndandladspa:Plugins -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandladspa">Snd and LADSPA Plugins</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndandladspa">Snd and LADSPA Plugins</div>
 
 <pre>
   <a class=def name="initladspa">init-ladspa</a>
@@ -1990,7 +2014,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
                 (list "cmt" "freeverb3" 0 .5 .5 .5 .5 .5) 
                 100000 "freeverb")
 </pre>
-<p><a name="ladspachannel"></a>The "regularized" version of apply-ladspa could be defined:
+<p id="ladspachannel">The "regularized" version of apply-ladspa could be defined:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define* (ladspa-channel ladspa-data (beg 0) ndur snd chn (edpos -1))
@@ -2107,10 +2131,13 @@ data directly to the DAC:
      (<a class=quiet href="extsnd.html#musaudioclose" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioclose_tip)">mus-audio-close</a> audio-port)
      (ladspa-cleanup descriptor handle)))))
 </pre></td></tr></table>
-<br>
+
+
+
 
 <!-- INDEX sndandalsa:Alsa -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandalsa">Snd and ALSA</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndandalsa">Snd and ALSA</div>
 
 <p>
 (This section is a lightly edited copy of some notes Fernando sent me).
@@ -2176,10 +2203,12 @@ or
 of ALSA is beyond my ken.
 </p>
 
-<br>
+
+
 
 <!-- INDEX sndandjack:Jack --> 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandjack">Snd and Jack</a></h3></td></tr></table> 
+
+<div class="innerheader" id="sndandjack">Snd and Jack</div>
 
 <p>(This section is from Kjetil Matheussen).
 </p>
@@ -2193,10 +2222,10 @@ SNDLIB_NUM_JACK_CHANNELS</td><td>Number of in and out jack ports created by snd
 </td></tr> 
 </table> 
 
-<br><br>
 
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgl">Snd and OpenGL</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndandgl">Snd and OpenGL</div>
 
 <p>Snd with Motif can be used in conjunction with OpenGL.  If it is configured
 with the switch --with-gl or --with-just-gl, the top level Snd shell
@@ -2254,12 +2283,10 @@ program:
 <p>See snd-gl.scm.  To turn these graphs into Postscript files, include the --with-gl2ps switch
 at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&gt;ps</a> function.
 </p>
-<br><br>
 
 
-<!-- ---------------------------------------- GSL ---------------------------------------- -->
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgsl">Snd and GSL</a></h3></td></tr></table>
+<div class="innerheader" id="sndandgsl">Snd and GSL</div>
 
 <p>If the GSL library is available, the following functions are imported into Snd:
 </p>
@@ -2317,12 +2344,10 @@ This returns the roots of the polynomial "poly" via gsl_poly_complex_solve.  See
 
 </table>
 
-<br><br>
 
 
-<!-- ---------------------------------------- GMP, MPFR, MPC ---------------------------------------- -->
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgmp">Snd and multiprecision arithmetic</a></h3></td></tr></table>
+<div class="innerheader" id="sndandgmp">Snd and multiprecision arithmetic</div>
 
 <p>Multiprecision arithmetic for integer, ratio, real, and complex numbers is available
 in Snd via the gmp, mpfr, and mpc libraries and s7.  Use the --with-gmp configuration
@@ -2454,12 +2479,10 @@ is a bigfloat oscil:
 But, one thing at a time...
 </p>
 
-<br><br>
 
-<table border=0 width="100%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="otherstuff">Other stuff</a></h2></td></tr></table>
-</td></tr></table>
-<br>
+
+
+<div class="header" id="otherstuff">Other stuff</div>
 
 <p>lint.scm is a lint program for s7 scheme.
 </p>

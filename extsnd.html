@@ -38,6 +38,34 @@
 		    padding-top: 10px;
 		    padding-bottom: 10px;
 	           }
+        DIV.header {margin-top: 50px;
+	            margin-bottom: 10px;
+		    font-size: 20px;
+		    font-weight: bold;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    text-align: center;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
+        DIV.innerheader {margin-top: 60px;
+	            margin-bottom: 30px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #eefdee; /* lightgreen */
+		    padding-left: 30px;
+		    width: 50%;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
+        DIV.innermostheader {margin-top: 30px;
+	            margin-bottom: 10px;
+	            border: 1px solid lightgray;
+		    background-color: #f0f0f0;
+		    padding-left: 30px;
+		    width: 30%;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
 	DIV.related {text-align:center;
 	             border: 1px solid lightgray;
 		     margin-bottom: 1.0cm;
@@ -51,10 +79,8 @@
 
 <body class="body">
 
-<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
-<script language=JavaScript type="text/javascript" src="wz_data.js"></script>
-
-<!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (make-index.scm) -->
+<script type="text/javascript" src="wz_tooltip.js"></script>
+<script type="text/javascript" src="wz_data.js"></script>
 
 <div class="topheader" id="extsndcontents">Snd Customization and Extension</div>
 
@@ -149,13 +175,10 @@ related documentation: &nbsp;
 
 </td><td><img src="pix/rr2.png" alt="setting switches">
 </td></tr></table>
-<br><br>
 
-<table border=0 width="100%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2>Introduction</h2></td></tr></table>
-</td></tr></table>
 
-<A NAME="lisplistener"></a>
+
+<div class="header" id="lisplistener">Introduction</div>
 
 <p>Snd is a highly customizable, extensible program.
 I've tried to bring out to the extension language nearly every portion
@@ -376,11 +399,9 @@ the matching open paren is underlined.
 </small></p>
 </blockquote>
 
-<br>
 
-<table border=0 width="100%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="etc">Snd Programming</a></h2></td></tr></table>
-</td></tr></table>
+
+<div class="header" id="etc">Snd Programming</div>
 
 <p>Snd is organized as a list of sounds, each with a list of channels,
 each channel containing lists of edits, marks, mixes, etc.
@@ -589,8 +610,8 @@ Extensions to Snd can be found in:
 </table>
 </td></tr></table>
 
-<br><br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="behavior">Customizing Snd's behavior</a></h3></td></tr></table>
+
+<div class="innerheader" id="behavior">Customizing Snd's behavior</div>
 
 <p>Most of Snd's behavior can be customized.  For example,
 when a sound is saved, some people want to be warned if
@@ -623,8 +644,9 @@ exit.  Similar hooks customize actions such as closing
 a sound (<a href="#closehook">close-hook</a>), clicking a mark (<a href="#markclickhook">mark-click-hook</a>),
 pressing a key (<a href="#keypresshook">key-press-hook</a>), and so on.</p>
 
-<br>
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndglobalvars">Global variables</a></h4></td></tr></table>
+
+
+<div class="innerheader" id="sndglobalvars">Global variables</div>
 
 <p>The global variables handle various customizations that aren't callback-oriented.
 For example, 
@@ -655,6 +677,8 @@ function. </p>
 
 <p>The variables affecting Snd's overall behavior are:
 </p>
+
+
 
 <!-- ******************************** GLOBAL VARIABLE TABLE ******************************** -->
 
@@ -1420,7 +1444,8 @@ See also <a href="snd.html#zoomoption">Zoom options</a>.
 
 
 <!-- ******************************** GENERIC FUNCTIONS ******************************** -->
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndgenericfuncs">Generic functions</a></h4></td></tr></table>
+
+<div class="innerheader" id="sndgenericfuncs">Generic functions</div>
 
 <p>Several functions in Snd are "generic" in the sense that they can handle a wide
 variety of objects.  The length function, for example, applies to strings and vectors,
@@ -1558,13 +1583,13 @@ and <a href="#sndsounds">sounds</a> (as objects or as integers).
 
 </table>
 
-<br><br>
 
 
 
 <!-- ******************************** HOOKS ******************************** -->
 <!-- INDEX sndhooks:Hooks -->
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndhooks">Hooks</a></h4></td></tr></table>
+
+<div class="innerheader" id="sndhooks">Hooks</div>
 
 <p>When some user-interface action takes place, code is called that responds to that action;
 these functions are sometimes called callbacks; the variable that holds a list of such
@@ -2969,11 +2994,11 @@ This hook is called each time a file is selected in a View Files dialog's files 
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 </table>
-<br><br>
 
 
 
-<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>Channel-specific hooks:</h4></td></tr></table>
+<div class="innerheader">Channel-specific hooks:</div>
+
 <pre>
   <a class=def name="edithook">edit-hook</a> (snd chn)
   <a class=def name="undohook">undo-hook</a> (snd chn)
@@ -3027,8 +3052,9 @@ Snd may check edit-hook ahead of time to avoid unnecessary work.</small>
 </td></tr></table>
 
 
-<br><br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndobjects">Snd's objects</a></h3></td></tr></table>
+
+
+<div class="header" id="sndobjects">Snd's objects</div>
 
 <p>Snd presents its various data structures as a list
 of sounds, each with a list of channels, each with lists of edits,
@@ -3082,7 +3108,8 @@ of these below.
 <!-- INDEX samplers:samplers -->
 <!-- ******************************** SAMPLERS ******************************** -->
 
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="samplers">Samplers</a></h3></td></tr></table>
+<div class="innerheader" id="samplers">Samplers</div>
+
 <p>
 The simplest data access function is <a href="#sample">sample</a> which returns the sample at
 a given position in a sound's channel.  This simplicity, however, comes at
@@ -3356,11 +3383,13 @@ snd-&gt;sample? returns #t if 'obj' is a snd-&gt;sample generator.
 </td></tr>
 
 </table>
-<br>
+
 
 
 <!-- INDEX Vcts:Vcts -->
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="Vcts">Vcts</a></h3></td></tr></table>
+
+<div class="innerheader" id="Vcts">Vcts</div>
+
 <p>
 Many of the Snd and CLM functions handle vectors (arrays) of data.
 By defining a new vector type, named vct, and providing a package
@@ -3784,11 +3813,12 @@ additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documenta
     <em class=listener>true</em>
 </pre>
 
-<br><br>
+
+
 
 
 <!-- INDEX sndsounddata:sound-data -->
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data</a></h3></td></tr></table>
+<div class="innerheader" id="sndsounddata">Sound-data</div>
 
 <p>Another Snd object containing sound samples is the sound-data object; it can be viewed either as an array of vcts, 
 each vct representing one channel's data, or as an array of frames, each frame holding a sample from
@@ -4013,9 +4043,9 @@ vct-&gt;sound-data copies vct v's data into sound-data sd's channel chan.
 
 </table>
 
-<br>
 
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="extsndlib">Sndlib</a></h3></td></tr></table>
+
+<div class="innerheader" id="extsndlib">Sndlib</div>
 
 <p>All of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
 functions are available, as well as most of CLM (<a href="sndclm.html">sndclm.html</a>).
@@ -4616,10 +4646,10 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
                 (/ (<a class=quiet href="#mussoundsamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsamples_tip)">mus-sound-samples</a> file) 
                    (* (channels file) (srate file)))))))
 </pre></td></tr></table>
-<br>
-<br>
-<br>
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmarks">Marks</a></h3></td></tr></table>
+
+
+
+<div class="innerheader" id="sndmarks">Marks</div>
 
 <A NAME="markstuff"></a>
 
@@ -4975,18 +5005,16 @@ show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-
 <p>Other examples can be found in Dave Phillips' marks-menu.scm, snd-motif.scm (add-mark-pane),
 edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mark, looping).
 </p>
-<br>
-<br>
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmixes">Mixes</a></h3></td></tr></table>
+
+
+
+<div class="innerheader" id="sndmixes">Mixes</div>
 
 <p>Mixing operations have a lot of extra support built into Snd.  In nearly every mixing function, you
 can request a "mix tag" (or set that request globally via <a href="#withmixtags">with-mix-tags</a>).
 If the mix operation is tagged, you can then operate on that data through a number of functions,
 the Mix Dialog, various hooks, and various mouse-related actions.
 </p>
-
-
-<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4>Mixes</h4></td></tr></table>
 
 <p>A mix is an object that represents a channel (one channel in and one channel out) of a sound mix.
 Various mixing functions create these objects (mix-vct for example).  In the old days, mixes were identified
@@ -5457,14 +5485,11 @@ with-sound (a notelist) expanded into mixes: <a href="sndscm.html#withmixedsound
 <br>
 </small></blockquote>
 </td></tr></TABLE>
-<br><br>
 
 
 
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
 
-<br>
-<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4>Regions</h4></td></tr></table>
+<div class="innerheader" id="sndregions">Regions and Selections</div>
 
 <p>A region is a saved portion of sound data.  Use the View:Region browser to inspect, edit, and save regions.
 As regions are defined, the new ones are pushed on a stack, and if enough regions already
@@ -5704,14 +5729,14 @@ region-play-list and region-play-sequence in examp.scm<br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
-<br><br>
 
 
-<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4>Selections</h4></td></tr></table>
+
+
 
 
 <!-- ******************************** SELECTION TABLE ******************************** -->
-<br>
+
 <A NAME="selectionstuff"></a>
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -6075,8 +6100,8 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 </pre></td></tr></table>
 
 
-<br><br><br>
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounds">Sounds and channels</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndsounds">Sounds and channels</div>
 
 <p>This is the heart of Snd; we've waded through all the ancillary junk, and we've
 finally reached the functions that actually edit sounds!  Most of these functions
@@ -10161,10 +10186,11 @@ of the fft points, making the display look smoother.
 </td></tr>
 
 </table><!-- end of main sound/channel table -->
-<br><br>
 
-<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
 
+
+
+<div class="innerheader" id="customcontrols">the control panel</div>
 
 <p>The control panel makes it easy to try out various sound effects without
 editing anything.  You can change volume ('amp'), pitch ('speed'), tempo
@@ -10595,12 +10621,14 @@ in snd-motif.scm sets up a separate amp slider for each channel in the current s
 entire panel.
 </p>
 
-<br>
+
+
+
 
 <!-- INDEX editlists:Edit lists -->
 <!-- Edit Lists -->
-<br>
-<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="editlists">Edit Lists</a></h4></td></tr></table>
+
+<div class="innerheader" id="editlists">Edit Lists</div>
 
 <p>An edit list (in other editors this is called an "edit decision list", I guess because it sounds decisive)
 describes the edit history of a channel. When, for example, you type C-d, nothing actually
@@ -10921,8 +10949,8 @@ other such text.
 
 
 <!-- Transforms -->
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndtransforms">Transforms</a></h3></td></tr></table>
+
+<div class="innerheader" id="sndtransforms">Transforms</div>
 
 <p>Most of the transform functions and variables have been treated above, so they are only mentioned here.
 </p>
@@ -11104,10 +11132,12 @@ apply function to spectrum, inverse fft: <a href="sndscm.html#filterfft">filter-
 </blockquote></small>
 </td></tr></TABLE>
 
-<br>
+
+
+
 <!-- Dialogs -->
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs and Other Widgets</a></h3></td></tr></table>
+
+<div class="innerheader" id="snddialogs">Dialogs and other widgets</div>
 
 <p>The built-in dialogs, accessible from the main menu, provide the standard, but sometimes clumsy
 ways to open and save sounds, edit envelopes and headers, and set various global variables.
@@ -12051,8 +12081,9 @@ This returns the text widget's text.  It can be set.
 <!-- end of dialog table -->
 
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndmisc">Miscellaneous functions</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="sndmisc">Miscellaneous functions</div>
 
 <p>These functions don't seem to fit anywhere else:</p>
 
@@ -12675,12 +12706,12 @@ This causes 'key' with modifiers 'state' and 'extended' to revert to its built-i
 
 
 </table>
-<br>
+
 
 
 <!-- ******************************** CONSTANTS ******************************** -->
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconstants">Constants</a></h3></td></tr></table>
+<div class="innerheader" id="sndconstants">Constants</div>
 
 <p><b>Sndlib</b> (see <a href="sndlib.html#sndlibxen">sndlib.html</a> for a complete list):</p>
 <pre>
@@ -12798,12 +12829,12 @@ This causes 'key' with modifiers 'state' and 'extended' to revert to its built-i
   copy-context   cursor-context   selection-context  mark-context
 </pre>
 
-<br>
+
 
 
 <!-- ******************************** ERRORS ******************************** -->
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snderrors">Errors and Debugging</a></h3></td></tr></table>
+<div class="innerheader" id="snderrors">Errors and debugging</div>
 <!-- INDEX snderrors:Debugging (Scheme) -->
 
 <p>When something goes awry, the various functions can throw an error (a symbol)
@@ -12869,8 +12900,8 @@ stack of listeners.  Normally that means you jump out of a breakpoint
 or whatever and find yourself back at the top level.  <code>(throw 'snd-top-level)</code>.
 </p>
 
-<br>
-<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>s7 debugging</h4></td></tr></table>
+
+<div class="innermostheader">s7 debugging</div>
 
 <p>When s7 hits an error, it prints out a stacktrace as well as the error message.
 The variable *error-info* has additional info.  You can also trace functions, and
@@ -12878,19 +12909,18 @@ place breakpoints.  See <a href="s7.html">s7.html</a> for further details.
 </p>
 
 
-<br>
-<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>Forth debugging</h4></td></tr></table>
+<div class="innermostheader">Forth debugging</div>
 <p>See the debugging section in the fth documentation.
 </p>
 
-<br>
-<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>Ruby debugging</h4></td></tr></table>
+
+<div class="innermostheader">Ruby debugging</div>
 <p>
 <code>$DEBUG = true</code> turns on the Ruby debugger.
 </p>
 
-<br>
-<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="cdebugging">C debugging</a></h4></td></tr></table>
+
+<div class="innermostheader" id="cdebugging">C debugging</div>
 
 <!-- INDEX cdebugging:Debugging (C) -->
 <p>If you hit a bug in Snd's C code, you'll need to use gdb
@@ -12921,10 +12951,10 @@ and you need to type C-C to get out (that is, C-g doesn't interrupt the loop),
     run
 </pre>
 
-<br>
 
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="appearance">Customizing Snd's appearance</a></h3></td></tr></table>
+
+<div class="header" id="appearance">Customizing Snd's appearance</div>
 
 <p>Snd's overall appearance is controlled first by the startup <a href="grfsnd.html#sndswitches">switches</a> that
 choose the outermost widget; normally this is a paned window with a sound
@@ -12938,7 +12968,7 @@ There are a variety of functions and variables related to widget colors and so f
 
 <!-- ******************************** COLORS ******************************** -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="colors">Colors</a></h4></td></tr></table>
+<div class="innerheader" id="colors">Colors</div>
 
 <p>A color in Snd is an object with three fields representing the
 rgb (red green blue) settings as numbers between 0.0 and 1.0.  A color
@@ -13092,11 +13122,11 @@ Snd graphics contexts: <a href="#sndgcs">snd-gcs</a><br>
 </td></tr></TABLE>
 
 
-<br><br>
+
 
 <!-- ******************************** FONTS ******************************** -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="fonts">Fonts</a></h4></td></tr></table>
+<div class="innerheader" id="fonts">Fonts</div>
 
 <p>Fonts in Snd are strings containing a description of the
 desired font.  These can be the abbreviated forms such as
@@ -13127,11 +13157,10 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
     &gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
     <em class=listener>"-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
 </pre>
-<br>
-<br>
 
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="graphics">Graphics</a></h4></td></tr></table>
+
+<div class="innerheader" id="graphics">Graphics</div>
 
 <!-- ******************************** GRAPHICS ******************************** -->
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>

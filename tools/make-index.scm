@@ -880,21 +880,26 @@
 
         TD.green {background-color: lightgreen}
 	TD.beige {background-color: beige}
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
         BODY.body {background-color: #ffffff;    /* white */
 	           /* margin-left: 0.5cm; */
                    }
 </style>
 </head>
 <body class=\"body\">
-
-<table border=0 width=\"100%\" cellpadding=2 cellspacing=0><tr><td class=\"green\">
-<table width=\"100%\" border=0><tr><td class=\"beige\" align=\"center\" valign=\"middle\"><h1>Index</h1></td></tr></table>
-</td></tr></table>
-
-<br>
+<div class=\"topheader\">Index</div>
 <!-- created ~A -->~%" (creation-date))
 		      
-	  (format ofil "<table cellspacing=0 cellpadding=1>~%  <tr>")
+	  (format ofil "<table>~%  <tr>")
 	  (set! got-tr #t)
 	  (let ((row 0)
 		(ctr 0)
@@ -936,9 +941,7 @@
 
 	      (incf ctr)
 	      (when (< ctr cols)
-		(if (= row 0)
-		    (format ofil "<td width=20></td>")
-		    (format ofil "<td></td>")))
+	        (format ofil "<td></td>"))
 			  
 	      (when (= ctr cols)
 		(if got-tr (begin (format ofil "</tr>~%") (set! got-tr #f)))
