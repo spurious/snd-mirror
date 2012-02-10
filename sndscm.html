@@ -25,35 +25,52 @@
 	TD.bluish {background-color: #f2f4ff}
 	TD.beige {background-color: beige}
 	TD.brownish {background-color: #fbfbf0}
+        TD.greenish {background-color: #eefdee}
+
+	DIV.center {text-align: center}
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 0.5cm; 
+                   }
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
+	DIV.related {text-align:center;
+	             border: 1px solid lightgray;
+		     margin-bottom: 1.0cm;
+		     margin-top: 1.0cm;
+		     padding-top: 10px;
+		     padding-bottom: 10px;
+		     background-color: #f0f0f0;
+	            }
 </style>
 </head>
-<body bgcolor=white>
+<body class="body">
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 <script language=JavaScript type="text/javascript" src="wz_data.js"></script>
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h1>Scheme, Ruby, and Forth Functions included with Snd</h1></td></tr></table>
-</td></tr></table>
-<br>
+<div class="topheader">Scheme, Ruby, and Forth Functions included with Snd</div>
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
+</div>
 
-
-<br>
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (make-index.scm) -->
 
@@ -451,7 +468,7 @@ To hear them all, <code>(calling-all-animals)</code>.
 </p>
 
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>How to Paint a Bird Song</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>How to Paint a Bird Song</h4></td></tr></table>
 </td></tr></table>
 
 <p>Back in 1980, I wanted some bird songs for "Colony", but my stabs at
@@ -838,7 +855,7 @@ clean-channel.
 <br>
 
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>A Noisy Story</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>A Noisy Story</h4></td></tr></table>
 </td></tr></table>
 <!-- INDEX cleandoc:Noise Reduction -->
 
@@ -11335,7 +11352,7 @@ load("ws.rb")
 load("v.rb")
 </pre></td><td width=30></td>
 
-<td bgcolor="#EefdEe">
+<td class="greenish">
 <pre>
 \ Forth:
 "clm.fs" file-eval
@@ -11361,7 +11378,7 @@ with_sound() do
 end
 </pre></td><td width=30></td>
 
-<td bgcolor="#EefdEe">
+<td class="greenish">
 <pre>
 0 1 440 0.1 ' fm-violin with-sound
 </pre></td>
@@ -11590,7 +11607,7 @@ The "output" argument can be a vct, a vector, or a sound-data object, as well as
 
 <br>
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>definstrument</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>definstrument</h4></td></tr></table>
 </td></tr></table>
 
 <p>
@@ -11662,7 +11679,7 @@ handles, init-with-sound and finish-with-sound.
 </p>
 
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>sound-let</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>sound-let</h4></td></tr></table>
 </td></tr></table>
 
 <p>sound-let is a form of let* that creates temporary sound files
@@ -11701,7 +11718,7 @@ Here's another example:
 
 <br>
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-temp-sound</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>with-temp-sound</h4></td></tr></table>
 </td></tr></table>
 
 <p>with-temp-sound is like sound-let, but does not delete its output file:
@@ -11734,7 +11751,7 @@ end
 
 <br>
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-mixed-sound</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>with-mixed-sound</h4></td></tr></table>
 </td></tr></table>
 
 <p><a name="withmixedsound">with-mixed-sound</a> is a variant of with-sound that creates a
@@ -11782,7 +11799,7 @@ it in conjunction with mixer to scale and envelope all the various ins and outs.
 
 <br>
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-marked-sound</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>with-marked-sound</h4></td></tr></table>
 </td></tr></table>
 
 <p><a name="withmarkedsound">with-marked-sound</a> is yet another version of with-sound that 
@@ -11792,7 +11809,7 @@ adds a mark at the start of each note.
 
 <br>
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>clm-load</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>clm-load</h4></td></tr></table>
 </td></tr></table>
 
 <p><a name="clmload">clm-load</a> provides a slightly different way to load a notelist.  Its first argument is a filename, assumed to
@@ -11811,7 +11828,7 @@ Similarly for, <code>(clm-load "clm-load-test.clm" :srate 44100 :channels 2)</co
 
 <br>
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>init-with-sound</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish" valign="middle"><h4>init-with-sound</h4></td></tr></table>
 </td></tr></table>
 
 <p><b>init-with-sound</b> and <b>finish-with-sound</b>
@@ -11832,7 +11849,7 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 
 <br>
 <table border=0 width="50%" cellpadding=1 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="#EEFDEE"><h4>other stuff associated with with-sound</h4></td></tr></table>
+<table width="100%" border=0><tr><td class="greenish"><h4>other stuff associated with with-sound</h4></td></tr></table>
 </td></tr></table>
 
 <p>
@@ -11928,24 +11945,21 @@ an upward ramp and a downward ramp, then zips them together:
     (zip-sound 0 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
     (zip-sound 0 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
 </pre>
-<br>
 
 
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
+</div>
 
 </body>
 </html>

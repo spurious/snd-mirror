@@ -880,9 +880,12 @@
 
         TD.green {background-color: lightgreen}
 	TD.beige {background-color: beige}
+        BODY.body {background-color: #ffffff;    /* white */
+	           /* margin-left: 0.5cm; */
+                   }
 </style>
 </head>
-<body bgcolor=white>
+<body class=\"body\">
 
 <table border=0 width=\"100%\" cellpadding=2 cellspacing=0><tr><td class=\"green\">
 <table width=\"100%\" border=0><tr><td class=\"beige\" align=\"center\" valign=\"middle\"><h1>Index</h1></td></tr></table>
@@ -1164,6 +1167,7 @@
 					 (not (string-ci=? "&quot;" (checked-substring line i (+ i 6))))
 					 (not (string-ci=? "&ouml;" (checked-substring line i (+ i 6))))
 					 (not (string-ci=? "&mdash;" (checked-substring line i (+ i 7))))
+					 (not (string-ci=? "&nbsp;" (checked-substring line i (+ i 6))))
 					 (not (string-ci=? "&&" (checked-substring line i (+ i 2))))
 					 (not (string-ci=? "& " (checked-substring line i (+ i 2))))) ; following char -- should skip this
 				    (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))

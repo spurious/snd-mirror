@@ -26,8 +26,33 @@
 
         TD.green {background-color: lightgreen}
 	TD.bluish {background-color: #f2f4ff}
+	PRE.bluish {background-color: #f2f4ff}
 	TD.beige {background-color: beige}
 	TD.brownish {background-color: #fbfbf0}
+        TD.greenish {background-color: #eefdee}
+
+	DIV.center {text-align: center}
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 0.5cm; 
+                   }
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
+	DIV.related {text-align:center;
+	             border: 1px solid lightgray;
+		     margin-top: 1.0cm;
+		     margin-bottom: 1.0cm;
+		     padding-top: 10px;
+		     padding-bottom: 10px;
+		     background-color: #f0f0f0;
+	            }
 </style>
 
 
@@ -65,12 +90,14 @@ pdf2png is in the cairo tarball (cairo/test dir)
 -->
 
 </head>
-<body bgcolor=white>
+<body class="body">
+
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 <script language=JavaScript type="text/javascript" src="wz_data.js"></script>
 
-<A NAME="sndclmtop"></A><h1>CLM</h1>
+<div class="topheader" id="sndclmtop">CLM</div>
+
 
 <p>CLM (originally an acronym for Common Lisp Music) is a sound synthesis
 package in the Music V family.  This file describes CLM as implemented in Snd,
@@ -82,29 +109,24 @@ can be packaged into "note lists".  (These names are just convenient historical 
 The main emphasis here is on the generators;
 note lists and instruments are described in <a href="sndscm.html">sndscm.html</a>.
 </p>
-<br>
 
 
-<center>Bill Schottstaedt (bil@ccrma.stanford.edu)</center>
-<br>
+<div class="center">Bill Schottstaedt (bil@ccrma.stanford.edu)</div>
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
 
-<br>
-<br>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
+</div>
+
 
 
 <table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
@@ -118,7 +140,7 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 
 <tr><td colspan=3><center><a href="#generators">Built-in Generators</a></center></td></tr>
 
-<tr><td width=20 bgcolor="#f2f4ff"></td><td>
+<tr><td width=20 class="bluish"></td><td>
 <table border=0 cellpadding=0>
   <tr><td><a href="#all-passdoc">all-pass</a></td><td width=20></td><td>all-pass filter</td></tr>
   <tr><td><a href="#asymmetric-fmdoc">asymmetric-fm</a></td><td></td><td>asymmetric fm</td></tr>
@@ -177,7 +199,7 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 
 <tr><td colspan=3><center><a href="#otherfunctions">Other Functions</a></center></td></tr>
 
-<tr><td width=20 bgcolor="#f2f4ff"></td><td>
+<tr><td width=20 class="bluish"></td><td>
 <table border=0 cellpadding=0>
   <tr><td><a href="#autocorrelate">autocorrelate</a></td><td></td><td>autocorrelation</td></tr>
   <tr><td><a href="#amplitude-modulate">amplitude-modulate</a></td><td></td><td>sig1 * (car + sig2)</td></tr>
@@ -634,7 +656,7 @@ snd-rt:
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-oscil 440.0)))
@@ -659,7 +681,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 make-oscil { gen }
@@ -802,9 +824,9 @@ it produces a sinusoid with (usually very elaborate) amplitude and frequency env
 </p>
 
 <table border=2 cellpadding=6 hspace=20 vspace=20>
-<tr><td bgcolor="#f0f4ff">
+<tr><td class="bluish">
 
-<table border=0 hspace=20><tr><td bgcolor="#f0f4ff">
+<table border=0 hspace=20><tr><td class="bluish">
 <pre>
 (define (scheme-bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
   (let* ((gls-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> freq-envelope (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> freqskew) dur))
@@ -851,9 +873,9 @@ end
 </pre>
 </td></tr></table>
 
-</td></tr><tr><td bgcolor="#effdef">
+</td></tr><tr><td class="greenish">
 
-<table border=0 hspace=20><tr><td bgcolor="#effdef">
+<table border=0 hspace=20><tr><td class="greenish">
 <pre>
 instrument: forth-bird { f: start f: dur f: freq f: freq-skew f: amp freqenv ampenv -- }
     :frequency freq make-oscil { os }
@@ -902,7 +924,7 @@ are times when nothing but a ton of oscils will do:
 
 <table border=1 hspace=20><tr><td>
 <table border=0 hspace=20>
-<tr><td bgcolor="#eefdee"><center>add lots of reverb!</center></td></tr>
+<tr><td class="greenish"><center>add lots of reverb!</center></td></tr>
 <tr><td>
 <pre>
 
@@ -1100,7 +1122,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-oscil 440.0))
@@ -1133,7 +1155,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 make-oscil { gen }
@@ -1501,7 +1523,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-table-lookup 440.0 :wave (partials-&gt;wave '(1 .5  2 .5)))))
@@ -1523,7 +1545,7 @@ with_sound(:play, true) do
 </td>
 </tr><tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 :wave '( 1 0.5  2 0.5 ) #f #f partials-&gt;wave make-table-lookup { gen }
@@ -1905,7 +1927,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-polywave 440.0
@@ -1932,7 +1954,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 :partials '( 1 0.5 2 0.5 ) make-polywave { gen }
@@ -2669,7 +2691,7 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-triangle-wave 440.0)))
@@ -2695,7 +2717,7 @@ with_sound(:play, true) do
 </td>
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 make-triangle-wave { gen }
@@ -3390,7 +3412,7 @@ for more dicussion about using these generators as FM modulators.
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-ncos 440.0 10)))
@@ -3414,7 +3436,7 @@ with_sound(:play, true) do
 </td>
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 10 make-ncos { gen }
@@ -4154,7 +4176,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <!--  <area shape=rect coords="0,421,300,500" href="#sin2n" alt="sin2n"> -->
 
 
-<tr><td colspan=3 bgcolor="#eefdee"><center>Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518, 8.516, 8.531</center></td></tr>
+<tr><td colspan=3 class="greenish"><center>Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518, 8.516, 8.531</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -4176,25 +4198,25 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,141,300,180">
 </map>
 </td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>Jolley, "Summation of Series", 521 587 623 635 638 685 686 691 692 728</center></td></tr>
+<tr><td colspan=3 class="greenish"><center>Jolley, "Summation of Series", 521 587 623 635 638 685 686 691 692 728</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
 <tr><td><a class=invisible href="#izcos"><img src="pix/sceq39.png" alt="I(k) sum"></a></td><td></td>
 <td><a class=invisible href="#k3sin"><img src="pix/sceq40.png" alt="n3 case"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
+<tr><td colspan=3 class="greenish"><center>Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
 <tr><td><a class=invisible href="#krksin"><img src="pix/sceq25.png" alt="more sums"></a></td><td></td>
 <td><a class=invisible href="#abssin"><img src="pix/sceq26.png" alt="more sums"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>Zygmund, "Trigonometric Series" p34, 352</center></td></tr>
+<tr><td colspan=3 class="greenish"><center>Zygmund, "Trigonometric Series" p34, 352</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
 <tr><td><img src="pix/sceq7.png" alt="more sums"></td><td></td>
 <td><a class=invisible href="#abcos"><img src="pix/sceq27.png" alt="more sums"></a></td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>Sansone, "Orthogonal Functions"</center></td></tr>
+<tr><td colspan=3 class="greenish"><center>Sansone, "Orthogonal Functions"</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -4210,7 +4232,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,51,300,100" alt="jjesin">
 </map>
 </td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240</center></td></tr>
+<tr><td colspan=3 class="greenish"><center>Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -4221,7 +4243,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <td><a class=invisible href="#j2cos"><img src="pix/sceq34.png" alt="more sums"></a></td><td></td>
 <td><a class=invisible href="#jpcos"><img src="pix/sceq33.png" alt="more sums"></a></td>
 </tr><tr>
-<td colspan=3 bgcolor="#eefdee"><center>Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
+<td colspan=3 class="greenish"><center>Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -4232,9 +4254,9 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 </td>
 </tr>
  
-<tr><td bgcolor="#eefdee"><center>Askey, "Ramanujan and Hypergeometric Series"</center></td>
-<td bgcolor="#eefdee"></td>
-<td bgcolor="#eefdee"><center>Ramanujan, "On certain Arithmetical Functions"</center></td>
+<tr><td class="greenish"><center>Askey, "Ramanujan and Hypergeometric Series"</center></td>
+<td class="greenish"></td>
+<td class="greenish"><center>Ramanujan, "On certain Arithmetical Functions"</center></td>
 </tr>
 
 </table>
@@ -4328,7 +4350,7 @@ reflection, please send it to me, and I'll add it to this collection.
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-nrxycos 440.0 :n 10)))
@@ -4353,7 +4375,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 :n 10 make-nrxycos { gen }
@@ -4529,7 +4551,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t :srate 44100)
   (let ((shifter (make-ssb-am 440.0 20))
@@ -4559,7 +4581,7 @@ with_sound(:play, true, :srate, 44100) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 20 make-ssb-am { shifter }
@@ -4774,7 +4796,7 @@ We would replace the current make-ssb-am line with:
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-wave-train 440.0
@@ -4812,7 +4834,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   400 10 make-ncos { g }
@@ -4992,7 +5014,7 @@ trigger, and mus-reset to restart an envelope.
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:channels 2 :play #t)
   (let ((ran1 (make-rand 5.0 (hz-&gt;radians 220.0)))
@@ -5025,7 +5047,7 @@ with_sound(:play, true, :channels, 2) do
 
 </tr><tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   5.0 220.0 hz-&gt;radians make-rand { ran1 }
@@ -5433,7 +5455,7 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((flt (make-two-pole 1000.0 0.999))
@@ -5463,7 +5485,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   1000.0 0.999 make-two-pole { flt }
@@ -5625,7 +5647,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((flt (make-firmant 1000.0 0.999))
@@ -5655,7 +5677,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   1000.0 0.999 make-firmant { flt }
@@ -5886,7 +5908,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((flt (make-iir-filter 3 (vct 0.0 -1.978 0.998)))
@@ -5913,7 +5935,7 @@ with_sound(:play, true) do
 
 </tr><tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   3 vct( 0.0 -1.978 0.998 ) make-iir-filter { flt }
@@ -6065,7 +6087,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((dly (make-delay (seconds-&gt;samples 0.5)))
@@ -6100,7 +6122,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   0.5 seconds-&gt;samples make-delay { dly }
@@ -6224,7 +6246,7 @@ and is the basis for about a dozen extensions (comb and friends below).
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((cmb (make-comb 0.4 (seconds-&gt;samples 0.4)))
@@ -6253,7 +6275,7 @@ with_sound(:play, true) do
 
 </tr><tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   0.4 0.4 seconds-&gt;samples make-comb { cmb }
@@ -6455,7 +6477,7 @@ in the feedback loop:
 <table border=1 hspace=20 cellspacing=12 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((alp (make-all-pass -0.4 0.4 (seconds-&gt;samples 0.4)))
@@ -6483,7 +6505,7 @@ with_sound(:play, true) do
 </tr>
 
 <tr>
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   -0.4 0.4 0.4 seconds-&gt;samples make-all-pass { alp }
@@ -6593,7 +6615,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((avg (make-moving-average 4410))
@@ -6629,7 +6651,7 @@ with_sound(:play, true) do
 
 </tr><tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   4410 make-moving-average { avg }
@@ -6718,7 +6740,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t :srate 22050)
   (let* ((rd (make-readin "oboe.snd"))
@@ -6748,7 +6770,7 @@ with_sound(:play, true, :srate, 22050) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "oboe.snd" make-readin { rd }
@@ -6763,7 +6785,7 @@ lambda: ( -- )
 </tr>
 <tr>
 
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((osc (make-oscil 440.0))
@@ -6793,7 +6815,7 @@ with_sound(:play, true) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 : make-src-proc { osc -- prc; dir self -- val }
   1 proc-create osc , ( prc )
@@ -6950,7 +6972,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t :statistics #t)
   (let ((cnv (make-convolve 
@@ -6979,7 +7001,7 @@ with_sound(:play, true, :statistics, true) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "pistol.snd" make-readin ( rd )
@@ -6994,7 +7016,7 @@ lambda: ( -- )
 </tr>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let* ((tempfile (convolve-files "oboe.snd" 
@@ -7029,7 +7051,7 @@ with_sound(:play, true) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "oboe.snd" "pistol.snd" 0.5 "convolved.snd" convolve-files { tempfile }
@@ -7136,7 +7158,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((grn (make-granulate (make-readin "oboe.snd") 2.0)))
@@ -7162,7 +7184,7 @@ with_sound(:play, true) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "oboe.snd" make-readin 2.0 make-granulate { grn }
@@ -7175,7 +7197,7 @@ lambda: ( -- )
 </tr>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let* ((osc (make-oscil 440.0))
@@ -7213,7 +7235,7 @@ with_sound(:play, true) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 : make-granulate-proc { osc sweep -- prc; dir self -- val }
   1 proc-create osc , sweep , ( prc )
@@ -7404,7 +7426,7 @@ In the following example, we use the edit function to reverse every other grain:
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t) ; new pitch = 2 * old
   (let ((pv (make-phase-vocoder 
@@ -7433,7 +7455,7 @@ with_sound(:play, true) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "oboe.snd" make-readin :pitch 2.0 make-phase-vocoder { pv }
@@ -7446,7 +7468,7 @@ lambda: ( -- )
 </tr>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t :srate 22050) ; new dur = 2 * old
   (let ((pv (make-phase-vocoder 
@@ -7479,7 +7501,7 @@ with_sound(:play, true, :srate, 22050) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "oboe.snd" make-readin :interp 256 make-phase-vocoder { pv }
@@ -7609,7 +7631,7 @@ moving-spectrum in generators.scm.
 <table border=1 hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((fm (make-asymmetric-fm 440.0 0.0 0.9 0.5)))
@@ -7634,7 +7656,7 @@ with_sound(:play, true) do
 </tr>
 <tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 0.0 0.9 0.5 make-asymmetric-fm { fm }
@@ -7929,7 +7951,7 @@ object.
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:channels 2)
   ;; swap channels of stereo file
@@ -7967,7 +7989,7 @@ with_sound(:channels, 2) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "stereo.snd" make-file-&gt;frame { input }
@@ -8058,7 +8080,7 @@ and you forget to call mus-close, the GC will eventually do it for you.
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((reader (make-readin "oboe.snd")))
@@ -8084,7 +8106,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "oboe.snd" make-readin { reader }
@@ -8164,7 +8186,7 @@ readin and <a href="#env">env</a>:
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((infile 
@@ -8191,7 +8213,7 @@ with_sound(:play, true) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   "oboe.snd" make-file-&gt;sample { infile }
@@ -8336,7 +8358,7 @@ use its :output argument:
 <table border=1 hspace=20 cellspacing=2 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t :channels 2)
   (let ((loc (make-locsig 60.0))
@@ -8364,7 +8386,7 @@ with_sound(:play, true, :channels, 2) do
 
 <td width=4></td>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   60.0 make-locsig { loc }
@@ -8572,7 +8594,7 @@ The generic functions are:
 <table border=2 cellpadding=10 hspace=40><tr><td>
 
 <table cellspacing=0 cellpadding=0>
-<tr><td class="bluish"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f2f4ff"></td><td class="bluish">channel being read/written</td></tr>
+<tr><td class="bluish"><a class=def name="mus-channel">mus-channel</a></td><td width=30 class="bluish"></td><td class="bluish">channel being read/written</td></tr>
 <tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
 <tr><td class="bluish"><a class=def name="mus-data">mus-data</a></td><td class="bluish"></td><td class="bluish">vct of data</td></tr>
 <tr><td><a class=def name="mus-describe">mus-describe</a></td><td></td><td>description of current state</td></tr>
@@ -8714,7 +8736,7 @@ frequency and the spacing between successive sidebands).
 
 
 <br>
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <a class=def name="make-polyoid">make-polyoid</a> 
          (frequency *clm-default-frequency*) 
          (partial-amps-and-phases '(1 1 0.0))   ; a list of harmonic numbers, their associated amplitudes, and their initial-phases
@@ -8812,7 +8834,7 @@ version usually sounds raspier, and in the limit it sounds like white noise!
 
 
 <br>
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-asyfm">make-asyfm</A> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
   <A class=def NAME="asyfmJ">asyfm-J</A> gen (fm 0.0)
   <A class=def NAME="asyfmI">asyfm-I</A> gen (fm 0.0)
@@ -8825,7 +8847,7 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-fmssb">make-fmssb</A> (frequency 0.0) (ratio 1.0) (index 1.0)
   <A class=def NAME="fmssb">fmssb</A> gen (fm 0.0)
   <A class=def NAME="fmssb?">fmssb?</A> gen
@@ -8839,7 +8861,7 @@ in with-sound, but not within run (the run macro does not currently handle compl
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-pulsed-env">make-pulsed-env</A> envelope duration frequency
   <A class=def NAME="pulsedenv">pulsed-env</A> gen (fm 0.0)
   <A class=def NAME="pulsedenv?">pulsed-env?</A> gen
@@ -8853,7 +8875,7 @@ Many of the instruments in animals.scm use this generator.  (In a sense, this is
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-blackman">make-blackman</A> frequency n ; 1 &lt;= n &lt;= 10
   <A class=def NAME="blackman">blackman</A> gen (fm 0.0)
   <A class=def NAME="blackman?">blackman?</A> gen
@@ -8866,7 +8888,7 @@ as yet another "kernel" along the lines of <a href="#ncos">ncos</a>.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-sinc-train">make-sinc-train</A> frequency (n 1)
   <a class=def name="sinc-train">sinc-train</a> gen (fm 0.0)
   <A class=def NAME="sinc-train?">sinc-train?</A> gen
@@ -8878,7 +8900,7 @@ This produces a sinc-train ((sin x)/x) with n components.  It is very similar to
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-pink-noise">make-pink-noise</A> (n 1)
   <a class=def name="pink-noise">pink-noise</a> gen
   <A class=def NAME="pink-noise?">pink-noise?</A> gen
@@ -8891,7 +8913,7 @@ This produces a reasonable approximation to 1/f noise, also known as pink-noise.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-brown-noise">make-brown-noise</A> frequency (amplitude 1.0)
   <a class=def name="brown-noise">brown-noise</a> gen
   <A class=def NAME="brown-noise?">brown-noise?</A> gen
@@ -8903,7 +8925,7 @@ This produces (unbounded) brownian noise.  'amplitude' sets the maximum size of 
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-green-noise">make-green-noise</A> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
   <a class=def name="green-noise">green-noise</a> gen (fm 0.0)
   <A class=def NAME="green-noise?">green-noise?</A> gen
@@ -8948,7 +8970,7 @@ Here's an instrument that fuzzes up its amplitude envelope a bit using green noi
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-adjustable-square-wave">make-adjustable-square-wave</A> frequency (duty-factor 0.5) (amplitude 1.0)
   <A class=def NAME="adjustable-square-wave">adjustable-square-wave</A> gen (fm 0.0)
   <A class=def NAME="adjustable-square-wave?">adjustable-square-wave?</A> gen
@@ -9027,7 +9049,7 @@ Use mus-scaler to set the duty-factor at run-time.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-round-interp">make-round-interp</A> frequency n amplitude
   <A class=def NAME="round-interp">round-interp</A> gen (fm 0.0)
   <A class=def NAME="round-interp?">round-interp?</A> gen
@@ -9067,7 +9089,7 @@ the higher "n", the more low-passed the output.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def>make-moving-max</A> (n 128)
   <a class=def name="moving-max">moving-max</a> gen y
   <A class=def>moving-max?</A> gen
@@ -9132,9 +9154,9 @@ Also defined, but not tested, is moving-variance; in the same mold, but not defi
 
 
 <!-- bessel functions -->
-<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>Bessel functions</h5></center></td></tr></table>
+<table border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>Bessel functions</h5></center></td></tr></table>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-bess">make-bess</A> (frequency 0.0) (n 0)
   <A class=def NAME="bess">bess</A> gen (fm 0.0)
   <A class=def NAME="bess?">bess?</A> gen
@@ -9170,7 +9192,7 @@ I must be missing something.
 <br>
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-j0evencos">make-j0evencos</A> (frequency 0.0) (index 1.0)
   <A class=def NAME="j0evencos">j0evencos</A> gen (fm 0.0)
   <A class=def NAME="j0evencos?">j0evencos?</A> gen
@@ -9255,7 +9277,7 @@ blackman6 2048
 -->
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-j0j1cos">make-j0j1cos</A> (frequency 0.0) (index 0.0)
   <A class=def NAME="j0j1cos">j0j1cos</A> gen fm
   <A class=def NAME="j0j1cos?">j0j1cos?</A> gen
@@ -9270,7 +9292,7 @@ and is very similar to normal FM.
 
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-izcos">make-izcos</A> (frequency 0.0) (r 1.0)
   <A class=def NAME="izcos">izcos</A> gen (fm 0.0)
   <A class=def NAME="izcos?">izcos?</A> gen
@@ -9285,7 +9307,7 @@ and is very similar to normal FM.
 
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-jjcos">make-jjcos</A> (frequency 0.0) (r 0.5) (a 1.0) (k 1.0)
   <A class=def NAME="jjcos">jjcos</A> gen (fm 0.0)
   <A class=def NAME="jjcos?">jjcos?</A> gen
@@ -9317,7 +9339,7 @@ in general as a and r approach 1.0, the spectrum approaches "k" components, some
 
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-jycos">make-jycos</A> (frequency 0.0) (r 1.0) (a 1.0)
   <A class=def NAME="jycos">jycos</A> gen (fm 0.0)
   <A class=def NAME="jycos?">jycos?</A> gen
@@ -9334,7 +9356,7 @@ both the time and frequency graphs will be unhappy).
 
 
 <!-- finite sums -->
-<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>finite sums</h5></center></td></tr></table>
+<table border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>finite sums</h5></center></td></tr></table>
 
 <p>These generators produce a set of n sinusoids.
 With a bit of bother, 
@@ -9342,7 +9364,7 @@ they could be done with polywave.  I don't
 think there would be any difference, even taking FM into account. 
 </p>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-nssb">make-nssb</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nssb">nssb</A> gen (fm 0.0)
   <A class=def NAME="nssb?">nssb?</A> gen
@@ -9353,7 +9375,7 @@ think there would be any difference, even taking FM into account.
 
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">make-ncos2</A> (frequency 0.0) (n 1)
   <A class=def NAME="ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">ncos2</A> gen (fm 0.0)
   <A class=def NAME="ncos2?">ncos2?</A> gen
@@ -9367,7 +9389,7 @@ think there would be any difference, even taking FM into account.
 <img src="pix/sceq23.png" alt="sum of cosines" hspace=40><br>
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">make-ncos4</A> (frequency 0.0) (n 1)
   <A class=def NAME="ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">ncos4</A> gen (fm 0.0)
   <A class=def NAME="ncos4?">ncos4?</A> gen
@@ -9383,7 +9405,7 @@ think there would be any difference, even taking FM into account.
 
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">make-npcos</A> (frequency 0.0) (n 1)
   <A class=def NAME="npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">npcos</A> gen (fm 0.0)
   <A class=def NAME="npcos?">npcos?</A> gen
@@ -9393,7 +9415,7 @@ think there would be any difference, even taking FM into account.
 </p>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-n1cos">make-n1cos</A> (frequency 0.0) (n 1)
   <A class=def NAME="n1cos">n1cos</A> gen (fm 0.0)
   <A class=def NAME="n1cos?">n1cos?</A> gen
@@ -9408,7 +9430,7 @@ think there would be any difference, even taking FM into account.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-nxycos">make-nxycos</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxycos">nxycos</A> gen (fm 0.0)
   <A class=def NAME="nxycos?">nxycos?</A> gen
@@ -9436,7 +9458,7 @@ even trickier, so it divides by "n".
 
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-noddcos">make-noddcos</A> (frequency 0.0) (n 1)
   <A class=def NAME="noddcos">noddcos</A> gen (fm 0.0)
   <A class=def NAME="noddcos?">noddcos?</A> gen
@@ -9517,7 +9539,7 @@ by the inverse of this, so it is always between -1 and 1.
 -->
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-nrcos">make-nrcos</A> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="nrcos">nrcos</A> gen (fm 0.0)
   <A class=def NAME="nrcos?">nrcos?</A> gen
@@ -9570,7 +9592,7 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-nkssb">make-nkssb</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nkssb">nkssb</A> gen (fm 0.0)
   <A class=def NAME="nkssbinterp">nkssb-interp</A> gen fm interp
@@ -9594,7 +9616,7 @@ The instrument nkssber uses nkssb-interp:
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-nsincos">make-nsincos</A> (frequency 0.0) (n 1)
   <A class=def NAME="nsincos">nsincos</A> gen (fm 0.0)
   <A class=def NAME="nsincos?">nsincos?</A> gen
@@ -9605,7 +9627,7 @@ The instrument nkssber uses nkssb-interp:
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-nchoosekcos">make-nchoosekcos</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nchoosekcos">nchoosekcos</A> gen (fm 0.0)
   <A class=def NAME="nchoosekcos?">nchoosekcos?</A> gen
@@ -9635,9 +9657,9 @@ is amplitude modulation:
 
 
 <!-- infinite sums -->
-<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>infinite sums</h5></center></td></tr></table>
+<table border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>infinite sums</h5></center></td></tr></table>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-rcos">make-rcos</A> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rcos">rcos</A> gen (fm 0.0)
   <A class=def NAME="rcos?">rcos?</A> gen
@@ -9732,7 +9754,7 @@ are the same, but there's an overall phase difference of pi.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-ercos">make-ercos</A> (frequency 0.0) (r 0.5) ; r &gt; 0.0
   <A class=def NAME="ercos">ercos</A> gen (fm 0.0)
   <A class=def NAME="ercos?">ercos?</A> gen
@@ -9754,7 +9776,7 @@ The ercoser instrument uses ercos:
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-eoddcos">make-eoddcos</A> (frequency 0.0) (r 0.5)
   <A class=def NAME="eoddcos">eoddcos</A> gen (fm 0.0)
   <A class=def NAME="eoddcos?">eoddcos?</A> gen
@@ -9776,7 +9798,7 @@ The ercoser instrument uses ercos:
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-rkcos">make-rkcos</A> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rkcos">rkcos</A> gen (fm 0.0)
   <A class=def NAME="rkcos?">rkcos?</A> gen
@@ -9883,7 +9905,7 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-rk!cos">make-rk!cos</A> (frequency 0.0) (r 0.5)  ; rk!cos is a special case of rxyk!cos
   <A class=def NAME="rk!cos">rk!cos</A> gen (fm 0.0)
   <A class=def NAME="rk!cos?">rk!cos?</A> gen
@@ -9964,7 +9986,7 @@ pitch and the index ("r") of the rxyk!cos generator.  The effect is vaguely bras
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-r2k!cos">make-r2k!cos</A> (frequency 0.0) (r 0.5) (k 0.0)
   <A class=def NAME="r2k!cos">r2k!cos</A> gen (fm 0.0)
   <A class=def NAME="r2k!cos?">r2k!cos?</A> gen
@@ -10043,7 +10065,7 @@ The instruments pianoy and pianoy1 use r2k!cos: <code>pianoy beg dur freq amp</c
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-rkoddssb">make-rkoddssb</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rkoddssb">rkoddssb</A> gen (fm 0.0)
   <A class=def NAME="rkoddssb?">rkoddssb?</A> gen
@@ -10086,7 +10108,7 @@ safe maximum r is:
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-k2sin">make-k2sin</A> (frequency 0.0)
   <A class=def NAME="k2sin">k2sin</A> gen (fm 0.0)
   <A class=def NAME="k2sin?">k2sin?</A> gen
@@ -10105,7 +10127,7 @@ safe maximum r is:
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-k3sin">make-k3sin</A> (frequency 0.0)
   <A class=def NAME="k3sin">k3sin</A> gen fm
   <A class=def NAME="k3sin?">k3sin?</A> gen
@@ -10116,7 +10138,7 @@ safe maximum r is:
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-krksin">make-krksin</A> (frequency 0.0) (r 0.5)
   <A class=def NAME="krksin">krksin</A> gen (fm 0.0)
   <A class=def NAME="krksin?">krksin?</A> gen
@@ -10143,7 +10165,7 @@ The only value to avoid is 1.0.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-abcos">make-abcos</A> (frequency 0.0) (a 0.5) (b 0.25)
   <A class=def NAME="abcos">abcos</A> gen (fm 0.0)
   <A class=def NAME="abcos?">abcos?</A> gen
@@ -10161,7 +10183,7 @@ The only value to avoid is 1.0.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-r2k2cos">make-r2k2cos</A> (frequency 0.0) (r 0.5)
   <A class=def NAME="r2k2cos">r2k2cos</A> gen (fm 0.0)
   <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
@@ -10178,7 +10200,7 @@ variants of those given above.
 <br><br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <A class=def NAME="make-tanhsin">make-tanhsin</A> (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
   <A class=def NAME="tanhsin">tanhsin</A> gen (fm 0.0)
   <A class=def NAME="tanhsin?">tanhsin?</A> gen
@@ -10189,7 +10211,7 @@ variants of those given above.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <a class=def name="make-moving-fft">make-moving-fft</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-fft">moving-fft</A> gen
   <a class=def name="moving-fft?">moving-fft?</A> gen
@@ -10213,7 +10235,7 @@ We could mimic the fft display window in the "lisp graph" via:
 </pre>
 <br>
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <a class=def name="make-moving-spectrum">make-moving-spectrum</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-spectrum">moving-spectrum</A> gen
   <a class=def name="moving-spectrum?">moving-spectrum?</A> gen
@@ -10227,7 +10249,7 @@ use moving-spectrum-amps, moving-spectrum-phases, and moving-spectrum-freqs.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <a class=def name="make-moving-autocorrelation">make-moving-autocorrelation</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-autocorrelation">moving-autocorrelation</A> gen
   <a class=def name="moving-autocorrelation?">moving-autocorrelation?</A> gen
@@ -10240,7 +10262,7 @@ via mus-data.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <a class=def name="make-moving-pitch">make-moving-pitch</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-pitch">moving-pitch</A> gen
   <a class=def name="moving-pitch?">moving-pitch?</A> gen
@@ -10267,7 +10289,7 @@ via mus-data.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <a class=def name="make-moving-scentroid">make-moving-scentroid</a> (dbfloor -40.0) (rfreq 100.0) (size 4096)
   <a class=def name="moving-scentroid">moving-scentroid</A> gen
   <a class=def name="moving-scentroid?">moving-scentroid?</A> gen
@@ -10278,7 +10300,7 @@ via mus-data.
 <br>
 
 
-<pre style="background-color: #f2f4ff">
+<pre class="bluish">
   <a class=def name="make-flocsig">make-flocsig</a> (reverb-amount 0.0) (frequency 1.0) (amplitude 2.0) offset
   <a class=def name="flocsig">flocsig</A> gen i val
   <a class=def name="flocsig?">flocsig?</A> gen
@@ -10366,7 +10388,7 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
 
 
 <!-- defgenerator -->
-<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>defgenerator</h5></center></td></tr></table>
+<table border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>defgenerator</h5></center></td></tr></table>
 
 <pre>
   <a class=def name="defgenerator">defgenerator</a> name fields
@@ -10872,7 +10894,7 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 <table border=1 hspace=20 vspace=10 cellspacing=8 cellpadding=5>
 
 <tr>
-<td bgcolor="#f0f4ff">
+<td class="bluish">
 <pre>
 (with-sound (:play #t)
   (let ((osc1 (make-oscil 440.0))
@@ -10899,7 +10921,7 @@ with_sound(:play, true) do
 
 </tr><tr>
 
-<td bgcolor="#effdef">
+<td class="greenish">
 <pre>
 lambda: ( -- )
   440.0 make-oscil { osc1 }
@@ -11539,20 +11561,17 @@ an interesting instrument that you're willing to share, please send it to me
 </p>
 
 
-<br><br>
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
+</div>
 
 </body></html>

@@ -1,17 +1,57 @@
+<!-- <!DOCTYPE html> -->
+
 <html>
 <head>
 <title>An Introduction to FM</title>
+
+<style type="text/css">
+        EM.noem {font-style: normal}
+        PRE.indented {padding-left: 1.0cm;}
+        TD.greenish {background-color: #eefdee}
+	TD.bluish {background-color: #f6f8ff}
+        DIV.header {margin-top: 60px;
+	            margin-bottom: 30px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #eefdee; /* lightgreen */
+		    padding-left: 30px;
+	           }
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
+        DIV.centered {text-align: center;
+	               padding-bottom: 0.5cm;
+	             }
+        DIV.centered1 {padding-left: 30%;
+	               padding-bottom: 0.5cm;
+		       }
+	DIV.bluishbordered {background-color: #f2f4ff;
+	                   border: 1px solid #000000;
+			   padding-left: 10px;
+			   padding-right: 10px;
+			   padding-top: 10px;
+			   padding-bottom: 10px;
+			   }
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 0.5cm; 
+                   }
+</style>
 </head>
-<body bgcolor=white>
+<body class="body">
 
-
-<center><h2>An Introduction To FM</h2></center>
-
-<center>
+<div class="topheader" id ="fmintro">An Introduction To FM</div>
+<div class="centered1">
 <img src="pix/fmad1.png" alt="radio ad">
 <img src="pix/fmad2.png" alt="intro">
+
 <!--
-	this Zenith brochure is probably from around 1952 --these 3 models were introduced
+	this Zenith brochure is probably from around 1952: these 3 models were introduced
 	between 1950 and 1952.  Schematics are available online,
 	http://www.nostalgiaair.org/PagesByModel/573/M0025573.pdf
 	for example (the others are at the same site).  There are
@@ -21,14 +61,8 @@
 	frequency band) were from ca 1940.  There are good pictures at various websites,
 	http://userpages.bright.net/~geary/fm/index.html for example.
 -->
- 
-</center>
-<br>
-
-<center>Bill Schottstaedt</center>
-
-<br>
-
+</div>
+<div class="centered">Bill Schottstaedt</div>
 
 <!-- the latex stuff is always embedded in:
 
@@ -42,7 +76,6 @@
 -->
 
 <!-- INDEX fmintro:Frequency Modulation -->
-<A NAME="fmintro"></A>
 
 <p>In frequency modulation we modulate the frequency &mdash; "modulation" here is just a latinate word for 
 "change".  Vibrato and glissando are frequency modulation.  John Chowning tells me that he 
@@ -55,7 +88,7 @@ can express this (the vibrato, not the neat story) as:
 
 <img src="pix/fmeq1.png" alt="cos(wt + f)" hspace=20>
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM and phase modulation</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>FM and phase modulation</h5></center></td></tr></table>
 
 <p>where the c subscript stands for "carrier" and f(t) means "some arbitrary function added to the 
 carrier".  Since cos takes an angle as its argument, f(t) modulates (that is, changes) the angle 
@@ -104,7 +137,7 @@ the same parameters.  Also, to lay a different controversy to rest, it should be
 functions that there is no difference in run-time computational expense or accuracy.
 </p>
 
-</td></tr><tr><td bgcolor="#f6f8ff">
+</td></tr><tr><td class="bluish">
 
 <!-- CLM CASE
 <pre>
@@ -266,7 +299,7 @@ functions that there is no difference in run-time computational expense or accur
 -->
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>simple FM: sin(sin)</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>simple FM: sin(sin)</h5></center></td></tr></table>
 
 <p>Given our formula for FM, let's assume, for starters, that f(t) is a sinusoid:
 </p>
@@ -443,7 +476,7 @@ a sort of damped sinusoid:
 <img src="pix/jacobi.png" alt="page from Jacobi's works">
 </td></tr>
 <tr>
-<td bgcolor="#f6f8ff">
+<td class="bluish">
 <center>C G J Jacobi, Gesammelte Werke, VI 101</center>
 </td></tr></table>
 </td></tr></table>
@@ -461,9 +494,9 @@ more dispersed the spectral energy &mdash; normally a brighter sound.
 <table border=1 cellpadding=4 hspace=20 vspace=10>
 
 <tr>
-<td bgcolor="#f6f8ff"><center>carrier=1000, mod=100, index=1.0</center></td>
-<td bgcolor="#f6f8ff"><center>carrier=1000, mod=100, index=2.0</center></td>
-<td bgcolor="#f6f8ff"><center>carrier=1000, mod=100, index=3.0</center></td>
+<td class="bluish"><center>carrier=1000, mod=100, index=1.0</center></td>
+<td class="bluish"><center>carrier=1000, mod=100, index=2.0</center></td>
+<td class="bluish"><center>carrier=1000, mod=100, index=3.0</center></td>
 </tr>
 
 <tr>
@@ -538,7 +571,7 @@ FM version sound richer and, far more importantly, louder?
 <tr><td>
 <img src="pix/fmtime.png" alt="time domain comparisons">
 </td></tr>
-<tr><td bgcolor="#f6f8ff">
+<tr><td class="bluish">
 <center>FM waveform (index: 3.0) vs sum of cosines with the same (relative) component amplitudes</center>
 </td></tr>
 </table>
@@ -662,7 +695,7 @@ Just for completeness, here's a derivation following Gray and Mathews, "A Treati
 <!-- should we do the expansion by hand? -->
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>simple FM examples</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>simple FM examples</h5></center></td></tr></table>
 
 <p>Here's a simple FM instrument:
 </p>
@@ -807,7 +840,7 @@ real and imaginary parts &mdash; unexplored territory!
 <tr><td>
 <img src="pix/fmc63.png" alt="complex index fm 6.0+3.0i 0.5 interp">
 </td></tr>
-<tr><td bgcolor="#f6f8ff"><small><center>index: 6+3i</center></small></td></tr></table>
+<tr><td class="bluish"><small><center>index: 6+3i</center></small></td></tr></table>
 </td></tr>
 </table>
 
@@ -966,7 +999,7 @@ real and imaginary parts &mdash; unexplored territory!
 -->
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>phase quibbles: cos(sin)</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>phase quibbles: cos(sin)</h5></center></td></tr></table>
 
 <p>
 I am getting carried away &mdash; 
@@ -1056,7 +1089,7 @@ instrument:
 
 <table border=1 cellpadding=6 hspace=20 vspace=10>
 <tr>
-<td bgcolor="#f6f8ff">
+<td class="bluish">
 
 <!-- CLM CASE
 <pre>
@@ -1150,7 +1183,7 @@ CLM instrument that shows this (subtle) effect:
 </td></tr></table>
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>asymmetric spectra</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>asymmetric spectra</h5></center></td></tr></table>
 
 <p>The next question is "if we can get cancellations, can we fiddle with the phases and get 
 asymmetric FM spectra?".  There are several approaches; an obvious one uses the
@@ -1195,7 +1228,7 @@ but not anything we'd claim was single side-band.
 <!-- SND CASE -->
 
 <table border=1 hspace=10 cellpadding=6>
-<tr><td bgcolor="#f6f8ff">
+<tr><td class="bluish">
 <pre>
 (define (pm-cancellation beg dur carfreq modfreq amp index)
   (let* ((cx 0.0)
@@ -1219,9 +1252,9 @@ but not anything we'd claim was single side-band.
 <td>
   <table border=0>
   <tr><td><img src="pix/fmeq27.png" alt="uncancelled"></td></tr>
-  <tr><td bgcolor="#f6f8ff"><center>cos side by itself</center></td></tr>
+  <tr><td class="bluish"><center>cos side by itself</center></td></tr>
   <tr><td><img src="pix/fmcancel.png" alt="fm cancellation"></td></tr>
-  <tr><td bgcolor="#f6f8ff"><center>both sides (showing cancellations)</center></td></tr>
+  <tr><td class="bluish"><center>both sides (showing cancellations)</center></td></tr>
   </table>
 </td>
 </tr></table>
@@ -1232,7 +1265,7 @@ examples which come from a collection of "imaginary machines":
 </p>
 
 <table border=1 hspace=10 cellpadding=6 vspace=10>
-<tr><td bgcolor="#f6f8ff">
+<tr><td class="bluish">
 <pre>
 (definstrument (machine1 beg dur cfreq mfreq amp index gliss)
   (let* ((gen (make-fmssb cfreq mfreq :index 1.0)) ; defined in generators.scm
@@ -1298,7 +1331,7 @@ any exponential in the numerator, so we can get many interesting effects: moving
 <img src="pix/jam.png" alt="jam pict">
 </td></tr>
 <tr>
-<td bgcolor="#f6f8ff"><center><small>a: 2, x:1000, y: 100</small></center>
+<td class="bluish"><center><small>a: 2, x:1000, y: 100</small></center>
 </td></tr></table>
 </td></tr></table>
 
@@ -1356,7 +1389,7 @@ The spectrum produced for a given "r" is mirrored by -1/r (remembering that
 -->
 
 <table border=1 hspace=20 cellpadding=3>
-<tr><td bgcolor="#f6f8ff">
+<tr><td class="bluish">
 <pre>
 Asymmetric FM with index=2.0, r=0.5:
 
@@ -1393,7 +1426,7 @@ a moving formant).  Here we sweep "r" from -1.0 to -20.0, with an index of 3, m/
 
 
 <br>
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>complex FM: sin(sin+sin)</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>complex FM: sin(sin+sin)</h5></center></td></tr></table>
 
 
 <p>
@@ -1526,7 +1559,7 @@ i is the 2000 Hz part, k the 200 Hz,
 red dots mark pure sum/difference tones
 </pre>
 </td></tr>
-<tr><td colspan=2 bgcolor="#f6f8ff"><center>(with-sound () (fm 0 2.0 2000 .5 '(1 .1) '(0.5 1.0) 0.0 '(1.855 1.599)))</center></td></tr>
+<tr><td colspan=2 class="bluish"><center>(with-sound () (fm 0 2.0 2000 .5 '(1 .1) '(0.5 1.0) 0.0 '(1.855 1.599)))</center></td></tr>
 </table>
 
 <!--
@@ -1699,7 +1732,7 @@ set of initial phases that minimizes the modulating signal's peak amplitude:
 
 <br><br>
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>cascade FM: sin(sin(sin))</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>cascade FM: sin(sin(sin))</h5></center></td></tr></table>
 
 <p>We can, of course, use FM (or anything) to produce the modulating signal.  When FM is used, it is 
 sometimes called "cascade FM":
@@ -1725,7 +1758,7 @@ sort of like a set of formant regions.
 <table border=1 hspace=40 vspace=10><tr><td>
 <img src="pix/cascade.png" alt="cascade fm picture">
 </td></tr>
-<tr><td bgcolor="#f6f8ff"><center>osc A: 2000 Hz, osc B: 500 Hz, index 1.5, osc C: 50 Hz, index 1.0</center></td></tr>
+<tr><td class="bluish"><center>osc A: 2000 Hz, osc B: 500 Hz, index 1.5, osc C: 50 Hz, index 1.0</center></td></tr>
 </table>
 
 <!--
@@ -1808,7 +1841,7 @@ phase by a constant (0.05), usually not a big deal.
 to show how strong this effect is:
 </p>
 
-</td></tr><tr><td bgcolor="#f6f8ff">
+</td></tr><tr><td class="bluish">
 
 <!-- CLM CASE
 <pre>
@@ -1887,9 +1920,9 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 </td>
 </tr>
 <tr>
-<td bgcolor="#f6f8ff"><center>k=3</center></td>
-<td bgcolor="#f6f8ff"><center>k=30</center></td>
-<td bgcolor="#f6f8ff"><center>k=300</center></td>
+<td class="bluish"><center>k=3</center></td>
+<td class="bluish"><center>k=30</center></td>
+<td class="bluish"><center>k=300</center></td>
 </tr></table>
 
 <table border=1 hspace=100 cellpadding=4 vspace=10><tr><td>
@@ -1926,7 +1959,7 @@ As z increases above 1.27, we get a square wave, then period doubling, and final
 
 
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>feedback FM: sin(x=sin(x))</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>feedback FM: sin(x=sin(x))</h5></center></td></tr></table>
 
 <p>A similar trick comes up in feedback FM used in some synthesizers. Here the output of the modulator
 is fed back into its input:
@@ -1990,7 +2023,7 @@ so, just as in normal FM, if the index is 0, we get a pure sine wave.
 </p>
 
 <table border=1 hspace=20 vspace=10 cellpadding=3>
-<tr><td bgcolor="#f6f8ff">
+<tr><td class="bluish">
 <pre>
 (define (feedbk beg dur freq amp index)
   (let* ((start (seconds-&gt;samples beg))
@@ -2041,7 +2074,7 @@ the magic formula yet (a reasonable stab at it is: <code>-(phase-incr^(1-(B/3))<
 <table border=1 align=right hspace=20 vspace=20><tr><td>
 <img src="pix/blip.png">
 </td></tr>
-<tr><td bgcolor="#f6f8ff">
+<tr><td class="bluish">
 <center>Tomisawa's picture of the noise</center>
 </td></tr></table>
 
@@ -2138,7 +2171,7 @@ the sum has DC! and the difference is a pulse train, but higher srate fixes that
 
 -->
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM and noise: sin(sin(rand))</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>FM and noise: sin(sin(rand))</h5></center></td></tr></table>
 
 <p>
 One way to make noise 
@@ -2152,7 +2185,7 @@ random number frequency times its index &mdash; is this just Mr Carson again?):
 
 
 <table border=1 hspace=40 vspace=10 cellpadding=5>
-<tr><td bgcolor="f6f8ff" colspan=3>
+<tr><td class="bluish" colspan=3>
 <pre>
 (with-sound ()
   (let ((gen (make-oscil 5000))
@@ -2175,9 +2208,9 @@ random number frequency times its index &mdash; is this just Mr Carson again?):
 </td>
 </tr>
 <tr>
-<td bgcolor="#f6f8ff"><center>flat</center></td>
-<td bgcolor="#f6f8ff"><center>gaussian (bell curve)</center></td>
-<td bgcolor="#f6f8ff"><center>eared</center></td>
+<td class="bluish"><center>flat</center></td>
+<td class="bluish"><center>gaussian (bell curve)</center></td>
+<td class="bluish"><center>eared</center></td>
 </tr></table>
 
 
@@ -2197,16 +2230,16 @@ smeared out by a copy of the noise band:
 
 <table border=1 hspace=20 vspace=10>
 <tr>
-<td colspan=3 bgcolor="#f6f8ff"><center>(with-sound () (fm-violin 0 1 400.0 .5 :fm-index 3.0 :noise-amount 0.007))</center></td></tr>
+<td colspan=3 class="bluish"><center>(with-sound () (fm-violin 0 1 400.0 .5 :fm-index 3.0 :noise-amount 0.007))</center></td></tr>
 <tr>
 <td><img src="pix/fmvnoise0.png" alt="fmv no noise"></td>
 <td><img src="pix/fmvnoise2.png" alt="fmv noise .002"></td>
 <td><img src="pix/fmvnoise7.png" alt="fmv noise .007"></td>
 </tr>
 <tr>
-<td bgcolor="#f6f8ff"><center>noise-amount: 0.0</center></td>
-<td bgcolor="#f6f8ff"><center>noise-amount: 0.002</center></td>
-<td bgcolor="#f6f8ff"><center>noise-amount: 0.007</center></td>
+<td class="bluish"><center>noise-amount: 0.0</center></td>
+<td class="bluish"><center>noise-amount: 0.002</center></td>
+<td class="bluish"><center>noise-amount: 0.007</center></td>
 </tr></table>
 
 <p>In CLM:
@@ -2349,7 +2382,7 @@ makes a sound crisper; "Wait for Me!" uses it whenever a sound needs to cut thro
 mix. 
 </p>
 
-<table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>FM voice</h5></center></td></tr></table>
+<table align=right border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>FM voice</h5></center></td></tr></table>
 
 <p>We can use more than one sinusoidal component in our carrier, or multiple banks of carriers and 
 modulators, and depend upon vibrato and "spectral fusion" to make the result sound like one voice.  
@@ -2530,7 +2563,7 @@ Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
 
 <table border=1><tr><td>
 <img src="pix/fmradio.png" alt="early FM radio">
-</td></tr><tr><td bgcolor="#f6f8ff">
+</td></tr><tr><td class="bluish">
 <center>FM (and AM) radio ca 1933</center>
 </td></tr></table>
 
@@ -2540,7 +2573,7 @@ Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
 <img src="pix/m5fm1.png"><br>
 <img src="pix/m5fm2.png">
 </td></tr>
-<tr><td bgcolor="#f6f8ff"><center>Music 5 FM?</center>
+<tr><td class="bluish"><center>Music 5 FM?</center>
 </td></tr></table>
 
 </td></tr></table>

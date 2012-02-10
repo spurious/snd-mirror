@@ -22,38 +22,54 @@
         TD.green {background-color: lightgreen}
 	TD.bluish {background-color: #f2f4ff}
 	TD.beige {background-color: beige}
+        TD.greenish {background-color: #eefdee}
+
+	DIV.center {text-align: center}
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 0.5cm; 
+                   }
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
+	DIV.related {text-align:center;
+	             border: 1px solid lightgray;
+		     margin-bottom: 1.0cm;
+		     margin-top: 1.0cm;
+		     padding-top: 10px;
+		     padding-bottom: 10px;
+		     background-color: #f0f0f0;
+	            }
 </style>
 </head>
 
-<body bgcolor=white>
+<body class="body">
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 <script language=JavaScript type="text/javascript" src="wz_data.js"></script>
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (make-index.scm) -->
 
-<A NAME="extsndcontents"></a>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr>
-<td class="beige" align="center" valign="middle"><h1>Snd Customization and Extension</h1></td>
-</tr></table>
-</td></tr></table>
-<br>
+<div class="topheader" id="extsndcontents">Snd Customization and Extension</div>
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tips extension language')">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tips extension language')">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
+</div>
 
 
 <table border=0 cellpadding=10 vspace=10 hspace=20>
@@ -185,7 +201,7 @@ are in <em class=listener>this color</em>):
 <em class=listener>3</em>
 </pre></td><td width=60></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>1 2 +</em>
 <em class=listener>3</em>
 </pre></td>
@@ -203,7 +219,7 @@ are in <em class=listener>this color</em>):
 <em class=listener>0</em>
 </pre></td><td></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>"oboe.snd" open-sound</em>
 <em class=listener>0</em>
 </pre></td>
@@ -221,7 +237,7 @@ are in <em class=listener>this color</em>):
 <em class=listener>true</em>
 </pre></td><td></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>auto-resize</em>
 <em class=listener>#t</em>
 </pre></td>
@@ -239,7 +255,7 @@ are in <em class=listener>this color</em>):
 <em class=listener>false</em>
 </pre></td><td></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>#f set-auto-resize</em>
 <em class=listener>#f</em>
 </pre></td>
@@ -257,7 +273,7 @@ are in <em class=listener>this color</em>):
 <em class=listener>0.01.0</em>
 </pre></td><td></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>'( 0.0 1.0 ) set-x-bounds</em>
 <em class=listener>'( 0.0 1.0 )</em>
 </pre></td>
@@ -275,7 +291,7 @@ are in <em class=listener>this color</em>):
 <em class=listener>true</em>
 </pre></td><td></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>"bird.fs" file-eval</em>
 <em class=listener>0</em>
 </pre></td>
@@ -293,7 +309,7 @@ are in <em class=listener>this color</em>):
 <em class=listener>-0.0015869140625</em>
 </pre></td><td></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>lambda: &lt;{ y }&gt; y 2.0 f* ; map-channel</em>
 <em class=listener>-0.00158691</em>
 </pre></td>
@@ -311,7 +327,7 @@ are in <em class=listener>this color</em>):
 
 </pre></td><td></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>: plus ( a b -- sum ) { a b } a b + ;</em>
 <em class=listener>nil</em>
 </pre></td>
@@ -329,7 +345,7 @@ are in <em class=listener>this color</em>):
 <em class=listener>[:Pixel, 16711680]</em>
 </pre></td><td></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 &gt;<em class=typing>1 0 0 make-color set-basic-color</em>
 <em class=listener>#&lt;XmRaw: Pixel 0x9d3b430&gt;</em>
 </pre></td>
@@ -2957,7 +2973,7 @@ This hook is called each time a file is selected in a View Files dialog's files 
 
 
 
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Channel-specific hooks:</h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>Channel-specific hooks:</h4></td></tr></table>
 <pre>
   <a class=def name="edithook">edit-hook</a> (snd chn)
   <a class=def name="undohook">undo-hook</a> (snd chn)
@@ -3308,7 +3324,7 @@ sampler? returns #t if 'obj' is a sampler.
 </p>
 
 <br>
-<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Snd-&gt;sample</h4></td></tr></table>
+<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4>Snd-&gt;sample</h4></td></tr></table>
 
 <p>There is a Snd-specific CLM-style generator that redirects CLM instrument input (via in-any, ina, etc)
 to Snd data, snd-&gt;sample. 
@@ -4970,7 +4986,7 @@ the Mix Dialog, various hooks, and various mouse-related actions.
 </p>
 
 
-<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Mixes</h4></td></tr></table>
+<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4>Mixes</h4></td></tr></table>
 
 <p>A mix is an object that represents a channel (one channel in and one channel out) of a sound mix.
 Various mixing functions create these objects (mix-vct for example).  In the old days, mixes were identified
@@ -5448,7 +5464,7 @@ with-sound (a notelist) expanded into mixes: <a href="sndscm.html#withmixedsound
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndregions">Regions and Selections</a></h3></td></tr></table>
 
 <br>
-<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Regions</h4></td></tr></table>
+<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4>Regions</h4></td></tr></table>
 
 <p>A region is a saved portion of sound data.  Use the View:Region browser to inspect, edit, and save regions.
 As regions are defined, the new ones are pushed on a stack, and if enough regions already
@@ -5691,7 +5707,7 @@ region-play-list and region-play-sequence in examp.scm<br>
 <br><br>
 
 
-<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Selections</h4></td></tr></table>
+<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4>Selections</h4></td></tr></table>
 
 
 <!-- ******************************** SELECTION TABLE ******************************** -->
@@ -10147,7 +10163,7 @@ of the fft points, making the display look smoother.
 </table><!-- end of main sound/channel table -->
 <br><br>
 
-<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
+<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="customcontrols">the control panel</a></h4></td></tr></table>
 
 
 <p>The control panel makes it easy to try out various sound effects without
@@ -10584,7 +10600,7 @@ entire panel.
 <!-- INDEX editlists:Edit lists -->
 <!-- Edit Lists -->
 <br>
-<table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editlists">Edit Lists</a></h4></td></tr></table>
+<table width="35%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="editlists">Edit Lists</a></h4></td></tr></table>
 
 <p>An edit list (in other editors this is called an "edit decision list", I guess because it sounds decisive)
 describes the edit history of a channel. When, for example, you type C-d, nothing actually
@@ -12854,7 +12870,7 @@ or whatever and find yourself back at the top level.  <code>(throw 'snd-top-leve
 </p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>s7 debugging</h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>s7 debugging</h4></td></tr></table>
 
 <p>When s7 hits an error, it prints out a stacktrace as well as the error message.
 The variable *error-info* has additional info.  You can also trace functions, and
@@ -12863,18 +12879,18 @@ place breakpoints.  See <a href="s7.html">s7.html</a> for further details.
 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Forth debugging</h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>Forth debugging</h4></td></tr></table>
 <p>See the debugging section in the fth documentation.
 </p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Ruby debugging</h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>Ruby debugging</h4></td></tr></table>
 <p>
 <code>$DEBUG = true</code> turns on the Ruby debugger.
 </p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4><A NAME="cdebugging">C debugging</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="cdebugging">C debugging</a></h4></td></tr></table>
 
 <!-- INDEX cdebugging:Debugging (C) -->
 <p>If you hit a bug in Snd's C code, you'll need to use gdb
@@ -13688,20 +13704,17 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 </table>
 
 
-<br><br>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tips extension language')">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
+</div>
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
 </body></html>

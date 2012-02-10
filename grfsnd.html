@@ -21,9 +21,36 @@
 	TD.green {background-color: lightgreen}
 	TD.bluish {background-color: #f2f4ff}
 	TD.beige {background-color: beige}
+        TD.greenish {background-color: #eefdee}
+
+	DIV.center {text-align: center}
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 0.5cm; 
+                   }
+        DIV.centered1 {padding-left: 35%;
+	               padding-bottom: 0.5cm;
+		       }
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
+	DIV.related {text-align:center;
+	             border: 1px solid lightgray;
+		     margin-bottom: 1.0cm;
+		     margin-top: 1.0cm;
+		     padding-top: 10px;
+		     padding-bottom: 10px;
+		     background-color: #f0f0f0;
+	            }
 </style>
 </head>
-<body bgcolor=white>
+<body class="body">
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 <script language=JavaScript type="text/javascript" src="wz_data.js"></script>
@@ -31,26 +58,20 @@
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (make-index.scm) -->
 
-<A NAME="grfsndcontents"></a>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h1>Snd Customization and Extension Part 2</h1></td></tr></table>
-</td></tr></table>
-<br>
+<div class="topheader" id="grfsndcontents">Snd Customization and Extension Part 2</div>
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
+</div>
 
 
 <table border=0 cellpadding=5 vspace=10 hspace=20>
@@ -720,7 +741,7 @@ latter are (configure --help):
 
 <table cellspacing=0 cellpadding=0>
 <tr><td colspan=2></td><td width=20></td><td></td></tr>
-<tr><td colspan=2 bgcolor="#EEFDEE">Audio choices</td><td></td><td>(normally this is decided automatically)</td></tr>
+<tr><td colspan=2 class="greenish">Audio choices</td><td></td><td>(normally this is decided automatically)</td></tr>
 <tr><td width=50></td><td>--with-esd</td><td></td><td>use ESD (enlightened sound daemon)</td></tr>
 <tr><td></td><td>--with-alsa</td><td></td><td>use ALSA (the default in Linux)</td></tr>
 <tr><td></td><td>--with-oss</td><td></td><td>use OSS</td></tr>
@@ -730,7 +751,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-portaudio</td><td></td><td>use portaudio (may not work yet)</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 
-<tr><td colspan=2 bgcolor="#EEFDEE">Graphics choices</td><td></td><td></td><td></td></tr>
+<tr><td colspan=2 class="greenish">Graphics choices</td><td></td><td></td><td></td></tr>
 <tr><td></td><td>--with-gtk</td><td></td><td>use Gtk+ to build Snd (Gtk+ version 2.0 or later)</td></tr>
 <tr><td></td><td>--with-motif</td><td></td><td>use Motif (version 2.0 or later) to build Snd (the default), Lesstif is not supported</td></tr>
 <tr><td></td><td>--with-static-motif</td><td></td><td>use libXm.a to build Snd</td></tr>
@@ -744,19 +765,19 @@ latter are (configure --help):
 <tr><td></td><td>--with-editres</td><td></td><td>include editres in xm (default: no)</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 
-<tr><td colspan=2 bgcolor="#EEFDEE">Language choices</td><td></td><td></td></tr>
+<tr><td colspan=2 class="greenish">Language choices</td><td></td><td></td></tr>
 <tr><td></td><td>--with-forth</td><td></td><td>use Forth as the extension language</td></tr>
 <tr><td></td><td>--with-ruby</td><td></td><td>use Ruby as the extension language; version 1.6.4 or later</td></tr>
 <tr><td></td><td>--with-s7</td><td></td><td>use s7 as the extension language (default = yes)</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td></td><td>where Ruby is installed</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 
-<tr><td colspan=2 bgcolor="#EEFDEE">Numerical choices</td><td></td><td></td></tr>
+<tr><td colspan=2 class="greenish">Numerical choices</td><td></td><td></td></tr>
 <tr><td></td><td>--with-float-samples</td><td></td><td>use floats or doubles as the internal sample representation (default: yes)</td></tr>
 <tr><td></td><td>--with-sample-width=N</td><td></td><td>if not float samples, use N bits for ints (default: 24, must be between 16 and 31)</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 
-<tr><td colspan=2 bgcolor="#EEFDEE">Library choices</td><td></td><td></td></tr>
+<tr><td colspan=2 class="greenish">Library choices</td><td></td><td></td></tr>
 <tr><td></td><td>--with-gsl</td><td></td><td>use GSL (for Chebyshev window), default: yes if local C does not support complex trig</td></tr>
 <tr><td></td><td>--with-fftw</td><td></td><td>use fftw, default: yes; fallback fft is built-in</td></tr>
 <tr><td></td><td>--with-gmp</td><td></td><td>use gmp, mpfr, and mpc to implement multiprecision arithmetic (default: no)</td></tr>
@@ -766,13 +787,13 @@ latter are (configure --help):
 <tr><td></td><td>--disable-deprecated</td><td></td><td>do not include any deprecated stuff from gtk, s7, sndlib, xen, clm, etc</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 
-<tr><td colspan=2 bgcolor="#EEFDEE">Directory choices</td><td></td><td></td></tr>
+<tr><td colspan=2 class="greenish">Directory choices</td><td></td><td></td></tr>
 <tr><td></td><td>--with-temp-dir</td><td></td><td>directory to use for temp files (default: ".")</td></tr>
 <tr><td></td><td>--with-save-dir</td><td></td><td>directory to use for saved-state files (default: ".")</td></tr>
 <tr><td></td><td>--with-doc-dir</td><td></td><td>directory to search for documentation (html-dir, elaborate set of defaults)</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 
-<tr><td colspan=2 bgcolor="#EEFDEE">Debugging etc</td><td></td><td></td></tr>
+<tr><td colspan=2 class="greenish">Debugging etc</td><td></td><td></td></tr>
 <tr><td></td><td>--with-snd-as-widget</td><td></td><td>make Snd a loadable widget, not a standalone program</td></tr>
 <tr><td></td><td>--with-profiling</td><td></td><td>include profiling (branch counting) machinery, default: no (only for s7)</td></tr>
 <tr><td></td><td>--enable-snd-debug</td><td></td><td>include internal Snd debugging functions, default: no (not useful if not actually debugging!) </td></tr>
@@ -1517,7 +1538,7 @@ snd
 &gt; <em class=typing>exit</em>
 </pre></td><td width=60></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 snd
 <em class=typing>"test.snd" new-sound</em>
 <em class=listener>0 ok</em>
@@ -1587,7 +1608,7 @@ save_sound_as "test.snd"
 exit
 </pre></td><td width=60></td>
 
-<td bgcolor="#EefdEe"><pre>
+<td class="greenish"><pre>
 #! /usr/bin/env /home/bil/forth-snd/snd
 "oboe.snd" open-sound drop
 2.0 #f #f scale-by drop
@@ -2246,7 +2267,7 @@ at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&g
 <table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- gsl-dht -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
+<tr><td colspan=2 class="bluish">
 <em class=emdef>gsl-dht</em> <code>size data nu xmax</code>
 </td></tr><tr><td width=60></td><td>
 gsl-dht performs the Hankel transform of "data", a vct.  See <a href="extsnd.html#addtransform">add-transform</a>
@@ -2255,7 +2276,7 @@ for an example.
 
 
 <!-- gsl-eigenvectors -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
+<tr><td colspan=2 class="bluish">
 <em class=emdef>gsl-eigenvectors</em> <code>matrix</code>
 </td></tr><tr><td width=60></td><td>
 gsl-eigenvectors returns the eigenvalues and corresponding eigenvectors of "matrix", a mixer.
@@ -2279,7 +2300,7 @@ See make-dpss-window in snd-test.scm (the corresponding C code is in clm.c).
 
 
 <!-- gsl-elliptk -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
+<tr><td colspan=2 class="bluish">
 <em class=emdef>gsl-ellipk</em> <code>k</code><br>
 <em class=emdef>gsl-ellipj</em> <code>j u m</code>
 </td></tr><tr><td width=60></td><td>
@@ -2288,7 +2309,7 @@ analog-filter.scm for an example.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- gsl-roots -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
+<tr><td colspan=2 class="bluish">
 <em class=emdef>gsl-roots</em> <code>poly</code>
 </td></tr><tr><td width=60></td><td>
 This returns the roots of the polynomial "poly" via gsl_poly_complex_solve.  See analog-filter.scm for an example.
@@ -2311,7 +2332,7 @@ switch.  This version of s7 also supplies the functions:
 <table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- bignum -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
+<tr><td colspan=2 class="bluish">
 <em class=emdef>bignum</em> <code>num</code>
 </td></tr><tr><td width=60></td><td>
 <p>bignum converts its argument (a string) into a big number.  This is the most convenient
@@ -2354,7 +2375,7 @@ of numbers.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- bignum? -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
+<tr><td colspan=2 class="bluish">
 <em class=emdef>bignum?</em> <code>num</code>
 </td></tr><tr><td width=60></td><td>
 <p>bignum? returns #t if its argument is a big number.
@@ -2362,7 +2383,7 @@ of numbers.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- bignum-fft -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
+<tr><td colspan=2 class="bluish">
 <em class=emdef>bignum-fft</em> <code>rl im size <em class=narg>sign</em></code>
 </td></tr><tr><td width=60></td><td>
 bignum-fft performs an FFT using big floats; rl and im are vectors of big floats.
@@ -2370,7 +2391,7 @@ bignum-fft performs an FFT using big floats; rl and im are vectors of big floats
 
 
 <!-- bignum-precision -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
+<tr><td colspan=2 class="bluish">
 <em class=emdef>bignum-precision</em> <code></code>
 </td></tr><tr><td width=60></td><td>
 <p>bignum-precision sets the number of bits used in floating-point big numbers (integer 
@@ -2459,22 +2480,18 @@ at the start of snd-test.scm.  The other files in the tools directory are intend
 for semi-automatic regression testing.
 </p>
 
-<br><br>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a>
+</div>
 
-
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
-
-</body></html>
+</body>
+</html>

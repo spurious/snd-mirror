@@ -15,22 +15,35 @@
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
 
         TD.green {background-color: lightgreen}
+        TD.greenish {background-color: #eefdee}
+
+	DIV.center {text-align: center}
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 0.5cm; 
+                   }
+        DIV.centered1 {padding-left: 35%;
+	               padding-bottom: 0.5cm;
+		       }
+	DIV.related {text-align:center;
+	             border: 1px solid lightgray;
+		     margin-bottom: 1.0cm;
+		     margin-top: 1.0cm;
+		     padding-top: 10px;
+		     padding-bottom: 10px;
+		     background-color: #f0f0f0;
+	            }
 </style>
-<!-- 	P {text-align: justify}  -->
 </head>
-<body bgcolor=white>
+<body class="body">
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 <script language=JavaScript type="text/javascript" src="wz_data.js"></script>
 
-<center>
+<div class="centered1"><img src="pix/s.png" alt="S"><img src="pix/n.png" alt="n"><img src="pix/d.png" alt="d"></div>
 
-<img src="pix/s.png" alt="S"><img src="pix/n.png" alt="n"><img src="pix/d.png" alt="d">
 
-</center>
-<br><br>
-<center>Bill Schottstaedt (bil@ccrma.stanford.edu)</center>
-<br><br>
+<div class="center">Bill Schottstaedt (bil@ccrma.stanford.edu)</div>
+
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (make-index.scm) -->
 
@@ -76,20 +89,20 @@ is included in <a href="http://ccrma.stanford.edu/planetccrma/software/">PlanetC
 </p>
 <br>
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html">index.html</a></small></td>
-</tr></table>
-</center>
+
+<div class="related">
+related documentation: &nbsp;
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html">index.html</a>
+</div>
+
 
 <br><br>
 <table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
@@ -578,7 +591,7 @@ display possible matches.
 <p>Snd can handle the following file and data types:</p>
 
 <table border=0 hspace=20>
-<tr><td bgcolor="#EEFDEE">read/write (many data formats)</td></tr>
+<tr><td class="greenish">read/write (many data formats)</td></tr>
 <tr><td>
 <pre>
     NeXT/Sun/DEC/AFsp
@@ -592,7 +605,7 @@ display possible matches.
 </pre>
 </td></tr>
 <tr><td><br></td></tr>
-<tr><td bgcolor="#EEFDEE">read-only (in selected data formats)</td></tr>
+<tr><td class="greenish">read-only (in selected data formats)</td></tr>
 <tr><td>
 <pre>
     8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, PVF, NVF,
@@ -604,7 +617,7 @@ display possible matches.
 </pre>
 </td></tr>
 <tr><td><br></td></tr>
-<tr><td bgcolor="#EEFDEE">automatically translated to a readable format</td></tr>
+<tr><td class="greenish">automatically translated to a readable format</td></tr>
 <tr><td>
 <pre>
     IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI, NIST shortpack, HCOM, Intel, 
@@ -994,7 +1007,7 @@ has a chapter to itself.</p>
 <br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="thecursor">The Active Channel and The Cursor</a></h3></td></tr></table>
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>The Active Channel</h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>The Active Channel</h4></td></tr></table>
 
 <p>Click in the time domain waveform to activate the cursor and select that channel.
 To make the selected channel stand out from the rest,
@@ -1011,7 +1024,7 @@ also move between windows with <A NAME="cxo"></a>C-x o.</p>
 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Moving the Cursor</h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>Moving the Cursor</h4></td></tr></table>
 
 <A NAME="movecursor"></a>
 <p>Any mouse click on the waveform causes the cursor to move to that point.
@@ -1049,7 +1062,7 @@ rate before being applied to the command, so C-u 2.1 C-f moves
 the cursor forward 2.1 seconds in the data.</p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Moving the Window</h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>Moving the Window</h4></td></tr></table>
 
 <A NAME="movingwindow"></a>
 <p>The simplest way to move the window (the portion of the data in the current graph) is to drag the
@@ -1277,7 +1290,7 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="saveopen">Save, open, close, print</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="saveopen">Save, open, close, print</a></h4></td></tr></table>
 
 <img src="pix/saveas.png" alt="save as dialog" align=right>
 <p>Most of these kinds of operations are accessible from the File menu.
@@ -1296,7 +1309,7 @@ be invoked from the keyboard:</p>
 file which can be sent to directly a printer or saved for later use.</p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="deleteinsert">Delete, insert, mix</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="deleteinsert">Delete, insert, mix</a></h4></td></tr></table>
 
 <A NAME="editcut"></a><p>The fastest way to delete a section is to drag the mouse through it and
 call the Edit menu's Delete selection option.  Any region
@@ -1325,7 +1338,7 @@ the Edit:Insert Selection menu option does the same with the current selection.
 </p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="multichannel">Multichannel operations</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="multichannel">Multichannel operations</a></h4></td></tr></table>
 
 <A NAME="syncbutton"></a><p>Normally each operation applies only to the currently
 active channel.  If, however, the sound's 'sync' button is set,
@@ -1374,7 +1387,7 @@ portions of the other channels will also be
 selected.</p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="ampenvs">Amplitude envelopes and scaling</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="ampenvs">Amplitude envelopes and scaling</a></h4></td></tr></table>
 
 <p>An envelope in Snd is a list of x y break-point pairs.
 The x axis range is arbitrary. 
@@ -1425,7 +1438,7 @@ the actual scaled-to value is just less than 1.0 to avoid the
 </p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="menufind">Find</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="menufind">Find</a></h4></td></tr></table>
 
 <p>Searches in Snd refer to the sound data, and are,
 in general, patterned after Emacs.  When you type
@@ -1468,7 +1481,7 @@ There are more examples in <a href="sndscm.html#zeroplus">sndscm.html</a>.
 See also the functions <a href="extsnd.html#findchannel">find-channel</a> and <a href="extsnd.html#countmatches">count-matches</a>.
 </p>
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="changesamples">Change samples</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="changesamples">Change samples</a></h4></td></tr></table>
 
 <p>The simplest changes are:</p>
 <pre>
@@ -1482,7 +1495,7 @@ at the cursor to .1.  To set several samples to zero, use C-u &lt;number&gt; C-z
 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="undoredo">Undo, redo, revert</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="undoredo">Undo, redo, revert</a></h4></td></tr></table>
 
 <p>Snd supports 'unlimited undo' in the sense that you can
 move back and forth in the list of edits without any
@@ -1501,7 +1514,7 @@ are these keyboard commands:</p>
 </pre>
 <p>Revert is the same as undoing all edits.</p>
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="menuplay">Play</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="menuplay">Play</a></h4></td></tr></table>
 
 <p>To play a sound, click the 'play' button.  If the sound has more
 channels than your DAC(s), Snd will (normally) try to mix the extra channels
@@ -1569,7 +1582,7 @@ C-x p plays the currently active selection.
 </p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="mixingfiles">Mix Files</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="mixingfiles">Mix Files</a></h4></td></tr></table>
 
 <p>Mixing (adding, not multiplying by a sinusoid) is the most common
 editing operation performed on sounds, so there is relatively
@@ -1623,7 +1636,7 @@ or drop it on the main menubar to open it.
 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="kbdmacros">Keyboard macros</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="kbdmacros">Keyboard macros</a></h4></td></tr></table>
 
 <p><A NAME="kce"></a>As in Emacs, C-x ( begins keyboard macro definition, C-x )
 ends it, and C-x e executes the last keyboard macro.  Unlike
@@ -1635,7 +1648,7 @@ more details.</p>
 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="changeformat">Change file format</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="changeformat">Change file format</a></h4></td></tr></table>
 
 <p>To change the sound file's header or data format, use the File or Edit menu Save as option.
 Choose the header type you want, then the data format,
@@ -1644,7 +1657,7 @@ choice).  The File:Save dialog saves the currently selected sound.
 The Edit:Save dialog saves the selection in a new file.
 </p>
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="extendfile">Extend a File</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="extendfile">Extend a File</a></h4></td></tr></table>
 
 <p>
 The easiest way to extend the
@@ -1660,7 +1673,7 @@ automatically pad with zeros, if necessary.
 </p>
 <br>
 <!-- INDEX recordfile:Recording -->
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="recordfile">Record a File</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="recordfile">Record a File</a></h4></td></tr></table>
 
 <img src="pix/simprec.png" alt="picture of recorder dialog" align=right hspace=20>
 
@@ -1670,7 +1683,7 @@ the usual buttons along the bottom to start or stop the recorder, provide help, 
 </p>
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editenvelope">Edit or View an Envelope</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="editenvelope">Edit or View an Envelope</a></h4></td></tr></table>
 
 <img src="pix/env.png" alt="picture of envelope editor" align=right hspace=10>
 
@@ -1757,7 +1770,7 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editheader">Edit, add, or remove the header</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="editheader">Edit, add, or remove the header</a></h4></td></tr></table>
 
 <img src="pix/editheader.png" alt="edit header dialog" align=right>
 <p>The Edit menu's Edit Header option starts a dialog to edit, add, or
@@ -1773,7 +1786,7 @@ After writing the new header, you should either close or update the
 associated sound.
 </p>
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="savedstate">Save session</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="savedstate">Save session</a></h4></td></tr></table>
 
 <p>At any time you can save the current
 state of Snd by calling <code>(save-state name)</code> where <i>name</i>
@@ -1784,7 +1797,7 @@ whatever. To load such a file after startup, <code>(load name)</code>.
 </p> 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="centeryaxis">Center a tiny signal with DC</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="centeryaxis">Center a tiny signal with DC</a></h4></td></tr></table>
 
 <p>Due to the quantized nature of the y-axis position scroller, a tiny
 signal that is not centered on 0 can be a pain to position in the
@@ -1796,7 +1809,7 @@ M-x (set! (<a class=quiet href="extsnd.html#ybounds" onmouseout="UnTip()" onmous
 
 
 <br>
-<table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="misccommands">Miscellaneous commands</a></h4></td></tr></table>
+<table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="misccommands">Miscellaneous commands</a></h4></td></tr></table>
 
 <p><A NAME="kgc"></a>C-g at any point aborts the current keyboard command
 sequence, as does any mouse click.  C-g can also interrupt most long
@@ -1980,21 +1993,18 @@ panel are:</p>
 For information on initialization, configuration, and connections to other programs, see <a href="grfsnd.html#grfsndcontents">grfsnd.html</a>.
 </p>
 
-<br>
+<div class="related">
+related documentation: &nbsp;
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
+<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html">index.html</a>
+</div>
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
-</tr></table>
-</center>
 
 </body></html>

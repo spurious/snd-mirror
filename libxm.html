@@ -19,14 +19,28 @@
 
         TD.green {background-color: lightgreen}
 	TD.beige {background-color: beige}
+
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 0.5cm; 
+                   }
+        DIV.centered1 {padding-left: 35%;
+	               padding-bottom: 0.5cm;
+		       }
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
 </style>
 </head>
-<body bgcolor=white>
+<body class="body">
 
-<A NAME="xm"></A>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h1>xm</h1></td></tr></table>
-</td></tr></table>
+<div class="topheader">libxm</div>
 
 <br>
 <p>libxm provides s7, Ruby, and Forth (fth) bindings for Xlib, Xt, Xpm, and Xm (Motif);

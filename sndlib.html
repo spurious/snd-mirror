@@ -8,6 +8,7 @@
 	EM.def {font-style:italic; font-weight: bold}
 	H1 {text-align: center}
 	UL {list-style-type: none}
+	DIV.center {text-align: center}
 
 	A {text-decoration:none}
 	A:hover {text-decoration:underline}
@@ -15,37 +16,74 @@
 	A.quiet:hover {text-decoration:underline}
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
 
-        TD.green {background-color: lightgreen}
+        DIV.topheader {margin-top: 10px;
+	            margin-bottom: 40px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    font-family: 'Helvetica';
+		    font-size: 30px;
+		    text-align: center;
+		    padding-top: 10px;
+		    padding-bottom: 10px;
+	           }
+        DIV.innerheader {margin-top: 60px;
+	            margin-bottom: 30px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #eefdee; /* lightgreen */
+		    padding-left: 30px;
+		    width: 50%;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
+        DIV.header {margin-top: 50px;
+	            margin-bottom: 10px;
+		    font-size: 20px;
+		    font-weight: bold;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    text-align: center;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
+	DIV.related {text-align:center;
+	             border: 1px solid lightgray;
+		     margin-bottom: 1.0cm;
+		     margin-top: 1.0cm;
+		     padding-top: 10px;
+		     padding-bottom: 10px;
+		     background-color: #f0f0f0;
+	            }
+        TD.green {background-color: lightgreen;
+	          padding-left: 1.0cm;}
 	TD.beige {background-color: beige}
+        BODY.body {background-color: #ffffff;    /* white */
+	           margin-left: 0.5cm; 
+                   }
+
 </style>
 </head>
-<body bgcolor=white>
+<body class="body">
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 <script language=JavaScript type="text/javascript" src="wz_data.js"></script>
 
-<h1>SndLib</h1>
-<center>Bill Schottstaedt (bil@ccrma.stanford.edu)</center>
-<br>
+<div class="topheader">SndLib</div>
+<div class="center">Bill Schottstaedt (bil@ccrma.stanford.edu)</div>
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html">index.html</a></small></td>
-</tr></table>
-</center>
 
-<br>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
-</td></tr></table>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html">index.html</a></small></td>
+</div>
+
+<div class="header">Contents</div>
 
 <ul>
 <li><a href="#introduction">Introduction</a>
@@ -64,10 +102,10 @@
 </ul>
 <li><a href="#sndlibxen">Extension Languages</a>
 </ul>
-<br>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="introduction">Introduction</a></h2></td></tr></table>
-</td></tr></table>
+
+
+
+<div class="header" id="Introduction">Introduction</div>
 
 <p>sndlib is a collection of sound file and audio hardware
 handlers written in C and running currently in various Unices
@@ -111,10 +149,9 @@ the word "to" as in "mus_samples_to_bytes".  Booleans use "_p" (an ancient
 Common Lisp convention meaning "predicate" I think).
 </p>
 
-<br>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="headers">Headers</a></h2></td></tr></table>
-</td></tr></table>
+
+
+<div class="header" id="headers">Headers</div>
 
 <p>Sound files have built-in descriptors known as headers.
 The following functions return the information in the header.
@@ -180,10 +217,9 @@ components that have been found can be read via functions such as
 <b>mus_header_srate</b>.
 </p>
 
-<br>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="data">Data</a></h2></td></tr></table>
-</td></tr></table>
+
+
+<div class="header" id="data">Data</div>
 
 <p>The following functions provide access to
 sound file data:</p>
@@ -243,10 +279,9 @@ starting for each of <i>chans</i> channels in <i>obufs</i> at
 file indicated by <i>fd</i> to the desired frame.
 </p>
 
-<br>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="hardware">Hardware</a></h2></td></tr></table>
-</td></tr></table>
+
+
+<div class="header" id="hardware">Hardware</div>
 
 <p>The following functions provide access to audio harware.  If an
 error occurs, they return -1 (MUS_ERROR). </p>
@@ -293,10 +328,7 @@ requested by mus_audio_open_output with channels interleaved.</p>
 
 
 
-<br>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="music5">MusicV</a></h2></td></tr></table>
-</td></tr></table>
+<div class="header" id="music5">Music V</div>
 
 <p>clm.c and friends implement all the generators found in CLM, a
 music V implementation, and clm2xen.c ties these into the languages supported by the
@@ -421,13 +453,13 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <p>Errors are reported
 through mus_error which can be redirected or muffled.  See clm2xen.c for an example.
 </p>
-<br>
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="examples">Examples</a></h2></td></tr></table>
-</td></tr></table>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndinfo">SndInfo</a></h3></td></tr></table>
+
+<div class="header" id="examples">Examples</div>
+
+<div class="innerheader id="sndinfo">sndinfo</div>
+
 
 <p>This program prints out a description of a sound file (sndinfo.c).</p>
 <pre>
@@ -463,8 +495,9 @@ int main(int argc, char *argv[])
   return(0);
 }
 </pre>
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndplay">SndPlay</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="sndplay">sndplay</div>
 
 <p>This code plays a sound file (sndplay.c):</p>
 
@@ -510,9 +543,10 @@ int main(int argc, char *argv[])
 }
 
 </pre>
-<br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="audinfo">AudInfo</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="audinfo">audinfo</div>
 
 <p>This program describes the current audio harware state (audinfo.c):</p>
 <pre>
@@ -525,8 +559,9 @@ int main(int argc, char *argv[])
 }
 </pre>
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndsine">SndSine</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="sndsine">sndsine</div>
 
 <p>This program writes a one channel NeXT/Sun sound file
 containing a sine wave at 440 Hz.</p>
@@ -565,8 +600,9 @@ int main(int argc, char *argv[])
 }
 </pre>
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="clmosc">clmosc</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="clmosc">clmosc</div>
 
 <p>This is program uses the clm.c oscillator and output functions to write the same sine wave 
 as we wrote in SndSine.</p>
@@ -818,18 +854,18 @@ has written a package using these functions, and several CLM instruments:
 see the sndins directory, and in particular the README file, for details.
 </p>
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="otherexamples">Other Examples</a></h3></td></tr></table>
+
+
+
+<div class="innerheader" id="otherexamples">Other examples</div>
 
 <p>The primary impetus for the sound library was the development
 of Snd and CLM, both of which are freely available.
 </p>
-<br>
 
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A NAME="sndlibxen"></a>Extension Languages</h2></td></tr></table>
-</td></tr></table>
+
+<div class="header" id="sndlibxen">Extension Languages</div>
 
 <p>Much of sndlib is accessible at run time in any program that has one of
 the languages supported by the xen package (s7, Ruby, Forth);
@@ -939,18 +975,17 @@ constants and functions described above into Scheme.  To initialize sndlib, call
 </pre>
 
 
-<center>
-<table bgcolor="aliceblue" border=0 cellspacing=8><tr>
-<td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
-<td><small><a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html</a></small></td>
-<td><small><a href="index.html">index.html</a></small></td>
-</tr></table>
-</center>
+<div class="related">
+related documentation: &nbsp;
+<a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html &nbsp;</a>
+<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
+<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
+<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
+<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
+<a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html &nbsp;</a>
+<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="index.html">index.html</a></small></td>
+</div>
 
-</body></html>
+</body>
+</html>
