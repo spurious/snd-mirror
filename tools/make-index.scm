@@ -372,8 +372,11 @@
       (begin 
        (let ((def-pos (string-position " class=def" str)))
 	 (when def-pos
-	   (set! str (string-append (checked-substring str 0 def-pos) 
-				    (checked-substring str (+ def-pos 10))))))
+	       ;(format #t "str: ~S, def-pos: ~A~%" str def-pos)
+	   (set! str (string-append "<a "
+				    (if (char=? (str (+ def-pos 10)) #\n)
+					(checked-substring str (+ def-pos 10))
+					(values "name=" (checked-substring str (+ def-pos 14))))))))
        
        (let* ((line (string-append "<a href=\"" 
 				   (or file "") 
@@ -424,6 +427,7 @@
 	 
 	 (let ((bpos (char-position #\> line))
 	       (epos (or (string-position "</a>" line) 
+			 (string-position "</em>" line) 
 			 (string-position "</A>" line))))
 	   (make-ind :name line 
 		     :topic topic 
@@ -723,6 +727,7 @@
 			   (pos-def (and (not compos) 
 					 (not indpos)
 					 (or (string-position "<a class=def name=" dline)
+					     (string-position "<em class=def id=" dline)
 					     (and with-clm-locals 
 						  (string-position "<a class=def Name=" dline)))))
 			   (pos (or pos-simple pos-def))
@@ -761,11 +766,12 @@
 					  ((not pos))
 					(set! dline (checked-substring dline pos))
 					(let ((epos (or (string-position "</a>" dline) 
+							(string-position "</em>" dline) 
 							(string-position "</A>" dline))))
 					  (if (not epos) 
 					      (format #t "<a> but no </a> for ~A~%" dline)
 					      (begin
-						(set! (names n) (checked-substring dline 0 (+ epos 4)))
+						(set! (names n) (string-append (checked-substring dline 0 epos) "</a>"))
 						(set! (files n) (car file))
 						(set! (topics n) topic)
 						(incf n)
@@ -774,6 +780,7 @@
 								     (and with-clm-locals 
 									  (string-position "<a Name=" dline))))
 						(set! pos-def (or (string-position "<a class=def name=" dline)
+								  (string-position "<em class=def id=" dline)
 								  (string-position "<A class=def name=" dline)
 								  (and with-clm-locals 
 								       (string-position "<a class=def Name=" dline))))
@@ -828,7 +835,7 @@
 					      (ind-sortby b)))))
 
       (let ((len (length tnames)))
-	(let ((new-names (make-vector (+ len 80)))
+	(let ((new-names (make-vector (+ len 100)))
 	      (j 0)
 	      (last-char #f))
 	  (do ((i 0 (+ i 1)))
@@ -860,7 +867,7 @@
       (call-with-output-file output
         (lambda (ofil)
 	  (format ofil "<!DOCTYPE html>
-<html>
+<html lang=\"en\">
 <head>
 <title>Snd Index</title>
 <style type=\"text/css\">
@@ -1341,12 +1348,14 @@
 			 (let* ((dline line)
 				(pos-simple (string-ci-position "<a name=" dline))
 				(pos-def (string-ci-position "<a class=def name=" dline))
-				(pos (or pos-simple pos-def))
-				(pos-len (if pos-simple 9 19)))
+				(pos-def1 (string-ci-position "<em class=def id=" dline))
+				(pos (or pos-simple pos-def pos-def1))
+				(pos-len (if pos-simple 9 (if pos-def 19 18))))
 			   (do ()
 			       ((not pos))
 			     (set! dline (checked-substring dline (+ pos pos-len)))
 			     (let ((epos (or (string-position "</a>" dline) 
+					     (string-position "</em>" dline) 
 					     (string-position "</A>" dline))))
 			       ;;actually should look for close double quote
 			       (if (not epos) 
@@ -1366,8 +1375,9 @@
 				     (set! dline (checked-substring dline epos))
 				     (set! pos-simple (string-ci-position "<a name=" dline))
 				     (set! pos-def (string-ci-position "<a class=def name=" dline))
-				     (set! pos (or pos-simple pos-def))
-				     (set! pos-len (if pos-simple 9 19)))))))
+				     (set! pos-def1 (string-ci-position "<em class=def id=" dline))
+				     (set! pos (or pos-simple pos-def pos-def1))
+				     (set! pos-len (if pos-simple 9 (if pos-def 19 18))))))))
 					  
 			 ;; search for href
 			 (let* ((dline line)
@@ -1380,6 +1390,7 @@
 			       ((not pos))
 			     (set! dline (checked-substring dline (+ pos pos-len)))
 			     (let ((epos (or (string-position "</a>" dline) 
+					     (string-position "</em>" dline) 
 					     (string-position "</A>" dline))))
 			       (if (not epos) 
 				   (format #t "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)

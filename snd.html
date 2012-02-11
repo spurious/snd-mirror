@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 <head>
 <title>Snd</title>
 <style type="text/css">
@@ -13,6 +13,7 @@
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
+	EM.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
 
         TD.green {background-color: lightgreen}
         TD.greenish {background-color: #eefdee}
@@ -24,6 +25,25 @@
         DIV.centered1 {padding-left: 35%;
 	               padding-bottom: 0.5cm;
 		       }
+        DIV.header {margin-top: 50px;
+	            margin-bottom: 10px;
+		    font-size: 20px;
+		    font-weight: bold;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    text-align: center;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
+        DIV.innerheader {margin-top: 60px;
+	            margin-bottom: 30px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #eefdee; /* lightgreen */
+		    padding-left: 30px;
+		    width: 50%;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
 	DIV.related {text-align:center;
 	             border: 1px solid lightgray;
 		     margin-bottom: 1.0cm;
@@ -101,10 +121,7 @@ related documentation: &nbsp;
 </div>
 
 
-<br><br>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
-</td></tr></table>
+<div class="header">Contents</div>
 
 <table border=0 cellpadding=5>
 <tr><th>this file:</th><th>extsnd.html:</th><th>grfsnd.html:</th></tr>
@@ -341,12 +358,9 @@ related documentation: &nbsp;
 </tr>
 </table>
 
-<br>
-<br>
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="gettingstarted">Getting Started</a></h2></td></tr></table>
-</td></tr></table>
-<br><br>
+
+
+<div class="header" id="gettingstarted">Getting started</div>
 
 <img src="pix/intro2.png" alt="basic snd display" align=right hspace=30>
 
@@ -477,15 +491,9 @@ describes the user-interface extension library.
 
 <img src="pix/selpop.png" alt="selection popup menu" hspace=20>
 
-<br>
-<br>
-<br>
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="fileoperations">File Operations</a></h2></td></tr></table>
-</td></tr></table>
 
-<br>
+<div class="header" id="fileoperations">File operations</div>
 
 <table border=8 hspace=20>
 <tr><th></th><th>File Menu</th><th></th></tr>
@@ -517,7 +525,7 @@ If a name is preceded by "-p" or "-preload", it is treated as a directory
 name and all sound files found in that directory are added
 to the <a href="#viewfiles">View:Files</a> list.  To
 load arbitrary Snd customizations (your own code, or a <a href="#savedstate">saved state</a> file),
-precede the file name with <A class=def NAME="minusl">"-l"</a> or "-load" (or use the load function). 
+precede the file name with <em id="minusl">"-l"</em> or "-load" (or use the load function). 
 </p>
 <pre>
   snd oboe.snd -l examp.scm
@@ -551,7 +559,7 @@ and separate windows for each sound (-separate).
 </map>
 
 <p>A file can be opened from the File menu via Open
-or View.  <A class=def NAME="viewfile">View</a> opens the file read-only, whereas Open
+or View.  <em class=def id="viewfile">View</em> opens the file read-only, whereas Open
 allows it to be changed.  The equivalent keyboard
 command is C-x C-f.  
 If a file cannot be changed (either it was opened read-only
@@ -689,11 +697,11 @@ applies to the currently selected sound.
 
 <A NAME="savefile"></a><p>To save the current edited state of a file, use the
 Save option (to overwrite the old version of the
-file), or <A class=def NAME="savefileas">Save as</a> (to write to a new file, leaving
+file), or <em class=def id="savefileas">Save as</em> (to write to a new file, leaving
 the old file unchanged).  The equivalent keyboard
 command is C-x C-s (save).  Other related keyboard
 commands are C-x w (save selection as file), and
-<A class=def NAME="cxcw">C-x C-w</a> (extract and save the current channel as a file).
+<em class=def id="cxcw">C-x C-w</em> (extract and save the current channel as a file).
 Normally, if the new file already exists, and it is
 not currently being edited in Snd, it is silently
 overwritten.  If you try to overwrite a file, and
@@ -742,12 +750,13 @@ The <a href="#insertfile">Insert</a> option inserts a file at the cursor.
 <A NAME="exitfile"></a><p>Finally, to exit Snd cleanly (that is, removing any
 temporary files, and cleaning up some system stuff),
 use the Exit option.  Unsaved edits are silently
-flushed (but see the function <a href="extsnd.html#askaboutunsavededits">ask-about-unsaved-edits</a>).</p>
+flushed (but see the function <a href="extsnd.html#askaboutunsavededits">ask-about-unsaved-edits</a>).
+</p>
 
-<br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="viewing">The Display</a></h3></td></tr></table>
-<br>
+
+
+<div class="innerheader" id="viewing">The display</div>
 
 <table border=8 hspace=20>
 <tr><th></th><th>View Menu</th><th></th></tr>
@@ -775,7 +784,7 @@ To open or close the listener, use Open listener.
 </p>
 
 
-<p>The <A class=def NAME="colorbrowser">Color/Orientation</a> option
+<p>The <em class=def id="colorbrowser">Color/Orientation</em> option
 activates a window that sets various aspects of the sonogram, spectrogram,
 and wavogram displays.  There are fifteen or so colormaps available along with
 ways to invert the maps, and scale (darken) them differently according to screen or
@@ -783,7 +792,7 @@ printer characteristics.
 </p>
 
 
-<p>The <A class=def NAME="viewinfo">Popup menu's Info</a> dialog can be left in view and updated with M-v i
+<p>The <em class=def id="viewinfo">Popup menu's Info</em> dialog can be left in view and updated with M-v i
 to reflect the currently active sound.  The same information is displayed in the
 minibuffer when you click the file name.</p>
 
@@ -817,10 +826,9 @@ about each file as the mouse passes over it.
 
 <p>The <a href="#regionbrowser">Regions</a> and <a href="#mixdialog">Mix Dialog</a> options are described below.</p>
 
-<br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="options">Other Options</a></h3></td></tr></table>
-<br>
+
+<div class="innerheader" id="options">Other options</div>
 
 <table border=8 hspace=20>
 <tr><th></th><th>Options Menu</th><th></th></tr>
@@ -955,15 +963,11 @@ interested in.  If you leave the help dialog active, it becomes a sort of toolti
 if you linger over some other topic, its help info will be posted in the help dialog.
 </p>
 <img src="pix/prefs.png" alt="preferences dialog">
-<br>
-<br>
-<br>
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="editoperations">Edit Operations</a></h2></td></tr></table>
-</td></tr></table>
 
-<br>
+
+<div class="header" id="editoperations">Edit operations</div>
+
 
 <table border=8 hspace=20>
 <tr><th></th><th>Edit Menu</th><th></th></tr>
@@ -999,11 +1003,13 @@ how to use marks and regions; how to perform various
 common editing operations. It ends with a description of
 all the mouse and keyboard editing commands.  The 'control
 panel' provides more complex editing operations, but
-has a chapter to itself.</p>
+has a chapter to itself.
+</p>
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="thecursor">The Active Channel and The Cursor</a></h3></td></tr></table>
-<br>
+
+
+<div class="innerheader" id="thecursor">The active channel and cursor</div>
+
 <table width="50%" border=0><tr><td class="greenish" valign="middle"><h4>The Active Channel</h4></td></tr></table>
 
 <p>Click in the time domain waveform to activate the cursor and select that channel.
@@ -1102,8 +1108,10 @@ If you'd like far more precise window moving and zooming control,
 see <a href="extsnd.html#moveonepixel">move-one-pixel</a> and
 <a href="extsnd.html#zoomonepixel">zoom-one-pixel</a>.
 </p>
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="marks">Marks</a></h3></td></tr></table>
+
+
+
+<div class="innerheader" id="marks">Marks</div>
 
 <p>A 'mark' marks a particular sample in a sound (not a
 position in that sound).
@@ -1149,8 +1157,9 @@ getting the distance.</p>
 file.
 </p>
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="regions">Regions</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="regions">Regions</div>
 
 <p>A region is a portion of the sound
 data.  Although I'm not completely consistent in this document, 
@@ -1227,12 +1236,10 @@ If the 'selection' button is set in the transform options dialog,
 (or equivalently, <a href="extsnd.html#showselectiontransform">show-selection-transform</a>
 is #t), the fft display, if any, displays the transform of the selected portion.
 </p>
-<br>
-<br>
-<br>
-<br>
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="edithistory">The Edit List</a></h3></td></tr></table>
+
+
+<div class="innerheader" id="edithistory">The edit list</div>
 
 <p>The current state of the undo/redo list can be viewed
 as a scrolled list of strings in the pane on the left of the 
@@ -1253,9 +1260,10 @@ meantime).  The file can be edited (it's just a text file with comments).
 See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 </p>
 
-<br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="howtoedit">How to...</a></h3></td></tr></table>
-<br>
+
+
+<div class="innerheader" id="howtoedit">How to ...</div>
+
 <table><tr><td>
 <ul>
 <li><a href="#saveopen">Save, open, close, print</a>
@@ -1849,12 +1857,12 @@ the selection, carriage-return accepts the current selection, mouse click on any
 any other character removes the list.  
 </p>
 
-<br>
+
+
 
 <!-- INDEX controls:Control Panel -->
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="controls">The Control Panel</a></h2></td></tr></table>
-</td></tr></table>
+
+<div class="header" id="controls">The control panel</div>
 
 <p>The control panel is the portion of each sound's pane
 beneath the channel graphs.
@@ -1982,9 +1990,11 @@ panel are:</p>
   C-x C-o   show ("open") control panel
   C-x C-c   hide ("close") control panel
 </pre>
-<br>
 
-<h2>Customization and Extension</h2>
+
+
+
+<div class="header">Customization and extension</div>
 
 <p>For information on the extension language functions, see <a href="extsnd.html#extsndcontents">extsnd.html</a>.
 For information on initialization, configuration, and connections to other programs, see <a href="grfsnd.html#grfsndcontents">grfsnd.html</a>.

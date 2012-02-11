@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 <head>
 <title>CLM</title>
 <style type="text/css">
@@ -23,6 +23,7 @@
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black; padding-right: 0.2cm}
 	A.olddef {font-style: normal; text-decoration:none; color:gray; padding-right: 0.2cm}
 	EM.gray {color:gray; font-style: normal}
+	EM.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black; padding-right: 0.2cm}
 
         TD.green {background-color: lightgreen}
 	TD.bluish {background-color: #f2f4ff}
@@ -44,6 +45,25 @@
 		    text-align: center;
 		    padding-top: 10px;
 		    padding-bottom: 10px;
+	           }
+        DIV.header {margin-top: 50px;
+	            margin-bottom: 10px;
+		    font-size: 20px;
+		    font-weight: bold;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #f5f5dc; /* beige */
+		    text-align: center;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
+	           }
+        DIV.innerheader {margin-top: 60px;
+	            margin-bottom: 30px;
+	            border: 4px solid #00ff00; /* green */
+		    background-color: #eefdee; /* lightgreen */
+		    padding-left: 30px;
+		    width: 50%;
+		    padding-top: 20px;
+		    padding-bottom: 20px;
 	           }
 	DIV.related {text-align:center;
 	             border: 1px solid lightgray;
@@ -129,11 +149,8 @@ related documentation: &nbsp;
 
 
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
-</td></tr></table>
+<div class="header">Contents</div>
 
-<br>
 <table border=8 cellpadding=8 hspace=20>
 
 <tr><td colspan=3><center><a href="#introduction">Introduction</a></center></td></tr>
@@ -224,11 +241,8 @@ related documentation: &nbsp;
 </table>
 
 
-<br><br>
 
-<table border=0 width="100%" cellpadding=2 cellspacing=0><tr><td class="green">
-<table width="100%" border=0><tr><td class="beige" align="center" valign="middle"><h2><A class=def NAME="introduction">Introduction</a></h2></td></tr></table>
-</td></tr></table>
+<div class="header" id="introduction">Introduction</div>
 
 <table border=0 hspace=100 vspace=20><tr><td>
 <p><small>
@@ -633,23 +647,23 @@ snd-rt:
 </pre>
 </td></tr></table>
 
-<br><br>
+
 
 
 <!-- INDEX generators:Generators -->
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2><A class=def NAME="generators">Generators</a></h2></td></tr></table>
-<br><br>
+
+<div class="header" id="generators">Generators</div>
 
 
-<A NAME="oscildoc"></A>
+
 <!-- ******************************** OSCIL ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>oscil</h3></div></td></tr></table>
-<br>
+<div class="innerheader" id="oscildoc">oscil</div>
+
 <pre>
-  <a class=def name="make-oscil">make-oscil</a> (frequency *clm-default-frequency*) (initial-phase 0.0)
-  <a class=def name="oscil">oscil</a> os (fm-input 0.0) (pm-input 0.0)
-  <a class=def name="oscil?">oscil?</a> os
+  <em class=def id="make-oscil">make-oscil</em> (frequency *clm-default-frequency*) (initial-phase 0.0)
+  <em class=def id="oscil">oscil</em> os (fm-input 0.0) (pm-input 0.0)
+  <em class=def id="oscil?">oscil?</em> os
 </pre>
 
 
@@ -1090,18 +1104,17 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 
 -->
 
-<br><br>
 
 
 
-<A NAME="envdoc"></A>
+
 <!-- ******************************** ENV ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>env</h3></div></td></tr></table>
-<br>
+<div class="innerheader" id="envdoc">env</div>
+
 
 <pre>
-  <a class=def name="make-env">make-env</a> 
+  <em class=def id="make-env">make-env</em> 
       envelope      ; list or vct of x,y break-point pairs
       (scaler 1.0)  ; scaler on every y value (before offset is added)
       duration      ; duration in seconds
@@ -1110,11 +1123,11 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
       end           ; end sample number (obsolete, use length)
       length        ; duration in samples
 
-  <a class=def name="env">env</a> e
-  <a class=def name="env?">env?</a> e
+  <em class=def id="env">env</em> e
+  <em class=def id="env?">env?</em> e
 
-  <a class=def name="env-interp">env-interp</a> x env (base 1.0) ;value of env at x
-  <a class=def name="env-any">env-any</a> e connecting-function
+  <em class=def id="env-interp">env-interp</em> x env (base 1.0) ;value of env at x
+  <em class=def id="env-any">env-any</em> e connecting-function
 </pre>
 
 
@@ -1135,8 +1148,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
       (outa i (* (env ampf) (oscil gen))))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -1152,8 +1164,7 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="greenish">
 <pre>
@@ -1495,28 +1506,25 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 <br>
 </small></blockquote>
 </td></tr></table>
-<br><br>
 
 
 
-<A NAME="table-lookupdoc"></A>
 <!-- ******************************** TABLE-LOOKUP ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>table-lookup</h3></div></td></tr></table>
-<br>
+<div class="innerheader" id="table-lookupdoc">table-lookup</div>
 
 <pre>
-  <a class=def name="make-table-lookup">make-table-lookup</a> 
+  <em class=def id="make-table-lookup">make-table-lookup</em> 
         (frequency *clm-default-frequency*) ; table repetition rate in Hz
         (initial-phase 0.0)                 ; starting point in radians (pi = mid-table)
         wave                                ; a vct containing the signal
         (size *clm-table-size*)             ; table size if wave not specified
         (type mus-interp-linear)            ; interpolation type
 
-  <a class=def name="table-lookup">table-lookup</a> tl (fm-input 0.0)
-  <a class=def name="table-lookup?">table-lookup?</a> tl
+  <em class=def id="table-lookup">table-lookup</em> tl (fm-input 0.0)
+  <em class=def id="table-lookup?">table-lookup?</em> tl
 
-  <a class=def NAME="make-table-lookup-with-env">make-table-lookup-with-env</a> frequency env size
+  <em class=def id="make-table-lookup-with-env">make-table-lookup-with-env</em> frequency env size
 </pre>
 
 
@@ -1598,8 +1606,8 @@ various such waveforms:
 </p>
 
 <pre>
- <a class=def name="partialstowave">partials-&gt;wave</a> synth-data wave-vct (norm #t)
- <a class=def name="phase-partialstowave">phase-partials-&gt;wave</a> synth-data wave-vct (norm #t)
+ <em class=def id="partialstowave">partials-&gt;wave</em> synth-data wave-vct (norm #t)
+ <em class=def id="phase-partialstowave">phase-partials-&gt;wave</em> synth-data wave-vct (norm #t)
 </pre>
 
 <p>The "synth-data" argument is a list or vct of (partial amp) pairs: '(1 .5  2 .25)
@@ -1887,39 +1895,38 @@ bagpipe drone.  <a href="sndscm.html#twotab">two-tab</a> in the same file interp
 See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displayscannedsynthesis">display-scanned-synthesis</a>.
 </p>
 
-<br><br>
 
 
 
 <A NAME="polyshapedoc"></A>
-<A NAME="polywavedoc"></A>
+
 <!-- ******************************** POLYWAVE, POLYSHAPE ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>polywave, polyshape</h3></div></td></tr></table>
-<br>
+<div class="innerheader" id="polywavedoc">polywave, polyshape</div>
+
 <pre>
-  <a class=def name="make-polywave">make-polywave</a> 
+  <em class=def id="make-polywave">make-polywave</em> 
          (frequency *clm-default-frequency*) 
          (partials '(1 1))                   ; a list of harmonic numbers and their associated amplitudes
          (type mus-chebyshev-first-kind)     ; Chebyshev polynomial choice
 
-  <a class=def name="polywave">polywave</a> w (fm 0.0)
-  <a class=def name="polywave?">polywave?</a> w
+  <em class=def id="polywave">polywave</em> w (fm 0.0)
+  <em class=def id="polywave?">polywave?</em> w
 
-  <a class=def name="make-polyshape">make-polyshape</a> 
+  <em class=def id="make-polyshape">make-polyshape</em> 
         (frequency *clm-default-frequency*) 
         (initial-phase 0.0) 
         coeffs 
         (partials '(1 1)) 
         (kind mus-chebyshev-first-kind)
 
-  <a class=def name="polyshape">polyshape</a> w (index 1.0) (fm 0.0)
-  <a class=def name="polyshape?">polyshape?</a> w
+  <em class=def id="polyshape">polyshape</em> w (index 1.0) (fm 0.0)
+  <em class=def id="polyshape?">polyshape?</em> w
 
-  <a class=def name="partialstopolynomial">partials-&gt;polynomial</a> partials (kind mus-chebyshev-first-kind)
-  <a class=def name="normalizepartials">normalize-partials</a> partials
+  <em class=def id="partialstopolynomial">partials-&gt;polynomial</em> partials (kind mus-chebyshev-first-kind)
+  <em class=def id="normalizepartials">normalize-partials</em> partials
 
-  <a class=def name="mus-chebyshev-tu-sum">mus-chebyshev-tu-sum</a> x t-coeffs u-coeffs
+  <em class=def id="mus-chebyshev-tu-sum">mus-chebyshev-tu-sum</em> x t-coeffs u-coeffs
   <em class=emdef>mus-chebyshev-t-sum</em> x t-coeffs
   <em class=emdef>mus-chebyshev-u-sum</em> x u-coeffs
 </pre>
@@ -2659,32 +2666,30 @@ is at its maximum:
 See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 </p>
 
-<br><br>
 
 
 
 
-<A NAME="sawtoothdoc"></A>
 <!-- ******************************** SAWTOOTH ETC ******************************** -->
 
-<table width="70%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></div></td></tr></table>
-<br>
+<div class="innerheader" id="sawtoothdoc">sawtooth-wave, triangle-wave, pulse-train, square-wave</div>
+
 <pre>
-  <a class=def name="make-triangle-wave">make-triangle-wave</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
-  <a class=def name="triangle-wave">triangle-wave</a> s (fm 0.0)
-  <a class=def name="triangle-wave?">triangle-wave?</a> s
+  <em class=def id="make-triangle-wave">make-triangle-wave</em> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
+  <em class=def id="triangle-wave">triangle-wave</em> s (fm 0.0)
+  <em class=def id="triangle-wave?">triangle-wave?</em> s
 
-  <a class=def name="make-square-wave">make-square-wave</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0)
-  <a class=def name="square-wave">square-wave</a> s (fm  0.0)
-  <a class=def name="square-wave?">square-wave?</a> s
+  <em class=def id="make-square-wave">make-square-wave</em> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0)
+  <em class=def id="square-wave">square-wave</em> s (fm  0.0)
+  <em class=def id="square-wave?">square-wave?</em> s
 
-  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
-  <a class=def name="sawtooth-wave">sawtooth-wave</a> s (fm 0.0)
-  <a class=def name="sawtooth-wave?">sawtooth-wave?</a> s
+  <em class=def id="make-sawtooth-wave">make-sawtooth-wave</em> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
+  <em class=def id="sawtooth-wave">sawtooth-wave</em> s (fm 0.0)
+  <em class=def id="sawtooth-wave?">sawtooth-wave?</em> s
 
-  <a class=def name="make-pulse-train">make-pulse-train</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase (* 2 pi))
-  <a class=def name="pulse-train">pulse-train</a> s (fm 0.0)
-  <a class=def name="pulse-train?">pulse-train?</a> s
+  <em class=def id="make-pulse-train">make-pulse-train</em> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase (* 2 pi))
+  <em class=def id="pulse-train">pulse-train</em> s (fm 0.0)
+  <em class=def id="pulse-train?">pulse-train?</em> s
 </pre>
 
 
@@ -2701,8 +2706,7 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
                  (triangle-wave gen))))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -2715,8 +2719,7 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
-<td width=4></td>
-
+</tr><tr>
 <td class="greenish">
 <pre>
 lambda: ( -- )
@@ -3388,24 +3391,22 @@ used.  Even triangle-wave(square-wave) can make funny noises.  See <a href="#nco
 for more dicussion about using these generators as FM modulators.
 </p>
 
-<br><br>
 
 
 
-<A NAME="ncosdoc"></A>
+
 <!-- ******************************** NCOS, NSIN ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ncos and nsin</h3></div></td></tr></table>
-<br>
+<div class="innerheader" id="ncosdoc">ncos and nsin</div>
 
 <pre>
-  <a class=def name="make-ncos">make-ncos</a> (frequency *clm-default-frequency*) (n 1)
-  <a class=def name="ncos">ncos</a> nc (fm 0.0)
-  <a class=def name="ncos?">ncos?</a> nc
+  <em class=def id="make-ncos">make-ncos</em> (frequency *clm-default-frequency*) (n 1)
+  <em class=def id="ncos">ncos</em> nc (fm 0.0)
+  <em class=def id="ncos?">ncos?</em> nc
 
-  <a class=def name="make-nsin">make-nsin</a> (frequency *clm-default-frequency*) (n 1)
-  <a class=def name="nsin">nsin</a> ns (fm 0.0)
-  <a class=def name="nsin?">nsin?</a> ns
+  <em class=def id="make-nsin">make-nsin</em> (frequency *clm-default-frequency*) (n 1)
+  <em class=def id="nsin">nsin</em> ns (fm 0.0)
+  <em class=def id="nsin?">nsin?</em> ns
 </pre>
 <br>
 
@@ -4323,27 +4324,26 @@ you know of any curious formula, anything that might trigger an interesting trai
 reflection, please send it to me, and I'll add it to this collection. 
 </p>
 
-<br><br>
 
 
-<A NAME="nrxydoc"></A>
+
+
 <!-- ******************************** NRXYSIN and NRXYCOS ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>nrxysin and nrxycos</h3></div></td></tr></table>
+<div class="innerheader" id="nrxydoc">nrxysin and nrxycos</div>
 
-<br>
 <pre>
-  <a class=def name="make-nrxysin">make-nrxysin</a> 
+  <em class=def id="make-nrxysin">make-nrxysin</em> 
       (frequency *clm-default-frequency*) 
       (ratio 1.0)               ; ratio between frequency and the spacing between successive sidebands
       (n 1)                     ; number of sidebands
       (r .5)                    ; amplitude ratio between successive sidebands (-1.0 &lt; r &lt; 1.0)
-  <a class=def name="nrxysin">nrxysin</a> s (fm 0.0)
-  <a class=def name="nrxysin?">nrxysin?</a> s
+  <em class=def id="nrxysin">nrxysin</em> s (fm 0.0)
+  <em class=def id="nrxysin?">nrxysin?</em> s
 
-  <a class=def name="make-nrxycos">make-nrxycos</a> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
-  <a class=def name="nrxycos">nrxycos</a> s (fm 0.0)
-  <a class=def name="nrxycos?">nrxycos?</a> s
+  <em class=def id="make-nrxycos">make-nrxycos</em> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
+  <em class=def id="nrxycos">nrxycos</em> s (fm 0.0)
+  <em class=def id="nrxycos?">nrxycos?</em> s
 </pre>
 <br>
 
@@ -4358,9 +4358,8 @@ reflection, please send it to me, and I'll add it to this collection.
         ((= i 44100))
       (outa i (* 0.5 (nrxycos gen))))))
 </pre>
-</td>
-
-<td width=4></td>
+</td></tr>
+<tr>
 
 <td class="brownish">
 <pre>
@@ -4371,10 +4370,9 @@ with_sound(:play, true) do
     end
   end.output
 </pre>
-</td>
+</td></tr>
 
-<td width=4></td>
-
+<tr>
 <td class="greenish">
 <pre>
 lambda: ( -- )
@@ -4532,19 +4530,18 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 	(outa i (* (env ampf) val))))))
 -->
 
-<br><br>
 
 
 
-<A NAME="ssb-amdoc"></A>
+
 <!-- ******************************** SSB-AM ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ssb-am</h3></div></td></tr></table>
-<br>
+<div class="innerheader" id="ssb-amdoc">ssb-am</div>
+
 <pre>
-  <a class=def name="make-ssb-am">make-ssb-am</a> (frequency *clm-default-frequency*) (order 40)
-  <a class=def name="ssb-am">ssb-am</a> gen (insig 0.0) (fm 0.0)
-  <a class=def name="ssb-am?">ssb-am?</a> gen
+  <em class=def id="make-ssb-am">make-ssb-am</em> (frequency *clm-default-frequency*) (order 40)
+  <em class=def id="ssb-am">ssb-am</em> gen (insig 0.0) (fm 0.0)
+  <em class=def id="ssb-am?">ssb-am?</em> gen
 </pre>
 
 
@@ -4562,8 +4559,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
                        (oscil osc)))))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -4577,9 +4573,8 @@ with_sound(:play, true, :srate, 44100) do
     end
   end.output
 </pre>
-</td>
-
-<td width=4></td>
+</td></tr>
+<tr>
 
 <td class="greenish">
 <pre>
@@ -4769,27 +4764,25 @@ We would replace the current make-ssb-am line with:
 </pre>
 
 
-<br><br>
 
 
 
-<A NAME="wave-traindoc"></A>
 <!-- ******************************** WAVE-TRAIN ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>wave-train</h3></div></td></tr></table>
+<div class="innerheader" id="wave-traindoc">wave-train</div>
 
 <pre>
-  <a class=def name="make-wave-train">make-wave-train</a> 
+  <em class=def id="make-wave-train">make-wave-train</em> 
         (frequency *clm-default-frequency*) 
         (initial-phase 0.0) 
         wave 
         (size *clm-table-size*) 
         (type mus-interp-linear)
 
-  <a class=def name="wave-train">wave-train</a> w (fm 0.0)
-  <a class=def name="wave-train?">wave-train?</a> w
+  <em class=def id="wave-train">wave-train</em> w (fm 0.0)
+  <em class=def id="wave-train?">wave-train?</em> w
 
-  <a class=def NAME="make-wave-train-with-env">make-wave-train-with-env</a> frequency env size
+  <em class=def id="make-wave-train-with-env">make-wave-train-with-env</em> frequency env size
 </pre>
 
 
@@ -4812,8 +4805,7 @@ We would replace the current make-ssb-am line with:
       (outa i (* 0.5 (wave-train gen))))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -4831,8 +4823,7 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="greenish">
 <pre>
@@ -4978,36 +4969,34 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 in generators.scm, used in animals.scm.  It is often simpler to use <a href="#pulse-train">pulse-train</a> as the repetition
 trigger, and mus-reset to restart an envelope.  
 </p>
-<br><br>
 
 
 
-<A NAME="randdoc"></A>
 <!-- ******************************** RAND, RAND-INTERP ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>rand, rand-interp</h3></div></td></tr></table>
+<div class="innerheader" id="randdoc">rand, rand-interp</div>
 
 <pre>
-  <a class=def name="make-rand">make-rand</a> 
+  <em class=def id="make-rand">make-rand</em> 
         (frequency *clm-default-frequency*) ; frequency at which new random numbers occur
         (amplitude 1.0)                     ; numbers are between -amplitude and amplitude
         (envelope '(-1 1 1 1))              ; distribution envelope (uniform distribution is the default)
         distribution                        ; pre-computed distribution
 
-  <a class=def name="rand">rand</a> r (sweep 0.0)
-  <a class=def name="rand?">rand?</a> r
+  <em class=def id="rand">rand</em> r (sweep 0.0)
+  <em class=def id="rand?">rand?</em> r
 
-  <a class=def name="make-rand-interp">make-rand-interp</a> 
+  <em class=def id="make-rand-interp">make-rand-interp</em> 
         (frequency *clm-default-frequency*) 
         (amplitude 1.0)
         (envelope '(-1 1 1 1)
         distribution)
 
-  <a class=def name="rand-interp">rand-interp</a> r (sweep 0.0)
-  <a class=def name="rand-interp?">rand-interp?</a> r
+  <em class=def id="rand-interp">rand-interp</em> r (sweep 0.0)
+  <em class=def id="rand-interp?">rand-interp?</em> r
 
-  <a class=def name="mus-random">mus-random</a> amp
-  <a class=def Name="mus-rand-seed">mus-rand-seed</a>
+  <em class=def id="mus-random">mus-random</em> amp
+  <em class=def id="mus-rand-seed">mus-rand-seed</em>
 </pre>
 
 
@@ -5421,34 +5410,32 @@ period doublings, see Strogatz, "Nonlinear Dynamics and Chaos".
 and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 </p>
 
-<br><br>
 
 
 
-<A NAME="one-poledoc"></A>
 <A NAME="one-zerodoc"></A>
 <A NAME="two-poledoc"></A>
 <A NAME="two-zerodoc"></A>
 <!-- ******************************** SIMPLE FILTERS ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>one-pole, one-zero, two-pole, two-zero</h3></div></td></tr></table>
+<div class="innerheader" id="one-poledoc">one-pole, one-zero, two-pole, two-zero</div>
 
 <pre>
-   <a class=def name="make-one-pole">make-one-pole</a> a0 b1    ; b1 &lt; 0.0 gives lowpass, b1 &gt; 0.0 gives highpass
-   <a class=def name="one-pole">one-pole</a> f input 
-   <a class=def name="one-pole?">one-pole?</a> f
+   <em class=def id="make-one-pole">make-one-pole</em> a0 b1    ; b1 &lt; 0.0 gives lowpass, b1 &gt; 0.0 gives highpass
+   <em class=def id="one-pole">one-pole</em> f input 
+   <em class=def id="one-pole?">one-pole?</em> f
 
-   <a class=def name="make-one-zero">make-one-zero</a> a0 a1    ; a1 &gt; 0.0 gives weak lowpass, a1 &lt; 0.0 highpass
-   <a class=def name="one-zero">one-zero</a> f input 
-   <a class=def name="one-zero?">one-zero?</a> f
+   <em class=def id="make-one-zero">make-one-zero</em> a0 a1    ; a1 &gt; 0.0 gives weak lowpass, a1 &lt; 0.0 highpass
+   <em class=def id="one-zero">one-zero</em> f input 
+   <em class=def id="one-zero?">one-zero?</em> f
 
-   <a class=def name="make-two-pole">make-two-pole</a> frequency [or a0] radius [or b1] b2
-   <a class=def name="two-pole">two-pole</a> f input 
-   <a class=def name="two-pole?">two-pole?</a> f
+   <em class=def id="make-two-pole">make-two-pole</em> frequency [or a0] radius [or b1] b2
+   <em class=def id="two-pole">two-pole</em> f input 
+   <em class=def id="two-pole?">two-pole?</em> f
 
-   <a class=def name="make-two-zero">make-two-zero</a> frequency [or a0] radius [or a1] a2
-   <a class=def name="two-zero">two-zero</a> f input 
-   <a class=def name="two-zero?">two-zero?</a> f
+   <em class=def id="make-two-zero">make-two-zero</em> frequency [or a0] radius [or a1] a2
+   <em class=def id="two-zero">two-zero</em> f input 
+   <em class=def id="two-zero?">two-zero?</em> f
 </pre>
 
 
@@ -5466,8 +5453,7 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
                        (rand ran1)))))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -5482,8 +5468,7 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="greenish">
 <pre>
@@ -5621,26 +5606,24 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
   (set! (x-axis-label 0 3) "(make-two-zero 0.5 0.2 0.3)"))
 -->
 
-<br><br>
 
 
 
 
-<A NAME="formantdoc"></A>
 <!-- ******************************** FORMANT ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>formant</h3></div></td></tr></table>
+<div class="innerheader" id="formantdoc">formant</div>
 
 <pre>
-  <a class=def name="make-formant">make-formant</a> 
+  <em class=def id="make-formant">make-formant</em> 
       frequency   ; resonance center frequency in Hz
       radius      ; resonance width, indirectly
-  <a class=def name="formant">formant</a> f input center-frequency-in-radians
-  <a class=def name="formant?">formant?</a> f
+  <em class=def id="formant">formant</em> f input center-frequency-in-radians
+  <em class=def id="formant?">formant?</em> f
 
-  <a class=def name="make-firmant">make-firmant</a> frequency radius
-  <a class=def name="firmant">firmant</a> f input center-frequency-in-radians
-  <a class=def name="firmant?">firmant?</a> f
+  <em class=def id="make-firmant">make-firmant</em> frequency radius
+  <em class=def id="firmant">firmant</em> f input center-frequency-in-radians
+  <em class=def id="firmant?">firmant?</em> f
 </pre>
 
 
@@ -5658,8 +5641,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
                        (rand ran1)))))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -5674,8 +5656,7 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="greenish">
 <pre>
@@ -5877,31 +5858,29 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 </td>
 </tr></table>
 
-<br><br>
 
 
 
-<A NAME="filterdoc"></A>
 <A NAME="fir-filterdoc"></A>
 <A NAME="iir-filterdoc"></A>
 <!-- ******************************** FILTERS ******************************** -->
-<br>
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>filter, iir-filter, fir-filter</h3></div></td></tr></table>
+
+<div class="innerheader" id="filterdoc">filter, iir-filter, fir-filter</div>
 
 <pre>
-   <a class=def name="make-filter">make-filter</a> order xcoeffs ycoeffs
-   <a class=def name="filter">filter</a> fl inp 
-   <a class=def name="filter?">filter?</a> fl
+   <em class=def id="make-filter">make-filter</em> order xcoeffs ycoeffs
+   <em class=def id="filter">filter</em> fl inp 
+   <em class=def id="filter?">filter?</em> fl
 
-   <a class=def name="make-fir-filter">make-fir-filter</a> order xcoeffs
-   <a class=def name="fir-filter">fir-filter</a> fl inp 
-   <a class=def name="fir-filter?">fir-filter?</a> fl
+   <em class=def id="make-fir-filter">make-fir-filter</em> order xcoeffs
+   <em class=def id="fir-filter">fir-filter</em> fl inp 
+   <em class=def id="fir-filter?">fir-filter?</em> fl
 
-   <a class=def name="make-iir-filter">make-iir-filter</a> order ycoeffs
-   <a class=def name="iir-filter">iir-filter</a> fl inp 
-   <a class=def name="iir-filter?">iir-filter?</a> fl
+   <em class=def id="make-iir-filter">make-iir-filter</em> order ycoeffs
+   <em class=def id="iir-filter">iir-filter</em> fl inp 
+   <em class=def id="iir-filter?">iir-filter?</em> fl
 
-   <a class=def name="make-fir-coeffs">make-fir-coeffs</a> order v
+   <em class=def id="make-fir-coeffs">make-fir-coeffs</em> order v
 </pre>
 
 
@@ -6060,27 +6039,26 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <br>
 </small></blockquote>
 </td></tr></table>
-<br><br>
 
 
 
-<A NAME="delaydoc"></A>
+
 <!-- ******************************** DELAY ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>delay, tap</h3></div></td></tr></table>
+<div class="innerheader" id="delaydoc">delay, tap</div>
 
 <pre>
-  <a class=def name="make-delay">make-delay</a> 
+  <em class=def id="make-delay">make-delay</em> 
       size                  ; delay length
       initial-contents      ; delay line's initial values (a vct or a list)
       (initial-element 0.0) ; delay line's initial element
       max-size              ; maximum delay size in case the delay changes 
       type                  ; interpolation type
-  <a class=def name="delay">delay</a> d input (pm 0.0)
-  <a class=def name="delay?">delay?</a> d
+  <em class=def id="delay">delay</em> d input (pm 0.0)
+  <em class=def id="delay?">delay?</em> d
 
-  <a class=def name="tap">tap</a> d (offset 0)
-  <a class=def name="delaytick">delay-tick</a> d input
+  <em class=def id="tap">tap</em> d (offset 0)
+  <em class=def id="delaytick">delay-tick</em> d input
 </pre>
 
 
@@ -6101,8 +6079,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
                            (oscil osc2))))))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -6119,8 +6096,7 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="greenish">
 <pre>
@@ -6217,29 +6193,28 @@ chorus effects (<a href="sndscm.html#chorus">chorus</a> in dsp.scm), and flangin
 and is the basis for about a dozen extensions (comb and friends below).
 </p>
 
-<br><br>
 
 
 
 
-<A NAME="combdoc"></A>
+
 <A NAME="notchdoc"></A>
 <!-- ******************************** COMB, NOTCH ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>comb, notch</h3></div></td></tr></table>
+<div class="innerheader" id="combdoc">comb, notch</div>
 
 <pre>
-  <a class=def name="make-comb">make-comb</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
-  <a class=def name="comb">comb</a> cflt input (pm 0.0)
-  <a class=def name="comb?">comb?</a> cflt
+  <em class=def id="make-comb">make-comb</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
+  <em class=def id="comb">comb</em> cflt input (pm 0.0)
+  <em class=def id="comb?">comb?</em> cflt
 
-  <a class=def name="make-filtered-comb">make-filtered-comb</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size filter
-  <a class=def name="filtered-comb">filtered-comb</a> cflt input (pm 0.0)
-  <a class=def name="filtered-comb?">filtered-comb?</a> cflt
+  <em class=def id="make-filtered-comb">make-filtered-comb</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size filter
+  <em class=def id="filtered-comb">filtered-comb</em> cflt input (pm 0.0)
+  <em class=def id="filtered-comb?">filtered-comb?</em> cflt
 
-  <a class=def name="make-notch">make-notch</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
-  <a class=def name="notch">notch</a> cflt input (pm 0.0)
-  <a class=def name="notch?">notch?</a> cflt
+  <em class=def id="make-notch">make-notch</em> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
+  <em class=def id="notch">notch</em> cflt input (pm 0.0)
+  <em class=def id="notch?">notch?</em> cflt
 </pre>
 
 
@@ -6451,17 +6426,15 @@ in the feedback loop:
     (make-filtered-comb :size len :scaler room-decay-val :filter (make-one-zero :a0 (- 1.0 dmp) :a1 dmp))
 </pre>
 
-<br><br>
 
 
 
-<A NAME="all-passdoc"></A>
 <!-- ******************************** ALL-PASS ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>all-pass</h3></div></td></tr></table>
+<div class="innerheader" id="all-passdoc">all-pass</div>
 
 <pre>
-  <a class=def name="make-all-pass">make-all-pass</a> 
+  <em class=def id="make-all-pass">make-all-pass</em> 
         (feedback 0.0) 
         (feedforward 0.0)
         size 
@@ -6469,8 +6442,8 @@ in the feedback loop:
         (initial-element 0.0) 
         max-size
 
-  <a class=def name="all-pass">all-pass</a> f input (pm 0.0)
-  <a class=def name="all-pass?">all-pass?</a> f
+  <em class=def id="all-pass">all-pass</em> f input (pm 0.0)
+  <em class=def id="all-pass?">all-pass?</em> f
 </pre>
 
 
@@ -6595,20 +6568,18 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
 </tr>
 </table>
 
-<br><br>
 
 
 
 
-<A NAME="moving-averagedoc"></A>
 <!-- ******************************** MOVING-AVERAGE ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>moving-average</h3></div></td></tr></table>
+<div class="innerheader" id="moving-averagedoc">moving-average</div>
 
 <pre>
-  <a class=def name="make-moving-average">make-moving-average</a> size initial-contents (initial-element 0.0)
-  <a class=def name="moving-average">moving-average</a> f input
-  <a class=def name="moving-average?">moving-average?</a> f
+  <em class=def id="make-moving-average">make-moving-average</em> size initial-contents (initial-element 0.0)
+  <em class=def id="moving-average">moving-average</em> f input
+  <em class=def id="moving-average?">moving-average?</em> f
 </pre>
 
 
@@ -6720,20 +6691,18 @@ that are squelched and those that are unchanged (to avoid clicks):
 <a href="#exponentially-weighted-moving-average">exponentially-weighted-moving-average</a>
 (the latter being just a one-pole filter).
 </p>
-<br><br>
 
 
 
 
-<A NAME="srcdoc"></A>
 <!-- ******************************** SRC ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>src</h3></div></td></tr></table>
+<div class="innerheader" id="srcdoc">src</div>
 
 <pre>
-  <a class=def name="make-src">make-src</a> input (srate 1.0) (width 5)
-  <a class=def name="src">src</a> s (sr-change 0.0) input-function
-  <a class=def name="src?">src?</a> s
+  <em class=def id="make-src">make-src</em> input (srate 1.0) (width 5)
+  <em class=def id="src">src</em> s (sr-change 0.0) input-function
+  <em class=def id="src?">src?</em> s
 </pre>
 
 
@@ -6950,22 +6919,20 @@ a time-varying src is applied, use <a href="sndscm.html#srcduration">src-duratio
 envelope so that the result has a given duration, use <a href="sndscm.html#srcfitenvelope">scr-fit-envelope</a>.
 </p>
 
-<br><br>
 
 
 
 
-<A NAME="convolvedoc"></A>
 <!-- ******************************** CONVOLVE ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>convolve</h3></div></td></tr></table>
+<div class="innerheader" id="convolvedoc">convolve</div>
 
 <pre>
-  <a class=def name="make-convolve">make-convolve</a> input filter fft-size filter-size
-  <a class=def name="convolve">convolve</a> ff input-function
-  <a class=def name="convolve?">convolve?</a> ff
+  <em class=def id="make-convolve">make-convolve</em> input filter fft-size filter-size
+  <em class=def id="convolve">convolve</em> ff input-function
+  <em class=def id="convolve?">convolve?</em> ff
 
-  <a class=def name="convolvefiles">convolve-files</a> file1 file2 (maxamp 1.0) (output-file "tmp.snd")
+  <em class=def id="convolvefiles">convolve-files</em> file1 file2 (maxamp 1.0) (output-file "tmp.snd")
 </pre>
 
 
@@ -7128,18 +7095,17 @@ halls floating around the web.  convolve and <a href="#fir-filter">fir-filter</a
 but convolve uses an FFT internally, rather than a laborious dot-product.
 </p>
 
-<br><br>
 
 
 
-<A NAME="granulatedoc"></A>
 <!-- ******************************** GRANULATE ******************************** -->
 
-<!-- INDEX grains:Granular synthesis --><A class=def NAME="grains"></a>
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>granulate</h3></div></td></tr></table>
+<!-- INDEX grains:Granular synthesis --><em class=def id="grains"></em>
+
+<div class="innerheader" id="granulatedoc">granulate</div>
 
 <pre>
-  <a class=def name="make-granulate">make-granulate</a>   
+  <em class=def id="make-granulate">make-granulate</em>   
         input
         (expansion 1.0)   ; how much to lengthen or compress the file
         (length .15)      ; length of file slices that are overlapped
@@ -7150,8 +7116,8 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
         max-size          ; internal buffer size
         edit              ; grain editing function
 
-  <a class=def name="granulate">granulate</a> e input-function edit-function
-  <a class=def name="granulate?">granulate?</a> e
+  <em class=def id="granulate">granulate</em> e input-function edit-function
+  <em class=def id="granulate?">granulate?</em> e
 </pre>
 
 
@@ -7406,20 +7372,18 @@ In the following example, we use the edit function to reverse every other grain:
     (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) (<em class=red>granulate</em> grn (lambda (dir) (rd)))))))
 </pre>
 </td></tr></table>
-<br><br>
 
 
 
 
-<A NAME="phase-vocoderdoc"></A>
 <!-- ******************************** PHASE-VOCODER ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>phase-vocoder</h3></div></td></tr></table>
+<div class="innerheader" id="phase-vocoderdoc">phase-vocoder</div>
 
 <pre>
-  <a class=def name="make-phase-vocoder">make-phase-vocoder</a> input (fft-size 512) (overlap 4) (interp 128) (pitch 1.0) analyze edit synthesize
-  <a class=def name="phase-vocoder">phase-vocoder</a> pv input-function analyze-function edit-function synthesize-function
-  <a class=def name="phase-vocoder?">phase-vocoder?</a> pv
+  <em class=def id="make-phase-vocoder">make-phase-vocoder</em> input (fft-size 512) (overlap 4) (interp 128) (pitch 1.0) analyze edit synthesize
+  <em class=def id="phase-vocoder">phase-vocoder</em> pv input-function analyze-function edit-function synthesize-function
+  <em class=def id="phase-vocoder?">phase-vocoder?</em> pv
 </pre>
 
 
@@ -7607,24 +7571,21 @@ that this phase-vocoder (as a generator) was the "right thing".  The first step 
 moving-spectrum in generators.scm.
 </p>
 
-<br><br>
 
 
 
-
-<A NAME="asymmetric-fmdoc"></A>
 <!-- ******************************** ASYMMETRIC-FM ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>asymmetric-fm</h3></div></td></tr></table>
+<div class="innerheader" id="asymmetric-fmdoc">asymmetric-fm</div>
 
 <pre>
-  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> 
+  <em class=def id="make-asymmetric-fm">make-asymmetric-fm</em> 
       (frequency *clm-default-frequency*) 
       (initial-phase 0.0) 
       (r 1.0)             ; amplitude ratio between successive sidebands
       (ratio 1.0)         ; ratio between carrier and sideband spacing
-  <a class=def name="asymmetric-fm">asymmetric-fm</a> af index (fm 0.0)
-  <a class=def name="asymmetric-fm?">asymmetric-fm?</a> af
+  <em class=def id="asymmetric-fm">asymmetric-fm</em> af index (fm 0.0)
+  <em class=def id="asymmetric-fm?">asymmetric-fm?</em> af
 </pre>
 
 
@@ -7735,17 +7696,15 @@ would be tricky to get time-varying indices.  In this instrument we sweep "r" wi
 
 <p>For the other kind of asymmetric-fm see generators.scm, and for asymmetric spectra via "single sideband FM" see generators.scm.
 </p>
-<br><br>
 
 
 
 <!-- INDEX framedoc:frames -->
 <!-- INDEX framedoc:mixers -->
 
-<A NAME="framedoc"></A>
 <!-- ******************************** FRAME, MIXER ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>frames and mixers</h3></div></td></tr></table>
+<div class="innerheader" id="framedoc">frames and mixers</div>
 
 <p>
 There are two special data types in CLM: frames and mixers.
@@ -7762,29 +7721,29 @@ sound data input and output.
 </p>
 
 <table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td><a class=def name="make-frame">make-frame</a><code> chans :rest args</code></td><td width=20></td><td>create frame and load it with args</td></tr>
-<tr><td><a class=def name="make-frame!">make-frame!</a><code> chans :rest args</code></td><td width=20></td><td>create frame of any size and load it with args</td></tr>
-<tr><td><a class=def name="frame1">frame</a><code> :rest args</code></td><td width=20></td><td>create frame and load it with args</td></tr>
-<tr><td><a class=def name="frame?">frame?</a><code> obj</code></td><td></td><td>is obj a frame</td></tr>
-<tr><td><a class=def name="frame-ref">frame-ref</a><code> f1 chan</code></td><td></td><td>return f1[chan]</td></tr>
-<tr><td><a class=def name="frame-set!">frame-set!</a><code> f1 chan val</code></td><td></td><td>f1[chan] = val (also set! with frame-ref)</td></tr>
-<tr><td><a class=def name="frame+">frame+</a><code> f1 f2 outf</code></td><td></td><td>add f1 and f2 element-wise, return new frame (or outf)</td></tr>
-<tr><td><a class=def name="frame*">frame*</a><code> f1 f2 outf</code></td><td></td><td>multiply f1 and f2 element-size, return new frame (or outf)</td></tr>
+<tr><td><em class=def id="make-frame">make-frame</em><code> chans :rest args</code></td><td width=20></td><td>create frame and load it with args</td></tr>
+<tr><td><em class=def id="make-frame!">make-frame!</em><code> chans :rest args</code></td><td width=20></td><td>create frame of any size and load it with args</td></tr>
+<tr><td><em class=def id="frame1">frame</em><code> :rest args</code></td><td width=20></td><td>create frame and load it with args</td></tr>
+<tr><td><em class=def id="frame?">frame?</em><code> obj</code></td><td></td><td>is obj a frame</td></tr>
+<tr><td><em class=def id="frame-ref">frame-ref</em><code> f1 chan</code></td><td></td><td>return f1[chan]</td></tr>
+<tr><td><em class=def id="frame-set!">frame-set!</em><code> f1 chan val</code></td><td></td><td>f1[chan] = val (also set! with frame-ref)</td></tr>
+<tr><td><em class=def id="frame+">frame+</em><code> f1 f2 outf</code></td><td></td><td>add f1 and f2 element-wise, return new frame (or outf)</td></tr>
+<tr><td><em class=def id="frame*">frame*</em><code> f1 f2 outf</code></td><td></td><td>multiply f1 and f2 element-size, return new frame (or outf)</td></tr>
 <tr><td><br></td><td></td><td></td></tr>
-<tr><td><a class=def name="make-mixer">make-mixer</a><code> chans :rest args</code></td><td></td><td>create a mixer and load it with args</td></tr>
-<tr><td><a class=def name="make-mixer!">make-mixer!</a><code> chans :rest args</code></td><td></td><td>create a mixer of any size and load it with args</td></tr>
-<tr><td><a class=def name="mixer1">mixer</a><code> :rest args</code></td><td></td><td>create a mixer and load it with args</td></tr>
-<tr><td><a class=def name="make-scalar-mixer">make-scalar-mixer</a><code> chans scl</code></td><td></td><td>create a mixer with scl on the diagonal</td></tr>
-<tr><td><a class=def name="mixer?">mixer?</a><code> obj</code></td><td></td><td>is obj a mixer</td></tr>
-<tr><td><a class=def name="mixer-ref">mixer-ref</a><code> m1 in out</code></td><td></td><td>m1[in,out] (use set! to change)</td></tr>
-<tr><td><a class=def name="mixer-set!">mixer-set!</a><code> m1 in out val</code></td><td></td><td>m1[in,out] = val (also set! with mixer-ref)</td></tr>
-<tr><td><a class=def name="mixermultiply">mixer*</a><code> m1 m2 outm</code></td><td></td><td>matrix multiply of m1 and m2, return new mixer (or outm)</td></tr>
-<tr><td><a class=def name="mixeradd">mixer+</a><code> m1 m2 outm</code></td><td></td><td>matrix add of m1 and m2, return new mixer (or outm)</td></tr>
+<tr><td><em class=def id="make-mixer">make-mixer</em><code> chans :rest args</code></td><td></td><td>create a mixer and load it with args</td></tr>
+<tr><td><em class=def id="make-mixer!">make-mixer!</em><code> chans :rest args</code></td><td></td><td>create a mixer of any size and load it with args</td></tr>
+<tr><td><em class=def id="mixer1">mixer</em><code> :rest args</code></td><td></td><td>create a mixer and load it with args</td></tr>
+<tr><td><em class=def id="make-scalar-mixer">make-scalar-mixer</em><code> chans scl</code></td><td></td><td>create a mixer with scl on the diagonal</td></tr>
+<tr><td><em class=def id="mixer?">mixer?</em><code> obj</code></td><td></td><td>is obj a mixer</td></tr>
+<tr><td><em class=def id="mixer-ref">mixer-ref</em><code> m1 in out</code></td><td></td><td>m1[in,out] (use set! to change)</td></tr>
+<tr><td><em class=def id="mixer-set!">mixer-set!</em><code> m1 in out val</code></td><td></td><td>m1[in,out] = val (also set! with mixer-ref)</td></tr>
+<tr><td><em class=def id="mixermultiply">mixer*</em><code> m1 m2 outm</code></td><td></td><td>matrix multiply of m1 and m2, return new mixer (or outm)</td></tr>
+<tr><td><em class=def id="mixeradd">mixer+</em><code> m1 m2 outm</code></td><td></td><td>matrix add of m1 and m2, return new mixer (or outm)</td></tr>
 <tr><td></td><td><br></td><td></td></tr>
-<tr><td><a class=def name="frametoframe">frame-&gt;frame</a><code> mf mf outf</code></td><td></td><td>pass frame through mixer, return new frame (or outf)</td></tr>
-<tr><td><a class=def name="frametolist">frame-&gt;list</a><code> frame</code></td><td></td><td>return list of frame's contents</td></tr>
-<tr><td><a class=def name="sampletoframe">sample-&gt;frame</a><code> mf sample outf</code></td><td></td><td>pass sample through mf (a frame or mixer), return new frame (or outf)</td></tr>
-<tr><td><a class=def name="frametosample">frame-&gt;sample</a><code> mf frame</code></td><td></td><td>pass frame through mf (a frame or mixer), return sample</td></tr>
+<tr><td><em class=def id="frametoframe">frame-&gt;frame</em><code> mf mf outf</code></td><td></td><td>pass frame through mixer, return new frame (or outf)</td></tr>
+<tr><td><em class=def id="frametolist">frame-&gt;list</em><code> frame</code></td><td></td><td>return list of frame's contents</td></tr>
+<tr><td><em class=def id="sampletoframe">sample-&gt;frame</em><code> mf sample outf</code></td><td></td><td>pass sample through mf (a frame or mixer), return new frame (or outf)</td></tr>
+<tr><td><em class=def id="frametosample">frame-&gt;sample</em><code> mf frame</code></td><td></td><td>pass frame through mf (a frame or mixer), return sample</td></tr>
 </table>
 
 <A NAME="framemuschannels"></A>
@@ -7899,15 +7858,12 @@ unnecessary, and mixer-set! and frame-set! can be replaced with set!:
     <em class=listener>0.3</em>
 </pre>
 
-<br><br>
 
 
 
-
-<A NAME="filetosampledoc"></A>
 <!-- ******************************** FILE->SAMPLE ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>sound IO</h3></div></td></tr></table>
+<div class="innerheader" id="filetosampledoc">sound IO</div>
 
 <p>Sound file IO is based on a set of file readers and writers that deal either in samples, frames, or vcts.
 The six functions are file-&gt;sample, sample-&gt;file, file-&gt;frame, frame-&gt;file, array-&gt;file, and file-&gt;array.
@@ -7920,31 +7876,31 @@ object.
 
 
 <pre>
-  <a class=def name="make-filetosample">make-file-&gt;sample</a> name (buffer-size 8192)
-  <a class=def name="make-sampletofile">make-sample-&gt;file</a> name (chans 1) (format mus-lfloat) (type mus-next) comment
-  <a class=def name="filetosample?">file-&gt;sample?</a> obj
-  <a class=def name="sampletofile?">sample-&gt;file?</a> obj
-  <a class=def name="filetosample">file-&gt;sample</a> obj samp chan
-  <a class=def name="sampletofile">sample-&gt;file</a> obj samp chan val
-  <a class=def name="continue-sampletofile">continue-sample-&gt;file</a> file
+  <em class=def id="make-filetosample">make-file-&gt;sample</em> name (buffer-size 8192)
+  <em class=def id="make-sampletofile">make-sample-&gt;file</em> name (chans 1) (format mus-lfloat) (type mus-next) comment
+  <em class=def id="filetosample?">file-&gt;sample?</em> obj
+  <em class=def id="sampletofile?">sample-&gt;file?</em> obj
+  <em class=def id="filetosample">file-&gt;sample</em> obj samp chan
+  <em class=def id="sampletofile">sample-&gt;file</em> obj samp chan val
+  <em class=def id="continue-sampletofile">continue-sample-&gt;file</em> file
 
-  <a class=def name="make-filetoframe">make-file-&gt;frame</a> name (buffer-size 8192)
-  <a class=def name="make-frametofile">make-frame-&gt;file</a> name (chans 1) (format mus-lfloat) (type mus-next) comment
-  <a class=def name="frametofile?">frame-&gt;file?</a> obj
-  <a class=def name="filetoframe?">file-&gt;frame?</a> obj
-  <a class=def name="filetoframe">file-&gt;frame</a> obj samp outf
-  <a class=def name="frametofile">frame-&gt;file</a> obj samp val
-  <a class=def name="continue-frametofile">continue-frame-&gt;file</a> file
+  <em class=def id="make-filetoframe">make-file-&gt;frame</em> name (buffer-size 8192)
+  <em class=def id="make-frametofile">make-frame-&gt;file</em> name (chans 1) (format mus-lfloat) (type mus-next) comment
+  <em class=def id="frametofile?">frame-&gt;file?</em> obj
+  <em class=def id="filetoframe?">file-&gt;frame?</em> obj
+  <em class=def id="filetoframe">file-&gt;frame</em> obj samp outf
+  <em class=def id="frametofile">frame-&gt;file</em> obj samp val
+  <em class=def id="continue-frametofile">continue-frame-&gt;file</em> file
 
-  <a class=def name="filetoarray">file-&gt;array</a> file channel beg dur array
-  <a class=def name="arraytofile">array-&gt;file</a> file data len srate channels
+  <em class=def id="filetoarray">file-&gt;array</em> file channel beg dur array
+  <em class=def id="arraytofile">array-&gt;file</em> file data len srate channels
 
-  <a class=def name="mus-input?">mus-input?</a> obj
-  <a class=def name="mus-output?">mus-output?</a> obj
-  <a class=def name="mus-close">mus-close</a> obj
-  <a class=def name="*output*">*output*</a>
-  <a class=def name="*reverb*">*reverb*</a>
-  <a class=def name="musfilebuffersize">mus-file-buffer-size</a>
+  <em class=def id="mus-input?">mus-input?</em> obj
+  <em class=def id="mus-output?">mus-output?</em> obj
+  <em class=def id="mus-close">mus-close</em> obj
+  <em class=def id="*output*">*output*</em>
+  <em class=def id="*reverb*">*reverb*</em>
+  <em class=def id="musfilebuffersize">mus-file-buffer-size</em>
 </pre>
 
 
@@ -7968,7 +7924,7 @@ object.
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -7987,7 +7943,7 @@ with_sound(:channels, 2) do
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td class="greenish">
 <pre>
@@ -8061,19 +8017,18 @@ and you forget to call mus-close, the GC will eventually do it for you.
 </pre>
 </td></tr></table>
 
-<br><br>
 
 
 
-<A NAME="readindoc"></A>
+
 <!-- ******************************** READIN ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>readin</h3></div></td></tr></table>
+<div class="innerheader" id="readindoc">readin</div>
 
 <pre>
- <a class=def name="make-readin">make-readin</a> file (channel 0) (start 0) (direction 1) size
- <a class=def name="readin">readin</a> rd
- <a class=def name="readin?">readin?</a> rd
+ <em class=def id="make-readin">make-readin</em> file (channel 0) (start 0) (direction 1) size
+ <em class=def id="readin">readin</em> rd
+ <em class=def id="readin?">readin?</em> rd
 </pre>
 
 
@@ -8089,8 +8044,7 @@ and you forget to call mus-close, the GC will eventually do it for you.
       (outa i (* 2.0 (readin reader))))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -8103,8 +8057,7 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="greenish">
 <pre>
@@ -8159,27 +8112,25 @@ readin and <a href="#env">env</a>:
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
 </pre>
 </td></tr></table>
-<br><br>
 
 
 
 
-<A NAME="in-anydoc"></A>
 <A NAME="out-anydoc"></A>
 <!-- ******************************** IN-ANY, OUT-ANY ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>in-any, out-any</h3></div></td></tr></table>
+<div class="innerheader" id="in-anydoc">in-any, out-any</div>
 
 <pre>
-  <a class=def name="out-any">out-any</a> loc data channel (output *output*)
-  <a class=def name="outa">outa</a> loc data (output *output*)
+  <em class=def id="out-any">out-any</em> loc data channel (output *output*)
+  <em class=def id="outa">outa</em> loc data (output *output*)
   <em class=emdef>outb</em> loc data (output *output*)
   <em class=emdef>outc</em> loc data (output *output*)
   <em class=emdef>outd</em> loc data (output *output*)
 
-  <a class=def name="in-any">in-any</a> loc channel input
-  <a class=def name="ina">ina</a> loc input
-  <a class=def name="inb">inb</a> loc input
+  <em class=def id="in-any">in-any</em> loc channel input
+  <em class=def id="ina">ina</em> loc input
+  <em class=def id="inb">inb</em> loc input
 </pre>
 
 
@@ -8196,8 +8147,7 @@ readin and <a href="#env">env</a>:
       (out-any i (in-any i 0 infile) 0))))
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="brownish">
 <pre>
@@ -8210,8 +8160,7 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td class="greenish">
 <pre>
@@ -8322,19 +8271,16 @@ use its :output argument:
 </td></tr></table>
 
 
-<br><br>
 
 
 
-
-<A NAME="locsigdoc"></A>
 <!-- ******************************** LOCSIG ******************************** -->
 
 <!-- INDEX make-locsig:Sound placement -->
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>locsig</h3></div></td></tr></table>
+<div class="innerheader" id="locsigdoc">locsig</div>
 
 <pre>
- <a class=def name="make-locsig">make-locsig</a> 
+ <em class=def id="make-locsig">make-locsig</em> 
         (degree 0.0)
         (distance 1.0) 
 	(reverb 0.0)       ; reverb amount
@@ -8342,16 +8288,16 @@ use its :output argument:
 	(revout *reverb*)  ; reverb output generator or location
         (channels (channels output))
 	(type mus-interp-linear)
- <a class=def name="locsig">locsig</a> loc i in-sig
- <a class=def name="locsig?">locsig?</a> loc
+ <em class=def id="locsig">locsig</em> loc i in-sig
+ <em class=def id="locsig?">locsig?</em> loc
 
- <a class=def name="locsig-ref">locsig-ref</a> loc chan
- <a class=def name="locsig-set!">locsig-set!</a> loc chan val
- <a class=def name="locsig-reverb-ref">locsig-reverb-ref</a> loc chan
- <a class=def name="locsig-reverb-set!">locsig-reverb-set!</a> loc chan val
+ <em class=def id="locsig-ref">locsig-ref</em> loc chan
+ <em class=def id="locsig-set!">locsig-set!</em> loc chan val
+ <em class=def id="locsig-reverb-ref">locsig-reverb-ref</em> loc chan
+ <em class=def id="locsig-reverb-set!">locsig-reverb-set!</em> loc chan val
 
- <a class=def name="move-locsig">move-locsig</a> loc degree distance
- <a class=def name="locsig-type">locsig-type</a> ()
+ <em class=def id="move-locsig">move-locsig</em> loc degree distance
+ <em class=def id="locsig-type">locsig-type</em> ()
 </pre>
 
 
@@ -8509,20 +8455,17 @@ Here is an example of move-locsig:
 
 </tr></table>
 
-<br><br>
 
 
 
-
-<A NAME="move-sounddoc"></A>
 <!-- ******************************** MOVE-SOUND ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>move-sound</h3></div></td></tr></table>
+<div class="innerheader" id="move-sounddoc">move-sound</div>
 
 <pre>
- <a class=def name="make-move-sound">make-move-sound</a> dlocs-list (output *output*) (revout *reverb*)
- <a class=def name="move-sound">move-sound</a> dloc i in-sig
- <a class=def name="move-sound?">move-sound?</a> dloc
+ <em class=def id="make-move-sound">make-move-sound</em> dlocs-list (output *output*) (revout *reverb*)
+ <em class=def id="move-sound">move-sound</em> dloc i in-sig
+ <em class=def id="move-sound?">move-sound?</em> dloc
 </pre>
 
 <p>move-sound is intended as the run-time portion of <a href="sndscm.html#dlocsigdoc">dlocsig</a>.  make-dlocsig
@@ -8573,12 +8516,9 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 </pre>
 </td></tr></table>
 
-<br><br>
 
 
-
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Generic Functions</h2></td></tr></table>
-<A NAME="genericfunctions"></A>
+<div class="header" id="genericfunctions">Generic functions</div>
 
 <!-- ******************************** GENERIC FUNCTIONS ******************************** -->
 
@@ -8594,32 +8534,32 @@ The generic functions are:
 <table border=2 cellpadding=10 hspace=40><tr><td>
 
 <table cellspacing=0 cellpadding=0>
-<tr><td class="bluish"><a class=def name="mus-channel">mus-channel</a></td><td width=30 class="bluish"></td><td class="bluish">channel being read/written</td></tr>
-<tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
-<tr><td class="bluish"><a class=def name="mus-data">mus-data</a></td><td class="bluish"></td><td class="bluish">vct of data</td></tr>
-<tr><td><a class=def name="mus-describe">mus-describe</a></td><td></td><td>description of current state</td></tr>
-<tr><td class="bluish"><a class=def name="mus-feedback">mus-feedback</a></td><td class="bluish"></td><td class="bluish">feedback coefficient</td></tr>
-<tr><td><a class=def name="mus-feedforward">mus-feedforward</a></td><td></td><td>feedforward coefficient</td></tr>
-<tr><td class="bluish"><a class=def name="mus-file-name">mus-file-name</a></td><td class="bluish"></td><td class="bluish">file being read/written</td></tr>
-<tr><td><a class=def name="mus-frequency">mus-frequency</a></td><td></td><td>frequency (Hz)</td></tr>
-<tr><td class="bluish"><a class=def name="mus-hop">mus-hop</a></td><td class="bluish"></td><td class="bluish">hop size for block processing</td></tr>
-<tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>
-<tr><td class="bluish"><a class=def name="mus-interp-type">mus-interp-type</a></td><td class="bluish"></td><td class="bluish">interpolation type (mus-interp-linear, etc)</td></tr>
-<tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data length</td></tr>
-<tr><td class="bluish"><a class=def name="mus-location">mus-location</a></td><td class="bluish"></td><td class="bluish">sample location for reads/writes</td></tr>
-<tr><td><a class=def name="mus-name">mus-name</a></td><td></td><td>generator name ("oscil")</td></tr>
-<tr><td class="bluish"><a class=def name="mus-offset">mus-offset</a></td><td class="bluish"></td><td class="bluish">envelope offset</td></tr>
-<tr><td><a class=def name="mus-order">mus-order</a></td><td></td><td>filter order</td></tr>
-<tr><td class="bluish"><a class=def name="mus-phase">mus-phase</a></td><td class="bluish"></td><td class="bluish">phase (radians)</td></tr>
-<tr><td><a class=def name="mus-ramp">mus-ramp</a></td><td></td><td>granulate grain envelope ramp setting</td></tr>
-<tr><td class="bluish"><a class=def name="mus-reset">mus-reset</a></td><td class="bluish"></td><td class="bluish">set gen to default starting state</td></tr>
-<tr><td><a class=def name="mus-run">mus-run</a></td><td></td><td>run any generator</td></tr>
-<tr><td><a class=def name="mus-scaler">mus-scaler</a></td><td></td><td>scaler, normally on an amplitude</td></tr>
-<tr><td class="bluish"><a class=def name="mus-width">mus-width</a></td><td class="bluish"></td><td class="bluish">width of interpolation tables, etc</td></tr>
-<tr><td><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td></td><td>x (input) coefficient</td></tr>
-<tr><td class="bluish"><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td class="bluish"></td><td class="bluish">vct of x (input) coefficients</td></tr>
-<tr><td><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td></td><td>y (output, feedback) coefficient</td></tr>
-<tr><td class="bluish"><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td class="bluish"></td><td class="bluish">vct of y (feedback) coefficients</td></tr>
+<tr><td class="bluish"><em class=def id="mus-channel">mus-channel</em></td><td width=30 class="bluish"></td><td class="bluish">channel being read/written</td></tr>
+<tr><td><em class=def id="mus-channels">mus-channels</em></td><td></td><td>channels open</td></tr>
+<tr><td class="bluish"><em class=def id="mus-data">mus-data</em></td><td class="bluish"></td><td class="bluish">vct of data</td></tr>
+<tr><td><em class=def id="mus-describe">mus-describe</em></td><td></td><td>description of current state</td></tr>
+<tr><td class="bluish"><em class=def id="mus-feedback">mus-feedback</em></td><td class="bluish"></td><td class="bluish">feedback coefficient</td></tr>
+<tr><td><em class=def id="mus-feedforward">mus-feedforward</em></td><td></td><td>feedforward coefficient</td></tr>
+<tr><td class="bluish"><em class=def id="mus-file-name">mus-file-name</em></td><td class="bluish"></td><td class="bluish">file being read/written</td></tr>
+<tr><td><em class=def id="mus-frequency">mus-frequency</em></td><td></td><td>frequency (Hz)</td></tr>
+<tr><td class="bluish"><em class=def id="mus-hop">mus-hop</em></td><td class="bluish"></td><td class="bluish">hop size for block processing</td></tr>
+<tr><td><em class=def id="mus-increment">mus-increment</em></td><td></td><td>various increments</td></tr>
+<tr><td class="bluish"><em class=def id="mus-interp-type">mus-interp-type</em></td><td class="bluish"></td><td class="bluish">interpolation type (mus-interp-linear, etc)</td></tr>
+<tr><td><em class=def id="mus-length">mus-length</em></td><td></td><td>data length</td></tr>
+<tr><td class="bluish"><em class=def id="mus-location">mus-location</em></td><td class="bluish"></td><td class="bluish">sample location for reads/writes</td></tr>
+<tr><td><em class=def id="mus-name">mus-name</em></td><td></td><td>generator name ("oscil")</td></tr>
+<tr><td class="bluish"><em class=def id="mus-offset">mus-offset</em></td><td class="bluish"></td><td class="bluish">envelope offset</td></tr>
+<tr><td><em class=def id="mus-order">mus-order</em></td><td></td><td>filter order</td></tr>
+<tr><td class="bluish"><em class=def id="mus-phase">mus-phase</em></td><td class="bluish"></td><td class="bluish">phase (radians)</td></tr>
+<tr><td><em class=def id="mus-ramp">mus-ramp</em></td><td></td><td>granulate grain envelope ramp setting</td></tr>
+<tr><td class="bluish"><em class=def id="mus-reset">mus-reset</em></td><td class="bluish"></td><td class="bluish">set gen to default starting state</td></tr>
+<tr><td><em class=def id="mus-run">mus-run</em></td><td></td><td>run any generator</td></tr>
+<tr><td><em class=def id="mus-scaler">mus-scaler</em></td><td></td><td>scaler, normally on an amplitude</td></tr>
+<tr><td class="bluish"><em class=def id="mus-width">mus-width</em></td><td class="bluish"></td><td class="bluish">width of interpolation tables, etc</td></tr>
+<tr><td><em class=def id="mus-xcoeff">mus-xcoeff</em></td><td></td><td>x (input) coefficient</td></tr>
+<tr><td class="bluish"><em class=def id="mus-xcoeffs">mus-xcoeffs</em></td><td class="bluish"></td><td class="bluish">vct of x (input) coefficients</td></tr>
+<tr><td><em class=def id="mus-ycoeff">mus-ycoeff</em></td><td></td><td>y (output, feedback) coefficient</td></tr>
+<tr><td class="bluish"><em class=def id="mus-ycoeffs">mus-ycoeffs</em></td><td class="bluish"></td><td class="bluish">vct of y (feedback) coefficients</td></tr>
 </table>
 
 </td></tr></table>
@@ -8660,19 +8600,17 @@ the default frequency modulation) to any generator:
 </td></tr></table>
 
 <p>
-<a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
+<em class=def id="musgeneratorp">mus-generator?</em> returns #t if its argument is
 a generator.
 A generator defined via <a href="#defgenerator">defgenerator</a> can take part in these methods.
 If the last element of the list (returned by defgenerator) is an association list, the generic functions
 will search that list for their name, and use the functions that follow to implement their method.
 </p>
-<br>
-<br><br>
 
 
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Other Generators</h2></td></tr></table>
-<A NAME="othergenerators"></A>
+
+<div class="header" id="othergenerators">Other generators</div>
 
 <!-- ******************************** OTHER GENERATORS ******************************** -->
 
@@ -8737,17 +8675,17 @@ frequency and the spacing between successive sidebands).
 
 <br>
 <pre class="bluish">
-  <a class=def name="make-polyoid">make-polyoid</a> 
+  <em class=def id="make-polyoid">make-polyoid</em> 
          (frequency *clm-default-frequency*) 
          (partial-amps-and-phases '(1 1 0.0))   ; a list of harmonic numbers, their associated amplitudes, and their initial-phases
 
-  <a class=def name="polyoid">polyoid</a> w (fm 0.0)
-  <a class=def name="polyoid?">polyoid?</a> w
+  <em class=def id="polyoid">polyoid</em> w (fm 0.0)
+  <em class=def id="polyoid?">polyoid?</em> w
 
-  <a class=def name="polyoidenv">polyoid-env</a> w fm amps phases
+  <em class=def id="polyoidenv">polyoid-env</em> w fm amps phases
 
-  <a class=def name="make-noid">make-noid</a> (frequency 0.0) (n 1) phases
-  <a class=def name="noid">noid</a> w (fm 0.0)
+  <em class=def id="make-noid">make-noid</em> (frequency 0.0) (n 1) phases
+  <em class=def id="noid">noid</em> w (fm 0.0)
 </pre>
 
 <p>polyoid combines the first and second Chebyshev polynomials to provide
@@ -8835,10 +8773,10 @@ version usually sounds raspier, and in the limit it sounds like white noise!
 
 <br>
 <pre class="bluish">
-  <A class=def NAME="make-asyfm">make-asyfm</A> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
-  <A class=def NAME="asyfmJ">asyfm-J</A> gen (fm 0.0)
-  <A class=def NAME="asyfmI">asyfm-I</A> gen (fm 0.0)
-  <A class=def NAME="asyfm?">asyfm?</A> gen
+  <em class=def id="make-asyfm">make-asyfm</em> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
+  <em class=def id="asyfmJ">asyfm-J</em> gen (fm 0.0)
+  <em class=def id="asyfmI">asyfm-I</em> gen (fm 0.0)
+  <em class=def id="asyfm?">asyfm?</em> gen
 </pre>
 
 <p>These two generators produce the two flavors of asymmetric-fm.  asyfm-J is the same as the built-in asymmetric generator;
@@ -8848,9 +8786,9 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
 
 
 <pre class="bluish">
-  <A class=def NAME="make-fmssb">make-fmssb</A> (frequency 0.0) (ratio 1.0) (index 1.0)
-  <A class=def NAME="fmssb">fmssb</A> gen (fm 0.0)
-  <A class=def NAME="fmssb?">fmssb?</A> gen
+  <em class=def id="make-fmssb">make-fmssb</em> (frequency 0.0) (ratio 1.0) (index 1.0)
+  <em class=def id="fmssb">fmssb</em> gen (fm 0.0)
+  <em class=def id="fmssb?">fmssb?</em> gen
 </pre>
 
 <p>This generator produces the "gapped" spectra mentioned in <a href="fm.html">fm.html</a>. It is used extensively in the
@@ -8862,9 +8800,9 @@ in with-sound, but not within run (the run macro does not currently handle compl
 
 
 <pre class="bluish">
-  <A class=def NAME="make-pulsed-env">make-pulsed-env</A> envelope duration frequency
-  <A class=def NAME="pulsedenv">pulsed-env</A> gen (fm 0.0)
-  <A class=def NAME="pulsedenv?">pulsed-env?</A> gen
+  <em class=def id="make-pulsed-env">make-pulsed-env</em> envelope duration frequency
+  <em class=def id="pulsedenv">pulsed-env</em> gen (fm 0.0)
+  <em class=def id="pulsedenv?">pulsed-env?</em> gen
 </pre>
 
 <p>
@@ -8876,9 +8814,9 @@ Many of the instruments in animals.scm use this generator.  (In a sense, this is
 
 
 <pre class="bluish">
-  <A class=def NAME="make-blackman">make-blackman</A> frequency n ; 1 &lt;= n &lt;= 10
-  <A class=def NAME="blackman">blackman</A> gen (fm 0.0)
-  <A class=def NAME="blackman?">blackman?</A> gen
+  <em class=def id="make-blackman">make-blackman</em> frequency n ; 1 &lt;= n &lt;= 10
+  <em class=def id="blackman">blackman</em> gen (fm 0.0)
+  <em class=def id="blackman?">blackman?</em> gen
 </pre>
 
 <p>
@@ -8889,9 +8827,9 @@ as yet another "kernel" along the lines of <a href="#ncos">ncos</a>.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-sinc-train">make-sinc-train</A> frequency (n 1)
-  <a class=def name="sinc-train">sinc-train</a> gen (fm 0.0)
-  <A class=def NAME="sinc-train?">sinc-train?</A> gen
+  <em class=def id="make-sinc-train">make-sinc-train</em> frequency (n 1)
+  <em class=def id="sinc-train">sinc-train</em> gen (fm 0.0)
+  <em class=def id="sinc-train?">sinc-train?</em> gen
 </pre>
 
 <p>
@@ -8901,9 +8839,9 @@ This produces a sinc-train ((sin x)/x) with n components.  It is very similar to
 
 
 <pre class="bluish">
-  <A class=def NAME="make-pink-noise">make-pink-noise</A> (n 1)
-  <a class=def name="pink-noise">pink-noise</a> gen
-  <A class=def NAME="pink-noise?">pink-noise?</A> gen
+  <em class=def id="make-pink-noise">make-pink-noise</em> (n 1)
+  <em class=def id="pink-noise">pink-noise</em> gen
+  <em class=def id="pink-noise?">pink-noise?</em> gen
 </pre>
 
 <p>
@@ -8914,9 +8852,9 @@ This produces a reasonable approximation to 1/f noise, also known as pink-noise.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-brown-noise">make-brown-noise</A> frequency (amplitude 1.0)
-  <a class=def name="brown-noise">brown-noise</a> gen
-  <A class=def NAME="brown-noise?">brown-noise?</A> gen
+  <em class=def id="make-brown-noise">make-brown-noise</em> frequency (amplitude 1.0)
+  <em class=def id="brown-noise">brown-noise</em> gen
+  <em class=def id="brown-noise?">brown-noise?</em> gen
 </pre>
 
 <p>
@@ -8926,13 +8864,13 @@ This produces (unbounded) brownian noise.  'amplitude' sets the maximum size of 
 
 
 <pre class="bluish">
-  <A class=def NAME="make-green-noise">make-green-noise</A> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
-  <a class=def name="green-noise">green-noise</a> gen (fm 0.0)
-  <A class=def NAME="green-noise?">green-noise?</A> gen
+  <em class=def id="make-green-noise">make-green-noise</em> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
+  <em class=def id="green-noise">green-noise</em> gen (fm 0.0)
+  <em class=def id="green-noise?">green-noise?</em> gen
 
-  <A class=def NAME="make-green-noise-interp">make-green-noise-interp</A> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
-  <a class=def name="green-noise-interp">green-noise-interp</a> gen (fm 0.0)
-  <A class=def NAME="green-noise-interp?">green-noise-interp?</A> gen
+  <em class=def id="make-green-noise-interp">make-green-noise-interp</em> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
+  <em class=def id="green-noise-interp">green-noise-interp</em> gen (fm 0.0)
+  <em class=def id="green-noise-interp?">green-noise-interp?</em> gen
 </pre>
 
 <p>These two generators produce bounded brownian noise; "green-noise" was Michael McNabb's name for it.
@@ -8971,17 +8909,17 @@ Here's an instrument that fuzzes up its amplitude envelope a bit using green noi
 
 
 <pre class="bluish">
-  <A class=def NAME="make-adjustable-square-wave">make-adjustable-square-wave</A> frequency (duty-factor 0.5) (amplitude 1.0)
-  <A class=def NAME="adjustable-square-wave">adjustable-square-wave</A> gen (fm 0.0)
-  <A class=def NAME="adjustable-square-wave?">adjustable-square-wave?</A> gen
+  <em class=def id="make-adjustable-square-wave">make-adjustable-square-wave</em> frequency (duty-factor 0.5) (amplitude 1.0)
+  <em class=def id="adjustable-square-wave">adjustable-square-wave</em> gen (fm 0.0)
+  <em class=def id="adjustable-square-wave?">adjustable-square-wave?</em> gen
 
-  <A class=def NAME="make-adjustable-triangle-wave">make-adjustable-triangle-wave</A> frequency (duty-factor 0.5) (amplitude 1.0)
-  <A class=def NAME="adjustable-triangle-wave">adjustable-triangle-wave</A> gen (fm 0.0)
-  <A class=def NAME="adjustable-triangle-wave?">adjustable-triangle-wave?</A> gen
+  <em class=def id="make-adjustable-triangle-wave">make-adjustable-triangle-wave</em> frequency (duty-factor 0.5) (amplitude 1.0)
+  <em class=def id="adjustable-triangle-wave">adjustable-triangle-wave</em> gen (fm 0.0)
+  <em class=def id="adjustable-triangle-wave?">adjustable-triangle-wave?</em> gen
 
-  <A class=def NAME="make-adjustable-sawtooth-wave">make-adjustable-sawtooth-wave</A> frequency (duty-factor 0.5) (amplitude 1.0)
-  <A class=def NAME="adjustable-sawtooth-wave">adjustable-sawtooth-wave</A> gen (fm 0.0)
-  <A class=def NAME="adjustable-sawtooth-wave?">adjustable-sawtooth-wave?</A> gen
+  <em class=def id="make-adjustable-sawtooth-wave">make-adjustable-sawtooth-wave</em> frequency (duty-factor 0.5) (amplitude 1.0)
+  <em class=def id="adjustable-sawtooth-wave">adjustable-sawtooth-wave</em> gen (fm 0.0)
+  <em class=def id="adjustable-sawtooth-wave?">adjustable-sawtooth-wave?</em> gen
 </pre>
 
 <p>
@@ -9050,9 +8988,9 @@ Use mus-scaler to set the duty-factor at run-time.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-round-interp">make-round-interp</A> frequency n amplitude
-  <A class=def NAME="round-interp">round-interp</A> gen (fm 0.0)
-  <A class=def NAME="round-interp?">round-interp?</A> gen
+  <em class=def id="make-round-interp">make-round-interp</em> frequency n amplitude
+  <em class=def id="round-interp">round-interp</em> gen (fm 0.0)
+  <em class=def id="round-interp?">round-interp?</em> gen
 </pre>
 
 <p>
@@ -9091,27 +9029,27 @@ the higher "n", the more low-passed the output.
 
 <pre class="bluish">
   <A class=def>make-moving-max</A> (n 128)
-  <a class=def name="moving-max">moving-max</a> gen y
+  <em class=def id="moving-max">moving-max</em> gen y
   <A class=def>moving-max?</A> gen
 
   <A class=def>make-moving-sum</A> (n 128)
-  <a class=def name="moving-sum">moving-sum</a> gen y
+  <em class=def id="moving-sum">moving-sum</em> gen y
   <A class=def>moving-sum?</A> gen
 
   <A class=def>make-moving-rms</A> (n 128)
-  <a class=def name="moving-rms">moving-rms</a> gen y
+  <em class=def id="moving-rms">moving-rms</em> gen y
   <A class=def>moving-rms?</A> gen
 
   <A class=def>make-moving-length</A> (n 128)
-  <a class=def name="moving-length">moving-length</a> gen y
+  <em class=def id="moving-length">moving-length</em> gen y
   <A class=def>moving-length?</A> gen
 
   <A class=def>make-weighted-moving-average</A> n
-  <a class=def name="weighted-moving-average">weighted-moving-average</a> gen y
+  <em class=def id="weighted-moving-average">weighted-moving-average</em> gen y
   <A class=def>weighted-moving-average?</A> gen
 
   <A class=def>make-exponentially-weighted-moving-average</A> n
-  <a class=def name="exponentially-weighted-moving-average">exponentially-weighted-moving-average</a> gen y
+  <em class=def id="exponentially-weighted-moving-average">exponentially-weighted-moving-average</em> gen y
   <A class=def>exponentially-weighted-moving-average?</A> gen
 </pre>
 
@@ -9157,9 +9095,9 @@ Also defined, but not tested, is moving-variance; in the same mold, but not defi
 <table border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>Bessel functions</h5></center></td></tr></table>
 
 <pre class="bluish">
-  <A class=def NAME="make-bess">make-bess</A> (frequency 0.0) (n 0)
-  <A class=def NAME="bess">bess</A> gen (fm 0.0)
-  <A class=def NAME="bess?">bess?</A> gen
+  <em class=def id="make-bess">make-bess</em> (frequency 0.0) (n 0)
+  <em class=def id="bess">bess</em> gen (fm 0.0)
+  <em class=def id="bess?">bess?</em> gen
 </pre>
 
 <!-- LATEX: & J_{n}(x) = \frac{a}{\sqrt{x}}\sin(x+\delta) + \frac{r_{n}(x)}{x^{\frac{3}{2}}} \\ -->
@@ -9193,9 +9131,9 @@ I must be missing something.
 <br>
 
 <pre class="bluish">
-  <A class=def NAME="make-j0evencos">make-j0evencos</A> (frequency 0.0) (index 1.0)
-  <A class=def NAME="j0evencos">j0evencos</A> gen (fm 0.0)
-  <A class=def NAME="j0evencos?">j0evencos?</A> gen
+  <em class=def id="make-j0evencos">make-j0evencos</em> (frequency 0.0) (index 1.0)
+  <em class=def id="j0evencos">j0evencos</em> gen (fm 0.0)
+  <em class=def id="j0evencos?">j0evencos?</em> gen
 </pre>
 
 <p>j0evencos produces the J0(index * sin(x)) case mentioned above (with the DC component subtracted out).
@@ -9278,9 +9216,9 @@ blackman6 2048
 <br>
 
 <pre class="bluish">
-  <A class=def NAME="make-j0j1cos">make-j0j1cos</A> (frequency 0.0) (index 0.0)
-  <A class=def NAME="j0j1cos">j0j1cos</A> gen fm
-  <A class=def NAME="j0j1cos?">j0j1cos?</A> gen
+  <em class=def id="make-j0j1cos">make-j0j1cos</em> (frequency 0.0) (index 0.0)
+  <em class=def id="j0j1cos">j0j1cos</em> gen fm
+  <em class=def id="j0j1cos?">j0j1cos?</em> gen
 </pre>
 
 <img src="pix/sceq36.png" alt="j0j1 formulsa" hspace=40>
@@ -9293,9 +9231,9 @@ and is very similar to normal FM.
 <br>
 
 <pre class="bluish">
-  <A class=def NAME="make-izcos">make-izcos</A> (frequency 0.0) (r 1.0)
-  <A class=def NAME="izcos">izcos</A> gen (fm 0.0)
-  <A class=def NAME="izcos?">izcos?</A> gen
+  <em class=def id="make-izcos">make-izcos</em> (frequency 0.0) (r 1.0)
+  <em class=def id="izcos">izcos</em> gen (fm 0.0)
+  <em class=def id="izcos?">izcos?</em> gen
 </pre>
 
 <img src="pix/sceq39.png" alt="I(k) sum" hspace=40>
@@ -9308,21 +9246,21 @@ and is very similar to normal FM.
 <br>
 
 <pre class="bluish">
-  <A class=def NAME="make-jjcos">make-jjcos</A> (frequency 0.0) (r 0.5) (a 1.0) (k 1.0)
-  <A class=def NAME="jjcos">jjcos</A> gen (fm 0.0)
-  <A class=def NAME="jjcos?">jjcos?</A> gen
+  <em class=def id="make-jjcos">make-jjcos</em> (frequency 0.0) (r 0.5) (a 1.0) (k 1.0)
+  <em class=def id="jjcos">jjcos</em> gen (fm 0.0)
+  <em class=def id="jjcos?">jjcos?</em> gen
 
-  <A class=def NAME="make-j2cos">make-j2cos</A> (frequency 0.0) (r 0.5) (n 1)
-  <A class=def NAME="j2cos">j2cos</A> gen (fm 0.0)
-  <A class=def NAME="j2cos?">j2cos?</A> gen
+  <em class=def id="make-j2cos">make-j2cos</em> (frequency 0.0) (r 0.5) (n 1)
+  <em class=def id="j2cos">j2cos</em> gen (fm 0.0)
+  <em class=def id="j2cos?">j2cos?</em> gen
 
-  <A class=def NAME="make-jpcos">make-jpcos</A> (frequency 0.0) (r 0.5) (a 0.0) (k 1.0)
-  <A class=def NAME="jpcos">jpcos</A> gen (fm 0.0)
-  <A class=def NAME="jpcos?">jpcos?</A> gen
+  <em class=def id="make-jpcos">make-jpcos</em> (frequency 0.0) (r 0.5) (a 0.0) (k 1.0)
+  <em class=def id="jpcos">jpcos</em> gen (fm 0.0)
+  <em class=def id="jpcos?">jpcos?</em> gen
 
-  <A class=def NAME="make-jncos">make-jncos</A> (frequency 0.0) (r 0.5) (a 1.0) (n 0)
-  <A class=def NAME="jncos">jncos</A> gen (fm 0.0)
-  <A class=def NAME="jncos?">jncos?</A> gen
+  <em class=def id="make-jncos">make-jncos</em> (frequency 0.0) (r 0.5) (a 1.0) (n 0)
+  <em class=def id="jncos">jncos</em> gen (fm 0.0)
+  <em class=def id="jncos?">jncos?</em> gen
 </pre>
 
 <p>These produce a sum of cosines scaled by a product of Bessel functions; in a sense, there are two, or maybe three "indices".
@@ -9340,9 +9278,9 @@ in general as a and r approach 1.0, the spectrum approaches "k" components, some
 <br>
 
 <pre class="bluish">
-  <A class=def NAME="make-jycos">make-jycos</A> (frequency 0.0) (r 1.0) (a 1.0)
-  <A class=def NAME="jycos">jycos</A> gen (fm 0.0)
-  <A class=def NAME="jycos?">jycos?</A> gen
+  <em class=def id="make-jycos">make-jycos</em> (frequency 0.0) (r 1.0) (a 1.0)
+  <em class=def id="jycos">jycos</em> gen (fm 0.0)
+  <em class=def id="jycos?">jycos?</em> gen
 </pre>
 
 <p>This uses bes-y0 to produce components scaled by Yn(r)*Jn(a).  bes-y0(0) is -inf, so a^2 + r^2 should be greater than 2ar,
@@ -9365,9 +9303,9 @@ think there would be any difference, even taking FM into account.
 </p>
 
 <pre class="bluish">
-  <A class=def NAME="make-nssb">make-nssb</A> (frequency 0.0) (ratio 1.0) (n 1)
-  <A class=def NAME="nssb">nssb</A> gen (fm 0.0)
-  <A class=def NAME="nssb?">nssb?</A> gen
+  <em class=def id="make-nssb">make-nssb</em> (frequency 0.0) (ratio 1.0) (n 1)
+  <em class=def id="nssb">nssb</em> gen (fm 0.0)
+  <em class=def id="nssb?">nssb?</em> gen
 </pre>
 
 <p>nssb is the single side-band version of ncos and nsin.  It is very similar to <a href="#nxysin">nxysin</a> and <a href="#nxycos">nxycos</a>.
@@ -9376,9 +9314,9 @@ think there would be any difference, even taking FM into account.
 <br>
 
 <pre class="bluish">
-  <A class=def NAME="make-ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">make-ncos2</A> (frequency 0.0) (n 1)
-  <A class=def NAME="ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">ncos2</A> gen (fm 0.0)
-  <A class=def NAME="ncos2?">ncos2?</A> gen
+  <em class=emdef id="make-ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">make-ncos2</em> (frequency 0.0) (n 1)
+  <em class=emdef id="ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">ncos2</em> gen (fm 0.0)
+  <em class=def id="ncos2?">ncos2?</em> gen
 </pre>
 
 <p>This is the Fejer kernel.  The i-th harmonic amplitude is (n-i)/(n+1).
@@ -9390,9 +9328,9 @@ think there would be any difference, even taking FM into account.
 <br>
 
 <pre class="bluish">
-  <A class=def NAME="make-ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">make-ncos4</A> (frequency 0.0) (n 1)
-  <A class=def NAME="ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">ncos4</A> gen (fm 0.0)
-  <A class=def NAME="ncos4?">ncos4?</A> gen
+  <em class=emdef id="make-ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">make-ncos4</em> (frequency 0.0) (n 1)
+  <em class=emdef id="ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">ncos4</em> gen (fm 0.0)
+  <em class=def id="ncos4?">ncos4?</em> gen
 </pre>
 
 <p>This is the Jackson kernel, the square of ncos2.
@@ -9406,9 +9344,9 @@ think there would be any difference, even taking FM into account.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">make-npcos</A> (frequency 0.0) (n 1)
-  <A class=def NAME="npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">npcos</A> gen (fm 0.0)
-  <A class=def NAME="npcos?">npcos?</A> gen
+  <em class=emdef id="make-npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">make-npcos</em> (frequency 0.0) (n 1)
+  <em class=emdef id="npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">npcos</em> gen (fm 0.0)
+  <em class=def id="npcos?">npcos?</em> gen
 </pre>
 
 <p>This is the Poussin kernel, a combination of two ncos2 generators, one at "n" subtracted from twice another at 2n+1.
@@ -9416,9 +9354,9 @@ think there would be any difference, even taking FM into account.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-n1cos">make-n1cos</A> (frequency 0.0) (n 1)
-  <A class=def NAME="n1cos">n1cos</A> gen (fm 0.0)
-  <A class=def NAME="n1cos?">n1cos?</A> gen
+  <em class=def id="make-n1cos">make-n1cos</em> (frequency 0.0) (n 1)
+  <em class=def id="n1cos">n1cos</em> gen (fm 0.0)
+  <em class=def id="n1cos?">n1cos?</em> gen
 </pre>
 
 <p>Another spikey waveform, very similar to ncos2 above.
@@ -9431,21 +9369,21 @@ think there would be any difference, even taking FM into account.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-nxycos">make-nxycos</A> (frequency 0.0) (ratio 1.0) (n 1)
-  <A class=def NAME="nxycos">nxycos</A> gen (fm 0.0)
-  <A class=def NAME="nxycos?">nxycos?</A> gen
+  <em class=def id="make-nxycos">make-nxycos</em> (frequency 0.0) (ratio 1.0) (n 1)
+  <em class=def id="nxycos">nxycos</em> gen (fm 0.0)
+  <em class=def id="nxycos?">nxycos?</em> gen
 
-  <A class=def NAME="make-nxysin">make-nxysin</A> (frequency 0.0) (ratio 1.0) (n 1)
-  <A class=def NAME="nxysin">nxysin</A> gen (fm 0.0)
-  <A class=def NAME="nxysin?">nxysin?</A> gen
+  <em class=def id="make-nxysin">make-nxysin</em> (frequency 0.0) (ratio 1.0) (n 1)
+  <em class=def id="nxysin">nxysin</em> gen (fm 0.0)
+  <em class=def id="nxysin?">nxysin?</em> gen
 
-  <A class=def NAME="make-nxy1cos">make-nxy1cos</A> (frequency 0.0) (ratio 1.0) (n 1)
-  <A class=def NAME="nxy1cos">nxy1cos</A> gen (fm 0.0)
-  <A class=def NAME="nxy1cos?">nxy1cos?</A> gen
+  <em class=def id="make-nxy1cos">make-nxy1cos</em> (frequency 0.0) (ratio 1.0) (n 1)
+  <em class=def id="nxy1cos">nxy1cos</em> gen (fm 0.0)
+  <em class=def id="nxy1cos?">nxy1cos?</em> gen
 
-  <A class=def NAME="make-nxy1sin">make-nxy1sin</A> (frequency 0.0) (ratio 1.0) (n 1)
-  <A class=def NAME="nxy1sin">nxy1sin</A> gen (fm 0.0)
-  <A class=def NAME="nxy1sin?">nxy1sin?</A> gen
+  <em class=def id="make-nxy1sin">make-nxy1sin</em> (frequency 0.0) (ratio 1.0) (n 1)
+  <em class=def id="nxy1sin">nxy1sin</em> gen (fm 0.0)
+  <em class=def id="nxy1sin?">nxy1sin?</em> gen
 </pre>
 <p>These produce a sum of "n" sinsoids starting at "frequency", spaced by "ratio".  Since "frequency" can be treated
 as the carrier, there's no point in an ssb version.  nxy1cos is the same as nxycos, but every other
@@ -9459,17 +9397,17 @@ even trickier, so it divides by "n".
 <br>
 
 <pre class="bluish">
-  <A class=def NAME="make-noddcos">make-noddcos</A> (frequency 0.0) (n 1)
-  <A class=def NAME="noddcos">noddcos</A> gen (fm 0.0)
-  <A class=def NAME="noddcos?">noddcos?</A> gen
+  <em class=def id="make-noddcos">make-noddcos</em> (frequency 0.0) (n 1)
+  <em class=def id="noddcos">noddcos</em> gen (fm 0.0)
+  <em class=def id="noddcos?">noddcos?</em> gen
 
-  <A class=def NAME="make-noddsin">make-noddsin</A> (frequency 0.0) (n 1)
-  <A class=def NAME="noddsin">noddsin</A> gen (fm 0.0)
-  <A class=def NAME="noddsin?">noddsin?</A> gen
+  <em class=def id="make-noddsin">make-noddsin</em> (frequency 0.0) (n 1)
+  <em class=def id="noddsin">noddsin</em> gen (fm 0.0)
+  <em class=def id="noddsin?">noddsin?</em> gen
 
-  <A class=def NAME="make-noddssb">make-noddssb</A> (frequency 0.0) (ratio 1.0) (n 1)
-  <A class=def NAME="noddssb">noddssb</A> gen (fm 0.0)
-  <A class=def NAME="noddssb?">noddssb?</A> gen
+  <em class=def id="make-noddssb">make-noddssb</em> (frequency 0.0) (ratio 1.0) (n 1)
+  <em class=def id="noddssb">noddssb</em> gen (fm 0.0)
+  <em class=def id="noddssb?">noddssb?</em> gen
 </pre>
 
 
@@ -9540,18 +9478,18 @@ by the inverse of this, so it is always between -1 and 1.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-nrcos">make-nrcos</A> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="nrcos">nrcos</A> gen (fm 0.0)
-  <A class=def NAME="nrcos?">nrcos?</A> gen
+  <em class=def id="make-nrcos">make-nrcos</em> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="nrcos">nrcos</em> gen (fm 0.0)
+  <em class=def id="nrcos?">nrcos?</em> gen
 
-  <A class=def NAME="make-nrsin">make-nrsin</A> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="nrsin">nrsin</A> gen (fm 0.0)
-  <A class=def NAME="nrsin?">nrsin?</A> gen
+  <em class=def id="make-nrsin">make-nrsin</em> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="nrsin">nrsin</em> gen (fm 0.0)
+  <em class=def id="nrsin?">nrsin?</em> gen
 
-  <A class=def NAME="make-nrssb">make-nrssb</A> (frequency 0.0) (ratio 1.0) (n 1) (r 0.5) ; 0.0 &lt;= r &lt; 1.0
-  <A class=def NAME="nrssb">nrssb</A> gen (fm 0.0)
-  <A class=def NAME="nrssbinterp">nrssb-interp</A> gen fm interp
-  <A class=def NAME="nrssb?">nrssb?</A> gen
+  <em class=def id="make-nrssb">make-nrssb</em> (frequency 0.0) (ratio 1.0) (n 1) (r 0.5) ; 0.0 &lt;= r &lt; 1.0
+  <em class=def id="nrssb">nrssb</em> gen (fm 0.0)
+  <em class=def id="nrssbinterp">nrssb-interp</em> gen fm interp
+  <em class=def id="nrssb?">nrssb?</em> gen
 </pre>
 
 <p>These produce the sum of "n" sinusoids, with successive sinusoids scaled by "r"; the nth component has amplitude r^n.
@@ -9593,10 +9531,10 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 
 
 <pre class="bluish">
-  <A class=def NAME="make-nkssb">make-nkssb</A> (frequency 0.0) (ratio 1.0) (n 1)
-  <A class=def NAME="nkssb">nkssb</A> gen (fm 0.0)
-  <A class=def NAME="nkssbinterp">nkssb-interp</A> gen fm interp
-  <A class=def NAME="nkssb?">nkssb?</A> gen
+  <em class=def id="make-nkssb">make-nkssb</em> (frequency 0.0) (ratio 1.0) (n 1)
+  <em class=def id="nkssb">nkssb</em> gen (fm 0.0)
+  <em class=def id="nkssbinterp">nkssb-interp</em> gen fm interp
+  <em class=def id="nkssb?">nkssb?</em> gen
 </pre>
 
 <p>This generator produces the single side-band version of the sum of "n" sinusoids, where the nth component has amplitude n.
@@ -9617,9 +9555,9 @@ The instrument nkssber uses nkssb-interp:
 
 
 <pre class="bluish">
-  <A class=def NAME="make-nsincos">make-nsincos</A> (frequency 0.0) (n 1)
-  <A class=def NAME="nsincos">nsincos</A> gen (fm 0.0)
-  <A class=def NAME="nsincos?">nsincos?</A> gen
+  <em class=def id="make-nsincos">make-nsincos</em> (frequency 0.0) (n 1)
+  <em class=def id="nsincos">nsincos</em> gen (fm 0.0)
+  <em class=def id="nsincos?">nsincos?</em> gen
 </pre>
 
 <p>This generator produces a sum of n cosines scaled by sin(k*pi/(n+1))/sin(pi/(n+1)).
@@ -9628,9 +9566,9 @@ The instrument nkssber uses nkssb-interp:
 
 
 <pre class="bluish">
-  <A class=def NAME="make-nchoosekcos">make-nchoosekcos</A> (frequency 0.0) (ratio 1.0) (n 1)
-  <A class=def NAME="nchoosekcos">nchoosekcos</A> gen (fm 0.0)
-  <A class=def NAME="nchoosekcos?">nchoosekcos?</A> gen
+  <em class=def id="make-nchoosekcos">make-nchoosekcos</em> (frequency 0.0) (ratio 1.0) (n 1)
+  <em class=def id="nchoosekcos">nchoosekcos</em> gen (fm 0.0)
+  <em class=def id="nchoosekcos?">nchoosekcos?</em> gen
 </pre>
 
 <p>This generator produces a sum of n cosines scaled by the binomial coefficients.  If n is even, the last term is halved.
@@ -9660,22 +9598,22 @@ is amplitude modulation:
 <table border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>infinite sums</h5></center></td></tr></table>
 
 <pre class="bluish">
-  <A class=def NAME="make-rcos">make-rcos</A> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="rcos">rcos</A> gen (fm 0.0)
-  <A class=def NAME="rcos?">rcos?</A> gen
+  <em class=def id="make-rcos">make-rcos</em> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="rcos">rcos</em> gen (fm 0.0)
+  <em class=def id="rcos?">rcos?</em> gen
 
-  <A class=def NAME="make-rssb">make-rssb</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="rssb">rssb</A> gen (fm 0.0)
-  <A class=def NAME="rssbinterp">rssb-interp</A> gen fm interp
-  <A class=def NAME="rssb?">rssb?</A> gen
+  <em class=def id="make-rssb">make-rssb</em> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="rssb">rssb</em> gen (fm 0.0)
+  <em class=def id="rssbinterp">rssb-interp</em> gen fm interp
+  <em class=def id="rssb?">rssb?</em> gen
 
-  <A class=def NAME="make-rxycos">make-rxycos</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="rxycos">rxycos</A> gen (fm 0.0)
-  <A class=def NAME="rxycos?">rxycos?</A> gen
+  <em class=def id="make-rxycos">make-rxycos</em> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="rxycos">rxycos</em> gen (fm 0.0)
+  <em class=def id="rxycos?">rxycos?</em> gen
 
-  <A class=def NAME="make-rxysin">make-rxysin</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="rxysin">rxysin</A> gen (fm 0.0)
-  <A class=def NAME="rxysin?">rxysin?</A> gen
+  <em class=def id="make-rxysin">make-rxysin</em> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="rxysin">rxysin</em> gen (fm 0.0)
+  <em class=def id="rxysin?">rxysin?</em> gen
 </pre>
 
 <p>These generators produce an infinite sum of sinusoids, each successive component scaled by "r" (so the nth component has amplitude r^n).
@@ -9755,13 +9693,13 @@ are the same, but there's an overall phase difference of pi.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-ercos">make-ercos</A> (frequency 0.0) (r 0.5) ; r &gt; 0.0
-  <A class=def NAME="ercos">ercos</A> gen (fm 0.0)
-  <A class=def NAME="ercos?">ercos?</A> gen
+  <em class=def id="make-ercos">make-ercos</em> (frequency 0.0) (r 0.5) ; r &gt; 0.0
+  <em class=def id="ercos">ercos</em> gen (fm 0.0)
+  <em class=def id="ercos?">ercos?</em> gen
 
-  <A class=def NAME="make-erssb">make-erssb</A> (frequency 0.0) (ratio 1.0) (r 0.5)
-  <A class=def NAME="erssb">erssb</A> gen (fm 0.0)
-  <A class=def NAME="erssb?">erssb?</A> gen
+  <em class=def id="make-erssb">make-erssb</em> (frequency 0.0) (ratio 1.0) (r 0.5)
+  <em class=def id="erssb">erssb</em> gen (fm 0.0)
+  <em class=def id="erssb?">erssb?</em> gen
 </pre>
 
 <p>These produce a sum of sinusoids, each scaled by e^(-kr), a special case of rcos.  Our safe (minimum) "r" here becomes <code>(/ (log 0.001) (floor (/ srate (* -3 freq))))</code>.
@@ -9777,9 +9715,9 @@ The ercoser instrument uses ercos:
 
 
 <pre class="bluish">
-  <A class=def NAME="make-eoddcos">make-eoddcos</A> (frequency 0.0) (r 0.5)
-  <A class=def NAME="eoddcos">eoddcos</A> gen (fm 0.0)
-  <A class=def NAME="eoddcos?">eoddcos?</A> gen
+  <em class=def id="make-eoddcos">make-eoddcos</em> (frequency 0.0) (r 0.5)
+  <em class=def id="eoddcos">eoddcos</em> gen (fm 0.0)
+  <em class=def id="eoddcos?">eoddcos?</em> gen
 </pre>
 
 <p>This produces a sum of odd harmonics, each scaled by e^r(2k-1)/(2k-1).  As "r" approches 0.0, this approaches a square wave.
@@ -9799,17 +9737,17 @@ The ercoser instrument uses ercos:
 
 
 <pre class="bluish">
-  <A class=def NAME="make-rkcos">make-rkcos</A> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="rkcos">rkcos</A> gen (fm 0.0)
-  <A class=def NAME="rkcos?">rkcos?</A> gen
+  <em class=def id="make-rkcos">make-rkcos</em> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="rkcos">rkcos</em> gen (fm 0.0)
+  <em class=def id="rkcos?">rkcos?</em> gen
 
-  <A class=def NAME="make-rksin">make-rksin</A> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="rksin">rksin</A> gen (fm 0.0)
-  <A class=def NAME="rksin?">rksin?</A> gen
+  <em class=def id="make-rksin">make-rksin</em> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="rksin">rksin</em> gen (fm 0.0)
+  <em class=def id="rksin?">rksin?</em> gen
 
-  <A class=def NAME="make-rkssb">make-rkssb</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="rkssb">rkssb</A> gen (fm 0.0)
-  <A class=def NAME="rkssb?">rkssb?</A> gen
+  <em class=def id="make-rkssb">make-rkssb</em> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="rkssb">rkssb</em> gen (fm 0.0)
+  <em class=def id="rkssb?">rkssb?</em> gen
 </pre>
 
 <!--
@@ -9906,21 +9844,21 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 
 
 <pre class="bluish">
-  <A class=def NAME="make-rk!cos">make-rk!cos</A> (frequency 0.0) (r 0.5)  ; rk!cos is a special case of rxyk!cos
-  <A class=def NAME="rk!cos">rk!cos</A> gen (fm 0.0)
-  <A class=def NAME="rk!cos?">rk!cos?</A> gen
+  <em class=def id="make-rk!cos">make-rk!cos</em> (frequency 0.0) (r 0.5)  ; rk!cos is a special case of rxyk!cos
+  <em class=def id="rk!cos">rk!cos</em> gen (fm 0.0)
+  <em class=def id="rk!cos?">rk!cos?</em> gen
 
-  <A class=def NAME="make-rk!ssb">make-rk!ssb</A> (frequency 0.0) (ratio 1.0) (r 0.5)
-  <A class=def NAME="rk!ssb">rk!ssb</A> gen (fm 0.0)
-  <A class=def NAME="rk!ssb?">rk!ssb?</A> gen
+  <em class=def id="make-rk!ssb">make-rk!ssb</em> (frequency 0.0) (ratio 1.0) (r 0.5)
+  <em class=def id="rk!ssb">rk!ssb</em> gen (fm 0.0)
+  <em class=def id="rk!ssb?">rk!ssb?</em> gen
 
-  <A class=def NAME="make-rxyk!cos">make-rxyk!cos</A> (frequency 0.0) (ratio 1.0) (r 0.5)
-  <A class=def NAME="rxyk!cos">rxyk!cos</A> gen (fm 0.0)
-  <A class=def NAME="rxyk!cos?">rxyk!cos?</A> gen
+  <em class=def id="make-rxyk!cos">make-rxyk!cos</em> (frequency 0.0) (ratio 1.0) (r 0.5)
+  <em class=def id="rxyk!cos">rxyk!cos</em> gen (fm 0.0)
+  <em class=def id="rxyk!cos?">rxyk!cos?</em> gen
 
-  <A class=def NAME="make-rxyk!sin">make-rxyk!sin</A> (frequency 0.0) (ratio 1.0) (r 0.5)
-  <A class=def NAME="rxyk!sin">rxyk!sin</A> gen (fm 0.0)
-  <A class=def NAME="rxyk!sin?">rxyk!sin?</A> gen
+  <em class=def id="make-rxyk!sin">make-rxyk!sin</em> (frequency 0.0) (ratio 1.0) (r 0.5)
+  <em class=def id="rxyk!sin">rxyk!sin</em> gen (fm 0.0)
+  <em class=def id="rxyk!sin?">rxyk!sin?</em> gen
 </pre>
 
 
@@ -9987,9 +9925,9 @@ pitch and the index ("r") of the rxyk!cos generator.  The effect is vaguely bras
 
 
 <pre class="bluish">
-  <A class=def NAME="make-r2k!cos">make-r2k!cos</A> (frequency 0.0) (r 0.5) (k 0.0)
-  <A class=def NAME="r2k!cos">r2k!cos</A> gen (fm 0.0)
-  <A class=def NAME="r2k!cos?">r2k!cos?</A> gen
+  <em class=def id="make-r2k!cos">make-r2k!cos</em> (frequency 0.0) (r 0.5) (k 0.0)
+  <em class=def id="r2k!cos">r2k!cos</em> gen (fm 0.0)
+  <em class=def id="r2k!cos?">r2k!cos?</em> gen
 </pre>
 
 <p>
@@ -10066,9 +10004,9 @@ The instruments pianoy and pianoy1 use r2k!cos: <code>pianoy beg dur freq amp</c
 
 
 <pre class="bluish">
-  <A class=def NAME="make-rkoddssb">make-rkoddssb</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
-  <A class=def NAME="rkoddssb">rkoddssb</A> gen (fm 0.0)
-  <A class=def NAME="rkoddssb?">rkoddssb?</A> gen
+  <em class=def id="make-rkoddssb">make-rkoddssb</em> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <em class=def id="rkoddssb">rkoddssb</em> gen (fm 0.0)
+  <em class=def id="rkoddssb?">rkoddssb?</em> gen
 </pre>
 
 <p>This produces a sum of odd-numbered harmonics scaled by (r^(2k-1))/(2k-1).  This kind of spectrum is usually
@@ -10109,17 +10047,17 @@ safe maximum r is:
 
 
 <pre class="bluish">
-  <A class=def NAME="make-k2sin">make-k2sin</A> (frequency 0.0)
-  <A class=def NAME="k2sin">k2sin</A> gen (fm 0.0)
-  <A class=def NAME="k2sin?">k2sin?</A> gen
+  <em class=def id="make-k2sin">make-k2sin</em> (frequency 0.0)
+  <em class=def id="k2sin">k2sin</em> gen (fm 0.0)
+  <em class=def id="k2sin?">k2sin?</em> gen
 
-  <A class=def NAME="make-k2cos">make-k2cos</A> (frequency 0.0)
-  <A class=def NAME="k2cos">k2cos</A> gen (fm 0.0)
-  <A class=def NAME="k2cos?">k2cos?</A> gen
+  <em class=def id="make-k2cos">make-k2cos</em> (frequency 0.0)
+  <em class=def id="k2cos">k2cos</em> gen (fm 0.0)
+  <em class=def id="k2cos?">k2cos?</em> gen
 
-  <A class=def NAME="make-k2ssb">make-k2ssb</A> (frequency 0.0) (ratio 1.0)
-  <A class=def NAME="k2ssb">k2ssb</A> gen (fm 0.0)
-  <A class=def NAME="k2ssb?">k2ssb?</A> gen
+  <em class=def id="make-k2ssb">make-k2ssb</em> (frequency 0.0) (ratio 1.0)
+  <em class=def id="k2ssb">k2ssb</em> gen (fm 0.0)
+  <em class=def id="k2ssb?">k2ssb?</em> gen
 </pre>
 
 <p>These produce a sum of sinusoids scaled by 1/(2^k).
@@ -10128,9 +10066,9 @@ safe maximum r is:
 
 
 <pre class="bluish">
-  <A class=def NAME="make-k3sin">make-k3sin</A> (frequency 0.0)
-  <A class=def NAME="k3sin">k3sin</A> gen fm
-  <A class=def NAME="k3sin?">k3sin?</A> gen
+  <em class=def id="make-k3sin">make-k3sin</em> (frequency 0.0)
+  <em class=def id="k3sin">k3sin</em> gen fm
+  <em class=def id="k3sin?">k3sin?</em> gen
 </pre>
 
 <p>This produces a sum of sines scaled by 1.0/(k^3).
@@ -10139,9 +10077,9 @@ safe maximum r is:
 
 
 <pre class="bluish">
-  <A class=def NAME="make-krksin">make-krksin</A> (frequency 0.0) (r 0.5)
-  <A class=def NAME="krksin">krksin</A> gen (fm 0.0)
-  <A class=def NAME="krksin?">krksin?</A> gen
+  <em class=def id="make-krksin">make-krksin</em> (frequency 0.0) (r 0.5)
+  <em class=def id="krksin">krksin</em> gen (fm 0.0)
+  <em class=def id="krksin?">krksin?</em> gen
 </pre>
 
 <img src="pix/sceq25.png" alt="sum of sines" hspace=40>
@@ -10166,13 +10104,13 @@ The only value to avoid is 1.0.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-abcos">make-abcos</A> (frequency 0.0) (a 0.5) (b 0.25)
-  <A class=def NAME="abcos">abcos</A> gen (fm 0.0)
-  <A class=def NAME="abcos?">abcos?</A> gen
+  <em class=def id="make-abcos">make-abcos</em> (frequency 0.0) (a 0.5) (b 0.25)
+  <em class=def id="abcos">abcos</em> gen (fm 0.0)
+  <em class=def id="abcos?">abcos?</em> gen
 
-  <A class=def NAME="make-absin">make-absin</A> (frequency 0.0) (a 0.5) (b 0.25)
-  <A class=def NAME="absin">absin</A> gen (fm 0.0)
-  <A class=def NAME="absin?">absin?</A> gen
+  <em class=def id="make-absin">make-absin</em> (frequency 0.0) (a 0.5) (b 0.25)
+  <em class=def id="absin">absin</em> gen (fm 0.0)
+  <em class=def id="absin?">absin?</em> gen
 </pre>
 
 <p>These produce a sum of sinusoids scaled as follows:
@@ -10184,9 +10122,9 @@ The only value to avoid is 1.0.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-r2k2cos">make-r2k2cos</A> (frequency 0.0) (r 0.5)
-  <A class=def NAME="r2k2cos">r2k2cos</A> gen (fm 0.0)
-  <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
+  <em class=def id="make-r2k2cos">make-r2k2cos</em> (frequency 0.0) (r 0.5)
+  <em class=def id="r2k2cos">r2k2cos</em> gen (fm 0.0)
+  <em class=def id="r2k2cos?">r2k2cos?</em> gen
 </pre>
 
 <p>This produces a sum of cosines, each scaled by 1/(r^2+k^2).  r shouldn't be 0, but otherwise it almost doesn't matter what it is &mdash;
@@ -10201,9 +10139,9 @@ variants of those given above.
 
 
 <pre class="bluish">
-  <A class=def NAME="make-tanhsin">make-tanhsin</A> (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
-  <A class=def NAME="tanhsin">tanhsin</A> gen (fm 0.0)
-  <A class=def NAME="tanhsin?">tanhsin?</A> gen
+  <em class=def id="make-tanhsin">make-tanhsin</em> (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
+  <em class=def id="tanhsin">tanhsin</em> gen (fm 0.0)
+  <em class=def id="tanhsin?">tanhsin?</em> gen
 </pre>
 
 <p>This produces tanh(r * sin(x)) which approaches a square wave as "r" increases.
@@ -10212,9 +10150,9 @@ variants of those given above.
 
 
 <pre class="bluish">
-  <a class=def name="make-moving-fft">make-moving-fft</a> (input #f :type clm) (n 512) (hop 128)
-  <a class=def name="moving-fft">moving-fft</A> gen
-  <a class=def name="moving-fft?">moving-fft?</A> gen
+  <em class=def id="make-moving-fft">make-moving-fft</em> (input #f :type clm) (n 512) (hop 128)
+  <em class=def id="moving-fft">moving-fft</em> gen
+  <em class=def id="moving-fft?">moving-fft?</em> gen
 </pre>
 
 <p>moving-fft provides a sample-by-sample FFT (magnitudes and phases) of its
@@ -10236,9 +10174,9 @@ We could mimic the fft display window in the "lisp graph" via:
 <br>
 
 <pre class="bluish">
-  <a class=def name="make-moving-spectrum">make-moving-spectrum</a> (input #f :type clm) (n 512) (hop 128)
-  <a class=def name="moving-spectrum">moving-spectrum</A> gen
-  <a class=def name="moving-spectrum?">moving-spectrum?</A> gen
+  <em class=def id="make-moving-spectrum">make-moving-spectrum</em> (input #f :type clm) (n 512) (hop 128)
+  <em class=def id="moving-spectrum">moving-spectrum</em> gen
+  <em class=def id="moving-spectrum?">moving-spectrum?</em> gen
 </pre>
 
 <p>moving-spectrum provides a sample-by-sample spectrum (amplitudes, frequencies, and current phases) of its
@@ -10250,9 +10188,9 @@ use moving-spectrum-amps, moving-spectrum-phases, and moving-spectrum-freqs.
 
 
 <pre class="bluish">
-  <a class=def name="make-moving-autocorrelation">make-moving-autocorrelation</a> (input #f :type clm) (n 512) (hop 128)
-  <a class=def name="moving-autocorrelation">moving-autocorrelation</A> gen
-  <a class=def name="moving-autocorrelation?">moving-autocorrelation?</A> gen
+  <em class=def id="make-moving-autocorrelation">make-moving-autocorrelation</em> (input #f :type clm) (n 512) (hop 128)
+  <em class=def id="moving-autocorrelation">moving-autocorrelation</em> gen
+  <em class=def id="moving-autocorrelation?">moving-autocorrelation?</em> gen
 </pre>
 
 <p>moving-autocorrelation provides the autocorrelation of the last 'n' samples every 'hop' samples.
@@ -10263,9 +10201,9 @@ via mus-data.
 
 
 <pre class="bluish">
-  <a class=def name="make-moving-pitch">make-moving-pitch</a> (input #f :type clm) (n 512) (hop 128)
-  <a class=def name="moving-pitch">moving-pitch</A> gen
-  <a class=def name="moving-pitch?">moving-pitch?</A> gen
+  <em class=def id="make-moving-pitch">make-moving-pitch</em> (input #f :type clm) (n 512) (hop 128)
+  <em class=def id="moving-pitch">moving-pitch</em> gen
+  <em class=def id="moving-pitch?">moving-pitch?</em> gen
 </pre>
 
 <p>moving-pitch provides the current pitch of its input, recalculated (via moving-autocorrelation) every 'hop' samples.
@@ -10290,9 +10228,9 @@ via mus-data.
 
 
 <pre class="bluish">
-  <a class=def name="make-moving-scentroid">make-moving-scentroid</a> (dbfloor -40.0) (rfreq 100.0) (size 4096)
-  <a class=def name="moving-scentroid">moving-scentroid</A> gen
-  <a class=def name="moving-scentroid?">moving-scentroid?</A> gen
+  <em class=def id="make-moving-scentroid">make-moving-scentroid</em> (dbfloor -40.0) (rfreq 100.0) (size 4096)
+  <em class=def id="moving-scentroid">moving-scentroid</em> gen
+  <em class=def id="moving-scentroid?">moving-scentroid?</em> gen
 </pre>
 
 <p>moving-scentroid provides a generator that mimics Bret Battey's scentroid instrument (in dsp.scm or scentroid.ins).
@@ -10301,9 +10239,9 @@ via mus-data.
 
 
 <pre class="bluish">
-  <a class=def name="make-flocsig">make-flocsig</a> (reverb-amount 0.0) (frequency 1.0) (amplitude 2.0) offset
-  <a class=def name="flocsig">flocsig</A> gen i val
-  <a class=def name="flocsig?">flocsig?</A> gen
+  <em class=def id="make-flocsig">make-flocsig</em> (reverb-amount 0.0) (frequency 1.0) (amplitude 2.0) offset
+  <em class=def id="flocsig">flocsig</em> gen i val
+  <em class=def id="flocsig?">flocsig?</em> gen
 </pre>
 
 <p>flocsig is a version of locsig that adds changing delays between the channels (flanging).  
@@ -10391,7 +10329,7 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
 <table border=1 width=200 vspace=10 hspace=20><tr><td class="greenish"><center><h5>defgenerator</h5></center></td></tr></table>
 
 <pre>
-  <a class=def name="defgenerator">defgenerator</a> name fields
+  <em class=def id="defgenerator">defgenerator</em> name fields
 </pre>
 
 <p>defgenerator defines a generator.  Its syntax is modelled after Common Lisp's defstruct.
@@ -10596,30 +10534,27 @@ Here is an example that produces abs(oscil):
 </td></tr></table>
 
 
-<br>
-<br><br>
-
 
 
 <!-- ******************************** FUNCTIONS ******************************** -->
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2><a class=def NAME="otherfunctions">Other Functions</a></h2></td></tr></table>
+<div class="header" id="otherfunctions">Other functions</div>
 
 <p>There are several functions closely tied to the generators and instruments.
 </p>
 
 <table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td><a class=def name="hztoradians">hz-&gt;radians</a><code> freq</code></td><td width=20></td><td>convert freq to radians per sample (using mus-srate): (freq * 2 * pi) / srate</td></tr>
-<tr><td><a class=def name="radianstohz">radians-&gt;hz</a><code> rads</code></td><td></td><td>convert rads to Hz (using mus-srate): (rads * srate) / (2 * pi)</td></tr>
-<tr><td><a class=def name="dbtolinear">db-&gt;linear</a><code> dB</code></td><td></td><td>convert dB to linear value: 10^(dB/20)</td></tr>
-<tr><td><a class=def name="lineartodb">linear-&gt;db</a><code> val</code></td><td></td><td>convert val to dB: 20 * log(x) / log(10)</td></tr>
-<tr><td><a class=def Name="timestosamples">times-&gt;samples</a><code> start duration</code></td><td></td><td>convert start and duration from seconds to samples (beg+dur in latter case)</td></tr>
-<tr><td><a class=def name="samplestoseconds">samples-&gt;seconds</a><code> samps</code></td><td></td><td>convert samples to seconds (using mus-srate): samps / srate</td></tr>
-<tr><td><a class=def name="secondstosamples">seconds-&gt;samples</a><code> secs</code></td><td></td><td>convert seconds to samples (using mus-srate): secs * srate</td></tr>
-<tr><td><a class=def name="degreestoradians">degrees-&gt;radians</a><code> degs</code></td><td></td><td>convert degrees to radians: (degs * 2 * pi) / 360</td></tr>
-<tr><td><a class=def name="radianstodegrees">radians-&gt;degrees</a><code> rads</code></td><td></td><td>convert radians to degrees: (rads * 360) / (2 * pi)</td></tr>
-<tr><td><a class=def name="clear-array">clear-array</a><code> arr</code></td><td></td><td>set all values in arr (a vct) to 0.0</td></tr>
-<tr><td><a class=def name="mussrate">mus-srate</a></td><td></td><td>sampling rate in with-sound</td></tr>
+<tr><td><em class=def id="hztoradians">hz-&gt;radians</em><code> freq</code></td><td width=20></td><td>convert freq to radians per sample (using mus-srate): (freq * 2 * pi) / srate</td></tr>
+<tr><td><em class=def id="radianstohz">radians-&gt;hz</em><code> rads</code></td><td></td><td>convert rads to Hz (using mus-srate): (rads * srate) / (2 * pi)</td></tr>
+<tr><td><em class=def id="dbtolinear">db-&gt;linear</em><code> dB</code></td><td></td><td>convert dB to linear value: 10^(dB/20)</td></tr>
+<tr><td><em class=def id="lineartodb">linear-&gt;db</em><code> val</code></td><td></td><td>convert val to dB: 20 * log(x) / log(10)</td></tr>
+<tr><td><em class=def id="timestosamples">times-&gt;samples</em><code> start duration</code></td><td></td><td>convert start and duration from seconds to samples (beg+dur in latter case)</td></tr>
+<tr><td><em class=def id="samplestoseconds">samples-&gt;seconds</em><code> samps</code></td><td></td><td>convert samples to seconds (using mus-srate): samps / srate</td></tr>
+<tr><td><em class=def id="secondstosamples">seconds-&gt;samples</em><code> secs</code></td><td></td><td>convert seconds to samples (using mus-srate): secs * srate</td></tr>
+<tr><td><em class=def id="degreestoradians">degrees-&gt;radians</em><code> degs</code></td><td></td><td>convert degrees to radians: (degs * 2 * pi) / 360</td></tr>
+<tr><td><em class=def id="radianstodegrees">radians-&gt;degrees</em><code> rads</code></td><td></td><td>convert radians to degrees: (rads * 360) / (2 * pi)</td></tr>
+<tr><td><em class=def id="clear-array">clear-array</em><code> arr</code></td><td></td><td>set all values in arr (a vct) to 0.0</td></tr>
+<tr><td><em class=def id="mussrate">mus-srate</em></td><td></td><td>sampling rate in with-sound</td></tr>
 </table>
 
 <p>
@@ -10665,7 +10600,7 @@ an increment of a phase variable.
 <br>
 
 <pre>
-  <a class=def name="musfloatequalfudgefactor">mus-float-equal-fudge-factor</a>
+  <em class=def id="musfloatequalfudgefactor">mus-float-equal-fudge-factor</em>
 </pre>
 
 <p>This function sets how far apart generator vct elements can be and still be considered equal in equal?
@@ -10689,7 +10624,7 @@ an increment of a phase variable.
 <br>
 
 <pre>
-  <a class=def name="musarrayprintlength">mus-array-print-length</a>
+  <em class=def id="musarrayprintlength">mus-array-print-length</em>
 </pre>
 
 <p>
@@ -10711,16 +10646,15 @@ This function determines how many mixer elements are printed by mus-describe.
     ]&gt;</em>
 </pre>
 
-<br><br>
-
 
 
 <!-- ******************************** POLYNOMIAL ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>polynomial</h3></div></td></tr></table>
+<div class="innerheader">polynomial</div>
+
 
 <pre>
-   <a class=def name="polynomial">polynomial</a> coeffs x
+   <em class=def id="polynomial">polynomial</em> coeffs x
 </pre>
 
 <p>The polynomial function evaluates a polynomial, defined by giving its coefficients,
@@ -10767,19 +10701,17 @@ Here's a generator that uses polynomial to produce a Blackman4 waveform (see als
 </pre>
 </td></tr></table>
 
-<br><br>
-
 
 
 <!-- ******************************** ARRAY-INTERP ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>array-interp, dot-product</h3></div></td></tr></table>
+<div class="innerheader">array-interp, dot-product</div>
 
 <pre>
-  <a class=def name="array-interp">array-interp</a> fn x size
-  <a class=def name="dot-product">dot-product</a> in1 in2
-  <a class=def name="edot-product">edot-product</a> freq data
-  <a class=def name="mus-interpolate">mus-interpolate</a> type x v size y1
+  <em class=def id="array-interp">array-interp</em> fn x size
+  <em class=def id="dot-product">dot-product</em> in1 in2
+  <em class=def id="edot-product">edot-product</em> freq data
+  <em class=def id="mus-interpolate">mus-interpolate</em> type x v size y1
 </pre>
 
 <p>array-interp interpolates in the array "fn" at the point "x".  It underlies the <a href="#table-lookup">table-lookup</a>
@@ -10837,17 +10769,15 @@ mus-interpolate is the function used whenever table lookup interpolation is requ
 <a href="#delay">delay</a> or <a href="#wave-train">wave-train</a>. 
 The "type" argument is one of the interpolation types (<code>mus-interp-linear</code>, for example).
 </p>
-<br><br>
-
 
 
 
 <!-- ******************************** CONTRAST-ENHANCEMENT ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>contrast-enhancement</h3></div></td></tr></table>
+<div class="innerheader">contrast-enhancement</div>
 
 <pre>
-   <a class=def name="contrast-enhancement">contrast-enhancement</a> in-samp (fm-index 1.0)
+   <em class=def id="contrast-enhancement">contrast-enhancement</em> in-samp (fm-index 1.0)
 </pre>
 
 <p>contrast-enhancement passes its input to sin as a kind of phase modulation.
@@ -10877,17 +10807,16 @@ See <a href="#moving-max">moving-max</a> for a similar function that does this k
 resulting in a steady modulation, rather than an intensification of just the peaks.
 And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 </p>
-<br><br>
 
 
 
 <!-- ******************************** AMPLITUDE-MODULATE ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>ring-modulate, amplitude-modulate</h3></div></td></tr></table>
+<div class="innerheader">ring-modulate, amplitude-modulate</div>
 
 <pre>
-  <a class=def name="ring-modulate">ring-modulate</a> in1 in2                  ; returns <code>(* in1 in2)</code>
-  <a class=def name="amplitude-modulate">amplitude-modulate</a> am-carrier in1 in2  ; returns <code>(* in1 (+ am-carrier in2))</code>
+  <em class=def id="ring-modulate">ring-modulate</em> in1 in2                  ; returns <code>(* in1 in2)</code>
+  <em class=def id="amplitude-modulate">amplitude-modulate</em> am-carrier in1 in2  ; returns <code>(* in1 (+ am-carrier in2))</code>
 </pre>
 
 
@@ -10967,25 +10896,24 @@ with itself, splitting into cos2x and cos0x.  T2 (that is, 2cos^2x - 1) then sub
 The upper sidebands may foldover (alias); if it's a problem, low-pass filter the inputs (surely no CLM user needs that silly reminder!).
 </p>
 
-<br><br><br>
-
 
 
 
 <!-- ******************************** FFT ******************************** -->
 
-<table width="60%" border=0><tr><td class="green" valign="middle"><div class="centered"><h3>FFT (fourier transform)</h3></div></td></tr></table>
+<div class="innerheader">FFT (fourier transform)</div>
+
 <pre>
-  <a class=def Name="fft">mus-fft</a> rdat idat fftsize sign
-  <a class=def name="make-fft-window">make-fft-window</a> type size (beta 0.0) (alpha 0.0)
-  <a class=def name="multiply-arrays">multiply-arrays</a> rdat window
-  <a class=def name="rectangulartopolar">rectangular-&gt;polar</a> rdat idat
-  <a class=def name="rectangulartomagnitudes">rectangular-&gt;magnitudes</a> rdat idat
-  <a class=def name="polartorectangular">polar-&gt;rectangular</a> rdat idat
-  <a class=def name="spectrum">spectrum</a> rdat idat window norm-type
-  <a class=def name="convolution">convolution</a> rdat idat size
-  <a class=def name="autocorrelate">autocorrelate</a> data
-  <a class=def name="correlate">correlate</a> data1 data2
+  <em class=def id="fft">mus-fft</em> rdat idat fftsize sign
+  <em class=def id="make-fft-window">make-fft-window</em> type size (beta 0.0) (alpha 0.0)
+  <em class=def id="multiply-arrays">multiply-arrays</em> rdat window
+  <em class=def id="rectangulartopolar">rectangular-&gt;polar</em> rdat idat
+  <em class=def id="rectangulartomagnitudes">rectangular-&gt;magnitudes</em> rdat idat
+  <em class=def id="polartorectangular">polar-&gt;rectangular</em> rdat idat
+  <em class=def id="spectrum">spectrum</em> rdat idat window norm-type
+  <em class=def id="convolution">convolution</em> rdat idat size
+  <em class=def id="autocorrelate">autocorrelate</em> data
+  <em class=def id="correlate">correlate</em> data1 data2
 </pre>
 
 <p>mus-fft, spectrum, and convolution are the standard functions used everywhere.
@@ -11079,7 +11007,7 @@ apply function to spectrum, inverse fft: <a href="sndscm.html#filterfft">filter-
 
 
 
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><a class=def name="instruments">Instruments</a></h3></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><em class=def id="instruments">Instruments</em></h3></td></tr></table>
 
 <p>It's hard to decide what's an "instrument" in this context, but I think I'll treat
 it as something that can be called as a note in a notelist (in with-sound) and

@@ -1,22 +1,20 @@
-Snd 12.8
+Snd 12.9
 
-s7: added logbit? (using gmp arg order, not CL)
+  Mike Scholz got Snd to compile/load/run in 
+     FreeBSD 8, 9, and 10
+     CentOS: gcc (GCC) 4.4.6 20110731 (Red Hat 4.4.6-3) 
+     Ubuntu: gcc (Ubuntu/Linaro 4.6.1-9ubuntu3) 4.6.1 
+     Debian: gcc (Debian 4.4.5-8) 4.4.5 
+     NetBSD
+     OpenBSD
 
-    added reverse argument (in C) to s7_new_type_x and (in scheme) to make-type.  
-      This is needed because an object might implement the apply and set methods, 
-      but they might refer to different things (I should have noticed this a long
-      time ago...)
+  s7: added random-state?, hash-table-iterator?, and morally-equal?
 
-    s7_environment_to_list and environment->list return just the local environment's
-      bindings.  They used to crawl up the environment chain, but that can now be
-      done with outer-environment.
+  removed snd1.html, snd-contents.html (the other html files are moving
+    to HTML5 as rapidly as possible)
+  
 
-    outer-environment returns the environment enclosing its argument (an environment).
+checked: clang 1.7, gmp 5.0.3, gtk 3.3.14
 
-    added an object system example in the environments section of s7.html.
-      It's based on environments as classes/instances.
-
-checked: sbcl 1.0.55, gtk 3.3.8|10|12
-
-Thanks!: Mike Scholz, Rick Taube.
+Thanks!: Mike Scholz
 

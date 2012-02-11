@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 <head>
 <title>Snd Customization and Extension</title>
 <style type="text/css">
@@ -18,6 +18,7 @@
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black; padding-right: 0.2cm}
+	EM.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black; padding-right: 0.2cm}
 
 	TD.green {background-color: lightgreen}
 	TD.bluish {background-color: #f2f4ff}
@@ -871,7 +872,7 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 
 
 
-<div class="innerheader" id=sndenvvars">Environment variables</div>
+<div class="innerheader" id="sndenvvars">Environment variables</div>
 
 <p>There are several environment variables specific to Snd:
 </p>
@@ -1143,7 +1144,7 @@ an oscil or a sawtooth-wave:
 ;;; both src and granulate take a function argument to get input whenever it is needed.
 ;;; in this case, src calls granulate which reads the currently selected file.
 
-(define <A class=def NAME="expsrc">expsrc</a>
+(define <em class=emdef id="expsrc">expsrc</em>
   (lambda (rate)
     (let* ((gr (<a class=quiet href="sndclm.html#make-granulate" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_granulate_tip)">make-granulate</a> :expansion rate))
 	   (sr (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate rate))
@@ -1936,11 +1937,11 @@ The s7 initialization file is ~/.snd_s7.
 <div class="innerheader" id="sndandladspa">Snd and LADSPA Plugins</div>
 
 <pre>
-  <a class=def name="initladspa">init-ladspa</a>
-  <a class=def name="listladspa">list-ladspa</a>
-  <a class=def name="analyseladspa">analyse-ladspa</a> library plugin [also <b>analyze-ladspa</b>]
-  <a class=def name="ladspadescriptor">ladspa-descriptor</a> library plugin
-  <a class=def name="applyladspa">apply-ladspa</a> reader data duration origin snd chn
+  <em class=def id="initladspa">init-ladspa</em>
+  <em class=def id="listladspa">list-ladspa</em>
+  <em class=def id="analyseladspa">analyse-ladspa</em> library plugin [also <b>analyze-ladspa</b>]
+  <em class=def id="ladspadescriptor">ladspa-descriptor</em> library plugin
+  <em class=def id="applyladspa">apply-ladspa</em> reader data duration origin snd chn
 
   <em class=emdef>ladspa-instantiate</em> descriptor srate
   <em class=emdef>ladspa-activate</em> descriptor handle
