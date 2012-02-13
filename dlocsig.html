@@ -123,11 +123,11 @@
 
 <p><table>         
 <tr><td bgcolor="#e0e0e0"><a name="arrange-speakers"><strong>arrange-speakers</strong></a></td><td> &amp;optional-key
-<tr><td></td><td>(<i>speakers</i> '())<br>
-                 (<i>groups</i> '())<br>
-                 (<i>distances</i> '())<br>
-                 (<i>delays</i> '())<br>
-                 (<i>map</i> '())<br>
+<tr><td></td><td>(speakers '())<br>
+                 (groups '())<br>
+                 (distances '())<br>
+                 (delays '())<br>
+                 (map '())<br>
 </table></p>
 
 <p><em>arrange-speakers</em> returns a speaker configuration structure for a particular number of speakers and associated output channels. It defines the location of all speakers in two or three dimensional space, groups the speakers for panning purposes and optionally adds fixed delays to some speakers and maps individual speakers to output channels. </p>
@@ -252,14 +252,14 @@
 
 <p><table>
 <tr><td bgcolor="#e0e0e0"><a name="make-path"><strong>make-path</strong></a></td><td> &amp;optional-key
-<tr><td></td><td>(<i>3d</i> path-3d)<br>
-                 (<i>path</i> '())<br>
-                 (<i>polar</i> nil)<br>
-                 (<i>closed</i> nil)<br>
-                 (<i>curvature</i> nil)<br>
-                 (<i>error</i> 0.01)<br>
-                 (<i>initial-direction</i> '())<br>
-                 (<i>final-direction</i> '())<br>
+<tr><td></td><td>(3d path-3d)<br>
+                 (path '())<br>
+                 (polar nil)<br>
+                 (closed nil)<br>
+                 (curvature nil)<br>
+                 (error 0.01)<br>
+                 (initial-direction '())<br>
+                 (final-direction '())<br>
 </table></p>
 
 <p><em>make-path</em> returns a bezier path object that can be used as an argument to the <em>make-dlocsig</em> unit generator creation function. </p>
@@ -349,26 +349,26 @@
 
 <p><table>
 <tr><td bgcolor="#e0e0e0"><a name="make-polar-path"><strong>make-polar-path</strong></a></td><td> &amp;optional-key
-<tr><td></td><td>(<i>3d</i> path-3d)<br>
-                 (<i>path</i> '())<br>
-                 (<i>closed</i> nil)<br>
-                 (<i>curvature</i> nil)<br>
-                 (<i>error</i> 0.01)<br>
-                 (<i>initial-direction</i> '())<br>
-                 (<i>final-direction</i> '())<br>
+<tr><td></td><td>(3d path-3d)<br>
+                 (path '())<br>
+                 (closed nil)<br>
+                 (curvature nil)<br>
+                 (error 0.01)<br>
+                 (initial-direction '())<br>
+                 (final-direction '())<br>
 </table></p>
 
 <p><em>make-polar-path</em> returns a bezier path object that can be used as an argument to the <em>make-dlocsig</em> unit generator creation function. It will automatically parse the trajectory points as being represented in polar coordinates. </p>
 
 <p><table>
 <tr><td bgcolor="#e0e0e0"><a name="make-closed-path"><strong>make-closed-path</strong></a></td><td> &amp;optional-key
-<tr><td></td><td>(<i>3d</i> path-3d)<br>
-                 (<i>path</i> '())<br>
-                 (<i>polar</i> nil)<br>
-                 (<i>curvature</i> nil)<br>
-                 (<i>error</i> 0.01)<br>
-                 (<i>initial-direction</i> '())<br>
-                 (<i>final-direction</i> '())<br>
+<tr><td></td><td>(3d path-3d)<br>
+                 (path '())<br>
+                 (polar nil)<br>
+                 (curvature nil)<br>
+                 (error 0.01)<br>
+                 (initial-direction '())<br>
+                 (final-direction '())<br>
 </table></p>
 
 <p><em>make-polar-path</em> returns a bezier path object that can be used as an argument to the <em>make-dlocsig</em> unit generator creation function. It will create a closed path. </p>
@@ -381,13 +381,13 @@
 
 <p><table>
 <tr><td bgcolor="#e0e0e0"><a name="make-spiral-path"><strong>make-spiral-path</strong></a></td><td> &amp;optional-key
-<tr><td></td><td>(<i>start-angle</i> 0d0)<br>
-                 (<i>total-angle</i> nil)<br>
-                 (<i>step-angle</i> (/ <a href="#dlocsig-one-turn">dlocsig-one-turn</a> 100))<br>
-                 (<i>turns</i> nil)<br>
-                 (<i>distance</i> '(0 10 1 10))<br>
-                 (<i>height</i> '(0 0 1 0))<br>
-                 (<i>velocity</i> '(0 1 1 1))<br>
+<tr><td></td><td>(start-angle 0d0)<br>
+                 (total-angle nil)<br>
+                 (step-angle (/ <a href="#dlocsig-one-turn">dlocsig-one-turn</a> 100))<br>
+                 (turns nil)<br>
+                 (distance '(0 10 1 10))<br>
+                 (height '(0 0 1 0))<br>
+                 (velocity '(0 1 1 1))<br>
 </table></p>
 
 <p><em>make-spiral-path</em> returns a spiral trajectory centered around the listener's position. </p>
@@ -437,31 +437,31 @@
 <p>Ahem, there is no graphical path editor... yet. If your system includes the <em>gnuplot</em> utility you can use the following functions to graphically visualize the path and its properties. </p>
 
 <p><table>
-<tr><td bgcolor="#e0e0e0"><a name="plot"><strong>plot</strong></a></td><td> <i>path</i>
+<tr><td bgcolor="#e0e0e0"><a name="plot"><strong>plot</strong></a></td><td> path
 </table></p>
 
 <p>This will plot two views, one containing the trajectory and the other containing overlapping plots of the velocity, acceleration and doppler shift of the moving sound source. </p>
 
 <p><table>
-<tr><td bgcolor="#e0e0e0"><a name="plot-trajectory"><strong>plot-trajectory</strong></a></td><td> <i>path</i>
+<tr><td bgcolor="#e0e0e0"><a name="plot-trajectory"><strong>plot-trajectory</strong></a></td><td> path
 </table></p>
 
 <p>Plots the trajectory of the moving sound source. </p>
 
 <p><table>
-<tr><td bgcolor="#e0e0e0"><a name="plot-velocity"><strong>plot-velocity</strong></a></td><td> <i>path</i>
+<tr><td bgcolor="#e0e0e0"><a name="plot-velocity"><strong>plot-velocity</strong></a></td><td> path
 </table></p>
 
 <p>Plots the velocity of the moving sound source. </p>
 
 <p><table>
-<tr><td bgcolor="#e0e0e0"><a name="plot-acceleration"><strong>plot-acceleration</strong></a></td><td> <i>path</i>
+<tr><td bgcolor="#e0e0e0"><a name="plot-acceleration"><strong>plot-acceleration</strong></a></td><td> path
 </table></p>
 
 <p>Plots the acceleration of the moving sound source. </p>
 
 <p><table>
-<tr><td bgcolor="#e0e0e0"><a name="plot-doppler"><strong>plot-doppler</strong></a></td><td> <i>path</i>
+<tr><td bgcolor="#e0e0e0"><a name="plot-doppler"><strong>plot-doppler</strong></a></td><td> path
 </table></p>
 
 <p>Plots the doppler shift of the moving sound source. </p>
@@ -478,20 +478,20 @@
 
 <p><table>         
 <tr><td bgcolor="#e0e0e0"><strong>make-dlocsig</strong></td><td> &amp;optional-key<br>
-<tr><td></td><td>(<i>start-time</i> nil)<br>
-                 (<i>duration</i> nil)<br>
-                 (<i>path</i> dlocsig-path)<br>
-                 (<i>scaler</i> dlocsig-scaler)<br>
-                 (<i>direct-power</i> dlocsig-direct-power)<br>
-                 (<i>reverb-power</i> dlocsig-reverb-power)<br>
-                 (<i>inside-radius</i> dlocsig-inside-radius)<br>
-                 (<i>inside-direct-power</i> dlocsig-inside-direct-power)<br>
-                 (<i>inside-reverb-power</i> dlocsig-inside-reverb-power)<br>
-                 (<i>reverb-amount</i> dlocsig-reverb-amount)<br>
-                 (<i>initial-delay</i> dlocsig-initial-delay)<br>
-                 (<i>unity-gain-dist</i> dlocsig-unity-gain-dist)<br>
-                 (<i>minimum-segment-size</i> dlocsig-minimum-segment-size)<br>
-                 (<i>render-using</i> dlocsig-render-using)<br>
+<tr><td></td><td>(start-time nil)<br>
+                 (duration nil)<br>
+                 (path dlocsig-path)<br>
+                 (scaler dlocsig-scaler)<br>
+                 (direct-power dlocsig-direct-power)<br>
+                 (reverb-power dlocsig-reverb-power)<br>
+                 (inside-radius dlocsig-inside-radius)<br>
+                 (inside-direct-power dlocsig-inside-direct-power)<br>
+                 (inside-reverb-power dlocsig-inside-reverb-power)<br>
+                 (reverb-amount dlocsig-reverb-amount)<br>
+                 (initial-delay dlocsig-initial-delay)<br>
+                 (unity-gain-dist dlocsig-unity-gain-dist)<br>
+                 (minimum-segment-size dlocsig-minimum-segment-size)<br>
+                 (render-using dlocsig-render-using)<br>
 
 </table></p>
 
@@ -588,7 +588,7 @@
 </table>
 
 <p><table>         
-<tr><td bgcolor="#e0e0e0"><strong>dlocsig</strong></td><td> <i>dloc</i> <i>i</i> <i>sample</i>
+<tr><td bgcolor="#e0e0e0"><strong>dlocsig</strong></td><td> dloc i sample
 </table></p>
 
 <p>Localizes a sample and merges it into the output file at absolute sample number i. </p>

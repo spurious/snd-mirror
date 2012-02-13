@@ -18,6 +18,7 @@
         TD.green {background-color: lightgreen}
         TD.greenish {background-color: #eefdee}
 
+        PRE.indented {padding-left: 1.0cm}
 	DIV.center {text-align: center}
         BODY.body {background-color: #ffffff;    /* white */
 	           margin-left: 0.5cm; 
@@ -444,7 +445,7 @@ But this is all standard stuff; even the
 various dialogs scattered around the menus will present
 no surprises.  
 The GL spectrograph is somewhat unusual,
-and I like the paned window approach to multichannel sounds ("<i>de gustibus...</i>").
+and I like the paned window approach to multichannel sounds ("de gustibus...").
 But it is primarily the embedded extension language
 (s7, Ruby, or Forth) that 
 makes Snd different from other editors.
@@ -1424,8 +1425,8 @@ amplitude, use the functions:</p>
   <a href="extsnd.html#scaleselectionby">scale-selection-by</a> args
   <a href="extsnd.html#scaleselectionto">scale-selection-to</a> args
 </pre>
-<p><i>scale-by</i> scales the current sync'd channels by its arguments,
-and <i>scale-to</i> scales them to its arguments (a normalization).
+<p>scale-by scales the current sync'd channels by its arguments,
+and scale-to scales them to its arguments (a normalization).
 The arguments in each case are either a list of floats
 corresponding to each successive member of the current
 set of sync'd channels, or just one argument. In the
@@ -1794,7 +1795,7 @@ associated sound.
 <table width="50%" border=0><tr><td class="greenish" valign="middle"><h4><A NAME="savedstate">Save session</a></h4></td></tr></table>
 
 <p>At any time you can save the current
-state of Snd by calling <code>(save-state name)</code> where <i>name</i>
+state of Snd by calling <code>(save-state name)</code> where name
 is a file name.  You can restart the saved session by calling Snd
 with this file name and the "-l" switch: snd -l name.
 This file is in exactly the same format as the <a href="grfsnd.html#sndinitfile">initialization file</a>, and can be edited, renamed, or

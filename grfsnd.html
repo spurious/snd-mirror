@@ -5,8 +5,6 @@
 <title>Snd Customization and Extension</title>
 <style type="text/css">
 	EM.red {color:red; font-style:normal}
-        EM.typing {color:maroon; font-style: normal}
-        EM.listener {color:darkblue; font-style: normal}
         EM.tab {font-style: normal; font-size: small; font-family: fixed}
 	EM.emdef {font-weight: bold; font-style: normal; padding-right: 0.2cm}
 	H1 {text-align: center}
@@ -1085,11 +1083,11 @@ explicit "oscil" function (for example) isn't needed.
 </p>
 
 <pre class="indented">
-&gt;(define hi (make-oscil 440.0))
+&gt; (define hi (make-oscil 440.0))
 #&lt;unspecified&gt;
-&gt;(hi)
+&gt; (hi)
 0.0
-&gt;(oscil hi)
+&gt; (oscil hi)
 0.125050634145737
 </pre>
 
@@ -1099,17 +1097,17 @@ an oscil or a sawtooth-wave:
 </p>
 
 <pre class="indented">
-&gt;(define sine-or-sawtooth
+&gt; (define sine-or-sawtooth
    (lambda (sine)
      (let ((gen ((if sine make-oscil make-sawtooth-wave) 440.0)))
        (lambda (fm)
          (gen fm)))))
 #&lt;unspecified&gt;
-&gt;(define osc (sine-or-sawtooth #t))
+&gt; (define osc (sine-or-sawtooth #t))
 #&lt;unspecified&gt;
-&gt;(osc 0.0)
+&gt; (osc 0.0)
 0.0
-&gt;(osc 0.0)
+&gt; (osc 0.0)
 0.125050634145737
 </pre>
 

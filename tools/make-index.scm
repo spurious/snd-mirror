@@ -1236,7 +1236,7 @@
 									   (if (string-ci-list-position closer
 											  (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
 												"a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
-												"em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th" "div"))
+												"em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th" "tbody" "div"))
 									       (begin
 										 (if (not (string-ci=? (car commands) closer))
 										     (format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
@@ -1300,7 +1300,8 @@
 											  (not (string-ci=? "tr" (car commands))))
 										     (format #t "~A[~D]: td without tr?~%" file linectr))
 										 (if (and (string-ci=? opener "tr")
-											  (not (string-ci=? "table" (car commands))))
+											  (not (string-ci=? "table" (car commands)))
+											  (not (string-ci=? "table" (cadr commands))))
 										     (format #t "~A[~D]: tr without table?~%" file linectr))
 										 (if (and (string-ci=? opener "p")
 											  (string-ci=? "table" (car commands)))

@@ -240,43 +240,43 @@ sample type to C types (MUS_SAMPLE_TO_FLOAT, etc), and the reverse
 (MUS_FLOAT_TO_SAMPLE, etc).
 </p>
 
-<p><i>mus_sound_open_input</i> opens <i>arg</i> for reading.  Most standard
+<p>mus_sound_open_input opens arg for reading.  Most standard
 uncompressed formats are readable.  This function returns the associated
 file number, or -1 upon failure. </p>
 
-<p><i>mus_sound_close_input</i> closes an open sound file.  Its argument is
+<p>mus_sound_close_input closes an open sound file.  Its argument is
 the integer returned by mus_sound_open_input.</p>
 
-<p><i>mus_sound_open_output</i> opens (creates) the file <i>arg</i>, setting its sampling rate
-to be <i>srate</i>, number of channels to <i>chans</i>, data format
-to <i>data_format</i> (see sndlib.h for these types: MUS_BSHORT,
+<p>mus_sound_open_output opens (creates) the file arg, setting its sampling rate
+to be srate, number of channels to chans, data format
+to data_format (see sndlib.h for these types: MUS_BSHORT,
 means 16-bit 2's complement big endian fractions),
-header type to <i>header_type</i> (AIFF for example; the available
+header type to header_type (AIFF for example; the available
 writable header types are MUS_AIFC (or AIFF), MUS_RIFF ('wave'), MUS_RF64,
 MUS_NEXT, MUS_NIST, MUS_CAFF, and MUS_IRCAM), and comment (if any) to
-<i>comment</i>.  The header is not considered complete without
+comment.  The header is not considered complete without
 an indication of the data size, but since this is rarely known
 in advance, it is supplied when the sound file is closed.  mus_sound_open_output
 function returns the associated file number.</p>
 
-<p><i>mus_sound_close_output</i> first updates the file's header to 
-reflect the final data size <i>bytes_of_data</i>, then closes
-the file.  The argument <i>fd</i> is the integer returned by
+<p>mus_sound_close_output first updates the file's header to 
+reflect the final data size bytes_of_data, then closes
+the file.  The argument fd is the integer returned by
 mus_sound_open_output.</p>
 
-<p><i>mus_sound_read</i> reads data from the file indicated by <i>fd</i>,
-placing data in the array <i>obufs</i> as mus_sample_t values (floats normally).
-<i>chans</i> determines how many arrays of
+<p>mus_sound_read reads data from the file indicated by fd,
+placing data in the array obufs as mus_sample_t values (floats normally).
+chans determines how many arrays of
 samples are in obufs, which is filled by mus_sound_read from its
-index <i>beg</i> to <i>end</i> with zero padding if necessary.
+index beg to end with zero padding if necessary.
 </p>
 
-<p><i>mus_sound_write</i> writes samples to the file indicated by <i>fd</i>,
-starting for each of <i>chans</i> channels in <i>obufs</i> at
-<i>beg</i> and ending at <i>end</i>.</p>
+<p>mus_sound_write writes samples to the file indicated by fd,
+starting for each of chans channels in obufs at
+beg and ending at end.</p>
 
-<p><i>mus_sound_seek_frame</i> moves the read or write position for the
-file indicated by <i>fd</i> to the desired frame.
+<p>mus_sound_seek_frame moves the read or write position for the
+file indicated by fd to the desired frame.
 </p>
 
 
@@ -295,35 +295,35 @@ error occurs, they return -1 (MUS_ERROR). </p>
   int mus_audio_read(int line, char *buf, int bytes)
 </pre>
 
-<p><i>mus_audio_initialize</i> takes care of any necessary initialization.</p>
+<p>mus_audio_initialize takes care of any necessary initialization.</p>
 
 <p>
-<i>mus_audio_describe</i>
+mus_audio_describe
 returns a description of the audio hardware state as a string.</p>
 
-<p><i>mus_audio_open_input</i> opens an audio port to read sound data (i.e. a microphone, line in, etc).
-The input device is <i>dev</i> (see sndlib.h for details; when in doubt, use MUS_AUDIO_DEFAULT).
-The input sampling rate is <i>srate</i> or as close as we
-can get to it.  The number of input channels (if available) is <i>chans</i>.
-The input data format is <i>format</i> (when in doubt, use the macro MUS_AUDIO_COMPATIBLE_FORMAT).
-And the input buffer size (if settable at all) is <i>size</i> (bytes).  This
+<p>mus_audio_open_input opens an audio port to read sound data (i.e. a microphone, line in, etc).
+The input device is dev (see sndlib.h for details; when in doubt, use MUS_AUDIO_DEFAULT).
+The input sampling rate is srate or as close as we
+can get to it.  The number of input channels (if available) is chans.
+The input data format is format (when in doubt, use the macro MUS_AUDIO_COMPATIBLE_FORMAT).
+And the input buffer size (if settable at all) is size (bytes).  This
 function returns an integer to distinguish its port from others that might be
 in use.
 </p>
 
-<p><i>mus_audio_open_output</i> opens an audio port to write data (i.e. speakers, line out, etc).
-The output device is <i>dev</i> (see sndlib.h).  Its sampling rate is <i>srate</i>, number
-of channels <i>chans</i>, data format <i>format</i>, and buffer size <i>size</i>.  This
+<p>mus_audio_open_output opens an audio port to write data (i.e. speakers, line out, etc).
+The output device is dev (see sndlib.h).  Its sampling rate is srate, number
+of channels chans, data format format, and buffer size size.  This
 function returns the associated line number of the output port.</p>
 
-<p><i>mus_audio_close</i> closes the port (input or output) associated with <i>line</i>.</p>
+<p>mus_audio_close closes the port (input or output) associated with line.</p>
 
-<p><i>mus_audio_read</i> reads sound data from <i>line</i>.  The incoming <i>bytes</i> bytes of data are placed
-in <i>buf</i>.  If no error was returned from mus_audio_open_input, the data is in the format requested
+<p>mus_audio_read reads sound data from line.  The incoming bytes bytes of data are placed
+in buf.  If no error was returned from mus_audio_open_input, the data is in the format requested
 by that function with channels interleaved.</p>
 
-<p><i>mus_audio_write</i> writes <i>bytes</i> bytes of data in <i>buf</i> to the output
-port associated with <i>line</i>.  This data is assumed to be in the format
+<p>mus_audio_write writes bytes bytes of data in buf to the output
+port associated with line.  This data is assumed to be in the format
 requested by mus_audio_open_output with channels interleaved.</p>
 
 
@@ -898,8 +898,8 @@ constants and functions described above into Scheme.  To initialize sndlib, call
   mus-sound-data-location (filename)       location of first sample (bytes)
   mus-sound-chans (filename)               number of channels (samples are interleaved)
   mus-sound-srate (filename)               sampling rate
-  mus-sound-header-type (filename)         header type (e.g. <i>mus-aiff</i>)
-  mus-sound-data-format (filename)         data format (e.g. <i>mus-bshort</i>)
+  mus-sound-header-type (filename)         header type (e.g. mus-aiff)
+  mus-sound-data-format (filename)         data format (e.g. mus-bshort)
   mus-sound-length (filename)              true file length (bytes)
   mus-sound-type-specifier (filename)      original header type identifier
   mus-sound-maxamp(filename)               returns a list of max amps and locations thereof
@@ -922,29 +922,29 @@ constants and functions described above into Scheme.  To initialize sndlib, call
                                            reopen (without disturbing) filename, ready to be written
   mus-sound-close-input (fd)               close sound file
   mus-sound-close-output (fd bytes)        close sound file and update its length indication, if any
-  mus-sound-read (fd beg end chans sdata)  read data from sound file <i>fd</i> loading the data array from beg to end
-                                           <i>sdata</i> is a sound-data object that should be able to accommodate the read
-  mus-sound-write (fd beg end chans sdata) write data to sound file <i>fd</i>
-  mus-sound-seek-frame (fd frame)          move to <i>frame</i> in sound file <i>fd</i>
+  mus-sound-read (fd beg end chans sdata)  read data from sound file fd loading the data array from beg to end
+                                           sdata is a sound-data object that should be able to accommodate the read
+  mus-sound-write (fd beg end chans sdata) write data to sound file fd
+  mus-sound-seek-frame (fd frame)          move to frame in sound file fd
   mus-file-clipping (fd)                   whether output is clipped in file 'fd'
   mus-clipping ()                          global clipping choice
 
   mus-audio-open-output (device srate chans format bufsize)
-                                           open audio port <i>device</i> ready for output with the indicated attributes
+                                           open audio port device ready for output with the indicated attributes
   mus-audio-open-input (device srate chans format bufsize)
-                                           open audio port <i>device</i> ready for input with the indicated attributes
-  mus-audio-write (line sdata frames)      write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i>
-  mus-audio-read (line sdata frames)       read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>
-  mus-audio-close (line)                   close audio port <i>line</i>
+                                           open audio port device ready for input with the indicated attributes
+  mus-audio-write (line sdata frames)      write frames of data from sound-data object sdata to port line
+  mus-audio-read (line sdata frames)       read frames of data into sound-data object sdata from port line
+  mus-audio-close (line)                   close audio port line
 
   mus-oss-set-buffers (num size)           in Linux (OSS) sets the number and size of the OSS "fragments"
 
-  make-sound-data (chans, frames)      return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i>
-  sound-data-ref (obj chan frame)      return (as a float) the sample in channel <i>chan</i> at location <i>frame</i>
-  sound-data-set! (obj chan frame val) set <i>obj</i>'s sample at <i>frame</i> in <i>chan</i> to (the float) <i>val</i>
-  sound-data? (obj)                    #t if <i>obj</i> is of type sound-data
-  sound-data-length (obj)              length of each channel of data in <i>obj</i>
-  sound-data-chans (obj)               number of channels of data in <i>obj</i>
+  make-sound-data (chans, frames)      return a sound-data object with chans arrays, each of length frames
+  sound-data-ref (obj chan frame)      return (as a float) the sample in channel chan at location frame
+  sound-data-set! (obj chan frame val) set obj's sample at frame in chan to (the float) val
+  sound-data? (obj)                    #t if obj is of type sound-data
+  sound-data-length (obj)              length of each channel of data in obj
+  sound-data-chans (obj)               number of channels of data in obj
   sound-data-&gt;vct (sdobj chan vobj)    place sound-data channel data in vct 
   vct-&gt;sound-data (vobj sdobj chan)    place vct data in sound-data
 

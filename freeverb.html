@@ -60,7 +60,6 @@
 <div class="innerheader">Parameters</div>
 
 <p>All parameters have similarly named global bindings that you can use in a <em>let</em> statement to change the behavior of the reverberator (instead of passing parameters to the reverb instrument through <em>:reverb-data</em> in a <em>with-sound</em>). Prepend <em>freeverb-</em> to the parameter name to get the global binding name. </p> 
-</p>
 
 <pre class="indented"><em class=def id="start-time">start-time</em></pre>
 <p>Start time of the instrument in the output stream (this is normally supplied automatically by <em>with-sound</em>). <p>
@@ -79,7 +78,7 @@
 
 
 <pre class="indented"><em class=def id="global">global</em></pre>
-<p>Controls how the outputs of all reverbs (one per channel) is mixed into the output stream. Specifying "0" will connect each reverberator directly to each output channel, "1" will mix all reverberated channels equally into all output channels. Intermediate values will allow for an arbitrary balance between local and global reverberation. The overall gain of the mixing matrix is kept constant. See <font color="b01010">output-mixer</font> for a complete override to this parameter. </p>
+<p>Controls how the outputs of all reverbs (one per channel) is mixed into the output stream. Specifying "0" will connect each reverberator directly to each output channel, "1" will mix all reverberated channels equally into all output channels. Intermediate values will allow for an arbitrary balance between local and global reverberation. The overall gain of the mixing matrix is kept constant. See <b>output-mixer</b> for a complete override to this parameter. </p>
 
 
 <pre class="indented"><em class=def id="predelay">predelay</em></pre>

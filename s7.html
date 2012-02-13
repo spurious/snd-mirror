@@ -9,8 +9,6 @@
 <style type="text/css">
 	EM.red {color:red; font-style:normal}
         EM.error {color:chocolate; font-style:normal}
-        EM.typing {color:maroon; font-style: normal}
-        EM.listener {color:darkblue; font-style: normal}
 	EM.emdef {font-weight: bold; font-style: normal}
 	EM.green {color:green; font-style:normal}
 	EM.big {font-size: 20px;
@@ -188,7 +186,7 @@ indented and in a sort of brownish background.
 </ul>
 
 
-<!-- ******************************************************************************** -->
+
 <div class="header" id="multiprecision"><h4>multiprecision arithmetic</h4></div>
 
 <p>All numeric types, integers, ratios, reals, and complex numbers are supported.
@@ -282,7 +280,7 @@ but reals are limited by bignum-precision.  This means, for example, that
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="math"><h4>math functions</h4></div>
 
@@ -485,7 +483,7 @@ random-state-&gt;list, then to restart from that point, apply make-random-state 
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="define*"><h4>define*, lambda*</h4></div>
 
@@ -701,7 +699,7 @@ f
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="macros"><h4>macros</h4></div>
 
@@ -1253,7 +1251,7 @@ to quote the result (if the result does not already evaluate to itself):
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="constants"><h4>define-constant, constant?, symbol-access</h4></div>
 
@@ -1390,7 +1388,7 @@ with this mechanism, including property lists.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="maketype1"><h4>make-type</h4></div>
 
@@ -1743,7 +1741,7 @@ v
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="pws"><h4>procedure-with-setter</h4></div>
 
@@ -1963,7 +1961,7 @@ Even better: "dilambda":
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="generalizedset"><h4>applicable objects, generalized set!, generic functions</h4></div>
 
@@ -2172,7 +2170,7 @@ or even <code>(&gt; 1 0+i)</code>.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="multidimensionalvectors"><h4>multidimensional vectors</h4></div>
 
@@ -2425,7 +2423,7 @@ It wants you to use: <code>(let ((v #("abc" "def"))) ((v 0) 2))</code>.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="hashtables"><h4>hash-tables</h4></div>
 
@@ -2515,7 +2513,7 @@ of the table sizes, or the order in which the key/value pairs were added.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="environments"><h4>environments</h4></div>
 
@@ -2944,7 +2942,7 @@ b
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="multiplevalues"><h4>multiple-values</h4></div>
 
@@ -3227,7 +3225,7 @@ is 15, as anyone would expect.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="callwithexit1"><h4>call-with-exit and continuation?</h4></div>
 
@@ -3304,7 +3302,7 @@ This is similar to trying to read from a closed input port.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="format1"><h4>format, object-&gt;string</h4></div>
 
@@ -3491,7 +3489,7 @@ a modern GUI will leave formatting decisions to a text or table widget.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="hooks"><h4>hooks</h4></div>
 
@@ -3531,7 +3529,7 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="procedureinfo"><h4>procedure info</h4></div>
 
@@ -3726,7 +3724,7 @@ this in procedure-arity?
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="evalstring"><h4>eval</h4></div>
 
@@ -3810,7 +3808,7 @@ done!
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="IO"><h4>IO functions</h4></div>
 
@@ -3880,7 +3878,7 @@ integer-decode-float, and the various bitwise operators.
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="errors"><h4>error handling</h4></div>
 
@@ -4107,7 +4105,7 @@ traced function call (that is, global to the function, not the function's local 
 
 
 
-<!-- ******************************************************************************** -->
+
 
 <div class="header" id="miscellanea"><h4>miscellanea</h4></div>
 
@@ -5105,7 +5103,6 @@ waste a lot of time fixing this, I chose to flush multithreading.
 
 
 
-<!-- ******************************************************************************** -->
 <div class="header" id="FFIexamples"><h4>FFI examples</h4></div>
 
 <p>s7 exists only to serve as an extension of some other application, so

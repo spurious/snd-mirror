@@ -7,8 +7,6 @@
 	EM.red {color:red; font-style: normal}
         EM.error {color:chocolate; font-style: normal}
         EM.narg {color:sienna; font-style: normal}
-        EM.typing {color:maroon; font-style: normal}
-        EM.listener {color:darkblue; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 	EM.emdef {font-weight: bold; font-style: normal; padding-right: 0.2cm}
@@ -25,6 +23,7 @@
 	TD.beige {background-color: beige}
         TD.greenish {background-color: #eefdee}
 
+        PRE.indented {padding-left: 1.0cm}
 	DIV.center {text-align: center}
         BODY.body {background-color: #ffffff;    /* white */
 	           margin-left: 0.5cm; 
@@ -90,6 +89,7 @@
 		  padding-bottom: 0.2cm;
 		  text-align: center;
 		  }
+        #contents_table tbody tr:nth-child(odd) { background-color: #f2f4ff; }
 </style>
 </head>
 
@@ -221,9 +221,7 @@ The easiest way to get acquainted
 with this aspect of Snd is to open the listener
 (via the View:Open listener menu option), and type
 experiments in its window.  Its prompt is "&gt;". So,
-say we've opened the listener (my typing is 
-in <em class=typing>this color</em> and Snd's responses
-are in <em class=listener>this color</em>):
+say we've opened the listener.
 </p>
 
 <table border=0 cellspacing=10>
@@ -231,165 +229,165 @@ are in <em class=listener>this color</em>):
 
 <tr>
 <td bgcolor="#fbfbff"><pre>
-&gt;<em class=typing>(+ 1 2)</em>
-<em class=listener>3</em>
+&gt; (+ 1 2)
+3
 </pre></td><td width=60></td>
 
 <td bgcolor="#FdFdf2"><pre>
-&gt;<em class=typing>1+2</em>
-<em class=listener>3</em>
+&gt;1+2
+3
 </pre></td><td width=60></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>1 2 +</em>
-<em class=listener>3</em>
+&gt;1 2 +
+3
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 <tr>
 <td bgcolor="#fbfbff" onmouseout="UnTip()" onmouseover="Tip('this opens oboe.snd; the &quot;0&quot; returned is the new sound\'s \'index\'')"><pre>
-&gt;<em class=typing>(open-sound "oboe.snd")</em>
-<em class=listener>#&lt;sound 0&gt;</em>
+&gt; (open-sound "oboe.snd")
+#&lt;sound 0&gt;
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
-&gt;<em class=typing>open_sound("oboe.snd")</em>
-<em class=listener>0</em>
+&gt;open_sound("oboe.snd")
+0
 </pre></td><td></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>"oboe.snd" open-sound</em>
-<em class=listener>0</em>
+&gt;"oboe.snd" open-sound
+0
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 <tr>
 <td bgcolor="#fbfbff" onmouseout="UnTip()" onmouseover="Tip('#t = true, #f = false in Scheme and Forth')"><pre>
-&gt;<em class=typing>(auto-resize)</em>
-<em class=listener>#t</em>
+&gt; (auto-resize)
+#t
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
-&gt;<em class=typing>auto_resize</em>
-<em class=listener>true</em>
+&gt;auto_resize
+true
 </pre></td><td></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>auto-resize</em>
-<em class=listener>#t</em>
+&gt;auto-resize
+#t
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 <tr>
 <td bgcolor="#fbfbff"><pre>
-&gt;<em class=typing>(set! (auto-resize) #f)</em>
-<em class=listener>#f</em>
+&gt; (set! (auto-resize) #f)
+#f
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
-&gt;<em class=typing>set_auto_resize false</em>
-<em class=listener>false</em>
+&gt;set_auto_resize false
+false
 </pre></td><td></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>#f set-auto-resize</em>
-<em class=listener>#f</em>
+&gt;#f set-auto-resize
+#f
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 <tr>
 <td bgcolor="#fbfbff"><pre>
-&gt;<em class=typing>(set! (x-bounds) '(0.0 1.0))</em>
-<em class=listener>(0.0 1.0)</em>
+&gt; (set! (x-bounds) '(0.0 1.0))
+(0.0 1.0)
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2" onmouseout="UnTip()" onmouseover="Tip('Ruby runs array elements together in printout: &quot;0.01.0&quot; should be &quot;0.0 1.0&quot;')"><pre>
-&gt;<em class=typing>set_x_bounds([0.0, 1.0])</em>
-<em class=listener>0.01.0</em>
+&gt;set_x_bounds([0.0, 1.0])
+0.01.0
 </pre></td><td></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>'( 0.0 1.0 ) set-x-bounds</em>
-<em class=listener>'( 0.0 1.0 )</em>
+&gt;'( 0.0 1.0 ) set-x-bounds
+'( 0.0 1.0 )
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 <tr>
 <td bgcolor="#fbfbff" onmouseout="UnTip()" onmouseover="Tip('this is Scheme\'s way of saying the previous evaluation returned no newsworthy result.')"><pre>
-&gt;<em class=typing>(load "bird.scm")</em>
-<em class=listener>make-birds</em>
+&gt; (load "bird.scm")
+make-birds
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
-&gt;<em class=typing>load "bird.rb"</em>
-<em class=listener>true</em>
+&gt;load "bird.rb"
+true
 </pre></td><td></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>"bird.fs" file-eval</em>
-<em class=listener>0</em>
+&gt;"bird.fs" file-eval
+0
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 <tr>
 <td bgcolor="#fbfbff"><pre>
-&gt;<em class=typing>(map-channel (lambda (y) (* y 2)))</em>
-<em class=listener>0</em>
+&gt; (map-channel (lambda (y) (* y 2)))
+0
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
-&gt;<em class=typing>map_channel(lambda do |y| y * 2 end)</em>
-<em class=listener>-0.0015869140625</em>
+&gt;map_channel(lambda do |y| y * 2 end)
+-0.0015869140625
 </pre></td><td></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>lambda: &lt;{ y }&gt; y 2.0 f* ; map-channel</em>
-<em class=listener>-0.00158691</em>
+&gt;lambda: &lt;{ y }&gt; y 2.0 f* ; map-channel
+-0.00158691
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 <tr>
 <td bgcolor="#fbfbff"><pre>
-&gt;<em class=typing>(define (plus a b) (+ a b))</em>
-<em class=listener>plus</em>
+&gt; (define (plus a b) (+ a b))
+plus
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
-&gt;<em class=typing>def plus(a, b) a+b end</em>
+&gt;def plus(a, b) a+b end
 
 </pre></td><td></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>: plus ( a b -- sum ) { a b } a b + ;</em>
-<em class=listener>nil</em>
+&gt;: plus ( a b -- sum ) { a b } a b + ;
+nil
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 <tr>
 <td bgcolor="#fbfbff"><pre>
-&gt;<em class=typing>(set! (basic-color) (make-color 1 0 0))</em>
-<em class=listener>(Pixel 16711680)</em>
+&gt; (set! (basic-color) (make-color 1 0 0))
+(Pixel 16711680)
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
-&gt;<em class=typing>set_basic_color make_color(1, 0, 0)</em>
-<em class=listener>[:Pixel, 16711680]</em>
+&gt;set_basic_color make_color(1, 0, 0)
+[:Pixel, 16711680]
 </pre></td><td></td>
 
 <td class="greenish"><pre>
-&gt;<em class=typing>1 0 0 make-color set-basic-color</em>
-<em class=listener>#&lt;XmRaw: Pixel 0x9d3b430&gt;</em>
+&gt;1 0 0 make-color set-basic-color
+#&lt;XmRaw: Pixel 0x9d3b430&gt;
 </pre></td>
 </tr>
-<!-- **************** -->
+
 
 </table>
 
@@ -437,192 +435,192 @@ Extensions to Snd can be found in:
 
 
 <table border=8 cellpadding=6 hspace=20><tr><td>
-<table border=0 cellspacing=0 cellpadding=2>
+<table id="contents_table">
 <tr><th colspan=2 bgcolor="beige">Contents</th></tr>
-
-<tr><td class="bluish"><a href="sndscm.html#analogfilterdoc">analog-filter</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(analog_filter_doc_tip)">standard IIR filters</td></tr>
+<tbody>
+<tr><td><a href="sndscm.html#analogfilterdoc">analog-filter</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(analog_filter_doc_tip)">standard IIR filters</td></tr>
 
 <tr><td><a href="sndscm.html#animalsdoc">animals</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(animals_doc_tip)">a bunch of animals</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#autosavedoc">autosave</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(autosave_doc_tip)">auto-save (edit backup) support</td></tr>
+<tr><td><a href="sndscm.html#autosavedoc">autosave</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(autosave_doc_tip)">auto-save (edit backup) support</td></tr>
 
 <tr><td><a href="sndscm.html#bessdoc">bess</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(bess_doc_tip)">FM demo</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#binaryiodoc">binary-io</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(binary_io_doc_tip)">binary files</td></tr>
+<tr><td><a href="sndscm.html#binaryiodoc">binary-io</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(binary_io_doc_tip)">binary files</td></tr>
 
 <tr><td><a href="sndscm.html#birddoc">bird</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(bird_doc_tip)">North-American birds</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#cleandoc">clean</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(clean_doc_tip)">noise reduction</td></tr>
+<tr><td><a href="sndscm.html#cleandoc">clean</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(clean_doc_tip)">noise reduction</td></tr>
 
 <tr><td><a href="sndscm.html#clminsdoc">clm-ins, clm23</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(clm_ins_doc_tip)">various CLM instruments</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#dlocsigdoc">dlocsig</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(dlocsig_doc_tip)">moving sounds (Michael Scholz)</td></tr>
+<tr><td><a href="sndscm.html#dlocsigdoc">dlocsig</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(dlocsig_doc_tip)">moving sounds (Michael Scholz)</td></tr>
 
 <tr><td><a href="sndscm.html#drawdoc">draw</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(draw_doc_tip)">graphics additions</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#dspdoc">dsp</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(dsp_doc_tip)">various DSP-related procedures</td></tr>
+<tr><td><a href="sndscm.html#dspdoc">dsp</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(dsp_doc_tip)">various DSP-related procedures</td></tr>
 
 <tr><td><a href="sndscm.html#envdoc">env</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(env_doc_tip)">envelope functions</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#enveddoc">enved</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(enved_doc_tip)">envelope editor</td></tr>
+<tr><td><a href="sndscm.html#enveddoc">enved</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(enved_doc_tip)">envelope editor</td></tr>
 
 <tr><td><a href="sndscm.html#exampdoc">examp</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(examp_doc_tip)">many examples</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#extensionsdoc">extensions</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(extensions_doc_tip)">various generally useful Snd extensions</td></tr>
+<tr><td><a href="sndscm.html#extensionsdoc">extensions</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(extensions_doc_tip)">various generally useful Snd extensions</td></tr>
 
 <tr><td><a href="sndscm.html#fadedoc">fade</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(fade_doc_tip)">frequency-domain cross-fades</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#framedoc">frame</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(frame_doc_tip)">frames, vcts, sound-data objects</td></tr>
+<tr><td><a href="sndscm.html#framedoc">frame</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(frame_doc_tip)">frames, vcts, sound-data objects</td></tr>
 
 <tr><td><a href="sndscm.html#freeverbdoc">freeverb</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(freeverb_doc_tip)">a reverb</td></tr>
 
-<tr><td class="bluish"><a href="sndclm.html#othergenerators">generators</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(generators_doc_tip)">a bunch of generators</td></tr>
+<tr><td><a href="sndclm.html#othergenerators">generators</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(generators_doc_tip)">a bunch of generators</td></tr>
 
 <tr><td><a href="sndscm.html#granidoc">grani</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(grani_doc_tip)">CLM's grani (Fernando Lopez-Lezcano and Mike Scholz)</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#heartdoc">heart</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(heart_doc_tip)">use Snd with non-sound (arbitrary range) data</td></tr>
+<tr><td><a href="sndscm.html#heartdoc">heart</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(heart_doc_tip)">use Snd with non-sound (arbitrary range) data</td></tr>
 
 <tr><td><a href="sndscm.html#hooksdoc">hooks</a></td>
     <td  onmouseout="UnTip()" onmouseover="Tip(hooks_doc_tip)">functions related to hooks</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#indexdoc">index</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(index_doc_tip)">snd-help extension</td></tr>
+<tr><td><a href="sndscm.html#indexdoc">index</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(index_doc_tip)">snd-help extension</td></tr>
 
 <tr><td><a href="sndscm.html#dotemacs">inf-snd.el, DotEmacs</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(inf_snd_doc_tip)">Emacs subjob support (Michael Scholz, Fernando Lopez-Lezcano)</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#jcrevdoc">jcrev</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(jcrev_doc_tip)">John Chowning's ancient reverb</td></tr>
+<tr><td><a href="sndscm.html#jcrevdoc">jcrev</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(jcrev_doc_tip)">John Chowning's ancient reverb</td></tr>
 
 <tr><td><a href="sndscm.html#lintdoc">lint</a></td>
     <td>a lint program for scheme</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#maracadoc">maraca</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(maraca_doc_tip)">Perry Cook's maraca physical model</td></tr>
+<tr><td><a href="sndscm.html#maracadoc">maraca</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(maraca_doc_tip)">Perry Cook's maraca physical model</td></tr>
 
 <tr><td><a href="sndscm.html#marksdoc">marks</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(marks_doc_tip)">functions related to marks</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#maxfdoc">maxf</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(maxf_doc_tip)">Max Mathews resonator</td></tr>
+<tr><td><a href="sndscm.html#maxfdoc">maxf</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(maxf_doc_tip)">Max Mathews resonator</td></tr>
 
 <tr><td><a href="sndscm.html#menusdoc">menus</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(menus_doc_tip)">additional menus</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#mixdoc">mix</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(mix_doc_tip)">functions related to mixes</td></tr>
+<tr><td><a href="sndscm.html#mixdoc">mix</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(mix_doc_tip)">functions related to mixes</td></tr>
 
 <tr><td><a href="sndscm.html#mixerdoc">mixer</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(mixer_doc_tip)">functions related to linear algebra</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#moogdoc">moog</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(moog_doc_tip)">Moog filter</td></tr>
+<tr><td><a href="sndscm.html#moogdoc">moog</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(moog_doc_tip)">Moog filter</td></tr>
 
 <tr><td><a href="sndscm.html#musglyphs">musglyphs</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(musglyphs_doc_tip)">Music notation symbols (from CMN)</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#nbdoc">nb</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(nb_doc_tip)">Popup File info etc</td></tr>
+<tr><td><a href="sndscm.html#nbdoc">nb</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(nb_doc_tip)">Popup File info etc</td></tr>
 
 <tr><td><a href="sndscm.html#noisedoc">noise</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(noise_doc_tip)">noise maker</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#numericsdoc">numerics</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(numerics_doc_tip)">various numerical functions</td></tr>
+<tr><td><a href="sndscm.html#numericsdoc">numerics</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(numerics_doc_tip)">various numerical functions</td></tr>
 
 <tr><td><a href="sndscm.html#oscopedoc">oscope</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(oscope_doc_tip)">an oscilloscope/spectrum analysis dialog</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#peakphasesdoc">peak-phases</a></td>
-    <td class="bluish">phases for the unpulse-train</td></tr>
+<tr><td><a href="sndscm.html#peakphasesdoc">peak-phases</a></td>
+    <td>phases for the unpulse-train</td></tr>
 
 <tr><td><a href="sndscm.html#pianodoc">piano</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(piano_doc_tip)">piano physical model</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#playdoc">play</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(play_doc_tip)">play-related functions</td></tr>
+<tr><td><a href="sndscm.html#playdoc">play</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(play_doc_tip)">play-related functions</td></tr>
 
 <tr><td><a href="sndscm.html#polydoc">poly</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(poly_doc_tip)">polynomial-related stuff</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#prc95doc">prc95</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(prc95_doc_tip)">Perry Cook's physical model examples</td></tr>
+<tr><td><a href="sndscm.html#prc95doc">prc95</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(prc95_doc_tip)">Perry Cook's physical model examples</td></tr>
 
 <tr><td><a href="sndscm.html#pvocdoc">pvoc</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(pvoc_doc_tip)">phase-vocoder</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#rgbdoc">rgb</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(rgb_doc_tip)">color names</td></tr>
+<tr><td><a href="sndscm.html#rgbdoc">rgb</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(rgb_doc_tip)">color names</td></tr>
 
 <tr><td><a href="sndscm.html#rtiodoc">rtio</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(rtio_doc_tip)">real-time stuff</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#rubberdoc">rubber</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(rubber_doc_tip)">rubber-sound</td></tr>
+<tr><td><a href="sndscm.html#rubberdoc">rubber</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(rubber_doc_tip)">rubber-sound</td></tr>
 
 <tr><td><a href="sndscm.html#selectiondoc">selection</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(selection_doc_tip)">functions acting on the current selection</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#singerdoc">singer</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(singer_doc_tip)">Perry Cook's vocal-tract physical model</td></tr>
+<tr><td><a href="sndscm.html#singerdoc">singer</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(singer_doc_tip)">Perry Cook's vocal-tract physical model</td></tr>
 
 <tr><td><a href="sndscm.html#sndolddoc">snd11|12.scm</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(sndold_doc_tip)">Backwards compatibility</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#snddiffdoc">snddiff</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(snddiff_doc_tip)">sound difference detection</td></tr>
+<tr><td><a href="sndscm.html#snddiffdoc">snddiff</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(snddiff_doc_tip)">sound difference detection</td></tr>
 
 <tr><td><a href="sndscm.html#sndgldoc">snd-gl</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(snd_gl_doc_tip)">OpenGL examples (gl.c)</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#sndmotifdoc">snd-motif, snd-gtk, snd-xm</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(snd_motif_doc_tip)">Motif/Gtk module (xm.c, xg.c)</td></tr>
+<tr><td><a href="sndscm.html#sndmotifdoc">snd-motif, snd-gtk, snd-xm</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(snd_motif_doc_tip)">Motif/Gtk module (xm.c, xg.c)</td></tr>
 
 <tr><td><a href="sndscm.html#sndtestdoc">snd-test</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(snd_test_doc_tip)">Snd regression tests</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#sndwarpdoc">sndwarp</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(sndwarp_doc_tip)">Bret Battey's sndwarp instrument</td></tr>
+<tr><td><a href="sndscm.html#sndwarpdoc">sndwarp</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(sndwarp_doc_tip)">Bret Battey's sndwarp instrument</td></tr>
 
 <tr><td><a href="sndscm.html#spectrdoc">spectr</a></td>
     <td>instrument steady state spectra</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#stochasticdoc">stochastic</a></td>
-    <td class="bluish">Bill Sack's dynamic stochastic synthesis</td></tr>
+<tr><td><a href="sndscm.html#stochasticdoc">stochastic</a></td>
+    <td>Bill Sack's dynamic stochastic synthesis</td></tr>
 
 <tr><td><a href="sndscm.html#straddoc">strad</a></td>
     <td>string physical model (from CLM)</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#vdoc">v</a></td>
-    <td class="bluish">fm-violin</td></tr>
+<tr><td><a href="sndscm.html#vdoc">v</a></td>
+    <td>fm-violin</td></tr>
 
 <tr><td><a href="sndscm.html#wsdoc">ws</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(ws_doc_tip)">with-sound</td></tr>
 
-<tr><td class="bluish"><a href="sndscm.html#zipdoc">zip</a></td>
-    <td class="bluish" onmouseout="UnTip()" onmouseover="Tip(zip_doc_tip)">the zipper (the anti-cross-fader)</td></tr>
-
+<tr><td><a href="sndscm.html#zipdoc">zip</a></td>
+    <td onmouseout="UnTip()" onmouseover="Tip(zip_doc_tip)">the zipper (the anti-cross-fader)</td></tr>
+</tbody>
 </table>
 </td></tr></table>
 
@@ -696,7 +694,7 @@ function. </p>
 
 
 
-<!-- ******************************** GLOBAL VARIABLE TABLE ******************************** -->
+<!--  GLOBAL VARIABLE TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6>
 
@@ -1117,10 +1115,10 @@ This is the size of the triangular arrow that handles click-to-play duties for t
 For objects such as vcts, print-length sets the number of elements printed.
 In s7, this also sets *vector-print-length*.
 <pre>
-    <em class=listener>&gt;</em><em class=typing>(set! (print-length) 3)</em>
-    <em class=listener>3</em>
-    <em class=listener>&gt;</em><em class=typing>(make-vct 10 .1)</em>
-    <em class=listener>#&lt;vct[len=10]: 0.100 0.100 0.100 ...&gt;</em>
+    &gt; (set! (print-length) 3)
+    3
+    &gt; (make-vct 10 .1)
+    #&lt;vct[len=10]: 0.100 0.100 0.100 ...&gt;
 </pre>
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -1459,7 +1457,7 @@ See also <a href="snd.html#zoomoption">Zoom options</a>.
 
 
 
-<!-- ******************************** GENERIC FUNCTIONS ******************************** -->
+<!--  GENERIC FUNCTIONS  -->
 
 <div class="innerheader" id="sndgenericfuncs">Generic functions</div>
 
@@ -1602,7 +1600,7 @@ and <a href="#sndsounds">sounds</a> (as objects or as integers).
 
 
 
-<!-- ******************************** HOOKS ******************************** -->
+<!--  HOOKS  -->
 <!-- INDEX sndhooks:Hooks -->
 
 <div class="innerheader" id="sndhooks">Hooks</div>
@@ -1734,7 +1732,7 @@ hooks.scm has snd-hooks and reset-all-hooks, as well as other
 useful hook-related functions.  
 </p>
 
-<!-- ******************************** HOOK TABLE ******************************** -->
+<!--  HOOK TABLE  -->
 
 <p>
 In the following list of hooks, the arguments after the hook name refer to the arguments to the functions invoked by
@@ -2762,7 +2760,7 @@ This hook is called each time some Snd-generated response ('text') is about to b
 If the function returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt.
 The prompt is important!  Snd uses it to find the current form to evaluate, so if your print hook function
 forgets to include it, you can end up with a comatose listener.  To get out of this state, include
-the prompt by hand (i.e. type in the shell that Snd started in, "&gt;(hook-clear print-hook)").
+the prompt by hand (i.e. type in the shell that Snd started in, "&gt; (hook-clear print-hook)").
 This is intended to make it possible to
 distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, but both should be handled
 in some other way &mdash; I should rewrite this part of Snd.
@@ -3122,7 +3120,7 @@ of these below.
 
 
 <!-- INDEX samplers:samplers -->
-<!-- ******************************** SAMPLERS ******************************** -->
+<!--  SAMPLERS  -->
 
 <div class="innerheader" id="samplers">Samplers</div>
 
@@ -3165,7 +3163,7 @@ implemented in frame.scm.
 </p>
 
 
-<!-- ******************************** SAMPLER TABLE ******************************** -->
+<!--  SAMPLER TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -3213,24 +3211,24 @@ starting at sample 'start' with initial read direction 'dir'
 (1=forward, -1=backward).  'edpos' is the edit history position to read;
 it defaults to the current edit. 
 <pre>
-    :<em class=typing>(open-sound "oboe.snd")</em>
-    <em class=listener>#&lt;sound 0&gt;</em>
-    :<em class=typing>(define reader (make-sampler 1000))</em>
-    <em class=listener>reader</em>
-    :<em class=typing>reader</em>
-    <em class=listener>#&lt;sampler: oboe.snd[0: 0] from 1000, at 1000, forward&gt;</em>
-    :<em class=typing>(read-sample reader)</em>
-    <em class=listener>0.0328369140625</em>
-    :<em class=typing>(sample 1000)</em>
-    <em class=listener>0.0328369140625</em>
-    :<em class=typing>(next-sample reader)</em>
-    <em class=listener>0.0347900390625</em>
-    :<em class=typing>(sample 1001)</em>
-    <em class=listener>0.0347900390625</em>
-    :<em class=typing>(sampler-home reader)</em>
-    <em class=listener>(#&lt;sound 0&gt; 0)</em>
-    :<em class=typing>(sampler-position reader)</em>
-    <em class=listener>1002</em>
+    :(open-sound "oboe.snd")
+    #&lt;sound 0&gt;
+    :(define reader (make-sampler 1000))
+    reader
+    :reader
+    #&lt;sampler: oboe.snd[0: 0] from 1000, at 1000, forward&gt;
+    :(read-sample reader)
+    0.0328369140625
+    :(sample 1000)
+    0.0328369140625
+    :(next-sample reader)
+    0.0347900390625
+    :(sample 1001)
+    0.0347900390625
+    :(sampler-home reader)
+    (#&lt;sound 0&gt; 0)
+    :(sampler-position reader)
+    1002
 </pre>
 One use of 'edpos' is to get the difference 
 between two edits:
@@ -3448,7 +3446,7 @@ Forth: variable hi
 
 <p>Now our vct 'hi' has 100 -3.14's. </p>
 
-<!-- ******************************** VCT TABLE ******************************** -->
+<!--  VCT TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -3457,10 +3455,10 @@ Forth: variable hi
 </td></tr><tr><td width=30></td><td>
 return a new vct with elements of list 'lst' (equivalent to the <a href="#vct">vct</a> function).
 <pre>
-    :<em class=typing>(list-&gt;vct (list 0.1 0.2 0.3))</em>
-    <em class=listener>#&lt;vct[len=3]: 0.100 0.200 0.300&gt;</em>
-    :<em class=typing>(vct 0.1 0.2 0.3)</em>
-    <em class=listener>#&lt;vct[len=3]: 0.100 0.200 0.300&gt;</em>
+    :(list-&gt;vct (list 0.1 0.2 0.3))
+    #&lt;vct[len=3]: 0.100 0.200 0.300&gt;
+    :(vct 0.1 0.2 0.3)
+    #&lt;vct[len=3]: 0.100 0.200 0.300&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3470,8 +3468,8 @@ return a new vct with elements of list 'lst' (equivalent to the <a href="#vct">v
 </td></tr><tr><td></td><td>
 make-vct creates a vct of size 'len'.
 <pre>
-    :<em class=typing>(make-vct 3 0.1)</em>
-    <em class=listener>#&lt;vct[len=3]: 0.100 0.100 0.100&gt;</em>
+    :(make-vct 3 0.1)
+    #&lt;vct[len=3]: 0.100 0.100 0.100&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3503,12 +3501,12 @@ vct? returns #t if 'v' is a vct.
 vct-add! performs element-wise add: <code>v1[i + off] += v2[i]</code>, returning 'v1'.  To protect the
 original vct, use vct-copy: <code>(vct-add! (vct-vopy v1) v2)</code>.
 <pre>
-:<em class=typing>(define v1 (vct .1 .2 .3))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-:<em class=typing>(vct-add! v1 (vct .3 .2 .1))</em>
-<em class=listener>#&lt;vct[len=3]: 0.400 0.400 0.400&gt;</em>
-:<em class=typing>v1</em>
-<em class=listener>#&lt;vct[len=3]: 0.400 0.400 0.400&gt;</em>
+:(define v1 (vct .1 .2 .3))
+#&lt;unspecified&gt;
+:(vct-add! v1 (vct .3 .2 .1))
+#&lt;vct[len=3]: 0.400 0.400 0.400&gt;
+:v1
+#&lt;vct[len=3]: 0.400 0.400 0.400&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3569,10 +3567,10 @@ is the same as <code>(<a class=quiet href="#vctfill" onmouseout="UnTip()" onmous
 vct-move moves a block of values within a vct:  <code>v[new++] = v[old++]</code>, or
 if 'backwards' is #t: <code>v[new--] = v[old--]</code>.  It returns 'v'.
 <pre>
-:<em class=typing>(define v1 (vct 1 2 3 4 5 6 7 8 9 10))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-:<em class=typing>(vct-move! v1 0 5)</em>
-<em class=listener>#&lt;vct[len=10]: 6.000 7.000 8.000 9.000 10.000 6.000 7.000 8.000 9.000 10.000&gt;</em>
+:(define v1 (vct 1 2 3 4 5 6 7 8 9 10))
+#&lt;unspecified&gt;
+:(vct-move! v1 0 5)
+#&lt;vct[len=10]: 6.000 7.000 8.000 9.000 10.000 6.000 7.000 8.000 9.000 10.000&gt;
 </pre>
 
 We can use vct-move! to maintain a sliding window on a sound:
@@ -3615,8 +3613,8 @@ vct-peak returns the maximum absolute value of the elements of 'v'.
 </td></tr><tr><td></td><td>
 vct-ref returns the element 'pos' in 'v': <code>v[pos]</code>.
 <pre>
-:<em class=typing>(vct-ref (vct .1 .2 .3) 1)</em>
-<em class=listener>0.200000002980232</em>
+:(vct-ref (vct .1 .2 .3) 1)
+0.200000002980232
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3657,10 +3655,10 @@ vct-subtract! performs an element-wise subtract: <code>v1[i] -= v2[i]</code>.  I
 vct-subseq returns a new vct (or 'nv' if given) with the elements of 'v' between 'start' and 'end' inclusive.  'end' defaults
 to the end of 'v'.
 <pre>
-:<em class=typing>(define v1 (vct 1 2 3 4 5 6 7 8 9 10))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-:<em class=typing>(vct-subseq v1 3 6)</em>
-<em class=listener>#&lt;vct[len=4]: 4.000 5.000 6.000 7.000&gt;</em>
+:(define v1 (vct 1 2 3 4 5 6 7 8 9 10))
+#&lt;unspecified&gt;
+:(vct-subseq v1 3 6)
+#&lt;vct[len=4]: 4.000 5.000 6.000 7.000&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3707,16 +3705,16 @@ To add such a note to whatever is already present, use either <a href="#mixvct">
 vct-&gt;list returns a list with elements of 'v'.
 <pre>
     ;; Scheme:
-    :<em class=typing>(vct-&gt;list (list-&gt;vct (list 0.1 0.2 0.3)))</em>
-    <em class=listener>(0.100000001490116 0.200000002980232 0.300000011920929)</em> ; (sigh...)
+    :(vct-&gt;list (list-&gt;vct (list 0.1 0.2 0.3)))
+    (0.100000001490116 0.200000002980232 0.300000011920929) ; (sigh...)
 
     ;; Ruby:
-    :<em class=typing>vct2list(list2vct([0.1, 0.2, 0.3]))</em>
-    <em class=listener>[0.100000001490116, 0.200000002980232, 0.300000011920929]</em>
+    :vct2list(list2vct([0.1, 0.2, 0.3]))
+    [0.100000001490116, 0.200000002980232, 0.300000011920929]
 
     ;; Forth:
-    <em class=listener>snd&gt;</em> <em class=typing>'( 0.1 0.2 0.3 ) list-&gt;vct vct-&gt;list</em>
-    <em class=listener>'( 0.1 0.2 0.3 )</em>
+    snd&gt; '( 0.1 0.2 0.3 ) list-&gt;vct vct-&gt;list
+    '( 0.1 0.2 0.3 )
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3735,10 +3733,10 @@ vct-&gt;sound-data places the data in vct 'v' in the sound-data object 'sd', ret
 vct-&gt;string returns a Scheme-readable string describing 'v'.  The standard way of displaying a vct
 uses "#&lt;vct...&gt;" which is not useful if you want to read the string later as a piece of Scheme code.
 <pre>
-    :<em class=typing>(define v1 (make-vct 3 0.1))</em>
-    prints v1 as <em class=listener>#&lt;vct[len=3]: 0.100 0.100 0.100&gt;</em>
-    :<em class=typing>(vct-&gt;string v1)</em>
-    <em class=listener>"(vct 0.100 0.100 0.100)"</em>
+    :(define v1 (make-vct 3 0.1))
+    prints v1 as #&lt;vct[len=3]: 0.100 0.100 0.100&gt;
+    :(vct-&gt;string v1)
+    "(vct 0.100 0.100 0.100)"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3815,16 +3813,16 @@ In Ruby, vcts partake in the Enumerable and Comparable classes, and have a varie
 additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documentation for a complete list.
 </p>
 <pre>
-    :<em class=typing>v1</em>
-    <em class=listener>#&lt;vct[len=10]: 0.100 0.100 0.100 3.000 0.100 0.100 0.100 0.100 0.100 0.100&gt;</em>
-    :<em class=typing>v1.find_all {|x| x &gt; 1.0 }</em>
-    <em class=listener>[3.0, 4.0]</em>
-    :<em class=typing>v1.max</em>
-    <em class=listener>4.0</em>
-    :<em class=typing>v2 = make_vct(10, 0.1)</em>
-    <em class=listener>#&lt;vct[len=10]: 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100&gt;</em>
-    :<em class=typing>v2 &lt; v1</em>
-    <em class=listener>true</em>
+    :v1
+    #&lt;vct[len=10]: 0.100 0.100 0.100 3.000 0.100 0.100 0.100 0.100 0.100 0.100&gt;
+    :v1.find_all {|x| x &gt; 1.0 }
+    [3.0, 4.0]
+    :v1.max
+    4.0
+    :v2 = make_vct(10, 0.1)
+    #&lt;vct[len=10]: 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100&gt;
+    :v2 &lt; v1
+    true
 </pre>
 
 
@@ -3842,7 +3840,7 @@ As with vcts, sound-data objects partake in the Enumerable and Comparable
 classes in Ruby.
 </p>
 
-<!-- ******************************** SOUND-DATA TABLE ******************************** -->
+<!--  SOUND-DATA TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -3851,10 +3849,10 @@ classes in Ruby.
 </td></tr><tr><td width=30><br></td><td>
 make-sound-data returns a new sound-data object with 'chans' arrays, each with 'frames' elements.
 <pre>
-    :<em class=typing>(make-sound-data 2 5)</em>
-    <em class=listener>#&lt;sound-data[chans=2, length=5]:
+    :(make-sound-data 2 5)
+    #&lt;sound-data[chans=2, length=5]:
         (0.000 0.000 0.000 0.000 0.000)
-        (0.000 0.000 0.000 0.000 0.000)&gt;</em>
+        (0.000 0.000 0.000 0.000 0.000)&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3865,20 +3863,20 @@ make-sound-data returns a new sound-data object with 'chans' arrays, each with '
 </td></tr><tr><td><br></td><td>
 sound-data-add! adds the contents of sd2 into sd1 and returns sd1.
 <pre>
-    :<em class=typing>(define sd1 (make-sound-data 2 5))</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
-    :<em class=typing>(do ((chn 0 (+ 1 chn))) ((= chn 2)) 
+    :(define sd1 (make-sound-data 2 5))
+    #&lt;unspecified&gt;
+    :(do ((chn 0 (+ 1 chn))) ((= chn 2)) 
        (do ((i 0 (+ 1 i))) ((= i 5)) 
-         (sound-data-set! sd1 chn i (+ i (* 5 chn)))))</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
-    :<em class=typing>sd1</em>
-    <em class=listener>#&lt;sound-data[chans=2, length=5]:
+         (sound-data-set! sd1 chn i (+ i (* 5 chn)))))
+    #&lt;unspecified&gt;
+    :sd1
+    #&lt;sound-data[chans=2, length=5]:
         (0.000 1.000 2.000 3.000 4.000)
-        (5.000 6.000 7.000 8.000 9.000)&gt;</em>
-    :<em class=typing>(sound-data-add! (sound-data-fill! (make-sound-data 2 5) .25) sd1)</em>
-    <em class=listener>#&lt;sound-data[chans=2, length=5]:
+        (5.000 6.000 7.000 8.000 9.000)&gt;
+    :(sound-data-add! (sound-data-fill! (make-sound-data 2 5) .25) sd1)
+    #&lt;sound-data[chans=2, length=5]:
         (0.250 1.250 2.250 3.250 4.250)
-        (5.250 6.250 7.250 8.250 9.250)&gt;</em>
+        (5.250 6.250 7.250 8.250 9.250)&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3917,14 +3915,14 @@ sound-data-length returns the length (in samples) of each channel in the sound-d
 </td></tr><tr><td></td><td>
 sound-data-maxamp returns a list of maxamps (one for each channel) of the data in sd.
 <pre>
-    :<em class=typing>sd1</em>
-    <em class=listener>#&lt;sound-data[chans=2, length=5]:
+    :sd1
+    #&lt;sound-data[chans=2, length=5]:
         (0.000 1.000 2.000 3.000 4.000)
-        (5.000 6.000 7.000 8.000 9.000)&gt;</em>
-    :<em class=typing>(sound-data-maxamp sd1)</em>
-    <em class=listener>(4.0 9.0)</em>
-    :<em class=typing>(sound-data-peak sd1)</em>
-    <em class=listener>9.0</em>
+        (5.000 6.000 7.000 8.000 9.000)&gt;
+    :(sound-data-maxamp sd1)
+    (4.0 9.0)
+    :(sound-data-peak sd1)
+    9.0
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3958,8 +3956,8 @@ sound-data-peak returns the overall maximum element in sd.
 </td></tr><tr><td></td><td>
 sound-data-ref returns (as a float) the sample in channel chan at location frame.  In s7 you can omit the "sound-data-ref":
 <pre>
-    <em class=listener>&gt;</em><em class=typing>(let ((sd (make-sound-data 1 1))) (sd 0 0))</em>
-    <em class=listener>0.0</em>
+    &gt; (let ((sd (make-sound-data 1 1))) (sd 0 0))
+    0.0
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3970,14 +3968,14 @@ sound-data-ref returns (as a float) the sample in channel chan at location frame
 </td></tr><tr><td></td><td>
 sound-data-reverse! reverses the elements of each channel of sd and returns sd.
 <pre>
-    :<em class=typing>sd1</em>
-    <em class=listener>#&lt;sound-data[chans=2, length=5]:
+    :sd1
+    #&lt;sound-data[chans=2, length=5]:
         (0.000 1.000 2.000 3.000 4.000)
-        (5.000 6.000 7.000 8.000 9.000)&gt;</em>
-    :<em class=typing>(sound-data-reverse! sd1)</em>
-    <em class=listener>#&lt;sound-data[chans=2, length=5]:
+        (5.000 6.000 7.000 8.000 9.000)&gt;
+    :(sound-data-reverse! sd1)
+    #&lt;sound-data[chans=2, length=5]:
         (4.000 3.000 2.000 1.000 0.000)
-        (9.000 8.000 7.000 6.000 5.000)&gt;</em>
+        (9.000 8.000 7.000 6.000 5.000)&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3995,8 +3993,8 @@ sound-data-scale! multiplies each sample in sd by scaler.
 sound-data-set! sets sd's sample at 'frame' in channel 'chan' to val.
 In s7 you can use generalized set:
 <pre>
-    <em class=listener>&gt;</em><em class=typing>(let ((sd (make-sound-data 1 1))) (set! (sd 0 0) 1.0) (sd 0 0))</em>
-    <em class=listener>1.0</em>
+    &gt; (let ((sd (make-sound-data 1 1))) (set! (sd 0 0) 1.0) (sd 0 0))
+    1.0
 </pre>
 
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4039,12 +4037,12 @@ This is an experimental function currently used in the oscilloscope (oscope.scm)
 </td></tr><tr><td></td><td>
 sound-data-&gt;vct copies sound-data sd's channel 'chan' data into vct v.
 <pre>
-    :<em class=typing>sd1</em>
-    <em class=listener>#&lt;sound-data[chans=2, length=5]:
+    :sd1
+    #&lt;sound-data[chans=2, length=5]:
         (4.000 3.000 2.000 1.000 0.000)
-        (9.000 8.000 7.000 6.000 5.000)&gt;</em>
-    :<em class=typing>(sound-data-&gt;vct sd1 1)</em>
-    <em class=listener>#&lt;vct[len=5]: 9.000 8.000 7.000 6.000 5.000&gt;</em>
+        (9.000 8.000 7.000 6.000 5.000)&gt;
+    :(sound-data-&gt;vct sd1 1)
+    #&lt;vct[len=5]: 9.000 8.000 7.000 6.000 5.000&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4066,7 +4064,7 @@ functions are available, as well as most of CLM (<a href="sndclm.html">sndclm.ht
 For many eamples, see play.scm and rtio.scm. The most important Sndlib functions for Snd are:
 </p>
 
-<!-- ******************************** SNDLIB TABLE ******************************** -->
+<!--  SNDLIB TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -4196,8 +4194,8 @@ If 'start' is given, it sets where to start reading in the sound-data buffers.
 </td></tr><tr><td></td><td>
 mus-bytes-per-sample returns the number of bytes that 'data-format' uses to encode one sample of sound.
 <pre>
-    :<em class=typing>(mus-bytes-per-sample mus-bdouble)</em>
-    <em class=listener>8</em>
+    :(mus-bytes-per-sample mus-bdouble)
+    8
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4235,8 +4233,8 @@ There are also "unscaled" versions of the floating point types, and "normalized"
 </td></tr><tr><td></td><td>
 mus-data-format-&gt;string converts 'format' from an integer to a string, e.g. "mus-mulaw".
 <pre>
-    :<em class=typing>(mus-data-format-&gt;string mus-bdouble)</em>
-    <em class=listener>"mus-bdouble"</em>
+    :(mus-data-format-&gt;string mus-bdouble)
+    "mus-bdouble"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4256,8 +4254,8 @@ mus-expand-filename fills out the filename 'name' to include its 'absolute' path
 that is, it replaces '~' with the current home directory,
 and whatever else seems appropriate.
 <pre>
-    :<em class=typing>(mus-expand-filename "oboe.snd")</em>
-    <em class=listener>"/home/bil/cl/oboe.snd"</em>
+    :(mus-expand-filename "oboe.snd")
+    "/home/bil/cl/oboe.snd"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4309,8 +4307,8 @@ mus-header-type-name converts 'type', an integer, to a string, e.g. "AIFF".  Som
 </pre>
 This function doesn't set the header choices for output of recording; it just decodes a sndlib header type identifier.
 <pre>
-    :<em class=typing>(mus-header-type-name (mus-sound-header-type "oboe.snd"))</em>
-    <em class=listener>"Sun/Next"</em>
+    :(mus-header-type-name (mus-sound-header-type "oboe.snd"))
+    "Sun/Next"
 </pre>
 The default sound output header choice is <a href="#defaultoutputheadertype">default-output-header-type</a>,
 a sound file's
@@ -4399,10 +4397,10 @@ for the number of bytes per sample.
 </td></tr><tr><td></td><td>
 mus-sound-comment returns the comment in the header of the file 'filename'.
 <pre>
-    :<em class=typing>(with-sound (:comment "this is a comment") (fm-violin 0 1 440 .1))</em>
-    <em class=listener>"test.snd"</em>
-    :<em class=typing>(mus-sound-comment "test.snd")</em>
-    <em class=listener>"this is a comment"</em>
+    :(with-sound (:comment "this is a comment") (fm-violin 0 1 440 .1))
+    "test.snd"
+    :(mus-sound-comment "test.snd")
+    "this is a comment"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4412,8 +4410,8 @@ mus-sound-comment returns the comment in the header of the file 'filename'.
 </td></tr><tr><td></td><td>
 mus-sound-data-format returns the data format (e.g. <code>mus-bshort</code>) of the file 'filename'.
 <pre>
-    :<em class=typing>(mus-data-format-&gt;string (mus-sound-data-format "oboe.snd"))</em>
-    <em class=listener>"mus-bshort"</em>
+    :(mus-data-format-&gt;string (mus-sound-data-format "oboe.snd"))
+    "mus-bshort"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4438,8 +4436,8 @@ It is equivalent to <code>(mus-bytes-per-sample (mus-sound-data-format filename)
 </td></tr><tr><td></td><td>
 This returns the duration in seconds of the sound data in the file 'filename'.
 <pre>
-    :<em class=typing>(mus-sound-duration "oboe.snd")</em>
-    <em class=listener>2.30512475967407</em>
+    :(mus-sound-duration "oboe.snd")
+    2.30512475967407
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4464,8 +4462,8 @@ mus-sound-frames returns the number of frames of sound data in the file 'filenam
 </td></tr><tr><td></td><td>
 This returns the header type (e.g. <code>mus-aifc</code>) of the file 'filename'.
 <pre>
-    :<em class=typing>(mus-header-type-&gt;string (mus-sound-header-type "oboe.snd"))</em>
-    <em class=listener>"mus-next"</em>
+    :(mus-header-type-&gt;string (mus-sound-header-type "oboe.snd"))
+    "mus-next"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4483,8 +4481,8 @@ mus-sound-length returns the number of bytes of sound data in the file 'filename
 This function refers to the "loop" info that is sometimes found in some headers (aifc, wav etc).
 <a href="sndscm.html#markloops">mark-loops</a> in examp.scm uses mus-sound-loop-info to place a mark at each loop point.
 <pre>
-    :<em class=typing>(mus-sound-loop-info "~/sf1/forest.aiff")</em>
-    <em class=listener>(24981 144332 0 0 60 0 1 0)</em>
+    :(mus-sound-loop-info "~/sf1/forest.aiff")
+    (24981 144332 0 0 60 0 1 0)
 </pre>
 The loop info is a list of
 up to 4 points, the first two (start, end = 24981 144332 above) refer to the sustain loop,
@@ -4505,10 +4503,10 @@ each inner list being (mark-id mark-position).  The mark-id is a number that ide
 use with mus-sound-loop-info, and the mark-position is its sample number in the file.
 Normally, this information is already included in the mus-sound-loop-info list:
 <pre>
-    :<em class=typing>(mus-sound-mark-info "/home/bil/sf1/forest.aiff")</em>
-    <em class=listener>((4 1) (3 0) (2 144332) (1 24981))</em>
-    :<em class=typing>(mus-sound-loop-info "/home/bil/sf1/forest.aiff")</em>
-    <em class=listener>(24981 144332 0 0 60 0 1 0)</em>
+    :(mus-sound-mark-info "/home/bil/sf1/forest.aiff")
+    ((4 1) (3 0) (2 144332) (1 24981))
+    :(mus-sound-loop-info "/home/bil/sf1/forest.aiff")
+    (24981 144332 0 0 60 0 1 0)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4519,11 +4517,11 @@ Normally, this information is already included in the mus-sound-loop-info list:
 mus-sound-maxamp returns a list of max amps and locations thereof.  The corresponding set! 
 affects only the sndlib table of sound file info, not the sound file itself, as in all such cases.
 <pre>
-    :<em class=typing>(mus-sound-maxamp "oboe.snd")</em>
-    <em class=listener>(24971 0.147247314453125)</em>                  
+    :(mus-sound-maxamp "oboe.snd")
+    (24971 0.147247314453125)                  
     ;; oboe's maxamp is .147 first encountered at sample 24971
-    :<em class=typing>(mus-sound-maxamp "2a.snd")</em>
-    <em class=listener>(933 0.0999755859375 2827 0.0999755859375)</em> 
+    :(mus-sound-maxamp "2a.snd")
+    (933 0.0999755859375 2827 0.0999755859375) 
     ;; 2a's maxamps are 0.1 in each channel at sample 933 in chan 0, 2827 in chan 1
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4535,12 +4533,12 @@ affects only the sndlib table of sound file info, not the sound file itself, as 
 This function returns #t if the sound's maxamp data is available
 in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read the data to get the maxamp.
 <pre>
-    :<em class=typing>(mus-sound-maxamp-exists? "/home/bil/test/sound/away.snd")</em>
-    <em class=listener>#f</em>
-    :<em class=typing>(mus-sound-maxamp "/home/bil/test/sound/away.snd")</em>
-    <em class=listener>(14562264 0.463623046875 14557044 0.404571533203125)</em>
-    :<em class=typing>(mus-sound-maxamp-exists? "/home/bil/test/sound/away.snd")</em>
-    <em class=listener>#t</em>
+    :(mus-sound-maxamp-exists? "/home/bil/test/sound/away.snd")
+    #f
+    :(mus-sound-maxamp "/home/bil/test/sound/away.snd")
+    (14562264 0.463623046875 14557044 0.404571533203125)
+    :(mus-sound-maxamp-exists? "/home/bil/test/sound/away.snd")
+    #t
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4595,8 +4593,8 @@ This function prints the current sound header data table to the file given or st
 </td></tr><tr><td></td><td>
 mus-sound-samples returns the number of samples in the sound file 'filename' according to its header.
 <pre>
-    :<em class=typing>(mus-sound-samples "oboe.snd")</em>
-    <em class=listener>50828</em>
+    :(mus-sound-samples "oboe.snd")
+    50828
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4635,8 +4633,8 @@ mus-sound-write writes data from the sound-data object 'sd' to the sound file 'f
 This returns the sound's write date:
 </td></tr><tr><td></td><td>
 <pre>
-    :<em class=typing>(strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))</em>
-    <em class=listener>"18-Oct 06:56 PDT"</em>
+    :(strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))
+    "18-Oct 06:56 PDT"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4675,7 +4673,7 @@ for an overview and key bindings associated with marks.
 See also the <a href="#sndhooks">hooks</a> section above for various mark-related hooks.
 </p>
 
-<!-- ******************************** MARKS TABLE ******************************** -->
+<!--  MARKS TABLE  -->
 
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
@@ -4685,12 +4683,12 @@ See also the <a href="#sndhooks">hooks</a> section above for various mark-relate
 </td></tr><tr><td width=30><br></td><td>
 add-mark adds a mark at the position 'sample', returning the new mark.
 <pre>
-    :<em class=typing>(define m1 (add-mark 1234))</em>
-    <em class=listener>m1</em>
-    :<em class=typing>m1</em>
-    <em class=listener>#&lt;mark 0&gt;</em>
-    :<em class=typing>(mark-sample m1)</em>
-    <em class=listener>1234</em>
+    :(define m1 (add-mark 1234))
+    m1
+    :m1
+    #&lt;mark 0&gt;
+    :(mark-sample m1)
+    1234
 </pre>
 The mark-name can be set via 'name', and the mark-sync field via 'sync'.
 If 'sample' is beyond the end of the data, add-mark throws 'no-such-sample.
@@ -4745,15 +4743,15 @@ One way out is to define
 a #-reader that sees something like "#m12" and expands that into <code>(integer-&gt;mark 12)</code>:
 </p>
 <pre>
-&gt; <em class=typing>(set! <a href="s7.html#sharpreaders">*#readers*</a>
+&gt; (set! <a href="s7.html#sharpreaders">*#readers*</a>
     (cons (cons #\m (lambda (str)
                       (integer-&gt;mark (string-&gt;number (substring str 1)))))
-          *#readers*))</em>
-<em class=listener>((#\m . #&lt;closure&gt;))</em>
-&gt; <em class=typing>#m1</em>
-<em class=listener>#&lt;mark 1&gt;</em>
-&gt; <em class=typing>(mark-sample #m1)</em>
-<em class=listener>38694</em>
+          *#readers*))
+((#\m . #&lt;closure&gt;))
+&gt; #m1
+#&lt;mark 1&gt;
+&gt; (mark-sample #m1)
+38694
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4784,10 +4782,10 @@ This is the graphics context to use to draw a mark (XOR mode).
 </td></tr><tr><td></td><td>
 mark-home is a list with the sound and channel that hold the mark.
 <pre>
-    :<em class=typing>(marks 0 0)</em>   ; what marks are in snd 0, chn 0?
-    <em class=listener>(#&lt;mark 0&gt;)</em>            ; just one
-    :<em class=typing>(mark-home (car (marks 0 0)))</em> ; what is that mark's snd/chn?
-    <em class=listener>(#&lt;sound 0&gt; 0)</em>
+    :(marks 0 0)   ; what marks are in snd 0, chn 0?
+    (#&lt;mark 0&gt;)            ; just one
+    :(mark-home (car (marks 0 0))) ; what is that mark's snd/chn?
+    (#&lt;sound 0&gt; 0)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4797,14 +4795,14 @@ mark-home is a list with the sound and channel that hold the mark.
 </td></tr><tr><td></td><td>
 This is the name of the mark.
 <pre>
-    :<em class=typing>(define m1 (add-mark 1234 0 0 "a name"))</em>
-    <em class=listener>m1</em>
-    :<em class=typing>(mark-name m1)</em>
-    <em class=listener>"a name"</em>
-    :<em class=typing>(set! (mark-name m1) "a new name")</em>
-    <em class=listener>"a new name"</em>
-    :<em class=typing>(mark-name m1)</em>
-    <em class=listener>"a new name"</em>
+    :(define m1 (add-mark 1234 0 0 "a name"))
+    m1
+    :(mark-name m1)
+    "a name"
+    :(set! (mark-name m1) "a new name")
+    "a new name"
+    :(mark-name m1)
+    "a new name"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4824,10 +4822,10 @@ mark-properties is a property list associated with a mark.
 </td></tr><tr><td></td><td>
 mark-property accesses the property 'key' in the property list associated with the mark.
 <pre>
-    :<em class=typing>(set! (mark-property :weight m0) 2.5)</em>   ; m0 is the mark
-    <em class=listener>2.5</em>
-    :<em class=typing>(mark-property :weight m0)</em>
-    <em class=listener>2.5</em>
+    :(set! (mark-property :weight m0) 2.5)   ; m0 is the mark
+    2.5
+    :(mark-property :weight m0)
+    2.5
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4837,12 +4835,12 @@ mark-property accesses the property 'key' in the property list associated with t
 </td></tr><tr><td></td><td>
 mark-sample is the sample number (a location) marked by the mark at edit history position 'edpos'.
 <pre>
-    :<em class=typing>(mark-sample m1)</em>
-    <em class=listener>1234</em>
-    :<em class=typing>(set! (mark-sample m1) 4321)</em>
-    <em class=listener>4321</em>
-    :<em class=typing>(mark-sample m1)</em>
-    <em class=listener>4321</em>
+    :(mark-sample m1)
+    1234
+    :(set! (mark-sample m1) 4321)
+    4321
+    :(mark-sample m1)
+    4321
 </pre>
 It might be more consistent with other Snd names to call this mark-position, but I wanted to emphasize
 that a mark follows its sample around as a sound is edited; that is, it marks a sample, not a position in the sound.
@@ -4940,12 +4938,12 @@ the list of marks reflects the marks active at that point in the edit history.  
 Say we have two sounds open, 2 marks in the first (a mono sound), and one
 in the 2nd channel of the 2nd (a stereo sound):
 <pre>
-    :<em class=typing>(marks 0 0)</em>
-    <em class=listener>(#&lt;mark 1&gt; #&lt;mark 0&gt;)</em>     ; these are mark id's, as returned by the add-mark function for example
-    :<em class=typing>(marks 1)</em>
-    <em class=listener>(() (#&lt;mark 2&gt;))</em>  ; no mark in channel 0, one in channel 1
-    :<em class=typing>(marks)</em>
-    <em class=listener>(((#&lt;mark 1&gt; #&lt;mark 0&gt;)) (() (#&lt;mark 2&gt;)))</em>
+    :(marks 0 0)
+    (#&lt;mark 1&gt; #&lt;mark 0&gt;)     ; these are mark id's, as returned by the add-mark function for example
+    :(marks 1)
+    (() (#&lt;mark 2&gt;))  ; no mark in channel 0, one in channel 1
+    :(marks)
+    (((#&lt;mark 1&gt; #&lt;mark 0&gt;)) (() (#&lt;mark 2&gt;)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5036,14 +5034,14 @@ by integers, so for conversion you can use mix-&gt;integer and integer-&gt;mix.
 Say we have a mix object stored in the variable "id":
 </p>
 <pre>
-    &gt;<em class=listener>(set! (mix-amp id) .5)</em>
-    <em class=typing>.5</em>
+    &gt; (set! (mix-amp id) .5)
+    .5
 </pre>
 <p>This sets the mix's amplitude scaler to .5.  
 </p>
 
 
-<!-- ******************************** MIX FUNCTION TABLE ******************************** -->
+<!--  MIX FUNCTION TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -5146,12 +5144,12 @@ If the sound is also omitted, you get a list of lists of lists, the outer list r
 inner list to that sound's channels.  Say we have two sounds open, 2 mixes in the first (a mono sound), and 1 mix
 in the 2nd channel of the 2nd (a stereo sound):
 <pre>
-    :<em class=typing>(mixes 0 0)</em>
-    <em class=listener>(#&lt;mix 0&gt; #&lt;mix 2&gt;)</em>     ; these are mix objects, as returned by the mix function for example
-    :<em class=typing>(mixes 1)</em>
-    <em class=listener>(() (#&lt;mix 1&gt;))</em>  ; no mix in channel 0, one in channel 1
-    :<em class=typing>(mixes)</em>
-    <em class=listener>(((#&lt;mix 0&gt; #&lt;mix 2&gt;)) (() (#&lt;mix 1&gt;)))</em>
+    :(mixes 0 0)
+    (#&lt;mix 0&gt; #&lt;mix 2&gt;)     ; these are mix objects, as returned by the mix function for example
+    :(mixes 1)
+    (() (#&lt;mix 1&gt;))  ; no mix in channel 0, one in channel 1
+    :(mixes)
+    (((#&lt;mix 0&gt; #&lt;mix 2&gt;)) (() (#&lt;mix 1&gt;)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5202,15 +5200,15 @@ mix-length returns the mix's length in samples.
 </td></tr><tr><td></td><td>
 mix-home returns a list containing the mix's output sound and channel number, and the input original filename (if any), and input channel.
 <pre>
-    :<em class=typing>(define mx (mix "pistol.snd" 1000))</em>
-    <em class=listener>#&lt;mix 0&gt;</em>
-    :<em class=typing>(mix-home mx)</em>
-    <em class=listener>(#&lt;sound 0&gt; 0 "/home/bil/cl/pistol.snd" 0)</em>
+    :(define mx (mix "pistol.snd" 1000))
+    #&lt;mix 0&gt;
+    :(mix-home mx)
+    (#&lt;sound 0&gt; 0 "/home/bil/cl/pistol.snd" 0)
     ;; (list output-sound-index output-channel input-filename input-channel)
-    :<em class=typing>(set! mx (mix-vct (make-vct 100 .1) 2000))</em>
-    <em class=listener>#&lt;mix 1&gt;</em>
-    :<em class=typing>(mix-home mx)</em>
-    <em class=listener>(#&lt;sound 0&gt; 0 #f 0)</em>
+    :(set! mx (mix-vct (make-vct 100 .1) 2000))
+    #&lt;mix 1&gt;
+    :(mix-home mx)
+    (#&lt;sound 0&gt; 0 #f 0)
     ;;   #f: no input file
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5340,10 +5338,10 @@ mix-properties is a property list associated with a mix.
 </td></tr><tr><td></td><td>
 mix-property associates a property with a mix.
 <pre>
-    :<em class=typing>(set! (mix-property :info mx) "this is a mix")</em>
-    <em class=listener>"this is a mix"</em>
-    :<em class=typing>(mix-property :info mx)</em>
-    <em class=listener>"this is a mix"</em>
+    :(set! (mix-property :info mx) "this is a mix")
+    "this is a mix"
+    :(mix-property :info mx)
+    "this is a mix"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5424,18 +5422,18 @@ If 'with-mix-tags' is #f (the default is #t), the data is
 mixed without creating any mix tags.
 mix-vct returns the id of the new mix, or -1 (a simple mix, no tag).
 <pre>
-    :<em class=typing>(channel-&gt;vct 1000 3)</em>               ; what are these 3 samples before the mix?
-    <em class=listener>#&lt;vct[len=3]: -0.065 -0.059 -0.060&gt;</em>
-    :<em class=typing>(define mx (mix-vct (vct .1 .2 .3) 1000))</em> ; add these 3 values
-    <em class=listener>#&lt;mix 3&gt;</em>
-    :<em class=typing>(channel-&gt;vct 1000 3)</em>               ; now we hope they were added...
-    <em class=listener>#&lt;vct[len=3]: 0.035 0.141 0.240&gt;</em>
-    :<em class=typing>(mix-position mx)</em>                    ; and the new mix starts at 1000
-    <em class=listener>1000</em>
-    :<em class=typing>(length mx)</em>                          ; and its length is 3 samples
-    <em class=listener>3</em>
-    :<em class=typing>(mix-vct (with-sound (:output (make-vct 44100)) (fm-violin 0 1 440 .1)))</em>
-    <em class=listener>#&lt;mix 4&gt;</em>
+    :(channel-&gt;vct 1000 3)               ; what are these 3 samples before the mix?
+    #&lt;vct[len=3]: -0.065 -0.059 -0.060&gt;
+    :(define mx (mix-vct (vct .1 .2 .3) 1000)) ; add these 3 values
+    #&lt;mix 3&gt;
+    :(channel-&gt;vct 1000 3)               ; now we hope they were added...
+    #&lt;vct[len=3]: 0.035 0.141 0.240&gt;
+    :(mix-position mx)                    ; and the new mix starts at 1000
+    1000
+    :(length mx)                          ; and its length is 3 samples
+    3
+    :(mix-vct (with-sound (:output (make-vct 44100)) (fm-violin 0 1 440 .1)))
+    #&lt;mix 4&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5492,7 +5490,7 @@ mix property list: <a href="extsnd.html#mixproperty">mix-property</a> in mix.scm
 pan mono sound into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
 move a mixed sound via dlocsig: <a href="extsnd.html#mixmovesound">mix-move-sound</a><br>
 the mix dialog: <a href="snd.html#mixdialog">Mix Dialog</a><br>
-cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a><br>
+cross-fade in frequency: cross-fade and dissolve-fade in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
 snap mix to beat after drag: <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a><br>
 delete all mixes: <a href="sndscm.html#silenceallmixes">silence-all-mixes</a><br>
@@ -5511,7 +5509,7 @@ exist, old ones are pushed off (and deleted) to make room.
 </p>
 
 
-<!-- ******************************** REGION TABLE ******************************** -->
+<!--  REGION TABLE  -->
 
 <A NAME="regionstuff"></a>
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
@@ -5595,10 +5593,10 @@ This returns the number of channels in the region 'reg'.
 </td></tr><tr><td></td><td>
 region-frames returns the number of frames in the region 'reg'.
 <pre>
-    :<em class=typing>(make-region 100 200)</em>
-    <em class=listener>#&lt;region 1&gt;</em>
-    :<em class=typing>(region-frames (integer-&gt;region 1))</em>
-    <em class=listener>101</em>
+    :(make-region 100 200)
+    #&lt;region 1&gt;
+    :(region-frames (integer-&gt;region 1))
+    101
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5635,8 +5633,8 @@ This is the counterpart to <a href="#integertoregion">integer-&gt;region</a>.
 </td></tr><tr><td></td><td>
 region-maxamp is the peak amplitude of the samples in the region 'reg'.
 <pre>
-    :<em class=typing>(region-maxamp (integer-&gt;region 1))</em>
-    <em class=listener>4.8828125e-4</em>
+    :(region-maxamp (integer-&gt;region 1))
+    4.8828125e-4
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5653,10 +5651,10 @@ region-maxamp-position returns the location (a sample number) of the peak amplit
 </td></tr><tr><td></td><td>
 region-position returns the begin time of the region's channel 'chan' in the original sound.
 <pre>
-    :<em class=typing>(make-region 1000 2000)</em>
-    <em class=listener>2</em>
-    :<em class=typing>(region-position (integer-&gt;region 2))</em>
-    <em class=listener>1000</em>
+    :(make-region 1000 2000)
+    2
+    :(region-position (integer-&gt;region 2))
+    1000
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5750,7 +5748,7 @@ region-play-list and region-play-sequence in examp.scm<br>
 
 
 
-<!-- ******************************** SELECTION TABLE ******************************** -->
+<!--  SELECTION TABLE  -->
 
 <A NAME="selectionstuff"></a>
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
@@ -5901,14 +5899,14 @@ The object can be passed to the <a href="#sndgenericfuncs">generic functions</a>
 current selection:
 </p>
 <pre>
-    :<em class=typing>(define selobj (selection))</em>
-    <em class=listener>selobj</em>
-    :<em class=typing>selobj</em>
-    <em class=listener>#&lt;selection 1&gt;</em>
-    :<em class=typing>(selection-chans)</em>
-    <em class=listener>1</em>
-    :<em class=typing>(channels selobj)</em>
-    <em class=listener>1</em>
+    :(define selobj (selection))
+    selobj
+    :selobj
+    #&lt;selection 1&gt;
+    :(selection-chans)
+    1
+    :(channels selobj)
+    1
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5926,16 +5924,16 @@ selection-chans returns the number of channels in the current selection.
 selection-frames returns the number of frames in the current selection (its length in samples).  
 You can set this to move the selection end point:
 <pre>
-    :<em class=typing>(select-all)</em>                    ; grab all of current channel
-    <em class=listener>#&lt;region 1&gt;</em>
-    :<em class=typing>(selection-frames)</em>
-    <em class=listener>55240</em>
-    :<em class=typing>(set! (selection-frames) 10000)</em> ; unselect all but the starting 10000
-    <em class=listener>10000</em>
-    :<em class=typing>(selection-frames)</em>
-    <em class=listener>10000</em>
-    :<em class=typing>(set! (selection-frames) (* 2 (selection-frames)))</em> ; double the selection length
-    <em class=listener>20000</em>
+    :(select-all)                    ; grab all of current channel
+    #&lt;region 1&gt;
+    :(selection-frames)
+    55240
+    :(set! (selection-frames) 10000) ; unselect all but the starting 10000
+    10000
+    :(selection-frames)
+    10000
+    :(set! (selection-frames) (* 2 (selection-frames))) ; double the selection length
+    20000
 </pre>
 See also <a href="sndscm.html#makeselection">make-selection</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6018,14 +6016,14 @@ This function returns the selection srate.  There's some arbitrariness in this i
 selection? returns #t if there is a selection.
 If some 'obj' is passed, selection? returns #t is obj is a selection object, and there is a selection.
 <pre>
-    :<em class=typing>(select-all)</em>
-    <em class=listener>#&lt;region 2&gt;</em>
-    :<em class=typing>(selection?)</em>
-    <em class=listener>#t</em>
-    :<em class=typing>(set! (selection-member? #t) #f)</em>
-    <em class=listener>#f</em>
-    :<em class=typing>(selection?)</em>
-    <em class=listener>#f</em>
+    :(select-all)
+    #&lt;region 2&gt;
+    :(selection?)
+    #t
+    :(set! (selection-member? #t) #f)
+    #f
+    :(selection?)
+    #f
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -6194,7 +6192,7 @@ There's never any good reason to do this, so if it looks like a no-op, do it a d
 <br>
 
 
-<!-- ******************************** SOUND AND CHANNEL TABLE ******************************** -->
+<!--  SOUND AND CHANNEL TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -6391,22 +6389,22 @@ channel-property returns the value associated with 'key' in the given channel's
 <a href="extsnd.html#channelproperties">property list</a>.  To add or change a property, use set! with this procedure. 
 <pre>
     Scheme:
-    :<em class=typing>(set! (channel-property 'info 0 0) "this is sound 0, first channel")</em>
-    <em class=listener>"this is sound 0, first channel"</em>
-    :<em class=typing>(channel-property 'info 0 0)</em>
-    <em class=listener>"this is sound 0, first channel"</em>
+    :(set! (channel-property 'info 0 0) "this is sound 0, first channel")
+    "this is sound 0, first channel"
+    :(channel-property 'info 0 0)
+    "this is sound 0, first channel"
 
     Ruby:
-    ><em class=typing>set_channel_property(:info, "this is info", 0, 0)</em>
-    <em class=listener>this is info</em>
-    ><em class=typing>channel_property(:info, 0, 0)</em>
-    <em class=listener>this is info</em>
+    >set_channel_property(:info, "this is info", 0, 0)
+    this is info
+    >channel_property(:info, 0, 0)
+    this is info
 
     Forth:
-    ><em class=typing>'info "this is info" 0 0 set-channel-property</em>
-    <em class=listener>'( '( 'info . this is info ) )</em>
-    ><em class=typing>'info 0 0 channel-property</em>
-    <em class=listener>this is info</em>
+    >'info "this is info" 0 0 set-channel-property
+    '( '( 'info . this is info ) )
+    >'info 0 0 channel-property
+    this is info
 </pre>
 The property list is convenient because the associated information goes away automatically
 when the channel is closed, and the property lists are saved by <a href="extsnd.html#savestate">save-state</a>.
@@ -7120,11 +7118,11 @@ This function finds the sample that satisfies the function 'proc'. 'sample'
 determines where to start the search. 
 
 <pre>
-&gt;<em class=typing>(find-channel (lambda (y) (&gt; y .1)))</em>
-<em class=listener>4423</em>
+&gt; (find-channel (lambda (y) (&gt; y .1)))
+4423
 
-&gt;<em class=typing>lambda: &lt;{ y }&gt; 0.1 y f&lt; ; find-channel</em>
-<em class=listener>4423</em>
+&gt;lambda: &lt;{ y }&gt; 0.1 y f&lt; ; find-channel
+4423
 </pre>
 
 I didn't bring out the search direction (find-channel is built on scan-channel which assumes it is
@@ -7563,16 +7561,16 @@ Here we add 0.2 to every sample in a channel:
 
 <pre>
 Scheme:
-    &gt;<em class=typing>(map-channel (lambda (y) (+ y 0.2)))</em>
-    <em class=listener>0</em>
+    &gt; (map-channel (lambda (y) (+ y 0.2)))
+    0
 
 Ruby:
-    &gt;<em class=typing>map_channel(lambda do |y| y + 0.2 end)</em>
-    <em class=listener>-0.0015869140625</em>
+    &gt;map_channel(lambda do |y| y + 0.2 end)
+    -0.0015869140625
 
 Forth:
-    &gt;<em class=typing>lambda: &lt;{ y }&gt; y 0.2 f+ ; map-channel</em>
-    <em class=listener>-0.00158691</em>
+    &gt;lambda: &lt;{ y }&gt; y 0.2 f+ ; map-channel
+    -0.00158691
 </pre>
 
 <p>
@@ -7582,14 +7580,14 @@ then check to see how close our reconstruction is to the original:
 </p>
 
 <pre>
-<em class=listener>&gt;</em> <em class=typing>(let ((y0 0.0)) (map-channel (lambda (y) (let ((diff (- y y0))) (set! y0 y) diff))))</em>
-<em class=listener>0</em>
-<em class=listener>&gt;</em> <em class=typing>(let ((y0 0.0)) (map-channel (lambda (y) (let ((add (+ y y0))) (set! y0 add) add))))</em>
-<em class=listener>0</em>
-<em class=listener>&gt;</em> <em class=typing>(let ((rd (make-sampler 0 0 0 1 0))) (map-channel (lambda (y) (- y (rd)))))</em>
-<em class=listener>0</em>          ; the sampler is reading the unedited form of the sound
-<em class=listener>&gt;</em> <em class=typing>(maxamp)</em> ; i.e. how big is the biggest difference
-<em class=listener>0.0</em>
+&gt; (let ((y0 0.0)) (map-channel (lambda (y) (let ((diff (- y y0))) (set! y0 y) diff))))
+0
+&gt; (let ((y0 0.0)) (map-channel (lambda (y) (let ((add (+ y y0))) (set! y0 add) add))))
+0
+&gt; (let ((rd (make-sampler 0 0 0 1 0))) (map-channel (lambda (y) (- y (rd)))))
+0          ; the sampler is reading the unedited form of the sound
+&gt; (maxamp) ; i.e. how big is the biggest difference
+0.0
 </pre>
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
@@ -8776,10 +8774,10 @@ This returns a vct of 'samps' samples starting at 'samp' in the given channel.
 'pos' is the edit history position to read (it defaults to the current position).
 This is settable (as is <a href="#sample">sample</a>):
 <pre>
-    <em class=listener>:</em><em class=typing>(samples 1000 10)</em>
-    <em class=listener>#&lt;vct[len=10]: 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004&gt;</em>
-    <em class=listener>:</em><em class=typing>(set! (samples 1000 10) (make-vct 10 .1))</em>
-    <em class=listener>#&lt;vct[len=10]: 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100&gt;</em>
+    :(samples 1000 10)
+    #&lt;vct[len=10]: 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004&gt;
+    :(set! (samples 1000 10) (make-vct 10 .1))
+    #&lt;vct[len=10]: 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -8991,8 +8989,8 @@ The following call scans the
 current channel from sample 0 to the end looking for any sample greater than
 .1:<br>
 <pre>
-&gt;<em class=typing>(scan-channel (lambda (y) (&gt; y .1)))</em>
-<em class=listener>4423</em>
+&gt; (scan-channel (lambda (y) (&gt; y .1)))
+4423
 </pre>
 In this case, we found such a sample at position 4423.<br>
 <pre>
@@ -9003,8 +9001,8 @@ In this case, we found such a sample at position 4423.<br>
       (if baddy (set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) baddy))
       (not baddy))))
 
-&gt;<em class=typing>(every-sample? (lambda (y) (&lt; y .5)))</em>
-<em class=listener>#t</em>
+&gt; (every-sample? (lambda (y) (&lt; y .5)))
+#t
 </pre>
 To scan all the channels of a multichannel sound in parallel, see
 <a href="sndscm.html#scansound">scan-sound</a>.
@@ -9155,12 +9153,12 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 This returns the brief (no directory) form of the sound's filename.
 
 <pre>
-    &gt;<em class=typing>(open-sound "oboe.snd")</em>
-    <em class=listener>#&lt;sound 0&gt;</em>
-    &gt;<em class=typing>(file-name (integer-&gt;sound 0))</em>
-    <em class=listener>"/home/bil/cl/oboe.snd"</em>
-    &gt;<em class=typing>(short-file-name (integer-&gt;sound 0))</em>
-    <em class=listener>"oboe.snd"</em>
+    &gt; (open-sound "oboe.snd")
+    #&lt;sound 0&gt;
+    &gt; (file-name (integer-&gt;sound 0))
+    "/home/bil/cl/oboe.snd"
+    &gt; (short-file-name (integer-&gt;sound 0))
+    "oboe.snd"
 </pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -9306,8 +9304,8 @@ sound? returns #t if 'snd' refers to an open sound.
 This returns a list of lists describing 'snd' as a soundfont.  Each inner list
 consists of the sound name, start point, loop start, and loop end.
 <pre>
-    :<em class=typing>(soundfont-info)</em>
-    <em class=listener>(("BrSteel_E4" 0 65390 65458) ("BrSteel_B2" 65490 131458 131637) ...)</em>
+    :(soundfont-info)
+    (("BrSteel_E4" 0 65390 65458) ("BrSteel_B2" 65490 131458 131637) ...)
 </pre>
 To set a named mark at the start of each sound with un-named marks 
 at the loop points:
@@ -9351,8 +9349,8 @@ the second two to the release.  The 5th and 6th list entries are the base note a
 For historical reasons, the 7th and 8th entries are the sustain and release modes.
 This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's settable).  See explode-sf2 in examp.scm.
 <pre>
-    :<em class=typing>(sound-loop-info)</em>
-    <em class=listener>(24981 144332 0 0 60 0 1 0)</em>
+    :(sound-loop-info)
+    (24981 144332 0 0 60 0 1 0)
 </pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -9534,20 +9532,20 @@ argument 'num-or-env' can be a number, an envelope, or a CLM env generator.
 <code>(src-channel 2.0)</code> makes the sound go twice as fast.
 This is the <a class=quiet href="#regularizedargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_regularizedargs_tip)">regularized</a> version of <a href="#srcsound">src-sound</a>.
 <pre>
-    <em class=listener>:</em><em class=typing>(frames)</em>                  ; current duration
-    <em class=listener>50828</em>
-    <em class=listener>:</em><em class=typing>(src-channel 2.0)</em>         ; make it half as long
-    <em class=listener>2.0</em>
-    <em class=listener>:</em><em class=typing>(frames)</em>
-    <em class=listener>25415</em>
-    <em class=listener>:</em><em class=typing>(src-channel '(0 .5 1 1))</em> ; start slow and speed up
-    <em class=listener>(0 0.5 1 1)</em>
-    <em class=listener>:</em><em class=typing>(frames)</em>
-    <em class=listener>35235</em>
-    <em class=listener>:</em><em class=typing>(src-channel (make-env '(0 .5 1 1) :length 20000))</em> ; stick at 1 after sample 20000
-    <em class=listener>#&lt;env linear, pass: 35236 (dur: 20000), index: 1, scaler: 1.0000, offset: 0.0000, ...&gt;</em>
-    <em class=listener>:</em><em class=typing>(frames)</em>
-    <em class=listener>42964</em>
+    :(frames)                  ; current duration
+    50828
+    :(src-channel 2.0)         ; make it half as long
+    2.0
+    :(frames)
+    25415
+    :(src-channel '(0 .5 1 1)) ; start slow and speed up
+    (0 0.5 1 1)
+    :(frames)
+    35235
+    :(src-channel (make-env '(0 .5 1 1) :length 20000)) ; stick at 1 after sample 20000
+    #&lt;env linear, pass: 35236 (dur: 20000), index: 1, scaler: 1.0000, offset: 0.0000, ...&gt;
+    :(frames)
+    42964
 </pre>
 
 
@@ -9634,16 +9632,16 @@ how long the resultant note will be given an src envelope:
 ;;; (src-duration '(0 .5 .5 3 .6 1 .7 .1 .8 1.5 1 1)) -&gt; 1.02474349685432
 
 ;;; here we're using this in the Snd listener:
-<em class=listener>&gt;</em><em class=typing>(frames)</em>
-<em class=listener>220501</em>
-<em class=listener>&gt;</em><em class=typing>(src-duration '(0 1 1 2))</em>
-<em class=listener>0.693147180559945</em>
-<em class=listener>&gt;</em><em class=typing>(src-sound '(0 1 1 2))</em> ; should be about .693 * 220500 frames 
-<em class=listener>(0 1 1 2)</em>
-<em class=listener>&gt;</em><em class=typing>(frames)</em>
-<em class=listener>152842</em>
-<em class=listener>&gt;</em><em class=typing>(/ 152842.0 220501)</em>
-<em class=listener>0.693157854159392</em><em class=typing></em>       ; tada!
+&gt; (frames)
+220501
+&gt; (src-duration '(0 1 1 2))
+0.693147180559945
+&gt; (src-sound '(0 1 1 2)) ; should be about .693 * 220500 frames 
+(0 1 1 2)
+&gt; (frames)
+152842
+&gt; (/ 152842.0 220501)
+0.693157854159392       ; tada!
 </pre></td></tr></table>
 
 The inverse, so to speak, of this is <a href="sndscm.html#srcfitenvelope">src-fit-envelope</a>:
@@ -9808,18 +9806,18 @@ This returns either 0 if there is no transform, <a href="#transformsize">transfo
 or (list spectrum-end time-slices fft-bins) if either a sonogram or a spectrogram is being displayed.
 
 <pre>
-    <em class=listener>:</em><em class=typing>(set! (transform-graph?) #t)</em> ; turn on fft display
-    <em class=listener>#t</em>
-    <em class=listener>:</em><em class=typing>(transform-frames)</em>
-    <em class=listener>512</em>
-    <em class=listener>:</em><em class=typing>(set! (transform-graph-type) graph-as-sonogram)</em>
-    <em class=listener>1</em>                             ; 1 = graph-as-sonogram
-    <em class=listener>:</em><em class=typing>(transform-frames)</em>
-    <em class=listener>(1.0 375 256)</em>                 ; 1.0 -&gt; full spectrum displayed
-    <em class=listener>:</em><em class=typing>(set! (transform-graph?) #f)</em> ; turn off fft display
-    <em class=listener>#f</em>
-    <em class=listener>:</em><em class=typing>(transform-frames)</em>
-    <em class=listener>0</em>
+    :(set! (transform-graph?) #t) ; turn on fft display
+    #t
+    :(transform-frames)
+    512
+    :(set! (transform-graph-type) graph-as-sonogram)
+    1                             ; 1 = graph-as-sonogram
+    :(transform-frames)
+    (1.0 375 256)                 ; 1.0 -&gt; full spectrum displayed
+    :(set! (transform-graph?) #f) ; turn off fft display
+    #f
+    :(transform-frames)
+    0
 </pre>
 
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -10053,10 +10051,10 @@ displayed in the minibuffer.  This is the View:Verbose cursor option
 This is the current x axis label. 'context' is one of <code>time-graph</code> (the default), <code>lisp-graph</code>, or 
 <code>transform-graph</code>.
 <pre>
-    :<em class=typing>(x-axis-label)</em>
-    <em class=listener>"time"</em>
-    :<em class=typing>(set! (x-axis-label) "tempus")</em>
-    <em class=listener>"tempus"</em>
+    :(x-axis-label)
+    "time"
+    :(set! (x-axis-label) "tempus")
+    "tempus"
 </pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -10246,7 +10244,7 @@ the final result is sent to the speakers.
 The control panel procedures are:
 </p>
 
-<!-- ******************************** CONTROL PANEL ******************************** -->
+<!--  CONTROL PANEL  -->
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
 <!-- amp-control -->
@@ -10675,7 +10673,7 @@ The edit list functions are:
 </p>
 
 
-<!-- ******************************** EDIT-LIST TABLE ******************************** -->
+<!--  EDIT-LIST TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -10736,18 +10734,18 @@ to copy the last edit history string and use its associated bounds &mdash; unlik
 This returns the current edit list contents as a string.  If 'edpos' is specified, only that position is described.
 'with-source' (default: #t) determines whether ptree source code is included in the output.
 <pre>
-    :<em class=typing>(open-sound "oboe.snd")</em>
-    <em class=listener>#&lt;sound 0&gt;</em>
-    :<em class=typing>(scale-channel 2.0)</em>
-    <em class=listener>2.0</em>
-    :<em class=typing>(pad-channel 100 200)</em>
-    <em class=listener>100</em>
-    :<em class=typing>(display-edits 0 0 1)</em>  ; show just edit 1 (the scale-channel call)
-    <em class=listener>"
+    :(open-sound "oboe.snd")
+    #&lt;sound 0&gt;
+    :(scale-channel 2.0)
+    2.0
+    :(pad-channel 100 200)
+    100
+    :(display-edits 0 0 1)  ; show just edit 1 (the scale-channel call)
+    "
      (scale 0 50828) ; scale-channel 2.000 0 #f [1:2]:
        (at 0, cp-&gt;sounds[0][0:50827, 2.000]) [file: /home/bil/cl/oboe.snd[0]]
        (at 50828, end_mark)
-    "</em>
+    "
 </pre>
 </td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -10762,8 +10760,8 @@ begin sample, and the number of samples
 affected.  If 'edpos' is omitted, edit-fragment returns the currently active
 edit.
 <pre>
-    :<em class=typing>(edit-fragment 2 0 0)</em> ; continuing example above
-    <em class=listener>("pad-channel" "zero" 100 200)</em>
+    :(edit-fragment 2 0 0) ; continuing example above
+    ("pad-channel" "zero" 100 200)
 </pre>
 </td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -10777,50 +10775,50 @@ sequence and re-apply it in some other context.  For example, you can back up to
 save the edit list, make a change, then re-run the saved edit sequence.  
 The function returned takes 2 arguments, a sound and a channel number.
 <pre>
-    :<em class=typing>(define our-edits (</em><em class=red>edit-list-&gt;function</em><em class=typing>))</em> ; same example as above
-    <em class=listener>#&lt;unspecified&gt;</em>
-    :<em class=typing>our-edits</em>
-    <em class=listener>#&lt;procedure our-edits ((snd chn) (scale-channel 2.0 0 #f snd chn) (pad-channel 100 200 snd chn))&gt;</em>
-    :<em class=typing>(undo 2)</em>
-    <em class=listener>2</em>
-    :<em class=typing>(our-edits 0 0)</em>
-    <em class=listener>100</em>
+    :(define our-edits (<em class=red>edit-list-&gt;function</em>)) ; same example as above
+    #&lt;unspecified&gt;
+    :our-edits
+    #&lt;procedure our-edits ((snd chn) (scale-channel 2.0 0 #f snd chn) (pad-channel 100 200 snd chn))&gt;
+    :(undo 2)
+    2
+    :(our-edits 0 0)
+    100
 </pre>
 
 In Ruby:
 <pre>
-    :<em class=typing>open_sound "oboe.snd"</em>
-    <em class=listener>0</em>
-    :<em class=typing>scale_channel 2.0</em>
-    <em class=listener>2.0</em>
-    :<em class=typing>pad_channel 100, 200</em>
-    <em class=listener>100</em>
-    :<em class=typing>our_edits = edit_list2function</em>
-    <em class=listener>#&lt;Proc:0x40c713ec@(eval):2&gt;</em>
-    :<em class=typing>our_edits.source</em>
-    <em class=listener>Proc.new {|snd, chn|  scale_channel(2.000, 0, false, snd, chn); pad_channel(100, 200, snd, chn) }</em>
-    :<em class=typing>undo 2</em>
-    <em class=listener>2</em>
-    :<em class=typing>our_edits.call(0, 0)</em>
-    <em class=listener>100</em>
+    :open_sound "oboe.snd"
+    0
+    :scale_channel 2.0
+    2.0
+    :pad_channel 100, 200
+    100
+    :our_edits = edit_list2function
+    #&lt;Proc:0x40c713ec@(eval):2&gt;
+    :our_edits.source
+    Proc.new {|snd, chn|  scale_channel(2.000, 0, false, snd, chn); pad_channel(100, 200, snd, chn) }
+    :undo 2
+    2
+    :our_edits.call(0, 0)
+    100
 </pre>
 
 In Forth:
 <pre>
-    snd&gt; <em class=typing>"oboe.snd" open-sound</em>
-    <em class=listener>0</em>
-    snd&gt; <em class=typing>2.0 scale-channel</em>
-    <em class=listener>2.0</em>
-    snd&gt; <em class=typing>100 200 pad-channel</em>
-    <em class=listener>100</em>
-    snd&gt; <em class=typing>0 0 edit-list-&gt;function value our-edits</em>
-    <em class=listener>nil</em>
-    snd&gt; <em class=typing>our-edits proc-source-ref</em>
-    <em class=listener>lambda: { snd chn } 2.000 0 #f snd chn scale-channel drop 100 200 snd chn pad-channel drop ; 2 make-proc</em>
-    snd&gt; <em class=typing>2 undo</em>
-    <em class=listener>2</em>
-    snd&gt; <em class=typing>our-edits '( 0 0 ) run-proc</em>
-    <em class=listener>#f</em>
+    snd&gt; "oboe.snd" open-sound
+    0
+    snd&gt; 2.0 scale-channel
+    2.0
+    snd&gt; 100 200 pad-channel
+    100
+    snd&gt; 0 0 edit-list-&gt;function value our-edits
+    nil
+    snd&gt; our-edits proc-source-ref
+    lambda: { snd chn } 2.000 0 #f snd chn scale-channel drop 100 200 snd chn pad-channel drop ; 2 make-proc
+    snd&gt; 2 undo
+    2
+    snd&gt; our-edits '( 0 0 ) run-proc
+    #f
 </pre>
 </td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -10880,9 +10878,9 @@ Each inner list has the form
 If 'data-number' is -2, it marks the end of the list.  In our example above (the scale-channel/pad-channel sequence):
 
 <pre>
-    :<em class=typing>(edit-tree)</em>
-    <em class=listener>((0 0 0 99 2.0 0.0 0.0 0) (100 -1 0 199 0.0 0.0 0.0 1) 
-        (300 0 100 50827 2.0 0.0 0.0 0) (51028 -2 0 0 0.0 0.0 0.0 0))</em>
+    :(edit-tree)
+    ((0 0 0 99 2.0 0.0 0.0 0) (100 -1 0 199 0.0 0.0 0.0 1) 
+        (300 0 100 50827 2.0 0.0 0.0 0) (51028 -2 0 0 0.0 0.0 0.0 0))
 </pre>
 
 </td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
@@ -10989,7 +10987,7 @@ other such text.
 <p>Most of the transform functions and variables have been treated above, so they are only mentioned here.
 </p>
 
-<!-- ******************************** TRANSFORM TABLE ******************************** -->
+<!--  TRANSFORM TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -11193,7 +11191,7 @@ to the File:Open dialog, first makes sure the dialog exists with <code>(open-fil
 </p>
 
 
-<!-- ******************************** DIALOG TABLE ******************************** -->
+<!--  DIALOG TABLE  -->
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
 <!-- add-directory-to-view-files-list -->
@@ -11930,10 +11928,10 @@ sound files.  It is settable: a list of extensions as strings:
 </td></tr><tr><td></td><td>
 This returns #t if 'filename' has an extension that matches one in the <a href="#soundfileextensions">sound-file-extensions</a> list.
 <pre>
-    :<em class=typing>(sound-file? "oboe.snd")</em>
-    <em class=listener>#t</em>
-    :<em class=typing>(sound-file? "extsnd.html")</em>
-    <em class=listener>#f</em>
+    :(sound-file? "oboe.snd")
+    #t
+    :(sound-file? "extsnd.html")
+    #f
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -11981,22 +11979,22 @@ sound-widgets returns a list of various widgets specific to a given sound:
 For example, we can read and write the minibuffer:
 <pre>
     Scheme:
-    :<em class=typing>(report-in-minibuffer "this is a test")</em>
-    <em class=listener>"this is a test"</em>
-    :<em class=typing>(widget-text ((sound-widgets) 3))</em>
-    <em class=listener>"this is a test"</em>
+    :(report-in-minibuffer "this is a test")
+    "this is a test"
+    :(widget-text ((sound-widgets) 3))
+    "this is a test"
     
     Ruby:
-    :<em class=typing>report_in_minibuffer("this is a test")</em>
-    <em class=listener>this is a test</em>
-    :<em class=typing>widget_text(sound_widgets()[3])</em>
-    <em class=listener>this is a test</em>
+    :report_in_minibuffer("this is a test")
+    this is a test
+    :widget_text(sound_widgets()[3])
+    this is a test
     
     Forth:
-    <em class=listener>snd&gt;</em> <em class=typing>"this is a test" report-in-minibuffer</em>
-    <em class=listener>this is a test</em>
-    <em class=listener>snd&gt;</em> <em class=typing>0 sound-widgets 3 list-ref widget-text</em>
-    <em class=listener>this is a test</em>
+    snd&gt; "this is a test" report-in-minibuffer
+    this is a test
+    snd&gt; 0 sound-widgets 3 list-ref widget-text
+    this is a test
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12124,7 +12122,7 @@ This returns the text widget's text.  It can be set.
 
 <p>These functions don't seem to fit anywhere else:</p>
 
-<!-- ******************************** MISCELLANEOUS TABLE ******************************** -->
+<!--  MISCELLANEOUS TABLE  -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
@@ -12402,7 +12400,7 @@ local variables).  To continue from the breakpoint, (break-ok).  To
 exit back to the top level, (break-exit):
 </p>
 <pre>
-    <em class=typing>(define (outer arg1)
+    (define (outer arg1)
       (let ((y 123))
         (define (hiho arg)
           (let ((x 32)
@@ -12413,26 +12411,26 @@ exit back to the top level, (break-exit):
 	    (+ x (string-length y) (z 1))))
         (hiho 1)
         (break)
-        (* y 2)))</em>
+        (* y 2)))
 
-    <em class=listener>&gt;</em> <em class=typing>(outer 456)</em>
-    <em class=listener>hiho&gt;</em>
-    <em class=listener>snd-top-level</em>
-    <em class=listener>hiho&gt;</em> <em class=typing>x</em>
-    <em class=listener>32</em>
-    <em class=listener>hiho&gt;</em> <em class=typing>arg</em>
-    <em class=listener>1</em>
-    <em class=listener>hiho&gt;</em> <em class=typing>y</em>
-    <em class=listener>"a string"</em>
-    <em class=listener>hiho&gt;</em> <em class=typing>(break-ok)</em>
-    <em class=listener>&gt;</em>
-    <em class=listener>outer&gt;</em> 
-    <em class=listener>snd-top-level</em>
-    <em class=listener>outer&gt;</em> <em class=typing>y</em>
-    <em class=listener>123</em>
-    <em class=listener>outer&gt;</em> <em class=typing>(break-ok)</em>
-    <em class=listener>&gt;</em>
-    <em class=listener>246</em>
+    &gt; (outer 456)
+    hiho&gt;
+    snd-top-level
+    hiho&gt; x
+    32
+    hiho&gt; arg
+    1
+    hiho&gt; y
+    "a string"
+    hiho&gt; (break-ok)
+    &gt;
+    outer&gt; 
+    snd-top-level
+    outer&gt; y
+    123
+    outer&gt; (break-ok)
+    &gt;
+    246
 </pre>
 <p>To get a stack trace at the point of the break, <code>(stacktrace break-ok)</code>.
 </p>
@@ -12478,8 +12476,8 @@ The hooks associated with this function are:
 </td></tr><tr><td></td><td>
 fmod is mod with float arguments:
 <pre>
-    &gt;<em class=typing>(fmod 2.5 1.4)</em>
-    <em class=listener>1.1</em>
+    &gt; (fmod 2.5 1.4)
+    1.1
 </pre>
 In Scheme, it is a synonym for modulo.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -12542,8 +12540,8 @@ This returns the user-defined (not built-in) procedure, if any, currently bound 
 'state' is a combination of control = 4 and meta = 8.  'extended' is #t if the command
 is preceded by C-x.
 <pre>
-    :<em class=typing>(key-binding "Right" 0)</em>
-    <em class=listener>#&lt;procedure #f (() "move one pixel forward" (move-one-pixel (selected-sound) (selected-channel) #t))&gt;</em>
+    :(key-binding "Right" 0)
+    #&lt;procedure #f (() "move one pixel forward" (move-one-pixel (selected-sound) (selected-channel) #t))&gt;
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12625,33 +12623,33 @@ See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">
 This returns the help text associated with 'obj':
 <pre>
     Scheme:
-    :<em class=typing>(snd-help 'open-sound)</em>   ; or "open-sound"
-    <em class=listener>"(open-sound filename) opens filename (as if opened from File:Open menu option), 
-    and returns the new sound's index"</em>
+    :(snd-help 'open-sound)   ; or "open-sound"
+    "(open-sound filename) opens filename (as if opened from File:Open menu option), 
+    and returns the new sound's index"
 
     Ruby:
-    :<em class=typing>snd_help("close_sound")</em>  ; or :open_sound
-    <em class=listener>close_sound((snd false)): close snd</em>
+    :snd_help("close_sound")  ; or :open_sound
+    close_sound((snd false)): close snd
 
     Forth:
-    snd> <em class=typing>"revert-sound" snd-help</em>
-    <em class=listener>(revert-sound (snd #f)): revert snd to its unedited state (undo all)</em>
+    snd> "revert-sound" snd-help
+    (revert-sound (snd #f)): revert snd to its unedited state (undo all)
 </pre>
 If no help string can be found, or if the name doesn't come close to any currently defined name,
 snd-help runs through the current load path searching *.scm (or *.rb) files for a definition
 of that name.  So, if you haven't loaded dsp.scm:
 <pre>
-    :<em class=typing>(snd-help "volterra-filter")</em>
-    <em class=listener>"volterra-filter is not defined; it appears to be defined in:
+    :(snd-help "volterra-filter")
+    "volterra-filter is not defined; it appears to be defined in:
     /home/bil/cl/dsp.scm:1936:(define (volterra-filter flt x) <!-- ) -->
-    and documented at sndscm.html#volterrafilter"</em>
+    and documented at sndscm.html#volterrafilter"
 </pre>
 snd-help tries to be smart about minor mispellings:
 <pre>
-    :<em class=typing>(snd-help "close-soud")</em>
-    <em class=listener>"(close-sound (snd #f)): close snd
+    :(snd-help "close-soud")
+    "(close-sound (snd #f)): close snd
     Other possibilities:
-    close-sound is defined; it is documented at extsnd.html#closesound"</em>
+    close-sound is defined; it is documented at extsnd.html#closesound"
 </pre>
 To go to the
 HTML documentation for a given object, load <a href="sndscm.html#indexdoc">index.scm</a> and use the html function.
@@ -12693,10 +12691,10 @@ This displays 'str' in the listener, then returns 'str'.
 </td></tr><tr><td></td><td>
 This returns a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <pre>
-    <em class=listener>:</em><em class=typing>(temp-dir)</em>
-    <em class=listener>"/home/bil/zap/tmp"</em>
-    <em class=listener>:</em><em class=typing>(snd-tempnam)</em>
-    <em class=listener>"/home/bil/zap/tmp/snd_7000_2.snd"</em>
+    :(temp-dir)
+    "/home/bil/zap/tmp"
+    :(snd-tempnam)
+    "/home/bil/zap/tmp/snd_7000_2.snd"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12707,8 +12705,8 @@ This returns a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 </td></tr><tr><td></td><td>
 This is the url (in the Snd documentation) corresponding to 'name'; 'name' can be a string or a symbol.
 <pre>
-    <em class=listener>:</em><em class=typing>(snd-url 'open-sound)</em>
-    <em class=listener>"extsnd.html#opensound"</em>
+    :(snd-url 'open-sound)
+    "extsnd.html#opensound"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12719,8 +12717,8 @@ This is the url (in the Snd documentation) corresponding to 'name'; 'name' can b
 </td></tr><tr><td></td><td>
 This returns a list of lists, each inner list containing a Snd function name (as a string) and its associated url in the Snd documentation.
 <pre>
-    :<em class=typing>(assoc "open-sound" (snd-urls))</em>
-    <em class=listener>: ("open-sound" . "extsnd.html#opensound")</em>
+    :(assoc "open-sound" (snd-urls))
+    : ("open-sound" . "extsnd.html#opensound")
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12746,7 +12744,7 @@ This causes 'key' with modifiers 'state' and 'extended' to revert to its built-i
 
 
 
-<!-- ******************************** CONSTANTS ******************************** -->
+<!--  CONSTANTS  -->
 
 <div class="innerheader" id="sndconstants">Constants</div>
 
@@ -12869,7 +12867,7 @@ This causes 'key' with modifiers 'state' and 'extended' to revert to its built-i
 
 
 
-<!-- ******************************** ERRORS ******************************** -->
+<!--  ERRORS  -->
 
 <div class="innerheader" id="snderrors">Errors and debugging</div>
 <!-- INDEX snderrors:Debugging (Scheme) -->
@@ -12881,19 +12879,19 @@ and sometimes appends a stack trace.  So, as an example, selection-position
 throws 'no-active-selection if there isn't a selection:
 </p>
 <pre>
-    &gt;<em class=typing>(selection-position)</em>
-    <em class=listener>selection-position: no-active-selection</em>
-    &gt;<em class=typing>asdf</em>
-    <em class=listener>Unbound variable: asdf</em>
+    &gt; (selection-position)
+    selection-position: no-active-selection
+    &gt;asdf
+    Unbound variable: asdf
 </pre>
 <p>But there are cases where you'd rather handle an error (or all errors) specially.
 In the case of 'no-active-selection, we set up our own handler for that as follows:</p>
 <pre>
-&gt;<em class=typing>(catch 'no-active-selection 
+&gt; (catch 'no-active-selection 
        (lambda () 
          (+ 1 (<a class=quiet href="#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>))) 
-       (lambda (tag val) 0))</em>
-<em class=listener>0</em>
+       (lambda (tag val) 0))
+0
 </pre>
 <p>Here we've caught 'no-active-selection (if it occurs within the
 first thunk's body), and return 0 if it occurs; otherwise we return
@@ -13003,7 +13001,7 @@ There are a variety of functions and variables related to widget colors and so f
 </p>
 
 
-<!-- ******************************** COLORS ******************************** -->
+<!--  COLORS  -->
 
 <div class="innerheader" id="colors">Colors</div>
 
@@ -13011,7 +13009,7 @@ There are a variety of functions and variables related to widget colors and so f
 rgb (red green blue) settings as numbers between 0.0 and 1.0.  A color
 object is created via make-color:</p>
 <pre>
-    &gt;<em class=typing>(define blue (<a class=quiet href="#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 1))</em>
+    &gt; (define blue (<a class=quiet href="#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 1))
 </pre>
 <p>This declares the Scheme variable "blue" and gives it the value
 of the color whose rgb components include only blue in full force.
@@ -13019,7 +13017,7 @@ The X11 color names are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. The
 widget background color is basic-color.
 </p>
 <pre>
-    &gt;<em class=typing>(set! (<a class=quiet href="#basiccolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_basiccolor_tip)">basic-color</a>) blue)</em>
+    &gt; (set! (<a class=quiet href="#basiccolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_basiccolor_tip)">basic-color</a>) blue)
 </pre>
 
 <p>The color variables
@@ -13163,7 +13161,7 @@ Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
 
 
 
-<!-- ******************************** FONTS ******************************** -->
+<!--  FONTS  -->
 
 <div class="innerheader" id="fonts">Fonts</div>
 
@@ -13193,15 +13191,15 @@ The font variables are:
 If the requested font can't be loaded, the set! statement returns the old (unchanged) font name.
 </p>
 <pre>
-    &gt;<em class=typing>(set! (axis-label-font) "8x14")</em>
-    <em class=listener>"-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"</em>
+    &gt; (set! (axis-label-font) "8x14")
+    "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"
 </pre>
 
 
 
 <div class="innerheader" id="graphics">Graphics</div>
 
-<!-- ******************************** GRAPHICS ******************************** -->
+<!--  GRAPHICS  -->
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
 <!-- add-colormap -->
@@ -13286,8 +13284,8 @@ This returns #t if 'obj' is a color (a Pixel in xm jargon); see <a href="#makeco
 </td></tr><tr><td></td><td>
 This returns the rgb color components of 'obj' in a list.
 <pre>
-  <em class=listener>:</em><em class=typing>(color-&gt;list (make-color 1 0 0))</em>
-  <em class=listener>(1.0 0.0 0.0)</em>
+  :(color-&gt;list (make-color 1 0 0))
+  (1.0 0.0 0.0)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -13339,8 +13337,8 @@ spring-colormap, summer-colormap, rainbow-colormap, flag-colormap, and phases-co
 </td></tr><tr><td></td><td>
 colormap-name returns the specified colormap's name.
 <pre>
-  <em class=listener>:</em><em class=typing>(colormap-name (colormap))</em>
-  <em class=listener>"hot"</em>
+  :(colormap-name (colormap))
+  "hot"
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
