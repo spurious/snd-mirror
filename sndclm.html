@@ -36,6 +36,24 @@
         BODY.body {background-color: #ffffff;    /* white */
 	           margin-left: 0.5cm; 
                    }
+        TABLE.method {margin-top: 0.2cm;
+                      margin-bottom: 0.2cm;
+		      margin-left: 1.0cm;
+		      border: 1px solid gray;
+		      padding-left: 0.1cm;
+		      padding-right: 0.1cm;
+		      padding-top: 0.1cm;
+		      padding-bottom: 0.1cm;
+		      }	    
+        TD.methodtitle {background-color: beige;
+		  border: 1px solid gray;
+		  padding-top: 0.2cm;	
+		  padding-bottom: 0.2cm;
+		  text-align: center;
+		  }
+        TD.inner {padding-right: 0.5cm;
+	          padding-top: 0.1cm;
+	         }
         DIV.topheader {margin-top: 10px;
 	            margin-bottom: 40px;
 	            border: 4px solid #00ff00; /* green */
@@ -624,26 +642,16 @@ as the generator object:
 
 <p>There are many more such generators scattered around the Snd package, most now collected in generators.scm.
 I'm also writing pure-scheme versions of the built-in generators: big-gens.scm.  For comparison, here is the sinewave
-instrument in Grace (Common Music) and Snd-rt:
+instrument in Grace (Common Music):
 </p>
 <table border=0 hspace=40><tr><td>
 <pre>
-
 file "test.wav" () 
   with osc = make-oscil(440) 
   loop for i below 44100 
        outa(i, .1 * oscil(osc)) 
   end 
 end 
-
-
-snd-rt:
-
-(&lt;rt-out&gt; :len 1 (oscil :freq 440)) 
-
-(&lt;rt-stalin&gt;
-   (sound :dur 1:-s 
-     (out (oscil :freq 440)))) 
 </pre>
 </td></tr></table>
 
@@ -719,14 +727,14 @@ use <a href="#degreestoradians">degrees-&gt;radians</a> to convert from degrees 
 To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 </p>
 
-<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 class="beige"><center>oscil methods</center></td></tr>
-<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
-<tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
-<tr><td><em class=gen>mus-length</em></td><td>1 (no set!)</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
+<table class="method">
+<tr><td colspan=2 class="methodtitle">oscil methods</td></tr>
+<tr><td class="inner"><em class=gen>mus-frequency</em></td> <td class="inner">frequency in Hz</td></tr>
+<tr><td class="inner"><em class=gen>mus-phase</em></td>     <td class="inner">phase in radians</td></tr>
+<tr><td class="inner"><em class=gen>mus-length</em></td>    <td class="inner">1 (no set!)</td></tr>
+<tr><td class="inner"><em class=gen>mus-increment</em></td> <td class="inner">frequency in radians per sample</td></tr>
 </table>
-<br>
+
 <pre>
   (let ((result (sin (+ phase pm-input))))
     (set! phase (+ phase (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency) fm-input))
@@ -734,7 +742,6 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 <!--  <img src="pix/sceq9.png" alt="fnm equation" hspace=10 vspace=10> -->
 </pre>
 <!-- LATEX: \cos \, (\omega_{c}t+B\sin \omega_{m}t)\:=\!\!\sum_{n=-\infty}^{\infty} \! \! J_{n}(B)\cos(\omega_{c} + n\omega_{m})t -->
-<br clear=left>
 
 <p>One slightly confusing aspect of oscil is that glissando has to be turned into a phase-increment envelope.
 This means that the frequency envelope y values should be passed through <a href="#hztoradians">hz-&gt;radians</a>:

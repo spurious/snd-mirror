@@ -26975,6 +26975,13 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 }
 
 
+/* TODO: (error-environment) which does not get clobbered (sc->error_env?)
+ *       error itself as a bacro, not a function
+ *       would hooks be better as bacros?  
+ *         hook as always of 1 arg=caller's env...
+ *  the only thing *error-info* gives us outside the bacro env is the code -- add as an opt arg? (bacro*)
+ *    -- a continuation?
+ */
 #define ERROR_INFO_DEFAULT sc->F
 #define ERROR_TYPE 0
 #define ERROR_DATA 1

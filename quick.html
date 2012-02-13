@@ -1,6 +1,9 @@
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
 <title>Snd Quick Overview</title>
+
 <style type="text/css">
 	EM.red {color:red; font-style: normal}
         EM.error {color:chocolate; font-style: normal}
@@ -43,6 +46,21 @@
 		     padding-bottom: 10px;
 		     background-color: #f0f0f0;
 	            }
+        TABLE.method {margin-top: 0.5cm;
+                      margin-bottom: 0.5cm;
+		      margin-left: 1.0cm;
+		      border: 1px solid gray;
+		      padding-left: 0.1cm;
+		      padding-right: 0.1cm;
+		      padding-top: 0.1cm;
+		      padding-bottom: 0.1cm;
+		      }	    
+        TH.title {background-color: lightgreen;
+		  border: 1px solid gray;
+		  padding-top: 0.2cm;	
+		  padding-bottom: 0.2cm;
+		  text-align: center;
+		  }
 </style>
 </head>
 <body class="body">
@@ -63,8 +81,10 @@ related documentation: &nbsp;
 
 
 
-<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#colors">Colors</a></th><tr><td>
-<blockquote><small><br>
+<table class="method">
+<tr><th class="title"><a class=quiet href="extsnd.html#colors">Colors</a></th></tr>
+<tr><td>
+<blockquote><small>
 Other color-related stuff:<br>
 Color names: <a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a><br>
 colors in the file dialogs: install-searcher-with-colors in snd-motif.scm<br>
@@ -78,15 +98,16 @@ openGL: snd-gl.scm, <a href="grfsnd.html#sndandgl">Snd and OpenGL</a><br>
 fancy widget backgrounds: new-backgrounds.scm in the tutorial<br>
 color hook: <a href="extsnd.html#colorhook">color-hook</a><br>
 Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
-<br></small></blockquote>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Conversions</th><tr><td>
-<table border=0 cellspacing=0 cellpadding=0><tr>
-<td>
-<blockquote><small><br>
+
+
+<table class="method">
+<tr><th class="title" colspan=4>Conversions</th></tr>
+<tr><td>
+<blockquote><small>
 <a href="sndclm.html#arraytofile">array-&gt;file</a><br>
 <a href="extsnd.html#channeltovct">channel-&gt;vct</a><br>
 <a href="extsnd.html#colortolist">color-&gt;list</a><br>
@@ -147,14 +168,13 @@ Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
 <a href="extsnd.html#vectortovct">vector-&gt;vct</a><br>
 </small></blockquote>
 </td></tr></table>
-</td></tr></table>
 
 
 
-<br>
-<table border=3 hspace=40><th class="green">Copying</th><tr><td>
+
+<table class="method">
+<tr><th class="title">Copying</th></tr><tr><td>
 <blockquote><small>
-<br>
 copy file: in Ruby: File.copy or File.syscopy<br>
 copy vct: <a href="extsnd.html#vctcopy">vct-copy</a>, <a href="extsnd.html#vcttovector">vct-&gt;vector</a>, <a href="sndscm.html#vcttoframe">vct-&gt;frame</a><br>
 copy mix: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
@@ -167,15 +187,14 @@ copy transform data: <a href="extsnd.html#transformtovct">transform-&gt;vct</a><
 copy sound-data: <a href="extsnd.html#sounddatatovct">sound-data-&gt;vct</a><br>
 copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 copy vector: <a href="extsnd.html#vectortovct">vector-&gt;vct</a><br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Cursor</th><tr><td>
+
+<table class="method">
+<tr><th class="title">Cursor</th></tr><tr><td>
 <blockquote><small>
-<br>
 Tracking cursor: <a href="extsnd.html#withtrackingcursor">with-tracking-cursor</a><br>
 Change cursor shape or size: <a href="extsnd.html#cursorstyle">cursor-style</a>, <a href="extsnd.html#cursorsize">cursor-size</a><br>
 Cursor moving keys: <a href="snd.html#movecursor">Moving the Cursor</a><br>
@@ -186,14 +205,14 @@ track play once: control-click 'play'. (You can add a mark at the current tracki
 leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm<br>
 tracking cursor accuracy: <a href="extsnd.html#cursorlocationoffset">cursor-location-offset</a><br>
 tracking cursor updating: <a href="extsnd.html#cursorupdateinterval">cursor-update-interval</a><br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Deletions</th><tr><td>
-<small><blockquote>
+
+<table class="method">
+<tr><th class="title">Deletions</th></tr><tr><td>
+<blockquote><small>
 delete a file: in scheme delete-file or Ruby's File.delete<br>
 delete a region: <a href="extsnd.html#forgetregion">forget-region</a><br>
 delete the currently selected samples: <a href="extsnd.html#deleteselection">delete-selection</a><br>
@@ -206,15 +225,14 @@ remove a menu item: <a href="extsnd.html#removefrommenu">remove-from-menu</a> or
 delete a mix or all mixes: <a href="sndscm.html#silenceallmixes">silence-mixes</a><br>
 add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a><br>
 Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! string-delete<br>
-<br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Envelopes</th><tr><td>
+
+<table class="method">
+<tr><th class="title">Envelopes</th></tr><tr><td>
 <blockquote><small>
-<br>
 envelope sound: <a href="extsnd.html#envchannel">env-channel</a>, <a href="extsnd.html#envsound">env-sound</a><br>
 other enveloping functions: <a href="extsnd.html#rampchannel">ramp-channel</a>, <a href="extsnd.html#xrampchannel">xramp-channel</a>, <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
 The CLM env generator: <a href="sndclm.html#make-env">env</a>, many examples in examp.scm, new-effects.scm, etc<br>
@@ -234,14 +252,14 @@ envelope with <a href="sndclm.html#ncos">ncos</a> connections: <a href="sndscm.h
 Customizing the envelope editor: <a href="extsnd.html#envedhook">enved-hook</a><br>
 peak amp follower: <a href="sndclm.html#moving-max">moving-max</a><br>
 step envelope in pitch: <a href="sndclm.html#rxyk!cos">brassy</a> in generators.scm<br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">FFTs</th><tr><td>
-<small><blockquote>
+
+<table class="method">
+<tr><th class="title">FFTs</th></tr><tr><td>
+<blockquote><small>
 Snd fft function: <a href="extsnd.html#fft">fft</a><br>
 CLM fft function: <a href="sndclm.html#fft">mus-fft</a><br>
 CLM spectrum: <a href="sndclm.html#spectrum">spectrum</a><br>
@@ -273,14 +291,14 @@ More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fou
 3D (single) fft display: <a href="sndscm.html#complexify">complexify</a><br>
 bark, mel, erb scale display: <a href="sndscm.html#displaybarkfft">display-bark-fft</a><br>
 apply function to spectrum, inverse fft: <a href="sndscm.html#filterfft">filter-fft</a><br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Filters</th><tr><td>
+
+<table class="method">
+<tr><th class="title">Filters</th></tr><tr><td>
 <blockquote><small>
-<br>
 filter a sound: <a href="extsnd.html#filtersound">filter-sound</a>, <a href="extsnd.html#filterchannel">filter-channel</a>, and <a href="extsnd.html#clmchannel">clm-channel</a><br>
 filter the selection: <a href="extsnd.html#filterselection">filter-selection</a>, <a href="sndscm.html#filterselectionandsmooth">filter-selection-and-smooth</a><br>
 CLM filter generators: <a href="sndclm.html#filterdoc">filter, one-pole, formant, comb, notch, all-pass, etc</a><br>
@@ -313,14 +331,14 @@ graphical equalizer filter bank: <a href="sndscm.html#clminsdoc">graphEq</a><br>
 nonlinear (Volterra) filter: <a href="sndscm.html#volterrafilter">volterra-filter</a><br>
 Kalman filter: <a href="sndscm.html#kalmanfilterchannel">kalman-filter-channel</a><br>
 see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a><br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Insertions</th><tr><td>
-<small><blockquote>
+
+<table class="method">
+<tr><th class="title">Insertions</th></tr><tr><td>
+<blockquote><small>
 insert some portion of a channel: <a href="sndscm.html#insertchannel">insert-channel</a><br>
 insert a silence: <a href="extsnd.html#padchannel">pad-channel</a>, <a href="extsnd.html#insertsilence">insert-silence</a>, <a href="sndscm.html#padsound">pad-sound</a><br>
 insert a region: <a href="extsnd.html#insertregion">insert-region</a><br>
@@ -330,14 +348,14 @@ insert a sound: <a href="extsnd.html#insertsound">insert-sound</a><br>
 append a sound and silence: <a href="extsnd.html#appendsound">append-sound</a><br>
 insert a frame: <a href="sndscm.html#insertframe">insert-frame</a><br>
 insert sound-data: <a href="sndscm.html#insertsounddata">insert-sound-data</a><br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#sndmarks">Marks</a></th><tr><td>
+
+<table class="method">
+<tr><th class="title"><a class=quiet href="extsnd.html#sndmarks">Marks</a></th></tr><tr><td>
 <blockquote><small>
-<br>
 global find-mark: <a href="sndscm.html#marknametoid">mark-name-&gt;id</a><br>
 mark history: <a href="sndscm.html#describemark">describe-mark</a><br>
 synchronize marks by inserting silences: <a href="sndscm.html#syncup">syncup</a><br>
@@ -355,14 +373,13 @@ mark property lists: <a href="extsnd.html#markproperty">mark-property</a><br>
 save mark properties in saved state file: <a href="sndscm.html#savemarkproperties">save-mark-properties</a><br>
 show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-info</a><br>
 </small></blockquote>
-<br>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Maxamps</th><tr><td>
+
+<table class="method">
+<tr><th class="title">Maxamps</th></tr><tr><td>
 <blockquote><small>
-<br>
 Sound file maxamp: <a href="extsnd.html#mussoundmaxamp">mus-sound-maxamp</a><br>
 Region maxamp: <a href="extsnd.html#regionmaxamp">region-maxamp</a><br>
 Selection maxamp: <a href="extsnd.html#selectionmaxamp">selection-maxamp</a><br>
@@ -371,15 +388,14 @@ Vct maxamp: <a href="extsnd.html#vctpeak">vct-peak</a><br>
 To set the y axis bounds to reflect the channel's maxamp: <a href="extsnd.html#ybounds">y-bounds</a><br>
 Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 maxamp locations: <a href="extsnd.html#maxampposition">maxamp-position</a>, <a href="extsnd.html#regionmaxampposition">region-maxamp-position</a>, <a href="extsnd.html#selectionmaxampposition">selection-maxamp-position</a>
-<br><br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#sndmixes">Mixing</a></th><tr><td>
+
+<table class="method">
+<tr><th class="title"><a class=quiet href="extsnd.html#sndmixes">Mixing</a></th></tr><tr><td>
 <blockquote><small>
-<br>
 mix sound file: <a href="extsnd.html#mix">mix</a> or drag-and-drop it where you want it mixed<br>
 mix channel: see <a href="sndscm.html#mixchannel">mix-channel</a> in extensions.scm<br>
 mix region: <a href="extsnd.html#mixregion">mix-region</a><br>
@@ -401,14 +417,14 @@ zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
 snap mix to beat after drag: <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a><br>
 delete all mixes: <a href="sndscm.html#silenceallmixes">silence-all-mixes</a><br>
 with-sound (a notelist) expanded into mixes: <a href="sndscm.html#withmixedsound">with-mixed-sound</a><br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Play</th><tr><td>
-<small><blockquote>
+
+<table class="method">
+<tr><th class="title">Play</th></tr><tr><td>
+<blockquote><small>
 play from cursor: C-q and example above<br>
 play from cursor with tracking cursor: <a href="extsnd.html#pfc">pfc</a> above<br>
 play the selection: (play (selection)), <a href="snd.html#cxp">C-x p</a><br>
@@ -430,15 +446,13 @@ send arbitrary data to the DAC: <a href="extsnd.html#musaudiowrite">mus-audio-wr
 play after sending the data through some function: <a href="sndscm.html#playsound">play-sound</a><br>
 play with applied amplitude envelope: <a href="sndscm.html#playwithenvs">play-with-envs</a>, <a href="sndscm.html#playpanned">play-panned</a><br>
 play an external file: (play "file")<br>
-<br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Random numbers</th><tr><td>
+<table class="method">
+<tr><th class="title">Random numbers</th></tr><tr><td>
 <blockquote><small>
-<br>
 generators, arbitrary distributions, fractals, 1/f: <a href="sndclm.html#randdoc">rand and rand-interp</a>, <a href="sndclm.html#round-interp">round-interp</a><br>
 dithering: <a href="sndscm.html#ditherchannel">dither-channel</a>, <a href="sndscm.html#dithersound">dither-sound</a><br>
 noise-making instrument: <a href="sndscm.html#noisedoc">noise.scm, noise.rb</a><br>
@@ -450,14 +464,13 @@ Ruby: kernel_rand (alias for Ruby's rand), srand: random integer between 0 and a
 mus-rand-seed (settable)<br>
 bounded brownian noise: <a href="sndclm.html#green-noise">green-noise</a><br>
 brown and pink noise: <a href="sndclm.html#brown-noise">brown-noise</a><br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#sndregions">Regions</a></th><tr><td>
-<small><blockquote>
+<table class="method">
+<tr><th class="title"><a class=quiet href="extsnd.html#sndregions">Regions</a></th></tr><tr><td>
+<blockquote><small>
 Max length of region list: <a href="extsnd.html#maxregions">max-regions</a><br>
 Whether selection creates a region: <a href="extsnd.html#selectioncreatesregion">selection-creates-region</a><br>
 To play region repeatedly: <a href="sndscm.html#playregionforever">play-region-forever</a><br>
@@ -469,14 +482,13 @@ region-play-list and region-play-sequence in examp.scm<br>
 <a href="sndscm.html#regiontoframe">region-&gt;frame</a><br>
 <a href="sndscm.html#regiontosounddata">region-&gt;sound-data</a><br>
 <a href="sndscm.html#makeregionframereader">make-region-frame-reader</a><br>
-<br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Resampling</th><tr><td>
-<small><blockquote>
+<table class="method">
+<tr><th class="title">Resampling</th></tr><tr><td>
+<blockquote><small>
 resample channel: <a href="extsnd.html#srcchannel">src-channel</a><br>
 resample all chans: <a href="extsnd.html#srcsound">src-sound</a><br>
 resample selection: <a href="extsnd.html#srcsoundselection">src-selection</a><br>
@@ -495,15 +507,13 @@ resample through list: <a href="sndscm.html#scratch">scratch</a><br>
 resample step-size through a function: <a href="extsnd.html#setsamples">step-src</a><br>
 predict duration of resampled sound: <a href="sndscm.html#srcduration">src-duration</a><br>
 linear src: linear-src-channel in dsp.scm<br>
-<br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Reverbs</th><tr><td>
+<table class="method">
+<tr><th class="title">Reverbs</th></tr><tr><td>
 <blockquote><small>
-<br>
 freeverb: <a href="sndscm.html#freeverbdoc">freeverb.scm, freeverb.rb</a><br>
 jc-reverb: <a href="sndscm.html#jcrevdoc">jcrev.scm</a><br>
 jl-reverb: <a href="sndscm.html#clminsdoc">clm-ins.scm</a><br>
@@ -511,16 +521,14 @@ nrev: <a href="sndscm.html#clminsdoc">clm-ins.scm</a><br>
 control panel reverb: <a href="snd.html#reverb">Reverb</a>, <a href="extsnd.html#reverbdecay">control variables</a><br>
 convolution reverb: <a href="extsnd.html#convolvewith">conrev</a><br>
 *reverb*: <a href="sndscm.html#wsdoc">with-sound</a><br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
 
-<br>
-<table border=3 hspace=40><th class="green">Reversing</th><tr><td>
+<table class="method">
+<tr><th class="title">Reversing</th></tr><tr><td>
 <blockquote><small>
-<br>
 reverse channel: <a href="extsnd.html#reversechannel">reverse-channel</a>, <a href="extsnd.html#reversesound">reverse-sound</a><br>
 reverse selected portion: <a href="extsnd.html#reverseselection">reverse-selection</a><br>
 read samples in reverse: use <a href="extsnd.html#makesampler">make-sampler</a> with direction -1<br>
@@ -534,14 +542,13 @@ reverse a list: reverse and reverse!<br>
 reverse a string: in Ruby: reverse<br>
 reverse vct: <a href="extsnd.html#vctreverse">vct-reverse!</a><br>
 reverse a frame: <a href="sndscm.html#framereverse">frame-reverse</a><br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Saving</th><tr><td>
-<small><blockquote>
+<table class="method">
+<tr><th class="title">Saving</th></tr><tr><td>
+<blockquote><small>
 save sound: <a href="extsnd.html#savesound">save-sound</a><br>
 save all sounds: <code>(for-each save-sound (sounds))</code><br>
 save a sound under a different name: <a href="extsnd.html#savesoundas">save-sound-as</a><br>
@@ -566,14 +573,13 @@ save just the edit history: <a href="extsnd.html#saveedithistory">save-edit-hist
 take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>
 save the current sound setup for a later reopen: <a href="extsnd.html#remembersoundstate">remember-sound-state</a><br>
 save the current fft peak info: <a href="extsnd.html#peaks">peaks</a><br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Searches</th><tr><td>
+<table class="method">
+<tr><th class="title">Searches</th></tr><tr><td>
 <blockquote><small>
-<br>
 find a mark: <a href="extsnd.html#findmark">find-mark</a><br>
 find a mix: <a href="sndscm.html#findmix">find-mix</a><br>
 find a sound: <a href="extsnd.html#findsound">find-sound</a><br>
@@ -589,14 +595,13 @@ search a multichannel sound: <a href="sndscm.html#scansound">scan-sound</a><br>
 find a widget: find-child in snd-motif.scm<br>
 add C-s and C-r to the listener key bindings: add-find-to-listener in snd-motif.scm<br>
 Scheme find: find-if<br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green"><a class=quiet href="extsnd.html#sndregions">Selections</a></th><tr><td>
-<small><blockquote>
+<table class="method">
+<tr><th class="title"><a class=quiet href="extsnd.html#sndregions">Selections</a></th></tr><tr><td>
+<blockquote><small>
 show the current selection: <a href="extsnd.html#showselection">show-selection</a><br>
 color of selected portion: <a href="extsnd.html#selectioncolor">selection-color</a><br>
 set whether creating a selection creates a region: <a href="extsnd.html#selectioncreatesregion">selection-creates-region</a><br>
@@ -620,14 +625,13 @@ undo select-all.: <a href="sndscm.html#menusdoc">deselect-all</a><br>
 filter the selection: <a href="extsnd.html#filterselection">filter-selection</a>, <a href="sndscm.html#filterselectionandsmooth">filter-selection-and-smooth</a><br>
 turn the selection into a mix: <a href="extsnd.html#selectiontomix">selection-&gt;mix</a><br>
 unselect everything: <a href="extsnd.html#unselectall">unselect-all</a><br>
-<br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Smoothing</th><tr><td>
-<small><blockquote>
+<table class="method">
+<tr><th class="title">Smoothing</th></tr><tr><td>
+<blockquote><small>
 smooth channel: <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
 smooth all channels: <a href="extsnd.html#smoothsound">smooth-sound</a><br>
 smooth selection: <a href="extsnd.html#smoothselection">smooth-selection</a><br>
@@ -636,14 +640,13 @@ smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
 smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 smooth via low-pass <a href="extsnd.html#filtersinsnd">filter</a><br>
 smooth over click: <a href="sndscm.html#removeclicks">remove-clicks</a> in examp.scm<br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Time Domain Display</th><tr><td>
+<table class="method">
+<tr><th class="title">Time Domain Display</th></tr><tr><td>
 <blockquote><small>
-<br>
 Built-in keyboard commands: <a href="snd.html#movewindow">Moving the Window</a><br>
 Specialized keyboard commands: <a href="extsnd.html#bindkey">bind-key</a><br>
 Window size: <a href="extsnd.html#xzoomslider">x-zoom-slider</a>, <a href="extsnd.html#zoomonepixel">zoom-one-pixel</a>, <br>
@@ -659,14 +662,13 @@ selection fft: <a href="extsnd.html#showselectiontransform">show-selection-trans
 <br>
 general info:<br>
 Axis description: <a href="extsnd.html#axisinfo">axis-info</a><br>
-<br>
 </small></blockquote>
 </td></tr></table>
 
 
-<br>
-<table border=3 hspace=40><th class="green">Undo</th><tr><td>
-<small><blockquote>
+<table class="method">
+<tr><th class="title">Undo</th></tr><tr><td>
+<blockquote><small>
 undo edit: <a href="extsnd.html#undo">undo</a> and <a href="extsnd.html#undochannel">undo-channel</a><br>
 undo all edits: <a href="extsnd.html#revertsound">revert-sound</a><br>
 specialize undo: <a href="extsnd.html#undohook">undo-hook</a><br>
@@ -674,9 +676,7 @@ protect against undo: <a href="extsnd.html#edithook">edit-hook</a><br>
 redo edit: <a href="extsnd.html#redo">redo</a> and <a href="extsnd.html#redochannel">redo-channel</a><br>
 move around in edit list: <a href="extsnd.html#editposition">edit-position</a> and <a href="extsnd.html#currenteditposition">current-edit-position</a><br>
 About edit lists: <a href="extsnd.html#editlists">Edit lists</a><br><br>
-</blockquote></small>
+</small></blockquote>
 </td></tr></table>
-
-
 
 </body></html>
