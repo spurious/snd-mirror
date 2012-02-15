@@ -1208,12 +1208,13 @@
 				 (let ((c (line i)))
 
 				   (if (char=? c #\<)
-				       (if start
-					   (if (and (not scripting)
-						    (not (> p-quotes 0)))
-					       (format #t "~A[~D]: nested < ~A~%" file linectr line))
-					   (set! start i))
-
+				       (begin
+					 (if start
+					     (if (and (not scripting)
+						      (not (> p-quotes 0)))
+						 (format #t "~A[~D]: nested < ~A~%" file linectr line))
+					     (set! start i))
+					 )
 				       (if (char=? c #\/)
 					   (if (and start (= start (- i 1)))
 					       (set! closing #t))
@@ -1228,6 +1229,8 @@
 						       (begin
 							 (if closing
 							     (let ((closer (checked-substring line (+ start 2) i)))
+							       (if (string-ci=? closer "center")
+								   (format #t "~A[~D]: </center> is obsolete, ~A~%" file linectr line))
 							       (if (string-ci=? closer "script")
 								   (set! scripting #f)
 								   (if (not scripting)
@@ -1284,6 +1287,8 @@
 							     ;; not closing
 							     (if (not scripting)
 								 (let ((opener (checked-substring line (+ start 1) i)))
+								   (if (string-ci=? opener "center")
+								       (format #t "~A[~D]: <center> is obsolete, ~A~%" file linectr line))
 								   (if (string-ci=? opener "script")
 								       (set! scripting #t)
 								       (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
