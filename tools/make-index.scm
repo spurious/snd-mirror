@@ -1229,8 +1229,10 @@
 						       (begin
 							 (if closing
 							     (let ((closer (checked-substring line (+ start 2) i)))
-							       (if (string-ci=? closer "center")
-								   (format #t "~A[~D]: </center> is obsolete, ~A~%" file linectr line))
+							       (if (or (string-ci=? closer "center")
+								       (string-ci=? closer "big")
+								       (string-ci=? closer "font"))
+								   (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
 							       (if (string-ci=? closer "script")
 								   (set! scripting #f)
 								   (if (not scripting)
@@ -1287,8 +1289,10 @@
 							     ;; not closing
 							     (if (not scripting)
 								 (let ((opener (checked-substring line (+ start 1) i)))
-								   (if (string-ci=? opener "center")
-								       (format #t "~A[~D]: <center> is obsolete, ~A~%" file linectr line))
+								   (if (or (string-ci=? opener "center")
+									   (string-ci=? opener "big")
+									   (string-ci=? opener "font"))
+								       (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
 								   (if (string-ci=? opener "script")
 								       (set! scripting #t)
 								       (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
