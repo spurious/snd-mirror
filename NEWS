@@ -10,8 +10,8 @@ Snd 12.9
 
   s7: added random-state?, hash-table-iterator?, and morally-equal?
 
-  removed snd1.html, snd-contents.html (the other html files are moving
-    to HTML5 as rapidly as possible)
+  clm/cmn/snd/s7: removed snd1.html and snd-contents.html, and 
+    translated the rest of the html files to html5
   
 
 checked: clang 1.7, gmp 5.0.3, gtk 3.3.14

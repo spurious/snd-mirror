@@ -719,18 +719,11 @@
 			   (indpos (string-position "<!-- main-index" dline))
 			   (xpos (string-position "<TABLE " dline))
 			   (unxpos (string-position "</TABLE>" dline))
-			   (pos-simple (and (not compos) 
-					    (not indpos)
-					    (or (string-position "<a name=" dline)
-						(and with-clm-locals 
-						     (string-position "<a Name=" dline)))))
 			   (pos-def (and (not compos) 
 					 (not indpos)
-					 (or (string-position "<a class=def name=" dline)
-					     (string-position "<em class=def id=" dline)
-					     (and with-clm-locals 
-						  (string-position "<a class=def Name=" dline)))))
-			   (pos (or pos-simple pos-def))
+					 (string-position "<em class=def id=" dline)
+					 ))
+			   (pos pos-def)
 			   (tpos (and (not pos) 
 				      (string-position "<!-- TOPIC " line))))
 		      (if unxpos 
@@ -776,15 +769,12 @@
 						(set! (topics n) topic)
 						(incf n)
 						(set! dline (checked-substring dline (+ epos 4)))
-						(set! pos-simple (or (string-position "<a name=" dline)
-								     (and with-clm-locals 
-									  (string-position "<a Name=" dline))))
 						(set! pos-def (or (string-position "<a class=def name=" dline)
 								  (string-position "<em class=def id=" dline)
 								  (string-position "<A class=def name=" dline)
 								  (and with-clm-locals 
 								       (string-position "<a class=def Name=" dline))))
-						(set! pos (or pos-simple pos-def))
+						(set! pos pos-def)
 						))))))))
 		      (if (and xrefing
 			       (or (not (char=? (dline 0) #\<))
@@ -1360,11 +1350,10 @@
 					  
 			 ;; search for name
 			 (let* ((dline line)
-				(pos-simple (string-ci-position "<a name=" dline))
-				(pos-def (string-ci-position "<a class=def name=" dline))
 				(pos-def1 (string-ci-position "<em class=def id=" dline))
-				(pos (or pos-simple pos-def pos-def1))
-				(pos-len (if pos-simple 9 (if pos-def 19 18))))
+				(pos pos-def1) ;(or pos-def pos-def1))
+				(pos-len 18))
+
 			   (do ()
 			       ((not pos))
 			     (set! dline (checked-substring dline (+ pos pos-len)))
@@ -1373,7 +1362,7 @@
 					     (string-position "</A>" dline))))
 			       ;;actually should look for close double quote
 			       (if (not epos) 
-				   (begin (format #t "~A[~D]: <a name> but no </a> for ~A~%" file linectr dline) (abort))
+				   (begin (format #t "~A[~D]: <em...> but no </em> for ~A~%" file linectr dline) (abort))
 				   (let ((min-epos (char-position #\space dline)))
 				     (set! epos (char-position #\> dline))
 				     (if (and (number? min-epos)
@@ -1387,11 +1376,9 @@
 					     (format #t "~A[~D]: ambiguous name: ~A~%" file linectr (vector-ref names i)))))
 				     (incf name)
 				     (set! dline (checked-substring dline epos))
-				     (set! pos-simple (string-ci-position "<a name=" dline))
-				     (set! pos-def (string-ci-position "<a class=def name=" dline))
 				     (set! pos-def1 (string-ci-position "<em class=def id=" dline))
-				     (set! pos (or pos-simple pos-def pos-def1))
-				     (set! pos-len (if pos-simple 9 (if pos-def 19 18))))))))
+				     (set! pos pos-def1)
+				     (set! pos-len 18))))))
 					  
 			 ;; search for href
 			 (let* ((dline line)
