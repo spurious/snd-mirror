@@ -1305,6 +1305,10 @@
 											  (not (string-ci-list-position "tr" commands)))
 										     (format #t "~A[~D]: td without tr?~%" file linectr))
 												    
+;										 (if (and (string-ci=? opener "div")
+;											  (string-ci-list-position "div" commands))
+;										     (format #t "~A[~D]: nested div?~%" file linectr))
+
 										 (if (and (string-ci=? opener "td")
 											  (not (string-ci=? "tr" (car commands))))
 										     (format #t "~A[~D]: td without tr?~%" file linectr))
