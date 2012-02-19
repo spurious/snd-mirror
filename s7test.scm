@@ -14420,6 +14420,12 @@ in s7:
 (test (define . x) 'error)
 (test (define x 1 2) 'error)
 (test (define x x) 'error)
+(test (define x x x) 'error)
+(test (define x x . x) 'error)
+(test (let ((x 0)) (define x (x . x))) 'error)
+(test (define (x x) . x) 'error)
+(test (define (x x) x . x) 'error)
+(test (let () (define (x x) x) (x 0)) 0)
 (test (define (x 1)) 'error)
 (test (define (x)) 'error)
 (test (define 1 2) 'error)
@@ -19490,466 +19496,467 @@ abs     1       2
   (let ((val (first_even '(1 3 5 6 7 8 9))))
     (if (not (equal? val (list 6)))
 	(format #t "first_even (tagbody, gensym, reverse!) (6): '~A~%" val)))
-  
-  (let ((hi (lambda* (a) a)))
-    (test (hi 1) 1)
-    (test (hi) #f)          ; all args are optional
-    (test (hi :a 32) 32)    ; all args are keywords
-    (test (hi 1 2) 'error)  ; extra args
-    
-    (for-each
-     (lambda (arg)
-       (test (hi arg) arg)
-       (test (hi :a arg) arg))
-     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2)))
-    
-    (test (hi :b 1) 'error))
-  
-  (let ((hi (lambda* ((a 1)) a)))
-    (test (hi 2) 2)
-    (test (hi) 1)
-    (test (hi :a 2) 2)
-    
-    (for-each
-     (lambda (arg)
-       (test (hi arg) arg)
-       (test (hi :a arg) arg))
-     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2))))
-  
-  (let ((hi (lambda* (a (b "hi")) (list a b))))
-    (test (hi) (list #f "hi"))
-    (test (hi 1) (list 1 "hi"))
-    (test (hi 1 2) (list 1 2))
-    (test (hi :b 1) (list #f 1))
-    (test (hi :a 1) (list 1 "hi"))
-    (test (hi 1 :b 2) (list 1 2))
-    (test (hi :b 3 :a 1) (list 1 3))
-    (test (hi :a 3 :b 1) (list 3 1))
-    (test (hi 1 :a 3) 'error)
-    (test (hi 1 2 :a 3) 'error) ; trailing (extra) args
-    (test (hi :a 2 :c 1) 'error)
-    (test (hi 1 :c 2) 'error)
-    
-    (for-each
-     (lambda (arg)
-       (test (hi :a 1 :b arg) (list 1 arg))
-       (test (hi :a arg) (list arg "hi"))
-       (test (hi :b arg) (list #f arg))
-       (test (hi arg arg) (list arg arg)))
-     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2))))
-  
-  (let ((hi (lambda* (a :key (b 3) :optional c) (list a b c))))
-    (test (hi) (list #f 3 #f))
-    (test (hi 1) (list 1 3 #f))
-    (test (hi :c 32) (list #f 3 32))
-    (test (hi :c 32 :b 43 :a 54) (list 54 43 32))
-    (test (hi 1 2 3) (list 1 2 3))
-    (test (hi :b 32) (list #f 32 #f))
-    (test (hi 1 2 :c 32) (list 1 2 32)))
-  
-  (let ((hi (lambda* (a :rest b) (list a b))))
-    (test (hi 1 2 3) (list 1 (list 2 3)))
-    (test (hi) (list #f ()))
-    (test (hi :a 2) (list 2 '()))
-    (test (hi :b 3) (list #f 3)))
-  
-  (let ((hi (lambda* (a :rest b :rest c) (list a b c))))
-    (test (hi 1 2 3 4 5) (list 1 (list 2 3 4 5) (list 3 4 5))))
-  
-  (let ((hi (lambda* ((a 3) :key (b #t) :optional (c pi) :rest d) (list a b c d))))
-    (test (hi) (list 3 #t pi ()))
-    (test (hi 1 2 3 4) (list 1 2 3 (list 4))))
-  
-  (let ((hi (lambda* ((a 'hi)) (equal? a 'hi))))
-    (test (hi) #t)
-    (test (hi 1) #f)
-    (test (hi 'hi) #t)
-    (test (hi :a 1) #f))
-  
-  (let* ((x 32)
-	 (hi (lambda* (a (b x)) (list a b))))
-    (test (hi) (list #f 32))
-    (test (hi :a 1) (list 1 32)))
-  
-  (let ((hi (lambda* (a . b) (list a b))))
-    (test (hi 1 2 3) (list 1 (list 2 3)))
-    (test (hi) (list #f ()))
-    (test (hi :a 2) (list 2 '()))
-    (test (hi :b 3) (list #f 3)))
-  
-  (let ((hi (lambda* ((a 0.0) :optional (b 0.0)) (+ a b))))
-    (num-test (hi 1.0) 1.0)
-    (num-test (hi 1.0 2.0) 3.0)
-    (num-test (hi) 0.0)
-    (num-test (+ (hi) (hi 1.0) (hi 1.0 2.0)) 4.0)
-    (num-test (+ (hi 1.0) (hi) (hi 1.0 2.0)) 4.0)
-    (num-test (+ (hi 1.0) (hi 1.0 2.0) (hi)) 4.0)
-    (num-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0))
-  
-  (test (let ((hi (lambda*))) (hi)) 'error)
-  (test (let ((hi (lambda* #f))) (hi)) 'error)
-  (test (let ((hi (lambda* "hi" #f))) (hi)) 'error)
-  (test (let ((hi (lambda* ("hi") #f))) (hi)) 'error)
-  (test (let ((hi (lambda* (a 0.0) a))) (hi)) 'error)
-  (test (let ((hi (lambda* (a . 0.0) a))) (hi)) 'error)
-  (test (let ((hi (lambda* ((a . 0.0)) a))) (hi)) 'error)
-  (test (let ((hi (lambda* ((a 0.0 "hi")) a))) (hi)) 'error)
-  (test (let ((hi (lambda* ((a 0.0 . "hi")) a))) (hi)) 'error)
-  (test (let ((hi (lambda* ((a)) a))) (hi)) 'error)
-  (test (let ((hi (lambda* (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
-  
-  (test (let () (define* (hi) 0) (hi)) 0)
-  (test (let () (define* (hi a . b) b) (hi 1 2 3)) '(2 3))
-  (test (let () (define* (hi a . b) b) (hi :a 1 2 3)) '(2 3))
-  (test (let () (define* (hi a . b) b) (hi 1)) '())
-  (test (let () (define* (hi a . b) b) (hi :a 1)) '())
-  (test (let () (define* (hi a . b) b) (hi)) '())
-  (test (let () (define* (hi a . a) a) (hi)) 'error)
-  (test (let () (define* (hi (a 1) . a) a) (hi)) 'error)
-  (test (let () (define* (hi (a 1) . b) b) (hi 2 3 4)) '(3 4))
-  
-  (test (let () (define* (hi a :rest b) b) (hi 1 2 3)) '(2 3))
-  (test (let () (define* (hi a :rest b) b) (hi :a 1 2 3)) '(2 3))
-  (test (let () (define* (hi a :rest b) b) (hi 1)) '())
-  (test (let () (define* (hi a :rest b) b) (hi :a 1)) '())
-  (test (let () (define* (hi a :rest b) b) (hi)) '())
-  
-  (test (let () (define* (hi :key a :rest b) b) (hi 1 2 3)) '(2 3))
-  (test (let () (define* (hi :key a :rest b) b) (hi :a 1 2 3)) '(2 3))
-  (test (let () (define* (hi :key a :rest b) b) (hi 1)) '())
-  (test (let () (define* (hi :key a :rest b) b) (hi :a 1)) '())
-  (test (let () (define* (hi :key a :rest b) b) (hi)) '())
-  
-  (test (let () (define* (hi :optional a :rest b) b) (hi 1 2 3)) '(2 3))
-  (test (let () (define* (hi :optional a :rest b) b) (hi :a 1 2 3)) '(2 3))
-  (test (let () (define* (hi :optional a :rest b) b) (hi 1)) '())
-  (test (let () (define* (hi :optional a :rest b) b) (hi :a 1)) '())
-  (test (let () (define* (hi :optional a :rest b) b) (hi)) '())
-  
-  (test (let () (define* (hi (a 1) . b) b) (hi 1 2 3)) '(2 3))
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi)) '(#f 22 ()))
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :a 1)) '(1 22 ()))
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1)) '(#f 1 ()))
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1)) '(#f 22 1))
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :a 1 2)) '(1 2 ()))
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 2 3)) 'error) ; b set twice
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1 2 3)) '(#f 2 (3)))
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 :a 2 3)) '(2 1 (3)))
+  )
 
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi)) 1)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :b :a :a 3)) 3)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :b 3)) 1)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 3)) 3)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi a: 3)) 3)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 3)) 3)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 3 :b 2)) 3)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
-  (test (let () (define* (hi (a 1) :optional :key :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
-  (test (let () (define* (hi :optional :key :rest a :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) '(:c 1 :a 3 :b 2))
+(let ((hi (lambda* (a) a)))
+  (test (hi 1) 1)
+  (test (hi) #f)          ; all args are optional
+  (test (hi :a 32) 32)    ; all args are keywords
+  (test (hi 1 2) 'error)  ; extra args
   
-  (test (let () (define* (hi :optional (a 1) :optional (b 2)) a)) 'error)
-  (test (let () (define* (hi :optional :optional (a 2)) a) (hi 21)) 'error)
-  (test (let () (define* (hi optional: (a 1)) a) (hi 1)) 'error)
-  (test (let () (define* (hi :optional: (a 1)) a) (hi 1)) 'error)
-  (test (let () (define* (hi :key (a 1) :key (b 2)) a)) 'error)
-  (test (let () (define* (hi :key (a 1) :optional (b 2) :allow-other-keys :allow-other-keys) a)) 'error)
-  (test (let () (define* (hi :optional (a 1) :key :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
-  (test (let () (define* (hi :key :optional :allow-other-keys) 1) (hi :c 1 :a 3 :b 2)) 1)
-  (test (let () (define* (hi :key :optional :allow-other-keys) 1) (hi)) 1)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 2 32)) 'error)
-  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 2 32)) 'error)
+  (for-each
+   (lambda (arg)
+     (test (hi arg) arg)
+     (test (hi :a arg) arg))
+   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2)))
+  
+  (test (hi :b 1) 'error))
 
-  (test (let () (define* (hi (a 1) :rest c :allow-other-keys) (list a c)) (hi :a 3 :b 2)) '(3 (:b 2)))
-  (test (let () (define* (hi (a 1) :rest c) (list a c)) (hi :a 3 :b 2)) '(3 (:b 2)))
+(let ((hi (lambda* ((a 1)) a)))
+  (test (hi 2) 2)
+  (test (hi) 1)
+  (test (hi :a 2) 2)
+  
+  (for-each
+   (lambda (arg)
+     (test (hi arg) arg)
+     (test (hi :a arg) arg))
+   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2))))
 
-  (test (let () (define* (hi (a 1) (b 2) :allow-other-keys) (list a b)) (hi :c 21 :b 2)) '(1 2))
-  (test (let () (define hi (lambda* ((a 1) (b 2) :allow-other-keys) (list a b))) (hi :c 21 :b 2)) '(1 2))
-  (test (let () (define-macro* (hi (a 1) (b 2) :allow-other-keys) `(list ,a ,b)) (hi :c 21 :b 2)) '(1 2))
+(let ((hi (lambda* (a (b "hi")) (list a b))))
+  (test (hi) (list #f "hi"))
+  (test (hi 1) (list 1 "hi"))
+  (test (hi 1 2) (list 1 2))
+  (test (hi :b 1) (list #f 1))
+  (test (hi :a 1) (list 1 "hi"))
+  (test (hi 1 :b 2) (list 1 2))
+  (test (hi :b 3 :a 1) (list 1 3))
+  (test (hi :a 3 :b 1) (list 3 1))
+  (test (hi 1 :a 3) 'error)
+  (test (hi 1 2 :a 3) 'error) ; trailing (extra) args
+  (test (hi :a 2 :c 1) 'error)
+  (test (hi 1 :c 2) 'error)
+  
+  (for-each
+   (lambda (arg)
+     (test (hi :a 1 :b arg) (list 1 arg))
+     (test (hi :a arg) (list arg "hi"))
+     (test (hi :b arg) (list #f arg))
+     (test (hi arg arg) (list arg arg)))
+   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2))))
 
-  (test (let () (define* (f (a :b)) a) (list (f) (f 1) (f :c) (f :a :c) (f :a 1) (f))) '(:b 1 :c :c 1 :b))
-  (test (let () (define* (f a (b :c)) b) (f :b 1 :d)) 'error)
-  (test ((lambda* (:rest (b 1)) b)) 'error) ; "lambda* :rest parameter can't have a default value." ?
-  (test ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c)))) 7)
-  (test ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c))) :b 3) 10)
-  (test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c))) :b a)) 370)
-  (test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (let ((a -2)) (* b a))))) c))))) -3)
-  (test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ (let ((a -2)) (* b a)) a))) c))))) -3)
-  (test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ (let ((a 0)) (/ b a)) a))) c))))) 'error)
-  (test ((lambda* ((c (call/cc (lambda (return) (return 3))))) c)) 3)
-  (test ((lambda* ((a (do ((i 0 (+ i 1)) (sum 0)) ((= i 3) sum) (set! sum (+ sum i))))) (+ a 100))) 103)
-  (test ((lambda* ((a (do ((i 0 (+ i 1)) (sum 0)) ((= i 3) sum) (set! sum (+ sum i)))) b) (+ a b)) 1 2) 3)
+(let ((hi (lambda* (a :key (b 3) :optional c) (list a b c))))
+  (test (hi) (list #f 3 #f))
+  (test (hi 1) (list 1 3 #f))
+  (test (hi :c 32) (list #f 3 32))
+  (test (hi :c 32 :b 43 :a 54) (list 54 43 32))
+  (test (hi 1 2 3) (list 1 2 3))
+  (test (hi :b 32) (list #f 32 #f))
+  (test (hi 1 2 :c 32) (list 1 2 32)))
 
-  ;; some of these are questionable
-  (test ((lambda* ((x (lambda () 1))) (x))) 1)
-  (test ((lambda* ((x x) else) (+ x else)) 1 2) 'error) ; used to be 3
-  (test (symbol? ((lambda* ((y y)) y))) 'error) ; this used to be #t but now y is undefined
-  (test (symbol? ((lambda* ((y y) :key) y))) 'error) ; same
-  (test (procedure-arity (lambda* ((a 1) :allow-other-keys) a)) '(0 1 #f))
-  (test (procedure-arity (lambda* (:allow-other-keys) 34)) '(0 0 #f))
-  (test ((lambda* (:allow-other-keys) 34) :a 32) 34)
-  (test (procedure-arity (lambda* ((a 1) :rest b :allow-other-keys) a)) '(0 1 #t))
-  (test ((lambda* ((y x) =>) (list y =>)) 1 2) 'error) ; used to be '(1 2))
-  (test ((lambda* (=> (y x)) (list y =>)) 1) 'error) ; used to be  '(x 1))
-  (test ((lambda* ((y #2D((1 2) (3 4)))) (y 1 0))) 3)
-  (test ((lambda* ((y (symbol "#(1 #\\a (3))")) x) -1)) -1)
-  (test ((lambda* ((y (symbol "#(1 #\\a (3))")) x) y)) (symbol "#(1 #\\a (3))"))
-  (test ((lambda* ((y #(1 #\a (3)))) (y 0))) 1)
-  (test ((lambda* ((y ()) ()) y)) 'error)
-  (test ((lambda* ((y ()) (x)) y)) 'error)
-  (test ((lambda* ((=> "") else) else) else) #f)
-  (test ((lambda* (x (y x)) y) 1) #f)
-  (test ((lambda* (x (y x)) (let ((x 32)) y)) 1) #f)
-  (test ((lambda* ((x 1) (y x)) y)) 1)
-  (test ((lambda* ((x 1) (y (+ x 1))) y)) 2)
-  (test ((lambda* ((x y) (y x)) y)) 'error) ; used to be 'y
-  (test (let ((z 2)) ((lambda* ((x z) (y x)) y))) 2) ; hmmm
-  (test (keyword? ((lambda* ((x :-)) x))) #t)
-  (test ((apply lambda* (list (list (list (string->symbol "a") 1)) (string->symbol "a"))) (symbol->keyword (string->symbol "a")) 3) 3)
-  (test ((lambda* (:allow-other-keys) 1) :a 321) 1)
-  (test ((lambda* (:rest (a 1)) a)) 'error)
-  (test ((lambda* (:rest a) a)) '())
-  (test ((lambda* (:rest (a 1)) 1)) 'error)
-  (test (let ((b 2)) ((lambda* (:rest (a (let () (set! b 3) 4))) b))) 'error)
-  (test (let ((b 2)) ((lambda* ((a (let () (set! b 3) 4))) b))) 3)
-  (test ((lambda* (:rest hi :allow-other-keys (x x)) x)) 'error)
-  (test ((lambda* (:rest x y) (list x y)) 1 2 3) '((1 2 3) 2))
-  (test ((lambda* (:rest '((1 2) (3 4)) :rest (y 1)) 1)) 'error)
-  (test ((lambda* (:rest (list (quote (1 2) (3 4))) :rest (y 1)) 1)) 'error)
-  (test ((lambda* ((x ((list 1 2) 1))) x)) 2)
-  (test ((lambda* ((y ("hi" 0))) y)) #\h)
-  (test ((lambda* ((x ((lambda* ((x 1)) x)))) x)) 1)
-  (test ((lambda* (:rest) 3)) 'error)
-  (test ((lambda* (:rest 1) 3)) 'error)
-  (test ((lambda* (:rest :rest) 3)) 'error)
-  (test ((lambda* (:rest :key) 3)) 'error)
-  (test ((lambda* ((: 1)) :)) 1)
-  (test ((lambda* ((: 1)) :) :: 21) 21)
-  (test ((lambda* ((a 1)) a) a: 21) 21)
-  (test ((lambda* ((a 1)) a) :a: 21) 'error)
-  (test (let ((func (let ((a 3)) (lambda* ((b (+ a 1))) b)))) (let ((a 21)) (func))) 4)
-  (test (let ((a 21)) (let ((func (lambda* ((b (+ a 1))) b))) (let ((a 3)) (func)))) 22)
-  (test (let ((a 21)) (begin (define-macro* (func (b (+ a 1))) b) (let ((a 3)) (func)))) 4)
-  (test ((lambda* (:rest x :allow-other-keys y) x) 1) 'error)
-  (test ((lambda* (:allow-other-keys x) x) 1) 'error)
-  (test ((lambda* (:allow-other-keys . x) x) 1 2) 'error)
-  (test ((lambda* (:optional . y) y) 1 2 3) '(1 2 3))
-  (test ((lambda* (:optional . y) y)) '())
-  (test ((lambda* (:rest . (x)) x) 1 2) '(1 2))
-  (test ((lambda* (:rest . (x 1)) x) 1 2) 'error)
-  (test ((lambda* (:rest . (x)) x)) '())
-  (test ((lambda* (:optional . (x)) x) 1) 1)
-  (test ((lambda* (:optional . (x 1)) x) 1) 'error)
-  (test ((lambda* (:optional . (x)) x)) #f)
-  (test ((lambda* (:optional . (x)) x) 1 2) 'error)
-  (test ((lambda* (x :key) x) 1) 1)
-  (test ((lambda* (:key :optional :rest x :allow-other-keys) x) 1) '(1))
-  (test (lambda* (key: x) x) 'error)
-  (test (lambda* (:key: x) x) 'error)
-  (test ((lambda* x x) 1) '(1))
-  (test (lambda* (((x) 1)) x) 'error)
-  (test ((lambda* ((a: 3)) a:) :a: 4) 'error)
-  (test ((lambda* ((a 3)) a) a: 4) 4)
+(let ((hi (lambda* (a :rest b) (list a b))))
+  (test (hi 1 2 3) (list 1 (list 2 3)))
+  (test (hi) (list #f ()))
+  (test (hi :a 2) (list 2 '()))
+  (test (hi :b 3) (list #f 3)))
 
-  ;; not sure the next 4 aren't errors
-  (test ((lambda* (:key . x) x) :x 1) '(:x 1))
-  (test ((lambda* (:key . x) x)) '())
-  (test ((lambda* (:optional . y) y) :y 1) '(:y 1))
-  (test ((lambda* (:rest a b c) (list a b c)) 1 2 3 4) '((1 2 3 4) 2 3))
+(let ((hi (lambda* (a :rest b :rest c) (list a b c))))
+  (test (hi 1 2 3 4 5) (list 1 (list 2 3 4 5) (list 3 4 5))))
 
-  (test (let ((x 3)) (define* (f (x x)) x) (let ((x 32)) (f))) 3)
-  (test (let ((x 3)) (define-macro* (f (x x)) `,x) (let ((x 32)) (f))) 32)
+(let ((hi (lambda* ((a 3) :key (b #t) :optional (c pi) :rest d) (list a b c d))))
+  (test (hi) (list 3 #t pi ()))
+  (test (hi 1 2 3 4) (list 1 2 3 (list 4))))
 
-  (test (let () (define (x x) x) (x 1)) 1)
-  (test (procedure? (let () (define* (x (x #t)) x) (x x))) #t)
-  (test (procedure? (let () (define* (x (x x)) x) (x (x x)))) #t)
-  (test (procedure? (let () (define* (x (x x)) x) (x))) #t)
-  (test (apply + ((lambda* ((x (values 1 2 3))) x))) 6)
-  (test ((lambda* ((x (lambda* ((y (+ 1 2))) y))) (x))) 3)
-  ;; (let () (define* (x (x (x))) :optional) (x (x x))) -> segfault infinite loop in prepare_closure_star
+(let ((hi (lambda* ((a 'hi)) (equal? a 'hi))))
+  (test (hi) #t)
+  (test (hi 1) #f)
+  (test (hi 'hi) #t)
+  (test (hi :a 1) #f))
+
+(let* ((x 32)
+       (hi (lambda* (a (b x)) (list a b))))
+  (test (hi) (list #f 32))
+  (test (hi :a 1) (list 1 32)))
+
+(let ((hi (lambda* (a . b) (list a b))))
+  (test (hi 1 2 3) (list 1 (list 2 3)))
+  (test (hi) (list #f ()))
+  (test (hi :a 2) (list 2 '()))
+  (test (hi :b 3) (list #f 3)))
+
+(let ((hi (lambda* ((a 0.0) :optional (b 0.0)) (+ a b))))
+  (num-test (hi 1.0) 1.0)
+  (num-test (hi 1.0 2.0) 3.0)
+  (num-test (hi) 0.0)
+  (num-test (+ (hi) (hi 1.0) (hi 1.0 2.0)) 4.0)
+  (num-test (+ (hi 1.0) (hi) (hi 1.0 2.0)) 4.0)
+  (num-test (+ (hi 1.0) (hi 1.0 2.0) (hi)) 4.0)
+  (num-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0))
+
+(test (let ((hi (lambda*))) (hi)) 'error)
+(test (let ((hi (lambda* #f))) (hi)) 'error)
+(test (let ((hi (lambda* "hi" #f))) (hi)) 'error)
+(test (let ((hi (lambda* ("hi") #f))) (hi)) 'error)
+(test (let ((hi (lambda* (a 0.0) a))) (hi)) 'error)
+(test (let ((hi (lambda* (a . 0.0) a))) (hi)) 'error)
+(test (let ((hi (lambda* ((a . 0.0)) a))) (hi)) 'error)
+(test (let ((hi (lambda* ((a 0.0 "hi")) a))) (hi)) 'error)
+(test (let ((hi (lambda* ((a 0.0 . "hi")) a))) (hi)) 'error)
+(test (let ((hi (lambda* ((a)) a))) (hi)) 'error)
+(test (let ((hi (lambda* (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
+
+(test (let () (define* (hi) 0) (hi)) 0)
+(test (let () (define* (hi a . b) b) (hi 1 2 3)) '(2 3))
+(test (let () (define* (hi a . b) b) (hi :a 1 2 3)) '(2 3))
+(test (let () (define* (hi a . b) b) (hi 1)) '())
+(test (let () (define* (hi a . b) b) (hi :a 1)) '())
+(test (let () (define* (hi a . b) b) (hi)) '())
+(test (let () (define* (hi a . a) a) (hi)) 'error)
+(test (let () (define* (hi (a 1) . a) a) (hi)) 'error)
+(test (let () (define* (hi (a 1) . b) b) (hi 2 3 4)) '(3 4))
+
+(test (let () (define* (hi a :rest b) b) (hi 1 2 3)) '(2 3))
+(test (let () (define* (hi a :rest b) b) (hi :a 1 2 3)) '(2 3))
+(test (let () (define* (hi a :rest b) b) (hi 1)) '())
+(test (let () (define* (hi a :rest b) b) (hi :a 1)) '())
+(test (let () (define* (hi a :rest b) b) (hi)) '())
+
+(test (let () (define* (hi :key a :rest b) b) (hi 1 2 3)) '(2 3))
+(test (let () (define* (hi :key a :rest b) b) (hi :a 1 2 3)) '(2 3))
+(test (let () (define* (hi :key a :rest b) b) (hi 1)) '())
+(test (let () (define* (hi :key a :rest b) b) (hi :a 1)) '())
+(test (let () (define* (hi :key a :rest b) b) (hi)) '())
+
+(test (let () (define* (hi :optional a :rest b) b) (hi 1 2 3)) '(2 3))
+(test (let () (define* (hi :optional a :rest b) b) (hi :a 1 2 3)) '(2 3))
+(test (let () (define* (hi :optional a :rest b) b) (hi 1)) '())
+(test (let () (define* (hi :optional a :rest b) b) (hi :a 1)) '())
+(test (let () (define* (hi :optional a :rest b) b) (hi)) '())
+
+(test (let () (define* (hi (a 1) . b) b) (hi 1 2 3)) '(2 3))
+(test (let () (define* (hi a (b 22) . c) (list a b c)) (hi)) '(#f 22 ()))
+(test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :a 1)) '(1 22 ()))
+(test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1)) '(#f 1 ()))
+(test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1)) '(#f 22 1))
+(test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :a 1 2)) '(1 2 ()))
+(test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 2 3)) 'error) ; b set twice
+(test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1 2 3)) '(#f 2 (3)))
+(test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 :a 2 3)) '(2 1 (3)))
+
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi)) 1)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :b :a :a 3)) 3)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :b 3)) 1)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 3)) 3)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi a: 3)) 3)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 3)) 3)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 3 :b 2)) 3)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
+(test (let () (define* (hi (a 1) :optional :key :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
+(test (let () (define* (hi :optional :key :rest a :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) '(:c 1 :a 3 :b 2))
+
+(test (let () (define* (hi :optional (a 1) :optional (b 2)) a)) 'error)
+(test (let () (define* (hi :optional :optional (a 2)) a) (hi 21)) 'error)
+(test (let () (define* (hi optional: (a 1)) a) (hi 1)) 'error)
+(test (let () (define* (hi :optional: (a 1)) a) (hi 1)) 'error)
+(test (let () (define* (hi :key (a 1) :key (b 2)) a)) 'error)
+(test (let () (define* (hi :key (a 1) :optional (b 2) :allow-other-keys :allow-other-keys) a)) 'error)
+(test (let () (define* (hi :optional (a 1) :key :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
+(test (let () (define* (hi :key :optional :allow-other-keys) 1) (hi :c 1 :a 3 :b 2)) 1)
+(test (let () (define* (hi :key :optional :allow-other-keys) 1) (hi)) 1)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 2 32)) 'error)
+(test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 2 32)) 'error)
+
+(test (let () (define* (hi (a 1) :rest c :allow-other-keys) (list a c)) (hi :a 3 :b 2)) '(3 (:b 2)))
+(test (let () (define* (hi (a 1) :rest c) (list a c)) (hi :a 3 :b 2)) '(3 (:b 2)))
+
+(test (let () (define* (hi (a 1) (b 2) :allow-other-keys) (list a b)) (hi :c 21 :b 2)) '(1 2))
+(test (let () (define hi (lambda* ((a 1) (b 2) :allow-other-keys) (list a b))) (hi :c 21 :b 2)) '(1 2))
+(test (let () (define-macro* (hi (a 1) (b 2) :allow-other-keys) `(list ,a ,b)) (hi :c 21 :b 2)) '(1 2))
+
+(test (let () (define* (f (a :b)) a) (list (f) (f 1) (f :c) (f :a :c) (f :a 1) (f))) '(:b 1 :c :c 1 :b))
+(test (let () (define* (f a (b :c)) b) (f :b 1 :d)) 'error)
+(test ((lambda* (:rest (b 1)) b)) 'error) ; "lambda* :rest parameter can't have a default value." ?
+(test ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c)))) 7)
+(test ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c))) :b 3) 10)
+(test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (* b 3)))) c))) :b a)) 370)
+(test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ a (let ((a -2)) (* b a))))) c))))) -3)
+(test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ (let ((a -2)) (* b a)) a))) c))))) -3)
+(test (let ((a 123)) ((lambda* ((a 1) (b 2)) ((lambda* ((c (+ (let ((a 0)) (/ b a)) a))) c))))) 'error)
+(test ((lambda* ((c (call/cc (lambda (return) (return 3))))) c)) 3)
+(test ((lambda* ((a (do ((i 0 (+ i 1)) (sum 0)) ((= i 3) sum) (set! sum (+ sum i))))) (+ a 100))) 103)
+(test ((lambda* ((a (do ((i 0 (+ i 1)) (sum 0)) ((= i 3) sum) (set! sum (+ sum i)))) b) (+ a b)) 1 2) 3)
+
+;; some of these are questionable
+(test ((lambda* ((x (lambda () 1))) (x))) 1)
+(test ((lambda* ((x x) else) (+ x else)) 1 2) 'error) ; used to be 3
+(test (symbol? ((lambda* ((y y)) y))) 'error) ; this used to be #t but now y is undefined
+(test (symbol? ((lambda* ((y y) :key) y))) 'error) ; same
+(test (procedure-arity (lambda* ((a 1) :allow-other-keys) a)) '(0 1 #f))
+(test (procedure-arity (lambda* (:allow-other-keys) 34)) '(0 0 #f))
+(test ((lambda* (:allow-other-keys) 34) :a 32) 34)
+(test (procedure-arity (lambda* ((a 1) :rest b :allow-other-keys) a)) '(0 1 #t))
+(test ((lambda* ((y x) =>) (list y =>)) 1 2) 'error) ; used to be '(1 2))
+(test ((lambda* (=> (y x)) (list y =>)) 1) 'error) ; used to be  '(x 1))
+(test ((lambda* ((y #2D((1 2) (3 4)))) (y 1 0))) 3)
+(test ((lambda* ((y (symbol "#(1 #\\a (3))")) x) -1)) -1)
+(test ((lambda* ((y (symbol "#(1 #\\a (3))")) x) y)) (symbol "#(1 #\\a (3))"))
+(test ((lambda* ((y #(1 #\a (3)))) (y 0))) 1)
+(test ((lambda* ((y ()) ()) y)) 'error)
+(test ((lambda* ((y ()) (x)) y)) 'error)
+(test ((lambda* ((=> "") else) else) else) #f)
+(test ((lambda* (x (y x)) y) 1) #f)
+(test ((lambda* (x (y x)) (let ((x 32)) y)) 1) #f)
+(test ((lambda* ((x 1) (y x)) y)) 1)
+(test ((lambda* ((x 1) (y (+ x 1))) y)) 2)
+(test ((lambda* ((x y) (y x)) y)) 'error) ; used to be 'y
+(test (let ((z 2)) ((lambda* ((x z) (y x)) y))) 2) ; hmmm
+(test (keyword? ((lambda* ((x :-)) x))) #t)
+(test ((apply lambda* (list (list (list (string->symbol "a") 1)) (string->symbol "a"))) (symbol->keyword (string->symbol "a")) 3) 3)
+(test ((lambda* (:allow-other-keys) 1) :a 321) 1)
+(test ((lambda* (:rest (a 1)) a)) 'error)
+(test ((lambda* (:rest a) a)) '())
+(test ((lambda* (:rest (a 1)) 1)) 'error)
+(test (let ((b 2)) ((lambda* (:rest (a (let () (set! b 3) 4))) b))) 'error)
+(test (let ((b 2)) ((lambda* ((a (let () (set! b 3) 4))) b))) 3)
+(test ((lambda* (:rest hi :allow-other-keys (x x)) x)) 'error)
+(test ((lambda* (:rest x y) (list x y)) 1 2 3) '((1 2 3) 2))
+(test ((lambda* (:rest '((1 2) (3 4)) :rest (y 1)) 1)) 'error)
+(test ((lambda* (:rest (list (quote (1 2) (3 4))) :rest (y 1)) 1)) 'error)
+(test ((lambda* ((x ((list 1 2) 1))) x)) 2)
+(test ((lambda* ((y ("hi" 0))) y)) #\h)
+(test ((lambda* ((x ((lambda* ((x 1)) x)))) x)) 1)
+(test ((lambda* (:rest) 3)) 'error)
+(test ((lambda* (:rest 1) 3)) 'error)
+(test ((lambda* (:rest :rest) 3)) 'error)
+(test ((lambda* (:rest :key) 3)) 'error)
+(test ((lambda* ((: 1)) :)) 1)
+(test ((lambda* ((: 1)) :) :: 21) 21)
+(test ((lambda* ((a 1)) a) a: 21) 21)
+(test ((lambda* ((a 1)) a) :a: 21) 'error)
+(test (let ((func (let ((a 3)) (lambda* ((b (+ a 1))) b)))) (let ((a 21)) (func))) 4)
+(test (let ((a 21)) (let ((func (lambda* ((b (+ a 1))) b))) (let ((a 3)) (func)))) 22)
+(test (let ((a 21)) (begin (define-macro* (func (b (+ a 1))) b) (let ((a 3)) (func)))) 4)
+(test ((lambda* (:rest x :allow-other-keys y) x) 1) 'error)
+(test ((lambda* (:allow-other-keys x) x) 1) 'error)
+(test ((lambda* (:allow-other-keys . x) x) 1 2) 'error)
+(test ((lambda* (:optional . y) y) 1 2 3) '(1 2 3))
+(test ((lambda* (:optional . y) y)) '())
+(test ((lambda* (:rest . (x)) x) 1 2) '(1 2))
+(test ((lambda* (:rest . (x 1)) x) 1 2) 'error)
+(test ((lambda* (:rest . (x)) x)) '())
+(test ((lambda* (:optional . (x)) x) 1) 1)
+(test ((lambda* (:optional . (x 1)) x) 1) 'error)
+(test ((lambda* (:optional . (x)) x)) #f)
+(test ((lambda* (:optional . (x)) x) 1 2) 'error)
+(test ((lambda* (x :key) x) 1) 1)
+(test ((lambda* (:key :optional :rest x :allow-other-keys) x) 1) '(1))
+(test (lambda* (key: x) x) 'error)
+(test (lambda* (:key: x) x) 'error)
+(test ((lambda* x x) 1) '(1))
+(test (lambda* (((x) 1)) x) 'error)
+(test ((lambda* ((a: 3)) a:) :a: 4) 'error)
+(test ((lambda* ((a 3)) a) a: 4) 4)
+
+;; not sure the next 4 aren't errors
+(test ((lambda* (:key . x) x) :x 1) '(:x 1))
+(test ((lambda* (:key . x) x)) '())
+(test ((lambda* (:optional . y) y) :y 1) '(:y 1))
+(test ((lambda* (:rest a b c) (list a b c)) 1 2 3 4) '((1 2 3 4) 2 3))
+
+(test (let ((x 3)) (define* (f (x x)) x) (let ((x 32)) (f))) 3)
+(test (let ((x 3)) (define-macro* (f (x x)) `,x) (let ((x 32)) (f))) 32)
+
+(test (let () (define (x x) x) (x 1)) 1)
+(test (procedure? (let () (define* (x (x #t)) x) (x x))) #t)
+(test (procedure? (let () (define* (x (x x)) x) (x (x x)))) #t)
+(test (procedure? (let () (define* (x (x x)) x) (x))) #t)
+(test (apply + ((lambda* ((x (values 1 2 3))) x))) 6)
+(test ((lambda* ((x (lambda* ((y (+ 1 2))) y))) (x))) 3)
+;; (let () (define* (x (x (x))) :optional) (x (x x))) -> segfault infinite loop in prepare_closure_star
 
   ;;; define-macro
   ;;; define-macro*
   ;;; define-bacro
   ;;; define-bacro*
 
-  (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ 1 ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((1 0) 0))
-  (test (let ((x 0)) (define-bacro* (hi (a (let () (set! x (+ x 1)) x))) `(+ 1 ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((1 0) 0))
-  (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ x ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((-1 0) 0))
-  (test (let ((x 0)) (define-bacro* (hi (a (let () (set! x (+ x 1)) x))) `(+ x ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((-1 0) 0))
+(test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ 1 ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((1 0) 0))
+(test (let ((x 0)) (define-bacro* (hi (a (let () (set! x (+ x 1)) x))) `(+ 1 ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((1 0) 0))
+(test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ x ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((-1 0) 0))
+(test (let ((x 0)) (define-bacro* (hi (a (let () (set! x (+ x 1)) x))) `(+ x ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((-1 0) 0))
 
-  (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(let ((x -1)) (+ x ,a))) (list (hi) x)) '(-1 0)) 
-  (test (let ((x 0)) (let ((x -1)) (+ x (let () (set! x (+ x 1)) x)))) -1)
-  (test (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x)) '(-1 0))
-  (test (let () (define-macro (hi a) `(let ((b 1)) (+ ,a b))) (hi (+ 1 b))) 3)
-  (test (let ((b 321)) (define-macro (hi a) `(let ((b 1)) (+ ,a b))) (hi b)) 2)
-  (test (let ((b 321)) (define-macro* (hi (a b)) `(let ((b 1)) (+ ,a b))) (hi b)) 2)
-  (test (let ((b 321)) (define-macro* (hi (a b)) `(let ((b 1)) (+ ,a b))) (hi)) 2) ; ???
-  (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ ,a ,a)) (hi)) 3) ; ??? -- default val is substituted directly
-  ;; but (let () (define-macro* (hi a (b a)) `(+ ,a ,b)) (hi 1)) -> "a: unbound variable" -- "a" itself is substituted, but does not exist at expansion(?)
+(test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(let ((x -1)) (+ x ,a))) (list (hi) x)) '(-1 0)) 
+(test (let ((x 0)) (let ((x -1)) (+ x (let () (set! x (+ x 1)) x)))) -1)
+(test (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x)) '(-1 0))
+(test (let () (define-macro (hi a) `(let ((b 1)) (+ ,a b))) (hi (+ 1 b))) 3)
+(test (let ((b 321)) (define-macro (hi a) `(let ((b 1)) (+ ,a b))) (hi b)) 2)
+(test (let ((b 321)) (define-macro* (hi (a b)) `(let ((b 1)) (+ ,a b))) (hi b)) 2)
+(test (let ((b 321)) (define-macro* (hi (a b)) `(let ((b 1)) (+ ,a b))) (hi)) 2) ; ???
+(test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ ,a ,a)) (hi)) 3) ; ??? -- default val is substituted directly
+;; but (let () (define-macro* (hi a (b a)) `(+ ,a ,b)) (hi 1)) -> "a: unbound variable" -- "a" itself is substituted, but does not exist at expansion(?)
 
-  ;; can we implement bacros via define-macro* default args?
-  ;;  I don't think so -- macro arguments can't be evaluated in that environment because 
-  ;;  only the default values have been set (on the previous parameters).
+;; can we implement bacros via define-macro* default args?
+;;  I don't think so -- macro arguments can't be evaluated in that environment because 
+;;  only the default values have been set (on the previous parameters).
 
-  ;; bacro ignores closure in expansion but macro does not:
-  (test (let ((x 1)) (define-macro (ho a) `(+ ,x ,a)) (let ((x 32)) (ho 3))) 4)
-  (test (let ((x 1)) (define-macro (ho a) `(+ x ,a)) (let ((x 32)) (ho 3))) 35)
-  (test (let ((x 1)) (define-bacro (ho a) `(+ ,x ,a)) (let ((x 32)) (ho 3))) 35)
-  (test (let ((x 1)) (define-bacro (ho a) `(+ x ,a)) (let ((x 32)) (ho 3))) 35)
+;; bacro ignores closure in expansion but macro does not:
+(test (let ((x 1)) (define-macro (ho a) `(+ ,x ,a)) (let ((x 32)) (ho 3))) 4)
+(test (let ((x 1)) (define-macro (ho a) `(+ x ,a)) (let ((x 32)) (ho 3))) 35)
+(test (let ((x 1)) (define-bacro (ho a) `(+ ,x ,a)) (let ((x 32)) (ho 3))) 35)
+(test (let ((x 1)) (define-bacro (ho a) `(+ x ,a)) (let ((x 32)) (ho 3))) 35)
 
-  (test (let ((x 1)) (define-macro* (ho (a x)) `(+ ,x ,a)) (let ((x 32)) (ho))) 33)
-  (test (let ((x 1)) (define-macro* (ho (a x)) `(+ x ,a)) (let ((x 32)) (ho))) 64)
-  (test (let ((x 1)) (define-bacro* (ho (a x)) `(+ x ,a)) (let ((x 32)) (ho))) 64)
-  (test (let ((x 1)) (define-bacro* (ho (a x)) `(+ ,x ,a)) (let ((x 32)) (ho))) 64)
+(test (let ((x 1)) (define-macro* (ho (a x)) `(+ ,x ,a)) (let ((x 32)) (ho))) 33)
+(test (let ((x 1)) (define-macro* (ho (a x)) `(+ x ,a)) (let ((x 32)) (ho))) 64)
+(test (let ((x 1)) (define-bacro* (ho (a x)) `(+ x ,a)) (let ((x 32)) (ho))) 64)
+(test (let ((x 1)) (define-bacro* (ho (a x)) `(+ ,x ,a)) (let ((x 32)) (ho))) 64)
 
-  (test (let ((x 1)) (define-macro* (ho (a (+ x 0))) `(+ ,x ,a)) (let ((x 32)) (ho))) 33)  ;; (+ 32 (+ x 0)) !?! macroexpand is confusing?
-  (test (let ((x 1)) (define-macro* (ho (a (+ x 0))) `(+ x ,a)) (let ((x 32)) (ho))) 64)   ;; (+ x (+ x 0))
-  (test (let ((x 1)) (define-bacro* (ho (a (+ x 0))) `(+ x ,a)) (let ((x 32)) (ho))) 64 )
-  (test (let ((x 1)) (define-bacro* (ho (a (+ x 0))) `(+ ,x ,a)) (let ((x 32)) (ho))) 64 )
+(test (let ((x 1)) (define-macro* (ho (a (+ x 0))) `(+ ,x ,a)) (let ((x 32)) (ho))) 33)  ;; (+ 32 (+ x 0)) !?! macroexpand is confusing?
+(test (let ((x 1)) (define-macro* (ho (a (+ x 0))) `(+ x ,a)) (let ((x 32)) (ho))) 64)   ;; (+ x (+ x 0))
+(test (let ((x 1)) (define-bacro* (ho (a (+ x 0))) `(+ x ,a)) (let ((x 32)) (ho))) 64 )
+(test (let ((x 1)) (define-bacro* (ho (a (+ x 0))) `(+ ,x ,a)) (let ((x 32)) (ho))) 64 )
 
-  (test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi)) '())
-  (test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi 1)) '(1))
-  (test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi 1 2 3)) '(1 2 3))
-  (test (let () (define-macro* (hi a :rest b) `(list ,a ,@b)) (hi 1 2 3)) '(1 2 3))
-  (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi)) '(1))
-  (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi 2)) '(2))
-  (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi :a 2)) '(2))
-  (test (let () (define-macro* (hi (a 1) :rest b :allow-other-keys) `(list ,a ,@b)) (hi :a 2 :b 3)) '(2 :b 3))
+(test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi)) '())
+(test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi 1)) '(1))
+(test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi 1 2 3)) '(1 2 3))
+(test (let () (define-macro* (hi a :rest b) `(list ,a ,@b)) (hi 1 2 3)) '(1 2 3))
+(test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi)) '(1))
+(test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi 2)) '(2))
+(test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi :a 2)) '(2))
+(test (let () (define-macro* (hi (a 1) :rest b :allow-other-keys) `(list ,a ,@b)) (hi :a 2 :b 3)) '(2 :b 3))
 
-;  (test (let () (define-macro ,@a 23)) 'error)
-;  (test (let () (define-macro ,a 23)) 'error)
-; maybe this isn't right
+					;  (test (let () (define-macro ,@a 23)) 'error)
+					;  (test (let () (define-macro ,a 23)) 'error)
+					; maybe this isn't right
 
-  (test ((lambda* ((a 1) :allow-other-keys) a) :b 1 :a 3) 3)
-  (test (let () (define-macro* (hi (a 1) :allow-other-keys) `(list ,a)) (hi :b 2 :a 3)) '(3))
-  (test ((lambda* ((a 1) :rest b :allow-other-keys) b) :c 1 :a 3) '())
-  (test ((lambda* ((a 1) :rest b :allow-other-keys) b) :b 1 :a 3) 'error) 
-  ;; that is the rest arg is not settable via a keyword and it's an error to try to
-  ;;   do so, even if :allow-other-keys -- ??
+(test ((lambda* ((a 1) :allow-other-keys) a) :b 1 :a 3) 3)
+(test (let () (define-macro* (hi (a 1) :allow-other-keys) `(list ,a)) (hi :b 2 :a 3)) '(3))
+(test ((lambda* ((a 1) :rest b :allow-other-keys) b) :c 1 :a 3) '())
+(test ((lambda* ((a 1) :rest b :allow-other-keys) b) :b 1 :a 3) 'error) 
+;; that is the rest arg is not settable via a keyword and it's an error to try to
+;;   do so, even if :allow-other-keys -- ??
 
-  (test (let ((x 1)) (define* (hi (a x)) a) (let ((x 32)) (hi))) 1)
-  (test (let ((x 1)) (define* (hi (a (+ x 0))) a) (let ((x 32)) (hi))) 1)
-  (test (let ((x 1)) (define* (hi (a (+ x "hi"))) a) (let ((x 32)) (hi))) 'error)
-  (test (let ((x 1)) (define-macro* (ho (a (+ x "hi"))) `(+ x ,a)) (let ((x 32)) (ho))) 'error)
+(test (let ((x 1)) (define* (hi (a x)) a) (let ((x 32)) (hi))) 1)
+(test (let ((x 1)) (define* (hi (a (+ x 0))) a) (let ((x 32)) (hi))) 1)
+(test (let ((x 1)) (define* (hi (a (+ x "hi"))) a) (let ((x 32)) (hi))) 'error)
+(test (let ((x 1)) (define-macro* (ho (a (+ x "hi"))) `(+ x ,a)) (let ((x 32)) (ho))) 'error)
 
-  ;; define-macro* default arg expr does not see definition-time closure:
-  (test (let ((mac #f))
-	  (let ((a 32))
-	    (define-macro* (hi (b (+ a 1))) `(+ ,b 2))
-	    (set! mac hi))
-	  (mac))
-	'error) ; ";a: unbound variable, line 4"
+;; define-macro* default arg expr does not see definition-time closure:
+(test (let ((mac #f))
+	(let ((a 32))
+	  (define-macro* (hi (b (+ a 1))) `(+ ,b 2))
+	  (set! mac hi))
+	(mac))
+      'error) ; ";a: unbound variable, line 4"
 
-  (test ((lambda* ((x (let ()
-			(define-macro (hi a)
-			  `(+ ,a 1))
-			(hi 2))))
-		  (+ x 1)))
-	4)
-  (test (let () 
-	  (define-macro* (hi (x (let ()
-				  (define-macro (hi a)
-				    `(+ ,a 1))
-				  (hi 2))))
-	    `(+ ,x 1)) 
-	  (hi))
-	4)
+(test ((lambda* ((x (let ()
+		      (define-macro (hi a)
+			`(+ ,a 1))
+		      (hi 2))))
+		(+ x 1)))
+      4)
+(test (let () 
+	(define-macro* (hi (x (let ()
+				(define-macro (hi a)
+				  `(+ ,a 1))
+				(hi 2))))
+	  `(+ ,x 1)) 
+	(hi))
+      4)
 
-  (test (let () (define* (hi b) b) (procedure? hi)) #t)
-  
-  (test (let ()
-	  (define (hi a) a)
-	  (let ((tag (catch #t
-			    (lambda () (hi 1 2 3))
-			    (lambda args (car args)))))
-	    (eq? tag 'wrong-number-of-args)))
-	#t)
-  
-  (test (let ()
-	  (define (hi a) a)
-	  (let ((tag (catch #t
-			    (lambda () (hi))
-			    (lambda args (car args)))))
-	    (eq? tag 'wrong-number-of-args)))
-	#t)
-  
-  (test (let ()
-	  (define* (hi a) a)
-	  (let ((tag (catch #t
-			    (lambda () (hi 1 2 3))
-			    (lambda args (car args)))))
-	    (eq? tag 'wrong-number-of-args)))
-	#t)
+(test (let () (define* (hi b) b) (procedure? hi)) #t)
 
-  (test (let () (define (hi :a) :a) (hi 1)) 'error)
-  (test (let () (define* (hi :a) :a) (hi 1)) 'error)
-  (test (let () (define* (hi (:a 2)) a) (hi 1)) 'error)
-  (test (let () (define* (hi (a 1) (:a 2)) a) (hi 1)) 'error)
-  (test (let () (define* (hi (pi 1)) pi) (hi 2)) 'error)
-  (test (let () (define* (hi (:b 1) (:a 2)) a) (hi)) 'error)
+(test (let ()
+	(define (hi a) a)
+	(let ((tag (catch #t
+			  (lambda () (hi 1 2 3))
+			  (lambda args (car args)))))
+	  (eq? tag 'wrong-number-of-args)))
+      #t)
 
-  (test (let () (define* (hi (a 1) (a 2)) a) (hi 2)) 'error)
-  (test (let () (define (hi a a) a) (hi 1 2)) 'error)
-  (test (let () (define hi (lambda (a a) a)) (hi 1 1)) 'error)
-  (test (let () (define hi (lambda* ((a 1) (a 2)) a)) (hi 1 2)) 'error)
-  (test (let () (define (hi (a 1)) a) (hi 1)) 'error)
+(test (let ()
+	(define (hi a) a)
+	(let ((tag (catch #t
+			  (lambda () (hi))
+			  (lambda args (car args)))))
+	  (eq? tag 'wrong-number-of-args)))
+      #t)
 
-  (let () 
-    (define* (hi (a #2d((1 2) (3 4)))) (a 1 0))
-    (test (hi) 3)
-    (test (hi #2d((7 8) (9 10))) 9))
+(test (let ()
+	(define* (hi a) a)
+	(let ((tag (catch #t
+			  (lambda () (hi 1 2 3))
+			  (lambda args (car args)))))
+	  (eq? tag 'wrong-number-of-args)))
+      #t)
 
-  (let () (define* (f :rest a) a) (test (f :a 1) '(:a 1)))
-  (let () (define* (f :rest a :rest b) (list a b)) (test (f :a 1 :b 2) '((:a 1 :b 2) (1 :b 2))))
+(test (let () (define (hi :a) :a) (hi 1)) 'error)
+(test (let () (define* (hi :a) :a) (hi 1)) 'error)
+(test (let () (define* (hi (:a 2)) a) (hi 1)) 'error)
+(test (let () (define* (hi (a 1) (:a 2)) a) (hi 1)) 'error)
+(test (let () (define* (hi (pi 1)) pi) (hi 2)) 'error)
+(test (let () (define* (hi (:b 1) (:a 2)) a) (hi)) 'error)
 
-  (test (lambda :hi 1) 'error)
-  (test (lambda (:hi) 1) 'error)
-  (test (lambda (:hi . :hi) 1) 'error)
-  (test (lambda (i . i) 1 . 2) 'error)
-  (test (lambda (i i i i) (i)) 'error)
-  (test (lambda "hi" 1) 'error)
-  (test (lambda* ((i 1) i i) i) 'error)
-  (test (lambda* ((a 1 2)) a) 'error)
-  (test (lambda* ((a . 1)) a) 'error)
-  (test (lambda* ((0.0 1)) 0.0) 'error)
+(test (let () (define* (hi (a 1) (a 2)) a) (hi 2)) 'error)
+(test (let () (define (hi a a) a) (hi 1 2)) 'error)
+(test (let () (define hi (lambda (a a) a)) (hi 1 1)) 'error)
+(test (let () (define hi (lambda* ((a 1) (a 2)) a)) (hi 1 2)) 'error)
+(test (let () (define (hi (a 1)) a) (hi 1)) 'error)
 
-  (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32) '(32 1 ()))
-  (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5) '(1 3 (2 3 4 5)))
-  ;; these are in s7.html
-  (test ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5) '(1 (2 3 4 5) (3 4 5)))
+(let () 
+  (define* (hi (a #2d((1 2) (3 4)))) (a 1 0))
+  (test (hi) 3)
+  (test (hi #2d((7 8) (9 10))) 9))
 
-  (test (let () (define-macro (hi a a) `(+ ,a 1)) (hi 1 2)) 'error)
+(let () (define* (f :rest a) a) (test (f :a 1) '(:a 1)))
+(let () (define* (f :rest a :rest b) (list a b)) (test (f :a 1 :b 2) '((:a 1 :b 2) (1 :b 2))))
 
-  (test (let ((c 1)) 
-	  (define* (a :optional (b c)) b) 
-	  (set! c 2) 
-	  (a))
-	2)
-  
-  (test (let ((c 1)) 
-	  (define* (a :optional (b c)) b) 
-	  (let ((c 32)) 
-	    (a)))
-	1)
-  
-  (test (let ((c 1)) 
-	  (define* (a (b (+ c 1))) b) 
-	  (set! c 2) 
-	  (a))
-	3)
-  
-  (test (let ((c 1))
-	  (define* (a (b (+ c 1))) b)
-	  (set! c 2)
-	  (let ((c 123))
-	    (a)))
-	3)
-  
-  (test (let* ((cc 1)
-	       (c (lambda () (set! cc (+ cc 1)) cc)))
-	  (define* (a (b (c))) b)
-	  (list cc (a) cc))
-	(list 1 2 2))
+(test (lambda :hi 1) 'error)
+(test (lambda (:hi) 1) 'error)
+(test (lambda (:hi . :hi) 1) 'error)
+(test (lambda (i . i) 1 . 2) 'error)
+(test (lambda (i i i i) (i)) 'error)
+(test (lambda "hi" 1) 'error)
+(test (lambda* ((i 1) i i) i) 'error)
+(test (lambda* ((a 1 2)) a) 'error)
+(test (lambda* ((a . 1)) a) 'error)
+(test (lambda* ((0.0 1)) 0.0) 'error)
+
+(test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32) '(32 1 ()))
+(test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5) '(1 3 (2 3 4 5)))
+;; these are in s7.html
+(test ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5) '(1 (2 3 4 5) (3 4 5)))
+
+(test (let () (define-macro (hi a a) `(+ ,a 1)) (hi 1 2)) 'error)
+
+(test (let ((c 1)) 
+	(define* (a :optional (b c)) b) 
+	(set! c 2) 
+	(a))
+      2)
+
+(test (let ((c 1)) 
+	(define* (a :optional (b c)) b) 
+	(let ((c 32)) 
+	  (a)))
+      1)
+
+(test (let ((c 1)) 
+	(define* (a (b (+ c 1))) b) 
+	(set! c 2) 
+	(a))
+      3)
+
+(test (let ((c 1))
+	(define* (a (b (+ c 1))) b)
+	(set! c 2)
+	(let ((c 123))
+	  (a)))
+      3)
+
+(test (let* ((cc 1)
+	     (c (lambda () (set! cc (+ cc 1)) cc)))
+	(define* (a (b (c))) b)
+	(list cc (a) cc))
+      (list 1 2 2))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -19957,462 +19964,463 @@ abs     1       2
 ;;; untrace
 ;;; *trace-hook*
 
-  (for-each
-   (lambda (arg)
-     (test (trace arg) 'error)
-     (test (untrace arg) 'error))
-   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+(for-each
+ (lambda (arg)
+   (test (trace arg) 'error)
+   (test (untrace arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
-  (let ((sum 0))
-    (define (hiho a b c) (* a b c))
-    (set! *trace-hook* (lambda (f args) (set! sum (apply + args))))
-    (trace hiho)
-    (hiho 2 3 4)
-    (untrace hiho)
-    (set! *trace-hook* '())
-    (test sum 9))
+(let ((sum 0))
+  (define (hiho a b c) (* a b c))
+  (set! *trace-hook* (lambda (f args) (set! sum (apply + args))))
+  (trace hiho)
+  (hiho 2 3 4)
+  (untrace hiho)
+  (set! *trace-hook* '())
+  (test sum 9))
 
-  (test (hook-arity *trace-hook*) '(2 0 #f))
-  (test (hook-documentation *trace-hook*) "*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.")
-  (test (hook-functions *trace-hook*) '())
+(test (hook-arity *trace-hook*) '(2 0 #f))
+(test (hook-documentation *trace-hook*) "*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.")
+(test (hook-functions *trace-hook*) '())
 
-  (let ((sum 0))
-    (define (hiho a b c) (* a b c))
-    (set! *trace-hook* (list (lambda (f args) (set! sum (apply + args)))))
-    (trace hiho)
-    (hiho 2 3 4)
-    (untrace hiho)
-    (set! *trace-hook* '())
-    (test sum 9))
+(let ((sum 0))
+  (define (hiho a b c) (* a b c))
+  (set! *trace-hook* (list (lambda (f args) (set! sum (apply + args)))))
+  (trace hiho)
+  (hiho 2 3 4)
+  (untrace hiho)
+  (set! *trace-hook* '())
+  (test sum 9))
 
-  (for-each
-   (lambda (arg)
-     (test (set! *trace-hook* arg) 'error)
-     (test (set! *unbound-variable-hook* arg) 'error)
-     (test (set! *error-hook* arg) 'error)
-     (test (set! *load-hook* arg) 'error)
-
-     (test (set! (hook-functions *trace-hook*) arg) 'error)
-     (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
-     (test (set! (hook-functions *error-hook*) arg) 'error)
-     (test (set! (hook-functions *load-hook*) arg) 'error)
-
-     (test (set! (hook-functions *trace-hook*) (list arg)) 'error)
-     (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
-     (test (set! (hook-functions *error-hook*) (list arg)) 'error)
-     (test (set! (hook-functions *load-hook*) (list arg)) 'error)
-     )
-   (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
+(for-each
+ (lambda (arg)
+   (test (set! *trace-hook* arg) 'error)
+   (test (set! *unbound-variable-hook* arg) 'error)
+   (test (set! *error-hook* arg) 'error)
+   (test (set! *load-hook* arg) 'error)
+   
+   (test (set! (hook-functions *trace-hook*) arg) 'error)
+   (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
+   (test (set! (hook-functions *error-hook*) arg) 'error)
+   (test (set! (hook-functions *load-hook*) arg) 'error)
+   
+   (test (set! (hook-functions *trace-hook*) (list arg)) 'error)
+   (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
+   (test (set! (hook-functions *error-hook*) (list arg)) 'error)
+   (test (set! (hook-functions *load-hook*) (list arg)) 'error)
+   )
+ (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
 
 
 
 ;;; --------------------------------------------------------------------------------
-  ;;; procedure-arity
+;;; procedure-arity
 
-  (test (procedure-arity car) '(1 0 #f))
-  (test (procedure-arity 'car) '(1 0 #f))
-  (test (procedure-arity +) '(0 0 #t))
-  (test (procedure-arity '+) '(0 0 #t))
-  (test (procedure-arity log) '(1 1 #f))
-  (test (procedure-arity '/) '(1 0 #t))
-  (test (procedure-arity catch) '(3 0 #f))
-  (test (procedure-arity) 'error)
-  (test (procedure-arity abs abs) 'error)
-  (test (procedure-arity "hi") 'error)
+(test (procedure-arity car) '(1 0 #f))
+(test (procedure-arity 'car) '(1 0 #f))
+(test (procedure-arity +) '(0 0 #t))
+(test (procedure-arity '+) '(0 0 #t))
+(test (procedure-arity log) '(1 1 #f))
+(test (procedure-arity '/) '(1 0 #t))
+(test (procedure-arity catch) '(3 0 #f))
+(test (procedure-arity) 'error)
+(test (procedure-arity abs abs) 'error)
+(test (procedure-arity "hi") 'error)
 
-  (test (procedure-arity vector-set!) '(3 0 #t))
-  (test (let ((hi (lambda () 1))) (procedure-arity hi)) '(0 0 #f))
-  (test (let ((hi (lambda (a) 1))) (procedure-arity hi)) '(1 0 #f))
-  (test (let ((hi (lambda (a b) 1))) (procedure-arity hi)) '(2 0 #f))
-  (test (let ((hi (lambda (a . b) 1))) (procedure-arity hi)) '(1 0 #t))
-  (test (let ((hi (lambda a 1))) (procedure-arity hi)) '(0 0 #t))
-  
-  (test (let () (define (hi) 1) (procedure-arity hi)) '(0 0 #f))
-  (test (let () (define (hi a) a) (procedure-arity hi)) '(1 0 #f))
-  (test (let () (define* (hi a) a) (procedure-arity hi)) '(0 1 #f))
-  (test (let () (define* (hi a . b) a) (procedure-arity hi)) '(0 1 #t))
-  (test (let () (define* (hi (a 1) (b 2)) a) (procedure-arity hi)) '(0 2 #f))
-  (test (let ((hi (lambda* (a) 1))) (procedure-arity hi)) '(0 1 #f))
-  (test (call/cc (lambda (func) (procedure-arity func))) '(0 0 #t))
+(test (procedure-arity vector-set!) '(3 0 #t))
+(test (let ((hi (lambda () 1))) (procedure-arity hi)) '(0 0 #f))
+(test (let ((hi (lambda (a) 1))) (procedure-arity hi)) '(1 0 #f))
+(test (let ((hi (lambda (a b) 1))) (procedure-arity hi)) '(2 0 #f))
+(test (let ((hi (lambda (a . b) 1))) (procedure-arity hi)) '(1 0 #t))
+(test (let ((hi (lambda a 1))) (procedure-arity hi)) '(0 0 #t))
 
-  (test (procedure-arity (lambda* (a :rest b) a)) '(0 1 #t))
-  (test (procedure-arity (lambda* (:optional a :rest b) a)) '(0 1 #t))
-  (test (procedure-arity (lambda* (:optional a :key b :rest c) a)) '(0 2 #t))
-  (test (procedure-arity (lambda* (:optional a b) a)) '(0 2 #f))
-  (test (procedure-arity (lambda* (:rest args) args)) '(0 0 #t))
-  (test (procedure-arity (lambda* (a :optional b . c) a)) '(0 2 #t))
-  (test (procedure-arity (lambda* (:rest a . b) a)) '(0 0 #t))
-  (test (procedure-arity (lambda* (:key :optional a) a)) '(0 1 #f))
-  (test (procedure-arity (lambda* a a)) '(0 0 #t))
-  (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure-arity hi)) 'error)
-  (test (procedure-arity (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) '(1 0 #f))
-  (test (procedure-arity (make-procedure-with-setter (lambda (a . b) a) (lambda (a b) a))) '(1 0 #t))
-  (test (procedure-arity (make-procedure-with-setter (lambda* (a :optional b) a) (lambda (a b) a))) '(0 2 #f))
-  
-  (test (procedure-arity (lambda (x . args) x)) '(1 0 #t))
-  (test (procedure-arity (lambda (x y . args) x)) '(2 0 #t))
-  (test (procedure-arity (lambda* (x . args) x)) '(0 1 #t))
-  (test (procedure-arity (lambda* (x y . args) x)) '(0 2 #t))
+(test (let () (define (hi) 1) (procedure-arity hi)) '(0 0 #f))
+(test (let () (define (hi a) a) (procedure-arity hi)) '(1 0 #f))
+(test (let () (define* (hi a) a) (procedure-arity hi)) '(0 1 #f))
+(test (let () (define* (hi a . b) a) (procedure-arity hi)) '(0 1 #t))
+(test (let () (define* (hi (a 1) (b 2)) a) (procedure-arity hi)) '(0 2 #f))
+(test (let ((hi (lambda* (a) 1))) (procedure-arity hi)) '(0 1 #f))
+(test (call/cc (lambda (func) (procedure-arity func))) '(0 0 #t))
+
+(test (procedure-arity (lambda* (a :rest b) a)) '(0 1 #t))
+(test (procedure-arity (lambda* (:optional a :rest b) a)) '(0 1 #t))
+(test (procedure-arity (lambda* (:optional a :key b :rest c) a)) '(0 2 #t))
+(test (procedure-arity (lambda* (:optional a b) a)) '(0 2 #f))
+(test (procedure-arity (lambda* (:rest args) args)) '(0 0 #t))
+(test (procedure-arity (lambda* (a :optional b . c) a)) '(0 2 #t))
+(test (procedure-arity (lambda* (:rest a . b) a)) '(0 0 #t))
+(test (procedure-arity (lambda* (:key :optional a) a)) '(0 1 #f))
+(test (procedure-arity (lambda* a a)) '(0 0 #t))
+(test (let () (define-macro (hi a) `(+ ,a 1)) (procedure-arity hi)) 'error)
+(test (procedure-arity (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) '(1 0 #f))
+(test (procedure-arity (make-procedure-with-setter (lambda (a . b) a) (lambda (a b) a))) '(1 0 #t))
+(test (procedure-arity (make-procedure-with-setter (lambda* (a :optional b) a) (lambda (a b) a))) '(0 2 #f))
+
+(test (procedure-arity (lambda (x . args) x)) '(1 0 #t))
+(test (procedure-arity (lambda (x y . args) x)) '(2 0 #t))
+(test (procedure-arity (lambda* (x . args) x)) '(0 1 #t))
+(test (procedure-arity (lambda* (x y . args) x)) '(0 2 #t))
+
+(for-each
+ (lambda (arg)
+   (test (procedure-arity arg) 'error))
+ (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+(define (for-each-subset func args)
+  (let* ((arity (procedure-arity func))
+	 (min-args (car arity))
+	 (max-args (if (caddr arity)
+		       (length args)
+		       (+ min-args (cadr arity))))
+	 (subsets '()))
     
-  (for-each
-   (lambda (arg)
-     (test (procedure-arity arg) 'error))
-   (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
-
-  (define (for-each-subset func args)
-    (let* ((arity (procedure-arity func))
-	   (min-args (car arity))
-	   (max-args (if (caddr arity)
-			 (length args)
-			 (+ min-args (cadr arity))))
-	   (subsets '()))
-      
-      (define (subset source dest len)
-	(if (null? source)
-	    (begin
-	      (if (member dest subsets)
-		  (format #t ";got ~S twice in for-each-subset: ~S~%" dest args))
-	      (set! subsets (cons dest subsets))
-	      (if (<= min-args len max-args)
-		  (apply func dest)))
-	    (begin
-	      (subset (cdr source) (cons (car source) dest) (+ len 1))
-	      (subset (cdr source) dest len))))
-      
-      (subset args '() 0)))
-
-  (test (let ((ctr 0))
-	  (for-each-subset (lambda args (set! ctr (+ ctr 1))) '(1 2 3 4))
-	  ctr)
-	16)
-  (test (let ((ctr 0))
-	  (for-each-subset (lambda (arg) (set! ctr (+ ctr 1))) '(1 2 3 4))
-	  ctr)
-	4)
-  (test (let ((ctr 0))
-	  (for-each-subset (lambda (arg1 arg2 arg3) (set! ctr (+ ctr 1))) '(1 2 3 4))
-	  ctr)
-	4)
-  (test (let ((ctr 0))
-	  (for-each-subset (lambda* (arg1 arg2 arg3) (set! ctr (+ ctr 1))) '(1 2 3 4))
-	  ctr)
-	15)
-  (test (let ((ctr 0))
-	  (for-each-subset (lambda () (set! ctr (+ ctr 1))) '(1 2 3 4))
-	  ctr)
-	1)
-
-  (define (snarf func lst)
-    "(snarf func lst) repeatedly applies func to as many elements of lst as func can take"
-    (let ((arity (procedure-arity func)))
-      (if (caddr arity)
-	  (apply func lst)
-	  (let ((n (+ (car arity) (cadr arity)))
-		(lst-len (length lst)))
-	    (if (< lst-len (car arity))
-		(error 'wrong-number-of-args ";snarf func requires ~A args, but got ~A, ~A" (car arity) lst-len lst)
-		(if (<= lst-len n)
-		    (apply func lst)
-		    (if (not (zero? (modulo (length lst) n)))
-			(error 'wrong-number-of-args ";snarf will take ~A args at a time, but got ~A in ~A" n lst-len lst)
-			;; ideally this would accept partial lists (i.e. left-over < req),
-			;;   but then we also need to notice that case in the list-tail below
-			(let ()
-			  
-			  (define (snarf-1 len f args)
-			    (if (not (null? args))
-				(let* ((last (list-tail args (- len 1)))
-				       (rest (cdr last)))
-				  (dynamic-wind
-				      (lambda ()
-					(set! (cdr last) '()))
-				      (lambda ()
-					(apply func args))
-				      (lambda ()
-					(set! (cdr last) rest)))
-				  (snarf-1 len f rest))))
-			  
-			  (snarf-1 n func lst)))))))))
-
-  (test (let ((lst '(1 2 3 4))) (catch #t (lambda () (snarf (lambda (a b) (format #t "~A ~A~%" a b c)) lst)) (lambda args 'error)) lst) '(1 2 3 4))
-  (test (snarf (lambda (a b) (format #t "~A ~A~%" a b)) '(1 2 3 4 5)) 'error)
-  (test (snarf (lambda (a b) (format #t "~A ~A~%" a b)) '(1)) 'error)
-  (test (let ((x 0)) (snarf (lambda (a) (set! x (+ x a))) '(1 2 3)) x) 6)
-  (test (let ((x 0)) (snarf (lambda (a b) (set! x (+ x a b))) '(1 2 3 4)) x) 10)
-  (test (let ((x 0)) (snarf (lambda* (a b) (set! x (+ x a b))) '(1 2 3 4)) x) 10)
-  (test (let ((x 0)) (snarf (lambda a (set! x (apply + a))) '(1 2 3 4)) x) 10)
-  (test (let ((x 0)) (snarf (lambda* (a b (c 0)) (set! x (+ x a b c))) '(1 2)) x) 3)
-
-
-
-;;; --------------------------------------------------------------------------------
-  ;;; procedure-source
-
-  (for-each
-   (lambda (arg)
-     (eval-string (format #f "(define (func) ~S)" arg))
-     (let ((source (procedure-source func)))
-       (let ((val (func)))
-	 (test val arg))))
-   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) ':hi "hi"))
-
-  (for-each
-   (lambda (arg)
-     (test (procedure-source arg) 'error))
-   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
-
-  (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
-  (test (procedure-source) 'error)
-  (test (procedure-source abs abs) 'error)
-  (test (procedure-source quasiquote) 'error)
-  (test (let () (define-macro (hi a) `(+ 1 ,a)) (cadr (caddr (procedure-source hi)))) '(lambda (a) ({list} '+ 1 a)))
-
-  (let ()
-    (define (hi a) (+ a x))
-    (test ((apply let '((x 32)) (list (procedure-source hi))) 12) 44))
-  ;; i.e. make a closure from (let ((x 32)) <procedure-source hi>)
-
-
-
-;;; --------------------------------------------------------------------------------
-  ;;; procedure-name
-
-  (test (let () (define (hi a) a) (procedure-name hi)) "hi")
-  (test (let () (define (hi a) a) (procedure-name 'hi)) "hi")
-  (test (procedure-name abs) "abs")
-  (test (procedure-name 'abs) "abs")
-  (test (procedure-name quasiquote) "quasiquote")
-  (test (procedure-name -s7-symbol-table-locked?) "-s7-symbol-table-locked?")
-  (test (let ((a abs)) (procedure-name a)) "abs")
-  (test (let () (define hi (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) (procedure-name hi)) "hi")
-  (test (let () (define* (hi (a 1)) a) (let ((b #f)) (set! b hi) (procedure-name b))) "hi")
-  (for-each
-   (lambda (arg)
-     (test (procedure-name arg) ""))
-   (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
-
-  (if (defined? '1+) (test (procedure-name 1+) "1+"))
-  (if (defined? 'identity) (test (procedure-name identity) "identity"))
-  (test (procedure-name cddr-1) "cddr-1")
-  (test (cddr-1 '(1 2 3 4)) (cddr '(1 2 3 4)))
-  (test (procedure-name cddr) "cddr")
-
-  ;; (let () (define-macro (hiho a) `(+ ,a 1)) (procedure-name hiho)) -> ""
-
-
-
-
-;;; --------------------------------------------------------------------------------
-  ;;; procedure-documentation
-
-  (test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
-  (test (string=? (let () (define (hi) "this is a string" 1) (help hi)) "this is a string") #t)
-  (test (string=? (let () (define (hi) "this is a string") (procedure-documentation hi)) "this is a string") #t)
-  (test (string=? (let () (define (hi) "this is a string") (hi)) "this is a string") #t)
-  (test (string=? (let () (define* (hi (a "a string")) a) (procedure-documentation hi)) "") #t)
-  (test (string=? (let () (define* (hi (a "a string")) "another string" a) (procedure-documentation hi)) "another string") #t)
-  (test (string=? (let () (define (hi a) "hi doc" (define (ho b) "ho doc" b) (ho a)) (procedure-documentation hi)) "hi doc") #t)
-  (test (set! (procedure-documentation abs) "X the unknown") 'error)
-  (test (let ((str (procedure-documentation abs))) (set! ((procedure-documentation abs) 1) #\x) (equal? str (procedure-documentation abs))) #t)
-  (test (let ((str (procedure-documentation abs))) (fill! (procedure-documentation abs) #\x) (equal? str (procedure-documentation abs))) #t)
-  (let ()
-    (define-macro (amac a) "this is a string" `(+ ,a 1))
-    (test (procedure-documentation amac) "this is a string"))
-  (let ()
-    (define-macro* (amac (a 1)) "this is a string" `(+ ,a 1))
-    (test (procedure-documentation amac) "this is a string"))
-  (let ()
-    (define-bacro (amac a) "this is a string" `(+ ,a 1))
-    (test (procedure-documentation amac) "this is a string"))
-  (let ()
-    (define-bacro* (amac (a 1)) "this is a string" `(+ ,a 1))
-    (test (procedure-documentation amac) "this is a string"))
-  
-  (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
-  (test (string=? (help abs) "(abs x) returns the absolute value of the real number x") #t)
-  (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
-  (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
-	  (list (hi 1) (procedure-documentation hi)))
-	(list 2 "this is a test"))
-  (test (procedure-documentation (lambda* (a b) "docs" a)) "docs")
-  (test (procedure-documentation (lambda* (a b) "" a)) "")
-  (test (procedure-documentation (lambda* (a b) a)) "")
-  (test (procedure-documentation (call-with-exit (lambda (c) c))) "")
-  (test (procedure-documentation (call/cc (lambda (c) c))) "")
-  (test (procedure-documentation) 'error)
-  (test (procedure-documentation abs abs) 'error)
-
-  (if (not (provided? 'snd))
-      (for-each
-       (lambda (arg)
-	 (test (procedure-documentation arg) 'error)
-	 (test (help arg) #f))
-       (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi" :hi)))
-  
-  ;; (test (procedure-with-setter? symbol-access) #t)
-  (test (procedure-documentation symbol-access) "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a symbol accesses its current binding.")
-  
-  (test (procedure-arity) 'error)
-  (test (procedure-arity abs abs) 'error)
-  (test (procedure-arity (call-with-exit (lambda (c) c))) '(0 0 #t))
-  (test (procedure-arity (call/cc (lambda (c) c))) '(0 0 #t))
-  
-  (let ((p (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) (+ a b)))))
-    (test (object->string (procedure-source p)) "(lambda (a) (+ a 1))")
-    (let ((p1 p)
-	  (p2 (make-procedure-with-setter (lambda (a) "pws doc" (+ a 1)) (lambda (a b) (+ a b)))))
-      (test (equal? p p1) #t)
-      (test (equal? p1 p2) #f)
-      (test (procedure-documentation p2) "pws doc")
-      (test (apply p2 '(2)) 3)))
-
-  (test (procedure-documentation hook-functions) "(hook-functions hook) returns the list of functions on the hook. It is settable;  (set! (hook-functions hook) (cons func (hook-functions hook))) adds func to the current list.")
-
-
-
-;;; --------------------------------------------------------------------------------
-  ;;; procedure-environment
-
-  (let ((f1 (lambda (a) (+ a 1)))
-	(f2 (lambda* ((a 2)) (+ a 1))))
-    (define (hi a) (+ a 1))
-    (define* (ho (a 1)) (+ a 1))
-    (test (environment? (procedure-environment hi)) #t)
-    (test (null? (environment->list (procedure-environment hi))) #f)
-    (test (environment? (procedure-environment ho)) #t)
-    (test (environment? (procedure-environment f1)) #t)
-    (test (environment? (procedure-environment f2)) #t)
-    (test (environment? (procedure-environment abs)) #t)
-    (test (length (procedure-environment ho)) 1)
-    (test (> (length (procedure-environment abs)) 100) #t)
-    (test (fill! (procedure-environment abs) 0) 'error)
-    (test (reverse (procedure-environment abs)) 'error)
-    (test (fill! (procedure-environment ho) 0) 'error)
-    (test (reverse (procedure-environment ho)) 'error))
-
-  (test (procedure-environment quasiquote) (global-environment))
-  (test (procedure-environment lambda) 'error)
-  (test (procedure-environment abs) (global-environment))
-  (test (procedure-environment cond-expand) (global-environment))
-  
-  (for-each
-   (lambda (arg)
-     (test (procedure-environment arg) 'error))
-   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
-
-  (test (let ()
-	  (define (hi a)
-	    (let ((func (symbol->value '__func__ (procedure-environment hi))))
-	      (list (if (symbol? func) func (car func))
-		    a)))
-	  (hi 1))
-	(list 'hi 1))
-
-  (test (let ()
-	  (define hi (let ((a 32)) 
-		       (lambda (b) 
-			 (+ a b))))
-	  (define ho (with-environment 
-		      (procedure-environment hi) 
-		      (lambda (b) 
-			(+ a b))))
-	  (list (hi 1) (ho 1)))
-	(list 33 33))
-
-  (test (let ()
-	  (define (hi a) (+ a 1))
-	  (with-environment (procedure-environment hi) 
-            ((eval (procedure-source hi)) 2)))
-	3)
-
-  (let ()
-    (define (where-is func)
-      (let* ((env (procedure-environment func))
-	     (addr (symbol->value '__func__ env)))
-	(if (not (pair? addr))
-	    ""
-	    (list (format #f "~A[~D]" (cadr addr) (caddr addr))
-		  addr))))
-    (let ((e (where-is ok?)))
-      (test (and (pair? (cadr e))
-		 (< ((cadr e) 2) 100)) ; this depends on where ok? is in this file
-	    #t)
-      (test (and (pair? (cadr e))
-		 (string=? (symbol->string (car (cadr e))) "ok?"))
-	    #t)
-      (test (and (pair? (cadr e))
-		 (let ((name (cadr (cadr e))))
-		   (and (string? name)
-			(call-with-exit
-			 (lambda (oops)
-			   (let ((len (length name)))
-			     (do ((i 0 (+ i 1)))
-				 ((= i len) #t)
-			       (if (and (not (char-alphabetic? (name i)))
-					(not (char=? (name i) #\/))
-					(not (char=? (name i) #\\))
-					(not (char=? (name i) #\.))
-					(not (char=? (name i) #\-))
-					(not (char-numeric? (name i))))
-				   (begin
-				     (format #t "ok? file name: ~S~%" name)
-				     (oops #f))))))))))
-	    #t)))
-
-  (let ()
-    (define-macro (window func beg end . body)
-      `(call-with-exit
-	(lambda (quit)
-	  (do ((notes ',body (cdr notes)))
-	      ((null? notes))
-	    (let* ((note (car notes))
-		   (note-beg (cadr note)))
-	      (if (<= ,beg note-beg)
-		  (if (> note-beg (+ ,beg ,end))
-		      (quit)
-		      (,func note))))))))
+    (define (subset source dest len)
+      (if (null? source)
+	  (begin
+	    (if (member dest subsets)
+		(format #t ";got ~S twice in for-each-subset: ~S~%" dest args))
+	    (set! subsets (cons dest subsets))
+	    (if (<= min-args len max-args)
+		(apply func dest)))
+	  (begin
+	    (subset (cdr source) (cons (car source) dest) (+ len 1))
+	    (subset (cdr source) dest len))))
     
-    (test 
-     (let ((n 0))
-       (window (lambda (a-note) (set! n (+ n 1))) 0 1 
-	       (fm-violin 0 1 440 .1) 
-	       (fm-violin .5 1 550 .1) 
-	       (fm-violin 3 1 330 .1))
-       n)
-     2)
-    
-    (test 
-     (let ((notes 0)
-	   (env #f))
-       (set! env (current-environment))
-       (window (with-environment env (lambda (n) (set! notes (+ notes 1)))) 0 1 
-	       (fm-violin 0 1 440 .1) 
-	       (fm-violin .5 1 550 .1) 
-	       (fm-violin 3 1 330 .1))
-       notes)
-     2))
+    (subset args '() 0)))
 
-  (test (let ()
-	  (define-macro (window func beg end . body)
-	    `(let ((e (current-environment)))
-	       (call-with-exit
-		(lambda (quit)
-		  (do ((notes ',body (cdr notes)))
-		      ((null? notes))
-		    (let* ((note (car notes))
-			   (note-beg (cadr note)))
-		      (if (<= ,beg note-beg)
-			  (if (> note-beg (+ ,beg ,end))
-			      (quit)
-			      ((with-environment e ,func) note)))))))))
-	  
-	  (let ((notes 0))
-	    (window (lambda (n) (set! notes (+ notes 1))) 0 1 
-		    (fm-violin 0 1 440 .1) 
-		    (fm-violin .5 1 550 .1) 
-		    (fm-violin 3 1 330 .1))
-	    notes))
-	2)
+(test (let ((ctr 0))
+	(for-each-subset (lambda args (set! ctr (+ ctr 1))) '(1 2 3 4))
+	ctr)
+      16)
+(test (let ((ctr 0))
+	(for-each-subset (lambda (arg) (set! ctr (+ ctr 1))) '(1 2 3 4))
+	ctr)
+      4)
+(test (let ((ctr 0))
+	(for-each-subset (lambda (arg1 arg2 arg3) (set! ctr (+ ctr 1))) '(1 2 3 4))
+	ctr)
+      4)
+(test (let ((ctr 0))
+	(for-each-subset (lambda* (arg1 arg2 arg3) (set! ctr (+ ctr 1))) '(1 2 3 4))
+	ctr)
+      15)
+(test (let ((ctr 0))
+	(for-each-subset (lambda () (set! ctr (+ ctr 1))) '(1 2 3 4))
+	ctr)
+      1)
+
+(define (snarf func lst)
+  "(snarf func lst) repeatedly applies func to as many elements of lst as func can take"
+  (let ((arity (procedure-arity func)))
+    (if (caddr arity)
+	(apply func lst)
+	(let ((n (+ (car arity) (cadr arity)))
+	      (lst-len (length lst)))
+	  (if (< lst-len (car arity))
+	      (error 'wrong-number-of-args ";snarf func requires ~A args, but got ~A, ~A" (car arity) lst-len lst)
+	      (if (<= lst-len n)
+		  (apply func lst)
+		  (if (not (zero? (modulo (length lst) n)))
+		      (error 'wrong-number-of-args ";snarf will take ~A args at a time, but got ~A in ~A" n lst-len lst)
+		      ;; ideally this would accept partial lists (i.e. left-over < req),
+		      ;;   but then we also need to notice that case in the list-tail below
+		      (let ()
+			
+			(define (snarf-1 len f args)
+			  (if (not (null? args))
+			      (let* ((last (list-tail args (- len 1)))
+				     (rest (cdr last)))
+				(dynamic-wind
+				    (lambda ()
+				      (set! (cdr last) '()))
+				    (lambda ()
+				      (apply func args))
+				    (lambda ()
+				      (set! (cdr last) rest)))
+				(snarf-1 len f rest))))
+			
+			(snarf-1 n func lst)))))))))
+
+(test (let ((lst '(1 2 3 4))) (catch #t (lambda () (snarf (lambda (a b) (format #t "~A ~A~%" a b c)) lst)) (lambda args 'error)) lst) '(1 2 3 4))
+(test (snarf (lambda (a b) (format #t "~A ~A~%" a b)) '(1 2 3 4 5)) 'error)
+(test (snarf (lambda (a b) (format #t "~A ~A~%" a b)) '(1)) 'error)
+(test (let ((x 0)) (snarf (lambda (a) (set! x (+ x a))) '(1 2 3)) x) 6)
+(test (let ((x 0)) (snarf (lambda (a b) (set! x (+ x a b))) '(1 2 3 4)) x) 10)
+(test (let ((x 0)) (snarf (lambda* (a b) (set! x (+ x a b))) '(1 2 3 4)) x) 10)
+(test (let ((x 0)) (snarf (lambda a (set! x (apply + a))) '(1 2 3 4)) x) 10)
+(test (let ((x 0)) (snarf (lambda* (a b (c 0)) (set! x (+ x a b c))) '(1 2)) x) 3)
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; procedure-source
+
+(for-each
+ (lambda (arg)
+   (eval-string (format #f "(define (func) ~S)" arg))
+   (let ((source (procedure-source func)))
+     (let ((val (func)))
+       (test val arg))))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) ':hi "hi"))
+
+(for-each
+ (lambda (arg)
+   (test (procedure-source arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+(test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
+(test (procedure-source) 'error)
+(test (procedure-source abs abs) 'error)
+(test (procedure-source quasiquote) 'error)
+(test (let () (define-macro (hi a) `(+ 1 ,a)) (cadr (caddr (procedure-source hi)))) '(lambda (a) ({list} '+ 1 a)))
+
+(let ()
+  (define (hi a) (+ a x))
+  (test ((apply let '((x 32)) (list (procedure-source hi))) 12) 44))
+;; i.e. make a closure from (let ((x 32)) <procedure-source hi>)
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; procedure-name
+
+(test (let () (define (hi a) a) (procedure-name hi)) "hi")
+(test (let () (define (hi a) a) (procedure-name 'hi)) "hi")
+(test (procedure-name abs) "abs")
+(test (procedure-name 'abs) "abs")
+(test (procedure-name quasiquote) "quasiquote")
+(test (procedure-name -s7-symbol-table-locked?) "-s7-symbol-table-locked?")
+(test (let ((a abs)) (procedure-name a)) "abs")
+(test (let () (define hi (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) (procedure-name hi)) "hi")
+(test (let () (define* (hi (a 1)) a) (let ((b #f)) (set! b hi) (procedure-name b))) "hi")
+(for-each
+ (lambda (arg)
+   (test (procedure-name arg) ""))
+ (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+(if (defined? '1+) (test (procedure-name 1+) "1+"))
+(if (defined? 'identity) (test (procedure-name identity) "identity"))
+(test (procedure-name cddr-1) "cddr-1")
+(test (cddr-1 '(1 2 3 4)) (cddr '(1 2 3 4)))
+(test (procedure-name cddr) "cddr")
+
+;; (let () (define-macro (hiho a) `(+ ,a 1)) (procedure-name hiho)) -> ""
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; procedure-documentation
+
+(test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
+(test (string=? (let () (define (hi) "this is a string" 1) (help hi)) "this is a string") #t)
+(test (string=? (let () (define (hi) "this is a string") (procedure-documentation hi)) "this is a string") #t)
+(test (string=? (let () (define (hi) "this is a string") (hi)) "this is a string") #t)
+(test (string=? (let () (define* (hi (a "a string")) a) (procedure-documentation hi)) "") #t)
+(test (string=? (let () (define* (hi (a "a string")) "another string" a) (procedure-documentation hi)) "another string") #t)
+(test (string=? (let () (define (hi a) "hi doc" (define (ho b) "ho doc" b) (ho a)) (procedure-documentation hi)) "hi doc") #t)
+(test (set! (procedure-documentation abs) "X the unknown") 'error)
+(test (let ((str (procedure-documentation abs))) (set! ((procedure-documentation abs) 1) #\x) (equal? str (procedure-documentation abs))) #t)
+(test (let ((str (procedure-documentation abs))) (fill! (procedure-documentation abs) #\x) (equal? str (procedure-documentation abs))) #t)
+(let ()
+  (define-macro (amac a) "this is a string" `(+ ,a 1))
+  (test (procedure-documentation amac) "this is a string"))
+(let ()
+  (define-macro* (amac (a 1)) "this is a string" `(+ ,a 1))
+  (test (procedure-documentation amac) "this is a string"))
+(let ()
+  (define-bacro (amac a) "this is a string" `(+ ,a 1))
+  (test (procedure-documentation amac) "this is a string"))
+(let ()
+  (define-bacro* (amac (a 1)) "this is a string" `(+ ,a 1))
+  (test (procedure-documentation amac) "this is a string"))
+
+(test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
+(test (string=? (help abs) "(abs x) returns the absolute value of the real number x") #t)
+(test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
+(test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
+	(list (hi 1) (procedure-documentation hi)))
+      (list 2 "this is a test"))
+(test (procedure-documentation (lambda* (a b) "docs" a)) "docs")
+(test (procedure-documentation (lambda* (a b) "" a)) "")
+(test (procedure-documentation (lambda* (a b) a)) "")
+(test (procedure-documentation (lambda* (a b) "" a)) "")
+(test (procedure-documentation (call-with-exit (lambda (c) c))) "")
+(test (procedure-documentation (call/cc (lambda (c) c))) "")
+(test (procedure-documentation) 'error)
+(test (procedure-documentation abs abs) 'error)
+
+(if (not (provided? 'snd))
+    (for-each
+     (lambda (arg)
+       (test (procedure-documentation arg) 'error)
+       (test (help arg) #f))
+     (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi" :hi)))
+
+;; (test (procedure-with-setter? symbol-access) #t)
+(test (procedure-documentation symbol-access) "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a symbol accesses its current binding.")
+
+(test (procedure-arity) 'error)
+(test (procedure-arity abs abs) 'error)
+(test (procedure-arity (call-with-exit (lambda (c) c))) '(0 0 #t))
+(test (procedure-arity (call/cc (lambda (c) c))) '(0 0 #t))
+
+(let ((p (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) (+ a b)))))
+  (test (object->string (procedure-source p)) "(lambda (a) (+ a 1))")
+  (let ((p1 p)
+	(p2 (make-procedure-with-setter (lambda (a) "pws doc" (+ a 1)) (lambda (a b) (+ a b)))))
+    (test (equal? p p1) #t)
+    (test (equal? p1 p2) #f)
+    (test (procedure-documentation p2) "pws doc")
+    (test (apply p2 '(2)) 3)))
+
+(test (procedure-documentation hook-functions) "(hook-functions hook) returns the list of functions on the hook. It is settable;  (set! (hook-functions hook) (cons func (hook-functions hook))) adds func to the current list.")
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; procedure-environment
+
+(let ((f1 (lambda (a) (+ a 1)))
+      (f2 (lambda* ((a 2)) (+ a 1))))
+  (define (hi a) (+ a 1))
+  (define* (ho (a 1)) (+ a 1))
+  (test (environment? (procedure-environment hi)) #t)
+  (test (null? (environment->list (procedure-environment hi))) #f)
+  (test (environment? (procedure-environment ho)) #t)
+  (test (environment? (procedure-environment f1)) #t)
+  (test (environment? (procedure-environment f2)) #t)
+  (test (environment? (procedure-environment abs)) #t)
+  (test (length (procedure-environment ho)) 1)
+  (test (> (length (procedure-environment abs)) 100) #t)
+  (test (fill! (procedure-environment abs) 0) 'error)
+  (test (reverse (procedure-environment abs)) 'error)
+  (test (fill! (procedure-environment ho) 0) 'error)
+  (test (reverse (procedure-environment ho)) 'error))
+
+(test (procedure-environment quasiquote) (global-environment))
+(test (procedure-environment lambda) 'error)
+(test (procedure-environment abs) (global-environment))
+(test (procedure-environment cond-expand) (global-environment))
+
+(for-each
+ (lambda (arg)
+   (test (procedure-environment arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+(test (let ()
+	(define (hi a)
+	  (let ((func (symbol->value '__func__ (procedure-environment hi))))
+	    (list (if (symbol? func) func (car func))
+		  a)))
+	(hi 1))
+      (list 'hi 1))
+
+(test (let ()
+	(define hi (let ((a 32)) 
+		     (lambda (b) 
+		       (+ a b))))
+	(define ho (with-environment 
+		    (procedure-environment hi) 
+		    (lambda (b) 
+		      (+ a b))))
+	(list (hi 1) (ho 1)))
+      (list 33 33))
+
+(test (let ()
+	(define (hi a) (+ a 1))
+	(with-environment (procedure-environment hi) 
+			  ((eval (procedure-source hi)) 2)))
+      3)
+
+(let ()
+  (define (where-is func)
+    (let* ((env (procedure-environment func))
+	   (addr (symbol->value '__func__ env)))
+      (if (not (pair? addr))
+	  ""
+	  (list (format #f "~A[~D]" (cadr addr) (caddr addr))
+		addr))))
+  (let ((e (where-is ok?)))
+    (test (and (pair? (cadr e))
+	       (< ((cadr e) 2) 100)) ; this depends on where ok? is in this file
+	  #t)
+    (test (and (pair? (cadr e))
+	       (string=? (symbol->string (car (cadr e))) "ok?"))
+	  #t)
+    (test (and (pair? (cadr e))
+	       (let ((name (cadr (cadr e))))
+		 (and (string? name)
+		      (call-with-exit
+		       (lambda (oops)
+			 (let ((len (length name)))
+			   (do ((i 0 (+ i 1)))
+			       ((= i len) #t)
+			     (if (and (not (char-alphabetic? (name i)))
+				      (not (char=? (name i) #\/))
+				      (not (char=? (name i) #\\))
+				      (not (char=? (name i) #\.))
+				      (not (char=? (name i) #\-))
+				      (not (char-numeric? (name i))))
+				 (begin
+				   (format #t "ok? file name: ~S~%" name)
+				   (oops #f))))))))))
+	  #t)))
+
+(let ()
+  (define-macro (window func beg end . body)
+    `(call-with-exit
+      (lambda (quit)
+	(do ((notes ',body (cdr notes)))
+	    ((null? notes))
+	  (let* ((note (car notes))
+		 (note-beg (cadr note)))
+	    (if (<= ,beg note-beg)
+		(if (> note-beg (+ ,beg ,end))
+		    (quit)
+		    (,func note))))))))
+  
+  (test 
+   (let ((n 0))
+     (window (lambda (a-note) (set! n (+ n 1))) 0 1 
+	     (fm-violin 0 1 440 .1) 
+	     (fm-violin .5 1 550 .1) 
+	     (fm-violin 3 1 330 .1))
+     n)
+   2)
+  
+  (test 
+   (let ((notes 0)
+	 (env #f))
+     (set! env (current-environment))
+     (window (with-environment env (lambda (n) (set! notes (+ notes 1)))) 0 1 
+	     (fm-violin 0 1 440 .1) 
+	     (fm-violin .5 1 550 .1) 
+	     (fm-violin 3 1 330 .1))
+     notes)
+   2))
+
+(test (let ()
+	(define-macro (window func beg end . body)
+	  `(let ((e (current-environment)))
+	     (call-with-exit
+	      (lambda (quit)
+		(do ((notes ',body (cdr notes)))
+		    ((null? notes))
+		  (let* ((note (car notes))
+			 (note-beg (cadr note)))
+		    (if (<= ,beg note-beg)
+			(if (> note-beg (+ ,beg ,end))
+			    (quit)
+			    ((with-environment e ,func) note)))))))))
+	
+	(let ((notes 0))
+	  (window (lambda (n) (set! notes (+ notes 1))) 0 1 
+		  (fm-violin 0 1 440 .1) 
+		  (fm-violin .5 1 550 .1) 
+		  (fm-violin 3 1 330 .1))
+	  notes))
+      2)
 
 #|
 ;;; TODO: procedure-environment is a mess but it's hard to test
@@ -20438,21 +20446,21 @@ and setter of pws is either global or ()
 
 ;;; bad English:
 :(procedure-environment quote)
-;procedure-environment argument, quote, is a syntax but should be a procedure or a macro
-;    (procedure-environment quote)
+					;procedure-environment argument, quote, is a syntax but should be a procedure or a macro
+					;    (procedure-environment quote)
 
 ;;; but:
-(procedure-environment values) -> global env! (like catch/dynamic-wnd it's a procedure)
+(procedure-environment values) -> global env! (like catch/dynamic-wind it's a procedure)
 
 :(procedure-environment (vct 1 2))
 #<environment>
 :(procedure-environment (vector 1 2))
-;procedure-environment argument, #(1 2), is a vector but should be a procedure or a macro
-;    (vector 1 2)
+					;procedure-environment argument, #(1 2), is a vector but should be a procedure or a macro
+					;    (vector 1 2)
 
 :(environment->list (procedure-environment (cadr (make-type))))
 ((print . #f) (equal . #f) (getter . #f) (setter . #f) (length . #f) (name . #f) (copy . #f) (reverse . #f) (fill . #f))
-   but that's make-type's arglist??
+but that's make-type's arglist??
 :(environment->list (procedure-environment make-type))
 ((__func__ . make-type))
 
@@ -22291,7 +22299,7 @@ and setter of pws is either global or ()
     (let ((ctr ((cadr (make-type :getter (lambda (a b) (car (map append (list b a)))) :length (lambda (a) (length (map abs '(-1 -2 -3)))))))))
       (test (map (lambda (a b) (+ a b)) ctr ctr) '(0 2 4)))
 
-    ))
+    );)
 
 #|
 ;;; these tests are problematic -- they might not fail as hoped, or they might generate unwanted troubles

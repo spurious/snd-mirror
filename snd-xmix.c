@@ -659,9 +659,9 @@ Widget make_mix_dialog(void)
       xmix_speed_control_style = speed_control_style(ss);
 
       mix_dialog_id = any_mix_id();
-      xdismiss = XmStringCreateLocalized((char *)"Go Away");
+      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
       xcopy = XmStringCreateLocalized((char *)"Copy mix");
-      xhelp = XmStringCreateLocalized((char *)"Help");
+      xhelp = XmStringCreateLocalized((char *)I_HELP);
       xtitle = XmStringCreateLocalized((char *)"Mixes");
 
       n = 0;
@@ -762,7 +762,7 @@ Widget make_mix_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      previousb = XtCreateManagedWidget("Previous", xmPushButtonWidgetClass, mix_row, args, n);
+      previousb = XtCreateManagedWidget(I_PREVIOUS, xmPushButtonWidgetClass, mix_row, args, n);
       if (previous_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
 	set_sensitive(previousb, false);
       XtAddCallback(previousb, XmNactivateCallback, mix_previous_callback, NULL);
@@ -770,7 +770,7 @@ Widget make_mix_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      nextb = XtCreateManagedWidget("Next", xmPushButtonWidgetClass, mix_row, args, n);
+      nextb = XtCreateManagedWidget(I_NEXT, xmPushButtonWidgetClass, mix_row, args, n);
       if (next_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
 	set_sensitive(nextb, false);
       XtAddCallback(nextb, XmNactivateCallback, mix_next_callback, NULL);

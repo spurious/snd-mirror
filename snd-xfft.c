@@ -1018,8 +1018,8 @@ Widget make_transform_dialog(bool managed)
 	    size_pos = i + 1;
 	    break;
 	  }
-      xdismiss = XmStringCreateLocalized((char *)"Go Away"); /* needed by template dialog */
-      xhelp = XmStringCreateLocalized((char *)"Help");
+      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY); /* needed by template dialog */
+      xhelp = XmStringCreateLocalized((char *)I_HELP);
       xtitle = XmStringCreateLocalized((char *)"Transform Options");
       xorient = XmStringCreateLocalized((char *)"Color/Orientation");
 

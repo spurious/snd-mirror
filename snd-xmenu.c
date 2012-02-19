@@ -146,7 +146,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
     }
   else
     {
-      set_menu_label(edit_play_menu, "Stop");
+      set_menu_label(edit_play_menu, I_STOP);
       ss->selection_play_stop = true;
       play_selection(IN_BACKGROUND);
     }
@@ -399,7 +399,7 @@ void check_menu_labels(int key, int state, bool extended)
   else 
     {
       if ((key == snd_K_s) && (state == snd_ControlMask))
-	set_label(edit_find_menu, "Find");
+	set_label(edit_find_menu, I_FIND);
     }
 }
 
@@ -562,7 +562,7 @@ Widget add_menu(void)
   XtVaSetValues(edit_redo_menu, XmNmnemonic, 'R', NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
-  edit_find_menu = XtCreateManagedWidget("Find", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_find_menu = XtCreateManagedWidget(I_FIND, xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_find_menu, XmNactivateCallback, edit_find_callback_1, NULL);
   XtVaSetValues(edit_find_menu, XmNmnemonic, 'F', NULL);
 #endif
@@ -809,13 +809,13 @@ Widget add_menu(void)
 
   /* HELP MENU */
   XtSetArg(main_args[main_n], XmNuserData, (XtPointer)4);
-  help_menu = XmCreatePulldownMenu(main_menu, (char *)"Help", main_args, main_n + 1);
+  help_menu = XmCreatePulldownMenu(main_menu, (char *)I_HELP, main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, help_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'H'); high_n++;
   XtSetArg(high_args[high_n], XmNuserData, (XtPointer)4); high_n++;
-  help_cascade_menu = XtCreateManagedWidget("Help", xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
+  help_cascade_menu = XtCreateManagedWidget(I_HELP, xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
   help_about_snd_menu = XtCreateManagedWidget("About Snd", xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_about_snd_menu, XmNactivateCallback, help_about_snd_callback, NULL);
@@ -1117,7 +1117,7 @@ static void popup_loop_play_callback(Widget w, XtPointer info, XtPointer context
     }
   else
     {
-      set_menu_label(edit_play_menu, "Stop");
+      set_menu_label(edit_play_menu, I_STOP);
       ss->selection_play_stop = true;
       loop_play_selection();
     }

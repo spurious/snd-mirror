@@ -26981,6 +26981,27 @@ static int remember_file_name(s7_scheme *sc, const char *file)
  *         hook as always of 1 arg=caller's env...
  *  the only thing *error-info* gives us outside the bacro env is the code -- add as an opt arg? (bacro*)
  *    -- a continuation?
+ *  but you can already add (current-environment) to the error args
+ *  I guess you want a simple error call, and in the error handler easy access to the error env
+ *    so error-environment does have a use,
+ *       error-source => code at that point
+ *       error-line-number/filename
+ *       the error handler gets the original error args = type and data
+ * and the stack is just confusing, so *error-info* can be replaced by 2 or 4 funcs
+ *    (define (error-line-number) (pair-line-number (error-source))) etc
+ *
+ * TODO: add another section to s7.html splitting s7 into 2 if one computation is taking its time
+ *       I think this requires 
+ *          recognizing that s7 is computing something and the user wants new action,
+ *          copying the global environment
+ *          start a new s7 using a new heap/stack/global env etc (s7_init?)
+ *            does this require a new pthread?  
+ *          merge the original global-env into the new one
+ *          respond to user with the new s7
+ *          when the previous computation ends (how to tell this?)
+ *            compare the original global-env against the copied version for changes made by the 1st s7,
+ *            and if the new s7 matches the copy (i.e. it did not set the same global), merge the values
+ *          free entirely the original s7 (how?)
  */
 #define ERROR_INFO_DEFAULT sc->F
 #define ERROR_TYPE 0

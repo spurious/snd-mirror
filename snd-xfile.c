@@ -1,6 +1,39 @@
 #include "snd.h"
 #include "snd-file.h"
 
+/* TODO: "go away" should always be next to help (on the right)
+ *        with most likely "yes" case on the left.
+ *           affects at least: edit-find, view-files, view-mixes, view-regions, transform-options, transform-controls, options-prefs (motif)
+ *             every dialog in gtk!
+ * what does "reset" mean in (for example) view-files? --the enved window should hold it or omit it?
+ *   or "revert" in colors?
+ * view-files should not be a drop-down until there really is more than 1 viewer (not "new" as an option!)
+ * what is "sync" in mixes? "graph style" "channel style" mean nothing, zoom focus?? axes??
+ * isn't "save options" redundant?  options-controls is not the control panel, and "control panel" is a dumb name
+ *   gtk options/controls has trough color?
+ * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
+ * the minibuffer is useless -- what to do with it?  maybe a per-channel toolbar?
+ *   or try to recognize what user wants -- search in sound, help etc?
+ * in gtk I think I've turned off the menu icons, yet they sometimes appear in the dialogs?
+ * "global find" is jargon
+ * can tooltip be context dependent?  (x -> "close selected sound" but should be "close oboe.snd" or whatever).
+ *   if toolbar entry is a no-op, can that be indicated (undo, but no edits, cut but no selection etc)
+ *   other parts of the interface need tooltips, I suppose (the "x" in the sound pane for example)
+ * add grid option to the view menu
+ * should "unselect" be "unselect all"?
+ * in snd.html the names in the menus should reflect current names (not "paste" etc), and order ("show controls" is not 1st is it?)
+ *   remember the popup menus!  they use "cut" for example
+ * if a selection is made, don't change the dialog size
+ * in open/save-as etc, the actual file should be at the top, not the bottom
+ * edit env is a mess and is probably never used anyway -- in any case get rid of pointless buttons!
+ * some of these dialogs look too small -- holdover from distant past?
+ * perhaps the help buttons could be (?)entry where click?->current help dialog, else search if typed value (with completion)
+ *
+ * 19: gxfind button order, but one is "forward|back" and the other is "next|previous"
+ *       firefox uses |find: |entry| <--previous | -->next | highlight all, others use "search:..."
+ *       the gtk back/forward business is built into the stock icons
+ */
+
 /* various file-related dialogs:
    File|Edit:Save-as
    File:Open|View
@@ -1258,7 +1291,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   s2 = XmStringCreateLocalized(title);
   ok_label = XmStringCreateLocalized(title);
   filter_list_label = XmStringCreateLocalized((char *)"files listed:");
-  cancel_label = XmStringCreateLocalized((char *)"Go Away");
+  cancel_label = XmStringCreateLocalized((char *)I_GO_AWAY);
 
   n = 0;
   if (open_file_dialog_directory(ss))
@@ -1595,7 +1628,7 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 	XtSetSensitive(odat->mkdirB, false);
       }
 
-      cancel_label = XmStringCreateLocalized((char *)"Go Away");
+      cancel_label = XmStringCreateLocalized((char *)I_GO_AWAY);
       XtVaSetValues(odat->dialog, XmNcancelLabelString, cancel_label, NULL);
       XmStringFree(cancel_label);
     }
@@ -3385,7 +3418,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       filter_list_label = XmStringCreateLocalized((char *)"files listed:");
       XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;
 
-      cancel_label = XmStringCreateLocalized((char *)"Go Away");
+      cancel_label = XmStringCreateLocalized((char *)I_GO_AWAY);
       XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
 
       sd->fp = (file_pattern_info *)calloc(1, sizeof(file_pattern_info));
@@ -3970,8 +4003,8 @@ widget_t make_new_file_dialog(bool managed)
       Widget sep, reset_button;
 
       titlestr = XmStringCreateLocalized((char *)"New file");
-      xhelp = XmStringCreateLocalized((char *)"Help");
-      xcancel = XmStringCreateLocalized((char *)"Go Away");
+      xhelp = XmStringCreateLocalized((char *)I_HELP);
+      xcancel = XmStringCreateLocalized((char *)I_GO_AWAY);
       xok = XmStringCreateLocalized((char *)"Ok");
 
       n = 0;
@@ -4371,8 +4404,8 @@ Widget edit_header(snd_info *sp)
       XmString xstr1, xstr2, xstr3, titlestr;
 
       n = 0;
-      xstr1 = XmStringCreateLocalized((char *)"Go Away"); /* needed by template dialog */
-      xstr2 = XmStringCreateLocalized((char *)"Help");
+      xstr1 = XmStringCreateLocalized((char *)I_GO_AWAY); /* needed by template dialog */
+      xstr2 = XmStringCreateLocalized((char *)I_HELP);
       xstr3 = XmStringCreateLocalized((char *)"Save");
       titlestr = XmStringCreateLocalized((char *)"Edit Header");
 
@@ -4700,8 +4733,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   Arg args[20];
   Widget reset_button, main_w;
 
-  xstr1 = XmStringCreateLocalized((char *)"Go Away"); /* needed by template dialog */
-  xstr2 = XmStringCreateLocalized((char *)"Help");
+  xstr1 = XmStringCreateLocalized((char *)I_GO_AWAY); /* needed by template dialog */
+  xstr2 = XmStringCreateLocalized((char *)I_HELP);
   xstr3 = XmStringCreateLocalized((char *)"Ok");
   if (!title)
     titlestr = XmStringCreateLocalized((char *)"No header on file");
@@ -6134,8 +6167,8 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       Widget amp_label, speed_label, env_frame;
       Widget bframe, bform;
 
-      xdismiss = XmStringCreateLocalized((char *)"Go Away");
-      xhelp = XmStringCreateLocalized((char *)"Help");
+      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
+      xhelp = XmStringCreateLocalized((char *)I_HELP);
       new_viewer_str = XmStringCreateLocalized((char *)"New Viewer");
 
       {

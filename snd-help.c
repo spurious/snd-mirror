@@ -531,7 +531,7 @@ void find_help(void)
     #define search_procedure_example "   >lambda: <{ y }> 0.1 y f< ; set-search-procedure"
   #endif
 
-  snd_help_with_xrefs("Find", 
+  snd_help_with_xrefs(I_FIND, 
 
 #if HAVE_EXTENSION_LANGUAGE
 "Searches in Snd refer to the sound data, and are, in general, patterned after Emacs.  When you type \
@@ -2582,8 +2582,8 @@ search function examples in that file that search for peaks, clicks, or a partic
 #endif
 
 		      WITH_WORD_WRAP,
-		      snd_xrefs("Find"),
-		      snd_xref_urls("Find"));
+		      snd_xrefs(I_FIND),
+		      snd_xref_urls(I_FIND));
 }
 
 
@@ -2943,7 +2943,7 @@ static const char *topic_url(const char *topic)
 static const char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
-  "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Copy",
+  "Src", I_FIND, "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Copy",
   "Noise Reduction", "Window Size", "Color", "Control", "Random Numbers", "Wavogram"
 };
 

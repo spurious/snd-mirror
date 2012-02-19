@@ -300,8 +300,8 @@ widget_t record_file(void)
       XmString xquit, xhelp, xrecord, xtitle;
       Atom wm_delete;
 
-      xquit = XmStringCreateLocalized((char *)"Go Away");
-      xhelp = XmStringCreateLocalized((char *)"Help");
+      xquit = XmStringCreateLocalized((char *)I_GO_AWAY);
+      xhelp = XmStringCreateLocalized((char *)I_HELP);
       xrecord = XmStringCreateLocalized((char *)"Record");
       xtitle = XmStringCreateLocalized((char *)"Record");
 

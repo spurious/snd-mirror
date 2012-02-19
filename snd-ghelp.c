@@ -272,7 +272,7 @@ static void create_help_monolog(void)
   help_dialog = snd_gtk_dialog_new();
   SG_SIGNAL_CONNECT(help_dialog, "delete_event", delete_help_dialog, NULL);
 
-  gtk_window_set_title(GTK_WINDOW(help_dialog), "Help");
+  gtk_window_set_title(GTK_WINDOW(help_dialog), I_HELP);
   sg_make_resizable(help_dialog);
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 40);
@@ -286,7 +286,7 @@ static void create_help_monolog(void)
   add_highlight_button_style(ok_button);
 #endif
   gtk_widget_show(ok_button);
-  set_stock_button_label(ok_button, "Go Away");
+  set_stock_button_label(ok_button, I_GO_AWAY);
 
   help_previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_widget_set_name(help_previous_button, "dialog_button");

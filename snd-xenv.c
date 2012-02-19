@@ -186,7 +186,7 @@ static void apply_enved(void)
 	{
 	  set_sensitive(applyB, false);
 	  set_sensitive(apply2B, false);
-	  set_button_label(cancelB, "Stop");
+	  set_button_label(cancelB, I_STOP);
 	  cancelling = false;
 	  check_for_event();
 	  switch (enved_target(ss))
@@ -253,7 +253,7 @@ static void apply_enved(void)
 	  if (enved_wave_p(ss)) env_redisplay();
 	  set_sensitive(applyB, true);
 	  set_sensitive(apply2B, true);
-	  set_button_label(cancelB, "Go Away");
+	  set_button_label(cancelB, I_GO_AWAY);
 	  cancelling = true;
 	}
     }
@@ -976,8 +976,8 @@ Widget create_envelope_editor(void)
       char str[LABEL_BUFFER_SIZE];
 
       /* -------- DIALOG -------- */
-      xdismiss = XmStringCreateLocalized((char *)"Go Away");
-      xhelp = XmStringCreateLocalized((char *)"Help");
+      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
+      xhelp = XmStringCreateLocalized((char *)I_HELP);
       titlestr = XmStringCreateLocalized((char *)"Edit Envelope");
       xapply = XmStringCreateLocalized((char *)"Apply");
       /* xreset = XmStringCreateLocalized((char *)"Reset"); */

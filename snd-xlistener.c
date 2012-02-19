@@ -1311,10 +1311,10 @@ static void make_listener_widget(int height)
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC); n++;
       listener_popup = XmCreatePopupMenu(listener_text, (char *)"listener-popup", args, n);
 
-      w = XtCreateManagedWidget("Help", xmPushButtonWidgetClass, listener_popup, args, n);
+      w = XtCreateManagedWidget(I_HELP, xmPushButtonWidgetClass, listener_popup, args, n);
       XtAddCallback(w, XmNactivateCallback, listener_help_callback, NULL);
 
-      w = XtCreateManagedWidget("Stop", xmPushButtonWidgetClass, listener_popup, args, n);
+      w = XtCreateManagedWidget(I_STOP, xmPushButtonWidgetClass, listener_popup, args, n);
       XtAddCallback(w, XmNactivateCallback, listener_stop_callback, NULL);
 
 #if HAVE_SCHEME

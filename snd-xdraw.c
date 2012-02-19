@@ -947,8 +947,8 @@ Widget make_color_orientation_dialog(bool managed)
       XmString glstr;
 #endif
 
-      xdismiss = XmStringCreateLocalized((char *)"Go Away"); /* needed by template dialog */
-      xhelp = XmStringCreateLocalized((char *)"Help");
+      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY); /* needed by template dialog */
+      xhelp = XmStringCreateLocalized((char *)I_HELP);
       xreset = XmStringCreateLocalized((char *)"Reset");
       titlestr = XmStringCreateLocalized((char *)"Color and Orientation");
 

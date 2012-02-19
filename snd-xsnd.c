@@ -3248,8 +3248,8 @@ void make_controls_dialog(void)
       XmString xdismiss, xhelp, titlestr, xreset;
       Widget mainform, slider;
 
-      xdismiss = XmStringCreateLocalized((char *)"Go Away");
-      xhelp = XmStringCreateLocalized((char *)"Help");
+      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
+      xhelp = XmStringCreateLocalized((char *)I_HELP);
       titlestr = XmStringCreateLocalized((char *)"More controls");
       xreset = XmStringCreateLocalized((char *)"Reset");
 

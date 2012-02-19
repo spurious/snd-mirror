@@ -300,7 +300,7 @@ widget_t record_file(void)
 
       quit_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(quit_button, "dialog_button");
-      set_stock_button_label(quit_button, "Go Away");
+      set_stock_button_label(quit_button, I_GO_AWAY);
 
 #ifdef GTK_STOCK_MEDIA_RECORD
       record_button = sg_button_new_from_stock_with_label("Record", GTK_STOCK_MEDIA_RECORD);

@@ -1670,13 +1670,13 @@ widget_t make_preferences_dialog(void)
     Widget revert_button, clear_button;
 
     title = XmStringCreateLocalized((char *)"Preferences");
-    help = XmStringCreateLocalized((char *)"Help");
+    help = XmStringCreateLocalized((char *)I_HELP);
     revert = XmStringCreateLocalized((char *)"Revert");
     clear = XmStringCreateLocalized((char *)"Clear");
 #if HAVE_EXTENSION_LANGUAGE
     save = XmStringCreateLocalized((char *)"Save");
 #endif
-    dismiss = XmStringCreateLocalized((char *)"Go Away");
+    dismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->basic_color); n++;

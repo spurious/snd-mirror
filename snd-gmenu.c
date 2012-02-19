@@ -131,7 +131,7 @@ static void edit_play_callback(GtkWidget *w, gpointer info)
     }
   else
     {
-      set_menu_label(edit_play_menu, "Stop");
+      set_menu_label(edit_play_menu, I_STOP);
       ss->selection_play_stop = true;
       play_selection(IN_BACKGROUND);
     }
@@ -521,8 +521,8 @@ GtkWidget *add_menu(void)
   ml[e_redo_menu] = "Redo";
 
 #if HAVE_EXTENSION_LANGUAGE
-  edit_find_menu = add_insensitive_menu_item(edit_cascade_menu, "Find", GTK_STOCK_FIND, (GCallback)edit_find_callback_1);
-  ml[e_find_menu] = "Find";
+  edit_find_menu = add_insensitive_menu_item(edit_cascade_menu, I_FIND, GTK_STOCK_FIND, (GCallback)edit_find_callback_1);
+  ml[e_find_menu] = I_FIND;
 #endif
 
   edit_select_sep_menu = add_menu_separator(edit_cascade_menu);
@@ -769,8 +769,8 @@ GtkWidget *add_menu(void)
 
   /* -------- HELP MENU -------- */
 
-  help_menu = gtk_menu_item_new_with_label("Help");
-  ml[h_menu] = "Help";
+  help_menu = gtk_menu_item_new_with_label(I_HELP);
+  ml[h_menu] = I_HELP;
   gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), help_menu);
   gtk_widget_show(help_menu);
   /* this is no longer supported in Gtk -- they say "use gtk_widget_set_hexpand() and gtk_widget_set_halign()" */
@@ -835,8 +835,8 @@ GtkWidget *add_menu(void)
   ml[h_undo_menu] = "Undo and redo";
 
 #if HAVE_EXTENSION_LANGUAGE
-  help_find_menu = add_menu_item(help_cascade_menu, "Find", NULL, (GCallback)help_find_callback);
-  ml[h_find_menu] = "Find";
+  help_find_menu = add_menu_item(help_cascade_menu, I_FIND, NULL, (GCallback)help_find_callback);
+  ml[h_find_menu] = I_FIND;
 #endif
 
   help_sync_menu = add_menu_item(help_cascade_menu, "Sync and unite", NULL, (GCallback)help_sync_callback);
@@ -1070,7 +1070,7 @@ static void popup_loop_play_callback(GtkWidget *w, gpointer info)
     }
   else
     {
-      set_menu_label(edit_play_menu, "Stop");
+      set_menu_label(edit_play_menu, I_STOP);
       ss->selection_play_stop = true;
       loop_play_selection();
     }

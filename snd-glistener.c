@@ -946,12 +946,12 @@ static void listener_popup_populate_callback(GtkTextView *view, GtkMenu *menu, g
   gtk_widget_show(w); 
 #endif
 
-  w = gtk_menu_item_new_with_label("Stop"); 
+  w = gtk_menu_item_new_with_label(I_STOP); 
   gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
   g_signal_connect(w, "activate", G_CALLBACK(listener_stop_callback), NULL);
   gtk_widget_show(w); 
 
-  w = gtk_menu_item_new_with_label("Help"); 
+  w = gtk_menu_item_new_with_label(I_HELP); 
   gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
   g_signal_connect(w, "activate", G_CALLBACK(listener_help_callback), NULL);
   gtk_widget_show(w); 

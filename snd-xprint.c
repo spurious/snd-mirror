@@ -113,7 +113,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
       clear_print_error();
       if (ss->print_choice == PRINT_SND)
 	{
-	  plab = XmStringCreateLocalized((char *)"Stop");
+	  plab = XmStringCreateLocalized((char *)I_STOP);
 	  nsp = any_selected_sound();
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, "printing %s", nsp->short_filename);
 	  slab = XmStringCreateLocalized(print_string);
@@ -207,8 +207,8 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       xmstr1 = XmStringCreateLocalized((char *)"Print");  /* "ok" here is confusing -- might mean, ok I'm done */
-      xmstr2 = XmStringCreateLocalized((char *)"Help");
-      xmstr3 = XmStringCreateLocalized((char *)"Go Away");
+      xmstr2 = XmStringCreateLocalized((char *)I_HELP);
+      xmstr3 = XmStringCreateLocalized((char *)I_GO_AWAY);
       titlestr = XmStringCreateLocalized((char *)"Print");
 
       XtSetArg(args[n], XmNmessageString, xmstr4); n++;

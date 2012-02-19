@@ -154,7 +154,7 @@ static void apply_enved(void)
 	{
 	  set_sensitive(applyB, false);
 	  set_sensitive(apply2B, false);
-	  set_stock_button_label(cancelB, "Stop");
+	  set_stock_button_label(cancelB, I_STOP);
 	  force_update(cancelB);
 	  switch (enved_target(ss))
 	    {
@@ -222,7 +222,7 @@ static void apply_enved(void)
 	    }
 	  set_sensitive(applyB, true);
 	  set_sensitive(apply2B, true);
-	  set_stock_button_label(cancelB, "Go Away");
+	  set_stock_button_label(cancelB, I_GO_AWAY);
 	}
     }
 }
@@ -952,7 +952,7 @@ GtkWidget *create_envelope_editor(void)
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "dialog_button");
 
-      cancelB = sg_button_new_from_stock_with_label("Go Away", GTK_STOCK_QUIT);
+      cancelB = sg_button_new_from_stock_with_label(I_GO_AWAY, GTK_STOCK_QUIT);
       gtk_widget_set_name(cancelB, "dialog_button");
 
       applyB = gtk_button_new_from_stock(GTK_STOCK_APPLY);

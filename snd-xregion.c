@@ -440,8 +440,8 @@ static void make_region_dialog(void)
   regrow *r;
   chan_info *cp;
 
-  xok = XmStringCreateLocalized((char *)"Go Away");
-  xhelp = XmStringCreateLocalized((char *)"Help");
+  xok = XmStringCreateLocalized((char *)I_GO_AWAY);
+  xhelp = XmStringCreateLocalized((char *)I_HELP);
   xinsert = XmStringCreateLocalized((char *)"Insert");
   titlestr = XmStringCreateLocalized((char *)"Regions");
 

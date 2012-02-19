@@ -4,7 +4,7 @@
 
 /* -------- edit find -------- */
 
-static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, findnextB;
+static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, previousB;
 
 static Widget find_error_frame = NULL, find_error_label = NULL;
 
@@ -87,7 +87,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	    ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
 #endif
 	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", str);
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, str);
 	  set_label(edit_find_label, buf);
 	  /* XmTextSetString(edit_find_text, NULL); */
 	  free(buf);
@@ -100,7 +100,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  char *temp = NULL;
 	  /* using global search_proc set by user */
 	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "find: %s", temp = (char *)XEN_AS_STRING(ss->search_proc));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, temp = (char *)XEN_AS_STRING(ss->search_proc));
 #if HAVE_SCHEME
 	  if (temp) free(temp);
 #endif
@@ -112,13 +112,13 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
   if (str) XtFree(str);
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
-      s1 = XmStringCreateLocalized((char *)"Stop");
+      s1 = XmStringCreateLocalized((char *)I_STOP);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       redirect_xen_error_to(stop_search_if_error, NULL);
       str = global_search(direction);
       redirect_xen_error_to(NULL, NULL);
-      s1 = XmStringCreateLocalized((char *)"Go Away");
+      s1 = XmStringCreateLocalized((char *)I_GO_AWAY);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
       if ((str) && (*str)) set_label(edit_find_label, str);
@@ -153,17 +153,13 @@ static void find_dialog_close(Widget w, XtPointer context, XtPointer info)
 
 static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
-  if (XmGetFocusWidget(edit_find_dialog) == XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON))
+  if (ss->checking_explicitly)
+    ss->stopped_explicitly = true;
+  else 
     {
-      if (ss->checking_explicitly)
-	ss->stopped_explicitly = true;
-      else 
-	{
-	  XtUnmanageChild(edit_find_dialog);
-	  clear_find_error();
-	}
+      XtUnmanageChild(edit_find_dialog);
+      clear_find_error();
     }
-  else edit_find_next_callback(w, context, info);
 } 
 
 
@@ -174,38 +170,47 @@ static void make_edit_find_dialog(bool managed)
       Widget dl, rc;
       Arg args[20];
       int n;
-      XmString xmstr1, xmstr3, titlestr;
+      XmString go_away, next, titlestr, help;
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
-      xmstr1 = XmStringCreateLocalized((char *)"Go Away");
-      xmstr3 = XmStringCreateLocalized((char *)"Previous");
-      titlestr = XmStringCreateLocalized((char *)"Find");
-      XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
-      XtSetArg(args[n], XmNcancelLabelString, xmstr3); n++;
+
+      /* order appears to be   ok | added | cancel  | help
+       *
+       *  we want:       previous | next  | go away | ?
+       *  but that order means <cr> in the text widget goes to "previous"!
+       */
+
+      go_away = XmStringCreateLocalized((char *)I_GO_AWAY);
+      next = XmStringCreateLocalized((char *)I_NEXT);
+      titlestr = XmStringCreateLocalized((char *)I_FIND);
+      help = XmStringCreateLocalized((char *)I_HELP);
+
+      XtSetArg(args[n], XmNokLabelString, next); n++;
+      XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), (char *)"find", args, n);
+      edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), (char *)I_FIND, args, n);
       
-      XmStringFree(xmstr1);
-      XmStringFree(xmstr3);
+      XmStringFree(go_away);
+      XmStringFree(next);
       XmStringFree(titlestr);
       
       XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_SYMBOL_LABEL));
       XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_MESSAGE_LABEL));
       
       XtAddCallback(edit_find_dialog, XmNhelpCallback, edit_find_help_callback, NULL);
-      XtAddCallback(edit_find_dialog, XmNcancelCallback, edit_find_previous_callback, NULL);
-      XtAddCallback(edit_find_dialog, XmNokCallback, edit_find_cancel_callback, NULL);
+      XtAddCallback(edit_find_dialog, XmNcancelCallback, edit_find_cancel_callback, NULL);
+      XtAddCallback(edit_find_dialog, XmNokCallback, edit_find_next_callback, NULL);
       
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      findnextB = XtCreateManagedWidget("Next", xmPushButtonGadgetClass, edit_find_dialog, args, n);
-      XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, NULL);
+      previousB = XtCreateManagedWidget(I_PREVIOUS, xmPushButtonGadgetClass, edit_find_dialog, args, n);
+      XtAddCallback(previousB, XmNactivateCallback, edit_find_previous_callback, NULL);
       
       rc = XtCreateManagedWidget("row", xmFormWidgetClass, edit_find_dialog, NULL, 0);
       
@@ -214,7 +219,7 @@ static void make_edit_find_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      dl = XtCreateManagedWidget("find:", xmLabelWidgetClass, rc, args, n);
+      dl = XtCreateManagedWidget(I_find, xmLabelWidgetClass, rc, args, n);
       
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -257,7 +262,7 @@ static void make_edit_find_dialog(bool managed)
       XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->highlight_color, NULL);
 
-      cancelB = XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON);
+      cancelB = XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON);
       set_dialog_widget(FIND_DIALOG, edit_find_dialog);
 
       XtUnmanageChild(find_error_frame);
@@ -346,9 +351,9 @@ static XEN g_find_dialog_widgets(void)
   if (edit_find_dialog)
     return(XEN_CONS(XEN_WRAP_WIDGET(edit_find_dialog),
 	     XEN_CONS(XEN_WRAP_WIDGET(edit_find_text),
-  	       XEN_CONS(XEN_WRAP_WIDGET(findnextB),
-		 XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)), /* find previous */
-		   XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),   /* cancel */
+  	       XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)), /* find next */
+		 XEN_CONS(XEN_WRAP_WIDGET(previousB), /* find previous */
+		   XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)),   /* go away */
 		     XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);
 }

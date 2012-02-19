@@ -678,7 +678,7 @@ GtkWidget *make_mix_dialog(void)
       add_highlight_button_style(dismiss_button);
 #endif
       gtk_widget_show(dismiss_button);
-      set_stock_button_label(dismiss_button, "Go Away");
+      set_stock_button_label(dismiss_button, I_GO_AWAY);
 
       apply_button = sg_button_new_from_stock_with_label("Apply Env", GTK_STOCK_APPLY);
       gtk_widget_set_name(apply_button, "dialog_button");
@@ -765,7 +765,7 @@ GtkWidget *make_mix_dialog(void)
 #endif
       SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
       gtk_widget_show(nextb);
-      set_stock_button_label(nextb, "Next");
+      set_stock_button_label(nextb, I_NEXT);
 
       previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
       gtk_widget_set_name(previousb, "dialog_button");
@@ -775,7 +775,7 @@ GtkWidget *make_mix_dialog(void)
 #endif
       SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
       gtk_widget_show(previousb);
-      set_stock_button_label(previousb, "Previous");
+      set_stock_button_label(previousb, I_PREVIOUS);
 
 
       /* SPEED */

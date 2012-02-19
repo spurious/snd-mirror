@@ -375,7 +375,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   fs->cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(fs->cancel_button, "dialog_button");
-  set_stock_button_label(fs->cancel_button, "Go Away");
+  set_stock_button_label(fs->cancel_button, I_GO_AWAY);
 
   fs->mkdir_button = sg_button_new_from_stock_with_label("Mkdir", GTK_STOCK_REFRESH);
   gtk_widget_set_name(fs->mkdir_button, "dialog_button");
@@ -3385,7 +3385,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 
   cancelB = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(cancelB, "dialog_button");
-  set_stock_button_label(cancelB, "Go Away");
+  set_stock_button_label(cancelB, I_GO_AWAY);
 
   resetB = sg_button_new_from_stock_with_label("Reset", GTK_STOCK_REFRESH);
   gtk_widget_set_name(resetB, "dialog_button");
@@ -3699,7 +3699,7 @@ widget_t make_new_file_dialog(bool managed)
 
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "dialog_button");
-      set_stock_button_label(cancel_button, "Go Away");
+      set_stock_button_label(cancel_button, I_GO_AWAY);
 
       new_file_ok_button = sg_button_new_from_stock_with_label("Ok", GTK_STOCK_NEW);
       gtk_widget_set_name(new_file_ok_button, "dialog_button");
@@ -4049,7 +4049,7 @@ GtkWidget *edit_header(snd_info *sp)
 
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "dialog_button");
-      set_stock_button_label(cancel_button, "Go Away");
+      set_stock_button_label(cancel_button, I_GO_AWAY);
 
       ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
       gtk_widget_set_name(ep->save_button, "dialog_button");
@@ -5309,7 +5309,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismissB, "dialog_button");
-      set_stock_button_label(dismissB, "Go Away");
+      set_stock_button_label(dismissB, I_GO_AWAY);
 
       resetB = sg_button_new_from_stock_with_label("Reset", GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "dialog_button");

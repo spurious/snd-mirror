@@ -100,6 +100,15 @@
   #define POPUP_BUTTON 3
 #endif
 
+#define I_HELP "Help"
+#define I_GO_AWAY "Go away"
+#define I_NEXT "Next"
+#define I_PREVIOUS "Previous"
+#define I_FIND "Find"
+#define I_find "find:"
+#define I_STOP "Stop"
+
+
 typedef enum {SOUND_SAVE_AS, SELECTION_SAVE_AS, REGION_SAVE_AS} save_dialog_t;
 typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;
