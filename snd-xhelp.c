@@ -180,64 +180,6 @@ static bool new_help(const char *pattern, bool complain)
 }
 
 
-static char **help_history = NULL;
-static int help_history_size = 0;
-static int help_history_pos = 0;
-static bool help_needed = true;
-
-static void add_pattern_to_help_history(const char *pattern)
-{
-  if (!help_needed) return;
-  if (help_history_size == 0)
-    {
-      help_history_size = 16;
-      help_history = (char **)calloc(help_history_size, sizeof(char *));
-    }
-  else
-    {
-      if (help_history_pos >= help_history_size)
-	{
-	  int i;
-	  for (i = 0; i < 8; i++) 
-	    {
-	      if (help_history[i]) free(help_history[i]);
-	      help_history[i] = help_history[i + 8];
-	      help_history[i + 8] = NULL;
-	    }
-	  help_history_pos = 8;
-	}
-    }
-  if (help_history[help_history_pos]) free(help_history[help_history_pos]);
-  help_history[help_history_pos++] = mus_strdup(pattern);
-}
-
-
-static void help_next_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  if ((help_history_pos < help_history_size) && 
-      (help_history[help_history_pos]))
-    {
-      help_needed = false;
-      help_history_pos++;
-      new_help(help_history[help_history_pos - 1], true);
-      help_needed = true;
-    }
-}
-
-
-static void help_previous_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  if ((help_history_pos > 1) &&
-      (help_history[help_history_pos - 2]))
-    {
-      help_needed = false;
-      help_history_pos--;
-      new_help(help_history[help_history_pos - 1], true);
-      help_needed = true;
-    }
-}
-
-
 static void help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* single-click to select item in "related items" list */
@@ -296,11 +238,10 @@ static void help_double_click_callback(Widget w, XtPointer context, XtPointer in
 
 static Widget help_search = NULL;
 
-static void ok_callback(Widget w, XtPointer context, XtPointer info) 
+static void help_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  Widget active_widget;
-  active_widget = XmGetFocusWidget(help_dialog);
-  if ((!active_widget) || (active_widget != help_search))
+  /* this focus widget check is actually needed! */
+  if (XmGetFocusWidget(help_dialog) == XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON))
     XtUnmanageChild(help_dialog);
 }
 
@@ -336,7 +277,6 @@ static void help_search_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static Widget help_next_button = NULL, help_previous_button = NULL;
 static XmRendition texts[2];
 
 static void create_help_monolog(void)
@@ -344,13 +284,13 @@ static void create_help_monolog(void)
   /* create scrollable but not editable text window */
   Arg args[20];
   int n;
-  XmString titlestr, forward, dismiss;
+  XmString titlestr, go_away;
   Widget holder, xref_label; /* documentation says this isn't needed, but it is */
   Widget frame, label, inner_holder, sep, parent;
   XmRenderTable rs = NULL;
+
   titlestr = XmStringCreateLocalized((char *)I_HELP);
-  forward = XmStringCreateLocalized((char *)"Forward");
-  dismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
+  go_away = XmStringCreateLocalized((char *)I_GO_AWAY);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
@@ -360,30 +300,20 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNtransient, false); n++;
-  XtSetArg(args[n], XmNokLabelString, dismiss); n++;
-  XtSetArg(args[n], XmNcancelLabelString, forward); n++;
+  XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
 
   help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), (char *)"snd-help", args, n);
   XtAddEventHandler(help_dialog, ExposureMask, false, help_expose, NULL);
-  XtAddCallback(help_dialog, XmNokCallback, ok_callback, NULL);
-  XtAddCallback(help_dialog, XmNcancelCallback, help_next_callback, NULL);
-  help_next_button = XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON);
 
+  XtAddCallback(help_dialog, XmNcancelCallback, help_quit_callback, NULL);
+
+  XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_HELP_BUTTON));
   XtUnmanageChild(XmMessageBoxGetChild(help_dialog, XmDIALOG_SYMBOL_LABEL));
 
   XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->highlight_color, NULL);
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-  XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-  help_previous_button = XtCreateManagedWidget("Back", xmPushButtonGadgetClass, help_dialog, args, n);
-  XtAddCallback(help_previous_button, XmNactivateCallback, help_previous_callback, NULL);
-  XtSetSensitive(help_next_button, false);
-  XtSetSensitive(help_previous_button, false);
-      
   XmStringFree(titlestr);
-  XmStringFree(forward);
   holder = XtCreateManagedWidget("holder", xmFormWidgetClass, help_dialog, NULL, 0);
 
   n = 0;
@@ -511,8 +441,7 @@ static void create_help_monolog(void)
   XtVaSetValues(help_text, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
   XtVaSetValues(related_items, XmNbackground, ss->highlight_color, XmNforeground, ss->black, NULL);
   XtVaSetValues(xref_label, XmNbackground, ss->highlight_color, XmNforeground, ss->black, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->selection_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->highlight_color, NULL);
+
   XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->selection_color, NULL);
   XtVaSetValues(XmMessageBoxGetChild(help_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color, NULL);
 
@@ -574,9 +503,6 @@ Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_
 
   XmStringFree(xstr1);
   XtVaSetValues(related_items, XmNitems, NULL, XmNitemCount, 0, NULL);
-  if (help_needed) add_pattern_to_help_history(subject);
-  XtSetSensitive(help_next_button, (help_history_pos < help_history_size) && (help_history[help_history_pos]));
-  XtSetSensitive(help_previous_button, (help_history_pos > 1));
   return(help_dialog);
 }
 

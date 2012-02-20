@@ -5,7 +5,7 @@
 
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
-static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
+static GtkWidget *revertB, *undoB, *redoB, *brktxtL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *dBB, *orderL;
 static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
 static GtkAdjustment *baseAdj, *orderAdj;
@@ -726,13 +726,6 @@ static void reset_button_pressed(GtkWidget *w, gpointer context)
 }
 
 
-static void print_button_pressed(GtkWidget *w, gpointer context)
-{
-  ss->print_choice = PRINT_ENV;
-  file_print_callback(w, context);
-}
-
-
 static void env_browse_callback(const char *name, int row, void *data)
 {
   select_or_edit_env(row);
@@ -1034,15 +1027,6 @@ GtkWidget *create_envelope_editor(void)
       add_highlight_button_style(saveB);
 #endif
       gtk_widget_show(saveB);
-
-      printB = gtk_button_new_with_label(" print  ");
-      gtk_button_set_relief(GTK_BUTTON(printB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(saverow), printB, true, true, BB_MARGIN);
-      SG_SIGNAL_CONNECT(printB, "clicked", print_button_pressed, NULL);
-#if HAVE_GTK_3
-      add_highlight_button_style(printB);
-#endif
-      gtk_widget_show(printB);
 
       revrow = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(leftbox), revrow, false, false, BB_MARGIN);

@@ -95,7 +95,6 @@ static void file_menu_update_1(GtkWidget *w, gpointer info)
 static void file_open_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(FILE_READ_WRITE, true);}
 static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(FILE_READ_ONLY, true);}
 static void file_new_callback(GtkWidget *w, gpointer info) {make_new_file_dialog(true);}
-static void file_record_callback(GtkWidget *w, gpointer info) {record_file();}
 static void file_close_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
 static void file_close_all_callback(GtkWidget *w, gpointer info) {for_each_sound(snd_close_file);}
 static void file_save_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}
@@ -317,7 +316,6 @@ static void help_env_callback(GtkWidget *w, gpointer info) {env_help();}
 static void help_marks_callback(GtkWidget *w, gpointer info) {marks_help();}
 static void help_mix_callback(GtkWidget *w, gpointer info) {mix_help();}
 static void help_sound_files_callback(GtkWidget *w, gpointer info) {sound_files_help();}
-static void help_recording_callback(GtkWidget *w, gpointer info) {recording_help();}
 static void help_keys_callback(GtkWidget *w, gpointer info) {key_binding_help();}
 static void help_play_callback(GtkWidget *w, gpointer info) {play_help();}
 static void help_resample_callback(GtkWidget *w, gpointer info) {resample_help();}
@@ -486,9 +484,6 @@ GtkWidget *add_menu(void)
   file_new_menu = add_menu_item(file_cascade_menu, "New", GTK_STOCK_NEW, (GCallback)file_new_callback);
   ml[f_new_menu] = "New";
 
-  file_record_menu = add_menu_item(file_cascade_menu, "Record", GTK_STOCK_MEDIA_RECORD, (GCallback)file_record_callback);
-  ml[f_record_menu] = "Record";
-
   file_view_menu = add_menu_item(file_cascade_menu, "View", GTK_STOCK_OPEN, (GCallback)file_view_callback);
   ml[f_view_menu] = "View";
 
@@ -595,8 +590,8 @@ GtkWidget *add_menu(void)
   ml[v_sep2_menu] = NULL;
 
 
-  view_graph_style_menu = add_menu_item(view_cascade_menu, "Graph style", NULL, NULL);
-  ml[v_graph_style_menu] = "Graph style";
+  view_graph_style_menu = add_menu_item(view_cascade_menu, I_LINES_OR_DOTS, NULL, NULL);
+  ml[v_graph_style_menu] = I_LINES_OR_DOTS;
 
   view_graph_style_cascade_menu = gtk_menu_new();
   add_toolbar_style(view_graph_style_cascade_menu);
@@ -633,8 +628,8 @@ GtkWidget *add_menu(void)
 #endif
 
 
-  view_combine_menu = add_menu_item(view_cascade_menu, "Channel style", NULL, NULL);
-  ml[v_combine_menu] = "Channel style";
+  view_combine_menu = add_menu_item(view_cascade_menu, I_CHANNEL_LAYOUT, NULL, NULL);
+  ml[v_combine_menu] = I_CHANNEL_LAYOUT;
 
   view_combine_cascade_menu = gtk_menu_new();
   add_toolbar_style(view_combine_cascade_menu);
@@ -684,8 +679,8 @@ GtkWidget *add_menu(void)
   ml[v_x_axis_measures_menu] = "measures";
 
 
-  view_axes_menu = add_menu_item(view_cascade_menu, "Axes", NULL, NULL);
-  ml[v_axes_menu] = "Axes";
+  view_axes_menu = add_menu_item(view_cascade_menu, I_AXIS_LAYOUT, NULL, NULL);
+  ml[v_axes_menu] = I_AXIS_LAYOUT;
 
   view_axes_cascade_menu = gtk_menu_new();
   add_toolbar_style(view_axes_cascade_menu);
@@ -711,8 +706,8 @@ GtkWidget *add_menu(void)
   ml[v_bare_x_axis_menu] = "base x axis";
 
 
-  view_focus_style_menu = add_menu_item(view_cascade_menu, "Zoom focus", NULL, NULL);
-  ml[v_focus_style_menu] = "Zoom focus";
+  view_focus_style_menu = add_menu_item(view_cascade_menu, I_ZOOM_CENTERS_ON, NULL, NULL);
+  ml[v_focus_style_menu] = I_ZOOM_CENTERS_ON;
 
   view_focus_cascade_menu = gtk_menu_new();
   add_toolbar_style(view_focus_cascade_menu);
@@ -748,12 +743,12 @@ GtkWidget *add_menu(void)
   options_transform_menu = add_menu_item(options_cascade_menu, "Transform options", NULL, (GCallback)options_transform_callback);
   ml[o_transform_menu] = "Transform Options";
 
-  options_controls_menu = add_menu_item(options_cascade_menu, "Controls", NULL, (GCallback)options_controls_callback);
-  ml[o_controls_menu] = "Controls";
+  options_controls_menu = add_menu_item(options_cascade_menu, "Control panel options", NULL, (GCallback)options_controls_callback);
+  ml[o_controls_menu] = "Control panel options";
 
 #if HAVE_EXTENSION_LANGUAGE
-  options_save_menu = add_menu_item(options_cascade_menu, "Save options", NULL, (GCallback)options_save_callback);
-  ml[o_save_menu] = "Save options";
+  options_save_menu = add_menu_item(options_cascade_menu, I_SAVE_CURRENT_SETTINGS, NULL, (GCallback)options_save_callback);
+  ml[o_save_menu] = I_SAVE_CURRENT_SETTINGS;
 
   options_save_state_menu = add_menu_item(options_cascade_menu, "Save session", NULL, (GCallback)options_save_state_callback);
   ml[o_save_state_menu] = "Save session";
@@ -794,9 +789,6 @@ GtkWidget *add_menu(void)
 
   help_keys_menu = add_menu_item(help_cascade_menu, "Key bindings", NULL, (GCallback)help_keys_callback);
   ml[h_keys_menu] = "Key bindings";
-
-  help_recording_menu = add_menu_item(help_cascade_menu, "Record", NULL, (GCallback)help_recording_callback);
-  ml[h_recording_menu] = "Record";
 
   help_play_menu = add_menu_item(help_cascade_menu, "Play", NULL, (GCallback)help_play_callback);
   ml[h_play_menu] = "Play";

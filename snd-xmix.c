@@ -455,18 +455,13 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
 
 static void copy_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  copy_mix(mix_dialog_id);
-  after_mix_edit(mix_dialog_id);
-}
-
-
-static void dismiss_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
-{
   Widget active_widget;
-  clear_mix_error();
   active_widget = XmGetFocusWidget(mix_dialog);
   if (active_widget == XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON))
-    XtUnmanageChild(mix_dialog);
+    {
+      copy_mix(mix_dialog_id);
+      after_mix_edit(mix_dialog_id);
+    }
   else
     {
       if (active_widget == w_id)
@@ -477,6 +472,13 @@ static void dismiss_mix_dialog_callback(Widget w, XtPointer context, XtPointer i
 	    beg_activated();
 	}
     }
+}
+
+
+static void quit_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  clear_mix_error();
+  XtUnmanageChild(mix_dialog);
 }
 
 
@@ -648,8 +650,8 @@ Widget make_mix_dialog(void)
   if (mix_dialog == NULL)
     {
       Widget mainform, mix_row, mix_frame, sep, w_sep1;
-      Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row, env_button;
-      XmString xdismiss, xhelp, xtitle, s1, xcopy;
+      Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row, env_button, copy_button;
+      XmString xgo_away, xhelp, xtitle, s1, xcopy;
       int n;
       Arg args[20];
       XtCallbackList n1, n2;
@@ -659,15 +661,15 @@ Widget make_mix_dialog(void)
       xmix_speed_control_style = speed_control_style(ss);
 
       mix_dialog_id = any_mix_id();
-      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
+      xgo_away = XmStringCreateLocalized((char *)I_GO_AWAY);
       xcopy = XmStringCreateLocalized((char *)"Copy mix");
       xhelp = XmStringCreateLocalized((char *)I_HELP);
       xtitle = XmStringCreateLocalized((char *)"Mixes");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
-      XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
-      XtSetArg(args[n], XmNcancelLabelString, xcopy); n++;
+      XtSetArg(args[n], XmNokLabelString, xcopy); n++;
+      XtSetArg(args[n], XmNcancelLabelString, xgo_away); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, xtitle); n++;
@@ -675,14 +677,16 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
       mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Mixes", args, n);
+      copy_button = XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON);
 
-      XtAddCallback(mix_dialog, XmNokCallback, dismiss_mix_dialog_callback, NULL);
-      XtAddCallback(mix_dialog, XmNcancelCallback, copy_mix_dialog_callback, NULL);
+      /* XtAddCallback(mix_dialog, XmNokCallback, copy_mix_dialog_callback, NULL); */
+      XtAddCallback(copy_button, XmNactivateCallback, copy_mix_dialog_callback, NULL);
+      XtAddCallback(mix_dialog, XmNcancelCallback, quit_mix_dialog_callback, NULL);
       XtAddCallback(mix_dialog, XmNhelpCallback, help_mix_dialog_callback, NULL);
 
       XmStringFree(xhelp);
       XmStringFree(xcopy);
-      XmStringFree(xdismiss);
+      XmStringFree(xgo_away);
       XmStringFree(xtitle);
 
       XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->selection_color, NULL);

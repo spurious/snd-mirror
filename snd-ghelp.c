@@ -115,64 +115,6 @@ static bool new_help(const char *pattern, bool complain)
 }
 
 
-static char **help_history = NULL;
-static int help_history_size = 0;
-static int help_history_pos = 0;
-static bool help_needed = true;
-
-static void add_pattern_to_help_history(const char *pattern)
-{
-  if (!help_needed) return;
-  if (help_history_size == 0)
-    {
-      help_history_size = 16; /* not 8! -- need room for cycle below */
-      help_history = (char **)calloc(help_history_size, sizeof(char *));
-    }
-  else
-    {
-      if (help_history_pos >= help_history_size)
-	{
-	  int i;
-	  for (i = 0; i < 8; i++) 
-	    {
-	      if (help_history[i]) free(help_history[i]);
-	      help_history[i] = help_history[i + 8];
-	      help_history[i + 8] = NULL;
-	    }
-	  help_history_pos = 8;
-	}
-    }
-  if (help_history[help_history_pos]) free(help_history[help_history_pos]);
-  help_history[help_history_pos++] = mus_strdup(pattern);
-}
-
-
-static void help_next_callback(GtkWidget *w, gpointer context)
-{
-  if ((help_history_pos < help_history_size) && 
-      (help_history[help_history_pos]))
-    {
-      help_needed = false;
-      help_history_pos++;
-      new_help(help_history[help_history_pos - 1], true);
-      help_needed = true;
-    }
-}
-
-
-static void help_previous_callback(GtkWidget *w, gpointer context)
-{
-  if ((help_history_pos > 1) &&
-      (help_history[help_history_pos - 2]))
-    {
-      help_needed = false;
-      help_history_pos--;
-      new_help(help_history[help_history_pos - 1], true);
-      help_needed = true;
-    }
-}
-
-
 static char *find_highlighted_text(const char *value)
 {
   int i, len, start = -1;
@@ -263,8 +205,6 @@ static void search_activated(GtkWidget *w, gpointer context)
 }
 
 
-static GtkWidget *help_next_button = NULL, *help_previous_button = NULL;
-
 static void create_help_monolog(void)
 {
   /* create scrollable but not editable text window */
@@ -277,24 +217,6 @@ static void create_help_monolog(void)
   gtk_container_set_border_width (GTK_CONTAINER(help_dialog), 10);
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 40);
   gtk_widget_realize(help_dialog);
-
-  help_previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
-  gtk_widget_set_name(help_previous_button, "dialog_button");
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), help_previous_button, true, true, 10);
-  SG_SIGNAL_CONNECT(help_previous_button, "clicked", help_previous_callback, NULL);
-#if HAVE_GTK_3
-  add_highlight_button_style(help_previous_button);
-#endif
-  gtk_widget_show(help_previous_button);
-
-  help_next_button = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-  gtk_widget_set_name(help_next_button, "dialog_button");
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), help_next_button, true, true, 10);
-  SG_SIGNAL_CONNECT(help_next_button, "clicked", help_next_callback, NULL);
-#if HAVE_GTK_3
-  add_highlight_button_style(help_next_button);
-#endif
-  gtk_widget_show(help_next_button);
 
   ok_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(ok_button, "dialog_button");
@@ -380,10 +302,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
     }
   else add_help_text(help_text, helpstr);
 
-  if (help_needed) add_pattern_to_help_history(subject);
   slist_clear(related_items); /* this can clobber "subject"! */
-  gtk_widget_set_sensitive(help_next_button, (help_history_pos < help_history_size) && (help_history[help_history_pos]));
-  gtk_widget_set_sensitive(help_previous_button, (help_history_pos > 1));
   return(help_dialog);
 }
 

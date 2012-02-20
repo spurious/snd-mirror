@@ -1326,21 +1326,6 @@ To move the cursor from one mix to the next, in the same manner as C-j moves thr
 }
 
 
-/* ---------------- Recording ---------------- */
-
-void recording_help(void) 
-{
-  snd_help_with_xrefs("Record", 
-"Snd's recorder is very simple; for complex recording tasks, use Ardour.  The record dialog presents one or two VU meters (just \
-the curve and a needle), a text widget for the output sound file name, a button to change the meters from linear to dB, and \
-the usual buttons along the bottom to start or stop the recorder, provide help, and exit.",
-
-		      WITH_WORD_WRAP,
-		      NULL,
-		      NULL);
-}
-
-
 /* ---------------- Headers etc ---------------- */
 
 static const char *header_and_data_xrefs[10] = {
@@ -2274,7 +2259,7 @@ The dialog has a display showing either the envelope currently being edited or \
 a panorama of all currently loaded envelopes.  The current envelope can be edited with the mouse: click at some spot in the graph to place a \
 new breakpoint, drag an existing breakpoint to change its position, and click an existing breakpoint to delete it. \
 The Undo and Redo buttons can be used to move around in the list of envelope edits; the current state \
-of the envelope can be saved with the 'save' button, or printed with 'print'. Envelopes can be defined via " define_envelope_name ": \
+of the envelope can be saved with the 'save' button. Envelopes can be defined via " define_envelope_name ": \
 \n\n" define_envelope_example "\n\n\
 defines two envelopes that can be used in Snd wherever an envelope is needed (e.g. C-x C-a).  You can also define \
 a new envelope in the dialog's text field; " ramp_envelope_example " creates a ramp as a new envelope. \
@@ -2929,11 +2914,11 @@ static const char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 34
+#define NUM_XREFS 33
 static const char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
-  "Src", I_FIND, "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Copy",
+  "Src", I_FIND, "Undo", "Redo", "Sync", "Control panel", "Header", "Key", "Copy",
   "Window Size", "Color", "Control", "Random Numbers", "Wavogram"
 };
 
@@ -2942,7 +2927,7 @@ static const char **xref_tables[NUM_XREFS] = {
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
-  sync_xrefs, control_xrefs, NULL, header_and_data_xrefs, key_xrefs, Copying_xrefs,
+  sync_xrefs, control_xrefs, header_and_data_xrefs, key_xrefs, Copying_xrefs,
   Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs,
   Wavogram_xrefs
 };
@@ -2952,7 +2937,7 @@ static const char **xref_url_tables[NUM_XREFS] = {
   Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
-  NULL, NULL, NULL, NULL, NULL, Copying_urls, 
+  NULL, NULL, NULL, NULL, Copying_urls, 
   Window_size_and_position_urls, Colors_urls, NULL, Random_Numbers_urls,
   Wavogram_urls
 };
@@ -2964,7 +2949,7 @@ static help_func help_funcs[NUM_XREFS] = {
   &delete_help, &env_help, &filter_help, &find_help, &insert_help, &maxamp_help,
   &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
-  &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &copy_help,
+  &sync_help, &controls_help, &sound_files_help, &key_binding_help, &copy_help,
   &window_size_help, &colors_help, &controls_help, &random_numbers_help,
   &wavogram_help
 };

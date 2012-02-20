@@ -432,7 +432,6 @@
 #define S_read_only                     "read-only"
 #define S_read_region_sample            "read-region-sample"
 #define S_read_sample                   "read-sample"
-#define S_recorder_dialog               "recorder-dialog"
 #if HAVE_RUBY
   #define S_redo                        "redo-edit"
 #else

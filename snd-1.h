@@ -754,7 +754,6 @@ void marks_help(void);
 void mix_help(void);
 void sound_files_help(void);
 void init_file_help(void);
-void recording_help(void);
 void region_help(void);
 void selection_help(void);
 void colors_help(void);

@@ -202,7 +202,6 @@ void set_enved_wave_p(bool val) {}
 void set_enved_in_dB(bool val) {}
 bool enved_dialog_is_active(void) {return(false);}
 void set_enved_filter_order(int order) {}
-widget_t record_file(void) {return(0);}
 widget_t make_open_file_dialog(read_only_t read_only, bool managed) {return(0);}
 widget_t make_mix_file_dialog(bool managed) {return(0);}
 widget_t make_insert_file_dialog(bool managed) {return(0);}

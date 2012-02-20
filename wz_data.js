@@ -160,7 +160,7 @@ var extsnd_dialogwidgets_tip = "<code>(dialog-widgets)</code>: dialog widgets (e
                                " (8 view-files-dialog) (9 raw data dialog) (10 new file dialog)<br>" +
                                " (11 mix-file-dialog) (12 edit-header-dialog) (13 find-dialog)<br>" +
                                " (14 help-dialog) (15 listener completion)  (16 view-mixes-dialog)<br>" +
-                               " (17 print-dialog) (18 recorder-dialog) (19 view-regions-dialog)<br>" +
+                               " (17 print-dialog) (19 view-regions-dialog)<br>" +
                                " (20 info-dialog) (21 #f) (22 save-selection-dialog)<br>" +
                                " (23 insert-file-dialog)  (24 save-region-dialog) (25 preferences-dialog))</code>";
 

@@ -1,36 +1,42 @@
 #include "snd.h"
 #include "snd-file.h"
 
-/* TODO: "go away" should always be next to help (on the right)
- *        with most likely "yes" case on the left.
- *           affects at least: view-files, view-mixes, view-regions, transform-options, transform-controls, options-prefs (motif)
+/* TODO: 
  * what does "reset" mean in (for example) view-files? --the enved window should hold it or omit it?
- *   or "revert" in colors?
+ *   or "revert" in colors? or "revert" vs "clear" in prefs -- shouldn't revert go back to its state when opened?
  * view-files should not be a drop-down until there really is more than 1 viewer (not "new" as an option!)
- * what is "sync" in mixes? "graph style" "channel style" mean nothing, zoom focus?? axes??
- * isn't "save options" redundant?  options-controls is not the control panel, and "control panel" is a dumb name
+ * what is "sync" in mixes? 
+ * isn't "save current settings" redundant? and "control panel" is a dumb name
  *   gtk options/controls has trough color?
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
  * the minibuffer is useless -- what to do with it?  maybe a per-channel toolbar?
  *   or try to recognize what user wants -- search in sound, help etc?
  * in gtk I think I've turned off the menu icons, yet they sometimes appear in the dialogs?
- * "global find" is jargon
+ * "global find" is jargon (used as a built-in xref title in snd-help)
+ *
  * can tooltip be context dependent?  (x -> "close selected sound" but should be "close oboe.snd" or whatever).
+ *   this should happen when the tooltip is about to be displayed
  *   if toolbar entry is a no-op, can that be indicated (undo, but no edits, cut but no selection etc)
  *   other parts of the interface need tooltips, I suppose (the "x" in the sound pane for example)
  *   in gtk, I think so -- add_tooltip
  *   in motif, probably need to remove the old handler and add a new one (snd-xmenu add_tooltip)
- * add grid option to the view menu
- * if a selection is made, don't change the dialog size
- * in open/save-as etc, the actual file should be at the top, not the bottom
+ *   but how to do either of these things just before activation?
+ *
+ * add grid option to the view menu -- where would the density scale go?
+ *   get rid of the previous-files/dirs lists
+ * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * edit env is a mess and is probably never used anyway -- in any case get rid of pointless buttons!
  * some of these dialogs look too small -- holdover from distant past?
- * perhaps the help buttons could be (?)entry where click?->current help dialog, else search if typed value (with completion)
- *
+ * 
  * 19: gxfind button order, but one is "forward|back" and the other is "next|previous"
  *       firefox uses |find: |entry| <--previous | -->next | highlight all, others use "search:..."
  *       the gtk back/forward business is built into the stock icons
  *     all gtk go-aways
+ * 20: rest of go-away buttons moved
+ *     removed help history
+ *     removed enved print button
+ *     changed several menu labels
+ *     removed snd-g|xrec.c
  */
 
 /* various file-related dialogs:
@@ -947,7 +953,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 
 static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_pattern_info *fp, dialog_play_info *dp)
 {
-  Widget rc;
+  Widget rc, sep1;
   int n;
   Arg args[12];
 
@@ -961,6 +967,13 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
   fp->just_sounds_button = XtCreateManagedWidget("sound files only", xmToggleButtonWidgetClass, rc, args, n);
 
   n = 0;
+  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
+  XtSetArg(args[n], XmNwidth, 20); n++;
+  XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+  sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, rc, args, n);
+
+  n = 0;
+  /* XmNmarginLeft here refers to the space between the button and its label! */
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   dp->play_button = XtCreateWidget("play selected sound", xmToggleButtonWidgetClass, rc, args, n);
 
@@ -1254,7 +1267,8 @@ static void multifile_completer(widget_t w, void *data)
 }
 
 
-#define FILE_DIALOG_WIDTH 450
+#define FILE_DIALOG_WIDTH 500
+#define FILE_DIALOG_HEIGHT 500
 
 static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, char *select_title, 
 					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
@@ -1265,7 +1279,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
    */
   Widget w;
   file_dialog_info *fd;
-  Arg args[20];
+  Arg args[32];
   int n;
   XmString s1, s2, ok_label, filter_list_label, cancel_label;
   Widget wtmp = NULL, rc1, rc2;
@@ -1309,6 +1323,10 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   XtSetArg(args[n], XmNuserData, (XtPointer)(fd->fp)); n++;
   XtSetArg(args[n], XmNfileSearchProc, snd_directory_reader); n++;        /* over-ride Motif's directory reader altogether */  
   XtSetArg(args[n], XmNwidth, FILE_DIALOG_WIDTH); n++;
+
+  XtSetArg(args[n], XmNheight, FILE_DIALOG_HEIGHT); n++;
+  XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
+  XtSetArg(args[n], XmNnoResize, false); n++;
 
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   fd->fp->dialog = fd->dialog;
@@ -4726,26 +4744,26 @@ static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info)
 
 static void make_raw_data_dialog(raw_info *rp, const char *title)
 {
-  XmString xstr1, xstr2, xstr3, xstr4, titlestr;
+  XmString go_away, xhelp, xok, xtitle, titlestr;
   int n;
   int raw_srate, raw_chans, raw_data_format;
   Arg args[20];
   Widget reset_button, main_w;
 
-  xstr1 = XmStringCreateLocalized((char *)I_GO_AWAY); /* needed by template dialog */
-  xstr2 = XmStringCreateLocalized((char *)I_HELP);
-  xstr3 = XmStringCreateLocalized((char *)"Ok");
+  go_away = XmStringCreateLocalized((char *)I_GO_AWAY); /* needed by template dialog */
+  xhelp = XmStringCreateLocalized((char *)I_HELP);
+  xok = XmStringCreateLocalized((char *)"Ok");
   if (!title)
     titlestr = XmStringCreateLocalized((char *)"No header on file");
   else titlestr = XmStringCreateLocalized((char *)title);
-  xstr4 = XmStringCreateLocalized((char *)title);
+  xtitle = XmStringCreateLocalized((char *)title);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
-  XtSetArg(args[n], XmNcancelLabelString, xstr1); n++;
-  XtSetArg(args[n], XmNhelpLabelString, xstr2); n++;
-  XtSetArg(args[n], XmNokLabelString, xstr3); n++;
-  XtSetArg(args[n], XmNmessageString, xstr4); n++;
+  XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
+  XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
+  XtSetArg(args[n], XmNokLabelString, xok); n++;
+  XtSetArg(args[n], XmNmessageString, xtitle); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNallowShellResize, true); n++;
@@ -4757,10 +4775,10 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   XtAddCallback(rp->dialog, XmNcancelCallback, raw_data_cancel_callback, (XtPointer)rp);
   XtAddCallback(rp->dialog, XmNhelpCallback,   raw_data_help_callback,   (XtPointer)rp);
   XtAddCallback(rp->dialog, XmNokCallback,     raw_data_ok_callback,     (XtPointer)rp);
-  XmStringFree(xstr1);
-  XmStringFree(xstr2);
-  XmStringFree(xstr3);
-  XmStringFree(xstr4);
+  XmStringFree(go_away);
+  XmStringFree(xhelp);
+  XmStringFree(xok);
+  XmStringFree(xtitle);
   XmStringFree(titlestr);
 
   n = 0;
@@ -5420,13 +5438,10 @@ static void view_files_help_callback(Widget w, XtPointer context, XtPointer info
 }
 
 
-static void view_files_dismiss_callback(Widget w, XtPointer context, XtPointer info) 
+static void view_files_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  Widget active_widget;
-  active_widget = XmGetFocusWidget(vdat->dialog);
-  if (active_widget == MSG_BOX(vdat->dialog, XmDIALOG_OK_BUTTON))
-    XtUnmanageChild(vdat->dialog);
+  XtUnmanageChild(vdat->dialog);
 }
 
 
@@ -5435,16 +5450,18 @@ static void view_files_new_viewer_callback(Widget w, XtPointer context, XtPointe
   view_files_info *vdat = (view_files_info *)context;
   if ((vdat) && 
       (vdat->dialog) &&
-      (XtIsManaged(vdat->dialog)))
+      (XtIsManaged(vdat->dialog)) &&
+      (XmGetFocusWidget(vdat->dialog) == XmMessageBoxGetChild(vdat->dialog, XmDIALOG_OK_BUTTON)))
     {
       Position x = 0, y = 0;
+
       /* jog the current one over a bit -- otherwise the new one lands exactly on top of the old! */
       XtVaGetValues(vdat->dialog, XmNx, &x, XmNy, &y, NULL);
       XtVaSetValues(vdat->dialog, XmNx, x + 30, XmNy, y - 30, NULL);
-    }
-  vdat = new_view_files_dialog();
-  make_view_files_dialog_1(vdat, true);
 
+      vdat = new_view_files_dialog();
+      make_view_files_dialog_1(vdat, true);
+    }
 }
 
 
@@ -6155,8 +6172,8 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
     {
       int i, n;
       Arg args[20];
-      XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
-      Widget mainform, viewform, leftform, reset_button;
+      XmString go_away, xhelp, titlestr, new_viewer_str, s1, bstr;
+      Widget mainform, viewform, leftform, reset_button, new_viewer_button;
       Widget left_title_sep, add_label, sep1, sep3, sep4, sep5, sep6, sep7;
 #if (!HAVE_FAM)
       Widget sep2;
@@ -6166,7 +6183,7 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       Widget amp_label, speed_label, env_frame;
       Widget bframe, bform;
 
-      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
+      go_away = XmStringCreateLocalized((char *)I_GO_AWAY);
       xhelp = XmStringCreateLocalized((char *)I_HELP);
       new_viewer_str = XmStringCreateLocalized((char *)"New Viewer");
 
@@ -6180,18 +6197,20 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
-      XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
-      XtSetArg(args[n], XmNcancelLabelString, new_viewer_str); n++;
+      XtSetArg(args[n], XmNokLabelString, new_viewer_str); n++;
+      XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
       vdat->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Files", args, n);
+      new_viewer_button = MSG_BOX(vdat->dialog, XmDIALOG_OK_BUTTON);
 
       XtAddCallback(vdat->dialog, XmNhelpCallback,   view_files_help_callback,       (XtPointer)vdat);
-      XtAddCallback(vdat->dialog, XmNokCallback,     view_files_dismiss_callback,    (XtPointer)vdat);
-      XtAddCallback(vdat->dialog, XmNcancelCallback, view_files_new_viewer_callback, (XtPointer)vdat);
+      /* XtAddCallback(vdat->dialog, XmNokCallback,     view_files_new_viewer_callback,    (XtPointer)vdat); */
+      XtAddCallback(new_viewer_button, XmNactivateCallback, view_files_new_viewer_callback, (XtPointer)vdat);
+      XtAddCallback(vdat->dialog, XmNcancelCallback, view_files_quit_callback, (XtPointer)vdat);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
@@ -6200,7 +6219,7 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtAddCallback(reset_button, XmNactivateCallback, view_files_reset_callback, (XtPointer)vdat);
 
       XmStringFree(xhelp);
-      XmStringFree(xdismiss);
+      XmStringFree(go_away);
       XmStringFree(titlestr);
       XmStringFree(new_viewer_str);
 

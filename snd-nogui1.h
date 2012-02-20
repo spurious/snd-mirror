@@ -297,12 +297,6 @@ void mix_dialog_set_mix(int id);
 
 
 
-/* -------- snd-xrec.c -------- */
-
-widget_t record_file(void);
-
-
-
 /* -------- snd-xprint.c -------- */
 
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer);

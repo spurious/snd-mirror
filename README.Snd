@@ -329,7 +329,7 @@ TROUBLES:
 
 ---- audio (a can of worms) ----
 
-In Linux, Snd sometimes can't seem to play or record when other
+In Linux, Snd sometimes can't seem to play when other
 applications are happy -- if this happens, please evaluate the function
 mus-audio-describe, and send me whatever it prints out. 
 
@@ -344,14 +344,6 @@ that it can't handle big-endian shorts.
 
 In OpenBSD, use pulseaudio:
  ./configure --with-gmp --with-gtk --with-pulseaudio CFLAGS=-ftrampolines LDFLAGS=-pthread 
-
-
-The Record dialog only works in Linux (OSS, perhaps ALSA), Sun (not x86),
-some SGI systems, and perhaps Mac OSX.  In Linux, someone below the level
-of my code randomly switches input between the microphone and the line-in
-jack -- I don't know why or how to stop it!  If this is happening to you,
-the recorder will appear to stop working, then if you leave it and
-return, it will be happy again -- extremely annoying!
 
 
 In X86 Solaris, you may need to install Jurgen Keil's audio drivers.
@@ -381,42 +373,6 @@ the audio card thinks it's the local network controller or something.
 ---- ALSA: ----
 
 Only versions from 1.0 of ALSA are supported.
-
-On recording, here's a note from Fernando from cmdist:
-
-    > Recently I installed a sound card with digital in (with cmi8738 chip)
-    > in my linux system with alsa. With 'arecord -D hw:0.2' I can succesfully record
-    > from my digital input. How can I do the same with with Snd? The
-    > digital inputs do not appear on the record window. I compiled Snd with alsa support.
-    
-    You could try to set up an environment variable before starting snd to 
-    point to that particular device. This is the way snd reacts to env 
-    variables:
-    
-    - searched for in the following order:
-      MUS_ALSA_PLAYBACK_DEVICE
-         defines the name of the playback device
-      MUS_ALSA_CAPTURE_DEVICE
-         defines the name of the capture device
-      MUS_ALSA_DEVICE
-         defines the name of the playback and capture device
-      use the first two if the playback and capture devices are different or the
-      third if they are the same.
-    
-    So you could try:
-      MUS_ALSA_DEVICE="hw:0,2" snd
-    if you are using bash as your shell
-    
-    This should use the digital i/o as the input output device.  It would also
-    be possible to concatenate several devices using a definition in the
-    .asoundrc file but that would involve understanding its arcane
-    configuration language, which I don't. The current snd alss 0.9 code only
-    looks at the first device it finds (normally hw:0,0).
-    
-    -- Fernando
-
-There's also a discussion of RME cards in the cmdist archives.
-
 
 An addendum: in my system, I have a wretched sound card in my machine,
 and an EMI 2|6 connected to a USB connector.  So the EMI device is "hw:1"

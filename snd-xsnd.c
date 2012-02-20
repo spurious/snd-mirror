@@ -3174,7 +3174,8 @@ static void reset_all_sliders(void)
 
 static void controls_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  reset_all_sliders();
+  if (XmGetFocusWidget(controls_dialog) == XmMessageBoxGetChild(controls_dialog, XmDIALOG_OK_BUTTON))
+    reset_all_sliders();
 }
 
 static void controls_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -3191,7 +3192,7 @@ Reverb-feedback sets the scaler on the feedback.",
 	   WITHOUT_WORD_WRAP);
 }
 
-static void controls_dismiss_callback(Widget w, XtPointer context, XtPointer info) 
+static void controls_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(controls_dialog);
 }
@@ -3245,10 +3246,10 @@ void make_controls_dialog(void)
     {
       int n;
       Arg args[32];
-      XmString xdismiss, xhelp, titlestr, xreset;
-      Widget mainform, slider;
+      XmString go_away, xhelp, titlestr, xreset;
+      Widget mainform, slider, reset_button;
 
-      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
+      go_away = XmStringCreateLocalized((char *)I_GO_AWAY);
       xhelp = XmStringCreateLocalized((char *)I_HELP);
       titlestr = XmStringCreateLocalized((char *)"More controls");
       xreset = XmStringCreateLocalized((char *)"Reset");
@@ -3256,8 +3257,8 @@ void make_controls_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
-      XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
-      XtSetArg(args[n], XmNcancelLabelString, xreset); n++;
+      XtSetArg(args[n], XmNokLabelString, xreset); n++;
+      XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
@@ -3265,13 +3266,15 @@ void make_controls_dialog(void)
       XtSetArg(args[n], XmNtransient, false); n++;
       XtSetArg(args[n], XmNwidth, 400); n++;
       controls_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"More controls", args, n);
+      reset_button = MSG_BOX(controls_dialog, XmDIALOG_OK_BUTTON);
 
-      XtAddCallback(controls_dialog, XmNhelpCallback,   controls_help_callback,    NULL);
-      XtAddCallback(controls_dialog, XmNokCallback,     controls_dismiss_callback, NULL);
-      XtAddCallback(controls_dialog, XmNcancelCallback, controls_reset_callback,   NULL);
+      XtAddCallback(controls_dialog, XmNhelpCallback,   controls_help_callback,  NULL);
+      /* XtAddCallback(controls_dialog, XmNokCallback,  controls_reset_callback, NULL); */
+      XtAddCallback(reset_button, XmNactivateCallback,  controls_reset_callback, NULL);
+      XtAddCallback(controls_dialog, XmNcancelCallback, controls_quit_callback,  NULL);
 
       XmStringFree(xhelp);
-      XmStringFree(xdismiss);
+      XmStringFree(go_away);
       XmStringFree(titlestr);
       XmStringFree(xreset);
 

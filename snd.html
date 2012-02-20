@@ -184,7 +184,6 @@ related documentation: &nbsp;
     <li><a href="#kbdmacros">Keyboard macros</a>
     <li><a href="#changeformat">Change file format</a>
     <li><a href="#extendfile">Extend a file</a>
-    <li><a href="#recordfile">Record a file</a>
     <li><a href="#editenvelope">Edit or view an envelope</a>
     <li><a href="#editheader">Edit, add, or remove the header</a>
     <li><a href="#centeryaxis">Center a tiny signal with DC</a>
@@ -295,7 +294,7 @@ related documentation: &nbsp;
 <td class="br"><a href="#closefile">Close</a></td>
 <td class="br"><a href="#undoredo">Redo</a></td>
 <td class="br"><a href="#viewfiles">Files</a></td>
-<td class="br">Controls</td>
+<td class="br">Control panel options</td>
 <td class="br"><a href="extsnd.html#appearance">Customization</a></td>
 </tr>
 <tr>
@@ -317,70 +316,70 @@ related documentation: &nbsp;
 <td class="br"><a href="#editcut">Insert selection</a></td>
 <td class="br"><a href="#colorbrowser">Color/Orientation</a></td>
 <td class="br"><a href="#preferencesbrowser">Preferences</a></td>
-<td class="br"><a href="#recordfile">Record</a></td>
+<td class="br"><a href="#menuplay">Play</a></td>
 </tr>
 <tr>
 <td class="br"><a href="#mixingfiles">Mix</a></td>
 <td class="br"><a href="#editcut">Mix Selection</a></td>
 <td class="br"><a href="#controls">Show controls</a></td>   
-<td class="br"></td>
-<td class="br"><a href="#menuplay">Play</a></td>
+<td></td>
+<td class="br"><a href="#savefile">Save</a></td>
 </tr>
 <tr>
 <td class="br"><a href="#insertfile">Insert</a></td>
 <td class="br"><a href="#cxp">Play Selection</a></td>
 <td class="br"><a href="#viewdots">Graph style</a></td>
-<td class="br"></td>
-<td class="br"><a href="#savefile">Save</a></td>
+<td></td>
+<td class="br"><a href="#mixingfiles">Mix</a></td>
 </tr>
 <tr>
 <td class="br"><a href="#updatefile">Update</a></td>
 <td class="br"><a href="#cxw">Save Selection</a></td>
 <td class="br"><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td>
-<td class="br"></td>
-<td class="br"><a href="#mixingfiles">Mix</a></td>
+<td></td>
+<td class="br"><a href="#speed">Resample</a></td>
 </tr>
 <tr>
 <td class="br"><a href="#newfile">New</a></td>
 <td class="br"><a href="#menuselectall">Select all</a></td>
 <td class="br"><a href="extsnd.html#withinsetgraph">With inset graph</a></td>
-<td class="br"></td>
-<td class="br"><a href="#speed">Resample</a></td>
-</tr>
-<tr>
-<td class="br"><a href="#recordfile">Record</a></td>
-<td class="br">Unselect all</td>
-<td class="br"><a href="#unitebutton">Channel style</a></td>
-<td class="br"></td>
+<td></td>
 <td class="br"><a href="#viewfft">FFT</a></td>
 </tr>
 <tr>
 <td class="br"><a href="#openfile">View</a></td>
-<td class="br"><a href="#editenvelope">Edit Envelope</a></td>
-<td class="br"><a href="#viewy0">Show y=0</a></td>
-<td class="br"></td>
+<td class="br">Unselect all</td>
+<td class="br"><a href="#unitebutton">Channel style</a></td>
+<td></td>
 <td class="br"><a href="#filtercontrol">Filter</a></td>
 </tr>
 <tr>
 <td class="br"><a href="#printfile">Print</a></td>
-<td class="br"><a href="#editheader">Edit Header</a></td>
-<td class="br"><a href="extsnd.html#xaxisstyle">X axis units</a></td>
-<td class="br"></td>
+<td class="br"><a href="#editenvelope">Edit Envelope</a></td>
+<td class="br"><a href="#viewy0">Show y=0</a></td>
+<td></td>
 <td class="br"><a href="#reverb">Reverb</a></td>
 </tr>
 <tr>
 <td class="br"><a href="#exitfile">Exit</a></td>
-<td class="br"></td>
-<td class="br"><a href="extsnd.html#showaxes">Axes</a></td>
-<td class="br"></td>
+<td class="br"><a href="#editheader">Edit Header</a></td>
+<td class="br"><a href="extsnd.html#xaxisstyle">X axis units</a></td>
+<td></td>
 <td class="br"><a href="#ampenvs">Envelope</a></td>
 </tr>
 <tr>
-<td class="br"></td>
-<td class="br"></td>
-<td class="br"><a href="#zoomoption">Zoom focus</a></td>
-<td class="br"></td>
+<td></td>
+<td></td>
+<td class="br"><a href="extsnd.html#showaxes">Axes</a></td>
+<td></td>
 <td class="br"><a href="#marks">Marks</a></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td class="br"><a href="#zoomoption">Zoom focus</a></td>
+<td></td>
+<td class="br">Insert</td>
 </tr>
 </table>
 
@@ -531,7 +530,6 @@ describes the user-interface extension library.
 <tr><td class="br"><a href="#updatefile">Update</a></td>   <td class="br">re-read file (data changed behind Snd's back)</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#viewfile">View</a></td>       <td class="br">open file read-only</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#newfile">New</a></td>         <td class="br">create a new, empty file</td><td class="br"></td></tr>
-<tr><td class="br"><a href="#recordfile">Record</a></td>   <td class="br">record sound producing a new file</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#printfile">Print</a></td>     <td class="br">produce a Postscript version of current display</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#exitfile">Exit</a></td>       <td class="br">leave Snd, flushing all pending edits</td><td class="br"></td></tr>
 </table>
@@ -763,7 +761,6 @@ of this file is "snd.eps"; it can be set via <a href="extsnd.html#epsfile">eps-f
 </p>
 
 <p>To mix files, see <a href="#mixingfiles">"Mix Files"</a>.
-To record a file, see <a href="#recordfile">"Record Files"</a>.
 The <a href="#insertfile">Insert</a> option inserts a file at the cursor.
 </p>
 
@@ -855,7 +852,7 @@ about each file as the mouse passes over it.
 <table class="borderspaced">
 <tr><th class="beige" colspan=2>Options Menu</th></tr>
 <tr><td class="br"><a href="#viewfft">Transform options</a></td><td class="br">various transform (FFT, etc) choices</td></tr>
-<tr><td class="br">Controls</td><td class="br">set variables that affect the control panel processing</td></tr>
+<tr><td class="br">Control panel options</td><td class="br">set variables that affect the control panel processing</td></tr>
 <tr><td class="br"><a href="#saveoptions">Save options</a></td><td class="br">save current state of various variables</td></tr>
 <tr><td class="br"><a href="#savedstate">Save session</a></td><td class="br">save current state</td></tr>
 <tr><td class="br"><a href="#preferencesbrowser">Preferences</a></td><td class="br">customize Snd</td></tr>
@@ -1310,7 +1307,6 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 <li><a href="#kbdmacros">Keyboard macros</a>
 <li><a href="#changeformat">Change file format</a>
 <li><a href="#extendfile">Extend a file</a>
-<li><a href="#recordfile">Record a file</a>
 <li><a href="#editenvelope">Edit or view an envelope</a>
 <li><a href="#editheader">Edit, add, or remove the header</a>
 <li><a href="#centeryaxis">Center a tiny signal with DC</a>
@@ -1732,19 +1728,6 @@ to add a second, C-&gt; C-u 1.0 C-o.  The same sequence
 can be used to add silence to the start of a file.
 Functions such as <a href="extsnd.html#insertsound">insert-sound</a>
 automatically pad with zeros, if necessary.
-</p>
-
-
-
-
-<!-- INDEX recordfile:Recording -->
-<div class="innerheader" id="recordfile">Record a File</div>
-
-<img class="indented" src="pix/simprec.png" alt="picture of recorder dialog">
-
-<p>Snd's recorder is very simple; for complex recording tasks, use Ardour.  The record dialog presents one or two VU meters (just
-the curve and a needle), a text widget for the output sound file name, a button to change the meters from linear to dB, and
-the usual buttons along the bottom to start or stop the recorder, provide help, and exit.
 </p>
 
 

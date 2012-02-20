@@ -946,9 +946,7 @@ static void graph_resize_callback(Widget w, XtPointer context, XtPointer info)
 
 static void dismiss_transform_callback(Widget w, XtPointer context, XtPointer info)
 {
-  Widget active_widget;
-  active_widget = XmGetFocusWidget(transform_dialog);
-  if (active_widget == XmMessageBoxGetChild(transform_dialog, XmDIALOG_OK_BUTTON))
+  if (XmGetFocusWidget(transform_dialog) == XmMessageBoxGetChild(transform_dialog, XmDIALOG_CANCEL_BUTTON))
     XtUnmanageChild(transform_dialog);
 }
 
@@ -1000,9 +998,9 @@ Widget make_transform_dialog(bool managed)
       Widget mainform, type_frame, type_form, type_label, size_frame, size_form, size_label, display_frame, display_form, display_label;
       Widget window_frame, window_form, window_label, wavelet_frame, wavelet_form, wavelet_label, graph_frame, graph_form, gsep;
       Widget ab_form, ab_frame, ab_title, ab_sep;
-      Widget se_form, se_frame, se_title, se_sep;
+      Widget se_form, se_frame, se_title, se_sep, ok_button;
       XmString s1;
-      XmString xhelp, xdismiss, xtitle, bstr, xorient;
+      XmString xhelp, xgo_away, xtitle, bstr, xorient;
       Arg args[32];
       XmString sizes[NUM_TRANSFORM_SIZES];
       XmString wavelets[NUM_WAVELETS];
@@ -1018,15 +1016,15 @@ Widget make_transform_dialog(bool managed)
 	    size_pos = i + 1;
 	    break;
 	  }
-      xdismiss = XmStringCreateLocalized((char *)I_GO_AWAY); /* needed by template dialog */
+      xgo_away = XmStringCreateLocalized((char *)I_GO_AWAY); /* needed by template dialog */
       xhelp = XmStringCreateLocalized((char *)I_HELP);
       xtitle = XmStringCreateLocalized((char *)"Transform Options");
       xorient = XmStringCreateLocalized((char *)"Color/Orientation");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
-      XtSetArg(args[n], XmNcancelLabelString, xorient); n++;
-      XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
+      XtSetArg(args[n], XmNcancelLabelString, xgo_away); n++;
+      XtSetArg(args[n], XmNokLabelString, xorient); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, xtitle); n++;
@@ -1034,12 +1032,14 @@ Widget make_transform_dialog(bool managed)
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
       transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Transform Options", args, n);
+      ok_button = XmMessageBoxGetChild(transform_dialog, XmDIALOG_OK_BUTTON);
 
-      XtAddCallback(transform_dialog, XmNcancelCallback, color_orientation_callback, NULL);
-      XtAddCallback(transform_dialog, XmNokCallback, dismiss_transform_callback, NULL);
+      XtAddCallback(transform_dialog, XmNcancelCallback, dismiss_transform_callback, NULL);
+      /* XtAddCallback(transform_dialog, XmNokCallback, color_orientation_callback, NULL); */ /* <cr> in dialog calls this! */
+      XtAddCallback(ok_button, XmNactivateCallback, color_orientation_callback, NULL);
       XtAddCallback(transform_dialog, XmNhelpCallback, help_transform_callback, NULL);
       XmStringFree(xhelp);
-      XmStringFree(xdismiss);
+      XmStringFree(xgo_away);
       XmStringFree(xtitle);
       XmStringFree(xorient);
 

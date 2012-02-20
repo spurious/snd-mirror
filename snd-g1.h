@@ -466,12 +466,6 @@ void g_init_gxenv(void);
 
 
 
-/* -------- snd-grec.c -------- */
-
-widget_t record_file(void);
-
-
-
 /* -------- snd-gfile.c -------- */
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);

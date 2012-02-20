@@ -109,7 +109,6 @@ static void file_menu_update_1(Widget w, XtPointer info, XtPointer context)
 static void file_open_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(FILE_READ_WRITE, true);}
 static void file_view_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(FILE_READ_ONLY, true);}
 static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog(true);}
-static void file_record_callback(Widget w, XtPointer info, XtPointer context) {record_file();}
 static void file_close_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
 static void file_close_all_callback(Widget w, XtPointer info, XtPointer context) {for_each_sound(snd_close_file);}
 static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}
@@ -360,7 +359,6 @@ static void help_env_callback(Widget w, XtPointer info, XtPointer context) {env_
 static void help_marks_callback(Widget w, XtPointer info, XtPointer context) {marks_help();}
 static void help_mix_callback(Widget w, XtPointer info, XtPointer context) {mix_help();}
 static void help_sound_files_callback(Widget w, XtPointer info, XtPointer context) {sound_files_help();}
-static void help_recording_callback(Widget w, XtPointer info, XtPointer context) {recording_help();}
 static void help_keys_callback(Widget w, XtPointer info, XtPointer context) {key_binding_help();}
 static void help_play_callback(Widget w, XtPointer info, XtPointer context) {play_help();}
 static void help_filter_callback(Widget w, XtPointer info, XtPointer context) {filter_help();}
@@ -522,9 +520,6 @@ Widget add_menu(void)
   XtAddCallback(file_new_menu, XmNactivateCallback, file_new_callback, NULL);
   XtVaSetValues(file_new_menu, XmNmnemonic, 'N', NULL);
 
-  file_record_menu = XtCreateManagedWidget("Record", xmPushButtonWidgetClass, file_menu, main_args, main_n);
-  XtAddCallback(file_record_menu, XmNactivateCallback, file_record_callback, NULL);
-
   file_view_menu = XtCreateManagedWidget("View", xmPushButtonWidgetClass, file_menu, main_args, main_n);
   XtAddCallback(file_view_menu, XmNactivateCallback, file_view_callback, NULL);
   XtVaSetValues(file_view_menu, XmNmnemonic, 'V', NULL);
@@ -646,7 +641,7 @@ Widget add_menu(void)
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, view_graph_style_menu); k++;
-  view_graph_style_cascade_menu = XtCreateManagedWidget("Graph style", xmCascadeButtonWidgetClass, view_menu, main_args, k);
+  view_graph_style_cascade_menu = XtCreateManagedWidget(I_LINES_OR_DOTS, xmCascadeButtonWidgetClass, view_menu, main_args, k);
 
   view_lines_menu = XtCreateManagedWidget("lines", xmPushButtonWidgetClass, view_graph_style_menu, main_args, main_n);
   XtAddCallback(view_lines_menu, XmNactivateCallback, view_lines_callback, NULL); 
@@ -680,7 +675,7 @@ Widget add_menu(void)
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, view_combine_menu); k++;
-  view_combine_cascade_menu = XtCreateManagedWidget("Channel style", xmCascadeButtonWidgetClass, view_menu, main_args, k);
+  view_combine_cascade_menu = XtCreateManagedWidget(I_CHANNEL_LAYOUT, xmCascadeButtonWidgetClass, view_menu, main_args, k);
 
   view_combine_separate_menu = XtCreateManagedWidget("separate", xmPushButtonWidgetClass, view_combine_menu, main_args, main_n);
   XtAddCallback(view_combine_separate_menu, XmNactivateCallback, view_separate_callback, NULL); 
@@ -728,7 +723,7 @@ Widget add_menu(void)
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, view_axes_menu); k++;
-  view_axes_cascade_menu = XtCreateManagedWidget("Axes", xmCascadeButtonWidgetClass, view_menu, main_args, k);
+  view_axes_cascade_menu = XtCreateManagedWidget(I_AXIS_LAYOUT, xmCascadeButtonWidgetClass, view_menu, main_args, k);
 
   view_no_axes_menu = XtCreateManagedWidget("no axes", xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
   XtAddCallback(view_no_axes_menu, XmNactivateCallback, view_no_axes_callback, NULL);  
@@ -758,7 +753,7 @@ Widget add_menu(void)
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, view_focus_style_menu); k++;
-  view_focus_cascade_menu = XtCreateManagedWidget("Zoom focus", xmCascadeButtonWidgetClass, view_menu, main_args, k);
+  view_focus_cascade_menu = XtCreateManagedWidget(I_ZOOM_CENTERS_ON, xmCascadeButtonWidgetClass, view_menu, main_args, k);
 
   view_focus_left_menu = XtCreateManagedWidget("window left edge", xmPushButtonWidgetClass, view_focus_style_menu, main_args, main_n);
   XtAddCallback(view_focus_left_menu, XmNactivateCallback, view_focus_left_callback, NULL);  
@@ -787,13 +782,13 @@ Widget add_menu(void)
   XtAddCallback(options_transform_menu, XmNactivateCallback, options_transform_callback, NULL);
   XtVaSetValues(options_transform_menu, XmNmnemonic, 't', NULL);
 
-  options_controls_menu = XtCreateManagedWidget("Controls", xmPushButtonWidgetClass, options_menu, main_args, main_n);
+  options_controls_menu = XtCreateManagedWidget("Control panel options", xmPushButtonWidgetClass, options_menu, main_args, main_n);
   XtAddCallback(options_controls_menu, XmNactivateCallback, options_controls_callback, NULL);
   XtVaSetValues(options_controls_menu, XmNmnemonic, 'c', NULL);
 
 
 #if HAVE_EXTENSION_LANGUAGE
-  options_save_menu = XtCreateManagedWidget("Save options", xmPushButtonWidgetClass, options_menu, main_args, main_n);
+  options_save_menu = XtCreateManagedWidget(I_SAVE_CURRENT_SETTINGS, xmPushButtonWidgetClass, options_menu, main_args, main_n);
   XtAddCallback(options_save_menu, XmNactivateCallback, options_save_callback, NULL);
   XtVaSetValues(options_save_menu, XmNmnemonic, 'a', NULL);
 
@@ -831,9 +826,6 @@ Widget add_menu(void)
 
   help_keys_menu = XtCreateManagedWidget("Key bindings", xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_keys_menu, XmNactivateCallback, help_keys_callback, NULL);
-
-  help_recording_menu = XtCreateManagedWidget("Record", xmPushButtonWidgetClass, help_menu, main_args, main_n);
-  XtAddCallback(help_recording_menu, XmNactivateCallback, help_recording_callback, NULL);
 
   help_play_menu = XtCreateManagedWidget("Play", xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_play_menu, XmNactivateCallback, help_play_callback, NULL);

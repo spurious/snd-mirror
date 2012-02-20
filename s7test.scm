@@ -17620,6 +17620,50 @@ who says the continuation has to restart the map from the top?
 (test (call-with-exit (lambda (r1) (call-with-exit (lambda (r2) (call-with-exit (lambda (r3) (r2 12) (r2 1))) (r1 2))) 3)) 3)
 (test (call-with-exit (lambda (r1) (call-with-exit (lambda (r2) (call-with-exit (lambda (r3) (r3 12) (r2 1))) (r1 2))) 3)) 2)
 
+;; make sure call-with-exit closes ports
+(test (let ((p (call-with-exit (lambda (return) 
+				 (call-with-input-file "tmp1.r5rs" 
+				   (lambda (port) 
+				     (return port))))))) 
+	(port-closed? p)) 
+      #t)
+(test (let ((p (call-with-exit (lambda (return) 
+				 (call-with-input-file "tmp1.r5rs" 
+				   (lambda (port) 
+				     (if (not (port-closed? port)) (return port))))))))
+	(port-closed? p)) 
+      #t)
+(test (let ((p (call-with-exit (lambda (return) 
+				 (with-input-from-file "tmp1.r5rs" 
+				   (lambda () 
+				     (return (current-input-port)))))))) 
+	(port-closed? p)) 
+      #t)
+(test (let ((p (call-with-exit (lambda (return) 
+				 (with-output-to-file "empty-file" 
+				   (lambda () 
+				     (return (current-output-port)))))))) 
+	(port-closed? p)) 
+      #t)
+(test (let ((p (call-with-exit (lambda (return) 
+				 (call-with-output-file "empty-file" 
+				   (lambda (port) 
+				     (return port)))))))
+	(port-closed? p)) 
+      #t)
+(test (let ((p (call-with-exit (lambda (return) 
+				 (call-with-input-string "this is a test" 
+				   (lambda (port) 
+				     (return port)))))))
+	(port-closed? p)) 
+      #t)
+(test (let ((p (call-with-exit (lambda (return) 
+				 (call-with-output-string
+				   (lambda (port) 
+				     (return port)))))))
+	(port-closed? p)) 
+      #t)
+
 (let ((pws (make-procedure-with-setter < >))) (test (sort! '(2 3 1 4) pws) '(1 2 3 4)))
 (test (call-with-exit (lambda (k) (call-with-input-string "123" k))) 'error)
 (test (call-with-exit (lambda (k) (call-with-input-file "tmp1.r5rs" k))) 'error)

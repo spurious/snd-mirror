@@ -2309,23 +2309,6 @@ So, to use the "plughw" device, we could:
 (set! (mus-alsa-device) "plughw:0")
 </pre>
 
-<p>
-Similarly, if you know which device you want to record from (say your arecord command is
-"arecord -D hw:0.2"), you can tell Snd's recorder to use that device via:
-</p>
-
-<pre class="indented">
-setenv MUS_ALSA_CAPTURE_DEVICE "hw:0.2"
-</pre>
-
-<p>
-or
-</p>
-
-<pre class="indented">
-(set! (mus-alsa-capture-device) "hw:0.2")
-</pre>
-
 <p>It's also possible to define your own device, apparently, but that part
 of ALSA is beyond my ken.
 </p>

@@ -5,7 +5,7 @@
 
 static Widget enved_dialog = NULL;
 static Widget applyB, apply2B, cancelB, drawer, showB, saveB, revertB, undoB, redoB;
-static Widget printB, brkptL, graphB, fltB, ampB, srcB, clipB;
+static Widget brkptL, graphB, fltB, ampB, srcB, clipB;
 static Widget nameL, textL, screnvlst, dBB, orderL, deleteB, resetB, firB = NULL;
 static Widget expB, linB, baseScale, baseValue, selectionB;
 static GC gc, rgc, ggc;
@@ -738,13 +738,6 @@ void enved_print(char *name)
 }
 
 
-static void print_button_pressed(Widget w, XtPointer context, XtPointer info) 
-{
-  ss->print_choice = PRINT_ENV;
-  file_print_callback(w, context, info); 
-}
-
-
 static void env_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmListCallbackStruct *cb = (XmListCallbackStruct *)info;
@@ -1288,24 +1281,10 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, showB); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 50); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       saveB = XtCreateManagedWidget("save", xmPushButtonWidgetClass, colB, args, n);
 
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, saveB); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, saveB); n++;
-      printB = XtCreateManagedWidget("print", xmPushButtonWidgetClass, colB, args, n);
-
       XtAddCallback(saveB, XmNactivateCallback, save_button_pressed, NULL);
-      XtAddCallback(printB, XmNactivateCallback, print_button_pressed, NULL);
 
       /* UNDO REDO */
       n = 0;
@@ -1334,6 +1313,7 @@ Widget create_envelope_editor(void)
 
       XtAddCallback(undoB, XmNactivateCallback, undo_button_pressed, NULL);
       XtAddCallback(redoB, XmNactivateCallback, redo_button_pressed, NULL);
+
 
       /* REVERT DELETE */
       n = 0;

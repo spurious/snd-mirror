@@ -1560,7 +1560,7 @@ You can also request help on a given topic by clicking the variable name on the 
 static void preferences_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   clear_prefs_dialog_error();
-  if (XmGetFocusWidget(preferences_dialog) == XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON))
+  if (XmGetFocusWidget(preferences_dialog) == XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON))
     XtUnmanageChild(preferences_dialog);
 }
 
@@ -1666,28 +1666,28 @@ widget_t make_preferences_dialog(void)
 
   /* -------- base buttons -------- */
   {
-    XmString title, help, revert, clear, save, dismiss;
-    Widget revert_button, clear_button;
+    XmString title, help, revert, clear, save, go_away;
+    Widget clear_button, revert_button;
+#if HAVE_EXTENSION_LANGUAGE
+    Widget save_button;
+
+    save = XmStringCreateLocalized((char *)"Save");
+#endif
 
     title = XmStringCreateLocalized((char *)"Preferences");
     help = XmStringCreateLocalized((char *)I_HELP);
     revert = XmStringCreateLocalized((char *)"Revert");
     clear = XmStringCreateLocalized((char *)"Clear");
-#if HAVE_EXTENSION_LANGUAGE
-    save = XmStringCreateLocalized((char *)"Save");
-#endif
-    dismiss = XmStringCreateLocalized((char *)I_GO_AWAY);
+    go_away = XmStringCreateLocalized((char *)I_GO_AWAY);
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
     XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
     XtSetArg(args[n], XmNnoResize, false); n++;
     XtSetArg(args[n], XmNtransient, false); n++;
-#if HAVE_EXTENSION_LANGUAGE
-    XtSetArg(args[n], XmNcancelLabelString, save); n++;
-#endif
+    XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
     XtSetArg(args[n], XmNhelpLabelString, help); n++;
-    XtSetArg(args[n], XmNokLabelString, dismiss); n++;
+    XtSetArg(args[n], XmNokLabelString, revert); n++;
     XtSetArg(args[n], XmNdialogTitle, title); n++;
     XtSetArg(args[n], XmNallowShellResize, true); n++;
     XtSetArg(args[n], XmNautoUnmanage, false); n++;
@@ -1700,11 +1700,7 @@ widget_t make_preferences_dialog(void)
       XtSetArg(args[n], XmNheight, (STARTUP_HEIGHT < height) ? (Dimension)STARTUP_HEIGHT : ((Dimension)(height - 50))); n++;
     }
     preferences_dialog = XmCreateTemplateDialog(MAIN_PANE(ss), (char *)"preferences", args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-    XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-    revert_button = XtCreateManagedWidget("Revert", xmPushButtonGadgetClass, preferences_dialog, args, n);
+    revert_button = XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON);
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
@@ -1712,10 +1708,16 @@ widget_t make_preferences_dialog(void)
     clear_button = XtCreateManagedWidget("Clear", xmPushButtonGadgetClass, preferences_dialog, args, n);
 
 #if HAVE_EXTENSION_LANGUAGE
-    XtAddCallback(preferences_dialog, XmNcancelCallback, preferences_save_callback, NULL);
+    n = 0;
+    XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+    XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
+    save_button = XtCreateManagedWidget("Save", xmPushButtonGadgetClass, preferences_dialog, args, n);
+    XtAddCallback(save_button, XmNactivateCallback, preferences_save_callback, NULL);
 #endif
+
+    XtAddCallback(preferences_dialog, XmNcancelCallback, preferences_quit_callback, NULL);
     XtAddCallback(preferences_dialog, XmNhelpCallback, preferences_help_callback, NULL);
-    XtAddCallback(preferences_dialog, XmNokCallback, preferences_quit_callback, NULL);
+    /* XtAddCallback(preferences_dialog, XmNokCallback, preferences_revert_callback, NULL); */
     XtAddCallback(revert_button, XmNactivateCallback, preferences_revert_callback, NULL);
     XtAddCallback(clear_button, XmNactivateCallback, preferences_clear_callback, NULL);
     
@@ -1724,7 +1726,7 @@ widget_t make_preferences_dialog(void)
 #if HAVE_EXTENSION_LANGUAGE
     XmStringFree(save);
 #endif
-    XmStringFree(dismiss);
+    XmStringFree(go_away);
     XmStringFree(revert);
     XmStringFree(clear);
     

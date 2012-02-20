@@ -702,7 +702,7 @@ Otherwise Snd just closes the sound, flushing any unsaved edits.
 <em class=def id="audioinputdevice">audio-input-device</em> (default: mus-audio-default)
 </pre>
 
-<p>This is the recorder's input device: <code>(set! (audio-input-device) mus-audio-microphone)</code>.
+<p>This is the audio input device: <code>(set! (audio-input-device) mus-audio-microphone)</code>.
 </p>
 <div class="spacer"></div>
 
@@ -4705,7 +4705,7 @@ on a good day.
 <em class=def id="musalsacapturedevice">mus-alsa-capture-device</em>
 </pre>
 
-<p>This is the ALSA capture (audio recording) device. The matching environment variable is MUS_ALSA_CAPTURE_DEVICE.
+<p>This is the ALSA capture device. The matching environment variable is MUS_ALSA_CAPTURE_DEVICE.
 </p>
 <div class="spacer"></div>
 
@@ -4770,7 +4770,7 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 <em class=def id="musaudioopeninput">mus-audio-open-input</em> device srate chans format bufsize
 </pre>
 
-<p>mus-audio-open-input opens the audio input (recording) port 'device'.  It returns -1 if the open failed.
+<p>mus-audio-open-input opens the audio input device.  It returns -1 if the open failed.
 </p>
 <div class="spacer"></div>
 
@@ -4970,7 +4970,7 @@ mus-next  mus-aifc  mus-riff  mus-rf64 mus-nist  mus-raw  mus-ircam  mus-aiff mu
 mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
 </pre>
 
-<p>This function doesn't set the header choices for output of recording; it just decodes a sndlib header type identifier.
+<p>This function just decodes a sndlib header type identifier.
 </p>
 
 <pre class="indented">
@@ -11871,7 +11871,7 @@ channel's local amp-control value is set instead of the sound's.  This affects
 
 <p>The amp-control min and max amounts as a list.  The default is
 (list 0.0 8.0).  The value 1.0 should be in the given range, since it is placed in the middle of the slider's range.
-If no 'snd' argument is given, this also affects the Mix, View:Files, and Record dialogs.
+If no 'snd' argument is given, this also affects the Mix and View:Files dialogs.
 </p>
 <div class="spacer"></div>
 
@@ -13190,7 +13190,6 @@ defvar exists in this context so that Snd and CLM can share envelope files.
 14: Help dialog 
 16: View: Mixes dialog
 17: File: Print dialog 
-18: File: Recorder dialog 
 19: View: Regions dialog
 20: info dialog (activated by info-dialog function)
 21: more controls dialog
@@ -13690,16 +13689,6 @@ If the xm module is loaded, we could add our own info via:
 </pre>
 
 <p>This creates and (if 'managed' which defaults to #t) activates the File:Print dialog, returning the dialog widget.
-</p>
-<div class="spacer"></div>
-
-
-<!-- recorder-dialog -->
-<pre class="indented">
-<em class=def id="recorderdialog">recorder-dialog</em>
-</pre>
-
-<p>This starts the <a href="snd.html#recordfile">recorder</a> window, returning the dialog widget.
 </p>
 <div class="spacer"></div>
 

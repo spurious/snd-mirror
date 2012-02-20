@@ -7321,7 +7321,7 @@ static int look_for_format (int *mixer_vals, int format)
 }
 
 
-int mus_audio_device_format(int dev) /* snd-dac snd-xrec snd-grec */
+int mus_audio_device_format(int dev) /* snd-dac */
 {
   int mixer_vals[16];
   int format;

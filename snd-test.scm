@@ -30306,8 +30306,7 @@ EDITS: 2
 						"Save   C-x C-s" 
 						"Close  C-x k"
 						"Close all"
-						"Save options"
-						"Record"
+						"Save current settings"
 						"Mixes" "clm" "fm-violin"))))
 			(XtCallCallbacks menu XmNactivateCallback (snd-global-state))))))))))
     (for-each close-sound (sounds))

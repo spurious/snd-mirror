@@ -171,7 +171,7 @@ void update_region_browser(bool grf_too)
 }
 
 
-static void region_ok_callback(Widget w, XtPointer context, XtPointer info) 
+static void region_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(region_dialog);
 }
@@ -240,7 +240,8 @@ static void region_mix_callback(Widget w, XtPointer context, XtPointer info)
 
 static void region_save_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  if (current_region != -1)
+  if ((current_region != -1) &&
+      (XmGetFocusWidget(region_dialog) == XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON)))
     make_region_save_as_dialog(true);
 }
 
@@ -436,46 +437,48 @@ static void make_region_dialog(void)
   Arg args[32];
   Widget formw, last_row, infosep, fr ,rw;
   Widget editb, unlistb, plw, panes, toppane, sep1 = NULL;
-  XmString xok, xinsert, xhelp, titlestr;
+  XmString xgo_away, xhelp, titlestr, xsave_as;
   regrow *r;
   chan_info *cp;
 
-  xok = XmStringCreateLocalized((char *)I_GO_AWAY);
+  xgo_away = XmStringCreateLocalized((char *)I_GO_AWAY);
   xhelp = XmStringCreateLocalized((char *)I_HELP);
-  xinsert = XmStringCreateLocalized((char *)"Insert");
   titlestr = XmStringCreateLocalized((char *)"Regions");
+  xsave_as = XmStringCreateLocalized((char *)"Save as");
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
-  XtSetArg(args[n], XmNcancelLabelString, xinsert); n++;
+  XtSetArg(args[n], XmNcancelLabelString, xgo_away); n++;
   XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
-  XtSetArg(args[n], XmNokLabelString, xok); n++;
+  XtSetArg(args[n], XmNokLabelString, xsave_as); n++;
   XtSetArg(args[n], XmNautoUnmanage, false); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNtransient, false); n++;
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Regions", args, n);
+  save_as_button = XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-  save_as_button = XtCreateManagedWidget("Save as", xmPushButtonGadgetClass, region_dialog, args, n);
+  insert_button = XtCreateManagedWidget("Insert", xmPushButtonGadgetClass, region_dialog, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
   mix_button = XtCreateManagedWidget("Mix", xmPushButtonGadgetClass, region_dialog, args, n);
 
-  XtAddCallback(region_dialog,  XmNokCallback,       region_ok_callback,     NULL);
-  XtAddCallback(region_dialog,  XmNcancelCallback,   region_insert_callback, NULL);
+  /* XtAddCallback(region_dialog,  XmNokCallback,       region_save_callback,   NULL); */
+  XtAddCallback(save_as_button, XmNactivateCallback, region_save_callback,   NULL);
+  XtAddCallback(region_dialog,  XmNcancelCallback,   region_quit_callback,   NULL);
   XtAddCallback(region_dialog,  XmNhelpCallback,     region_help_callback,   NULL);
   XtAddCallback(mix_button,     XmNactivateCallback, region_mix_callback,    NULL);
-  XtAddCallback(save_as_button, XmNactivateCallback, region_save_callback,   NULL);
+  XtAddCallback(insert_button,  XmNactivateCallback, region_insert_callback, NULL);
 
   XmStringFree(xhelp);
-  XmStringFree(xok);
-  XmStringFree(xinsert);
+  XmStringFree(xgo_away);
+  XmStringFree(xsave_as);
   XmStringFree(titlestr);
 
   XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->selection_color, NULL);

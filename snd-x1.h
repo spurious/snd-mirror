@@ -446,12 +446,6 @@ void mix_dialog_set_mix(int id);
 
 
 
-/* -------- snd-xrec.c -------- */
-
-widget_t record_file(void);
-
-
-
 /* -------- snd-xprint.c -------- */
 
 void file_print_callback(Widget w, XtPointer context, XtPointer info);
