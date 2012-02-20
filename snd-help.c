@@ -2836,16 +2836,6 @@ static void reverse_help(void)
 }
 
 
-static void noise_reduction_help(void)
-{
-  snd_help_with_xrefs("Noise Reduction",
-		      "",
-		      WITH_WORD_WRAP,
-		      snd_xrefs("Noise Reduction"),
-		      snd_xref_urls("Noise Reduction"));
-}
-
-
 static void random_numbers_help(void)
 {
   snd_help_with_xrefs("Random Numbers",
@@ -2894,14 +2884,14 @@ static void window_size_help(void)
 
 #include "snd-xref.c"
 
-#define NUM_TOPICS 39
+#define NUM_TOPICS 38
 static const char *topic_names[NUM_TOPICS] = {
   "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
   "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
   "Motif", "Gtk", "Script", "Ruby", "s7", "LADSPA", "OpenGL", "Gdb", "Control panel",
   "X resources", "Invocation flags", "Initialization file", "Customization",
-  "Noise Reduction", "Window Size", "Color", "Random Number", "Wavogram",
+  "Window Size", "Color", "Random Number", "Wavogram",
   "Forth"
 };
 
@@ -2916,7 +2906,7 @@ static const char *topic_urls[NUM_TOPICS] = {
   "grfsnd.html#sndandladspa", 
   "grfsnd.html#sndandgl", "grfsnd.html#sndandgdb", "extsnd.html#customcontrols",
   "grfsnd.html#sndresources", "grfsnd.html#sndswitches", "grfsnd.html#sndinitfile", "extsnd.html#extsndcontents",
-  "extsnd.html#noisystory", "extsnd.html#movingwindows", "extsnd.html#colors", "sndscm.html#allrandomnumbers",
+  "extsnd.html#movingwindows", "extsnd.html#colors", "sndscm.html#allrandomnumbers",
   "snd.html#wavogram", "grfsnd.html#sndandforth"
 };
 
@@ -2939,12 +2929,12 @@ static const char *topic_url(const char *topic)
   return(NULL);
 }
 
-#define NUM_XREFS 35
+#define NUM_XREFS 34
 static const char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
   "Src", I_FIND, "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Copy",
-  "Noise Reduction", "Window Size", "Color", "Control", "Random Numbers", "Wavogram"
+  "Window Size", "Color", "Control", "Random Numbers", "Wavogram"
 };
 
 static const char **xref_tables[NUM_XREFS] = {
@@ -2953,7 +2943,7 @@ static const char **xref_tables[NUM_XREFS] = {
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
   Resampling_xrefs, Searching_xrefs, Undo_and_Redo_xrefs, Undo_and_Redo_xrefs, 
   sync_xrefs, control_xrefs, NULL, header_and_data_xrefs, key_xrefs, Copying_xrefs,
-  Noise_Reduction_xrefs, Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs,
+  Window_size_and_position_xrefs, Colors_xrefs, control_xrefs, Random_Numbers_xrefs,
   Wavogram_xrefs
 };
 
@@ -2963,7 +2953,7 @@ static const char **xref_url_tables[NUM_XREFS] = {
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
   Resampling_urls, Searching_urls, Undo_and_Redo_urls, Undo_and_Redo_urls, 
   NULL, NULL, NULL, NULL, NULL, Copying_urls, 
-  Noise_Reduction_urls, Window_size_and_position_urls, Colors_urls, NULL, Random_Numbers_urls,
+  Window_size_and_position_urls, Colors_urls, NULL, Random_Numbers_urls,
   Wavogram_urls
 };
 
@@ -2975,7 +2965,7 @@ static help_func help_funcs[NUM_XREFS] = {
   &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
   &sync_help, &controls_help, recording_help, &sound_files_help, &key_binding_help, &copy_help,
-  &noise_reduction_help, &window_size_help, &colors_help, &controls_help, &random_numbers_help,
+  &window_size_help, &colors_help, &controls_help, &random_numbers_help,
   &wavogram_help
 };
 

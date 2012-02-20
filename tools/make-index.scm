@@ -284,13 +284,6 @@
 
 (define array-length 4096)
 
-(define names (make-vector array-length #f))
-(define files (make-vector array-length #f))
-(define gfiles (make-vector array-length #f))
-(define generals (make-vector array-length #f))
-(define xrefs (make-vector array-length #f))
-(define topics (make-vector array-length #f))
-
 
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
@@ -689,6 +682,7 @@
       (if (char=? (str i) #\space)
 	  (set! (str i) #\_)))))
 
+(define ids '())
 
 (define* (make-index-1 file-names (output "test.html") (cols 3) (capitalized #f) no-bold with-scm with-clm-locals)
   ;; read html file, gather all names, create index (in lower-case, *=space in sort)
@@ -697,13 +691,15 @@
 	(xrefing #f)
 	(current-general 0)
 	(got-tr #f)
-	(topic #f))
-    
-    (fill! names #f)
-    (fill! files #f)
-    (fill! topics #f)
-    (fill! gfiles #f)
-    (fill! generals #f)
+	(topic #f)
+	(xrefs (make-vector array-length #f))
+	(generals (make-vector array-length #f))
+	(topics (make-vector array-length #f))
+	(gfiles (make-vector array-length #f))
+	(files (make-vector array-length #f))
+	(names (make-vector array-length #f))
+	)
+    (set! ids '())
     
     (do ((file file-names (cdr file))
 	 (file-ctr 0 (+ file-ctr 1)))
@@ -719,15 +715,29 @@
 			   (indpos (string-position "<!-- main-index" dline))
 			   (xpos (string-position "<TABLE " dline))
 			   (unxpos (string-position "</TABLE>" dline))
-			   (pos-def (and (not compos) 
-					 (not indpos)
-					 (string-position "<em class=def id=" dline)
-					 ))
-			   (pos pos-def)
+			   (pos (and (not compos) 
+				     (not indpos)
+				     (string-position "<em class=def id=" dline)
+				     ))
+			   (id-pos (string-position " id=" dline))
 			   (tpos (and (not pos) 
 				      (string-position "<!-- TOPIC " line))))
 		      (if unxpos 
 			  (set! xrefing #f))
+
+		      (if id-pos
+			  (let* ((start (char-position #\" (checked-substring dline id-pos)))
+				 (end (char-position #\" (checked-substring dline (+ id-pos start 2))))
+				 (name (substring dline (+ id-pos start 1) (+ id-pos start 2 end))))
+			    (let* ((sym-name (string->symbol name))
+				   (data (assq sym-name ids)))
+			      (if (not data)
+				  (set! ids (cons (cons sym-name 0) ids))))))
+
+		      ;; (format #t "~A ~D ~D ~D: id: ~S~%" dline id-pos start end name)))
+		      ;; (do ((e (*error-info* 6) (outer-environment e))) ((eq? e (global-environment))) (format #t "~A~%" (environment->list e)))
+		      ;; TODO: add this to s7.html or build it into s7
+
 		      (if tpos
 			  (let ((epos (string-position " -->" dline)))
 			    (if (not epos) 
@@ -769,12 +779,7 @@
 						(set! (topics n) topic)
 						(incf n)
 						(set! dline (checked-substring dline (+ epos 4)))
-						(set! pos-def (or (string-position "<a class=def name=" dline)
-								  (string-position "<em class=def id=" dline)
-								  (string-position "<A class=def name=" dline)
-								  (and with-clm-locals 
-								       (string-position "<a class=def Name=" dline))))
-						(set! pos pos-def)
+						(set! pos (string-position "<em class=def id=" dline))
 						))))))))
 		      (if (and xrefing
 			       (or (not (char=? (dline 0) #\<))
@@ -1382,17 +1387,14 @@
 					  
 			 ;; search for href
 			 (let* ((dline line)
-				(pos-norm (string-position "<a href=" dline)) ; ignore A HREF
-				(pos-quiet (string-position "<a class=quiet href=" dline))
-				(pos-def (string-position "<a class=def href=" dline))
-				(pos (or pos-norm pos-quiet pos-def))
-				(pos-len (if pos-norm 9 (if pos-def 19 21))))
+				(pos (string-position " href=" dline)) ; ignore A HREF
+				(pos-len 7))
 			   (do ()
 			       ((not pos))
+			     ;; (format #t "~A dline: ~A~%" pos dline)
+			     (if (zero? (length dline)) (exit))
 			     (set! dline (checked-substring dline (+ pos pos-len)))
-			     (let ((epos (or (string-position "</a>" dline) 
-					     (string-position "</em>" dline) 
-					     (string-position "</A>" dline))))
+			     (let ((epos (char-position #\> dline)))
 			       (if (not epos) 
 				   (format #t "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)
 				   (begin
@@ -1410,13 +1412,23 @@
 
 				     (set! (lines href) linectr)
 				     (set! (refs href) file)
+				     
+				     ;; (hrefs href) here is the full link: sndclm.html#make-filetosample for example
+				     ;;   it can also be a bare file name
+				     (let* ((start (char-position #\# (hrefs href)))
+					    (name (and (number? start) 
+						       (string->symbol (substring (hrefs href) (+ start 1)))))
+					    (data (and (symbol? name) 
+						       (assq name ids))))
+				       (if name 
+					   (if (not data)
+					       (format #t ";can't find id ~A~%" name)
+					       (set-cdr! data (+ (cdr data) 1)))))
+				     
 				     (incf href)
 				     (set! dline (checked-substring dline epos))
-				     (set! pos-norm (string-position "<a href=" dline))
-				     (set! pos-quiet (string-position "<a class=quiet href=" dline))
-				     (set! pos-def (string-position "<a class=def href=" dline))
-				     (set! pos (or pos-norm pos-quiet pos-def))
-				     (set! pos-len (if pos-norm 9 (if pos-def 19 21))))))))))
+				     (set! pos (string-position " href=" dline))
+				     (set! pos-len 7))))))))
 		     (line-loop (read-line f))))))))
 
 	       (if (not (null? commands)) (format #t "open directives at end of ~A: ~A~%" file commands))
@@ -1425,27 +1437,22 @@
     ;; end file scan
     
     (format #t "found ~D names and ~D references~%" name href)
-#|
-    ;; this no longer works because HTML5 does not have the name attribute
-    (do ((h 0 (+ h 1)))
-	((= h href))
-      (if (and (string? (hrefs h))
-	       (not (string-vector-position (hrefs h) names))
-	       (char-position #\# (hrefs h)))
-	  (format #t "undef'd: ~A (~A: ~A)~%" (hrefs h) (refs h) (lines h))))
-|#
+
+    (for-each
+     (lambda (data)
+       (if (zero? (cdr data))
+	   (format #t ";~A unref'd~%" (car data))))
+     ids)
     ))
 
-
-(html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"
-	      "sndscm.html" "fm.html" "quick.html" "s7.html"
-	      "xen.html" "libxm.html" "index.html"))
 
 (make-index-1 '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "quick.html" "s7.html")
 	      "test.html" 5 '("AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") #t #t)
 
 
-(s7-version)
+(html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"
+	      "sndscm.html" "fm.html" "quick.html" "s7.html"
+	      "xen.html" "libxm.html" "index.html"))
 
 (exit)
 

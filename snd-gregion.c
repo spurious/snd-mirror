@@ -497,10 +497,10 @@ static void make_region_dialog(void)
   add_highlight_button_style(mix_button);
 #endif
 
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), dismiss_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), insert_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), mix_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), save_as_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), dismiss_button, true, true, 4);
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), help_button, true, true, 4);
 
   SG_SIGNAL_CONNECT(insert_button, "clicked", region_insert_callback, NULL);

@@ -278,16 +278,6 @@ static void create_help_monolog(void)
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 40);
   gtk_widget_realize(help_dialog);
 
-  ok_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-  gtk_widget_set_name(ok_button, "dialog_button");
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), ok_button, false, true, 20);
-  SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
-#if HAVE_GTK_3
-  add_highlight_button_style(ok_button);
-#endif
-  gtk_widget_show(ok_button);
-  set_stock_button_label(ok_button, I_GO_AWAY);
-
   help_previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_widget_set_name(help_previous_button, "dialog_button");
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), help_previous_button, true, true, 10);
@@ -305,6 +295,16 @@ static void create_help_monolog(void)
   add_highlight_button_style(help_next_button);
 #endif
   gtk_widget_show(help_next_button);
+
+  ok_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
+  gtk_widget_set_name(ok_button, "dialog_button");
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), ok_button, false, true, 20);
+  SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
+#if HAVE_GTK_3
+  add_highlight_button_style(ok_button);
+#endif
+  gtk_widget_show(ok_button);
+  set_stock_button_label(ok_button, I_GO_AWAY);
 
   frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(help_dialog)), frame, true, true, 10); 

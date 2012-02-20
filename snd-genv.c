@@ -966,8 +966,8 @@ GtkWidget *create_envelope_editor(void)
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), applyB, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), apply2B, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), cancelB, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), resetB, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), cancelB, false, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), helpB, false, true, 10);
 
       SG_SIGNAL_CONNECT(cancelB, "clicked", dismiss_enved_callback, NULL);

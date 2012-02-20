@@ -404,9 +404,9 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 #endif
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->ok_button, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->cancel_button, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->mkdir_button, true, true, 10);
   if (with_extract) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->extract_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->cancel_button, true, true, 10);
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->help_button, true, true, 10);
 
   gtk_widget_show(fs->ok_button);
@@ -3394,8 +3394,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   gtk_widget_set_name(okB, "dialog_button");
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), okB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), cancelB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), resetB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), cancelB, true, true, 10);
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), helpB, true, true, 10);
 
 #if HAVE_GTK_3
@@ -3708,8 +3708,8 @@ widget_t make_new_file_dialog(bool managed)
       gtk_widget_set_name(reset_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), new_file_ok_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), cancel_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), reset_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), cancel_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), help_button, true, true, 10);
 
 #if HAVE_GTK_3
@@ -5315,8 +5315,8 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_set_name(resetB, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), newB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), dismissB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), resetB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), dismissB, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), helpB, true, true, 10);
 
 #if HAVE_GTK_3

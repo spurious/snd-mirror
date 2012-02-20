@@ -1840,7 +1840,7 @@ repeated), and 'freq' sets the grain sinusoid's frequency.
 <A class=def>graphEq</a> file beg dur or-beg amp (amp-env '(0 1.0 0.8 1.0 1.0 0.0)) (amp-base 1.0) ...
 </pre>
 
-<p>graphEq is a sort of non-graphical graphical equalizer, developed by Marco Trevisani. It sets up a bank of formant
+<p id="grapheq">graphEq is a sort of non-graphical graphical equalizer, developed by Marco Trevisani. It sets up a bank of formant
 generators with an optional envelope on each formant, then filters and envelopes the input file.
 Its trailing parameters are:
 </p>
@@ -3418,7 +3418,7 @@ let(pareto-distribution(1.0))   do |g| map_channel(lambda do |y| any_random(1.0,
 
 <!-- INDEX allrandomnumbers:Random Numbers -->
 
-<table class="method">
+<TABLE class="method">
 <tr><td class="methodtitle">Random Numbers in Snd/CLM</td></tr>
 <tr><td>
 <blockquote id="allrandomnumbers"><small>
@@ -3434,7 +3434,7 @@ mus-rand-seed (settable)<br>
 bounded brownian noise: <a href="sndclm.html#green-noise">green-noise</a><br>
 brown and pink noise: <a href="sndclm.html#brown-noise">brown-noise</a>
 </small></blockquote>
-</td></tr></table>
+</td></tr></TABLE>
 
 
 
@@ -6980,7 +6980,7 @@ by the reverb amount).
 
 <!-- INDEX reverbexamples:Reverb -->
 
-<table class="method">
+<TABLE class="method">
 <tr><td class="methodtitle">Reverbs in Snd</td></tr>
 <tr><td>
 <blockquote><small>
@@ -6992,7 +6992,7 @@ control panel reverb: <a href="snd.html#reverb">Reverb</a>, <a href="extsnd.html
 convolution reverb: <a href="extsnd.html#convolvewith">conrev</a><br>
 *reverb*: <a href="#wsdoc">with-sound</a>
 </small></blockquote>
-</td></tr></table>
+</td></tr></TABLE>
 
 
 
@@ -10822,7 +10822,7 @@ Here's a picture (it also shows <a href="extsnd.html#withsmptelabel">with-smpte-
   <area shape=rect coords="539,33,545,120" alt="SMPTE label" href="extsnd.html#addmark" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 12345: (add-mark 12345)')">
   <area shape=rect coords="570,25,710,45" alt="SMPTE label" href="extsnd.html#withinsetgraph" onmouseout="UnTip()" onmouseover="Tip('this is the graph produced by (set! (with-inset-graph) #t)')">
   <area shape=rect coords="725,25,800,155" alt="SMPTE label" href="#addmarkpane" onmouseout="UnTip()" onmouseover="Tip('this is the mark pane from (add-mark-pane)')">
-  <area shape=rect coords="590,155,700,170" alt="SMPTE label" href="#showdiskpsace" onmouseout="UnTip()" onmouseover="Tip('this is the amount of free disk space I have.In the bad old days, disk space was a constant problem.')">
+  <area shape=rect coords="590,155,700,170" alt="SMPTE label" href="#showdiskspace" onmouseout="UnTip()" onmouseover="Tip('this is the amount of free disk space I have.In the bad old days, disk space was a constant problem.')">
 </map>
 <div class="spacer"></div>
 
@@ -12710,7 +12710,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
   (simp 20000 10000 :amplitude 0.2))
 </pre>
 
-<p id="shepardtone">You don't have to use definstrument; in the next example we make a Shepard tone
+<p>You don't have to use definstrument; in the next example we make a Shepard tone
 by calling the oscils and whatnot directly in the with-sound body:
 </p>
 
@@ -12750,7 +12750,7 @@ with-temp-sound and sound-let set up temporary bindings for embedded with-sounds
 
 <div class="innerheader">sound-let</div>
 
-<p id="soundlet">sound-let is a form of let* that creates temporary sound files
+<p id="sound-let">sound-let is a form of let* that creates temporary sound files
 within with-sound.  Its syntax is a combination of let* and with-sound:
 with-sound:</p>
 
@@ -12822,7 +12822,7 @@ end
 
 <p id="withmixedsound">with-mixed-sound is a variant of with-sound that creates a
 <a href="extsnd.html#sndmixes">"mix"</a> for each note in the notelist.  If you move the
-mixes around, you can write out the new note list via <em class="noem" id="withmixedsoundtonotelist">with-mixed-sound-&gt;notelist</em>.
+mixes around, you can write out the new note list via with-mixed-sound-&gt;notelist.
 In multichannel files, all the channels associated with a note are sync'd together, so if you drag one,
 the others follow.  Also, if you click a mix tag, the corresponding note in the notelist is displayed
 in the minibuffer.
@@ -12877,7 +12877,7 @@ adds a mark at the start of each note.
 
 <div class="innerheader">clm-load</div>
 
-<p id="clmload">clm-load provides a slightly different way to load a notelist.  Its first argument is a filename, assumed to
+<p>clm-load provides a slightly different way to load a notelist.  Its first argument is a filename, assumed to
 be a text file containing notes (equivalent to the body of with-sound). The rest of the arguments to clm-load are the usual with-sound arguments, if any.
 For example, if we have a file named clm-load-test.clm with these contents:
 </p>

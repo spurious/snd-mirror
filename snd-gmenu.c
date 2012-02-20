@@ -1097,7 +1097,7 @@ void post_selection_popup_menu(void *e)
       add_menu_item(selection_popup_menu, "Play",           NULL, (GCallback)edit_play_callback);
       add_menu_item(selection_popup_menu, "Play looping",   NULL, (GCallback)popup_loop_play_callback);
       add_menu_item(selection_popup_menu, "Crop",           NULL, (GCallback)popup_crop_callback);
-      add_menu_item(selection_popup_menu, "Unselect",       NULL, (GCallback)edit_unselect_callback);
+      add_menu_item(selection_popup_menu, "Unselect all",   NULL, (GCallback)edit_unselect_callback);
       add_menu_item(selection_popup_menu, "Copy -> new",    NULL, (GCallback)popup_copy_to_new_callback);
       add_menu_item(selection_popup_menu, "-> 0.0",         NULL, (GCallback)popup_zero_selection_callback);
       add_menu_item(selection_popup_menu, "-> 1.0",         NULL, (GCallback)popup_normalize_selection_callback);

@@ -670,16 +670,6 @@ GtkWidget *make_mix_dialog(void)
       gtk_window_resize(GTK_WINDOW(mix_dialog), 560, 280);
       gtk_widget_realize(mix_dialog);
       
-      dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(dismiss_button, "dialog_button");
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), dismiss_button, false, true, 10);
-      SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
-#if HAVE_GTK_3
-      add_highlight_button_style(dismiss_button);
-#endif
-      gtk_widget_show(dismiss_button);
-      set_stock_button_label(dismiss_button, I_GO_AWAY);
-
       apply_button = sg_button_new_from_stock_with_label("Apply Env", GTK_STOCK_APPLY);
       gtk_widget_set_name(apply_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), apply_button, false, true, 10);
@@ -697,6 +687,16 @@ GtkWidget *make_mix_dialog(void)
       add_highlight_button_style(copy_button);
 #endif
       gtk_widget_show(copy_button);
+
+      dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
+      gtk_widget_set_name(dismiss_button, "dialog_button");
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), dismiss_button, false, true, 10);
+      SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
+#if HAVE_GTK_3
+      add_highlight_button_style(dismiss_button);
+#endif
+      gtk_widget_show(dismiss_button);
+      set_stock_button_label(dismiss_button, I_GO_AWAY);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "dialog_button");

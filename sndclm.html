@@ -3932,8 +3932,6 @@ another kernel set: binomial coeffs G&R 1.320 etc, not different enough
 </td>
 </tr>
 
-<!--  <area shape=rect coords="0,421,300,500" href="#sin2n" alt="sin2n"> -->
-
 <tr><td colspan=2 class="sumtitle">Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518, 8.516, 8.531</td></tr>
 
 <tr><td class="hightop">
@@ -3943,7 +3941,6 @@ another kernel set: binomial coeffs G&R 1.320 etc, not different enough
     <area shape=rect coords="0,31,300,60" href="#rxysin" alt="rxysin">
     <area shape=rect coords="0,61,300,100" href="#k2sin" alt="k2sin">
     <area shape=rect coords="0,101,300,140" href="#eoddcos" alt="eoddcos">
-    <area shape=rect coords="0,141,300,180" href="#k32sin" alt="k32sin">
 </map>
 </td>
 <td class="hightop"><img class="noborder" src="pix/sceq21.png" alt="more sums" usemap="#J2">
@@ -7419,7 +7416,6 @@ sound data input and output.
 <tr><td class="inner"><em class=def id="frametosample">frame-&gt;sample</em><code> mf frame</code></td><td>pass frame through mf (a frame or mixer), return sample</td></tr>
 </table>
 
-<em class="noem" id="framemuschannels"></em>
 <table class="method">
 <tr><td colspan=2 class="methodtitle">frame and mixer methods</td></tr>
 <tr><td class="inner"><em class=gen>mus-channels</em></td><td class="inner">number of channels accommodated</td></tr>
@@ -8948,7 +8944,7 @@ think there would be any difference, even taking FM into account.
 <div class="separator"></div>
 
 <pre class="indented">
-<em class=emdef id="make-ncos2">make-ncos2</em> (frequency 0.0) (n 1)
+<em class=emdef>make-ncos2</em> (frequency 0.0) (n 1)
 <em class=emdef id="ncos2">ncos2</em> gen (fm 0.0)
 <em class=def id="ncos2?">ncos2?</em> gen
 </pre>
@@ -8962,8 +8958,8 @@ think there would be any difference, even taking FM into account.
 <div class="separator"></div>
 
 <pre class="indented">
-<em class=emdef id="make-ncos4">make-ncos4</em> (frequency 0.0) (n 1)
-<em class=emdef id="ncos4">ncos4</em> gen (fm 0.0)
+<em class=emdef>make-ncos4</em> (frequency 0.0) (n 1)
+<em class=emdef>ncos4</em> gen (fm 0.0)
 <em class=def id="ncos4?">ncos4?</em> gen
 </pre>
 
@@ -8978,8 +8974,8 @@ think there would be any difference, even taking FM into account.
 
 
 <pre class="indented">
-<em class=emdef id="make-npcos">make-npcos</em> (frequency 0.0) (n 1)
-<em class=emdef id="npcos">npcos</em> gen (fm 0.0)
+<em class=emdef>make-npcos</em> (frequency 0.0) (n 1)
+<em class=emdef>npcos</em> gen (fm 0.0)
 <em class=def id="npcos?">npcos?</em> gen
 </pre>
 
@@ -10075,7 +10071,7 @@ Here is an example that produces abs(oscil):
 </p>
 
 <pre class="indented">
-(defgenerator (abssin
+(defgenerator (<em class="noem" id="abssin">abssin</em>
 	       :make-wrapper (lambda (g)
 			       (set! (abssin-osc g) (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> (abssin-frequency g)))
 			       g)	       
@@ -10486,7 +10482,7 @@ The upper sidebands may foldover (alias); if it's a problem, low-pass filter the
 <em class=def id="correlate">correlate</em> data1 data2
 </pre>
 
-<p>mus-fft, spectrum, and convolution are the standard functions used everywhere.
+<p id="musfft">mus-fft, spectrum, and convolution are the standard functions used everywhere.
 fft is the Fourier transform, convolution convolves its arguments, and spectrum
 returns '(magnitude (rectangular-&gt;polar (fft))).  The results are in dB (if "norm-type" is 0),
 or linear and normalized to 1.0 ("norm-type" = 1), or linear unnormalized.

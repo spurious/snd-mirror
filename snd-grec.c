@@ -309,8 +309,8 @@ widget_t record_file(void)
 #endif
       gtk_widget_set_name(record_button, "dialog_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(recorder)), quit_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(recorder)), record_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(recorder)), quit_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(recorder)), help_button, true, true, 10);
 
 #if HAVE_GTK_3
