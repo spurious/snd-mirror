@@ -4380,7 +4380,7 @@ involve circular structures.  Will equal? be our friend?
     &gt; (= 2 2.0)
     #t
     &gt; (let ((x +nan.0)) (equal? x x))
-    #t
+    #t                ; s7 returns #f here
     &gt; (let ((x +nan.0)) (= x x))
     #f
 </pre>

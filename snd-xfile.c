@@ -36,7 +36,8 @@
  *     removed help history
  *     removed enved print button
  *     changed several menu labels
- *     removed snd-g|xrec.c
+ *     removed snd-g|xrec.c, recorder-dialog, etc
+ * 21: changed gcolor layout but how to get more of colormap titles displayed?
  */
 
 /* various file-related dialogs:

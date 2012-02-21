@@ -14,7 +14,7 @@ Snd 12.9
     translated the rest of the html files to html5
   
   snd: removed the recorder, changed various menu names, moved
-       dialog buttons around.
+       dialog buttons around at random.
 
 checked: clang 1.7, gmp 5.0.3, gtk 3.3.14
 

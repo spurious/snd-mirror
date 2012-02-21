@@ -871,8 +871,8 @@ GtkWidget *make_color_orientation_dialog(bool managed)
   if (!ccd_dialog)
     {
       GtkWidget *light_label, *dark_label, *help_button, *dismiss_button, *reset_button;
-      GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label;
-      GtkWidget *color_frame, *color_label, *mainbox, *colorbox;
+      GtkWidget *scale_box, *cutoff_box, *cutoff_label;
+      GtkWidget *color_frame, *color_label, *mainbox, *colorbox, *map_box;
       GtkWidget *shbox;
 
       GtkWidget *ax_box, *ay_box, *az_box, *sx_box, *sy_box, *sz_box, *hop_box;
@@ -925,33 +925,65 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       color_frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(mainbox), color_frame, false, false, 10);
       gtk_frame_set_shadow_type(GTK_FRAME(color_frame), GTK_SHADOW_ETCHED_IN);
+      widget_set_vexpand(color_frame, true);
       gtk_widget_show(color_frame);
 
       colorbox = gtk_vbox_new(false, 2);
       gtk_container_add(GTK_CONTAINER(color_frame), colorbox);
+      widget_set_vexpand(colorbox, true);
       gtk_widget_show(colorbox);
 
       color_label = snd_gtk_highlight_label_new("colors");
       gtk_box_pack_start(GTK_BOX(colorbox), color_label, false, false, 0);
       gtk_widget_show(color_label);
 
-      outer_table = gtk_table_new(3, 5, true); /* this seems backwards! */
-      gtk_box_pack_end(GTK_BOX(colorbox), outer_table, false, false, 4);
 
-#if HAVE_GTK_3
-      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 12);
-#else
-      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 8);
-#endif
-      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
+      /* invert colormap
+       * light -> dark
+       * cutoff
+       */
 
-      gtk_widget_show(outer_table);
+      map_box = gtk_hbox_new(false, 4);
+      widget_set_vexpand(map_box, true);
+      gtk_box_pack_start(GTK_BOX(colorbox), map_box, true, true, 8);
+      gtk_widget_show(map_box);
+      
+      {
+	char **names;
+	GtkWidget *frame;
+	int i, size;
+	
+	frame = gtk_frame_new(NULL);
+	gtk_container_set_border_width(GTK_CONTAINER(frame), 0);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+	widget_modify_bg(frame, GTK_STATE_NORMAL, ss->zoom_color);
+	gtk_box_pack_start(GTK_BOX(map_box), frame, true, true, 0);
+	widget_set_hexpand(frame, true);
+	widget_set_vexpand(frame, true);
+	gtk_widget_show(frame);
+	
+	size = num_colormaps();
+	names = (char **)calloc(size, sizeof(char *));
+	for (i = 0; i < size; i++) names[i] = colormap_name(i);
+	ccd_list = slist_new_with_title(S_colormap, frame, (const char**)names, size, CONTAINER_ADD);
+	ccd_list->select_callback = list_color_callback;
+	widget_set_vexpand(ccd_list->box, true);
+	free(names);
 
+	/* TODO: how to get more of this list displayed, and make it the
+	 *       widget that expands if the dialog is expanded?  Nothing works.
+	 */
+      }
+      
+      ccd_invert = gtk_check_button_new_with_label("invert");
+      SG_SIGNAL_CONNECT(ccd_invert, "toggled", invert_color_callback, NULL);
+      gtk_box_pack_start(GTK_BOX(map_box), ccd_invert, false, false, 12);
+      gtk_widget_show(ccd_invert);
+      set_toggle_button(ccd_invert, color_inverted(ss), false, NULL);
+
+      
       scale_box = gtk_vbox_new(false, 0);
-      gtk_table_attach(GTK_TABLE(outer_table), scale_box, 0, 3, 0, 1,
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		       10, 0);
+      gtk_box_pack_start(GTK_BOX(colorbox), scale_box, false, false, 10);
       gtk_widget_show(scale_box);
       
       ccd_scale_adj = (GtkAdjustment *)gtk_adjustment_new(50.0, 0.0, 101.0, 0.1, 1.0, 1.0);
@@ -966,7 +998,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       SG_SIGNAL_CONNECT(ccd_scale, "format-value", scale_int_format_callback, NULL);
       gtk_widget_show(ccd_scale);
 
-      shbox = gtk_hbox_new(false, 0);
+      shbox = gtk_hbox_new(false, 10);
       gtk_box_pack_start(GTK_BOX(scale_box), shbox, true, true, 0); 
       gtk_widget_show(shbox);
 
@@ -980,35 +1012,9 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_box_pack_end(GTK_BOX(shbox), dark_label, false, false, 0);
       gtk_widget_show(dark_label);
 
-      {
-	char **names;
-	GtkWidget *frame;
-	int i, size;
 
-	frame = gtk_frame_new(NULL);
-	gtk_container_set_border_width(GTK_CONTAINER(frame), 0);
-	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
-	widget_modify_bg(frame, GTK_STATE_NORMAL, ss->zoom_color);
-	gtk_table_attach(GTK_TABLE(outer_table), frame, 3, 5, 0, 3,
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		       4, 4);
-	widget_set_hexpand(frame, true);
-	gtk_widget_show(frame);
-
-	size = num_colormaps();
-	names = (char **)calloc(size, sizeof(char *));
-	for (i = 0; i < size; i++) names[i] = colormap_name(i);
-	ccd_list = slist_new_with_title(S_colormap, frame, (const char**)names, size, CONTAINER_ADD);
-	ccd_list->select_callback = list_color_callback;
-	free(names);
-      }
-
-      cutoff_box = gtk_hbox_new(false, 0);
-      gtk_table_attach(GTK_TABLE(outer_table), cutoff_box, 0, 3, 1, 2,
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		       0, 0);
+      cutoff_box = gtk_hbox_new(false, 10);
+      gtk_box_pack_end(GTK_BOX(colorbox), cutoff_box, false, false, 0);
       gtk_widget_show(cutoff_box);
 
       cutoff_label = gtk_label_new("data cutoff:");
@@ -1027,24 +1033,14 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(cutoff_box), ccd_cutoff, true, true, 0);
       gtk_widget_show(ccd_cutoff);
 
-      ccd_invert = gtk_check_button_new_with_label("invert");
-      SG_SIGNAL_CONNECT(ccd_invert, "toggled", invert_color_callback, NULL);
-
-      gtk_table_attach(GTK_TABLE(outer_table), ccd_invert, 0, 3, 2, 3,
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		       0, 0);
-
-      gtk_widget_show(ccd_invert);
-      set_toggle_button(ccd_invert, color_inverted(ss), false, NULL);
-
       set_dialog_widget(COLOR_ORIENTATION_DIALOG, ccd_dialog);
       if (color_map(ss) != BLACK_AND_WHITE_COLORMAP) slist_select(ccd_list, color_map(ss));
+
 
       /* orientation section */
 
       orient_frame = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(mainbox), orient_frame, false, false, 10);
+      gtk_box_pack_start(GTK_BOX(mainbox), orient_frame, false, false, 0);
       gtk_frame_set_shadow_type(GTK_FRAME(orient_frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(orient_frame);
 
@@ -1053,7 +1049,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_widget_show(orientbox);
 
       orient_label = snd_gtk_highlight_label_new("orientation");
-      gtk_box_pack_start(GTK_BOX(orientbox), orient_label, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), orient_label, false, false, 10);
       gtk_widget_show(orient_label);
 
 
