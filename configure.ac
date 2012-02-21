@@ -992,6 +992,8 @@ else
         AC_CHECK_LIB(m, gtk_font_chooser_get_font_size, [AC_DEFINE(HAVE_GTK_FONT_CHOOSER_GET_FONT_SIZE)], ,$GTK_LIBS)
 	# for 3.3.6
         AC_CHECK_LIB(m, gtk_application_window_new, [AC_DEFINE(HAVE_GTK_APPLICATION_WINDOW_NEW)], ,$GTK_LIBS)
+	# for 3.3.16
+        AC_CHECK_LIB(m, gtk_color_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
 
 	AC_CHECK_LIB(cairo, cairo_glyph_allocate, [AC_DEFINE(HAVE_CAIRO_GLYPH_ALLOCATE)], ,$GTK_LIBS)
 	AC_CHECK_LIB(cairo, cairo_region_xor, [AC_DEFINE(HAVE_CAIRO_REGION_XOR)], ,$GTK_LIBS)

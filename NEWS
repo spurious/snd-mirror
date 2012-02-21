@@ -16,7 +16,7 @@ Snd 12.9
   snd: removed the recorder, changed various menu names, moved
        dialog buttons around at random.
 
-checked: clang 1.7, gmp 5.0.3, gtk 3.3.14
+checked: clang 1.7, gmp 5.0.3, gtk 3.3.14|16
 
 Thanks!: Mike Scholz
 
