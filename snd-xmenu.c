@@ -327,6 +327,13 @@ static void view_focus_left_callback(Widget w, XtPointer info, XtPointer context
 static void view_focus_middle_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
 static void view_focus_active_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
 
+static void view_grid_callback(Widget w, XtPointer info, XtPointer context)
+{
+  if (show_grid(ss) == NO_GRID)
+    set_show_grid(WITH_GRID);
+  else set_show_grid(NO_GRID);
+}
+
 
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
@@ -768,6 +775,10 @@ Widget add_menu(void)
   XtAddCallback(view_focus_active_menu, XmNactivateCallback, view_focus_active_callback, NULL);  
 
 
+  view_grid_menu = XtCreateManagedWidget("With grid", xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_grid_menu, XmNactivateCallback, view_grid_callback, NULL);
+
+
   /* OPTIONS MENU */
   XtSetArg(main_args[main_n], XmNuserData, (XtPointer)3);
   options_menu = XmCreatePulldownMenu(main_menu, (char *)"Option", main_args, main_n + 1);
@@ -931,17 +942,6 @@ static void popup_normalize_callback(Widget w, XtPointer info, XtPointer context
 }
 
 
-static void popup_apply_controls_callback(Widget w, XtPointer info, XtPointer context) 
-{
-  menu_apply_controls(any_selected_sound());
-}
-
-
-static void popup_reset_controls_callback(Widget w, XtPointer info, XtPointer context) 
-{
-  menu_reset_controls(any_selected_sound());
-}
-
 static void popup_reverse_callback(Widget w, XtPointer info, XtPointer context) 
 {
   reverse_sound(current_channel(), OVER_SOUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
@@ -972,8 +972,6 @@ void post_basic_popup_menu(void *e)
       add_menu_item(basic_popup_menu, "Stop!",          stop_everything_callback);
       add_menu_item(basic_popup_menu, "-> 1.0",         popup_normalize_callback);
       add_menu_item(basic_popup_menu, "Reverse",        popup_reverse_callback);
-      add_menu_item(basic_popup_menu, "Apply controls", popup_apply_controls_callback);
-      add_menu_item(basic_popup_menu, "Reset controls", popup_reset_controls_callback);
     }
 
   XmMenuPosition(basic_popup_menu, event);
@@ -1093,13 +1091,6 @@ static void popup_selection_info_callback(Widget w, XtPointer info, XtPointer co
   report_in_minibuffer(any_selected_sound(), "selection max: %f", selection_max);
 }
 
-static void popup_selection_apply_controls_callback(Widget w, XtPointer info, XtPointer context)
-{
-  ss->apply_choice = APPLY_TO_SELECTION;
-  menu_apply_controls(any_selected_sound());
-}
-
-
 static void popup_loop_play_callback(Widget w, XtPointer info, XtPointer context) 
 {
   if (ss->selection_play_stop)
@@ -1137,7 +1128,7 @@ void post_selection_popup_menu(void *e)
       add_menu_item(selection_popup_menu, "Play",           edit_play_callback);
       add_menu_item(selection_popup_menu, "Play looping",   popup_loop_play_callback);
       add_menu_item(selection_popup_menu, "Crop",           popup_crop_callback);
-      add_menu_item(selection_popup_menu, "Unselect",       edit_unselect_callback);
+      add_menu_item(selection_popup_menu, "Unselect all",   edit_unselect_callback);
       add_menu_item(selection_popup_menu, "-> 0.0",         popup_zero_selection_callback);
       add_menu_item(selection_popup_menu, "-> 1.0",         popup_normalize_selection_callback);
       add_menu_item(selection_popup_menu, "Copy -> new",    popup_copy_to_new_callback);
@@ -1145,7 +1136,6 @@ void post_selection_popup_menu(void *e)
       add_menu_item(selection_popup_menu, "Mix",            edit_mix_callback);
       add_menu_item(selection_popup_menu, "Mark",           popup_mark_selection_callback);
       add_menu_item(selection_popup_menu, "Reverse",        popup_reverse_selection_callback);
-      add_menu_item(selection_popup_menu, "Apply controls", popup_selection_apply_controls_callback);
       add_menu_item(selection_popup_menu, "Info",           popup_selection_info_callback);
     }
 

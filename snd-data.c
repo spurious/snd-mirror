@@ -952,7 +952,7 @@ sync_info *free_sync_info(sync_info *si)
 }
 
 
-static int syncd_channels(int sync)
+int syncd_channels(int sync)
 {
   if (sync != 0)
     {

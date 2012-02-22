@@ -1,6 +1,6 @@
 Snd change log
 
-  21-Feb:   removed the recorder (snd-g|xrec.c)
+  21-Feb:   removed the recorder (snd-g|xrec.c).
   10-Feb:   removed snd1.html, snd-contents.html.
   2-Feb:    Snd 12.8.
   27-Jan:   removed snd10.scm.

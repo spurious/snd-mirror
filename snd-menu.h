@@ -33,6 +33,7 @@ enum {m_menu,
           v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu, v_bare_x_axis_menu,
           v_focus_style_menu, v_focus_cascade_menu,
             v_focus_right_menu, v_focus_left_menu, v_focus_middle_menu, v_focus_active_menu,
+          v_grid_menu,
         v_sep2_menu,
       NUM_MENU_WIDGETS
 };
@@ -156,6 +157,7 @@ enum {m_menu,
 #define view_focus_left_menu (ss->mw[v_focus_left_menu])
 #define view_focus_middle_menu (ss->mw[v_focus_middle_menu])
 #define view_focus_active_menu (ss->mw[v_focus_active_menu])
+#define view_grid_menu (ss->mw[v_grid_menu])
 
 void edit_menu_update(void);
 void view_menu_update(void);

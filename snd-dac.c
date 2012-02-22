@@ -879,7 +879,7 @@ void stop_playing_region(int n, play_stop_t reason)
 }
 
 
-static bool playing(void)
+bool something_is_playing(void)
 {
   int i;
   if (play_list)
@@ -3323,7 +3323,7 @@ static XEN g_playing(void)
 {
   #define H_playing "(" S_playing "): " PROC_TRUE " if sound output is in progress.  If players are waiting to start, \
 setting this to " PROC_TRUE " starts them; setting it to " PROC_FALSE " stops output."
-  return(C_TO_XEN_BOOLEAN(playing()));
+  return(C_TO_XEN_BOOLEAN(something_is_playing()));
 }
 
 

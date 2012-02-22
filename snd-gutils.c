@@ -976,7 +976,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 
 
 #if HAVE_GTK_3
-static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider, *tb_provider;
+static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider, *tb_provider, *mu_provider;
 static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider;
 
 void add_white_button_style(GtkWidget *w)
@@ -1015,6 +1015,13 @@ void add_toolbar_style(GtkWidget *w)
   GtkStyleContext *c;
   c = gtk_widget_get_style_context(w);
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(tb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
+void add_menu_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(mu_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 void add_paned_style(GtkWidget *w)
@@ -1060,6 +1067,10 @@ void add_blue_scale_style(GtkWidget *w)
 }
 
 void add_toolbar_style(GtkWidget *w)
+{
+}
+
+void add_menu_style(GtkWidget *w)
 {
 }
 
@@ -1447,9 +1458,22 @@ void init_gtk(void)
 
   tb_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(tb_provider),
-    "GtkToolbar, GtkMenuBar, GtkMenu, GtkToolButton, GtkToolItem { \n"
-    "  border-width: 0;\n"
+    "GtkToolbar, GtkToolButton, GtkToolItem { \n"
+    "  border-color: #fffff0;\n"				  
+    /* "  background-color: #fffff0;\n" */
+    "  padding-left: 8px;\n"
+    "  padding-bottom: 4px;\n"
+    "  background-image: -gtk-gradient (linear, left top, right bottom, from(rgb(255, 255, 240)), to(rgb(255, 255, 255)));\n"
+    "}\n",
+    -1, NULL);
+
+  mu_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(mu_provider),
+    "GtkMenuBar, GtkMenu, GtkMenuItem { \n"
+    "  border-width: 4px;\n"
+    "  border-color: #fffff0;\n"				  
     "  background-color: #fffff0;\n"
+    "  padding-bottom: 4px;\n"
     "}\n",
     -1, NULL);
 

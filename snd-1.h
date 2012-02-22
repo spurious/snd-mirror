@@ -964,6 +964,7 @@ void for_each_separate_chan(void (*func)(chan_info *ncp));
 bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *ncp));
 bool snd_ok(snd_info *sp);
 int active_channels(virtual_channels_t count_virtual_channels);
+int syncd_channels(int sync);
 int find_free_sound_slot(int desired_chans);
 int find_free_sound_slot_for_channel_display(void);
 snd_info *selected_sound(void);
@@ -1337,6 +1338,7 @@ void play_channels(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *u
 		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos);
 void play_selection(play_process_t background);
 void loop_play_selection(void);
+bool something_is_playing(void);
 bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix, bool start_playing);
 void toggle_dac_pausing(void); /* snd-dac.c */
 bool play_in_progress(void);

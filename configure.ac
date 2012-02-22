@@ -40,7 +40,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
-#   --enable-snd-debug    include Snd internal debugging stuff
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)

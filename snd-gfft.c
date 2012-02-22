@@ -945,6 +945,8 @@ GtkWidget *make_transform_dialog(bool managed)
 	GtkAdjustment *pk_vals, *db_vals, *lf_vals;
 	GtkWidget *vb, *sep1, *sep2;
 
+	#define DISPLAY_MARGIN 2
+
 	vbb = gtk_vbox_new(false, 6);
 	gtk_container_add(GTK_CONTAINER(display_frame), vbb);
 	gtk_widget_show(vbb);
@@ -961,47 +963,47 @@ GtkWidget *make_transform_dialog(bool managed)
 	gtk_container_add(GTK_CONTAINER(hb), buttons);
 	
 	normal_fft_button = gtk_radio_button_new_with_label(NULL, "single transform");
-	gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, false, false, 2);
+	gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(normal_fft_button);
 	SG_SIGNAL_CONNECT(normal_fft_button, "clicked", normal_fft_callback, NULL);
 	
 	sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "sonogram");
-	gtk_box_pack_start(GTK_BOX(buttons), sono_button, false, false, 2);
+	gtk_box_pack_start(GTK_BOX(buttons), sono_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(sono_button);
 	SG_SIGNAL_CONNECT(sono_button, "clicked", sonogram_callback, NULL);
 	
 	spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "spectrogram");
-	gtk_box_pack_start(GTK_BOX(buttons), spectro_button, false, false, 2);
+	gtk_box_pack_start(GTK_BOX(buttons), spectro_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(spectro_button);
 	SG_SIGNAL_CONNECT(spectro_button, "clicked", spectrogram_callback, NULL);
 	
 	peaks_button = gtk_check_button_new_with_label("peaks");
-	gtk_box_pack_start(GTK_BOX(buttons), peaks_button, false, false, 2);
+	gtk_box_pack_start(GTK_BOX(buttons), peaks_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(peaks_button);
 	SG_SIGNAL_CONNECT(peaks_button, "toggled", peaks_callback, NULL);
 	
 	db_button = gtk_check_button_new_with_label("dB");
-	gtk_box_pack_start(GTK_BOX(buttons), db_button, false, false, 2);
+	gtk_box_pack_start(GTK_BOX(buttons), db_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(db_button);
 	SG_SIGNAL_CONNECT(db_button, "toggled", db_callback, NULL);
 	
 	logfreq_button = gtk_check_button_new_with_label("log freq");
-	gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, false, false, 2);
+	gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(logfreq_button);
 	SG_SIGNAL_CONNECT(logfreq_button, "toggled", logfreq_callback, NULL);
 	
 	normalize_button = gtk_check_button_new_with_label("normalize");
-	gtk_box_pack_start(GTK_BOX(buttons), normalize_button, false, false, 2);
+	gtk_box_pack_start(GTK_BOX(buttons), normalize_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(normalize_button);
 	SG_SIGNAL_CONNECT(normalize_button, "toggled", normalize_callback, NULL);
 	
 	selection_button = gtk_check_button_new_with_label("selection");
-	gtk_box_pack_start(GTK_BOX(buttons), selection_button, false, false, 2);
+	gtk_box_pack_start(GTK_BOX(buttons), selection_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(selection_button);
 	SG_SIGNAL_CONNECT(selection_button, "toggled", selection_callback, NULL);
 
 	phases_button = gtk_check_button_new_with_label("with phases");
-	gtk_box_pack_end(GTK_BOX(buttons), phases_button, false, false, 2);
+	gtk_box_pack_end(GTK_BOX(buttons), phases_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(phases_button);
 	SG_SIGNAL_CONNECT(phases_button, "toggled", phases_callback, NULL);
 	
@@ -1094,7 +1096,7 @@ GtkWidget *make_transform_dialog(bool managed)
 	gtk_widget_show(alpha_box);
 	
 	alpha_label = gtk_label_new("alpha: ");
-	gtk_box_pack_start(GTK_BOX(alpha_box), alpha_label, false, false, 1);
+	gtk_box_pack_start(GTK_BOX(alpha_box), alpha_label, false, false, 8);
 	gtk_widget_show(alpha_label);      
 	
 	alpha_adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -1116,7 +1118,7 @@ GtkWidget *make_transform_dialog(bool managed)
 	
 
 	beta_label = gtk_label_new("beta:  ");
-	gtk_box_pack_start(GTK_BOX(beta_box), beta_label, false, false, 1);
+	gtk_box_pack_start(GTK_BOX(beta_box), beta_label, false, false, 8);
 	gtk_widget_show(beta_label);      
 	
 	beta_adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -1156,7 +1158,7 @@ GtkWidget *make_transform_dialog(bool managed)
       gtk_widget_show(start_box);
 
       start_label = gtk_label_new("start: ");
-      gtk_box_pack_start(GTK_BOX(start_box), start_label, false, false, 1);
+      gtk_box_pack_start(GTK_BOX(start_box), start_label, false, false, 8);
       gtk_widget_show(start_label);      
 
       spectrum_start_adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -1177,7 +1179,7 @@ GtkWidget *make_transform_dialog(bool managed)
       gtk_widget_show(end_box);
 
       end_label = gtk_label_new("end:  ");
-      gtk_box_pack_start(GTK_BOX(end_box), end_label, false, false, 1);
+      gtk_box_pack_start(GTK_BOX(end_box), end_label, false, false, 8);
       gtk_widget_show(end_label);      
 
       spectrum_end_adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);

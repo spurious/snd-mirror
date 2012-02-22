@@ -293,6 +293,7 @@ color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
 #endif
 void add_highlight_button_style(GtkWidget *w);
 void add_toolbar_style(GtkWidget *w);
+void add_menu_style(GtkWidget *w);
 void add_paned_style(GtkWidget *w);
 void add_red_scale_style(GtkWidget *w);
 void add_green_scale_style(GtkWidget *w);

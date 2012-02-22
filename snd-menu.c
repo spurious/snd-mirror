@@ -127,6 +127,9 @@ void view_menu_update(void)
   set_sensitive(view_focus_right_menu,  zoom_focus_style(ss) != ZOOM_FOCUS_RIGHT);
   set_sensitive(view_focus_middle_menu, zoom_focus_style(ss) != ZOOM_FOCUS_MIDDLE);
   set_sensitive(view_focus_active_menu, zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE);
+
+  /* grid menu label */
+  set_menu_label(view_grid_menu, (show_grid(ss) == WITH_GRID) ? "Without grid" : "With grid");
 }
 
 

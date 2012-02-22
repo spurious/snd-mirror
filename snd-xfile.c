@@ -10,23 +10,25 @@
  *   gtk options/controls has trough color?
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
  * the minibuffer is useless -- what to do with it?  maybe a per-channel toolbar?
+ *   at least turn it into a straight (non-editable) label
  *   or try to recognize what user wants -- search in sound, help etc?
  * in gtk I think I've turned off the menu icons, yet they sometimes appear in the dialogs?
  * "global find" is jargon (used as a built-in xref title in snd-help)
  *
- * can tooltip be context dependent?  (x -> "close selected sound" but should be "close oboe.snd" or whatever).
- *   this should happen when the tooltip is about to be displayed
- *   if toolbar entry is a no-op, can that be indicated (undo, but no edits, cut but no selection etc)
- *   other parts of the interface need tooltips, I suppose (the "x" in the sound pane for example)
- *   in gtk, I think so -- add_tooltip
- *   in motif, probably need to remove the old handler and add a new one (snd-xmenu add_tooltip)
- *   but how to do either of these things just before activation?
+ * finish the query-tooltip callbacks in snd-gmenu
+ * other parts of the interface need tooltips, I suppose (the "x" in the sound pane for example)
  *
- * add grid option to the view menu -- where would the density scale go?
- *   get rid of the previous-files/dirs lists
+ * get rid of the previous-files/dirs lists
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * edit env is a mess and is probably never used anyway -- in any case get rid of pointless buttons!
  * some of these dialogs look too small -- holdover from distant past?
+ *   fixup the margins at least (especially gfft)
+ * what about tooltips in the listener, or some way to show help (apropos) if hovering
+ *   also if error displayed, hover->env printout etc
+ *   and hover in graph -> show sample value?
+ *
+ * if built without-audio, omit those tool icons and menu items!
+ * gtk2 tooltips look much better because the bgcolor is correct
  * 
  * 19: gxfind button order, but one is "forward|back" and the other is "next|previous"
  *       firefox uses |find: |entry| <--previous | -->next | highlight all, others use "search:..."
@@ -38,6 +40,9 @@
  *     changed several menu labels
  *     removed snd-g|xrec.c, recorder-dialog, etc
  * 21: changed gcolor layout but how to get more of colormap titles displayed?
+ *     gtk3 menu/toolbar fixups and gtk 3.3.16 in xg
+ *     added view grid menu item, removed control-related popup menu items
+ * 22: added main menu context-sensitive tooltips
  */
 
 /* various file-related dialogs:
