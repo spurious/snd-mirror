@@ -780,4 +780,3 @@ Reverb-feedback sets the scaler on the feedback.
 			       (set! (with-tracking-cursor) val))))
 
 (define (recorder-dialog) "recorder-dialog is obsolete")
-

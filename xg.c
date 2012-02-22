@@ -321,7 +321,6 @@ XM_TYPE_PTR_2(gboolean_, gboolean*)
 XM_TYPE_PTR(GdkEvent_, GdkEvent*)
 XM_TYPE_PTR_2(GdkEventAny_, GdkEventAny*)
 XM_TYPE_PTR_1(gdouble_, gdouble*)
-XM_TYPE_PTR_1(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
 XM_TYPE_PTR_1(GdkEventMotion_, GdkEventMotion*)
 XM_TYPE_PTR(GtkAccelKey_, GtkAccelKey*)
 XM_TYPE_PTR(GClosure_, GClosure*)
@@ -899,8 +898,7 @@ XM_TYPE_PTR_1(GtkApplicationWindow_, GtkApplicationWindow*)
 #endif
 
 #if HAVE_GTK_COLOR_CHOOSER_DIALOG_NEW
-XM_TYPE(gdoubl, gdoubl)
-XM_TYPE_PTR(GtkColorChooser_, GtkColorChooser*)
+XM_TYPE_PTR_1(GtkColorChooser_, GtkColorChooser*)
 #endif
 
 #if (!HAVE_GTK_3)
@@ -30559,30 +30557,30 @@ static XEN gxg_gdk_keymap_get_modifier_state(XEN keymap)
 
 static XEN gxg_gtk_hsv_to_rgb(XEN h, XEN s, XEN v, XEN ignore_r, XEN ignore_g, XEN ignore_b)
 {
-  #define H_gtk_hsv_to_rgb "void gtk_hsv_to_rgb(gdouble h, gdouble s, gdouble v, gdouble [r], gdouble [g], \
-gdouble [b])"
-  gdoubl ref_r;
-  gdoubl ref_g;
-  gdoubl ref_b;
+  #define H_gtk_hsv_to_rgb "void gtk_hsv_to_rgb(gdouble h, gdouble s, gdouble v, gdouble* [r], gdouble* [g], \
+gdouble* [b])"
+  gdouble ref_r;
+  gdouble ref_g;
+  gdouble ref_b;
   XEN_ASSERT_TYPE(XEN_gdouble_P(h), h, 1, "gtk_hsv_to_rgb", "gdouble");
   XEN_ASSERT_TYPE(XEN_gdouble_P(s), s, 2, "gtk_hsv_to_rgb", "gdouble");
   XEN_ASSERT_TYPE(XEN_gdouble_P(v), v, 3, "gtk_hsv_to_rgb", "gdouble");
   gtk_hsv_to_rgb(XEN_TO_C_gdouble(h), XEN_TO_C_gdouble(s), XEN_TO_C_gdouble(v), &ref_r, &ref_g, &ref_b);
-  return(XEN_LIST_3(C_TO_XEN_gdoubl(ref_r), C_TO_XEN_gdoubl(ref_g), C_TO_XEN_gdoubl(ref_b)));
+  return(XEN_LIST_3(C_TO_XEN_gdouble(ref_r), C_TO_XEN_gdouble(ref_g), C_TO_XEN_gdouble(ref_b)));
 }
 
 static XEN gxg_gtk_rgb_to_hsv(XEN r, XEN g, XEN b, XEN ignore_h, XEN ignore_s, XEN ignore_v)
 {
-  #define H_gtk_rgb_to_hsv "void gtk_rgb_to_hsv(gdouble r, gdouble g, gdouble b, gdouble [h], gdouble [s], \
-gdouble [v])"
-  gdoubl ref_h;
-  gdoubl ref_s;
-  gdoubl ref_v;
+  #define H_gtk_rgb_to_hsv "void gtk_rgb_to_hsv(gdouble r, gdouble g, gdouble b, gdouble* [h], gdouble* [s], \
+gdouble* [v])"
+  gdouble ref_h;
+  gdouble ref_s;
+  gdouble ref_v;
   XEN_ASSERT_TYPE(XEN_gdouble_P(r), r, 1, "gtk_rgb_to_hsv", "gdouble");
   XEN_ASSERT_TYPE(XEN_gdouble_P(g), g, 2, "gtk_rgb_to_hsv", "gdouble");
   XEN_ASSERT_TYPE(XEN_gdouble_P(b), b, 3, "gtk_rgb_to_hsv", "gdouble");
   gtk_rgb_to_hsv(XEN_TO_C_gdouble(r), XEN_TO_C_gdouble(g), XEN_TO_C_gdouble(b), &ref_h, &ref_s, &ref_v);
-  return(XEN_LIST_3(C_TO_XEN_gdoubl(ref_h), C_TO_XEN_gdoubl(ref_s), C_TO_XEN_gdoubl(ref_v)));
+  return(XEN_LIST_3(C_TO_XEN_gdouble(ref_h), C_TO_XEN_gdouble(ref_s), C_TO_XEN_gdouble(ref_v)));
 }
 
 static XEN gxg_gtk_color_chooser_get_rgba(XEN chooser, XEN color)
@@ -49031,7 +49029,7 @@ void Init_libxg(void)
       #else
         XEN_YES_WE_HAVE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Feb-12"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Feb-12"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

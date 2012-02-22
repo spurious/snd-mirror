@@ -108,6 +108,7 @@
 #undef MUS_JACK_VERSION
 #undef MUS_PULSEAUDIO
 #undef MUS_PORTAUDIO
+#undef WITH_AUDIO
 
 #undef HAVE_FFTW3
 #undef WITH_GMP

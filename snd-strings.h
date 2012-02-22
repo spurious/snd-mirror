@@ -340,7 +340,6 @@
 #define S_maxamp_position               "maxamp-position"
 #define S_menu_widgets                  "menu-widgets"
 #define S_min_dB                        "min-dB"
-#define S_minibuffer_history_length     "minibuffer-history-length"
 #define S_mix                           "mix"
 #define S_mix_amp                       "mix-amp"
 #define S_mix_amp_env                   "mix-amp-env"

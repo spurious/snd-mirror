@@ -670,16 +670,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       clear_minibuffer(sp);
       return;
     }
-  if ((with_meta) && ((keysym == snd_K_p) || (keysym == snd_K_P) || (keysym == snd_K_n) || (keysym == snd_K_N)))
-    {
-      restore_mini_string(sp, (keysym == snd_K_p) || (keysym == snd_K_P));
-      goto_minibuffer(sp);
-      return;
-    }
 
   str = get_minibuffer_string(sp);
-  if ((str) && (*str))
-    remember_mini_string(sp, str);
   /* sp->minibuffer_on = MINI_REPORT; */
 
 #if HAVE_EXTENSION_LANGUAGE

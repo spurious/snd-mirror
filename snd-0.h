@@ -534,10 +534,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define in_set_grid_density(a) ss->Grid_Density = a
 #define DEFAULT_GRID_DENSITY 1.0
 
-#define minibuffer_history_length(ss) ss->Minibuffer_History_Length
-#define set_minibuffer_history_length(a) ss->Minibuffer_History_Length = a
-#define DEFAULT_MINIBUFFER_HISTORY_LENGTH 8
-
 #define transform_normalization(ss) ss->Transform_Normalization
 #define in_set_transform_normalization(a) ss->Transform_Normalization = a
 #define DEFAULT_TRANSFORM_NORMALIZATION NORMALIZE_BY_CHANNEL

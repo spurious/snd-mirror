@@ -404,7 +404,6 @@ static void save_options(FILE *fd)
   fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE, snd_local_time());
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sod(fd, S_transform_size, transform_size(ss));
-  if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd, S_minibuffer_history_length, minibuffer_history_length(ss));
   if (fft_window(ss) != DEFAULT_FFT_WINDOW) pss_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_xen_name(fft_window(ss))));
   if (transform_graph_type(ss) != DEFAULT_TRANSFORM_GRAPH_TYPE) pss_ss(fd, S_transform_graph_type, transform_graph_type_name(transform_graph_type(ss)));
   if (time_graph_type(ss) != DEFAULT_TIME_GRAPH_TYPE) pss_ss(fd, S_time_graph_type, time_graph_type_name(time_graph_type(ss)));
@@ -2043,18 +2042,12 @@ static XEN g_set_audio_input_device(XEN val)
 }
 
 
-static XEN g_minibuffer_history_length(void) {return(C_TO_XEN_INT(minibuffer_history_length(ss)));}
+static XEN g_minibuffer_history_length(void) {return(C_TO_XEN_INT(0));}
 
 static XEN g_set_minibuffer_history_length(XEN val) 
 {
-  #define H_minibuffer_history_length "(" S_minibuffer_history_length "): the minibuffer history length. \
-This pertains to the M-p and M-n commands."
-  int len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_minibuffer_history_length, "an integer");
-  len = XEN_TO_C_INT(val);
-  if (len > 0)
-    set_minibuffer_history_length(len);
-  return(C_TO_XEN_INT(minibuffer_history_length(ss)));
+  #define H_minibuffer_history_length "(minibuffer-history-length): this is a no-op."
+  return(C_TO_XEN_INT(0));
 }
 
 
@@ -2510,9 +2503,6 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_input_device, g_audio_input_device_w, H_audio_input_device,
 				   S_setB S_audio_input_device, g_set_audio_input_device_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_minibuffer_history_length, g_minibuffer_history_length_w, H_minibuffer_history_length,
-				   S_setB S_minibuffer_history_length, g_set_minibuffer_history_length_w,  0, 0, 1, 0);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_resize, g_auto_resize_w, H_auto_resize,
 				   S_setB S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0);
 
@@ -2590,5 +2580,10 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
   XEN_DEFINE_PROCEDURE(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
 #if (!HAVE_SCHEME)
   XEN_DEFINE_PROCEDURE(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);
+#endif
+
+#if (!SND_DISABLE_DEPRECATED)
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("minibuffer-history-length", g_minibuffer_history_length_w, H_minibuffer_history_length,
+				   "set-minibuffer-history-length", g_set_minibuffer_history_length_w,  0, 0, 1, 0);
 #endif
 }

@@ -227,7 +227,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Sync_Style =                  DEFAULT_SYNC_STYLE;
   ss->Listener_Prompt =             mus_strdup(DEFAULT_LISTENER_PROMPT);
   ss->listener_prompt_length =      mus_strlen(ss->Listener_Prompt);
-  ss->Minibuffer_History_Length =   DEFAULT_MINIBUFFER_HISTORY_LENGTH;
   ss->Clipping =                    DEFAULT_CLIPPING;
   ss->Optimization =                DEFAULT_OPTIMIZATION;
   ss->Print_Length =                DEFAULT_PRINT_LENGTH;

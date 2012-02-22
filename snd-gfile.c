@@ -815,6 +815,7 @@ void clear_deleted_snd_info(struct dialog_play_info *dp)
 }
 
 
+#if WITH_AUDIO
 static void play_selected_callback(GtkWidget *w, gpointer data)
 {
   dialog_play_info *dp = (dialog_play_info *)data;
@@ -839,6 +840,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
     }
   else file_dialog_stop_playing(dp);
 }
+#endif
 
 
 static bool file_is_directory(fsb *fs)
@@ -1049,7 +1051,9 @@ static void dialog_select_callback(const char *filename, void *context)
       gtk_widget_show(fd->vbox);
       gtk_widget_show(fd->info1);
       gtk_widget_show(fd->info2);
+#if WITH_AUDIO
       gtk_widget_show(fd->dp->play_button);
+#endif
 #if HAVE_FAM
       fd->info_filename = mus_strdup(filename);
       fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
@@ -1194,10 +1198,12 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
     SG_SIGNAL_CONNECT(fs->just_sounds_button, "toggled", just_sounds_callback, (void *)fs);
     gtk_widget_show(fs->just_sounds_button);
 
+#if WITH_AUDIO
     fd->dp->play_button = gtk_check_button_new_with_label("play selected sound");
     gtk_box_pack_end(GTK_BOX(hbox), fd->dp->play_button, true, true, 2);
     SG_SIGNAL_CONNECT(fd->dp->play_button, "toggled", play_selected_callback, fd->dp);
     gtk_widget_show(fd->dp->play_button);
+#endif
 
     /* this order of box_pack_end calls puts the spacer before (above) the buttons */
     spacer = gtk_vseparator_new();
@@ -1660,12 +1666,14 @@ widget_t make_insert_file_dialog(bool managed)
 
 void set_open_file_play_button(bool val) 
 {
+#if WITH_AUDIO
   if ((odat) && (odat->dp->play_button))
     set_toggle_button(odat->dp->play_button, val, false, (gpointer)odat);
   if ((mdat) && (mdat->dp->play_button))
     set_toggle_button(mdat->dp->play_button, val, false, (gpointer)mdat);
   if ((idat) && (idat->dp->play_button))
     set_toggle_button(idat->dp->play_button, val, false, (gpointer)mdat);
+#endif
 }
 
 
@@ -4411,12 +4419,14 @@ static vf_row *make_vf_row(view_files_info *vdat, GCallback play_callback, GCall
   gtk_box_pack_start(GTK_BOX(vdat->file_list), r->rw, false, false, 0);
   gtk_widget_show(r->rw);
 
+#if WITH_AUDIO
   r->pl = gtk_check_button_new();
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, false, false, 2);
   widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->white);
   widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->white);
   SG_SIGNAL_CONNECT(r->pl, "toggled", play_callback, r);
   gtk_widget_show(r->pl);
+#endif
 
   r->nm = gtk_button_new_with_label("");
   widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->white);
@@ -4570,6 +4580,7 @@ static void view_files_select_callback(GtkWidget *w, gpointer context)
 
 static void view_files_play_callback(GtkWidget *w, gpointer context) 
 {
+#if WITH_AUDIO
   /* open and play -- close at end or when button off toggled */
   vf_row *r = (vf_row *)context;
   view_files_info *vdat;
@@ -4577,6 +4588,7 @@ static void view_files_play_callback(GtkWidget *w, gpointer context)
   if (view_files_play(vdat, r->pos, TOGGLE_BUTTON_ACTIVE(w)))
     set_toggle_button(w, false, false, (void *)vdat);
   else vdat->current_play_button = w;
+#endif
 }
 
 
@@ -5279,7 +5291,10 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
   if (!(vdat->dialog))
     {
       int i;
-      GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *add_label, *addbox;
+      GtkWidget *sep1, *cww, *rlw, *tophbox, *add_label, *addbox;
+#if WITH_AUDIO
+      GtkWidget *plw;
+#endif
 #if (!HAVE_FAM)
       GtkWidget *bbox;
 #endif
@@ -5402,15 +5417,16 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_start(GTK_BOX(fileform), tophbox, false, false, 4);
       gtk_widget_show(tophbox);
 
+#if WITH_AUDIO
 #if (!HAVE_GTK_3)
       plw = gtk_label_new("play"); 
 #else
       plw = gtk_button_new_with_label("play");
       add_highlight_button_style(plw);
 #endif
-
       gtk_box_pack_start(GTK_BOX(tophbox), plw, false, false, 5);
       gtk_widget_show(plw);
+#endif
 
       sbar = gtk_menu_bar_new();
       gtk_box_pack_end(GTK_BOX(tophbox), sbar, false, false, 0);

@@ -1075,12 +1075,15 @@ void filter_env_changed(snd_info *sp, env *e)
 
 void set_play_button(snd_info *sp, bool val)
 {
+#if WITH_AUDIO
   if (HAS_WIDGETS(sp))
     XmToggleButtonSetState(PLAY_BUTTON(sp), (Boolean)val, false);
   set_open_file_play_button(val);
+#endif
 }
 
 
+#if WITH_AUDIO
 static void play_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   snd_info *sp = (snd_info *)context;
@@ -1105,10 +1108,12 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
       play_sound(sp, 0, NO_END_SPECIFIED);
     }
 }
+#endif
 
 
 typedef struct {bool pausing; } pause_data;
 
+#if WITH_AUDIO
 static void set_play_button_pause(snd_info *sp, void *ptr)
 {
   if ((sp->playing) && (HAS_WIDGETS(sp)))
@@ -1121,35 +1126,42 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
       else XtVaSetValues(w, XmNselectColor, (ss->tracking) ? ss->green : ss->selection_color, NULL);
     }
 }
+#endif
 
 
 void play_button_pause(bool pausing)
 {
+#if WITH_AUDIO
   pause_data *pd;
   pd = (pause_data *)calloc(1, sizeof(pause_data));
   pd->pausing = pausing;
   for_each_sound_with_void(set_play_button_pause, (void *)pd);
   free(pd);
+#endif
 }
 
 
 void set_control_panel_play_button(snd_info *sp)
 {
+#if WITH_AUDIO
   if (HAS_WIDGETS(sp))
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
       XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, ss->selection_color, NULL);
     }
+#endif
 }
 
 
 static void play_arrow_callback(Widget w, XtPointer context, XtPointer info)
 {
+#if WITH_AUDIO
   snd_info *sp = (snd_info *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   bool dir;
   dir = (bool)(cb->set);
   if (dir) sp->speed_control_direction = -1; else sp->speed_control_direction = 1;
+#endif
 }
 
 
@@ -2076,6 +2088,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       MINIBUFFER_TEXT(sp) = make_textfield_widget("snd-info", NAME_BOX(sp), args, n, ACTIVATABLE, add_completer_func(info_completer, (void *)sp));
       XtAddCallback(MINIBUFFER_TEXT(sp), XmNactivateCallback, minibuffer_click_callback, (XtPointer)sp);
 
+#if WITH_AUDIO
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -2093,6 +2106,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNselectColor, ss->selection_color); n++;
       PLAY_BUTTON(sp) = make_togglebutton_widget("play", NAME_BOX(sp), args, n);
       XtAddCallback(PLAY_BUTTON(sp), XmNvalueChangedCallback, play_button_callback, (XtPointer)sp);
+#endif
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
@@ -2103,8 +2117,12 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 #endif
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
+#if WITH_AUDIO
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, PLAY_BUTTON(sp)); n++;
+#else
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+#endif
       XtSetArg(args[n], XmNselectColor, ss->selection_color); n++;
       SYNC_BUTTON(sp) = make_togglebutton_widget("sync", NAME_BOX(sp), args, n);
       XtAddEventHandler(SYNC_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
@@ -3442,7 +3460,11 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 	  XEN_CONS(XEN_WRAP_WIDGET(SND_NAME(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROLS(sp)),
 	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
+#if WITH_AUDIO
 	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
+#else
+	     XEN_CONS(XEN_FALSE,
+#endif
 	      XEN_CONS(XEN_WRAP_WIDGET(FILTER_GRAPH(sp)), /* this is the drawingarea widget */
 	       XEN_CONS(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),

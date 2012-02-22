@@ -8367,8 +8367,8 @@
 ;;;         color_button stuff seems also to be deprecated?
 
 (CFNC-3316 "guint gdk_keymap_get_modifier_state GdkKeymap* keymap")
-(CFNC-3316 "void gtk_hsv_to_rgb gdouble h gdouble s gdouble v gdouble [r] gdouble [g] gdouble [b]")
-(CFNC-3316 "void gtk_rgb_to_hsv gdouble r gdouble g gdouble b gdouble [h] gdouble [s] gdouble [v]")
+(CFNC-3316 "void gtk_hsv_to_rgb gdouble h gdouble s gdouble v gdouble* [r] gdouble* [g] gdouble* [b]")
+(CFNC-3316 "void gtk_rgb_to_hsv gdouble r gdouble g gdouble b gdouble* [h] gdouble* [s] gdouble* [v]")
 (CFNC-3316 "void gtk_color_chooser_get_rgba GtkColorChooser* chooser GdkRGBA* color")
 (CFNC-3316 "void gtk_color_chooser_set_rgba GtkColorChooser* chooser GdkRGBA* color" 'const)
 (CFNC-3316 "gboolean gtk_color_chooser_get_use_alpha GtkColorChooser* chooser")

@@ -1702,7 +1702,7 @@ typedef struct mini_history {
 } mini_history;
   
 static mini_history *listener_history = NULL;
-typedef enum {MINIBUFFER, FILTER_TEXT, LISTENER_TEXT} mini_history_t;
+typedef enum {FILTER_TEXT, LISTENER_TEXT} mini_history_t;
 
 
 static void remember_string(snd_info *sp, const char *str, mini_history_t which)
@@ -1716,7 +1716,6 @@ static void remember_string(snd_info *sp, const char *str, mini_history_t which)
 
   switch (which)
     {
-    case MINIBUFFER:    mh = sp->minibuffer_history; break;
     case FILTER_TEXT:   mh = sp->filter_history;     break;
     case LISTENER_TEXT: mh = listener_history;       break;
     default:            return;                      break;
@@ -1725,11 +1724,10 @@ static void remember_string(snd_info *sp, const char *str, mini_history_t which)
   if (mh == NULL)
     {
       mh = (mini_history *)calloc(1, sizeof(mini_history));
-      mh->strings_size = minibuffer_history_length(ss);
+      mh->strings_size = 8;
       mh->strings = (char **)calloc(mh->strings_size, sizeof(char *));
       switch (which)
 	{
-	case MINIBUFFER:    sp->minibuffer_history = mh; break;
 	case FILTER_TEXT:   sp->filter_history = mh;     break;
 	case LISTENER_TEXT: listener_history = mh;       break;
 	}
@@ -1750,12 +1748,6 @@ static void remember_string(snd_info *sp, const char *str, mini_history_t which)
   mh->strings[0] = mus_strdup(str);
 }
 
-
-void remember_mini_string(snd_info *sp, const char *str) 
-{
-  remember_string(sp, str, MINIBUFFER);
-}
-
 void remember_filter_string(snd_info *sp, const char *str) 
 {
   remember_string(sp, str, FILTER_TEXT);
@@ -1774,7 +1766,6 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
 
   switch (which)
     {
-    case MINIBUFFER:    mh = sp->minibuffer_history; break;
     case FILTER_TEXT:   mh = sp->filter_history;     break;
     case LISTENER_TEXT: mh = listener_history;       break;
     }
@@ -1796,7 +1787,6 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
 	{
 	  switch (which)
 	    {
-	    case MINIBUFFER:    set_minibuffer_string(sp, str, true); break;
 	    case FILTER_TEXT:   set_filter_text(sp, str);             break;
 	    case LISTENER_TEXT: append_listener_text(-1, str);        break;
 	    }
@@ -1805,7 +1795,6 @@ static void restore_string(snd_info *sp, bool back, mini_history_t which)
 }
 
 
-void restore_mini_string(snd_info *sp, bool back) {restore_string(sp, back, MINIBUFFER);}
 void restore_filter_string(snd_info *sp, bool back) {restore_string(sp, back, FILTER_TEXT);}
 void restore_listener_string(bool back) {restore_string(NULL, back, LISTENER_TEXT);}
 
@@ -1817,7 +1806,6 @@ static void clear_strings(snd_info *sp, mini_history_t which)
 
   switch (which)
     {
-    case MINIBUFFER:    mh = sp->minibuffer_history; break;
     case FILTER_TEXT:   mh = sp->filter_history;     break;
     case LISTENER_TEXT: mh = listener_history;       break;
     }
@@ -1827,7 +1815,6 @@ static void clear_strings(snd_info *sp, mini_history_t which)
       int i;
       switch (which)
 	{
-	case MINIBUFFER:    sp->minibuffer_history = NULL; break;
 	case FILTER_TEXT:   sp->filter_history = NULL;     break;
 	case LISTENER_TEXT: listener_history = NULL;       break;
 	}
@@ -1840,7 +1827,6 @@ static void clear_strings(snd_info *sp, mini_history_t which)
 }
 
 
-void clear_mini_strings(snd_info *sp) {clear_strings(sp, MINIBUFFER);}
 void clear_filter_strings(snd_info *sp) {clear_strings(sp, FILTER_TEXT);}
 
 

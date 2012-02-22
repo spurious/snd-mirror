@@ -301,21 +301,25 @@ static void region_focus_callback(Widget w, XtPointer context, XtPointer info)
 
 void reflect_play_region_stop(int n)
 {
+#if WITH_AUDIO
   if (region_rows)
     {
       regrow *rg;
       rg = region_row(region_id_to_list_position(n));
       if (rg) XmToggleButtonSetState(rg->pl, false, false);
     }
+#endif
 }
 
 
 static void region_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
+#if WITH_AUDIO
   regrow *r = (regrow *)context;
   if (XmToggleButtonGetState(r->pl))
     play_region(region_list_position_to_id(r->pos), IN_BACKGROUND);
   else stop_playing_region(region_list_position_to_id(r->pos), PLAY_BUTTON_UNSET);
+#endif
 }
 
 
@@ -392,6 +396,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   XtSetArg(args[n], XmNheight, 18); n++; 
   r->rw = XtCreateWidget("rw", xmFormWidgetClass, ww, args, n);
 
+#if WITH_AUDIO
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -404,11 +409,16 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
   XtSetArg(args[n], XmNmarginWidth, 8); n++;
   r->pl = make_togglebutton_widget("pl", r->rw, args, n);
+#endif
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+#if WITH_AUDIO
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, r->pl); n++;
+#else
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+#endif
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -436,7 +446,10 @@ static void make_region_dialog(void)
   int n, i, id;
   Arg args[32];
   Widget formw, last_row, infosep, fr ,rw;
-  Widget editb, unlistb, plw, panes, toppane, sep1 = NULL;
+  Widget editb, unlistb, panes, toppane, sep1 = NULL;
+#if WITH_AUDIO
+  Widget plw;
+#endif
   XmString xgo_away, xhelp, titlestr, xsave_as;
   regrow *r;
   chan_info *cp;
@@ -516,6 +529,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNpaneMinimum, 40); n++;
   toppane = XtCreateManagedWidget("toppane", xmFormWidgetClass, panes, args, n);
 
+#if WITH_AUDIO
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -523,13 +537,18 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   plw = XtCreateManagedWidget("play", xmLabelWidgetClass, toppane, args, n);
+#endif
   
   n = 0;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
   XtSetArg(args[n], XmNrightPosition, 70); n++;
+#if WITH_AUDIO
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, plw); n++;
+#else
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+#endif
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmSTATIC); n++;

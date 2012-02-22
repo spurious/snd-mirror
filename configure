@@ -4009,7 +4009,6 @@ _ACEOF
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
-#   --enable-snd-debug    include Snd internal debugging stuff
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
@@ -10195,6 +10194,11 @@ $as_echo_n "checking for audio system... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AUDIO_SYSTEM" >&5
 $as_echo "$AUDIO_SYSTEM" >&6; }
 fi
+fi
+
+if test "$AUDIO_SYSTEM" != None ; then
+  $as_echo "#define WITH_AUDIO 1" >>confdefs.h
+
 fi
 
 

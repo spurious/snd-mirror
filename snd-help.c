@@ -459,6 +459,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+21-Feb:  removed the recorder (snd-g|xrec.c).\n\
+         removed the minibuffer history list and the minibuffer-history-length function.\n\
+10-Feb:  removed snd1.html, snd-contents.html.\n\
 2-Feb:   Snd 12.8.\n\
 27-Jan:  removed snd10.scm.\n\
 30-Dec:  Snd 12.7.\n\
@@ -1560,6 +1563,7 @@ any key via:\n\
 
 void play_help(void)
 {
+#if WITH_AUDIO
   #if HAVE_SCHEME
     #define play_cursor_example "(play (cursor))"
     #define play_file_example "(play \"oboe.snd\")"
@@ -1622,6 +1626,9 @@ Except in the browsers, what is actually played depends on the control panel.",
 		      snd_xref_urls("Play"));
 
   append_key_help("C-q", snd_K_q, snd_ControlMask, true, true);
+#else
+  snd_help("Play", "this version of Snd can't play!", WITH_WORD_WRAP);
+#endif
 }
 
 

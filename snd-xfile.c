@@ -10,7 +10,7 @@
  *   gtk options/controls has trough color?
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
  * the minibuffer is useless -- what to do with it?  maybe a per-channel toolbar?
- *   at least turn it into a straight (non-editable) label
+ *   at least turn it into a straight (non-editable) label [statusbar appears to be the Gtk name for this]
  *   or try to recognize what user wants -- search in sound, help etc?
  * in gtk I think I've turned off the menu icons, yet they sometimes appear in the dialogs?
  * "global find" is jargon (used as a built-in xref title in snd-help)
@@ -27,8 +27,11 @@
  *   also if error displayed, hover->env printout etc
  *   and hover in graph -> show sample value?
  *
- * if built without-audio, omit those tool icons and menu items!
- * gtk2 tooltips look much better because the bgcolor is correct
+ * gtk2 tooltips look much better because the bgcolor is correct, but pango markup here is only a partial fix
+ * if no audio don't include the various play buttons
+ *   if no audio in mix dialog, move the previous/next buttons over to the right
+ *   still region play, snd play -- and why controls in this case??
+ *   also motif cases here
  * 
  * 19: gxfind button order, but one is "forward|back" and the other is "next|previous"
  *       firefox uses |find: |entry| <--previous | -->next | highlight all, others use "search:..."
@@ -41,8 +44,11 @@
  *     removed snd-g|xrec.c, recorder-dialog, etc
  * 21: changed gcolor layout but how to get more of colormap titles displayed?
  *     gtk3 menu/toolbar fixups and gtk 3.3.16 in xg
- *     added view grid menu item, removed control-related popup menu items
+ *     added view grid menu item
+ *     removed control-panel related popup menu items
  * 22: added main menu context-sensitive tooltips
+ *     WITH_AUDIO checks                          [unfinished]
+ *     removed the minibuffer history stuff, minibuffer-history-length
  */
 
 /* various file-related dialogs:
@@ -928,6 +934,7 @@ void clear_deleted_snd_info(struct dialog_play_info *dp)
 }
 
 
+#if WITH_AUDIO
 static void play_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
@@ -955,6 +962,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
     }
   else file_dialog_stop_playing(dp);
 }
+#endif
 
 
 static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_pattern_info *fp, dialog_play_info *dp)
@@ -971,7 +979,9 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
   XtSetArg(args[n], XmNset, just_sounds(ss)); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   fp->just_sounds_button = XtCreateManagedWidget("sound files only", xmToggleButtonWidgetClass, rc, args, n);
+  XtAddCallback(fp->just_sounds_button, XmNvalueChangedCallback, just_sounds_callback, (XtPointer)fp);
 
+#if WITH_AUDIO
   n = 0;
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
   XtSetArg(args[n], XmNwidth, 20); n++;
@@ -984,7 +994,7 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
   dp->play_button = XtCreateWidget("play selected sound", xmToggleButtonWidgetClass, rc, args, n);
 
   XtAddCallback(dp->play_button, XmNvalueChangedCallback, play_selected_callback, (XtPointer)dp);
-  XtAddCallback(fp->just_sounds_button, XmNvalueChangedCallback, just_sounds_callback, (XtPointer)fp);
+#endif
 }
 
 

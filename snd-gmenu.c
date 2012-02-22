@@ -123,6 +123,7 @@ static void edit_undo_callback(GtkWidget *w, gpointer info) {undo_edit_with_sync
 static void edit_redo_callback(GtkWidget *w, gpointer info) {redo_edit_with_sync(current_channel(), 1);}
 
 
+#if WITH_AUDIO
 static void edit_play_callback(GtkWidget *w, gpointer info) 
 {
   if (ss->selection_play_stop)
@@ -144,6 +145,14 @@ void reflect_play_selection_stop(void)
   set_menu_label(edit_play_menu, "Play Selection");
   ss->selection_play_stop = false;
 }
+
+#else
+
+void reflect_play_selection_stop(void)
+{
+}
+
+#endif
 
 
 static void edit_header_callback_1(GtkWidget *w, gpointer info)
@@ -543,8 +552,10 @@ GtkWidget *add_menu(void)
   edit_mix_menu = add_insensitive_menu_item(edit_cascade_menu, "Mix selection", GTK_STOCK_ADD, (GCallback)edit_mix_callback);
   ml[e_mix_menu] = "Mix Selection";
 
+#if WITH_AUDIO
   edit_play_menu = add_insensitive_menu_item(edit_cascade_menu, "Play selection", GTK_STOCK_MEDIA_PLAY, (GCallback)edit_play_callback);
   ml[e_play_menu] = "Play Selection";
+#endif
 
   edit_save_as_menu = add_insensitive_menu_item(edit_cascade_menu, "Save selection", GTK_STOCK_SAVE_AS, (GCallback)edit_save_as_callback);
   ml[e_save_as_menu] = "Save Selection";
@@ -1059,6 +1070,7 @@ static void popup_selection_info_callback(GtkWidget *w, gpointer info)
   report_in_minibuffer(any_selected_sound(), "selection max: %f", selection_max);
 }
 
+#if WITH_AUDIO
 static void popup_loop_play_callback(GtkWidget *w, gpointer info) 
 {
   if (ss->selection_play_stop)
@@ -1073,6 +1085,7 @@ static void popup_loop_play_callback(GtkWidget *w, gpointer info)
       loop_play_selection();
     }
 }
+#endif
 
 
 void post_selection_popup_menu(void *e) 
@@ -1092,8 +1105,10 @@ void post_selection_popup_menu(void *e)
       add_menu_item(selection_popup_menu, "Cut and smooth", NULL, (GCallback)popup_cut_and_smooth_callback);
       add_menu_item(selection_popup_menu, "Cut -> new",     NULL, (GCallback)popup_cut_to_new_callback);
       add_menu_item(selection_popup_menu, "Save as",        NULL, (GCallback)edit_save_as_callback);
+#if WITH_AUDIO
       add_menu_item(selection_popup_menu, "Play",           NULL, (GCallback)edit_play_callback);
       add_menu_item(selection_popup_menu, "Play looping",   NULL, (GCallback)popup_loop_play_callback);
+#endif
       add_menu_item(selection_popup_menu, "Crop",           NULL, (GCallback)popup_crop_callback);
       add_menu_item(selection_popup_menu, "Unselect all",   NULL, (GCallback)edit_unselect_callback);
       add_menu_item(selection_popup_menu, "Copy -> new",    NULL, (GCallback)popup_copy_to_new_callback);
@@ -1347,6 +1362,7 @@ static void add_separator_to_toolbar(GtkWidget *bar)
 }
 
 
+#if WITH_AUDIO
 static void play_from_start_callback(GtkWidget *w, gpointer info) 
 {
   snd_info *sp;
@@ -1375,6 +1391,7 @@ static void stop_playing_callback(GtkWidget *w, gpointer info)
   stop_playing_all_sounds(PLAY_C_G);
   reflect_play_selection_stop(); /* this sets ss->selection_play_stop = false; */
 }
+#endif
 
 
 static void full_dur_callback(GtkWidget *w, gpointer info) 
@@ -1482,6 +1499,11 @@ static gboolean close_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean ke
       free(tip);
     }
   else gtk_tooltip_set_text(tooltip, "close the current sound");
+
+  /* gtk_tooltip_set_markup(tooltip, "<span background=\"#fffff0\">close the current sound</span>");
+   * this is almost right -- the padding (or margin?) is still in the ugly yellow color
+   * how to set that color??
+   */
   return(true);
 }
 
@@ -1591,6 +1613,7 @@ static gboolean redo_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean key
 }
 
 
+#if WITH_AUDIO
 static gboolean play_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
 {
   snd_info *sp;
@@ -1621,6 +1644,119 @@ static gboolean play_selected_from_cursor_tooltip(GtkWidget *w, gint x, gint y, 
       free(tip);
     }
   else gtk_tooltip_set_text(tooltip, "play the current sound from the cursor");
+  return(true);
+}
+#endif
+
+
+static gboolean full_dur_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      char *tip;
+      tip = mus_format("show all of %s", sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "show all of the current sound");
+  return(true);
+}
+
+
+static gboolean zoom_out_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      char *tip;
+      tip = mus_format("show more of %s (zoom out)", sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "show more of the current sound (zoom out)");
+  return(true);
+}
+
+
+static gboolean zoom_in_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      char *tip;
+      tip = mus_format("show less of %s (zoom in)", sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "show less of the current sound (zoom in)");
+  return(true);
+}
+
+
+static gboolean goto_start_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      char *tip;
+      tip = mus_format("go to the beginning of %s", sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "go to the beginning of the current sound");
+  return(true);
+}
+
+
+static gboolean goto_end_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      char *tip;
+      tip = mus_format("go to the end of %s", sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "go to the end of the current sound");
+  return(true);
+}
+
+
+static gboolean go_back_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      char *tip;
+      tip = mus_format("go back one window in %s", sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "go back one window in the current sound");
+  return(true);
+}
+
+
+static gboolean go_forward_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      char *tip;
+      tip = mus_format("go forward one window in %s", sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "go forward one window in the current sound");
   return(true);
 }
 
@@ -1663,6 +1799,7 @@ void show_toolbar(void)
       add_separator_to_toolbar(toolbar);
 
 
+#if WITH_AUDIO
       w = add_to_toolbar(toolbar, GTK_STOCK_MEDIA_PLAY,      "play from the start",        (GCallback)play_from_start_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(play_selected_tooltip), NULL);
       
@@ -1671,28 +1808,44 @@ void show_toolbar(void)
 
       add_to_toolbar(toolbar, GTK_STOCK_MEDIA_STOP,          "stop playing",               (GCallback)stop_playing_callback);      
       add_separator_to_toolbar(toolbar);
+#endif
 
  
-      add_to_toolbar(toolbar, GTK_STOCK_FULLSCREEN,      "show full sound",            (GCallback)full_dur_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_ZOOM_OUT,        "zoom out",                   (GCallback)zoom_out_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_ZOOM_IN,         "zoom in",                    (GCallback)zoom_in_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_GOTO_FIRST,      "go to start of sound",       (GCallback)goto_start_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_GO_BACK,         "go back a window",           (GCallback)go_back_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_GO_FORWARD,      "go forward a window",        (GCallback)go_forward_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_GOTO_LAST,       "go to end of sound",         (GCallback)goto_end_callback);      
+      w = add_to_toolbar(toolbar, GTK_STOCK_FULLSCREEN,      "show full sound",            (GCallback)full_dur_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(full_dur_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_ZOOM_OUT,        "zoom out",                   (GCallback)zoom_out_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(zoom_out_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_ZOOM_IN,         "zoom in",                    (GCallback)zoom_in_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(zoom_in_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_GOTO_FIRST,      "go to start of sound",       (GCallback)goto_start_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(goto_start_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_GO_BACK,         "go back a window",           (GCallback)go_back_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(go_back_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_GO_FORWARD,      "go forward a window",        (GCallback)go_forward_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(go_forward_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_GOTO_LAST,       "go to end of sound",         (GCallback)goto_end_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(goto_end_tooltip), NULL);
       add_separator_to_toolbar(toolbar);
 
 
-      add_to_toolbar(toolbar, GTK_STOCK_SELECT_ALL,      "select all of sound",        (GCallback)edit_select_all_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_CLEAR,           "unselect everything",        (GCallback)edit_unselect_callback);  
-      add_to_toolbar(toolbar, GTK_STOCK_CUT,             "delete selection",           (GCallback)edit_cut_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_PASTE,           "insert selection at cursor", (GCallback)edit_paste_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_SELECT_ALL,      "select all of the current sound",(GCallback)edit_select_all_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_CLEAR,               "unselect everything",        (GCallback)edit_unselect_callback);  
+      add_to_toolbar(toolbar, GTK_STOCK_CUT,                 "delete the selected portion",(GCallback)edit_cut_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_PASTE,               "insert the selection at the cursor", (GCallback)edit_paste_callback);      
       add_separator_to_toolbar(toolbar);
 
 
-      /* add_to_toolbar(toolbar, GTK_STOCK_PREFERENCES,     "open preferences dialog",    (GCallback)options_preferences_callback); */
-      add_to_toolbar(toolbar, GTK_STOCK_CANCEL,          "stop the current operation", (GCallback)stop_everything_callback);
-      add_to_toolbar(toolbar, GTK_STOCK_QUIT,            "exit Snd",                   (GCallback)file_exit_callback);
+#if (!WITH_AUDIO)
+      add_to_toolbar(toolbar, GTK_STOCK_PREFERENCES,         "open the preferences dialog",(GCallback)options_preferences_callback);
+#endif
+      add_to_toolbar(toolbar, GTK_STOCK_CANCEL,              "stop everything",            (GCallback)stop_everything_callback);
+      add_to_toolbar(toolbar, GTK_STOCK_QUIT,                "exit Snd",                   (GCallback)file_exit_callback);
     }
 
   gtk_widget_show(toolbar);

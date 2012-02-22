@@ -41,7 +41,9 @@ void edit_menu_update(void)
 
   /* is there an active selection? */
   set_sensitive(edit_cut_menu, selection_p);
+#if WITH_AUDIO
   set_sensitive(edit_play_menu, selection_p);
+#endif
   set_sensitive(edit_mix_menu, selection_p);
   set_sensitive(edit_save_as_menu, selection_p);
   set_sensitive(edit_unselect_menu, selection_p);

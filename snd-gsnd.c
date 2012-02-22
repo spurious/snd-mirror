@@ -501,21 +501,26 @@ static void set_button_base(GtkWidget *w, color_info *col)
 
 void set_play_button(snd_info *sp, bool val)
 {
+#if WITH_AUDIO
   if (HAS_WIDGETS(sp))
     set_toggle_button(PLAY_BUTTON(sp), val, false, (void *)sp);
+#endif
 }
 
 
 void set_control_panel_play_button(snd_info *sp)
 {
+#if WITH_AUDIO
   if (HAS_WIDGETS(sp))
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
       set_button_base(PLAY_BUTTON(sp), ss->white);
     }
+#endif
 }
 
 
+#if WITH_AUDIO
 static int last_play_state = 0;
 /* these "last-*-state" variables are trying to catch C-M-click info which is then used
  *   presumably by the immediately following value-changed callback for the given button.
@@ -571,15 +576,18 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
 	else set_button_base(w, ss->white);
     }
 }
+#endif
 
 
 void play_button_pause(bool pausing)
 {
+#if WITH_AUDIO
   pause_data *pd;
   pd = (pause_data *)calloc(1, sizeof(pause_data));
   pd->pausing = pausing;
   for_each_sound_with_void(set_play_button_pause, (void *)pd);
   free(pd);
+#endif
 }
 
 
@@ -1766,11 +1774,13 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* now fill from other end */
       
+#if WITH_AUDIO
       PLAY_BUTTON(sp) = gtk_check_button_new_with_label("play");
       gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), PLAY_BUTTON(sp), false, false, BUTTON_SPACE); /* need space here or "play" hits window edge */
       SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "button_press_event", play_button_callback, sp);
       SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "toggled", play_button_click_callback, sp);
       gtk_widget_show(PLAY_BUTTON(sp));
+#endif
       
       SYNC_BUTTON(sp) = gtk_check_button_new_with_label("sync");
       gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), SYNC_BUTTON(sp), false, false, BUTTON_SPACE);
@@ -2514,7 +2524,11 @@ pane-box (10)name-form"
 	  XEN_CONS(XEN_WRAP_WIDGET(NAME_BUTTON(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),
 	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
+#if WITH_AUDIO
 	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
+#else
+             XEN_CONS(XEN_FALSE,
+#endif
 	      XEN_CONS(XEN_WRAP_WIDGET(FILTER_ENV(sp)), /* this is the (filter) drawingarea widget */
 	       XEN_CONS(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),

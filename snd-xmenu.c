@@ -136,6 +136,7 @@ static void edit_redo_callback(Widget w, XtPointer info, XtPointer context) {red
 static void edit_menu_update_1(Widget w, XtPointer info, XtPointer context) {edit_menu_update();}
 
 
+#if WITH_AUDIO
 static void edit_play_callback(Widget w, XtPointer info, XtPointer context) 
 {
   if (ss->selection_play_stop)
@@ -157,6 +158,14 @@ void reflect_play_selection_stop(void)
   set_menu_label(edit_play_menu, "Play Selection");
   ss->selection_play_stop = false;
 }
+
+#else
+
+void reflect_play_selection_stop(void)
+{
+}
+
+#endif
 
 
 static void edit_header_callback_1(Widget w, XtPointer info, XtPointer context)
@@ -396,8 +405,10 @@ void check_menu_labels(int key, int state, bool extended)
 	{
 	  if (key == snd_K_k) set_label(file_close_menu, "Close"); else
 	  if (key == snd_K_i) set_label(edit_paste_menu, "Insert Selection"); else	  
-	  if (key == snd_K_q) set_label(edit_mix_menu, "Mix Selection"); else	  
+	  if (key == snd_K_q) set_label(edit_mix_menu, "Mix Selection"); else
+#if WITH_AUDIO	  
 	  if (key == snd_K_p) set_label(edit_play_menu, "Play Selection"); else	  
+#endif
 	  if (key == snd_K_w) set_label(edit_save_as_menu, "Save Selection");
 	}
     }
@@ -583,9 +594,11 @@ Widget add_menu(void)
   XtAddCallback(edit_mix_menu, XmNactivateCallback, edit_mix_callback, NULL);
   XtVaSetValues(edit_mix_menu, XmNmnemonic, 'M', NULL);
 
+#if WITH_AUDIO
   edit_play_menu = XtCreateManagedWidget("Play Selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_play_menu, XmNactivateCallback, edit_play_callback, NULL);
   XtVaSetValues(edit_play_menu, XmNmnemonic, 'P', NULL);
+#endif
 
   edit_save_as_menu = XtCreateManagedWidget("Save Selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_save_as_menu, XmNactivateCallback, edit_save_as_callback, NULL);
@@ -1091,6 +1104,7 @@ static void popup_selection_info_callback(Widget w, XtPointer info, XtPointer co
   report_in_minibuffer(any_selected_sound(), "selection max: %f", selection_max);
 }
 
+#if WITH_AUDIO
 static void popup_loop_play_callback(Widget w, XtPointer info, XtPointer context) 
 {
   if (ss->selection_play_stop)
@@ -1105,6 +1119,7 @@ static void popup_loop_play_callback(Widget w, XtPointer info, XtPointer context
       loop_play_selection();
     }
 }
+#endif
 
 
 void post_selection_popup_menu(void *e) 
@@ -1125,8 +1140,10 @@ void post_selection_popup_menu(void *e)
       add_menu_item(selection_popup_menu, "Cut and smooth", popup_cut_and_smooth_callback);
       add_menu_item(selection_popup_menu, "Cut -> new",     popup_cut_to_new_callback);
       add_menu_item(selection_popup_menu, "Save as",        edit_save_as_callback);
+#if WITH_AUDIO
       add_menu_item(selection_popup_menu, "Play",           edit_play_callback);
       add_menu_item(selection_popup_menu, "Play looping",   popup_loop_play_callback);
+#endif
       add_menu_item(selection_popup_menu, "Crop",           popup_crop_callback);
       add_menu_item(selection_popup_menu, "Unselect all",   edit_unselect_callback);
       add_menu_item(selection_popup_menu, "-> 0.0",         popup_zero_selection_callback);
@@ -1473,6 +1490,7 @@ static void add_separator_to_toolbar(Widget bar)
 }
 
 
+#if WITH_AUDIO
 static void play_from_start_callback(Widget w, XtPointer info, XtPointer context) 
 {
   snd_info *sp;
@@ -1501,6 +1519,7 @@ static void stop_playing_callback(Widget w, XtPointer info, XtPointer context)
   stop_playing_all_sounds(PLAY_C_G);
   reflect_play_selection_stop(); /* this sets ss->selection_play_stop = false; */
 }
+#endif
 
 
 static void full_dur_callback(Widget w, XtPointer info, XtPointer context) 
@@ -1634,10 +1653,12 @@ void show_toolbar(void)
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CLOSE),         "close selected sound",       file_close_callback);
       add_separator_to_toolbar(toolbar); 
 
+#if WITH_AUDIO
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_PLAY),          "play from the start",        play_from_start_callback);      
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_CURSOR_PLAY),   "play from the cursor",       play_from_cursor_callback);      
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_STOP_PLAY),     "stop playing",               stop_playing_callback);      
       add_separator_to_toolbar(toolbar);
+#endif
  
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_UP),            "show full sound",            full_dur_callback);      
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_ZOOM_OUT),      "zoom out",                   zoom_out_callback);      

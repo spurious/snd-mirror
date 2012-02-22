@@ -509,6 +509,7 @@ void reflect_mix_play_stop(void)
 }
 
 
+#if WITH_AUDIO
 static void mix_play_callback(GtkWidget *w, gpointer context) 
 {
   if (mix_playing)
@@ -528,6 +529,7 @@ static gboolean mix_play_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer d
   draw_picture(mix_play_ax, snd_icon(SND_PNG_SPEAKER), 0, 0, 0, 0, 16, 16); /* in gtk2 this looks better if y-dest is 2 */
   return(false);
 }
+#endif
 
 
 static void mix_dB_callback(GtkWidget *w, gpointer context) 
@@ -656,7 +658,10 @@ GtkWidget *make_mix_dialog(void)
   if (mix_dialog == NULL)
     {
       GtkWidget *dismiss_button, *help_button, *rc, *mix_frame, *rc_top, *copy_button;
-      GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row, *mix_play_pix;
+      GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;
+#if WITH_AUDIO
+      GtkWidget *mix_play_pix;
+#endif
       char amplab[LABEL_BUFFER_SIZE];
 
       gmix_speed_control_style = speed_control_style(ss);
@@ -742,6 +747,7 @@ GtkWidget *make_mix_dialog(void)
       w_beg = snd_entry_new(rc, NULL, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_beg, "activate", beg_activated, NULL);
 
+#if WITH_AUDIO
       mix_play = gtk_button_new();
       gtk_box_pack_start(GTK_BOX(rc), mix_play, false, false, 2);
       SG_SIGNAL_CONNECT(mix_play, "clicked", mix_play_callback, NULL);
@@ -755,7 +761,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_add(GTK_CONTAINER(mix_play), mix_play_pix);
       gtk_widget_show(mix_play_pix);
       SG_SIGNAL_CONNECT(mix_play_pix, DRAW_SIGNAL, mix_play_pix_expose, NULL);
-
+#endif
 
       nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
       gtk_widget_set_name(nextb, "dialog_button");
@@ -913,9 +919,11 @@ GtkWidget *make_mix_dialog(void)
       if (mix_sync_from_id(mix_dialog_id) != 0)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_sync), true);
 
+#if WITH_AUDIO
       mix_play_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       mix_play_ax->wn = WIDGET_TO_WINDOW(mix_play_pix);
       mix_play_ax->gc = ss->basic_gc;
+#endif
 
       gtk_widget_hide(error_frame);
     }

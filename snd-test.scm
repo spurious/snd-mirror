@@ -814,9 +814,6 @@
     (set! (dac-size) (dac-size))
     (if (not (equal? (dac-size)  256 )) 
 	(snd-display #__line__ ";dac-size set def: ~A" (dac-size)))
-    (set! (minibuffer-history-length) (minibuffer-history-length))
-    (if (not (equal? (minibuffer-history-length)  8)) 
-	(snd-display #__line__ ";minibuffer-history-length set def: ~A" (minibuffer-history-length)))
     (set! (clipping) (clipping))
     (if (not (equal? (clipping)  #f )) 
 	(snd-display #__line__ ";clipping set def: ~A" (clipping)))
@@ -1309,7 +1306,6 @@
       'max-virtual-ptrees (max-virtual-ptrees) 32
       'max-transform-peaks (max-transform-peaks) 100
       'min-dB (min-dB) -60.0 
-      'minibuffer-history-length (minibuffer-history-length) 8
       'mix-tag-height (mix-tag-height) 14
       'mix-tag-width (mix-tag-width) 6
       'mix-waveform-height (mix-waveform-height) 20 
@@ -1863,7 +1859,6 @@
 	(list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross)
 	(list 'dac-combines-channels dac-combines-channels #t #f)
 	(list 'dac-size dac-size 256 512)
-	(list 'minibuffer-history-length minibuffer-history-length 8 16)
 	(list 'clipping clipping #f #t)
 	(list 'default-output-chans default-output-chans 1 2)
 	(list 'default-output-data-format default-output-data-format 1 1)
@@ -2201,7 +2196,7 @@
 		       'mark-drag-hook 'mark-home 'mark-hook 'mark-name 'mark-properties 'mark-property
 		       'mark-sample 'mark-sync 'mark-sync-max 'mark-tag-height 'mark-tag-width
 		       'mark? 'marks 'max-regions 'max-transform-peaks 'max-virtual-ptrees 'maxamp
-		       'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length 'mix
+		       'maxamp-position 'menu-widgets 'min-dB 'mix
 		       'mix-amp 'mix-amp-env 'mix-click-hook 'mix-color
 		       'mix-dialog-mix 'mix-drag-hook 'mix-file-dialog 'mix-length 'mix-home
 		       'mix-name 'mix-position 'mix-properties 'mix-property 'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max
@@ -60194,7 +60189,7 @@ EDITS: 1
 		     main-widgets make-color make-graph-data make-mix-sampler make-player make-region
 		     make-region-sampler make-sampler map-chan mark-color mark-name mark-properties mark-property
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions max-virtual-ptrees
-		     maxamp maxamp-position menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
+		     maxamp maxamp-position menu-widgets min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-color mix-length mix? view-mixes-dialog mix-position
 		     mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties mix-property 
 		     mix-region mix-sampler?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
@@ -60345,7 +60340,7 @@ EDITS: 1
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
-			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size colormap?
+			 read-only right-sample sample samples selected-channel colormap-size colormap?
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider
 			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length mus-float-equal-fudge-factor
@@ -61152,7 +61147,7 @@ EDITS: 1
 			    enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			    foreground-color graph-color graph-cursor highlight-color just-sounds key-binding
 			    listener-color listener-font listener-prompt listener-text-color max-regions
-			    minibuffer-history-length mix-waveform-height region-graph-style position-color
+			    mix-waveform-height region-graph-style position-color
 			    time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
 			    view-files-sort print-length play-arrow-size sash-color ladspa-dir peak-env-dir save-dir save-state-file
 			    selected-channel selected-data-color selected-graph-color 

@@ -438,7 +438,7 @@ typedef struct snd_info {
   chan_info *lacp;
   struct ctrl_state *saved_controls;
   bool apply_ok, applying;
-  struct mini_history *minibuffer_history, *filter_history;
+  struct mini_history *filter_history;
   bool active;
   char *name_string;
   fam_info *file_watcher;
@@ -513,7 +513,7 @@ typedef struct snd_state {
   mus_float_t Enved_Base, Enved_Power, Auto_Update_Interval;
   bool Enved_Wave_p, Graphs_Horizontal, With_Background_Processes, With_File_Monitor;
   env_type_t Enved_Style;
-  int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Mark_Tag_Height, Mark_Tag_Width, Minibuffer_History_Length;
+  int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Mark_Tag_Height, Mark_Tag_Width;
   enved_target_t Enved_Target;
   bool Clipping, Show_Indices, Just_Sounds;
   int Cursor_Size;
@@ -1555,9 +1555,6 @@ void peak_env_scale_selection_by(chan_info *cp, mus_float_t scl, mus_long_t beg,
 peak_env_info *peak_env_copy(chan_info *cp, bool reversed, int edpos);
 peak_env_info *peak_env_section(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos);
 void pick_one_bin(peak_env_info *ep, int bin, mus_long_t cursamp, chan_info *cp, int edpos);
-void remember_mini_string(snd_info *sp, const char *str);
-void restore_mini_string(snd_info *s, bool back);
-void clear_mini_strings(snd_info *sp);
 void remember_filter_string(snd_info *sp, const char *str);
 void restore_filter_string(snd_info *s, bool back);
 void clear_filter_strings(snd_info *sp);

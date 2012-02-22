@@ -146,9 +146,9 @@
 (define all-types '())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*"
+(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*"
 		  "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
-(set! all-types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*" 
+(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" 
 		      "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
 
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
@@ -166,7 +166,7 @@
 	"GdkWMDecoration*"  "GdkWindowAttr*" "GtkAccelLabel*" "GtkAccelMapForeach" "GtkAccessible*" "GtkActionEntry*"
 	"GtkAlignment*" "GtkAllocation*" "GtkArrow*" "GtkAspectFrame*" "GtkBin*" "GtkBox*" "GtkButton*" "GtkButtonBox*"
 	"GtkCalendar*" "GtkCellLayout*" "GtkCellLayoutDataFunc" "GtkCellRendererPixbuf*" "GtkCellRendererText*" "GtkCellRendererToggle*"
-	"GtkCheckMenuItem*" "GtkClipboardTargetsReceivedFunc" "GtkColorButton*" "GtkColorSelection*" "GtkColorSelectionDialog*"
+	"GtkCheckMenuItem*" "GtkClipboardTargetsReceivedFunc" 
 	"GtkCombo*" "GtkComboBox*" "GtkComboBoxEntry*" "GtkContainer*" "GtkCurve*" "GtkDialog*" "GtkDrawingArea*" "GtkEditable*"
 	"GtkEventBox*" "GtkExpander*" "GtkFileChooser*" "GtkFileFilterFunc"
 	"GtkFileSelection*" "GtkFixed*" "GtkFontButton*" "GtkFontSelection*" "GtkFontSelectionDialog*" "GtkFrame*" "GtkGammaCurve*"
@@ -229,7 +229,7 @@
 	;;    this one depends on c++
 	"GtkFontChooser*" "GtkFontChooserDialog*"
 	"GdkModifierIntent" "guint**" "GtkApplication*" "GVariant*" "GtkApplicationWindow*"
-	"GdkEventKey*"
+	"GdkEventKey*" "GtkColorChooser*"
 	))
 
 (define no-xen-p 
