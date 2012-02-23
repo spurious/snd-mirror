@@ -977,7 +977,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 
 #if HAVE_GTK_3
 static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider, *tb_provider, *mu_provider;
-static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider, *cb_provider;
+static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider, *cb_provider, *entry_provider;
 
 void add_white_button_style(GtkWidget *w)
 {
@@ -1059,6 +1059,13 @@ void add_check_button_style(GtkWidget *w)
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(cb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
+void add_entry_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(entry_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
 #else
 
 void add_red_scale_style(GtkWidget *w)
@@ -1106,6 +1113,10 @@ void add_dialog_style(GtkWidget *w)
 void add_check_button_style(GtkWidget *w)
 {
 }
+
+void add_entry_style(GtkWidget *w)
+{
+}
 #endif
 
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
@@ -1146,6 +1157,7 @@ slist *slist_new_with_title_and_table_data(const char *title,
   if (title)
     {
       lst->box = gtk_vbox_new(false, 0);
+      widget_set_vexpand(lst->box, true);
 
       lst->label = snd_gtk_highlight_label_new(title);
       gtk_box_pack_start(GTK_BOX(lst->box), lst->label, false, false, 0);
@@ -1153,6 +1165,7 @@ slist *slist_new_with_title_and_table_data(const char *title,
     }
 
   lst->topics = gtk_vbox_new(false, 2); /* sets list item vertical spacing */
+  widget_set_vexpand(lst->topics, true);
   lst->scroller = gtk_scrolled_window_new(NULL, NULL);
 
   if (!title) 
@@ -1456,10 +1469,23 @@ void init_gtk(void)
   listener_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(listener_provider),
     "#listener_text { \n"
-    "  background-color: rgb(240, 248, 255);\n"			 
+     "  background-color: rgb(240, 248, 255);\n"
+     "  color: #000000;\n"
+    "}\n"
+    "#listener_text:selected { \n"
+     "  background-color: darker(rgb(240, 248, 255));\n"
+     "  color: #000000;\n"
     "}\n",
     -1, NULL);
-		
+
+  entry_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(entry_provider),
+    "GtkEntry:selected { \n"
+    "  background-color: darker(rgb(240, 248, 255));\n"
+     "  color: #000000;\n"
+    "}\n",
+    -1, NULL);
+
   dialog_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(dialog_provider),
     "GtkDialog { \n"
@@ -1520,7 +1546,8 @@ void init_gtk(void)
 
   cb_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(cb_provider),
-    "GtkRadioButton, GtkCheckButton { \n"
+    "GtkRadioButton:hover, GtkCheckButton:hover { \n"
+    "  background-color: rgb(200, 200, 190);\n"
     "}\n",
     -1, NULL);
 }

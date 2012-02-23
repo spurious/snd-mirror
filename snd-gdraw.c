@@ -1089,10 +1089,16 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       widget_modify_bg(sep3, GTK_STATE_NORMAL, ss->basic_color);
       gtk_widget_show(sep3);
 
+      
+#if HAVE_GTK_3
+      #define PADDING 4
+#else
+      #define PADDING 2
+#endif
 
       /* AX */
       ax_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(orientbox), ax_box, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), ax_box, true, true, PADDING);
       gtk_widget_show(ax_box);
 
       ax_label = gtk_label_new("x angle:");
@@ -1114,7 +1120,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       /* AY */
       ay_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(orientbox), ay_box, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), ay_box, true, true, PADDING);
       gtk_widget_show(ay_box);
 
       ay_label = gtk_label_new("y angle:");
@@ -1136,7 +1142,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       /* AZ */
       az_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(orientbox), az_box, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), az_box, true, true, PADDING);
       gtk_widget_show(az_box);
 
       az_label = gtk_label_new("z angle:");
@@ -1157,14 +1163,14 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
 
       sep1 = gtk_vseparator_new(); /* not hseparator! */
-      gtk_box_pack_start(GTK_BOX(orientbox), sep1, false, false, 6);
+      gtk_box_pack_start(GTK_BOX(orientbox), sep1, false, false, 3 * PADDING);
       widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->basic_color);
       gtk_widget_show(sep1);
 
 
       /* SX */
       sx_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(orientbox), sx_box, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), sx_box, true, true, PADDING);
       gtk_widget_show(sx_box);
 
       sx_label = gtk_label_new("x scale:");
@@ -1186,7 +1192,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       /* SY */
       sy_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(orientbox), sy_box, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), sy_box, true, true, PADDING);
       gtk_widget_show(sy_box);
 
       sy_label = gtk_label_new("y scale:");
@@ -1208,7 +1214,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       /* SZ */
       sz_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(orientbox), sz_box, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), sz_box, true, true, PADDING);
       gtk_widget_show(sz_box);
 
 
@@ -1230,14 +1236,14 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
 
       sep2 = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(orientbox), sep2, false, false, 6);
+      gtk_box_pack_start(GTK_BOX(orientbox), sep2, false, false, 3 * PADDING);
       widget_modify_bg(sep2, GTK_STATE_NORMAL, ss->basic_color);
       gtk_widget_show(sep2);
 
 
       /* HOP */
       hop_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(orientbox), hop_box, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), hop_box, false, false, PADDING);
       gtk_widget_show(hop_box);
 
       hop_label = gtk_label_new("hop:     ");
@@ -1259,7 +1265,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_widget_show(oid_hop);
 
       sep5 = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(orientbox), sep5, false, false, 3);
+      gtk_box_pack_start(GTK_BOX(orientbox), sep5, false, false, 2 * PADDING);
       widget_modify_bg(sep5, GTK_STATE_NORMAL, ss->basic_color);
       gtk_widget_show(sep5);
     }

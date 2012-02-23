@@ -575,8 +575,9 @@ void snd_doit(int argc, char **argv)
       (!(set_bold_peaks_font(FALLBACK_FONT))))
     fprintf(stderr, "can't find bold peaks font: %s", DEFAULT_BOLD_PEAKS_FONT);
 
-  if (!(set_listener_font(FALLBACK_FONT)))
-    fprintf(stderr, "can't find listener font: %s", FALLBACK_FONT);
+  if ((!(set_listener_font(DEFAULT_LISTENER_FONT))) &&
+      (!(set_listener_font(FALLBACK_FONT))))
+    fprintf(stderr, "can't find listener font: %s", DEFAULT_LISTENER_FONT);
 
   ss->orig_axis_label_font = mus_strdup(axis_label_font(ss));
   ss->orig_axis_numbers_font = mus_strdup(axis_numbers_font(ss));
@@ -607,10 +608,13 @@ void snd_doit(int argc, char **argv)
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
+      /* hseparator here looks bad */
+
       SOUND_PANE(ss) = gtk_vpaned_new();
       add_paned_style(SOUND_PANE(ss));
       gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)), 0);
       gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), SOUND_PANE(ss));
+
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
 	  SOUND_PANE_BOX(ss) = gtk_notebook_new();

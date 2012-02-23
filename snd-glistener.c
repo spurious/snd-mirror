@@ -435,6 +435,41 @@ static void check_parens(void)
 }
 
 
+static gboolean listener_mouse_move(GtkWidget *w, GdkEvent *ev, gpointer data)
+{
+#if 0
+  gint ev_x, ev_y, wx, wy;
+  gdouble x, y;
+  GtkTextIter iter, start, end;
+  char *txt;
+
+  gdk_event_get_coords(ev, &x, &y);
+  ev_x = x;
+  ev_y = y;
+
+  gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(listener_text), GTK_TEXT_WINDOW_TEXT, ev_x, ev_y, &wx, &wy);
+  gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(listener_text), &iter, wx, wy);
+
+  start = iter;
+  end = iter;
+  if (!gtk_text_iter_starts_word(&start))
+    gtk_text_iter_backward_word_start(&start);
+  if (!gtk_text_iter_ends_word(&end))
+    gtk_text_iter_forward_word_end(&end);
+  txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, true);
+
+  /* now we have a word that is beneath the cursor */
+
+  /* TODO: underline now, go into wait for nms timing out
+   *        if motion kill and restart timer
+   *        if timeout, post info about the underlined thing
+   */
+#endif
+
+  return(false);
+}
+
+
 static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   check_parens();
@@ -811,8 +846,11 @@ GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t w
 {
   GtkWidget *text;
   GtkSettings *settings;
+
   text = gtk_entry_new();
   gtk_editable_set_editable(GTK_EDITABLE(text), true);
+  add_entry_style(text);
+
   settings = gtk_widget_get_settings(text);
   g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
 
@@ -834,13 +872,15 @@ GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t w
       bindings_ok = true;
       make_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
     }
-
   gtk_widget_show(text);
+
+#if (!HAVE_GTK_3)
   if (with_white_background == WITH_WHITE_BACKGROUND) 
     {
       widget_modify_bg(text, GTK_STATE_NORMAL, ss->white);
       widget_modify_base(text, GTK_STATE_SELECTED, ss->white); 
     }
+#endif
   connect_mouse_to_text(text);
   return(text);
 }
@@ -972,8 +1012,10 @@ static void make_listener_widget(int height)
 	gtk_paned_pack2(GTK_PANED(SOUND_PANE(ss)), frame, false, true); /* add2 but resize=false */
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
 
-      listener_text = make_scrolled_text(frame, true, 0, false); 
+      listener_text = make_scrolled_text(frame, true, CONTAINER_ADD, false); 
       /* gtk_widget_set_name(listener_text, "listener_text"); */
+      /* gtk_widget_set_margin_top(listener_text, 8); -- looks really dumb because it uses the outer bgcolor */
+      set_listener_text_font();
       add_listener_style(listener_text);
 
       make_bindings(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
@@ -985,6 +1027,9 @@ static void make_listener_widget(int height)
       SG_SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "populate-popup", listener_popup_populate_callback, NULL);
+
+      SG_SIGNAL_CONNECT(listener_text, "motion_notify_event", listener_mouse_move, NULL);
+
       ss->listener_pane = listener_text;
 
       if (!prompt_not_editable) 
@@ -1069,6 +1114,8 @@ int listener_height(void)
 {
 #if HAVE_GTK_3
   int hgt, pos;
+  if (!listener_text) 
+    return(0);
   hgt = widget_height(SOUND_PANE(ss));
   pos = gtk_paned_get_position(GTK_PANED(SOUND_PANE(ss)));
   return(hgt - pos);

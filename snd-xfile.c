@@ -13,13 +13,10 @@
  * the minibuffer is useless -- what to do with it?  maybe a per-channel toolbar?
  *   at least turn it into a straight (non-editable) label [statusbar appears to be the Gtk name for this]
  *   or try to recognize what user wants -- search in sound, help etc?
- *
  * clear-minibuffer|report-in-minibuffer -> use statusbar? or status-area?
  * remove prompt-in-minibuffer?  In fact, how is this used??
  * remove the widgets listed as part of the minibuffer (sound-widgets I assume)
  * remove eval-between-marks and all other such stuff from *.rb|fs
- *   thes functions don't make much sense anyway -- the user is prompted for a function,
- *   so he has to known the extension language!  So why not use it directly?
  *   also there may be text-oriented uses via sound-widgets
  *   and snd-kbd uses the prompt mechanism for dozens of operations -- how to replace this?
  *   other than C-x C-f or C-x C-w, are these actually useful?
@@ -27,21 +24,26 @@
  *
  * in gtk I think I've turned off the menu icons, yet they sometimes appear in the dialogs?
  * "global find" is jargon (used as a built-in xref title in snd-help)
- * other parts of the interface need tooltips, I suppose (the "x" in the sound pane for example)
+ * other parts of the interface need tooltips, I suppose (the "x|f|t" in the sound pane for example)
  *
- * get rid of the previous-files/dirs lists
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * edit env is a mess and is probably never used anyway -- in any case get rid of pointless buttons!
  * view files is a mess -- it tries to do way too much
  * some of these dialogs look too small -- holdover from distant past?
- *   fixup the margins at least (especially gfft)
+ *   fixup the margins at least
+ *
  * what about tooltips in the listener, or some way to show help (apropos) if hovering
  *   also if error displayed, hover->env printout etc
  *   and hover in graph -> show sample value?
+ *   see listener_move_mouse in snd-glistener.c
+ *
+ * if M-p/n are actually useful, add to glistener if possible
  *
  * gtk2 tooltips look much better because the bgcolor is correct, but pango markup here is only a partial fix
  *   if no audio in mix dialog, move the previous/next buttons over to the right
  * 
+ * stacktrace in listener popup should look for error info 1st -- can we tell last thing was in error?
+ *
  * 19: gxfind button order, but one is "forward|back" and the other is "next|previous"
  *       firefox uses |find: |entry| <--previous | -->next | highlight all, others use "search:..."
  *       the gtk back/forward business is built into the stock icons
@@ -60,6 +62,8 @@
  *     removed the minibuffer history stuff, minibuffer-history-length, prompt-in-minibuffer
  *     removed eval-between-marks and eval-over-selection, open-current-buffer and close-buffer
  * 23: left margin in gfft, etc
+ *     removed xsnd filter history
+ *     changed listener default font to Monospace 11, added get-font to extsnd.html
  */
 
 /* various file-related dialogs:

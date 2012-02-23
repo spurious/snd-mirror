@@ -1,5 +1,64 @@
 #include "snd.h"
 
+
+/* ---------------- listener text history ---------------- */
+
+static char **listener_strings = NULL;
+static int listener_strings_size = 0, listener_strings_pos = 0;
+static bool listener_first_time = true;
+
+void remember_listener_string(const char *str)
+{
+  int i, top;
+  if (!str) return;
+
+  if (listener_strings_size == 0)
+    {
+      listener_strings_size = 8;
+      listener_strings = (char **)calloc(listener_strings_size, sizeof(char *));
+    }
+  
+  listener_strings_pos = 0;
+  listener_first_time = true;
+
+  /* if str matches current history top entry, ignore it (as in tcsh) */
+  if ((listener_strings[0]) &&
+      (strcmp(str, listener_strings[0]) == 0))
+    return;
+
+  top = listener_strings_size - 1;
+  if (listener_strings[top]) free(listener_strings[top]);
+  for (i = top; i > 0; i--) listener_strings[i] = listener_strings[i - 1];
+
+  listener_strings[0] = mus_strdup(str);
+}
+
+
+void restore_listener_string(bool back)
+{
+  if (listener_strings)
+    {
+      char *str;
+      if (!(listener_first_time))
+	{
+	  if (back)
+	    listener_strings_pos++;
+	  else listener_strings_pos--;
+	}
+      listener_first_time = false;
+      if (listener_strings_pos < 0) listener_strings_pos = 0;
+      if (listener_strings_pos > (listener_strings_size - 1)) listener_strings_pos = listener_strings_size - 1;
+      str = listener_strings[listener_strings_pos];
+      if (str)
+	append_listener_text(-1, str); 
+    }
+}
+
+
+
+
+/* -------------------------------------------------------------------------------- */
+
 bool is_prompt(const char *str, int beg)
 {
   int i, j;

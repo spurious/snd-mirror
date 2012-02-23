@@ -1011,22 +1011,17 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   keysym = XKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),
 			    (ev->state & snd_ShiftMask) ? 1 : 0);
-  if ((ev->state & snd_MetaMask) && 
-      ((keysym == snd_K_p) || (keysym == snd_K_P) || (keysym == snd_K_n) || (keysym == snd_K_N)))
-    {
-      restore_filter_string(sp, (keysym == snd_K_p) || (keysym == snd_K_P));
-      return;
-    }
-  str = XmTextGetString(w);
-  if ((str) && (*str)) remember_filter_string(sp, str);
 
+  str = XmTextGetString(w);
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   redirect_errors_to(errors_to_minibuffer, (void *)sp);
   sp->filter_control_envelope = string_to_env((const char *)str);
   redirect_errors_to(NULL, NULL);
   if (str) XtFree(str);
+
   if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
+
   str = XmTextGetString(FILTER_ORDER_TEXT(sp));
   if ((str) && (*str))
     {

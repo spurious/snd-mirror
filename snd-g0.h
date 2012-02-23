@@ -260,8 +260,9 @@ typedef struct {
 #define DEFAULT_PEAKS_FONT "Times Medium 10"
 #define DEFAULT_BOLD_PEAKS_FONT "Times Bold 10"
 #define DEFAULT_AXIS_NUMBERS_FONT "Sans 10"
-/* changed 31-May-08 for Gtk+-2.13.1 -- apparently Fixed 10 is no longer defined (or maybe this is Fedora 9's fault?) */
+/* changed 31-May-08 for Gtk+-2.13.1 -- apparently Fixed 10 is no longer defined -- perhaps use Monospace here? */
 #define DEFAULT_AXIS_LABEL_FONT "Times Medium 14"
+#define DEFAULT_LISTENER_FONT "Monospace 11"
 
 typedef enum {CONTAINER_ADD, PANED_ADD1, BOX_PACK, TABLE_ATTACH, PANED_ADD2, BOX_PACK_END} widget_add_t;
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;

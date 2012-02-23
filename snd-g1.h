@@ -302,6 +302,7 @@ void add_white_button_style(GtkWidget *w);
 void add_listener_style(GtkWidget *w);
 void add_dialog_style(GtkWidget *w);
 void add_check_button_style(GtkWidget *w);
+void add_entry_style(GtkWidget *w);
 
 void recolor_graph(chan_info *cp, bool selected);
 void set_sensitive(GtkWidget *wid, bool val);

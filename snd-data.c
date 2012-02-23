@@ -446,7 +446,6 @@ void free_snd_info(snd_info *sp)
   sp->lacp = NULL;
   sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);
-  clear_filter_strings(sp);
   clear_players();
   reflect_mix_change(ANY_MIX_ID);
 

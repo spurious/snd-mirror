@@ -13508,6 +13508,26 @@ Scheme:    (cadr (main-widgets))
 Ruby:      main_widgets.cadr
 Forth:     main-widgets cadr
 </pre>
+
+<p>In Gtk 3.1 or later, we can use this to fire up a modal font chooser dialog:
+</p>
+
+<pre class="indented">
+&gt; (define (get-font)
+  (let ((fonts (gtk_font_chooser_dialog_new "fonts" (GTK_WINDOW (cadr (<em class=red>main-widgets</em>))))))
+    (let ((response (gtk_dialog_run (GTK_DIALOG fonts)))) ; don't return until a choice is made 
+      (let ((name (if (= response GTK_RESPONSE_OK)        ;   (cancel = GTK_RESPONSE_CANCEL)
+	              (gtk_font_chooser_get_font (GTK_FONT_CHOOSER fonts))
+		      'no-font-selected)))                ; perhaps pass in the current value instead?
+	(gtk_widget_destroy (GTK_WIDGET fonts))           ; clean up after the dialog
+	name))))                                          ; return new font
+get-font
+
+&gt; (set! (listener-font) (get-font))
+"Monospace Bold Italic 10"
+</pre>
+
+
 <div class="spacer"></div>
 
 

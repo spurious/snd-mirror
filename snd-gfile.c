@@ -2213,7 +2213,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
       gtk_widget_show(frame);
-      fdat->comment_text = make_scrolled_text(frame, true, 0, false); /* this returns a text_view widget */
+      fdat->comment_text = make_scrolled_text(frame, true, CONTAINER_ADD, false); /* this returns a text_view widget */
       connect_mouse_to_text(fdat->comment_text);
     }
 
@@ -4188,7 +4188,7 @@ static void create_post_it_monolog(void)
   add_highlight_button_style(ok_button);
 #endif
 
-  post_it_text = make_scrolled_text(DIALOG_CONTENT_AREA(post_it_dialog), false, 2, true);
+  post_it_text = make_scrolled_text(DIALOG_CONTENT_AREA(post_it_dialog), false, BOX_PACK, true);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
   gtk_widget_show(post_it_dialog);
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
