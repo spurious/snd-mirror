@@ -2531,7 +2531,7 @@ pane-box (10)name-form"
 #endif
 	      XEN_CONS(XEN_WRAP_WIDGET(FILTER_ENV(sp)), /* this is the (filter) drawingarea widget */
 	       XEN_CONS(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
-	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
+		XEN_CONS(XEN_FALSE,
 	         XEN_CONS(XEN_WRAP_WIDGET(NAME_PIX(sp)),
 		  XEN_CONS(XEN_WRAP_WIDGET(PANE_BOX(sp)),
 		   XEN_CONS(XEN_WRAP_WIDGET(NAME_HBOX(sp)),

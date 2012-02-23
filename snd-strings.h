@@ -423,7 +423,6 @@
 #define S_print_hook                    "print-hook"
 #define S_print_length                  "print-length"
 #define S_progress_report               "progress-report"
-#define S_prompt_in_minibuffer          "prompt-in-minibuffer"
 #define S_ptree_channel                 "ptree-channel"
 #define S_ramp_channel                  "ramp-channel"
 #define S_read_hook                     "read-hook"

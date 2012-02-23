@@ -5429,28 +5429,6 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 <div class="spacer"></div>
 
 
-<!-- open-buffer -->
-<pre class="indented">
-<em class=def id="openbuffer">open-buffer</em> filename
-<em class=emdef>close-buffer</em> snd
-</pre>
-
-<p>These two function implement a "Buffers" menu
-which provides a list of currently open sounds; select one
-in the menu to make it the selected sound; open-buffer
-adds a menu item that selects a file, close-buffer removes it.
-To activate this, we need
-to:
-</p>
-
-<pre class="indented">
-(hook-push <a class=quiet href="extsnd.html#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a> open-buffer)
-(hook-push <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a> close-buffer)
-</pre>
-
-<div class="spacer"></div>
-
-
 <!-- open-next-file-in-directory -->
 <pre class="indented">
 <em class=def id="opennextfileindirectory">open-next-file-in-directory</em> 
@@ -7135,35 +7113,6 @@ before it, causing it to move to sample 478.
 <div class="spacer"></div>
 
 
-<!-- eval-bewteen-marks -->
-<pre class="indented">
-<em class=def id="evalbetweenmarks">eval-between-marks</em> func
-</pre>
-
-<p>eval-between-marks evaluates 'func'
-between the leftmost marks in the currently selected channel.
-'func' should take one argument, a sample, and return the new sample value.
-</p>
-
-<pre class="indented">
-(eval-between-marks (lambda (y) (* y 2)))
-</pre>
-
-<p>doubles the samples between the two chosen marks, then returns a vct with the new data (I can't
-remember why this is returned &mdash; it doesn't seem necessary).
-</p>
-
-<pre class="indented">
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\m 0 
-  (lambda () "eval between marks"
-    (<a class=quiet href="extsnd.html#promptinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_promptinminibuffer_tip)">prompt-in-minibuffer</a> "mark eval:" eval-between-marks)))
-</pre>
-
-<p>prompts for a function in the minibuffer, then evaluates it between the marks.
-</p>
-<div class="spacer"></div>
-
-
 <!-- fit-selection-between-marks -->
 <pre class="indented">
 <em class=def id="fitselectionbetweenmarks">fit-selection-between-marks</em> m1 m2
@@ -7543,7 +7492,7 @@ you want to your initialization file.
 </p>
 
 <div class="seealso">
-see also: &nbsp; <a href="extsnd.html#addtomainmenu" onmouseout="UnTip()" onmouseover="Tip('add-to-main-menu and add-to-menu documentation')">add-to-main-menu</a> &nbsp; <a href="#openbuffer">Buffers menu</a> 
+see also: &nbsp; <a href="extsnd.html#addtomainmenu" onmouseout="UnTip()" onmouseover="Tip('add-to-main-menu and add-to-menu documentation')">add-to-main-menu</a>.
 </div>
 
 
@@ -10415,32 +10364,6 @@ see also: &nbsp; <a href="#clmexpsrc" onmouseout="UnTip()" onmouseover="Tip('clm
 <!--  FILE: selection  -->
 
 <div class="header" id="selectiondoc">selection</div>
-
-<!-- eval-over-selection -->
-<pre class="indented">
-<em class=def id="evaloverselection">eval-over-selection</em> func snd
-</pre>
-
-<p>eval-over-selection evaluates 'func' on each sample in the current selection. A better
-name might be map-selection.
-The code:</p>
-
-<pre class="indented">
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\x 4
-  (lambda () "eval over selection"
-    (if (<a class=quiet href="extsnd.html#selectionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionok_tip)">selection?</a>)
-	(<a class=quiet href="extsnd.html#promptinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_promptinminibuffer_tip)">prompt-in-minibuffer</a> "selection eval:" <em class=red>eval-over-selection</em>)
-	(<a class=quiet href="extsnd.html#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> "no selection")))
-  #t)
-</pre>
-
-<p>binds the key sequence C-x x to a function that checks for an active selection,
-then prompts (in the minibuffer) for the function to apply, and when
-you eventually reply with a function, applies that function
-to each sample in the selection.
-</p>
-
-<div class="spacer"></div>
 
 
 <!-- filter-selection-and-smooth -->

@@ -1780,7 +1780,6 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   sp->inuse = SOUND_READER;
   initialize_control_panel(sp);
   sp->search_proc = XEN_UNDEFINED;
-  sp->prompt_callback = XEN_UNDEFINED;
   sp->index = TEMP_SOUND_INDEX;
   len = (hdr->samples) / (hdr->chans);
 
@@ -4103,7 +4102,9 @@ void view_files_display_list(view_files_info *vdat)
 	      r->pos = i;
 	    }
 	  set_button_label(r->nm, vdat->names[r->pos]);
+#if WITH_AUDIO
 	  set_toggle_button(r->pl, false, false, (void *)vdat);
+#endif
 	  if (!(widget_is_active(r->rw))) activate_widget(r->rw);
 	  last_row = r->rw;
 	}

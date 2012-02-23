@@ -461,6 +461,7 @@ void about_snd_help(void)
 \n\
 21-Feb:  removed the recorder (snd-g|xrec.c).\n\
          removed the minibuffer history list and the minibuffer-history-length function.\n\
+         removed prompt-in-minibuffer.\n\
 10-Feb:  removed snd1.html, snd-contents.html.\n\
 2-Feb:   Snd 12.8.\n\
 27-Jan:  removed snd10.scm.\n\

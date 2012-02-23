@@ -138,7 +138,9 @@ void update_region_browser(bool grf_too)
       regrow *r;
       r = region_row(i);
       set_button_label(r->nm, rs->name[i]);
+#if WITH_AUDIO
       XmToggleButtonSetState(r->pl, false, false);
+#endif
       XtManageChild(r->rw);
     }
 
@@ -381,7 +383,10 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   Arg args[32];
   regrow *r;
   XmString s1;
-  XtCallbackList n1, n3;
+#if WITH_AUDIO
+  XtCallbackList n1;
+#endif
+  XtCallbackList n3;
 
   s1 = XmStringCreateLocalized((char *)"");
   r = (regrow *)calloc(1, sizeof(regrow));
@@ -435,7 +440,9 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   XtAddEventHandler(r->nm, EnterWindowMask, false, regrow_mouse_enter_label, (XtPointer)r);
   XtAddEventHandler(r->nm, LeaveWindowMask, false, regrow_mouse_leave_label, (XtPointer)r);
 
+#if WITH_AUDIO
   free(n1);
+#endif
   free(n3);
   return(r);
 }

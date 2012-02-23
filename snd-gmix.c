@@ -54,7 +54,9 @@ static bool speed_pressed = false, speed_dragged = false;
 /* can't use value_changed on adjustment and motion event happens even when the mouse merely moves across the slider without dragging */
 
 static speed_style_t gmix_speed_control_style = SPEED_CONTROL_AS_FLOAT;
-static graphics_context *mix_play_ax = NULL;
+#if WITH_AUDIO
+  static graphics_context *mix_play_ax = NULL;
+#endif
 
 static mus_float_t speed_to_scrollbar(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
@@ -386,7 +388,10 @@ static gboolean mix_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev,
 }
 
 
-static GtkWidget *w_id = NULL, *w_beg = NULL, *mix_play = NULL, *w_id_label = NULL;
+static GtkWidget *w_id = NULL, *w_beg = NULL, *w_id_label = NULL;
+#if WITH_AUDIO
+  static GtkWidget *mix_play = NULL;
+#endif
 
 static bool id_changed = false;
 

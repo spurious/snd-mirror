@@ -977,7 +977,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 
 #if HAVE_GTK_3
 static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider, *tb_provider, *mu_provider;
-static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider;
+static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider, *cb_provider;
 
 void add_white_button_style(GtkWidget *w)
 {
@@ -1052,6 +1052,13 @@ void add_blue_scale_style(GtkWidget *w)
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(bsc_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
+void add_check_button_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(cb_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
 #else
 
 void add_red_scale_style(GtkWidget *w)
@@ -1093,6 +1100,10 @@ void add_listener_style(GtkWidget *w)
 }
 
 void add_dialog_style(GtkWidget *w)
+{
+}
+
+void add_check_button_style(GtkWidget *w)
 {
 }
 #endif
@@ -1507,5 +1518,10 @@ void init_gtk(void)
     "}\n",
     -1, NULL);
 
+  cb_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(cb_provider),
+    "GtkRadioButton, GtkCheckButton { \n"
+    "}\n",
+    -1, NULL);
 }
 #endif

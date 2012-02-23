@@ -780,3 +780,188 @@ Reverb-feedback sets the scaler on the feedback.
 			       (set! (with-tracking-cursor) val))))
 
 (define (recorder-dialog) "recorder-dialog is obsolete")
+
+#|
+;;; these use prompt-in-minibuffer which is going away
+;;;
+;;; define selection from cursor to named mark bound to 'm' key
+(bind-key #\m 0 
+  (lambda ()
+    (prompt-in-minibuffer "mark name:"
+      (lambda (response) ; this expects a string (use double quotes)
+	(define (define-selection beg end)
+	  (let* ((s (selected-sound))
+		 (c (selected-channel s)))
+	    (set! (selection-member? s c) #t)
+	    (set! (selection-position s c) beg)
+	    (set! (selection-frames s c) (+ 1 (- end beg)))))
+        (let ((m (find-mark response)))
+	  (if (mark? m)
+	      (define-selection (cursor) (mark-sample m))
+	      (report-in-minibuffer "no such mark")))))))
+
+
+;;; -------- eval over selection, replacing current samples, mapped to "C-x x" key using prompt-in-minibuffer
+;;;
+;;; when the user types C-x x (without modifiers) and there is a current selection,
+;;;   the minibuffer prompts "selection eval:".  Eventually the user responds,
+;;;   hopefully with a function of one argument, the current selection sample
+;;;   the value returned by the function becomes the new selection value.
+
+(bind-key #\x 0
+  (lambda () "eval over selection"
+    (if (selection?)
+	(prompt-in-minibuffer "selection eval:" eval-over-selection)
+	(report-in-minibuffer "no selection")))
+  #t)
+
+(define (eval-over-selection func)
+  "(eval-over-selection func) evaluates func on each sample in the current selection"
+  (if (and (procedure? func) 
+	   (selection?))
+      (let ((beg (selection-position))
+	    (len (selection-frames)))
+	(apply map (lambda (snd chn)
+		     (if (selection-member? snd chn)
+			 (let ((new-data (make-vct len))
+			       (old-data (channel->vct beg len snd chn)))
+			   (do ((k 0 (+ 1 k))) ;here we're applying our function to each sample in the currently selected portion
+			       ((= k len) (vct->channel new-data beg len snd chn))
+			     (set! (new-data k) (func (old-data k)))))))
+	       (all-chans)))))
+
+
+;;; -------- eval-between-marks
+
+(define (eval-between-marks func)
+  "(eval-between-marks func) evaluates func between the leftmost marks; func takes one arg, the original sample"
+
+  (define (find-if pred l)
+    (cond ((null? l) #f)
+	  ((pred (car l)) l)
+	  (else (find-if pred (cdr l)))))
+
+  (if (procedure? func)
+      ;; find leftmost two marks in selected chn
+      (let ((chan (selected-channel))
+	    (snd (selected-sound)))
+	(if (< chan 0) (set! chan 0)) ;perhaps not current sound, so no selected channel in it
+	(let ((mlist (marks snd chan)))
+	  (if (< (length mlist) 2)
+	      (report-in-minibuffer "need 2 marks")
+	      (let* ((left-samp (left-sample snd chan))
+		     (winl (find-if (lambda (n) (> (mark-sample n) left-samp)) mlist)))
+		(if (and winl (> (length winl) 1))
+		    (let* ((beg (mark-sample (car winl)))
+			   (len (- (mark-sample (cadr winl)) beg))
+			   (new-data (make-vct len))
+			   (old-data (channel->vct beg len snd chan)))
+		      (do ((k 0 (+ 1 k)))
+			  ((= k len) (vct->channel new-data beg len snd chan))
+			(set! (new-data k) (func (old-data k))))))))))))
+
+;(bind-key #\m 0 (lambda () "eval between marks" (prompt-in-minibuffer "mark eval:" eval-between-marks)))
+
+
+
+;;; -------- C-x b support: hide all but one of the current sounds (more like Emacs)
+;;;
+;;;  this could also hide all but the current channel, but I can't decide if that's a good idea
+
+(define last-buffer #f)
+(define current-buffer #f)
+(define last-width 0)
+(define last-height 0)
+
+(define (open-current-buffer width height)
+  "(open-current-buffer width height) makes sure the current buffer is displayed (part of the C-x b support)"
+  (set! last-width width)
+  (set! last-height height)
+  (let ((sound-pane (car (sound-widgets (car current-buffer)))))
+    (if sound-pane
+	(begin
+	  (show-widget sound-pane)
+	  (set! (widget-size sound-pane) (list width height))
+	  (select-sound (car current-buffer))
+	  (select-channel (cadr current-buffer))))))
+
+(define (close-all-buffers)
+  "(close-all-buffers) closes all buffers (for C-x b)"
+  (for-each 
+   (lambda (n)
+     (hide-widget (car (sound-widgets n))))
+   (sounds)))
+
+(define (switch-to-buf)
+  "(switch-to-buf) handles C-x b"
+  (prompt-in-minibuffer 
+   (if last-buffer
+       (if (> (cadr last-buffer) 0)
+	   (format #f "switch to buf: (default \"~A\" chan ~A) " 
+		   (short-file-name (car last-buffer))
+		   (cadr last-buffer))
+	   (format #f "switch to buf: (default \"~A\") " 
+		   (short-file-name (car last-buffer))))
+       "switch to buf: (default: make new sound)")
+   (lambda (response)
+     (let ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
+	   (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
+       (call-with-exit
+	(lambda (give-up)
+	  (if (or (not (string? response))
+		  (= (string-length response) 0))
+	      (let ((temp current-buffer))
+		(if last-buffer
+		    (set! current-buffer last-buffer)
+		    (let ((index (new-sound)))
+		      (set! current-buffer (list index 0))))
+		(set! last-buffer temp))
+	      (let ((index (find-sound response)))
+		(if index
+		    (begin
+		      (set! last-buffer current-buffer)
+		      (set! current-buffer (list index 0)))
+		    (give-up (report-in-minibuffer (format #f "can't find ~A" response))))))
+	  (close-all-buffers)
+	  (report-in-minibuffer "")
+	  (open-current-buffer width height)))))))
+
+(define (xb-close snd)
+  "(xb-close snd) is part of the C-x b support"
+  (if (and current-buffer
+	   (= snd (car current-buffer)))
+      (let ((closer (car current-buffer)))
+	(close-all-buffers)
+	(if last-buffer
+	    (set! current-buffer last-buffer)
+	    (if (sounds)
+		(set! current-buffer (list (car (sounds)) 0))
+		(set! current-buffer #f)))
+	(set! last-buffer
+	      (call-with-exit
+	       (lambda (return)
+		 (for-each
+		  (lambda (n)
+		    (if (and (not (= n closer))
+			     (or (not current-buffer)
+				 (not (= n (car current-buffer)))))
+			(return (list n 0))))
+		  (sounds))
+		 #f)))
+	(if current-buffer
+	    (open-current-buffer last-width last-height)))))
+
+(define (xb-open snd)
+  "(xb-open snd) is part of the C-x b support"
+  (close-all-buffers)
+  (set! last-buffer current-buffer)
+  (set! current-buffer (list snd 0))
+  (open-current-buffer (if (= last-width 0) (window-width) last-width)
+		       (if (= last-height 0) (- (window-height) 10) last-height))
+  #f)
+
+;(bind-key #\b 0 switch-to-buf #t)
+;(hook-push close-hook xb-close)
+;(hook-push after-open-hook xb-open)	    
+
+|#

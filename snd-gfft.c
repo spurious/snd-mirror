@@ -946,6 +946,7 @@ GtkWidget *make_transform_dialog(bool managed)
 	GtkWidget *vb, *sep1, *sep2;
 
 	#define DISPLAY_MARGIN 2
+	#define LEFT_MARGIN 8
 
 	vbb = gtk_vbox_new(false, 6);
 	gtk_container_add(GTK_CONTAINER(display_frame), vbb);
@@ -963,46 +964,55 @@ GtkWidget *make_transform_dialog(bool managed)
 	gtk_container_add(GTK_CONTAINER(hb), buttons);
 	
 	normal_fft_button = gtk_radio_button_new_with_label(NULL, "single transform");
+	widget_set_margin_left(normal_fft_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(buttons), normal_fft_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(normal_fft_button);
 	SG_SIGNAL_CONNECT(normal_fft_button, "clicked", normal_fft_callback, NULL);
 	
 	sono_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "sonogram");
+	widget_set_margin_left(sono_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(buttons), sono_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(sono_button);
 	SG_SIGNAL_CONNECT(sono_button, "clicked", sonogram_callback, NULL);
 	
 	spectro_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(normal_fft_button)), "spectrogram");
+	widget_set_margin_left(spectro_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(buttons), spectro_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(spectro_button);
 	SG_SIGNAL_CONNECT(spectro_button, "clicked", spectrogram_callback, NULL);
 	
 	peaks_button = gtk_check_button_new_with_label("peaks");
+	widget_set_margin_left(peaks_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(buttons), peaks_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(peaks_button);
 	SG_SIGNAL_CONNECT(peaks_button, "toggled", peaks_callback, NULL);
 	
 	db_button = gtk_check_button_new_with_label("dB");
+	widget_set_margin_left(db_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(buttons), db_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(db_button);
 	SG_SIGNAL_CONNECT(db_button, "toggled", db_callback, NULL);
 	
 	logfreq_button = gtk_check_button_new_with_label("log freq");
+	widget_set_margin_left(logfreq_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(buttons), logfreq_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(logfreq_button);
 	SG_SIGNAL_CONNECT(logfreq_button, "toggled", logfreq_callback, NULL);
 	
 	normalize_button = gtk_check_button_new_with_label("normalize");
+	widget_set_margin_left(normalize_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(buttons), normalize_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(normalize_button);
 	SG_SIGNAL_CONNECT(normalize_button, "toggled", normalize_callback, NULL);
 	
 	selection_button = gtk_check_button_new_with_label("selection");
+	widget_set_margin_left(selection_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(buttons), selection_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(selection_button);
 	SG_SIGNAL_CONNECT(selection_button, "toggled", selection_callback, NULL);
 
 	phases_button = gtk_check_button_new_with_label("with phases");
+	widget_set_margin_left(phases_button, LEFT_MARGIN);
 	gtk_box_pack_end(GTK_BOX(buttons), phases_button, false, false, DISPLAY_MARGIN);
 	gtk_widget_show(phases_button);
 	SG_SIGNAL_CONNECT(phases_button, "toggled", phases_callback, NULL);

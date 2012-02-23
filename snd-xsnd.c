@@ -3467,7 +3467,7 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 #endif
 	      XEN_CONS(XEN_WRAP_WIDGET(FILTER_GRAPH(sp)), /* this is the drawingarea widget */
 	       XEN_CONS(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
-	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
+		XEN_CONS(XEN_FALSE,
 	         XEN_CONS(XEN_WRAP_WIDGET(LOCK_OR_BOMB(sp)),
 	          XEN_CONS(XEN_WRAP_WIDGET(SYNC_BUTTON(sp)),
 	           XEN_EMPTY_LIST)))))))))));

@@ -2958,8 +2958,6 @@ If it returns a string (a filename), that file is opened instead of the original
 	#f)))
 </pre>
 
-<p>See also <a href="sndscm.html#openbuffer">open-buffer</a> in examp.scm.
-</p>
 <div class="spacer"></div>
 
 <!-- open-raw-sound-hook -->
@@ -5841,7 +5839,6 @@ squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">
 insert silence before marks: <a href="sndscm.html#padmarks">pad-marks</a><br>
 move syncd marks: <a href="sndscm.html#movesyncdmarks">move-syncd-marks</a><br>
 play starting from syncd marks: <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
-evaluate function between marks: <a href="sndscm.html#evalbetweenmarks">eval-between-marks</a><br>
 place marks at selection start and end: <a href="sndscm.html#snapmarks">snap-marks</a><br>
 define selection via marks: <a href="sndscm.html#defineselectionviamarks">define-selection-via-marks</a><br>
 force dragged mark to land on a beat: <a href="sndscm.html#snapmarktobeat">snap-mark-to-beat</a><br>
@@ -7157,7 +7154,6 @@ hook called when selection stops playing: <a href="extsnd.html#stopplayingselect
 swap chans in selected portion: <a href="sndscm.html#swapselectionchannels">swap-selection-channels</a><br>
 replace portion with selection: <a href="sndscm.html#replacewithselection">replace-with-selection</a><br>
 select portion via function: <a href="sndscm.html#makeselection">make-selection</a><br>
-evaluate func on each sample of selection: <a href="sndscm.html#evaloverselection">eval-over-selection</a> (map-selection in effect)<br>
 selection members as list of lists of sound indices and channels: <a href="sndscm.html#selectionmembers">selection-members</a><br>
 rms of selection data: <a href="sndscm.html#selectionrms">selection-rms</a><br>
 delete selection and smooth the splice: <a href="extsnd.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
@@ -7403,7 +7399,7 @@ See <a href="#snpmark">snap-mark-to-beat</a>, or <a href="sndscm.html#snapmixtob
 <em class=def id="bomb">bomb</em> snd on
 </pre>
 
-<p>bomb displays an exploding bomb icon next to 'snd's' name (in the minibuffer area).  Set 'on' to #f to erase the bomb.  Each time bomb
+<p>bomb displays an exploding bomb icon next to 'snd's' name.  Set 'on' to #f to erase the bomb.  Each time bomb
 is called, the bomb icon moves to the next image in its sequence (showing the bomb's fuse burning down),
 restarting the sequence whenever it reaches the end.  This icon is used when a sound and its underlying file
 get out of sync somehow (<a href="#autoupdate">auto-update</a>).
@@ -9485,67 +9481,6 @@ the sound's minibuffer using 'name' to identify itself.
 <div class="separator"></div>
 
 
-<!-- prompt-in-minibuffer -->
-<pre class="indented">
-<em class=def id="promptinminibuffer">prompt-in-minibuffer</em> msg callback snd raw
-</pre>
-
-<p>This posts 'msg' in the sound's minibuffer and when you respond,
-it calls 'callback' with the response as the callback's argument.
-If 'callback' is specified it should be either #f or a function of 
-one argument: the raw response if 'raw' is #t, otherwise the evaluated response.
-For example, the following fragment asks for 
-a yes-or-no response, then takes some action:
-</p>
-
-<pre class="indented">
-  (define* (yes-or-no question action-if-yes action-if-no snd)
-    (<em class=red>prompt-in-minibuffer</em> question
-		 	  (lambda (response)
-			    (<a class=quiet href="#clearminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_clearminibuffer_tip)">clear-minibuffer</a>)
-			    (if (string=? response "yes")
-			        (action-if-yes snd)
-			        (action-if-no snd)))
-			  snd #t))
-</pre>
-
-<p>See eval-over-selection in <a href="sndscm.html#extensionsdoc">extensions.scm</a> for a more useful example.
-We could also use a continuation here:
-</p>
-
-<pre class="indented">
-(define (prompt msg default)
-  (call-with-current-continuation
-   (lambda (rsvp)
-     (<em class=red>prompt-in-minibuffer</em> msg rsvp)
-     default)))
-</pre>
-
-<p>The 'raw' argument is useful when we want to prompt for yes or no, without forcing the
-user to put the answer in double quotes.  In the next example, we replace Snd's
-built-in C-x k action (which immediately closes the sound) with one that is
-more like Emacs (it prompts for confirmation first):
-</p>
-
-<pre class="indented">
-(<a class=quiet href="#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> (char-&gt;integer #\k) 0 
-  (lambda ()
-    "close sound"
-    (<a class=quiet href="#clearminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_clearminibuffer_tip)">clear-minibuffer</a>)
-    (<em class=red>prompt-in-minibuffer</em>
-     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "close ~S (cr=yes)?" (<a class=quiet href="#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a>))
-     (lambda (response)
-       (if (or (not (string? response))
-	       (= (string-length response) 0)
-               (char=? (response 0) #\y))
-	   (<a class=quiet href="#closesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_closesound_tip)">close-sound</a>)))
-     #f   ; selected sound
-     #t)) ; treat as string (i.e. don't require double quotes)
-  #t)     ; C-x ...
-</pre>
-<div class="separator"></div>
-
-
 
 <!-- INDEX ptreechannel:Virtual Edits -->
 <!-- ptree-channel -->
@@ -9961,7 +9896,6 @@ redo-edit also exists in Scheme, for consistency.
 on the right, beneath the graph.  It is intended to mimic Emacs' minibuffer, being useful mainly for short,
 temporary messages.  C-g clears it, as does <a href="#clearminibuffer">clear-minibuffer</a>.  
 If 'as-error' is #t, the message is placed in the minibuffer error label, rather than in the usual text area.
-See also <a href="#promptinminibuffer">prompt-in-minibuffer</a>.
 </p>
 <div class="separator"></div>
 
@@ -13874,7 +13808,6 @@ prints the names of all the stereo AIFC files it finds:
 4: play button
 5: filter-graph               ; control panel drawing area for filter envelope
 6: unite button               ; invisible in mono sounds
-7: minibuffer-label           ; prompt area for the minibuffer
 8: name-icon                  ; hour-glass or whatever
 9: sync button
 </pre>

@@ -6,7 +6,9 @@ typedef enum {VF_AT_CURSOR, VF_AT_END, VF_AT_BEGINNING, VF_AT_MARK, VF_AT_SAMPLE
 typedef struct {
   widget_t rw;
   widget_t nm;
+#if WITH_AUDIO
   widget_t pl;
+#endif
   int pos;
   void *vdat;
 } vf_row;

@@ -9,18 +9,30 @@
  * isn't "save current settings" redundant? and "control panel" is a dumb name
  *   gtk options/controls has trough color?
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
+ *
  * the minibuffer is useless -- what to do with it?  maybe a per-channel toolbar?
  *   at least turn it into a straight (non-editable) label [statusbar appears to be the Gtk name for this]
  *   or try to recognize what user wants -- search in sound, help etc?
+ *
+ * clear-minibuffer|report-in-minibuffer -> use statusbar? or status-area?
+ * remove prompt-in-minibuffer?  In fact, how is this used??
+ * remove the widgets listed as part of the minibuffer (sound-widgets I assume)
+ * remove eval-between-marks and all other such stuff from *.rb|fs
+ *   thes functions don't make much sense anyway -- the user is prompted for a function,
+ *   so he has to known the extension language!  So why not use it directly?
+ *   also there may be text-oriented uses via sound-widgets
+ *   and snd-kbd uses the prompt mechanism for dozens of operations -- how to replace this?
+ *   other than C-x C-f or C-x C-w, are these actually useful?
+ *   could C-x C-f et al fire up the associated dialogs?
+ *
  * in gtk I think I've turned off the menu icons, yet they sometimes appear in the dialogs?
  * "global find" is jargon (used as a built-in xref title in snd-help)
- *
- * finish the query-tooltip callbacks in snd-gmenu
  * other parts of the interface need tooltips, I suppose (the "x" in the sound pane for example)
  *
  * get rid of the previous-files/dirs lists
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * edit env is a mess and is probably never used anyway -- in any case get rid of pointless buttons!
+ * view files is a mess -- it tries to do way too much
  * some of these dialogs look too small -- holdover from distant past?
  *   fixup the margins at least (especially gfft)
  * what about tooltips in the listener, or some way to show help (apropos) if hovering
@@ -28,10 +40,7 @@
  *   and hover in graph -> show sample value?
  *
  * gtk2 tooltips look much better because the bgcolor is correct, but pango markup here is only a partial fix
- * if no audio don't include the various play buttons
  *   if no audio in mix dialog, move the previous/next buttons over to the right
- *   still region play, snd play -- and why controls in this case??
- *   also motif cases here
  * 
  * 19: gxfind button order, but one is "forward|back" and the other is "next|previous"
  *       firefox uses |find: |entry| <--previous | -->next | highlight all, others use "search:..."
@@ -46,9 +55,11 @@
  *     gtk3 menu/toolbar fixups and gtk 3.3.16 in xg
  *     added view grid menu item
  *     removed control-panel related popup menu items
- * 22: added main menu context-sensitive tooltips
- *     WITH_AUDIO checks                          [unfinished]
- *     removed the minibuffer history stuff, minibuffer-history-length
+ * 22: added main menu context-sensitive tooltips in gtk
+ *     WITH_AUDIO checks
+ *     removed the minibuffer history stuff, minibuffer-history-length, prompt-in-minibuffer
+ *     removed eval-between-marks and eval-over-selection, open-current-buffer and close-buffer
+ * 23: left margin in gfft, etc
  */
 
 /* various file-related dialogs:
@@ -919,18 +930,22 @@ typedef struct dialog_play_info {
 
 static void file_dialog_stop_playing(dialog_play_info *dp)
 {
+#if WITH_AUDIO
   if ((dp->player) && 
       (dp->player->playing)) 
     {
       stop_playing_sound(dp->player, PLAY_BUTTON_UNSET);
       dp->player = NULL;
     }
+#endif
 }
 
 
 void clear_deleted_snd_info(struct dialog_play_info *dp)
 {
+#if WITH_AUDIO
   dp->player = NULL;
+#endif
 }
 
 
@@ -1096,7 +1111,9 @@ static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
 
 static void post_file_info(file_dialog_info *fd, const char *filename)
 {
+#if WITH_AUDIO
   XtManageChild(fd->dp->play_button);
+#endif
   post_sound_info(fd->info1, fd->info2, filename, true);
   if (!(XtIsManaged(fd->info1))) 
     XtManageChild(fd->info1);
@@ -1118,8 +1135,10 @@ static void post_file_info(file_dialog_info *fd, const char *filename)
 
 static void unpost_file_info(file_dialog_info *fd)
 {
+#if WITH_AUDIO
   if (XtIsManaged(fd->dp->play_button)) 
     XtUnmanageChild(fd->dp->play_button);
+#endif
   if (XtIsManaged(fd->info_frame))
     XtUnmanageChild(fd->info_frame);
 #if HAVE_FAM
@@ -1383,7 +1402,9 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   /* -------- Snd-like color schemes */
   color_file_selection_box(fd->dialog);
   XtVaSetValues(fd->fp->just_sounds_button, XmNselectColor, ss->selection_color, NULL);
+#if WITH_AUDIO
   XtVaSetValues(fd->dp->play_button, XmNselectColor, ss->selection_color, NULL);
+#endif
 
   /* -------- completions */
 
@@ -1908,12 +1929,14 @@ widget_t make_insert_file_dialog(bool managed)
 
 void set_open_file_play_button(bool val)
 {
+#if WITH_AUDIO
   if ((odat) && (odat->dp->play_button))
     XmToggleButtonSetState(odat->dp->play_button, (Boolean)val, false);
   if ((mdat) && (mdat->dp->play_button))
     XmToggleButtonSetState(mdat->dp->play_button, (Boolean)val, false);
   if ((idat) && (idat->dp->play_button))
     XmToggleButtonSetState(idat->dp->play_button, (Boolean)val, false);
+#endif
 }
 
 
@@ -3308,6 +3331,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 
 static void save_as_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
 {
+#if WITH_AUDIO
   dialog_play_info *dp = (dialog_play_info *)context;
   char *filename = NULL;
   XmString *strs;
@@ -3321,6 +3345,7 @@ static void save_as_dialog_select_callback(Widget w, XtPointer context, XtPointe
 	XtUnmanageChild(dp->play_button);
     }
   if (filename) XtFree(filename);
+#endif
 }
 
 
@@ -3538,7 +3563,9 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtVaSetValues(sd->panel_data->format_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
       XtVaSetValues(sd->panel_data->header_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
       XtVaSetValues(sd->fp->just_sounds_button, XmNselectColor, ss->selection_color, NULL);
+#if WITH_AUDIO
       XtVaSetValues(sd->dp->play_button, XmNselectColor, ss->selection_color, NULL);
+#endif
 
       XtVaSetValues(sd->panel_data->src_button, XmNselectColor, ss->selection_color, NULL);
       if (sd->type == SOUND_SAVE_AS)
@@ -5222,7 +5249,10 @@ static vf_row *make_vf_row(view_files_info *vdat,
   Arg args[32];
   vf_row *r;
   XmString s1;
-  XtCallbackList n1, n3;
+#if WITH_AUDIO
+  XtCallbackList n1;
+#endif
+  XtCallbackList n3;
 
   s1 = XmStringCreateLocalized((char *)"");
   r = (vf_row *)calloc(1, sizeof(vf_row));
@@ -5238,6 +5268,7 @@ static vf_row *make_vf_row(view_files_info *vdat,
   XtSetArg(args[n], XmNheight, 18); n++; 
   r->rw = XtCreateWidget("rw", xmFormWidgetClass, vdat->file_list_holder, args, n);
 
+#if WITH_AUDIO
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -5250,11 +5281,16 @@ static vf_row *make_vf_row(view_files_info *vdat,
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
   XtSetArg(args[n], XmNmarginWidth, 8); n++;
   r->pl = make_togglebutton_widget("pl", r->rw, args, n);
+#endif
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+#if WITH_AUDIO
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, r->pl); n++;
+#else
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+#endif
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -5271,7 +5307,9 @@ static vf_row *make_vf_row(view_files_info *vdat,
   XtAddEventHandler(r->nm, EnterWindowMask, false, vf_mouse_enter_label, (XtPointer)r);
   XtAddEventHandler(r->nm, LeaveWindowMask, false, vf_mouse_leave_label, (XtPointer)r);
 
+#if WITH_AUDIO
   free(n1);
+#endif
   free(n3);
   return(r);
 }
@@ -5431,6 +5469,7 @@ static void view_files_select_callback(Widget w, XtPointer context, XtPointer in
 
 static void view_files_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
+#if WITH_AUDIO
   /* open and play -- close at end or when button off toggled */
   vf_row *r = (vf_row *)context;
   view_files_info *vdat;
@@ -5439,6 +5478,7 @@ static void view_files_play_callback(Widget w, XtPointer context, XtPointer info
   if (view_files_play(vdat, r->pos, cb->set))
     XmToggleButtonSetState(w, false, false);
   else vdat->current_play_button = w;
+#endif
 }
 
 
@@ -5571,12 +5611,17 @@ void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or
 {
   char *filename;
   filename = mus_expand_filename((const char *)file_or_dir);
-  if ((filename) && (filename[strlen(filename) - 1] == '*'))
-    filename[strlen(filename) - 1] = 0;
-  if (directory_p(filename))
-    add_directory_to_view_files_list(vdat, (const char *)filename);
-  else add_file_to_view_files_list(vdat, file_or_dir, filename);
-  free(filename);
+  if (filename)
+    {
+      int len;
+      len = strlen(filename);
+      if (filename[len - 1] == '*')
+	filename[len - 1] = 0;
+      if (directory_p(filename))
+	add_directory_to_view_files_list(vdat, (const char *)filename);
+      else add_file_to_view_files_list(vdat, file_or_dir, filename);
+      free(filename);
+    }
 }
 
 
@@ -6194,7 +6239,10 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
 #if (!HAVE_FAM)
       Widget sep2;
 #endif
-      Widget plw, rlw, sbar;
+#if WITH_AUDIO
+      Widget plw;
+#endif
+      Widget rlw, sbar;
       XtCallbackList n1, n2, n3, n4;
       Widget amp_label, speed_label, env_frame;
       Widget bframe, bform;
@@ -6803,6 +6851,7 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNseparatorType, XmDOUBLE_LINE); n++;
       sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, viewform, args, n);
 
+#if WITH_AUDIO
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
@@ -6812,6 +6861,7 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNtopWidget, sep1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       plw = XtCreateManagedWidget("play", xmLabelWidgetClass, viewform, args, n);
+#endif
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
@@ -6858,8 +6908,13 @@ widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNleftPosition, 5); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+#if WITH_AUDIO
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, plw); n++;
+#else
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sep1); n++;
+#endif
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, sep3); n++;
       XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;

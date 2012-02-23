@@ -296,10 +296,12 @@ static void fsb_file_select_callback(const char *file_name, int row, void *data)
 }
 
 
+#if WITH_AUDIO
 static char *fsb_selected_file(fsb *fs)
 {
   return(fsb_fullname(fs, slist_selection(fs->file_list)));
 }
+#endif
 
 
 static void fsb_filter_activate(GtkWidget *w, gpointer context) 

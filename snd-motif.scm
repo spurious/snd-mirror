@@ -412,7 +412,8 @@
     (for-each-child 
      swc 
      (lambda (n) 
-       (if (and (not (string=? (XtName n) "snd-name-form")) 
+       (if (and n 
+		(not (string=? (XtName n) "snd-name-form")) 
 		(not (string=? (XtName (XtParent n)) "snd-name-form")))
 	   (XtUnmanageChild n))))
     (XtSetValues swc (list XmNpaneMaximum 1 

@@ -575,7 +575,6 @@ void clear_minibuffer(snd_info *sp)
   sp->loading = false;
   sp->amp_count = 0;
   sp->macro_count = 0;
-  sp->prompting = false;
 }
 
 
@@ -1042,33 +1041,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 #endif
     }
 
-#if HAVE_EXTENSION_LANGUAGE
-  /* strlen can be 0 here if <cr> response to prompt */
-  if (sp->prompting)
-    {
-      int loc;
-      if (mus_strlen(str) > 0)
-	{
-	  XEN proc;
-	  redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
-	  redirect_errors_to(errors_to_minibuffer, (void *)sp);
-	  if (sp->raw_prompt)
-	    proc = C_TO_XEN_STRING(str);
-	  else proc = snd_catch_any(eval_str_wrapper, str, str);
-	  if (XEN_PROCEDURE_P(sp->prompt_callback))
-	    {
-	      loc = snd_protect(proc);
-	      XEN_CALL_1(sp->prompt_callback, proc, "prompt callback func");
-	      snd_unprotect_at(loc);
-	    }
-	  redirect_everything_to(NULL, NULL);
-	}
-      sp->prompting = false;
-      sp->minibuffer_on = MINI_REPORT;
-      clear_minibuffer_prompt(sp);
-      return;
-    }
-#endif
   if (mus_strlen(str) > 0)
     {
       redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
@@ -2511,67 +2483,9 @@ static XEN g_save_macros(XEN file)
 }
 
 
-/* this doesn't display the full prompt in motif, but I can't find any way to fix it */
-
 static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd, XEN raw)
 {
-  #if HAVE_SCHEME
-    #define prompt_example "(prompt-in-minibuffer \"what?\" (lambda (response) (snd-print response)))"
-  #endif
-  #if HAVE_RUBY
-    #define prompt_example "prompt_in_minibuffer(\"what?\", lambda do | response | snd_print(response) end)"
-  #endif
-  #if HAVE_FORTH
-    #define prompt_example "\"what?\" lambda: <{ response }> response snd-print ; prompt-in-minibuffer"
-  #endif
-
-  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg :optional callback snd raw): post msg in snd's minibuffer \
-then when the user eventually responds, invoke the function callback, if any, with the response.  If 'raw' is " PROC_TRUE ", the response is \
-passed as a string to the prompt callback function; otherwise it is evaluated first.\n  " prompt_example
-
-  snd_info *sp;
-
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_prompt_in_minibuffer, "a string");
-  XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(callback)) || (XEN_BOOLEAN_P(callback)) || XEN_PROCEDURE_P(callback), 
-		  callback, XEN_ARG_2, S_prompt_in_minibuffer, PROC_FALSE " or a procedure");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(raw), raw, XEN_ARG_4, S_prompt_in_minibuffer, "a boolean");
-  ASSERT_SOUND(S_prompt_in_minibuffer, snd, 3);
-
-  sp = get_sp(snd);
-  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
-    return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd));
-
-  if (XEN_PROCEDURE_P(sp->prompt_callback))
-    {
-      snd_unprotect_at(sp->prompt_callback_loc);
-      sp->prompt_callback_loc = NOT_A_GC_LOC;
-    }
-
-  sp->prompt_callback = XEN_FALSE; /* just in case something goes awry */
-  if (XEN_BOUND_P(raw)) sp->raw_prompt = XEN_TO_C_BOOLEAN(raw); else sp->raw_prompt = false;
-  if (XEN_PROCEDURE_P(callback))
-    {
-      char *errstr;
-      XEN errmsg;
-      errstr = procedure_ok(callback, 1, S_prompt_in_minibuffer, "callback", 2);
-      if (errstr)
-	{
-	  errmsg = C_TO_XEN_STRING(errstr);
-	  free(errstr);
-	  return(snd_bad_arity_error(S_prompt_in_minibuffer, 
-				     errmsg,
-				     callback));
-	}
-      sp->prompt_callback_loc = snd_protect(callback);  
-    }
-  sp->prompt_callback = callback;
-  make_minibuffer_label(sp, XEN_TO_C_STRING(msg));
-  sp->minibuffer_on = MINI_USER;
-  sp->prompting = true;
-#if USE_MOTIF
-  goto_minibuffer(sp); /* in gtk this somehow calls activate in the text widget, clearing our prompt? */
-#endif
-  return(callback);
+  return(XEN_FALSE);
 }
 
 
@@ -2673,7 +2587,9 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_save_macros,            g_save_macros_w,            1, 0, 0, H_save_macros);
   XEN_DEFINE_PROCEDURE(S_clear_minibuffer,       g_clear_minibuffer_w,       0, 1, 0, H_clear_minibuffer);
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 2, 0, H_report_in_minibuffer);
-  XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,   g_prompt_in_minibuffer_w,   1, 3, 0, H_prompt_in_minibuffer);
+#if (!SND_DISABLE_DEPRECATED)
+  XEN_DEFINE_PROCEDURE("prompt-in-minibuffer",   g_prompt_in_minibuffer_w,   1, 3, 0, "obsolete");
+#endif
   XEN_DEFINE_PROCEDURE(S_snd_simulate_keystroke, g_snd_simulate_keystroke_w, 4, 0, 0, "internal testing function");
 
 #if HAVE_SCHEME

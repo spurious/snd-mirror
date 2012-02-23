@@ -4,7 +4,6 @@
 ;;;   replace-with-selection
 ;;;   selection-members
 ;;;   make-selection
-;;;   eval-over-selection
 ;;;   filter-selection-and-smooth
 ;;;   with-temporary-selection
 ;;;
@@ -74,26 +73,6 @@
 	(len (selection-frames)))
     (insert-selection beg) ; put in the selection before deletion, since delete-samples can deactivate the selection
     (delete-samples (+ beg len) len)))
-
-
-
-#|
-;;; define selection from cursor to named mark bound to 'm' key
-(bind-key #\m 0 
-  (lambda ()
-    (prompt-in-minibuffer "mark name:"
-      (lambda (response) ; this expects a string (use double quotes)
-	(define (define-selection beg end)
-	  (let* ((s (selected-sound))
-		 (c (selected-channel s)))
-	    (set! (selection-member? s c) #t)
-	    (set! (selection-position s c) beg)
-	    (set! (selection-frames s c) (+ 1 (- end beg)))))
-        (let ((m (find-mark response)))
-	  (if (mark? m)
-	      (define-selection (cursor) (mark-sample m))
-	      (report-in-minibuffer "no such mark")))))))
-|#
 
 
 
@@ -172,39 +151,6 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 	  (unselect-all))
       result)))
 
-
-
-
-;;; -------- eval over selection, replacing current samples, mapped to "C-x x" key using prompt-in-minibuffer
-;;;
-;;; when the user types C-x x (without modifiers) and there is a current selection,
-;;;   the minibuffer prompts "selection eval:".  Eventually the user responds,
-;;;   hopefully with a function of one argument, the current selection sample
-;;;   the value returned by the function becomes the new selection value.
-
-(bind-key #\x 0
-  (lambda () "eval over selection"
-    (if (selection?)
-	(prompt-in-minibuffer "selection eval:" eval-over-selection)
-	(report-in-minibuffer "no selection")))
-  #t)
-
-(define (eval-over-selection func)
-  "(eval-over-selection func) evaluates func on each sample in the current selection"
-  (if (and (procedure? func) 
-	   (selection?))
-      (let ((beg (selection-position))
-	    (len (selection-frames)))
-	(apply map (lambda (snd chn)
-		     (if (selection-member? snd chn)
-			 (let ((new-data (make-vct len))
-			       (old-data (channel->vct beg len snd chn)))
-			   (do ((k 0 (+ 1 k))) ;here we're applying our function to each sample in the currently selected portion
-			       ((= k len) (vct->channel new-data beg len snd chn))
-			     (set! (new-data k) (func (old-data k)))))))
-	       (all-chans)))))
-
-;;; the same idea can be used to apply a function between two marks (see eval-between-marks in marks.scm)
 
 
 ;;; -------- filter-selection-and-smooth

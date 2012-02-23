@@ -872,13 +872,17 @@ GtkWidget *make_color_orientation_dialog(bool managed)
     {
       GtkWidget *light_label, *dark_label, *help_button, *dismiss_button, *reset_button;
       GtkWidget *scale_box, *cutoff_box, *cutoff_label;
-      GtkWidget *color_frame, *color_label, *mainbox, *colorbox, *map_box;
+      GtkWidget *color_label, *mainbox, *colorbox, *map_box;
       GtkWidget *shbox;
 
       GtkWidget *ax_box, *ay_box, *az_box, *sx_box, *sy_box, *sz_box, *hop_box;
       GtkWidget *ax_label, *ay_label, *az_label, *sx_label, *sy_label, *sz_label, *hop_label;
-      GtkWidget *orient_frame, *orient_label, *orientbox;
+      GtkWidget *orient_label, *orientbox;
       GtkWidget *sep1, *sep2, *sep3, *sep5;
+
+#if (!HAVE_GTK_3)
+      GtkWidget *orient_frame, *color_frame;
+#endif
 
 
       ccd_dialog = snd_gtk_dialog_new();
@@ -921,15 +925,20 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(ccd_dialog)), mainbox);
       gtk_widget_show(mainbox);
       
-
+#if (!HAVE_GTK_3)
       color_frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(mainbox), color_frame, false, false, 10);
       gtk_frame_set_shadow_type(GTK_FRAME(color_frame), GTK_SHADOW_ETCHED_IN);
       widget_set_vexpand(color_frame, true);
       gtk_widget_show(color_frame);
+#endif
 
       colorbox = gtk_vbox_new(false, 2);
+#if HAVE_GTK_3
+      gtk_box_pack_start(GTK_BOX(mainbox), colorbox, false, false, 10);
+#else
       gtk_container_add(GTK_CONTAINER(color_frame), colorbox);
+#endif
       widget_set_vexpand(colorbox, true);
       gtk_widget_show(colorbox);
 
@@ -945,14 +954,18 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       map_box = gtk_hbox_new(false, 4);
       widget_set_vexpand(map_box, true);
+      widget_set_margin_left(map_box, 8);
       gtk_box_pack_start(GTK_BOX(colorbox), map_box, true, true, 8);
       gtk_widget_show(map_box);
       
       {
 	char **names;
+#if (!HAVE_GTK_3)
 	GtkWidget *frame;
+#endif
 	int i, size;
 	
+#if (!HAVE_GTK_3)
 	frame = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(frame), 0);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
@@ -961,11 +974,16 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 	widget_set_hexpand(frame, true);
 	widget_set_vexpand(frame, true);
 	gtk_widget_show(frame);
+#endif
 	
 	size = num_colormaps();
 	names = (char **)calloc(size, sizeof(char *));
 	for (i = 0; i < size; i++) names[i] = colormap_name(i);
+#if HAVE_GTK_3
+	ccd_list = slist_new_with_title(S_colormap, map_box, (const char**)names, size, BOX_PACK);
+#else
 	ccd_list = slist_new_with_title(S_colormap, frame, (const char**)names, size, CONTAINER_ADD);
+#endif
 	ccd_list->select_callback = list_color_callback;
 	widget_set_vexpand(ccd_list->box, true);
 	free(names);
@@ -983,7 +1001,9 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       
       scale_box = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(colorbox), scale_box, false, false, 10);
+      widget_set_margin_left(scale_box, 8);
+      widget_set_margin_right(scale_box, 8);
+      gtk_box_pack_start(GTK_BOX(colorbox), scale_box, false, false, 0);
       gtk_widget_show(scale_box);
       
       ccd_scale_adj = (GtkAdjustment *)gtk_adjustment_new(50.0, 0.0, 101.0, 0.1, 1.0, 1.0);
@@ -1013,8 +1033,10 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_widget_show(dark_label);
 
 
-      cutoff_box = gtk_hbox_new(false, 10);
-      gtk_box_pack_end(GTK_BOX(colorbox), cutoff_box, false, false, 0);
+      cutoff_box = gtk_hbox_new(false, 0);
+      widget_set_margin_left(cutoff_box, 8);
+      widget_set_margin_right(cutoff_box, 8);
+      gtk_box_pack_end(GTK_BOX(colorbox), cutoff_box, false, false, 8);
       gtk_widget_show(cutoff_box);
 
       cutoff_label = gtk_label_new("data cutoff:");
@@ -1039,13 +1061,22 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       /* orientation section */
 
+#if (!HAVE_GTK_3)
       orient_frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(mainbox), orient_frame, false, false, 0);
       gtk_frame_set_shadow_type(GTK_FRAME(orient_frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(orient_frame);
+#endif
 
       orientbox = gtk_vbox_new(false, 2);
+#if HAVE_GTK_3
+      /* gtk_widget_set_vexpand(orientbox, true); */
+      widget_set_margin_left(orientbox, 8);
+      widget_set_margin_right(orientbox, 8);
+      gtk_box_pack_start(GTK_BOX(mainbox), orientbox, false, false, 10);
+#else
       gtk_container_add(GTK_CONTAINER(orient_frame), orientbox);
+#endif
       gtk_widget_show(orientbox);
 
       orient_label = snd_gtk_highlight_label_new("orientation");

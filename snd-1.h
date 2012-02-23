@@ -385,16 +385,15 @@ typedef struct snd_info {
   int nchans;
   struct ptree *search_tree;
   XEN search_proc;
-  XEN prompt_callback;
   XEN properties;
-  int search_proc_loc, prompt_callback_loc, properties_loc;
-  bool raw_prompt, remembering;
+  int search_proc_loc, properties_loc;
+  bool remembering;
   char *search_expr;
   mus_long_t marking;
   int search_count, amp_count; /* search_count = number of times to search before return, amp_count = amp env samps if not 1 (= full dur) */
   sp_filing_t filing;
   char *filing_filename;
-  bool prompting, loading, finding_mark, selectioning;
+  bool loading, finding_mark, selectioning;
   printing_t printing;
   mus_long_t macro_count;
   minibuffer_choice_t minibuffer_on;

@@ -52,6 +52,11 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #if (!HAVE_GTK_3)
 #define EVENT_AREA_WIDTH(Ev)  (Ev)->area.width
 #define EVENT_AREA_HEIGHT(Ev) (Ev)->area.height
+#define widget_set_margin_left(W, M) 
+#define widget_set_margin_right(W, M) 
+#else
+#define widget_set_margin_left(W, M) gtk_widget_set_margin_left(W, M)
+#define widget_set_margin_right(W, M) gtk_widget_set_margin_right(W, M)
 #endif
 
 #if (HAVE_GTK_3) && defined(__GNUC__) && (!(defined(__cplusplus)))

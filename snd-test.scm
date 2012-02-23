@@ -2252,7 +2252,7 @@
 		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
 		       'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
 		       'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
-		       'prompt-in-minibuffer 'ptree-channel 'pulse-train
+		       'ptree-channel 'pulse-train
 		       'pulse-train? 'radians->degrees 'radians->hz
 		       'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
 		       'read-hook 'read-mix-sample 'read-only 'read-region-sample
@@ -32693,22 +32693,6 @@ EDITS: 2
 	      (if (not (equal? (edit-fragment 2 obi 0) '("delete-selection-and-smooth" "set" 968 64))) 
 		  (snd-display #__line__ ";edit-fragment(2): ~S?" (edit-fragment 2 obi 0)))
 	      
-	      (let ((samp100 (sample 1100 obi 0)))
-		(select-sound obi)
-		(safe-make-selection 1000 2000 obi)
-		(eval-over-selection (lambda (val) (* 2.0 val)))
-		(let ((nsamp100 (sample 1100 obi 0)))
-		  (if (fneq (* 2.0 samp100) nsamp100) 
-		      (snd-display #__line__ ";eval-over-selection: ~A ~A [~A ~A]?" 
-				   samp100 nsamp100 (selection-position) (selection-frames)))
-		  (let ((m2 (add-mark 1000 obi 0))
-			(m3 (add-mark 2000 obi 0)))
-		    (if (not (equal? (marks obi 0) (list m2 m3))) (snd-display #__line__ ";add-mark: ~A ~A?" (marks obi 0) (list m2 m3)))
-		    (set! (left-sample obi 0) 950)
-		    (eval-between-marks (lambda (val) (* 2.0 val)))
-		    (let ((msamp100 (sample 1100 obi 0)))
-		      (if (fneq (* 2.0 nsamp100) msamp100) (snd-display #__line__ ";eval-between-marks: ~A ~A?" nsamp100 msamp100))
-		      (revert-sound obi)))))
 	      (let ((maxa (maxamp obi)))
 		(normalized-mix "pistol.snd" 1000 0 obi 0)
 		(let ((nmaxa (maxamp obi)))
@@ -60200,7 +60184,7 @@ EDITS: 1
 		     peaks player? players play-arrow-size
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
-		     print-length progress-report prompt-in-minibuffer read-only
+		     print-length progress-report read-only
 		     redo region-chans view-regions-dialog region-home 
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position remember-sound-state
 		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
@@ -61440,7 +61424,6 @@ EDITS: 1
 		  (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 -2)))
 		  (check-error-tag 'no-data (lambda () (scale-by '())))
 		  (check-error-tag 'no-data (lambda () (scale-to '())))
-		  (check-error-tag 'bad-arity (lambda () (prompt-in-minibuffer "hi" (lambda (x y) (+ x y)))))
 		  (check-error-tag 'no-such-sample (lambda () (set! (selection-position ind 0) -999)))
 		  (check-error-tag 'wrong-type-arg (lambda () (set! (selection-frames ind 0) -999)))
 		  (check-error-tag 'wrong-type-arg (lambda () (set! (selection-frames ind 0) 0)))

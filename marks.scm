@@ -13,7 +13,6 @@
 ;;;     pad-marks inserts silence before each in a list of marks
 ;;;     play-syncd-marks and play-between-marks
 ;;;     report-mark-names causes mark names to be posted in the minibuffer as a sound is played
-;;;     eval-between-marks evaluates func between two marks
 ;;;     snap-marks places marks at current selection boundaries
 ;;;     define-selection-via-marks selects the portion between two marks
 ;;;     snap-mark-to-beat forces dragged mark to end up on a beat
@@ -253,38 +252,6 @@
 		 (hook-push stop-playing-hook report-mark-names-stop-playing-hook)
 		 (hook-push play-hook report-mark-names-play-hook)
 		 #f))))
-
-
-;;; -------- eval-between-marks
-
-(define (eval-between-marks func)
-  "(eval-between-marks func) evaluates func between the leftmost marks; func takes one arg, the original sample"
-
-  (define (find-if pred l)
-    (cond ((null? l) #f)
-	  ((pred (car l)) l)
-	  (else (find-if pred (cdr l)))))
-
-  (if (procedure? func)
-      ;; find leftmost two marks in selected chn
-      (let ((chan (selected-channel))
-	    (snd (selected-sound)))
-	(if (< chan 0) (set! chan 0)) ;perhaps not current sound, so no selected channel in it
-	(let ((mlist (marks snd chan)))
-	  (if (< (length mlist) 2)
-	      (report-in-minibuffer "need 2 marks")
-	      (let* ((left-samp (left-sample snd chan))
-		     (winl (find-if (lambda (n) (> (mark-sample n) left-samp)) mlist)))
-		(if (and winl (> (length winl) 1))
-		    (let* ((beg (mark-sample (car winl)))
-			   (len (- (mark-sample (cadr winl)) beg))
-			   (new-data (make-vct len))
-			   (old-data (channel->vct beg len snd chan)))
-		      (do ((k 0 (+ 1 k)))
-			  ((= k len) (vct->channel new-data beg len snd chan))
-			(set! (new-data k) (func (old-data k))))))))))))
-
-;(bind-key #\m 0 (lambda () "eval between marks" (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 
 
 ;;; -------- snap-marks

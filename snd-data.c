@@ -375,8 +375,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->search_tree = NULL;
   sp->search_proc = XEN_UNDEFINED;
   sp->search_proc_loc = NOT_A_GC_LOC;
-  sp->prompt_callback = XEN_UNDEFINED;
-  sp->prompt_callback_loc = NOT_A_GC_LOC;
   sp->delete_me = NULL;
   sp->name_string = NULL;
   sp->active = true;
@@ -434,12 +432,6 @@ void free_snd_info(snd_info *sp)
   sp->file_unreadable = false;
   sp->minibuffer_on = MINI_OFF;
   clear_sound_search_procedure(sp, true);
-  if (XEN_PROCEDURE_P(sp->prompt_callback))
-    {
-      snd_unprotect_at(sp->prompt_callback_loc);
-      sp->prompt_callback_loc = NOT_A_GC_LOC;
-    }
-  sp->prompt_callback = XEN_UNDEFINED;
   if (XEN_VECTOR_P(sp->properties)) /* using vector as node for GC */
     XEN_VECTOR_SET(sp->properties, 0, XEN_EMPTY_LIST);
   sp->selected_channel = NO_SELECTION;

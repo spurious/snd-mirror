@@ -318,7 +318,10 @@ static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event
 }
 
 
-static Widget w_id = NULL, w_beg = NULL, mix_play = NULL;
+static Widget w_id = NULL, w_beg = NULL;
+#if WITH_AUDIO
+  static Widget mix_play = NULL;
+#endif
 static Widget error_frame = NULL, error_label = NULL;
 
 static void clear_mix_error(void)
@@ -490,16 +493,21 @@ static void help_mix_dialog_callback(Widget w, XtPointer context, XtPointer info
 
 /* -------- play -------- */
 
-static bool mix_playing = false;
+#if WITH_AUDIO
+  static bool mix_playing = false;
+#endif
 
 void reflect_mix_play_stop(void)
 {
+#if WITH_AUDIO
   if (mix_play)
     XmChangeColor(mix_play, ss->basic_color);
   mix_playing = false;
+#endif
 }
 
 
+#if WITH_AUDIO
 static void mix_dialog_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (mix_playing)
@@ -514,6 +522,7 @@ static void mix_dialog_play_callback(Widget w, XtPointer context, XtPointer info
       play_mix_from_id(mix_dialog_id);
     }
 }
+#endif
 
 
 /* -------- dB -------- */
@@ -639,7 +648,9 @@ void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color)
       XFreePixmap(XtDisplay(mix_dialog), speaker_r);
       XSetBackground(XtDisplay(mix_dialog), gc, new_color);
       speaker_r = make_pixmap(p_speaker_bits, p_speaker_width, p_speaker_height, mixer_depth, gc);
+#if WITH_AUDIO
       XtVaSetValues(mix_play, XmNlabelPixmap, speaker_r, NULL);
+#endif
     }
 }
 
@@ -754,6 +765,7 @@ Widget make_mix_dialog(void)
       gc = XtGetGC(mix_row, GCForeground | GCBackground, &v);
       speaker_r = make_pixmap(p_speaker_bits, p_speaker_width, p_speaker_height, mixer_depth, gc);
 
+#if WITH_AUDIO
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
@@ -761,7 +773,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
       mix_play = XtCreateManagedWidget("mix-play", xmPushButtonWidgetClass, mix_row, args, n);
       XtAddCallback(mix_play, XmNactivateCallback, mix_dialog_play_callback, NULL);
-
+#endif
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
