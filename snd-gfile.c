@@ -26,6 +26,7 @@ typedef struct fsb {
   char *directory_name, *file_name;
   slist *directory_list, *file_list;
   void (*file_select_callback)(const char *filename, void *data);
+  void (*file_double_click_callback)(const char *filename, void *data);
   void *file_select_data;
   void (*directory_select_callback)(const char *filename, void *data);
   void *directory_select_data;
@@ -645,11 +646,11 @@ static GtkWidget *make_file_list_item(fsb *fs, int choice)
 
 static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 {
+  fsb *fs = (fsb *)data;
   if ((NO_BUCKY_BITS_P(EVENT_STATE(ev))) && 
       (EVENT_TYPE(ev) == GDK_BUTTON_PRESS) && 
       (EVENT_BUTTON(ev) == POPUP_BUTTON))
     {
-      fsb *fs = (fsb *)data;
       int i, items_len;
       if (fs->file_list_items == NULL)
 	{
@@ -736,6 +737,20 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 	}
       gtk_menu_popup(GTK_MENU(fs->files_menu), NULL, NULL, NULL, NULL, EVENT_BUTTON(ev), EVENT_TIME(ev));
     }
+  else
+    {
+      if ((EVENT_TYPE(ev) == GDK_2BUTTON_PRESS) && /* double-click */
+#if HAVE_GTK_3
+	  (EVENT_BUTTON(ev) == GDK_BUTTON_PRIMARY))
+#else
+	  (EVENT_BUTTON(ev) == 1))
+#endif
+	{
+	  if (fs->file_double_click_callback)
+	    (*(fs->file_double_click_callback))((const char *)(fs->file_name), fs->file_select_data);
+	}
+    }
+
   return(false);
 }
 
@@ -1183,6 +1198,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
 
   fs->file_select_data = (void *)fd;
   fs->file_select_callback = dialog_select_callback;
+  fs->file_double_click_callback = NULL;
   fs->directory_select_data = (void *)fd;
   fs->directory_select_callback = dialog_directory_select_callback;
 
@@ -1433,6 +1449,37 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
 }
 
 
+static void file_open_double_click_callback(const char *filename, void *context)
+{
+  if ((filename) &&
+      (!(directory_p(filename))))
+    {
+      file_dialog_info *fd;
+      snd_info *sp;
+      
+      fd = odat;
+      redirect_snd_error_to(redirect_file_open_error, (void *)fd);
+      ss->requestor_dialog = fd->fs->dialog;
+      ss->open_requestor = FROM_OPEN_DIALOG;
+      sp = snd_open_file(filename, fd->file_dialog_read_only);
+      redirect_snd_error_to(NULL, NULL);
+      if (sp) 
+	{
+	  gpointer hide_me;
+	  hide_me = g_object_get_data(G_OBJECT(fd->fs->dialog), "hide-me"); /* see snd-gtk.scm where this is set */
+	  if (hide_me == 0)
+	    gtk_widget_hide(fd->fs->dialog);
+	  select_channel(sp, 0); /* add_sound_window (snd-xsnd.c) -> make_file_info (snd-file) will report reason for error, if any */
+	}
+      else
+	{
+	  clear_error_if_open_changes(fd->fs, fd);
+	  start_unsound_watcher(fd, filename);
+	}
+    }
+}
+
+
 widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 {
   if (!odat)
@@ -1448,6 +1495,7 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 			      (GCallback)file_open_dialog_dismiss,
 			      (GCallback)file_open_dialog_help,
 			      GTK_STOCK_OPEN);
+      odat->fs->file_double_click_callback = file_open_double_click_callback;
 #if 0
       preload_filenames(odat->fs->file_text_names);
 #endif
@@ -2034,6 +2082,15 @@ static void file_data_src_callback(GtkWidget *w, gpointer context)
   fd->src = (bool)(TOGGLE_BUTTON_ACTIVE(w));
 }
 
+#define WITH_FRAME true
+#define WITHOUT_FRAME false
+
+#define WITH_SRATE_FIELD true
+#define WITHOUT_SRATE_FIELD false
+
+#define WITH_AUTO_COMMENT true
+#define WITHOUT_AUTO_COMMENT false
+
 
 static file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				       dialog_channels_t with_chan, 
@@ -2043,7 +2100,9 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				       dialog_header_type_t with_header_type,
 				       dialog_comment_t with_comment, 
 				       header_choice_t header_choice,
-				       bool with_src, bool with_auto_comment)
+				       bool with_src, 
+				       bool with_auto_comment,
+				       bool with_frame)
 {
   GtkWidget *form, *scbox, *combox = NULL, *frame, *frame_box;
   file_data *fdat;
@@ -2066,12 +2125,17 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
-  frame = gtk_frame_new(NULL);
-  gtk_box_pack_start(GTK_BOX(parent), frame, false, false, 8);
-  gtk_widget_show(frame);
+  if (with_frame)
+    {
+      frame = gtk_frame_new(NULL);
+      gtk_box_pack_start(GTK_BOX(parent), frame, false, false, 8);
+      gtk_widget_show(frame);
+    }
 
   frame_box = gtk_vbox_new(false, 0);
-  gtk_container_add(GTK_CONTAINER(frame), frame_box);
+  if (with_frame)
+    gtk_container_add(GTK_CONTAINER(frame), frame_box);
+  else gtk_box_pack_start(GTK_BOX(parent), frame_box, false, false, 8);
   gtk_widget_show(frame_box);
 
   form = gtk_hbox_new(true, 8);
@@ -2921,8 +2985,9 @@ static void save_innards(GtkWidget *vbox, void *data)
 					WITH_HEADER_TYPE_FIELD, 
 					WITH_COMMENT_FIELD,
 					WITH_WRITABLE_HEADERS,
-					true,
-					sd->type == SOUND_SAVE_AS);
+					WITH_SRATE_FIELD,
+					sd->type == SOUND_SAVE_AS,
+					WITH_FRAME);
   widget_modify_base(sd->panel_data->error_text, GTK_STATE_NORMAL, ss->yellow);
   widget_modify_base(sd->panel_data->error_text, GTK_STATE_ACTIVE, ss->yellow);
 }
@@ -3425,7 +3490,9 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 				  WITHOUT_HEADER_TYPE_FIELD, 
 				  WITHOUT_COMMENT_FIELD,
 				  WITH_READABLE_HEADERS,
-				  false, false);
+				  WITHOUT_SRATE_FIELD, 
+				  WITHOUT_AUTO_COMMENT,
+				  WITH_FRAME);
   rp->rdat->dialog = rp->dialog;
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
@@ -3752,7 +3819,9 @@ widget_t make_new_file_dialog(bool managed)
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD,
 				  WITH_BUILTIN_HEADERS,
-				  false, false);
+				  WITHOUT_SRATE_FIELD, 
+				  WITHOUT_AUTO_COMMENT,
+				  WITH_FRAME);
       ndat->dialog = new_file_dialog;
 
       SG_SIGNAL_CONNECT(new_file_dialog, "delete_event", new_file_delete_callback, ndat);
@@ -4083,7 +4152,9 @@ GtkWidget *edit_header(snd_info *sp)
 				      WITH_HEADER_TYPE_FIELD, 
 				      WITH_COMMENT_FIELD,
 				      WITH_BUILTIN_HEADERS,
-				      false, false);
+				      WITHOUT_SRATE_FIELD, 
+				      WITHOUT_AUTO_COMMENT,
+				      WITHOUT_FRAME);
       ep->edat->dialog = ep->dialog;
 
       SG_SIGNAL_CONNECT(ep->dialog, "delete_event", edit_header_delete_callback, ep);

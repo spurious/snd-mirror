@@ -220,7 +220,14 @@ void make_minibuffer_label(snd_info *sp , const char *str)
 
 static void name_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  sp_name_click((snd_info *)context);
+  char *str;
+  snd_info *sp = (snd_info *)context;
+  str = sp_name_click(sp);
+  if (str)
+    {
+      report_in_minibuffer(sp, str);
+      free(str);
+    }
 }
 
 

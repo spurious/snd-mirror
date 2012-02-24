@@ -690,9 +690,32 @@ static void unite_button_click(GtkWidget *w, gpointer data)
 
 static gboolean name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  sp_name_click((snd_info *)data);
+  char *str;
+  snd_info *sp = (snd_info *)data;
+  str = sp_name_click(sp);
+  if (str)
+    {
+      report_in_minibuffer(sp, str);
+      free(str);
+    }
   return(false);
 }
+
+
+static gboolean name_button_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  char *str;
+  snd_info *sp = (snd_info *)data;
+  str = sp_name_click(sp);
+  if (str)
+    {
+      gtk_tooltip_set_text(tooltip, str);
+      free(str);
+    }
+  else gtk_tooltip_set_text(tooltip, "nothing known about this sound!");
+  return(true);
+}
+
 
 
 /* -------- AMP CALLBACKS -------- */
@@ -1576,6 +1599,19 @@ static void close_button_callback(GtkWidget *w, gpointer context)
 }
 
 
+static gboolean close_button_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp = (snd_info *)data;
+  char *tip;
+  tip = mus_format("close %s", sp->short_filename);
+  gtk_tooltip_set_text(tooltip, tip);
+  free(tip);
+  return(true);
+}
+
+
+
+
 /* -------- SOUND PANE -------- */
 
 #define BUTTON_SPACE 6
@@ -1703,10 +1739,12 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 #if HAVE_GTK_3
       add_highlight_button_style(CLOSE_BUTTON(sp));
 #endif
+      add_tooltip(CLOSE_BUTTON(sp), "close current sound");
       gtk_button_set_relief(GTK_BUTTON(CLOSE_BUTTON(sp)), GTK_RELIEF_NONE);
       gtk_button_set_image(GTK_BUTTON(CLOSE_BUTTON(sp)), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), CLOSE_BUTTON(sp), false, false, 8);
       SG_SIGNAL_CONNECT(CLOSE_BUTTON(sp), "clicked", close_button_callback, sp);
+      g_signal_connect(CLOSE_BUTTON(sp), "query-tooltip", G_CALLBACK(close_button_tooltip), (gpointer)sp);
       gtk_widget_show(CLOSE_BUTTON(sp));
 
 
@@ -1714,9 +1752,11 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 #if HAVE_GTK_3
       add_highlight_button_style(NAME_EVENT_BOX(sp));
 #endif
+      add_tooltip(NAME_EVENT_BOX(sp), "name of current sound"); /* just a placeholder */
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_EVENT_BOX(sp), false, false, 5);
       gtk_widget_show(NAME_EVENT_BOX(sp));
       SG_SIGNAL_CONNECT(NAME_EVENT_BOX(sp), "button_press_event", name_click_callback, sp);
+      g_signal_connect(NAME_EVENT_BOX(sp), "query-tooltip", G_CALLBACK(name_button_tooltip), (gpointer)sp);
       
       NAME_BUTTON(sp) = gtk_label_new(shortname_indexed(sp));
       gtk_container_add(GTK_CONTAINER(NAME_EVENT_BOX(sp)), NAME_BUTTON(sp));
@@ -1783,12 +1823,14 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 #endif
       
       SYNC_BUTTON(sp) = gtk_check_button_new_with_label("sync");
+      add_tooltip(SYNC_BUTTON(sp), "group this sound with anything sharing its sync value");
       gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), SYNC_BUTTON(sp), false, false, BUTTON_SPACE);
       SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "button_press_event", sync_button_callback, sp);
       SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "toggled", sync_button_click, sp);
       gtk_widget_show(SYNC_BUTTON(sp));
       
       UNITE_BUTTON(sp) = gtk_check_button_new_with_label("unite");
+      add_tooltip(UNITE_BUTTON(sp), "combine channel graphs in one window");
       gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), UNITE_BUTTON(sp), false, false, BUTTON_SPACE);
       SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "button_press_event", unite_button_callback, sp);
       SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "toggled", unite_button_click, sp);

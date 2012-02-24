@@ -1519,7 +1519,7 @@ char *shortname(snd_info *sp);
 char *shortname_indexed(snd_info *sp);
 void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed);
 mus_float_t speed_changed(mus_float_t ival, char *srcbuf, speed_style_t style, int tones, int srcbuf_size);
-void sp_name_click(snd_info *sp);
+char *sp_name_click(snd_info *sp);
 void free_controls(snd_info *sp);
 void save_controls(snd_info *sp);
 void restore_controls(snd_info *sp);

@@ -1449,27 +1449,29 @@ static char *linked_file(const char *link_name)
 
 static XEN name_click_hook;
 
-void sp_name_click(snd_info *sp)
+char *sp_name_click(snd_info *sp) /* caller should free returned string */
 {
   if (sp)
     {
       file_info *hdr;
+
       /* call name-click-hook (if any) return #t = don't print info in minibuffer */
       if ((XEN_HOOKED(name_click_hook)) &&
 	  (XEN_TRUE_P(run_or_hook(name_click_hook, 
 				  XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 				  S_name_click_hook))))
-	return;
+	return(NULL);
+
       hdr = sp->hdr;
       if (hdr)
 	{
 	  mus_float_t dur;
-	  char *str = NULL;
+	  char *result, *str = NULL;
 
 	  bool linked = false;
 	  linked = link_p(sp->filename);
 	  dur = (mus_float_t)((double)(hdr->samples) / (double)(hdr->chans * hdr->srate));
-	  report_in_minibuffer(sp, "%d, %d chan%s, %.3f sec%s, %s: %s, %s%s%s%s",
+	  result = mus_format("%d, %d chan%s, %.3f sec%s, %s: %s, %s%s%s%s",
 			       hdr->srate,
 			       hdr->chans,
 			       ((hdr->chans > 1) ? "s" : ""),
@@ -1477,7 +1479,7 @@ void sp_name_click(snd_info *sp)
 			       ((dur == 1.0) ? "" : "s"),
 			       mus_header_type_to_string(hdr->type),
 			       mus_data_format_to_string(hdr->format),
-			       snd_strftime(STRFTIME_FORMAT, sp->write_date),
+			       snd_strftime("%d-%b-%Y %H:%M", sp->write_date),
 			       (linked) ? ", (link to " : "",
 #if HAVE_READLINK
 			       (linked) ? str = linked_file(sp->filename) : "",
@@ -1486,8 +1488,10 @@ void sp_name_click(snd_info *sp)
 #endif
 			       (linked) ? ")" : "");
 	  if (str) free(str);
+	  return(result);
 	}
     }
+  return(NULL);
 }
 
 

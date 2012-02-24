@@ -38,7 +38,6 @@
  *   see listener_move_mouse in snd-glistener.c
  *
  * if M-p/n are actually useful, add to glistener if possible
- *
  * gtk2 tooltips look much better because the bgcolor is correct, but pango markup here is only a partial fix
  *   if no audio in mix dialog, move the previous/next buttons over to the right
  * 
@@ -61,9 +60,11 @@
  *     WITH_AUDIO checks
  *     removed the minibuffer history stuff, minibuffer-history-length, prompt-in-minibuffer
  *     removed eval-between-marks and eval-over-selection, open-current-buffer and close-buffer
- * 23: left margin in gfft, etc
+ * 23: left margin in gfft and selected colors, etc
  *     removed xsnd filter history
  *     changed listener default font to Monospace 11, added get-font to extsnd.html
+ * 24: more tooltips
+ *     double-click in filer opens (as in motif)
  */
 
 /* various file-related dialogs:
