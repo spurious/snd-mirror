@@ -6,7 +6,7 @@
 static Widget enved_dialog = NULL;
 static Widget applyB, apply2B, cancelB, drawer, showB, saveB, revertB, undoB, redoB;
 static Widget brkptL, graphB, fltB, ampB, srcB, clipB;
-static Widget nameL, textL, screnvlst, dBB, orderL, deleteB, resetB, firB = NULL;
+static Widget nameL, textL, screnvlst, dBB, orderL, resetB, firB = NULL;
 static Widget expB, linB, baseScale, baseValue, selectionB;
 static GC gc, rgc, ggc;
 
@@ -511,7 +511,6 @@ static void select_or_edit_env(int pos)
   set_sensitive(revertB, false);
   set_sensitive(saveB, false);
   env_redisplay();
-  set_sensitive(deleteB, true);
 }
 
 
@@ -634,27 +633,6 @@ static void selection_button_pressed(Widget s, XtPointer context, XtPointer info
   if ((enved_wave_p(ss)) && 
       (!showing_all_envs))
     env_redisplay();
-}
-
-
-static void delete_button_pressed(Widget w, XtPointer context, XtPointer info) 
-{
-  if (selected_env)
-    {
-      int i, len;
-      len = enved_all_envs_top();
-      for (i = 0; i < len; i++)
-	if (selected_env == enved_all_envs(i))
-	  {
-	    delete_envelope(enved_all_names(i));
-	    if (enved_all_envs_top() == 0)
-	      set_sensitive(deleteB, false);
-	    if (active_env) active_env = free_env(active_env);
-	    selected_env = NULL;
-	    env_redisplay();
-	    break;
-	  }
-    }
 }
 
 
@@ -973,7 +951,6 @@ Widget create_envelope_editor(void)
       xhelp = XmStringCreateLocalized((char *)I_HELP);
       titlestr = XmStringCreateLocalized((char *)"Edit Envelope");
       xapply = XmStringCreateLocalized((char *)"Apply");
-      /* xreset = XmStringCreateLocalized((char *)"Reset"); */
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
@@ -1013,7 +990,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNforeground, ss->black); n++;
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      resetB = XtCreateManagedWidget("Reset", xmPushButtonGadgetClass, enved_dialog, args, n);
+      resetB = XtCreateManagedWidget("Clear graph", xmPushButtonGadgetClass, enved_dialog, args, n);
       XtAddCallback(resetB, XmNactivateCallback, reset_button_callback, NULL);
 
 
@@ -1286,7 +1263,7 @@ Widget create_envelope_editor(void)
 
       XtAddCallback(saveB, XmNactivateCallback, save_button_pressed, NULL);
 
-      /* UNDO REDO */
+      /* REVERT */
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
@@ -1294,6 +1271,21 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, saveB); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      revertB = XtCreateManagedWidget("revert", xmPushButtonWidgetClass, colB, args, n);
+
+      XtAddCallback(revertB, XmNactivateCallback, revert_button_pressed, NULL);
+
+
+      /* UNDO REDO */
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, revertB); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
@@ -1315,34 +1307,6 @@ Widget create_envelope_editor(void)
       XtAddCallback(redoB, XmNactivateCallback, redo_button_pressed, NULL);
 
 
-      /* REVERT DELETE */
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, undoB); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 50); n++;
-      revertB = XtCreateManagedWidget("revert", xmPushButtonWidgetClass, colB, args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, revertB); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, revertB); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      deleteB = XtCreateManagedWidget("delete", xmPushButtonWidgetClass, colB, args, n);
-
-      XtAddCallback(revertB, XmNactivateCallback, revert_button_pressed, NULL);
-      XtAddCallback(deleteB, XmNactivateCallback, delete_button_pressed, NULL);
-
       /* AMP FLT SRC */
       /* enved_function (target) choice (a row of three push buttons that acts like a "radio box") */
       n = 0;
@@ -1351,7 +1315,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, revertB); n++;
+      XtSetArg(args[n], XmNtopWidget, undoB); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 33); n++;
@@ -1510,7 +1474,6 @@ Widget create_envelope_editor(void)
       if (enved_all_envs_top() == 0)
 	set_sensitive(showB, false);
       set_sensitive(revertB, false);
-      set_sensitive(deleteB, false);
       set_sensitive(undoB, false);
       set_sensitive(redoB, false);
       set_sensitive(saveB, false);

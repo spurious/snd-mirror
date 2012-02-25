@@ -1343,7 +1343,6 @@ static void init_types(void)
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define set_copy_args(p)              typeflag(p) |= T_COPY_ARGS
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
-#define clear_copy_args(p)            typeflag(p) &= (~T_COPY_ARGS)
 /* this marks something that might mess with its argument list
  */
 
@@ -1531,7 +1530,6 @@ static void init_types(void)
 #define c_function_class(f)           (f)->object.ffptr->id
 #define c_function_chooser(f)         (f)->object.ffptr->chooser
 #define c_function_chooser_data(f)    (f)->object.ffptr->chooser_data
-#define c_function_choice(Sc, F, Args, X) (c_function_chooser(F))(Sc, F, Args, X)
 #endif
 
 #define c_call(f)                     ((s7_function)(fcdr(f)))

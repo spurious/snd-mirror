@@ -630,11 +630,8 @@ char *info_completer(widget_t w, const char *text, void *data)
       if (sp->search_count != 0) 
 	return(mus_strdup(text));      /* C-s or C-r so as above */
 
-      if ((sp->marking) || (sp->finding_mark)) 
+      if (sp->marking)
 	return(mus_strdup(text));      /* C-x C-m etc */
-
-      if (sp->amp_count != 0) 
-	return(env_name_completer(w, text, NULL));
 
       if (use_sound_filename_completer(sp->filing))
 	return(sound_filename_completer(w, text, NULL));

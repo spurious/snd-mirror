@@ -9,27 +9,32 @@
  * isn't "save current settings" redundant? and "control panel" is a dumb name
  *   gtk options/controls has trough color?
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
+ * what is "save" in enved, also if use erases one from env list==delete
+ *   also lin/exp is stupid -- omit, click "exp" label to reset to 1 (always)
+ *   and "reset" apparently means "clear"
  *
  * the minibuffer is useless -- what to do with it?  maybe a per-channel toolbar?
  *   at least turn it into a straight (non-editable) label [statusbar appears to be the Gtk name for this]
  *   or try to recognize what user wants -- search in sound, help etc?
  * clear-minibuffer|report-in-minibuffer -> use statusbar? or status-area?
  * remove prompt-in-minibuffer?  In fact, how is this used??
- * remove the widgets listed as part of the minibuffer (sound-widgets I assume)
- * remove eval-between-marks and all other such stuff from *.rb|fs
- *   also there may be text-oriented uses via sound-widgets
- *   and snd-kbd uses the prompt mechanism for dozens of operations -- how to replace this?
+ *     sound-widgets should be safe now -- MINIBUFFER_TEXT can be a label
+ *     used in snd-test (sound-widgets 3) [removed I think]
+ *             snd-motif show-disk-space [doesn't notice mb type], with-minmax-button [same -- so this can be changed to a label]
+ * remove eval-between-marks and all other such stuff from *.rb|fs [got scm already]
+ *   snd-kbd uses the prompt mechanism for 4 operations [exported to the menus via save_edits_with_prompt]
  *   other than C-x C-f or C-x C-w, are these actually useful?
  *   could C-x C-f et al fire up the associated dialogs?
  *   several of the current prompts are handling "xyzzy exists; overwrite?" questions -- these belong in a dialog I think
  *   perhaps put up a dialog somewhere?
  *   perhaps define all the "built-in" keys via (bind-key ...)
+ *   also define the removed key bindings in snd12.scm.
  *
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
- * edit env is a mess and is probably never used anyway -- in any case get rid of pointless buttons!
  * view files is a mess -- it tries to do way too much
  * some of these dialogs look too small -- holdover from distant past?
  *   fixup the margins at least
+ * in save-as dialog, the new file name should be at the top (like new-file dialog)
  *
  * what about tooltips in the listener, or some way to show help (apropos) if hovering
  *   also if error displayed, hover->env printout etc
@@ -38,9 +43,11 @@
  *
  * if M-p/n are actually useful, add to glistener if possible
  * gtk2 tooltips look much better because the bgcolor is correct, but pango markup here is only a partial fix
- * ideally the key binding list in help would use monospace or a table
- * 
+ * ideally the code examples (in the listener and help dialog) would be in monospace with help-topic in red??
  * stacktrace in listener popup should look for error info 1st -- can we tell last thing was in error?
+ *    or error in snd listener -> post var info as well as code (in scrolled window)?
+ *
+ * when done, read all snd-help/snd.html to check for leftovers.
  *
  * 19: gxfind button order, but one is "forward|back" and the other is "next|previous"
  *       firefox uses |find: |entry| <--previous | -->next | highlight all, others use "search:..."
@@ -65,7 +72,10 @@
  * 24: more tooltips
  *     double-click in filer opens (as in motif)
  *     removed C-x d|w|i, C-x C-l, named macros, save-macros
- * 25: 
+ * 25: fixed gfile popup menu style, added more toolbar tips
+ *     removed enved delete button
+ *     put key bindings help in monospace
+ *     removed c-x a|j
  */
 
 /* various file-related dialogs:

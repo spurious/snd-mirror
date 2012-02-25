@@ -822,14 +822,7 @@ void env_help(void)
 To define a triangle curve: " envelope_example ".\
 There is no preset limit on the number of breakpoints. Use the envelope editor to draw envelopes with the mouse. \
 \n\n\
-To apply an envelope to a sound, use " S_env_sound " or the extended command C-x C-a.  If this command gets a numeric \
-argument, the envelope is applied from the cursor for that many samples. Otherwise, the envelope is \
-applied to the entire file. \
-\n\
-  C-x a     apply amplitude envelope to selection\n\
-  C-x C-a   apply amplitude envelope to channel\n\
-\n\
-The primary enveloping functions are:\n\
+To apply an envelope to a sound, use " S_env_sound ". The primary enveloping functions are:\n\
 \n\
  " S_env_sound " (envelope :optional (samp 0) samps (env-base 1.0) snd chn edpos)\n\
     " S_env_sound " applies the amplitude envelope to snd's channel chn.\n\
@@ -846,9 +839,6 @@ The primary enveloping functions are:\n\
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Envelope"),           /* snd-xref.c */
 		      snd_xref_urls("Envelope"));
-
-  append_key_help("C-x a", snd_K_a, 0, true,
-    append_key_help("C-x C-a", snd_K_s, snd_ControlMask, true, true));
 }
 
 
@@ -1170,7 +1160,6 @@ than 0) will move together when one is moved, and so on.  The following keyboard
   C-x /     place named mark at cursor\n\
   C-x C-m   add named mark\n\
   C-j       go to mark\n\
-  C-x j     go to named mark\n\
 \n\
 The main mark-related functions are:\n\
 \n\
@@ -1203,19 +1192,17 @@ The following keyboard commands relate to marks: \
   C-M       place syncd marks at all currently syncd chan cursors\n\
   C-x /     place named mark at cursor\n\
   C-x C-m   add named mark\n\
-  C-j       go to mark\n\
-  C-x j     go to named mark",
+  C-j       go to mark",
 #endif
 
 		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mark"),
 		      snd_xref_urls("Mark"));
 
-  append_key_help("C-x j", snd_K_j, 0, true,
-    append_key_help("C-j", snd_K_j, snd_ControlMask, false,
-      append_key_help("C-x C-m", snd_K_m, snd_ControlMask, true,
-        append_key_help("C-x /", snd_K_slash, 0, true,
-	  append_key_help("C-m", snd_K_m, snd_ControlMask, false, true)))));
+  append_key_help("C-x C-m", snd_K_m, snd_ControlMask, true,
+    append_key_help("C-x /", snd_K_slash, 0, true,
+      append_key_help("C-j", snd_K_j, snd_ControlMask, false,
+        append_key_help("C-m", snd_K_m, snd_ControlMask, false, true))));
 }
 
 
@@ -1260,8 +1247,6 @@ commonly-used controls on the currently chosen mix. At the top are the mix id, \
 name, begin and end times, and a play button. Beneath that are \
 various sliders controlling the speed (sampling rate) of the mix, amplitude of \
 each input channel, and the amplitude envelopes. \
-\n\n\
-To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
 \n\n\
 The main mix-related functions are:\n\
 \n\
@@ -1316,8 +1301,6 @@ commonly-used controls on the currently chosen mix. At the top are the mix id, \
 name, begin and end times, and a play button. Beneath that are \
 various sliders controlling the speed (sampling rate), amplitude, \
 and amplitude envelope applied to the mix. \
-\n\n\
-To move the cursor from one mix to the next, in the same manner as C-j moves through marks, use C-x C-j. \
 \n\n",
 #endif
 
@@ -1458,7 +1441,11 @@ static void show_key_help(int key, int state, bool cx, char *help)
       char cbuf[256];
       make_key_name(cbuf, 256, key, state, cx);
       mus_snprintf(buf, 1024, "\n%s: %s", cbuf, help);
+#if USE_GTK
+      snd_help_append_monospace(buf);
+#else
       snd_help_append(buf);
+#endif
       free(help);
     }
 }
@@ -1705,20 +1692,13 @@ void save_help(void)
   snd_help_with_xrefs("Save",
 "To save the current edited state of a file, use the File:Save option (to overwrite the old version of the \
 file), or File:Save as (to write to a new file, leaving the old file unchanged).  The equivalent keyboard \
-command is C-x C-s (save).  Other related keyboard commands are C-x w (save selection as file), and \
-C-x C-w (extract and save the current channel as a file). Normally, if the new file already exists, and it is \
-not currently being edited in Snd, it is silently overwritten. \
-If you try to overwrite a file, and \
-that file has active edits in a different Snd window, you'll be asked for confirmation. \
-If you want Snd to ask before overwriting a file in any case, set the variable " S_ask_before_overwrite " to " PROC_TRUE ".\n",
+command is C-x C-s (save). ",
 
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
 
-  append_key_help("C-x w", snd_K_w, 0, true,
-    append_key_help("C-x C-w", snd_K_w, snd_ControlMask, true,
-      append_key_help("C-x C-s", snd_K_s, snd_ControlMask, true, true)));
+  append_key_help("C-x C-s", snd_K_s, snd_ControlMask, true, true);
 }
 
 
@@ -1889,7 +1869,7 @@ void insert_help(void)
   snd_help_with_xrefs("Insert",
 
 #if HAVE_EXTENSION_LANGUAGE
-"To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
+"C-o inserts a \
 zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selection \
 dialogs. The insertion-related functions are:\n\
 \n\
@@ -1918,7 +1898,7 @@ dialogs. The insertion-related functions are:\n\
     channels are inserted.\n",
 
 #else
-"To insert a file, use C-x C-i, and to insert the selection C-x i.  C-o inserts a \
+"C-o inserts a \
 zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selection dialogs.",
 #endif
 
@@ -1926,9 +1906,7 @@ zero sample at the cursor.  There are also the File:Insert and Edit:Insert Selec
 		      snd_xrefs("Insert"),
 		      snd_xref_urls("Insert"));
 
-  append_key_help("C-x i", snd_K_i, 0, true,
-    append_key_help("C-o", snd_K_o, snd_ControlMask, false,
-      append_key_help("C-x C-i", snd_K_i, snd_ControlMask, true, true)));
+  append_key_help("C-o", snd_K_o, snd_ControlMask, false, true);
 }
 
 
@@ -2269,7 +2247,7 @@ new breakpoint, drag an existing breakpoint to change its position, and click an
 The Undo and Redo buttons can be used to move around in the list of envelope edits; the current state \
 of the envelope can be saved with the 'save' button. Envelopes can be defined via " define_envelope_name ": \
 \n\n" define_envelope_example "\n\n\
-defines two envelopes that can be used in Snd wherever an envelope is needed (e.g. C-x C-a).  You can also define \
+defines two envelopes that can be used in Snd wherever an envelope is needed.  You can also define \
 a new envelope in the dialog's text field; " ramp_envelope_example " creates a ramp as a new envelope. \
 \n\n\
 In the overall view of envelopes, click an envelope, or click its name in the scrolled \
@@ -2278,7 +2256,7 @@ was previously there.  To load an existing envelope into the editor, you can als
 the envelope as it is currently defined in the graph viewer, type its name in this field, then \
 either push return or the 'save' button. \
 \n\n\
-Once you have an envelope in the editor, you can apply it to the current sounds with the 'Apply' or 'Undo&amp;Apply' buttons; the latter \
+Once you have an envelope in the editor, you can apply it to the current sounds with the 'Apply' or 'Undo&Apply' buttons; the latter \
 first tries to undo the previous edit, then applies the envelope. The envelope can be applied to \
 the amplitude, the spectrum, or the sampling rate. The choice is made via the three buttons marked 'amp', \
 'flt', and 'src'. The filter order is the variable " S_enved_filter_order " which defaults to 40. To use fft-filtering (convolution) \
@@ -2303,7 +2281,6 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 		      snd_xrefs("Envelope"),
 		      snd_xref_urls("Envelope"));
 
-  append_key_help("C-x C-a", snd_K_a, snd_ControlMask, true, true);
 }
 
 

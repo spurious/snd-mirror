@@ -390,10 +390,9 @@ typedef struct snd_info {
   bool remembering;
   char *search_expr;
   mus_long_t marking;
-  int search_count, amp_count; /* search_count = number of times to search before return, amp_count = amp env samps if not 1 (= full dur) */
+  int search_count; /* search_count = number of times to search before return */
   sp_filing_t filing;
   char *filing_filename;
-  bool finding_mark, selectioning;
   minibuffer_choice_t minibuffer_on;
   read_only_t user_read_only, file_read_only;
   chan_info **chans;
@@ -435,7 +434,6 @@ typedef struct snd_info {
   chan_info *lacp;
   struct ctrl_state *saved_controls;
   bool apply_ok, applying;
-  struct mini_history *filter_history;
   bool active;
   char *name_string;
   fam_info *file_watcher;
@@ -1135,8 +1133,6 @@ XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc);
 XEN snd_no_active_selection_error(const char *caller);
 void g_xen_initialize(void);
 XEN eval_str_wrapper(void *data);
-XEN eval_form_wrapper(void *data);
-XEN string_to_form(const char *data);
 XEN g_c_make_sampler(snd_fd *fd);
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 bool procedure_arity_ok(XEN proc, int args);
@@ -1524,8 +1520,6 @@ void restore_controls(snd_info *sp);
 void reset_controls(snd_info *sp);
 void set_show_controls(bool val);
 void stop_applying(snd_info *sp);
-void menu_apply_controls(snd_info *sp);
-void menu_reset_controls(snd_info *sp);
 void expand_control_set_hop(mus_float_t hop);
 void expand_control_set_length(mus_float_t hop);
 void expand_control_set_ramp(mus_float_t hop);
@@ -1815,8 +1809,6 @@ void g_init_base(void);
 
 
 /* -------- snd-kbd.c -------- */
-
-void save_macro_state(FILE *fd);
 
 #ifdef __GNUC__
   void report_in_minibuffer(snd_info *sp, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));

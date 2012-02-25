@@ -563,31 +563,6 @@ XEN eval_str_wrapper(void *data)
 }
 
 
-#if (!HAVE_SCHEME)
-XEN eval_form_wrapper(void *data)
-{
-  return(XEN_EVAL_FORM((XEN)data));
-}
-#else
-XEN eval_form_wrapper(void *data)
-{
-  return(XEN_FALSE);
-}
-#endif
-
-
-static XEN string_to_form_1(void *data)
-{
-  return(C_STRING_TO_XEN_FORM((char *)data));
-}
-
-
-XEN string_to_form(const char *str)
-{
-  return(snd_catch_any(string_to_form_1, (void *)str, str));  /* catch needed else #< in input (or incomplete form) exits Snd! */
-}
-
-
 static XEN eval_file_wrapper(void *data)
 {
   XEN error;

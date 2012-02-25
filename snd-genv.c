@@ -5,9 +5,9 @@
 
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
-static GtkWidget *revertB, *undoB, *redoB, *brktxtL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
+static GtkWidget *revertB, *undoB, *redoB, *brktxtL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB;
 static GtkWidget *nameL, *textL, *dBB, *orderL;
-static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
+static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *unrow;
 static GtkAdjustment *baseAdj, *orderAdj;
 static gc_t *gc, *rgc, *ggc;
 static slist *env_list = NULL;
@@ -458,7 +458,6 @@ static void select_or_edit_env(int pos)
   set_sensitive(revertB, false);
   set_sensitive(saveB, false);
   env_redisplay();
-  set_sensitive(deleteB, true);
 }
 
 
@@ -602,27 +601,6 @@ static void selection_button_pressed(GtkWidget *w, gpointer context)
   if ((enved_wave_p(ss)) && 
       (!showing_all_envs)) 
     env_redisplay();
-}
-
-
-static void delete_button_pressed(GtkWidget *w, gpointer context)
-{
-  if (selected_env)
-    {
-      int i, len;
-      len = enved_all_envs_top();
-      for (i = 0; i < len; i++)
-	if (selected_env == enved_all_envs(i))
-	  {
-	    delete_envelope(enved_all_names(i));
-	    if (enved_all_envs_top() == 0) 
-	      set_sensitive(deleteB, false);
-	    if (active_env) active_env = free_env(active_env);
-	    selected_env = NULL;
-	    env_redisplay();
-	    break;
-	  }
-    }
 }
 
 
@@ -954,7 +932,7 @@ GtkWidget *create_envelope_editor(void)
       apply2B = sg_button_new_from_stock_with_label("Undo&Apply", GTK_STOCK_UNDO);
       gtk_widget_set_name(apply2B, "dialog_button");
 
-      resetB = sg_button_new_from_stock_with_label("Reset", GTK_STOCK_REFRESH);
+      resetB = sg_button_new_from_stock_with_label("Clear graph", GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), applyB, false, true, 10);
@@ -1015,40 +993,23 @@ GtkWidget *create_envelope_editor(void)
 #endif
       gtk_widget_show(showB);
 
-      saverow = gtk_hbox_new(false, BB_MARGIN);
-      gtk_box_pack_start(GTK_BOX(leftbox), saverow, false, false, BB_MARGIN);
-      gtk_widget_show(saverow);
-
       saveB = gtk_button_new_with_label(" save ");
       gtk_button_set_relief(GTK_BUTTON(saveB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(saverow), saveB, true, true, BB_MARGIN);
+      gtk_box_pack_start(GTK_BOX(leftbox), saveB, false, false, BB_MARGIN);
       SG_SIGNAL_CONNECT(saveB, "clicked", save_button_pressed, NULL);
 #if HAVE_GTK_3
       add_highlight_button_style(saveB);
 #endif
       gtk_widget_show(saveB);
 
-      revrow = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(leftbox), revrow, false, false, BB_MARGIN);
-      gtk_widget_show(revrow);
-
       revertB = gtk_button_new_with_label("revert ");
       gtk_button_set_relief(GTK_BUTTON(revertB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(revrow), revertB, true, true, BB_MARGIN);
+      gtk_box_pack_start(GTK_BOX(leftbox), revertB, false, false, BB_MARGIN);
       SG_SIGNAL_CONNECT(revertB, "clicked", revert_button_pressed, NULL);
 #if HAVE_GTK_3
       add_highlight_button_style(revertB);
 #endif
       gtk_widget_show(revertB);
-
-      deleteB = gtk_button_new_with_label("delete");
-      gtk_button_set_relief(GTK_BUTTON(deleteB), GTK_RELIEF_HALF);
-      gtk_box_pack_start(GTK_BOX(revrow), deleteB, true, true, BB_MARGIN);
-      SG_SIGNAL_CONNECT(deleteB, "clicked", delete_button_pressed, NULL);
-#if HAVE_GTK_3
-      add_highlight_button_style(deleteB);
-#endif
-      gtk_widget_show(deleteB);
 
       unrow = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(leftbox), unrow, false, false, BB_MARGIN);
@@ -1234,7 +1195,6 @@ GtkWidget *create_envelope_editor(void)
       if (enved_all_envs_top() == 0)
 	set_sensitive(showB, false);
       set_sensitive(revertB, false);
-      set_sensitive(deleteB, false);
       set_sensitive(undoB, false);
       set_sensitive(redoB, false);
       set_sensitive(saveB, false);

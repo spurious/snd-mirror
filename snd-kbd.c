@@ -155,12 +155,10 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_less,       snd_MetaMask,    0, kbd_false, false, "move cursor to sample 0",                    NULL, -1},
   {snd_K_greater,    snd_MetaMask,    0, kbd_false, false, "move cursor to last sample",                 NULL, -1},
 
-  {snd_K_a,          0, 0, kbd_false, true, "apply envelope to selection",                               NULL, -1},
   {snd_K_b,          0, 0, kbd_false, true, "position window so cursor is on left margin",               NULL, -1},
   {snd_K_c,          0, 0, kbd_false, true, "define selection from cursor to nth mark",                  NULL, -1},
   {snd_K_e,          0, 0, kbd_false, true, "execute keyboard macro",                                    NULL, -1},
   {snd_K_f,          0, 0, kbd_false, true, "position window so cursor is on right margin",              NULL, -1},
-  {snd_K_j,          0, 0, kbd_false, true, "goto named mark",                                           NULL, -1},
   {snd_K_k,          0, 0, kbd_false, true, "close file",                                                NULL, -1},
   {snd_K_l,          0, 0, kbd_false, true, "position selection in mid-view",                            NULL, -1},
   {snd_K_o,          0, 0, kbd_false, true, "move to next or previous graph",                            NULL, -1},
@@ -174,7 +172,6 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_openparen,  0, 0, kbd_false, true, "begin keyboard macro definition",                           NULL, -1},
   {snd_K_closeparen, 0, 0, kbd_false, true, "end keyboard macro definition",                             NULL, -1},
 
-  {snd_K_a, snd_ControlMask, 0, kbd_false, true, "apply envelope",                                       NULL, -1},
   {snd_K_b, snd_ControlMask, 0, kbd_false, true, "set x window bounds (preceded by 1 arg)",              NULL, -1},
   {snd_K_c, snd_ControlMask, 0, kbd_false, true, "hide control panel",                                   NULL, -1},
   {snd_K_f, snd_ControlMask, 0, kbd_false, true, "open file",                                            NULL, -1},
@@ -398,7 +395,6 @@ void clear_minibuffer(snd_info *sp)
   sp->marking = 0;
   sp->filing = NOT_FILING;
   sp->minibuffer_on = MINI_OFF;
-  sp->amp_count = 0;
 }
 
 
@@ -420,14 +416,6 @@ static void prompt(snd_info *sp, const char *msg, const char *preload)
   make_minibuffer_label(sp, msg);
   sp->minibuffer_on = MINI_PROMPT;
   goto_minibuffer(sp);
-}
-
-
-static void get_amp_expression(snd_info *sp, int count, bool over_selection) 
-{
-  prompt(sp, "env:", NULL); 
-  sp->amp_count = count; 
-  sp->selectioning = over_selection;
 }
 
 
@@ -544,7 +532,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
     }
 #endif
   sp->minibuffer_on = MINI_REPORT; 
-  if ((sp->marking) || (sp->finding_mark))
+  if (sp->marking)
     {
       if (sp->marking) 
 	{
@@ -561,7 +549,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       else 
 	{
 	  goto_named_mark(active_chan, str);
-	  sp->finding_mark = false;
 	}
       return;
     }
@@ -697,41 +684,13 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  sp->filing = NOT_FILING;
 	  return;
 	}
-
-      if (sp->amp_count != 0)
-	{
-	  env *e;
-	  if (!active_chan) active_chan = sp->chans[0];
-	  redirect_errors_to(errors_to_minibuffer, (void *)sp);
-	  e = string_to_env(str);
-	  if (e)
-	    {
-	      if (sp->amp_count != 1)
-		apply_env(active_chan, e, CURSOR(active_chan), 
-			  sp->amp_count, sp->selectioning, 
-			  (char *)((sp->selectioning) ? "C-x a" : "C-x C-a"), NULL,
-			  C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
-	      else apply_env(active_chan, e, 0, CURRENT_SAMPLES(active_chan),
-			     sp->selectioning, 
-			     (char *)((sp->selectioning) ? "C-x a" : "C-x C-a"), NULL,
-			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
-	      e = free_env(e);
-	    }
-	  redirect_errors_to(NULL, NULL);
-	  sp->selectioning = false;
-	  sp->amp_count = 0;
-	  clear_minibuffer(sp);
-	  return;
-	}
     }
-
   if (mus_strlen(str) > 0)
     {
       redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
       redirect_errors_to(errors_to_minibuffer, (void *)sp);
       snd_report_result(snd_catch_any(eval_str_wrapper, (void *)str, str), str);
       redirect_everything_to(NULL, NULL);
-      sp->selectioning = false;
     }
   else clear_minibuffer(sp);
 }
@@ -1455,11 +1414,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	  extended_mode = false;
 	  switch (keysym)
 	    {
-	    case snd_K_A: case snd_K_a: 
-	      get_amp_expression(sp, ext_count, OVER_SOUND);
-	      dont_clear_minibuffer = true; 
-	      break;
-
 	    case snd_K_B: case snd_K_b: 
 	      set_window_bounds(cp, ext_count); 
 	      break;
@@ -1737,15 +1691,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    {
 	      switch (keysym)
 		{
-		case snd_K_A: case snd_K_a: 
-		  if (selection_is_active_in_channel(cp)) 
-		    {
-		      get_amp_expression(sp, (!got_ext_count) ? 1 : ext_count, OVER_SELECTION); 
-		      dont_clear_minibuffer = true; 
-		    } 
-		  else string_to_minibuffer(sp, "no active selection");
-		  break;
-
 		case snd_K_B: case snd_K_b: 
 		  cp->cursor_on = true; 
 		  handle_cursor(cp, CURSOR_ON_LEFT);
@@ -1773,12 +1718,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_F: case snd_K_f: 
 		  cp->cursor_on = true; 
 		  handle_cursor(cp, CURSOR_ON_RIGHT); 
-		  break;
-
-		case snd_K_J: case snd_K_j: 
-		  prompt(sp, "mark:", NULL); 
-		  sp->finding_mark = true; 
-		  dont_clear_minibuffer = true; 
 		  break;
 
 		case snd_K_K: case snd_K_k: 

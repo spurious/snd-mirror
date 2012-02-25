@@ -833,7 +833,7 @@ static int find_env(const char *name)
 int enved_all_envs_top(void) {return(all_envs_top);}
 char *enved_all_names(int n) {return(all_names[n]);}
 void set_enved_env_list_top(int n) {env_list_top = n;}
-env *enved_all_envs(int pos) {return(all_envs[pos]);}
+env *enved_all_envs(int pos) {return(all_envs[pos]);} /* unused */
 
 
 static void add_envelope(const char *name, env *val)
@@ -866,7 +866,7 @@ static void add_envelope(const char *name, env *val)
 }
 
 
-void delete_envelope(const char *name)
+void delete_envelope(const char *name) /* currently unused */
 {
   int pos;
   pos = find_env(name);

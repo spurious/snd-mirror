@@ -549,7 +549,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
       if (fs->file_dir_items == NULL)
 	{
 	  fs->dirs_menu = gtk_menu_new();
-	  add_toolbar_style(fs->dirs_menu);
+	  add_menu_style(fs->dirs_menu);
 	  fs->file_dir_items = (GtkWidget **)calloc(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
 	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	    {
@@ -656,7 +656,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 	{
 	  /* set up the default menu items */
 	  fs->files_menu = gtk_menu_new();
-	  add_toolbar_style(fs->files_menu);
+	  add_menu_style(fs->files_menu);
 	  fs->file_list_items = (GtkWidget **)calloc(SORT_XEN, sizeof(GtkWidget *));
 	  fs->file_list_items_size = SORT_XEN;
 	  for (i = 0; i < SORT_XEN; i++)
@@ -2082,9 +2082,6 @@ static void file_data_src_callback(GtkWidget *w, gpointer context)
   fd->src = (bool)(TOGGLE_BUTTON_ACTIVE(w));
 }
 
-#define WITH_FRAME true
-#define WITHOUT_FRAME false
-
 #define WITH_SRATE_FIELD true
 #define WITHOUT_SRATE_FIELD false
 
@@ -2101,10 +2098,9 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				       dialog_comment_t with_comment, 
 				       header_choice_t header_choice,
 				       bool with_src, 
-				       bool with_auto_comment,
-				       bool with_frame)
+				       bool with_auto_comment)
 {
-  GtkWidget *form, *scbox, *combox = NULL, *frame, *frame_box;
+  GtkWidget *form, *scbox, *combox = NULL, *frame_box;
   file_data *fdat;
   int nformats = 0, nheaders = 0;
   const char **formats = NULL, **headers = NULL;
@@ -2125,17 +2121,8 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
-  if (with_frame)
-    {
-      frame = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(parent), frame, false, false, 8);
-      gtk_widget_show(frame);
-    }
-
   frame_box = gtk_vbox_new(false, 0);
-  if (with_frame)
-    gtk_container_add(GTK_CONTAINER(frame), frame_box);
-  else gtk_box_pack_start(GTK_BOX(parent), frame_box, false, false, 8);
+  gtk_box_pack_start(GTK_BOX(parent), frame_box, false, false, 8);
   gtk_widget_show(frame_box);
 
   form = gtk_hbox_new(true, 8);
@@ -2986,8 +2973,7 @@ static void save_innards(GtkWidget *vbox, void *data)
 					WITH_COMMENT_FIELD,
 					WITH_WRITABLE_HEADERS,
 					WITH_SRATE_FIELD,
-					sd->type == SOUND_SAVE_AS,
-					WITH_FRAME);
+					sd->type == SOUND_SAVE_AS);
   widget_modify_base(sd->panel_data->error_text, GTK_STATE_NORMAL, ss->yellow);
   widget_modify_base(sd->panel_data->error_text, GTK_STATE_ACTIVE, ss->yellow);
 }
@@ -3491,8 +3477,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 				  WITHOUT_COMMENT_FIELD,
 				  WITH_READABLE_HEADERS,
 				  WITHOUT_SRATE_FIELD, 
-				  WITHOUT_AUTO_COMMENT,
-				  WITH_FRAME);
+				  WITHOUT_AUTO_COMMENT);
   rp->rdat->dialog = rp->dialog;
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
@@ -3820,8 +3805,7 @@ widget_t make_new_file_dialog(bool managed)
 				  WITH_COMMENT_FIELD,
 				  WITH_BUILTIN_HEADERS,
 				  WITHOUT_SRATE_FIELD, 
-				  WITHOUT_AUTO_COMMENT,
-				  WITHOUT_FRAME);
+				  WITHOUT_AUTO_COMMENT);
       ndat->dialog = new_file_dialog;
 
       SG_SIGNAL_CONNECT(new_file_dialog, "delete_event", new_file_delete_callback, ndat);
@@ -4153,8 +4137,7 @@ GtkWidget *edit_header(snd_info *sp)
 				      WITH_COMMENT_FIELD,
 				      WITH_BUILTIN_HEADERS,
 				      WITHOUT_SRATE_FIELD, 
-				      WITHOUT_AUTO_COMMENT,
-				      WITHOUT_FRAME);
+				      WITHOUT_AUTO_COMMENT);
       ep->edat->dialog = ep->dialog;
 
       SG_SIGNAL_CONNECT(ep->dialog, "delete_event", edit_header_delete_callback, ep);
@@ -5503,11 +5486,11 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       sbar = gtk_menu_bar_new();
       gtk_box_pack_end(GTK_BOX(tophbox), sbar, false, false, 0);
-      add_toolbar_style(sbar);
+      add_menu_style(sbar);
       gtk_widget_show(sbar);
 
       vdat->smenu = gtk_menu_new();
-      add_toolbar_style(vdat->smenu);
+      add_menu_style(vdat->smenu);
       vdat->a_to_z = gtk_menu_item_new_with_label("a..z");
       vdat->z_to_a = gtk_menu_item_new_with_label("z..a");
       vdat->new_to_old = gtk_menu_item_new_with_label("new..old");

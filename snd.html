@@ -1087,7 +1087,6 @@ C-v    move cursor to mid-window
 
 C-i    display cursor info
 C-j    go to mark
-C-x j  go to named mark
 </pre>
 
 <p>All keyboard commands accept numerical arguments, as in Emacs.
@@ -1180,7 +1179,6 @@ C-x /     place named mark at cursor
 C-x C-m   add named mark
 
 C-j       go to mark
-C-x j     go to named mark
 </pre>
 
 <p>The distance from the cursor to a mark can be used as a numeric
@@ -1254,11 +1252,9 @@ you made.
 <pre class="indented">
 C-y         paste in current selection at cursor
 C-[space]   start keyboard-based selection definition
-C-x a       apply amplitude envelope to selection
 C-x c       define selection from cursor to mark
 C-x p       play selection or region
 C-x q       mix in selection
-
 C-x l       position selection in mid-view
 C-x v       position window over current selection
 </pre>
@@ -1431,20 +1427,6 @@ breakpoints.  Envelopes can be defined with
 define and referred to thereafter by name.
 Use the <a href="#editenvelope">envelope editor</a>
 to draw envelopes with the mouse.
-</p>
-
-<p>To apply an envelope to a sound, use the extended
-command C-x C-a.  If this command gets a numeric
-argument, the envelope is applied from the cursor
-for that many samples. Otherwise, the envelope is
-applied to the entire file.</p>
-
-<pre class="indented">
-C-x a     apply amplitude envelope to selection
-C-x C-a   apply amplitude envelope to channel
-</pre>
-
-<p>You can also specify an envelope name to the C-x C-a prompt.
 </p>
 
 <p id="scaling">To scale a file or selection by or to some
@@ -1652,9 +1634,6 @@ be changed independently of anything else either through such functions as
 
 <img class="indented" src="pix/mixer.png" alt="mix tags">
 
-<p>To move the cursor from one mix to the next, in the same
-manner as C-j moves through marks, use C-x C-j.
-</p>
 <p>
 The function <a href="sndscm.html#makesoundbox">make-sound-box</a>
 produces a container with each sound represented by an icon;
@@ -1752,7 +1731,7 @@ definitions via load:
 </pre>
 
 <p>defines two envelopes that can be used in Snd wherever an
-envelope is needed (e.g. C-x C-a).  You can also define
+envelope is needed.  You can also define
 a new envelope in the dialog's text field;
 '(0 0 1 1) followed by return creates a ramp.</p>
 

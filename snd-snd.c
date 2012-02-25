@@ -2093,33 +2093,6 @@ static bool apply_controls(apply_state *ap)
 }
 
 
-void menu_apply_controls(snd_info *sp)
-{
-  apply_state *ap;
-  apply_beg = 0;
-  apply_dur = 0;
-  if (sp->applying) 
-    string_to_minibuffer(sp, "already applying...");
-  else
-    {
-      ap = (apply_state *)make_apply_state(sp);
-      if (ap)
-	{
-	  sp->applying = true;
-	  redirect_everything_to(printout_to_minibuffer, (void *)sp);
-	  while (apply_controls(ap)) ;
-	  redirect_everything_to(NULL, NULL);
-	}
-    }
-}
-
-
-void menu_reset_controls(snd_info *sp)
-{
-  reset_controls(sp);
-}
-
-
 void expand_control_set_hop(mus_float_t hop)
 {
   int i;

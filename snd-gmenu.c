@@ -563,7 +563,7 @@ GtkWidget *add_menu(void)
   edit_select_all_menu = add_insensitive_menu_item(edit_cascade_menu, "Select all", GTK_STOCK_SELECT_ALL, (GCallback)edit_select_all_callback);
   ml[e_select_all_menu] = "Select all";
 
-  edit_unselect_menu = add_insensitive_menu_item(edit_cascade_menu, "Unselect all", NULL, (GCallback)edit_unselect_callback);
+  edit_unselect_menu = add_insensitive_menu_item(edit_cascade_menu, "Unselect all", GTK_STOCK_CLEAR, (GCallback)edit_unselect_callback);
   ml[e_unselect_menu] = "Unselect all";
 
   edit_edit_sep_menu = add_menu_separator(edit_cascade_menu);
@@ -603,7 +603,7 @@ GtkWidget *add_menu(void)
   view_region_menu = add_insensitive_menu_item(view_cascade_menu, "Regions", NULL, (GCallback)view_region_callback_1);
   ml[v_region_menu] = "Regions";
 
-  view_color_orientation_menu = add_menu_item(view_cascade_menu, "Color/Orientation", NULL, (GCallback)view_color_orientation_callback_1);
+  view_color_orientation_menu = add_menu_item(view_cascade_menu, "Color/Orientation", GTK_STOCK_SELECT_COLOR, (GCallback)view_color_orientation_callback_1);
   ml[v_color_orientation_menu] = "Color/Orientation";
 
   view_controls_menu = add_menu_item(view_cascade_menu, "Show controls", NULL, (GCallback)view_controls_callback);
@@ -784,7 +784,7 @@ GtkWidget *add_menu(void)
   add_menu_separator(options_cascade_menu);
   ml[o_sep_menu] = NULL;
 
-  options_preferences_menu = add_menu_item(options_cascade_menu, "Preferences", NULL, (GCallback)options_preferences_callback);
+  options_preferences_menu = add_menu_item(options_cascade_menu, "Preferences", GTK_STOCK_PREFERENCES, (GCallback)options_preferences_callback);
   ml[o_preferences_menu] = "Preferences";
 
 
@@ -1761,6 +1761,46 @@ static gboolean go_forward_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboa
 }
 
 
+static gboolean unselect_all_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  if (selection_is_active())
+    gtk_tooltip_set_text(tooltip, "unselect the currently selected portion");
+  else gtk_tooltip_set_text(tooltip, "when something is selected, this unselects it");
+  return(true);
+}
+
+
+static gboolean delete_selection_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  if (selection_is_active())
+    gtk_tooltip_set_text(tooltip, "delete the currently selected portion");
+  else gtk_tooltip_set_text(tooltip, "when something is selected, this deletes it");
+  return(true);
+}
+
+
+static gboolean insert_selection_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  if (selection_is_active())
+    {
+      snd_info *sp;
+      char *tip;
+      chan_info *cp;
+
+      sp = any_selected_sound();
+      cp = any_selected_channel(sp);
+
+      tip = mus_format("insert the selected portion at the cursor (at time %.3f) in %s",
+		       ((double)CURSOR(cp)) / ((double)(SND_SRATE(sp))),
+		       sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "when something is selected, this inserts it at the cursor in the current sound");
+  return(true);
+}
+
+
 
 static GtkWidget *toolbar = NULL;
 
@@ -1834,10 +1874,16 @@ void show_toolbar(void)
       add_separator_to_toolbar(toolbar);
 
 
-      add_to_toolbar(toolbar, GTK_STOCK_SELECT_ALL,      "select all of the current sound",(GCallback)edit_select_all_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_CLEAR,               "unselect everything",        (GCallback)edit_unselect_callback);  
-      add_to_toolbar(toolbar, GTK_STOCK_CUT,                 "delete the selected portion",(GCallback)edit_cut_callback);      
-      add_to_toolbar(toolbar, GTK_STOCK_PASTE,               "insert the selection at the cursor", (GCallback)edit_paste_callback);      
+      add_to_toolbar(toolbar, GTK_STOCK_SELECT_ALL,          "select all of the current sound",(GCallback)edit_select_all_callback);
+      
+      w = add_to_toolbar(toolbar, GTK_STOCK_CLEAR,           "unselect everything",        (GCallback)edit_unselect_callback);  
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(unselect_all_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_CUT,             "delete the selected portion",(GCallback)edit_cut_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(delete_selection_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_PASTE,               "insert the selection at the cursor", (GCallback)edit_paste_callback);      
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(insert_selection_tooltip), NULL);
       add_separator_to_toolbar(toolbar);
 
 
