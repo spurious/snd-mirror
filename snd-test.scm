@@ -2270,7 +2270,7 @@
 		       'sample->file? 'sample->frame 'sampler-at-end? 'sampler-home 'sampler-position
 		       'sampler? 'samples 'samples->seconds 'sash-color
 		       'save-controls 'save-dir 'save-edit-history 'save-envelopes 'save-hook
-		       'save-listener 'save-macros 'save-marks 'save-region 'save-region-dialog
+		       'save-listener 'save-marks 'save-region 'save-region-dialog
 		       'save-selection 'save-selection-dialog 'save-sound 'save-sound-as 'save-sound-dialog
 		       'save-state 'save-state-file 'save-state-hook 'sawtooth-wave 'sawtooth-wave?
 		       'scale-by 'scale-channel 'scale-selection-by 'scale-selection-to 'scale-to
@@ -61221,7 +61221,6 @@ EDITS: 1
 	      (begin
 		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
 		(check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
-		(check-error-tag 'cannot-save (lambda () (save-macros "/bad/baddy")))
 		(check-error-tag 'cannot-save (lambda () (mus-sound-report-cache "/bad/baddy")))
 		(check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
 		(check-error-tag 'no-such-sound (lambda () (set! (search-procedure 1234) (lambda (a) a))))

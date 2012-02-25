@@ -21,10 +21,9 @@
  *   and snd-kbd uses the prompt mechanism for dozens of operations -- how to replace this?
  *   other than C-x C-f or C-x C-w, are these actually useful?
  *   could C-x C-f et al fire up the associated dialogs?
- *
- * in gtk I think I've turned off the menu icons, yet they sometimes appear in the dialogs?
- * "global find" is jargon (used as a built-in xref title in snd-help)
- * other parts of the interface need tooltips, I suppose (the "x|f|t" in the sound pane for example)
+ *   several of the current prompts are handling "xyzzy exists; overwrite?" questions -- these belong in a dialog I think
+ *   perhaps put up a dialog somewhere?
+ *   perhaps define all the "built-in" keys via (bind-key ...)
  *
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * edit env is a mess and is probably never used anyway -- in any case get rid of pointless buttons!
@@ -39,7 +38,7 @@
  *
  * if M-p/n are actually useful, add to glistener if possible
  * gtk2 tooltips look much better because the bgcolor is correct, but pango markup here is only a partial fix
- *   if no audio in mix dialog, move the previous/next buttons over to the right
+ * ideally the key binding list in help would use monospace or a table
  * 
  * stacktrace in listener popup should look for error info 1st -- can we tell last thing was in error?
  *
@@ -65,6 +64,8 @@
  *     changed listener default font to Monospace 11, added get-font to extsnd.html
  * 24: more tooltips
  *     double-click in filer opens (as in motif)
+ *     removed C-x d|w|i, C-x C-l, named macros, save-macros
+ * 25: 
  */
 
 /* various file-related dialogs:

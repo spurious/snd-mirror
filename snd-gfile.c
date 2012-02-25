@@ -3821,7 +3821,7 @@ widget_t make_new_file_dialog(bool managed)
 				  WITH_BUILTIN_HEADERS,
 				  WITHOUT_SRATE_FIELD, 
 				  WITHOUT_AUTO_COMMENT,
-				  WITH_FRAME);
+				  WITHOUT_FRAME);
       ndat->dialog = new_file_dialog;
 
       SG_SIGNAL_CONNECT(new_file_dialog, "delete_event", new_file_delete_callback, ndat);

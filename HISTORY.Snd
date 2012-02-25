@@ -1,8 +1,9 @@
 Snd change log
 
-  21-Feb:   removed the recorder (snd-g|xrec.c).
+  21-Feb:   removed the recorder, recorder-dialog, snd-g|xrec.c.
             removed the minibuffer history list and the minibuffer-history-length function.
-	    removed prompt-in-minibuffer.
+	    removed prompt-in-minibuffer, save-macros, named keyboard macros.
+	    added view:with-grid menu.
   10-Feb:   removed snd1.html, snd-contents.html.
   2-Feb:    Snd 12.8.
   27-Jan:   removed snd10.scm.

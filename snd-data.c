@@ -363,7 +363,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
     }
   else sp->channel_style = CHANNELS_SEPARATE;
 
-  sp->loading = false;
   sp->marking = 0;
   sp->filing = NOT_FILING;
   sp->minibuffer_on = MINI_OFF;
@@ -420,7 +419,6 @@ void free_snd_info(snd_info *sp)
   sp->inuse = SOUND_IDLE;
   sp->playing = 0;
   sp->search_count = 0;
-  sp->loading = false;
   sp->bomb_in_progress = false;
   sp->marking = 0;
   sp->filing = NOT_FILING;

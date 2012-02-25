@@ -393,9 +393,7 @@ typedef struct snd_info {
   int search_count, amp_count; /* search_count = number of times to search before return, amp_count = amp env samps if not 1 (= full dur) */
   sp_filing_t filing;
   char *filing_filename;
-  bool loading, finding_mark, selectioning;
-  printing_t printing;
-  mus_long_t macro_count;
+  bool finding_mark, selectioning;
   minibuffer_choice_t minibuffer_on;
   read_only_t user_read_only, file_read_only;
   chan_info **chans;

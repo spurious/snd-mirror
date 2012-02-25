@@ -5883,8 +5883,15 @@ void set_with_menu_icons(bool val)
   in_set_with_menu_icons(val);
 #if USE_GTK
   g_object_set(gtk_settings_get_default(), "gtk-menu-images", with_menu_icons(ss), NULL);
+  g_object_set(gtk_settings_get_default(), "gtk-button-images", with_menu_icons(ss), NULL);
 #endif
-  /* in Scheme: (g_object_set (GPOINTER (gtk_settings_get_default)) "gtk-menu-images" #t) */
+  /* in Scheme: (g_object_set (GPOINTER (gtk_settings_get_default)) "gtk-menu-images" #t) 
+   *   the list of these properties is in GtkSettings.html
+   *   others of possible interest: 
+   *     gtk-cursor-blink-time, gtk-cursor-blink (set in glistener)
+   *     gtk-double-click-time, gtk-enable-tooltips (see set_with_tooltips above)
+   *     gtk-menu-bar-accel
+   */
 }
 
 
@@ -5909,7 +5916,7 @@ static XEN g_save_as_dialog_src(void) {return(C_TO_XEN_BOOLEAN(save_as_dialog_sr
 
 static XEN g_set_save_as_dialog_src(XEN val) 
 {
-  #define H_save_as_dialog_src "(" S_save_as_dialog_src "): " PROC_TRUE " if you the 'src' button set by default in the various Save-as dialogs"
+  #define H_save_as_dialog_src "(" S_save_as_dialog_src "): " PROC_TRUE " if you want the 'src' button set by default in the various Save-as dialogs"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_save_as_dialog_src, "a boolean");
   set_save_as_dialog_src(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(save_as_dialog_src(ss)));
@@ -5926,7 +5933,7 @@ static XEN g_save_as_dialog_auto_comment(void) {return(C_TO_XEN_BOOLEAN(save_as_
 
 static XEN g_set_save_as_dialog_auto_comment(XEN val) 
 {
-  #define H_save_as_dialog_auto_comment "(" S_save_as_dialog_auto_comment "): " PROC_TRUE " if you the 'auto' button set by default in the various Save-as dialogs"
+  #define H_save_as_dialog_auto_comment "(" S_save_as_dialog_auto_comment "): " PROC_TRUE " if you want the 'auto' button set by default in the various Save-as dialogs"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_save_as_dialog_auto_comment, "a boolean");
   set_save_as_dialog_auto_comment(XEN_TO_C_BOOLEAN(val));
   return(C_TO_XEN_BOOLEAN(save_as_dialog_auto_comment(ss)));

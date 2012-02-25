@@ -1257,7 +1257,6 @@ void save_state(const char *save_state_name)
 	}
     }
   fprintf(save_fd, "\n");
-  save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
   save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
   save_regions(save_fd);                                  /* regions */
   

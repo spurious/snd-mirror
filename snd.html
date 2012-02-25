@@ -334,7 +334,7 @@ related documentation: &nbsp;
 </tr>
 <tr>
 <td class="br"><a href="#updatefile">Update</a></td>
-<td class="br"><a href="#cxw">Save Selection</a></td>
+<td class="br">Save Selection</td>
 <td class="br"><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td>
 <td></td>
 <td class="br"><a href="#speed">Resample</a></td>
@@ -533,7 +533,7 @@ describes the user-interface extension library.
 <tr><td class="br"><a href="#savefileas">Save as</a></td>  <td class="br">save current edits under a new name, stay in current file</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#revertfile">Revert</a></td>   <td class="br">flush edits</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#mixingfiles">Mix</a></td>     <td class="br">mix file</td><td class="br">(C-x C-q)</td></tr>
-<tr><td class="br"><a href="#insertfile">Insert</a></td>   <td class="br">insert file</td><td class="br">(C-x C-i)</td></tr>
+<tr><td class="br"><a href="#insertfile">Insert</a></td>   <td class="br">insert file</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#updatefile">Update</a></td>   <td class="br">re-read file (data changed behind Snd's back)</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#viewfile">View</a></td>       <td class="br">open file read-only</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#newfile">New</a></td>         <td class="br">create a new, empty file</td><td class="br"></td></tr>
@@ -722,9 +722,7 @@ applies to the currently selected sound.
 Save option (to overwrite the old version of the
 file), or <em class=emdef id="savefileas">Save as</em> (to write to a new file, leaving
 the old file unchanged).  The equivalent keyboard
-command is C-x C-s (save).  Other related keyboard
-commands are C-x w (save selection as file), and
-C-x C-w (extract and save the current channel as a file).
+command is C-x C-s (save).  
 Normally, if the new file already exists, and it is
 not currently being edited in Snd, it is silently
 overwritten.  If you try to overwrite a file, and
@@ -1008,10 +1006,10 @@ if you linger over some other topic, its help info will be posted in the help di
 <tr><td class="br"><a href="#undoredo">Redo</a></td><td class="br">Redo last edit</td><td class="br">(C-x C-r)</td></tr>
 <tr><td class="br"><a href="#menufind">Find</a></td><td class="br">Global search via find dialog</td><td class="br">(C-s, C-r)</td></tr>
 <tr><td class="br"><a href="#editcut">Cut</a></td><td class="br">Cut (delete) selected portion</td><td class="br"></td></tr>
-<tr><td class="br"><a href="#editcut">Paste</a></td><td class="br">Paste (insert) selected portion</td><td class="br">(C-y, C-x i)</td></tr>
+<tr><td class="br"><a href="#editcut">Paste</a></td><td class="br">Paste (insert) selected portion</td><td class="br">(C-y</td></tr>
 <tr><td class="br"><a href="#editcut">Mix selection</a></td><td class="br">Mix (add) selected portion</td><td class="br">(C-x q)</td></tr>
 <tr><td class="br"><a href="#cxp">Play selection</a></td><td class="br">Play selected portion</td><td class="br">(C-x p)</td></tr>
-<tr><td class="br"><a href="#cxw">Save selection</a></td><td class="br">Save selected portion as file</td><td class="br">(C-x w)</td></tr>
+<tr><td class="br">Save selection</td><td class="br">Save selected portion as file</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#menuselectall">Select all</a></td><td class="br">select entire file</td><td class="br"></td></tr>
 <tr><td class="br">Unselect all</td><td class="br">unselect everything</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#editenvelope">Edit Envelope</a></td><td class="br">Edit or view envelopes</td><td class="br"></td></tr>
@@ -1258,10 +1256,8 @@ C-y         paste in current selection at cursor
 C-[space]   start keyboard-based selection definition
 C-x a       apply amplitude envelope to selection
 C-x c       define selection from cursor to mark
-C-x i       insert selection
 C-x p       play selection or region
 C-x q       mix in selection
-<em class="noem" id="cxw">C-x w</em>       save selection as file 
 
 C-x l       position selection in mid-view
 C-x v       position window over current selection
@@ -1337,11 +1333,8 @@ be invoked from the keyboard:</p>
 
 <pre class="indented">
 C-x k     close currently selected file
-C-x w     save selection as file 
-C-x C-d   print
 C-x C-f   open file 
 C-x C-s   save file
-C-x C-i   insert file
 C-x C-w   save currently selected channel as file
 </pre>
 
@@ -1354,9 +1347,8 @@ file which can be sent to directly a printer or saved for later use.
 <div class="innerheader" id="deleteinsert">Delete, insert, mix</div>
 
 <p id="editcut">The fastest way to delete a section is to drag the mouse through it and
-call the Edit menu's Delete selection option.  Any region
-can be pasted or mixed in using C-x q and C-x i with a
-numeric argument (the region number); the current selection
+call the Edit menu's Delete selection option. 
+The current selection
 can be pasted in
 by clicking the middle mouse button.  The
 associated keyboard commands are:</p>
@@ -1366,13 +1358,8 @@ C-d      delete sample at cursor
 C-h      delete previous sample
 C-k      delete a 'line' &mdash; 128 samples
 C-w      delete current selected portion
-
 C-o      insert a zero sample at cursor
-C-x i    insert selection at cursor
-C-x C-i  insert file 
-
 C-y      paste in current selection at cursor
-
 C-x q    mix in region (arg = region number)
 C-x C-q  mix in file
 </pre>
@@ -1703,12 +1690,7 @@ are edited in parallel with the current one.
 <div class="innerheader" id="kbdmacros">Keyboard macros</div>
 
 <p>As in Emacs, C-x ( begins keyboard macro definition, C-x )
-ends it, and C-x e executes the last keyboard macro.  Unlike
-Emacs, C-x C-e prompts for a name for the last defined
-macro; M-x name invokes the macro "name", and the
-function save-macros saves all currently named macros.
-See the <a href="extsnd.html#lisplistener">lisp</a> section for
-more details.
+ends it, and C-x e executes the last keyboard macro. 
 </p>
 
 
@@ -1897,14 +1879,6 @@ same as C-j.</p>
 <p>C-x introduces an 'extended command'.  It can be preceded
 by a numeric argument or aborted with C-g.  C-x halts any
 on-going region definition.</p>
-
-<p>C-x d prompts for the temporary directory name.  Snd
-saves some editing operations in temporary files, rather
-than in-core buffers.  If the temporary directory has
-been set (in various ways), it is used; otherwise
-Snd looks for the TMPDIR environment variable; if it
-is not found, or is null, the directory /var/tmp is
-used.</p>
 
 <p>C-x C-c closes the control panel. 
 C-x C-o opens the panel.

@@ -485,7 +485,6 @@
 #define S_save_envelopes                "save-envelopes"
 #define S_save_hook                     "save-hook"
 #define S_save_listener                 "save-listener"
-#define S_save_macros                   "save-macros"
 #define S_save_marks                    "save-marks"
 #define S_save_mix                      "save-mix"
 #define S_save_region                   "save-region"

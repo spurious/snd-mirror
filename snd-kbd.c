@@ -13,10 +13,6 @@ static int macro_cmd_size = 0;
 static int macro_size = 0;
 typedef struct {int keysym; int state;} macro_cmd;
 static macro_cmd **macro_cmds = NULL;
-typedef struct {char *name; int macro_size; macro_cmd **cmds;} named_macro;
-static named_macro **named_macros = NULL;
-static int named_macro_ctr = 0;
-static int named_macro_size = 0;
 
 
 static void allocate_macro_cmds(void)
@@ -73,169 +69,6 @@ static void continue_macro(int keysym, int state)
 }
 
 
-static named_macro *name_macro(char *name)
-{
-  named_macro *nm;
-  if (named_macro_ctr == named_macro_size)
-    {
-      int old_size;
-      old_size = named_macro_size;
-      named_macro_size += 16;
-      if (!named_macros) named_macros = (named_macro **)calloc(named_macro_size, sizeof(named_macro *));
-      else 
-	{
-	  int i;
-	  named_macros = (named_macro **)realloc(named_macros, named_macro_size * sizeof(named_macro *));
-	  for (i = old_size; i < named_macro_size; i++) named_macros[i] = NULL;
-	}
-    }
-  if (!(named_macros[named_macro_ctr])) 
-    named_macros[named_macro_ctr] = (named_macro *)calloc(1, sizeof(named_macro));
-  nm = named_macros[named_macro_ctr];
-  nm->name = mus_strdup(name);
-  named_macro_ctr++;
-  return(nm);
-}
-
-
-static void name_last_macro (char *name)
-{
-  named_macro *nm;
-  int i;
-  nm = name_macro(name);
-  nm->macro_size = macro_size;
-  nm->cmds = (macro_cmd **)calloc(macro_size, sizeof(macro_cmd *));
-  for (i = 0; i < macro_size; i++)
-    {
-      macro_cmd *mc;
-      nm->cmds[i] = (macro_cmd *)calloc(1, sizeof(macro_cmd));
-      mc = nm->cmds[i];
-      mc->keysym = macro_cmds[i]->keysym;
-      mc->state = macro_cmds[i]->state;
-    }
-}
-
-
-static void save_macro_1(named_macro *nm, FILE *fd)
-{
-  int i;
-  macro_cmd *mc;
-#if HAVE_RUBY
-  fprintf(fd, "def %s\n", nm->name);
-  for (i = 0; i < nm->macro_size; i++)
-    {
-      mc = nm->cmds[i];
-      if (mc->keysym != 0)
-	fprintf(fd, 
-		"  %s %d, %d\n", 
-		S_key, (int)(mc->keysym), mc->state);
-    }
-  fprintf(fd, "end\n");
-#endif
-#if HAVE_SCHEME
-  fprintf(fd, "(define (%s)\n", nm->name);
-  for (i = 0; i < nm->macro_size; i++)
-    {
-      mc = nm->cmds[i];
-      if (mc->keysym != 0)
-	fprintf(fd, 
-		"  (%s (char->integer #\\%c) %d)\n", 
-		S_key, (char)(mc->keysym), mc->state);
-    }
-  fprintf(fd, ")\n");
-#endif
-#if HAVE_FORTH
-  fprintf(fd, ": %s\n", nm->name);
-  for (i = 0; i < nm->macro_size; i++)
-    {
-      mc = nm->cmds[i];
-      if (mc->keysym != 0)
-	fprintf(fd, 
-		"  [char] %c %d %s drop\n", 
-		(char)(mc->keysym), mc->state, S_key);
-    }
-  fprintf(fd, ";\n");
-#endif
-}
-
-
-void save_macro_state (FILE *fd)
-{
-  int i;
-  for (i = 0; i < named_macro_ctr; i++) 
-    save_macro_1(named_macros[i], fd);
-}
-
-
-static bool execute_named_macro_1(chan_info *cp, const char *name, mus_long_t count)
-{
-  int k;
-  for (k = 0; k < named_macro_ctr; k++)
-    {
-      if (mus_strcmp(name, named_macros[k]->name))
-	{
-	  int i;
-	  mus_long_t j;
-	  named_macro *nm;
-	  nm = named_macros[k];
-	  for (j = 0; j < count; j++)
-	    for (i = 0; i < nm->macro_size; i++) 
-	      {
-		macro_cmd *mc;
-		mc = nm->cmds[i];
-		if (mc->keysym != 0)
-		  {
-		    if ((cp->active < CHANNEL_HAS_EDIT_LIST) || (!(cp->sound))) return(1);
-		    /* it's possible for a command in the macro sequence to close cp */
-		    keyboard_command(cp, mc->keysym, mc->state);
-		  }
-	      }
-	  return(true);
-	}
-    }
-  return(false);
-}
-
-
-static void execute_named_macro(chan_info *cp, char *name, mus_long_t count)
-{
-  if (!(execute_named_macro_1(cp, name, count)))
-    /* not a macro...*/
-    {
-#if HAVE_EXTENSION_LANGUAGE
-#if HAVE_SCHEME
-      XEN result = XEN_FALSE;
-      int i, loc, one_edit;
-      one_edit = cp->edit_ctr + 1;
-      for (i = 0; i < count; i++)
-	result = XEN_EVAL_C_STRING(name);
-#else
-      int one_edit, i, loc, form_loc;
-      XEN form, result = XEN_UNDEFINED;
-      one_edit = cp->edit_ctr + 1;
-      redirect_errors_to(errors_to_minibuffer, (void *)(cp->sound));
-      form = string_to_form(name);
-      redirect_errors_to(NULL, NULL);
-      form_loc = snd_protect(form);
-      for (i = 0; i < count; i++)
-	result = snd_catch_any(eval_form_wrapper, (void *)form, name);
-      snd_unprotect_at(form_loc);
-#endif
-      loc = snd_protect(result);
-      snd_report_result(result, name);
-      snd_unprotect_at(loc);
-      if (cp->edit_ctr > one_edit)
-	{
-	  if (ss->deferred_regions > 0) 
-	    sequester_deferred_regions(cp, one_edit - 1);
-	  while (cp->edit_ctr > one_edit) backup_edit_list(cp);
-	}
-#else
-      /* not sure it's possible to get here at all -- execute undefined named macro?? */
-      snd_error("This version of Snd has no extension language, so there's no way to evaluate %s", name);
-#endif
-    }
-}
 
 
 /* ---------------- key bindings ---------------- */
@@ -325,10 +158,8 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_a,          0, 0, kbd_false, true, "apply envelope to selection",                               NULL, -1},
   {snd_K_b,          0, 0, kbd_false, true, "position window so cursor is on left margin",               NULL, -1},
   {snd_K_c,          0, 0, kbd_false, true, "define selection from cursor to nth mark",                  NULL, -1},
-  {snd_K_d,          0, 0, kbd_false, true, "set temp dir name",                                         NULL, -1},
   {snd_K_e,          0, 0, kbd_false, true, "execute keyboard macro",                                    NULL, -1},
   {snd_K_f,          0, 0, kbd_false, true, "position window so cursor is on right margin",              NULL, -1},
-  {snd_K_i,          0, 0, kbd_false, true, "insert region",                                             "insert-selection", -1},
   {snd_K_j,          0, 0, kbd_false, true, "goto named mark",                                           NULL, -1},
   {snd_K_k,          0, 0, kbd_false, true, "close file",                                                NULL, -1},
   {snd_K_l,          0, 0, kbd_false, true, "position selection in mid-view",                            NULL, -1},
@@ -338,7 +169,6 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_r,          0, 0, kbd_false, true, "redo",                                                      NULL, -1},
   {snd_K_u,          0, 0, kbd_false, true, "undo",                                                      NULL, -1},
   {snd_K_v,          0, 0, kbd_false, true, "position window over selection",                            NULL, -1},
-  {snd_K_w,          0, 0, kbd_false, true, "save selection as file",                                    NULL, -1},
   {snd_K_z,          0, 0, kbd_false, true, "smooth selection",                                          NULL, -1},
   {snd_K_slash,      0, 0, kbd_false, true, "place named mark",                                          NULL, -1},
   {snd_K_openparen,  0, 0, kbd_false, true, "begin keyboard macro definition",                           NULL, -1},
@@ -347,11 +177,8 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_a, snd_ControlMask, 0, kbd_false, true, "apply envelope",                                       NULL, -1},
   {snd_K_b, snd_ControlMask, 0, kbd_false, true, "set x window bounds (preceded by 1 arg)",              NULL, -1},
   {snd_K_c, snd_ControlMask, 0, kbd_false, true, "hide control panel",                                   NULL, -1},
-  {snd_K_d, snd_ControlMask, 0, kbd_false, true, "print",                                                NULL, -1},
-  {snd_K_e, snd_ControlMask, 0, kbd_false, true, "give last keyboard macro a name",                      NULL, -1},
   {snd_K_f, snd_ControlMask, 0, kbd_false, true, "open file",                                            NULL, -1},
   {snd_K_g, snd_ControlMask, 0, kbd_false, true, "abort command",                                        NULL, -1},
-  {snd_K_i, snd_ControlMask, 0, kbd_false, true, "insert file",                                          NULL, -1},
   {snd_K_m, snd_ControlMask, 0, kbd_false, true, "add named mark",                                       NULL, -1},
   {snd_K_o, snd_ControlMask, 0, kbd_false, true, "show control panel",                                   NULL, -1},
   {snd_K_p, snd_ControlMask, 0, kbd_false, true, "set window size (preceded by 1 arg)",                  NULL, -1},
@@ -570,11 +397,8 @@ void clear_minibuffer(snd_info *sp)
   sp->search_count = 0;
   sp->marking = 0;
   sp->filing = NOT_FILING;
-  sp->printing = NOT_PRINTING;
   sp->minibuffer_on = MINI_OFF;
-  sp->loading = false;
   sp->amp_count = 0;
-  sp->macro_count = 0;
 }
 
 
@@ -743,20 +567,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
     }
   if (mus_strlen(str) != 0)
     {
-      if (sp->printing)
-	{
-	  snd_print(str);
-	  sp->printing = NOT_PRINTING;
-	  clear_minibuffer(sp);
-	  return;
-	}
-      if (sp->loading)
-	{
-	  snd_load_file(str);
-	  sp->loading = false;
-	  clear_minibuffer(sp);
-	  return;
-	}
       if (sp->filing != NOT_FILING)
 	{
 	  switch (sp->filing)
@@ -800,70 +610,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      /* C-x C-f <cr> is no-op (emacs) */
 	      break;
 
-	      /* save selection */
-	    case DOIT_SELECTION_FILING: /* if user responded to prompt about overwriting */
-	      /* clear prompt and text widget without clearing all the fields (like sp->filing!) */
-	      clear_minibuffer_prompt(sp);
-	      set_minibuffer_string(sp, NULL, true);
-	      sp->minibuffer_on = MINI_OFF;
-	      if (STRCMP(str, "yes") != 0)
-		{
-		  if (sp->filing_filename)
-		    {
-		      free(sp->filing_filename);
-		      sp->filing_filename = NULL;
-		    }
-		  string_to_minibuffer(sp, "selection not saved");
-		  sp->filing = NOT_FILING;
-		  return;
-		}
-
-	      /* else fall through... */
-	    case SELECTION_FILING:
-	      if (selection_is_active())
-		{
-		  io_error_t io_err;
-		  char *filename = NULL;
-		  if (sp->filing == SELECTION_FILING)
-		    {
-		      clear_minibuffer_prompt(sp);
-		      set_minibuffer_string(sp, NULL, true);
-		      sp->minibuffer_on = MINI_OFF;
-		      filename = mus_expand_filename(str);
-		      if ((ask_before_overwrite(ss)) && 
-			  (mus_file_probe(filename)))
-			{
-			  /* ask user whether to go on. */
-			  char *ques;
-			  ques = mus_format("%s exists: overwrite?", str);
-			  prompt(sp, ques, NULL);
-			  free(ques);
-			  sp->filing_filename = filename;
-			  sp->filing = DOIT_SELECTION_FILING;
-			  return;
-			}
-		    }
-		  else 
-		    {
-		      filename = sp->filing_filename;
-		      sp->filing_filename = NULL;
-		    }
-		  io_err = save_selection(filename,
-					  default_output_header_type(ss), 
-					  default_output_data_format(ss), 
-					  SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
-		  if (io_err == IO_NO_ERROR)
-		    report_in_minibuffer(sp, "selection saved as %s", filename);
-		  else report_in_minibuffer(sp, "selection not saved: %s %s", 
-					    io_error_name(io_err), 
-					    filename);
-		  free(filename);
-		}
-	      else string_to_minibuffer(sp, "no selection to save");
-	      sp->filing = NOT_FILING;
-	      break;
-
-	      /* save channel -- the same loop as selection case above */
+	      /* save channel */
 	    case DOIT_CHANNEL_FILING:
 	      clear_minibuffer_prompt(sp);
 	      set_minibuffer_string(sp, NULL, true);
@@ -920,33 +667,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      }
 	      break;
 
-#if HAVE_OPENDIR
-	      /* set temp-dir */
-	    case TEMP_FILING:
-	      {
-		DIR *dp;
-		char *newdir;
-		newdir = mus_strdup(str);
-		clear_minibuffer(sp);
-		dp = opendir(newdir);
-		if (dp) 
-		  {
-		    closedir(dp);
-		    if (temp_dir(ss)) free(temp_dir(ss));
-		    set_temp_dir(newdir);
-		  }
-		else 
-		  {
-		    char *msg;
-		    msg = mus_format("can't access %s! temp dir is unchanged", newdir);
-		    display_minibuffer_error(sp, msg);
-		    free(msg);
-		    if (newdir) free(newdir);
-		  }
-	      }
-	      break;
-#endif
-
 	      /* mix file */
 	    case CHANGE_FILING:
 	      {
@@ -960,28 +680,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      }
 	      break;
 
-	      /* insert file */
-	    case INSERT_FILING:
-	      {
-		int err;
-		clear_minibuffer(sp);
-		redirect_errors_to(errors_to_minibuffer, (void *)sp);
-		err = insert_complete_file_at_cursor(sp, str);
-		redirect_errors_to(NULL, NULL);
-		if (err == 0)
-		  report_in_minibuffer(sp, "%s inserted at cursor", str);
-	      }
-	      break;
-
-	      /* execute macro */
-	    case MACRO_FILING: 
-	      if ((macro_cmds) && (macro_size > 0))
-		{
-		  name_last_macro(str); 
-		  clear_minibuffer(sp); 
-		}
-	      else string_to_minibuffer(sp, "no previous macro");
-	      break;
 
 	    case SAVE_EDITS_FILING:
 	      if ((str[0] == 'y') ||
@@ -1025,20 +723,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  clear_minibuffer(sp);
 	  return;
 	}
-
-#if HAVE_EXTENSION_LANGUAGE
-      if (sp->macro_count)
-	{
-	  redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
-	  redirect_errors_to(errors_to_minibuffer, (void *)sp);
-	  execute_named_macro(active_chan, str, sp->macro_count);
-	  /* if this is a close command from the current minibuffer, the sound may not exist when we return */
-	  redirect_everything_to(NULL, NULL);
-	  if (sp == NULL) return;
-	  sp->macro_count = 0;
-	  return;
-	}
-#endif
     }
 
   if (mus_strlen(str) > 0)
@@ -1467,14 +1151,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
     }
 
 #if HAVE_EXTENSION_LANGUAGE
-  if ((state & snd_MetaMask) && 
-      ((keysym == snd_K_X) || (keysym == snd_K_x)))
-    {
-      /* named macros invoked and saved here */
-      prompt(sp, (char *)"M-x:", NULL);
-      sp->macro_count = count;
-      return;
-    }
   hashloc = in_user_keymap(keysym, state, extended_mode);
   if (hashloc != -1)                       /* found user-defined key */
     {
@@ -1792,23 +1468,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      hide_controls(sp); 
 	      break;
 
-	    case snd_K_D: case snd_K_d: 
-	      prompt(sp, "eps file:", NULL); 
-	      sp->printing = ((ext_count != 0) ? PRINTING : NOT_PRINTING);
-	      dont_clear_minibuffer = true; 
-	      break;
-
-	    case snd_K_E: case snd_K_e: 
-	      if (macro_size == 0)
-		string_to_minibuffer(sp, "no macro active?");
-	      else
-		{
-		  prompt(sp, "macro name:", NULL); 
-		  sp->filing = MACRO_FILING; 
-		  dont_clear_minibuffer = true; 
-		}
-	      break;
-
 	    case snd_K_F: case snd_K_f: 
 	      prompt(sp, "file:", NULL); 
 	      sp->filing = INPUT_FILING; 
@@ -1819,21 +1478,9 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      control_g(sp);
 	      break;
 
-	    case snd_K_I: case snd_K_i: 
-	      prompt(sp, "insert file:", NULL); 
-	      sp->filing = INSERT_FILING; 
-	      dont_clear_minibuffer = true; 
-	      break;
-
 	    case snd_K_J: case snd_K_j:
 	      cp->cursor_on = true; 
 	      goto_mix(cp, ext_count); 
-	      break;
-
-	    case snd_K_L: case snd_K_l: 
-	      prompt(sp, "load:", NULL); 
-	      sp->loading = true;
-	      dont_clear_minibuffer = true; 
 	      break;
 
 	    case snd_K_M: case snd_K_m:
@@ -2070,12 +1717,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		    goto_listener();
 		    listener_append(buf);
 		  }
-		else 
-		  {
-		    prompt(sp, (char *)"M-x:", buf);
-		    sp->macro_count = count;
-		    clear_search = false;
-		  }
 	      }
 #else
 	      report_in_minibuffer(sp, "key %s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
@@ -2115,12 +1756,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		    string_to_minibuffer(cp->sound, "no such mark");
 		  break;
 
-		case snd_K_D: case snd_K_d: 
-		  prompt(sp, "temp dir:", NULL); 
-		  sp->filing = TEMP_FILING; 
-		  dont_clear_minibuffer = true; 
-		  break;
-
 		case snd_K_E: case snd_K_e: 
 		  if (defining_macro) 
 		    {
@@ -2138,10 +1773,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_F: case snd_K_f: 
 		  cp->cursor_on = true; 
 		  handle_cursor(cp, CURSOR_ON_RIGHT); 
-		  break;
-
-		case snd_K_I: case snd_K_i: 
-		  insert_selection_or_region((!got_ext_count) ? 0 : ext_count, cp);
 		  break;
 
 		case snd_K_J: case snd_K_j: 
@@ -2207,12 +1838,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		      if (complain)
 			string_to_minibuffer(sp, "no active selection");
 		    }
-		  break;
-
-		case snd_K_W: case snd_K_w:
-		  prompt(sp, "file:", NULL); 
-		  sp->filing = SELECTION_FILING; 
-		  dont_clear_minibuffer = true;
 		  break;
 
 		case snd_K_Z: case snd_K_z: 
@@ -2459,27 +2084,8 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 
 static XEN g_save_macros(XEN file)
 {
-  #define H_save_macros "(" S_save_macros " :optional (file \"~/.snd\")): save keyboard macros file"
-  FILE *fd = NULL;
-  const char *name;
-
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_save_macros, "a string");
-
-  name = XEN_TO_C_STRING(file);
-  fd = FOPEN(name, "a");
-  if (fd) 
-    {
-      save_macro_state(fd);
-      snd_fclose(fd, name);
-    }
-  else
-    {
-      XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_save_macros ": ~S ~A"),
-			   file,
-			   C_TO_XEN_STRING(snd_io_strerror())));
-    }
-  return(file);
+  fprintf(stderr, "save-macros no longer does anything\n");
+  return(XEN_FALSE);
 }
 
 
@@ -2584,7 +2190,7 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
   XEN_DEFINE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
-  XEN_DEFINE_PROCEDURE(S_save_macros,            g_save_macros_w,            1, 0, 0, H_save_macros);
+  XEN_DEFINE_PROCEDURE("save-macros",            g_save_macros_w,            1, 0, 0, "obsolete");
   XEN_DEFINE_PROCEDURE(S_clear_minibuffer,       g_clear_minibuffer_w,       0, 1, 0, H_clear_minibuffer);
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 2, 0, H_report_in_minibuffer);
 #if (!SND_DISABLE_DEPRECATED)

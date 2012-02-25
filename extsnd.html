@@ -1470,11 +1470,26 @@ To get the maximum performance, set this flag to false (#f).
 
 <!-- with-menu-icons -->
 <pre class="indented">
-<em class=def id="withmenuicons">with-menu-icons</em> (default: #f)
+<em class=def id="withmenuicons">with-menu-icons</em> (default: #t)
 </pre>
 
 <p>with-menu-icons determines whether some menus display icons beside the item labels (in Gtk only).
+This sets both gtk-menu-images and gtk-button-images.  There are a lot of these default settings
+in gtk (see GtkSettings.html).  To set one from Scheme:
 </p>
+
+<pre class="indented">
+(g_object_set (GPOINTER (gtk_settings_get_default)) "gtk-menu-images" #t) 
+</pre>
+
+<p>To get the current value of one of these settings, you need to tell xg the expected return
+type.  In the next example, we assume we're getting an integer:
+</p>
+
+<pre class="indented">
+&gt; (g_object_get (GPOINTER (gtk_settings_get_default)) "gtk-cursor-blink-time" #f)
+1200
+</pre>
 <div class="spacer"></div>
 
 
@@ -5832,7 +5847,7 @@ more examples including:
 <TABLE class="method">
 <tr><th class="title"><a class=quiet href="extsnd.html#sndmarks">Marks</a></th></tr><tr><td>
 <blockquote><small>
-global find-mark: <a href="sndscm.html#marknametoid">mark-name-&gt;id</a><br>
+find mark in any sound: <a href="sndscm.html#marknametoid">mark-name-&gt;id</a><br>
 mark history: <a href="sndscm.html#describemark">describe-mark</a><br>
 synchronize marks by inserting silences: <a href="sndscm.html#syncup">syncup</a><br>
 squeeze selection between marks: <a href="sndscm.html#fitselectionbetweenmarks">fit-selection-between-marks</a><br>
@@ -10118,7 +10133,6 @@ start the file save dialog: <a href="extsnd.html#savesounddialog">save-sound-dia
 start the selection save dialog: <a href="extsnd.html#saveselectiondialog">save-selection-dialog</a><br>
 start the region save dialog: <a href="extsnd.html#saveregiondialog">save-region-dialog</a><br>
 save the current listener text: <a href="extsnd.html#savelistener">save-listener</a><br>
-save keyboard macros: <a href="extsnd.html#savemacros">save-macros</a><br>
 save marks: <a href="extsnd.html#savemarks">save-marks</a><br>
 save just the edit history: <a href="extsnd.html#saveedithistory">save-edit-history</a><br>
 take some action upon a window manager save-yourself signal: <a href="sndscm.html#uponsaveyourself">upon-save-yourself</a><br>
@@ -14463,16 +14477,6 @@ is preceded by C-x.
 </pre>
 
 <p>This returns #t if underlying machine is little endian.
-</p>
-<div class="spacer"></div>
-
-
-<!-- save-macros -->
-<pre class="indented">
-<em class=def id="savemacros">save-macros</em> filename
-</pre>
-
-<p>This saves all currently defined <a href="snd.html#kbdmacros">keyboard macros</a> in 'filename'.
 </p>
 <div class="spacer"></div>
 

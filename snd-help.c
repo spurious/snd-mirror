@@ -1422,7 +1422,7 @@ void init_file_help(void)
 
 #if HAVE_EXTENSION_LANGUAGE
 "Nearly everything in Snd can be set in an initialization file, loaded at any time from a saved-state file, specified \
-via inter-process communciation from any other program, invoked via M-x in the minibuffer, imbedded in a keyboard macro, or  \
+via inter-process communciation from any other program, or  \
 dealt with from the lisp listener panel. I've tried to bring out to lisp nearly every portion of Snd, \
 both the signal-processing functions, and much of the user interface. You can, for example, add your own menu choices, \
 editing operations, or graphing alternatives. These extensions can be loaded at any time.  One of the \
@@ -2561,7 +2561,7 @@ void find_dialog_help(void)
     #define closure_example ": zero+ ( -- prc; n self -- val )\n  lambda-create 0.0 ( lastn ) , latestxt 1 make-proc\n does> { n self -- val }\n  self @ ( lastn ) f0<  n f0>= &&  -1 && { rtn }\n  n self ! ( lastn = n )\n  rtn\n;" 
   #endif
 
-  snd_help_with_xrefs("Global Find",
+  snd_help_with_xrefs("Search all sounds",
 
 #if HAVE_EXTENSION_LANGUAGE
 "This search travels through all the current channels in parallel until a match is found.  The find \
