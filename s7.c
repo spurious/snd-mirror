@@ -34632,7 +34632,7 @@ static s7_pointer check_let(s7_scheme *sc)
        */
       
       if (!(is_symbol(car(carx))))
-	return(eval_error(sc, "bad variable ~S in let bindings", carx));
+	return(eval_error(sc, "bad variable ~S in let", carx));
       
       if (is_immutable(car(carx)))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG,
@@ -34858,7 +34858,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
       s7_pointer x, z;
       x = car(y);
       if (!(is_symbol(car(x))))     /* (let* ((3 1)) 1) */
-	return(eval_error(sc, "bad variable ~S in let* bindings", x));
+	return(eval_error(sc, "bad variable ~S in let*", x));
 
       z = car(x);
       if (is_immutable(z))
@@ -35011,7 +35011,7 @@ static s7_pointer check_letrec(s7_scheme *sc)
       
       if ((!is_pair(car(x))) ||           /* (letrec (1 2) #t) */
 	  (!(is_symbol(caar(x)))))
-	return(eval_error(sc, "bad variable ~S in letrec bindings", car(x)));
+	return(eval_error(sc, "bad variable ~S in letrec", car(x)));
       
       if (is_immutable(caar(x)))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG,
@@ -53537,7 +53537,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* optional, key, rest args */
   assign_syntax(sc, "define",            OP_DEFINE);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
-  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);  /* unsetabble and unrebindable bindings */
+  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);  /* unsetabble and unrebindable */
 
   assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
   assign_syntax(sc, "defmacro*",         OP_DEFMACRO_STAR);
@@ -54370,7 +54370,7 @@ the error type and the info passed to the error handler.");
                           (if (null? body)                                                 \n\
                               (error 'syntax-error \"letrec* has no body\")                \n\
                               (if (not (list? bindings))                                   \n\
-                                  (error 'syntax-error \"letrec* bindings are messed up\") \n\
+                                  (error 'syntax-error \"letrec* variables are messed up\") \n\
                                   `(let (,@(map (lambda (var&init)                         \n\
                                                   (list (car var&init) #<undefined>))      \n\
                                                 bindings))                                 \n\

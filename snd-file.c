@@ -1652,6 +1652,7 @@ void snd_close_file(snd_info *sp)
       return;
     }
   unpost_unsaved_edits_if_any(sp);
+  unpost_file_has_changed_if_any(sp);
 #endif
 
   if (peak_env_dir(ss))

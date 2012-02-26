@@ -615,12 +615,6 @@ char *sound_filename_completer(widget_t w, const char *text, void *data)
 }
 
 
-static bool use_sound_filename_completer(sp_filing_t filing)
-{
-  return(filing == INPUT_FILING);  /* C-x C-f */
-}
-
-
 char *info_completer(widget_t w, const char *text, void *data)
 {
   snd_info *sp = (snd_info *)data;
@@ -632,9 +626,6 @@ char *info_completer(widget_t w, const char *text, void *data)
 
       if (sp->marking)
 	return(mus_strdup(text));      /* C-x C-m etc */
-
-      if (use_sound_filename_completer(sp->filing))
-	return(sound_filename_completer(w, text, NULL));
 
       new_text = expression_completer(w, text, NULL);
       if (get_completion_matches() == 0)

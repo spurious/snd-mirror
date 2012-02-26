@@ -111,7 +111,7 @@ static void file_view_callback(Widget w, XtPointer info, XtPointer context) {mak
 static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog(true);}
 static void file_close_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
 static void file_close_all_callback(Widget w, XtPointer info, XtPointer context) {for_each_sound(snd_close_file);}
-static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}
+static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits_from_kbd(any_selected_sound());}
 static void file_update_callback(Widget w, XtPointer info, XtPointer context) {update_file_from_menu();}
 static void file_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_sound_save_as_dialog(true);}
 static void file_revert_callback(Widget w, XtPointer info, XtPointer context) {revert_file_from_menu();}
@@ -375,7 +375,7 @@ static void help_env_callback(Widget w, XtPointer info, XtPointer context) {env_
 static void help_marks_callback(Widget w, XtPointer info, XtPointer context) {marks_help();}
 static void help_mix_callback(Widget w, XtPointer info, XtPointer context) {mix_help();}
 static void help_sound_files_callback(Widget w, XtPointer info, XtPointer context) {sound_files_help();}
-static void help_keys_callback(Widget w, XtPointer info, XtPointer context) {key_binding_help();}
+static void help_keys_callback(Widget w, XtPointer info, XtPointer context) {key_help();}
 static void help_play_callback(Widget w, XtPointer info, XtPointer context) {play_help();}
 static void help_filter_callback(Widget w, XtPointer info, XtPointer context) {filter_help();}
 static void help_save_callback(Widget w, XtPointer info, XtPointer context) {save_help();}

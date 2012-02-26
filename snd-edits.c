@@ -6847,6 +6847,7 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
   /* check for change to file while we were editing it */
   current_write_date = file_write_date(sp->filename);
   /* returns -1 if file does not exist (stat -> -1) */
+
   if (current_write_date < 0)
     {
       snd_error("can't save edits; %s has disappeared!", sp->filename); 
@@ -6854,10 +6855,15 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
       return(IO_CANT_OPEN_FILE);
     }
   if ((ask) &&
-      (ask_before_overwrite(ss)) &&
       ((current_write_date - sp->write_date) > 1)) /* In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
-    return(IO_NEED_WRITE_CONFIRMATION);            /* see snd-kbd.c save_edits_with_prompt for the rest of this */
+    return(IO_NEED_WRITE_CONFIRMATION);            /* see snd-kbd.c save_edits_from_kbd for the rest of this */
+
+  /* this used to include ask_before_overwrite, but I don't think that is relevant.  If the file
+   *    has changed from what we think it is, we have a problem -- the save is unlikely to do anything useful.
+   */
+
   err = save_edits_and_update_display(sp);
+
   if (err == IO_NO_ERROR)
     {
       if (sp->edited_region) 

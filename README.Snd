@@ -70,7 +70,9 @@ The configure script has a bunch of arguments:
                                  with --with-alsa)
 
      --with-pulseaudio         use PulseAudio (untested)
-     --without-audio
+
+     --without-audio           do not include audio support.  This also affects the
+                                 GUI (play buttons are omitted).
 
 
    Numerics:
@@ -203,7 +205,7 @@ Guenter Geiger and Stefan Schwandter: the Linux Alpha port.
 Paul Davis:                         the original ALSA support.
 Steven Schultz and Mike Scholz:     the *BSD ports.
 Ludger Brummer and Charles Nichols: the Mac-OSX port.
-Thomas Klausner:                    the NetBSD port.
+Thomas Klausner and Mike Scholz:    the NetBSD port.
 Steve Beet:                         minGW
 
 Plus many other contributions from
@@ -219,7 +221,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Emacs Lisp, javascript,
-Fortran, and postscript (altogether about 700,000 lines).
+Fortran, and postscript (altogether about 740,000 lines).
 
 
 ----------------------------------------------------------------
@@ -296,7 +298,6 @@ Motif:
 
 Gtk+:
   http://www.gtk.org
-  ftp://ftp.gtk.org/pub/gtk/
 
 OpenGL:
   http://www.mesa3d.org/
@@ -343,7 +344,7 @@ that it can't handle big-endian shorts.
 
 
 In OpenBSD, use pulseaudio:
- ./configure --with-gmp --with-gtk --with-pulseaudio CFLAGS=-ftrampolines LDFLAGS=-pthread 
+ ./configure --with-gmp --with-gtk --with-pulseaudio CFLAGS=-ftrampolines LDFLAGS=-pthread
 
 
 In X86 Solaris, you may need to install Jurgen Keil's audio drivers.
@@ -428,7 +429,7 @@ On 64-bit machines, use motif 2.3.2 or later.
 
 ---- Gtk+: ----
 
-Only Gtk 2.10 or later is supported.  
+Only Gtk 2.12 or later is supported.  
 
 If you get an error like:
 

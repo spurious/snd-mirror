@@ -71,7 +71,7 @@ static void continue_macro(int keysym, int state)
 
 
 
-/* ---------------- key bindings ---------------- */
+/* ---------------- keys ---------------- */
 
 typedef struct {
   int key; 
@@ -83,20 +83,20 @@ typedef struct {
   int gc_loc;
 } key_entry; 
 
-static key_entry *user_keymap = NULL;
+static key_entry *keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
 
 
-int in_user_keymap(int key, int state, bool cx_extended)
+int in_keymap(int key, int state, bool cx_extended)
 {
   int i;
   if (keymap_top == 0) return(-1);
   for (i = 0; i < keymap_top; i++)
-    if ((user_keymap[i].key == key) && 
-	(user_keymap[i].state == state) &&
-	(user_keymap[i].cx_extended == cx_extended) && 
-	(XEN_BOUND_P(user_keymap[i].func)))
+    if ((keymap[i].key == key) && 
+	(keymap[i].state == state) &&
+	(keymap[i].cx_extended == cx_extended) && 
+	(XEN_BOUND_P(keymap[i].func)))
       return(i);
   return(-1);
 }
@@ -108,9 +108,9 @@ int in_user_keymap(int key, int state, bool cx_extended)
   #define kbd_false XEN_FALSE
 #endif
 
-#define NUM_BUILT_IN_KEY_BINDINGS 81
+#define NUM_BUILT_IN_KEYS 81
 
-static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
+static key_entry built_in_keys[NUM_BUILT_IN_KEYS] = {
   {snd_K_Down,       0, 0, kbd_false, false, "zoom out",                                                 NULL, -1},
   {snd_K_Up,         0, 0, kbd_false, false, "zoom in",                                                  NULL, -1},
   {snd_K_Left,       0, 0, kbd_false, false, "move window left",                                         NULL, -1},
@@ -189,15 +189,15 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
 };
 
 
-void map_over_key_bindings(bool (*func)(int key, int state, bool cx, XEN xf))
+void map_over_keys(bool (*func)(int key, int state, bool cx, XEN xf))
 {
   int i;
   for (i = 0; i < keymap_top; i++)
-    if ((XEN_BOUND_P(user_keymap[i].func)) &&
-	((*func)(user_keymap[i].key, 
-		 user_keymap[i].state, 
-		 user_keymap[i].cx_extended, 
-		 user_keymap[i].func)))
+    if ((XEN_BOUND_P(keymap[i].func)) &&
+	((*func)(keymap[i].key, 
+		 keymap[i].state, 
+		 keymap[i].cx_extended, 
+		 keymap[i].func)))
       return;
 }
 
@@ -220,18 +220,18 @@ static key_info *make_key_info(key_entry k)
 }
 
 
-key_info *find_prefs_key_binding(const char *prefs_name)
+key_info *find_prefs_key(const char *prefs_name)
 {
   int i;
   key_info *ki;
   for (i = 0; i < keymap_top; i++)
-    if ((XEN_BOUND_P(user_keymap[i].func)) &&
-	(mus_strcmp(user_keymap[i].prefs_info, prefs_name)))
-      return(make_key_info(user_keymap[i]));
+    if ((XEN_BOUND_P(keymap[i].func)) &&
+	(mus_strcmp(keymap[i].prefs_info, prefs_name)))
+      return(make_key_info(keymap[i]));
 
-  for (i = 0; i < NUM_BUILT_IN_KEY_BINDINGS; i++)
-    if (mus_strcmp(built_in_key_bindings[i].prefs_info, prefs_name))
-      return(make_key_info(built_in_key_bindings[i]));
+  for (i = 0; i < NUM_BUILT_IN_KEYS; i++)
+    if (mus_strcmp(built_in_keys[i].prefs_info, prefs_name))
+      return(make_key_info(built_in_keys[i]));
 
   ki = (key_info *)calloc(1, sizeof(key_info));
   ki->key = NULL;
@@ -242,25 +242,25 @@ key_info *find_prefs_key_binding(const char *prefs_name)
 }
 
 
-char *key_binding_description(int key, int state, bool cx_extended)
+char *key_description(int key, int state, bool cx_extended)
 {
   int pos;
   if ((key < MIN_KEY_CODE) || (key > MAX_KEY_CODE) ||
       (state < MIN_KEY_STATE) || (state > MAX_KEY_STATE))
     return(NULL);
-  pos = in_user_keymap(key, state, cx_extended);
-  if (pos < 0) pos = in_user_keymap(key, state, cx_extended);
+  pos = in_keymap(key, state, cx_extended);
+  if (pos < 0) pos = in_keymap(key, state, cx_extended);
   if (pos >= 0)
     {
-      if (user_keymap[pos].origin)
-	return(mus_strdup(user_keymap[pos].origin));
+      if (keymap[pos].origin)
+	return(mus_strdup(keymap[pos].origin));
       return(mus_strdup("something indescribable")); /* NULL would mean "no binding" */
     }
-  for (pos = 0; pos < NUM_BUILT_IN_KEY_BINDINGS; pos++)
-    if ((built_in_key_bindings[pos].key == key) && 
-	(built_in_key_bindings[pos].state == state) && 
-	(built_in_key_bindings[pos].cx_extended == cx_extended))
-      return(mus_strdup(built_in_key_bindings[pos].origin));
+  for (pos = 0; pos < NUM_BUILT_IN_KEYS; pos++)
+    if ((built_in_keys[pos].key == key) && 
+	(built_in_keys[pos].state == state) && 
+	(built_in_keys[pos].cx_extended == cx_extended))
+      return(mus_strdup(built_in_keys[pos].origin));
   return(NULL);
 }
 
@@ -268,7 +268,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
 void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info)
 {
   int i;
-  i = in_user_keymap(key, state, cx_extended);
+  i = in_keymap(key, state, cx_extended);
   if (i == -1)
     {
       if (keymap_size == keymap_top)
@@ -276,79 +276,79 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
 	  keymap_size += 16;
 	  if (keymap_top == 0)
 	    {
-	      user_keymap = (key_entry *)calloc(keymap_size, sizeof(key_entry));
+	      keymap = (key_entry *)calloc(keymap_size, sizeof(key_entry));
 	      for (i = 0; i < keymap_size; i++) 
-		user_keymap[i].func = XEN_UNDEFINED;
+		keymap[i].func = XEN_UNDEFINED;
 	    }
 	  else 
 	    {
-	      user_keymap = (key_entry *)realloc(user_keymap, keymap_size * sizeof(key_entry));
+	      keymap = (key_entry *)realloc(keymap, keymap_size * sizeof(key_entry));
 	      for (i = keymap_top; i < keymap_size; i++) 
 		{
-		  user_keymap[i].key = 0; 
-		  user_keymap[i].state = 0; 
-		  user_keymap[i].func = XEN_UNDEFINED;
-		  user_keymap[i].cx_extended = false;
-		  user_keymap[i].origin = NULL;
-		  user_keymap[i].prefs_info = NULL;
-		  user_keymap[i].gc_loc = NOT_A_GC_LOC;
+		  keymap[i].key = 0; 
+		  keymap[i].state = 0; 
+		  keymap[i].func = XEN_UNDEFINED;
+		  keymap[i].cx_extended = false;
+		  keymap[i].origin = NULL;
+		  keymap[i].prefs_info = NULL;
+		  keymap[i].gc_loc = NOT_A_GC_LOC;
 		}
 	    }
 	}
-      user_keymap[keymap_top].key = key;
-      user_keymap[keymap_top].state = state;
-      user_keymap[keymap_top].cx_extended = cx_extended;
+      keymap[keymap_top].key = key;
+      keymap[keymap_top].state = state;
+      keymap[keymap_top].cx_extended = cx_extended;
       check_menu_labels(key, state, cx_extended);
       i = keymap_top;
       keymap_top++;
     }
   else
     {
-      if ((XEN_PROCEDURE_P(user_keymap[i].func)) &&
-	  (user_keymap[i].gc_loc != NOT_A_GC_LOC))
+      if ((XEN_PROCEDURE_P(keymap[i].func)) &&
+	  (keymap[i].gc_loc != NOT_A_GC_LOC))
 	{
-	  snd_unprotect_at(user_keymap[i].gc_loc);
-	  user_keymap[i].gc_loc = NOT_A_GC_LOC;
+	  snd_unprotect_at(keymap[i].gc_loc);
+	  keymap[i].gc_loc = NOT_A_GC_LOC;
 	}
-      if (user_keymap[i].origin)
+      if (keymap[i].origin)
 	{
 	  /* this is silly... */
 	  char *tmp;
-	  tmp = (char *)user_keymap[i].origin;
-	  user_keymap[i].origin = NULL;
+	  tmp = (char *)keymap[i].origin;
+	  keymap[i].origin = NULL;
 	  free(tmp);
 	}
-      if (user_keymap[i].prefs_info)
+      if (keymap[i].prefs_info)
 	{
 	  char *tmp;
-	  tmp = (char *)user_keymap[i].prefs_info;
-	  user_keymap[i].prefs_info = NULL;
+	  tmp = (char *)keymap[i].prefs_info;
+	  keymap[i].prefs_info = NULL;
 	  free(tmp);
 	}
     }
-  user_keymap[i].origin = mus_strdup(origin);
-  user_keymap[i].prefs_info = mus_strdup(prefs_info);
-  user_keymap[i].args = args;
-  user_keymap[i].func = func;
+  keymap[i].origin = mus_strdup(origin);
+  keymap[i].prefs_info = mus_strdup(prefs_info);
+  keymap[i].args = args;
+  keymap[i].func = func;
   if (XEN_PROCEDURE_P(func)) 
-    user_keymap[i].gc_loc = snd_protect(func);
+    keymap[i].gc_loc = snd_protect(func);
 }
 
 
-static void call_user_keymap(int hashedsym, int count)
+static void call_keymap(int hashedsym, int count)
 {
   kbd_cursor_t res = KEYBOARD_NO_ACTION;
 
-  if (XEN_BOUND_P(user_keymap[hashedsym].func))
+  if (XEN_BOUND_P(keymap[hashedsym].func))
     {
       /* not _NO_CATCH here because the code is not protected at any higher level */
-      if (user_keymap[hashedsym].args == 0)
-	res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, 
-							    user_keymap[hashedsym].origin), 
+      if (keymap[hashedsym].args == 0)
+	res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(keymap[hashedsym].func, 
+							    keymap[hashedsym].origin), 
 						 (int)KEYBOARD_NO_ACTION);
-      else res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, 
+      else res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(keymap[hashedsym].func, 
 							       C_TO_XEN_INT(count), 
-							       user_keymap[hashedsym].origin),
+							       keymap[hashedsym].origin),
 						    (int)KEYBOARD_NO_ACTION);
     }
   handle_cursor(selected_channel(), res);
@@ -558,45 +558,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	{
 	  switch (sp->filing)
 	    {
-
-	      /* open file */
-	    case INPUT_FILING:
-	      if (str)
-		{
-		  char *filename;
-		  snd_info *nsp;
-		  filename = mus_expand_filename(str);
-		  if (mus_file_probe(filename))
-		    {
-		      ss->open_requestor = FROM_KEYBOARD;
-#if (!USE_NO_GUI)
-		      ss->requestor_dialog = NULL;
-#endif
-		      ss->open_requestor_data = (void *)sp;
-		      nsp = snd_open_file(str, FILE_READ_WRITE);
-		    }
-		  else
-		    {
-		      /* C-x C-f <name-of-nonexistent-file> -> open new sound */
-		      nsp = snd_new_file(filename, 
-					 default_output_header_type(ss),
-					 default_output_data_format(ss),
-					 default_output_srate(ss),
-					 default_output_chans(ss),
-					 NULL, 1); /* at least 1 sample needed for new sound data buffer creation */
-		      /* now should this file be deleted upon exit?? */
-		    }
-		  free(filename);
-		  if (nsp) 
-		    {
-		      select_channel(nsp, 0);
-		      clear_minibuffer(sp);
-		    }
-		  else snd_warning("can't open %s!", str);
-		}
-	      /* C-x C-f <cr> is no-op (emacs) */
-	      break;
-
 	      /* save channel */
 	    case DOIT_CHANNEL_FILING:
 	      clear_minibuffer_prompt(sp);
@@ -654,30 +615,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      }
 	      break;
 
-	      /* mix file */
-	    case CHANGE_FILING:
-	      {
-		int id_or_error;
-		clear_minibuffer(sp);
-		redirect_errors_to(errors_to_minibuffer, (void *)sp);
-		id_or_error = mix_complete_file_at_cursor(sp, str);
-		redirect_errors_to(NULL, NULL);
-		if (id_or_error >= 0)
-		  report_in_minibuffer(sp, "%s mixed in at cursor", str);
-	      }
-	      break;
-
-
-	    case SAVE_EDITS_FILING:
-	      if ((str[0] == 'y') ||
-		  (str[0] == 'Y'))
-		{
-		  sp->need_update = false;
-		  clear_minibuffer_error(sp);
-		  save_edits_and_update_display(sp);
-		}
-	      clear_minibuffer(sp);
-	      break;
 	    default:
 	      break;
 	    }
@@ -875,17 +812,23 @@ static chan_info *goto_next_graph(chan_info *cp, int count)
 }
 
 
-void save_edits_with_prompt(snd_info *sp)
+void save_edits_from_kbd(snd_info *sp)
 {
-  io_error_t err;
+  /* this used to prompt for confirmation, but we now use a dialog
+   */
   redirect_everything_to(printout_to_minibuffer, (void *)sp);
-  err = save_edits(sp); 
+#if (!USE_NO_GUI)
+  {
+    io_error_t err;
+    err = save_edits(sp);
+    if (err == IO_NEED_WRITE_CONFIRMATION)
+      changed_file_dialog(sp);
+  }
+#else
+  save_edits_without_asking(sp);
+#endif
+
   redirect_everything_to(NULL, NULL);
-  if (err == IO_NEED_WRITE_CONFIRMATION)
-    {
-      prompt(sp, "file has changed; overwrite anyway?", NULL); 
-      sp->filing = SAVE_EDITS_FILING; 
-    }
 }
 
 
@@ -1110,11 +1053,11 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
     }
 
 #if HAVE_EXTENSION_LANGUAGE
-  hashloc = in_user_keymap(keysym, state, extended_mode);
+  hashloc = in_keymap(keysym, state, extended_mode);
   if (hashloc != -1)                       /* found user-defined key */
     {
       extended_mode = false;
-      call_user_keymap(hashloc, count);
+      call_keymap(hashloc, count);
       return;
     }
 #endif
@@ -1423,9 +1366,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_F: case snd_K_f: 
-	      prompt(sp, "file:", NULL); 
-	      sp->filing = INPUT_FILING; 
-	      dont_clear_minibuffer = true; 
+	      make_open_file_dialog(FILE_READ_WRITE, true);
 	      break;
 
 	    case snd_K_G: case snd_K_g: 
@@ -1454,9 +1395,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_Q: case snd_K_q: 
-	      prompt(sp, "mix file:", NULL); 
-	      sp->filing = CHANGE_FILING; 
-	      dont_clear_minibuffer = true; 
+	      make_mix_file_dialog(true);
 	      break;
 
 	    case snd_K_R: case snd_K_r: 
@@ -1464,8 +1403,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_S: case snd_K_s: 
-	      save_edits_with_prompt(sp);
-	      dont_clear_minibuffer = true; 
+	      save_edits_from_kbd(sp);
 	      break;
 
 	    case snd_K_T: case snd_K_t: 
@@ -1481,6 +1419,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_W: case snd_K_w: 
+	      /* TODO: goto save-as dialog with extraction set somehow? */
 	      prompt(sp, "file:", NULL); 
 	      sp->filing = CHANNEL_FILING; 
 	      dont_clear_minibuffer = true; 
@@ -1861,7 +1800,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 }
 
 
-/* ---------------- Xen kbd bindings ---------------- */
 
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
 {
@@ -1926,9 +1864,9 @@ prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an in
   k = key_name_to_key(key, S_key_binding);
   s = XEN_TO_C_INT_OR_ELSE(state, 0) & 0xfffe; /* no shift bit */
   check_for_key_error(k, s, S_key_binding);
-  i = in_user_keymap(k, s, XEN_TRUE_P(cx_extended));
+  i = in_keymap(k, s, XEN_TRUE_P(cx_extended));
   if (i >= 0) 
-    return(user_keymap[i].func);
+    return(keymap[i].func);
 
   return(XEN_UNDEFINED);
 }
@@ -2140,8 +2078,8 @@ void g_init_kbd(void)
 #if HAVE_SCHEME
   {
     int i;
-    for (i = 0; i < NUM_BUILT_IN_KEY_BINDINGS; i++)
-      built_in_key_bindings[i].func = XEN_FALSE;
+    for (i = 0; i < NUM_BUILT_IN_KEYS; i++)
+      built_in_keys[i].func = XEN_FALSE;
   }
 #endif
 }

@@ -4389,6 +4389,101 @@ void save_edits_now(snd_info *sp)
 
 
 
+/* ---------------- file has changed dialog ---------------- */
+
+static int num_file_has_changed_dialogs = 0;
+static GtkWidget **file_has_changed_dialogs = NULL;
+static snd_info **file_has_changed_sounds = NULL;
+
+static GtkWidget *file_has_changed_dialog(snd_info *sp)
+{
+  int i;
+  /* are there any such dialogs? */
+  if (num_file_has_changed_dialogs == 0)
+    return(NULL);
+
+  /* now see if we've already prompted about this sound */
+  for (i = 0; i < num_file_has_changed_dialogs; i++)
+    if (file_has_changed_sounds[i] == sp)
+      return(file_has_changed_dialogs[i]);
+
+  /* try to find a free unmanaged dialog */
+  for (i = 0; i < num_file_has_changed_dialogs; i++)
+    if ((file_has_changed_dialogs[i]) &&
+	(!widget_is_active(file_has_changed_dialogs[i])))
+      return(file_has_changed_dialogs[i]);
+
+  return(NULL);
+}
+
+static void save_file_has_changed_dialog(GtkWidget *d, snd_info *sp)
+{
+  if (num_file_has_changed_dialogs == 0)
+    {
+      file_has_changed_dialogs = (GtkWidget **)calloc(1, sizeof(GtkWidget *));
+      file_has_changed_sounds = (snd_info **)calloc(1, sizeof(snd_info *));
+    }
+  else
+    {
+      file_has_changed_dialogs = (GtkWidget **)realloc(file_has_changed_dialogs, (num_file_has_changed_dialogs + 1) * sizeof(GtkWidget *));
+      file_has_changed_sounds = (snd_info **)realloc(file_has_changed_sounds, (num_file_has_changed_dialogs + 1) * sizeof(snd_info *));
+    }
+
+  file_has_changed_dialogs[num_file_has_changed_dialogs] = d;
+  file_has_changed_sounds[num_file_has_changed_dialogs] = sp;
+  num_file_has_changed_dialogs++;
+}
+
+
+void unpost_file_has_changed_if_any(snd_info *sp)
+{
+  int i;
+  for (i = 0; i < num_file_has_changed_dialogs; i++)
+    if (((file_has_changed_sounds[i] == sp) ||
+	 (!snd_ok(file_has_changed_sounds[i]))) &&
+	(widget_is_active(file_has_changed_dialogs[i])))
+      gtk_widget_hide(file_has_changed_dialogs[i]);
+}
+
+
+static void file_has_changed_activate(GtkDialog *w, gint id, gpointer context)
+{
+  if (id == GTK_RESPONSE_YES)
+    {
+      snd_info *sp = (snd_info *)context;
+      save_edits_without_asking(sp);
+      sp->need_update = false;
+      stop_bomb(sp);                  /* in case Snd already noticed the problem */
+      clear_minibuffer(sp);
+    }
+  gtk_widget_hide(GTK_WIDGET(w));
+}
+
+
+void changed_file_dialog(snd_info *sp)
+{
+  char *question;
+  GtkWidget *dialog;
+
+  question = mus_format("%s has changed!  Save edits anyway?", sp->short_filename);
+  dialog = file_has_changed_dialog(sp);
+  if (!dialog)
+    {
+      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, (const gchar *)question);
+      SG_SIGNAL_CONNECT(dialog, "response", file_has_changed_activate, (gpointer)sp);
+      save_file_has_changed_dialog(dialog, sp);
+    }
+  else
+    {
+      g_object_set(dialog, "text", question, NULL);
+    }
+
+  free(question);
+  gtk_widget_show(dialog);
+}
+
+
+
 
 /* ---------------- view files dialog ---------------- */
 

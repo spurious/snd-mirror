@@ -56,7 +56,7 @@ typedef struct prefs_info {
 
 static void prefs_set_dialog_title(const char *filename);
 static void reflect_key(prefs_info *prf, const char *key_name);
-static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x));
+static void save_key(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x));
 static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x));
 static void clear_prefs_dialog_error(void);
 static void scale_set_color(prefs_info *prf, color_t pixel);
@@ -2031,81 +2031,81 @@ widget_t make_preferences_dialog(void)
     }
 
 
-    /* ---------------- additional key bindings ---------------- */
+    /* ---------------- additional keys ---------------- */
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    key_label = make_inner_label("  additional key bindings", dpy_box, current_sep);
+    key_label = make_inner_label("  additional keys", dpy_box, current_sep);
 
     {
       key_info *ki;
 
-      ki = find_prefs_key_binding("play-from-cursor");
+      ki = find_prefs_key("play-from-cursor");
       prf = prefs_row_with_text_and_three_toggles("play all chans from cursor", S_play, 
 						  "key:", 8, "ctrl:", "meta:",  "C-x:",
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, key_label,
 						  bind_play_from_cursor);
-      remember_pref(prf, reflect_play_from_cursor, save_pfc_binding, help_play_from_cursor, clear_play_from_cursor, NULL);
+      remember_pref(prf, reflect_play_from_cursor, save_pfc, help_play_from_cursor, clear_play_from_cursor, NULL);
       free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
-      ki = find_prefs_key_binding("show-all");
+      ki = find_prefs_key("show-all");
       prf = prefs_row_with_text_and_three_toggles("show entire sound", S_x_bounds, 
 						  "key:", 8, "ctrl:", "meta:",  "C-x:",
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_show_all);
-      remember_pref(prf, reflect_show_all, save_show_all_binding, help_show_all, clear_show_all, NULL);
+      remember_pref(prf, reflect_show_all, save_show_all, help_show_all, clear_show_all, NULL);
       free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
-      ki = find_prefs_key_binding("select-all");
+      ki = find_prefs_key("select-all");
       prf = prefs_row_with_text_and_three_toggles("select entire sound", S_select_all, 
 						  "key:", 8, "ctrl:", "meta:",  "C-x:",
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_select_all);
-      remember_pref(prf, reflect_select_all, save_select_all_binding, help_select_all, clear_select_all, NULL);
+      remember_pref(prf, reflect_select_all, save_select_all, help_select_all, clear_select_all, NULL);
       free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
-      ki = find_prefs_key_binding("show-selection");
+      ki = find_prefs_key("show-selection");
       prf = prefs_row_with_text_and_three_toggles("show current selection", "show-selection", 
 						  "key:", 8, "ctrl:", "meta:",  "C-x:",
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_show_selection);
-      remember_pref(prf, reflect_show_selection, save_show_selection_binding, help_show_selection, clear_show_selection, NULL);
+      remember_pref(prf, reflect_show_selection, save_show_selection, help_show_selection, clear_show_selection, NULL);
       free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
-      ki = find_prefs_key_binding("revert-sound");
+      ki = find_prefs_key("revert-sound");
       prf = prefs_row_with_text_and_three_toggles("undo all edits (revert)", S_revert_sound, 
 						  "key:", 8, "ctrl:", "meta:",  "C-x:",
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_revert);
-      remember_pref(prf, reflect_revert, save_revert_binding, help_revert, clear_revert_sound, NULL);
+      remember_pref(prf, reflect_revert, save_revert, help_revert, clear_revert_sound, NULL);
       free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
-      ki = find_prefs_key_binding("exit");
+      ki = find_prefs_key("exit");
       prf = prefs_row_with_text_and_three_toggles("exit from Snd", S_exit, 
 						  "key:", 8, "ctrl:", "meta:",  "C-x:",
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_exit);
-      remember_pref(prf, reflect_exit, save_exit_binding, help_exit, clear_exit, NULL);
+      remember_pref(prf, reflect_exit, save_exit, help_exit, clear_exit, NULL);
       free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
-      ki = find_prefs_key_binding("goto-maxamp");
+      ki = find_prefs_key("goto-maxamp");
       prf = prefs_row_with_text_and_three_toggles("move cursor to channel's maximum sample", S_maxamp_position, 
 						  "key:", 8, "ctrl:", "meta:",  "C-x:",
 						  ki->key, ki->c, ki->m, ki->x,
 						  dpy_box, current_sep,
 						  bind_goto_maxamp);
-      remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp_binding, help_goto_maxamp, clear_goto_maxamp, NULL);
+      remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp, help_goto_maxamp, clear_goto_maxamp, NULL);
       free(ki);
 
     }

@@ -3885,7 +3885,7 @@ static void initial_bounds_text(prefs_info *prf)
 static void reflect_key(prefs_info *prf, const char *key_name)
 {
   key_info *ki;
-  ki = find_prefs_key_binding(key_name);
+  ki = find_prefs_key(key_name);
   SET_TOGGLE(prf->toggle, ki->c);
   SET_TOGGLE(prf->toggle2, ki->m);
   SET_TOGGLE(prf->toggle3, ki->x);
@@ -3894,7 +3894,7 @@ static void reflect_key(prefs_info *prf, const char *key_name)
 }
 
 
-static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x))
+static void save_key(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x))
 {
   char *key, *expr;
   key = GET_TEXT(prf->text);
@@ -3932,7 +3932,7 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
 static void clear_key(prefs_info *prf, const char *name)
 {
   key_info *ki;
-  ki = find_prefs_key_binding(name);
+  ki = find_prefs_key(name);
   if (ki)
     {
       if (ki->key)
@@ -3960,7 +3960,7 @@ static const char *help_play_from_cursor(prefs_info *prf)
 }
 
 
-static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
+static char *make_pfc(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d (lambda () (set! (pausing) #f) (play (cursor))) %s \"play sound from cursor\" \"play-from-cursor\")\n", 
@@ -3992,15 +3992,15 @@ static void reflect_play_from_cursor(prefs_info *prf)
 }
 
 
-static void save_pfc_binding(prefs_info *prf, FILE *fd)
+static void save_pfc(prefs_info *prf, FILE *fd)
 {
-  save_key_binding(prf, fd, make_pfc_binding);
+  save_key(prf, fd, make_pfc);
 }
 
 
 static void bind_play_from_cursor(prefs_info *prf)
 {
-  key_bind(prf, make_pfc_binding);
+  key_bind(prf, make_pfc);
 }
 
 
@@ -4022,7 +4022,7 @@ static const char *help_show_all(prefs_info *prf)
 }
 
 
-static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
+static char *make_show_all(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d (lambda () \
@@ -4063,15 +4063,15 @@ static void reflect_show_all(prefs_info *prf)
 }
 
 
-static void save_show_all_binding(prefs_info *prf, FILE *fd)
+static void save_show_all(prefs_info *prf, FILE *fd)
 {
-  save_key_binding(prf, fd, make_show_all_binding);
+  save_key(prf, fd, make_show_all);
 }
 
 
 static void bind_show_all(prefs_info *prf)
 {
-  key_bind(prf, make_show_all_binding);
+  key_bind(prf, make_show_all);
 }
 
 
@@ -4093,7 +4093,7 @@ static const char *help_select_all(prefs_info *prf)
 }
 
 
-static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
+static char *make_select_all(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d (lambda () \
@@ -4134,15 +4134,15 @@ static void reflect_select_all(prefs_info *prf)
 }
 
 
-static void save_select_all_binding(prefs_info *prf, FILE *fd)
+static void save_select_all(prefs_info *prf, FILE *fd)
 {
-  save_key_binding(prf, fd, make_select_all_binding);
+  save_key(prf, fd, make_select_all);
 }
 
 
 static void bind_select_all(prefs_info *prf)
 {
-  key_bind(prf, make_select_all_binding);
+  key_bind(prf, make_select_all);
 }
 
 
@@ -4163,7 +4163,7 @@ static const char *help_revert(prefs_info *prf)
 }
 
 
-static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
+static char *make_revert(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d revert-sound %s \"undo all edits\" \"revert-sound\")\n", 
@@ -4195,15 +4195,15 @@ static void reflect_revert(prefs_info *prf)
 }
 
 
-static void save_revert_binding(prefs_info *prf, FILE *fd)
+static void save_revert(prefs_info *prf, FILE *fd)
 {
-  save_key_binding(prf, fd, make_revert_binding);
+  save_key(prf, fd, make_revert);
 }
 
 
 static void bind_revert(prefs_info *prf)
 {
-  key_bind(prf, make_revert_binding);
+  key_bind(prf, make_revert);
 }
 
 
@@ -4224,7 +4224,7 @@ static const char *help_exit(prefs_info *prf)
 }
 
 
-static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
+static char *make_exit(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d exit %s \"exit\" \"exit\")\n", 
@@ -4256,15 +4256,15 @@ static void reflect_exit(prefs_info *prf)
 }
 
 
-static void save_exit_binding(prefs_info *prf, FILE *fd)
+static void save_exit(prefs_info *prf, FILE *fd)
 {
-  save_key_binding(prf, fd, make_exit_binding);
+  save_key(prf, fd, make_exit);
 }
 
 
 static void bind_exit(prefs_info *prf)
 {
-  key_bind(prf, make_exit_binding);
+  key_bind(prf, make_exit);
 }
 
 
@@ -4285,7 +4285,7 @@ static const char *help_goto_maxamp(prefs_info *prf)
 }
 
 
-static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
+static char *make_goto_maxamp(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d (lambda () (set! (cursor) (maxamp-position))) %s \"goto maxamp\" \"goto-maxamp\")\n", 
@@ -4317,15 +4317,15 @@ static void reflect_goto_maxamp(prefs_info *prf)
 }
 
 
-static void save_goto_maxamp_binding(prefs_info *prf, FILE *fd)
+static void save_goto_maxamp(prefs_info *prf, FILE *fd)
 {
-  save_key_binding(prf, fd, make_goto_maxamp_binding);
+  save_key(prf, fd, make_goto_maxamp);
 }
 
 
 static void bind_goto_maxamp(prefs_info *prf)
 {
-  key_bind(prf, make_goto_maxamp_binding);
+  key_bind(prf, make_goto_maxamp);
 }
 
 
@@ -4346,7 +4346,7 @@ static const char *help_show_selection(prefs_info *prf)
 }
 
 
-static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool cx)
+static char *make_show_selection(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
@@ -4378,15 +4378,15 @@ static void reflect_show_selection(prefs_info *prf)
 }
 
 
-static void save_show_selection_binding(prefs_info *prf, FILE *fd)
+static void save_show_selection(prefs_info *prf, FILE *fd)
 {
-  save_key_binding(prf, fd, make_show_selection_binding);
+  save_key(prf, fd, make_show_selection);
 }
 
 
 static void bind_show_selection(prefs_info *prf)
 {
-  key_bind(prf, make_show_selection_binding);
+  key_bind(prf, make_show_selection);
 }
 
 

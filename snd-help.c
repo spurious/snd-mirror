@@ -494,14 +494,14 @@ NULL);
 static bool append_key_help(const char *name, int key, int state, bool cx_extended, bool first_time)
 {
   int pos;
-  pos = in_user_keymap(key, state, cx_extended);
+  pos = in_keymap(key, state, cx_extended);
   if (pos != -1)
     {
       char *msg, *tmp = NULL;
       msg = mus_format("%s%s is bound to %s",
 		       (first_time) ? "\n\ncurrently " : "\n          ",
 		       name,
-		       tmp = key_binding_description(key, state, cx_extended));
+		       tmp = key_description(key, state, cx_extended));
       snd_help_append(msg);
       free(msg);
       if (tmp) free(tmp);
@@ -1422,17 +1422,17 @@ is loaded, there's not much customization you can do.",
 }
 
 
-/* ---------------- Key Bindings ---------------- */
+/* ---------------- Keys ---------------- */
 
 static const char *key_xrefs[4] = {
-  "To change a key binding: {" S_bind_key "}",
+  "To change a key's action: {" S_bind_key "}",
   "To undefine a key: {" S_unbind_key "}",
-  "Current key binding: {" S_key_binding "}",
+  "Current key action: {" S_key_binding "}",
   NULL};
 
 static void show_key_help(int key, int state, bool cx, char *help)
 {
-  /* this frees the help string since it's always coming from key_binding_description, and
+  /* this frees the help string since it's always coming from key_description, and
    *   is a bother to handle in the loops that call us
    */
   if (help)
@@ -1454,7 +1454,7 @@ static void show_key_help(int key, int state, bool cx, char *help)
 static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == 0) && (!cx) && (XEN_BOUND_P(func)))
-    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+    show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
 
@@ -1462,7 +1462,7 @@ static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
 static bool find_buckified_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (!cx) && (XEN_BOUND_P(func)))
-    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+    show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
 
@@ -1470,7 +1470,7 @@ static bool find_buckified_keys(int key, int state, bool cx, XEN func)
 static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == 0) && (cx) && (XEN_BOUND_P(func)))
-    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+    show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
 
@@ -1478,7 +1478,7 @@ static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
 static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (cx) && (XEN_BOUND_P(func)))
-    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+    show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
 
@@ -1486,12 +1486,12 @@ static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func)
 static bool find_leftover_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state & snd_MetaMask))
-    show_key_help(key, state, cx, key_binding_description(key, state, cx));
+    show_key_help(key, state, cx, key_description(key, state, cx));
   return(false);
 }
 
 
-void key_binding_help(void)
+void key_help(void)
 {
   #if HAVE_SCHEME
     #define bind_key_example "(bind-key \"End\" 0\n      (lambda () \"view full sound\"\n        (set! (x-bounds) (list 0.0 (/ (frames) (srate))))))"
@@ -1505,10 +1505,10 @@ void key_binding_help(void)
 
   int i;
 
-  snd_help_with_xrefs("Key bindings",
+  snd_help_with_xrefs("Keys",
 
 #if HAVE_EXTENSION_LANGUAGE
-"Although Snd has a number of built-in key bindings (listed below), you can redefine \
+"Although Snd has a number of built-in key actions (listed below), you can redefine \
 any key via:\n\
 \n\
   " S_bind_key " (key state func :optional extended origin)\n\
@@ -1516,33 +1516,33 @@ any key via:\n\
     modifiers 'state' (and preceding C-x if 'extended') to evaluate\n\
     'func'.  For example, to set the End key to cause the full sound\n\
     to be displayed:\n\n\
-    " bind_key_example "\n\n\nKey Bindings:\n",
+    " bind_key_example "\n\n\nKeys:\n",
 
 #else
-"If there's no extension language, you're stuck with the built-in key bindings:",
+"If there's no extension language, you're stuck with the built-in key actions:",
 #endif
 		      WITHOUT_WORD_WRAP,
 		      key_xrefs,
 		      NULL);
   /* run through bindings straight, C-key, C-x key, C-x C-key appending description in help dialog */
   for (i = 0; i < 256; i++)
-    show_key_help(i, 0, false, key_binding_description(i, 0, false));
-  map_over_key_bindings(find_unbuckified_keys);
+    show_key_help(i, 0, false, key_description(i, 0, false));
+  map_over_keys(find_unbuckified_keys);
   for (i = 0; i < 256; i++)
-    show_key_help(i, snd_ControlMask, false, key_binding_description(i, snd_ControlMask, false));
-  map_over_key_bindings(find_buckified_keys);
+    show_key_help(i, snd_ControlMask, false, key_description(i, snd_ControlMask, false));
+  map_over_keys(find_buckified_keys);
   for (i = 0; i < 256; i++)
-    show_key_help(i, snd_MetaMask, false, key_binding_description(i, snd_MetaMask, false));
+    show_key_help(i, snd_MetaMask, false, key_description(i, snd_MetaMask, false));
   for (i = 0; i < 256; i++)
-    show_key_help(i, snd_ControlMask | snd_MetaMask, false, key_binding_description(i, snd_ControlMask | snd_MetaMask, false));
+    show_key_help(i, snd_ControlMask | snd_MetaMask, false, key_description(i, snd_ControlMask | snd_MetaMask, false));
   for (i = 0; i < 256; i++)
-    show_key_help(i, 0, true, key_binding_description(i, 0, true));
-  map_over_key_bindings(find_unbuckified_cx_keys);
+    show_key_help(i, 0, true, key_description(i, 0, true));
+  map_over_keys(find_unbuckified_cx_keys);
   for (i = 0; i < 256; i++)
-    show_key_help(i, snd_ControlMask, true, key_binding_description(i, snd_ControlMask, true));
+    show_key_help(i, snd_ControlMask, true, key_description(i, snd_ControlMask, true));
 
-  map_over_key_bindings(find_buckified_cx_keys);
-  map_over_key_bindings(find_leftover_keys);
+  map_over_keys(find_buckified_cx_keys);
+  map_over_keys(find_leftover_keys);
   snd_help_back_to_top();
 }
 
@@ -2934,7 +2934,7 @@ static help_func help_funcs[NUM_XREFS] = {
   &delete_help, &env_help, &filter_help, &find_help, &insert_help, &maxamp_help,
   &play_help, &reverse_help, &save_help, &smooth_help, &resample_help, &fft_help, &reverb_help,
   &resample_help, &find_help, &undo_help, &undo_help,
-  &sync_help, &controls_help, &sound_files_help, &key_binding_help, &copy_help,
+  &sync_help, &controls_help, &sound_files_help, &key_help, &copy_help,
   &window_size_help, &colors_help, &controls_help, &random_numbers_help,
   &wavogram_help
 };

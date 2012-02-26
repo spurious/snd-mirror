@@ -99,7 +99,7 @@ static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dial
 static void file_new_callback(GtkWidget *w, gpointer info) {make_new_file_dialog(true);}
 static void file_close_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
 static void file_close_all_callback(GtkWidget *w, gpointer info) {for_each_sound(snd_close_file);}
-static void file_save_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}
+static void file_save_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) save_edits_from_kbd(any_selected_sound());}
 static void file_update_callback(GtkWidget *w, gpointer info) {update_file_from_menu();}
 static void file_save_as_callback(GtkWidget *w, gpointer info) {make_sound_save_as_dialog(true);}
 static void file_revert_callback(GtkWidget *w, gpointer info) {revert_file_from_menu();}
@@ -334,7 +334,7 @@ static void help_env_callback(GtkWidget *w, gpointer info) {env_help();}
 static void help_marks_callback(GtkWidget *w, gpointer info) {marks_help();}
 static void help_mix_callback(GtkWidget *w, gpointer info) {mix_help();}
 static void help_sound_files_callback(GtkWidget *w, gpointer info) {sound_files_help();}
-static void help_keys_callback(GtkWidget *w, gpointer info) {key_binding_help();}
+static void help_keys_callback(GtkWidget *w, gpointer info) {key_help();}
 static void help_play_callback(GtkWidget *w, gpointer info) {play_help();}
 static void help_resample_callback(GtkWidget *w, gpointer info) {resample_help();}
 static void help_reverb_callback(GtkWidget *w, gpointer info) {reverb_help();}

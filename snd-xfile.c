@@ -29,6 +29,8 @@
  *   perhaps put up a dialog somewhere?
  *   perhaps define all the "built-in" keys via (bind-key ...)
  *   also define the removed key bindings in snd12.scm.
+ *   and add menu accelerators on some switch, like the toolbar
+ * to replace C-s|C-r we need to add a local search option to the find dialog
  *
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * view files is a mess -- it tries to do way too much
@@ -76,6 +78,8 @@
  *     removed enved delete button
  *     put key bindings help in monospace
  *     removed c-x a|j
+ * 26: c-x c-s now goes to file-has-changed dialog
+ *     c-x c-f -> open file dialog, c-x c-q -> mix file dialog
  */
 
 /* various file-related dialogs:
@@ -5165,6 +5169,137 @@ void save_edits_now(snd_info *sp)
       XtAddCallback(dialog, XmNhelpCallback,   unsaved_edits_help_callback, (XtPointer)sp);
       XtAddCallback(dialog, XmNokCallback,     unsaved_edits_yes_callback,  (XtPointer)sp);
       XtAddCallback(dialog, XmNcancelCallback, unsaved_edits_no_callback,   (XtPointer)sp);
+
+      XmStringFree(yes);
+      XmStringFree(no);
+
+      map_over_children(dialog, set_main_color_of_widget);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->selection_color, NULL);
+      XtVaSetValues(MSG_BOX(dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->highlight_color, NULL);
+    }
+  else
+    {
+      XtVaSetValues(dialog, XmNmessageString, q, NULL);
+    }
+
+  XmStringFree(q);
+  free(question);
+  XtManageChild(dialog);
+}
+
+
+
+/* ---------------- file has changed dialog ---------------- */
+
+static int num_file_has_changed_dialogs = 0;
+static Widget *file_has_changed_dialogs = NULL;
+static snd_info **file_has_changed_sounds = NULL;
+
+static Widget file_has_changed_dialog(snd_info *sp)
+{
+  int i;
+  /* are there any such dialogs? */
+  if (num_file_has_changed_dialogs == 0)
+    return(NULL);
+
+  /* now see if we've already prompted about this sound */
+  for (i = 0; i < num_file_has_changed_dialogs; i++)
+    if (file_has_changed_sounds[i] == sp)
+      return(file_has_changed_dialogs[i]);
+
+  /* try to find a free unmanaged dialog */
+  for (i = 0; i < num_file_has_changed_dialogs; i++)
+    if ((file_has_changed_dialogs[i]) &&
+	(!XtIsManaged(file_has_changed_dialogs[i])))
+      return(file_has_changed_dialogs[i]);
+
+  return(NULL);
+}
+
+static void save_file_has_changed_dialog(Widget d, snd_info *sp)
+{
+  if (num_file_has_changed_dialogs == 0)
+    {
+      file_has_changed_dialogs = (Widget *)calloc(1, sizeof(Widget));
+      file_has_changed_sounds = (snd_info **)calloc(1, sizeof(snd_info *));
+    }
+  else
+    {
+      file_has_changed_dialogs = (Widget *)realloc(file_has_changed_dialogs, (num_file_has_changed_dialogs + 1) * sizeof(Widget));
+      file_has_changed_sounds = (snd_info **)realloc(file_has_changed_sounds, (num_file_has_changed_dialogs + 1) * sizeof(snd_info *));
+    }
+
+  file_has_changed_dialogs[num_file_has_changed_dialogs] = d;
+  file_has_changed_sounds[num_file_has_changed_dialogs] = sp;
+  num_file_has_changed_dialogs++;
+}
+
+
+void unpost_file_has_changed_if_any(snd_info *sp)
+{
+  int i;
+  for (i = 0; i < num_file_has_changed_dialogs; i++)
+    if (((file_has_changed_sounds[i] == sp) ||
+	 (!snd_ok(file_has_changed_sounds[i]))) &&
+	(XtIsManaged(file_has_changed_dialogs[i])))
+      XtUnmanageChild(file_has_changed_dialogs[i]);
+}
+
+
+static void file_has_changed_no_callback(Widget w, XtPointer context, XtPointer info)
+{
+}
+
+static void file_has_changed_yes_callback(Widget w, XtPointer context, XtPointer info)
+{
+  snd_info *sp = (snd_info *)context;
+  save_edits_without_asking(sp);
+  sp->need_update = false;
+  stop_bomb(sp);                  /* in case Snd already noticed the problem */
+  clear_minibuffer(sp);
+}
+
+static void file_has_changed_help_callback(Widget w, XtPointer context, XtPointer info)
+{
+  snd_help("save edits?", 
+	   "The file has changed unexpectedly, so in most cases, saving the current edits can't do anything useful.  But you can try anyway!",
+	   WITH_WORD_WRAP);
+}
+
+void changed_file_dialog(snd_info *sp)
+{
+  char *question;
+  XmString q;
+  Widget dialog;
+
+  question = mus_format("%s has changed!  Save edits anyway?", sp->short_filename);
+  q = XmStringCreateLocalized(question);
+
+  dialog = file_has_changed_dialog(sp);
+  if (!dialog)
+    {
+      Arg args[20];
+      int n;
+      XmString yes, no;
+
+      yes = XmStringCreateLocalized((char *)"yes");
+      no = XmStringCreateLocalized((char *)"no");
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
+      XtSetArg(args[n], XmNokLabelString, yes); n++;
+      XtSetArg(args[n], XmNcancelLabelString, no); n++;
+      XtSetArg(args[n], XmNmessageString, q); n++;
+      dialog = XmCreateQuestionDialog(MAIN_PANE(ss), sp->filename, args, n);
+      save_file_has_changed_dialog(dialog, sp);
+
+      XtAddCallback(dialog, XmNhelpCallback,   file_has_changed_help_callback, (XtPointer)sp);
+      XtAddCallback(dialog, XmNokCallback,     file_has_changed_yes_callback,  (XtPointer)sp);
+      XtAddCallback(dialog, XmNcancelCallback, file_has_changed_no_callback,   (XtPointer)sp);
 
       XmStringFree(yes);
       XmStringFree(no);
