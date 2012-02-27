@@ -389,9 +389,6 @@ typedef struct snd_info {
   int search_proc_loc, properties_loc;
   bool remembering;
   char *search_expr;
-  mus_long_t marking;
-  int search_count; /* search_count = number of times to search before return */
-  minibuffer_choice_t minibuffer_on;
   read_only_t user_read_only, file_read_only;
   chan_info **chans;
 
@@ -402,16 +399,12 @@ typedef struct snd_info {
   int num_progress_widgets;
   Widget tab;
   Widget dialog;
-  Dimension minibuffer_height;
-  bool minibuffer_watcher;
 #endif
 #if USE_GTK
   GtkWidget **snd_widgets;
   GtkAdjustment **snd_adjs;
   GtkWidget *dialog;
   int page;
-  bool mini_active;
-  gulong minibuffer_watcher;
   graphics_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax, *filter_ax;
   graphics_context **clock_pix_ax;
   GtkWidget **clock_widgets;

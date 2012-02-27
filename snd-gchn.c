@@ -673,8 +673,6 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
   chan_info *cp = (chan_info *)data;
   ss->graph_is_active = true;
   gtk_widget_grab_focus(w);
-  if (cp->sound)
-    cp->sound->mini_active = false;
   graph_button_press_callback(cp, (void *)ev, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), EVENT_BUTTON(ev), EVENT_TIME(ev));
   return(false);
 }
@@ -873,6 +871,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       if (button_style == WITH_FW_BUTTONS)
 	{
 	  cw[W_f] = gtk_check_button_new_with_label("f");
+	  add_tooltip(cw[W_f], "show fft");
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_f], true, true, 0);
 	  gtk_widget_show(cw[W_f]);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_f]), false);
@@ -880,6 +879,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  SG_SIGNAL_CONNECT(cw[W_f], "toggled", f_toggle_click_callback, cp);
   
 	  cw[W_w] = gtk_check_button_new_with_label("w");
+	  add_tooltip(cw[W_f], "show wave");
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_w], true, true, 0);
 	  gtk_widget_show(cw[W_w]);
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_w]), true);

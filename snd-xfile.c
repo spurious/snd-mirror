@@ -13,12 +13,11 @@
  *   also lin/exp is stupid -- omit, click "exp" label to reset to 1 (always)
  *   and "reset" apparently means "clear"
  *
- * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html already]
+ * remove eval-between-marks and all other minibuffer stuff from *.rb|fs|h|c [got scm|html already]
  *   perhaps define all the "built-in" keys via (bind-key ...)
  *   also define the removed key bindings in snd12.scm.
  *   and add menu accelerators on some switch, like the toolbar
  * to replace C-s we need to add a local search option to the find dialog
- * make sure there's no edge to the status area
  *
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * view files is a mess -- it tries to do way too much

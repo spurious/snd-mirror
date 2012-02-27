@@ -8382,6 +8382,7 @@
 (CCAST-336 "GTK_COLOR_CHOOSER_WIDGET" "GtkColorWidget*")
 (CCHK-3316 "GTK_IS_COLOR_CHOOSER_WIDGET" "GtkColorWidget*")
 
+;; also GDK_BUTTON_PRIMARY|MIDDLE|SECONDARY but they are just ints (from gdkevents.h)
 
 
 

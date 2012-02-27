@@ -538,12 +538,11 @@ void find_help(void)
   snd_help_with_xrefs(I_FIND, 
 
 #if HAVE_EXTENSION_LANGUAGE
-"Searches in Snd refer to the sound data, and are, in general, patterned after Emacs.  When you type \
-C-s or C-r, the minibuffer below the graph is activated and you are asked for the search expression. \
+"Searches in Snd refer to the sound data.  When you type \
+C-s, the find dialog is activated and you are asked for the search expression. \
 The expression is a function that takes one argument, the current sample value, and returns " PROC_TRUE " when it finds a match. \
 To look for the next sample that is greater than .1, " basic_example ".  The cursor then moves \
-to that sample, if any. Successive C-s's or C-r's continue the search starting from the next sample.\
-Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.\
+to that sample, if any. Successive C-s's continue the search starting from the next sample.\
 \n\n\
 The primary searching function is:\n\
 \n\
@@ -577,8 +576,7 @@ the searching mechanisms are disabled.",
 		      snd_xrefs("Search"),
 		      snd_xref_urls("Search"));
 
-  append_key_help("C-r", snd_K_r, snd_ControlMask, false,
-    append_key_help("C-s", snd_K_s, snd_ControlMask, false, true));
+  append_key_help("C-s", snd_K_s, snd_ControlMask, false, true);
 }
 
 

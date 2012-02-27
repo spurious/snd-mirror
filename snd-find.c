@@ -327,7 +327,7 @@ static mus_long_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   ss->stopped_explicitly = false;
   if ((progress_displayed) &&
       (!find_eval_error_p))
-    clear_minibuffer_error(sp);
+    clear_minibuffer(sp);
   free_snd_fd(sf);
   search_in_progress = false;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
@@ -421,7 +421,7 @@ static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   ss->stopped_explicitly = false;
   if ((progress_displayed) &&
       (!find_eval_error_p))
-    clear_minibuffer_error(sp);
+    clear_minibuffer(sp);
   free_snd_fd(sf);
   search_in_progress = false;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
@@ -431,95 +431,81 @@ static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 }
 
 
-static void get_find_expression(snd_info *sp, int count)
-{
-  set_minibuffer_string(sp, NULL, true);
-  goto_minibuffer(sp);
-  sp->search_count = count;
-}
-
-
 void cursor_search(chan_info *cp, int count)
 {
-  /* called only in snd-kbd so all errors should go to minibuffer, and search should be stopped upon error */
   snd_info *sp;
   sp = cp->sound;
   if (search_in_progress) 
     display_minibuffer_error(sp, "search already in progress");
   else
     {
-      if (sp->search_count != 0)
+      mus_long_t samp;
+      if ((!(XEN_PROCEDURE_P(sp->search_proc))) && 
+	  (sp->search_tree == NULL)) 
 	{
-	  mus_long_t samp;
-	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && 
-	      (sp->search_tree == NULL)) 
-	    {
-	      /* I decided not to check for a global search procedure; it's much harder
-	       *   to implement than it looks, and I'm not sure it would "do the right thing"
-	       *   anyway, if say the user types c-g to clear the current to ask for the next --
-	       *   a fall-back then would be annoying.  And then, in the global searcher (edit:find)
-	       *   to be consistent wouldn't we need a check for a local searcher?
-	       *
-	       * perhaps the right thing is to remove these procedures altogether
-	       */
-	      sp->search_count = 0;
-	      return; /* no search expr */
-	    }
-	  if (sp->search_expr)
-	    {
-	      /* see note above about closures */
-	      clear_sound_search_procedure(sp, false);
+	  /* I decided not to check for a global search procedure; it's much harder
+	   *   to implement than it looks, and I'm not sure it would "do the right thing"
+	   *   anyway, if say the user types c-g to clear the current to ask for the next --
+	   *   a fall-back then would be annoying.  And then, in the global searcher (edit:find)
+	   *   to be consistent wouldn't we need a check for a local searcher?
+	   *
+	   * perhaps the right thing is to remove these procedures altogether
+	   */
+	  return; /* no search expr */
+	}
+      if (sp->search_expr)
+	{
+	  /* see note above about closures */
+	  clear_sound_search_procedure(sp, false);
 #if HAVE_SCHEME
-	      if (optimization(ss) > 0)
-		sp->search_tree = mus_run_form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
+	  if (optimization(ss) > 0)
+	    sp->search_tree = mus_run_form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
 #endif
-	      if (sp->search_tree == NULL)
-		{
-		  redirect_errors_to(errors_to_minibuffer, (void *)sp);
-		  sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
-		  redirect_errors_to(NULL, NULL);
-		  if (XEN_PROCEDURE_P(sp->search_proc))
-		    sp->search_proc_loc = snd_protect(sp->search_proc);
-		  else return;
-		}
-	    }
-	  redirect_errors_to(send_find_errors_to_minibuffer, (void *)sp);
-	  if (count > 0)
-	    samp = cursor_find_forward(sp, cp, count);
-	  else samp = cursor_find_backward(sp, cp, -count);
-	  redirect_errors_to(NULL, NULL);
-	  if (find_eval_error_p)
+	  if (sp->search_tree == NULL)
 	    {
-	      find_eval_error_p = false;
-	      sp->search_count = 0;
+	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
+	      sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
+	      redirect_errors_to(NULL, NULL);
+	      if (XEN_PROCEDURE_P(sp->search_proc))
+		sp->search_proc_loc = snd_protect(sp->search_proc);
+	      else return;
+	    }
+	}
+      redirect_errors_to(send_find_errors_to_minibuffer, (void *)sp);
+      if (count > 0)
+	samp = cursor_find_forward(sp, cp, count);
+      else samp = cursor_find_backward(sp, cp, -count);
+      redirect_errors_to(NULL, NULL);
+      if (find_eval_error_p)
+	{
+	  find_eval_error_p = false;
+	}
+      else
+	{
+	  if (samp == -1) 
+	    { 
+	      char *msg;
+	      msg = mus_format("not found%s", 
+			       (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
+	      display_minibuffer_error(sp, msg);
+	      free(msg);
+	      cp->last_search_result = SEARCH_FAILED;
 	    }
 	  else
 	    {
-	      if (samp == -1) 
-		{ 
-		  char *msg;
-		  msg = mus_format("not found%s", 
-				   (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
-		  display_minibuffer_error(sp, msg);
-		  free(msg);
-		  cp->last_search_result = SEARCH_FAILED;
-		}
-	      else
-		{
-		  char *s1, *s2, *msg;
-		  s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
-		  s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp));
-		  msg = mus_format("%s at %s (%lld)", s1, s2, samp);
-		  display_minibuffer_error(sp, msg);
-		  free(s1);
-		  free(s2);
-		  free(msg);
-		  cp->last_search_result = SEARCH_OK;
-		  cursor_moveto_without_verbosity(cp, samp);
-		}
+	      char *s1, *s2, *msg;
+	      s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
+	      s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp));
+	      msg = mus_format("%s at %s (%lld)", s1, s2, samp);
+	      display_minibuffer_error(sp, msg);
+	      free(s1);
+	      free(s2);
+	      free(msg);
+	      cp->last_search_result = SEARCH_OK;
+	      cursor_moveto_without_verbosity(cp, samp);
 	    }
 	}
-      else get_find_expression(sp, count);
+      
     }
 }
 

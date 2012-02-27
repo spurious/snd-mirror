@@ -1656,13 +1656,11 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	  if (cp->printing)
 	    ps_reset_color();
 	}
-      if ((cp->verbose_cursor) && (cp->cursor_on) &&
-	  (CURSOR(cp) >= ap->losamp) && (CURSOR(cp) <= ap->hisamp) && 
-	  ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
-	{
-	  show_cursor_info(cp); 
-	  sp->minibuffer_on = MINI_CURSOR;
-	} 
+      if ((cp->verbose_cursor) && 
+	  (cp->cursor_on) &&
+	  (CURSOR(cp) >= ap->losamp) && 
+	  (CURSOR(cp) <= ap->hisamp))
+	show_cursor_info(cp); 
     }
 
   return(j);
@@ -1811,13 +1809,12 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 #endif
   if (cp->show_y_zero) display_y_zero(cp);
       
-  if ((cp->verbose_cursor) && (cp->cursor_on) &&
-      (CURSOR(cp) >= beg) && (CURSOR(cp) <= end) && 
-      ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
-    {
-      show_cursor_info(cp); 
-      sp->minibuffer_on = MINI_CURSOR;
-    }
+  if ((cp->verbose_cursor) && 
+      (cp->cursor_on) &&
+      (CURSOR(cp) >= beg) && 
+      (CURSOR(cp) <= end))
+    show_cursor_info(cp); 
+
 #if USE_GTK
   cairo_pop_group_to_source(ss->cr);
   cairo_paint(ss->cr);
@@ -4511,12 +4508,11 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
   if (redisplay != KEYBOARD_NO_ACTION)
     {
       snd_info *sp;
+
       sp = cp->sound;
       if (cp->verbose_cursor)
-	{
-	  show_cursor_info(cp); 
-	  sp->minibuffer_on = MINI_CURSOR;
-	} 
+	show_cursor_info(cp); 
+
       if (redisplay != CURSOR_IN_VIEW)
 	{
 	  double gx = 0.0;

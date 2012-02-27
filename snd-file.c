@@ -1324,7 +1324,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	  else
 	    {
 	      sp->file_unreadable = false;
-	      clear_minibuffer_error(sp);
+	      clear_minibuffer(sp);
 	      err = access(sp->filename, W_OK);
 	      if (err < 0)   /* if err < 0, then we can't write (W_OK -> error ) */
 		sp->file_read_only = FILE_READ_ONLY; 

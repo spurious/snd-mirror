@@ -349,7 +349,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->sync = DEFAULT_SYNC;
   sp->previous_sync = sp->sync;
   initialize_control_panel(sp);
-  sp->search_count = 0;
   sp->selectpos = -1;
 
   if (chans > 1)
@@ -363,8 +362,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
     }
   else sp->channel_style = CHANNELS_SEPARATE;
 
-  sp->marking = 0;
-  sp->minibuffer_on = MINI_OFF;
   sp->selected_channel = NO_SELECTION;
   sp->playing = 0;
   sp->applying = false;
@@ -417,16 +414,13 @@ void free_snd_info(snd_info *sp)
       sp->chans[i] = free_chan_info(sp->chans[i]);
   sp->inuse = SOUND_IDLE;
   sp->playing = 0;
-  sp->search_count = 0;
   sp->bomb_in_progress = false;
-  sp->marking = 0;
   sp->applying = false;
   sp->channel_style = CHANNELS_SEPARATE;
   sp->user_read_only = FILE_READ_WRITE;
   sp->file_read_only = FILE_READ_WRITE;
   sp->need_update = false;
   sp->file_unreadable = false;
-  sp->minibuffer_on = MINI_OFF;
   clear_sound_search_procedure(sp, true);
   if (XEN_VECTOR_P(sp->properties)) /* using vector as node for GC */
     XEN_VECTOR_SET(sp->properties, 0, XEN_EMPTY_LIST);

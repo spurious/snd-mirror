@@ -15,7 +15,6 @@ enum {W_pane, W_pane_box, W_control_panel,
       W_revlen, W_revlen_event, W_revlen_label, W_revlen_number, W_reverb_button,
       W_filter_form, W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, 
       W_filter_dB, W_filter_hz, W_filter_frame,
-      W_error_info_frame, W_error_info_label,
       NUM_SND_WIDGETS
 };
 
@@ -47,9 +46,6 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->snd_widgets[W_pane_box]);}
 #define PLAY_BUTTON(Sp)          Sp->snd_widgets[W_play]
 #define UNITE_BUTTON(Sp)         Sp->snd_widgets[W_unite]
 #define CLOCK_PIX(Sp, Chan)      Sp->clock_widgets[Chan]
-
-#define ERROR_INFO(Sp)           Sp->snd_widgets[W_error_info_label]
-#define ERROR_INFO_FRAME(Sp)     Sp->snd_widgets[W_error_info_frame]
 
 #define CONTROL_PANEL(Sp)        Sp->snd_widgets[W_control_panel]
 
@@ -113,44 +109,9 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->snd_widgets[W_pane_box]);}
 #define FILTER_ADJUSTMENT(Sp)    Sp->snd_adjs[W_filter_adj]
 
 
-/* -------- minibuffer error -------- */
-
-static void watch_minibuffer(GtkWidget *w, gpointer context)
-{
-  clear_minibuffer_error((snd_info *)context);
-}
-
-
-void clear_minibuffer_error(snd_info *sp)
-{
-  gtk_widget_hide(ERROR_INFO_FRAME(sp));
-  gtk_widget_hide(ERROR_INFO(sp));
-  if (sp->minibuffer_watcher)
-    {
-      g_signal_handler_disconnect(MINIBUFFER_TEXT(sp), sp->minibuffer_watcher);
-      sp->minibuffer_watcher = 0;
-    }
-}
-
-
 void display_minibuffer_error(snd_info *sp, const char *str) 
 {
-  char *s1 = NULL; /* change cr to space (cr is printed as a funny box in gtk) */
-  int len, i;
-  len = mus_strlen(str);
-  if (len > 0)
-    {
-      s1 = mus_strdup(str);
-      for (i = 0; i < len; i++)
-	if (s1[i] == '\n')
-	  s1[i] = ' ';
-    }
-  info_widget_display(ERROR_INFO(sp), s1);
-  gtk_widget_show(ERROR_INFO(sp));
-  gtk_widget_show(ERROR_INFO_FRAME(sp));
-  if (!(sp->minibuffer_watcher))
-    sp->minibuffer_watcher = SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "changed", watch_minibuffer, (gpointer)sp);
-  if (s1) free(s1);
+  report_in_minibuffer(sp, str);
 }
 
 
@@ -389,16 +350,6 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
 
 
 /* -------- MINIBUFFER CALLBACKS -------- */
-
-void goto_minibuffer(snd_info *sp)
-{
-  if (sp) 
-    {
-      sp->mini_active = true;
-      goto_window(MINIBUFFER_TEXT(sp));
-    }
-}
-
 
 static char stupid[1] = {'\0'};
 
@@ -1640,9 +1591,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_paned_add1(GTK_PANED(SND_PANE(sp)), PANE_BOX(sp));
       gtk_widget_show(PANE_BOX(sp));
 
-      ERROR_INFO_FRAME(sp) = gtk_frame_new(NULL);
-      gtk_box_pack_end(GTK_BOX(PANE_BOX(sp)), ERROR_INFO_FRAME(sp), false, false, 10);
-
       NAME_HBOX(sp) = gtk_hbox_new(false, 0);
       gtk_box_pack_end(GTK_BOX(PANE_BOX(sp)), NAME_HBOX(sp), false, false, 0);
       
@@ -1729,6 +1677,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_set_halign(MINIBUFFER_TEXT(sp), GTK_ALIGN_FILL);
       gtk_widget_set_hexpand(MINIBUFFER_TEXT(sp), true);
 #endif
+      gtk_entry_set_has_frame(GTK_ENTRY(MINIBUFFER_TEXT(sp)), false);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_TEXT(sp), true, true, 2);
       gtk_widget_show(MINIBUFFER_TEXT(sp));
 
@@ -1758,11 +1707,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       
       gtk_widget_show(NAME_HBOX(sp));
 
-      /* -------- minibuffer error display -------- */
-
-      ERROR_INFO(sp) = make_info_widget();
-      gtk_container_add(GTK_CONTAINER(ERROR_INFO_FRAME(sp)), ERROR_INFO(sp));
-      gtk_widget_show(ERROR_INFO(sp));
 
       /* if control-panel */
       
@@ -2119,7 +2063,7 @@ void snd_info_cleanup(snd_info *sp)
 {
   if (HAS_WIDGETS(sp))
     {
-      clear_minibuffer_error(sp);
+      clear_minibuffer(sp);
       if (SYNC_BUTTON(sp))
 	{
 	  set_toggle_button(SYNC_BUTTON(sp), false, false, (void *)sp);
@@ -2470,7 +2414,7 @@ void make_controls_dialog(void)
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " :optional snd): a list of \
-widgets: ((0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon) (9)\
+widgets: ((0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon) (9)\
 pane-box (10)name-form"
   snd_info *sp;
 

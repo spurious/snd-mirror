@@ -1,12 +1,8 @@
 #include "snd.h"
 
-
-
-/* -------- edit find -------- */
-
 static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, previousB;
-
 static Widget find_error_frame = NULL, find_error_label = NULL;
+static chan_info *find_channel = NULL; /* sigh */
 
 static void clear_find_error(void);
 
@@ -66,18 +62,23 @@ static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info)
 
 
 static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointer context, XtPointer info)
-{ /* "Find" is the label here */
+{ 
+  /* "Find" is the label here if no info
+   */
   char *str = NULL, *buf = NULL;
   XmString s1;
   XEN proc;
+
   str = XmTextGetString(edit_find_text);
   if ((str) && (*str))
     { 
       clear_global_search_procedure(true);
       ss->search_expr = mus_strdup(str);
+
       redirect_errors_to(errors_to_find_text, NULL);
       proc = snd_catch_any(eval_str_wrapper, str, str);
       redirect_errors_to(NULL, NULL);
+
       if ((XEN_PROCEDURE_P(proc)) && (procedure_arity_ok(proc, 1)))
 	{
 	  ss->search_proc = proc;
@@ -109,19 +110,26 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  free(buf);
 	}
     }
+
   if (str) XtFree(str);
-  if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
+
+  if ((XEN_PROCEDURE_P(ss->search_proc)) || 
+      (ss->search_tree))
     {
       s1 = XmStringCreateLocalized((char *)I_STOP);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
+
       redirect_xen_error_to(stop_search_if_error, NULL);
       str = global_search(direction);
       redirect_xen_error_to(NULL, NULL);
+
       s1 = XmStringCreateLocalized((char *)I_GO_AWAY);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
-      if ((str) && (*str)) set_label(edit_find_label, str);
+
+      if ((str) && (*str)) 
+	set_label(edit_find_label, str);
     }
 } 
 
@@ -163,33 +171,30 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
 } 
 
 
-static void make_edit_find_dialog(bool managed)
+static void make_edit_find_dialog(bool managed, chan_info *cp)
 {
+  find_channel = cp;
+
+  /* TODO: local search if cp, also need direct search repeat if c-s again in graph
+   */
+
   if (!edit_find_dialog)
     {
       Widget dl, rc;
       Arg args[20];
       int n;
-      XmString go_away, next, titlestr, help;
+      XmString go_away, next, help;
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 
-      /* order appears to be   ok | added | cancel  | help
-       *
-       *  we want:       previous | next  | go away | ?
-       *  but that order means <cr> in the text widget goes to "previous"!
-       */
-
       go_away = XmStringCreateLocalized((char *)I_GO_AWAY);
       next = XmStringCreateLocalized((char *)I_NEXT);
-      titlestr = XmStringCreateLocalized((char *)I_FIND);
       help = XmStringCreateLocalized((char *)I_HELP);
 
       XtSetArg(args[n], XmNokLabelString, next); n++;
       XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
-      XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
@@ -197,7 +202,6 @@ static void make_edit_find_dialog(bool managed)
       
       XmStringFree(go_away);
       XmStringFree(next);
-      XmStringFree(titlestr);
       
       XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_SYMBOL_LABEL));
       XtUnmanageChild(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_MESSAGE_LABEL));
@@ -266,9 +270,7 @@ static void make_edit_find_dialog(bool managed)
       set_dialog_widget(FIND_DIALOG, edit_find_dialog);
 
       XtUnmanageChild(find_error_frame);
-
       if (managed) XtManageChild(edit_find_dialog);
-
       {
 	Atom wm_delete_window;
 	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
@@ -283,12 +285,28 @@ static void make_edit_find_dialog(bool managed)
 	  raise_dialog(edit_find_dialog);
 	}
     }
+
+  {
+    XmString titlestr;
+    if (cp)
+      titlestr = XmStringCreateLocalized(mus_format("%s in %s channel %d", (char *)I_FIND, cp->sound->short_filename, cp->chan));
+    else titlestr = XmStringCreateLocalized((char *)I_FIND);
+    XtVaSetValues(edit_find_dialog, XmNdialogTitle, titlestr, NULL);
+    XmStringFree(titlestr);
+  }
 }
 
 
 void edit_find_callback(Widget w, XtPointer context, XtPointer info)
 {
-  make_edit_find_dialog(true);
+  make_edit_find_dialog(true, NULL);
+}
+
+
+void find_dialog(chan_info *cp)
+{
+  /* TODO: the assumption now is that if this is called with no change, repeat the search (i.e. it's C-s followed immediately by C-s) */
+  make_edit_find_dialog(true, cp);
 }
 
 
@@ -337,11 +355,14 @@ static XEN g_find_dialog(XEN managed, XEN text)
 {
   #define H_find_dialog "(" S_find_dialog " :optional managed text): create and activate the Edit:Find dialog, return the dialog widget. \
 If 'text' is included, it is preloaded into the find dialog text widget."
+
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_find_dialog, "a boolean");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(text), text, XEN_ARG_2, S_find_dialog, "a string");
-  make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed));
+
+  make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed), NULL);
   if ((edit_find_text) && (XEN_STRING_P(text)))
     XmTextSetString(edit_find_text, (char *)XEN_TO_C_STRING(text));
+
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
 
@@ -351,8 +372,8 @@ static XEN g_find_dialog_widgets(void)
   if (edit_find_dialog)
     return(XEN_CONS(XEN_WRAP_WIDGET(edit_find_dialog),
 	     XEN_CONS(XEN_WRAP_WIDGET(edit_find_text),
-  	       XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)), /* find next */
-		 XEN_CONS(XEN_WRAP_WIDGET(previousB), /* find previous */
+  	       XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),           /* find next */
+		 XEN_CONS(XEN_WRAP_WIDGET(previousB),                                                          /* find previous */
 		   XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)),   /* go away */
 		     XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);

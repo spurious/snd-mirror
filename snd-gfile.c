@@ -740,11 +740,13 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
   else
     {
       if ((EVENT_TYPE(ev) == GDK_2BUTTON_PRESS) && /* double-click */
-#if HAVE_GTK_3
-	  (EVENT_BUTTON(ev) == GDK_BUTTON_PRIMARY))
+
+#ifdef GDK_BUTTON_PRIMARY
+	  (EVENT_BUTTON(ev) == GDK_BUTTON_PRIMARY)) /* gdkevents.h: "since 3.4" which hasn't happened yet! */
 #else
 	  (EVENT_BUTTON(ev) == 1))
 #endif
+
 	{
 	  if (fs->file_double_click_callback)
 	    (*(fs->file_double_click_callback))((const char *)(fs->file_name), fs->file_select_data);

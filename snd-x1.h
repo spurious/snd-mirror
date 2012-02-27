@@ -210,6 +210,7 @@ void g_init_gxcolormaps(void);
 
 void edit_find_callback(Widget w, XtPointer context, XtPointer info);
 void set_find_dialog_label(const char *str);
+void find_dialog(chan_info *cp);
 void save_find_dialog_state(FILE *fd);
 void g_init_gxfind(void);
 
@@ -317,7 +318,6 @@ int control_panel_height(snd_info *sp);
 Widget w_snd_pane(snd_info *sp);
 Widget unite_button(snd_info *sp);
 void set_control_panel_play_button(snd_info *sp);
-void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, const char *str, bool update);
 void snd_info_cleanup(snd_info *sp);
 void set_amp(snd_info *sp, mus_float_t val);
@@ -363,7 +363,6 @@ void g_init_gxsnd(void);
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_sound_selection(snd_info *sp);
 void display_minibuffer_error(snd_info *sp, const char *str);
-void clear_minibuffer_error(snd_info *sp);
 void make_controls_dialog(void);
 
 

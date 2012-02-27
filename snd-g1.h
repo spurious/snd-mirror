@@ -240,6 +240,7 @@ void g_init_gxchn(void);
 /* -------- snd-gfind.c -------- */
 
 void edit_find_callback(GtkWidget *w, gpointer info);
+void find_dialog(chan_info *cp);
 void set_find_dialog_label(const char *str);
 void save_find_dialog_state(FILE *fd);
 void g_init_gxfind(void);
@@ -384,7 +385,6 @@ void start_bomb(snd_info *sp);
 void stop_bomb(snd_info *sp);
 void show_bomb(snd_info *sp);
 void hide_bomb(snd_info *sp);
-void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, const char *str, bool update);
 void set_play_button(snd_info *sp, bool val);
 void play_button_pause(bool pausing);
@@ -422,7 +422,6 @@ void progress_report(chan_info *cp, mus_float_t pct);
 void g_init_gxsnd(void);
 void reflect_sound_selection(snd_info *sp);
 void display_minibuffer_error(snd_info *sp, const char *str);
-void clear_minibuffer_error(snd_info *sp);
 void make_controls_dialog(void);
 
 

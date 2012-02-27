@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: in gtk3, C-f in the graph gets:
+ *    Gdk-CRITICAL **: gdk_window_get_device_position: assertion `gdk_device_get_source (device) != GDK_SOURCE_KEYBOARD' failed
+ */
 
 /* -------- Keyboard Macros -------- */
 
@@ -141,7 +144,7 @@ static key_entry built_in_keys[NUM_BUILT_IN_KEYS] = {
   {snd_K_o,          snd_ControlMask, 0, kbd_false, false, "insert one zero sample at cursor",           NULL, -1},
   {snd_K_p,          snd_ControlMask, 0, kbd_false, false, "move cursor back one 'line'",                NULL, -1},
   {snd_K_q,          snd_ControlMask, 0, kbd_false, false, "play current channel starting at cursor",    "play-channel-from-cursor", -1},
-  {snd_K_s,          snd_ControlMask, 0, kbd_false, false, "search forwards",                            NULL, -1},
+  {snd_K_s,          snd_ControlMask, 0, kbd_false, false, "search",                                     NULL, -1},
   {snd_K_t,          snd_ControlMask, 0, kbd_false, false, "stop playing",                               NULL, -1},
   {snd_K_u,          snd_ControlMask, 0, kbd_false, false, "start arg count definition.",                NULL, -1},
   {snd_K_v,          snd_ControlMask, 0, kbd_false, false, "move cursor to mid-window",                  NULL, -1},
@@ -356,14 +359,7 @@ static void call_keymap(int hashedsym, int count)
 
 void string_to_minibuffer(snd_info *sp, const char *buf)
 {
-  if ((sp->minibuffer_on == MINI_PROMPT) || 
-      (sp->minibuffer_on == MINI_USER))
-    display_minibuffer_error(sp, buf); /* leave the prompt alone */
-  else
-    {
-      set_minibuffer_string(sp, buf, false); /* was true, but that causes bogus expose events of entire graph widget -- perhaps pass this as parameter? */
-      sp->minibuffer_on = MINI_REPORT;
-    }
+  set_minibuffer_string(sp, buf, false); /* was true, but that causes bogus expose events of entire graph widget -- perhaps pass this as parameter? */
 }
 
 
@@ -385,9 +381,6 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
 void clear_minibuffer(snd_info *sp)
 {
   set_minibuffer_string(sp, NULL, true);
-  sp->search_count = 0;
-  sp->marking = 0;
-  sp->minibuffer_on = MINI_OFF;
 }
 
 
@@ -774,7 +767,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   static bool got_count = false;
   static bool m = false;
   int shift = 0;
-  bool cursor_searching = false, clear_search = true;
   int hashloc, i, state;
   mus_long_t loc;
   static mus_long_t ext_count = 1;
@@ -996,10 +988,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 #if HAVE_EXTENSION_LANGUAGE
 	    case snd_K_S: case snd_K_s: 
-	      /* TODO: handle this in a dialog */
-	      cp->cursor_on = true; 
-	      cursor_search(cp, count); 
-	      cursor_searching = true; 
+	      find_dialog(cp);
 	      break;
 #endif
 	    case snd_K_T: case snd_K_t: 
@@ -1082,7 +1071,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		{
 		  start_selection_creation(cp, CURSOR(cp));
 		  report_in_minibuffer(sp, "selection starts at %lld", CURSOR(cp));
-		  clear_search = false;
 		}
 	      break;
 
@@ -1521,7 +1509,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		      start_defining_macro(); 
 		      string_to_minibuffer(sp, "defining macro..."); 
 		    }
-		  clear_search = false; 
 		  break;
 
 		case snd_K_closeparen: 
@@ -1530,7 +1517,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		      stop_defining_macro(); 
 		      clear_minibuffer(sp); 
 		    }
-		  clear_search = false;
 		  break;
 
 		default:
@@ -1545,11 +1531,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	}
     }
   if (!extended_mode) {got_ext_count = false; ext_count = 1;}
-  if ((sp) && (clear_search))
-    {
-      if (!cursor_searching) 
-	sp->search_count = 0;
-    }
 }
 
 

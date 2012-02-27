@@ -140,7 +140,7 @@ static void edit_find_previous(GtkWidget *w, gpointer context)
 }
 
 
-static void make_edit_find_dialog(bool managed)
+static void make_edit_find_dialog(bool managed, chan_info *cp)
 {
   if (!edit_find_dialog)
     {
@@ -225,7 +225,13 @@ static void make_edit_find_dialog(bool managed)
 
 void edit_find_callback(GtkWidget *w, gpointer context)
 {
-  make_edit_find_dialog(true);
+  make_edit_find_dialog(true, NULL);
+}
+
+
+void find_dialog(chan_info *cp)
+{
+  make_edit_find_dialog(true, cp);
 }
 
 
@@ -273,11 +279,14 @@ void save_find_dialog_state(FILE *fd)
 static XEN g_find_dialog(XEN managed, XEN text)
 {
   #define H_find_dialog "(" S_find_dialog " :optional managed text): create and activate the Edit:Find dialog, return the dialog widget"
+
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_find_dialog, "a boolean");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(text), text, XEN_ARG_2, S_find_dialog, "a string");
-  make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed));
+
+  make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed), NULL);
   if ((edit_find_text) && (XEN_STRING_P(text)))
     gtk_entry_get_text(GTK_ENTRY(edit_find_text));
+
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
 

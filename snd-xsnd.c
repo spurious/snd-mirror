@@ -15,17 +15,12 @@ enum {W_pane,
       W_filter_order_down, W_filter_order_up,
       W_name, W_lock_or_bomb, W_stop_icon, W_info,
       W_play, W_sync, W_unite, W_close,
-      W_error_info_box, W_error_info_frame, W_error_info_label,
       NUM_SND_WIDGETS
 };
 
 
 Widget unite_button(snd_info *sp) {return(sp->snd_widgets[W_unite]);}
 Widget w_snd_pane(snd_info *sp)   {return(sp->snd_widgets[W_pane]);}
-
-#define ERROR_INFO(Sp)           Sp->snd_widgets[W_error_info_label]
-#define ERROR_INFO_FRAME(Sp)     Sp->snd_widgets[W_error_info_frame]
-#define ERROR_INFO_BOX(Sp)       Sp->snd_widgets[W_error_info_box]
 
 #define SND_PANE(Sp)             Sp->snd_widgets[W_pane]
 #define SND_NAME(Sp)             Sp->snd_widgets[W_name]
@@ -90,86 +85,9 @@ int snd_pane_height(snd_info *sp)
 }
 
 
-static void watch_minibuffer(Widget w, XtPointer context, XtPointer info)
-{
-  clear_minibuffer_error((snd_info *)context);
-}
-
-
-void clear_minibuffer_error(snd_info *sp)
-{
-  Dimension height = 20;
-  if (sp->minibuffer_height > 5) 
-    height = sp->minibuffer_height;
-  XtUnmanageChild(ERROR_INFO_BOX(sp));
-  if (sp->minibuffer_watcher)
-    {
-      sp->minibuffer_watcher = false;
-      XtRemoveCallback(MINIBUFFER_TEXT(sp), XmNvalueChangedCallback, watch_minibuffer, (XtPointer)sp);
-    }
-  XtUnmanageChild(NAME_BOX(sp));
-  XtVaSetValues(NAME_BOX(sp),
-		XmNpaneMinimum, height,
-		XmNpaneMaximum, height + 1,
-		NULL);
-  XtManageChild(NAME_BOX(sp));
-}
-
-
 void display_minibuffer_error(snd_info *sp, const char *str) 
 {
-  XmString s1;
-  int lines = 0;
-  Dimension y;
-
-  if ((!str) || (!(*str)))
-    return; /* this is causing a segfault in _XmStringEntryCopy? */
-
-  if (sp->minibuffer_height == 0)
-    {
-      XtVaGetValues(NAME_BOX(sp), XmNheight, &y, NULL);
-      sp->minibuffer_height = y;
-    }
-  s1 = multi_line_label(str, &lines);
-
-  XtVaSetValues(ERROR_INFO(sp), XmNlabelString, s1, NULL);
-  XmStringFree(s1);
-
-  if (!(XtIsManaged(ERROR_INFO_BOX(sp)))) /* else we're simply changing the label of an existing message */
-    {
-      XtUnmanageChild(NAME_BOX(sp));
-      XtVaSetValues(NAME_BOX(sp),
-		    XmNpaneMinimum, (lines + 2) * 20,
-		    XmNpaneMaximum, (lines + 2) * 20,
-		    NULL);
-
-      if (!(XtIsManaged(ERROR_INFO_FRAME(sp))))
-	XtManageChild(ERROR_INFO_FRAME(sp));
-      if (!(XtIsManaged(ERROR_INFO(sp))))
-	XtManageChild(ERROR_INFO(sp));
-      XtManageChild(ERROR_INFO_BOX(sp));
-      XtManageChild(NAME_BOX(sp));
-
-      XtVaGetValues(ERROR_INFO_FRAME(sp),
-		    XmNheight, &y,
-		    NULL);
-      XtVaSetValues(NAME_BOX(sp),
-		    XmNpaneMinimum, 20,
-		    XmNpaneMaximum, y + 24,
-		    NULL);
-
-      if (!(sp->minibuffer_watcher))
-	{
-	  sp->minibuffer_watcher = true;
-	  XtAddCallback(MINIBUFFER_TEXT(sp), XmNvalueChangedCallback, watch_minibuffer, (XtPointer)sp);
-	}
-    }
-}
-
-
-void goto_minibuffer(snd_info *sp)
-{
-  if (sp) goto_window(MINIBUFFER_TEXT(sp));
+  report_in_minibuffer(sp, str);
 }
 
 
@@ -1901,7 +1819,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNpaneMinimum, 20); n++;
       XtSetArg(args[n], XmNpaneMaximum, 20); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       NAME_BOX(sp) = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, SND_PANE(sp), args, n);
@@ -1915,7 +1833,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNlabelPixmap, close_icon); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNwidth, 32); n++;
@@ -1930,7 +1848,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       /* XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++; */
 
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -1949,7 +1867,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       n = 0;      
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, NAME_LABEL(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1980,7 +1898,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	    n = 0;      
 	    XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	    XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-	    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+	    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
 	    XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
 	    XtSetArg(args[n], XmNleftWidget, left_widget); n++;
 	    XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1999,7 +1917,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	n = 0;      
 	XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
 	XtSetArg(args[n], XmNleftWidget, left_widget); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2020,13 +1938,15 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, STOP_ICON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNresizeWidth, true); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNeditable, false); n++;
+      XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
       MINIBUFFER_TEXT(sp) = XtCreateManagedWidget("snd-info", xmTextFieldWidgetClass, NAME_BOX(sp), args, n);
 
 #if WITH_AUDIO
@@ -2037,7 +1957,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNmarginHeight, TOGGLE_MARGIN); n++;
       XtSetArg(args[n], XmNmarginTop, TOGGLE_MARGIN); n++;
 #endif
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
@@ -2056,7 +1976,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNmarginHeight, TOGGLE_MARGIN); n++;
       XtSetArg(args[n], XmNmarginTop, TOGGLE_MARGIN); n++;
 #endif
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
 #if WITH_AUDIO
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
@@ -2085,27 +2005,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       UNITE_BUTTON(sp) = make_togglebutton_widget("unite", NAME_BOX(sp), args, n);
       XtAddEventHandler(UNITE_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(UNITE_BUTTON(sp), XmNvalueChangedCallback, unite_button_callback, (XtPointer)sp);
-
-      /* error display */
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, MINIBUFFER_TEXT(sp)); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNallowResize, true); n++; 
-      ERROR_INFO_BOX(sp) = XtCreateWidget("error-box", xmRowColumnWidgetClass, NAME_BOX(sp), args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      XtSetArg(args[n], XmNmarginHeight, 0); n++; 
-      ERROR_INFO_FRAME(sp) = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, ERROR_INFO_BOX(sp), args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-      ERROR_INFO(sp) = XtCreateManagedWidget("error-info", xmLabelWidgetClass, ERROR_INFO_FRAME(sp), args, n);
 
 
       /* ---------------- control panel ---------------- */
@@ -2777,8 +2676,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       for (i = 0; i < NUM_SND_WIDGETS - 1; i++)
 	if ((sw[i]) && 
 	    (!XtIsManaged(sw[i])) &&
-	    (in_show_controls(ss) || (i != W_amp_form)) &&
-	    (i != W_error_info_box))
+	    (in_show_controls(ss) || (i != W_amp_form)))
 	  XtManageChild(sw[i]);
 
       for (k = 0; k < nchans; k++) 
@@ -2862,7 +2760,7 @@ void snd_info_cleanup(snd_info *sp)
 {
   if (HAS_WIDGETS(sp))
     {
-      clear_minibuffer_error(sp);
+      clear_minibuffer(sp);
       if (SYNC_BUTTON(sp))
 	{
 	  XtVaSetValues(SYNC_BUTTON(sp), XmNset, false, NULL);
@@ -3385,7 +3283,7 @@ void make_controls_dialog(void)
 static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " :optional snd): a list of \
-widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon (9)sync-button"
+widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon (9)sync-button"
 
   snd_info *sp;
 
