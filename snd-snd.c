@@ -1455,7 +1455,7 @@ char *sp_name_click(snd_info *sp) /* caller should free returned string */
     {
       file_info *hdr;
 
-      /* call name-click-hook (if any) return #t = don't print info in minibuffer */
+      /* call name-click-hook (if any) return #t = don't print info in the status area */
       if ((XEN_HOOKED(name_click_hook)) &&
 	  (XEN_TRUE_P(run_or_hook(name_click_hook, 
 				  XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
@@ -2043,7 +2043,7 @@ static bool apply_controls(apply_state *ap)
 		  si = free_sync_info(si); 
 		  break;
 		}
-	      clear_minibuffer(sp);
+	      clear_status_area(sp);
 	      sp->apply_ok = false;
 	      
 	      if ((sp->expand_control_p) || 
@@ -6100,7 +6100,7 @@ void g_init_snd(void)
   init_sound_keywords();
 
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
-If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelched."
+If it returns " PROC_TRUE ", the usual informative status babbling is squelched."
 
   #define H_after_apply_controls_hook S_after_apply_controls_hook " (snd): called when " S_apply_controls " finishes."
 

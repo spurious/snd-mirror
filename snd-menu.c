@@ -182,7 +182,7 @@ static void file_update(snd_info *sp)
       ((sp->need_update) || 
        (file_write_date(sp->filename) != sp->write_date)))
     {
-      redirect_everything_to(printout_to_minibuffer, (void *)sp);
+      redirect_everything_to(printout_to_status_area, (void *)sp);
       snd_update(sp);
       redirect_everything_to(NULL, NULL);
     }
@@ -216,7 +216,7 @@ void save_options_from_menu(void)
   if (filename)
     {
       if (any_selected_sound())
-	report_in_minibuffer(any_selected_sound(), "saved options in %s", filename);
+	status_report(any_selected_sound(), "saved options in %s", filename);
     }
 }
 
@@ -241,7 +241,7 @@ void save_state_from_menu(void)
       if (!save_state_error_p)
 	{
 	  if (any_selected_sound())
-	    report_in_minibuffer(any_selected_sound(), "saved state in %s", save_state_file(ss));
+	    status_report(any_selected_sound(), "saved state in %s", save_state_file(ss));
 	}
     }
   else 

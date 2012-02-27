@@ -4477,7 +4477,7 @@ static const char *help_verbose_cursor(prefs_info *prf)
 {
   return("\
   If this is set, the cursor's position and the underlying  \n\
-  sample's value are displayed in the minibuffer as the cursor moves.  ");
+  sample's value are displayed in the status area as the cursor moves.  ");
 }
 
 static const char *help_with_tracking_cursor(prefs_info *prf) 

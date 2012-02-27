@@ -355,15 +355,9 @@ static void call_keymap(int hashedsym, int count)
 }
 
 
-/* ---------------- minibuffer ---------------- */
+/* ---------------- status area ---------------- */
 
-void string_to_minibuffer(snd_info *sp, const char *buf)
-{
-  set_minibuffer_string(sp, buf, false); /* was true, but that causes bogus expose events of entire graph widget -- perhaps pass this as parameter? */
-}
-
-
-void report_in_minibuffer(snd_info *sp, const char *format, ...)
+void status_report(snd_info *sp, const char *format, ...)
 {
 #if (!USE_NO_GUI)
   char *buf;
@@ -372,19 +366,19 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
-  string_to_minibuffer(sp, buf);
+  set_status(sp, buf, false);
   free(buf);
 #endif
 }
 
 
-void clear_minibuffer(snd_info *sp)
+void clear_status_area(snd_info *sp)
 {
-  set_minibuffer_string(sp, NULL, true);
+  set_status(sp, NULL, true);
 }
 
 
-void errors_to_minibuffer(const char *msg, void *data)
+void errors_to_status_area(const char *msg, void *data)
 {
   snd_info *sp;
   sp = (snd_info *)data;
@@ -393,13 +387,13 @@ void errors_to_minibuffer(const char *msg, void *data)
       sp = any_selected_sound();
       if (!snd_ok(sp)) return;
     }
-  display_minibuffer_error((snd_info *)data, msg);
+  status_report((snd_info *)data, msg);
 }
 
 
-void printout_to_minibuffer(const char *msg, void *data)
+void printout_to_status_area(const char *msg, void *data)
 {
-  string_to_minibuffer((snd_info *)data, msg);
+  set_status((snd_info *)data, msg, false);
 }
 
 
@@ -586,7 +580,7 @@ void save_edits_from_kbd(snd_info *sp)
 {
   /* this used to prompt for confirmation, but we now use a dialog
    */
-  redirect_everything_to(printout_to_minibuffer, (void *)sp);
+  redirect_everything_to(printout_to_status_area, (void *)sp);
 #if (!USE_NO_GUI)
   {
     io_error_t err;
@@ -646,7 +640,7 @@ static mus_long_t get_count(char *number_buffer, int number_ctr, bool dot_seen, 
   if (!mark_wise) return(val);
   old_cursor = CURSOR(cp);
   if (!(goto_mark(cp, val)))
-    string_to_minibuffer(cp->sound, "no such mark");
+    set_status(cp->sound, "no such mark", false);
   val = CURSOR(cp) - old_cursor; /* will be 0 if no relevant marks */
   CURSOR(cp) = old_cursor;
   return(val);
@@ -746,7 +740,7 @@ void control_g(snd_info *sp)
     {
       if (sp->applying) stop_applying(sp);
       for_each_sound_chan(sp, stop_fft_in_progress);
-      clear_minibuffer(sp);
+      clear_status_area(sp);
     }
 }
 
@@ -831,8 +825,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
     }
 #endif
 
-  /* if (sp->minibuffer_temp) clear_minibuffer(sp); */
-
   if (state & snd_ControlMask)
     {
       if (!extended_mode)
@@ -908,7 +900,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_J: case snd_K_j: 
 	      cp->cursor_on = true; 
 	      if (!(goto_mark(cp, count)))
-		string_to_minibuffer(cp->sound, "no such mark");
+		set_status(cp->sound, "no such mark", false);
 	      break;
 
 	    case snd_K_K: case snd_K_k: 
@@ -934,7 +926,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		else 
 		  {
 		    if (!(delete_mark_samp(CURSOR(cp), cp)))
-		      report_in_minibuffer(cp->sound, "no mark at sample %lld", CURSOR(cp));
+		      status_report(cp->sound, "no mark at sample %lld", CURSOR(cp));
 		  }
 		if ((keysym == snd_K_M) && 
 		    (cp->sound->sync != 0))
@@ -959,7 +951,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 			  else 
 			    {
 			      if (!(delete_mark_samp(CURSOR(cp), si->cps[i])))
-				report_in_minibuffer(cp->sound, "no mark at sample %lld", CURSOR(cp));
+				status_report(cp->sound, "no mark at sample %lld", CURSOR(cp));
 			    }
 			}
 		    si = free_sync_info(si);
@@ -1070,7 +1062,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      if (count > 0)
 		{
 		  start_selection_creation(cp, CURSOR(cp));
-		  report_in_minibuffer(sp, "selection starts at %lld", CURSOR(cp));
+		  status_report(sp, "selection starts at %lld", CURSOR(cp));
 		}
 	      break;
 
@@ -1103,7 +1095,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    default:
-	      report_in_minibuffer(sp, "C-%s undefined", key_to_name(keysym));
+	      status_report(sp, "C-%s undefined", key_to_name(keysym));
 	      break;
 	    }
 	}
@@ -1198,7 +1190,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    default:
-	      report_in_minibuffer(sp, "C-x C-%s undefined", key_to_name(keysym));
+	      status_report(sp, "C-x C-%s undefined", key_to_name(keysym));
 	      break;
 	    }
 	}
@@ -1268,7 +1260,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_Home: 
-	      redirect_everything_to(printout_to_minibuffer, (void *)sp);
+	      redirect_everything_to(printout_to_status_area, (void *)sp);
 	      sp = snd_update(sp); 
 	      redirect_everything_to(NULL, NULL);
 	      break;
@@ -1363,7 +1355,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  }
 	      }
 #else
-	      report_in_minibuffer(sp, "key %s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
+	      status_report(sp, "key %s%s undefined", (state & snd_MetaMask) ? "M-" : "", key_to_name(keysym));
 #endif
 	      break;
 	    }
@@ -1388,13 +1380,13 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 		case snd_K_C: case snd_K_c: 
 		  if (!(mark_define_region(cp, (!got_ext_count) ? 1 : ext_count)))
-		    string_to_minibuffer(cp->sound, "no such mark");
+		    set_status(cp->sound, "no such mark", false);
 		  break;
 
 		case snd_K_E: case snd_K_e: 
 		  if (defining_macro) 
 		    {
-		      string_to_minibuffer(sp, "can't call macro while it's being defined");
+		      set_status(sp, "can't call macro while it's being defined", false);
 		      defining_macro = false;
 		      macro_size = 0; /* so subsequent M-x e doesn't get something silly */
 		    }
@@ -1418,7 +1410,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  cp->cursor_on = true;
 		  if (selection_is_active_in_channel(cp))
 		    cursor_moveto(cp, (mus_long_t)(selection_beg(cp) + 0.5 * selection_len()));
-		  else string_to_minibuffer(sp, "no active selection");
+		  else set_status(sp, "no active selection", false);
 		  handle_cursor_with_sync(cp, CURSOR_IN_MIDDLE);
 		  break;
 
@@ -1465,14 +1457,14 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 			      }
 			}
 		      if (complain)
-			string_to_minibuffer(sp, "no active selection");
+			set_status(sp, "no active selection", false);
 		    }
 		  break;
 
 		case snd_K_Z: case snd_K_z: 
 		  if (selection_is_active_in_channel(cp))
 		    cos_smooth(cp, CURSOR(cp), (!got_ext_count) ? 1 : ext_count, OVER_SELECTION); 
-		  else string_to_minibuffer(sp, "no active selection");
+		  else set_status(sp, "no active selection", false);
 		  break;
 
 		case snd_K_Right:   
@@ -1503,11 +1495,11 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 		case snd_K_openparen:
 		  if (defining_macro) 
-		    string_to_minibuffer(sp, "macro definition already in progress");
+		    set_status(sp, "macro definition already in progress", false);
 		  else
 		    {
 		      start_defining_macro(); 
-		      string_to_minibuffer(sp, "defining macro..."); 
+		      set_status(sp, "defining macro...", false); 
 		    }
 		  break;
 
@@ -1515,18 +1507,18 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  if (defining_macro)
 		    {
 		      stop_defining_macro(); 
-		      clear_minibuffer(sp); 
+		      clear_status_area(sp); 
 		    }
 		  break;
 
 		default:
-		  report_in_minibuffer(sp, "C-x %s undefined", key_to_name(keysym));
+		  status_report(sp, "C-x %s undefined", key_to_name(keysym));
 		  break;
 		}
 	    }
 	  else
 	    {
-	      report_in_minibuffer(sp, "C-x M-%s undefined", key_to_name(keysym));
+	      status_report(sp, "C-x M-%s undefined", key_to_name(keysym));
 	    }
 	}
     }
@@ -1710,8 +1702,8 @@ static XEN g_status_report(XEN msg, XEN snd)
 
   message = XEN_TO_C_STRING(msg);
   if ((message) && (*message))
-    string_to_minibuffer(sp, message);
-  else clear_minibuffer(sp);
+    set_status(sp, message, false);
+  else clear_status_area(sp);
   return(msg);
 }
 
@@ -1729,12 +1721,7 @@ static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd, XEN raw)
   return(XEN_FALSE);
 }
 
-static XEN g_report_in_minibuffer(XEN msg, XEN snd, XEN as_error)
-{
-  return(g_status_report(msg, snd));
-}
-
-static XEN g_clear_minibuffer(XEN snd)
+static XEN g_clear_status_area(XEN snd)
 {
   return(g_status_report(C_TO_XEN_STRING(""), snd));
 }
@@ -1751,8 +1738,7 @@ XEN_ARGIFY_2(g_status_report_w, g_status_report)
 
 #if (!SND_DISABLE_DEPRECATED)
   XEN_NARGIFY_1(g_save_macros_w, g_save_macros)
-  XEN_ARGIFY_1(g_clear_minibuffer_w, g_clear_minibuffer)
-  XEN_ARGIFY_3(g_report_in_minibuffer_w, g_report_in_minibuffer)
+  XEN_ARGIFY_1(g_clear_status_area_w, g_clear_status_area)
   XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
 #endif
 
@@ -1766,8 +1752,7 @@ XEN_ARGIFY_2(g_status_report_w, g_status_report)
 
 #if (!SND_DISABLE_DEPRECATED)
   #define g_save_macros_w g_save_macros
-  #define g_clear_minibuffer_w g_clear_minibuffer
-  #define g_report_in_minibuffer_w g_report_in_minibuffer
+  #define g_clear_status_area_w g_clear_status_area
   #define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
 #endif
 
@@ -1796,8 +1781,8 @@ void g_init_kbd(void)
 
 #if (!SND_DISABLE_DEPRECATED)
   XEN_DEFINE_PROCEDURE("save-macros",            g_save_macros_w,            1, 0, 0, "obsolete");
-  XEN_DEFINE_PROCEDURE("clear-minibuffer",       g_clear_minibuffer_w,       0, 1, 0, "obsolete");
-  XEN_DEFINE_PROCEDURE("report-in-minibuffer",   g_report_in_minibuffer_w,   1, 2, 0, "obsolete");
+  XEN_DEFINE_PROCEDURE("clear-minibuffer",       g_clear_status_area_w,      0, 1, 0, "obsolete");
+  XEN_DEFINE_PROCEDURE("report-in-minibuffer",   g_status_report_w,          1, 2, 0, "obsolete");
   XEN_DEFINE_PROCEDURE("prompt-in-minibuffer",   g_prompt_in_minibuffer_w,   1, 3, 0, "obsolete");
 #endif
 

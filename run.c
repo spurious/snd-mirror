@@ -9470,32 +9470,6 @@ static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
-#if (!SND_DISABLE_DEPRECATED)
-/* ---------------- report-in-minibuffer ---------------- */
-
-static void report_in_minibuffer_s(int *args, ptree *pt) 
-{
-  snd_info *sp;
-  sp = run_get_sp(2, args, pt->ints);
-  if (sp)
-    string_to_minibuffer(sp, STRING_ARG_1);
-}
-
-
-static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_args)
-{
-  xen_value *true_args[3];
-  xen_value *rtn;
-  int k;
-  run_opt_arg(pt, args, num_args, 2, true_args);
-  true_args[1] = args[1];
-  true_args[0] = args[0];
-  rtn = package(pt, R_BOOL, report_in_minibuffer_s, "report_in_minibuffer_s", true_args, 2);
-  for (k = num_args + 1; k <= 2; k++) free(true_args[k]);
-  return(rtn);
-}
-#endif
-
 
 /* ---------------- sampler stuff ---------------- */
 
@@ -17129,9 +17103,6 @@ static void init_walkers(void)
 
   INIT_WALKER(S_snd_print,              make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_snd_warning,            make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
-#if (!SND_DISABLE_DEPRECATED)
-  INIT_WALKER("report-in-minibuffer",   make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
-#endif
 
   INIT_WALKER(S_sound_p,                make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER(S_selection_chans,        make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));

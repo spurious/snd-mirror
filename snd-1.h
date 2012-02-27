@@ -1799,20 +1799,21 @@ void g_init_base(void);
 /* -------- snd-kbd.c -------- */
 
 #ifdef __GNUC__
-  void report_in_minibuffer(snd_info *sp, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
+  void status_report(snd_info *sp, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 #else
-  void report_in_minibuffer(snd_info *sp, const char *format, ...);
+  void status_report(snd_info *sp, const char *format, ...);
 #endif
-void string_to_minibuffer(snd_info *sp, const char *buf);
-void errors_to_minibuffer(const char *msg, void *data);
-void printout_to_minibuffer(const char *msg, void *data);
-void clear_minibuffer(snd_info *sp);
+void errors_to_status_area(const char *msg, void *data);
+void printout_to_status_area(const char *msg, void *data);
+void clear_status_area(snd_info *sp);;
+
 int in_keymap(int key, int state, bool cx_extended);
 void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info);
 char *key_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
 void map_over_keys(bool (*func)(int key, int state, bool cx, XEN xf));
 key_info *find_prefs_key(const char *prefs_name);
+
 void save_edits_from_kbd(snd_info *sp);
 void keyboard_command(chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);

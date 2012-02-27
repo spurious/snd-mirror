@@ -145,7 +145,7 @@ static void zx_changed(float value, chan_info *cp)
 	  cp->squelch_update = true;
 	  resize_sx(cp);
 	  cp->squelch_update = false;
-	  clear_minibuffer(cp->sound); /* erase the "(update squelched)" message */
+	  clear_status_area(cp->sound); /* erase the "(update squelched)" message */
 	}
       else resize_sx(cp);
     }
@@ -736,12 +736,12 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
 	  seconds = (float)(ungrf_x(cp->axis, x));
 	  if (seconds < 0.0) seconds = 0.0;
 	  if (sp->nchans > 1)
-	    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
-	  else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
+	    status_report(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
+	  else status_report(sp, "drop to mix file at %.4f", seconds);
 	  break;
 
 	case DRAG_LEAVE:
-	  string_to_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
+	  set_status(sp, " ", false); /* not clear_status_area here! => segfault */
 	  break;
 	}
     }

@@ -156,7 +156,7 @@
 					(not (char-numeric? chr)))
 				   (set! start i)))))))
 		 (loop (read-line file #t))))))))
-   (list "snd.html" "extsnd.html" "sndlib.html" "grfsnd.html" "sndclm.html" "sndscm.html"))
+   (list "snd.html" "extsnd.html" "sndlib.html" "grfsnd.html" "sndclm.html" "sndscm.html" "libxm.html" "s7.html" "fm.html"))
 
   (for-each
    (lambda (name)
@@ -303,6 +303,10 @@
   "grfsnd.html"
   "extsnd.html"
   "libxm.html"
+  "sndclm.html"
+  "fm.html"
+  "s7.html"
+  "sndlib.html"
   ))
 
 (exit)

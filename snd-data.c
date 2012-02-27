@@ -141,7 +141,7 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->active = CHANNEL_INACTIVE;
   /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
    *   an error may occur (an edit list temp file might have vanished for example), and normally Snd
-   *   attempts to post an error message in the sound's minibuffer.  To force this out, we have to
+   *   attempts to post an error message in the sound's status area.  To force this out, we have to
    *   call XmUpdate or equivalent, which can cause all the sound's channels to attempt to redisplay;
    *   since the one causing the error is half-deallocated, trouble can ensue.  So both the channel
    *   and the sound have "active" flags that are true only when everything is ship-shape.

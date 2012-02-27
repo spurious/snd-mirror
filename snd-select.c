@@ -426,7 +426,7 @@ void add_selection_or_region(int reg, chan_info *cp)
 	    }
 	  else io_err = add_region(reg, cp);
 	  if (io_err != IO_NO_ERROR)
-	    report_in_minibuffer(cp->sound, "can't mix %s: %s",
+	    status_report(cp->sound, "can't mix %s: %s",
 				 (got_selection) ? "selection" : "region",
 				 io_error_name(io_err));
 	}
@@ -497,7 +497,7 @@ void insert_selection_or_region(int reg, chan_info *cp)
 	}
       else err = paste_region(reg, cp);
       if (err != IO_NO_ERROR)
-	report_in_minibuffer(cp->sound, "can't insert %s: %s",
+	status_report(cp->sound, "can't insert %s: %s",
 			     (got_selection) ? "selection" : "region",
 			     io_error_name(err));
     }

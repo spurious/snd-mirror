@@ -234,10 +234,10 @@ char *global_search(read_direction_t direction)
 
 static bool find_eval_error_p = false;
 
-static void send_find_errors_to_minibuffer(const char *msg, void *data)
+static void send_find_errors_to_status_area(const char *msg, void *data)
 {
   find_eval_error_p = true;
-  display_minibuffer_error((snd_info *)data, msg);
+  status_report((snd_info *)data, msg);
   ss->stopped_explicitly = true;
 }
 
@@ -251,7 +251,7 @@ static mus_long_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   bool progress_displayed = false;
   if (search_in_progress) 
     {
-      display_minibuffer_error(sp, "search already in progress");
+      status_report(sp, "search already in progress");
       return(-1);
     }
   search_in_progress = true;
@@ -285,7 +285,7 @@ static mus_long_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 		  if (ss->stopped_explicitly) break;
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
-		  display_minibuffer_error(sp, msg);
+		  status_report(sp, msg);
 		  free(msg);
 		  progress_displayed = true;
 		}
@@ -313,7 +313,7 @@ static mus_long_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 		  char *msg;
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
-		  display_minibuffer_error(sp, msg);
+		  status_report(sp, msg);
 		  free(msg);
 		  progress_displayed = true;
 		}
@@ -327,7 +327,7 @@ static mus_long_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   ss->stopped_explicitly = false;
   if ((progress_displayed) &&
       (!find_eval_error_p))
-    clear_minibuffer(sp);
+    clear_status_area(sp);
   free_snd_fd(sf);
   search_in_progress = false;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
@@ -346,7 +346,7 @@ static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   bool progress_displayed = false;
   if (search_in_progress) 
     {
-      display_minibuffer_error(sp, "search already in progress");
+      status_report(sp, "search already in progress");
       return(-1);
     }
   search_in_progress = true;
@@ -378,7 +378,7 @@ static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 		  if (ss->stopped_explicitly) break;
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
-		  display_minibuffer_error(sp, msg);
+		  status_report(sp, msg);
 		  free(msg);
 		  progress_displayed = true;
 		}
@@ -408,7 +408,7 @@ static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 		  char *msg;
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
-		  display_minibuffer_error(sp, msg);
+		  status_report(sp, msg);
 		  free(msg);
 		  progress_displayed = true;
 		}
@@ -421,7 +421,7 @@ static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   ss->stopped_explicitly = false;
   if ((progress_displayed) &&
       (!find_eval_error_p))
-    clear_minibuffer(sp);
+    clear_status_area(sp);
   free_snd_fd(sf);
   search_in_progress = false;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
@@ -436,7 +436,7 @@ void cursor_search(chan_info *cp, int count)
   snd_info *sp;
   sp = cp->sound;
   if (search_in_progress) 
-    display_minibuffer_error(sp, "search already in progress");
+    status_report(sp, "search already in progress");
   else
     {
       mus_long_t samp;
@@ -463,7 +463,7 @@ void cursor_search(chan_info *cp, int count)
 #endif
 	  if (sp->search_tree == NULL)
 	    {
-	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
+	      redirect_errors_to(errors_to_status_area, (void *)sp);
 	      sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
 	      redirect_errors_to(NULL, NULL);
 	      if (XEN_PROCEDURE_P(sp->search_proc))
@@ -471,7 +471,7 @@ void cursor_search(chan_info *cp, int count)
 	      else return;
 	    }
 	}
-      redirect_errors_to(send_find_errors_to_minibuffer, (void *)sp);
+      redirect_errors_to(send_find_errors_to_status_area, (void *)sp);
       if (count > 0)
 	samp = cursor_find_forward(sp, cp, count);
       else samp = cursor_find_backward(sp, cp, -count);
@@ -487,7 +487,7 @@ void cursor_search(chan_info *cp, int count)
 	      char *msg;
 	      msg = mus_format("not found%s", 
 			       (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
-	      display_minibuffer_error(sp, msg);
+	      status_report(sp, msg);
 	      free(msg);
 	      cp->last_search_result = SEARCH_FAILED;
 	    }
@@ -497,7 +497,7 @@ void cursor_search(chan_info *cp, int count)
 	      s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
 	      s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp));
 	      msg = mus_format("%s at %s (%lld)", s1, s2, samp);
-	      display_minibuffer_error(sp, msg);
+	      status_report(sp, msg);
 	      free(s1);
 	      free(s2);
 	      free(msg);

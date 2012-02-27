@@ -422,7 +422,7 @@ static void undo_and_apply_enved_callback(GtkWidget *w, gpointer context)
       active_channel->squelch_update = true;
       undo_edit_with_sync(active_channel, 1);
       active_channel->squelch_update = false;
-      clear_minibuffer(active_channel->sound);
+      clear_status_area(active_channel->sound);
     }
   apply_enved();
   last_active_channel = active_channel;

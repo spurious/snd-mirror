@@ -729,7 +729,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 	}
       else
 	{
-	  string_to_minibuffer(sp0, "swap interrupted");
+	  set_status(sp0, "swap interrupted", false);
 	  ss->stopped_explicitly = false;
 	}
       if (ofile0) {free(ofile0); ofile0 = NULL;}
@@ -1144,7 +1144,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
     }
   else
     {
-      string_to_minibuffer(sp, "src interrupted");
+      set_status(sp, "src interrupted", false);
       /* should we remove the temp file here? */
       ss->stopped_explicitly = false;
     }
@@ -1608,7 +1608,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, origin, sf->edit_ctr);
       else 
 	{
-	  string_to_minibuffer(sp, "filter interrupted");
+	  set_status(sp, "filter interrupted", false);
 	  ss->stopped_explicitly = false;
 	}
       mus_free(gen);
@@ -1649,7 +1649,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	  close_temp_file(ofile, ofd, hdr->type, fsize * sizeof(mus_float_t));
 	  if (bytes != 0)
 	    file_change_samples(beg, dur + order, ofile, cp, 0, DELETE_ME, origin, sf->edit_ctr);
-	  else string_to_minibuffer(sp, "can't write data?");
+	  else set_status(sp, "can't write data?", false);
 
 	  free(sndrdat);
 	  free(sndidat);
@@ -2072,7 +2072,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e,
   if (ss->stopped_explicitly)
     {
       /* clean up and undo all edits up to stop_point */
-      string_to_minibuffer(sp, "filter stopped");
+      set_status(sp, "filter stopped", false);
       ss->stopped_explicitly = false;
       for (i = 0; i <= stop_point; i++)
 	{
@@ -2274,7 +2274,7 @@ void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int arg_pos)
 
   if (ss->stopped_explicitly)
     {
-      string_to_minibuffer(sp, "reverse stopped");
+      set_status(sp, "reverse stopped", false);
       ss->stopped_explicitly = false;
       for (i = 0; i <= stop_point; i++)
 	{
@@ -4253,7 +4253,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = false;
-	  report_in_minibuffer(sp, "%s stopped at sample %lld", caller, kp + beg);
+	  status_report(sp, "%s stopped at sample %lld", caller, kp + beg);
 	  break;
 	}
     }

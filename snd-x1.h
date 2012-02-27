@@ -318,7 +318,7 @@ int control_panel_height(snd_info *sp);
 Widget w_snd_pane(snd_info *sp);
 Widget unite_button(snd_info *sp);
 void set_control_panel_play_button(snd_info *sp);
-void set_minibuffer_string(snd_info *sp, const char *str, bool update);
+void set_status(snd_info *sp, const char *str, bool update);
 void snd_info_cleanup(snd_info *sp);
 void set_amp(snd_info *sp, mus_float_t val);
 int amp_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval);
@@ -362,7 +362,6 @@ XmString initial_speed_label(speed_style_t style);
 void g_init_gxsnd(void);
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_sound_selection(snd_info *sp);
-void display_minibuffer_error(snd_info *sp, const char *str);
 void make_controls_dialog(void);
 
 

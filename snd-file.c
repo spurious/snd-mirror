@@ -1316,7 +1316,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	    {
 	      char *msg;
 	      msg = mus_format("%s is read-protected!", sp->short_filename);
-	      display_minibuffer_error(sp, msg);
+	      status_report(sp, msg);
 	      free(msg);
 	      sp->file_unreadable = true;
 	      start_bomb(sp);
@@ -1324,7 +1324,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	  else
 	    {
 	      sp->file_unreadable = false;
-	      clear_minibuffer(sp);
+	      clear_status_area(sp);
 	      err = access(sp->filename, W_OK);
 	      if (err < 0)   /* if err < 0, then we can't write (W_OK -> error ) */
 		sp->file_read_only = FILE_READ_ONLY; 
@@ -1343,7 +1343,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
       if (mus_file_probe(sp->filename) == 0)
 	{
 	  /* user deleted file while editing it? */
-	  report_in_minibuffer(sp, "%s no longer exists!", sp->short_filename);
+	  status_report(sp, "%s no longer exists!", sp->short_filename);
 	  sp->file_unreadable = true;
 	  start_bomb(sp);
 	  return;
@@ -1694,8 +1694,8 @@ void snd_close_file(snd_info *sp)
     stop_playing_sound(sp, PLAY_CLOSE);
 
 #if (!USE_NO_GUI)
-  sp->inuse = SOUND_NORMAL;               /* needed to make sure minibuffer is actually cleared in set_minibuffer_string */
-  set_minibuffer_string(sp, NULL, false); /* false = don't try to update graphs! */
+  sp->inuse = SOUND_NORMAL;               /* needed to make sure the status area is actually cleared in set_status */
+  set_status(sp, NULL, false); /* false = don't try to update graphs! */
   sp->inuse = SOUND_IDLE;
 #endif
 
@@ -2275,7 +2275,7 @@ snd_info *snd_update(snd_info *sp)
 
 static void snd_update_warning_handler(const char *msg, void *data)
 {
-  string_to_minibuffer((snd_info *)data, msg);
+  set_status((snd_info *)data, msg, false);
 }
 
 

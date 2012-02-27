@@ -990,10 +990,10 @@ void sequester_deferred_regions(chan_info *cp, int edit_top)
 		(drp->edpos[j] > edit_top))
 	      {
 		if (r->lens[j] > 1000000)
-		  report_in_minibuffer(cp->sound, "sequestering region %d...", r->id);
+		  status_report(cp->sound, "sequestering region %d...", r->id);
 		deferred_region_to_temp_file(r);
 		if (r->lens[j] > 1000000)
-		  clear_minibuffer(cp->sound);
+		  clear_status_area(cp->sound);
 		break;
 	      }
 	}

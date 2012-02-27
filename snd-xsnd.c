@@ -29,7 +29,7 @@ Widget w_snd_pane(snd_info *sp)   {return(sp->snd_widgets[W_pane]);}
 #define LOCK_OR_BOMB(Sp)         Sp->snd_widgets[W_lock_or_bomb]
 #define STOP_ICON(Sp)            Sp->snd_widgets[W_stop_icon]
 #define NAME_LABEL(Sp)           Sp->snd_widgets[W_name]
-#define MINIBUFFER_TEXT(Sp)      Sp->snd_widgets[W_info]
+#define STATUS_AREA(Sp)      Sp->snd_widgets[W_info]
 #define SYNC_BUTTON(Sp)          Sp->snd_widgets[W_sync]
 #define PLAY_BUTTON(Sp)          Sp->snd_widgets[W_play]
 #define UNITE_BUTTON(Sp)         Sp->snd_widgets[W_unite]
@@ -85,22 +85,16 @@ int snd_pane_height(snd_info *sp)
 }
 
 
-void display_minibuffer_error(snd_info *sp, const char *str) 
-{
-  report_in_minibuffer(sp, str);
-}
-
-
-void set_minibuffer_string(snd_info *sp, const char *str, bool update) 
+void set_status(snd_info *sp, const char *str, bool update) 
 {
   if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
-  XmTextSetString(MINIBUFFER_TEXT(sp), (char *)str);
+  XmTextSetString(STATUS_AREA(sp), (char *)str);
   /* updating clears the entire graph widget and triggers an expose event -- this is evil if we're currently displaying! */
   /* there's also a bug in libxcb (fixed, but not propagated yet) that causes a segfault here if more than
    *   one thread is affected by this global X queue flush.
    */
 
-  if (update) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
+  if (update) XmUpdateDisplay(STATUS_AREA(sp));
 }
 
 
@@ -111,7 +105,7 @@ static void name_click_callback(Widget w, XtPointer context, XtPointer info)
   str = sp_name_click(sp);
   if (str)
     {
-      report_in_minibuffer(sp, str);
+      status_report(sp, str);
       free(str);
     }
 }
@@ -883,7 +877,7 @@ static void filter_order_down_callback(Widget w, XtPointer context, XtPointer in
 static void get_filter_order(snd_info *sp, char *str)
 {
   int order;
-  redirect_errors_to(errors_to_minibuffer, (void *)sp);
+  redirect_errors_to(errors_to_status_area, (void *)sp);
   order = string_to_int(str, 1, "filter order");
   redirect_errors_to(NULL, NULL);
   if (order & 1) order++;
@@ -907,7 +901,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
 
   str = XmTextGetString(w);
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
-  redirect_errors_to(errors_to_minibuffer, (void *)sp);
+  redirect_errors_to(errors_to_status_area, (void *)sp);
   sp->filter_control_envelope = string_to_env((const char *)str);
   redirect_errors_to(NULL, NULL);
   if (str) XtFree(str);
@@ -1651,14 +1645,14 @@ static void manage_sync_button(snd_info *sp)
 }
 
 
-static void attach_minibuffer(snd_info *sp)
+static void attach_status_area(snd_info *sp)
 {
-  XtUnmanageChild(MINIBUFFER_TEXT(sp));
-  XtVaSetValues(MINIBUFFER_TEXT(sp),
+  XtUnmanageChild(STATUS_AREA(sp));
+  XtVaSetValues(STATUS_AREA(sp),
 		XmNrightAttachment, XmATTACH_WIDGET,
 		XmNrightWidget, (XtIsManaged(UNITE_BUTTON(sp))) ? UNITE_BUTTON(sp) : ((XtIsManaged(SYNC_BUTTON(sp))) ? SYNC_BUTTON(sp) : PLAY_BUTTON(sp)),
 		NULL);
-  XtManageChild(MINIBUFFER_TEXT(sp));
+  XtManageChild(STATUS_AREA(sp));
 }
 
 
@@ -1812,7 +1806,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* creates channel (horizontal) paned window widget as child of w_snd_pane(sp) == SND_PANE(sp) */
       
 
-      /* -------- sound file name, minibuffer, various buttons -------- */
+      /* -------- sound file name, status area, various buttons -------- */
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
@@ -1947,7 +1941,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNeditable, false); n++;
       XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
-      MINIBUFFER_TEXT(sp) = XtCreateManagedWidget("snd-info", xmTextFieldWidgetClass, NAME_BOX(sp), args, n);
+      STATUS_AREA(sp) = XtCreateManagedWidget("snd-info", xmTextFieldWidgetClass, NAME_BOX(sp), args, n);
 
 #if WITH_AUDIO
       n = 0;
@@ -2718,7 +2712,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     {
       for_each_sound(manage_sync_button); 
     }
-  attach_minibuffer(sp);
+  attach_status_area(sp);
 
   add_sound_data(filename, sp, WITH_GRAPH);
 
@@ -2730,7 +2724,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   else hide_lock(sp);
 
   if (old_name)
-    report_in_minibuffer(sp, "(translated %s)", old_name);
+    status_report(sp, "(translated %s)", old_name);
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
@@ -2760,7 +2754,7 @@ void snd_info_cleanup(snd_info *sp)
 {
   if (HAS_WIDGETS(sp))
     {
-      clear_minibuffer(sp);
+      clear_status_area(sp);
       if (SYNC_BUTTON(sp))
 	{
 	  XtVaSetValues(SYNC_BUTTON(sp), XmNset, false, NULL);
@@ -2797,7 +2791,7 @@ static XEN reflect_file_close_in_sync(XEN xreason)
       if ((sp) && (sp->nchans == 1))
 	{
 	  XtUnmanageChild(SYNC_BUTTON(sp));
-	  attach_minibuffer(sp);
+	  attach_status_area(sp);
 	}
     }
   return(XEN_FALSE);
@@ -3298,7 +3292,7 @@ widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filte
   return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),
 	  XEN_CONS(XEN_WRAP_WIDGET(SND_NAME(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROLS(sp)),
-	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
+	    XEN_CONS(XEN_WRAP_WIDGET(STATUS_AREA(sp)),
 #if WITH_AUDIO
 	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
 #else

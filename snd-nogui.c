@@ -2,7 +2,6 @@
 #include "snd-menu.h"
 #include "snd-file.h"
 
-void display_minibuffer_error(snd_info *sp, const char *str) {fprintf(stderr, "%s\n", str);}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}
@@ -138,7 +137,7 @@ void set_foreground_color(graphics_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(struct dialog_play_info *dp) {}
-void set_minibuffer_string(snd_info *sp, const char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
+void set_status(snd_info *sp, const char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
 void snd_info_cleanup(snd_info *sp) {}
 void toggle_expand_button(snd_info *sp, bool state) {}
 void toggle_contrast_button(snd_info *sp, bool state) {}

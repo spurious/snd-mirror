@@ -13,7 +13,7 @@
  *   also lin/exp is stupid -- omit, click "exp" label to reset to 1 (always)
  *   and "reset" apparently means "clear"
  *
- * remove eval-between-marks and all other minibuffer stuff from *.rb|fs|h|c [got scm|html already]
+ * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html|h|c already]
  *   perhaps define all the "built-in" keys via (bind-key ...)
  *   also define the removed key bindings in snd12.scm.
  *   and add menu accelerators on some switch, like the toolbar
@@ -234,7 +234,6 @@ static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info
     {
       /* position menu to match current text widget, show previous choices, if any else "[no previous choices]" */
       /*     XmMenuPosition(popup_menu, event) happens automatically */
-      /* should max len be user-var? history-length? (replace minibuffer-history-length?) */
 
       char *current_filename;
       int i, filenames_to_display = 0;
@@ -1768,7 +1767,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	  else 
 	    {
-	      report_in_minibuffer(sp, "%s mixed in at cursor", filename);
+	      status_report(sp, "%s mixed in at cursor", filename);
 	      remember_filename(filename, fd->fpop->file_text_names);
 	    }
 	  if (filename) XtFree(filename);
@@ -1875,7 +1874,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	  else 
 	    {
-	      report_in_minibuffer(sp, "%s inserted at cursor", filename);
+	      status_report(sp, "%s inserted at cursor", filename);
 	      remember_filename(filename, fd->fpop->file_text_names);
 	    }
 	  if (filename) XtFree(filename);
@@ -3125,7 +3124,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   switch (sd->type)
     {
     case SOUND_SAVE_AS:
-      clear_minibuffer(sp);
+      clear_status_area(sp);
       if (!saving)
 	extractable_chans = sp->nchans;
       break;
@@ -3309,14 +3308,14 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (saving)
 	{
 	  if (sd->type == SOUND_SAVE_AS)
-	    report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
-	  else report_in_minibuffer(sp, "%s saved as %s", (sd->type == SELECTION_SAVE_AS) ? "selection" : "region", str);
+	    status_report(sp, "%s saved as %s", sp->short_filename, str);
+	  else status_report(sp, "%s saved as %s", (sd->type == SELECTION_SAVE_AS) ? "selection" : "region", str);
 	}
       else
 	{
 	  if (sd->type == SOUND_SAVE_AS)
-	    report_in_minibuffer(sp, "%s chan %d saved as %s", sp->short_filename, chan, str);
-	  else report_in_minibuffer(sp, "selection chan %d saved as %s", chan, str);
+	    status_report(sp, "%s chan %d saved as %s", sp->short_filename, chan, str);
+	  else status_report(sp, "selection chan %d saved as %s", chan, str);
 	}
       run_after_save_as_hook(sp, str, true); /* true => from dialog */
       XtUnmanageChild(sd->dialog);
@@ -4788,7 +4787,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  hdr->comment = NULL;
 	  if (rp->requestor == FROM_KEYBOARD)
 	    {
-	      clear_minibuffer((snd_info *)(rp->requestor_data));
+	      clear_status_area((snd_info *)(rp->requestor_data));
 	      rp->selected = true;
 	    }
 	  finish_opening_sound(add_sound_window(rp->filename, rp->read_only, hdr), rp->selected);
@@ -5287,7 +5286,7 @@ static void file_has_changed_yes_callback(Widget w, XtPointer context, XtPointer
   save_edits_without_asking(sp);
   sp->need_update = false;
   stop_bomb(sp);                  /* in case Snd already noticed the problem */
-  clear_minibuffer(sp);
+  clear_status_area(sp);
 }
 
 static void file_has_changed_help_callback(Widget w, XtPointer context, XtPointer info)

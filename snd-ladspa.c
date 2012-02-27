@@ -888,7 +888,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
     }
   else 
     {
-      report_in_minibuffer(sp, S_apply_ladspa " interrupted");
+      status_report(sp, S_apply_ladspa " interrupted");
       ss->stopped_explicitly = false;
     }
   if (ofile) free(ofile);

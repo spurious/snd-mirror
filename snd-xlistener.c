@@ -19,7 +19,7 @@ static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num)
       char *old_text, *new_text;
 
       old_text = XmTextGetString(w);
-      if (mus_strlen(old_text) == 0) return; /* C-x C-f TAB in minibuffer, for example */
+      if (mus_strlen(old_text) == 0) return; /* C-x C-f TAB in kbd??, for example */
 
       new_text = complete_text(w, old_text, completer);
       if (mus_strlen(new_text) == 0) return; /* can this happen? */
@@ -456,13 +456,6 @@ static void Text_transpose(Widget w, XEvent *event, char **str, Cardinal *num)
 
 static void Complain(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  /* if the minibuffer has focus (via pointer movement) and user types C-j (for example),
-   *   the textfield widget doesn't have any action associated with that, so it prints
-   *   C-j and leaves the cursor where it was; without this action, Motif posts a small
-   *   empty box where the character should be, which can be confusing; another option
-   *   would be to activate the keyboard instead (as in C-x), but I think that would only
-   *   add to the confusion.
-   */
   char *old_text, *new_text;
   XmTextPosition curpos;
   int len;

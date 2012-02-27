@@ -39,7 +39,7 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->snd_widgets[W_pane_box]);}
 
 #define CLOSE_BUTTON(Sp)         Sp->snd_widgets[W_close]
 
-#define MINIBUFFER_TEXT(Sp)      Sp->snd_widgets[W_info]
+#define STATUS_AREA(Sp)      Sp->snd_widgets[W_info]
 #define NAME_PIX(Sp)             Sp->snd_widgets[W_name_pix]
 #define STOP_PIX(Sp)             Sp->snd_widgets[W_stop_pix]
 #define SYNC_BUTTON(Sp)          Sp->snd_widgets[W_sync]
@@ -107,12 +107,6 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->snd_widgets[W_pane_box]);}
 #define REVSCL_ADJUSTMENT(Sp)    Sp->snd_adjs[W_revscl_adj]
 #define REVLEN_ADJUSTMENT(Sp)    Sp->snd_adjs[W_revlen_adj]
 #define FILTER_ADJUSTMENT(Sp)    Sp->snd_adjs[W_filter_adj]
-
-
-void display_minibuffer_error(snd_info *sp, const char *str) 
-{
-  report_in_minibuffer(sp, str);
-}
 
 
 
@@ -349,16 +343,16 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
 }
 
 
-/* -------- MINIBUFFER CALLBACKS -------- */
+/* -------- STATUS AREA CALLBACKS -------- */
 
 static char stupid[1] = {'\0'};
 
-void set_minibuffer_string(snd_info *sp, const char *str, bool update) 
+void set_status(snd_info *sp, const char *str, bool update) 
 {
   if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
   if (str)
-    gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), str);
-  else gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), stupid);
+    gtk_entry_set_text(GTK_ENTRY(STATUS_AREA(sp)), str);
+  else gtk_entry_set_text(GTK_ENTRY(STATUS_AREA(sp)), stupid);
 }
 
 
@@ -568,7 +562,7 @@ static gboolean name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
   str = sp_name_click(sp);
   if (str)
     {
-      report_in_minibuffer(sp, str);
+      status_report(sp, str);
       free(str);
     }
   return(false);
@@ -1358,7 +1352,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   char *str = NULL;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
-  redirect_errors_to(errors_to_minibuffer, (void *)sp);
+  redirect_errors_to(errors_to_status_area, (void *)sp);
   sp->filter_control_envelope = string_to_env((const char *)str);
   redirect_errors_to(NULL, NULL);
   if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
@@ -1672,14 +1666,14 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	  }
       }
 
-      MINIBUFFER_TEXT(sp) = gtk_entry_new();
+      STATUS_AREA(sp) = gtk_entry_new();
 #if HAVE_GTK_3
-      gtk_widget_set_halign(MINIBUFFER_TEXT(sp), GTK_ALIGN_FILL);
-      gtk_widget_set_hexpand(MINIBUFFER_TEXT(sp), true);
+      gtk_widget_set_halign(STATUS_AREA(sp), GTK_ALIGN_FILL);
+      gtk_widget_set_hexpand(STATUS_AREA(sp), true);
 #endif
-      gtk_entry_set_has_frame(GTK_ENTRY(MINIBUFFER_TEXT(sp)), false);
-      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_TEXT(sp), true, true, 2);
-      gtk_widget_show(MINIBUFFER_TEXT(sp));
+      gtk_entry_set_has_frame(GTK_ENTRY(STATUS_AREA(sp)), false);
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STATUS_AREA(sp), true, true, 2);
+      gtk_widget_show(STATUS_AREA(sp));
 
       /* now fill from other end */
       
@@ -2035,7 +2029,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   else hide_lock(sp);
 
   if (old_name)
-    report_in_minibuffer(sp, "(translated %s)", old_name);
+    status_report(sp, "(translated %s)", old_name);
   after_open(sp);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
@@ -2063,7 +2057,7 @@ void snd_info_cleanup(snd_info *sp)
 {
   if (HAS_WIDGETS(sp))
     {
-      clear_minibuffer(sp);
+      clear_status_area(sp);
       if (SYNC_BUTTON(sp))
 	{
 	  set_toggle_button(SYNC_BUTTON(sp), false, false, (void *)sp);
@@ -2429,7 +2423,7 @@ pane-box (10)name-form"
   return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),
 	  XEN_CONS(XEN_WRAP_WIDGET(NAME_BUTTON(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),
-	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
+	    XEN_CONS(XEN_WRAP_WIDGET(STATUS_AREA(sp)),
 #if WITH_AUDIO
 	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
 #else

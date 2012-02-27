@@ -916,7 +916,7 @@ The full frequency axis is normally displayed, but the axis is draggable -- put 
 and drag it either way to change the range (this is equivalent to changing the variable " S_spectrum_end "). \
 You can also click on any point in the fft to get the associated fft value at that point displayed; \
 if " S_with_verbose_cursor " is " PROC_TRUE ", you can drag the mouse through the fft display and \
-the description in the minibuffer will be constantly updated.  To change the fft size by powers of two, \
+the description in the status area is constantly updated.  To change the fft size by powers of two, \
 you can use the keypad keys '*' and '/'.  \
 \n\n\
 The main FFT-related functions are:\

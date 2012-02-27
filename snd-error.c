@@ -99,7 +99,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
 	snd_info *sp;
 	sp = any_selected_sound();
 	if ((sp) && (sp->active))
-	  display_minibuffer_error(sp, msg);
+	  status_report(sp, msg);
 	else post_it("Error", msg);
       }
 #endif
@@ -142,7 +142,7 @@ static void snd_warning_1(const char *msg)
       snd_info *sp;
       sp = any_selected_sound();
       if ((sp) && (sp->active))
-	display_minibuffer_error(sp, msg);
+	status_report(sp, msg);
       else 
 	{
 	  listener_append(msg);
@@ -253,7 +253,7 @@ static XEN g_snd_error(XEN msg)
   
 static XEN g_snd_warning(XEN msg)
 {
-  #define H_snd_warning "(" S_snd_warning " str): reports warning message str (normally in the minibuffer)"
+  #define H_snd_warning "(" S_snd_warning " str): reports warning message str (normally in the status area)"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_warning, "a string");
   snd_warning("%s", XEN_TO_C_STRING(msg));
   return(msg);

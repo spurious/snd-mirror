@@ -164,7 +164,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	    case PRINT_SND: 
 	      if (snd_print(str))
-		report_in_minibuffer(nsp, "printed current view to %s", str);
+		status_report(nsp, "printed current view to %s", str);
 	      break;
 
 	    case PRINT_ENV: 

@@ -545,7 +545,7 @@ static void update_graph_1(chan_info *cp, bool warn)
     {
 #if (!USE_NO_GUI)
       if ((warn) && (sp))
-	string_to_minibuffer(sp, "(update squelched)"); /* this has tripped me one too many times... */
+	set_status(sp, "(update squelched)", false); /* this has tripped me one too many times... */
 #endif
       return;
     }
@@ -4747,7 +4747,7 @@ void show_cursor_info(chan_info *cp)
 	    }
 	}
     }
-  string_to_minibuffer(sp, expr_str);
+  set_status(sp, expr_str, false);
   free(expr_str);
   free(s1);
   free(s2);
@@ -5627,13 +5627,13 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  samp = mark_sample(mouse_mark);
 			  sync = mark_sync(mouse_mark);
 			  if (sync == 0)
-			    report_in_minibuffer(sp, "mark %d at sample %lld (%3f secs): %3f", 
+			    status_report(sp, "mark %d at sample %lld (%3f secs): %3f", 
 						 mark_to_int(mouse_mark), 
 						 samp,
 						 (double)samp / (double)(SND_SRATE(sp)),
 						 chn_sample(samp, cp, cp->edit_ctr));
 			  else
-			    report_in_minibuffer(sp, "mark %d at sample %lld (%3f secs): %3f, (sync: %d)", 
+			    status_report(sp, "mark %d at sample %lld (%3f secs): %3f, (sync: %d)", 
 						 mark_to_int(mouse_mark), 
 						 samp,
 						 (double)samp / (double)(SND_SRATE(sp)),
@@ -5667,7 +5667,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	  {
 	    char *str;
 	    str = describe_fft_point(cp, x, y);
-	    string_to_minibuffer(sp, str);
+	    set_status(sp, str, false);
 	    if (str) free(str);
 	  }
 	  break;
@@ -5737,7 +5737,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
   if (mouse_mark)
     {
       move_mark(cp, mouse_mark, x);
-      report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
+      status_report(sp, "%.4f", ungrf_x(cp->axis, x));
       dragged = true;
       return;
     }
@@ -5745,7 +5745,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
   switch (click_within_graph)
     {
     case CLICK_MIX:
-      /* printing the new position in the minibuffer here is distracting and unnecessary 
+      /* printing the new position in the status area here is distracting and unnecessary 
        *   and the documentation (extsnd.html) has a mix-drag-hook function to print the position.
        */
       move_mix_tag(mix_tag, x, y);
@@ -5754,7 +5754,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 
     case CLICK_MARK:
       if (dragged) 
-	report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
+	status_report(sp, "%.4f", ungrf_x(cp->axis, x));
       dragged = true;
       break;
       
@@ -5764,7 +5764,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
     case CLICK_SELECTION_MAIN:
     case CLICK_WAVE:
       if (dragged) 
-	report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
+	status_report(sp, "%.4f", ungrf_x(cp->axis, x));
       
       if (!dragged) 
 	start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
@@ -5846,7 +5846,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	{
 	  char *str;
 	  str = describe_fft_point(cp, x, y);
-	  string_to_minibuffer(cp->sound, str);
+	  set_status(cp->sound, str, false);
 	  if (str) free(str);
 	}
       break;
@@ -6730,7 +6730,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
 	  if (cp->edit_ctr == 0)
 	    reflect_file_revert_in_label(cp->sound);
 	  else reflect_file_change_in_label(cp);
-	  clear_minibuffer(cp->sound);
+	  clear_status_area(cp->sound);
 	}
       break;
 
@@ -8259,7 +8259,7 @@ WITH_THREE_SETTER_ARGS(g_set_show_mix_waveforms_reversed, g_set_show_mix_wavefor
 
 static XEN g_verbose_cursor(XEN snd, XEN chn)
 {
-  #define H_verbose_cursor "(" S_with_verbose_cursor " :optional snd chn): " PROC_TRUE " if the cursor's position and so on is displayed in the minibuffer"
+  #define H_verbose_cursor "(" S_with_verbose_cursor " :optional snd chn): " PROC_TRUE " if the cursor's position and so on is displayed in the status area"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_VERBOSE_CURSOR, S_with_verbose_cursor));
   return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
@@ -8274,7 +8274,7 @@ static void chans_verbose_cursor(chan_info *cp, bool value)
 void set_verbose_cursor(bool val)
 {
   in_set_verbose_cursor(val);
-  if (val == 0) for_each_sound(clear_minibuffer);
+  if (val == 0) for_each_sound(clear_status_area);
   for_each_chan_with_bool(chans_verbose_cursor, val);
 }
 

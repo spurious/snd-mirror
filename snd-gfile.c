@@ -1577,7 +1577,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 	    }
 	  else 
 	    {
-	      report_in_minibuffer(sp, "%s mixed in at cursor", filename);
+	      status_report(sp, "%s mixed in at cursor", filename);
 	    }
 	}
       else 
@@ -1677,7 +1677,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	    }
 	  else 
 	    {
-	      report_in_minibuffer(sp, "%s inserted at cursor", filename);
+	      status_report(sp, "%s inserted at cursor", filename);
 	    }
 	}
       else 
@@ -2665,7 +2665,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   switch (sd->type)
     {
     case SOUND_SAVE_AS:
-      clear_minibuffer(sp);
+      clear_status_area(sp);
       if (!saving)
 	extractable_chans = sp->nchans;
       break;
@@ -2838,14 +2838,14 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (saving)
 	{
 	  if (sd->type == SOUND_SAVE_AS)
-	    report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
-	  else report_in_minibuffer(sp, "%s saved as %s", (sd->type == SELECTION_SAVE_AS) ? "selection" : "region", str);
+	    status_report(sp, "%s saved as %s", sp->short_filename, str);
+	  else status_report(sp, "%s saved as %s", (sd->type == SELECTION_SAVE_AS) ? "selection" : "region", str);
 	}
       else
 	{
 	  if (sd->type == SOUND_SAVE_AS)
-	    report_in_minibuffer(sp, "%s chan %d saved as %s", sp->short_filename, chan, str);
-	  else report_in_minibuffer(sp, "selection chan %d saved as %s", chan, str);
+	    status_report(sp, "%s chan %d saved as %s", sp->short_filename, chan, str);
+	  else status_report(sp, "selection chan %d saved as %s", chan, str);
 	}
       run_after_save_as_hook(sp, str, true); /* true => from dialog */
       gtk_widget_hide(sd->fs->dialog);
@@ -3399,7 +3399,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	  hdr->comment = NULL;
 	  if (rp->requestor == FROM_KEYBOARD)
 	    {
-	      clear_minibuffer((snd_info *)(rp->requestor_data));
+	      clear_status_area((snd_info *)(rp->requestor_data));
 	      rp->selected = true;
 	    }
 	  finish_opening_sound(add_sound_window(rp->filename, rp->read_only, hdr), rp->selected);
@@ -4479,7 +4479,7 @@ static void file_has_changed_activate(GtkDialog *w, gint id, gpointer context)
       save_edits_without_asking(sp);
       sp->need_update = false;
       stop_bomb(sp);                  /* in case Snd already noticed the problem */
-      clear_minibuffer(sp);
+      clear_status_area(sp);
     }
   gtk_widget_hide(GTK_WIDGET(w));
 }

@@ -385,7 +385,7 @@ void start_bomb(snd_info *sp);
 void stop_bomb(snd_info *sp);
 void show_bomb(snd_info *sp);
 void hide_bomb(snd_info *sp);
-void set_minibuffer_string(snd_info *sp, const char *str, bool update);
+void set_status(snd_info *sp, const char *str, bool update);
 void set_play_button(snd_info *sp, bool val);
 void play_button_pause(bool pausing);
 void syncb(snd_info *sp, int on);
@@ -421,7 +421,6 @@ void finish_progress_report(chan_info *cp);
 void progress_report(chan_info *cp, mus_float_t pct);
 void g_init_gxsnd(void);
 void reflect_sound_selection(snd_info *sp);
-void display_minibuffer_error(snd_info *sp, const char *str);
 void make_controls_dialog(void);
 
 

@@ -373,8 +373,8 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 
 #else
 
-/* no extension language but user managed to try to evaluate something -- one way is to
- *   activate the minibuffer (via click) and type an expression into it
+/* no extension language but user managed to try to evaluate something
+ *   can this happen?
  */
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {

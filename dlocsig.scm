@@ -2887,6 +2887,26 @@
 	      (fminimum-segment-length xa ya za ta xi yi zi ti)
 	      (fminimum-segment-length xi yi zi ti xb yb zb tb)))))
     
+    ;; returns the new duration of a sound after using an envelope for time-varying sampling-rate conversion
+    ;; (from Bill's dsp.scm)
+    (define (src-duration e)
+      (let* ((len (length e))
+	     (ex0 (car e))
+	     (ex1 (e (- len 2)))
+	     (all-x (- ex1 ex0))
+	     (dur 0.0))
+	(do ((i 0 (+ i 2)))
+	    ((>= i (- len 2)) dur)
+	  (let* ((x0 (e i))
+		 (x1 (e (+ i 2)))
+		 (y0 (e (+ i 1))) ; 1/x x points
+		 (y1 (e (+ i 3)))
+		 (area (if (< (abs (- y0 y1)) .0001)
+			   (/ (- x1 x0) (* y0 all-x))
+			   (* (/ (- (log y1) (log y0)) 
+				 (- y1 y0)) 
+			      (/ (- x1 x0) all-x)))))
+	    (set! dur (+ dur (abs area)))))))
     
     ;; Loop for each pair of points in the position envelope and render them
     (if (= (length xpoints) 1)
@@ -2909,27 +2929,6 @@
 	      (if (= i len)
 		  (walk-all-rooms xb yb zb tb 4))))))
     
-    ;; returns the new duration of a sound after using an envelope for time-varying sampling-rate conversion
-    ;; (from Bill's dsp.scm)
-    (define (src-duration e)
-      (let* ((len (length e))
-	     (ex0 (car e))
-	     (ex1 (e (- len 2)))
-	     (all-x (- ex1 ex0))
-	     (dur 0.0))
-	(do ((i 0 (+ i 2)))
-	    ((>= i (- len 2)) dur)
-	  (let* ((x0 (e i))
-		 (x1 (e (+ i 2)))
-		 (y0 (e (+ i 1))) ; 1/x x points
-		 (y1 (e (+ i 3)))
-		 (area (if (< (abs (- y0 y1)) .0001)
-			   (/ (- x1 x0) (* y0 all-x))
-			   (* (/ (- (log y1) (log y0)) 
-				 (- y1 y0)) 
-			      (/ (- x1 x0) all-x)))))
-	    (set! dur (+ dur (abs area)))))))
-    
     ;; create delay lines for output channels that need them
     (if speakers
 	(let* ((delays (speaker-config-delays speakers))
@@ -2949,7 +2948,9 @@
     ;; this does not work quite right but the error leads to a longer
     ;; run with zeroed samples at the end so it should be fine
     ; (format #t "doppler: ~S~%" doppler)
+
     (set! real-dur (* duration (src-duration (reverse doppler)))) 
+
     ;; end of the run according to the duration of the note
     ;; (set! end (time->samples duration))
     ;; start and end of the run loop in samples

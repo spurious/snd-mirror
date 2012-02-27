@@ -188,7 +188,7 @@ int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, 
 
 /* -------- snd-xsnd.c -------- */
 
-void set_minibuffer_string(snd_info *sp, const char *str, bool update);
+void set_status(snd_info *sp, const char *str, bool update);
 void snd_info_cleanup(snd_info *sp);
 void set_amp(snd_info *sp, mus_float_t val);
 void set_expand(snd_info *sp, mus_float_t val);
@@ -225,7 +225,6 @@ void start_progress_report(chan_info *cp);
 void finish_progress_report(chan_info *cp);
 void progress_report(chan_info *cp, mus_float_t pct);
 void reflect_sound_selection(snd_info *sp);
-void display_minibuffer_error(snd_info *sp, const char *str);
 
 
 /* -------- snd-xfile.c -------- */

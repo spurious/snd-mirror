@@ -8496,7 +8496,7 @@ static void finish_as_one_edit(chan_info *cp)
       if (cp->in_as_one_edit == 0)
 	{
 	  cp->squelch_update = cp->previous_squelch_update;
-	  if (!(cp->squelch_update)) clear_minibuffer(cp->sound);
+	  if (!(cp->squelch_update)) clear_status_area(cp->sound);
 	  reflect_edit_history_change(cp);
 	  update_graph(cp);
 	}
@@ -8733,7 +8733,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	      if ((ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST))
 		{
 		  ss->stopped_explicitly = false;
-		  string_to_minibuffer(cp->sound, "maxamp check interrupted...");
+		  set_status(cp->sound, "maxamp check interrupted...", false);
 		  break;
 		}
 	      j = 0;

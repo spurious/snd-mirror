@@ -1017,7 +1017,7 @@ static void popup_error_handler(const char *msg, void *data)
 {
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
-  report_in_minibuffer(any_selected_sound(), "%s: %s", (char *)data, msg);
+  status_report(any_selected_sound(), "%s: %s", (char *)data, msg);
 }
 
 static void popup_cut_to_new_callback_1(bool cut) 
@@ -1101,7 +1101,7 @@ static void popup_selection_info_callback(Widget w, XtPointer info, XtPointer co
 {
   selection_max = 0.0;
   for_each_chan(selection_info);
-  report_in_minibuffer(any_selected_sound(), "selection max: %f", selection_max);
+  status_report(any_selected_sound(), "selection max: %f", selection_max);
 }
 
 #if WITH_AUDIO

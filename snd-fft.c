@@ -1335,7 +1335,7 @@ typedef struct sonogram_state {
   graph_type_t graph_type;
   int transform_type, w_choice;
   bool old_logxing;
-  bool minibuffer_needs_to_be_cleared;
+  bool status_needs_to_be_cleared;
   bool force_recalc;
 } sonogram_state;
 
@@ -1371,7 +1371,7 @@ void *make_sonogram_state(chan_info *cp, bool force_recalc)
   sg->msg_ctr = 8;
   sg->transform_type = cp->transform_type;
   sg->w_choice = cp->wavelet_type;
-  sg->minibuffer_needs_to_be_cleared = false;
+  sg->status_needs_to_be_cleared = false;
   if (cp->temp_sonogram)
     {
       sonogram_state *temp_sg;
@@ -1585,7 +1585,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 
   cp->fft_changed = FFT_CHANGED;
   start_progress_report(cp);
-  sg->minibuffer_needs_to_be_cleared = true;
+  sg->status_needs_to_be_cleared = true;
   return(SONO_RUN);
 }
 
@@ -1612,7 +1612,7 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
   if (sg->msg_ctr == 0)
     {
       progress_report(cp, ((mus_float_t)(si->active_slices) / (mus_float_t)(si->target_slices)));
-      sg->minibuffer_needs_to_be_cleared = true;
+      sg->status_needs_to_be_cleared = true;
       sg->msg_ctr = 8;
       if ((!(cp->graph_transform_p)) || 
 	  (cp->active < CHANNEL_HAS_AXES))
@@ -1686,10 +1686,10 @@ static void finish_sonogram(sonogram_state *sg)
 	  if ((cp->last_sonogram) && (cp->last_sonogram != sg)) 
 	    free(cp->last_sonogram);
 	  cp->last_sonogram = sg;
-	  if (sg->minibuffer_needs_to_be_cleared)
+	  if (sg->status_needs_to_be_cleared)
 	    {
 	      finish_progress_report(cp);
-	      sg->minibuffer_needs_to_be_cleared = false;
+	      sg->status_needs_to_be_cleared = false;
 	    }
 	}
     }
