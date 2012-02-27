@@ -169,7 +169,7 @@
   "(fft-peak snd chn scale) returns the peak spectral magnitude.  It is intended for use with after-transform-hook."
   (if (and (transform-graph?) 
 	   (= (transform-graph-type) graph-once))
-      (report-in-minibuffer 
+      (status-report 
        (number->string (/ (* 2.0 (vct-peak (transform->vct snd chn))) 
 			  (transform-size)))
        snd)
@@ -226,7 +226,7 @@
 	  (vct-add! data3 tmprl)        ; copy into data3
 	  (vct-scale! data3 fftscale)   ; scale by fftscale
 	  (graph data3 "lag time" 0 fftlen)))
-      (report-in-minibuffer "display-correlation wants stereo input")))
+      (status-report "display-correlation wants stereo input")))
 
 ;(hook-push graph-hook display-correlation)
 
@@ -499,13 +499,13 @@ read an ASCII sound file"
 	      (car samples)
 	      (find-leftmost-mark (cdr samples)))))
     (if (= (length chan-marks) 0)
-	(report-in-minibuffer "no marks!")
+	(status-report "no marks!")
 	(let ((leftmost (find-leftmost-mark (map mark-sample chan-marks))))
 	  (if (number? leftmost)
 	      (begin
 		(set! (left-sample keysnd keychn) leftmost)
 		keyboard-no-action)
-	      (report-in-minibuffer "no mark in window"))))))
+	      (status-report "no mark in window"))))))
 
 ;(bind-key #\m 0 (lambda () "align window left edge with mark" (first-mark-in-window-at-left)))
 

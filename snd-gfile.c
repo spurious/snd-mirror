@@ -3067,7 +3067,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, const char *sound_name,
 }
 
 
-widget_t make_sound_save_as_dialog(bool managed)
+static save_as_dialog_info *make_sound_save_as_dialog_1(bool managed, int chan)
 {
   snd_info *sp = NULL;
   char *com = NULL;
@@ -3091,6 +3091,15 @@ widget_t make_sound_save_as_dialog(bool managed)
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
   if (com) free(com);
+  if (chan >= 0)
+    {
+      char *chan_str;  
+      chan_str = (char *)calloc(8, sizeof(char));
+      snprintf(chan_str, 8, "%d", chan);
+      gtk_entry_set_text(GTK_ENTRY(sd->panel_data->chans_text), chan_str);
+      free(chan_str);
+    }
+
   if (sd->fs->reread_directory) 
     {
       force_directory_reread(sd->fs);
@@ -3098,7 +3107,21 @@ widget_t make_sound_save_as_dialog(bool managed)
     }
   if (managed) gtk_widget_show(sd->fs->dialog);
   make_auto_comment(sd);
+  return(sd);
+}
+
+
+widget_t make_sound_save_as_dialog(bool managed)
+{
+  save_as_dialog_info *sd;
+  sd = make_sound_save_as_dialog_1(managed, -1);
   return(sd->fs->dialog);
+}
+
+
+void make_channel_extract_dialog(int chan)
+{
+  make_sound_save_as_dialog_1(true, chan);
 }
 
 

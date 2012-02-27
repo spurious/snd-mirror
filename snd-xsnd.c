@@ -13,7 +13,7 @@ enum {W_pane,
       W_revlen, W_revlen_label, W_revlen_number, W_reverb_button,
       W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_hz, W_filter_frame,
       W_filter_order_down, W_filter_order_up,
-      W_name, W_lock_or_bomb, W_stop_icon, W_info_label, W_info,
+      W_name, W_lock_or_bomb, W_stop_icon, W_info,
       W_play, W_sync, W_unite, W_close,
       W_error_info_box, W_error_info_frame, W_error_info_label,
       NUM_SND_WIDGETS
@@ -34,7 +34,6 @@ Widget w_snd_pane(snd_info *sp)   {return(sp->snd_widgets[W_pane]);}
 #define LOCK_OR_BOMB(Sp)         Sp->snd_widgets[W_lock_or_bomb]
 #define STOP_ICON(Sp)            Sp->snd_widgets[W_stop_icon]
 #define NAME_LABEL(Sp)           Sp->snd_widgets[W_name]
-#define MINIBUFFER_LABEL(Sp)     Sp->snd_widgets[W_info_label]
 #define MINIBUFFER_TEXT(Sp)      Sp->snd_widgets[W_info]
 #define SYNC_BUTTON(Sp)          Sp->snd_widgets[W_sync]
 #define PLAY_BUTTON(Sp)          Sp->snd_widgets[W_play]
@@ -184,37 +183,6 @@ void set_minibuffer_string(snd_info *sp, const char *str, bool update)
    */
 
   if (update) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
-}
-
-
-void set_minibuffer_cursor_position(snd_info *sp, int pos)
-{
-  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
-  XmTextSetCursorPosition(MINIBUFFER_TEXT(sp), pos);
-}
-
-
-char *get_minibuffer_string(snd_info *sp) 
-{
-  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return(NULL);
-  return(XmTextGetString(MINIBUFFER_TEXT(sp)));
-}
-
-
-void make_minibuffer_label(snd_info *sp , const char *str)
-{
-  if (HAS_WIDGETS(sp))
-    {
-      XmString s1;
-      /* there seems to be no way to get this label to reflect its string width -- 
-       *    I have tried everything imaginable with no luck
-       */
-      s1 = XmStringCreateLocalized((char *)str);
-      XtVaSetValues(MINIBUFFER_LABEL(sp), 
-		    XmNlabelString, s1, 
-		    NULL);
-      XmStringFree(s1);
-    }
 }
 
 
@@ -1261,21 +1229,6 @@ static void close_button_callback(Widget w, XtPointer context, XtPointer info)
 
 
 
-static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer info)
-{
-  /* can be response to various things */
-  snd_info *sp = (snd_info *)context;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  XKeyEvent *ev;
-  KeySym keysym;
-  ev = (XKeyEvent *)(cb->event);
-  keysym = XKeycodeToKeysym(XtDisplay(w),
-			    (int)(ev->keycode),
-			    (ev->state & snd_ShiftMask) ? 1 : 0);
-  snd_minibuffer_activate(sp, keysym, (ev->state & snd_MetaMask));
-}
-
-
 /* apply is only safe if the DAC is currently inactive and remains safe only
  * if all other apply buttons are locked out (and play).
  */
@@ -2065,30 +2018,16 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       }
 
       n = 0;
-      s1 = XmStringCreateLocalized((char *)"     ");
-      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, STOP_ICON(sp)); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, STOP_ICON(sp)); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNlabelString, s1); n++;
-      MINIBUFFER_LABEL(sp) = XtCreateManagedWidget("snd-info-label", xmLabelWidgetClass, NAME_BOX(sp), args, n);
-      XmStringFree(s1);
-
-      n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, MINIBUFFER_LABEL(sp)); n++;
+      XtSetArg(args[n], XmNleftWidget, STOP_ICON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNresizeWidth, true); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
-      MINIBUFFER_TEXT(sp) = make_textfield_widget("snd-info", NAME_BOX(sp), args, n, ACTIVATABLE, add_completer_func(info_completer, (void *)sp));
-      XtAddCallback(MINIBUFFER_TEXT(sp), XmNactivateCallback, minibuffer_click_callback, (XtPointer)sp);
+      MINIBUFFER_TEXT(sp) = XtCreateManagedWidget("snd-info", xmTextFieldWidgetClass, NAME_BOX(sp), args, n);
 
 #if WITH_AUDIO
       n = 0;

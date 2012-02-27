@@ -206,20 +206,6 @@ mus_long_t mark_id_to_sample(int id)
 }
 
 
-static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
-{
-  char *name = (char *)uname;
-  if ((mp->name) && (mus_strcmp(mp->name, name))) return(mp);
-  else return(NULL);
-}
-
-
-static mark *find_named_mark(chan_info *cp, const char *name)
-{
-  return(map_over_marks(cp, find_named_mark_1, (void *)name, READ_FORWARD));
-}
-
-
 static mark *find_previous_mark_1(chan_info *cp, mark *mp, void *m)
 {
   if (mp->samp < (*((mus_long_t *)m))) 
@@ -814,12 +800,28 @@ bool goto_mark(chan_info *cp, int count)
 }
 
 
+#if 0
+static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
+{
+  char *name = (char *)uname;
+  if ((mp->name) && (mus_strcmp(mp->name, name))) return(mp);
+  else return(NULL);
+}
+
+
+static mark *find_named_mark(chan_info *cp, const char *name)
+{
+  return(map_over_marks(cp, find_named_mark_1, (void *)name, READ_FORWARD));
+}
+
+
 void goto_named_mark(chan_info *cp, const char *name)
 {
   mark *mp;
   mp = find_named_mark(cp, name);
   if (mp) cursor_moveto(cp, mp->samp);
 }
+#endif
 
 
 static mark *active_mark_1(chan_info *cp, mark *mp, void *ignore)

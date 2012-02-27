@@ -13,24 +13,12 @@
  *   also lin/exp is stupid -- omit, click "exp" label to reset to 1 (always)
  *   and "reset" apparently means "clear"
  *
- * the minibuffer is useless -- what to do with it?  maybe a per-channel toolbar?
- *   at least turn it into a straight (non-editable) label [statusbar appears to be the Gtk name for this]
- *   or try to recognize what user wants -- search in sound, help etc?
- * clear-minibuffer|report-in-minibuffer -> use statusbar? or status-area?
- * remove prompt-in-minibuffer?  In fact, how is this used??
- *     sound-widgets should be safe now -- MINIBUFFER_TEXT can be a label
- *     used in snd-test (sound-widgets 3) [removed I think]
- *             snd-motif show-disk-space [doesn't notice mb type], with-minmax-button [same -- so this can be changed to a label]
- * remove eval-between-marks and all other such stuff from *.rb|fs [got scm already]
- *   snd-kbd uses the prompt mechanism for 4 operations [exported to the menus via save_edits_with_prompt]
- *   other than C-x C-f or C-x C-w, are these actually useful?
- *   could C-x C-f et al fire up the associated dialogs?
- *   several of the current prompts are handling "xyzzy exists; overwrite?" questions -- these belong in a dialog I think
- *   perhaps put up a dialog somewhere?
+ * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html already]
  *   perhaps define all the "built-in" keys via (bind-key ...)
  *   also define the removed key bindings in snd12.scm.
  *   and add menu accelerators on some switch, like the toolbar
- * to replace C-s|C-r we need to add a local search option to the find dialog
+ * to replace C-s we need to add a local search option to the find dialog
+ * make sure there's no edge to the status area
  *
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * view files is a mess -- it tries to do way too much
@@ -79,7 +67,11 @@
  *     put key bindings help in monospace
  *     removed c-x a|j
  * 26: c-x c-s now goes to file-has-changed dialog
- *     c-x c-f -> open file dialog, c-x c-q -> mix file dialog
+ *     c-x c-f -> open file dialog, c-x c-q -> mix file dialog, c-x c-w -> save-as dialog
+ *     removed c-r, c-x c-m, c-x /
+ *     removed minibuffer_label, minibuffer itself is now an unactivatable text widget.
+ * 27: removed clear-minibuffer and report-in-minibuffer, added status-report
+ *
  */
 
 /* various file-related dialogs:
@@ -2352,6 +2344,13 @@ static void file_data_auto_comment_callback(Widget w, XtPointer context, XtPoint
 
 #define PANEL_COMMENT_SPACE 16
 
+#define WITH_AUTO_COMMENT true
+#define WITHOUT_AUTO_COMMENT false
+
+#define WITH_SRATE true
+#define WITHOUT_SRATE false
+
+
 static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
 				       dialog_channels_t with_chan, 
 				       int header_type, int data_format,
@@ -3573,8 +3572,8 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 					    WITH_HEADER_TYPE_FIELD, 
 					    WITH_COMMENT_FIELD,
 					    WITH_WRITABLE_HEADERS,
-					    true,
-					    sd->type == SOUND_SAVE_AS);
+					    WITH_SRATE,
+					    sd->type == SOUND_SAVE_AS); /* auto comment */
 
       sd->panel_data->dialog = sd->dialog;
 
@@ -3668,7 +3667,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 }
 
 
-widget_t make_sound_save_as_dialog(bool managed)
+static save_as_dialog_info *make_sound_save_as_dialog_1(bool managed, int chan)
 {
   /* should the save-as dialog, at least in the file case, reflect the current file attributes/comment?
    *          or should we have a save-as-hook that can set up the dialog fields? 
@@ -3698,6 +3697,18 @@ widget_t make_sound_save_as_dialog(bool managed)
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
   if (com) free(com);
+
+  if (chan >= 0)
+    {
+      char *chan_str;  
+      chan_str = (char *)calloc(8, sizeof(char));
+      snprintf(chan_str, 8, "%d", chan);
+      XmTextFieldSetString(sd->panel_data->chans_text, chan_str);
+      free(chan_str);
+
+      /* PERHAPS: remove save-as button or something -- would need to re-enable at end or at start */
+    }
+
   if (sd->fp->reread_directory) 
     {
       force_directory_reread(sd->dialog);
@@ -3708,7 +3719,21 @@ widget_t make_sound_save_as_dialog(bool managed)
     XtManageChild(sd->dialog);
 
   make_auto_comment(sd);
+  return(sd);
+}
+
+
+widget_t make_sound_save_as_dialog(bool managed)
+{
+  save_as_dialog_info *sd;
+  sd = make_sound_save_as_dialog_1(managed, -1);
   return(sd->dialog);
+}
+
+
+void make_channel_extract_dialog(int chan)
+{
+  make_sound_save_as_dialog_1(true, chan);
 }
 
 
@@ -4159,7 +4184,8 @@ widget_t make_new_file_dialog(bool managed)
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD,
 				  WITH_BUILTIN_HEADERS,
-				  false, false);
+				  WITHOUT_SRATE, 
+				  WITHOUT_AUTO_COMMENT);
       ndat->dialog = new_file_dialog;
       XtManageChild(ndat->error_text);
       XtManageChild(new_file_dialog);
@@ -4527,7 +4553,8 @@ Widget edit_header(snd_info *sp)
 				      WITH_HEADER_TYPE_FIELD, 
 				      WITH_COMMENT_FIELD,
 				      WITH_BUILTIN_HEADERS,
-				      false, false);
+				      WITHOUT_SRATE, 
+				      WITHOUT_AUTO_COMMENT);
       ep->edat->dialog = ep->dialog;
 
       if (hdr->type == MUS_RAW)
@@ -4870,7 +4897,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 				  WITHOUT_HEADER_TYPE_FIELD, 
 				  WITHOUT_COMMENT_FIELD,
 				  WITH_READABLE_HEADERS,
-				  false, false);
+				  WITHOUT_SRATE, 
+				  WITHOUT_AUTO_COMMENT);
   rp->rdat->dialog = rp->dialog;
 
   set_file_dialog_sound_attributes(rp->rdat, 

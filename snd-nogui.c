@@ -139,11 +139,8 @@ void set_foreground_color(graphics_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(struct dialog_play_info *dp) {}
-void make_minibuffer_label(snd_info *sp, const char *str) {}
 void goto_minibuffer(snd_info *sp) {}
 void set_minibuffer_string(snd_info *sp, const char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
-void set_minibuffer_cursor_position(snd_info *sp, int pos) {}
-char *get_minibuffer_string(snd_info *sp) {return(NULL);}
 void snd_info_cleanup(snd_info *sp) {}
 void toggle_expand_button(snd_info *sp, bool state) {}
 void toggle_contrast_button(snd_info *sp, bool state) {}

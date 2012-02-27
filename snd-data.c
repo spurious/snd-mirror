@@ -364,7 +364,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   else sp->channel_style = CHANNELS_SEPARATE;
 
   sp->marking = 0;
-  sp->filing = NOT_FILING;
   sp->minibuffer_on = MINI_OFF;
   sp->selected_channel = NO_SELECTION;
   sp->playing = 0;
@@ -421,7 +420,6 @@ void free_snd_info(snd_info *sp)
   sp->search_count = 0;
   sp->bomb_in_progress = false;
   sp->marking = 0;
-  sp->filing = NOT_FILING;
   sp->applying = false;
   sp->channel_style = CHANNELS_SEPARATE;
   sp->user_read_only = FILE_READ_WRITE;

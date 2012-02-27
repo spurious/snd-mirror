@@ -2114,7 +2114,7 @@
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 		       'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
-		       'clear-minibuffer 'clear-sincs 'clip-hook 'clipping 'clm-channel 'clm-print
+		       'clear-sincs 'clip-hook 'clipping 'clm-channel 'clm-print
 		       'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
 		       'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale
 		       'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
@@ -2260,7 +2260,7 @@
 		       'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
 		       'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
 		       'region-maxamp-position 'region-position 'region-sample 'region-sampler? 'region-srate
-		       'region? 'regions 'remember-sound-state 'remove-from-menu 'report-in-minibuffer
+		       'region? 'regions 'remember-sound-state 'remove-from-menu 'status-report
 		       'reset-controls 'reset-listener-cursor 'restore-controls 'restore-region
 		       'reverb-control-decay 'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds 'reverb-control-lowpass
 		       'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control? 'reverse-channel 'reverse-selection
@@ -2287,7 +2287,7 @@
 		       'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos?
 		       'smooth-channel 'smooth-selection 'smooth-sound 'snd->sample 'snd->sample?
 		       'snd-error 'snd-error-hook 'snd-gcs 'snd-help 'snd-font 'snd-color
-		       'snd-print 'snd-simulate-keystroke 'snd-spectrum 'snd-tempnam 'snd-url
+		       'snd-print 'snd-spectrum 'snd-tempnam 'snd-url
 		       'snd-urls 'snd-version 'snd-warning 'snd-warning-hook 'sound-data->sound-data
 		       'sound-data->vct 'sound-data-chans 'sound-data-length 'sound-data-maxamp 'sound-data-ref 'sound-data-peak
 		       'sound-data-set! 'sound-data-scale! 'sound-data-fill! 'sound-data? 
@@ -29659,8 +29659,8 @@ EDITS: 2
 	(let ((ind (open-sound "oboe.snd")))
 	  (if (< (length (sound-widgets ind)) 4)
 	      (snd-display #__line__ ";sound-widgets: ~A?" (sound-widgets ind)))
-	  (report-in-minibuffer "hi there" ind)
-	  (clear-minibuffer)
+	  (status-report "hi there" ind)
+	  (status-report "")
 	  (close-sound ind))
 	(if (file-exists? "link-oboe.snd")
 	    (let* ((ind (open-sound "link-oboe.snd"))
@@ -30300,7 +30300,7 @@ EDITS: 2
 	      (begin
 		(add-to-menu mb "not here" (lambda () (snd-display #__line__ ";oops")))
 		(remove-from-menu mb "not here")
-		(add-to-menu 3 "Denoise" (lambda () (report-in-minibuffer "denoise")))))
+		(add-to-menu 3 "Denoise" (lambda () (status-report "denoise")))))
 	  
 	  (set! clm_buffer_added #t)))
     
@@ -30841,7 +30841,7 @@ EDITS: 2
 		     (set! abf #t)
 		     (if (and (transform-graph? snd chn) 
 			      (= (transform-graph-type snd chn) graph-once))
-			 (report-in-minibuffer 
+			 (status-report 
 			  (number->string (/ (* 2.0 (vct-peak (transform->vct snd chn)))
 					     (transform-size snd chn)))
 			  snd)
@@ -31766,7 +31766,7 @@ EDITS: 2
 	  (set! (amp-control) .5)
 	  (test-panel amp-control 'amp-control)
 	  (restore-controls)
-	  (report-in-minibuffer "hi")
+	  (status-report "hi")
 	  
 	  (without-errors
 	   (begin
@@ -43849,36 +43849,6 @@ EDITS: 1
 	  (close-sound ind-1)
 	  (close-sound ind-2)))
       
-      (if (and all-args (defined? 'snd-simulate-keystroke))
-	  (begin
-	    ;; monkeys pound on keyboard...
-	    (copy-file (string-append (getcwd) "/2a.snd") (string-append (getcwd) "/test.snd"))
-	    (let ((ind (open-sound "test.snd"))
-		  (last-time (+ (real-time) 300))
-		  (tests 2500))
-	      (do ((i 0 (+ 1 i)))
-		  ((or (> (real-time) last-time)
-		       (= i tests)))
-		(let ((k (+ 1 (random 200)))
-		      (s (let ((v (random 5)))
-			   (if (= v 1) 4
-			       (if (= v 2) 8
-				   (if (= v 3) 12
-				       0))))))
-		  (if (> k 127) (begin (set! k (char->integer #\x)) (set! s 4)))
-		  (if (> (random 1.0) .99) (clear-listener))
-		  (if (or (= k (char->integer #\e)) 
-			  (= k (char->integer #\E)))
-		      (snd-simulate-keystroke ind 0 (char->integer #\g) 0))
-		  (snd-simulate-keystroke ind (random (channels ind)) k s)
-		  (if (and (sound? ind) (> (frames ind 0) 1000000))
-		      (begin
-			(close-sound ind)
-			(copy-file (string-append (getcwd) "/2a.snd") (string-append (getcwd) "/test.snd"))))
-		  (if (not (sound? ind))
-		      (set! ind (open-sound "test.snd")))))
-	      (close-sound ind))))
-      
       (set! (remember-sound-state) #t)
       (let ((ind (open-sound "oboe.snd")))
 	(set! (transform-graph? ind 0) #t)
@@ -48063,7 +48033,7 @@ EDITS: 1
       (etst '(frames 0 1 2 3))
       (etst '(edit-position 0 1 2))
       (etst '(cursor 0 1 2))
-      (etst '(report-in-minibuffer "hi" 0 1 2))
+      (etst '(status-report "hi" 0 1 2))
       (etst '((make-vct 2) 3.14))
       (etst '(make-vct 2 3 4))
       (etst '(make-vct 2 1))
@@ -49472,8 +49442,8 @@ EDITS: 1
 				(not (= (edit-position ind) 0))
 				(not (= (edit-position) 0)))
 			    (begin
-			      (report-in-minibuffer "oops")
-			      (report-in-minibuffer "oops again" ind)
+			      (status-report "oops")
+			      (status-report "oops again" ind)
 			      -123.0)
 			    (next-sample r)))))
 	(if (or (fneq (v 0) .0662) (fneq (v 1) .0551)) (snd-display #__line__ ";next-sample let edit ftst: ~A" v))
@@ -49619,7 +49589,7 @@ EDITS: 1
 		 (display mxr) (display sd) (display vi1) (display vv1) (display vc1)
 		 (snd-print "snd-print test...")
 		 (snd-warning "snd-warning test...")
-		 (report-in-minibuffer "report-in-minibuffer test..." ind)
+		 (status-report "status-report test..." ind)
 		 (display hi) (display '(1 2)) (display :hiho) (display 'asdf)
 		 (call/cc (lambda (hiho) (if #f (hiho) (display hiho))))
 		 (call-with-current-continuation (lambda (hiho) (if #f (hiho) (display hiho))))
@@ -60149,8 +60119,8 @@ EDITS: 1
 		     print-length progress-report read-only
 		     redo region-chans view-regions-dialog region-home 
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position remember-sound-state
-		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
-		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
+		     selection-maxamp selection-maxamp-position region-sample region->vct 
+		     region-srate regions region?  remove-from-menu status-report reset-controls restore-controls
 		     restore-region reverb-control-decay reverb-control-feedback 
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 		     reverse-selection revert-sound right-sample sample sampler-at-end?  sampler? samples sampler-position

@@ -112,7 +112,7 @@
   <area shape=rect coords="50,240,580,250" href="#gettingstarted" alt="X axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes how much of the sound we see (zoom in and out)')">
   <area shape=rect coords="30,260,130,280" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound file name')">
   <area shape=rect coords="0,260,29,280" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound index (used by many of the extension language functions)')">
-  <area shape=rect coords="140,260,450,280" href="#gettingstarted" alt="minibuffer" onmouseout="UnTip()" onmouseover="Tip('error messages get displayed here')">
+  <area shape=rect coords="140,260,450,280" href="#gettingstarted" alt="status area" onmouseout="UnTip()" onmouseover="Tip('error messages get displayed here')">
   <area shape=rect coords="460,260,475,280" href="#syncbutton" alt="sync button" onmouseout="UnTip()" onmouseover="Tip('this button can make all chans/sounds move together.')">
   <area shape=rect coords="522,260,535,280" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('play the sound')">
   <area shape=rect coords="563,255,573,262" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('this opens the control panel')">
@@ -677,7 +677,7 @@ and that file is the one the editor sees from then on.
 screen space; within that section, each channel
 has a pane, and below the channels is the 'control
 pane', normally hidden except for the file name
-and 'minibuffer'.  At the very bottom
+and 'status area'.  At the very bottom
 of the Snd window is the listener, if any (see
 the View menu Open listener option).
 The panes can all be independently
@@ -695,7 +695,7 @@ off and there is no active user-display function,
 you get an empty display.  For each sound there is
 a control panel containing the file name, in parentheses if
 the file is actually a link, with an
-asterisk if there are unsaved edits, a 'minibuffer'
+asterisk if there are unsaved edits, a 'status area'
 for various kinds of simple text-based interactions,
 a 'sync' button for grouped display and edit
 operations, a 'unite' button (if the sound has more than one channel),
@@ -754,7 +754,7 @@ edit.
   <area shape=rect coords="285,30,420,210" onmouseout="UnTip()" onmouseover="Tip('this is the time domain graph with display-current-window.')">
   <area shape=rect coords="530,30,760,210" onmouseout="UnTip()" onmouseover="Tip('this is the frequency domain (FFT) graph with peaks.')">
   <area shape=rect coords="0,285,750,415" onmouseout="UnTip()" onmouseover="Tip('this is the listener showing the edits.')">
-  <area shape=rect coords="210,245,570,275" onmouseout="UnTip()" onmouseover="Tip('this is the minibuffer telling us about the cursor.')">
+  <area shape=rect coords="210,245,570,275" onmouseout="UnTip()" onmouseover="Tip('this is the status area telling us about the cursor.')">
 </map>
 
 
@@ -820,7 +820,7 @@ printer characteristics.
 
 <p>The Popup menu's Info dialog can be left in view and updated with M-v i
 to reflect the currently active sound.  The same information is displayed in the
-minibuffer when you click the file name.</p>
+status area when you click the file name.</p>
 
 <p id="viewfiles">Files option 
 starts a dialog with a list of interesting files,
@@ -911,7 +911,7 @@ to changing the variable <a href="extsnd.html#spectrumend">spectrum-end</a>).  Y
 on any point in the fft to get the associated fft value at that point
 displayed; if with-verbose-cursor is on, you can
 drag the mouse through the fft display and the
-description in the minibuffer will be constantly
+description in the status area will be constantly
 updated.
 </p>
 
@@ -1004,7 +1004,7 @@ if you linger over some other topic, its help info will be posted in the help di
 <tr><th class="beige" colspan=3>Edit Menu</th></tr>
 <tr><td class="br"><a href="#undoredo">Undo</a></td><td class="br">Undo last edit</td><td class="br">(C-x C-u or C-_)</td></tr>
 <tr><td class="br"><a href="#undoredo">Redo</a></td><td class="br">Redo last edit</td><td class="br">(C-x C-r)</td></tr>
-<tr><td class="br"><a href="#menufind">Find</a></td><td class="br">Global search via find dialog</td><td class="br">(C-s, C-r)</td></tr>
+<tr><td class="br"><a href="#menufind">Find</a></td><td class="br">Global search via find dialog</td><td class="br">(C-s)</td></tr>
 <tr><td class="br"><a href="#editcut">Cut</a></td><td class="br">Cut (delete) selected portion</td><td class="br"></td></tr>
 <tr><td class="br"><a href="#editcut">Paste</a></td><td class="br">Paste (insert) selected portion</td><td class="br">(C-y</td></tr>
 <tr><td class="br"><a href="#editcut">Mix selection</a></td><td class="br">Mix (add) selected portion</td><td class="br">(C-x q)</td></tr>
@@ -1463,9 +1463,8 @@ the actual scaled-to value is just less than 1.0 to avoid the
 
 <p>Searches in Snd refer to the sound data, and are,
 in general, patterned after Emacs.  When you type
-C-s or C-r, the minibuffer below the graph is
-activated and you are asked for the search expression.
-The expression is a
+C-s, the find dialog is activated.
+The expression it asks for is a
 function that takes one argument, the current
 sample value, and returns #t when it finds a match. 
 To look for the next sample that is greater than
@@ -1473,17 +1472,8 @@ To look for the next sample that is greater than
 cursor then moves
 to the next such sample, if any.
 Successive C-s's
-or C-r's repeat the search.  C-x C-s can redefine the
-search pattern, which is also cleared by various other
-commands, much as in Emacs.
-The search commands are:</p>
-
-<pre class="indented">
-C-r   find backwards
-C-s   find forwards
-</pre>
-
-<p>These searching functions can be closures; the following searches for
+repeat the search.  
+These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
 
 <pre class="indented">
@@ -1565,7 +1555,7 @@ And the region and file browsers provide
 play buttons for each of the listed regions or files.  If you
 hold down the control key when you click 'play', the cursor
 follows along as the sound is played.  If 'verbose cursor' is
-on, the time is also displayed in the minibuffer.
+on, the time is also displayed in the status area.
 If you stop the play
 in progress, the cursor remains where you stopped it, but
 otherwise returns to its original position.  Type space

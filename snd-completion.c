@@ -615,50 +615,6 @@ char *sound_filename_completer(widget_t w, const char *text, void *data)
 }
 
 
-char *info_completer(widget_t w, const char *text, void *data)
-{
-  snd_info *sp = (snd_info *)data;
-  if (sp)
-    {
-      char *new_text = NULL;
-      if (sp->search_count != 0) 
-	return(mus_strdup(text));      /* C-s or C-r so as above */
-
-      if (sp->marking)
-	return(mus_strdup(text));      /* C-x C-m etc */
-
-      new_text = expression_completer(w, text, NULL);
-      if (get_completion_matches() == 0)
-	{
-	  int i, beg, parens, len;
-	  beg = 0;
-	  parens = 0;  	                                 /* filename would have to be a string in this context */
-	  len = mus_strlen(text);
-	  for (i = 0; i < len; i++)
-	    if (text[i] == '\"')
-	      {
-		beg = i + 1;
-		parens++;
-		break;
-	      }
-	  if ((beg > 0) && (parens & 1))                 /* i.e. there is a string and we're in it */
-	    {
-	      char *new_file;
-	      if (new_text) free(new_text);
-	      new_file = filename_completer(w, (char *)(text + beg), NULL);
-	      len = beg + 2 + mus_strlen(new_file);
-	      new_text = (char *)calloc(len, sizeof(char));
-	      strncpy(new_text, text, beg);
-	      strcat(new_text, new_file);
-	      if (new_file) free(new_file);
-	    }
-	}
-      return(new_text);
-    }
-  return(expression_completer(w, text, NULL));
-}
-
-
 static int find_indentation(char *str, int loc)
 {
   int line_beg = 0, open_paren = -1, parens, i;

@@ -344,7 +344,7 @@
   (let ((snc (sync)))
     (define (trim-front-one-channel snd chn)
       (if (< (length (marks snd chn)) 1)
-          (report-in-minibuffer "trim-front needs a mark" snd)
+          (status-report "trim-front needs a mark" snd)
           (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))
     (if (> snc 0)
         (apply map
@@ -361,7 +361,7 @@
   (let ((snc (sync)))
     (define (trim-back-one-channel snd chn)
       (if (< (length (marks snd chn)) 1)
-          (report-in-minibuffer "trim-back needs a mark" snd)
+          (status-report "trim-back needs a mark" snd)
           (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
             (delete-samples (+ endpt 1) (- (frames snd chn) endpt)))))
     (if (> snc 0)
@@ -382,7 +382,7 @@
   (let ((snc (sync)))
     (define (crop-one-channel snd chn)
       (if (< (length (marks snd chn)) 2)
-          (report-in-minibuffer "crop needs start and end marks" snd)
+          (status-report "crop needs start and end marks" snd)
           (as-one-edit
            (lambda ()
              (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)

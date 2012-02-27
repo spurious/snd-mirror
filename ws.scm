@@ -427,11 +427,11 @@
 	   (hook-push mix-click-hook
 		      (lambda (id)
 			(let ((info (with-mixed-sound-mix-info id outsnd)))
-			  (report-in-minibuffer (format #f "mix ~A: ~A" 
-						      id (or (and info
-								  (cadddr info))
-							     (/ (mix-position id) (* 1.0 (srate outsnd))))))
-			  #t))) ; #t -> don't print the mix id in the minibuffer
+			  (status-report (format #f "mix ~A: ~A" 
+						 id (or (and info
+							     (cadddr info))
+							(/ (mix-position id) (* 1.0 (srate outsnd))))))
+			  #t))) ; #t -> don't print the mix id in the status area
 
 	   (dynamic-wind
 	       (lambda ()
@@ -500,7 +500,7 @@
 					  (cddr call))
 				  oput)
 			 (display (format #f "  ~A~%" call) oput)))
-		   (report-in-minibuffer "can't find note associated with mix ~A" id))))
+		   (status-report "can't find note associated with mix ~A" id))))
 	   cur-mixes)
 	  (display (format #f ")~%") oput)
 	  (close-output-port oput)))))

@@ -14,7 +14,7 @@
 ;;; (make-channel-drop-site snd chn) -- add a drop site
 ;;; (set-channel-drop drop snd chn) -- change given graph drop callback to drop
 ;;; (select-file func title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
-;;; (show-disk-space snd) adds a label to the minibuffer area showing the current free space 
+;;; (show-disk-space snd) adds a label to the status-area area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
 ;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
 ;;; (remove-main-menu menu) removes a top-level menu
@@ -1775,7 +1775,7 @@
 
 ;;; -------- show-disk-space
 ;;;
-;;; adds a label to the minibuffer area showing the current free space 
+;;; adds a label to the status-area area showing the current free space 
 
 (define showing-disk-space #f) ; for prefs dialog
 
@@ -1797,7 +1797,7 @@
 	    (XmStringFree str)
 	    (XtAppAddTimeOut (caddr data) 10000 show-label data))))
     (lambda* (snd-arg)
-      "(show-disk-space snd) adds a label to snd's minibuffer area showing the current free space (for use with after-open-hook)"
+      "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)"
       (let* ((snd (or snd-arg (selected-sound)))
 	     (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
 	(if (not previous-label)
@@ -1805,15 +1805,15 @@
 		(snd-error "no sound found for disk space label")
 		(let* ((app (car (main-widgets)))
 		       (widgets (sound-widgets snd))
-		       (minibuffer (widgets 3))
+		       (status-area (widgets 3))
 		       (unite-button (widgets 6))
 		       (sync-button (widgets 9))
-		       (name-form (XtParent minibuffer)) ; "snd-name-form"
+		       (name-form (XtParent status-area)) ; "snd-name-form"
 		       (space (kmg (disk-kspace (file-name snd))))
 		       (str (XmStringCreateLocalized space)))
 		  (set! showing-disk-space #t)
-		  (XtUnmanageChild minibuffer)
-		  (XtVaSetValues minibuffer (list XmNrightAttachment XmATTACH_NONE))
+		  (XtUnmanageChild status-area)
+		  (XtVaSetValues status-area (list XmNrightAttachment XmATTACH_NONE))
 		  (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
 							  (list XmNbackground      (basic-color)
 								XmNleftAttachment  XmATTACH_NONE
@@ -1823,8 +1823,8 @@
 										       unite-button
 										       sync-button)
 								XmNtopAttachment   XmATTACH_FORM))))
-		    (XtVaSetValues minibuffer (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
-		    (XtManageChild minibuffer)
+		    (XtVaSetValues status-area (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
+		    (XtManageChild status-area)
 		    (XmStringFree str)
 		    (set! previous-label (list snd new-label app))
 		    (set! labelled-snds (cons previous-label labelled-snds))
@@ -2632,11 +2632,11 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
       (let ((previous-minmax (find-if (lambda (n) (equal? (car n) snd)) maxed-snds)))
 	(if (not previous-minmax)
 	    (let* ((widgets (sound-widgets snd))
-		   (minibuffer (widgets 3))
+		   (status-area (widgets 3))
 		   (play-button (widgets 4))
 		   (cur-size (cadr (XtVaGetValues (car widgets) (list XmNheight 0)))))
 	      (XtUnmanageChild play-button)
-	      (let* ((name-form (XtParent minibuffer)) ; "snd-name-form"
+	      (let* ((name-form (XtParent status-area)) ; "snd-name-form"
 		     (new-minmax (XtCreateManagedWidget "." xmPushButtonWidgetClass name-form 
 							(list XmNbackground      (basic-color)
 							      XmNrightAttachment XmATTACH_FORM

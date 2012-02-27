@@ -462,7 +462,7 @@
 					     
 					     
 					     ((3)  (goto-named-mark "end") (my-play-selection (- (cursor) 100000) (cursor)))
-					;				(else (report-in-minibuffer "status:" (status) ) )
+					;				(else (status-report "status:" (status) ) )
 					     )
 					)
 	  )

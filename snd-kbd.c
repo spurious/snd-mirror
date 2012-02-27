@@ -141,7 +141,6 @@ static key_entry built_in_keys[NUM_BUILT_IN_KEYS] = {
   {snd_K_o,          snd_ControlMask, 0, kbd_false, false, "insert one zero sample at cursor",           NULL, -1},
   {snd_K_p,          snd_ControlMask, 0, kbd_false, false, "move cursor back one 'line'",                NULL, -1},
   {snd_K_q,          snd_ControlMask, 0, kbd_false, false, "play current channel starting at cursor",    "play-channel-from-cursor", -1},
-  {snd_K_r,          snd_ControlMask, 0, kbd_false, false, "search backwards",                           NULL, -1},
   {snd_K_s,          snd_ControlMask, 0, kbd_false, false, "search forwards",                            NULL, -1},
   {snd_K_t,          snd_ControlMask, 0, kbd_false, false, "stop playing",                               NULL, -1},
   {snd_K_u,          snd_ControlMask, 0, kbd_false, false, "start arg count definition.",                NULL, -1},
@@ -168,7 +167,6 @@ static key_entry built_in_keys[NUM_BUILT_IN_KEYS] = {
   {snd_K_u,          0, 0, kbd_false, true, "undo",                                                      NULL, -1},
   {snd_K_v,          0, 0, kbd_false, true, "position window over selection",                            NULL, -1},
   {snd_K_z,          0, 0, kbd_false, true, "smooth selection",                                          NULL, -1},
-  {snd_K_slash,      0, 0, kbd_false, true, "place named mark",                                          NULL, -1},
   {snd_K_openparen,  0, 0, kbd_false, true, "begin keyboard macro definition",                           NULL, -1},
   {snd_K_closeparen, 0, 0, kbd_false, true, "end keyboard macro definition",                             NULL, -1},
 
@@ -176,7 +174,6 @@ static key_entry built_in_keys[NUM_BUILT_IN_KEYS] = {
   {snd_K_c, snd_ControlMask, 0, kbd_false, true, "hide control panel",                                   NULL, -1},
   {snd_K_f, snd_ControlMask, 0, kbd_false, true, "open file",                                            NULL, -1},
   {snd_K_g, snd_ControlMask, 0, kbd_false, true, "abort command",                                        NULL, -1},
-  {snd_K_m, snd_ControlMask, 0, kbd_false, true, "add named mark",                                       NULL, -1},
   {snd_K_o, snd_ControlMask, 0, kbd_false, true, "show control panel",                                   NULL, -1},
   {snd_K_p, snd_ControlMask, 0, kbd_false, true, "set window size (preceded by 1 arg)",                  NULL, -1},
   {snd_K_q, snd_ControlMask, 0, kbd_false, true, "mix in file",                                          NULL, -1},
@@ -360,12 +357,10 @@ static void call_keymap(int hashedsym, int count)
 void string_to_minibuffer(snd_info *sp, const char *buf)
 {
   if ((sp->minibuffer_on == MINI_PROMPT) || 
-      (sp->minibuffer_on == MINI_USER) ||
-      (sp->minibuffer_on == MINI_FIND))
+      (sp->minibuffer_on == MINI_USER))
     display_minibuffer_error(sp, buf); /* leave the prompt alone */
   else
     {
-      clear_minibuffer_prompt(sp);
       set_minibuffer_string(sp, buf, false); /* was true, but that causes bogus expose events of entire graph widget -- perhaps pass this as parameter? */
       sp->minibuffer_on = MINI_REPORT;
     }
@@ -389,44 +384,10 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
 
 void clear_minibuffer(snd_info *sp)
 {
-  clear_minibuffer_prompt(sp);
   set_minibuffer_string(sp, NULL, true);
   sp->search_count = 0;
   sp->marking = 0;
-  sp->filing = NOT_FILING;
   sp->minibuffer_on = MINI_OFF;
-}
-
-
-void clear_minibuffer_prompt(snd_info *sp)
-{
-  make_minibuffer_label(sp, "     ");
-}
-
-
-static void prompt(snd_info *sp, const char *msg, const char *preload)
-{
-  if (preload)
-    {
-      set_minibuffer_string(sp, preload, true);
-      set_minibuffer_cursor_position(sp, mus_strlen(preload));
-    }
-  else
-    set_minibuffer_string(sp, NULL, true);
-  make_minibuffer_label(sp, msg);
-  sp->minibuffer_on = MINI_PROMPT;
-  goto_minibuffer(sp);
-}
-
-
-static void prompt_named_mark(chan_info *cp) 
-{
-  snd_info *sp = cp->sound;
-  clear_minibuffer(sp);
-  make_minibuffer_label(sp, "mark:");
-  sp->minibuffer_on = MINI_PROMPT;
-  goto_minibuffer(sp);
-  sp->marking = CURSOR(cp) + 1; /*  + 1 so it's not confused with 0 (if (sp->marking)...) */
 }
 
 
@@ -446,190 +407,6 @@ void errors_to_minibuffer(const char *msg, void *data)
 void printout_to_minibuffer(const char *msg, void *data)
 {
   string_to_minibuffer((snd_info *)data, msg);
-}
-
-
-#if HAVE_DIRENT_H
-  #include <dirent.h>
-#endif
-
-void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
-{
-  bool s_or_r = false;
-  chan_info *active_chan;
-  static char *str = NULL;
-  if (str) /* leftover from previous call */
-    {
-#if USE_MOTIF
-      XtFree(str);
-#else
-#if USE_GTK
-      free(str);
-#endif
-#endif
-      str = NULL;
-    }
-  if ((keysym == snd_K_s) || (keysym == snd_K_r)) s_or_r = true;
-  if (sp != selected_sound()) select_channel(sp, 0);
-  active_chan = any_selected_channel(sp);
-  if (active_chan)
-    {
-      goto_graph(active_chan);
-    }
-  if ((keysym == snd_K_g) || (keysym == snd_K_G)) /* c-g => abort whatever we're doing and return */
-    {
-      clear_minibuffer(sp);
-      return;
-    }
-
-  str = get_minibuffer_string(sp);
-  /* sp->minibuffer_on = MINI_REPORT; */
-
-#if HAVE_EXTENSION_LANGUAGE
-  if (sp->search_count != 0)
-    {
-      /* it's the search expr request */
-      /* if not nil, replace previous */
-      if (!s_or_r)
-	{
-	  if ((str) && (*str))
-	    {
-	      XEN proc;
-	      /* check for procedure as arg, or lambda form:
-	       * (lambda (y) (> y .1)) 
-	       * if returns #t, search stops
-	       *
-	       * if error in scheme, don't go ahead with the search!
-	       */
-	      clear_sound_search_procedure(sp, true);
-	      sp->search_expr = mus_strdup(str);
-	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
-	      proc = snd_catch_any(eval_str_wrapper, str, str);
-	      if (XEN_PROCEDURE_P(proc)) /* redundant but avoids unwanted error message via snd_error */
-		{
-		  char *errmsg;
-		  errmsg = procedure_ok(proc, 1, "find", "find", 1);
-		  if (errmsg)
-		    {
-		      snd_error_without_format(errmsg);
-		      free(errmsg);
-		    }
-		  else
-		    {
-		      sp->search_proc = proc;
-		      sp->search_proc_loc = snd_protect(proc);
-		    }
-		}
-	      else active_chan = NULL; /* don't try to search! */
-	      redirect_errors_to(NULL, NULL);
-	      if (active_chan) active_chan->last_search_result = SEARCH_OK;
-	    }
-	}
-
-      if (active_chan)
-	cursor_search(active_chan, sp->search_count);
-      return;
-    }
-#endif
-  sp->minibuffer_on = MINI_REPORT; 
-  if (sp->marking)
-    {
-      if (sp->marking) 
-	{
-	  mark *m;
-	  m = add_mark(sp->marking - 1, str, active_chan);
-	  if (m)
-	    {
-	      report_in_minibuffer(sp, "%s placed at sample %lld", str, sp->marking - 1);
-	      display_channel_marks(active_chan);
-	    }
-	  else report_in_minibuffer(sp, "There is already a mark at sample %lld", sp->marking - 1);
-	  sp->marking = 0;
-	}	
-      else 
-	{
-	  goto_named_mark(active_chan, str);
-	}
-      return;
-    }
-  if (mus_strlen(str) != 0)
-    {
-      if (sp->filing != NOT_FILING)
-	{
-	  switch (sp->filing)
-	    {
-	      /* save channel */
-	    case DOIT_CHANNEL_FILING:
-	      clear_minibuffer_prompt(sp);
-	      set_minibuffer_string(sp, NULL, true);
-	      sp->minibuffer_on = MINI_OFF;
-	      if (STRCMP(str, "yes") != 0)
-		{
-		  if (sp->filing_filename)
-		    {
-		      free(sp->filing_filename);
-		      sp->filing_filename = NULL;
-		    }
-		  string_to_minibuffer(sp, "channel not saved");
-		  sp->filing = NOT_FILING;
-		  return;
-		}
-
-	      /* else fall through... */
-	    case CHANNEL_FILING:
-	      {
-		io_error_t io_err;
-		char *filename = NULL;
-		if (sp->filing == CHANNEL_FILING)
-		  {
-		    clear_minibuffer_prompt(sp);
-		    set_minibuffer_string(sp, NULL, true);
-		    sp->minibuffer_on = MINI_OFF;
-		    filename = mus_expand_filename(str);
-		    if ((ask_before_overwrite(ss)) && 
-			(mus_file_probe(filename)))
-		      {
-			/* ask user whether to go on. */
-			char *ques;
-			ques = mus_format("%s exists: overwrite?", str);
-			prompt(sp, ques, NULL);
-			free(ques);
-			sp->filing_filename = filename;
-			sp->filing = DOIT_CHANNEL_FILING;
-			return;
-		      }
-		  }
-		else 
-		  {
-		    filename = sp->filing_filename;
-		    sp->filing_filename = NULL;
-		  }
-		io_err = save_channel_edits(active_chan, filename, AT_CURRENT_EDIT_POSITION);
-		if (io_err == IO_NO_ERROR)
-		  report_in_minibuffer(sp, "channel %d saved as %s", 
-				       active_chan->chan,
-				       filename);
-		else string_to_minibuffer(sp, "channel not saved");
-		if (filename) free(filename);
-		sp->filing = NOT_FILING;
-	      }
-	      break;
-
-	    default:
-	      break;
-	    }
-	  sp->filing = NOT_FILING;
-	  return;
-	}
-    }
-  if (mus_strlen(str) > 0)
-    {
-      redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
-      redirect_errors_to(errors_to_minibuffer, (void *)sp);
-      snd_report_result(snd_catch_any(eval_str_wrapper, (void *)str, str), str);
-      redirect_everything_to(NULL, NULL);
-    }
-  else clear_minibuffer(sp);
 }
 
 
@@ -997,7 +774,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   static bool got_count = false;
   static bool m = false;
   int shift = 0;
-  bool dont_clear_minibuffer = false, cursor_searching = false, clear_search = true;
+  bool cursor_searching = false, clear_search = true;
   int hashloc, i, state;
   mus_long_t loc;
   static mus_long_t ext_count = 1;
@@ -1134,7 +911,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 	    case snd_K_I: case snd_K_i: 
 	      show_cursor_info(cp); 
-	      dont_clear_minibuffer = true; 
 	      break;
 
 	    case snd_K_J: case snd_K_j: 
@@ -1219,17 +995,10 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 #if HAVE_EXTENSION_LANGUAGE
-	    case snd_K_R: case snd_K_r: 
-	      cp->cursor_on = true; 
-	      cursor_search(cp, -count); 
-	      dont_clear_minibuffer = true; 
-	      cursor_searching = true; 
-	      break;
-
 	    case snd_K_S: case snd_K_s: 
+	      /* TODO: handle this in a dialog */
 	      cp->cursor_on = true; 
 	      cursor_search(cp, count); 
-	      dont_clear_minibuffer = true; 
 	      cursor_searching = true; 
 	      break;
 #endif
@@ -1378,13 +1147,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      goto_mix(cp, ext_count); 
 	      break;
 
-	    case snd_K_M: case snd_K_m:
-	      cp->cursor_on = true; 
-	      prompt_named_mark(cp);
-	      set_show_marks(true); 
-	      dont_clear_minibuffer = true; 
-	      break;
-
 	    case snd_K_O: case snd_K_o: 
 	      /* this doesn't change the View:Controls menu label because (sigh...) it's specific to the currently selected sound */
 	      show_controls(sp); 
@@ -1419,10 +1181,11 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_W: case snd_K_w: 
-	      /* TODO: goto save-as dialog with extraction set somehow? */
-	      prompt(sp, "file:", NULL); 
-	      sp->filing = CHANNEL_FILING; 
-	      dont_clear_minibuffer = true; 
+	      {
+		chan_info *cp;
+		cp = any_selected_channel(any_selected_sound());
+		make_channel_extract_dialog(cp->chan);
+	      }
 	      break;
 
 	    case snd_K_Z: case snd_K_z: 
@@ -1770,13 +1533,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  clear_search = false;
 		  break;
 
-		case snd_K_slash: 
-		  cp->cursor_on = true;
-		  prompt_named_mark(cp); 
-		  set_show_marks(true); 
-		  dont_clear_minibuffer = true; 
-		  break;
-
 		default:
 		  report_in_minibuffer(sp, "C-x %s undefined", key_to_name(keysym));
 		  break;
@@ -1791,11 +1547,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   if (!extended_mode) {got_ext_count = false; ext_count = 1;}
   if ((sp) && (clear_search))
     {
-      if ((sp->minibuffer_on == MINI_FIND) && (!dont_clear_minibuffer))
-	clear_minibuffer(sp);
-      else 
-	if (!cursor_searching) 
-	  sp->search_count = 0;
+      if (!cursor_searching) 
+	sp->search_count = 0;
     }
 }
 
@@ -1959,94 +1712,84 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 }
 
 
+static XEN g_status_report(XEN msg, XEN snd)
+{
+  #define H_status_report "(" S_status_report " message :optional snd) posts message in snd's status area."
+
+  snd_info *sp;
+  const char *message;
+
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_status_report, "a string");
+  ASSERT_SOUND(S_status_report, snd, 2);
+
+  sp = get_sp(snd);
+  if ((sp == NULL) || 
+      (sp->inuse != SOUND_NORMAL))
+    return(snd_no_such_sound_error(S_status_report, snd));
+
+  message = XEN_TO_C_STRING(msg);
+  if ((message) && (*message))
+    string_to_minibuffer(sp, message);
+  else clear_minibuffer(sp);
+  return(msg);
+}
+
+
+#if (!SND_DISABLE_DEPRECATED)
 static XEN g_save_macros(XEN file)
 {
   fprintf(stderr, "save-macros no longer does anything\n");
   return(XEN_FALSE);
 }
 
-
 static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd, XEN raw)
 {
+  fprintf(stderr, "prompt-in-minibuffer no longer does anything\n");
   return(XEN_FALSE);
 }
-
 
 static XEN g_report_in_minibuffer(XEN msg, XEN snd, XEN as_error)
 {
-  #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg :optional snd as-error): display msg in snd's minibuffer. \
-If 'as-error' is " PROC_TRUE ", place the message in the minibuffer's error label."
-  snd_info *sp;
-
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(as_error), as_error, XEN_ARG_2, S_report_in_minibuffer, "a boolean");
-  ASSERT_SOUND(S_report_in_minibuffer, snd, 2);
-
-  sp = get_sp(snd);
-  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
-    return(snd_no_such_sound_error(S_report_in_minibuffer, snd));
-
-  if (XEN_TRUE_P(as_error))
-    display_minibuffer_error(sp, XEN_TO_C_STRING(msg));
-  else string_to_minibuffer(sp, XEN_TO_C_STRING(msg));
-  return(msg);
+  return(g_status_report(msg, snd));
 }
-
 
 static XEN g_clear_minibuffer(XEN snd)
 {
-  #define H_clear_minibuffer "(" S_clear_minibuffer " :optional snd) clears snd's minibuffer (erasing any \
-error message as well)."
-  snd_info *sp;
-
-  ASSERT_SOUND(S_clear_minibuffer, snd, 1);
-
-  sp = get_sp(snd);
-  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
-    return(snd_no_such_sound_error(S_clear_minibuffer, snd));
-  clear_minibuffer(sp);
-  return(XEN_FALSE);
+  return(g_status_report(C_TO_XEN_STRING(""), snd));
 }
-
-
-#define S_snd_simulate_keystroke "snd-simulate-keystroke"
-
-static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
-{
-  /* intended for testing */
-  chan_info *cp;
-
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_3, S_snd_simulate_keystroke, "key number (int)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_4, S_snd_simulate_keystroke, "key state (int)");
-  ASSERT_CHANNEL(S_snd_simulate_keystroke, snd, chn, 1);
-  cp = get_cp(snd, chn, S_snd_simulate_keystroke);
-  if (!cp) return(XEN_FALSE);
-
-  keyboard_command(cp, XEN_TO_C_INT(key), XEN_TO_C_INT(state));
-  return(key);
-}
+#endif
 
 
 #ifdef XEN_ARGIFY_1
+
 XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
 XEN_ARGIFY_6(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
-XEN_NARGIFY_1(g_save_macros_w, g_save_macros)
-XEN_ARGIFY_1(g_clear_minibuffer_w, g_clear_minibuffer)
-XEN_ARGIFY_3(g_report_in_minibuffer_w, g_report_in_minibuffer)
-XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
-XEN_NARGIFY_4(g_snd_simulate_keystroke_w, g_snd_simulate_keystroke)
+XEN_ARGIFY_2(g_status_report_w, g_status_report)
+
+#if (!SND_DISABLE_DEPRECATED)
+  XEN_NARGIFY_1(g_save_macros_w, g_save_macros)
+  XEN_ARGIFY_1(g_clear_minibuffer_w, g_clear_minibuffer)
+  XEN_ARGIFY_3(g_report_in_minibuffer_w, g_report_in_minibuffer)
+  XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
+#endif
+
 #else
+
 #define g_key_binding_w g_key_binding
 #define g_bind_key_w g_bind_key
 #define g_unbind_key_w g_unbind_key
 #define g_key_w g_key
-#define g_save_macros_w g_save_macros
-#define g_clear_minibuffer_w g_clear_minibuffer
-#define g_report_in_minibuffer_w g_report_in_minibuffer
-#define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
-#define g_snd_simulate_keystroke_w g_snd_simulate_keystroke
+#define g_status_report_w g_status_report
+
+#if (!SND_DISABLE_DEPRECATED)
+  #define g_save_macros_w g_save_macros
+  #define g_clear_minibuffer_w g_clear_minibuffer
+  #define g_report_in_minibuffer_w g_report_in_minibuffer
+  #define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
+#endif
+
 #endif
 
 void g_init_kbd(void)
@@ -2067,13 +1810,15 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
   XEN_DEFINE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
-  XEN_DEFINE_PROCEDURE("save-macros",            g_save_macros_w,            1, 0, 0, "obsolete");
-  XEN_DEFINE_PROCEDURE(S_clear_minibuffer,       g_clear_minibuffer_w,       0, 1, 0, H_clear_minibuffer);
-  XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 2, 0, H_report_in_minibuffer);
+
+  XEN_DEFINE_PROCEDURE(S_status_report,          g_status_report_w,          1, 1, 0, H_status_report);
+
 #if (!SND_DISABLE_DEPRECATED)
+  XEN_DEFINE_PROCEDURE("save-macros",            g_save_macros_w,            1, 0, 0, "obsolete");
+  XEN_DEFINE_PROCEDURE("clear-minibuffer",       g_clear_minibuffer_w,       0, 1, 0, "obsolete");
+  XEN_DEFINE_PROCEDURE("report-in-minibuffer",   g_report_in_minibuffer_w,   1, 2, 0, "obsolete");
   XEN_DEFINE_PROCEDURE("prompt-in-minibuffer",   g_prompt_in_minibuffer_w,   1, 3, 0, "obsolete");
 #endif
-  XEN_DEFINE_PROCEDURE(S_snd_simulate_keystroke, g_snd_simulate_keystroke_w, 4, 0, 0, "internal testing function");
 
 #if HAVE_SCHEME
   {

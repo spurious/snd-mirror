@@ -435,7 +435,7 @@
 
 ;;; -------- show-disk-space
 ;;;
-;;; adds a label to the minibuffer area showing the current free space 
+;;; adds a label to the status-area area showing the current free space 
 
 (define show-disk-space
   (let ((labelled-snds '()))
@@ -462,7 +462,7 @@
 	    (else (find-if pred (cdr l)))))
 
     (lambda* (snd-arg)
-      "(show-disk-space snd) adds a label to snd's minibuffer area showing the current free space (for use with after-open-hook)"
+      "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)"
 
       (let* ((snd (or snd-arg (selected-sound)))
 	     (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))

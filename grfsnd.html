@@ -630,14 +630,14 @@ output-comment-hook lambda: &lt;{ str -- s }&gt;
   require dsp
   graph-hook lambda: &lt;{ snd chn y0 y1 -- #f }&gt;
     $" freq: %.3f" #( snd chn left-sample  snd chn spot-freq ) string-format
-    snd #f report-in-minibuffer drop
+    snd status-report drop
     #f
   ; add-hook!
 
   mouse-click-hook lambda: &lt;{ snd chn button state x y axis -- a }&gt;
     axis time-graph = if
       $" freq: %.3f" #( snd chn #f cursor  snd chn spot-freq ) string-format
-      snd #f report-in-minibuffer
+      snd status-report
     else
       #f
     then
@@ -752,7 +752,7 @@ output-comment-hook lambda: &lt;{ str -- s }&gt;
     undef selection? if
       $" selection-eval:" &lt;'&gt; eval-over-selection #f #f prompt-in-minibuffer
     else
-      $" no selection" #f #f report-in-minibuffer
+      $" no selection" #f status-report
     then drop
     cursor-in-view
   ; #t $" eval over selection" "eval-over-selection" bind-key drop

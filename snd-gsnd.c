@@ -5,7 +5,7 @@
  */
 
 enum {W_pane, W_pane_box, W_control_panel,
-      W_name_form, W_name, W_name_event, W_name_pix, W_stop_pix, W_info_label, W_info,
+      W_name_form, W_name, W_name_event, W_name_pix, W_stop_pix, W_info,
       W_play, W_sync, W_unite, W_close,
       W_amp_form, W_amp_event, W_amp, W_amp_label, W_amp_number, W_amp_sep,
       W_speed_form, W_speed, W_speed_event, W_speed_label, W_speed_label_event, W_speed_number, W_speed_pix,
@@ -40,7 +40,6 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->snd_widgets[W_pane_box]);}
 
 #define CLOSE_BUTTON(Sp)         Sp->snd_widgets[W_close]
 
-#define MINIBUFFER_LABEL(Sp)     Sp->snd_widgets[W_info_label]
 #define MINIBUFFER_TEXT(Sp)      Sp->snd_widgets[W_info]
 #define NAME_PIX(Sp)             Sp->snd_widgets[W_name_pix]
 #define STOP_PIX(Sp)             Sp->snd_widgets[W_stop_pix]
@@ -401,20 +400,6 @@ void goto_minibuffer(snd_info *sp)
 }
 
 
-void set_minibuffer_cursor_position(snd_info *sp, int pos)
-{
-  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
-  gtk_editable_set_position(GTK_EDITABLE(MINIBUFFER_TEXT(sp)), pos);
-}
-
-
-char *get_minibuffer_string(snd_info *sp) 
-{
-  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return(NULL);
-  return(mus_strdup((char *)gtk_entry_get_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)))));
-} 
-
-
 static char stupid[1] = {'\0'};
 
 void set_minibuffer_string(snd_info *sp, const char *str, bool update) 
@@ -425,69 +410,6 @@ void set_minibuffer_string(snd_info *sp, const char *str, bool update)
   else gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), stupid);
 }
 
-
-void make_minibuffer_label(snd_info *sp, const char *str)
-{
-  if ((sp->inuse != SOUND_NORMAL) || (!HAS_WIDGETS(sp))) return;
-  gtk_label_set_text(GTK_LABEL(MINIBUFFER_LABEL(sp)), str);
-}
-
-
-static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
-{
-  snd_info *sp = (snd_info *)data;
-  snd_minibuffer_activate(sp, 0, false);
-  sp->mini_active = true;
-}
-
-
-static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
-{
-  /* can't use M-p in gtk version because it's trapped by a menu accelerator (File:Print) -- M-n is File:New */
-  snd_info *sp = (snd_info *)data;
-  if (((!sp->mini_active)) || 
-      (((EVENT_KEYVAL(event) == snd_K_s) || 
-	(EVENT_KEYVAL(event) == snd_K_r)) && 
-       (EVENT_STATE(event) & snd_ControlMask)))
-    {
-      chan_info *cp;
-      cp = current_channel();
-      if (cp) graph_key_press(channel_graph(cp), event, (gpointer)cp); 
-      g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
-      return(true);
-    }
-  if (((EVENT_KEYVAL(event) == snd_K_g) || (EVENT_KEYVAL(event) == snd_K_G)) && 
-      (EVENT_STATE(event) & snd_ControlMask))
-    {
-      clear_minibuffer(sp);
-      return(true);
-    }
-  if (EVENT_KEYVAL(event) == snd_K_Tab)
-    {
-      gtk_entry_set_text(GTK_ENTRY(w), info_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), data));
-      gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
-      return(true);
-    }
-  return(false);
-}
-
-
-static gboolean minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
-{
-  snd_info *sp = (snd_info *)data;
-  if ((sp) && (sp->inuse == SOUND_NORMAL))
-    sp->mini_active = true;
-  return(false);
-}
-
-
-static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
-{
-  snd_info *sp = (snd_info *)data;
-  if ((sp) && (sp->inuse == SOUND_NORMAL))
-    sp->mini_active = false;
-  return(false);
-}
 
 
 /* -------- PLAY BUTTON -------- */
@@ -1802,15 +1724,13 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	  }
       }
 
-      MINIBUFFER_LABEL(sp) = gtk_label_new(NULL);
-      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_LABEL(sp), false, false, 0);
-      gtk_widget_show(MINIBUFFER_LABEL(sp));
-      
-      MINIBUFFER_TEXT(sp) = snd_entry_new(NAME_HBOX(sp), NULL, WITH_DEFAULT_BACKGROUND);
-      SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "key_press_event", minibuffer_key_callback, sp);
-      SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "activate", minibuffer_activate_callback, sp);
-      SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "enter_notify_event", minibuffer_mouse_enter, sp);
-      SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "leave_notify_event", minibuffer_mouse_leave, sp);
+      MINIBUFFER_TEXT(sp) = gtk_entry_new();
+#if HAVE_GTK_3
+      gtk_widget_set_halign(MINIBUFFER_TEXT(sp), GTK_ALIGN_FILL);
+      gtk_widget_set_hexpand(MINIBUFFER_TEXT(sp), true);
+#endif
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_TEXT(sp), true, true, 2);
+      gtk_widget_show(MINIBUFFER_TEXT(sp));
 
       /* now fill from other end */
       

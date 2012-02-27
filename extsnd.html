@@ -624,7 +624,7 @@ Snd does not exit.</p>
   (if (not (null? lst))
       (if (&gt; (car (<a class=quiet href="#edits" onmouseout="UnTip()" onmouseover="Tip(extsnd_edits_tip)">edits</a> (car lst))) 0)
 	  (begin
-	    (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> "there are unsaved edits")
+	    (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> "there are unsaved edits")
 	    #t)
 	  (unsaved-edits? (cdr lst)))
       #f))
@@ -634,7 +634,7 @@ Snd does not exit.</p>
 
 <p>Now when Snd is told to exit, it checks before-exit-hook, runs
 unsaved-edits?, and if the latter returns #t, if prints
-a worried message in the minibuffer, and refuses to
+a worried message in the status area, and refuses to
 exit.  Similar hooks customize actions such as closing
 a sound (<a href="#closehook">close-hook</a>), clicking a mark (<a href="#markclickhook">mark-click-hook</a>),
 pressing a key (<a href="#keypresshook">key-press-hook</a>), and so on.</p>
@@ -1784,7 +1784,7 @@ and <a href="#sndsounds">sounds</a> (as objects or as integers).
 <p>When some user-interface action takes place, code is called that responds to that action;
 these functions are sometimes called callbacks; the variable that holds a list of such
 callbacks is known as a hook.  
-For example, the hook that is checked when you click the sound's name in the minibuffer is
+For example, the hook that is checked when you click the sound's name in the status area is
 name-click-hook.  We can cause that action to print "hi":</p>
 
 <pre class="indented">
@@ -2026,7 +2026,7 @@ program.  See <a href="sndscm.html#wssavestate">ws-save-state</a> in ws.scm.  It
 (define (report-fft-peak snd chn scale)
   (if (and (<a class=quiet href="#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) 
            (= (<a class=quiet href="#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">transform-graph-type</a>) <a class=quiet href="#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">graph-once</a>))
-      (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> 
+      (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> 
         (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctpeak_tip)">vct-peak</a> (<a class=quiet href="#transformtovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformtovct_tip)">transform-&gt;vct</a> snd chn))) 
                            (<a class=quiet href="#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size</a> snd chn))))))
 (hook-push <em class=red>after-transform-hook</em> report-fft-peak)
@@ -2516,7 +2516,7 @@ If it returns a function (of no arguments), that function is called rather than 
 <em class=def id="markclickhook">mark-click-hook</em> (mark)
 </pre>
 
-<p>This hook is called when a mark is clicked; return #t to squelch the default minibuffer mark identification.  The following 
+<p>This hook is called when a mark is clicked; return #t to squelch the default status area mark identification.  The following 
 hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound</a> in ws.scm to display arbitrary info about a mark.
 </p>
 
@@ -2556,10 +2556,10 @@ hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound
 
 <pre class="indented">
 (define (report-mark-location id)
-  ;; print current mark location in minibuffer
+  ;; print current mark location in status area
   (let ((samp (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> id))
         (sndchn (<a class=quiet href="#markhome" onmouseout="UnTip()" onmouseover="Tip(extsnd_markhome_tip)">mark-home</a> id)))
-    (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> 
+    (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> 
       (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mark ~A: sample: ~D (~,3F) ~A[~D]: ~,3F"
               id samp 
               (/ samp (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> (car sndchn))) 
@@ -2636,7 +2636,7 @@ in mix.scm for a fancier version):
 <pre class="indented">
 (hook-push <em class=red>mix-drag-hook</em>
   (lambda (n x y) 
-    (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> 
+    (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> 
       (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mix ~A at ~D: ~,3F" 
         n (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> n) 
         (exact-&gt;inexact (/ (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> n) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))))
@@ -2723,7 +2723,7 @@ turning the wheel zooms the graph in or out:
 mouse-click-hook lambda: &lt;{ snd chn button state x y axis -- }&gt; 
  axis time-graph = if 
    $" freq: %.3f" '( snd chn #f cursor  snd chn spot-freq ) string-format 
-   snd #f report-in-minibuffer 
+   snd #f status-report 
  else 
    #f 
  then 
@@ -2907,8 +2907,8 @@ You can redirect mus_print output from stderr (the default) to stdout via:
 <em class=def id="nameclickhook">name-click-hook</em> (snd)
 </pre>
 
-<p>This hook is called when the sound name is clicked (in the label in the minibuffer region of the sound's pane).
-If the function returns #t, the usual highly informative minibuffer babbling is squelched.
+<p>This hook is called when the sound name is clicked (in the label in the status area region of the sound's pane).
+If the function returns #t, the usual highly informative status area babbling is squelched.
 </p>
 
 <pre class="indented">
@@ -3429,7 +3429,7 @@ up protected portions of the edit history:
     (hook-push hook 
       (lambda ()
         (let ((val (&lt; (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn) edit-pos)))
-          (if val (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> "protected"))
+          (if val (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> "protected"))
           val)))))
 
 (define* (unprotect snd chn)
@@ -7592,16 +7592,6 @@ original number of channels &mdash; the data is not touched).
 <div class="separator"></div>
 
 
-<!-- clear-minibuffer -->
-<pre class="indented">
-<em class=def id="clearminibuffer">clear-minibuffer</em> snd
-</pre>
-
-<p>This clears the sound's minibuffer area (both the text and the error message widgets).
-</p>
-<div class="separator"></div>
-
-
 <!-- clm-channel -->
 <pre class="indented">
 <em class=def id="clmchannel">clm-channel</em> clm-gen beg dur snd chn edpos overlap origin
@@ -9491,7 +9481,7 @@ far along we are in the computation; there are only 20 separate
 icons, so there's no point in calling this more often than that.  
 <a href="#startprogressreport">start-progress-report</a> posts the initial icon, and <a href="#finishprogressreport">finish-progress-report</a> 
 removes it.  If the icons are not available, a message is posted in 
-the sound's minibuffer using 'name' to identify itself.
+the sound's status area using 'name' to identify itself.
 </p>
 <div class="separator"></div>
 
@@ -9898,19 +9888,6 @@ For more about the edit history list, see <a href="#editlists">Edit Lists</a>.
 
 <p>In Ruby, redo is a part of the loop handling, so Snd's redo is renamed redo_edit.
 redo-edit also exists in Scheme, for consistency.
-</p>
-<div class="separator"></div>
-
-
-<!-- report-in-minibuffer -->
-<pre class="indented">
-<em class=def id="reportinminibuffer">report-in-minibuffer</em> msg snd as-error
-</pre>
-
-<p>This posts 'msg' in the sound's minibuffer.  The 'minibuffer' is the text widget between the sound's filename and the buttons
-on the right, beneath the graph.  It is intended to mimic Emacs' minibuffer, being useful mainly for short,
-temporary messages.  C-g clears it, as does <a href="#clearminibuffer">clear-minibuffer</a>.  
-If 'as-error' is #t, the message is placed in the minibuffer error label, rather than in the usual text area.
 </p>
 <div class="separator"></div>
 
@@ -11118,6 +11095,17 @@ how long the resultant note will be given an src envelope:
 <div class="separator"></div>
 
 
+<!-- status-report -->
+<pre class="indented">
+<em class=def id="statusreport">status-report</em> msg snd
+</pre>
+
+<p>This posts 'msg' in the sound's status area.  The status area is the text widget between the sound's filename and the buttons
+on the right, beneath the graph.  
+</p>
+<div class="separator"></div>
+
+
 <!-- stop-player -->
 <pre class="indented">
 <em class=def id="stopplayer">stop-player</em> player
@@ -11551,7 +11539,7 @@ the smaller this number, the more traces can be displayed (the default is 3).  S
 </pre>
 
 <p>If with-verbose-cursor is #t, the cursor's position and other information is constantly 
-displayed in the minibuffer.  This is the View:Verbose cursor option 
+displayed in the status area.  This is the View:Verbose cursor option 
 (default: #f). 
 </p>
 <div class="separator"></div>
@@ -13838,7 +13826,7 @@ prints the names of all the stereo AIFC files it finds:
 0: main-pane 
 1: name-label                 ; sound's file name
 2: control-panel 
-3: minibuffer 
+3: status area 
 4: play button
 5: filter-graph               ; control panel drawing area for filter envelope
 6: unite button               ; invisible in mono sounds
@@ -13846,24 +13834,24 @@ prints the names of all the stereo AIFC files it finds:
 9: sync button
 </pre>
 
-<p>For example, we can read and write the minibuffer:
+<p>For example, we can read and write the status area:
 </p>
 
 <pre class="indented">
 Scheme:
-&gt; (report-in-minibuffer "this is a test")
+&gt; (status-report "this is a test")
 "this is a test"
 &gt; (widget-text ((sound-widgets) 3))
 "this is a test"
     
 Ruby:
-:report_in_minibuffer("this is a test")
+:status_report("this is a test")
 this is a test
 :widget_text(sound_widgets()[3])
 this is a test
     
 Forth:
-snd&gt; "this is a test" report-in-minibuffer
+snd&gt; "this is a test" status-report
 this is a test
 snd&gt; 0 sound-widgets 3 list-ref widget-text
 this is a test
@@ -14128,7 +14116,7 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
            (lambda () 
 	     "move cursor and window to current edit"
 	     (let ((ed (<a class=quiet href="#editfragment" onmouseout="UnTip()" onmouseover="Tip(extsnd_editfragment_tip)">edit-fragment</a>))) 
-	       (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A" ed)) 
+	       (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A" ed)) 
 	       (set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (caddr ed)) 
 	       cursor-in-view)))
 
@@ -14684,7 +14672,7 @@ opened, "now.snd.scm" is loaded automatically with *snd-opened-sound* holding th
 <em class=def id="sndwarning">snd-warning</em> str
 </pre>
 
-<p>This posts a 'str' in the minibuffer and returns 'str'.
+<p>This posts a 'str' in the status area and returns 'str'.
 See also <a href="#sndwarninghook">snd-warning-hook</a>.
 </p>
 <div class="spacer"></div>

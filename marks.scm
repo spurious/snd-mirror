@@ -240,12 +240,12 @@
 		   (if (and (not (null? samplist))
 			    (>= samp (car samplist)))
 		       (begin
-			 (report-in-minibuffer (mark-name (car marklist)) snd)
+			 (status-report (mark-name (car marklist)) snd)
 			 (set! marklist (cdr marklist))
 			 (set! samplist (cdr samplist)))))
 
 		 (define (report-mark-names-stop-playing-hook snd)
-		   (report-in-minibuffer "" snd)
+		   (status-report "" snd)
 		   (hook-remove play-hook report-mark-names-play-hook)
 		   (hook-remove stop-playing-hook report-mark-names-stop-playing-hook))
 		 

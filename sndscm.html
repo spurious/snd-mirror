@@ -2911,7 +2911,7 @@ so that each time we click somewhere in the graph, the pitch at that point is re
 <pre class="indented">
 $mouse_click_hook.add_hook!("examp-cursor-hook") do |snd, chn, button, state, x, y, axis|
   if axis == Time_graph
-    report_in_minibuffer(format("(freq: %.3f)", spot_freq(cursor(snd, chn))))
+    status_report(format("(freq: %.3f)", spot_freq(cursor(snd, chn))))
   end
 end
 </pre>
@@ -4256,7 +4256,7 @@ envelope 'interp'.
 <em class=emdef>fft-peak</em> snd chn scale
 </pre>
 
-<p>fft-peak is an <a href="extsnd.html#aftertransformhook">after-transform-hook</a> function that reports the peak spectral magnitude in the minibuffer.
+<p>fft-peak is an <a href="extsnd.html#aftertransformhook">after-transform-hook</a> function that reports the peak spectral magnitude in the status area.
 </p>
 
 <pre class="indented">
@@ -5402,10 +5402,10 @@ the next maximum or minimum in the waveform.
 search-for-click looks for a click.
 find-pitch finds the next
 place where 'pitch' (in Hz) is predominate.
-For example, type C-s (in the graph), then in the minibuffer:
+For example, type C-s (in the graph), then in the status area:
 (find-pitch 600), and if the function finds some place in the sound
 where 600 Hz seems to be the basic pitch, it moves the cursor there and
-reports the time in the minibuffer text window.
+reports the time in the status area text window.
 See also the multichannel case: <a href="#simultaneouszerocrossing">simultaneous-zero-crossing</a> in frame.scm.
 </p>
 <div class="spacer"></div>
@@ -6699,7 +6699,7 @@ It includes a Snd-Ruby mode (snd-ruby-mode), a Snd-Scheme mode
 The commands inf-snd-help and snd-help
 access the description which Snd provides for many functions.
 Using the prefix key C-u you get the HTML version of Snd's help.
-With tab-completion in the minibuffer you can scan all functions at
+With tab-completion in the status area you can scan all functions at
 a glance. 
 A menu "Snd/Ruby" is placed in the Emacs menu bar.  Entries in this
 menu are disabled if no inferior Snd process exists.
@@ -7205,7 +7205,7 @@ playing from all the marks sharing its 'sync' argument (see <a href="extsnd.html
 <em class=def id="reportmarknames">report-mark-names</em> 
 </pre>
 
-<p>report-mark-names causes a named mark to display its name in the minibuffer when 
+<p>report-mark-names causes a named mark to display its name in the status area when 
 its sample happens to be played.
 </p>
 <div class="spacer"></div>
@@ -8814,7 +8814,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 	(do ((i beg (+ i 1)))
 	    ((&gt; i end))
 	  (set! mx (max mx (abs (rd))))))
-      (report-in-minibuffer (format #f "maxamp: ~A" mx)))))
+      (status-report (format #f "maxamp: ~A" mx)))))
 </pre>
 
 
@@ -11199,7 +11199,7 @@ This is actually a bad idea since the menu names can change without warning.
 </pre>
 
 <p>show-disk-space adds a label in the
-minibuffer area which shows the current amount of disk space available
+status area area which shows the current amount of disk space available
 on the partition of the associated sound.  There's a picture of it in action above (add-mark-pane).
 </p>
 <div class="spacer"></div>
@@ -12748,7 +12748,7 @@ end
 mixes around, you can write out the new note list via with-mixed-sound-&gt;notelist.
 In multichannel files, all the channels associated with a note are sync'd together, so if you drag one,
 the others follow.  Also, if you click a mix tag, the corresponding note in the notelist is displayed
-in the minibuffer.
+in the status area.
 </p>
 
 

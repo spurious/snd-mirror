@@ -99,8 +99,6 @@ var extsnd_channelwidgets_tip = "<code>(channel-widgets snd chn)</code>: a list 
 
 var extsnd_chans_tip = "<code>(channels snd)</code>: how many channels snd has";
 
-var extsnd_clearminibuffer_tip = "<code>(clear-minibuffer snd)</code>: clears snd's minibuffer (erasing any error message as well).";
-
 var extsnd_cliphook_tip = "<code>clip-hook (clipping-value)</code> is called each time a sample is about to be clipped<br>" +
                           " upon being written to a sound file.  The hook function can return the new value to be written,<br>" +
                           " or rely on the default (-1.0 or 1.0 depending on the sign of 'clipping-value').";
@@ -450,7 +448,7 @@ var extsnd_mussoundsamples_tip = "<code>(mus-sound-samples filename)</code>: sam
 var extsnd_mussoundsrate_tip = "<code>(mus-sound-srate filename)</code>: sampling rate of sound file";
 
 var extsnd_nameclickhook_tip = "<code>name-click-hook (snd)</code>: called when sound name clicked.<br>" +
-                               " If it returns #t, the usual informative minibuffer babbling is squelched.";
+                               " If it returns #t, the usual informative status area babbling is squelched.";
 
 var extsnd_newsound_tip = "<code>(new-sound :file :header-type :data-format :srate :channels :comment :size)</code>:<br>" +
                           " creates a new sound file with the indicated attributes; if any are omitted,<br>" +
@@ -507,13 +505,6 @@ var extsnd_positiontox_tip = "<code>(position-&gt;x val snd chn (ax time-graph))
 
 var extsnd_previoussample_tip = "<code>(previous-sample reader)</code>: previous sample from reader";
 
-var extsnd_promptinminibuffer_tip = "<code>(prompt-in-minibuffer msg callback snd raw)</code>:<br>" +
-                                    " post msg in snd's minibuffer then when the user eventually responds,<br>" +
-                                    " invoke the function callback, if any, with the response.<br>" +
-                                    " If 'raw' is #t, the response is passed as a string to the prompt callback function;<br>" +
-                                    " otherwise it is evaluated first as Scheme code.<br>" +
-                                    "<code>   (prompt-in-minibuffer \"what?\" (lambda (response) (snd-print response)))</code>";
-
 var extsnd_ptreechannel_tip = "<code>(ptree-channel proc (beg 0) (dur len) snd chn edpos peak-env-also init-func origin)</code>:<br>" +
                               " apply 'proc' as a 'virtual edit';<br>" +
                               " that is, the effect of 'proc' (a function of one argument, the current sample, if init-func is not specified),<br>" +
@@ -537,9 +528,7 @@ var extsnd_regionok_tip = "<code>(region? reg)</code>: #t if region is active";
 var extsnd_regularizedargs_tip = "The \"regularized\" functions take arguments in the order<br>" +
                                  " begin time, duration (not end sample), sound index, channel number, and edit position.";
 
-var extsnd_reportinminibuffer_tip = "<code>(report-in-minibuffer msg snd as-error)</code>:<br>" +
-                                    " display msg in snd's minibuffer.<br>" +
-                                    " If 'as-error' is #t, place the message in the minibuffer's error label.";
+var extsnd_statusreport_tip = "<code>(status-report msg snd)</code>: display msg in snd's status area.";
 
 var extsnd_restorecontrols_tip = "<code>(restore-controls snd)</code>: restore the previously saved control panel settings";
 
@@ -685,7 +674,7 @@ var extsnd_sounds_tip = "<code>(sounds)</code>: list of active sounds (a list of
 
 var extsnd_soundwidgets_tip = "<code>(sound-widgets snd)</code>: returns a list of widgets associated with 'snd':<br>" +
                               "(0)pane (1)name (2)control-panel<br>" +
-                              "(3)minibuffer (4)play-button (5)filter-env<br>" +
+                              "(3)status area (4)play-button (5)filter-env<br>" +
                               "(6)unite-button (7)name-label (8)name-icon (9)sync-button";
 
 var extsnd_squelchupdate_tip = "<code>(squelch-update snd chn)</code>: #t if updates (redisplays) are turned off in snd's channel chn";

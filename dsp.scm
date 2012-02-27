@@ -332,7 +332,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 ;(hook-push graph-hook 
 ;	   (lambda (snd chn y0 y1) 
-;	     (report-in-minibuffer (format #f "~A" (spot-freq (left-sample))))))
+;	     (status-report (format #f "~A" (spot-freq (left-sample))))))
 
 
 

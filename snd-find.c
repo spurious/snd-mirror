@@ -434,8 +434,6 @@ static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 static void get_find_expression(snd_info *sp, int count)
 {
   set_minibuffer_string(sp, NULL, true);
-  make_minibuffer_label(sp, "find:");
-  sp->minibuffer_on = MINI_FIND;
   goto_minibuffer(sp);
   sp->search_count = count;
 }
@@ -465,7 +463,6 @@ void cursor_search(chan_info *cp, int count)
 	       * perhaps the right thing is to remove these procedures altogether
 	       */
 	      sp->search_count = 0;
-	      clear_minibuffer_prompt(cp->sound);
 	      return; /* no search expr */
 	    }
 	  if (sp->search_expr)
