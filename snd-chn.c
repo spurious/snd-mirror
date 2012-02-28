@@ -1396,7 +1396,6 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
   sp->inuse = SOUND_WRAPPER;
   sp->active = true;
   sp->hdr = (file_info *)calloc(1, sizeof(file_info));
-  sp->search_proc = XEN_UNDEFINED;
   hdr = sp->hdr;
   hdr->samples = initial_length;
   hdr->srate = srate;

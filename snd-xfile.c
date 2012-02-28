@@ -11,7 +11,9 @@
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
  * what is "save" in enved, also if use erases one from env list==delete
  *   also lin/exp is stupid -- omit, click "exp" label to reset to 1 (always)
- *   and "reset" apparently means "clear"
+ *
+ * regions: next chan button is on when mono?  these need tooltips
+ * in gtk3, the pane handles are all invisible (white on white)
  *
  * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html|h|c already]
  *   perhaps define all the "built-in" keys via (bind-key ...)
@@ -70,7 +72,10 @@
  *     removed c-r, c-x c-m, c-x /
  *     removed minibuffer_label, minibuffer itself is now an unactivatable text widget.
  * 27: removed clear-minibuffer and report-in-minibuffer, added status-report
- *
+ *     in *.[ch] minibuffer -> status area throughout
+ *     region dialog cleanup in motif
+ * 28: region dialog in gtk
+ *     search-procedure is now just global (no sound-local option)
  */
 
 /* various file-related dialogs:

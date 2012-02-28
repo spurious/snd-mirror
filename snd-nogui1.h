@@ -45,7 +45,7 @@ void set_with_gl(bool val, bool dpys);
 
 /* -------- snd-xfind.c -------- */
 
-void set_find_dialog_label(const char *str);
+bool find_dialog_is_active(void);
 void save_find_dialog_state(FILE *fd);
 
 
@@ -115,7 +115,7 @@ void make_transform_type_list(void);
 
 /* -------- snd-xregion.c -------- */
 
-void update_region_browser(bool grf_too);
+int update_region_browser(bool grf_too);
 bool region_browser_is_active(void);
 void delete_region_and_update_browser(int n);
 void reflect_play_region_stop(int n);

@@ -748,6 +748,8 @@ void control_g(snd_info *sp)
   #define SND_KEYMASK (snd_ControlMask | snd_MetaMask)
 #endif
 
+static chan_info *last_searcher = NULL;
+
 
 void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 {
@@ -980,6 +982,18 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 #if HAVE_EXTENSION_LANGUAGE
 	    case snd_K_S: case snd_K_s: 
+	      if ((cp == last_searcher) &&
+		  (find_dialog_is_active()))
+		find_dialog_find(NULL, READ_FORWARD, cp);
+	      last_searcher = cp;
+	      find_dialog(cp);
+	      break;
+
+	    case snd_K_R: case snd_K_r: 
+	      if ((cp == last_searcher) &&
+		  (find_dialog_is_active()))
+		find_dialog_find(NULL, READ_BACKWARD, cp);
+	      last_searcher = cp;
 	      find_dialog(cp);
 	      break;
 #endif

@@ -1780,7 +1780,6 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   sp->hdr = hdr;
   sp->inuse = SOUND_READER;
   initialize_control_panel(sp);
-  sp->search_proc = XEN_UNDEFINED;
   sp->index = TEMP_SOUND_INDEX;
   len = (hdr->samples) / (hdr->chans);
 
@@ -2023,13 +2022,6 @@ static void copy_snd_info(snd_info *nsp, snd_info *osp)
   nsp->reverb_control_decay = osp->reverb_control_decay;
   nsp->channel_style = osp->channel_style;
   nsp->sync = osp->sync;
-  nsp->search_tree = osp->search_tree;
-  osp->search_tree = NULL;
-  nsp->search_expr = osp->search_expr;
-  osp->search_expr = NULL;
-  nsp->search_proc = osp->search_proc;
-  if (XEN_BOUND_P(nsp->search_proc)) 
-    nsp->search_proc_loc = snd_protect(nsp->search_proc);
 }
 
 
@@ -2069,12 +2061,6 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
 	  cps[i]->cursor_proc = XEN_UNDEFINED;
 	  cps[i]->cursor_proc_loc = NOT_A_GC_LOC;
 	}
-    }
-  if (XEN_BOUND_P(osp->search_proc))
-    {
-      snd_unprotect_at(osp->search_proc_loc);
-      osp->search_proc_loc = NOT_A_GC_LOC;
-      osp->search_proc = XEN_UNDEFINED;
     }
 }
 

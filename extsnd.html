@@ -1256,6 +1256,20 @@ directory for them.
 <div class="spacer"></div>
 
 
+<!-- search-procedure -->
+<pre class="indented">
+<em class=def id="searchprocedure">search-procedure</em>
+</pre>
+
+<p>This is the search procedure used by the find dialog or C-s if none is otherwise specified.
+</p>
+
+<pre class="indented">
+(set! (<a class=quiet href="#searchprocedure" onmouseout="UnTip()" onmouseover="Tip(extsnd_searchprocedure_tip)">search-procedure</a>) (lambda (y) (&gt; y .1)))
+</pre>
+<div class="spacer"></div>
+
+
 <!-- selection-creates-region -->
 <pre class="indented">
 <em class=def id="selectioncreatesregion">selection-creates-region</em> (default: #t)
@@ -8340,7 +8354,7 @@ find a sound: <a href="extsnd.html#findsound">find-sound</a><br>
 Example find procedures: <a href="sndscm.html#searchforclick">search-for-click, zero+, next-peak, find-pitch</a><br>
 find in reverse: <a href="extsnd.html#findchannelinreverse">find-channel-in-reverse</a><br>
 Search via continuation: <a href="extsnd.html#scanagain">scan-again</a><br>
-Explicit access to search procedures: <a href="extsnd.html#searchprocedure">search-procedure</a><br>
+Default search procedure: <a href="extsnd.html#searchprocedure">search-procedure</a><br>
 The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="extsnd.html#finddialog">find-dialog</a><br>
 find silence: <a href="extsnd.html#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
@@ -10363,20 +10377,6 @@ into a previous call will not work.  That is,
 <p>Now <code>(my-scan-chan (lambda (y) (&gt; y .1)))</code> finds the first such sample, and
 subsequent (scan-again) calls continue the search where the last call left off.
 </p>
-<div class="separator"></div>
-
-
-<!-- search-procedure -->
-<pre class="indented">
-<em class=def id="searchprocedure">search-procedure</em> snd
-</pre>
-
-<p>This gives the current global or sound-local (if 'snd' is specified) search procedure.
-</p>
-
-<pre class="indented">
-(set! (<a class=quiet href="#searchprocedure" onmouseout="UnTip()" onmouseover="Tip(extsnd_searchprocedure_tip)">search-procedure</a>) (lambda (y) (&gt; y .1)))
-</pre>
 <div class="separator"></div>
 
 

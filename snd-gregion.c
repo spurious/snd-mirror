@@ -146,7 +146,7 @@ static void make_region_labels(file_info *hdr)
 }
 
 
-void update_region_browser(bool grf_too)
+int update_region_browser(bool grf_too)
 {
   int i, len;
   region_state *rs;
@@ -170,7 +170,7 @@ void update_region_browser(bool grf_too)
       gtk_widget_hide(region_rows[i]->rw);
 
   free_region_state(rs);
-  if (len == 0) return;
+  if (len == 0) return(0);
 
   gtk_widget_show(region_list);
   if (grf_too)
@@ -194,6 +194,7 @@ void update_region_browser(bool grf_too)
 	  region_update_graph(cp);
 	}
     }
+  return(len);
 }
 
 
@@ -248,13 +249,6 @@ void delete_region_and_update_browser(int pos)
       else set_current_region(-1);
       update_region_browser(true);
     }
-}
-
-
-static void region_unlist_callback(GtkWidget *w, gpointer context)
-{
-  if (current_region != -1)
-    delete_region_and_update_browser(current_region);
 }
 
 
@@ -370,12 +364,13 @@ static void region_edit_callback(GtkWidget *w, gpointer context)
     region_edit(current_region);
 }
 
-
+#if 0
 static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   g_signal_stop_emission((gpointer)w, g_signal_lookup("enter_notify_event", G_OBJECT_TYPE((gpointer)w)), 0);
   return(false);
 }
+#endif
 
 
 static XEN reflect_file_in_region_browser(XEN reason)
@@ -447,6 +442,7 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
   r->nm = gtk_button_new_with_label("");
   widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->white);
   widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->white);
+  gtk_button_set_relief(GTK_BUTTON(r->nm), GTK_RELIEF_HALF);
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
   add_white_button_style(r->nm);
@@ -462,15 +458,12 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
 }
 
 
-static GtkWidget *edit_button, *unlist_button;
-static GtkWidget *dismiss_button, *help_button;
-
 static void make_region_dialog(void)
 {
-  int i, id;
+  int i, id, rows;
   regrow *r;
   chan_info *cp;
-  GtkWidget *infobox, *labels, *labbox;
+  GtkWidget *infobox, *labels, *labbox, *edit_button, *dismiss_button, *help_button;
   GtkWidget *sep1, *cww, *toppane, *tophbox, *formw;
 #if WITH_AUDIO
   GtkWidget *plw;
@@ -497,6 +490,9 @@ static void make_region_dialog(void)
   mix_button = sg_button_new_from_stock_with_label("Mix", GTK_STOCK_ADD);
   gtk_widget_set_name(mix_button, "dialog_button");
 
+  edit_button = sg_button_new_from_stock_with_label("Edit", GTK_STOCK_EDIT);
+  gtk_widget_set_name(edit_button, "dialog_button");
+
   save_as_button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
   gtk_widget_set_name(save_as_button, "dialog_button");
 
@@ -506,10 +502,12 @@ static void make_region_dialog(void)
   add_highlight_button_style(insert_button);
   add_highlight_button_style(save_as_button);
   add_highlight_button_style(mix_button);
+  add_highlight_button_style(edit_button);
 #endif
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), insert_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), mix_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), edit_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), save_as_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), dismiss_button, true, true, 4);
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), help_button, true, true, 4);
@@ -519,17 +517,20 @@ static void make_region_dialog(void)
   SG_SIGNAL_CONNECT(help_button, "clicked", region_help_callback, NULL);
   SG_SIGNAL_CONNECT(dismiss_button, "clicked", region_ok_callback, NULL);
   SG_SIGNAL_CONNECT(save_as_button, "clicked", region_save_callback, NULL);
+  SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
 
   gtk_widget_show(insert_button);
   gtk_widget_show(mix_button);
   gtk_widget_show(help_button);
   gtk_widget_show(dismiss_button);
   gtk_widget_show(save_as_button);
+  gtk_widget_show(edit_button);
 
   region_grf = gtk_vpaned_new();
   add_paned_style(region_grf);
   gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(region_dialog)), region_grf, true, true, 0);
   gtk_widget_show(region_grf);
+
 
   toppane = gtk_hbox_new(false, 0);
   gtk_paned_add1(GTK_PANED(region_grf), toppane);
@@ -573,6 +574,10 @@ static void make_region_dialog(void)
   gtk_widget_show(region_list);
   gtk_widget_show(cww);
 
+  sep1 = gtk_hseparator_new();
+  gtk_box_pack_end(GTK_BOX(formw), sep1, false, false, 2);
+  gtk_widget_show(sep1);
+
 
   infobox = gtk_vbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(toppane), infobox, false, false, 2);
@@ -587,7 +592,8 @@ static void make_region_dialog(void)
       r->pos = i;
     }
 
-  update_region_browser(false);
+  rows = update_region_browser(false);
+  if (rows > 10) rows = 10;
 
   /* in Gtk, apparently, labels are just the text, not the background (i.e. they're transparent) */
   /* we need a button simply to get the background color, then a vbox to put four labels on the button */
@@ -595,11 +601,11 @@ static void make_region_dialog(void)
   /* if we turn off the relief, the colors go away */
   /* all I want is an opaque label with a background color */
 
-  labels = gtk_button_new();
+  labels = gtk_event_box_new();
   gtk_box_pack_start(GTK_BOX(infobox), labels, true, true, 2);
   gtk_widget_show(labels);
   widget_modify_bg(labels, GTK_STATE_NORMAL, ss->highlight_color);
-  SG_SIGNAL_CONNECT(labels, "enter_notify_event", region_labels_mouse_enter, NULL);
+  /* SG_SIGNAL_CONNECT(labels, "enter_notify_event", region_labels_mouse_enter, NULL); */
 
   labbox = gtk_vbox_new(true, 0);
   gtk_container_add(GTK_CONTAINER(labels), labbox);
@@ -650,24 +656,6 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(labbox), maxamp_text, false, false, 2);
   gtk_widget_show(maxamp_text);
 
-  edit_button = gtk_button_new_with_label("edit");
-#if HAVE_GTK_3
-  add_highlight_button_style(edit_button);
-#endif
-  SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
-  gtk_box_pack_start(GTK_BOX(infobox), edit_button, true, true, 2);
-  gtk_widget_show(edit_button);
-  widget_modify_bg(edit_button, GTK_STATE_NORMAL, ss->lighter_blue);
-
-  unlist_button = gtk_button_new_with_label("unlist");
-#if HAVE_GTK_3
-  add_highlight_button_style(unlist_button);
-#endif
-  SG_SIGNAL_CONNECT(unlist_button, "clicked", region_unlist_callback, NULL);
-  gtk_box_pack_start(GTK_BOX(infobox), unlist_button, true, true, 2);
-  gtk_widget_show(unlist_button);
-  widget_modify_bg(unlist_button, GTK_STATE_NORMAL, ss->lighter_blue);
-
   gtk_widget_show(region_dialog);
 
   id = region_list_position_to_id(0);
@@ -676,7 +664,8 @@ static void make_region_dialog(void)
   set_current_region(0);
   cp = rsp->chans[0];
 
-  gtk_paned_set_position(GTK_PANED(region_grf), 220);
+  gtk_paned_set_position(GTK_PANED(region_grf), (gint)floor(100 + rows * 14));
+
   SG_SIGNAL_CONNECT(channel_graph(cp), DRAW_SIGNAL, region_resize_callback, cp);
   SG_SIGNAL_CONNECT(channel_graph(cp), "configure_event", region_expose_callback, cp);
 

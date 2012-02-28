@@ -2124,7 +2124,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   nformats = fdat->formats;
 
   frame_box = gtk_vbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(parent), frame_box, false, false, 8);
+  gtk_box_pack_start(GTK_BOX(parent), frame_box, true, true, 8);
   gtk_widget_show(frame_box);
 
   form = gtk_hbox_new(true, 8);

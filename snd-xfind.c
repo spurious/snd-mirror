@@ -4,8 +4,8 @@ static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, previo
 static Widget find_error_frame = NULL, find_error_label = NULL;
 static chan_info *find_channel = NULL; /* sigh */
 
-static void clear_find_error(void);
 
+static void clear_find_error(void);
 static void edit_find_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   clear_find_error();
@@ -23,12 +23,23 @@ static void clear_find_error(void)
 }
 
 
-static void errors_to_find_text(const char *msg, void *data)
+void find_dialog_stop_label(bool show_stop)
+{
+  XmString s1;
+  if (show_stop)
+    s1 = XmStringCreateLocalized((char *)I_STOP);
+  else s1 = XmStringCreateLocalized((char *)I_GO_AWAY);
+  XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
+  XmStringFree(s1);
+}
+
+
+void errors_to_find_text(const char *msg, void *data)
 {
   Dimension find_height = 0;
   int lines = 0;
   XmString label;
-  set_find_dialog_label("error");
+  find_dialog_set_label("error");
   label = multi_line_label(msg, &lines);
   XtVaSetValues(find_error_label, 
 		XmNlabelString, label, 
@@ -48,7 +59,7 @@ static void errors_to_find_text(const char *msg, void *data)
 }
 
 
-static void stop_search_if_error(const char *msg, void *data)
+void stop_search_if_error(const char *msg, void *data)
 {
   errors_to_find_text(msg, data);
   ss->stopped_explicitly = true; /* should be noticed in global_search in snd-find.c */
@@ -63,78 +74,14 @@ static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info)
 
 static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointer context, XtPointer info)
 { 
-  /* "Find" is the label here if no info
-   */
-  char *str = NULL, *buf = NULL;
-  XmString s1;
-  XEN proc;
-
+  char *str;
   str = XmTextGetString(edit_find_text);
-  if ((str) && (*str))
-    { 
-      clear_global_search_procedure(true);
-      ss->search_expr = mus_strdup(str);
-
-      redirect_errors_to(errors_to_find_text, NULL);
-      proc = snd_catch_any(eval_str_wrapper, str, str);
-      redirect_errors_to(NULL, NULL);
-
-      if ((XEN_PROCEDURE_P(proc)) && (procedure_arity_ok(proc, 1)))
-	{
-	  ss->search_proc = proc;
-	  ss->search_proc_loc = snd_protect(proc);
-#if HAVE_SCHEME
-	  if (optimization(ss) > 0)
-	    ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
-#endif
-	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, str);
-	  set_label(edit_find_label, buf);
-	  /* XmTextSetString(edit_find_text, NULL); */
-	  free(buf);
-	}
-    }
-  else
-    {
-      if (ss->search_expr == NULL)
-	{
-	  char *temp = NULL;
-	  /* using global search_proc set by user */
-	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, temp = (char *)XEN_AS_STRING(ss->search_proc));
-#if HAVE_SCHEME
-	  if (temp) free(temp);
-#endif
-	  set_label(edit_find_label, buf);
-	  /* XmTextSetString(edit_find_text, NULL); */
-	  free(buf);
-	}
-    }
-
-  if (str) XtFree(str);
-
-  if ((XEN_PROCEDURE_P(ss->search_proc)) || 
-      (ss->search_tree))
-    {
-      s1 = XmStringCreateLocalized((char *)I_STOP);
-      XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
-      XmStringFree(s1);
-
-      redirect_xen_error_to(stop_search_if_error, NULL);
-      str = global_search(direction);
-      redirect_xen_error_to(NULL, NULL);
-
-      s1 = XmStringCreateLocalized((char *)I_GO_AWAY);
-      XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
-      XmStringFree(s1);
-
-      if ((str) && (*str)) 
-	set_label(edit_find_label, str);
-    }
-} 
+  find_dialog_find(str, direction, find_channel);
+  if (str) free(str);
+}
 
 
-void set_find_dialog_label(const char *str) 
+void find_dialog_set_label(const char *str) 
 {
   if (edit_find_label) 
     set_label(edit_find_label, str);
@@ -174,9 +121,6 @@ static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer inf
 static void make_edit_find_dialog(bool managed, chan_info *cp)
 {
   find_channel = cp;
-
-  /* TODO: local search if cp, also need direct search repeat if c-s again in graph
-   */
 
   if (!edit_find_dialog)
     {
@@ -305,14 +249,19 @@ void edit_find_callback(Widget w, XtPointer context, XtPointer info)
 
 void find_dialog(chan_info *cp)
 {
-  /* TODO: the assumption now is that if this is called with no change, repeat the search (i.e. it's C-s followed immediately by C-s) */
   make_edit_find_dialog(true, cp);
+}
+
+
+bool find_dialog_is_active(void)
+{
+  return((edit_find_dialog) && (XtIsManaged(edit_find_dialog)));
 }
 
 
 void save_find_dialog_state(FILE *fd)
 {
-  if ((edit_find_dialog) && (XtIsManaged(edit_find_dialog)))
+  if (find_dialog_is_active())
     {
       char *text = NULL;
       text = XmTextGetString(edit_find_text);

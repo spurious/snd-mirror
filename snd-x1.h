@@ -156,7 +156,7 @@ void g_init_gxdrop(void);
 
 /* -------- snd-xregion.c -------- */
 
-void update_region_browser(bool grf_too);
+int update_region_browser(bool grf_too);
 bool region_browser_is_active(void);
 void delete_region_and_update_browser(int n);
 void reflect_play_region_stop(int n);
@@ -209,8 +209,12 @@ void g_init_gxcolormaps(void);
 /* -------- snd-xfind.c -------- */
 
 void edit_find_callback(Widget w, XtPointer context, XtPointer info);
-void set_find_dialog_label(const char *str);
 void find_dialog(chan_info *cp);
+void find_dialog_set_label(const char *str);
+void stop_search_if_error(const char *msg, void *data);
+void errors_to_find_text(const char *msg, void *data);
+void find_dialog_stop_label(bool show_stop);
+bool find_dialog_is_active(void);
 void save_find_dialog_state(FILE *fd);
 void g_init_gxfind(void);
 

@@ -383,12 +383,9 @@ typedef struct snd_info {
   char *filename;
   char *short_filename;
   int nchans;
-  struct ptree *search_tree;
-  XEN search_proc;
   XEN properties;
-  int search_proc_loc, properties_loc;
+  int properties_loc;
   bool remembering;
-  char *search_expr;
   read_only_t user_read_only, file_read_only;
   chan_info **chans;
 
@@ -440,7 +437,6 @@ typedef struct snd_state {
   int channel_min_height;
   snd_info **sounds;
   char *search_expr, *startup_title, *startup_errors;
-  struct ptree *search_tree;
   XEN search_proc;
   int file_sorters_size, file_filters_size;
   XEN file_sorters, file_filters;
@@ -1772,11 +1768,7 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
 /* -------- snd-find.c -------- */
 
-char *global_search(read_direction_t direction);
-void cursor_search(chan_info *cp, int count);
-void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too);
-void clear_global_search_procedure(bool clear_expr_too);
-
+void find_dialog_find(char *str, read_direction_t direction, chan_info *cp);
 void g_init_find(void);
 
 

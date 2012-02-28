@@ -365,11 +365,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->selected_channel = NO_SELECTION;
   sp->playing = 0;
   sp->applying = false;
-  sp->search_expr = NULL;
   sp->lacp = NULL;
-  sp->search_tree = NULL;
-  sp->search_proc = XEN_UNDEFINED;
-  sp->search_proc_loc = NOT_A_GC_LOC;
   sp->delete_me = NULL;
   sp->name_string = NULL;
   sp->active = true;
@@ -421,7 +417,6 @@ void free_snd_info(snd_info *sp)
   sp->file_read_only = FILE_READ_WRITE;
   sp->need_update = false;
   sp->file_unreadable = false;
-  clear_sound_search_procedure(sp, true);
   if (XEN_VECTOR_P(sp->properties)) /* using vector as node for GC */
     XEN_VECTOR_SET(sp->properties, 0, XEN_EMPTY_LIST);
   sp->selected_channel = NO_SELECTION;

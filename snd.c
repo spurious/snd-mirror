@@ -452,7 +452,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   g_xen_initialize();
   ss->search_proc = XEN_UNDEFINED;
   ss->search_expr = NULL;
-  ss->search_tree = NULL;
   mus_error_set_handler(mus_error_to_snd);
   mus_print_set_handler(mus_print_to_snd);
 

@@ -657,6 +657,7 @@ static void mix_dialog_help_callback(GtkWidget *w, gpointer context)
 
 
 static GtkWidget *w_sync;
+#define LEFT_MARGIN 6
 
 GtkWidget *make_mix_dialog(void)
 {
@@ -885,21 +886,25 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_dB_row);	
 
       w_clip = gtk_check_button_new_with_label("clip");
+      widget_set_margin_left(w_clip, LEFT_MARGIN);
       SG_SIGNAL_CONNECT(w_clip, "toggled", mix_clip_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_clip, false, false, 0);
       gtk_widget_show(w_clip);
 
       w_wave = gtk_check_button_new_with_label("wave");
+      widget_set_margin_left(w_wave, LEFT_MARGIN);
       SG_SIGNAL_CONNECT(w_wave, "toggled", mix_wave_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_wave, false, false, 0);
       gtk_widget_show(w_wave);
 
       w_dB = gtk_check_button_new_with_label("dB");
+      widget_set_margin_left(w_dB, LEFT_MARGIN);
       SG_SIGNAL_CONNECT(w_dB, "toggled", mix_dB_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_dB, false, false, 0);
       gtk_widget_show(w_dB);
 
       w_sync = gtk_check_button_new_with_label("sync");
+      widget_set_margin_left(w_sync, LEFT_MARGIN);
       SG_SIGNAL_CONNECT(w_sync, "toggled", mix_sync_callback, NULL);
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_sync, false, false, 0);
       gtk_widget_show(w_sync);

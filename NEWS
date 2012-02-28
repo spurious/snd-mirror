@@ -25,6 +25,7 @@ Snd 12.9
           prompt for info are either undefined now, or use a dialog instead.
        removed minibuffer-history-length, prompt-in-minibuffer, clear-minibuffer,
           and report-in-minibuffer.  Replaced the latter two with status-report.
+       removed sound-specific search-procedures (i.e. there is only one search procedure)
 
 
 checked: clang 1.7, gmp 5.0.3, gtk 3.3.14|16

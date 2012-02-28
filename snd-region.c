@@ -403,7 +403,6 @@ static void make_region_readable(region *r)
   regsp = make_basic_snd_info(r->chans);
   regsp->nchans = r->chans;
   regsp->hdr = (file_info *)calloc(1, sizeof(file_info));
-  regsp->search_proc = XEN_UNDEFINED;
   regsp->inuse = SOUND_READER;
 
   hdr = regsp->hdr;

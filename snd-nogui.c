@@ -2,9 +2,9 @@
 #include "snd-menu.h"
 #include "snd-file.h"
 
+bool find_dialog_is_active(void) {return(false);}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
-void set_find_dialog_label(const char *str) {}
 void save_find_dialog_state(FILE *fd) {}
 void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
@@ -80,7 +80,7 @@ void set_transform_normalization(fft_normalize_t val) {}
 void set_show_selection_transform(bool show) {}
 void reflect_regions_in_region_browser(void) {}
 void reflect_no_regions_in_region_browser(void) {}
-void update_region_browser(bool grf_too) {}
+int update_region_browser(bool grf_too) {return(0);}
 bool region_browser_is_active(void) {return(false);}
 void delete_region_and_update_browser(int n) {}
 void reflect_play_region_stop(int n) {}

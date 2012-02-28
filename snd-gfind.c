@@ -1,18 +1,9 @@
 #include "snd.h"
 
-
 static GtkWidget *edit_find_dialog, *edit_find_text, *cancelB, *edit_find_label, *next_button, *previous_button;
-
 static GtkWidget *find_error_frame = NULL, *find_error_label = NULL;
-
-static void clear_find_error(void);
+static chan_info *find_channel = NULL;
 static gulong find_key_press_handler_id = 0;
-
-static gboolean find_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
-{
-  clear_find_error();
-  return(false);
-}
 
 
 static void clear_find_error(void)
@@ -27,15 +18,22 @@ static void clear_find_error(void)
 }
 
 
-static void errors_to_find_text(const char *msg, void *data)
+static gboolean find_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  set_label(find_error_label, msg);
+  clear_find_error();
+  return(false);
+}
+
+
+void errors_to_find_text(const char *msg, void *data)
+{
+  find_dialog_set_label(msg);
   gtk_widget_show(find_error_frame);
   find_key_press_handler_id = SG_SIGNAL_CONNECT(edit_find_text, "key_press_event", find_modify_key_press, NULL);
 }
 
 
-static void stop_search_if_error(const char *msg, void *data)
+void stop_search_if_error(const char *msg, void *data)
 {
   errors_to_find_text(msg, data);
   ss->stopped_explicitly = true; /* should be noticed in global_search in snd-find.c */
@@ -69,59 +67,20 @@ static void edit_find_help(GtkWidget *w, gpointer context)
 
 
 static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer context) 
-{ /* "Find" is the label here */
-  char *str, *buf = NULL;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(edit_find_text));
-  if ((str) && (*str))
-    {
-      XEN proc;
-      clear_global_search_procedure(true);
-      ss->search_expr = mus_strdup(str);
-      redirect_errors_to(errors_to_find_text, NULL);
-      proc = snd_catch_any(eval_str_wrapper, str, str);
-      redirect_errors_to(NULL, NULL);
-      if ((XEN_PROCEDURE_P(proc)) && (procedure_arity_ok(proc, 1)))
-	{
-	  ss->search_proc = proc;
-	  ss->search_proc_loc = snd_protect(proc);
-#if HAVE_SCHEME
-	  if (optimization(ss) > 0)
-	    ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
-#endif
-	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, str);
-	  set_label(edit_find_label, buf);
-	  free(buf);
-	}
-    }
-  else
-    {
-      if (ss->search_expr == NULL)
-	{
-	  char *temp = NULL;
-	  /* using global search_proc set by user */
-	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, temp = (char *)XEN_AS_STRING(ss->search_proc));
-#if HAVE_SCHEME
-	  if (temp) free(temp);
-#endif
-	  set_label(edit_find_label, buf);
-	  free(buf);
-	}
-    }
-  if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
-    {
-      set_stock_button_label(cancelB, I_STOP);
-      redirect_xen_error_to(stop_search_if_error, NULL);
-      str = global_search(direction);
-      redirect_xen_error_to(NULL, NULL);
-      set_stock_button_label(cancelB, I_GO_AWAY);
-      if ((str) && (*str)) set_label(edit_find_label, str);
-    }
-} 
+{
+  find_dialog_find((char *)gtk_entry_get_text(GTK_ENTRY(edit_find_text)), direction, find_channel);
+}
 
 
-void set_find_dialog_label(const char *str) 
+void find_dialog_stop_label(bool show_stop)
+{
+  if (show_stop)
+    set_stock_button_label(cancelB, I_STOP);
+  else set_stock_button_label(cancelB, I_GO_AWAY); 
+}
+
+
+void find_dialog_set_label(const char *str) 
 {
   if (edit_find_label) 
     set_label(edit_find_label, str);
@@ -235,9 +194,15 @@ void find_dialog(chan_info *cp)
 }
 
 
+bool find_dialog_is_active(void)
+{
+  return((edit_find_dialog) && (widget_is_active(edit_find_dialog)));
+}
+
+
 void save_find_dialog_state(FILE *fd)
 {
-  if ((edit_find_dialog) && (widget_is_active(edit_find_dialog)))
+  if (find_dialog_is_active())
     {
       char *text = NULL;
       text = sg_get_text(edit_find_text, 0, -1);

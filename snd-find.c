@@ -1,537 +1,6 @@
 #include "snd.h"
 
-static bool search_in_progress = false;
-
-typedef struct 
-{
-  int n; 
-  read_direction_t direction; 
-  int chans; 
-  mus_long_t inc, dur; 
-  chan_info **cps; 
-  snd_fd **fds;
-} gfd;
-
-#define MANY_PASSES 10000
-
-
-static void prepare_global_search(chan_info *cp, void *g0)
-{
-  gfd *g = (gfd *)g0;
-  mus_long_t this_dur;
-  read_direction_t direction;
-  direction = g->direction;
-  g->cps[g->n] = cp;
-  if (direction == READ_FORWARD)
-    {
-      g->fds[g->n] = init_sample_read(CURSOR(cp) + 1, cp, direction);
-      this_dur = CURRENT_SAMPLES(cp) - CURSOR(cp);
-    }
-  else
-    {
-      g->fds[g->n] = init_sample_read(CURSOR(cp) - 1, cp, direction);
-      this_dur = CURSOR(cp);
-    }
-  if (this_dur > g->dur) g->dur = this_dur;
-  if (g->fds[g->n] != NULL) g->n++;
-}
-
-
-#define KEEP_SEARCHING false
-#define STOP_SEARCHING true
-
-static bool run_global_search(gfd *g)
-{
-  if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
-    {
-      int i, j, k;
-      for (i = 0; i < g->chans; i++)
-	{
-	  if (g->cps[i])
-	    {
-	      mus_float_t samp;
-	      XEN res;
-	      snd_fd *sf;
-	      if (!((g->cps[i])->sound)) return(STOP_SEARCHING);
-	      sf = g->fds[i]; 
-	      samp = read_sample(sf);
-	      if (ss->search_tree)
-		{
-		  if (mus_run_evaluate_ptree_1f2b(ss->search_tree, samp))
-		    {
-		      g->n = i;
-		      return(STOP_SEARCHING);
-		    }
-		}
-	      else
-		{
-		  res = XEN_CALL_1(ss->search_proc,
-				   C_TO_XEN_DOUBLE((double)(samp)), 
-				   "global search func");
-		  if (ss->stopped_explicitly)
-		    return(STOP_SEARCHING);
-		  if (XEN_TRUE_P(res))
-		    {
-		      g->n = i;
-		      return(STOP_SEARCHING);
-		    }
-		  else
-		    {
-		      if (XEN_INTEGER_P(res))
-			{
-			  g->n = i; /* channel number */
-			  if (g->direction == READ_FORWARD)
-			    g->inc += XEN_TO_C_INT(res);
-			  else g->inc -= XEN_TO_C_INT(res);
-			  return(STOP_SEARCHING);
-			}
-		    }
-		}
-	      if (sf->at_eof)
-		{
-		  sf = free_snd_fd(sf);
-		  g->fds[i] = NULL;
-		  g->cps[i] = NULL;
-		  k = 0;
-		  for (j = 0; j < g->chans; j++) 
-		    if (g->cps[i]) 
-		      {
-			k = 1;
-			break;
-		      }
-		  if (k == 0) /* all at eof */
-		    {
-		      g->n = -1;
-		      return(STOP_SEARCHING);
-		    }
-		}
-	    }
-	}
-    }
-  g->inc++;
-  return(KEEP_SEARCHING);
-}
-
-
-static char search_message[PRINT_BUFFER_SIZE];
-
-char *global_search(read_direction_t direction)
-{
-  /* set up snd_fd for each active channel, 
-   * tick each one forward until a match is found, 
-   * update cursor/graph and report success (if any) in associated info window
-   * subsequent runs (if no new text) repeat the search from the current locations
-   */
-  int chans, i, passes = 0, report_passes = 0;
-  bool reporting = false;
-  gfd *fd;
-  chan_info *cp;
-  if (search_in_progress) 
-    {
-      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s", "search in progress");
-      return(search_message);
-    }
-
-  /* here and elsewhere when a new search is begun, even if using the previous search expression, the
-   *   expression needs to be re-evaluated, since otherwise in a search like:
-   *   (define (zero+)
-   *     (let ((lastn 0.0))
-   *       (lambda (n)
-   *         (let ((rtn (and (< lastn 0.0)
-   *                         (>= n 0.0)
-   *                         -1)))
-   *           (set! lastn n)
-   *           rtn))))
-   *   the notion of the previous sample will never be cleared.
-   * But we do know that the expression is ok otherwise.
-   * (This causes one redundant evaluation the first time around)
-   *    perhaps its should save the form, and evaluate that?
-   */
-  if (ss->search_tree == NULL)
-    {
-      if (ss->search_expr)
-	{
-	  /* search_expr can be null if user set search_proc directly */
-	  clear_global_search_procedure(false);
-	  ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
-	  ss->search_proc_loc = snd_protect(ss->search_proc);
-	}
-    }
-  search_in_progress = true;
-  chans = active_channels(WITH_VIRTUAL_CHANNELS);
-  search_message[0] = '\0';
-  if (chans > 0)
-    {
-      fd = (gfd *)calloc(1, sizeof(gfd));
-      fd->n = 0;
-      fd->inc = 1;
-      fd->direction = direction;
-      fd->dur = 0;
-      fd->chans = chans;
-      fd->fds = (snd_fd **)calloc(chans, sizeof(snd_fd *));
-      fd->cps = (chan_info **)calloc(chans, sizeof(chan_info *));
-      for_each_normal_chan_with_void(prepare_global_search, (void *)fd);
-      fd->n = -1;
-      ss->stopped_explicitly = false;
-      reporting = (fd->dur >= (REPORTING_SIZE * 10));
-      if (reporting) set_find_dialog_label("0%");
-      while (run_global_search(fd) == KEEP_SEARCHING)
-	{
-	  passes++;
-	  if (passes >= MANY_PASSES)
-	    {
-	      check_for_event();
-	      passes = 0;
-	      fd->n = -1;
-	      if (reporting)
-		{
-		  report_passes += MANY_PASSES;
-		  if (report_passes > REPORTING_SIZE)
-		    {
-		      char buf[8];
-		      mus_snprintf(buf, 8, "%d%%", (int)(100 * (double)(fd->inc) / (double)(fd->dur)));
-		      set_find_dialog_label(buf);
-		      report_passes = 0;
-		    }
-		}
-	    }
-	  if (ss->stopped_explicitly) break;
-	}
-      if (ss->stopped_explicitly)
-	mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s", "search stopped");
-      else
-	{
-	  if (fd->n == -1)
-	    mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s: not found", ss->search_expr);
-	  else
-	    {
-	      /* fd->n is winner, fd->inc is how far forward we searched from current cursor loc */
-	      cp = fd->cps[fd->n];
-	      set_find_dialog_label("");
-	      cp->cursor_on = true;
-	      if (direction == READ_FORWARD)
-		cursor_move(cp, fd->inc);
-	      else cursor_move(cp, -fd->inc);
-	      /* now in its own info window show find state, and update graph if needed */
-	      show_cursor_info(cp);
-	      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "found at %lld", CURSOR(cp));
-	    }
-	}
-      ss->stopped_explicitly = false;
-      for (i = 0; i < chans; i++) 
-	free_snd_fd(fd->fds[i]);
-      free(fd->fds);
-      free(fd->cps);
-      free(fd);
-    }
-  search_in_progress = false;
-  return(search_message);
-}
-
-
-#define REPORT_TICKS 10
-#define TREE_REPORT_TICKS 100
-
-static bool find_eval_error_p = false;
-
-static void send_find_errors_to_status_area(const char *msg, void *data)
-{
-  find_eval_error_p = true;
-  status_report((snd_info *)data, msg);
-  ss->stopped_explicitly = true;
-}
-
-
-static mus_long_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
-{
-  int passes = 0, tick = 0;
-  mus_long_t i = 0, end, start;
-  snd_fd *sf = NULL;
-  XEN res = XEN_FALSE;
-  bool progress_displayed = false;
-  if (search_in_progress) 
-    {
-      status_report(sp, "search already in progress");
-      return(-1);
-    }
-  search_in_progress = true;
-  if (cp->last_search_result == SEARCH_OK)
-    start = CURSOR(cp) + 1;
-  else start = 0;
-  sf = init_sample_read(start, cp, READ_FORWARD);
-  if (!sf)
-    {
-      search_in_progress = false;
-      return(-1);
-    }
-  end = CURRENT_SAMPLES(cp);
-  ss->stopped_explicitly = false;
-  if (sp->search_tree)
-    {
-
-      for (i = start; i < end; i++, tick++)
-	{
-	  if (mus_run_evaluate_ptree_1f2b(sp->search_tree, read_sample(sf)))
-	    {
-	      count--; 
-	      if (count == 0) break;
-	    }
-	  else
-	    {
-	      if (tick > (MANY_PASSES * TREE_REPORT_TICKS))
-		{
-		  char *msg;
-		  check_for_event();
-		  if (ss->stopped_explicitly) break;
-		  tick = 0;
-		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
-		  status_report(sp, msg);
-		  free(msg);
-		  progress_displayed = true;
-		}
-	    }
-	}
-    }
-  else
-    {
-      for (i = start, passes = 0; i < end; i++, passes++)
-	{
-	  res = XEN_CALL_1(sp->search_proc, 
-			   C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
-			   "local search func");
-	  if (XEN_NOT_FALSE_P(res)) 
-	    {
-	      count--; 
-	      if (count == 0) break;
-	    }
-	  if (passes >= MANY_PASSES)
-	    {
-	      check_for_event();
-	      tick++;
-	      if ((tick > REPORT_TICKS) && (!(ss->stopped_explicitly)))
-		{
-		  char *msg;
-		  tick = 0;
-		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
-		  status_report(sp, msg);
-		  free(msg);
-		  progress_displayed = true;
-		}
-	      /* if user types C-s during an active search, we risk stomping on our current pointers */
-	      if (!(sp->active)) break;
-	      passes = 0;
-	    }
-	  if (ss->stopped_explicitly) break;
-	}
-    }
-  ss->stopped_explicitly = false;
-  if ((progress_displayed) &&
-      (!find_eval_error_p))
-    clear_status_area(sp);
-  free_snd_fd(sf);
-  search_in_progress = false;
-  if (count != 0) return(-1); /* impossible sample number, so => failure */
-  if (XEN_INTEGER_P(res))
-    return(i + XEN_TO_C_INT(res));
-  return(i);
-}
-
-
-static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
-{
-  mus_long_t i = 0, start, tick = 0;
-  int passes = 0;
-  snd_fd *sf = NULL;
-  XEN res = XEN_FALSE;
-  bool progress_displayed = false;
-  if (search_in_progress) 
-    {
-      status_report(sp, "search already in progress");
-      return(-1);
-    }
-  search_in_progress = true;
-  if (cp->last_search_result == SEARCH_OK)
-    start = CURSOR(cp) - 1;
-  else start = CURRENT_SAMPLES(cp) - 1;
-  sf = init_sample_read(start, cp, READ_BACKWARD);
-  if (!sf)
-    {
-      search_in_progress = false;
-      return(-1);
-    }
-  ss->stopped_explicitly = false;
-  if (sp->search_tree)
-    {
-      for (i = start; i >= 0; i--, tick++)
-	{
-	  if (mus_run_evaluate_ptree_1f2b(sp->search_tree, read_sample(sf)))
-	    {
-	      count--; 
-	      if (count == 0) break;
-	    }
-	  else
-	    {
-	      if (tick > (MANY_PASSES * TREE_REPORT_TICKS))
-		{
-		  char *msg;
-		  check_for_event();
-		  if (ss->stopped_explicitly) break;
-		  tick = 0;
-		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
-		  status_report(sp, msg);
-		  free(msg);
-		  progress_displayed = true;
-		}
-	    }
-	}
-    }
-  else
-    {
-      for (i = start, passes = 0; i >= 0; i--, passes++)
-	{
-	  /* sp search proc as ptree */
-	  res = XEN_CALL_1(sp->search_proc, 
-			   C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
-			   "local search func");
-	  if (XEN_NOT_FALSE_P(res)) 
-	    {
-	      count--; 
-	      if (count == 0) break;
-	    }
-	  if (passes >= MANY_PASSES)
-	    {
-	      check_for_event();
-	      /* if user types C-s during an active search, we risk stomping on our current pointers */
-	      tick++;
-	      if (tick > REPORT_TICKS)
-		{
-		  char *msg;
-		  tick = 0;
-		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
-		  status_report(sp, msg);
-		  free(msg);
-		  progress_displayed = true;
-		}
-	      if (!(sp->active)) break;
-	      passes = 0;
-	    }
-	  if (ss->stopped_explicitly) break;
-	}
-    }
-  ss->stopped_explicitly = false;
-  if ((progress_displayed) &&
-      (!find_eval_error_p))
-    clear_status_area(sp);
-  free_snd_fd(sf);
-  search_in_progress = false;
-  if (count != 0) return(-1); /* impossible sample number, so => failure */
-  if (XEN_INTEGER_P(res))
-    return(i - XEN_TO_C_INT(res));
-  return(i);
-}
-
-
-void cursor_search(chan_info *cp, int count)
-{
-  snd_info *sp;
-  sp = cp->sound;
-  if (search_in_progress) 
-    status_report(sp, "search already in progress");
-  else
-    {
-      mus_long_t samp;
-      if ((!(XEN_PROCEDURE_P(sp->search_proc))) && 
-	  (sp->search_tree == NULL)) 
-	{
-	  /* I decided not to check for a global search procedure; it's much harder
-	   *   to implement than it looks, and I'm not sure it would "do the right thing"
-	   *   anyway, if say the user types c-g to clear the current to ask for the next --
-	   *   a fall-back then would be annoying.  And then, in the global searcher (edit:find)
-	   *   to be consistent wouldn't we need a check for a local searcher?
-	   *
-	   * perhaps the right thing is to remove these procedures altogether
-	   */
-	  return; /* no search expr */
-	}
-      if (sp->search_expr)
-	{
-	  /* see note above about closures */
-	  clear_sound_search_procedure(sp, false);
-#if HAVE_SCHEME
-	  if (optimization(ss) > 0)
-	    sp->search_tree = mus_run_form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
-#endif
-	  if (sp->search_tree == NULL)
-	    {
-	      redirect_errors_to(errors_to_status_area, (void *)sp);
-	      sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
-	      redirect_errors_to(NULL, NULL);
-	      if (XEN_PROCEDURE_P(sp->search_proc))
-		sp->search_proc_loc = snd_protect(sp->search_proc);
-	      else return;
-	    }
-	}
-      redirect_errors_to(send_find_errors_to_status_area, (void *)sp);
-      if (count > 0)
-	samp = cursor_find_forward(sp, cp, count);
-      else samp = cursor_find_backward(sp, cp, -count);
-      redirect_errors_to(NULL, NULL);
-      if (find_eval_error_p)
-	{
-	  find_eval_error_p = false;
-	}
-      else
-	{
-	  if (samp == -1) 
-	    { 
-	      char *msg;
-	      msg = mus_format("not found%s", 
-			       (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
-	      status_report(sp, msg);
-	      free(msg);
-	      cp->last_search_result = SEARCH_FAILED;
-	    }
-	  else
-	    {
-	      char *s1, *s2, *msg;
-	      s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
-	      s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp));
-	      msg = mus_format("%s at %s (%lld)", s1, s2, samp);
-	      status_report(sp, msg);
-	      free(s1);
-	      free(s2);
-	      free(msg);
-	      cp->last_search_result = SEARCH_OK;
-	      cursor_moveto_without_verbosity(cp, samp);
-	    }
-	}
-      
-    }
-}
-
-
-void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too)
-{
-  if (XEN_PROCEDURE_P(sp->search_proc)) 
-    {
-      snd_unprotect_at(sp->search_proc_loc);
-      sp->search_proc_loc = NOT_A_GC_LOC;
-    }
-  sp->search_proc = XEN_UNDEFINED;
-  if (clear_expr_too)
-    {
-      if (sp->search_expr) free(sp->search_expr);
-      sp->search_expr = NULL;
-    }
-  if (sp->search_tree)
-    {
-      mus_run_free_ptree(sp->search_tree);
-      sp->search_tree = NULL;
-    }
-}
-
-
-void clear_global_search_procedure(bool clear_expr_too)
+static void clear_search_state(void)
 {
   if (XEN_PROCEDURE_P(ss->search_proc)) 
     {
@@ -539,110 +8,310 @@ void clear_global_search_procedure(bool clear_expr_too)
       ss->search_proc_loc = NOT_A_GC_LOC;
     }
   ss->search_proc = XEN_UNDEFINED;
-  if (clear_expr_too)
-    {
-      if (ss->search_expr) free(ss->search_expr);
-      ss->search_expr = NULL;
-    }
-  if (ss->search_tree) 
-    {
-      mus_run_free_ptree(ss->search_tree);
-      ss->search_tree = NULL;
-    }
+
+  if (ss->search_expr) free(ss->search_expr);
+  ss->search_expr = NULL;
 }
 
 
-static XEN g_search_procedure(XEN snd)
+#if (!USE_NO_GUI)
+
+static void find_report(chan_info *cp, const char *msg)
 {
-  #define H_search_procedure "(" S_search_procedure " :optional snd): global (if no 'snd' specified) or sound-local search function"
-  if (XEN_BOUND_P(snd))
+  if (cp)
+    status_report(cp->sound, msg);
+  find_dialog_set_label(msg);
+}
+
+
+static bool search_in_progress = false;
+static chan_info *previous_channel = NULL;
+#define MANY_PASSES 100000
+
+
+static mus_long_t channel_find_forward(chan_info *cp, bool repeating)
+{
+  bool reported = false;
+  mus_long_t i, end, start, passes;
+  snd_fd *sf = NULL;
+  XEN res = XEN_FALSE;
+
+  end = CURRENT_SAMPLES(cp);
+  start = CURSOR(cp) + 1;
+  if (start >= end)
+    start = 0;
+
+  sf = init_sample_read(start, cp, READ_FORWARD);
+  if (!sf)
+    return(-1);
+
+  ss->stopped_explicitly = false;
+  for (i = start, passes = 0; i < end; i++, passes++)
     {
-      snd_info *sp;
-
-      ASSERT_SOUND(S_search_procedure, snd, 1);
-
-      sp = get_sp(snd);
-      if (sp)
-	return(sp->search_proc);
-      else return(XEN_FALSE);
+      res = XEN_CALL_1(ss->search_proc, 
+		       C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
+		       "search function");
+      if (XEN_NOT_FALSE_P(res)) 
+	break;
+      if (passes >= MANY_PASSES)
+	{
+	  passes = 0;
+	  check_for_event();
+	  if (!(ss->stopped_explicitly))
+	    {
+	      char *msg;
+	      msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(cp->sound) * 60)));
+	      find_report(cp, msg);
+	      free(msg);
+	      reported = true;
+	    }
+	  /* if user types C-s during an active search, we risk stomping on our current pointers */
+	  if (!(cp->sound->active)) break;
+	}
+      if (ss->stopped_explicitly) break;
     }
 
+  ss->stopped_explicitly = false;
+  if (reported) find_report(cp, NULL);
+  free_snd_fd(sf);
+
+  if (i < end)
+    return(i);
+  return(-1);
+}
+
+
+static mus_long_t channel_find_backward(chan_info *cp, bool repeating)
+{
+  bool reported = false;
+  mus_long_t i, start, passes;
+  snd_fd *sf = NULL;
+  XEN res = XEN_FALSE;
+
+  start = CURSOR(cp) - 1;
+  if (start < 0)
+    start = CURRENT_SAMPLES(cp) - 1;
+
+  sf = init_sample_read(start, cp, READ_BACKWARD);
+  if (!sf)
+    return(-1);
+
+  ss->stopped_explicitly = false;
+  for (i = start, passes = 0; i >= 0; i--, passes++)
+    {
+      res = XEN_CALL_1(ss->search_proc, 
+		       C_TO_XEN_DOUBLE((double)(read_sample(sf))), 
+		       "search function");
+      if (XEN_NOT_FALSE_P(res)) 
+	break;
+      if (passes >= MANY_PASSES)
+	{
+	  passes = 0;
+	  check_for_event();
+	  if (!(ss->stopped_explicitly))
+	    {
+	      char *msg;
+	      msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(cp->sound) * 60)));
+	      find_report(cp, msg);
+	      free(msg);
+	      reported = true;
+	    }
+	  /* if user types C-s during an active search, we risk stomping on our current pointers */
+	  if (!(cp->sound->active)) break;
+	}
+      if (ss->stopped_explicitly) break;
+    }
+
+  ss->stopped_explicitly = false;
+  if (reported) find_report(cp, NULL);
+  free_snd_fd(sf);
+
+  if (i >= 0)
+    return(i);
+  return(-1);
+}
+
+
+static char *channel_search(chan_info *cp, read_direction_t direction, bool repeating)
+{
+  mus_long_t samp;
+  char *s1, *s2, *msg;
+
+  if (direction == READ_FORWARD)
+    samp = channel_find_forward(cp, repeating);
+  else samp = channel_find_backward(cp, repeating);
+  
+  previous_channel = cp;
+
+  if (samp == -1)
+    return(NULL);
+
+  s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
+  s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(cp->sound));
+  msg = mus_format("%s at %s (%lld)", s1, s2, samp);
+  cursor_moveto_without_verbosity(cp, samp);
+  free(s1);
+  free(s2);
+
+  return(msg);
+}
+
+
+static char *global_search(read_direction_t direction, bool repeating)
+{
+  int i, j;
+
+  if ((repeating) &&
+      ((!previous_channel) ||
+       (!(previous_channel->sound)) ||
+       (!(previous_channel->sound->active))))
+    repeating = false;
+       
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      chan_info *cp;
+
+      sp = ss->sounds[i];
+      if ((sp) &&
+	  (sp->inuse == SOUND_NORMAL))
+	for (j = 0; j < sp->nchans; j++)
+	  {
+	    cp = (chan_info *)(sp->chans[j]);
+	    if ((!repeating) ||
+		(cp == previous_channel))
+	      {
+		char *msg;
+		repeating = false; /* after we find the channel, look at everything */
+		msg = channel_search(cp, direction, repeating);
+		if (msg)
+		  return(msg);
+	      }
+	  }
+    }
+  return(NULL);
+}
+
+
+void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
+{
+  XEN proc;
+  bool repeating_search = false;
+
+  if (search_in_progress) 
+    {
+      find_report(cp, "search already in progress");
+      return;
+    }
+
+  proc = XEN_FALSE;
+
+  /* str can be null, or equal to the previous call's str -- in this case use
+   *   the current search procedure if possible, else complain.
+   * if str not null, make a new (local?) search-procedure
+   */
+
+  if ((!str) || 
+      (!(*str)) ||
+      (mus_strcmp(str, ss->search_expr)))
+    {
+      proc = ss->search_proc;
+      if (!(XEN_PROCEDURE_P(proc)))
+	return;
+      repeating_search = true;
+    }
+  else
+    {
+      char *buf = NULL;
+
+      redirect_errors_to(errors_to_find_text, NULL);
+      proc = snd_catch_any(eval_str_wrapper, str, str);
+      redirect_errors_to(NULL, NULL);
+
+      if ((!(XEN_PROCEDURE_P(proc))) ||
+	  (!(procedure_arity_ok(proc, 1))))
+	return;
+
+      clear_search_state(); /* free previous, if any */
+      repeating_search = false;
+
+      ss->search_proc = proc;
+      ss->search_expr = mus_strdup(str);
+      ss->search_proc_loc = snd_protect(proc);
+
+      buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(buf, PRINT_BUFFER_SIZE, "%s %s", I_find, str);
+      find_dialog_set_label(buf);
+      free(buf);
+    }
+
+  /* now we have a search procedure, possibly optimized */
+
+  search_in_progress = true;
+  find_dialog_stop_label(true);
+  redirect_xen_error_to(stop_search_if_error, NULL);
+  if (cp)
+    str = channel_search(cp, direction, repeating_search);
+  else str = global_search(direction, repeating_search);
+  redirect_xen_error_to(NULL, NULL);
+  find_dialog_stop_label(false);
+  search_in_progress = false;
+
+  if ((str) && (*str)) 
+    {
+      find_report(cp, str);
+      free(str);
+    }
+  else find_report(cp, "not found");
+}
+
+#endif
+/* end no gui */
+
+
+
+/* -------------------------------------------------------------------------------- */
+
+static XEN g_search_procedure(void)
+{
+  #define H_search_procedure "(" S_search_procedure "): the function used by the find dialog or C-s if none is otherwise specified."
   return(ss->search_proc);
 }
 
 
-static XEN g_set_search_procedure(XEN snd, XEN proc)
+static XEN g_set_search_procedure(XEN proc)
 {
-  snd_info *sp;
   char *error = NULL;
   XEN errstr;
+
   /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> as "proc" */
   /*   why is this different from ptree-channel's proc arg? */
+  
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) || XEN_FALSE_P(proc), proc, XEN_ONLY_ARG, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
 
-  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd)) /* could be the proc arg if no snd */
+  error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);
+  if (!error)
     {
-      ASSERT_SOUND(S_setB S_search_procedure, snd, 1);
-      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) || XEN_FALSE_P(proc), proc, XEN_ARG_1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
-
-      sp = get_sp(snd);
-      if (sp)
+      clear_search_state();
+      if (XEN_PROCEDURE_P(proc))
 	{
-	  error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);
-	  if (error == NULL)
-	    {
-	      clear_sound_search_procedure(sp, true);
-	      if (XEN_PROCEDURE_P(proc))
-		{
-		  sp->search_proc = proc;
-		  sp->search_proc_loc = snd_protect(proc);
-#if HAVE_SCHEME
-		  if (optimization(ss) > 0)
-		    sp->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
-#endif
-		}
-	      return(proc);
-	    }
-	  else 
-	    {
-	      errstr = C_TO_XEN_STRING(error);
-	      free(error);
-	      return(snd_bad_arity_error(S_setB S_search_procedure, errstr, proc));
-	    }
+	  ss->search_proc = proc;
+	  ss->search_proc_loc = snd_protect(proc);
 	}
-      else
-	return(snd_no_such_sound_error(S_setB S_search_procedure, snd));
     }
   else 
     {
-      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(snd) || XEN_FALSE_P(snd), snd, XEN_ARG_1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
-      error = procedure_ok(snd, 1, S_setB S_search_procedure, "proc", 1);
-      if (error == NULL)
-	{
-	  clear_global_search_procedure(true);
-	  if (XEN_PROCEDURE_P(snd))
-	    {
-	      ss->search_proc = snd;
-	      ss->search_proc_loc = snd_protect(snd);
-#if HAVE_SCHEME
-	      if (optimization(ss) > 0)
-		ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(snd));
-#endif
-	    }
-	}
-      else 
-	{
-	  errstr = C_TO_XEN_STRING(error);
-	  free(error);
-	  return(snd_bad_arity_error(S_setB S_search_procedure, errstr, snd));
-	}
+      errstr = C_TO_XEN_STRING(error);
+      free(error);
+      return(snd_bad_arity_error(S_setB S_search_procedure, errstr, proc));
     }
-  return(snd);
+  return(proc);
 }
 
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_1(g_search_procedure_w, g_search_procedure)
-XEN_ARGIFY_2(g_set_search_procedure_w, g_set_search_procedure)
+XEN_NARGIFY_0(g_search_procedure_w, g_search_procedure)
+XEN_NARGIFY_1(g_set_search_procedure_w, g_set_search_procedure)
 #else
 #define g_search_procedure_w g_search_procedure
 #define g_set_search_procedure_w g_set_search_procedure
@@ -651,5 +320,5 @@ XEN_ARGIFY_2(g_set_search_procedure_w, g_set_search_procedure)
 void g_init_find(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_search_procedure, g_search_procedure_w, H_search_procedure,
-				   S_setB S_search_procedure, g_set_search_procedure_w,  0, 1, 1, 1);
+				   S_setB S_search_procedure, g_set_search_procedure_w,  0, 0, 1, 0);
 }
