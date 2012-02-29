@@ -232,7 +232,6 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
 typedef enum {READ_FORWARD, READ_BACKWARD} read_direction_t;
 typedef enum {TRACK_IF_ASKED, ALWAYS_TRACK} tracking_cursor_t;
 typedef enum {DONT_UPDATE_DISPLAY, UPDATE_DISPLAY} cut_selection_regraph_t;
-typedef enum {SEARCH_OK, SEARCH_FAILED} search_result_t;
 typedef enum {IGNORE_CACHE, REMOVE_FROM_CACHE} cache_remove_t;
 typedef enum {FFT_UNCHANGED, FFT_CHANGED, FFT_CHANGE_LOCKED} fft_change_t;
 typedef enum {WITHOUT_GRAPH, WITH_GRAPH, WITHOUT_INITIAL_GRAPH_HOOK} channel_graph_t;

@@ -80,6 +80,7 @@ void clear_listener(void);
 void set_listener_text_font(void);
 void g_init_gxlistener(void);
 GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t with_white_background);
+GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size);
 bool highlight_unbalanced_paren(void);
 void connect_mouse_to_text(GtkWidget *text);
 
@@ -299,6 +300,7 @@ color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
   GdkColor *rgb_to_gdk_color(color_t col);
 #endif
 void add_highlight_button_style(GtkWidget *w);
+void add_center_button_style(GtkWidget *w);
 void add_toolbar_style(GtkWidget *w);
 void add_menu_style(GtkWidget *w);
 void add_paned_style(GtkWidget *w);

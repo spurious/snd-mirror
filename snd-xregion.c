@@ -678,8 +678,10 @@ static void make_region_dialog(void)
   /* channel_f is up arrow, channel_w is down arrow */
   XtAddCallback(channel_f(cp), XmNactivateCallback, region_up_arrow_callback, NULL);
   XtAddCallback(channel_w(cp), XmNactivateCallback, region_down_arrow_callback, NULL);
+
   set_sensitive(channel_f(cp), false);
-  if (region_chans(region_list_position_to_id(0)) > 1) set_sensitive(channel_w(cp), true);
+  set_sensitive(channel_w(cp), (region_chans(region_list_position_to_id(0)) > 1));
+
   cp->chan = 0;
   rsp->hdr = fixup_region_data(cp, 0, 0);
   make_region_labels(rsp->hdr);

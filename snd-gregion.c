@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: in gtk3, all the backgrounds are gray
- */
-
 /* -------- region browser -------- */
 
 typedef struct {
@@ -458,6 +455,48 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
 }
 
 
+static bool query_callback(GtkTooltip *tooltip, const char *which)
+{
+  snd_info *sp;
+  char *tip;
+  chan_info *cp;
+
+  sp = any_selected_sound();
+  if (sp)
+    {
+      cp = any_selected_channel(sp);
+      if (cp)
+	{
+	  tip = mus_format("%s the selected region at the cursor (at time %.3f) in %s",
+			   which,
+			   ((double)CURSOR(cp)) / ((double)(SND_SRATE(sp))),
+			   sp->short_filename);
+	  gtk_tooltip_set_text(tooltip, tip);
+	  free(tip);
+	  return(true);
+	}
+    }
+
+  if (strcmp(which, "insert") == 0)
+    gtk_tooltip_set_text(tooltip, "if there is an active sound, this inserts the selected region into it at the cursor");
+  else gtk_tooltip_set_text(tooltip, "if there is an active sound, this mixes the selected region with it starting at the cursor");
+  return(true);
+}
+
+
+static gboolean insert_region_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  return(query_callback(tooltip, "insert"));
+}
+
+
+static gboolean mix_region_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  return(query_callback(tooltip, "mix"));
+}
+
+
+
 static void make_region_dialog(void)
 {
   int i, id, rows;
@@ -519,6 +558,14 @@ static void make_region_dialog(void)
   SG_SIGNAL_CONNECT(save_as_button, "clicked", region_save_callback, NULL);
   SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
 
+  add_tooltip(insert_button,  "insert the selected region");
+  add_tooltip(mix_button,     "mix the selected region");
+  add_tooltip(save_as_button, "save the selected region to a file");
+  add_tooltip(edit_button,    "edit the selected region");
+
+  g_signal_connect(insert_button, "query-tooltip", G_CALLBACK(insert_region_tooltip), NULL);
+  g_signal_connect(mix_button,    "query-tooltip", G_CALLBACK(mix_region_tooltip), NULL);
+  
   gtk_widget_show(insert_button);
   gtk_widget_show(mix_button);
   gtk_widget_show(help_button);
@@ -673,7 +720,11 @@ static void make_region_dialog(void)
   SG_SIGNAL_CONNECT(channel_down_arrow(cp), "button_press_event", region_down_arrow_callback, NULL);
 
   set_sensitive(channel_f(cp), false);
-  if (region_chans(region_list_position_to_id(0)) > 1) set_sensitive(channel_w(cp), true);
+  set_sensitive(channel_w(cp), (region_chans(region_list_position_to_id(0)) > 1));
+
+  add_tooltip(channel_f(cp), "move the graph to the previous channel");
+  add_tooltip(channel_w(cp), "move the graph to the next channel");
+
   cp->chan = 0;
   rsp->hdr = fixup_region_data(cp, 0, 0);
   make_region_labels(rsp->hdr);

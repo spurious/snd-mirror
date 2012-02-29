@@ -9,73 +9,34 @@
  * isn't "save current settings" redundant? and "control panel" is a dumb name
  *   gtk options/controls has trough color?
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
+ *
  * what is "save" in enved, also if use erases one from env list==delete
  *   also lin/exp is stupid -- omit, click "exp" label to reset to 1 (always)
+ *   when env first shown, exp is assumed to be 1?
  *
- * regions: next chan button is on when mono?  these need tooltips
  * in gtk3, the pane handles are all invisible (white on white)
  *
  * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html|h|c already]
  *   perhaps define all the "built-in" keys via (bind-key ...)
  *   also define the removed key bindings in snd12.scm.
  *   and add menu accelerators on some switch, like the toolbar
- * to replace C-s we need to add a local search option to the find dialog
  *
  * gtk: (motif is set this way in library) in open/save-as etc, the actual file should be at the top, not the bottom
  * view files is a mess -- it tries to do way too much
  * some of these dialogs look too small -- holdover from distant past?
  *   fixup the margins at least
  * in save-as dialog, the new file name should be at the top (like new-file dialog)
+ * find: global not tested, stop not tested
  *
  * what about tooltips in the listener, or some way to show help (apropos) if hovering
  *   also if error displayed, hover->env printout etc
  *   and hover in graph -> show sample value?
  *   see listener_move_mouse in snd-glistener.c
  *
- * if M-p/n are actually useful, add to glistener if possible
- * gtk2 tooltips look much better because the bgcolor is correct, but pango markup here is only a partial fix
- * ideally the code examples (in the listener and help dialog) would be in monospace with help-topic in red??
  * stacktrace in listener popup should look for error info 1st -- can we tell last thing was in error?
  *    or error in snd listener -> post var info as well as code (in scrolled window)?
  *
  * when done, read all snd-help/snd.html to check for leftovers.
- *
- * 19: gxfind button order, but one is "forward|back" and the other is "next|previous"
- *       firefox uses |find: |entry| <--previous | -->next | highlight all, others use "search:..."
- *       the gtk back/forward business is built into the stock icons
- *     all gtk go-aways
- * 20: rest of go-away buttons moved
- *     removed help history
- *     removed enved print button
- *     changed several menu labels
- *     removed snd-g|xrec.c, recorder-dialog, etc
- * 21: changed gcolor layout but how to get more of colormap titles displayed?
- *     gtk3 menu/toolbar fixups and gtk 3.3.16 in xg
- *     added view grid menu item
- *     removed control-panel related popup menu items
- * 22: added main menu context-sensitive tooltips in gtk
- *     WITH_AUDIO checks
- *     removed the minibuffer history stuff, minibuffer-history-length, prompt-in-minibuffer
- *     removed eval-between-marks and eval-over-selection, open-current-buffer and close-buffer
- * 23: left margin in gfft and selected colors, etc
- *     removed xsnd filter history
- *     changed listener default font to Monospace 11, added get-font to extsnd.html
- * 24: more tooltips
- *     double-click in filer opens (as in motif)
- *     removed C-x d|w|i, C-x C-l, named macros, save-macros
- * 25: fixed gfile popup menu style, added more toolbar tips
- *     removed enved delete button
- *     put key bindings help in monospace
- *     removed c-x a|j
- * 26: c-x c-s now goes to file-has-changed dialog
- *     c-x c-f -> open file dialog, c-x c-q -> mix file dialog, c-x c-w -> save-as dialog
- *     removed c-r, c-x c-m, c-x /
- *     removed minibuffer_label, minibuffer itself is now an unactivatable text widget.
- * 27: removed clear-minibuffer and report-in-minibuffer, added status-report
- *     in *.[ch] minibuffer -> status area throughout
- *     region dialog cleanup in motif
- * 28: region dialog in gtk
- *     search-procedure is now just global (no sound-local option)
  */
 
 /* various file-related dialogs:

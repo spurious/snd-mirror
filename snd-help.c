@@ -459,11 +459,23 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-21-Feb:  removed the recorder (snd-g|xrec.c).\n\
-         removed the minibuffer history list and the minibuffer-history-length function.\n\
-         removed prompt-in-minibuffer.\n\
+Feb:   removed snd1.html and snd-contents.html (these were\n\
+         using Javascript for stuff that is now built into html), and \n\
+         translated the rest of the html files to html5.\n\
+       removed the recorder, recorder-dialog, snd-g|xrec.c,\n\
+       changed various menu names and added a view:with-grid menu\n\
+       moved dialog buttons around at random,\n\
+       removed save-macros and named keyboard macros,\n\
+       added context-sensitive tooltips to the gtk version,\n\
+       changed the gtk listener default font to Monospace 11,\n\
+       the \"minibuffer\" is now a \"statusbar\".  This means it is not \n\
+          editable, which means all the key sequences that used to \n\
+          prompt for info are either undefined now, or use a dialog instead.\n\
+       removed minibuffer-history-length, prompt-in-minibuffer, clear-minibuffer,\n\
+          and report-in-minibuffer.  Replaced the latter two with status-report.\n\
+       removed sound-specific search-procedures (i.e. there is only one search procedure)\n\
 10-Feb:  removed snd1.html, snd-contents.html.\n\
-2-Feb:   Snd 12.8.\n\
+2-Feb:   Snd 12.8.\n\\n\
 27-Jan:  removed snd10.scm.\n\
 30-Dec:  Snd 12.7.\n\
 8-Nov:   Snd 12.6\n\

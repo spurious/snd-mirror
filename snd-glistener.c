@@ -886,6 +886,37 @@ GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t w
 }
 
 
+GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size)
+{
+  GtkWidget *text;
+  GtkSettings *settings;
+
+  text = gtk_entry_new();
+  gtk_editable_set_editable(GTK_EDITABLE(text), true);
+  gtk_entry_set_width_chars(GTK_ENTRY(text), size);
+  add_entry_style(text);
+
+  settings = gtk_widget_get_settings(text);
+  g_object_set(settings, "gtk-entry-select-on-focus", false, NULL);
+
+  gtk_box_pack_start(GTK_BOX(container), text, false, false, 4);
+
+  if (!bindings_ok)
+    {
+      bindings_ok = true;
+      make_bindings(GTK_ENTRY_GET_CLASS(GTK_ENTRY(text)));
+    }
+  gtk_widget_show(text);
+
+#if (!HAVE_GTK_3)
+  widget_modify_bg(text, GTK_STATE_NORMAL, ss->white);
+  widget_modify_base(text, GTK_STATE_SELECTED, ss->white); 
+#endif
+  connect_mouse_to_text(text);
+  return(text);
+}
+
+
 static void listener_help_callback(GtkWidget *w, gpointer info)
 {
   /* for selected text or text near cursor or text near pointer, get help or completion,

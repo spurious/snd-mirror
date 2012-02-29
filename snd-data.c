@@ -116,7 +116,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->cy = 0;
   cp->fft_cx = 0;
   cp->selection_transform_size = 0;
-  cp->last_search_result = SEARCH_OK;
   if (cp->last_sonogram) 
     {
       free(cp->last_sonogram); 

@@ -341,7 +341,6 @@ typedef struct chan_info {
   channel_state_t active;
   int old_x0, old_x1;
   mus_float_t *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
-  search_result_t last_search_result;
   bool just_zero, new_peaks, editable, updating;
   struct inset_graph_info_t *inset_graph; /* defined in snd-chn.c */
 #if HAVE_GL
@@ -1768,7 +1767,9 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
 /* -------- snd-find.c -------- */
 
-void find_dialog_find(char *str, read_direction_t direction, chan_info *cp);
+#if (!USE_NO_GUI)
+  void find_dialog_find(char *str, read_direction_t direction, chan_info *cp);
+#endif
 void g_init_find(void);
 
 

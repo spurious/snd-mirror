@@ -978,6 +978,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 #if HAVE_GTK_3
 static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider, *tb_provider, *mu_provider;
 static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider, *cb_provider, *entry_provider;
+static GtkCssProvider *cl_provider;
 
 void add_white_button_style(GtkWidget *w)
 {
@@ -993,6 +994,13 @@ void add_highlight_button_style(GtkWidget *w)
   c = gtk_widget_get_style_context(w);
   gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(hl_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   gtk_widget_set_name(w, "highlight_button");
+}
+
+void add_center_button_style(GtkWidget *w)
+{
+  GtkStyleContext *c;
+  c = gtk_widget_get_style_context(w);
+  gtk_style_context_add_provider(c, GTK_STYLE_PROVIDER(cl_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 void add_listener_style(GtkWidget *w)
@@ -1095,7 +1103,9 @@ void add_paned_style(GtkWidget *w)
 void add_highlight_button_style(GtkWidget *w)
 {
 }
-
+void add_center_button_style(GtkWidget *w)
+{
+}
 void add_white_button_style(GtkWidget *w) 
 {
   gtk_widget_set_name(w, "white_button");
@@ -1443,9 +1453,9 @@ void init_gtk(void)
   wb_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(wb_provider),
     "GtkButton#white_button { \n"
-    "  padding-top: 0;\n"
-    "  padding-bottom: 0;\n"
-    "  border-width: 0;\n"
+    "  padding-top: 0px;\n"
+    "  padding-bottom: 0px;\n"
+    "  border-width: 0px;\n"
     "  background-color: #ffffff;\n"
     "}\n"
     "GtkButton#white_button:prelight { \n"
@@ -1456,12 +1466,27 @@ void init_gtk(void)
   hl_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(hl_provider),
     "GtkEventBox, GtkButton#highlight_button { \n"
-    "  padding-top: 0;\n"
-    "  padding-bottom: 0;\n"
-    "  border-width: 0;\n"
+    "  padding-top: 0px;\n"
+    "  padding-bottom: 0px;\n"
+    "  border-width: 0px;\n"
     "  background-color: #fffff0;\n"
     "}\n"
     "GtkButton#highlight_button:prelight { \n"
+    "  background-image: -gtk-gradient (linear, left top, right bottom, from(#fffff0), to(rgb(200, 225, 255)));\n"
+    "}\n",
+    -1, NULL);
+
+  cl_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(cl_provider),
+    "GtkEventBox, GtkButton { \n"
+    "  padding-top: 0px;\n"
+    "  padding-bottom: 0px;\n"
+    "  padding-left: 8px;\n"
+    "  padding-right: 8px;\n"
+    "  border-width: 1px;\n"
+    "  background-color: #fffff0;\n"
+    "}\n"
+    "GtkButton:prelight { \n"
     "  background-image: -gtk-gradient (linear, left top, right bottom, from(#fffff0), to(rgb(200, 225, 255)));\n"
     "}\n",
     -1, NULL);
