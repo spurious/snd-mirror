@@ -1090,13 +1090,13 @@ void reflect_mix_change(int mix_id)
 			   (mix_is_active(mix_dialog_id)) ? "" : " (locked)");
 	      XmTextSetString(w_beg, lab);
 	      
-	      set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), true);
+	      set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), true);
 	    }
 	  else
 	    {
 	      XmTextSetString(w_id, (char *)"-1");
 	      XmTextSetString(w_beg, (char *)"no active mixes");
-	      set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), false);
+	      set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), false);
 	    }
 	  if (!dragging)
 	    {

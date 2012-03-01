@@ -17,7 +17,7 @@ enum {m_menu,
           h_delete_menu, h_reverb_menu, h_debug_menu, h_region_menu, h_selection_menu, h_colors_menu,
         o_menu, o_cascade_menu,
           o_transform_menu, o_controls_menu,
-          o_save_menu, o_save_state_menu, o_sep_menu, o_preferences_menu,
+          o_save_state_menu, o_sep_menu, o_preferences_menu,
         v_menu, v_cascade_menu,
           v_graph_style_menu, v_graph_style_cascade_menu,
             v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
@@ -105,7 +105,6 @@ enum {m_menu,
 #define options_menu (ss->mw[o_menu])
 #define options_cascade_menu (ss->mw[o_cascade_menu])
 #define options_transform_menu (ss->mw[o_transform_menu])
-#define options_save_menu (ss->mw[o_save_menu])
 #define options_save_state_menu (ss->mw[o_save_state_menu])
 #define options_sep_menu (ss->mw[o_sep_menu])
 #define options_preferences_menu (ss->mw[o_preferences_menu])
@@ -164,7 +163,6 @@ void view_menu_update(void);
 void file_menu_update(void);
 void update_file_from_menu(void);
 void revert_file_from_menu(void);
-void save_options_from_menu(void);
 void save_state_from_menu(void);
 void unprotect_callback(int slot);
 

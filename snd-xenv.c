@@ -7,7 +7,7 @@ static Widget enved_dialog = NULL;
 static Widget applyB, apply2B, cancelB, drawer, showB, saveB, revertB, undoB, redoB;
 static Widget brkptL, graphB, fltB, ampB, srcB, clipB;
 static Widget nameL, textL, screnvlst, dBB, orderL, resetB, firB = NULL;
-static Widget expB, linB, baseScale, baseValue, selectionB;
+static Widget baseScale, baseValue, selectionB;
 static GC gc, rgc, ggc;
 
 static const char *env_names[3] = {"amp env:", "flt env:", "src env:"};
@@ -85,12 +85,10 @@ void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, 
 
 static void reflect_segment_state(void)
 {
-  if (enved_dialog)
-    {
-      XmChangeColor(expB, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? ((Pixel)ss->yellow) : ((Pixel)ss->highlight_color));
-      XmChangeColor(linB, (enved_style(ss) == ENVELOPE_LINEAR) ? ((Pixel)ss->yellow) : ((Pixel)ss->highlight_color));
-      if ((active_env) && (!(showing_all_envs))) env_redisplay();
-    }
+  if ((enved_dialog) &&
+      (active_env) && 
+      (!(showing_all_envs)))
+    env_redisplay();
 }
 
 
@@ -578,6 +576,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
       if (!active_env)
 	{
 	  active_env = default_env(1.0, 0.0);
+	  active_env->base = enved_base(ss);
 	  env_redisplay(); /* needed to get current_xs set up correctly */
 	}
       if (env_editor_button_press(ss->enved, ev->x, ev->y, ev->time, active_env))
@@ -746,34 +745,6 @@ static void clip_button_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void exp_button_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  /* a push button */
-  set_enved_style(ENVELOPE_EXPONENTIAL);
-  if ((active_env) && 
-      (!(showing_all_envs)))
-    {
-      active_env->base = enved_base(ss);
-      set_sensitive(saveB, true);
-    }
-  reflect_segment_state();
-}
-
-
-static void lin_button_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  /* a push button */
-  set_enved_style(ENVELOPE_LINEAR);
-  if ((active_env) && 
-      (!(showing_all_envs)))
-    {
-      active_env->base = 1.0;
-      set_enved_base(1.0);
-      set_sensitive(saveB, true);
-    }
-  reflect_segment_state();
-}
-
 
 #define BASE_MAX 400
 #define BASE_MID 200
@@ -800,8 +771,10 @@ static void make_base_label(mus_float_t bval)
       (!(showing_all_envs))) 
     {
       active_env->base = enved_base(ss);
-      if (enved_style(ss) == ENVELOPE_EXPONENTIAL)
-	env_redisplay();
+      if (active_env->base == 1.0)
+	set_enved_style(ENVELOPE_LINEAR);
+      else set_enved_style(ENVELOPE_EXPONENTIAL);
+      env_redisplay();
     }
 }
 
@@ -824,7 +797,7 @@ static void base_changed(int val)
 	}
     }
   make_base_label(bval);
-  if ((active_env) && (enved_style(ss) == ENVELOPE_EXPONENTIAL))
+  if (active_env)
     set_sensitive(saveB, true); /* what about undo/redo here? */
 }
 
@@ -875,7 +848,7 @@ static void base_click_callback(Widget w, XtPointer context, XtPointer info)
   ev = (XButtonEvent *)(cb->event);
   if (ev->state & (snd_ControlMask | snd_MetaMask)) 
     val = base_last_value; 
-  else val = BASE_MID;
+  else val = BASE_MID; /* this is supposedly 1.0 */
   base_changed(val);
   XtVaSetValues(baseScale, XmNvalue, val, NULL);
 }
@@ -1350,42 +1323,13 @@ Widget create_envelope_editor(void)
       XtAddCallback(ampB, XmNactivateCallback, amp_button_callback, NULL);
       XtAddCallback(srcB, XmNactivateCallback, src_button_callback, NULL);
 
-      /* LINEAR EXP [PROC] */
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->yellow); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, ampB); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 50); n++;
-      linB = XtCreateManagedWidget("lin", xmPushButtonWidgetClass, colB, args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->yellow); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, linB); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, linB); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 100); n++;
-      expB = XtCreateManagedWidget("exp", xmPushButtonWidgetClass, colB, args, n);
-
-      XtAddCallback(linB, XmNactivateCallback, lin_button_callback, NULL);
-      XtAddCallback(expB, XmNactivateCallback, exp_button_callback, NULL);
-
       /* SELECTION */
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, linB); n++;
+      XtSetArg(args[n], XmNtopWidget, ampB); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;

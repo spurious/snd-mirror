@@ -178,11 +178,7 @@ static int view_files_items_size = 0;
 
 static void view_files_item_callback(GtkWidget *w, gpointer info)
 {
-  char *dirname;
-  dirname = get_item_label(w);
-  if (mus_strcmp(dirname, "new viewer"))
-    make_view_files_dialog(true, true); /* managed and empty (brand-new) */
-  else view_files_start_dialog_with_title(dirname);
+  view_files_start_dialog_with_title(get_item_label(w));
 }
 
 
@@ -195,49 +191,52 @@ static void view_files_callback(GtkWidget *w, gpointer info)
     make_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else
     {
-      int i;
-      char **view_files_names;
-
-      view_files_names = view_files_dialog_titles();
-      view_files_names[size++] = mus_strdup("new viewer");
-
-      if (size > view_files_items_size)
+      if (size == 1)
+	make_view_files_dialog(true, false); /* raise current */
+      else
 	{
-	  if (view_files_items_size == 0)
-	    view_files_items = (GtkWidget **)calloc(size, sizeof(GtkWidget *));
-	  else
+	  int i;
+	  char **view_files_names;
+	  
+	  view_files_names = view_files_dialog_titles();
+	  if (size > view_files_items_size)
 	    {
-	      view_files_items = (GtkWidget **)realloc(view_files_items, size * sizeof(GtkWidget *));
-	      for (i = view_files_items_size; i < size; i++)
-		view_files_items[i] = NULL;
+	      if (view_files_items_size == 0)
+		view_files_items = (GtkWidget **)calloc(size, sizeof(GtkWidget *));
+	      else
+		{
+		  view_files_items = (GtkWidget **)realloc(view_files_items, size * sizeof(GtkWidget *));
+		  for (i = view_files_items_size; i < size; i++)
+		    view_files_items[i] = NULL;
+		}
+	      view_files_items_size = size;
 	    }
-	  view_files_items_size = size;
+	  
+	  for (i = 0; i < size; i++)
+	    {
+	      if (view_files_items[i] == NULL)
+		{
+		  view_files_items[i] = gtk_menu_item_new_with_label(view_files_names[i]);
+		  gtk_menu_shell_append(GTK_MENU_SHELL(view_files_cascade_menu), view_files_items[i]);
+		  gtk_widget_show(view_files_items[i]);
+		  SG_SIGNAL_CONNECT(view_files_items[i], "activate", view_files_item_callback, NULL);
+		}
+	      else
+		{
+		  set_item_label(view_files_items[i], view_files_names[i]);
+		  gtk_widget_show(view_files_items[i]);
+		}
+	      free(view_files_names[i]);
+	    }
+	  free(view_files_names);
 	}
-
-      for (i = 0; i < size; i++)
-	{
-	  if (view_files_items[i] == NULL)
-	    {
-	      view_files_items[i] = gtk_menu_item_new_with_label(view_files_names[i]);
-	      gtk_menu_shell_append(GTK_MENU_SHELL(view_files_cascade_menu), view_files_items[i]);
-	      gtk_widget_show(view_files_items[i]);
-	      SG_SIGNAL_CONNECT(view_files_items[i], "activate", view_files_item_callback, NULL);
-	    }
-	  else
-	    {
-	      set_item_label(view_files_items[i], view_files_names[i]);
-	      gtk_widget_show(view_files_items[i]);
-	    }
-	  free(view_files_names[i]);
-	}
-      free(view_files_names);
     }
 }
 
 
 static void view_menu_update_1(GtkWidget *w, gpointer info)
 {
-  if ((view_files_dialog_list_length() > 0) &&
+  if ((view_files_dialog_list_length() > 1) &&
       (!view_files_cascade_menu))
     {
       view_files_cascade_menu = gtk_menu_new();
@@ -307,9 +306,6 @@ static void view_grid_callback(GtkWidget *w, gpointer info)
 
 static void options_transform_callback(GtkWidget *w, gpointer info) {make_transform_dialog(true);}
 static void options_controls_callback(GtkWidget *w, gpointer info) {make_controls_dialog();}
-#if HAVE_EXTENSION_LANGUAGE
-static void options_save_callback(GtkWidget *w, gpointer info) {save_options_from_menu();}
-#endif
 
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(GtkWidget *w, gpointer info) {save_state_from_menu();}
@@ -774,9 +770,6 @@ GtkWidget *add_menu(void)
   ml[o_controls_menu] = "Control panel options";
 
 #if HAVE_EXTENSION_LANGUAGE
-  options_save_menu = add_menu_item(options_cascade_menu, I_SAVE_CURRENT_SETTINGS, NULL, (GCallback)options_save_callback);
-  ml[o_save_menu] = I_SAVE_CURRENT_SETTINGS;
-
   options_save_state_menu = add_menu_item(options_cascade_menu, "Save session", NULL, (GCallback)options_save_state_callback);
   ml[o_save_state_menu] = "Save session";
 #endif

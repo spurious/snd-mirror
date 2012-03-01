@@ -16400,11 +16400,6 @@ struct ptree *mus_run_form_to_ptree_1_b(s7_pointer code)
 }
 
 
-struct ptree *mus_run_form_to_ptree_1_b_without_env(s7_pointer code)
-{
-  /* find */
-  return(mus_run_form_to_ptree_1_b(s7_procedure_source(s7, code)));
-}
 
 
 /* ---------------- various evaluator wrappers ---------------- */

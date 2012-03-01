@@ -209,18 +209,6 @@ void revert_file_from_menu(void)
 }
 
 
-void save_options_from_menu(void)
-{
-  const char *filename;
-  filename = save_options_in_prefs();
-  if (filename)
-    {
-      if (any_selected_sound())
-	status_report(any_selected_sound(), "saved options in %s", filename);
-    }
-}
-
-
 static bool save_state_error_p = false;
 
 static void save_state_from_menu_error_handler(const char *msg, void *ignore)

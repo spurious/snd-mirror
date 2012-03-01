@@ -3112,8 +3112,6 @@ static XEN vf_open_file_watcher(XEN reason)
 	vf_mix_insert_buttons_set_sensitive(vdat, 
 					    ((vdat->currently_selected_files > 0) &&
 					     (any_selected_sound())));
-	vf_open_remove_buttons_set_sensitive(vdat, 
-					     (vdat->currently_selected_files > 0));
       }
   return(XEN_FALSE);
 }
@@ -3326,8 +3324,6 @@ static char **view_files_set_selected_files(widget_t dialog, char **files, int l
       vf_mix_insert_buttons_set_sensitive(vdat, 
 					  ((vdat->currently_selected_files > 0) &&
 					   (any_selected_sound())));
-      vf_open_remove_buttons_set_sensitive(vdat, 
-					   (vdat->currently_selected_files > 0));
     }
   return(files);
 }
@@ -3379,25 +3375,6 @@ void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
 }
 
 
-void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
-{
-  if (vdat->openB)
-    {
-      set_sensitive(vdat->removeB, sensitive);
-      set_sensitive(vdat->openB, sensitive);
-    }
-}
-
-
-#if (!HAVE_FAM)
-void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive)
-{
-  if (vdat->clearB)
-    set_sensitive(vdat->clearB, sensitive);
-}
-#endif
-
-
 static void view_files_clear_selected_files(view_files_info *vdat)
 {
   int len;
@@ -3415,7 +3392,6 @@ static void view_files_clear_selected_files(view_files_info *vdat)
     }
   vdat->currently_selected_files = 0;
   vf_mix_insert_buttons_set_sensitive(vdat, false);
-  vf_open_remove_buttons_set_sensitive(vdat, false);
 }
 
 
@@ -3436,7 +3412,6 @@ static void view_files_unselect_file(view_files_info *vdat, vf_row *r)
   if (vdat->currently_selected_files == 0)
     {
       vf_mix_insert_buttons_set_sensitive(vdat, false);
-      vf_open_remove_buttons_set_sensitive(vdat, false);
       vf_unpost_info(vdat);
     }
 }
@@ -3553,8 +3528,6 @@ void view_files_select(vf_row *r, bool add_to_selected)
   vf_mix_insert_buttons_set_sensitive(vdat, 
 				      ((vdat->currently_selected_files > 0) &&
 				       (any_selected_sound())));
-  vf_open_remove_buttons_set_sensitive(vdat, 
-				       (vdat->currently_selected_files > 0));
 }
 
 
@@ -3787,11 +3760,6 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
     }
 
   vf_add_file(vdat, filename, fullname);
-#if (!HAVE_FAM)
-  if ((vdat->dialog) && 
-      (widget_is_active(vdat->dialog)))
-    vf_clear_button_set_sensitive(vdat, true);
-#endif
 }
 
 
@@ -4134,9 +4102,6 @@ void view_files_clear_list(view_files_info *vdat)
 	    vdat->full_names[i] = NULL;
 	  }
       vdat->end = -1;
-#if (!HAVE_FAM)
-      vf_clear_button_set_sensitive(vdat, false);
-#endif
       vdat->currently_selected_files = 0;
     }
 }
@@ -4180,9 +4145,6 @@ void view_files_update_list(view_files_info *vdat)
 	    j++;
 	  }
       vdat->end = j - 1;
-#if (!HAVE_FAM)
-      vf_clear_button_set_sensitive(vdat, vdat->end >= 0);
-#endif
     }
 
   if (old_names)

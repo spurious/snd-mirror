@@ -194,11 +194,7 @@ static int view_files_items_size = 0;
 
 static void view_files_item_callback(Widget w, XtPointer context, XtPointer info)
 {
-  char *dirname;
-  dirname = get_label(w);
-  if (mus_strcmp(dirname, "new viewer"))
-    make_view_files_dialog(true, true); /* managed and empty (brand-new) */
-  else view_files_start_dialog_with_title(dirname);
+  view_files_start_dialog_with_title(get_label(w));
 }
 
 
@@ -211,48 +207,51 @@ static void view_files_callback(Widget w, XtPointer info, XtPointer context)
     make_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else
     {
-      int i;
-      char **view_files_names;
-
-      if ((XmIsPushButton(view_files_menu)) && /* autotest check */
-	  (!view_files_cascade_menu))
-	return;
-
-      view_files_names = view_files_dialog_titles();
-      view_files_names[size++] = mus_strdup("new viewer");
-
-      if (size > view_files_items_size)
+      if (size == 1)
+	make_view_files_dialog(true, false); /* raise current */
+      else
 	{
-	  if (view_files_items_size == 0)
-	    view_files_items = (Widget *)calloc(size, sizeof(Widget));
-	  else
+	  int i;
+	  char **view_files_names;
+	  
+	  if ((XmIsPushButton(view_files_menu)) && /* autotest check */
+	      (!view_files_cascade_menu))
+	    return;
+	  
+	  view_files_names = view_files_dialog_titles();
+	  if (size > view_files_items_size)
 	    {
-	      view_files_items = (Widget *)realloc(view_files_items, size * sizeof(Widget));
-	      for (i = view_files_items_size; i < size; i++)
-		view_files_items[i] = NULL;
+	      if (view_files_items_size == 0)
+		view_files_items = (Widget *)calloc(size, sizeof(Widget));
+	      else
+		{
+		  view_files_items = (Widget *)realloc(view_files_items, size * sizeof(Widget));
+		  for (i = view_files_items_size; i < size; i++)
+		    view_files_items[i] = NULL;
+		}
+	      view_files_items_size = size;
 	    }
-	  view_files_items_size = size;
+	  
+	  for (i = 0; i < size; i++)
+	    {
+	      if (view_files_items[i] == NULL)
+		{
+		  int n = 0;
+		  Arg args[6];
+		  XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
+		  
+		  view_files_items[i] = XtCreateManagedWidget(view_files_names[i], xmPushButtonWidgetClass, view_files_menu, args, n);
+		  XtAddCallback(view_files_items[i], XmNactivateCallback, view_files_item_callback, NULL); 
+		}
+	      else
+		{
+		  set_label(view_files_items[i], view_files_names[i]);
+		  XtManageChild(view_files_items[i]);
+		}
+	      free(view_files_names[i]);
+	    }
+	  free(view_files_names);
 	}
-
-      for (i = 0; i < size; i++)
-	{
-	  if (view_files_items[i] == NULL)
-	    {
-	      int n = 0;
-	      Arg args[6];
-	      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
-
-	      view_files_items[i] = XtCreateManagedWidget(view_files_names[i], xmPushButtonWidgetClass, view_files_menu, args, n);
-	      XtAddCallback(view_files_items[i], XmNactivateCallback, view_files_item_callback, NULL); 
-	    }
-	  else
-	    {
-	      set_label(view_files_items[i], view_files_names[i]);
-	      XtManageChild(view_files_items[i]);
-	    }
-	  free(view_files_names[i]);
-	}
-      free(view_files_names);
     }
 }
 
@@ -281,7 +280,7 @@ static void make_view_files_list_menu(void)
 
 static void view_menu_update_1(Widget w, XtPointer info, XtPointer context) 
 {
-  if ((view_files_dialog_list_length() > 0) &&
+  if ((view_files_dialog_list_length() > 1) &&
       (!view_files_cascade_menu))
     make_view_files_list_menu();
     
@@ -349,9 +348,6 @@ static void view_grid_callback(Widget w, XtPointer info, XtPointer context)
 
 static void options_transform_callback(Widget w, XtPointer info, XtPointer context) {make_transform_dialog(true);}
 static void options_controls_callback(Widget w, XtPointer info, XtPointer context) {make_controls_dialog();}
-#if HAVE_EXTENSION_LANGUAGE
-static void options_save_callback(Widget w, XtPointer info, XtPointer context) {save_options_from_menu();}
-#endif
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(Widget w, XtPointer info, XtPointer context) {save_state_from_menu();}
 #endif
@@ -812,10 +808,6 @@ Widget add_menu(void)
 
 
 #if HAVE_EXTENSION_LANGUAGE
-  options_save_menu = XtCreateManagedWidget(I_SAVE_CURRENT_SETTINGS, xmPushButtonWidgetClass, options_menu, main_args, main_n);
-  XtAddCallback(options_save_menu, XmNactivateCallback, options_save_callback, NULL);
-  XtVaSetValues(options_save_menu, XmNmnemonic, 'a', NULL);
-
   options_save_state_menu = XtCreateManagedWidget("Save session", xmPushButtonWidgetClass, options_menu, main_args, main_n);
   XtAddCallback(options_save_state_menu, XmNactivateCallback, options_save_state_callback, NULL);
 #endif

@@ -11309,6 +11309,29 @@ a2" 3) "132")
 ;;    the inner call.
 
 
+(let () ; from scheme bboard
+  (define (maxlist list) 
+    (define (maxlist' l max) 
+      (if (null? l) max 
+	  (if (> (car l) max) 
+	      (maxlist' (cdr l) (car l)) 
+	      (maxlist' (cdr l) max)))) 
+    (if (null? list) 'undef 
+	(maxlist' list (car list)))) 
+  (test (maxlist '(1 2 3)) 3) ; quote is ok in s7 if not the initial char (sort of like a number)
+
+  (let ((h'a 3))
+    (test h'a 3))
+  (let ((1'2 32))
+    (test 1'2 32))
+  (let ((1'`'2 32))
+    (test 1'`'2 32))
+  (let ((1'`,@2 32))
+    (test 1'`,@2 32))
+
+  (test (define '3 32) 'error) ;define quote: syntactic keywords tend to behave badly if redefined
+  )
+
 
 ;;; -------- object->string
 ;;; object->string

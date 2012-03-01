@@ -337,7 +337,7 @@ static gint unpost_genv_error(gpointer data)
 
 static void errors_to_genv_text(const char *msg, void *data)
 {
-  set_button_label(brktxtL, msg);
+  gtk_label_set_text(GTK_LABEL(brktxtL), msg);
   g_timeout_add_full(0, (guint32)5000, unpost_genv_error, NULL, NULL);
 }
 
@@ -463,7 +463,7 @@ static void select_or_edit_env(int pos)
 
 static void clear_point_label(void)
 {
-  set_button_label(brktxtL, BLANK_LABEL);
+  gtk_label_set_text(GTK_LABEL(brktxtL), BLANK_LABEL);
 }
 
 
@@ -474,7 +474,7 @@ static void enved_display_point_label(mus_float_t x, mus_float_t y)
   if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
-  set_button_label(brktxtL, brkpt_buf);
+  gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);
 }
 
 
@@ -533,6 +533,7 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
       if (!active_env)
 	{
 	  active_env = default_env(1.0, 0.0);
+	  active_env->base = enved_base(ss);
 	  env_redisplay(); /* needed to get current_xs set up correctly */
 	}
       if (env_editor_button_press(ss->enved, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_TIME(ev), active_env))
@@ -1099,8 +1100,7 @@ GtkWidget *create_envelope_editor(void)
       textL = snd_entry_new_with_size(toprow, 28);
       SG_SIGNAL_CONNECT(textL, "activate", text_field_activated, NULL);
 
-      brktxtL = gtk_button_new_with_label(BLANK_LABEL);
-      gtk_button_set_relief(GTK_BUTTON(brktxtL), GTK_RELIEF_NONE);
+      brktxtL = gtk_label_new(BLANK_LABEL);
       gtk_box_pack_start(GTK_BOX(toprow), brktxtL, false, false, 6);
       gtk_widget_show(brktxtL);
 

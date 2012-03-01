@@ -4713,8 +4713,6 @@ void vf_post_selected_files_list(view_files_info *vdat)
   free(msg1);
   free(msg2);
 
-  set_sensitive(vdat->openB, true);
-  set_sensitive(vdat->removeB, true);
   set_sensitive(vdat->mixB, true);
   set_sensitive(vdat->insertB, true);
 }
@@ -4731,8 +4729,6 @@ void vf_unpost_info(view_files_info *vdat)
   info_widget_display(vdat->info1, "");
   info_widget_display(vdat->info2, "");
 
-  set_sensitive(vdat->openB, false);
-  set_sensitive(vdat->removeB, false);
   set_sensitive(vdat->mixB, false);
   set_sensitive(vdat->insertB, false);
 }
@@ -4801,25 +4797,6 @@ static void view_files_new_viewer_callback(GtkWidget *w, gpointer context)
   vdat = new_view_files_dialog();
   make_view_files_dialog_1(vdat, true);
 }
-
-
-#if (!HAVE_FAM)
-static void view_files_clear_callback(GtkWidget *w, gpointer context) 
-{
-  view_files_info *vdat = (view_files_info *)context;
-  view_files_clear_list(vdat);
-  view_files_display_list(vdat);
-}
-
-
-static void view_files_update_callback(GtkWidget *w, gpointer context) 
-{
-  view_files_info *vdat = (view_files_info *)context;
-  /* run through view files list looking for any that have been deleted behind our back */
-  view_files_update_list(vdat);
-  view_files_display_list(vdat);
-}
-#endif
 
 
 static void sort_vf(view_files_info *vdat, int sort_choice)
@@ -4917,18 +4894,6 @@ static void view_files_drop_watcher(GtkWidget *w, const char *str, int x, int y,
   add_file_to_view_files_list(vdat, str, filename);
   free(filename);
   view_files_display_list(vdat);
-}
-
-
-static void view_files_open_selected_callback(GtkWidget *w, gpointer context) 
-{
-  view_files_open_selected_files((view_files_info *)context);
-}
-
-
-static void view_files_remove_selected_callback(GtkWidget *w, gpointer context) 
-{
-  view_files_remove_selected_files((view_files_info *)context);
 }
 
 
@@ -5471,9 +5436,6 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 #if WITH_AUDIO
       GtkWidget *plw;
 #endif
-#if (!HAVE_FAM)
-      GtkWidget *bbox;
-#endif
       GtkWidget *sbar, *sitem, *newB;
       GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB, *resetB;
 
@@ -5529,7 +5491,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(resetB);
 
       mainform = gtk_hpaned_new();
-      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(vdat->dialog)), mainform, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(vdat->dialog)), mainform, true, true, 8);
       gtk_widget_set_name(mainform, "the_unpane");
       add_paned_style(mainform);
       gtk_widget_show(mainform);
@@ -5673,32 +5635,6 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(cww);
       add_drop(vdat->file_list, view_files_drop_watcher, (void *)vdat);
 
-#if (!HAVE_FAM)
-      bbox = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(fileform), bbox, false, false, 0);
-      gtk_widget_show(bbox);
-
-      vdat->updateB = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
-      gtk_widget_set_name(vdat->updateB, "dialog_button");
-
-      vdat->clearB = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
-      gtk_widget_set_name(vdat->clearB, "dialog_button");
-
-      gtk_box_pack_start(GTK_BOX(bbox), vdat->updateB, true, true, 1);
-      gtk_box_pack_end(GTK_BOX(bbox), vdat->clearB, true, true, 1);
-
-#if HAVE_GTK_3
-      add_highlight_button_style(vdat->updateB);
-      add_highlight_button_style(vdat->clearB);
-#endif
-
-      SG_SIGNAL_CONNECT(vdat->updateB, "clicked", view_files_update_callback, (gpointer)vdat);
-      SG_SIGNAL_CONNECT(vdat->clearB, "clicked", view_files_clear_callback, (gpointer)vdat);
-
-      gtk_widget_show(vdat->updateB);
-      gtk_widget_show(vdat->clearB);
-#endif
-
       addbox = gtk_hbox_new(false, 0);
       gtk_box_pack_end(GTK_BOX(fileform), addbox, false, false, 0);
       gtk_widget_show(addbox);
@@ -5718,7 +5654,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       /* left side */
       {
-	GtkWidget *ltop_sep, *lbox, *frame;
+	GtkWidget *ltop_sep, *frame;
 	GtkWidget *lbox1, *lbox2, *lbox3, *lbox4, *lbox5;
 
 	vdat->left_title = snd_gtk_entry_label_new("(no files selected)", ss->highlight_color);
@@ -5734,50 +5670,17 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(ltop_sep);
 
 	vdat->info1 = make_info_widget();
-	gtk_box_pack_start(GTK_BOX(leftform), vdat->info1, false, true, 0);
-	info_widget_display(vdat->info1, "|");
+	gtk_box_pack_start(GTK_BOX(leftform), vdat->info1, false, true, 4);
 	gtk_widget_show(vdat->info1);
 
 	vdat->info2 = make_info_widget();
-	gtk_box_pack_start(GTK_BOX(leftform), vdat->info2, false, true, 0);
-	info_widget_display(vdat->info2, "|");
+	gtk_box_pack_start(GTK_BOX(leftform), vdat->info2, false, true, 4);
 	gtk_widget_show(vdat->info2);
 
 	{
 	  GtkWidget *spacer;
 	  spacer = gtk_vseparator_new();
 	  gtk_box_pack_start(GTK_BOX(leftform), spacer, false, false, 2);
-	  gtk_widget_show(spacer);
-	}
-
-	lbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(leftform), lbox, false, false, 0);
-	gtk_widget_show(lbox);
-
-	vdat->openB = gtk_button_new_from_stock(GTK_STOCK_OPEN);
-	vdat->removeB = sg_button_new_from_stock_with_label("Unlist", GTK_STOCK_REMOVE);
-
-	gtk_box_pack_start(GTK_BOX(lbox), vdat->openB, true, true, 1);
-	gtk_box_pack_end(GTK_BOX(lbox), vdat->removeB, true, true, 1);
-
-#if HAVE_GTK_3
-	add_highlight_button_style(vdat->openB);
-	add_highlight_button_style(vdat->removeB);
-#endif
-
-	SG_SIGNAL_CONNECT(vdat->openB, "clicked", view_files_open_selected_callback, (gpointer)vdat);
-	SG_SIGNAL_CONNECT(vdat->removeB, "clicked", view_files_remove_selected_callback, (gpointer)vdat);
-
-	set_sensitive(vdat->openB, false);
-	set_sensitive(vdat->removeB, false);
-
-	gtk_widget_show(vdat->openB);
-	gtk_widget_show(vdat->removeB);
-
-	{
-	  GtkWidget *spacer;
-	  spacer = gtk_vseparator_new();
-	  gtk_box_pack_start(GTK_BOX(leftform), spacer, false, false, 4);
 	  gtk_widget_show(spacer);
 	}
 
@@ -5802,12 +5705,12 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(leftform), frame, false, false, 0);
 #endif
 	
-	lbox2 = gtk_vbox_new(false, 0);
+	lbox2 = gtk_vbox_new(false, 2);
 	gtk_container_add(GTK_CONTAINER(frame), lbox2);
 	gtk_widget_show(lbox2);
 
 	lbox1 = gtk_hbox_new(false, 0);
-	gtk_box_pack_start(GTK_BOX(lbox2), lbox1, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(lbox2), lbox1, false, false, 8);
 	gtk_widget_show(lbox1);
 
 	vdat->mixB = sg_button_new_from_stock_with_label("Mix", GTK_STOCK_ADD);
@@ -5815,11 +5718,8 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 
 	gtk_box_pack_start(GTK_BOX(lbox1), vdat->mixB, true, true, 1);
 	gtk_box_pack_end(GTK_BOX(lbox1), vdat->insertB, true, true, 1);
-
-#if HAVE_GTK_3
 	add_highlight_button_style(vdat->mixB);
 	add_highlight_button_style(vdat->insertB);
-#endif
 
 	SG_SIGNAL_CONNECT(vdat->mixB, "clicked", view_files_mix_selected_callback, (gpointer)vdat);
 	SG_SIGNAL_CONNECT(vdat->insertB, "clicked", view_files_insert_selected_callback, (gpointer)vdat);
@@ -5830,23 +5730,28 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(vdat->mixB);
 	gtk_widget_show(vdat->insertB);
 
+	#define LEFT_MARGIN 4
+
 	vdat->at_cursor_button = gtk_radio_button_new_with_label(NULL, "at cursor");
 	widget_modify_bg(vdat->at_cursor_button, GTK_STATE_PRELIGHT, ss->lighter_blue);
+	widget_set_margin_left(vdat->at_cursor_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_cursor_button, false, false, 0);
-#if HAVE_GTK_3
-	add_highlight_button_style(vdat->at_cursor_button);
-#endif
+	add_check_button_style(vdat->at_cursor_button);
 	gtk_widget_show(vdat->at_cursor_button);
 	SG_SIGNAL_CONNECT(vdat->at_cursor_button, "clicked", view_files_at_cursor_callback, (gpointer)vdat);
 
 	vdat->at_end_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at end");
 	widget_modify_bg(vdat->at_end_button, GTK_STATE_PRELIGHT, ss->lighter_blue);
+	widget_set_margin_left(vdat->at_end_button, LEFT_MARGIN);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_end_button, false, false, 0);
+	add_check_button_style(vdat->at_end_button);
 	gtk_widget_show(vdat->at_end_button);
 	SG_SIGNAL_CONNECT(vdat->at_end_button, "clicked", view_files_at_end_callback, (gpointer)vdat);
 
 	vdat->at_beginning_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at beginning");
 	widget_modify_bg(vdat->at_beginning_button, GTK_STATE_PRELIGHT, ss->lighter_blue);
+	widget_set_margin_left(vdat->at_beginning_button, LEFT_MARGIN);
+	add_check_button_style(vdat->at_beginning_button);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_beginning_button, false, false, 0);
 	gtk_widget_show(vdat->at_beginning_button);
 	SG_SIGNAL_CONNECT(vdat->at_beginning_button, "clicked", view_files_at_beginning_callback, (gpointer)vdat);
@@ -5865,6 +5770,8 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 
 	vdat->at_sample_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at sample");
 	widget_modify_bg(vdat->at_sample_button, GTK_STATE_PRELIGHT, ss->lighter_blue);
+	widget_set_margin_left(vdat->at_sample_button, LEFT_MARGIN);
+	add_check_button_style(vdat->at_sample_button);
 	gtk_box_pack_start(GTK_BOX(lbox3), vdat->at_sample_button, false, false, 0);
 	gtk_widget_show(vdat->at_sample_button);
 	SG_SIGNAL_CONNECT(vdat->at_sample_button, "clicked", view_files_at_sample_callback, (gpointer)vdat);
@@ -5874,6 +5781,8 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 
 	vdat->at_mark_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), "at mark");
 	widget_modify_bg(vdat->at_mark_button, GTK_STATE_PRELIGHT, ss->lighter_blue);
+	widget_set_margin_left(vdat->at_mark_button, LEFT_MARGIN);
+	add_check_button_style(vdat->at_mark_button);
 	gtk_box_pack_end(GTK_BOX(lbox3), vdat->at_mark_button, false, false, 0);
 	gtk_widget_show(vdat->at_mark_button);
 	SG_SIGNAL_CONNECT(vdat->at_mark_button, "clicked", view_files_at_mark_callback, (gpointer)vdat);
@@ -5896,6 +5805,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_box_pack_start(GTK_BOX(leftform), ampH, false, false, 4);
       
 	  vdat->amp_event = gtk_event_box_new();
+	  widget_set_margin_left(vdat->amp_event, LEFT_MARGIN);
 	  add_highlight_button_style(vdat->amp_event);
 	  gtk_box_pack_start(GTK_BOX(ampH), vdat->amp_event, false, false, 4);
 	  gtk_widget_show(vdat->amp_event);
@@ -5926,6 +5836,7 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
       
 	  vdat->speed_event = gtk_event_box_new();
 	  add_highlight_button_style(vdat->speed_event);
+	  widget_set_margin_left(vdat->speed_event, LEFT_MARGIN);
 	  gtk_box_pack_start(GTK_BOX(speedH), vdat->speed_event, false, false, 4);
 	  gtk_widget_show(vdat->speed_event);
 	  SG_SIGNAL_CONNECT(vdat->speed_event, "button_press_event", vf_speed_click_callback, (gpointer)vdat);

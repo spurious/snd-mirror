@@ -1536,6 +1536,7 @@ void init_gtk(void)
     "  border-color: #fffff0;\n"				  
     "  background-color: #fffff0;\n"
     "  padding-bottom: 4px;\n"
+    "  padding-left: 8px;\n"				  
     "}\n",
     -1, NULL);
 
