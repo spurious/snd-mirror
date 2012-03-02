@@ -308,6 +308,7 @@ static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer d
 static void startup_funcs(void)
 {
   static int auto_open_ctr = 0;
+  ss->file_monitor_ok = initialize_file_monitor();
 
 #ifndef SND_AS_WIDGET
   /* trap outer-level Close for cleanup check */
@@ -357,13 +358,11 @@ static void startup_funcs(void)
     set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
 #endif
 
-#if (!HAVE_G_FILE_MONITOR_DIRECTORY)
   if (!(ss->file_monitor_ok))
     {
       if (auto_update_interval(ss) > 0.0)
 	g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
     }
-#endif
 
 #if MUS_TRAP_SEGFAULT
   if (trap_segfault(ss)) signal(SIGSEGV, segv);

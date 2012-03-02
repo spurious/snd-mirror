@@ -3262,6 +3262,8 @@ static char **view_files_files(widget_t dialog, int *len)
 }
 
 
+static void view_files_clear_list(view_files_info *vdat);
+
 static char **view_files_set_files(widget_t dialog, char **files, int len)
 {
   view_files_info *vdat;
@@ -3900,7 +3902,7 @@ void view_files_display_list(view_files_info *vdat)
 }
 
 
-void view_files_clear_list(view_files_info *vdat)
+static void view_files_clear_list(view_files_info *vdat)
 {
   int i;
 #if (!USE_NO_GUI)

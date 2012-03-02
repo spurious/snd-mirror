@@ -163,7 +163,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 }
 
 
-void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
+static void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
   ss->snd_print_handler = handler;
   ss->snd_print_data = data;

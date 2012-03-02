@@ -481,7 +481,7 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t 
 }
 
 
-void insert_selection_or_region(int reg, chan_info *cp)
+static void insert_selection_or_region(int reg, chan_info *cp)
 {
   io_error_t err = IO_NO_ERROR;
   if (cp) 

@@ -223,6 +223,8 @@ static void startup_funcs(void)
   snd_info *sp;
   static int auto_open_ctr = 0;
 
+  ss->file_monitor_ok = initialize_file_monitor();
+
 #ifndef SND_AS_WIDGET
   shell = ss->mainshell;
   dpy = MAIN_DISPLAY(ss);
@@ -273,7 +275,6 @@ static void startup_funcs(void)
   if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
   if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
 
-  ss->file_monitor_ok = initialize_file_monitor();
   if (!ss->file_monitor_ok)
     {
       if (auto_update_interval(ss) > 0.0)

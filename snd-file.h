@@ -130,7 +130,6 @@ void view_files_open_selected_files(view_files_info *vdat);
 void view_files_select(vf_row *r, bool add_to_selected);
 bool view_files_play(view_files_info *vdat, int pos, bool play);
 void vf_clear_error(view_files_info *vdat);
-void view_files_clear_list(view_files_info *vdat);
 view_files_info *new_view_files_dialog(void);
 void view_files_update_list(view_files_info *vdat);
 void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname);

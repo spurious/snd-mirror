@@ -492,8 +492,6 @@ widget_t make_mix_file_dialog(bool managed);
 widget_t make_insert_file_dialog(bool managed);
 GtkWidget *edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
-void cleanup_edit_header_watcher(void);
-void cleanup_new_file_watcher(void);
 void set_open_file_play_button(bool val);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(struct dialog_play_info *fd);

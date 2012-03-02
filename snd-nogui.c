@@ -3,9 +3,7 @@
 #include "snd-file.h"
 
 void cleanup_file_monitor(void) {}
-bool initialize_file_monitor(void) {return(false);}
 void *unmonitor_file(void *watcher) {return(NULL);}
-void *unmonitor_directory(void *watcher) {return(NULL);}
 void monitor_sound(snd_info *sp) {}
 
 bool find_dialog_is_active(void) {return(false);}
@@ -173,8 +171,6 @@ void alert_new_file(void) {}
 widget_t make_new_file_dialog(bool managed) {return(0);}
 int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}
-void cleanup_edit_header_watcher(void) {}
-void cleanup_new_file_watcher(void) {}
 widget_t make_selection_save_as_dialog(bool managed) {return(0);}
 widget_t make_region_save_as_dialog(bool managed) {return(0);}
 widget_t make_sound_save_as_dialog(bool managed) {return(0);}

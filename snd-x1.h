@@ -389,8 +389,6 @@ void mouse_enter_label(void *r, int type);
 void mouse_leave_label(void *r, int type);
 Widget edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
-void cleanup_edit_header_watcher(void);
-void cleanup_new_file_watcher(void);
 void set_open_file_play_button(bool val);
 widget_t make_mix_file_dialog(bool managed);
 widget_t make_insert_file_dialog(bool managed);

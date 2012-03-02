@@ -1093,7 +1093,6 @@ int xen_transform_to_int(XEN n);
 /* -------- snd-xen.c -------- */
 
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data);
-void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data);
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
@@ -1178,7 +1177,6 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 bool selection_creation_in_progress(void);
 void add_selection_or_region(int reg, chan_info *cp);
 void insert_selection_from_menu(void);
-void insert_selection_or_region(int reg, chan_info *cp);
 void cancel_selection_watch(void);
 void show_selection(void);
 bool xen_selection_p(XEN obj);
@@ -1641,7 +1639,6 @@ bool listener_is_visible(void);
 void g_init_listener(void);
 char *trim(char *orig);
 void listener_help_at_cursor(char *buf, int name_curpos, int len, int prompt_pos);
-void remember_listener_string(const char *str);
 void restore_listener_string(bool back);
 
 

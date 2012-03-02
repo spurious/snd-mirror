@@ -19,11 +19,16 @@
 /* glib now has a "gio" module that provides a fam-like service, but it requires using gio style file handlers throughout. 
 */
 
-#undef HAVE_G_FILE_MONITOR_DIRECTORY
-
 #if HAVE_G_FILE_MONITOR_DIRECTORY
 
 /*
+ *
+ * ----------------
+ * fam replacement from glib? g_file_monitor_directory (also in filers)
+ *    file = g_file_new_for_path(g_get_home_dir ());
+ *    monitor = g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, NULL);
+ *    g_signal_connect(G_OBJECT(monitor), "changed", G_CALLBACK(dir_changed), NULL); 
+ * ----------------
 void                user_function                      (GFileMonitor     *monitor,
                                                         GFile            *file,
                                                         GFile            *other_file,
@@ -31,10 +36,129 @@ void                user_function                      (GFileMonitor     *monito
                                                         gpointer          user_data)       : Run Last
 */
 
+bool initialize_file_monitor(void)
+{
+  return(true);
+}
+
+static void cleanup_new_file_watcher(void);
+static void cleanup_edit_header_watcher(void);
+
+void cleanup_file_monitor(void)
+{
+  cleanup_edit_header_watcher();
+  cleanup_new_file_watcher();
+  ss->file_monitor_ok = false;
+}
+
+void *unmonitor_file(void *watcher) 
+{
+  if (G_IS_FILE_MONITOR(watcher))
+    g_file_monitor_cancel((GFileMonitor *)watcher);
+  return(NULL);
+}
+
+void *unmonitor_directory(void *watcher) 
+{
+  if (G_IS_FILE_MONITOR(watcher))
+    g_file_monitor_cancel((GFileMonitor *)watcher);
+  return(NULL);
+}
 
 
+static void sp_file_changed(GFileMonitor *mon, GFile *file, GFile *other, GFileMonitorEvent ev, gpointer data)
+{
+  snd_info *sp = (snd_info *)data;
+  if (sp->writing) return;
+  
+  switch (ev)
+    {
+    case G_FILE_MONITOR_EVENT_CHANGED:
+      /* this includes cp overwriting old etc */
+      if (file_write_date(sp->filename) != sp->write_date) /* otherwise chmod? */
+	{
+	  sp->need_update = true;
+	  if (auto_update(ss))
+	    snd_update(sp);
+	  else start_bomb(sp);
+	}
+#if HAVE_ACCESS
+      else
+	{
+	  int err;
+	  err = access(sp->filename, R_OK);
+	  if (err < 0)
+	    {
+	      char *msg;
+	      msg = mus_format("%s is read-protected!", sp->short_filename);
+	      status_report(sp, msg);
+	      free(msg);
+	      sp->file_unreadable = true;
+	      start_bomb(sp);
+	    }
+	  else
+	    {
+	      sp->file_unreadable = false;
+	      clear_status_area(sp);
+	      err = access(sp->filename, W_OK);
+	      if (err < 0)   /* if err < 0, then we can't write (W_OK -> error ) */
+		sp->file_read_only = FILE_READ_ONLY; 
+	      else sp->file_read_only = FILE_READ_WRITE;
+	      if ((sp->user_read_only == FILE_READ_ONLY) || 
+		  (sp->file_read_only == FILE_READ_ONLY)) 
+		show_lock(sp); 
+	      else hide_lock(sp);
+	    }
+	}
 #endif
+      break;
 
+    case G_FILE_MONITOR_EVENT_DELETED:
+      /* snd_update will post a complaint in this case, but I like it explicit */
+      if (mus_file_probe(sp->filename) == 0)
+	{
+	  /* user deleted file while editing it? */
+	  status_report(sp, "%s no longer exists!", sp->short_filename);
+	  sp->file_unreadable = true;
+	  start_bomb(sp);
+	  return;
+	}
+
+    case G_FILE_MONITOR_EVENT_CREATED:
+    case G_FILE_MONITOR_EVENT_MOVED:
+      if (sp->write_date != file_write_date(sp->filename))
+	{
+	  sp->file_unreadable = false;
+	  sp->need_update = true;
+	  if (auto_update(ss))
+	    snd_update(sp);
+	  else start_bomb(sp);
+	}
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+
+
+void monitor_sound(snd_info *sp)
+{
+  GFile *file;
+  file = g_file_new_for_path(sp->filename);
+  sp->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
+  g_signal_connect(G_OBJECT(sp->file_watcher), "changed", G_CALLBACK(sp_file_changed), (gpointer)sp);   
+  g_object_unref(file); /* is this safe? */
+}
+
+
+
+void view_files_unmonitor_directories(view_files_info *vdat) {}
+void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
+
+
+#else
 
 void cleanup_file_monitor(void) {}
 bool initialize_file_monitor(void) {return(false);}
@@ -45,6 +169,7 @@ void monitor_sound(snd_info *sp) {}
 void view_files_unmonitor_directories(view_files_info *vdat) {}
 void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
 
+#endif
 
 
 /* -------------------------------------------------------------------------------- */
@@ -121,17 +246,17 @@ static void fsb_file_set_text(fsb *fs, const char *file)
 
 #if HAVE_G_FILE_MONITOR_DIRECTORY
 static void force_directory_reread(fsb *fs);
-static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe)
+static void watch_current_directory_contents(GFileMonitor *mon, GFile *file, GFile *other, GFileMonitorEvent ev, gpointer data)
 {
-  switch (fe->code)
+  switch (ev)
     {
-    case FAMDeleted:
-    case FAMCreated:
-    case FAMMoved:
+    case G_FILE_MONITOR_EVENT_DELETED:
+    case G_FILE_MONITOR_EVENT_CREATED:
+    case G_FILE_MONITOR_EVENT_MOVED:
       if ((!(just_sounds(ss))) ||
-	  (sound_file_p(fe->filename)))
+	  (sound_file_p(g_file_get_path(file))))
 	{
-	  fsb *fs = (fsb *)(famp->data);
+	  fsb *fs = (fsb *)data;
 	  fs->reread_directory = true;
 	  if ((fs->dialog) &&
 	      (widget_is_active(fs->dialog)))
@@ -241,10 +366,14 @@ static void fsb_update_lists(fsb *fs)
   if ((fs->last_dir == NULL) ||
       (strcmp(fs->directory_name, fs->last_dir) != 0))
     {
+      GFile *file;
       if (fs->directory_watcher)
 	unmonitor_file(fs->directory_watcher); /* filename normally ignored */
 
-      fs->directory_watcher = fam_monitor_directory(fs->directory_name, (void *)fs, watch_current_directory_contents);
+      file = g_file_new_for_path(fs->directory_name);
+      fs->directory_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
+      g_signal_connect(G_OBJECT(fs->directory_watcher), "changed", G_CALLBACK(watch_current_directory_contents), (gpointer)fs);
+      g_object_unref(file);
 
       if (fs->last_dir) free(fs->last_dir);
       fs->last_dir = mus_strdup(fs->directory_name);
@@ -1011,15 +1140,15 @@ static void repost_sound_info(file_dialog_info *fd)
 }
 
 
-static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
+static void watch_info_file(GFileMonitor *mon, GFile *file, GFile *other, GFileMonitorEvent ev, gpointer data)
 {
-  switch (fe->code)
+  switch (ev)
     {
-    case FAMChanged:
-    case FAMDeleted:
-    case FAMCreated:
-    case FAMMoved:
-      repost_sound_info((file_dialog_info *)(fp->data));
+    case G_FILE_MONITOR_EVENT_CHANGED:
+    case G_FILE_MONITOR_EVENT_DELETED:
+    case G_FILE_MONITOR_EVENT_CREATED:
+    case G_FILE_MONITOR_EVENT_MOVED:
+      repost_sound_info((file_dialog_info *)data);
       break;
 
     default:
@@ -1118,8 +1247,15 @@ static void dialog_select_callback(const char *filename, void *context)
       gtk_widget_show(fd->dp->play_button);
 #endif
 #if HAVE_G_FILE_MONITOR_DIRECTORY
-      fd->info_filename = mus_strdup(filename);
-      fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
+      {
+	GFile *file;
+
+	fd->info_filename = mus_strdup(filename);
+	file = g_file_new_for_path(filename);
+	fd->info_filename_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
+	g_signal_connect(G_OBJECT(fd->info_filename_watcher), "changed", G_CALLBACK(watch_info_file), (gpointer)fd);
+	g_object_unref(file);
+      }
 #endif
     }
   else
@@ -1347,18 +1483,20 @@ static void clear_error_if_open_changes(fsb *fs, file_dialog_info *fd)
 }
 
 
-#if HAVE_G_FILE_MONITOR_DIRECTORY
-static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
+#if HAVE_G_FILE_MONITOR_DIRECTORY 
+static void unpost_unsound_error(GFileMonitor *mon, GFile *file, GFile *other, GFileMonitorEvent ev, gpointer data)
 {
   file_dialog_info *fd;
-  switch (fe->code)
+  char *filename;
+  switch (ev)
     {
-    case FAMChanged:
-    case FAMCreated:
-      fd = (file_dialog_info *)(fp->data);
+    case G_FILE_MONITOR_EVENT_CHANGED:
+    case G_FILE_MONITOR_EVENT_CREATED:
+      filename = g_file_get_path(file);
+      fd = (file_dialog_info *)data;
       if ((fd) &&
-	  (fe->filename) &&
-	  (mus_strcmp(fe->filename, fd->unsound_filename)))
+	  (filename) &&
+	  (mus_strcmp(filename, fd->unsound_filename)))
 	clear_file_error_label(fd);
       break;
 
@@ -1371,15 +1509,22 @@ static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
 
 static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
 {
+  GFile *file;
+
   if (fd->unsound_directory_watcher)
     {
       fd->unsound_directory_watcher = unmonitor_file(fd->unsound_directory_watcher);
       if (fd->unsound_dirname) free(fd->unsound_dirname);
       if (fd->unsound_filename) free(fd->unsound_filename);
     }
+
   fd->unsound_filename = mus_expand_filename(filename);
   fd->unsound_dirname = just_directory(fd->unsound_filename);
-  fd->unsound_directory_watcher = fam_monitor_directory(fd->unsound_dirname, (void *)fd, unpost_unsound_error);
+
+  file = g_file_new_for_path(fd->unsound_dirname);
+  fd->unsound_directory_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
+  g_signal_connect(G_OBJECT(fd->unsound_directory_watcher), "changed", G_CALLBACK(unpost_unsound_error), (gpointer)fd);
+  g_object_unref(file);
 }
 #else
 static void start_unsound_watcher(file_dialog_info *fd, const char *filename) {}
@@ -2550,16 +2695,16 @@ static void clear_error_if_save_as_filename_changes(GtkWidget *dialog, gpointer 
 
 
 #if HAVE_G_FILE_MONITOR_DIRECTORY
-static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
+static void watch_save_as_file(GFileMonitor *mon, GFile *file, GFile *other, GFileMonitorEvent ev, gpointer data)
 {
   /* if file is deleted, respond in some debonair manner */
-  switch (fe->code)
+  switch (ev)
     {
-    case FAMChanged:
-    case FAMDeleted:
-    case FAMCreated:
-    case FAMMoved:
-      save_as_undoit((save_as_dialog_info *)(fp->data));
+    case G_FILE_MONITOR_EVENT_CHANGED:
+    case G_FILE_MONITOR_EVENT_DELETED:
+    case G_FILE_MONITOR_EVENT_CREATED:
+    case G_FILE_MONITOR_EVENT_MOVED:
+      save_as_undoit((save_as_dialog_info *)data);
       break;
 
     default:
@@ -2757,7 +2902,13 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			       "DoIt"
 			       );
 #if HAVE_G_FILE_MONITOR_DIRECTORY
-	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
+	      {
+		GFile *file;
+		file = g_file_new_for_path(fullname);
+		sd->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
+		g_signal_connect(G_OBJECT(sd->file_watcher), "changed", G_CALLBACK(watch_save_as_file), (gpointer)sd);
+		g_object_unref(file);
+	      }
 #endif
 	      post_file_dialog_error((const char *)msg, sd->panel_data);
 	      clear_error_if_save_as_filename_changes(sd->fs->dialog, (void *)sd);
@@ -3581,7 +3732,7 @@ static mus_long_t initial_samples = 1;
 static char *new_file_filename = NULL;
 static void *new_file_watcher = NULL;
 
-void cleanup_new_file_watcher(void)
+static void cleanup_new_file_watcher(void)
 {
   new_file_watcher = unmonitor_file(new_file_watcher);
 }
@@ -3621,15 +3772,15 @@ static void clear_error_if_new_filename_changes(GtkWidget *dialog)
 
 
 #if HAVE_G_FILE_MONITOR_DIRECTORY
-static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
+static void watch_new_file(GFileMonitor *mon, GFile *file, GFile *other, GFileMonitorEvent ev, gpointer data)
 {
   /* if file is deleted, respond in some debonair manner */
-  switch (fe->code)
+  switch (ev)
     {
-    case FAMChanged:
-    case FAMDeleted:
-    case FAMCreated:
-    case FAMMoved:
+    case G_FILE_MONITOR_EVENT_CHANGED:
+    case G_FILE_MONITOR_EVENT_DELETED:
+    case G_FILE_MONITOR_EVENT_CREATED:
+    case G_FILE_MONITOR_EVENT_MOVED:
       new_file_undoit();
       break;
 
@@ -3674,7 +3825,13 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	    {
 	      msg = mus_format("%s exists. If you want to overwrite it, click 'DoIt'", newer_name);
 #if HAVE_G_FILE_MONITOR_DIRECTORY
-	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+	      {
+		GFile *file;
+		file = g_file_new_for_path(new_file_filename);
+		new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
+		g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
+		g_object_unref(file);
+	      }
 #endif
 	      set_stock_button_label(new_file_ok_button, "DoIt");
 	      post_file_dialog_error((const char *)msg, ndat);
@@ -3695,7 +3852,13 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 #if HAVE_G_FILE_MONITOR_DIRECTORY
 		  if ((ss->local_errno) &&
 		      (mus_file_probe(new_file_filename))) /* see comment in snd-xfile.c */
-		    new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+		    {
+		      GFile *file;
+		      file = g_file_new_for_path(new_file_filename);
+		      new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
+		      g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
+		      g_object_unref(file);
+		    }
 #endif
 		  clear_error_if_new_filename_changes(new_file_dialog);
 		}
@@ -3955,7 +4118,7 @@ static edhead_info *new_edhead_dialog(void)
 }
 
 
-void cleanup_edit_header_watcher(void)
+static void cleanup_edit_header_watcher(void)
 {
   int i;
   for (i = 0; i < edhead_info_size; i++)
@@ -4033,16 +4196,17 @@ static gint edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer 
 
 
 #if HAVE_G_FILE_MONITOR_DIRECTORY
-static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
+static void watch_file_read_only(GFileMonitor *mon, GFile *file, GFile *other, GFileMonitorEvent ev, gpointer data)
 {
   /* if file is deleted or permissions change, respond in some debonair manner */
-  edhead_info *ep = (edhead_info *)(fp->data);
+  edhead_info *ep = (edhead_info *)data;
   snd_info *sp = NULL;
   sp = ep->sp;
   if (sp->writing) return;
-  switch (fe->code)
+
+  switch (ev)
     {
-    case FAMChanged:
+    case G_FILE_MONITOR_EVENT_CHANGED:
 #if HAVE_ACCESS
       {
 	int err;
@@ -4063,9 +4227,9 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 #endif
 
       /* else fall through */
-    case FAMDeleted:
-    case FAMCreated:
-    case FAMMoved:
+    case G_FILE_MONITOR_EVENT_DELETED:
+    case G_FILE_MONITOR_EVENT_CREATED:
+    case G_FILE_MONITOR_EVENT_MOVED:
       /* I don't think it makes sense to continue the dialog at this point */
       clear_dialog_error(ep->edat);
       gtk_widget_hide(ep->dialog);
@@ -4215,7 +4379,13 @@ GtkWidget *edit_header(snd_info *sp)
   gtk_widget_show(ep->dialog);
   reflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
 #if HAVE_G_FILE_MONITOR_DIRECTORY
-  ep->file_ro_watcher = fam_monitor_file(ep->sp->filename, (void *)ep, watch_file_read_only);
+  {
+    GFile *file;
+    file = g_file_new_for_path(ep->sp->filename);
+    ep->file_ro_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
+    g_signal_connect(G_OBJECT(ep->file_ro_watcher), "changed", G_CALLBACK(watch_file_read_only), (gpointer)ep);
+    g_object_unref(file);
+  }
 #endif
   return(ep->dialog);
 }

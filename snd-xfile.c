@@ -9,6 +9,9 @@
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
  * what is "save" in enved -- maybe "(re)define <env-name>?" with a tooltip
  * in gtk3, the pane handles are all invisible (white on white)
+ * in gtk2 the bomb icon isn't animated (and looks squashed)
+ * fam open filer doesn't update in gtk [all of the new fam stuff needs to be tested]
+ *   also view files stuff is still a stub
  *
  * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html|h|c already]
  *   perhaps define all the "built-in" keys via (bind-key ...)
@@ -19,13 +22,6 @@
  * find: global not tested, stop not tested
  * vf buttons need tooltips and bgcolor of entire dialog is bad
  * make new pictures for snd.html (will need audio+gtk3 ideally)
- *
- * ----------------
- * fam replacement from glib? g_file_monitor_directory (also in filers)
- *    file = g_file_new_for_path(g_get_home_dir ());
- *    monitor = g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, NULL);
- *    g_signal_connect(G_OBJECT(monitor), "changed", G_CALLBACK(dir_changed), NULL); 
- * ----------------
  *
  * what about tooltips in the listener, or some way to show help (apropos) if hovering
  *   also if error displayed, hover->env printout etc
@@ -151,7 +147,7 @@ static fam_info *fam_monitor_file(const char *filename, void *data, void (*actio
       err = FAMMonitorFile(fam_connection, filename, rp, (void *)fp);
       if (err < 0)
 	{
-	  snd_warning("can't monitor %s: %s (free %p %p)\n", filename, fam_error_to_string(FAMErrno), fp, rp);
+	  snd_warning("can't monitor %s: %s (%p %p %p)\n", filename, fam_error_to_string(FAMErrno), fam_connection, fp, rp);
 	  free(rp);
 	  rp = NULL;
 	  free(fp);
@@ -334,6 +330,9 @@ bool initialize_file_monitor(void)
   return(true);
 }
 
+
+static void cleanup_edit_header_watcher(void);
+static void cleanup_new_file_watcher(void);
 
 void cleanup_file_monitor(void)
 {
@@ -4137,7 +4136,7 @@ static char *new_file_filename = NULL;
 static void *new_file_watcher = NULL;
 
 
-void cleanup_new_file_watcher(void)
+static void cleanup_new_file_watcher(void)
 {
   if (new_file_watcher)
     new_file_watcher = unmonitor_file(new_file_watcher);
@@ -4549,7 +4548,7 @@ static edhead_info *new_edhead_dialog(void)
 }
 
 
-void cleanup_edit_header_watcher(void)
+static void cleanup_edit_header_watcher(void)
 {
   int i;
   for (i = 0; i < edhead_info_size; i++)
