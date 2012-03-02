@@ -9,12 +9,6 @@
   #undef _
 #endif
 
-#if (!HAVE_FAM)
-  #define FAMRequest int
-  #define FAMEvent int
-  #define FAMConnection void*
-#endif
-
 #define NO_SUCH_ENVELOPE XEN_ERROR_TYPE("no-such-envelope")
 #define NO_SUCH_SAMPLE   XEN_ERROR_TYPE("no-such-sample")
 #define NO_SUCH_EDIT     XEN_ERROR_TYPE("no-such-edit")
@@ -109,7 +103,6 @@
 #define I_STOP "Stop"
 
 #define I_LINES_OR_DOTS "Dots or lines"
-#define I_SAVE_CURRENT_SETTINGS "Save current settings"
 #define I_CHANNEL_LAYOUT "Channel layout"
 #define I_ZOOM_CENTERS_ON "Zoom centers on"
 #define I_AXIS_LAYOUT "Axis layout"

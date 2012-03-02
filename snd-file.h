@@ -1,6 +1,18 @@
 #ifndef SND_FILE_H
 #define SND_FILE_H
 
+#if HAVE_FAM
+#include <fam.h>
+
+typedef struct fam_info {
+  FAMRequest *rp;
+  void (*action)(struct fam_info *fp, FAMEvent *fe);
+  void *data;
+  char *filename;
+} fam_info;
+#endif
+
+
 typedef enum {VF_AT_CURSOR, VF_AT_END, VF_AT_BEGINNING, VF_AT_MARK, VF_AT_SAMPLE} vf_location_t;
 
 typedef struct {
@@ -35,7 +47,11 @@ typedef struct {
   mus_long_t beg;
 
   int dirs_size;
+#if HAVE_FAM
   fam_info **dirs;
+#else
+  void *dirs;
+#endif
   char **dir_names;
   bool need_update;
 
@@ -111,7 +127,6 @@ void view_files_display_list(view_files_info *vdat);
 void view_files_mix_selected_files(widget_t w, view_files_info *vdat);
 void view_files_insert_selected_files(widget_t w, view_files_info *vdat);
 void view_files_open_selected_files(view_files_info *vdat);
-void view_files_remove_selected_files(view_files_info *vdat);
 void view_files_select(vf_row *r, bool add_to_selected);
 bool view_files_play(view_files_info *vdat, int pos, bool play);
 void vf_clear_error(view_files_info *vdat);
@@ -124,6 +139,11 @@ void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
 void view_files_reflect_sort_items(void);
 int vf_mix(view_files_info *vdat);
 bool vf_insert(view_files_info *vdat);
+void vf_add_file_if_absent(view_files_info *vdat, const char *filename);
+void vf_remove_file_if_present(view_files_info *vdat, const char *filename);
+void view_files_unmonitor_directories(view_files_info *vdat);
+void view_files_monitor_directory(view_files_info *vdat, const char *dirname);
+
 char *dialog_get_title(widget_t dialog);
 
 const char **type_and_format_to_position(file_data *fdat, int type, int format);

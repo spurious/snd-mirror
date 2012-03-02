@@ -229,6 +229,12 @@ void reflect_sound_selection(snd_info *sp);
 
 /* -------- snd-xfile.c -------- */
 
+void cleanup_file_monitor(void);
+bool initialize_file_monitor(void);
+void *unmonitor_file(void *watcher);
+void *unmonitor_directory(void *watcher);
+void monitor_sound(snd_info *sp);
+
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);
 void alert_new_file(void);
 widget_t make_new_file_dialog(bool managed);

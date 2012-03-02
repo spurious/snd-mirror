@@ -276,8 +276,24 @@ static void region_down_arrow_callback(Widget w, XtPointer context, XtPointer in
 
 static void region_focus_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  static oclock_t mouse_down_time = 0;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  XButtonEvent *ev;
   chan_info *cp;
   regrow *r = (regrow *)context;
+
+  ev = (XButtonEvent *)(cb->event);
+  if (mouse_down_time != 0)
+    {
+      if ((ev->time - mouse_down_time) < ss->click_time) /* edit region if double clicked */
+	{
+	  mouse_down_time = ev->time;
+	  if (current_region != -1) 
+	    region_edit(current_region);
+	  return;
+	}
+    }
+  mouse_down_time = ev->time;
 
   unhighlight_region();
   if (region_list_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
@@ -316,13 +332,6 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
     play_region(region_list_position_to_id(r->pos), IN_BACKGROUND);
   else stop_playing_region(region_list_position_to_id(r->pos), PLAY_BUTTON_UNSET);
 #endif
-}
-
-
-static void region_edit_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  if (current_region != -1) 
-    region_edit(current_region);
 }
 
 
@@ -447,7 +456,7 @@ static void make_region_dialog(void)
   int n, i, id;
   Arg args[32];
   Widget formw, last_row, infosep;
-  Widget editb, panes, toppane, sep1 = NULL, sep2;
+  Widget panes, toppane, sep1 = NULL, sep2;
 #if WITH_AUDIO
   Widget plw;
 #endif
@@ -483,18 +492,12 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
   mix_button = XtCreateManagedWidget("Mix", xmPushButtonGadgetClass, region_dialog, args, n);
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-  XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-  editb = XtCreateManagedWidget("Edit", xmPushButtonGadgetClass, region_dialog, args, n);
-
   /* XtAddCallback(region_dialog,  XmNokCallback,       region_save_callback,   NULL); */
   XtAddCallback(save_as_button, XmNactivateCallback, region_save_callback,   NULL);
   XtAddCallback(region_dialog,  XmNcancelCallback,   region_quit_callback,   NULL);
   XtAddCallback(region_dialog,  XmNhelpCallback,     region_help_callback,   NULL);
   XtAddCallback(mix_button,     XmNactivateCallback, region_mix_callback,    NULL);
   XtAddCallback(insert_button,  XmNactivateCallback, region_insert_callback, NULL);
-  XtAddCallback(editb,          XmNactivateCallback, region_edit_callback,   NULL);
 
   XmStringFree(xhelp);
   XmStringFree(xgo_away);

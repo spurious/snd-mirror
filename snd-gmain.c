@@ -96,7 +96,7 @@ static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer co
 #endif
 
 
-#if (!HAVE_FAM)
+
 static guint auto_update_proc = 0;
 
 static gint auto_update_check(gpointer context)
@@ -117,9 +117,7 @@ void auto_update_restart(void)
   if (auto_update_proc == 0)
     g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
 }
-#else
-void auto_update_restart(void) {}
-#endif
+
 
 
 #if HAVE_SETJMP_H
@@ -359,9 +357,12 @@ static void startup_funcs(void)
     set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
 #endif
 
-#if (!HAVE_FAM)
-  if (auto_update_interval(ss) > 0.0)
-    g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
+#if (!HAVE_G_FILE_MONITOR_DIRECTORY)
+  if (!(ss->file_monitor_ok))
+    {
+      if (auto_update_interval(ss) > 0.0)
+	g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
+    }
 #endif
 
 #if MUS_TRAP_SEGFAULT

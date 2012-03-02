@@ -1484,6 +1484,7 @@ void init_gtk(void)
     "  padding-left: 8px;\n"
     "  padding-right: 8px;\n"
     "  border-width: 1px;\n"
+    "  border-color: gray;\n"
     "  background-color: #fffff0;\n"
     "}\n"
     "GtkButton:prelight { \n"

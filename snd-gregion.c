@@ -312,10 +312,33 @@ static gboolean region_down_arrow_callback(GtkWidget *w, GdkEventButton *ev, gpo
 }
 
 
-static void region_focus_callback(GtkWidget *w, gpointer context) /* button clicked callback */
+
+static oclock_t mouse_down_time = 0, ev_mouse_down_time = 0;
+
+static gboolean select_event_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  ev_mouse_down_time = EVENT_TIME(ev);
+  return(false);
+}
+
+
+static void region_focus_callback(GtkWidget *w, gpointer context)  /* button clicked callback */
 {
   chan_info *cp;
   regrow *r = (regrow *)context;
+
+  if (mouse_down_time != 0)
+    {
+      if ((ev_mouse_down_time - mouse_down_time) < 200)
+	{
+	  mouse_down_time = ev_mouse_down_time;
+	  if (current_region != -1) 
+	    region_edit(current_region);
+	  return;
+	}
+    }
+  mouse_down_time = ev_mouse_down_time;
+
   unhighlight_region();
   if (region_list_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
   set_current_region(r->pos);
@@ -353,21 +376,6 @@ static void region_play_callback(GtkWidget *w, gpointer context)
   else stop_playing_region(region_list_position_to_id(r->pos), PLAY_BUTTON_UNSET);
 #endif
 }
-
-
-static void region_edit_callback(GtkWidget *w, gpointer context)
-{
-  if (current_region != -1) 
-    region_edit(current_region);
-}
-
-#if 0
-static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
-{
-  g_signal_stop_emission((gpointer)w, g_signal_lookup("enter_notify_event", G_OBJECT_TYPE((gpointer)w)), 0);
-  return(false);
-}
-#endif
 
 
 static XEN reflect_file_in_region_browser(XEN reason)
@@ -447,6 +455,7 @@ static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback nam
   SG_SIGNAL_CONNECT(r->nm, "clicked", name_callback, r);
   SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", regrow_mouse_enter_label, r);
   SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", regrow_mouse_leave_label, r);
+  SG_SIGNAL_CONNECT(r->nm, "button_press_event", select_event_callback, NULL);
 
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
   gtk_widget_show(r->nm);
@@ -502,7 +511,7 @@ static void make_region_dialog(void)
   int i, id, rows;
   regrow *r;
   chan_info *cp;
-  GtkWidget *infobox, *labels, *labbox, *edit_button, *dismiss_button, *help_button;
+  GtkWidget *infobox, *labels, *labbox, *dismiss_button, *help_button;
   GtkWidget *sep1, *cww, *toppane, *tophbox, *formw;
 #if WITH_AUDIO
   GtkWidget *plw;
@@ -529,9 +538,6 @@ static void make_region_dialog(void)
   mix_button = sg_button_new_from_stock_with_label("Mix", GTK_STOCK_ADD);
   gtk_widget_set_name(mix_button, "dialog_button");
 
-  edit_button = sg_button_new_from_stock_with_label("Edit", GTK_STOCK_EDIT);
-  gtk_widget_set_name(edit_button, "dialog_button");
-
   save_as_button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
   gtk_widget_set_name(save_as_button, "dialog_button");
 
@@ -541,12 +547,10 @@ static void make_region_dialog(void)
   add_highlight_button_style(insert_button);
   add_highlight_button_style(save_as_button);
   add_highlight_button_style(mix_button);
-  add_highlight_button_style(edit_button);
 #endif
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), insert_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), mix_button, true, true, 4);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), edit_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), save_as_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), dismiss_button, true, true, 4);
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), help_button, true, true, 4);
@@ -556,12 +560,10 @@ static void make_region_dialog(void)
   SG_SIGNAL_CONNECT(help_button, "clicked", region_help_callback, NULL);
   SG_SIGNAL_CONNECT(dismiss_button, "clicked", region_ok_callback, NULL);
   SG_SIGNAL_CONNECT(save_as_button, "clicked", region_save_callback, NULL);
-  SG_SIGNAL_CONNECT(edit_button, "clicked", region_edit_callback, NULL);
 
   add_tooltip(insert_button,  "insert the selected region");
   add_tooltip(mix_button,     "mix the selected region");
   add_tooltip(save_as_button, "save the selected region to a file");
-  add_tooltip(edit_button,    "edit the selected region");
 
   g_signal_connect(insert_button, "query-tooltip", G_CALLBACK(insert_region_tooltip), NULL);
   g_signal_connect(mix_button,    "query-tooltip", G_CALLBACK(mix_region_tooltip), NULL);
@@ -571,7 +573,6 @@ static void make_region_dialog(void)
   gtk_widget_show(help_button);
   gtk_widget_show(dismiss_button);
   gtk_widget_show(save_as_button);
-  gtk_widget_show(edit_button);
 
   region_grf = gtk_vpaned_new();
   add_paned_style(region_grf);

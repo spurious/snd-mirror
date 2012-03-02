@@ -193,15 +193,6 @@ typedef struct {
   int index;           /* cp->sounds index (src writes a new temp file) */
 } mix_state;
 
-typedef struct fam_info {
-  FAMRequest *rp;
-  void (*action)(struct fam_info *fp, FAMEvent *fe);
-  void *data;
-#if MUS_DEBUGGING
-  char *filename;
-#endif
-} fam_info;
-
 typedef struct env_editor {
   int *current_xs;
   int *current_ys;
@@ -423,7 +414,7 @@ typedef struct snd_info {
   bool apply_ok, applying;
   bool active;
   char *name_string;
-  fam_info *file_watcher;
+  void *file_watcher;
   bool writing, bomb_in_progress;
 } snd_info;
 
@@ -528,8 +519,7 @@ typedef struct snd_state {
   bool jump_ok, exiting;
   env_editor *enved;
   oclock_t click_time;
-  bool fam_ok, C_g_typed;
-  FAMConnection *fam_connection;
+  bool file_monitor_ok, C_g_typed;
   void (*snd_error_handler)(const char *error_msg, void *data);
   void *snd_error_data;
   void (*snd_warning_handler)(const char *warning_msg, void *data);
@@ -592,7 +582,6 @@ typedef struct snd_state {
 #if HAVE_GL
   GLXContext cx;
 #endif
-  XtInputId fam_port;
   Widget *mw;
   bool axis_color_set;
 #endif
@@ -638,7 +627,6 @@ typedef struct snd_state {
   mus_float_t bg_gradient;
   
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor, *bounds_cursor, *play_cursor, *loop_play_cursor, *yaxis_cursor;
-  gint fam_port;
   GtkWidget **mw;
   bool axis_color_set;
 #endif
@@ -1636,15 +1624,6 @@ char *shorter_tempnam(const char *dir, const char *prefix);
 char *snd_tempnam(void);
 void snd_exit(int val);
 void g_init_utils(void);
-
-fam_info *fam_monitor_file(const char *filename, 
-			   void *data, 
-			   void (*action)(struct fam_info *fp, FAMEvent *fe));
-fam_info *fam_monitor_directory(const char *dir_name,
-				void *data, 
-				void (*action)(struct fam_info *fp, FAMEvent *fe));
-fam_info *fam_unmonitor_file(const char *filename, fam_info *fp);
-fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp);
 
 
 

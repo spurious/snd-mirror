@@ -1289,88 +1289,6 @@ file_info *free_file_info(file_info *hdr)
 }
 
 
-static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
-{
-#if HAVE_FAM
-  snd_info *sp = NULL;
-  /* fp has been checked already */
-  sp = (snd_info *)(fp->data);
-  if (sp->writing) return;
-  switch (fe->code)
-    {
-    case FAMChanged:
-      /* this includes cp overwriting old etc */
-      if (file_write_date(sp->filename) != sp->write_date) /* otherwise chmod? */
-	{
-	  sp->need_update = true;
-	  if (auto_update(ss))
-	    snd_update(sp);
-	  else start_bomb(sp);
-	}
-#if HAVE_ACCESS
-      else
-	{
-	  int err;
-	  err = access(sp->filename, R_OK);
-	  if (err < 0)
-	    {
-	      char *msg;
-	      msg = mus_format("%s is read-protected!", sp->short_filename);
-	      status_report(sp, msg);
-	      free(msg);
-	      sp->file_unreadable = true;
-	      start_bomb(sp);
-	    }
-	  else
-	    {
-	      sp->file_unreadable = false;
-	      clear_status_area(sp);
-	      err = access(sp->filename, W_OK);
-	      if (err < 0)   /* if err < 0, then we can't write (W_OK -> error ) */
-		sp->file_read_only = FILE_READ_ONLY; 
-	      else sp->file_read_only = FILE_READ_WRITE;
-	      if ((sp->user_read_only == FILE_READ_ONLY) || 
-		  (sp->file_read_only == FILE_READ_ONLY)) 
-		show_lock(sp); 
-	      else hide_lock(sp);
-	    }
-	}
-#endif
-      break;
-
-    case FAMDeleted:
-      /* snd_update will post a complaint in this case, but I like it explicit */
-      if (mus_file_probe(sp->filename) == 0)
-	{
-	  /* user deleted file while editing it? */
-	  status_report(sp, "%s no longer exists!", sp->short_filename);
-	  sp->file_unreadable = true;
-	  start_bomb(sp);
-	  return;
-	}
-      /* else I don't know why I got this fam code, but fall through to the update case */
-
-    case FAMCreated:
-    case FAMMoved:
-      /* this can be delivered a bit late (and more than once for a given save), so don't set off the bomb icon unless the file is wrong */
-      if (sp->write_date != file_write_date(sp->filename))
-	{
-	  sp->file_unreadable = false;
-	  sp->need_update = true;
-	  if (auto_update(ss))
-	    snd_update(sp);
-	  else start_bomb(sp);
-	}
-      break;
-
-    default:
-      /* ignore the rest */
-      break;
-    }
-#endif
-}
-
-
 static char *opened_sound_file_name(snd_info *sp)
 {
   char *newname;
@@ -1550,7 +1468,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       sp->need_update = false;
       ss->active_sounds++;
       reflect_file_change_in_title();
-      sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
+      monitor_sound(sp);
     }
   for_each_separate_chan(channel_open_pane);
 
@@ -1679,7 +1597,7 @@ void snd_close_file(snd_info *sp)
     sp->chans[i]->squelch_update = true;
   /* check_for_event(); */
 
-  sp->file_watcher = fam_unmonitor_file(sp->filename, sp->file_watcher);
+  sp->file_watcher = unmonitor_file(sp->file_watcher);
 
   /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */
   if (selection_creation_in_progress()) finish_selection_creation();
@@ -2081,7 +1999,7 @@ snd_info *snd_update(snd_info *sp)
   snd_info *saved_sp;
   struct ctrl_state *saved_controls;
   mus_long_t *old_cursors;
-  fam_info *old_file_watcher;
+  void *old_file_watcher;
   XEN update_hook_result = XEN_FALSE;
   const char *ur_filename;
   int app_x, app_y;
@@ -2173,7 +2091,6 @@ snd_info *snd_update(snd_info *sp)
 	    ed->peak_env = free_peak_env(ncp, k);
 	}
     }
-
   old_file_watcher = sp->file_watcher; /* will be unmonitored in snd_close_file, but we need to know if it is being monitored now */
 
   snd_close_file(sp);
@@ -2181,7 +2098,7 @@ snd_info *snd_update(snd_info *sp)
   /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
 
-  if (!(ss->fam_ok))
+  if (!(ss->file_monitor_ok))
     alert_new_file();
 
   ss->reloading_updated_file = (old_index + 1);
@@ -2203,10 +2120,11 @@ snd_info *snd_update(snd_info *sp)
   if (nsp)
     {
       /* if header is bad, nsp can be null awaiting raw data dialog's return */
+
       if ((old_file_watcher) &&
 	  (!(nsp->file_watcher)))
-	nsp->file_watcher = fam_monitor_file(nsp->filename, (void *)nsp, fam_sp_action); 
-            /* might be a different sp as well as underlying file */
+	monitor_sound(nsp);
+      /* might be a different sp as well as underlying file */
 
       nsp->saved_controls = saved_controls;
       if (saved_controls) restore_controls(nsp);
@@ -2882,7 +2800,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
       return(false);
     }
 #if HAVE_ACCESS
-  if (!(ss->fam_ok))
+  if (!(ss->file_monitor_ok))
     if (access(sp->filename, W_OK) < 0)
       {
 	snd_error("%s is write-protected", sp->filename);
@@ -3763,29 +3681,7 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 }
 
 
-static void view_files_unmonitor_directories(view_files_info *vdat)
-{
-  if (vdat->dirs)
-    {
-      int i;
-      for (i = 0; i < vdat->dirs_size; i++)
-	if (vdat->dirs[i])
-	  {
-	    vdat->dirs[i] = fam_unmonitor_directory(vdat->dir_names[i], vdat->dirs[i]);
-	    free(vdat->dir_names[i]);
-	    vdat->dir_names[i] = NULL;
-	  }
-      free(vdat->dirs);
-      vdat->dirs = NULL;
-      free(vdat->dir_names);
-      vdat->dir_names = NULL;
-      vdat->dirs_size = 0;
-    }
-}
-
-
-#if HAVE_FAM
-static void vf_add_file_if_absent(view_files_info *vdat, const char *filename)
+void vf_add_file_if_absent(view_files_info *vdat, const char *filename)
 {
   int row;
   row = view_files_find_row(vdat, filename);
@@ -3797,7 +3693,7 @@ static void vf_add_file_if_absent(view_files_info *vdat, const char *filename)
 }
 
 
-static void vf_remove_file_if_present(view_files_info *vdat, const char *filename)
+void vf_remove_file_if_present(view_files_info *vdat, const char *filename)
 {
   int i, row;
   row = view_files_find_row(vdat, filename);
@@ -3813,91 +3709,6 @@ static void vf_remove_file_if_present(view_files_info *vdat, const char *filenam
 	    break;
 	  }
     }
-}
-
-
-static void vf_watch_directory(struct fam_info *fp, FAMEvent *fe)
-{
-  view_files_info *vdat;
-  if (!(sound_file_p(fe->filename))) return;
-  vdat = (view_files_info *)(fp->data);
-  switch (fe->code)
-    {
-    case FAMChanged:
-      if (access(fe->filename, R_OK) == 0)
-	vf_add_file_if_absent(vdat, fe->filename);
-      else vf_remove_file_if_present(vdat, fe->filename);
-      break;
-
-    case FAMDeleted:
-    case FAMMoved:
-      /* it's an existing file that is moved? -- I see the old name?? */
-      vf_remove_file_if_present(vdat, fe->filename);
-      break;
-
-    case FAMCreated:
-      vf_add_file_if_absent(vdat, fe->filename);
-      break;
-
-    default:
-      /* ignore the rest */
-      break;
-    }
-  if (vdat->need_update)
-    {
-      view_files_update_list(vdat);
-      vdat->need_update = false;
-      if ((vdat->dialog) &&
-	  (widget_is_active(vdat->dialog)))
-	view_files_display_list(vdat);
-    }
-}
-#else
-static void vf_watch_directory(struct fam_info *fp, FAMEvent *fe) {}
-#endif
-
-
-static void view_files_monitor_directory(view_files_info *vdat, const char *dirname)
-{
-  int i, loc = -1;
-  if (vdat->dirs)
-    {
-      for (i = 0; i < vdat->dirs_size; i++)
-	if (vdat->dirs[i])
-	  {
-	    if (mus_strcmp(vdat->dir_names[i], dirname)) /* this was reversed?? */
-	      return;
-	  }
-	else
-	  {
-	    loc = i;
-	    break;
-	  }
-      if (loc == -1)
-	{
-	  loc = vdat->dirs_size;
-	  vdat->dirs_size += 4;
-	  vdat->dirs = (fam_info **)realloc(vdat->dirs, vdat->dirs_size * sizeof(fam_info *));
-	  vdat->dir_names = (char **)realloc(vdat->dir_names, vdat->dirs_size * sizeof(char *));
-	  for (i = loc; i < vdat->dirs_size; i++)
-	    {
-	      vdat->dirs[i] = NULL;
-	      vdat->dir_names[i] = NULL;
-	    }
-	}
-    }
-  else
-    {
-      vdat->dirs_size = 4;
-      loc = 0;
-      vdat->dirs = (fam_info **)calloc(vdat->dirs_size, sizeof(fam_info *));
-      vdat->dir_names = (char **)calloc(vdat->dirs_size, sizeof(char *));
-    }
-  redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
-  vdat->dirs[loc] = fam_monitor_directory(dirname, (void *)vdat, vf_watch_directory);
-  redirect_snd_error_to(NULL, NULL);
-  if (vdat->dirs[loc])
-    vdat->dir_names[loc] = mus_strdup(dirname);
 }
 
 
@@ -3956,7 +3767,9 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
     }
   else
     {
+#if (!USE_NO_GUI)
       view_files_monitor_directory(vdat, dirname);
+#endif
       sound_files = find_sound_files_in_dir(dirname);
       if ((sound_files) && 
 	  (sound_files->len > 0))
@@ -4090,7 +3903,9 @@ void view_files_display_list(view_files_info *vdat)
 void view_files_clear_list(view_files_info *vdat)
 {
   int i;
+#if (!USE_NO_GUI)
   view_files_unmonitor_directories(vdat);
+#endif
   if (vdat->names)
     {
       for (i = 0; i < vdat->size; i++)
@@ -4669,29 +4484,6 @@ void view_files_open_selected_files(view_files_info *vdat)
 }
 
 
-void view_files_remove_selected_files(view_files_info *vdat)
-{
-  int i, loc;
-
-  for (i = 0; i < vdat->currently_selected_files; i++)
-    {
-      loc = vdat->selected_files[i];
-      if (vdat->names[loc])
-	{
-	  free(vdat->names[loc]); 
-	  vdat->names[loc] = NULL;
-	  free(vdat->full_names[loc]); 
-	  vdat->full_names[loc] = NULL;
-	}
-    }
-
-  vdat->currently_selected_files = 0;
-  vf_unpost_info(vdat);
-  view_files_update_list(vdat);
-  view_files_display_list(vdat);
-}
-
-
 char *view_files_find_any_directory(void)
 {
   /* find any active directory in any vf dialog */
@@ -4703,11 +4495,11 @@ char *view_files_find_any_directory(void)
 	  view_files_info *vdat;
 	  vdat = view_files_infos[j];
 	  if ((vdat) && 
-	      (vdat->dirs))
+	      (vdat->dir_names))
 	    {
 	      int i;
 	      for (i = 0; i < vdat->dirs_size; i++)
-		if (vdat->dirs[i])
+		if (vdat->dir_names[i])
 		  return(vdat->dir_names[i]);
 	    }
 	}

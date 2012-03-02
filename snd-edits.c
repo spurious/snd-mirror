@@ -2851,7 +2851,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   if (sl_err == MUS_NO_ERROR)
     {
       io_err = close_temp_file(ofile, ofd, hdr->type, len * chans * datumb);
-      if (!(ss->fam_ok))
+      if (!(ss->file_monitor_ok))
 	alert_new_file();
     }
   else 
@@ -6713,7 +6713,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
       free(ofile); 
       ofile = NULL;
     }
-  if (!(ss->fam_ok))
+  if (!(ss->file_monitor_ok))
     if (auto_update(ss)) 
       for_each_sound(sound_not_current);
   return(IO_NO_ERROR);

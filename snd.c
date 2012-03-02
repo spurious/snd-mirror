@@ -375,7 +375,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #endif
 
   ss = (snd_state *)calloc(1, sizeof(snd_state)); /* not calloc! */
-  ss->fam_ok = false;
   ss->startup_errors = NULL;
 
 #if HAVE_GTK_3
@@ -416,6 +415,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
 #endif
   ss->jump_ok = false;
+  ss->file_monitor_ok = false;
   allocate_regions(max_regions(ss));
   ss->init_window_x = DEFAULT_INIT_WINDOW_X; 
   ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
@@ -437,7 +437,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->lisp_graph_hook_active = false;
   ss->exiting = false;
   ss->deferred_regions = 0;
-  ss->fam_connection = NULL;
   ss->snd_error_data = NULL;
   ss->snd_error_handler = NULL;
   ss->snd_warning_data = NULL;

@@ -33,9 +33,6 @@
 #if HAVE_SETLOCALE
   #include <locale.h>
 #endif
-#if HAVE_FAM_H
-  #include <fam.h>
-#endif
 
 #include "_sndlib.h"
 #include "xen.h"
@@ -68,7 +65,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "2-Mar-12"
+#define SND_DATE "5-Mar-12"
 #ifndef SND_VERSION
 #define SND_VERSION "12.9"
 #endif

@@ -12,6 +12,45 @@
    View:Files
 */
 
+
+
+/* file monitor */
+
+/* glib now has a "gio" module that provides a fam-like service, but it requires using gio style file handlers throughout. 
+*/
+
+#undef HAVE_G_FILE_MONITOR_DIRECTORY
+
+#if HAVE_G_FILE_MONITOR_DIRECTORY
+
+/*
+void                user_function                      (GFileMonitor     *monitor,
+                                                        GFile            *file,
+                                                        GFile            *other_file,
+                                                        GFileMonitorEvent event_type,
+                                                        gpointer          user_data)       : Run Last
+*/
+
+
+
+#endif
+
+
+void cleanup_file_monitor(void) {}
+bool initialize_file_monitor(void) {return(false);}
+void *unmonitor_file(void *watcher) {return(NULL);}
+void *unmonitor_directory(void *watcher) {return(NULL);}
+void monitor_sound(snd_info *sp) {}
+
+void view_files_unmonitor_directories(view_files_info *vdat) {}
+void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
+
+
+
+/* -------------------------------------------------------------------------------- */
+
+
+
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
 
 /* ---------------- file selector replacement ---------------- */
@@ -35,7 +74,7 @@ typedef struct fsb {
   bool reread_directory;
   char *last_dir;
   dir_info *current_files;
-  fam_info *directory_watcher;
+  void *directory_watcher;
   int filter_choice, sorter_choice;
 
   /* popup info */
@@ -80,7 +119,7 @@ static void fsb_file_set_text(fsb *fs, const char *file)
 }
 
 
-#if HAVE_FAM
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 static void force_directory_reread(fsb *fs);
 static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe)
 {
@@ -197,13 +236,13 @@ static void fsb_update_lists(fsb *fs)
 
   fs->current_files = files;
 
-#if HAVE_FAM
+#if HAVE_G_FILE_MONITOR_DIRECTORY
   /* make sure fam knows which directory to watch */
   if ((fs->last_dir == NULL) ||
       (strcmp(fs->directory_name, fs->last_dir) != 0))
     {
       if (fs->directory_watcher)
-	fam_unmonitor_file(fs->last_dir, fs->directory_watcher); /* filename normally ignored */
+	unmonitor_file(fs->directory_watcher); /* filename normally ignored */
 
       fs->directory_watcher = fam_monitor_directory(fs->directory_name, (void *)fs, watch_current_directory_contents);
 
@@ -340,7 +379,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data);
 
 static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab,
 		     void (*add_innards)(GtkWidget *vbox, void *data), void *data, /* add_innards data can be either file_dialog_info or save_as_dialog_info */
-		     const gchar *stock, bool with_extract)
+		     const gchar *stock, bool with_extract, bool with_mkdir)
 {
   fsb *fs;
   char *cur_dir = NULL, *pwd = NULL;
@@ -375,13 +414,18 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   /* -------- buttons -------- */
   fs->help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
   gtk_widget_set_name(fs->help_button, "dialog_button");
+  if (!with_mkdir) widget_set_margin_left(fs->help_button, 16);
 
   fs->cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(fs->cancel_button, "dialog_button");
   set_stock_button_label(fs->cancel_button, I_GO_AWAY);
+  if (!with_mkdir) widget_set_margin_left(fs->cancel_button, 16);
 
-  fs->mkdir_button = sg_button_new_from_stock_with_label("Mkdir", GTK_STOCK_REFRESH);
-  gtk_widget_set_name(fs->mkdir_button, "dialog_button");
+  if (with_mkdir)
+    {
+      fs->mkdir_button = sg_button_new_from_stock_with_label("Mkdir", GTK_STOCK_REFRESH);
+      gtk_widget_set_name(fs->mkdir_button, "dialog_button");
+    }
 
   if (with_extract)
     {
@@ -397,17 +441,18 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     }
   else fs->ok_button = gtk_button_new_from_stock(stock);
   gtk_widget_set_name(fs->ok_button, "dialog_button");
+  if (!with_mkdir) widget_set_margin_left(fs->ok_button, 16);
 
 #if HAVE_GTK_3
   add_highlight_button_style(fs->ok_button);
   add_highlight_button_style(fs->cancel_button);
-  add_highlight_button_style(fs->mkdir_button);
+  if (with_mkdir) add_highlight_button_style(fs->mkdir_button);
   add_highlight_button_style(fs->help_button);
   if (with_extract) add_highlight_button_style(fs->extract_button);
 #endif
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->ok_button, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->mkdir_button, true, true, 10);
+  if (with_mkdir) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->mkdir_button, true, true, 10);
   if (with_extract) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->extract_button, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->cancel_button, true, true, 10);
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->help_button, true, true, 10);
@@ -415,7 +460,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   gtk_widget_show(fs->ok_button);
   gtk_widget_show(fs->cancel_button);
   gtk_widget_show(fs->help_button);
-  gtk_widget_show(fs->mkdir_button);
+  if (with_mkdir) gtk_widget_show(fs->mkdir_button);
   if (with_extract) gtk_widget_show(fs->extract_button);
 
 
@@ -934,9 +979,9 @@ typedef struct file_dialog_info {
   read_only_t file_dialog_read_only;
   GtkWidget *frame, *info1, *info2, *vbox;
   dialog_play_info *dp;
-  fam_info *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
+  void *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
+  void *info_filename_watcher;     /* watch for change in selected file and repost info */
   char *unsound_dirname, *unsound_filename;
-  fam_info *info_filename_watcher;     /* watch for change in selected file and repost info */
   char *info_filename;
 } file_dialog_info;
 
@@ -947,17 +992,16 @@ static void unpost_file_info(file_dialog_info *fd)
   info_widget_display(fd->info1, "");
   info_widget_display(fd->info2, "");
   clear_open_handlers(fd->fs);
-#if HAVE_FAM
+
   if (fd->info_filename_watcher)
     {
-      fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
+      fd->info_filename_watcher = unmonitor_file(fd->info_filename_watcher);
       if (fd->info_filename) {free(fd->info_filename); fd->info_filename = NULL;}
     }
-#endif
 }
 
 
-#if HAVE_FAM
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 static void repost_sound_info(file_dialog_info *fd)
 {
   if ((mus_file_probe(fd->info_filename)) &&
@@ -1006,7 +1050,7 @@ static file_dialog_info *idat = NULL; /* insert file */
 
 void alert_new_file(void) 
 {
-  if (ss->fam_ok) return;
+  if (ss->file_monitor_ok) return;
   if (odat)
     {
       odat->fs->reread_directory = true;
@@ -1073,7 +1117,7 @@ static void dialog_select_callback(const char *filename, void *context)
 #if WITH_AUDIO
       gtk_widget_show(fd->dp->play_button);
 #endif
-#if HAVE_FAM
+#if HAVE_G_FILE_MONITOR_DIRECTORY
       fd->info_filename = mus_strdup(filename);
       fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
 #endif
@@ -1183,7 +1227,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
   fd->file_dialog_read_only = read_only;
   fd->dp = (dialog_play_info *)calloc(1, sizeof(dialog_play_info));
 
-  fd->fs = make_fsb(title, file_title, ok_title, open_innards, (void *)fd, stock, false);
+  fd->fs = make_fsb(title, file_title, ok_title, open_innards, (void *)fd, stock, false, false);
   fs = fd->fs;
   fd->dp->fs = fs;
 
@@ -1193,10 +1237,6 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
   SG_SIGNAL_CONNECT(fs->cancel_button, "clicked", file_dismiss_proc, (gpointer)fd);
   if (file_delete_proc) 
     SG_SIGNAL_CONNECT(fs->dialog, "delete_event", file_delete_proc, (gpointer)fd);
-
-  if (file_mkdir_proc)
-    SG_SIGNAL_CONNECT(fs->mkdir_button, "clicked", file_mkdir_proc, (gpointer)fd);
-  else gtk_widget_hide(fs->mkdir_button);
 
   fs->file_select_data = (void *)fd;
   fs->file_select_callback = dialog_select_callback;
@@ -1237,7 +1277,6 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
   SG_SIGNAL_CONNECT(fs->file_text, "activate", file_ok_proc, (gpointer)fd);
 
   set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
-  set_sensitive(fs->mkdir_button, false);
   SG_SIGNAL_CONNECT(fs->file_text, "key_release_event", reflect_text_in_open_button, (gpointer)fd);
 
   set_dialog_widget(which_dialog, fs->dialog);
@@ -1267,14 +1306,13 @@ static void redirect_file_open_error(const char *error_msg, void *ufd)
 static void clear_file_error_label(file_dialog_info *fd)
 {
   info_widget_display(fd->info1, "");
-#if HAVE_FAM
+
   if (fd->unsound_directory_watcher)
     {
-      fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
+      fd->unsound_directory_watcher = unmonitor_file(fd->unsound_directory_watcher);
       if (fd->unsound_dirname) {free(fd->unsound_dirname); fd->unsound_dirname = NULL;}
       if (fd->unsound_filename) {free(fd->unsound_filename); fd->unsound_filename = NULL;}
     }
-#endif
 }
 
 
@@ -1309,7 +1347,7 @@ static void clear_error_if_open_changes(fsb *fs, file_dialog_info *fd)
 }
 
 
-#if HAVE_FAM
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
 {
   file_dialog_info *fd;
@@ -1335,7 +1373,7 @@ static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
 {
   if (fd->unsound_directory_watcher)
     {
-      fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
+      fd->unsound_directory_watcher = unmonitor_file(fd->unsound_directory_watcher);
       if (fd->unsound_dirname) free(fd->unsound_dirname);
       if (fd->unsound_filename) free(fd->unsound_filename);
     }
@@ -1422,35 +1460,6 @@ static gint file_open_dialog_delete(GtkWidget *w, GdkEvent *event, gpointer cont
 }
 
 
-static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  fsb *fs;
-  char *filename = NULL;
-  fs = fd->fs;
-
-  filename = fsb_file_text(fs);
-  if (snd_mkdir(filename) < 0)
-    {
-      /* could not make the directory */
-      char *str;
-      str = mus_format("can't make %s: %s", filename, strerror(errno));
-      file_open_error(str, fd);
-      clear_error_if_open_changes(fs, fd);
-      free(str);
-    }
-  else
-    {
-      /* set FSB to new dir and force update */
-      if (fs->directory_name) free(fs->directory_name);
-      fs->directory_name = mus_strdup(filename);
-      fsb_filter_set_text_with_directory(fs, "*");
-      fsb_update_lists(fs);
-      set_sensitive(w, false);
-    }
-}
-
-
 static void file_open_double_click_callback(const char *filename, void *context)
 {
   if ((filename) &&
@@ -1492,7 +1501,7 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 			      NULL,
 			      FILE_OPEN_DIALOG,
 			      (GCallback)file_open_dialog_ok,	
-			      (GCallback)file_open_dialog_mkdir,
+			      NULL, /* no mkdir */
 			      (GCallback)file_open_dialog_delete,
 			      (GCallback)file_open_dialog_dismiss,
 			      (GCallback)file_open_dialog_help,
@@ -1516,7 +1525,9 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 	  odat->fs->reread_directory = false;
 	}
     }
-  if (managed) gtk_widget_show(odat->fs->dialog);
+  if (managed) 
+    gtk_widget_show(odat->fs->dialog);
+
   return(odat->fs->dialog);
 }
 
@@ -2287,7 +2298,7 @@ typedef struct {
   char *filename;
   save_dialog_t type;
   dialog_play_info *dp;
-  fam_info *file_watcher;
+  void *file_watcher;
   gulong filename_watcher_id;
   int header_type, format_type;
 } save_as_dialog_info;
@@ -2520,7 +2531,7 @@ static void save_as_undoit(save_as_dialog_info *sd)
       sd->filename_watcher_id = 0;
     }
   clear_dialog_error(sd->panel_data);
-  sd->file_watcher = fam_unmonitor_file(sd->filename, sd->file_watcher);
+  sd->file_watcher = unmonitor_file(sd->file_watcher);
 }
 
 
@@ -2538,9 +2549,9 @@ static void clear_error_if_save_as_filename_changes(GtkWidget *dialog, gpointer 
 }
 
 
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
 {
-#if HAVE_FAM
   /* if file is deleted, respond in some debonair manner */
   switch (fe->code)
     {
@@ -2555,8 +2566,8 @@ static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
       /* ignore the rest */
       break;
     }
-#endif
 }
+#endif
 
 
 static bool srates_differ(int srate, save_as_dialog_info *sd)
@@ -2745,7 +2756,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			       (parlous_sp) ? ", and has unsaved edits" : "",
 			       "DoIt"
 			       );
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
+#endif
 	      post_file_dialog_error((const char *)msg, sd->panel_data);
 	      clear_error_if_save_as_filename_changes(sd->fs->dialog, (void *)sd);
 	      set_stock_button_label(sd->fs->ok_button, "DoIt");
@@ -2758,6 +2771,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     }
 
   /* try to save... if it exists already, first write as temp, then move */
+
   if (sd->file_watcher)
     save_as_undoit(sd);
   ss->local_errno = 0;
@@ -3008,7 +3022,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, const char *sound_name,
       fsb *fs;
       sd->header_type = header_type;
       sd->format_type = format_type;
-      sd->fs = make_fsb(file_string, "save as:", "Save as", save_innards, (void *)sd, GTK_STOCK_SAVE_AS, (sd->type != REGION_SAVE_AS));
+      sd->fs = make_fsb(file_string, "save as:", "Save as", save_innards, (void *)sd, GTK_STOCK_SAVE_AS, (sd->type != REGION_SAVE_AS), true);
       fs = sd->fs;
 
       if (sd->type != REGION_SAVE_AS)
@@ -3565,11 +3579,11 @@ static GtkWidget *new_file_dialog = NULL, *new_file_text = NULL, *new_file_ok_bu
 static file_data *ndat = NULL;
 static mus_long_t initial_samples = 1;
 static char *new_file_filename = NULL;
-static fam_info *new_file_watcher = NULL;
+static void *new_file_watcher = NULL;
 
 void cleanup_new_file_watcher(void)
 {
-  new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+  new_file_watcher = unmonitor_file(new_file_watcher);
 }
 
 
@@ -3588,7 +3602,7 @@ static void new_file_undoit(void)
 	}
     }
   set_stock_button_label(new_file_ok_button, "Ok");
-  new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+  new_file_watcher = unmonitor_file(new_file_watcher);
 }
 
 
@@ -3606,10 +3620,10 @@ static void clear_error_if_new_filename_changes(GtkWidget *dialog)
 }
 
 
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
 {
   /* if file is deleted, respond in some debonair manner */
-#if HAVE_FAM
   switch (fe->code)
     {
     case FAMChanged:
@@ -3623,8 +3637,8 @@ static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
       /* ignore the rest */
       break;
     }
-#endif
 }
+#endif
 
 
 static void new_file_ok_callback(GtkWidget *w, gpointer context) 
@@ -3659,7 +3673,9 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	      (mus_file_probe(new_file_filename)))
 	    {
 	      msg = mus_format("%s exists. If you want to overwrite it, click 'DoIt'", newer_name);
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+#endif
 	      set_stock_button_label(new_file_ok_button, "DoIt");
 	      post_file_dialog_error((const char *)msg, ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog);
@@ -3669,15 +3685,18 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	    {
 	      if (new_file_watcher)
 		new_file_undoit();
+
 	      ss->local_errno = 0;
 	      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)ndat);
 	      sp = snd_new_file(newer_name, header_type, data_format, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 		  if ((ss->local_errno) &&
 		      (mus_file_probe(new_file_filename))) /* see comment in snd-xfile.c */
 		    new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+#endif
 		  clear_error_if_new_filename_changes(new_file_dialog);
 		}
 	      else
@@ -3852,7 +3871,7 @@ widget_t make_new_file_dialog(bool managed)
     {
       char *new_name;
       new_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
-#if (!HAVE_FAM)
+
       if (new_file_watcher)
 	{
 	  /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
@@ -3860,7 +3879,7 @@ widget_t make_new_file_dialog(bool managed)
 	      (!(mus_file_probe(new_name))))
 	    new_file_undoit();
 	}
-#endif
+
       if (strncmp(new_name, "new-", 4) == 0)
 	{
 	  /* if file is open with currently posted new-file dialog name, and it's our name (new-%d), then tick the counter */
@@ -3890,7 +3909,7 @@ typedef struct edhead_info {
   file_data *edat;
   snd_info *sp;
   bool panel_changed;
-  fam_info *file_ro_watcher;
+  void *file_ro_watcher;
   int sp_ro_watcher_loc;
 } edhead_info;
 
@@ -3945,7 +3964,7 @@ void cleanup_edit_header_watcher(void)
 	edhead_info *ep;
 	ep = edhead_infos[i];
 	if (ep->file_ro_watcher)
-	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+	  ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
       }
 }
 
@@ -3996,7 +4015,7 @@ static void edit_header_done(edhead_info *ep)
   gtk_widget_hide(ep->dialog);
   unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
   ep->panel_changed = false;
-  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+  ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
 }
 
 
@@ -4013,9 +4032,9 @@ static gint edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer 
 }
 
 
+#if HAVE_G_FILE_MONITOR_DIRECTORY
 static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 {
-#if HAVE_FAM
   /* if file is deleted or permissions change, respond in some debonair manner */
   edhead_info *ep = (edhead_info *)(fp->data);
   snd_info *sp = NULL;
@@ -4053,15 +4072,15 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
       if (ep->panel_changed)
 	unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
       ep->panel_changed = false;
-      ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+      ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
       break;
 
     default:
       /* ignore the rest */
       break;
     }
-#endif
 }
+#endif
 
 
 static void edit_header_ok_callback(GtkWidget *w, gpointer context) 
@@ -4086,7 +4105,7 @@ static void edit_header_ok_callback(GtkWidget *w, gpointer context)
 	      return;
 	    }
 	}
-      ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+      ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
       gtk_widget_hide(ep->dialog);
       unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
     }
@@ -4195,7 +4214,9 @@ GtkWidget *edit_header(snd_info *sp)
 
   gtk_widget_show(ep->dialog);
   reflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
+#if HAVE_G_FILE_MONITOR_DIRECTORY
   ep->file_ro_watcher = fam_monitor_file(ep->sp->filename, (void *)ep, watch_file_read_only);
+#endif
   return(ep->dialog);
 }
 
@@ -5516,14 +5537,12 @@ GtkWidget *make_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(rmargin), fileform, true, true, 4);
 	gtk_widget_show(fileform);
 #else
-	lmargin = gtk_event_box_new(); 
+	lmargin = gtk_event_box_new();
 	gtk_paned_add1(GTK_PANED(mainform), lmargin);	
-	add_highlight_button_style(lmargin);
 	gtk_widget_show(lmargin);
 
 	rmargin = gtk_event_box_new();
 	gtk_paned_add2(GTK_PANED(mainform), rmargin);	
-	add_highlight_button_style(rmargin);
 	gtk_widget_show(rmargin);
 
 	leftform = gtk_vbox_new(false, 0);

@@ -683,6 +683,40 @@ else
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
 
+	  # --------------------------------
+          # fam/gamin (motif only)
+          FAM_LIB=""
+
+          if test "$with_fam" != no ; then
+            # look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
+            AC_MSG_CHECKING(for Gamin)
+            if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
+               gamin_version="`$PKG_CONFIG gamin --modversion`"
+               AC_MSG_RESULT($gamin_version)
+               # before version 0.0.18, gamin.pc messed up the --libs result, so we'll just insist on a later version
+               if $PKG_CONFIG --atleast-version 0.1.0 gamin; then
+                 AC_DEFINE_UNQUOTED(MUS_GAMIN_VERSION,"${gamin_version}")
+                 FAM_LIB="`$PKG_CONFIG gamin --libs`"
+                 AC_DEFINE(HAVE_FAM)
+                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
+               else
+        	AC_MSG_WARN([need gamin version 0.1.0 or later])
+               fi
+            else
+              AC_MSG_RESULT(no)
+              AC_MSG_CHECKING(for Fam)
+              AC_CHECK_LIB(fam, FAMOpen, 
+               [
+                 AC_DEFINE(HAVE_FAM)
+                 FAM_LIB="-lfam"
+                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
+               ])
+            fi
+          fi
+
+          AC_SUBST(FAM_LIB)
+	  # --------------------------------
+
           AC_MSG_CHECKING(for XmDataField)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -963,6 +997,8 @@ else
           AC_DEFINE_UNQUOTED(MUS_CAIRO_VERSION,"${cairo_version}")
           fi
 
+        AC_CHECK_LIB(m, g_file_monitor_directory, [AC_DEFINE(HAVE_G_FILE_MONITOR_DIRECTORY)], ,$GTK_LIBS)
+
 	# for 2.13.0
 	AC_CHECK_LIB(m, gtk_test_widget_click, [AC_DEFINE(HAVE_GTK_TEST_WIDGET_CLICK)], ,$GTK_LIBS)
 	# for 2.13.6 (uses 2134)
@@ -1102,43 +1138,6 @@ fi
 AC_SUBST(GL_LIBS)
 AC_SUBST(GL_FILES)
 AC_SUBST(GL_FLAGS)
-
-
-
-#--------------------------------------------------------------------------------
-# fam/gamin (needs GUI)
-#--------------------------------------------------------------------------------
-
-FAM_LIB=""
-if test "$ac_snd_have_gui" != no ; then
-  if test "$with_fam" != no ; then
-    # look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
-    AC_MSG_CHECKING(for Gamin)
-    if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
-       gamin_version="`$PKG_CONFIG gamin --modversion`"
-       AC_MSG_RESULT($gamin_version)
-       # before version 0.0.18, gamin.pc messed up the --libs result, so we'll just insist on a later version
-       if $PKG_CONFIG --atleast-version 0.1.0 gamin; then
-         AC_DEFINE_UNQUOTED(MUS_GAMIN_VERSION,"${gamin_version}")
-         FAM_LIB="`$PKG_CONFIG gamin --libs`"
-         AC_DEFINE(HAVE_FAM)
-         OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
-       else
-	AC_MSG_WARN([need gamin version 0.1.0 or later])
-       fi
-    else
-      AC_MSG_RESULT(no)
-      AC_MSG_CHECKING(for Fam)
-      AC_CHECK_LIB(fam, FAMOpen, 
-       [
-         AC_DEFINE(HAVE_FAM)
-         FAM_LIB="-lfam"
-         OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
-       ])
-    fi
-  fi
-fi
-AC_SUBST(FAM_LIB)
 
 
 

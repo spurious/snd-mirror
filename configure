@@ -642,7 +642,6 @@ RUBY_CFLAGS
 RUBY_SEARCH_PATH
 RUBY_RELEASE_DATE
 RUBY_VERSION
-FAM_LIB
 GL_FLAGS
 GL_FILES
 GL_LIBS
@@ -652,6 +651,7 @@ CAIRO_CFLAGS
 GTK_LD_LIBS
 GTK_LIBS
 GTK_CFLAGS
+FAM_LIB
 XFLAGS
 XLIBS
 X_EXTRA_LIBS
@@ -7344,6 +7344,88 @@ if test "x$ac_cv_lib_m_XmCreateForm" = xyes; then :
 
 
 
+	  # --------------------------------
+          # fam/gamin (motif only)
+          FAM_LIB=""
+
+          if test "$with_fam" != no ; then
+            # look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Gamin" >&5
+$as_echo_n "checking for Gamin... " >&6; }
+            if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
+               gamin_version="`$PKG_CONFIG gamin --modversion`"
+               { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gamin_version" >&5
+$as_echo "$gamin_version" >&6; }
+               # before version 0.0.18, gamin.pc messed up the --libs result, so we'll just insist on a later version
+               if $PKG_CONFIG --atleast-version 0.1.0 gamin; then
+                 cat >>confdefs.h <<_ACEOF
+#define MUS_GAMIN_VERSION "${gamin_version}"
+_ACEOF
+
+                 FAM_LIB="`$PKG_CONFIG gamin --libs`"
+                 $as_echo "#define HAVE_FAM 1" >>confdefs.h
+
+                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
+               else
+        	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: need gamin version 0.1.0 or later" >&5
+$as_echo "$as_me: WARNING: need gamin version 0.1.0 or later" >&2;}
+               fi
+            else
+              { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fam" >&5
+$as_echo_n "checking for Fam... " >&6; }
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FAMOpen in -lfam" >&5
+$as_echo_n "checking for FAMOpen in -lfam... " >&6; }
+if ${ac_cv_lib_fam_FAMOpen+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfam  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char FAMOpen ();
+int
+main ()
+{
+return FAMOpen ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_fam_FAMOpen=yes
+else
+  ac_cv_lib_fam_FAMOpen=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_fam_FAMOpen" >&5
+$as_echo "$ac_cv_lib_fam_FAMOpen" >&6; }
+if test "x$ac_cv_lib_fam_FAMOpen" = xyes; then :
+
+                 $as_echo "#define HAVE_FAM 1" >>confdefs.h
+
+                 FAM_LIB="-lfam"
+                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
+
+fi
+
+            fi
+          fi
+
+
+	  # --------------------------------
+
           { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XmDataField" >&5
 $as_echo_n "checking for XmDataField... " >&6; }
           cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -8132,6 +8214,48 @@ _ACEOF
 
           fi
 
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for g_file_monitor_directory in -lm" >&5
+$as_echo_n "checking for g_file_monitor_directory in -lm... " >&6; }
+if ${ac_cv_lib_m_g_file_monitor_directory+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char g_file_monitor_directory ();
+int
+main ()
+{
+return g_file_monitor_directory ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_m_g_file_monitor_directory=yes
+else
+  ac_cv_lib_m_g_file_monitor_directory=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_g_file_monitor_directory" >&5
+$as_echo "$ac_cv_lib_m_g_file_monitor_directory" >&6; }
+if test "x$ac_cv_lib_m_g_file_monitor_directory" = xyes; then :
+  $as_echo "#define HAVE_G_FILE_MONITOR_DIRECTORY 1" >>confdefs.h
+
+fi
+
+
 	# for 2.13.0
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_test_widget_click in -lm" >&5
 $as_echo_n "checking for gtk_test_widget_click in -lm... " >&6; }
@@ -8914,91 +9038,6 @@ else
 fi
 
 
-
-
-
-
-#--------------------------------------------------------------------------------
-# fam/gamin (needs GUI)
-#--------------------------------------------------------------------------------
-
-FAM_LIB=""
-if test "$ac_snd_have_gui" != no ; then
-  if test "$with_fam" != no ; then
-    # look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Gamin" >&5
-$as_echo_n "checking for Gamin... " >&6; }
-    if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
-       gamin_version="`$PKG_CONFIG gamin --modversion`"
-       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gamin_version" >&5
-$as_echo "$gamin_version" >&6; }
-       # before version 0.0.18, gamin.pc messed up the --libs result, so we'll just insist on a later version
-       if $PKG_CONFIG --atleast-version 0.1.0 gamin; then
-         cat >>confdefs.h <<_ACEOF
-#define MUS_GAMIN_VERSION "${gamin_version}"
-_ACEOF
-
-         FAM_LIB="`$PKG_CONFIG gamin --libs`"
-         $as_echo "#define HAVE_FAM 1" >>confdefs.h
-
-         OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
-       else
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: need gamin version 0.1.0 or later" >&5
-$as_echo "$as_me: WARNING: need gamin version 0.1.0 or later" >&2;}
-       fi
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fam" >&5
-$as_echo_n "checking for Fam... " >&6; }
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FAMOpen in -lfam" >&5
-$as_echo_n "checking for FAMOpen in -lfam... " >&6; }
-if ${ac_cv_lib_fam_FAMOpen+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfam  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char FAMOpen ();
-int
-main ()
-{
-return FAMOpen ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_fam_FAMOpen=yes
-else
-  ac_cv_lib_fam_FAMOpen=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_fam_FAMOpen" >&5
-$as_echo "$ac_cv_lib_fam_FAMOpen" >&6; }
-if test "x$ac_cv_lib_fam_FAMOpen" = xyes; then :
-
-         $as_echo "#define HAVE_FAM 1" >>confdefs.h
-
-         FAM_LIB="-lfam"
-         OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
-
-fi
-
-    fi
-  fi
-fi
 
 
 

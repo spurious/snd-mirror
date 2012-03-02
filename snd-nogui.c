@@ -2,6 +2,12 @@
 #include "snd-menu.h"
 #include "snd-file.h"
 
+void cleanup_file_monitor(void) {}
+bool initialize_file_monitor(void) {return(false);}
+void *unmonitor_file(void *watcher) {return(NULL);}
+void *unmonitor_directory(void *watcher) {return(NULL);}
+void monitor_sound(snd_info *sp) {}
+
 bool find_dialog_is_active(void) {return(false);}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}

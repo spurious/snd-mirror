@@ -1,6 +1,9 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 #include "clm-strings.h"
+#if HAVE_FAM_H
+  #include <fam.h>
+#endif
 
 static const char **snd_xrefs(const char *topic);
 static const char **snd_xref_urls(const char *topic);

@@ -1,6 +1,7 @@
 #include "snd.h"
 #include "snd-file.h"
 
+
 /* TODO: 
  * what does "reset" mean in (for example) view-files?
  *   or "revert" in colors? or "revert" vs "clear" in prefs -- shouldn't revert go back to its state when opened?
@@ -17,8 +18,15 @@
  * in save-as dialog, the new file name should be at the top (like new-file dialog)
  * find: global not tested, stop not tested
  * vf buttons need tooltips and bgcolor of entire dialog is bad
- * maybe same in region (replace edit button with dbl click in list)
+ * make new pictures for snd.html (will need audio+gtk3 ideally)
+ *
+ * ----------------
  * fam replacement from glib? g_file_monitor_directory (also in filers)
+ *    file = g_file_new_for_path(g_get_home_dir ());
+ *    monitor = g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, NULL);
+ *    g_signal_connect(G_OBJECT(monitor), "changed", G_CALLBACK(dir_changed), NULL); 
+ * ----------------
+ *
  * what about tooltips in the listener, or some way to show help (apropos) if hovering
  *   also if error displayed, hover->env printout etc
  *   and hover in graph -> show sample value?
@@ -40,6 +48,329 @@
    Info and Raw
    View:Files
 */
+
+
+
+/* ---------------- file alteration monitor (fam or gamin) ---------------- */
+#if HAVE_FAM
+
+static FAMConnection *fam_connection = NULL;
+XtInputId fam_port;
+
+/* one confusing thing: if user deletes the file we're monitoring, apparently Linux doesn't
+ *   actually delete it, though a directory monitor reports the deletion; the file itself
+ *   hangs around, I guess because we have it open(?) -- can't decide how to deal with this.
+ *
+ * The main open is in snd_chn add_channel_data, and the file channel is held open unless
+ *   too_many_files forces us to close as many as possible.
+ */
+
+
+static const char *fam_error_to_string(int err)
+{
+  if (err > 0)
+    return(FamErrlist[err]); /* not sure this actually does anything anymore */
+  return("0");
+}
+
+
+static void fam_check(void)
+{
+  FAMEvent fe; 
+  if (!(ss->file_monitor_ok)) return;
+  while (FAMPending(fam_connection) > 0)
+    {
+      if (FAMNextEvent(fam_connection, &fe) < 0) 
+	snd_error("fam error: %s\n", fam_error_to_string(FAMErrno));
+      else
+	{
+	  if (!(ss->checking_explicitly)) 
+	    /* not in check_for_event -- we can't just ignore these because gamin hangs */
+	    {
+	      switch (fe.code)
+		{
+		case FAMStartExecuting:
+		case FAMStopExecuting:
+		case FAMAcknowledge:
+		case FAMExists:
+		case FAMEndExist:
+		  /* ignore these (fp pointer can be a dangling reference here) */
+		  break;
+		default:
+		  {
+		    fam_info *fp = (fam_info *)(fe.userdata);
+		    if ((!fp) || (fp->action == fp->data))
+		      fprintf(stderr, "no fam user data!");
+		    else 
+		      {
+			(*(fp->action))(fp, &fe);
+		      }
+		  }
+		  break;
+		}
+	    }
+	}
+    }
+}
+
+
+static void fam_reader(XtPointer context, int *fd, XtInputId *id)
+{
+  fam_check();
+}
+
+
+static fam_info *make_fam_info(FAMRequest *rp, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
+{
+  fam_info *fp;
+  fp = (fam_info *)calloc(1, sizeof(fam_info));
+  fp->data = data;
+  fp->action = action;
+  fp->rp = rp;
+  return(fp);
+}
+
+  
+static FAMRequest *fam_monitor(void)
+{
+  return((FAMRequest *)calloc(1, sizeof(FAMRequest)));
+}
+
+
+static fam_info *fam_monitor_file(const char *filename, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
+{
+  fam_info *fp = NULL;
+  FAMRequest *rp = NULL;
+  int err;
+  if (!(with_file_monitor(ss))) return(NULL);
+  rp = fam_monitor();
+  if (rp)
+    {
+      fp = make_fam_info(rp, data, action);
+      fp->filename = mus_strdup(filename);
+      err = FAMMonitorFile(fam_connection, filename, rp, (void *)fp);
+      if (err < 0)
+	{
+	  snd_warning("can't monitor %s: %s (free %p %p)\n", filename, fam_error_to_string(FAMErrno), fp, rp);
+	  free(rp);
+	  rp = NULL;
+	  free(fp);
+	  fp = NULL;
+	}
+      else return(fp);
+    }
+  else snd_warning("can't get fam request for %s: %s\n", filename, fam_error_to_string(FAMErrno));
+  return(NULL);
+}
+
+
+static fam_info *fam_monitor_directory(const char *dir_name, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
+{
+  fam_info *fp = NULL;
+  FAMRequest *rp = NULL;
+  int err;
+  if (!(with_file_monitor(ss))) return(NULL);
+  rp = fam_monitor();
+  if (rp)
+    {
+      fp = make_fam_info(rp, data, action);
+      fp->filename = mus_strdup(dir_name);
+      err = FAMMonitorDirectory(fam_connection, dir_name, rp, (void *)fp);
+      if (err < 0)
+	{
+	  snd_warning("can't monitor %s: %s\n", dir_name, fam_error_to_string(FAMErrno));
+	  free(rp);
+	  rp = NULL;
+	  free(fp);
+	  fp = NULL;
+	}
+      else return(fp);
+    }
+  else snd_warning("can't get fam request for %s: %s\n", dir_name, fam_error_to_string(FAMErrno));
+  return(NULL);
+}
+
+
+static fam_info *fam_unmonitor_file(fam_info *fp)
+{
+  int err;
+  if (fp)
+    {
+      if (fp->rp)
+	{
+	  err = FAMCancelMonitor(fam_connection, fp->rp);
+	  if (err < 0)
+	    snd_warning("can't unmonitor %s: %s\n", fp->filename, fam_error_to_string(FAMErrno));
+
+	  if (fp->filename) 
+	    {
+	      free(fp->filename); 
+	      fp->filename = NULL;
+	    }
+
+	  free(fp->rp);
+	  /* /usr/include/fam.h implies that cancel frees this, but valgrind seems to disagree */
+	  /* as far as I can see, gamin (libgamin/gam_api.c) does not free it */
+	  /*   nor does fam (fam/fam.c++ in 2.6.10 does not, and their test case assumes it won't) */
+	  fp->rp = NULL;
+	}
+
+      fp->action = NULL;
+      fp->data = NULL;
+      free(fp);
+    }
+
+  return(NULL);
+}
+
+
+static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
+{
+  snd_info *sp = NULL;
+  /* fp has been checked already */
+
+  sp = (snd_info *)(fp->data);
+  if (sp->writing) return;
+
+  switch (fe->code)
+    {
+    case FAMChanged:
+      /* this includes cp overwriting old etc */
+      if (file_write_date(sp->filename) != sp->write_date) /* otherwise chmod? */
+	{
+	  sp->need_update = true;
+	  if (auto_update(ss))
+	    snd_update(sp);
+	  else start_bomb(sp);
+	}
+#if HAVE_ACCESS
+      else
+	{
+	  int err;
+	  err = access(sp->filename, R_OK);
+	  if (err < 0)
+	    {
+	      char *msg;
+	      msg = mus_format("%s is read-protected!", sp->short_filename);
+	      status_report(sp, msg);
+	      free(msg);
+	      sp->file_unreadable = true;
+	      start_bomb(sp);
+	    }
+	  else
+	    {
+	      sp->file_unreadable = false;
+	      clear_status_area(sp);
+	      err = access(sp->filename, W_OK);
+	      if (err < 0)   /* if err < 0, then we can't write (W_OK -> error ) */
+		sp->file_read_only = FILE_READ_ONLY; 
+	      else sp->file_read_only = FILE_READ_WRITE;
+	      if ((sp->user_read_only == FILE_READ_ONLY) || 
+		  (sp->file_read_only == FILE_READ_ONLY)) 
+		show_lock(sp); 
+	      else hide_lock(sp);
+	    }
+	}
+#endif
+      break;
+
+    case FAMDeleted:
+      /* snd_update will post a complaint in this case, but I like it explicit */
+      if (mus_file_probe(sp->filename) == 0)
+	{
+	  /* user deleted file while editing it? */
+	  status_report(sp, "%s no longer exists!", sp->short_filename);
+	  sp->file_unreadable = true;
+	  start_bomb(sp);
+	  return;
+	}
+      /* else I don't know why I got this fam code, but fall through to the update case */
+
+    case FAMCreated:
+    case FAMMoved:
+      /* this can be delivered a bit late (and more than once for a given save), so don't set off the bomb icon unless the file is wrong */
+      if (sp->write_date != file_write_date(sp->filename))
+	{
+	  sp->file_unreadable = false;
+	  sp->need_update = true;
+	  if (auto_update(ss))
+	    snd_update(sp);
+	  else start_bomb(sp);
+	}
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+
+
+/* exported */
+
+void monitor_sound(snd_info *sp)
+{
+  sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action); 
+}
+
+
+bool initialize_file_monitor(void)
+{
+  int fd, err;
+  fam_connection = (FAMConnection *)calloc(1, sizeof(FAMConnection));
+  err = FAMOpen(fam_connection);
+  if (err < 0)
+    {
+      snd_warning("can't start file alteration monitor: %s\n", fam_error_to_string(FAMErrno));
+      return(false);
+    }
+  
+  fd = FAMCONNECTION_GETFD(fam_connection);
+  fam_port = XtAppAddInput(MAIN_APP(ss),
+			   fd,
+			   (XtPointer)XtInputReadMask,
+			   fam_reader,
+			   NULL);
+  return(true);
+}
+
+
+void cleanup_file_monitor(void)
+{
+  cleanup_edit_header_watcher();
+  cleanup_new_file_watcher();
+  if (fam_connection)
+    FAMClose(fam_connection);
+  fam_connection = NULL;
+  ss->file_monitor_ok = false;
+}
+
+
+void *unmonitor_file(void *watcher)
+{
+  fam_unmonitor_file((fam_info *)watcher);
+  return(NULL);
+}
+
+
+void *unmonitor_directory(void *watcher)
+{
+  return(unmonitor_file(watcher));
+}
+
+
+
+#else
+void cleanup_file_monitor(void) {}
+bool initialize_file_monitor(void) {return(false);}
+void *unmonitor_file(void *watcher) {return(NULL);}
+void *unmonitor_directory(void *watcher) {return(NULL);}
+void monitor_sound(snd_info *sp) {}
+#endif
+/* have fam */
+
+/* -------------------------------------------------------------------------------- */
+
 
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -136,7 +467,7 @@ typedef struct file_pattern_info {
   Widget dialog, just_sounds_button;
   char *last_dir;
   dir_info *current_files;
-  fam_info *directory_watcher;
+  void *directory_watcher;
   int filter_choice, sorter_choice;
   dirpos_list *dir_list;
 } file_pattern_info;
@@ -855,21 +1186,22 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
       XmListSetPos(file_list, list_pos);
   }
 
-#if HAVE_FAM
   /* make sure fam knows which directory to watch */
   if ((fp->last_dir == NULL) ||
       (strcmp(our_dir, fp->last_dir) != 0))
     {
       if (fp->directory_watcher)
-	fam_unmonitor_file(fp->last_dir, fp->directory_watcher); /* filename normally ignored */
-
+	unmonitor_file(fp->directory_watcher);
+#if HAVE_FAM
       fp->directory_watcher = fam_monitor_directory(our_dir, (void *)fp, watch_current_directory_contents);
-
+#else
+      fp->directory_watcher = NULL;
+#endif
       if (fp->last_dir) free(fp->last_dir);
       fp->last_dir = mus_strdup(our_dir);
       fp->reread_directory = false;
     }
-#endif
+
   if (our_dir) XtFree(our_dir);
 }
 
@@ -985,13 +1317,13 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
 
 typedef struct file_dialog_info {
   read_only_t file_dialog_read_only;
-  Widget dialog, mkdirB;
+  Widget dialog;
   Widget info_frame, info1, info2;     /* labels giving info on selected file, or an error message */
   file_pattern_info *fp;
   dialog_play_info *dp;
-  fam_info *unsound_directory_watcher; /* started if file doesn't exist, not a sound file, bogus header, etc (clears error msg if problem changed) */
+  void *unsound_directory_watcher; /* started if file doesn't exist, not a sound file, bogus header, etc (clears error msg if problem changed) */
+  void *info_filename_watcher;     /* watch for change in selected file and repost info */
   char *unsound_dirname, *unsound_filename;
-  fam_info *info_filename_watcher;     /* watch for change in selected file and repost info */
   char *info_filename;
   file_popup_info *fpop;
 } file_dialog_info;
@@ -1091,7 +1423,7 @@ static void post_file_info(file_dialog_info *fd, const char *filename)
 #if HAVE_FAM
   if (fd->info_filename_watcher)
     {
-      fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
+      fd->info_filename_watcher = unmonitor_file(fd->info_filename_watcher);
       if (fd->info_filename) {free(fd->info_filename); fd->info_filename = NULL;}
     }
   fd->info_filename = mus_strdup(filename);
@@ -1108,13 +1440,12 @@ static void unpost_file_info(file_dialog_info *fd)
 #endif
   if (XtIsManaged(fd->info_frame))
     XtUnmanageChild(fd->info_frame);
-#if HAVE_FAM
+
   if (fd->info_filename_watcher)
     {
-      fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
+      fd->info_filename_watcher = unmonitor_file(fd->info_filename_watcher);
       if (fd->info_filename) {free(fd->info_filename); fd->info_filename = NULL;}
     }
-#endif
 }
 
 
@@ -1259,7 +1590,6 @@ static void reflect_text_in_open_button(Widget w, XtPointer context, XtPointer i
   file_dialog_info *fd = (file_dialog_info *)context;
   /* w here is the text widget, not the button */
   XtSetSensitive(FSB_BOX(fd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(fd->dialog))));
-  if (fd->mkdirB) XtSetSensitive(fd->mkdirB, file_is_nonexistent_directory(fd->dialog));
 }
 
 
@@ -1461,14 +1791,13 @@ static void unpost_open_modify_error(file_dialog_info *fd)
   dialog_filename_text = FSB_BOX(fd->dialog, XmDIALOG_TEXT);
   if (dialog_filename_text) 
     XtRemoveCallback(dialog_filename_text, XmNmodifyVerifyCallback, open_modify_callback, (XtPointer)fd);
-#if HAVE_FAM
+
   if (fd->unsound_directory_watcher)
     {
-      fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
+      fd->unsound_directory_watcher = unmonitor_file(fd->unsound_directory_watcher);
       if (fd->unsound_dirname) {free(fd->unsound_dirname); fd->unsound_dirname = NULL;}
       if (fd->unsound_filename) {free(fd->unsound_filename); fd->unsound_filename = NULL;}
     }
-#endif
 }
 
 
@@ -1517,7 +1846,7 @@ static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
 {
   if (fd->unsound_directory_watcher)
     {
-      fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
+      fd->unsound_directory_watcher = unmonitor_file(fd->unsound_directory_watcher);
       if (fd->unsound_dirname) free(fd->unsound_dirname);
       if (fd->unsound_filename) free(fd->unsound_filename);
     }
@@ -1586,33 +1915,6 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void file_mkdir_callback(Widget w, XtPointer context, XtPointer info)
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  char *filename = NULL;
-  filename = XmTextGetString(FSB_BOX(fd->dialog, XmDIALOG_TEXT));
-  if (snd_mkdir(filename) < 0)
-    {
-      /* could not make the directory */
-      char *str;
-      str = mus_format("can't make %s: %s", filename, strerror(errno));
-      file_open_error(str, fd);
-      clear_error_if_open_changes(fd->dialog, fd);
-      free(str);
-    }
-  else
-    {
-      /* set FSB to new dir and force update */
-      char *filter;
-      filter = mus_format("%s*", filename); /* already has the "/" at the end */
-      update_dir_list(fd->dialog, filter);
-      free(filter);
-      XtSetSensitive(w, false);
-    }
-  XtFree(filename);
-}
-
-
 static file_dialog_info *odat = NULL;
 
 widget_t make_open_file_dialog(read_only_t read_only, bool managed)
@@ -1636,18 +1938,6 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 
       /* now preload last n files opened before this point */
       preload_filenames(odat->fpop->file_text_names);
-
-      /* add "Mkdir" button */
-      {
-	int n;
-	Arg args[12];
-	n = 0;
-	XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-	XtSetArg(args[n], XmNarmColor,   ss->selection_color); n++;
-	odat->mkdirB = XtCreateManagedWidget("Mkdir", xmPushButtonGadgetClass, odat->dialog, args, n);
-	XtAddCallback(odat->mkdirB, XmNactivateCallback, file_mkdir_callback, (XtPointer)odat);
-	XtSetSensitive(odat->mkdirB, false);
-      }
 
       cancel_label = XmStringCreateLocalized((char *)I_GO_AWAY);
       XtVaSetValues(odat->dialog, XmNcancelLabelString, cancel_label, NULL);
@@ -1909,7 +2199,7 @@ void set_open_file_play_button(bool val)
 
 void alert_new_file(void) 
 {
-  if (ss->fam_ok) return;
+  if (ss->file_monitor_ok) return;
   /* ideally this would include the save-as dialogs */
   if (odat)
     {
@@ -2711,7 +3001,7 @@ typedef struct {
   save_dialog_t type;
   file_pattern_info *fp;
   dialog_play_info *dp;
-  fam_info *file_watcher;
+  void *file_watcher;
   file_popup_info *fpop;
   const char *original_filename;
 } save_as_dialog_info;
@@ -2931,7 +3221,7 @@ static void save_as_undoit(save_as_dialog_info *sd)
   XmStringFree(ok_label);
   clear_dialog_error(sd->panel_data);
   XtRemoveCallback(sd->filename_widget, XmNmodifyVerifyCallback, save_as_filename_modify_callback, (XtPointer)(sd->panel_data));
-  sd->file_watcher = fam_unmonitor_file(sd->filename, sd->file_watcher);
+  sd->file_watcher = unmonitor_file(sd->file_watcher);
 }
 
 
@@ -2949,9 +3239,9 @@ static void clear_error_if_save_as_filename_changes(Widget dialog, save_as_dialo
 }
 
 
+#if HAVE_FAM
 static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
 {
-#if HAVE_FAM
   /* if file is deleted, respond in some debonair manner */
   switch (fe->code)
     {
@@ -2966,8 +3256,8 @@ static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
       /* ignore the rest */
       break;
     }
-#endif
 }
+#endif
 
 
 static bool srates_differ(int srate, save_as_dialog_info *sd)
@@ -3163,7 +3453,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	      msg = mus_format("%s exists%s. To overwrite it, click 'DoIt'", 
 			       str,
 			       (parlous_sp) ? ", and has unsaved edits" : "");
+#if HAVE_FAM
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
+#endif
 	      post_file_dialog_error((const char *)msg, sd->panel_data);
 	      clear_error_if_save_as_filename_changes(sd->dialog, sd);
 	      ok_label = XmStringCreateLocalized((char *)"DoIt");
@@ -3842,13 +4134,13 @@ static file_data *ndat = NULL;
 static mus_long_t initial_samples = 1;
 static Widget new_file_text = NULL;
 static char *new_file_filename = NULL;
-static fam_info *new_file_watcher = NULL;
+static void *new_file_watcher = NULL;
 
 
 void cleanup_new_file_watcher(void)
 {
   if (new_file_watcher)
-    new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+    new_file_watcher = unmonitor_file(new_file_watcher);
 }
 
 
@@ -3864,7 +4156,7 @@ static void new_file_undoit(void)
   XmStringFree(ok_label);
   clear_dialog_error(ndat);
   XtRemoveCallback(new_file_text, XmNmodifyVerifyCallback, new_filename_modify_callback, NULL);
-  new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+  new_file_watcher = unmonitor_file(new_file_watcher);
 }
 
 
@@ -3882,9 +4174,9 @@ static void clear_error_if_new_filename_changes(Widget dialog)
 }
 
 
+#if HAVE_FAM
 static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
 {
-#if HAVE_FAM
   /* if file is deleted, respond in some debonair manner */
   switch (fe->code)
     {
@@ -3899,8 +4191,8 @@ static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
       /* ignore the rest */
       break;
     }
-#endif
 }
+#endif
 
 
 static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info) 
@@ -3936,7 +4228,9 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      XmString ok_label;
 	      msg = mus_format("%s exists. If you want to overwrite it, click 'DoIt'", newer_name);
+#if HAVE_FAM
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+#endif
 	      post_file_dialog_error((const char *)msg, ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog);
 	      ok_label = XmStringCreateLocalized((char *)"DoIt");
@@ -3951,12 +4245,14 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      if (new_file_watcher)
 		new_file_undoit();
+
 	      ss->local_errno = 0;
 	      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)ndat);
 	      sp = snd_new_file(new_file_filename, header_type, data_format, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{
+#if HAVE_FAM
 		  if ((ss->local_errno) &&
 		    /* some sort of file system error -- this is confusing because fam sends
 		     *   a "deleted" event if we don't have write permission -- as if we had
@@ -3969,6 +4265,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 		     *  in any case, we won't be confused by an immediate irrelevant delete event
 		     */
 		    new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+#endif
 		  clear_error_if_new_filename_changes(new_file_dialog);
 		}
 	      else
@@ -4165,7 +4462,7 @@ widget_t make_new_file_dialog(bool managed)
     {
       char *new_name;
       new_name = XmTextGetString(new_file_text);
-#if (!HAVE_FAM)
+
       if (new_file_watcher)
 	{
 	  /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
@@ -4173,7 +4470,7 @@ widget_t make_new_file_dialog(bool managed)
 	      (!(mus_file_probe(new_name))))
 	    new_file_undoit();
 	}
-#endif
+
       if (strncmp(new_name, "new-", 4) == 0)
 	{
 	  /* if file is open with currently posted new-file dialog name, and it's our name (new-%d), then tick the counter */
@@ -4205,7 +4502,7 @@ typedef struct edhead_info {
   file_data *edat;
   snd_info *sp;
   bool panel_changed;
-  fam_info *file_ro_watcher;
+  void *file_ro_watcher;
   int sp_ro_watcher_loc;
 } edhead_info;
 
@@ -4261,7 +4558,7 @@ void cleanup_edit_header_watcher(void)
 	edhead_info *ep;
 	ep = edhead_infos[i];
 	if (ep->file_ro_watcher)
-	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+	  ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
       }
 }
 
@@ -4318,7 +4615,7 @@ static void eh_cancel(edhead_info *ep)
       (ep->sp) &&
       (ep->sp->active) &&
       (ep->sp->filename))
-    ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+    ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
 }
 
 
@@ -4336,9 +4633,9 @@ static void edit_header_wm_delete_callback(Widget w, XtPointer context, XtPointe
 }
 
 
+#if HAVE_FAM
 static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 {
-#if HAVE_FAM
   /* if file is deleted or permissions change, respond in some debonair manner */
   edhead_info *ep = (edhead_info *)(fp->data);
   snd_info *sp = NULL;
@@ -4378,15 +4675,15 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
       if (ep->panel_changed)
 	unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
       ep->panel_changed = false;
-      ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+      ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
       break;
 
     default:
       /* ignore the rest */
       break;
     }
-#endif
 }
+#endif
 
 
 static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info) 
@@ -4418,7 +4715,7 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
 		  return;
 		}
 	    }
-	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+	  ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
 	  XtUnmanageChild(ep->dialog);
 	  unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
 	}
@@ -4565,7 +4862,9 @@ Widget edit_header(snd_info *sp)
   XmStringFree(xstr4);
   if (!(XtIsManaged(ep->dialog))) XtManageChild(ep->dialog);
   reflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
+#if HAVE_FAM
   ep->file_ro_watcher = fam_monitor_file(ep->sp->filename, (void *)ep, watch_file_read_only);
+#endif
   return(ep->dialog);
 }
 
@@ -5311,6 +5610,119 @@ void changed_file_dialog(snd_info *sp)
 
 static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
+
+
+#if HAVE_FAM
+static void vf_watch_directory(struct fam_info *fp, FAMEvent *fe)
+{
+  view_files_info *vdat;
+  if (!(sound_file_p(fe->filename))) return;
+  vdat = (view_files_info *)(fp->data);
+  switch (fe->code)
+    {
+    case FAMChanged:
+      if (access(fe->filename, R_OK) == 0)
+	vf_add_file_if_absent(vdat, fe->filename);
+      else vf_remove_file_if_present(vdat, fe->filename);
+      break;
+
+    case FAMDeleted:
+    case FAMMoved:
+      /* it's an existing file that is moved? -- I see the old name?? */
+      vf_remove_file_if_present(vdat, fe->filename);
+      break;
+
+    case FAMCreated:
+      vf_add_file_if_absent(vdat, fe->filename);
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+  if (vdat->need_update)
+    {
+      view_files_update_list(vdat);
+      vdat->need_update = false;
+      if ((vdat->dialog) &&
+	  (widget_is_active(vdat->dialog)))
+	view_files_display_list(vdat);
+    }
+}
+
+
+void view_files_monitor_directory(view_files_info *vdat, const char *dirname)
+{
+  int i, loc = -1;
+  if (vdat->dir_names)
+    {
+      for (i = 0; i < vdat->dirs_size; i++)
+	if (vdat->dirs[i])
+	  {
+	    if (mus_strcmp(vdat->dir_names[i], dirname)) /* this was reversed?? */
+	      return;
+	  }
+	else
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = vdat->dirs_size;
+	  vdat->dirs_size += 4;
+	  vdat->dirs = (fam_info **)realloc(vdat->dirs, vdat->dirs_size * sizeof(fam_info *));
+	  vdat->dir_names = (char **)realloc(vdat->dir_names, vdat->dirs_size * sizeof(char *));
+	  for (i = loc; i < vdat->dirs_size; i++)
+	    {
+	      vdat->dirs[i] = NULL;
+	      vdat->dir_names[i] = NULL;
+	    }
+	}
+    }
+  else
+    {
+      vdat->dirs_size = 4;
+      loc = 0;
+      vdat->dirs = (fam_info **)calloc(vdat->dirs_size, sizeof(fam_info *));
+      vdat->dir_names = (char **)calloc(vdat->dirs_size, sizeof(char *));
+    }
+  redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
+  vdat->dirs[loc] = fam_monitor_directory(dirname, (void *)vdat, vf_watch_directory);
+  redirect_snd_error_to(NULL, NULL);
+  if (vdat->dirs[loc])
+    vdat->dir_names[loc] = mus_strdup(dirname);
+}
+
+
+void view_files_unmonitor_directories(view_files_info *vdat)
+{
+  if (vdat->dirs)
+    {
+      int i;
+      for (i = 0; i < vdat->dirs_size; i++)
+	if (vdat->dirs[i])
+	  {
+	    vdat->dirs[i] = unmonitor_directory(vdat->dirs[i]);
+	    free(vdat->dir_names[i]);
+	    vdat->dir_names[i] = NULL;
+	  }
+      free(vdat->dirs);
+      vdat->dirs = NULL;
+      free(vdat->dir_names);
+      vdat->dir_names = NULL;
+      vdat->dirs_size = 0;
+    }
+}
+
+#else
+
+void view_files_unmonitor_directories(view_files_info *vdat) {}
+void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
+
+#endif
+
+
 
 static char *vf_row_get_label(void *ur)
 {

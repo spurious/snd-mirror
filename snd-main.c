@@ -68,16 +68,9 @@ bool snd_exit_cleanly(bool force_exit)
 	     XEN_EMPTY_LIST,
 	     S_exit_hook);
 
-#if HAVE_FAM
-  if (ss->fam_ok)
-    {
-      cleanup_edit_header_watcher();
-      cleanup_new_file_watcher();
-      if (ss->fam_connection)
-	FAMClose(ss->fam_connection);
-      ss->fam_connection = NULL;
-    }
-#endif
+  if (ss->file_monitor_ok)
+    cleanup_file_monitor();
+
   cleanup_dac();
   for_each_normal_chan(remove_temp_files);
   cleanup_region_temp_files();
@@ -90,7 +83,7 @@ void sound_not_current(snd_info *sp)
 {
   /* check for change in update status */
   bool needs_update;
-  if (ss->fam_ok) return;
+  if (ss->file_monitor_ok) return;
   needs_update = (file_write_date(sp->filename) != sp->write_date);
   if (needs_update != sp->need_update)
     {
