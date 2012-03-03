@@ -2034,6 +2034,7 @@ static XEN g_set_audio_input_device(XEN val)
 }
 
 
+#if (!SND_DISABLE_DEPRECATED)
 static XEN g_minibuffer_history_length(void) {return(C_TO_XEN_INT(0));}
 
 static XEN g_set_minibuffer_history_length(XEN val) 
@@ -2041,6 +2042,7 @@ static XEN g_set_minibuffer_history_length(XEN val)
   #define H_minibuffer_history_length "(minibuffer-history-length): this is a no-op."
   return(C_TO_XEN_INT(0));
 }
+#endif
 
 
 static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(ss)));}
@@ -2293,8 +2295,10 @@ XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
 XEN_NARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
 XEN_NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
 XEN_NARGIFY_1(g_set_audio_input_device_w, g_set_audio_input_device)
-XEN_NARGIFY_0(g_minibuffer_history_length_w, g_minibuffer_history_length)
-XEN_NARGIFY_1(g_set_minibuffer_history_length_w, g_set_minibuffer_history_length)
+#if (!SND_DISABLE_DEPRECATED)
+  XEN_NARGIFY_0(g_minibuffer_history_length_w, g_minibuffer_history_length)
+  XEN_NARGIFY_1(g_set_minibuffer_history_length_w, g_set_minibuffer_history_length)
+#endif
 XEN_NARGIFY_0(g_auto_resize_w, g_auto_resize)
 XEN_NARGIFY_1(g_set_auto_resize_w, g_set_auto_resize)
 XEN_NARGIFY_0(g_color_cutoff_w, g_color_cutoff)
@@ -2380,8 +2384,10 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_audio_output_device_w g_set_audio_output_device
 #define g_audio_input_device_w g_audio_input_device
 #define g_set_audio_input_device_w g_set_audio_input_device
-#define g_minibuffer_history_length_w g_minibuffer_history_length
-#define g_set_minibuffer_history_length_w g_set_minibuffer_history_length
+#if (!SND_DISABLE_DEPRECATED)
+  #define g_minibuffer_history_length_w g_minibuffer_history_length
+  #define g_set_minibuffer_history_length_w g_set_minibuffer_history_length
+#endif
 #define g_auto_resize_w g_auto_resize
 #define g_set_auto_resize_w g_set_auto_resize
 #define g_color_cutoff_w g_color_cutoff

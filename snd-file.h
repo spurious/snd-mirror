@@ -50,7 +50,11 @@ typedef struct {
 #if HAVE_FAM
   fam_info **dirs;
 #else
+#if HAVE_G_FILE_MONITOR_DIRECTORY
+  GFileMonitor **dirs;
+#else
   void *dirs;
+#endif
 #endif
   char **dir_names;
   bool need_update;

@@ -10,8 +10,7 @@
  * what is "save" in enved -- maybe "(re)define <env-name>?" with a tooltip
  * in gtk3, the pane handles are all invisible (white on white)
  * in gtk2 the bomb icon isn't animated (and looks squashed)
- * fam open filer doesn't update in gtk [all of the new fam stuff needs to be tested]
- *   also view files stuff is still a stub
+ *   both it and the hour glass are just single png (inline) files
  *
  * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html|h|c already]
  *   perhaps define all the "built-in" keys via (bind-key ...)

@@ -21,21 +21,6 @@
 
 #if HAVE_G_FILE_MONITOR_DIRECTORY
 
-/*
- *
- * ----------------
- * fam replacement from glib? g_file_monitor_directory (also in filers)
- *    file = g_file_new_for_path(g_get_home_dir ());
- *    monitor = g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, NULL);
- *    g_signal_connect(G_OBJECT(monitor), "changed", G_CALLBACK(dir_changed), NULL); 
- * ----------------
-void                user_function                      (GFileMonitor     *monitor,
-                                                        GFile            *file,
-                                                        GFile            *other_file,
-                                                        GFileMonitorEvent event_type,
-                                                        gpointer          user_data)       : Run Last
-*/
-
 bool initialize_file_monitor(void)
 {
   return(true);
@@ -146,16 +131,136 @@ static void sp_file_changed(GFileMonitor *mon, GFile *file, GFile *other, GFileM
 void monitor_sound(snd_info *sp)
 {
   GFile *file;
+  GError *err = NULL;
+
   file = g_file_new_for_path(sp->filename);
-  sp->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
-  g_signal_connect(G_OBJECT(sp->file_watcher), "changed", G_CALLBACK(sp_file_changed), (gpointer)sp);   
+
+  sp->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
+  if (err != NULL)
+    snd_warning(err->message);
+  else g_signal_connect(G_OBJECT(sp->file_watcher), "changed", G_CALLBACK(sp_file_changed), (gpointer)sp);   
+
   g_object_unref(file); /* is this safe? */
 }
 
 
 
-void view_files_unmonitor_directories(view_files_info *vdat) {}
-void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
+void view_files_unmonitor_directories(view_files_info *vdat) 
+{
+  if (vdat->dirs)
+    {
+      int i;
+      for (i = 0; i < vdat->dirs_size; i++)
+	if (vdat->dirs[i])
+	  {
+	    vdat->dirs[i] = (GFileMonitor *)unmonitor_directory(vdat->dirs[i]);
+	    free(vdat->dir_names[i]);
+	    vdat->dir_names[i] = NULL;
+	  }
+      free(vdat->dirs);
+      vdat->dirs = NULL;
+      free(vdat->dir_names);
+      vdat->dir_names = NULL;
+      vdat->dirs_size = 0;
+    }
+}
+
+
+static void vf_watch_directory(GFileMonitor *mon, GFile *file, GFile *other, GFileMonitorEvent ev, gpointer data)
+{
+  view_files_info *vdat;
+  char *filename;
+
+  vdat = (view_files_info *)data;
+  filename = g_file_get_path(file);
+
+  fprintf(stderr, "%s: %d\n", filename, (int)ev);
+
+  switch (ev)
+    {
+    case G_FILE_MONITOR_EVENT_CHANGED:
+      if (access(filename, R_OK) == 0)
+	vf_add_file_if_absent(vdat, filename);
+      else vf_remove_file_if_present(vdat, filename);
+      break;
+
+    case G_FILE_MONITOR_EVENT_DELETED:
+    case G_FILE_MONITOR_EVENT_MOVED:
+      /* it's an existing file that is moved? -- I see the old name?? */
+      vf_remove_file_if_present(vdat, filename);
+      break;
+
+    case G_FILE_MONITOR_EVENT_CREATED:
+      vf_add_file_if_absent(vdat, filename);
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+  if (vdat->need_update)
+    {
+      view_files_update_list(vdat);
+      vdat->need_update = false;
+      if ((vdat->dialog) &&
+	  (widget_is_active(vdat->dialog)))
+	view_files_display_list(vdat);
+    }
+}
+
+
+void view_files_monitor_directory(view_files_info *vdat, const char *dirname)
+{
+  GFile *file;
+  GError *err = NULL;
+  int i, loc = -1;
+
+  if (vdat->dir_names)
+    {
+      for (i = 0; i < vdat->dirs_size; i++)
+	if (vdat->dirs[i])
+	  {
+	    if (mus_strcmp(vdat->dir_names[i], dirname)) /* this was reversed?? */
+	      return;
+	  }
+	else
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = vdat->dirs_size;
+	  vdat->dirs_size += 4;
+	  vdat->dirs = (GFileMonitor **)realloc(vdat->dirs, vdat->dirs_size * sizeof(GFileMonitor *));
+	  vdat->dir_names = (char **)realloc(vdat->dir_names, vdat->dirs_size * sizeof(char *));
+	  for (i = loc; i < vdat->dirs_size; i++)
+	    {
+	      vdat->dirs[i] = NULL;
+	      vdat->dir_names[i] = NULL;
+	    }
+	}
+    }
+  else
+    {
+      vdat->dirs_size = 4;
+      loc = 0;
+      vdat->dirs = (GFileMonitor **)calloc(vdat->dirs_size, sizeof(GFileMonitor *));
+      vdat->dir_names = (char **)calloc(vdat->dirs_size, sizeof(char *));
+    }
+
+  redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
+  file = g_file_new_for_path(dirname);
+  vdat->dirs[loc] = g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, &err);
+  if (err != NULL)
+    snd_warning(err->message);
+  else g_signal_connect(G_OBJECT(vdat->dirs[loc]), "changed", G_CALLBACK(vf_watch_directory), (gpointer)vdat);   
+  g_object_unref(file); 
+  redirect_snd_error_to(NULL, NULL);
+
+  if (vdat->dirs[loc])
+    vdat->dir_names[loc] = mus_strdup(dirname);
+}
 
 
 #else
@@ -367,12 +472,15 @@ static void fsb_update_lists(fsb *fs)
       (strcmp(fs->directory_name, fs->last_dir) != 0))
     {
       GFile *file;
+      GError *err = NULL;
       if (fs->directory_watcher)
-	unmonitor_file(fs->directory_watcher); /* filename normally ignored */
+	unmonitor_directory(fs->directory_watcher); /* filename normally ignored */
 
       file = g_file_new_for_path(fs->directory_name);
-      fs->directory_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
-      g_signal_connect(G_OBJECT(fs->directory_watcher), "changed", G_CALLBACK(watch_current_directory_contents), (gpointer)fs);
+      fs->directory_watcher = (void *)g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, &err);
+      if (err != NULL)
+	snd_warning(err->message);
+      else g_signal_connect(G_OBJECT(fs->directory_watcher), "changed", G_CALLBACK(watch_current_directory_contents), (gpointer)fs);
       g_object_unref(file);
 
       if (fs->last_dir) free(fs->last_dir);
@@ -1249,11 +1357,14 @@ static void dialog_select_callback(const char *filename, void *context)
 #if HAVE_G_FILE_MONITOR_DIRECTORY
       {
 	GFile *file;
+	GError *err = NULL;
 
 	fd->info_filename = mus_strdup(filename);
 	file = g_file_new_for_path(filename);
-	fd->info_filename_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
-	g_signal_connect(G_OBJECT(fd->info_filename_watcher), "changed", G_CALLBACK(watch_info_file), (gpointer)fd);
+	fd->info_filename_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
+	if (err != NULL)
+	  snd_warning(err->message);
+	else g_signal_connect(G_OBJECT(fd->info_filename_watcher), "changed", G_CALLBACK(watch_info_file), (gpointer)fd);
 	g_object_unref(file);
       }
 #endif
@@ -1445,7 +1556,7 @@ static void clear_file_error_label(file_dialog_info *fd)
 
   if (fd->unsound_directory_watcher)
     {
-      fd->unsound_directory_watcher = unmonitor_file(fd->unsound_directory_watcher);
+      fd->unsound_directory_watcher = unmonitor_directory(fd->unsound_directory_watcher);
       if (fd->unsound_dirname) {free(fd->unsound_dirname); fd->unsound_dirname = NULL;}
       if (fd->unsound_filename) {free(fd->unsound_filename); fd->unsound_filename = NULL;}
     }
@@ -1510,10 +1621,11 @@ static void unpost_unsound_error(GFileMonitor *mon, GFile *file, GFile *other, G
 static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
 {
   GFile *file;
+  GError *err = NULL;
 
   if (fd->unsound_directory_watcher)
     {
-      fd->unsound_directory_watcher = unmonitor_file(fd->unsound_directory_watcher);
+      fd->unsound_directory_watcher = unmonitor_directory(fd->unsound_directory_watcher);
       if (fd->unsound_dirname) free(fd->unsound_dirname);
       if (fd->unsound_filename) free(fd->unsound_filename);
     }
@@ -1522,8 +1634,10 @@ static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
   fd->unsound_dirname = just_directory(fd->unsound_filename);
 
   file = g_file_new_for_path(fd->unsound_dirname);
-  fd->unsound_directory_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
-  g_signal_connect(G_OBJECT(fd->unsound_directory_watcher), "changed", G_CALLBACK(unpost_unsound_error), (gpointer)fd);
+  fd->unsound_directory_watcher = (void *)g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, &err);
+  if (err != NULL)
+    snd_warning(err->message);
+  else g_signal_connect(G_OBJECT(fd->unsound_directory_watcher), "changed", G_CALLBACK(unpost_unsound_error), (gpointer)fd);
   g_object_unref(file);
 }
 #else
@@ -2904,9 +3018,12 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 #if HAVE_G_FILE_MONITOR_DIRECTORY
 	      {
 		GFile *file;
+		GError *err = NULL;
 		file = g_file_new_for_path(fullname);
-		sd->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
-		g_signal_connect(G_OBJECT(sd->file_watcher), "changed", G_CALLBACK(watch_save_as_file), (gpointer)sd);
+		sd->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
+		if (err != NULL)
+		  snd_warning(err->message);
+		else g_signal_connect(G_OBJECT(sd->file_watcher), "changed", G_CALLBACK(watch_save_as_file), (gpointer)sd);
 		g_object_unref(file);
 	      }
 #endif
@@ -3827,9 +3944,12 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 #if HAVE_G_FILE_MONITOR_DIRECTORY
 	      {
 		GFile *file;
+		GError *err = NULL;
 		file = g_file_new_for_path(new_file_filename);
-		new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
-		g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
+		new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
+		if (err != NULL)
+		  snd_warning(err->message);
+		else g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
 		g_object_unref(file);
 	      }
 #endif
@@ -3854,9 +3974,12 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 		      (mus_file_probe(new_file_filename))) /* see comment in snd-xfile.c */
 		    {
 		      GFile *file;
+		      GError *err = NULL;
 		      file = g_file_new_for_path(new_file_filename);
-		      new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
-		      g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
+		      new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
+		      if (err != NULL)
+			snd_warning(err->message);
+		      else g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
 		      g_object_unref(file);
 		    }
 #endif
@@ -4381,9 +4504,12 @@ GtkWidget *edit_header(snd_info *sp)
 #if HAVE_G_FILE_MONITOR_DIRECTORY
   {
     GFile *file;
+    GError *err = NULL;
     file = g_file_new_for_path(ep->sp->filename);
-    ep->file_ro_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
-    g_signal_connect(G_OBJECT(ep->file_ro_watcher), "changed", G_CALLBACK(watch_file_read_only), (gpointer)ep);
+    ep->file_ro_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
+    if (err != NULL)
+      snd_warning(err->message);
+    else g_signal_connect(G_OBJECT(ep->file_ro_watcher), "changed", G_CALLBACK(watch_file_read_only), (gpointer)ep);
     g_object_unref(file);
   }
 #endif
