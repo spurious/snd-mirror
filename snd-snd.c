@@ -2621,24 +2621,13 @@ If more than one such sound exists, 'nth' chooses which one to return."
 }
 
 
+#if (!SND_DISABLE_DEPRECATED)
 static XEN g_bomb(XEN snd, XEN on)
 {
-  #define H_bomb "(" S_bomb " :optional snd (on " PROC_TRUE ")): display (or erase if on=" PROC_FALSE ") the bomb icon"
-  snd_info *sp;
-
-  ASSERT_SOUND(S_bomb, snd, 1);
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_2, S_bomb, "a boolean");
-
-  sp = get_sp(snd); /* could also be a variable display handler here */
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_bomb, snd));
-
-  if (XEN_FALSE_P(on))
-    hide_bomb(sp);
-  else show_bomb(sp);
-
+  #define H_bomb "(" S_bomb " :optional snd (on " PROC_TRUE ")): obsolete"
   return(on);
 }
+#endif
 
 
 typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
@@ -5850,7 +5839,9 @@ static XEN g_sounds(void)
 #ifdef XEN_ARGIFY_1
 
 XEN_NARGIFY_1(g_sound_p_w, g_sound_p)
-XEN_ARGIFY_2(g_bomb_w, g_bomb)
+#if (!SND_DISABLE_DEPRECATED)
+  XEN_ARGIFY_2(g_bomb_w, g_bomb)
+#endif
 XEN_ARGIFY_2(g_find_sound_w, g_find_sound)
 XEN_ARGIFY_1(g_channels_w, g_channels)
 XEN_ARGIFY_2(g_set_channels_w, g_set_channels)
@@ -5972,7 +5963,9 @@ XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
 #else
 
 #define g_sound_p_w g_sound_p
-#define g_bomb_w g_bomb
+#if (!SND_DISABLE_DEPRECATED)
+  #define g_bomb_w g_bomb
+#endif
 #define g_find_sound_w g_find_sound
 #define g_channels_w g_channels
 #define g_set_channels_w g_set_channels
@@ -6128,7 +6121,9 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_comment,       g_comment_w,       H_comment,       S_setB S_comment,       g_set_comment_w,        0, 1, 1, 1);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_p,               g_sound_p_w,          1, 0, 0, H_sound_p);
+#if (!SND_DISABLE_DEPRECATED)
   XEN_DEFINE_SAFE_PROCEDURE(S_bomb,                  g_bomb_w,             0, 2, 0, H_bomb);
+#endif
   XEN_DEFINE_SAFE_PROCEDURE(S_find_sound,            g_find_sound_w,       1, 1, 0, H_find_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_name,             g_file_name_w,        0, 1, 0, H_file_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_short_file_name,       g_short_file_name_w,  0, 1, 0, H_short_file_name);

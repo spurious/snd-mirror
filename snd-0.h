@@ -55,7 +55,6 @@
 #else
   #define NUM_HOURGLASSES 1
 #endif
-#define NUM_BOMBS 15
 
 #define PEAK_ENV_CUTOFF 50000
 #define MIN_INIT 1000000.0

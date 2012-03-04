@@ -386,6 +386,7 @@ typedef struct snd_info {
   int num_progress_widgets;
   Widget tab;
   Widget dialog;
+  int bomb_ctr;
 #endif
 #if USE_GTK
   GtkWidget **snd_widgets;
@@ -402,7 +403,6 @@ typedef struct snd_info {
 #endif
 
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
-  int bomb_ctr;
   time_t write_date, update_warning_write_date;   /* check for change behind back while editing */
   bool need_update, file_unreadable; /* current in-core data does not match actual file (someone wrote it behind our back) */
   channel_style_t channel_style;
@@ -1300,7 +1300,6 @@ void play_channels(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *u
 		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos);
 void play_selection(play_process_t background);
 void loop_play_selection(void);
-bool something_is_playing(void);
 bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix, bool start_playing);
 void toggle_dac_pausing(void); /* snd-dac.c */
 bool play_in_progress(void);

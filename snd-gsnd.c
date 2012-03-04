@@ -112,7 +112,7 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->snd_widgets[W_pane_box]);}
 
 static bool mini_lock_allocated = false;
 static picture_t *mini_lock = NULL, *speed_r = NULL, *speed_l = NULL, *blank = NULL, *stop_sign = NULL;
-static picture_t *bombs[NUM_BOMBS];
+static picture_t *bomb = NULL;
 
 void show_lock(snd_info *sp)
 {
@@ -147,22 +147,18 @@ static void hide_stop_sign(snd_info *sp)
 }
 
 
-void show_bomb(snd_info *sp)
+static void show_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  if (sp->bomb_ctr >= NUM_BOMBS) 
-    sp->bomb_ctr = 0;
-  draw_picture(sp->name_pix_ax, bombs[sp->bomb_ctr], 0, 0, 0, 0, 16, 16);
+  draw_picture(sp->name_pix_ax, bomb, 0, 0, 0, 0, 16, 16);
   gtk_widget_show(NAME_PIX(sp));
-  sp->bomb_ctr++; 
 }
 
 
-void hide_bomb(snd_info *sp)
+static void hide_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
   gtk_widget_hide(NAME_PIX(sp));
-  sp->bomb_ctr = 0;
 }
 
 
@@ -189,7 +185,6 @@ static gint tick_bomb(gpointer data)
 void start_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
-  sp->bomb_ctr = 0;
   if (!(sp->bomb_in_progress))
     {
       sp->bomb_in_progress = true;
@@ -295,22 +290,27 @@ static void make_pixmaps(void)
 {
   if (!mini_lock_allocated)
     { 
-      int k;
       mini_lock = snd_icon(SND_PNG_LOCK);
       stop_sign = snd_icon(SND_PNG_STOP);
       blank = snd_icon(SND_PNG_BLANK);
       speed_r = snd_icon(SND_PNG_RIGHT_ARROW);
       speed_l = snd_icon(SND_PNG_LEFT_ARROW);
-      for (k = 0; k < NUM_BOMBS; k++) 
-	bombs[k] = snd_icon(SND_PNG_BOMB);
+      bomb = snd_icon(SND_PNG_BOMB);
       mini_lock_allocated = true;
     }
 }
+
+/* lock stop blank bomb as 16x16
+ *    bomb (warning) is also 22x22 24x24 32x32
+ *    lock (changes-prevent) and stop (stop) also
+ *  but 24x24 doesn't look larger?
+ */
 
 
 static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
+
   if ((HAS_WIDGETS(sp)) &&
       (NAME_PIX(sp)) &&
       (sp->name_pix_ax))
@@ -1535,7 +1535,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
 
-  sp->bomb_ctr = 0;
   sp->write_date = file_write_date(filename); /* needed early in this process by the peak-env handlers */
   make_pixmaps();
 

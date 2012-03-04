@@ -1403,6 +1403,8 @@ static unsigned char speed_l_bits1[] = {
    0x20, 0x00, 0x10, 0x08, 0x08, 0x00, 0x04, 0x20, 0x02, 0x00, 0xfd, 0xa5,
    0x02, 0x00, 0x04, 0x20, 0x08, 0x00, 0x10, 0x08, 0x20, 0x00, 0x00, 0x00};
 
+#define NUM_BOMBS 15
+
 static Pixmap mini_lock = 0;
 static Pixmap close_icon = 0;
 static Pixmap blank_pixmap = 0;
@@ -1444,7 +1446,7 @@ static void hide_stop_sign(snd_info *sp)
 }
 
 
-void show_bomb(snd_info *sp)
+static void show_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
   if (sp->bomb_ctr >= NUM_BOMBS) 
@@ -1455,7 +1457,7 @@ void show_bomb(snd_info *sp)
 }
 
 
-void hide_bomb(snd_info *sp)
+static void hide_bomb(snd_info *sp)
 {
   if (!HAS_WIDGETS(sp)) return;
   XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);

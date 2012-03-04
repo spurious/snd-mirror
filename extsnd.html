@@ -736,7 +736,7 @@ when a sound is opened or closed.
 <p>auto-update determines whether Snd should <a href="snd.html#updatefile">update</a> a file automatically 
 if it (the file) changes on disk due to some other process.
 If Snd's view of a sound doesn't match the on-disk version of the sound, 
-a bomb icon warns you that there are two conflicting versions of the sound.
+a warning is posted that there are two conflicting versions of the sound.
 </p>
 <div class="spacer"></div>
 
@@ -3373,8 +3373,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 </pre>
 
 <p>Say we're editing a sound in several different windows, and want to save and re-apply any
-edits we may have in the other windows when we save the sound from one window (all the others
-then get the exploding bomb icon because their underlying data has changed):
+edits we may have in the other windows when we save the sound from one window:
 </p>
 
 <pre class="indented">
@@ -7420,31 +7419,6 @@ The default is 4.
 The default is 60.0, making it the same as x-axis-in-seconds.  
 See <a href="#snpmark">snap-mark-to-beat</a>, or <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a>.
 </p>
-<div class="separator"></div>
-
-
-<!-- bomb -->
-<pre class="indented">
-<em class=def id="bomb">bomb</em> snd on
-</pre>
-
-<p>bomb displays an exploding bomb icon next to 'snd's' name.  Set 'on' to #f to erase the bomb.  Each time bomb
-is called, the bomb icon moves to the next image in its sequence (showing the bomb's fuse burning down),
-restarting the sequence whenever it reaches the end.  This icon is used when a sound and its underlying file
-get out of sync somehow (<a href="#autoupdate">auto-update</a>).
-</p>
-
-<pre class="indented">
-(define show-bomb 
-  (lambda (n speed) 
-    (if (&gt; n 0) 
-	(begin 
-	  (<em class=red>bomb</em>) 
-	  (<a class=quiet href="#gin" onmouseout="UnTip()" onmouseover="Tip(extsnd_gin_tip)">in</a> speed (lambda () (show-bomb (- n 1) speed))))
-	(<em class=red>bomb</em> 0 #f))))
-
-(show-bomb 15 200) ; there are 15 images in the sequence
-</pre>
 <div class="separator"></div>
 
 

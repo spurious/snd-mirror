@@ -349,8 +349,6 @@ void show_lock(snd_info *sp);
 void hide_lock(snd_info *sp);
 void start_bomb(snd_info *sp);
 void stop_bomb(snd_info *sp);
-void show_bomb(snd_info *sp);
-void hide_bomb(snd_info *sp);
 snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr);
 void set_sound_pane_file_label(snd_info *sp, const char *str);
 void color_filter_waveform(Pixel color);
@@ -374,7 +372,6 @@ void make_controls_dialog(void);
 void cleanup_file_monitor(void);
 bool initialize_file_monitor(void);
 void *unmonitor_file(void *watcher);
-void *unmonitor_directory(void *watcher);
 void monitor_sound(snd_info *sp);
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);

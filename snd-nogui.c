@@ -154,8 +154,6 @@ void play_button_pause(bool pausing) {}
 void syncb(snd_info *sp, int on) {sp->sync = on; if (on > ss->sound_sync_max) ss->sound_sync_max = on;}
 void show_lock(snd_info *sp) {}
 void hide_lock(snd_info *sp) {}
-void show_bomb(snd_info *sp) {}
-void hide_bomb(snd_info *sp) {}
 void start_bomb(snd_info *sp) {}
 void stop_bomb(snd_info *sp) {}
 void set_sound_pane_file_label(snd_info *sp, const char *str) {}

@@ -43,7 +43,7 @@ void *unmonitor_file(void *watcher)
   return(NULL);
 }
 
-void *unmonitor_directory(void *watcher) 
+static void *unmonitor_directory(void *watcher) 
 {
   if (G_IS_FILE_MONITOR(watcher))
     g_file_monitor_cancel((GFileMonitor *)watcher);
@@ -268,7 +268,7 @@ void view_files_monitor_directory(view_files_info *vdat, const char *dirname)
 void cleanup_file_monitor(void) {}
 bool initialize_file_monitor(void) {return(false);}
 void *unmonitor_file(void *watcher) {return(NULL);}
-void *unmonitor_directory(void *watcher) {return(NULL);}
+static void *unmonitor_directory(void *watcher) {return(NULL);}
 void monitor_sound(snd_info *sp) {}
 
 void view_files_unmonitor_directories(view_files_info *vdat) {}

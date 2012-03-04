@@ -879,7 +879,7 @@ void stop_playing_region(int n, play_stop_t reason)
 }
 
 
-bool something_is_playing(void)
+static bool something_is_playing(void)
 {
   int i;
   if (play_list)

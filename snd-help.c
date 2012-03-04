@@ -477,6 +477,7 @@ Feb:   removed snd1.html and snd-contents.html (these were\n\
        removed minibuffer-history-length, prompt-in-minibuffer, clear-minibuffer,\n\
           and report-in-minibuffer.  Replaced the latter two with status-report.\n\
        removed sound-specific search-procedures (i.e. there is only one search procedure)\n\
+       removed the bomb function.\n\
 10-Feb:  removed snd1.html, snd-contents.html.\n\
 2-Feb:   Snd 12.8.\n\\n\
 27-Jan:  removed snd10.scm.\n\

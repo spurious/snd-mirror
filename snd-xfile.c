@@ -9,8 +9,6 @@
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
  * what is "save" in enved -- maybe "(re)define <env-name>?" with a tooltip
  * in gtk3, the pane handles are all invisible (white on white)
- * in gtk2 the bomb icon isn't animated (and looks squashed)
- *   both it and the hour glass are just single png (inline) files
  *
  * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html|h|c already]
  *   perhaps define all the "built-in" keys via (bind-key ...)
@@ -351,7 +349,7 @@ void *unmonitor_file(void *watcher)
 }
 
 
-void *unmonitor_directory(void *watcher)
+static void *unmonitor_directory(void *watcher)
 {
   return(unmonitor_file(watcher));
 }
@@ -362,7 +360,7 @@ void *unmonitor_directory(void *watcher)
 void cleanup_file_monitor(void) {}
 bool initialize_file_monitor(void) {return(false);}
 void *unmonitor_file(void *watcher) {return(NULL);}
-void *unmonitor_directory(void *watcher) {return(NULL);}
+static void *unmonitor_directory(void *watcher) {return(NULL);}
 void monitor_sound(snd_info *sp) {}
 #endif
 /* have fam */

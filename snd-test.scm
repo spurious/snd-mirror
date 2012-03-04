@@ -2110,7 +2110,7 @@
 		       'before-close-hook 'before-exit-hook 'before-save-as-hook 'before-save-state-hook 'before-transform-hook
 		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 
 		       'blackman5-window 'blackman6-window 'blackman7-window 'blackman8-window 'blackman9-window 'blackman10-window 
-		       'bohman-window 'bold-peaks-font 'bomb 'cauchy-window 'mlt-sine-window
+		       'bohman-window 'bold-peaks-font 'cauchy-window 'mlt-sine-window
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 		       'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
@@ -9038,7 +9038,6 @@ EDITS: 5
 	  (set! (speed-control index) old-speed)
 	  (set! (speed-control-style) old-style)
 	  (set! (show-controls index) old-open))
-	(bomb index #t)
 	(let ((k (disk-kspace "oboe.snd")))
 	  (if (or (not (number? k))
 		  (<= k 0))
@@ -9279,7 +9278,6 @@ EDITS: 5
 	      (snd-display #__line__ ";edit-position: ~A ~A?" (edit-position) eds)))
 	(play index :channel 0 :wait #t)
 	
-	(bomb index #f)
 	(if (not (selection-creates-region)) (set! (selection-creates-region) #t))
 	(select-all index 0) 
 	(let ((r0 (car (regions)))
@@ -60076,7 +60074,7 @@ EDITS: 1
 		     add-to-main-menu add-to-menu add-transform amp-control ask-about-unsaved-edits
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
-		     basic-color bind-key bomb apply-controls change-samples-with-origin channel-style
+		     basic-color bind-key apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound combined-data-color
 		     color-cutoff color-orientation-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
@@ -60427,7 +60425,7 @@ EDITS: 1
 				    (if (and (not (eq? tag 'wrong-type-arg))
 					     (not (eq? tag 'mus-error)))
 					(snd-display #__line__ ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
-				(list amp-control bomb apply-controls close-sound comment contrast-control 
+				(list amp-control apply-controls close-sound comment contrast-control 
 				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 				      reverb-control-length-bounds reverb-control-scale-bounds
 				      contrast-control-amp contrast-control? data-format data-location data-size expand-control
