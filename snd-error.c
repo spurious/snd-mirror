@@ -142,7 +142,7 @@ static void snd_warning_1(const char *msg)
       snd_info *sp;
       sp = any_selected_sound();
       if ((sp) && (sp->active))
-	status_report(sp, msg);
+	status_report(sp, "%s", msg); /* make the Mac C compiler happy */
       else 
 	{
 	  listener_append(msg);

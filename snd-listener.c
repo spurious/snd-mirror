@@ -7,7 +7,8 @@ static char **listener_strings = NULL;
 static int listener_strings_size = 0, listener_strings_pos = 0;
 static bool listener_first_time = true;
 
-void remember_listener_string(const char *str)
+#if (!USE_NO_GUI)
+static void remember_listener_string(const char *str)
 {
   int i, top;
   if (!str) return;
@@ -32,6 +33,7 @@ void remember_listener_string(const char *str)
 
   listener_strings[0] = mus_strdup(str);
 }
+#endif
 
 
 void restore_listener_string(bool back)

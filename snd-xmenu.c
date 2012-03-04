@@ -408,11 +408,13 @@ void check_menu_labels(int key, int state, bool extended)
 	  if (key == snd_K_w) set_label(edit_save_as_menu, "Save Selection");
 	}
     }
+#if HAVE_EXTENSION_LANGUAGE
   else 
     {
       if ((key == snd_K_s) && (state == snd_ControlMask))
 	set_label(edit_find_menu, I_FIND);
     }
+#endif
 }
 
 

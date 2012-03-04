@@ -1396,7 +1396,7 @@ static XEN g_set_enved_filter(XEN type)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(type), type, XEN_ONLY_ARG, S_setB S_enved_filter, "boolean");
   FIR_p = XEN_TO_C_BOOLEAN(type);
   if (firB)
-    set_button_label(firB, (FIR_p) ? "fir" : "fft");
+    gtk_label_set_text(GTK_LABEL(firB), (FIR_p) ? "fir" : "fft");
   return(type);
 }
 

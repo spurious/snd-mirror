@@ -1263,7 +1263,7 @@ void revert_env_edit(void);
 int enved_all_envs_top(void);
 char *enved_all_names(int n);
 void set_enved_env_list_top(int n);
-env *enved_all_envs(int pos);
+/* env *enved_all_envs(int pos); */
 void alert_envelope_editor(const char *name, env *val);
 void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, printing_t printing);
 void save_envelope_editor_state(FILE *fd);
@@ -1273,7 +1273,7 @@ env *string_to_env(const char *str);
 void add_or_edit_symbol(const char *name, env *val);
 env* name_to_env(const char *str);
 env *position_to_env(int pos);
-void delete_envelope(const char *name);
+/* void delete_envelope(const char *name); */
 enved_fft *free_enved_fft(enved_fft *ef);
 void reflect_enved_fft_change(chan_info *cp);
 
@@ -1742,7 +1742,7 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
 /* -------- snd-find.c -------- */
 
-#if (!USE_NO_GUI)
+#if HAVE_EXTENSION_LANGUAGE && (!USE_NO_GUI)
   void find_dialog_find(char *str, read_direction_t direction, chan_info *cp);
 #endif
 void g_init_find(void);

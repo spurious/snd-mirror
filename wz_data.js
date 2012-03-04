@@ -245,8 +245,6 @@ var extsnd_frames_tip = "<code>(frames snd chn edpos)</code>: number of frames o
 
 var extsnd_freesampler_tip = "<code>(free-sampler reader)</code>: free a sampler (of any kind)";
 
-var extsnd_gin_tip = "<code>(in msecs thunk)</code>: invoke thunk in msecs milliseconds (named call_in in Ruby)";
-
 var extsnd_graph_tip = "<code>(graph data xlabel (x0 0.0) (x1 1.0) y0 y1 snd chn (force-display #t) show-axes)</code>:<br>" +
                        " displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1;<br>" +
                        " 'data' can be a list or a vct. If 'data' is a list of numbers, it is treated as an envelope.";

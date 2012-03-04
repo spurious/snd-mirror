@@ -193,6 +193,7 @@ static char *global_search(read_direction_t direction, bool repeating)
 }
 
 
+#if HAVE_EXTENSION_LANGUAGE
 void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
 {
   XEN proc;
@@ -264,7 +265,7 @@ void find_dialog_find(char *str, read_direction_t direction, chan_info *cp)
     }
   else find_report(cp, "not found");
 }
-
+#endif
 #endif
 /* end no gui */
 

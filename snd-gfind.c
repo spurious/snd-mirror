@@ -68,7 +68,9 @@ static void edit_find_help(GtkWidget *w, gpointer context)
 
 static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer context) 
 {
+#if HAVE_EXTENSION_LANGUAGE
   find_dialog_find((char *)gtk_entry_get_text(GTK_ENTRY(edit_find_text)), direction, find_channel);
+#endif
 }
 
 

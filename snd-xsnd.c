@@ -891,13 +891,6 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   /* make an envelope out of the data */
   snd_info *sp = (snd_info *)context;
   char *str = NULL;
-  XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *)info;
-  XKeyEvent *ev;
-  KeySym keysym;
-  ev = (XKeyEvent *)(cb->event);
-  keysym = XKeycodeToKeysym(XtDisplay(w),
-			    (int)(ev->keycode),
-			    (ev->state & snd_ShiftMask) ? 1 : 0);
 
   str = XmTextGetString(w);
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);

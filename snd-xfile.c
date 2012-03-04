@@ -18,7 +18,6 @@
  * in save-as dialog, the new file name should be at the top (like new-file dialog)
  * find: global not tested, stop not tested
  * vf buttons need tooltips and bgcolor of entire dialog is bad
- * make new pictures for snd.html (will need audio+gtk3 ideally)
  *
  * what about tooltips in the listener, or some way to show help (apropos) if hovering
  *   also if error displayed, hover->env printout etc
@@ -360,7 +359,7 @@ static void *unmonitor_directory(void *watcher)
 void cleanup_file_monitor(void) {}
 bool initialize_file_monitor(void) {return(false);}
 void *unmonitor_file(void *watcher) {return(NULL);}
-static void *unmonitor_directory(void *watcher) {return(NULL);}
+/* static void *unmonitor_directory(void *watcher) {return(NULL);} */
 void monitor_sound(snd_info *sp) {}
 #endif
 /* have fam */
@@ -1277,7 +1276,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 
 static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_pattern_info *fp, dialog_play_info *dp)
 {
-  Widget rc, sep1;
+  Widget rc;
   int n;
   Arg args[12];
 
@@ -1296,7 +1295,7 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
   XtSetArg(args[n], XmNwidth, 20); n++;
   XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
-  sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, rc, args, n);
+  XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, rc, args, n);
 
   n = 0;
   /* XmNmarginLeft here refers to the space between the button and its label! */
@@ -4133,11 +4132,13 @@ static char *new_file_filename = NULL;
 static void *new_file_watcher = NULL;
 
 
+#if HAVE_FAM
 static void cleanup_new_file_watcher(void)
 {
   if (new_file_watcher)
     new_file_watcher = unmonitor_file(new_file_watcher);
 }
+#endif
 
 
 static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer info);
@@ -4545,6 +4546,7 @@ static edhead_info *new_edhead_dialog(void)
 }
 
 
+#if HAVE_FAM
 static void cleanup_edit_header_watcher(void)
 {
   int i;
@@ -4557,6 +4559,7 @@ static void cleanup_edit_header_watcher(void)
 	  ep->file_ro_watcher = unmonitor_file(ep->file_ro_watcher);
       }
 }
+#endif
 
 
 static XmString make_header_dialog_title(edhead_info *ep, snd_info *sp)
@@ -5699,7 +5702,7 @@ void view_files_unmonitor_directories(view_files_info *vdat)
       for (i = 0; i < vdat->dirs_size; i++)
 	if (vdat->dirs[i])
 	  {
-	    vdat->dirs[i] = unmonitor_directory(vdat->dirs[i]);
+	    vdat->dirs[i] = (fam_info *)unmonitor_directory(vdat->dirs[i]);
 	    free(vdat->dir_names[i]);
 	    vdat->dir_names[i] = NULL;
 	  }

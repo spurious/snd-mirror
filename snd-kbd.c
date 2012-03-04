@@ -387,7 +387,7 @@ void errors_to_status_area(const char *msg, void *data)
       sp = any_selected_sound();
       if (!snd_ok(sp)) return;
     }
-  status_report((snd_info *)data, msg);
+  status_report((snd_info *)data, "%s", msg);
 }
 
 
@@ -748,7 +748,9 @@ void control_g(snd_info *sp)
   #define SND_KEYMASK (snd_ControlMask | snd_MetaMask)
 #endif
 
-static chan_info *last_searcher = NULL;
+#if HAVE_EXTENSION_LANGUAGE && (!USE_NO_GUI)
+  static chan_info *last_searcher = NULL;
+#endif
 
 
 void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
@@ -980,7 +982,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED);
 	      break;
 
-#if HAVE_EXTENSION_LANGUAGE
+#if HAVE_EXTENSION_LANGUAGE && (!USE_NO_GUI)
 	    case snd_K_S: case snd_K_s: 
 	      if ((cp == last_searcher) &&
 		  (find_dialog_is_active()))
@@ -1174,6 +1176,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      set_window_percentage(cp, ext_count);
 	      break;
 
+#if (!USE_NO_GUI)
 	    case snd_K_W: case snd_K_w: 
 	      {
 		chan_info *cp;
@@ -1181,6 +1184,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		make_channel_extract_dialog(cp->chan);
 	      }
 	      break;
+#endif
 
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 
@@ -1796,7 +1800,7 @@ void g_init_kbd(void)
 #if (!SND_DISABLE_DEPRECATED)
   XEN_DEFINE_PROCEDURE("save-macros",            g_save_macros_w,            1, 0, 0, "obsolete");
   XEN_DEFINE_PROCEDURE("clear-minibuffer",       g_clear_status_area_w,      0, 1, 0, "obsolete");
-  XEN_DEFINE_PROCEDURE("report-in-minibuffer",   g_status_report_w,          1, 2, 0, "obsolete");
+  XEN_DEFINE_PROCEDURE("report-in-minibuffer",   g_status_report_w,          1, 1, 0, "obsolete");
   XEN_DEFINE_PROCEDURE("prompt-in-minibuffer",   g_prompt_in_minibuffer_w,   1, 3, 0, "obsolete");
 #endif
 

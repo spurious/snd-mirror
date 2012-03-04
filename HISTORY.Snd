@@ -1,22 +1,23 @@
 Snd change log
 
- Feb: s7: added random-state?, hash-table-iterator?, and morally-equal?
-      clm/cmn/snd/s7: removed snd1.html and snd-contents.html (these were
-           using Javascript for stuff that is now built into html), and 
-           translated the rest of the html files to html5.
-      snd: removed the recorder, recorder-dialog, snd-g|xrec.c,
-           changed various menu names and added a view:with-grid menu
-           moved dialog buttons around at random,
-           removed save-macros and named keyboard macros,
-           added context-sensitive tooltips to the gtk version,
-           changed the gtk listener default font to Monospace 11,
-           the "minibuffer" is now a "statusbar".  This means it is not 
-              editable, which means all the key sequences that used to 
-              prompt for info are either undefined now, or use a dialog instead.
-           removed minibuffer-history-length, prompt-in-minibuffer, clear-minibuffer,
-              and report-in-minibuffer.  Replaced the latter two with status-report.
-           removed sound-specific search-procedures (i.e. there is only one search procedure)
-           removed the bomb function
+ 5-Mar:     Snd 12.9.
+ Feb:       s7: added random-state?, hash-table-iterator?, and morally-equal?
+            clm/cmn/snd/s7: removed snd1.html and snd-contents.html (these were
+                 using Javascript for stuff that is now built into html), and 
+                 translated the rest of the html files to html5.
+            snd: removed the recorder, recorder-dialog, snd-g|xrec.c,
+                 changed various menu names and added a view:with-grid menu
+                 moved dialog buttons around at random,
+                 removed save-macros and named keyboard macros,
+                 added context-sensitive tooltips to the gtk version,
+                 changed the gtk listener default font to Monospace 11,
+                 the "minibuffer" is now a "statusbar".  This means it is not 
+                    editable, which means all the key sequences that used to 
+                    prompt for info are either undefined now, or use a dialog instead.
+                 removed minibuffer-history-length, prompt-in-minibuffer, clear-minibuffer,
+                    and report-in-minibuffer.  Replaced the latter two with status-report.
+                 removed sound-specific search-procedures (i.e. there is only one search procedure)
+                 removed the bomb function
   2-Feb:    Snd 12.8.
   27-Jan:   removed snd10.scm.
 

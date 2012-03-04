@@ -36,7 +36,9 @@ void edit_menu_update(void)
   
   /* is there an open sound? */
   set_sensitive(edit_header_menu, file_p);
+#if HAVE_EXTENSION_LANGUAGE
   set_sensitive(edit_find_menu, file_p);
+#endif
   set_sensitive(edit_select_all_menu, file_p);
 
   /* is there an active selection? */

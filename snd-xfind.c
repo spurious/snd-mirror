@@ -76,7 +76,9 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 { 
   char *str;
   str = XmTextGetString(edit_find_text);
+#if HAVE_EXTENSION_LANGUAGE
   find_dialog_find(str, direction, find_channel);
+#endif
   if (str) free(str);
 }
 
@@ -127,14 +129,13 @@ static void make_edit_find_dialog(bool managed, chan_info *cp)
       Widget dl, rc;
       Arg args[20];
       int n;
-      XmString go_away, next, help;
+      XmString go_away, next;
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 
       go_away = XmStringCreateLocalized((char *)I_GO_AWAY);
       next = XmStringCreateLocalized((char *)I_NEXT);
-      help = XmStringCreateLocalized((char *)I_HELP);
 
       XtSetArg(args[n], XmNokLabelString, next); n++;
       XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
@@ -342,4 +343,5 @@ void g_init_gxfind(void)
   XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog);
   XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
 }
+
 

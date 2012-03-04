@@ -603,8 +603,12 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, region_list); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+#if WITH_AUDIO
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, plw); n++;
+#else
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+#endif
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
   XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
@@ -616,8 +620,12 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, infosep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+#if WITH_AUDIO
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, plw); n++;
+#else
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+#endif
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
   reg_srtxt = XtCreateManagedWidget("srate:", xmLabelWidgetClass, toppane, args, n);
