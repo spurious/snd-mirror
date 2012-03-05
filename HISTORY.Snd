@@ -12,8 +12,8 @@ Snd change log
                  added context-sensitive tooltips to the gtk version,
                  changed the gtk listener default font to Monospace 11,
                  the "minibuffer" is now a "statusbar".  This means it is not 
-                    editable, which means all the key sequences that used to 
-                    prompt for info are either undefined now, or use a dialog instead.
+                    editable, so all the key sequences that used to prompt for 
+                    info are either undefined now, or use a dialog instead.
                  removed minibuffer-history-length, prompt-in-minibuffer, clear-minibuffer,
                     and report-in-minibuffer.  Replaced the latter two with status-report.
                  removed sound-specific search-procedures (i.e. there is only one search procedure)
