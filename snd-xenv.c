@@ -1232,7 +1232,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNtopWidget, showB); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      saveB = XtCreateManagedWidget("save", xmPushButtonWidgetClass, colB, args, n);
+      saveB = XtCreateManagedWidget("define it", xmPushButtonWidgetClass, colB, args, n);
 
       XtAddCallback(saveB, XmNactivateCallback, save_button_pressed, NULL);
 

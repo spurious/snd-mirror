@@ -735,8 +735,6 @@
 				  (set! ids (cons (cons sym-name 0) ids))))))
 
 		      ;; (format #t "~A ~D ~D ~D: id: ~S~%" dline id-pos start end name)))
-		      ;; (do ((e (*error-info* 6) (outer-environment e))) ((eq? e (global-environment))) (format #t "~A~%" (environment->list e)))
-		      ;; TODO: add this to s7.html or build it into s7
 
 		      (if tpos
 			  (let ((epos (string-position " -->" dline)))

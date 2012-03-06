@@ -985,7 +985,7 @@ GtkWidget *create_envelope_editor(void)
 #endif
       gtk_widget_show(showB);
 
-      saveB = gtk_button_new_with_label(" save ");
+      saveB = gtk_button_new_with_label("define it");
       gtk_button_set_relief(GTK_BUTTON(saveB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(leftbox), saveB, false, false, BB_MARGIN);
       SG_SIGNAL_CONNECT(saveB, "clicked", save_button_pressed, NULL);

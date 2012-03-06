@@ -3950,6 +3950,14 @@ additional info about that error:
 (stacktrace *error-info*)
 </pre>
 
+<p>To list all the local bindings from the error outward:
+</p>
+<pre class="indented">
+(do ((e (*error-info* 6) (outer-environment e))) 
+    ((eq? e (global-environment))) 
+  (format #t "~A~%" (environment-&gt;list e)))
+</pre>
+
 <p>To evaluate the error handler in the environment of the error:
 </p>
 

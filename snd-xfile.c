@@ -7,7 +7,6 @@
  *   or "revert" in colors? or "revert" vs "clear" in prefs -- shouldn't revert go back to its state when opened?
  * what is "sync" in mixes? 
  * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
- * what is "save" in enved -- maybe "(re)define <env-name>?" with a tooltip
  * in gtk3, the pane handles are all invisible (white on white)
  *
  * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html|h|c already]
@@ -24,10 +23,8 @@
  *   and hover in graph -> show sample value?
  *   see listener_move_mouse in snd-glistener.c
  *
- * stacktrace in listener popup should look for error info 1st -- can we tell last thing was in error?
- *    or error in snd listener -> post var info as well as code (in scrolled window)?
- *
  * when done, read all snd-help/snd.html to check for leftovers.
+ * menu spacing has changed again! in 3.3.18
  */
 
 /* various file-related dialogs:

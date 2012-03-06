@@ -8384,8 +8384,35 @@
 
 ;; also GDK_BUTTON_PRIMARY|MIDDLE|SECONDARY but they are just ints (from gdkevents.h)
 
+#|
+;;; 3.3.18
+
+(CINT "GDK_EXTENSION_EVENTS_NONE" "GdkExtensionMode")
+(CINT "GDK_EXTENSION_EVENTS_ALL" "GdkExtensionMode")
+(CINT "GDK_EXTENSION_EVENTS_CURSOR" "GdkExtensionMode")
+
+(CINT "GDK_TOUCH_BEGIN" "GdkEventType")
+(CINT "GDK_TOUCH_UPDATE" "GdkEventType")
+(CINT "GDK_TOUCH_END" "GdkEventType")
+(CINT "GDK_TOUCH_CANCEL" "GdkEventType")
+
+(CINT "GDK_SCROLL_SMOOTH" "GdkScrollDirection")
+
+(CINT "GDK_CROSSING_TOUCH_BEGIN" "GdkCrossingMode")
+(CINT "GDK_CROSSING_TOUCH_END" "GdkCrossingMode")
+(CINT "GDK_CROSSING_DEVICE_SWITCH" "GdkCrossingMode")
+
+(CINT "GDK_EVENT_POINTER_EMULATED" "GdkEventFlags")
+
+(CINT "GDK_TOUCH_MASK" "GdkEventMask")
+(CINT "GDK_SMOOTH_SCROLL_MASK" "GdkEventMask")
+
+(CFNC "gboolean gdk_event_get_scroll_deltas GdkEvent* event gdouble* [delta_x] gdouble* [delta_y]")
+
+|#
 
 
+ 
 
 
 ;;; --------------------------------------------------------------------------------

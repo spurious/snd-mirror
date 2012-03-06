@@ -1226,24 +1226,27 @@ static void listener_clear_callback(Widget w, XtPointer context, XtPointer info)
 
 
 #if HAVE_SCHEME
-static bool (*current_begin_hook)(s7_scheme *sc);
-
-static bool stacktrace_begin_hook(s7_scheme *sc)
-{
-  s7_stacktrace(sc, s7_name_to_value(sc, "*stderr*"));
-  s7_set_begin_hook(s7, current_begin_hook);
-  return(false);
-}
-
-
 static void listener_stacktrace_callback(Widget w, XtPointer context, XtPointer info)
 {
-  /* if we're running, replace the current begin_hook with one that grabs a stacktrace and 
-   *    replaces itself with the previous one
-   */
-  current_begin_hook = s7_begin_hook(s7);
-  if (current_begin_hook) 
-    s7_set_begin_hook(s7, stacktrace_begin_hook);
+  int gc_loc;
+  s7_pointer old_port;
+  char *msg;
+
+  old_port = s7_set_current_output_port(s7, s7_open_output_string(s7));
+  gc_loc = s7_gc_protect(s7, old_port);
+
+  s7_stacktrace(s7, s7_nil(s7));
+  msg = mus_strdup(s7_get_output_string(s7, s7_current_output_port(s7)));
+
+  s7_close_output_port(s7, s7_current_output_port(s7));
+  s7_set_current_output_port(s7, old_port);
+  s7_gc_unprotect_at(s7, gc_loc);
+  
+  if (msg)
+    {
+      snd_display_result(msg, NULL);
+      free(msg);
+    }
 }
 #endif
 
@@ -1304,9 +1307,6 @@ static void make_listener_widget(int height)
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC); n++;
       listener_popup = XmCreatePopupMenu(listener_text, (char *)"listener-popup", args, n);
 
-      w = XtCreateManagedWidget(I_HELP, xmPushButtonWidgetClass, listener_popup, args, n);
-      XtAddCallback(w, XmNactivateCallback, listener_help_callback, NULL);
-
       w = XtCreateManagedWidget(I_STOP, xmPushButtonWidgetClass, listener_popup, args, n);
       XtAddCallback(w, XmNactivateCallback, listener_stop_callback, NULL);
 
@@ -1315,11 +1315,14 @@ static void make_listener_widget(int height)
       XtAddCallback(w, XmNactivateCallback, listener_stacktrace_callback, NULL);
 #endif
 
-      w = XtCreateManagedWidget("Save", xmPushButtonWidgetClass, listener_popup, args, n);
-      XtAddCallback(w, XmNactivateCallback, listener_save_callback, NULL);
+      w = XtCreateManagedWidget(I_HELP, xmPushButtonWidgetClass, listener_popup, args, n);
+      XtAddCallback(w, XmNactivateCallback, listener_help_callback, NULL);
 
       w = XtCreateManagedWidget("Clear", xmPushButtonWidgetClass, listener_popup, args, n);
       XtAddCallback(w, XmNactivateCallback, listener_clear_callback, NULL);
+
+      w = XtCreateManagedWidget("Save", xmPushButtonWidgetClass, listener_popup, args, n);
+      XtAddCallback(w, XmNactivateCallback, listener_save_callback, NULL);
 
       XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
 

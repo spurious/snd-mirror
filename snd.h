@@ -65,11 +65,11 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "6-Mar-12"
+#define SND_DATE "7-Mar-12"
 #ifndef SND_VERSION
-#define SND_VERSION "12.9"
+#define SND_VERSION "12.10"
 #endif
 #define SND_MAJOR_VERSION "12"
-#define SND_MINOR_VERSION "9"
+#define SND_MINOR_VERSION "10"
 
 #endif

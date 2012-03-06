@@ -27745,7 +27745,9 @@ static void improper_arglist_error(s7_scheme *sc)
 }
 
 
-/* (let ((a 43) (c 123)) (define (hi b) (stacktrace) b) (hi a)) */
+/* (let ((a 43) (c 123)) (define (hi b) (stacktrace) b) (hi a)) 
+ * (let ((a 43) (c 123)) (define (hi b) (+ a b c)) (hi "hi"))
+ */
 
 static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
 {
@@ -27773,13 +27775,13 @@ static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
 static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
 {
   /* 3 cases currently: 
-   *    if args=nil, show current stack
+   *    if args=nil, show current stack, or if at top level, show *error-info*
    *           =vector, assume it is a vector of envs from *error-info*
    *           =continuation, show its stack
    * if trailing arg is a port, it sets where the output goes
    */
   #define H_stacktrace "(stacktrace (obj #f) (port (current-output-port))) displays a stacktrace.  If obj is not \
-given, the current stack is displayed, if obj is *error-info*, the stack at the point of the error is displayed, and if obj \
+given, the current stack (or the error stack) is displayed; if obj is *error-info*, the stack at the point of the error is displayed; if obj \
 is a continuation, its stack is displayed.  If the trailing port argument is not given, \
 output is sent to the current-output-port."
 
@@ -27791,8 +27793,17 @@ output is sent to the current-output-port."
     {
       if (is_output_port(car(args)))
 	{
+	  /* why is this supporting backwards arguments? 
+	   */
 	  port = car(args);
-	  args = cdr(args);
+	  if (is_not_null(cdr(args)))
+	    obj = cadr(args);
+	  else
+	    {
+	      if (is_null(sc->envir))
+		obj = sc->error_info;
+	      else obj = sc->F;
+	    }
 	}
       else
 	{
@@ -27803,14 +27814,16 @@ output is sent to the current-output-port."
 		port = cadr(args);
 	      else return(s7_wrong_type_arg_error(sc, "stacktrace", 2, cadr(args), "an open output port"));
 	    }
+	  obj = car(args);
 	}
-      obj = car(args);
     }
-  else obj = sc->F;
+  else 
+    {
+      if (is_null(sc->envir))
+	obj = sc->error_info;
+      else obj = sc->F;
+    }
 
-  /* *error-info* is the special case here
-   *   TODO: stacktrace + *error-info* is too hard to use, and appears to repeat the local vars
-   */
   if (s7_is_vector(obj))
     {
       if (vector_length(obj) < ERROR_INFO_SIZE)

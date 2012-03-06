@@ -435,9 +435,9 @@ static void check_parens(void)
 }
 
 
+#if 0
 static gboolean listener_mouse_move(GtkWidget *w, GdkEvent *ev, gpointer data)
 {
-#if 0
   gint ev_x, ev_y, wx, wy;
   gdouble x, y;
   GtkTextIter iter, start, end;
@@ -464,10 +464,10 @@ static gboolean listener_mouse_move(GtkWidget *w, GdkEvent *ev, gpointer data)
    *        if motion kill and restart timer
    *        if timeout, post info about the underlined thing
    */
-#endif
-
   return(false);
 }
+#endif
+
 
 
 static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
@@ -968,24 +968,27 @@ static void listener_stop_callback(GtkWidget *w, gpointer info)
 
 
 #if HAVE_SCHEME
-static bool (*current_begin_hook)(s7_scheme *sc);
-
-static bool stacktrace_begin_hook(s7_scheme *sc)
-{
-  s7_stacktrace(sc, s7_name_to_value(sc, "*stderr*"));
-  s7_set_begin_hook(s7, current_begin_hook);
-  return(false);
-}
-
-
 static void listener_stacktrace_callback(GtkWidget *w, gpointer info)
 {
-  /* if we're running, replace the current begin_hook with one that grabs a stacktrace and 
-   *    replaces itself with the previous one
-   */
-  current_begin_hook = s7_begin_hook(s7);
-  if (current_begin_hook)
-    s7_set_begin_hook(s7, stacktrace_begin_hook);
+  int gc_loc;
+  s7_pointer old_port;
+  char *msg;
+
+  old_port = s7_set_current_output_port(s7, s7_open_output_string(s7));
+  gc_loc = s7_gc_protect(s7, old_port);
+
+  s7_stacktrace(s7, s7_nil(s7));
+  msg = mus_strdup(s7_get_output_string(s7, s7_current_output_port(s7)));
+
+  s7_close_output_port(s7, s7_current_output_port(s7));
+  s7_set_current_output_port(s7, old_port);
+  s7_gc_unprotect_at(s7, gc_loc);
+  
+  if (msg)
+    {
+      snd_display_result(msg, NULL);
+      free(msg);
+    }
 }
 #endif
 
@@ -995,9 +998,14 @@ static void listener_popup_populate_callback(GtkTextView *view, GtkMenu *menu, g
   /* this apparently only happens once */
   GtkWidget *w;
   
-  /* prepending, so do everything backwards */
+  /* prepending (to force the idiotic defaults to the end), so do everything backwards */
   w = gtk_separator_menu_item_new(); 
   gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
+  gtk_widget_show(w); 
+
+  w = gtk_menu_item_new_with_label("Save"); 
+  gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
+  g_signal_connect(w, "activate", G_CALLBACK(listener_save_callback), NULL);
   gtk_widget_show(w); 
 
   w = gtk_menu_item_new_with_label("Clear"); 
@@ -1005,9 +1013,9 @@ static void listener_popup_populate_callback(GtkTextView *view, GtkMenu *menu, g
   g_signal_connect(w, "activate", G_CALLBACK(listener_clear_callback), NULL);
   gtk_widget_show(w); 
 
-  w = gtk_menu_item_new_with_label("Save"); 
+  w = gtk_menu_item_new_with_label(I_HELP); 
   gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
-  g_signal_connect(w, "activate", G_CALLBACK(listener_save_callback), NULL);
+  g_signal_connect(w, "activate", G_CALLBACK(listener_help_callback), NULL);
   gtk_widget_show(w); 
 
 #if HAVE_SCHEME
@@ -1020,11 +1028,6 @@ static void listener_popup_populate_callback(GtkTextView *view, GtkMenu *menu, g
   w = gtk_menu_item_new_with_label(I_STOP); 
   gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
   g_signal_connect(w, "activate", G_CALLBACK(listener_stop_callback), NULL);
-  gtk_widget_show(w); 
-
-  w = gtk_menu_item_new_with_label(I_HELP); 
-  gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
-  g_signal_connect(w, "activate", G_CALLBACK(listener_help_callback), NULL);
   gtk_widget_show(w); 
 }
 
@@ -1058,9 +1061,9 @@ static void make_listener_widget(int height)
       SG_SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "populate-popup", listener_popup_populate_callback, NULL);
-
+#if 0
       SG_SIGNAL_CONNECT(listener_text, "motion_notify_event", listener_mouse_move, NULL);
-
+#endif
       ss->listener_pane = listener_text;
 
       if (!prompt_not_editable) 

@@ -7995,8 +7995,7 @@ To get .1 seconds of attack and decay:
 
 <p>
 An envelope in Snd is a list of breakpoints. It can be packaged as a CLM generator (an 'env') via <a href="sndclm.html#make-env">make-env</a>.
-It can be declared via define just like any other variable, or with <a href="#defvar">defvar</a> (for CLM/Snd intercompatibility),
-or with <a href="#defineenvelope">define-envelope</a>.
+It can be declared via define just like any other variable, or with <a href="#defineenvelope">define-envelope</a>.
 </p>
 
 
@@ -13019,7 +13018,7 @@ Snd menus are numbered from 0 ('File') to 4 ('Help').  If the label and callback
 </pre>
 
 <p>This adds an envelope to the envelope editor's list, under the name 'name', using the list of breakpoints
-'data', and the optional 'base'.  If the 'base' is omitted, this is the same as <a href="#defvar">defvar</a>.
+'data', and the optional 'base'. 
 </p>
 
 <pre class="indented">
@@ -13037,7 +13036,7 @@ Forth:  $" ramp" '( 0.0 0.0 1.0 1.0 ) 1.0 define-envelope
 
 <p>This is the same as (define var val) except that the envelope editor keeps track
 of 'var' thereafter and treats lists as envelopes.
-defvar exists in this context so that Snd and CLM can share envelope files.
+defvar exists in this context so that Snd and the CL version of CLM can share envelope files.
 </p>
 
 <pre class="indented">
