@@ -14,7 +14,6 @@
  *   also define the removed key bindings in snd12.scm.
  *   and add menu accelerators on some switch, like the toolbar
  *
- * in save-as dialog, the new file name should be at the top (like new-file dialog)
  * find: global not tested, stop not tested
  * vf buttons need tooltips and bgcolor of entire dialog is bad
  *

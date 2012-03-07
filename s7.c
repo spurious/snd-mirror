@@ -4755,17 +4755,9 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   /* (call-with-exit (lambda (return) ...)) */
-  /* perhaps "call/exit"? */
   
   if (!is_procedure(car(args)))                              /* this includes continuations */
     return(s7_wrong_type_arg_error(sc, "call-with-exit", 0, car(args), "a procedure"));
-
-  /* PERHAPS: include the procedure-arity check above.  Currently
-   *    (call-with-exit (lambda (a b) (a 1)))
-   *    ;(lambda (a b) (a 1)): not enough arguments: (lambda (a b) (a 1))
-   *    ;    (lambda (a b) (a 1))
-   * which seems confused, but (lambda (a b) ...) is called with the #<goto> as its only argument.
-   */
 
   x = make_goto(sc);
   push_stack(sc, OP_DEACTIVATE_GOTO, x, sc->NIL); /* this means call-with-exit is not tail-recursive */
@@ -26973,34 +26965,6 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 }
 
 
-/* TODO: (error-environment) which does not get clobbered (sc->error_env?)
- *       error itself as a bacro, not a function
- *       would hooks be better as bacros?  
- *         hook as always of 1 arg=caller's env...
- *  the only thing *error-info* gives us outside the bacro env is the code -- add as an opt arg? (bacro*)
- *    -- a continuation?
- *  but you can already add (current-environment) to the error args
- *  I guess you want a simple error call, and in the error handler easy access to the error env
- *    so error-environment does have a use,
- *       error-source => code at that point
- *       error-line-number/filename
- *       the error handler gets the original error args = type and data
- * and the stack is just confusing, so *error-info* can be replaced by 2 or 4 funcs
- *    (define (error-line-number) (pair-line-number (error-source))) etc
- *
- * TODO: add another section to s7.html splitting s7 into 2 if one computation is taking its time
- *       I think this requires 
- *          recognizing that s7 is computing something and the user wants new action,
- *          copying the global environment
- *          start a new s7 using a new heap/stack/global env etc (s7_init?)
- *            does this require a new pthread?  
- *          merge the original global-env into the new one
- *          respond to user with the new s7
- *          when the previous computation ends (how to tell this?)
- *            compare the original global-env against the copied version for changes made by the 1st s7,
- *            and if the new s7 matches the copy (i.e. it did not set the same global), merge the values
- *          free entirely the original s7 (how?)
- */
 #define ERROR_INFO_DEFAULT sc->F
 #define ERROR_TYPE 0
 #define ERROR_DATA 1
@@ -38757,6 +38721,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, OP_BARRIER, sc->args, sc->code);
 	  if ((*(sc->begin_hook))(sc))
 	    {
+	      /* set *error-info* in case we were interrupted and need to see why something was hung */
+	      vector_element(sc->error_info, ERROR_TYPE) = sc->F;
+	      vector_element(sc->error_info, ERROR_DATA) = sc->F;
+	      vector_element(sc->error_info, ERROR_CODE) = sc->cur_code;
+	      vector_element(sc->error_info, ERROR_CODE_LINE) = ERROR_INFO_DEFAULT;
+	      vector_element(sc->error_info, ERROR_CODE_FILE) = ERROR_INFO_DEFAULT;
+	      vector_element(sc->error_info, ERROR_ENVIRONMENT) = sc->envir;
+	      
 	      s7_quit(sc);
 	      /* don't call gc here -- perhaps at restart somehow? */
 	      return(sc->F);

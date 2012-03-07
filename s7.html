@@ -3916,7 +3916,8 @@ a format control string, apply format to it and the other arguments, and
 send that info to the current-error-port.
 </p>
 
-<p>When an error is encountered, the variable <em class=def id="errorinfo">*error-info*</em>, a vector, contains
+<p>When an error is encountered, and when s7 is interrupted via begin-hook, 
+the variable <em class=def id="errorinfo">*error-info*</em>, a vector, contains
 additional info about that error:
 </p>
 

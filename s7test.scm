@@ -14334,6 +14334,16 @@ in s7:
 (test (apply (lambda (x) x) _ht_) 'error)
 (test (apply + '#(1 2 3)) 'error)
 
+(test (apply "hi" '(1 2)) 'error)
+(test ("hi" 1 2) 'error)
+(test (apply '(1 2) '(1 2)) 'error)
+(test ((list 1 2 3) 1 2) 'error)
+
+(test (apply "hi" '(1)) #\i)
+(test ("hi" 1) #\i)
+(test (apply '(1 2) '(1)) 2)
+(test ((list 1 2 3) 1) 2)
+
 (for-each
  (lambda (arg)
    (test (apply arg '(1)) 'error)
@@ -15349,6 +15359,14 @@ in s7:
 (test (let ((: 0)) (- :)) 0) 
 ;; this only works if we haven't called (string->symbol "") making : into a keyword (see also other cases below)
 ;; perhaps I should document this weird case -- don't use : as a variable name
+
+(test (let ((pi 3)) pi) 'error)
+(test (let ((:key 1)) :key) 'error)
+(test (let ((:3 1)) 1) 'error)
+(test (let ((3 1)) 1) 'error)
+(test (let ((3: 1)) 1) 'error)
+(test (let ((optional: 1)) 1) 'error)
+(test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
 
 (test ((let ((x 2))
 	 (let ((x 3))
@@ -16610,25 +16628,6 @@ in s7:
   (test (and (= x 1) (= y 33)) #t)
   (set! y (call-with-exit (lambda (return) ((lambda (a b) (return a) (set! x b)) 2 3))))
   (test (and (= x 1) (= y 2)) #t))
-
-(test (apply "hi" '(1 2)) 'error)
-(test ("hi" 1 2) 'error)
-(test (apply '(1 2) '(1 2)) 'error)
-(test ((list 1 2 3) 1 2) 'error)
-
-(test (apply "hi" '(1)) #\i)
-(test ("hi" 1) #\i)
-(test (apply '(1 2) '(1)) 2)
-(test ((list 1 2 3) 1) 2)
-
-(test (let ((pi 3)) pi) 'error)
-(test (let ((:key 1)) :key) 'error)
-(test (let ((:3 1)) 1) 'error)
-(test (let ((3 1)) 1) 'error)
-(test (let ((3: 1)) 1) 'error)
-(test (let ((optional: 1)) 1) 'error)
-(test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
-
 
 (test (let ((x 0))
 	(define (quit z1) (z1 1) (set! x 1))

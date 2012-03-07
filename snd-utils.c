@@ -356,7 +356,8 @@ void snd_exit(int val)
 }
 
 
-
+/* currently this is only used by the test suite (snd-test.scm)
+ */
 #if HAVE_SCHEME
 #define S_file_to_string "file->string"
 

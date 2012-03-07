@@ -678,7 +678,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     }
   else fs->ok_button = gtk_button_new_from_stock(stock);
   gtk_widget_set_name(fs->ok_button, "dialog_button");
-  if (!with_mkdir) widget_set_margin_left(fs->ok_button, 16);
+  if (!with_mkdir) widget_set_margin_left(fs->ok_button, 40);
 
 #if HAVE_GTK_3
   add_highlight_button_style(fs->ok_button);
@@ -701,22 +701,32 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   if (with_extract) gtk_widget_show(fs->extract_button);
 
 
-  /* -------- filter -------- */
+  /* -------- file -------- */
   {
     GtkWidget *row;
+    char *str;
+
     row = gtk_hbox_new(false, 10);
-    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), row, false, false, 2);
+    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), row, false, false, 10);
     gtk_widget_show(row);
 
-    /* filter text entry */
-    fs->filter_label = gtk_label_new("files listed:");
-    gtk_box_pack_start(GTK_BOX(row), fs->filter_label, false, false, 0);
-    sg_left_justify_label(fs->filter_label);
-    gtk_widget_show(fs->filter_label);
+    /* file text entry */
+    fs->file_label = gtk_label_new(file_lab);
 
-    fs->filter_text = snd_entry_new(row, NULL, WITH_WHITE_BACKGROUND);
-    fsb_filter_set_text_with_directory(fs, "*");
-    SG_SIGNAL_CONNECT(fs->filter_text, "activate", fsb_filter_activate, (gpointer)fs);
+    str = mus_format("<b>%s</b>", file_lab);
+    gtk_label_set_markup(GTK_LABEL(fs->file_label), str);
+    gtk_label_set_use_markup(GTK_LABEL(fs->file_label), true);
+    free(str);
+
+    gtk_box_pack_start(GTK_BOX(row), fs->file_label, false, false, 0);
+    sg_left_justify_label(fs->file_label);
+    gtk_widget_show(fs->file_label);
+
+    fs->file_text = snd_entry_new(row, NULL, WITH_WHITE_BACKGROUND);
+    gtk_entry_set_text(GTK_ENTRY(fs->file_text), fs->directory_name);
+    if (fs->directory_name)
+      gtk_editable_set_position(GTK_EDITABLE(fs->file_text), mus_strlen((char *)(fs->directory_name)));
+    SG_SIGNAL_CONNECT(fs->file_text, "activate", fsb_file_activate, (gpointer)fs);
   }
 
 
@@ -739,32 +749,33 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   fs->file_list->button_press_callback = fsb_files_button_press_callback;
   fs->file_list->button_press_callback_data = (void *)fs;
 
-  fsb_update_lists(fs);
   gtk_widget_set_size_request(fs->panes, -1, 150);
 
 
   /* -------- special case box -------- */
   add_innards(DIALOG_CONTENT_AREA(fs->dialog), data);
 
-
-  /* -------- file -------- */
+  /* -------- filter -------- */
   {
     GtkWidget *row;
-
-    row = gtk_hbox_new(false, 10);
-    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), row, false, false, 10);
+    row = gtk_hbox_new(false, 8);
+    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), row, false, false, 16);
     gtk_widget_show(row);
 
-    /* file text entry */
-    fs->file_label = gtk_label_new(file_lab);
-    gtk_box_pack_start(GTK_BOX(row), fs->file_label, false, false, 0);
-    sg_left_justify_label(fs->file_label);
-    gtk_widget_show(fs->file_label);
+    /* filter text entry */
+    fs->filter_label = gtk_label_new("files listed:");
+    gtk_box_pack_start(GTK_BOX(row), fs->filter_label, false, false, 0);
+    sg_left_justify_label(fs->filter_label);
+    gtk_widget_show(fs->filter_label);
 
-    fs->file_text = snd_entry_new(row, NULL, WITH_WHITE_BACKGROUND);
-    gtk_entry_set_text(GTK_ENTRY(fs->file_text), fs->directory_name);
-    SG_SIGNAL_CONNECT(fs->file_text, "activate", fsb_file_activate, (gpointer)fs);
+    fs->filter_text = snd_entry_new(row, NULL, WITH_WHITE_BACKGROUND);
+    fsb_filter_set_text_with_directory(fs, "*");
+    if (fs->directory_name)
+      gtk_editable_set_position(GTK_EDITABLE(fs->filter_text), 1 + mus_strlen((char *)(fs->directory_name)));
+    SG_SIGNAL_CONNECT(fs->filter_text, "activate", fsb_filter_activate, (gpointer)fs);
   }
+
+  fsb_update_lists(fs);
 
   gtk_widget_show(fs->dialog);
   gtk_paned_set_position(GTK_PANED(fs->panes), 120);
