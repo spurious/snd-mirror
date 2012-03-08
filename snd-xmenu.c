@@ -580,25 +580,25 @@ Widget add_menu(void)
 
   edit_select_sep_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, edit_menu, sep_args, j);
 
-  edit_cut_menu = XtCreateManagedWidget("Delete Selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_cut_menu = XtCreateManagedWidget("Delete selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_cut_menu, XmNactivateCallback, edit_cut_callback, NULL);
   XtVaSetValues(edit_cut_menu, XmNmnemonic, 'C', NULL);
 
-  edit_paste_menu = XtCreateManagedWidget("Insert Selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_paste_menu = XtCreateManagedWidget("Insert selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_paste_menu, XmNactivateCallback, edit_paste_callback, NULL);
   XtVaSetValues(edit_paste_menu, XmNmnemonic, 'P', NULL);
 
-  edit_mix_menu = XtCreateManagedWidget("Mix Selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_mix_menu = XtCreateManagedWidget("Mix selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_mix_menu, XmNactivateCallback, edit_mix_callback, NULL);
   XtVaSetValues(edit_mix_menu, XmNmnemonic, 'M', NULL);
 
 #if WITH_AUDIO
-  edit_play_menu = XtCreateManagedWidget("Play Selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_play_menu = XtCreateManagedWidget("Play selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_play_menu, XmNactivateCallback, edit_play_callback, NULL);
   XtVaSetValues(edit_play_menu, XmNmnemonic, 'P', NULL);
 #endif
 
-  edit_save_as_menu = XtCreateManagedWidget("Save Selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_save_as_menu = XtCreateManagedWidget("Save selection", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_save_as_menu, XmNactivateCallback, edit_save_as_callback, NULL);
   XtVaSetValues(edit_save_as_menu, XmNmnemonic, 'S', NULL);
 
@@ -610,11 +610,11 @@ Widget add_menu(void)
 
   edit_edit_sep_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, edit_menu, sep_args, j);
 
-  edit_env_menu = XtCreateManagedWidget("Edit Envelope", xmPushButtonWidgetClass, edit_menu, main_args, main_n);
+  edit_env_menu = XtCreateManagedWidget("Edit envelope", xmPushButtonWidgetClass, edit_menu, main_args, main_n);
   XtAddCallback(edit_env_menu, XmNactivateCallback, edit_envelope_callback, NULL);
   XtVaSetValues(edit_env_menu, XmNmnemonic, 'E', NULL);
 
-  edit_header_menu = XtCreateManagedWidget("Edit Header", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  edit_header_menu = XtCreateManagedWidget("Edit header", xmPushButtonWidgetClass, edit_menu, in_args, in_n);
   XtAddCallback(edit_header_menu, XmNactivateCallback, edit_header_callback_1, NULL);
   XtVaSetValues(edit_header_menu, XmNmnemonic, 'H', NULL);
 
@@ -707,7 +707,7 @@ Widget add_menu(void)
   XtAddCallback(view_combine_superimposed_menu, XmNactivateCallback, view_superimposed_callback, NULL);  
   if (channel_style(ss) == CHANNELS_SUPERIMPOSED) set_sensitive(view_combine_superimposed_menu, false);
 
-  view_zero_menu = XtCreateManagedWidget("Show Y = 0", xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  view_zero_menu = XtCreateManagedWidget("Show y = 0", xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_zero_menu, XmNactivateCallback, view_zero_callback, NULL);
   XtVaSetValues(view_zero_menu, XmNmnemonic, 'y', NULL);
 
@@ -800,7 +800,7 @@ Widget add_menu(void)
   XtSetArg(high_args[high_n], XmNuserData, (XtPointer)3); high_n++;
   options_cascade_menu = XtCreateManagedWidget("Options", xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
-  options_transform_menu = XtCreateManagedWidget("Transform Options", xmPushButtonWidgetClass, options_menu, main_args, main_n);
+  options_transform_menu = XtCreateManagedWidget("Transform options", xmPushButtonWidgetClass, options_menu, main_args, main_n);
   XtAddCallback(options_transform_menu, XmNactivateCallback, options_transform_callback, NULL);
   XtVaSetValues(options_transform_menu, XmNmnemonic, 't', NULL);
 
@@ -839,7 +839,7 @@ Widget add_menu(void)
   XtAddCallback(help_init_file_menu, XmNactivateCallback, help_init_file_callback, NULL);
 #endif
 
-  help_controls_menu = XtCreateManagedWidget("Control Panel", xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  help_controls_menu = XtCreateManagedWidget("Control panel", xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_controls_menu, XmNactivateCallback, help_controls_callback, NULL);
 
   help_keys_menu = XtCreateManagedWidget("Key bindings", xmPushButtonWidgetClass, help_menu, main_args, main_n);
@@ -886,10 +886,10 @@ Widget add_menu(void)
   XtAddCallback(help_find_menu, XmNactivateCallback, help_find_callback, NULL);
 #endif
 
-  help_sync_menu = XtCreateManagedWidget("Sync and Unite", xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  help_sync_menu = XtCreateManagedWidget("Sync and unite", xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_sync_menu, XmNactivateCallback, help_sync_callback, NULL);
 
-  help_sound_files_menu = XtCreateManagedWidget("Headers and Data", xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  help_sound_files_menu = XtCreateManagedWidget("Headers and data", xmPushButtonWidgetClass, help_menu, main_args, main_n);
   XtAddCallback(help_sound_files_menu, XmNactivateCallback, help_sound_files_callback, NULL);
 
   help_debug_menu = XtCreateManagedWidget("Debugging", xmPushButtonWidgetClass, help_menu, main_args, main_n);
@@ -1129,7 +1129,7 @@ void post_selection_popup_menu(void *e)
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
       selection_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"selection-popup-menu", args, n + 1);
 
-      add_menu_item(selection_popup_menu, "Fill Window",    popup_show_selection_callback);
+      add_menu_item(selection_popup_menu, "Fill window",    popup_show_selection_callback);
       add_menu_item(selection_popup_menu, "Cut",            edit_cut_callback);
       add_menu_item(selection_popup_menu, "Cut and smooth", popup_cut_and_smooth_callback);
       add_menu_item(selection_popup_menu, "Cut -> new",     popup_cut_to_new_callback);

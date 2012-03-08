@@ -85,10 +85,15 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define GTK_IS_VPANED(Obj) GTK_IS_PANED(Obj)
 #undef GTK_IS_HPANED
 #define GTK_IS_HPANED(Obj) GTK_IS_PANED(Obj)
+
+#if 0
 #undef GTK_IS_VSCALE
 #define GTK_IS_VSCALE(Obj) GTK_IS_SCALE(Obj)
 #undef GTK_IS_HSCALE
 #define GTK_IS_HSCALE(Obj) GTK_IS_SCALE(Obj)
+#undef GTK_IS_TABLE
+#define GTK_IS_TABLE(Obj) GTK_IS_GRID(Obj)
+#endif
 
 #define gtk_vbox_new(H, S) gtk_box_new(GTK_ORIENTATION_VERTICAL, S)
 #define gtk_hbox_new(H, S) gtk_box_new(GTK_ORIENTATION_HORIZONTAL, S)
@@ -104,8 +109,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 /* 3.4: table widget replaced by grid (also box eventually, I think) */
 #undef GTK_TABLE
 #define GTK_TABLE(Obj) GTK_GRID(Obj)
-#undef GTK_IS_TABLE
-#define GTK_IS_TABLE(Obj) GTK_IS_GRID(Obj)
 #define gtk_table_new(Rows, Cols, Homogeneous) gtk_grid_new()
 #define gtk_table_set_homogeneous(Obj, Val) do {gtk_grid_set_row_homogeneous(Obj, Val); gtk_grid_set_column_homogeneous(Obj, Val);} while (0)
 #define gtk_table_set_row_spacings(Obj, Val) gtk_grid_set_row_spacing(Obj, Val)

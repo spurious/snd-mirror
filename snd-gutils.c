@@ -752,6 +752,9 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, int add_choice, 
 
   sw = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  /* gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(sw), 1000);
+   *    seems to be a no-op -- I think they are maxing this against the current contents window size (see below)
+   */
 
   new_text = gtk_text_view_new();
   buf = gtk_text_buffer_new(NULL);
@@ -1103,9 +1106,11 @@ void add_paned_style(GtkWidget *w)
 void add_highlight_button_style(GtkWidget *w)
 {
 }
+
 void add_center_button_style(GtkWidget *w)
 {
 }
+
 void add_white_button_style(GtkWidget *w) 
 {
   gtk_widget_set_name(w, "white_button");
@@ -1231,6 +1236,11 @@ slist *slist_new_with_title_and_table_data(const char *title,
       for (i = 0; i < num_items; i++)
 	lst->items[i] = slist_new_item(lst, initial_items[i], i);
     }
+
+  /* gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(lst->scroller), 200); 
+   *    this actually works!
+   */
+
   return(lst);
 }
 

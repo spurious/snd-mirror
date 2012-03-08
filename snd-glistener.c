@@ -435,7 +435,44 @@ static void check_parens(void)
 }
 
 
-#if 0
+#define WITH_LISTENER_TIPS 0
+
+#if WITH_LISTENER_TIPS
+
+static GtkTextTag *hover_tag = NULL;
+static int old_hover_start, old_hover_end; /* these can't be GtkTextIters! */
+static bool hover_underlined = false;
+
+static void add_hover_underline(GtkTextIter hover_start, GtkTextIter hover_end)
+{
+  GtkTextBuffer *buf;
+  
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
+  if (!hover_tag)
+    hover_tag = gtk_text_buffer_create_tag(buf, "underline", "underline", PANGO_UNDERLINE_SINGLE, NULL);
+  gtk_text_buffer_apply_tag(buf, hover_tag, &hover_start, &hover_end);
+
+  old_hover_start = gtk_text_iter_get_offset(&hover_start);
+  old_hover_end = gtk_text_iter_get_offset(&hover_end);
+  hover_underlined = true;
+}
+
+
+static void remove_hover_underline(void)
+{
+  if (hover_underlined)
+    {
+      GtkTextBuffer *buf;
+      GtkTextIter hover_start, hover_end;
+      buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text));
+      gtk_text_buffer_get_iter_at_offset(buf, &hover_start, old_hover_start);
+      gtk_text_buffer_get_iter_at_offset(buf, &hover_end, old_hover_end);
+      gtk_text_buffer_remove_tag(buf, hover_tag, &hover_start, &hover_end);
+      hover_underlined = false;
+    }
+}
+
+
 static gboolean listener_mouse_move(GtkWidget *w, GdkEvent *ev, gpointer data)
 {
   gint ev_x, ev_y, wx, wy;
@@ -447,25 +484,49 @@ static gboolean listener_mouse_move(GtkWidget *w, GdkEvent *ev, gpointer data)
   ev_x = x;
   ev_y = y;
 
+  remove_hover_underline();
+
   gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(listener_text), GTK_TEXT_WINDOW_TEXT, ev_x, ev_y, &wx, &wy);
   gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(listener_text), &iter, wx, wy);
 
+#if 0
   start = iter;
   end = iter;
+
+  /* if (gtk_text_iter_inside_word(&iter))
+   */
+
   if (!gtk_text_iter_starts_word(&start))
     gtk_text_iter_backward_word_start(&start);
   if (!gtk_text_iter_ends_word(&end))
     gtk_text_iter_forward_word_end(&end);
   txt = gtk_text_buffer_get_text(LISTENER_BUFFER, &start, &end, true);
 
-  /* now we have a word that is beneath the cursor */
+  /* now we have a word that is beneath the cursor, but this breaks at "-"! and not space!
+   *   and typing doesn't count as a mouse movement, so we don't have anything we can use!
+   *
+   * so... I guess I have to get the entire text, go to the current position, and
+   *    do all the text handling myself.  Suddenly this seems like a bad idea.
+   *
+   * I suppose I could check the mouse position against the text end
+   *    then go to the mouse position in that and search backwards/forwards for a scheme word
+   *    and if found, add underline using those "iters" -- the ones above are completely useless.
+   *
+   * snd-completion.c has separator_char_p
+   * 
+   */
+#endif
 
-  /* TODO: underline now, go into wait for nms timing out
+  add_hover_underline(start, end);
+  
+
+  /* go into wait for nms timing out
    *        if motion kill and restart timer
    *        if timeout, post info about the underlined thing
    */
   return(false);
 }
+
 #endif
 
 
@@ -473,6 +534,9 @@ static gboolean listener_mouse_move(GtkWidget *w, GdkEvent *ev, gpointer data)
 static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   check_parens();
+#if WITH_LISTENER_TIPS
+  remove_hover_underline();
+#endif
   return(false);
 }
 
@@ -1019,7 +1083,7 @@ static void listener_popup_populate_callback(GtkTextView *view, GtkMenu *menu, g
   gtk_widget_show(w); 
 
 #if HAVE_SCHEME
-  w = gtk_menu_item_new_with_label("Stacktrace"); 
+  w = gtk_menu_item_new_with_label("Error info");  /* how to set this to "Stacktrace" if s7_current_environment is nil? */
   gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), w); 
   g_signal_connect(w, "activate", G_CALLBACK(listener_stacktrace_callback), NULL);
   gtk_widget_show(w); 
@@ -1061,7 +1125,7 @@ static void make_listener_widget(int height)
       SG_SIGNAL_CONNECT(listener_text, "enter_notify_event", listener_focus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
       SG_SIGNAL_CONNECT(listener_text, "populate-popup", listener_popup_populate_callback, NULL);
-#if 0
+#if WITH_LISTENER_TIPS
       SG_SIGNAL_CONNECT(listener_text, "motion_notify_event", listener_mouse_move, NULL);
 #endif
       ss->listener_pane = listener_text;

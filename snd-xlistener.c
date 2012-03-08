@@ -1257,6 +1257,8 @@ static void listener_stop_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+static Widget stacktrace_popup_menu = NULL;
+
 static void listener_popup_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
@@ -1264,6 +1266,8 @@ static void listener_popup_callback(Widget w, XtPointer context, XtPointer info)
   e = cb->event;
   if (e->type == ButtonPress)
     {
+      if (stacktrace_popup_menu)
+	set_menu_label(stacktrace_popup_menu, (s7_is_null(s7, s7_current_environment(s7))) ? "Error info" : "Stacktrace");
       cb->menuToPost = listener_popup;
     }
 }
@@ -1313,6 +1317,7 @@ static void make_listener_widget(int height)
 #if HAVE_SCHEME
       w = XtCreateManagedWidget("Stacktrace", xmPushButtonWidgetClass, listener_popup, args, n);
       XtAddCallback(w, XmNactivateCallback, listener_stacktrace_callback, NULL);
+      stacktrace_popup_menu = w;
 #endif
 
       w = XtCreateManagedWidget(I_HELP, xmPushButtonWidgetClass, listener_popup, args, n);

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: in gtk3, C-f in the graph gets:
- *    Gdk-CRITICAL **: gdk_window_get_device_position: assertion `gdk_device_get_source (device) != GDK_SOURCE_KEYBOARD' failed
- */
 
 /* -------- Keyboard Macros -------- */
 

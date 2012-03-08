@@ -1093,7 +1093,7 @@ void post_selection_popup_menu(void *e)
 
       SG_SIGNAL_CONNECT(selection_popup_menu, "button_release_event", popup_menu_button_release, NULL);
 
-      add_menu_item(selection_popup_menu, "Fill Window",    NULL, (GCallback)popup_show_selection_callback);
+      add_menu_item(selection_popup_menu, "Fill window",    NULL, (GCallback)popup_show_selection_callback);
       add_menu_item(selection_popup_menu, "Cut",            NULL, (GCallback)edit_cut_callback);
       add_menu_item(selection_popup_menu, "Cut and smooth", NULL, (GCallback)popup_cut_and_smooth_callback);
       add_menu_item(selection_popup_menu, "Cut -> new",     NULL, (GCallback)popup_cut_to_new_callback);

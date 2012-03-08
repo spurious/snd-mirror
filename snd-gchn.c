@@ -636,13 +636,15 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   chan_info *cp = (chan_info *)data;
   int keysym;
   bool theirs;
-  int x, y;
-  GdkModifierType key_state;
 
-  window_get_pointer(ev, &x, &y, &key_state);
-  key_state = (GdkModifierType)(EVENT_STATE(ev));
+  /* window_get_pointer(ev, &x, &y, &key_state); 
+   * the x and y coordinates apparently refer to the mouse, 
+   *   and are only used to recognize "lisp-graph" oriented keystrokes.
+   *   These are then used only if there is also a key_press_hook.
+   */
+
   keysym = EVENT_KEYVAL(ev);
-  theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
+  theirs = key_press_callback(cp, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), keysym);
   if (theirs) ss->graph_is_active = false;
   g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
 
@@ -655,13 +657,9 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   chan_info *cp = (chan_info *)data;
   int keysym;
   bool theirs;
-  int x, y;
-  GdkModifierType key_state;
 
-  window_get_pointer(ev, &x, &y, &key_state);
-  key_state = (GdkModifierType)(EVENT_STATE(ev));
   keysym = EVENT_KEYVAL(ev);
-  theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
+  theirs = key_press_callback(cp, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), keysym);
   if (theirs) ss->graph_is_active = true;
 
   return(true);

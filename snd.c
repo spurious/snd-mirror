@@ -24,7 +24,7 @@ static bool ignore_mus_error(int type, char *msg)
 #endif
 
 
-void mus_error_to_snd(int type, char *msg)
+static void mus_error_to_snd(int type, char *msg)
 {
   if (!ss)
     {

@@ -2,30 +2,6 @@
 #include "snd-file.h"
 
 
-/* TODO: 
- * what does "reset" mean in (for example) view-files?
- *   or "revert" in colors? or "revert" vs "clear" in prefs -- shouldn't revert go back to its state when opened?
- * what is "sync" in mixes? 
- * "sync" and "unite" are bad names  "f" and "w" are dumb and look (in gtk) like they refer to the sliders
- * in gtk3, the pane handles are all invisible (white on white)
- *
- * remove eval-between-marks and all other minibuffer stuff from *.rb|fs [got scm|html|h|c already]
- *   perhaps define all the "built-in" keys via (bind-key ...)
- *   also define the removed key bindings in snd12.scm.
- *   and add menu accelerators on some switch, like the toolbar
- *
- * find: global not tested, stop not tested
- * vf buttons need tooltips and bgcolor of entire dialog is bad
- *
- * what about tooltips in the listener, or some way to show help (apropos) if hovering
- *   also if error displayed, hover->env printout etc
- *   and hover in graph -> show sample value?
- *   see listener_move_mouse in snd-glistener.c
- *
- * when done, read all snd-help/snd.html to check for leftovers.
- * menu spacing has changed again! in 3.3.18
- */
-
 /* various file-related dialogs:
    File|Edit:Save-as
    File:Open|View

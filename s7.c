@@ -4224,10 +4224,10 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   set_immutable(slot_symbol(x));
 }
 
-/*        (define (func a) (let ((cvar (+ a 1))) cvar))
- *        (define-constant cvar 23)
- *        (func 1)
- *        ;can't bind an immutable object: cvar
+/* (define (func a) (let ((cvar (+ a 1))) cvar))
+ * (define-constant cvar 23)
+ * (func 1)
+ * ;can't bind an immutable object: cvar
  */
 
 

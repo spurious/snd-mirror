@@ -907,11 +907,9 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), dismiss_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), help_button, false, true, 10);
 
-#if HAVE_GTK_3
       add_highlight_button_style(dismiss_button);
       add_highlight_button_style(reset_button);
       add_highlight_button_style(help_button);
-#endif
 
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_color_orientation_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", help_color_orientation_callback, NULL);
@@ -957,7 +955,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       widget_set_margin_left(map_box, 8);
       gtk_box_pack_start(GTK_BOX(colorbox), map_box, true, true, 8);
       gtk_widget_show(map_box);
-      
+
       {
 	char **names;
 #if (!HAVE_GTK_3)
@@ -988,9 +986,9 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 	widget_set_vexpand(ccd_list->box, true);
 	free(names);
 
-	/* TODO: how to get more of this list displayed, and make it the
-	 *       widget that expands if the dialog is expanded?  Nothing works.
-	 */
+#if HAVE_GTK_3
+	gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(ccd_list->scroller), 140); 
+#endif
       }
       
       ccd_invert = gtk_check_button_new_with_label("invert");
@@ -1066,6 +1064,13 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(mainbox), orient_frame, false, false, 0);
       gtk_frame_set_shadow_type(GTK_FRAME(orient_frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(orient_frame);
+#else
+      {
+	GtkWidget *sep;
+	sep = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(mainbox), sep, false, false, 2);
+	gtk_widget_show(sep);
+      }
 #endif
 
       orientbox = gtk_vbox_new(false, 2);
