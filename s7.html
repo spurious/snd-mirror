@@ -2268,12 +2268,12 @@ vector-dimensions returns a list of the dimensions.
 	(do ((y 1 (+ y 1)))
 	    ((= y (- height 1)))
 	  (let ((n (+ (state0 (- x 1) (- y 1))
-		      (state0 x       (- y 1))
+		      (state0    x    (- y 1))
 		      (state0 (+ x 1) (- y 1))
 		      (state0 (- x 1)    y)      
 		      (state0 (+ x 1)    y)      
 		      (state0 (- x 1) (+ y 1))
-		      (state0 x       (+ y 1))
+		      (state0    x    (+ y 1))
 		      (state0 (+ x 1) (+ y 1)))))
 	    (set! (state1 x y) 
 		  (if (or (= n 3) 
@@ -2409,11 +2409,43 @@ This also affects format and sort!:
 #2D((4 3) (2 1))
 </pre>
 
+</div>
+
+<div class="indented">
+
 <p>Another question: should we accept the multi-index syntax in a case such as:
-<code>(let ((v #("abc" "def"))) (v 0 2))</code>?  Currently s7 complains because
-it expects each index in a case like this to refer to the same kind of object.
-It wants you to use: <code>(let ((v #("abc" "def"))) ((v 0) 2))</code>.  
 </p>
+
+<pre class="indented">
+(let ((v #("abc" "def"))) 
+  (v 0 2))
+</pre>
+
+<p>My first thought was that the indices should all refer to the same
+type of object, so s7 would complain in a mixed case like that.
+If we can nest any applicable objects and apply the whole thing to
+an arbitrary list of indices, ambiguities arise.  As a simple
+example,
+</p>
+
+<pre class="indented">
+((lambda (x) x) "hi" 0)
+</pre>
+
+<p>I think this should complain that the function got too many arguments,
+but from the implicit indexing point of view, it could be interpreted
+as
+</p>
+
+<pre class="indented">
+(string-ref ((lambda (x) x) "hi") 0)
+</pre>
+
+<p>Add optional and rest arguments, and you can't tell who is supposed to
+take which indices.  Currently, you can mix types with implicit indices,
+but a function grabs all remaining indices.  Trickier than I expected!
+</p>
+
 </div>
 
 </blockquote>

@@ -86,15 +86,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #undef GTK_IS_HPANED
 #define GTK_IS_HPANED(Obj) GTK_IS_PANED(Obj)
 
-#if 0
-#undef GTK_IS_VSCALE
-#define GTK_IS_VSCALE(Obj) GTK_IS_SCALE(Obj)
-#undef GTK_IS_HSCALE
-#define GTK_IS_HSCALE(Obj) GTK_IS_SCALE(Obj)
-#undef GTK_IS_TABLE
-#define GTK_IS_TABLE(Obj) GTK_IS_GRID(Obj)
-#endif
-
 #define gtk_vbox_new(H, S) gtk_box_new(GTK_ORIENTATION_VERTICAL, S)
 #define gtk_hbox_new(H, S) gtk_box_new(GTK_ORIENTATION_HORIZONTAL, S)
 #define gtk_vscrollbar_new(S) gtk_scrollbar_new(GTK_ORIENTATION_VERTICAL, S)

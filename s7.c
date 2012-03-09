@@ -1754,6 +1754,7 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static bool is_pws(s7_pointer obj);
 static token_t token(s7_scheme *sc);
+static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 
 static bool tracing, trace_all;
 
@@ -19023,19 +19024,15 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
   */
 
   s7_pointer lst, inds;
+
   lst = car(args);
+  if (!is_pair(lst))
+    return(s7_wrong_type_arg_error(sc, "list-ref", 1, lst, "a pair"));
 
   inds = cdr(args);
-  while (true)
-    {
-      if (!is_pair(lst))
-	return(s7_wrong_type_arg_error(sc, "list-ref", 1, lst, "a pair"));
-
-      if (is_null(cdr(inds)))
-	return(list_ref_1(sc, lst, car(inds)));
-      lst = list_ref_1(sc, lst, car(inds));
-      inds = cdr(inds);
-    }
+  if (is_null(cdr(inds)))
+    return(list_ref_1(sc, lst, car(inds)));
+  return(implicit_index(sc, list_ref_1(sc, lst, car(inds)), cdr(inds)));
 }
 
 
@@ -20753,13 +20750,13 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	  index += n * vector_offset(vect, i);
 	}
       if (is_not_null(x))
-	return(s7_wrong_number_of_args_error(sc, "too many indices for vector-ref: ~A", indices));
+	return(implicit_index(sc, vector_element(vect, index), x));
 
       /* if not enough indices, return a shared vector covering whatever is left */
       if (i < vector_ndims(vect))
 	return(make_shared_vector(sc, vect, i, index));
     }
-  else
+  else 
     {
       /* (let ((hi (make-vector 3 0.0)) (sum 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! sum (+ sum (hi i)))) sum) */
 
@@ -20772,14 +20769,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	return(s7_out_of_range_error(sc, "vector-ref index,", 2, car(indices), "should be between 0 and the vector length"));
       
       if (is_not_null(cdr(indices)))                /* (let ((L '#(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
-	{
-	  s7_pointer new_vect;
-	  new_vect = vector_element(vect, index);
-	  if (!s7_is_vector(new_vect))             /* (vector-ref #(1) 0 0) */
-	    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, new_vect, "a vector"));
-
-	  return(vector_ref_1(sc, new_vect, cdr(indices))); 
-	}
+	return(implicit_index(sc, vector_element(vect, index), cdr(indices)));
     }
 
   return(vector_element(vect, index));
@@ -21792,8 +21782,9 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 
   if (is_null(cddr(args)))
     return(s7_hash_table_ref(sc, table, cadr(args)));
-  return(g_hash_table_ref(sc, cons(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args))));
+  return(implicit_index(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args)));
 }
+
 
 #if WITH_OPTIMIZATION
 static s7_pointer hash_table_ref_2;
@@ -37077,6 +37068,58 @@ static void annotate_expansion(s7_scheme *sc, s7_pointer p)
   for (x = cdr(p); is_pair(x); x = cdr(x))
     if (is_pair(car(x)))
       annotate_expansion(sc, car(x));
+}
+
+
+static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices)
+{
+  /* (let ((lst '("12" "34"))) (lst 0 1)) -> #\2
+   * (let ((lst (list #(1 2) #(3 4)))) (lst 0 1)) -> 2
+   *
+   * TODO: tests
+   * 
+   * also remember to check multidim vects in various positions
+   *   (#2d(("hi" "ho") ("ha" "hu")) 1 1 0) -> #\h
+   * and what about the optimizer? [seems ok in a simple test]
+   *
+   * this can get tricky:
+   *   ((list (lambda (a) (+ a 1)) (lambda (b) (* b 2))) 1 2) -> 4
+   * but what if func takes rest/optional args, etc?
+   *   ((list (lambda args (car args))) 0 "hi" 0)
+   *   should this return #\h or "hi"??
+   *   currently it is "hi" which is consistent with
+   *  ((lambda args (car args))"hi" 0)
+   * but...
+   * ((lambda (arg) arg) "hi" 0)
+   * is currently an error (too many arguments)
+   */
+  
+  switch (type(obj))
+    {
+    case T_VECTOR:                       /* (#(#(1 2) #(3 4)) 1 1) -> 4 */
+      return(vector_ref_1(sc, obj, indices)); 
+      
+    case T_STRING:                       /* (#("12" "34") 0 1) -> #\2 */
+      if (is_null(cdr(indices)))
+	return(string_ref_1(sc, obj, car(indices)));
+      return(s7_error(sc, 
+		      sc->WRONG_NUMBER_OF_ARGS, 
+		      list_3(sc, sc->TOO_MANY_ARGUMENTS, obj, indices)));
+      
+    case T_PAIR:                         /* (#((1 2) (3 4)) 1 0) -> 3, (#((1 (2 3))) 0 1 0) -> 2 */
+      if (is_null(cdr(indices)))
+	return(list_ref_1(sc, obj, car(indices)));
+      return(g_list_ref(sc, cons(sc, obj, indices)));
+      
+    case T_HASH_TABLE:                   /* ((vector (hash-table '(a . 1) '(b . 2))) 0 'a) -> 1 */
+      return(g_hash_table_ref(sc, cons(sc, obj, indices)));
+      
+    case T_C_OBJECT:                     /* ((vector (vct 1 2 3)) 0 2) -> 3.0 */
+      return((*(object_ref(obj)))(sc, obj, indices));
+      
+    default:                             /* (#(a b c) 0 1) -> error, but ((list (lambda (x) x)) 0 "hi") -> "hi" */
+      return(g_apply(sc, list_2(sc, obj, indices)));
+    }
 }
 
 
@@ -54428,17 +54471,6 @@ the error type and the info passed to the error handler.");
   return(sc);
 }
 
-
-/* should we fix this?
- *    :(let ((lst '("12" "34"))) (lst 0 1))
- *    ;list-ref argument 1, "12", is string but should be a pair
- *    ;    (lst 0 1)
- *    :(let ((lst '("12" "34"))) ((lst 0) 1))
- *    #\2
- *    (let ((lst (list #(1 2) #(3 4)))) (lst 0 1))
- *    ;list-ref argument 1, #(1 2), is vector but should be a pair
- *    ;    (lst 0 1)
- */
 
 /* TODO: the symbol-access stuff is not fully implemented
  *       t342.scm for tests, augment env, closure arg names, do step?

@@ -1388,21 +1388,25 @@ void after_open(snd_info *sp)
   /* the sync-style choice used to be handled via after-open-hook in extensions.*, but 15-Feb-11 has
    *   been moved into the main Snd.  So here is the code...
    */
-  switch (sync_style(ss))
+  if (sp->nchans > 1)
     {
-    case SYNC_NONE:
-      sp->sync = 0;
-      break;
-
-    case SYNC_ALL:
-      sp->sync = 1;
-      break;
-
-    case SYNC_BY_SOUND:
-      ss->sound_sync_max++;
-      sp->sync = ss->sound_sync_max; /* if we had used (set! (sync) ...) this would be set (via syncb) to the new max */
-      break;
+      switch (sync_style(ss))
+	{
+	case SYNC_NONE:
+	  sp->sync = 0;
+	  break;
+	  
+	case SYNC_ALL:
+	  sp->sync = 1;
+	  break;
+	  
+	case SYNC_BY_SOUND:
+	  ss->sound_sync_max++;
+	  sp->sync = ss->sound_sync_max; /* if we had used (set! (sync) ...) this would be set (via syncb) to the new max */
+	  break;
+	}
     }
+  else sp->sync = 0;
   syncb(sp, sp->sync);
 
   if (XEN_HOOKED(after_open_hook))

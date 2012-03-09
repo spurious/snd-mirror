@@ -6471,7 +6471,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (set! (v i j) (list i j))))
   (test (v 0 0) '(0 0))
   (test ((v 1 2) 0) 1)
-  (test (v 1 2 0) 'error)
+  (test (v 1 2 0) 1)
+  (test (v 1 2 0 0) 'error)
   (test (object->string v) "#2D(((0 0) (0 1) (0 2)) ((1 0) (1 1) (1 2)))"))
 
 (test (let ((v1 (make-vector '(3 2) 1))
@@ -12251,6 +12252,8 @@ this prints:
 (test (map apply (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) '((1) (2) (3))) '(2 4 27))
 
 ;;; (let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val)) -> ((#3=(1) #2=(2) #1=(3)) (#1# #2# #3#))
+(test (map if '(#f #f #t) '(0 1 2) '(3 4 5)) '(3 4 2))
+(test (map apply (map lambda '(() (a) (a b)) '(1 (+ a 1) (+ a b 1))) '(() (2) (3 4))) '(1 3 8))
 
 
 (test (map list "hi") '((#\h) (#\i)))
@@ -20562,6 +20565,13 @@ or is it ((__func__ . func3)) in context?
 (procedure-environment #<continuation>) -> #<global-environment>
 (procedure-environment #<goto>) -> #<global-environment>
 and setter of pws is either global or ()
+
+;;; this returns #t because the fallback in g_procedure_environment is the global env
+(eq? (global-environment)
+     (let ((a 32))
+       (call-with-exit ; or call/cc
+	(lambda (return)
+	  (procedure-environment return)))))
 
 ;;; bad English:
 :(procedure-environment quote)
