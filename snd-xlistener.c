@@ -1266,8 +1266,10 @@ static void listener_popup_callback(Widget w, XtPointer context, XtPointer info)
   e = cb->event;
   if (e->type == ButtonPress)
     {
+#if HAVE_SCHEME
       if (stacktrace_popup_menu)
 	set_menu_label(stacktrace_popup_menu, (s7_is_null(s7, s7_current_environment(s7))) ? "Error info" : "Stacktrace");
+#endif
       cb->menuToPost = listener_popup;
     }
 }

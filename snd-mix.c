@@ -3003,7 +3003,7 @@ static XEN g_set_mix_properties(XEN n, XEN val)
 
 static XEN g_mix_property(XEN key, XEN id) 
 {
-  #define H_mix_property "(" S_mix_property " key id) returns the value associated with 'key' in the given mix's property list, or #f"
+  #define H_mix_property "(" S_mix_property " key id) returns the value associated with 'key' in the given mix's property list, or " PROC_FALSE "."
   return(XEN_ASSOC_REF(key, g_mix_properties(id)));
 }
 

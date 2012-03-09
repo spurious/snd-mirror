@@ -1906,7 +1906,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
 
 static XEN g_mix_region(XEN reg_n, XEN chn_samp_n, XEN snd_n, XEN chn_n, XEN reg_chn)
 {
-  #define H_mix_region "(" S_mix_region " region :optional (chn-samp 0) snd chn (region-chan #t)): \
+  #define H_mix_region "(" S_mix_region " region :optional (chn-samp 0) snd chn (region-chan " PROC_TRUE ")): \
 mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") into snd's channel chn starting at chn-samp; \
 it returns a list of the new mixes"
 

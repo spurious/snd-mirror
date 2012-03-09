@@ -8628,8 +8628,6 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
        Val = s7_integer(slot_value(_Val_)); } while (0)
 
 
-/* TODO: add (gen (vector-ref s s) | s | direct) */
-
 #define GEN_1(Type, Func) \
   static s7_pointer Type ## _1; \
   static s7_pointer g_ ## Type ## _1(s7_scheme *sc, s7_pointer args) \
@@ -11421,8 +11419,7 @@ static s7_pointer frame_to_frame_chooser(s7_scheme *sc, s7_pointer f, int args, 
       return(frame_to_frame_sss);
     }
 
-  /* TODO: (sample->frame s s s)
-   *       (sample->file ?)
+  /* PERHAPS: (sample->frame s s s) (sample->file ?)
    * TODO: in snd-test: 17902: ;delay size 0: #<vct[len=5]: 0.000 1.000 0.000 0.000 0.000>
    */
   return(f);

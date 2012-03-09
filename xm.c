@@ -8188,7 +8188,7 @@ definitions stored in the specified property on the named window."
 
 static XEN gxm_XGetIconSizes(XEN arg1, XEN arg2)
 {
-  #define H_XGetIconSizes "Status XGetIconSizes(display, w): returns #f if the window manager has not \
+  #define H_XGetIconSizes "Status XGetIconSizes(display, w): returns " PROC_FALSE " if the window manager has not \
 set icon sizes; otherwise, it return nonzero and a list of XIconSize structs."
   /* DIFF: XGetIconSizes omit last 2 args, return list of XIconSizes
    */
@@ -12654,7 +12654,7 @@ static XEN gxm_XGetAtomName(XEN arg1, XEN arg2)
 
 static XEN gxm_XFetchBuffer(XEN arg1, XEN arg2)
 {
-  #define H_XFetchBuffer "char *XFetchBuffer(display, buffer): returns #f if there \
+  #define H_XFetchBuffer "char *XFetchBuffer(display, buffer): returns " PROC_FALSE " if there \
 is no data in the buffer or if an invalid buffer is specified, otherwise a string."
   int len = 0;
   char *buf;
@@ -15384,7 +15384,7 @@ static int callback_struct_type(Widget w, const char *name)
 static XEN gxm_XtAddCallback(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XtAddCallback "void XtAddCallback(w, callback_name, callback, client_data) adds the specified callback procedure to \
-the specified widget's callback list.  In xm, the client-data is optional, defaulting to #f. The callback procedure takes \
+the specified widget's callback list.  In xm, the client-data is optional, defaulting to " PROC_FALSE ". The callback procedure takes \
 3 args: widget client-data callback-info. Returns a description of the callback suitable for use with XtRemoveCallback."
   /* DIFF: XtAddCallback returns the C-side "client-data" (for subsequent XtRemoveCallback)
    */

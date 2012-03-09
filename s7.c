@@ -57,10 +57,12 @@
  *        random for any numeric type and any numeric argument, including 0 ferchrissake!
  *        sinh, cosh, tanh, asinh, acosh, atanh
  *        read-line, read-byte, write-byte, *stdin*, *stdout*, and *stderr*
- *        logior, logxor, logand, lognot, logbit?, ash, integer-length, integer-decode-float, nan?, infinite?
+ *        logior, logxor, logand, lognot, logbit?, ash, integer-length
+ *        integer-decode-float, nan?, infinite?
  *        procedure-source, procedure-arity, procedure-documentation, procedure-name, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
- *        symbol-table, symbol->value, global-environment, current-environment, procedure-environment, initial-environment, environment?
+ *        symbol-table, symbol->value
+ *        global-environment, current-environment, procedure-environment, initial-environment, environment?
  *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        object->string, eval-string
@@ -19030,9 +19032,15 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "list-ref", 1, lst, "a pair"));
 
   inds = cdr(args);
-  if (is_null(cdr(inds)))
-    return(list_ref_1(sc, lst, car(inds)));
-  return(implicit_index(sc, list_ref_1(sc, lst, car(inds)), cdr(inds)));
+  while (true)
+    {
+      lst = list_ref_1(sc, lst, car(inds));
+      if (is_null(cdr(inds)))
+	return(lst);
+      inds = cdr(inds);
+      if (!is_pair(lst)) /* trying to avoid a cons here at the cost of one extra type check */
+	return(implicit_index(sc, lst, inds));
+    }
 }
 
 
@@ -27922,7 +27930,6 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
-  /* TODO: error handling */
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = code;
   sc->envir = e;
@@ -27933,7 +27940,6 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 
 s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
 {
-  /* TODO: error handling */
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = form;
   sc->envir = e;
@@ -37075,12 +37081,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 {
   /* (let ((lst '("12" "34"))) (lst 0 1)) -> #\2
    * (let ((lst (list #(1 2) #(3 4)))) (lst 0 1)) -> 2
-   *
-   * TODO: tests
-   * 
-   * also remember to check multidim vects in various positions
-   *   (#2d(("hi" "ho") ("ha" "hu")) 1 1 0) -> #\h
-   * and what about the optimizer? [seems ok in a simple test]
    *
    * this can get tricky:
    *   ((list (lambda (a) (+ a 1)) (lambda (b) (* b 2))) 1 2) -> 4

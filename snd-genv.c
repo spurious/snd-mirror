@@ -1386,7 +1386,7 @@ static XEN g_set_enved_envelope(XEN e)
 
 static XEN g_enved_filter(void)
 {
-  #define H_enved_filter "(" S_enved_filter "): envelope editor FIR/FFT filter choice (#t: FIR)"
+  #define H_enved_filter "(" S_enved_filter "): envelope editor FIR/FFT filter choice (" PROC_TRUE ": FIR)"
   return(C_TO_XEN_BOOLEAN(FIR_p));
 }
 

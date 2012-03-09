@@ -2843,7 +2843,7 @@ static XEN g_set_mark_properties(XEN n, XEN val)
 
 static XEN g_mark_property(XEN key, XEN id) 
 {
-  #define H_mark_property "(" S_mark_property " key id) returns the value associated with 'key' in the given mark's property list, or #f"
+  #define H_mark_property "(" S_mark_property " key id) returns the value associated with 'key' in the given mark's property list, or " PROC_FALSE "."
   return(XEN_ASSOC_REF(key, g_mark_properties(id)));
 }
 

@@ -644,7 +644,16 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
    */
 
   keysym = EVENT_KEYVAL(ev);
+#if HAVE_GTK_3
   theirs = key_press_callback(cp, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), keysym);
+#else
+  {
+    int x, y;
+    GdkModifierType key_state;
+    window_get_pointer(ev, &x, &y, &key_state);
+    theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
+  }
+#endif
   if (theirs) ss->graph_is_active = false;
   g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
 
@@ -659,7 +668,16 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   bool theirs;
 
   keysym = EVENT_KEYVAL(ev);
+#if HAVE_GTK_3
   theirs = key_press_callback(cp, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), keysym);
+#else
+  {
+    int x, y;
+    GdkModifierType key_state;
+    window_get_pointer(ev, &x, &y, &key_state);
+    theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
+  }
+#endif
   if (theirs) ss->graph_is_active = true;
 
   return(true);

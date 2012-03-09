@@ -1319,7 +1319,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 
 static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 {
-  #define H_mix_selection "(" S_mix_selection " :optional (beg 0) snd chn (selection-channel #t)): mix the currently selected portion starting at beg"
+  #define H_mix_selection "(" S_mix_selection " :optional (beg 0) snd chn (selection-channel " PROC_TRUE ")): mix the currently selected portion starting at beg"
   if (selection_is_active())
     {
       chan_info *cp;
