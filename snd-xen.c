@@ -123,10 +123,6 @@ static XEN g_snd_s7_error_handler(XEN args)
   msg = s7_car(args);
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, "_snd_s7_error_handler_", "a string");
 
-#if MUS_DEBUGGING
-  fprintf(stderr, "error: %s\n", s7_object_to_c_string(s7, args));
-#endif
-
   if (ss->xen_error_handler)
     (*(ss->xen_error_handler))(s7_string(msg), (void *)any_selected_sound()); /* not NULL! */
   return(s7_f(s7));
@@ -1963,26 +1959,6 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 }
 
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-/* use gsl gegenbauer to check our function */
-
-#include <gsl/gsl_sf_gegenbauer.h>
-
-static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
-{
-  gsl_sf_result val;
-  gsl_sf_gegenpoly_n_e(XEN_TO_C_INT(n), XEN_TO_C_DOUBLE(lambda), XEN_TO_C_DOUBLE(x), &val);
-  return(C_TO_XEN_DOUBLE(val.val));
-}
-
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_3(g_gsl_gegenbauer_w, g_gsl_gegenbauer)
-#else
-  #define g_gsl_gegenbauer_w g_gsl_gegenbauer
-#endif
-#endif
-
-
 #include <gsl/gsl_dht.h>
 
 static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
@@ -2715,10 +2691,6 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
 #endif
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer_w,  3, 0, 0, "internal test func");
-#endif
-
 #if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
@@ -2960,10 +2932,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if (HAVE_GL) && (!JUST_GL)
   Init_libgl();
-#endif
-
-#if MUS_DEBUGGING
-  XEN_YES_WE_HAVE("snd-debug");
 #endif
 
 #if HAVE_ALSA

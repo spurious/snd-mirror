@@ -3919,8 +3919,6 @@ static save_as_dialog_info *make_sound_save_as_dialog_1(bool managed, int chan)
       snprintf(chan_str, 8, "%d", chan);
       XmTextFieldSetString(sd->panel_data->chans_text, chan_str);
       free(chan_str);
-
-      /* PERHAPS: remove save-as button or something -- would need to re-enable at end or at start */
     }
 
   if (sd->fp->reread_directory) 

@@ -21329,9 +21329,9 @@ If its first argument is a list, the list is copied (despite the '!')."
   data = car(args);
   if (is_null(data)) return(sc->NIL);
   if ((!is_pair(data)) && 
-      (!s7_is_vector(data)) &&
-      (!is_c_object(data)))
-    return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector, list, or an object from make-type and friends"));
+      (!s7_is_vector(data)))
+    /* (!is_c_object(data))) */
+    return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector or a list"));
 
   lessp = cadr(args);
   if (!is_procedure(lessp))

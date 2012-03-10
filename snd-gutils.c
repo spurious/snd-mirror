@@ -1,34 +1,17 @@
 #include "snd.h"
 
-#if MUS_DEBUGGING
-static int cairo_depth = 0;
-#endif
-
 #if HAVE_GTK_3
 cairo_t *make_cairo(GdkWindow *win, const char *func, const char *file, int line)
 #else
 cairo_t *make_cairo(GdkDrawable *win, const char *func, const char *file, int line)
 #endif
 {
-#if MUS_DEBUGGING
-  cairo_depth++;
-  /* fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth); */
-  if (cairo_depth > 1)
-    {
-      fprintf(stderr, "make_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth);
-      /* abort(); */
-    }
-#endif
   ss->line_width = -1.0;
   return(gdk_cairo_create(win));
 }
 
 void free_cairo(cairo_t *cr, const char *func, const char *file, int line)
 {
-#if MUS_DEBUGGING
-  cairo_depth--;
-  /* fprintf(stderr, "free_cairo: %s %s[%d] %d\n", func, file, line, cairo_depth); */
-#endif
   ss->line_width = -1.0;
   cairo_destroy(cr);
 }

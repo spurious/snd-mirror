@@ -8410,6 +8410,57 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (test (H2 4 4) #f)
      ))
 
+(let* ((vtype (make-type :getter vector-ref
+			 :setter vector-set!
+			 :length vector-length))
+       (v? (car vtype))
+       (make-v (cadr vtype))
+       (v-ref (caddr vtype)))
+  (let ((v1 (make-v (make-vector 3 0)))
+	(v2 (make-v (make-vector 3 32))))
+    (set! (v2 0) 1)
+    (set! (v2 1) 2)
+    (set! (v2 2) 3)
+    (set! (v1 0) v2)
+    (set! (v1 1) (list 1 2 3))
+    (set! (v1 2) "123")
+
+    (test (v1 0 0) 1)
+    (test (v1 1 1) 2)
+    (test (v1 2 2) #\3)
+    
+    (let ((L1 (list v2 v1)))
+      (test (L1 0 1) 2)
+      (test (L1 1 1 1) 2)
+      (test (L1 1 2 2) #\3))
+    ))
+
+(let* ((L1 (cons 1 2))
+       (L2 (list L1 3)))
+  (test (L1 0) 1)
+  (test (L1 1) 'error)
+  (test (L1 2) 'error)
+  (test (L2 0 0) 1)
+  (test (L2 0 1) 'error)
+  (test ((cons "123" 0) 0 1) #\2))
+
+(let ((L1 (list "123" "456" "789")))
+  (set-cdr! (cdr L1) L1)
+  (test (L1 0 1) #\2)
+  (test (L1 1 1) #\5)
+  (test (L1 2 1) #\2)
+  (test (L1 12 0) #\1))
+
+(let ((L1 (list "123" "456" "789")))
+  (set-car! (cdr L1) L1) 
+  (test (L1 1 1 1 1 1 0 0) #\1))
+
+(test ((list (list) "") 1 0) 'error)
+(test ((list (list) "") 0 0) 'error)
+(test (#(1 2) 0 0) 'error)
+(test (#(1 #()) 1 0) 'error)
+
+
 
 
 
@@ -11605,6 +11656,14 @@ a2" 3) "132")
 		 (lambda args
 		   (format #t "~A error: ~A~%" str args))))))))
 |#
+
+(let ((List 1)
+      (LIST 2)
+      (lIsT 3)
+      (-list 4)
+      (_list 5)
+      (+list 6))
+  (test (apply + (list List LIST lIsT -list _list +list)) 21))
 
 
 
@@ -19428,7 +19487,10 @@ who says the continuation has to restart the map from the top?
     (set! (v1 2) 111)
     (set! (v1 3) 1111)
     (set! (v1 4) 11111)
-    (set! (v1 5) -1)))
+    (set! (v1 5) -1)
+    ;; this doesn't currently work -- make-type needs a sort argument
+    (test (sort! v1 >) 'error)))
+
 
 
 
@@ -20765,6 +20827,13 @@ abs     1       2
 		  (fm-violin 3 1 330 .1))
 	  notes))
       2)
+
+(let ((a 32)) 
+  (define (hi x) (+ x a)) 
+  (test (defined? 'bbbbb (procedure-environment hi)) #f)
+  (test (defined? 'x (procedure-environment hi)) #t)
+  (test (symbol->value 'a (procedure-environment hi)) 32))
+
 
 #|
 ;;; TODO: procedure-environment is a mess but it's hard to test
@@ -65013,7 +65082,6 @@ etc
 
 (test (let () (define (hi a) (let ((pair? +)) (pair? a 1))) (hi 2)) 3)
 (test ((lambda (let) (let* ((letrec 1)) (+ letrec let))) 123) 124)
-;;; TODO: if anteprev moved here, it's confused about pair? args
 
 (test (let ((begin 3)) (+ begin 1)) 4)
 (test ((lambda (let*) (let ((letrec 1)) (+ letrec let*))) 123) 124)

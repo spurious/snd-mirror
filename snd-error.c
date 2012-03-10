@@ -16,10 +16,7 @@ const char *io_error_name(io_error_t err)
 }
 
 
-/* these are needed as C ints below */
-#ifndef MUS_DEBUGGING
-  #define MUS_DEBUGGING 0
-#endif
+/* this is needed as a C int below */
 #ifndef USE_NO_GUI
   #define USE_NO_GUI 0
 #endif
@@ -80,7 +77,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
       if (run_snd_error_hook(msg))
 	return;
     }
-#if (USE_NO_GUI) || (MUS_DEBUGGING)
+#if (USE_NO_GUI)
   fprintf(stderr, "%s", msg);
 #else
   if (ss)
@@ -150,9 +147,6 @@ static void snd_warning_1(const char *msg)
 	}
     }
   else fprintf(stderr, "%s", msg);
-#if MUS_DEBUGGING
-  fprintf(stderr, "%s", msg);
-#endif
 }
 
 

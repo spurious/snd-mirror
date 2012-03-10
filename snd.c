@@ -409,11 +409,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   initialize_format_lists();
   snd_set_global_defaults(false);
 
-#if MUS_DEBUGGING
-  ss->Trap_Segfault = false;
-#else
   ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
-#endif
   ss->jump_ok = false;
   ss->file_monitor_ok = false;
   allocate_regions(max_regions(ss));

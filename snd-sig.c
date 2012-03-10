@@ -3538,10 +3538,6 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
     {
 
 #if HAVE_SCHEME
-      
-      /* TODO: avoid use_apply and set_safe somehow
-       * TODO: doc s7_eval et al
-       */
       if (use_apply)
 	{
 	  s7_set_car(arg_list, s7_make_real(s7, read_sample(sf)));
@@ -3554,7 +3550,6 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	  s7_slot_set_value(s7, slot, s7_make_real(s7, read_sample(sf)));
 	  res = eval(s7, body, e);
 	}
-
 #else
       res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
 #endif

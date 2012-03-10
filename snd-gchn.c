@@ -1336,9 +1336,6 @@ void color_chan_components(color_t color, slider_choice_t which_component)
 		    /* this sets both the trough and the slider color -- not really what I'd like */
 		    widget_modify_bg(channel_sx(cp), GTK_STATE_NORMAL, color);  
 		    widget_modify_bg(channel_sy(cp), GTK_STATE_NORMAL, color);  
-		    /* TODO: gzx etc? also the slider should be a different color
-		     *       this might work if we used scales rather than sliders
-		     */
 #endif
 		  }
 		else

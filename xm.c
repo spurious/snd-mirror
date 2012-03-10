@@ -26075,13 +26075,6 @@ static void define_strings(void)
     for (i = 0; i < hd_ctr; i++)
       {
 	n = (int)(xm_hash[i]->name[0]) - 97; /* (char->integer #\a) */
-#if MUS_DEBUGGING
-	if ((n < 0) || (n >= LINKS_SIZE)) 
-	  {
-	    fprintf(stderr, "index %s at %d\n", xm_hash[i]->name, n);
-	    abort();
-	  }
-#endif
 	if (hd_links[n] > i)
 	  hd_links[n] = i;
       }
