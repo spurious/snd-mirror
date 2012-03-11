@@ -7575,9 +7575,14 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
 	     (denominator(a) == denominator(b)));
 
     case T_REAL:
+      if (is_NaN(real(a))) 
+	return(false);
       return(real(a) == real(b));
   
     default:
+      if ((is_NaN(real_part(a))) ||
+	  (is_NaN(imag_part(a))))
+	return(false);
       return((real_part(a) == real_part(b)) &&
 	     (imag_part(a) == imag_part(b)));
     }
@@ -21746,6 +21751,8 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 	    case T_COMPLEX:
 	      hash_table_function(table) = hash_equal;
 	      break;
+	      /* TODO: surely complex hash should be like float?
+	       */
 
 	    case T_CHARACTER:
 	      if (hash_table_function(table) != hash_char) 
@@ -23330,10 +23337,16 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
 /* s7_call in this context can lead to segfaults:
  *
  *    (call-with-exit (lambda (exit) (length ((cadr (make-type :length (lambda (a) (exit 32)))) 1))))
- *      [partly fixed; still callable via object_reverse and applicable_length]
+ *      [TODO: not a segfault, but generates the error message "unknown operator"!]
+ *      does this make sense?  Is "exit" part of the length function's closure? 
+ *    (let ((nt (call-with-exit (lambda (exit) (make-type :length (lambda (a) (exit 32))))))) (let ((obj ((cadr nt) 1))) (length obj)))
+ *      -> invalid-escape-function
+ *    why does the 1st case work in s7test?
  * 
  *    (call-with-exit (lambda (exit) (object->string ((cadr (make-type :print (lambda (a) (exit 32)))) 1))))
  *      [hard to fix -- very low level access to the method (atom_to_c_string)]
+ *    (let ((nt (call-with-exit (lambda (exit) (make-type :print (lambda (a) (exit 32))))))) (let ((obj ((cadr nt) 1))) (object->string obj)))
+ *      -> invalid-escape-function
  *
  *    (call-with-exit (lambda (exit) (copy ((cadr (make-type :copy (lambda (a) (exit 32)))) 1))))
  *      [called in s7_copy, g_copy calls s7_copy]
@@ -23387,7 +23400,6 @@ static s7_pointer call_s_object_reverse(s7_scheme *sc, s7_pointer a)
 
 static s7_pointer call_s_object_fill(s7_scheme *sc, s7_pointer a, s7_pointer val)
 {
-  /* I think this is no longer accessible */
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
   return(s7_call(sc, object_types[obj->type].fill_func, list_2(sc, obj->value, val)));
@@ -23690,6 +23702,7 @@ In each case, the argument is the value of the object, not the object itself."
  *    to state in advance what keys -- undeclared key would be bound in the func env under its
  *    name and value -- define+?  -- the extra args would be in an alist accessible under
  *    the rest arg name?  
+ * and this stuff should all be built on environments, like the object system in s7.html
  */
 
 
@@ -24833,13 +24846,13 @@ static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_eq(s7_pointer obj1, s7_pointer obj2)
 {
-  return(obj1 == obj2);
+  return(obj1 == obj2); /* so floats and NaNs might be eq? but not eqv? */
 }
 
 
 bool s7_is_eqv(s7_pointer a, s7_pointer b) 
 {
-  if (a == b)
+  if ((a == b) && (!is_number(a)))
     return(true);
   
 #if WITH_GMP
@@ -24871,12 +24884,8 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 
 static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
-  if (x == y)    
+  if ((x == y) && (!is_number(x))) /* this needs to be just like the g_is_equal outer test: (equal? '(1/0) '(1/0)) */
     return(true);
-  /* since we have one internal NaN, (equal? +nan.0 +nan.0) -> #t which seems like a bug,
-   *   but Guile is similar: (let ((x +nan.0)) (equal? x x)) -> #t, whereas (equal? +nan.0 +nan.0) -> #f
-   *   and (let ((x +nan.0)) (= x x)) -> #f in Guile
-   */
   
 #if WITH_GMP
   if (big_numbers_are_eqv(x, y))
@@ -25065,7 +25074,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
   if ((x == y) && (!is_number(x)))  /* (equal? 1/0 1/0) should be #f */
     return(true);
-  
+
 #if WITH_GMP
   if (big_numbers_are_eqv(x, y))
     return(true);
@@ -25280,6 +25289,8 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
+  #define FLOATING_EPSILON 1e-15
+
   if (x == y) 
     return(true);
 
@@ -25330,52 +25341,173 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
     case T_PAIR:
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
 
-    case T_INTEGER:
-    case T_RATIO:
+#if WITH_GMP
+      /* not sure how to handle these cases */
     case T_BIG_INTEGER:
     case T_BIG_RATIO:
-      if ((!is_number(y)) && 
-	  (!is_big_number(y)))
-	return(false);
-#if WITH_GMP
-      return(big_equal(sc, list_2(sc, x, y)) == sc->T);
-#else
-      return(g_equal(sc, list_2(sc, x, y)) == sc->T);
+    case T_BIG_REAL:
+    case T_BIG_COMPLEX:
+      return(big_equal(sc, list_2(sc, x, y)) != sc->F);
 #endif
 
-    case T_REAL:
-    case T_BIG_REAL:
-    case T_COMPLEX:
-    case T_BIG_COMPLEX:
-      if ((!is_number(y)) && 
-	  (!is_big_number(y)))
-	return(false);
-#if WITH_GMP
-      if (big_equal(sc, list_2(sc, x, y)) == sc->F)
-#else
-      if (g_equal(sc, list_2(sc, x, y)) == sc->F) /* maybe use a preset cons here and above if speed actually matters in this case */
-#endif
+    case T_INTEGER:
+      switch (type(y))
 	{
-	  s7_Double r1, i1, r2, i2;
-	  if ((is_rational(y)) ||
-	      (is_big_integer(y)) ||
-	      (is_big_ratio(y)))
-	    return(false);
+#if WITH_GMP
+	case T_BIG_INTEGER:
+	case T_BIG_REAL:
+	case T_BIG_COMPLEX:
+	case T_BIG_RATIO:
+	  return(big_equal(sc, list_2(sc, x, y)) != sc->F);
+#endif
 	  
-	  /* now we know they're both non-rational and not = */
-	  r1 = s7_real_part(x);
-	  r2 = s7_real_part(y);
-	  if ((r1 == r2) || 
-	      ((is_NaN(r1)) && (is_NaN(r2))))
-	    {
-	      i1 = s7_imag_part(x);
-	      i2 = s7_imag_part(y);
-	      return((i1 == i2) || 
-		     ((is_NaN(i1)) && (is_NaN(i2))));
-	    }
+	case T_INTEGER:
+	  return(integer(x) == integer(y));
+
+	case T_RATIO:
+	  return(false);
+
+	case T_REAL:
+	  return((!is_NaN(real(y))) &&
+		 (fabs(integer(x) - real(y)) <= FLOATING_EPSILON));
+
+	case T_COMPLEX:
+	  return((!is_NaN(real_part(y))) &&
+		 (!is_NaN(imag_part(y))) &&
+		 (fabs(integer(x) - real_part(y)) <= FLOATING_EPSILON) &&
+		 (fabs(imag_part(y) <= FLOATING_EPSILON)));
+
+	default:
 	  return(false);
 	}
-      return(true);
+
+    case T_RATIO:
+      switch (type(y))
+	{
+#if WITH_GMP
+	case T_BIG_INTEGER:
+	case T_BIG_REAL:
+	case T_BIG_COMPLEX:
+	case T_BIG_RATIO:
+	  return(big_equal(sc, list_2(sc, x, y)) != sc->F);
+#endif
+	  
+	case T_INTEGER:
+	  return(false);
+
+	case T_RATIO:
+	  return((numerator(x) == numerator(y)) &&
+		 (denominator(x) == denominator(y)));
+
+	case T_REAL:
+	  return((!is_NaN(real(y))) &&
+		 (fabs(fraction(x) - real(y)) <= FLOATING_EPSILON));
+
+	case T_COMPLEX:
+	  return((!is_NaN(real_part(y))) &&
+		 (!is_NaN(imag_part(y))) &&
+		 (fabs(fraction(x) - real_part(y)) <= FLOATING_EPSILON) &&
+		 (fabs(imag_part(y) <= FLOATING_EPSILON)));
+
+	default:
+	  return(false);
+	}
+
+    case T_REAL:
+      switch (type(y))
+	{
+#if WITH_GMP
+	case T_BIG_INTEGER:
+	case T_BIG_REAL:
+	case T_BIG_COMPLEX:
+	case T_BIG_RATIO:
+	  return(big_equal(sc, list_2(sc, x, y)) != sc->F);
+#endif
+	  
+	case T_INTEGER:
+	  return((!is_NaN(real(x))) &&
+		 (fabs(real(x) - integer(y)) <= FLOATING_EPSILON));
+
+	case T_RATIO:
+	  return((!is_NaN(real(x))) &&
+		 (fabs(real(x) - fraction(y)) <= FLOATING_EPSILON));
+
+	case T_REAL:
+	  if (is_NaN(real(x)))
+	    return(is_NaN(real(y)));
+
+	  return((!is_NaN(real(y))) &&
+		 ((real(x) == real(y)) || /* might be inf! */
+		  (fabs(real(x) - real(y)) <= FLOATING_EPSILON)));
+
+	case T_COMPLEX:
+	  return((!is_NaN(real(x))) &&
+		 (!is_NaN(real_part(y))) &&
+		 (!is_NaN(imag_part(y))) &&
+		 ((real(x) == real_part(y)) ||
+		  (fabs(real(x) - real_part(y)) <= FLOATING_EPSILON)) &&
+		 (fabs(imag_part(y) <= FLOATING_EPSILON)));
+
+	default:
+	  return(false);
+	}
+
+    case T_COMPLEX:
+      switch (type(y))
+	{
+#if WITH_GMP
+	case T_BIG_INTEGER:
+	case T_BIG_REAL:
+	case T_BIG_COMPLEX:
+	case T_BIG_RATIO:
+	  return(big_equal(sc, list_2(sc, x, y)) != sc->F);
+#endif
+	  
+	case T_INTEGER:
+	  return((!is_NaN(real_part(x))) &&
+		 (!is_NaN(imag_part(x))) &&
+		 (fabs(real_part(x) - integer(y)) <= FLOATING_EPSILON) &&
+		 (fabs(imag_part(x) <= FLOATING_EPSILON)));
+
+	case T_RATIO:
+	  return((!is_NaN(real_part(x))) &&
+		 (!is_NaN(imag_part(x))) &&
+		 (fabs(real_part(x) - fraction(y)) <= FLOATING_EPSILON) &&
+		 (fabs(imag_part(x) <= FLOATING_EPSILON)));
+
+	case T_REAL:
+	  if ((is_NaN(real_part(x))) ||
+	      (is_NaN(imag_part(x))) ||
+	      (is_NaN(real(y))))
+	    return(false);
+	  return(((real_part(x) == real(y)) ||
+		  (fabs(real_part(x) - real(y)) <= FLOATING_EPSILON)) &&
+		 (fabs(imag_part(x) <= FLOATING_EPSILON)));
+
+	case T_COMPLEX:
+	  if (is_NaN(real_part(x)))
+	    return((is_NaN(real_part(y))) &&
+		   (((is_NaN(imag_part(x))) && (is_NaN(imag_part(y)))) ||
+		    (imag_part(x) == imag_part(y)) ||
+		    (fabs(imag_part(x) - imag_part(y)) <= FLOATING_EPSILON)));
+
+	  if (is_NaN(imag_part(x)))
+	    return((is_NaN(imag_part(y))) &&
+		   ((real_part(x) == real_part(y)) ||
+		    (fabs(real_part(x) - real_part(y)) <= FLOATING_EPSILON)));
+		   
+	  if ((is_NaN(real_part(y))) ||
+	      (is_NaN(imag_part(y))))
+	    return(false);
+
+	  return(((real_part(x) == real_part(y)) ||
+		  (fabs(real_part(x) - real_part(y)) <= FLOATING_EPSILON)) &&
+		 ((imag_part(x) == imag_part(y)) ||
+		  (fabs(imag_part(x) - imag_part(y)) <= FLOATING_EPSILON)));
+
+	default:
+	  return(false);
+	}
 
     case T_CLOSURE:
     case T_CLOSURE_STAR:
@@ -27223,7 +27355,7 @@ GOT_CATCH:
 	   *
 	   * if at all possible, get some indication of where we are!
 	   */
-	  s7_pointer x, error_port;
+	  s7_pointer error_port;
 	  error_port = s7_current_error_port(sc);
 
 	  if ((!s7_is_list(sc, info)) ||
@@ -27316,15 +27448,22 @@ GOT_CATCH:
 
 	  /* look for __func__ in the error environment etc
 	   */
-	  x = find_local_symbol(sc, vector_element(sc->error_info, ERROR_ENVIRONMENT), sc->__FUNC__);  /* returns nil if no __func__ */
+	  {
+	    s7_pointer x, env;
+	    env = vector_element(sc->error_info, ERROR_ENVIRONMENT);
+	    if (env)
+	      {
+		x = find_local_symbol(sc, env, sc->__FUNC__);  /* returns nil if no __func__ */
 
-	  if ((is_slot(x)) &&
-	      (error_port != sc->F))
-	    {
-	      s7_display(sc, make_protected_string(sc, ";    "), error_port);
-	      s7_display(sc, slot_value(x), error_port);
-	      s7_newline(sc, error_port);
-	    }
+		if ((is_slot(x)) &&
+		    (error_port != sc->F))
+		  {
+		    s7_display(sc, make_protected_string(sc, ";    "), error_port);
+		    s7_display(sc, slot_value(x), error_port);
+		    s7_newline(sc, error_port);
+		  }
+	      }
+	  }
 	  
 	  if ((exit_eval) &&
 	      (sc->error_exiter))
@@ -54410,7 +54549,8 @@ the error type and the info passed to the error handler.");
                                      ,@body))))");
 
 
-  /* call-with-values is almost a no-op in this context */
+  /* call-with-values is almost a no-op in this context 
+   */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
 
@@ -54423,7 +54563,8 @@ the error type and the info passed to the error handler.");
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
 
 
-  /* cond-expand (uses *features*) */
+  /* cond-expand (uses *features*) 
+   */
   s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)              \n\
                           ;; taken from MIT scheme?                        \n\
                           (define (got? fr)                                \n\
@@ -54475,15 +54616,11 @@ the error type and the info passed to the error handler.");
 /* TODO: the symbol-access stuff is not fully implemented
  *       t342.scm for tests, augment env, closure arg names, do step?
  *       what about recursion during this process (i.e. ref to accessed var in accessor)? -- infinite loop possible here!
- *       block recursive call on accessor? -- how? (no dynamic vars, so no clean way to disable)
  *       are optimized calls ok in this regard?
  *       all call_symbol_bind uses really should be embedded
- *       call gc in the symbol access stuff and unbound variable to flush out bugs [or eval-string?]
  *
  * (set! (procedure-setter abs) ...)?
- *
  * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
- *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  *
  * lint     13424 -> 1231 [1237]

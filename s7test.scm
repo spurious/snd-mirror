@@ -45,6 +45,8 @@
 	(format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) otst result oexp))))
 
 (defmacro test (tst expected) ;(display tst) (newline)
+  ;;                     (eval ',tst) works here, but eval-string is problematic
+  ;; `(ok? ',tst (lambda () (eval-string (format #f "~S" ',tst))) ,expected))
   `(ok? ',tst (lambda () ,tst) ,expected))
 
 (define (tok? otst ola)
@@ -299,6 +301,12 @@
 (test (eq? (begin) (append)) #t)
 (test (let ((lst (list 1 2 3))) (eq? lst (apply list lst))) #f) ; changed 26-Sep-11
 
+;(test (eq? 1/0 1/0) #f)
+;(test (let ((+nan.0 1/0)) (eq? +nan.0 +nan.0)) #f)
+;; these are "unspecified" so any boolean value is ok
+
+;; TODO: need memv/assv tests, and hash-table set all nans equal? document the epsilon -- include in morally-equal?
+
 (test (eq? ''2 '2) #f)
 (test (eq? '2 '2) #t) ; unspecified??
 (test (eq? '2 2) #t)
@@ -442,7 +450,9 @@
 	 (format #t ";(eq? x y) of ~A ~A -> #f?~%" x y))))
  ;; actually I hear that #f is ok here for numbers
  (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
-       3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
+       3/4 #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
+;; this used to include 3.14 and 1+i but that means the (eq? x x) case differs from the (eq? 3.14 3.14) case
+
 #|
 :'(1(1))
 (1 (1))
@@ -538,6 +548,8 @@
 (test (eqv? 1/2 0.5) #f)
 (test (eqv? 1 1/1) #t)
 (test (eqv? 0.5 5e-1) #t)
+(test (eqv? 1/0 1/0) #f)
+(test (let ((+nan.0 1/0)) (eqv? +nan.0 +nan.0)) #f)
 
 (test (eqv? (cons 'a 'b) (cons 'a 'c)) #f)
 (test (eqv? eqv? eqv?) #t)
@@ -698,6 +710,15 @@
 (test (let* ((x 3.141) (y x)) (equal? x y)) #t)
 (test (let* ((x 1+i) (y x)) (equal? x y)) #t)
 (test (let* ((x 3/4) (y x)) (equal? x y)) #t)
+(test (equal? '(+ '1) '(+ 1)) #f) ; !?
+
+(test (equal? '(1/0) '(1/0)) #f)
+(test (equal? '1/0 '1/0) #f) 
+(test (let ((+nan.0 1/0)) (equal? '(+nan.0) '(+nan.0))) #t)
+(test (let ((+nan.0 1/0)) (equal? (list +nan.0) (list +nan.0))) #f)
+;;; in the 1st case we're looking at the symbol, not its value
+(test (let ((+nan.0 1/0)) (equal? (vector +nan.0) (vector +nan.0))) #f)
+(test (let ((+nan.0 1/0)) (equal? #(1/0) #(1/0))) #f)
 
 (test (let ((x 3.141)) (equal? x x)) #t)
 (test (equal? 3 3) #t)
@@ -889,6 +910,7 @@
 (test (let* ((x 3.141) (y x)) (morally-equal? x y)) #t)
 (test (let* ((x 1+i) (y x)) (morally-equal? x y)) #t)
 (test (let* ((x 3/4) (y x)) (morally-equal? x y)) #t)
+(test (morally-equal? .1 1/10) #t)
 
 (test (let ((x 3.141)) (morally-equal? x x)) #t)
 (test (morally-equal? 3 3) #t)
@@ -1067,7 +1089,9 @@
 
 	 (list "hi" ""
 	       (integer->char 65) #\space #\newline #\null
-	       1 3/4 1.0 1+i pi most-negative-fixnum most-positive-fixnum (real-part (log 0)) 1e18
+	       1 3/4 
+	       ;; 1.0 1+i pi (real-part (log 0)) 1e18
+	       most-negative-fixnum most-positive-fixnum 
 	       'a-symbol 
 	       (make-vector 3 #f) #() #2d((1 2) (3 4))
 	       abs quasiquote macroexpand make-type hook-functions 
@@ -1081,7 +1105,9 @@
 	       )
 	 (list (string #\h #\i) (string)
 	       #\A #\space #\newline (integer->char 0)
-	       (- 2 1) (/ 3 4) 1.0 1+i pi -9223372036854775808 9223372036854775807 (real-part (log 0)) 1e18
+	       (- 2 1) (/ 3 4) 
+	       ;; 1.0 1+i pi (real-part (log 0)) 1e18
+	       -9223372036854775808 9223372036854775807 
 	       (string->symbol "a-symbol")
 	       (vector #f #f #f) (vector)  #2d((1 2) (3 4))
 	       abs quasiquote macroexpand make-type hook-functions 
@@ -5317,6 +5343,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (memv 3.4 '(1.2 2.3 3.4 4.5)) '(3.4 4.5))
 (test (memv 3.4 '(1.3 2.5 3.7 4.9)) #f)
 (test (memv 1/2 (list (/ 2.0) .5 1/2)) '(1/2))
+(test (memv 1.0 '(1 2 3)) #f)
+(test (memv 1/0 '(1/0 1.0 3)) #f)
 (let ((ls (list 'a 'b 'c)))
   (set-car! (memv 'b ls) 'z)
   (test ls '(a z c)))
@@ -9805,6 +9833,13 @@ a2" 3) "132")
 |2 3 0| |1 2 3 0| = |3  8 13  6|
 |3 0 1| |2 3 0 1|   |2  6  6 10|
 ") #t)
+
+
+(test (format #f "~S" '(+ 1/0 1/0)) "(+ nan.0 nan.0)") ; !?
+(test (format #f "~S" '(+ '1/0 1/0)) "(+ 'nan.0 nan.0)") ; !? 
+(test (format #f "~S" '(+ 1/0 1.0/0.0)) (format #f "~S" (list '+ '1/0 '1.0/0.0)))
+(test (format #f "~S" (quote (+ '1 1))) "(+ '1 1)")
+
 
 (test (format #f "~12,''D" 1) "'''''''''''1")
 (test (let ((str "~12,'xD")) (set! (str 5) #\space) (format #f str 1)) "           1")
@@ -22279,6 +22314,7 @@ but that's make-type's arglist??
     (test (length ((cadr (make-type :length (lambda (a) (+ 1 a)))) (vector 1 2 3))) 'error)
     (test (call-with-exit (lambda (exit) (length ((cadr (make-type :length (lambda (a) (exit 32)))) 1)))) 32)
     (test (call-with-exit (lambda (exit) (fill! ((cadr (make-type :fill (lambda (a n) (exit 32)))) 1) 0))) 32)
+    (test (let ((nt (call-with-exit (lambda (exit) (make-type :length (lambda (a) (exit 32))))))) (let ((obj ((cadr nt) 1))) (length obj))) 'error)
 
     (test (let* ((vzt (make-type :name "vzt" 
 				 :length (lambda (v) (vector-length v))
@@ -22572,6 +22608,8 @@ but that's make-type's arglist??
 	  )
 	))
 
+
+    ;;; symbol-access
 
     (define (notify-if-set var notifier)
       (set! (symbol-access var) (list #f notifier #f)))

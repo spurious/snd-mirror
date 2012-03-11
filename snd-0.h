@@ -101,11 +101,6 @@
 #define I_find "find:"
 #define I_STOP "Stop"
 
-#define I_LINES_OR_DOTS "Dots or lines"
-#define I_CHANNEL_LAYOUT "Channel layout"
-#define I_ZOOM_CENTERS_ON "Zoom centers on"
-#define I_AXIS_LAYOUT "Axis layout"
-
 typedef enum {SOUND_SAVE_AS, SELECTION_SAVE_AS, REGION_SAVE_AS} save_dialog_t;
 typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;

@@ -400,6 +400,9 @@ scheme@(guile-user)&gt;  (&lt; (/ 1.0 -0.0) -1e100 1e100 (/ 1.0 0.0))
 <p>
 How can they be equal? In s7, the sign
 of -0.0 is ignored, and they really are equal.
+One other gotcha: two floats can satisfy eq? and yet not be eqv?:
+<code>(eq? nan.0 nan.0)</code> might be #t (it is unspecified), but <code>(eqv? nan.0 nan.0)</code> is #f.
+The same problem afflicts memq and assq.  
 </p>
 </div>
 
@@ -4427,6 +4430,7 @@ involve circular structures.  Will equal? be our friend?
 </pre>
 
 <p>No! Who can predict <code>(equal? +nan.0 +nan.0)</code>?
+Or <code>(= .1 1/10)</code>?
 Leaving aside numbers, 
 closed ports are not equal, yet nothing can be done with them.
 And #() is not equal to #2d().  And two closures are never equal, even if their
@@ -4442,9 +4446,12 @@ some other thing, they satisfy the function morally-equal?.
 #t
 &gt; (morally-equal? 1/0 1/0)
 #t
+&gt; (morally-equal? .1 1/10)
+#t                              ; floating-point epsilon here is 1.0e-16 or thereabouts
 &gt; (morally-equal? (lambda () #f) (lambda () #f))
 #t
 </pre>
+
 
 
 <!--

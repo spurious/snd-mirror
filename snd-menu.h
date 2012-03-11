@@ -1,6 +1,11 @@
 #ifndef SND_MENU_H
 #define SND_MENU_H
 
+#define I_LINES_OR_DOTS "Dots or lines"
+#define I_CHANNEL_LAYOUT "Channel layout"
+#define I_ZOOM_CENTERS_ON "Zoom centers on"
+#define I_AXIS_LAYOUT "Axis layout"
+
 enum {m_menu,
         f_menu, f_cascade_menu,
           f_open_menu, f_open_recent_menu, f_open_recent_cascade_menu, f_close_menu, f_close_all_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
