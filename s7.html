@@ -400,7 +400,7 @@ scheme@(guile-user)&gt;  (&lt; (/ 1.0 -0.0) -1e100 1e100 (/ 1.0 0.0))
 <p>
 How can they be equal? In s7, the sign
 of -0.0 is ignored, and they really are equal.
-One other gotcha: two floats can satisfy eq? and yet not be eqv?:
+One other oddity: two floats can satisfy eq? and yet not be eqv?:
 <code>(eq? nan.0 nan.0)</code> might be #t (it is unspecified), but <code>(eqv? nan.0 nan.0)</code> is #f.
 The same problem afflicts memq and assq.  
 </p>
@@ -871,13 +871,13 @@ macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
 </p>
 
 <pre class="indented">
-  (define-macro (mac b) 
-    `(let ((a 12)) 
-       (+ a ,b)))
+(define-macro (mac b) 
+  `(let ((a 12)) 
+     (+ a ,b)))
 
-  (let ((a 1) 
-        (+ *))
-    (mac a))
+(let ((a 1) 
+      (+ *))
+  (mac a))
 </pre>
 
 <p>returns 144 because "+" has turned into "*", and "a" is the internal "a",
@@ -1075,12 +1075,12 @@ By the way, bacros solve part of our original problem:
 </p>
 
 <pre class="indented">
-  (define-bacro (mac b) 
-    `(let ((a 12)) 
-       (+ a ,(symbol-&gt;value b))))
+(define-bacro (mac b) 
+  `(let ((a 12)) 
+     (+ a ,(symbol-&gt;value b))))
 
-  (let ((a 1))
-    (mac a))
+(let ((a 1))
+  (mac a))
 </pre>
 
 <p>returns 13! No variable capture! Perhaps we can massage this idea a bit:
@@ -1156,12 +1156,12 @@ the loop!
 </p>
 
 <pre class="indented">
-  (defmacro once-only (names . body)
-    (let ((gensyms (map (lambda (n) (gensym)) names)))
-      `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
-	 `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
-	    ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
-	       ,@body)))))
+(defmacro once-only (names . body)
+  (let ((gensyms (map (lambda (n) (gensym)) names)))
+    `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
+       `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
+          ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
+             ,@body)))))
 </pre>
 
 <p>From the land of sparkling bacros:
@@ -1278,10 +1278,10 @@ become constants:
 </p>
 
 <pre class="indented">
- (define (func a) (let ((cvar (+ a 1))) cvar))
- (define-constant cvar 23)
- (func 1)
- ;can't bind or set an immutable object: cvar
+(define (func a) (let ((cvar (+ a 1))) cvar))
+(define-constant cvar 23)
+(func 1)
+;can't bind or set an immutable object: cvar
 </pre>
 
 <p>So, obviously, choose unique names for your constants, or don't use define-constant.
@@ -2184,9 +2184,9 @@ an integer as in the one dimensional case:
 </p>
 
 <pre class="indented">
-    (make-vector (list 2 3 4))
-    (make-vector '(2 3) 1.0)
-    (vector-dimensions (make-vector (list 2 3 4))) -&gt; (2 3 4)
+(make-vector (list 2 3 4))
+(make-vector '(2 3) 1.0)
+(vector-dimensions (make-vector (list 2 3 4))) -&gt; (2 3 4)
 </pre>
 
 <p>The second example includes the optional initial element.
@@ -2197,17 +2197,17 @@ vector-dimensions returns a list of the dimensions.
 </p>
 
 <pre class="indented">
-    &gt; (define v (make-vector '(2 3) 1.0))
-    #2D((1.0 1.0 1.0) (1.0 1.0 1.0))
+&gt; (define v (make-vector '(2 3) 1.0))
+#2D((1.0 1.0 1.0) (1.0 1.0 1.0))
 
-    &gt; (set! (v 0 1) 2.0)
-    #2D((1.0 2.0 1.0) (1.0 1.0 1.0))
+&gt; (set! (v 0 1) 2.0)
+#2D((1.0 2.0 1.0) (1.0 1.0 1.0))
 
-    &gt; (v 0 1)
-    2.0
+&gt; (v 0 1)
+2.0
 
-    &gt; (vector-length v)
-    6
+&gt; (vector-length v)
+6
 </pre>
 
 
@@ -2299,11 +2299,11 @@ signals that the lists specify the elements of an 'n' dimensional vector: <code>
 </p>
 
 <pre class="indented">
-    &gt; (vector-ref #2D((1 2 3) (4 5 6)) 1 2)
-    6
+&gt; (vector-ref #2D((1 2 3) (4 5 6)) 1 2)
+6
 
-    &gt; (matrix-multiply #2d((-1 0) (0 -1)) #2d((2 0) (-2 2)))
-    #2D((-2 0) (2 -2))
+&gt; (matrix-multiply #2d((-1 0) (0 -1)) #2d((2 0) (-2 2)))
+#2D((-2 0) (2 -2))
 </pre>
 
 <p>If any dimension has 0 length, you get an n-dimensional empty vector.  It is not
@@ -2311,11 +2311,11 @@ equal to a 1-dimensional empty vector.
 </p>
 
 <pre class="indented">
-    &gt; (make-vector '(10 0 3))
-    #3D()
+&gt; (make-vector '(10 0 3))
+#3D()
 
-    &gt; (equal? #() #3D())
-    #f
+&gt; (equal? #() #3D())
+#f
 </pre>
 </div>
 
@@ -2523,13 +2523,13 @@ make-hash-table-iterator internally).
 </p>
 
 <pre class="indented">
-    (define (hash-table-&gt;alist table)
-      (map values table))
+(define (hash-table-&gt;alist table)
+  (map values table))
 
-    (define (merge-hash-tables . tables)
-      (apply hash-table 
-        (apply append 
-          (map hash-table-&gt;alist tables))))
+(define (merge-hash-tables . tables)
+  (apply hash-table 
+    (apply append 
+      (map hash-table-&gt;alist tables))))
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
@@ -2539,6 +2539,11 @@ make-hash-table-iterator internally).
 <p>Two hash-tables are equal if they have the same keys with the same values.  This is independent
 of the table sizes, or the order in which the key/value pairs were added.
 </p>
+</div>
+
+<div class="indented">
+<p>If the hash key is a float (a non-rational number), hash-table-ref uses <a href="#morallyequalp">morally-equal?</a>.
+Otherwise, for example, you could use NaN as a key, but then never be able to access it!
 </div>
 
 </blockquote>
@@ -2557,20 +2562,20 @@ Environments are first class (and applicable) objects in s7.
 </p>
 
 <pre class="indented">
-  (<em class=def id="environmentp">environment?</em> obj)            #t if obj is an environment
-  (<em class=def id="globalenvironment">global-environment</em>)          the top-level environment
-  (<em class=def id="currentenvironment">current-environment</em>)         the currently visible variables and their values
-  (<em class=def id="procedureenvironment">procedure-environment</em> proc)  the environment at the time when proc was defined
-  (<em class=def id="initialenvironment">initial-environment</em>)         the current environment, but all built-in functions have their original values
-  (<em class=def id="outerenvironment">outer-environment</em> env)       the environment that encloses the environment env
+(<em class=def id="environmentp">environment?</em> obj)            #t if obj is an environment
+(<em class=def id="globalenvironment">global-environment</em>)          the top-level environment
+(<em class=def id="currentenvironment">current-environment</em>)         the currently visible variables and their values
+(<em class=def id="procedureenvironment">procedure-environment</em> proc)  the environment at the time when proc was defined
+(<em class=def id="initialenvironment">initial-environment</em>)         the current environment, but all built-in functions have their original values
+(<em class=def id="outerenvironment">outer-environment</em> env)       the environment that encloses the environment env
 
-  (<em class=def id="withenvironment">with-environment</em> env . body) evaluate body in the environment env 
+(<em class=def id="withenvironment">with-environment</em> env . body) evaluate body in the environment env 
 
-  (<em class=def id="augmentenvironment">augment-environment</em> env . bindings)   add bindings to env
-  (<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings)
-  (<em class=def id="environmenttolist">environment-&gt;list</em> env)       return the environment bindings as a list of (symbol . value) cons's
-  (<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
-  (<em class=def id="definedp">defined?</em> sym (env (current-environment)))
+(<em class=def id="augmentenvironment">augment-environment</em> env . bindings)   add bindings to env
+(<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings)
+(<em class=def id="environmenttolist">environment-&gt;list</em> env)       return the environment bindings as a list of (symbol . value) cons's
+(<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
+(<em class=def id="definedp">defined?</em> sym (env (current-environment)))
 </pre>
 
 
@@ -2601,10 +2606,10 @@ Perhaps these would be better:
 </p>
 
 <pre class="indented">
-    (define (make-environment parent . args) (apply augment-environment parent args))
-    (define (environment . slots) (apply augment-environment () args))
-    (define (define-in-environment env symbol value) (augment-environment! env (cons symbol value)))
-    (define next-environment outer-environment)
+(define (make-environment parent . args) (apply augment-environment parent args))
+(define (environment . slots) (apply augment-environment () args))
+(define (define-in-environment env symbol value) (augment-environment! env (cons symbol value)))
+(define next-environment outer-environment)
 </pre>
 
 <p>It is possible in Scheme to redefine built-in functions such as car.
@@ -2979,37 +2984,37 @@ In s7, multiple values are spliced directly into the caller's argument list.
 </p>
 
 <pre class="indented">
-  &gt; (+ (values 1 2 3) 4)
-  10
-  &gt; (string-ref ((lambda () (values "abcd" 2))))
-  #\c
-  &gt; ((lambda (a b) (+ a b)) ((lambda () (values 1 2))))
-  3
-  &gt; (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) ; call/cc has an implicit "values"
-  10
-  &gt; ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3))
-  (3 2)
+&gt; (+ (values 1 2 3) 4)
+10
+&gt; (string-ref ((lambda () (values "abcd" 2))))
+#\c
+&gt; ((lambda (a b) (+ a b)) ((lambda () (values 1 2))))
+3
+&gt; (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) ; call/cc has an implicit "values"
+10
+&gt; ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3))
+(3 2)
 
-  ;; call-with-values: 
-  (define-macro (call-with-values producer consumer) 
-    `(,consumer (,producer)))
+;; call-with-values: 
+(define-macro (call-with-values producer consumer) 
+  `(,consumer (,producer)))
 
-  ;; multiple-value-bind ("receive" in srfi-8):
-  (define-macro (multiple-value-bind vars expr . body)
-    `((lambda ,vars ,@body) ,expr))
+;; multiple-value-bind ("receive" in srfi-8):
+(define-macro (multiple-value-bind vars expr . body)
+  `((lambda ,vars ,@body) ,expr))
 
-  ;; multiple-value-set!:
-  (define-macro (multiple-value-set! vars expr . body)
-    (let ((local-vars (map (lambda (n) (gensym)) vars)))
-      `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))
+;; multiple-value-set!:
+(define-macro (multiple-value-set! vars expr . body)
+  (let ((local-vars (map (lambda (n) (gensym)) vars)))
+    `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))
 
-  (define (curry function . args)
-    (if (null? args)
-	function
-	(lambda more-args
-	  (if (null? more-args)
-	      (apply function args)
-	      (function (apply values args) (apply values more-args))))))
+(define (curry function . args)
+  (if (null? args)
+      function
+      (lambda more-args
+        (if (null? more-args)
+            (apply function args)
+            (function (apply values args) (apply values more-args))))))
 </pre>
 
 
@@ -3524,13 +3529,13 @@ a modern GUI leaves formatting decisions to a text or table widget.
 
 
 <pre class="indented">
-    (<em class=def id="makehook">make-hook</em> (arity (0 0 #f)) (documentation ""))  ; make a new hook
-    (<em class=def id="hook">hook</em> ...)                                       ; make a hook, the args are functions
-    (<em class=def id="hookp">hook?</em> obj)                                      ; return #t if obj is a hook
-    (<em class=def id="hookfunctions">hook-functions</em> hook)                            ; the hook's list of functions
-    (<em class=def id="hookarity">hook-arity</em> hook)                                ; the hook's arity list: (required optional rest)
-    (<em class=def id="hookdocumentation">hook-documentation</em> hook)                        ; the hook's documentation string
-    (<em class=def id="hookapply">hook-apply</em> hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
+(<em class=def id="makehook">make-hook</em> (arity (0 0 #f)) (documentation ""))  ; make a new hook
+(<em class=def id="hook">hook</em> ...)                                       ; make a hook, the args are functions
+(<em class=def id="hookp">hook?</em> obj)                                      ; return #t if obj is a hook
+(<em class=def id="hookfunctions">hook-functions</em> hook)                            ; the hook's list of functions
+(<em class=def id="hookarity">hook-arity</em> hook)                                ; the hook's arity list: (required optional rest)
+(<em class=def id="hookdocumentation">hook-documentation</em> hook)                        ; the hook's documentation string
+(<em class=def id="hookapply">hook-apply</em> hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
 </pre>
 
 <p>A hook holds a list of functions.  When something interesting happens,
@@ -3562,12 +3567,12 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 
 
 <pre class="indented">
-  (<em class=def id="procedurename">procedure-name</em> proc)
-  (<em class=def id="proceduresource">procedure-source</em> proc)
-  (<em class=def id="procedurearity">procedure-arity</em> proc)
-  (<em class=def id="proceduredocumentation">procedure-documentation</em> proc)
-  (<em class=def id="proceduresetter">procedure-setter</em> proc)
-  (procedure-environment proc)
+(<em class=def id="procedurename">procedure-name</em> proc)
+(<em class=def id="proceduresource">procedure-source</em> proc)
+(<em class=def id="procedurearity">procedure-arity</em> proc)
+(<em class=def id="proceduredocumentation">procedure-documentation</em> proc)
+(<em class=def id="proceduresetter">procedure-setter</em> proc)
+(procedure-environment proc)
 </pre>
 
 <p>procedure-source, procedure-arity, procedure-setter, procedure-documentation, and help provide a look into a
@@ -3852,13 +3857,13 @@ are:
 </p>
 
 <pre class="indented">
-    (with-output-to-string thunk)         ; open a string port as current-output-port, call thunk, return string
-    (with-input-from-string string thunk) ; open string as current-input-port, call thunk
-    (call-with-output-string proc)        ; open a string port, apply proc to it, return string
-    (call-with-input-string string proc)  ; open string as current-input-port, apply proc to it
-    (open-output-string)                  ; open a string output port
-    (get-output-string port)              ; return output accumulated in the string output port
-    (open-input-string string)            ; open a string input port reading string
+(with-output-to-string thunk)         ; open a string port as current-output-port, call thunk, return string
+(with-input-from-string string thunk) ; open string as current-input-port, call thunk
+(call-with-output-string proc)        ; open a string port, apply proc to it, return string
+(call-with-input-string string proc)  ; open string as current-input-port, apply proc to it
+(open-output-string)                  ; open a string output port
+(get-output-string port)              ; return output accumulated in the string output port
+(open-input-string string)            ; open a string input port reading string
 </pre>
 
 <pre class="indented">
@@ -4032,17 +4037,17 @@ show the continuation stack.
 </p>
 
 <pre class="indented">
-    (let ()
-      (define (a1 a) (+ a #\c))
-      (define (a2 b) (+ b (a1 b)))
-      (define (a3 c) (+ c (a2 c)))
-      (catch #t
-        (lambda () (a3 1))
-        (lambda args (<em class=red>stacktrace</em> *error-info*))))
+(let ()
+  (define (a1 a) (+ a #\c))
+  (define (a2 b) (+ b (a1 b)))
+  (define (a3 c) (+ c (a2 c)))
+  (catch #t
+    (lambda () (a3 1))
+    (lambda args (<em class=red>stacktrace</em> *error-info*))))
 
--&gt;    (a1 (a . 1))
-      (a2 (b . 1))
-      (a3 (c . 1))
+(a1 (a . 1))
+(a2 (b . 1))
+(a3 (c . 1))
 </pre>
 
 <p>
@@ -4101,23 +4106,23 @@ There's a s7 lint checker: lint.scm in the Snd tarball.
 <p><em class=def id="trace">trace</em> and untrace provide tracing:
 </p>
 <pre class="indented">
-    (define (hiho arg) 
-      (if (&gt; arg 0) 
-          (+ 1 (hiho (- arg 1))) 
-          0))
+(define (hiho arg) 
+  (if (&gt; arg 0) 
+      (+ 1 (hiho (- arg 1))) 
+      0))
 
-    (<em class=red>trace</em> hiho)
+(<em class=red>trace</em> hiho)
 
-    (hiho 3)
+(hiho 3)
 
-    [hiho 3]
-     [hiho 2]
-      [hiho 1]
-       [hiho 0]
-        0
-       1
-      2
-     3
+[hiho 3]
+ [hiho 2]
+  [hiho 1]
+   [hiho 0]
+    0
+   1
+  2
+ 3
 </pre>
 
 <p>trace adds a function to the list of functions being traced, and untrace removes it.
@@ -4133,14 +4138,14 @@ traced function call (that is, global to the function, not the function's local 
 </p>
 
 <pre class="indented">
-    (define (hiho a b c) (* a b c))
-    (set! (hook-functions *trace-hook*) (list (lambda (f args) (format #t "sum of args: ~A~%" (apply + args)))))
-    (trace hiho)
-    (hiho 2 3 4)
+(define (hiho a b c) (* a b c))
+(set! (hook-functions *trace-hook*) (list (lambda (f args) (format #t "sum of args: ~A~%" (apply + args)))))
+(trace hiho)
+(hiho 2 3 4)
 
-    [hiho 2 3 4]
-    sum of args: 9
-     24
+[hiho 2 3 4]
+sum of args: 9
+ 24
 </pre>
 
 
@@ -4263,10 +4268,10 @@ I need to know where something unexpected happened.  So:
 <p>To return no value from a reader, use <code>(values)</code>.
 </p>
 <pre class="indented">
-    &gt; (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
-    ((#\; . #&lt;closure&gt;))
-    &gt; (+ 1 #;(* 2 3) 4)
-    5
+&gt; (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
+((#\; . #&lt;closure&gt;))
+&gt; (+ 1 #;(* 2 3) 4)
+5
 </pre>
 
 
@@ -4325,18 +4330,18 @@ Here we scan the symbol table looking for any function that doesn't have documen
 </p>
 
 <pre class="indented">
-       (let ((st (<em class=red>symbol-table</em>)))
-         (do ((i 0 (+ i 1))) 
-             ((= i (vector-length st)))
-           (let ((lst (vector-ref st i)))
-             (for-each 
-               (lambda (sym)
-       	         (if (<em class=red>defined?</em> sym)
-	             (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-	               (if (and (procedure? val)
-			        (string=? "" (procedure-documentation val)))
-		           (format #t "~A " sym)))))
-               lst))))
+(let ((st (<em class=red>symbol-table</em>)))
+  (do ((i 0 (+ i 1))) 
+      ((= i (vector-length st)))
+    (let ((lst (vector-ref st i)))
+      (for-each 
+        (lambda (sym)
+          (if (<em class=red>defined?</em> sym)
+              (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+                (if (and (procedure? val)
+                         (string=? "" (procedure-documentation val)))
+                    (format #t "~A " sym)))))
+        lst))))
 </pre>
 
 <p>But geez how boring can something be?  Nobody cares about procedure-documentation!
@@ -4410,33 +4415,35 @@ where we only feed in a few constants, I bet it segfaults!
 <div class="separator"></div>
 
 <pre class="indented">
-    (<b><em class=def id="morallyequalp">morally-equal?</em></b> x y)
+(<b><em class=def id="morallyequalp">morally-equal?</em></b> x y)
 </pre>
 
-<p>morally-equal? is a technical term taken from higher math where it is usually
-followed by an exercise for the reader. 
+<p>
 Say we want to check that two different computations came to the same result, and that result might
 involve circular structures.  Will equal? be our friend?
 </p>
+
 <pre class="indented">
-    &gt; (equal? 2 2.0)
-    #f
-    &gt; (= 2 2.0)
-    #t
-    &gt; (let ((x +nan.0)) (equal? x x))
-    #t                ; s7 returns #f here
-    &gt; (let ((x +nan.0)) (= x x))
-    #f
+&gt; (equal? 2 2.0)
+#f
+&gt; (let ((x +nan.0)) (equal? x x))
+#f
+&gt; (equal? .1 1/10)
+#f    
+&gt; (= .1 1/10)
+#f
+&gt; (= 0.0 0+1e-300i)
+#f
 </pre>
 
-<p>No! Who can predict <code>(equal? +nan.0 +nan.0)</code>?
-Or <code>(= .1 1/10)</code>?
+<p>No! We need an equality check that ignores epsilonic differences in real and
+complex numbers, and knows that NaNs are equal for all practical purposes.
 Leaving aside numbers, 
 closed ports are not equal, yet nothing can be done with them.
-And #() is not equal to #2d().  And two closures are never equal, even if their
+#() is not equal to #2d().  And two closures are never equal, even if their
 arguments, environments, and bodies are equal.
 Since there might be circles, it is not easy to write
-a replacement equality checker in Scheme.
+a replacement for equal? in Scheme.
 So, in s7, if one thing is basically the same as
 some other thing, they satisfy the function morally-equal?.
 </p>
@@ -4444,13 +4451,19 @@ some other thing, they satisfy the function morally-equal?.
 <pre class="indented">
 &gt; (morally-equal? 2 2.0)
 #t
-&gt; (morally-equal? 1/0 1/0)
+&gt; (morally-equal? 1/0 1/0)      ; NaN
 #t
 &gt; (morally-equal? .1 1/10)
-#t                              ; floating-point epsilon here is 1.0e-16 or thereabouts
+#t                              ; floating-point epsilon here is 1.0e-15 or thereabouts
+&gt; (morally-equal? 0.0 1e-300)
+#t
 &gt; (morally-equal? (lambda () #f) (lambda () #f))
 #t
 </pre>
+
+<p>I'd be happy to add *float-epsilon* or some such constant, if anyone needs 
+to control it.  Maybe this function should be named equal!?.
+</p>
 
 
 
@@ -4974,10 +4987,10 @@ we can maintain backwards compatibility via:
 </p>
 
 <pre class="indented">
-    (define exact? rational?)
-    (define (inexact? x) (not (rational? x)))
-    (define inexact-&gt;exact rationalize) ; or floor
-    (define (exact-&gt;inexact x) (* x 1.0))
+(define exact? rational?)
+(define (inexact? x) (not (rational? x)))
+(define inexact-&gt;exact rationalize) ; or floor
+(define (exact-&gt;inexact x) (* x 1.0))
 </pre>
 
 <p>#i and #e are also useless because you can
@@ -4985,12 +4998,12 @@ have any number after, for example, #b:
 </p>
 
 <pre class="indented">
-    &gt; #b1.1
-    1.5
-    &gt; #b1e2
-    4.0
-    &gt; #o17.5+i
-    15.625+1i
+&gt; #b1.1
+1.5
+&gt; #b1e2
+4.0
+&gt; #o17.5+i
+15.625+1i
 </pre>
 
 <p>Speaking of #b and friends, what should <code>(string-&gt;number "#xffff" 2)</code> return?
@@ -5078,28 +5091,28 @@ have any number after, for example, #b:
 </p>
 
 <pre class="indented">
-   remove the exact/inexact distinction including #i and #e
-   remove `#(...) support (quasiquoted vector constants)
-   remove *-ci functions
-   remove string&lt;-&gt;list and vector&lt;-&gt;list
-   change string-&gt;symbol to symbol
-   remove call-with-values and its friends
-   remove char-ready?
-   change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
-   use @ as the exponent marker if base &gt; 10
-   remove the "d", "f", "s", and "l" exponent markers (leaving "e" and "E")
+remove the exact/inexact distinction including #i and #e
+remove `#(...) support (quasiquoted vector constants)
+remove *-ci functions
+remove string&lt;-&gt;list and vector&lt;-&gt;list
+change string-&gt;symbol to symbol
+remove call-with-values and its friends
+remove char-ready?
+change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
+use @ as the exponent marker if base &gt; 10
+remove the "d", "f", "s", and "l" exponent markers (leaving "e" and "E")
 </pre>
 
 <p>and perhaps:
 </p>
 
 <pre class="indented">
-   remove even? and odd?
-   remove the 4-way cxxxxr functions
-   add file?, directory?, and delete-file
-   remove string-length, vector-length, and hash-table-size.
-   remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
-     set-car!|cdr!, and set-current-output|input|error-port.
+remove even? and odd?
+remove the 4-way cxxxxr functions
+add file?, directory?, and delete-file
+remove string-length, vector-length, and hash-table-size.
+remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
+       set-car!|cdr!, and set-current-output|input|error-port.
 </pre>
 </div>
 
@@ -5179,19 +5192,19 @@ compile-time flags:
 </p>
 
 <pre class="indented">
-    HAVE_STDBOOL_H                 1 if you have stdbool.h
-    HAVE_SYS_PARAM_H               1 if you're running FreeBSD
-    HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
-    HAVE_LSTAT                     1 if you want the load function to be able to tell a normal file from a directory
-    SIZEOF_VOID_P                  8 (default) or 4, but it's not a big deal (a minor optimization of a switch statement)
+HAVE_STDBOOL_H                 1 if you have stdbool.h
+HAVE_SYS_PARAM_H               1 if you're running FreeBSD
+HAVE_GETTIMEOFDAY              1 if you want timing info from the GC (default is 0)
+HAVE_LSTAT                     1 if you want the load function to be able to tell a normal file from a directory
+SIZEOF_VOID_P                  8 (default) or 4, but it's not a big deal (a minor optimization of a switch statement)
 
-    WITH_GMP                       1 if you want multiprecision arithmetic (requires gmp, mpfr, and mpc, default is 0)
-    WITH_COMPLEX                   1 if your compiler supports complex numbers
-    HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
-    S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
-    WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
+WITH_GMP                       1 if you want multiprecision arithmetic (requires gmp, mpfr, and mpc, default is 0)
+WITH_COMPLEX                   1 if your compiler supports complex numbers
+HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
+S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
+WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
                                    if someone defends these exponent markers, ask him to read 1l11+11l1i
-    WITH_OPTIMIZATION              1 (default) to turn on some elaborate internal optimizations
+WITH_OPTIMIZATION              1 (default) to turn on some elaborate internal optimizations
 </pre>
 
 <p>See the comment at the start of s7.c for more information about these switches.

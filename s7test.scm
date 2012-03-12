@@ -7912,6 +7912,18 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (set! (ht2 1) ht1)
       (test ((ht2 1) 1) 'hi)))
 
+(let ((ht1 (make-hash-table)))
+   (set! (ht1 1/0) "NaN!")
+   (let ((nan 1/0))
+      (test (ht1 nan) "NaN!")
+      (set! (ht1 nan) 0)
+      (test (ht1 nan) 0)
+      (test (object->string ht1) "#<hash-table (nan.0 . 0)>")))
+
+
+;;; TODO: test inf, ratios, complex (+inf and nan), close floats [can this wander?]
+
+
 (test (hash-table?) 'error)
 (test (hash-table? 1 2) 'error)
 

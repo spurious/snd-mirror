@@ -21460,11 +21460,23 @@ static s7_Int hash_loc(s7_scheme *sc, s7_pointer key)
       return(loc);
 
     case T_REAL:
-      loc = (s7_Int)floor(s7_real(key));
-      if (loc < 0) loc = -loc;
-      return(loc);
-      
-      /* ratio or complex -- use type */
+      {
+	s7_Double val;
+	val = s7_real(key);
+	if ((isinf(val)) || (is_NaN(val)))
+	  loc = 0;
+	else
+	  {
+	    loc = (s7_Int)floor(s7_real(key));
+	    if (loc < 0) loc = -loc;
+	  }
+	return(loc);
+      }
+
+    case T_RATIO:
+      return(s7_denominator(key));
+
+      /* complex -- use type */
 
     case T_SYMBOL:
       return(symbol_hash(key));
@@ -21574,6 +21586,7 @@ static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   #define HASH_FLOAT_EPSILON 1.0e-12
   /* give the equality check some room.  We only get here if key is T_REAL.
+   *   also inf == inf and nan == nan
    */
 
   if (type(key) == T_REAL)
@@ -21588,9 +21601,23 @@ static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
       loc &= hash_len;
       keyval = real(key);
 
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (fabs(s7_real(fcdr(x)) - keyval) < HASH_FLOAT_EPSILON)
-	  return(car(x));
+      if (is_NaN(keyval))
+	{
+	  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+	    if (is_NaN(s7_real(fcdr(x))))
+	      return(car(x));
+	}
+      else
+	{
+	  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+	    {
+	      s7_Double val;
+	      val = s7_real(fcdr(x));
+	      if ((val == keyval) ||   /* inf case */
+		  (fabs(val - keyval) < HASH_FLOAT_EPSILON))
+		return(car(x));
+	    }
+	}
     }
   return(sc->NIL);
 }
