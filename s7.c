@@ -1757,6 +1757,7 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static bool is_pws(s7_pointer obj);
 static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
+static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 
 static bool tracing, trace_all;
 
@@ -9586,6 +9587,10 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  if (is_null(p)) return(s7_make_ratio(sc, numerator(x) + (num_a * denominator(x)), denominator(x)));
 	  den_a = denominator(x);
 	  num_a = numerator(x) + (num_a * denominator(x));
+	  /* this can overflow:
+	   *   (+ 100000 1/142857142857140) -> -832205957599110323/28571428571428
+	   * what to do??
+	   */
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto ADD_INTEGERS;
 	  goto ADD_RATIOS;
@@ -21442,6 +21447,7 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 static s7_Int hash_loc(s7_scheme *sc, s7_pointer key)
 {
   s7_Int loc = 0;
+  s7_Double val;
   const char *c; 
 
   switch (type(key))
@@ -21455,28 +21461,51 @@ static s7_Int hash_loc(s7_scheme *sc, s7_pointer key)
       return(loc);
 
     case T_INTEGER:
-      loc = s7_integer(key);
+      loc = integer(key);
       if (loc < 0) return(-loc);
       return(loc);
 
+      /* there is a problem here if we hash mixed numeric types and hash_equal uses morally-equal?
+       *    the latter thinks 1/2 and 0.5 are the same, but the ratio is at location 2, and the
+       *    float is at location 0 -- how we match will depend on the order!  But we want morally-equal?
+       *    for floats and complex numbers.  And given a structure as a key, that involves morally-equal?
+       *    for ints and ratios: (list 1/2) will match (list 0.5) even if 1/2 doesn't match 0.5!
+       *    It seems nuts to add yet another equality checker -- what to do??
+       *
+       * and even in the equal? case, we need round, not floor in the real/complex cases else
+       *    1-eps doesn't match 1.0, but 1+eps does.  And what if round(val) is too big for s7_Int?
+       *    lrint rounds and returns a long int, but it raises FE_INVALID if val is too large.
+       *    so, we should check before floor that val < S7_LONG_MAX and > MIN (or use LL versions) --
+       *    this is becoming messy and perhaps too slow.
+       */
     case T_REAL:
-      {
-	s7_Double val;
-	val = s7_real(key);
-	if ((isinf(val)) || (is_NaN(val)))
-	  loc = 0;
-	else
-	  {
-	    loc = (s7_Int)floor(s7_real(key));
-	    if (loc < 0) loc = -loc;
-	  }
-	return(loc);
-      }
+      val = real(key);
+      if ((isinf(val)) || (is_NaN(val)))
+	loc = 0;
+      else
+	{
+	  loc = (s7_Int)floor(val);
+	  if (loc < 0) loc = -loc;
+	}
+      
+      /* fprintf(stderr, "%f -> %lld\n", val, loc); */
+      /* currently 1e300 goes to most-negative-fixnum! -> 0 after logand size, I hope */
+
+      return(loc);
 
     case T_RATIO:
-      return(s7_denominator(key));
+      return(denominator(key));
 
-      /* complex -- use type */
+    case T_COMPLEX:
+      val = real_part(key);
+      if ((isinf(val)) || (is_NaN(val)))
+	loc = 0;
+      else
+	{
+	  loc = (s7_Int)floor(val);
+	  if (loc < 0) loc = -loc;
+	}
+      return(loc);
 
     case T_SYMBOL:
       return(symbol_hash(key));
@@ -21516,7 +21545,7 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
   loc = hash_loc(sc, key) & hash_len;
 
   for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-    if (s7_is_equal(sc, fcdr(x), key))
+    if (s7_is_equal(sc, fcdr(x), key)) /* ideally s7_is_morally_equal_1 but see comment above */
       return(car(x));
   return(sc->NIL);
 }
@@ -21530,12 +21559,12 @@ static s7_pointer hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
       s7_pointer x;
       unsigned int hash_len, loc;
       hash_len = (int)hash_table_length(table) - 1;
-      keyval = s7_integer(key);
+      keyval = integer(key);
       if (keyval < 0)
 	loc = (-keyval) & hash_len;
       else loc = keyval & hash_len;
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (s7_integer(fcdr(x)) == keyval)
+	if (integer(fcdr(x)) == keyval)
 	  return(car(x));
     }
   return(sc->NIL);
@@ -21604,7 +21633,7 @@ static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
       if (is_NaN(keyval))
 	{
 	  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	    if (is_NaN(s7_real(fcdr(x))))
+	    if (is_NaN(real(fcdr(x))))
 	      return(car(x));
 	}
       else
@@ -21612,7 +21641,7 @@ static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
 	  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	    {
 	      s7_Double val;
-	      val = s7_real(fcdr(x));
+	      val = real(fcdr(x));
 	      if ((val == keyval) ||   /* inf case */
 		  (fabs(val - keyval) < HASH_FLOAT_EPSILON))
 		return(car(x));
@@ -21778,8 +21807,6 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 	    case T_COMPLEX:
 	      hash_table_function(table) = hash_equal;
 	      break;
-	      /* TODO: surely complex hash should be like float?
-	       */
 
 	    case T_CHARACTER:
 	      if (hash_table_function(table) != hash_char) 
@@ -25176,10 +25203,6 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 }
 
 
-
-
-static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
-
 static bool hash_tables_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   s7_pointer *lists;
@@ -25392,7 +25415,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  return(integer(x) == integer(y));
 
 	case T_RATIO:
-	  return(false);
+	  return(fabs(integer(x) - fraction(y)) <= FLOATING_EPSILON);
 
 	case T_REAL:
 	  return((!is_NaN(real(y))) &&
@@ -25402,7 +25425,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  return((!is_NaN(real_part(y))) &&
 		 (!is_NaN(imag_part(y))) &&
 		 (fabs(integer(x) - real_part(y)) <= FLOATING_EPSILON) &&
-		 (fabs(imag_part(y) <= FLOATING_EPSILON)));
+		 (fabs(imag_part(y)) <= FLOATING_EPSILON));
 
 	default:
 	  return(false);
@@ -25420,11 +25443,10 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 #endif
 	  
 	case T_INTEGER:
-	  return(false);
+	  return(fabs(fraction(x) - integer(y)) <= FLOATING_EPSILON);
 
 	case T_RATIO:
-	  return((numerator(x) == numerator(y)) &&
-		 (denominator(x) == denominator(y)));
+	  return(fabs(fraction(x) - fraction(y)) <= FLOATING_EPSILON);
 
 	case T_REAL:
 	  return((!is_NaN(real(y))) &&
@@ -25434,7 +25456,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  return((!is_NaN(real_part(y))) &&
 		 (!is_NaN(imag_part(y))) &&
 		 (fabs(fraction(x) - real_part(y)) <= FLOATING_EPSILON) &&
-		 (fabs(imag_part(y) <= FLOATING_EPSILON)));
+		 (fabs(imag_part(y)) <= FLOATING_EPSILON));
 
 	default:
 	  return(false);
@@ -25468,12 +25490,16 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 		  (fabs(real(x) - real(y)) <= FLOATING_EPSILON)));
 
 	case T_COMPLEX:
+	  if (is_NaN(real(x)))
+	    return((is_NaN(real_part(y))) &&
+		   (fabs(imag_part(y)) <= FLOATING_EPSILON));
+
 	  return((!is_NaN(real(x))) &&
 		 (!is_NaN(real_part(y))) &&
 		 (!is_NaN(imag_part(y))) &&
 		 ((real(x) == real_part(y)) ||
 		  (fabs(real(x) - real_part(y)) <= FLOATING_EPSILON)) &&
-		 (fabs(imag_part(y) <= FLOATING_EPSILON)));
+		 (fabs(imag_part(y)) <= FLOATING_EPSILON));
 
 	default:
 	  return(false);
@@ -25494,13 +25520,13 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  return((!is_NaN(real_part(x))) &&
 		 (!is_NaN(imag_part(x))) &&
 		 (fabs(real_part(x) - integer(y)) <= FLOATING_EPSILON) &&
-		 (fabs(imag_part(x) <= FLOATING_EPSILON)));
+		 (fabs(imag_part(x)) <= FLOATING_EPSILON));
 
 	case T_RATIO:
 	  return((!is_NaN(real_part(x))) &&
 		 (!is_NaN(imag_part(x))) &&
 		 (fabs(real_part(x) - fraction(y)) <= FLOATING_EPSILON) &&
-		 (fabs(imag_part(x) <= FLOATING_EPSILON)));
+		 (fabs(imag_part(x)) <= FLOATING_EPSILON));
 
 	case T_REAL:
 	  if ((is_NaN(real_part(x))) ||
@@ -25509,7 +25535,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	    return(false);
 	  return(((real_part(x) == real(y)) ||
 		  (fabs(real_part(x) - real(y)) <= FLOATING_EPSILON)) &&
-		 (fabs(imag_part(x) <= FLOATING_EPSILON)));
+		 (fabs(imag_part(x)) <= FLOATING_EPSILON));
 
 	case T_COMPLEX:
 	  if (is_NaN(real_part(x)))
@@ -54176,10 +54202,10 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "list?",                     g_is_list,                  1, 0, false, H_is_list);
   s7_define_safe_function(sc, "pair?",                     g_is_pair,                  1, 0, false, H_is_pair);
   s7_define_safe_function(sc, "cons",                      g_cons,                     2, 0, false, H_cons);
+
   s7_define_safe_function(sc, "car",                       g_car,                      1, 0, false, H_car);
   s7_define_safe_function(sc, "cdr",                       g_cdr,                      1, 0, false, H_cdr);
   /* possibly a bad idea -- macro expander has built-in cdr */
-
   s7_define_function(sc, "set-car!",                       g_set_car,                  2, 0, false, H_set_car);
   s7_define_function(sc, "set-cdr!",                       g_set_cdr,                  2, 0, false, H_set_cdr);
   s7_define_safe_function(sc, "caar",                      g_caar,                     1, 0, false, H_caar);
@@ -54210,6 +54236,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "cddddr",                    g_cddddr,                   1, 0, false, H_cddddr);
   s7_define_safe_function(sc, "cddadr",                    g_cddadr,                   1, 0, false, H_cddadr);
   s7_define_safe_function(sc, "cdddar",                    g_cdddar,                   1, 0, false, H_cdddar);
+
   s7_define_safe_function(sc, "assq",                      g_assq,                     2, 0, false, H_assq);
   s7_define_safe_function(sc, "assv",                      g_assv,                     2, 0, false, H_assv);
   s7_define_function(sc, "assoc",                          g_assoc,                    2, 1, false, H_assoc);

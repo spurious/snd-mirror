@@ -2544,6 +2544,7 @@ of the table sizes, or the order in which the key/value pairs were added.
 <div class="indented">
 <p>If the hash key is a float (a non-rational number), hash-table-ref uses <a href="#morallyequalp">morally-equal?</a>.
 Otherwise, for example, you could use NaN as a key, but then never be able to access it!
+</p>
 </div>
 
 </blockquote>
@@ -4461,8 +4462,8 @@ some other thing, they satisfy the function morally-equal?.
 #t
 </pre>
 
-<p>I'd be happy to add *float-epsilon* or some such constant, if anyone needs 
-to control it.  Maybe this function should be named equal!?.
+<p>I'd be happy to add *float-epsilon* or some such variable, if anyone needs 
+it.  Maybe this function should be named "equal!?".
 </p>
 
 
@@ -5067,6 +5068,7 @@ have any number after, for example, #b:
   (define (include file) (load file (current-environment)))
 
   (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
+
 <!--
   ;; and why no blob-&gt;string, blob-for-each, exact-integer-expt, euclidean-rationalize ...?
   modules: include-ci import export
