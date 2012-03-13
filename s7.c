@@ -9296,10 +9296,12 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 
 static s7_Double round_per_R5RS(s7_Double x) 
 {
-  s7_Double fl = floor(x);
-  s7_Double ce = ceil(x);
-  s7_Double dfl = x - fl;
-  s7_Double dce = ce - x;
+  s7_Double fl, ce, dfl, dce;
+
+  fl = floor(x);
+  ce = ceil(x);
+  dfl = x - fl;
+  dce = ce - x;
   
   if (dfl > dce) return(ce);
   if (dfl < dce) return(fl);
@@ -21444,10 +21446,20 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_Int hash_loc(s7_scheme *sc, s7_pointer key)
+static int hash_float_location(s7_Double x)
 {
-  s7_Int loc = 0;
-  s7_Double val;
+  if ((isinf(x)) || (is_NaN(x)))
+    return(0);
+
+  if (x < 0.0)
+    return(0.5 - x);
+  return(x + 0.5);
+}
+
+
+static int hash_loc(s7_scheme *sc, s7_pointer key)
+{
+  int loc = 0;
   const char *c; 
 
   switch (type(key))
@@ -21461,60 +21473,34 @@ static s7_Int hash_loc(s7_scheme *sc, s7_pointer key)
       return(loc);
 
     case T_INTEGER:
-      loc = integer(key);
+      loc = (int)integer(key); /* overflow possible! */
       if (loc < 0) return(-loc);
       return(loc);
 
-      /* there is a problem here if we hash mixed numeric types and hash_equal uses morally-equal?
-       *    the latter thinks 1/2 and 0.5 are the same, but the ratio is at location 2, and the
-       *    float is at location 0 -- how we match will depend on the order!  But we want morally-equal?
-       *    for floats and complex numbers.  And given a structure as a key, that involves morally-equal?
-       *    for ints and ratios: (list 1/2) will match (list 0.5) even if 1/2 doesn't match 0.5!
-       *    It seems nuts to add yet another equality checker -- what to do??
-       *
-       * and even in the equal? case, we need round, not floor in the real/complex cases else
-       *    1-eps doesn't match 1.0, but 1+eps does.  And what if round(val) is too big for s7_Int?
-       *    lrint rounds and returns a long int, but it raises FE_INVALID if val is too large.
-       *    so, we should check before floor that val < S7_LONG_MAX and > MIN (or use LL versions) --
-       *    this is becoming messy and perhaps too slow.
-       */
     case T_REAL:
-      val = real(key);
-      if ((isinf(val)) || (is_NaN(val)))
-	loc = 0;
-      else
-	{
-	  loc = (s7_Int)floor(val);
-	  if (loc < 0) loc = -loc;
-	}
-      
-      /* fprintf(stderr, "%f -> %lld\n", val, loc); */
-      /* currently 1e300 goes to most-negative-fixnum! -> 0 after logand size, I hope */
-
-      return(loc);
+      return(hash_float_location(real(key)));
+      /* currently 1e300 goes to most-negative-fixnum! -> 0 after logand size, I hope 
+       *
+       * we need round, not floor for the location calculation in the real/complex cases else
+       *    1-eps doesn't match 1.0, but 1+eps does.  And what if round(val) is too big for int?
+       *    lrint is complex and requires special compiler flags to get any speed (-fno-math-errno).
+       *    all we need is (int)(val+0.5) -- all the other stuff is pointless in this context
+       */
 
     case T_RATIO:
-      return(denominator(key));
+      return(denominator(key)); /* overflow possible */
 
     case T_COMPLEX:
-      val = real_part(key);
-      if ((isinf(val)) || (is_NaN(val)))
-	loc = 0;
-      else
-	{
-	  loc = (s7_Int)floor(val);
-	  if (loc < 0) loc = -loc;
-	}
-      return(loc);
+      return(hash_float_location(real_part(key)));
 
     case T_SYMBOL:
       return(symbol_hash(key));
 
     case T_SYNTAX:
-      return((s7_Int)syntax_opcode(key));
+      return(syntax_opcode(key));
 
     case T_CHARACTER:
-      return((s7_Int)character(key));
+      return(character(key));
 
     case T_VECTOR:
       return(vector_length(key));
@@ -21536,21 +21522,6 @@ static s7_pointer hash_empty(s7_scheme *sc, s7_pointer table, s7_pointer key)
 }
 
 
-static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
-{
-  s7_pointer x;
-  unsigned int hash_len, loc;
-
-  hash_len = (int)hash_table_length(table) - 1;
-  loc = hash_loc(sc, key) & hash_len;
-
-  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-    if (s7_is_equal(sc, fcdr(x), key)) /* ideally s7_is_morally_equal_1 but see comment above */
-      return(car(x));
-  return(sc->NIL);
-}
-
-
 static s7_pointer hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (s7_is_integer(key))
@@ -21558,11 +21529,13 @@ static s7_pointer hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
       s7_Int keyval;
       s7_pointer x;
       unsigned int hash_len, loc;
+
       hash_len = (int)hash_table_length(table) - 1;
       keyval = integer(key);
       if (keyval < 0)
 	loc = (-keyval) & hash_len;
       else loc = keyval & hash_len;
+
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (integer(fcdr(x)) == keyval)
 	  return(car(x));
@@ -21577,6 +21550,7 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
     {
       s7_pointer x;
       int hash_len, loc;
+
       hash_len = (int)hash_table_length(table) - 1;
       loc = string_hash(key);
       if (loc == 0)
@@ -21611,42 +21585,100 @@ static s7_pointer hash_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
 }
 
 
-static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
+#define HASH_FLOAT_EPSILON 1.0e-12
+
+static s7_pointer hash_float_1(s7_scheme *sc, s7_pointer table, int loc, s7_Double keyval)
 {
-  #define HASH_FLOAT_EPSILON 1.0e-12
-  /* give the equality check some room.  We only get here if key is T_REAL.
-   *   also inf == inf and nan == nan
-   */
-
-  if (type(key) == T_REAL)
+  s7_pointer x;
+  bool look_for_nan;
+  look_for_nan = is_NaN(keyval);
+  
+  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
     {
-      s7_Double keyval;
-      s7_pointer x;
-      int hash_len, loc;
-
-      hash_len = (int)hash_table_length(table) - 1;
-      loc = (int)floor(real(key));
-      if (loc < 0) loc = -loc;
-      loc &= hash_len;
-      keyval = real(key);
-
-      if (is_NaN(keyval))
+      s7_pointer y;
+      y = fcdr(x);
+      if (type(y) == T_REAL) /* we're possibly called from hash_equal, so keys might not be T_REAL */
 	{
-	  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	    if (is_NaN(real(fcdr(x))))
-	      return(car(x));
-	}
-      else
-	{
-	  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+	  s7_Double val;
+	  val = real(y);
+	  if (look_for_nan)
 	    {
-	      s7_Double val;
-	      val = real(fcdr(x));
+	      if (is_NaN(val))
+		return(car(x));
+	    }
+	  else
+	    {
 	      if ((val == keyval) ||   /* inf case */
 		  (fabs(val - keyval) < HASH_FLOAT_EPSILON))
 		return(car(x));
 	    }
 	}
+    }
+  return(sc->NIL);
+}
+
+
+static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  /* give the equality check some room.  We only get here if key is T_REAL.
+   *   also inf == inf and nan == nan
+   */
+  s7_Double keyval;
+  int hash_len, loc;
+
+  hash_len = (int)hash_table_length(table) - 1;
+  keyval = real(key);
+  loc = hash_float_location(keyval) & hash_len;
+
+  return(hash_float_1(sc, table, loc, keyval));
+}
+
+
+static s7_pointer hash_complex_1(s7_scheme *sc, s7_pointer table, int loc, s7_pointer key)
+{
+  s7_pointer x;
+  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+    {
+      s7_pointer y;
+      y = fcdr(x);
+      if ((type(y) == T_COMPLEX) &&
+	  (s7_is_morally_equal_1(sc, y, key, NULL)))
+	return(car(x));
+    }
+  return(sc->NIL);
+}
+
+
+static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  /* there is a problem here if we hash mixed numeric types and floats are compared using float-epsilon.
+   *   to remain consistent even in mixed cases, we need to trap the floats here before s7_is_equal.
+   *   complex numbers are similar.
+   *
+   * morally-equal? can't be used here unless we use it even in hash_int and other such cases.
+   *   otherwise, what matches depends on what else is in the hash, and on the order in which 
+   *   they were placed there.  But I think the key 1 should not match the key 1.0+epsilon,
+   *   and similarly for ratios, yet NaN should definitely match NaN (else it's a nutty no-op
+   *   to use such a key). 
+   */
+  s7_pointer x;
+  unsigned int hash_len, loc;
+
+  hash_len = (int)hash_table_length(table) - 1;
+  loc = hash_loc(sc, key) & hash_len;
+
+  switch (type(key))
+    {
+    case T_REAL:
+      return(hash_float_1(sc, table, loc, real(key)));
+
+    case T_COMPLEX:
+      return(hash_complex_1(sc, table, loc, key));
+      
+    default:
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+	if (s7_is_equal(sc, fcdr(x), key))
+	  return(car(x));
     }
   return(sc->NIL);
 }
@@ -21703,13 +21735,13 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table (size 511)) returns a new hash table"
-  s7_Int size = DEFAULT_HASH_TABLE_SIZE;
+  int size = DEFAULT_HASH_TABLE_SIZE;
 
   if (is_not_null(args))
     {
       if (s7_is_integer(car(args)))
 	{
-	  size = s7_integer(car(args));
+	  size = (int)s7_integer(car(args));
 	  if (size <= 0)
 	    return(s7_out_of_range_error(sc, "make-hash-table size,", 0, car(args), "should be a positive integer"));
 	  if (size > MAX_LIST_LENGTH)
@@ -21742,8 +21774,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
     cdr(x) = value;
   else
     {
-      s7_Int hash_len, loc;
-      int typ;
+      int hash_len, loc, typ;
 
       hash_len = hash_table_length(table) - 1;
       loc = hash_loc(sc, key) & hash_len;
@@ -21789,7 +21820,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 	  switch (typ)
 	    {
 	    case T_STRING:
-	      if (hash_table_function(table) != hash_string) 
+	      if (hash_table_function(table) != hash_string)
 		hash_table_function(table) = hash_equal;
 	      break;
 	      
@@ -21809,12 +21840,12 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 	      break;
 
 	    case T_CHARACTER:
-	      if (hash_table_function(table) != hash_char) 
+	      if (hash_table_function(table) != hash_char)
 		hash_table_function(table) = hash_equal;
 	      break;
 
 	    case T_SYMBOL:
-	      if (hash_table_function(table) != hash_symbol) 
+	      if (hash_table_function(table) != hash_symbol)
 		hash_table_function(table) = hash_equal;
 	      break;
 
@@ -21823,6 +21854,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 	      break;
 	    }
 	}
+
       x = cons_unchecked(sc, cons(sc, key, value), hash_table_elements(table)[loc]);
       hash_table_elements(table)[loc] = x;
       fcdr(x) = key;
@@ -21982,7 +22014,7 @@ static s7_pointer hash_list_copy(s7_scheme *sc, s7_pointer obj)
 static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
 {
   /* this has to copy not only the lists but the cons's in the lists! */
-  s7_Int i, len;
+  int i, len;
   s7_pointer new_hash;
   s7_pointer *old_lists, *new_lists;
   int gc_loc;
@@ -22008,7 +22040,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
 
 static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
 {
-  s7_Int i, len;
+  int i, len;
   s7_pointer new_hash;
   s7_pointer *old_lists;
   int gc_loc;
@@ -22049,7 +22081,7 @@ static s7_pointer g_hash_table_iterate(s7_scheme *sc, s7_pointer args)
 {
   /* internal func pointed to by sc->HASH_TABLE_ITERATE */
   s7_pointer lst, loc, table;
-  s7_Int vloc, len;
+  int vloc, len;
   s7_pointer *elements;
 
   lst = caar(args);
@@ -22064,7 +22096,7 @@ static s7_pointer g_hash_table_iterate(s7_scheme *sc, s7_pointer args)
   elements = hash_table_elements(table);
 
   loc = caddar(args);
-  for (vloc = integer(loc) + 1; vloc < len;  vloc++)
+  for (vloc = (int)(integer(loc) + 1); vloc < len;  vloc++)
     {
       s7_pointer x;
       x = elements[vloc];
@@ -22124,7 +22156,7 @@ static s7_pointer g_is_hash_table_iterator(s7_scheme *sc, s7_pointer args)
 
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci)
 {
-  s7_Int i, len, bufsize = 0, gc_iter;
+  int i, len, bufsize = 0, gc_iter;
   bool too_long = false;
   char **elements = NULL;
   char *buf;

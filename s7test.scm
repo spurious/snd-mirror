@@ -8410,6 +8410,64 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (test (ht1 nan) 0)
       (test (object->string ht1) "#<hash-table (nan.0 . 0)>")))
 
+(let ((ht1 (make-hash-table)))
+   (set! (ht1 1.0) "1.0")
+   (let ((eps 9e-16)
+	 (bigeps 1e-11))
+      (test (ht1 1.0) "1.0")
+
+      (set! (ht1 (+ 1.0 eps)) "1.0+eps")
+      (test (ht1 1.0) "1.0+eps")
+
+      (set! (ht1 (- 1.0 eps)) "1.0-eps")
+      (test (ht1 1.0) "1.0-eps")
+
+      (set! (ht1 (+ 1.0 bigeps)) "1.0+bigeps")
+      (test (ht1 1.0) "1.0-eps")
+
+      (set! (ht1 (- 1.0 bigeps)) "1.0-bigeps")
+      (test (ht1 1.0) "1.0-eps")
+
+      (set! (ht1 1) "1")
+      (test (ht1 1) "1")
+      (test (ht1 1.0) "1.0-eps")
+
+      (set! (ht1 1.0) "1.0")
+      (set! (ht1 (+ 1.0 eps)) "1.0")
+      (test (ht1 1.0) "1.0") 
+
+      (set! (ht1 1+1e-200i) "1+noi")
+      (test (ht1 1+1e-200i) "1+noi")
+      (test (ht1 1.0) "1.0")
+      (test (ht1 1+1e-16i) "1+noi")
+
+      (set! (ht1 1-1e-200i) "1-noi")
+      (test (ht1 1-1e-200i) "1-noi")
+      (test (ht1 1.0) "1.0")
+
+      (set! (ht1 1e300) "1e300")
+      (test (ht1 1e300) "1e300")
+
+      (set! (ht1 2e300) "2e300")
+      (test (ht1 2e300) "2e300")
+      (test (ht1 1e300) "1e300")
+      ))
+
+(let ((ht1 (make-hash-table)))
+   (set! (ht1 1.0) "1.0")
+   (set! (ht1 (+ 1.0 9e-16)) "1.0+eps")
+   (set! (ht1 1) "1")
+   (test (ht1 1.0) "1.0+eps")
+
+   (set! (ht1 1.0) "1.0")
+   (set! (ht1 (+ 1.0 9e-16)) "1.0+eps")
+   (test (ht1 1.0) "1.0+eps")
+   )
+
+(let ((ht1 (make-hash-table)))
+  (set! (ht1 1) "1")
+  (set! (ht1 1.0) "1.0")
+  (test (ht1 1) "1"))
 
 ;;; TODO: test inf, ratios, complex (+inf and nan), close floats [can this wander?]
 ;;;   rat->rat is exact (or int) until say a float is added, then we use morally-equal -- is this trouble?
@@ -8727,6 +8785,28 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 ;;; some implicit index tests
+
+(let ()
+  (define (make-iterator obj)
+    (let ((ctr 0))
+      (lambda ()
+	(and (< ctr (length obj))
+	     (let ((val (obj ctr)))
+	       (set! ctr (+ ctr 1))
+	       val)))))
+
+  (let ((v1 (list 1 2 3 4)) 
+	(v2 (vector 1.0 2.0))
+	(v3 (string #\1 #\2 #\3)))
+    (let ((obj1 (make-iterator v1))
+	  (obj2 (make-iterator v2))
+	  (obj3 (make-iterator v3)))
+      (test (list (obj1) (obj2) (obj3)) (list 1 1.0 #\1))
+      (test (list (obj1) (obj2) (obj3)) (list 2 2.0 #\2))
+      (test (list (obj1) (obj2) (obj3)) (list 3 #f #\3))
+      (test (list (obj1) (obj2) (obj3)) (list 4 #f #f))
+      (test (list (obj1) (obj2) (obj3)) (list #f #f #f))
+      )))
 
 (test (#(#(1 2) #(3 4)) 1 1) 4)
 (test (#("12" "34") 0 1) #\2)

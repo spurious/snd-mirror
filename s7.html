@@ -2065,6 +2065,20 @@ length, copy, reverse, fill!, map and for-each are generic in this sense (map al
 2
 </pre>
 
+<p>Here is a function that returns an iterator.  It works for anything that
+accepts an integer argument (e.g. list, string, vector, ...):
+</p>
+
+<pre class="indented">
+(define (make-iterator obj)
+  (let ((ctr 0))
+    (lambda ()
+      (and (&lt; ctr (length obj))
+	   (let ((val (obj ctr)))
+	     (set! ctr (+ ctr 1))
+	     val)))))
+</pre>
+
 <p>
 string-&gt;list and vector-&gt;list are <code>(map values object)</code>.
 Their inverses are (and always have been) equally trivial.
