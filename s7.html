@@ -1438,7 +1438,7 @@ when passed that object.
 		   (if (rec? obj)
 		       (vector-set! (ref obj) 1 val)))))))
 
-#|
+
 (let ((hi (make-rec 32 '(1 2))))
   (set! (rec-b hi) 123)
   (format #t "rec: ~A ~A" 
@@ -1446,11 +1446,10 @@ when passed that object.
 	  (rec-b hi)))
 
 "rec: 32 123"
-|#
 </pre>
 
 <p>Currently make-type takes some optional arguments to specify other actions.  
-I might change this to be an alist of (operation function) pairs, but for now,
+I may change this (see <a href="#environments">environments</a>).  For now,
 the optional (optkey) arguments are: print equal getter setter length name copy reverse fill.
 Except for the 'name' argument, these are functions.
 When these functions are called, the argument representing the object is
@@ -1673,67 +1672,9 @@ point
 &gt; (map + (list 1 2 3) (float-vector 1 2 3)) ; we have a getter and length, so map works
 (2.0 4.0 6.0)
 </pre>
-</div>
 
-
-<div class="indented">
-
-<p>I seem to be using the same construct over and over; a begin to hold the names defined in the outer
-environment, a let to hold internal stuff, and set!s to give the names values.  It's a clumsy, but 
-simple way for multiple functions to share a closure.
-Maybe it rates a macro:
+<p>See also make-adjustable-vector in s7test.scm.
 </p>
-
-<pre>
-(define-macro (blet* names bindings . body)
-  `(begin
-     ,@(map (lambda (name)
-	      `(define ,name #f))
-	    names)
-     (let* ,bindings
-	,@body)))
-
-(blet* (make-adjustable-vector adjustable-vector? adjust-vector)
-
-       ((av-type (<em class=red>make-type</em> :name "adjustable-vector"
-			    :getter (lambda (obj index)
-				      ((car obj) index))
-			    :setter (lambda (obj index value)
-				      (set! ((car obj) index) value))
-		            :length (lambda (obj)
-			              (vector-length (car obj)))
-			    :print (lambda (obj)
-				     (object-&gt;string (car obj)))))
-	(av? (car av-type))
-	(make-av (cadr av-type))
-	(av-ref (caddr av-type)))
-
-  (set! make-adjustable-vector (lambda args 
-				 (make-av (list (apply make-vector args)))))
-  (set! adjustable-vector? av?)
-  (set! adjust-vector (lambda* (obj new-length initial-element)
-		        (let* ((new-vector (make-vector new-length initial-element))
-			       (copy-len (min new-length (length obj))))
-			  (do ((i 0 (+ i 1)))
-			      ((= i copy-len))
-			    (set! (new-vector i) (obj i)))
-			  (set! (car (av-ref obj)) new-vector)))))
-
-&gt; (define v (make-adjustable-vector 3 #f))
-v
-
-&gt; v
-#(#f #f #f)
-
-&gt; (set! (v 1) 32.0)
-32.0
-
-&gt; v
-#(#f 32.0 #f)
-
-&gt; (adjust-vector v 10 #f)
-#(#f 32.0 #f #f #f #f #f #f #f #f)
-</pre>
 </div>
 
 </blockquote>
@@ -2049,6 +1990,8 @@ not currently considered to be a procedure, so <code>(procedure? "hi")</code> is
 accept anything that apply can handle, so
 <code>(map #(0 1) '(1 0))</code> is '(1 0).  (On the first call to map in this case, you get the result of
 <code>(#(0 1) 1)</code> and so on).
+string-&gt;list and vector-&gt;list are <code>(map values object)</code>.
+Their inverses are (and always have been) equally trivial.
 </p>
 
 
@@ -2060,7 +2003,6 @@ length, copy, reverse, fill!, map and for-each are generic in this sense (map al
 <pre class="indented">
 &gt; (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4))
 (5 -3 9)
-
 &gt; (length "hi")
 2
 </pre>
@@ -2080,53 +2022,51 @@ accepts an integer argument (e.g. list, string, vector, ...):
 </pre>
 
 <p>
-string-&gt;list and vector-&gt;list are <code>(map values object)</code>.
-Their inverses are (and always have been) equally trivial.
-Here's an FFT procedure that accepts lists or vectors, or any similar object:
+Here's a generic FFT:
 </p>
 
-<pre>
-        (define* (cfft! data n (dir 1)) ; (complex data)
-          (if (not n) (set! n (<em class=red>length</em> data)))
-          (do ((i 0 (+ i 1))
-               (j 0))
-              ((= i n))
-            (if (&gt; j i)
-        	(let ((temp (data j)))
-        	  (set! (data j) (data i))
-        	  (set! (data i) temp)))
-            (let ((m (/ n 2)))
-              (do () 
-        	  ((or (&lt; m 2) (&lt; j m)))
-        	(set! j (- j m))
-        	(set! m (/ m 2)))
-              (set! j (+ j m))))
-          (let ((ipow (floor (log n 2)))
-        	(prev 1))
-            (do ((lg 0 (+ lg 1))
-        	 (mmax 2 (* mmax 2))
-        	 (pow (/ n 2) (/ pow 2))
-        	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
-        	((= lg ipow))
-              (let ((wpc (exp theta))
-        	    (wc 1.0))
-        	(do ((ii 0 (+ ii 1)))
-        	    ((= ii prev))
-        	  (do ((jj 0 (+ jj 1))
-        	       (i ii (+ i mmax))
-        	       (j (+ ii prev) (+ j mmax)))
-        	      ((&gt;= jj pow))
-        	    (let ((tc (* wc (data j))))
-        	      (set! (data j) (- (data i) tc))
-        	      (set! (data i) (+ (data i) tc))))
-        	  (set! wc (* wc wpc)))
-        	(set! prev mmax))))
-          data)
-        
-        &gt; (cfft! (list 0.0 1+i 0.0 0.0))
-        (1+1i -1+1i -1-1i 1-1i)
-        &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
-        #(1+1i -1+1i -1-1i 1-1i)
+<pre class="indented">
+(define* (cfft! data n (dir 1)) ; (complex data)
+  (if (not n) (set! n (<em class=red>length</em> data)))
+  (do ((i 0 (+ i 1))
+       (j 0))
+      ((= i n))
+    (if (&gt; j i)
+	(let ((temp (data j)))
+	  (set! (data j) (data i))
+	  (set! (data i) temp)))
+    (let ((m (/ n 2)))
+      (do () 
+	  ((or (&lt; m 2) (&lt; j m)))
+	(set! j (- j m))
+	(set! m (/ m 2)))
+      (set! j (+ j m))))
+  (let ((ipow (floor (log n 2)))
+	(prev 1))
+    (do ((lg 0 (+ lg 1))
+	 (mmax 2 (* mmax 2))
+	 (pow (/ n 2) (/ pow 2))
+	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
+	((= lg ipow))
+      (let ((wpc (exp theta))
+	    (wc 1.0))
+	(do ((ii 0 (+ ii 1)))
+	    ((= ii prev))
+	  (do ((jj 0 (+ jj 1))
+	       (i ii (+ i mmax))
+	       (j (+ ii prev) (+ j mmax)))
+	      ((&gt;= jj pow))
+	    (let ((tc (* wc (data j))))
+	      (set! (data j) (- (data i) tc))
+	      (set! (data i) (+ (data i) tc))))
+	  (set! wc (* wc wpc)))
+	(set! prev mmax))))
+  data)
+
+&gt; (cfft! (list 0.0 1+i 0.0 0.0))
+(1+1i -1+1i -1-1i 1-1i)
+&gt; (cfft! (vector 0.0 1+i 0.0 0.0))
+#(1+1i -1+1i -1-1i 1-1i)
 </pre>
 </div>
 
@@ -2567,7 +2507,6 @@ Otherwise, for example, you could use NaN as a key, but then never be able to ac
 
 
 
-
 <div class="header" id="environments"><h4>environments</h4></div>
 
 
@@ -2935,7 +2874,12 @@ v1
 class-3
 &gt; ((class-3 'multiply) class-3 10)
 180                               ; (* 10 (* 1 2 3) (+ 1 2))
+
+
 </pre>
+
+<p>Perhaps make-type should be built on this?
+</p>
 </div>
 
 

@@ -22150,9 +22150,6 @@ static s7_pointer g_is_hash_table_iterator(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
-/*  are hash-table-iterators ever equal? -- they are closures
- */
-
 
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci)
 {
@@ -22161,7 +22158,6 @@ static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file
   char **elements = NULL;
   char *buf;
   s7_pointer iterator, iter_loc;
-  
   
   /* if hash is a member of ci, just print its number
    * (let ((ht (hash-table '(a . 1)))) (hash-table-set! ht 'b ht))
@@ -23784,11 +23780,11 @@ In each case, the argument is the value of the object, not the object itself."
 }
 
 /* here it would be neat if we allowed any keywords, and those not handled explicitly could
- *    be added to the methods list under the key-word->symbol name.  define* without the need
- *    to state in advance what keys -- undeclared key would be bound in the func env under its
- *    name and value -- define+?  -- the extra args would be in an alist accessible under
- *    the rest arg name?  
- * and this stuff should all be built on environments, like the object system in s7.html
+ *    be added to the methods list under the key-word->symbol name.  :rest arg to current define*
+ *    undeclared key would be bound in the new object's env under its
+ *    name and value.  Then new methods could be added or changed at any time, as
+ *    in the object system in s7.html (and it could use make-type perhaps?)
+ * but we need :s|getter, :print=:display or :object->string, :equal=:equal?, :name
  */
 
 
