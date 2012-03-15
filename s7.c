@@ -1743,7 +1743,8 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(s7_scheme *sc, const char *file);
-static const char *type_name(s7_pointer arg);
+static const char *type_name(s7_pointer arg, int article);
+enum {NO_ARTICLE, DEFINITE_ARTICLE, INDEFINITE_ARTICLE};
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int len);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
@@ -17447,7 +17448,7 @@ static char *describe_type_bits(s7_pointer obj)
   buf = (char *)calloc(512, sizeof(char));
   snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
-	   type_name(obj),
+	   type_name(obj, NO_ARTICLE),
 	   typeflag(obj),
 	   is_procedure(obj) ?          " procedure" : "",
 	   is_marked(obj) ?             " gc-marked" : "",
@@ -23562,7 +23563,7 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 			     make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
 			     make_protected_string(sc, object_types[tag].name),
 			     x,
-			     make_protected_string(sc, type_name(x)))));
+			     make_protected_string(sc, type_name(x, INDEFINITE_ARTICLE)))));
     }
   return(sc->F); /* someone has completely messed up */
 }
@@ -26819,80 +26820,138 @@ static void trace_return(s7_scheme *sc)
 
 /* -------- error handlers -------- */
 
-static const char *type_name(s7_pointer arg)
+static const char *type_name(s7_pointer arg, int article)
 {
+  static char *typnam = NULL;
+  static const char *articles[3] =      {"", "the ", "a "};
+  static const char *nils[3] =          {"nil",            "the null list",      "nil"};
+  static const char *untypeds[3] =      {"untyped",        "the untyped",        "untyped"};
+  static const char *booleans[3] =      {"boolean",        "the boolean",        "boolean"};
+  static const char *strings[3] =       {"string",         "the string",         "a string"};
+  static const char *symbols[3] =       {"symbol",         "the symbol",         "a symbol"};
+  static const char *syntaxes[3] =      {"syntax",         "the syntactic",      "syntactic"};
+  static const char *pairs[3] =         {"pair",           "the pair",           "a pair"};
+  static const char *closures[3] =      {"closure",        "the closure",        "a closure"};
+  static const char *gotos[3] =         {"goto",           "the call-with-exit goto", "a goto (from call-with-exit)"};
+  static const char *continuations[3] = {"continuation",   "the continuation",   "a continuation"};
+  static const char *functions[3] =     {"function",       "the function",       "a function"};
+  static const char *macros[3] =        {"macro",          "the macro",          "a macro"};
+  static const char *bacros[3] =        {"bacro",          "the bacro",          "a bacro"};
+  static const char *vectors[3] =       {"vector",         "the vector",         "a vector"};
+  static const char *c_pointers[3] =    {"C pointer",      "the raw C pointer",  "a raw C pointer"};
+  static const char *hooks[3] =         {"hook",           "the hook",           "a hook"};
+  static const char *counters[3] =      {"internal counter", "the internal counter", "an internal counter"};
+  static const char *slots[3] =         {"slot",           "the slot (variable binding)", "a slot (variable binding)"};
+  static const char *environments[3] =  {"environment",    "the environment",    "an environment"};
+  static const char *characters[3] =    {"character",      "the character",      "a character"};
+  static const char *catches[3] =       {"catch",          "the catch",          "a catch"};
+  static const char *dynamic_winds[3] = {"dynamic-wind",   "the dynamic-wind",   "a dynamic-wind"};
+  static const char *hash_tables[3] =   {"hash-table",     "the hash-table",     "a hash-table"};
+  static const char *integers[3] =      {"integer",        "the integer",        "an integer"};
+  static const char *big_integers[3] =  {"big integer",    "the big integer",    "a big integer"};
+  static const char *ratios[3] =        {"ratio",          "the ratio",          "a ratio"};
+  static const char *big_ratios[3] =    {"big ratio",      "the big ratio",      "a big ratio"};
+  static const char *reals[3] =         {"real",           "the real",           "a real"};
+  static const char *big_reals[3] =     {"big real",       "the big real",       "a big real"};
+  static const char *complexes[3] =     {"complex number", "the complex number", "a complex number"};
+  static const char *big_complexes[3] = {"big complex number", "the big complex number", "a big complex number"};
+
   switch (type(arg))
     {
-    case T_NIL:          return("nil");
-    case T_UNTYPED:      return("untyped");
-    case T_BOOLEAN:      return("boolean");
-    case T_STRING:       return("string");
-    case T_SYMBOL:       return("symbol");
-    case T_SYNTAX:       return("syntax");
-    case T_PAIR:         return("pair");
-    case T_CLOSURE:      return("closure");
-    case T_CLOSURE_STAR: return("closure*");
-    case T_GOTO:         return("goto");
-    case T_CONTINUATION: return("continuation");
+    case T_NIL:          return(nils[article]);
+    case T_UNTYPED:      return(untypeds[article]);
+    case T_BOOLEAN:      return(booleans[article]);
+    case T_STRING:       return(strings[article]);
+    case T_SYMBOL:       return(symbols[article]);
+    case T_SYNTAX:       return(syntaxes[article]);
+    case T_PAIR:         return(pairs[article]);
+    case T_CLOSURE:      
+    case T_CLOSURE_STAR: return(closures[article]);
+    case T_GOTO:         return(gotos[article]);
+    case T_CONTINUATION: return(continuations[article]);
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
-    case T_C_FUNCTION:   return("function");
-    case T_C_MACRO:      return("macro");
-    case T_C_POINTER:    return("c-pointer");
-    case T_CHARACTER:    return("character");
-    case T_VECTOR:       return("vector");
-    case T_BACRO:        return("bacro");
-    case T_MACRO:        return("macro");
-    case T_CATCH:        return("catch");
-    case T_DYNAMIC_WIND: return("dynamic-wind");
-    case T_HASH_TABLE:   return("hash-table");
-    case T_C_OBJECT:     return(object_types[object_type(arg)].name);
-    case T_HOOK:         return("hook");
-    case T_COUNTER:      return("counter");
-    case T_SLOT:         return("slot");
-    case T_ENVIRONMENT:  return("environment");
+    case T_C_FUNCTION:   return(functions[article]);
+    case T_MACRO:
+    case T_C_MACRO:      return(macros[article]);
+    case T_C_POINTER:    return(c_pointers[article]);
+    case T_CHARACTER:    return(characters[article]);
+    case T_VECTOR:       return(vectors[article]);
+    case T_BACRO:        return(bacros[article]);
+    case T_CATCH:        return(catches[article]); /* are these 2 possible? */
+    case T_DYNAMIC_WIND: return(dynamic_winds[article]);
+    case T_HASH_TABLE:   return(hash_tables[article]);
+    case T_HOOK:         return(hooks[article]);
+    case T_COUNTER:      return(counters[article]);
+    case T_SLOT:         return(slots[article]);
+    case T_ENVIRONMENT:  return(environments[article]);
 
-    case T_INTEGER:      return("integer");
-    case T_RATIO:        return("ratio");
-    case T_REAL:         return("real");
-    case T_COMPLEX:      return("complex number"); /* "a complex" doesn't sound right */
+    case T_INTEGER:      return(integers[article]);
+    case T_RATIO:        return(ratios[article]);
+    case T_REAL:         return(reals[article]);
+    case T_COMPLEX:      return(complexes[article]);
+    case T_BIG_INTEGER:  return(big_integers[article]);
+    case T_BIG_RATIO:    return(big_ratios[article]);
+    case T_BIG_REAL:     return(big_reals[article]);
+    case T_BIG_COMPLEX:  return(big_complexes[article]);
 
-    case T_BIG_INTEGER:  return("big integer");
-    case T_BIG_RATIO:    return("big ratio");
-    case T_BIG_REAL:     return("big real");
-    case T_BIG_COMPLEX:  return("big complex number");
+    case T_C_OBJECT:
+      {
+	int len;
+	const char *name;
+	name = object_types[object_type(arg)].name;
+	len = safe_strlen(name) + 8;
+	if (typnam) free(typnam);
+	typnam = (char *)calloc(len, sizeof(char));
+	snprintf(typnam, len, "%s%s", articles[article], name);
+	return(typnam);
+      }
 
     case T_INPUT_PORT:
       {
+	int len;
+	const char *name;
 	if (is_file_port(arg))
-	  return("input file port");
-	if (is_string_port(arg))
-	  return("input string port");
-	return("input port");
+	  name = "input file port";
+	else
+	  {
+	    if (is_string_port(arg))
+	      name = "input string port";
+	    else name = "input port";
+	  }
+	len = safe_strlen(name) + 8;
+	if (typnam) free(typnam);
+	typnam = (char *)calloc(len, sizeof(char));
+	if (article == INDEFINITE_ARTICLE)
+	  snprintf(typnam, len, "an %s", name);
+	else snprintf(typnam, len, "%s%s", articles[article], name);
+	return(typnam);
       }
 
     case T_OUTPUT_PORT:
       {
+	int len;
+	const char *name;
 	if (is_file_port(arg))
-	  return("output file port");
-	if (is_string_port(arg))
-	  return("output string port");
-	return("output port");
+	  name = "output file port";
+	else
+	  {
+	    if (is_string_port(arg))
+	      name = "output string port";
+	    else name = "output port";
+	  }
+	len = safe_strlen(name) + 8;
+	if (typnam) free(typnam);
+	typnam = (char *)calloc(len, sizeof(char));
+	if (article == INDEFINITE_ARTICLE)
+	  snprintf(typnam, len, "an %s", name);
+	else snprintf(typnam, len, "%s%s", articles[article], name);
+	return(typnam);
       }
     }
   return("messed up object");
-}
-
-
-static bool is_vowel(const char *name)
-{
-  return((name[0] == 'a') || 
-	 (name[0] == 'e') || 
-	 (name[0] == 'i') || 
-	 (name[0] == 'o') || 
-	 (name[0] == 'u'));
 }
 
 
@@ -26906,9 +26965,8 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
       list_set(sc, sc->WRONG_TYPE_ARG_INFO, 1, make_protected_string(sc, caller));
       list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, make_integer(sc, arg_n));
       list_set(sc, sc->WRONG_TYPE_ARG_INFO, 3, arg);
-      list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, (is_vowel(type_name(arg))) ? "n" : ""));
-      list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, type_name(arg)));
-      list_set(sc, sc->WRONG_TYPE_ARG_INFO, 6, make_protected_string(sc, descr));
+      list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, type_name(arg, INDEFINITE_ARTICLE)));
+      list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, descr));
       return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->WRONG_TYPE_ARG_INFO));
 
       /* it's possible to avoid the cell allocations here, but at the cost of memcpy instead --
@@ -26917,9 +26975,8 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
     }
   list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 1, make_protected_string(sc, caller));
   list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 2, arg);
-  list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 3, make_protected_string(sc, (is_vowel(type_name(arg))) ? "n" : ""));
-  list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, type_name(arg)));
-  list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, descr));
+  list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 3, make_protected_string(sc, type_name(arg, INDEFINITE_ARTICLE)));
+  list_set(sc, sc->SIMPLE_WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, descr));
   return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->SIMPLE_WRONG_TYPE_ARG_INFO));
 }
 
@@ -27589,8 +27646,8 @@ static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args)
     return(s7_error(sc, sc->SYNTAX_ERROR, list_2(sc, make_protected_string(sc, "attempt to apply nil to ~S?"), args)));
   return(s7_error(sc, sc->SYNTAX_ERROR, 
 		  list_4(sc, 
-			 make_protected_string(sc, "attempt to apply the ~A ~S to ~S?"), 
-			 make_protected_string(sc, type_name(obj)), obj, args)));
+			 make_protected_string(sc, "attempt to apply ~A ~S to ~S?"), 
+			 make_protected_string(sc, type_name(obj, DEFINITE_ARTICLE)), obj, args)));
 }
 
 
@@ -44246,7 +44303,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto BEGIN;
 	  }
 		
-	case T_CONTINUATION:	                  /* -------- continuation ("call-with-current-continuation") -------- */
+	case T_CONTINUATION:	                  /* -------- continuation ("call/cc") -------- */
 	  call_with_current_continuation(sc);
 	  goto START;
 
@@ -53966,14 +54023,14 @@ s7_scheme *s7_init(void)
   sc->WRONG_TYPE_ARG = make_symbol(sc, "wrong-type-arg");
 
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
-  for (i = 0; i < 7; i++)
+  for (i = 0; i < 6; i++)
     sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR);
-  car(sc->WRONG_TYPE_ARG_INFO) = s7_make_permanent_string("~A argument ~D, ~S, is a~A ~A but should be ~A");
+  car(sc->WRONG_TYPE_ARG_INFO) = s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A");
 
   sc->SIMPLE_WRONG_TYPE_ARG_INFO = sc->NIL;
-  for (i = 0; i < 6; i++)
+  for (i = 0; i < 5; i++)
     sc->SIMPLE_WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->SIMPLE_WRONG_TYPE_ARG_INFO, T_PAIR);
-  car(sc->SIMPLE_WRONG_TYPE_ARG_INFO) = s7_make_permanent_string("~A argument, ~S, is a~A ~A but should be ~A");
+  car(sc->SIMPLE_WRONG_TYPE_ARG_INFO) = s7_make_permanent_string("~A argument, ~S, is ~A but should be ~A");
 
   sc->WRONG_NUMBER_OF_ARGS = make_symbol(sc, "wrong-number-of-args");
   sc->FORMAT_ERROR = make_symbol(sc, "format-error");

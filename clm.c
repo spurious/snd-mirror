@@ -3075,7 +3075,7 @@ bool mus_wave_train_p(mus_any *ptr)
 typedef struct {
   mus_any_class *core;
   int loc, size;
-  bool zdly, line_allocated;
+  bool zdly, line_allocated, filt_allocated;
   mus_float_t *line;
   int zloc, zsize;
   mus_float_t xscl, yscl, yn1;
@@ -3189,6 +3189,7 @@ static int free_delay(mus_any *gen)
   if (ptr) 
     {
       if ((ptr->line) && (ptr->line_allocated)) clm_free(ptr->line);
+      if ((ptr->filt) && (ptr->filt_allocated)) mus_free(ptr->filt);
       clm_free(ptr);
     }
   return(0);
@@ -3356,6 +3357,8 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
       gen->line_allocated = true;
     }
   gen->zloc = line_size - size;
+  gen->filt = NULL;
+  gen->filt_allocated = false;
   return((mus_any *)gen);
 }
 
@@ -3882,22 +3885,21 @@ static mus_any_class FILTERED_COMB_CLASS = {
 
 mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line, int line_size, mus_interp_t type, mus_any *filt)
 {
-  if (filt)
+  dly *fc;
+  fc = (dly *)mus_make_comb(scaler, size, line, line_size, type);
+  if (fc)
     {
-      dly *fc;
-      fc = (dly *)mus_make_comb(scaler, size, line, line_size, type);
-      if (fc)
+      fc->core = &FILTERED_COMB_CLASS;
+      if (filt)
+	fc->filt = filt;
+      else 
 	{
-	  fc->core = &FILTERED_COMB_CLASS;
-	  fc->filt = filt;
-	  return((mus_any *)fc);
+	  fc->filt = mus_make_one_zero(1.0, 0.0);
+	  fc->filt_allocated = true;
 	}
-      else return(NULL);
+      return((mus_any *)fc);
     }
-  return(mus_make_comb(scaler, size, line, line_size, type));
-  /* TODO: doesn't this mean mus_run sees a null filter above? 
-   *    (let ((gen (make-filtered-comb .4 5))) (filtered-comb gen 1.0)) -> ;filtered-comb argument 1...should be a filtered-comb filter
-   */
+  else return(NULL);
 }
 
 

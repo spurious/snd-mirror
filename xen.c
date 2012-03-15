@@ -1915,7 +1915,6 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
   XEN_DEFINE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
   XEN_DEFINE_PROCEDURE("directory?",          g_file_is_directory_w,  1, 0, 0, H_file_is_directory);
-  XEN_EVAL_C_STRING("(define file-is-directory? directory?)");    /* backwards compatibility: */
   XEN_DEFINE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
   XEN_DEFINE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
   XEN_DEFINE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
@@ -1928,24 +1927,8 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
   XEN_DEFINE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
 
-#if 0
-  /* backwards compatibility (guile hook functions) -- these have been moved to snd11.scm */
-  XEN_EVAL_C_STRING("(define (hook-empty? hook) (null? (hook-functions hook)))");
-  XEN_EVAL_C_STRING("(define (reset-hook! hook) (set! (hook-functions hook) '()))");
-  XEN_EVAL_C_STRING("(define (run-hook . args) (hook-apply (car args) (cdr args)))");
-  XEN_EVAL_C_STRING("(define hook->list hook-functions)");
-  XEN_EVAL_C_STRING("(define* (add-hook! hook func (at-end #f)) \n\
-                       (set! (hook-functions hook) \n\
-                             (if (not at-end) \n\
-                                (cons func (hook-functions hook)) \n\
-                                (append (hook-functions hook) (list func)))))");
-  XEN_EVAL_C_STRING("(define (remove-hook! hook func) \n\
-                       (set! (hook-functions hook)\n\
-	                     (let loop ((l (hook-functions hook))\n\
-		                        (result '()))\n\
-	                       (cond ((null? l) (reverse! result))\n\
-		                     ((eq? func (car l)) (loop (cdr l) result))\n\
-		                     (else (loop (cdr l) (cons (car l) result)))))))");
+#if (!XEN_DISABLE_DEPRECATED)
+  XEN_EVAL_C_STRING("(define file-is-directory? directory?)");    /* backwards compatibility: */
 #endif
 
   /* these three to replace add-hook!, reset-hook!, and remove-hook! */

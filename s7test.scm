@@ -8436,6 +8436,29 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (set! (ht1 (+ 1.0 eps)) "1.0")
       (test (ht1 1.0) "1.0") 
 
+      (set! (ht1 -1.0) "-1.0")
+      (test (ht1 -1.0) "-1.0")
+
+      (set! (ht1 (+ -1.0 eps)) "-1.0+eps")
+      (test (ht1 -1.0) "-1.0+eps")
+
+      (set! (ht1 (- -1.0 eps)) "-1.0-eps")
+      (test (ht1 -1.0) "-1.0-eps")
+
+      (set! (ht1 (+ -1.0 bigeps)) "-1.0+bigeps")
+      (test (ht1 -1.0) "-1.0-eps")
+
+      (set! (ht1 (- -1.0 bigeps)) "-1.0-bigeps")
+      (test (ht1 -1.0) "-1.0-eps")
+
+      (set! (ht1 1) "-1")
+      (test (ht1 1) "-1")
+      (test (ht1 -1.0) "-1.0-eps")
+
+      (set! (ht1 -1.0) "-1.0")
+      (set! (ht1 (+ -1.0 eps)) "-1.0")
+      (test (ht1 -1.0) "-1.0") 
+
       (set! (ht1 1+1e-200i) "1+noi")
       (test (ht1 1+1e-200i) "1+noi")
       (test (ht1 1.0) "1.0")
@@ -20885,6 +20908,14 @@ abs     1       2
 (test (let ((x 1)) (define* (hi (a (+ x "hi"))) a) (let ((x 32)) (hi))) 'error)
 (test (let ((x 1)) (define-macro* (ho (a (+ x "hi"))) `(+ x ,a)) (let ((x 32)) (ho))) 'error)
 
+(let ()
+  (define-macro (add a . b)
+    `(if (null? ',b)
+	 ,a
+	 (+ ,a (add ,@b))))
+  (test (add 1 2 3) 6)
+  (test (add 1 (add 2 3) 4) 10))
+
 ;; define-macro* default arg expr does not see definition-time closure:
 (test (let ((mac #f))
 	(let ((a 32))
@@ -21477,7 +21508,8 @@ abs     1       2
 
 
 #|
-;;; TODO: procedure-environment is a mess but it's hard to test
+;;; procedure-environment is a mess but it's hard to test mainly because it's different in different versions of s7
+;;;    and the test macro affects it
 
 (test (let () (define (func3 a b) (+ a b)) (environment->list (procedure-environment func3))) '((b) (a)))
 or is it ((__func__ . func3)) in context?
@@ -21505,12 +21537,6 @@ and setter of pws is either global or ()
 	(lambda (return)
 	  (procedure-environment return)))))
 
-;;; bad English:
-:(procedure-environment quote)
-					;procedure-environment argument, quote, is a syntax but should be a procedure or a macro
-					;    (procedure-environment quote)
-
-;;; but:
 (procedure-environment values) -> global env! (like catch/dynamic-wind it's a procedure)
 
 :(procedure-environment (vct 1 2))

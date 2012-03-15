@@ -3513,9 +3513,7 @@ If it returns " PROC_TRUE ", the sound is not played."
   sdobj = XEN_FALSE;
   sdobj_loc = NOT_A_GC_LOC;
 
-  /* SOMEDAY: extend rest of play args to other cases like play-region */
-
-  
+#if (!SND_DISABLE_DEPRECATED)
   /* backwards compatibility for c-g! */
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define c-g! stop-playing)");
@@ -3528,5 +3526,5 @@ If it returns " PROC_TRUE ", the sound is not played."
 #if HAVE_FORTH
   XEN_EVAL_C_STRING("<'> stop-playing alias c-g!"); 
 #endif
-
+#endif
 }
