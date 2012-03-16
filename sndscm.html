@@ -9222,13 +9222,28 @@ in the all harmonic case, if n=65536,
 4.5547029e-05*i*i + 0.640075398*i gives a peak of 309.9, and
 -4.697190e-05*i*i + 1.357080536*i peaks at 303.6 (n^.515).  If n=131072, 
 2.09440276*i*i + 1.4462367*i peaks at 438.7 (n^.516).
+</p>
+
+<p>
 A good quadratic for each n, in the all harmonics case, 
 is (pi+pi/n)*i*i - i*pi/2.  
 Except for the pi/n term, the rest just marches through the quadrants in order, so this is the
 same as (pi*(((mod(i,4)/2)+(i*i/n)))).
+This is similar to the formula suggested by M. Schroeder, but
+but the addition of the "mod(i,4)/2" term improves its performance.  If N=100, for example, Schroeder's
+peak is 13.49, whereas the mod peak is 11.90.  There are better choices of quadrant than mod(i,4);
+if N=14, the mod(i,4) formula gives a peak of 4.89 (Schroeder's formula's peak is 5.1), 
+but an exhaustive search of all quadrant choices
+finds #(0 0 0 1 3 3 0 1 2 3 1 3 2 3) with a peak of 4.28.  
+Since the search involves approximately 4^n FFTs,
+there's not much hope of going above N=20 or thereabouts.
+I can't see any pattern in the lists of ideal quadrants.
+</p>
+
+<p>
 The corresponding odd harmonics version is (pi+pi/n)*i*i, or slightly better (pi+pi/n)*i*i - i/10.
 These do better as n increases, but I don't think they reach n^.5.  If n=4000000,
-the peak is at 2408.9 (n^.512).  
+the peak is at 2408.9 (n^.512). 
 A linear equation in "i" here is simply phase offset in the sum of sines formula mentioned
 earlier, so given an initial phase of x*i, as x goes from 0 to pi/2, the peak goes from .7245*n to n.
 </p>

@@ -38892,12 +38892,20 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (ceiling 9223372036854775807) 9223372036854775807)
 (num-test (ceiling most-negative-fixnum) most-negative-fixnum)
 (num-test (ceiling most-positive-fixnum) most-positive-fixnum)
+(num-test (ceiling 8922337203685477.9) 8922337203685478)
+
+;;; but unfortunately (ceiling 9223372036854775806.9) => -9223372036854775808
+;;;                   (ceiling 922337203685477580.9)  => 922337203685477632
+;;;                   (ceiling 9223372036854770.9)    => 9223372036854770
+;;;   etc
 
 (if with-bignums
     (begin
       (num-test (ceiling 8388608.0000000005) 8388609)
       (num-test (ceiling 8388609.0000000005) 8388610)
-      (num-test (ceiling 8388607.9999999995) 8388608)))
+      (num-test (ceiling 8388607.9999999995) 8388608)
+      (num-test (ceiling 9223372036854775806.9) 9223372036854775807)
+      ))
 
 (test (= (ceiling (* 111738283365989051/177100989030047175 1.0)) (ceiling 130441933147714940/206745572560704147)) #t)
 (test (= (ceiling (* 114243/80782 114243/80782 1.0)) (ceiling (* 275807/195025 275807/195025))) #f)
@@ -61868,6 +61876,12 @@ but it's the printout that is at fault:
 (num-test (/ (/ (- most-positive-fixnum))) -9223372036854775807)
 (num-test (/(*(/(*)))) 1)
 (num-test (/ 12341234/111 123456789 12341234/111) 1/123456789)
+(num-test (/ 1e63 1e-63) 1e126)
+(num-test (/ 1e154 1e-154) 1e308) ; else inf
+(num-test (/ 1e-200 1e200) 0.0)
+;;; inaccuracies creep in (/ 1e-200 1e123) => 9.8813129168249e-324
+;;; or (/ 10e307 1e309) => 0.0 and (/ 10e308 1e308) => inf
+;;; might be neat to handle these (if exps= just divide mant?
 
 (num-test (/ -0.651381628953465E0 -0.9237050214744277E0) 7.051835962889135018948026610294923703508E-1)
 (num-test (/ 0.5067986732438687E0 0.6260017267692811E0) 8.095803119575965307784422745290898299591E-1)

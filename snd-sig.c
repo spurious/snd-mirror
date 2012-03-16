@@ -6634,392 +6634,78 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 }
 
 
-
-/* -------------------------------------------------------------------------------- */
-
-#define S_fpgrid "fpgrid"
-
-static char *choice_name[4] = {"all", "odd", "even", "prime"};
-
-static void save_peaks(const char *file, int choice, int n, mus_float_t peak, mus_float_t *phases)
+#if HAVE_SCHEME
+static s7_pointer g_phases_get_peak(s7_scheme *sc, s7_pointer args)
 {
-  FILE *ofile;
-  int k;
-  ofile = fopen(file, "a");
-  fprintf(ofile, "%s, %d %f #(", choice_name[choice], n, peak);
-  for (k = 0; k < n - 1; k++) 
-    fprintf(ofile, "%f ", phases[k]);
-  fprintf(ofile, "%f)\n", phases[n - 1]);
-  fclose(ofile);
-}
-
-
-static XEN g_fpgrid(XEN x_choice, XEN x_n, XEN start_phases)
-{
-  int choice, current_choice, n, size, fft_size, hits, big_counter;
-  mus_float_t increment = .01, overall_min, current_min;
-  mus_float_t *initial_phases = NULL;
-  pk_data **choices = NULL;
+  s7_Int choice, i, m, n;
+  int fft_size, fft_mult = 128, n1;
+  s7_pointer phases;
+  s7_pointer *elements;
+  double pi2, mx;
   mus_float_t *rl, *im;
 
-  auto mus_float_t saved_min(int ch, int nn);
-  auto mus_float_t get_peak(mus_float_t *phases);
+  pi2 = M_PI / 2.0;
 
-  mus_float_t saved_min(int ch, int nn)
-  {
-    if (nn <= 128)
-      {
-	switch (ch)
-	  {
-	  case ALL:   return(all_mins[nn - 1]);
-	  case ODD:   return(odd_mins[nn - 1]);
-	  case EVEN:  return(even_mins[nn - 1]);
-	  case PRIME: return(prime_mins[nn - 1]);
-	  }
-      }
-    if (nn == 256) return(min_8[ch]);
-    if (nn == 512) return(min_9[ch]);
-    if (nn == 1024) return(min_10[ch]);
-    if (nn == 2048) return(min_11[ch]);
-    return((mus_float_t)nn);
-  }
+  choice = s7_integer(s7_car(args));
+  n = s7_integer(s7_cadr(args));
+  phases = s7_caddr(args);
+  elements = s7_vector_elements(phases);
 
-  mus_float_t get_peak(mus_float_t *phases)
-  {
-    int i, m;
-    mus_float_t pi2, mx_sin, mx_cos;
-
-    pi2 = M_PI / 2.0;
-    memset((void *)rl, 0, fft_size * sizeof(mus_float_t));
-    memset((void *)im, 0, fft_size * sizeof(mus_float_t));
-
-    for (m = 0; m < n; m++)
-      {
-	int bin;
-	mus_float_t phi;
-	phi = (M_PI * phases[m]) + pi2;
-	if (choice == ALL)
-	  bin = m + 1;
-	else
-	  {
-	    if (choice == ODD)
-	      bin = (m * 2) + 1;
-	    else 
-	      {
-		if (choice == EVEN)
-		  {
-		    bin = m * 2;
-		    if (bin == 0) bin = 1;
-		  }
-		else bin = primes[m];
-	      }
-	  }
-	rl[bin] = cos(phi);
-	im[bin] = sin(phi);
-      }
-
-    mus_fft(rl, im, fft_size, -1);
-    /* real part is sine reconstruction, imaginary part is cosine, we're interested in both! */
-    /*   we could also add and subtract the 2 to get 2 more cases "for free", amp sqrt(2), phase asin(cos(0)/sqrt(2)) */
-    /*   and repeat this with a shift (rotation from i) for 2n other cases */
-    /*   resultant amp is between 0 and 2 (cosine) */
-
-    mx_sin = fabs(rl[0]);
-    mx_cos = fabs(im[0]);
-    for (i = 1; i < fft_size; i++)
-      {
-	mus_float_t mxtemp;
-	mxtemp = fabs(rl[i]);
-	if (mxtemp > mx_sin)
-	  mx_sin = mxtemp;
-	mxtemp = fabs(im[i]);
-	if (mxtemp > mx_cos)
-	  mx_cos = mxtemp;
-      }
-
-    if (mx_sin <= mx_cos)
-      return(mx_sin);
-
-    /* use the cosine case, but make it sine-based with 0.0 initial phase for the fundamental */
-    for (m = 1; m < n; m++)
-      {
-	int bin;
-	if (choice == ALL)
-	  bin = m + 1;
-	else
-	  {
-	    if (choice == ODD)
-	      bin = (m * 2) + 1;
-	    else 
-	      {
-		if (choice == EVEN)
-		  {
-		    bin = m * 2;
-		    if (bin == 0) bin = 1;
-		  }
-		else bin = primes[m];
-	      }
-	  }
-	phases[m] += (0.5 * (bin - 1));
-      }
-
-    return(mx_cos);
-  }
-  
-
-  choice = XEN_TO_C_INT(x_choice);
-  if ((choice < ALL) || (choice > PRIME))
-    choice = ALL;
-
-  n = XEN_TO_C_INT(x_n);
-  
-  size = n - 1;
-  increment = 0.001;
-
-  if (XEN_VECTOR_P(start_phases))
+  if (choice == 0)
+    n1 = n;
+  else 
     {
-      int i;
-      initial_phases = (mus_float_t *)malloc(n * sizeof(mus_float_t));
-      for (i = 0; i < n; i++)
-	initial_phases[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(start_phases, i));
-    }
-  else return(XEN_FALSE);
-
-  overall_min = saved_min(choice, n);
-
-  {
-    int start, n1;
-
-    if (choice == ALL)
-      n1 = n;
-    else
-      {
-	if (choice != PRIME)
-	  n1 = n * 2;
-	else n1 = primes[n];
-      }
-
-    fft_size = (int)pow(2.0, (int)ceil(log(FFT_MULT * n1) / log(2.0)));
-    rl = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
-    im = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
-
-    choices = (pk_data **)calloc(size, sizeof(pk_data *));
-
-    for (start = 0; start < size; start++)
-      {
-	int k;
-	choices[start] = (pk_data *)calloc(1, sizeof(pk_data));
-	choices[start]->phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
-	for (k = 1; k < n; k++)
-	  choices[start]->phases[k] = initial_phases[k];
-      }
-  }
-
-    /* now the initial population has the initial phases */
-
-  current_min = overall_min;
-  current_choice = 0;
-
-  while (true)
-    {
-      int k;
-      mus_float_t peak;
-
-      for (k = 1; k < n; k++)
-	{
-	  mus_float_t phs, orig_incr;
-	  orig_incr = increment;
-
-	  phs = choices[current_choice]->phases[k];
-	  choices[current_choice]->phases[k] += increment;
-	  peak = get_peak(choices[current_choice]->phases);
-	  if (peak >= overall_min)
-	    choices[current_choice]->phases[k] = phs;
-	  else
-	    {
-	      choices[current_choice]->pk = peak;
-	      if (peak < current_min)
-		{
-		  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-		  current_min = peak;
-		}
-	      while (true)
-		{
-		  mus_float_t local_peak;
-		  phs = choices[current_choice]->phases[k];
-		  choices[current_choice]->phases[k] += increment;
-		  local_peak = get_peak(choices[current_choice]->phases);
-		  if (local_peak >= peak)
-		    {
-		      choices[current_choice]->phases[k] = phs;
-		      break;
-		    }
-		  else
-		    {
-		      peak = local_peak;
-		      choices[current_choice]->pk = peak;
-		      if (peak < current_min)
-			{
-			  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-			  current_min = local_peak;
-			}
-		    }
-		}
-	      current_choice++;
-	      if (current_choice >= size) break;
-	    }
-
-	  increment = orig_incr;
-	  phs = choices[current_choice]->phases[k];
-	  choices[current_choice]->phases[k] -= increment;
-	  peak = get_peak(choices[current_choice]->phases);
-	  if (peak >= overall_min)
-	    choices[current_choice]->phases[k] = phs;
-	  else
-	    {
-	      choices[current_choice]->pk = peak;
-	      if (peak < current_min)
-		{
-		  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-		  current_min = peak;
-		}
-	      while (true)
-		{
-		  mus_float_t local_peak;
-		  phs = choices[current_choice]->phases[k];
-		  choices[current_choice]->phases[k] -= increment;
-		  local_peak = get_peak(choices[current_choice]->phases);
-		  if (local_peak >= peak)
-		    {
-		      choices[current_choice]->phases[k] = phs;
-		      break;
-		    }
-		  else
-		    {
-		      peak = local_peak;
-		      choices[current_choice]->pk = peak;
-		      if (peak < current_min)
-			{
-			  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-			  current_min = local_peak;
-			}
-		    }
-		}
-	      current_choice++;
-	      if (current_choice >= size) break;
-	    }
-
-	}
-
-      if (current_choice >= size) 
-	{
-	  overall_min = current_min;
-	  current_choice = 0;
-	  continue;
-	}
-
-      increment *= 0.75;
-      if (increment < .00001) break;
+      if (choice == 3)
+	n1 = primes[n];
+      else n1 = 2 * n;
     }
 
-  /* now try the counter combinations */
-  increment = .0001;
-  current_choice = 0;
-  big_counter = 0;
-  hits = 0;
+  fft_size = (int)pow(2.0, (int)ceil(log(fft_mult * n1) / log(2.0)));
+  rl = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
+  im = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
 
-  while (true)
+  for (m = 0; m < n; m++)
     {
-      int counter;
-      mus_float_t peak;
-
-      for (current_choice = 0; current_choice < size; current_choice++)
+      double phi;
+      int bin;
+      phi = pi2 + M_PI * (s7_real(elements[m]));
+      if (choice == 0)
+	bin = m + 1;
+      else 
 	{
-	  for (counter = 1; counter < 10000; counter++)
+	  if (choice == 1)
+	    bin = 1 + (m * 2);
+	  else
 	    {
-	      int k, bits, cur;
-	      big_counter++;
-	      bits = big_counter << 1;
-	      
-	      for (k = 1; k < n; k++)
+	      if (choice == 2)
 		{
-		  cur = 1 << k;
-		  if (cur > bits) break;
-		  if ((cur & bits) != 0)
-		    choices[current_choice]->phases[k] += increment;
+		  bin = m * 2;
+		  if (bin == 0) bin = 1;
 		}
-	      peak = get_peak(choices[current_choice]->phases);
-	      if (peak < choices[current_choice]->pk)
-		{
-		  hits++;
-		  choices[current_choice]->pk = peak;
-		  if (peak < current_min)
-		    {
-		      save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-		      current_min = peak;
-		    }
-		}
-	      else
-		{
-		  for (k = 1; k < n; k++)
-		    {
-		      cur = 1 << k;
-		      if (cur > bits) break;
-		      if ((cur & bits) != 0)
-			choices[current_choice]->phases[k] -= 2 * increment;
-		    }
-		  peak = get_peak(choices[current_choice]->phases);
-		  if (peak >= choices[current_choice]->pk)
-		    {
-		      for (k = 1; k < n; k++)
-			{
-			  cur = 1 << k;
-			  if (cur > bits) break;
-			  if ((cur & bits) != 0)
-			    choices[current_choice]->phases[k] += increment;
-			}
-		    }
-		  else
-		    {
-		      hits++;
-		      choices[current_choice]->pk = peak;
-		      if (peak < current_min)
-			{
-			  save_peaks("test.data", choice, n, peak, choices[current_choice]->phases);
-			  current_min = peak;
-			}
-		    }
-		}
+	      else bin = primes[m];
 	    }
 	}
+      rl[bin] = cos(phi);
+      im[bin] = sin(phi);
+    }
 
-      overall_min = current_min;
-      if (hits < 3) 
-	{
-	  increment *= 0.75;
-	  big_counter = 0;
-	  if (increment < .00001) break;
-	}
-      hits = 0;
+  mus_fft(rl, im, fft_size, -1);
+  
+  mx = fabs(rl[0]);
+  for (i = 1; i < fft_size; i++)
+    {
+      double tmp;
+      tmp = fabs(rl[i]);
+      if (tmp > mx)
+	mx = tmp;
     }
 
   free(rl);
   free(im);
-  if (initial_phases) free(initial_phases);
 
-  {
-    int i;
-    for (i = 0; i < size; i++)
-      {
-	free(choices[i]->phases);
-	free(choices[i]);
-      }
-    free(choices);
-  }
-
-  fprintf(stderr, "%d %d is done\n", choice, n);
-  return(XEN_FALSE);
+  return(s7_make_real(sc, mx));
 }
+#endif
 
 #endif
 
@@ -7070,7 +6756,6 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
-XEN_ARGIFY_3(g_fpgrid_w, g_fpgrid)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -7117,7 +6802,6 @@ XEN_ARGIFY_3(g_fpgrid_w, g_fpgrid)
 #if HAVE_NESTED_FUNCTIONS
 #define g_find_min_peak_phases_w g_find_min_peak_phases
 #define g_fpsap_w g_fpsap
-#define g_fpgrid_w g_fpgrid
 #endif
 #endif
 
@@ -7171,7 +6855,9 @@ void g_init_sig(void)
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
   XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
-  XEN_DEFINE_PROCEDURE(S_fpgrid, g_fpgrid_w, 3, 0, 0, "");
+#if HAVE_SCHEME
+  XEN_DEFINE_PROCEDURE("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
+#endif
 #endif
 }
 
