@@ -7,18 +7,6 @@
  *   channels can come and go as a play is in progress
  */
 
-/* TODO: how to use (play func) on a multichannel file? 
- *   there is a slot for each chan
- *   add_xen_to_play_list needs a channel number [play has chan and out-chan]
- *     but would it be better to have multiple functions (how to specify chans?) or one function returning a frame?
- *     in the latter case, we'd need a :channels arg to play [this exists, currently only used for zero case?]
- *     but how to parcel out the frame?  (does the 0-case actually work if chans>1?)
- *
- *     use the :channel arg, :wait, and add a separate func for each chan
- */
-
-
-
 /* -------------------------------- per-channel control-panel state -------------------------------- */
 
 typedef struct {

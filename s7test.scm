@@ -10512,6 +10512,7 @@ a2" 3) "132")
 (test (format #f ".~P." 1) "..")
 (test (format #f ".~P." 1.0) "..")
 (test (format #f ".~P." 1.2) ".s.")
+(test (format #f ".~P." 2/3) ".s.")
 (test (format #f ".~P." 2) ".s.")
 (test (format #f ".~p." 1) "..")
 (test (format #f ".~p." 1.0) "..")
@@ -10525,6 +10526,9 @@ a2" 3) "132")
 (test (format #f ".~@p." 1.0) ".y.")
 (test (format #f ".~@p." 1.2) ".ies.")
 (test (format #f ".~@p." 2) ".ies.")
+(test (format #f ".~P." 1.0+i) 'error)
+(test (format #f ".~P." 1/0) ".s.")
+(test (format #f ".~P." (real-part (log 0))) ".s.")
 
 (test (format #f (string #\~ #\a) 1) "1")
 (test (format #f (format #f "~~a") 1) "1")
@@ -10534,6 +10538,15 @@ a2" 3) "132")
 (test (format #f "~f" (/ 1 3)) "1/3") ; hmmm -- should it call exact->inexact?
 (test (format #f "~f" 1) "1")
 (test (format #f "~F" most-positive-fixnum) "9223372036854775807")
+(test (format #f "~,20F" 1e-20) "0.00000000000000000001")
+(test (format #f "~,40F" 1e-40) "0.0000000000000000000000000000000000000001")
+
+;;; the usual troubles here with big floats:
+;;; (format #f "~F" 922337203685477580.9) -> "922337203685477632.000000"
+;;; (format #f "~F" 9223372036854775.9) -> "9223372036854776.000000"
+;;; (format #f "~F" 1e25) -> "10000000000000000905969664.000000"
+;;; or small:
+;;; (format #f "~,30F" 1e-1) -> "0.100000000000000005551115123126"
 
 (if with-bignums
     (begin
@@ -11040,6 +11053,7 @@ a2" 3) "132")
 (test (format #f "~{~A~}" '(1 2 3 . 4)) 'error)
 (test (format #f "~20,vF" 3.14) 'error)
 (test (format #f "~{~C~^ ~}" "hiho") "h i h o")
+(test (format #f "~{~{~C~^ ~}~}" (list "hiho")) "h i h o")
 (test (format #f "~{~A ~}" #(1 2 3 4)) "1 2 3 4 ")
 (test (let ((v (vector 1))) (set! (v 0) v) (format #f "~A" v)) "#1=#(#1#)")
 (test (let ((v (vector 1))) (set! (v 0) v) (format #f "~{~A~}" v)) "#1=#(#1#)")
@@ -38412,6 +38426,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (ash -129876 -1026) -1)
 (num-test (ash -2 -3) -1)
 (num-test (ash -3 -3) -1)
+(num-test (ash -3 3) -24)
 (num-test (ash -31 -100) -1)
 (num-test (ash -31 -20) -1)
 (num-test (ash -31 -60) -1)
@@ -38440,6 +38455,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (ash 2 -2) 0)
 (test (> (ash 1 30) 1) #t)
 (test (> (ash 1 62) 1) #t)
+(test (ash most-positive-fixnum -2) 2305843009213693951)
+(test (ash most-positive-fixnum -62) 1)
+(test (ash (ash most-negative-fixnum -2) 2) most-negative-fixnum)
 
 (do ((i 0 (+ i 1))) 
     ((= i 15)) 

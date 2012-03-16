@@ -6184,10 +6184,9 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 |#
 
 
-;;; TODO: moving spectrum returns freqs in radians, and does not try to find the interpolated peak,
-;;;         so we need another version that returns current freq/amp pairs that can be used directly in oscil
-;;;         cutoff, peaks, freqs, amps -- moving-peaks?
-;;;       This is the main portion of the "pins" instrument (also find-pitch in examp.scm)
+;;; moving spectrum returns freqs in radians, and does not try to find the interpolated peak,
+;;;   so we need another version that returns current freq/amp pairs that can be used directly in oscil
+;;;   This is the main portion of the "pins" instrument (also find-pitch in examp.scm)
 
 
 
