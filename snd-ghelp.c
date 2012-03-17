@@ -344,8 +344,6 @@ void snd_help_append_monospace(const char *text)
   gtk_text_buffer_insert_with_tags_by_name(buf, &pos, text, -1, "monospace", NULL);
 }
 
-/* SOMEDAY: ideally all the code examples would be in monospace
- */
 
 void snd_help_back_to_top(void)
 {

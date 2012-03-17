@@ -11074,6 +11074,8 @@ how long the resultant note will be given an src envelope:
 
 <p>This posts 'msg' in the sound's status area.  The status area is the text widget between the sound's filename and the buttons
 on the right, beneath the graph.  
+If 'snd' is not a currently open sound, the message is sent to the listener, if it is open. 
+If there is no sound or listener, 'msg' is sent to stderr.
 </p>
 <div class="separator"></div>
 

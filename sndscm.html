@@ -6651,24 +6651,14 @@ The result returned by 'thunk' is returned by with-local-hook.
 
 <pre class="indented">
 <em class=def id="html">html</em> obj
-<em class=emdef>?</em> obj
 </pre>
 
-<p>index.scm provides a connection between firefox, mozilla or netscape
+<p>index.scm provides a connection between firefox
 and the Snd documentation.  The index itself is
-built by make-index.scm, then accessed through the functions html and ?.
+built by make-index.scm, then accessed through the function html.
 (html arg), where 'arg' can be a string, a symbol, or a procedure sends the html reader to the corresponding url
 in the Snd documents.
-(? obj) prints out any help it can find for 'obj', and tries to find 'obj' in the documentation.
 </p>
-
-<pre class="indented">
-&gt; (html "open-sound")  ; mozilla starts (if necessary), and goes to the open-sound documentation
-#t
-&gt; (? "open-sound")
-(open-sound filename): open filename (as if opened from File:Open menu option), 
-and return the new sound's index
-</pre>
 
 <div class="seealso">
 see also: &nbsp; <a href="extsnd.html#htmlprogram" onmouseout="UnTip()" onmouseover="Tip('name of html reader')">html-program</a> &nbsp; <a href="extsnd.html#sndhelp" onmouseout="UnTip()" onmouseover="Tip('main Snd help function')">snd-help</a> &nbsp; <a href="extsnd.html#sndurls" onmouseout="UnTip()" onmouseover="Tip('table of Snd documentation urls')">snd-urls</a>

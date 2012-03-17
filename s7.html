@@ -1103,10 +1103,12 @@ By the way, bacros solve part of our original problem:
 start, then only use [+] in our macros.  
 </p>
 
+<!--
 <p>(I know, I know; this entire issue is ridiculous and overblown.  Some Professor got wind
 of it years ago, and his reaction made Chicken Little look like Mr Cool.  Now
 all his buddies have to pretend they care.)
 </p>
+-->
 
 </div>
 
@@ -3959,7 +3961,7 @@ additional info about that error:
 <p>To list all the local bindings from the error outward:
 </p>
 <pre class="indented">
-(do ((e (*error-info* 6) (outer-environment e))) 
+(do ((e (*error-info* 5) (outer-environment e))) 
     ((eq? e (global-environment))) 
   (format #t "~A~%" (environment-&gt;list e)))
 </pre>
@@ -4018,50 +4020,68 @@ show the continuation stack.
 <p>
 See also trace below.  There is a break macro defined in Snd (snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
-<!-- INDEX autoload:autoload -->
+</p>
 
-<em class=def id="autoload">There's</em> yet another hook, 
-<em class=def id="unboundvariablehook">*unbound-variable-hook*</em>, which is calledbefore the error is signalled
-when an unbound variable
-is encountered.
-Its functions take one argument,
-the unbound symbol.  In Snd, this is used to implement autoloading:
+<p>
+<!-- INDEX autoload:autoload -->
+<em class=def id="autoload">If</em> s7 encounters an unbound variable, it calls
+<em class=def id="unboundvariablehook">*unbound-variable-hook*</em> before signalling an error.
+This hook's 
+functions take one argument,
+the unbound symbol.  In Snd, *unbound-variable-hook* is used to implement autoloading:
 </p>
 
 <pre class="indented">
 (set! (hook-functions <em class=red>*unbound-variable-hook*</em>)
   (list (lambda (sym)
-          ;; add your own symbol checks here
           (let ((file (autoload-file (symbol-&gt;string sym))))
             ;; autoload-file is a Snd function that knows where a lot of Snd's Scheme functions are
             (if file (load file))
             (symbol-&gt;value sym))))) ; this will return #&lt;undefined&gt; if we didn't find its source file
 </pre>
-
-<!--
-
-<blockquote>
-<div class="indented">
-<p>Sly evil-doers can subvert this hook to provide something similar to Common Lisp's symbol-macros:
+<p>If any of the *unbound-variable-hook* functions returns something other than #&lt;undefined&gt;, that is
+used as the symbol's (temporary) value.  Otherwise, s7 calls the error handler.
 </p>
+
+<p>There are a lot of thoroughly disreputable ways to take advantage of *unbound-variable-hook*.
+Here are two.  In the first, we can't ever remember how to get the error environment information
+when we're in the REPL, so we tie that action to the question-mark key.  Whenever '?' is typed
+in the listener, the error info is typed out.  This leads inexorably to the second use, a nod
+toward Common Lisp's symbol-macros.  
+</p>
+
 <pre class="indented">
+&gt; (set! (hook-functions *unbound-variable-hook*)
+      (append (hook-functions *unbound-variable-hook*) ; keep existing funcs like autoload
+	      (list 
+	       (lambda (sym) 
+		 (if (eq? sym '?)                       ; here '?' is the thing typed
+		     (do ((e (*error-info* 5) (outer-environment e))) 
+			 ((eq? e (global-environment))) 
+		       (status-report (format #f "~%~A" (environment->list e)) -1))
+                       ;; status-report is a Snd function that (in this case) sends the data to the Snd listener		       
+		     #&lt;undefined&gt;)))))
+(#&lt;closure&gt; #&lt;closure&gt;)
+&gt; (let ((a "hi") (b 2)) (+ a b)) ; hit an error on purpose
+;+ argument 1, "hi", is a string but should be a number
+;    (+ a b)
+&gt; ?
+((a . "hi") (b . 2))   ; ? prints the local variable info at the point of the error
+
 &gt; (set! (hook-functions *unbound-variable-hook*)
     (list (lambda (sym)
             (if (eq? sym 'hiho)
-                (sin (random 1.0))
-                (symbol-&gt;value sym)))))
+                (sin (random 1.0)) ; hiho -> sin of some random number
+                #&lt;undefined&gt;))))
 &lt;closure&gt;
-
 &gt; hiho
 0.46727567824396
-
 &gt; hiho
 0.64985453979392
 </pre>
 
-</div>
-</blockquote>
--->
+
+
 
 <p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  

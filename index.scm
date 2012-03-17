@@ -58,10 +58,11 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 		(snd-print (format #f "no url for ~A?" name))))
 	  (snd-print (format #f "no doc for ~A?" name))))))
 
-
+#|
 (define (? obj)
   "(? obj) prints out any help it can find for obj, and tries to find obj in the docs via firefox, netscape or mozilla"
   (let ((hlp (snd-help obj)))
     (if (string? hlp)
 	(snd-print hlp))
     (html obj)))
+|#

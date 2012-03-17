@@ -110,6 +110,7 @@
       
       (define (where-is func)
 	(let ((addr (symbol->value '__func__ (procedure-environment func))))
+	  ;; this misses scheme-side pws because their environment is (probably) the global env
 	  (if (not (pair? addr))
 	      #f
 	      (cadr addr))))
@@ -140,6 +141,8 @@
        (lambda (symbol-and-file)
 	 (let ((symbol (car symbol-and-file))
 	       (file (cadr symbol-and-file)))
+	   (if (not (file-exists? file))
+	       (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
 	   (set! names (cons (cons symbol file) names))
 	   (if (not (member file places))
 	       (set! places (cons file places)))))
@@ -154,6 +157,10 @@
 	(list 'def-clm-struct "ws.scm")
 	(list 'definstrument "ws.scm")
 	(list 'defgenerator "generators.scm")
+
+	(list 'channel-sync "extensions.scm")
+	(list 'cursor-follows-play "snd11.scm")
+	(list 'xe-envelope "xm-enved.scm")
 	))
       
       ;; and some of the main variables
@@ -161,6 +168,8 @@
        (lambda (symbol-and-file)
 	 (let ((symbol (car symbol-and-file))
 	       (file (cadr symbol-and-file)))
+	   (if (not (file-exists? file))
+	       (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
 	   (set! names (cons (cons symbol file) names))
 	   (if (not (member file places))
 	       (set! places (cons file places)))))

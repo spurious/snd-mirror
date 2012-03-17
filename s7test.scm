@@ -17364,6 +17364,54 @@ in s7:
 	     (yin yang)))))
       '(10 9 8 7 6 5 4 3 2 1 0))
 
+(let ()
+  ;; taken from wikipedia
+  (define readyList '())
+ 
+  (define (i-run)
+    (if (not (null? readyList))
+	(let ((cont (car readyList)))
+	  (set! readyList (cdr readyList))
+	  (cont '()))))
+ 
+  (define (fork fn arg)
+    (set! readyList
+	  (append readyList
+		  (cons
+		   (lambda (x)
+		     (fn arg)
+		     (i-run))
+		   '()))))
+ 
+  (define (yield)
+    (call-with-current-continuation
+     (lambda (thisCont)
+       (set! readyList
+	     (append readyList
+		     (cons thisCont '())))
+       (let ((cont (car readyList)))
+	 (set! readyList (cdr readyList))
+	 (cont '())))))
+
+  (define data (make-vector 10 0))
+  (define data-loc 0)
+
+  (define (process arg)
+    (if (< data-loc 10)
+	(begin
+	  (set! (data data-loc) arg)
+	  (set! data-loc (+ data-loc 1))
+	  (yield)
+	  (process (+ arg 1)))
+	(i-run)))
+
+  (fork process 0)
+  (fork process 10)
+  (fork process 20)
+  (i-run)
+
+  (test data #(0 10 20 1 11 21 2 12 22 3)))
+
 (test (let ((c #f))
 	(let ((r '()))
 	  (let ((w (let ((v 1))

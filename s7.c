@@ -9206,7 +9206,7 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	if (isinf(z))
 	  return(s7_out_of_range_error(sc, "floor", 0, x, "argument is infinite"));
 
-	/* I used to check for a big real arg here and throw an error, but that
+	/* I used to check for a large arg here and throw an error, but that
 	 *   can't work in general (see s7test).
 	 */
 	return(make_integer(sc, (s7_Int)floor(real(x)))); 
@@ -24050,7 +24050,7 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
  *              extensions for channel-sync, and similarly elsewhere.
  *
  * hooks are also clumsy and not the right thing, but aimed at C
- *   could hooks be environments?  watchers, or-hooks, error (cerror) handlers
+ *   could hooks be environments?  watchers, or-hooks, error handlers
  */
 
 
@@ -24569,16 +24569,21 @@ static s7_pointer hook_copy(s7_scheme *sc, s7_pointer hook)
 
 s7_pointer s7_hook_apply(s7_scheme *sc, s7_pointer hook, s7_pointer args)
 {
+  s7_pointer result;
+  result = sc->UNSPECIFIED;
+
   if (is_pair(hook_functions(hook)))
     {
       int gc_loc;
       s7_pointer x;
+
       gc_loc = s7_gc_protect(sc, args);
       for (x = hook_functions(hook); is_not_null(x); x = cdr(x))
-	s7_call(sc, car(x), args);
+	result = s7_call(sc, car(x), args);
       s7_gc_unprotect_at(sc, gc_loc);
     }
-  return(sc->UNSPECIFIED);
+
+  return(result);
 }
 
 
@@ -27254,32 +27259,6 @@ static int remember_file_name(s7_scheme *sc, const char *file)
  *    6..top: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
  */
 
-/* slightly ugly:
-
-(define-macro (cerror . args)
-  `(call/cc
-    (lambda (continue)
-      (apply error continue ',args))))
-
-;;; now ((vector-ref *error-info* 0)) will continue from the error
-
-(define (cerror . args)
-  (format #t "error: ~A" (car args))
-  (if (not (null? (cdr args)))
-      (if (and (string? (cadr args))
-	       (not (null? (cddr args))))
-	  (let ((str (apply format (cdr args))))
-	    (format #t "~S~%" str))
-	  (format #t "~S~%" (cadr args))))
-  (format #t "continue? (<cr>=yes) ")
-  (let ((val (read-line ())))
-    (if (not (char=? (val 0) #\newline))
-	(error (car args)))))
-
-;;; so perhaps wrap the caller-passed stuff in "continue?" etc?
-*/
-
-
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
   int i;
@@ -28269,7 +28248,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   if (is_c_function(func))
     return(c_function_call(func)(sc, args));  /* no check for wrong-number-of-args -- is that reasonable? */
 
-  sc->temp1 = func;
+  sc->temp1 = func; /* this is just GC protection */
   sc->temp2 = args;
 
   old_longjmp = sc->longjmp_ok;
@@ -29946,13 +29925,12 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 
 
-/* ---------------- */
+/* ---------------- *unbound-variable-hook* ---------------- */
 
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
-  /* handle *unbound-variable-hook* */
-
-  /* this always occurs in a context where we're trying anything, so I'll move a couple of those tests here */
+  /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here (keyword etc)
+   */
   if (is_keyword(sym))
     return(sym);
 
@@ -29962,10 +29940,31 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   if (safe_strcmp(symbol_name(sym), "|#") == 0)
     return(read_error(sc, "unmatched |#"));
 
+  /* check *unbound-variable-hook* 
+   */
   if (is_not_null(hook_functions(sc->unbound_variable_hook)))
     {
-      int save_x = -1, save_y = -1, save_z = -1, cur_code_loc = -1;
-      s7_pointer x, cur_code;
+      int save_x = -1, save_y = -1, save_z = -1, cur_code_loc, value_loc, arglist_loc;
+      s7_pointer x, cur_code, value, arglist, result;
+      
+      /* sc->args and sc->code are pushed on the stack by s7_call, then
+       *   restored by eval, so they are protected, but sc->value and sc->cur_code are
+       *   not protected (yet).  We need sc->cur_code so that the possible eventual error
+       *   call can tell where the error occurred, and we need sc->value because it might
+       *   be awaiting addition to sc->args in e.g. OP_EVAL_ARGS5, and then be clobbered
+       *   by the hook function.  (+ 1 asdf) will end up evaluating (+ asdf asdf) if sc->value
+       *   is not protected.
+       */
+
+      /* TODO: test this and the symbol-macro example (+ 1 asdf)
+       */
+
+      value = sc->value;
+      value_loc = s7_gc_protect(sc, value);
+
+      /* is it true that the value gc protection isn't needed by s7_hook_apply in every case
+       *    because only here are we being triggered by a symbol lookup?
+       */
 
       cur_code = sc->cur_code;
       if (!is_pair(cur_code))
@@ -29977,24 +29976,29 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  pair_line_number(cur_code) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
 	}
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
-
       SAVE_X_Y_Z(save_x, save_y, save_z);
+      arglist = list_1(sc, sym);
+      arglist_loc = s7_gc_protect(sc, arglist);
 
-      /* not s7_hook_apply here because we need the value that the hook function returns
-       *   should we call the entire list?  or just call trailing funcs if x is #<unspecified>?
+      /* not using s7_hook_apply because we want to quit as soon as we see something other than #<undefined>
        */
+      result = sc->UNDEFINED;
+      for (x = hook_functions(sc->unbound_variable_hook); is_not_null(x); x = cdr(x))
+	{
+	  result = s7_call(sc, car(x), arglist);
+	  if (result != sc->UNDEFINED)
+	    break;
+	}
 
-      x = s7_call(sc, 
-		  car(hook_functions(sc->unbound_variable_hook)),
-		  list_1(sc, sym));
-
+      s7_gc_unprotect_at(sc, arglist_loc);
+      sc->value = value;
+      s7_gc_unprotect_at(sc, value_loc);
       RESTORE_X_Y_Z(save_x, save_y, save_z);
-
       sc->cur_code = cur_code;
       s7_gc_unprotect_at(sc, cur_code_loc);
 
-      if (x != sc->UNDEFINED)
-	return(x);
+      if (result != sc->UNDEFINED)
+	return(result);
     }
   
   return(eval_error(sc, "~A: unbound variable", sym));

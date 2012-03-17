@@ -1702,7 +1702,9 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
 
 static XEN g_status_report(XEN msg, XEN snd)
 {
-  #define H_status_report "(" S_status_report " message :optional snd) posts message in snd's status area."
+  #define H_status_report "(" S_status_report " message :optional snd) posts message in snd's status area.\
+If 'snd' is not a currently open sound, the message is sent to the listener, if it is open. \
+If there is no sound or listener, it is sent to stderr."
 
   snd_info *sp;
   const char *message;
@@ -1710,15 +1712,25 @@ static XEN g_status_report(XEN msg, XEN snd)
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_status_report, "a string");
   ASSERT_SOUND(S_status_report, snd, 2);
 
+  message = XEN_TO_C_STRING(msg);
   sp = get_sp(snd);
+
   if ((sp == NULL) || 
       (sp->inuse != SOUND_NORMAL))
-    return(snd_no_such_sound_error(S_status_report, snd));
-
-  message = XEN_TO_C_STRING(msg);
-  if ((message) && (*message))
-    set_status(sp, message, false);
-  else clear_status_area(sp);
+    {
+      if ((message) && (*message))
+	{
+	  if (listener_exists())
+	    append_listener_text(-1, message);
+	  else fprintf(stderr, "%s", message);
+	}
+    }
+  else
+    {
+      if ((message) && (*message))
+	set_status(sp, message, false);
+      else clear_status_area(sp);
+    }
   return(msg);
 }
 
