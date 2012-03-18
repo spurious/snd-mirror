@@ -70,7 +70,7 @@
  *        gc, *load-hook*, *error-hook*, *error-info*, *unbound-variable-hook*
  *        *features*, *load-path*, *vector-print-length*, *#readers*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
- *        stacktrace, trace and untrace, *trace-hook*, __func__, macroexpand
+ *        stacktrace, trace and untrace, __func__, macroexpand
  *        length, copy, fill!, reverse, map, for-each are generic
  *        make-type creates a new scheme type
  *        symbol-access modifies symbol value lookup
@@ -338,7 +338,7 @@ enum {OP_NO_OP,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_EXPANSION,
+      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_EXPANSION,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
@@ -412,7 +412,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "catch", "dynamic-wind", "define-constant", "define-constant", 
    "do", "do", "do", "do", "do", "do",
    "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
-   "trace-return", "error-hook-quit", "trace-hook-quit", "with-environment", "with-environment", "define-expansion",
+   "trace-return", "error-hook-quit", "with-environment", "with-environment", "define-expansion",
    "for-each", "for-each", "for-each", "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
    "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", 
@@ -477,7 +477,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_CATCH", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
   "OP_DO", "OP_DO_END", "OP_DO_END1", "OP_DO_STEP", "OP_DO_STEP2", "OP_DO_INIT",
   "OP_DEFINE_STAR", "OP_LAMBDA_STAR", "OP_LAMBDA_STAR_DEFAULT", "OP_ERROR_QUIT", "OP_UNWIND_INPUT", "OP_UNWIND_OUTPUT", 
-  "OP_TRACE_RETURN", "OP_ERROR_HOOK_QUIT", "OP_TRACE_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_EXPANSION",
+  "OP_TRACE_RETURN", "OP_ERROR_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_EXPANSION",
   "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
   
   "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
@@ -1034,7 +1034,6 @@ struct s7_scheme {
 
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
   s7_pointer vector_print_length;     /* same for *vector-print-length* */
-  s7_pointer trace_hook;              /* *trace-hook* hook object */
   s7_pointer load_hook;               /* *load-hook* hook object */
   s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
   s7_pointer error_hook;              /* *error-hook* hook object */
@@ -24833,29 +24832,6 @@ static bool internal_hook_arity_ok(s7_scheme *sc, s7_pointer hook, s7_pointer fu
 }
 
 
-static s7_pointer g_trace_hook_set(s7_scheme *sc, s7_pointer args)
-{
-  /* in normal use, we'd (set! (hook-functions *trace-hook*) ...), but for backwards compatibility,
-   *   we also need to support (set! *trace-hook* func).
-   */
-  s7_pointer funcs;
-  funcs = cadr(args);
-  if (s7_is_list(sc, funcs)) /* pair or null */
-    {
-      if (internal_hook_arity_ok(sc, sc->trace_hook, funcs))
-	hook_functions(sc->trace_hook) = funcs;
-      else return(sc->ERROR);
-    }
-  else
-    {
-      if (s7_is_procedure(funcs))
-	hook_functions(sc->trace_hook) = cons(sc, funcs, sc->NIL);
-      else return(sc->ERROR);
-    }
-  return(sc->trace_hook); /* kinda pointless... */
-}
-
-
 static s7_pointer g_load_hook_set(s7_scheme *sc, s7_pointer args)
 {
   /* in normal use, we'd (set! (hook-functions *load-hook*) ...), but for backwards compatibility,
@@ -26775,24 +26751,6 @@ static void trace_apply(s7_scheme *sc)
       free(str);
       
       sc->trace_depth++;
- 
-      if (is_not_null(hook_functions(sc->trace_hook)))
-	{
-	  push_stack(sc, OP_TRACE_HOOK_QUIT, copy_list(sc, sc->args), sc->code); 
-	  /* this restores the current state after dealing with the trace hook func.
-	   *   we have to copy the arglist because the evaluator now uses the arg list
-	   *   as the local environment -- the assumption when we get back to TRACE_HOOK_QUIT
-	   *   is that eval's sc->args is no longer of interest.
-	   *
-	   * we have to turn off tracing while evaluating the trace hook functions
-	   */
-	  tracing = false;
-	  s7_hook_apply(sc, sc->trace_hook, list_2(sc, sc->code, sc->args));
-
-	  /* it would be nice if *trace-hook* could return #f to turn off trace printout.
-	   *   then it could be used (more cleanly) for a call-history list (a circular list)
-	   */
-	}
     }
 }
 
@@ -29954,9 +29912,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
        *   be awaiting addition to sc->args in e.g. OP_EVAL_ARGS5, and then be clobbered
        *   by the hook function.  (+ 1 asdf) will end up evaluating (+ asdf asdf) if sc->value
        *   is not protected.
-       */
-
-      /* TODO: test this and the symbol-macro example (+ 1 asdf)
        */
 
       value = sc->value;
@@ -48263,12 +48218,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
-    case OP_TRACE_HOOK_QUIT:
-      tracing = true;                 /* this was turned off before calling the *trace-hook* functions */
-      /* sc->args was copied in trace_apply */
-      goto APPLY; /* goto apply but not trace */
-
-      
     case OP_ERROR_HOOK_QUIT:
       hook_functions(sc->error_hook) = sc->code;  /* restore old value */
 
@@ -54473,9 +54422,6 @@ s7_scheme *s7_init(void)
 			      s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "called if *features* is set"), 
 			      s7_make_function(sc, "(bind *features*)", g_features_set, 2, 0, false, "called if *features* is bound")));
 
-
-  /* these hook variables should use s7_define_constant, but we need to be backwards compatible */
-
   /* -------- *load-hook* -------- */
   sc->load_hook = s7_make_hook(sc, 1, 0, false, "*load-hook* is called when a file is loaded.  Its functions take one argument, the filename.");
   s7_define_variable(sc, "*load-hook*", sc->load_hook);
@@ -54486,17 +54432,6 @@ s7_scheme *s7_init(void)
 					       "called if *load-hook* is set"), 
 			      sc->F));
 
-  /* -------- *trace-hook* -------- */
-  sc->trace_hook = s7_make_hook(sc, 2, 0, false, 
-				"*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.");
-  s7_define_variable(sc, "*trace-hook*", sc->trace_hook); 
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*trace-hook*"), 
-		       list_3(sc, 
-			      sc->F, 
-			      s7_make_function(sc, "(set *trace-hook*)", g_trace_hook_set, 2, 0, false, 
-					       "called if *trace-hook* is set"), 
-			      sc->F));
-  
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_make_hook(sc, 1, 0, false, "*unbound-variable-hook* is called when an unbound variable is encountered.  Its functions \
 take 1 argument, the unbound symbol.");
@@ -54567,6 +54502,7 @@ the error type and the info passed to the error handler.");
 				g_set_symbol_table_is_locked, 1, 0, 
 				H_symbol_table_is_locked);
   s7_define_safe_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
+
 
   s7_provide(sc, "s7");
 
@@ -54763,7 +54699,7 @@ the error type and the info passed to the error handler.");
  *       all call_symbol_bind uses really should be embedded
  *
  * (set! (procedure-setter abs) ...)?
- * other uses of s7_call: all the object stuff [see note in that section], readers, unbound_variable
+ * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  *
  * lint     13424 -> 1231 [1237]

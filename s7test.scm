@@ -19751,6 +19751,8 @@ who says the continuation has to restart the map from the top?
    (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i abs 'hi '() #t #f '#(()) (list 1 2 3) '(1 . 2)))
   (set! *vector-print-length* old-len))
 
+
+;;; *unbound-variable-hook*
 (let ((old-hook (hook-functions *unbound-variable-hook*))
       (hook-val #f))
   (set! (hook-functions *unbound-variable-hook*) (list (lambda (sym) (set! hook-val sym) 123)))
@@ -19767,6 +19769,32 @@ who says the continuation has to restart the map from the top?
    (test (set! *unbound-variable-hook* arg) 'error)
    (test (set! *error-hook* arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '#(())))
+
+(let ((old-hook (hook-functions *unbound-variable-hook*)))
+  (set! (hook-functions *unbound-variable-hook*) 
+      (list (lambda (sym) 
+              32)))
+  (test (+ 1 _an_undefined_variable_i_hope_) 33)
+  (test (* _an_undefined_variable_i_hope_ _an_undefined_variable_i_hope_) 1024)
+  (set! (hook-functions *unbound-variable-hook*) old-hook))
+
+(let ((old-hook (hook-functions *unbound-variable-hook*))
+      (x #f))
+  (set! (hook-functions *unbound-variable-hook*) 
+      (list 
+       (lambda (sym)
+	 (set! x 0)
+	 #<undefined>)
+       (lambda (sym) 
+	 32)
+       (lambda (sym)
+	 (format *stderr* "oops -- *unbound-variable-hook* func called incorrectly~%")
+	 #f)))
+  (test (+ 1 _an_undefined_variable_i_hope_) 33)
+  (test x 0)
+  (set! (hook-functions *unbound-variable-hook*) old-hook))
+
+
 
 (let ((old-load-hook (hook-functions *load-hook*))
       (val #f))
@@ -21101,7 +21129,6 @@ abs     1       2
 ;;; --------------------------------------------------------------------------------
 ;;; trace 
 ;;; untrace
-;;; *trace-hook*
 
 (for-each
  (lambda (arg)
@@ -21109,41 +21136,16 @@ abs     1       2
    (test (untrace arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
-(let ((sum 0))
-  (define (hiho a b c) (* a b c))
-  (set! *trace-hook* (lambda (f args) (set! sum (apply + args))))
-  (trace hiho)
-  (hiho 2 3 4)
-  (untrace hiho)
-  (set! *trace-hook* '())
-  (test sum 9))
-
-(test (hook-arity *trace-hook*) '(2 0 #f))
-(test (hook-documentation *trace-hook*) "*trace-hook* customizes tracing.  Its functions take 2 arguments, the function being traced, and its current arguments.")
-(test (hook-functions *trace-hook*) '())
-
-(let ((sum 0))
-  (define (hiho a b c) (* a b c))
-  (set! *trace-hook* (list (lambda (f args) (set! sum (apply + args)))))
-  (trace hiho)
-  (hiho 2 3 4)
-  (untrace hiho)
-  (set! *trace-hook* '())
-  (test sum 9))
-
 (for-each
  (lambda (arg)
-   (test (set! *trace-hook* arg) 'error)
    (test (set! *unbound-variable-hook* arg) 'error)
    (test (set! *error-hook* arg) 'error)
    (test (set! *load-hook* arg) 'error)
    
-   (test (set! (hook-functions *trace-hook*) arg) 'error)
    (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
    (test (set! (hook-functions *error-hook*) arg) 'error)
    (test (set! (hook-functions *load-hook*) arg) 'error)
    
-   (test (set! (hook-functions *trace-hook*) (list arg)) 'error)
    (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
    (test (set! (hook-functions *error-hook*) (list arg)) 'error)
    (test (set! (hook-functions *load-hook*) (list arg)) 'error)

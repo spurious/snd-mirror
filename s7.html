@@ -153,7 +153,7 @@ indented and in a sort of brownish background.
   <li><a href="#procedureinfo">procedure info</a>
   <li><a href="#evalstring">eval</a>
   <li><a href="#IO">string IO</a>
-  <li><a href="#errors">errors, stacktrace, trace</a>
+  <li><a href="#errors">errors</a>
   <li><a href="#miscellanea">miscellanea</a>
   <li><a href="#FFIexamples">FFI examples</a>
   <ul>
@@ -3509,7 +3509,7 @@ a modern GUI leaves formatting decisions to a text or table widget.
 the hook is invoked, and it applies its arguments to each function in the list.
 In GUI toolkits hooks are called callback-lists, in CL conditions,
 in other contexts watchpoints or signals.  s7 itself has several
-hooks: *trace-hook*, *error-hook*, *unbound-variable-hook*, and *load-hook*.
+hooks: *error-hook*, *unbound-variable-hook*, and *load-hook*.
 A hook is created with make-hook or hook, called either as an applicable object
 or via hook-apply, and recognized via hook?.  The list of functions is accessed
 via hook-functions.  All the functions on the list have to be compatible with
@@ -4043,11 +4043,13 @@ the unbound symbol.  In Snd, *unbound-variable-hook* is used to implement autolo
 used as the symbol's (temporary) value.  Otherwise, s7 calls the error handler.
 </p>
 
+<blockquote>
+<div class="indented">
 <p>There are a lot of thoroughly disreputable ways to take advantage of *unbound-variable-hook*.
 Here are two.  In the first, we can't ever remember how to get the error environment information
 when we're in the REPL, so we tie that action to the question-mark key.  Whenever '?' is typed
-in the listener, the error info is typed out.  This leads inexorably to the second use, a nod
-toward Common Lisp's symbol-macros.  
+in the listener, the error info is typed out.  That moment of weakness leads inexorably to the second, 
+dalliance with symbol-macros!
 </p>
 
 <pre class="indented">
@@ -4058,7 +4060,7 @@ toward Common Lisp's symbol-macros.
 		 (if (eq? sym '?)                       ; here '?' is the thing typed
 		     (do ((e (*error-info* 5) (outer-environment e))) 
 			 ((eq? e (global-environment))) 
-		       (status-report (format #f "~%~A" (environment->list e)) -1))
+		       (status-report (format #f "~%~A" (environment-&gt;list e)) -1))
                        ;; status-report is a Snd function that (in this case) sends the data to the Snd listener		       
 		     #&lt;undefined&gt;)))))
 (#&lt;closure&gt; #&lt;closure&gt;)
@@ -4071,7 +4073,7 @@ toward Common Lisp's symbol-macros.
 &gt; (set! (hook-functions *unbound-variable-hook*)
     (list (lambda (sym)
             (if (eq? sym 'hiho)
-                (sin (random 1.0)) ; hiho -> sin of some random number
+                (sin (random 1.0)) ; hiho -&gt; sins of some number
                 #&lt;undefined&gt;))))
 &lt;closure&gt;
 &gt; hiho
@@ -4079,15 +4081,17 @@ toward Common Lisp's symbol-macros.
 &gt; hiho
 0.64985453979392
 </pre>
+</div>
 
 
-
-
+<div class="indented">
 <p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
-There's a s7 lint checker: lint.scm in the Snd tarball.
+lint.scm in the Snd tarball checks for infelicities in s7 code (I think this is now called splint in the C world).
 </p>
+</div>
 
+<div class="indented">
 <p><em class=def id="trace">trace</em> and untrace provide tracing:
 </p>
 <pre class="indented">
@@ -4113,29 +4117,12 @@ There's a s7 lint checker: lint.scm in the Snd tarball.
 <p>trace adds a function to the list of functions being traced, and untrace removes it.
 trace with no arguments causes everything to be traced, and untrace with no arguments
 turns this off.  To trace a function that is internal to another function, put the
-trace and untrace calls in the enclosing function.
+trace and untrace calls in the enclosing function.  (Currently, tracing does not work
+well if WITH_OPTIMIZATION is 1 (the default)).
 </p>
+</div>
 
-<p>There is also a hook, <em class=def id="tracehook">*trace-hook*</em>.  It takes functions
-of 2 arguments, the currently traced
-function and the list of current arguments.  The hook's functions are evaluated in the environment of the
-traced function call (that is, global to the function, not the function's local environment).
-</p>
-
-<pre class="indented">
-(define (hiho a b c) (* a b c))
-(set! (hook-functions *trace-hook*) (list (lambda (f args) (format #t "sum of args: ~A~%" (apply + args)))))
-(trace hiho)
-(hiho 2 3 4)
-
-[hiho 2 3 4]
-sum of args: 9
- 24
-</pre>
-
-
-
-
+</blockquote>
 
 
 

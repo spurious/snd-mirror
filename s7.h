@@ -44,7 +44,6 @@ typedef double s7_Double;
    *    *error-hook*            hook called upon error; takes a function of two args, 
    *                               the error type (a symbol), and the info about it (a list).
    *    *error-info*            data describing last error (see below).
-   *    *trace-hook*            hook called upon trace; takes a function of two args, the traced function name and its current args
    *    *unbound-variable-hook* hook called when an unbound symbol is accessed.
    *    *#readers*              #... readers
    *    *gc-stats*              #t to turn on GC statistics
@@ -826,7 +825,7 @@ void s7_mark_object(s7_pointer p);
  *    symbol-table tan tanh trace truncate untrace vector vector->list with-input-from-file 
  *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?
  *
- * and these variables: *safety* *#readers* *error-hook* *unbound-variable-hook* *trace-hook*
+ * and these variables: *safety* *#readers* *error-hook* *unbound-variable-hook*
  *
  * if you need any of these, let me know.
  */
@@ -837,6 +836,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 18-Mar:    removed *trace-hook*.
  * 6-Feb:     random-state?, hash-table-iterator?, and morally-equal?
  * 18-Jan:    s7_environment_to_list and environment->list return just the local environment's
  *               bindings.
