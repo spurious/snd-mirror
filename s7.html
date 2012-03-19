@@ -871,16 +871,17 @@ macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
 </p>
 
 <pre class="indented">
-(define-macro (mac b) 
-  `(let ((a 12)) 
-     (+ a ,b)))
-
-(let ((a 1) 
-      (+ *))
-  (mac a))
+&gt; (define-macro (mac b) 
+    `(let ((a 12)) 
+       (+ a ,b)))
+mac
+&gt; (let ((a 1) 
+        (+ *))
+    (mac a))
+144
 </pre>
 
-<p>returns 144 because "+" has turned into "*", and "a" is the internal "a",
+<p>This returns 144 because "+" has turned into "*", and "a" is the internal "a",
 not the argument "a".  We get <code>(* 12 12)</code> where we might have expected
 <code>(+ 12 1)</code>.  Although this example is silly, the problem is real in Scheme
 because Scheme has no reserved words and only one name space.  Since macros and functions (not to mention
@@ -889,9 +890,9 @@ and since we might be loading any
 number of libraries written by others, it's impossible to tell what names
 this external code depends on.  
 It is possible to use gensym to clean up the macro, but that makes it
-unreadable in all but the simplest cases.  It is also possible, but not very easy, to
-write a macro to do the gensymification for us, but in s7 it is much more straightforward
-to use the environment functions.
+unreadable in all but the simplest cases.  It is also possible to
+write a macro to do the gensymification for us, but in s7 it is easier to
+use the environment functions.
 The procedure-environment of a macro is the environment at its definition time, just like a function.
 By wrapping the macro body in with-environment, we make sure anything in that body reflects 
 the definition environment, not the calling environment.  We then augment that environment
@@ -982,6 +983,7 @@ mac
 	  (b 3)) 
       (+ a b c d)))) ; 'a' and 'b' are local, 'c' and 'd' are from the augmented env
 </pre>
+
 
 
 <p>This is not the end of the story.
@@ -4782,7 +4784,7 @@ These symbols are not just an optimization of string comparison:
 
 <div class="indented">
 
-<p>The built-in syntactic names, such as "begin", are almost first-class citizens.
+<p id="firstclasssyntax">The built-in syntactic names, such as "begin", are almost first-class citizens.
 </p>
 
 <pre class="indented">
@@ -5217,8 +5219,8 @@ The examples that follow show:
 
 <div class="header" id="repl"><h4>A simple listener</h4></div>
 
-<table><tr><td>
-<div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5278,7 +5280,7 @@ int main(int argc, char **argv)
  */
 </pre>
 </div>
-</td></tr></table>
+
 
 <p>Since this reads stdin and writes stdout, it can be run as a Scheme subjob of emacs.
 One (inconvenient) way to do this is to set the emacs variable scheme-program-name to
@@ -5291,8 +5293,8 @@ customized indefinitely.  See, for example, snd-inf.el in the Snd package.
 <p>To read stdin while working in a GUI-based program is trickier.  In glib/gtk, you can use
 something like this:
 </p>
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 static gboolean read_stdin(GIOChannel *source, GIOCondition condition, gpointer data)
 {
@@ -5310,7 +5312,7 @@ stdin_id = g_io_add_watch_full(channel,         /* and call read_stdin above if 
 			       <em class=red>read_stdin</em>, NULL, NULL);
 g_io_channel_unref(channel);
 </pre></div>
-</td></tr></table>
+
 
 <p>If we accidentally get into an infinite loop in our REPL, we have to exit the program.
 See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook to the rescue!</a> below for two ways to fix this.
@@ -5321,8 +5323,8 @@ See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook t
 
 <div class="header" id="defun"><h4>Define a function with arguments and a returned value, and a variable</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5376,14 +5378,14 @@ int main(int argc, char **argv)
  *    &gt; (exit)
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 <div class="header" id="defvar"><h4>Call a Scheme-defined function from C, and get/set Scheme variable values in C</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5420,15 +5422,15 @@ int main(int argc, char **argv)
  *    (add1 2): 3
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="juce"><h4>C++ and Juce, from Rick Taube</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 int main(int argc, const char* argv[]) 
 { 
@@ -5456,15 +5458,15 @@ int main(int argc, const char* argv[])
   return 0; 
 } 
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="sndlib"><h4>Load sndlib using the XEN functions and macros into an s7 repl</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5554,15 +5556,15 @@ int main(int argc, char **argv)
  * you might also need -lgsl -lgslcblas
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="pwstype"><h4>Add a new Scheme type and procedure-with-setters</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5731,15 +5733,15 @@ int main(int argc, char **argv)
  *    : (exit)
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="functionportexample"><h4>Redirect output (and input) to a C procedure</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5795,15 +5797,15 @@ int main(int argc, char **argv)
  *    [#] [\] [a] 
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="extendop"><h4>Extend a built-in operator ("+" in this case)</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5861,15 +5863,15 @@ int main(int argc, char **argv)
  *    "hiho"
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="definestar1"><h4>C-side define* (s7_define_function_star)</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5918,15 +5920,15 @@ int main(int argc, char **argv)
  *    5
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="definemacro1"><h4>C-side define-macro (s7_define_macro)</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -5972,15 +5974,15 @@ int main(int argc, char **argv)
  *    5
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="signal"><h4>Signal handling and continuations</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6059,15 +6061,15 @@ int main(int argc, char **argv)
  *    3
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="vector"><h4>Multidimensional vector element access</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6146,15 +6148,15 @@ int main(int argc, char **argv)
 /* vect[0,0,0]: 0, vect[1,1,1]: 32
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="notify"><h4>Notification from Scheme that a given Scheme variable has been set</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6222,15 +6224,15 @@ int main(int argc, char **argv)
  *    32
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="namespace"><h4>Load C defined stuff into a separate namespace</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6326,15 +6328,15 @@ int main(int argc, char **argv)
  *     2
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="Cerrors"><h4>Handle scheme errors in C</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6436,7 +6438,7 @@ int main(int argc, char **argv)
  *   the value returned ('our-error in this case).
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
@@ -6453,8 +6455,8 @@ a normal Scheme list of functions.  So in the next example, we define a closure
 in C using s7_make_closure.  
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6549,15 +6551,15 @@ int main(int argc, char **argv)
  *   ((f . #&lt;closure function&gt;) (x . 32))
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
 
 <div class="header" id="testhook"><h4>C and Scheme hooks</h4></div>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6624,7 +6626,7 @@ int main(int argc, char **argv)
  *    1
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
@@ -6637,8 +6639,8 @@ compiler and loader flags.
 First we define a module that defines a new s7 function, add-1:
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6658,13 +6660,13 @@ void init_ex(s7_scheme *sc)  /* this needs to be globally accessible (not "stati
 }
 
 </pre></div>
-</td></tr></table>
+
 
 <p>And here is our main program:
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6741,7 +6743,7 @@ int main(int argc, char **argv)
  *   3
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
@@ -6753,8 +6755,8 @@ int main(int argc, char **argv)
 so we have to copy that into a new number before adding.
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6875,7 +6877,7 @@ int main(int argc, char **argv)
  *   2.500E0+1.000E0i
  */
 </pre></div>
-</td></tr></table>
+
 
 
 
@@ -6888,8 +6890,8 @@ a much more elaborate REPL.  From s7's point of view, the only tricky part invol
 catching errors.
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -6974,8 +6976,8 @@ static void evaluate_expression(s7_scheme *sc, char *expression)
 static char *get_current_expression(void)
 {
   /* find the enclosing expression and return it.  This could be a lot smarter, but
-   *    for the current example, I'll just look back to the previous prompt, then
-   *    forward for the next prompt or the buffer end.
+   *    for now, I'll just look back to the previous prompt, then forward for the 
+   *    next prompt or the buffer end.
    */
   GtkTextIter pos, previous, next, temp;
   GtkTextMark *m;
@@ -7004,10 +7006,10 @@ static char *get_current_expression(void)
   return(NULL);
 }
 
-static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
+static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer scheme)
 {
   /* called when we type anything in the text widget.
-   *   'data' is our s7 interpreter.
+   *   'scheme' is our s7 interpreter.
    */
   guint key;
   key = event-&gt;keyval;
@@ -7015,7 +7017,7 @@ static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
     {
       GtkTextIter pos;
       /* get enclosing expression, evaluate it, display result (or error), prompt for next */
-      evaluate_expression((s7_scheme *)data, get_current_expression());
+      evaluate_expression((s7_scheme *)scheme, get_current_expression());
 
       /* prompt for next expression */
       gtk_text_buffer_get_end_iter(repl_buf, &amp;pos);
@@ -7090,7 +7092,7 @@ int main(int argc, char **argv)
  */
 
 </pre></div>
-</td></tr></table>
+
 
 
 
@@ -7101,8 +7103,8 @@ int main(int argc, char **argv)
 Here is the same code, but now using libxm; first the C side, called gtkex.c:
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -7129,15 +7131,15 @@ int main(int argc, char **argv)
  *   ;; you may need to include the libxm directory above
  */
 </pre></div>
-</td></tr></table>
+
 
 <p>And here is gtkex.scm.  The main problem with this code is that Gtk is moving
 rapidly toward gtk3, and libxm is running along behind panting and complaining.
 There are several things that may change once Gtk settles down.
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 (gtk_init 0 #f)
 
@@ -7242,7 +7244,7 @@ There are several things that may change once Gtk settles down.
 
 ;; build gtkex as above, then run it and it will load/run this code
 </pre></div>
-</td></tr></table>
+
 
 
 
@@ -7257,8 +7259,8 @@ to keep running while we clean up the s7 problem.  So, in the next example, we u
 thread for the s7 evaluation:
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
@@ -7406,10 +7408,9 @@ static void prompt(GtkWidget *w)
   g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
 }
 
-static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
+static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer scheme)
 {
   /* called when you type anything in the text widget.
-   *   'data' is our s7 interpreter.
    */
   guint key, state;
   key = event-&gt;keyval;
@@ -7418,7 +7419,7 @@ static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
   if (key == Return_Key)
     {
       if (!s7_is_running)
-	evaluate_expression((s7_scheme *)data, get_current_expression());
+	evaluate_expression((s7_scheme *)scheme, get_current_expression());
       prompt(w);
     }
 <em class=red>
@@ -7493,7 +7494,7 @@ int main(int argc, char **argv)
   gtk_main();
 }
 </pre></div>
-</td></tr></table>
+
 
 
 <p>This code still has a flaw.  Any GUI callback can
@@ -7548,8 +7549,8 @@ to insert your own function into eval.  In s7, we have a "begin_hook" which sits
 
 
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 /* terminal-based REPL, 
  *    an expansion of the <a href="#repl">read-eval-print loop</a> program above.
@@ -7649,11 +7650,11 @@ int main(int argc, char **argv)
     tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
 }
 </pre></div>
-</td></tr></table>
 
 
-<table>
-<tr><td><div class="brownishbordered">
+
+
+<div class="indented">
 <pre>
 /* Gtk-based REPL using s7_begin_hook 
  */
@@ -7785,15 +7786,14 @@ static void prompt(GtkWidget *w)
   g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
 }
 
-static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
+static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer scheme)
 {
   /* called when you type anything in the text widget.
-   *   'data' is our s7 interpreter.
    */
   guint key, state;
   s7_scheme *sc;
 
-  sc = (s7_scheme *)data;
+  sc = (s7_scheme *)scheme;
   key = event-&gt;keyval;
   state = event-&gt;state;
 
@@ -7859,7 +7859,7 @@ int main(int argc, char **argv)
   gtk_main();
 }
 </pre></div>
-</td></tr></table>
+
 
 <p>In the Gtk case above, begin_hook itself checks the user-interface (via gtk_main_iteration), so a key_press event
 (or any other) can still get through, even if s7_eval_c_string falls into an
@@ -7888,8 +7888,8 @@ begin_hook function, insert its own function to do something useful, then that f
 replace itself with the original:
 </p>
 
-<table>
-<tr><td><div class="brownishbordered">
+
+<div class="indented">
 <pre>
 static bool (*current_begin_hook)(s7_scheme *sc);       /* this will be the saved original function */
 
@@ -7907,7 +7907,7 @@ static void listener_stacktrace_callback(...)           /* the usual callback bo
     s7_set_begin_hook(s7, stacktrace_begin_hook);       /*   insert our stacktrace function in its place */
 }
 </pre></div>
-</td></tr></table>
+
 
 </body>
 </html>

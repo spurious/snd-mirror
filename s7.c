@@ -16898,6 +16898,15 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 
 static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 {
+  /* would it be useful to add an environment arg here?  (just set sc->envir at the end?)
+   *    except for expansions, nothing is evaluated at read time, unless...
+   *    say we set up a dot reader:
+   *        (set! *#readers* (cons (cons #\. (lambda (str) (if (string=? str ".") (eval (read)) #f))) *#readers*))
+   *    then 
+   *        (call-with-input-string "(+ 1 #.(+ 1 hiho))" (lambda (p) (read p)))
+   *    evaluates hiho in the global environment, but how to pass the env to the inner eval or read?
+   * (eval, eval-string and load already have an env arg)
+   */
   #define H_read "(read (port (current-input-port))) returns the next object in the input port, or #<eof> at the end"
   s7_pointer port;
   
@@ -54434,7 +54443,7 @@ s7_scheme *s7_init(void)
 
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_make_hook(sc, 1, 0, false, "*unbound-variable-hook* is called when an unbound variable is encountered.  Its functions \
-take 1 argument, the unbound symbol.");
+take 1 argument, the unbound symbol.  If any of the functions returns something other than #<undefined>, that value replaces the symbol.");
   s7_define_variable(sc, "*unbound-variable-hook*", sc->unbound_variable_hook); 
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*unbound-variable-hook*"), 
 		       list_3(sc, 
@@ -54444,7 +54453,7 @@ take 1 argument, the unbound symbol.");
 			      sc->F));
   
   /* -------- *error-hook* -------- */
-  sc->error_hook = s7_make_hook(sc, 2, 0, false, "*error-hook* is called when an error is not caught.  Its functions take two arguments, \
+  sc->error_hook = s7_make_hook(sc, 2, 0, false, "*error-hook* is called when an error is not caught (by catch).  Its functions take two arguments, \
 the error type and the info passed to the error handler.");
   s7_define_variable(sc, "*error-hook*", sc->error_hook);
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*error-hook*"), 

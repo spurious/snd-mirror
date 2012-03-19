@@ -339,10 +339,14 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	    }
 	  break;
 
+#if 0
+	  /* I now think there's nothing special about backslash outside double-quotes (handled above)
+	   */
 	case '\\': 
 	  /* this is an error of some sort or an ignored double quote? */
 	  i += 2; 
 	  break;
+#endif
 
 	case '#' :
 	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
@@ -394,7 +398,7 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 
 	case '(' :
 	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
-	    return(i);
+	    return(i - 1); /* 'a(...) -- ignore the (...) */
 	  else 
 	    {
 	      i++;
@@ -422,6 +426,13 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	case '`' :                  /* `(1 2) */
 	  if (prev_separator) 
 	    quote_wait = true;
+	  non_whitespace_p = true;
+	  i++;
+	  break;
+
+	case ',':                   /* `,(+ 1 2) */
+	case '@':                   /* `,@(list 1 2) */
+	  prev_separator = false;
 	  non_whitespace_p = true;
 	  i++;
 	  break;
@@ -848,6 +859,7 @@ void listener_return(widget_t w, int last_prompt)
 
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	{
+
 	  int gc_loc;
 	  s7_pointer old_port;
 

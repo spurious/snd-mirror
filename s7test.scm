@@ -12342,6 +12342,16 @@ a2" 3) "132")
       (+list 6))
   (test (apply + (list List LIST lIsT -list _list +list)) 21))
 
+(let ()
+  (define (\ arg) (+ arg 1))
+  (test (+ 1 (\ 2)) 4)
+  (define (@\ arg) (+ arg 1))
+  (test (+ 1 (@\ 2)) 4)
+  (define (@,\ arg) (+ arg 1))
+  (test (+ 1 (@,\ 2)) 4)
+  (define (\,@\ arg) (+ arg 1))
+  (test (+ 1 (\,@\ 2)) 4)
+  )
 
 
 
@@ -14586,6 +14596,21 @@ in s7:
 	  (define (hi a) (+ a 1))))
 	(hi 1))
       2)
+(test (let ()
+	(cond-expand
+	 ((and s7 (not s7)) 'oops)
+	 (else 1)))
+      1)
+(test (let ()
+	(cond-expand
+	 ("not a pair" 1)
+	 (2 2)
+	 (#t 3)
+	 ((1 . 2) 4)
+	 (() 6)
+	 (list 7)
+	 (else 5)))
+      5)
 
 
 
@@ -17593,6 +17618,7 @@ in s7:
 (test ((call-with-exit (lambda (return) (return + 1 2 3)))) 6)
 (test ((call-with-exit (lambda (return) (apply return (list + 1 2 3))))) 6)
 (test ((call/cc (lambda (return) (return + 1 2 3)))) 6)
+(test (+ 2 (call-with-exit (lambda (return) (let ((rtn (copy return))) (* 5 (rtn 4)))))) 6)
 
 (test (+ 2 (values 3 (call-with-exit (lambda (k1) (k1 4))) 5)) 14)
 (test (+ 2 (call-with-exit (lambda (k1) (values 3 (k1 4) 5))) 8) 14)
@@ -19398,7 +19424,6 @@ who says the continuation has to restart the map from the top?
 	     (symbol? (car v)) ; \ -> ((symbol "\\") ())
 	     (null? (cadr v))))
       #t)
-;; this gets a read-error in Snd because the listener gets confused
 
 (test #(,1) #(1))
 (test #(,,,1) #(1))
@@ -19413,6 +19438,9 @@ who says the continuation has to restart the map from the top?
 (',@1 1) -> ({apply} {values} 1)
 #(,@1) -> #((unquote ({apply} {values} 1)))
 (quasiquote #(,@(list 1 2 3))) -> #((unquote ({apply} {values} (list 1 2 3))))
+
+(quote ,@(for-each)) -> (unquote ({apply} {values} (for-each)))
+;;; when is (quote ...) not '...?
 |#
 
 
@@ -21054,6 +21082,19 @@ abs     1       2
 			  (lambda args (car args)))))
 	  (eq? tag 'wrong-number-of-args)))
       #t)
+
+(let ()
+  (define-macro* (if-let bindings true false)
+    (let* ((binding-list (if (and (pair? bindings) (symbol? (car bindings)))
+			     (list bindings)
+			     bindings))
+	   (variables (map car binding-list)))
+      `(let ,binding-list
+	 (if (and ,@variables)
+	     ,true
+	     ,false))))
+
+  (test (if-let ((a 1) (b 2)) (list a b) "oops") '(1 2)))
 
 (test (let () (define (hi :a) :a) (hi 1)) 'error)
 (test (let () (define* (hi :a) :a) (hi 1)) 'error)
