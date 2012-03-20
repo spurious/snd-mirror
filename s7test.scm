@@ -7020,7 +7020,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (apply v (make-list 100 0)) 0)
   (test (v 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 0))
 
-;;; eval-string here else these are read errors
+;; eval-string here else these are read errors
 (test (eval-string "#3D(((1 2) (3 4)) ((5 6) (7)))") 'error)
 (test (eval-string "#3D(((1 2) (3 4)) ((5) (7 8)))") 'error)
 (test (eval-string "#3D(((1 2) (3 4)) (() (7 8)))") 'error)
@@ -12072,10 +12072,10 @@ a2" 3) "132")
 (test (equal? '('#()) '(#())) #f)
 (test (equal? (list '#()) '(#())) #t)
 (test (equal? '('#()) '('#())) #t)
-(test (equal? '('#()) '(`#())) #f) ; ! [guile agrees]
+(test (equal? '('#()) '(`#())) #f) ;  [guile agrees]
 (test (equal? '('()) '(`())) #f) ; ! quote != quasiquote [guile agrees]
-(test (equal? '('(1)) '(`(1))) #t) ; !! but lists are different? [guile says #f]
-(test (equal? '('#(1)) '(`#(1))) #f) ; ! [guile agrees]
+(test (equal? '('(1)) '(`(1))) #t) ;  but lists are different? [guile says #f]
+(test (equal? '('#(1)) '(`#(1))) #f) ; [guile agrees]
 (test (equal? '('#()) '(#())) #f)
 (test (equal? '(`#()) '(`#())) #t)
 (test (equal? '#() `#()) #t)
@@ -12084,60 +12084,120 @@ a2" 3) "132")
 (test (equal? '(`#()) '(#())) #t)
 (test (equal? `#() '#()) #t) ; and also (1) () #(1) etc
 (test (equal? `'#() ''#()) #t) ; "
-(test (equal? '`#() ''#()) #f) ; ! it equals '#()
+(test (equal? '`#() ''#()) #f) ; it equals '#() -- this is consistent -- see below
 (test (equal? '`#() ``#()) #t)
-;; gah -- `#(...) should be removed from s7
-;; but there is still the strangeness that `'() is not the same as '`() -- quasiquote returns '() not (), and similarly for #() except...
-;; there are actually 3 cases here, the 3rd is (equal? `''() ``'()) -> #f, but the #() case is #t
+
+(test (equal? '() '()) #t)
+(test (equal? (quote ()) '()) #t)
+(test (equal? '() (quote ())) #t)
+(test (equal? (quote ()) (quote ())) #t)
+(test (equal? `(1) '(1)) #t)
+(test (equal? (quasiquote (1)) '(1)) #t)
+(test (equal? `(1) (quote (1))) #t)
+(test (equal? (quasiquote (1)) (quote (1))) #t)
+(test (equal? ``''1 '``'1) #t)
+(test (equal? (quasiquote `(quote (quote 1))) '``'1) #t)
+(test (equal? ``''1 (quote ``(quote 1))) #t)
+(test (equal? (quasiquote `(quote (quote 1))) (quote ``(quote 1))) #t)
+(test (equal? '``'#f ```'#f) #t)
+(test (equal? (quote ``(quote #f)) ```'#f) #t)
+(test (equal? '``'#f (quasiquote ``(quote #f))) #t)
+(test (equal? (quote ``(quote #f)) (quasiquote ``(quote #f))) #t)
+;;; etc:
 
 #|
-"(equal? ''() ``())" -> #f
-"(equal? ''(1) ``(1))" -> #t 
-"(equal? ''#() ``#())" -> #f
-"(equal? ''#(1) ``#(1))" -> #f
-"(equal? ''1 ``1)" -> #f
-"(equal? ''#f ``#f)" -> #f
+(equal? (quote `1) (quote (quasiquote 1))) -> #f
+the reader sees `1 and turns it into 1 in the 1st case, but does not collapse the 2nd case to 1
+  (who knows, quasiquote might have been redefined in context... but ` can't be redefined):
+:(define (` a) a)
+;define: define a non-symbol? 'a
+;    (define ('a) a)
 
-"(equal? `''() ``'())" -> #f 
-"(equal? `''(1) ``'(1))" -> #t
-"(equal? `''#() ``'#())" -> #t
-"(equal? `''#(1) ``'#(1))" -> #t
-"(equal? `''1 ``'1)" -> #t
-"(equal? `''#f ``'#f)" -> #t
+this is different from guile which does not handle ` at read time except to expand it:
 
-;; see t242.scm
+guile> (quote `1) 
+(quasiquote 1)
+
+:(quote `1)
+1
+
+so anything that quotes ` is not going to equal quote quasiquote
+
+
+(define bold-text (format #f "~C[1m" #\escape))
+(define unbold-text (format #f "~C[22m" #\escape))
 
 (define (check-strs str1 str2)
-  (let* ((expr (format #f "(equal? ~A ~A)" (string-append str1 "()") (string-append str2 "()")))
-	 (val (catch #t 
-		     (lambda () (eval-string expr))
-		     (lambda args 'error))))
-    (format #t "--------~%~S -> ~S~%" expr val)
-    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "(1)") (string-append str2 "(1)")))
-    (let ((val (catch #t 
-		      (lambda () (eval-string expr))
-		      (lambda args 'error))))
-      (format #t "~S -> ~S~%" expr val))
-    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "#()") (string-append str2 "#()")))
-    (let ((val (catch #t 
-		      (lambda () (eval-string expr))
-		      (lambda args 'error))))
-      (format #t "~S -> ~S~%" expr val))
-    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "#(1)") (string-append str2 "#(1)")))
-    (let ((val (catch #t 
-		      (lambda () (eval-string expr))
-		      (lambda args 'error))))
-      (format #t "~S -> ~S~%" expr val))
-    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "1") (string-append str2 "1")))
-    (let ((val (catch #t 
-		      (lambda () (eval-string expr))
-		      (lambda args 'error))))
-      (format #t "~S -> ~S~%" expr val))
-    (set! expr (format #f "(equal? ~A ~A)" (string-append str1 "#f") (string-append str2 "#f")))
-    (let ((val (catch #t 
-		      (lambda () (eval-string expr))
-		      (lambda args 'error))))
-      (format #t "~S -> ~S~%" expr val))))
+  (for-each
+   (lambda (arg)
+     (let ((expr (format #f "(equal? ~A~A ~A~A)" str1 arg str2 arg)))
+       (let ((val (catch #t 
+			 (lambda () (eval-string expr))
+			 (lambda args 'error))))
+	 (format #t "--------~%~S -> ~S" expr val)
+	 (let* ((parens3 0)
+		(parens4 0)
+		(str3 (apply string-append (map (lambda (c)
+						 (if (char=? c #\`)
+						     (if (= parens3 0)
+							 (begin
+							   (set! parens3 (+ parens3 1))
+							   "(quasiquote ")
+							 "`")
+						     (if (char=? c #\')
+							 (begin
+							   (set! parens3 (+ parens3 1))
+							   "(quote ")
+							 (string c))))
+						str1)))
+		(str4 (apply string-append (map (lambda (c)
+						 (if (char=? c #\`)
+						     (if (= parens4 0)
+							 (begin
+							   (set! parens4 (+ parens4 1))
+							   "(quasiquote ")
+							 "`")
+						     (if (char=? c #\')
+							 (begin
+							   (set! parens4 (+ parens4 1))
+							   "(quote ")
+							 (string c))))
+						str2))))
+	   (let ((expr (format #f "(equal? ~A~A~A ~A~A)" str3 arg (make-string parens3 #\)) str2 arg)))
+	     (let* ((val1 (catch #t 
+			       (lambda () (eval-string expr))
+			       (lambda args 'error)))
+		    (trouble (and (not (eq? val1 'error))
+				  (not (eq? val1 val)))))
+	       (if trouble
+		   (format #t "~%~8T~A~S -> ~S~A" bold-text expr val1 unbold-text)
+		   (format #t "~%~8T~S -> ~S" expr val1))))
+	   (let ((expr (format #f "(equal? ~A~A ~A~A~A)" str1 arg str4 arg (make-string parens4 #\)))))
+	     (let* ((val1 (catch #t 
+			       (lambda () (eval-string expr))
+			       (lambda args 'error)))
+		    (trouble (and (not (eq? val1 'error))
+				  (not (eq? val1 val)))))
+	       (if trouble
+		   (format #t "~%~8T~A~S -> ~S~A" bold-text expr val1 unbold-text)
+		   (format #t "~%~8T~S -> ~S" expr val1))))
+	   (let ((expr (format #f "(equal? ~A~A~A ~A~A~A)" str3 arg (make-string parens3 #\)) str4 arg (make-string parens4 #\)))))
+	     (let* ((val1 (catch #t 
+			       (lambda () (eval-string expr))
+			       (lambda args 'error)))
+		    (trouble (and (not (eq? val1 'error))
+				  (not (eq? val1 val)))))
+	       (if trouble
+		   (format #t "~%~8T~A~S -> ~S~A~%" bold-text expr val1 unbold-text)
+		   (format #t "~%~8T~S -> ~S~%" expr val1))))
+	   ))))
+   (list "()" "(1)" "#()" "#(1)" "1" "#f")))
+   ;; (list ",(+ 1 2)" "\"\"" "(())" "#\\1" "3/4" ",1")
+
+(check-strs "'" "'")
+(check-strs "`" "'")
+(check-strs "'" "`")
+(check-strs "`" "`")
 
 (let ((strs '()))
   (do ((i 0 (+ i 1)))
@@ -12175,6 +12235,9 @@ a2" 3) "132")
 		  (set! strs (cons (list str1 str2) strs))
 		  (set! strs (cons (list str2 str1) strs))))))))))
 
+
+;;; --------------------------------
+
 (do ((i 0 (+ i 1)))
     ((= i 256))
   (if (and (not (= i (char->integer #\))))
@@ -12187,7 +12250,8 @@ a2" 3) "132")
 	       (lambda args
 		 (format #t "[~D] ~A -> ~A~%" i str args))))))
 
-(let ((chars (vector (integer->char 0) #\newline #\space #\tab #\. #\, #\@ #\= #\x #\b #\' #\` #\# #\] #\[ #\} #\{ #\( #\) #\1 #\i #\+ #\- #\e #\_ #\\ #\" #\: #\; #\> #\<)))
+(let ((chars (vector (integer->char 0) #\newline #\space #\tab #\. #\, #\@ #\= #\x #\b #\' #\` 
+		     #\# #\] #\[ #\} #\{ #\( #\) #\1 #\i #\+ #\- #\e #\_ #\\ #\" #\: #\; #\> #\<)))
   (let ((nchars (vector-length chars)))
     (do ((len 2 (+ len 1)))
 	((= len 3))
@@ -12213,9 +12277,11 @@ a2" 3) "132")
 	  (catch #t
 		 (lambda ()
 		   (let ((val (eval-string str)))
-		     (format #t " ~S (~S ~S)~%" val (car val) (cdr val))))
+		     (format #t " ~S -> ~S~%" str val)))
 		 (lambda args
-		   (format #t " ~A~%" args))))))))
+		   ;(format #t " ~A~%" args)
+		   #f
+		   )))))))
 |#
 
 (let ((äåæéîå define)
@@ -19524,7 +19590,18 @@ who says the continuation has to restart the map from the top?
 (test (eq? #t :#t) #f)
 ;(test (keyword? '#:t) #f)  ; these 2 are fooled by the Guile-related #: business (which is still supported)
 ;(test (keyword? '#:#t) #f)
+;#:1.0e8 is also a keyword(!) 
+;#:# is also, so #:#() is interpreted as #:# '()
+
 (test (keyword? :-1) #t)
+(test (keyword? :0/0) #t)
+(test (keyword? :1+i) #t)
+(test (keyword? :1) #t)
+(test (keyword? 0/0:) #t)
+(test (keyword? 1+i:) #t)
+(test (keyword? 1:) #t)
+;;; bizarre...
+
 (test (keyword? (symbol ":#(1 #\\a (3))")) #t)
 (test (keyword? (make-keyword (object->string #(1 #\a (3)) #f))) #t)
 (test (keyword? begin) #f)
@@ -21084,7 +21161,7 @@ abs     1       2
       #t)
 
 (let ()
-  (define-macro* (if-let bindings true false)
+  (define-macro* (if-let bindings true false) ; shouldn't this be let-if or let-if-and, not if-let?
     (let* ((binding-list (if (and (pair? bindings) (symbol? (car bindings)))
 			     (list bindings)
 			     bindings))
@@ -21795,6 +21872,11 @@ but that's make-type's arglist??
   (test (eval-string "'#( . 1)") 'error)
   (test (eval-string "'(1 2 . )") 'error)
   (test (eval-string "'#(1 2 . )") 'error)
+  (test (eval-string "#'(1 2)") 'error)
+  (test (eval-string "#`(1 2)") 'error)
+  (test (eval-string "#,(1 2)") 'error)
+  (test (eval-string "#`,(1 2)") 'error)
+  (test (eval-string "#1(2)") 'error)
   (test (eval-string "(+ 1 . . )") 'error)
   (test (eval-string "(car '(1 . ))") 'error)
   (test (eval-string "(car '(1 . . 2))") 'error)
@@ -24971,7 +25053,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	 (descr (cadr val))
 	 (cur-info *error-info*))
     (test tag 'division-by-zero)
-    (test descr '("~A: division by zero, ~A" "/" (1 0.0))) ; this changes...
+    (test descr '("~A: division by zero, ~S" "/" (1 0.0))) ; this changes...
     (test (vector? cur-info) #t)
     (test (> (length cur-info) 5) #t)
     (test tag (cur-info 0))
@@ -25314,6 +25396,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (procedure? ((((((letrec ((x (lambda () y)) (y (lambda () x))) x))))))) #t)
 (test (procedure? ((((((let x () x))))))) #t)
 (test (procedure? ((((((lambda (x) (set! x (lambda () x))) (lambda () x))))))) #t)
+(test (procedure? ````,,,,((((let x () x))))) #t)
 (test ((do ((i 0 (+ i 1))) ((= i 1) (lambda () 3)))) 3)
 (test (dynamic-wind s7-version s7-version s7-version) (s7-version))
 (num-test ((list .(log 0)) 1) 0)
@@ -63596,12 +63679,25 @@ etc....
 (test (string->number "1 000") #f)
 (test (string->number "1 / 2") #f)
 (test (string->number "1 .2") #f)
+(test (string->number "1:") #f)
+(test (string->number "#b 1") #f)
 
+#|
+(do ((i 20 (+ i 1)))
+    ((= i 128))
+  (let ((str (string-append "#" (string (integer->char i)) "1.0e8")))
+    (catch #t (lambda ()
+		(let ((val (eval-string str)))
+		  (format #t "~A -> ~S~%" str val)))
+	   (lambda args 'error))))
+|#
 (num-test #b1.0e8 256.0)
 (num-test #o1.0e8 16777216.0)
 (num-test #d1.0e8 100000000.0)
+(num-test #x1.0e8 1.056640625) ; e is a digit
+(num-test #e1.0e8 100000000)
+(num-test #i1.0e8 100000000.0)
 
-;;; no #x here because e is a digit
 (if with-bignums
     (num-test #b1.1111111111111111111111111111111111111111111111111110011101010100100100011001011011111011000011001110110101010011110011000100111E1023 1.7976931348623156E308))
 
@@ -63619,6 +63715,7 @@ etc....
 (test (string->number "1e1/2") #f)
 (test (string->number "1e#b0") #f)
 (test (string->number "#B0") #f)
+(test (string->number "0+I") #f)
 (test (string->number "#e#b0/0") #f)
 (test (string->number "#i#b0/0") #f)
 (test (string->number "#e0/0") #f)

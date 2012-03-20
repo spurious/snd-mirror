@@ -20925,9 +20925,9 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	}
 
       if (is_not_null(cdr(x)))
-	return(s7_wrong_number_of_args_error(sc, "too many args for vector-set!: ~A", args));
+	return(s7_wrong_number_of_args_error(sc, "too many args for vector-set!: ~S", args));
       if (i != vector_ndims(vec))
-	return(s7_wrong_number_of_args_error(sc, "not enough args for vector-set!: ~A", args));
+	return(s7_wrong_number_of_args_error(sc, "not enough args for vector-set!: ~S", args));
 
       val = car(x);
     }
@@ -23105,12 +23105,12 @@ static s7_pointer fallback_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
 static s7_pointer fallback_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
-  return(eval_error(sc, "attempt to set ~A?", obj));
+  return(eval_error(sc, "attempt to set ~S?", obj));
 }
 
 static s7_pointer fallback_length(s7_scheme *sc, s7_pointer obj)
 {
-  return(eval_error(sc, "attempt to get length of ~A?", obj));
+  return(eval_error(sc, "attempt to get length of ~S?", obj));
 }
 
 
@@ -23311,7 +23311,7 @@ static s7_pointer object_copy(s7_scheme *sc, s7_pointer obj)
   if (object_types[tag].copy)
     return((*(object_types[tag].copy))(sc, obj));
 
-  return(eval_error(sc, "attempt to copy ~A?", obj));
+  return(eval_error(sc, "attempt to copy ~S?", obj));
 }
 
 
@@ -23322,7 +23322,7 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
   if (object_types[tag].reverse)
     return((*(object_types[tag].reverse))(sc, obj));
 
-  return(eval_error(sc, "attempt to reverse ~A?", obj));
+  return(eval_error(sc, "attempt to reverse ~S?", obj));
 }
 
 
@@ -23624,7 +23624,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 				      list_2(sc, 
-					     make_protected_string(sc, "make-type arg, ~A, should be a function"),
+					     make_protected_string(sc, "make-type arg, ~S, should be a function"),
 					     func)));
 		    }
 		  func_loc = s7_gc_protect(sc, func); /* this ought to be faster in the mark phase than checking every function field of every scheme type(?) */
@@ -23642,7 +23642,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
+				      list_2(sc, make_protected_string(sc, "make-type :print procedure, ~S, should take one argument"), func)));
 		    }
 
 		  object_types[tag].print_func = func;
@@ -23657,7 +23657,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
+				      list_2(sc, make_protected_string(sc, "make-type :equal procedure, ~S, should take two arguments"), func)));
 		    }
 		  object_types[tag].equal = NULL;
 		  object_types[tag].equal_func = func;
@@ -23670,7 +23670,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
+				      list_2(sc, make_protected_string(sc, "make-type :getter procedure, ~S, should take at least one argument"), func)));
 		    }
 		  object_types[tag].getter_func = func;
 		  object_types[tag].apply = call_s_object_getter;
@@ -23682,7 +23682,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
+				      list_2(sc, make_protected_string(sc, "make-type :setter procedure, ~S, should take at least two arguments"), func)));
 		    }
 		  object_types[tag].setter_func = func;
 		  object_types[tag].set = call_s_object_setter;
@@ -23695,7 +23695,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
+				      list_2(sc, make_protected_string(sc, "make-type :length procedure, ~S, should take at one argument"), func)));
 		    }
 
 		  object_types[tag].length_func = func;
@@ -23720,7 +23720,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :copy procedure, ~A, should take at one argument"), func)));
+				      list_2(sc, make_protected_string(sc, "make-type :copy procedure, ~S, should take at one argument"), func)));
 		    }
 		  object_types[tag].copy_func = func;
 		  object_types[tag].copy = call_s_object_copy;
@@ -23733,7 +23733,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :reverse procedure, ~A, should take at one argument"), func)));
+				      list_2(sc, make_protected_string(sc, "make-type :reverse procedure, ~S, should take at one argument"), func)));
 		    }
 		  object_types[tag].reverse_func = func;
 		  object_types[tag].reverse = call_s_object_reverse;
@@ -23746,7 +23746,7 @@ In each case, the argument is the value of the object, not the object itself."
 		      s7_gc_unprotect_at(sc, args_loc);
 		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :fill procedure, ~A, should take at two arguments"), func)));
+				      list_2(sc, make_protected_string(sc, "make-type :fill procedure, ~S, should take at two arguments"), func)));
 		    }
 		  object_types[tag].fill_func = func;
 		  object_types[tag].fill = call_s_object_fill;
@@ -24799,7 +24799,7 @@ list to the trailing arguments of hook-apply."
       if (!is_proper_list(sc, hook_args))        /* (hook-apply + #f) etc */
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			list_2(sc, 
-			       make_protected_string(sc, "hook-apply's last argument should be a proper list: ~A"),
+			       make_protected_string(sc, "hook-apply's last argument should be a proper list: ~S"),
 			       hook_args)));
     }
 
@@ -25843,7 +25843,7 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 
 	if (object_types[tag].fill)
 	  return((*(object_types[tag].fill))(sc, car(args), cadr(args)));
-	return(eval_error(sc, "attempt to fill ~A?", car(args)));
+	return(eval_error(sc, "attempt to fill ~S?", car(args)));
       }
 
     case T_PAIR:
@@ -26554,7 +26554,7 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
       if (is_not_null(args))
 	return(s7_error(sc, 
 			sc->FORMAT_ERROR, 
-			list_2(sc, make_protected_string(sc, "format control string is null, but there are other arguments: ~A"), args)));
+			list_2(sc, make_protected_string(sc, "format control string is null, but there are other arguments: ~S"), args)));
       return(make_protected_string(sc, ""));
     }
 
@@ -26986,7 +26986,7 @@ static s7_pointer division_by_zero_error(s7_scheme *sc, const char *caller, s7_p
 {
   return(s7_error(sc, make_symbol(sc, "division-by-zero"), 
 		  list_3(sc, 
-			 make_protected_string(sc, "~A: division by zero, ~A"), 
+			 make_protected_string(sc, "~A: division by zero, ~S"), 
 			 make_protected_string(sc, caller),
 			 arg)));
 }
@@ -27399,7 +27399,7 @@ GOT_CATCH:
        *   error check here!
        */
       if (!args_match(sc, sc->code, 2))
-	return(s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~A", sc->args));
+	return(s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~S", sc->args));
 
       sc->op = OP_APPLY;
 
@@ -27444,7 +27444,7 @@ GOT_CATCH:
 
 	  if ((!s7_is_list(sc, info)) ||
 	      (!s7_is_string(car(info))))
-	    format_to_output(sc, error_port, "\n;~A ~A", list_2(sc, type, info), type == sc->FORMAT_ERROR);
+	    format_to_output(sc, error_port, "\n;~S ~S", list_2(sc, type, info), type == sc->FORMAT_ERROR);
 	  else
 	    {
 	      const char *carstr;
@@ -27470,7 +27470,7 @@ GOT_CATCH:
 		  format_to_output(sc, error_port, errstr, cdr(info), type == sc->FORMAT_ERROR);
 		  free(errstr);
 		}
-	      else format_to_output(sc, error_port, "\n;~A ~A", list_2(sc, type, info), type == sc->FORMAT_ERROR);
+	      else format_to_output(sc, error_port, "\n;~S ~S", list_2(sc, type, info), type == sc->FORMAT_ERROR);
 	    }
 	  
 	  /* now display location at end */
@@ -27514,7 +27514,7 @@ GOT_CATCH:
 
 	  if (is_pair(vector_element(sc->error_info, ERROR_CODE)))
 	    {
-	      format_to_output(sc, error_port, ";    ~A", 
+	      format_to_output(sc, error_port, ";    ~S", 
 			       list_1(sc, vector_element(sc->error_info, ERROR_CODE)),
 			       type == sc->FORMAT_ERROR);
 	      s7_newline(sc, error_port);
@@ -27926,7 +27926,7 @@ static void improper_arglist_error(s7_scheme *sc)
    */
   s7_error(sc, sc->SYNTAX_ERROR, 
 	   list_2(sc,
-		  make_protected_string(sc, "improper list of arguments: ~A"),
+		  make_protected_string(sc, "improper list of arguments: ~S"),
 		  append_in_place(sc, safe_reverse_in_place(sc, sc->args), sc->code)));
 }
 
@@ -28120,7 +28120,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 	  if (!is_proper_list(sc, car(p)))        /* (apply + #f) etc */
 	    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			    list_2(sc, 
-				   make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
+				   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
 				   args)));
 	  cdr(q) = car(p);                       
 	  push_stack(sc, OP_APPLY, cdr(args), sc->code);
@@ -28136,7 +28136,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 	  if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
 	    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			    list_2(sc, 
-				   make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
+				   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
 				   args)));
 	}
     }
@@ -28639,7 +28639,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       for (x = cdr(args); (is_pair(x)) && (is_pair(car(x))); x = cdr(x)) {}
       if (!is_pair(x))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~A"), cdr(args))));
+			list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~S"), cdr(args))));
     }
 
   sc->y = args;
@@ -28986,7 +28986,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       for (x = cdr(args); (is_pair(x)) && (is_pair(car(x))); x = cdr(x)) {}
       if (!is_pair(x))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
+			list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~S"), cdr(args))));
     }
 
   sc->args = make_counter(sc, sc->NIL, safe_reverse_in_place(sc, sc->z), 0, len);
@@ -29059,13 +29059,13 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  /* look for errors here rather than glomming up the set! and let code */
 	case OP_SET1:                                             /* (set! var (values 1 2 3)) */
 	  set_multiple_value(args);
-	  return(eval_error(sc, "can't set! some variable to ~A", args));
+	  return(eval_error(sc, "can't set! some variable to ~S", args));
 
 	case OP_LET1:                                             /* (let ((var (values 1 2 3))) ...) */
 	case OP_LET_STAR1:
 	case OP_LETREC1:
 	  set_multiple_value(args);
-	  return(eval_error_with_name(sc, "~A: can't bind some variable to ~A", args));
+	  return(eval_error_with_name(sc, "~A: can't bind some variable to ~S", args));
 
 	  /* handle 'and' and 'or' specially */
 	case OP_AND1:
@@ -29246,7 +29246,7 @@ static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
   if (!is_proper_list(sc, x))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    list_2(sc, 
-			   make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
+			   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
 			   args)));
 
   return(g_qq_values(sc, x));
@@ -30119,7 +30119,7 @@ static s7_pointer lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, 
 	  {
 	    return(s7_error(sc, sc->WRONG_TYPE_ARG,
 			    list_4(sc,
-				   make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
+				   make_protected_string(sc, "~A: parameter set twice, ~S in ~S"),
 				   closure_name(sc, sc->code), sc->y, sc->args)));
 	  }
 	slot_set_value(x, val);
@@ -30246,7 +30246,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 					{
 					  return(s7_error(sc, sc->WRONG_TYPE_ARG,
 							  list_4(sc,
-								 make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
+								 make_protected_string(sc, "~A: parameter set twice, ~S in ~S"),
 								 closure_name(sc, sc->code), sc->y, sc->args)));
 					}
 				    }
@@ -30254,7 +30254,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 				    {
 				      return(s7_error(sc, sc->WRONG_TYPE_ARG,
 						      list_4(sc,
-							     make_protected_string(sc, "~A: unknown key: ~A in ~A"),
+							     make_protected_string(sc, "~A: unknown key: ~S in ~S"),
 							     closure_name(sc, sc->code), sc->y, sc->args)));
 				    }
 				  /* (define* (f a (b :c)) b) (f :b 1 :d) */
@@ -30263,7 +30263,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 				{
 				  return(s7_error(sc, sc->WRONG_TYPE_ARG,
 						  list_4(sc,
-							 make_protected_string(sc, "~A: unknown key: ~A in ~A"),
+							 make_protected_string(sc, "~A: unknown key: ~S in ~S"),
 							 closure_name(sc, sc->code), sc->y, sc->args)));
 				}
 			    }
@@ -34543,7 +34543,7 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args)
 	}
       if ((is_not_null(x)) &&
 	  (s7_is_constant(x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
-	return(eval_error(sc, "lambda :rest parameter '~A is a constant", x));
+	return(eval_error(sc, "lambda :rest parameter '~S is a constant", x));
     }
   return(sc->F);
 }
@@ -34554,7 +34554,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
   if (!s7_is_list(sc, args))
     {
       if (s7_is_constant(args))                                  /* (lambda* :a ...) */
-	return(eval_error(sc, "lambda* parameter '~A is a constant", args));
+	return(eval_error(sc, "lambda* parameter '~S is a constant", args));
       if (is_symbol(args))
 	set_local(args);
     }
@@ -48590,6 +48590,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_READ_QUASIQUOTE:
       /* this was pushed when the backquote was seen, then eventually we popped back to it */
       sc->value = g_quasiquote_1(sc, sc->value);
+      /* doing quasiquote at read time means there are minor inconsistencies in 
+       *    various combinations or quote/' and quasiquote/`.  A quoted ` will expand
+       *    but quoted quasiquote will not (` can't be redefined, but quasiquote can).
+       *    see s7test.scm for examples.
+       */
       goto START;
       
       
@@ -54677,7 +54682,7 @@ the error type and the info passed to the error handler.");
                             (if (pair? clauses)                            \n\
                         	(let* ((feature (if (pair? (car clauses))  \n\
                         			    (caar clauses)         \n\
-                        			    (error 'wrong-type-arg \"cond-expand clause ~A is not a list\" (car clauses))))\n\
+                        			    (error 'wrong-type-arg \"cond-expand clause ~S is not a list\" (car clauses))))\n\
                         	       (code (cons 'begin (cdar clauses))))\n\
                         	  (cond                                    \n\
                         	   ((and (eq? 'else feature)               \n\
