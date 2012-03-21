@@ -30618,20 +30618,6 @@ gboolean use_alpha)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_color_chooser_add_palette(XEN chooser, XEN horizontal, XEN colors_per_line, XEN n_colors, XEN colors)
-{
-  #define H_gtk_color_chooser_add_palette "void gtk_color_chooser_add_palette(GtkColorChooser* chooser, \
-gboolean horizontal, gint colors_per_line, gint n_colors, GdkRGBA* colors)"
-  XEN_ASSERT_TYPE(XEN_GtkColorChooser__P(chooser), chooser, 1, "gtk_color_chooser_add_palette", "GtkColorChooser*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(horizontal), horizontal, 2, "gtk_color_chooser_add_palette", "gboolean");
-  XEN_ASSERT_TYPE(XEN_gint_P(colors_per_line), colors_per_line, 3, "gtk_color_chooser_add_palette", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(n_colors), n_colors, 4, "gtk_color_chooser_add_palette", "gint");
-  XEN_ASSERT_TYPE(XEN_GdkRGBA__P(colors), colors, 5, "gtk_color_chooser_add_palette", "GdkRGBA*");
-  gtk_color_chooser_add_palette(XEN_TO_C_GtkColorChooser_(chooser), XEN_TO_C_gboolean(horizontal), XEN_TO_C_gint(colors_per_line), 
-                                XEN_TO_C_gint(n_colors), XEN_TO_C_GdkRGBA_(colors));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_color_chooser_dialog_new(XEN title, XEN parent)
 {
   #define H_gtk_color_chooser_dialog_new "GtkWidget* gtk_color_chooser_dialog_new(gchar* title, GtkWindow* parent)"
@@ -38326,7 +38312,6 @@ XEN_NARGIFY_2(gxg_gtk_color_chooser_get_rgba_w, gxg_gtk_color_chooser_get_rgba)
 XEN_NARGIFY_2(gxg_gtk_color_chooser_set_rgba_w, gxg_gtk_color_chooser_set_rgba)
 XEN_NARGIFY_1(gxg_gtk_color_chooser_get_use_alpha_w, gxg_gtk_color_chooser_get_use_alpha)
 XEN_NARGIFY_2(gxg_gtk_color_chooser_set_use_alpha_w, gxg_gtk_color_chooser_set_use_alpha)
-XEN_NARGIFY_5(gxg_gtk_color_chooser_add_palette_w, gxg_gtk_color_chooser_add_palette)
 XEN_NARGIFY_2(gxg_gtk_color_chooser_dialog_new_w, gxg_gtk_color_chooser_dialog_new)
 XEN_NARGIFY_0(gxg_gtk_color_chooser_widget_new_w, gxg_gtk_color_chooser_widget_new)
 #endif
@@ -42365,7 +42350,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_color_chooser_set_rgba_w gxg_gtk_color_chooser_set_rgba
 #define gxg_gtk_color_chooser_get_use_alpha_w gxg_gtk_color_chooser_get_use_alpha
 #define gxg_gtk_color_chooser_set_use_alpha_w gxg_gtk_color_chooser_set_use_alpha
-#define gxg_gtk_color_chooser_add_palette_w gxg_gtk_color_chooser_add_palette
 #define gxg_gtk_color_chooser_dialog_new_w gxg_gtk_color_chooser_dialog_new
 #define gxg_gtk_color_chooser_widget_new_w gxg_gtk_color_chooser_widget_new
 #endif
@@ -46411,7 +46395,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_color_chooser_set_rgba, gxg_gtk_color_chooser_set_rgba_w, 2, 0, 0, H_gtk_color_chooser_set_rgba);
   XG_DEFINE_PROCEDURE(gtk_color_chooser_get_use_alpha, gxg_gtk_color_chooser_get_use_alpha_w, 1, 0, 0, H_gtk_color_chooser_get_use_alpha);
   XG_DEFINE_PROCEDURE(gtk_color_chooser_set_use_alpha, gxg_gtk_color_chooser_set_use_alpha_w, 2, 0, 0, H_gtk_color_chooser_set_use_alpha);
-  XG_DEFINE_PROCEDURE(gtk_color_chooser_add_palette, gxg_gtk_color_chooser_add_palette_w, 5, 0, 0, H_gtk_color_chooser_add_palette);
   XG_DEFINE_PROCEDURE(gtk_color_chooser_dialog_new, gxg_gtk_color_chooser_dialog_new_w, 2, 0, 0, H_gtk_color_chooser_dialog_new);
   XG_DEFINE_PROCEDURE(gtk_color_chooser_widget_new, gxg_gtk_color_chooser_widget_new_w, 0, 0, 0, H_gtk_color_chooser_widget_new);
 #endif
@@ -49029,7 +49012,7 @@ void Init_libxg(void)
       #else
         XEN_YES_WE_HAVE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Feb-12"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Mar-12"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

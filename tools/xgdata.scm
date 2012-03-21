@@ -8373,7 +8373,6 @@
 (CFNC-3316 "void gtk_color_chooser_set_rgba GtkColorChooser* chooser GdkRGBA* color" 'const)
 (CFNC-3316 "gboolean gtk_color_chooser_get_use_alpha GtkColorChooser* chooser")
 (CFNC-3316 "void gtk_color_chooser_set_use_alpha GtkColorChooser* chooser gboolean use_alpha")
-(CFNC-3316 "void gtk_color_chooser_add_palette GtkColorChooser* chooser gboolean horizontal gint colors_per_line gint n_colors GdkRGBA* colors")
 (CFNC-3316 "GtkWidget* gtk_color_chooser_dialog_new gchar* title GtkWindow* parent" 'const)
 (CFNC-3316 "GtkWidget* gtk_color_chooser_widget_new void")
 
@@ -8408,6 +8407,9 @@
 (CINT "GDK_SMOOTH_SCROLL_MASK" "GdkEventMask")
 
 (CFNC "gboolean gdk_event_get_scroll_deltas GdkEvent* event gdouble* [delta_x] gdouble* [delta_y]")
+
+;;; 3.3.20 -- nothing new but "XI2" requirement -- what is that??
+(CFNC "void gtk_color_chooser_add_palette GtkColorChooser* chooser GtkOrientation horizontal gint colors_per_line gint n_colors GdkRGBA* colors") ; was gboolean horizontal
 
 |#
 

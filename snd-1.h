@@ -1383,7 +1383,7 @@ void sx_incremented(chan_info *cp, double amount);
 int move_axis(chan_info *cp, int x);
 void set_axes(chan_info *cp, double x0, double x1, mus_float_t y0, mus_float_t y1);
 void focus_x_axis_change(chan_info *cp, int focus_style);
-bool key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
+void key_press_callback(chan_info *ur_cp, int x, int y, int key_state, int keysym);
 void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_state, int button, oclock_t time);
 void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, int button);
 void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time);

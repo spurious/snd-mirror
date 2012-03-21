@@ -948,8 +948,8 @@ struct s7_scheme {
   unsigned int heap_size;
 
   /* "int" or "unsigned int" seems safe here:
-   *      sizeof(s7_cell) = 28 in 32-bit machines, 32 in 64
-   *      so to get more than 2^32 actual objects would require ca 140 GBytes RAM
+   *      sizeof(s7_cell) = 48 bytes
+   *      so to get more than 2^32 actual objects would require ca 206 GBytes RAM
    *      vectors might be full of the same object (sc->NIL for example), so there
    *      we need ca 38 GBytes RAM (8 bytes per pointer).  
    */

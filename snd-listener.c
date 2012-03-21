@@ -622,7 +622,9 @@ void listener_return(widget_t w, int last_prompt)
 #if (!HAVE_RUBY && !HAVE_FORTH)
   GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0;
   int parens;
+#if USE_MOTIF
   GUI_TEXT_POSITION_TYPE new_eot = 0;
+#endif
 #endif
 
   full_str = GUI_TEXT(w);
@@ -783,8 +785,12 @@ void listener_return(widget_t w, int last_prompt)
 		    listener_append_and_prompt(NULL);
 		  else 
 		    {
+#if USE_MOTIF
 		      new_eot = GUI_TEXT_END(w);
 		      GUI_LISTENER_TEXT_INSERT(w, new_eot, (char *)"\n");
+#else
+		      GUI_LISTENER_TEXT_INSERT(w, 0, (char *)"\n");
+#endif
 		    }
 		  if (full_str) GUI_FREE(full_str);
 		  return;

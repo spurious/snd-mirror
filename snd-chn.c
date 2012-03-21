@@ -5252,13 +5252,13 @@ void w_button_callback(chan_info *cp, bool on, bool with_control)
 }
 
 
-bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
+void key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 {
   /* called by every key-intercepting widget in the entire sound pane */
   chan_info *cp;
   snd_info *sp;
 
-  if (!ncp) return(false);
+  if (!ncp) return;
   cp = virtual_selected_channel(ncp);
   sp = cp->sound;
   select_channel(sp, cp->chan);
@@ -5267,7 +5267,6 @@ bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
       (within_graph(cp, x, y) == CLICK_LISP) &&
       (XEN_HOOKED(key_press_hook)))
     {
-      /* return true to keep this key press from being passed to keyboard_command */
       XEN res = XEN_FALSE;
       res = run_or_hook(key_press_hook,
 			XEN_LIST_4(C_INT_TO_XEN_SOUND(sp->index),
@@ -5276,11 +5275,10 @@ bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 				   C_TO_XEN_INT(key_state)), /* this can have NumLock etc -- will be masked off in keyboard_command */
 			S_key_press_hook);
       if (XEN_TRUE_P(res))
-	return(false);
+	return;
     }
   keyboard_command(cp, keysym, key_state);
   /* if lisp graph has cursor? */
-  return(false);
 }
 
 
