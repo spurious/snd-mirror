@@ -181,7 +181,6 @@ related documentation: &nbsp;
     <li><a href="#undoredo">Undo, redo, revert</a>
     <li><a href="#menuplay">Play</a>
     <li><a href="#mixingfiles">Mix Files</a>
-    <li><a href="#kbdmacros">Keyboard macros</a>
     <li><a href="#changeformat">Change file format</a>
     <li><a href="#extendfile">Extend a file</a>
     <li><a href="#editenvelope">Edit or view an envelope</a>
@@ -384,7 +383,7 @@ related documentation: &nbsp;
 <tr>
 <td></td>
 <td></td>
-<td class="br">With grid</td>
+<td class="br"><a href="extsnd.html#showgrid">With grid</a></td>
 <td></td>
 <td class="br">Delete</td>
 </tr>
@@ -512,7 +511,7 @@ to various other programs and X; <a href="sndscm.html">sndscm.html</a> has brief
 most of the Scheme/Ruby/Forth code included in the Snd tarball; <a href="fm.html">fm.html</a>
 is an introduction to FM; <a href="sndclm.html">sndclm.html</a> is the basic generator documentation;
 <a href="sndlib.html">sndlib.html</a> describes the underlying sound IO library; <a href="libxm.html">libxm.html</a>
-describes the user-interface extension library.
+describes the user-interface extension library; <a href="s7.html">s7.html</a> is the s7 documentation.
 </p>
 
 <p>There are context-sensitive popup menus, and (if you like) a toolbar:
@@ -794,7 +793,7 @@ flushed (but see the function <a href="extsnd.html#askaboutunsavededits">ask-abo
 <tr><td class="br"><a href="#viewy0">Show y=0</a></td><td class="br">show or hide the y=0 line</td></tr>
 <tr><td class="br"><a href="extsnd.html#xaxisstyle">X axis units</a></td><td class="br">x axis labelled in seconds, samples, percent of total</td></tr>
 <tr><td class="br"><a href="#zoomoption">Zoom focus</a></td><td class="br">where to focus during zooms</td></tr>
-<tr><td class="br">With grid</td><td class="br">show a grid in the graph</td></tr>
+<tr><td class="br"><a href="extsnd.html#showgrid">With grid</a></td><td class="br">show a grid in the graph</td></tr>
 </table>
 
 
@@ -1296,7 +1295,6 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 <li><a href="#undoredo">Undo, redo, revert</a>
 <li><a href="#menuplay">Play</a>
 <li><a href="#mixingfiles">Mix Files</a>
-<li><a href="#kbdmacros">Keyboard macros</a>
 <li><a href="#changeformat">Change file format</a>
 <li><a href="#extendfile">Extend a file</a>
 <li><a href="#editenvelope">Edit or view an envelope</a>
@@ -1644,14 +1642,6 @@ The editor envelope is drawn in black with dots whereas the current
 mix amp env (if any) is drawn in blue.
 If the mix's sync field is not 0, any other mixes that share that sync field
 are edited in parallel with the current one.
-</p>
-
-
-
-<div class="innerheader" id="kbdmacros">Keyboard macros</div>
-
-<p>As in Emacs, C-x ( begins keyboard macro definition, C-x )
-ends it, and C-x e executes the last keyboard macro. 
 </p>
 
 

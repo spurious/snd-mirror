@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [589]
-;;;  test 1: defaults                           [1184]
-;;;  test 2: headers                            [1403]
-;;;  test 3: variables                          [1718]
-;;;  test 4: sndlib                             [2351]
-;;;  test 5: simple overall checks              [4930]
-;;;  test 6: vcts                               [14121]
-;;;  test 7: colors                             [14558]
-;;;  test 8: clm                                [15078]
-;;;  test 9: mix                                [26421]
-;;;  test 10: marks                             [28650]
-;;;  test 11: dialogs                           [29617]
-;;;  test 12: extensions                        [29827]
-;;;  test 13: menus, edit lists, hooks, etc     [30093]
-;;;  test 14: all together now                  [31585]
-;;;  test 15: chan-local vars                   [32476]
-;;;  test 16: regularized funcs                 [34278]
-;;;  test 17: dialogs and graphics              [39225]
-;;;  test 18: enved                             [39321]
-;;;  test 19: save and restore                  [39340]
-;;;  test 20: transforms                        [41099]
-;;;  test 21: new stuff                         [43249]
-;;;  test 22: run                               [45304]
-;;;  test 23: with-sound                        [52181]
-;;;  test 25: X/Xt/Xm                           [56300]
-;;;  test 26:                                   [59993]
-;;;  test 27: GL                                [59999]
-;;;  test 28: errors                            [60123]
-;;;  test 29: s7                                [62367]
-;;;  test all done                              [62438]
-;;;  test the end                               [62628]
+;;;  test 0: constants                          [590]
+;;;  test 1: defaults                           [1182]
+;;;  test 2: headers                            [1400]
+;;;  test 3: variables                          [1715]
+;;;  test 4: sndlib                             [2347]
+;;;  test 5: simple overall checks              [4902]
+;;;  test 6: vcts                               [14048]
+;;;  test 7: colors                             [14484]
+;;;  test 8: clm                                [15004]
+;;;  test 9: mix                                [26308]
+;;;  test 10: marks                             [28541]
+;;;  test 11: dialogs                           [29508]
+;;;  test 12: extensions                        [29701]
+;;;  test 13: menus, edit lists, hooks, etc     [29967]
+;;;  test 14: all together now                  [31443]
+;;;  test 15: chan-local vars                   [32334]
+;;;  test 16: regularized funcs                 [34120]
+;;;  test 17: dialogs and graphics              [39067]
+;;;  test 18: enved                             [39163]
+;;;  test 19: save and restore                  [39182]
+;;;  test 20: transforms                        [40904]
+;;;  test 21: new stuff                         [43058]
+;;;  test 22: run                               [45083]
+;;;  test 23: with-sound                        [51957]
+;;;  test 25: X/Xt/Xm                           [56069]
+;;;  test 26:                                   [59762]
+;;;  test 27: GL                                [59768]
+;;;  test 28: errors                            [59892]
+;;;  test 29: s7                                [62132]
+;;;  test all done                              [62204]
+;;;  test the end                               [62394]
 
 (define tests 1)
 (define keep-going #f)
@@ -62410,40 +62410,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 14,486,041,393  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 10,836,543,187  run.c:eval_ptree [/home/bil/snd-11/snd]
 
-7-Mar-10
-318,148,021,968 
-40,864,919,790  s7.c:eval [/home/bil/snd-s7/snd]
-26,485,168,742  io.c:mus_read_any_1 [/home/bil/snd-s7/snd]
-24,338,113,084  s7.c:eval'2 [/home/bil/snd-s7/snd]
-21,345,385,043  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-s7/snd]
-18,089,464,229  snd-edits.c:channel_local_maxamp [/home/bil/snd-s7/snd]
-16,230,371,673  s7.c:gc [/home/bil/snd-s7/snd]
-10,973,188,812  io.c:mus_write_1 [/home/bil/snd-s7/snd]
-10,939,541,547  run.c:eval_ptree [/home/bil/snd-s7/snd]
-8,918,483,945  snd-sig.c:direct_filter [/home/bil/snd-s7/snd]
-
-24-Jul-10
-290,992,535,136 
-41,408,289,112  s7.c:eval [/home/bil/snd-11/snd]
-32,616,883,526  s7.c:eval'2 [/home/bil/snd-11/snd]
-25,031,312,834  snd-edits.c:channel_local_maxamp [/home/bil/snd-11/snd]
-20,823,611,841  io.c:mus_read_any_1 [/home/bil/snd-11/snd]
-15,322,708,021  s7.c:gc [/home/bil/snd-11/snd]
-10,968,070,604  io.c:mus_write_1 [/home/bil/snd-11/snd]
-10,030,190,974  run.c:eval_ptree [/home/bil/snd-11/snd]
- 8,918,483,905  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
-
-15-Oct-10
-265,752,846,149 
-34,814,887,043  s7.c:eval [/home/bil/test-snd/snd]
-26,289,382,435  s7.c:eval'2 [/home/bil/test-snd/snd]
-24,643,766,551  snd-edits.c:channel_local_maxamp [/home/bil/test-snd/snd]
-21,181,140,399  io.c:mus_read_any_1 [/home/bil/test-snd/snd]
-12,896,421,436  s7.c:gc [/home/bil/test-snd/snd]
-10,979,592,154  io.c:mus_write_1 [/home/bil/test-snd/snd]
-10,045,760,800  run.c:eval_ptree [/home/bil/test-snd/snd]
- 8,918,483,905  snd-sig.c:direct_filter [/home/bil/test-snd/snd]
-
 10-Dec-10 (64-bit)
 224,005,122,781 
 32,349,320,555  s7.c:eval [/home/bil/snd-11/snd]
@@ -62454,23 +62420,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 11,175,405,494  s7.c:gc [/home/bil/snd-11/snd]
  8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
-
-16-Nov:
-155,487,001,400
-15,960,688,632  ???:sin [/lib64/libm-2.12.so]
-15,183,088,270  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
- 9,321,224,247  s7.c:eval [/home/bil/snd-12/snd]
- 9,254,121,605  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
- 8,904,504,267  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
- 8,829,563,098  run.c:eval_ptree [/home/bil/snd-12/snd]
- 7,220,825,842  io.c:mus_write_1 [/home/bil/snd-12/snd]
- 6,122,129,276  s7.c:eval'2 [/home/bil/snd-12/snd]
- 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
- 2,764,673,602  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
- 2,744,323,094  ???:cos [/lib64/libm-2.12.so]
- 2,646,608,661  clm.c:mus_src [/home/bil/snd-12/snd]
- 2,143,776,482  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
- 2,044,842,751  s7.c:gc [/home/bil/snd-12/snd]
 
 14-Dec-11:
 153,472,402,051
@@ -62488,6 +62437,5 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,654,002,973  clm.c:mus_src [/home/bil/snd-12/snd]
  2,216,029,830  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
  2,051,926,172  s7.c:gc [/home/bil/snd-12/snd]
-
 |#
 

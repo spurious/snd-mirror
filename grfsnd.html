@@ -65,6 +65,16 @@
         DIV.centered1 {padding-left: 35%;
 	               padding-bottom: 0.5cm;
 		       }
+	DIV.indented {background-color: #F8F8F0; 
+	              padding-left: 0.5cm; 
+	              padding-right: 0.5cm; 
+		      padding-top: 0.5cm; 
+		      padding-bottom: 0.5cm;
+		      margin-bottom: 0.5cm;
+		      border: 1px solid gray;
+		      -moz-border-radius: 20px;
+		      -webkit-border-radius: 20px;
+		      }
         DIV.topheader {margin-top: 10px;
 	            margin-bottom: 40px;
 	            border: 4px solid #00ff00; /* green */
@@ -858,6 +868,7 @@ Miscellaneous:
 </pre>
 
 
+<div class="indented">
 <pre class="indented">
 ./configure
 make
@@ -873,7 +884,7 @@ Here at CCRMA, we normally use:
 <pre class="indented">
 ./configure --with-alsa --with-temp-dir=/zap --with-static-xm --with-gl
 </pre>
-
+</div>
 
 <p>
 There are many more examples in tools/compsnd.

@@ -269,7 +269,6 @@ int find_matching_paren(const char *str, int parens, int pos, int *highlight_pos
   return(parens);
 }
 
-/* this doesn't know about block comments */
 
 int check_balance(const char *expr, int start, int end, bool in_listener) 
 {
@@ -339,58 +338,63 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	    }
 	  break;
 
-#if 0
-	  /* I now think there's nothing special about backslash outside double-quotes (handled above)
-	   */
-	case '\\': 
-	  /* this is an error of some sort or an ignored double quote? */
-	  i += 2; 
-	  break;
-#endif
-
-	case '#' :
-	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
-	    return(i);
-	  else 
+	case '#':
+	  if ((i < end - 1) &&
+	      (expr[i + 1] == '|'))
 	    {
-	      bool found_it = false;
-	      if (prev_separator)
+	      /* (+ #| a comment |# 2 1) */
+	      i++;
+	      do {
+		i++;
+	      } while (((expr[i] != '|') || (expr[i + 1] != '#')) && (i < end));
+	      i++;
+	      break;
+	    }
+	  else
+	    {
+	      if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
+		return(i);
+	      else 
 		{
-		  int k, incr = 0;
-		  for (k = i + 1; k < end; k++)
+		  bool found_it = false;
+		  if (prev_separator)
 		    {
-		      if (expr[k] == '(')
+		      int k, incr = 0;
+		      for (k = i + 1; k < end; k++)
 			{
-			  incr = k - i;
-			  break;
+			  if (expr[k] == '(')
+			    {
+			      incr = k - i;
+			      break;
+			    }
+			  else
+			    {
+			      if ((!isdigit(expr[k])) &&
+				  (expr[k] != 'D') && 
+				  (expr[k] != 'd') &&
+				  (expr[k] != '=') &&
+				  (expr[k] != '#'))
+				break;
+			    }
 			}
+		      if (incr > 0)
+			{
+			  i += incr;
+			  found_it = true;
+			}
+		    }
+		  if (!found_it)
+		    {
+		      if ((i + 2 < end) && (expr[i + 1] == '\\') && 
+			  ((expr[i + 2] == ')') || (expr[i + 2] == ';') || (expr[i + 2] == '\"') || (expr[i + 2] == '(')))
+			i += 3;
 		      else
 			{
-			  if ((!isdigit(expr[k])) &&
-			      (expr[k] != 'D') && 
-			      (expr[k] != 'd') &&
-			      (expr[k] != '=') &&
-			      (expr[k] != '#'))
-			    break;
+			  prev_separator = false;
+			  quote_wait = false;
+			  non_whitespace_p = true;
+			  i++;
 			}
-		    }
-		  if (incr > 0)
-		    {
-		      i += incr;
-		      found_it = true;
-		    }
-		}
-	      if (!found_it)
-		{
-		  if ((i + 2 < end) && (expr[i + 1] == '\\') && 
-		      ((expr[i + 2] == ')') || (expr[i + 2] == ';') || (expr[i + 2] == '\"') || (expr[i + 2] == '(')))
-		    i += 3;
-		  else
-		    {
-		      prev_separator = false;
-		      quote_wait = false;
-		      non_whitespace_p = true;
-		      i++;
 		    }
 		}
 	    }

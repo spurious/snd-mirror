@@ -4050,7 +4050,7 @@ used as the symbol's (temporary) value.  Otherwise, s7 calls the error handler.
 <p>There are a lot of thoroughly disreputable ways to take advantage of *unbound-variable-hook*.
 Here are two.  In the first, we can't ever remember how to get the error environment information
 when we're in the REPL, so we tie that action to the question-mark key.  Whenever '?' is typed
-in the listener, the error info is typed out.  That moment of weakness leads inexorably to the second, 
+in the listener, the error info is typed out.  That first moment of weakness leads inexorably to the second, 
 dalliance with symbol-macros!
 </p>
 
@@ -4423,7 +4423,7 @@ some other thing, they satisfy the function morally-equal?.
 </p>
 
 <pre class="indented">
-&gt; (morally-equal? 2 2.0)
+&gt; (morally-equal? 2 2.0)        ; would "equal!?" be a better name?
 #t
 &gt; (morally-equal? 1/0 1/0)      ; NaN
 #t
@@ -4436,9 +4436,10 @@ some other thing, they satisfy the function morally-equal?.
 </pre>
 
 <p>I'd be happy to add *float-epsilon* or some such variable, if anyone needs 
-it.  Maybe this function should be named "equal!?".
+it.  
+Also, I can't decide how bignums should interact with morally-equal?.  Currently,
+if a bignum is involved, either here or in a hash-table, s7 uses equal?.
 </p>
-
 
 
 <!--
@@ -4784,7 +4785,7 @@ These symbols are not just an optimization of string comparison:
 
 <div class="indented">
 
-<p id="firstclasssyntax">The built-in syntactic names, such as "begin", are almost first-class citizens.
+<p>The built-in syntactic names, such as "begin", are almost first-class citizens.
 </p>
 
 <pre class="indented">

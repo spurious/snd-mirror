@@ -25158,9 +25158,13 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
   
   switch (type(x))
     {
-      /* one problematic case: #<unspecified> is currently not equal to (values) but they print the same.
-       *   case T_UNTYPED: return((s7_is_unspecified(sc, x)) && (s7_is_unspecified(sc, y)))
+    case T_UNTYPED: 
+      /* we checked x == y above, and know x and y are T_UNTYPED
        */
+      if (x == sc->UNSPECIFIED) return(y == sc->NO_VALUE);
+      if (x == sc->NO_VALUE) return(y = sc->UNSPECIFIED);
+      return(false);
+
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
@@ -25370,6 +25374,13 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 
   switch (type(x))
     {
+    case T_UNTYPED: 
+      /* we checked x == y above, and know x and y are T_UNTYPED
+       */
+      if (x == sc->UNSPECIFIED) return(y == sc->NO_VALUE);
+      if (x == sc->NO_VALUE) return(y = sc->UNSPECIFIED);
+      return(false);
+
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
@@ -25411,7 +25422,8 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
 
 #if WITH_GMP
-      /* not sure how to handle these cases */
+      /* not sure how to handle these cases -- what should the "float-epsilon" be?
+       */
     case T_BIG_INTEGER:
     case T_BIG_RATIO:
     case T_BIG_REAL:
