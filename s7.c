@@ -24045,7 +24045,8 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
 /* if this were settable, 
  *    (define (make-procedure-with-setter g s) (set! (procedure-setter g) s) g)
  *    (define (procedure-with-setter? g) (procedure? (procedure-setter g)))
- *
+ * so pws could go away?
+ * 
  * for c-function both sides? there's 
  *   c_function_setter(getter) = setter;
  * for scheme both sides
@@ -24059,6 +24060,7 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
  *
  * hooks are also clumsy and not the right thing, but aimed at C
  *   could hooks be environments?  watchers, or-hooks, error handlers
+ *   also it would help if they always had the same arity -- (lambda args ...)
  */
 
 
@@ -24825,8 +24827,15 @@ list to the trailing arguments of hook-apply."
 
 static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
-  return(s7_is_equal(sc, hook_arity(x), hook_arity(y)) &&
-	 s7_is_equal(sc, hook_functions(x), hook_functions(y)));
+  return((s7_is_equal(sc, hook_arity(x), hook_arity(y))) &&
+	 (s7_is_equal(sc, hook_functions(x), hook_functions(y))));
+}
+
+
+static bool hooks_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
+{
+  return((s7_is_equal(sc, hook_arity(x), hook_arity(y))) &&
+	 (s7_is_morally_equal_1(sc, hook_functions(x), hook_functions(y), NULL)));
 }
 
 
@@ -25162,7 +25171,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       /* we checked x == y above, and know x and y are T_UNTYPED
        */
       if (x == sc->UNSPECIFIED) return(y == sc->NO_VALUE);
-      if (x == sc->NO_VALUE) return(y = sc->UNSPECIFIED);
+      if (x == sc->NO_VALUE) return(y == sc->UNSPECIFIED);
       return(false);
 
     case T_STRING:
@@ -25378,17 +25387,17 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       /* we checked x == y above, and know x and y are T_UNTYPED
        */
       if (x == sc->UNSPECIFIED) return(y == sc->NO_VALUE);
-      if (x == sc->NO_VALUE) return(y = sc->UNSPECIFIED);
+      if (x == sc->NO_VALUE) return(y == sc->UNSPECIFIED);
       return(false);
 
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
     case T_C_OBJECT:
-      return(objects_are_equal(sc, x, y));
+      return(objects_are_equal(sc, x, y)); /* perhaps a slot for this? */
 
     case T_HOOK:
-      return(hooks_are_equal(sc, x, y));
+      return(hooks_are_morally_equal(sc, x, y));
 
     case T_C_POINTER:
       return(raw_pointer(x) == raw_pointer(y));
