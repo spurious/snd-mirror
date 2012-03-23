@@ -9374,6 +9374,13 @@ static s7_Int c_mod(s7_Int x, s7_Int y)
 }
 
 
+/*
+(define (exptmod a b n) ; from the net somewhere
+  (cond ((zero? b) 1)
+        ((even? b) (exptmod (modulo (* a a) n) (quotient b 2) n))
+        (else (modulo (* a (exptmod (modulo (* a a) n) (quotient b 2) n)) n))))
+*/
+
 static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 {
   #define H_modulo "(modulo x1 x2) returns x1 mod x2; (modulo 4 3) = 1.  The arguments can be real numbers."

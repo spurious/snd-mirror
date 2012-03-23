@@ -12010,6 +12010,9 @@ a2" 3) "132")
 (test '("""""") '("" "" ""))
 (test '(#|;"();|#) '())
 (test '(#||##\# #||##b1) '(#\# 1))
+(test (#|s'!'|#*) 1)
+(test (#|==|#) ())
+(test -#|==|#1 'error) ; unbound variable
 (test '((). '()) '(() quote ()))
 (test '(1. . .2) '(1.0 . 0.2))
 (test (equal? '(().()) '(())) #t)
@@ -13308,7 +13311,11 @@ this prints:
 ;;; (let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val)) -> ((#3=(1) #2=(2) #1=(3)) (#1# #2# #3#))
 (test (map if '(#f #f #t) '(0 1 2) '(3 4 5)) '(3 4 2))
 (test (map apply (map lambda '(() (a) (a b)) '(1 (+ a 1) (+ a b 1))) '(() (2) (3 4))) '(1 3 8))
-
+(test (map values (list 1 2 3) (list 4 5 6)) '(1 4 2 5 3 6))
+(test (map map (list values) '((1 2)) '((3 4))) '((1 3 2 4)))
+(test (map values '((1 2)) '((3 4))) '((1 2) (3 4)))
+(test (map map (list map) (list (list values)) '(((1 2))) '(((3 4)))) '(((1 3 2 4))))
+(test (map apply (list values) '(((1 2))) '(((3 4)))) (apply map values '(((1 2))) '(((3 4))))) ; !
 
 (test (map list "hi") '((#\h) (#\i)))
 (test (map string "hi") '("h" "i"))
@@ -21131,6 +21138,25 @@ abs     1       2
   (test (add 1 2 3) 6)
   (test (add 1 (add 2 3) 4) 10))
 
+(let ((val #f))
+  (define-macro (add-1 var)
+    `(+ 1 (let ()
+	    (set! val ',var)
+	    ,var)))
+  (define (add-2 var)
+    (set! val var)
+    (+ 1 var))
+  (let ((free #t))
+    (let ((res ((if free add-1 add-2) (+ 1 2 3))))
+      (if (or (not (equal? val '(+ 1 2 3)))
+	      (not (= res 7)))
+	  (format #t ";mac/proc[#t]: ~A ~A~%" val res)))
+    (set! free #f)
+    (let ((res ((if free add-1 add-2) (+ 1 2 3))))
+      (if (or (not (equal? val '6))
+	      (not (= res 7)))
+	  (format #t ";mac/proc[#f]: ~A ~A~%" val res)))))
+
 ;; define-macro* default arg expr does not see definition-time closure:
 (test (let ((mac #f))
 	(let ((a 32))
@@ -21192,6 +21218,26 @@ abs     1       2
 	     ,false))))
 
   (test (if-let ((a 1) (b 2)) (list a b) "oops") '(1 2)))
+
+(let () ; from the pro CL mailing list
+  (define-macro (do-leaves var tree . body)
+    `(let ()
+       (define (rec ,var)
+	 (if (not (null? ,var))
+	     (if (pair? ,var)
+		 (begin
+		   (rec (car ,var))
+		   (rec (cdr ,var)))
+		 (begin
+		   ,@body))))
+       (rec ,tree)))
+
+  (test (let ((lst ())) 
+	  (do-leaves hiho '(+ 1 (* 2 3)) 
+	    (set! lst (cons hiho lst))) 
+	  (reverse lst))
+	'(+ 1 * 2 3)))
+
 
 (test (let () (define (hi :a) :a) (hi 1)) 'error)
 (test (let () (define* (hi :a) :a) (hi 1)) 'error)
