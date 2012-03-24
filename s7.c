@@ -7993,6 +7993,14 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
     }
 }
 
+/* another possibility:
+ * since (log (make-polar 1 .1)) = 0+0.1i and so on,
+ *       (log (real-part (log 0)) .1) (currently = -inf-nani) = -inf+.1i
+ * but   (log 0 .1) = inf-nani
+ *
+ * :(log (make-polar (exp 1) .1))
+ *  1+0.1i
+ */
 
 static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 {
@@ -9352,7 +9360,6 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 	return(make_integer(sc, (s7_Int)round_per_R5RS(z)));
       }
 
-
     case T_COMPLEX:
       return(s7_wrong_type_arg_error(sc, "round", 0, x, "a real"));
 
@@ -9379,6 +9386,32 @@ static s7_Int c_mod(s7_Int x, s7_Int y)
   (cond ((zero? b) 1)
         ((even? b) (exptmod (modulo (* a a) n) (quotient b 2) n))
         (else (modulo (* a (exptmod (modulo (* a a) n) (quotient b 2) n)) n))))
+
+(define (compare a b n) 
+  (list (exptmod a b n) 
+        (modulo (expt a b) n)))
+
+;; using gmp
+:(compare 4 20 7)
+(2 2)
+:(compare 4 20 3)
+(1 1)
+:(compare 117 30 11)
+(1 1)
+:(compare 1170 310 13)
+(0 0)
+:(compare 1178 31 13)
+(5 5)
+:(compare 1178 31 131211)
+(59921 59921)
+:(compare 117812 31 131211)
+(85196 85196)
+:(compare 117812 311 131211)
+(91715 91715)
+:(compare 117812 311 13121112334)
+(4399226350 4399226350)
+
+;; could this be built-into the non-gmp case?
 */
 
 static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
@@ -17386,6 +17419,8 @@ static char *slashify_string(const char *p, int len, bool quoted, bool *slashifi
   /* this can be non-null even if there's not enough memory, but I think I'll check in the caller */
   if (quoted) s[j++] = '"';
 
+  /* what about the trailing nulls? Guile writes them out (as does s7 currently)
+   */
   for (i = 0; i < len; i++) 
     {
       if (slashify_table[((unsigned char)(p[i]))])
@@ -28876,6 +28911,10 @@ static bool next_map(s7_scheme *sc)
        *   (define-macro (hiho a) `(+ 1 ,a)) 
        *   (map hiho lst)) 
        * -> '(2 3 4)
+       *
+       * but this can be very confusing!  quasiquote is considered to be a macro, so
+       *    (map quasiquote '((1 2) (3 4))) -> (2 4)
+       * because map (or apply?) thinks the 1 and 3 are macro names!
        */
       push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
       car(sc->TEMP_CELL_1) = sc->code;

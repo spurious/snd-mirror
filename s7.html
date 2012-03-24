@@ -3032,6 +3032,19 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
 3
 </pre>
 
+<p>More often you want to keep the short-circuiting, but add some action as
+"and" or "or" scans its arguments:
+</p>
+
+<pre class="indented">
+(define-macro (and-call function . args)
+  ;; apply function to each arg, stopping if returned value is #f
+  `(and ,@(map (lambda (arg) `(,function ,arg)) args)))
+
+&gt; (macroexpand (and-call abs (+ 1 2) (- 3 2)))
+(and (abs (+ 1 2)) (abs (- 3 2)))
+</pre>
+
 <p>At the top-level, since there's nothing to splice into, you simply get your values back:
 </p>
 

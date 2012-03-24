@@ -21131,6 +21131,15 @@ abs     1       2
 (test (let ((x 1)) (define-macro* (ho (a (+ x "hi"))) `(+ x ,a)) (let ((x 32)) (ho))) 'error)
 
 (let ()
+  (define-macro (and-call function . args)
+    ;; apply function to each arg, stopping if returned value is #f
+    `(and ,@(map (lambda (arg) `(,function ,arg)) args)))
+
+  (let ((lst ()))
+    (and-call (lambda (a) (and a (set! lst (cons a lst)))) (+ 1 2) #\a #f (format #t "oops!~%"))
+    (test lst (list #\a 3))))
+
+(let ()
   (define-macro (add a . b)
     `(if (null? ',b)
 	 ,a
