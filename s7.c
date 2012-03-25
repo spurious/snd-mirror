@@ -17420,6 +17420,9 @@ static char *slashify_string(const char *p, int len, bool quoted, bool *slashifi
   if (quoted) s[j++] = '"';
 
   /* what about the trailing nulls? Guile writes them out (as does s7 currently)
+   *    but that is not ideal.  I'd like to use ~S for error messages, so that
+   *    strings are clearly identified via the double-quotes, but this way of
+   *    writing them is ugly.
    */
   for (i = 0; i < len; i++) 
     {

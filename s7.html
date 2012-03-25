@@ -2963,8 +2963,6 @@ In s7, multiple values are spliced directly into the caller's argument list.
 10
 &gt; ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3))
 (3 2)
-&gt; (map values (list 1 2 3) (list 4 5 6))
-(1 4 2 5 3 6)
 
 ;; call-with-values: 
 (define-macro (call-with-values producer consumer) 
@@ -3004,7 +3002,17 @@ from map's function application:
 &gt; (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3))
 (1 20 3 60)
 
-&gt; (define (filter-map func lst) (map (lambda (x) (if (func x) x (values))) lst))
+(define (filter-map func lst) 
+  (map (lambda (x) (if (func x) x (values))) lst))
+
+&gt; (map values (list 1 2 3) (list 4 5 6))
+(1 4 2 5 3 6)
+
+(define (shuffle . args) 
+  (apply map values args))
+
+&gt; (shuffle '(1 2 3) #(4 5 6) '(7 8 9))
+(1 4 7 2 5 8 3 6 9)
 </pre>
 
 <p>
@@ -3020,20 +3028,18 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
          (let () (set! x 3) #f)) ;   this is never evaluated
     x)
 1
-
 &gt; (let ((x 1)) 
     (and (<em class=red>values</em> (let () #f) 
                  (let () (set! x 3) #f)))
   x) 
 3
-
 &gt; (let ((x 1))                ; (apply and ...) has the same effect
     (apply and (list #f (set! x 3))) x)
 3
 </pre>
 
 <p>More often you want to keep the short-circuiting, but add some action as
-"and" or "or" scans its arguments:
+"and" or "or" marches through its arguments:
 </p>
 
 <pre class="indented">
@@ -3041,8 +3047,9 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
   ;; apply function to each arg, stopping if returned value is #f
   `(and ,@(map (lambda (arg) `(,function ,arg)) args)))
 
-&gt; (macroexpand (and-call abs (+ 1 2) (- 3 2)))
-(and (abs (+ 1 2)) (abs (- 3 2)))
+(define-macro (and-let* vars . body)
+  ;; bind vars, if any is #f stop, else evaluate body with those bindings
+  `(let () (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) (begin ,@body))))
 </pre>
 
 <p>At the top-level, since there's nothing to splice into, you simply get your values back:

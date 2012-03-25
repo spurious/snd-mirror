@@ -13308,6 +13308,13 @@ this prints:
 (test (map (lambda (a b) (a b)) (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) (list 1 2 3)) '(2 4 27))
 (test (map apply (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) '((1) (2) (3))) '(2 4 27))
 
+(test (map gcd #(1 2)) '(1 2))
+(test (let ((ht (hash-table '(a . 1) '(b . 2)) )) (for-each set-cdr! ht '(32 33)) (ht 'a)) 32)
+(test (apply vector (map values #(1 2) #(3 4))) #(1 3 2 4))
+(test (map values '(1 2 3) '(4 5 6) '(7 8 9)) '(1 4 7 2 5 8 3 6 9))
+(test (map eval (list (+ 1 2) (+ 3 4))) '(3 7))
+(test (map apply (list + - * /) (list 1 2 3 4) '((5) (6) (7) (8))) '(6 -4 21 1/2))
+
 ;;; (let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val)) -> ((#3=(1) #2=(2) #1=(3)) (#1# #2# #3#))
 (test (map if '(#f #f #t) '(0 1 2) '(3 4 5)) '(3 4 2))
 (test (map apply (map lambda '(() (a) (a b)) '(1 (+ a 1) (+ a b 1))) '(() (2) (3 4))) '(1 3 8))
@@ -13316,6 +13323,11 @@ this prints:
 (test (map values '((1 2)) '((3 4))) '((1 2) (3 4)))
 (test (map map (list map) (list (list values)) '(((1 2))) '(((3 4)))) '(((1 3 2 4))))
 (test (map apply (list values) '(((1 2))) '(((3 4)))) (apply map values '(((1 2))) '(((3 4))))) ; !
+
+(let ()
+  (define (shuffle . args) 
+    (apply map values args))
+  (test (shuffle '(1 2 3) #(4 5 6) '(7 8 9)) '(1 4 7 2 5 8 3 6 9)))
 
 (test (map list "hi") '((#\h) (#\i)))
 (test (map string "hi") '("h" "i"))
@@ -21216,7 +21228,11 @@ abs     1       2
       #t)
 
 (let ()
-  (define-macro* (if-let bindings true false) ; shouldn't this be let-if or let-if-and, not if-let?
+  ;; shouldn't this be let-if or let-if-and, not if-let?
+  ;;   and why not add short-circuiting to it (at the variable bindings point)?
+  ;;   not pretty, but we could do this via and-call + augment-environment
+  ;; maybe use and-let* instead
+  (define-macro* (if-let bindings true false) 
     (let* ((binding-list (if (and (pair? bindings) (symbol? (car bindings)))
 			     (list bindings)
 			     bindings))
@@ -21227,6 +21243,41 @@ abs     1       2
 	     ,false))))
 
   (test (if-let ((a 1) (b 2)) (list a b) "oops") '(1 2)))
+
+(let ()
+  (defmacro old-and-let* (vars . body) ; from guile/1.8/ice-9/and-let-star.scm
+
+  (define (expand vars body)
+    (cond
+     ((null? vars)
+      (if (null? body)
+	  #t
+	  `(begin ,@body)))
+     ((pair? vars)
+      (let ((exp (car vars)))
+        (cond
+         ((pair? exp)
+          (cond
+           ((null? (cdr exp))
+            `(and ,(car exp) ,(expand (cdr vars) body)))
+           (else
+            (let ((var (car exp)))
+              `(let (,exp)
+                 (and ,var ,(expand (cdr vars) body)))))))
+         (else
+          `(and ,exp ,(expand (cdr vars) body))))))
+     (else
+      (error "not a proper list" vars))))
+
+  (expand vars body))
+
+  (test (old-and-let* ((hi 3) (ho #f)) (+ hi 1)) #f))
+
+(let ()
+  (define-macro (and-let* vars . body)
+    `(and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) (begin ,@body)))
+  (test (and-let* ((hi 3) (ho #f)) (+ hi 1)) #f))
+
 
 (let () ; from the pro CL mailing list
   (define-macro (do-leaves var tree . body)
