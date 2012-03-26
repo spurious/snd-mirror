@@ -17422,7 +17422,15 @@ static char *slashify_string(const char *p, int len, bool quoted, bool *slashifi
   /* what about the trailing nulls? Guile writes them out (as does s7 currently)
    *    but that is not ideal.  I'd like to use ~S for error messages, so that
    *    strings are clearly identified via the double-quotes, but this way of
-   *    writing them is ugly.
+   *    writing them is ugly:
+   *
+   *    :(let ((str (make-string 8 #\null))) (set! (str 0) #\a) str)
+   *    "a\x00\x00\x00\x00\x00\x00\x00"
+   *
+   * but it would be misleading to omit them because:
+   *
+   *    :(let ((str (make-string 8 #\null))) (set! (str 0) #\a) (string-append str "bc"))
+   *    "a\x00\x00\x00\x00\x00\x00\x00bc"
    */
   for (i = 0; i < len; i++) 
     {

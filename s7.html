@@ -89,13 +89,32 @@
 	           margin-right: 20px;
 	           margin-left: 20px; 
                    }
+        DIV.orange {background-color: #ffa500; /* orange */
+		   padding-left: 6px;
+		   padding-right: 6px;
+		   padding-top: 4px;
+		   padding-bottom: 4px;
+	           border: 4px solid #000000;
+		   font-family: 'Helvetica';
+		   font-size: 12px;
+	           font-weight: bold;
+		   text-align: center;
+		   margin-left: 0.5cm;
+		   margin-right: 1.0cm;
+		   float: right;
+		   -moz-border-radius: 8px;
+		   -webkit-border-radius: 8px;
+		   }
 </style>
 </head>
 <body class="body">
 
 <!-- INDEX s7doc:s7 scheme -->
 
-<div class="topheader" id="s7doc">s7</div>
+
+<div class="topheader" id="s7doc">s7
+</div>
+
 
 <p>s7 is a Scheme implementation intended as an extension language
 for other applications, primarily Snd and Common Music.  It exists as just two files, s7.c and
@@ -133,6 +152,12 @@ I originally used a small font for scholia, but now I have to squint
 to read that tiny text, so less-than-vital commentaries are shown in the normal font, but 
 indented and in a sort of brownish background.
 </p>
+
+<div class="orange">
+<p>Danger!</p>
+<p>Men Working</p>
+<p>in Trees</p>
+</div>
 
 <ul>
   <li><a href="#multiprecision">multiprecision arithmetic</a>
@@ -182,7 +207,6 @@ indented and in a sort of brownish background.
       <li><a href="#replrescue">begin_hook to the rescue!</a>
   </ul>
 </ul>
-
 
 
 <div class="header" id="multiprecision"><h4>multiprecision arithmetic</h4></div>
@@ -3048,8 +3072,9 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
   `(and ,@(map (lambda (arg) `(,function ,arg)) args)))
 
 (define-macro (and-let* vars . body)
-  ;; bind vars, if any is #f stop, else evaluate body with those bindings
-  `(let () (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) (begin ,@body))))
+  `(let () ;; bind vars, if any is #f stop, else evaluate body with those bindings
+     (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) 
+          (begin ,@body))))
 </pre>
 
 <p>At the top-level, since there's nothing to splice into, you simply get your values back:
