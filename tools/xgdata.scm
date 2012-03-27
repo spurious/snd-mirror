@@ -8408,9 +8408,10 @@
 
 (CFNC "gboolean gdk_event_get_scroll_deltas GdkEvent* event gdouble* [delta_x] gdouble* [delta_y]")
 
-;;; 3.3.20 -- nothing new but "XI2" requirement -- what is that??
+;;; 3.3.20 -- nothing new but "XI2" requirement -- what is that?? -- apparently some sort of typo
 (CFNC "void gtk_color_chooser_add_palette GtkColorChooser* chooser GtkOrientation horizontal gint colors_per_line gint n_colors GdkRGBA* colors") ; was gboolean horizontal
 
+;;; 3.4.0 -- nothing new
 |#
 
 

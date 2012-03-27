@@ -836,6 +836,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 26-Mar:    "@" as exponent, WITH_AT_SIGN_AS_EXPONENT switch (default is 1).
  * 18-Mar:    removed *trace-hook*.
  * 6-Feb:     random-state?, hash-table-iterator?, and morally-equal?
  * 18-Jan:    s7_environment_to_list and environment->list return just the local environment's

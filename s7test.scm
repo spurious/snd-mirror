@@ -1924,8 +1924,8 @@
 (test (char? #\xff) #t)
 ;; any larger number is a reader error
 
+(test (eval-string "(char? #\xbdca2cbec)") 'error) ; this can overflow internally!
 (test (eval-string "(char? #\\x#b0)") 'error)
-
 (test (eval-string "(char? #\\100)") 'error)
 (test (eval-string "(char? #\\x-65)") 'error)
 (test (eval-string "(char? #\\x6.5)") 'error)
@@ -63204,6 +63204,50 @@ but it's the printout that is at fault:
 (num-test (string->number "0-0e100i") 0.0)
 (test (string->number "0e10e100") #f)
 
+;;; @ exponent added 26-Mar-12
+(if (provided? '@-exponent)
+    (begin
+      (num-test 1.0 1@0)
+      (num-test 10.0 1@1)
+      (num-test 10.0 1@+1)
+      (num-test 0.1 1@-1)
+
+      (num-test (string->number "e@0" 16) 14.0)
+      (num-test (string->number "a@1" 16) 160.0)
+      (num-test (string->number "#xa@1") 160.0)
+      (num-test (string->number ".a@0" 12) 0.83333333333333)
+      (num-test (string->number "a.@0" 16) 10.0)
+      (num-test (string->number "0a" 16) 10)
+      (num-test (string->number "#e0a" 16) 10)
+
+      (num-test 1@0+1@0i 1+1i)
+      (num-test (string->number "1@1" 12) 12.0)
+      (num-test (string->number "1@-1" 16) 0.0625)
+      (num-test (string->number "1.0@1+0.1@2i" 16) 16+16i)
+      (num-test (string->number "#b.0@2") 0.0)
+      (num-test (string->number ".2@-22") 2e-23)
+      (num-test (string->number "+02@02") 200.0)
+      (num-test (string->number "2fe2@2" 16) 3138048.0)
+      (num-test (string->number "#i1@01" 16) 16.0)
+      (num-test (string->number "1@-0-bc/di" 16) 1-14.461538461538i)
+      (num-test (string->number ".f-a.c1@0i" 16) 0.9375-10.75390625i)
+      (num-test (string->number "df2@2-ccfi" 16) 913920-3279i)
+      (num-test (string->number "0/0de-0@2i" 16) 0.0)
+      (num-test (string->number "-1a12cd.@1" 16) -27339984.0)
+      (num-test (string->number "fb/2ea+2@+1i" 16) 0.33646112600536+32i)
+      (num-test (string->number "af.e0@-0+0b/efefd11i" 16) 175.875+4.3721589140015e-08i)
+      (num-test (string->number "bb10@1-i" 12) 247248-1i)
+      (num-test (string->number "b.+0@01i" 12) 11.0)
+      (num-test (string->number "-0@-0221" 12) 0.0)
+      (num-test (string->number "-a-01@2i" 12) -10-144i)
+      (num-test (string->number "#d.0@-11" 10) 0.0)
+      (num-test (string->number "#i+1@002" 10) 100.0)
+      (num-test (string->number "-111@-1-1i" 10) -11.1-1i)
+      (num-test (string->number "122@9-2@0i" 10) 122000000000-2i)
+      (num-test (string->number "-0@+10-20i" 10) 0-20i)
+      (num-test (string->number "+2@-909221" 10) 0.0)
+      ))
+
 ;; s7.html claims this '=' is guaranteed...
 (test (= .6 (string->number ".6")) #t)
 (test (= 0.60 (string->number "0.60")) #t)
@@ -63536,16 +63580,26 @@ etc....
       (test (number? (string->number "#e1.0e310")) #t)
       ))
 ;; in the non-gmp case #e1e321 is a read error -- should s7 return NaN silently?
-;; can't use #e1e543 directly here because the reader throws an error even though with-bignums is #f
 
 (if (not with-bignums)
     (begin
-      ;(test (number? (string->number "#e1e307")) #t)
-      ;(test (number? #e1.0e564) #t)
-      (test (string->number "#e005925563891587147521650777143.74135805596e05") 'error)
-      (test (string->number "#e78.5e65") 'error)
-      (test (string->number "#e-1559696614.857e28") 'error)))
+      (test (string->number "#e1e307") #f)
+      (test (eval-string "(number? #e1.0e564)") 'error)
+      (test (string->number "#e005925563891587147521650777143.74135805596e05") #f)
+      (test (string->number "#e78.5e65") #f)
+      (test (string->number "#e1e543") #f)
+      (test (string->number "#e120d21") #f)
+      (test (string->number "#e-2.2e021") #f)
+      (test (string->number "#e120@21" 12) #f)
+      (test (string->number "#d#e120@21") #f)
+      (test (string->number "#b#e120@21") #f)
+      (test (string->number "#e#b120@21") #f)
+      (test (string->number "#e#d120@21") #f)
+      (test (infinite? (string->number "9221.@9129" 10)) #t)
+      (test (nan? (string->number "0f0/00" 16)) #t)
+      (test (string->number "#e-1559696614.857e28") #f)))
 
+(test (string->number "#e1+1i") #f)
 (test (= 0 00 -000 #e-0 0/1 #e#x0 #b0000 #e#d0.0 -0 +0) #t)
 
 ;;  (do ((i 0 (+ i 1)) (n 1 (* n 2))) ((= i 63)) (display n) (display " ") (display (number->string n 16)) (newline))
@@ -65462,7 +65516,7 @@ etc....
 ;;; here's code to generate all (im)possible numbers (using just a few digits) of a given length
 
 (define file (open-output-file "ntest.scm"))
-(define chars (list #\1 #\0 #\9 #\# #\. #\+ #\- #\e #\i #\/ #\b #\x #\d #\o #\l #\s #\f))
+(define chars (list #\1 #\0 #\9 #\# #\. #\+ #\- #\e #\i #\/ #\b #\x #\d #\o #\l #\s #\f #\@))
 
 (define (all-syms f len with-file)
   (let ((sym (make-string len))
@@ -65481,9 +65535,6 @@ etc....
 	(do ((k 0 (+ k 1)))
 	    ((= k len))
 	  (string-set! sym k (list-ref chars (vector-ref ctrs k)))))
-      
-					;(format #t "~S " sym)
-      
       (let ((tag (catch #t (lambda () (string->number sym)) (lambda args (car args)))))
 	(if (not with-file)
 	    (if (and (number? tag)
@@ -65554,7 +65605,7 @@ etc....
    "-#b1" "+#b1" "#b1/#b2" "#b1+#b1i" "1+#bi" "1+#b1i" "1#be1" "#b" "#o" "#" "#ea" "#e1a" "1+ie1" "1+i1" "1e+1i"
    "#e#b" "#b#b" "#b#b1" "1e3e4" "1.0e-3e+4" "1e3s" "1e3s3" "#o#x1" "#i#i1" "1e-i" "#be1" "1/i" "1/e1" "1+e1"
    "1e+" "1e1+" "1e1e1" "1e-+1" "1e0x1" "1e-" "1/#o2"
-   "#i#i1" "12@12+0i"))
+   "#i#i1" "12@12i"))
 
 (for-each 
  (lambda (couple)

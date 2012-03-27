@@ -206,9 +206,15 @@
    */
 #endif
 
+#ifndef WITH_AT_SIGN_AS_EXPONENT
+  #define WITH_AT_SIGN_AS_EXPONENT 1
+  /* for bases 15 and 16, 'e' is a digit, so to get exponents in those bases (and actually
+   *    any greater than 10), we need a different exponent marker.  This makes '@' an exponent marker.
+   */
+#endif
 
 #ifndef WITH_OPTIMIZATION
-#define WITH_OPTIMIZATION 1
+  #define WITH_OPTIMIZATION 1
   /* this currently speeds s7 up by about 236 to 122 in callgrind terms.
    *    a lot of the current optimization choices are just experiments (I'll clean up this mess some day).
    *    the completely unrealistic goal, of course, is to replace the run macro.
@@ -1735,7 +1741,7 @@ static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void free_object(s7_pointer a);
 static char *object_print(s7_scheme *sc, s7_pointer a);
-static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol);
+static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error);
 static bool object_is_applicable(s7_pointer x);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
@@ -5595,9 +5601,12 @@ static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
 
 
 
+#define WITH_OVERFLOW_ERROR true
+#define WITHOUT_OVERFLOW_ERROR false
+
 static double default_rationalize_error = 1.0e-12;
 
-static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
+static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 {
   switch (type(x))
     {
@@ -5612,18 +5621,28 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 
 	val = s7_real(x);
 	if ((isinf(val)) || (is_NaN(val)))
-	  return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, x, "a normal real"));
+	  {
+	    if (with_error)
+	      return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, x, "a normal real"));
+	    return(sc->NIL);
+	  }
 
 	if ((val > S7_LLONG_MAX) ||
 	    (val < S7_LLONG_MIN))
-	  return(s7_out_of_range_error(sc, "inexact->exact", 0, x, "too large to express as an integer"));
+	  {
+	    if (with_error)
+	      return(s7_out_of_range_error(sc, "inexact->exact", 0, x, "too large to express as an integer"));
+	    return(sc->NIL);
+	  }
 
 	if (c_rationalize(val, default_rationalize_error, &numer, &denom))
 	  return(s7_make_ratio(sc, numer, denom));
       }
 
     default:
-      return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, x, "a real"));
+      if (with_error)
+	return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, x, "a real"));
+      return(sc->NIL);
     }
 
   return(x);
@@ -6334,6 +6353,9 @@ static void init_ctables(void)
 
   /* surely only 'e' is needed... */
   exponent_table['e'] = true; exponent_table['E'] = true;
+#if WITH_AT_SIGN_AS_EXPONENT
+  exponent_table['@'] = true; 
+#endif
 #if WITH_EXTRA_EXPONENT_MARKERS
   exponent_table['s'] = true; exponent_table['S'] = true; 
   exponent_table['f'] = true; exponent_table['F'] = true;
@@ -6472,7 +6494,7 @@ static bool is_abnormal(s7_pointer x)
 #define SYMBOL_OK true
 #define NO_SYMBOLS false
 
-static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, int radix) 
+static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, int radix, bool with_error) 
 {
   /* name is the stuff after the '#', return sc->NIL if not a recognized #... entity */
   int len;
@@ -6536,7 +6558,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	    else return(sc->NIL);
 	  }
 	/* the #b or whatever overrides any radix passed in earlier */
-	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), NO_SYMBOLS);
+	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), NO_SYMBOLS, with_error);
 
 	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted.
 	 * here we can get #b#e0/0 or #b#e+1/0 etc.
@@ -6561,7 +6583,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	  }
 #endif
 	if (to_exact)
-	  return(inexact_to_exact(sc, x));
+	  return(inexact_to_exact(sc, x, with_error)); 
 	return(exact_to_inexact(sc, x));
       }
       break;
@@ -6582,7 +6604,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	      (name[2] == 'i'))
 	    return(sc->NIL);
 
-	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
+	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix, with_error);
 	  if (s7_is_number(x))
 	    {
 	      if (is_abnormal(x))
@@ -6595,7 +6617,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	    }
 	  return(sc->NIL);
 	}
-      x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS);
+      x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS, with_error);
       if (!s7_is_number(x))  /* not is_abnormal(x) -- #i0/0 -> nan etc */
 	return(sc->NIL);
 #if WITH_GMP
@@ -6614,7 +6636,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	      (name[2] == 'i'))
 	    return(sc->NIL);
 
-	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
+	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix, with_error);
 	  if (s7_is_number(x))
 	    {
 	      if (is_abnormal(x))                        /* (string->number "#e#b0/0") */
@@ -6624,12 +6646,12 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 #if WITH_GMP
 	      return(big_inexact_to_exact(sc, list_1(sc, x)));
 #endif
-	      return(inexact_to_exact(sc, x));
+	      return(inexact_to_exact(sc, x, with_error));
 	    }
 	  return(sc->NIL);
 	}
 
-      x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS);
+      x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS, with_error);
 #if WITH_GMP
       /* #e1e310 is a simple case */
       if (s7_is_bignum(x))
@@ -6648,7 +6670,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
        */
       return(big_inexact_to_exact(sc, list_1(sc, x)));
 #endif
-      return(inexact_to_exact(sc, x));
+      return(inexact_to_exact(sc, x, with_error));
       break;
 
 
@@ -6695,13 +6717,15 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	  /* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
 	   *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
 	   *   an even lower level.
+	   *
+	   * another problem: #\xbdca2cbec overflows so lval is -593310740 -> segfault unless caught
 	   */
 	  bool happy = true;
 	  char *tmp;
 	  int lval = 0;
 
 	  tmp = (char *)(name + 2);
-	  while ((*tmp) && (happy))
+	  while ((*tmp) && (happy) && (lval >= 0))
 	    {
 	      int dig;
 	      dig = digits[(int)(*tmp++)];
@@ -6710,7 +6734,8 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	      else happy = false;
 	    }
 	  if ((happy) &&
-	      (lval < 256))
+	      (lval < 256) &&
+	      (lval >= 0))
 	    return(chars[lval]);
 	}
     }
@@ -6823,6 +6848,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
    *   in scheme, unfortunately, due to the idiotic scheme polar notation.  But we accept "s" and "l" as exponent markers
    *   so, perhaps for radix > 10, the exponent, if any, has to use one of S s L l?  Not "l"!  And "s" originally meant "short".
    *
+   * '@' can now be used as the exponent marker (26-Mar-12).
+   *
    * Another slight ambiguity: 1+1/2i is parsed as 1 + 0.5i, not 1+1/(2i), or (1+1)/(2i) or (1+1/2)i etc
    */
 
@@ -6864,7 +6891,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	      exp_negative = true;
 	    }
 	}
-      while ((dig = digits[(int)(*str++)]) < 10) /* exponent is always base 10 */
+      while ((dig = digits[(int)(*str++)]) < 10) /* exponent itself is always base 10 */
 	exponent = dig + (exponent * 10);
       if (exp_negative) exponent = -exponent;
     }
@@ -7119,7 +7146,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
 /* make symbol or number atom from string */
 
-static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol) 
+static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error) 
 {
   #define ISDIGIT(Chr, Rad) (digits[(unsigned char)Chr] < Rad)
 
@@ -7134,7 +7161,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   switch (c)
     {
     case '#':
-      return(make_sharp_constant(sc, p, UNNESTED_SHARP, radix)); /* make_sharp_constant expects the '#' to be removed */
+      return(make_sharp_constant(sc, p, UNNESTED_SHARP, radix, with_error)); /* make_sharp_constant expects the '#' to be removed */
 
     case '+':
     case '-':
@@ -7222,7 +7249,11 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		if (current_radix > 10)
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		/* see note above */
+		/* fall through -- if '@' used, radices>10 are ok */
 		
+#if WITH_AT_SIGN_AS_EXPONENT
+	      case '@':
+#endif
 		current_radix = 10;
 		
 		if (((ex1) ||
@@ -7235,7 +7266,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		    (has_plus_or_minus != 0)) /* 1+1.0ee */
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
-		if ((!ISDIGIT(p[-1], current_radix)) &&
+		if ((!ISDIGIT(p[-1], radix)) && /* was current_radix but that's always 10! */
 		    (p[-1] != '.'))
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
@@ -7492,7 +7523,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 {
   s7_pointer x;
-  x = make_atom(sc, str, radix, NO_SYMBOLS);
+  x = make_atom(sc, str, radix, NO_SYMBOLS, WITHOUT_OVERFLOW_ERROR);
   if (s7_is_number(x))  /* only needed because str might start with '#' and not be a number (#t for example) */
     return(x);
   return(sc->F);
@@ -13420,7 +13451,7 @@ static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
-  return(inexact_to_exact(sc, car(args)));
+  return(inexact_to_exact(sc, car(args), WITH_OVERFLOW_ERROR));
 }
 
 #endif
@@ -16217,9 +16248,9 @@ static s7_pointer file_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
     }
 
   if (atom_case)
-    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK));
+    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR));
 
-  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
+  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
 }
 
 
@@ -16247,7 +16278,7 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool at
       /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
       sc->strbuf[1] = orig_str[1];
       sc->strbuf[2] = '\0';
-      return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
+      return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
     }
 
   /* eval_c_string string is a constant so we can't set and unset the token's end char */
@@ -16259,8 +16290,8 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool at
   sc->strbuf[k] = '\0';
 
   if (atom_case)
-    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK));
-  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
+    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR));
+  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
 }
 
 
@@ -16290,14 +16321,14 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
 	  sc->strbuf[1] = orig_str[1];
 	  sc->strbuf[2] = '\0';
-	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
+	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
 	}
 
       /* port_string was allocated (and read from a file) so we can mess with it directly */
       
       endc = orig_str[k];
       orig_str[k] = '\0';
-      result = make_sharp_constant(sc, orig_str, UNNESTED_SHARP, BASE_10);
+      result = make_sharp_constant(sc, orig_str, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR);
       
       orig_str[k] = endc;
       if (*str != 0) port_string_point(pt)--;
@@ -16317,11 +16348,11 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9':
     case '.': case '+': case '-':
-      result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK);
+      result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR);
       break;
       
     case '#':
-      result = make_sharp_constant(sc, (char *)(orig_str + 1), UNNESTED_SHARP, BASE_10);
+      result = make_sharp_constant(sc, (char *)(orig_str + 1), UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR);
       break;
       
     default:
@@ -54600,6 +54631,9 @@ the error type and the info passed to the error handler.");
 
 #if WITH_EXTRA_EXPONENT_MARKERS
   s7_provide(sc, "dfls-exponents");
+#endif
+#if WITH_AT_SIGN_AS_EXPONENT
+  s7_provide(sc, "@-exponent");
 #endif
 
   {

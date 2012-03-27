@@ -328,7 +328,7 @@ Other math-related differences between s7 and r5rs:
 <li>rational? and exact mean integer or ratio (i.e. not floating point), inexact means not exact.
 <li>floor, ceiling, truncate, and round return (exact) integer results.
 <li>"#" does not stand for an unknown digit.
-<li>the "@" complex number notation is not supported.
+<li>the "@" complex number notation is not supported ("@" is an exponent marker in s7).
 <li>"+i" is not considered a number; include the real part.
 <li>modulo, remainder, and quotient take integer, ratio, or real arguments.
 <li>lcm and gcd can take integer or ratio arguments.
@@ -366,10 +366,9 @@ Other math-related differences between s7 and r5rs:
 <div class="indented">
 
 <p>The exponent itself is always in base 10; this follows gmp usage.
-Since Scheme uses "@" for its useless polar notation, s7 doesn't use it for the exponent marker, but that
+Scheme normally uses "@" for its useless polar notation, but that
 means <code>(string-&gt;number "1e1" 16)</code> is ambiguous &mdash; is the "e" a digit or an exponent marker?
-s7 could perhaps substitute "s" in this case, but instead it just prohibits exponents if the
-radix is greater than 10.
+In s7, "@" is an exponent marker.
 </p>
 
 <pre class="indented">
@@ -382,9 +381,6 @@ radix is greater than 10.
 &gt; (string-&gt;number "1.2e1" 3); (* 3 (+ 1 2/3))
 5.0
 </pre>
-
-<p>Perhaps s7 should use "@"!
-</p>
 </div>
 
 
@@ -3635,48 +3631,14 @@ write a function that tells us where the source is for a function:
 <div class="indented">
 
 <p>procedure-source returns the actual function source &mdash;
-more fun than a barrel of monkeys. Here is a self-modifying factorial function:
-</p>
-
-<pre class="indented">
-(define fact         ; Reini Urban, http://autocad.xarch.at/lisp/self-mod.lsp.txt
-  (let ((old '())
-	(result '()))
-
-    (define (last lst)
-      (list-tail lst (- (length lst) 1)))
-
-    (define (butlast lis)
-      (let ((len (length lis)))
-	(if (&lt;= len 1) '()
-	    (let ((result '()))
-	      (do ((i 0 (+ i 1))
-		   (lst lis (cdr lst)))
-		  ((= i (- len 1)) (reverse result))
-		(set! result (cons (car lst) result)))))))
-
-    (lambda (n)
-      (cond ((zero? n) 1)
-	    (#t 
-	     (set! old (<em class=red>procedure-source</em> fact))
-	     (set! fact (apply lambda '(n)
-			  `((cond 
-			    ,@(butlast (cdr (car (cdr (cdr old)))))
-			    ((= n ,n) ,(let ()
-					 (set! result (* n (fact (- n 1))))
-					 result))
-			    ,@(last (cdr (car (cdr (cdr old)))))))))
-	     result)))))
-</pre>
-
-<p>If you modify the procedure source directly, it is safest to redefine the procedure (as above)
+more fun than a barrel of monkeys!
+If you modify the procedure source directly, it is safest to redefine the procedure
 so that everything in s7 knows about the change.  
-<a href="#augmentenv">augment-environment</a> serves a similar purpose when editing environments.
-Here's a more useful example; it adds trace and local variable info for debugging:
+Here'a an example that adds trace and local variable info for debugging:
 </p>
 
 <pre class="indented">
-(define-macro (procedure-annotate proc)
+(define-bacro (procedure-annotate proc) ; use "bacro" so we can annotate local functions
   (let ((orig (<em class=red>procedure-source</em> proc)))
 
     (define (proc-walk source)
@@ -3748,7 +3710,6 @@ rather than a boolean.  I haven't run into a case where it matters.  Another odd
 this in procedure-arity?
 </p>
 </div>
-
 
 
 <div class="indented">
@@ -5122,8 +5083,7 @@ change string-&gt;symbol to symbol
 remove call-with-values and its friends
 remove char-ready?
 change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
-use @ as the exponent marker if base &gt; 10
-remove the "d", "f", "s", and "l" exponent markers (leaving "e" and "E")
+remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
 </pre>
 
 <p>and perhaps:
@@ -5226,6 +5186,7 @@ WITH_GMP                       1 if you want multiprecision arithmetic (requires
 WITH_COMPLEX                   1 if your compiler supports complex numbers
 HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
 S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
+WITH_AT_SIGN_AS_EXPONENT       1 if you want "@" to mark exponents (default is 1)
 WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
                                    if someone defends these exponent markers, ask him to read 1l11+11l1i
 WITH_OPTIMIZATION              1 (default) to turn on some elaborate internal optimizations
