@@ -1209,11 +1209,12 @@ static void init_types(void)
 #define is_rational(P)                t_rational_p[type(P)]
 
 #define is_big_number(p)              t_big_number_p[type(p)]
+#if 0
 #define is_big_integer(p)             (type(p) == T_BIG_INTEGER)
 #define is_big_ratio(p)               (type(p) == T_BIG_RATIO)
 #define is_big_real(p)                (type(p) == T_BIG_REAL)
 #define is_big_complex(p)             (type(p) == T_BIG_COMPLEX)
-
+#endif
 #define is_simple(P)                  t_simple_p[type(P)]
 
 
@@ -3924,6 +3925,21 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
   return(sc->NIL);
 }
 
+
+static s7_pointer complete_environment_copy(s7_scheme *sc, s7_pointer env)
+{
+  s7_pointer x, new_e;
+
+  if (is_null(next_environment(env)))
+    new_e = sc->NIL;
+  else new_e = complete_environment_copy(sc, next_environment(env));
+
+  new_e = new_frame_in_env(sc, new_e);
+  for (x = environment_slots(env); is_slot(x); x = next_slot(x))
+    ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
+  environment_slots(new_e) = reverse_slots(sc, environment_slots(new_e));
+  return(new_e);
+}
 
 
 static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
@@ -22220,6 +22236,8 @@ returns the next (key . value) pair in the hash-table each time it is called.  W
 					list_2(sc, sc->QUOTE, 
 					       list_3(sc, sc->NIL, car(args), make_mutable_integer(sc, -1))))),
 		      T_CLOSURE));
+  /* (lambda () ((hash-table iterate) '(() #<hash-table> -1)))
+   */
 }
 
 
@@ -24504,11 +24522,6 @@ static void safe_do_set_id(s7_scheme *sc, long long int id)
   sc->safe_do_ids[sc->safe_do_level] = id;
 }
 
-bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol)
-{
-  return(sc->safe_do_ids[sc->safe_do_level] == symbol_id(symbol));
-}
-
 bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol)
 {
   return(sc->safe_do_ids[sc->safe_do_level] >= symbol_id(symbol));
@@ -24522,11 +24535,6 @@ bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol)
 #else
 
 bool s7_in_safe_do(s7_scheme *sc)
-{
-  return(false);
-}
-
-bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol)
 {
   return(false);
 }
@@ -25769,6 +25777,8 @@ static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step
 }
 
 
+static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree);
+
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 {
   switch (type(obj))
@@ -25788,11 +25798,42 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_VECTOR:
       return(vector_copy(sc, obj)); /* "shallow" copy */
 
-    case T_PAIR:
+    case T_PAIR:                    /* top level only as in the other cases, last arg checks for circles */
       return(cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
 
     case T_HOOK:
       return(hook_copy(sc, obj));
+
+      /* perhaps copy! to do a complete (descending) copy
+       */
+
+    case T_INTEGER:
+      if (!is_immutable(obj))
+	return(make_mutable_integer(sc, integer(obj)));
+      return(obj);
+
+    case T_CLOSURE:
+      {
+	s7_pointer args, tree, new_env;
+	bool old_off;
+	old_off = sc->gc_off;
+	sc->gc_off = true;
+	new_env = complete_environment_copy(sc, closure_environment(obj));
+	args = tree_copy(sc, closure_args(obj));
+	tree = tree_copy(sc, closure_body(obj));
+#if WITH_OPTIMIZATION
+	s7_unoptimize(sc, tree);
+#endif
+	sc->gc_off = old_off;
+	return(s7_make_closure(sc, args, tree, new_env));
+      }
+
+  /* TODO: tree_copy needs gc protection (less brute-force anyway) and checks for circles
+   *       should we try to re-optimize the new tree?
+   *       or not copy the procedure body, but copy each symbol value in the env? (generator for example)
+   */
+
+
 
 #if WITH_GMP
     case T_BIG_INTEGER:
@@ -25816,6 +25857,18 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj"
   return(s7_copy(sc, car(args)));
+}
+
+
+static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree)
+{
+  /* copy entire tree, but use s7_copy for any non-pairs
+   */
+  if (!is_pair(tree))
+    return(s7_copy(sc, tree));
+  return(cons(sc, 
+	      tree_copy(sc, car(tree)),
+	      tree_copy(sc, cdr(tree))));
 }
 
 

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.105"
-#define S7_DATE "6-Feb-12"
+#define S7_VERSION "1.106"
+#define S7_DATE "26-Mar-12"
 
 
 typedef long long int s7_Int;
@@ -64,7 +64,7 @@ typedef double s7_Double;
    *    pair-line-number        location of a piece of code read from a file
    *    gc                      calls the GC. If its argument is #f, the GC is turned off
    *    quit                    exits s7
-   *    call-with-exit          just like call/cc but jump back into a context
+   *    call-with-exit          just like call/cc but without the ability to jump back into a context
    *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
    *    procedure-documentation doc string associated with a procedure
    *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
@@ -599,7 +599,6 @@ s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 
 
 bool s7_in_safe_do(s7_scheme *sc);
-bool s7_is_do_local(s7_scheme *sc, s7_pointer symbol);
 bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
 bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol);
   /* these are for optimization choices */
@@ -839,8 +838,7 @@ void s7_mark_object(s7_pointer p);
  * 26-Mar:    "@" as exponent, WITH_AT_SIGN_AS_EXPONENT switch (default is 1).
  * 18-Mar:    removed *trace-hook*.
  * 6-Feb:     random-state?, hash-table-iterator?, and morally-equal?
- * 18-Jan:    s7_environment_to_list and environment->list return just the local environment's
- *               bindings.
+ * 18-Jan:    s7_environment_to_list and environment->list return just the local environment's bindings.
  *            outer-environment returns the environment enclosing its argument (an environment).
  *            environments are now applicable objects. 
  *            added the object system example to s7.html.

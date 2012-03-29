@@ -8584,6 +8584,19 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (test (eq? hti hti) #t)
  (test (eqv? hti hti) #t)
  (test (morally-equal? hti hti) #t)
+
+ (let ((hti2 hti))
+   (test (equal? hti2 hti) #t)
+   (test (morally-equal? hti2 hti) #t)
+   (set! hti2 (copy hti))
+;;; currently this is #t   (test (equal? hti2 hti) #f)
+;;;   (test (morally-equal? hti2 hti) #t)
+
+   ;; (hti2)
+   ;; argh -- copy of iterator just returns the iterator, so 
+   ;;    (hti2) here will mess up (hti) below
+   )
+
  (test (procedure? hti) #t) ; currently this is the case -- should this be a separate type?
  (test (procedure-arity hti) '(0 0 #f))
  (let ((vals (list (hti) (hti))))
@@ -8760,6 +8773,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	(format #t ";hash-table for-each cases: ~A~%" cases)))
   (let ((iter1 (make-hash-table-iterator ht1))
 	(iter2 (make-hash-table-iterator ht2)))
+    (test (equal? iter1 iter2) #f)
+    (test (morally-equal? iter1 iter2) #f)
     (test (hash-table-iterator? iter2) #t)
     (let ((cases 0))
       (do ((a (iter1) (iter1))
@@ -25009,8 +25024,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (copy '()) '())
 (test (copy #()) #())
 (test (copy #2d((1 2) (3 4))) #2d((1 2) (3 4)))
-(test (let ((f (lambda () 1))) ((copy f))) 1) ; here copy actually returns f: 
-(test (let ((f (lambda () 1))) (eq? (copy f) f)) #t)
+(test (let ((f (lambda () 1))) ((copy f))) 1)
+(test (let ((f (lambda () 1))) (eq? (copy f) f)) #f) ; changed 29-Mar-12
 (test (copy 1.0) 1.0)
 (test (copy 1.0+i) 1.0+i)
 (test (copy "") "")
@@ -63207,11 +63222,15 @@ but it's the printout that is at fault:
 ;;; @ exponent added 26-Mar-12
 (if (provided? '@-exponent)
     (begin
+      (num-test 0.0 0@0)
+      (num-test 0.0 0@-0)
+      (num-test 0.0 0@+0)
       (num-test 1.0 1@0)
       (num-test 10.0 1@1)
       (num-test 10.0 1@+1)
       (num-test 0.1 1@-1)
 
+      (num-test (string->number "1@0" 16) 1.0)
       (num-test (string->number "e@0" 16) 14.0)
       (num-test (string->number "a@1" 16) 160.0)
       (num-test (string->number "#xa@1") 160.0)
@@ -63219,6 +63238,7 @@ but it's the printout that is at fault:
       (num-test (string->number "a.@0" 16) 10.0)
       (num-test (string->number "0a" 16) 10)
       (num-test (string->number "#e0a" 16) 10)
+      (num-test (string->number "a@-1" 16) 0.625)
 
       (num-test 1@0+1@0i 1+1i)
       (num-test (string->number "1@1" 12) 12.0)
