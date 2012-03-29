@@ -8589,16 +8589,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (equal? hti2 hti) #t)
    (test (morally-equal? hti2 hti) #t)
    (set! hti2 (copy hti))
-;;; currently this is #t   (test (equal? hti2 hti) #f)
-;;;   (test (morally-equal? hti2 hti) #t)
-
-   ;; (hti2)
-   ;; argh -- copy of iterator just returns the iterator, so 
-   ;;    (hti2) here will mess up (hti) below
+   (test (equal? hti2 hti) #f)
+   ;; (test (morally-equal? hti2 hti) #t)
+   (test (hti2) '(123 . "123"))
    )
 
- (test (procedure? hti) #t) ; currently this is the case -- should this be a separate type?
- (test (procedure-arity hti) '(0 0 #f))
  (let ((vals (list (hti) (hti))))
    (if (not (equal? (sort! vals (lambda (a b) (< (car a) (car b)))) '((123 . "123") (456 . "456"))))
        (format #t ";hash-table-iterator: ~A~%" vals))

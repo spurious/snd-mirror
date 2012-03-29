@@ -1003,7 +1003,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer FEED_TO;                 /* => */
-  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, HASH_TABLE_ITERATE, ENVIRONMENT_SET;
+  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET;
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
@@ -3929,6 +3929,9 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 static s7_pointer complete_environment_copy(s7_scheme *sc, s7_pointer env)
 {
   s7_pointer x, new_e;
+  bool old_off;
+  old_off = sc->gc_off;
+  sc->gc_off = true;
 
   if (is_null(next_environment(env)))
     new_e = sc->NIL;
@@ -3938,6 +3941,8 @@ static s7_pointer complete_environment_copy(s7_scheme *sc, s7_pointer env)
   for (x = environment_slots(env); is_slot(x); x = next_slot(x))
     ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
   environment_slots(new_e) = reverse_slots(sc, environment_slots(new_e));
+
+  sc->gc_off = old_off;
   return(new_e);
 }
 
@@ -17936,10 +17941,8 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
 }
 
 
-static s7_pointer g_hash_table_iterate(s7_scheme *sc, s7_pointer args);
+static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator);
 static s7_pointer g_make_hash_table_iterator(s7_scheme *sc, s7_pointer args);
-#define hash_table_iterate_args(H) cdadar(closure_body(H))
-
 
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 {
@@ -17993,17 +17996,16 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	  
 	case T_HASH_TABLE:
 	  {
-	    s7_pointer iterator, iter_loc;
+	    s7_pointer iterator;
 	    int gc_iter;
 
 	    iterator = g_make_hash_table_iterator(sc, list_1(sc, top));
 	    gc_iter = s7_gc_protect(sc, iterator);
-	    iter_loc = hash_table_iterate_args(iterator);
 
 	    while (true)
 	      {
 		s7_pointer x;
-		x = g_hash_table_iterate(sc, iter_loc);
+		x = hash_table_iterate(sc, iterator);
 		if (is_null(x)) break;
 		if (has_structure(x))
 		  collect_shared_info(sc, ci, x);
@@ -22186,39 +22188,49 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 }
 
 
-static s7_pointer g_hash_table_iterate(s7_scheme *sc, s7_pointer args)
+typedef struct {
+  s7_pointer table, lst;
+  int loc;
+} ht_iter;
+
+static int ht_iter_tag = 0;
+
+static char *print_ht_iter(s7_scheme *sc, void *val)
 {
-  /* internal func pointed to by sc->HASH_TABLE_ITERATE */
-  s7_pointer lst, loc, table;
-  int vloc, len;
-  s7_pointer *elements;
+  char *str;
+  str = (char *)calloc(32, sizeof(char));
+  snprintf(str, 32, "#<hash-table iterator>");
+  return(str);
+}
 
-  lst = caar(args);
-  if (is_pair(lst))
-    {
-      caar(args) = cdr(lst);
-      return(car(lst));
-    }
+static void free_ht_iter(void *val)
+{
+  free(val);
+}
 
-  table = cadar(args);
-  len = hash_table_length(table);
-  elements = hash_table_elements(table);
+static bool equal_ht_iter(void *val1, void *val2)
+{
+  return(val1 == val2);
+}
 
-  loc = caddar(args);
-  for (vloc = (int)(integer(loc) + 1); vloc < len;  vloc++)
-    {
-      s7_pointer x;
-      x = elements[vloc];
-      if (is_not_null(x))
-	{
-	  integer(loc) = vloc;
-	  caar(args) = cdr(x);
-	  return(car(x));
-	}
-    }
+static void mark_ht_iter(void *val)
+{
+  ht_iter *iter = (ht_iter *)val;
+  s7_mark_object(iter->table);
+  s7_mark_object(iter->lst);
+}
 
-  integer(loc) = len;
-  return(sc->NIL);
+static s7_pointer copy_ht_iter(s7_scheme *sc, s7_pointer obj)
+{
+  ht_iter *new_iter, *old_iter;
+  old_iter = (ht_iter *)s7_object_value(obj);
+  
+  new_iter = (ht_iter *)calloc(1, sizeof(ht_iter));
+  new_iter->lst = old_iter->lst;
+  new_iter->table = old_iter->table;
+  new_iter->loc = old_iter->loc;
+
+  return(s7_make_object(sc, ht_iter_tag, (void *)new_iter));
 }
 
 
@@ -22227,17 +22239,16 @@ static s7_pointer g_make_hash_table_iterator(s7_scheme *sc, s7_pointer args)
   #define H_make_hash_table_iterator "(make-hash-table-iterator table) returns a function of no arguments that \
 returns the next (key . value) pair in the hash-table each time it is called.  When there are no more pairs, it returns nil."
 
+  ht_iter *iter;
   if (!s7_is_hash_table(car(args)))
     return(s7_wrong_type_arg_error(sc, "make-hash-table-iterator", 0, car(args), "a hash-table"));
 
-  return(make_closure(sc, 
-		      sc->NIL,                             /* no args to the new function */
-		      list_1(sc, list_2(sc, sc->HASH_TABLE_ITERATE,
-					list_2(sc, sc->QUOTE, 
-					       list_3(sc, sc->NIL, car(args), make_mutable_integer(sc, -1))))),
-		      T_CLOSURE));
-  /* (lambda () ((hash-table iterate) '(() #<hash-table> -1)))
-   */
+  iter = (ht_iter *)calloc(1, sizeof(ht_iter));
+  iter->lst = sc->NIL;
+  iter->table = car(args);
+  iter->loc = -1;
+
+  return(s7_make_object(sc, ht_iter_tag, (void *)iter));
 }
 
 
@@ -22247,19 +22258,53 @@ static s7_pointer g_is_hash_table_iterator(s7_scheme *sc, s7_pointer args)
   s7_pointer obj;
 
   obj = car(args);
-  /* we need to clamber around in the procedure source */
-  if ((is_closure(obj)) &&
-      (is_null(closure_args(obj))))
-    {
-      s7_pointer source;
-      source = closure_body(obj);
-      if ((is_pair(source)) &&
-	  (is_pair(car(source))) &&
-	  (caar(source) == sc->HASH_TABLE_ITERATE))
-	return(sc->T);
-    }
-  return(sc->F);
+  return(s7_make_boolean(sc, (s7_is_object(obj)) && (s7_object_type(obj) == ht_iter_tag)));
 }
+
+
+static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
+{
+  s7_pointer lst, table;
+  ht_iter *iter;
+  int loc, len;
+  s7_pointer *elements;
+
+  iter = (ht_iter *)s7_object_value(iterator);
+  lst = iter->lst;
+  if (is_pair(lst))
+    {
+      iter->lst = cdr(lst);
+      return(car(lst));
+    }
+
+  table = iter->table;
+  len = hash_table_length(table);
+  elements = hash_table_elements(table);
+
+  for (loc = iter->loc + 1; loc < len;  loc++)
+    {
+      s7_pointer x;
+      x = elements[loc];
+      if (is_not_null(x))
+	{
+	  iter->loc = loc;
+	  iter->lst = cdr(x);
+	  return(car(x));
+	}
+    }
+
+  iter->loc = len;
+  return(sc->NIL);
+}
+
+
+static s7_pointer ref_ht_iter(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  /* don't check args -- it's simpler in map/for-each to pass an int to all objects in this context
+   */
+  return(hash_table_iterate(sc, obj));
+}
+
 
 
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci)
@@ -22268,7 +22313,7 @@ static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file
   bool too_long = false;
   char **elements = NULL;
   char *buf;
-  s7_pointer iterator, iter_loc;
+  s7_pointer iterator;
   
   /* if hash is a member of ci, just print its number
    * (let ((ht (hash-table '(a . 1)))) (hash-table-set! ht 'b ht))
@@ -22293,15 +22338,13 @@ static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file
     }
 
   iterator = g_make_hash_table_iterator(sc, list_1(sc, hash));
-
   gc_iter = s7_gc_protect(sc, iterator);
-  iter_loc = hash_table_iterate_args(iterator);
 
   elements = (char **)calloc(len, sizeof(char *));
 
   for (i = 0; i < len; i++)
     {
-      elements[i] = object_to_c_string_with_circle_check(sc, g_hash_table_iterate(sc, iter_loc), USE_WRITE, WITH_ELLIPSES, ci);
+      elements[i] = object_to_c_string_with_circle_check(sc, hash_table_iterate(sc, iterator), USE_WRITE, WITH_ELLIPSES, ci);
       bufsize += safe_strlen(elements[i]);
 
       if (bufsize > sc->print_width) 
@@ -25777,8 +25820,6 @@ static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step
 }
 
 
-static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree);
-
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 {
   switch (type(obj))
@@ -25807,33 +25848,25 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       /* perhaps copy! to do a complete (descending) copy
        */
 
-    case T_INTEGER:
-      if (!is_immutable(obj))
-	return(make_mutable_integer(sc, integer(obj)));
-      return(obj);
-
     case T_CLOSURE:
+      return(s7_make_closure(sc, 
+			     closure_args(obj), 
+			     closure_body(obj), 
+			     complete_environment_copy(sc, closure_environment(obj))));
+
+    case T_CLOSURE_STAR:
       {
-	s7_pointer args, tree, new_env;
-	bool old_off;
-	old_off = sc->gc_off;
-	sc->gc_off = true;
-	new_env = complete_environment_copy(sc, closure_environment(obj));
-	args = tree_copy(sc, closure_args(obj));
-	tree = tree_copy(sc, closure_body(obj));
-#if WITH_OPTIMIZATION
-	s7_unoptimize(sc, tree);
-#endif
-	sc->gc_off = old_off;
-	return(s7_make_closure(sc, args, tree, new_env));
+	s7_pointer x;
+	x = s7_make_closure(sc, 
+			    closure_args(obj), 
+			    closure_body(obj), 
+			    complete_environment_copy(sc, closure_environment(obj)));
+	set_type(x, T_CLOSURE_STAR | T_PROCEDURE | T_COPY_ARGS);
+	return(x);
       }
 
-  /* TODO: tree_copy needs gc protection (less brute-force anyway) and checks for circles
-   *       should we try to re-optimize the new tree?
-   *       or not copy the procedure body, but copy each symbol value in the env? (generator for example)
+  /* should the env values also be copied?
    */
-
-
 
 #if WITH_GMP
     case T_BIG_INTEGER:
@@ -25860,6 +25893,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if 0
 static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree)
 {
   /* copy entire tree, but use s7_copy for any non-pairs
@@ -25870,6 +25904,7 @@ static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree)
 	      tree_copy(sc, car(tree)),
 	      tree_copy(sc, cdr(tree))));
 }
+#endif
 
 
 static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
@@ -26027,18 +26062,17 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 
     case T_HASH_TABLE:
       {
-	s7_pointer x, iterator, iter_loc;
+	s7_pointer x, iterator;
 	int gc_iter;
 	/* (format #f "~{~A ~}" (hash-table '(a . 1) '(b . 2))) */
 
 	iterator = g_make_hash_table_iterator(sc, list_1(sc, obj));
 	gc_iter = s7_gc_protect(sc, iterator);
-	iter_loc = hash_table_iterate_args(iterator);
 
 	sc->w = sc->NIL;
 	while (true)
 	  {
-	    x = g_hash_table_iterate(sc, iter_loc);
+	    x = hash_table_iterate(sc, iterator);
 	    if (is_null(x)) break;
 	    sc->w = cons(sc, x, sc->w);
 	  }
@@ -28549,10 +28583,6 @@ static bool next_for_each(s7_scheme *sc)
 	car(x) = vector_element(car(y), loc); 
 	break;
 
-      case T_CLOSURE: /* hash-table via an iterator */
-	car(x) = g_hash_table_iterate(sc, hash_table_iterate_args(car(y)));  /* cdadadar? I suppose this accessor could be optimized */
-	break;
-
       case T_STRING:
 	car(x) = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
 	break;
@@ -28970,10 +29000,6 @@ static bool next_map(s7_scheme *sc)
 
 	case T_STRING:
 	  x = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
-	  break;
-
-	case T_CLOSURE:   /* hash-table via an iterator */
-	  x = g_hash_table_iterate(sc, hash_table_iterate_args(car(y)));
 	  break;
 
 	default: 
@@ -54503,6 +54529,8 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "hash-table-ref",            g_hash_table_ref,           2, 0, true,  H_hash_table_ref);
   s7_define_safe_function(sc, "hash-table-set!",           g_hash_table_set,           3, 0, false, H_hash_table_set);
   s7_define_safe_function(sc, "hash-table-size",           g_hash_table_size,          1, 0, false, H_hash_table_size);
+
+  ht_iter_tag = s7_new_type_x("hash-table-iterator", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   s7_define_safe_function(sc, "make-hash-table-iterator",  g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
   s7_define_safe_function(sc, "hash-table-iterator?",      g_is_hash_table_iterator,   1, 0, false, H_is_hash_table_iterator);
 
@@ -54712,7 +54740,6 @@ the error type and the info passed to the error handler.");
     sym = s7_symbol_value(sc, sym);
     set_setter(sym);
     
-    sc->HASH_TABLE_ITERATE = s7_make_function(sc, "(hash-table iterate)", g_hash_table_iterate, 1, 0, false, "internal hash-table iteration function");
     sc->STRING_SET = s7_symbol_value(sc, make_symbol(sc, "string-set!"));
   }
 

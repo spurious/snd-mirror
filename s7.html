@@ -2149,6 +2149,36 @@ or even <code>(&gt; 1 0+i)</code>.
 </p>
 </div>
 
+
+<div class="indented">
+<p>The make-iterator function above raises an interesting issue.  What should the copy function
+do if passed a closure?  In the iterator case, we obviously want a snapshot of the current
+state of the iteration:
+</p>
+<pre class="indented">
+(define (iterator-&gt;string iterator)
+  (let ((look-ahead (<em class="red">copy</em> iterator)))
+    (string-append "#&lt;iterator ... " 
+		   (object-&gt;string (look-ahead)) " "
+		   (object-&gt;string (look-ahead)) " "
+		   (object-&gt;string (look-ahead))
+		   " ...&gt;")))
+
+(let ((v (vector 0 1 2 3 4 5 6 7 8 9)))
+  (let ((iterator (<em class=red>make-iterator</em> v)))
+    (let* ((vals (list (iterator) (iterator) (iterator)))
+           (description (iterator-&gt;string iterator))
+           (more-vals (list (iterator) (iterator))))
+      (list vals description more-vals))))
+</pre>
+<p>which returns <code>'((0 1 2) "#&lt;iterator ... 3 4 5 ...&gt;" (3 4))</code>
+The same thing happens if we copy a hash-table-iterator, although
+that iterator is not a procedure.  But to get this consistency we have
+copy the function's environment chain (all its non-global "closed over" state).
+</p>
+
+</div>
+
 </blockquote>
 
 
