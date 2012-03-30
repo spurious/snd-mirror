@@ -8858,6 +8858,34 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	       (set! ctr (+ ctr 1))
 	       val)))))
 
+  (define-macro (with-iterator obj . body) 
+    `(with-environment (procedure-environment ,obj) ,@body))
+  
+  (define iterator-ctr 
+    (make-procedure-with-setter 
+     (lambda (iter)
+       (with-iterator iter ctr))
+     (lambda (iter new-ctr)
+       (with-environment 
+	(augment-environment (procedure-environment iter) (cons 'new-ctr new-ctr))
+	(set! ctr new-ctr)))))
+  
+  (define (iterator-obj iter)
+    (with-iterator iter obj))
+  
+  (define (iterator-copy iter)
+    (let ((new-iter (make-iterator (iterator-obj iter))))
+      (set! (iterator-ctr new-iter) (iterator-ctr iter))
+      new-iter))
+  
+  (define (iterator->string iterator)
+    (let ((look-ahead (iterator-copy iterator)))
+      (string-append "#<iterator ... " 
+		     (object->string (look-ahead)) " "
+		     (object->string (look-ahead)) " "
+		     (object->string (look-ahead))
+		     " ...>")))
+  
   (let ((v1 (list 1 2 3 4)) 
 	(v2 (vector 1.0 2.0))
 	(v3 (string #\1 #\2 #\3)))
@@ -8869,7 +8897,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (test (list (obj1) (obj2) (obj3)) (list 3 #f #\3))
       (test (list (obj1) (obj2) (obj3)) (list 4 #f #f))
       (test (list (obj1) (obj2) (obj3)) (list #f #f #f))
-      )))
+      ))
+
+  (let ((v (vector 0 1 2 3 4 5 6 7 8 9)))
+    (let ((iterator (make-iterator v)))
+      (let* ((vals (list (iterator) (iterator) (iterator)))
+	     (description (iterator->string iterator))
+	     (more-vals (list (iterator) (iterator))))
+	(test (list vals description more-vals) '((0 1 2) "#<iterator ... 3 4 5 ...>" (3 4))))))
+  )
 
 (test (#(#(1 2) #(3 4)) 1 1) 4)
 (test (#("12" "34") 0 1) #\2)
@@ -25020,7 +25056,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (copy #()) #())
 (test (copy #2d((1 2) (3 4))) #2d((1 2) (3 4)))
 (test (let ((f (lambda () 1))) ((copy f))) 1)
-(test (let ((f (lambda () 1))) (eq? (copy f) f)) #f) ; changed 29-Mar-12
+(test (let ((f (lambda () 1))) (eq? (copy f) f)) #t)
+(test (let ((f (lambda* ((a 2)) (+ a 1)))) ((copy f))) 3)
+(test (let ((f (lambda* ((a 2)) (+ a 1)))) (eq? (copy f) f)) #t)
 (test (copy 1.0) 1.0)
 (test (copy 1.0+i) 1.0+i)
 (test (copy "") "")

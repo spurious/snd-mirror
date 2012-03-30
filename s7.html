@@ -2152,9 +2152,11 @@ or even <code>(&gt; 1 0+i)</code>.
 
 <div class="indented">
 <p>The make-iterator function above raises an interesting issue.  What should the copy function
-do if passed a closure?  In the iterator case, we obviously want a snapshot of the current
+do if passed a closure?  To be consistent with copy as applied
+to a hash-table-iterator, we want a snapshot of the current
 state of the iteration:
 </p>
+
 <pre class="indented">
 (define (iterator-&gt;string iterator)
   (let ((look-ahead (<em class="red">copy</em> iterator)))
@@ -2171,12 +2173,86 @@ state of the iteration:
            (more-vals (list (iterator) (iterator))))
       (list vals description more-vals))))
 </pre>
-<p>which returns <code>'((0 1 2) "#&lt;iterator ... 3 4 5 ...&gt;" (3 4))</code>
-The same thing happens if we copy a hash-table-iterator, although
-that iterator is not a procedure.  But to get this consistency we have
-copy the function's environment chain (all its non-global "closed over" state).
+
+<p>
+which returns <code>'((0 1 2) "#&lt;iterator ... 3 4 5 ...&gt;" (3 4))</code>
+But this consistency requires that we
+copy the function's environment chain (all its non-global "closed over" state),
+and each value in that chain:
 </p>
 
+<pre class="indented">
+(define (make-iterator-with-filter obj func)
+  (let ((iterator (make-iterator obj)))
+    (letrec ((filter (lambda ()
+		       (or (func (iterator))
+			   (filter)))))
+      filter)))
+
+(let ((v (vector 0 1 2 3 4 5 6 7 8 9)))
+  (let ((iterator (make-iterator-with-filter v 
+		    (lambda (val)
+		      (if (number? val)
+			  (and (even? val)
+			       val)
+			  :all-done)))))
+    ...))
+</pre>
+
+<p>			  
+Now if we <code>(copy iterator)</code> in the let body above, but don't copy the internal iterator in the copy function,
+the two iterators step on each other because they share the same 'ctr' variable.
+If the copy function copies any closure it finds in the environment (so that the inner iterator is copied), we get an infinite loop
+because 'filter' is in its own closure (thanks to letrec).
+And if it copies all values in the environment, it copies the vector 
+that is deliberately shared!  Our motto is "hack now, think later", so we try to add
+circle checks and copy only closure environments, but now we have a big pile of
+queasy code that assumes we have thought of everything.  Not likely.  And copy has
+become incredibly wasteful; we might end up copying hundreds of local variables,
+when all we actually want is access to the 'ctr' and 'obj' variables in the
+current iterator's environment.  I'm getting ahead of the story, but suffice it
+to say that <a href="#environments">environments</a> are first class objects in s7.
+We can think of the make-iterator function as defining an implicit class that contains
+the slots 'ctr' and 'obj', and that returns an instance of that class.
+So...
+</p>
+
+<!--
+        iterator-location: (symbol->value 'ctr (procedure-environment iterator))
+	reset-iterator:    (eval `(set! ctr 0) (procedure-environment iterator))
+	iterator-at-end?:  (eval `(>= ctr (length obj)) (procedure-environment iterator))
+        iterator? 
+-->
+
+<pre class="indented">
+(define-macro (with-iterator obj . body) 
+  `(with-environment (procedure-environment ,obj) ,@body))
+
+;; just for fun:
+(define (reset-iterator iter)
+  (with-iterator iter (set! ctr 0)))	
+
+(define (iterator-obj iter)
+  (with-iterator iter obj))
+
+(define iterator-ctr 
+  (make-procedure-with-setter 
+   (lambda (iter)
+     (with-iterator iter ctr))
+   (lambda (iter new-ctr)
+     (with-environment 
+      (augment-environment (procedure-environment iter) (cons 'new-ctr new-ctr))
+      (set! ctr new-ctr)))))
+
+(define (iterator-copy iter)
+  (let ((new-iter (make-iterator (iterator-obj iter))))
+    (set! (iterator-ctr new-iter) (iterator-ctr iter))
+    new-iter))
+</pre>
+
+<p>
+And the copy function simply returns its argument if passed a closure.
+</p>
 </div>
 
 </blockquote>

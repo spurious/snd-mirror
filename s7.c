@@ -3926,27 +3926,6 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 }
 
 
-static s7_pointer complete_environment_copy(s7_scheme *sc, s7_pointer env)
-{
-  s7_pointer x, new_e;
-  bool old_off;
-  old_off = sc->gc_off;
-  sc->gc_off = true;
-
-  if (is_null(next_environment(env)))
-    new_e = sc->NIL;
-  else new_e = complete_environment_copy(sc, next_environment(env));
-
-  new_e = new_frame_in_env(sc, new_e);
-  for (x = environment_slots(env); is_slot(x); x = next_slot(x))
-    ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
-  environment_slots(new_e) = reverse_slots(sc, environment_slots(new_e));
-
-  sc->gc_off = old_off;
-  return(new_e);
-}
-
-
 static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 {
   #define H_global_environment "(global-environment) returns the current top-level definitions (symbol bindings). \
@@ -22188,12 +22167,15 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 }
 
 
+/* ---------------- hash-table iterators ---------------- */
+
 typedef struct {
   s7_pointer table, lst;
   int loc;
 } ht_iter;
 
 static int ht_iter_tag = 0;
+
 
 static char *print_ht_iter(s7_scheme *sc, void *val)
 {
@@ -22203,15 +22185,18 @@ static char *print_ht_iter(s7_scheme *sc, void *val)
   return(str);
 }
 
+
 static void free_ht_iter(void *val)
 {
   free(val);
 }
 
+
 static bool equal_ht_iter(void *val1, void *val2)
 {
   return(val1 == val2);
 }
+
 
 static void mark_ht_iter(void *val)
 {
@@ -22219,6 +22204,7 @@ static void mark_ht_iter(void *val)
   s7_mark_object(iter->table);
   s7_mark_object(iter->lst);
 }
+
 
 static s7_pointer copy_ht_iter(s7_scheme *sc, s7_pointer obj)
 {
@@ -25845,29 +25831,6 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_HOOK:
       return(hook_copy(sc, obj));
 
-      /* perhaps copy! to do a complete (descending) copy
-       */
-
-    case T_CLOSURE:
-      return(s7_make_closure(sc, 
-			     closure_args(obj), 
-			     closure_body(obj), 
-			     complete_environment_copy(sc, closure_environment(obj))));
-
-    case T_CLOSURE_STAR:
-      {
-	s7_pointer x;
-	x = s7_make_closure(sc, 
-			    closure_args(obj), 
-			    closure_body(obj), 
-			    complete_environment_copy(sc, closure_environment(obj)));
-	set_type(x, T_CLOSURE_STAR | T_PROCEDURE | T_COPY_ARGS);
-	return(x);
-      }
-
-  /* should the env values also be copied?
-   */
-
 #if WITH_GMP
     case T_BIG_INTEGER:
       return(mpz_to_big_integer(sc, big_integer(obj)));
@@ -25894,6 +25857,8 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
 
 #if 0
+/* these might come in handy someday... */
+
 static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree)
 {
   /* copy entire tree, but use s7_copy for any non-pairs
@@ -25903,6 +25868,27 @@ static s7_pointer tree_copy(s7_scheme *sc, s7_pointer tree)
   return(cons(sc, 
 	      tree_copy(sc, car(tree)),
 	      tree_copy(sc, cdr(tree))));
+}
+
+static s7_pointer complete_environment_copy(s7_scheme *sc, s7_pointer env)
+{
+  /* copy entire chain of envs */
+  s7_pointer x, new_e;
+  bool old_off;
+  old_off = sc->gc_off;
+  sc->gc_off = true;
+
+  if (is_null(next_environment(env)))
+    new_e = sc->NIL;
+  else new_e = complete_environment_copy(sc, next_environment(env));
+
+  new_e = new_frame_in_env(sc, new_e);
+  for (x = environment_slots(env); is_slot(x); x = next_slot(x))
+    ADD_SLOT(new_e, slot_symbol(x), slot_value(x));
+  environment_slots(new_e) = reverse_slots(sc, environment_slots(new_e));
+
+  sc->gc_off = old_off;
+  return(new_e);
 }
 #endif
 
