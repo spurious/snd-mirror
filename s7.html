@@ -2211,18 +2211,11 @@ queasy code that assumes we have thought of everything.  Not likely.  And copy h
 become incredibly wasteful; we might end up copying hundreds of local variables,
 when all we actually want is access to the 'ctr' and 'obj' variables in the
 current iterator's environment.  I'm getting ahead of the story, but suffice it
-to say that <a href="#environments">environments</a> are first class objects in s7.
+to say that <a href="#environments">environments</a> are first class citizens of s7.
 We can think of the make-iterator function as defining an implicit class that contains
 the slots 'ctr' and 'obj', and that returns an instance of that class.
 So...
 </p>
-
-<!--
-        iterator-location: (symbol->value 'ctr (procedure-environment iterator))
-	reset-iterator:    (eval `(set! ctr 0) (procedure-environment iterator))
-	iterator-at-end?:  (eval `(>= ctr (length obj)) (procedure-environment iterator))
-        iterator? 
--->
 
 <pre class="indented">
 (define-macro (with-iterator obj . body) 
@@ -2251,13 +2244,11 @@ So...
 </pre>
 
 <p>
-And the copy function simply returns its argument if passed a closure.
+After all that, the copy function simply returns its argument if passed a closure.
 </p>
 </div>
 
 </blockquote>
-
-
 
 
 
