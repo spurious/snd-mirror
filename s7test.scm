@@ -8849,64 +8849,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 ;;; some implicit index tests
 
-(let ()
-  (define (make-iterator obj)
-    (let ((ctr 0))
-      (lambda ()
-	(and (< ctr (length obj))
-	     (let ((val (obj ctr)))
-	       (set! ctr (+ ctr 1))
-	       val)))))
-
-  (define-macro (with-iterator obj . body) 
-    `(with-environment (procedure-environment ,obj) ,@body))
-  
-  (define iterator-ctr 
-    (make-procedure-with-setter 
-     (lambda (iter)
-       (with-iterator iter ctr))
-     (lambda (iter new-ctr)
-       (with-environment 
-	(augment-environment (procedure-environment iter) (cons 'new-ctr new-ctr))
-	(set! ctr new-ctr)))))
-  
-  (define (iterator-obj iter)
-    (with-iterator iter obj))
-  
-  (define (iterator-copy iter)
-    (let ((new-iter (make-iterator (iterator-obj iter))))
-      (set! (iterator-ctr new-iter) (iterator-ctr iter))
-      new-iter))
-  
-  (define (iterator->string iterator)
-    (let ((look-ahead (iterator-copy iterator)))
-      (string-append "#<iterator ... " 
-		     (object->string (look-ahead)) " "
-		     (object->string (look-ahead)) " "
-		     (object->string (look-ahead))
-		     " ...>")))
-  
-  (let ((v1 (list 1 2 3 4)) 
-	(v2 (vector 1.0 2.0))
-	(v3 (string #\1 #\2 #\3)))
-    (let ((obj1 (make-iterator v1))
-	  (obj2 (make-iterator v2))
-	  (obj3 (make-iterator v3)))
-      (test (list (obj1) (obj2) (obj3)) (list 1 1.0 #\1))
-      (test (list (obj1) (obj2) (obj3)) (list 2 2.0 #\2))
-      (test (list (obj1) (obj2) (obj3)) (list 3 #f #\3))
-      (test (list (obj1) (obj2) (obj3)) (list 4 #f #f))
-      (test (list (obj1) (obj2) (obj3)) (list #f #f #f))
-      ))
-
-  (let ((v (vector 0 1 2 3 4 5 6 7 8 9)))
-    (let ((iterator (make-iterator v)))
-      (let* ((vals (list (iterator) (iterator) (iterator)))
-	     (description (iterator->string iterator))
-	     (more-vals (list (iterator) (iterator))))
-	(test (list vals description more-vals) '((0 1 2) "#<iterator ... 3 4 5 ...>" (3 4))))))
-  )
-
 (test (#(#(1 2) #(3 4)) 1 1) 4)
 (test (#("12" "34") 0 1) #\2)
 (test (#((1 2) (3 4)) 1 0) 3)
@@ -21743,6 +21685,64 @@ abs     1       2
  (lambda (arg)
    (test (procedure-environment arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+(let ()
+  (define (make-iterator obj)
+    (let ((ctr 0))
+      (lambda ()
+	(and (< ctr (length obj))
+	     (let ((val (obj ctr)))
+	       (set! ctr (+ ctr 1))
+	       val)))))
+
+  (define-macro (with-iterator obj . body) 
+    `(with-environment (procedure-environment ,obj) ,@body))
+  
+  (define iterator-ctr 
+    (make-procedure-with-setter 
+     (lambda (iter)
+       (with-iterator iter ctr))
+     (lambda (iter new-ctr)
+       (with-environment 
+	(augment-environment (procedure-environment iter) (cons 'new-ctr new-ctr))
+	(set! ctr new-ctr)))))
+  
+  (define (iterator-obj iter)
+    (with-iterator iter obj))
+  
+  (define (iterator-copy iter)
+    (let ((new-iter (make-iterator (iterator-obj iter))))
+      (set! (iterator-ctr new-iter) (iterator-ctr iter))
+      new-iter))
+  
+  (define (iterator->string iterator)
+    (let ((look-ahead (iterator-copy iterator)))
+      (string-append "#<iterator ... " 
+		     (object->string (look-ahead)) " "
+		     (object->string (look-ahead)) " "
+		     (object->string (look-ahead))
+		     " ...>")))
+  
+  (let ((v1 (list 1 2 3 4)) 
+	(v2 (vector 1.0 2.0))
+	(v3 (string #\1 #\2 #\3)))
+    (let ((obj1 (make-iterator v1))
+	  (obj2 (make-iterator v2))
+	  (obj3 (make-iterator v3)))
+      (test (list (obj1) (obj2) (obj3)) (list 1 1.0 #\1))
+      (test (list (obj1) (obj2) (obj3)) (list 2 2.0 #\2))
+      (test (list (obj1) (obj2) (obj3)) (list 3 #f #\3))
+      (test (list (obj1) (obj2) (obj3)) (list 4 #f #f))
+      (test (list (obj1) (obj2) (obj3)) (list #f #f #f))
+      ))
+
+  (let ((v (vector 0 1 2 3 4 5 6 7 8 9)))
+    (let ((iterator (make-iterator v)))
+      (let* ((vals (list (iterator) (iterator) (iterator)))
+	     (description (iterator->string iterator))
+	     (more-vals (list (iterator) (iterator))))
+	(test (list vals description more-vals) '((0 1 2) "#<iterator ... 3 4 5 ...>" (3 4))))))
+  )
 
 (test (let ()
 	(define (hi a)
