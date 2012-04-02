@@ -8580,6 +8580,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (set! (ht 456) "456")
  (define hti (make-hash-table-iterator ht))
  (test (hash-table-iterator? hti) #t)
+ (test (object->string hti) "#<hash-table-iterator>")
  (test (equal? hti hti) #t)
  (test (eq? hti hti) #t)
  (test (eqv? hti hti) #t)
@@ -39718,6 +39719,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (modulo -1.5 2) 0.5)
 (num-test (modulo -1/2 -1) -1/2)
 (num-test (modulo -1/2 -1.0) -0.5)
+(num-test (modulo -1/2 2) 3/2)
 (num-test (modulo -1/9223372036854775807 -1/3) -1/9223372036854775807)
 (num-test (modulo -10 -1) 0)
 (num-test (modulo -10 -10) 0)
@@ -40104,6 +40106,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (modulo 53715833/85137581 9369319/6625109) 53715833/85137581)
 (num-test (modulo 171928773/272500658 54608393/38613965) 171928773/272500658)
 (num-test (modulo 4178406761/630138897 131836323/93222358) 28610075152269757/29371516922929563)
+
+(num-test (modulo 1/9223372036 9223372036) 1/9223372036)
+(num-test (modulo 1/9223372036854775807 9223372036854775807) 1/9223372036854775807)
+(num-test (modulo 3/2 most-positive-fixnum) 3/2)
+(num-test (modulo 3/2 most-negative-fixnum) 'error)
+(num-test (modulo most-negative-fixnum -1) 0)
 
 (if with-bignums
     (begin
@@ -40818,6 +40826,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (quotient 9223372036854775807 -9223372036854775808) 0)
 (num-test (quotient 9223372036854775807 9223372036854775807) 1)
 
+(test (quotient most-negative-fixnum -1) 'error)
+
 (num-test (quotient 3 1.5) 2)
 (num-test (quotient 3 1.75) 1)
 (num-test (quotient pi 1) 3)
@@ -41370,6 +41380,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (remainder 110.123 2.5) 0.123)
 (num-test (remainder 110.123 4.0) 2.123)
 (num-test (remainder 110.123 1000.1) 110.123)
+
+(num-test (remainder 3/2 most-negative-fixnum) 3/2)
+(num-test (remainder 3/2 most-positive-fixnum) 3/2)
+(num-test (remainder most-negative-fixnum -1) 0)
 
 (test (= (remainder (* 577/408 577/408) 2) (remainder (* 1393/985 1393/985) 2)) #f)
 (test (= (remainder 2.0 (* 577/408 577/408)) (remainder (* 1393/985 1393/985) 2.0)) #f)

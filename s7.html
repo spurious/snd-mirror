@@ -2248,6 +2248,14 @@ After all that, the copy function simply returns its argument if passed a closur
 </p>
 </div>
 
+<!-- this doesn't combine in the way you'd want in an object system; if we
+     (iterator-copy filter-iterator), the environment of the copy has
+         ((filter . #-closure-))
+         ((iterator . #-closure-))
+         ((obj . #(0 1 2 3 4 5 6 7 8 9)) (func . #-closure-))
+     so 'ctr' is not defined in the filter-iterator environment.
+-->
+
 </blockquote>
 
 
@@ -2660,7 +2668,7 @@ Environments are first class (and applicable) objects in s7.
 </pre>
 
 
-<p id="augmentenv"><code>(with-environment env . body)</code> evaluates its body in the environment env.
+<p><code>(with-environment env . body)</code> evaluates its body in the environment env.
 There are several examples of its use in the <a href="#macros">macro</a> section.
 defined? returns #t if the symbol is defined in the environment, and
 symbol-&gt;value returns the value associated with it.
@@ -2707,6 +2715,15 @@ wrap it in <code>(with-environment (initial-environment) ...)</code>:
 <p>
 with-environment and initial-environment are constants, so you can
 use them in any context without worrying about whether they've been redefined.
+</p>
+
+
+
+<blockquote>
+
+<div class="indented">
+
+<p>
 I think these functions can implement the notions of libraries,
 separate namespaces, or modules.  
 Here's one way: first the library writer just writes his library.
@@ -2778,8 +2795,9 @@ its bindings are exported into the current environment:
 <p>That's all there is to it!
 </p>
 
+</div>
 
-<blockquote>
+
 
 <div class="indented">
 

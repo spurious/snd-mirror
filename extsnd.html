@@ -3378,9 +3378,9 @@ edits we may have in the other windows when we save the sound from one window:
 <pre class="indented">
 (let ((eds #f))
   (hook-push <em class=red>update-hook</em>
-	     (lambda (cursnd)     ; called before actual update -- save our edits
+	     (lambda (cursnd)     ; called before actual update &mdash; save our edits
 	       (set! eds (<a href="#editlisttofunction">edit-list-&gt;function</a> cursnd 0))
-	       (lambda (newsnd)   ; called after update -- reapply our edits
+	       (lambda (newsnd)   ; called after update &mdash; reapply our edits
 		 (if eds (eds newsnd 0))))))
 </pre>
 

@@ -3515,9 +3515,9 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       s7_pointer ge;
 
       if ((sc->safety == 0) &&
-	  ((is_closure(value)) ||
+	  ((is_closure(value))      ||
 	   (is_closure_star(value)) ||
-	   (is_macro(value)) ||
+	   (is_macro(value))        ||
 	   (is_bacro(value))))
 	{
 	  s7_remove_from_heap(sc, closure_args(value));
@@ -4371,6 +4371,8 @@ static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
 
 /* is this the right thing?  It returns #f for call-with-exit ("goto") because
  *   that form of continuation can't continue (via a jump back to its context).
+ *
+ * how to recognize the call-with-exit function?  "goto" is an internal name.
  */
 
 
@@ -5262,8 +5264,8 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
       val = (double)p0 / (double)q0;
       
       if (((x0 <= val) && (val <= x1)) ||
-	  (e1 == 0) ||
-	  (e1p == 0) ||
+	  (e1 == 0)                    ||
+	  (e1p == 0)                   ||
 	  (tries > 100))
 	{
 	  (*numer) = p0;
@@ -5752,6 +5754,9 @@ static int integer_length(s7_Int a)
   #define I_48 281474976710656LL
   #define I_56 72057594037927936LL
 
+  /* a might be most-negative-fixnum! in Clisp: (integer-length -9223372036854775808) -> 63
+   */
+  if (a == S7_LLONG_MIN) return(63);
   if (a < 0) a = -a;
   if (a < I_8) return(bits[a]);
   if (a < I_16) return(8 + bits[a >> 8]);
@@ -6461,8 +6466,8 @@ static bool is_abnormal(s7_pointer x)
 	     is_NaN(real(x)));
 
     case T_COMPLEX:
-      return(((isinf(s7_real_part(x))) || 
-	      (isinf(s7_imag_part(x))) ||
+      return(((isinf(s7_real_part(x)))  || 
+	      (isinf(s7_imag_part(x)))  ||
 	      (is_NaN(s7_real_part(x))) || 
 	      (is_NaN(s7_imag_part(x)))));
 
@@ -8941,6 +8946,8 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER:
 	  if (integer(y) == 0) 
 	    return(division_by_zero_error(sc, "quotient", args));
+	  if ((integer(y) == -1) && (integer(x) == S7_LLONG_MIN))   /* (quotient most-negative-fixnum -1) */
+	    return(s7_out_of_range_error(sc, "quotient", 0, args, "too large to express as an integer"));	    
 	  return(make_integer(sc, integer(x) / integer(y)));
 
 	case T_RATIO:
@@ -9060,6 +9067,9 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER:
 	  if (integer(y) == 0) 
 	    return(division_by_zero_error(sc, "remainder", args));
+	  if ((integer(y) == 1) || (integer(y) == -1))
+	    return(make_integer(sc, 0));
+	  /* (remainder most-negative-fixnum -1) will segfault with arithmetic exception */
 	  return(make_integer(sc, integer(x) % integer(y)));
 
 	case T_RATIO:
@@ -9089,11 +9099,11 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
       switch (type(y))
 	{
 	case T_INTEGER:
-	  if (integer(y) == 0) 
+	  n2 = integer(y);
+	  if (n2 == 0) 
 	    return(division_by_zero_error(sc, "remainder", args));
 	  n1 = numerator(x);
 	  d1 = denominator(x);
-	  n2 = integer(y);
 	  d2 = 1;
 	  goto RATIO_REM_RATIO;
 
@@ -9464,7 +9474,11 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
       switch (type(y))
 	{
 	case T_INTEGER:
-	  if (integer(y) == 0) return(x);
+	  if (integer(y) == 0) 
+	    return(x);
+	  if ((integer(y) == 1) || (integer(y) == -1))
+	    return(make_integer(sc, 0));
+	  /* (modulo most-negative-fixnum -1) will segfault with arithmetic exception */
 	  return(make_integer(sc, c_mod(integer(x), integer(y))));
 
 	case T_RATIO:
@@ -9494,6 +9508,16 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  n1 = numerator(x);
 	  d1 = denominator(x);
 	  n2 = integer(y);
+
+	  if ((n2 > 0) && (n1 > 0) && (n2 > n1)) return(x);
+	  if ((n2 < 0) && (n1 < 0) && (n2 < n1)) return(x);
+
+	  if (n2 == S7_LLONG_MIN)
+	    return(s7_out_of_range_error(sc, "modulo", 0, y, "intermediate (a/b) is too large"));	
+	  /* the problem here is that (modulo 3/2 most-negative-fixnum)
+	   * will segfault with signal SIGFPE, Arithmetic exception, so try to trap it.
+	   */
+
 	  d2 = 1;
 	  goto RATIO_MOD_RATIO;
 
@@ -9536,10 +9560,8 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	    }
 
 	  /* there are cases here we might want to catch:
-	   *    (modulo 1/9223372036 9223372036) -> error, not 1/9223372036?
 	   *    (modulo 9223372036 1/9223372036) -> error, not 0?
 	   *    (modulo 1 1/9223372036854775807) -> error, not 0?
-	   *    (modulo 1/9223372036854775807 9223372036854775807) -> error, not 1/9223372036854775807?
 	   */
 	  return(s7_out_of_range_error(sc, "modulo", 0, x, "intermediate (a/b) is too large"));	
       
@@ -22181,7 +22203,7 @@ static char *print_ht_iter(s7_scheme *sc, void *val)
 {
   char *str;
   str = (char *)calloc(32, sizeof(char));
-  snprintf(str, 32, "#<hash-table iterator>");
+  snprintf(str, 32, "#<hash-table-iterator>");
   return(str);
 }
 
@@ -22291,6 +22313,8 @@ static s7_pointer ref_ht_iter(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   return(hash_table_iterate(sc, obj));
 }
 
+/* no obvious meaning for length of a hash-table-iterator, or set!, fill!, and reverse
+ */
 
 
 static char *hash_table_to_c_string(s7_scheme *sc, s7_pointer hash, bool to_file, shared_info *ci)
@@ -22664,13 +22688,16 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
    *  objects and macros as procedures.  Ideally we'd have s7_is_applicable.
    */
   return(make_boolean(sc,
-		      (typ == T_CLOSURE) || 
+		      (typ == T_CLOSURE)      || 
 		      (typ == T_CLOSURE_STAR) ||
-		      (typ >= T_C_FUNCTION) ||
-		      (typ == T_GOTO) ||
+		      (typ >= T_C_FUNCTION)   ||
+		      (typ == T_GOTO)         ||
 		      (typ == T_CONTINUATION) ||
 		      (is_pws(x))));
 }
+
+/* PERHAPS: procedure*? and macro*?  bacro?
+ */
 
 
 static void s7_function_set_setter(s7_scheme *sc, const char *getter, const char *setter)

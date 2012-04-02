@@ -3064,3 +3064,4 @@
 		
 		(close-input-port fp))))))))
 
+;;; vector-ref|set! of #() etc?
