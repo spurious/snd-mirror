@@ -23973,7 +23973,9 @@ but that's make-type's arglist??
 (test (environment? (augment-environment! '())) #t)
 (test (environment? (augment-environment (augment-environment '()) '(a . 1))) #t)
 (test (environment? (augment-environment '() '(a . 1))) #t)
-
+(test (eq? abs ((global-environment) 'abs)) #t)
+(test ((augment-environment () '(asdf . 32)) 'asdf) 32)
+(test ((augment-environment () '(asdf . 32)) 'asd) #<undefined>)
 
 #|
 if t423.scm is
@@ -24176,6 +24178,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (eval 'pi (augment-environment! () '(pi . 1) '(a . 2))) 'error)
 (test (eval 'pi (augment-environment () (cons 'pi pi))) pi)
 (test (eval 'pi (augment-environment! () (cons 'pi pi))) pi)
+(test (map (augment-environment () '(asdf . 32) '(bsdf . 3)) '(bsdf asdf)) '(3 32))
+(test (equal? (map (global-environment) '(abs cons car)) (list abs cons car)) #t)
 
 (let ()
   (define-constant _a_constant_ 32)

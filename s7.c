@@ -3847,13 +3847,23 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
-  /* (let ((a 1)) ((current-environment) 'a)) */
+  /* (let ((a 1)) ((current-environment) 'a)) 
+   * ((global-environment) 'abs) 
+   */
   s7_pointer x, y;
+  
+  if (env == sc->global_env)
+    {
+      y = global_slot(symbol);
+      if (is_slot(y))
+	return(slot_value(y));
+      return(sc->UNDEFINED);
+    }
 
   for (x = env; is_environment(x); x = next_environment(x))
     for (y = environment_slots(x); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == symbol)
-	return(cdr(y));
+	return(slot_value(y));
 
   return(sc->UNDEFINED);
 }
@@ -3862,11 +3872,23 @@ static s7_pointer environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symb
 static s7_pointer environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
   s7_pointer x, y;
+
+  if (env == sc->global_env)
+    {
+      y = global_slot(symbol);
+      if (is_slot(y))
+	{
+	  slot_set_value(y, value);
+	  return(value);
+	}
+      return(sc->UNDEFINED);
+    }
+
   for (x = env; is_environment(x); x = next_environment(x))
     for (y = environment_slots(x); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == symbol)
 	{
-	  cdr(y) = value;
+	  slot_set_value(y, value);
 	  return(value);
 	}
   return(sc->UNDEFINED);
