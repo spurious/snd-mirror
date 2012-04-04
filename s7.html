@@ -2699,6 +2699,7 @@ Perhaps these would be better:
 (define (environment . slots) (apply augment-environment () args))
 (define (define-in-environment env symbol value) (augment-environment! env (cons symbol value)))
 (define next-environment outer-environment)
+(define current-environment-unshadowed initial-environment)
 </pre>
 
 <p>It is possible in Scheme to redefine built-in functions such as car.
@@ -3974,24 +3975,39 @@ are:
 <ul>
 <li>read-byte and write-byte: binary IO, named "read-u8" and "write-u8" in r6rs, I think
 <li>read-line: line-at-a-time reads (for write-line, use format or for-each with write-char).
+<li>curent-error-port, set-current-error-port
 </ul>
 
 <p>The variable <em class=def id="vectorprintlength">*vector-print-length*</em> sets
 the upper limit on how many vector elements are printed by object-&gt;string and format.
-</p>
-
-<p>When running s7 behind a GUI, you often want input to come from and output to go to
+The end-of-file object is #&lt;eof&gt;. 
+When running s7 behind a GUI, you often want input to come from and output to go to
 arbitrary widgets. The function ports provide a way to redirect IO.  See <a href="#functionportexample">below</a>
 for an example.
 </p>
 
-<p>s7 also includes current-error-port and set-current-error-port.
-The default IO ports are *stdin*, *stdout*, and *stderr*.  The end-of-file
-object is #&lt;eof&gt;.
-</p>
-
 
 <blockquote>
+
+<div class="indented">
+
+<p>
+The default IO ports are *stdin*, *stdout*, and *stderr*.
+*stderr* is useful if you want to make sure output is flushed out immediately.
+The default output port is *stdout* which buffers output until a newline is seen.
+In most REPLs, the input port is set up by the REPL, so you need to use
+*stdin* if you want to read from the terminal instead:  
+</p>
+
+<pre class="indented">
+&gt; (read-char)
+#&lt;eof&gt;
+&gt; (read-char *stdin*)
+a          ; here s7 waited for me to type "a" in the terminal
+#\a        ; this is the REPL reporting what read-char returned
+</pre>
+
+</div>
 
 
 <div class="indented">
@@ -5125,11 +5141,6 @@ have any number after, for example, #b:
   (define (string-&gt;vector str) (apply vector (string-&gt;list str)))
   (define copy-list copy)
 
-  (define string-ni=? string=?) 
-  (define string-ni&lt;? string&lt;?) 
-  (define string-ni&gt;? string&gt;?) 
-  (define string-ni&lt;=? string&lt;=?) 
-  (define string-ni&gt;=? string&gt;=?)   
   (define char-foldcase char-downcase) 
   (define string-foldcase string-downcase)
   (define (string-downcase str) (apply string (map char-downcase str)))
@@ -5160,23 +5171,38 @@ have any number after, for example, #b:
   (define blob-u8-ref vector-ref) 
   (define blob-u8-set! vector-set!)
 
-  (define scheme-report-environment initial-environment)
   (define interaction-environment current-environment)
   (define (include file) (load file (current-environment)))
 
   (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 
+  (define-macro (when test . forms) `(if ,test (begin ,@forms)))
+  (define-macro (unless test . forms) `(if (not ,test) (begin ,@forms)))
+
+  ;; command-line is problematic: s7 has no access to the caller's "main" function, and
+  ;;   outside Windows, there's no simple way to get these arguments (if they exist).
+
+  ;; floor/ and friends can't work as intended: they assume that multiple values 
+  ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
+  ;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
+  ;; and why no euclidean-rationalize? or exact-integer-expt?
+
+  ;; get-environment-variable is a bad name ("environment" is already in use), and "get-"
+  ;;   in any name is a red flag.  I might implement this as the variable *env* with
+  ;;   hash-table-like implicit indexing: (*env* "HOME") returns "/home/bil".
+  ;; scheme also has get-output-string which might be better as "output-string".
+
+  ;; define-record-type falls between two stools: the type mechanism should be separate
+  ;;   from the notion of a structure with fields. 
 <!--
-  ;; and why no blob-&gt;string, blob-for-each, exact-integer-expt, euclidean-rationalize ...?
   modules: include-ci import export
   raise raise-continuable error [error msg obj] guard
   define-record-type
   parameter objects: make-parameter parameterize
   copy-partial-blob[!] copy-blob!
   case-lambda
-  file-exists? delete-file command-line
-  getenv? time?: get-environment-variable[s] current-jiffy|second jiffies-per-second current-posix-second
-  "complete" set of int div: truncate-quotient truncate-remainder truncate/ round-* floor-* euclidean-*? ceiling-*
+  file-exists? delete-file
+  time?: get-environment-variable[s] current-jiffy|second jiffies-per-second current-posix-second
   with-exception-handler null-environment
 -->
 </pre>

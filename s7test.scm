@@ -21729,12 +21729,16 @@ abs     1       2
 	(v3 (string #\1 #\2 #\3)))
     (let ((obj1 (make-iterator v1))
 	  (obj2 (make-iterator v2))
-	  (obj3 (make-iterator v3)))
+	  (obj3 (make-iterator v3))
+	  (obj4 (make-iterator v3)))
+      (test (morally-equal? obj1 obj3) #f)
+      (test (morally-equal? obj4 obj3) #t)
       (test (list (obj1) (obj2) (obj3)) (list 1 1.0 #\1))
       (test (list (obj1) (obj2) (obj3)) (list 2 2.0 #\2))
       (test (list (obj1) (obj2) (obj3)) (list 3 #f #\3))
       (test (list (obj1) (obj2) (obj3)) (list 4 #f #f))
       (test (list (obj1) (obj2) (obj3)) (list #f #f #f))
+      (test (morally-equal? obj4 obj3) #f)
       ))
 
   (let ((v (vector 0 1 2 3 4 5 6 7 8 9)))
@@ -21862,10 +21866,21 @@ abs     1       2
 (let ((a 32)) 
   (define (hi x) (+ x a)) 
   (test (defined? 'bbbbb (procedure-environment hi)) #f)
-  ;; (test (defined? 'x (procedure-environment hi)) #t)
-  ;; this is sometimes unhappy?
+  (let ((xdef (defined? 'x (procedure-environment hi))))
+    (test xdef #t))
   (test (symbol->value 'a (procedure-environment hi)) 32))
 
+(let ()
+  (let ((x 32))
+    (define (hi a) (+ a x))
+    (let ((xx ((procedure-environment hi) 'x)))
+      (test xx 32))
+    (let ((s7-version 321))
+      (test s7-version 321)
+      (let ((xxx ((initial-environment) 'x)))
+	(test xxx 32)
+	(let ((str (with-environment (initial-environment) (s7-version))))
+	  (test (string? str) #t))))))
 
 #|
 ;;; procedure-environment is a mess but it's hard to test mainly because it's different in different versions of s7

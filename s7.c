@@ -3623,13 +3623,9 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   /* add sc->initial_env bindings to the current environment */
   #define H_initial_environment "(initial-environment) establishes the original bindings of all the predefined functions"
 
-  /* maybe this should be named with-initial-environment or something -- it currently looks
+  /* maybe this should be named unshadowed-current-environment or something -- it currently looks
    *   like it simply returns the initial env, but it actually shadows the global env entries
-   *   that have changed.  But that doesn't behave the way one would expect:
-   *
-   *     (let () (define (x) 1) (defined? 'x (initial-environment)) -> #t!
-   *   
-   *   I can't see how to fix this short of copying the thing.
+   *   that have changed.  
    */
   int i;
   s7_pointer *inits;
@@ -3652,6 +3648,7 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   sc->w = sc->NIL;
   return(x);
 }
+
 
 /* should these two augment-envs check for symbol accessors?
  */
@@ -22718,7 +22715,8 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 		      (is_pws(x))));
 }
 
-/* PERHAPS: procedure*? and macro*?  bacro?
+/* PERHAPS: procedure*? and macro*?  bacro?, syntax?
+ *   (how to tell lambda's type)
  */
 
 
@@ -44605,7 +44603,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 
-	case T_ENVIRONMENT:
+	case T_ENVIRONMENT:                       /* -------- environment as applicable object -------- */
 	  if (is_null(cdr(sc->args)))
 	    {
 	      if (is_symbol(car(sc->args)))
@@ -53725,6 +53723,21 @@ static void s7_gmp_init(s7_scheme *sc)
 
 #endif
 /* WITH_GMP */
+
+
+
+/* PERHAPS: WITH_R7RS
+ *  which would add file-exists? delete-file command-line [what does this return? list of strings!]
+ *                      but that is char **argv listified, and we have no "main"
+ *                  get-environment-variable
+ *                  what is null-environment?
+ *                  is define-record-type like make-type? [No it has a dumb list of fields]
+ *                  are import and include just load?
+ *  others that might be sensible: 
+ *                  time related junk
+ *                  bytevector
+ *                  when, unless (use macros)
+ */
 
 
 
