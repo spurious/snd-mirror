@@ -12,8 +12,8 @@
 (define (read-string)
   (let ((chars '()))
     (do ((c (read-byte) (read-byte)))
-	((or (= c 0)
-	     (eof-object? c))
+	((or (eof-object? c)
+	     (= c 0))
 	 (apply string (reverse chars)))
       (set! chars (cons (integer->char c) chars)))))
 

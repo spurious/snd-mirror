@@ -53727,16 +53727,13 @@ static void s7_gmp_init(s7_scheme *sc)
 
 
 /* PERHAPS: WITH_R7RS
- *  which would add file-exists? delete-file command-line [what does this return? list of strings!]
- *                      but that is char **argv listified, and we have no "main"
- *                  get-environment-variable
- *                  what is null-environment?
+ *  which would add file-exists? delete-file [these require many compile time decisions -- header files, etc see xen.c]
+ *                  get-environment-variable [as *env* + implicit index]
+ *                  what is null-environment? [(null-env version) -> env with just lambda and friends?? -- what's the point?]
  *                  is define-record-type like make-type? [No it has a dumb list of fields]
- *                  are import and include just load?
  *  others that might be sensible: 
  *                  time related junk
- *                  bytevector
- *                  when, unless (use macros)
+ *                  bytevector [open-input-bytevector is just an iterator]
  */
 
 

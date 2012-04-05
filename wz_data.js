@@ -146,9 +146,6 @@ var extsnd_declare_tip = "Functions embedded within run may need to declare the 
 var extsnd_defineenvelope_tip = "<code>(define-envelope name data)</code>: define 'name' to have the value 'data'<br>" +
                                 " (a list of breakpoints), and load it into the envelope editor.";
 
-var extsnd_defvar_tip = "<code>(defvar name data)</code>: define 'name' to have the value 'data'<br>" +
-                        " (a list of breakpoints), and load it into the envelope editor.";
-
 var extsnd_deletesamples_tip = "<code>(delete-samples start-samp samps snd chn edpos)</code>:<br>" +
                                " delete 'samps' samples from snd's channel chn starting at 'start-samp'";
 

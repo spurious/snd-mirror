@@ -3100,18 +3100,11 @@ In s7, multiple values are spliced directly into the caller's argument list.
 &gt; ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3))
 (3 2)
 
-;; call-with-values: 
 (define-macro (call-with-values producer consumer) 
   `(,consumer (,producer)))
 
-;; multiple-value-bind ("receive" in srfi-8):
 (define-macro (multiple-value-bind vars expr . body)
   `((lambda ,vars ,@body) ,expr))
-
-;; multiple-value-set!:
-(define-macro (multiple-value-set! vars expr . body)
-  (let ((local-vars (map (lambda (n) (gensym)) vars)))
-    `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))
 
 (define (curry function . args)
   (if (null? args)
@@ -5172,39 +5165,38 @@ have any number after, for example, #b:
   (define blob-u8-set! vector-set!)
 
   (define interaction-environment current-environment)
-  (define (include file) (load file (current-environment)))
+  (define-bacro (include file) `(load ,file (current-environment)))
 
   (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 
   (define-macro (when test . forms) `(if ,test (begin ,@forms)))
   (define-macro (unless test . forms) `(if (not ,test) (begin ,@forms)))
 
-  ;; command-line is problematic: s7 has no access to the caller's "main" function, and
-  ;;   outside Windows, there's no simple way to get these arguments (if they exist).
+  (define-macro (define-values vars . body)
+    `(apply begin (map (lambda (var val) `(define ,var ,val)) ',vars (list (begin ,@body)))))
+
+  (define-macro (let*-values vars . body)
+    `(let () 
+       ,@(map (lambda (nvars . nbody)
+	        `(apply define-values ',nvars ',@nbody))
+	      (map car vars) (map cdr vars))
+       ,@body))
 
   ;; floor/ and friends can't work as intended: they assume that multiple values 
   ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
   ;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
   ;; and why no euclidean-rationalize? or exact-integer-expt?
 
-  ;; get-environment-variable is a bad name ("environment" is already in use), and "get-"
+  ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
   ;;   in any name is a red flag.  I might implement this as the variable *env* with
   ;;   hash-table-like implicit indexing: (*env* "HOME") returns "/home/bil".
-  ;; scheme also has get-output-string which might be better as "output-string".
+  ;; scheme also has get-output-string which might be better without the "get-".
 
   ;; define-record-type falls between two stools: the type mechanism should be separate
   ;;   from the notion of a structure with fields. 
-<!--
-  modules: include-ci import export
-  raise raise-continuable error [error msg obj] guard
-  define-record-type
-  parameter objects: make-parameter parameterize
-  copy-partial-blob[!] copy-blob!
-  case-lambda
-  file-exists? delete-file
-  time?: get-environment-variable[s] current-jiffy|second jiffies-per-second current-posix-second
-  with-exception-handler null-environment
--->
+
+  ;; command-line is problematic: s7 has no access to the caller's "main" function, and
+  ;;   outside Windows, there's no simple way to get these arguments.
 </pre>
 </div>
 

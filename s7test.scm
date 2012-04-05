@@ -505,7 +505,7 @@
 (test (eqv? () '()) #t)
 (test (eqv? "" "") #f)
 (test (eqv? "hi" "hi") #f) ; unspecified 
-(test (eqv? #() #()) #f)   ; unspecified, but in s7 (eqv? () ()) is #t -- inconsistent? (eqv? "" "") is #f
+(test (eqv? #() #()) #f)   ; unspecified, but in s7 (eqv? () ()) is #t
 
 (let ((c1 (let ((x 32))
 	    (lambda () x)))
@@ -16277,6 +16277,24 @@ in s7:
 	x)))
   (test (hi 0) 3))
 
+(let ()
+  (define-macro (define-values vars . body)
+    `(apply begin (map (lambda (var val) `(define ,var ,val)) ',vars (list (begin ,@body)))))
+
+  (define-macro (let*-values vars . body)
+    `(let () 
+       ,@(map (lambda (nvars . nbody)
+	        `(apply define-values ',nvars ',@nbody))
+	      (map car vars) (map cdr vars))
+       ,@body))
+
+  (let ()
+    (define-values (a b) (values 3 2))
+    (test (* a b) 6))
+
+  (let ()
+    (test (let*-values (((a b) (values 3 2))) (* a b)) 6)))
+
 (define __p__ 123)
 
 (let ((__p__ 321))
@@ -17182,6 +17200,14 @@ in s7:
   (define-constant _let*_x_ 32)
   (test (let* ((_let*_x_ 1)) _let*_x_) 'error))
 
+#|
+  ;; Al Petrovky says this should return #t, but in s7 it is #f
+  (letrec ((x (call/cc list)) (y (call/cc list)))
+    (cond ((procedure? x) (x (pair? y)))
+          ((procedure? y) (y (pair? x))))
+    (let ((x (car x)) (y (car y)))
+      (and (call/cc x) (call/cc y) (call/cc x))))
+|#
 
 
 
@@ -17666,7 +17692,7 @@ in s7:
 	      start)))))
       '("start" "next" "last"))
 
-(test (let ((cont #f))
+(test (let ((cont #f)) ; Al Petrovsky
 	(letrec ((x (call-with-current-continuation (lambda (c) (set! cont c) 0)))
 		 (y (call-with-current-continuation (lambda (c) (set! cont c) 0))))
 	  (if cont
@@ -66560,5 +66586,68 @@ in non-gmp,
   (format #t "~A ~A~%" _acc_var1_ _acc_var2_))
 
 
+|#
+
+
+#|
+;;; here's an expanded version of the autotester mentioned in s7.html:
+
+(let ((constants (list #f #t () 1.5 (/ 1 most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
+		  "hi" :hi 'hi (list 1) (list 1 2) (cons 1 2) '() (list (list 1 2)) (list (list 1)) (list ()) #() 
+		  1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 (make-hook '(0 0 #f))
+		  1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
+		  most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
+		  -1 0 0.0 1 1.5 1.0+1.0i 3/4 63 -63 (make-hash-table) (hash-table '(a . 2) '(b .3))
+		  '((1 2) (3 4)) '((1 (2)) (((3) 4))) '(()) "" (list #(1) "1") '(1 2 . 3)
+		  #(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args) (lambda* ((a 3) (b 2)) (+ a b))
+		  (augment-environment '() (cons 'a 1)) (current-environment) (global-environment)
+		  *load-hook*  *error-hook* (make-random-state 123) *vector-print-length* *gc-stats*
+		  quasiquote macroexpand cond-expand
+		  (string #\a #\null #\b) #2d((1 2) (3 4))
+		  #<undefined> #<eof> #<unspecified>
+		  )))
+
+  (define (autotest func args args-left)
+    (set! (-s7-symbol-table-locked?) #t)
+    (catch #t 
+	   (lambda () 
+	     (apply func args))
+	   (lambda any #f))
+    (set! (-s7-symbol-table-locked?) #f)
+    (if (> args-left 0)
+	(for-each
+	 (lambda (c)
+	   (autotest func (cons c args) (- args-left 1)))
+	 constants)))
+
+  (let ((st (symbol-table)))
+    (do ((i 0 (+ i 1))) 
+	((= i (length st)))
+      (let ((lst (st i)))
+	(for-each 
+	 (lambda (sym)
+	   (if (defined? sym)
+	       (let ((val (symbol->value sym)))
+		 (if (procedure? val)
+		     (let* ((arity (procedure-arity val))
+			    (req (car arity))
+			    (opt (cadr arity))
+			    (rst (caddr arity)))
+		       (if (or (> (+ opt req) 4)
+		       	       (member (symbol->string sym) '("trace" "exit" "abort" 
+							      "(generalized set!)" "(environment set!)"
+							      "[make]" "[ref]" "autotest" "{multivector}"
+							      "[set--s7-symbol-table-locked?]")))
+			   (format #t ";skip ~A for now~%" sym)
+			   (begin
+			     (format #t ";whack on ~A...~%" sym)
+			     (autotest val '() (+ req opt 1)))))
+		     (begin
+		       (if (member (symbol->string sym) '("do"))
+			   (format #t ";skip ~A for now~%" sym)
+			   (begin
+			     (format #t ";whack on ~A...~%" sym)
+			     (autotest val '() 2))))))))
+	 lst)))))
 |#
 
