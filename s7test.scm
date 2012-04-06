@@ -13167,6 +13167,54 @@ this prints:
 
 (test (let ((lst '(1 2 3)) (sum 0)) (define-macro (hi a) `(set! sum (+ sum (+ 1 ,a)))) (for-each hi lst) sum) 9)
   
+(let ((sum 0))
+  (define (and-for-each func . args)
+    ;; apply func to first of each arg, stopping if func returns #f
+    (call-with-exit
+     (lambda (quit)
+       (apply for-each 
+	      (lambda arglist
+		(if (not (apply func arglist))
+		    (quit #<unspecified>)))
+	      args))))
+  
+  (test (and-for-each (lambda (arg) 
+			(and (not (null? arg))
+			     (set! sum (+ sum arg))))
+		      (list 1 2 () 3 4))
+	#<unspecified>)
+  (test sum 3)
+  (set! sum 0)
+  
+  (and-for-each (lambda (arg) 
+		  (and (not (null? arg))
+		       (set! sum (+ sum arg))))
+		(list 1 2 3 4))
+  (test sum 10)
+  (set! sum 0)
+  
+  (and-for-each (lambda (arg1 arg2) 
+		  (and (not (null? arg1))
+		       (not (null? arg2))
+		       (set! sum (+ sum arg1 arg2))))
+		(list 1 2 3 4)
+		(list 5 6 () 7 8))
+  (test sum 14))
+
+#|
+(define (and-map func . args)
+  (call-with-exit
+   (lambda (quit)
+     (let ((result ()))
+       (apply for-each 
+	      (lambda arglist
+		(let ((val (apply func arglist)))
+		  (if (not val)
+		      (quit (reverse result))
+		      (set! result (cons val result)))))
+	    args)
+       (reverse result)))))
+|#
 
 
 
@@ -17780,6 +17828,20 @@ in s7:
 	(list (memb 'd '(a b c))
 	      (memb 'b '(a b c))))
       '(#f (b c)))
+
+(let* ((sum 0)
+       (val1 (call-with-exit 
+	      (lambda (return)
+		(set! sum (+ sum 1))
+		(let ((val2 (call-with-exit 
+			     (lambda (return)
+			       (set! sum (+ sum 1))
+			       (if #t (return sum))
+			       123))))
+		  (set! sum (+ sum val2))
+		  (return sum)
+		  32)))))
+  (test (list val1 sum) '(4 4)))
 
 (let ((x 1))
   (define y (call-with-exit (lambda (return) (set! x (return 32)))))

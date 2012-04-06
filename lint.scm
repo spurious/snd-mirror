@@ -4,12 +4,15 @@
 
 (define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
+(define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
 (define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
 
 (define *load-file-first* #f)
 (define start-up-environment (global-environment))
+(define *current-file* "")
+(define *top-level-objects* (make-hash-table))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2964,6 +2967,7 @@
       
       (lambda (file . args)
 	"(lint file) looks for infelicities in file's scheme code"
+	(set! *current-file* file)
 	(set! undefined-identifiers '())
 	(set! globals (make-hash-table))
 	(set! loaded-files '())
@@ -3012,9 +3016,19 @@
 					form 
 					vars)))
 		
+		(if *report-multiply-defined-top-level-functions*
+		    (for-each
+		     (lambda (var)
+		       (let ((var-file (hash-table-ref *top-level-objects* (car var))))
+			 (if (not var-file)
+			     (hash-table-set! *top-level-objects* (car var) *current-file*)
+			     (if (not (string=? var-file *current-file*))
+				 (format #t ";~S is defined at the top level in ~S and ~S~%" (car var) var-file *current-file*)))))
+		     vars))
+
 		(if *report-unused-top-level-functions* 
 		    (begin
-		      (report-usage file 0 'top-level-stuff #f vars)
+		      (report-usage file 0 'top-level-object #f vars)
 		      (if (not (null? generators))
 			  (let ((descr `(lambda (gen)))
 				(set '())
@@ -3059,4 +3073,4 @@
 		(close-input-port fp))))))))
 
 
-;;; collisions across files? (load order might matter)
+

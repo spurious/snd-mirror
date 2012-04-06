@@ -3388,23 +3388,18 @@ similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "ca
 </p>
 
 <pre class="indented">
-(define (find-first-even-number arg)
-  (<em class=red>call-with-exit</em>
-   (lambda (return)
-     (for-each
-      (lambda (a)
-	(if (even? a)
-	    (return a)))
-      arg))))
-
-(find-first-even-number (list 1 3 9 13 8 2 4)) -&gt; 8
-
 (define-macro (block . body) 
-  `(<em class=red>call-with-exit</em> 
-     (lambda (return) 
-       ,@body)))
+  ;; borrowed loosely from CL &mdash; predefine "return" as an escape
+  `(<em class=red>call-with-exit</em> (lambda (return) ,@body)))
 
-(block (display "hi") (return 32) (display "oops")) -&gt; 32
+(define (and-for-each func . args)
+  ;; apply func to the first member of each arg, stopping if it returns #f
+  (<em class=red>call-with-exit</em>
+   (lambda (quit)
+     (apply for-each (lambda arglist
+		       (if (not (apply func arglist))
+			   (quit #&lt;unspecified&gt;))) 
+	    args))))
 </pre>
 
 <p><b>continuation?</b> returns #t if its argument is a continuation,
@@ -5185,10 +5180,10 @@ have any number after, for example, #b:
   ;; floor/ and friends can't work as intended: they assume that multiple values 
   ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
   ;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
-  ;; and why no euclidean-rationalize? or exact-integer-expt?
+  ;; and why no euclidean-rationalize or exact-integer-expt?
 
   ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
-  ;;   in any name is a red flag.  I might implement this as the variable *env* with
+  ;;   in any name should raise a red flag.  I might implement this as the variable *env* with
   ;;   hash-table-like implicit indexing: (*env* "HOME") returns "/home/bil".
   ;; scheme also has get-output-string which might be better without the "get-".
 
@@ -5196,7 +5191,7 @@ have any number after, for example, #b:
   ;;   from the notion of a structure with fields. 
 
   ;; command-line is problematic: s7 has no access to the caller's "main" function, and
-  ;;   outside Windows, there's no simple way to get these arguments.
+  ;;   outside Windows, there's no reasonable way to get these arguments.
 </pre>
 </div>
 
