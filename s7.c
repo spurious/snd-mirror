@@ -8077,7 +8077,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 
       y = cadr(args);
       if ((x == small_int(1)) && (y == small_int(1)))  /* (log 1 1) -> 0 (this is NaN in the bignum case) */
-	return(small_int(0));
+	return(small_int(0));                          
 
       /* (log 1 0) must be 0 since everyone says (expt 0 0) is 1 */
       if (s7_is_zero(y))
@@ -8092,7 +8092,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	{
 	  if (s7_is_one(x))  /* but (log 1.0 1.0) -> 0.0 */
 	    return(real_zero);
-	  return(s7_make_real(sc, INFINITY));
+	  return(s7_make_real(sc, INFINITY)); /* currently (log 1/0 1) is inf? */
 	}
 
       if ((s7_is_real(x)) &&

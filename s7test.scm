@@ -15560,6 +15560,17 @@ in s7:
 (test (apply or) #f)
 (test (apply quote '(1)) 1)
 
+(let ()
+  (define (min-max arg . args)
+    (if (null? args)
+	(apply max arg)
+	(min (apply max arg) 
+	     (apply min-max args))))
+
+  (test (min-max '(1 2 3) '(0 -1 4)) 3)
+  (test (min-max '(1 2 3) '(0 -1 4) '(1 2)) 2))
+
+
 
 
 
@@ -18526,6 +18537,34 @@ who says the continuation has to restart the map from the top?
 	  val))
       5)
 
+(let ()
+  (define-macro (while test . body)
+    `(call-with-exit 
+      (lambda (break) 
+	(letrec ((continue (lambda () 
+			     (if (let () ,test)
+				 (begin 
+				   (let () ,@body)
+				   (continue))
+				 (break)))))
+	  (continue)))))
+  (test (let ((i 0)
+	      (sum 0)
+	      (break 32)
+	      (continue 48))
+	  (while (begin 
+		   (define break 10)
+		   (define continue 0) 
+		   (< i (+ break continue)))
+		 (set! sum (+ sum 1))
+		 (set! i (+ i 1))
+		 (if (< i 5) (continue))
+		 (set! sum (+ sum 10))
+		 (if (> i 7) (break))
+		 (set! sum (+ sum 100)))
+	  sum)
+	348))
+
 
 
 
@@ -20004,6 +20043,16 @@ who says the continuation has to restart the map from the top?
   (test (* _an_undefined_variable_i_hope_ _an_undefined_variable_i_hope_) 1024)
   (set! (hook-functions *unbound-variable-hook*) old-hook))
 
+(let ((old-hook (hook-functions *unbound-variable-hook*)))
+  (set! (hook-functions *unbound-variable-hook*) 
+      (list (lambda (sym) 
+	      (if (eq? sym '__asdf__)
+		  32
+		  (+ 1 __asdf__)))))
+  (let ((val (+ 1 _an_undefined_variable_i_hope_)))
+    (set! (hook-functions *unbound-variable-hook*) old-hook)
+    (test val 34)))
+
 (let ((old-hook (hook-functions *unbound-variable-hook*))
       (x #f))
   (set! (hook-functions *unbound-variable-hook*) 
@@ -21450,6 +21499,28 @@ abs     1       2
 	(define* (a (b (c))) b)
 	(list cc (a) cc))
       (list 1 2 2))
+
+(let ()
+  (define* (func (val ((lambda (a) (+ a 1)) 2))) val)
+  (test (func) 3)
+  (test (func 1) 1))
+
+(let ()
+  (define (make-iterator obj)
+    (let ((ctr 0))
+      (lambda ()
+	(and (< ctr (length obj))
+	     (let ((val (obj ctr)))
+	       (set! ctr (+ ctr 1))
+	       val)))))
+
+  (let ((iter (make-iterator #(10 9 8 7 6 5 4 3 2 1 0))))
+    (define* (func (val (iter))) val)
+
+    (test (list (func) (func) (func)) '(10 9 8))))
+
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -22951,6 +23022,24 @@ but that's make-type's arglist??
 		(+ *))
 	    (mac a (- 5 a) (* a 2))))
 	9)
+
+  (test (let () 
+          (define-macro (mac b) 
+            `(let ((a 12)) 
+               (,+ a ,b)))
+           (let ((a 1) 
+                 (+ *))
+            (mac a)))
+       24)
+
+  (test (let () 
+          (define-macro (mac b) 
+            `(let ((a 12)) 
+               (+ a ,b)))
+           (let ((a 1) 
+                 (+ *))
+            (mac a)))
+       144)
 
   (test (let ()
 	  (define-clean-macro (mac) (let ((a 1)) `(+ ,a 1)))
@@ -35782,6 +35871,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (imag-part inf.0) 0.0)
 (num-test (imag-part (+ 2 0+1/0i)) inf.0)
 (num-test (imag-part 0/0+0i) 0.0)
+(num-test (imag-part 1/0) 0.0)
+;(num-test (imag-part (log 1/0)) pi) ; hmmm -- I could imagine other choices here and below
+;(num-test (imag-part (sqrt 1/0)) 0.0)
+;(test (nan? (imag-part (sqrt (log 1/0)))) #t)
 
 (if with-bignums
     (begin
@@ -55688,9 +55781,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (log pi) 1.14472988584940)
 (num-test (log (/ 1+i)) (log (/ 1 1+i)))
 (test (< (real-part (log 0.0)) (real-part (- (log 0.0)))) #t)
+
 (test (infinite? (random (log 0.0))) #t) ; should (random inf.0 inf.0) be 0?
 ;(num-test (log 1 1) 'error) ; (expt 1 0) is 1 but so is (expt 1 1) -- an ambiguous case (returns NaN in gmp)
 ;(num-test (log 2 1) 'error) ; now returns infinity
+;; this is actually inconsistent in one way:
+;; (log 1/0 2) -> nannani, (log 1/0 1) -> inf.0
 
 (for-each
  (lambda (num-and-val)
@@ -63183,6 +63279,8 @@ but it's the printout that is at fault:
 (test (make-random-state 1.0) 'error)
 (test (make-random-state 1+i) 'error)
 (test (make-random-state 3/4) 'error)
+(test (make-random-state 1/0) 'error)
+(test (make-random-state (real-part (log 0))) 'error)
 (test (random-state? (make-random-state 100)) #t)
 (test (random-state?) 'error)
 (test (random-state? (make-random-state 100) 100) 'error)

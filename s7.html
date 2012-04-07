@@ -903,7 +903,23 @@ mac
 
 <p>This returns 144 because "+" has turned into "*", and "a" is the internal "a",
 not the argument "a".  We get <code>(* 12 12)</code> where we might have expected
-<code>(+ 12 1)</code>.  Although this example is silly, the problem is real in Scheme
+<code>(+ 12 1)</code>.  As long as the redefinition of '+' is local, we can unquote the +:
+</p>
+
+<pre class="indented">
+&gt; (define-macro (mac b) 
+    `(let ((a 12)) 
+       (,+ a ,b))) ; ,+ picks up the definition-time +
+mac
+&gt; (let ((a 1) 
+        (+ *))
+    (mac a))
+24                 ; (+ a a) where a is 12
+</pre>
+
+<p>But this unquote trick won't work if we've previously loaded some file that redefined '+'
+at the top-level (so at macro definition time, + is *, but we want the built-in +).
+Although this example is silly, the problem is real in Scheme
 because Scheme has no reserved words and only one name space.  Since macros and functions (not to mention
 continuations) look the same when called in the code,
 and since we might be loading any
@@ -1003,8 +1019,6 @@ mac
 	  (b 3)) 
       (+ a b c d)))) ; 'a' and 'b' are local, 'c' and 'd' are from the augmented env
 </pre>
-
-
 
 <p>This is not the end of the story.
 Macro expansion happens
@@ -1125,12 +1139,8 @@ By the way, bacros solve part of our original problem:
 start, then only use [+] in our macros.  
 </p>
 
-<!--
-<p>(I know, I know; this entire issue is ridiculous and overblown.  Some Professor got wind
-of it years ago, and his reaction made Chicken Little look like Mr Cool.  Now
-all his buddies have to pretend they care.)
+<p>If you think you want define-syntax, consider mumps or polio (this is not a joke).
 </p>
--->
 
 </div>
 
@@ -2256,6 +2266,20 @@ After all that, the copy function simply returns its argument if passed a closur
      so 'ctr' is not defined in the filter-iterator environment.
 -->
 
+<div class="indented">
+<p>I don't know why this pleases me so much, but you can use make-iterator
+to define a function whose argument takes a different default value each time it is called:
+</p>
+
+<pre class="indented">
+&gt; (let ((iter (make-iterator #(10 9 8 7 6 5))))
+     (define* (func (val (iter))) 
+       val)
+     (list (func) (func 32) (func) (func)))
+&gt; (10 32 8 7)
+</pre>
+</div>
+
 </blockquote>
 
 
@@ -2267,8 +2291,8 @@ After all that, the copy function simply returns its argument if passed a closur
 
 <p>
 s7 supports
-vectors with any number of dimensions.  It is here, in particular, that the generalized
-set! stuff shines.  make-vector's second argument can be a list of dimensions, rather than
+vectors with any number of dimensions.  It is here, in particular, that generalized
+set! shines.  make-vector's second argument can be a list of dimensions, rather than
 an integer as in the one dimensional case:
 </p>
 
@@ -3021,7 +3045,7 @@ class-3
 &gt; ((class-3 'multiply) class-3 10)
 180                               ; (* 10 (* 1 2 3) (+ 1 2))
 
-
+;; another obvious possibility: generic macros
 </pre>
 
 <p>Perhaps make-type should be built on this?
@@ -3384,7 +3408,12 @@ is 15, as anyone would expect.
 
 
 <p><b><em class=def id="callwithexit">call-with-exit</em></b> is call/cc without the ability to jump back into the original context,
-similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "catch" for error handling).
+similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "catch" for error handling), and is both
+cleaner than call/cc, and much faster. 
+<!--
+Avoid call/cc like the plague &mdash; it makes code unreadable, undebuggable,
+and probably unportable since every scheme handles call/cc differently.
+-->
 </p>
 
 <pre class="indented">
@@ -3400,6 +3429,18 @@ similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "ca
 		       (if (not (apply func arglist))
 			   (quit #&lt;unspecified&gt;))) 
 	    args))))
+
+(define-macro (while test . body)
+  ;; while loop with predefined break and continue
+  `(<em class=red>call-with-exit</em>
+    (lambda (break) 
+      (letrec ((continue (lambda () 
+			   (if (let () ,test)
+			       (begin 
+				 (let () ,@body)
+				 (continue))
+			       (break)))))
+	(continue)))))
 </pre>
 
 <p><b>continuation?</b> returns #t if its argument is a continuation,
