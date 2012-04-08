@@ -10,7 +10,7 @@
 ;;;   gauche test suite
 ;;;   sacla test suite
 ;;;   Kent Dybvig's "The Scheme Programming Language"
-;;;   Brad Lucier (who also pointed out many bugs)
+;;;   Brad Lucier and Peter Bex
 ;;;   GSL tests
 ;;;   Abramowitz and Stegun, "Handbook of Mathematical Functions"
 ;;;   Weisstein, "Encyclopedia of Mathematics"
@@ -2765,10 +2765,8 @@
 (test (string=? "" (string-append)) #t)
 (test (string=? (string #\space #\newline) " \n") #t)
 
-(test (string=? "......" "...\ ...") #t)
 (test (string=? "......" "...\
 ...") #t)
-(test (string=? "" "\ \ \ \ \ \ \ ") #t)
 (test (string=? "\n" (string #\newline)) #t)
 (test (string=? "\
 \
@@ -2796,13 +2794,8 @@
 ;; this strikes me as highly dubious
 (test (call-with-input-string "1\n2" (lambda (p) (read p))) 1)
 (test (call-with-input-string "1\\ \n2" (lambda (p) (read p))) (symbol "1\\"))
-(test (call-with-input-string "1\ 2" (lambda (p) (read p))) 12)
-(test (call-with-input-string "1\ \ \ 2" (lambda (p) (read p))) 12)
 
 (test (call-with-input-string "1\
-2" (lambda (p) (read p))) 12)
-
-(test (call-with-input-string "1\ \
 2" (lambda (p) (read p))) 12)
 
 (test (let ((xyzzy 32)) (call-with-input-string "xy\
@@ -2819,11 +2812,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
  this is presumably a comment;\
  and more commentary
  321)" (lambda (p) (eval (read p)))) xyzzy) 321)
-
-(test (eval-string "1\ 2") 12)
-(test (length "\ \ \ \ \ \ \ ") 0)
-(test (eval-string "(length \"\\ 1\")") 1)
-(test (eval-string "\"\\ \x30\\ \"") "0") ; (integer->char #x30) = "0"
 
 
 
@@ -3310,7 +3298,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (string-length "(string #\\( #\\+ #\\space #\\1 #\\space #\\3 #\\))") 44)
 (test (string-length) 'error)
 (test (string-length "hi" "ho") 'error)
-(test (string-length "..\ ..") 4)
 (test (string-length (string #\null)) 1) ; ??
 (test (string-length (string #\null #\null)) 2) ; ??
 (test (string-length (string #\null #\newline)) 2) ; ??
@@ -3396,7 +3383,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (string-ref "abcdef-dg1ndh" 6) #\-)
 (test (string-ref "\"\\\"" 1) #\\)
 (test (string-ref "\"\\\"" 2) #\")
-(test (string-ref "12\ 34" 2) #\3)
 
 (test (let ((str (make-string 3 #\x))) (set! (string-ref str 1) #\a) str) "xax")
 
@@ -3605,7 +3591,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (substring "hi\"ho" 3 5) "ho")
 (test (substring (substring "hi\"ho" 1 4) 2) "h")
 (test (substring (substring "hi\"ho" 3 5) 1 2) "o")
-(test (substring "01\ \ 34" 2) "34")
 (test (let* ((s1 "0123456789") (s2 (substring s1 1 3))) (string-set! s2 1 #\x) s1) "0123456789")
 (test (substring (substring "" 0 0) 0 0) "")
 (test (substring (format #f "") 0 0) "")
@@ -11197,7 +11182,6 @@ a2" 3) "132")
 (test (format #f "1~^2") "1")
 (test (apply format #f "~P~d~B~~" '(1 2 3)) "211~")
 (test (format #f "~T1~~^~P" 0) "1~^s")
-(test (format #f "1\ 2") "12")
 (test (format #f "~S~^~{~^" '(+ x 1)) "(+ x 1)")
 (test (format #f "1~^~{2") "1")
 (test (format #f "~A~{~0~g~@~B~}" '() '()) "()")
@@ -12020,7 +12004,6 @@ a2" 3) "132")
 (test '(a #|foo||||# b) '(a b))
 (test '(a #|foo|||||# b) '(a b))
 
-;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
 (test (char? #\#) #t)
 (test (eval-string "'#<vct>") 'error)
 (test (eval-string "'(#<vct>)") 'error)
@@ -12037,7 +12020,6 @@ a2" 3) "132")
 (test (let ((\x00}< 1) (@:\t{ 2)) (+ \x00}< @:\t{)) 3)
 (test (let ((| 1) (|| 2) (||| 3)) (+ || | |||)) 6)
 (test (let ((|a#||#b| 1)) |a#||#b|) 1)
-(test (let ((?#||#\ 1) (\n\r\t 2) (.1e+2+ie 3)) (+ ?#||#\ \n\r\t .1e+2+ie)) 6)
 (test (let ((@,@'[1] 1) (\,| 2)) (+ @,@'[1] \,|)) 3)
 (test (list"0"0()#()#\a"""1"'x(list)+(cons"""")#f) (list "0" 0 () #() #\a "" "1" 'x (list) + '("" . "") #f))
 (test (let ((x, 1)) x,) 1)
@@ -12053,7 +12035,6 @@ a2" 3) "132")
 ;; how is ...#(... parsed?
 (test (eval-string "'(# (1))") 'error)
 (test (let ((lst (eval-string "'(#(1))"))) (and (= (length lst) 1) (vector? (car lst)))) #t)                     ; '(#(1))
-(test (let ((lst (eval-string "'(#\ (1))"))) (and (= (length lst) 1) (vector? (car lst)))) #t)                   ; '(#(1))
 (test (let ((lst (eval-string "'(-#(1))"))) (and (= (length lst) 2) (symbol? (car lst)) (pair? (cadr lst)))) #t) ; '(-# (1))
 (test (let ((lst (eval-string "'(1#(1))"))) (and (= (length lst) 2) (symbol? (car lst)) (pair? (cadr lst)))) #t) ; '(1# (1))
 (test (let ((lst (eval-string "'('#(1))"))) (and (= (length lst) 1) (vector? (cadar lst)))) #t)                  ; '((quote #(1)))
@@ -18474,9 +18455,11 @@ who says the continuation has to restart the map from the top?
 (test (call-with-exit (lambda (go) (case 'go ((go 2) 3) (else 4)))) 3)
 (test (call-with-exit (lambda (go) (go (go (go 1))))) 1)
 (test (call-with-exit (lambda (go) (quasiquote (go 1)))) '(go 1))
-(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a) (go 2) 3))) 2)
-(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a) 2))) 2) ; default arg not evaluated if not needed
-(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a)))) #f) ; lambda_star_argument_default_value in s7 explicitly desires this
+
+;; these tests were messed up -- I forgot the outer parens
+(test (call-with-exit (lambda (go) ((lambda* ((a (go 1))) a) (go 2) 3))) 2)
+(test (call-with-exit (lambda (go) ((lambda* ((a (go 1))) a)))) 1)
+
 (test (call-with-exit (lambda (go) ((lambda (go) go) 1))) 1)
 (test (call-with-exit (lambda (go) (quote (go 1)) 2)) 2)
 (test (call-with-exit (lambda (go) (and (go 1) #f))) 1)
@@ -22333,20 +22316,6 @@ but that's make-type's arglist??
   (test (eval ((eval-string "(lambda (a) (list '+ a 1))") 2)) 3)
   (test (eval-string "(+ 1 (eval (list '+ 1 2)))") 4)
 
-  (num-test (eval-string "\ +\ \ 1") 1)
-  (num-test (eval-string "'\ `\ 1") 1)
-  (num-test (eval-string "\ 1\ +i") 1+1i)
-  (num-test (eval-string "\x32\x37/\x37\ ") 27/7)
-  (num-test (eval-string "\ '-1\ ") -1)
-  (num-test (eval-string "\ .\ 10") 0.1)
-  (num-test (eval-string "#\ i\ -\x34") -4.0)
-  (num-test (eval-string "1\ 1.\x37\ ") 11.7)
-  (num-test (eval-string "1/\ \ 1\x30") 1/10)
-  (num-test (eval-string "#\ xe\ \x36\ ") 230)
-  (num-test (eval-string "\ \ \x35\ .  ") 5.0)
-  (num-test (eval-string "#x01/\ \x34") 1/4)
-  (num-test (eval-string "-\ 1\ .\x35\ e\ 0") -1.5)
-
   (for-each
    (lambda (arg)
      (test (eval-string arg) 'error))
@@ -25842,7 +25811,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (cond (((values '(1 2) '(3 4)) 0 0))) 'error)
 (test (cond (((#2d((1 2) (3 4)) 0) 0) 32)) 32)
 (test (cond ((apply < '(1 2)))) #t)
-(test (dynamic-wind lcm gcd *) 'error)
+(test (dynamic-wind lcm gcd *) 0) ; was 'error but Peter Bex tells me this is normal
 (test (case 0 ((> 0 1) 32)) 32)
 (test (char-downcase (char-downcase #\newline)) #\newline)
 (test (and (and) (and (and)) (and (and (and (or))))) #f)
@@ -29262,7 +29231,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(test-t (not (lower-case-p #\A)))
 	(test-t (lower-case-p #\a))
 	(test-t (not (lower-case-p #\-)))
-;	(test-t (char= #\ (name-char (char-name #\ ))))
 ;	(test-t (char= #\Space (name-char (char-name #\Space))))
 ;	(test-t (char= #\Newline (name-char (char-name #\Newline))))
 
@@ -35588,7 +35556,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (num-test (numerator (/ 9223372036854775808 -9223372036854775807)) -9223372036854775808)
       (num-test (numerator 1234567891234567890/1234567) 1234567891234567890)
       (num-test (numerator 9223372036854775808/9223372036854775807) 9223372036854775808)
-      (test (numerator? 0+92233720368547758081.0i) 'error)
+      (test (numerator 0+92233720368547758081.0i) 'error)
       ))
 
 (test (numerator 0.0) 'error) ; guile thinks this is ok
@@ -35701,7 +35669,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (num-test (denominator (/ 9223372036854775808 -9223372036854775807)) 9223372036854775807)
       (num-test (denominator 1234567891234567890/1234567) 1234567)
       (num-test (denominator 9223372036854775808/9223372036854775807) 9223372036854775807)
-      (test (denominator? 0+92233720368547758081.0i) 'error)
+      (test (denominator 0+92233720368547758081.0i) 'error)
       ))
 
 (test (denominator 0.0) 'error)
@@ -61586,7 +61554,7 @@ but it's the printout that is at fault:
       (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) -52761146275983172771170709/183561983334767209753061626751)
       (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981) -543899925850203550003/2756144552405627689570151) 
       (num-test (- 1e40+1e30i 1e40-1e30i) 0+2e30i)
-      (num-test (- 2 12345678901234567890+12345678901234567890i) -12345678901234567890-12345678901234567890i)
+      (num-test (- 2 12345678901234567890+12345678901234567890i) -12345678901234567888-12345678901234567890i)
       (num-test (- 500009/500029 500057/500041 500083/500069) -125047255383687283/125034753009582041)
       (num-test (- 9223372036854775807 -9223372036854775808) 18446744073709551615)
       (num-test (- 98947 2/97499 76847 4/61981 5/59981) 8010593845541429507/362470312515139)
@@ -63930,12 +63898,8 @@ etc....
 (test (string->number (string (integer->char 189))) #f) ; 1/2 as single char
 (test (string->number (string #\1 (integer->char 127) #\0)) #f) ; backspace
 
-;; but...
-(test (string->number "1\ 2") 12)
 (test (string->number "1\
 2") 12)
-(num-test (string->number "1\ \ \ \ \ .\ \ \ 2\ \ ") 1.2)
-(test (string->number "1\ \ \ \ \ . \ \ \ 2\ \ ") #f) ; yowza
 
 (test (string->number "1E1") 10.0)
 (test (string->number "1e1") 10.0)
@@ -64896,53 +64860,6 @@ etc....
 (test (string->number "#<") #f)
 (test (string->number "+.e1") #f)
 (test (string->number ".e1") #f)
-
-(num-test (string->number "1\ 2") 12)
-(num-test (string->number "\ \x30\ ") 0)
-(num-test (string->number "\ \x31\ /\ \x32\ ") 1/2)
-(num-test (string->number "\ \ 4\ 3\ /43\ ") 1)
-(num-test (string->number "+\x36\ 4/\x36\ \ 4") 1)
-(num-test (string->number "\ +\ \x33\ 4/3\ 4") 1)
-(num-test (string->number "#x\x34\ 4\ /\ 44") 1)
-(num-test (string->number "+\x30\ \ \ \ \x33/3") 1)
-(num-test (string->number "4\ 4/\ \ 4\x34\ ") 1)
-(num-test (string->number "4\ \ \ /\ \ \ \x34") 1)
-(num-test (string->number "\ 3\x34\ /\ 3\ 4") 1)
-(num-test (string->number "\ #\ x\ \x34/\x30\x34") 1)
-(num-test (string->number "3\ /\ \x33\ \ ") 1)
-(num-test (string->number "\ 3\ /\x32\ ") 3/2)
-(num-test (string->number "\ \ +\ 3/\ \x32") 3/2)
-(num-test (string->number "#\ x\x36/4") 3/2)
-(num-test (string->number "#x\x38/\ 4\ \ ") 2)
-(num-test (string->number "4\x32\x37") 427)
-(num-test (string->number "\x32.\x39") 2.9)
-(num-test (string->number "\ 4\ e\x32\ ") 400.0)
-(num-test (string->number "#i\x32\x38\x36\ ") 286.0)
-(num-test (string->number "#\ i.3\ ") 0.3)
-(num-test (string->number "4\x31+3\x36i") 41+36i)
-(num-test (string->number "34\ \ \ /4\ \x32\x32") 17/211)
-(num-test (string->number "#x4\ 4\ e\ /4") 551/2)
-(num-test (string->number "\ \ #\ x33\x34/\x33") 820/3)
-(num-test (string->number ".\ 44\ \ e\ -\ \ \x36\ \ ") 4.4e-07)
-(num-test (string->number "#\ \ x34\ 4\ \x38\ +4i") 13384+4i)
-(num-test (string->number "#i\x31.\ 4+\ \x39\ .\ \ i") 1.4+9i)
-(num-test (string->number "#\ \ x#i\ \x38\x31+4\ 4i") 129+68i)
-(num-test (string->number "#i\ #x4\ \x37\ -4/\ 4\ i") 71-1i)
-
-(num-test (string->number "12\
-34.\ \
-56") 1234.56)
-(num-test (string->number "12\
-\ 34\
-.\
-\
-5\ 6") 1234.56)
-
-(for-each
- (lambda (i)
-   (test (eval-string (format #f "(string->number \"~A\")" (string #\1 #\\ (integer->char i) #\2))) 12))
- (list 9 10 11 12 13 32))
-
 
 (if with-bignums
     (begin

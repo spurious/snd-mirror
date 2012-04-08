@@ -150,7 +150,7 @@ as an inexact integer.
 and want a quick tour of where s7 is different.  (Well, it was quick once upon a time).
 I originally used a small font for scholia, but now I have to squint
 to read that tiny text, so less-than-vital commentaries are shown in the normal font, but 
-indented and in a sort of brownish background.
+indented and on a sort of brownish background.
 </p>
 
 <div class="orange">
@@ -469,6 +469,112 @@ random-state-&gt;list, then to restart from that point, apply make-random-state 
 
 <div class="indented">
 
+<p>I can't find the right tone for this section; this is the 400-th revision; I wish I were a better writer!
+</p>
+
+<p>In some Schemes,
+"rational" means "could possibly be
+expressed equally well as a ratio: floats are approximations".  In s7 it's: "is actually expressed (at the scheme level) as a ratio (or an integer of course)";
+otherwise "rational?" is the same as "real?":
+</p>
+
+<pre class="indented">
+(not-s7-scheme)&gt; (rational? (sqrt 2))
+#t
+</pre>
+
+<p>To argue that 1.0 must be a (scheme) ratio because it is represented at the IEEE-float level as a sort of
+ratio is the fallacy known as equivocation: it uses "ratio" with two different meanings.
+</p>
+
+<p>But that confusion is trivial compared to the completely nutty "inexact integer".
+As I understand it, "inexact" originally meant "floating point", and "exact" meant integer or ratio of integers.
+But words have a life of their own.
+0.0 somehow became an "inexact" integer (although it can be represented exactly in floating
+point).  
++inf.0 must be an integer &mdash;
+its fractional part is explicitly zero!  But +nan.0... 
+And then there's:
+</p>
+
+<pre class="indented">
+(not-s7-scheme)&gt; (integer? 9007199254740993.1)
+#t
+</pre>
+
+<p>
+When does this matter?  I often need to index into a vector, but the index is a float (a "real" in Scheme-speak: its
+fractional part can be non-zero).
+In one Scheme:
+</p>
+
+<pre class="indented">
+(not-s7-scheme)&gt; (vector-ref #(0) (floor 0.1))
+ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a programmer mistake"!]
+</pre>
+
+<p>Not to worry, I'll use inexact-&gt;exact:
+</p>
+
+<pre class="indented">
+(not-s7-scheme)&gt; (inexact-&gt;exact 0.1)
+3602879701896397/36028797018963968                  ; [why? "floats are ratios"!]
+</pre>
+
+<p>So I end up using the verbose <code>(floor (inexact-&gt;exact ...))</code> everywhere, and even
+then I have no guarantee that I'll get a legal vector index. 
+</p>
+
+<p>When I started work on s7, I thought perhaps
+"exact" could mean "is represented exactly in the computer".  We'd have integers and ratios exact; 
+reals and complex exact if they are exactly
+represented in the current floating point implementation.  
+0.0 and 0.5 might be exact if the printout isn't misleading, and 0.1 is inexact.
+"integer?" and friends would refer instead to the programmer's point of view.
+That is, if the programmer uses 1 or if the thing prints as 1, it is the integer 1, whereas 1.0
+means floating point (not integer!). 
+And to keep exactness in view, we'd have
+to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
+But then what would inexact-&gt;exact do?  
+</p>
+
+<p>
+I have never seen any use made of the exact/inexact distinction &mdash; just
+wild flailing to try get around it.
+I think the whole idea is confused and useless, and leads
+to verbose and buggy code.  
+If we discard it,
+we can maintain backwards compatibility via:
+</p>
+
+<pre class="indented">
+(define exact? rational?)
+(define (inexact? x) (not (rational? x)))
+(define inexact-&gt;exact rationalize) ; or floor
+(define (exact-&gt;inexact x) (* x 1.0))
+</pre>
+
+<p>#i and #e are also useless because you can
+have any number after, for example, #b:
+</p>
+
+<pre class="indented">
+&gt; #b1.1
+1.5
+&gt; #b1e2
+4.0
+&gt; #o17.5+i
+15.625+1i
+</pre>
+
+<p>Speaking of #b and friends, what should <code>(string-&gt;number "#xffff" 2)</code> return?
+</p>
+</div>
+
+
+
+<div class="indented">
+
 <pre>
 (define (log-n-of n . ints)     ; return the bits on in exactly n of ints
   (let ((len (length ints)))
@@ -492,10 +598,6 @@ random-state-&gt;list, then to restart from that point, apply make-random-state 
 		     (set! prev mid)))))))))
 </pre>
 
-<!-- since set-cdr! is so useful, it's too bad we can't do something similar with any sequence:
-    apply a function to a truncated portion of a sequence (a vector for example).  Currently
-    we'd need subvector->list; what about subvector/sublist? subsequence?
--->
 </div>
 
 </blockquote>
@@ -695,7 +797,7 @@ argument:
 
 <p>CL would agree with the first case if we used &amp;key for 'c', but would give an error in the second.
 Of course, the major difference is that s7 keyword arguments don't insist that the key be present.
-The :rest argument is needed in cases like these because we can't use expression
+The :rest argument is needed in cases like these because we can't use an expression
 such as:
 </p>
 
@@ -1267,9 +1369,7 @@ If we use the macro before defining it (as is perfectly legal for functions):
   (format #t "x: ~A~%" x))
 
 s7 still says x is 2 then 3, Guile throws an error: "Wrong type to apply: #<syntax-transformer hi>";
-clisp says 2 then 3! and sbcl gives the error: "HI is being redefined as a macro when it was previously assumed to be a function."
-Incredible.
-
+clisp says 2 then 3, and sbcl gives the error: "HI is being redefined as a macro when it was previously assumed to be a function."
 
 A bacro can be viewed as a function that does not
 evaluate its arguments, but to avoid the extra evaluation after expansion we need
@@ -1717,8 +1817,33 @@ point
 </p>
 </div>
 
-</blockquote>
 
+<div class="indented">
+
+<p>Scheme needs a more elegant way to define functions that share a closure.  The begin+define+let+set! shuffle used
+above is an embarrassment.
+Here's an idle thought:
+</p>
+
+<pre class="indented">
+(define f1 (let ((x 23))
+	     (lambda (a)
+	       (+ x a))))
+(define f2
+  (with-environment (procedure-environment f1) ; import f1's closure ("x") into f2
+   (lambda (b)
+     (+ b (* 2 x)))))
+
+&gt; (+ (f1 1) (f2 1))
+71
+</pre>
+
+<p>or perhaps better, use define-bacro with augment-environment! as in the <a href="#objectsystem">object system</a> example.
+</p>
+</div>
+
+
+</blockquote>
 
 
 
@@ -2826,7 +2951,7 @@ its bindings are exported into the current environment:
 
 <div class="indented">
 
-<p>Here is yet another object system.  Each class and each instance is an environment.
+<p id="objectsystem">Here is yet another object system.  Each class and each instance is an environment.
 A class might be thought of as a template for instances, but
 there's actually no difference between them.  To make an instance of a class, copy it.  To inherit from
 another class, concatenate the environments. To access (get or set) a field or a method, use the implicit
@@ -3047,6 +3172,10 @@ class-3
 
 ;; another obvious possibility: generic macros
 </pre>
+<!--
+at class definition time:
+    (list 'mac (symbol->value (define-macro (mac a) `(+ ,a 1))))
+-->
 
 <p>Perhaps make-type should be built on this?
 </p>
@@ -4231,7 +4360,8 @@ dalliance with symbol-macros!
 		     (do ((e (*error-info* 5) (outer-environment e))) 
 			 ((eq? e (global-environment))) 
 		       (status-report (format #f "~%~A" (environment-&gt;list e)) -1))
-                       ;; status-report is a Snd function that (in this case) sends the data to the Snd listener		       
+                       ;; status-report is a Snd function that (in this case)
+		       ;;   sends the data to the Snd listener.	       
 		     #&lt;undefined&gt;)))))
 (#&lt;closure&gt; #&lt;closure&gt;)
 &gt; (let ((a "hi") (b 2)) (+ a b)) ; hit an error on purpose
@@ -4257,7 +4387,7 @@ dalliance with symbol-macros!
 <div class="indented">
 <p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
-lint.scm in the Snd tarball checks for infelicities in s7 code (I think this is now called splint in the C world).
+lint.scm in the Snd tarball checks for infelicities in s7 code (I think the C equivalent is now called splint).
 </p>
 </div>
 
@@ -4623,6 +4753,9 @@ bind it to something else, which is asking for confusion).
 
 <div class="separator"></div>
 
+<blockquote>
+
+<div class="indented">
 <p>Some other differences from r5rs:
 </p>
 
@@ -4648,8 +4781,42 @@ bind it to something else, which is asking for confusion).
 <li>case accepts =&gt; much like cond (the function argument is the selector).
 </ul>
 
+</div>
 
-<blockquote>
+
+
+<div class="indented">
+
+<p>Here are some additional changes I'd make to s7 if I didn't care about compatibility with other Schemes:
+</p>
+
+<pre class="indented">
+remove the exact/inexact distinction including #i and #e
+remove `#(...) support (quasiquoted vector constants)
+remove *-ci functions
+remove string&lt;-&gt;list and vector&lt;-&gt;list
+change string-&gt;symbol to symbol
+remove call-with-values and its friends
+remove char-ready?
+change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
+remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
+</pre>
+
+<p>and perhaps:
+</p>
+
+<pre class="indented">
+remove even? and odd?
+remove the 4-way cxxxxr functions
+add file?, directory?, and delete-file
+remove string-length, vector-length, and hash-table-size.
+remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
+       set-car!|cdr!, and set-current-output|input|error-port.
+replace procedure-with-setter with settable procedure-setter
+</pre>
+</div>
+
+
 
 
 <div class="indented">
@@ -5065,98 +5232,6 @@ the current environment, so defines happen at the enclosing level.
 
 <div class="indented">
 
-<p>I can't find the right tone for this section; this is the 400-th revision; I wish I were a better writer!
-I think the exact/inexact distinction in Scheme is confused and useless, and leads
-to verbose and buggy code.  
-In some Schemes,
-"rational" means "could possibly be
-expressed equally well as a ratio (floats are approximations)".  In s7 it's: "is actually expressed as a ratio (or an integer of course)";
-otherwise "rational?" is the same as "real?":
-</p>
-
-<pre class="indented">
-(not-s7-scheme)&gt; (rational? (sqrt 2))
-#t
-</pre>
-
-<p>As I understand it, "inexact" originally meant "floating point", and "exact" meant integer or ratio of integers.
-But words have a life of their own.
-0.0 somehow became an "inexact" integer (although it can be represented exactly in floating
-point).  
-+inf.0 must be an integer &mdash;
-its fractional part is explicitly zero!  But +nan.0... 
-And then there's:
-</p>
-
-<pre class="indented">
-(not-s7-scheme)&gt; (integer? 9007199254740993.1)
-#t
-</pre>
-
-<p>
-When does this matter?  I often need to index into a vector, but the index is a float (a "real" in Scheme-speak: its
-fractional part can be non-zero).
-In one Scheme:
-</p>
-
-<pre class="indented">
-(not-s7-scheme)&gt; (vector-ref #(0) (floor 0.1))
-ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a programmer mistake"!]
-</pre>
-
-<p>Not to worry, I'll use inexact-&gt;exact:
-</p>
-
-<pre class="indented">
-(not-s7-scheme)&gt; (inexact-&gt;exact 0.1)
-3602879701896397/36028797018963968                  ; [why? "floats are ratios"!]
-</pre>
-
-<p>So I end up using the verbose <code>(floor (inexact-&gt;exact ...))</code> everywhere, and even
-then I have no guarantee that I'll get a legal vector index.
-When I started work on s7, I thought perhaps
-"exact" could mean "is represented exactly in the computer".  We'd have integers and ratios exact; 
-reals and complex exact if they are exactly
-represented in the current floating point implementation.  
-0.0 and 0.5 might be exact if the printout isn't misleading, and 0.1 is inexact.
-"integer?" and friends would refer instead to the programmer's point of view.
-That is, if the programmer uses 1 or if the thing prints as 1, it is the integer 1, whereas 1.0
-means floating point (not integer!).
-And to keep exactness in view, we'd have
-to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
-But then what would inexact-&gt;exact do?  
-If we discard the exact/inexact distinction,
-we can maintain backwards compatibility via:
-</p>
-
-<pre class="indented">
-(define exact? rational?)
-(define (inexact? x) (not (rational? x)))
-(define inexact-&gt;exact rationalize) ; or floor
-(define (exact-&gt;inexact x) (* x 1.0))
-</pre>
-
-<p>#i and #e are also useless because you can
-have any number after, for example, #b:
-</p>
-
-<pre class="indented">
-&gt; #b1.1
-1.5
-&gt; #b1e2
-4.0
-&gt; #o17.5+i
-15.625+1i
-</pre>
-
-<p>Speaking of #b and friends, what should <code>(string-&gt;number "#xffff" 2)</code> return?
-</p>
-</div>
-
-
-
-<div class="indented">
-
 <p>r7rs:
 </p>
 
@@ -5235,66 +5310,6 @@ have any number after, for example, #b:
   ;;   outside Windows, there's no reasonable way to get these arguments.
 </pre>
 </div>
-
-
-
-<div class="indented">
-
-<p>Here are some additional changes I'd make to s7 if I didn't care about compatibility with other Schemes:
-</p>
-
-<pre class="indented">
-remove the exact/inexact distinction including #i and #e
-remove `#(...) support (quasiquoted vector constants)
-remove *-ci functions
-remove string&lt;-&gt;list and vector&lt;-&gt;list
-change string-&gt;symbol to symbol
-remove call-with-values and its friends
-remove char-ready?
-change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
-remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
-</pre>
-
-<p>and perhaps:
-</p>
-
-<pre class="indented">
-remove even? and odd?
-remove the 4-way cxxxxr functions
-add file?, directory?, and delete-file
-remove string-length, vector-length, and hash-table-size.
-remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
-       set-car!|cdr!, and set-current-output|input|error-port.
-replace procedure-with-setter with settable procedure-setter
-</pre>
-</div>
-
-
-
-<div class="indented">
-
-<p>Scheme needs a more elegant way to define functions that share a closure.  The begin+define+let+set! shuffle used
-above is an embarrassment.
-Here's an idle thought:
-</p>
-
-<pre class="indented">
-(define f1 (let ((x 23))
-	     (lambda (a)
-	       (+ x a))))
-(define f2
-  (with-environment (procedure-environment f1) ; import f1's closure ("x") into f2
-   (lambda (b)
-     (+ b (* 2 x)))))
-
-&gt; (+ (f1 1) (f2 1))
-71
-</pre>
-
-<p>or perhaps better, use define-bacro with augment-environment! as in the object system example above.
-</p>
-</div>
-
 
 
 

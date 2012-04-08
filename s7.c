@@ -24407,6 +24407,39 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
 }
 
 
+static bool is_thunkable(s7_scheme *sc, s7_pointer x)
+{
+  /* can be called with 0 args */
+  switch (type(x))
+    {
+    case T_C_FUNCTION:
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
+      return(c_function_required_args(x) == 0);
+
+    case T_CLOSURE:
+      return(!(is_pair(closure_args(x))));
+      
+    case T_CLOSURE_STAR:
+      return(true);
+
+    case T_C_OBJECT:
+      if (object_type(x) == pws_tag)
+	{
+	  s7_pws_t *f;
+	  if (is_not_null(s7_procedure_getter(sc, x))) /* a scheme function in this case */
+	    return(is_thunkable(sc, s7_procedure_getter(sc, x)));
+
+	  f = (s7_pws_t *)s7_object_value(x);	  
+	  return(f->get_req_args == 0);
+	}
+    }
+  return(false);
+}
+
+
 
 
 /* -------------------------------- symbol-access ------------------------------------------------ */
@@ -27240,11 +27273,16 @@ static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
 each a function of no arguments, guaranteeing that finish is called even if body is exited"
   s7_pointer p;
 
-  if (!is_thunk(sc, car(args)))
+  /* apparently most schemes think the restriction here to a thunk is onerous, and
+   *   instead limit it to functions that can be called with no args.
+   *   hence is_thunkable here -- is this also the expectation in call-with-output-file and others?
+   */
+
+  if (!is_thunkable(sc, car(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 1, car(args), "a thunk"));
-  if (!is_thunk(sc, cadr(args)))
+  if (!is_thunkable(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 2, cadr(args), "a thunk"));
-  if (!is_thunk(sc, caddr(args)))
+  if (!is_thunkable(sc, caddr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a thunk"));
 
   /* this won't work:
@@ -29973,14 +30011,15 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 			    }
 			  else
 			    {
-			      if (!is_white_space(c))
+			      /* if (!is_white_space(c)) */ /* changed 8-Apr-12 */
+			      if ((c != '\n') && (c != '\r'))
 				return(sc->T); 
 
 			      /* #f here would give confusing error message "end of input", so return #t=bad backslash.
 			       *     this is not optimal. It's easy to forget that backslash needs to be backslashed. 
 			       *
-			       * the white_space business implements Scheme's \<newline> or \<space> feature -- the character after \ is flushed.
-			       *   It may be that r6rs expects all white space after \ to be flushed, but in that case
+			       * the white_space business half-implements Scheme's \<newline>...<eol>... or \<space>...<eol>...
+			       *   feature -- the characters after \ are flushed if they're all white space and include a newline.
 			       *   (string->number "1\   2") is 12??  Too bizarre.
 			       */
 			    }
