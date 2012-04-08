@@ -64861,6 +64861,11 @@ etc....
 (test (string->number "+.e1") #f)
 (test (string->number ".e1") #f)
 
+(num-test (string->number "4\x32\x37") 427)
+(num-test (string->number "\x32.\x39") 2.9)
+(num-test (string->number "#i\x32\x38\x36") 286.0)
+(num-test (string->number "4\x31+3\x36i") 41+36i)
+
 (if with-bignums
     (begin
       (num-test (string->number "101461074055444526136" 8) 1181671265888545886)

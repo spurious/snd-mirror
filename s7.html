@@ -483,8 +483,8 @@ otherwise "rational?" is the same as "real?":
 #t
 </pre>
 
-<p>To argue that 1.0 must be a (scheme) ratio because it is represented at the IEEE-float level as a sort of
-ratio is the fallacy known as equivocation: it uses "ratio" with two different meanings.
+<p>That 1.0 is represented at the IEEE-float level as a sort of
+ratio does not mean it has to be a scheme ratio; the two notions are independent.
 </p>
 
 <p>But that confusion is trivial compared to the completely nutty "inexact integer".
@@ -1241,7 +1241,7 @@ By the way, bacros solve part of our original problem:
 start, then only use [+] in our macros.  
 </p>
 
-<p>If you think you want define-syntax, consider mumps or polio (this is not a joke).
+<p>If you think you want define-syntax, consider the mumps (this is not a joke).
 </p>
 
 </div>
@@ -3973,6 +3973,25 @@ hi
   hi returns 44
 </pre>
 
+<p>But maybe something less invasive is better. Here's a version of let that prints
+its bindings (this is borrowed from "nuntius" at reddit lisp):
+</p>
+
+<pre class="indented">
+(define-macro (print-let bindings . body)
+  (let ((temp-symbol (gensym)))
+    `(let ,(map (lambda (var/val)
+		  `(,(car var/val) 
+		    (let ((,temp-symbol ,(cadr var/val))) 
+		      (format #t ";~S: ~S -&gt; ~S~%" 
+			      ',(car var/val) 
+			      ',(cadr var/val) 
+			      ,temp-symbol)
+		      ,temp-symbol)))
+		bindings)
+       ,@body)))
+</pre>
+
 </div>
 
 
@@ -4790,30 +4809,30 @@ bind it to something else, which is asking for confusion).
 <p>Here are some additional changes I'd make to s7 if I didn't care about compatibility with other Schemes:
 </p>
 
-<pre class="indented">
-remove the exact/inexact distinction including #i and #e
-remove `#(...) support (quasiquoted vector constants)
-remove *-ci functions
-remove string&lt;-&gt;list and vector&lt;-&gt;list
-change string-&gt;symbol to symbol
-remove call-with-values and its friends
-remove char-ready?
-change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
-remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
-</pre>
+<ul>
+<li>remove the exact/inexact distinction including #i and #e
+<li>remove `#(...) support (quasiquoted vector constants)
+<li>remove *-ci functions
+<li>remove string&lt;-&gt;list and vector&lt;-&gt;list
+<li>change string-&gt;symbol to symbol
+<li>remove call-with-values and its friends
+<li>remove char-ready?
+<li>change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
+<li>remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
+</ul>
 
 <p>and perhaps:
 </p>
 
-<pre class="indented">
-remove even? and odd?
-remove the 4-way cxxxxr functions
-add file?, directory?, and delete-file
-remove string-length, vector-length, and hash-table-size.
-remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
-       set-car!|cdr!, and set-current-output|input|error-port.
-replace procedure-with-setter with settable procedure-setter
-</pre>
+<ul>
+<li>remove even? and odd?
+<li>remove the 4-way cxxxxr functions
+<li>add file?, directory?, and delete-file
+<li>remove string-length, vector-length, and hash-table-size.
+<li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
+<li>replace procedure-with-setter with settable procedure-setter
+</ul>
+
 </div>
 
 

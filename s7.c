@@ -8233,7 +8233,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 {
-  #define H_asin "(asin z) returns asin(z); (sin (asin 1)) = 1"
+  #define H_asin "(asin z) returns asin(z); (sin (asin x)) = x"
   s7_pointer n;
 
   n = car(args);
@@ -8241,7 +8241,10 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
     {
     case T_INTEGER:
       if (integer(n) == 0) return(small_int(0));                    /* (asin 0) -> 0 */
-      
+
+      /* TODO: in netBSD, (asin 2) returns 0.25383842987008+0.25383842987008i according to Peter Bex
+       */
+
     case T_REAL:
     case T_RATIO:
       {
@@ -52391,6 +52394,7 @@ static s7_pointer big_logxor(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 {
   #define H_rationalize "(rationalize x err) returns the ratio with lowest denominator within err of x"
+
   /* currently (rationalize 1/0 1e18) -> 0
    * remember to pad with many trailing zeros:
    *
@@ -52401,7 +52405,12 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
    *
    * PERHAPS: gmp number reader used if gmp -- could this be the trailing zeros problem?  (why is the non-gmp case ok?)
    *          also the bignum function is faking it.
+   *
+   * TODO: there is at least one case where the error is wrong, I think:
+   *      > (rationalize 5925563891587147521650777143.74135805596e05)
+   * should be 148139097289678688041269428593533951399/250000
    */
+
   s7_pointer p0, p1 = NULL, p;
   mpfr_t error, ux, x0, x1;
   mpz_t i, i0, i1;
