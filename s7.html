@@ -179,7 +179,19 @@ indented and on a sort of brownish background.
   <li><a href="#evalstring">eval</a>
   <li><a href="#IO">string IO</a>
   <li><a href="#errors">errors</a>
-  <li><a href="#miscellanea">miscellanea</a>
+  <li><a href="#miscellanea">miscellaneous:</a> 
+
+    <a href="#loadpath">*load-path*</a>,
+    <a href="#featureslist">*features*</a>,
+    <a href="#sharpreaders">*#readers*</a>,
+    <a href="#makelist">make-list</a>,
+    <a href="#keywords">keywords</a>,
+    <a href="#symboltable">symbol-table</a>,
+    <a href="#s7help">help</a>,
+    <a href="#s7gc">gc</a>,
+    <a href="#morallyequalp">morally-equal?</a>,
+    <a href="#s7vsr5rs">etc</a>
+
   <li><a href="#FFIexamples">FFI examples</a>
   <ul>
       <li><a href="#repl">read-eval-print loop (and emacs)</a>
@@ -4445,10 +4457,10 @@ well if WITH_OPTIMIZATION is 1 (the default)).
 
 
 
-<div class="header" id="miscellanea"><h4>miscellanea</h4></div>
+<div class="header" id="miscellanea"><h4>miscellaneous stuff</h4></div>
 
 
-<p><b><em class=def id="loadpath">*load-path*</em></b> is a list of directories to search when loading a file.
+<p id="loadpath"><b><em class=def id="loadpath">*load-path*</em></b> is a list of directories to search when loading a file.
 <b><em class=def id="loadhook">*load-hook*</em></b> is a hook whose functions are called just before a file is loaded.  
 The hook function argument is the filename.
 While loading, the port-filename and port-line-number of the current-input-port can tell you
@@ -4498,7 +4510,7 @@ at startup *features* is:
 
 <div class="separator"></div>
 
-<p>Multi-line and in-line comments can be enclosed in #| and |#.
+<p id="sharpreaders">Multi-line and in-line comments can be enclosed in #| and |#.
 <code>(+ #| add |# 1 2)</code>.
 </p>
 
@@ -4568,7 +4580,7 @@ I need to know where something unexpected happened.  So:
 
 <div class="separator"></div>
 
-<p>(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.
+<p id="makelist">(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.
 </p>
 
 <p><b>reverse!</b> is an in-place version of the built-in function reverse.  That is, 
@@ -4604,7 +4616,7 @@ but vectors are sorted in place.
 
 <div class="separator"></div>
 
-<p>
+<p id="keywords">
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
 <b>keyword?</b>, <b>make-keyword</b>, <b>symbol-&gt;keyword</b>, and <b>keyword-&gt;symbol</b>.
 A keyword is a symbol that starts or ends with a colon. The colon
@@ -4615,7 +4627,7 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 
 <div class="separator"></div>
 
-<p>
+<p id="symboltable">
 <code>(<em class=def id="symboltable">symbol-table</em>)</code> returns the symbol table, a vector of lists of symbols.
 Here we scan the symbol table looking for any function that doesn't have documentation:
 </p>
@@ -4676,7 +4688,7 @@ where we only feed in a few constants, I bet it segfaults!
 
 <div class="separator"></div>
 
-<p><b>help</b> tries to find information about its argument.
+<p id="s7help"><b>help</b> tries to find information about its argument.
 </p>
 
 <pre class="indented">
@@ -4699,7 +4711,7 @@ where we only feed in a few constants, I bet it segfaults!
 
 <div class="separator"></div>
 
-<p><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
+<p id="s7gc"><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
 </p>
 
 
@@ -4709,7 +4721,7 @@ where we only feed in a few constants, I bet it segfaults!
 (<b><em class=def id="morallyequalp">morally-equal?</em></b> x y)
 </pre>
 
-<p>
+<p id="morallyequalp">
 Say we want to check that two different computations came to the same result, and that result might
 involve circular structures.  Will equal? be our friend?
 </p>
@@ -4775,7 +4787,7 @@ bind it to something else, which is asking for confusion).
 <blockquote>
 
 <div class="indented">
-<p>Some other differences from r5rs:
+<p id="s7vsr5rs">Some other differences from r5rs:
 </p>
 
 <ul>

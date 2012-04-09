@@ -25812,6 +25812,23 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	     (s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), NULL)) &&
 	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), NULL)) &&
 	     (s7_is_morally_equal_1(sc, closure_body(x), closure_body(y), NULL)));
+
+    case T_MACRO:
+    case T_BACRO:
+      /* these are hard to check because the body has the gensymmed arg name
+       *
+       * args:   ({defmac}-16) 
+       *         ({defmac}-17)
+       * bodies: ((apply (lambda (a) ({list} '+ 1 a)) (cdr {defmac}-16))) 
+       *         ((apply (lambda (a) ({list} '+ 1 a)) (cdr {defmac}-17)))
+       * 
+       * the "args" and "body" are not relevant: we create these shells internally, so the true args are in the applied lambda
+       * so ignore args, and check (cadr (car body)) => (lambda (a) ({list} '+ 1 a))
+       */
+      return((type(y) == type(x)) &&
+	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), NULL)) &&
+	     (s7_is_morally_equal_1(sc, cadr(car(closure_body(x))), cadr(car(closure_body(y))), NULL)));
+
     }
   return(false);
 }
@@ -25877,6 +25894,7 @@ list has infinite length."
 }
 
 /* what about (length file)?  input port, read_file gets the file length, so perhaps save it
+ *   but we're actually looking at the port, so its length is what remains to be read? (if input port)
  */
 
 
@@ -25908,7 +25926,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_VECTOR:
       return(vector_copy(sc, obj)); /* "shallow" copy */
 
-    case T_PAIR:                    /* top level only as in the other cases, last arg checks for circles */
+    case T_PAIR:                    /* top level only, as in the other cases, last arg checks for circles */
       return(cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
 
     case T_HOOK:
@@ -30001,7 +30019,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 		    sc->strbuf[i++] = '\n';
 		  else 
 		    {
-		      if (c == 't') /* this is for compatibility with other Schemes */
+		      if (c == 't')                         /* this is for compatibility with other Schemes */
 			sc->strbuf[i++] = '\t';
 		      else 
 			{
@@ -53771,19 +53789,6 @@ static void s7_gmp_init(s7_scheme *sc)
 
 #endif
 /* WITH_GMP */
-
-
-
-/* PERHAPS: WITH_R7RS
- *  which would add file-exists? delete-file [these require many compile time decisions -- header files, etc see xen.c]
- *                  get-environment-variable [as *env* + implicit index]
- *                  what is null-environment? [(null-env version) -> env with just lambda and friends?? -- what's the point?]
- *                  is define-record-type like make-type? [No it has a dumb list of fields]
- *  others that might be sensible: 
- *                  time related junk
- *                  bytevector [open-input-bytevector is just an iterator]
- */
-
 
 
 
