@@ -17,10 +17,8 @@
 
 (define (remove-if pred l)
   "(remove-if func lst) removes any element from 'lst' that 'func' likes"
-  (let loop ((l l) (result '()))
-    (cond ((null? l) (reverse! result))
-	  ((pred (car l)) (loop (cdr l) result))
-	  (else (loop (cdr l) (cons (car l) result))))))
+  (map (lambda (x) (if (pred x) (values) x)) l))
+
 
 (if (not (defined? 'all-chans))
     (define (all-chans)
