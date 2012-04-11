@@ -13697,6 +13697,26 @@ this prints:
 		    '(_zero_ _one_ _two_)))
   (+ _zero_ _one_ _two_))
 
+(let ()
+  (define (map-with-exit func . args)
+  ;; func takes escape thunk, then args
+  (let* ((result '())
+	 (escape-tag (gensym))
+	 (escape (lambda () (error escape-tag)))) ; error here = throw
+    (catch escape-tag
+      (lambda ()
+	(let ((len (apply max (map length args))))
+	  (do ((ctr 0 (+ ctr 1)))
+	      ((= ctr len) (reverse result))      ; return the full result if no throw
+	    (let ((val (apply func escape (map (lambda (x) (x ctr)) args))))
+	      (set! result (cons val result))))))
+      (lambda args
+	(reverse result))))) ; if we catch escape-tag, return the partial result
+
+  (define (truncate-if func lst)
+    (map-with-exit (lambda (escape x) (if (func x) (escape) x)) lst))
+
+  (test (truncate-if even? #(1 3 5 -1 4 6 7 8)) '(1 3 5 -1)))
 
 
 
@@ -24154,6 +24174,7 @@ but that's make-type's arglist??
 (test (eq? abs ((global-environment) 'abs)) #t)
 (test ((augment-environment () '(asdf . 32)) 'asdf) 32)
 (test ((augment-environment () '(asdf . 32)) 'asd) #<undefined>)
+(test (environment? (augment-environment (current-environment))) #t) ; no bindings is like (let () ...)
 
 #|
 if t423.scm is

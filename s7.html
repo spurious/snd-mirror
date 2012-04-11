@@ -314,8 +314,6 @@ but reals are limited by bignum-precision.  This means, for example, that
 
 
 
-
-
 <div class="header" id="math"><h4>math functions</h4></div>
 
 
@@ -347,6 +345,7 @@ Other math-related differences between s7 and r5rs:
 <li>log takes an optional second argument, the base.
 <li>'.' and an exponent can occur in a number in any base.
 <li>rationalize returns a ratio! 
+<li>case is significant in numbers, as elsewhere: #b0 is 0, but #B0 is an error.
 </ul>
 
 <pre class="indented">
@@ -3318,10 +3317,7 @@ of 'or' and 'and'.
 </p>
 
 <pre class="indented">
-&gt; (let ((x 1)) 
-    (and (<em class=red>values</em> (let () #f) 
-                 (let () (set! x 3) #f)))
-  x) 
+&gt; (let ((x 1)) (and (<em class=red>values</em> #f (let () (set! x 3) #f))) x)
 3
 </pre>
 
@@ -3550,8 +3546,8 @@ is 15, as anyone would expect.
 
 
 <p><b><em class=def id="callwithexit">call-with-exit</em></b> is call/cc without the ability to jump back into the original context,
-similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "catch" for error handling), and is both
-cleaner than call/cc, and much faster. 
+similar to "return" in C.  This 
+is cleaner than call/cc, and much faster. 
 <!--
 Avoid call/cc like the plague &mdash; it makes code unreadable, undebuggable,
 and probably unportable since every scheme handles call/cc differently.
@@ -3562,15 +3558,6 @@ and probably unportable since every scheme handles call/cc differently.
 (define-macro (block . body) 
   ;; borrowed loosely from CL &mdash; predefine "return" as an escape
   `(<em class=red>call-with-exit</em> (lambda (return) ,@body)))
-
-(define (and-for-each func . args)
-  ;; apply func to the first member of each arg, stopping if it returns #f
-  (<em class=red>call-with-exit</em>
-   (lambda (quit)
-     (apply for-each (lambda arglist
-		       (if (not (apply func arglist))
-			   (quit #&lt;unspecified&gt;))) 
-	    args))))
 
 (define-macro (while test . body)
   ;; while loop with predefined break and continue
@@ -3583,33 +3570,20 @@ and probably unportable since every scheme handles call/cc differently.
 				 (continue))
 			       (break)))))
 	(continue)))))
+
+(define (and-for-each func . args)
+  ;; apply func to the first member of each arg, stopping if it returns #f
+  (<em class=red>call-with-exit</em>
+   (lambda (quit)
+     (apply for-each (lambda arglist
+		       (if (not (apply func arglist))
+			   (quit #&lt;unspecified&gt;))) 
+	    args))))
 </pre>
 
 <p>It's unfortunate that if we escape from 'map', we lose whatever
-partial result it has accumulated. 
+partial result it has accumulated &mdash; see <a href="#mapwithexit">map-with-exit</a>.
 </p>
-
-<!--
-(define (escapable-map func . args)
-  (let* ((result '())
-	 (escape-tag (gensym))
-	 (escape (lambda () (error escape-tag))))
-    (catch escape-tag
-      (lambda ()
-	(let ((len (apply max (map length args))))
-	  (do ((ctr 0 (+ ctr 1)))
-	      ((= ctr len) (reverse result))
-	    (let ((val (apply func escape (map (lambda (x) (x ctr)) args))))
-	      (set! result (cons val result))))))
-      (lambda args
-	(reverse result)))))
-
-(define (truncate-if func lst)
-  (escapable-map (lambda (escape x) (if (func x) (escape) x)) lst))
-
-:(truncate-if even? '(1 3 5 -1 4 6 7 8))
-(1 3 5 -1)
--->
 
 
 <p><b>continuation?</b> returns #t if its argument is a continuation,
@@ -3734,13 +3708,10 @@ floats in the "~X" case.  So in s7,
 <pre class="indented">
 &gt; (format #f "~X" 21)
 "15"
-
 &gt; (format #f "~X" 1.25)
 "1.4"
-
 &gt; (format #f "~X" 1.25+i)
 "1.4+1.0i"
-
 &gt; (format #f "~X" 21/4)
 "15/4"
 </pre>
@@ -4255,7 +4226,7 @@ via the error function, and can be trapped and dealt with via <em class=def id="
   (lambda ()     ; code protected by the catch
     (abs 1 2))
   (lambda args   ; the error handler
-    (apply format (append (list #t) (cadr args)))))
+    (apply format #t (cadr args))))
 
 -&gt; "abs: too many arguments: (1 2)"
 
@@ -4280,6 +4251,37 @@ The default action, in the absence of any catch, is to treat the message as
 a format control string, apply format to it and the other arguments, and
 send that info to the current-error-port.
 </p>
+
+
+<blockquote>
+<div class="indented">
+<p id="mapwithexit">catch is not limited to error handling:
+</p>
+
+<pre class="indented">
+(define (map-with-exit func . args)
+  ;; func takes escape thunk, then args
+  (let* ((result '())
+	 (escape-tag (gensym))
+	 (escape (lambda () (error escape-tag)))) ; error here = throw
+    (<em class=red>catch</em> escape-tag
+      (lambda ()
+	(let ((len (apply max (map length args))))
+	  (do ((ctr 0 (+ ctr 1)))
+	      ((= ctr len) (reverse result))      ; return the full result if no throw
+	    (let ((val (apply func escape (map (lambda (x) (x ctr)) args))))
+	      (set! result (cons val result))))))
+      (lambda args
+	(reverse result))))) ; if we catch escape-tag, return the partial result
+
+(define (truncate-if func lst)
+  (map-with-exit (lambda (escape x) (if (func x) (escape) x)) lst))
+
+&gt; (truncate-if even? #(1 3 5 -1 4 6 7 8))
+(1 3 5 -1)
+</pre>
+</div>
+</blockquote>
 
 <p>When an error is encountered, and when s7 is interrupted via begin-hook, 
 the variable <em class=def id="errorinfo">*error-info*</em>, a vector, contains
@@ -4451,33 +4453,12 @@ lint.scm in the Snd tarball checks for infelicities in s7 code (I think the C eq
 </div>
 
 <div class="indented">
-<p><em class=def id="trace">trace</em> and untrace provide tracing:
-</p>
-<pre class="indented">
-(define (hiho arg) 
-  (if (&gt; arg 0) 
-      (+ 1 (hiho (- arg 1))) 
-      0))
-
-(<em class=red>trace</em> hiho)
-
-(hiho 3)
-
-[hiho 3]
- [hiho 2]
-  [hiho 1]
-   [hiho 0]
-    0
-   1
-  2
- 3
-</pre>
-
-<p>trace adds a function to the list of functions being traced, and untrace removes it.
+<p><em class=def id="trace">trace</em>
+adds a function to the list of functions being traced, and untrace removes it.
 trace with no arguments causes everything to be traced, and untrace with no arguments
 turns this off.  To trace a function that is internal to another function, put the
-trace and untrace calls in the enclosing function.  (Currently, tracing does not work
-well if WITH_OPTIMIZATION is 1 (the default)).
+trace and untrace calls in the enclosing function.  Currently, tracing does not work
+well if WITH_OPTIMIZATION is 1 (the default).
 </p>
 </div>
 
@@ -4842,11 +4823,13 @@ bind it to something else, which is asking for confusion).
 
 </div>
 
-
+<!-- null-environment does not fit very well; how to shadow earlier define-constant for example
+     one of which is initial-environment; perhaps make a special environment at init time? 
+-->
 
 <div class="indented">
 
-<p>Here are some additional changes I'd make to s7 if I didn't care about compatibility with other Schemes:
+<p>Here are some changes I'd make to s7 if I didn't care about compatibility with other Schemes:
 </p>
 
 <ul>
@@ -5189,22 +5172,19 @@ These symbols are not just an optimization of string comparison:
       (set! x 3) 
       (+ x 4)))
 7
-
 &gt; (let ((function lambda)) 
     ((function (a b) (list a b)) 3 4))
 (3 4)
-
 &gt; (apply begin '((define x 3) (+ x 2)))
 5
-
 &gt; ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let)
 3
 
-&gt; (define-macro (symbol-set! var val) ; use apply instead of define-bacro
-    `(apply set! ,var (list ,val)))
+(define-macro (symbol-set! var val) ; use apply instead of define-bacro
+ `(apply set! ,var (list ,val)))
 
-&gt; (define-macro (progv vars vals . body)
-    `(apply (apply lambda ,vars ',body) ,vals))
+(define-macro (progv vars vals . body)
+ `(apply (apply lambda ,vars ',body) ,vals))
 
 &gt; (let ((s '(one two)) (v '(1 2))) (progv s v (+ one two)))
 3

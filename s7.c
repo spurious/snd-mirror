@@ -3788,19 +3788,20 @@ new environment."
 	return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
     }
 
-  for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
-    {
-      s7_pointer sym, val;
-      if ((!is_pair(car(x))) ||
-	  (!is_symbol(caar(x))))
-	return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
-
-      sym = caar(x);
-      val = cdar(x);
-      if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
-	  (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
-	return(s7_wrong_type_arg_error(sc, "augment-environment", i, sym, "mutable symbol"));
-    }
+  if (!is_null(cdr(args)))
+    for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
+      {
+	s7_pointer sym, val;
+	if ((!is_pair(car(x))) ||
+	    (!is_symbol(caar(x))))
+	  return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
+	
+	sym = caar(x);
+	val = cdar(x);
+	if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
+	    (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
+	  return(s7_wrong_type_arg_error(sc, "augment-environment", i, sym, "mutable symbol"));
+      }
 
   return(s7_augment_environment(sc, e, cdr(args)));
 }
