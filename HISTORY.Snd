@@ -1,5 +1,6 @@
 Snd change log
 
+ 12-Apr:    Snd 12.10.     
  5-Mar:     Snd 12.9.
  Feb:       s7: added random-state?, hash-table-iterator?, and morally-equal?
             clm/cmn/snd/s7: removed snd1.html and snd-contents.html (these were

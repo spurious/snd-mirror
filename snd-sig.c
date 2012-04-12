@@ -6229,7 +6229,7 @@ typedef struct {
 #define EVEN 2
 #define PRIME 3
 
-#define FFT_MULT 200
+#define FFT_MULT 160
   /* if 64, errors or .005 are common 
    * if 128, which works in 99% of the cases, errors can be as much as .002
    */
@@ -6527,7 +6527,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     }
 
   min_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
+
   overall_min = saved_min(choice, n);
+  if (overall_min < sqrt((double)n)) overall_min = sqrt((double)n);
+
   temp_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
   diff_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
 

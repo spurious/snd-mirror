@@ -100,7 +100,7 @@ echo ' -------------------------------------------------------------------------
 make
 make xm
 ./snd --version
-./snd -noinit --features "'clm 'snd-debug"
+./snd -noinit --features "'clm"
 
 make allclean
 rm -f snd
@@ -485,7 +485,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'gsl 'snd-debug 'snd-motif"
+./snd -noinit --features "'clm 'gsl 'snd-motif"
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
@@ -496,7 +496,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-debug 'snd-motif 'gmp"
+./snd -noinit --features "'clm 'snd-motif 'gmp"
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
@@ -507,7 +507,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-debug 'snd-motif"
+./snd -noinit --features "'clm 'snd-motif"
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
@@ -551,7 +551,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-s7"
+./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-s7"
 
 
 make allclean

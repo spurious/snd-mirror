@@ -7389,8 +7389,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 	ql1 = q[len - 1];
 	pl1 = (*(plus - 1));
 #if WITH_GMP
-	if (ex1) {e1 = *ex1; (*ex1) = 'e';} /* for mpfr */
-	if (ex2) {e2 = *ex2; (*ex2) = 'e';}
+	if (ex1) {e1 = *ex1; (*ex1) = '@';} /* for mpfr */
+	if (ex2) {e2 = *ex2; (*ex2) = '@';}
 #endif
 	
 	/* look for cases like 1+i */
@@ -7496,7 +7496,11 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 	  if (ex1)
 	    {
 	      old_e = (*ex1);
+#if WITH_AT_SIGN_AS_EXPONENT
+	      (*ex1) = '@';
+#else
 	      (*ex1) = 'e';
+#endif
 	    }
 	  result = string_to_either_real(sc, q, radix);
 	  if (ex1)

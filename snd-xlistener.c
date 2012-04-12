@@ -1257,7 +1257,9 @@ static void listener_stop_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+#if HAVE_SCHEME
 static Widget stacktrace_popup_menu = NULL;
+#endif
 
 static void listener_popup_callback(Widget w, XtPointer context, XtPointer info)
 {

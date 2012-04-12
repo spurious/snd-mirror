@@ -406,6 +406,10 @@ try setting:
 
     (set! (mus-alsa-device) "plughw:0")
 
+or
+
+    (set! (mus-alsa-device) "plughw:1")
+
 then try playing again.  The "default" device is always completely
 broken.  
 

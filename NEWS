@@ -1,34 +1,8 @@
-Snd 12.9
+Snd 12.10.
 
-  Mike Scholz got Snd to compile/load/run in 
-     FreeBSD 8, 9, and 10
-     CentOS: gcc (GCC) 4.4.6 20110731 (Red Hat 4.4.6-3) 
-     Ubuntu: gcc (Ubuntu/Linaro 4.6.1-9ubuntu3) 4.6.1 
-     Debian: gcc (Debian 4.4.5-8) 4.4.5 
-     NetBSD
-     OpenBSD
+This version is mostly bugfixes and documentation improvements.
+In s7 "@" is now an exponent marker.
 
-  s7: added random-state?, hash-table-iterator?, and morally-equal?
+checked: gtk 3.3.18|20|3.4.0, gmp 5.0.4, mpfr 3.1.0, cairo 1.12.0
 
-  clm/cmn/snd/s7: removed snd1.html and snd-contents.html (these were
-       using Javascript for stuff that is now built into html), and 
-       translated the rest of the html files to html5.
-  
-  snd: removed the recorder, recorder-dialog, snd-g|xrec.c,
-       changed various menu names and added a view:with-grid menu
-       moved dialog buttons around at random,
-       removed save-macros and named keyboard macros,
-       added context-sensitive tooltips to the gtk version,
-       changed the gtk listener default font to Monospace 11,
-       the "minibuffer" is now a "statusbar".  This means it is not 
-          editable, so all the key sequences that used to prompt for 
-          info are either undefined now, or use a dialog instead.
-       removed minibuffer-history-length, prompt-in-minibuffer, clear-minibuffer,
-          and report-in-minibuffer.  Replaced the latter two with status-report.
-       removed sound-specific search-procedures (i.e. there is only one search procedure)
-       removed the bomb function
-
-checked: clang 1.7, gmp 5.0.3, gtk 3.3.14|16
-
-Thanks!: Mike Scholz
-
+Thanks!: Jeffrey Zimmer, Sean Reed, Michael Edwards, Peter Bex.

@@ -462,6 +462,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Apr:  Snd 12.10.\n\
 5-Mar:   Snd 12.9.\n\
 Feb:     removed snd1.html and snd-contents.html (these were\n\
            using Javascript for stuff that is now built into html), and \n\
