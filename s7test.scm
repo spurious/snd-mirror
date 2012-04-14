@@ -10174,6 +10174,76 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (string=? "\x61\x42\x63" "aBc") #t)
 
 
+(if (provided? 'system-extras)
+    (begin
+
+      ;;; directory?
+      (test (directory? "tmp1.r5rs") #f)
+      (test (directory? ".") #t)
+      (test (directory?) 'error)
+      (test (directory? "." 0) 'error)
+      (for-each
+       (lambda (arg)
+	 (test (directory? arg) 'error))
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+      ;;; file-exists?
+      (test (file-exists? "tmp1.r5rs") #t)
+      (test (file-exists? "not-a-file-I-hope") #f)
+      (test (file-exists?) 'error)
+      (test (file-exists? "tmp1.r5rs" 0) 'error)
+      (for-each
+       (lambda (arg)
+	 (test (file-exists? arg) 'error))
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+      ;;; delete-file
+      (test (delete-file "tmp1.r5rs") 0)
+      (test (file-exists? "tmp1.r5rs") #f)
+      (test (delete-file "not-a-file-I-hope") -1)
+      (test (delete-file) 'error)
+      (test (delete-file "tmp1.r5rs" 0) 'error)
+      (for-each
+       (lambda (arg)
+	 (test (delete-file arg) 'error))
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+      ;;; getenv
+      (test (getenv "HOME") "/home/bil")
+      (test (getenv "NO-ENV") "")
+      (test (getenv) 'error)
+      (test (getenv "HOME" #t) 'error)
+      (for-each
+       (lambda (arg)
+	 (test (getenv arg) 'error))
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+      ;;; directory->list
+      (test (directory->list) 'error)
+      (test (directory->list "." 0) 'error)
+      (for-each
+       (lambda (arg)
+	 (test (directory->list arg) 'error))
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+      ;;; system
+      (test (system "ls s7test.scm") 0)
+      (test (system) 'error)
+      (test (system "ls" 0) 'error)
+      (for-each
+       (lambda (arg)
+	 (test (system arg) 'error))
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+      
+      ))
+      
+
 
 (for-each
  (lambda (arg)
@@ -10549,8 +10619,12 @@ a2" 3) "132")
 (test (format #f "~f" (/ 1 3)) "1/3") ; hmmm -- should it call exact->inexact?
 (test (format #f "~f" 1) "1")
 (test (format #f "~F" most-positive-fixnum) "9223372036854775807")
-(test (format #f "~,20F" 1e-20) "0.00000000000000000001")
-(test (format #f "~,40F" 1e-40) "0.0000000000000000000000000000000000000001")
+
+(if (not with-bignums) 
+    (begin
+      (test (format #f "~,20F" 1e-20) "0.00000000000000000001")
+      (test (format #f "~,40F" 1e-40) "0.0000000000000000000000000000000000000001")))
+;; if with bignums, these needs more bits
 
 ;;; the usual troubles here with big floats:
 ;;; (format #f "~F" 922337203685477580.9) -> "922337203685477632.000000"
@@ -22042,12 +22116,13 @@ abs     1       2
 	  notes))
       2)
 
-(let ((a 32)) 
-  (define (hi x) (+ x a)) 
-  (test (defined? 'bbbbb (procedure-environment hi)) #f)
-  (let ((xdef (defined? 'x (procedure-environment hi))))
-    (test xdef #t))
-  (test (symbol->value 'a (procedure-environment hi)) 32))
+; this is version dependent
+;(let ((a 32)) 
+;  (define (hi x) (+ x a)) 
+;  (test (defined? 'bbbbb (procedure-environment hi)) #f)
+;  (let ((xdef (defined? 'x (procedure-environment hi))))
+;    (test xdef #t))
+;  (test (symbol->value 'a (procedure-environment hi)) 32))
 
 (let ()
   (let ((x 32))
@@ -40316,11 +40391,14 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (modulo 1/9223372036 9223372036) 1/9223372036)
 (num-test (modulo 1/9223372036854775807 9223372036854775807) 1/9223372036854775807)
 (num-test (modulo 3/2 most-positive-fixnum) 3/2)
-(num-test (modulo 3/2 most-negative-fixnum) 'error)
 (num-test (modulo most-negative-fixnum -1) 0)
+
+(if (not with-bignums)
+    (num-test (modulo 3/2 most-negative-fixnum) 'error))
 
 (if with-bignums
     (begin
+      (num-test (modulo 3/2 most-negative-fixnum) -18446744073709551613/2)
       (num-test (modulo (+ 2 (* 3 499127 495037 490459 468803)) (* 499127 495037 490459 468803)) 2)
       (num-test (modulo -9223372036854775808 5.551115123125783999999999999999999999984E-17) 3.258027528318940824192395666614174842834E-17)
       (num-test (modulo 12345678901234567890 12345678901234567) 890)
@@ -41032,7 +41110,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (quotient 9223372036854775807 -9223372036854775808) 0)
 (num-test (quotient 9223372036854775807 9223372036854775807) 1)
 
-(test (quotient most-negative-fixnum -1) 'error)
+(if (not with-bignums)
+    (test (quotient most-negative-fixnum -1) 'error)
+    (num-test (quotient most-negative-fixnum -1) 9223372036854775808))
 
 (num-test (quotient 3 1.5) 2)
 (num-test (quotient 3 1.75) 1)
@@ -41113,7 +41193,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (= (quotient 2.0 (* 54608393/38613965 54608393/38613965)) (quotient (* 131836323/93222358 131836323/93222358) 2.0)) #t)
 (test (= (quotient 54608393/38613965 131836323/93222358) (floor (/ 54608393/38613965 131836323/93222358))) #t)
 (test (= (quotient (* 131836323/93222358 131836323/93222358) 2) (quotient (* 318281039/225058681 318281039/225058681) 2)) #f)
-(if with-bignums (test (= (quotient 2.0 (* 131836323/93222358 131836323/93222358)) (quotient (* 318281039/225058681 318281039/225058681) 2.0)) #f))
+;(if with-bignums (test (= (quotient 2.0 (* 131836323/93222358 131836323/93222358)) ; this should be 1 I think
+;			  (quotient (* 318281039/225058681 318281039/225058681) 2.0)) #f))
 (test (= (quotient 131836323/93222358 318281039/225058681) (floor (/ 131836323/93222358 318281039/225058681))) #t)
 (if with-bignums (test (= (quotient (* 318281039/225058681 318281039/225058681) 2) (quotient (* 1855077841/1311738121 1855077841/1311738121) 2)) #t))
 (if with-bignums (test (= (quotient 2.0 (* 318281039/225058681 318281039/225058681)) (quotient (* 1855077841/1311738121 1855077841/1311738121) 2.0)) #f))
@@ -56926,8 +57007,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (num-test (expt 1 most-negative-fixnum) 1)
 (num-test (expt -1 most-negative-fixnum) 1)
-(test (expt 1 most-positive-fixnum) 1)
-(test (expt -1 most-positive-fixnum) -1)
+(num-test (expt 1 most-positive-fixnum) 1)
+(num-test (expt -1 most-positive-fixnum) -1)
 
 (num-test (expt 0+i (+ 0 (expt 2 16))) 1.0)
 (num-test (expt 0+i (+ 1 (expt 2 16))) 0+i)
@@ -63852,6 +63933,7 @@ etc....
       (num-test (string->number "#e8978167593632120808315265/5504938256213345873657899") 8978167593632120808315265/5504938256213345873657899)
       (num-test (string->number "#i8978167593632120808315265/5504938256213345873657899") 1.630929753571457437099527114342760854299E0)
       (num-test (string->number "#i119601499942330812329233874099/12967220607") 9.223372036854775808414213562473095048798E18)
+      ;; this next test needs more bits to compare with other schemes -- this is the result if 128 bits
       (num-test (string->number "#e005925563891587147521650777143.74135805596e05") 826023606487248364518118333837545313/1394)
       (num-test (string->number "#e-1559696614.857e28") -15596966148570000000000000000000000000)
       (test (integer? (string->number "#e1e310")) #t)
@@ -64468,8 +64550,9 @@ etc....
 (num-test #x-aAf -2735)
 
 (num-test #b1+1.1i 1+1.5i)  ; yow...
-;(num-test #b#e0+i 0+1i)    ; these 2 are now read-errors 
+;(num-test #b#e0+i 0+1i)    ; these 2 are now read-errors (#e0+i is an error because inexact->exact does not accept complex args in s7)
 ;(num-test #b#e0+1.1i 0+1.5i) 
+(test (string->number "#b#e0+i") #f)
 
 (num-test #xf/c 5/4)
 (num-test #x+f/c 5/4)

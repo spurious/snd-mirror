@@ -1663,6 +1663,14 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist)
 #endif
 
 
+static XEN g_getpid(void)
+{
+  #define H_getpid "(getpid) returns the current job's process id"
+  return(C_TO_XEN_INT((int)getpid()));
+}
+
+
+#if (!WITH_SYSTEM_EXTRAS)
 static bool file_probe(const char *arg)
 {
   /* from io.c */
@@ -1679,6 +1687,14 @@ static bool file_probe(const char *arg)
   close(fd);
   return(true);
 #endif
+}
+
+
+static XEN g_file_exists_p(XEN name)
+{
+  #define H_file_exists_p "(file-exists? filename): #t if the file exists"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
+  return(C_TO_XEN_BOOLEAN(file_probe(XEN_TO_C_STRING(name))));
 }
 
 
@@ -1703,27 +1719,18 @@ static bool directory_p(const char *filename)
 #endif
 }
 
-
-static XEN g_file_exists_p(XEN name)
-{
-  #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
-  return(C_TO_XEN_BOOLEAN(file_probe(XEN_TO_C_STRING(name))));
-}
-
-
-static XEN g_getpid(void)
-{
-  #define H_getpid "(getpid) returns the current job's process id"
-  return(C_TO_XEN_INT((int)getpid()));
-}
-
-
 static XEN g_file_is_directory(XEN name)
 {
   #define H_file_is_directory "(file-is-directory? filename): #t if filename names a directory"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-is-directory?", "a string");
   return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
+}
+
+static XEN g_delete_file(XEN name)
+{
+  #define H_delete_file "(delete-file filename): deletes the file"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
+  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
 }
 
 
@@ -1733,6 +1740,7 @@ static XEN g_system(XEN command)
   XEN_ASSERT_TYPE(XEN_STRING_P(command), command, XEN_ONLY_ARG, "system", "a string");
   return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
 }
+#endif
 
 
 static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
@@ -1742,13 +1750,6 @@ static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
   return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
 }
 
-
-static XEN g_delete_file(XEN name)
-{
-  #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
-  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
-}
 
 
 #ifdef _MSC_VER
@@ -1875,11 +1876,13 @@ static XEN g_gc_on(void)
 
 
 XEN_NARGIFY_0(g_getpid_w, g_getpid)
-XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
-XEN_NARGIFY_1(g_file_is_directory_w, g_file_is_directory)
-XEN_NARGIFY_1(g_system_w, g_system)
-XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
-XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
+#if (!WITH_SYSTEM_EXTRAS)
+  XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
+  XEN_NARGIFY_1(g_file_is_directory_w, g_file_is_directory)
+  XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
+  XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
+  XEN_NARGIFY_1(g_system_w, g_system)
+#endif
 XEN_NARGIFY_0(g_getcwd_w, g_getcwd)
 XEN_NARGIFY_2(g_strftime_w, g_strftime)
 XEN_NARGIFY_1(g_localtime_w, g_localtime)
@@ -1913,11 +1916,13 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   s7_gc_protect(s7, xen_zero);
 
   XEN_DEFINE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
+#if (!WITH_SYSTEM_EXTRAS)
   XEN_DEFINE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
   XEN_DEFINE_PROCEDURE("directory?",          g_file_is_directory_w,  1, 0, 0, H_file_is_directory);
-  XEN_DEFINE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
-  XEN_DEFINE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
   XEN_DEFINE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
+  XEN_DEFINE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
+  XEN_DEFINE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
+#endif
   XEN_DEFINE_PROCEDURE("getcwd",              g_getcwd_w,             0, 0, 0, H_getcwd);
   XEN_DEFINE_PROCEDURE("strftime",            g_strftime_w,           2, 0, 0, H_strftime);
   XEN_DEFINE_PROCEDURE("tmpnam",              g_tmpnam_w,             0, 0, 0, H_tmpnam);

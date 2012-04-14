@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.106"
-#define S7_DATE "26-Mar-12"
+#define S7_VERSION "1.107"
+#define S7_DATE "14-Apr-12"
 
 
 typedef long long int s7_Int;
@@ -835,6 +835,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 14-Apr:    WITH_SYSTEM_EXTRAS (default 0) has additional OS and IO functions:
+ *              directory? file-exists? delete-file getenv directory->list system
  * 26-Mar:    "@" as exponent, WITH_AT_SIGN_AS_EXPONENT switch (default is 1).
  * 18-Mar:    removed *trace-hook*.
  * 6-Feb:     random-state?, hash-table-iterator?, and morally-equal?

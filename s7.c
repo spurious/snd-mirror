@@ -221,7 +221,20 @@
    */
 #endif
 
+#ifndef WITH_SYSTEM_EXTRAS
+  #define WITH_SYSTEM_EXTRAS 0
+  /* this adds several functions that access file info, directories, times, etc
+   *    (work in progress)
+   */
+#endif
 
+/* PERHAPS: WITH_PURE_S7 or something like that to get rid of remaining bad ideas:
+ *          inexact/exact and #i #e
+ *          `#() special cases
+ *          call-with-values etc
+ *          char-ready? and eof-object? [s7-slib-init.scm currently says we have char-ready? otherwise only occurs in s7test.scm]
+ *          dfls exponents
+ */
 
 #define DEBUGGING 0
 #define PRINTING 0
@@ -250,6 +263,7 @@
  *    characters
  *    strings
  *    ports
+ *    system extras
  *    lists
  *    vectors and hash-tables
  *    objects and functions
@@ -4819,6 +4833,9 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
    *
    * where we jump back into a call-with-exit body via call/cc, the goto has to be
    * re-established.
+   *
+   * I think call-with-exit could be based on catch, but it's a simpler notion,
+   *   and certainly at the source level it is easier to read.
    */
   
   return(sc->NIL);
@@ -16544,11 +16561,35 @@ static s7_pointer make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   return(read_file(sc, fp, name, MAX_SIZE_FOR_STRING_PORT, "open"));
 }
 
+#ifndef _MSC_VER
+#include <sys/stat.h>
+#endif
+
+static bool is_directory(const char *filename)
+{
+#ifndef _MSC_VER
+  #ifdef S_ISDIR
+    struct stat statbuf;
+    #if HAVE_LSTAT
+      return((lstat(filename, &statbuf) >= 0) &&
+	     (S_ISDIR(statbuf.st_mode)));
+    #else
+      return((stat(filename, &statbuf) == 0) && 
+	     (S_ISDIR(statbuf.st_mode)));
+    #endif
+  #endif
+#endif
+  return(false);
+}
+
 
 static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char *mode, const char *caller)
 {
   FILE *fp;
   /* see if we can open this file before allocating a port */
+
+  if (is_directory(name))
+    return(file_error(sc, caller, "is a directory", name));
 
   errno = 0;
   fp = fopen(name, mode);
@@ -17142,30 +17183,6 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
     }
 
   return(sc->UNSPECIFIED);
-}
-
-
-#include <sys/stat.h>
-
-static bool is_directory(const char *filename)
-{
-#ifdef _MSC_VER
-  return(false);
-
-#else
-  /* from snd-file.c */
-#ifdef S_ISDIR
-  struct stat statbuf;
-#if HAVE_LSTAT
-  return((lstat(filename, &statbuf) >= 0) &&
-	 (S_ISDIR(statbuf.st_mode)));
-  return(false);
-#else
-  return((stat(filename, &statbuf) == 0) && 
-	 (S_ISDIR(statbuf.st_mode)));
-#endif
-#endif
-#endif
 }
 
 
@@ -18659,6 +18676,143 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   push_stack(sc, OP_APPLY, sc->NIL, cadr(args));
   return(sc->F);
 }
+
+
+
+/* -------------------------------- system extras -------------------------------- */
+
+#if WITH_SYSTEM_EXTRAS
+
+/* these headers are apparently in every OS:
+ *    <float.h>, <limits.h>, <stdarg.h>, <stddef.h>, <ctime.h>, <errno.h>, <fcntl.h>,
+ *    <locale.h>, <signal.h>, <stdio.h>, <stdlib.h>, <string.h>, <time.h>, <sys/types.h>
+ */
+
+#include <fcntl.h>
+
+  /* other possibilities:
+   *   setenv, home-directory
+   *   current-time, time->string (ie strftime packaged up), temporary-filename or temp-directory, sleep
+   *   lseek? [open|close|delete-hook] file-write-date or file-write-time since we want it to work with time->string
+   *   full-filename
+   *   would need T_TIME type, and probably T_DIRECTORY, so need time? boolean func
+   * CL names: file-length file-position file-write-date
+   */
+
+static s7_pointer g_is_directory(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_directory "(directory? str) returns #t if str is the name of a directory"
+  s7_pointer name;
+  name = car(args);
+
+  if (!s7_is_string(name))
+    return(s7_wrong_type_arg_error(sc, "directory?", 0, name, "a string"));
+  
+  return(s7_make_boolean(sc, is_directory(s7_string(name))));
+}
+
+
+static bool file_probe(const char *arg)
+{
+#ifndef _MSC_VER
+  return(access(arg, F_OK) == 0);
+#else
+  int fd;
+#ifdef O_NONBLOCK
+  fd = open(arg, O_RDONLY, O_NONBLOCK);
+#else
+  fd = open(arg, O_RDONLY, 0);
+#endif
+  if (fd == -1) return(false);
+  close(fd);
+  return(true);
+#endif
+}
+
+
+static s7_pointer g_file_exists(s7_scheme *sc, s7_pointer args)
+{
+  #define H_file_exists "(file-exists? filename) returns #t if the file exists"
+  s7_pointer name;
+  name = car(args);
+
+  if (!s7_is_string(name))
+    return(s7_wrong_type_arg_error(sc, "file-exists?", 0, name, "a string"));
+  
+  return(s7_make_boolean(sc, file_probe(s7_string(name))));
+}
+
+
+static s7_pointer g_delete_file(s7_scheme *sc, s7_pointer args)
+{
+  #define H_delete_file "(delete-file filename) deletes the file filename."
+  s7_pointer name;
+  name = car(args);
+
+  if (!s7_is_string(name))
+    return(s7_wrong_type_arg_error(sc, "delete-file", 0, name, "a string"));
+  
+  return(make_integer(sc, unlink(s7_string(name))));
+}
+
+
+static s7_pointer g_getenv_1(s7_scheme *sc, s7_pointer args)
+{
+  #define H_getenv "(getenv var) returns the value of an environment variable."
+  s7_pointer name;
+  name = car(args);
+
+  if (!s7_is_string(name))
+    return(s7_wrong_type_arg_error(sc, "getenv", 0, name, "a string"));
+  
+  return(s7_make_string(sc, getenv(s7_string(name))));
+}
+
+
+static s7_pointer g_system(s7_scheme *sc, s7_pointer args)
+{
+  #define H_system "(system command) executes the command."
+  s7_pointer name;
+  name = car(args);
+
+  if (!s7_is_string(name))
+    return(s7_wrong_type_arg_error(sc, "system", 0, name, "a string"));
+  
+  return(make_integer(sc, system(s7_string(name))));
+}
+
+
+#if HAVE_DIRENT_H
+#include <dirent.h>
+
+static s7_pointer g_directory_to_list(s7_scheme *sc, s7_pointer args)
+{
+  #define H_directory_to_list "(directory->list directory) returns the contents of the directory as a list of strings (filenames)."
+  DIR *dpos;
+  s7_pointer name, result;
+
+  name = car(args);
+  if (!s7_is_string(name))
+    return(s7_wrong_type_arg_error(sc, "directory->list", 0, name, "a string"));
+
+  sc->w = sc->NIL;
+  if ((dpos = opendir(s7_string(name))) != NULL)
+    {
+      struct dirent *dirp;
+      while ((dirp = readdir(dpos)) != NULL)
+	sc->w = cons(sc, s7_make_string(sc, dirp->d_name), sc->w);
+      closedir(dpos);
+    }
+
+  result = sc->w;
+  sc->w = sc->NIL;
+  return(result);
+}
+#endif
+
+#endif
+
+
 
 
 
@@ -52429,9 +52583,10 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
    * PERHAPS: gmp number reader used if gmp -- could this be the trailing zeros problem?  (why is the non-gmp case ok?)
    *          also the bignum function is faking it.
    *
-   * TODO: there is at least one case where the error is wrong, I think:
+   * a confusing case:
    *      > (rationalize 5925563891587147521650777143.74135805596e05)
-   * should be 148139097289678688041269428593533951399/250000
+   *   should be 148139097289678688041269428593533951399/250000
+   *   but that requires more than 128 bits of bignum-precision.
    */
 
   s7_pointer p0, p1 = NULL, p;
@@ -54401,6 +54556,16 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "with-output-to-string",          g_with_output_to_string,    1, 0, false, H_with_output_to_string);
   s7_define_function(sc, "with-output-to-file",            g_with_output_to_file,      2, 0, false, H_with_output_to_file);
   
+#if WITH_SYSTEM_EXTRAS
+  s7_define_safe_function(sc, "directory?",                g_is_directory,             1, 0, false, H_is_directory);
+  s7_define_safe_function(sc, "file-exists?",              g_file_exists,              1, 0, false, H_file_exists);
+  s7_define_safe_function(sc, "delete-file",               g_delete_file,              1, 0, false, H_delete_file);
+  s7_define_safe_function(sc, "getenv",                    g_getenv_1,                 1, 0, false, H_getenv);
+  s7_define_safe_function(sc, "system",                    g_system,                   1, 0, false, H_system);
+#if HAVE_DIRENT_H
+  s7_define_safe_function(sc, "directory->list",           g_directory_to_list,        1, 0, false, H_directory_to_list);
+#endif
+#endif
   
 #if (!WITH_GMP)
   s7_define_safe_function(sc, "make-polar",                g_make_polar,               2, 0, false, H_make_polar);
@@ -54818,6 +54983,9 @@ the error type and the info passed to the error handler.");
 #endif
 #if WITH_AT_SIGN_AS_EXPONENT
   s7_provide(sc, "@-exponent");
+#endif
+#if WITH_SYSTEM_EXTRAS
+  s7_provide(sc, "system-extras");
 #endif
 
   {

@@ -309,4 +309,24 @@
   "sndlib.html"
   ))
 
+
+
+(format #t "--------------------------------------------------------------------------------~%")
+(let ((png-files (directory->list "/home/bil/cl/pix"))
+      (baddies '()))
+  (for-each
+   (lambda (file)
+     (if (and (not (directory? file))
+	      (not (zero? (system (format #f "fgrep ~A *.html" file)))))
+	 (set! baddies (cons file baddies))))
+   png-files)
+  (if (not (null? baddies))
+      (begin
+	(format #t "--------------------------------------------------------------------------------~%")
+	(format #t ";unused pix/png: ~{~A ~}~%" baddies)
+	(format #t "--------------------------------------------------------------------------------~%"))))
+
+
 (exit)
+
+

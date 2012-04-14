@@ -707,12 +707,14 @@
 	(gfiles (make-vector array-length #f))
 	(files (make-vector array-length #f))
 	(names (make-vector array-length #f))
+	(local-ids '())
 	)
     (set! ids '())
     
     (do ((file file-names (cdr file))
 	 (file-ctr 0 (+ file-ctr 1)))
 	((null? file))
+      (set! local-ids '())
       (call-with-input-file (car file)
         (lambda (f)
 	  (let line-loop ((line (read-line f)))
@@ -741,7 +743,10 @@
 			    (let* ((sym-name (string->symbol name))
 				   (data (assq sym-name ids)))
 			      (if (not data)
-				  (set! ids (cons (cons sym-name 0) ids))))))
+				  (set! ids (cons (cons sym-name 0) ids))
+				  (if (memq sym-name local-ids)
+				      (format #t "~S: id ~S is set twice~%" file sym-name)))
+			      (set! local-ids (cons sym-name local-ids)))))
 
 		      ;; (format #t "~A ~D ~D ~D: id: ~S~%" dline id-pos start end name)))
 

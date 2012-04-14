@@ -88,7 +88,6 @@ bool directory_p(const char *filename)
 #if HAVE_LSTAT
   return((lstat(filename, &statbuf) >= 0) &&
 	 (S_ISDIR(statbuf.st_mode)));
-  return(false);
 #else
   return((stat(filename, &statbuf) == 0) && 
 	 (S_ISDIR(statbuf.st_mode)));
