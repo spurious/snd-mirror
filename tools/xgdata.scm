@@ -8411,7 +8411,7 @@
 ;;; 3.3.20 -- nothing new but "XI2" requirement -- what is that?? -- apparently some sort of typo
 (CFNC "void gtk_color_chooser_add_palette GtkColorChooser* chooser GtkOrientation horizontal gint colors_per_line gint n_colors GdkRGBA* colors") ; was gboolean horizontal
 
-;;; 3.4.0 -- nothing new
+;;; 3.4.0|1 -- nothing new
 |#
 
 

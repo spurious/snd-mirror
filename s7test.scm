@@ -413,7 +413,7 @@
 (test (eq? 'if (string->symbol "if")) #t)
 (test (eq? (copy lambda) (copy 'lambda)) #f)
 (test (eq? if 'if) #f)
-(test (eq? if 'if) #f)
+(test (eq? if `if) #f)
 (test (eq? if (keyword->symbol :if)) #f)
 (test (eq? if (string->symbol "if")) #f)
 (test (eq? lambda and) #f)
@@ -10232,7 +10232,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; system
-      (test (system "ls s7test.scm") 0)
+      (test (system "test -f s7test.scm") 0)
       (test (system) 'error)
       (test (system "ls" 0) 'error)
       (for-each
@@ -24691,6 +24691,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	   (eval `(+ x 1) (e 1)))
       33)
 
+(test (let () ((current-environment) 'abs)) #<undefined>)
+(test (let () ((initial-environment) 'abs)) #<undefined>)
+(test ((global-environment) 'abs) abs)
 
 (test (catch #t
 	     (lambda ()
@@ -24739,7 +24742,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (let () (define (hi e) (set! (e 'a) 2)) (test (let ((a 1)) (hi (current-environment)) a) 2))
 (let () (define (hi) (let ((a 1)) (let ((e (current-environment)) (i 'a)) (set! (e i) #\a)) a)) (hi) (hi) (test (hi) #\a))
 
-(test (let ((a 1)) (let ((e (current-environment))) (e :hi))) #<undefined>) ; ?? perhaps it should always be :hi?
+(test (let ((a 1)) (let ((e (current-environment))) (e :hi))) #<undefined>) ; global env is not searched in this case
 
 (let ((e1 #f) (e2 #f))
   (let ((a 1)) (set! e1 (current-environment)))

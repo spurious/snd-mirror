@@ -1367,7 +1367,7 @@ prints:
 x: 2
 x: 2
 
-in every case but s7 which still says the 2nd x is 3.  
+in every case but s7 which still says the second x is 3.  
 
 If we use the macro before defining it (as is perfectly legal for functions):
 
@@ -3192,6 +3192,23 @@ at class definition time:
 </p>
 </div>
 
+<div class="indented">
+<p>As shown in the preceding example, implicit indexing of a local environment
+does not search the global environment.  Since initial-environment extends the
+current environment chain, it is considered a local environment:
+</p>
+
+<pre class="indented">
+&gt; ((global-environment) 'abs)
+abs
+&gt; (let () ((current-environment) 'abs))
+#&lt;undefined&gt;
+&gt; ((initial-environment) 'abs) ; what a bad function name
+#&lt;undefined&gt;
+</pre>
+
+</div>
+
 
 <div class="indented">
 
@@ -4218,7 +4235,7 @@ adds:
 (file-exists? str)       ; return #t if str names an existing file
 (delete-file str)        ; try to delete the file, return 0 is successful, else -1
 (getenv var)             ; return the value of an environment variable: (getenv "HOME")
-(directory->list dir)    ; return contents of directory as a list of strings (if HAVE_DIRENT_H)
+(directory-&gt;list dir)    ; return contents of directory as a list of strings (if HAVE_DIRENT_H)
 (system command)         ; execute command
 </pre>
 
@@ -4617,7 +4634,7 @@ function passed as its second argument to choose the new ordering.
 (0 1 2 3 4 5 6 7 8 9)
 
 (define (mix-notelists . notelists)
-  ;; assume the 2nd parameter is the begin time in seconds (the 1st is the instrument name)
+  ;; assume the second parameter is the begin time in seconds (the 1st is the instrument name)
   (<em class=red>sort!</em>
    (apply append notelists)
    (lambda (note1 note2)
@@ -4831,7 +4848,7 @@ bind it to something else, which is asking for confusion).
 <li>current-input-port, current-output-port, and current-error-port have setters
 <li>the default IO ports are named *stdin*, *stdout*, and *stderr*.
 <li>*gc-stats* is a boolean that controls whether GC stats are printed.
-<li>member and assoc accept an optional 3rd argument, the comparison function (equal? is the default).
+<li>member and assoc accept an optional third argument, the comparison function (equal? is the default).
 <li>case accepts =&gt; much like cond (the function argument is the selector).
 <li>if WITH_SYSTEM_EXTRAS is 1, the following are built-in: directory? file-exists? delete-file
 </ul>
@@ -4840,6 +4857,7 @@ bind it to something else, which is asking for confusion).
 
 <!-- null-environment does not fit very well; how to shadow earlier define-constant for example
      one of which is initial-environment; perhaps make a special environment at init time? 
+     the code for that is save_null_environment, but it is untested and commented out.
 -->
 
 <div class="indented">
@@ -4865,7 +4883,6 @@ bind it to something else, which is asking for confusion).
 <ul>
 <li>remove even? and odd?
 <li>remove the 4-way cxxxxr functions
-<li>add directory-&gt;list
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
 <li>replace procedure-with-setter with settable procedure-setter

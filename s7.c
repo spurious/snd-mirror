@@ -138,9 +138,11 @@
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.8.0 or later)
  *
+ * if WITH_SYSTEM_EXTRAS is 1 (default is 0), various OS and file related functions are included.
+ *
  * so the incoming (non-s7-specific) compile-time switches are
  *     WITH_COMPLEX, WITH_COMPLEX_TRIG, HAVE_STDBOOL_H, HAVE_SYS_PARAM_H, SIZEOF_VOID_P, 
- *     HAVE_GETTIMEOFDAY, HAVE_LSTAT
+ *     HAVE_GETTIMEOFDAY, HAVE_LSTAT, HAVE_DIRENT_H
  *
  * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__,
  *     (and __FreeBSD_version if HAVE_SYS_PARAM_H)
@@ -358,7 +360,7 @@ enum {OP_NO_OP,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_EXPANSION,
+      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENTRANCE, OP_EXPANSION,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
@@ -497,7 +499,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_CATCH", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
   "OP_DO", "OP_DO_END", "OP_DO_END1", "OP_DO_STEP", "OP_DO_STEP2", "OP_DO_INIT",
   "OP_DEFINE_STAR", "OP_LAMBDA_STAR", "OP_LAMBDA_STAR_DEFAULT", "OP_ERROR_QUIT", "OP_UNWIND_INPUT", "OP_UNWIND_OUTPUT", 
-  "OP_TRACE_RETURN", "OP_ERROR_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_EXPANSION",
+  "OP_TRACE_RETURN", "OP_ERROR_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_WITH_ENTRANCE", "OP_EXPANSION",
   "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
   
   "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
@@ -797,6 +799,7 @@ typedef struct {               /* call/cc */
   s7_pointer stack;
   s7_pointer *stack_start, *stack_end, *op_stack;
   unsigned int stack_size, op_stack_loc, op_stack_size;
+  int local_key;
 } s7_continuation_t;
 
 
@@ -853,6 +856,8 @@ typedef struct s7_cell {
     unsigned char chr;
 
     void *c_pointer;
+
+    int entry_key;
     
     struct {
       s7_Int length;
@@ -1008,7 +1013,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   s7_pointer initial_env;             /* original bindings of predefined functions */
   
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, ENTRANCE;
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY_VALUES, QQ_APPEND, MULTIVECTOR;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer SIMPLE_WRONG_TYPE_ARG_INFO, SIMPLE_OUT_OF_RANGE_INFO;
@@ -1150,14 +1155,15 @@ struct s7_scheme {
 #define T_C_MACRO             33
 #define T_OUTPUT_PORT         34
 #define T_INPUT_PORT          35
+#define T_ENTRANCE            36
 
-#define T_C_FUNCTION          36
-#define T_C_ANY_ARGS_FUNCTION 37
-#define T_C_OPT_ARGS_FUNCTION 38
-#define T_C_RST_ARGS_FUNCTION 39
-#define T_C_LST_ARGS_FUNCTION 40
+#define T_C_FUNCTION          37
+#define T_C_ANY_ARGS_FUNCTION 38
+#define T_C_OPT_ARGS_FUNCTION 39
+#define T_C_RST_ARGS_FUNCTION 40
+#define T_C_LST_ARGS_FUNCTION 41
 
-#define BUILT_IN_TYPES        41
+#define BUILT_IN_TYPES        42
 
 
 static bool t_number_p[BUILT_IN_TYPES], t_real_p[BUILT_IN_TYPES], t_rational_p[BUILT_IN_TYPES];
@@ -1210,7 +1216,7 @@ static void init_types(void)
   t_simple_p[T_OUTPUT_PORT] = true;
 }
 
-/* T_STACK, T_SLOT, and T_COUNTER are internal (stacks, bindings, map circular list checks)
+/* T_STACK, T_SLOT, T_ENTRANCE, and T_COUNTER are internal (stacks, bindings, call/cc barriers, map circular list checks)
  */
 
 #define TYPE_BITS                     8
@@ -1572,6 +1578,7 @@ static void init_types(void)
 #define continuation_op_stack(p)      (p)->object.continuation->op_stack
 #define continuation_op_loc(p)        (p)->object.continuation->op_stack_loc
 #define continuation_op_size(p)       (p)->object.continuation->op_stack_size
+#define continuation_key(p)           (p)->object.continuation->local_key
 
 #define call_exit_goto_loc(p)         (p)->object.rexit.goto_loc
 #define call_exit_op_loc(p)           (p)->object.rexit.op_stack_loc
@@ -1620,6 +1627,8 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define counter_count(p)              (p)->object.ctr.val
 #define counter_length(p)             (p)->object.ctr.len
 
+#define is_entrance(p)                (type(p) == T_ENTRANCE)
+#define entrance_key(p)               (p)->object.entry_key
 
 #if __cplusplus
   using namespace std;
@@ -2496,6 +2505,7 @@ static void init_mark_functions(void)
   mark_function[T_STACK]               = mark_stack;
   mark_function[T_COUNTER]             = mark_counter;
   mark_function[T_SLOT]                = mark_slot;
+  mark_function[T_ENTRANCE]            = just_mark;
   mark_function[T_C_MACRO]             = just_mark;
   mark_function[T_C_POINTER]           = just_mark;
   mark_function[T_C_FUNCTION]          = just_mark;
@@ -3632,6 +3642,33 @@ static void save_initial_environment(s7_scheme *sc)
 }
 
 
+#if 0
+static void save_null_environment(s7_scheme *sc)
+{
+  #define NULL_ENV_SIZE 18
+  static const char *null_env_names[NULL_ENV_SIZE] = {
+    "define" "quote" "lambda" "if" "set!" "define*" "lambda*" "cond" "case" "and" "or" "let" "let*" "letrec" "letrec*" "begin" "do" "quasiquote"};
+  int i;
+  s7_pointer *nulls;
+  /* g_null_environment would return sc->null_env */
+  
+  sc->null_env = (s7_pointer)calloc(1, sizeof(s7_cell));
+  set_type(sc->null_env, T_VECTOR);
+  vector_length(sc->null_env) = NULL_ENV_SIZE;
+  vector_elements(sc->null_env) = (s7_pointer *)malloc(NULL_ENV_SIZE * sizeof(s7_pointer));
+  nulls = vector_elements(sc->null_env);
+  sc->null_env->hloc = NOT_IN_HEAP;
+
+  for (i = 0; i < NULL_ENV_SIZE; i++)
+    {
+      s7_pointer sym;
+      sym = make_symbol(sc, null_env_names[i]);
+      nulls[i] = permanent_slot(sym, s7_symbol_value(sc, sym));
+    }
+}
+#endif
+
+
 static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
 {
   /* add sc->initial_env bindings to the current environment */
@@ -3640,6 +3677,15 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   /* maybe this should be named unshadowed-current-environment or something -- it currently looks
    *   like it simply returns the initial env, but it actually shadows the global env entries
    *   that have changed.  
+   *
+   * slightly confusing:
+   *    :((initial-environment) 'abs)
+   *    #<undefined>
+   *    :(defined? 'abs (initial-environment))
+   *    #t
+   * this is because initial-environment sets up a local environment of unshadowed symbols,
+   *   and environment_ref below only looks at the local env chain (that is, if env is not
+   *   the global env, then the global env is not searched).
    */
   int i;
   s7_pointer *inits;
@@ -4534,6 +4580,51 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
 }
 
 
+
+
+
+/* TODO: with-entrance barrier
+ * (with-call/cc-barrier . body) calls body guaranteeing that there can be no jumps into the
+ *    middle of it from outside -- no outer evaluation of a continuation can jump across this
+ *    barrier.  The flip-side of call-with-exit, with-entrance?
+ *    It sets a T_ENTRANCE var in a new env, that has a unique tag.  Call/cc then always
+ *    checks the env chain for any such variable, saving the localmost.  Apply of a continuation
+ *    looks for such a saved variable, if none, go ahead, else check the current env (before the
+ *    jump) for that variable.  If none, error, else go ahead.  This is different from a delimited
+ *    continuation which simply delimits the extent of the continuation (why not use lambda?) -- we want to block it
+ *    from coming at us from some unknown place.  This is as tail-callable (just an env -- the stack
+ *    does not grow) as a recursive function with an outer let [check this!].  And it "delimits" the damage call/cc
+ *    can do in a readable way. [This need not slow down old code since we can tell via the tag
+ *    whether (with-entrance) has ever been called).  Do we need any others than the most local?
+ */  
+
+
+static int entry_ctr = 0;
+
+static s7_pointer make_entrance(s7_scheme *sc)
+{
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  entrance_key(x) = entry_ctr++;
+  set_type(x, T_ENTRANCE);
+  return(x);
+}
+
+
+static bool find_entrance(s7_scheme *sc, int key)
+{
+  /* search backwards through sc->envir for sc->ENTRANCE with key as value
+   */
+  s7_pointer x, y;	
+  for (x = sc->envir; is_environment(x); x = next_environment(x))
+    for (y = environment_slots(x); is_slot(y); y = next_slot(y))	
+      if ((slot_symbol(y) == sc->ENTRANCE) &&
+	  (entrance_key(slot_value(y)) == key))
+	return(true);
+  return(false);
+}
+
+
 s7_pointer s7_make_continuation(s7_scheme *sc) 
 {
   s7_pointer x;
@@ -4558,6 +4649,8 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_op_stack(x) = copy_op_stack(sc);
   continuation_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   continuation_op_size(x) = sc->op_stack_size;
+
+  continuation_key(x) = entry_ctr - 1;
 
   set_type(x, T_CONTINUATION | T_PROCEDURE);
   add_continuation(sc, x);
@@ -4606,7 +4699,7 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 
 	case OP_BARRIER:
 	  if (i > continuation_stack_top(c))  /* otherwise it's some unproblematic outer eval-string? */
-	    return(false);
+	    return(false);                    /*    but what if we've already evaluated a dynamic-wind closer? */
 	  break;
 
 	case OP_DEACTIVATE_GOTO:              /* here we're jumping out of an unrelated call-with-exit block */
@@ -4653,23 +4746,37 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 
 static void call_with_current_continuation(s7_scheme *sc)
 {
-  if (!check_for_dynamic_winds(sc, sc->code))
+  s7_pointer c;
+  c = sc->code;
+
+  if (continuation_key(c) >= 0)
+    {
+      fprintf(stderr, "found entry: %d\n", continuation_key(c));
+      if (find_entrance(sc, continuation_key(c)))
+	fprintf(stderr, "  we're ok\n");
+      else fprintf(stderr, "  probably from outside\n");
+    }
+
+  if (!check_for_dynamic_winds(sc, c)) /* if OP_BARRIER on stack deeper than continuation top(?), but when does this happen? */
     return;
 
-  sc->stack = copy_stack(sc, continuation_stack(sc->code), continuation_stack_top(sc->code));
-  sc->stack_size = continuation_stack_size(sc->code);
+  /* we push_stack sc->code before calling an embedded eval above, so sc->code should still be c here, etc
+   */
+
+  sc->stack = copy_stack(sc, continuation_stack(c), continuation_stack_top(c));
+  sc->stack_size = continuation_stack_size(c);
   sc->stack_start = vector_elements(sc->stack);
-  sc->stack_end = (s7_pointer *)(sc->stack_start + continuation_stack_top(sc->code));
+  sc->stack_end = (s7_pointer *)(sc->stack_start + continuation_stack_top(c));
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
   
   {
     int i, top;
-    top = continuation_op_loc(sc->code);
+    top = continuation_op_loc(c);
     sc->op_stack_now = (s7_pointer *)(sc->op_stack + top);
-    sc->op_stack_size = continuation_op_size(sc->code);
+    sc->op_stack_size = continuation_op_size(c);
     sc->op_stack_end = (s7_pointer *)(sc->op_stack + sc->op_stack_size);
     for (i = 0; i < top; i++)
-      sc->op_stack[i] = continuation_op_stack(sc->code)[i];
+      sc->op_stack[i] = continuation_op_stack(c)[i];
   }
 
   if (is_null(sc->args))
@@ -4840,6 +4947,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   
   return(sc->NIL);
 }
+
 
 
 
@@ -17676,6 +17784,14 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	return(str);
       }
 
+    case T_ENTRANCE:
+      {
+	char *str;
+	str = (char *)malloc(32 * sizeof(char));
+	snprintf(str, 32, "#<entrance: %d>", entrance_key(obj));
+	return(str);
+      }
+
     case T_SLOT:
       {
 	int len;
@@ -18683,7 +18799,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 
 #if WITH_SYSTEM_EXTRAS
 
-/* these headers are apparently in every OS:
+/* according to gnulib, these headers are in every OS:
  *    <float.h>, <limits.h>, <stdarg.h>, <stddef.h>, <ctime.h>, <errno.h>, <fcntl.h>,
  *    <locale.h>, <signal.h>, <stdio.h>, <stdlib.h>, <string.h>, <time.h>, <sys/types.h>
  */
@@ -18693,9 +18809,9 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   /* other possibilities:
    *   setenv, home-directory
    *   current-time, time->string (ie strftime packaged up), temporary-filename or temp-directory, sleep
-   *   lseek? [open|close|delete-hook] file-write-date or file-write-time since we want it to work with time->string
+   *   lseek [open|close|delete-hook] file-write-date or file-write-time since we want it to work with time->string
    *   full-filename
-   *   would need T_TIME type, and probably T_DIRECTORY, so need time? boolean func
+   *   would need T_TIME type so need time?
    * CL names: file-length file-position file-write-date
    */
 
@@ -18718,11 +18834,7 @@ static bool file_probe(const char *arg)
   return(access(arg, F_OK) == 0);
 #else
   int fd;
-#ifdef O_NONBLOCK
-  fd = open(arg, O_RDONLY, O_NONBLOCK);
-#else
   fd = open(arg, O_RDONLY, 0);
-#endif
   if (fd == -1) return(false);
   close(fd);
   return(true);
@@ -23196,6 +23308,9 @@ and if a match is found (via eqv?), the associated clauses are evaluated, and ca
 	case OP_WITH_ENV:
 	  return("(with-environment env ...) evaluates its body in the environment env.");
 
+	case OP_WITH_ENTRANCE:
+	  return("(with-entrance ...) evaluates its body in a context that is safe from outside interference.");
+
 	case OP_LAMBDA:
 	  return("(lambda args ...) returns a function.");
 
@@ -27251,6 +27366,7 @@ static const char *type_name(s7_pointer arg, int article)
   static const char *c_pointers[3] =    {"C pointer",      "the raw C pointer",  "a raw C pointer"};
   static const char *hooks[3] =         {"hook",           "the hook",           "a hook"};
   static const char *counters[3] =      {"internal counter", "the internal counter", "an internal counter"};
+  static const char *entrances[3] =     {"entrance",       "the entrance",       "an entrance"};
   static const char *slots[3] =         {"slot",           "the slot (variable binding)", "a slot (variable binding)"};
   static const char *environments[3] =  {"environment",    "the environment",    "an environment"};
   static const char *characters[3] =    {"character",      "the character",      "a character"};
@@ -27295,6 +27411,7 @@ static const char *type_name(s7_pointer arg, int article)
     case T_HASH_TABLE:   return(hash_tables[article]);
     case T_HOOK:         return(hooks[article]);
     case T_COUNTER:      return(counters[article]);
+    case T_ENTRANCE:     return(entrances[article]);
     case T_SLOT:         return(slots[article]);
     case T_ENVIRONMENT:  return(environments[article]);
 
@@ -33872,6 +33989,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
   op = (opcode_t)syntax_opcode(func);
 
   if ((op == OP_QUOTE) || 
+      (op == OP_WITH_ENTRANCE) ||
       (op == OP_WITH_ENV))
     return(false);
 
@@ -48782,6 +48900,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
 
 
+    case OP_WITH_ENTRANCE:
+      NEW_FRAME(sc, sc->envir, sc->envir);
+      add_slot(sc, sc->ENTRANCE, make_entrance(sc));
+      /* sc->code (the body) is ready to go */
+      goto BEGIN;
+
+
     case OP_EXPANSION:
       /* after the expander has finished, we need to add some annotations
        */
@@ -54264,6 +54389,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);     /* macro expansion in calling environment */
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
+  assign_syntax(sc, "with-entrance",     OP_WITH_ENTRANCE);
 
   sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",   OP_QUOTE_UNCHECKED);  
   sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",     OP_LET_UNCHECKED);  
@@ -54406,6 +54532,7 @@ s7_scheme *s7_init(void)
   sc->APPLY =       make_symbol(sc, "apply");
   sc->CDR =         make_symbol(sc, "cdr");
   sc->SET =         make_symbol(sc, "set!");
+  sc->ENTRANCE =    make_symbol(sc, "(entrance)");
 
   #define s_is_type_name "[?]"                         /* these were "(?)" etc, but the procedure-source needs to be usable */
   sc->S_IS_TYPE = make_symbol(sc, s_is_type_name);

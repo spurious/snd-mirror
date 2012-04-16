@@ -3775,7 +3775,7 @@ is arbitrary, though it's simplest to use 0.0 to 1.0.
 
 <pre class="indented">
 &gt; (add-envelopes '(0 0 1 1) '(0 0 1 1 2 0))
-(0 0 1/2 3/2 1 1)  ; i.e. (0 0 1 1.5 2 1) in the 2nd env's terms
+(0 0 1/2 3/2 1 1)  ; i.e. (0 0 1 1.5 2 1) in the second env's terms
 </pre>
 
 <div class="spacer"></div>
@@ -6533,7 +6533,7 @@ The Ruby version is in clm-ins.rb.
   (grains 0)                              ; if not 0, total number of grains to be generated
   (amp-envelope '(0 0 0.3 1 0.7 1 1 0))   ; overall amplitude envelope for note
   (grain-envelope '(0 0 0.3 1 0.7 1 1 0)) ; env for each individual grain
-  (grain-envelope-end #f)                 ; if not #f, a 2nd grain env
+  (grain-envelope-end #f)                 ; if not #f, a second grain env
   (grain-envelope-transition '(0 0 1 1))  ; interp 0: use grain-envelope, 1: use grain-envelope-end
   (grain-envelope-array-size 512)         ; <a href="sndclm.html#make-table-lookup">make-table-lookup</a> table size
   (grain-duration 0.1)                    ; number or envelope setting grain duration (in seconds)
@@ -8153,13 +8153,13 @@ the peak amplitude?  What is that peak as a function of n?  Can we find any patt
 to the initial phases so that a tiresome search is unnecessary?  For the second question,
 there are several simple cases.  If all harmonics are cosines, the peak amplitude is
 n (they all are 1 at the start).  If we have 2 harmonics, and vary the initial phase of
-the 2nd from 0.0 to 2*pi, graphing the resulting peak amplitude, we get:
+the second from 0.0 to 2*pi, graphing the resulting peak amplitude, we get:
 </p>
 
 <img class="indented" src="pix/noid2.png" alt="n=2 case">
 <img class="indented" src="pix/sum2.png" alt="n=2 case">
 
-<p>The graph on the left is the 2nd harmonic's initial phase vs the peak amplitude.  Since 0.0
+<p>The graph on the left is the second harmonic's initial phase vs the peak amplitude.  Since 0.0
 appears to be a minimum (we can show that it is via simultaneous non-linear equations; see peak-phases.scm), 
 we can solve for the peak at that point using calculus: differentiate
 sin(x) + sin(2x) to get cos(x) + 2cos(2x) = 4cos^2(x) + cos(x) -2, a quadratic equation
@@ -8383,8 +8383,8 @@ A sum of n odd harmonics behaves similarly (the peak comes half as far from the 
 but has the same max).  A sum of n sines of alternating sign also has the same peak amp,
 but now the peak is at pi-(3*pi)/(4*n).  
 Those are the easy cases.  The next case involves 3 harmonics,
-where we vary the 2nd and 3rd harmonic's initial phase, looking for the minimum peak amplitude.
-One view of this terrain has the 2nd harmonic's initial phase on the Y axis, the 3rd's on the X axis,
+where we vary the second and third harmonic's initial phase, looking for the minimum peak amplitude.
+One view of this terrain has the second harmonic's initial phase on the Y axis, the third's on the X axis,
 and the color for the height of the corresponding peak:
 </p>
 
@@ -8553,7 +8553,7 @@ or:
 
 <p>
 I tilted the graph slightly to try to show how the colors match the peaks.  
-If we set the 2nd component's phase to (a+pi)/2 where "a" is the 3rd one's initial phase,
+If we set the second component's phase to (a+pi)/2 where "a" is the third one's initial phase,
 we travel along the minimum going diagonally through the middle of the graph (I think the
 graph got truncated slightly: the top should match the bottom).
 The graph on the right is
@@ -8565,9 +8565,9 @@ can be applied to any number
 of dimensions (until we run out of disk space and patience), is to move through the possibilities
 in much the way you'd count to 100; before each 10's digit increments, you'd count diligently
 through all the 1's.  Similarly, in the next set of graphs, we go from 0 to 2pi completely
-on one component before incrementing the next lower component.  So, we get the 2nd component
+on one component before incrementing the next lower component.  So, we get the second component
 moving slowly from 0 to 2pi, and, in the n=3 case, at each step it takes, it waits until the
-3rd component has gone from 0 to 2pi.  This way we get all possible initial phases graphed
+third component has gone from 0 to 2pi.  This way we get all possible initial phases graphed
 in a normal 2D picture.  Here is the n=3 case.  The top level looks a bit like the n=2 case, but
 zooming in shows more complexity (each graph on the right is the selected portion of the one
 on its left). (The complexity in this case is mostly due to the slice-at-a-time approach).
@@ -8815,7 +8815,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 <p>It's curious that the "min-peak-amplitude versus n" graphs look continuous; what
 happens to the minima as we slowly add the next higher harmonic?  In the n=2 case,
 each minimum splits in two, then smoothly moves to its next minimum location (where the
-3rd harmonic has amplitude 1.0).  Here's a graph of the moving minima,
+third harmonic has amplitude 1.0).  Here's a graph of the moving minima,
 showing also the resultant peak amplitude:
 </p>
 
@@ -8823,7 +8823,7 @@ showing also the resultant peak amplitude:
 <img class="indented" src="pix/peak-path.png" alt="moving minima">
 
 <p>In the first graph, each dot is at the phase location of the minimum peak amplitude as the
-3rd harmonic is increased in amplitude by 0.025.  The turning points are just before the 3rd harmonic
+third harmonic is increased in amplitude by 0.025.  The turning points are just before the third harmonic
 reaches an amplitude of 0.5.  The n=2 minima are at (0, 0), (red and green, with
 the green x=2 rather than 0), and (0, 1), (black and blue). Each splits and wanders eventually to
 the n=3 global minima at (0.41 1.68), (1.41, 1.68), (1.59, 0.32), and (0.59, 0.32).
@@ -10866,8 +10866,8 @@ The synthesis code is also in <a href="#dspdocscanned">dsp.scm</a>.
 
 <pre class="indented">
 top slider = mass,
-2nd slider = spring,
-3rd slider = damping,
+second slider = spring,
+third slider = damping,
 lower two are frequency and amplitude
 see <A HREF="http://www.billverplank.com/ScannedSynthesis.PDF">Bill Verplank's paper</A>
 </pre>

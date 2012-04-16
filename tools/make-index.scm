@@ -1244,7 +1244,9 @@
 								   (set! scripting #f)
 								   (if (not scripting)
 								       (if (not (string-ci-list-position closer commands))
-									   (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" file linectr closer line (+ start 2) i commands)
+									   (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
+										   file linectr closer line (+ start 2) i commands)
+
 									   (if (string-ci-list-position closer
 											  (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
 												"a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
@@ -1300,67 +1302,79 @@
 									   (string-ci=? opener "big")
 									   (string-ci=? opener "font"))
 								       (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
+
 								   (if (string-ci=? opener "script")
 								       (set! scripting #t)
-								       (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
-									   (if (and (string-ci-list-position opener commands)
-										    (= p-quotes 0)
-										    (not (string-ci-list-position opener (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote"))))
-									       (format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands)
-									       (begin
-										 (if (and (string-ci=? opener "td")
-											  (not (string-ci-list-position "tr" commands)))
-										     (format #t "~A[~D]: td without tr?~%" file linectr))
-												    
-;										 (if (and (string-ci=? opener "div")
-;											  (string-ci-list-position "div" commands))
-;										     (format #t "~A[~D]: nested div?~%" file linectr))
 
-										 (if (and (string-ci=? opener "td")
-											  (not (string-ci=? "tr" (car commands))))
-										     (format #t "~A[~D]: td without tr?~%" file linectr))
-										 (if (and (string-ci=? opener "tr")
-											  (not (string-ci=? "table" (car commands)))
-											  (not (string-ci=? "table" (cadr commands))))
-										     (format #t "~A[~D]: tr without table?~%" file linectr))
-										 (if (and (string-ci=? opener "p")
-											  (string-ci=? "table" (car commands)))
-										     (format #t "~A[~D]: unclosed table?~%" file linectr))
-												    
-										 (if (and (string-ci=? opener "tr")
-											  (not (string-ci-list-position "table" commands)))
-										     (format #t "~A[~D]: tr without table~%" file linectr))
-										 (if (and (string-ci-list-position opener (list "pre" "br" "table" "hr" "img" "ul"))
-											  (string-ci-list-position "p" commands))
-										     (format #t "~A[~D]: ~A within <p>?~%" file linectr opener))
-										 (if (and (string-ci=? opener "li")
-											  (not (string-ci-list-position "ul" commands)))
-										     (format #t "~A[~D]: li without ul~%" file linectr))
-										 
-										 (if (and (string-ci=? opener "small")
-											  (or (string-ci=? "pre" (car commands))
-											      (string-ci=? "code" (car commands))))
-										     (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands)))
-												    
-										 (if (not warned)
-										     (begin
-										       (if (and (string-ci=? opener "tr")
-												(string-ci-list-position "tr" commands)
-												(< (count "table" commands) 2))
-											   (begin
-											     (set! warned #t)
-											     (set! commands (remove "tr" commands :count 1))
-											     (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
-										       (if (and (string-ci=? opener "td")
-												(string-ci-list-position "td" commands)
-												(< (count "table" commands) 2))
-											   (begin
-											     (set! warned #t)
-											     (set! commands (remove "td" commands :count 1))
-											     (format #t "~A[~D]: unclosed td at table~%" file linectr)))))
-										 (if (string-ci=? opener "--")
-										     (format #t "~A[~D]: <-- missing !?~%" file linectr))
-										 (set! commands (push opener commands)))))))))
+								       (if (string-ci=? opener "img")
+									   (let* ((rest-line (checked-substring line (+ start 4)))
+										  (alt-pos (string-position "alt=" rest-line))
+										  (src-pos (string-position "src=" rest-line)))
+									     (if (not alt-pos)
+										 (format #t "~A[~D]: img but no alt: ~A~%" file linectr line))
+									     (if src-pos
+										 (let ((png-pos (string-position ".png" rest-line)))
+										   (if png-pos
+										       (let ((file (checked-substring rest-line (+ src-pos 5) (+ png-pos 4))))
+											 (if (not (file-exists? file))
+											     (format #t "~A[~D]: src not found: ~S~%" file line-ctr file)))))))
+
+									   (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
+									       (if (and (string-ci-list-position opener commands)
+											(= p-quotes 0)
+											(not (string-ci-list-position opener (list "ul" "tr" "td" "table" 
+																   "small" "big" "sub" "blockquote"))))
+										   (format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands)
+										   (begin
+										     (if (and (string-ci=? opener "td")
+											      (not (string-ci-list-position "tr" commands)))
+											 (format #t "~A[~D]: td without tr?~%" file linectr))
+										     
+										     (if (and (string-ci=? opener "td")
+											      (not (string-ci=? "tr" (car commands))))
+											 (format #t "~A[~D]: td without tr?~%" file linectr))
+										     (if (and (string-ci=? opener "tr")
+											      (not (string-ci=? "table" (car commands)))
+											      (not (string-ci=? "table" (cadr commands))))
+											 (format #t "~A[~D]: tr without table?~%" file linectr))
+										     (if (and (string-ci=? opener "p")
+											      (string-ci=? "table" (car commands)))
+											 (format #t "~A[~D]: unclosed table?~%" file linectr))
+										     
+										     (if (and (string-ci=? opener "tr")
+											      (not (string-ci-list-position "table" commands)))
+											 (format #t "~A[~D]: tr without table~%" file linectr))
+										     (if (and (string-ci-list-position opener (list "pre" "br" "table" "hr" "img" "ul"))
+											      (string-ci-list-position "p" commands))
+											 (format #t "~A[~D]: ~A within <p>?~%" file linectr opener))
+										     (if (and (string-ci=? opener "li")
+											      (not (string-ci-list-position "ul" commands)))
+											 (format #t "~A[~D]: li without ul~%" file linectr))
+										     
+										     (if (and (string-ci=? opener "small")
+											      (or (string-ci=? "pre" (car commands))
+												  (string-ci=? "code" (car commands))))
+											 (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands)))
+										     
+										     (if (not warned)
+											 (begin
+											   (if (and (string-ci=? opener "tr")
+												    (string-ci-list-position "tr" commands)
+												    (< (count "table" commands) 2))
+											       (begin
+												 (set! warned #t)
+												 (set! commands (remove "tr" commands :count 1))
+												 (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
+											   (if (and (string-ci=? opener "td")
+												    (string-ci-list-position "td" commands)
+												    (< (count "table" commands) 2))
+											       (begin
+												 (set! warned #t)
+												 (set! commands (remove "td" commands :count 1))
+												 (format #t "~A[~D]: unclosed td at table~%" file linectr)))))
+										     (if (string-ci=? opener "--")
+											 (format #t "~A[~D]: <-- missing !?~%" file linectr))
+										     (set! commands (push opener commands))))))))))
 							 ;; end if closing
 							 (set! start #f))))))))))
 					      ) ; if not in-comment...
