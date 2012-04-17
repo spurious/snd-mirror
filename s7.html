@@ -3565,10 +3565,6 @@ is 15, as anyone would expect.
 <p><b><em class=def id="callwithexit">call-with-exit</em></b> is call/cc without the ability to jump back into the original context,
 similar to "return" in C.  This 
 is cleaner than call/cc, and much faster. 
-<!--
-Avoid call/cc like the plague &mdash; it makes code unreadable, undebuggable,
-and probably unportable since every scheme handles call/cc differently.
--->
 </p>
 
 <pre class="indented">
@@ -3601,6 +3597,34 @@ and probably unportable since every scheme handles call/cc differently.
 <p>It's unfortunate that if we escape from 'map', we lose whatever
 partial result it has accumulated &mdash; see <a href="#mapwithexit">map-with-exit</a>.
 </p>
+
+<p>The other side, so to speak, of call-with-exit, is with-baffle.
+Sometimes we need a normal call/cc, but want to make sure it is active
+only within a given block of code.  with-baffle ensures that no continuation
+created within its body can leak out and later jump back in from somewhere.
+Normally, a continuation is a variable, and is called like a function, so
+if it gets away, there's no telling when it might wreak havoc on us.
+Scheme code with call/cc becomes unpredictable, undebuggable, and completely
+unmaintainable.  Who's to say that the innocent-looking library function
+we're calling isn't setting a huge booby trap?  with-baffle
+blocks all that &mdash; no continuation can jump into its body from outside.  Here's
+an example:
+</p>
+
+<pre>
+(let ((x 0)
+      (c1 #f)              ; c1 will try to sneak in
+      (results '()))
+  (<em class=red>with-baffle</em>             ; the syntax is (with-baffle . body)         
+   (set! x (call/cc
+	    (lambda (r1)
+	      (set! c1 r1)
+	      (r1 2))))
+   (set! results (cons x results)))
+  (if (= x 2) (c1 32))     ; now outside the baffled block, c1 tries to sneak back in
+  results)                 ;   but s7 says no: call-blocked ("continuation can't jump across with-baffle")
+</pre>
+
 
 
 <p><b>continuation?</b> returns #t if its argument is a continuation,

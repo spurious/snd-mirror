@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.107"
-#define S7_DATE "14-Apr-12"
+#define S7_VERSION "1.108"
+#define S7_DATE "17-Apr-12"
 
 
 typedef long long int s7_Int;
@@ -835,6 +835,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 17-Apr:    with-baffle.
  * 14-Apr:    WITH_SYSTEM_EXTRAS (default 0) has additional OS and IO functions:
  *              directory? file-exists? delete-file getenv directory->list system
  * 26-Mar:    "@" as exponent, WITH_AT_SIGN_AS_EXPONENT switch (default is 1).

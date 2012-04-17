@@ -3356,10 +3356,12 @@ large component for the carrier, and all the others are very small.
 
 
 <p>One very sketchy explanation is that since a pulse is close to zero most of the time,
-the modulation is also close to zero.
+the modulation is also close to zero; when the pulse is suddenly high, the effective
+phase change is that number modulo 2*pi, so no matter how high the "index", the total change
+is bounded.
 I believe this is the basis of FM radio's
 noise reduction: we can filter out the high stuff which is weak anyway, and otherwise
-the spike has no effect on our carrier.
+the spike has little effect on our carrier.
 Another handwaving approach is:
 let "n" be the number of components ncos creates, "B" the amplitude of the modulating signal,
 and "k" be the component number.

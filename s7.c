@@ -360,7 +360,7 @@ enum {OP_NO_OP,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENTRANCE, OP_EXPANSION,
+      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_BAFFLE, OP_EXPANSION,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
@@ -499,7 +499,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_CATCH", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
   "OP_DO", "OP_DO_END", "OP_DO_END1", "OP_DO_STEP", "OP_DO_STEP2", "OP_DO_INIT",
   "OP_DEFINE_STAR", "OP_LAMBDA_STAR", "OP_LAMBDA_STAR_DEFAULT", "OP_ERROR_QUIT", "OP_UNWIND_INPUT", "OP_UNWIND_OUTPUT", 
-  "OP_TRACE_RETURN", "OP_ERROR_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_WITH_ENTRANCE", "OP_EXPANSION",
+  "OP_TRACE_RETURN", "OP_ERROR_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_WITH_BAFFLE", "OP_EXPANSION",
   "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
   
   "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
@@ -857,7 +857,7 @@ typedef struct s7_cell {
 
     void *c_pointer;
 
-    int entry_key;
+    int baffle_key;
     
     struct {
       s7_Int length;
@@ -1013,7 +1013,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   s7_pointer initial_env;             /* original bindings of predefined functions */
   
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, ENTRANCE;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE;
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY_VALUES, QQ_APPEND, MULTIVECTOR;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer SIMPLE_WRONG_TYPE_ARG_INFO, SIMPLE_OUT_OF_RANGE_INFO;
@@ -1155,7 +1155,7 @@ struct s7_scheme {
 #define T_C_MACRO             33
 #define T_OUTPUT_PORT         34
 #define T_INPUT_PORT          35
-#define T_ENTRANCE            36
+#define T_BAFFLE              36
 
 #define T_C_FUNCTION          37
 #define T_C_ANY_ARGS_FUNCTION 38
@@ -1216,7 +1216,7 @@ static void init_types(void)
   t_simple_p[T_OUTPUT_PORT] = true;
 }
 
-/* T_STACK, T_SLOT, T_ENTRANCE, and T_COUNTER are internal (stacks, bindings, call/cc barriers, map circular list checks)
+/* T_STACK, T_SLOT, T_BAFFLE, and T_COUNTER are internal (stacks, bindings, call/cc barriers, map circular list checks)
  */
 
 #define TYPE_BITS                     8
@@ -1627,8 +1627,8 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define counter_count(p)              (p)->object.ctr.val
 #define counter_length(p)             (p)->object.ctr.len
 
-#define is_entrance(p)                (type(p) == T_ENTRANCE)
-#define entrance_key(p)               (p)->object.entry_key
+#define is_baffle(p)                (type(p) == T_BAFFLE)
+#define baffle_key(p)               (p)->object.baffle_key
 
 #if __cplusplus
   using namespace std;
@@ -2505,7 +2505,7 @@ static void init_mark_functions(void)
   mark_function[T_STACK]               = mark_stack;
   mark_function[T_COUNTER]             = mark_counter;
   mark_function[T_SLOT]                = mark_slot;
-  mark_function[T_ENTRANCE]            = just_mark;
+  mark_function[T_BAFFLE]              = just_mark;
   mark_function[T_C_MACRO]             = just_mark;
   mark_function[T_C_POINTER]           = just_mark;
   mark_function[T_C_FUNCTION]          = just_mark;
@@ -4580,14 +4580,11 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
 }
 
 
-
-
-
-/* TODO: with-entrance barrier
- * (with-call/cc-barrier . body) calls body guaranteeing that there can be no jumps into the
+/* TODO: with-baffle barrier
+ * (with-baffle . body) calls body guaranteeing that there can be no jumps into the
  *    middle of it from outside -- no outer evaluation of a continuation can jump across this
- *    barrier.  The flip-side of call-with-exit, with-entrance?
- *    It sets a T_ENTRANCE var in a new env, that has a unique tag.  Call/cc then always
+ *    barrier:  The flip-side of call-with-exit.
+ *    It sets a T_BAFFLE var in a new env, that has a unique key.  Call/cc then always
  *    checks the env chain for any such variable, saving the localmost.  Apply of a continuation
  *    looks for such a saved variable, if none, go ahead, else check the current env (before the
  *    jump) for that variable.  If none, error, else go ahead.  This is different from a delimited
@@ -4595,31 +4592,31 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
  *    from coming at us from some unknown place.  This is as tail-callable (just an env -- the stack
  *    does not grow) as a recursive function with an outer let [check this!].  And it "delimits" the damage call/cc
  *    can do in a readable way. [This need not slow down old code since we can tell via the tag
- *    whether (with-entrance) has ever been called).  Do we need any others than the most local?
+ *    whether (with-baffle) has ever been called).  Do we need any others than the most local?
  */  
 
 
-static int entry_ctr = 0;
+static int baffle_ctr = 0;
 
-static s7_pointer make_entrance(s7_scheme *sc)
+static s7_pointer make_baffle(s7_scheme *sc)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  entrance_key(x) = entry_ctr++;
-  set_type(x, T_ENTRANCE);
+  baffle_key(x) = baffle_ctr++;
+  set_type(x, T_BAFFLE);
   return(x);
 }
 
 
-static bool find_entrance(s7_scheme *sc, int key)
+static bool find_baffle(s7_scheme *sc, int key)
 {
-  /* search backwards through sc->envir for sc->ENTRANCE with key as value
+  /* search backwards through sc->envir for sc->BAFFLE with key as value
    */
   s7_pointer x, y;	
   for (x = sc->envir; is_environment(x); x = next_environment(x))
     for (y = environment_slots(x); is_slot(y); y = next_slot(y))	
-      if ((slot_symbol(y) == sc->ENTRANCE) &&
-	  (entrance_key(slot_value(y)) == key))
+      if ((slot_symbol(y) == sc->BAFFLE) &&
+	  (baffle_key(slot_value(y)) == key))
 	return(true);
   return(false);
 }
@@ -4650,7 +4647,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   continuation_op_size(x) = sc->op_stack_size;
 
-  continuation_key(x) = entry_ctr - 1;
+  continuation_key(x) = baffle_ctr - 1;
 
   set_type(x, T_CONTINUATION | T_PROCEDURE);
   add_continuation(sc, x);
@@ -4744,21 +4741,26 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 }
 
 
-static void call_with_current_continuation(s7_scheme *sc)
+static bool call_with_current_continuation(s7_scheme *sc)
 {
   s7_pointer c;
   c = sc->code;
 
+  /* check for (baffle ...) blocking the current attempt to continue
+   */
   if (continuation_key(c) >= 0)
     {
-      fprintf(stderr, "found entry: %d\n", continuation_key(c));
-      if (find_entrance(sc, continuation_key(c)))
-	fprintf(stderr, "  we're ok\n");
-      else fprintf(stderr, "  probably from outside\n");
+      /* fprintf(stderr, "found baffle: %d\n", continuation_key(c)); */
+      if (!(find_baffle(sc, continuation_key(c))))
+	{
+	  /* fprintf(stderr, "  probably from outside\n"); */
+	  /* should this raise an error? */
+	  return(false);
+	}
     }
 
   if (!check_for_dynamic_winds(sc, c)) /* if OP_BARRIER on stack deeper than continuation top(?), but when does this happen? */
-    return;
+    return(true);
 
   /* we push_stack sc->code before calling an embedded eval above, so sc->code should still be c here, etc
    */
@@ -4787,6 +4789,7 @@ static void call_with_current_continuation(s7_scheme *sc)
 	sc->value = car(sc->args);
       else sc->value = splice_in_values(sc, sc->args);
     }
+  return(true);
 }
 
 
@@ -17784,11 +17787,11 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	return(str);
       }
 
-    case T_ENTRANCE:
+    case T_BAFFLE:
       {
 	char *str;
 	str = (char *)malloc(32 * sizeof(char));
-	snprintf(str, 32, "#<entrance: %d>", entrance_key(obj));
+	snprintf(str, 32, "#<baffle: %d>", baffle_key(obj));
 	return(str);
       }
 
@@ -23308,8 +23311,8 @@ and if a match is found (via eqv?), the associated clauses are evaluated, and ca
 	case OP_WITH_ENV:
 	  return("(with-environment env ...) evaluates its body in the environment env.");
 
-	case OP_WITH_ENTRANCE:
-	  return("(with-entrance ...) evaluates its body in a context that is safe from outside interference.");
+	case OP_WITH_BAFFLE:
+	  return("(with-baffle ...) evaluates its body in a context that is safe from outside interference.");
 
 	case OP_LAMBDA:
 	  return("(lambda args ...) returns a function.");
@@ -27366,7 +27369,7 @@ static const char *type_name(s7_pointer arg, int article)
   static const char *c_pointers[3] =    {"C pointer",      "the raw C pointer",  "a raw C pointer"};
   static const char *hooks[3] =         {"hook",           "the hook",           "a hook"};
   static const char *counters[3] =      {"internal counter", "the internal counter", "an internal counter"};
-  static const char *entrances[3] =     {"entrance",       "the entrance",       "an entrance"};
+  static const char *baffles[3] =       {"baffle",         "the baffle",         "a baffle"};
   static const char *slots[3] =         {"slot",           "the slot (variable binding)", "a slot (variable binding)"};
   static const char *environments[3] =  {"environment",    "the environment",    "an environment"};
   static const char *characters[3] =    {"character",      "the character",      "a character"};
@@ -27411,7 +27414,7 @@ static const char *type_name(s7_pointer arg, int article)
     case T_HASH_TABLE:   return(hash_tables[article]);
     case T_HOOK:         return(hooks[article]);
     case T_COUNTER:      return(counters[article]);
-    case T_ENTRANCE:     return(entrances[article]);
+    case T_BAFFLE:       return(baffles[article]);
     case T_SLOT:         return(slots[article]);
     case T_ENVIRONMENT:  return(environments[article]);
 
@@ -33989,7 +33992,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
   op = (opcode_t)syntax_opcode(func);
 
   if ((op == OP_QUOTE) || 
-      (op == OP_WITH_ENTRANCE) ||
+      (op == OP_WITH_BAFFLE) ||
       (op == OP_WITH_ENV))
     return(false);
 
@@ -44830,7 +44833,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call/cc") -------- */
-	  call_with_current_continuation(sc);
+	  if (!call_with_current_continuation(sc))
+	    return(s7_error(sc, make_symbol(sc, "call-blocked"),
+			    list_1(sc, make_protected_string(sc, "continuation can't jump across with-baffle"))));
 	  goto START;
 
 	case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */
@@ -48900,9 +48905,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
 
 
-    case OP_WITH_ENTRANCE:
+    case OP_WITH_BAFFLE:
       NEW_FRAME(sc, sc->envir, sc->envir);
-      add_slot(sc, sc->ENTRANCE, make_entrance(sc));
+      add_slot(sc, sc->BAFFLE, make_baffle(sc));
       /* sc->code (the body) is ready to go */
       goto BEGIN;
 
@@ -54389,7 +54394,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);     /* macro expansion in calling environment */
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
-  assign_syntax(sc, "with-entrance",     OP_WITH_ENTRANCE);
+  assign_syntax(sc, "with-baffle",     OP_WITH_BAFFLE);
 
   sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",   OP_QUOTE_UNCHECKED);  
   sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",     OP_LET_UNCHECKED);  
@@ -54532,7 +54537,7 @@ s7_scheme *s7_init(void)
   sc->APPLY =       make_symbol(sc, "apply");
   sc->CDR =         make_symbol(sc, "cdr");
   sc->SET =         make_symbol(sc, "set!");
-  sc->ENTRANCE =    make_symbol(sc, "(entrance)");
+  sc->BAFFLE =      make_symbol(sc, "(baffle)");
 
   #define s_is_type_name "[?]"                         /* these were "(?)" etc, but the procedure-source needs to be usable */
   sc->S_IS_TYPE = make_symbol(sc, s_is_type_name);
