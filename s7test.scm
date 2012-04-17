@@ -18666,6 +18666,45 @@ who says the continuation has to restart the map from the top?
 	  sum)
 	348))
 
+(test (with-baffle
+       (let ((x 0)
+	     (c1 #f)
+	     (results '()))
+	 (set! x (call/cc
+		  (lambda (r1)
+		    (set! c1 r1)
+		    (r1 2))))
+	 (set! results (cons x results))
+	 (if (= x 2) (c1 32))
+	 results))
+      '(32 2))
+
+(test (let ((x 0)
+	    (c1 #f)
+	    (results '()))
+	(with-baffle
+	 (set! x (call/cc
+		  (lambda (r1)
+		    (set! c1 r1)
+		    (r1 2))))
+	 (set! results (cons x results)))
+	(if (= x 2) (c1 32))
+	results)
+      'error)
+
+(test (let ((what's-for-breakfast '())
+	    (bad-dog 'fido))        ; bad-dog will try to sneak in
+	(with-baffle               ; the syntax is (with-baffle . body)         
+	 (set! what's-for-breakfast
+	       (call/cc
+		(lambda (biscuit?)
+		  (set! bad-dog biscuit?) ; bad-dog smells a biscuit!
+		  (biscuit? 'biscuit!)))))
+	(if (eq? what's-for-breakfast 'biscuit!) 
+	    (bad-dog 'biscuit!))  ; now, outside the baffled block, bad-dog tries to sneak back in
+	results)                   ;   but s7 says "No!": baffled! ("continuation can't jump across with-baffle")
+      'error)
+
 
 
 

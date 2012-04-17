@@ -4622,6 +4622,20 @@ static bool find_baffle(s7_scheme *sc, int key)
 }
 
 
+static int find_any_baffle(s7_scheme *sc)
+{
+  /* search backwards through sc->envir for any sc->BAFFLE
+   */
+  s7_pointer x, y;	
+  if (baffle_ctr > 0)
+    for (x = sc->envir; is_environment(x); x = next_environment(x))
+      for (y = environment_slots(x); is_slot(y); y = next_slot(y))	
+	if (slot_symbol(y) == sc->BAFFLE)
+	  return(baffle_key(slot_value(y)));
+  return(-1);
+}
+
+
 s7_pointer s7_make_continuation(s7_scheme *sc) 
 {
   s7_pointer x;
@@ -4647,7 +4661,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   continuation_op_size(x) = sc->op_stack_size;
 
-  continuation_key(x) = baffle_ctr - 1;
+  continuation_key(x) = find_any_baffle(sc);
 
   set_type(x, T_CONTINUATION | T_PROCEDURE);
   add_continuation(sc, x);
@@ -44835,7 +44849,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_CONTINUATION:	                  /* -------- continuation ("call/cc") -------- */
 	  if (!call_with_current_continuation(sc))
 	    return(s7_error(sc, make_symbol(sc, "baffled!"),
-			    list_1(sc, make_protected_string(sc, "continuation can't jump across with-baffle"))));
+			    list_1(sc, make_protected_string(sc, "continuation can't jump into with-baffle"))));
 	  goto START;
 
 	case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */

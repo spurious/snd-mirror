@@ -584,7 +584,7 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
     
     Next, download and untar the latest snd sources from ccrma
     
-    $ ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --disable-nls --with-motif --with-static-xm --with-motif-prefix=/sw
+    $ ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif --with-static-xm --with-motif-prefix=/sw
     
     This config was run from a bash shell.  If you are using tcsh (and you
     might be if you upgraded to panther) then you will have to omit the part
@@ -606,11 +606,15 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
 
 In OSX 10.5, I had to add Xft, Xmu, and fontconfig to the MOTIF_LIBS line in makefile:
 
-MOTIF_LIBS =  -L/usr/X11/lib -R/usr/X11/lib  -lSM -lICE -lXft -lXmu -lfontconfig /usr/X11R6-old/lib/libXm.a -L/usr/X11R6-old/lib -lXt -lXp -lX11  -lSM -lICE -lXext -lXpm
+  MOTIF_LIBS =  -L/usr/X11/lib -R/usr/X11/lib  -lSM -lICE -lXft -lXmu -lfontconfig /usr/X11R6-old/lib/libXm.a -L/usr/X11R6-old/lib -lXt -lXp -lX11  -lSM -lICE -lXext -lXpm
 
 (the X11R6-old business came about because I didn't remake libXm, but the OSX installation
 process moved the previous X11R6 directory to X11R6 1, which is untypable).
 
+
+In OSX 10.6.8, Ludger Brummer suggests:
+
+  ./configure CFLAGS="-arch i386 -I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif --with-static-xm --with-motif-prefix=/sw 
 
 
 Here's a note from Brooke Mitchell:
