@@ -12503,6 +12503,13 @@ so anything that quotes ` is not going to equal quote quasiquote
   (test (+ 1 (\,@\ 2)) 4)
   )
 
+;;; these are from the r7rs discussions
+(test (let ((a'b 3)) a'b) 3) ; allow variable names like "can't-go-on" or "don't-ask"
+(test (let () (define (f x y) (+ x y)) (let ((a 3) (b 4)) (f a, b))) 'error) ; unbound variable a,
+(test (let () (define (f x y) (+ x y)) (let ((a 3) (b 4)) (f a ,b))) 'error) ; unquote outside quasiquote
+
+
+
 
 
 ;;; -------- object->string

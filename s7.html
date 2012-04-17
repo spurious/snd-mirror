@@ -371,6 +371,8 @@ Other math-related differences between s7 and r5rs:
 3/2
 &gt; (make-rectangular 1/2 0)
 1/2
+&gt; (logbit? 6 1) ; argument order, (logbit? int index), follows gmp, not CL
+#t
 </pre>
 
 <blockquote>
@@ -1446,7 +1448,7 @@ or in C; I wanted this many years ago in Snd).  The notification function is esp
 you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
 All of these cases modify
 the path between a symbol and its value.  
-s7 gives you a handle on that path via the procedure-with-setter <b><em class=def id="symbolaccess">symbol-access</em></b>.
+s7 gives you a handle on that path via the procedure-with-setter <em class=def id="symbolaccess">symbol-access</em>.
 <code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
 changes them.  The accessor-list is a list of three functions, the get, set, and bind functions.
 The set and bind functions take two arguments, the symbol in question
@@ -3598,36 +3600,34 @@ is cleaner than call/cc, and much faster.
 partial result it has accumulated &mdash; see <a href="#mapwithexit">map-with-exit</a>.
 </p>
 
-<p>The other side, so to speak, of call-with-exit, is with-baffle.
+<p>The other side, so to speak, of call-with-exit, is <em class=def id="withbaffle">with-baffle</em>.
+Both limit the scope of a continuation.
 Sometimes we need a normal call/cc, but want to make sure it is active
 only within a given block of code.  with-baffle ensures that no continuation
-created within its body can leak out and later jump back in from somewhere.
-Normally, a continuation is a variable, and is called like a function, so
-if it gets away, there's no telling when it might wreak havoc on us.
+created within its body can leak out and later jump back in.
+Normally, if a continuation gets away, there's no telling when it might wreak havoc on us.
 Scheme code with call/cc becomes unpredictable, undebuggable, and completely
-unmaintainable.  Who's to say that the innocent-looking library function
-we're calling isn't setting a huge booby trap?  with-baffle
-blocks all that &mdash; no continuation can jump into its body from outside.  Here's
-an example:
+unmaintainable.  
+with-baffle blocks all that &mdash; no continuation can jump into its body:
 </p>
 
 <pre>
 (let ((x 0)
-      (c1 #f)              ; c1 will try to sneak in
+      (bad-dog #f)           ; bad-dog will try to sneak in
       (results '()))
-  (<em class=red>with-baffle</em>             ; the syntax is (with-baffle . body)         
+  (<em class=red>with-baffle</em>               ; the syntax is (with-baffle . body)         
    (set! x (call/cc
 	    (lambda (r1)
-	      (set! c1 r1)
+	      (set! bad-dog r1) ; bad-dog smells a biscuit!
 	      (r1 2))))
    (set! results (cons x results)))
-  (if (= x 2) (c1 32))     ; now outside the baffled block, c1 tries to sneak back in
-  results)                 ;   but s7 says no: call-blocked ("continuation can't jump across with-baffle")
+  (if (= x 2) (bad-dog 32))  ; now, outside the baffled block, bad-dog tries to sneak back in
+  results)                   ;   but s7 says "No!": baffled! ("continuation can't jump across with-baffle")
 </pre>
 
 
 
-<p><b>continuation?</b> returns #t if its argument is a continuation,
+<p><em class=def id="continuationp">continuation?</em> returns #t if its argument is a continuation,
 as opposed to a normal procedure.  I don't know why Scheme hasn't had this function from
 the very beginning, but it's needed if you want to write a continuable error
 handler.  Here is a sketch of the situation:

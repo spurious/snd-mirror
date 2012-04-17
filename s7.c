@@ -44834,7 +44834,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call/cc") -------- */
 	  if (!call_with_current_continuation(sc))
-	    return(s7_error(sc, make_symbol(sc, "call-blocked"),
+	    return(s7_error(sc, make_symbol(sc, "baffled!"),
 			    list_1(sc, make_protected_string(sc, "continuation can't jump across with-baffle"))));
 	  goto START;
 
