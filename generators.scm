@@ -1792,7 +1792,7 @@
 			       (lambda (g) 
 				 (safe-rxycos-r g))
 			       (lambda (g val)
-				 (set! (safe-rxycor-r g) val)
+				 (set! (safe-rxycos-r g) val)
 				 (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
 				 (safe-rxycos-r g)))
 
@@ -6483,7 +6483,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 (defgenerator (flocsig 
 	       ;; assume stereo out/rev 
 	       :make-wrapper (lambda (g)
-			       (set! (flocsig-maxd g) (ceiling amplitude))
+			       (set! (flocsig-maxd g) (ceiling (flocsig-amplitude g))) ; was amplitude?
 			       (set! (flocsig-out1 g) (make-vct (flocsig-maxd g)))
 			       (set! (flocsig-out2 g) (make-vct (flocsig-maxd g)))
 			       (set! (flocsig-ri g) (make-rand-interp 

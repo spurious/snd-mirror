@@ -3086,3 +3086,4 @@
 
 
 
+;;; TODO: nonce words that look like misspellings should be reported whatever the undefined-variables switch is

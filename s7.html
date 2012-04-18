@@ -3598,7 +3598,12 @@ is cleaner than call/cc, and much faster.
 
 <p>It's unfortunate that if we escape from 'map', we lose whatever
 partial result it has accumulated &mdash; see <a href="#mapwithexit">map-with-exit</a>.
+The call-with-exit function's argument (the "continuation") is only valid
+within the call-with-exit function.  In call/cc, you can save it, then call it later
+to jump back, but if you try that with call-with-exit (from outside the call-with-exit function's body), you'll get an error.
+This is similar to trying to read from a closed input port. 
 </p>
+
 
 <p>The other side, so to speak, of call-with-exit, is <em class=def id="withbaffle">with-baffle</em>.
 Both limit the scope of a continuation.
@@ -3625,7 +3630,7 @@ with-baffle blocks all that &mdash; no continuation can jump into its body:
   what's-for-breakfast)        ;   but s7 says "No!": baffled! ("continuation can't jump into with-baffle")
 </pre>
 
-
+<br>
 <p><em class=def id="continuationp">continuation?</em> returns #t if its argument is a continuation,
 as opposed to a normal procedure.  I don't know why Scheme hasn't had this function from
 the very beginning, but it's needed if you want to write a continuable error
@@ -3656,20 +3661,6 @@ catch body, and needs a way to distinguish a real continuation
 from a simple procedure.  Otherwise, it blithely announces that
 it is continuing from the point of the error, but then fails to do so.
 </p>
-
-<blockquote>
-
-<div class="indented">
-
-<p>The call-with-exit function's argument (the "continuation") is only valid
-within the call-with-exit function.  In call/cc, you can save it, then call it later
-to jump back, but if you try that with call-with-exit (from outside the call-with-exit function's body), you'll get an error.
-This is similar to trying to read from a closed input port. 
-</p>
-</div>
-
-</blockquote>
-
 
 
 
@@ -3766,6 +3757,8 @@ floats in the "~X" case.  So in s7,
 <pre class="indented">
 &gt; (format #f "~{~C~^ ~}" "hiho")
 "h i h o"
+&gt; (format #f "~{~{~C~^ ~}~^...~}" (list "hiho" "test"))
+"h i h o...t e s t"
 </pre>
 </div>
 

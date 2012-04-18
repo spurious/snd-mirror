@@ -4580,8 +4580,7 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
 }
 
 
-/* TODO: with-baffle barrier
- * (with-baffle . body) calls body guaranteeing that there can be no jumps into the
+/* (with-baffle . body) calls body guaranteeing that there can be no jumps into the
  *    middle of it from outside -- no outer evaluation of a continuation can jump across this
  *    barrier:  The flip-side of call-with-exit.
  *    It sets a T_BAFFLE var in a new env, that has a unique key.  Call/cc then always
@@ -4589,10 +4588,7 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
  *    looks for such a saved variable, if none, go ahead, else check the current env (before the
  *    jump) for that variable.  If none, error, else go ahead.  This is different from a delimited
  *    continuation which simply delimits the extent of the continuation (why not use lambda?) -- we want to block it
- *    from coming at us from some unknown place.  This is as tail-callable (just an env -- the stack
- *    does not grow) as a recursive function with an outer let [check this!].  And it "delimits" the damage call/cc
- *    can do in a readable way. [This need not slow down old code since we can tell via the tag
- *    whether (with-baffle) has ever been called).  Do we need any others than the most local?
+ *    from coming at us from some unknown place.  
  */  
 
 
@@ -55324,6 +55320,7 @@ the error type and the info passed to the error handler.");
  * (set! (procedure-setter abs) ...)?
  * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
+ * to be more consistent: *pi*, *most-negative|positive-fixnum*
  *
  * lint     13424 -> 1231 [1237]
  * bench    52019 -> 7875 [8268]

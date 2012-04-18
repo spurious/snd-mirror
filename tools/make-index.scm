@@ -1317,7 +1317,7 @@
 										   (if png-pos
 										       (let ((file (checked-substring rest-line (+ src-pos 5) (+ png-pos 4))))
 											 (if (not (file-exists? file))
-											     (format #t "~A[~D]: src not found: ~S~%" file line-ctr file)))))))
+											     (format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
 
 									   (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
 									       (if (and (string-ci-list-position opener commands)

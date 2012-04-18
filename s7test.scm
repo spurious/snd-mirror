@@ -10480,6 +10480,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "1~\
 a2" 3) "132")
 
+(test (format #f "~{~{~C~^ ~}~^...~}" (list "hiho" "test")) "h i h o...t e s t")
+
 ;; ~nT handling is a mess -- what are the defaults?  which is column 1? do we space up to or up to and including?
 
 (test (format #f "asdh~20Thiho") "asdh               hiho")
