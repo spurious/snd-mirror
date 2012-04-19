@@ -2857,11 +2857,21 @@ Perhaps these would be better:
 </p>
 
 <pre class="indented">
-(define (make-environment parent . args) (apply augment-environment parent args))
-(define (environment . slots) (apply augment-environment () args))
-(define (define-in-environment env symbol value) (augment-environment! env (cons symbol value)))
-(define next-environment outer-environment)
-(define current-environment-unshadowed initial-environment)
+(define (make-environment parent . args) 
+  (apply augment-environment parent args))
+
+(define (environment . slots) 
+  (apply augment-environment () args))
+
+(define-macro (define! env . args) 
+  (if (or (null? env) 
+          (eq? env (current-environment)))
+      `(define ,@args)
+      `(with-environment ,env (define ,@args))))
+
+;; and much less satisfying...
+(define next-environment outer-environment)                 ; parent-environment?
+(define current-environment-unshadowed initial-environment) ; pure-environment?
 </pre>
 
 <p>It is possible in Scheme to redefine built-in functions such as car.
@@ -3120,6 +3130,20 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
      method-name))
 
 
+(define (all-methods obj method)
+  ;; for arbitrary method combinations: this returns a list of all the methods of a given name
+  ;;   in obj's class and the classes it inherits from (see example below)
+  (let* ((base-method (obj method))
+	 (methods (if (procedure? base-method) (list base-method) ())))
+    (for-each 
+     (lambda (ancestor)
+       (let ((next-method (ancestor method)))
+	 (if (and (procedure? next-method)
+		  (not (memq next-method methods)))
+	     (set! methods (cons next-method methods)))))
+     (obj 'inherited))
+    (reverse methods)))
+
 
 &gt; (define-class class-1 () 
        '((a 1) (b 2)) 
@@ -3182,6 +3206,12 @@ v1
 class-3
 &gt; ((class-3 'multiply) class-3 10)
 180                               ; (* 10 (* 1 2 3) (+ 1 2))
+&gt; (all-methods v3 'multiply)
+(#&lt;closure&gt; #&lt;closure&gt;)
+&gt; (for-each (lambda (p) (format #t "~A~%" (procedure-source p))) (all-methods v3 'multiply))
+(lambda (obj num) (* num ((class-2 'multiply) obj) (add obj)))
+(lambda (obj) (with-environment obj (* a b c)))
+
 
 ;; another obvious possibility: generic macros
 </pre>
@@ -3608,8 +3638,7 @@ This is similar to trying to read from a closed input port.
 <p>The other side, so to speak, of call-with-exit, is <em class=def id="withbaffle">with-baffle</em>.
 Both limit the scope of a continuation.
 Sometimes we need a normal call/cc, but want to make sure it is active
-only within a given block of code.  with-baffle ensures that no continuation
-created within its body can leak out and later jump back in.
+only within a given block of code.  
 Normally, if a continuation gets away, there's no telling when it might wreak havoc on us.
 Scheme code with call/cc becomes unpredictable, undebuggable, and completely
 unmaintainable.  
@@ -4866,7 +4895,7 @@ bind it to something else, which is asking for confusion).
 <li>*gc-stats* is a boolean that controls whether GC stats are printed.
 <li>member and assoc accept an optional third argument, the comparison function (equal? is the default).
 <li>case accepts =&gt; much like cond (the function argument is the selector).
-<li>if WITH_SYSTEM_EXTRAS is 1, the following are built-in: directory? file-exists? delete-file
+<li>if WITH_SYSTEM_EXTRAS is 1, the following are built-in: directory?, file-exists?, delete-file, system, directory-&gt;list, getenv.
 </ul>
 
 </div>
@@ -4904,6 +4933,15 @@ bind it to something else, which is asking for confusion).
 <li>replace procedure-with-setter with settable procedure-setter
 </ul>
 
+<p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
+*most-positive-fixnum* so that all the built-in variables and constants have the
+same kind of name.  All the environment function names are bad &mdash; even the name "environment"
+is bad since it refers to one way of using that data type, as if we 
+called all strings "symbol-name".  get-output-string should be current-output-string.
+cond-expand is bad &mdash; we're not expanding anything. symbol-access and make-type are not ideal, 
+as names and in every other way.
+Better ideas are always welcome!
+</p>
 </div>
 
 

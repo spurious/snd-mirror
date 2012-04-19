@@ -15077,7 +15077,17 @@ in s7:
 
 (test (let ((x 5)) (define foo (lambda (y) (bar x y))) (define bar (lambda (a b) (+ (* a b) a))) (foo (+ x 3))) 45)
 (test (let ((x 5)) (letrec ((foo (lambda (y) (bar x y))) (bar (lambda (a b) (+ (* a b) a)))) (foo (+ x 3)))) 45)
+
 (num-test (let () (define compose (lambda (f g) (lambda args (f (apply g args))))) ((compose sqrt *) 12 75))  30.0)
+(let ()
+  (define (compose . args)
+    (if (procedure? (car args))
+	(if (null? (cdr args))
+	    ((car args))
+	    ((car args) (apply compose (cdr args))))
+	(apply values args)))
+  (test (compose - + (lambda (a b c) (values a (* b c))) 2 3 4) -14))
+
 (test (let ((f (lambda () (lambda (x y) (+ x y))))) ((f) 1 2)) 3)
 (test ((lambda (x) (define y 4) (+ x y)) 1) 5)
 (test ((lambda(x)(define y 4)(+ x y))1) 5)
@@ -17373,6 +17383,7 @@ in s7:
 
 ;;; --------------------------------------------------------------------------------
 ;;; call/cc
+;;; call-with-current-continuation
 ;;; --------------------------------------------------------------------------------
 ;;; some of these were originally from Al Petrovsky, Scott G Miller, Matthias Radestock, J H Brown, Dorai Sitaram, 
 ;;;   and probably others.
@@ -24341,6 +24352,17 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 3
 |#
 
+(test (let ()
+	(with-environment (current-environment) (define hiho 43))
+	hiho)
+      43)
+(let ()
+  (define-macro (define! env . args) 
+    `(with-environment ,env (define ,@args)))
+  (test (let ()
+	  (define! (current-environment) (hiho x) (+ x 1))
+	  (hiho 2))
+	3))
 
 (let ()
   (apply augment-environment! (current-environment)

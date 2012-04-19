@@ -3086,4 +3086,6 @@
 
 
 
-;;; TODO: nonce words that look like misspellings should be reported whatever the undefined-variables switch is
+;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is,
+;;;   but this slows us down too much.
+
