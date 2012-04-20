@@ -15080,13 +15080,14 @@ in s7:
 
 (num-test (let () (define compose (lambda (f g) (lambda args (f (apply g args))))) ((compose sqrt *) 12 75))  30.0)
 (let ()
-  (define (compose . args)
+  (define (compose . args) ; this just removes parens
     (if (procedure? (car args))
 	(if (null? (cdr args))
 	    ((car args))
 	    ((car args) (apply compose (cdr args))))
 	(apply values args)))
-  (test (compose - + (lambda (a b c) (values a (* b c))) 2 3 4) -14))
+  (test (compose - + (lambda (a b c) (values a (* b c))) 2 3 4) -14)
+  (test (- (+ ((lambda (a b c) (values a (* b c))) 2 3 4))) -14)) ; I prefer this
 
 (test (let ((f (lambda () (lambda (x y) (+ x y))))) ((f) 1 2)) 3)
 (test ((lambda (x) (define y 4) (+ x y)) 1) 5)
@@ -24598,6 +24599,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (with-environment (augment-environment '() '(b . 1)) a) 'error)
 (test (with-environment '((a . 1)) a) 'error)
 (test (with-environment '((a . 1) 2) a) 'error)
+(test (let ((a 1)) (set! ((current-environment) 'a) 32) a) 32)
 
 (for-each
  (lambda (arg)

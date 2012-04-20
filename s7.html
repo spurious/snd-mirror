@@ -626,7 +626,7 @@ have any number after, for example, #b:
 
 <p><em class=def id="definestar">define*</em> and
  <em class=def id="lambdastar">lambda*</em>
-are extensions of define and lambda that make it easier to
+are extensions of define and lambda that make it easier
 to deal with optional, keyword, and rest arguments.  
 The syntax is very simple: every argument to define* has a default value
 and is automatically available as a keyword argument.  The default value
@@ -2450,13 +2450,10 @@ vector-dimensions returns a list of the dimensions.
 <pre class="indented">
 &gt; (define v (make-vector '(2 3) 1.0))
 #2D((1.0 1.0 1.0) (1.0 1.0 1.0))
-
 &gt; (set! (v 0 1) 2.0)
 #2D((1.0 2.0 1.0) (1.0 1.0 1.0))
-
 &gt; (v 0 1)
 2.0
-
 &gt; (vector-length v)
 6
 </pre>
@@ -2552,7 +2549,6 @@ signals that the lists specify the elements of an 'n' dimensional vector: <code>
 <pre class="indented">
 &gt; (vector-ref #2D((1 2 3) (4 5 6)) 1 2)
 6
-
 &gt; (matrix-multiply #2d((-1 0) (0 -1)) #2d((2 0) (-2 2)))
 #2D((-2 0) (2 -2))
 </pre>
@@ -2564,7 +2560,6 @@ equal to a 1-dimensional empty vector.
 <pre class="indented">
 &gt; (make-vector '(10 0 3))
 #3D()
-
 &gt; (equal? #() #3D())
 #f
 </pre>
@@ -2843,7 +2838,6 @@ To add or change a symbol's value, use augment-environment:
          (<em class=red>augment-environment</em>
            (current-environment) 
            (cons 'b 32)))) ; add 'b with the value 32 to this environment
-
 -&gt; 33
 </pre>
 
@@ -3591,7 +3585,7 @@ is 15, as anyone would expect.
 
 
 
-<div class="header" id="callwithexit1"><h4>call-with-exit and continuation?</h4></div>
+<div class="header" id="callwithexit1"><h4>call-with-exit, with-baffle and continuation?</h4></div>
 
 
 <p><b><em class=def id="callwithexit">call-with-exit</em></b> is call/cc without the ability to jump back into the original context,
@@ -4063,6 +4057,13 @@ its bindings (this is borrowed from "nuntius" at reddit lisp):
 		      ,temp-symbol)))
 		bindings)
        ,@body)))
+
+;; or simpler:
+
+(define-macro (print-let bindings . body)
+  `(let ,bindings 
+     (format #t "~{;~A~%~}" (current-environment))
+     ,@body))	      
 </pre>
 
 </div>
@@ -4336,7 +4337,7 @@ send that info to the current-error-port.
 <pre class="indented">
 (define (map-with-exit func . args)
   ;; func takes escape thunk, then args
-  (let* ((result '())
+  (let* ((result ())
 	 (escape-tag (gensym))
 	 (escape (lambda () (error escape-tag)))) ; error here = throw
     (<em class=red>catch</em> escape-tag
@@ -4355,6 +4356,35 @@ send that info to the current-error-port.
 &gt; (truncate-if even? #(1 3 5 -1 4 6 7 8))
 (1 3 5 -1)
 </pre>
+
+<p>But this is less useful than map (it can't map over a hash-table for example),
+and is mostly reimplementing built-in code.  Perhaps s7 should have an extension
+of map (and more usefully, for-each) that is patterned after dynamic-wind:
+<code>(for-each init-func main-func end-func . args)</code> where init-func
+is called with one argument, the length of the shortest sequence argument (for-each
+and map know this in advance); main-func takes n arguments where n matches
+the number of sequences passed; and end-func is called even if a jump out of main-func
+occurs (like dynamic-wind in this regard).  In the dynamic-map case, the end-func
+takes one argument, the current, possibly partial, result list.  dynamic-for-each
+then could easily implement generic functions such as -&gt;list, -&gt;vector, and
+-&gt;string (converting any sequence into a sequence of some other type).
+map-with-exit would be
+</p>
+<pre class="indented">
+(define (map-with-exit func . args) 
+  (let ((result ()))
+    (call-with-exit
+      (lambda (quit)
+        (apply dynamic-map #f ; no init-func in this case
+               (lambda main-args 
+                 (apply func quit main-args)) 
+               (lambda (res) 
+                 (set! result res))
+               args)))
+    result))
+</pre>
+<p>That brings up the name "dynamic-wind": wind what? dynamic what? Surely there's a better name out there?
+</p>
 </div>
 </blockquote>
 
@@ -4383,7 +4413,7 @@ additional info about that error:
 </p>
 
 <pre class="indented">
-(symbol-&gt;value var (vector-ref *error-info* 5))
+(symbol-&gt;value var (*error-info* 5))
 </pre>
 
 <p>To print the stack at the point of the error:
@@ -4587,7 +4617,6 @@ at startup *features* is:
 <pre class="indented">
 &gt; *features*
 (snd12 snd snd-s7 snd-motif gsl alsa xm clm4 clm sndlib gmp s7)
-
 &gt; (provided? 'gmp)
 #t
 </pre>
@@ -4720,8 +4749,8 @@ Here we scan the symbol table looking for any function that doesn't have documen
 <pre class="indented">
 (let ((st (<em class=red>symbol-table</em>)))
   (do ((i 0 (+ i 1))) 
-      ((= i (vector-length st)))
-    (let ((lst (vector-ref st i)))
+      ((= i (length st)))
+    (let ((lst (st i)))
       (for-each 
         (lambda (sym)
           (if (<em class=red>defined?</em> sym)
@@ -4879,20 +4908,17 @@ bind it to something else, which is asking for confusion).
 <li>after the initial binding, do sets its step variables, rather than rebinding them.
 <li>no force or delay (use slib).
 <li>no syntax-rules or any of its friends.
-<li>s7-version returns the current s7 version.
 <li>no scheme-report-environment (use initial-environment), null-environment, or interaction-environment (use current-environment).
 <li>no transcript-on or transcript-off.
-<li>__func__ is the name (or name and location) of the function currently being defined or called, as in C.
 <li>begin returns the value of the last form; it can contain both definitions and other statements.
 <li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are first-class objects.
 <li>for-each and map accept different length arguments; the operation stops when any argument reaches its end.
-<li>for-each and map accept any applicable object as the first argument.
+<li>for-each and map accept any applicable object as the first argument, and any sequence as a trailing argument.
 <li>letrec*, but without conviction.
 <li>set! and *-set! return the new value, not #&lt;unspecified&gt;.
 <li>port-closed?
 <li>current-input-port, current-output-port, and current-error-port have setters
 <li>the default IO ports are named *stdin*, *stdout*, and *stderr*.
-<li>*gc-stats* is a boolean that controls whether GC stats are printed.
 <li>member and assoc accept an optional third argument, the comparison function (equal? is the default).
 <li>case accepts =&gt; much like cond (the function argument is the selector).
 <li>if WITH_SYSTEM_EXTRAS is 1, the following are built-in: directory?, file-exists?, delete-file, system, directory-&gt;list, getenv.

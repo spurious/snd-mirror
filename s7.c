@@ -24052,7 +24052,7 @@ a list of three functions: ?, make, and ref.  The '?' function returns #t if pas
 the 'make' function creates a new object of that type, and the 'ref' function returns the value of that object.\
 The optional arguments to make-type are functions that specify how objects of the new type display themselves (print, 1 argument), \
 check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number \
-of args, see vector for an example), respond to the generalized set! and length generic functions, and finally, \
+of args, see vector for an example), respond to the generalized set! and length functions, and finally, \
 one special case: name sets the type name (a string), which only matters if you're not specifying the print function. \
 In each case, the argument is the value of the object, not the object itself."
 
@@ -55321,8 +55321,20 @@ the error type and the info passed to the error handler.");
  * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * to be more consistent: *pi*, *most-negative|positive-fixnum*
+ * s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
+ *
+ * (dynamic-for-each initial normal final ...)
+ *    where initial is func of one arg, the upcoming length (for-each knows this in advance)
+ *          normal is the current for-each func
+ *          final is always called, even if jump out (like dynamic-wind)
+ *   ->list ->string ->vector [all via dynamic-for-each]
+ * similarly dynamic-map, but in this case final is passed the current (possibly truncated) result [map-with-exit]
+ *
+ * port as arg to map and for-each? how to tell it what to get? [string port is a string?]
+ * pure-let(*) to build-in initial-environment
  *
  * lint     13424 -> 1231 [1237]
  * bench    52019 -> 7875 [8268]
  * index    44300 -> 4988 [4992]
+ * (these numbers are obsolete since lint/index have changed a lot)
  */

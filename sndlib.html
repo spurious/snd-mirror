@@ -318,11 +318,11 @@ function returns the associated line number of the output port.</p>
 
 <p>mus_audio_close closes the port (input or output) associated with line.</p>
 
-<p>mus_audio_read reads sound data from line.  The incoming bytes bytes of data are placed
+<p>mus_audio_read reads sound data from line.  The incoming 'bytes' bytes of data are placed
 in buf.  If no error was returned from mus_audio_open_input, the data is in the format requested
 by that function with channels interleaved.</p>
 
-<p>mus_audio_write writes bytes bytes of data in buf to the output
+<p>mus_audio_write writes 'bytes' bytes of data in buf to the output
 port associated with line.  This data is assumed to be in the format
 requested by mus_audio_open_output with channels interleaved.</p>
 
