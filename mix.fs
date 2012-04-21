@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ mix.fs -- mix.scm -> mix.fs
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Thu Apr 15 15:58:17 CEST 2010
+\ Changed: Tue Apr 17 02:41:03 CEST 2012
 
 \ Commentary:
 \
@@ -38,7 +37,7 @@ require clm
 require examp
 
 : tree-for-each ( proc-or-xt tree -- )
-  doc" Applies PROC-OR-XT to every leaf of TREE."
+  doc" Apply PROC-OR-XT to every leaf of TREE."
   { proc-or-xt tree }
   tree nil? unless
     tree cons? if
@@ -51,7 +50,7 @@ require examp
 ;
 
 : mix-sound <{ file :optional start 0 -- id }>
-  doc" Mixes FILE (all chans) at START in the currently selected sound."
+  doc" Mix FILE (all chans) at START in the currently selected sound."
   file start #t undef undef undef undef mix
 ;
 
@@ -60,13 +59,13 @@ hide
 : silence-all-mixes-cb <{ -- }> <'> silence-mix-xt undef undef mixes tree-for-each ;
 set-current
 : silence-all-mixes ( -- )
-  doc" Sets all mix amps to 0."
+  doc" Set all mix amps to 0."
   <'> silence-all-mixes-cb undef as-one-edit drop
 ;
 previous
 
 : find-mix <{ samp :optional snd #f chn #f -- mx }>
-  doc" Returns the id of the mix at the given SAMPLE, or #f."
+  doc" Return the id of the mix at the given SAMPLE, or #f."
   #f					\ flag
   snd snd-snd chn snd-chn mixes each { id }
     id mix-position samp d= if
@@ -78,7 +77,7 @@ previous
 ;
 
 : mix->vct ( id -- v )
-  doc" Returns mix's data in vct."
+  doc" Return mix's data in vct."
   { id }
   id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
   id 0 make-mix-sampler { reader }
@@ -87,7 +86,7 @@ previous
 ;
 
 : save-mix ( id fname -- )
-  doc" Saves mix data (as floats) in FILENAME."
+  doc" Save mix data (as floats) in FILENAME."
   { id fname }
   id mix->vct { v }
   fname #f srate mus-sound-open-output { fd }
@@ -96,7 +95,7 @@ previous
 ;
 
 : mix-maxamp ( id -- max-amp )
-  doc" Returns the max amp in the given mix."
+  doc" Return the max amp in the given mix."
   mix->vct vct-peak
 ;
 
@@ -117,7 +116,7 @@ hide
 ;
 set-current
 : snap-mix-to-beat <{ -- }>
-  doc" Forces a dragged mix to end up on a beat (see beats-per-minute).  \
+  doc" Force a dragged mix to end up on a beat (see beats-per-minute).  \
 Resets mix-release-hook to cancel."
   mix-release-hook snap-mix-to-beat-cb add-hook!
 ;
@@ -141,19 +140,19 @@ previous
 
 : mix-click-info <{ id -- #t }>
   doc" A mix-click-hook function that describes a mix and its properties.\n\
-mix-click-hook <'> mix-click-info add-hook!"
+mix-click-hook <'> mix-click-info add-hook!."
   id mix-home 0 array-ref { mid }
-  id mix-name empty? if "" else $"  (%S)" #( id mix-name ) string-format then { mname }
-  $"        mix id: %s%s\n" #( id mname ) string-format make-string-output-port { prt }
-  prt $"      position: %d (%.3f secs)\n" #( id mix-position dup mid srate f/ ) port-puts-format
-  prt $"        length: %d (%.3f secs)\n" #( id mix-length   dup mid srate f/ ) port-puts-format
-  prt $"            in: %s[%d]\n" #( mid short-file-name id mix-home 1 array-ref ) port-puts-format
-  prt $"        scaler: %s\n"   #( id mix-amp )     port-puts-format
-  prt $"         speed: %.3f\n" #( id mix-speed )   port-puts-format
-  prt $"           env: %s\n"   #( id mix-amp-env ) port-puts-format
+  id mix-name empty? if "" else " (%S)" #( id mix-name ) string-format then { mname }
+  "       mix id: %s%s\n" #( id mname ) string-format make-string-output-port { prt }
+  prt "     position: %d (%.3f secs)\n" #( id mix-position dup mid srate f/ ) port-puts-format
+  prt "       length: %d (%.3f secs)\n" #( id mix-length   dup mid srate f/ ) port-puts-format
+  prt "           in: %s[%d]\n" #( mid short-file-name id mix-home 1 array-ref ) port-puts-format
+  prt "       scaler: %s\n"   #( id mix-amp )     port-puts-format
+  prt "        speed: %.3f\n" #( id mix-speed )   port-puts-format
+  prt "          env: %s\n"   #( id mix-amp-env ) port-puts-format
   id mix-properties { props }
-  props empty? unless prt $"    properties: %s\n" #( props ) port-puts-format then
-  $" Mix info" prt port->string info-dialog drop
+  props empty? unless prt "   properties: %s\n" #( props ) port-puts-format then
+  "Mix info" prt port->string info-dialog drop
   #t
 ;
 \ mix-click-hook <'> mix-click-info add-hook!
@@ -161,7 +160,7 @@ mix-click-hook <'> mix-click-info add-hook!"
 \ ;;; -------- mix-name->id
 
 : mix-name->id { name -- mx }
-  doc" Returns the mix id associated with NAME."
+  doc" Return the mix id associated with NAME."
   #f
   sounds each { snd }
     snd channels 0 do
@@ -213,7 +212,7 @@ set-current
 previous
 
 : transpose-mixes ( mix-list semitones -- )
-  doc" Transposes each mix in mix-list by semitones."
+  doc" Transpose each mix in mix-list by semitones."
   12.0 f/ 2.0 swap f** src-mixes
 ;
 

@@ -1,9 +1,8 @@
-\ spectr.fs -- spectr.cl --> spectr.fs -*- snd-forth -*-
-
+\ spectr.fs -- spectr.cl --> spectr.fs
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Nov 18 15:26:46 CET 2004
-\ Changed: Fri Dec 12 00:57:33 CET 2008
+\ Changed: Fri Mar 23 22:51:31 CET 2012
 
 \ Commentary:
 

@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Sat Feb 19 17:27:17 CET 2011
+\ Changed: Tue Apr 17 02:39:57 CEST 2012
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )
@@ -37,6 +37,7 @@ require examp
      exit-hook
      graph-hook
      help-hook
+     info-popup-hook
      initial-graph-hook
      key-press-hook
      lisp-graph-hook
@@ -91,7 +92,7 @@ require examp
 [then] constant snd-hooks
 
 : reset-all-hooks ( -- )
-  doc" Removes all Snd hook functions."
+  doc" Remove all Snd hook functions."
   snd-hooks each ( hook ) dup hook? if reset-hook! else drop then end-each
   nil nil nil { lst snd chn }
   all-chans each to lst
@@ -104,11 +105,11 @@ require examp
 ;
 
 : with-local-hook <{ hook local-hook-procs thunk -- }>
-  doc" Evaluates THUNK (an xt) with HOOK set to LOCAL-HOOK-PROCS (an array of procs), \
+  doc" Evaluate THUNK (an xt) with HOOK set to LOCAL-HOOK-PROCS (an array of procs), \
 then restores HOOK to its previous state."
-  hook hook?              hook             1 $" a hook"       assert-type
-  local-hook-procs array? local-hook-procs 2 $" a array"      assert-type
-  thunk word?             thunk            3 $" a proc or xt" assert-type
+  hook hook?              hook             1 "a hook"       assert-type
+  local-hook-procs array? local-hook-procs 2 "a array"      assert-type
+  thunk word?             thunk            3 "a proc or xt" assert-type
   hook hook->array { old-procs }
   hook reset-hook!
   local-hook-procs each ( proc ) hook swap add-hook! end-each

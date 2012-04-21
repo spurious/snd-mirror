@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ env.fs -- env.scm -> env.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Wed Oct 14 00:11:58 CEST 2009
+\ Changed: Tue Apr 17 02:37:44 CEST 2012
 
 \ Commentary:
 \
@@ -42,18 +41,18 @@
 require clm
 
 : envelope? ( obj -- f )
-  doc" Returns #t if OBJ is a vct or an array with even length and length >= 2."
+  doc" Return #t if OBJ is a vct or an array with even length and length >= 2."
   ( obj ) length dup 2 mod 0= swap 2 >= &&
 ;
 <'> object-copy alias envelope-copy
-<'> envelope-copy $" ( en1 -- en2 )  Copies EN1 which may be a vct, or an array." help-set!
+<'> envelope-copy "( en1 -- en2 )  Copy EN1, which may be a vct or an array." help-set!
 
 \ ;;; -------- envelope-interp
 
 : envelope-interp <{ x en :optional base 1.0 -- r }>
-  doc" Returns value of ENV at X; BASE controls connecting segment type; \
+  doc" Return value of ENV at X; BASE controls connecting segment type; \
 ENV may be a vct, or an array:\n\
-0.3 #( 0.0 0.0 0.5 1.0 1.0 0.0 ) 1.0 envelope-interp => 0.6"
+0.3 #( 0.0 0.0 0.5 1.0 1.0 0.0 ) 1.0 envelope-interp => 0.6."
   en empty? if
     0.0
   else
@@ -83,16 +82,17 @@ ENV may be a vct, or an array:\n\
     then
   then
 ;
+
 : interp ( x env -- r )
-  doc" 0.3 #( 0.0 0.0 0.5 1.0 1.0 0.0 ) interp => 0.6"
+  doc" 0.3 #( 0.0 0.0 0.5 1.0 1.0 0.0 ) interp => 0.6."
   1.0 envelope-interp
 ;
 
 \ ;;; -------- window-envelope (a kinda brute-force translation from the CL version in env.lisp)
 
 : window-envelope ( beg end en1 -- en2 )
-  doc" Returns portion of EN1 lying between x axis values BEG and END:\n\
-1.0 3.0 #( 0.0 0.0 5.0 1.0 ) window-envelope => #( 1.0 0.2 3.0 0.6 )"
+  doc" Return portion of EN1 lying between x axis values BEG and END:\n\
+1.0 3.0 #( 0.0 0.0 5.0 1.0 ) window-envelope => #( 1.0 0.2 3.0 0.6 )."
   { beg end en1 }
   #() { en2 }
   en1 length 1 > if en1 1 array-ref else 0.0 then { lasty }
@@ -159,8 +159,9 @@ hide
   en
 ;
 set-current
+
 : map-envelopes ( en1 en2 xt -- en3 )
-  doc" Maps XT over the breakpoints in EN1 and EN2 returning a new envelope."
+  doc" Map XT over the breakpoints in EN1 and EN2 returning a new envelope."
   { en1 en2 xt }
   #() { xs }
   #() { en3 }
@@ -191,12 +192,13 @@ previous
 \ ;;; -------- multiply-envelopes, add-envelopes
 
 : add-envelopes ( env1 env2 -- env3 )
-  doc" Adds break-points of ENV1 and ENV2 returning a new envelope."
+  doc" Add break-points of ENV1 and ENV2 returning a new envelope."
   <'> f+ map-envelopes
 ;
+
 : multiply-envelopes ( env1 env2 -- env3 )
-  doc" Multiplies break-points of ENV1 and ENV2 returning a new envelope:\n\
-#( 0 0 2 0.5 ) #( 0 0 1 2 2 1 ) multiply-envelopes => #( 0.0 0.0 0.5 0.5 1.0 0.5 )"
+  doc" Multiply break-points of ENV1 and ENV2 returning a new envelope:\n\
+#( 0 0 2 0.5 ) #( 0 0 1 2 2 1 ) multiply-envelopes => #( 0.0 0.0 0.5 0.5 1.0 0.5 )."
   <'> f* map-envelopes
 ;
 <'> add-envelopes      alias envelopes+
@@ -205,7 +207,7 @@ previous
 \ ;;; -------- max-envelope
 
 : max-envelope ( en -- r )
-  doc" Returns max y value in EN."
+  doc" Return max y value in EN."
   { en }
   en 1 object-ref en length 1 ?do en i object-ref fmax 2 +loop
 ;
@@ -213,7 +215,7 @@ previous
 \ ;;; -------- min-envelope
 
 : min-envelope ( en -- r )
-  doc" Returns min y value in EN."
+  doc" Return min y value in EN."
   { en }
   en 1 object-ref en length 1 ?do en i object-ref fmin 2 +loop
 ;
@@ -229,22 +231,23 @@ previous
   2 +loop
   ( sum )
 ;
+
 : envelope-length ( en -- n )
-  doc" Returns number of points in EN."
+  doc" Return number of points in EN."
   length 2/
 ;
 
 \ ;;; -------- envelope-last-x
 
 : envelope-last-x ( en -- r )
-  doc" Returns max x axis break point position"
+  doc" Return max x axis break point position."
   -2 object-ref
 ;
 
 \ ;;; -------- stretch-envelope
 
 : stretch-envelope <{ fn old-attack new-attack :optional old-decay #f new-decay #f -- new-env }>
-  doc" Takes ENV and returns a new envelope based on it \
+  doc" Take ENV and returns a new envelope based on it \
 but with the attack and optionally decay portions stretched or squeezed; \
 OLD-ATTACK is the original x axis attack end point, \
 NEW-ATTACK is where that section should end in the new envelope.  \
@@ -252,10 +255,10 @@ Similarly for OLD-DECAY and NEW-DECAY.  \
 This mimics divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).  \
 ENV may be a vct, or an array.\n\
 #( 0 0 1 1 )     0.1 0.2         stretch-envelope => #( 0 0 0.2 0.1 1 1 )\n\
-#( 0 0 1 1 2 0 ) 0.1 0.2 1.5 1.6 stretch-envelope => #( 0 0 0.2 0.1 1.1 1 1.6 0.5 2 0 )"
+#( 0 0 1 1 2 0 ) 0.1 0.2 1.5 1.6 stretch-envelope => #( 0 0 0.2 0.1 1.1 1 1.6 0.5 2 0 )."
   old-decay new-decay not && if
     'argument-error
-    #( get-func-name $" old-decay, %s, but no new-decay, %s?" #( old-decay new-decay ) 5 )
+    #( get-func-name "old-decay, %s, but no new-decay, %s?" #( old-decay new-decay ) 5 )
     fth-throw
   then
   fn length { len }
@@ -317,7 +320,7 @@ ENV may be a vct, or an array.\n\
 \ ;;; -------- scale-envelope
 
 : scale-envelope <{ en scl :optional offset 0 -- new-en }>
-  doc" Scales y axis values by SCL and optionally adds OFFSET.  \
+  doc" Scale y axis values by SCL and optionally adds OFFSET.  \
 EN may be a list, a vct, or an array."
   en map *key* i 2 mod if scl f* offset f+ then end-map ( new-en )
 ;
@@ -325,7 +328,7 @@ EN may be a list, a vct, or an array."
 \ ;;; -------- reverse-envelope
 
 : reverse-envelope ( en1 -- en2 )
-  doc" Reverses the breakpoints in EN1."
+  doc" Reverse the breakpoints in EN1."
   { en1 }
   en1 length { size }
   en1 envelope-copy { en2 }
@@ -342,7 +345,7 @@ EN may be a list, a vct, or an array."
 \ ;;; -------- envelope-concatenate from clm/env.lisp
 
 : envelope-concatenate ( en1 ... enn n -- ne )
-  doc" Concatenates N envelopes into a new envelope (from clm/env.lisp)."
+  doc" Concatenate N envelopes into a new envelope (from clm/env.lisp)."
   >array { envs }
   envs object-length 1 = if
     envs 0 array-ref
@@ -365,7 +368,7 @@ EN may be a list, a vct, or an array."
 \ ;;; -------- concatenate-envelopes from snd/env.scm
 
 : concatenate-envelopes ( en1 ... enn n -- ne )
-  doc" Concatenates N envelopes into a new envelope (from snd/env.scm)."
+  doc" Concatenate N envelopes into a new envelope (from snd/env.scm)."
   >array { envs }
   envs object-length 1 = if
     envs 0 array-ref
@@ -398,7 +401,7 @@ EN may be a list, a vct, or an array."
 \ ;;; -------- repeat-envelope
 
 : repeat-envelope <{ ur-env repeats :optional reflected #f normalized #f -- en }>
-  doc" repeats UR-ENV REPEATS times.\n\
+  doc" Repeat UR-ENV REPEATS times.\n\
 #( 0 0 100 1 ) 2 repeat-envelope => #( 0 0 100 1 101 0 201 1 )\n\
 If the final y value is different from the first y value, \
 a quick ramp is inserted between repeats.  \
@@ -494,6 +497,7 @@ REFLECTED causes every other repetition to be in reverse."
     beg
   ;
   set-current
+
   : power-env-channel <{ pe
        :optional beg 0 dur #f snd #f chn #f edpos #f edname "power-env-channel" -- curbeg }>
     pe beg snd chn edpos pec-cb edname as-one-edit
@@ -533,13 +537,14 @@ REFLECTED causes every other repetition to be in reverse."
     base
   ;
   set-current
+
   : powenv-channel <{ envelope :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
     \ ;; envelope with a separate base for each segment:
     \ #( 0 0 0.325  1 1 32.0 2 0 32.0 ) powenv-channel
     envelope length 3 = if
       envelope 1 array-ref beg dur snd chn edpos scale-channel
     else
-      $" %s %s %s %s" #( envelope beg dur get-func-name ) string-format { origin }
+      "%s %s %s %s" #( envelope beg dur get-func-name ) string-format { origin }
       envelope beg dur snd chn edpos powc-cb origin as-one-edit
     then
   ;
@@ -627,7 +632,7 @@ REFLECTED causes every other repetition to be in reverse."
 \ ;;; -------- normalize-envelope
 
 : normalize-envelope <{ en1 :optional new-max 1.0 -- en2 }>
-  doc" Scales envelope by NEW-MAX / max-envelope(EN1)."
+  doc" Scale envelope by NEW-MAX / max-envelope(EN1)."
   en1 second-ref en1 length 1 ?do en1 i object-ref fabs fmax 2 +loop { peak }
   en1 new-max peak f/ 0.0 scale-envelope
 ;

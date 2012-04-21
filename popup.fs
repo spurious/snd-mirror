@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ popup.fs -- popup.scm|rb --> popup.fs
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Thu Oct 21 12:17:07 CEST 2010
+\ Changed: Tue Apr 17 02:18:10 CEST 2012
 
 \ Commentary:
 
@@ -42,14 +41,14 @@ require extensions
 
 \ for prefs
 : edhist-help-edits <{ w c info  -- }>
-  $" Edit History Functions"
-  $" This popup menu gives access to the edit-list function handlers in Snd.  \
+  "Edit History Functions"
+  "This popup menu gives access to the edit-list function handlers in Snd.  \
 At any time you can backup in the edit list, 'save' the current trailing edits, make some \
 new set of edits, then 'reapply' the saved edits.  The 'apply' choice gives access to all \
 currently saved edit lists -- any such list can be applied to any channel.  'Clear' deletes \
 all saved edit lists."
-  #( $" {edit lists}" $" {edit-list->function}" )
-  #( $" extsnd.html#editlists" $" extsnd.html#editlist_to_function" )
+  #( "{edit lists}" "{edit-list->function}" )
+  #( "extsnd.html#editlists" "extsnd.html#editlist_to_function" )
   help-dialog drop
 ;
 
@@ -291,7 +290,7 @@ hide
     vars :stopping #f array-assoc-set!
     ( vars ) :stopping1 array-assoc-ref if
       vars   :stopping1 #f array-assoc-set!
-      ( vars ) :stop-widget1 array-assoc-ref $" Loop play" change-label
+      ( vars ) :stop-widget1 array-assoc-ref "Loop play" change-label
       stop-playing-selection-hook <'> sel-play-again-cb remove-hook! drop
     then
     undef stop-playing drop
@@ -308,7 +307,7 @@ hide
  does> { w c info self -- }
   self @ { vars }
   vars :stopping1 array-assoc-ref if
-    w $" Loop play" change-label
+    w "Loop play" change-label
     vars :stopping1 #f array-assoc-set!
     ( vars ) :stopping array-assoc-ref if
       vars :stopping #f array-assoc-set!
@@ -375,12 +374,12 @@ hide
 : sel-info <{ w c info -- val }>
   #f #f selection-position { beg }
   #f #f selection-frames   { len }
-  $"     start: %d, %.3f\n" #( beg beg #f srate f/ ) string-format { str }
-  $"       end: %d, %.3f\n" #( beg len + dup #f srate f/ ) string-format str swap << to str
-  $"  duration: %d, %.3f\n" #( len len #f srate f/ ) string-format str swap << to str
-  $"     chans: %d\n" selection-chans string-format str swap << to str
-  $"    maxamp: %.3f\n" #f #f selection-maxamp string-format str swap << to str
-  $" Selection Info" str info-dialog drop
+  "    start: %d, %.3f\n" #( beg beg #f srate f/ ) string-format { str }
+  "      end: %d, %.3f\n" #( beg len + dup #f srate f/ ) string-format str swap << to str
+  " duration: %d, %.3f\n" #( len len #f srate f/ ) string-format str swap << to str
+  "    chans: %d\n" selection-chans string-format str swap << to str
+  "   maxamp: %.3f\n" #f #f selection-maxamp string-format str swap << to str
+  "Selection Info" str info-dialog drop
 ;
 
 \ choice 2 == selection
@@ -395,24 +394,24 @@ let: ( -- menu )
   #a( :stopping #f :stopping1 #f :stop-widget #f :stop-widget1 #f ) { vars }
   stop-playing-selection-hook vars sel-stop-play-cb add-hook!
   "selection-popup" main-widgets 2 array-ref
-  #( #( $" Selection"        'label     #f               #f )
-     #( $" sep"              'separator #f               #f )
-     #( $" Play"             #f         vars sel-play-cb #f )
-     #( $" Loop play"        #f         vars sel-loop-cb #f )
-     #( $" Delete"           #f         <'> sel-del      #f )
-     #( $" Zero"             #f         <'> sel-zero     #f )
-     #( $" Crop"             #f         <'> sel-crop     #f )
-     #( $" Save as"          #f         <'> sel-save-as  #f )
-     #( $" Copy->New"        #f         <'> sel-copy     #f )
-     #( $" Cut->New"         #f         <'> sel-cut      #f )
-     #( $" Snap marks"       #f         <'> sel-marks    #f )
-     #( $" Selection Info"   #f         <'> sel-info     #f )
-     #( $" Apply controls"   #f         <'> sel-appcnt   #f )
-     #( $" Reset controls"   #f         <'> sel-rescnt   #f )
-     #( $" Unselect"         #f         <'> sel-unsel    #f )
-     #( $" Reverse"          #f         <'> sel-rev      #f )
-     #( $" Mix"              #f         <'> sel-mix      #f )
-     #( $" Invert"           #f         <'> sel-invert   #f ) ) make-popup-menu
+  #( #( "Selection"        'label     #f               #f )
+     #( "sep"              'separator #f               #f )
+     #( "Play"             #f         vars sel-play-cb #f )
+     #( "Loop play"        #f         vars sel-loop-cb #f )
+     #( "Delete"           #f         <'> sel-del      #f )
+     #( "Zero"             #f         <'> sel-zero     #f )
+     #( "Crop"             #f         <'> sel-crop     #f )
+     #( "Save as"          #f         <'> sel-save-as  #f )
+     #( "Copy->New"        #f         <'> sel-copy     #f )
+     #( "Cut->New"         #f         <'> sel-cut      #f )
+     #( "Snap marks"       #f         <'> sel-marks    #f )
+     #( "Selection Info"   #f         <'> sel-info     #f )
+     #( "Apply controls"   #f         <'> sel-appcnt   #f )
+     #( "Reset controls"   #f         <'> sel-rescnt   #f )
+     #( "Unselect"         #f         <'> sel-unsel    #f )
+     #( "Reverse"          #f         <'> sel-rev      #f )
+     #( "Mix"              #f         <'> sel-mix      #f )
+     #( "Invert"           #f         <'> sel-invert   #f ) ) make-popup-menu
 ;let constant selection-popup-menu
 
 \ --- time domain popup ---
@@ -533,7 +532,7 @@ let: ( -- menu )
   3 set-object-print-length
   3 set-print-length drop
   props each { prop }			\ ( key . val )
-    str  $"   %s:  %s\n" #( prop 0 array-ref prop 1 array-ref ) string-format << to str
+    str  "  %s:  %s\n" #( prop 0 array-ref prop 1 array-ref ) string-format << to str
   end-each
   old-len       set-object-print-length
   old-vct-len   set-print-length drop
@@ -545,23 +544,23 @@ let: ( -- menu )
   graph-popup-chn { chn }
   snd chn #f frames { frms }
   snd srate { sr }
-  $"    chans: %d, srate: %d\n"     #( snd channels sr ) string-format { str }
-  $"   format: %s [%s]\n"
+  "   chans: %d, srate: %d\n"     #( snd channels sr ) string-format { str }
+  "  format: %s [%s]\n"
   #( snd data-format mus-data-format-name snd header-type mus-header-type-name )
   string-format str swap << to str
-  $"   length: %.3f  (%d frames)\n" #( frms sr f/ frms ) string-format str swap << to str
+  "  length: %.3f  (%d frames)\n" #( frms sr f/ frms ) string-format str swap << to str
   snd #t #f maxamp each { mx }
-    $" %6s %c: %.3f\n" #( "maxamp" [char] A i + mx ) string-format str swap << to str
+    "%6s %c: %.3f\n" #( "maxamp" [char] A i + mx ) string-format str swap << to str
   end-each
   snd comment empty? unless
-    $"  comment: %S\n" #( snd comment )            string-format str swap << to str
+    " comment: %S\n" #( snd comment )            string-format str swap << to str
   then
   snd file-name mus-sound-loop-info { loops }
   loops nil? unless
-    $"     loop: %s\n"     #( loops )              string-format str swap << to str
+    "    loop: %s\n"     #( loops )              string-format str swap << to str
   then
   snd header-type mus-soundfont = if
-    $"   sounds: %s\n"     #( snd soundfont-info ) string-format str swap << to str
+    "  sounds: %s\n"     #( snd soundfont-info ) string-format str swap << to str
   then
   snd sound-properties { props }
   props nil? unless
@@ -571,11 +570,11 @@ let: ( -- menu )
   snd channels 0 ?do
     snd i channel-properties to props
     props nil? unless
-      $" chan %d properties:\n" #( i ) string-format str swap << to str
+      "chan %d properties:\n" #( i ) string-format str swap << to str
       str props print-props << to str
     then
   loop
-  snd file-name $"  info" $+ str info-dialog
+  snd file-name " info" $+ str info-dialog
 ;
 
 : paddmrk-cb <{ w c info -- val }>
@@ -620,36 +619,36 @@ let: ( -- menu )
   #a( :stopping #f :stop-widget #f ) { vars }
   stop-playing-hook vars stop-playing-cb add-hook!
   "graph-popup" main-widgets 2 array-ref
-  #( #( $" Snd"              'label       #f              #f )
-     #( $" sep"              'separator   #f              #f )
-     #( $" Play"             #f         vars play-cb    vars stop-cb )
-     #( $" Play channel"     #f         vars pchan-cb   #f )
-     #( $" Play from cursor" #f         vars pcur-cb    #f )
-     #( $" Play previous"    #f         vars pprev-cb   #f )
-     #( $" Play original"    #f         vars porig-cb   #f )
-     #( $" Undo"             #f         <'> pundo-cb    #f )
-     #( $" Redo"             #f         <'> predo-cb    #f )
-     #( $" Revert"           #f         <'> prev-cb     #f )
-     #( $" Open"             #f         <'> popen-cb    #f )
-     #( $" Save"             #f         <'> psave-cb    #f )
-     #( $" Save as"          #f         <'> psaveas-cb  #f )
-     #( $" Update"           #f         <'> pupdate-cb  #f )
-     #( $" Close"            #f         <'> pclose-cb   #f )
-     #( $" Mix selection"    #f         <'> pmixsel-cb  #f )
-     #( $" Insert selection" #f         <'> pinssel-cb  #f )
-     #( $" Replace with selection" #f   <'> prepsel-cb  #f )
-     #( $" Select all"       #f         <'> pselall-cb  #f )
-     #( $" Unselect"         #f         <'> punsel-cb   #f )
-     #( $" Apply controls"   #f         <'> papcnt-cb   #f )
-     #( $" Reset controls"   #f         <'> precnt-cb   #f )
-     #( $" Info"             #f         <'> pinfo-cb    #f )
-     #( $" Add mark"         #f         <'> paddmrk-cb  #f )
-     #( $" Delete mark"      #f         <'> pdelmrk-cb  #f )
-     #( $" Delete all marks" #f         <'> pdelamrk-cb #f )
-     #( $" To next mark"     #f         <'> pnextmrk-cb #f )
-     #( $" To last mark"     #f         <'> plastmrk-cb #f )
-     #( $" sep"              'separator #f              #f )
-     #( $" Exit"             #f         <'> exit-cb     #f ) ) make-popup-menu
+  #( #( "Snd"              'label       #f              #f )
+     #( "sep"              'separator   #f              #f )
+     #( "Play"             #f         vars play-cb    vars stop-cb )
+     #( "Play channel"     #f         vars pchan-cb   #f )
+     #( "Play from cursor" #f         vars pcur-cb    #f )
+     #( "Play previous"    #f         vars pprev-cb   #f )
+     #( "Play original"    #f         vars porig-cb   #f )
+     #( "Undo"             #f         <'> pundo-cb    #f )
+     #( "Redo"             #f         <'> predo-cb    #f )
+     #( "Revert"           #f         <'> prev-cb     #f )
+     #( "Open"             #f         <'> popen-cb    #f )
+     #( "Save"             #f         <'> psave-cb    #f )
+     #( "Save as"          #f         <'> psaveas-cb  #f )
+     #( "Update"           #f         <'> pupdate-cb  #f )
+     #( "Close"            #f         <'> pclose-cb   #f )
+     #( "Mix selection"    #f         <'> pmixsel-cb  #f )
+     #( "Insert selection" #f         <'> pinssel-cb  #f )
+     #( "Replace with selection" #f   <'> prepsel-cb  #f )
+     #( "Select all"       #f         <'> pselall-cb  #f )
+     #( "Unselect"         #f         <'> punsel-cb   #f )
+     #( "Apply controls"   #f         <'> papcnt-cb   #f )
+     #( "Reset controls"   #f         <'> precnt-cb   #f )
+     #( "Info"             #f         <'> pinfo-cb    #f )
+     #( "Add mark"         #f         <'> paddmrk-cb  #f )
+     #( "Delete mark"      #f         <'> pdelmrk-cb  #f )
+     #( "Delete all marks" #f         <'> pdelamrk-cb #f )
+     #( "To next mark"     #f         <'> pnextmrk-cb #f )
+     #( "To last mark"     #f         <'> plastmrk-cb #f )
+     #( "sep"              'separator #f              #f )
+     #( "Exit"             #f         <'> exit-cb     #f ) ) make-popup-menu
 ;let constant graph-popup-menu
 
 : graph-popup-cb { snd chn -- prc; w self -- }
@@ -659,41 +658,41 @@ let: ( -- menu )
   self cell+ @   { snd }
   snd chn edits  { eds }
   w widget->name { name }
-  name $" Snd" string= if
+  name "Snd" string= if
     snd channels 1 > if
-      $" %s[%d]" #( snd short-file-name chn ) string-format w swap change-label
+      "%s[%d]" #( snd short-file-name chn ) string-format w swap change-label
     else
       w snd short-file-name change-label
     then
   else
-    name $" Save"          string=
-    name $" Undo"          string= ||
-    name $" Revert"        string= ||
-    name $" Play previous" string= || if
+    name "Save"          string=
+    name "Undo"          string= ||
+    name "Revert"        string= ||
+    name "Play previous" string= || if
       w eds 0 array-ref 0> if show-widget else hide-widget then drop
     else
-      name $" Play channel" string= if
+      name "Play channel" string= if
 	w snd channels 1 > if show-widget else hide-widget then drop
       else
-	name $" Redo" string= if
+	name "Redo" string= if
 	  w eds 1 array-ref 0> if show-widget else hide-widget then drop
 	else
-	  name $" Mix selection"          string=
-	  name $" Insert selection"       string= ||
-	  name $" Unselect"               string= ||
-	  name $" Replace with selection" string= || if
+	  name "Mix selection"          string=
+	  name "Insert selection"       string= ||
+	  name "Unselect"               string= ||
+	  name "Replace with selection" string= || if
 	    w undef selection? if show-widget else hide-widget then drop
 	  else
-	    name $" Play from cursor" string= if
+	    name "Play from cursor" string= if
 	      w snd chn #f cursor 0> if show-widget else hide-widget then drop
 	    else
-	      name $" Play original" string= if
+	      name "Play original" string= if
 		w eds 0 array-ref 1 > if show-widget else hide-widget then drop
 	      else
-		name $" Delete mark"       string=
-		name $" Delete all marks"  string= ||
-		name $" To next mark"      string= ||
-		name $" To last mark"      string= || if
+		name "Delete mark"       string=
+		name "Delete all marks"  string= ||
+		name "To next mark"      string= ||
+		name "To last mark"      string= || if
 		  w snd chn #f marks nil? unless show-widget else hide-widget then drop
 		then
 	      then
@@ -899,19 +898,19 @@ let: ( -- menu )
 : fft-color <{ w c info -- val }> #t color-orientation-dialog ;
 
 let: ( -- menu )
-  $" fft-popup" main-widgets 2 array-ref
-  #( #( $" Transform"        'label     #f               #f )
-     #( $" sep"              'separator #f               #f )
-     #( $" Peaks"            #f         <'> fft-peaks-cb #f )
-     #( $" dB"               #f         <'> fft-db-cb    #f )
-     #( $" Log freq"         #f         <'> fft-frq-cb   #f )
-     #( $" Normalize"        #f         <'> fft-norm-cb  #f )
-     #( $" Graph type"       'cascade   grp-labs         <'> grp-set )
-     #( $" Size"             'cascade   siz-labs         <'> siz-set )
-     #( $" Window"           'cascade   win-labs         <'> win-set )
-     #( $" Transform type"   'cascade   trn-labs         <'> trn-set )
-     #( $" Wavelet type"     'cascade   typ-labs         <'> typ-set )
-     #( $" Color/Orientation" #f        <'> fft-color    #f ) ) make-popup-menu
+  "fft-popup" main-widgets 2 array-ref
+  #( #( "Transform"        'label     #f               #f )
+     #( "sep"              'separator #f               #f )
+     #( "Peaks"            #f         <'> fft-peaks-cb #f )
+     #( "dB"               #f         <'> fft-db-cb    #f )
+     #( "Log freq"         #f         <'> fft-frq-cb   #f )
+     #( "Normalize"        #f         <'> fft-norm-cb  #f )
+     #( "Graph type"       'cascade   grp-labs         <'> grp-set )
+     #( "Size"             'cascade   siz-labs         <'> siz-set )
+     #( "Window"           'cascade   win-labs         <'> win-set )
+     #( "Transform type"   'cascade   trn-labs         <'> trn-set )
+     #( "Wavelet type"     'cascade   typ-labs         <'> typ-set )
+     #( "Color/Orientation" #f        <'> fft-color    #f ) ) make-popup-menu
 ;let constant fft-popup-menu
 
 : fft-popup-cb { snd chn -- prc; w self -- }
@@ -920,14 +919,14 @@ let: ( -- menu )
   self       @   { chn }
   self cell+ @   { snd }
   w widget->name { name }
-  name $" Peaks" string= if
-    w snd chn show-transform-peaks if $" No peaks" else $" Peaks" then change-label
+  name "Peaks" string= if
+    w snd chn show-transform-peaks if "No peaks" else "Peaks" then change-label
   else
-    name $" dB" string= if
-      w snd chn fft-log-magnitude if $" Linear" else $" dB" then change-label
+    name "dB" string= if
+      w snd chn fft-log-magnitude if "Linear" else "dB" then change-label
     else
-      name $" Log freq" string= if
-	w snd chn fft-log-frequency if $" Linear freq" else $" Log freq" then change-label
+      name "Log freq" string= if
+	w snd chn fft-log-frequency if "Linear freq" else "Log freq" then change-label
       then
     then
   then
@@ -1012,7 +1011,7 @@ let: ( -- menu )
   ;
 [else]
   \ --- edit history popup ---
-  1 $" edhist-save-edits calls it with PROC as its only argument." create-hook edhist-save-hook
+  1 "edhist-save-edits calls it with PROC as its only argument." create-hook edhist-save-hook
 
   #() value edhist-funcs
   #() value edhist-widgets
@@ -1053,7 +1052,7 @@ let: ( -- menu )
     edhist-funcs each 0 array-ref { label }
       nil { button }
       wids nil? if
-	$" wid" FxmPushButtonWidgetClass parent
+	"wid" FxmPushButtonWidgetClass parent
 	#( FXmNbackground highlight-color ) undef FXtCreateManagedWidget to button
 	edhist-widgets #( button ) array-append to edhist-widgets
 	button FXmNactivateCallback <'> edhist-apply i FXtAddCallback drop
@@ -1064,7 +1063,7 @@ let: ( -- menu )
       then
       label array? if
 	\ label: #(snd chn)
-	button  $" %s[%s]" #(
+	button  "%s[%s]" #(
 	   label 0 array-ref short-file-name
 	   label 1 array-ref ) format change-label
       else
@@ -1080,7 +1079,7 @@ let: ( -- menu )
     snd channels 0 ?do
       edhist-funcs #( snd i ) array-assoc { old-val }
       old-val array? if
-	old-val  0  $" %s[%d]" #( snd short-file-name i ) string-format array-set!
+	old-val  0  "%s[%d]" #( snd short-file-name i ) string-format array-set!
       then
     loop
   ;
@@ -1186,7 +1185,7 @@ let: ( -- menu )
   : listener-edit <{ w -- }>
     w FXtName "Help" string= if
       listener-selection ?dup-if
-	1 >list w $" Help on %S" rot string-format change-label
+	1 >list w "Help on %S" rot string-format change-label
 	w FXtManageChild drop
       else
 	w FXtUnmanageChild drop
@@ -1226,18 +1225,18 @@ let: ( -- menu )
       main-widgets 4 array-ref
     then { parent }
     "listener-popup" parent
-    #( #( $" Listener" 	     'label     #f           	       #f )
-       #( $" sep"      	     'separator #f           	       #f )
-       #( $" Play"     	     'cascade   <'> list-play-cb       <'> identity-cb #t )
-       #( $" Help"           #f         <'> list-help-cb       #f )
-       #( $" Open"     	     #f         <'> popen-cb           #f )
-       #( $" Clear listener" #f         <'> list-clear-cb      #f )
-       #( $" Close"    	     'cascade   <'> close-sound-extend <'> identity-cb #t )
-       #( $" Save"     	     'cascade   <'> save-sound         <'> edited-cb   #t )
-       #( $" Revert"   	     'cascade   <'> revert-sound       <'> edited-cb   #t )
-       #( $" Focus"          'cascade   <'> list-focus-cb      <'> focused-cb  #f )
-       #( $" sep"            'separator #f                     #f )
-       #( $" Exit"           #f         <'> exit-cb            #f ) ) make-popup-menu { menu }
+    #( #( "Listener" 	   'label     #f        	     #f )
+       #( "sep"      	   'separator #f           	     #f )
+       #( "Play"     	   'cascade   <'> list-play-cb       <'> identity-cb #t )
+       #( "Help"           #f         <'> list-help-cb       #f )
+       #( "Open"     	   #f         <'> popen-cb           #f )
+       #( "Clear listener" #f         <'> list-clear-cb      #f )
+       #( "Close"    	   'cascade   <'> close-sound-extend <'> identity-cb #t )
+       #( "Save"     	   'cascade   <'> save-sound         <'> edited-cb   #t )
+       #( "Revert"   	   'cascade   <'> revert-sound       <'> edited-cb   #t )
+       #( "Focus"          'cascade   <'> list-focus-cb      <'> focused-cb  #f )
+       #( "sep"            'separator #f                     #f )
+       #( "Exit"           #f         <'> exit-cb            #f ) ) make-popup-menu { menu }
     parent FXmNpopupHandlerCallback <'> listener-popup-cb menu FXtAddCallback drop
     menu
   ;let constant listener-popup-menu
@@ -1263,9 +1262,9 @@ let: ( -- menu )
   set-current
 
   : change-menu-color ( menu new-color -- )
-    doc" Changes the color of MENU to NEW-COLOR.  \
-    NEW-COLOR can be the color name, an xm Pixel, a snd color, or a list of rgb values \
-    (as in Snd's make-color)."
+    doc" Change the color of MENU to NEW-COLOR.  \
+NEW-COLOR can be the color name, an xm Pixel, a snd color, or a list of rgb values \
+(as in Snd's make-color)."
     { menu new-color }
     new-color string? if			\ assuming X11 color names here
       main-widgets 1 array-ref { shell }
@@ -1274,7 +1273,7 @@ let: ( -- menu )
       dpy scr FDefaultColormap { cmap }
       FXColor { col }
       dpy cmap new-color col col FXAllocNamedColor 0= if
-	$" can't allocate %S" #( new-color ) string-format snd-error
+	"can't allocate %S" #( new-color ) string-format snd-error
       else
 	col Fpixel
       then
@@ -1288,27 +1287,27 @@ let: ( -- menu )
   ;
 
   : change-selection-popup-color ( new-color -- )
-    doc" Changes the selection popup menu's color: \"red\" change-selection-popup-color"
+    doc" Change the selection popup menu's color: \"red\" change-selection-popup-color."
     selection-popup-menu swap change-menu-color
   ;
 
   : change-graph-popup-color ( new-color -- )
-    doc" Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
+    doc" Change the time-domain popup menu's color: basic-color change-graph-popup-color."
     selection-popup-menu swap change-menu-color
   ;
 
   : change-fft-popup-color ( new-color -- )
-    doc" Changes the fft popup menu's color: #(0.5 0.5 0.5) change-fft-popup-color"
+    doc" Change the fft popup menu's color: #(0.5 0.5 0.5) change-fft-popup-color."
     fft-popup-menu swap change-menu-color
   ;
 
   : change-edhist-popup-color ( new-color -- )
-    doc" Changes the time-domain popup menu's color: basic-color change-graph-popup-color"
+    doc" Change the time-domain popup menu's color: basic-color change-graph-popup-color."
     edit-history-menu swap change-menu-color
   ;
 
   : change-listener-popup-color ( new-color -- )
-    doc" Changes the listener popup menu's color."
+    doc" Change the listener popup menu's color."
     listener-popup-menu swap change-menu-color
   ;
 

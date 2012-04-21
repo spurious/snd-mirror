@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ rgb.fs -- rgb.scm|rb --> rgb.fs
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Aug 18 16:57:43 CEST 2006
-\ Changed: Wed Nov 25 01:22:08 CET 2009
+\ Changed: Fri Mar 23 22:50:07 CET 2012
 
 \ Commentary:
 \

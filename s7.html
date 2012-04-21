@@ -3618,10 +3618,22 @@ is cleaner than call/cc, and much faster.
 		       (if (not (apply func arglist))
 			   (quit #&lt;unspecified&gt;))) 
 	    args))))
+
+(define (find-if f . args)  ; generic position-if is very similar
+  (<em class=red>call-with-exit</em>
+   (lambda (return) 
+     (apply for-each (lambda main-args 
+		       (if (apply f main-args) 
+			   (apply return main-args)))
+	    args))))
+
+&gt; (find-if even? #(1 3 5 2))
+2
+&gt; (* (find-if > #(1 3 5 2) '(2 2 2 3)))
+6
 </pre>
 
-<p>It's unfortunate that if we escape from 'map', we lose whatever
-partial result it has accumulated &mdash; see <a href="#mapwithexit">map-with-exit</a>.
+<p>
 The call-with-exit function's argument (the "continuation") is only valid
 within the call-with-exit function.  In call/cc, you can save it, then call it later
 to jump back, but if you try that with call-with-exit (from outside the call-with-exit function's body), you'll get an error.
@@ -4331,12 +4343,13 @@ send that info to the current-error-port.
 
 <blockquote>
 <div class="indented">
-<p id="mapwithexit">catch is not limited to error handling:
+<p>catch is not limited to error handling:
 </p>
 
 <pre class="indented">
 (define (map-with-exit func . args)
-  ;; func takes escape thunk, then args
+  ;; map, but if early exit taken, return the accumulated partial result
+  ;;   func takes escape thunk, then args
   (let* ((result ())
 	 (escape-tag (gensym))
 	 (escape (lambda () (error escape-tag)))) ; error here = throw
@@ -4360,13 +4373,13 @@ send that info to the current-error-port.
 <p>But this is less useful than map (it can't map over a hash-table for example),
 and is mostly reimplementing built-in code.  Perhaps s7 should have an extension
 of map (and more usefully, for-each) that is patterned after dynamic-wind:
-<code>(for-each init-func main-func end-func . args)</code> where init-func
+<code>(dynamic-for-each init-func main-func end-func . args)</code> where init-func
 is called with one argument, the length of the shortest sequence argument (for-each
 and map know this in advance); main-func takes n arguments where n matches
 the number of sequences passed; and end-func is called even if a jump out of main-func
 occurs (like dynamic-wind in this regard).  In the dynamic-map case, the end-func
 takes one argument, the current, possibly partial, result list.  dynamic-for-each
-then could easily implement generic functions such as -&gt;list, -&gt;vector, and
+then could easily (but maybe not efficiently) implement generic functions such as -&gt;list, -&gt;vector, and
 -&gt;string (converting any sequence into a sequence of some other type).
 map-with-exit would be
 </p>
@@ -4383,8 +4396,6 @@ map-with-exit would be
                args)))
     result))
 </pre>
-<p>That brings up the name "dynamic-wind": wind what? dynamic what? Surely there's a better name out there?
-</p>
 </div>
 </blockquote>
 
@@ -4416,13 +4427,6 @@ additional info about that error:
 (symbol-&gt;value var (*error-info* 5))
 </pre>
 
-<p>To print the stack at the point of the error:
-</p>
-
-<pre class="indented">
-(stacktrace *error-info*)
-</pre>
-
 <p>To list all the local bindings from the error outward:
 </p>
 <pre class="indented">
@@ -4431,7 +4435,9 @@ additional info about that error:
   (format #t "~A~%" (environment-&gt;list e)))
 </pre>
 
-<p>To evaluate the error handler in the environment of the error:
+<p>stacktrace is similar, but I may remove it &mdash; s7 has only a shadowy
+notion of a stack.
+To evaluate the error handler in the environment of the error:
 </p>
 
 <pre class="indented">
@@ -4462,28 +4468,8 @@ the error type and whatever other info accompanies it.
 (set! (hook-functions *error-hook*) (list (lambda (tag args) (apply format #t args))))
 </pre>
 
-<p><em class=def id="stacktrace">stacktrace</em> can be called anytime to see the chain of function calls.  Its optional argument
-can be *error-info* to show the stack at the point of the last error,
-or a continuation to
-show the continuation stack. 
-</p>
-
-<pre class="indented">
-(let ()
-  (define (a1 a) (+ a #\c))
-  (define (a2 b) (+ b (a1 b)))
-  (define (a3 c) (+ c (a2 c)))
-  (catch #t
-    (lambda () (a3 1))
-    (lambda args (<em class=red>stacktrace</em> *error-info*))))
-
-(a1 (a . 1))
-(a2 (b . 1))
-(a3 (c . 1))
-</pre>
-
 <p>
-See also trace below.  There is a break macro defined in Snd (snd-xen.c)
+There is a break macro defined in Snd (snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
 </p>
 
@@ -4874,6 +4860,8 @@ some other thing, they satisfy the function morally-equal?.
 #t                              ; floating-point epsilon here is 1.0e-15 or thereabouts
 &gt; (morally-equal? 0.0 1e-300)
 #t
+&gt; (morally-equal? 0.0 1e-14)
+#f                              ; its not always #t!
 &gt; (morally-equal? (lambda () #f) (lambda () #f))
 #t
 </pre>
@@ -5364,7 +5352,7 @@ know if you need it.  The issue is purely one of speed.
 and it can contain both definitions and expressions.  These are evaluated in the order
 in which they occur, and in the environment at the point of the evaluation.  I think
 of it as being a little REPL.  begin does not introduce a new frame in
-the current environment, so defines happen at the enclosing level.
+the current environment, so defines happen in the enclosing environment.
 </p>
 
 <pre class="indented">

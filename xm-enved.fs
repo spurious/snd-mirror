@@ -1,18 +1,17 @@
-\ -*- snd-forth -*-
 \ xm-enved.fs -- xm-enved.scm -> xm-enved.fs
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Sat Jul 30 18:31:47 CEST 2011
+\ Changed: Tue Apr 17 02:24:52 CEST 2012
 
 \ Commentary:
 \
 \ Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 \
 \ Tested with Snd 12.x
-\             Fth 1.2.x
-\             Motif 2.3.0 X11R6
-\             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+\             Fth 1.3.x
+\             Motif 2.3.3 X11R6
+\             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \
 \ This is an example of an object type written in Forth.
 \
@@ -47,7 +46,7 @@ require snd-xm
 
 \ === XENVED OBJECT TYPE ===
 
-5 $" ( gen pos x y reason -- f )  \
+5 "( gen pos x y reason -- f )  \
 Will be called before changing a breakpoint in GEN's envelope.  \
 This hook runs the global ENVED-HOOK at first, \
 subsequent procedures can directly manipulate GEN's envelope \
@@ -162,7 +161,7 @@ fth-xenved make-?obj xenved?
 : xe-length ( obj -- len ) xe-enved@ enved-length ;
 
 : xe-inspect { obj -- str }
-  $" #<%s[%d]: axis-bounds:  #( %s %s %s %s ), envelope: %s>"
+  "#<%s[%d]: axis-bounds:  #( %s %s %s %s ), envelope: %s>"
   #( obj object-name
      obj xe-length
      obj xe-bx0@
@@ -175,7 +174,7 @@ fth-xenved make-?obj xenved?
 : xe->string ( obj -- str ) xe-enved@ enved->string ;  
 
 : xe-dump { obj -- str }
-  $" %S %S :envelope %S :axis-bounds #( %s %s %s %s ) :args %S make-xenved"
+  "%S %S :envelope %S :axis-bounds #( %s %s %s %s ) :args %S make-xenved"
   #( obj xe-name@
      obj xe-parent@
      obj xe-envelope@
@@ -589,10 +588,10 @@ fth-xenved make-?obj xenved?
   :axis-bounds #( 0.0 1.0 0.0 1.0 ) get-optkey { axis-bounds }
   :args        #()                  get-optkey { args }
   { name parent }
-  parent      widget?      parent      2 $" a widget"                assert-type
-  axis-bounds axis-bounds? axis-bounds 4 $" an array of axis bounds" assert-type
+  parent      widget?      parent      2 "a widget"                assert-type
+  axis-bounds axis-bounds? axis-bounds 4 "an array of axis bounds" assert-type
   xenved% %alloc { xe }
-  xe unless 'system-error #( get-func-name $" cannot create xenved" ) fth-throw then
+  xe unless 'system-error #( get-func-name "cannot create xenved" ) fth-throw then
   envelope make-enved xe xe-enved !
   name string? unless "xe-test" to name then
   name parent args make-drawer xe xe-drawer !
@@ -618,24 +617,24 @@ fth-xenved make-?obj xenved?
 ;
 
 : xe-envelope { gen -- lst }
-  gen xenved? gen 1 $" an xenved object" assert-type
+  gen xenved? gen 1 "an xenved object" assert-type
   gen xe-envelope@
 ;
 
 : set-xe-envelope { gen lst -- }
-  gen xenved? gen 1 $" an xenved object" assert-type
-  lst array?  lst 2 $" an array"         assert-type
+  gen xenved? gen 1 "an xenved object" assert-type
+  lst array?  lst 2 "an array"         assert-type
   lst gen xe-envelope!
   gen xe-redraw
 ;
 
 : xe-open { gen -- }
-  gen xenved? gen 1 $" an xenved object" assert-type
+  gen xenved? gen 1 "an xenved object" assert-type
   gen xe-drawer@ widget? if gen xe-drawer@ show-widget drop then
 ;
 
 : xe-close { gen -- }
-  gen xenved? gen 1 $" an xenved object" assert-type
+  gen xenved? gen 1 "an xenved object" assert-type
   gen xe-drawer@ widget? if gen xe-drawer@ hide-widget drop then
 ;
 previous
@@ -654,7 +653,7 @@ previous
 [then]
 
 : xenved-test <{ :optional name "xenved" -- xe }>
-  doc" create a drawing test widget\n\
+  doc" Create a drawing test widget\n\
 xenved-test value xe\n\
 xe             => #( 0.0 0.0 1.0 1.0 )\n\
 xe xe-envelope => #( 0.0 0.0 1.0 1.0 )\n\
@@ -666,7 +665,7 @@ xe xe-envelope => #( 0.0 0.0\n\
                      1.0 1.0 )\n\
 xe #( 0 1 1 1 ) set-xe-envelope
 xe xe-envelope => #( 0 1 1 1 )\n\
-xe xe-close"
+xe xe-close."
   name
   name test-widget-type test-widget-args add-main-pane
   :envelope    #( 0.0 0.0 1.0 1.0 )

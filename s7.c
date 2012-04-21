@@ -70,7 +70,7 @@
  *        gc, *load-hook*, *error-hook*, *error-info*, *unbound-variable-hook*
  *        *features*, *load-path*, *vector-print-length*, *#readers*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
- *        stacktrace, trace and untrace, __func__, macroexpand
+ *        trace and untrace, __func__, macroexpand
  *        length, copy, fill!, reverse, map, for-each are generic
  *        make-type creates a new scheme type
  *        symbol-access modifies symbol value lookup
@@ -273,7 +273,7 @@
  *    eq?
  *    generic length, copy, fill!
  *    format
- *    error handlers, stacktrace, trace
+ *    error handlers, trace
  *    sundry leftovers
  *    multiple-values, quasiquote
  *    eval
@@ -54778,20 +54778,19 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "ash",                       g_ash,                      2, 0, false, H_ash);
 #endif
   s7_define_safe_function(sc, "logbit?",                   g_logbit,                   2, 0, false, H_logbit);
-
-  s7_define_safe_function(sc, "random-state->list",        s7_random_state_to_list,    0, 1, false, H_random_state_to_list);
   s7_define_safe_function(sc, "integer-decode-float",      g_integer_decode_float,     1, 0, false, H_integer_decode_float);
-  s7_define_safe_function(sc, "exact?",                    g_is_exact,                 1, 0, false, H_is_exact);
-  s7_define_safe_function(sc, "inexact?",                  g_is_inexact,               1, 0, false, H_is_inexact);
 
   rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
   s7_define_function(sc, "random-state?",                  g_is_random_state,          1, 0, false, H_is_random_state);
+  s7_define_safe_function(sc, "random-state->list",        s7_random_state_to_list,    0, 1, false, H_random_state_to_list);
 
   s7_define_safe_function(sc, "number?",                   g_is_number,                1, 0, false, H_is_number);
   s7_define_safe_function(sc, "integer?",                  g_is_integer,               1, 0, false, H_is_integer);
   s7_define_safe_function(sc, "real?",                     g_is_real,                  1, 0, false, H_is_real);
   s7_define_safe_function(sc, "complex?",                  g_is_complex,               1, 0, false, H_is_complex);
   s7_define_safe_function(sc, "rational?",                 g_is_rational,              1, 0, false, H_is_rational);
+  s7_define_safe_function(sc, "exact?",                    g_is_exact,                 1, 0, false, H_is_exact);
+  s7_define_safe_function(sc, "inexact?",                  g_is_inexact,               1, 0, false, H_is_inexact);
 
   s7_define_safe_function(sc, "number->string",            g_number_to_string,         1, 1, false, H_number_to_string);
   s7_define_safe_function(sc, "string->number",            g_string_to_number,         1, 1, false, H_string_to_number);
@@ -54855,7 +54854,6 @@ s7_scheme *s7_init(void)
 
   s7_define_safe_function(sc, "car",                       g_car,                      1, 0, false, H_car);
   s7_define_safe_function(sc, "cdr",                       g_cdr,                      1, 0, false, H_cdr);
-  /* possibly a bad idea -- macro expander has built-in cdr */
   s7_define_function(sc, "set-car!",                       g_set_car,                  2, 0, false, H_set_car);
   s7_define_function(sc, "set-cdr!",                       g_set_cdr,                  2, 0, false, H_set_cdr);
   s7_define_safe_function(sc, "caar",                      g_caar,                     1, 0, false, H_caar);
@@ -54893,6 +54891,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "memq",                      g_memq,                     2, 0, false, H_memq);
   s7_define_safe_function(sc, "memv",                      g_memv,                     2, 0, false, H_memv);
   s7_define_function(sc, "member",                         g_member,                   2, 1, false, H_member);
+
   s7_define_safe_function(sc, "append",                    g_append,                   0, 0, true,  H_append);
   s7_define_function(sc, "list",                           g_list,                     0, 0, true,  H_list);
   {
@@ -55316,21 +55315,25 @@ the error type and the info passed to the error handler.");
  *       what about recursion during this process (i.e. ref to accessed var in accessor)? -- infinite loop possible here!
  *       are optimized calls ok in this regard?
  *       all call_symbol_bind uses really should be embedded
+ *   how to make define-constant and symbol-access local?
  *
- * (set! (procedure-setter abs) ...)?
+ * PERHAPS: (set! (procedure-setter abs) ...)?
  * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
- * to be more consistent: *pi*, *most-negative|positive-fixnum*
- * s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
+ * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
+ * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
  *
- * (dynamic-for-each initial normal final ...)
+ * PERHAPS: (dynamic-for-each initial main final . args)
  *    where initial is func of one arg, the upcoming length (for-each knows this in advance)
- *          normal is the current for-each func
+ *          main is the current for-each func
  *          final is always called, even if jump out (like dynamic-wind)
  *   ->list ->string ->vector [all via dynamic-for-each]
+ *   but there are also number->string object->string symbol->string, so we have ambiguity in that case
+ *   but all of these are too slow as for-each -- we'd want to special case it anyway
  * similarly dynamic-map, but in this case final is passed the current (possibly truncated) result [map-with-exit]
+ * map also always has the count, I believe, but simple for-each doesn't?
  *
- * port as arg to map and for-each? how to tell it what to get? [string port is a string?]
+ * port as arg to map and for-each? how to tell it what to get? [string input port is a string?]
  * pure-let(*) to build-in initial-environment
  *
  * lint     13424 -> 1231 [1237]

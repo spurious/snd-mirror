@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Thu Mar 03 15:29:03 CET 2011
+\ Changed: Tue Apr 17 02:39:29 CEST 2012
 
 \ Commentary:
 \
@@ -48,8 +48,6 @@
 \ make-selection                  ( :optional beg end snd chn -- )
 \ delete-selection-and-smooth     ( -- )
 \ eval-over-selection             ( func -- val )
-\
-\ yes-or-no?                      ( question action-if-yes action-if-no snd -- )
 \
 \ mix-channel                     ( file-data :optional beg dur snd chn edpos -- val )
 \ insert-channel                  ( file-data :optional beg 0 dur snd chn edpos -- val )
@@ -320,8 +318,7 @@ previous
 \ ;;; -------- sound-property
 
 : remove-sound-property <{ key :optional snd #f -- alist }>
-  doc" Removes key-value pair in the given sound's property list.  \
-Returns altered list."
+  doc" Remove key-value pair in the given sound's property list and return altered list."
   snd sound-properties key array-assoc-remove!
 ;
 
@@ -335,8 +332,7 @@ Returns altered list."
 \ ;;; -------- channel-property
 
 : remove-channel-property <{ key :optional snd #f chn #f -- alist }>
-  doc" Removes key-value pair in the given channel's property list.  \
-Returns altered list."
+  doc" Remove key-value pair in the given channel's property list and return altered list."
   snd chn channel-properties key array-assoc-remove!
 ;
 
@@ -374,8 +370,8 @@ Returns altered list."
 \ ;;; there are lots of ways to do this; this version uses functions from Snd, CLM, and Sndlib.
 
 : enveloped-mix ( filename beg env -- )
-  doc" Mixes FILENAME starting at BEG with amplitude envelope ENV.\n\
-\"pistol.snd\" 0 #( 0 0 1 1 2 0 ) enveloped-mix"
+  doc" Mix FILENAME starting at BEG with amplitude envelope ENV.\n\
+\"pistol.snd\" 0 #( 0 0 1 1 2 0 ) enveloped-mix."
   { filename beg env }
   filename mus-sound-frames { len }
   temp-dir empty? if "" else temp-dir then "tmp.snd" $+ { tmp-name }
@@ -394,13 +390,13 @@ Returns altered list."
 \ ;;;   (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 10.0) (snd-print n))))
 
 : map-sound-files <{ func :optional dir "." -- lst }>
-  doc" Applies FUNC to each sound file in DIR."
+  doc" Apply FUNC to each sound file in DIR."
   dir sound-files-in-directory map func #( *key* ) run-proc end-map
 ;
 \ lambda: <{ n -- str|#f }> n mus-sound-duration 10.0 f> if n snd-print cr then ; map-sound-files
 
 : for-each-sound-file <{ func :optional dir "." -- }>
-  doc" Applies FUNC to each sound file in DIR."
+  doc" Apply FUNC to each sound file in DIR."
   dir sound-files-in-directory each { f } func #( f ) run-proc drop end-each
 ;
 0 [if]
@@ -415,7 +411,7 @@ lambda: <{ n -- }>
 [then]
 
 : match-sound-files <{ func :optional dir "." -- ary }>
-  doc" Applies FUNC to each sound file in DIR and returns an array of files \
+  doc" Apply FUNC to each sound file in DIR and returns an array of files \
 for which FUNC does not return #f."
   #() { matches }
   dir sound-files-in-directory each { f }
@@ -430,7 +426,7 @@ for which FUNC does not return #f."
 \ ;;; returns a list of lists of (snd chn): channels in current selection
 
 : selection-members ( -- array-of-lists )
-  doc" Returns an array of lists of #( snd chn ) indicating the channels \
+  doc" Return an array of lists of #( snd chn ) indicating the channels \
 participating in the current selection."
   #() { sndlist }
   undef selection? if
@@ -448,7 +444,7 @@ participating in the current selection."
 \ ;;; the regularized form of this would use dur not end
 
 : make-selection <{ :optional beg 0 end #f snd #f chn #f -- }>
-  doc" Makes a selection like make-region but without creating a region.  \
+  doc" Make a selection like make-region but without creating a region.  \
 It follows SND's sync field, and applies to all SND's channels if CHN is not specified. \
 END defaults to end of channel, BEG defaults to 0, SND defaults to the currently selected sound."
   snd snd-snd { current-sound }
@@ -486,7 +482,7 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
 \ ;;; -------- delete selected portion and smooth the splice
 
 : delete-selection-and-smooth ( -- )
-  doc" Deletes the current selection and smooths the splice."
+  doc" Delete the current selection and smooth the splice."
   undef selection? if
     #f #f selection-position { beg }
     #f #f selection-frames   { len }
@@ -510,12 +506,12 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
 \ ;;;   the value returned by the function becomes the new selection value.
 
 : eval-over-selection <{ func -- val }>
-  doc" Evaluates FUNC on each sample in the current selection."
+  doc" Evaluate FUNC on each sample in the current selection."
   func word?
   undef selection? && if
     #f #f selection-position { beg }
     #f #f selection-frames   { len }
-    $" <'> %s %s" #( func get-func-name ) string-format { origin }
+    "<'> %s %s" #( func get-func-name ) string-format { origin }
     all-chans each { lst }
       lst 0 array-ref  { snd }
       lst 1 array-ref { chn }
@@ -527,42 +523,43 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
     end-each
   then
 ;
-0 [if]
-"x" 0 lambda: <{ -- val }>
-  undef selection? if
-    $" selection-eval:" <'> eval-over-selection #f #f prompt-in-minibuffer
-  else
-    $" no selection" #f #f report-in-minibuffer
-  then
-; #t $" eval over selection" $" eval over selection" bind-key
-[then]
-
-hide
-: response-cb { snd action-if-yes action-if-no -- proc; response self -- val }
-  1 proc-create action-if-no , action-if-yes , snd ,
- does> { response self -- val }
-  self @ { action-if-no }
-  self cell+ @ { action-if-yes }
-  self 2 cells + @ { snd }
-  snd clear-minibuffer drop
-  response 0 string-ref [char] y = if
-    action-if-yes snd run-proc
-  else
-    action-if-no snd run-proc
-  then
-;
-set-current
-
-: yes-or-no? ( question action-if-yes action-if-no snd -- )
-  { question action-if-yes action-if-no snd }
-  snd clear-minibuffer drop
-  question
-  snd action-if-yes action-if-no response-cb
-  snd
-  #t
-  prompt-in-minibuffer drop
-;
-previous
+\ FIXME minibuffer removed in Snd
+\ 0 [if]
+\ "x" 0 lambda: <{ -- val }>
+\   undef selection? if
+\     "selection-eval:" <'> eval-over-selection #f #f prompt-in-minibuffer
+\   else
+\     "no selection" #f #f report-in-minibuffer
+\   then
+\ ; #t "eval over selection" "eval over selection" bind-key
+\ [then]
+\ 
+\ hide
+\ : response-cb { snd action-if-yes action-if-no -- proc; response self -- val }
+\   1 proc-create action-if-no , action-if-yes , snd ,
+\  does> { response self -- val }
+\   self @ { action-if-no }
+\   self cell+ @ { action-if-yes }
+\   self 2 cells + @ { snd }
+\   snd clear-minibuffer drop
+\   response 0 string-ref [char] y = if
+\     action-if-yes snd run-proc
+\   else
+\     action-if-no snd run-proc
+\   then
+\ ;
+\ set-current
+\ 
+\ : yes-or-no? ( question action-if-yes action-if-no snd -- )
+\   { question action-if-yes action-if-no snd }
+\   snd clear-minibuffer drop
+\   question
+\   snd action-if-yes action-if-no response-cb
+\   snd
+\   #t
+\   prompt-in-minibuffer drop
+\ ;
+\ previous
 
 \ ;;; -------- mix-channel, insert-channel, c-channel
 
@@ -575,8 +572,8 @@ hide
 set-current
 
 : mix-channel <{ file-data :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Mixes in FILE-DATA.  \
-FILE-DATA can be the file name or a list #( file-name [beg [channel]] )"
+  doc" Mix in FILE-DATA.  \
+FILE-DATA can be the file name or a list #( file-name [beg [channel]] )."
   file-data string? if file-data else file-data 0 array-ref then { file-name }
   file-name find-file to file-name
   file-name false? if 'no-such-file #( get-func-name file-name ) fth-throw then
@@ -586,7 +583,7 @@ FILE-DATA can be the file name or a list #( file-name [beg [channel]] )"
   beg 0< if 'no-such-sample #( get-func-name beg ) fth-throw then
   len 0> if
     file-beg file-name file-channel 1 #f make-sampler { reader }
-    $" %S %s %s %s" #( file-data beg dur get-func-name ) string-format { origin }
+    "%S %s %s %s" #( file-data beg dur get-func-name ) string-format { origin }
     reader mc-cb beg len snd chn edpos origin map-channel
   else
     #f
@@ -595,8 +592,8 @@ FILE-DATA can be the file name or a list #( file-name [beg [channel]] )"
 previous
 
 : insert-channel <{ file-data :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Inserts the FILE-DATA.  \
-FILE-DATA can be the file name or a list #( file-name [beg [channel]] )"
+  doc" Insert the FILE-DATA.  \
+FILE-DATA can be the file name or a list #( file-name [beg [channel]] )."
   file-data string? if file-data else file-data 0 array-ref then { file-name }
   file-name find-file to file-name
   file-name false? if 'no-such-file #( get-func-name file-name ) fth-throw then
@@ -608,7 +605,7 @@ FILE-DATA can be the file name or a list #( file-name [beg [channel]] )"
     file-beg file-name file-channel 1 #f make-sampler { reader }
     len 0.0 make-vct map! reader next-sample end-map { data }
     reader free-sampler drop
-    $" %S %s %s %s" #( file-data beg dur get-func-name ) string-format { origin }
+    "%S %s %s %s" #( file-data beg dur get-func-name ) string-format { origin }
     beg len data snd chn edpos #f origin insert-samples
   else
     #f
@@ -713,16 +710,16 @@ hide
 set-current
 
 : sine-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Produces a sinsusoidal connection from RMP0 to RMP1."
+  doc" Produce a sinsusoidal connection from RMP0 to RMP1."
   \ ;; vct: angle incr off scl
-  $" %s %s %s %s %s" #( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
   <'> sr3-cb beg dur snd chn edpos #t  rmp0 rmp1 sr2-cb  origin ptree-channel
 ;
 previous
 
 : sine-env-channel <{ en :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Connects ENV's dots with sinusoids."
-  $" %s %s %s %s" #( en beg dur get-func-name ) string-format { origin }
+  doc" Connect ENV's dots with sinusoids."
+  "%s %s %s %s" #( en beg dur get-func-name ) string-format { origin }
   en <'> sine-ramp beg dur snd chn edpos origin any-env-channel
 ;
 \ #( 0 0 1 1 2 -0.5 3 1 ) sine-env-channel
@@ -757,13 +754,13 @@ hide
 set-current
 
 : blackman4-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  $" %s %s %s %s %s" #( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
   <'> b4r3-cb beg dur snd chn edpos #f rmp0 rmp1 b4r2-cb origin ptree-channel
 ;
 previous
 
 : blackman4-env-channel <{ en :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  $" %s %s %s %s" #( en beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s" #( en beg dur get-func-name ) string-format { origin }
   en <'> blackman4-ramp beg dur snd chn edpos origin any-env-channel
 ;
 
@@ -799,8 +796,8 @@ hide
 set-current
 
 : ramp-squared <{ rmp0 rmp1 :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Connects RMP0 and RMP1 with an x^2 curve."
-  $" %s %s %s %s %s %s" #( rmp0 rmp1 symmetric beg dur get-func-name ) string-format { origin }
+  doc" Connect RMP0 and RMP1 with an x^2 curve."
+  "%s %s %s %s %s %s" #( rmp0 rmp1 symmetric beg dur get-func-name ) string-format { origin }
   <'> rsq3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric rsq2-cb  origin ptree-channel
 ;
 previous
@@ -814,8 +811,8 @@ hide
 set-current
 
 : env-squared-channel <{ en :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Connects ENV's dots with x^2 curves."
-  $" %s %s %s %s %s" #( en symmetric beg dur get-func-name ) string-format { origin }
+  doc" Connect ENV's dots with x^2 curves."
+  "%s %s %s %s %s" #( en symmetric beg dur get-func-name ) string-format { origin }
   en  symmetric esqc-cb beg dur snd chn edpos origin any-env-channel
 ;
 previous
@@ -850,10 +847,10 @@ set-current
 
 : ramp-expt <{ rmp0 rmp1 exponent
      :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Connects RMP0 and RMP1 with an x^exponent curve."
+  doc" Connect RMP0 and RMP1 with an x^exponent curve."
   \ ;; vct: start incr off scl exponent
   \ ;; a^x = exp(x * log(a))
-  $" %s %s %s %s %s %s %s"
+  "%s %s %s %s %s %s %s"
   #( rmp0 rmp1 exponent symmetric beg dur get-func-name ) string-format { origin }
   <'> rex3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric exponent rex2-cb origin ptree-channel
 ;
@@ -869,8 +866,8 @@ set-current
 
 : env-expt-channel <{ en exponent
      :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Connects ENV's dots with x^exponent curves."
-  $" %s %s %s %s %s %s" #( en exponent symmetric beg dur get-func-name ) string-format { origin }
+  doc" Connect ENV's dots with x^exponent curves."
+  "%s %s %s %s %s %s" #( en exponent symmetric beg dur get-func-name ) string-format { origin }
   en  symmetric exponent expc-cb beg dur snd chn edpos origin any-env-channel
 ;
 previous
@@ -886,14 +883,14 @@ hide
 set-current
 
 : offset-channel <{ amount :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Adds AMOUNT to each sample."
-  $" %s %s %s %s" #( amount beg dur get-func-name ) string-format { origin }
+  doc" Add AMOUNT to each sample."
+  "%s %s %s %s" #( amount beg dur get-func-name ) string-format { origin }
   amount offc-cb beg dur snd chn edpos #t #f origin ptree-channel
 ;
 previous
 
 : offset-sound <{ offset :optional beg 0 dur #f snd #f -- }>
-  doc" Adds OFFSET to every sample in SND."
+  doc" Add OFFSET to every sample in SND."
   snd snd-snd to snd
   snd sound? if
     snd channels 0 ?do offset beg dur snd i ( chn ) #f offset-channel drop loop
@@ -905,7 +902,7 @@ previous
 \ ;;; -------- pad-sound
 
 : pad-sound <{ beg dur :optional snd #f -- }>
-  doc" Places a block of DUR zeros in every channel of SND starting at BEG."
+  doc" Place a block of DUR zeros in every channel of SND starting at BEG."
   snd snd-snd to snd
   snd sound? if
     snd channels 0 ?do beg dur snd i ( chn ) #f pad-channel drop loop
@@ -925,13 +922,13 @@ hide
 set-current
 
 : dither-channel <{ :optional amount 0.00006 beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Adds AMOUNT dither to each sample."
-  $" %s %s %s %s" #( amount beg dur get-func-name ) string-format { origin }
+  doc" Add AMOUNT dither to each sample."
+  "%s %s %s %s" #( amount beg dur get-func-name ) string-format { origin }
   amount f2/ dith-cb beg dur snd chn edpos #t #f origin ptree-channel
 ;
 
 : dither-sound <{ :optional amount 0.00006 beg 0 dur #f snd #f -- }>
-  doc" Adds dithering to every sample of SND."
+  doc" Add dithering to every sample of SND."
   snd snd-snd to snd
   snd sound? if
     snd channels 0 ?do amount beg dur snd i ( chn ) #f dither-channel drop loop
@@ -951,13 +948,13 @@ hide
 set-current
 
 : contrast-channel <{ index :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Applies contrast enhancement to the sound."
-  $" %s %s %s %s" #( index beg dur get-func-name ) string-format { origin }
+  doc" Apply contrast enhancement to the sound."
+  "%s %s %s %s" #( index beg dur get-func-name ) string-format { origin }
   index cntr-cb beg dur snd chn edpos #f #f origin ptree-channel
 ;
 
 : contrast-sound <{ index :optional beg 0 dur #f snd #f -- }>
-  doc" Applies contrast-enhancement to every channel of SND."
+  doc" Apply contrast-enhancement to every channel of SND."
   snd snd-snd to snd
   snd sound? if
     snd channels 0 ?do index beg dur snd i ( chn ) #f contrast-channel drop loop
@@ -969,7 +966,7 @@ set-current
 \ ;;; -------- scale-sound
 
 : scale-sound <{ scl :optional beg 0 dur #f snd #f -- }>
-  doc" Multiplies every sample in SND by SCL."
+  doc" Multiply every sample in SND by SCL."
   snd snd-snd to snd
   snd sound? if
     snd channels 0 ?do scl beg dur snd i ( chn ) #f scale-channel drop loop
@@ -981,7 +978,7 @@ set-current
 \ ;;; -------- normalize-sound
 
 : normalize-sound <{ amp :optional beg 0 dur #f snd #f -- }>
-  doc" Scales SND to peak amplitude AMP."
+  doc" Scale SND to peak amplitude AMP."
   snd snd-snd to snd
   snd sound? if
     amp 0.0 snd #t #f maxamp each fabs fmax end-each f/ { scl }
@@ -1002,7 +999,7 @@ hide
 set-current
 
 : channels= <{ snd1 chn1 snd2 chn2 :optional allowable-difference 0.0 -- f }>
-  doc" Returns #t if the two channels are the same (within diff) modulo trailing 0's."
+  doc" Return #t if the two channels are the same (within diff) modulo trailing 0's."
   snd1 snd2 =
   chn1 chn2 = && if
     #t
@@ -1035,7 +1032,7 @@ set-current
 previous
 
 : channels-equal? <{ snd1 chn1 snd2 chn2 :optional allowable-difference 0.0 -- f }>
-  doc" Returns #t if the two channels are the same (within diff)."
+  doc" Return #t if the two channels are the same (within diff)."
   snd1 chn1 #f frames snd2 chn2 #f frames <> if
     #f
   else
@@ -1046,7 +1043,7 @@ previous
 \ ;;; -------- mono->stereo, mono-files->stereo
 
 : mono->stereo ( new-name snd1 chn1 snd2 chn2 -- snd )
-  doc" Takes the two channels and combines them into a stereo sound NEW-NAME."
+  doc" Take the two channels and combine them into a stereo sound NEW-NAME."
   { new-name snd1 chn1 snd2 chn2 }
   snd1 chn1 edit-position { old-ed1 }
   snd2 chn2 edit-position { old-ed2 }
@@ -1060,7 +1057,7 @@ previous
 \ "test.snd" 0 0 1 0 mono->stereo
 
 : mono-files->stereo ( new-name chan1-name chan2-name -- snd )
-  doc" Combines two mono files into the stereo file NEW-NAME."
+  doc" Combine two mono files into the stereo file NEW-NAME."
   {  new-name chan1-name chan2-name }
   chan1-name find-file to chan1-name
   chan1-name false? if 'no-such-file #( get-func-name chan1-name ) fth-throw then
@@ -1076,7 +1073,7 @@ previous
 \ "test.snd" "oboe.snd" "pistol.snd" mono-files->stereo
 
 : stereo->mono ( orig-snd chan1-name chan2-name -- snd0 snd1 )
-  doc" Splits a stereo sound into two mono sounds named CHAN1-NAME and CHAN2-NAME."
+  doc" Split a stereo sound into two mono sounds named CHAN1-NAME and CHAN2-NAME."
   {  orig-snd chan1-name chan2-name }
   orig-snd 0 edit-position { old-ed0 }
   orig-snd 1 edit-position { old-ed1 }

@@ -13282,7 +13282,7 @@ this prints:
 		(list 5 6 () 7 8))
   (test sum 14))
 
-#|
+
 (define (and-map func . args)
   (call-with-exit
    (lambda (quit)
@@ -13295,7 +13295,32 @@ this prints:
 		      (set! result (cons val result)))))
 	    args)
        (reverse result)))))
-|#
+
+(test (and-map even? '(0 2 4 5 6)) '(#t #t #t))
+
+(define (find-if f . args)
+  (call-with-exit
+   (lambda (return) 
+     (apply for-each (lambda main-args 
+		       (if (apply f main-args) 
+			   (apply return main-args)))
+	    args))))
+
+(test (find-if even? #(1 3 5 2)) 2)
+(test (* (find-if > #(1 3 5 2) '(2 2 2 3))) 6)
+
+(define (position-if f . args)
+  (let ((pos 0))
+    (call-with-exit
+     (lambda (return) 
+       (apply for-each (lambda main-args 
+			 (if (apply f main-args) 
+			     (return pos))
+			 (set! pos (+ pos 1)))
+	    args)))))
+
+(test (position-if even? #(1 3 5 2)) 3)
+(test (position-if > #(1 3 5 2) '(2 2 2 3)) 1)
 
 
 
@@ -35151,6 +35176,14 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (zero? 1e-20) #f)
 (test (zero? -1.797693134862315699999999999999999999998E308) #f)
 (test (zero? -2.225073858507201399999999999999999999996E-308) #f)
+(test (zero? 2.2250738585072012e-308) #f) ; gauche says one of these can hang
+(test (zero? 2.2250738585072013e-308) #f) 
+(test (zero? 2.2250738585072014e-308) #f) 
+(test (zero? 2.2250738585072015e-308) #f) 
+(test (zero? 2.2250738585072011e-308) #f)
+(test (zero? 2.2250738585072010e-308) #f)
+(test (zero? 2.2250738585072010e-309) #f)
+(test (zero? 2.2250738585072010e-310) #f)
 (test (zero? -9223372036854775808) #f)
 (test (zero? 1.110223024625156799999999999999999999997E-16) #f)
 (test (zero? 9223372036854775807) #f)

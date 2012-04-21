@@ -1,9 +1,8 @@
-\ -*- snd-forth -*-
 \ draw.fs -- draw.scm -> draw.fs
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Sat Jul 25 17:37:39 CEST 2009
+\ Changed: Tue Apr 17 00:51:23 CEST 2012
 
 \ Commentary:
 
@@ -205,7 +204,7 @@ hide
 set-current
 
 : make-current-window-display ( -- )
-  doc" Displays in upper right corner the overall current sound \
+  doc" Display in upper right corner the overall current sound \
 and where the current window fits in it."
   current-window-display-is-running unless
     #t to current-window-display-is-running

@@ -33,7 +33,7 @@
 (define *clm-output-safety*     0)           ; if 1, assume output buffers will not need to be flushed except at the very end
 
 (define *to-snd*                #t)
-(define *default-player* (lambda (s) (play s :wait #t))) ; we need to perserve "play" because it is used as a keyword argument in with-sound
+(define *default-player* (lambda (s) (play s :wait #t))) ; we need to preserve "play" because it is used as a keyword argument in with-sound
 
 
 (define (times->samples beg dur) 

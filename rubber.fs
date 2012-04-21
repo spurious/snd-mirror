@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Fri Nov 06 00:35:16 CET 2009
+\ Changed: Tue Apr 17 02:41:32 CEST 2012
 
 \ Commentary:
 \
@@ -224,7 +224,7 @@ hide
       adding if
 	beg next-beg len snd chn env-add { new-samps }
 	show-details if
-	  beg $" %d:%d" #( i len extension f/ f>s ) string-format snd chn add-named-mark drop
+	  beg "%d:%d" #( i len extension f/ f>s ) string-format snd chn add-named-mark drop
 	then
 	beg len new-samps snd chn #f insert-samples drop
 	mult 1 ?do
@@ -236,10 +236,10 @@ hide
 	end-each
       else
 	beg snd chn #f frames >= if
-	  $" trouble at %d: %d of %d" #( i beg snd chn #f frames ) clm-message
+	  "trouble at %d: %d of %d" #( i beg snd chn #f frames ) clm-message
 	then
 	show-details if
-	  beg 1- $" %d:%d" #( i len extension f/ f>s ) string-format snd chn add-named-mark drop
+	  beg 1- "%d:%d" #( i len extension f/ f>s ) string-format snd chn add-named-mark drop
 	then
 	beg len snd chn #f delete-samples drop
 	changed-len len + to changed-len
@@ -257,20 +257,20 @@ hide
     then
   end-each
   show-details if
-    $" wanted: %d, got %d" #( samps changed-len ) clm-message
+    "wanted: %d, got %d" #( samps changed-len ) clm-message
   then
   \ ;; and return to original srate
   snd chn unsample-sound
   show-details if
     snd chn 0 frames { frms0 }
     snd chn undef frames { frms }
-    $" %d -> %d (%d)" #( frms0  frms  frms0 stretch f* floor f>s ) clm-message
+    "%d -> %d (%d)" #( frms0  frms  frms0 stretch f* floor f>s ) clm-message
   then
 ;
 set-current
 : rubber-sound ( stretch snd chn -- res )
   { stretch snd chn }
-  stretch snd chn rubber-cb $" %s %s" #( stretch get-func-name ) string-format as-one-edit
+  stretch snd chn rubber-cb "%s %s" #( stretch get-func-name ) string-format as-one-edit
 ;
 previous
 

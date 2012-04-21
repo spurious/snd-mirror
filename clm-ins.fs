@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sat Feb 19 17:27:43 CET 2011
+\ Changed: Tue Apr 17 02:34:07 CEST 2012
 
 \ Commentary:
 \
@@ -85,7 +85,7 @@ instrument: jc-reverb-fs <{ :key
   doc" The Chowning reverb.\n\
 0 1 440 0.2 <'> fm-violin :reverb <'> jc-reverb with-sound\n\
 0 1 440 0.2 <'> fm-violin\n\
-  :reverb-data #( :low-pass #t ) :reverb <'> jc-reverb :channels 2 with-sound"
+:reverb-data #( :low-pass #t ) :reverb <'> jc-reverb :channels 2 with-sound."
   *output* mus-channels { chans }
   *reverb* mus-channels { rev-chans }
   *reverb* reverb-dur { dur }
@@ -104,7 +104,7 @@ instrument: jc-reverb-fs <{ :key
   doubled chan4 ||          if :size delay3 seconds->samples make-delay else #f then { outdel3 }
   chan4 doubled chan2 && || if :size delay4 seconds->samples make-delay else #f then { outdel4 }
   amp-env if :envelope amp-env :scaler volume :duration dur make-env else #f then { env-a }
-  doubled chan4 && if $" jc-reverb is not set up for doubled reverb in quad" error then
+  doubled chan4 && if "jc-reverb is not set up for doubled reverb in quad" error then
   0.0 0.0 { comb-sum comb-sum-1 }
   0.0 dur run
     0.0 rev-chans 0 ?do j i *reverb* in-any f+ loop { in-val }
@@ -212,9 +212,9 @@ instrument: fm-violin-fs <{ start dur freq amp
      reverb-amount              0.01
      index-type                 'violin -- }>
   doc" FM-Violin from clm/v.ins|snd/v.scm|rb.\n\
-0 3 440 0.5 :fm-index 0.5 <'> fm-violin with-sound"
+0 3 440 0.5 :fm-index 0.5 <'> fm-violin with-sound."
   freq fabs 1.0 f<= if
-    $" freq = %s? reset to 440.0" #( freq ) string-format warning
+    "freq = %s? reset to 440.0" #( freq ) string-format warning
     440.0 to freq
   then
   freq hz->radians          { frq-scl }
@@ -348,7 +348,7 @@ instrument: pluck <{ start dur freq amp
      :optional
      weighting 0.5
      lossfact  0.9 -- }>
-  doc" Implements the Jaffe-Smith plucked string physical model.  \
+  doc" Implement the Jaffe-Smith plucked string physical model.  \
 WEIGHTING is the ratio of the once-delayed to the twice-delayed samples.  \
 It defaults to 0.5 = shortest decay.  \
 Anything other than 0.5 = longer decay.  \
@@ -526,8 +526,8 @@ instrument: fofins <{ start dur freq amp vib f0 a0 f1 a1 f2 a2
      :optional
      ae #( 0 0 25 1 75 1 100 0 )
      ve #( 0 1 100 1 ) -- }>
-  doc" produces FOF synthesis.\n\
-0 1 270 0.2 0.001 730 0.6 1090 0.3 2440 0.1 <'> fofins with-sound"
+  doc" Produce FOF synthesis.\n\
+0 1 270 0.2 0.001 730 0.6 1090 0.3 2440 0.1 <'> fofins with-sound."
   :envelope ae :scaler amp :duration dur make-env { ampf }
   :frequency 6.0 make-oscil { vibr }
   :envelope ve :scaler vib :duration dur make-env { vibenv }
@@ -585,7 +585,7 @@ instrument: fm-trumpet <{ start dur
      ampenv2  #( 0 0 25 1 75 0.9 100 0 )
      indenv1  #( 0 0 25 1 75 0.9 100 0 )
      indenv2  #( 0 0 25 1 75 0.9 100 0 ) -- }>
-  doc" 0 2 <'> fm-trumpet with-sound"
+  doc" 0 2 <'> fm-trumpet with-sound."
   :envelope
   #( 0 1  25 0.1  75 0  100 0 )
   25
@@ -763,8 +763,8 @@ instrument: stereo-flute <{ start dur freq flow
      vib-amount      0.03
      ran-rate        5.0
      ran-amount      0.03 -- }>
- doc" A physical model of a flute.\n\
-0 1 440 0.55 :flow-envelope #( 0 0 1 1 2 1 3 0 ) <'> stereo-flute with-sound"
+  doc" A physical model of a flute.\n\
+0 1 440 0.55 :flow-envelope #( 0 0 1 1 2 1 3 0 ) <'> stereo-flute with-sound."
   :envelope flow-envelope :scaler flow :duration dur decay f- make-env { flowf }
   :frequency vib-rate                            make-oscil       { p-vib }
   :frequency ran-rate                          	 make-rand-interp { ran-vib }
@@ -1302,7 +1302,7 @@ instrument: nrev-fs <{ :key
      volume        1.0
      amp-env       #( 0 1 1 1 ) -- }>
   doc" NREV (the most popular Samson box reverb).\n\
-<'> fm-violin-test :reverb <'> nrev with-sound"
+<'> fm-violin-test :reverb <'> nrev with-sound."
   *output* mus-channels { chans }
   *reverb* mus-channels { rev-chans }
   *reverb* reverb-dur { dur }
@@ -1554,8 +1554,8 @@ instrument: gran-synth <{ start dur freq grain-dur interval amp -- }>
 \ 
 \ clm/ugex.ins
 instrument: touch-tone <{ numbers :key start 0.0 -- }>
-  doc" (see clm/ugex.ins) NUMBERS is an array with phone numbers.\n\
-#( 8 5 7 7 5 8 ) <'> touch-tone with-sound"
+  doc" (See clm/ugex.ins) NUMBERS is an array with phone numbers.\n\
+#( 8 5 7 7 5 8 ) <'> touch-tone with-sound."
   #( 0  697  697  697  770  770  770  852  852  852  941  941  941 ) { tt1 }
   #( 0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477 ) { tt2 }
   numbers each ( numb ) dup 0= if drop 11 then { idx }
@@ -2181,9 +2181,9 @@ instrument: resflt <{ start dur driver
      degree        0.0
      distance      1.0
      reverb-amount 0.005 -- }>
-  doc" from clm/resflt.ins\n\
+  doc" From clm/resflt.ins\n\
 0 1 #f 0 0 #f 0.1 200 230 10 '( 0 0 50 1 100 0 ) '( 0 0 100 1 ) 500 0.995 0.1 1000 0.995 0.1 2000 0.995 0.1 :degree 90.0 random <'> resflt with-sound\n\
-0 1 #t 10000 0.01 '( 0 0 50 1 100 0 ) 0 0 0 0 #f #f 500 0.995 0.1 1000 0.995 0.1 2000 0.995 0.1 :degree 90.0 random <'> resflt with-sound"
+0 1 #t 10000 0.01 '( 0 0 50 1 100 0 ) 0 0 0 0 #f #f 500 0.995 0.1 1000 0.995 0.1 2000 0.995 0.1 :degree 90.0 random <'> resflt with-sound."
   :radius r1 :frequency freq1 make-two-pole { f1 }
   :radius r2 :frequency freq2 make-two-pole { f2 }
   :radius r3 :frequency freq3 make-two-pole { f3 }
@@ -2239,7 +2239,7 @@ set-current
 \ SCRATCH-INS
 instrument: scratch-ins <{ start file src-ratio turntable -- }>
   file find-file to file
-  file unless 'file-not-found $" %s: cannot find %S" #( get-func-name file ) fth-raise then
+  file unless 'file-not-found "%s: cannot find %S" #( get-func-name file ) fth-raise then
   file mus-sound-duration { dur }
   file make-readin { f }
   turntable 0 object-ref seconds->samples { cur-samp }
@@ -2301,14 +2301,14 @@ instrument: pins <{ start dur file amp
      highest-bin   128
      max-peaks     16
      attack        #f -- }>
-  doc" start dur \"fyow.snd\" 1.0 :time-scaler 2.0 pins"
+  doc" start dur \"fyow.snd\" 1.0 :time-scaler 2.0 pins."
   file find-file to file
-  file unless 'file-not-found $" %s: cannot find %S" #( get-func-name file ) fth-raise then
+  file unless 'file-not-found "%s: cannot find %S" #( get-func-name file ) fth-raise then
   file mus-sound-duration { fdur }
   dur time-scaler f/      { sdur }
   sdur fdur f> if
     'forth-error
-    $" %s is %.3f seconds long, but we'll need %.3f seconds of data for this note"
+    "%s is %.3f seconds long, but we'll need %.3f seconds of data for this note"
     #( file fdur sdur ) fth-raise
   then
   file make-readin                                 { fil }
@@ -2567,7 +2567,7 @@ instrument: clm-expsrc <{ start dur in-file exp-ratio src-ratio amp
      rev           #f
      start-in-file 0 -- }>
   in-file find-file to in-file
-  in-file unless 'file-not-found $" %s: cannot find %S" #( get-func-name in-file ) fth-raise then
+  in-file unless 'file-not-found "%s: cannot find %S" #( get-func-name in-file ) fth-raise then
   start-in-file in-file mus-sound-srate f* fround->s { stf }
   :file in-file :channel 0 :start stf make-readin { fdA }
   :input fdA readin-cb :expansion exp-ratio make-granulate { exA }
@@ -2607,9 +2607,9 @@ instrument: exp-snd <{ file start dur amp
 \\ ;; granulate with envelopes on the expansion amount, segment envelope shape,\n\
 \\ ;; segment length, hop length, and input file resampling rate\n\
 \"fyow.snd\" 0 3 1 #( 0 1 1 3 ) 0.4 0.15 #( 0 2 1 0.5 ) 0.05 <'> exp-snd with-sound\n\
-\"oboe.snd\" 0 3 1 #( 0 1 1 3 ) 0.4 0.15 #( 0 2 1 0.5 ) 0.2  <'> exp-snd with-sound"
+\"oboe.snd\" 0 3 1 #( 0 1 1 3 ) 0.4 0.15 #( 0 2 1 0.5 ) 0.2  <'> exp-snd with-sound."
   file find-file to file
-  file unless 'file-not-found $" %s: cannot find %S" #( get-func-name file ) fth-raise then
+  file unless 'file-not-found "%s: cannot find %S" #( get-func-name file ) fth-raise then
   file 0 make-readin { f0 }
   :envelope exp-amt array? if exp-amt else #( 0 exp-amt 1 exp-amt ) then
   :duration dur make-env { expenv }
@@ -2671,7 +2671,7 @@ instrument: exp-snd <{ file start dur amp
   ex-a granulate vol f* { val-a1 }
   rampdata min-envelope f0<= rampdata max-envelope 0.5 f>= || if
     'forth-error
-    $" ramp argument to expand must always be between 0.0 and 0.5, %.3f -- %.3f"
+    "ramp argument to expand must always be between 0.0 and 0.5, %.3f -- %.3f"
     #( rampdata min-envelope rampdata max-envelope ) fth-raise
   then
   0.0 0.0 { ex-samp next-samp }
@@ -2742,10 +2742,10 @@ instrument: expfil <{ start dur hopsecs rampsecs steadysecs file1 file2 -- }>
   start seconds->samples   { out1 }
   hop out1 +               { out2 }
   file1 find-file to file1
-  file1 unless 'file-not-found $" %s: cannot find %S" #( get-func-name file1 ) fth-raise then
+  file1 unless 'file-not-found "%s: cannot find %S" #( get-func-name file1 ) fth-raise then
   file1 0 make-readin { fil1 }
   file2 find-file to file2
-  file2 unless 'file-not-found $" %s: cannot find %S" #( get-func-name file2 ) fth-raise then
+  file2 unless 'file-not-found "%s: cannot find %S" #( get-func-name file2 ) fth-raise then
   file2 0 make-readin { fil2 }
   0.0 { inval }
   start dur #{ :degree 90.0 random } run-instrument
@@ -2876,9 +2876,9 @@ instrument: graph-eq <{ file start dur
      filt-gain-scale 1.0
      filt-gain-base  1.0
      a1              0.99 -- }>
-  doc" \"oboe.snd\" 0 2 graph-eq"
+  doc" \"oboe.snd\" 0 2 graph-eq."
   file find-file to file
-  file unless 'file-not-found $" %s: cannot find %S" #( get-func-name file ) fth-raise then
+  file unless 'file-not-found "%s: cannot find %S" #( get-func-name file ) fth-raise then
   :file file :start file mus-sound-srate file-start f* fround->s make-readin { rd }
   :envelope amp-env :scaler amplitude :duration dur :base amp-base make-env { ampf }
   gain-freq-list length 2/ { len }
@@ -2962,7 +2962,7 @@ instrument: anoi <{ fname start dur :optional fftsize 128 amp-scaler 1.0 R two-p
   amp-scaler 4.0 f* mus-srate f/ { incr }
   0.0 { amp }
   fname find-file to fname
-  fname unless 'file-not-found $" %s: cannot find %S" #( get-func-name fname ) fth-raise then
+  fname unless 'file-not-found "%s: cannot find %S" #( get-func-name fname ) fth-raise then
   fname make-file->sample { fil }
   fftsize s>f to fftsize
   fftsize fnegate { -fftsize }
@@ -3033,9 +3033,9 @@ instrument: fullmix <{ in-file
      rev-amount #f -- }>
   doc" \"pistol.snd\" 0 1 fullmix\n\
 :envelope #( 0 0 1 1 ) :duration dur :scaler 0.5 make-env value en
-\"oboe.snd\" 0 2 0 #( #( 0.8 en ) ) 2.0 <'> fullmix with-sound"
+\"oboe.snd\" 0 2 0 #( #( 0.8 en ) ) 2.0 <'> fullmix with-sound."
   in-file find-file to in-file
-  in-file unless 'file-not-found $" %s: cannot find %S" #( get-func-name in-file ) fth-raise then
+  in-file unless 'file-not-found "%s: cannot find %S" #( get-func-name in-file ) fth-raise then
   dur unless in-file mus-sound-duration inbeg f- sr if sr fabs else 1.0 then f/ to dur then
   in-file mus-sound-chans { in-chans }
   inbeg in-file mus-sound-srate f* fround->s { inloc }
@@ -3071,7 +3071,7 @@ instrument: fullmix <{ in-file
 		outn env? if outn else :envelope outn :duration dur make-env then
 		array-set!
 	      else
-		$" %s: unknown element in matrix: %S" #( get-func-name outn ) string-format warning
+		"%s: unknown element in matrix: %S" #( get-func-name outn ) string-format warning
 	      then
 	    then
 	  then
@@ -3156,7 +3156,7 @@ instrument: fullmix <{ in-file
   \ --- Hilbert transform (from dsp.fs)
 
   : make-hilbert-transform <{ :optional len 30 -- gen }>
-    doc" Makes a Hilbert transform filter."
+    doc" Make Hilbert transform filter."
     len 2* 1+ { arrlen }
     arrlen 0.0 make-vct { arr }
     len even? if len else len 1+ then { lim }
@@ -3242,7 +3242,7 @@ end-struct fm2%
 \ ;;; This is a translation of the rmsgain code provided by Fabio Furlanete.
 
 : make-rmsgain <{ :optional hp 10.0 -- gen }>
-  doc" makes an RMS gain generator."
+  doc" Make RMS gain generator."
   2.0  two-pi mus-srate f/ hp f* fcos  f- { b }
   b  b b f* 1.0 f- fsqrt  f- { c2 }
   1.0 c2 f- { c1 }
@@ -3256,7 +3256,7 @@ end-struct fm2%
 ;
 
 : rmsgain-rms ( gen sig -- val )
-  doc" runs an RMS gain generator."
+  doc" Run RMS gain generator."
   { gen sig }
   gen :rmsg-c1 array-assoc-ref  sig f*  sig f*
   gen :rmsg-c2 array-assoc-ref  gen :rmsg-q array-assoc-ref  f*  f+
@@ -3264,7 +3264,7 @@ end-struct fm2%
 ;
 
 : rmsgain-gain ( gen sig rmsval -- val )
-  doc" returns the current RMS gain."
+  doc" Return current RMS gain."
   { gen sig rmsval }
   gen :rmsg-c1 array-assoc-ref  sig f*  sig f*
   gen :rmsg-c2 array-assoc-ref  gen :rmsg-r array-assoc-ref  f*  f+
@@ -3276,19 +3276,19 @@ end-struct fm2%
 ;
 
 : rmsgain-balance ( gen sig comp -- val )
-  doc" scales a signal based on a RMS gain."
+  doc" Scale signal based on a RMS gain."
   { gen sig comp }
   gen sig  gen comp rmsgain-rms  rmsgain-gain
 ;
 
 : rmsgain-gain-avg ( gen -- val )
-  doc" is part of the RMS gain stuff."
+  doc" Is part of the RMS gain stuff."
   { gen }
   gen :rmsg-avg array-assoc-ref  gen :rmsg-avgc array-assoc-ref f/
 ;
 
 : rmsgain-balance-avg ( gen -- val )
-  doc" is part of the RM gain stuff."
+  doc" Is part of the RMS gain stuff."
   :rmsg-avg array-assoc-ref
 ;
 

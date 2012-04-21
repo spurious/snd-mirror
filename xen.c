@@ -1740,7 +1740,6 @@ static XEN g_system(XEN command)
   XEN_ASSERT_TYPE(XEN_STRING_P(command), command, XEN_ONLY_ARG, "system", "a string");
   return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
 }
-#endif
 
 
 static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
@@ -1749,6 +1748,7 @@ static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
   XEN_ASSERT_TYPE(XEN_STRING_P(var), var, XEN_ONLY_ARG, "getenv", "a string");
   return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
 }
+#endif
 
 
 

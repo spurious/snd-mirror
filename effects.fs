@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sat Oct 29 00:05:35 CEST 2011
+\ Changed: Tue Apr 17 02:37:09 CEST 2012
 
 \ Commentary:
 \
@@ -115,7 +115,7 @@ set-current
 : effects-squelch-channel <{ amount gate-size :optional snd #f chn #f -- val }>
   :size gate-size make-moving-average { f0 }
   :size gate-size :initial-element 1.0 make-moving-average { f1 }
-  $" %s %s %s" #( amount gate-size get-func-name ) string-format { origin }
+  "%s %s %s" #( amount gate-size get-func-name ) string-format { origin }
   f0 f1 amount squelch-cb 0 #f snd chn #f origin map-channel
 ;
 previous
@@ -175,7 +175,7 @@ set-current
       snd chn undef frames
     then
   then { samps }
-  $" %s %s %s %s %s %s" #( input-samps del-time amp beg dur get-func-name ) string-format { orig }
+  "%s %s %s %s %s %s" #( input-samps del-time amp beg dur get-func-name ) string-format { orig }
   samps amp del effects-echo-cb beg dur snd chn #f orig map-channel
 ;
 
@@ -191,7 +191,7 @@ set-current
       snd chn undef frames
     then
   then { samps }
-  $" %s %s %s %s %s %s" #( amp secs input-samps beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s %s" #( amp secs input-samps beg dur get-func-name ) string-format { origin }
   amp samps flt del effects-flecho-cb beg dur snd chn #f origin map-channel
 ;
 
@@ -208,7 +208,7 @@ set-current
       snd chn undef frames
     then
   then { samps }
-  $" %s %s %s %s %s %s %s %s" #( scaler secs freq amp input-samps beg dur get-func-name )
+  "%s %s %s %s %s %s %s %s" #( scaler secs freq amp input-samps beg dur get-func-name )
   string-format { origin }
   scaler amp samps os del effects-zecho-cb beg dur snd chn #f origin map-channel
 ;
@@ -222,32 +222,32 @@ previous
 \ effects-comb-chord             ( scaler size amp :optional beg dur snd chn -- res )
 
 : effects-bbp <{ freq bw :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s" #( freq bw beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( freq bw beg dur get-func-name ) string-format { origin }
   freq bw make-butter-band-pass beg dur snd chn #f #f origin clm-channel
 ;
 
 : effects-bbr <{ freq bw :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s" #( freq bw beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( freq bw beg dur get-func-name ) string-format { origin }
   freq bw make-butter-band-reject beg dur snd chn #f #f origin clm-channel
 ;
 
 : effects-bhp <{ freq :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s" #( freq beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s" #( freq beg dur get-func-name ) string-format { origin }
   freq make-butter-high-pass beg dur snd chn #f #f origin clm-channel
 ;
 
 : effects-blp <{ freq :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s" #( freq beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s" #( freq beg dur get-func-name ) string-format { origin }
   freq make-butter-low-pass beg dur snd chn #f #f origin clm-channel
 ;
 
 : effects-comb-filter <{ scaler size :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s" #( scaler size beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( scaler size beg dur get-func-name ) string-format { origin }
   scaler size comb-filter beg dur snd chn #f origin map-channel
 ;
 
 : effects-comb-chord <{ scaler size amp :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s %s" #( scaler size amp beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s %s" #( scaler size amp beg dur get-func-name ) string-format { origin }
   scaler size amp comb-chord beg dur snd chn #f origin map-channel
 ;
 
@@ -262,7 +262,7 @@ hide
 set-current
 
 : effects-moog <{ freq Q :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s" #( freq Q beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( freq Q beg dur get-func-name ) string-format { origin }
   freq Q make-moog-filter moog-cb beg dur snd chn #f origin map-channel
 ;
 previous
@@ -314,14 +314,14 @@ set-current
 : effects-am <{ freq en :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
   en array? if :envelope en :length dur 1- make-env else #f then { e }
-  $" %s %s %s %s %s" #( freq en beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( freq en beg dur get-func-name ) string-format { origin }
   e if os e effects-am-env-cb else os effects-am-cb then beg dur snd chn #f origin map-channel
 ;
 
 : effects-rm <{ freq en :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
   en array? if :envelope en :length dur 1- make-env else #f then { e }
-  $" %s %s %s %s %s" #( freq en beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( freq en beg dur get-func-name ) string-format { origin }
   e if os e effects-rm-env-cb else os effects-rm-cb then beg dur snd chn #f origin map-channel
 ;
 previous
@@ -378,7 +378,7 @@ previous
 
 : effects-jc-reverb-1 <{ vol :optional beg 0 dur #f snd #f  chn #f -- res }>
   dur if dur else snd chn #f frames then { samps }
-  $" %s %s %s %s" #( vol beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s" #( vol beg dur get-func-name ) string-format { origin }
   samps vol effects-jc-reverb beg dur snd chn #f origin map-channel
 ;
 
@@ -413,7 +413,7 @@ set-current
   sf free-sampler drop
   out-data amp vct-scale! drop
   out-data vct-peak { max-samp }
-  $" %s %s %s" #( snd0 amp get-func-name ) string-format { origin }
+  "%s %s %s" #( snd0 amp get-func-name ) string-format { origin }
   out-data 0 total-len snd chn #f origin vct->channel drop
   max-samp 1.0 f> if #( max-samp fnegate max-samp ) snd chn set-y-bounds drop then
   max-samp
@@ -446,7 +446,7 @@ set-current
 : effects-position-sound <{ mono pos :optional snd #f chn #f -- res }>
   mono #f #f frames { len }
   0 mono #f 1 #f make-sampler { rd }
-  $" %s %s %s" #( mono pos get-func-name ) string-format { origin }
+  "%s %s %s" #( mono pos get-func-name ) string-format { origin }
   pos number? if
     rd pos numb-cb 0 len snd chn #f origin map-channel
   else
@@ -491,7 +491,7 @@ set-current
   :frequency speed :amplitude amnt make-rand-interp { ri }
   time snd srate f* fround->s { len }
   :size len :max-size amnt f>s len 1 + + make-delay { del }
-  $" %s %s %s %s %s %s"
+  "%s %s %s %s %s %s"
   #( amnt speed time beg
   dur number? snd chn #f frames dur <> && if dur else #f then
   get-func-name ) string-format { origin }
@@ -540,7 +540,7 @@ previous
 
 : effects-cross-synthesis-1 <{ csnd amp fftsize r :optional beg 0 dur #f snd #f  chn #f -- res }>
   { csnd amp fftsize r beg dur snd chn }
-  $" %s %s %s %s %s %s %s" #( csnd amp fftsize r beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s %s %s" #( csnd amp fftsize r beg dur get-func-name ) string-format { origin }
   csnd sound? unless sounds 0 array-ref to csnd then
   csnd amp fftsize r effects-cross-synthesis beg dur snd chn #f origin map-channel
 ;
@@ -572,7 +572,7 @@ set-current
   dur if dur else snd chn #f frames then { len }
   len 0.0 make-vct { out-data }
   out-data   os sr sf amp vct-fp-cb   vct-map! drop
-  $" %s %s %s %s %s %s" #( srf amp freq beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s %s" #( srf amp freq beg dur get-func-name ) string-format { origin }
   out-data beg len snd chn #f origin vct->channel
 ;
 previous
@@ -601,7 +601,7 @@ set-current
     idx len = ?leave
     rd  rn  0.0 rand-interp  #f src
   end-map to out-data
-  $" %s %s %s %s %s" #( freq amp beg dur get-func-name ) string-format { origin }
+  "%s %s %s %s %s" #( freq amp beg dur get-func-name ) string-format { origin }
   out-data beg out-data vct-length snd chn #f origin vct->channel
 ;
 previous
@@ -751,7 +751,7 @@ set-current
 
 <'> noop 0 make-proc constant effects-noop
 
-$" Go Away" constant eff-dismiss-string
+"Go Away" constant eff-dismiss-string
 "Help"      constant eff-help-string
 "DoIt"      constant eff-okay-string
 "Reset"     constant eff-reset-string
@@ -782,7 +782,7 @@ $" Go Away" constant eff-dismiss-string
 
 24 value semi-range
 
-: semi-scale-label ( val -- str ) $" semitones: %s" swap semi-range - 1 >array string-format ;
+: semi-scale-label ( val -- str ) "semitones: %s" swap semi-range - 1 >array string-format ;
 : semitones->ratio ( val -- r )   2.0 swap 12.0 f/ f** ;
 : ratio->semitones ( ratio -- n ) 12.0 swap flog 2.0 flog f/ f* fround->s ;
 
@@ -916,11 +916,11 @@ $" Go Away" constant eff-dismiss-string
 
 : map-chan-over-target-with-sync { func target origin-func decay -- }
   sounds empty? if
-    $" no sound" snd-warning drop
+    "no sound" snd-warning drop
   else
     target 'selection =
     undef selection? not && if
-      $" no selection" snd-warning drop
+      "no selection" snd-warning drop
     else
       #f sync { snc }
       target 'marks = if
@@ -961,7 +961,7 @@ $" Go Away" constant eff-dismiss-string
 	  then { end }
 	  end beg - { dur }
 	  origin-func #( target dur ) run-proc { name-and-orig }
-	  $" %s %s %s %s"
+	  "%s %s %s %s"
 	  #( name-and-orig 0 array-ref
 	     beg
 	     target 'sound = if #f else dur 1+ then
@@ -1082,7 +1082,7 @@ $" Go Away" constant eff-dismiss-string
   : scale-semi-cb <{ w c info -- }> c  info Fvalue semi-scale-label  change-label ;
 
   : create-semi-scale-widget { parent title init cb -- scale }
-    $" semitones: %s" #( init ratio->semitones ) string-format { str }
+    "semitones: %s" #( init ratio->semitones ) string-format { str }
     str FxmLabelWidgetClass parent
     #( FXmNbackground  basic-color ) undef FXtCreateManagedWidget { label }
     "scale" FxmScaleWidgetClass parent
@@ -1174,7 +1174,7 @@ $" Go Away" constant eff-dismiss-string
       dpy scr FDefaultColormap { cmap }
       undef undef undef undef undef undef FXColor { col }
       dpy cmap self cell+ @ ( color-str ) col col FXAllocNamedColor 0= if
-	$" can't allocate color!" snd-error drop
+	"can't allocate color!" snd-error drop
       else
 	col Fpixel self !
       then
@@ -1203,9 +1203,9 @@ $" Go Away" constant eff-dismiss-string
        FXmNrightAttachment  FXmATTACH_FORM
        FXmNentryClass       FxmToggleButtonWidgetClass
        FXmNisHomogeneous    #t ) undef FXtCreateManagedWidget { rc }
-    #( #( $" entire sound"  'sound     #t )
-       #( $" selection"     'selection #f )
-       #( $" between marks" 'marks     #f ) ) each { lst }
+    #( #( "entire sound"  'sound     #t )
+       #( "selection"     'selection #f )
+       #( "between marks" 'marks     #f ) ) each { lst }
       lst 0 array-ref { name }
       lst 1 array-ref { typ }
       lst 2 array-ref { on }
@@ -1220,7 +1220,7 @@ $" Go Away" constant eff-dismiss-string
     truncate-prc if
       "trsep" FxmSeparatorWidgetClass mainform
       #( FXmNorientation FXmHORIZONTAL ) undef FXtCreateManagedWidget drop
-      $" truncate at end" FxmToggleButtonWidgetClass mainform
+      "truncate at end" FxmToggleButtonWidgetClass mainform
       #( FXmNbackground  basic-color
 	 FXmNset         #t
 	 FXmNselectColor yellow-pixel ) undef FXtCreateManagedWidget ( trbutton )
@@ -1326,7 +1326,7 @@ $" Go Away" constant eff-dismiss-string
     d 4 array-ref { func }
     func #( w d ) run-proc drop
     label
-    title $" : " $+ low w FGTK_ADJUSTMENT Fgtk_adjustment_get_value high scale-log-label $+
+    title ": " $+ low w FGTK_ADJUSTMENT Fgtk_adjustment_get_value high scale-log-label $+
     change-label
     #f
   ;
@@ -1372,15 +1372,15 @@ $" Go Away" constant eff-dismiss-string
       table if #f else FGTK_ORIENTATION_HORIZONTAL 0 Fgtk_box_new then { hbox }
       table if
   	use-log if
-  	  $" %s (%.2f)" #( title init )
+  	  "%s (%.2f)" #( title init )
   	else
-  	  $" %s" #( title )
+  	  "%s" #( title )
   	then
       else
   	use-log if
-  	  $" %s: %.2f" #( title init )
+  	  "%s: %.2f" #( title init )
   	else
-  	  $" %s:" #( title )
+  	  "%s:" #( title )
   	then
       then string-format Fgtk_label_new { label }
       use-log if
@@ -1456,9 +1456,9 @@ $" Go Away" constant eff-dismiss-string
     rc Fgtk_widget_show drop
     rc FGTK_BOX { rcbox }
     #f { group }
-    #( #( $" entire sound"  'sound     #t )
-       #( $" selection"     'selection #f )
-       #( $" between marks" 'marks     #f ) ) each { lst }
+    #( #( "entire sound"  'sound     #t )
+       #( "selection"     'selection #f )
+       #( "between marks" 'marks     #f ) ) each { lst }
       lst 0 array-ref { name }
       lst 1 array-ref { typ }
       lst 2 array-ref { on }
@@ -1473,7 +1473,7 @@ $" Go Away" constant eff-dismiss-string
       FGTK_ORIENTATION_HORIZONTAL Fgtk_separator_new { sep }
       rcbox sep #t #t 4 Fgtk_box_pack_start drop
       sep Fgtk_widget_show drop
-      $" truncate at end" Fgtk_check_button_new_with_label to button
+      "truncate at end" Fgtk_check_button_new_with_label to button
       rcbox button #t #t 4 Fgtk_box_pack_start drop
       button FGTK_TOGGLE_BUTTON #t Fgtk_toggle_button_set_active drop
       button Fgtk_widget_show drop
@@ -1594,7 +1594,7 @@ hide
 	  gen amount@ scale-selection-by
 	then
       else
-	$" no selection" snd-warning
+	"no selection" snd-warning
       then
     else
       plausible-mark-samples { pts }
@@ -1611,7 +1611,7 @@ hide
 	  pts 0 array-ref - #f #f #f normalize-channel
 	then
       else
-	$" no marks" snd-warning
+	"no marks" snd-warning
       then
     then
   then
@@ -1639,7 +1639,7 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen gain-ok-cb
-    gen label@ $" Move the slider to change the gain scaling amount." help-cb
+    gen label@ "Move the slider to change the gain scaling amount." help-cb
     gen gain-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
@@ -1662,7 +1662,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -1680,7 +1680,7 @@ hide
       undef selection? if
 	gen amount@ scale-selection-to drop
       else
-	$" no selection" snd-warning drop
+	"no selection" snd-warning drop
       then
     else
       plausible-mark-samples { pts }
@@ -1690,7 +1690,7 @@ hide
 	pts 1 array-ref
 	pts 0 array-ref - #f #f #f normalize-channel drop
       else
-	$" no marks" snd-warning drop
+	"no marks" snd-warning drop
       then
     then
   then
@@ -1717,7 +1717,7 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen normalize-ok-cb
-    gen label@ $" Normalize scales amplitude to the normalize amount.  \
+    gen label@ "Normalize scales amplitude to the normalize amount.  \
 Move the slider to change the scaling amount." help-cb
     gen normalize-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
@@ -1739,7 +1739,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -1795,14 +1795,14 @@ end-struct gate%
     gen dialog@ widget? unless
       gen label@
       gen gate-ok-cb
-      gen label@ $" Move the slider to change the gate intensity.  \
+      gen label@ "Move the slider to change the gate intensity.  \
 Higher values gate more of the sound." help-cb
       gen gate-reset-cb #f make-effect-dialog gen dialog!
       gen dialog@ #(
 	 #( "gate" 0.0 gen amount@ 0.1 gen gate-slider-cb 1000 )
       ) add-sliders gen sliders!
-      $" Omit silence" FXmStringCreateLocalized { s1 }
-      $" Omit silence" FxmToggleButtonWidgetClass gen sliders@ 0 array-ref FXtParent
+      "Omit silence" FXmStringCreateLocalized { s1 }
+      "Omit silence" FxmToggleButtonWidgetClass gen sliders@ 0 array-ref FXtParent
       #( FXmNbackground  basic-color
 	 FXmNvalue       gen omit-silence@ if 1 else 0 then
 	 FXmNlabelString s1 ) undef FXtCreateManagedWidget ( toggle )
@@ -1823,13 +1823,13 @@ Higher values gate more of the sound." help-cb
     gen dialog@ widget? unless
       gen label@
       gen gate-ok-cb
-      gen label@ $" Move the slider to change the gate intensity.  \
+      gen label@ "Move the slider to change the gate intensity.  \
 Higher values gate more of the sound." help-cb
       gen gate-reset-cb #f make-effect-dialog gen dialog!
       gen dialog@ #(
 	 #( "gate" 0.0 gen amount@ 0.1 gen gate-slider-cb 1000 )
       ) add-sliders gen sliders!
-      $" Omit silence" Fgtk_check_button_new_with_label { toggle }
+      "Omit silence" Fgtk_check_button_new_with_label { toggle }
       gen dialog@ FGTK_DIALOG Fgtk_dialog_get_content_area FGTK_BOX
       toggle #f #f 4 Fgtk_box_pack_start drop
       toggle Fgtk_widget_show drop
@@ -1852,7 +1852,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.4f)" #( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.4f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -1880,7 +1880,7 @@ hide
  does> { target samps self -- name origin }
   self @ { gen }
   "effects-echo"
-  $" %s %s %s" #( target 'sound = if #f else samps then gen delay-time@ gen amount@ ) string-format
+  "%s %s %s" #( target 'sound = if #f else samps then gen delay-time@ gen amount@ ) string-format
 ;
 
 : echo-ok-cb ( gen -- prc; w c i self -- )
@@ -1922,12 +1922,12 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen echo-ok-cb
-    gen label@ $" The sliders change the delay time and echo amount." help-cb
+    gen label@ "The sliders change the delay time and echo amount." help-cb
     gen echo-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" delay time"  0.0 gen delay-time@  2.0 gen echo-delay-slider-cb  100 )
-       #( $" echo amount" 0.0 gen amount@      1.0 gen echo-amount-slider-cb 100 )
+       #( "delay time"  0.0 gen delay-time@  2.0 gen echo-delay-slider-cb  100 )
+       #( "echo amount" 0.0 gen amount@      1.0 gen echo-amount-slider-cb 100 )
     ) add-sliders gen sliders!
     gen <'> truncate-cb add-target
   then
@@ -1946,7 +1946,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" #( gen label@ gen delay-time@ gen amount@ ) string-format change-label
+  "%s (%.2f %.2f)" #( gen label@ gen delay-time@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -1973,8 +1973,8 @@ hide
   2 proc-create swap , ( prc )
  does> { target samps self -- name origin }
   self @ { gen }
-  $" effects-flecho"
-  $" %s %s %s" #( gen amount@ gen delay-time@ target 'sound = if #f else samps then ) string-format
+  "effects-flecho"
+  "%s %s %s" #( gen amount@ gen delay-time@ target 'sound = if #f else samps then ) string-format
 ;
 
 : flecho-ok-cb ( gen -- prc; w c i self -- )
@@ -2004,12 +2004,12 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen flecho-ok-cb
-    gen label@ $" Move the sliders to set the filter scaler and the delay time in seconds." help-cb
+    gen label@ "Move the sliders to set the filter scaler and the delay time in seconds." help-cb
     gen flecho-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" filter scaler"     0.0 gen amount@     1.0 gen echo-amount-slider-cb 100 )
-       #( $" delay time (secs)" 0.0 gen delay-time@ 3.0 gen echo-delay-slider-cb  100 )
+       #( "filter scaler"     0.0 gen amount@     1.0 gen echo-amount-slider-cb 100 )
+       #( "delay time (secs)" 0.0 gen delay-time@ 3.0 gen echo-delay-slider-cb  100 )
     ) add-sliders gen sliders!
     gen <'> truncate-cb add-target
   then
@@ -2028,7 +2028,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" #( gen label@ gen amount@ gen delay-time@ ) string-format change-label
+  "%s (%.2f %.2f)" #( gen label@ gen amount@ gen delay-time@ ) string-format change-label
 ;
 previous
 
@@ -2061,8 +2061,8 @@ hide
   2 proc-create swap , ( prc )
  does> { target samps self -- name origin }
   self @ { gen }
-  $" effects-zecho"
-  $" %s %s %s %s %s" #( gen scaler@
+  "effects-zecho"
+  "%s %s %s %s %s" #( gen scaler@
      gen delay-time@
      gen frequency@
      gen amplitude@
@@ -2106,15 +2106,15 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen zecho-ok-cb
-    gen label@ $" Move the sliders to set the echo scaler, \
+    gen label@ "Move the sliders to set the echo scaler, \
 the delay time in seconds, the modulation frequency, and the echo amplitude." help-cb
     gen zecho-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" echo scaler"         0.0 gen scaler@       1.0 gen scaler-slider-cb    100 )
-       #( $" delay time (secs)"   0.0 gen delay-time@   3.0 gen zecho-del-slider-cb 100 )
-       #( $" modulatio frequency" 0.0 gen frequency@  100.0 gen frequency-slider-cb 100 )
-       #( $" modulatio amplitude" 0.0 gen amplitude@  100.0 gen amplitude-slider-cb 100 )
+       #( "echo scaler"         0.0 gen scaler@       1.0 gen scaler-slider-cb    100 )
+       #( "delay time (secs)"   0.0 gen delay-time@   3.0 gen zecho-del-slider-cb 100 )
+       #( "modulatio frequency" 0.0 gen frequency@  100.0 gen frequency-slider-cb 100 )
+       #( "modulatio amplitude" 0.0 gen amplitude@  100.0 gen amplitude-slider-cb 100 )
     ) add-sliders gen sliders!
     gen <'> truncate-cb add-target
   then
@@ -2135,7 +2135,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f %.2f %.2f)"
+  "%s (%.2f %.2f %.2f %.2f)"
   #( gen label@ gen scaler@ gen delay-time@ gen frequency@ gen amplitude@ ) format change-label
 ;
 previous
@@ -2158,7 +2158,7 @@ end-struct bp-filter%
   self @ { gen }
   gen frequency@ gen band-pass-bw@ make-butter-band-pass { flt }
   gen target@ 'sound = if
-    $" %s %s 0 #f effects-bbp" #( gen frequency@ gen band-pass-bw@ ) string-format { origin }
+    "%s %s 0 #f effects-bbp" #( gen frequency@ gen band-pass-bw@ ) string-format { origin }
     flt #f #f #f #f origin filter-sound
   else
     gen target@ 'selection = if
@@ -2167,7 +2167,7 @@ end-struct bp-filter%
       plausible-mark-samples { pts }
       pts 0 array-ref { bg }
       pts 1 array-ref bg - 1+ { nd }
-      $" %s %s %s %s effects-bbp" #( gen frequency@ gen band-pass-bw@ bg nd )
+      "%s %s %s %s effects-bbp" #( gen frequency@ gen band-pass-bw@ bg nd )
       string-format { origin }
       flt bg nd #f #f #f #f origin clm-channel
     then
@@ -2198,13 +2198,13 @@ end-struct bp-filter%
   gen dialog@ widget? unless
     gen label@
     gen bp-ok-cb
-    gen label@ $" Butterworth band-pass filter.  \
+    gen label@ "Butterworth band-pass filter.  \
 Move the sliders to change the center frequency and bandwidth." help-cb
     gen bp-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" center frequency" 20.0 gen frequency@    22050.0 gen log-freq-slider-cb 1 'log )
-       #( $" bandwidth"           0 gen band-pass-bw@    1000 gen bp-bw-slider-cb    1 )
+       #( "center frequency" 20.0 gen frequency@    22050.0 gen log-freq-slider-cb 1 'log )
+       #( "bandwidth"           0 gen band-pass-bw@    1000 gen bp-bw-slider-cb    1 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2223,7 +2223,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d)" #( gen label@ gen frequency@ gen band-pass-bw@ ) string-format change-label
+  "%s (%.2f %d)" #( gen label@ gen frequency@ gen band-pass-bw@ ) string-format change-label
 ;
 previous
 
@@ -2243,7 +2243,7 @@ end-struct notch%
   self @ { gen }
   gen frequency@ gen notch-bw@ make-butter-band-reject { flt }
   gen target@ 'sound = if
-    $" %s %s 0 #f effects-bbr" #( gen frequency@ gen notch-bw@ ) string-format { origin }
+    "%s %s 0 #f effects-bbr" #( gen frequency@ gen notch-bw@ ) string-format { origin }
     flt #f #f #f #f origin filter-sound
   else
     gen target@ 'selection = if
@@ -2252,7 +2252,7 @@ end-struct notch%
       plausible-mark-samples { pts }
       pts 0 array-ref { bg }
       pts 1 array-ref bg - 1+ { nd }
-      $" %s %s %s %s effects-bbp" #( gen frequency@ gen notch-bw@ bg nd ) string-format { orig }
+      "%s %s %s %s effects-bbp" #( gen frequency@ gen notch-bw@ bg nd ) string-format { orig }
       flt bg nd #f #f #f #f orig clm-channel
     then
   then
@@ -2281,13 +2281,13 @@ end-struct notch%
   gen dialog@ widget? unless
     gen label@
     gen br-ok-cb
-    gen label@ $" Butterworth band-reject filter.  \
+    gen label@ "Butterworth band-reject filter.  \
 Move the sliders to change the center frequency and bandwidth." help-cb
     gen br-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" center frequency" 20.0 gen frequency@   22050.0 gen log-freq-slider-cb 1 'log )
-       #( $" bandwidth"           0 gen notch-bw@       1000 gen br-bw-slider-cb    1  )
+       #( "center frequency" 20.0 gen frequency@   22050.0 gen log-freq-slider-cb 1 'log )
+       #( "bandwidth"           0 gen notch-bw@       1000 gen br-bw-slider-cb    1  )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2306,7 +2306,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d)" #( gen label@ gen frequency@ gen notch-bw@ ) string-format change-label
+  "%s (%.2f %d)" #( gen label@ gen frequency@ gen notch-bw@ ) string-format change-label
 ;
 previous
 
@@ -2319,7 +2319,7 @@ hide
   self @ { gen }
   gen frequency@ make-butter-high-pass { flt }
   gen target@ 'sound = if
-    $" %s 0 #f effects-bhp" gen frequency@ string-format { origin }
+    "%s 0 #f effects-bhp" gen frequency@ string-format { origin }
     flt #f #f #f #f origin filter-sound
   else
     gen target@ 'selection = if
@@ -2328,7 +2328,7 @@ hide
       plausible-mark-samples { pts }
       pts 0 array-ref { bg }
       pts 1 array-ref bg - 1+ { nd }
-      $" %s %s %s effects-bhp" #( gen frequency@ bg nd ) string-format { origin }
+      "%s %s %s effects-bhp" #( gen frequency@ bg nd ) string-format { origin }
       flt bg nd #f #f #f #f origin clm-channel
     then
   then
@@ -2349,12 +2349,12 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen hp-ok-cb
-    gen label@ $" Butterworth high-pass filter.  \
+    gen label@ "Butterworth high-pass filter.  \
 Move the slider to change the high-pass cutoff frequency." help-cb
     gen hp-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" high-pass cutoff frequency" 20.0 gen frequency@ 22050.0 gen log-freq-slider-cb 1 'log )
+       #( "high-pass cutoff frequency" 20.0 gen frequency@ 22050.0 gen log-freq-slider-cb 1 'log )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2371,7 +2371,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen frequency@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen frequency@ ) string-format change-label
 ;
 previous
 
@@ -2384,7 +2384,7 @@ hide
   self @ { gen }
   gen frequency@ make-butter-low-pass { flt }
   gen target@ 'sound = if
-    $" %s 0 #f effects-blp" gen frequency@ string-format { origin }
+    "%s 0 #f effects-blp" gen frequency@ string-format { origin }
     flt #f #f #f #f origin filter-sound
   else
     gen target@ 'selection = if
@@ -2393,7 +2393,7 @@ hide
       plausible-mark-samples { pts }
       pts 0 array-ref { bg }
       pts 1 array-ref bg - 1+ { nd }
-      $" %s %s %s effects-blp" #( gen frequency@ bg nd ) string-format { origin }
+      "%s %s %s effects-blp" #( gen frequency@ bg nd ) string-format { origin }
       flt bg nd #f #f #f #f origin clm-channel
     then
   then
@@ -2414,12 +2414,12 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen lp-ok-cb
-    gen label@ $" Butterworth low-pass filter.  \
+    gen label@ "Butterworth low-pass filter.  \
 Move the slider to change the low-pass cutoff frequency." help-cb
     gen lp-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" low-pass cutoff frequency" 20.0 gen frequency@ 22050.0 gen log-freq-slider-cb 1 'log )
+       #( "low-pass cutoff frequency" 20.0 gen frequency@ 22050.0 gen log-freq-slider-cb 1 'log )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2436,7 +2436,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen frequency@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen frequency@ ) string-format change-label
 ;
 previous
 
@@ -2454,7 +2454,7 @@ hide
   2 proc-create swap , ( prc )
  does> { target samps self -- name origin }
   self @ { gen }
-  $" effects-comb-filter" $" %s %s" #( gen scaler@ gen size@ ) string-format
+  "effects-comb-filter" "%s %s" #( gen scaler@ gen size@ ) string-format
 ;
 
 : comb-ok-cb ( gen -- prc; w c i self -- )
@@ -2481,7 +2481,7 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen comb-ok-cb
-    gen label@ $" Move the slider to change the comb scaler and size." help-cb
+    gen label@ "Move the slider to change the comb scaler and size." help-cb
     gen comb-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
@@ -2505,7 +2505,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d)" #( gen label@ gen scaler@ gen size@ ) string-format change-label
+  "%s (%.2f %d)" #( gen label@ gen scaler@ gen size@ ) string-format change-label
 ;
 previous
 
@@ -2523,8 +2523,8 @@ hide
   2 proc-create swap , ( prc )
  does> { target samps self -- name origin }
   self @ { gen }
-  $" effects-comb-chord"
-  $" %s %s %s" #( gen scaler@ gen size@ gen amplitude@ ) string-format
+  "effects-comb-chord"
+  "%s %s %s" #( gen scaler@ gen size@ gen amplitude@ ) string-format
 ;
 
 : cc-ok-cb ( gen -- prc; w c i self -- )
@@ -2553,14 +2553,14 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen cc-ok-cb
-    gen label@ $" Creates chords by using filters at harmonically related sizes.  \
+    gen label@ "Creates chords by using filters at harmonically related sizes.  \
 Move the sliders to set the comb chord parameters." help-cb
     gen cc-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" chord scaler" 0.0 gen scaler@    1.0 gen scaler-slider-cb    100 )
-       #( $" chord size"     0 gen size@      100 gen size-slider-cb        1 )
-       #( $" amplitude"    0.0 gen amplitude@ 1.0 gen amplitude-slider-cb 100 )
+       #( "chord scaler" 0.0 gen scaler@    1.0 gen scaler-slider-cb    100 )
+       #( "chord size"     0 gen size@      100 gen size-slider-cb        1 )
+       #( "amplitude"    0.0 gen amplitude@ 1.0 gen amplitude-slider-cb 100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2580,7 +2580,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d %.2f)" #( gen label@ gen scaler@ gen size@ gen amplitude@ )
+  "%s (%.2f %d %.2f)" #( gen label@ gen scaler@ gen size@ gen amplitude@ )
   string-format change-label
 ;
 previous
@@ -2607,7 +2607,7 @@ end-struct moog%
  does> { target samps self -- name origin }
   self @ { gen }
   "effects-moog"
-  $" %s %s" #( gen frequency@ gen moog-resonance@ ) string-format
+  "%s %s" #( gen frequency@ gen moog-resonance@ ) string-format
 ;
 
 : moog-ok-cb ( gen -- prc; w c i self -- )
@@ -2644,13 +2644,13 @@ end-struct moog%
   gen dialog@ widget? unless
     gen label@
     gen moog-ok-cb
-    gen label@ $" Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.  \
+    gen label@ "Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.  \
 Move the sliders to set the filter cutoff frequency and resonance." help-cb    
     gen moog-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" cutoff frequency" 20.0 gen frequency@  22050.0 gen log-freq-slider-cb 1 'log )
-       #( $" resonanze"         0.0 gen moog-resonance@ 1.0 gen moog-res-cb      100 )
+       #( "cutoff frequency" 20.0 gen frequency@  22050.0 gen log-freq-slider-cb 1 'log )
+       #( "resonanze"         0.0 gen moog-resonance@ 1.0 gen moog-res-cb      100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2669,7 +2669,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" #( gen label@ gen frequency@ gen moog-resonance@ ) string-format change-label
+  "%s (%.2f %.2f)" #( gen label@ gen frequency@ gen moog-resonance@ ) string-format change-label
 ;
 previous
 
@@ -2740,11 +2740,11 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen adsat-ok-cb
-    gen label@ $" Move the slider to change the saturation scaling factor." help-cb
+    gen label@ "Move the slider to change the saturation scaling factor." help-cb
     gen adsat-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" adaptive saturation size" 0 gen size@ 10 gen size-slider-cb 1 )
+       #( "adaptive saturation size" 0 gen size@ 10 gen size-slider-cb 1 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2761,7 +2761,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%d)" #( gen label@ gen size@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%d)" #( gen label@ gen size@ ) string-format change-label
 ;
 previous
 
@@ -2779,10 +2779,10 @@ hide
       undef selection? if
 	gen amount@ 1.0 src-selection
       else
-	$" no selection" snd-warning
+	"no selection" snd-warning
       then
     else
-      $" can't apply src between marks yet" snd-warning
+      "can't apply src between marks yet" snd-warning
     then
   then
 ;
@@ -2808,12 +2808,12 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen src-ok-cb
-    gen label@ $" Move the slider to change the sample rate.  \
+    gen label@ "Move the slider to change the sample rate.  \
 Values greater than 1.0 speed up file play, negative values reverse it." help-cb
     gen src-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" sample rate" -2.0 gen amount@ 2.0 gen src-amount-cb 100 )
+       #( "sample rate" -2.0 gen amount@ 2.0 gen src-amount-cb 100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2830,7 +2830,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -2880,7 +2880,7 @@ end-struct expsrc%
       pts 1 array-ref
       pts 0 array-ref - 1+ apply-controls drop
     else
-      $" no marks" snd-warning drop
+      "no marks" snd-warning drop
     then
   else
     snd gen target@ 'sound = if 0 else 2 then undef undef apply-controls drop
@@ -2947,15 +2947,15 @@ end-struct expsrc%
   gen dialog@ widget? unless
     gen label@
     gen expsrc-ok-cb
-    gen label@ $" Move the slider to change the time/pitch scaling parameter." help-cb
+    gen label@ "Move the slider to change the time/pitch scaling parameter." help-cb
     gen expsrc-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" time scale"     0.0 gen time-scale@     5.0 gen expsrc-ts-cb 100 )
-       #( $" hop size"       0.0 gen hop-size@       1.0 gen expsrc-hs-cb 100 )
-       #( $" segment-length" 0.0 gen segment-length@ 0.5 gen expsrc-sl-cb 100 )
-       #( $" ramp scale"     0.0 gen ramp-scale@     0.5 gen expsrc-rs-cb 100 )
-       #( $" pitch scale"    0.0 gen pitch-scale@    5.0 gen expsrc-ps-cb 100 )
+       #( "time scale"     0.0 gen time-scale@     5.0 gen expsrc-ts-cb 100 )
+       #( "hop size"       0.0 gen hop-size@       1.0 gen expsrc-hs-cb 100 )
+       #( "segment-length" 0.0 gen segment-length@ 0.5 gen expsrc-sl-cb 100 )
+       #( "ramp scale"     0.0 gen ramp-scale@     0.5 gen expsrc-rs-cb 100 )
+       #( "pitch scale"    0.0 gen pitch-scale@    5.0 gen expsrc-ps-cb 100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -2977,7 +2977,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" #( gen label@ gen time-scale@ gen pitch-scale@ ) string-format change-label
+  "%s (%.2f %.2f)" #( gen label@ gen time-scale@ gen pitch-scale@ ) string-format change-label
 ;
 previous
 
@@ -2997,7 +2997,7 @@ hide
       selected-sound #f selection-member? if
 	en 1.0 src-selection drop
       else
-	$" no selection" snd-warning drop
+	"no selection" snd-warning drop
       then
     else
       plausible-mark-samples { pts }
@@ -3007,7 +3007,7 @@ hide
 	end beg - { len }
 	:envelope en :length len make-env beg len selected-sound #f #f src-channel drop
       else
-	$" no marks" snd-warning drop
+	"no marks" snd-warning drop
       then
     then
   then
@@ -3029,11 +3029,11 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen src-timevar-ok-cb
-    gen label@ $" Move the slider to change the src-timevar scaling amount." help-cb
+    gen label@ "Move the slider to change the src-timevar scaling amount." help-cb
     gen src-timevar-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" Resample factor" 0.0 gen scaler@ 10.0 gen scaler-slider-cb 100 )
+       #( "Resample factor" 0.0 gen scaler@ 10.0 gen scaler-slider-cb 100 )
     ) add-sliders gen sliders!
     gen make-enved-widget
   else
@@ -3052,7 +3052,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" Time-varying sample rate scaling" change-label
+  self cell+ @ ( child ) "Time-varying sample rate scaling" change-label
 ;
 previous
 
@@ -3079,7 +3079,7 @@ hide
  does> { target samps self -- name origin }
   self @ { gen }
   "effects-am"
-  $" %s %s" #( gen amount@
+  "%s %s" #( gen amount@
      gen envel@ xe-envelope #( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
   string-format
 ;
@@ -3117,11 +3117,11 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen am-ok-cb
-    gen label@ $" Move the slider to change the modulation amount." help-cb
+    gen label@ "Move the slider to change the modulation amount." help-cb
     gen am-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" amplitude modulation" 0.0 gen amount@ 1000.0 gen am-slider-cb 1 )
+       #( "amplitude modulation" 0.0 gen amount@ 1000.0 gen am-slider-cb 1 )
     ) add-sliders gen sliders!
     gen make-enved-widget
   else
@@ -3140,7 +3140,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -3165,7 +3165,7 @@ hide
  does> { target samps self -- name origin }
   self @ { gen }
   "effects-rm"
-  $" %s %s" #( gen frequency@
+  "%s %s" #( gen frequency@
      gen envel@ xe-envelope #( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
   string-format
 ;
@@ -3211,12 +3211,12 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen rm-ok-cb
-    gen label@ $" Move the slider to change ring modulation parameters." help-cb
+    gen label@ "Move the slider to change ring modulation parameters." help-cb
     gen rm-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" modulation frequency" 0 gen frequency@ 1000 gen rm-freq-cb    1 )
-       #( $" modulation radians"   0 gen scaler@     360 gen rm-radians-cb 1 )
+       #( "modulation frequency" 0 gen frequency@ 1000 gen rm-freq-cb    1 )
+       #( "modulation radians"   0 gen scaler@     360 gen rm-radians-cb 1 )
     ) add-sliders gen sliders!
     gen make-enved-widget
   else
@@ -3237,7 +3237,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" #( gen label@ gen frequency@ gen scaler@ ) string-format change-label
+  "%s (%.2f %.2f)" #( gen label@ gen frequency@ gen scaler@ ) string-format change-label
 ;
 previous
 
@@ -3275,7 +3275,7 @@ end-struct nrev-reverb%
       pts 1 array-ref
       pts 0 array-ref - 1+ apply-controls drop
     else
-      $" no marks" snd-warning drop
+      "no marks" snd-warning drop
     then
   else
     snd gen target@ 'sound = if 0 else 2 then undef undef apply-controls drop
@@ -3320,15 +3320,15 @@ end-struct nrev-reverb%
   gen dialog@ widget? unless
     gen label@
     gen nrev-ok-cb
-    gen label@ $" Reverberator from Michael McNabb.  \
+    gen label@ "Reverberator from Michael McNabb.  \
 Adds reverberation scaled by reverb amount, lowpass filtering, and feedback.  \
 Move the sliders to change the reverb parameters." help-cb
     gen nrev-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" reverb amount"   0.0 gen amount@          1.00 gen nrev-amount-cb   100 )
-       #( $" reverb filter"   0.0 gen reverb-filter@   1.00 gen nrev-filter-cb   100 )
-       #( $" reverb feedback" 0.0 gen reverb-feedback@ 1.25 gen nrev-feedback-cb 100 )
+       #( "reverb amount"   0.0 gen amount@          1.00 gen nrev-amount-cb   100 )
+       #( "reverb filter"   0.0 gen reverb-filter@   1.00 gen nrev-filter-cb   100 )
+       #( "reverb feedback" 0.0 gen reverb-feedback@ 1.25 gen nrev-feedback-cb 100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -3348,7 +3348,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f %.2f)"
+  "%s (%.2f %.2f %.2f)"
   #( gen label@ gen amount@ gen reverb-filter@ gen reverb-feedback@ ) string-format change-label
 ;
 previous
@@ -3420,13 +3420,13 @@ end-struct jc-reverb%
   gen dialog@ widget? unless
     gen label@
     gen jc-ok-cb
-    gen label@ $" Nice reverb from John Chowning.  \
+    gen label@ "Nice reverb from John Chowning.  \
 Move the sliders to set the reverb parameters." help-cb
     gen jc-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" decay duration" 0.0 gen jc-reverb-decay@  10.0 gen jc-decay-cb  100 )
-       #( $" reverb volume"  0.0 gen jc-reverb-volume@ 1.00 gen jc-volume-cb 100 )
+       #( "decay duration" 0.0 gen jc-reverb-decay@  10.0 gen jc-decay-cb  100 )
+       #( "reverb volume"  0.0 gen jc-reverb-volume@ 1.00 gen jc-volume-cb 100 )
     ) add-sliders gen sliders!
     gen <'> truncate-cb add-target
   then
@@ -3445,7 +3445,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" #( gen label@ gen jc-reverb-decay@ gen jc-reverb-volume@ ) string-format
+  "%s (%.2f %.2f)" #( gen label@ gen jc-reverb-decay@ gen jc-reverb-volume@ ) string-format
   change-label
 ;
 previous
@@ -3473,10 +3473,10 @@ end-struct effects-convolve%
     snd2 sound? if
       snd1 gen amplitude@ snd2 #f effects-cnv
     else
-      $" no such sound two: %S" #( snd2 ) string-format snd-warning
+      "no such sound two: %S" #( snd2 ) string-format snd-warning
     then
   else
-    $" no such sound one: %S" #( snd1 ) string-format snd-warning
+    "no such sound one: %S" #( snd1 ) string-format snd-warning
   then
 ;
 
@@ -3511,7 +3511,7 @@ end-struct effects-convolve%
   gen dialog@ widget? unless
     gen label@
     gen cnv-ok-cb
-    gen label@ $" Very simple convolution.  \
+    gen label@ "Very simple convolution.  \
 Move the sliders to set the reverb parameters the numbers of the soundfiles \
 to be convolved and the amount for the amplitude scaler.  \
 Output will be scaled to floating-point values, \
@@ -3523,9 +3523,9 @@ You can find convolution data files on sites listed at \
 http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data." help-cb
     gen cnv-reset-cb #f make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" impulse response file"   0 gen convolve-one@   24 gen cnv-one-cb            1 )
-       #( $" sound file"              0 gen convolve-two@   24 gen cnv-two-cb            1 )
-       #( $" amplitude"             0.0 gen amplitude@    0.10 gen amplitude-slider-cb 100 )
+       #( "impulse response file"   0 gen convolve-one@   24 gen cnv-one-cb            1 )
+       #( "sound file"              0 gen convolve-two@   24 gen cnv-two-cb            1 )
+       #( "amplitude"             0.0 gen amplitude@    0.10 gen amplitude-slider-cb 100 )
     ) add-sliders gen sliders!
   then
   gen dialog@ activate-dialog
@@ -3544,7 +3544,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%d %d %.2f)"
+  "%s (%d %d %.2f)"
   #( gen label@ gen convolve-one@ gen convolve-two@ gen amplitude@ ) string-format change-label
 ;
 previous
@@ -3617,13 +3617,13 @@ end-struct effects-place-sound%
   gen dialog@ widget? unless
     gen label@
     gen ps-ok-cb
-    gen label@ $" Mixes mono sound into stereo sound field." help-cb
+    gen label@ "Mixes mono sound into stereo sound field." help-cb
     gen ps-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" mono sound"   0 gen mono-snd@   50 gen ps-mono-cb   1 )
-       #( $" stereo sound" 0 gen stereo-snd@ 50 gen ps-stereo-cb 1 )
-       #( $" pan position" 0 gen pan-pos@    90 gen ps-pos-cb    1 )
+       #( "mono sound"   0 gen mono-snd@   50 gen ps-mono-cb   1 )
+       #( "stereo sound" 0 gen stereo-snd@ 50 gen ps-stereo-cb 1 )
+       #( "pan position" 0 gen pan-pos@    90 gen ps-pos-cb    1 )
     ) add-sliders gen sliders!
     gen make-enved-widget
   else
@@ -3644,7 +3644,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%d %d %d)"
+  "%s (%d %d %d)"
   #( gen label@ gen mono-snd@ gen stereo-snd@ gen pan-pos@ ) string-format change-label
 ;
 previous
@@ -3680,7 +3680,7 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen silence-ok-cb
-    gen label@ $" Move the slider to change the number of seconds \
+    gen label@ "Move the slider to change the number of seconds \
 of silence added at the cursor position." help-cb
     gen silence-reset-cb #f make-effect-dialog gen dialog!
     gen dialog@ #(
@@ -3700,7 +3700,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -3727,7 +3727,7 @@ hide
       pts 1 array-ref
       pts 0 array-ref - 1+ apply-controls drop
     else
-      $" no marks" snd-warning drop
+      "no marks" snd-warning drop
     then
   else
     snd gen target@ 'sound = if 0 else 2 then 0 undef apply-controls drop
@@ -3756,11 +3756,11 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen contrast-ok-cb
-    gen label@ $" Move the slider to change the contrast intensity." help-cb
+    gen label@ "Move the slider to change the contrast intensity." help-cb
     gen contrast-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" contrast enhancement" 0.0 gen amount@ 10.0 gen contrast-amount-cb 100 )
+       #( "contrast enhancement" 0.0 gen amount@ 10.0 gen contrast-amount-cb 100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -3777,7 +3777,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -3809,7 +3809,7 @@ end-struct effects-cross%
  does> { target samps self -- name origin }
   self @ { gen }
   "effects-cross-synthesis-1"
-  $" %s %s %s %s" #( gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ ) string-format
+  "%s %s %s %s" #( gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ ) string-format
 ;
 
 : cs-ok-cb ( gen -- prc; w c i self -- )
@@ -3878,7 +3878,7 @@ end-struct effects-cross%
 
   : cs-sel-create-sel { gen -- }
     #( 64 128 256 512 1024 4096 ) { sizes }
-    $" FFT size" FXmStringCreateLocalized { s1 }
+    "FFT size" FXmStringCreateLocalized { s1 }
     "frame" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent
     #( FXmNborderWidth   1
        FXmNshadowType    FXmSHADOW_ETCHED_IN
@@ -3890,7 +3890,7 @@ end-struct effects-cross%
        FXmNbottomAttachment FXmATTACH_FORM
        FXmNbackground       basic-color ) undef FXtCreateManagedWidget { frm }
     use-combo-box-for-fft-size if
-      $" FFT size" FxmLabelWidgetClass frm
+      "FFT size" FxmLabelWidgetClass frm
       #( FXmNleftAttachment   FXmATTACH_FORM
 	 FXmNrightAttachment  FXmATTACH_NONE
 	 FXmNtopAttachment    FXmATTACH_FORM
@@ -3924,7 +3924,7 @@ end-struct effects-cross%
 	 FXmNtopAttachment    FXmATTACH_FORM
 	 FXmNbottomAttachment FXmATTACH_NONE
 	 FXmNbackground       basic-color ) undef FXtCreateManagedWidget { rc }
-      $" FFT size" FxmLabelWidgetClass frm
+      "FFT size" FxmLabelWidgetClass frm
       #( FXmNleftAttachment   FXmATTACH_FORM
 	 FXmNrightAttachment  FXmATTACH_FORM
 	 FXmNtopAttachment    FXmATTACH_WIDGET
@@ -3954,14 +3954,14 @@ end-struct effects-cross%
   gen dialog@ widget? unless
     gen label@
     gen cs-ok-cb
-    gen label@ $" The sliders set the number of the soundfile to be cross-synthesized, \
+    gen label@ "The sliders set the number of the soundfile to be cross-synthesized, \
 the synthesis amplitude, the FFT size, and the radius value." help-cb
     gen cs-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" input sound"   0 gen cs-sound@     20 gen cs-snd-cb             1 )
-       #( $" amplitude"   0.0 gen amplitude@   1.0 gen amplitude-slider-cb 100 )
-       #( $" radius"      0.0 gen cs-radius@ 360.0 gen cs-rad-cb           100 )
+       #( "input sound"   0 gen cs-sound@     20 gen cs-snd-cb             1 )
+       #( "amplitude"   0.0 gen amplitude@   1.0 gen amplitude-slider-cb 100 )
+       #( "radius"      0.0 gen cs-radius@ 360.0 gen cs-rad-cb           100 )
     ) add-sliders gen sliders!
     gen cs-sel-create-sel
     gen #f add-target
@@ -3984,7 +3984,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%d %.2f %d %.2f)" #( gen label@ gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ )
+  "%s (%d %.2f %d %.2f)" #( gen label@ gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ )
   string-format change-label
 ;
 previous
@@ -4019,7 +4019,7 @@ end-struct effects-flange%
  does> { target samps self -- name origin }
   self @ { gen }
   "effects-flange"
-  $" %s %s %s" #( gen amount@ gen flange-speed@ gen flange-time@ ) string-format
+  "%s %s %s" #( gen amount@ gen flange-speed@ gen flange-time@ ) string-format
 ;
 
 : flange-ok-cb ( gen -- prc; w c i self -- )
@@ -4070,13 +4070,13 @@ end-struct effects-flange%
   gen dialog@ widget? unless
     gen label@
     gen flange-ok-cb
-    gen label@ $" Move the slider to change the flange speed, amount, and time." help-cb
+    gen label@ "Move the slider to change the flange speed, amount, and time." help-cb
     gen flange-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" flange speed"  0.0 gen flange-speed@ 100.0 gen flange-speed-cb   10 )
-       #( $" flange amount" 0.0 gen amount@       100.0 gen flange-amount-cb  10 )
-       #( $" flange time"   0.0 gen flange-time@    1.0 gen flange-time-cb   100 )
+       #( "flange speed"  0.0 gen flange-speed@ 100.0 gen flange-speed-cb   10 )
+       #( "flange amount" 0.0 gen amount@       100.0 gen flange-amount-cb  10 )
+       #( "flange time"   0.0 gen flange-time@    1.0 gen flange-time-cb   100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -4096,7 +4096,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f %.2f)" #( gen label@ gen flange-speed@ gen amount@ gen flange-time@ )
+  "%s (%.2f %.2f %.2f)" #( gen label@ gen flange-speed@ gen amount@ gen flange-time@ )
   string-format change-label
 ;
 previous
@@ -4116,7 +4116,7 @@ hide
   self @ { gen }
   gen scaler@ random-phase-cb { prc }
   \ edit-list->function needs a usable proc-source-string
-  prc $" %s random-phase-cb" gen scaler@ string-format proc-source-set!
+  prc "%s random-phase-cb" gen scaler@ string-format proc-source-set!
   prc #f #f rotate-phase
 ;
 
@@ -4135,10 +4135,10 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen rp-ok-cb
-    gen label@ $" Move the slider to change the randomization amplitude scaler." help-cb
+    gen label@ "Move the slider to change the randomization amplitude scaler." help-cb
     gen rp-reset-cb #f make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" amplitude scaler" 0.0 gen scaler@ 100.0 gen scaler-slider-cb 100 )
+       #( "amplitude scaler" 0.0 gen scaler@ 100.0 gen scaler-slider-cb 100 )
     ) add-sliders gen sliders!
   then
   gen dialog@ activate-dialog
@@ -4154,7 +4154,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen scaler@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen scaler@ ) string-format change-label
 ;
 previous
 
@@ -4214,14 +4214,14 @@ end-struct effects-robotize%
   gen dialog@ widget? unless
     gen label@
     gen robotize-ok-cb
-    gen label@ $" Move the sliders to set the sample rate, \
+    gen label@ "Move the sliders to set the sample rate, \
 oscillator amplitude, and oscillator frequency." help-cb
     gen robotize-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" sample rate"          0.0 gen samp-rate@  2.0 gen robotize-sam-cb     100 )
-       #( $" oscillator amplitude" 0.0 gen amplitude@  1.0 gen amplitude-slider-cb 100 )
-       #( $" oscillator frequency" 0.0 gen frequency@ 60.0 gen frequency-slider-cb 100 )
+       #( "sample rate"          0.0 gen samp-rate@  2.0 gen robotize-sam-cb     100 )
+       #( "oscillator amplitude" 0.0 gen amplitude@  1.0 gen amplitude-slider-cb 100 )
+       #( "oscillator frequency" 0.0 gen frequency@ 60.0 gen frequency-slider-cb 100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -4241,7 +4241,7 @@ set-current
  does> { self -- }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f %.2f)" #( gen label@ gen samp-rate@ gen amplitude@ gen frequency@ )
+  "%s (%.2f %.2f %.2f)" #( gen label@ gen samp-rate@ gen amplitude@ gen frequency@ )
   string-format change-label
 ;
 previous
@@ -4283,12 +4283,12 @@ end-struct effects-rubber%
   gen dialog@ widget? unless
     gen label@
     gen rubber-ok-cb
-    gen label@ $" Stretches or contracts the time of a sound.  \
+    gen label@ "Stretches or contracts the time of a sound.  \
 Move the slider to change the stretch factor." help-cb
     gen rubber-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" stretch factor" 0.0 gen factor@ 5.0 gen rubber-factor-cb 100 )
+       #( "stretch factor" 0.0 gen factor@ 5.0 gen rubber-factor-cb 100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -4305,7 +4305,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen factor@ ) string-format change-label
+  self cell+ @ ( child ) "%s (%.2f)" #( gen label@ gen factor@ ) string-format change-label
 ;
 previous
 
@@ -4350,12 +4350,12 @@ hide
   gen dialog@ widget? unless
     gen label@
     gen wobble-ok-cb
-    gen label@ $" Move the sliders to set the wobble frequency and amplitude." help-cb
+    gen label@ "Move the sliders to set the wobble frequency and amplitude." help-cb
     gen wobble-reset-cb
     gen general-target-cb make-effect-dialog gen dialog!
     gen dialog@ #(
-       #( $" wobble frequency" 0.0 gen frequency@ 100.0 gen frequency-slider-cb 100 )
-       #( $" wobble amplitude" 0.0 gen amplitude@   1.0 gen amplitude-slider-cb 100 )
+       #( "wobble frequency" 0.0 gen frequency@ 100.0 gen frequency-slider-cb 100 )
+       #( "wobble amplitude" 0.0 gen amplitude@   1.0 gen amplitude-slider-cb 100 )
     ) add-sliders gen sliders!
     gen #f add-target
   then
@@ -4373,7 +4373,7 @@ set-current
   0 proc-create self @ ( gen ) , child , ( prc )
  does> { self -- }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f %.2f)" #( gen label@ gen frequency@ gen amplitude@ )
+  self cell+ @ ( child ) "%s (%.2f %.2f)" #( gen label@ gen frequency@ gen amplitude@ )
   string-format change-label
 ;
 previous
@@ -4386,55 +4386,55 @@ previous
 
   let: ( -- )
     effects-menu-label make-main-menu { main }
-    $" Amplitude Effects"           main make-menu { menu }
-    menu $" Gain"                   make-gain-dialog         menu-entry
-    menu $" Normalize"              make-normalize-dialog    menu-entry
-    menu $" Gate"                   make-gate-dialog         menu-entry
-    $" Delay Effects"               main make-menu to menu
-    menu $" Echo"                   make-echo-dialog         menu-entry
-    menu $" Filtered echo"          make-flecho-dialog       menu-entry
-    menu $" Modulated echo"         make-zecho-dialog        menu-entry
-    $" Filter Effects"              main make-menu to menu
-    menu $" Band-pass filter"       make-band-pass-dialog    menu-entry
-    menu $" Band-reject filter"     make-notch-dialog        menu-entry
-    menu $" High-pass filter"       make-high-pass-dialog    menu-entry
-    menu $" Low-pass filter"        make-low-pass-dialog     menu-entry
-    menu $" Comb filter"            make-comb-dialog         menu-entry
-    menu $" Comb chord filter"      make-comb-chord-dialog   menu-entry
-    menu $" Moog filter"            make-moog-dialog         menu-entry
-    $" Frequency Effects"           main make-menu to menu
-    menu $" Adaptive saturation"    make-adsat-dialog        menu-entry
-    menu $" Sample rate conversion" make-src-dialog          menu-entry
-    menu $" Time/pitch scaling"     make-expsrc-dialog       menu-entry
-    menu $" Src-Timevar"            make-src-timevar-dialog  menu-entry
-    $" Modulation Effects"          main make-menu to menu
-    menu $" Amplitude modulation"   make-am-effect-dialog    menu-entry
-    menu $" Ring modulation"        make-rm-effect-dialog    menu-entry
-    $" Reverbs"                     main make-menu to menu
-    menu $" McNabb reverb"          make-reverb-dialog       menu-entry
-    menu $" Chowning reverb"        make-jc-reverb-dialog    menu-entry
-    menu $" Convolution"            make-convolve-dialog     menu-entry
-    $" Various"                     main make-menu to menu
-    menu $" Place sound"            make-place-sound-dialog  menu-entry
-    menu $" Add silence"            make-silence-dialog      menu-entry
-    menu $" Contrast enhancement"   make-contrast-dialog     menu-entry
-    menu $" Cross synthesis"        make-cross-synth-dialog  menu-entry
-    menu $" Flange"                 make-flange-dialog       menu-entry
-    menu $" Randomize phase"        make-random-phase-dialog menu-entry
-    menu $" Robotize"               make-robotize-dialog     menu-entry
-    menu $" Rubber sound"           make-rubber-dialog       menu-entry
-    menu $" Wobble"                 make-wobble-dialog       menu-entry
+    "Amplitude Effects"           main make-menu { menu }
+    menu "Gain"                   make-gain-dialog         menu-entry
+    menu "Normalize"              make-normalize-dialog    menu-entry
+    menu "Gate"                   make-gate-dialog         menu-entry
+    "Delay Effects"               main make-menu to menu
+    menu "Echo"                   make-echo-dialog         menu-entry
+    menu "Filtered echo"          make-flecho-dialog       menu-entry
+    menu "Modulated echo"         make-zecho-dialog        menu-entry
+    "Filter Effects"              main make-menu to menu
+    menu "Band-pass filter"       make-band-pass-dialog    menu-entry
+    menu "Band-reject filter"     make-notch-dialog        menu-entry
+    menu "High-pass filter"       make-high-pass-dialog    menu-entry
+    menu "Low-pass filter"        make-low-pass-dialog     menu-entry
+    menu "Comb filter"            make-comb-dialog         menu-entry
+    menu "Comb chord filter"      make-comb-chord-dialog   menu-entry
+    menu "Moog filter"            make-moog-dialog         menu-entry
+    "Frequency Effects"           main make-menu to menu
+    menu "Adaptive saturation"    make-adsat-dialog        menu-entry
+    menu "Sample rate conversion" make-src-dialog          menu-entry
+    menu "Time/pitch scaling"     make-expsrc-dialog       menu-entry
+    menu "Src-Timevar"            make-src-timevar-dialog  menu-entry
+    "Modulation Effects"          main make-menu to menu
+    menu "Amplitude modulation"   make-am-effect-dialog    menu-entry
+    menu "Ring modulation"        make-rm-effect-dialog    menu-entry
+    "Reverbs"                     main make-menu to menu
+    menu "McNabb reverb"          make-reverb-dialog       menu-entry
+    menu "Chowning reverb"        make-jc-reverb-dialog    menu-entry
+    menu "Convolution"            make-convolve-dialog     menu-entry
+    "Various"                     main make-menu to menu
+    menu "Place sound"            make-place-sound-dialog  menu-entry
+    menu "Add silence"            make-silence-dialog      menu-entry
+    menu "Contrast enhancement"   make-contrast-dialog     menu-entry
+    menu "Cross synthesis"        make-cross-synth-dialog  menu-entry
+    menu "Flange"                 make-flange-dialog       menu-entry
+    menu "Randomize phase"        make-random-phase-dialog menu-entry
+    menu "Robotize"               make-robotize-dialog     menu-entry
+    menu "Rubber sound"           make-rubber-dialog       menu-entry
+    menu "Wobble"                 make-wobble-dialog       menu-entry
   ;let
 
   #f effects-noop  add-to-effects-menu	\ separator
-  $" Octave-down"   lambda: <{ -- }> 2 #f #f down-oct ;            add-to-effects-menu
-  $" Remove clicks" lambda: <{ -- }> #f #f effects-remove-clicks ; add-to-effects-menu
-  $" Remove DC"     lambda: <{ -- }> #f #f effects-remove-dc ;     add-to-effects-menu
-  $" Spiker"        lambda: <{ -- }> #f #f spike ;                 add-to-effects-menu
-  $" Compand"       lambda: <{ -- }> #f #f effects-compand ;       add-to-effects-menu
-  $" Invert"        lambda: <{ -- }> -1 #f #f scale-by ;           add-to-effects-menu
-  $" Reverse"       lambda: <{ -- }> #f #f #f reverse-sound ;      add-to-effects-menu
-  $" Null phase"    lambda: <{ -- }> #f #f zero-phase ;            add-to-effects-menu
+  "Octave-down"   lambda: <{ -- }> 2 #f #f down-oct ;            add-to-effects-menu
+  "Remove clicks" lambda: <{ -- }> #f #f effects-remove-clicks ; add-to-effects-menu
+  "Remove DC"     lambda: <{ -- }> #f #f effects-remove-dc ;     add-to-effects-menu
+  "Spiker"        lambda: <{ -- }> #f #f spike ;                 add-to-effects-menu
+  "Compand"       lambda: <{ -- }> #f #f effects-compand ;       add-to-effects-menu
+  "Invert"        lambda: <{ -- }> -1 #f #f scale-by ;           add-to-effects-menu
+  "Reverse"       lambda: <{ -- }> #f #f #f reverse-sound ;      add-to-effects-menu
+  "Null phase"    lambda: <{ -- }> #f #f zero-phase ;            add-to-effects-menu
 [then]
 
 \ effects.fs ends here

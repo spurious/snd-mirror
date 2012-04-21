@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Thu Jan 26 16:38:31 CET 2012
+\ Changed: Tue Apr 17 02:22:34 CEST 2012
 
 \ Commentary:
 \
@@ -54,7 +54,20 @@
 
 'snd-nogui provided? [if] skip-file [then]
 
-$" X error" create-exception x-error
+'snd-gtk provided? [if]
+  'gtk3 provided? [unless]
+    \ We use is-managed? in snd-test.fs
+    [defined] Fgtk_widget_get_realized [if]
+      <'> Fgtk_widget_get_realized
+    [else]
+      <'> noop
+    [then] alias is-managed? ( wid -- f )
+    .( snd-gtk: gtk3 required -- skipping snd-xm.fs ) cr
+    skip-file
+  [then]
+[then]
+
+"X error" create-exception x-error
 
 \ if not configured --with-static-xm|g
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
@@ -71,17 +84,17 @@ hide
 
 : kmg { num -- str }
   num 0<= if
-    $" disk full!"
+    "disk full!"
   else
     "" { str }
     num 1024 d> if
       num 1024 1024 * d> if
-	$" space: %6.3fG" #( num 1024.0 1024.0 f* f/ ) string-format
+	"space: %6.3fG" #( num 1024.0 1024.0 f* f/ ) string-format
       else
-	$" space: %6.3fM" #( num 1024.0 f/ )           string-format
+	"space: %6.3fM" #( num 1024.0 f/ )           string-format
       then
     else
-      $" space: %10dK" #( num ) string-format
+      "space: %10dK" #( num ) string-format
     then ( str )
   then
 ;
@@ -99,14 +112,14 @@ previous
   : widget?       ( w -- f ) FGTK_IS_WIDGET ;
   : set-sensitive ( w f -- ) Fgtk_widget_set_sensitive drop ;
 
-  [undefined] Fgtk_widget_get_realized [if]
-    <'> noop alias is-managed? ( wid -- f )
+  [defined] Fgtk_widget_get_realized [if]
+    <'> Fgtk_widget_get_realized
   [else]
-    <'> Fgtk_widget_get_realized alias is-managed? ( wid -- f )
-  [then]
+    <'> noop
+  [then] alias is-managed? ( wid -- f )
 
   : change-label ( wid new-label -- )
-    doc" Changes WIDGET's label to be NEW-LABEL."
+    doc" Change WIDGET's label to be NEW-LABEL."
     { wid new-label }
     wid if
       wid FGTK_IS_LABEL if
@@ -126,7 +139,7 @@ previous
   set-current
 
   : for-each-child { wid prc -- }
-    doc" Applies PRC ( w -- val ) to WIDGET and each of its children."
+    doc" Apply PRC ( w -- val ) to WIDGET and each of its children."
     wid widget? if
       prc #( wid ) run-proc drop
       wid FGTK_CONTAINER prc for-each-cb Fgtk_container_foreach drop
@@ -137,7 +150,7 @@ previous
   : load-font ( name -- fid|#f ) Fpango_font_description_from_string ;
 
   : host-name ( -- host )
-    doc" Returns name of current machine."
+    doc" Return name of current machine."
     main-widgets 0 array-ref
     "WM_CLIENT_MACHINE" #f Fgdk_atom_intern
     FGDK_TARGET_STRING 0 1024 0 Fgdk_property_get { val }
@@ -160,7 +173,7 @@ previous
     main-widgets 5 array-ref { parent }
     parent FGTK_IS_BOX unless main-widgets 2 array-ref to parent then
     parent FGTK_IS_BOX unless
-      'x-error $" %s: no GTK_BOX widget found" #( get-func-name ) fth-raise
+      'x-error "%s: no GTK_BOX widget found" #( get-func-name ) fth-raise
     then
     parent FGTK_BOX pane #f #f 4 Fgtk_box_pack_start drop
     pane Fgtk_widget_show drop
@@ -196,8 +209,8 @@ previous
   set-current
 
   : show-disk-space <{ snd -- }>
-    doc" Adds a label to the minibuffer area showing the current free space \
-    (for use with after-open-hook)."
+    doc" Add a label to the minibuffer area showing the current free space \
+(for use with after-open-hook)."
     #f ( flag )
     labelled-snds each { n } n 0 array-ref snd equal? if
 	( flag ) drop
@@ -217,7 +230,7 @@ previous
 	labelled-snds previous-label array-push drop
 	10000 <'> show-label previous-label Fg_timeout_add drop
       else
-	$" no sound found for disk space label" snd-error drop
+	"no sound found for disk space label" snd-error drop
       then
     then
   ;
@@ -229,7 +242,7 @@ previous
   <'> FXtIsManaged alias is-managed? ( wid -- f )
 
   : change-label ( wid new-label -- )
-    doc" Changes WIDGET's label to be NEW-LABEL."
+    doc" Change WIDGET's label to be NEW-LABEL."
     { wid new-label }
     new-label FXmStringCreateLocalized { str }
     wid #( FXmNlabelString str ) FXtVaSetValues drop
@@ -237,7 +250,7 @@ previous
   ;
 
   : for-each-child { wid prc -- }
-    doc" Applies PRC to WIDGET and each of its children."
+    doc" Apply PRC to WIDGET and each of its children."
     prc #( wid ) run-proc drop
     wid FXtIsComposite if
       wid #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each ( w ) prc recurse end-each
@@ -253,7 +266,7 @@ previous
   ;
 
   : current-screen ( -- scr )
-    doc" Returns the current X screen number of the current display."
+    doc" Return the current X screen number of the current display."
     main-dpy FDefaultScreenOfDisplay
   ;
 
@@ -279,7 +292,7 @@ previous
   previous
   
   : find-child ( widget name -- wid )
-    doc" Returns a widget named NAME, if one can be found in the widget hierarchy beneath WIDGET."
+    doc" Return a widget named NAME, if one can be found in the widget hierarchy beneath WIDGET."
     { widget name }
     #f
     widget children->array each { w }
@@ -313,7 +326,7 @@ previous
   set-current
 
   : display-widget-tree { widget -- }
-    doc" Displays the hierarchy of widgets beneath WIDGET."
+    doc" Display the hierarchy of widgets beneath WIDGET."
     <'> display-widget #( widget 0 ) run-proc drop
   ;
   previous
@@ -331,13 +344,13 @@ previous
   set-current
 
   : set-main-color-of-widget ( widget -- )
-    doc" Sets the background color of WIDGET."
+    doc" Set the background color of WIDGET."
     <'> change-color-cb for-each-child
   ;
   previous
 
   : host-name ( -- host )
-    doc" Returns name of current machine."
+    doc" Return name of current machine."
     main-widgets 1 array-ref { wid }
     wid FXtWindow { win }
     main-dpy win main-dpy "WM_CLIENT_MACHINE" #f FXInternAtom 0 32 #f FXA_STRING
@@ -570,8 +583,8 @@ previous
   set-current
 
   : show-disk-space <{ snd -- }>
-    doc" Adds a label to the minibuffer area showing the current free space \
-    (for use with after-open-hook)."
+    doc" Add a label to the minibuffer area showing the current free space \
+(for use with after-open-hook)."
     #f ( flag )
     labelled-snds each { n } n 0 array-ref snd equal? if
 	( flag ) drop
@@ -606,14 +619,14 @@ previous
 	labelled-snds previous-label array-push drop
 	app 10000 <'> show-label previous-label FXtAppAddTimeOut drop
       else
-	$" no sound found for disk space label" snd-error drop
+	"no sound found for disk space label" snd-error drop
       then
     then
   ;
   previous
 
   : current-label ( widget -- label )
-    doc" Returns WIDGET's label."
+    doc" Return WIDGET's label."
     ( wid ) #( FXmNlabelString 0 ) FXtVaGetValues 1 array-ref { xmstr }
     xmstr #f FXmCHARSET_TEXT FXmCHARSET_TEXT #f 0 FXmOUTPUT_ALL FXmStringUnparse
   ;
