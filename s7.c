@@ -880,7 +880,7 @@ typedef struct s7_cell {
     } cons;
 
     struct {               /* symbols */
-      s7_pointer name, global_slot, local_slot;
+      s7_pointer name, global_slot, local_slot, initial_slot;
       long long int id;
     } sym;
 
@@ -1483,6 +1483,7 @@ static void init_types(void)
 #define symbol_op_data(p)             ((s7_extended_cell *)p)->op_data
 
 #define global_slot(p)                (p)->object.sym.global_slot
+#define initial_slot(p)               (p)->object.sym.initial_slot
 #define local_slot(p)                 (p)->object.sym.local_slot
 
 #define is_slot(p)                    (type(p) == T_SLOT)
@@ -3181,6 +3182,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
   global_slot(x) = sc->NIL;
+  initial_slot(x) = sc->UNDEFINED;
   local_slot(x) = sc->NIL;
   symbol_id(x) = 0;
   symbol_accessor(x) = -1;
@@ -3562,6 +3564,8 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       global_slot(symbol) = slot;
       if (symbol_id(symbol) == 0) /* never defined locally? */
 	{
+	  if (initial_slot(symbol) == sc->UNDEFINED)
+	    initial_slot(symbol) = permanent_slot(symbol, value);
 	  local_slot(symbol) = slot;
 	  set_global(symbol);
 	}
@@ -3702,6 +3706,9 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   /* if (set! + -) then + needs to be overridden, but the local bit isn't set,
    *   so we have to check the actual values in the non-local case.
    *   (define (f x) (with-environment (initial-environment) (+ x 1))) 
+   */
+
+  /* TODO: can this use initial_slot now?
    */
 
   x = sc->w;
@@ -6834,6 +6841,20 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       return(big_inexact_to_exact(sc, list_1(sc, x)));
 #endif
       return(inexact_to_exact(sc, x, with_error));
+      break;
+
+
+      /* -------- #_... -------- */
+    case '_':
+      /* now implement the #_<name> -> built-in value of <name> stuff 
+       *   TODO: test #_
+       */
+      {
+	s7_pointer built_in_value;
+	built_in_value = initial_slot(make_symbol(sc, (char *)(name + 1)));
+	if (built_in_value != sc->UNDEFINED)
+	  return(slot_value(built_in_value));
+      }
       break;
 
 
@@ -30565,6 +30586,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   cdr(syn) = syn; /* this saves us an error check in the main eval section */
   car(syn) = x;
   global_slot(x) = permanent_slot(x, syn);
+  initial_slot(x) = permanent_slot(x, syn);
 
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
@@ -30587,6 +30609,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 
   global_slot(x) = sc->NIL;
   local_slot(x) = sc->NIL;
+  initial_slot(x) = sc->UNDEFINED;
   symbol_table_hash(name, &loc); 
   symbol_hash(x) = loc;
   symbol_id(x) = 0;
@@ -30598,6 +30621,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   cdr(syn) = syn; 
   car(syn) = s7_make_symbol(sc, name);
   global_slot(x) = permanent_slot(x, syn);
+  initial_slot(x) = permanent_slot(x, syn);
 
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_id(x) = 0;
@@ -54359,7 +54383,7 @@ s7_scheme *s7_init(void)
   /* keep the characters out of the heap */
   chars = (s7_pointer *)malloc((NUM_CHARS + 1) * sizeof(s7_pointer));
   chars[0] = sc->EOF_OBJECT;
-  chars++;
+  chars++;                    /* now chars[EOF] == chars[-1] == sc->EOF_OBJECT */
   {
     s7_cell *cells;
     cells = (s7_cell *)calloc(NUM_CHARS, sizeof(s7_cell));

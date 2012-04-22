@@ -1010,15 +1010,15 @@ macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
     `(let ((a 12)) 
        (+ a ,b)))
 mac
-&gt; (let ((a 1) 
-        (+ *))
-    (mac a))
+&gt; (let ((a 1) (+ *)) (mac a))
 144
 </pre>
 
-<p>This returns 144 because "+" has turned into "*", and "a" is the internal "a",
-not the argument "a".  We get <code>(* 12 12)</code> where we might have expected
-<code>(+ 12 1)</code>.  As long as the redefinition of '+' is local, we can unquote the +:
+<p>This returns 144 because '+' has turned into '*', and 'a' is the internal 'a',
+not the argument 'a'.  We get <code>(* 12 12)</code> where we might have expected
+<code>(+ 12 1)</code>.  
+Starting with the '+' problem, 
+as long as the redefinition of '+' is local (that is, it happens after the macro definition), we can unquote the +:
 </p>
 
 <pre class="indented">
@@ -1026,60 +1026,96 @@ not the argument "a".  We get <code>(* 12 12)</code> where we might have expecte
     `(let ((a 12)) 
        (,+ a ,b))) ; ,+ picks up the definition-time +
 mac
-&gt; (let ((a 1) 
-        (+ *))
-    (mac a))
+&gt; (let ((a 1) (+ *)) (mac a))
 24                 ; (+ a a) where a is 12
 </pre>
 
-<p>But this unquote trick won't work if we've previously loaded some file that redefined '+'
+<p>But the unquote trick won't work if we have previously loaded some file that redefined '+'
 at the top-level (so at macro definition time, + is *, but we want the built-in +).
 Although this example is silly, the problem is real in Scheme
-because Scheme has no reserved words and only one name space.  Since macros and functions (not to mention
-continuations) look the same when called in the code,
-and since we might be loading any
-number of libraries written by others, it's impossible to tell what names
-this external code depends on.  
-It is possible to use gensym to clean up the macro, but that makes it
-unreadable in all but the simplest cases.  It is also possible to
+because Scheme has no reserved words and only one name space.  
+And this problem is not restricted to macros:
+</p>
+
+<pre class="indented">
+&gt; (define + *)
++
+&gt; (define (add a b) (+ a b))
+add
+&gt; (add 2 3)
+6
+</pre>
+
+<p>Since 
+we might be loading
+code written by others, it's sometimes hard to tell what names
+that code depends on or redefines.
+We need a way to get the pristine (start-up, built-in) value of '+'.
+One long-winded way in s7 uses <a href="#initialenvironment">initial-environment</a>:
+</p>
+
+<pre class="indented">
+&gt; (define + *)
++
+&gt; (define (add a b) (with-environment (initial-environment) (+ a b)))
+add
+&gt; (add 2 3)
+5
+</pre>
+
+<p>But this is hard to read, and it's not inconceivable that we might want all three
+values of a symbol, the start-up value, the definition-time value, and the
+current value.  The latter can be accessed with the bare symbol, the definition-time
+value with unquote (','), and the start-up value with either initial-environment
+or #_&lt;name&gt;.  That is, #_+ is a reader macro for <code>(with-environment (initial-environment) +)</code>.
+So now our macro is:
+</p>
+
+<pre class="indented">
+&gt; (define-macro (mac b) 
+    `(#_let ((a 12)) 
+       (#_+ a ,b))) ; #_+ and #_let are start-up values
+mac
+&gt; (let ((a 1) (+ *)) (mac a))
+24                 ; (+ a a) where a is 12 and + is the start-up +
+</pre>
+
+<p>#_&lt;name&gt; could be implemented via *#readers*:
+</p>
+
+<pre class="indented">
+(set! *#readers*
+  (cons (cons #\_ (lambda (str)
+		    `(with-environment 
+                       (initial-environment) 
+                       ,(string-&gt;symbol (substring str 1)))))
+	*#readers*))
+</pre>
+
+<br>
+<p>
+So, now we have only the variable capture problem ('a' has been captured in this case).
+This is the only thing that the gigantic "hygenic macro" systems in Scheme actually deal with:
+a microscopic problem that you'd think, from the hype, was up there with malaria and the
+national debt.  CL uses gensym (or gentemp) to fix this:
+</p>
+
+<pre class="indented">
+&gt; (define-macro (mac b) (let ((var (gensym))) `(#_let ((,var 12)) (#_+ ,var ,b))))
+mac
+&gt; (let ((a 1) (+ *)) (mac a))
+13
+</pre>
+
+<p>
+But gensym can make the macro code
+unreadable in more complex cases.  It is possible to
 write a macro to do the gensymification for us, but in s7 it is easier to
 use the environment functions.
 The procedure-environment of a macro is the environment at its definition time, just like a function.
 By wrapping the macro body in with-environment, we make sure anything in that body reflects 
 the definition environment, not the calling environment.  We then augment that environment
 with the macro arguments getting their values from the call-time environment:
-</p>
-
-<pre class="indented">
-(define-macro (define-immaculo name-and-args . body)
-  (let* ((gensyms (map (lambda (g) (gensym)) (cdr name-and-args)))
-	 (args (cdr (copy name-and-args)))
-	 (name (car name-and-args))
-	 (set-args (map (lambda (a g) `(list ',g ,a)) args gensyms))
-	 (get-args (map (lambda (a g) `(quote (cons ',a ,g))) args gensyms)))
-
-    `(define-macro ,name-and-args
-       `(let ,(list ,@set-args)                 ; get the current macro arg values
-	  ,(list 'with-environment 
-		 (append (list 'augment-environment) 
-			 (list (list 'procedure-environment ,name)) 
-			 (list ,@get-args))     ; import the current arg values into the definition environment
-		 ,@body)))))
-</pre>
-
-<p>In this version of define-immaculo, don't unquote the macro arguments in the body, and
-use <code>(apply values body)</code> in place of ",@body".
-</p>
-
-<pre class="indented">
-&gt; (define-immaculo (mac b) `(let ((a 12)) (+ a b)))
-mac
-&gt; (let ((a 21) (+ *)) (mac a))
-33
-</pre>
-
-<p>
-If the slight difference in syntax is a problem
 </p>
 
 <pre class="indented">
@@ -1106,35 +1142,26 @@ mac
 46
 &gt; (let ((a 21) (b 10) (+ *)) (mac a (+ b 10))) ; here '+' is '*'
 136
-
-&gt; (macroexpand (define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d))))
-(define-macro (mac c d) 
-  ({list} 'let 
-    (list (list '{gensym}-23 c)        ; here we get the call-time macro argument values
-          (list '{gensym}-24 d)) 
-      (list 'with-environment 
-            (append (list 'augment-environment) 
-                    ;; now wrap the body in the augmented definition-time environment
-                    (list (list 'procedure-environment mac)) 
-                    ;; add the macro args to the definition-time env
-                    (list '(cons 'c {gensym}-23) 
-                          '(cons 'd {gensym}-24))) 
-    '(let ((a 12) 
-           (b 3)) 
-       (+ a b c d)))))
-
-&gt; (let ((a 21) (b 10) (+ *)) (macroexpand (mac a b)))
-
-(let (({gensym}-22 a)    ; pick up mac args, this is arg 'c' with the value 'a'
-      ({gensym}-23 b)) 
-  (with-environment (augment-environment (procedure-environment #&lt;macro&gt;)
-                      (cons 'c {gensym}-22) ; add them to definition-time env
-		      (cons 'd {gensym}-23)) 
-    (let ((a 12) 
-	  (b 3)) 
-      (+ a b c d)))) ; 'a' and 'b' are local, 'c' and 'd' are from the augmented env
 </pre>
 
+<p>We might still have a captured variable if the macro has a "free variable",
+but this is always obvious, and in real code it is either deliberate or a bug.
+I wonder if s7 should also have a shorthand for the gensyms?  No good
+notation comes to mind, but as an illustration, consider #:&lt;name&gt;
+as either (gensym &lt;name&gt;) when binding, or the gensymmed result
+when referenced:
+<p>
+
+<pre class="indented">
+&gt; (define-macro (mac b) 
+    `(#_let ((#:a 12)) 
+       (#_+ #:a ,b))) ; #_+ and #_let are start-up values, #:a is replaced by an internal symbol
+mac
+&gt; (let ((a 1) (+ *)) (mac a))
+13                 ; (+ {gensym-a} a) where {gensym-a} is 12, a is 1, and + is the start-up +
+</pre>
+
+<br>
 <p>This is not the end of the story.
 Macro expansion happens
 in two different environments.  Leaving aside quasiquote which operates at read-time in the global environment,
@@ -1209,54 +1236,6 @@ symbol-set!
     (list x y))
 (123 x)
 </pre>
-
-<p>Or maybe "hacro"?  Use eval in place of symbol-&gt;value, and...
-</p>
-
-<pre class="indented">
-&gt; (let ((x #(1 2 3)) 
-        (y `(x 1))) 
-    (symbol-set! y 123) 
-    (list x y))
-(#(1 123 3) (x 1))
-</pre>
-
-<p>s7 uses a bacro to implement macroexpand so that it can handle locally defined macros.
-By the way, bacros solve part of our original problem:
-</p>
-
-<pre class="indented">
-(define-bacro (mac b) 
-  `(let ((a 12)) 
-     (+ a ,(symbol-&gt;value b))))
-
-(let ((a 1))
-  (mac a))
-</pre>
-
-<p>returns 13! No variable capture! Perhaps we can massage this idea a bit:
-</p>
-
-<pre class="indented">
-(set! *#readers*
-  (cons (cons #\_ (lambda (str)
-		    `(with-environment 
-                       (initial-environment) 
-                       ,(string-&gt;symbol (substring str 1)))))
-	*#readers*))
-
-(define-bacro* (mac b)
-  `(#_let ((a 12)) 
-     (#_+ a ,(eval b)))) ; eval rather than symbol-&gt;value so that 'b' can be any expression
-</pre>
-
-<p>We could also, for example, <code>(define-constant [+] +)</code> when we
-start, then only use [+] in our macros.  
-</p>
-
-<p>If you think you want define-syntax, consider the mumps (this is not a joke).
-</p>
-
 </div>
 
 
@@ -4926,9 +4905,9 @@ bind it to something else, which is asking for confusion).
 
 <ul>
 <li>remove the exact/inexact distinction including #i and #e
+<li>remove #d and #o (who uses octal anymore?)
 <li>remove `#(...) support (quasiquoted vector constants)
 <li>remove *-ci functions
-<li>remove string&lt;-&gt;list and vector&lt;-&gt;list
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>remove call-with-values and its friends
 <li>remove char-ready?
@@ -4945,6 +4924,7 @@ bind it to something else, which is asking for confusion).
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
 <li>replace procedure-with-setter with settable procedure-setter
+<li>add -&gt;list, -&gt;string, and -&gt;vector, replacing list-&gt;string and all its many friends.
 </ul>
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,

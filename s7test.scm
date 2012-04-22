@@ -16886,7 +16886,10 @@ in s7:
       (list 16 4))
 
 (test (let ((x 123)) (begin (define x 0)) x) 0) ; this strikes me as weird, since (let ((x 123) (x 0)) x) is illegal, so...
+(test (let ((x 0)) (define x 1) (define x 2) x) 2) 
 (test (let ((x 123)) (begin (define (hi a) (+ x a)) (define x 0)) (hi 1)) 1) ; is non-lexical reference?
+(test (let ((x 123)) (define (hi a) (+ x a)) (define x 0) (hi 1)) 1)
+(test (let ((x 123) (y 0)) (define (hi a) (+ y a)) (define y x) (define x 0) (hi 1)) 124)
 
 (for-each
  (lambda (arg)
