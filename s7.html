@@ -1107,6 +1107,18 @@ mac
 13
 </pre>
 
+<p>If gensym worries you because it's creating a symbol on each macro invocation,
+use a closure:
+</p>
+
+<pre class="indented">
+(define mac (let ((var (gensym))) 
+              (define-macro (mac-inner b) 
+                `(#_let ((,var 12)) (#_+ ,var ,b))) 
+              mac-inner))
+</pre>
+
+
 <p>
 But gensym can make the macro code
 unreadable in more complex cases.  It is possible to
@@ -1144,13 +1156,12 @@ mac
 136
 </pre>
 
-<p>We might still have a captured variable if the macro has a "free variable",
-but this is always obvious, and in real code it is either deliberate or a bug.
+<p>
 I wonder if s7 should also have a shorthand for the gensyms?  No good
 notation comes to mind, but as an illustration, consider #:&lt;name&gt;
 as either (gensym &lt;name&gt;) when binding, or the gensymmed result
 when referenced:
-<p>
+</p>
 
 <pre class="indented">
 &gt; (define-macro (mac b) 
