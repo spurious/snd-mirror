@@ -3611,14 +3611,16 @@ static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value)
 } 
 
 
+/* -------- initial-environment -------- */
+#define INITIAL_ENV_ENTRIES 400
+
 static void save_initial_environment(s7_scheme *sc)
 {
-  /* there are ca 270 predefined functions (and another 30 or so other things): 302 at last count
+  /* there are ca 270 predefined functions (and another 80 or so other things): 348 at last count
    */
-  #define INITIAL_ENV_ENTRIES 400
-  int i, k = 0, len;
-  s7_pointer ge;
-  s7_pointer *lsts, *inits;
+  int i, k = 0;
+  s7_pointer x;
+  s7_pointer *inits;
 
   sc->initial_env = (s7_pointer)calloc(1, sizeof(s7_cell));
   set_type(sc->initial_env, T_VECTOR);
@@ -3628,49 +3630,28 @@ static void save_initial_environment(s7_scheme *sc)
   s7_vector_fill(sc, sc->initial_env, sc->NIL);
   sc->initial_env->hloc = NOT_IN_HEAP;
 
-  ge = sc->global_env;
-  len = vector_fill_pointer(ge);
-  lsts = vector_elements(ge);
-   
-  for (i = 0; i < len; i++)
-    {
-      s7_pointer slot;
-      slot = lsts[i];
-      if (is_procedure(slot_value(slot)))
-	{
-	  inits[k++] = permanent_slot(slot_symbol(slot), slot_value(slot));
-	  if (k >= INITIAL_ENV_ENTRIES)
-	    return;
-	}
-    }
+  for (i = 0; i < vector_length(sc->symbol_table); i++) 
+    for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
+      {
+	s7_pointer sym, val;
+	sym = car(x);
+	if (is_slot(initial_slot(sym)))
+	  {
+	    val = slot_value(initial_slot(sym));
+	    if ((is_procedure(val)) || (is_syntax(val)))
+	      inits[k++] = initial_slot(sym);
+
+	    /* (let ((begin +)) (with-environment (initial-environment) (begin 1 2))) */
+	    /*
+	    if (k >= INITIAL_ENV_ENTRIES)
+	      {
+		fprintf(stderr, "oops: overran inits\n");
+		return;
+	      }
+	    */
+	  }
+      }
 }
-
-
-#if 0
-static void save_null_environment(s7_scheme *sc)
-{
-  #define NULL_ENV_SIZE 18
-  static const char *null_env_names[NULL_ENV_SIZE] = {
-    "define" "quote" "lambda" "if" "set!" "define*" "lambda*" "cond" "case" "and" "or" "let" "let*" "letrec" "letrec*" "begin" "do" "quasiquote"};
-  int i;
-  s7_pointer *nulls;
-  /* g_null_environment would return sc->null_env */
-  
-  sc->null_env = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->null_env, T_VECTOR);
-  vector_length(sc->null_env) = NULL_ENV_SIZE;
-  vector_elements(sc->null_env) = (s7_pointer *)malloc(NULL_ENV_SIZE * sizeof(s7_pointer));
-  nulls = vector_elements(sc->null_env);
-  sc->null_env->hloc = NOT_IN_HEAP;
-
-  for (i = 0; i < NULL_ENV_SIZE; i++)
-    {
-      s7_pointer sym;
-      sym = make_symbol(sc, null_env_names[i]);
-      nulls[i] = permanent_slot(sym, s7_symbol_value(sc, sym));
-    }
-}
-#endif
 
 
 static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
@@ -3699,22 +3680,57 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   inits = vector_elements(sc->initial_env);
 
   for (i = 0; (i < INITIAL_ENV_ENTRIES) && (is_slot(inits[i])); i++)
-    if ((!is_global(slot_symbol(inits[i]))) ||                                      /* it's shadowed locally */
-	(slot_value(inits[i]) != slot_value(global_slot(slot_symbol(inits[i])))))   /* it's not shadowed, but has been changed globally */
-      s7_make_slot(sc, sc->w, slot_symbol(inits[i]), slot_value(inits[i]));
-                         
+    {
+      x = slot_value(inits[i]);
+      if (is_procedure(x))
+	{
+	  if ((!is_global(slot_symbol(inits[i]))) ||                   /* it's shadowed locally */
+	      (x != slot_value(global_slot(slot_symbol(inits[i])))))   /* it's not shadowed, but has been changed globally */
+	    s7_make_slot(sc, sc->w, slot_symbol(inits[i]), x);
+	}
+      else
+	{
+	  if ((is_syntax(x)) &&
+	      (local_slot(slot_symbol(inits[i])) != sc->NIL))
+	    s7_make_slot(sc, sc->w, slot_symbol(inits[i]), x);
+	}
+    }
   /* if (set! + -) then + needs to be overridden, but the local bit isn't set,
    *   so we have to check the actual values in the non-local case.
    *   (define (f x) (with-environment (initial-environment) (+ x 1))) 
-   */
-
-  /* TODO: can this use initial_slot now?
    */
 
   x = sc->w;
   sc->w = sc->NIL;
   return(x);
 }
+
+
+#if 0
+static void save_null_environment(s7_scheme *sc)
+{
+  #define NULL_ENV_SIZE 18
+  static const char *null_env_names[NULL_ENV_SIZE] = {
+    "define" "quote" "lambda" "if" "set!" "define*" "lambda*" "cond" "case" "and" "or" "let" "let*" "letrec" "letrec*" "begin" "do" "quasiquote"};
+  int i;
+  s7_pointer *nulls;
+  /* g_null_environment would return sc->null_env */
+  
+  sc->null_env = (s7_pointer)calloc(1, sizeof(s7_cell));
+  set_type(sc->null_env, T_VECTOR);
+  vector_length(sc->null_env) = NULL_ENV_SIZE;
+  vector_elements(sc->null_env) = (s7_pointer *)malloc(NULL_ENV_SIZE * sizeof(s7_pointer));
+  nulls = vector_elements(sc->null_env);
+  sc->null_env->hloc = NOT_IN_HEAP;
+
+  for (i = 0; i < NULL_ENV_SIZE; i++)
+    {
+      s7_pointer sym;
+      sym = make_symbol(sc, null_env_names[i]);
+      nulls[i] = permanent_slot(sym, s7_symbol_value(sc, sym));
+    }
+}
+#endif
 
 
 /* should these two augment-envs check for symbol accessors?
@@ -6847,7 +6863,6 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       /* -------- #_... -------- */
     case '_':
       /* now implement the #_<name> -> built-in value of <name> stuff 
-       *   TODO: test #_
        */
       {
 	s7_pointer built_in_value;

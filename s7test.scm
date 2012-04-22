@@ -21472,6 +21472,16 @@ abs     1       2
   (test (add 1 2 3) 6)
   (test (add 1 (add 2 3) 4) 10))
 
+(let ()
+  (define mac (let ((var (gensym))) 
+		(define-macro (mac-inner b) 
+		  `(#_let ((,var 12)) (#_+ ,var ,b))) 
+		mac-inner))
+  (test (mac 1) 13)
+  (test (let ((a 1)) (mac a)) 13))
+
+(test (eq? call/cc #_call/cc) #t)
+
 (let ((val #f))
   (define-macro (add-1 var)
     `(+ 1 (let ()
@@ -66710,6 +66720,16 @@ etc
     (set! ho hi))
   (test val 3)
   (test (ho) 'error))
+
+(let ()
+  (define mac (let ((var (gensym))) 
+		(define-macro (mac-inner b) 
+		  `(#_let ((,var 12)) (#_+ ,var ,b))) 
+		mac-inner))
+  (test (let ((a 1) (+ *) (let /)) (mac a)) 13)
+  (test (let ((a 1) (+ *) (let /)) (mac (mac a))) 25))
+
+(test (let ((begin +)) (with-environment (initial-environment) (begin 1 2))) 2)
 
 
 
