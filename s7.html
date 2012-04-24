@@ -957,7 +957,6 @@ fmac
     (define-macro (hi a) `(+ ,a 1))
     hi)
 make-mac
-
 &gt; (let ((x (make-mac)))
     (x 2))
 3
@@ -1085,15 +1084,15 @@ mac
 <pre class="indented">
 (set! *#readers*
   (cons (cons #\_ (lambda (str)
-		    `(with-environment 
-                       (initial-environment) 
-                       ,(string-&gt;symbol (substring str 1)))))
+		    (with-environment 
+                      (initial-environment) 
+                      (string-&gt;symbol (substring str 1)))))
 	*#readers*))
 </pre>
 
 <br>
 <p>
-So, now we have only the variable capture problem ('a' has been captured in this case).
+So, now we have only the variable capture problem ('a' has been captured in the preceding examples).
 This is the only thing that the gigantic "hygienic macro" systems actually deal with:
 a microscopic problem that you'd think, from the hype, was up there with malaria and the
 national debt.  gensym is the standard approach:
@@ -1121,7 +1120,7 @@ use a closure:
 </pre>
 
 
-<p>
+<p>In s7, gensym is like CL's gentemp: inaccessible symbols are garbage collected.
 But gensym can make the macro code
 unreadable in more complex cases.  It is possible to
 write a macro to do the gensymification for us, but in s7 it is easier to
@@ -1325,13 +1324,13 @@ the loop!
 </p>
 
 <pre class="indented">
-(define-bacro (setf . args) ; CL's setf
+(define-bacro (setf . args)        ; CL's setf
   (if (not (null? args))
       (begin
 	(apply set! (car args) (eval (cadr args)) ())
 	(apply setf (cddr args)))))
 
-(define-bacro (psetf . args) ; parallel setf
+(define-bacro (psetf . args)       ; parallel setf
   (let ((e (current-environment))) ; so no gensyms needed
     (apply setf (do ((lst args (cddr lst))
 		     (new-args ()))

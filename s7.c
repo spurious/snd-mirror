@@ -824,6 +824,11 @@ typedef struct s7_cell {
       unsigned int hash;  
       char *svalue;
       bool needs_free;
+
+      /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
+      int accessor;
+      void *accessor_data;     /* FFI-accessible */
+      void *op_data;           /*   same purpose, but only s7-accessible */
     } string;
     
     union {
@@ -929,14 +934,6 @@ typedef struct s7_cell {
 
   } object;
 } s7_cell;
-
-
-typedef struct {
-  s7_cell obj;
-  int accessor;
-  void *accessor_data;     /* FFI-accessible */
-  void *op_data;           /*   same purpose, but only s7-accessible */
-} s7_extended_cell;
 
 
 typedef struct {
@@ -1098,9 +1095,9 @@ struct s7_scheme {
   format_data **fdats;
   int num_fdats;
 
-  s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables;
-  int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size;
-  int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc;
+  s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms;
+  int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size;
+  int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc;
 
   void *default_rng;
 #if WITH_GMP
@@ -1374,6 +1371,19 @@ static void init_types(void)
 /* this marks something that might mess with its argument list
  */
 
+#define T_GENSYM                      (1 << (TYPE_BITS + 21))
+#define is_gensym(p)                  ((typeflag(p) & T_GENSYM) != 0)
+#define clear_gensym(p)               typeflag(p) = (typeflag(p) & (~T_GENSYM))
+/* symbol is from gensym (GC-able etc)
+ */
+
+#define T_ACCESSED                    (1 << (TYPE_BITS + 22))
+#define is_accessed(p)                ((typeflag(p) & T_ACCESSED) != 0)
+#define set_accessed(p)               typeflag(p) |= T_ACCESSED
+#define clear_accessed(p)             typeflag(p) = (typeflag(p) & (~T_ACCESSED))
+/* symbol has extra symbol-accessor data -- this is a very small optimization over checking the name accessor value 
+ */
+
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 /* #define is_marked(p)               (typeflag(p) >= T_GC_MARK) */ /* exactly the same speed? */ 
@@ -1382,7 +1392,7 @@ static void init_types(void)
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x60000000
+#define UNUSED_BITS                   0x00000000
 
 #define set_type(p, f)                typeflag(p) = f
 
@@ -1477,10 +1487,10 @@ static void init_types(void)
 #define symbol_name(p)                string_value(symbol_name_cell(p))
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
-#define symbol_accessor(p)            ((s7_extended_cell *)p)->accessor
-#define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
-#define symbol_accessor_data(p)       ((s7_extended_cell *)p)->accessor_data
-#define symbol_op_data(p)             ((s7_extended_cell *)p)->op_data
+#define symbol_accessor(p)            (symbol_name_cell(p))->object.string.accessor
+#define symbol_has_accessor(p)        is_accessed(p) /* (symbol_accessor(p) != -1) */
+#define symbol_accessor_data(p)       (symbol_name_cell(p))->object.string.accessor_data
+#define symbol_op_data(p)             (symbol_name_cell(p))->object.string.op_data
 
 #define global_slot(p)                (p)->object.sym.global_slot
 #define initial_slot(p)               (p)->object.sym.initial_slot
@@ -1638,7 +1648,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
   static s7_Double Imag(complex<s7_Double> x) {return(imag(x));}
 #endif
 
-
 #define small_int(Val)                small_ints[Val]
 
 #define integer(p)                    p->object.number.integer_value
@@ -1657,7 +1666,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
   #define big_real(p)                (p->object.number.big_real)
   #define big_complex(p)             (p->object.number.big_complex)
 #endif
-
 
 #define S7_LLONG_MAX 9223372036854775807LL
 #define S7_LLONG_MIN (-S7_LLONG_MAX - 1LL)
@@ -1789,6 +1797,7 @@ static bool is_pws(s7_pointer obj);
 static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
+static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 
 static bool tracing, trace_all;
 
@@ -1999,6 +2008,23 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 }
 
 
+static void (*mark_function[BUILT_IN_TYPES])(s7_pointer p);
+
+static void mark_noop(s7_pointer p)
+{
+}
+
+
+static void mark_symbol(s7_pointer p)
+{
+  if (is_gensym(p))
+    set_mark(p);
+  /* don't set the mark bit of a normal symbol!  It wrecks the check against T_SYNTACTIC_TYPE,
+   *   slowing everything down by a large amount.
+   */
+}
+
+
 static void sweep(s7_scheme *sc)
 {
   int i, j;
@@ -2016,6 +2042,24 @@ static void sweep(s7_scheme *sc)
 	  else sc->strings[j++] = s1;
 	}
       sc->strings_loc = j;
+    }
+
+  if (sc->gensyms_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->gensyms_loc; i++)
+	{
+	  s7_pointer s1;
+	  s1 = sc->gensyms[i];
+	  if (type(s1) == 0)
+	    {
+	      free(symbol_name(s1));
+	      remove_from_symbol_table(sc, s1);
+	    }
+	  else sc->gensyms[j++] = s1;
+	}
+      sc->gensyms_loc = j;
+      if (j == 0)
+	mark_function[T_SYMBOL] = mark_noop;
     }
 
   if (sc->c_objects_loc > 0)
@@ -2153,6 +2197,18 @@ static void add_string(s7_scheme *sc, s7_pointer p)
 }
 
 
+static void add_gensym(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->gensyms_loc == sc->gensyms_size)
+    {
+      sc->gensyms_size *= 2;
+      sc->gensyms = (s7_pointer *)realloc(sc->gensyms, sc->gensyms_size * sizeof(s7_pointer));
+    }
+  sc->gensyms[sc->gensyms_loc++] = p;
+  mark_function[T_SYMBOL] = mark_symbol;
+}
+
+
 static void add_c_object(s7_scheme *sc, s7_pointer p)
 {
   if (sc->c_objects_loc == sc->c_objects_size)
@@ -2225,6 +2281,9 @@ static void init_gc_caches(s7_scheme *sc)
   sc->strings_size = INIT_GC_CACHE_SIZE;
   sc->strings_loc = 0;
   sc->strings = (s7_pointer *)malloc(sc->strings_size * sizeof(s7_pointer));
+  sc->gensyms_size = INIT_GC_CACHE_SIZE;
+  sc->gensyms_loc = 0;
+  sc->gensyms = (s7_pointer *)malloc(sc->gensyms_size * sizeof(s7_pointer));
   sc->vectors_size = INIT_GC_CACHE_SIZE;
   sc->vectors_loc = 0;
   sc->vectors = (s7_pointer *)malloc(sc->vectors_size * sizeof(s7_pointer));
@@ -2246,7 +2305,6 @@ static void init_gc_caches(s7_scheme *sc)
 }
 
 
-static void (*mark_function[BUILT_IN_TYPES])(s7_pointer p);
 #define S7_MARK(Obj) do {s7_pointer _p_; _p_ = Obj; (*mark_function[type(_p_)])(_p_);} while (0)
 
 static void mark_vector_1(s7_pointer p, s7_Int top)
@@ -2301,11 +2359,6 @@ static void mark_environment(s7_pointer env)
 static void just_mark(s7_pointer p)
 {
   set_mark(p);
-}
-
-
-static void mark_noop(s7_pointer p)
-{
 }
 
 
@@ -2483,7 +2536,7 @@ static void init_mark_functions(void)
   mark_function[T_BIG_RATIO]           = just_mark;
   mark_function[T_BIG_REAL]            = just_mark;
   mark_function[T_BIG_COMPLEX]         = just_mark;
-  mark_function[T_SYMBOL]              = mark_noop;
+  mark_function[T_SYMBOL]              = mark_noop; /* this changes to mark_symbol when gensyms are in the heap */
   mark_function[T_PAIR]                = mark_pair;
   mark_function[T_CLOSURE]             = mark_closure;
   mark_function[T_CLOSURE_STAR]        = mark_closure;
@@ -2963,6 +3016,19 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       return;
 
     case T_SYMBOL:
+      if (is_gensym(x))
+	{
+	  sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
+	  (*sc->free_heap_top++) = sc->heap[loc];
+	  sc->heap[loc]->hloc = loc;
+	  clear_gensym(x);
+	  x->hloc = NOT_IN_HEAP;
+	  /* TODO: remove from gensyms array? what about the similar vector case??
+	   * TODO: check other mark on/off cases
+	   */
+	}
+      return;
+
     case T_SYNTAX:
       /* here hloc is usually NOT_IN_HEAP, but in the syntax case can be the syntax op code.
        */
@@ -3177,7 +3243,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   s7_pointer x, str; 
   
   str = s7_make_permanent_string(name);
-  x = (s7_cell *)permanent_calloc(sizeof(s7_extended_cell));
+  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
@@ -3295,6 +3361,32 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 }
 
 
+static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
+{
+  unsigned int loc;
+  s7_pointer x, y; 
+  loc = symbol_hash(sym) % SYMBOL_TABLE_SIZE;
+  x = vector_element(sc->symbol_table, loc);
+  if (car(x) == sym)
+    {
+      vector_element(sc->symbol_table, loc) = cdr(x);
+      free(x);
+    }
+  else
+    {
+      for (y = x, x = cdr(x); is_not_null(x); y = x, x = cdr(x))
+	{
+	  if (car(x) == sym)
+	    {
+	      cdr(y) = cdr(x);
+	      free(x);
+	      break;
+	    }
+	}
+    }
+}
+
+
 s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 { 
   char *name;
@@ -3331,6 +3423,11 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
   #define H_gensym "(gensym (prefix \"gensym\")) returns a new, unused symbol"
+
+#if 0
+
+  /* old (non-GC-able) version (24-Apr-12)
+   */
   if (is_not_null(args))
     {
       if (!s7_is_string(car(args)))
@@ -3339,27 +3436,53 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
     }
   return(s7_gensym(sc, "gensym"));
 
-  /* ideally we'd produce a gc-able object here, but there's a problem in the loop macro
-   *   see gensym-s7.c.  It almost works to leave gensyms out of the symbol table since
-   *   the only case I can find where that matters is
-   *      (let ((hi (gensym))) (eq? hi (string->symbol (symbol->string hi))))
-   *   in string_read_name, I never see a gensym.
-   * Could these be handled outside the symbol_table? But that is just a stop-gap.
-   *
-   * I think the gensym-s7.c problem (or at least one them) is that the gensym symbol
-   *   uses NEW_CELL (getting a normal sized cell), but currently the assumption in
-   *   new_symbol is that symbols are larger than ordinary objects.  Setting the
-   *   symbol_accessor to -1 steps on whatever follows it.  (Yes, this fixes the
-   *   problems, but now symbol_has_accessor is slower and there are several places
-   *   where we set the accessor and other optimization fields).  Use the last type bit?
-   *
-   * cm src/SndLib.cpp calls s7_gensym, but I think it does not depend on the GC status;
-   *   schemeError appears to be a temp.
-   * gendiff: T_GENSYM, use fullsize here, remove from symtab and use sep 2-way array [string->symbol here]
-   *   make sure full size is always checked (not_gensym).  (There's lots of room in gmp case).
-   *   symbol_hash is free in this case?  T_ACCESSED? 
-   *   #_(a) -> gensym? then #_{a} as ref?
-   */
+#else
+
+  const char *prefix;
+  char *name;
+  int len, location;
+  s7_pointer x, str, stc;
+  unsigned int loc = 0;
+
+  if (is_not_null(args))
+    {
+      if (!s7_is_string(car(args)))
+	return(s7_wrong_type_arg_error(sc, "gensym prefix,", 0, car(args), "a string"));
+      prefix = string_value(car(args));
+    }
+  else prefix = "gensym";
+  len = safe_strlen(prefix) + 32;
+  name = (char *)calloc(len, sizeof(char));
+  snprintf(name, len, "{ %s }-%d", prefix, sc->gensym_counter++); 
+  location = symbol_table_hash(name, &loc); 
+      
+  str = (s7_cell *)calloc(1, sizeof(s7_cell));
+  str->hloc = NOT_IN_HEAP;
+  set_type(str, T_STRING | T_IMMUTABLE);
+  string_length(str) = safe_strlen(name);
+  string_value(str) = name;
+  string_needs_free(str) = false;
+
+  NEW_CELL(sc, x);
+  symbol_name_cell(x) = str;
+  set_type(x, T_SYMBOL | T_GENSYM);
+  global_slot(x) = sc->NIL;
+  initial_slot(x) = sc->UNDEFINED;
+  local_slot(x) = sc->NIL;
+  symbol_id(x) = 0;
+  symbol_accessor(x) = -1;
+  symbol_hash(x) = loc;
+
+  stc = (s7_cell *)calloc(1, sizeof(s7_cell)); /* so we can easily free it in GC sweep */
+  stc->hloc = NOT_IN_HEAP;
+  car(stc) = x;
+  set_type(stc, T_PAIR | T_IMMUTABLE);
+  cdr(stc) = vector_element(sc->symbol_table, location);
+  vector_element(sc->symbol_table, location) = stc;
+
+  add_gensym(sc, x);
+  return(x); 
+#endif  
 }
 
 
@@ -17783,7 +17906,7 @@ static char *describe_type_bits(s7_pointer obj)
    */
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(obj, NO_ARTICLE),
 	   typeflag(obj),
@@ -17807,6 +17930,8 @@ static char *describe_type_bits(s7_pointer obj)
 	   has_table(obj) ?             " function-table" : "",
 	   is_one_liner(obj) ?          " one-liner" : "",
 	   needs_copied_args(obj) ?     " copy-args" : "",
+	   is_gensym(obj) ?             " gensym" : "",
+	   is_accessed(obj) ?           " is accessed" : "",
 	   is_tail_call(obj) ?          " tail-call" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
   return(buf);
@@ -24842,8 +24967,15 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
       ((is_procedure(car(funcs))) ||
        (is_procedure(cadr(funcs))) ||
        (is_procedure(caddr(funcs)))))
-    symbol_accessor(symbol) = s7_gc_protect(sc, funcs);
-  else symbol_accessor(symbol) = -1;
+    {
+      symbol_accessor(symbol) = s7_gc_protect(sc, funcs);
+      set_accessed(symbol);
+    }
+  else 
+    {
+      symbol_accessor(symbol) = -1;
+      clear_accessed(symbol);
+    }
   return(funcs);
 }
 
@@ -30638,7 +30770,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 
   str = s7_make_permanent_string(name);
 
-  x = (s7_cell *)permanent_calloc(sizeof(s7_extended_cell));
+  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
@@ -55345,7 +55477,7 @@ the error type and the info passed to the error handler.");
                         	    code)                                  \n\
                         	   (else (loop (cdr clauses))))))))");
 
-  /* fprintf(stderr, "size: %d %d, max op: %d\n", (int)sizeof(s7_cell), (int)sizeof(s7_extended_cell), OP_MAX_DEFINED); */
+  /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 263 */
 #if WITH_GMP
   /* fprintf(stderr, "sizes: %d %d %d %d\n", sizeof(mpz_t), sizeof(mpq_t), sizeof(mpfr_t), sizeof(mpc_t)); */
