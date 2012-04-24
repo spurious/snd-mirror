@@ -3338,6 +3338,28 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
       return(s7_gensym(sc, string_value(car(args))));
     }
   return(s7_gensym(sc, "gensym"));
+
+  /* ideally we'd produce a gc-able object here, but there's a problem in the loop macro
+   *   see gensym-s7.c.  It almost works to leave gensyms out of the symbol table since
+   *   the only case I can find where that matters is
+   *      (let ((hi (gensym))) (eq? hi (string->symbol (symbol->string hi))))
+   *   in string_read_name, I never see a gensym.
+   * Could these be handled outside the symbol_table? But that is just a stop-gap.
+   *
+   * I think the gensym-s7.c problem (or at least one them) is that the gensym symbol
+   *   uses NEW_CELL (getting a normal sized cell), but currently the assumption in
+   *   new_symbol is that symbols are larger than ordinary objects.  Setting the
+   *   symbol_accessor to -1 steps on whatever follows it.  (Yes, this fixes the
+   *   problems, but now symbol_has_accessor is slower and there are several places
+   *   where we set the accessor and other optimization fields).  Use the last type bit?
+   *
+   * cm src/SndLib.cpp calls s7_gensym, but I think it does not depend on the GC status;
+   *   schemeError appears to be a temp.
+   * gendiff: T_GENSYM, use fullsize here, remove from symtab and use sep 2-way array [string->symbol here]
+   *   make sure full size is always checked (not_gensym).  (There's lots of room in gmp case).
+   *   symbol_hash is free in this case?  T_ACCESSED? 
+   *   #_(a) -> gensym? then #_{a} as ref?
+   */
 }
 
 
@@ -23180,18 +23202,17 @@ void s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, i
 }
 
 
-static void s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+static s7_pointer s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
-  s7_pointer func, sym;
+  s7_pointer func, sym, p;
   sym = make_symbol(sc, name);
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   s7_define(sc, sc->NIL, sym, func);
   set_immutable(slot_symbol(global_slot(sym)));
-  {
-    s7_pointer p;
-    p = s7_symbol_value(sc, make_symbol(sc, name));
-    typeflag(p) &= ~(T_SAFE_PROCEDURE);
-  }
+
+  p = s7_symbol_value(sc, sym); /* make_symbol(sc, name)); */
+  typeflag(p) &= ~(T_SAFE_PROCEDURE);
+  return(p);
 }
 
 
@@ -48527,6 +48548,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 							     ((sc->op == OP_DEFINE_MACRO_STAR) || 
 							      (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
 							     sc->z)),
+						   /* TODO: can these be the value not the symbol? */
 						   list_1(sc, list_2(sc, sc->CDR, sc->y)))));
       closure_environment(sc->value) = sc->envir;
       sc->code = sc->x; 
@@ -54443,7 +54465,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);     /* macro expansion in calling environment */
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
-  assign_syntax(sc, "with-baffle",     OP_WITH_BAFFLE);
+  assign_syntax(sc, "with-baffle",       OP_WITH_BAFFLE);
 
   sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",   OP_QUOTE_UNCHECKED);  
   sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",     OP_LET_UNCHECKED);  
@@ -54583,7 +54605,6 @@ s7_scheme *s7_init(void)
   sc->UNQUOTE =     make_symbol(sc, "unquote");
   sc->MACROEXPAND = make_symbol(sc, "macroexpand");
   sc->FEED_TO =     make_symbol(sc, "=>");
-  sc->APPLY =       make_symbol(sc, "apply");
   sc->CDR =         make_symbol(sc, "cdr");
   sc->SET =         make_symbol(sc, "set!");
   sc->BAFFLE =      make_symbol(sc, "(baffle)");
@@ -54599,12 +54620,6 @@ s7_scheme *s7_init(void)
 
   #define s_type_arg_name "[arg]"
   sc->S_TYPE_ARG = make_symbol(sc, s_type_arg_name);
-
-  sc->QQ_VALUES =       make_symbol(sc, "{values}");
-  sc->QQ_LIST =         make_symbol(sc, "{list}");
-  sc->QQ_APPLY_VALUES = make_symbol(sc, "{apply} {values}");
-  sc->QQ_APPEND =       make_symbol(sc, "{append}");
-  sc->MULTIVECTOR =     make_symbol(sc, "{multivector}");
 
   s7_make_slot(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
 
@@ -54956,12 +54971,9 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "list->vector",              g_list_to_vector,           1, 0, false, H_list_to_vector);
   s7_define_safe_function(sc, "vector-fill!",              g_vector_fill,              2, 0, false, H_vector_fill);
   s7_define_safe_function(sc, "vector",                    g_vector,                   0, 0, true,  H_vector);
+  sc->VECTOR = s7_symbol_value(sc, sc->VECTOR);
 #if WITH_OPTIMIZATION
-  {
-    s7_pointer f;
-    f = s7_symbol_value(sc, sc->VECTOR);
-    set_setter(f); /* for optimized DO's benefit */
-  }
+    set_setter(sc->VECTOR); /* for optimized DO's benefit */
 #endif
   s7_define_safe_function(sc, "vector-length",             g_vector_length,            1, 0, false, H_vector_length);
   s7_define_safe_function(sc, "vector-ref",                g_vector_ref,               2, 0, true,  H_vector_ref);
@@ -55000,6 +55012,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "eval",                           g_eval,                     1, 1, false, H_eval);
   s7_define_function(sc, "eval-string",                    g_eval_string,              1, 1, false, H_eval_string);
   s7_define_function(sc, "apply",                          g_apply,                    1, 0, true,  H_apply);
+  sc->APPLY = s7_symbol_value(sc, make_symbol(sc, "apply"));
 
   s7_define_function(sc, "for-each",                       g_for_each,                 2, 0, true,  H_for_each);
   s7_define_function(sc, "map",                            g_map,                      2, 0, true,  H_map);
@@ -55010,17 +55023,14 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "error",                          g_error,                    0, 0, true,  H_error);
 
   /* these are internal for quasiquote's use */
-  s7_define_constant_function(sc, "{values}",              g_qq_values,                0, 0, true,  H_qq_values);
-  s7_define_constant_function(sc, "{apply}",               g_apply,                    1, 0, true,  H_apply);
-  s7_define_constant_function(sc, "{apply} {values}",      g_apply_values,             0, 0, true,  H_apply_values);
-  s7_define_constant_function(sc, "{append}",              g_append,                   0, 0, true,  H_append);
-  s7_define_constant_function(sc, "{multivector}",         g_qq_multivector,           1, 0, true,  H_qq_multivector);
-  s7_define_constant_function(sc, "{list}",                g_qq_list,                  0, 0, true,  H_qq_list);
-  {
-    s7_pointer p;
-    p = s7_symbol_value(sc, make_symbol(sc, "{list}"));
-    set_type(p, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
-  }
+  /* s7_define_constant_function(sc, "{apply}",               g_apply,                    1, 0, true,  H_apply); */
+
+  sc->QQ_VALUES =       s7_define_constant_function(sc, "{values}",         g_qq_values,      0, 0, true,  H_qq_values);
+  sc->QQ_APPLY_VALUES = s7_define_constant_function(sc, "{apply} {values}", g_apply_values,   0, 0, true,  H_apply_values);
+  sc->QQ_APPEND =       s7_define_constant_function(sc, "{append}",         g_append,         0, 0, true,  H_append);
+  sc->MULTIVECTOR =     s7_define_constant_function(sc, "{multivector}",    g_qq_multivector, 1, 0, true,  H_qq_multivector);
+  sc->QQ_LIST =         s7_define_constant_function(sc, "{list}",           g_qq_list,        0, 0, true,  H_qq_list);
+  set_type(sc->QQ_LIST, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
 
   s7_define_safe_function(sc, "stacktrace",                g_stacktrace,               0, 2, false, H_stacktrace);
   s7_define_safe_function(sc, "trace",                     g_trace,                    0, 0, true,  H_trace);
@@ -55369,6 +55379,7 @@ the error type and the info passed to the error handler.");
  *   ->list ->string ->vector [all via dynamic-for-each]
  *   but there are also number->string object->string symbol->string, so we have ambiguity in that case
  *   but all of these are too slow as for-each -- we'd want to special case it anyway
+ *   list->* can always use apply instead, and looking over *.scm, these -> ops aren't used much anyway
  * similarly dynamic-map, but in this case final is passed the current (possibly truncated) result [map-with-exit]
  * map also always has the count, I believe, but simple for-each doesn't?
  *

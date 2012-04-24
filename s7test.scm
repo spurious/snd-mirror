@@ -13824,7 +13824,9 @@ this prints:
   (define (truncate-if func lst)
     (map-with-exit (lambda (escape x) (if (func x) (escape) x)) lst))
 
-  (test (truncate-if even? #(1 3 5 -1 4 6 7 8)) '(1 3 5 -1)))
+  (test (truncate-if even? #(1 3 5 -1 4 6 7 8)) '(1 3 5 -1))
+  (test (truncate-if negative? (truncate-if even? #(1 3 5 -1 4 6 7 8))) '(1 3 5))
+  )
 
 
 
@@ -19485,7 +19487,7 @@ who says the continuation has to restart the map from the top?
 (test (let ((b, 32)) `(a, , b, c,)) '(a, 32 c,))
 (test (equal? (let ((b, 32)) '(a, , b, c,)) '(a, (unquote b,) c,)) #t) ; comma by itself (no symbol) is an error
 (test (equal? (let ((b, 32)) '(a, ,  , b, c,)) '(a, (unquote (unquote b,)) c,)) #t)
-(test (equal? (let ((b 32)) (let ((b, b)) ``(a, ,  , b, c,))) '({list} 'a, 32 'c,)) #t)
+;(test (equal? (let ((b 32)) (let ((b, b)) ``(a, ,  , b, c,))) '({list} 'a, 32 'c,)) #t)
 
 ;; from gauche
 (let ((quasi0 99)
@@ -19795,9 +19797,9 @@ who says the continuation has to restart the map from the top?
 (test (defined? '{values}) #t)
 (test (let () (set! {values} 2)) 'error)
 (test (let (({values} 2)) {values}) 'error)
-(test (defined? '{apply}) #t)
-(test (let () (set! {apply} 2)) 'error)
-(test (let (({apply} 2)) {apply}) 'error)
+;(test (defined? '{apply}) #t)
+;(test (let () (set! {apply} 2)) 'error)
+;(test (let (({apply} 2)) {apply}) 'error)
 (test (defined? '{append}) #t)
 (test (let () (set! {append} 2)) 'error)
 (test (let (({append} 2)) {append}) 'error)
@@ -21902,7 +21904,7 @@ abs     1       2
 (test (procedure-source) 'error)
 (test (procedure-source abs abs) 'error)
 (test (procedure-source quasiquote) 'error)
-(test (let () (define-macro (hi a) `(+ 1 ,a)) (cadr (caddr (procedure-source hi)))) '(lambda (a) ({list} '+ 1 a)))
+;(test (let () (define-macro (hi a) `(+ 1 ,a)) (cadr (caddr (procedure-source hi)))) '(lambda (a) ({list} '+ 1 a)))
 
 (let ()
   (define (hi a) (+ a x))
@@ -23025,6 +23027,31 @@ but that's make-type's arglist??
 			     (let () (set! ctr (+ ctr 1)) ctr))))
 	      (list ctr lst)))
 	  '(2 (1 2 3 4))))
+
+  (let ()
+    ;; gensym not needed because no post-expansion eval!
+    (define-bacro (setf . args)
+      (if (not (null? args))
+	  (begin
+	    (apply set! (car args) (eval (cadr args)) ())
+	    (apply setf (cddr args)))))
+
+    (test (let ((a 1) (b 2)) (setf a b b 3) (list a b)) '(2 3))
+    (test (let ((a 1) (b 2)) (setf a b b (+ a 3)) (list a b)) '(2 5))
+    (test (let ((a #(1)) (b 2)) (setf (a 0) b b (+ (a 0) 3)) (list a b)) '(#(2) 5))
+    (test (let ((a 1) (b 2)) (setf a b b a) (list a b)) '(2 2))
+
+    ;; gensym not needed because the eval is restricted to the incoming env
+    (define-bacro (psetf . args)
+      (let ((e (current-environment)))
+	(apply setf (do ((lst args (cddr lst))
+			 (new-args ()))
+			((null? lst) new-args)
+		      (set! new-args (cons (car lst) (cons (eval (cadr lst) e) new-args)))))))
+
+    (test (let ((a 1) (b 2)) (psetf a b b a) (list a b)) '(2 1))
+    (test (let ((a #(1)) (b 2)) (setf (a 0) b b (+ (a 0) 3)) (list a b)) '(#(2) 4))
+    )
 
   (defmacro with-gensyms (names . body)
     `(let ,(map (lambda (n) `(,n (gensym))) names)
