@@ -2100,6 +2100,10 @@ static void sweep(s7_scheme *sc)
 		}
 	    }
 	  else sc->vectors[j++] = sc->vectors[i];
+	  /* here (in the else branch) if a vector constant in a global function has been removed from the heap,
+	   *   v->hloc == NOT_IN_HEAP, and we'll never see it freed, so if there were a lot of these, they might
+	   *   glom up this loop.  Surely not a big deal!?
+	   */
 	}
       sc->vectors_loc = j;
     }
@@ -2995,7 +2999,8 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_VECTOR:
       {
 	s7_Int i;
-	/* this can happen if a global function has an explicit vector constant.
+	/* this can happen if a global function has an explicit vector constant.  (The vector remain in the sc->vectors
+	 *    array forever -- also in the gensym case below).
 	 */
 	x->hloc = NOT_IN_HEAP;
 	sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
@@ -3023,9 +3028,6 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	  sc->heap[loc]->hloc = loc;
 	  clear_gensym(x);
 	  x->hloc = NOT_IN_HEAP;
-	  /* TODO: remove from gensyms array? what about the similar vector case??
-	   * TODO: check other mark on/off cases
-	   */
 	}
       return;
 
@@ -26096,6 +26098,9 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       return(hash_tables_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc))); 
 
     case T_ENVIRONMENT:
+      /* if the environment contains a function whose environment is the current environment, infinite loop?
+       *    so we pass the ci arg in the macro/function cases below
+       */
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
 
     case T_VECTOR:
@@ -26285,9 +26290,9 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       return((type(y) == type(x)) &&
-	     (s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), NULL)) &&
-	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), NULL)) &&
-	     (s7_is_morally_equal_1(sc, closure_body(x), closure_body(y), NULL)));
+	     (s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), ci)) &&
+	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), ci)) &&
+	     (s7_is_morally_equal_1(sc, closure_body(x), closure_body(y), ci)));
 
     case T_MACRO:
     case T_BACRO:
@@ -26300,10 +26305,21 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
        * 
        * the "args" and "body" are not relevant: we create these shells internally, so the true args are in the applied lambda
        * so ignore args, and check (cadr (car body)) => (lambda (a) ({list} '+ 1 a))
+       *
+       * if the "ci" arg is omitted, this hangs:
+       *    (morally-equal? 
+       *      (let () 
+       *        (define-macro* (a_func (an_arg (lambda () #t))) 
+       *          `,an_arg) 
+       *        (a_func)) 
+       *      (let () 
+       *        (define-macro (a_func an_arg) 
+       *          `,an_arg) 
+       *        (a_func (lambda () #t))))
        */
       return((type(y) == type(x)) &&
-	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), NULL)) &&
-	     (s7_is_morally_equal_1(sc, cadr(car(closure_body(x))), cadr(car(closure_body(y))), NULL)));
+	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), ci)) &&
+	     (s7_is_morally_equal_1(sc, cadr(car(closure_body(x))), cadr(car(closure_body(y))), ci)));
 
     }
   return(false);
@@ -49084,7 +49100,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_WITH_ENV:
-      /* (with-environment env . body) */
+      /* (with-environment env . body) 
+       *   in R this might be "with"
+       */
       if (!is_pair(sc->code))                            /* (with-environment . "hi") */
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->code));
       if (!is_pair(cdr(sc->code)))

@@ -1120,7 +1120,7 @@ use a closure:
 </pre>
 
 
-<p>In s7, gensym is like CL's gentemp: inaccessible symbols are garbage collected.
+<p>
 But gensym can make the macro code
 unreadable in more complex cases.  It is possible to
 write a macro to do the gensymification for us, but in s7 it is easier to
@@ -3595,6 +3595,14 @@ is 15, as anyone would expect.
 
 </blockquote>
 
+<!-- one place where multiple values might cause surprise:
+    :(define* (a1 (a2 (values 1 2))) a2)
+    :(a1)
+    (values 1 2)
+    :(define (a1 a2) a2)
+    :(a1 (values 1 2))
+    ;(values 1 2): too many arguments: (values 1 2)
+-->
 
 
 

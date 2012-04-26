@@ -1024,6 +1024,17 @@
 (test (morally-equal? (current-input-port) (current-output-port)) #f)
 (test (morally-equal? *stdin* *stderr*) #f)
 
+(test (morally-equal? 
+ (let () 
+   (define-macro* (a_func (an_arg (lambda () #t))) 
+     `,an_arg) 
+   (a_func)) 
+ (let () 
+   (define-macro (a_func an_arg) 
+     `,an_arg) 
+   (a_func (lambda () #t))))
+      #f)
+
 (if (not with-bignums) 
     (begin
       (test (morally-equal? 0 (+ 0 5e-16)) #t)
@@ -20082,6 +20093,7 @@ who says the continuation has to restart the map from the top?
 (test (let* ((a (gensym)) (b a)) (eq? a b)) #t)
 (test (let* ((a (gensym)) (b a)) (eqv? a b)) #t)
 (test (keyword? (symbol->keyword (gensym))) #t)
+(test (let ((g (gensym))) (set! g 12) g) 12)
 
 (let ((sym (gensym)))
   (test (eval `(let ((,sym 32)) (+ ,sym 1))) 33))
@@ -21456,6 +21468,45 @@ abs     1       2
 (test (let ((x 1)) (define* (hi (a (+ x 0))) a) (let ((x 32)) (hi))) 1)
 (test (let ((x 1)) (define* (hi (a (+ x "hi"))) a) (let ((x 32)) (hi))) 'error)
 (test (let ((x 1)) (define-macro* (ho (a (+ x "hi"))) `(+ x ,a)) (let ((x 32)) (ho))) 'error)
+
+(let ()
+  (define-bacro* (incf var (inc 1)) `(set! ,var (+ ,var ,inc)))
+  (define-bacro* (decf var (inc 1)) `(set! ,var (- ,var ,inc)))
+
+  (test (let ((x 0)) (incf x)) 1)
+  (test (let ((x 1.5)) (incf x 2.5) x) 4.0)
+  (test (let ((x 10)) (decf x (decf x 1)) x) 1) 
+
+  ;; ! -- left to right order I think (let ((x 10)) (set! x (- x (set! x (- x 1))))) so the 3rd x is 10
+  ;; Clisp and sbcl return 0: (let ((x 10)) (decf x (decf x (decf x))) x) is also 0
+  ;; but in clisp (let ((x 10)) (setf x (- x (setf x (- x 1)))) x) is 1
+  ;; I didn't know these cases were different
+  ;; (let ((x 10)) (set! x (- x (let () (set! x (- x 1)) x))) x) 1, Guile also says 1
+  ;; cltl2 p 134ff is an unreadable discussion of this, but I think it says in this case CL goes right to left
+  ;; weird! in CL (decf x (decf x)) != (setf x (- x (setf x (- x 1))))
+  ;;   and (let ((x 10)) (let ((val (decf x))) (decf x val) x))?
+  ;;   so by adhering to one evaluation order, we lose "referential transparency"?
+
+  (test (let ((x 1+i)) (decf x 0+i)) 1.0))
+
+(let ()
+
+  ;; (define-bacro* (incf var (inc 1)) (set! var (+ (eval var) (eval inc))))
+  ;; this form does not actually set the incoming variable (it sets the argument)
+  ;; at OP_SET we see set (var (+ (eval var) (eval inc)))
+  ;;                  set1 var 1
+  ;;                  which leaves x unset
+  ;; but below we see set (x 1)
+  ;;                  set1 x 1
+
+  (define-bacro* (incf var (inc 1)) (apply set! var (+ (eval var) (eval inc)) ()))
+  (define-bacro* (decf var (inc 1)) (apply set! var (- (eval var) (eval inc)) ()))
+
+  (test (let ((x 0)) (incf x)) 1)
+  (test (let ((x 1.5)) (incf x 2.5) x) 4.0)
+  (test (let ((x 10)) (decf x (decf x 1)) x) 1) 
+  (test (let ((x 1+i)) (decf x 0+i)) 1.0))
+
 
 (let ()
   (define-macro (and-call function . args)
@@ -23050,9 +23101,6 @@ abs     1       2
   (test (let ((a 1) (b 2)) (psetf a b b a) (list a b)) '(2 1))
   (test (let ((a #(1)) (b 2)) (psetf (a 0) b b (+ (a 0) 3)) (list a b)) '(#(2) 4))
   )
-
-;;; TODO: test mix of macro/bacro and explicitly test collisions
-;;; TODO: random macro/bacro tests
 
 (defmacro with-gensyms (names . body)
   `(let ,(map (lambda (n) `(,n (gensym))) names)
