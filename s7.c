@@ -3398,27 +3398,15 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
-  
-  for (; sc->gensym_counter < S7_LONG_MAX; ) 
-    { 
-      snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
-      location = symbol_table_hash(name, &loc); 
-      x = symbol_table_find_by_name(sc, name, location); 
-      if (is_not_null(x))
-	{
-	  if (s7_symbol_value(sc, x) != sc->UNDEFINED)
-	    continue; 
-	  free(name);
-	  return(x); 
-	}
-      
-      x = new_symbol(sc, name, location); 
-      symbol_hash(x) = loc;
-      free(name);
-      return(x); 
-    } 
+  /* there's no point in heroic efforts here to avoid name collisions --
+   *    the user can screw up no matter what we do.
+   */
+  snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
+  location = symbol_table_hash(name, &loc); 
+  x = new_symbol(sc, name, location);  /* not T_GENSYM -- might be called from outside */
+  symbol_hash(x) = loc;
   free(name);
-  return(sc->NIL); 
+  return(x); 
 } 
 
 
@@ -3426,26 +3414,13 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 {
   #define H_gensym "(gensym (prefix \"gensym\")) returns a new, unused symbol"
 
-#if 0
-
-  /* old (non-GC-able) version (24-Apr-12)
-   */
-  if (is_not_null(args))
-    {
-      if (!s7_is_string(car(args)))
-	return(s7_wrong_type_arg_error(sc, "gensym prefix,", 0, car(args), "a string"));
-      return(s7_gensym(sc, string_value(car(args))));
-    }
-  return(s7_gensym(sc, "gensym"));
-
-#else
-
   const char *prefix;
   char *name;
   int len, location;
   s7_pointer x, str, stc;
   unsigned int loc = 0;
 
+  /* get symbol name */
   if (is_not_null(args))
     {
       if (!s7_is_string(car(args)))
@@ -3455,9 +3430,10 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   else prefix = "gensym";
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
-  snprintf(name, len, "{ %s }-%d", prefix, sc->gensym_counter++); 
+  snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
   location = symbol_table_hash(name, &loc); 
       
+  /* make-string for symbol name */
   str = (s7_cell *)calloc(1, sizeof(s7_cell));
   str->hloc = NOT_IN_HEAP;
   set_type(str, T_STRING | T_IMMUTABLE);
@@ -3465,6 +3441,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   string_value(str) = name;
   string_needs_free(str) = false;
 
+  /* allocate the symbol in the heap so GC'd when inaccessible */
   NEW_CELL(sc, x);
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL | T_GENSYM);
@@ -3475,7 +3452,8 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   symbol_accessor(x) = -1;
   symbol_hash(x) = loc;
 
-  stc = (s7_cell *)calloc(1, sizeof(s7_cell)); /* so we can easily free it in GC sweep */
+  /* place new symbol in symbol-table, but using calloc so we can easily free it (remove it from the table) in GC sweep */
+  stc = (s7_cell *)calloc(1, sizeof(s7_cell));
   stc->hloc = NOT_IN_HEAP;
   car(stc) = x;
   set_type(stc, T_PAIR | T_IMMUTABLE);
@@ -3484,7 +3462,6 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 
   add_gensym(sc, x);
   return(x); 
-#endif  
 }
 
 
@@ -23187,10 +23164,6 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 		      (is_pws(x))));
 }
 
-/* PERHAPS: procedure*? and macro*?  bacro?, syntax?
- *   (how to tell lambda's type)
- */
-
 
 static void s7_function_set_setter(s7_scheme *sc, const char *getter, const char *setter)
 {
@@ -23299,7 +23272,7 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
       p = s7_symbol_value(sc, p);
       if (p == sc->UNDEFINED)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args))));
+			list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args)))); /* not p here */
     }
 
   if ((typeflag(p) & (T_PROCEDURE | T_ANY_MACRO)) == 0)
@@ -24684,14 +24657,20 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
       return(f->scheme_setter);
     }
 
-  return(sc->NIL);
+  return(sc->F); /* was nil until 26-Apr-12, but c_function_setter defaults to #f */
 }
 
 
 static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_setter "(procedure-setter obj) returns the setter associated with obj, or #f"
-  return(s7_procedure_setter(sc, car(args)));
+  s7_pointer p;
+
+  p = car(args);
+  if ((typeflag(p) & T_PROCEDURE) == 0)
+    return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure"));
+
+  return(s7_procedure_setter(sc, p));
 }
 
 /* if this were settable, 
@@ -24797,6 +24776,8 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
 }
 
 
+/* should this raise an error for a non-procedure?
+ */
 static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_name "(procedure-name proc) returns the name of the procedure or closure proc, if it can be found."
@@ -24924,30 +24905,8 @@ static bool is_thunkable(s7_scheme *sc, s7_pointer x)
  * these are in the same realm:
  *   typed var: restrict set! to the desired type or do auto-conversions
  *   constant: disallow set!
- *   traced var: report either read/write
- *   keywords: can't set or bind, always return self as value
- *
- * and related (but much messier to implement):
- *   fluid-let: dynamic until exit (call/cc error normal)
- *   dynamic variables: insist any ref is to the current binding [dynamic-let]
- *
- * a value wrapper or transparent object won't work:
- * (define-macro (trace sym)
- *   `(set! ,sym (wrap ,sym :setter (lambda (binding a) (format #t "~A set to ~A~%" (car binding) a)))))
- * 
- * (define-macro (untrace sym)
- *   `(set! ,sym ,sym) ??? -- oops...
- *
- * (symbol-access sym) -- a pws, if set! it affects the current binding actions.
- *   the actions are local to the current environment, so
- *   we automatically undo the local accessors when leaving the current scope.
- *   a list of 3 funcs: getter setter binder -- rest is ignored so that
- *   trace can save the current accessors in cadddr of the symbol-access list, 
- *   untrace uses that to restore the old form, etc
- *
- * (define (notify-if-set var notifier) ; returns #t if it's ok to set
- *   (set! (symbol-access) 
- *         (list #f (lambda (symbol new-value) (or (notifier symbol new-value) new-value)) #f)))
+ *   traced var: report set!
+ *   keywords: can't set or bind
  */
 
 
@@ -24962,21 +24921,22 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs)
 {
   if (symbol_has_accessor(symbol))
-    s7_gc_unprotect_at(sc, symbol_accessor(symbol));
-
-  if ((is_pair(funcs)) &&
-      (s7_list_length(sc, funcs) >= 3) &&
-      ((is_procedure(car(funcs))) ||
-       (is_procedure(cadr(funcs))) ||
-       (is_procedure(caddr(funcs)))))
     {
-      symbol_accessor(symbol) = s7_gc_protect(sc, funcs);
-      set_accessed(symbol);
-    }
-  else 
-    {
+      s7_gc_unprotect_at(sc, symbol_accessor(symbol));
       symbol_accessor(symbol) = -1;
       clear_accessed(symbol);
+    }
+
+  if (is_pair(funcs))
+    {
+      s7_pointer x;
+      for (x = funcs; is_pair(x); x = cdr(x))
+	if (car(x) != sc->F)                      /* if any field is not #f, reset symbol_accessor */
+	  {
+	    symbol_accessor(symbol) = s7_gc_protect(sc, funcs);
+	    set_accessed(symbol);
+	    break;
+	  }
     }
   return(funcs);
 }
@@ -25004,10 +24964,8 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
   if (funcs != sc->F)
     {
       if ((!is_pair(funcs)) ||
-	  (s7_list_length(sc, funcs) != 3))
-	return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 2, funcs, "a list of 3 settings"));	
-      if ((is_procedure(car(funcs))) && (!args_match(sc, car(funcs), 2)))
-	return(s7_wrong_type_arg_error(sc, "set! symbol-access get function,", 2, car(funcs), "a procedure of 2 arguments"));	
+	  (s7_list_length(sc, funcs) < 3))
+	return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 2, funcs, "a list of 3 or more settings"));	
       if ((is_procedure(cadr(funcs))) && (!args_match(sc, cadr(funcs), 2)))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access set function,", 2, cadr(funcs), "a procedure of 2 arguments"));	
       if ((is_procedure(caddr(funcs))) && (!args_match(sc, caddr(funcs), 2)))
@@ -39670,6 +39628,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else slot_set_value(y, val);
 
 	    /* var access checks during the step section? 
+	     *   we'd want a separate iteration in that case to avoid slowing down the normal case
 	     *
 	     * to embed here, we need x, y, (sc->args? sc->code?), sc->value
 	     *
@@ -48622,6 +48581,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *               (apply (lambda (a b) 
        *                        (cons (quote +) (cons a (cons b (quote ()))))) 
        *                      (cdr defmac-21)))
+       * the (cdr defmac...) is an unfortunate historical accident that is now very tricky to fix.
        */
       NEW_CELL_NO_CHECK(sc, sc->value);
       closure_args(sc->value) = list_1(sc, sc->y);
@@ -48696,7 +48656,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 							     ((sc->op == OP_DEFINE_MACRO_STAR) || 
 							      (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
 							     sc->z)),
-						   /* TODO: can these be the value not the symbol? */
 						   list_1(sc, list_2(sc, sc->CDR, sc->y)))));
       closure_environment(sc->value) = sc->envir;
       sc->code = sc->x; 
@@ -55511,30 +55470,13 @@ the error type and the info passed to the error handler.");
 
 /* TODO: the symbol-access stuff is not fully implemented
  *       t342.scm for tests, augment env, closure arg names, do step?
- *       what about recursion during this process (i.e. ref to accessed var in accessor)? -- infinite loop possible here!
- *       are optimized calls ok in this regard?
  *       all call_symbol_bind uses really should be embedded
- *   how to make define-constant and symbol-access local?
  *
  * PERHAPS: (set! (procedure-setter abs) ...)?
  * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
  * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
- *
- * PERHAPS: (dynamic-for-each initial main final . args)
- *    where initial is func of one arg, the upcoming length (for-each knows this in advance)
- *          main is the current for-each func
- *          final is always called, even if jump out (like dynamic-wind)
- *   ->list ->string ->vector [all via dynamic-for-each]
- *   but there are also number->string object->string symbol->string, so we have ambiguity in that case
- *   but all of these are too slow as for-each -- we'd want to special case it anyway
- *   list->* can always use apply instead, and looking over *.scm, these -> ops aren't used much anyway
- * similarly dynamic-map, but in this case final is passed the current (possibly truncated) result [map-with-exit]
- * map also always has the count, I believe, but simple for-each doesn't?
- *
- * port as arg to map and for-each? how to tell it what to get? [string input port is a string?]
- * pure-let(*) to build-in initial-environment
  *
  * lint     13424 -> 1231 [1237]
  * bench    52019 -> 7875 [8268]

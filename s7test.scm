@@ -21470,6 +21470,10 @@ abs     1       2
 (test (let ((x 1)) (define-macro* (ho (a (+ x "hi"))) `(+ x ,a)) (let ((x 32)) (ho))) 'error)
 
 (let ()
+  (define-macro (until test . body) `(do () (,test) ,@body))
+  (test (let ((i 0) (sum 0)) (until (= i 4) (set! sum (+ sum i)) (set! i (+ i 1))) sum) 6))
+
+(let ()
   (define-bacro* (incf var (inc 1)) `(set! ,var (+ ,var ,inc)))
   (define-bacro* (decf var (inc 1)) `(set! ,var (- ,var ,inc)))
 
@@ -21988,6 +21992,51 @@ abs     1       2
 (test (procedure-name cddr) "cddr")
 
 ;; (let () (define-macro (hiho a) `(+ ,a 1)) (procedure-name hiho)) -> ""
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; procedure-setter
+
+(test (procedure-setter) 'error)
+(test (procedure-setter car cons) 'error)
+(test (procedure-setter car) set-car!)
+(test (procedure-setter vector-ref) vector-set!)
+(test (procedure-setter make-string) #f)
+(test (procedure-setter quasiquote) 'error)
+(test (procedure-setter macroexpand) 'error)
+
+(test (procedure-setter cdr) set-cdr!)
+(test (procedure-setter hash-table-ref) hash-table-set!)
+(test (procedure-setter list-ref) list-set!)
+(test (procedure-setter string-ref) string-set!)
+(test (procedure-setter current-input-port) set-current-input-port)
+(test (procedure-setter current-output-port) set-current-output-port)
+(test (procedure-setter current-error-port) set-current-error-port)
+
+(for-each
+ (lambda (arg)
+   (test (procedure-setter arg) 'error))
+ (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi 'car "car" :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+(let ()
+  (define (hiho a) a)
+  (define-macro (hiha a) `(+ 1 ,a))
+  (define pws (make-procedure-with-setter (lambda () 1) (lambda (x) x)))
+  (test (procedure-setter hiho) #f)
+  (test (procedure-setter hiha) 'error)
+  (test (procedure? (procedure-setter pws)) #t)
+  (test ((procedure-setter pws) 32) 32)
+  )
+
+(test (let ((v #(1 2 3)))
+	((procedure-setter vector-ref) v 0 32)
+	v)
+      #(32 2 3))
+(test (let ((v #(1 2 3)))
+	((procedure-setter vector-ref) (let () v) 0 32)
+	v)
+      #(32 2 3))
 
 
 
@@ -23607,6 +23656,7 @@ abs     1       2
   (test (g2 32) 32))
 
 
+;;; make-type
 (let ()
   (define special-value
     (let ((type (make-type)))
@@ -24203,6 +24253,46 @@ abs     1       2
   
   );)
 
+
+(let ()
+  ;; CL property lists
+  (define get (make-procedure-with-setter
+	       (lambda (sym property)
+		 (let ((val (assoc property (symbol-plist sym))))
+		   (and val (cdr val))))
+	       (lambda (sym property value)
+		 (let* ((access (symbol-access sym))
+			(plist (and (pair? access) (car access)))
+			(prop (and (pair? plist) (assoc property plist))))
+		   (if (pair? prop)
+		       (set-cdr! prop value)
+		       (if (pair? access)
+			   (if (pair? plist)
+			       (set-car! access (cons (cons property value) plist))
+			       (set-car! access (list (cons property value))))
+			   (set! (symbol-access sym) (list (list (cons property value)) #f #f))))
+		   value))))
+  
+  (define (symbol-plist sym)
+    (let ((access (symbol-access sym)))
+      (if (pair? access)
+	  (or (car access) ())
+	  ())))
+
+  (test (symbol-plist 's7-version) ())
+  (test (get 's7-version 'hiho) #f)
+  (test (set! (get 's7-version 'hiho) 123) 123)
+  (test (symbol-plist 's7-version) '((hiho . 123)))
+  (test (symbol-access 's7-version) '(((hiho . 123)) #f #f))
+  (test (get 's7-version 'hiho) 123)
+  (test (set! (get 's7-version 'hiho) 321) 321)
+  (test (get 's7-version 'hiho) 321)
+  (test (set! (get 's7-version 'newp) 321123) 321123)
+  (test (symbol-plist 's7-version) '((newp . 321123) (hiho . 321)))
+  (test (get 's7-version 'newp) 321123)
+  (test (get 's7-version 'hiho) 321)
+)
+
 #|
 ;;; these tests are problematic -- they might not fail as hoped, or they might generate unwanted troubles
 (let ((bad-ideas "
@@ -24466,6 +24556,16 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 :(let () (let ((t423-1 #t)) (let* ((a (load "t423.scm" (current-environment)))) a) (t423-1 2 1)))
 3
 |#
+
+(test (let ((#_+ 3)) #_+) 'error)
+(test (define #_+ 3) 'error)
+(test (set! #_+ 3) 'error)
+
+(let ()
+  (define-macro (pure-let bindings . body)
+    `(with-environment (initial-environment)
+       (let ,bindings ,@body)))
+  (test (let ((+ *) (lambda abs)) (pure-let ((x 2)) ((lambda (y) (+ x y)) 3))) 5))
 
 (test (let ()
 	(with-environment (current-environment) (define hiho 43))
@@ -67062,3 +67162,5 @@ in non-gmp,
 	 lst)))))
 |#
 
+;;; this shows what global funcs have been rebound at some time
+;;; (with-environment (initial-environment) (format #t "~{~A ~}~%" (current-environment)))

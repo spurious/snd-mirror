@@ -1071,11 +1071,21 @@ or #_&lt;name&gt;.  That is, #_+ is a reader macro for <code>(with-environment (
 
 <pre class="indented">
 &gt; (define-macro (mac b) 
-    `(#_let ((a 12)) 
-       (#_+ a ,b))) ; #_+ and #_let are start-up values
+    `(<em class=red>#_let</em> ((a 12)) 
+       (<em class=red>#_+</em> a ,b))) ; #_+ and #_let are start-up values
 mac
 &gt; (let ((a 1) (+ *)) (mac a))
 24                 ; (+ a a) where a is 12 and + is the start-up +
+
+;;; make + generic (there's a similar C-based example below)
+&gt; (define (+ . args) 
+    (if (null? args) 0 
+        (apply (if (number? (car args)) <em class=red>#_+ #_string-append</em>) args)))
++
+&gt; (+ 1 2)
+3
+&gt; (+ "hi" "ho")
+"hiho"
 </pre>
 
 <p>#_&lt;name&gt; could be implemented via *#readers*:
@@ -1179,8 +1189,8 @@ Macro expansion happens
 in two different environments.  Leaving aside quasiquote which operates at read-time in the global environment,
 a macro first evaluates its body to form a piece
 of code, a list with the macro's arguments plugged in.  Then
-it evaluates that code.  So the expansion into a piece of code takes place in one
-environment (the definition-time environment), and the code evaluation takes place
+it evaluates that code.  The expansion into a piece of code takes place in one
+environment (the macro definition-time environment), and the code evaluation takes place
 in another (the call-time environment).  This can be very frustrating!  Say we
 decide to write a "symbol-set!" macro (borrowed in an oblique way from CL's set).
 <code>(symbol-set! var val)</code> should evaluate "var", getting a symbol as its
@@ -1248,6 +1258,10 @@ symbol-set!
     (list x y))
 (123 x)
 </pre>
+
+<p>To say it in a more positive way, a bacro is a macro that expands and evaluates
+its body in the calling environment.
+</p>
 </div>
 
 
@@ -1547,8 +1561,7 @@ and in between, call the previous set accessor, if any, after reporting the set:
 
 <p>The "get" function is currently not implemented.
 I believe symbol-access is similar to Ruby's hooked variables, or perhaps Perl's tied variables.
-We could implement all kinds of things
-with this mechanism, including property lists.
+For CL-style property lists based on this function, see s7test.scm.
 </p>
 
 
@@ -2685,25 +2698,27 @@ This also affects format and sort!:
 <p>My first thought was that the indices should all refer to the same
 type of object, so s7 would complain in a mixed case like that.
 If we can nest any applicable objects and apply the whole thing to
-an arbitrary list of indices, ambiguities arise.  As a simple
-example,
+an arbitrary list of indices, ambiguities arise:
 </p>
 
 <pre class="indented">
-((lambda (x) x) "hi" 0)
+((lambda (x) x) "hi" 0) 
+((lambda (x) (lambda (y) (+ x y))) 1 2)
 </pre>
 
-<p>I think this should complain that the function got too many arguments,
-but from the implicit indexing point of view, it could be interpreted
-as
+<p>I think these should complain that the function got too many arguments,
+but from the implicit indexing point of view, they could be interpreted
+as:
 </p>
 
 <pre class="indented">
-(string-ref ((lambda (x) x) "hi") 0)
+(string-ref ((lambda (x) x) "hi") 0) ; i.e. (((lambda (x) x) "hi") 0)
+(((lambda (x) (lambda (y) (+ x y))) 1) 2)
 </pre>
 
 <p>Add optional and rest arguments, and you can't tell who is supposed to
-take which indices.  Currently, you can mix types with implicit indices,
+take which arguments.  
+Currently, you can mix types with implicit indices,
 but a function grabs all remaining indices.  Trickier than I expected!
 </p>
 
@@ -4717,7 +4732,7 @@ function passed as its second argument to choose the new ordering.
 (0 1 2 3 4 5 6 7 8 9)
 
 (define (mix-notelists . notelists)
-  ;; assume the second parameter is the begin time in seconds (the 1st is the instrument name)
+  ;; assume the second parameter is the begin time in seconds (the first is the instrument name)
   (<em class=red>sort!</em>
    (apply append notelists)
    (lambda (note1 note2)
@@ -4771,8 +4786,7 @@ Here we scan the symbol table looking for any function that doesn't have documen
 </pre>
 
 <p>But geez how boring can something be?  Nobody cares about procedure-documentation!
-Here's a better example, an automatic software torture tester.  Even in kiddie mode
-where we only feed in a few constants, I bet it segfaults!
+Here's a better example, an automatic software torture tester.
 </p>
 
 <pre class="indented">
@@ -5588,7 +5602,7 @@ The examples that follow show:
 static s7_pointer our_exit(s7_scheme *sc, s7_pointer args) 
 {
   /* all added functions have this form, args is a list, 
-   *    s7_car(args) is the 1st arg, etc 
+   *    s7_car(args) is the first arg, etc 
    */
   exit(1);
   return(s7_nil(sc)); /* never executed, but makes the compiler happier */
