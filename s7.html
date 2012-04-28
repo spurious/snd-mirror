@@ -1190,91 +1190,9 @@ mac
 </pre>
 
 <br>
-<p>This is not the end of the story.
-Macro expansion happens
-in two different environments.  Leaving aside quasiquote which operates at read-time in the global environment,
-a macro first evaluates its body to form a piece
-of code, a list with the macro's arguments plugged in.  Then
-it evaluates that code.  The expansion into a piece of code takes place in one
-environment (the macro definition-time environment), and the code evaluation takes place
-in another (the call-time environment).  This can be very frustrating!  Say we
-decide to write a "symbol-set!" macro (borrowed in an oblique way from CL's set).
-<code>(symbol-set! var val)</code> should evaluate "var", getting a symbol as its
-value, then plug that symbol into <code>(set! var-value val)</code>.
-After expansion we want something like:
-</p>
-
-<pre class="indented">
-&gt; (let ((x 32) (y 'x)) 
-    (eval (list 'set! y 123)) ; (symbol-set! y 123) ideally
-    (list x y))
-(123 x)
-</pre>
-
-<p>If we define our macro in the local context, then the initial expansion
-into (set! x 123) takes place in a context where "y" is defined:
-</p>
-
-<pre class="indented">
-&gt; (let ((x 32) (y 'x))
-    (define-macro (symbol-set! var val)
-      `(set! ,(symbol-&gt;value var) ,val))
-    (symbol-set! y 123)
-    (list x y))
-(123 x)
-</pre>
-
-<p>But if we try to define that at the top level so we can use it anywhere, 
-"var" may not be defined in the environment where the initial list is created:
-</p>
-
-<pre class="indented">
-&gt; (define-macro (symbol-set! var val)
-    `(set! ,(symbol-&gt;value var) ,val))
-symbol-set!
-&gt; (let ((x 32) (y 'x))
-    (symbol-set! y 123)
-    (list x y))
-;y: unbound variable, line 3
-;    ({list} 'set! (symbol-&gt;value var) val)
-</pre>
-
-<p>Exactly the same thing happens in CL:
-</p>
-
-<pre class="indented">
-&gt; (defmacro symbol-set (var val) `(setf ,(eval var) ,val))
-SYMBOL-SET
-&gt; (let ((x 32) (y 'x)) (symbol-set y 123))
-*** - EVAL: variable Y has no value
-</pre>
-
-<p>Our "unhygienic" macros are too clean!  We want both the expansion into
-code and the evaluation of the code to happen in the call-time environment.
-Since this is a step backward for computer science, I've called these
-dirty macros, "bacros":
-</p>
-
-<pre class="indented">
-&gt; (define-bacro (symbol-set! var val) 
-   `(set! ,(symbol-&gt;value var) ,val))
-symbol-set!
-&gt; (let ((x 32) (y 'x)) 
-    (symbol-set! y 123) 
-    (list x y))
-(123 x)
-</pre>
-
-<p>To say it in a more positive way, a bacro is a macro that expands and evaluates
+<p>A bacro is a macro that expands and evaluates
 its body in the calling environment.
 </p>
-
-<p>I hate to ruin my own example, but in this case a bacro isn't actually necessary &mdash; we could have used:
-</p>
-<pre class="indented">
-(define-macro (symbol-set! var val)
-  `(apply set! ,var ,val ())) ; trailing nil is just to make apply happy
-</pre>
 
 </div>
 
@@ -1322,123 +1240,6 @@ f
 the loop! 
 </p>
 </div>
-
-
-<div class="indented">
-
-<p>But we should end on a happy note.  Here is Peter Seibel's once-only macro:
-</p>
-
-<pre class="indented">
-(defmacro once-only (names . body)
-  (let ((gensyms (map (lambda (n) (gensym)) names)))
-    `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
-       `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
-          ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
-             ,@body)))))
-</pre>
-
-<p>From the land of sparkling bacros:
-</p>
-
-<pre class="indented">
-(define-bacro (once-only names . body)
-  `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
-     ,@body))
-</pre>
-
-<br>
-<p>I can't stop &mdash; these things are like potato chips...
-</p>
-
-<pre class="indented">
-(define-bacro (setf . args)        ; CL's setf
-  (if (not (null? args))
-      (begin
-	(apply set! (car args) (eval (cadr args)) ())
-	(apply setf (cddr args)))))
-
-(define-bacro (psetf . args)       ; parallel setf
-  (let ((e (current-environment))) ; so no gensyms needed
-    (apply setf (do ((lst args (cddr lst))
-		     (new-args ()))
-		    ((null? lst) new-args)
-		  (set! new-args (cons (car lst) 
-                                       (cons (eval (cadr lst) e) 
-                                             new-args)))))))
-</pre>
-
-<!--
-A bacro is expanded in the call-time environment, so it can't be optimized in the same
-way that CL macros sometimes are.  Since a CL macro does not evaluate its arguments, and
-its expansion depends only on its definition environment, some lisps conclude that it can be expanded once and
-for all the first time it is encountered, and replaced by its result (some piece of code) &mdash;
-self-modifying code in effect.  This optimization is available in s7 under the name
-define-expansion, with some caveats.  The thing defined by define-expansion is fully
-expanded at read-time, so it must have a globally unique name, and it must depend
-only on the global read-time environment.  But the CL way of doing macros is problematic.
-Normally in lisp, if you redefine a function in its definition environment, then evaluate some code that calls
-that function, you get the new version.  If a macro has already been expanded out of existence, 
-it effectively ignores redefinition.  Similar gotchas apply to macros defined after they appear.
-
-example:
-(define (hi a) (+ 1 a))
-(define (use-hi b) (hi b))
-(let ((x (use-hi 1)))
-  (format #t "x: ~A~%" x))
-(define (hi a) (+ 2 a))
-(let ((x (use-hi 1)))
-  (format #t "x: ~A~%" x))
-
-prints:
-x: 2
-x: 3
-in s7, Guile, clisp, sbcl (using CL syntax of course),
-
-but
-
-(defmacro hi (a) `(+ 1 ,a))
-(define (use-hi b) (hi b))
-(let ((x (use-hi 1)))
-  (format #t "x: ~A~%" x))
-(defmacro hi (a) `(+ 2 ,a))
-(let ((x (use-hi 1)))
-  (format #t "x: ~A~%" x))
-
-prints:
-x: 2
-x: 2
-
-in every case but s7 which still says the second x is 3.  
-
-If we use the macro before defining it (as is perfectly legal for functions):
-
-(define (use-hi b) (hi b))
-(defmacro hi (a) `(+ 1 ,a))
-(let ((x (use-hi 1)))
-  (format #t "x: ~A~%" x))
-(defmacro hi (a) `(+ 2 ,a))
-(let ((x (use-hi 1)))
-  (format #t "x: ~A~%" x))
-
-s7 still says x is 2 then 3, Guile throws an error: "Wrong type to apply: #<syntax-transformer hi>";
-clisp says 2 then 3, and sbcl gives the error: "HI is being redefined as a macro when it was previously assumed to be a function."
-
-A bacro can be viewed as a function that does not
-evaluate its arguments, but to avoid the extra evaluation after expansion we need
-to quote the result (if the result does not already evaluate to itself):
-
-(define-bacro (when test . body)
-  (if (eval test)
-      `',(eval `(let () ,@body))))
-
-(let ((x 1)) (when (> x 0) '(list '+ x 3)))
--> '(list + x 3)
-
-
--->
-</div>
-
 
 </blockquote>
 
@@ -5341,8 +5142,8 @@ These symbols are not just an optimization of string comparison:
 &gt; ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let)
 3
 
-(define-macro (symbol-set! var val) ; use apply instead of define-bacro
- `(apply set! ,var (list ,val)))
+(define-macro (symbol-set! var val) ; like CL's set
+  `(apply set! ,var ',val ()))      ; trailing nil is just to make apply happy -- apply*?
 
 (define-macro (progv vars vals . body)
  `(apply (apply lambda ,vars ',body) ,vals))
