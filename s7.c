@@ -24938,7 +24938,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 	    break;
 	  }
     }
-  return(funcs);
+  return(funcs); /* or perhaps the new symbol-accessor? */
 }
 
 
@@ -24965,7 +24965,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
     {
       if ((!is_pair(funcs)) ||
 	  (s7_list_length(sc, funcs) < 3))
-	return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 2, funcs, "a list of 3 or more settings"));	
+	return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 2, funcs, "a list of 3 or more items"));	
       if ((is_procedure(cadr(funcs))) && (!args_match(sc, cadr(funcs), 2)))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access set function,", 2, cadr(funcs), "a procedure of 2 arguments"));	
       if ((is_procedure(caddr(funcs))) && (!args_match(sc, caddr(funcs), 2)))
@@ -55468,11 +55468,7 @@ the error type and the info passed to the error handler.");
 }
 
 
-/* TODO: the symbol-access stuff is not fully implemented
- *       t342.scm for tests, augment env, closure arg names, do step?
- *       all call_symbol_bind uses really should be embedded
- *
- * PERHAPS: (set! (procedure-setter abs) ...)?
+/* PERHAPS: (set! (procedure-setter abs) ...)?
  * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*

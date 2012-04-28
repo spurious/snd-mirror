@@ -21474,6 +21474,22 @@ abs     1       2
   (test (let ((i 0) (sum 0)) (until (= i 4) (set! sum (+ sum i)) (set! i (+ i 1))) sum) 6))
 
 (let ()
+  (define-macro (alambda pars . body)
+    `(letrec ((self (lambda* ,pars ,@body)))
+       self))
+  
+  (test ((alambda (n) (if (<= n 0) () (cons n (self (- n 1))))) 9) '(9 8 7 6 5 4 3 2 1))
+  
+  (define-macro* (aif test then (else #<unspecified>))
+    `(let ((it ,test))
+       (if it ,then ,else)))
+  
+  (test (aif (+ 3 2) it) 5)
+  (test (aif (> 2 3) it) #<unspecified>)
+  (test (aif (> 2 3) #f it) #f)
+  )
+
+(let ()
   (define-bacro* (incf var (inc 1)) `(set! ,var (+ ,var ,inc)))
   (define-bacro* (decf var (inc 1)) `(set! ,var (- ,var ,inc)))
 
@@ -24207,6 +24223,23 @@ abs     1       2
     (test (begin (set! _x1_ 32) _x1_) 0)
     (test (let ((_x1_ 32)) _x1_) 2))
   
+  (let ((_acc_var1_ 0)
+	(_acc_var2_ 1))
+    (set! (symbol-access '_acc_var1_)
+	  (list #f
+		(lambda (symbol new-value)
+		  (set! _acc_var2_ _acc_var1_)
+		  new-value)
+		#f))
+    (set! (symbol-access '_acc_var2_)
+	  (list #f
+		(lambda (symbol new-value)
+		  new-value)
+		#f))
+    (test (list _acc_var1_ _acc_var2_) '(0 1))
+    (set! _acc_var1_ 32)
+    (test (list _acc_var1_ _acc_var2_) '(32 0)))
+
   (define _x3_ 3)
   (set! (symbol-access '_x3_) (list #f (lambda (a b) b) (lambda (a b) b)))
   (test (let ((_x3_ 32)) _x3_) 32)
@@ -24251,8 +24284,70 @@ abs     1       2
   (let ((ctr ((cadr (make-type :getter (lambda (a b) (car (map append (list b a)))) :length (lambda (a) (length (map abs '(-1 -2 -3)))))))))
     (test (map (lambda (a b) (+ a b)) ctr ctr) '(0 2 4)))
   
-  );)
+  )
 
+(let ()
+  (define-macro (define-integer var value)
+    `(begin
+       (define ,var ,value)
+       (set! (symbol-access ',var) 
+	     (list #f
+		   (lambda (symbol new-value)
+		     (if (real? new-value)
+			 (floor new-value)
+			 (error "~A can only take an integer value, not ~S" symbol new-value)))
+		   (lambda (symbol new-value)
+		     (if (real? new-value)
+			 (floor new-value)
+			 (error "~A can only take an integer value, not ~S" symbol new-value)))))
+       ',var))
+  
+  (define-integer _just_int_ 32)
+  (set! _just_int_ 123.123)
+  (test _just_int_ 123)
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (set! _just_int_ "123"))
+		    (lambda args 'error))))
+    (test tag 'error))
+  
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (define _just_int_ "123"))
+		    (lambda args 'error))))
+    (test tag 'error))
+  
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (define (_just_int_ a) "123"))
+		    (lambda args 'error))))
+    (test tag 'error))
+  
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (define* (_just_int_ a) "123"))
+		    (lambda args 'error))))
+    (test tag 'error))
+  
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (define-macro (_just_int_ a) "123"))
+		    (lambda args 'error))))
+    (test tag 'error))
+  
+  (let ((tag (catch #t 
+		    (lambda ()
+		      (defmacro _just_int_ (a) "123"))
+		    (lambda args 'error))))
+    (test tag 'error))
+  
+  (test (letrec ((_just_int_ 12.41)) _just_int_) 12)
+  (test (let ((_just_int_ 12.41)) _just_int_) 12)
+  (test (let* ((_just_int_ 12.41)) _just_int_) 12)
+  
+  (test (do ((_just_int_ 1.5 (+ _just_int_ 2))) ((>= _just_int_ 10) _just_int_)) 11)
+  ;;  (format #t "do: ~A~%" (do ((_just_int_ 1.5 (+ _just_int_ 2.3))) ((>= _just_int_ 10) _just_int_))) ; 10.2 (no step check)
+  )
 
 (let ()
   ;; CL property lists
@@ -24292,6 +24387,9 @@ abs     1       2
   (test (get 's7-version 'newp) 321123)
   (test (get 's7-version 'hiho) 321)
 )
+
+
+
 
 #|
 ;;; these tests are problematic -- they might not fail as hoped, or they might generate unwanted troubles
@@ -24336,8 +24434,10 @@ abs     1       2
 (set! *safety* 0)
 |#
 
-(test (quit 0) 'error)
+;(test (quit 0) 'error)
 
+
+;;; define-expansion
 (define-expansion (_expansion_ a) `(+ ,a 1))
 (test (_expansion_ 3) 4)
 (test (macroexpand (_expansion_ 3)) `(+ 3 1))
@@ -24345,6 +24445,8 @@ abs     1       2
 (test '(_expansion_ 3) (quote (_expansion_ 3)))
 (test (_expansion_ (+ (_expansion_ 1) 2)) 5)
 
+
+;;; define-constant
 (test (let () (define-constant __c1__ 32) __c1__) 32)
 (test (let () __c1__) 'error)
 (test (let ((__c1__ 3)) __c1__) 'error)
@@ -24352,6 +24454,8 @@ abs     1       2
 (test (letrec ((__c1__ 3)) __c1__) 'error)
 (test (let () (define (__c1__ a) a) (__c1__ 3)) 'error)
 (test (let () (set! __c1__ 3)) 'error)
+
+
 
 
 
@@ -66964,138 +67068,6 @@ but I think we get NaN's implicitly and s7_make_real does not check
 in non-gmp, 
   (+ most-negative-fixnum -1 most-positive-fixnum) is the same as 
   (+ most-positive-fixnum most-positive-fixnum) -> -2!
-
-|#
-
-
-#|
-;;; symbol accessor tests in progress
-(define-macro (define-integer var value)
-  `(begin
-     (define ,var ,value)
-     (set! (symbol-access ',var) 
-	   (list #f
-		 (lambda (symbol new-value)
-		   (if (real? new-value)
-		       (floor new-value)
-		       (error "~A can only take an integer value, not ~S" symbol new-value)))
-		 (lambda (symbol new-value)
-		   (if (real? new-value)
-		       (floor new-value)
-		       (error "~A can only take an integer value, not ~S" symbol new-value)))))
-     ',var))
-
-(define-macro (define-integer-ok var value)
-  `(begin
-     (define ,var ,value)
-     (set! (symbol-access ',var) 
-	   (list #f
-		 (lambda (symbol new-value)
-		   new-value)
-		 (lambda (symbol new-value)
-		   new-value)))
-     ',var))
-
-
-(let ()
-  (define-integer _just_int_ 32)
-  (set! _just_int_ 123.123)
-  (format #t "set! _just_int_ 123.123: ~A~%" _just_int_)
-  (let ((tag (catch #t 
-		    (lambda ()
-		      (set! _just_int_ "123"))
-		    (lambda args 'error))))
-    (format #t "tag: ~A~%" tag))
-
-  (let ((tag (catch #t 
-		    (lambda ()
-		      (define _just_int_ "123"))
-		    (lambda args 'error))))
-    (format #t "tag: ~A~%" tag))
-
-  (let ((tag (catch #t 
-		    (lambda ()
-		      (define (_just_int_ a) "123"))
-		    (lambda args 'error))))
-    (format #t "tag: ~A~%" tag))
-
-  (let ((tag (catch #t 
-		    (lambda ()
-		      (define* (_just_int_ a) "123"))
-		    (lambda args 'error))))
-    (format #t "tag: ~A~%" tag))
-
-  (let ((tag (catch #t 
-		    (lambda ()
-		      (define-macro (_just_int_ a) "123"))
-		    (lambda args 'error))))
-    (format #t "tag: ~A~%" tag))
-
-  (let ((tag (catch #t 
-		    (lambda ()
-		      (defmacro _just_int_ (a) "123"))
-		    (lambda args 'error))))
-    (format #t "tag: ~A~%" tag))
-
-  (format #t "letrec: ~A~%" (letrec ((_just_int_ 12.41)) _just_int_))
-  (format #t "let: ~A~%" (let ((_just_int_ 12.41)) _just_int_))
-  (format #t "let*: ~A~%" (let* ((_just_int_ 12.41)) _just_int_))
-
-  (format #t "do: ~A~%" (do ((_just_int_ 1.5 (+ _just_int_ 2))) ((>= _just_int_ 10) _just_int_))) ; 11
-  (format #t "do: ~A~%" (do ((_just_int_ 1.5 (+ _just_int_ 2.3))) ((>= _just_int_ 10) _just_int_))) ; 10.2 (no step check)
-  )
-
-
-(let () 
-  (define-integer _j_ 32) 
-  (define (hi _j_) _j_) 
-  (format #t "hi(pi): ~A~%" (hi pi)) ; pi
-  (format #t "set: ~A~%" (let () (set! _j_ pi) _j_)) ; 3
-)
-
-(let ()
-  (define-integer-ok _k_ 123)
-  (define (_k_ a) (+ a 1))
-  (format #t "_k_: ~A~%" (_k_ 2))
-  )
-
-
-;; infinite loop!
-(let ((_acc_var1_ 0)
-      (_acc_var2_ 1))
-  (set! (symbol-access '_acc_var1_)
-	(list #f
-	      (lambda (symbol new-value)
-		(set! _acc_var2_ _acc_var1_)
-		new-value)
-	      #f))
-  (set! (symbol-access '_acc_var2_)
-	(list #f
-	      (lambda (symbol new-value)
-		(set! _acc_var1_ _acc_var2_)
-		new-value)
-	      #f))
-  (set! _acc_var1_ 32)
-  _acc_var2_)
-
-
-(let ((_acc_var1_ 0)
-      (_acc_var2_ 1))
-  (set! (symbol-access '_acc_var1_)
-	(list #f
-	      (lambda (symbol new-value)
-		(set! _acc_var2_ _acc_var1_)
-		new-value)
-	      #f))
-  (set! (symbol-access '_acc_var2_)
-	(list #f
-	      (lambda (symbol new-value)
-		new-value)
-	      #f))
-  (format #t "~A ~A -> " _acc_var1_ _acc_var2_)
-  (set! _acc_var1_ 32)
-  (format #t "~A ~A~%" _acc_var1_ _acc_var2_))
-
 
 |#
 

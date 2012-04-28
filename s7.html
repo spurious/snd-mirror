@@ -893,42 +893,6 @@ add-2
 when, loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
 
-<p>macro? returns #t if its argument is a macro or a symbol whose value is a macro.
-We can use it, and other macro-related stuff to make a version of macroexpand-all:
-</p>
-
-<pre class="indented">
-(define-macro (fully-expand form)
-  (define (expand form)
-    (if (pair? form)
-	(if (<em class=red>macro?</em> (car form))
-	    (expand ((eval (procedure-source (car form))) form))
-	    (cons (expand (car form))
-		  (expand (cdr form))))
-	form))
-  (expand form))
-
-&gt; (define-macro (hi a) `(+ 1 ,a))
-hi
-&gt; (define-macro (ha c) `(hi (+ ,c 1)))
-ha
-&gt; (fully-expand (define (ho b) (+ 1 (ha b))))
-ho
-&gt; (procedure-source ho)
-(lambda (b) (+ 1 (+ 1 (+ b 1))))
-</pre>
-
-<p>fully-expand expands each macro it encounters by using the
-procedure-source of that macro, that is, the function that the macro definition
-expanded into:
-</p>
-
-<pre class="indented">
-(define-macro (hi a) `(+ ,a 1))
-
-&gt; (procedure-source hi)
-(lambda ({defmac}-18) (apply (lambda (a) ({list} '+ a 1)) (cdr {defmac}-18)))
-</pre>
 
 
 <blockquote>
@@ -997,6 +961,48 @@ and handle a few tricky details (similarly for "{values}" and "{apply}").  There
 macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
 </p>
 </div>
+
+
+
+<div class="indented">
+<p>macro? returns #t if its argument is a macro or a symbol whose value is a macro.
+We can use it, and other macro-related stuff to make a version of macroexpand-all:
+</p>
+
+<pre class="indented">
+(define-macro (fully-expand form)
+  (define (expand form)
+    (if (pair? form)
+	(if (<em class=red>macro?</em> (car form))
+	    (expand ((eval (procedure-source (car form))) form))
+	    (cons (expand (car form))
+		  (expand (cdr form))))
+	form))
+  (expand form))
+
+&gt; (define-macro (hi a) `(+ 1 ,a))
+hi
+&gt; (define-macro (ha c) `(hi (+ ,c 1)))
+ha
+&gt; (fully-expand (define (ho b) (+ 1 (ha b))))
+ho
+&gt; (procedure-source ho)
+(lambda (b) (+ 1 (+ 1 (+ b 1))))
+</pre>
+
+<p>fully-expand expands each macro it encounters by using the
+procedure-source of that macro, that is, the function that the macro definition
+expanded into:
+</p>
+
+<pre class="indented">
+(define-macro (hi a) `(+ ,a 1))
+
+&gt; (procedure-source hi)
+(lambda ({defmac}-18) (apply (lambda (a) ({list} '+ a 1)) (cdr {defmac}-18)))
+</pre>
+</div>
+
 
 
 <div class="indented">
@@ -1194,8 +1200,8 @@ environment (the macro definition-time environment), and the code evaluation tak
 in another (the call-time environment).  This can be very frustrating!  Say we
 decide to write a "symbol-set!" macro (borrowed in an oblique way from CL's set).
 <code>(symbol-set! var val)</code> should evaluate "var", getting a symbol as its
-value, then plug that symbol into <code>(set! var-value val)</code>.  For example,
-after expansion we want something like:
+value, then plug that symbol into <code>(set! var-value val)</code>.
+After expansion we want something like:
 </p>
 
 <pre class="indented">
@@ -1262,6 +1268,14 @@ symbol-set!
 <p>To say it in a more positive way, a bacro is a macro that expands and evaluates
 its body in the calling environment.
 </p>
+
+<p>I hate to ruin my own example, but in this case a bacro isn't actually necessary &mdash; we could have used:
+</p>
+<pre class="indented">
+(define-macro (symbol-set! var val)
+  `(apply set! ,var ,val ())) ; trailing nil is just to make apply happy
+</pre>
+
 </div>
 
 
@@ -1476,8 +1490,9 @@ All of these cases modify
 the path between a symbol and its value.  
 s7 gives you a handle on that path via the procedure-with-setter <em class=def id="symbolaccess">symbol-access</em>.
 <code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
-changes them.  The accessor-list is a list of three functions, the get, set, and bind functions.
-The set and bind functions take two arguments, the symbol in question
+changes them.  The symbol-accessor value is a list of three or more items, primarily the set, and bind functions, the second
+and third entries in the list respectively.
+These two functions take two arguments, the symbol in question
 and the value that it is about to be set or bound to.  The variable is set or bound to the value they return.
 We could replace define-constant, and add
 local constants with:
@@ -1535,6 +1550,10 @@ int
 ;int can only take an integer value, not (1 2)
 </pre>
 
+
+<blockquote>
+<div class="indented">
+
 <p>Here are trace and untrace.  We save the previous accessors in trace, restore them upon untrace,
 and in between, call the previous set accessor, if any, after reporting the set:
 </p>
@@ -1558,10 +1577,12 @@ and in between, call the previous set accessor, if any, after reporting the set:
 	   (cdddr (symbol-access var)))
       (set! (symbol-access var) (cadddr (symbol-access var)))))
 </pre>
+</div>
+</blockquote>
 
-<p>The "get" function is currently not implemented.
+<p>The first element of the symbol-accessor list is not used by s7.
+It is used for CL-style property lists by symbol-plist and friends in s7test.scm.
 I believe symbol-access is similar to Ruby's hooked variables, or perhaps Perl's tied variables.
-For CL-style property lists based on this function, see s7test.scm.
 </p>
 
 
@@ -2934,7 +2955,8 @@ make sure that none of his bindings pollute the library code:
 <pre class="indented">
 (let ()
   (with-environment (initial-environment)
-    (load "any-library.scm" (current-environment)) ; by default load puts stuff in the global environment
+    (load "any-library.scm" (current-environment)) 
+    ;; by default load puts stuff in the global environment
     ...))
 </pre>
 
@@ -2972,7 +2994,8 @@ its bindings are exported into the current environment:
 (apply augment-environment! (current-environment)
   (with-environment (initial-environment)
     (load "any-library.scm" (current-environment))
-    (environment-&gt;list (current-environment)))) ; these are the bindings introduced by loading the library
+    (environment-&gt;list (current-environment)))) 
+    ;; these are the bindings introduced by loading the library
 </pre>
 
 <p>To do the same thing, but prepend "library:" to each name:
