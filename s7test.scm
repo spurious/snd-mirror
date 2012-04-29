@@ -14903,7 +14903,7 @@ in s7:
 	 (() 6)
 	 (list 7)
 	 (else 5)))
-      5)
+      'error)
 
 
 
@@ -23122,16 +23122,6 @@ abs     1       2
        `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
 	  ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
 	     ,@body)))))
-#|
-(define-bacro (once-only names . body)
-  (let ((e (outer-environment (current-environment))))
-    `(let (,@(map (lambda (name) `(,name (eval ,name ,e))) names))
-       ,@body)))
-
-(define-macro (once-only names . body)
-  `(let (,@(map (lambda (name) `(,name (eval ,name))) names))
-     ,@body))
-|#
 
 (let ()
   (defmacro hiho (start end) 
@@ -23144,10 +23134,19 @@ abs     1       2
 	    (list ctr lst)))
 	'(2 (1 2 3 4))))
 
-(define-bacro (once-only-1 names . body)
-  `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
-     ,@body))
+;;; (define-bacro (once-only-1 names . body)
+;;;   `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
+;;;     ,@body))
 ;;; can't be right: (let ((names 1)) (once-only (names) (+ names 1)))
+
+(define once-only-1
+  (let ((names (gensym))
+	(body (gensym)))
+    (apply define-bacro 
+	 `((once ,names . ,body)
+	   `(let (,@(map (lambda (name) `(,name ,(eval name))) ,names))
+	      ,@,body)))
+    once))
 
 (let ()
   (define-bacro (hiho start end) 

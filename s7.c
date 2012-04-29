@@ -23324,6 +23324,9 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
   s7_define(sc, sc->NIL, make_symbol(sc, name), func);
 }
 
+/* would define_bacro be useful in C?
+ */
+
 
 bool s7_is_macro(s7_scheme *sc, s7_pointer x)
 {
@@ -55420,39 +55423,17 @@ the error type and the info passed to the error handler.");
 
   /* cond-expand (uses *features*) 
    */
-  s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)              \n\
-                          ;; taken from MIT scheme?                        \n\
-                          (define (got? fr)                                \n\
-                            (cond                                          \n\
-                             ((memq fr *features*) #t)                     \n\
-                             ((not (pair? fr)) #f)                         \n\
-                             ((eq? 'and (car fr))                          \n\
-                              (let loop ((clauses (cdr fr)))               \n\
-                        	(or (null? clauses)                        \n\
-                        	    (and (got? (car clauses))              \n\
-                        		 (loop (cdr clauses))))))          \n\
-                             ((eq? 'or (car fr))                           \n\
-                              (let loop ((clauses (cdr fr)))               \n\
-                        	(and (pair? clauses)                       \n\
-                        	     (or (got? (car clauses))              \n\
-                        		 (loop (cdr clauses))))))          \n\
-                             ((eq? 'not (car fr))                          \n\
-                              (not (got? (and (pair? (cdr fr))             \n\
-                        		      (cadr fr)))))                \n\
-                             (else #f)))                                   \n\
-                          (let loop ((clauses clauses))                    \n\
-                            (if (pair? clauses)                            \n\
-                        	(let* ((feature (if (pair? (car clauses))  \n\
-                        			    (caar clauses)         \n\
-                        			    (error 'wrong-type-arg \"cond-expand clause ~S is not a list\" (car clauses))))\n\
-                        	       (code (cons 'begin (cdar clauses))))\n\
-                        	  (cond                                    \n\
-                        	   ((and (eq? 'else feature)               \n\
-                        		 (null? (cdr clauses)))            \n\
-                        	    code)                                  \n\
-                        	   ((got? (unoptimize feature))            \n\
-                        	    code)                                  \n\
-                        	   (else (loop (cdr clauses))))))))");
+  s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                               \n\
+                          (letrec ((traverse (lambda (tree)                                                 \n\
+		                               (if (pair? tree)                                             \n\
+			                            (cons (traverse (car tree))                             \n\
+				                          (if (null? (cdr tree)) () (traverse (cdr tree)))) \n\
+			                            (if (memq tree '(and or not else)) tree                 \n\
+			                                (and (symbol? tree) (provided? tree)))))))          \n\
+                            `(cond ,@(map (lambda (clause)                                                  \n\
+		                             (cons (traverse (car clause))                                  \n\
+			                           (if (null? (cdr clause)) '(#f) (cdr clause))))           \n\
+		                          clauses))))");
 
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 263 */
@@ -55477,6 +55458,8 @@ the error type and the info passed to the error handler.");
  *    also, shouldn't NaN travel through any calculation?
  *    integer(NAN) | pair_line_number, then decode that later? + there's room for a func index as well
  *    but we'd have to notice NaNs in log and elsewhere -- slightly slower (see end of s7test)
+ * PERHAPS: the built-in variables like *error-hook* could use the 1st symbol-access field as documentation (or the 4th?)
+ *    then (defvar var val doc) would make sense (but this is tied to the symbol which is not quite the same thing)
  *
  * lint     13424 -> 1231 [1237]
  * bench    52019 -> 7875 [8268]

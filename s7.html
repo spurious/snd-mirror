@@ -148,10 +148,20 @@ as an inexact integer.
 
 <p>This file assumes you know about Scheme and all its problems,
 and want a quick tour of where s7 is different.  (Well, it was quick once upon a time).
-I originally used a small font for scholia, but now I have to squint
+The main difference: if it's in s7, it's a first-class citizen of s7, and that includes
+macros, environments, and syntactic items.
+</p>
+
+<blockquote>
+<div class="indented">
+<p>I originally used a small font for scholia, but now I have to squint
 to read that tiny text, so less-than-vital commentaries are shown in the normal font, but 
 indented and on a sort of brownish background.
 </p>
+</div>
+</blockquote>
+
+
 
 <div class="orange">
 <p>Danger!</p>
@@ -911,8 +921,8 @@ Here define-bacro makes it possible
 to implement setf without any run-time consing or extra work &mdash; the second evaluation
 just sees #&lt;unspecified&gt; &mdash; so this is as fast as a function call.
 The setf argument is a gensym (created when setf is defined) so that its name does not shadow any existing
-variable; bacros expand in the calling environment, so the argument
-becomes a member of that environment.
+variable.  Bacros expand in the calling environment, and a normal argument name
+might shadow something in that environment while the bacro is begin expanded.
 </p>
 <p>
 See s7test.scm for many examples including such perennial favorites as
@@ -1247,6 +1257,35 @@ the loop!
 </p>
 </div>
 
+
+<div class="indented">
+
+<p>But we should end on a happy note.  Here is Peter Seibel's wonderful once-only macro:
+</p>
+
+<pre class="indented">
+(defmacro once-only (names . body)
+  (let ((gensyms (map (lambda (n) (gensym)) names)))
+    `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
+       `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
+          ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
+             ,@body)))))
+</pre>
+
+<p>From the land of sparkling bacros:
+</p>
+
+<pre class="indented">
+(define once-only 
+  (let ((names (gensym))
+	(body (gensym)))
+    (apply define-bacro 
+           `((once ,names . ,body)
+	      `(let (,@(map (lambda (name) `(,name ,(eval name))) ,names))
+	         ,@,body)))
+    once))
+</pre>
+</div>
 
 </blockquote>
 
@@ -2741,6 +2780,8 @@ use them in any context without worrying about whether they've been redefined.
 As mentioned in the macro section, #_&lt;name&gt; is a built-in reader macro
 for <code>(with-environment (initial-environment) &lt;name&gt;)</code>,
 so for example, #_+ is the built-in + function, no matter what.
+<code>(initial-environment)</code> cleans up the current environment whenever it's called,
+so you can use it to revert the REPL. 
 </p>
 
 
@@ -4822,7 +4863,8 @@ bind it to something else, which is asking for confusion).
 same kind of name.  All the environment function names are bad &mdash; even the name "environment"
 is bad since it refers to one way of using that data type, as if we 
 called all strings "symbol-names".  get-output-string should be current-output-string.
-cond-expand is bad &mdash; we're not expanding anything. symbol-access and make-type are not ideal, 
+"cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
+operate with the *features* list; perhaps "cond-provided"?. symbol-access and make-type are not ideal, 
 as names and in every other way.
 Better ideas are always welcome!
 </p>
