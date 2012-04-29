@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sat Feb 19 17:17:27 CET 2011
+# Changed: Tue Feb 28 15:54:32 CET 2012
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -92,12 +92,6 @@
 #   drag(snd, chn, button, state, x, y)
 #
 #  files_popup_buffer(type, position, name)
-#
-#  class Snd_buffers
-#   initialize
-#   switch_to_buffer
-#   open(snd)
-#   close(snd)
 #
 #  find_click(loc)
 #  remove_clicks
@@ -248,7 +242,7 @@ $after_transform_hook.add_hook!(\"fft-peak\") do |snd, chn, scale|
 end")
   def fft_peak(snd, chn, scale)
     if transform_graph? and transform_graph_type == Graph_once
-      report_in_minibuffer(((2.0 * vct_peak(transform2vct(snd, chn))) / transform_size).to_s, snd)
+      snd_print(((2.0 * vct_peak(transform2vct(snd, chn))) / transform_size).to_s, snd)
     else
       false
     end
@@ -307,7 +301,7 @@ end")
       vct_scale!(data3, fftscale)
       graph(data3, "lag time", 0, fftlen2)
     else
-      report_in_minibuffer("correlate wants stereo input")
+      snd_print("correlate wants stereo input")
     end
   end
 
@@ -615,11 +609,11 @@ bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
     current_left_sample = left_sample(keysnd, keychn)
     chan_marks = marks(keysnd, keychn)
     if chan_marks.null?
-      report_in_minibuffer("no marks!")
+      snd_print("no marks!")
     else
       leftmost = chan_marks.map do |m| mark_sample(m) end.detect do |m| m > current_left_sample end
       if leftmost.null?
-        report_in_minibuffer("no mark in window")
+        snd_print("no mark in window")
       else
         set_left_sample(leftmost, keysnd, keychn)
         Keyboard_no_action
@@ -1682,112 +1676,6 @@ end")
       select_sound(snd)
     end
   end
-
-  # C-x b support along the same lines
-
-  class Snd_buffers
-    def initialize
-      @last_buffer = false
-      @current_buffer = false
-      @last_width = 0
-      @last_heigth = 0
-    end
-
-    def switch_to_buffer
-      prompt = if @last_buffer
-                 if @last_buffer[1] > 0
-                   format("switch to buf: (default \"%s\" chan %d) ",
-                          short_file_name(@last_buffer[0]), @last_buffer[1])
-                 else
-                   format("switch to buf: (default \"%s\") ",
-                          short_file_name(@last_buffer[0]))
-                 end
-               else
-                 "switch to buf: (default: make new sound)"
-               end
-      prompt_in_minibuffer(prompt,
-                           lambda do |response|
-                             width, heigth = widget_size(sound_widgets(@current_buffer[0])[0])
-                             callcc do |give_up|
-                               if (not string?(response)) or response.empty?
-                                 temp = @current_buffer
-                                 if @last_buffer
-                                   @current_buffer = @last_buffer
-                                 else
-                                   index = new_sound()
-                                   @current_buffer = [index, 0]
-                                 end
-                                 @last_buffer = temp
-                               else
-                                 if index = find_sound(response)
-                                   @last_buffer, @current_buffer = @current_buffer, [index, 0]
-                                 else
-                                   give_up.call(report_in_minibuffer("can't find " + response))
-                                 end
-                               end
-                               close_all_buffers
-                               report_in_minibuffer("")
-                               open_current_buffer(width, heigth)
-                             end
-                           end)
-    end
-
-    def open(snd)
-      close_all_buffers
-      @last_buffer = @current_buffer
-      @current_buffer = [snd, 0]
-      open_current_buffer((@last_width.zero? ? window_width : @last_width),
-                          (@last_heigth.zero? ? (window_height - 10) : @last_heigth))
-      false
-    end
-    
-    def close(snd)
-      if @current_buffer and snd == @current_buffer[0]
-        closer = @current_buffer[0]
-        close_all_buffers
-        @current_buffer = if @last_buffer
-                            @last_buffer
-                          else
-                            sounds ? [sounds[0], 0] : false
-                          end
-        @last_buffer = Snd.sounds.detect do |s|
-          s != closer and ((not @current_buffer) or s != @current_buffer[0])
-        end
-        if @last_buffer
-          @last_buffer = [@last_buffer, 0]
-        end
-        if @current_buffer
-          open_current_buffer(@last_width, @last_heigth)
-        end
-      end
-      false
-    end
-
-    private
-    def open_current_buffer(width, heigth)
-      @last_width = width
-      @last_heigth = heigth
-      if sound_pane = sound_widgets(@current_buffer[0])[0]
-        show_widget(sound_pane)
-        set_widget_size(sound_pane, [width, heigth])
-        select_sound(@current_buffer[0])
-        select_channel(@current_buffer[1])
-      end
-    end
-
-    def close_all_buffers
-      Snd.sounds.each do |s| hide_widget(sound_widgets(s)[0]) end
-    end
-  end
-
-=begin
-  let(Snd_buffers.new) do |bufs|
-    # C-x b
-    bind_key(?b, 0, lambda do | | bufs.switch_to_buffer end, true, "C-x b: switch to buffer")
-    $close_hook.add_hook!("buffers") do |snd| bufs.close(snd) end
-    $after_open_hook.add_hook!("buffers") do |snd| bufs.open(snd) end
-  end
-=end
 
   # remove-clicks
 

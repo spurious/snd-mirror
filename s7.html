@@ -1203,17 +1203,20 @@ mac
 I wonder if s7 should also have a shorthand for the gensyms?  No good
 notation comes to mind, but as an illustration, consider #:&lt;name&gt;
 as either (gensym &lt;name&gt;) when binding, or the gensymmed result
-when referenced:
+when referenced  (femtolisp uses a variant of this):
 </p>
 
 <pre class="indented">
 &gt; (define-macro (mac b) 
-    `(#_let ((#:a 12)) 
+    `(#_let ((#:(gensym a) 12)) 
        (#_+ #:a ,b))) ; #_+ and #_let are start-up values, #:a is replaced by an internal symbol
 mac
 &gt; (let ((a 1) (+ *)) (mac a))
 13                 ; (+ {gensym-a} a) where {gensym-a} is 12, a is 1, and + is the start-up +
 </pre>
+
+<p>One minor problem is that Guile uses #: for keywords, as does some of the Common Music code.
+</p>
 </div>
 
 
@@ -4864,7 +4867,7 @@ same kind of name.  All the environment function names are bad &mdash; even the 
 is bad since it refers to one way of using that data type, as if we 
 called all strings "symbol-names".  get-output-string should be current-output-string.
 "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
-operate with the *features* list; perhaps "cond-provided"?. symbol-access and make-type are not ideal, 
+operate with the *features* list; perhaps "cond-provided"?  symbol-access and make-type are not ideal, 
 as names and in every other way.
 Better ideas are always welcome!
 </p>

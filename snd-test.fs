@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Thu Jan 26 17:40:05 CET 2012
+\ Changed: Sat Apr 28 00:42:23 CEST 2012
 
 \ Commentary:
 \
 \ Tested with:
-\   Snd version 12.8 of 27-Jan-12
-\   FTH 1.2.9 (26-Jan-2012)
+\   Snd version 12.11 of 30-Apr-12
+\   FTH 1.3.3 (27-Apr-2012)
 
 \
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
@@ -62,6 +62,10 @@
 'complex    provided? constant *with-test-complex*
 
 24 set-object-print-length
+
+*with-test-complex* [unless]
+  -1 constant 0+i
+[then]
 
 *with-test-nogui* [if]
   #f value stdout-io
@@ -833,7 +837,6 @@ SIGINT lambda: { sig -- }
      #( <'> cursor-location-offset 0 )
      #( <'> dac-combines-channels #t )
      #( <'> dac-size 256 )
-     #( <'> minibuffer-history-length 8 )
      #( <'> clipping #f )
      #( <'> default-output-chans 1 )
      #( <'> default-output-data-format mus-lfloat )
@@ -1075,7 +1078,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> max-virtual-ptrees 32 )
      #( <'> max-transform-peaks 100 )
      #( <'> min-dB -60.0 )
-     #( <'> minibuffer-history-length 8 )
      #( <'> mix-tag-height 14 )
      #( <'> mix-tag-width 6 )
      #( <'> mix-waveform-height 20 )
@@ -1584,7 +1586,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> tracking-cursor-style cursor-line cursor-cross )
      #( <'> dac-combines-channels #t #f )
      #( <'> dac-size 256 512 )
-     #( <'> minibuffer-history-length 8 16 )
      #( <'> clipping #f #t )
      #( <'> default-output-chans 1 2 )
      #( <'> default-output-data-format 1 1 )
@@ -1840,11 +1841,11 @@ black-and-white-colormap constant *better-colormap*
      'before-save-as-hook 'before-save-state-hook 'before-transform-hook 'bind-key
      'blackman2-window 'blackman3-window 'blackman4-window 'blackman5-window 'blackman6-window
      'blackman7-window 'blackman8-window 'blackman9-window 'blackman10-window 'bohman-window
-     'bold-peaks-font 'bomb 'cauchy-window 'mlt-sine-window 'cepstrum
+     'bold-peaks-font 'cauchy-window 'mlt-sine-window 'cepstrum
      'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
      'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels
      'channels-combined 'channels-separate 'channels-superimposed 'chans 'clear-array
-     'clear-listener 'clear-minibuffer 'clear-sincs 'clip-hook 'clipping 'clm-channel
+     'clear-listener 'clear-sincs 'clip-hook 'clipping 'clm-channel
      'clm-print 'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
      'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale 'color?
      'colormap 'colormap-name 'colormap-ref 'colormap-size 'colormap? 'comb 'comb?
@@ -1923,7 +1924,7 @@ black-and-white-colormap constant *better-colormap*
      'mark-color 'mark-context 'mark-drag-hook 'mark-home 'mark-hook
      'mark-name 'mark-properties 'mark-property 'mark-sample 'mark-sync 'mark-sync-max
      'mark-tag-height 'mark-tag-width 'mark? 'marks 'max-regions 'max-transform-peaks
-     'max-virtual-ptrees 'maxamp 'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length
+     'max-virtual-ptrees 'maxamp 'maxamp-position 'menu-widgets 'min-dB
      'mix 'mix-amp 'mix-amp-env 'mix-click-hook 'mix-color 'mix-dialog-mix 'mix-drag-hook
      'mix-file-dialog 'mix-length 'mix-home 'mix-name 'mix-position 'mix-properties 'mix-property
      'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max 'mix-sampler? 'mix-selection
@@ -1976,15 +1977,13 @@ black-and-white-colormap constant *better-colormap*
      'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
      'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
      'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
-     'prompt-in-minibuffer 'ptree-channel 'pulse-train
-     'pulse-train? 'radians->degrees 'radians->hz
+     'ptree-channel 'pulse-train 'pulse-train? 'radians->degrees 'radians->hz
      'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
-     'read-hook 'read-mix-sample 'read-only 'read-region-sample
-     'read-sample 'readin 'readin? 
+     'read-hook 'read-mix-sample 'read-only 'read-region-sample 'read-sample 'readin 'readin? 
      'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
      'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
      'region-maxamp-position 'region-position 'region-sample 'region-sampler? 'region-srate
-     'region? 'regions 'remember-sound-state 'remove-from-menu 'report-in-minibuffer 'reset-controls
+     'region? 'regions 'remember-sound-state 'remove-from-menu 'reset-controls
      'reset-listener-cursor 'restore-controls 'restore-region 'reverb-control-decay
      'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds
      'reverb-control-lowpass 'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control?
@@ -1994,7 +1993,7 @@ black-and-white-colormap constant *better-colormap*
      'sample->file? 'sample->frame 'sampler-at-end? 'sampler-home 'sampler-position
      'sampler? 'samples 'samples->seconds 'sash-color
      'save-controls 'save-dir 'save-edit-history 'save-envelopes 'save-hook
-     'save-listener 'save-macros 'save-marks 'save-region 'save-region-dialog
+     'save-listener 'save-marks 'save-region 'save-region-dialog
      'save-selection 'save-selection-dialog 'save-sound 'save-sound-as 'save-sound-dialog
      'save-state 'save-state-file 'save-state-hook 'sawtooth-wave 'sawtooth-wave?
      'scale-by 'scale-channel 'scale-selection-by 'scale-selection-to 'scale-to
@@ -2010,7 +2009,7 @@ black-and-white-colormap constant *better-colormap*
      'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
      'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos? 'smooth-channel
      'smooth-selection 'smooth-sound 'snd->sample 'snd->sample? 'snd-error 'snd-error-hook
-     'snd-exit ( added ) 'snd-gcs 'snd-help 'snd-font 'snd-color 'snd-print 'snd-simulate-keystroke
+     'snd-exit ( added ) 'snd-gcs 'snd-help 'snd-font 'snd-color 'snd-print
      'snd-spectrum 'snd-tempnam 'snd-url 'snd-urls 'snd-version 'snd-warning 'snd-warning-hook
      'sound-data->sound-data 'sound-data->vct 'sound-data-chans 'sound-data-length
      'sound-data-maxamp 'sound-data-ref 'sound-data-peak 'sound-data-set! 'sound-data-scale!
@@ -2023,7 +2022,7 @@ black-and-white-colormap constant *better-colormap*
      'speed-control-as-semitone 'speed-control-bounds 'speed-control-style 'speed-control-tones
      'square-wave 'square-wave? 'squelch-update 'srate 'src 'src-channel 'src-selection
      'src-sound 'src? 'ssb-am 'ssb-am? 'start-hook 'start-playing 'start-playing-hook
-     'start-playing-selection-hook 'start-progress-report 'stop-dac-hook 'stop-player
+     'start-playing-selection-hook 'start-progress-report 'status-report 'stop-dac-hook 'stop-player
      'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos 'ncos? 'nsin 'nsin?
      'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound
      'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap 'temp-dir
@@ -7389,7 +7388,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> mark-sample <'> mark-sync <'> mark-sync-max
    <'> mark-home <'> marks <'> mark? <'>  max-transform-peaks
    <'> max-regions <'> maxamp <'> maxamp-position
-   <'> minibuffer-history-length <'> min-dB <'> log-freq-start <'> mix
+   <'> min-dB <'> log-freq-start <'> mix
    <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-length
    <'> mix? <'> mix-position <'> mix-properties <'> mix-property
    <'> mix-name <'> mix-region <'> mix-sampler?
@@ -7403,13 +7402,11 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> add-directory-to-view-files-list <'> add-file-to-view-files-list
    <'> view-files-sort <'> view-files-amp <'> view-files-speed <'> view-files-files
    <'> view-files-selected-files <'> view-files-speed-style <'> view-files-amp-env
-   <'> print-length <'> progress-report <'> prompt-in-minibuffer <'> read-only
-   <'> redo <'> region-chans <'> region-home
+   <'> print-length <'> progress-report <'> read-only <'> redo <'> region-chans <'> region-home
    <'> region-graph-style <'> region-frames <'> region-position <'> region-maxamp
    <'> region-maxamp-position <'> remember-sound-state
-   <'> selection-maxamp <'> selection-maxamp-position
-   <'> region-sample <'> region->vct <'> clear-minibuffer <'> region-srate <'> regions
-   <'> region? <'>  remove-from-menu <'> report-in-minibuffer <'> reset-controls
+   <'> selection-maxamp <'> selection-maxamp-position <'> region-sample <'> region->vct
+   <'> region-srate <'> regions <'> region? <'>  remove-from-menu <'> reset-controls
    <'> restore-controls <'> restore-region <'> reverb-control-decay <'> reverb-control-feedback
    <'> reverb-control-length <'> reverb-control-lowpass <'> reverb-control-scale
    <'> reverb-control? <'>  reverse-sound <'> reverse-selection <'> revert-sound
@@ -7595,7 +7592,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> zero-pad <'> zoom-focus-style <'> sync-style <'> with-relative-panes <'>  window-x
    <'> window-y <'> window-width <'> window-height <'> beats-per-measure <'> channels
    <'> chans <'> comment <'> data-format <'> data-location <'> data-size <'> edit-position
-   <'> frames <'> header-type <'> maxamp <'> minibuffer-history-length <'> read-only
+   <'> frames <'> header-type <'> maxamp <'> read-only
    <'> right-sample <'> sample <'> samples <'> selected-channel <'> selected-sound
    <'> selection-position <'> selection-frames <'> selection-member? <'> sound-loop-info
    <'> srate <'> time-graph-type <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
@@ -7697,7 +7694,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 *with-test-complex* [if]
   : mc-3-cb <{ y -- val }> y 0.0+1.0i c* ;
 [else]
-  noop alias mc-3-cb
+  <'> noop alias mc-3-cb
 [then]
 
 : edpos-1-cb { ind -- prc; self -- edpos }
@@ -8262,7 +8259,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> enved-wave? <'> eps-file <'> eps-left-margin
      <'> eps-bottom-margin <'> eps-size
      <'> graph-cursor <'> listener-prompt
-     <'> max-regions <'> minibuffer-history-length <'> mix-waveform-height <'> region-graph-style
+     <'> max-regions <'> mix-waveform-height <'> region-graph-style
      <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style
      <'> view-files-sort <'> print-length
      <'> ladspa-dir <'> peak-env-dir <'> save-dir
@@ -8316,10 +8313,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   reset-almost-all-hooks
   "not-an-env" 	       	     <'> set-enved-envelope  	'no-such-envelope check-error-tag
   "/bad/baddy" 	       	     <'> save-envelopes      	'cannot-save      check-error-tag
-  "/bad/baddy" 	       	     <'> save-macros         	'cannot-save      check-error-tag
   "/bad/baddy" 	       	     <'> mus-sound-report-cache 'cannot-save      check-error-tag
   <'> noop 3 make-proc       <'> set-search-procedure   'bad-arity        check-error-tag
-  1234 <'> noop 1 make-proc  <'> set-search-procedure   'no-such-sound    check-error-tag
   0 "oboe.snd" 1             <'> make-sampler     	'no-such-channel  check-error-tag
   0 "oboe.snd" -1            <'> make-sampler     	'no-such-channel  check-error-tag
   <'> noop 1 make-proc       <'> set-zoom-focus-style   'bad-arity        check-error-tag
@@ -8452,7 +8447,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind 123                    <'> set-data-format        'out-of-range     check-error-tag
   ind 123                    <'> set-header-type        'out-of-range     check-error-tag
   ind 123                    <'> set-selected-channel   'no-such-channel  check-error-tag
-  ind <'> noop 3 make-proc   <'> set-search-procedure   'bad-arity        check-error-tag
+  <'> noop 3 make-proc       <'> set-search-procedure   'bad-arity        check-error-tag
   <'> noop 3 make-proc       <'> map-chan               'bad-arity        check-error-tag
   <'> noop 3 make-proc       <'> scan-chan              'bad-arity        check-error-tag
   <'> noop 1 make-proc ind 0 <'> set-cursor-style       'bad-arity        check-error-tag
@@ -8497,7 +8492,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 ind 0 -2                 <'> make-sampler     	'no-such-direction check-error-tag
   #()                        <'> scale-by               'no-data          check-error-tag
   #()                        <'> scale-to               'no-data          check-error-tag
-  "hi" <'> noop 2 make-proc  <'> prompt-in-minibuffer   'bad-arity        check-error-tag
   -999 ind 0                 <'> set-selection-position 'no-such-sample   check-error-tag
   -999 ind 0                 <'> set-selection-frames   'wrong-type-arg   check-error-tag
   0 ind 0                    <'> set-selection-frames   'wrong-type-arg   check-error-tag

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Sat Feb 06 13:48:36 CET 2010
+# Changed: Thu Feb 23 15:29:03 CET 2012
 
 # Commentary:
 #
@@ -285,14 +285,14 @@ plays the portion between the marks (searching for plausible default marks)")
     def report_mark_names_play_hook(size)
       @samp += size
       if array?(@samplist) and @samp >= @samplist.first
-        report_in_minibuffer(mark_sample(@marklist.first), @snd)
+        snd_print(mark_sample(@marklist.first), @snd)
         @marklist.unshift
         @samplist.unshift
       end
     end
 
     def report_mark_names_stop_playing_hook(snd)
-      report_in_minibuffer("", snd)
+      snd_print("", snd)
       $play_hook.remove_hook("report-mark-names-play")
       $stop_playing_hook.remove_hook("report-mark-names-stop-playing")
     end
@@ -348,7 +348,7 @@ evaluates func between the leftmost marks; func takes one arg, the original samp
           vct2channel(new_data, beg, len, snd, chn)
         end
       else
-        report_in_minibuffer("need 2 marks")
+        snd_print("need 2 marks")
       end
     end
   end

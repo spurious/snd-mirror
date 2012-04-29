@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Thu Mar 17 15:15:41 CET 2011
+# Changed: Thu Feb 23 15:28:23 CET 2012
 
 # Commentary:
 #
@@ -17,7 +17,7 @@ def protect(snd = false, chn = false)
   hook = edit_hook(snd, chn)
   hook.reset_hook!
   hook.add_hook!("protect") do | |
-    report_in_minibuffer("protected") if val = edit_position(snd, chn) < edit_pos
+    snd_print("protected") if val = edit_position(snd, chn) < edit_pos
     val
   end
 end

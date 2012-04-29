@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Fri Aug 26 18:05:09 CEST 2011
+# Changed: Tue Feb 28 15:57:01 CET 2012
 
 # Commentary:
 #
@@ -547,14 +547,14 @@ tries to determine the current pitch: spot_freq(left_sample)")
     ret
   end
   # $graph_hook.add_hook!("examp-left-sample-hook") do |snd, chn, y0, y1|
-  #   report_in_minibuffer(format("(freq: %.3f)", spot_freq(left_sample(snd, chn))))
+  #   status_report(format("(freq: %.3f)", spot_freq(left_sample(snd, chn))), snd)
   # end
   #
   # or
   #
   # $mouse_click_hook.add_hook!("examp-cursor-hook") do |snd, chn, button, state, x, y, axis|
   #   if axis == Time_graph
-  #     report_in_minibuffer(format("(freq: %.3f)", spot_freq(cursor(snd, chn))))
+  #     status_report(format("(freq: %.3f)", spot_freq(cursor(snd, chn))), snd)
   #   end
   # end
 
