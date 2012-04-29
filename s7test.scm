@@ -14523,9 +14523,16 @@ in s7:
 (test (set! (#(a 0 (3)) 1) 0) 0)
 (test (set! ('(a 0) 1) 0) 0)
 (test (apply set! (apply list (list ''(1 2 3) 1)) '(32)) 32)
+
 (let ()
-  (define-macro (symbol-set! var val) `(apply set! ,var (list ,val)))
+  (define-macro (symbol-set! var val) `(apply set! ,var (list ,val))) ; but this evals twice
   (test (let ((x 32) (y 'x)) (symbol-set! y 123) (list x y)) '(123 x)))
+(let ()
+  (define-macro (symbol-set! var val) ; like CL's set
+    `(apply set! ,var ',val ()))
+  (test (let ((var '(+ 1 2)) (val 'var)) (symbol-set! val 3) (list var val)) '(3 var))
+  (test (let ((var '(+ 1 2)) (val 'var)) (symbol-set! val '(+ 1 3)) (list var val)) '((+ 1 3) var)))
+
 (test (set! ('(1 2) 1 . 2) 1) 'error)
 (test (set! ('((1 2) 1) () . 1) 1) 'error)
 (test (set! ('(1 1) () . 1) 1) 'error)
@@ -23115,6 +23122,16 @@ abs     1       2
        `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
 	  ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
 	     ,@body)))))
+#|
+(define-bacro (once-only names . body)
+  (let ((e (outer-environment (current-environment))))
+    `(let (,@(map (lambda (name) `(,name (eval ,name ,e))) names))
+       ,@body)))
+
+(define-macro (once-only names . body)
+  `(let (,@(map (lambda (name) `(,name (eval ,name))) names))
+     ,@body))
+|#
 
 (let ()
   (defmacro hiho (start end) 
@@ -23130,6 +23147,7 @@ abs     1       2
 (define-bacro (once-only-1 names . body)
   `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
      ,@body))
+;;; can't be right: (let ((names 1)) (once-only (names) (+ names 1)))
 
 (let ()
   (define-bacro (hiho start end) 
@@ -23143,28 +23161,43 @@ abs     1       2
 	'(2 (1 2 3 4))))
 
 (let ()
-  ;; gensym not needed because no post-expansion eval!
-  (define-bacro (setf . args)
-    (if (not (null? args))
-	(begin
-	  (apply set! (car args) (eval (cadr args)) ())
-	  (apply setf (cddr args)))))
+  (define setf
+    (let ((args (gensym)))
+      (apply define-bacro 
+	     `((setf-1 . ,args)        
+	       (if (not (null? ,args))
+		   (begin
+		     (apply set! (car ,args) (cadr ,args) ())
+		     (apply setf (cddr ,args)))))) ; not setf-1 -- it's not defined except during the definition 
+      setf-1))
+  
+  (define-macro (psetf . args)
+    (let ((bindings ())
+	  (settings ()))
+      (do ((arglist args (cddr arglist)))
+	  ((null? arglist))
+	(let* ((g (gensym)))
+	  (set! bindings (cons (list g (cadr arglist)) bindings))
+	  (set! settings (cons `(set! ,(car arglist) ,g) settings))))
+      `(let ,bindings ,@settings)))
   
   (test (let ((a 1) (b 2)) (setf a b b 3) (list a b)) '(2 3))
   (test (let ((a 1) (b 2)) (setf a b b (+ a 3)) (list a b)) '(2 5))
   (test (let ((a #(1)) (b 2)) (setf (a 0) b b (+ (a 0) 3)) (list a b)) '(#(2) 5))
   (test (let ((a 1) (b 2)) (setf a b b a) (list a b)) '(2 2))
-  
-  ;; gensym not needed because the eval is restricted to the incoming env
-  (define-bacro (psetf . args)
-    (let ((e (current-environment)))
-      (apply setf (do ((lst args (cddr lst))
-		       (new-args ()))
-		      ((null? lst) new-args)
-		    (set! new-args (cons (car lst) (cons (eval (cadr lst) e) new-args)))))))
+  (test (let ((a 1) (b 2)) (setf a '(+ 1 2) b a) (list a b)) '((+ 1 2) (+ 1 2)))
+  (test (let ((args 1) (arg 1)) (setf args 2 arg 3) (list args arg)) '(2 3))
+  (test (let ((args 1) (arg 1)) (setf args (+ 2 3) arg args) (list args arg)) '(5 5))
+  (test (let ((args 1) (arg 1)) (setf args '(+ 2 3) arg (car args)) (list args arg)) '((+ 2 3) +))
   
   (test (let ((a 1) (b 2)) (psetf a b b a) (list a b)) '(2 1))
   (test (let ((a #(1)) (b 2)) (psetf (a 0) b b (+ (a 0) 3)) (list a b)) '(#(2) 4))
+  (test (let ((a 1) (b 2)) (psetf a '(+ 1 2) b a) (list a b)) '((+ 1 2) 1))
+  (test (let ((new-args 1)) (psetf new-args (+ new-args 1)) new-args) 2)
+  (test (let ((args 1) (arg 1)) (psetf args 2 arg 3) (list args arg)) '(2 3))
+  (test (let ((args 1) (arg 1)) (psetf args (+ 2 3) arg args) (list args arg)) '(5 1))
+  (test (let ((args 1) (arg 1)) (psetf args '(+ 2 3) arg (car args)) (list args arg)) 'error)
+  (test (let ((args '(1 2)) (arg 1)) (psetf args '(+ 2 3) arg (car args)) (list args arg)) '((+ 2 3) 1))
   )
 
 (defmacro with-gensyms (names . body)
