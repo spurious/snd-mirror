@@ -4228,6 +4228,7 @@ static const char* osx_error(OSStatus err)
 
 char *device_name(AudioDeviceID deviceID, int input_case)
 {
+  /* used only in describe_audio_state_1 */
   OSStatus err = noErr;
   UInt32 size = 0, msize = 0, trans = 0, trans_size = 0;
   char *name = NULL, *mfg = NULL, *full_name = NULL;
@@ -4259,6 +4260,7 @@ char *device_name(AudioDeviceID deviceID, int input_case)
 
 static int max_chans_via_stream_configuration(AudioDeviceID device, bool input_case)
 {
+  /* used in describe_audio_state_1 and max_chans */
   /* apparently MOTU 828 has to be different (this code from portaudio) */
   UInt32 size = 0;
   Boolean writable;
@@ -5036,9 +5038,57 @@ int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
 int mus_audio_systems(void) {return(1);}
 
-
 char *mus_audio_moniker(void) {return((char *)"Mac OSX audio");}
 #endif
+
+
+
+
+/* ------------------------------- new mac osx ----------------------------------------- */
+
+#if MUS_NEW_MAC_OSX
+#define AUDIO_OK 1
+
+/* only output is supported, and we just take whatever the Mac gives us
+ */
+
+int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
+
+int mus_audio_systems(void) {return(1);}
+
+char *mus_audio_moniker(void) {return((char *)"Mac OSX audio");}
+
+static void describe_audio_state_1(void) {pprint("Mac OSX audio");}
+
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
+{
+  return(MUS_ERROR);
+}
+
+int mus_audio_read(int line, char *buf, int bytes) 
+{
+  return(MUS_ERROR);
+}
+
+
+
+int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+{
+  return(MUS_ERROR);
+}
+
+int mus_audio_write(int line, char *buf, int bytes) 
+{
+  return(MUS_ERROR);
+}
+
+int mus_audio_close(int line) 
+{
+  return(MUS_ERROR);
+}
+
+#endif
+
 
 
 

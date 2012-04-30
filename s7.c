@@ -55435,6 +55435,7 @@ the error type and the info passed to the error handler.");
 			                           (if (null? (cdr clause)) '(#f) (cdr clause))))           \n\
 		                          clauses))))");
 
+
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 263 */
 #if WITH_GMP
@@ -55443,23 +55444,28 @@ the error type and the info passed to the error handler.");
    *   which means if we embed mpc_t in the s7_cell number union, it will grow by 24 bytes? 72 from 48
    */
 #endif
-  save_initial_environment(sc);
 
+  save_initial_environment(sc);
   return(sc);
 }
 
 
 /* PERHAPS: (set! (procedure-setter abs) ...)?
+ *    (make-procedure-with-setter getter setter) -> make type? or
+ *    (define (make-procedure-with-setter getter setter) (set! (procedure-setter getter) setter) getter)?
+ *    (define (procedure-with-setter? proc) (procedure-setter proc))
+ *    but these are still needed in C
  * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
  * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
- * PERHAPS: if NaN, we could save the line&file numbers in the lower 30 bits
+ * PERHAPS: if NaN, we could save the line&file numbers in the lower 30 bits, or perhaps the func name (we have room for about 11 chars)
  *    also, shouldn't NaN travel through any calculation?
  *    integer(NAN) | pair_line_number, then decode that later? + there's room for a func index as well
  *    but we'd have to notice NaNs in log and elsewhere -- slightly slower (see end of s7test)
  * PERHAPS: the built-in variables like *error-hook* could use the 1st symbol-access field as documentation (or the 4th?)
  *    then (defvar var val doc) would make sense (but this is tied to the symbol which is not quite the same thing)
+ * PERHAPS: a compile-time switch to use the fallback inexact stuff in s7.html (and no #i #e -> 'exactness on *features*?)
  *
  * lint     13424 -> 1231 [1237]
  * bench    52019 -> 7875 [8268]

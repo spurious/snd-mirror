@@ -149,7 +149,7 @@ as an inexact integer.
 <p>This file assumes you know about Scheme and all its problems,
 and want a quick tour of where s7 is different.  (Well, it was quick once upon a time).
 The main difference: if it's in s7, it's a first-class citizen of s7, and that includes
-macros, environments, and syntactic items.
+macros, environments, and syntactic keywords.
 </p>
 
 <blockquote>
@@ -410,16 +410,8 @@ In s7, "@" is an exponent marker.
 <div class="indented">
 
 <p>Should s7 predefine the numbers +inf.0, -inf.0, and nan.0?  It doesn't currently, but you can
-get them via log:
-</p>
-
-<pre class="indented">
-(define -inf.0 (real-part (log 0.0))) 
-(define +inf.0 (- (real-part (log 0.0)))) ; or (atanh 1.0)
-(define nan.0 (/ +inf.0 +inf.0))          ; or 1/0
-</pre>
-
-<p>But what is <code>(/ 1.0 0.0)</code>?  s7 gives a "division by zero" error here, and also in <code>(/ 1 0)</code>.
+get them via log or 1/0 (see <a href="#r7rs">below</a>).
+But what is <code>(/ 1.0 0.0)</code>?  s7 gives a "division by zero" error here, and also in <code>(/ 1 0)</code>.
 Guile returns +inf.0 in the first case, which seems reasonable, but a "numerical overflow" error in the second.
 Slightly weirder is <code>(expt 0.0 0+i)</code>.  Currently s7 returns 0.0, Guile returns +nan.0+nan.0i,
 Clisp and sbcl throw an error.  Everybody agrees that <code>(expt 0 0)</code> is 1, and Guile thinks
@@ -1198,25 +1190,6 @@ mac
 &gt; (let ((a 21) (b 10) (+ *)) (mac a (+ b 10))) ; here '+' is '*'
 136
 </pre>
-
-<p>
-I wonder if s7 should also have a shorthand for the gensyms?  No good
-notation comes to mind, but as an illustration, consider #:&lt;name&gt;
-as either (gensym &lt;name&gt;) when binding, or the gensymmed result
-when referenced  (femtolisp uses a variant of this):
-</p>
-
-<pre class="indented">
-&gt; (define-macro (mac b) 
-    `(#_let ((#:(gensym a) 12)) 
-       (#_+ #:a ,b))) ; #_+ and #_let are start-up values, #:a is replaced by an internal symbol
-mac
-&gt; (let ((a 1) (+ *)) (mac a))
-13                 ; (+ {gensym-a} a) where {gensym-a} is 12, a is 1, and + is the start-up +
-</pre>
-
-<p>One minor problem is that Guile uses #: for keywords, as does some of the Common Music code.
-</p>
 </div>
 
 
@@ -4857,8 +4830,7 @@ bind it to something else, which is asking for confusion).
 <li>remove the 4-way cxxxxr functions
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
-<li>replace procedure-with-setter with settable procedure-setter
-<li>add -&gt;list, -&gt;string, and -&gt;vector, replacing list-&gt;string and all its many friends.
+<li>replace procedure-with-setter with settable procedure-setter.
 </ul>
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
@@ -5177,7 +5149,7 @@ These symbols are not just an optimization of string comparison:
 
 <div class="indented">
 
-<p>The built-in syntactic items, such as "begin", are almost first-class citizens.
+<p>The built-in syntactic keywords, such as "begin", are almost first-class citizens.
 </p>
 
 <pre class="indented">
@@ -5251,10 +5223,16 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 </pre>
 
 <p>
-Currently, you can't set! a built-in syntactic object to some new value:
+Currently, you can't set! a built-in syntactic keyword to some new value:
 <code>(set! if 3)</code>.
 I hope this kind of thing is not actually very useful, but let me
 know if you need it.  The issue is purely one of speed.
+</p>
+
+<p>I use the phrase "syntactic keyword" because that's the term used in r5rs.  These
+are not keywords in the s7 sense, but what CL calls special forms or macros: lambda,
+begin, define-macro, and so on.  The only unusual additions to this set are
+define-bacro, with-environment and with-baffle.
 </p>
 </div>
 
@@ -5286,7 +5264,7 @@ the current environment, so defines happen in the enclosing environment.
 
 <div class="indented">
 
-<p>r7rs:
+<p id="r7rs">r7rs:
 </p>
 
 <pre>
@@ -5305,8 +5283,9 @@ the current environment, so defines happen in the enclosing environment.
   (define (string-upcase str) (apply string (map char-upcase str)))
 
   (define -inf.0 (real-part (log 0.0))) 
-  (define +inf.0 (- -inf.0)) 
-  (define +nan.0 (/ +inf.0 +inf.0))
+  (define +inf.0 (- -inf.0))    ; or (atanh 1.0)
+  (define +nan.0 1/0)           ; 1/0 for NaN is just a convenience, not a religious dogma
+  (define -nan.0 (- 1/0))
   (define (finite? n) (and (number? n) (not (nan? n)) (not (infinite? n))))
 
   (define exact-integer? integer?)	

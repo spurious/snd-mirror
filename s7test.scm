@@ -23138,6 +23138,7 @@ abs     1       2
 ;;;   `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
 ;;;     ,@body))
 ;;; can't be right: (let ((names 1)) (once-only (names) (+ names 1)))
+;;; if define-macro used here: syntax-error ("~A: unbound variable" start) in the example below
 
 (define once-only-1
   (let ((names (gensym))
@@ -23157,7 +23158,12 @@ abs     1       2
 	  (let ((lst (hiho (let () (set! ctr (+ ctr 1)) ctr) 
 			   (let () (set! ctr (+ ctr 1)) ctr))))
 	    (list ctr lst)))
-	'(2 (1 2 3 4))))
+	'(2 (1 2 3 4)))
+
+  (test (let ((names 1)) (once-only-1 (names) (+ names 1))) 2)
+  (test (let ((body 1)) (once-only-1 (body) (+ body 1))) 2) ; so body above also has to be gensym'd
+  )
+  
 
 (let ()
   (define setf
@@ -38809,11 +38815,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (test (integer-decode-float 92233720368547758081/123) 'error)
       )
     (begin
-      (test (integer-decode-float 1/0) '(6755399441055744 972 1))
-      (test (integer-decode-float (real-part (log 0))) '(4503599627370496 972 -1))
-      (test (integer-decode-float (- (real-part (log 0)))) '(4503599627370496 972 1))
-      (test (integer-decode-float (/ (real-part (log 0)) (real-part (log 0)))) '(6755399441055744 972 -1))
-      (test (integer-decode-float (- (/ (real-part (log 0)) (real-part (log 0))))) '(6755399441055744 972 1))
+      (test (integer-decode-float 1/0) '(6755399441055744 972 1)) ; nan
+      (test (integer-decode-float (real-part (log 0))) '(4503599627370496 972 -1)) ; -inf
+      (test (integer-decode-float (- (real-part (log 0)))) '(4503599627370496 972 1)) ; inf
+      (test (integer-decode-float (/ (real-part (log 0)) (real-part (log 0)))) '(6755399441055744 972 -1)) ; -nan
+      (test (integer-decode-float (- (/ (real-part (log 0)) (real-part (log 0))))) '(6755399441055744 972 1)) ; nan
       ))
 
 
@@ -67078,7 +67084,8 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 
 #x7ff0000000000000 +inf
 #xfff0000000000000 -inf
-#xfff8000000000000 nan
+#x7ff8000000000000 nan
+#xfff8000000000000 -nan
 
 but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? (would need check for invalid args)
 in C:
