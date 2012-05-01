@@ -407,8 +407,6 @@ MUS_EXPORT int mus_audio_open_input(int dev, int srate, int chans, int format, i
 MUS_EXPORT int mus_audio_write(int line, char *buf, int bytes);
 MUS_EXPORT int mus_audio_close(int line);
 MUS_EXPORT int mus_audio_read(int line, char *buf, int bytes);
-MUS_EXPORT int mus_audio_write_buffers(int line, int frames, int chans, mus_sample_t **bufs, int output_format, bool clipped);
-MUS_EXPORT int mus_audio_read_buffers(int line, int frames, int chans, mus_sample_t **bufs, int input_format);
 MUS_EXPORT int mus_audio_initialize(void);
 
 #if HAVE_OSS || HAVE_ALSA

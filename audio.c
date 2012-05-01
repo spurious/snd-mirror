@@ -147,9 +147,6 @@ static bool audio_initialized = false;
 #endif
 
 
-static char *audio_strbuf = NULL; /* previous name "strbuf" collides with Mac OSX global! */
-
-
 /* ------------------------------- OSS ----------------------------------------- */
 
 /* Thanks to Yair K. for OSS v4 changes.  22-Jan-08 */
@@ -197,14 +194,6 @@ static char *audio_strbuf = NULL; /* previous name "strbuf" collides with Mac OS
 #define MUS_OSS_WRITE_CHANNELS SNDCTL_DSP_CHANNELS
 #define MUS_OSS_SET_FORMAT     SNDCTL_DSP_SETFMT
 #define MUS_OSS_GET_FORMATS    SNDCTL_DSP_GETFMTS
-
-#if SOUND_VERSION < 0x040000
-  /* did they change the way SOUND_VERSION encodes the version? */
-  /* MUS_OSS_READ_* deliberately undefined in OSS v4 (see below) */
-  #define MUS_OSS_READ_RATE      SOUND_PCM_READ_RATE
-  #define MUS_OSS_READ_CHANNELS  SOUND_PCM_READ_CHANNELS
-  /* these can't be defined (easily anyway) in oss v4 */
-#endif
 
 #define DAC_NAME "/dev/dsp"
 #define MIXER_NAME "/dev/mixer"
@@ -260,9 +249,6 @@ static int *audio_open_ctr = NULL;
 static int *audio_dsp = NULL; 
 static int *audio_mixer = NULL; 
 static int *audio_mode = NULL; 
-typedef enum {NORMAL_CARD, SONORUS_STUDIO, RME_HAMMERFALL, DELTA_66} audio_card_t;
-/* the Sonorus Studi/o card is a special case in all regards */
-static audio_card_t *audio_type = NULL; 
 
 static int sound_cards = 0;
 #ifdef NEW_OSS
@@ -324,7 +310,6 @@ static int oss_mus_audio_initialize(void)
       audio_open_ctr = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
       audio_dsp = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
       audio_mixer = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
-      audio_type = (audio_card_t *)calloc(MAX_SOUNDCARDS, sizeof(audio_card_t));
       audio_mode = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
       dev_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
       init_srate = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
@@ -338,7 +323,6 @@ static int oss_mus_audio_initialize(void)
 	  audio_open_ctr[i] = 0;
 	  audio_dsp[i] = -1;
 	  audio_mixer[i] = -1;
-	  audio_type[i] = NORMAL_CARD;
 	}
 
       num_mixers = MAX_MIXERS;
@@ -427,67 +411,7 @@ static int oss_mus_audio_initialize(void)
 		}
 	    }
 #ifdef NEW_OSS				  
-	  /* can't change volume yet of Sonorus, so the method above won't work --
-	   * try to catch this case via the mixer's name
-	   */
 	  status = ioctl(md, SOUND_MIXER_INFO, &mixinfo);
-	  if ((status == 0) && 
-	      (mixinfo.name) && 
-	      (*(mixinfo.name)) && 
-	      (strlen(mixinfo.name) > 6))
-	    {
-	      if (strncmp("STUDI/O", mixinfo.name, 7) == 0)
-		{
-		  /* a special case in every regard */
-		  audio_type[sound_cards] = SONORUS_STUDIO;
-		  audio_mixer[sound_cards] = nmix; 
-		  nmix++;
-		  audio_dsp[sound_cards] = ndsp; 
-		  if (num_dsps >= 21)
-		    {
-		      ndsp += 21;
-		      audio_mode[sound_cards] = 1;
-		    }
-		  else
-		    {
-		      ndsp += 9;
-		      audio_mode[sound_cards] = 0;
-		    }
-		  sound_cards++;
-		  close(fd);
-		  close(md);
-		  continue;
-		}
-	      else
-		{
-		  if (strncmp("RME Digi96", mixinfo.name, 10) == 0)
-		    {
-		      audio_type[sound_cards] = RME_HAMMERFALL;
-		      audio_mixer[sound_cards] = nmix; 
-		      nmix++;
-		      audio_dsp[sound_cards] = ndsp; 
-		      sound_cards++;
-		      close(fd);
-		      close(md);
-		      continue;
-		    }
-		  else
-		    {
-		      if (strncmp("M Audio Delta", mixinfo.name, 13) == 0)
-			{
-			  audio_type[sound_cards] = DELTA_66;
-			  audio_mixer[sound_cards] = nmix; 
-			  nmix++;
-			  ndsp += 6; /* just a guess */
-			  audio_dsp[sound_cards] = ndsp; 
-			  sound_cards++;
-			  close(fd);
-			  close(md);
-			  continue;
-			}
-		    }
-		}
-	    }
 #endif
 	  err = ioctl(md, SOUND_MIXER_READ_DEVMASK, &devmask);
 	  responsive_field = SOUND_MIXER_VOLUME;
@@ -517,7 +441,6 @@ static int oss_mus_audio_initialize(void)
 				  /* found one! */
 				  audio_dsp[sound_cards] = ndsp; ndsp++;
 				  audio_mixer[sound_cards] = nmix; nmix++;
-				    audio_type[sound_cards] = NORMAL_CARD;
 				  sound_cards++;
 				}
 			      else ndsp++;
@@ -542,7 +465,6 @@ static int oss_mus_audio_initialize(void)
 	    {
 	      sound_cards = 1;
 	      audio_dsp[0] = 0;
-	      audio_type[0] = NORMAL_CARD;
 	      audio_mixer[0] = -2; /* hmmm -- need a way to see /dev/dsp as lonely outpost */
 	      close(fd);
  	      fd = open(MIXER_NAME, O_RDONLY | O_NONBLOCK, 0);
@@ -650,13 +572,6 @@ static int to_oss_format(int snd_format)
   return(MUS_ERROR);
 }
 
-static char sonorus_buf[LABEL_BUFFER_SIZE];
-static char *sonorus_name(int sys, int offset)
-{
-  mus_snprintf(sonorus_buf, LABEL_BUFFER_SIZE, "/dev/dsp%d", offset + audio_dsp[sys]);
-  return(sonorus_buf);
-}
-
 static bool fragment_set_failed = false;
 
 static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
@@ -675,44 +590,6 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 		      mus_format("format %d (%s) not available",
 				 format, 
 				 mus_data_format_name(format)));
-  if (audio_type[sys] == SONORUS_STUDIO)
-    {
-      /* in this case the output devices are parcelled out to the /dev/dsp locs */
-      /* dev/dsp0 is always stereo */
-      switch (dev)
-	{
-	case MUS_AUDIO_DEFAULT: 
-	  if (chans > 2) 
-	    audio_out = open(sonorus_name(sys, 1), O_WRONLY, 0);
-	  else audio_out = open(sonorus_name(sys, 0), O_WRONLY, 0);
-	  /* probably should write to both outputs */
-	  if (audio_out == -1) audio_out = open("/dev/dsp", O_WRONLY, 0);
-	  break;
-	case MUS_AUDIO_SPEAKERS:
-	  audio_out = open(sonorus_name(sys, 0), O_WRONLY, 0);
-	  if (audio_out == -1) audio_out = open("/dev/dsp", O_WRONLY, 0);
-	  break;
-	default:
-	  RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, audio_out,
-			    mus_format("Sonorus device %d (%s) not available",
-				       dev, 
-				       mus_audio_device_name(dev)));
-	  break;
-	}
-      if (audio_out == -1) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_out,
-			  mus_format("can't open Sonorus output device %d (%s): %s",
-				     dev, 
-				     mus_audio_device_name(dev), strerror(errno)));
-#ifdef NEW_OSS
-      if (ioctl(audio_out, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
-			  mus_format("can't get %d channels for Sonorus device %d (%s)",
-				     chans, dev, 
-				     mus_audio_device_name(dev)));
-#endif
-      return(audio_out);
-    }
 
   if (dev == MUS_AUDIO_DEFAULT)
     audio_out = linux_audio_open_with_error(dev_name = dac_name(sys, 0), 
@@ -850,34 +727,6 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 		      mus_format("format %d (%s) not available",
 				 format, 
 				 mus_data_format_name(format)));
-  if (audio_type[sys] == SONORUS_STUDIO)
-    {
-      switch (dev)
-	{
-	case MUS_AUDIO_DEFAULT:
-	  audio_fd = open(dev_name = sonorus_name(sys, 11), O_RDONLY, 0);
-	  break;
-	default:
-	  RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, -1,
-			    mus_format("no %s device on Sonorus?",
-				       mus_audio_device_name(dev)));
-	  break;
-	}
-      if (audio_fd == -1) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_NO_INPUT_AVAILABLE, -1,
-			  mus_format("can't open %s (Sonorus device %s): %s",
-				     dev_name, 
-				     mus_audio_device_name(dev), 
-				     strerror(errno)));
-#ifdef NEW_OSS
-      if (ioctl(audio_fd, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
-	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
-			  mus_format("can't get %d channels on %s (Sonorus device %s)",
-				     chans, dev_name, 
-				     mus_audio_device_name(dev)));
-#endif
-      return(audio_fd);
-    }
 
   if (((dev == MUS_AUDIO_DEFAULT) || (dev == MUS_AUDIO_DUPLEX_DEFAULT)) && (sys == 0))
     audio_fd = linux_audio_open(dev_name = dac_name(sys, 0), 
@@ -908,8 +757,6 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   else 
     ioctl(audio_fd, SNDCTL_DSP_SETDUPLEX, &err); /* not always a no-op! */
 #endif
-  if (audio_type[sys] == RME_HAMMERFALL) return(audio_fd);
-  if (audio_type[sys] == DELTA_66) return(audio_fd);
   /* need to make sure the desired recording source is active -- does this actually have any effect? */
   switch (dev)
     {
@@ -3133,12 +2980,6 @@ static float unlog(unsigned short val)
   /* return(pow(2.0, amp) - 1.0); */ /* doc seems to be bogus */
 }
 
-#define SRATE_11025_BITS (WAVE_FORMAT_1S16 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1M08)
-#define SRATE_22050_BITS (WAVE_FORMAT_2S16 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2M08)
-#define SRATE_44100_BITS (WAVE_FORMAT_4S16 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4M08)
-#define SHORT_SAMPLE_BITS (WAVE_FORMAT_1S16 | WAVE_FORMAT_1M16 | WAVE_FORMAT_2S16 | WAVE_FORMAT_2M16 | WAVE_FORMAT_4S16 | WAVE_FORMAT_4M16)
-#define BYTE_SAMPLE_BITS (WAVE_FORMAT_1S08 | WAVE_FORMAT_1M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M08)
-
 static char *mixer_status_name(int status)
 {
   switch (status)
@@ -3191,11 +3032,6 @@ static char *mixer_component_name(int type)
     default: return(""); break;
     }
 }
-
-#define MAX_DESCRIBE_CHANS 8
-#define MAX_DESCRIBE_CONTROLS 16
-/* these actually need to be big enough to handle whatever comes along, since we can't read partial states */
-/*   or they need to be expanded as necessary */
 
 char *mus_audio_moniker(void) {return("MS audio");} /* version number of some sort? */
 
@@ -3388,36 +3224,6 @@ static const char* osx_error(OSStatus err)
   return("unknown error");
 }
 
-char *device_name(AudioDeviceID deviceID, int input_case)
-{
-  OSStatus err = noErr;
-  UInt32 size = 0, msize = 0, trans = 0, trans_size = 0;
-  char *name = NULL, *mfg = NULL, *full_name = NULL;
-  err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceName, &size, NULL);
-  if (err == noErr) err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceManufacturer, &msize, NULL);
-  if (err == noErr)
-    {
-      name = (char *)malloc(size + 2);
-      err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyDeviceName, &size, name);
-      mfg = (char *)malloc(msize + 2);
-      err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyDeviceManufacturer, &msize, mfg);
-      full_name = (char *)malloc(size + msize + 4);
-#if HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE
-      trans_size = sizeof(UInt32);
-      err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyTransportType, &trans_size, &trans);
-      if (err != noErr) 
-#endif
-	trans = 0;
-      if (trans == 0)
-	mus_snprintf(full_name, size + msize + 4, "\n  %s: %s", mfg, name);
-      else mus_snprintf(full_name, size + msize + 4, "\n  %s: %s ('%c%c%c%c')", 
-			mfg, name,
-			(char)((trans >> 24) & 0xff), (char)((trans >> 16) & 0xff), (char)((trans >> 8) & 0xff), (char)(trans & 0xff));
-      free(name);
-      free(mfg);
-    }
-  return(full_name);
-}	
 
 static int max_chans_via_stream_configuration(AudioDeviceID device, bool input_case)
 {
@@ -4215,7 +4021,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 
   if (esd_play_sock ==  -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, audio_out,
-		      mus_format("Sonorus device %d (%s) not available",
+		      mus_format("device %d (%s) not available",
 				 ur_dev, mus_audio_device_name(ur_dev)));
   else
     return esd_play_sock;
@@ -4375,8 +4181,6 @@ static inline void __attribute__ ((__unused__)) atomic_add(volatile int* __mem, 
 /*************/
 /* Jack Part */
 /*************/
-
-#define SNDJACK_MAXSNDS 20
 
 #define SNDJACK_BUFFERSIZE 32768
 
@@ -5878,44 +5682,6 @@ void mus_reset_audio_c(void)
 #ifdef MUS_SUN
   sun_vol_name = NULL;
 #endif
-  audio_strbuf = NULL;
-}
-
-
-/* next two added 17-Dec-02 for non-interleaved audio IO */
-static char *output_buffer = NULL;
-static int output_buffer_size = 0;
-
-int mus_audio_write_buffers(int port, int frames, int chans, mus_sample_t **bufs, int output_format, bool clipped)
-{
-  int bytes;
-  bytes = chans * frames * mus_bytes_per_sample(output_format);
-  if (output_buffer_size < bytes)
-    {
-      if (output_buffer) free(output_buffer);
-      output_buffer = (char *)malloc(bytes);
-      output_buffer_size = bytes;
-    }
-  mus_file_write_buffer(output_format, 0, frames - 1, chans, bufs, output_buffer, clipped);
-  return(mus_audio_write(port, output_buffer, bytes));
-}
-
-
-static char *input_buffer = NULL;
-static int input_buffer_size = 0;
-
-int mus_audio_read_buffers(int port, int frames, int chans, mus_sample_t **bufs, int input_format)
-{
-  int bytes;
-  bytes = chans * frames * mus_bytes_per_sample(input_format);
-  if (input_buffer_size < bytes)
-    {
-      if (input_buffer) free(input_buffer);
-      input_buffer = (char *)malloc(bytes);
-      input_buffer_size = bytes;
-    }
-  mus_audio_read(port, input_buffer, bytes);
-  return(mus_file_read_buffer(input_format, 0, chans, frames, bufs, input_buffer));
 }
 
 
