@@ -4671,7 +4671,9 @@ This is an experimental function currently used in the oscilloscope (oscope.scm)
 
 <p>All of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
 functions are available, as well as most of CLM (<a href="sndclm.html">sndclm.html</a>).
-For many eamples, see play.scm and rtio.scm. The most important Sndlib functions for Snd are:
+See play.scm.  Much of the mus-audio interface is changing.  In particular, I'm removing the
+input side of the audio code.
+The most important Sndlib functions for Snd are:
 </p>
 
 <!--  SNDLIB TABLE  -->
@@ -4747,7 +4749,7 @@ on a good day.
 
 <!-- mus-audio-close -->
 <pre class="indented">
-<em class=def id="musaudioclose">mus-audio-close</em> line
+<em class=def id="musaudioclose">mus-audio-close</em> line ; obsolete
 </pre>
 
 <p>mus-audio-close closes the audio port 'line' ('line' comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
@@ -4770,19 +4772,9 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 <div class="spacer"></div>
 
 
-<!-- mus-audio-describe -->
-<pre class="indented">
-<em class=def id="musaudiodescribe">mus-audio-describe</em>
-</pre>
-
-<p>mus-audio-describe returns a string describing the current audio hardware state.
-</p>
-<div class="spacer"></div>
-
-
 <!-- mus-audio-open-input -->
 <pre class="indented">
-<em class=def id="musaudioopeninput">mus-audio-open-input</em> device srate chans format bufsize
+<em class=def id="musaudioopeninput">mus-audio-open-input</em> device srate chans format bufsize ; obsolete
 </pre>
 
 <p>mus-audio-open-input opens the audio input device.  It returns -1 if the open failed.
@@ -4792,7 +4784,7 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 
 <!-- mus-audio-open-output -->
 <pre class="indented">
-<em class=def id="musaudioopenoutput">mus-audio-open-output</em> device srate chans format bufsize
+<em class=def id="musaudioopenoutput">mus-audio-open-output</em> device srate chans format bufsize ; will change a lot soon
 </pre>
 
 <p>mus-audio-open-output opens the audio output (playback) port 'device'.  It returns -1 if the open failed.
@@ -4802,7 +4794,7 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 
 <!-- mus-audio-read -->
 <pre class="indented">
-<em class=def id="musaudioread">mus-audio-read</em> line sd frames
+<em class=def id="musaudioread">mus-audio-read</em> line sd frames ; obsolete
 </pre>
 
 <p>mus-audio-read reads 'frames' frames of data into the sound-data object 'sd' from the audio input port 'line'.  
@@ -4812,7 +4804,7 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 
 <!-- mus-audio-write -->
 <pre class="indented">
-<em class=def id="musaudiowrite">mus-audio-write</em> line sd frames (start 0)
+<em class=def id="musaudiowrite">mus-audio-write</em> line sd frames (start 0) ; obsolete
 </pre>
 
 <p>mus-audio-write writes 'frames' frames of data from the sound-data object 'sd' to the audio output port 'line'.
@@ -9346,7 +9338,6 @@ play a file upon a keystroke: <a href="extsnd.html#extendedpiano">bind-key</a><b
 play using an external program: (system "sndplay wood16.wav")<br>
 play a sine-wave or spectrum: <a href="sndscm.html#playsine">play-sine</a> and <a href="sndscm.html#playsines">play-sines</a><br>
 play arbitrary mixtures of things: <a href="extsnd.html#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
-send arbitrary data to the DAC: <a href="extsnd.html#musaudiowrite">mus-audio-write</a>, <a href="sndscm.html#startdac">start-dac</a><br>
 play after sending the data through some function: <a href="sndscm.html#playsound">play-sound</a><br>
 play with applied amplitude envelope: <a href="sndscm.html#playwithenvs">play-with-envs</a>, <a href="sndscm.html#playpanned">play-panned</a><br>
 play an external file: (play "file")<br>

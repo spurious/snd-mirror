@@ -1,3 +1,4 @@
+;;; this file is obsolete
 ;;; various low-level IO and "real-time" functions/examples
 
 (provide 'snd-rtio.scm)

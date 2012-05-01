@@ -1,3 +1,5 @@
+;;; most of this file is obsolete.
+;;;
 ;;; playing-related examples previously scattered around at random
 ;;;
 ;;; play-sound func -- play current sound, calling (func data) on each buffer if func is passed

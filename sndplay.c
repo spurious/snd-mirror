@@ -78,57 +78,50 @@ static int main_not_alsa(int argc, char *argv[])
 
   for (i = 1; i < argc; i++)
     {
-      if (strcmp(argv[i], "-describe") == 0) 
+      if (strcmp(argv[i], "-buffers") == 0) 
 	{
-	  fprintf(stdout, "%s", mus_audio_describe()); 
-	  exit(0);
+	  set_buffers(argv[i + 1]); 
+	  i++;
 	}
       else
 	{
-	  if (strcmp(argv[i], "-buffers") == 0) 
+	  if (strcmp(argv[i], "-bufsize") == 0) 
 	    {
-	      set_buffers(argv[i + 1]); 
+	      buffer_size = atoi(argv[i + 1]);
 	      i++;
 	    }
 	  else
 	    {
-	      if (strcmp(argv[i], "-bufsize") == 0) 
+	      if (strcmp(argv[i], "-start") == 0) 
 		{
-		  buffer_size = atoi(argv[i + 1]);
+		  begin_time = atof(argv[i + 1]);
 		  i++;
 		}
 	      else
 		{
-		  if (strcmp(argv[i], "-start") == 0) 
+		  if (strcmp(argv[i], "-end") == 0) 
 		    {
-		      begin_time = atof(argv[i + 1]);
+		      end_time = atof(argv[i + 1]);
 		      i++;
 		    }
-		  else
+		  else 
 		    {
-		      if (strcmp(argv[i], "-end") == 0) 
+		      if (strcmp(argv[i], "-mutable") == 0) 
 			{
-			  end_time = atof(argv[i + 1]);
+			  mutate = atoi(argv[i + 1]);
+			  include_mutate = 1;
 			  i++;
 			}
 		      else 
-			{
-			  if (strcmp(argv[i], "-mutable") == 0) 
-			    {
-			      mutate = atoi(argv[i + 1]);
-			      include_mutate = 1;
-			      i++;
-			    }
-			  else 
+			{ 
+			  if (strcmp(argv[i], "-volume") == 0)
 			    { 
-			      if (strcmp(argv[i], "-volume") == 0)
-				{ 
-				  volume = atof(argv[i + 1]);
-				  use_volume = 1;
-				  i++; 
-				} 
-			      else name = argv[i];
-			    }}}}}}}
+			      volume = atof(argv[i + 1]);
+			      use_volume = 1;
+			      i++; 
+			    } 
+			  else name = argv[i];
+			}}}}}}
   if (name == NULL) 
     {
       printf("usage: sndplay file [-start 1.0] [-end 1.0] [-bufsize %d] [-buffers 2x12] [-volume 1.0] [-mutable 1] [-describe]\n", BUFFER_SIZE); 
@@ -287,47 +280,39 @@ static int main_alsa(int argc, char *argv[])
   double begin_time = 0.0, end_time = 0.0, volume = 1.0;
   int use_volume = 0;
 
-  /* -describe => call mus_audio_describe and exit
-   * -buffers axb => set OSS fragment numbers 
+  /* -buffers axb => set OSS fragment numbers 
    */
   for (i = 1; i < argc; i++)
     {
-      if (strcmp(argv[i], "-describe") == 0)
+      if (strcmp(argv[i], "-buffers") == 0) 
 	{
-	  fprintf(stdout, "%s", mus_audio_describe()); 
-	  exit(0);
+	  set_buffers(argv[i+1]); 
+	  i++;
 	}
-      else 
+      else
 	{
-	  if (strcmp(argv[i], "-buffers") == 0) 
+	  if (strcmp(argv[i], "-start") == 0) 
 	    {
-	      set_buffers(argv[i+1]); 
+	      begin_time = atof(argv[i + 1]);
 	      i++;
 	    }
 	  else
 	    {
-	      if (strcmp(argv[i], "-start") == 0) 
+	      if (strcmp(argv[i], "-end") == 0) 
 		{
-		  begin_time = atof(argv[i + 1]);
+		  end_time = atof(argv[i + 1]);
 		  i++;
 		}
 	      else
 		{
-		  if (strcmp(argv[i], "-end") == 0) 
-		    {
-		      end_time = atof(argv[i + 1]);
-		      i++;
-		    }
-		  else
-		    {
-		      if (strcmp(argv[i], "-volume") == 0)
-			{ 
-			  volume = atof(argv[i + 1]);
-			  use_volume = 1;
-			  i++; 
-			} 
-		      else name = argv[i];
-		    }}}}}
+		  if (strcmp(argv[i], "-volume") == 0)
+		    { 
+		      volume = atof(argv[i + 1]);
+		      use_volume = 1;
+		      i++; 
+		    } 
+		  else name = argv[i];
+		}}}}
   afd0 = -1;
   afd1 = -1;
   if (!(mus_header_type_p(mus_sound_header_type(name))))
@@ -354,7 +339,7 @@ static int main_alsa(int argc, char *argv[])
       int cards, card;
       int sysdev, devs, dev, d, i, im;
       int first_samples_per_chan = -1;
-      cards = mus_audio_systems();
+      cards = 1;
       /* deselect all devices */
       for (d = 0; d < MAX_SLOTS; d++) 
 	{

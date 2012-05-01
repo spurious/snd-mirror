@@ -15,7 +15,6 @@
 #define S_mus_alsa_squelch_warning      "mus-alsa-squelch-warning"
 #define S_mus_audio_close               "mus-audio-close"
 #define S_mus_audio_default             "mus-audio-default"
-#define S_mus_audio_describe            "mus-audio-describe"
 #define S_mus_audio_open_input          "mus-audio-open-input"
 #define S_mus_audio_open_output         "mus-audio-open-output"
 #define S_mus_audio_read                "mus-audio-read"

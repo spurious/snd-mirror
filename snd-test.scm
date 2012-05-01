@@ -2484,8 +2484,6 @@
 		    (snd-display #__line__ ";print-cache 1: ~A?" line))
 		(close-input-port p)
 		(delete-file "hiho.tmp"))))
-	(if (< (string-length (mus-audio-describe)) 10)
-	    (snd-display #__line__ ";mus-audio-describe: ~A" (mus-audio-describe)))
 	(if (not (= chns 1)) (snd-display #__line__ ";oboe: mus-sound-chans ~D?" chns))
 	(if (not (= dl 28)) (snd-display #__line__ ";oboe: mus-sound-data-location ~D (~A)?" dl (= dl 28)))
 	(if (not (= fr 50828)) (snd-display #__line__ ";oboe: mus-sound-frames ~D?" fr))
@@ -60079,7 +60077,7 @@ EDITS: 1
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
-		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-audio-describe
+		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info 
 					;mus-alsa-buffers mus-alsa-buffer-size mus-apply
 		     mus-alsa-squelch-warning
 					;mus-alsa-device mus-alsa-playback-device mus-alsa-capture-device 

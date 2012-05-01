@@ -1948,12 +1948,9 @@ static const char *describe_dac(void)
 static void dac_error(void)
 {
   stop_playing_all_sounds_without_hook(PLAY_ERROR);
-  if ((!last_print) &&
-      (mus_audio_systems() == 0))
-    snd_error_without_format("can't play: no audio support");
-  else snd_error("can't play %s: %s",
-		 describe_dac(),
-		 (last_print) ? last_print : "reason not known");
+  snd_error("can't play %s: %s",
+	    describe_dac(),
+	    (last_print) ? last_print : "reason not known");
 }
 
 
@@ -2054,7 +2051,7 @@ static void scan_audio_devices(void)
        * Otherwise we try to combine devices, if all fails we modify snd settings
        * so that channel folding takes place. This is inefficient but works for now. 
        */
-      cards = mus_audio_systems();
+      cards = 1;
       index = 0;
       /* scan all cards and build a list of available output devices */
       for (card = 0; card < cards; card++) 
@@ -2251,32 +2248,9 @@ static bool start_audio_output_1(void)
       for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
       /* see if we can play 16 bit output */
       snd_dacp->out_format = mus_audio_compatible_format(audio_output_device(ss));
-#ifndef PPC
-      /* check for chans > def chans, open 2 cards if available */
-      if ((oss_available_chans < snd_dacp->channels) && (snd_dacp->channels == 4))
-	{
-	  if (mus_audio_systems() > 1)
-	    {
-	      set_dac_print();
-	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), 
-						snd_dacp->srate, 2, 
-						snd_dacp->out_format, 
-						dac_size(ss));
-	      unset_dac_print();
-	      if (dev_fd[0] != MUS_ERROR) 
-		dev_fd[1] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | audio_output_device(ss), 
-						  snd_dacp->srate, 2, 
-						  snd_dacp->out_format, 
-						  dac_size(ss));
-	    }
-	  if (dev_fd[1] == MUS_ERROR)
-	    {
-	      mus_audio_close(dev_fd[0]);
-	      dev_fd[0] = MUS_ERROR;
-	    }
-	  else oss_available_chans = 4;
-	}
-#endif
+
+      /* removed PPC stuff here 30-Apr-12 */
+
       if ((oss_available_chans < snd_dacp->channels) &&
           (oss_available_chans > 0))
  	{

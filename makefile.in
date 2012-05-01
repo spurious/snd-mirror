@@ -142,8 +142,8 @@ clean:
 	rm -f $(GG_SO_FILE)
 	rm -f $(GL_FILES)
 	rm -f $(S7_O_FILES)
-	rm -f sndplay.o audinfo.o sndinfo.o
-	rm -f snd sndplay audinfo sndinfo
+	rm -f sndplay.o sndinfo.o
+	rm -f snd sndplay sndinfo
 
 distclean: clean
 	rm -f mus-config.h config.log config.status makefile
@@ -155,7 +155,7 @@ allclean:
 	rm -f *.o
 	rm -f *.so
 	rm -f *.a
-	rm -f snd sndplay audinfo sndinfo
+	rm -f snd sndplay sndinfo
 
 sndplay: $(SNDLIB_HEADERS) $(S7_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 headers.c
@@ -172,14 +172,6 @@ sndinfo: $(SNDLIB_HEADERS) $(S7_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sound.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sndinfo.c
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
-
-audinfo: $(SNDLIB_HEADERS) $(S7_HEADERS)
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 headers.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 io.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 audio.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sound.c
-	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 audinfo.c
-	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o audinfo.o -o audinfo $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
 
 install: snd
 	${SHELL} ${top_srcdir}/mkinstalldirs ${bindir}

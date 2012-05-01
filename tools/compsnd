@@ -87,7 +87,6 @@ make
 
 make clmclean
 make sndinfo
-make audinfo
 make sndplay
 make allclean
 
@@ -474,7 +473,6 @@ echo ' '
 make allclean
 rm -f snd
 rm -f sndinfo
-rm -f audinfo
 rm -f config.cache
 
 echo ' -------------------------------------------------------------------------------- '
@@ -711,9 +709,7 @@ make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif 'snd-ladspa 'sndlib"
 make sndinfo
-make audinfo
 make sndplay
-./audinfo
 ./sndinfo test.snd
 make allclean
 
@@ -764,7 +760,6 @@ make allclean
 rm -f snd
 rm -f config.cache
 rm -f sndinfo
-rm -f audinfo
 
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                sndlib                                                 ---- '
@@ -772,8 +767,6 @@ echo ' -------------------------------------------------------------------------
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make sndinfo
 sndinfo oboe.snd
-make audinfo
-audinfo
 sndinfo test.snd
 
 echo ' '

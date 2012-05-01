@@ -17,8 +17,6 @@ echo ' '
 make clmclean
 make sndinfo
 ./sndinfo oboe.snd
-make audinfo
-./audinfo
 make sndplay
 ./sndplay oboe.snd
 
@@ -226,7 +224,6 @@ echo ' -------------------------------- motif test -----------------------------
 make allclean
 rm -f snd
 rm -f sndinfo
-rm -f audinfo
 rm -f config.cache
 echo ' CFLAGS="-Wall -I/usr/X11R6/include" --enable-snd-debug --with-gsl '
 ./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --enable-snd-debug --with-gsl LDFLAGS="-L/usr/X11R6/lib"
@@ -379,9 +376,7 @@ echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" '
 make
 make xm
 make sndinfo
-make audinfo
 make sndplay
-./audinfo
 ./sndinfo test.snd
 ./snd --version
 ./snd -l snd-test 16
@@ -412,13 +407,10 @@ make allclean
 rm -f snd
 rm -f config.cache
 rm -f sndinfo
-rm -f audinfo
 echo ' CFLAGS="-Wall" '
 ./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make sndinfo
 ./sndinfo oboe.snd
-make audinfo
-./audinfo
 
 echo ' '
 echo ' '

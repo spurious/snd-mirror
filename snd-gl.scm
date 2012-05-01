@@ -66,6 +66,8 @@
 
 
 ;;; ---------------- waterfall spectrum ----------------
+;;; this is obsolete
+
 (define waterfall
   (let* ((drawer #f)
 	 (input-port #f)

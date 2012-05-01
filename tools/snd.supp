@@ -681,26 +681,6 @@
 
 # --------------------------------------------------------------------------------
 
-{
-   OSS-1
-   Memcheck:Param
-   ioctl(SNDCTL_XXX|SOUND_XXX (SIOWR, int))
-   fun:__GI___ioctl
-   fun:describe_audio_state_1
-   fun:mus_audio_report
-   fun:g_mus_audio_describe
-}
-
-{
-   OSS-2
-   Memcheck:Param
-   ioctl(SNDCTL_XXX|SOUND_XXX (SIOWR, int))
-   fun:__GI___ioctl
-   fun:describe_audio_state_1
-   fun:mus_audio_report
-   fun:g_mus_audio_report
-}
-
 # I don't think any of these are actually my bugs -- everything is initialized and so forth in my code
 {
    snd-1

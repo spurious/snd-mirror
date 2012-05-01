@@ -95,7 +95,6 @@ related documentation: &nbsp;
 <ul>
 <li><a href="#sndinfo">SndInfo</a>
 <li><a href="#sndplay">SndPlay</a>
-<li><a href="#audinfo">AudInfo</a>
 <li><a href="#sndsine">SndSine</a>
 <li><a href="#clmosc">clmosc</a>
 <li><a href="#otherexamples">Other Examples</a>
@@ -287,7 +286,6 @@ file indicated by fd to the desired frame.
 error occurs, they return -1 (MUS_ERROR). </p>
 <pre>
   int mus_audio_initialize(void)
-  char *mus_audio_describe(void)
   int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
   int mus_audio_write(int line, char *buf, int bytes)
@@ -296,10 +294,6 @@ error occurs, they return -1 (MUS_ERROR). </p>
 </pre>
 
 <p>mus_audio_initialize takes care of any necessary initialization.</p>
-
-<p>
-mus_audio_describe
-returns a description of the audio hardware state as a string.</p>
 
 <p>mus_audio_open_input opens an audio port to read sound data (i.e. a microphone, line in, etc).
 The input device is dev (see sndlib.h for details; when in doubt, use MUS_AUDIO_DEFAULT).
@@ -542,21 +536,6 @@ int main(int argc, char *argv[])
   return(0);
 }
 
-</pre>
-
-
-
-<div class="innerheader" id="audinfo">audinfo</div>
-
-<p>This program describes the current audio harware state (audinfo.c):</p>
-<pre>
-
-int main(int argc, char *argv[])
-{
-  mus_sound_initialize();	
-  fprintf(stdout, mus_audio_describe());
-  return(0);
-}
 </pre>
 
 
@@ -912,7 +891,6 @@ constants and functions described above into Scheme.  To initialize sndlib, call
   mus-sound-write-date (filename)          sound write date
   data-format-bytes-per-sample (format)    bytes per sample
 
-  mus-audio-describe ()                    return audio hardware state as a string
   mus-audio-reinitialize                   force re-check of available audio devices
 
   mus-sound-open-input (filename)          open filename (a sound file) returning an integer ("fd" below)

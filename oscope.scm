@@ -1,3 +1,4 @@
+;;; this file is obsolete.
 ;;; a software oscilloscope using the standard Snd channel display interface
 
 (provide 'snd-oscope.scm)

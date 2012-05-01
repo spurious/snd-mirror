@@ -374,13 +374,6 @@ format (e.g. " S_mus_bshort " = 2)"
 }
 
 
-static XEN g_mus_audio_describe(void) 
-{
-  #define H_mus_audio_describe "(" S_mus_audio_describe "): returns a string describing the current audio hardware setup"
-  return(C_TO_XEN_STRING(mus_audio_describe()));
-}
-
-
 static XEN g_mus_sound_duration(XEN gfilename) 
 {
   #define H_mus_sound_duration "(" S_mus_sound_duration " filename): duration (in seconds) of sound file"
@@ -2488,7 +2481,6 @@ XEN_NARGIFY_1(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
 XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
 XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
 
-XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 XEN_NARGIFY_1(g_mus_audio_close_w, g_mus_audio_close)
 XEN_ARGIFY_4(g_mus_audio_write_w, g_mus_audio_write)
 XEN_NARGIFY_3(g_mus_audio_read_w, g_mus_audio_read)
@@ -2598,7 +2590,6 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_mus_sound_open_input_w g_mus_sound_open_input
 #define g_mus_sound_close_input_w g_mus_sound_close_input
 
-#define g_mus_audio_describe_w g_mus_audio_describe
 #define g_mus_audio_close_w g_mus_audio_close
 #define g_mus_audio_write_w g_mus_audio_write
 #define g_mus_audio_read_w g_mus_audio_read
@@ -2798,7 +2789,6 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_close_input,    g_mus_sound_close_input_w,      1, 0, 0, H_mus_sound_close_input);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_describe,       g_mus_audio_describe_w,         0, 0, 0, H_mus_audio_describe);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_write,          g_mus_audio_write_w,            3, 1, 0, H_mus_audio_write);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_audio_read,           g_mus_audio_read_w,             3, 0, 0, H_mus_audio_read);
