@@ -6365,16 +6365,12 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
     case T_INTEGER:
       len = 64 + width;
       p = (char *)malloc(len * sizeof(char));
-      snprintf(p, len, 
-	       (sizeof(int) >= sizeof(s7_Int)) ? "%*d" : "%*lld",
-	       width, integer(obj));
+      snprintf(p, len, "%*lld", width, (long long int)integer(obj));
       break;
       
     case T_RATIO:
       p = (char *)malloc(128 * sizeof(char));
-      len = snprintf(p, 128,
-		     (sizeof(int) >= sizeof(s7_Int)) ? "%d/%d" : "%lld/%lld", 
-		     numerator(obj), denominator(obj));
+      len = snprintf(p, 128, "%lld/%lld", (long long int)numerator(obj), (long long int)denominator(obj));
       if (width > len)
 	{
 	  char *p1;
@@ -55472,3 +55468,25 @@ the error type and the info passed to the error handler.");
  * index    44300 -> 4988 [4992]
  * (these numbers are obsolete since lint/index have changed a lot)
  */
+
+/* 
+:(((list +) 0) 1 2 3)
+6
+
+how to protect a recursive macro call from being stepped on
+(define-macro (mac a b) `(if (> ,b 0) (let ((,a (- ,b 1))) (mac ,a (- ,b 1))) ,b))
+:(mac mac 1)
+;attempt to apply the integer 0 to (0 1)?
+;    (mac mac 1)
+(define-macro (mac a b) (let ((gmac (gensym))) (set! gmac mac) `(if (> ,b 0) (let ((,a (- ,b 1))) (,gmac ,a (- ,b 1))) ,b)))
+:(mac mac 10)
+0
+
+PERHAPS: example showing memoization using augment-env! proc-env
+
+:(define func (let ((lst (list 1 2 3))) (lambda (a) (((procedure-environment func) 'lst) a))))
+func
+:(func 1)
+2
+
+*/

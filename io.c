@@ -2742,21 +2742,6 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
 }
 
 
-int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, mus_float_t *maxes)
-{
-  int chan;
-  for (chan = 0; chan < chans; chan++)
-    {
-      mus_float_t cur_min, cur_max;
-      mus_samples_bounds(data, bytes, chan, chans, format, &cur_min, &cur_max);
-      if (-cur_min > cur_max)
-	maxes[chan] = -cur_min;
-      else maxes[chan] = cur_max;
-    }
-  return(MUS_NO_ERROR);
-}
-
-
 char *mus_strdup(const char *str)
 {
   char *newstr = NULL;

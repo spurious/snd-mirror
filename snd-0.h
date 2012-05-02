@@ -409,12 +409,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define dac_size(ss) ss->Dac_Size
 #define set_dac_size(a) ss->Dac_Size = a
 #if (HAVE_OSS || HAVE_ALSA)
-  #ifdef PPC
-     /* actually linuxppc */
-     #define DEFAULT_DAC_SIZE 0
-  #else
-     #define DEFAULT_DAC_SIZE 256
-  #endif
+  #define DEFAULT_DAC_SIZE 256
 #else
   #if MUS_MAC_OSX
     #define DEFAULT_DAC_SIZE 64

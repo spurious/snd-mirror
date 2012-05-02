@@ -184,9 +184,9 @@ Authors:
 
 Bill Schottstaedt
 Michael Scholz
-Kjetil S. Matheussen
 
 Rick Taube and Andrew Burnson:      C++ and Windows wizardry.
+Kjetil S. Matheussen                the Jack support and many other imporvements.
 Dave Phillips:                      the tutorial, new-effects.scm, and many other files.
 Fernando Lopez-Lezcano:             the current ALSA support.
 Richard W.E. Furse:                 the original LADSPA support.

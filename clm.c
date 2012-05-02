@@ -10989,10 +10989,6 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
   n = n * 0.5;
   for (i = 0; i < n; i++)
     {
-#if (__linux__ && __PPC__)
-      if (rdat[i] < lowest) rdat[i] = 0.0;
-      if (idat[i] < lowest) idat[i] = 0.0;
-#endif
       val = rdat[i] * rdat[i] + idat[i] * idat[i];
       if (val < lowest)
 	rdat[i] = 0.001;

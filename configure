@@ -751,7 +751,6 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_esd
 with_alsa
 with_oss
 with_jack
@@ -1431,7 +1430,6 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-esd		  use ESD
   --with-alsa		  use ALSA
   --with-oss		  use OSS
   --with-jack		  use JACK
@@ -4036,7 +4034,6 @@ _ACEOF
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
-#   --with-esd            use Enlightened Sound Daemon
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif
 #   --with-forth          use Forth as the extension language
@@ -4061,12 +4058,6 @@ _ACEOF
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 
 #--------------------------------------------------------------------------------
-
-
-# Check whether --with-esd was given.
-if test "${with_esd+set}" = set; then :
-  withval=$with_esd;
-fi
 
 
 # Check whether --with-alsa was given.
@@ -9629,77 +9620,8 @@ if test "$with_audio" != no ; then
 # we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
 # this only matters for those cases where we've implemented the audio code in audio.c
 # test for ALSA courtesy of Paul Davis
-# test for ESD courtesy of Nick Bailey
 # test for BSD courtesy of Steven Schultz
 # test for Jack courtesy of Kjetil S. Matheussen
-
-if test "$with_esd" = yes ; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lesd" >&5
-$as_echo_n "checking for main in -lesd... " >&6; }
-if ${ac_cv_lib_esd_main+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lesd  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-return main ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_esd_main=yes
-else
-  ac_cv_lib_esd_main=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_esd_main" >&5
-$as_echo "$ac_cv_lib_esd_main" >&6; }
-if test "x$ac_cv_lib_esd_main" = xyes; then :
-
-    ac_fn_c_check_header_mongrel "$LINENO" "esd.h" "ac_cv_header_esd_h" "$ac_includes_default"
-if test "x$ac_cv_header_esd_h" = xyes; then :
-  $as_echo "#define MUS_ESD 1" >>confdefs.h
-
-	esd_version="`esd-config --version`"
-        cat >>confdefs.h <<_ACEOF
-#define MUS_ESD_VERSION "${esd_version}"
-_ACEOF
-
-        audiofile_version="`audiofile-config --version`"
-        cat >>confdefs.h <<_ACEOF
-#define MUS_AUDIOFILE_VERSION "${audiofile_version}"
-_ACEOF
-
-        AUDIO_LIB="`esd-config --libs`"
-        if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: esd takes precedence over alsa -- the two are not compatible" >&5
-$as_echo "$as_me: WARNING: esd takes precedence over alsa -- the two are not compatible" >&2;}
-        fi
-        AUDIO_SYSTEM=esd
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the ESD header files" >&5
-$as_echo "$as_me: WARNING: can't find the ESD header files" >&2;}
-fi
-
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the ESD library" >&5
-$as_echo "$as_me: WARNING: can't find the ESD library" >&2;}
-fi
-
-
-else
 
 if test "$with_pulseaudio" = yes ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lpulse-simple" >&5
@@ -9756,7 +9678,6 @@ else
 $as_echo "$as_me: WARNING: can't find the pulseaudio library" >&2;}
 fi
 
-fi
 fi
 
 

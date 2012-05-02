@@ -149,7 +149,7 @@ as an inexact integer.
 <p>This file assumes you know about Scheme and all its problems,
 and want a quick tour of where s7 is different.  (Well, it was quick once upon a time).
 The main difference: if it's in s7, it's a first-class citizen of s7, and that includes
-macros, environments, and syntactic keywords.
+macros, environments, and syntactic forms.
 </p>
 
 <blockquote>
@@ -5149,7 +5149,7 @@ These symbols are not just an optimization of string comparison:
 
 <div class="indented">
 
-<p>The built-in syntactic keywords, such as "begin", are almost first-class citizens.
+<p>The built-in syntactic forms, such as "begin", are almost first-class citizens.
 </p>
 
 <pre class="indented">
@@ -5228,12 +5228,6 @@ Currently, you can't set! a built-in syntactic keyword to some new value:
 I hope this kind of thing is not actually very useful, but let me
 know if you need it.  The issue is purely one of speed.
 </p>
-
-<p>I use the phrase "syntactic keyword" because that's the term used in r5rs.  These
-are not keywords in the s7 sense, but what CL calls special forms or macros: lambda,
-begin, define-macro, and so on.  The only unusual additions to this set are
-define-bacro, with-environment and with-baffle.
-</p>
 </div>
 
 
@@ -5269,13 +5263,13 @@ the current environment, so defines happen in the enclosing environment.
 
 <pre>
   (define vector-map map) 
-  (define vector-for-each for-each) 
-  (define copy-vector copy) 
-  (define (vector-&gt;string vect) (apply string (vector-&gt;list vect)))
   (define string-map map) 
+  (define vector-for-each for-each) 
   (define string-for-each for-each) 
-  (define (string-&gt;vector str) (apply vector (string-&gt;list str)))
+  (define copy-vector copy) 
   (define copy-list copy)
+  (define (vector-&gt;string vect) (apply string (vector-&gt;list vect)))
+  (define (string-&gt;vector str) (apply vector (string-&gt;list str)))
 
   (define char-foldcase char-downcase) 
   (define string-foldcase string-downcase)
@@ -5332,9 +5326,7 @@ the current environment, so defines happen in the enclosing environment.
   ;; and why no euclidean-rationalize or exact-integer-expt?
 
   ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
-  ;;   in any name should raise a red flag.  I might implement this as the variable *env* with
-  ;;   hash-table-like implicit indexing: (*env* "HOME") returns "/home/bil".
-  ;; scheme also has get-output-string which might be better without the "get-".
+  ;;   in any name should raise a red flag.
 
   ;; define-record-type falls between two stools: the type mechanism should be separate
   ;;   from the notion of a structure with fields. 

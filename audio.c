@@ -1,24 +1,18 @@
-/* Audio hardware handlers (OSS, ALSA, Sun, Windows, Mac OSX, Jack, ESD, HPUX, NetBSD, pulseaudio, portaudio) 
+/* Audio hardware handlers (OSS, ALSA, Sun, Windows, Mac OSX, Jack, HPUX, NetBSD, pulseaudio, portaudio) 
  *
- * this comes from the 90's when the caller decided when to write a buffer to a DAC,
- *   a much simpler world!  Now, everyone assumes that the player/recorder will callback
- *   for data at its convenience, so this code has become convoluted.  Since I no longer
- *   have any intention of recording, and the audio hardware state is handled better by
- *   the various OS's (when this was written most gave the user no way to tell what its
- *   state was), 2/3 of the code here is obsolete.  I am tempted to make these changes:
- *   
- * remove mus_audio_open_input, mus_audio_read, mus_audio_describe.
- * change playback to mus_audio_output which includes a callback function starting, writing,
- *    and stopping output.  So remove mus_audio_close and mus_audio_write as well.  Also
- *    removed from sndlib.h: MUS_AUDIO_PACK_SYSTEM et al, all the MUS_AUDIO_errors,
- *    mus_audio_systems (sensless in this day and age), mus_audio_api (Nando wanted this,
- *    but it is also totally obsolete), mus_audio_compatible_format (machines are fast),
- *    mus_oss_set_buffers, mus_audio_read|write_buffers, mus_audio_reinitialize,
- *    mus_audio_initialize, and all the mus_alsa specialties, and mus_audio_device_channels|format.
- * That is to say, 95% of audio.c is obsolete.
+ * In many cases, only callback driven transfers are supported, so ideally we'd have:
+ * int mus_audio_playback(caller_data, start_func, fill_func, end_func)
+ *   returns error indication or MUS_NO_ERROR
+ *   calls start_func at startup: void start(caller_data, ...)?
+ *   each times it needs a bufferfull, calls fill_func: bool fill(caller_data, void *buf, buf_size_in_samples, buf_data_type)
+ *     perhaps returns false to signal normal quit?
+ *   at end (either via fill or some interrupt), calls end(caller_data, ...)?
+ * but ...
  *
- * 30-Apr: remove mus_audio_systems
- * 1-May:  remove mus_audio_describe, audinfo.c
+ * 30-Apr: remove mus_audio_systems (always 1 except OSS)
+ * 1-May:  remove mus_audio_describe, audinfo.c, mus_audio_read|write_buffers, ESD support
+ * 2-May:  if ALSA default is pulse, async doesn't work.  We already are at an impasse!
+ *            alsa conf: /etc/asound.conf /etc/alsa/<all>.conf /usr/share/alsa/alsa.conf ~/.asoundrc
  */
 
 /*
@@ -29,13 +23,11 @@
  *    Sun (has switches for OpenBSD, but they're untested)
  *    Windows 95/98
  *    OSX
- *    ESD
  *    JACK
  *    HPUX
  *    NetBSD
  *    PulseAudio (in progress?)
  *    PortAudio
- *    audio describers
  */
 
 /*
@@ -46,11 +38,6 @@
  * int mus_audio_read(int line, char *buf, int bytes)
  * int mus_audio_initialize(void) does whatever is needed to get set up
  * char *mus_audio_moniker(void) returns some brief description of the overall audio setup (don't free return string).
- */
-
-/* error handling is tricky here -- higher levels are using many calls as probes, so
- *   the "error" is a sign of non-existence, not a true error.  So, for nearly all
- *   cases, I'll use mus_print, not mus_error.
  */
 
 #include <mus-config.h>
@@ -3184,16 +3171,10 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 
 
-/* ------------------------------- OSX ----------------------------------------- */
+/* ------------------------------- Mac OSX ----------------------------------------- */
 
 /* this code based primarily on the CoreAudio headers and portaudio pa_mac_core.c,
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
- */
-
-/* the following have been deprecated: 
- *         AudioDeviceGetPropertyInfo, AudioDeviceGetProperty, AudioHardwareGetPropertyInfo, AudioHardwareGetProperty,
- *         AudioDeviceSetProperty
- * once they are removed, Mac users will need portaudio, since I can't face rewriting that code.
  */
 
 #ifdef MUS_MAC_OSX
@@ -3224,34 +3205,9 @@ static const char* osx_error(OSStatus err)
   return("unknown error");
 }
 
-
-static int max_chans_via_stream_configuration(AudioDeviceID device, bool input_case)
-{
-  /* apparently MOTU 828 has to be different (this code from portaudio) */
-  UInt32 size = 0;
-  Boolean writable;
-  OSStatus err = noErr;
-  err = AudioDeviceGetPropertyInfo(device, 0, input_case, kAudioDevicePropertyStreamConfiguration, &size, &writable);
-  if (err == noErr)
-    {
-      AudioBufferList *list;
-      list = (AudioBufferList *)malloc(size);
-      err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamConfiguration, &size, list);
-      if (err == noErr)
-	{
-	  int chans = 0, i;
-	  for (i = 0; i < list->mNumberBuffers; i++)
-	    chans += list->mBuffers[i].mNumberChannels;
-	  free(list);
-	  return(chans);
-	}
-    }
-  return(-1);
-}
-
 #define MAX_BUFS 4
 static char **bufs = NULL;
-static int in_buf = 0, out_buf = 0;
+static unsigned int in_buf = 0, out_buf = 0;
 
 static OSStatus writer(AudioDeviceID inDevice, 
 		       const AudioTimeStamp *inNow, 
@@ -3332,11 +3288,23 @@ int mus_audio_close(int line)
 	  sizeof_running = sizeof(UInt32);
 	  while (in_buf == out_buf)
 	    {
-	      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
+	      /* err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running); */
+	      {
+		AudioObjectPropertyAddress device_address = { kAudioDevicePropertyDeviceIsRunning,
+							      kAudioDevicePropertyScopeOutput,
+							      kAudioObjectPropertyElementMaster };
+		err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_running, &running);
+	      }	      
 	    }
 	  while (in_buf != out_buf)
 	    {
-	      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
+	      /* err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running); */
+	      {
+		AudioObjectPropertyAddress device_address = { kAudioDevicePropertyDeviceIsRunning,
+							      kAudioDevicePropertyScopeOutput,
+							      kAudioObjectPropertyElementMaster };
+		err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_running, &running);
+	      }
 	    }
 	  in_buf = 0;
 	  err = AudioDeviceStop(device, (AudioDeviceIOProc)writer);
@@ -3360,7 +3328,7 @@ static audio_convert_t conversion_choice = CONVERT_NOT;
 static float conversion_multiplier = 1.0;
 static int dac_out_chans, dac_out_srate;
 static int incoming_out_chans = 1, incoming_out_srate = 44100;
-static int fill_point = 0;
+static unsigned int fill_point = 0;
 static unsigned int bufsize = 0, current_bufsize = 0;
 static bool match_dac_to_sound = true;
 
@@ -3384,13 +3352,29 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   UInt32 sizeof_device, sizeof_format, sizeof_bufsize;
   AudioStreamBasicDescription device_desc;
 
+  device = 0;
   sizeof_device = sizeof(AudioDeviceID);
   sizeof_bufsize = sizeof(unsigned int);
 
-  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device));
+  /* err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device)); */
+  {
+    AudioObjectPropertyAddress device_address = { kAudioHardwarePropertyDefaultOutputDevice,
+						  kAudioObjectPropertyScopeGlobal,
+						  kAudioObjectPropertyElementMaster };
+    err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &device_address, 0, NULL, &sizeof_device, &device);
+  }
+
   bufsize = 4096;
   if (err == noErr) 
-    err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
+    {
+      /* err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize); */
+      {
+	AudioObjectPropertyAddress device_address = { kAudioDevicePropertyBufferSize,
+						      kAudioDevicePropertyScopeOutput,
+						      kAudioObjectPropertyElementMaster };
+	err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_bufsize, &bufsize);
+      }
+    }
   if (err != noErr) 
     {
       fprintf(stderr, "open audio output err: %d %s\n", (int)err, osx_error(err));
@@ -3398,7 +3382,14 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
     }
 
   sizeof_format = sizeof(AudioStreamBasicDescription);
-  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+  /* err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc); */
+  {
+    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
+						  kAudioDevicePropertyScopeOutput,
+						  kAudioObjectPropertyElementMaster };
+    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_format, &device_desc);
+  }
+
   if (err != noErr)
     {
       fprintf(stderr, "open audio output (get device format) err: %d %s\n", (int)err, osx_error(err));
@@ -3412,7 +3403,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       /* current DAC state: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
       /* apparently get stream format can return noErr but chans == 0?? */
 
-      if ((device_desc.mChannelsPerFrame != chans) || 
+      if (((int)device_desc.mChannelsPerFrame != chans) || 
 	  ((int)(device_desc.mSampleRate) != srate))
 	{
 	  /* try to match DAC settings to current sound */
@@ -3421,7 +3412,13 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	  device_desc.mBytesPerPacket = chans * 4; /* assume 1 frame/packet and float32 data */
 	  device_desc.mBytesPerFrame = chans * 4;
 	  sizeof_format = sizeof(AudioStreamBasicDescription);
-	  err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+	  /* err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc); */
+	  {
+	    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
+							  kAudioDevicePropertyScopeOutput,
+							  kAudioObjectPropertyElementMaster };
+	    err = AudioObjectSetPropertyData(device, &device_address, 0, NULL, sizeof_format, &device_desc);
+	  }
 	  
 	  /* this error is bogus in some cases -- other audio systems just ignore it,
 	   *   but in my case (a standard MacIntel with no special audio hardware), if I leave
@@ -3440,11 +3437,24 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	      device_desc.mBytesPerPacket = device_desc.mChannelsPerFrame * 4; /* assume 1 frame/packet and float32 data */
 	      device_desc.mBytesPerFrame = device_desc.mChannelsPerFrame * 4;
 	      sizeof_format = sizeof(AudioStreamBasicDescription);
-	      err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+	      /* err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc); */
+	      {
+		AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
+							      kAudioDevicePropertyScopeOutput,
+							      kAudioObjectPropertyElementMaster };
+		err = AudioObjectSetPropertyData(device, &device_address, 0, NULL, sizeof_format, &device_desc);
+	      }
 	      if (err != noErr)
 		{
 		  sizeof_format = sizeof(AudioStreamBasicDescription);
-		  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormatMatch, &sizeof_format, &device_desc);
+		  /* err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormatMatch, &sizeof_format, &device_desc); */
+		  {
+		    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormatMatch,
+								  kAudioDevicePropertyScopeOutput,
+								  kAudioObjectPropertyElementMaster };
+		    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_format, &device_desc);
+		  }
+
 		  if (err == noErr)
 		    {
 		      /* match suggests: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
@@ -3452,12 +3462,24 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 		      /* a bug here in emagic 2|6 -- we can get 6 channel match, but then can't set it?? */
 
 		      sizeof_format = sizeof(AudioStreamBasicDescription);
-		      err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+		      /* err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc); */
+		      {
+			AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
+								      kAudioDevicePropertyScopeOutput,
+								      kAudioObjectPropertyElementMaster };
+			err = AudioObjectSetPropertyData(device, &device_address, 0, NULL, sizeof_format, &device_desc);
+		      }
 		      if (err != noErr) 
 			{
 			  /* no luck -- get current DAC settings at least */
 			  sizeof_format = sizeof(AudioStreamBasicDescription);
-			  AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+			  /* AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc); */
+			  {
+			    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
+									  kAudioDevicePropertyScopeOutput,
+									  kAudioObjectPropertyElementMaster };
+			    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_format, &device_desc);
+			  }
 			}
 		    }
 		}
@@ -3465,7 +3487,13 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 		{
 		  /* nothing matches? -- get current DAC settings */
 		  sizeof_format = sizeof(AudioStreamBasicDescription);
-		  AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+		  /* AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc); */
+		  {
+		    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
+								  kAudioDevicePropertyScopeOutput,
+								  kAudioObjectPropertyElementMaster };
+		    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_format, &device_desc);
+		  }
 		}
 	    }
 	}
@@ -3632,15 +3660,17 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 int mus_audio_write(int line, char *buf, int bytes) 
 {
   OSStatus err = noErr;
-  int lim, bp, out_bytes;
+  unsigned int lim, bp, out_bytes;
   UInt32 sizeof_running;
   UInt32 running;
   char *to_buf;
+
   to_buf = bufs[in_buf];
-  out_bytes = (int)(bytes * conversion_multiplier);
+  out_bytes = (unsigned int)(bytes * conversion_multiplier);
   if ((fill_point + out_bytes) > bufsize)
     out_bytes = bufsize - fill_point;
-  lim = (int)(out_bytes / conversion_multiplier);
+  lim = (unsigned int)(out_bytes / conversion_multiplier);
+
   if (!writing)
     {
       convert_incoming(to_buf, fill_point, lim, buf);
@@ -3676,7 +3706,13 @@ int mus_audio_write(int line, char *buf, int bytes)
       while (bp == out_buf)
 	{
 	  /* i.e. just kill time without hanging */
-	  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
+	  /* err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running); */
+	  {
+	    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyDeviceIsRunning,
+							  kAudioDevicePropertyScopeOutput,
+							  kAudioObjectPropertyElementMaster };
+	    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_running, &running);
+	  }
 	  /* usleep(10); */
 	}
     }
@@ -3698,12 +3734,30 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
   OSStatus err = noErr;
   UInt32 sizeof_device;
   UInt32 sizeof_bufsize;
+
   sizeof_device = sizeof(AudioDeviceID);
   sizeof_bufsize = sizeof(unsigned int);
-  err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &sizeof_device, (void *)(&device));
+
+  device = 0;
+  /* err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &sizeof_device, (void *)(&device)); */
+  {
+    AudioObjectPropertyAddress device_address = { kAudioHardwarePropertyDefaultInputDevice,
+						  kAudioObjectPropertyScopeGlobal,
+						  kAudioObjectPropertyElementMaster };
+    err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &device_address, 0, NULL, &sizeof_device, &device);
+  }
+
   bufsize = 4096;
   if (err == noErr) 
-    err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
+    {
+      /* err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize); */
+      {
+	AudioObjectPropertyAddress device_address = { kAudioDevicePropertyBufferSize,
+						      kAudioDevicePropertyScopeInput,
+						      kAudioObjectPropertyElementMaster };
+	err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_bufsize, &bufsize);
+      }
+    }
   if (err != noErr) 
     {
       fprintf(stderr, "open audio input err: %d %s\n", (int)err, osx_error(err));
@@ -3749,23 +3803,30 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
 int mus_audio_read(int line, char *buf, int bytes) 
 {
   OSStatus err = noErr;
-  int bp;
+  unsigned int bp;
   UInt32 sizeof_running;
   UInt32 running;
   char *to_buf;
+
   if (in_buf == out_buf)
     {
       bp = out_buf;
       sizeof_running = sizeof(UInt32);
       while (bp == out_buf)
 	{
-	  err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
+	  /* err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running); */
+	  {
+	    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyDeviceIsRunning,
+							  kAudioDevicePropertyScopeInput,
+							  kAudioObjectPropertyElementMaster };
+	    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_running, &running);
+	  }
 	  if (err != noErr) 
 	    fprintf(stderr, "wait err: %s ", osx_error(err));
 	}
     }
   to_buf = bufs[in_buf];
-  if (bytes <= bufsize)
+  if (bytes <= (int)bufsize)
     memmove((void *)buf, (void *)to_buf, bytes);
   else memmove((void *)buf, (void *)to_buf, bufsize);
   in_buf++;
@@ -3773,350 +3834,12 @@ int mus_audio_read(int line, char *buf, int bytes)
   return(MUS_ERROR);
 }
 
-static int max_chans(AudioDeviceID device, int input)
-{
-  int maxc = 0, formats, k, config_chans;
-  UInt32 size;
-  OSStatus err;
-  AudioStreamBasicDescription desc;
-  AudioStreamBasicDescription *descs;
-  size = sizeof(AudioStreamBasicDescription);
-  err = AudioDeviceGetProperty(device, 0, input, kAudioDevicePropertyStreamFormat, &size, &desc);
-  if (err == noErr) 
-    {
-      maxc = (int)(desc.mChannelsPerFrame);
-      size = 0;
-      err = AudioDeviceGetPropertyInfo(device, 0, input, kAudioDevicePropertyStreamFormats, &size, NULL);
-      formats = size / sizeof(AudioStreamBasicDescription);
-      if (formats > 1)
-	{
-	  descs = (AudioStreamBasicDescription *)calloc(formats, sizeof(AudioStreamBasicDescription));
-	  size = formats * sizeof(AudioStreamBasicDescription);
-	  err = AudioDeviceGetProperty(device, 0, input, kAudioDevicePropertyStreamFormats, &size, descs);
-	  if (err == noErr) 
-	    for (k = 0; k < formats; k++)
-	      if ((int)(descs[k].mChannelsPerFrame) > maxc) maxc = (int)(descs[k].mChannelsPerFrame);
-	  free(descs);
-	}
-    }
-  else fprintf(stderr, "read chans hit: %s\n", osx_error(err));
-  config_chans = max_chans_via_stream_configuration(device, input);
-  if (config_chans > maxc) return(config_chans);
-  return(maxc);
-}
-
-
-static int osx_chans(int dev1)
-{
-  AudioDeviceID dev = kAudioDeviceUnknown;
-  OSStatus err = noErr;
-  UInt32 size;
-  int curdev;
-  bool in_case = false;
-
-  curdev = MUS_AUDIO_DEVICE(dev1);
-  size = sizeof(AudioDeviceID);
-  in_case = ((curdev == MUS_AUDIO_MICROPHONE) || (curdev == MUS_AUDIO_LINE_IN));
-  if (in_case)
-    err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &dev);
-  else err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &dev);
-  if (err != noErr) fprintf(stderr, "get default: %s\n", osx_error(err));
-  return(max_chans(dev, in_case));
-}
-
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
 char *mus_audio_moniker(void) {return((char *)"Mac OSX audio");}
 #endif
 
 
-
-
-/* ------------------------------- new mac osx ----------------------------------------- */
-
-#if MUS_NEW_MAC_OSX
-#define AUDIO_OK 1
-
-/* only output is supported, and we just take whatever the Mac gives us
- * 
- * -framework AudioToolbox
- */
-#include <AudioToolbox/AudioToolbox.h>
-
-static AudioStreamBasicDescription fmt = {0};
-
-
-int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
-
-char *mus_audio_moniker(void) {return((char *)"Mac OSX audio");}
-
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
-{
-  return(MUS_ERROR);
-}
-
-int mus_audio_read(int line, char *buf, int bytes) 
-{
-  return(MUS_ERROR);
-}
-
-/* need 2 buffers out here?, allocated at write
- */
-
-static void write_callback(void *ptr, AudioQueueRef queue, AudioQueueBufferRef bufr)
-{
-  OSStatus status;
-  AudioQueueBuffer *buf = bufr;
-  int nsamp = buf->mAudioDataByteSize / 2;
-  short *samp = buf->mAudioData;
-
-  status = AudioQueueEnqueueBuffer (queue, bufr, 0, NULL);
-}
-
-
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
-{
-  OSStatus status;
-  AudioQueueBufferRef bufr1, bufr2;
-  AudioQueueRef queue;
-  AudioQueueBuffer *buf;
-
-  fmt.mSampleRate = srate;
-  fmt.mFormatID = kAudioFormatLinearPCM;
-  fmt.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
-  fmt.mFramesPerPacket = 1;
-  fmt.mChannelsPerFrame = chans;
-  fmt.mBytesPerPacket = fmt.mBytesPerFrame = 2 * chans;
-  fmt.mBitsPerChannel = 16;
-
-  status = AudioQueueNewOutput(&fmt, write_callback, NULL, CFRunLoopGetCurrent(), kCFRunLoopCommonModes, 0, &queue);
-  if (status == kAudioFormatUnsupportedDataFormatError)
-    return(MUS_ERROR);
-
-  /* this part is later */
-  status = AudioQueueAllocateBuffer(queue, size * 2, &buf1);
-  buf = bufr1;
-  buf->mAudioDataByteSize = size * 2;
-  write_callback(NULL, queue, bufr1);
-  
-  status = AudioQueueAllocateBuffer(queue, size * 2, &buf2);
-  buf = bufr2;
-  buf->mAudioDataByteSize = size * 2;
-  write_callback(NULL, queue, bufr2);
-
-  status = AudioQueueSetParameter(queue, kAudioQueueParam_Volume, 1.0);
-  status = AudioQueueStart(queue, NULL);
-  
-}
-
-int mus_audio_write(int line, char *buf, int bytes) 
-{
-  return(MUS_ERROR);
-}
-
-int mus_audio_close(int line) 
-{
-  return(MUS_ERROR);
-}
-
-#endif
-
-
-
-
-/* -------------------------------- ESD -------------------------------- */
-
-/* ESD audio IO for Linux                   *
- * Nick Bailey <nick@bailey-family.org.uk>  *
- * also n.bailey@elec.gla.ac.uk             */
-
-/* ESD is pretty well undocumented, and I've not looked at snd before, *
- * but here goes...                                                    *
- *                                                                     *
- * History:                                                            *
- * 14th Nov 2000: copied SUN drivers here and started to hack.  NJB.   *
- *                                                                     */
-
-#ifdef MUS_ESD
-#define AUDIO_OK 1
-
-#include <esd.h>
-
-static int esd_play_sock = -1;
-static int esd_rec_sock  = -1;
-static char esd_name[] = "Enlightened Sound Daemon";
-static int swap_end, resign; /* How to handle samples on write */
-
-int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
-static char our_name[LABEL_BUFFER_SIZE];
-char *mus_audio_moniker(void) 
-{
-#ifdef MUS_ESD_VERSION
-  #ifdef MUS_AUDIOFILE_VERSION
-    mus_snprintf(our_name, LABEL_BUFFER_SIZE, "%s: %s (Audiofile %s)", esd_name, MUS_ESD_VERSION, MUS_AUDIOFILE_VERSION);
-  #else
-    mus_snprintf(our_name, LABEL_BUFFER_SIZE, "%s: %s", esd_name, MUS_ESD_VERSION);
-  #endif
-  return(our_name);
-#else
-  return(esd_name);
-#endif
-}
-
-int mus_audio_api(void) {return(0);}
-
-#define RETURN_ERROR_EXIT(Error_Type, Audio_Line, Ur_Error_Message) \
-  do { char *Error_Message; Error_Message = Ur_Error_Message; \
-    if (esd_play_sock != -1) close(esd_play_sock); \
-    if (esd_rec_sock != -1) close(esd_rec_sock); \
-    if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
-    return(MUS_ERROR); \
-  } while (false)
-
-/* No we're laughing.  snd think's its talking to a real piece of hardware
-   so it'll only try to open it once.  We can just use the socket numbers */
-
-/* REVOLTING HACK!  to_esd_format is called from mus_audio_open, and
-   /as a side effect/, sets a flag to tell the write routine whether
-   or not to change the endienness of the audio sample data (afaik,
-   esd can't do this for us).  Same goes for signed-ness.
-   If it gets called from elsewhere, it could be nasty. */
-
-static int to_esd_format(int snd_format)
-{
-  /* Try this on the Macs: it may be esd expects Bigendian on those */
-  switch (snd_format) { /* Only some are supported */
-  case MUS_UBYTE:   swap_end = 0; resign = 0; return ESD_BITS8;
-  case MUS_LSHORT:  swap_end = 0; resign = 0; return ESD_BITS16;
-  case MUS_BSHORT:  swap_end = 1; resign = 0; return ESD_BITS16;
-  case MUS_ULSHORT: swap_end = 0; resign = 1; return ESD_BITS16;
-  case MUS_UBSHORT: swap_end = 1; resign = 1; return ESD_BITS16;
-  }
-  return MUS_ERROR;
-}
-
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
-{
-  int esd_prop = ESD_STREAM;
-  int esd_format;
-
-  if ((esd_format = to_esd_format(format)) == MUS_ERROR)
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
-		      mus_format("Can't handle format %d (%s) through esd",
-				 format, mus_data_format_name(format)));
-  else
-    esd_prop |= esd_format;
-
-  if (chans < 1 || chans > 2)
-    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
-		      mus_format("Can't handle format %d channels through esd",
-				 format));
-  else 
-    esd_prop |= chans == 1 ? ESD_MONO : ESD_STEREO;
-
-  esd_play_sock = esd_play_stream(esd_prop, srate,
-				  NULL, "snd playback stream");
-
-  if (esd_play_sock ==  -1)
-    RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, audio_out,
-		      mus_format("device %d (%s) not available",
-				 ur_dev, mus_audio_device_name(ur_dev)));
-  else
-    return esd_play_sock;
-}
-
-int mus_audio_write(int line, char *buf, int bytes)
-{
-  int written;
-  char *to = buf;
-
-  /* Esd can't do endianness or signed/unsigned conversion,
-     so it's our problem.  We won't screw up the callers data */
-
-  if (swap_end) {
-    char *from = buf;
-    char *p;
-    int samps = bytes/2;
-    p = to = (char *)alloca(bytes);
-    while (samps--) {
-      *p++ = *(from+1);
-      *p++ = *(from);
-      from += 2;
-    }
-  }
-
-  /* Need to do something about sign correction here */
-
-  do {
-    written = write(line, to, bytes);
-    if (written > 0) {
-      bytes -= written;
-      to += written;
-    }
-    else
-      RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
-			mus_format("write error: %s", strerror(errno)));
-  } while (bytes > 0);
-  return MUS_NO_ERROR;
-}
-
-int mus_audio_close(int line)
-{
-  esd_close(line);
-  if (esd_play_sock == line) esd_play_sock = -1;
-  else if (esd_rec_sock == line) esd_rec_sock = -1;
-  return MUS_NO_ERROR;
-}
-
-int mus_audio_read(int line, char *buf, int bytes)
-{
-  int bytes_read;
-
-  do {
-    bytes_read = read(line, buf, bytes);
-    if (bytes_read > 0) { /* 0 -> EOF; we'll regard that as an error */
-      bytes -= bytes_read;
-      buf += bytes_read;
-    } else
-      RETURN_ERROR_EXIT(MUS_AUDIO_WRITE_ERROR, -1,
-			mus_format("read error: %s", strerror(errno)));
-  } while (bytes > 0);
-  return MUS_NO_ERROR;
-}
-
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
-{
-  int esd_prop = ESD_STREAM;
-  int esd_format;
-
-  if ((esd_format = to_esd_format(format)) == MUS_ERROR)
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
-		      mus_format("Can't handle format %d (%s) through esd",
-				 format, mus_data_format_name(format)));
-  else
-    esd_prop |= esd_format;
-
-  if (chans < 1 || chans > 2)
-    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_out,
-		      mus_format("Can't handle format %d channels through esd",
-				 chans));
-  else 
-    esd_prop |= chans == 1 ? ESD_MONO : ESD_STEREO;
-
-  esd_rec_sock = esd_play_stream(esd_prop, srate,
-				  NULL, "snd record stream");
-
-  if (esd_rec_sock ==  -1)
-    RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, audio_out,
-		      mus_format("Device %d (%s) not available",
-				 ur_dev, mus_audio_device_name(ur_dev)));
-  else
-    return esd_rec_sock;
-}
-
-#endif
 
 
 /* ------------------------------- JACK ----------------------------------------- */
@@ -5797,12 +5520,7 @@ int mus_audio_device_channels(int dev)
     }
 #endif
 
-
-#if MUS_MAC_OSX
-  return(osx_chans(dev));
-#endif
-
-  return(2); /* netbsd hpux esd sun and oss with quibbles */
+  return(2); /* netbsd hpux sun mac and oss with quibbles */
 }
 
 
@@ -5897,13 +5615,6 @@ int mus_audio_device_format(int dev) /* snd-dac */
 #else
   mixer_vals[1] = MUS_BFLOAT;
 #endif
-#endif
-
-#if MUS_ESD
-  mixer_vals[0] = 3;
-  mixer_vals[1] = MUS_UBYTE;
-  mixer_vals[2] = MUS_LSHORT;
-  mixer_vals[3] = MUS_BSHORT;
 #endif
 
 #if MUS_NETBSD

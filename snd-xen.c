@@ -2942,10 +2942,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_YES_WE_HAVE("oss");
 #endif
 
-#if MUS_ESD
-  XEN_YES_WE_HAVE("esd");
-#endif
-
 #if MUS_PULSEAUDIO
   XEN_YES_WE_HAVE("pulse-audio");
 #endif

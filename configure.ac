@@ -43,7 +43,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
-#   --with-esd            use Enlightened Sound Daemon
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif
 #   --with-forth          use Forth as the extension language
@@ -69,7 +68,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 
 #--------------------------------------------------------------------------------
 
-AC_ARG_WITH(esd,         [  --with-esd		  use ESD])
 AC_ARG_WITH(alsa,        [  --with-alsa		  use ALSA])
 AC_ARG_WITH(oss,         [  --with-oss		  use OSS])
 AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
@@ -1375,28 +1373,8 @@ if test "$with_audio" != no ; then
 # we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
 # this only matters for those cases where we've implemented the audio code in audio.c
 # test for ALSA courtesy of Paul Davis
-# test for ESD courtesy of Nick Bailey
 # test for BSD courtesy of Steven Schultz
 # test for Jack courtesy of Kjetil S. Matheussen
-
-if test "$with_esd" = yes ; then
-  AC_CHECK_LIB(esd, main, [
-    AC_CHECK_HEADER(esd.h,
-       [AC_DEFINE(MUS_ESD)
-	esd_version="`esd-config --version`"
-        AC_DEFINE_UNQUOTED(MUS_ESD_VERSION,"${esd_version}")
-        audiofile_version="`audiofile-config --version`"
-        AC_DEFINE_UNQUOTED(MUS_AUDIOFILE_VERSION,"${audiofile_version}")
-        AUDIO_LIB="`esd-config --libs`"
-        if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
-	  AC_MSG_WARN([esd takes precedence over alsa -- the two are not compatible])
-        fi
-        AUDIO_SYSTEM=esd
-       ],
-      [AC_MSG_WARN(can't find the ESD header files)])],
-    [AC_MSG_WARN(can't find the ESD library)])
-
-else
 
 if test "$with_pulseaudio" = yes ; then
   AC_CHECK_LIB(pulse-simple, main, [
@@ -1411,7 +1389,6 @@ if test "$with_pulseaudio" = yes ; then
        ],
       [AC_MSG_WARN(can't find the pulseaudio header files)])],
     [AC_MSG_WARN(can't find the pulseaudio library)])
-fi
 fi
 
 

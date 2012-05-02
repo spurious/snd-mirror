@@ -489,7 +489,6 @@ MUS_EXPORT void mus_reset_io_c(void);
 MUS_EXPORT void mus_reset_headers_c(void);
 MUS_EXPORT void mus_reset_audio_c(void);
 
-MUS_EXPORT int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, mus_float_t *maxes);
 MUS_EXPORT int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int format, mus_float_t *min_samp, mus_float_t *max_samp);
 
 MUS_EXPORT mus_long_t mus_max_malloc(void);
