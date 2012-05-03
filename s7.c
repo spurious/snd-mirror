@@ -38097,7 +38097,12 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
       
     case T_C_OBJECT:                     /* ((vector (vct 1 2 3)) 0 2) -> 3.0 */
       return((*(object_ref(obj)))(sc, obj, indices));
-      
+
+    case T_ENVIRONMENT:
+      if (is_symbol(car(indices)))
+	return(environment_ref(sc, obj, car(indices)));
+      return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
+
     default:                             /* (#(a b c) 0 1) -> error, but ((list (lambda (x) x)) 0 "hi") -> "hi" */
       return(g_apply(sc, list_2(sc, obj, indices)));
     }
@@ -45129,6 +45134,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else return(s7_wrong_type_arg_error(sc, "environment application", 1, car(sc->args), "a symbol"));
 	    }
 	  else return(s7_wrong_number_of_args_error(sc, "environment as applicable object takes one argument: ~A", sc->args));
+	  /* PERHAPS: this error means (env a b) is an error not ((env a) b) which might be expected
+	   *  g_list_ref does this if extra index: return(implicit_index(sc, lst, inds));
+	   */
 	  goto START;
 
 
@@ -55468,25 +55476,3 @@ the error type and the info passed to the error handler.");
  * index    44300 -> 4988 [4992]
  * (these numbers are obsolete since lint/index have changed a lot)
  */
-
-/* 
-:(((list +) 0) 1 2 3)
-6
-
-how to protect a recursive macro call from being stepped on
-(define-macro (mac a b) `(if (> ,b 0) (let ((,a (- ,b 1))) (mac ,a (- ,b 1))) ,b))
-:(mac mac 1)
-;attempt to apply the integer 0 to (0 1)?
-;    (mac mac 1)
-(define-macro (mac a b) (let ((gmac (gensym))) (set! gmac mac) `(if (> ,b 0) (let ((,a (- ,b 1))) (,gmac ,a (- ,b 1))) ,b)))
-:(mac mac 10)
-0
-
-PERHAPS: example showing memoization using augment-env! proc-env
-
-:(define func (let ((lst (list 1 2 3))) (lambda (a) (((procedure-environment func) 'lst) a))))
-func
-:(func 1)
-2
-
-*/

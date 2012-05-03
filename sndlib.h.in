@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 21
-#define SNDLIB_REVISION 2
-#define SNDLIB_DATE "11-Dec-09"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "3-May-12"
 
 
 /* these are picked up during configuration */

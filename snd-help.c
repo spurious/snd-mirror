@@ -462,6 +462,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+1-May:   removed mus-audio-describe, ESD audio support, audinfo.\n\
 12-Apr:  Snd 12.10.\n\
 5-Mar:   Snd 12.9.\n\
 Feb:     removed snd1.html and snd-contents.html (these were\n\
@@ -480,8 +481,6 @@ Feb:     removed snd1.html and snd-contents.html (these were\n\
             and report-in-minibuffer.  Replaced the latter two with status-report.\n\
          removed sound-specific search-procedures (i.e. there is only one search procedure)\n\
          removed the bomb function.\n\
-2-Feb:   Snd 12.8.\n\\n\
-27-Jan:  removed snd10.scm.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

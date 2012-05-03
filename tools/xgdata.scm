@@ -8412,6 +8412,10 @@
 (CFNC "void gtk_color_chooser_add_palette GtkColorChooser* chooser GtkOrientation horizontal gint colors_per_line gint n_colors GdkRGBA* colors") ; was gboolean horizontal
 
 ;;; 3.4.0|1 -- nothing new
+;;; 3.5.2 -- a few deprecations (below)
+
+
+
 |#
 
 
@@ -8555,7 +8559,7 @@
 ;(CFNC-300 "void gtk_style_context_get GtkStyleContext* context GtkStateFlags state ...") 
 (CFNC-300 "void gtk_style_context_set_state GtkStyleContext* context GtkStateFlags flags")
 (CFNC-300 "GtkStateFlags gtk_style_context_get_state GtkStyleContext* context")
-(CFNC-300 "gboolean gtk_style_context_state_is_running GtkStyleContext* context GtkStateType state gdouble* progress")
+;;; 3.6 (CFNC-300 "gboolean gtk_style_context_state_is_running GtkStyleContext* context GtkStateType state gdouble* progress")
 (CFNC-300 "void gtk_style_context_set_path GtkStyleContext* context GtkWidgetPath* path")
 (CFNC-300 "GtkWidgetPath* gtk_style_context_get_path GtkStyleContext* context" 'const)
 (CFNC-300 "GList* gtk_style_context_list_classes GtkStyleContext* context")
@@ -8578,9 +8582,9 @@
 (CFNC-300 "void gtk_style_context_set_junction_sides GtkStyleContext* context GtkJunctionSides sides")
 (CFNC-300 "GtkJunctionSides gtk_style_context_get_junction_sides GtkStyleContext* context")
 (CFNC-300 "gboolean gtk_style_context_lookup_color GtkStyleContext* context gchar* color_name GdkRGBA* color" 'const)
-(CFNC-300 "void gtk_style_context_notify_state_change GtkStyleContext* context GdkWindow* window gpointer region_id GtkStateType state gboolean state_value")
-(CFNC-300 "void gtk_style_context_push_animatable_region GtkStyleContext* context gpointer region_id")
-(CFNC-300 "void gtk_style_context_pop_animatable_region GtkStyleContext* context")
+;;; 3.6 (CFNC-300 "void gtk_style_context_notify_state_change GtkStyleContext* context GdkWindow* window gpointer region_id GtkStateType state gboolean state_value")
+;;; 3.6 (CFNC-300 "void gtk_style_context_push_animatable_region GtkStyleContext* context gpointer region_id")
+;;; 3.6 (CFNC-300 "void gtk_style_context_pop_animatable_region GtkStyleContext* context")
 (CFNC-300 "void gtk_style_context_get_color GtkStyleContext* context GtkStateFlags state GdkRGBA* color")
 (CFNC-300 "void gtk_style_context_get_background_color GtkStyleContext* context GtkStateFlags state GdkRGBA* color")
 (CFNC-300 "void gtk_style_context_get_border_color GtkStyleContext* context GtkStateFlags state GdkRGBA* color")
@@ -8606,8 +8610,8 @@
 (CFNC-300 "void gtk_render_activity GtkStyleContext* context cairo_t* cr gdouble x gdouble y gdouble width gdouble height")
 (CFNC-300 "GdkPixbuf* gtk_render_icon_pixbuf GtkStyleContext* context GtkIconSource* source GtkIconSize size" 'const)
 
-(CFNC-300 "void gtk_style_context_cancel_animations GtkStyleContext* context gpointer region_id")
-(CFNC-300 "void gtk_style_context_scroll_animations GtkStyleContext* context GdkWindow* window gint dx gint dy")
+;;; 3.6 (CFNC-300 "void gtk_style_context_cancel_animations GtkStyleContext* context gpointer region_id")
+;;; 3.6 (CFNC-300 "void gtk_style_context_scroll_animations GtkStyleContext* context GdkWindow* window gint dx gint dy")
 
 (CFNC-300 "void gtk_style_properties_register_property GtkStylePropertyParser parse_func GParamSpec* pspec")
 (CFNC-300 "gboolean gtk_style_properties_lookup_property gchar* property_name GtkStylePropertyParser* parse_func GParamSpec** pspec" 'const)

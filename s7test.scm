@@ -5273,6 +5273,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (let ((lst (list (list 1 2 3)))) (lst 0 1)) 2) 
 (test ((list (list 1 2 3)) 0 1) 2)
 (test (list-ref (list (list 1 2)) 0 ()) 'error)
+(test (((list +) 0) 1 2 3) 6)
+
 
 (let ((lst (list 1 2)))
   (for-each
@@ -21498,6 +21500,21 @@ abs     1       2
   )
 
 (let ()
+  ;; how to protect a recursive macro call from being stepped on
+  ;; (define-macro (mac a b) `(if (> ,b 0) (let ((,a (- ,b 1))) (mac ,a (- ,b 1))) ,b))
+  ;; (mac mac 1)
+  ;; attempt to apply the integer 0 to (0 1)?
+  ;;    (mac mac 1)
+  (define-macro (mac a b)
+    (let ((gmac (gensym))) 
+      (set! gmac mac) 
+      `(if (> ,b 0) 
+	   (let ((,a (- ,b 1))) 
+	     (,gmac ,a (- ,b 1))) 
+	   ,b)))
+  (test (mac mac 10) 0))
+
+(let ()
   (define-bacro* (incf var (inc 1)) `(set! ,var (+ ,var ,inc)))
   (define-bacro* (decf var (inc 1)) `(set! ,var (- ,var ,inc)))
 
@@ -22159,6 +22176,32 @@ abs     1       2
 (test (procedure-environment lambda) 'error)
 (test (procedure-environment abs) (global-environment))
 (test (procedure-environment cond-expand) (global-environment))
+
+(let ()
+  (define func (let ((lst (list 1 2 3))) 
+		 (lambda (a) 
+		   (((procedure-environment func) 'lst) a))))
+  (test (func 1) 2))
+
+#|
+;;; but: 
+:(define func (let ((lst (list 1 2 3))) 
+		 (lambda (a) 
+		   ((procedure-environment func) 'lst a))))
+func
+:(func 1)
+;environment as applicable object takes one argument: (lst 1)
+;    'lst
+
+which seems inconsistent
+
+:(define func (let ((lst (list 1 2 3))) 
+		 (lambda (a) 
+		   ((list (procedure-environment func)) 0 'lst))))
+func
+:(func 1)
+(1 2 3)
+|#
 
 (for-each
  (lambda (arg)
