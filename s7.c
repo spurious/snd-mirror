@@ -24203,6 +24203,11 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* instead of this, just return a new type as a wrapper around an environment.
+ *   if these args are passed, tie via slot_value to the C struct
+ *   no ref function needed, make=copy?, ? passed back?
+ */
+
 static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_type "(make-type print equal getter setter length name copy reverse fill) returns a new type object, \
@@ -27942,7 +27947,7 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 }
 
 
-/* TODO if hooks become envs we'll need env-ref/set in C, and make_hook will need the field names, XEN_MAKE_HOOK?
+/* TODO if hooks become envs make_hook will need the field names, XEN_MAKE_HOOK?
  */
 static s7_pointer init_error_env(s7_scheme *sc)
 {
@@ -27969,9 +27974,6 @@ static s7_pointer g_error_environment(s7_scheme *sc, s7_pointer args)
 It has the additional local variables: error-type, error-data, error-code, error-line, and error-file."
   return(sc->error_env);
 }
-
-/* TODO: error-environment tests, and stacktrace
- */
 
 /*  > (let ((a 32) (b "hiho")) (catch #t (lambda () (+ a b)) (lambda args (format #t "~{;~A~%~}" (error-environment)))))
     ";(error-type . wrong-type-arg)

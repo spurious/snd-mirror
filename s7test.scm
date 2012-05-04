@@ -20241,10 +20241,6 @@ who says the continuation has to restart the map from the top?
 (test (or (null? *#readers*) (pair? *#readers*)) #t)
 (test (or (null? *load-path*) (pair? *load-path*)) #t)
 
-;(test (vector? (error-environment)) #t)
-;(test (let () (set! (error-environment) 2)) 'error)
-;(test (let (((error-environment) 2)) (error-environment)) 'error)
-
 (let ((old-len *vector-print-length*))
   (for-each
    (lambda (arg)
@@ -25632,6 +25628,31 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   )
 
 
+;;; error-environment
+(test (vector? (error-environment)) #f)
+(test (environment? (error-environment)) #t)
+(test (let () (set! (error-environment) 2)) 'error)
+(test (error-environment 123) 'error)
+
+(let ((val (catch #t (lambda () (/ 1 0.0)) (lambda args args))))
+  (with-environment (error-environment)
+    (test error-type 'division-by-zero)
+    (test (equal? error-code '(/ 1 0.0)) #t)
+    (test (list? error-data) #t)
+    (test (string? error-file) #t)
+    (test (integer? error-line) #t)
+    (test ((error-environment) 'error-file) error-file)
+    ))
+
+;;; stacktrace
+
+(test (string? (stacktrace)) #t)
+(test (stacktrace 123) 'error)
+
+
+
+
+
 ;;; --------------------------------------------------------------------------------
 ;;; make-procedure-with-setter
 
@@ -26004,23 +26025,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	#t))
 
 
-#|
-(let ((val (catch #t (lambda () (/ 1 0.0)) (lambda args args))))
-  (let* ((tag (car val))
-	 (descr (cadr val))
-	 (cur-info (error-environment)))
-    (test tag 'division-by-zero)
-    (test descr '("~A: division by zero, ~S" "/" (1 0.0))) ; this changes...
-    (test (vector? cur-info) #t)
-    (test (> (length cur-info) 5) #t)
-    (test tag (cur-info 0))
-    (test descr (cur-info 1))
-    (test (equal? (cur-info 2) '(/ 1 0.0)) #t)
-    (test (or (not (cur-info 3)) (integer? (cur-info 3))) #t) ; line-number
-    (test (or (not (cur-info 4)) (string? (cur-info 4))) #t) ; file name
-    ))
-|#
-
+;;; gc
 (for-each
  (lambda (arg)
    (test (gc arg) 'error))
@@ -26028,8 +26033,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
        3.14 3/4 1.0+1.0i 1 '() "" :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (gc #f #t) 'error)
-;(test (catch #t (lambda () (gc) #f) (lambda args 'error)) #f)
-;(test (dynamic-wind (lambda () (gc)) (lambda () (gc) #f) (lambda () (gc))) #f)
+
 
 
 

@@ -2612,10 +2612,10 @@ Otherwise, for example, you could use NaN as a key, but then never be able to ac
 
 <div class="indented">
 <pre>
-(define-macro (define-memoized name&arg . body)
-  (let ((arg (cadr name&arg))
+(define-macro (define-memoized name&amp;arg . body)
+  (let ((arg (cadr name&amp;arg))
 	(memo (gensym "memo")))
-    `(define ,(car name&arg)
+    `(define ,(car name&amp;arg)
        (let ((,memo (<em class=red>make-hash-table</em>)))
 	 (lambda (,arg)
 	   (or (,memo ,arg)                             ; check for saved value
@@ -3783,7 +3783,6 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 some are simply watching
 for an unusual event so that the GUI can reflect it, others are handling
 errors, or editing the current sound output.  
-In many cases, if any hook function returns a true value, the hook returns immediately.
 With dozens of hooks, and hundreds of hook functions, the simplicity of the hook
 interface becomes problematic.
 We have to remember each hook's arguments, what its return
@@ -3796,17 +3795,18 @@ first in the hook list.
 </p>
 
 <p>
-Perhaps
-each hook function could be a thunk, its return value always ignored, 
-and the call itself happen in <code>(with-environment hook ...)</code>.  The hook itself would be an environment 
-with a result field built-in, and also whatever data would otherwise have been passed in the argument list.
-All these fields could be treated as if in a closure in the function body, and
-set directly in C.  The hook would also have four lists, named
-say init, body, end, and error.   
-The error list would be invoked in case any error is signalled during hook evaluation.
-The lists of functions would be called in the order init, body, end.
-The hook result would be the result field.
-So in Scheme the interface would be something like:
+Perhaps:  a hook is an environment,
+each hook function takes one argument, the hook, and
+its return value is ignored.
+The function can use <code>(with-environment hook ...)</code> to access what would have been the
+hook arguments in the old implementation.  
+The hook also has a result field which is returned at the end.
+All these fields can be 
+set directly in C.  Each hook has four lists,
+init, body, end, and error.   
+The error list is invoked in case any error is signalled during hook evaluation.
+The lists of functions are called in the order init, body, end, much as in dynamic-wind.
+In Scheme the interface would be something like:
 </p>
 
 <pre class="indented">
@@ -3814,9 +3814,11 @@ So in Scheme the interface would be something like:
 (&lt;hook&gt; . fields)        ; calls the hook, args set the extra fields as in define*
 </pre>
 
-<p>where the hook is a special kind of environment that always has the fields 'documentation,
-'init, 'body, 'end, 'error, and 'result.  Others can be added
-with augment-environment!.  
+<p>
+I think I'll do this, and change make-type
+in a similar way; it will return an environment, along the lines of the example
+<a href="#objectsystem">object system</a>, then hooks can be a class, and the whole exported
+to C.
 </p>
 
 </div>
@@ -4298,7 +4300,7 @@ map-with-exit would be
 </blockquote>
 
 <p>When an error is encountered, and when s7 is interrupted via begin-hook, 
-<em class=def id="errorenvironment">(error-environment)</em> returns an environment that contains
+(<em class=def id="errorenvironment">error-environment</em>) returns an environment that contains
 additional info about that error:
 </p>
 
