@@ -8849,7 +8849,31 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (with-environment (procedure-environment our-abs)
     (test (ht '(-1)) 1)))
 
-
+(let ()
+  (define-macro (define-memoized name&arg . body)
+    (let ((arg (cadr name&arg))
+	  (memo (gensym "memo")))
+      `(define ,(car name&arg)
+	 (let ((,memo (make-hash-table)))
+	   (lambda (,arg)
+	     (or (,memo ,arg)
+		 (set! (,memo ,arg) (begin ,@body))))))))
+  
+  (define-memoized (f1 abc) (+ abc 2))
+  (test (f1 3) 5)
+  (test (f1 3) 5)
+  (test (f1 2) 4)
+  (let ((ht (call-with-exit
+	     (lambda (return)
+	       (for-each (lambda (x)
+			   (if (hash-table? (cdr x))
+			       (return (cdr x))))
+			 (outer-environment (procedure-environment f1)))
+	       #f))))
+    (if (not (hash-table? ht))
+	(format #t ";can't find memo? ~A~%" (environment->list (outer-environment (procedure-environment f1))))
+	(test (length (map (lambda (x) x) ht)) 2))))
+ 
 (let ((ht (make-hash-table)))
   (test (eq? (car (catch #t (lambda () (set! (ht) 2)) (lambda args args))) 'wrong-number-of-args) #t)
   (test (eq? (car (catch #t (lambda () (set! (ht 0 0) 2)) (lambda args args))) 'wrong-number-of-args) #t)
@@ -8860,7 +8884,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (apply hash-table (apply append (map (lambda (table) (map values table)) tables))))
   (let ((ht (merge-hash-tables (hash-table '(a . 1) '(b . 2)) (hash-table '(c . 3)))))
     (test (ht 'c) 3)))
-
 
 
 ;;; some implicit index tests
@@ -9146,8 +9169,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; hook-functions
 ;;; hook-documentation
 ;;; make-hook
-;;; hook-apply
 ;;; hook
+
+;;; hook-apply is apply
 
 (for-each
  (lambda (arg)
@@ -16232,6 +16256,13 @@ in s7:
 	      (split '(a b c d e f))))
       '((a c e) (b d f)))
 
+(let ()
+  (define (f1 . args)
+    (apply values (+ (car args) (cadr args)) (cddr args)))
+  (test (* (f1 2 3 4)) 20)
+  (test (* (f1 2 3 4) (f1 1 2 3)) 180)
+  (test (- (f1 2 3 4) (f1 1 2 3)) -5))
+
 (test (call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) '(2 3))
 (test (+ (call/cc (lambda (return) (return (values 1 2 3)))) 4) 10)
 
@@ -20209,10 +20240,10 @@ who says the continuation has to restart the map from the top?
 (test (integer? *vector-print-length*) #t)
 (test (or (null? *#readers*) (pair? *#readers*)) #t)
 (test (or (null? *load-path*) (pair? *load-path*)) #t)
-(test (vector? *error-info*) #t)
 
-(test (let () (set! *error-info* 2)) 'error)
-(test (let ((*error-info* 2)) *error-info*) 'error)
+;(test (vector? (error-environment)) #t)
+;(test (let () (set! (error-environment) 2)) 'error)
+;(test (let (((error-environment) 2)) (error-environment)) 'error)
 
 (let ((old-len *vector-print-length*))
   (for-each
@@ -25973,18 +26004,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	#t))
 
 
-(test (stacktrace #(23)) 'error)
-(for-each
- (lambda (arg)
-   (test (stacktrace arg) 'error))
- (list "hi" '(1 2 3) 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
-       3.14 3/4 1.0+1.0i 1 '() "" (if #f #f) #<eof> (lambda (a) (+ a 1))))
-(test (stacktrace *error-info* 1) 'error)
-
+#|
 (let ((val (catch #t (lambda () (/ 1 0.0)) (lambda args args))))
   (let* ((tag (car val))
 	 (descr (cadr val))
-	 (cur-info *error-info*))
+	 (cur-info (error-environment)))
     (test tag 'division-by-zero)
     (test descr '("~A: division by zero, ~S" "/" (1 0.0))) ; this changes...
     (test (vector? cur-info) #t)
@@ -25995,7 +26019,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (or (not (cur-info 3)) (integer? (cur-info 3))) #t) ; line-number
     (test (or (not (cur-info 4)) (string? (cur-info 4))) #t) ; file name
     ))
-
+|#
 
 (for-each
  (lambda (arg)

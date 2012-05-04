@@ -67,7 +67,7 @@
  *        port-line-number, port-filename
  *        object->string, eval-string
  *        reverse!, list-set!, sort!, make-list
- *        gc, *load-hook*, *error-hook*, *error-info*, *unbound-variable-hook*
+ *        gc, *load-hook*, *error-hook*, (error-environment), *unbound-variable-hook*
  *        *features*, *load-path*, *vector-print-length*, *#readers*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        trace and untrace, __func__, macroexpand
@@ -1051,7 +1051,8 @@ struct s7_scheme {
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
   s7_pointer output_port;             /* current-output-port */
   s7_pointer error_port;              /* current-error-port */
-  s7_pointer error_info;              /* the vector bound to *error-info* */
+  s7_pointer error_env;               /* the environment returned by (error-environment) */
+  s7_pointer error_type, error_data, error_code, error_line, error_file; /* error_env slots */
   s7_pointer standard_input, standard_output, standard_error;
 
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
@@ -2632,6 +2633,7 @@ static int gc(s7_scheme *sc)
   mark_global_env(sc);
   S7_MARK(sc->args);
   mark_environment(sc->envir);
+  mark_environment(sc->error_env);
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
   mark_stack_1(sc->stack, s7_stack_top(sc));
@@ -24687,10 +24689,6 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
  *   in scheme, it's currently used in with-sound for wsdat refs and in generators for field access
  *              dlocsig for fields, enved for channel-envelope, examp for cursor stuff,
  *              extensions for channel-sync, and similarly elsewhere.
- *
- * hooks are also clumsy and not the right thing, but aimed at C
- *   could hooks be environments?  watchers, or-hooks, error handlers
- *   also it would help if they always had the same arity -- (lambda args ...)
  */
 
 
@@ -25418,6 +25416,8 @@ with the hook."
 }
 
 
+#if 0
+/* removed 4-May-12 */
 static s7_pointer g_hook_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_hook_apply "(hook-apply hook ...) applies each function in the hook's function \
@@ -25462,6 +25462,7 @@ list to the trailing arguments of hook-apply."
 
   return(sc->UNSPECIFIED);
 }
+#endif
 
 
 static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
@@ -27941,25 +27942,45 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 }
 
 
-#define ERROR_INFO_DEFAULT sc->F
-#define ERROR_TYPE 0
-#define ERROR_DATA 1
-#define ERROR_CODE 2
-#define ERROR_CODE_LINE 3
-#define ERROR_CODE_FILE 4
-#define ERROR_ENVIRONMENT 5
-#define ERROR_STACK_SIZE 8
-#define ERROR_INFO_SIZE (6 + ERROR_STACK_SIZE)
-
-/* *error-info* is a vector of 6 or more elements:
- *    0: the error type or tag ('division-by-zero)
- *    1: the message or information passed by the error function
- *    2: if not #f, the code that s7 thinks triggered the error
- *    3: if not #f, the line number of that code
- *    4: if not #f, the file name of that code
- *    5: the environment at the point of the error
- *    6..top: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
+/* TODO if hooks become envs we'll need env-ref/set in C, and make_hook will need the field names, XEN_MAKE_HOOK?
  */
+static s7_pointer init_error_env(s7_scheme *sc)
+{
+  s7_pointer e;
+  int gc_loc;
+
+  e = new_frame_in_env(sc, sc->global_env);
+  gc_loc = s7_gc_protect(sc, e);
+
+  sc->error_type = s7_make_slot(sc, e, make_symbol(sc, "error-type"), sc->F);  /* the error type or tag ('division-by-zero) */
+  sc->error_data = s7_make_slot(sc, e, make_symbol(sc, "error-data"), sc->F);  /* the message or information passed by the error function */
+  sc->error_code = s7_make_slot(sc, e, make_symbol(sc, "error-code"), sc->F);  /* the code that s7 thinks triggered the error */
+  sc->error_line = s7_make_slot(sc, e, make_symbol(sc, "error-line"), sc->F);  /* the line number of that code */
+  sc->error_file = s7_make_slot(sc, e, make_symbol(sc, "error-file"), sc->F);  /* the file name of that code */
+
+  s7_gc_unprotect_at(sc, gc_loc);
+  return(e);
+}
+
+
+static s7_pointer g_error_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_error_environment "(error-environment) returns the environment at the point of the last error. \
+It has the additional local variables: error-type, error-data, error-code, error-line, and error-file."
+  return(sc->error_env);
+}
+
+/* TODO: error-environment tests, and stacktrace
+ */
+
+/*  > (let ((a 32) (b "hiho")) (catch #t (lambda () (+ a b)) (lambda args (format #t "~{;~A~%~}" (error-environment)))))
+    ";(error-type . wrong-type-arg)
+    ;(error-data \"~A argument ~D, ~S, is ~A but should be ~A\" \"+\" 2 \"hiho\" \"a string\" \"a number\")
+    ;(error-code + a b)
+    ;(error-line . #f)
+    ;(error-file . #f)
+*/
+
 
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
@@ -27973,7 +27994,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 
   /* null info can mean symbol table is locked so make-symbol uses s7_error to get out */
 
-  /* set up *error-info*, look for a catch that matches 'type', if found
+  /* set up (error-environment), look for a catch that matches 'type', if found
    *   call its error-handler, else if *error-hook* is bound, call it,
    *   else send out the error info ourselves.
    */
@@ -27994,35 +28015,31 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       sc->s7_call_line = -1;
     }
 
-  vector_element(sc->error_info, ERROR_TYPE) = type;
-  vector_element(sc->error_info, ERROR_DATA) = info;
-  vector_element(sc->error_info, ERROR_CODE) = sc->cur_code;
-  vector_element(sc->error_info, ERROR_CODE_LINE) = ERROR_INFO_DEFAULT;
-  vector_element(sc->error_info, ERROR_CODE_FILE) = ERROR_INFO_DEFAULT;
-  vector_element(sc->error_info, ERROR_ENVIRONMENT) = sc->envir;
+  slot_set_value(sc->error_type, type);
+  slot_set_value(sc->error_data, info);
+  slot_set_value(sc->error_code, sc->cur_code);
+  slot_set_value(sc->error_line, sc->F);
+  slot_set_value(sc->error_file, sc->F);
+  next_environment(sc->error_env) = sc->envir;
+
   s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
   if (is_pair(sc->cur_code))
     {
-      int line, j, top;
+      int line;
       line = pair_line_number(sc->cur_code);
 
       if ((line > 0) &&
 	  (remembered_line_number(line) != 0) &&
 	  (remembered_file_name(line) != sc->F))
 	{
-	  vector_element(sc->error_info, ERROR_CODE_LINE) = make_integer(sc, remembered_line_number(line)); 
-	  vector_element(sc->error_info, ERROR_CODE_FILE) = remembered_file_name(line);	  
+	  slot_set_value(sc->error_line, make_integer(sc, remembered_line_number(line))); 
+	  slot_set_value(sc->error_file, remembered_file_name(line));	  
 	}
-
-      for (top = s7_stack_top(sc) - 1, j = ERROR_ENVIRONMENT + 1; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4, j++)
-	vector_element(sc->error_info, j) = stack_environment(sc->stack, top);
-      if (j < ERROR_INFO_SIZE)
-	vector_element(sc->error_info, j) = ERROR_INFO_DEFAULT;
     }
 
-  sc->cur_code = ERROR_INFO_DEFAULT;
+  sc->cur_code = sc->F;
 
   /* if (!s7_is_continuation(type))... */
 
@@ -28247,19 +28264,19 @@ GOT_CATCH:
 	    }
 	  s7_newline(sc, error_port);
 
-	  if (is_pair(vector_element(sc->error_info, ERROR_CODE)))
+	  if (is_pair(slot_value(sc->error_code)))
 	    {
 	      format_to_output(sc, error_port, ";    ~S", 
-			       list_1(sc, vector_element(sc->error_info, ERROR_CODE)),
+			       list_1(sc, slot_value(sc->error_code)),
 			       type == sc->FORMAT_ERROR);
 	      s7_newline(sc, error_port);
 
-	      if (s7_is_string(vector_element(sc->error_info, ERROR_CODE_FILE)))
+	      if (s7_is_string(slot_value(sc->error_file)))
 		{
 		  format_to_output(sc, error_port, ";    [~S, line ~D]",
 				   list_2(sc, 
-					  vector_element(sc->error_info, ERROR_CODE_FILE), 
-					  vector_element(sc->error_info, ERROR_CODE_LINE)), 
+					  slot_value(sc->error_file),
+					  slot_value(sc->error_line)),
 				   type == sc->FORMAT_ERROR);
 		  s7_newline(sc, error_port);
 		}
@@ -28269,7 +28286,7 @@ GOT_CATCH:
 	   */
 	  {
 	    s7_pointer x, env;
-	    env = vector_element(sc->error_info, ERROR_ENVIRONMENT);
+	    env = next_environment(sc->error_env);
 	    if (env)
 	      {
 		x = find_local_symbol(sc, env, sc->__FUNC__);  /* returns nil if no __func__ */
@@ -28666,129 +28683,16 @@ static void improper_arglist_error(s7_scheme *sc)
 }
 
 
-/* (let ((a 43) (c 123)) (define (hi b) (stacktrace) b) (hi a)) 
- * (let ((a 43) (c 123)) (define (hi b) (+ a b c)) (hi "hi"))
- */
 
-static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
+s7_pointer s7_stacktrace(s7_scheme *sc)
 {
-  s7_pointer frame;
-  int i;
-  for (i = 0, frame = envir; is_slot(environment_slots(frame)) && (i < 4); i++, frame = next_environment(frame))
-    {
-      s7_pointer arg;
-      arg = environment_slots(frame);
-      while (is_slot(arg))
-	{
-	  if ((slot_symbol(arg) == sc->__FUNC__) ||
-	      (!s7_is_procedure(slot_value(arg))))
-	    {
-	      s7_write(sc, arg, port);
-	      s7_write_char(sc, ' ', port);
-	    }
-	  arg = next_slot(arg);
-	}
-      s7_newline(sc, port);    
-    }
-}
-
-
-static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
-{
-  /* 3 cases currently: 
-   *    if args=nil, show current stack, or if at top level, show *error-info*
-   *           =vector, assume it is a vector of envs from *error-info*
-   *           =continuation, show its stack
-   * if trailing arg is a port, it sets where the output goes
+  /* return a string showing the local slots
+   *    (let ((str ""))
+   *      (do ((e (outer-environment (error-environment)) (outer-environment e))) 
+   *          ((eq? e (global-environment)) str) 
+   *        (set! str (string-append str (object->string (environment->list e))))))
    */
-  #define H_stacktrace "(stacktrace (obj #f) (port (current-output-port))) displays a stacktrace.  If obj is not \
-given, the current stack (or the error stack) is displayed; if obj is *error-info*, the stack at the point of the error is displayed; if obj \
-is a continuation, its stack is displayed.  If the trailing port argument is not given, \
-output is sent to the current-output-port."
-
-  int i, top = 0;
-  s7_pointer stk = sc->F, port, obj;
-  port = s7_current_output_port(sc);
-
-  if (is_not_null(args))
-    {
-      if (is_output_port(car(args)))
-	{
-	  /* why is this supporting backwards arguments? 
-	   */
-	  port = car(args);
-	  if (is_not_null(cdr(args)))
-	    obj = cadr(args);
-	  else
-	    {
-	      if (is_null(sc->envir))
-		obj = sc->error_info;
-	      else obj = sc->F;
-	    }
-	}
-      else
-	{
-	  if (is_not_null(cdr(args)))
-	    {
-	      if ((is_output_port(cadr(args))) &&
-		  (!port_is_closed(cadr(args))))
-		port = cadr(args);
-	      else return(s7_wrong_type_arg_error(sc, "stacktrace", 2, cadr(args), "an open output port"));
-	    }
-	  obj = car(args);
-	}
-    }
-  else 
-    {
-      if (is_null(sc->envir))
-	obj = sc->error_info;
-      else obj = sc->F;
-    }
-
-  if (s7_is_vector(obj))
-    {
-      if (vector_length(obj) < ERROR_INFO_SIZE)
-	return(s7_wrong_type_arg_error(sc, "stacktrace", 1, obj, "*error-info*"));
-
-      for (i = ERROR_ENVIRONMENT; i < ERROR_INFO_SIZE; i++)
-	{
-	  if (vector_element(obj, i) == ERROR_INFO_DEFAULT)
-	    break;
-	  display_frame(sc, vector_element(obj, i), port);
-	}
-      return(sc->UNSPECIFIED);
-    }
-
-  if (is_null(args))
-    {
-      top = s7_stack_top(sc);
-      stk = sc->stack;
-    }
-  else
-    {
-      if (s7_is_continuation(obj))
-	{
-	  top = continuation_stack_top(obj);
-	  stk = continuation_stack(obj);
-	}
-    }
-  if (stk == sc->F)
-    return(s7_wrong_type_arg_error(sc, "stacktrace", 0, args, "a vector, or continuation"));
-  
-  if (sc->envir != stack_environment(stk, top - 1))
-    display_frame(sc, sc->envir, port);
-  for (i = top - 1; i > 0; i -= 4)
-    display_frame(sc, stack_environment(stk, i), port);
-
-  return(sc->UNSPECIFIED);
-}
-
-
-s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
-{
-  if (s7_is_list(sc, arg))
-    return(g_stacktrace(sc, arg));
-  return(g_stacktrace(sc, list_1(sc, arg)));
+  return(s7_eval_c_string(sc, "(stacktrace)"));
 }
 
 
@@ -38115,7 +38019,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
-  sc->cur_code = ERROR_INFO_DEFAULT;
+  sc->cur_code = sc->F;
   sc->op = first_op;
   
   /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp
@@ -39751,13 +39655,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, OP_BARRIER, sc->args, sc->code);
 	  if ((*(sc->begin_hook))(sc))
 	    {
-	      /* set *error-info* in case we were interrupted and need to see why something was hung */
-	      vector_element(sc->error_info, ERROR_TYPE) = sc->F;
-	      vector_element(sc->error_info, ERROR_DATA) = sc->F;
-	      vector_element(sc->error_info, ERROR_CODE) = sc->cur_code;
-	      vector_element(sc->error_info, ERROR_CODE_LINE) = ERROR_INFO_DEFAULT;
-	      vector_element(sc->error_info, ERROR_CODE_FILE) = ERROR_INFO_DEFAULT;
-	      vector_element(sc->error_info, ERROR_ENVIRONMENT) = sc->envir;
+	      /* set (error-environment) in case we were interrupted and need to see why something was hung */
+	      slot_set_value(sc->error_type, sc->F);
+	      slot_set_value(sc->error_data, sc->F);
+	      slot_set_value(sc->error_code, sc->cur_code);
+	      slot_set_value(sc->error_line, sc->F);
+	      slot_set_value(sc->error_file, sc->F);
+	      next_environment(sc->error_env) = sc->envir;
 	      
 	      s7_quit(sc);
 	      /* don't call gc here -- perhaps at restart somehow? */
@@ -54409,7 +54313,7 @@ s7_scheme *s7_init(void)
 
   sc->input_port_stack = sc->NIL;
   sc->code = sc->NIL;
-  sc->cur_code = ERROR_INFO_DEFAULT;
+  sc->cur_code = sc->F;
   sc->args = sc->NIL;
   sc->value = sc->NIL;
   sc->w = sc->NIL;
@@ -54747,6 +54651,8 @@ s7_scheme *s7_init(void)
   sc->SYNTAX_ERROR =   make_symbol(sc, "syntax-error");
   sc->WRONG_TYPE_ARG = make_symbol(sc, "wrong-type-arg");
 
+  sc->error_env = init_error_env(sc);
+
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
   for (i = 0; i < 6; i++)
     sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR);
@@ -54807,6 +54713,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "augment-environment!",           g_augment_environment_direct, 1, 0, true,  H_augment_environment_direct);
   s7_define_safe_function(sc, "environment?",              g_is_environment,           1, 0, false, H_is_environment);
   s7_define_safe_function(sc, "environment->list",         g_environment_to_list,      1, 0, false, H_environment_to_list);
+  s7_define_safe_function(sc, "error-environment",         g_error_environment,        0, 0, false, H_error_environment);
   s7_define_safe_function(sc, "provided?",                 g_is_provided,              1, 0, false, H_is_provided);
   s7_define_safe_function(sc, "provide",                   g_provide,                  1, 0, false, H_provide);
   s7_define_safe_function(sc, "defined?",                  g_is_defined,               1, 1, false, H_is_defined);
@@ -55114,10 +55021,13 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "hook?",                     g_is_hook,                  1, 0, false, H_is_hook);
   s7_define_safe_function(sc, "make-hook",                 g_make_hook,                0, 2, false, H_make_hook);
   s7_define_function(sc, "hook",                           g_hook,                     0, 0, true,  H_hook);
-  s7_define_function(sc, "hook-apply",                     g_hook_apply,               1, 0, true,  H_hook_apply);
   s7_define_safe_function(sc, "hook-arity",                g_hook_arity,               1, 0, false, H_hook_arity);
   s7_define_safe_function(sc, "hook-documentation",        g_hook_documentation,       1, 0, false, H_hook_documentation);
   s7_define_function_with_setter(sc, "hook-functions",     g_hook_functions, g_hook_set_functions, 1, 0, H_hook_functions);
+
+  /* s7_define_function(sc, "hook-apply",                  g_hook_apply,               1, 0, true,  H_hook_apply); */
+  /* see below for hook-apply = apply */
+
 
   s7_define_function(sc, "call/cc",                        g_call_cc,                  1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-current-continuation", g_call_cc,                  1, 0, false, H_call_cc);
@@ -55148,7 +55058,7 @@ s7_scheme *s7_init(void)
   sc->QQ_LIST =         s7_define_constant_function(sc, "{list}",           g_qq_list,        0, 0, true,  H_qq_list);
   set_type(sc->QQ_LIST, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
 
-  s7_define_safe_function(sc, "stacktrace",                g_stacktrace,               0, 2, false, H_stacktrace);
+  /* s7_define_safe_function(sc, "stacktrace",                g_stacktrace,               0, 2, false, H_stacktrace); */
   s7_define_safe_function(sc, "trace",                     g_trace,                    0, 0, true,  H_trace);
   s7_define_safe_function(sc, "untrace",                   g_untrace,                  0, 0, true,  H_untrace);
   s7_define_safe_function(sc, "gc",                        g_gc,                       0, 1, false, H_gc);
@@ -55269,10 +55179,7 @@ the error type and the info passed to the error handler.");
 			      s7_make_function(sc, "(bind *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is bound")));
 
 
-  /* -------- *error-info* -------- */
-  sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
-  s7_define_constant(sc, "*error-info*", sc->error_info);
-
+  /* PERHAPS: arity should be generic? */
 
   /* the next two are for the test suite */
   s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
@@ -55439,6 +55346,14 @@ the error type and the info passed to the error handler.");
 			                           (if (null? (cdr clause)) '(#f) (cdr clause))))           \n\
 		                          clauses))))");
 
+  /* backwards compatibility */
+  s7_eval_c_string(sc, "(define hook-apply apply)");
+
+  s7_eval_c_string(sc, "(define (stacktrace)                                                        \n\
+                          (let ((str \"\"))                                                         \n\
+                            (do ((e (outer-environment (error-environment)) (outer-environment e))) \n\
+                                ((eq? e (global-environment)) str)                                  \n\
+                              (set! str (string-append str (format #f \"~{~A ~}~%\" e))))))");
 
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 263 */

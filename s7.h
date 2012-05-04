@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.109"
-#define S7_DATE "22-Apr-12"
+#define S7_VERSION "1.110"
+#define S7_DATE "4-May-12"
 
 
 typedef long long int s7_Int;
@@ -43,7 +43,6 @@ typedef double s7_Double;
    *    *load-hook*             hook called before a file is loaded; takes a function of one arg, the name of the file.
    *    *error-hook*            hook called upon error; takes a function of two args, 
    *                               the error type (a symbol), and the info about it (a list).
-   *    *error-info*            data describing last error (see below).
    *    *unbound-variable-hook* hook called when an unbound symbol is accessed.
    *    *#readers*              #... readers
    *    *gc-stats*              #t to turn on GC statistics
@@ -72,9 +71,8 @@ typedef double s7_Double;
    *    help                    tries to find a help string associated with its argument
    *    symbol-calls            if profiling is enabled, returns the number of times its argument (a symbol) has been called
    *    trace and untrace       add or subtract functions from the trace list; (trace abs). 
-   *    stacktrace              show a stack trace, the stack at the point of an error: (stacktrace *error-info*),
-   *                               or the stack at a break point: (stacktrace break-continuation)
    *    macro?                  returns #t is its argument is a macro or a symbol whose value is a macro
+   *    with-baffle             limit scope of continuations
    *
    *    and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    *    stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
@@ -177,7 +175,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args);
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
-s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg);
+s7_pointer s7_stacktrace(s7_scheme *sc);
 
   /* these are equivalent to (error ...) in Scheme
    *   the first argument to s7_error is a symbol that can be caught (via (catch tag ...))
@@ -199,22 +197,6 @@ s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg);
    *  the handler is called, passing it the arguments (including the type) passed to the
    *  error function.  If no handler is found, the default error handler is called,
    *  normally printing the error arguments to current-error-port.
-   */
-
-  /* *error-info* is a vector of 6 or more elements:
-   *    0: the error type or tag ('division-by-zero)
-   *    1: the message or information passed by the error function
-   *    2: if not #f, the code that s7 thinks triggered the error
-   *    3: if not #f, the line number of that code
-   *    4: if not #f, the file name of that code
-   *    5: the environment at the point of the error
-   *    6..top: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
-   * 
-   * to find a variable's value at the point of the error:
-   *    (symbol->value var (vector-ref *error-info* 5))
-   *
-   * to print the stack at the point of the error:
-   *    (stacktrace *error-info*)
    */
 
 int s7_gc_protect(s7_scheme *sc, s7_pointer x);
@@ -835,7 +817,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 22-Apr:    #_<name> = initial value of name
+ * 4-May:     *error-info* replaced by error-environment, and stacktrace has changed.
+ * 22-Apr:    #_<name> = startup (built-in) value of name
  * 17-Apr:    with-baffle.
  * 14-Apr:    WITH_SYSTEM_EXTRAS (default 0) has additional OS and IO functions:
  *              directory? file-exists? delete-file getenv directory->list system

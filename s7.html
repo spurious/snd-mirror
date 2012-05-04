@@ -1957,7 +1957,7 @@ Even better: "dilambda":
 
 <p>procedure-with-setters can be viewed as one generalization of set!.  Another
 treats objects as having predefined get and set functions.  In s7
-lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined objects
+lists, strings, vectors, hash-tables, environments, and any cooperating C or Scheme-defined objects
 are both applicable and settable.  newLisp calls this implicit indexing, Gauche implements it
 via object-apply, Guile via procedure-with-setter; CL's funcallable instance might be the same idea.
 </p>
@@ -1970,62 +1970,6 @@ same as <code>(list-ref lst 1)</code>, and <code>(set! (lst 1) 2)</code> is the 
 as <code>(list-set! lst 1 2)</code>.
 I like this syntax:  the less noise, the better!
 </p>
-
-<pre class="indented">
-;; an example taken from R Cox's website
-
-(define dense (make-vector 128))
-(define sparse (make-vector 128))
-(define n 0)
-
-(define (add-member i)
-  (set! (dense n) i)
-  (set! (sparse i) n)
-  (set! n (+ n 1)))
-
-(define (is-member i)
-  (and (number? (sparse i))
-       (&lt; (sparse i) n)
-       (= (dense (sparse i)) i)))
-
-(define (clear-all) (set! n 0))
-
-(define (remove-member i)
-  (if (is-member i)
-      (begin
-	(let ((j (dense (- n 1))))
-	  (set! (dense (sparse i)) j)
-	  (set! (sparse j) (sparse i))
-	  (set! n (- n 1))))))
-
-(add-member 32)
-1
-(add-member 12)
-2
-(is-member 14)
-#f
-(is-member 12)
-#t
-</pre>
-
-<p>Some more examples:
-</p>
-
-<pre class="indented">
-&gt; (let ((lst (list 1 2 3)))
-    (set! (lst 1) 32)
-    (list (lst 0) (lst 1)))
-(1 32)
-
-&gt; (let ((hash (make-hash-table)))
-    (set! (hash 'hi) 32)
-    (hash 'hi))
-32
-
-&gt; (let ((str "123")) 
-    (set! (str 1) #\x) str)
-"1x3"
-</pre>
 
 <blockquote>
 
@@ -2658,10 +2602,31 @@ of the table sizes, or the order in which the key/value pairs were added.
 </p>
 </div>
 
+
 <div class="indented">
 <p>If the hash key is a float (a non-rational number), hash-table-ref uses <a href="#morallyequalp">morally-equal?</a>.
 Otherwise, for example, you could use NaN as a key, but then never be able to access it!
 </p>
+</div>
+
+
+<div class="indented">
+<pre>
+(define-macro (define-memoized name&arg . body)
+  (let ((arg (cadr name&arg))
+	(memo (gensym "memo")))
+    `(define ,(car name&arg)
+       (let ((,memo (<em class=red>make-hash-table</em>)))
+	 (lambda (,arg)
+	   (or (,memo ,arg)                             ; check for saved value
+	       (set! (,memo ,arg) (begin ,@body)))))))) ; set! returns the new value
+
+&gt; (define-memoized (f1 abc) (+ abc 2))
+&gt; (f1 3)
+5
+&gt; (environment-&gt;list (outer-environment (procedure-environment f1)))
+(({memo}-16 . #&lt;hash-table (3 . 5)&gt;))
+</pre>
 </div>
 
 </blockquote>
@@ -2683,6 +2648,7 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="globalenvironment">global-environment</em>)          the top-level environment
 (<em class=def id="currentenvironment">current-environment</em>)         the currently visible variables and their values
 (<em class=def id="procedureenvironment">procedure-environment</em> proc)  the environment at the time when proc was defined
+(error-environment)           the environment at the point of the last error
 (<em class=def id="initialenvironment">initial-environment</em>)         the current environment, but all built-in functions have their original values
 (<em class=def id="outerenvironment">outer-environment</em> env)       the environment that encloses the environment env
 
@@ -3787,7 +3753,7 @@ a modern GUI leaves formatting decisions to a text or table widget.
 (<em class=def id="hookfunctions">hook-functions</em> hook)                            ; the hook's list of functions
 (<em class=def id="hookarity">hook-arity</em> hook)                                ; the hook's arity list: (required optional rest)
 (<em class=def id="hookdocumentation">hook-documentation</em> hook)                        ; the hook's documentation string
-(<em class=def id="hookapply">hook-apply</em> hook ...) and (&lt;hook&gt; ...)           ; run the hook (it is an applicable object)
+(&lt;hook&gt; ...)                                     ; run the hook (it is an applicable object)
 </pre>
 
 <p>A hook holds a list of functions.  When something interesting happens,
@@ -3795,9 +3761,9 @@ the hook is invoked, and it applies its arguments to each function in the list.
 In GUI toolkits hooks are called callback-lists, in CL conditions,
 in other contexts watchpoints or signals.  s7 itself has several
 hooks: <a href="#errorhook">*error-hook*</a>, <a href="#unboundvariablehook">*unbound-variable-hook*</a>, and <a href="#loadhook">*load-hook*</a>.
-A hook is created with make-hook or hook, called either as an applicable object
-or via hook-apply, and recognized via hook?.  The list of functions is accessed
-via hook-functions.  All the functions on the list have to be compatible with
+A hook is created with make-hook or hook, recognized via hook?,
+and called as an applicable object.
+The list of functions is accessed via hook-functions.  All the functions on this list have to be compatible with
 the way the hook itself is invoked, so the hook has an arity, hook-arity.
 </p>
 
@@ -3810,6 +3776,51 @@ the way the hook itself is invoked, so the hook has an arity, hook-arity.
 </pre>
 
 
+
+<blockquote>
+<div class="indented">
+<p>Hooks are very useful in C, but they are clumsy.  The Snd editor has about 100;
+some are simply watching
+for an unusual event so that the GUI can reflect it, others are handling
+errors, or editing the current sound output.  
+In many cases, if any hook function returns a true value, the hook returns immediately.
+With dozens of hooks, and hundreds of hook functions, the simplicity of the hook
+interface becomes problematic.
+We have to remember each hook's arguments, what its return
+value means, and how the hook's functions interact.  
+In C, we have to cons up the argument list
+on each call, and since the hook might be called every time a mouse-moved event is signalled,
+that call overhead can't simply be ignored.
+In many cases, we want a particular hook function called no matter what, but there's no way to force it to be
+first in the hook list.
+</p>
+
+<p>
+Perhaps
+each hook function could be a thunk, its return value always ignored, 
+and the call itself happen in <code>(with-environment hook ...)</code>.  The hook itself would be an environment 
+with a result field built-in, and also whatever data would otherwise have been passed in the argument list.
+All these fields could be treated as if in a closure in the function body, and
+set directly in C.  The hook would also have four lists, named
+say init, body, end, and error.   
+The error list would be invoked in case any error is signalled during hook evaluation.
+The lists of functions would be called in the order init, body, end.
+The hook result would be the result field.
+So in Scheme the interface would be something like:
+</p>
+
+<pre class="indented">
+(make-hook . fields)     ; extra fields in env = args of old-style hook function
+(&lt;hook&gt; . fields)        ; calls the hook, args set the extra fields as in define*
+</pre>
+
+<p>where the hook is a special kind of environment that always has the fields 'documentation,
+'init, 'body, 'end, 'error, and 'result.  Others can be added
+with augment-environment!.  
+</p>
+
+</div>
+</blockquote>
 
 
 
@@ -4287,43 +4298,34 @@ map-with-exit would be
 </blockquote>
 
 <p>When an error is encountered, and when s7 is interrupted via begin-hook, 
-the variable <em class=def id="errorinfo">*error-info*</em>, a vector, contains
+<em class=def id="errorenvironment">(error-environment)</em> returns an environment that contains
 additional info about that error:
 </p>
 
 <ul>
-<li>0: the error type or tag, e.g. 'division-by-zero
-<li>1: the message or information passed by the error function
-<li>2: if not #f, the code that s7 thinks triggered the error
-<li>3: if not #f, the line number of that code
-<li>4: if not #f, the file name of that code
-<li>5: the environment at the point of the error
-<li>6...: stack environment pointers, ending in #f
+<li>error-type: the error type or tag, e.g. 'division-by-zero
+<li>error-data: the message or information passed by the error function
+<li>error-code: the code that s7 thinks triggered the error
+<li>error-line: the line number of that code
+<li>error-file: the file name of that code
 </ul>
-
 
 <blockquote>
 
 
 <div class="indented">
 
-<p>To find a variable's value at the point of the error:
+<p>To find a variable's value at the point of the error: <code>((error-environment) var)</code>.
+To list all the local bindings from the error outward:
 </p>
 
 <pre class="indented">
-(symbol-&gt;value var (*error-info* 5))
-</pre>
-
-<p>To list all the local bindings from the error outward:
-</p>
-<pre class="indented">
-(do ((e (*error-info* 5) (outer-environment e))) 
+(do ((e (outer-environment (error-environment)) (outer-environment e))) 
     ((eq? e (global-environment))) 
-  (format #t "~A~%" (environment-&gt;list e)))
+  (format #t "~{~A ~}~%" e))
 </pre>
 
-<p>stacktrace is similar, but I may remove it &mdash; s7 has only a shadowy
-notion of a stack.
+<p>
 To evaluate the error handler in the environment of the error:
 </p>
 
@@ -4335,8 +4337,7 @@ To evaluate the error handler in the environment of the error:
 	     (error 'oops)))
 	 (lambda args
 	   (with-environment
-	    (augment-environment 
-	     (*error-info* 5)      ; the error env
+	    (augment-environment (error-environment)
 	     (cons 'args args))    ; add the error handler args
 	    (list args x y)))))    ; we have access to 'y'
 </pre>
@@ -4396,7 +4397,7 @@ dalliance with symbol-macros!
 	      (list 
 	       (lambda (sym) 
 		 (if (eq? sym '?)                       ; here '?' is the thing typed
-		     (do ((e (*error-info* 5) (outer-environment e))) 
+		     (do ((e (outer-environment (error-environment)) (outer-environment e))) 
 			 ((eq? e (global-environment))) 
 		       (status-report (format #f "~%~A" (environment-&gt;list e)) -1))
                        ;; status-report is a Snd function that (in this case)
@@ -4526,7 +4527,7 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 
 <p>I use *#readers* primarily to implement a way to get the current line number and file name, along
 the lines of C's __LINE__ and __FILE__.  port-line-number works if we're reading a file (during load
-for example), and *error-info* has the same information if an error happens.  But during Snd's auto-test
+for example), and (error-environment) has the same information if an error happens.  But during Snd's auto-test
 sequence, there are many cases that aren't errors, and the file is no longer being loaded, but
 I need to know where something unexpected happened.  So:
 </p>
@@ -8111,20 +8112,20 @@ replace itself with the original:
 
 <div class="indented">
 <pre>
-static bool (*current_begin_hook)(s7_scheme *sc);       /* this will be the saved original function */
+static bool (*current_begin_hook)(s7_scheme *sc);        /* this will be the saved original function */
 
-static bool stacktrace_begin_hook(s7_scheme *sc)        /* this is our one-shot replacement */
+static bool stacktrace_begin_hook(s7_scheme *sc)         /* this is our one-shot replacement */
 {
-  s7_stacktrace(sc, s7_name_to_value(sc, "*stderr*"));  /* it prints a stacktrace */
-  s7_set_begin_hook(s7, current_begin_hook);            /*   then replaces itself with the original */
+  fprintf(stderr, "%s\n", s7_string(s7_stacktrace(sc))); /* it prints local var info */
+  s7_set_begin_hook(s7, current_begin_hook);             /*   then replaces itself with the original */
   return(false);
 }
 
-static void listener_stacktrace_callback(...)           /* the usual callback boilerplate here */
+static void listener_stacktrace_callback(...)            /* the usual callback boilerplate here */
 {
-  current_begin_hook = s7_begin_hook(s7);               /* save current begin_hook function */
-  if (current_begin_hook)                               /* s7 is running, so... */
-    s7_set_begin_hook(s7, stacktrace_begin_hook);       /*   insert our stacktrace function in its place */
+  current_begin_hook = s7_begin_hook(s7);                /* save current begin_hook function */
+  if (current_begin_hook)                                /* s7 is running, so... */
+    s7_set_begin_hook(s7, stacktrace_begin_hook);        /*   insert our stacktrace function in its place */
 }
 </pre></div>
 

@@ -1034,25 +1034,7 @@ static void listener_stop_callback(GtkWidget *w, gpointer info)
 #if HAVE_SCHEME
 static void listener_stacktrace_callback(GtkWidget *w, gpointer info)
 {
-  int gc_loc;
-  s7_pointer old_port;
-  char *msg;
-
-  old_port = s7_set_current_output_port(s7, s7_open_output_string(s7));
-  gc_loc = s7_gc_protect(s7, old_port);
-
-  s7_stacktrace(s7, s7_nil(s7));
-  msg = mus_strdup(s7_get_output_string(s7, s7_current_output_port(s7)));
-
-  s7_close_output_port(s7, s7_current_output_port(s7));
-  s7_set_current_output_port(s7, old_port);
-  s7_gc_unprotect_at(s7, gc_loc);
-  
-  if (msg)
-    {
-      snd_display_result(msg, NULL);
-      free(msg);
-    }
+  snd_display_result(s7_string(s7_stacktrace(s7)), NULL);
 }
 #endif
 

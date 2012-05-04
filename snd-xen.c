@@ -147,14 +147,12 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
                                          (if (pair? args)                            \n\
                                              (apply format #f (car args) (cdr args)) \n\
                                              \"\"))                                  \n\
-                                     (if (and (*error-info* 2)                       \n\
-                                              (string? (*error-info* 4))             \n\
-                                              (number? (*error-info* 3)))            \n\
-                                         (format #f \"~%~S[~D]: ~A~%\"               \n\
-                                                 (*error-info* 4)                    \n\
-                                                 (*error-info* 3)                    \n\
-                                                 (*error-info* 2))                   \n\
-                                         \"\"))))))");
+                                     (with-environment (error-environment)           \n\
+                                       (if (and error-code                           \n\
+                                                (string? error-file)                 \n\
+                                                (number? error-line))                \n\
+                                           (format #f \"~%~S[~D]: ~A~%\" error-file error-line error-code) \n\
+                                           \"\")))))))");
 #endif
 }
 
