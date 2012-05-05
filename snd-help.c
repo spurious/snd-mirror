@@ -3666,13 +3666,13 @@ and its value is returned."
 		    if (url)
 		      mus_snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
 				   subject, 
-				   s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
+				   (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
 				   s7_string(s7_car(s7_cdr(x))),
 				   url);
 		    else 
 		      mus_snprintf(str, 256, "%s is defined at line %lld of %s",
 				   subject, 
-				   s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
+				   (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
 				   s7_string(s7_car(s7_cdr(x))));
 		  }
 	      }

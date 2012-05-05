@@ -25564,7 +25564,10 @@ static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
   return(sc->error_hook);
 }
 
-
+/* environment_ref is not ideal in the env-as-object case -- it looks at global-env etc
+ *   another problem: everyone's scheme code becomes obsolete
+ *   maybe a different name?
+ */
 
 
 
@@ -27948,6 +27951,8 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 
 
 /* TODO if hooks become envs make_hook will need the field names, XEN_MAKE_HOOK?
+ *      also we'll need to add getter/setter fields to the env, and some way to specialize the type (is the id field used in this case?)
+ *      yes it is -- we'll need an inaccessible field in the env "(type)" or whatever.
  */
 static s7_pointer init_error_env(s7_scheme *sc)
 {

@@ -2006,8 +2006,8 @@ accepts an integer argument (e.g. list, string, vector, ...):
 (define (make-iterator obj)
   (let ((ctr 0))
     (lambda ()
-      (and (&lt; ctr (length obj))
-	   (let ((val (obj ctr)))
+      (and (&lt; ctr <em class=red>(length obj)</em>)
+	   (let ((val <em class=red>(obj ctr)</em>))
 	     (set! ctr (+ ctr 1))
 	     val)))))
 </pre>
@@ -2018,7 +2018,7 @@ Here's a generic FFT:
 
 <pre class="indented">
 (define* (cfft! data n (dir 1)) ; (complex data)
-  (if (not n) (set! n (<em class=red>length</em> data)))
+  (if (not n) (set! n (length data)))
   (do ((i 0 (+ i 1))
        (j 0))
       ((= i n))
@@ -3787,25 +3787,25 @@ With dozens of hooks, and hundreds of hook functions, the simplicity of the hook
 interface becomes problematic.
 We have to remember each hook's arguments, what its return
 value means, and how the hook's functions interact.  
-In C, we have to cons up the argument list
-on each call, and since the hook might be called every time a mouse-moved event is signalled,
-that call overhead can't simply be ignored.
-In many cases, we want a particular hook function called no matter what, but there's no way to force it to be
-first in the hook list.
+In Snd, I override the normal hook application process so, for example, if
+any hook function returns something other than #f, the hook returns that result
+and ignores any leftover functions.  But if some function on that list is just
+passing notification of an event to some other part of Snd, it had better 
+precede the early exit, and there's no way to enforce that.
 </p>
 
-<p>
-Perhaps:  a hook is an environment,
-each hook function takes one argument, the hook, and
+
+<p>My first thought was that a hook could be a special kind of environment, but
+that ran into ambiguities and whatnot.  Here's a second try: from the point of
+view of the writer of hook functions, the hook is an environment, each function
+takes one argument, the hook, and
 its return value is ignored.
-The function can use <code>(with-environment hook ...)</code> to access what would have been the
+The function can use <code>(with-environment hook ...)</code> or <code>(hook symbol)</code> to access what would have been the
 hook arguments in the old implementation.  
-The hook also has a result field which is returned at the end.
-All these fields can be 
-set directly in C.  Each hook has four lists,
-init, body, end, and error.   
-The error list is invoked in case any error is signalled during hook evaluation.
-The lists of functions are called in the order init, body, end, much as in dynamic-wind.
+The hook environment's result field is the returned value of the hook application.
+Each such environment also has three lists,
+init, body, and end, and
+these lists of functions are called in dynamic-wind.
 In Scheme the interface would be something like:
 </p>
 
@@ -3814,13 +3814,38 @@ In Scheme the interface would be something like:
 (&lt;hook&gt; . fields)        ; calls the hook, args set the extra fields as in define*
 </pre>
 
-<p>
-I think I'll do this, and change make-type
-in a similar way; it will return an environment, along the lines of the example
-<a href="#objectsystem">object system</a>, then hooks can be a class, and the whole exported
-to C.
+<p>From the hook maker's point of view, on the other hand, a hook is a closure with the make-hook arguments
+added to the closure.  Here's a sketch:
 </p>
 
+<pre class="indented">
+(define (make-hook . args)
+  (let ((result #&lt;unspecified&gt;)
+	(init ())
+	(body ())
+	(end ())
+	(local-args ())
+	(local-bindings ()))
+    (for-each (lambda (arg)
+		(set! local-bindings (cons (if (pair? arg)
+					       (cons (car arg) (cadr arg)) 
+					       (cons arg #&lt;unspecified&gt;))
+					   local-bindings))
+		(set! local-args (cons (caar local-bindings) local-args)))
+	      args)
+    (apply augment-environment! (current-environment) local-bindings)
+    (set! local-args (reverse local-args))
+    (lambda ()
+      (dynamic-wind 
+        (lambda () (for-each (lambda (f) (f (current-environment))) init))
+        (lambda () (for-each (lambda (f) (f (current-environment))) body) result)
+        (lambda () (for-each (lambda (f) (f (current-environment))) end))))))
+</pre>
+
+<p>Internally s7 would put that thunk in a hook object, and use the original argument
+list for hook application.  It can set the internal closure fields via procedure-environment.
+Since the hook functions have access to the current result, Snd's or-hook can still be implemented.
+</p>
 </div>
 </blockquote>
 
