@@ -3312,5 +3312,8 @@ void g_init_gxsnd(void)
 {
   XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
 
+  /* TODO: in new hooks, we need to add (lambda (hook) (sync-open-file-watcher (hook 'reason))) 
+   */
+
   XEN_DEFINE_PROCEDURE(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 }

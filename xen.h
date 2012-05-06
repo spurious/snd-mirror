@@ -1429,6 +1429,13 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_HOOK_PROCEDURES(Hook)                                     s7_hook_functions(Hook)
 #define XEN_ADD_HOOK(Hook, Func, Name, Doc)                           s7_hook_set_functions(Hook, s7_cons(s7, s7_make_function(s7, Name, Func, (int)s7_integer(s7_car(s7_hook_arity(Hook))), 0, false, Doc), s7_hook_functions(Hook)))
 
+/* if new: hook? = procedure?, hook-functions = ((procedure-environment hook) 'body)
+ *         make-hook needs field names, hooked is same, clear can be same, procedures is same,
+ *         add-hook is different from the above
+ * besides changing the code here, we'd need all the hook functions to change *.scm, *.html, any defined in C, C example in s7.html etc
+ *   so perhaps also 'new-hooks feature?
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif

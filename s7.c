@@ -230,6 +230,7 @@
    */
 #endif
 
+
 /* PERHAPS: WITH_PURE_S7 or something like that to get rid of remaining bad ideas:
  *          inexact/exact and #i #e
  *          `#() special cases
@@ -269,7 +270,6 @@
  *    lists
  *    vectors and hash-tables
  *    objects and functions
- *    hooks
  *    eq?
  *    generic length, copy, fill!
  *    format
@@ -25106,6 +25106,9 @@ bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol)
 
 /* -------------------------------- hooks -------------------------------- */
 
+/* all of this is obsolete */
+
+
 
 static bool is_function_with_arity(s7_pointer x)
 {
@@ -35134,7 +35137,9 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool a
 
 void s7_unoptimize(s7_scheme *sc, s7_pointer code)
 {
-  /* needed by the run macro 
+  /* needed by the run macro, 
+   * PERHAPS: unoptimize can be caught if code has a circle -- should we check length(code)?
+   *   run calls this function, so we really should check there -- crazy to check here on every pair
    */
   if (is_pair(code))
     {
@@ -55186,8 +55191,6 @@ the error type and the info passed to the error handler.");
 			      s7_make_function(sc, "(bind *#readers*)", g_sharp_readers_set, 2, 0, false, "called if *#readers* is bound")));
 
 
-  /* PERHAPS: arity should be generic? */
-
   /* the next two are for the test suite */
   s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
 				g_symbol_table_is_locked, 0, 0, 
@@ -55355,6 +55358,18 @@ the error type and the info passed to the error handler.");
 
   /* backwards compatibility */
   s7_eval_c_string(sc, "(define hook-apply apply)");
+
+  s7_eval_c_string(sc, "(define (make-new-hook . args)                                                       \n\
+                          (let ((init ())                                                                    \n\
+	                        (body ())                                                                    \n\
+	                        (end ()))                                                                    \n\
+                            (apply lambda* args                                                              \n\
+                              '(let ((result #<unspecified>))                                                \n\
+                                 (dynamic-wind                                                               \n\
+	                           (lambda () (for-each (lambda (f) (f (current-environment))) init))        \n\
+	                           (lambda () (for-each (lambda (f) (f (current-environment))) body) result) \n\
+	                           (lambda () (for-each (lambda (f) (f (current-environment))) end))))       \n\
+                              ())))");
 
   s7_eval_c_string(sc, "(define (stacktrace)                                                        \n\
                           (let ((str \"\"))                                                         \n\

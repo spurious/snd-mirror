@@ -659,7 +659,7 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
   /* s7_call takes a Scheme function (e.g. g_car above), and applies it to 'args' (a list of arguments)
    *   returning the result.
    *   
-   *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(sc, 123), s7_nil(s7))));
+   *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(s7, 123), s7_nil(s7))));
    *  
    *   returns 123.
    *

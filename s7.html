@@ -3806,7 +3806,7 @@ The hook environment's result field is the returned value of the hook applicatio
 Each such environment also has three lists,
 init, body, and end, and
 these lists of functions are called in dynamic-wind.
-In Scheme the interface would be something like:
+In Scheme the interface would be:
 </p>
 
 <pre class="indented">
@@ -3814,38 +3814,68 @@ In Scheme the interface would be something like:
 (&lt;hook&gt; . fields)        ; calls the hook, args set the extra fields as in define*
 </pre>
 
-<p>From the hook maker's point of view, on the other hand, a hook is a closure with the make-hook arguments
-added to the closure.  Here's a sketch:
+<p>From the hook maker's point of view, on the other hand, a hook is a closure with the make-hook arguments.
+Here's a sketch:
 </p>
 
 <pre class="indented">
 (define (make-hook . args)
-  (let ((result #&lt;unspecified&gt;)
-	(init ())
+  (let ((init ())
 	(body ())
-	(end ())
-	(local-args ())
-	(local-bindings ()))
-    (for-each (lambda (arg)
-		(set! local-bindings (cons (if (pair? arg)
-					       (cons (car arg) (cadr arg)) 
-					       (cons arg #&lt;unspecified&gt;))
-					   local-bindings))
-		(set! local-args (cons (caar local-bindings) local-args)))
-	      args)
-    (apply augment-environment! (current-environment) local-bindings)
-    (set! local-args (reverse local-args))
-    (lambda ()
-      (dynamic-wind 
-        (lambda () (for-each (lambda (f) (f (current-environment))) init))
-        (lambda () (for-each (lambda (f) (f (current-environment))) body) result)
-        (lambda () (for-each (lambda (f) (f (current-environment))) end))))))
+	(end ()))
+    (apply lambda* args
+      '(let ((result #&lt;unspecified&gt;))
+         (dynamic-wind 
+	   (lambda () (for-each (lambda (f) (f (current-environment))) init))
+	   (lambda () (for-each (lambda (f) (f (current-environment))) body) result)
+	   (lambda () (for-each (lambda (f) (f (current-environment))) end))))
+      ())))
+
+(define hook-environment procedure-environment)
+
+(define (add-to-hook hook function)
+  (set! ((hook-environment hook) 'body) 
+	(cons function ((hook-environment hook) 'body))))
+
+&gt; (define h (make-hook '(a 32) 'b))
+h
+&gt; (add-to-hook h (lambda (hook) 
+                   (set! (hook 'result) 
+                         (format #f "a: ~A, b: ~A" (hook 'a) (hook 'b)))))
+(#&lt;closure&gt;)
+&gt; (h 1 2)
+"a: 1, b: 2"
+&gt; (h)
+"a: 32, b: #f"
 </pre>
 
-<p>Internally s7 would put that thunk in a hook object, and use the original argument
-list for hook application.  It can set the internal closure fields via procedure-environment.
-Since the hook functions have access to the current result, Snd's or-hook can still be implemented.
+<p>To add an old-style hook function:
 </p>
+
+<pre class="indented">
+(add-to-hook hook (lambda (h) (apply func (map h (h 'args)))))
+</pre>
+
+<p>In C, to make a hook:
+</p>
+
+<pre class="indented">
+hook = s7_eval_c_string("(make-hook '(a 32) 'b)");
+s7_gc_protect(s7, hook);
+</pre>
+
+<p>And call it:
+</p>
+
+<pre class="indented">
+result = s7_call(s7, hook, 
+                     s7_cons(s7, s7_make_integer(s7, 1), 
+                                 s7_cons(s7, s7_make_integer(s7, 2), 
+                                             s7_nil(s7))));
+</pre>
+
+<!-- *unbound-variable-hook* is another case: it stops as soon as it gets something other then #undefined -->
+<!-- what about *error-hook* etc? -->
 </div>
 </blockquote>
 
