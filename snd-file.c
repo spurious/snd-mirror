@@ -6093,15 +6093,15 @@ This provides a way to set various sound-specific defaults. \n\
   #define H_output_name_hook S_output_name_hook " (current-name): called from the File:New dialog.  If it returns a filename, \
 that name is presented in the New File dialog."
 
-  open_hook =           XEN_DEFINE_HOOK(S_open_hook,           1, H_open_hook);           /* arg = filename */
-  before_close_hook =   XEN_DEFINE_HOOK(S_before_close_hook,   1, H_before_close_hook);   /* arg = sound index */
-  close_hook =          XEN_DEFINE_HOOK(S_close_hook,          1, H_close_hook);          /* arg = sound index */
-  bad_header_hook =     XEN_DEFINE_HOOK(S_bad_header_hook,     1, H_bad_header_hook);     /* arg = filename */
-  after_save_as_hook =  XEN_DEFINE_HOOK(S_after_save_as_hook,  3, H_after_save_as_hook);  /* args: index filename from-dialog */
-  before_save_as_hook = XEN_DEFINE_HOOK(S_before_save_as_hook, 7, H_before_save_as_hook); /* args: index filename selection srate type format comment */
-  during_open_hook =    XEN_DEFINE_HOOK(S_during_open_hook,    3, H_during_open_hook);    /* args = fd filename reason */
-  after_open_hook =     XEN_DEFINE_HOOK(S_after_open_hook,     1, H_after_open_hook);     /* args = sound */
-  output_name_hook =    XEN_DEFINE_HOOK(S_output_name_hook,    1, H_output_name_hook);    /* arg = current name, if any */
+  open_hook =           XEN_DEFINE_HOOK(S_open_hook,           "(make-hook 'name)",                1, H_open_hook);
+  before_close_hook =   XEN_DEFINE_HOOK(S_before_close_hook,   "(make-hook 'snd)",                 1, H_before_close_hook);
+  close_hook =          XEN_DEFINE_HOOK(S_close_hook,          "(make-hook 'snd)",                 1, H_close_hook);
+  bad_header_hook =     XEN_DEFINE_HOOK(S_bad_header_hook,     "(make-hook 'name)",                1, H_bad_header_hook);
+  after_save_as_hook =  XEN_DEFINE_HOOK(S_after_save_as_hook,  "(make-hook 'index 'name 'dialog)", 3, H_after_save_as_hook);
+  before_save_as_hook = XEN_DEFINE_HOOK(S_before_save_as_hook, "(make-hook 'index 'name 'selection 'srate 'type 'format 'comment)", 7, H_before_save_as_hook); 
+  during_open_hook =    XEN_DEFINE_HOOK(S_during_open_hook,    "(make-hook 'fd 'name 'reason)",    3, H_during_open_hook);
+  after_open_hook =     XEN_DEFINE_HOOK(S_after_open_hook,     "(make-hook 'snd)",                 1, H_after_open_hook);
+  output_name_hook =    XEN_DEFINE_HOOK(S_output_name_hook,    "(make-hook 'name)",                1, H_output_name_hook);
 
   #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
@@ -6109,7 +6109,7 @@ The list (passed to subsequent hook functions as 'current-choice') is interprete
 (list chans srate data-format data-location data-length) where trailing elements can \
 be omitted (location defaults to 0, and length defaults to the file length in bytes)."
 
-  open_raw_sound_hook = XEN_DEFINE_HOOK(S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
+  open_raw_sound_hook = XEN_DEFINE_HOOK(S_open_raw_sound_hook, "(make-hook 'name 'state)", 2, H_open_raw_sound_hook);
 
   #define H_update_hook S_update_hook " (snd): called just before " S_update_sound " is called. \
 The update process can  be triggered by a variety of situations, not just by " S_update_sound ". \
@@ -6119,16 +6119,16 @@ completion of the update operation; its argument is the (possibly different) sou
 Snd tries to maintain the index across the update, but if you change the number of channels \
 the newly updated sound may have a different index."
 
-  update_hook = XEN_DEFINE_HOOK(S_update_hook, 1, H_update_hook);            /* arg = sound index */
+  update_hook = XEN_DEFINE_HOOK(S_update_hook, "(make-hook 'snd)", 1, H_update_hook);
 
   #define H_view_files_select_hook S_view_files_select_hook "(filename): called when a file is selected in the \
 files list of the View Files dialog.  If it returns " PROC_TRUE ", the default action, opening the file, is omitted."
 
-  view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 2, H_view_files_select_hook); /* args = dialog, filename */
+  view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, "(make-hook 'dialog 'name)", 2, H_view_files_select_hook);
 
   #define H_info_popup_hook S_info_popup_hook " (snd): called by the info popup dialog."
 
-  info_popup_hook = XEN_DEFINE_HOOK(S_info_popup_hook, 1, H_info_popup_hook);             /* arg = sound index */
+  info_popup_hook = XEN_DEFINE_HOOK(S_info_popup_hook, "(make-hook 'snd)", 1, H_info_popup_hook); 
 
 
   /* file-filters and file-sorters are lists from user's point of view, but I want to

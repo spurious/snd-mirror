@@ -6411,12 +6411,12 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_EDIT_CTR:                return(C_TO_XEN_INT(cp->edit_ctr));                               break;
 	    case CP_GRAPH_TRANSFORM_P:       return(C_TO_XEN_BOOLEAN(cp->graph_transform_p));                  break;
 	    case CP_GRAPH_TIME_P:            return(C_TO_XEN_BOOLEAN(cp->graph_time_p));                       break;
-	    case CP_CURSOR:                  return(C_TO_XEN_LONG_LONG(CURSOR(cp)));                             break;
+	    case CP_CURSOR:                  return(C_TO_XEN_LONG_LONG(CURSOR(cp)));                           break;
 	    case CP_EDPOS_CURSOR:            return(C_TO_XEN_LONG_LONG(cp->edits[to_c_edit_position(cp, cp_edpos, S_cursor, 3)]->cursor)); break;
-	    case CP_FRAMES:                  return(C_TO_XEN_LONG_LONG(CURRENT_SAMPLES(cp)));                    break;
+	    case CP_FRAMES:                  return(C_TO_XEN_LONG_LONG(CURRENT_SAMPLES(cp)));                  break;
 	    case CP_GRAPH_LISP_P:            return(C_TO_XEN_BOOLEAN(cp->graph_lisp_p));                       break;
-	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_LONG_LONG(cp->axis->losamp));         break;
-	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_LONG_LONG(cp->axis->hisamp));         break;
+	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_LONG_LONG(cp->axis->losamp));       break;
+	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_LONG_LONG(cp->axis->hisamp));       break;
 	    case CP_SQUELCH_UPDATE:          return(C_TO_XEN_BOOLEAN(cp->squelch_update));                     break;
 	    case CP_CURSOR_SIZE:             return(C_TO_XEN_INT(cp->cursor_size));                            break;
 
@@ -6435,7 +6435,7 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_EDIT_HOOK:
 	      if (!(XEN_HOOK_P(cp->edit_hook)))
 		{
-		  cp->edit_hook = XEN_DEFINE_SIMPLE_HOOK(0);
+		  cp->edit_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook)", 0);
 		  cp->edit_hook_loc = snd_protect(cp->edit_hook);
 		}
 	      return(cp->edit_hook);
@@ -6444,7 +6444,7 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_AFTER_EDIT_HOOK:
 	      if (!(XEN_HOOK_P(cp->after_edit_hook)))
 		{
-		  cp->after_edit_hook = XEN_DEFINE_SIMPLE_HOOK(0);
+		  cp->after_edit_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook)", 0);
 		  cp->after_edit_hook_loc = snd_protect(cp->after_edit_hook);
 		}
 	      return(cp->after_edit_hook);
@@ -6453,7 +6453,7 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_UNDO_HOOK:               
 	      if (!(XEN_HOOK_P(cp->undo_hook)))
 		{
-		  cp->undo_hook = XEN_DEFINE_SIMPLE_HOOK(0);
+		  cp->undo_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook)", 0);
 		  cp->undo_hook_loc = snd_protect(cp->undo_hook);
 		}
 	      return(cp->undo_hook);
@@ -10218,18 +10218,18 @@ If it returns a function (of no arguments), that function is called rather than 
 If it returns " PROC_TRUE ", the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
   #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur): called when a sound is displayed for the first time"
   
-  after_transform_hook =  XEN_DEFINE_HOOK(S_after_transform_hook, 3,  H_after_transform_hook);   /* args = sound channel scaler */
-  graph_hook =            XEN_DEFINE_HOOK(S_graph_hook, 4,            H_graph_hook);             /* args = sound channel y0 y1 */
-  after_graph_hook =      XEN_DEFINE_HOOK(S_after_graph_hook, 2,      H_after_graph_hook);       /* args = sound channel */
-  after_lisp_graph_hook = XEN_DEFINE_HOOK(S_after_lisp_graph_hook, 2, H_after_lisp_graph_hook);  /* args = sound channel */
-  initial_graph_hook =    XEN_DEFINE_HOOK(S_initial_graph_hook, 3,    H_initial_graph_hook);     /* args = sound channel duration */
-  lisp_graph_hook =       XEN_DEFINE_HOOK(S_lisp_graph_hook, 2,       H_lisp_graph_hook);        /* args = sound channel */
-  mouse_press_hook =      XEN_DEFINE_HOOK(S_mouse_press_hook, 6,      H_mouse_press_hook);       /* args = sound channel button state x y */
-  mouse_click_hook =      XEN_DEFINE_HOOK(S_mouse_click_hook, 7,      H_mouse_click_hook);       /* args = sound channel button state x y axis */
-  mouse_drag_hook =       XEN_DEFINE_HOOK(S_mouse_drag_hook, 6,       H_mouse_drag_hook);        /* args = sound channel button state x y */
-  key_press_hook =        XEN_DEFINE_HOOK(S_key_press_hook, 4,        H_key_press_hook);         /* args = sound channel key state */
-  mark_click_hook =       XEN_DEFINE_HOOK(S_mark_click_hook, 1,       H_mark_click_hook);        /* arg = id */
-  mix_click_hook =        XEN_DEFINE_HOOK(S_mix_click_hook, 1,        H_mix_click_hook);         /* arg = id */
+  after_transform_hook =  XEN_DEFINE_HOOK(S_after_transform_hook,   "(make-hook 'snd 'chn 'scaler)",                    3, H_after_transform_hook);
+  graph_hook =            XEN_DEFINE_HOOK(S_graph_hook,             "(make-hook 'snd 'chn 'y0 'y1)",                    4, H_graph_hook);
+  after_graph_hook =      XEN_DEFINE_HOOK(S_after_graph_hook,       "(make-hook 'snd 'chn)",                            2, H_after_graph_hook); 
+  after_lisp_graph_hook = XEN_DEFINE_HOOK(S_after_lisp_graph_hook,  "(make-hook 'snd 'chn)",                            2, H_after_lisp_graph_hook);
+  initial_graph_hook =    XEN_DEFINE_HOOK(S_initial_graph_hook,     "(make-hook 'snd 'chn 'duration)",                  3, H_initial_graph_hook);
+  lisp_graph_hook =       XEN_DEFINE_HOOK(S_lisp_graph_hook,        "(make-hook 'snd 'chn)",                            2, H_lisp_graph_hook);
+  mouse_press_hook =      XEN_DEFINE_HOOK(S_mouse_press_hook,       "(make-hook 'snd 'chn 'button 'state 'x 'y)",       6, H_mouse_press_hook);
+  mouse_click_hook =      XEN_DEFINE_HOOK(S_mouse_click_hook,       "(make-hook 'snd 'chn 'button 'state 'x 'y 'axis)", 7, H_mouse_click_hook);
+  mouse_drag_hook =       XEN_DEFINE_HOOK(S_mouse_drag_hook,        "(make-hook 'snd 'chn 'button 'state 'x 'y)",       6, H_mouse_drag_hook);
+  key_press_hook =        XEN_DEFINE_HOOK(S_key_press_hook,         "(make-hook 'snd 'chn 'key 'state)",                4, H_key_press_hook);
+  mark_click_hook =       XEN_DEFINE_HOOK(S_mark_click_hook,        "(make-hook 'id)",                                  1, H_mark_click_hook); 
+  mix_click_hook =        XEN_DEFINE_HOOK(S_mix_click_hook,         "(make-hook 'id)",                                  1, H_mix_click_hook);  
 }
 
 

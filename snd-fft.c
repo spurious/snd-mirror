@@ -2456,7 +2456,7 @@ of a moving mark:\n\
 
   init_xen_transform();
 
-  before_transform_hook = XEN_DEFINE_HOOK(S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
+  before_transform_hook = XEN_DEFINE_HOOK(S_before_transform_hook, "(make-hook 'snd 'chn)", 2, H_before_transform_hook);
 
 #if HAVE_SCHEME
   s7_define_constant(s7, S_fourier_transform, C_INT_TO_XEN_TRANSFORM(FOURIER));

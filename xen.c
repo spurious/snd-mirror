@@ -1719,10 +1719,10 @@ static bool directory_p(const char *filename)
 #endif
 }
 
-static XEN g_file_is_directory(XEN name)
+static XEN g_directory_p(XEN name)
 {
-  #define H_file_is_directory "(file-is-directory? filename): #t if filename names a directory"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-is-directory?", "a string");
+  #define H_directory_p "(directory? filename): #t if filename names a directory"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "directory?", "a string");
   return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
 }
 
@@ -1878,7 +1878,7 @@ static XEN g_gc_on(void)
 XEN_NARGIFY_0(g_getpid_w, g_getpid)
 #if (!WITH_SYSTEM_EXTRAS)
   XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
-  XEN_NARGIFY_1(g_file_is_directory_w, g_file_is_directory)
+  XEN_NARGIFY_1(g_directory_p_w, g_directory_p)
   XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
   XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
   XEN_NARGIFY_1(g_system_w, g_system)
@@ -1918,7 +1918,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
 #if (!WITH_SYSTEM_EXTRAS)
   XEN_DEFINE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("directory?",          g_file_is_directory_w,  1, 0, 0, H_file_is_directory);
+  XEN_DEFINE_PROCEDURE("directory?",          g_directory_p_w,        1, 0, 0, H_directory_p);
   XEN_DEFINE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
   XEN_DEFINE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
   XEN_DEFINE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
@@ -1932,11 +1932,9 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
   XEN_DEFINE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
 
-#if (!XEN_DISABLE_DEPRECATED)
-  XEN_EVAL_C_STRING("(define file-is-directory? directory?)");    /* backwards compatibility: */
-#endif
-
-  /* these three to replace add-hook!, reset-hook!, and remove-hook! */
+  /* these three to replace add-hook!, reset-hook!, and remove-hook!
+   *   TODO: they are used in *.html but need to be fixed for the new hook implementation
+   */
   XEN_EVAL_C_STRING("(define (hook-push hook func) \n\
                        \"(hook-push hook func) adds func to hook's function list\" \n\
                        (set! (hook-functions hook) (cons func (hook-functions hook))))");

@@ -1074,7 +1074,7 @@ void g_init_listener(void)
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."
   
-  read_hook = XEN_DEFINE_HOOK(S_read_hook, 1, H_read_hook);
+  read_hook = XEN_DEFINE_HOOK(S_read_hook, "(make-hook 'text)", 1, H_read_hook);
 
   XEN_DEFINE_PROCEDURE("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
 }

@@ -17366,7 +17366,7 @@ something it can't optimize.  'msg' is a string description of the offending for
   (add-hook! " S_optimization_hook " (lambda (msg) (display (format #f \"run trouble: ~A~%\" msg))))\n\
 You can often slightly rewrite the form to make run happy."
 
-  optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
+  optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, "(make-hook 'message)", 1, H_optimization_hook);
 
 #if (!USE_SND)
   optimizing = true;
@@ -17426,7 +17426,7 @@ XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
 void mus_init_run(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER("optimization", g_optimization_w, "a no-op", S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
-  optimization_hook = XEN_DEFINE_HOOK("optimization-hook", 1, "a no-op");
+  optimization_hook = XEN_DEFINE_HOOK("optimization-hook", "(make-hook 'message)", 1, "a no-op");
 }
 
 #endif

@@ -1735,8 +1735,8 @@ enters the drawing area (graph pane) of the given channel.\n\
 leaves the drawing area (graph pane) of the given channel."
 #endif
 
-  mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
-  mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
+  mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_enter_graph_hook);
+  mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
 
 #if HAVE_SCHEME
   new_mouse_enter_graph_hook = s7_eval_c_string(s7, "(make-new-hook 'snd 'chn)");
@@ -1746,6 +1746,9 @@ leaves the drawing area (graph pane) of the given channel."
    *       (cons (lambda (hook)
    *               (format #t "snd: ~A, chn: ~A~%" (hook 'snd) (hook 'chn)))
    *             ((procedure-environment new-mouse-enter-graph-hook) 'body)))
+   */
+
+  /* I don't think XEN_DEFINE_HOOK and friends can be used in this case
    */
 #endif
 }

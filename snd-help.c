@@ -3679,9 +3679,7 @@ and its value is returned."
 	  }
 	else
 	  {
-	    if (XEN_HOOK_P(sym))
-	      str = (char *)s7_hook_documentation(sym);
-	    else str = (char *)xen_s7_constant_help(subject);
+	    str = (char *)xen_s7_constant_help(subject);
 	  }
       }
   }
@@ -3964,7 +3962,7 @@ void g_init_help(void)
   #define H_help_hook S_help_hook "(subject help-string): called from " S_snd_help ".  If \
 it returns a string, it replaces 'help-string' (the default help)"
 
-  help_hook = XEN_DEFINE_HOOK(S_help_hook, 2, H_help_hook);    /* args = subject help-string */
+  help_hook = XEN_DEFINE_HOOK(S_help_hook, "(make-hook 'subject 'message)", 2, H_help_hook);
 
 #if HAVE_SCHEME
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
@@ -3987,7 +3985,7 @@ If more than one hook function, each function gets the previous function's outpu
 ; add-hook!"
 #endif
 
-  output_comment_hook = XEN_DEFINE_HOOK(S_output_comment_hook, 1, H_output_comment_hook); /* arg = current mus_sound_comment(hdr) if any */
+  output_comment_hook = XEN_DEFINE_HOOK(S_output_comment_hook, "(make-hook 'comment)", 1, H_output_comment_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir,     g_html_dir_w,     H_html_dir,     S_setB S_html_dir,     g_set_html_dir_w,      0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);

@@ -6099,9 +6099,9 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
 
   #define H_peak_env_hook S_peak_env_hook " (snd chn): called when a new peak env is ready."
 
-  name_click_hook =  XEN_DEFINE_HOOK(S_name_click_hook, 1, H_name_click_hook);                               /* args = snd-index */
-  after_apply_controls_hook = XEN_DEFINE_HOOK(S_after_apply_controls_hook, 1, H_after_apply_controls_hook);  /* args = snd-index */
-  peak_env_hook = XEN_DEFINE_HOOK(S_peak_env_hook, 2, H_peak_env_hook);                                      /* args = snd-index, chan */
+  name_click_hook =           XEN_DEFINE_HOOK(S_name_click_hook,           "(make-hook 'snd)",      1, H_name_click_hook);
+  after_apply_controls_hook = XEN_DEFINE_HOOK(S_after_apply_controls_hook, "(make-hook 'snd)",      1, H_after_apply_controls_hook);
+  peak_env_hook =             XEN_DEFINE_HOOK(S_peak_env_hook,             "(make-hook 'snd 'chn)", 2, H_peak_env_hook);
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one pane (set by the 'unite' button)"

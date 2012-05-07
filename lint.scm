@@ -126,7 +126,7 @@
 		       eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt 
 		       floor for-each 
 		       gcd gensym global-environment 
-		       hash-table hash-table-ref hash-table-size hash-table? hook hook-apply hook-arity hook-documentation hook-functions hook? 
+		       hash-table hash-table-ref hash-table-size hash-table? hook-functions 
 		       if imag-part inexact->exact inexact? infinite? initial-environment input-port?  integer->char integer-decode-float 
 		       integer-length integer? 
 		       keyword->symbol keyword? 
@@ -409,10 +409,6 @@
 			  (cons 'hash-table-ref (list hash-table?))
 			  (cons 'hash-table-set! (list hash-table?))
 			  (cons 'hash-table-size hash-table?)
-			  (cons 'hook procedure?)
-			  (cons 'hook-arity hook?)
-			  (cons 'hook-documentation hook?)
-			  (cons 'hook-functions hook?)
 			  (cons 'imag-part number?)
 			  (cons 'inexact->exact real?)
 			  (cons 'inexact? number?)
@@ -1041,7 +1037,7 @@
 	       (or (char-op? b)
 		   (number-op? b)
 		   (string-op? b)))
-	      ((boolean? procedure? symbol? hook? continuation? environment?)
+	      ((boolean? procedure? symbol? continuation? environment?)
 	       (or (char-op? b)
 		   (number-op? b)
 		   (list-op? b)
@@ -1077,7 +1073,7 @@
 			  (pair? (cdar b)))
 		     (let* ((func (caar b))
 			    (arg-type (or (hash-table-ref argument-data func)
-					  (and (memq func '(string? pair? symbol? number? hash-table? hook? boolean? char? vector? procedure?))
+					  (and (memq func '(string? pair? symbol? number? hash-table? boolean? char? vector? procedure?))
 					       (symbol->value func))
 					  (and (memq func '(complex? integer? rational? real?))
 					       number?)
@@ -2598,8 +2594,7 @@
 						 (if (or (vector? key)
 							 (string? key)
 							 (list? key)
-							 (hash-table? key)
-							 (hook? key))
+							 (hash-table? key))
 						     (lint-format "case key ~S in ~S is unlikely to work (case uses eqv?)" 
 								  name line-number key clause))
 						 (if (member key all-keys)

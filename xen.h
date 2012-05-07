@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 10
-#define XEN_VERSION "3.10"
+#define XEN_MINOR_VERSION 11
+#define XEN_VERSION "3.11"
 
 /* HISTORY:
  *
+ *  8-May:     added description arg to XEN_DEFINE_SIMPLE_HOOK and XEN_DEFINE_HOOK, only used in scheme.
  *  12-Jan-12: added reverse argument to s7 version of XEN_MAKE_OBJECT_TYPE.
  *  --------
  *  20-Oct:    XEN_LONG_LONG_P.
@@ -313,9 +314,8 @@
 #define XEN_HOOK_PROCEDURES(a)          xen_rb_hook_to_a(a)
 #define XEN_CLEAR_HOOK(a)               xen_rb_hook_reset_hook(a)
 #define XEN_HOOKED(a)                   (!xen_rb_hook_empty_p(a))
-#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook((char *)(Name), Arity, (char *)Help)
-/* #define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new((char *)"simple_hook", Arity, NULL); */ 
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_create_simple_hook(Arity); 
+#define XEN_DEFINE_HOOK(Name, Descr, Arity, Help) xen_rb_create_hook((char *)(Name), Arity, (char *)Help)
+#define XEN_DEFINE_SIMPLE_HOOK(Descr, Arity) xen_rb_create_simple_hook(Arity); 
 #define XEN_ADD_HOOK(Hook, Func, Name, Doc) xen_rb_add_hook(Hook, (XEN (*)())Func, Name, Doc)
 
 /* ---- vectors ---- */
@@ -885,8 +885,8 @@ XEN xen_assoc(XEN key, XEN alist);
 /* === Hook, Procedure === */
 #define XEN_HOOK_P(Arg)                 FTH_HOOK_P(Arg)
 #define XEN_HOOKED(a)                   (!fth_hook_empty_p(a))
-#define XEN_DEFINE_HOOK(name, arity, help) fth_make_hook(name, arity, help)
-#define XEN_DEFINE_SIMPLE_HOOK(arity)   fth_make_simple_hook(arity)
+#define XEN_DEFINE_HOOK(name, descr, arity, help) fth_make_hook(name, arity, help)
+#define XEN_DEFINE_SIMPLE_HOOK(descr, arity) fth_make_simple_hook(arity)
 #define XEN_CLEAR_HOOK(Arg)             fth_hook_clear(Arg)
 #define XEN_HOOK_PROCEDURES(Obj)        fth_hook_procedure_list(Obj)
 #define XEN_ADD_HOOK(Hook, Func, Name, Doc)  fth_add_hook(Hook, (FTH)fth_define_procedure(Name, Func, fth_hook_arity(Hook), 0, false, Doc)) 
@@ -1420,21 +1420,14 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_OBJECT_TYPE                                               int /* tag type */
 #define XEN_OBJECT_TYPE_P(Obj, Tag)                                   (s7_object_type(Obj) == Tag)
 
-#define XEN_HOOK_P(Arg)                                               s7_is_hook(Arg)
-#define XEN_DEFINE_HOOK(Name, Arity, Help)                            xen_s7_define_hook(Name, s7_make_hook(s7, Arity, 0, false, Help))
+#define XEN_HOOK_P(Arg)                                               ((Arg) != XEN_FALSE)
+#define XEN_DEFINE_HOOK(Name, Descr, Arity, Help)                     xen_s7_define_hook(Name, s7_make_hook(s7, Descr))
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)                                 s7_make_hook(s7, Arity, 0, false, NULL)
-#define XEN_HOOKED(Hook)                                              s7_is_pair(s7_hook_functions(Hook))
-#define XEN_CLEAR_HOOK(Hook)                                          s7_hook_set_functions(Hook, s7_nil(s7))
-#define XEN_HOOK_PROCEDURES(Hook)                                     s7_hook_functions(Hook)
-#define XEN_ADD_HOOK(Hook, Func, Name, Doc)                           s7_hook_set_functions(Hook, s7_cons(s7, s7_make_function(s7, Name, Func, (int)s7_integer(s7_car(s7_hook_arity(Hook))), 0, false, Doc), s7_hook_functions(Hook)))
-
-/* if new: hook? = procedure?, hook-functions = ((procedure-environment hook) 'body)
- *         make-hook needs field names, hooked is same, clear can be same, procedures is same,
- *         add-hook is different from the above
- * besides changing the code here, we'd need all the hook functions to change *.scm, *.html, any defined in C, C example in s7.html etc
- *   so perhaps also 'new-hooks feature?
- */
+#define XEN_DEFINE_SIMPLE_HOOK(Descr, Arity)                          s7_make_hook(s7, Descr)
+#define XEN_HOOKED(Hook)                                              s7_is_pair(s7_hook_functions(s7, Hook))
+#define XEN_CLEAR_HOOK(Hook)                                          s7_hook_set_functions(s7, Hook, s7_nil(s7))
+#define XEN_HOOK_PROCEDURES(Hook)                                     s7_hook_functions(s7, Hook)
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc)                           s7_hook_set_functions(s7, Hook, s7_cons(s7, s7_make_function(s7, Name, Func, 0, 0, true, Doc), s7_hook_functions(s7, Hook)))
 
 #ifdef __cplusplus
 extern "C" {
@@ -1622,8 +1615,8 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_SYMBOL_P(Arg) 0
 #define XEN_HOOK_P(Arg) 0
 #define XEN_HOOKED(a) 0
-#define XEN_DEFINE_HOOK(Name, Arity, Help) 0
-#define XEN_DEFINE_SIMPLE_HOOK(Arity) 0
+#define XEN_DEFINE_HOOK(Name, Descr, Arity, Help) 0
+#define XEN_DEFINE_SIMPLE_HOOK(Descr, Arity) 0
 #define XEN_CLEAR_HOOK(Arg)
 #define XEN_HOOK_PROCEDURES(a) 0
 #define XEN_ADD_HOOK(Hook, Func, Name, Doc) 

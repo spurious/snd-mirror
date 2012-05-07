@@ -324,15 +324,15 @@ If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported i
 If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported it via the hook)"
 #endif
 
-  ss->snd_error_hook = XEN_DEFINE_HOOK(S_snd_error_hook, 1, H_snd_error_hook);       /* arg = error-message */
-  ss->snd_warning_hook = XEN_DEFINE_HOOK(S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
+  ss->snd_error_hook =   XEN_DEFINE_HOOK(S_snd_error_hook,   "(make-hook 'message)", 1, H_snd_error_hook);
+  ss->snd_warning_hook = XEN_DEFINE_HOOK(S_snd_warning_hook, "(make-hook 'message)", 1, H_snd_warning_hook);
 
 
   #define H_clip_hook S_clip_hook " (clipping-value) is called each time a sample is about to \
 be clipped upon being written to a sound file.  The hook function can return the new value to \
 be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'clipping-value')."
 
-  clip_hook = XEN_DEFINE_HOOK(S_clip_hook, 1, H_clip_hook); /* arg = clipping val as double */
+  clip_hook = XEN_DEFINE_HOOK(S_clip_hook, "(make-hook 'val)", 1, H_clip_hook); 
 
   mus_clip_set_handler(run_clip_hook);
 }

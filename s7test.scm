@@ -446,7 +446,7 @@
      (if (not (eq? x y))
 	 (format #t ";(eq? x y) of ~A ~A -> #f?~%" x y))))
  ;; actually I hear that #f is ok here for numbers
- (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3/4 #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
 ;; this used to include 3.14 and 1+i but that means the (eq? x x) case differs from the (eq? 3.14 3.14) case
 
@@ -1618,7 +1618,7 @@
 	       most-negative-fixnum most-positive-fixnum 
 	       'a-symbol 
 	       (make-vector 3 #f) #() #2d((1 2) (3 4))
-	       abs quasiquote macroexpand make-type hook-functions 
+	       abs quasiquote macroexpand make-type 
 	       (hash-table '(a . 1) '(b . 2)) (hash-table)
 	       (augment-environment (current-environment) '(a . 1)) (global-environment)
 	       #f #t :hi 
@@ -1634,7 +1634,7 @@
 	       -9223372036854775808 9223372036854775807 
 	       (string->symbol "a-symbol")
 	       (vector #f #f #f) (vector)  #2d((1 2) (3 4))
-	       abs quasiquote macroexpand make-type hook-functions 
+	       abs quasiquote macroexpand make-type 
 	       (let ((h (make-hash-table 31))) (set! (h 'a) 1) (set! (h 'b) 2) h) (make-hash-table 123)
 	       (augment-environment (current-environment) '(a . 1)) (global-environment)
 	       #f #t :hi 
@@ -1704,7 +1704,7 @@
  (lambda (arg)
    (if (boolean? arg)
        (format #t ";(boolean? ~A) -> #t?~%" arg)))
- (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
 
 (test (recompose 12 boolean? #f) #t)
@@ -1742,7 +1742,7 @@
  (lambda (arg)
    (if (not arg)
        (format #t ";(not ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi #<eof> #<undefined> (if #f #f)))
 
 (test (recompose 12 not #f) #f)
@@ -1796,7 +1796,7 @@
  (lambda (arg)
    (if (symbol? arg)
        (format #t ";(symbol? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined>))
 
 (test (symbol?) 'error)
@@ -1926,7 +1926,7 @@
  (lambda (arg)
    (if (char? arg)
        (format #t ";(char? ~A) -> #t?~%" arg)))
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) :hi (lambda (a) (+ a 1))))
 
 (test (char? begin) #f)
@@ -2260,7 +2260,7 @@
      (for-each
       (lambda (arg)
 	(test (op arg) 'error))
-      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	    3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
    (list char-upper-case? char-lower-case? char-upcase char-downcase char-numeric? char-whitespace? char-alphabetic?))
 
@@ -2316,7 +2316,7 @@
      (for-each
       (lambda (arg)
 	(test (op #\a arg) 'error))
-      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	    3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
    (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
 
@@ -2325,7 +2325,7 @@
      (for-each
       (lambda (arg)
 	(test (op arg #\a) 'error))
-      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	    3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
    (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
 
@@ -2710,13 +2710,13 @@
 (for-each
  (lambda (arg)
    (test (char->integer arg) 'error))
- (list -1 1 0 123456789 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list -1 1 0 123456789 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (integer->char arg) 'error))
- (list -1 257 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list -1 257 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (#\a) 'error)
@@ -2745,7 +2745,7 @@
 (for-each
  (lambda (arg)
    (test (string? arg) #f))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (string?) 'error)
@@ -2815,7 +2815,7 @@
  (lambda (arg)
    (test (string=? "hi" arg) 'error)
    (test (string=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -2890,7 +2890,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string<? "hi" arg) 'error)
    (test (string<? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -2941,7 +2941,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string>? "hi" arg) 'error)
    (test (string>? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -2990,7 +2990,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string<=? "hi" arg) 'error)
    (test (string<=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3042,7 +3042,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string>=? "hi" arg) 'error)
    (test (string>=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3080,7 +3080,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci=? "hi" arg) 'error)
    (test (string-ci=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3156,7 +3156,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci<? "hi" arg) 'error)
    (test (string-ci<? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3202,7 +3202,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci>? "hi" arg) 'error)
    (test (string-ci>? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3246,7 +3246,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci<=? "hi" arg) 'error)
    (test (string-ci<=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3292,7 +3292,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci>=? "hi" arg) 'error)
    (test (string-ci>=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3334,7 +3334,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string-length arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3347,7 +3347,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (string #\a arg) 'error)
    (test (string #\a #\null arg) 'error)
    (test (string arg) 'error))
- (list '() (list 1) '(1 . 2) "a" #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list '() (list 1) '(1 . 2) "a" #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (string) "")
@@ -3386,19 +3386,19 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (make-string 3 arg) 'error))
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (make-string arg #\a) 'error))
- (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (make-string arg) 'error))
- (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3432,13 +3432,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string-ref arg 0) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-ref "hiho" arg) 'error))
- (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test ("hi" 1) #\i)
@@ -3478,7 +3478,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string-copy arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (length (string-copy (string #\null))) 1)
@@ -3530,19 +3530,19 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string-set! arg 0 #\a) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-set! "hiho" arg #\a) 'error))
- (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-set! "hiho" 0 arg) 'error))
- (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (equal? (let ((str "hiho")) (string-set! str 2 #\null) str) "hi") #f)
@@ -3578,13 +3578,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (let ((hiho "hiho")) (string-fill! hiho arg) hiho) 'error))
- (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-fill! arg #\a) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3664,20 +3664,20 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (substring "hiho" arg 0) 'error))
- (list "hi" #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (substring "0123" arg) 'error)
    (test (substring "hiho" 1 arg) 'error))
- (list "hi" #\a -1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" #\a -1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (substring arg 1 2) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (define (substring? pattern target) ; taken from net somewhere (umich?) with changes for s7, see also snd-xen.c apropos definition
@@ -3798,7 +3798,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (string-append "hiho" arg) 'error)
    (test (string-append arg "hi") 'error)
    (test (string-append "a" "b" arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3906,7 +3906,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string->list arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->string x)) 'error)
@@ -3916,7 +3916,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (list->string arg) 'error))
- (list "hi" #\a 1 ''foo '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" #\a 1 ''foo '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let ((str (list->string '(#\x #\space #\null #\x))))
@@ -4090,14 +4090,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (symbol->string arg) 'error))
- (list #\a 1 "hi" '() (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 "hi" '() (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string->symbol arg) 'error)
    (test (symbol arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
@@ -4140,14 +4140,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (lambda (arg)
      (set! sym arg)
      (test (symbol->value 'sym) arg))
-   (list #\a 1 '() (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+   (list #\a 1 '() (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	 3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1)))))
 
 (for-each
  (lambda (arg)
    (test (symbol->value arg) 'error)
    (test (symbol->value 'abs arg) 'error))
- (list #\a 1 '() (list 1) "hi" '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) "hi" '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1))))
   
 (test (symbol->value) 'error)
@@ -4299,7 +4299,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (if (not (equal? (car (cons arg '())) arg))
        (format #t ";(car '(~A)) returned ~A?~%" arg (car (cons arg '()))))
    (test (car arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (reinvert 12 car (lambda (a) (cons a '())) '(1)) '(1))
@@ -4337,7 +4337,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (if (not (equal? (cdr (cons '() arg)) arg))
        (format #t ";(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg))))
    (test (cdr arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let* ((a (list 1 2 3))
@@ -4768,7 +4768,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (length arg) 'error))
- (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand make-type hook-functions 
+ (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (length 'x) 'error)
@@ -4848,7 +4848,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (reverse arg) 'error))
- (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand make-type hook-functions 
+ (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -4895,7 +4895,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (reverse! arg) 'error))
- (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t (if #f #f) #(1 2 3) "hiho" (lambda (a) (+ a 1))))
 
 
@@ -4942,7 +4942,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (if (pair? arg)
        (format #t ";(pair? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -4987,7 +4987,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (if (list? arg)
        (format #t ";(list? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -5038,7 +5038,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (if (null? arg)
        (format #t ";(null? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t (if #f #f) :hi #<eof> #<undefined> (values) (lambda (a) (+ a 1))))
 
 
@@ -5159,7 +5159,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (list-ref (list 1 arg) 1) arg))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 0)) 1)
@@ -5282,7 +5282,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
      (test (list-ref (list 1 2) arg) 'error)
      (test ((list 1 2) arg) 'error)
      (test (lst arg) 'error))
-   (list "hi" (integer->char 65) #f '(1 2) '() 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+   (list "hi" (integer->char 65) #f '(1 2) '() 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	 3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
 
 
@@ -5314,7 +5314,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (let ((x (list 1 2))) (list-set! x 0 arg) (list-ref x 0)) arg))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((L '((1 2 3) (4 5 6)))) (list-set! L 1 32) L) '((1 2 3) 32))
@@ -5404,7 +5404,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (list-set! (list 1 2) arg arg) 'error)
    (test (list-set! arg 1 2) 'error)
    (test (list-set! (list 1 2) arg 1) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -5503,7 +5503,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (list-tail (list 1 2) arg) 'error)
    (test (list-tail arg 0) 'error))
  (list "hi" -1 3 most-negative-fixnum most-positive-fixnum 
-       (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+       (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t (if #f #f) #<eof> #() #(1 2 3) (lambda (a) (+ a 1))))
 
 
@@ -6085,7 +6085,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	    (format #t ";(~A ~A) returned ~A?~%" op arg result))
 	(test (op arg '() arg) 'error)
 	(test (op arg) 'error)))
-    (list '() "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand hook-functions 
+    (list '() "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
 	  3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
        caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
@@ -6105,7 +6105,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (let ((result (catch #t (lambda () (op #f arg)) (lambda args 'error))))
 	(if (not (eq? result 'error))
 	    (format #t ";(~A #f ~A) returned ~A?~%" op arg result))))
-    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	  3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list assq assv assoc memq memv member))
 
@@ -6227,7 +6227,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector? arg) #f))
- (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (vector?) 'error)
@@ -6271,7 +6271,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-ref (make-vector 1 arg) 0) arg))
- (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
 
 (test (make-vector) 'error)
@@ -6290,7 +6290,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (make-vector arg) 'error)
    (test (make-vector (list 2 arg)) 'error))
- (list #\a '() -1 #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a '() -1 #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
 
 
@@ -6318,7 +6318,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-ref (vector arg) 0) arg))
- (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
 
 
@@ -6367,7 +6367,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector->list arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol "hi" abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol "hi" abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->vector x)) 'error)
@@ -6379,7 +6379,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (list->vector arg) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -6405,7 +6405,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-length arg) 'error))
- (list "hi" #\a 1 '() '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" #\a 1 '() '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -6472,7 +6472,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
      (test (vector-ref v arg) 'error)
      (test (vector-ref v arg 0) 'error)
      (test (vector-ref #2d((1 2) (3 4)) 0 arg) 'error))
-   (list "hi" '() #() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+   (list "hi" '() #() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
 	 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1)) (make-hash-table))))
 
 
@@ -6566,7 +6566,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (lambda (arg)
      (vector-set! v 1 arg)
      (test (vector-ref v 1) arg))
-   (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+   (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type 
 	 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1)))))
 (test (let ((v (vector 1 2 3))) (vector-set! v 1 0) v) '#(1 0 3))
 (test (let ((v (vector #f))) (vector-set! v 0 (vector)) v) '#(#()))
@@ -6585,20 +6585,20 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-set! arg 0 0) 'error))
- (list "hi" '() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1)) (make-hash-table)))
 
 (let ((v (vector 1 2 3)))
   (for-each
    (lambda (arg)
      (test (vector-set! v arg 0) 'error))
-   (list "hi" '() #() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+   (list "hi" '() #() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
 	 3.14 3/4 1.0+1.0i #t (make-vector 3) (lambda (a) (+ a 1)))))
 
 (for-each
  (lambda (arg)
    (test (vector-set! arg 0 0) 'error))
- (list "hi" '() #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '() #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let ((v (vector)))
@@ -6699,7 +6699,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (lambda (arg)
      (vector-fill! v arg)
      (test (vector-ref v 1) arg))
-   (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+   (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand make-type 
 	 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1)))))
 
 (test (let ((str "hi") (v (make-vector 3))) (vector-fill! v str) (string-set! (vector-ref v 0) 1 #\a) str) "ha")
@@ -6719,7 +6719,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-fill! arg 0) 'error))
- (list "hi" #\a '() 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" #\a '() 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (if with-bignums
@@ -7769,7 +7769,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	  (test (equal? l2 vect) #t)
 	  (test (equal? s2 lst) #t)))))
 
-(let* ((vals (list "hi" #\A 1 'a #(1) abs _ht_ quasiquote macroexpand make-type hook-functions 
+(let* ((vals (list "hi" #\A 1 'a #(1) abs _ht_ quasiquote macroexpand make-type 
 		   3.14 3/4 1.0+1.0i #\f '(1 . 2)))
        (vlen (length vals)))
   (do ((i 0 (+ i 1)))
@@ -8808,6 +8808,17 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (test (hash-table-ref ht 'a0 'a1) 'b1)
     (test (ht 'a0 'a1) 'b1)))
 
+(test (let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2.0) (morally-equal? h1 h2)) #t)
+(test (let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1.0) (set! (h2 'b) 2) (morally-equal? (list h1) (list h2))) #t)
+
+(test (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) (ht ht)) 1)
+(test (let ((ht (make-hash-table))) (hash-table-set! ht ht ht) (equal? (ht ht) ht)) #t)
+
+(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (object->string ht)) "#1=#<hash-table (a . #1#)>")
+(test (let ((h1 (make-hash-table))) (hash-table-set! h1 "hi" h1) (object->string h1)) "#1=#<hash-table (\"hi\" . #1#)>")
+(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (morally-equal? ht (copy ht))) #t)
+(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (equal? ht (copy ht))) #t)
+
 ;; there's no real need for multidim hashes:
 
 (let ((ht (make-hash-table)))
@@ -9161,277 +9172,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 ;;; --------------------------------------------------------------------------------
-;;; HOOKS
-;;; --------------------------------------------------------------------------------
-
-;;; hook?
-;;; hook-arity
-;;; hook-functions
-;;; hook-documentation
-;;; make-hook
-;;; hook
-
-;;; hook-apply is apply
-
-(for-each
- (lambda (arg)
-   (for-each
-    (lambda (func)
-      (let ((val (catch #t (lambda () (func arg)) (lambda args 'error))))
-	(if (not (eq? val 'error))
-	    (format #t ";(~A ~A) got ~A, but expected 'error~%" func arg val))))
-    (list hook-arity hook-documentation hook-functions hook hook-apply))
-   (test (hook? arg) #f))
- (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f :hi #<eof> #<undefined> #<unspecified>))
-
-(let ((h (make-hook '(1 0 #f) "a hook")))
-  (test (hook? h) #t)
-  (test (hook-functions h) '())
-  (test (hook-arity h) '(1 0 #f))
-  (test (hook-documentation h) "a hook")
-  (test (hook-apply h '(0)) (h 0))
-  (let ((f1 (lambda (x) x)))
-    (set! (hook-functions h) (list f1))
-    (test (member f1 (hook-functions h)) (list f1))
-    (test (hook-functions h) (list f1))
-    (test (hook-apply h '(1)) (h 1))
-    (test (apply (car (hook-functions h)) '(1)) 1)
-    (set! (hook-functions h) '())
-    (test (hook-functions h) '())
-    (test (set! (hook-functions h) (list (lambda (x y) (+ x y)))) 'error)
-    (let ((f2 (lambda* args (car args))))
-      (set! (hook-functions h) (list f1 f2))
-      (test (hook-functions h) (list f1 f2))
-      (test (hook-apply h '(23)) (h 23))))
-  (for-each
-   (lambda (arg)
-     (test (set! (hook-functions h) arg) 'error))
-   (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f :hi #<eof> #<undefined> #<unspecified>)))
-
-(let ((h (make-hook '(1 1 #f))))
-  (test (hook? h) #t)
-  (test (hook-functions h) '())
-  (test (hook-arity h) '(1 1 #f))
-  (test (hook-documentation h) "")
-  (test (hook-apply h '(0 1)) (h 0 1))
-  (let ((f1 (lambda* (x (y 12)) (+ x y))))
-    (set! (hook-functions h) (list f1))
-    (test (member f1 (hook-functions h)) (list f1))
-    (test (hook-functions h) (list f1))
-    (test (hook-apply h '(1 2)) (h 1 2))
-    (test (apply (car (hook-functions h)) '(1 2)) 3)
-    (set! (hook-functions h) '())
-    (test (hook-functions h) '())
-    (set! (hook-functions h) (list (lambda* ((x 1) (y 2)) (+ x y))))
-    (test (hook-apply h '(23)) (h 23))))
-
-(let ((h (make-hook)))
-  (test (hook? h) #t)
-  (test (hook-functions h) '())
-  (test (hook-arity h) '(0 0 #f))
-  (test (hook-documentation h) "")
-  (test (hook-apply h '()) (h))
-  (let ((f1 (lambda () 0)))
-    (set! (hook-functions h) (list f1))
-    (test (member f1 (hook-functions h)) (list f1))
-    (test (hook-functions h) (list f1))
-    (test (hook-apply h '()) (h))
-    (test (apply (car (hook-functions h)) '()) 0)
-    (set! (hook-functions h) '())
-    (test (hook-functions h) '())))
-
-(let ((h (hook (lambda x (error 'out-of-hook 32)))))
-  (let ((val (catch 'out-of-hook
-		    (lambda ()
-		      (h 123)
-		      (error 'oops "too far"))
-		    (lambda args args))))
-    (if (not (equal? val '(out-of-hook (32))))
-	(format #t ";hook error 1: ~A~%" val))
-
-    (let ((val (call-with-exit
-		(lambda (return)
-		  (set! (hook-functions h) (list (lambda x (return x))))
-		  (hook-apply h (list "hi"))
-		  123))))
-      (if (not (equal? val '("hi")))
-	  (format #t ";hook error 2: ~A~%" val)))))
-
-(test (make-hook '(1 2 #f) "hi" 3) 'error)
-(let ((h (make-hook)))
-  (test (hook-functions) 'error)
-  (test (hook-functions h h) 'error)
-  (test (hook-arity) 'error)
-  (test (hook-arity h h) 'error)
-  (test (hook-documentation) 'error)
-  (test (hook-documentation h h) 'error)
-  (test (hook-apply) 'error)
-  (test (hook-apply h 1) 'error)
-  (test (hook?) 'error)
-  (test (hook? h h) 'error)
-  (test (hook h) 'error)
-  (test (hook? (hook)) #t)
-  (test (hook-arity (hook)) '(0 0 #f))
-  (test (hook-functions (hook)) '())
-  (test (hook-documentation (hook)) ""))
-(test (make-hook '()) 'error)
-(test (make-hook '(1)) 'error)
-(test (make-hook '(1 2)) 'error)
-(test (make-hook '(1 2 #f 3)) 'error)
-(test (make-hook '(1.0 2 #f)) 'error)
-(test (make-hook '(1 2/3 #f)) 'error)
-(test (make-hook '(1 0 1)) 'error)
-(test (make-hook '(-1 0 #f)) 'error)
-(test (make-hook '(1 -1 #f)) 'error)
-(test (make-hook '(1 . 2)) 'error)
-(test (make-hook '(1 2 . #f)) 'error)
-(test (make-hook (list 1 0/0 #f)) 'error)
-(test (make-hook (list 1 1/0 #f)) 'error)
-(test (hook? (make-hook 1)) #t)
-(test (make-hook -1) 'error)
-(test (let ((lst (list 1 2 #f))) (set! (cdr (cdr (cdr lst))) lst) (make-hook lst)) 'error)
-
-(let ((h (make-hook '(1 0 #f)))
-      (x 0))
-  (set! (hook-functions h) (list (lambda (y) (set! x (+ x y))) (lambda (z) (set! x (+ x z)))))
-  (h 2)
-  (num-test x 4)
-  (apply h (list 3))
-  (num-test x 10)
-  (hook-apply h '(4))
-  (num-test x 18))
-
-(let ((h1 (make-hook))
-      (h2 (make-hook))
-      (x 0))
-  (let ((f1 (lambda () (h2)))
-	(f2 (lambda () (set! x (+ x 123)))))
-    (set! (hook-functions h1) (list f1 f2))
-    (set! (hook-functions h2) (list (lambda () (set! x (+ x 321)))))
-    (h1)
-    (num-test x 444)))
-
-(let ((h (make-hook))
-      (x 0))
-  (define (f1) (if (< x 10) (begin (set! x (+ x 1)) (f1))))
-  (set! (hook-functions h) (list f1))
-  (h)
-  (num-test x 10))
-
-(let ((h (make-hook '(1 0 #f))))
-  (define-macro (mac a) `(+ 1 ,a))
-  (test (set! (hook-functions h) (list (lambda () 3))) 'error)
-  (test (set! (hook-functions h) (list (lambda (x y) 3))) 'error)
-  (test (pair? (set! (hook-functions h) (list (lambda x 3)))) #t)
-  (test (pair? (set! (hook-functions h) (list (lambda* ((x 1)) 3)))) #t)
-  (test (pair? (set! (hook-functions h) (list (lambda* (x (y 1)) 3)))) #t)
-  (test (pair? (set! (hook-functions h) (list (lambda (x . z) 3)))) #t)
-  (test (pair? (set! (hook-functions h) (list abs sin list + /))) #t)
-  (test (set! (hook-functions h) (list quasiquote)) 'error)
-  (test (call-with-exit (lambda (return) (set! (hook-functions h) (list return)))) 'error)
-  (test (set! (hook-functions h) (list mac)) 'error)
-  (test (set! (hook-functions h) (list h)) 'error)
-  (test (pair? (set! (hook-functions h) (list hook-functions))) #t)
-  )
-
-(test (hook-arity (hook (lambda () 1))) '(0 0 #f))
-(test (hook-arity (hook (lambda (x) 1))) '(1 0 #f))
-(test (hook-arity (hook (lambda (x . y) 1))) '(1 0 #t))
-(test (hook-arity (hook (lambda* ((x 1) (y 2)) 1))) '(0 2 #f))
-
-(test (hook? (hook (lambda (x) x) (lambda (y) 1))) #t)
-(test (hook (lambda (x) x) (lambda () 1)) 'error)
-(test (hook (lambda (x) x) (lambda (x y) 1)) 'error)
-(test (hook? (hook (lambda (x) x) (lambda x 1))) #t)
-(test (hook? (hook (lambda () 1) (lambda x 1))) #t)
-(test (hook? (hook (lambda x 1) (lambda x 1))) #t)
-(test (hook? (hook (lambda (x y) x) (lambda* (x (y 1) (z 2)) 1))) #t)
-(test (hook (lambda (x y) x) (lambda* (x) 1)) 'error)
-(test (hook (lambda* (x (y 1)) x) (lambda* (x) 1)) 'error)
-
-(let ((h (make-hook '(1 1 #f))))
-  (set! (hook-functions h) (list (lambda* (x (y 1)) (+ x y)) (lambda z 2)))
-  (test (hook-apply h '(0)) (h 0))
-  (test (hook-apply h '(1 2)) (h 1 2))
-  (test (hook-apply h '(1 2 3)) 'error)
-  (test (h 1 2 3) 'error)
-  (test (hook-apply h '()) 'error)
-  (test (h) 'error)
-  (set! (hook-functions h) (list (lambda x x)))
-  (test (pair? (hook-functions h)) #t)
-  (set! (hook-functions h) '())
-  (test (hook-apply h '(1 2)) (h 1 2))
-  )
-
-(let ((h (make-hook '(1 0 #t))))
-  (test (object->string h) "#<hook>")
-  (test (reverse h) 'error)
-  (test (length h) 'error)
-  (test (fill! h) 'error)
-  (test (hook-arity h) '(1 0 #t))
-  (set! (hook-functions h) (list (lambda (x . y) x)))
-  (test (hook-apply h '(1 2 3)) (h 1 2 3))
-  (test (set! (hook-functions h) (cons (lambda (x . y) x) (lambda (x . y) x))) 'error)
-  (let ((lst (list (lambda (x . y) x))))
-    (set! (cdr lst) lst)
-    (test (set! (hook-functions h) lst) 'error)))
-
-(let ((h (make-hook '(1 0 #f)))
-      (sum 0))
-  (set! (hook-functions h) (list (lambda (x) (set! sum (+ sum 1)) (if (> x 0) (h (- x 1)) 0))))
-  (h 3)
-  (if (not (= sum 4)) (format #t ";hook called by hook function: ~A~%" sum)))
-
-(let ((h1 (make-hook '(1 0 #f))))
-  (let ((h2 (copy h1)))
-    (test (hook-arity h2) '(1 0 #f))
-    (test (hook-functions h2) '())
-    (test (equal? h1 h2) #t)
-    (test (morally-equal? h1 h2) #t)
-    (test (eq? h1 h2) #f)
-    (set! (hook-functions h1) (list (lambda (a) (+ a 1))))
-    (test (hook-functions h2) '())
-    (set! (hook-functions h1) '())
-    (set! (hook-functions h2) (list (lambda (a) (+ a 1))))
-    (test (hook-functions h1) '())
-    (let ((x 0))
-      (set! (hook-functions h1) (list (lambda (a) (set! x (+ a 1)))))
-      (test (let () (h1 3) (= x 4)) #t)
-      (let ((h3 (copy h1)))
-	(test (equal? (hook-functions h1) (hook-functions h3)) #t)
-	(test (equal? h1 h3) #t)
-	(test (equal? h2 h3) #f)
-	(test (morally-equal? h1 h3) #t)
-	(test (morally-equal? h2 h3) #f)
-	(h3 4)
-	(test x 5)))
-    (set! (hook-functions h1) (list (lambda (a) (set! x (+ a 1)))))
-    (set! (hook-functions h2) (list (lambda (a) (set! x (+ a 1)))))
-    (test (equal? h1 h2) #f)
-    (test (morally-equal? h1 h2) #t)))
-
-(let* ((h1 (make-hook '(1 0 #f)))
-       (x 0)
-       (p1 (make-procedure-with-setter (lambda (a) (set! x a)) (lambda (a b) (set! x (+ a b))))))
-  (set! (hook-functions h1) (list p1))
-  (h1 123)
-  (test x 123))
-
-(test (let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1) (set! (h2 'b) 2.0) (morally-equal? h1 h2)) #t)
-(test (let ((h1 (hash-table '(a . 1) '(b . 2))) (h2 (make-hash-table 31))) (set! (h2 'a) 1.0) (set! (h2 'b) 2) (morally-equal? (list h1) (list h2))) #t)
-
-(test (let ((ht (make-hash-table))) (hash-table-set! ht ht 1) (ht ht)) 1)
-(test (let ((ht (make-hash-table))) (hash-table-set! ht ht ht) (equal? (ht ht) ht)) #t)
-
-(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (object->string ht)) "#1=#<hash-table (a . #1#)>")
-(test (let ((h1 (make-hash-table))) (hash-table-set! h1 "hi" h1) (object->string h1)) "#1=#<hash-table (\"hi\" . #1#)>")
-(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (morally-equal? ht (copy ht))) #t)
-(test (let ((ht (make-hash-table))) (hash-table-set! ht 'a ht) (equal? ht (copy ht))) #t)
-
-
-
-
-;;; --------------------------------------------------------------------------------
 ;;; PORTS
 ;;; --------------------------------------------------------------------------------
 
@@ -9557,7 +9297,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (load arg) 'error)
    (test (load "empty-file" arg) 'error))
- (list '() (list 1) '(1 . 2) #f #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list '() (list 1) '(1 . 2) #f #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 (test (load) 'error)
 (test (load "empty-file" (current-environment) 1) 'error)
@@ -9665,7 +9405,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (if (eof-object? arg)
        (format #t ";(eof-object? ~A) -> #t?~%" arg)))
- (list "hi" '() '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '() '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> (lambda (a) (+ a 1))))
 
 (for-each
@@ -9675,7 +9415,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		     (lambda args 'error))))
      (if (not (eq? val 'error))
 	 (format #t ";(port-closed? ~A) -> ~S?~%" arg val))))
- (list "hi" '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> #<eof> (lambda (a) (+ a 1))))
 
 (test (port-closed?) 'error)
@@ -10003,7 +9743,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (lambda (arg) ;(format #t ";(~A ~A)~%" op arg)
       (test (op arg) 'error))
     (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs lambda with-environment
-	  _ht_ quasiquote macroexpand make-type hook-functions 
+	  _ht_ quasiquote macroexpand make-type 
 	  3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list char-ready? set-current-output-port set-current-input-port set-current-error-port
        close-input-port close-output-port open-input-file open-output-file
@@ -10222,7 +9962,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (directory? arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; file-exists?
@@ -10233,7 +9973,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (file-exists? arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; delete-file
@@ -10245,7 +9985,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (delete-file arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; getenv
@@ -10256,7 +9996,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (getenv arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; directory->list
@@ -10265,7 +10005,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (directory->list arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; system
@@ -10275,7 +10015,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (system arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
       
       ))
@@ -10285,7 +10025,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (char-ready? arg) 'error))
- (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -10326,7 +10066,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (lambda (arg)
       (test (format #f directive arg) 'error)
       (test (format #f directive) 'error))
-    (list "hi" #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+    (list "hi" #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
 	  #f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list "~D" "~F" "~G" "~X" "~B" "~O" "~E" "~P"))
 
@@ -20249,81 +19989,6 @@ who says the continuation has to restart the map from the top?
   (set! *vector-print-length* old-len))
 
 
-;;; *unbound-variable-hook*
-(let ((old-hook (hook-functions *unbound-variable-hook*))
-      (hook-val #f))
-  (set! (hook-functions *unbound-variable-hook*) (list (lambda (sym) (set! hook-val sym) 123)))
-  (catch #t
-	 (lambda ()
-	   (+ 1 one-two-three))
-	 (lambda args 'error))
-  (test (equal? one-two-three 123) #t)
-  (test (equal? hook-val 'one-two-three) #t)
-  (set! (hook-functions *unbound-variable-hook*) old-hook))
-
-(for-each
- (lambda (arg)
-   (test (set! *unbound-variable-hook* arg) 'error)
-   (test (set! *error-hook* arg) 'error))
- (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '#(())))
-
-(let ((old-hook (hook-functions *unbound-variable-hook*)))
-  (set! (hook-functions *unbound-variable-hook*) 
-      (list (lambda (sym) 
-              32)))
-  (test (+ 1 _an_undefined_variable_i_hope_) 33)
-  (test (* _an_undefined_variable_i_hope_ _an_undefined_variable_i_hope_) 1024)
-  (set! (hook-functions *unbound-variable-hook*) old-hook))
-
-(let ((old-hook (hook-functions *unbound-variable-hook*)))
-  (set! (hook-functions *unbound-variable-hook*) 
-      (list (lambda (sym) 
-	      (if (eq? sym '__asdf__)
-		  32
-		  (+ 1 __asdf__)))))
-  (let ((val (+ 1 _an_undefined_variable_i_hope_)))
-    (set! (hook-functions *unbound-variable-hook*) old-hook)
-    (test val 34)))
-
-(let ((old-hook (hook-functions *unbound-variable-hook*))
-      (x #f))
-  (set! (hook-functions *unbound-variable-hook*) 
-      (list 
-       (lambda (sym)
-	 (set! x 0)
-	 #<undefined>)
-       (lambda (sym) 
-	 32)
-       (lambda (sym)
-	 (format *stderr* "oops -- *unbound-variable-hook* func called incorrectly~%")
-	 #f)))
-  (test (+ 1 _an_undefined_variable_i_hope_) 33)
-  (test x 0)
-  (set! (hook-functions *unbound-variable-hook*) old-hook))
-
-
-
-(let ((old-load-hook (hook-functions *load-hook*))
-      (val #f))
-  (with-output-to-file "load-hook-test.scm"
-    (lambda ()
-      (format #t "(define (load-hook-test val) (+ val 1))")))
-  (set! *load-hook* 
-	(lambda (file) 
-	  (if (or val
-		  (defined? 'load-hook-test))
-	      (format #t ";*load-hook*: ~A ~A?~%" val load-hook-test))
-	  (set! val file)))
-  (load "load-hook-test.scm")
-  (if (or (not (string? val))
-	  (not (string=? val "load-hook-test.scm")))
-      (format #t ";*load-hook-test* file: ~S~%" val))
-  (if (not (defined? 'load-hook-test))
-      (format #t ";load-hook-test function not defined?~%")
-      (if (not (= (load-hook-test 1) 2))
-	  (format #t ";load-hook-test: ~A~%" (load-hook-test 1))))
-  (set! (hook-functions *load-hook*) old-load-hook))
-
 (let ((old-vlen *vector-print-length*))
   (set! *vector-print-length* 0)
   (test (format #f "~A" #()) "#()")
@@ -20855,7 +20520,7 @@ who says the continuation has to restart the map from the top?
 						     (error str))  ; use throw for guile
 					       (lambda args 1))) 
 				   (lambda args 2)))) 
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
         s7     Guile
@@ -21056,20 +20721,6 @@ abs     1       2
 	  (= x val 30)))
       #t)
 
-#|
-(let ((old-error-hook (hook-functions *error-hook*))
-      (tag #f)
-      (args #f))
-  (set! (hook-functions *error-hook*)
-	(list (lambda (etag eargs)
-		(set! tag etag)
-		(set! args eargs))))
-  (error 'tag 1 2 3)
-  (test (and (equal? tag 'tag)
-	     (equal? args '(1 2 3))))
-  (set! (hook-functions *error-hook*) old-error-hook))
-|#
-;;; can't include this because it interrupts the load
 
 
 
@@ -21850,22 +21501,6 @@ abs     1       2
    (test (untrace arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
-(for-each
- (lambda (arg)
-   (test (set! *unbound-variable-hook* arg) 'error)
-   (test (set! *error-hook* arg) 'error)
-   (test (set! *load-hook* arg) 'error)
-   
-   (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
-   (test (set! (hook-functions *error-hook*) arg) 'error)
-   (test (set! (hook-functions *load-hook*) arg) 'error)
-   
-   (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
-   (test (set! (hook-functions *error-hook*) (list arg)) 'error)
-   (test (set! (hook-functions *load-hook*) (list arg)) 'error)
-   )
- (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
-
 
 
 ;;; --------------------------------------------------------------------------------
@@ -22173,9 +21808,6 @@ abs     1       2
     (test (equal? p1 p2) #f)
     (test (procedure-documentation p2) "pws doc")
     (test (apply p2 '(2)) 3)))
-
-(test (procedure-documentation hook-functions) 
-      "(hook-functions hook) returns the list of functions on the hook. It is settable;  (set! (hook-functions hook) (cons func (hook-functions hook))) adds func to the current list.")
 
 
 
@@ -25874,7 +25506,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test ((copy abs) -123) 123)
 (test (copy ''1) ''1)
 (test (copy '''1) '''1)
-(test (hook? (copy (make-hook 1))) #t)
 (test (copy not) not)
 (test (copy "a\x00b") "a\x00b")
 (test (infinite? (copy (log 0.0))) #t)
@@ -25955,14 +25586,14 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (fill! arg 1) 'error))
- (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (let ((str (string #\a #\b)))
      (test (fill! str arg) 'error)))
- (list "hi" '(1 2 3) #() #f 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '(1 2 3) #() #f 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let ((c1 #f))
@@ -26029,7 +25660,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (gc arg) 'error))
- (list "hi" '(1 2 3) #() 'a-symbol abs _ht_ quasiquote macroexpand make-type hook-functions 
+ (list "hi" '(1 2 3) #() 'a-symbol abs _ht_ quasiquote macroexpand make-type 
        3.14 3/4 1.0+1.0i 1 '() "" :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (gc #f #t) 'error)
@@ -67204,7 +66835,7 @@ in non-gmp,
 
 (let ((constants (list #f #t () 1.5 (/ 1 most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 		  "hi" :hi 'hi (list 1) (list 1 2) (cons 1 2) '() (list (list 1 2)) (list (list 1)) (list ()) #() 
-		  1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 (make-hook '(0 0 #f))
+		  1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 		  1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
 		  most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
 		  -1 0 0.0 1 1.5 1.0+1.0i 3/4 63 -63 (make-hash-table) (hash-table '(a . 2) '(b .3))

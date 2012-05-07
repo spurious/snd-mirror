@@ -3464,13 +3464,13 @@ If it returns " PROC_TRUE ", the sound is not played."
   #define H_stop_playing_selection_hook S_stop_playing_selection_hook " (): called when the selection stops playing"
   #define H_start_playing_selection_hook S_start_playing_selection_hook " (): called when the selection starts playing"
 
-  stop_playing_hook = XEN_DEFINE_HOOK(S_stop_playing_hook, 1, H_stop_playing_hook);                         /* arg = sound */
-  start_playing_hook = XEN_DEFINE_HOOK(S_start_playing_hook, 1, H_start_playing_hook);                      /* arg = sound */
-  play_hook = XEN_DEFINE_HOOK(S_play_hook, 1, H_play_hook);                                                 /* args = size */
-  dac_hook = XEN_DEFINE_HOOK(S_dac_hook, 1, H_dac_hook);                                                    /* args = data as sound_data obj */
-  stop_dac_hook = XEN_DEFINE_HOOK(S_stop_dac_hook, 0, H_stop_dac_hook);                                     /* no args */
-  stop_playing_selection_hook = XEN_DEFINE_HOOK(S_stop_playing_selection_hook, 0, H_stop_playing_selection_hook); /* no args */
-  start_playing_selection_hook = XEN_DEFINE_HOOK(S_start_playing_selection_hook, 0, H_start_playing_selection_hook); /* no args */
+  stop_playing_hook =            XEN_DEFINE_HOOK(S_stop_playing_hook,            "(make-hook 'snd)",  1, H_stop_playing_hook);
+  start_playing_hook =           XEN_DEFINE_HOOK(S_start_playing_hook,           "(make-hook 'snd)",  1, H_start_playing_hook);
+  play_hook =                    XEN_DEFINE_HOOK(S_play_hook,                    "(make-hook 'size)", 1, H_play_hook); 
+  dac_hook =                     XEN_DEFINE_HOOK(S_dac_hook,                     "(make-hook 'data)", 1, H_dac_hook); 
+  stop_dac_hook =                XEN_DEFINE_HOOK(S_stop_dac_hook,                "(make-hook)",       0, H_stop_dac_hook); 
+  stop_playing_selection_hook =  XEN_DEFINE_HOOK(S_stop_playing_selection_hook,  "(make-hook)",       0, H_stop_playing_selection_hook);
+  start_playing_selection_hook = XEN_DEFINE_HOOK(S_start_playing_selection_hook, "(make-hook)",       0, H_start_playing_selection_hook);
 
   sdobj = XEN_FALSE;
   sdobj_loc = NOT_A_GC_LOC;

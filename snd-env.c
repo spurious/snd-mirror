@@ -1882,7 +1882,7 @@ stretch-envelope from env.fth: \n\
 ; add-hook!"
 #endif
 
-  enved_hook = XEN_DEFINE_HOOK(S_enved_hook, 5, H_enved_hook);
+  enved_hook = XEN_DEFINE_HOOK(S_enved_hook, "(make-hook 'env 'point 'x 'y 'reason)", 5, H_enved_hook);
 
   ss->enved = new_env_editor();
   free(ss->enved->axis);

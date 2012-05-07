@@ -1313,6 +1313,6 @@ orientation dialog changes"
   #define H_color_hook S_color_hook " (): called whenever one of the variables associated with the \
 color dialog changes"
 
-  orientation_hook = XEN_DEFINE_HOOK(S_orientation_hook, 0, H_orientation_hook);
-  color_hook = XEN_DEFINE_HOOK(S_color_hook, 0, H_color_hook);
+  orientation_hook = XEN_DEFINE_HOOK(S_orientation_hook, "(make-hook)", 0, H_orientation_hook);
+  color_hook =       XEN_DEFINE_HOOK(S_color_hook,       "(make-hook)", 0, H_color_hook);
 }

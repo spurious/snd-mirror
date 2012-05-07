@@ -2921,8 +2921,8 @@ void g_init_marks(void)
 
   init_xen_mark();
 
-  mark_drag_hook = XEN_DEFINE_HOOK(S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
-  mark_hook = XEN_DEFINE_HOOK(S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
+  mark_drag_hook = XEN_DEFINE_HOOK(S_mark_drag_hook, "(make-hook 'id)", 1, H_mark_drag_hook);
+  mark_hook = XEN_DEFINE_HOOK(S_mark_hook, "(make-hook 'id 'snd 'chn 'reason)", 4, H_mark_hook); 
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
 				   S_setB S_mark_sample, g_set_mark_sample_w, 1, 1, 2, 0);
@@ -2962,6 +2962,6 @@ void g_init_marks(void)
   #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
 If the hook returns " PROC_TRUE ", the mark is not drawn."
 
-  draw_mark_hook = XEN_DEFINE_HOOK(S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */
+  draw_mark_hook = XEN_DEFINE_HOOK(S_draw_mark_hook, "(make-hook 'id)", 1, H_draw_mark_hook);
 }
 

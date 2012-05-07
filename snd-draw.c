@@ -2158,7 +2158,7 @@ void g_init_draw(void)
   #define H_new_widget_hook S_new_widget_hook " (widget): called each time a dialog or \
 a new set of channel or sound widgets is created."
 
-  new_widget_hook = XEN_DEFINE_HOOK(S_new_widget_hook, 1, H_new_widget_hook);      /* arg = widget */
+  new_widget_hook = XEN_DEFINE_HOOK(S_new_widget_hook, "(make-hook 'widget)", 1, H_new_widget_hook);
 }
 
 #else

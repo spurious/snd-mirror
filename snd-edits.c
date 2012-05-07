@@ -10036,7 +10036,7 @@ void g_init_edits(void)
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \
 If it returns " PROC_TRUE ", the file is not saved.  'name' is " PROC_FALSE " unless the file is being saved under a new name (as in sound-save-as)."
 
-  save_hook = XEN_DEFINE_HOOK(S_save_hook, 2, H_save_hook);      /* arg = sound index, possible new name */
+  save_hook = XEN_DEFINE_HOOK(S_save_hook, "(make-hook 'snd 'name)", 2, H_save_hook); 
 
   #define H_save_state_hook S_save_state_hook " (temp-filename): called each time the " S_save_state " \
 mechanism is about to create a new temporary file to save some edit history sample values. \
@@ -10044,7 +10044,7 @@ temp-filename is the current file. \
 If the hook returns a string, it is treated as the new temp filename.  This hook provides a way to \
 keep track of which files are in a given saved state batch, and a way to rename or redirect those files."
 
-  save_state_hook = XEN_DEFINE_HOOK(S_save_state_hook, 1, H_save_state_hook);      /* arg = temp-filename */
+  save_state_hook = XEN_DEFINE_HOOK(S_save_state_hook, "(make-hook 'name)", 1, H_save_state_hook); 
   empty_closure = xen_make_vct(1, (mus_float_t *)calloc(1, sizeof(mus_float_t)));
   XEN_PROTECT_FROM_GC(empty_closure);
 

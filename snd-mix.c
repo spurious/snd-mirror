@@ -4040,15 +4040,15 @@ void g_init_mix(void)
   #define H_mix_release_hook S_mix_release_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
 'samps' = samples moved in the course of the drag. If it returns " PROC_TRUE ", the actual remix is the hook's responsibility."
 
-  mix_release_hook = XEN_DEFINE_HOOK(S_mix_release_hook, 2, H_mix_release_hook);
+  mix_release_hook = XEN_DEFINE_HOOK(S_mix_release_hook, "(make-hook 'id 'samples)", 2, H_mix_release_hook);
 
   #define H_mix_drag_hook S_mix_drag_hook " (id x y): called when a mix is dragged"
 
-  mix_drag_hook = XEN_DEFINE_HOOK(S_mix_drag_hook, 3, H_mix_drag_hook); /* args = id, mouse x, mouse or tag y */
+  mix_drag_hook = XEN_DEFINE_HOOK(S_mix_drag_hook, "(make-hook 'id 'x 'y)", 3, H_mix_drag_hook); /* args = id, mouse x, mouse or tag y */
 
   /* the name draw-mix-hook is inconsistent with the other mix hooks (mix-draw-hook?), but is intended to parallel draw-mark-hook */
   #define H_draw_mix_hook S_draw_mix_hook " (id): called when a mix tag is about to be displayed"
 
-  draw_mix_hook = XEN_DEFINE_HOOK(S_draw_mix_hook, 5, H_draw_mix_hook); /* arg = id, old-x, old-y, x, y */
+  draw_mix_hook = XEN_DEFINE_HOOK(S_draw_mix_hook, "(make-hook 'id 'old-x 'old-y 'x 'y)", 5, H_draw_mix_hook);
 }
 
