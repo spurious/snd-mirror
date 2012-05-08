@@ -1933,7 +1933,6 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
 
   /* these three to replace add-hook!, reset-hook!, and remove-hook!
-   *   TODO: they are used in *.html but need to be fixed for the new hook implementation
    */
   XEN_EVAL_C_STRING("(define (hook-push hook func) \n\
                        \"(hook-push hook func) adds func to hook's function list\" \n\

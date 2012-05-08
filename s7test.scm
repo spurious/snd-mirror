@@ -23221,6 +23221,11 @@ func
   (test (hi (1 2 3)) 6))
 
 
+;;; TODO: #\; reader: 
+;;; (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
+;;; :(eval-string "(+ #; 1 2 3 4)") -> 9
+;;; but (eval-string "(+ #; #; 1 2 3 4)") is also 9?
+
 
 (let ((old-readers *#readers*))
   

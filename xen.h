@@ -1421,9 +1421,9 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_OBJECT_TYPE_P(Obj, Tag)                                   (s7_object_type(Obj) == Tag)
 
 #define XEN_HOOK_P(Arg)                                               ((Arg) != XEN_FALSE)
-#define XEN_DEFINE_HOOK(Name, Descr, Arity, Help)                     xen_s7_define_hook(Name, s7_make_hook(s7, Descr))
+#define XEN_DEFINE_HOOK(Name, Descr, Arity, Help)                     xen_s7_define_hook(Name, s7_eval_c_string(s7, Descr))
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
-#define XEN_DEFINE_SIMPLE_HOOK(Descr, Arity)                          s7_make_hook(s7, Descr)
+#define XEN_DEFINE_SIMPLE_HOOK(Descr, Arity)                          s7_eval_c_string(s7, Descr)
 #define XEN_HOOKED(Hook)                                              s7_is_pair(s7_hook_functions(s7, Hook))
 #define XEN_CLEAR_HOOK(Hook)                                          s7_hook_set_functions(s7, Hook, s7_nil(s7))
 #define XEN_HOOK_PROCEDURES(Hook)                                     s7_hook_functions(s7, Hook)

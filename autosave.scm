@@ -69,10 +69,10 @@
       (begin
 	(if (not (null? (sounds)))
 	    (for-each auto-save-open-func (sounds)))
-	(hook-push after-open-hook auto-save-open-func)
-	(hook-push close-hook auto-save-done)
-	(hook-push save-hook (lambda (snd name) (auto-save-done snd)))
-	(hook-push exit-hook (lambda () (for-each auto-save-done (sounds))))))
+	(hook-push after-open-hook (lambda (hook) (auto-save-open-func (hook 'snd))))
+	(hook-push close-hook (lambda (hook) (auto-save-done (hook 'snd))))
+	(hook-push save-hook (lambda (hook) (auto-save-done (hook 'snd))))
+	(hook-push exit-hook (lambda (hook) (for-each auto-save-done (sounds))))))
   (set! auto-saving #t)
   (in (* 1000 auto-save-interval) auto-save-func))
 

@@ -452,7 +452,6 @@
 			      (set! test-number n)
 			      (set! (timings n) (real-time))
 			      (snd-display #__line__ ";test ~D" n)
-			      
 			      ))
 
 

@@ -1113,19 +1113,10 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
 XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 {
 #if HAVE_SCHEME
-  int gc_loc;
-#endif
+  return(s7_call(s7, hook, args));
+#else
   XEN result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES(hook);
-
-#if HAVE_SCHEME
-  gc_loc = s7_gc_protect(s7, args);
-  /* this gc protection is needed in s7 because the args are not s7 eval-assembled;
-   *   they are cons'd up in our C code, and applied here via s7_call, so between
-   *   s7_call's, they are not otherwise protected.  In normal function calls, the
-   *   args are on the sc->args list in the evaluator, and therefore protected.
-   */
-#endif
 
   while (XEN_NOT_NULL_P(procs))
     {
@@ -1133,24 +1124,17 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR(procs);
     }
 
-#if HAVE_SCHEME
-  s7_gc_unprotect_at(s7, gc_loc);
-#endif
-
   return(result);
+#endif
 }
 
 
 XEN run_hook(XEN hook, XEN args, const char *caller)
 {
 #if HAVE_SCHEME
-  int gc_loc;
-#endif
+  return(s7_call(s7, hook, args));
+#else
   XEN procs = XEN_HOOK_PROCEDURES(hook);
-
-#if HAVE_SCHEME
-  gc_loc = s7_gc_protect(s7, args);
-#endif
 
   while (XEN_NOT_NULL_P(procs))
     {
@@ -1160,26 +1144,19 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
 
-#if HAVE_SCHEME
-  s7_gc_unprotect_at(s7, gc_loc);
-#endif
-
   return(XEN_FALSE);
+#endif
 }
 
 
 XEN run_or_hook(XEN hook, XEN args, const char *caller)
 {
 #if HAVE_SCHEME
-  int gc_loc;
-#endif
+  return(s7_call(s7, hook, args));
+#else
   XEN result = XEN_FALSE; /* (or): #f */
   XEN hook_result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES(hook);
-
-#if HAVE_SCHEME
-  gc_loc = s7_gc_protect(s7, args);
-#endif
 
   while (XEN_NOT_NULL_P(procs))
     {
@@ -1191,11 +1168,8 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
 
-#if HAVE_SCHEME
-  s7_gc_unprotect_at(s7, gc_loc);
-#endif
-
   return(hook_result);
+#endif
 }
 
 

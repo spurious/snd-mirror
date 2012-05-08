@@ -486,10 +486,6 @@ static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
 static XEN mouse_enter_graph_hook;
 static XEN mouse_leave_graph_hook;
 
-#if HAVE_SCHEME
-  static XEN new_mouse_enter_graph_hook;
-#endif
-
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   pointer_or_int_t data;
@@ -499,12 +495,6 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
     goto_window(w);
 
   XtVaGetValues(w, XmNuserData, &data, NULL);
-
-#if HAVE_SCHEME
-  s7_call(s7, new_mouse_enter_graph_hook, 
-	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
-			C_TO_XEN_INT(UNPACK_CHANNEL(data))));
-#endif
 
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
@@ -1737,18 +1727,4 @@ leaves the drawing area (graph pane) of the given channel."
 
   mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_enter_graph_hook);
   mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
-
-#if HAVE_SCHEME
-  new_mouse_enter_graph_hook = s7_eval_c_string(s7, "(make-new-hook 'snd 'chn)");
-  s7_define_constant(s7, "new-mouse-enter-graph-hook", new_mouse_enter_graph_hook);
-
-  /* (set! ((procedure-environment new-mouse-enter-graph-hook) 'body)
-   *       (cons (lambda (hook)
-   *               (format #t "snd: ~A, chn: ~A~%" (hook 'snd) (hook 'chn)))
-   *             ((procedure-environment new-mouse-enter-graph-hook) 'body)))
-   */
-
-  /* I don't think XEN_DEFINE_HOOK and friends can be used in this case
-   */
-#endif
 }

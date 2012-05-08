@@ -3213,8 +3213,8 @@ of 'or' and 'and'.
 </p>
 
 <pre class="indented">
-(define (and? . args) 
-  (apply and args))
+(define (and? . args) (apply and args))
+(define (every? f . seqs) (apply and (apply map f seqs)))
 </pre>
 
 <p>More often you want to keep the short-circuiting, but add some action as
@@ -3740,69 +3740,18 @@ a modern GUI leaves formatting decisions to a text or table widget.
 
 
 
-
 <div class="header" id="hooks"><h4>hooks</h4></div>
 
-<p>This part of s7 is changing &mdash; see below.  
-</p>
-
 <pre class="indented">
-(<em class=def id="makehook">make-hook</em> . args)           ; make a new hook
-(<em class=def id="hookfunctions">hook-functions</em> hook)                            ; the hook's list of functions
+(<em class=def id="makehook">make-hook</em> . fields)           ; make a new hook
+(<em class=def id="hookfunctions">hook-functions</em> hook)          ; the hook's list of 'body' functions
 </pre>
 
-<p>A hook holds a list of functions.  When something interesting happens,
-the hook is invoked, and it applies its arguments to each function in the list.
+<p>A hook is a function created by make-hook, and called (normally from C) when something interesting happens.
 In GUI toolkits hooks are called callback-lists, in CL conditions,
 in other contexts watchpoints or signals.  s7 itself has several
 hooks: <a href="#errorhook">*error-hook*</a>, <a href="#unboundvariablehook">*unbound-variable-hook*</a>, and <a href="#loadhook">*load-hook*</a>.
-A hook is created with make-hook or hook, recognized via hook?,
-and called as an applicable object.
-The list of functions is accessed via hook-functions.  All the functions on this list have to be compatible with
-the way the hook itself is invoked, so the hook has an arity, hook-arity.
-</p>
-
-
-
-<blockquote>
-<div class="indented">
-<p>Hooks are very useful in C, but they are clumsy.  The Snd editor has about 100;
-some are simply watching
-for an unusual event so that the GUI can reflect it, others are handling
-errors, or editing the current sound output.  
-With dozens of hooks, and hundreds of hook functions, the simplicity of the hook
-interface becomes problematic.
-We have to remember each hook's arguments, what its return
-value means, and how the hook's functions interact.  
-In Snd, I override the normal hook application process so, for example, if
-any hook function returns something other than #f, the hook returns that result
-and ignores any leftover functions.  But if some function on that list is just
-passing notification of an event to some other part of Snd, it had better 
-precede the early exit, and there's no way to enforce that.
-</p>
-
-
-<p>My first thought was that a hook could be a special kind of environment, but
-that ran into ambiguities and whatnot.  Here's a second try: from the point of
-view of the writer of hook functions, the hook is an environment, each function
-takes one argument, the hook, and
-its return value is ignored.
-The function can use <code>(with-environment hook ...)</code> or <code>(hook symbol)</code> to access what would have been the
-hook arguments in the old implementation.  
-The hook environment's result field is the returned value of the hook application.
-Each such environment also has three lists,
-init, body, and end, and
-these lists of functions are called in dynamic-wind.
-In Scheme the interface would be:
-</p>
-
-<pre class="indented">
-(make-hook . fields)     ; extra fields in env = args of old-style hook function
-(&lt;hook&gt; . fields)        ; calls the hook, args set the extra fields as in define*
-</pre>
-
-<p>From the hook maker's point of view, on the other hand, a hook is a closure with the make-hook arguments.
-Here's a sketch:
+make-hook is:
 </p>
 
 <pre class="indented">
@@ -3816,15 +3765,25 @@ Here's a sketch:
 	   (lambda () (for-each (lambda (f) (f (current-environment))) init))
 	   (lambda () (for-each (lambda (f) (f (current-environment))) body) result)
 	   (lambda () (for-each (lambda (f) (f (current-environment))) end))))
-      ())))
+       ())))
+</pre>
 
-(define hook-environment procedure-environment)
+<p>
+Each of the functions held by the hook ('f' above), takes one argument, the environment within the hook,
+and its return value is ignored.
+The function can use <code>(with-environment arg ...)</code> or <code>(arg symbol)</code> to access the arguments to the hook ('args').
+The hook environment's result field is the returned value of the hook application.
+Each such environment has three lists,
+init, body, and end, and
+these lists of functions are called in dynamic-wind.
+Here's a sketch:
+</p>
 
+<pre class="indented">
 (define (add-to-hook hook function)
-  (set! ((hook-environment hook) 'body) 
-	(cons function ((hook-environment hook) 'body))))
+  (set! (hook-functions hook) (cons function (hook-functions hook))))
 
-&gt; (define h (make-hook '(a 32) 'b))
+&gt; (define h (make-hook '(a 32) 'b)) 
 h
 &gt; (add-to-hook h (lambda (hook) 
                    (set! (hook 'result) 
@@ -3861,10 +3820,9 @@ result = s7_call(s7, hook,
                                              s7_nil(s7))));
 </pre>
 
+
 <!-- *unbound-variable-hook* is another case: it stops as soon as it gets something other then #undefined -->
 <!-- what about *error-hook* etc? -->
-</div>
-</blockquote>
 
 
 
@@ -4243,6 +4201,7 @@ adds:
 
 
 
+<!-- TODO: show how to signal an error -->
 
 <div class="header" id="errors"><h4>error handling</h4></div>
 
@@ -4392,12 +4351,14 @@ To evaluate the error handler in the environment of the error:
 
 
 <p>The hook <em class=def id="errorhook">*error-hook*</em> provides a way to specialize error reporting.
-Its functions take two arguments, the values passed by the error function:
-the error type and whatever other info accompanies it.
+Its arguments are named 'type and 'data.
 </p>
 
 <pre class="indented">
-(set! (hook-functions *error-hook*) (list (lambda (tag args) (apply format #t args))))
+(set! (hook-functions *error-hook*) 
+      (list (lambda (hook) 
+              (apply format *stderr* (hook 'data)) 
+              (newline *stderr*))))
 </pre>
 
 <p>
@@ -4410,20 +4371,22 @@ which allows you to stop at some point, then evaluate arbitrary expressions in t
 <em class=def id="autoload">If</em> s7 encounters an unbound variable, it calls
 <em class=def id="unboundvariablehook">*unbound-variable-hook*</em> before signalling an error.
 This hook's 
-functions take one argument,
+functions take one argument, named 'variable,
 the unbound symbol.  In Snd, *unbound-variable-hook* is used to implement autoloading:
 </p>
 
 <pre class="indented">
 (set! (hook-functions <em class=red>*unbound-variable-hook*</em>)
-  (list (lambda (sym)
-          (let ((file (autoload-file (symbol-&gt;string sym))))
-            ;; autoload-file is a Snd function that knows where a lot of Snd's Scheme functions are
-            (if file (load file))
-            (symbol-&gt;value sym))))) ; this will return #&lt;undefined&gt; if we didn't find its source file
+  (list (lambda (hook)
+          (if (memq (hook 'result) '(#&lt;unspecified&gt; #&lt;undefined&gt;))
+              (let* ((sym (hook 'variable))
+                     (file (autoload-file (symbol-&gt;string sym))))
+                ;; autoload-file is a Snd function that knows where a lot of Snd's Scheme functions are
+                (if file (load file))
+                (set! (hook 'result) (symbol-&gt;value sym)))))))
 </pre>
-<p>If any of the *unbound-variable-hook* functions returns something other than #&lt;undefined&gt;, that is
-used as the symbol's (temporary) value.  Otherwise, s7 calls the error handler.
+<p>If none of the *unbound-variable-hook* functions sets 'result' to something other than #&lt;undefined&gt;,
+s7 calls the error handler.
 </p>
 
 <blockquote>
@@ -4439,14 +4402,17 @@ dalliance with symbol-macros!
 &gt; (set! (hook-functions *unbound-variable-hook*)
       (append (hook-functions *unbound-variable-hook*) ; keep existing funcs like autoload
 	      (list 
-	       (lambda (sym) 
-		 (if (eq? sym '?)                       ; here '?' is the thing typed
-		     (do ((e (outer-environment (error-environment)) (outer-environment e))) 
-			 ((eq? e (global-environment))) 
-		       (status-report (format #f "~%~A" (environment-&gt;list e)) -1))
-                       ;; status-report is a Snd function that (in this case)
-		       ;;   sends the data to the Snd listener.	       
-		     #&lt;undefined&gt;)))))
+	       (lambda (hook) 
+                 (if (memq (hook 'result) '(#&lt;unspecified&gt; #&lt;undefined&gt;))
+	             (let ((sym (hook 'variable)))
+		       (if (eq? sym '?)                       ; here '?' is the thing typed
+		           (do ((e (outer-environment (error-environment)) (outer-environment e))) 
+			       ((eq? e (global-environment)) 
+                                (set! (hook 'result) #f))
+		             (status-report (format #f "~%~A" (environment-&gt;list e)) -1))
+                             ;; status-report is a Snd function that (in this case)
+		             ;;   sends the data to the Snd listener.	       
+                             )))))))
 (#&lt;closure&gt; #&lt;closure&gt;)
 &gt; (let ((a "hi") (b 2)) (+ a b)) ; hit an error on purpose
 ;+ argument 1, "hi", is a string but should be a number
@@ -4455,11 +4421,10 @@ dalliance with symbol-macros!
 ((a . "hi") (b . 2))   ; ? prints the local variable info at the point of the error
 
 &gt; (set! (hook-functions *unbound-variable-hook*)
-    (list (lambda (sym)
-            (if (eq? sym 'hiho)
-                (sin (random 1.0)) ; hiho -&gt; sins of some number
-                #&lt;undefined&gt;))))
-&lt;closure&gt;
+    (list (lambda (hook)
+            (if (eq? (hook 'variable) 'hiho)
+                (set! (hook 'result) (sin (random 1.0))))))) ; hiho -&gt; sins of some number
+(&lt;closure&gt;)
 &gt; hiho
 0.46727567824396
 &gt; hiho
@@ -4491,17 +4456,18 @@ well if WITH_OPTIMIZATION is 1 (the default).
 
 <div class="header" id="miscellanea"><h4>miscellaneous stuff</h4></div>
 
-
 <p>
 <b><em class=def id="loadpath">*load-path*</em></b> is a list of directories to search when loading a file.
 <b><em class=def id="loadhook">*load-hook*</em></b> is a hook whose functions are called just before a file is loaded.  
-The hook function argument is the filename.
+The hook function argument, named 'name, is the filename.
 While loading, the port-filename and port-line-number of the current-input-port can tell you
 where you are in the file.
 </p>
 
 <pre class="indented">
-(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "loading ~S...~%" name))))
+(set! (hook-functions *load-hook*)
+       (list (lambda (hook) 
+               (format #t "loading ~S...~%" (hook 'name)))))
 </pre>
 
 <p>Here's a *load-hook* function that adds the loaded file's directory
@@ -4511,9 +4477,10 @@ the directory:
 
 <pre class="indented">
 (set! (hook-functions <em class=red>*load-hook*</em>)
-  (list (lambda (filename)
-          (let ((pos -1)
-	        (len (length filename)))
+  (list (lambda (hook)
+          (let* ((pos -1)
+                 (filename (hook 'name))
+	         (len (length filename)))
             (do ((i 0 (+ i 1)))
 	        ((= i len))
 	      (if (char=? (filename i) #\/)
@@ -6633,9 +6600,9 @@ int main(int argc, char **argv)
 
   if (with_error_hook)
     s7_eval_c_string(s7, "(set! (hook-functions *error-hook*)                    \n\
-                            (list (lambda (tag args)                             \n\
+                            (list (lambda (hook)                                 \n\
                                     (error-handler                               \n\
-                                      (apply format #f (car args) (cdr args))))))");
+                                      (apply format #f (hook 'data))))))");
 
   while (1) 
     {
@@ -6826,9 +6793,6 @@ int main(int argc, char **argv)
 
 <div class="indented">
 <pre>
-/* this part of s7 is being changed; this example is obsolete
- */	
-
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
 #include &lt;string.h&gt;
@@ -6839,7 +6803,7 @@ static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 
 static s7_pointer my_hook_function(s7_scheme *sc, s7_pointer args)
 {
-  fprintf(stderr, "arg is %s\n", s7_object_to_c_string(sc, s7_car(args)));
+  fprintf(stderr, "a is %s\n", s7_object_to_c_string(sc, s7_symbol_local_value(sc, s7_make_symbol(sc, "a"), s7_car(args))));
   return(s7_car(args));
 }
 
@@ -6853,15 +6817,15 @@ int main(int argc, char **argv)
   s7 = s7_init();  
   s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
-  /* define test_hook in C, test-hook in Scheme */
-  test_hook = <em class=red>s7_make_hook</em>(s7, 2, 0, false, "test-hook's functions take 2 arguments");
+  /* define test_hook in C, test-hook in Scheme, arguments are named a and b */
+  test_hook = <em class=red>s7_eval_c_string</em>(s7, "(make-hook 'a 'b)");
   s7_define_constant(s7, "test-hook", test_hook); 
 
   /* add my_hook_function to the test_hook function list */
-  <em class=red>s7_hook_set_functions</em>(test_hook, 
+  <em class=red>s7_hook_set_functions</em>(s7, test_hook, 
 			s7_cons(s7, 
-				s7_make_function(s7, "my-hook-function", my_hook_function, 2, 0, false, "my hook-function"), 
-				s7_hook_functions(test_hook)));
+				s7_make_function(s7, "my-hook-function", my_hook_function, 1, 0, false, "my hook-function"), 
+				s7_hook_functions(s7, test_hook)));
   while (1) 
     {
       fprintf(stdout, "\n&gt; ");
@@ -6878,20 +6842,14 @@ int main(int argc, char **argv)
 
 /* 
  *    &gt; test-hook
- *    #&lt;hook&gt;
+ *    #&lt;closure&gt;
  *    
  *    &gt; (hook-functions test-hook)
  *    (my-hook-function)
- *    
- *    &gt; (set! (hook-functions test-hook) 
- *        (cons (lambda (a b) (format #t "a is ~S~%" a)) 
- *              (hook-functions test-hook)))
- *    (#&lt;closure&gt; my-hook-function)
- *    
+ *
  *    &gt; (test-hook 1 2)
  *    a is 1
- *    arg is 1
- *    1
+ *    #&lt;unspecified&gt;
  */
 </pre></div>
 
