@@ -1801,10 +1801,19 @@ For example, the hook that is checked when you click the sound's name in the sta
 name-click-hook.  We can cause that action to print "hi":</p>
 
 <pre class="indented">
-Scheme: (hook-push <a class=quiet href="#nameclickhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_nameclickhook_tip)">name-click-hook</a> (lambda (snd) (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "hi") #t))
+Scheme: (hook-push <a class=quiet href="#nameclickhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_nameclickhook_tip)">name-click-hook</a> (lambda (hook) (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "hi") #t))
 Ruby:   $name_click_hook.add_hook!("print") do |snd| snd_print("hi"); true end
 Forth:  name-click-hook lambda: &lt;{ snd }&gt; "hi" snd-print drop #t ; add-hook!
 </pre>
+
+<p>The Scheme hook function is slightly different from the Forth and Ruby cases.  For about 15 years, Snd used Guile-style
+hooks which are essentially a list of functions, each called with the hook arguments ('snd' above).  But now Scheme hooks
+are functions that have three internal lists of functions.  The internal functions (the things we add to hook-functions, for example)
+take the hook's internal environment as their only argument ('hook' above), and then access the actual hook arguments
+via <code>(hook name)</code>.  So, the examples are confusing because the situation is confused!  To move between the
+versions, match the Forth/Ruby argument name to the Scheme hook variable, so the function argument 'snd in Forth/Ruby
+is <code>(hook 'snd)</code> in Scheme.
+</p>
 
 <p>
 If there is more than one function attached to a hook, some of the hooks
@@ -2376,17 +2385,18 @@ See examp.scm for many examples.  If you want to add your own graphics to the di
 
 <pre class="indented">
 (hook-push <em class=red>graph-hook</em>
-  (lambda (snd chn y0 y1)
+  (lambda (hook)
     "set the dot size depending on the number of samples being displayed"
-    (let ((dots (- (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn))))
+    (let* ((snd (hook 'snd))
+           (chn (hook 'chn))
+           (dots (- (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn))))
       (if (&gt; dots 100) 
 	  (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 1)
 	(if (&gt; dots 50)
 	    (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 2)
 	  (if (&gt; dots 25)
 	      (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 3)
-	    (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 5))))
-      #f)))
+	    (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 5)))))))
 </pre>
 <div class="spacer"></div>
 

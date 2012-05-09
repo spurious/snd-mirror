@@ -265,24 +265,25 @@
 
 (if (null? (hook-functions start-playing-hook))
     (hook-push start-playing-hook
-	       (lambda (snd)
-		 (if (sound? snd)  ; meaning not 123456 = temp-sound-index from View:Files play button
-		     (if (and (selection?)
-			      (selection-member? snd))
-			 (begin
-			   (play (selection))
-			   #t)
-			 (if (> (frames snd) (* 10 (srate snd)))
-			     (let ((chn (or (selected-channel) 0)))
-			       (with-temporary-selection 
-				(lambda () (play (selection)))
-				(left-sample snd chn) 
-				(- (right-sample snd chn) 
-				   (left-sample snd chn)) 
-				snd chn)
-			       #t)
-			     #f))
-		     #f))))
+	       (lambda (hook)
+		 (let ((snd (hook 'snd)))
+		   (if (sound? snd)  ; meaning not 123456 = temp-sound-index from View:Files play button
+		       (if (and (selection?)
+				(selection-member? snd))
+			   (begin
+			     (play (selection))
+			     #t)
+			   (if (> (frames snd) (* 10 (srate snd)))
+			       (let ((chn (or (selected-channel) 0)))
+				 (with-temporary-selection 
+				  (lambda () (play (selection)))
+				  (left-sample snd chn) 
+				  (- (right-sample snd chn) 
+				     (left-sample snd chn)) 
+				  snd chn)
+				 #t)
+			       #f))
+		       #f)))))
 
 
 ;;; precision window movements via arrow keys

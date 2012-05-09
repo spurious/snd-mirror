@@ -331,7 +331,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 				(* 2 (+ i 1 offset)))))))))))))
 
 ;(hook-push graph-hook 
-;	   (lambda (snd chn y0 y1) 
+;	   (lambda (hook)
 ;	     (status-report (format #f "~A" (spot-freq (left-sample))))))
 
 
@@ -1865,8 +1865,10 @@ and replaces it with the spectrum given in coeffs"
       (define (erb f) 
 	(+ 43.0 (* 11.17 (log (/ (+ f 312) (+ f 14675))))))
       
-      (define (display-bark-fft-1 snd chn)
-	(let* ((ls (left-sample snd chn))
+      (define (display-bark-fft-1 hook)
+	(let* ((snd (hook 'snd))
+	       (chn (hook 'chn))
+	       (ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
 	       (fftlen (floor (expt 2 (ceiling (/ (log (+ 1 (- rs ls))) (log 2)))))))
 	  (if (> fftlen 0)
@@ -1941,10 +1943,11 @@ and replaces it with the spectrum given in coeffs"
 	  
 	  (list color1 color2 color3))) ; tell lisp graph display what colors to use
       
-      (define (make-bark-labels snd chn)
+      (define (make-bark-labels hook)
 	;; at this point the x axis has no markings, but there is room for labels and ticks
-	
-	(let ((old-foreground-color (foreground-color snd chn copy-context)))
+	(let* ((snd (hook 'snd))
+	       (chn (hook 'chn))
+	       (old-foreground-color (foreground-color snd chn copy-context)))
 	  
 	  (let* ((axinfo (axis-info snd chn lisp-graph))
 		 (axis-x0 (axinfo 10))
@@ -2022,13 +2025,13 @@ and replaces it with the spectrum given in coeffs"
 	  (set! (foreground-color snd chn copy-context) old-foreground-color)))
       
       ;; mouse click = move to next scale's ticks
-      (define (choose-bark-ticks snd chn button state x y axis)
+      (define (choose-bark-ticks hook)
 	(if (= axis lisp-graph)
 	    (begin
 	      (set! bark-tick-function (+ 1 bark-tick-function))
 	      (if (> bark-tick-function 2)
 		  (set! bark-tick-function 0))
-	      (update-lisp-graph snd chn))))
+	      (update-lisp-graph (hook 'snd) (hook 'chn)))))
       
       ;; user's view of display-bark-fft function
       (lambda* (off col1 col2 col3)

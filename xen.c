@@ -1940,7 +1940,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_EVAL_C_STRING("(define (hook-append hook func) \n\
                        \"(hook-append hook func) adds func to the end of hook's function list\" \n\
                        (set! (hook-functions hook) (append (hook-functions hook) (list func))))");
-  XEN_EVAL_C_STRING("(define (hook-clear hook) (set! (hook-functions hook) '()))");
+  XEN_EVAL_C_STRING("(define (hook-clear hook) (set! (hook-functions hook) ()))");
   XEN_EVAL_C_STRING("(define (hook-remove hook func) \n\
                        (set! (hook-functions hook)\n\
 	                     (let loop ((l (hook-functions hook))\n\

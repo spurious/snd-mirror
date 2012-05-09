@@ -768,9 +768,6 @@ void s7_mark_object(s7_pointer p);
 #define s7_UNDEFINED(Sc)   s7_undefined(Sc)
 #define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
 #define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
-
-#define s7_procedure_with_setter_getter(Sc, Obj) s7_procedure_getter(Sc, Obj)
-#define s7_procedure_with_setter_setter(Sc, Obj) s7_procedure_setter(Sc, Obj)
 #endif
 
 /* the following Scheme functions are not currently exported to C:
@@ -804,7 +801,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 7-May:     removing current hook stuff...
+ * 7-May:     hook implementation changed completely.
  * 4-May:     *error-info* replaced by error-environment, and stacktrace has changed.
  * 22-Apr:    #_<name> = startup (built-in) value of name
  * 17-Apr:    with-baffle.

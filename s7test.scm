@@ -5882,6 +5882,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (memv 'a '(b a a)) '(a a))
 (test (memv "hi" '(1 "hi" 2)) #f)
 (test (memv #\a '(1 #f #\a 2)) '(#\a 2))
+(test (memv cons (list car cdr cons +)) (list cons +))
 
 (let ((odd '(3 a 3.0 b 3/4 c #(1) d))
       (even '(e 3 a 3.0 b 3/4 c #(1) d)))
@@ -8241,6 +8242,188 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	(set-cdr! lst2 lst2) 
 	(equal? lst1 lst2))
       #t)
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; HOOKS
+;;; --------------------------------------------------------------------------------
+
+;;; built-in: make-hook hook-functions *load-hook* *error-hook* *unbound-variable-hook*
+
+(for-each
+ (lambda (arg)
+   (test (set! *unbound-variable-hook* arg) 'error)
+   (test (set! *load-hook* arg) 'error)
+   
+   (test (set! (hook-functions *unbound-variable-hook*) arg) 'error)
+   (test (set! (hook-functions *error-hook*) arg) 'error)
+   (test (set! (hook-functions *load-hook*) arg) 'error)
+   
+   (test (set! (hook-functions *unbound-variable-hook*) (list arg)) 'error)
+   (test (set! (hook-functions *error-hook*) (list arg)) 'error)
+   (test (set! (hook-functions *load-hook*) (list arg)) 'error)
+   )
+ (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> #(1 2 3) '#(()) "hi" '(1 . 2) '(1 2 3)))
+
+(let ((old-hook (hook-functions *unbound-variable-hook*))
+      (hook-val #f))
+  (set! (hook-functions *unbound-variable-hook*) 
+	(list (lambda (hook) 
+		(set! hook-val (hook 'variable)) 
+		(set! (hook 'result) 123))))
+  (catch #t
+	 (lambda ()
+	   (+ 1 one-two-three))
+	 (lambda args 'error))
+  (test (equal? one-two-three 123) #t)
+  (test (equal? hook-val 'one-two-three) #t)
+  (set! (hook-functions *unbound-variable-hook*) old-hook))
+
+(let ((old-load-hook (hook-functions *load-hook*))
+      (val #f))
+  (with-output-to-file "load-hook-test.scm"
+    (lambda ()
+      (format #t "(define (load-hook-test val) (+ val 1))")))
+  (set! (hook-functions *load-hook*)
+	(list (lambda (hook) 
+		(if (or val
+			(defined? 'load-hook-test))
+		    (format #t ";*load-hook*: ~A ~A?~%" val load-hook-test))
+		(set! val (hook 'name)))))
+  (load "load-hook-test.scm")
+  (if (or (not (string? val))
+	  (not (string=? val "load-hook-test.scm")))
+      (format #t ";*load-hook-test* file: ~S~%" val))
+  (if (not (defined? 'load-hook-test))
+      (format #t ";load-hook-test function not defined?~%")
+      (if (not (= (load-hook-test 1) 2))
+	  (format #t ";load-hook-test: ~A~%" (load-hook-test 1))))
+  (set! (hook-functions *load-hook*) old-load-hook))
+
+(let ((old-hook (hook-functions *error-hook*)))
+  (set! (hook-functions *error-hook*) ())
+  (test (hook-functions *error-hook*) ())
+  (set! (hook-functions *error-hook*) (list (lambda (hook) #f)))
+  (test (list? (hook-functions *error-hook*)) #t)
+  (set! (hook-functions *error-hook*) ())
+  (set! *error-hook* (lambda (tag args) #f))
+  (test (list? (hook-functions *error-hook*)) #t)
+  (set! (hook-functions *error-hook*) old-hook))
+  
+
+(let ((h (make-hook 'x)))
+  (test (procedure? h) #t)
+  (test (hook-functions h) ())
+  (test (h) #<unspecified>)
+  (test (h 1) #<unspecified>)
+  (test (h 1 2) 'error)
+  (let ((f1 (lambda (hook) (set! (hook 'result) (hook 'x)))))
+    (set! (hook-functions h) (list f1))
+    (test (member f1 (hook-functions h)) (list f1))
+    (test (hook-functions h) (list f1))
+    (test (h 1) 1)
+    (set! (hook-functions h) ())
+    (test (hook-functions h) ())
+    (let ((f2 (lambda* args (set! ((car args) 'result) ((car args) 'x)))))
+      (set! (hook-functions h) (list f2))
+      (test (hook-functions h) (list f2))
+      (test (h 1) 1)))
+  (for-each
+   (lambda (arg)
+     (test (set! (hook-functions h) arg) 'error))
+   (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f :hi #<eof> #<undefined> #<unspecified>)))
+
+(let ((h (make-hook)))
+  (test (procedure? h) #t)
+  (test (hook-functions h) ())
+  (test (h) #<unspecified>)
+  (test (h 1) 'error)
+  (let ((f1 (lambda (hook) (set! (hook 'result) 123))))
+    (set! (hook-functions h) (list f1))
+    (test (member f1 (hook-functions h)) (list f1))
+    (test (hook-functions h) (list f1))
+    (test (h) 123)
+    (set! (hook-functions h) ())
+    (test (hook-functions h) ())
+    (let ((f2 (lambda* args (set! ((car args) 'result) 321))))
+      (set! (hook-functions h) (list f2))
+      (test (hook-functions h) (list f2))
+      (test (h) 321))))
+
+(let ((h (make-hook '(a 32) 'b)))
+  (test (procedure? h) #t)
+  (test (hook-functions h) ())
+  (test (h) #<unspecified>)
+  (test (h 1) #<unspecified>)
+  (test (h 1 2) #<unspecified>)
+  (test (h 1 2 3) 'error)
+  (let ((f1 (lambda (hook) (set! (hook 'result) (+ (hook 'a) (or (hook 'b) 0))))))
+    (set! (hook-functions h) (list f1))
+    (test (member f1 (hook-functions h)) (list f1))
+    (test (hook-functions h) (list f1))
+    (test (h) 32)
+    (test (h 1) 1)
+    (test (h 1 2) 3)
+    (set! (hook-functions h) ())
+    (test (hook-functions h) ())))
+
+(let ()
+  (for-each
+   (lambda (arg)
+     (test (make-hook arg) 'error))
+   (list "hi" #f 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f :hi #<eof> #<undefined> #<unspecified>)))
+
+(let ((h (make-hook)))
+  (let ((f1 (lambda (hook) (if (number? (hook 'result)) (set! (hook 'result) (+ (hook 'result) 1)) (set! (hook 'result) 0)))))
+    (test (h) #<unspecified>)
+    (set! (hook-functions h) (list f1))
+    (test (h) 0)
+    (set! (hook-functions h) (list f1 f1 f1))
+    (test (h) 2)))
+
+(let ((hook-init-functions (make-procedure-with-setter
+			    (lambda (hook)
+			      ((procedure-environment hook) 'init))
+			    (lambda (hook funcs)
+			      (set! ((procedure-environment hook) 'init) funcs))))
+      (hook-end-functions (make-procedure-with-setter
+			    (lambda (hook)
+			      ((procedure-environment hook) 'end))
+			    (lambda (hook funcs)
+			      (set! ((procedure-environment hook) 'end) funcs))))
+      (hook-body-functions (make-procedure-with-setter
+			    (lambda (hook)
+			      ((procedure-environment hook) 'body))
+			    (lambda (hook funcs)
+			      (set! ((procedure-environment hook) 'body) funcs)))))
+
+  (let ((h (make-hook 'x)))
+    (let ((f1 (lambda (hook) (set! (hook 'result) (hook 'x)))))
+      (test (hook-init-functions h) ())
+      (test (hook-end-functions h) ())
+      (test (hook-body-functions h) ())
+      (test (hook-functions h) ())
+      (test (h) #<unspecified>)
+      (set! (hook-init-functions h) (list f1))
+      (test (hook-init-functions h) (list f1))
+      (test (h 32) 32)
+      (test (h) #f)) ; that is, the default value of a lambda* arg
+    (let ((f2 (lambda (hook) (if (number? (hook 'result)) (set! (hook 'result) (* 2 (hook 'result)))))))
+      (set! (hook-end-functions h) (list f2))
+      (test (hook-end-functions h) (list f2))
+      (test (h) #f)
+      (test (h 32) 32)) ; the end funcs happen after the result is saved for return
+    (let ((endx 0))
+      (set! (hook-end-functions h) ())
+      (test (hook-end-functions h) ())
+      (set! (hook-body-functions h) (list (lambda (hook) (set! (hook 'result) (* 2 (or (hook 'result) 1))))))
+      (set! (hook-end-functions h) (list (lambda (hook) (set! endx (* 2 (hook 'result))))))
+      (test (h 32) 64)
+      (test endx 128)))
+
+
+  )
 
 
 
@@ -21485,8 +21668,21 @@ abs     1       2
   (let ((iter (make-iterator #(10 9 8 7 6 5 4 3 2 1 0))))
     (define* (func (val (iter))) val)
 
-    (test (list (func) (func) (func)) '(10 9 8))))
+    (test (list (func) (func) (func)) '(10 9 8)))
 
+  (let ((i1 (make-iterator #(1 2 3))) 
+	(i2 (make-iterator #(1 2 3)))) 
+    (test (morally-equal? i1 i2) #t)
+    (test (equal? i1 i2) #f)
+    (i1)
+    (test (morally-equal? i1 i2) #f)
+    (i2)
+    (test (morally-equal? i1 i2) #t))
+  (let ((i1 (make-iterator #(1 2 3))) 
+	(i2 (make-iterator '(1 2 3))))
+    (test (morally-equal? i1 i2) #f)))
+
+  
 
 
 

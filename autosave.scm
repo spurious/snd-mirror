@@ -43,7 +43,7 @@
       (do ((i 0 (+ 1 i)))
 	  ((= i (channels snd)))
 	(if (null? (hook-functions (edit-hook snd i)))
-	    (hook-push (edit-hook snd i) (upon-edit snd))))
+	    (hook-push (edit-hook snd i) (lambda (hook) (upon-edit (hook 'snd))))))
       (clear-unsaved-edits snd)))
   
   (define (auto-save-done snd)

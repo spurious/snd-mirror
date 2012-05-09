@@ -111,7 +111,7 @@
 		(set! (foreground-color snd chn) old-color)))))
     (free-cairo cr)))
 
-;(hook-push after-graph-hook overlay-rms-env)
+;(hook-push after-graph-hook (lambda (hook) (overlay-rms-env (hook 'snd) (hook 'chn))))
 
 
 (define* (display-colored-samples color beg dur snd chn)
@@ -162,7 +162,7 @@ whenever they're in the current view."
 (define* (color-samples color ubeg udur usnd uchn)
   "(color-samples color beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
   (if (not (member display-samples-in-color (hook-functions after-graph-hook)))
-      (hook-push after-graph-hook display-samples-in-color))
+      (hook-push after-graph-hook (lambda (hook) (display-samples-in-color (hook 'snd) (hook 'chn)))))
   (let* ((beg (or ubeg 0))
 	 (snd (or usnd (selected-sound) (car (sounds))))
 	 (chn (or uchn (selected-channel snd) 0))
@@ -212,16 +212,18 @@ whenever they're in the current view."
 		  (integer->sound (car args)) 
 		  (car args))))
     (hook-push after-graph-hook
-	       (lambda (snd chn)
-		 (if (equal? snd base)
-		     (let ((cr (make-cairo (car (channel-widgets snd chn)))))
-		       (for-each 
-			(lambda (nsnd)
-			  (if (and (sound? nsnd)
-				   (> (chans nsnd) chn))
-			      (graph-data (make-graph-data nsnd chn) base chn copy-context #f #f graph-dots cr)))
-			(cdr args))
-		       (free-cairo cr)))))))
+	       (lambda (hook)
+		 (let ((snd (hook 'snd))
+		       (chn (hook 'chn)))
+		   (if (equal? snd base)
+		       (let ((cr (make-cairo (car (channel-widgets snd chn)))))
+			 (for-each 
+			  (lambda (nsnd)
+			    (if (and (sound? nsnd)
+				     (> (chans nsnd) chn))
+				(graph-data (make-graph-data nsnd chn) base chn copy-context #f #f graph-dots cr)))
+			  (cdr args))
+			 (free-cairo cr))))))))
 
 
 (define (samples-via-colormap snd chn)

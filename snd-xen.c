@@ -137,22 +137,23 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 
 #if HAVE_SCHEME
   if (handler == NULL)
-    s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) '())");
+    s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) ())");
   else s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) (list               \n\
-                               (lambda (tag args)                                    \n\
+                               (lambda (hook)                                        \n\
+                                 (let ((args (hook 'data)))                          \n\
                                  (_snd_s7_error_handler_                             \n\
                                    (string-append                                    \n\
                                      (if (string? args)                              \n\
                                          args                                        \n\
                                          (if (pair? args)                            \n\
-                                             (apply format #f (car args) (cdr args)) \n\
+                                             (apply format #f args)                  \n\
                                              \"\"))                                  \n\
                                      (with-environment (error-environment)           \n\
                                        (if (and error-code                           \n\
                                                 (string? error-file)                 \n\
                                                 (number? error-line))                \n\
                                            (format #f \"~%~S[~D]: ~A~%\" error-file error-line error-code) \n\
-                                           \"\")))))))");
+                                           \"\"))))))))");
 #endif
 }
 

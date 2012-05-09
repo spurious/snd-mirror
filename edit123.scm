@@ -71,14 +71,14 @@
       (set! current-directory dir)
       (set! current-sorted-files (sort! (sound-files-in-directory dir) string<?)))
     
-    (define (get-current-directory filename)
-      (set! last-file-opened filename)
-      (display last-file-opened)
-      (let ((new-path (directory-from-path (mus-expand-filename filename))))
-	(if (or (not (string? current-directory))
-		(not (string=? current-directory new-path)))
-	    (get-current-files new-path)))
-      #f)
+    (define (get-current-directory hook)
+      (let ((filename (hook 'name)))
+	(set! last-file-opened filename)
+	(display last-file-opened)
+	(let ((new-path (directory-from-path (mus-expand-filename filename))))
+	  (if (or (not (string? current-directory))
+		  (not (string=? current-directory new-path)))
+	      (get-current-files new-path)))))
     
     (lambda ()
       (if (not (member get-current-files (hook-functions open-hook)))
@@ -105,7 +105,7 @@
 
 (define (click-middle-button-to-open-next-file-in-directory)
   (hook-push mouse-click-hook
-	     (lambda (snd chn button state x y axis)
+	     (lambda (hook)
 	       (if (= button 2)
 		   (open-next-file-in-directory)
 		   #f)))) ; else handle it normally
@@ -115,17 +115,17 @@
 
 
 (hook-push after-open-hook
-	   (lambda (snd)
+	   (lambda (hook)
 	     (set! status 0)
 	     ))
 
 (hook-push start-playing-hook 
-	   (lambda (snd)
+	   (lambda (hook)
 	     (set! is-playing 1)))
 
 
 (hook-push stop-playing-hook 
-	   (lambda (snd)
+	   (lambda (hook)
 	     (set! is-playing 0)))
 
 (define (eos )
@@ -288,9 +288,9 @@
   (let ((old-tracking (with-tracking-cursor)))
     (set! (with-tracking-cursor) #t)
     (hook-push stop-playing-hook 
-               (lambda (snd)
+               (lambda (hook)
                  (set! (with-tracking-cursor) old-tracking)
-		 (set! (channel-style snd) channels-superimposed))))
+		 (set! (channel-style (hook 'snd)) channels-superimposed))))
   (play (selected-sound) :start (cursor)))
 
 (define (play-end)

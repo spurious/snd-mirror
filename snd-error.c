@@ -25,9 +25,9 @@ const char *io_error_name(io_error_t err)
 bool run_snd_error_hook(const char *msg)
 {
   return((XEN_HOOKED(ss->snd_error_hook)) &&
-	 (XEN_NOT_FALSE_P(run_or_hook(ss->snd_error_hook, 
-				      XEN_LIST_1(C_TO_XEN_STRING(msg)),
-				      S_snd_error_hook))));
+	 (XEN_TRUE_P(run_or_hook(ss->snd_error_hook, 
+				 XEN_LIST_1(C_TO_XEN_STRING(msg)),
+				 S_snd_error_hook))));
 }
 
 
@@ -129,9 +129,9 @@ static void snd_warning_1(const char *msg)
     }
 
   if ((XEN_HOOKED(ss->snd_warning_hook)) &&
-      (XEN_NOT_FALSE_P(run_or_hook(ss->snd_warning_hook, 
-				   XEN_LIST_1(C_TO_XEN_STRING(msg)),
-				   S_snd_warning_hook))))
+      (XEN_TRUE_P(run_or_hook(ss->snd_warning_hook, 
+			      XEN_LIST_1(C_TO_XEN_STRING(msg)),
+			      S_snd_warning_hook))))
     return;
 
   if ((ss) && (!(ss->batch_mode)) && (ss->max_sounds > 0))
@@ -289,22 +289,22 @@ void g_init_errors(void)
 
 #if HAVE_SCHEME
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
-If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported it via the hook:\n\
+If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported it via the hook):\n\
   (hook-push " S_snd_error_hook "\n\
-    (lambda (msg) (" S_play " \"bong.snd\") #f))"
+    (lambda (hook) (" S_play " \"bong.snd\")))"
 
   #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \
 If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported it via the hook):\n\
   (define without-warnings\n\
     (lambda (thunk)\n\
-      (define no-warning (lambda (msg) #t))\n\
+      (define no-warning (lambda (hook) (set! (hook 'result) #t)))\n\
       (set! (hook-functions snd-warning-hook) (cons no-warning (hook-functions snd-warning-hook)))\n\
       (thunk)\n\
       (hook-remove snd-warning-hook no-warning)))"
 #endif
 #if HAVE_RUBY
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
-If it returns true, Snd flushes the error (it assumes you've reported it via the hook:\n\
+If it returns true, Snd flushes the error (it assumes you've reported it via the hook):\n\
   $snd_error_hook.add-hook!(\"error\") do |msg|\n\
     play(\"bong.snd\")\n\
     false\n\
@@ -315,7 +315,7 @@ If it returns true, Snd flushes the warning (it assumes you've reported it via t
 #endif
 #if HAVE_FORTH
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
-If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported it via the hook:\n\
+If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported it via the hook):\n\
 " S_snd_error_hook " lambda: <{ msg }>\n\
   \"bong.snd\" " S_play "\n\
 ; add-hook!"

@@ -1629,8 +1629,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define counter_count(p)              (p)->object.ctr.val
 #define counter_length(p)             (p)->object.ctr.len
 
-#define is_baffle(p)                (type(p) == T_BAFFLE)
-#define baffle_key(p)               (p)->object.baffle_key
+#define baffle_key(p)                 (p)->object.baffle_key
 
 #if __cplusplus
   using namespace std;
@@ -21892,6 +21891,7 @@ If its first argument is a list, the list is copied (despite the '!')."
     case T_VECTOR:
       /* (sort! (symbol-table) (lambda (a b) (< (length a) (length b)))) 
        * but this is harmless because (symbol-table) copies the vector -- are there any other cases?
+       * TODO: do we need to gc_protect something in this case?
        *
        * if (is_immutable(data)) 
        *   return(s7_wrong_type_arg_error(sc, "sort!", 1, data, "a mutable vector"));
@@ -24469,11 +24469,12 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       len = safe_list_length(sc, args);
       if (len < f->get_req_args)
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, obj, args)));
-
+			list_3(sc, make_protected_string(sc, "~A: not enough arguments for procedure-with-setter getter: ~A"),
+			       (f->name) ? make_protected_string(sc, f->name) : obj, args)));
       if (len > (f->get_req_args + f->get_opt_args))
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			list_3(sc, sc->TOO_MANY_ARGUMENTS, obj, args)));
+			list_3(sc, make_protected_string(sc, "~A: too many arguments for procedure-with-setter getter: ~A"),
+			       (f->name) ? make_protected_string(sc, f->name) : obj, args)));
 
       return((*(f->getter))(sc, args));
     }
@@ -24497,11 +24498,13 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       len = safe_list_length(sc, args);
       if (len < f->set_req_args)
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, obj, args)));
+			list_3(sc, make_protected_string(sc, "~A: not enough arguments for procedure-with-setter setter: ~A"),
+			       (f->name) ? make_protected_string(sc, f->name) : obj, args)));
 
       if (len > (f->set_req_args + f->set_opt_args))
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			list_3(sc, sc->TOO_MANY_ARGUMENTS, obj, args)));
+			list_3(sc, make_protected_string(sc, "~A: too many arguments for procedure-with-setter setter: ~A"),
+			       (f->name) ? make_protected_string(sc, f->name) : obj, args)));
 
       return((*(f->setter))(sc, args));
     }
@@ -27641,6 +27644,8 @@ GOT_CATCH:
 	{
 	  s7_pointer error_list;
 	  /* (set! (hook-functions *error-hook*) (list (lambda (h) (format *stderr* "got error ~A~%" (h 'args))))) */
+
+	  /* fprintf(stderr, "error-hook is: %s\n", DISPLAY(s7_procedure_source(sc, car(s7_hook_functions(sc, sc->error_hook))))); */
 
 	  error_list = sc->error_hook;
 	  sc->error_hook = sc->F;
@@ -54750,16 +54755,38 @@ s7_scheme *s7_init(void)
                                                  (lambda (hook)                                              \n\
                                                    ((procedure-environment hook) 'body))                     \n\
                                                  (lambda (hook lst)                                          \n\
+			  (define (procedure-1? f) ; during the transition, check for old-style hook funcs \n\
+			    (if (procedure? f)     ;   this can eventually be removed                      \n\
+				(let ((arity (procedure-arity f)))                                         \n\
+				  (or (= (car arity) 1)                                                    \n\
+                                      (eq? hook *error-hook*) \n\
+				      (and (= (car arity) 0)                                               \n\
+					   (or (caddr arity)                                               \n\
+					       (> (cadr arity) 0)))))                                      \n\
+				#f))                                                                       \n\
                                                    (if (and (list? lst)                                      \n\
-                                                            (apply and (map procedure? lst))) ; (and)=#t     \n\
+                                                            (apply and (map procedure-1? lst))) ; (and)=#t   \n\
                                                        (set! ((procedure-environment hook) 'body) lst)       \n\
-                                                       (error 'wrong-type-arg \"hook-functions must be a list of functions: ~S\" lst)))))");
+                                                       (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" \n\
+                          (map (lambda (f) ; another transitional case -- gives lots of info about the function \n\
+                                 (if (procedure? f)                        \n\
+                                     (let ((name (procedure-name f)))      \n\
+                                       (if (char=? (name 0) #\\#)          \n\
+                                           (procedure-source f)            \n\
+                                           name))                          \n\
+                                     f))                                   \n\
+                               lst))))))");
 
   /* TODO: documentation strings, add-to-hook? clear-hook?
    * TODO: XEN_HOOK_PROCEDURES anywhere it's not covered
    * TODO: all html examples [these all need to keep track of and/or/concat cases, and progn][and match examps/arg names]
    * TODO: all current cases (push-hook?, (set! (hook-functions...)) in ws/snd-test/play/hooks/etc)
-   * TODO: s7tests [also the special unbound tests]
+   * TODO: the special unbound tests, also init/end lists, jumps from body, rercursive and nested calls, use hook env to pass own info
+   *         augment-env! on (current-env) should be ok because it is renewed on each call
+   * TODO: catch-case, file-local-var, transparent-catch, [transparent-lambda?] [transparent-wind?]
+   *        does transparent-lambda give dynamic vars?  how about lambda+env (env 'var)?
+   * TODO: looping-catch, reraise error + error expls in s7.html
+   * hook as method? -> before/after/around methods, *format-hook*?
    */
   
   /* -------- *load-hook* -------- */
@@ -54775,9 +54802,7 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*error-hook*", sc->error_hook);
   
   /* ideally that would also be define_constant, but for backwards compatibility we
-   *   need to continue to support this:
-   *   (set! *error-hook* (lambda (tag args) ...))
-   *   becomes
+   *   need to continue to support this: (set! *error-hook* (lambda (tag args) ...)) becomes
    *   (set! (hook-functions *error-hook*) (list (lambda (hook) ((lambda (tag args) ...) (hook 'type) (hook 'data)))))
    */
 

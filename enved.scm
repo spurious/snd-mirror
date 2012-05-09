@@ -23,11 +23,12 @@
      (graph new-env "" 0.0 1.0 0.0 1.0 snd chn))))
 
 
-(define (create-initial-envelopes snd)
-  (do ((i 0 (+ 1 i)))
-      ((= i (channels snd)))
-    (set! (dot-size snd i) 8)
-    (set! (channel-envelope snd i) (list 0.0 1.0 1.0 1.0))))
+(define (create-initial-envelopes hook)
+  (let ((snd (hook 'snd)))
+    (do ((i 0 (+ 1 i)))
+	((= i (channels snd)))
+      (set! (dot-size snd i) 8)
+      (set! (channel-envelope snd i) (list 0.0 1.0 1.0 1.0)))))
 
 
 ;;; if click on point, delete,
@@ -40,8 +41,12 @@
 (define mouse-pos 0)
 (define mouse-new #f)
 
-(define (mouse-press-envelope snd chn button state ux uy)
-  (let ((mouse-radius .03))
+(define (mouse-press-envelope hook)
+  (let ((snd (hook 'snd))
+	(chn (hook 'chn))
+	(ux (hook 'x))
+	(uy (hook 'y))
+	(mouse-radius .03))
 
     (define (add-envelope-point x y cur-env)
       (let ((new-env '()))
@@ -84,74 +89,88 @@
 	    (set! mouse-pos (envelope-position new-x (channel-envelope snd chn))))
 	  (set! mouse-pos pos)))))
 
-(define (mouse-drag-envelope snd chn button state x y)
+(define (mouse-drag-envelope hook)
+  (let ((snd (hook 'snd))
+	(chn (hook 'chn))
+	(x (hook 'x))
+	(y (hook 'y)))
   ;; point exists, needs to be edited with check for various bounds
 
-  (define (edit-envelope-point pos x y cur-env)
-    (let ((new-env '()))
-      (define (search-point e npos)
-	(if (= npos pos)
-	    (append new-env (list x y) (cddr e))
+    (define (edit-envelope-point pos x y cur-env)
+      (let ((new-env '()))
+	(define (search-point e npos)
+	  (if (= npos pos)
+	      (append new-env (list x y) (cddr e))
+	      (begin
+		(set! new-env (append new-env (list (car e) (cadr e))))
+		(search-point (cddr e) (+ npos 2)))))
+	(search-point cur-env 0)))
+    
+    (let* ((cur-env (channel-envelope snd chn))
+	   (lx (if (= mouse-pos 0)
+		   0.0
+		   (if (>= mouse-pos (- (length cur-env) 2))
+		       1.0
+		       (max (+ (list-ref cur-env (- mouse-pos 2)) .001)
+			    (min x
+				 (- (list-ref cur-env (+ mouse-pos 2)) .001))))))
+	   (ly (max 0.0 (min y 1.0))))
+      (set! (channel-envelope snd chn) 
+	    (edit-envelope-point mouse-pos lx ly cur-env))
+      (update-lisp-graph snd chn))))
+
+(define (mouse-release-envelope hook)
+  (let ((snd (hook 'snd))
+	(chn (hook 'chn))
+	(ux (hook 'x))
+	(uy (hook 'y))
+	(axis (hook 'axis)))
+
+    (define (remove-envelope-point pos cur-env)
+      (let ((new-env '()))
+	(define (search-point e npos)
+	  (if (null? e)
+	      new-env
+	      (if (= pos npos)
+		  (append new-env (cddr e))
+		  (begin
+		    (set! new-env (append new-env (list (car e) (cadr e))))
+		    (search-point (cddr e) (+ npos 2))))))
+	(search-point cur-env 0)))
+    
+    (if (= axis lisp-graph)
+	(let ((cur-env (channel-envelope snd chn)))
+	  (set! mouse-up (get-internal-real-time))
+	  (if (and (not mouse-new)
+		   (<= (- mouse-up mouse-down) click-time)
+		   (not (= mouse-pos 0))
+		   (not (>= mouse-pos (- (length cur-env) 2))))
+	      (set! (channel-envelope snd chn)
+		    (remove-envelope-point mouse-pos cur-env)))
+	  (update-lisp-graph snd chn)
+	  (set! mouse-new #f)
+	  (set! (hook 'result) #t))
+	#f)))
+
+(define (enveloping-key-press hook)
+  (let ((snd (hook 'snd))
+	(chn (hook 'chn))
+	(key (hook 'key))
+	(state (hook 'state)))
+
+    ;; C-g returns to original env
+    ;; C-. applies current env to amplitude
+    (if (and (= key (char->integer #\.))
+	     (= state 4))
+	(begin
+	  (env-channel (channel-envelope snd chn) 0 (frames snd chn) snd chn)
+	  (set! (hook 'result) #t))
+	(if (and (= key (char->integer #\g))
+		 (= state 4))
 	    (begin
-	      (set! new-env (append new-env (list (car e) (cadr e))))
-	      (search-point (cddr e) (+ npos 2)))))
-      (search-point cur-env 0)))
-
-  (let* ((cur-env (channel-envelope snd chn))
-	 (lx (if (= mouse-pos 0)
-		 0.0
-		 (if (>= mouse-pos (- (length cur-env) 2))
-		     1.0
-		     (max (+ (list-ref cur-env (- mouse-pos 2)) .001)
-			  (min x
-			       (- (list-ref cur-env (+ mouse-pos 2)) .001))))))
-	 (ly (max 0.0 (min y 1.0))))
-    (set! (channel-envelope snd chn) 
-	  (edit-envelope-point mouse-pos lx ly cur-env))
-    (update-lisp-graph snd chn)))
-
-(define (mouse-release-envelope snd chn button state ux uy axis)
-
-  (define (remove-envelope-point pos cur-env)
-    (let ((new-env '()))
-      (define (search-point e npos)
-	(if (null? e)
-	    new-env
-	    (if (= pos npos)
-		(append new-env (cddr e))
-		(begin
-		  (set! new-env (append new-env (list (car e) (cadr e))))
-		  (search-point (cddr e) (+ npos 2))))))
-      (search-point cur-env 0)))
-
-  (if (= axis lisp-graph)
-      (let ((cur-env (channel-envelope snd chn)))
-	(set! mouse-up (get-internal-real-time))
-	(if (and (not mouse-new)
-		 (<= (- mouse-up mouse-down) click-time)
-		 (not (= mouse-pos 0))
-		 (not (>= mouse-pos (- (length cur-env) 2))))
-	    (set! (channel-envelope snd chn)
-		  (remove-envelope-point mouse-pos cur-env)))
-	(update-lisp-graph snd chn)
-	(set! mouse-new #f)
-	#t)
-      #f))
-
-(define (enveloping-key-press snd chn key state)
-  ;; C-g returns to original env
-  ;; C-. applies current env to amplitude
-  (if (and (= key (char->integer #\.))
-	   (= state 4))
-      (begin
-	(env-channel (channel-envelope snd chn) 0 (frames snd chn) snd chn)
-	#t)
-      (if (and (= key (char->integer #\g))
-	       (= state 4))
-	  (begin
-	    (set! (channel-envelope snd chn) '(0.0 1.0 1.0 1.0))
-	    #t)
-	  #f)))
+	      (set! (channel-envelope snd chn) '(0.0 1.0 1.0 1.0))
+	      (set! (hook 'result) #t))
+	    #f))))
 
 (define (start-enveloping)
   "(start-enveloping) starts the enved processes, displaying an envelope editor in each channel"
@@ -183,8 +202,8 @@
 	    (e (make-env (channel-envelope sound chan) 
 			 :length (floor (/ (frames sound chan) (dac-size))))))
 	(add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) '())))
-	(hook-push play-hook (lambda (fr)
-			       ;; if fr (dac buffer size in frames) is not dac-size, we should do something debonair
+	(hook-push play-hook (lambda (hook)
+			       ;; if dac buffer size in frames is not dac-size, we should do something debonair
 			       (set! (amp-control player) (env e))))))
     (start-playing chans (srate sound))))
 
