@@ -1429,25 +1429,16 @@ static void g_new_sound_hook(const char *filename)
   if (XEN_HOOKED(new_sound_hook))
     {
 #if HAVE_SCHEME
-      int gc_loc;
-#endif
-      XEN procs = XEN_HOOK_PROCEDURES(new_sound_hook);
-      XEN fname;
-
+      s7_call(s7, new_sound_hook, s7_cons(s7, C_TO_XEN_STRING(filename), XEN_EMPTY_LIST));
+#else
+      XEN procs, fname;
       fname = C_TO_XEN_STRING(filename);
-#if HAVE_SCHEME
-      gc_loc = s7_gc_protect(s7, fname);
-#endif
-
+      procs = XEN_HOOK_PROCEDURES(new_sound_hook);
       while (XEN_NOT_NULL_P(procs))
 	{
-	  XEN_CALL_1(XEN_CAR(procs), 
-		     fname,
-		     S_new_sound_hook);
+	  XEN_CALL_1(XEN_CAR(procs), fname, S_new_sound_hook);
 	  procs = XEN_CDR (procs);
 	}
-#if HAVE_SCHEME
-      s7_gc_unprotect_at(s7, gc_loc);
 #endif
     }
 }

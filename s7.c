@@ -54783,10 +54783,13 @@ s7_scheme *s7_init(void)
    * TODO: all current cases (push-hook?, (set! (hook-functions...)) in ws/snd-test/play/hooks/etc)
    * TODO: the special unbound tests, also init/end lists, jumps from body, rercursive and nested calls, use hook env to pass own info
    *         augment-env! on (current-env) should be ok because it is renewed on each call
-   * TODO: catch-case, file-local-var, transparent-catch, [transparent-lambda?] [transparent-wind?]
+   * TODO: catch-case, file-local-var [transparent-lambda?] [transparent-wind?]
    *        does transparent-lambda give dynamic vars?  how about lambda+env (env 'var)?
+   *    load file local var: (load file (augment-environment (current-environment) (cons 'local-var 1234)))
+   *        but this puts the loaded names into that temp env
    * TODO: looping-catch, reraise error + error expls in s7.html
    * hook as method? -> before/after/around methods, *format-hook*?
+   * TODO: export s7_list varargs, also maybe vector string etc
    */
   
   /* -------- *load-hook* -------- */

@@ -10216,7 +10216,7 @@ If it returns a function (of no arguments), that function is called rather than 
   #define H_mix_click_hook S_mix_click_hook " (id): called when a mix is clicked; return " PROC_TRUE " to squelch the default message."
   #define H_key_press_hook S_key_press_hook " (snd chn key state): called upon a key press if the mouse is in the lisp graph. \
 If it returns " PROC_TRUE ", the key press is not passed to the main handler. 'state' refers to the control, meta, and shift keys."
-  #define H_initial_graph_hook S_initial_graph_hook " (snd chn dur): called when a sound is displayed for the first time"
+  #define H_initial_graph_hook S_initial_graph_hook " (snd chn duration): called when a sound is displayed for the first time"
   
   after_transform_hook =  XEN_DEFINE_HOOK(S_after_transform_hook,   "(make-hook 'snd 'chn 'scaler)",                    3, H_after_transform_hook);
   graph_hook =            XEN_DEFINE_HOOK(S_graph_hook,             "(make-hook 'snd 'chn 'y0 'y1)",                    4, H_graph_hook);

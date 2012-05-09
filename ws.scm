@@ -413,25 +413,27 @@
 	       (begin
 		 (set! (hook-functions mix-release-hook) '())
 		 (hook-push mix-release-hook
-			    (lambda (id samps-moved)
-			      (let ((new-pos (+ samps-moved (mix-position id)))
-				    (base (sync id)))
-				(do ((mx (integer->mix base) (integer->mix (+ (mix->integer mx) 1))))
-				    ((or (not (mix? mx))
-					 (not (= (sync mx) base))))
-				  (set! (mix-position mx) new-pos))
-				#t)))))
+			    (lambda (hook)
+			      (let ((id (hook 'id))
+				    (samps-moved (hook 'samples)))
+				(let ((new-pos (+ samps-moved (mix-position id)))
+				      (base (sync id)))
+				  (do ((mx (integer->mix base) (integer->mix (+ (mix->integer mx) 1))))
+				      ((or (not (mix? mx))
+					   (not (= (sync mx) base))))
+				    (set! (mix-position mx) new-pos))
+				  (set! (hook 'result) #t)))))))
 
 	   ;; click shows the original note list entry
 	   (set! (hook-functions mix-click-hook) '())
 	   (hook-push mix-click-hook
-		      (lambda (id)
-			(let ((info (with-mixed-sound-mix-info id outsnd)))
+		      (lambda (hook)
+			(let ((info (with-mixed-sound-mix-info (hook 'id) outsnd)))
 			  (status-report (format #f "mix ~A: ~A" 
-						 id (or (and info
+						 (hook 'id) (or (and info
 							     (cadddr info))
 							(/ (mix-position id) (* 1.0 (srate outsnd))))))
-			  #t))) ; #t -> don't print the mix id in the status area
+			  (set! (hook 'result) #t)))) ; #t -> don't print the mix id in the status area
 
 	   (dynamic-wind
 	       (lambda ()
@@ -550,9 +552,10 @@
 	 (old-hook-list (hook-functions new-sound-hook))) ; save old new-sound-hook (nested sound-lets etc)
      (begin
        (set! (hook-functions new-sound-hook) '())
-       (hook-push new-sound-hook (lambda (file)       ; save current sound-let temp file list
-				   (if (string? file) ; try to ignore vcts and sound-data objects
-				       (set! temp-files (cons file temp-files)))))
+       (hook-push new-sound-hook (lambda (hook)       ; save current sound-let temp file list
+				   (let ((file (hook 'name)))
+				     (if (string? file) ; try to ignore vcts and sound-data objects
+					 (set! temp-files (cons file temp-files))))))
        (let ((val (let ,(map (lambda (arg) 
 			       (if (> (length arg) 2)
 				                      ; if with-sound, embed with-temp-sound
@@ -713,27 +716,28 @@ finish-with-sound to complete the process."
 
 ;;; -------- with-sound save state --------
 
-(define (ws-save-state filename)
+(define (ws-save-state hook)
   "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"
+  (let ((filename (hook 'name)))
 
-  (define (open-appending filename)
-    (open-output-file filename "a"))
-
-  (define (close-appending fd)
-    (close-output-port fd))
-
-  (let ((fd (open-appending filename)))
-    ;; fd is a Scheme port at this point (not an integer), so we can use format etc
-    ;; should the save-state file load this file if it hasn't been loaded? (what path?)
-    (format fd "~%~%;;; from ws.scm~%")
-    (format fd "(if (defined? '*clm-srate*)~%")
-    (format fd "    (begin~%")
-    (format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
-    (format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
-    (format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
-    (format fd "      (set! *clm-data-format* ~A)~%" (mus-data-format->string *clm-data-format*))
-    (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
-    (close-appending fd)))
+    (define (open-appending filename)
+      (open-output-file filename "a"))
+    
+    (define (close-appending fd)
+      (close-output-port fd))
+    
+    (let ((fd (open-appending filename)))
+      ;; fd is a Scheme port at this point (not an integer), so we can use format etc
+      ;; should the save-state file load this file if it hasn't been loaded? (what path?)
+      (format fd "~%~%;;; from ws.scm~%")
+      (format fd "(if (defined? '*clm-srate*)~%")
+      (format fd "    (begin~%")
+      (format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
+      (format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
+      (format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
+      (format fd "      (set! *clm-data-format* ~A)~%" (mus-data-format->string *clm-data-format*))
+      (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
+      (close-appending fd))))
 
 (hook-push after-save-state-hook ws-save-state)
 

@@ -154,7 +154,7 @@
        (lambda (snd chn) (channel-property 'original-cursor snd chn))
        (lambda (snd chn val) (set! (channel-property 'original-cursor snd chn) val))))
     
-    (define (local-dac-func data)
+    (define (local-dac-func hook)
       (for-each
        (lambda (snd)
    (do ((i 0 (+ 1 i)))
@@ -163,14 +163,16 @@
          (set! (current-cursor snd i) (cursor snd i)))))
        (sounds)))
     
-    (define (local-start-playing-func snd)
-      (do ((i 0 (+ 1 i)))
-    ((= i (channels snd)))
-  (set! (original-cursor snd i) (cursor snd i))
-  (set! (current-cursor snd i) (cursor snd i))))
+    (define (local-start-playing-func hook)
+      (let ((snd (hook 'snd)))
+	(do ((i 0 (+ 1 i)))
+	    ((= i (channels snd)))
+	  (set! (original-cursor snd i) (cursor snd i))
+	  (set! (current-cursor snd i) (cursor snd i)))))
     
-    (define (local-stop-playing-func snd)
-      (set! (cursor snd #t) (current-cursor snd 0)))
+    (define (local-stop-playing-func hook)
+      (let ((snd (hook 'snd)))
+	(set! (cursor snd #t) (current-cursor snd 0))))
     
     (if enable
   (begin

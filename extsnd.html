@@ -2412,7 +2412,7 @@ procedure <a href="sndscm.html#html">html</a> called any time snd-help is called
 </p>
 
 <pre class="indented">
-    (hook-push <em class=red>help-hook</em> (lambda (subject help) (<a class=quiet href="sndscm.html#html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_function_tip)">html</a> subject) #f))
+(hook-push <em class=red>help-hook</em> (lambda (hook) (<a class=quiet href="sndscm.html#html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_function_tip)">html</a> (hook 'subject))))
 </pre>
 
 <p>If there is more than one hook function, each function's result is passed as input to the next function.

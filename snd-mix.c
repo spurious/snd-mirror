@@ -4037,8 +4037,8 @@ void g_init_mix(void)
 				   S_setB S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
 
 
-  #define H_mix_release_hook S_mix_release_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
-'samps' = samples moved in the course of the drag. If it returns " PROC_TRUE ", the actual remix is the hook's responsibility."
+  #define H_mix_release_hook S_mix_release_hook " (id samples): called after the mouse has dragged a mix to some new position. \
+'samples' = samples moved in the course of the drag. If it returns " PROC_TRUE ", the actual remix is the hook's responsibility."
 
   mix_release_hook = XEN_DEFINE_HOOK(S_mix_release_hook, "(make-hook 'id 'samples)", 2, H_mix_release_hook);
 

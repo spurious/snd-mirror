@@ -3487,66 +3487,38 @@ void name_to_html_viewer(const char *red_text)
 }
 
 
-static XEN help_hook;
 static XEN output_comment_hook;
-
-static char *run_string_hook(XEN hook, const char *caller, char *initial_string, char *subject)
-{
-  /* no longer concats -- now just passes successive results along */
-  if (XEN_HOOKED(hook))
-    {
-#if HAVE_SCHEME
-      int gc_loc1, gc_loc2;
-#endif
-      XEN result, substr;
-      XEN procs = XEN_HOOK_PROCEDURES(hook);
-
-      result = C_TO_XEN_STRING(initial_string);
-#if HAVE_SCHEME
-      gc_loc1 = s7_gc_protect(s7, result);
-#endif
-
-      substr = C_TO_XEN_STRING(subject);
-#if HAVE_SCHEME
-      gc_loc2 = s7_gc_protect(s7, substr);
-#endif
-
-      while (XEN_NOT_NULL_P(procs))
-	{
-#if (!HAVE_SCHEME)
-	  if (subject)
-	    result = XEN_CALL_2(XEN_CAR(procs), substr, result,	caller);
-	  else result = XEN_CALL_1(XEN_CAR(procs), result, caller);
-#else
-	  if (subject)
-	    result = XEN_CALL_2(XEN_CAR(procs),	substr,	result,	caller);
-	  else result = XEN_CALL_1(XEN_CAR(procs), result, caller);
-	  s7_gc_unprotect_at(s7, gc_loc1);
-	  gc_loc1 = s7_gc_protect(s7, result);
-#endif
-	  procs = XEN_CDR(procs);
-	}
-
-#if HAVE_SCHEME
-      s7_gc_unprotect_at(s7, gc_loc1);
-      s7_gc_unprotect_at(s7, gc_loc2);
-#endif
-
-      if (XEN_STRING_P(result))
-	return(mus_strdup(XEN_TO_C_STRING(result)));
-    }
-  return(mus_strdup(initial_string));
-}
-
 
 char *output_comment(file_info *hdr)
 {
-  return(run_string_hook(output_comment_hook, 
-			 S_output_comment_hook, 
-			 (hdr) ? hdr->comment : NULL, 
-			 NULL));
+  XEN hook;
+  hook = output_comment_hook;
+  if (XEN_HOOKED(hook))
+    {
+      XEN result;
+      result = C_TO_XEN_STRING((hdr) ? hdr->comment : NULL);
+
+#if HAVE_SCHEME
+      result = s7_call(s7, hook, s7_cons(s7, result, s7_nil(s7)));
+#else		
+      {
+	XEN procs;
+	procs = XEN_HOOK_PROCEDURES(hook);
+	while (XEN_NOT_NULL_P(procs))
+	  {
+	    result = XEN_CALL_1(XEN_CAR(procs), result, S_output_comment_hook);
+	    procs = XEN_CDR(procs);
+	  }
+      }
+#endif
+      if (XEN_STRING_P(result))
+	return(mus_strdup(XEN_TO_C_STRING(result)));
+    }
+  return(mus_strdup((hdr) ? hdr->comment : NULL));
 }
 
+
+static XEN help_hook;
 
 XEN g_snd_help_with_search(XEN text, int widget_wid, bool search)
 {
@@ -3716,7 +3688,35 @@ and its value is returned."
 	  XEN help_text = XEN_FALSE;  /* so that we can free "str" */
 	  char *new_str = NULL;
 	  if (subject)
-	    new_str = run_string_hook(help_hook, S_help_hook, str, subject);
+	    {
+	      XEN hook;
+	      hook = help_hook;
+	      if (XEN_HOOKED(hook))
+		{
+		  XEN result, subj;
+
+		  result = C_TO_XEN_STRING(str);
+		  subj = C_TO_XEN_STRING(subject);
+
+#if HAVE_SCHEME
+		  result = s7_call(s7, hook, s7_cons(s7, subj, s7_cons(s7, result, s7_nil(s7))));
+#else		       
+		  {
+		    XEN procs;
+		    procs = XEN_HOOK_PROCEDURES(hook);
+		    while (XEN_NOT_NULL_P(procs))
+		      {
+			result = XEN_CALL_2(XEN_CAR(procs), subj, result, S_help_hook);
+			procs = XEN_CDR(procs);
+		      }
+		  }
+#endif
+		  if (XEN_STRING_P(result))
+		    new_str = mus_strdup(XEN_TO_C_STRING(result));
+		  else new_str = mus_strdup(str);
+		}
+	      else new_str = mus_strdup(str);
+	    }
 	  else new_str = mus_strdup(str);
 	  if (need_free)
 	    {
@@ -3965,11 +3965,11 @@ it returns a string, it replaces 'help-string' (the default help)"
   help_hook = XEN_DEFINE_HOOK(S_help_hook, "(make-hook 'subject 'message)", 2, H_help_hook);
 
 #if HAVE_SCHEME
-  #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
+  #define H_output_comment_hook S_output_comment_hook " (comment): called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, each function gets the previous function's output as its input.\n\
   (hook-push " S_output_comment_hook "\n\
-    (lambda (str)\n\
-      (string-append str \": written \"\n\
+    (lambda (hook)\n\
+      (string-append (hook 'comment) \": written \"\n\
         (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
           (localtime (current-time))))))"
 #endif

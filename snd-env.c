@@ -1567,70 +1567,64 @@ static XEN enved_hook;
 
 static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enved_point_t reason)
 {
-  bool env_changed = false;
   if (XEN_HOOKED(enved_hook))
     {
       int len = 0;
-#if HAVE_SCHEME
-      int gc_loc;
-#endif
       XEN result = XEN_FALSE;
-      XEN procs, env_list;
       /* if hook procedure returns a list, that is the new contents of the
        * envelope -- if its length doesn't match current, we need to remake
        * current. Otherwise return 0, and assume the caller will handle default
        */
-      procs = XEN_HOOK_PROCEDURES(enved_hook);
-      env_list = env_to_xen(e);
-#if HAVE_SCHEME
-      gc_loc = s7_gc_protect(s7, env_list);
-#endif
 
-      while (XEN_NOT_NULL_P(procs))
+#if HAVE_SCHEME
+      result = s7_call(s7, enved_hook, 
+		       XEN_LIST_5(env_to_xen(e),
+				  C_TO_XEN_INT(pos),
+				  C_TO_XEN_DOUBLE(x),
+				  C_TO_XEN_DOUBLE(y),
+				  C_TO_XEN_INT((int)reason)));
+#else
+      {
+	XEN procs, env_list;
+	env_list = env_to_xen(e);
+	procs = XEN_HOOK_PROCEDURES(enved_hook);
+	while (XEN_NOT_NULL_P(procs))
+	  {
+	    XEN temp;
+	    temp = XEN_APPLY(XEN_CAR(procs), 
+			       XEN_LIST_5(env_list,
+					  C_TO_XEN_INT(pos),
+					  C_TO_XEN_DOUBLE(x),
+					  C_TO_XEN_DOUBLE(y),
+					  C_TO_XEN_INT((int)reason)),
+			       S_enved_hook);
+	    if (XEN_NOT_FALSE_P(temp))
+	      {
+		result = temp;
+		env_list = temp;
+	      }
+	    procs = XEN_CDR (procs);
+	  }
+      }
+#endif
+      if ((XEN_NOT_FALSE_P(result)) && 
+	  (XEN_LIST_P_WITH_LENGTH(result, len)))
 	{
-	  result = XEN_APPLY(XEN_CAR(procs), 
-			     XEN_LIST_5(env_list,
-					C_TO_XEN_INT(pos),
-					C_TO_XEN_DOUBLE(x),
-					C_TO_XEN_DOUBLE(y),
-					C_TO_XEN_INT((int)reason)),
-			     S_enved_hook);
-	  procs = XEN_CDR (procs);
-	  if ((XEN_NOT_FALSE_P(result)) && 
-	      (XEN_LIST_P_WITH_LENGTH(result, len)))
+	  int i;
+	  XEN lst;
+	  if (len > e->data_size)
 	    {
-	      /* remake env and (if not null procs) env_list */
-	      /* each successive hook procedure gets the on-going (changing) envelope */
-	      int i;
-	      XEN lst;
-	      if (len > e->data_size)
-		{
-		  free(e->data);
-		  e->data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
-		  e->data_size = len;
-		}
-	      e->pts = len / 2;
-	      for (i = 0, lst = XEN_COPY_ARG(result); i < len; i++, lst = XEN_CDR(lst))
-		e->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-	      if (XEN_NOT_NULL_P(procs))
-		{
-#if HAVE_SCHEME
-		  s7_gc_unprotect_at(s7, gc_loc);
-#endif
-		  env_list = env_to_xen(e);
-#if HAVE_SCHEME
-		  gc_loc = s7_gc_protect(s7, env_list);
-#endif
-	
-		}
-	      env_changed = true;
+	      free(e->data);
+	      e->data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
+	      e->data_size = len;
 	    }
+	  e->pts = len / 2;
+	  for (i = 0, lst = XEN_COPY_ARG(result); i < len; i++, lst = XEN_CDR(lst))
+	    e->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	  return(true);
 	}
-#if HAVE_SCHEME
-      s7_gc_unprotect_at(s7, gc_loc);
-#endif
     }
-  return(env_changed); /* 0 = default action */
+  return(false);
 }
 
 

@@ -1051,7 +1051,6 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 {
   XEN res = XEN_FALSE;
   int res_loc = NOT_A_GC_LOC;
-  XEN procs;
   int len, srate, chans, data_format;
   mus_long_t data_location, bytes;
 
@@ -1064,16 +1063,11 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
   if (XEN_HOOKED(open_raw_sound_hook))
     {
 #if HAVE_SCHEME
-      int gc_loc;
-#endif
-      XEN arg1;
+      res = s7_call(s7, open_raw_sound_hook, s7_cons(s7, C_TO_XEN_STRING(fullname), s7_cons(s7, XEN_FALSE, XEN_EMPTY_LIST)));
+#else
+      XEN arg1, procs;
       procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
-
       arg1 = C_TO_XEN_STRING(fullname);
-#if HAVE_SCHEME
-      gc_loc = s7_gc_protect(s7, arg1);
-#endif
-
       while (XEN_NOT_NULL_P(procs))
 	{
 	  res = XEN_CALL_2(XEN_CAR(procs), 
@@ -1084,8 +1078,6 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 	  res_loc = snd_protect(res);
 	  procs = XEN_CDR(procs);
 	}
-#if HAVE_SCHEME
-      s7_gc_unprotect_at(s7, gc_loc);
 #endif
     }
   if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
@@ -1428,16 +1420,14 @@ char *output_name(const char *current_name)
   if (XEN_HOOKED(output_name_hook))
     {
 #if HAVE_SCHEME
-      int gc_loc;
-#endif
-      XEN result, fname;
-      XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
-
+      XEN result;
+      result = s7_call(s7, output_name_hook, s7_cons(s7, C_TO_XEN_STRING(current_name), XEN_EMPTY_LIST));
+      if (XEN_STRING_P(result)) 
+	return(mus_strdup(XEN_TO_C_STRING(result)));
+#else      
+      XEN result, fname, procs;
+      procs = XEN_HOOK_PROCEDURES (output_name_hook);
       fname = C_TO_XEN_STRING(current_name);
-#if HAVE_SCHEME
-      gc_loc = s7_gc_protect(s7, fname);
-#endif
-
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_CALL_1(XEN_CAR(procs),
@@ -1447,8 +1437,6 @@ char *output_name(const char *current_name)
 	    return(mus_strdup(XEN_TO_C_STRING(result)));
 	  procs = XEN_CDR (procs);
 	}
-#if HAVE_SCHEME
-      s7_gc_unprotect_at(s7, gc_loc);
 #endif
     }
   return(mus_strdup(current_name));
@@ -4584,7 +4572,13 @@ void display_info(snd_info *sp)
       /* run info-popup-hook, appending each string */
       if (XEN_HOOKED(info_popup_hook))
 	{
-	  XEN procs, result;
+	  XEN result;
+#if HAVE_SCHEME
+	  result = s7_call(s7, info_popup_hook, s7_cons(s7, C_INT_TO_XEN_SOUND(sp->index), XEN_EMPTY_LIST));
+	  if (XEN_STRING_P(result))
+	    post_it_append(XEN_TO_C_STRING(result));
+#else
+	  XEN procs;
 	  procs = XEN_HOOK_PROCEDURES(info_popup_hook);
 	  while (XEN_NOT_NULL_P(procs))
 	    {
@@ -4593,6 +4587,7 @@ void display_info(snd_info *sp)
 		post_it_append(XEN_TO_C_STRING(result));
 	      procs = XEN_CDR(procs);
 	    }
+#endif
 	}
 
       mus_snprintf(buffer, INFO_BUFFER_SIZE, "\n----------------------------------------\n%s:", sp->filename);
