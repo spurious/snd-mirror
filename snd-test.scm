@@ -30572,7 +30572,7 @@ EDITS: 2
       (set! (hook-functions after-save-as-hook) '())
       (hook-push after-save-as-hook 
 		 (lambda (hook)
-		   (let ((ind (hook 'index))
+		   (let ((ind (hook 'snd))
 			 (name (hook 'name))
 			 (dial (hook 'dialog)))
 		     (set! save-as-index ind)
@@ -31340,7 +31340,7 @@ EDITS: 2
     (let ((hook-called #f))
       (hook-push before-save-as-hook ; from docs
 		 (lambda (hook)
-		   (let ((index (hook 'index))
+		   (let ((index (hook 'snd))
 			 (filename (hook 'name))
 			 (selection (hook 'selection))
 			 (sr (hook 'srate))
@@ -31373,7 +31373,7 @@ EDITS: 2
     (let ((need-save-as-undo #f))
       (hook-push before-save-as-hook
 		 (lambda (hook)
-		   (let ((index (hook 'index))
+		   (let ((index (hook 'snd))
 			 (filename (hook 'name))
 			 (selection (hook 'selection))
 			 (sr (hook 'srate))
@@ -39091,7 +39091,7 @@ EDITS: 1
       (begin
 	
 	(if (not (provided? 'snd-musglyphs.scm)) (load "musglyphs.scm"))
-	(hook-push after-graph-hook display-previous-edits)
+	(hook-push after-graph-hook (lambda (hook) (display-previous-edits (hook 'snd) (hook 'chn))))
 	(hook-push lisp-graph-hook 
 		   (lambda (hook)
 		     (let ((snd (hook 'snd))
@@ -43197,8 +43197,6 @@ EDITS: 1
 		(color-samples (highlight-color) 0 100 ind1 0)
 		(update-time-graph)
 		(power-env-channel (make-power-env '(0 0 .325  1 1 32.0 2 0 32.0) :duration 2.0))
-		(update-time-graph)
-		(if (provided? 'xm) (show-disk-space ind1))
 		(update-time-graph)
 		(revert-sound ind1)
 		(make-selection 10000 20000 ind1 0)

@@ -148,21 +148,23 @@ whenever they're in the current view."
     (free-cairo cr)))
 
 
-(define (display-samples-in-color snd chn)
-  ;; intended as after-graph-hook member 
-  ;; run through 'colored-samples lists passing each to display-colored-samples
-  (let ((colors (channel-property 'colored-samples snd chn)))
-    (if colors
-	(for-each
-	 (lambda (vals)
-	   (apply display-colored-samples (append vals (list snd chn))))
-	 colors))))
+(define (display-samples-in-color hook)
+  (let ((snd (hook 'snd))
+	(chn (hook 'chn)))
+    ;; intended as after-graph-hook member 
+    ;; run through 'colored-samples lists passing each to display-colored-samples
+    (let ((colors (channel-property 'colored-samples snd chn)))
+      (if colors
+	  (for-each
+	   (lambda (vals)
+	     (apply display-colored-samples (append vals (list snd chn))))
+	   colors)))))
 
 
 (define* (color-samples color ubeg udur usnd uchn)
   "(color-samples color beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
   (if (not (member display-samples-in-color (hook-functions after-graph-hook)))
-      (hook-push after-graph-hook (lambda (hook) (display-samples-in-color (hook 'snd) (hook 'chn)))))
+      (hook-push after-graph-hook display-samples-in-color))
   (let* ((beg (or ubeg 0))
 	 (snd (or usnd (selected-sound) (car (sounds))))
 	 (chn (or uchn (selected-channel snd) 0))

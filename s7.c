@@ -54778,12 +54778,8 @@ s7_scheme *s7_init(void)
                                      f))                                   \n\
                                lst))))))");
 
-  /* TODO: documentation strings, add-to-hook? clear-hook?
+  /* TODO: documentation strings, add-to-hook? clear-hook? hook-result?
    * TODO: all html examples [these all need to keep track of and/or/concat cases, and progn][and match examps/arg names]
-   * TODO: all current cases (push-hook?, (set! (hook-functions...)) in ws/snd-test/play/hooks/etc)
-   * TODO: the special unbound tests, also init/end lists, jumps from body, recursive and nested calls
-   * TODO: catch-case [transparent-lambda?] [transparent-wind?]
-   *        does transparent-lambda give dynamic vars?  how about lambda+env (env 'var)?
    *
    * file local var could be a macro expanding to
    *   (if (not (defined? 'local-var)) (define local-var new-value))
@@ -54792,10 +54788,9 @@ s7_scheme *s7_init(void)
    *   ....
    *   (set! local-var (car (symbol-access 'local-var))) ; or pop
    * 
+   * TODO: catch-case [transparent-lambda?] [transparent-wind?] does transparent-lambda give dynamic vars?  how about lambda+env (env 'var)?
    * TODO: looping-catch, reraise error + error expls in s7.html
-   * hook as method? -> before/after/around methods, *format-hook*?  or-for-each  has? (i.e. like in -- recursive macro) ->
-   *     (any? f ...) where we don't eval ... until needed, or every? quit if #f: 
-   *     (define-bacro (every? f . args) (or (null? args) (and (apply f (car args)) (apply every? f (cdr args)))))
+   * TODO: hook as method? -> before/after/around methods, *format-hook*?
    * TODO: export s7_list varargs, also maybe vector string etc [does every C have varargs now?]
    */
   

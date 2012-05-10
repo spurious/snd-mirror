@@ -6,11 +6,6 @@
 (set! *clm-clipped* #f)
 (set! (with-inset-graph) #f)
 
-;;; these hooks may be drawing the graph in the upper right corner, which we don't want for now
-(set! (hook-functions after-graph-hook) '())
-(set! (hook-functions mouse-click-hook) '())
-(set! (hook-functions update-hook) '())
-
 ;;; tell Snd not to try to load the data file
 (set! (script-arg) (+ 1 (script-arg)))
 

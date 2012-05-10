@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.110"
-#define S7_DATE "4-May-12"
+#define S7_VERSION "2.0"
+#define S7_DATE "11-May-12"
 
 
 typedef long long int s7_Int;
@@ -803,7 +803,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 7-May:     hook implementation changed completely.
+ * 11-May:    s7 2.0: hook implementation changed completely.
  *            s7_environment_ref|set.
  * 4-May:     *error-info* replaced by error-environment, and stacktrace has changed.
  * 22-Apr:    #_<name> = startup (built-in) value of name

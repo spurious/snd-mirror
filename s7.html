@@ -3222,8 +3222,7 @@ of 'or' and 'and'.
 </p>
 
 <pre class="indented">
-(define-macro (and-call function . args)
-  ;; apply function to each arg, stopping if returned value is #f
+(define-macro (every? function . args)
   `(and ,@(map (lambda (arg) `(,function ,arg)) args)))
 
 (define-macro (and-let* vars . body)

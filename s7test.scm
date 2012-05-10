@@ -1823,6 +1823,15 @@
 	(let ((sym000000000000000000001 4))
 	  (+ sym000000000000000000000 sym000000000000000000001)))
       7)
+(test (let ((11-1 10)
+	    (2012-4-19 21)
+	    (1+the-road 18)
+	    (-1+2 1)
+	    (1e. 2)
+	    (0+i' 3)
+	    (0.. 4))
+	(+ 11-1 2012-4-19 1+the-road -1+2 1e. 0+i' 0..))
+      59)
 
 
 
@@ -8272,13 +8281,54 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	(list (lambda (hook) 
 		(set! hook-val (hook 'variable)) 
 		(set! (hook 'result) 123))))
-  (catch #t
-	 (lambda ()
-	   (+ 1 one-two-three))
-	 (lambda args 'error))
+  (let ((val (catch #t
+		    (lambda ()
+		      (+ 1 one-two-three))
+		    (lambda args 'error))))
+    (test val 124))
   (test (equal? one-two-three 123) #t)
   (test (equal? hook-val 'one-two-three) #t)
   (set! (hook-functions *unbound-variable-hook*) old-hook))
+
+(let ((old-hook (hook-functions *unbound-variable-hook*)))
+  (set! (hook-functions *unbound-variable-hook*) 
+	(list (lambda (hook) 
+		(set! (hook 'result) 32))))
+  (let ((val (+ 1 _an_undefined_variable_i_hope_)))
+    (test val 33))
+  (let ((val (* _an_undefined_variable_i_hope_ _an_undefined_variable_i_hope_)))
+    (test val 1024))
+  (set! (hook-functions *unbound-variable-hook*) old-hook))
+
+(let ((old-hook (hook-functions *unbound-variable-hook*)))
+  (set! (hook-functions *unbound-variable-hook*) 
+	(list (lambda (hook) 
+		(if (eq? (hook 'variable) '__asdf__)
+		    (set! (hook 'result) 32)
+		    (set! (hook 'result) (+ 1 __asdf__))))))
+  (let ((val (+ 1 _an_undefined_variable_i_hope_)))
+    (set! (hook-functions *unbound-variable-hook*) old-hook)
+    (test val 34)))
+
+(let ((old-hook (hook-functions *unbound-variable-hook*))
+      (x #f))
+  (set! (hook-functions *unbound-variable-hook*) 
+      (list 
+       (lambda (hook)
+	 (set! x 0)
+	 (set! (hook 'result) #<undefined>))
+       (lambda (hook) 
+	 (set! (hook 'result) 32))
+       (lambda (hook)
+	 (if (not (number? (hook 'result)))
+	     (format *stderr* "oops -- *unbound-variable-hook* func called incorrectly~%")))))
+  (let ((val (+ 1 _an_undefined_variable_i_hope_)))
+    (test val 33))
+  (test x 0)
+  (set! (hook-functions *unbound-variable-hook*) old-hook))
+
+;;; TODO: why does the context matter? (test (+ 1 _an_undefined_variable_i_hope_) 33) is unhappy?
+
 
 (let ((old-load-hook (hook-functions *load-hook*))
       (val #f))
@@ -8444,8 +8494,20 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
   (test (defined? 'a-new-var) #f)
 
-
-
+  (let* ((h (make-hook 'x))
+	 (endx 0)
+	 (val (call-with-exit
+	       (lambda (return)
+		 (set! (hook-body-functions h) 
+		       (list (lambda (hook) 
+			       (set! (hook 'result) (hook 'x))
+			       (return 32)
+			       (set! (hook 'result) -123))))
+		 (set! (hook-end-functions h) 
+		       (list (lambda (hook) 
+			       (set! endx (* 2 (hook 'result))))))
+		 (h 1)))))
+    (test (list val endx) '(32 2)))
   )
 
 

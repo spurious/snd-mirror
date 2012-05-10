@@ -628,7 +628,9 @@ Snd does not exit.</p>
 	  (unsaved-edits? (cdr lst)))
       #f))
 
-(hook-push <em class=red>before-exit-hook</em> (lambda () (unsaved-edits? (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
+(hook-push <em class=red>before-exit-hook</em> 
+  (lambda (hook) 
+    (set! (hook 'result) (unsaved-edits? (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>)))))
 </pre>
 
 <p>Now when Snd is told to exit, it checks before-exit-hook, runs
@@ -1170,7 +1172,9 @@ find out what the optimizer found confusing:
 </p>
 
 <pre class="indented">
-(hook-push <a class=quiet href="#optimizationhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_optimizationhook_tip)">optimization-hook</a> (lambda (n) (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "opt: ~A~%" n))))
+(hook-push <a class=quiet href="#optimizationhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_optimizationhook_tip)">optimization-hook</a> 
+  (lambda (hook) 
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "opt: ~A~%" (hook 'message))))
 </pre>
 
 <p>See also <a href="#maxvirtualptrees">max-virtual-ptrees</a>.
@@ -1801,7 +1805,7 @@ For example, the hook that is checked when you click the sound's name in the sta
 name-click-hook.  We can cause that action to print "hi":</p>
 
 <pre class="indented">
-Scheme: (hook-push <a class=quiet href="#nameclickhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_nameclickhook_tip)">name-click-hook</a> (lambda (hook) (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "hi") #t))
+Scheme: (hook-push <a class=quiet href="#nameclickhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_nameclickhook_tip)">name-click-hook</a> (lambda (hook) (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "hi") (set! (hook 'result) #t)))
 Ruby:   $name_click_hook.add_hook!("print") do |snd| snd_print("hi"); true end
 Forth:  name-click-hook lambda: &lt;{ snd }&gt; "hi" snd-print drop #t ; add-hook!
 </pre>
@@ -1815,8 +1819,8 @@ versions, match the Forth/Ruby argument name to the Scheme hook variable, so the
 is <code>(hook 'snd)</code> in Scheme.
 </p>
 
-<p>
-If there is more than one function attached to a hook, some of the hooks
+<p>In Ruby and Forth, but not in Scheme,
+if there is more than one function attached to a hook, some of the hooks
 "or" the functions together (marked <b>[or]</b> below); that is they
 run through the list of functions, and if any function returns something other than #f, the
 hook invocation eventually returns the last such non-#f value.  A few hooks are "cascade"
@@ -1825,7 +1829,11 @@ the final function's value is returned.
 In the other
 cases ("progn", the name coming from Common Lisp), the result returned by the hook is the result of the last function in the list.
 Whatever the hook combination choice, all the functions on the hook list are run
-on each invocation.  There are a variety of hook-related functions in hooks.scm.
+on each invocation.  
+</p>
+
+<p>In Scheme, all functions are run, and any returned values ignored.  It is
+up to the individual functions to track <code>(hook 'result)</code> if intermediate results matter.
 </p>
 
 <p>There are several basic actions that involve a bunch of hooks.  Here is a schematic view of
@@ -1883,19 +1891,6 @@ some of these sequences.
 </pre>
 
 
-<p>
-You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
-printout from hook-functions):
-</p>
-
-<pre class="indented">
-(define (describe-hook hook)
-  (for-each 
-    (lambda (n) 
-      (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~%" n)))
-    (reverse (<em class=red>hook-functions</em> hook))))
-</pre>
-
 <p>Here's the Ruby version of some of the hook-related functions:
 </p>
 
@@ -1933,8 +1928,8 @@ useful hook-related functions.
 
 <p>
 In the following list of hooks, the arguments after the hook name refer to the arguments to the functions invoked by
-the hook.  That is, after-apply-controls-hook (snd) means that the functions on the
-<a class=quiet href="#afterapplycontrolshook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afterapplycontrolshook_tip)">after-apply-controls-hook</a> list each take one argument, a sound.  
+the hook (in Ruby and Forth).  That is, after-apply-controls-hook (snd) means that the functions on the
+<a class=quiet href="#afterapplycontrolshook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afterapplycontrolshook_tip)">after-apply-controls-hook</a> list each take one argument, a sound.  In Scheme, they refer to the hook variables accessible in the hook environment via <code>(hook 'snd)</code>, for example.
 </p>
 
 <div class="spacer"></div>
@@ -1984,7 +1979,7 @@ ticks for various frequency scales.
 </pre>
 
 <p>This hook is called just before a newly opened sound's window is displayed.
-This provides a way to set various sound-specific defaults.  
+It provides a way to set various sound-specific defaults.  
 For example, the following causes Snd to default to locally 
 sync'd channels (that is, each sound's channels are sync'd 
 together but are independent of any other sound), united channels (all chans in one graph), 
@@ -1993,26 +1988,28 @@ and filled graphs (not line segments or dots, etc):
 
 <pre class="indented">
 (hook-push <em class=red>after-open-hook</em>
-  (lambda (snd)
-    (if (&gt; (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd) 1)
-        (begin
-          (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> snd) (+ 1 snd)) ; 0 = #f
-          (set! (<a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channel-style</a> snd) <a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>)
-          (set! (<a class=quiet href="#graphstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphstyle_tip)">graph-style</a> snd) <a class=quiet href="#graphstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphstyle_tip)">graph-filled</a>)))))
+  (lambda (hook)
+    (let ((snd (hook 'snd)))
+      (if (&gt; (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd) 1)
+          (begin
+            (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> snd) (+ 1 (sync-max)))
+            (set! (<a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channel-style</a> snd) <a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>)
+            (set! (<a class=quiet href="#graphstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphstyle_tip)">graph-style</a> snd) <a class=quiet href="#graphstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphstyle_tip)">graph-filled</a>))))))
 </pre>
 
-<p>See also <a href="sndscm.html#xbopen">C-x b</a> support in examp.scm, 
+<p>See also
 enved.scm, and various examples in snd-motif.scm.
 </p>
 <div class="spacer"></div>
 
 
+
 <!-- after-save-as-hook -->
 <pre class="indented">
-<em class=def id="aftersaveashook">after-save-as-hook</em> (index filename from-dialog)
+<em class=def id="aftersaveashook">after-save-as-hook</em> (snd name dialog)
 </pre>
 
-<p>This hook is called after File:Save as.
+<p>This hook is called after File:Save as.  ('snd = sound index, 'name = full filename, 'dialog = #t if called from a dialog).
 </p>
 <div class="spacer"></div>
 
@@ -2020,11 +2017,11 @@ enved.scm, and various examples in snd-motif.scm.
 
 <!-- after-save-state-hook -->
 <pre class="indented">
-<em class=def id="aftersavestatehook">after-save-state-hook</em> (filename)
+<em class=def id="aftersavestatehook">after-save-state-hook</em> (name)
 </pre>
 
-<p>This hook is called after Snd has saved its state (<a href="#savestate">save-state</a>).  'filename' is the (otherwise complete) saved state
-program.  See <a href="sndscm.html#wssavestate">ws-save-state</a> in ws.scm.  It uses this sequence:
+<p>This hook is called after Snd has saved its state (<a href="#savestate">save-state</a>).  'name is the (otherwise complete) saved state
+program (a filename).  See <a href="sndscm.html#wssavestate">ws-save-state</a> in ws.scm.  It uses this sequence:
 </p>
 
 <pre class="indented">
@@ -2045,29 +2042,34 @@ program.  See <a href="sndscm.html#wssavestate">ws-save-state</a> in ws.scm.  It
 </p>
 
 <pre class="indented">
-(define (report-fft-peak snd chn scale)
+(define (report-fft-peak snd chn)
   (if (and (<a class=quiet href="#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) 
            (= (<a class=quiet href="#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">transform-graph-type</a>) <a class=quiet href="#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">graph-once</a>))
       (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> 
         (number-&gt;string (/ (* 2 (<a class=quiet href="#vctpeak" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctpeak_tip)">vct-peak</a> (<a class=quiet href="#transformtovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformtovct_tip)">transform-&gt;vct</a> snd chn))) 
                            (<a class=quiet href="#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size</a> snd chn))))))
-(hook-push <em class=red>after-transform-hook</em> report-fft-peak)
+
+(hook-push <em class=red>after-transform-hook</em> 
+  (lambda (hook) 
+    (report-fft-peak (hook 'snd) (hook 'chn))))
 </pre>
 <div class="spacer"></div>
 
 
 <!-- bad-header-hook -->
 <pre class="indented">
-<em class=def id="badheaderhook">bad-header-hook</em> (filename)
+<em class=def id="badheaderhook">bad-header-hook</em> (name)
 </pre>
 
 <p>This hook is called if a file has a bogus-looking header (that is, 
 a header with what appear to be bad values such as a negative number of channels). 
-If a hook function returns #t, Snd does not try to open the file.
+If the hook returns #t, Snd does not try to open the file.
 </p>
 
 <pre class="indented">
-(hook-push bad-header-hook (lambda (n) #t)) ; don't open bogus-looking files
+(hook-push bad-header-hook 
+  (lambda (hook) 
+    (set! (hook 'result) #t))) ; don't open bogus-looking files
 </pre>
 
 <p>If no header is found, <a href="#openrawsoundhook">open-raw-sound-hook</a> is invoked instead ("raw" = "headerless").
@@ -2075,12 +2077,14 @@ If a hook function returns #t, Snd does not try to open the file.
 <div class="spacer"></div>
 
 
+<!-- STOPPED HERE -->
+
 <!-- before-close-hook -->
 <pre class="indented">
 <em class=def id="beforeclosehook">before-close-hook</em> (snd) 
 </pre>
 
-<p>This hook is called when a file is about to be closed.  If a hook function returns #t, the file is not closed.
+<p>This hook is called when a file is about to be closed.  If the hook returns #t, the file is not closed.
 </p>
 <div class="spacer"></div>
 
@@ -2098,7 +2102,7 @@ If a hook function returns #t, Snd does not exit.
 
 <!-- before-save-as-hook -->
 <pre class="indented">
-<em class=def id="beforesaveashook">before-save-as-hook</em> (index filename selection srate header-type data-format comment)
+<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection srate header-type data-format comment)
 </pre>
 
 <p>This hook is called before <a href="#savesoundas">save-sound-as</a> or File:Save as.  

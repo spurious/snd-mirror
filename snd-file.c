@@ -6022,13 +6022,13 @@ If it returns " PROC_TRUE ", the file is not closed."
 
   #define H_close_hook S_close_hook " (snd): called each time a file is closed (before the close)."
 
-  #define H_bad_header_hook S_bad_header_hook " (filename): called if a file has some bogus-looking header. \
+  #define H_bad_header_hook S_bad_header_hook " (name): called if a file has some bogus-looking header. \
 Return " PROC_TRUE " to give up on that file."
 
-  #define H_after_save_as_hook S_after_save_as_hook " (saved-sound-index save-as-full-filename from-save-as-dialog): called \
+  #define H_after_save_as_hook S_after_save_as_hook " (snd name dialog): called \
 upon File:Save as or " S_save_sound_as " completion."
 
-  #define H_before_save_as_hook S_before_save_as_hook " (index filename selection srate type format comment): called \
+  #define H_before_save_as_hook S_before_save_as_hook " (snd name selection srate type format comment): called \
 before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just before it is saved."
 
 #if HAVE_SCHEME
@@ -6092,8 +6092,8 @@ that name is presented in the New File dialog."
   before_close_hook =   XEN_DEFINE_HOOK(S_before_close_hook,   "(make-hook 'snd)",                 1, H_before_close_hook);
   close_hook =          XEN_DEFINE_HOOK(S_close_hook,          "(make-hook 'snd)",                 1, H_close_hook);
   bad_header_hook =     XEN_DEFINE_HOOK(S_bad_header_hook,     "(make-hook 'name)",                1, H_bad_header_hook);
-  after_save_as_hook =  XEN_DEFINE_HOOK(S_after_save_as_hook,  "(make-hook 'index 'name 'dialog)", 3, H_after_save_as_hook);
-  before_save_as_hook = XEN_DEFINE_HOOK(S_before_save_as_hook, "(make-hook 'index 'name 'selection 'srate 'type 'format 'comment)", 7, H_before_save_as_hook); 
+  after_save_as_hook =  XEN_DEFINE_HOOK(S_after_save_as_hook,  "(make-hook 'snd 'name 'dialog)",   3, H_after_save_as_hook);
+  before_save_as_hook = XEN_DEFINE_HOOK(S_before_save_as_hook, "(make-hook 'snd 'name 'selection 'srate 'type 'format 'comment)", 7, H_before_save_as_hook); 
   during_open_hook =    XEN_DEFINE_HOOK(S_during_open_hook,    "(make-hook 'fd 'name 'reason)",    3, H_during_open_hook);
   after_open_hook =     XEN_DEFINE_HOOK(S_after_open_hook,     "(make-hook 'snd)",                 1, H_after_open_hook);
   output_name_hook =    XEN_DEFINE_HOOK(S_output_name_hook,    "(make-hook 'name)",                1, H_output_name_hook);

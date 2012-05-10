@@ -462,10 +462,10 @@
 	    ((pred (car l)) (car l))
 	    (else (find-if pred (cdr l)))))
 
-    (lambda* (snd-arg)
+    (lambda (hook)
       "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)"
 
-      (let* ((snd (or snd-arg (selected-sound)))
+      (let* ((snd (hook 'snd))
 	     (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
 	(if (not previous-label)
 	    (if (not snd)

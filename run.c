@@ -17361,9 +17361,9 @@ void mus_init_run(void)
   XEN_ADD_HOOK(ss->mus_error_hook, watch_for_mus_error_in_run, "run-mus-error-handler", "run macro's mus-error handler");
 #endif
 
-  #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
+  #define H_optimization_hook S_optimization_hook " (message): called if the run macro encounters \
 something it can't optimize.  'msg' is a string description of the offending form:\n\
-  (add-hook! " S_optimization_hook " (lambda (msg) (display (format #f \"run trouble: ~A~%\" msg))))\n\
+  (hook-push " S_optimization_hook " (lambda (hook) (format #t \"run trouble: ~A~%\" (hook 'message))))\n\
 You can often slightly rewrite the form to make run happy."
 
   optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, "(make-hook 'message)", 1, H_optimization_hook);

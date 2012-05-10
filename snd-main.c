@@ -2460,7 +2460,7 @@ void g_init_main(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir,
 				   S_setB S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0);
 
-  #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns " PROC_TRUE ", snd exits immediately."
+  #define H_start_hook S_start_hook " (name): called upon start-up. If it returns " PROC_TRUE ", snd exits immediately."
   start_hook = XEN_DEFINE_HOOK(S_start_hook, "(make-hook 'name)", 1, H_start_hook); 
 
   #define H_before_exit_hook S_before_exit_hook " (): called upon exit. \
@@ -2472,12 +2472,12 @@ If it returns " PROC_TRUE ", Snd does not exit.  This can be used to check for u
 
   exit_hook = XEN_DEFINE_HOOK(S_exit_hook, "(make-hook)", 0, H_exit_hook);
 
-  #define H_after_save_state_hook S_after_save_state_hook " (filename): called after Snd state has been saved; \
+  #define H_after_save_state_hook S_after_save_state_hook " (name): called after Snd state has been saved; \
 filename is the save state file."
   after_save_state_hook = XEN_DEFINE_HOOK(S_after_save_state_hook, "(make-hook 'name)", 1, H_after_save_state_hook);
 
-  #define H_before_save_state_hook S_before_save_state_hook " (filename): called before Snd state is saved. If \
-the hook functions return " PROC_TRUE ", the save state process opens 'filename' for appending, rather than truncating."
+  #define H_before_save_state_hook S_before_save_state_hook " (name): called before Snd state is saved. If \
+the hook functions return " PROC_TRUE ", the save state process opens the file 'name' for appending, rather than truncating."
   before_save_state_hook = XEN_DEFINE_HOOK(S_before_save_state_hook, "(make-hook 'name)", 1, H_before_save_state_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);

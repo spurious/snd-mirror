@@ -36,7 +36,6 @@
 ;;; lisp graph with draggable x axis
 ;;; pointer focus within Snd
 ;;; View: Files dialog chooses which sound is displayed
-;;;    C-x b support along the same lines 
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
 ;;; file->vct and a sort of cue-list, I think, and region-play-list, region-play-sequence
