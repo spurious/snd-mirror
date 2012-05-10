@@ -2866,7 +2866,7 @@
 	  (set! (hook-functions output-comment-hook) '())
 	  (hook-push output-comment-hook
 		     (lambda (hook) 
-		       (set! (hook 'result) (string-append (hook 'message) " [written by me]"))))
+		       (set! (hook 'result) (string-append (hook 'comment) " [written by me]"))))
 	  (save-sound-as :file "test.snd" :sound ob :header-type mus-riff :data-format mus-lfloat)
 	  (set! (hook-functions output-comment-hook) '())
 	  (let ((ab (open-sound "test.snd")))

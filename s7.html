@@ -3761,10 +3761,11 @@ make-hook is:
 	(end ()))
     (apply lambda* args
       '(let ((result #&lt;unspecified&gt;))
-         (dynamic-wind 
-	   (lambda () (for-each (lambda (f) (f (current-environment))) init))
-	   (lambda () (for-each (lambda (f) (f (current-environment))) body) result)
-	   (lambda () (for-each (lambda (f) (f (current-environment))) end))))
+         (let ((e (current-environment)))
+           (dynamic-wind 
+	     (lambda () (for-each (lambda (f) (f e)) init))
+	     (lambda () (for-each (lambda (f) (f e)) body) result)
+	     (lambda () (for-each (lambda (f) (f e)) end)))))
        ())))
 </pre>
 

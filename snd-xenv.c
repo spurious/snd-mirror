@@ -871,7 +871,7 @@ static void reflect_sound_state(void)
 }
 
 
-static XEN reflect_file_in_enved(XEN reason)
+static XEN reflect_file_in_enved(XEN hook_or_reason)
 {
   if (enved_dialog) reflect_sound_state();
   return(XEN_FALSE);
@@ -886,10 +886,14 @@ static XEN reflect_file_in_enved(XEN reason)
 
 static void enved_reflect_selection(bool on);
 
-static XEN enved_selection_handler(XEN xreason)
+static XEN enved_selection_handler(XEN hook_or_reason)
 {
   int reason;
-  reason = XEN_TO_C_INT(xreason);
+#if HAVE_SCHEME
+  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
+#else
+  reason = XEN_TO_C_INT(hook_or_reason);
+#endif
   switch (reason)
     {
     case SELECTION_INACTIVE: enved_reflect_selection(false);                 break;

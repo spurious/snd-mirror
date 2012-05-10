@@ -3005,7 +3005,7 @@ static int view_files_find_row(view_files_info *vdat, const char *name);
 static int view_files_info_size = 0;
 static view_files_info **view_files_infos = NULL;
 
-static XEN vf_open_file_watcher(XEN reason)
+static XEN vf_open_file_watcher(XEN hook_or_reason)
 {
   int k;
   /* reasons are FILE_OPENED|CLOSED, but it's not worth the trouble of splitting them out here */

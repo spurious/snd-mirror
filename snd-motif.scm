@@ -270,33 +270,34 @@
   (set! (sound-property 'dragger snd) #f)
   #f)
 
-(define (add-dragger snd)
+(define (add-dragger hook)
   "(add-dragger snd) syncs together y-zoom sliders"
-  (set! (sound-property 'save-state-ignore snd)
-	(cons 'dragger
-	      (or (sound-property 'save-state-ignore snd)
-		  (list 'save-state-ignore))))
-  (set! (sound-property 'dragger snd)
-	(let ((calls '()))
-	  (do ((chn 0 (+ 1 chn)))
-	      ((= chn (channels snd)))
-	    (let* ((zy ((channel-widgets snd chn) 6))
-		   (slider-size (cadr (XtGetValues zy (list XmNsliderSize 0)))) ; this is relative to max size
-		   (max-size (cadr (XtGetValues zy (list XmNmaximum 0))))
-		   (zy-div (max 10 (- max-size slider-size))))
-	      (set! calls
-		    (cons (XtAddCallback zy
-					 XmNdragCallback 
-					 (lambda (w data info)
-					   (let ((v (/ (.value info) zy-div)))
-					     (do ((i 0 (+ i 1)))
-						 ((= i (channels snd)))
-					       (if (not (= i chn))
-						   (begin
-						     (set! (y-zoom-slider snd i) (* v v))
-						     (set! (y-position-slider snd i) (y-position-slider snd chn))))))))
-			  calls))))
-	  (reverse calls))))
+  (let ((snd (hook 'snd)))
+    (set! (sound-property 'save-state-ignore snd)
+	  (cons 'dragger
+		(or (sound-property 'save-state-ignore snd)
+		    (list 'save-state-ignore))))
+    (set! (sound-property 'dragger snd)
+	  (let ((calls '()))
+	    (do ((chn 0 (+ 1 chn)))
+		((= chn (channels snd)))
+	      (let* ((zy ((channel-widgets snd chn) 6))
+		     (slider-size (cadr (XtGetValues zy (list XmNsliderSize 0)))) ; this is relative to max size
+		     (max-size (cadr (XtGetValues zy (list XmNmaximum 0))))
+		     (zy-div (max 10 (- max-size slider-size))))
+		(set! calls
+		      (cons (XtAddCallback zy
+					   XmNdragCallback 
+					   (lambda (w data info)
+					     (let ((v (/ (.value info) zy-div)))
+					       (do ((i 0 (+ i 1)))
+						   ((= i (channels snd)))
+						 (if (not (= i chn))
+						     (begin
+						       (set! (y-zoom-slider snd i) (* v v))
+						       (set! (y-position-slider snd i) (y-position-slider snd chn))))))))
+			    calls))))
+	    (set! (hook 'result) (reverse calls))))))
 
 (define (zync)
   "(zync) ties each sound's y-zoom sliders together so that all change in parallel if one changes"
@@ -677,7 +678,7 @@
        (paint-all w)))
  (dialog-widgets))
  
-(hook-push new-widget-hook paint-all)
+(hook-push new-widget-hook (lambda (hook) (paint-all (hook 'widget))))
 |#
 
 (define right-arrow (list
@@ -1120,40 +1121,42 @@
 	      (cadr (XtGetValues lst (list XmNchildren 0) 1)))))))
       #f))
 
-  (define (remark id snd chn reason)
-    (make-mark-list snd chn))
+  (define (remark hook)
+    (make-mark-list (hook 'snd) (hook 'chn)))
 
-  (define (unremark snd)
+  (define (unremark hook)
     (do ((i 0 (+ i 1)))
-	((= i (channels snd)))
-      (deactivate-mark-list snd i)))
+	((= i (channels (hook 'snd))))
+      (deactivate-mark-list (hook 'snd) i)))
 
-  (define (open-remarks snd)
-    (do ((i 0 (+ i 1)))
-	((= i (channels snd)))
-      (hook-push (after-edit-hook snd i) 
-		 (lambda () 
-		   (if (Widget? (mark-list snd i)) 
-		       (make-mark-list snd i))))
-      (hook-push (undo-hook snd i) 
-		 (lambda () 
-		   (if (Widget? (mark-list snd i)) 
-		       (make-mark-list snd i))))))
+  (define (open-remarks hook)
+    (let ((snd (hook 'snd)))
+      (do ((i 0 (+ i 1)))
+	  ((= i (channels snd)))
+	(hook-push (after-edit-hook snd i) 
+		   (lambda (hook) 
+		     (if (Widget? (mark-list snd i)) 
+			 (make-mark-list snd i))))
+	(hook-push (undo-hook snd i) 
+		   (lambda (hook) 
+		     (if (Widget? (mark-list snd i)) 
+			 (make-mark-list snd i)))))))
 
   (set! including-mark-pane #t)
   (hook-push mark-hook remark)
   (hook-push close-hook unremark)
   (hook-push after-open-hook open-remarks)
-  (hook-push update-hook (lambda (snd) 
+  (hook-push update-hook (lambda (hook) 
 			   ;; update-sound (called if header is changed, for example), calls open-sound
 			   ;;   which restores our channel-local mark-pane hooks, but doesn't re-activate
 			   ;;   the mark pane itself. So, we return a procedure from the update-hook
 			   ;;   evaluation that will recreate our pane immediately upon update completion.
-			   (lambda (updated-snd) 
-			     ;; this is the procedure to be called when the update is done
-			     (do ((i 0 (+ i 1)))
-				 ((= i (channels updated-snd)))
-			       (make-mark-list updated-snd i)))))
+			   (set! (hook 'result)
+				 (lambda (updated-snd) 
+				   ;; this is the procedure to be called when the update is done
+				   (do ((i 0 (+ i 1)))
+				       ((= i (channels updated-snd)))
+				     (make-mark-list updated-snd i))))))
   )
 
 
@@ -1479,28 +1482,30 @@
 		(round-down (- seconds (* minutes 60)))
 		(round-down (- frames (* (round-down seconds) smpte-frames-per-second))))))
 	    
-    (lambda (snd chn)
+    (lambda (hook)
       "(draw-smpte-label snd chn) draws a SMPTE time stamp in a box on a graph"
-      (let* ((axinf (axis-info snd chn))
-	     (x (axinf 10))
-	     (y (axinf 13))
-	     (grf-width (- (axinf 12) x))
-	     (grf-height (- (axinf 11) y)))
-	(if (and (> grf-height (* 2 height))
-		 (> grf-width (* 1.5 width))
-		 (time-graph? snd chn))
-	    (let* ((smpte (smpte-label (car axinf) (srate snd)))
-		   (samp (car axinf)))
-	      (fill-rectangle x y width 2 snd chn)
-	      (fill-rectangle x (+ y height) width 2 snd chn)
-	      (fill-rectangle x y 2 height snd chn)
-	      (fill-rectangle (+ x width -2) y 2 height snd chn)
-	      (XSetFont dpy
-			(if (= chn (selected-channel snd))
-			    (cadr (snd-gcs))
-			    (car (snd-gcs)))
-			(.fid fs))
-	      (draw-string smpte (+ x 4) (+ y 4) snd chn)))))))
+      (let ((snd (hook 'snd))
+	    (chn (hook 'chn)))
+	(let* ((axinf (axis-info snd chn))
+	       (x (axinf 10))
+	       (y (axinf 13))
+	       (grf-width (- (axinf 12) x))
+	       (grf-height (- (axinf 11) y)))
+	  (if (and (> grf-height (* 2 height))
+		   (> grf-width (* 1.5 width))
+		   (time-graph? snd chn))
+	      (let* ((smpte (smpte-label (car axinf) (srate snd)))
+		     (samp (car axinf)))
+		(fill-rectangle x y width 2 snd chn)
+		(fill-rectangle x (+ y height) width 2 snd chn)
+		(fill-rectangle x y 2 height snd chn)
+		(fill-rectangle (+ x width -2) y 2 height snd chn)
+		(XSetFont dpy
+			  (if (= chn (selected-channel snd))
+			      (cadr (snd-gcs))
+			      (car (snd-gcs)))
+			  (.fid fs))
+		(draw-string smpte (+ x 4) (+ y 4) snd chn))))))))
 
 (define (show-smpte-label . arg)
   "(show-smpte-label on-or-off) turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample"
@@ -1675,8 +1680,8 @@
 				       XmNrightPosition    (* (+ 1 i) 10))) 
 	       meter-list)))
     (hook-push dac-hook 
-	       (lambda (sdobj)
-		 (let ((maxes (sound-data-maxamp sdobj)))
+	       (lambda (hook)
+		 (let ((maxes (sound-data-maxamp (hook 'data))))
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)
@@ -1687,7 +1692,7 @@
 			    (set! maxes (cdr maxes)))))
 		    (reverse meter-list)))))
     (hook-push stop-dac-hook
-	       (lambda () ; drain away the bubble
+	       (lambda (hook) ; drain away the bubble
 		 (XtAppAddWorkProc (car (main-widgets))
 				   (let ((ctr 0))
 				     (lambda (ignored)
@@ -2022,8 +2027,8 @@
 	      (reset-to-one amp ampn)
 	      (set! (amp-control snd (- top i)) 1.0))))))
   
-  (hook-push after-open-hook amp-controls-reflect-chans)
-  (hook-push after-apply-controls-hook amp-controls-clear))
+  (hook-push after-open-hook (lambda (hook) (amp-controls-reflect-chans (hook 'snd))))
+  (hook-push after-apply-controls-hook (lambda (hook) (amp-controls-clear (hook 'snd)))))
 
 ;(add-amp-controls)
 
@@ -2156,8 +2161,8 @@
 
 ;;; this deletes the play button
 ;(hook-push after-open-hook
-;	   (lambda (snd)
-;	     (let* ((ctrls ((sound-widgets snd) 2))
+;	   (lambda (hook)
+;	     (let* ((ctrls ((sound-widgets (hook 'snd)) 2))
 ;		    (play-button (find-child ctrls "play"))
 ;		    (sync-button (find-child ctrls "sync")))
 ;	     (XtUnmanageChild play-button)
@@ -2195,8 +2200,8 @@
     (if (not (null? (hook-functions draw-mark-hook)))
 	(set! (hook-functions draw-mark-hook) '()))
     (hook-push draw-mark-hook
-	       (lambda (id)
-		 (if (> (sync id) 0)
+	       (lambda (hook)
+		 (if (> (sync (hook 'id)) 0)
 		     (begin
 		       (XSetForeground dpy mark-gc new-mark-color)
 		       (XSetForeground dpy selected-mark-gc new-selected-mark-color))
@@ -2680,7 +2685,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	#f))))
 
 
-;(hook-push after-open-hook with-minmax-button)
+;(hook-push after-open-hook (lambda (hook) (with-minmax-button (hook 'snd))))
 
 #|
 (define (set-root-window-color color)

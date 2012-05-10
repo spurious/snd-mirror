@@ -2609,8 +2609,8 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension);
 
-  ss->snd_open_file_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook 'file-state)", 1);
-  ss->snd_selection_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook 'selection-state)", 1);
+  ss->snd_open_file_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook 'reason)", 1);
+  ss->snd_selection_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook 'reason)", 1);
 
   XEN_PROTECT_FROM_GC(ss->snd_open_file_hook);
   XEN_PROTECT_FROM_GC(ss->snd_selection_hook);

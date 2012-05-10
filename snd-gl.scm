@@ -149,8 +149,8 @@
 						      XmNrightAttachment  XmATTACH_FORM)))
 	    (XtAddCallback drawer XmNresizeCallback (lambda (w context info) (redraw-graph)))
 	    (XtAddCallback drawer XmNexposeCallback (lambda (w context info) (redraw-graph)))
-	    (hook-push orientation-hook (lambda () (redraw-graph)))
-	    (hook-push color-hook (lambda () (redraw-graph)))))
+	    (hook-push orientation-hook (lambda (hook) (redraw-graph)))
+	    (hook-push color-hook (lambda (hook) (redraw-graph)))))
       ;; start the waterfall display
       (if (not (or input-port (XtWorkProcId? input-proc)))
 	  (begin
@@ -491,6 +491,6 @@
 	      (set! (spectro-x-scale) 3.0)
 	      (XtAddCallback drawer XmNresizeCallback (lambda (w context info) (redraw-graph)))
 	      (XtAddCallback drawer XmNexposeCallback (lambda (w context info) (redraw-graph)))
-	      (hook-push after-graph-hook (lambda (s c) (redraw-graph)))
-	      (hook-push orientation-hook (lambda () (redraw-graph)))
-	      (hook-push color-hook (lambda () (redraw-graph))))))))
+	      (hook-push after-graph-hook (lambda (hook) (redraw-graph)))
+	      (hook-push orientation-hook (lambda (hook) (redraw-graph)))
+	      (hook-push color-hook (lambda (hook) (redraw-graph))))))))

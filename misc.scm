@@ -62,8 +62,11 @@
        (paint-all w)))
  (dialog-widgets))
 
-(if (not (hook-member paint-all new-widget-hook))
-    (hook-push new-widget-hook paint-all))
+(define (hook-paint-all hook) 
+  (paint-all (hook 'widget)))
+
+(if (not (hook-member hook-paint-all new-widget-hook))
+    (hook-push new-widget-hook hook-paint-all))
 
 (set! (mix-waveform-height) 32)
 
@@ -104,8 +107,8 @@
 ;;;
 
 ;(hook-push after-open-hook
-;           (lambda (snd)
-;             (XtUnmanageChild (find-child (list-ref (sound-widgets snd) 2) "play"))))
+;           (lambda (hook)
+;             (XtUnmanageChild (find-child (list-ref (sound-widgets (hook 'snd)) 2) "play"))))
 
 
 ;;;
@@ -269,16 +272,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (hook-push open-raw-sound-hook
-           (lambda (file choices)
-             (list 2 44100 (if (little-endian?) mus-lshort mus-bshort))))
+           (lambda (hook)
+             (set! (hook 'result) (list 2 44100 (if (little-endian?) mus-lshort mus-bshort)))))
 
 (hook-push open-hook
-           (lambda (filename)
-             (if (= (mus-sound-header-type filename) mus-raw)
-                 (let ((rawfile (string-append filename ".raw")))
-                   (system (format #f "mpg123 -s ~A > ~A" filename rawfile))
-                   rawfile)
-                 #f)))
+           (lambda (hook)
+	     (let ((filename (hook 'name)))
+	       (if (= (mus-sound-header-type filename) mus-raw)
+		   (let ((rawfile (string-append filename ".raw")))
+		     (system (format #f "mpg123 -s ~A > ~A" filename rawfile))
+		     (set! (hook 'result) rawfile))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -287,16 +290,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (hook-push open-raw-sound-hook
-           (lambda (file choices)
-             (list 2 44100 (if (little-endian?) mus-lshort mus-bshort))))
+           (lambda (hook)
+             (set! (hook 'result) (list 2 44100 (if (little-endian?) mus-lshort mus-bshort)))))
 
 (hook-push open-hook
-           (lambda (filename)
-             (if (= (mus-sound-header-type filename) mus-raw)
-                 (let ((rawfile (string-append filename ".raw")))
-                   (system (format #f "ogg123 -d raw -f ~A ~A" rawfile filename))
-                   rawfile)
-                 #f)))
+           (lambda (hook)
+	     (let ((filename (hook 'name)))
+	       (if (= (mus-sound-header-type filename) mus-raw)
+		   (let ((rawfile (string-append filename ".raw")))
+		     (system (format #f "ogg123 -d raw -f ~A ~A" rawfile filename))
+		     (set! (hook 'result) rawfile))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

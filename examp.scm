@@ -112,10 +112,12 @@
     (channel->vct wl (+ 1 (- wr wl)) snd chn)))
 
 
-(define (display-energy snd chn)
+(define (display-energy hook)
   ;; in this version, the y-zoom-slider controls the graph amp
-  "(display-energy snd chn) is a lisp-graph-hook function to display the time domain data as energy (squared)"
-  (let* ((ls (left-sample snd chn))
+  "(display-energy hook) is a lisp-graph-hook function to display the time domain data as energy (squared)"
+  (let* ((snd (hook 'snd))
+	 (chn (hook 'chn))
+	 (ls (left-sample snd chn))
 	 (rs (right-sample snd chn))
 	 (datal (make-graph-data snd chn))
 	 (data (if (vct? datal) datal (cadr datal)))
@@ -129,10 +131,11 @@
 ;(hook-push lisp-graph-hook display-energy)
 
 
-(define display-db
-  (lambda (snd chn)
-    "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
-    (let ((datal (make-graph-data snd chn)))
+(define (display-db hook)
+  "(display-db hook) is a lisp-graph-hook function to display the time domain data in dB"
+  (let* ((snd (hook 'snd))
+	 (chn (hook 'chn))
+	 (datal (make-graph-data snd chn)))
 
       (define (log10 a) 
 	(/ (log a) (log 10)))
@@ -151,7 +154,7 @@
 	    (graph data "dB" 
 		   (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
 		   0.0 60.0
-		   snd chn))))))
+		   snd chn)))))
 
 ;(hook-push lisp-graph-hook display-db)
 
@@ -165,15 +168,16 @@
     (sqrt (/ (dot-product data data) len))))
 
 
-(define (fft-peak snd chn scale)
-  "(fft-peak snd chn scale) returns the peak spectral magnitude.  It is intended for use with after-transform-hook."
-  (if (and (transform-graph?) 
-	   (= (transform-graph-type) graph-once))
-      (status-report 
-       (number->string (/ (* 2.0 (vct-peak (transform->vct snd chn))) 
-			  (transform-size)))
-       snd)
-      #f))
+(define (fft-peak hook)
+  "(fft-peak hook) returns the peak spectral magnitude.  It is intended for use with after-transform-hook."
+  (let ((snd (hook 'snd))
+	(chn (hook 'chn)))
+    (if (and (transform-graph?) 
+	     (= (transform-graph-type) graph-once))
+	(status-report 
+	 (number->string (/ (* 2.0 (vct-peak (transform->vct snd chn))) 
+			    (transform-size)))
+	 snd))))
 
 ;(hook-push after-transform-hook fft-peak)
 
@@ -196,37 +200,39 @@
 ;;;
 ;;; correlation of channels in a stereo sound
 
-(define (display-correlation snd chn y0 y1)
-  "(display-correlation snd chn y0 y1) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."
-  (if (and (= (channels snd) 2)
-	   (> (frames snd 0) 1)
-	   (> (frames snd 1) 1))
-      (let* ((ls (left-sample snd 0))
-	     (rs (right-sample snd 0))
-	     (ilen (+ 1 (- rs ls)))
-	     (pow2 (ceiling (/ (log ilen) (log 2))))
-	     (fftlen (floor (expt 2 pow2)))
-	     (fftscale (/ 1.0 fftlen))
-	     (rl1 (channel->vct ls fftlen snd 0))
-	     (rl2 (channel->vct ls fftlen snd 1))
-	     (im1 (make-vct fftlen))
-	     (im2 (make-vct fftlen)))
-	(fft rl1 im1 1)
-	(fft rl2 im2 1)
-	(let ((tmprl (vct-copy rl1))
-	      (tmpim (vct-copy im1))
-	      (data3 (make-vct fftlen)))
-	  (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
-	  (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
-	  (vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
-	  (vct-multiply! rl2 im1)       ; (* tempr2 tempi1)
-	  (vct-add! tmprl tmpim)        ; add the first two
-	  (vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
-	  (fft tmprl im2 -1)
-	  (vct-add! data3 tmprl)        ; copy into data3
-	  (vct-scale! data3 fftscale)   ; scale by fftscale
-	  (graph data3 "lag time" 0 fftlen)))
-      (status-report "display-correlation wants stereo input")))
+(define (display-correlation hook)
+  "(display-correlation hook) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."
+  (let ((snd (hook 'snd))
+	(chn (hook 'chn)))
+    (if (and (= (channels snd) 2)
+	     (> (frames snd 0) 1)
+	     (> (frames snd 1) 1))
+	(let* ((ls (left-sample snd 0))
+	       (rs (right-sample snd 0))
+	       (ilen (+ 1 (- rs ls)))
+	       (pow2 (ceiling (/ (log ilen) (log 2))))
+	       (fftlen (floor (expt 2 pow2)))
+	       (fftscale (/ 1.0 fftlen))
+	       (rl1 (channel->vct ls fftlen snd 0))
+	       (rl2 (channel->vct ls fftlen snd 1))
+	       (im1 (make-vct fftlen))
+	       (im2 (make-vct fftlen)))
+	  (fft rl1 im1 1)
+	  (fft rl2 im2 1)
+	  (let ((tmprl (vct-copy rl1))
+		(tmpim (vct-copy im1))
+		(data3 (make-vct fftlen)))
+	    (vct-multiply! tmprl rl2)     ; (* tempr1 tempr2)
+	    (vct-multiply! tmpim im2)     ; (* tempi1 tempi2)
+	    (vct-multiply! im2 rl1)       ; (* tempr1 tempi2)
+	    (vct-multiply! rl2 im1)       ; (* tempr2 tempi1)
+	    (vct-add! tmprl tmpim)        ; add the first two
+	    (vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
+	    (fft tmprl im2 -1)
+	    (vct-add! data3 tmprl)        ; copy into data3
+	    (vct-scale! data3 fftscale)   ; scale by fftscale
+	    (graph data3 "lag time" 0 fftlen)))
+	(status-report "display-correlation wants stereo input"))))
 
 ;(hook-push graph-hook display-correlation)
 
@@ -246,17 +252,19 @@
 ;;;
 ;;; also zoom spectrum based on y-axis zoom slider
 
-(define (zoom-spectrum snd chn y0 y1)
-  "(zoom-spectrum snd chn y0 y1) sets the transform size to correspond to the time-domain window size (use with graph-hook)"
-  (if (and (transform-graph? snd chn) 
-	   (= (transform-graph-type snd chn) graph-once))
-      (begin
-	(set! (transform-size snd chn)
-	      (expt 2 (ceiling 
-		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-			  (log 2.0)))))
-	(set! (spectrum-end snd chn) (y-zoom-slider snd chn))))
-  #f)
+(define (zoom-spectrum hook)
+  "(zoom-spectrum hook) sets the transform size to correspond to the time-domain window size (use with graph-hook)"
+  (let ((snd (hook 'snd))
+	(chn (hook 'chn)))
+    (if (and (transform-graph? snd chn) 
+	     (= (transform-graph-type snd chn) graph-once))
+	(begin
+	  (set! (transform-size snd chn)
+		(expt 2 (ceiling 
+			 (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+			    (log 2.0)))))
+	  (set! (spectrum-end snd chn) (y-zoom-slider snd chn))))))
+
 
 ;(hook-push graph-hook zoom-spectrum)
 
@@ -264,9 +272,11 @@
 
 ;;; -------- superimpose spectra of sycn'd sounds
 
-(define (superimpose-ffts snd chn y0 y1)
-  "(superimpose-ffts snd chn y0 y1) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"
-  (let ((maxsync (apply max (map sync (sounds)))))
+(define (superimpose-ffts hook)
+  "(superimpose-ffts hook) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"
+  (let ((maxsync (apply max (map sync (sounds))))
+	(snd (hook 'snd))
+	(chn (hook 'chn)))
     (if (and (> (sync snd) 0)
 	     (> (right-sample snd chn) (left-sample snd chn))
 	     (equal? snd (integer->sound (apply min (map (lambda (n) 
@@ -359,10 +369,11 @@
 
 #|  
 (hook-push open-hook
-           (lambda (filename)
-             (if (= (mus-sound-header-type filename) mus-raw)
-                 (read-ogg filename)
-		 #f)))
+           (lambda (hook)
+	     (let ((filename (hook 'name)))
+	       (if (= (mus-sound-header-type filename) mus-raw)
+		   (read-ogg filename)))))
+;; was returning #f?
 |#
 
 (define (write-ogg snd)
@@ -462,9 +473,11 @@ read an ASCII sound file"
 ;;; 
 ;;; this could be extended to set time-graph-style to graph-lines if many samples are displayed, etc
 
-(define (auto-dot snd chn y0 y1)
-  "(auto-dot snd chn y0 y1) sets the dot size depending on the number of samples being displayed (use with graph-hook)"
-  (let ((dots (- (right-sample snd chn)
+(define (auto-dot hook)
+  "(auto-dot hook) sets the dot size depending on the number of samples being displayed (use with graph-hook)"
+  (let* ((snd (hook 'snd))
+	 (chn (hook 'chn))
+	 (dots (- (right-sample snd chn)
 		 (left-sample snd chn))))
     (if (> dots 100) 
 	(set! (dot-size snd chn) 1)
@@ -472,8 +485,7 @@ read an ASCII sound file"
 	    (set! (dot-size snd chn) 2)
 	    (if (> dots 25)
 		(set! (dot-size snd chn) 3)
-		(set! (dot-size snd chn) 5))))
-    #f))
+		(set! (dot-size snd chn) 5))))))
     
 ;(hook-push graph-hook auto-dot)
 
@@ -1934,7 +1946,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
     (lambda ()
       (if (not (member get-current-files (hook-functions open-hook)))
-	  (hook-push open-hook get-current-directory))
+	  (hook-push open-hook (lambda (hook) (get-current-directory (hook 'name)))))
       (if (and (not (string? last-file-opened))
 	       (not (null? (sounds))))
 	  (set! last-file-opened (file-name (or (selected-sound)
@@ -1959,8 +1971,8 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 (define (click-middle-button-to-open-next-file-in-directory)
   "(click-middle-button-to-open-next-file-in-directory) adds open-next-file-in-directory to the mouse-click-hook"
   (hook-push mouse-click-hook
-	     (lambda (snd chn button state x y axis)
-	       (if (= button 2)
+	     (lambda (hook)
+	       (if (= (hook 'button) 2)
 		   (open-next-file-in-directory)
 		   #f)))) ; else handle it normally
 
@@ -2027,7 +2039,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
        (lambda (snd chn) (channel-property 'original-cursor snd chn))
        (lambda (snd chn val) (set! (channel-property 'original-cursor snd chn) val))))
     
-    (define (local-dac-func data)
+    (define (local-dac-func hook)
       (for-each
        (lambda (snd)
 	 (do ((i 0 (+ i 1)))
@@ -2036,14 +2048,16 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	       (set! (current-cursor snd i) (cursor snd i)))))
        (sounds)))
     
-    (define (local-start-playing-func snd)
-      (do ((i 0 (+ i 1)))
-	  ((= i (channels snd)))
-	(set! (original-cursor snd i) (cursor snd i))
-	(set! (current-cursor snd i) (cursor snd i))))
+    (define (local-start-playing-func hook)
+      (let ((snd (hook 'snd)))
+	(do ((i 0 (+ i 1)))
+	    ((= i (channels snd)))
+	  (set! (original-cursor snd i) (cursor snd i))
+	  (set! (current-cursor snd i) (cursor snd i)))))
     
-    (define (local-stop-playing-func snd)
-      (set! (cursor snd #t) (current-cursor snd 0)))
+    (define (local-stop-playing-func hook)
+      (let ((snd (hook 'snd)))
+	(set! (cursor snd #t) (current-cursor snd 0))))
     
     (if enable
 	(begin

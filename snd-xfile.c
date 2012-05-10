@@ -2006,7 +2006,7 @@ static void mix_file_help_callback(Widget w, XtPointer context, XtPointer info)
 
 static file_dialog_info *mdat = NULL;
 
-static XEN mix_open_file_watcher(XEN reason)
+static XEN mix_open_file_watcher(XEN hook_or_reason)
 {
   if ((mdat->dialog) &&
       (XtIsManaged(mdat->dialog)))
@@ -2113,7 +2113,7 @@ static void insert_file_help_callback(Widget w, XtPointer context, XtPointer inf
 
 static file_dialog_info *idat = NULL;
 
-static XEN insert_open_file_watcher(XEN reason)
+static XEN insert_open_file_watcher(XEN hook_or_reason)
 {
   if ((idat->dialog) &&
       (XtIsManaged(idat->dialog)))
@@ -3143,14 +3143,17 @@ void reflect_save_as_sound_selection(const char *sound_name)
 }
 
 
-static XEN save_selection_hook_handler(XEN xreason)
+static XEN save_selection_hook_handler(XEN hook_or_reason)
 {
   int reason;
   save_as_dialog_info *sd;
 
   sd = save_selection_as;
-  reason = XEN_TO_C_INT(xreason);
-
+#if HAVE_SCHEME
+  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
+#else
+  reason = XEN_TO_C_INT(hook_or_reason);
+#endif
   if ((reason == SELECTION_ACTIVE) ||
       (selection_is_active()))
     {

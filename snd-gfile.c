@@ -2758,14 +2758,17 @@ static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 }
 
 
-static XEN save_selection_hook_handler(XEN xreason)
+static XEN save_selection_hook_handler(XEN hook_or_reason)
 {
   int reason;
   save_as_dialog_info *sd;
 
   sd = save_selection_as;
-  reason = XEN_TO_C_INT(xreason);
-
+#if HAVE_SCHEME
+  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
+#else
+  reason = XEN_TO_C_INT(hook_or_reason);
+#endif
   if ((reason == SELECTION_ACTIVE) ||
       (selection_is_active()))
     {

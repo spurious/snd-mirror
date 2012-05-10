@@ -2774,10 +2774,14 @@ void snd_info_cleanup(snd_info *sp)
 }
 
 
-static XEN reflect_file_close_in_sync(XEN xreason)
+static XEN reflect_file_close_in_sync(XEN hook_or_reason)
 {
   int reason;
-  reason = XEN_TO_C_INT(xreason);
+#if HAVE_SCHEME
+  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
+#else
+  reason = XEN_TO_C_INT(hook_or_reason);
+#endif
   if ((reason == FILE_CLOSED) && /* snd-file.c */
       (ss->active_sounds == 1))
     {
@@ -3311,9 +3315,5 @@ widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filte
 void g_init_gxsnd(void)
 {
   XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
-
-  /* TODO: in new hooks, we need to add (lambda (hook) (sync-open-file-watcher (hook 'reason))) 
-   */
-
   XEN_DEFINE_PROCEDURE(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 }

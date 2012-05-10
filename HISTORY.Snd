@@ -1,5 +1,6 @@
 Snd change log
 
+ 11-May:    all scheme-side hook code changed.
  1-May:     removed mus-audio-describe, ESD audio support, audinfo.
  12-Apr:    Snd 12.10.     
  5-Mar:     Snd 12.9.

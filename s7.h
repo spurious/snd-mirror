@@ -480,6 +480,8 @@ s7_pointer s7_current_environment(s7_scheme *sc);                           /* (
 s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env);           /* (environment->list env) */
 bool s7_is_environment(s7_pointer e);
+s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym); /* (env sym) */
+s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (set! (env sym) val) */
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
@@ -802,6 +804,7 @@ void s7_mark_object(s7_pointer p);
  *        s7 changes
  *
  * 7-May:     hook implementation changed completely.
+ *            s7_environment_ref|set.
  * 4-May:     *error-info* replaced by error-environment, and stacktrace has changed.
  * 22-Apr:    #_<name> = startup (built-in) value of name
  * 17-Apr:    with-baffle.

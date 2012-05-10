@@ -90,7 +90,7 @@
 (define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
 (define (click-to-sync id) (set! (sync id) mark-sync-number) #f)
-;(hook-push mark-click-hook click-to-sync)
+;(hook-push mark-click-hook (lambda (hook) (click-to-sync (hook 'id))))
 
 
 ;;; -------- syncronize sounds at a given mark
@@ -249,8 +249,8 @@
 		   (hook-remove play-hook report-mark-names-play-hook)
 		   (hook-remove stop-playing-hook report-mark-names-stop-playing-hook))
 		 
-		 (hook-push stop-playing-hook report-mark-names-stop-playing-hook)
-		 (hook-push play-hook report-mark-names-play-hook)
+		 (hook-push stop-playing-hook (lambda (hook) (report-mark-names-stop-playing-hook (hook 'size))))
+		 (hook-push play-hook (lambda (hook) (report-mark-names-play-hook (hook 'snd))))
 		 #f))))
 
 
@@ -295,18 +295,22 @@
   "(snap-mark-to-beat) ensures that when a mark is dragged, its released position is always on a beat"
   (let ((mark-release 4))
     (hook-push mark-hook 
-	       (lambda (mrk snd chn reason)
-		 (if (= reason mark-release)
-		     (let* ((samp (mark-sample mrk))
-			    (bps (/ (beats-per-minute snd chn) 60.0))
-			    (sr (srate snd))
-			    (beat (floor (/ (* samp bps) sr)))
-			    (lower (floor (/ (* beat sr) bps)))
-			    (higher (floor (/ (* (+ 1 beat) sr) bps))))
-		       (set! (mark-sample mrk)
-			     (if (< (- samp lower) (- higher samp))
-				 lower
-				 higher))))))))
+	       (lambda (hook)
+		 (let ((mrk (hook 'id))
+		       (snd (hook 'snd))
+		       (chn (hook 'chn))
+		       (reason (hook 'reason)))
+		   (if (= reason mark-release)
+		       (let* ((samp (mark-sample mrk))
+			      (bps (/ (beats-per-minute snd chn) 60.0))
+			      (sr (srate snd))
+			      (beat (floor (/ (* samp bps) sr)))
+			      (lower (floor (/ (* beat sr) bps)))
+			      (higher (floor (/ (* (+ 1 beat) sr) bps))))
+			 (set! (mark-sample mrk)
+			       (if (< (- samp lower) (- higher samp))
+				   lower
+				   higher)))))))))
 
 ;;; -------- mark-explode
 ;;;
@@ -349,8 +353,9 @@
     (close-output-port fd))
 
   (hook-push after-save-state-hook 
-    (lambda (filename)
-      (let ((fd (open-appending filename)))
+    (lambda (hook)
+      (let* ((filename (hook 'name))
+	     (fd (open-appending filename)))
 	(format fd "~%~%;;; from remember-mark-properties in marks.scm~%")
 	(format fd "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%")
 	(for-each 
@@ -437,8 +442,8 @@
      (marks sndf))
     (string-append str (format #f "  m)~%"))))
 		   
-(hook-push output-comment-hook (lambda (str) (marks->string (selected-sound))))
-(hook-push after-open-hook (lambda (snd) (eval-header snd)))
+(hook-push output-comment-hook (lambda (hook) (marks->string (selected-sound))))
+(hook-push after-open-hook (lambda (hook) (eval-header (hook 'snd))))
 |#
 
 

@@ -340,18 +340,23 @@
     (fill-rectangle (- x (/ width 2)) (- y height) width height (car home) (cadr home))))
 
 (hook-push draw-mix-hook
-	   (lambda (id ox oy x y)
-	     (draw-mix-tag id ox oy x y)
-	     (draw-a-note (or (mix-property 'frequency id) 440.0)
-			  (/ (length id) (srate))
-			  x y
-			  (* 2 (mix-waveform-height))
-			  #f
-			  (eq? (mix-property 'instrument id) 'violin))
-	     #t))
+	   (lambda (hook)
+	     (let ((id (hook 'id))
+		   (ox (hook 'old-x))
+		   (oy (hook 'old-y))
+		   (x (hook 'x))
+		   (y (hook 'y)))
+	       (draw-mix-tag id ox oy x y)
+	       (draw-a-note (or (mix-property 'frequency id) 440.0)
+			    (/ (length id) (srate))
+			    x y
+			    (* 2 (mix-waveform-height))
+			    #f
+			    (eq? (mix-property 'instrument id) 'violin)))
+	     (set! (hook 'result) #t)))
 
 (hook-push after-graph-hook
-	   (lambda (s c)
+	   (lambda (hook)
 	     (let ((size (* 2 (mix-waveform-height))))
 	       (draw-staff 0 treble-tag-y (* 1.0 size) (* .25 size))
 	       (draw-staff 0 bass-tag-y (* 1.0 size) (* .25 size))
@@ -416,8 +421,11 @@
 (set! (show-mix-waveforms) #f)
 
 (hook-push draw-mix-hook
-	   (lambda (id ox oy x y)
-	     (let* ((xy (draw-a-note (or (mix-property 'frequency id) 440.0)
+	   (lambda (hook)
+	     (let* ((id (hook 'id))
+		    (x (hook 'x))
+		    (y (hook 'y))
+		    (xy (draw-a-note (or (mix-property 'frequency id) 440.0)
 				     (/ (length id) (srate))
 				     x y
 				     (* 2 (mix-waveform-height))
@@ -430,10 +438,10 @@
 		     (set! (mix-property 'original-frequency id) (mix-property 'frequency id))
 		     (set! (mix-property 'original-tag-y id) note-y)
 		     (set! (mix-property 'interval id) 0)))
-	       (list note-x note-y))))
+	       (set! (hook 'result) (list note-x note-y)))))
 
 (hook-push after-graph-hook
-	   (lambda (s c)
+	   (lambda (hook)
 	     (let ((size (* 2 (mix-waveform-height))))
 	       (draw-staff 0 treble-tag-y (* 1.0 size) (* .25 size))
 	       (draw-staff 0 bass-tag-y (* 1.0 size) (* .25 size))
@@ -441,8 +449,11 @@
 	       (draw-bass-clef (* size .075) (+ bass-tag-y (* size .26)) size))))
 
 (hook-push mix-drag-hook
-	   (lambda (n x y)
-	     (let ((orig-y (mix-property 'original-tag-y n)))
+	   (lambda (hook)
+	     (let* ((n (hook 'id))
+		    (x (hook 'x))
+		    (y (hook 'y))
+		    (orig-y (mix-property 'original-tag-y n)))
 	       (if orig-y
 		   (let ((interval (round (/ (* 12 (- (+ (mix-tag-height) orig-y) y))
 					     (* 2 (mix-waveform-height)))))
@@ -455,18 +466,20 @@
 								(expt 2.0 (/ interval 12.0)))))))))))
 	       
 (hook-push mix-release-hook
-	   (lambda (id samps)
-	     (as-one-edit
-	      (lambda ()
-		(set! (mix-position id) (+ samps (mix-position id)))
-		(let ((interval (mix-property 'interval id)))
-		  (if (not (= interval 0))
-		      (let ((last-interval (mix-property 'last-interval id)))
-			(if (or (not last-interval)
-				(not (= last-interval interval)))
-			    (set! (mix-speed id) (expt 2.0 (/ interval 12.0))))))
-		  (set! (mix-property 'last-interval id) interval))))
-	     #t))
+	   (lambda (hook)
+	     (let ((n (hook 'id))
+		   (samps (hook 'samples)))
+	       (as-one-edit
+		(lambda ()
+		  (set! (mix-position id) (+ samps (mix-position id)))
+		  (let ((interval (mix-property 'interval id)))
+		    (if (not (= interval 0))
+			(let ((last-interval (mix-property 'last-interval id)))
+			  (if (or (not last-interval)
+				  (not (= last-interval interval)))
+			      (set! (mix-speed id) (expt 2.0 (/ interval 12.0))))))
+		    (set! (mix-property 'last-interval id) interval))))
+	       (set! (hook 'result) #t))))
 
 (set! (mix-waveform-height) 20)
 

@@ -1129,7 +1129,7 @@ So I bound a few keys:
   (let ((old-tracking (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>)))
     (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) #t)
     (hook-push <a class=quiet href="extsnd.html#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
-	       (lambda (snd)
+	       (lambda (hook)
 		 (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
     (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>) 1)))))
 
@@ -7619,12 +7619,13 @@ move-mixes moves each mix in 'mix-list' by 'samps' samples.  To move all sync'd 
 
 <pre class="indented">
 (hook-push <a class=quiet href="extsnd.html#mixreleasehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixreleasehook_tip)">mix-release-hook</a>
-	   (lambda (id samps-moved)
-	     (let ((result (= (<a class=quiet href="extsnd.html#mixsync" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsync_tip)">mix-sync</a> id) 0)))
+	   (lambda (hook)
+	     (let* ((id (hook 'id))
+	            (samps-moved (hook 'samples))
+                    (result (= (<a class=quiet href="extsnd.html#mixsync" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsync_tip)">mix-sync</a> id) 0)))
 	       (if (not result)
 		   (<em class=red>move-mixes</em> (<a class=quiet href="#syncdmixes" onmouseout="UnTip()" onmouseover="Tip(sndscm_syncdmixes_tip)">syncd-mixes</a> (<a class=quiet href="extsnd.html#mixsync" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsync_tip)">mix-sync</a> id)) samps-moved))
-	       result))
-           #t) ; add this function to the end of the hook function list (this is a progn hook)
+	       (set! (hook 'result) result))))
 </pre>
 
 <p>See also <a href="#snapmixtobeat">snap-syncd-mixes-to-beat</a>. </p>
@@ -8796,7 +8797,7 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
   (set! (x-bounds) (list 0.0 0.2)))
 
 (hook-push mix-drag-hook ; report the current maxamp as we drag a component
-  (lambda (id x y) 
+  (lambda (hook)
     (let ((beg 0)
 	  (end (frames))
 	  (mx 0.0))

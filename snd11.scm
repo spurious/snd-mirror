@@ -395,8 +395,8 @@ but not anymore.
 	  #f)
 	
 	(set! including-reopen-menu #t)
-	(hook-push close-hook add-to-reopen-menu)
-	(hook-push open-hook check-reopen-menu))))
+	(hook-push close-hook (lambda (hook) (add-to-reopen-menu (hook 'snd))))
+	(hook-push open-hook (lambda (hook) (check-reopen-menu (hook 'name)))))))
 
 
 
@@ -676,76 +676,76 @@ Reverb-feedback sets the scaler on the feedback.
 			       (string=? (car n) (file-name snd)))
 			     states))))))
 
-    (define (remember-sound-at-close snd)
-      ;; save current state in list (name write-date (snd props) (chan props))
-      (set! (saved-state snd)
-	    (list (file-name snd)
-		  (file-write-date (file-name snd))
-		  (map (lambda (f) 
-			 (f snd)) 
-		       sound-funcs)
-		  (map (lambda (sc)
-			 (map (lambda (f)
-				(if (equal? f transform-type) 
-				    (transform->integer (f (car sc) (cadr sc))) 
-				    (f (car sc) (cadr sc))))
-			      channel-funcs))
-		       (let ((scs '()))
-			 (do ((i 0 (+ 1 i)))
-			     ((= i (channels snd)))
-			   (set! scs (cons (list snd i) scs)))
-			 (reverse scs)))))
-      #f)
+    (define (remember-sound-at-close hook)
+      (let ((snd (hook 'snd)))
+	;; save current state in list (name write-date (snd props) (chan props))
+	(set! (saved-state snd)
+	      (list (file-name snd)
+		    (file-write-date (file-name snd))
+		    (map (lambda (f) 
+			   (f snd)) 
+			 sound-funcs)
+		    (map (lambda (sc)
+			   (map (lambda (f)
+				  (if (equal? f transform-type) 
+				      (transform->integer (f (car sc) (cadr sc))) 
+				      (f (car sc) (cadr sc))))
+				channel-funcs))
+			 (let ((scs '()))
+			   (do ((i 0 (+ 1 i)))
+			       ((= i (channels snd)))
+			     (set! scs (cons (list snd i) scs)))
+			   (reverse scs)))))))
 
-    (define (remember-sound-at-open snd)
-      ;; restore previous state, if any
-      (let ((state (saved-state snd))) ; removes old state from current list
-	(if (and state
-		 (= (file-write-date (file-name snd)) (cadr state))
-		 (= (channels snd) (length (cadddr state)))
-		 (not (= choice 2)))
-	    ;; we need the chans check because auto-test files seem to have confused write dates
+    (define (remember-sound-at-open hook)
+      (let ((snd (hook 'snd)))
+	;; restore previous state, if any
+	(let ((state (saved-state snd))) ; removes old state from current list
+	  (if (and state
+		   (= (file-write-date (file-name snd)) (cadr state))
+		   (= (channels snd) (length (cadddr state)))
+		   (not (= choice 2)))
+	      ;; we need the chans check because auto-test files seem to have confused write dates
+	      (begin
+		(for-each (lambda (f val)
+			    (set! (f snd) val))
+			  sound-funcs
+			  (caddr state))
+		(do ((chn 0 (+ 1 chn)))
+		    ((= chn (channels snd)))
+		  (dynamic-wind
+		      (lambda () (set! (squelch-update snd chn) #t))
+		      (lambda ()
+			(for-each (lambda (f val)
+				    (if (and (list? val)
+					     (not (null? val))
+					     (eq? (car val) 'lambda))
+					(set! (f snd chn) (eval val (current-environment)))
+					(if (equal? f transform-type) 
+					    (set! (f snd chn) (integer->transform val)) 
+					    (set! (f snd chn) val))))
+				  channel-funcs
+				  (list-ref (cadddr state) chn)))
+		      (lambda () (set! (squelch-update snd chn) #f)))
+		  (if (time-graph? snd chn) (update-time-graph snd chn))
+		  (if (transform-graph? snd chn) (update-transform-graph snd chn))))))))
+
+    (define (remember-sound-at-start hook)
+      (let ((filename (hook 'name)))
+	(if (and (null? states)
+		 (file-exists? remember-sound-filename))
 	    (begin
-	      (for-each (lambda (f val)
-			  (set! (f snd) val))
-			sound-funcs
-			(caddr state))
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn (channels snd)))
-		(dynamic-wind
-		    (lambda () (set! (squelch-update snd chn) #t))
-		    (lambda ()
-		      (for-each (lambda (f val)
-				  (if (and (list? val)
-					   (not (null? val))
-					   (eq? (car val) 'lambda))
-				      (set! (f snd chn) (eval val (current-environment)))
-				      (if (equal? f transform-type) 
-					  (set! (f snd chn) (integer->transform val)) 
-					  (set! (f snd chn) val))))
-				channel-funcs
-				(list-ref (cadddr state) chn)))
-		    (lambda () (set! (squelch-update snd chn) #f)))
-		(if (time-graph? snd chn) (update-time-graph snd chn))
-		(if (transform-graph? snd chn) (update-transform-graph snd chn)))))))
+	      (load remember-sound-filename)
+	      (set! states -saved-remember-sound-states-states-)))))
 
-    (define (remember-sound-at-start filename)
-      (if (and (null? states)
-	       (file-exists? remember-sound-filename))
-	  (begin
-	    (load remember-sound-filename)
-	    (set! states -saved-remember-sound-states-states-)))
-      #f)
-
-    (define (remember-sound-at-exit)
+    (define (remember-sound-at-exit hook)
       (if (not (null? states))
 	  (call-with-output-file remember-sound-filename
 	    (lambda (fd)
 	      (format fd "~%~%;;; from remember-sound-state in extensions.scm~%")
 	      (format fd "(define -saved-remember-sound-states-states-~%  '")
 	      (print-readably fd states 0 #t)
-	      (format fd ")~%"))))
-      #f)
+	      (format fd ")~%")))))
       
     (if (or (= choice 0)  ; no remembering
 	    (= choice 1)) ; just within-run remembering

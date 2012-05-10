@@ -1437,10 +1437,14 @@ static void show_sync_button(snd_info *sp)
 }
 
 
-static XEN reflect_file_close_in_sync(XEN xreason)
+static XEN reflect_file_close_in_sync(XEN hook_or_reason)
 {
   int reason;
-  reason = XEN_TO_C_INT(xreason);
+#if HAVE_SCHEME
+  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
+#else
+  reason = XEN_TO_C_INT(hook_or_reason);
+#endif
   if ((reason == FILE_CLOSED) && /* snd-file.c */
       (ss->active_sounds == 1))
     {

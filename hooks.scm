@@ -47,23 +47,12 @@
 
 ;;; -------- local hook
 
-(define (list->hook hook lst)
-  "(list->hook hook lst) resets 'hook', then adds each function in 'lst' to it"
-  (define (list->hook-1 hook l)
-    (if (not (null? l))
-	(begin
-	  (hook-push hook (car l))
-	  (list->hook-1 hook (cdr l)))))
-  (set! (hook-functions hook) '())
-  (list->hook-1 hook lst)
-  hook)
-
 (define (with-local-hook hook local-hook-procs thunk)
   "(with-local-hook hook local-hook-procs thunk) evaluates thunk with hook set to local-hook-procs (a list), then restores hook to its previous state"
   (let ((old-hook-procs (hook-functions hook)))
-    (list->hook hook local-hook-procs)
+    (set! (hook-functions hook) local-hook-procs)
     (let ((result (thunk)))
-      (list->hook hook old-hook-procs)
+      (set! (hook-functions hook) old-hook-procs)
       result)))
 
 

@@ -3773,7 +3773,7 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
    *    :(defined? 'abs (initial-environment))
    *    #t
    * this is because initial-environment sets up a local environment of unshadowed symbols,
-   *   and environment_ref below only looks at the local env chain (that is, if env is not
+   *   and s7_environment_ref below only looks at the local env chain (that is, if env is not
    *   the global env, then the global env is not searched).
    */
   int i;
@@ -3994,7 +3994,7 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
+s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   /* (let ((a 1)) ((current-environment) 'a)) 
    * ((global-environment) 'abs) 
@@ -4018,7 +4018,7 @@ static s7_pointer environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symb
 }
 
 
-static s7_pointer environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
+s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
   s7_pointer x, y;
 
@@ -4053,7 +4053,7 @@ static s7_pointer g_environment_set(s7_scheme *sc, s7_pointer args)
   if (!is_symbol(sym))
     return(s7_wrong_type_arg_error(sc, "environment set!", 2, sym, "a symbol"));
 
-  return(environment_set(sc, car(args), sym, caddr(args)));
+  return(s7_environment_set(sc, car(args), sym, caddr(args)));
 }
 
 
@@ -25054,7 +25054,7 @@ s7_pointer s7_hook_functions(s7_scheme *sc, s7_pointer hook)
 s7_pointer s7_hook_set_functions(s7_scheme *sc, s7_pointer hook, s7_pointer functions)
 {
   if (s7_is_list(sc, functions))
-    environment_set(sc, closure_environment(hook), sc->BODY, functions);
+    s7_environment_set(sc, closure_environment(hook), sc->BODY, functions);
   return(functions);
 }
 
@@ -37463,7 +37463,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
     case T_ENVIRONMENT:
       if (is_symbol(car(indices)))
-	return(environment_ref(sc, obj, car(indices)));
+	return(s7_environment_ref(sc, obj, car(indices)));
       return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
 
     default:                             /* (#(a b c) 0 1) -> error, but ((list (lambda (x) x)) 0 "hi") -> "hi" */
@@ -41285,7 +41285,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (!is_environment(s))
 		      break;
 
-		    sc->value = environment_ref(sc, s, find_symbol_or_bust(sc, cadr(code)));
+		    sc->value = s7_environment_ref(sc, s, find_symbol_or_bust(sc, cadr(code)));
 		    goto START;
 		  }
 		  
@@ -44466,7 +44466,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_null(cdr(sc->args)))
 	    {
 	      if (is_symbol(car(sc->args)))
-		sc->value = environment_ref(sc, sc->code, car(sc->args));
+		sc->value = s7_environment_ref(sc, sc->code, car(sc->args));
 	      else return(s7_wrong_type_arg_error(sc, "environment application", 1, car(sc->args), "a symbol"));
 	    }
 	  else return(s7_wrong_number_of_args_error(sc, "environment as applicable object takes one argument: ~A", sc->args));
@@ -44772,7 +44772,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    case T_ENVIRONMENT:
 	      /* (set! (env sym) val) */
-	      sc->value = environment_set(sc, obj, arg, value);
+	      sc->value = s7_environment_set(sc, obj, arg, value);
 	      break;
 
 	    case T_C_OPT_ARGS_FUNCTION:
@@ -54739,16 +54739,17 @@ s7_scheme *s7_init(void)
 
   /* ---------------- hooks ---------------- */
 
-  s7_eval_c_string(sc, "(define (make-hook . args)                                                           \n\
-                          (let ((init ())                                                                    \n\
-	                        (body ())                                                                    \n\
-	                        (end ()))                                                                    \n\
-                            (apply lambda* args                                                              \n\
-                              '(let ((result #<unspecified>))                                                \n\
-                                 (dynamic-wind                                                               \n\
-	                           (lambda () (for-each (lambda (f) (f (current-environment))) init))        \n\
-	                           (lambda () (for-each (lambda (f) (f (current-environment))) body) result) \n\
-	                           (lambda () (for-each (lambda (f) (f (current-environment))) end))))       \n\
+  s7_eval_c_string(sc, "(define (make-hook . args)                                         \n\
+                          (let ((init ())                                                  \n\
+	                        (body ())                                                  \n\
+	                        (end ()))                                                  \n\
+                            (apply lambda* args                                            \n\
+                              '(let ((result #<unspecified>)) ; (format *stderr* \"args: ~S~%\" args)                            \n\
+                                 (let ((e (current-environment)))                          \n\
+                                   (dynamic-wind                                           \n\
+	                             (lambda () (for-each (lambda (f) (f e)) init))        \n\
+	                             (lambda () (for-each (lambda (f) (f e)) body) result) \n\
+	                             (lambda () (for-each (lambda (f) (f e)) end)))))      \n\
                               ())))");
 
   s7_eval_c_string(sc, "(define hook-functions (make-procedure-with-setter                                   \n\
@@ -54778,18 +54779,24 @@ s7_scheme *s7_init(void)
                                lst))))))");
 
   /* TODO: documentation strings, add-to-hook? clear-hook?
-   * TODO: XEN_HOOK_PROCEDURES anywhere it's not covered
    * TODO: all html examples [these all need to keep track of and/or/concat cases, and progn][and match examps/arg names]
    * TODO: all current cases (push-hook?, (set! (hook-functions...)) in ws/snd-test/play/hooks/etc)
-   * TODO: the special unbound tests, also init/end lists, jumps from body, rercursive and nested calls, use hook env to pass own info
-   *         augment-env! on (current-env) should be ok because it is renewed on each call
-   * TODO: catch-case, file-local-var [transparent-lambda?] [transparent-wind?]
+   * TODO: the special unbound tests, also init/end lists, jumps from body, recursive and nested calls
+   * TODO: catch-case [transparent-lambda?] [transparent-wind?]
    *        does transparent-lambda give dynamic vars?  how about lambda+env (env 'var)?
-   *    load file local var: (load file (augment-environment (current-environment) (cons 'local-var 1234)))
-   *        but this puts the loaded names into that temp env
+   *
+   * file local var could be a macro expanding to
+   *   (if (not (defined? 'local-var)) (define local-var new-value))
+   *   (set-car! (symbol-access 'local-var) local-var) ; or push so we can load other files in this one
+   *   (set! local-var new-value) 
+   *   ....
+   *   (set! local-var (car (symbol-access 'local-var))) ; or pop
+   * 
    * TODO: looping-catch, reraise error + error expls in s7.html
-   * hook as method? -> before/after/around methods, *format-hook*?
-   * TODO: export s7_list varargs, also maybe vector string etc
+   * hook as method? -> before/after/around methods, *format-hook*?  or-for-each  has? (i.e. like in -- recursive macro) ->
+   *     (any? f ...) where we don't eval ... until needed, or every? quit if #f: 
+   *     (define-bacro (every? f . args) (or (null? args) (and (apply f (car args)) (apply every? f (cdr args)))))
+   * TODO: export s7_list varargs, also maybe vector string etc [does every C have varargs now?]
    */
   
   /* -------- *load-hook* -------- */

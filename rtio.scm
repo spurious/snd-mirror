@@ -122,12 +122,12 @@
 	(mouse-pos 0.0)
 	( x1 1.0))
 
-    (define (mouse-press chn snd button state x y)
-      (set! mouse-pos (/ x x1))
+    (define (mouse-press hook)
+      (set! mouse-pos (/ (hook 'x) x1))
       (set! mouse-down x1))
 
-    (define (mouse-drag snd chn button state x y)
-      (let* ((xnew (/ x x1))
+    (define (mouse-drag hook)
+      (let* ((xnew (/ (hook 'x) x1))
 	     (lim (min 1.0 (max 0.1 (+ mouse-down (- mouse-pos xnew))))))
 	(set! x1 lim)))
 

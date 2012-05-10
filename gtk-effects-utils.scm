@@ -76,11 +76,11 @@
 	(begin
 	  (gtk_widget_set_sensitive ok-button (target-ok-callback))
 	  (hook-push effects-hook
-		     (lambda () (gtk_widget_set_sensitive ok-button (target-ok-callback)))))
+		     (lambda (hook) (gtk_widget_set_sensitive ok-button (target-ok-callback)))))
 	(begin
 	  (gtk_widget_set_sensitive ok-button (not (null? (sounds))))
 	  (hook-push effects-hook
-		     (lambda () (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))))
+		     (lambda (hook) (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))))
 
     (g_object_set_data (G_OBJECT new-dialog) "ok-button" (GPOINTER ok-button))
     new-dialog))

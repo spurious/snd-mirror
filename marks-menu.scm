@@ -137,7 +137,7 @@
 
 		    (if (provided? 'snd-motif)
 			(begin
-			  (hook-push select-channel-hook (lambda (snd chn)
+			  (hook-push select-channel-hook (lambda (hook)
 							   (let ((max-ms (max-mark))
 								 (min-ms (min-mark))
 								 (current-ms (find-two-marks)))
@@ -152,10 +152,10 @@
 											 XmNvalue (car current-ms)))
 								    (set! current-ms (cdr current-ms)))
 								  sliders)))))
-			  (hook-push mark-hook (lambda (id snd chn reason)
-						 (if (and (= snd (selected-sound))
-							  (= chn (selected-channel))
-							  (= reason 0)) ; add-mark
+			  (hook-push mark-hook (lambda (hook)
+						 (if (and (= (hook 'snd) (selected-sound))
+							  (= (hook 'chn) (selected-channel))
+							  (= (hook 'reason) 0)) ; add-mark
 						     (for-each
 						      (lambda (slider)
 							(XtVaSetValues slider (list XmNmaximum (max-mark))))
@@ -592,12 +592,12 @@ using the granulate generator to fix up the selection duration (this still is no
   "(stop-sync) stops mark-syncing (marks-menu)"
   (set! mark-sync-number 0))
 
-(define (click-to-sync id) 
+(define (click-to-sync id)
   "(click-to-sync id) sets a mark's sync field when it is clicked (marks-menu)"
   (set! (sync id) mark-sync-number)
   #f)
 
-(hook-push mark-click-hook click-to-sync)
+(hook-push mark-click-hook (lambda (hook) (click-to-sync (hook 'id))))
 
 
 (define m-sync #f)

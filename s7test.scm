@@ -8422,6 +8422,29 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (test (h 32) 64)
       (test endx 128)))
 
+  (let ((h (make-hook)))
+    (set! (hook-init-functions h) (list (lambda (hook) (augment-environment! hook (cons 'a-new-var 123)))))
+    (set! (hook-body-functions h) (list (lambda (hook) (set! (hook 'result) (hook 'a-new-var)))))
+    (test (h) 123)
+    (set! (hook-init-functions h) ())
+    (set! (hook-body-functions h) (list (lambda (hook) (set! (hook 'result) (hook 'a-new-var)))))
+    (test (h) #<undefined>))
+
+  (let ((h (make-hook)))
+    (set! (hook-init-functions h) (list (lambda (hook) (augment-environment! (outer-environment (outer-environment hook)) (cons 'a-new-var 123)))))
+    ;; tricky user could add a variable to every hook!
+    (set! (hook-body-functions h) (list (lambda (hook) (set! (hook 'result) (hook 'a-new-var)))))
+    (test (h) 123)
+    (set! (hook-init-functions h) ())
+    (set! (hook-body-functions h) (list (lambda (hook) (set! (hook 'result) (hook 'a-new-var)))))
+    (test (h) 123))
+
+  (let ((h (make-hook)))
+    (test (defined? 'a-new-var (procedure-environment h)) #f))
+
+  (test (defined? 'a-new-var) #f)
+
+
 
   )
 
@@ -57346,6 +57369,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (expt 0 -255) 'error)
 (test (expt 0 most-negative-fixnum) 'error)
 (test (expt 0.0 most-negative-fixnum) 'error)
+
+;;; amol sasane MAA Monthly
+(num-test (expt (sqrt 2) (log 3 2)) (sqrt 3))
+(num-test (expt (expt 2 (sqrt 2)) 1/2) (expt (sqrt 2) (sqrt 2)))
+(num-test (expt (sqrt 2) (* 2 (log 3 2))) 3)
+(num-test (expt (sqrt 2) (+ (sqrt 2) 1)) (* (sqrt 2) (expt (sqrt 2) (sqrt 2))))
+(num-test (expt (expt (sqrt 2) (sqrt 2)) (sqrt 2)) 2)
 
 (if (not with-bignums)
     (begin

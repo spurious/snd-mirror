@@ -335,7 +335,7 @@ static void region_play_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static XEN reflect_file_in_region_browser(XEN reason)
+static XEN reflect_file_in_region_browser(XEN hook_or_reason)
 {
   if (region_dialog)
     {

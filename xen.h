@@ -1427,7 +1427,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_HOOKED(Hook)                                              s7_is_pair(s7_hook_functions(s7, Hook))
 #define XEN_CLEAR_HOOK(Hook)                                          s7_hook_set_functions(s7, Hook, s7_nil(s7))
 #define XEN_HOOK_PROCEDURES(Hook)                                     s7_hook_functions(s7, Hook)
-#define XEN_ADD_HOOK(Hook, Func, Name, Doc)                           s7_hook_set_functions(s7, Hook, s7_cons(s7, s7_make_function(s7, Name, Func, 0, 0, true, Doc), s7_hook_functions(s7, Hook)))
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc)                           s7_hook_set_functions(s7, Hook, s7_cons(s7, s7_make_function(s7, Name, Func, 1, 0, false, Doc), s7_hook_functions(s7, Hook)))
 
 #ifdef __cplusplus
 extern "C" {

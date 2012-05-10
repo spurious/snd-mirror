@@ -373,37 +373,38 @@
 ;;; (zync) to start and (unzync) to stop
 
 
-(define (add-dragger snd)
+(define (add-dragger hook)
+  (let ((snd (hook 'snd)))
 
-  (define (dragger-callback adj context)
-    (let ((val (- 1.0 (gtk_adjustment_get_value (GTK_ADJUSTMENT adj))))
-	  (snd (car context))
-	  (chn (cadr context)))
-      (if (sound-property 'dragger snd)
-	  (begin
-	    (do ((i 0 (+ 1 i)))
-		((= i (channels snd)))
-	      (if (not (= i chn))
-		  (begin
-		    (set! (y-zoom-slider snd i) (* val val))
-		    (set! (y-position-slider snd i) (y-position-slider snd chn)))))
-	    (g_signal_stop_emission (GPOINTER adj)
-				    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (G_OBJECT adj)))
-				    0)))))
-      
-  (set! (sound-property 'dragger snd) #t)
-  (set! (sound-property 'save-state-ignore snd)
-	(cons 'dragger
-	      (or (sound-property 'save-state-ignore snd)
-		  (list 'save-state-ignore))))
-  (do ((chn 0 (+ 1 chn)))
-      ((= chn (channels snd)))
-    (let ((zy ((channel-widgets snd chn) 14)))
-      (g_signal_connect_closure_by_id (GPOINTER zy)
-				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (G_OBJECT zy)))
-				      0
-				      (g_cclosure_new dragger-callback (list snd chn) (list 'GClosureNotify 0))
-				      #f))))
+    (define (dragger-callback adj context)
+      (let ((val (- 1.0 (gtk_adjustment_get_value (GTK_ADJUSTMENT adj))))
+	    (snd (car context))
+	    (chn (cadr context)))
+	(if (sound-property 'dragger snd)
+	    (begin
+	      (do ((i 0 (+ 1 i)))
+		  ((= i (channels snd)))
+		(if (not (= i chn))
+		    (begin
+		      (set! (y-zoom-slider snd i) (* val val))
+		      (set! (y-position-slider snd i) (y-position-slider snd chn)))))
+	      (g_signal_stop_emission (GPOINTER adj)
+				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (G_OBJECT adj)))
+				      0)))))
+    
+    (set! (sound-property 'dragger snd) #t)
+    (set! (sound-property 'save-state-ignore snd)
+	  (cons 'dragger
+		(or (sound-property 'save-state-ignore snd)
+		    (list 'save-state-ignore))))
+    (do ((chn 0 (+ 1 chn)))
+	((= chn (channels snd)))
+      (let ((zy ((channel-widgets snd chn) 14)))
+	(g_signal_connect_closure_by_id (GPOINTER zy)
+					(g_signal_lookup "value_changed" (G_OBJECT_TYPE (G_OBJECT zy)))
+					0
+					(g_cclosure_new dragger-callback (list snd chn) (list 'GClosureNotify 0))
+					#f)))))
 
 (define (zync)
   "(zync) ties each sound's y-zoom sliders together so that all change in paralle if one changes"
@@ -770,8 +771,9 @@
 	((= i n))
       (set! meter-list (cons (make-level-meter meters width height) meter-list)))
     (hook-push dac-hook 
-	       (lambda (sdobj)
-		 (let ((maxes (sound-data-maxamp sdobj)))
+	       (lambda (hook)
+		 (let* ((sdobj (hook 'data))
+			(maxes (sound-data-maxamp sdobj)))
 		   (for-each
 		    (lambda (meter)
 		      (if (null? maxes)
@@ -782,7 +784,7 @@
 			    (set! maxes (cdr maxes)))))
 		    (reverse meter-list)))))
     (hook-push stop-dac-hook
-	       (lambda () ; drain away the bubble
+	       (lambda (hook) ; drain away the bubble
 		 (g_idle_add 
 		  (let ((ctr 0))
 		    (lambda (ignored)
