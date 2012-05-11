@@ -4298,6 +4298,46 @@ map-with-exit would be
     result))
 </pre>
 </div>
+
+<div class="indented">
+<p>With all the lambda boilerplate, nested catches are hard to read:
+</p>
+<pre class="indented">
+(catch #t
+  (lambda ()
+    (catch 'division-by-zero
+      (lambda ()
+	(catch 'wrong-type-arg
+	  (lambda () 
+	    (abs -1))
+	  (lambda args (format #t "got a bad arg~%") -1)))
+      (lambda args 0)))
+  (lambda args 123))
+</pre>
+
+<p>Perhaps we need a macro:
+</p>
+
+<pre class="indented">
+(define-macro (catch-case clauses . body)
+  (let ((base `(lambda () ,@body)))
+    (map (lambda (clause)
+	   (let ((tag (car clause)))
+	     (set! base `(lambda () 
+			   (catch ',(if (eq? tag 'else) #t tag)
+			     ,base 
+			     (lambda args ,@(cdr clause)))))))
+	 clauses)
+    (caddr base)))
+
+;;; the code above becomes:
+(catch-case ((wrong-type-arg (format #t "got a bad arg~%") -1)
+	     (division-by-zero 0)
+	     (else 123))
+  (abs -1))
+</pre>
+</div>
+
 </blockquote>
 
 <p>When an error is encountered, and when s7 is interrupted via begin-hook, 

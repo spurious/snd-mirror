@@ -199,7 +199,7 @@ void add_drop(GtkWidget *w,
 
 void g_init_gxdrop(void)
 {
-  #define H_drop_hook S_drop_hook " (filename): called whenever Snd receives a drag-and-drop \
+  #define H_drop_hook S_drop_hook " (name): called whenever Snd receives a drag-and-drop \
 event. If it returns " PROC_TRUE ", the file is not opened by Snd."
 
   drop_hook = XEN_DEFINE_HOOK(S_drop_hook, "(make-hook 'name)", 1, H_drop_hook); 

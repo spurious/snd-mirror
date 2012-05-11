@@ -440,6 +440,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->xen_error_data = NULL;
   ss->xen_error_handler = NULL;
   ss->update_sound_channel_style = NOT_A_CHANNEL_STYLE;
+  ss->squelch_mark_drag_info = false;
 
 #if HAVE_GL && WITH_GL2PS
   ss->gl_printing = false;

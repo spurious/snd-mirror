@@ -30674,7 +30674,7 @@ EDITS: 2
       (hook-push during-open-hook 
 		 (lambda (hook)
 		   (let ((fd (hook 'fd))
-			 (filename (hook 'filename))
+			 (filename (hook 'name))
 			 (reason (hook 'reason)))
 		     (set! dop #t)
 		     (if (fneq (mus-file-prescaler fd) 1.0)
@@ -31342,7 +31342,6 @@ EDITS: 2
 		 (lambda (hook)
 		   (let ((index (hook 'snd))
 			 (filename (hook 'name))
-			 (selection (hook 'selection))
 			 (sr (hook 'srate))
 			 (type (hook 'type))
 			 (format (hook 'format))
@@ -31358,8 +31357,7 @@ EDITS: 2
 			       ((= i chns))
 			     (undo 1 index i))
 			   (set! hook-called #t)
-			   (set! (hook 'result) #t))
-		       (set! (hook 'result) #f)))))
+			   (set! (hook 'result) #t))))))
       (let ((ind (open-sound "2.snd")))
 	(save-sound-as "test.snd" :srate 44100)
 	(if (not (= (edit-position ind 0) 0)) (snd-display #__line__ ";before-save-as-hook undo: ~A" (edit-position ind 0)))
@@ -31384,8 +31382,7 @@ EDITS: 2
 		     (if (not (= sr (srate index)))
 			 (begin
 			   (src-sound (exact->inexact (/ (srate index) sr)) 1.0 index)
-			   (set! need-save-as-undo #t)))
-		     (set! (hook 'result) #f))))
+			   (set! need-save-as-undo #t))))))
       (hook-push after-save-as-hook
 		 (lambda (hook)
 		   (if need-save-as-undo (undo))))

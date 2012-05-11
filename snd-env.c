@@ -1829,7 +1829,7 @@ void g_init_env(void)
   XEN_DEFINE_CONSTANT(S_enved_move_point,     ENVED_MOVE_POINT,     S_enved_hook " 'reason' arg when point is moved");
 
 #if HAVE_SCHEME
-  #define H_enved_hook S_enved_hook " (env pt new-x new-y reason): \
+  #define H_enved_hook S_enved_hook " (env point x y reason): \
 called each time a breakpoint is changed in the envelope editor; \
 if it returns a list, that list defines the new envelope, \
 otherwise the breakpoint is moved (but not beyond the neighboring \
@@ -1839,13 +1839,14 @@ or " S_enved_add_point ".  This hook makes it possible to define attack \
 and decay portions in the envelope editor, or use functions such as \
 stretch-envelope from env.scm: \n\
  (hook-push " S_enved_hook "\n\
-   (lambda (env pt x y reason)\n\
-     (if (= reason " S_enved_move_point ")\n\
-         (let* ((old-x (list-ref env (* pt 2)))\n\
-                (new-env (stretch-envelope env old-x x)))\n\
-           (list-set! new-env (+ (* pt 2) 1) y)\n\
-           new-env)\n\
-         #f)))"
+   (lambda (hook) \n\
+     ((lambda (env pt x y reason)\n\
+        (if (= reason " S_enved_move_point ")\n\
+            (let* ((old-x (list-ref env (* pt 2)))\n\
+                   (new-env (stretch-envelope env old-x x)))\n\
+              (list-set! new-env (+ (* pt 2) 1) y)\n\
+              (set! (hook 'result) new-env))))) \n\
+      (hook 'env) (hook 'point) (hook 'x) (hook 'y) (hook 'reason))))"
 #endif
 #if HAVE_RUBY
   #define H_enved_hook S_enved_hook " (env pt new-x new-y reason): \

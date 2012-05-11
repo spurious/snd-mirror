@@ -359,9 +359,9 @@ void snd_doit(int argc, char **argv)
   XEN_DEFINE_VARIABLE("phases-colormap",          colormap_temp[15], C_TO_XEN_INT(15));
 
 #if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(define " S_color_hook " (make-hook 0))");
-  XEN_EVAL_C_STRING("(define " S_drop_hook " (make-hook 1))");
-  XEN_EVAL_C_STRING("(define " S_listener_click_hook " (make-hook 1)) ");
+  XEN_EVAL_C_STRING("(define " S_color_hook " (make-hook))");
+  XEN_EVAL_C_STRING("(define " S_drop_hook " (make-hook 'name))");
+  XEN_EVAL_C_STRING("(define " S_listener_click_hook " (make-hook 'position)) ");
   XEN_EVAL_C_STRING("(define " S_mouse_enter_graph_hook " (make-hook 2))");
   XEN_EVAL_C_STRING("(define " S_mouse_enter_label_hook " (make-hook 3))");
   XEN_EVAL_C_STRING("(define " S_mouse_enter_listener_hook " (make-hook 1))");

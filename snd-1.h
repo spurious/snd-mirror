@@ -519,7 +519,7 @@ typedef struct snd_state {
   bool jump_ok, exiting;
   env_editor *enved;
   oclock_t click_time;
-  bool file_monitor_ok, C_g_typed;
+  bool file_monitor_ok, C_g_typed, squelch_mark_drag_info;
   void (*snd_error_handler)(const char *error_msg, void *data);
   void *snd_error_data;
   void (*snd_warning_handler)(const char *warning_msg, void *data);

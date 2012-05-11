@@ -3959,8 +3959,8 @@ void g_init_help(void)
   XEN_DEFINE_PROCEDURE(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
   XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
 
-  #define H_help_hook S_help_hook "(subject help-string): called from " S_snd_help ".  If \
-it returns a string, it replaces 'help-string' (the default help)"
+  #define H_help_hook S_help_hook "(subject message): called from " S_snd_help ".  If \
+it returns a string, it replaces 'message' (the default help)"
 
   help_hook = XEN_DEFINE_HOOK(S_help_hook, "(make-hook 'subject 'message)", 2, H_help_hook);
 

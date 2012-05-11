@@ -1835,7 +1835,8 @@ static int fill_dac_buffers(int write_ok)
     }
   /* now parcel these buffers out to the available devices */
 
-  if ((snd_dacp) && (XEN_HOOKED(dac_hook)))
+  if ((snd_dacp) && 
+      (XEN_HOOKED(dac_hook)))
     {
       if (XEN_FALSE_P(sdobj))
 	{
@@ -3456,10 +3457,10 @@ void g_init_dac(void)
 				   S_setB S_cursor_location_offset, g_set_cursor_location_offset_w,  0, 0, 1, 0);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd): called when a sound finishes playing."
-  #define H_play_hook S_play_hook " (samps): called each time a buffer is sent to the DAC."
+  #define H_play_hook S_play_hook " (size): called each time a buffer is sent to the DAC."
   #define H_start_playing_hook S_start_playing_hook " (snd): called when a play request is triggered. \
 If it returns " PROC_TRUE ", the sound is not played."
-  #define H_dac_hook S_dac_hook " (sdobj): called just before data is sent to DAC passing data as sound-data object"
+  #define H_dac_hook S_dac_hook " (data): called just before data is sent to DAC passing data as sound-data object"
   #define H_stop_dac_hook S_stop_dac_hook " (): called upon mus_audio_close (when DAC is turned off)"
   #define H_stop_playing_selection_hook S_stop_playing_selection_hook " (): called when the selection stops playing"
   #define H_start_playing_selection_hook S_start_playing_selection_hook " (): called when the selection starts playing"

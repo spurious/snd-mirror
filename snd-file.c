@@ -2237,7 +2237,7 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
 					 (comment) ? C_TO_XEN_STRING(comment) : XEN_FALSE),
 			      S_before_save_as_hook);
       before_save_as_hook_active = false;
-      return(!(XEN_FALSE_P(result)));
+      return(XEN_TRUE_P(result));
     }
   return(false);
 }

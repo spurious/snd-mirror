@@ -415,8 +415,10 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
   int nx;
   mus_long_t samps;
   bool redraw;
+
   ap = cp->axis;
   redraw = (!watching_mouse);
+
   if ((x > ap->x_axis_x1) || (x < ap->x_axis_x0)) 
     {
       if (watching_mouse)
@@ -438,14 +440,18 @@ static bool move_mark_1(chan_info *cp, mark *mp, int x)
 	  redraw = false;
 	}
     }
+
   mp->samp = (mus_long_t)(ungrf_x(ap, nx) * SND_SRATE(cp->sound));
   if (mp->samp < 0) mp->samp = 0;
+
   samps = CURRENT_SAMPLES(cp);
   if (mp->samp > samps) mp->samp = samps;
+
   if (XEN_HOOKED(mark_drag_hook))
-    run_hook(mark_drag_hook,
-	     XEN_LIST_1(new_xen_mark(mp->id)),
-	     S_mark_drag_hook);
+    ss->squelch_mark_drag_info = XEN_TRUE_P(run_progn_hook(mark_drag_hook,
+							   XEN_LIST_1(new_xen_mark(mp->id)),
+							   S_mark_drag_hook));
+  else ss->squelch_mark_drag_info = false;
   return(redraw);
 }
 
@@ -2959,7 +2965,7 @@ void g_init_marks(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_property, g_mark_property_w, H_mark_property, 
 				   S_setB S_mark_property, g_set_mark_property_w, 2, 0, 3, 0);
 
-  #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
+  #define H_draw_mark_hook S_draw_mark_hook " (id): called before a mark is drawn. \
 If the hook returns " PROC_TRUE ", the mark is not drawn."
 
   draw_mark_hook = XEN_DEFINE_HOOK(S_draw_mark_hook, "(make-hook 'id)", 1, H_draw_mark_hook);

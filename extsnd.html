@@ -1821,18 +1821,18 @@ is <code>(hook 'snd)</code> in Scheme.
 
 <p>In Ruby and Forth, but not in Scheme,
 if there is more than one function attached to a hook, some of the hooks
-"or" the functions together (marked <b>[or]</b> below); that is they
+"or" the functions together; that is they
 run through the list of functions, and if any function returns something other than #f, the
 hook invocation eventually returns the last such non-#f value.  A few hooks are "cascade"
 hooks; that is, each function gets the result of the previous function, and
 the final function's value is returned.
-In the other
-cases ("progn", the name coming from Common Lisp), the result returned by the hook is the result of the last function in the list.
+In other
+cases the result returned by the hook is the result of the last function in the list.
 Whatever the hook combination choice, all the functions on the hook list are run
 on each invocation.  
 </p>
 
-<p>In Scheme, all functions are run, and any returned values ignored.  It is
+<p>In Scheme, all functions are run, each takes one argument, the hook environment, and any return values are ignored.  It is
 up to the individual functions to track <code>(hook 'result)</code> if intermediate results matter.
 </p>
 
@@ -2077,8 +2077,6 @@ If the hook returns #t, Snd does not try to open the file.
 <div class="spacer"></div>
 
 
-<!-- STOPPED HERE -->
-
 <!-- before-close-hook -->
 <pre class="indented">
 <em class=def id="beforeclosehook">before-close-hook</em> (snd) 
@@ -2095,60 +2093,61 @@ If the hook returns #t, Snd does not try to open the file.
 </pre>
 
 <p>This hook is called upon a request to exit Snd.
-If a hook function returns #t, Snd does not exit. 
+If the hook returns #t, Snd does not exit. 
 </p>
 <div class="spacer"></div>
 
 
 <!-- before-save-as-hook -->
 <pre class="indented">
-<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection srate header-type data-format comment)
+<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection srate type format comment)
 </pre>
 
 <p>This hook is called before <a href="#savesoundas">save-sound-as</a> or File:Save as.  
-If a hook function returns something other than #f, the
+If the hook returns #t, the
 save is not performed.  This hook provides a way to do last minute fixups (srate conversion for example)
 just before a sound is saved.  The arguments to the hook function describe the requested attributes of the saved sound;
-'index' is the to-be-saved sound's index; 'filename' is the output file's name; 'selection' is #t if
+'snd' is the to-be-saved sound's index; 'name' is the output file's name; 'selection' is #t if
 we're saving the selection.
 </p>
 
 <pre class="indented">
 (hook-push <em class=red>before-save-as-hook</em>
-  (lambda (index filename selection sr type format comment)
-    (if (not (= sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index)))
-        (let ((chns (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> index)))
-	  (do ((i 0 (+ 1 i)))
-	      ((= i chns))
-	    (<a class=quiet href="#srcchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_srcchannel_tip)">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index) sr)) 0 #f index i))
-	  (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> filename index :header-type type :data-format format :srate sr :comment comment) 
-	  ;; hook won't be invoked recursively
-	  (do ((i 0 (+ 1 i)))
-	      ((= i chns))
-	    (<a class=quiet href="#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> 1 index i))
-	  #t) ; tell Snd that the sound is already saved
-	#f)))
+  (lambda (hook)	   
+    ((lambda (index filename sr type format comment)
+      (if (not (= sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index)))
+          (let ((chns (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> index)))
+	    (do ((i 0 (+ 1 i)))
+	        ((= i chns))
+	      (<a class=quiet href="#srcchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_srcchannel_tip)">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index) sr)) 0 #f index i))
+	    (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> filename index :header-type type :data-format format :srate sr :comment comment) 
+	    (do ((i 0 (+ 1 i)))
+	        ((= i chns))
+	      (<a class=quiet href="#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> 1 index i))
+	    (set! (hook 'result) #t)))) ; tell Snd that the sound is already saved
+     (hook 'snd) (hook 'name) (hook 'srate) (hook 'type) (hook 'format) (hook 'comment))))
+
 </pre>
 <div class="spacer"></div>
 
 
 <!-- before-save-state-hook -->
 <pre class="indented">
-<em class=def id="beforesavestatehook">before-save-state-hook</em> (filename)
+<em class=def id="beforesavestatehook">before-save-state-hook</em> (name)
 </pre>
 
-<p>This hook is called before Snd saves its state (<a href="#savestate">save-state</a>).  'filename' is the saved state
-file.  If the hook functions return #t, the save state file is opened in append mode (rather than create/truncate),
+<p>This hook is called before Snd saves its state (<a href="#savestate">save-state</a>).  'name' is the saved state
+file.  If the hook returns #t, the save state file is opened in append mode (rather than create/truncate),
 so you can write preliminary stuff via this hook, then instruct Snd not to clobber it during the save process.
 </p>
 
 <pre class="indented">
 (hook-push <em class=red>before-save-state-hook</em>
-  (lambda (name) 
-    (<span  onmouseout="UnTip()" onmouseover="Tip('io-open-write in Forth (see fs.fs); File.open in Ruby (I think &mdash; see extensions.rb)')">with-output-to-file name</span>
-      (lambda ()
-        (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f ";this comment will be at the top of the saved state file.~%~%"))
-	#t))))
+  (lambda (hook) 
+    (call-with-output-file (hook 'name)</span>
+      (lambda (p)
+        (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> p ";this comment will be at the top of the saved state file.~%~%")))
+    (set! (hook 'result) #t)))
 </pre>
 <div class="spacer"></div>
 
@@ -2158,15 +2157,17 @@ so you can write preliminary stuff via this hook, then instruct Snd not to clobb
 <em class=def id="beforetransformhook">before-transform-hook</em> (snd chn)
 </pre>
 
-<p>This hook is called just before an FFT (or spectrum) is calculated.  If a hook function returns 
+<p>This hook is called just before an FFT (or spectrum) is calculated.  If the hook returns 
 an integer, that value is used as the starting point (sample number) of the fft.  Normally,
 the fft starts from the left window edge.  To have it start at mid-window:
 </p>
 
 <pre class="indented">
 (hook-push <em class=red>before-transform-hook</em>
-  (lambda (snd chn)        ; 0.5 * (left + right) = midpoint
-    (round (* 0.5 (+ (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn))))))
+  (lambda (hook)        ; 0.5 * (left + right) = midpoint
+    (set! (hook 'result) 
+          (round (* 0.5 (+ (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> (hook 'snd) (hook 'chn)) 
+                           (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> (hook 'snd) (hook 'chn))))))))
 </pre>
 
 <p>The following 
@@ -2175,24 +2176,29 @@ of a moving mark:
 </p>
 
 <pre class="indented">
-(define fft-position #f)
-(hook-push <em class=red>before-transform-hook</em> (lambda (snd chn) fft-position))
-(hook-push <a class=quiet href="#markdraghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_markdraghook_tip)">mark-drag-hook</a> (lambda (id)
-                            (set! fft-position (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> id))
-                            (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>)))
+(let ((fft-position #f))
+  (hook-push <em class=red>before-transform-hook</em> 
+    (lambda (hook) 
+      (set! (hook 'result) fft-position)))
+  (hook-push <a class=quiet href="#markdraghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_markdraghook_tip)">mark-drag-hook</a> 
+    (lambda (hook)
+      (set! fft-position (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> (hook 'id)))
+      (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>))))
 </pre>
 <div class="spacer"></div>
+
 
 
 <!-- clip-hook -->
 <pre class="indented">
-<em class=def id="cliphook">clip-hook</em> (clipping-value) 
+<em class=def id="cliphook">clip-hook</em> (val) 
 </pre>
 
 <p>This hook is called whenever a sample is about to be clipped while writing out a sound file. 
-The hook function can return the new value.
+The hook can return the new value.
 </p>
 <div class="spacer"></div>
+
 
 
 <!-- close-hook -->
@@ -2205,14 +2211,9 @@ The hook function can return the new value.
 
 <pre class="indented">
 (hook-push <em class=red>close-hook</em>
-  (lambda (snd) 
-    (system "sndplay wood16.wav")))
+  (lambda (hook) 
+    (play "wood16.wav")))
 </pre>
-
-<p>close-hook is used in <a href="sndscm.html#autosavedoc">autosave.scm</a>, 
-the <a href="sndscm.html#xbopen">C-x b</a> support in examp.scm,
-and many other places.
-</p>
 <div class="spacer"></div>
 
 
@@ -2225,6 +2226,7 @@ and many other places.
 See <a href="sndscm.html#startwaterfall">start-waterfall</a> in snd-gl.scm.
 </p>
 <div class="spacer"></div>
+
 
 
 <!-- dac-hook -->
@@ -2240,10 +2242,10 @@ See <a href="sndscm.html#withlevelmeters">with-level-meters</a> in snd-motif.scm
 
 <!-- draw-mark-hook -->
 <pre class="indented">
-<em class=def id="drawmarkhook">draw-mark-hook</em> (mark)
+<em class=def id="drawmarkhook">draw-mark-hook</em> (id)
 </pre>
 
-<p>This hook is called before a mark is drawn. If the hook function returns #t, the mark is not drawn.  
+<p>This hook is called before a mark is drawn. If the hook returns #t, the mark is not drawn.  
 <a href="sndscm.html#marksynccolor">mark-sync-color</a>
 in snd-motif.scm uses this hook to draw sync'd marks in some other color than the current <a href="#markcolor">mark-color</a>.
 </p>
@@ -2252,13 +2254,13 @@ in snd-motif.scm uses this hook to draw sync'd marks in some other color than th
 
 <!-- draw-mix-hook -->
 <pre class="indented">
-<em class=def id="drawmixhook">draw-mix-hook</em> (mix old-x old-y x y)
+<em class=def id="drawmixhook">draw-mix-hook</em> (id old-x old-y x y)
 </pre>
 
-<p>This hook is called before a mix tag is drawn. If the hook function returns either #t or a list, the mix tag is not drawn by Snd (the
+<p>This hook is called before a mix tag is drawn. If the hook returns either #t or a list, the mix tag is not drawn by Snd (the
 assumption is that the hook function drew something).  old-x and old-y are the previous mix tag positions (in case
 you're using draw-mix-hook to draw your own mix tag as in musglyphs.scm).  x and y give the current position.
-If the hook function returns a list, its two elements (integers) are treated as the mix's tag x and y locations
+If the hook returns a list, its two elements (integers) are treated as the mix's tag x and y locations
 for subsequent mouse click hit detection.
 </p>
 <div class="spacer"></div>
@@ -2266,23 +2268,22 @@ for subsequent mouse click hit detection.
 
 <!-- drop-hook -->
 <pre class="indented">
-<em class=def id="drophook">drop-hook</em> (filename) 
+<em class=def id="drophook">drop-hook</em> (name) 
 </pre>
 
 <p>This hook is called each time Snd receives a drag-and-drop event, passing the hook functions the dropped filename.
-If the hook functions return #t, the file is not opened by Snd.  Normally if you drag a file icon to the menubar, 
+If the hook returns #t, the file is not opened by Snd.  Normally if you drag a file icon to the menubar, 
 Snd opens it as if you had called <a href="#opensound">open-sound</a>.  If you drag the icon to a particular channel,
 Snd mixes it at the mouse location in that channel.  To get Snd to
 mix the dragged file even from the menubar:
 </p>
 
 <pre class="indented">
-(hook-push <em class=red>drop-hook</em> (lambda (filename) (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> filename) #t)) ; return #t = we already dealt with the drop
+(hook-push <em class=red>drop-hook</em>
+  (lambda (hook) 
+    (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> (hook 'name))
+    (set! (hook 'result) #t))) ; return #t = we already dealt with the drop
 </pre>
-
-<p>snd-motif.scm has examples that add a drop callback to an arbitrary widget, or
-change an existing callback (to pass the sound and channel number to the drop callback function, bypassing drop-hook).
-</p>
 <div class="spacer"></div>
 
 
@@ -2291,15 +2292,15 @@ change an existing callback (to pass the sound and channel number to the drop ca
 <em class=def id="duringopenhook">during-open-hook</em> (fd name reason)
 </pre>
 
-<p>This hook is called after file is opened, but before data has been read.
+<p>This hook is called after a file is opened, but before its data has been read.
 This provides an opportunity to set sndlib prescaling values:
 </p>
 
 <pre class="indented">
 (hook-push <em class=red>during-open-hook</em>
-  (lambda (fd name reason)
-    (if (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> name) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_musraw_tip)">mus-raw</a>)
-        (set! (<a href="#musfileprescaler" onmouseout="UnTip()" onmouseover="Tip(extsnd_musfileprescaler_tip)">mus-file-prescaler</a> fd) 500.0))))
+  (lambda (hook)
+    (if (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> (hook 'name)) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_musraw_tip)">mus-raw</a>)
+        (set! (<a href="#musfileprescaler" onmouseout="UnTip()" onmouseover="Tip(extsnd_musfileprescaler_tip)">mus-file-prescaler</a> (hook 'fd)) 500.0))))
 </pre>
 
 <p>The prescaling affects only sound data made up of floats or doubles.  'reason' is an integer indicating why this file is being opened:
@@ -2320,6 +2321,7 @@ check that 'reason' is 1, or perhaps 1, 3, or 6 (these read the external form of
 <div class="spacer"></div>
 
 
+
 <!-- effects-hook -->
 <pre class="indented">
 <em class=def id="effectshook">effects-hook</em> ()
@@ -2333,7 +2335,7 @@ check that 'reason' is 1, or perhaps 1, 3, or 6 (these read the external form of
 
 <!-- enved-hook -->
 <pre class="indented">
-<em class=def id="envedhook">enved-hook</em> (env pt new-x new-y reason)
+<em class=def id="envedhook">enved-hook</em> (env point x y reason)
 </pre>
 
 <p>Each time a breakpoint is changed in the envelope editor, this hook 
@@ -2348,21 +2350,19 @@ and decay portions in the envelope editor, or use functions such as
 
 <pre class="indented">
 (hook-push <em class=red>enved-hook</em>
-  (lambda (env pt x y reason)
-    (if (= reason enved-move-point)
-        (if (and (&gt; x 0.0) (&lt; x (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopelastx_tip)">envelope-last-x</a> env))) ; from env.scm
-            (let* ((old-x (env (* pt 2)))
-                   (new-env (<em class=red>stretch-envelope</em> env old-x x)))
-              (set! (new-env (+ (* pt 2) 1)) y)
-              new-env)
-            env)
-        #f)))
+  (lambda (hook)
+    ((lambda (env pt x y reason)
+       (if (= reason enved-move-point)
+           (if (and (&gt; x 0.0) (&lt; x (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopelastx_tip)">envelope-last-x</a> env))) ; from env.scm
+               (let* ((old-x (env (* pt 2)))
+                      (new-env (<em class=red>stretch-envelope</em> env old-x x)))
+                 (set! (new-env (+ (* pt 2) 1)) y)
+                 (set! (hook 'result) new-env)))))
+     (hook 'env) (hook 'point) (hook 'x) (hook 'y) (hook 'reason))))
 </pre>
 
-<p>If there are several functions on the hook, each gets the envelope
-result of the preceding function (if a function returns #f, the envelope
-is not changed).  A math-type would call this a "function composition"
-method combination; a filter-type would say "cascade"; 
+<p>In Forth/Ruby, if there are several functions on the hook, each gets the envelope
+result of the preceding function.
 </p>
 <div class="spacer"></div>
 
@@ -2377,13 +2377,14 @@ method combination; a filter-type would say "cascade";
 <div class="spacer"></div>
 
 
+
 <!-- graph-hook -->
 <pre class="indented">
 <em class=def id="graphhook">graph-hook</em> (snd chn y0 y1) 
 </pre>
 
 <p>This hook is called each time a graph is updated or redisplayed.
-If its hook functions return #t, the display is not updated.
+If it returns #t, the display is not updated.
 See examp.scm for many examples.  If you want to add your own graphics to the display, use <a href="#aftergraphhook">after-graph-hook</a>.
 </p>
 
@@ -2397,12 +2398,13 @@ See examp.scm for many examples.  If you want to add your own graphics to the di
       (if (&gt; dots 100) 
 	  (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 1)
 	(if (&gt; dots 50)
-	    (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 2)
+	    (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 3)
 	  (if (&gt; dots 25)
-	      (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 3)
-	    (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 5)))))))
+	      (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 5)
+	    (set! (<a class=quiet href="#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a> snd chn) 8)))))))
 </pre>
 <div class="spacer"></div>
+
 
 
 <!-- help-hook -->
@@ -2418,10 +2420,8 @@ procedure <a href="sndscm.html#html">html</a> called any time snd-help is called
 <pre class="indented">
 (hook-push <em class=red>help-hook</em> (lambda (hook) (<a class=quiet href="sndscm.html#html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_function_tip)">html</a> (hook 'subject))))
 </pre>
-
-<p>If there is more than one hook function, each function's result is passed as input to the next function.
-</p>
 <div class="spacer"></div>
+
 
 
 <!-- info-popup-hook -->
@@ -2430,19 +2430,20 @@ procedure <a href="sndscm.html#html">html</a> called any time snd-help is called
 </pre>
 
 <p>This hook is called whenever you invoke the info item in the graph popup menu.
-Each function in the hook is passed the current sound object; if it returns a
+If it returns a
 string, that string is added to the information in the info dialog.
 </p>
 <div class="spacer"></div>
 
 
+
 <!-- initial-graph-hook -->
 <pre class="indented">
-<em class=def id="initialgraphhook">initial-graph-hook</em> (snd chn dur) 
+<em class=def id="initialgraphhook">initial-graph-hook</em> (snd chn duration) 
 </pre>
 
 <p>This hook is called the first time a given channel is displayed (when the sound is first opened).
-If the hook function returns a list, the list's contents are interpreted as:
+If the hook returns a list, the list's contents are interpreted as:
 </p>
 
 <pre class="indented">
@@ -2455,32 +2456,39 @@ The default (an empty hook) is equivalent to:
 </p>
 
 <pre class="indented">
-(hook-push <em class=red>initial-graph-hook</em> (lambda (snd chn dur) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0)))
+(hook-push <em class=red>initial-graph-hook</em> 
+  (lambda (hook) 
+    (set! (hook 'result) (list 0.0 0.1 -1.0 1.0 "time" -1.0 1.0))))
 </pre>
 
-<p>The 'dur' argument is the total length in seconds of the displayed portion of the channel, so to cause the
+<p>The 'duration' argument is the total length in seconds of the displayed portion of the channel, so to cause the
 entire sound to be displayed initially:
 </p>
 
 <pre class="indented">
-(hook-push <em class=red>initial-graph-hook</em> (lambda (snd chn dur) (list 0.0 dur)))
+(hook-push <em class=red>initial-graph-hook</em> 
+  (lambda (hook) 
+    (set! (hook 'result) (list 0.0 (hook 'duration)))))
 </pre>
 
 <p>To get other the data limits (rather than the default y axis limits of -1.0 to 1.0), you can use <a href="#mussoundmaxamp">mus-sound-maxamp</a>,
 but if that sound's maxamp isn't already known, it can require a long process of reading the file. The following hook procedure
-uses the maxamp data if it is already available or the file is short:
+uses the maxamp data if it is already available or if the file is short:
 </p>
 
 <pre class="indented">
 (hook-push <em class=red>initial-graph-hook</em>
-  (lambda (snd chn dur)
-    (if (or (<a class=quiet href="#mussoundmaxampexists" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxampexists_tip)">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd))
-            (&lt; (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) 10000000))
-	(let* ((amp-vals (<a class=quiet href="#mussoundmaxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxamp_tip)">mus-sound-maxamp</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd)))
-	       (max-val (max 1.0 (amp-vals (+ (* chn 2) 1)))))
-               ;; max amp data is list: (sample value sample value ...)
-	  (list 0.0 dur (- max-val) max-val)) ; these are the new y-axis limits
-	(list 0.0 dur -1.0 1.0))))            ; max amp unknown, so use defaults
+  (lambda (hook)
+    (let ((snd (hook 'snd))
+          (chn (hook 'chn))
+          (dur (hook 'duration)))
+      (if (or (<a class=quiet href="#mussoundmaxampexists" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxampexists_tip)">mus-sound-maxamp-exists?</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd))
+              (&lt; (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) 10000000))
+	  (let* ((amp-vals (<a class=quiet href="#mussoundmaxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxamp_tip)">mus-sound-maxamp</a> (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd)))
+	         (max-val (max 1.0 (amp-vals (+ (* chn 2) 1)))))
+                 ;; max amp data is list: (sample value sample value ...)
+	    (set! (hook 'result) (list 0.0 dur (- max-val) max-val))) ; these are the new y-axis limits
+	(set! (hook 'result) (list 0.0 dur -1.0 1.0))))))             ; max amp unknown, so use defaults
 </pre>
 <div class="spacer"></div>
 
@@ -2493,12 +2501,13 @@ uses the maxamp data if it is already available or the file is short:
 
 <p>This hook is called upon key press while the mouse is in the lisp graph (the third graph, 
 to the right of the time and fft graphs).
-If its function returns #t, the key press is not passed to the main handler.
+If it returns #t, the key press is not passed to the main handler.
 'state' refers to the control, meta, and shift keys.
 <a href="sndscm.html#enveddoc">start-enveloping</a> in enved.scm uses this hook to add C-g and C-. support to the
 channel-specific envelope editors.
 </p>
 <div class="spacer"></div>
+
 
 
 <!-- lisp-graph-hook -->
@@ -2507,19 +2516,21 @@ channel-specific envelope editors.
 </pre>
 
 <p>This hook is called just before the lisp graph is updated or redisplayed (see <a href="#displaydb">display-db</a>).
-If its function returns a list of pixels (xm style), these are used in order by the list of graphs (if any), rather than Snd's default set
-(this makes it possible to use different colors for the various graphs).
-If it returns a function (of no arguments), that function is called rather than the standard graph routine:
+If it returns a list of pixels (xm style), they are used in order by the list of graphs, rather than Snd's default colors.
+If it returns a thunk, that function is called rather than the standard graph routine:
 </p>
 
 <pre class="indented">
 (hook-push <em class=red>lisp-graph-hook</em>
-	   (lambda (snd chn)
-	     (lambda ()
-	       (<a class=quiet href="#drawstring" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawstring_tip)">draw-string</a> "hi" 
-			    (<a class=quiet href="#xtoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_xtoposition_tip)">x-&gt;position</a> 0.5 snd chn <a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_lispgraph_tip)">lisp-graph</a>) 
-			    (<a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">y-&gt;position</a> 0.0 snd chn <a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">lisp-graph</a>)
-			    snd chn))))
+  (lambda (hook)
+    (let ((snd (hook 'snd))
+          (chn (hook 'chn)))
+      (set! (hook 'result)
+        (lambda ()
+          (<a class=quiet href="#drawstring" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawstring_tip)">draw-string</a> "hi" 
+                       (<a class=quiet href="#xtoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_xtoposition_tip)">x-&gt;position</a> 0.5 snd chn <a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_lispgraph_tip)">lisp-graph</a>) 
+	               (<a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">y-&gt;position</a> 0.0 snd chn <a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">lisp-graph</a>)
+	               snd chn))))))
 </pre>
 
 <p>For a fancy example, see <a href="sndscm.html#displaybarkfft">display-bark-fft</a> in dsp.scm.
@@ -2527,58 +2538,61 @@ If it returns a function (of no arguments), that function is called rather than 
 <div class="spacer"></div>
 
 
+
+
 <!-- listener-click-hook -->
 <pre class="indented">
-<em class=def id="listenerclickhook">listener-click-hook</em> (textpos)
+<em class=def id="listenerclickhook">listener-click-hook</em> (position)
 </pre>
 
-<p>This hook is called when a click occurs in the listener; the 'textpos' argument is the position in the text 
+<p>This hook is called when a click occurs in the listener; the 'position' argument is the position in the text 
 (a character number) where the click occurred.
 </p>
 <div class="spacer"></div>
 
 
+
 <!-- mark-click-hook -->
 <pre class="indented">
-<em class=def id="markclickhook">mark-click-hook</em> (mark)
+<em class=def id="markclickhook">mark-click-hook</em> (id)
 </pre>
 
-<p>This hook is called when a mark is clicked; return #t to squelch the default status area mark identification.  The following 
-hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound</a> in ws.scm to display arbitrary info about a mark.
+<p>This hook is called when a mark is clicked; return #t to squelch the default status area mark identification.
 </p>
 
 <pre class="indented">
 (hook-push <em class=red>mark-click-hook</em>
-  (lambda (n) 
-    (if (not (defined? 'mark-properties)) (load "marks.scm"))
-    (<a class=quiet href="#infodialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_infodialog_tip)">info-dialog</a> "Mark Help"
-      (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "Mark ~A~A:~%  sample: ~D = ~,3F secs~A~A"
-	      n 
-	      (let ((name (<a class=quiet href="#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a> n)))
-   	        (if (&gt; (string-length name) 0)
-		    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f " (~S)" name)
-		    ""))
-	      (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> n)
-	      (/ (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> n) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> (car (<a class=quiet href="#markhome" onmouseout="UnTip()" onmouseover="Tip(extsnd_markhome_tip)">mark-home</a> n))))
-	      (if (not (= (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n) 0))
-	        (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  sync: ~A" (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n))
-	        "")
-	      (let ((props (<a class=quiet href="#markproperties" onmouseout="UnTip()" onmouseover="Tip(sndscm_markproperties_tip)">mark-properties</a> n)))
-	        (if (and (list? props)
-		         (not (null? props)))
-	          (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  properties: '~A" props)
-	          ""))))
-    #t))
+  (lambda (hook)
+    (let ((n (hook 'id)))
+      (if (not (defined? 'mark-properties)) (load "marks.scm"))
+      (<a class=quiet href="#infodialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_infodialog_tip)">info-dialog</a> "Mark Help"
+        (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "Mark ~A~A:~%  sample: ~D = ~,3F secs~A~A"
+	        n 
+	        (let ((name (<a class=quiet href="#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a> n)))
+   	          (if (&gt; (string-length name) 0)
+		      (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f " (~S)" name)
+		      ""))
+	        (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> n)
+	        (* 1.0 (/ (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> n) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> (car (<a class=quiet href="#markhome" onmouseout="UnTip()" onmouseover="Tip(extsnd_markhome_tip)">mark-home</a> n)))))
+	        (if (not (= (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n) 0))
+	          (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  sync: ~A" (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n))
+	          "")
+	        (let ((props (<a class=quiet href="#markproperties" onmouseout="UnTip()" onmouseover="Tip(sndscm_markproperties_tip)">mark-properties</a> n)))
+	          (if (and (list? props)
+		           (not (null? props)))
+	            (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  properties: '~A" props)
+	            ""))))
+      (set! (hook 'result) #t))))
 </pre>
 <div class="spacer"></div>
 
 
 <!-- mark-drag-hook -->
 <pre class="indented">
-<em class=def id="markdraghook">mark-drag-hook</em> (mark)
+<em class=def id="markdraghook">mark-drag-hook</em> (id)
 </pre>
 
-<p>This hook is called when a mark is dragged.
+<p>This hook is called when a mark is dragged.  If it returns #t, the mark position is not reflected in the status area.
 </p>
 
 <pre class="indented">
@@ -2589,14 +2603,18 @@ hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound
     (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> 
       (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mark ~A: sample: ~D (~,3F) ~A[~D]: ~,3F"
               id samp 
-              (/ samp (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> (car sndchn))) 
+              (exact-&gt;inexact (/ samp (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> (car sndchn))))
               (<a class=quiet href="#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a> (car sndchn))
               (cadr sndchn)
 	      (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> samp (car sndchn) (cadr sndchn))))))
 
-(hook-push <em class=red>mark-drag-hook</em> report-mark-location)
+(hook-push <em class=red>mark-drag-hook</em> 
+  (lambda (hook) 
+    (report-mark-location (hook 'id))
+    (set! (hook 'result) #t)))
 </pre>
 <div class="spacer"></div>
+
 
 
 <!-- mark-hook -->
@@ -2613,30 +2631,30 @@ and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on eac
 <pre class="indented">
 (define (snap-mark-to-beat)
   ;; when a mark is dragged, its end position is always on a beat
-  (let ((mark-release 4))
-    (hook-push <em class=red>mark-hook</em>
-      (lambda (mrk snd chn reason)
-        (if (= reason mark-release)
-            (let* ((samp (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> mrk))
-	           (bps (/ (<a class=quiet href="#beatsperminute" onmouseout="UnTip()" onmouseover="Tip(extsnd_beatsperminute_tip)">beats-per-minute</a> snd chn) 60.0))
-		   (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))
-		   (beat (floor (/ (* samp bps) sr)))
-		   (lower (floor (/ (* beat sr) bps)))
-		   (higher (floor (/ (* (+ 1 beat) sr) bps))))
-	      (set! (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> mrk)
-	      (if (&lt; (- samp lower) (- higher samp))
-		  lower
- 		  higher))))))))
+  (hook-push <em class=red>mark-hook</em>
+    (lambda (hook)
+      ((lambda (mrk snd chn reason)
+         (let ((mark-release 4))
+           (if (= reason mark-release)
+               (let* ((samp (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> mrk))
+	              (bps (/ (<a class=quiet href="#beatsperminute" onmouseout="UnTip()" onmouseover="Tip(extsnd_beatsperminute_tip)">beats-per-minute</a> snd chn) 60.0))
+		      (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))
+		      (beat (floor (/ (* samp bps) sr)))
+		      (lower (floor (/ (* beat sr) bps)))
+		      (higher (floor (/ (* (+ 1 beat) sr) bps))))
+	          (set! (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> mrk) (if (&lt; (- samp lower) (- higher samp)) lower higher))))))
+       (hook 'id) (hook 'snd) (hook 'chn) (hook 'reason)))))
 </pre>
 <div class="spacer"></div>
 
 
 <!-- mix-click-hook -->
 <pre class="indented">
-<em class=def id="mixclickhook">mix-click-hook</em> (mix)
+<em class=def id="mixclickhook">mix-click-hook</em> (id)
 </pre>
 
-<p>This hook is called when a mix tag is clicked; return #t to omit the default action which is to start the Mix dialog 
+<p>This hook is called when a mix tag is clicked (when the double-arrow is displayed over the tag); 
+return #t to omit the default action which is to start the Mix dialog 
 with the clicked mix.
 One example is <a href="sndscm.html#mixclickinfo">mix-click-info</a> in mix.scm.
 Here's an example that sets a mix's amps to 0 if you click it (see <a href="sndscm.html#mixclicksetsamp">mix-click-sets-amp</a>
@@ -2645,9 +2663,9 @@ in mix.scm for a fancier version):
 
 <pre class="indented">
 (hook-push <em class=red>mix-click-hook</em>
-  (lambda (n)
-    (set! (<a class=quiet href="#mixamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixamp_tip)">mix-amp</a> n) 0.0)
-    #t))
+  (lambda (hook)
+    (set! (<a class=quiet href="#mixamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixamp_tip)">mix-amp</a> (hook 'id)) 0.0)
+    (set! (hook 'result) #t)))
 </pre>
 <div class="spacer"></div>
 

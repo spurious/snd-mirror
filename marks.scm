@@ -381,27 +381,28 @@
 	(close-appending fd)))))
 
 
-(define (mark-click-info n)
+(define (mark-click-info hook)
   "(mark-click-info n) is a mark-click-hook function that describes a mark and its properties"
-  (help-dialog "Mark Help"
-	       (format #f "Mark ~A~A:~%  sample: ~D = ~,3F secs~A~A"
-		       n 
-		       (let ((name (mark-name n)))
-			 (if (> (string-length name) 0)
-			     (format #f " (~S)" name)
-			     ""))
-		       (mark-sample n)
-		       (/ (mark-sample n) (srate (car (mark-home n))))
-		       (if (not (= (sync n) 0))
-			   (format #f "~%  sync: ~A" (sync n))
-			   "")
-		       (let ((props (mark-properties n)))
-			 (if (and (list? props)
-				  (not (null? props)))
-			     (format #f "~%  properties: '~A" props)
-			     ""))))
-  #t)
-
+  (let ((n (hook 'id)))
+    (help-dialog "Mark Help"
+		 (format #f "Mark ~A~A:~%  sample: ~D = ~,3F secs~A~A"
+			 n 
+			 (let ((name (mark-name n)))
+			   (if (> (string-length name) 0)
+			       (format #f " (~S)" name)
+			       ""))
+			 (mark-sample n)
+			 (exact->inexact (/ (mark-sample n) (srate (car (mark-home n)))))
+			 (if (not (= (sync n) 0))
+			     (format #f "~%  sync: ~A" (sync n))
+			     "")
+			 (let ((props (mark-properties n)))
+			   (if (and (list? props)
+				    (not (null? props)))
+			       (format #f "~%  properties: '~A" props)
+			       ""))))
+    (set! (hook 'result) #t)))
+  
 
 #|
 ;;; this code saves mark info in the sound file header, and reads it back in when the sound is later reopened

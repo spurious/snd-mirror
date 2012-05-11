@@ -4047,7 +4047,7 @@ void g_init_mix(void)
   mix_drag_hook = XEN_DEFINE_HOOK(S_mix_drag_hook, "(make-hook 'id 'x 'y)", 3, H_mix_drag_hook); /* args = id, mouse x, mouse or tag y */
 
   /* the name draw-mix-hook is inconsistent with the other mix hooks (mix-draw-hook?), but is intended to parallel draw-mark-hook */
-  #define H_draw_mix_hook S_draw_mix_hook " (id): called when a mix tag is about to be displayed"
+  #define H_draw_mix_hook S_draw_mix_hook " (id old-x old-y x y): called when a mix tag is about to be displayed"
 
   draw_mix_hook = XEN_DEFINE_HOOK(S_draw_mix_hook, "(make-hook 'id 'old-x 'old-y 'x 'y)", 5, H_draw_mix_hook);
 }

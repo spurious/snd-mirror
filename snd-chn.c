@@ -84,7 +84,7 @@ static void run_after_graph_hook(chan_info *cp)
 	     XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 			C_TO_XEN_INT(cp->chan)),
 	     S_after_graph_hook);
-  /* (hook-push after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
+  /* (hook-push after-graph-hook (lambda (hook) (snd-print (format #f "~A ~A~%" (hook 'snd) (hook 'chn))))) */
 }
 
 
@@ -5734,7 +5734,9 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
   if (mouse_mark)
     {
       move_mark(cp, mouse_mark, x);
-      status_report(sp, "%.4f", ungrf_x(cp->axis, x));
+      /* if mark_drag_hook has printed info to the status_area, we shouldn't erase it here! */
+      if (!ss->squelch_mark_drag_info) 
+	status_report(sp, "%.4f", ungrf_x(cp->axis, x));
       dragged = true;
       return;
     }
@@ -5750,7 +5752,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
       break;
 
     case CLICK_MARK:
-      if (dragged) 
+      if ((dragged) &&
+	  (!ss->squelch_mark_drag_info))
 	status_report(sp, "%.4f", ungrf_x(cp->axis, x));
       dragged = true;
       break;

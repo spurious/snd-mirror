@@ -54780,6 +54780,7 @@ s7_scheme *s7_init(void)
 
   /* TODO: documentation strings, add-to-hook? clear-hook? hook-result?
    * TODO: all html examples [these all need to keep track of and/or/concat cases, and progn][and match examps/arg names]
+   * TODO: remember to check the Snd watchers.
    *
    * file local var could be a macro expanding to
    *   (if (not (defined? 'local-var)) (define local-var new-value))
@@ -54788,7 +54789,6 @@ s7_scheme *s7_init(void)
    *   ....
    *   (set! local-var (car (symbol-access 'local-var))) ; or pop
    * 
-   * TODO: catch-case [transparent-lambda?] [transparent-wind?] does transparent-lambda give dynamic vars?  how about lambda+env (env 'var)?
    * TODO: looping-catch, reraise error + error expls in s7.html
    * TODO: hook as method? -> before/after/around methods, *format-hook*?
    * TODO: export s7_list varargs, also maybe vector string etc [does every C have varargs now?]
