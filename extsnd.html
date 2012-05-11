@@ -2672,7 +2672,7 @@ in mix.scm for a fancier version):
 
 <!-- mix-drag-hook -->
 <pre class="indented">
-<em class=def id="mixdraghook">mix-drag-hook</em> (mix x y)
+<em class=def id="mixdraghook">mix-drag-hook</em> (id x y)
 </pre>
 
 <p>This hook is called when a mix is dragged.
@@ -2680,11 +2680,12 @@ in mix.scm for a fancier version):
 
 <pre class="indented">
 (hook-push <em class=red>mix-drag-hook</em>
-  (lambda (n x y) 
+  (lambda (hook)
     (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> 
       (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mix ~A at ~D: ~,3F" 
-        n (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> n) 
-        (exact-&gt;inexact (/ (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> n) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))))
+        (hook 'id) 
+        (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> (hook 'id)) 
+        (exact-&gt;inexact (/ (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> (hook 'id)) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))))
 </pre>
 
 <p>A neat example is to set up an empty sound with a 1.0 in sample 0, mix in a vct containing one element of 0.5, then set
@@ -2692,7 +2693,9 @@ up this mix-drag-hook:
 </p>
 
 <pre class="indented">
-(hook-push mix-drag-hook (lambda (id x y) (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>)))
+(hook-push mix-drag-hook 
+  (lambda (hook) 
+    (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>)))
 </pre>
 
 <p>and turn on the FFT graph.  As you drag the mix, you can see the spectral effect of that
@@ -2704,15 +2707,16 @@ moving value as a comb filter.
 
 <!-- mix-release-hook -->
 <pre class="indented">
-<em class=def id="mixreleasehook">mix-release-hook</em> (mix samps)
+<em class=def id="mixreleasehook">mix-release-hook</em> (id samples)
 </pre>
 
 <p>This hook is called after a mix has been dragged by the mouse to a new position.
-'samps' is the number of samples moved during the drag.  If its function returns #t, the final position
+'samples' is the number of samples moved during the drag.  If the hook returns #t, the final position
 of the mix is
 hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-beat</a> in mix.scm.
 </p>
 <div class="spacer"></div>
+
 
 
 <!-- mouse-click-hook -->
@@ -2724,7 +2728,7 @@ hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-bea
 </p>
 
 <pre class="indented">
-(define (click-to-center snd chn button state x y axis)
+(define (click-to-center snd chn x axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
   (if (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
       (let ((samp (floor (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd) (<a class=quiet href="#positiontox" onmouseout="UnTip()" onmouseover="Tip(extsnd_positiontox_tip)">position-&gt;x</a> x snd chn)))))
@@ -2734,12 +2738,17 @@ hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-bea
 	(<a class=quiet href="#updatetimegraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetimegraph_tip)">update-time-graph</a>)
 	#t)
       #f))
-(hook-push <em class=red>mouse-click-hook</em> click-to-center)
+
+(hook-push <em class=red>mouse-click-hook</em> 
+  (lambda (hook) 
+    (set! (hook 'result) (click-to-center (hook 'snd) (hook 'chn) (hook 'x) (hook 'axis)))))
 
 ;;; this example disables button 2 -&gt; insert selection
 (hook-push <em class=red>mouse-click-hook</em>
-  (lambda (snd chn button state x y axis)
-    (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>) (= button 2))))
+  (lambda (hook)
+    (set! (hook 'result) 
+       (and (= (hook 'axis) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>) 
+            (= (hook 'button) 2)))))
 </pre>
 
 <p>The mouse scroll wheel is sometimes reported as buttons 4 and 5; in the next example,
@@ -2748,17 +2757,19 @@ turning the wheel zooms the graph in or out:
 
 <pre class="indented">
 (hook-push <em class=red>mouse-click-hook</em>
-  (lambda (snd chn button state x y axis)
-    (if (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
-	     (or (= button 4) (= button 5))) ; mouse scroll wheel
-	(let ((midpoint (* 0.5 (apply + (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))
-	      (dur (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
-	      (range (if (= button 4)
-			 (* -0.25 (apply - (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))) ; zoom in
-			 (abs (apply - (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))))  ; zoom out
-	  (set! (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list (max 0.0 (- midpoint range))
-				 (min dur (+ midpoint range))))))
-    #f))
+  (lambda (hook)
+    (let ((button (hook 'button))
+          (axis (hook 'axis)))
+      (if (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
+	       (or (= button 4) (= button 5))) ; mouse scroll wheel
+  	  (let ((midpoint (* 0.5 (apply + (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))
+	        (dur (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
+	        (range (if (= button 4)
+			   (* -0.25 (apply - (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))) ; zoom in
+			   (abs (apply - (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))))  ; zoom out
+	    (set! (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list (max 0.0 (- midpoint range))
+				   (min dur (+ midpoint range)))))))))
+
 </pre>
 
 <p>Here is a Forth example:
@@ -2797,8 +2808,8 @@ mouse-click-hook lambda: &lt;{ snd chn button state x y axis -- }&gt;
 
 <pre class="indented">
 (hook-push <em class=red>mouse-enter-graph-hook</em>
-  (lambda (snd chn) 
-    (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A[~A]" (<a class=quiet href="#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a> snd) chn))))
+  (lambda (hook)
+    (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A[~A]" (<a class=quiet href="#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a> (hook 'snd)) (hook 'chn)))))
 </pre>
 <div class="spacer"></div>
 
@@ -2817,9 +2828,9 @@ to popup file info as follows:
 
 <pre class="indented">
 (hook-push <em class=red>mouse-enter-label-hook</em>
-  (lambda (type position name)
-    (if (not (= type 2))
-        (<a class=quiet href="#infodialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_infodialog_tip)">info-dialog</a> name (finfo name)))))
+  (lambda (hook)
+    (if (not (= (hook 'type) 2))
+        (<a class=quiet href="#infodialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_infodialog_tip)">info-dialog</a> (hook 'label) (finfo (hook 'label))))))
 </pre>
 
 <p>See also <a href="sndscm.html#nbdoc">files-popup-info</a> in nb.scm.
@@ -2840,17 +2851,16 @@ hook procedures:
 
 <pre class="indented">
 (hook-push <em class=red>mouse-enter-graph-hook</em>
-  (lambda (snd chn)
-    (if (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sound?</a> snd) (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> (car (<a class=quiet href="#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a> snd chn))))))
+  (lambda (hook)
+    (if (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sound?</a> (hook 'snd))
+         (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> (car (<a class=quiet href="#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a> (hook 'snd) (hook 'chn)))))))
 
 (hook-push <em class=red>mouse-enter-listener-hook</em>
-  (lambda (widget)
-    (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> widget)))
+  (lambda (hook)
+    (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> (hook 'widget))))
 </pre>
-
-<p>I much prefer this style of operation.
-</p>
 <div class="spacer"></div>
+
 
 
 <!-- mouse-enter-text-hook -->
@@ -2863,8 +2873,8 @@ hook procedures:
 
 <pre class="indented">
 (hook-push <em class=red>mouse-enter-text-hook</em>
-  (lambda (w)
-    (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> w)))
+  (lambda (hook)
+    (<a class=quiet href="#focuswidget" onmouseout="UnTip()" onmouseover="Tip(extsnd_focuswidget_tip)">focus-widget</a> (hook 'widget))))
 </pre>
 <div class="spacer"></div>
 
@@ -2924,7 +2934,7 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 
 <!-- mus-error-hook -->
 <pre class="indented">
-<em class=def id="muserrorhook">mus-error-hook</em> (error-type error-message)
+<em class=def id="muserrorhook">mus-error-hook</em> (type message)
 </pre>
 
 <p>This hook is called upon mus-error.
@@ -2937,12 +2947,14 @@ You can redirect mus_print output from stderr (the default) to stdout via:
 
 <pre class="indented">
 (hook-push <em class=red>mus-error-hook</em>
-  (lambda (typ msg)
-    (and (= typ 0)         ; it's mus_print, not mus_error
-         (display msg))))  ; display returns some non-#f result, I assume
+  (lambda (hook)
+    (if (= (hook 'type) 0)
+        (begin
+	  (display (hook 'message))
+	  (set! (hook 'result) #t)))))
 </pre>
 
-<p>To decode the 'error-type' argument, see <a href="#muserrortypetostring">mus-error-type-&gt;string</a>.
+<p>To decode the 'type' argument, see <a href="#muserrortypetostring">mus-error-type-&gt;string</a>.
 </p>
 <div class="spacer"></div>
 
@@ -2958,16 +2970,16 @@ If the function returns #t, the usual highly informative status area babbling is
 
 <pre class="indented">
 (hook-push <em class=red>name-click-hook</em>
-  (lambda (snd) ; toggle read-only
-    (set! (<a class=quiet href="#readonly" onmouseout="UnTip()" onmouseover="Tip(extsnd_readonly_tip)">read-only</a> snd) (not (<a class=quiet href="#readonly" onmouseout="UnTip()" onmouseover="Tip(extsnd_readonly_tip)">read-only</a> snd)))
-    #t))
+  (lambda (hook) ; toggle read-only
+    (set! (<a class=quiet href="#readonly" onmouseout="UnTip()" onmouseover="Tip(extsnd_readonly_tip)">read-only</a> (hook 'snd)) (not (<a class=quiet href="#readonly" onmouseout="UnTip()" onmouseover="Tip(extsnd_readonly_tip)">read-only</a> (hook 'snd))))
+    (set! (hook 'result) #t)))
 </pre>
 <div class="spacer"></div>
 
 
 <!-- new-sound-hook -->
 <pre class="indented">
-<em class=def id="newsoundhook">new-sound-hook</em> (filename)
+<em class=def id="newsoundhook">new-sound-hook</em> (name)
 </pre>
 
 <p>This hook is called whenever a new sound file is being created.  <a href="sndscm.html#sound-let">sound-let</a> in ws.scm uses
@@ -2988,9 +3000,10 @@ make sure all newly created widgets have the same background pixmaps.
 <div class="spacer"></div>
 
 
+
 <!-- open-hook -->
 <pre class="indented">
-<em class=def id="openhook">open-hook</em> (filename)
+<em class=def id="openhook">open-hook</em> (name)
 </pre>
 
 <p>This hook is called before a sound file is opened.
@@ -3001,49 +3014,53 @@ If it returns a string (a filename), that file is opened instead of the original
 
 <pre class="indented">
 (hook-push <em class=red>open-hook</em>
-  (lambda (filename)
-    (if (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> filename) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">mus-raw</a>)
-        ;; check for "OggS" first word, if found, translate to something Snd can read
-	(if (call-with-input-file filename 
-	      (lambda (fd)
-		(and (char=? (read-char fd) #\O)
-		     (char=? (read-char fd) #\g)
-		     (char=? (read-char fd) #\g)
-		     (char=? (read-char fd) #\S))))
-	    (let ((aufile (string-append filename ".au")))
-	      (if (file-exists? aufile) (delete-file aufile))
-	      (system (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "ogg123 -d au -f ~A ~A" aufile filename))
-	      aufile) ; now open-sound will read the new .au file
-	    #f)
-	#f)))
+  (lambda (hook)
+    (let ((filename (hook 'name)))
+      (if (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> filename) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">mus-raw</a>)
+          ;; check for "OggS" first word, if found, translate to something Snd can read
+	  (if (call-with-input-file filename 
+	        (lambda (fd)
+		  (and (char=? (read-char fd) #\O)
+		       (char=? (read-char fd) #\g)
+		       (char=? (read-char fd) #\g)
+		       (char=? (read-char fd) #\S))))
+	      (let ((aufile (string-append filename ".au")))
+	        (if (file-exists? aufile) (delete-file aufile))
+	        (system (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "ogg123 -d au -f ~A ~A" aufile filename))
+	        (set! (hook 'result) aufile))))))) ; now open-sound will read the new .au file
 </pre>
 
 <div class="spacer"></div>
 
+
+
 <!-- open-raw-sound-hook -->
 <pre class="indented">
-<em class=def id="openrawsoundhook">open-raw-sound-hook</em> (filename current-choices)
+<em class=def id="openrawsoundhook">open-raw-sound-hook</em> (name state)
 </pre>
 
 <p>This hook is called each time <a href="#opensound">open-sound</a> encounters a headerless file.
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on):
 (list chans srate data-format data-location data-length) where trailing elements can 
 be omitted ('data-location' defaults to 0, and 'data-length' defaults to the file length in bytes).
-If there is more than one function on the hook list, functions after the first get the
-on-going list result (if any) as the 'current-choices' argument (the empty list is the default).
+In Ruby and Forth, if there is more than one function on the hook list, functions after the first get the
+on-going list result as the 'state (the empty list is the default).
 </p>
 
 <pre class="indented">
-    (hook-push <em class=red>open-raw-sound-hook</em> (lambda (file choices) (list 1 44100 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-lshort</a>)))
+(hook-push <em class=red>open-raw-sound-hook</em> 
+  (lambda (hook) 
+    (set! (hook 'result) (list 1 44100 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-lshort</a>)))
 </pre>
 
 <p>Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
 The raw header defaults are stereo, 44100 Hz, big endian short data; these values can be changed in the
 Raw File Dialog, by calling <a href="#openrawsound">open-raw-sound</a> with explicit arguments, 
 or via <a href="#musheaderrawdefaults">mus-header-raw-defaults</a>.
-If the hook function returns #t, the <a href="#opensound">open-sound</a> returns without opening.
+If the hook returns #t, <a href="#opensound">open-sound</a> returns without opening the file.
 </p>
 <div class="spacer"></div>
+
 
 
 <!-- optimization-hook -->
@@ -3055,7 +3072,9 @@ If the hook function returns #t, the <a href="#opensound">open-sound</a> returns
 </p>
 
 <pre class="indented">
-(hook-push <em class=red>optimization-hook</em> (lambda (n) (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~%" n))))
+(hook-push <em class=red>optimization-hook</em> 
+  (lambda (hook) 
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "~A~%" (hook 'message))))
 </pre>
 
 <p>Normally, if the optimizer fails for some reason, it falls back silently on the Scheme evaluator, so
@@ -3075,9 +3094,10 @@ See <a href="sndscm.html#startwaterfall">start-waterfall</a> in snd-gl.scm.
 <div class="spacer"></div>
 
 
+
 <!-- output-comment-hook -->
 <pre class="indented">
-<em class=def id="outputcommenthook">output-comment-hook</em> (str)
+<em class=def id="outputcommenthook">output-comment-hook</em> (comment)
 </pre>
 
 <p>This hook is called in the Save-As dialog to set the default output comment value. 'str' is the current sound's comment.
@@ -3086,17 +3106,21 @@ If there is more than one hook function, each function's result is passed as inp
 
 <pre class="indented">
 (hook-push <em class=red>output-comment-hook</em>
-  (lambda (str)   ; append a time-stamp
-    (string-append str ": written " (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time))))))
+  (lambda (hook)   ; append a time-stamp
+    (set! (hook 'result) 
+      (string-append (hook 'comment)
+                     ": written " 
+                     (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))))))
 
-    ;; in Ruby: format("%s: written %s", str, Time.new.localtime.strftime("%d-%b %H:%M %Z"))
+;; in Ruby: format("%s: written %s", comment, Time.new.localtime.strftime("%d-%b %H:%M %Z"))
 </pre>
 <div class="spacer"></div>
 
 
+
 <!-- output-name-hook -->
 <pre class="indented">
-<em class=def id="outputnamehook">output-name-hook</em> (current-name)
+<em class=def id="outputnamehook">output-name-hook</em> (name)
 </pre>
 
 <p>This hook is called in the New File dialog. If it returns a filename, that name is presented in the New File dialog,
@@ -3106,11 +3130,11 @@ making it slightly easier to set default output names.
 <pre class="indented">
 (let ((file-ctr -1))
   (hook-push <em class=red>output-name-hook</em>
-    (lambda (ignored-name)
+    (lambda (hook)
       (set! file-ctr (+ file-ctr 1))
-      (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A-~D.snd"    ; make new file name based on date and file-ctr: "Jun-01-23.snd"
-	(strftime "%b-%d" (localtime (current-time)))
-        file-ctr))))
+      (set! (hook 'result) 
+            (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A-~D.snd"    ; make new file name, e.g.: "Jun-01-23.snd"
+               (strftime "%b-%d" (localtime (current-time))) file-ctr)))))
 </pre>
 <div class="spacer"></div>
 
@@ -3126,44 +3150,18 @@ making it slightly easier to set default output names.
 <div class="spacer"></div>
 
 
+
 <!-- play-hook -->
 <pre class="indented">
-<em class=def id="playhook">play-hook</em> (samps)
+<em class=def id="playhook">play-hook</em> (size)
 </pre>
 
 <p>This hook is called each time a buffer is about to be 
-filled for the DAC.  The buffer size is 'samps'.
+filled for the DAC.  The buffer size is 'size'.
 See <a href="sndscm.html#enveddoc">enved.scm</a> and <a href="sndscm.html#marksdoc">marks.scm</a>.
 </p>
 <div class="spacer"></div>
 
-
-<!-- print-hook -->
-<pre class="indented">
-<em class=def id="printhook">print-hook</em> (text)
-</pre>
-
-<p>This hook is called each time some Snd-generated response ('text') is about to be appended to the listener.
-If the function returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt.
-The prompt is important!  Snd uses it to find the current form to evaluate, so if your print hook function
-forgets to include it, you can end up with a comatose listener.  To get out of this state, include
-the prompt by hand (i.e. type in the shell that Snd started in, "&gt; (hook-clear print-hook)").
-This is intended to make it possible to
-distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, but both should be handled
-in some other way &mdash; I should rewrite this part of Snd.
-</p>
-
-<pre class="indented">
-(hook-push <em class=red>print-hook</em>
-  (lambda (msg) 
-    (if (char=? (msg 0) #\newline)
-	(<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> msg)
-	(<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~%[~A]~%~A" ;need newline just before listener-prompt
-			   msg 
-			   (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
-			   (<a class=quiet href="#listenerprompt" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenerprompt_tip)">listener-prompt</a>))))))
-</pre>
-<div class="spacer"></div>
 
 
 <!-- read-hook -->
@@ -3176,34 +3174,37 @@ in some other way &mdash; I should rewrite this part of Snd.
 <div class="spacer"></div>
 
 
+
 <!-- save-hook -->
 <pre class="indented">
 <em class=def id="savehook">save-hook</em> (snd name)
 </pre>
 
 <p>This hook is called each time a sound ('snd') is about to be saved.
-If its function returns #t, the file is not saved.  'name' is #f unless 
+If it returns #t, the file is not saved.  'name' is #f unless 
 the file is being saved under a new name (as in <a href="#savesoundas">save-sound-as</a>).
 See <a href="sndscm.html#autosavedoc">autosave.scm</a>.
 </p>
 <div class="spacer"></div>
 
 
+
 <!-- save-state-hook -->
 <pre class="indented">
-<em class=def id="savestatehook">save-state-hook</em> (temp-filename)
+<em class=def id="savestatehook">save-state-hook</em> (name)
 </pre>
 
 <p>This hook is called each time the <a href="#savestate">save-state</a>
 mechanism is about to create a new temporary file to save some edit history sample data; that is,
 each channel's edit history data is saved in a separate temporary file, and this hook provides
 a way to specify the name of that file.
-'temp-filename' is the temporary file name that will be used unless
+'name' is the temporary file name that will be used unless
 the hook function returns a different one (as a string).  This hook provides a way to
 keep track of which files are used in a given saved state batch, so
 that later cleanup is easier to manage.
 </p>
 <div class="spacer"></div>
+
 
 
 <!-- select-channel-hook -->
@@ -3213,10 +3214,9 @@ that later cleanup is easier to manage.
 
 <p>This hook is called when a channel is selected (after the sound has been selected). 
 The function arguments are the sound's index and the channel number.
-select-channel-hook is used in <a href="sndscm.html#playbetweenmarks">play-between-marks</a>
-to keep the loop bounds up-to-date.
 </p>
 <div class="spacer"></div>
+
 
 
 <!-- select-sound-hook -->
@@ -3229,9 +3229,10 @@ to keep the loop bounds up-to-date.
 <div class="spacer"></div>
 
 
+
 <!-- snd-error-hook -->
 <pre class="indented">
-<em class=def id="snderrorhook">snd-error-hook</em> (error-message)
+<em class=def id="snderrorhook">snd-error-hook</em> (message)
 </pre>
 
 <p>This hook is called upon <a href="#snderror">snd-error</a>.  If the listener is closed, it is also called upon any Scheme, Ruby, or Forth error.
@@ -3241,16 +3242,16 @@ dealt with it via the hook).
 
 <pre class="indented">
 (hook-push <em class=red>snd-error-hook</em>
-  (lambda (msg) 
-    (<a class=quiet href="#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> "bong.snd") ; or if xm is loaded, (XBell (XtDisplay (cadr (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>))) 10)
-    #f))
+  (lambda (hook)
+    (<a class=quiet href="#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> "bong.snd")))
 </pre>
 <div class="spacer"></div>
 
 
+
 <!-- snd-warning-hook -->
 <pre class="indented">
-<em class=def id="sndwarninghook">snd-warning-hook</em> (warning-message)
+<em class=def id="sndwarninghook">snd-warning-hook</em> (message)
 </pre>
 
 <p>This hook is called upon <a href="#sndwarning">snd-warning</a>.
@@ -3261,7 +3262,7 @@ reported it via the hook).
 <pre class="indented">
 (define without-warnings
   (lambda (thunk)
-    (define no-warning (lambda (msg) #t))
+    (define no-warning (lambda (hook) (set! (hook 'result) #t)))
     (hook-push <em class=red>snd-warning-hook</em> no-warning)
     (thunk)
     (hook-remove <em class=red>snd-warning-hook</em> no-warning)))
@@ -3269,29 +3270,33 @@ reported it via the hook).
 <div class="spacer"></div>
 
 
+
 <!-- start-hook -->
 <pre class="indented">
-<em class=def id="starthook">start-hook</em> (filename)
+<em class=def id="starthook">start-hook</em> (name)
 </pre>
 
 <p>This hook is called when Snd starts.
 If its function returns #t, Snd exits immediately.
 Say we are so annoyed with Snd's really very fine file browser that we want
 Snd to exit back to the shell if its file argument is not
-found (this code has to be in the ~/.snd init file):
+found (this code has to be in the ~/.snd_s7 init file):
 </p>
 
 <pre class="indented">
 (hook-push <em class=red>start-hook</em>
-  (lambda (file)
-    (if (not (file-exists? file))
+  (lambda (hook)
+    (if (not (file-exists? (hook 'name)))
 	(begin
-	  (display file) (display " does not exist")
-	  #t))))
+	  (format *stderr* "~S does not exist~%" (hook 'name))
+	  (set! (hook 'result) #t)))))
 </pre>
 <div class="spacer"></div>
 
 
+
+
+<!-- HERE -->
 <!-- start-playing-hook -->
 <pre class="indented">
 <em class=def id="startplayinghook">start-playing-hook</em> (snd)

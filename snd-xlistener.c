@@ -1020,16 +1020,14 @@ static Widget lisp_window = NULL;
 
 void listener_append(const char *msg)
 {
-  if ((listener_print_p(msg)) && /* we need this first -- runs print-hook */
-      (listener_text))
+  if (listener_text)
     XmTextInsert(listener_text, XmTextGetLastPosition(listener_text), (char *)msg);
 }
  
 
 void listener_append_and_prompt(const char *msg)
 {
-  if ((listener_print_p(msg)) &&
-      (listener_text))
+  if (listener_text)
     {
       XmTextPosition cmd_eot;
       if (msg)
@@ -1525,11 +1523,11 @@ static XEN g_goto_listener_end(void)
 void g_init_gxlistener(void)
 {
 #if HAVE_SCHEME
-  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (widget): called when the mouse \
 enters the lisp listener pane:\n\
   (hook-push " S_mouse_enter_listener_hook "\n\
-    (lambda (widget)\n\
-      (" S_focus_widget " widget)))"
+    (lambda (hook)\n\
+      (" S_focus_widget " (hook 'widget))))"
 #endif
 
 #if HAVE_RUBY
@@ -1546,7 +1544,7 @@ enters the lisp listener pane:\n\
 " S_mouse_enter_listener_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
 #endif
 
-  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener): called when the mouse \
+  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (widget): called when the mouse \
 leaves the lisp listener pane"
 
   mouse_enter_listener_hook = XEN_DEFINE_HOOK(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);

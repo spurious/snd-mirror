@@ -106,9 +106,8 @@
 (define (click-middle-button-to-open-next-file-in-directory)
   (hook-push mouse-click-hook
 	     (lambda (hook)
-	       (if (= button 2)
-		   (open-next-file-in-directory)
-		   #f)))) ; else handle it normally
+	       (if (= (hook 'button) 2)
+		   (set! (hook 'result) (open-next-file-in-directory))))))
 
 ;; or you could bind this (i.e. "(open-next-file-in-directory)") to some key.
 

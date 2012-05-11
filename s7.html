@@ -3799,7 +3799,7 @@ h
 </p>
 
 <pre class="indented">
-(add-to-hook hook (lambda (h) (apply func (map h (h 'args)))))
+(add-to-hook hook (lambda (h) (set! (h 'result) (apply func (map h (h 'args))))))
 </pre>
 
 <p>In C, to make a hook:

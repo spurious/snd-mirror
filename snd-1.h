@@ -1113,7 +1113,6 @@ XEN snd_protected_at(int loc);
 XEN run_or_hook(XEN hook, XEN args, const char *caller);
 XEN run_progn_hook(XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);
-bool listener_print_p(const char *msg);
 void check_features_list(const char *features);
 #if (!USE_NO_GUI)
   mus_float_t check_color_range(const char *caller, XEN val);

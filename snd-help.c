@@ -3969,9 +3969,10 @@ it returns a string, it replaces 'message' (the default help)"
 If more than one hook function, each function gets the previous function's output as its input.\n\
   (hook-push " S_output_comment_hook "\n\
     (lambda (hook)\n\
-      (string-append (hook 'comment) \": written \"\n\
-        (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
-          (localtime (current-time))))))"
+      (set! (hook 'result) (string-append (hook 'comment) \n\
+                                          \": written \"\n\
+                                          (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
+                                             (localtime (current-time)))))))"
 #endif
 #if HAVE_RUBY
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \

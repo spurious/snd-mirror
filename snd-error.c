@@ -288,17 +288,17 @@ void g_init_errors(void)
   XEN_DEFINE_PROCEDURE(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
 
 #if HAVE_SCHEME
-  #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
+  #define H_snd_error_hook S_snd_error_hook " (message): called upon snd_error. \
 If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported it via the hook):\n\
   (hook-push " S_snd_error_hook "\n\
     (lambda (hook) (" S_play " \"bong.snd\")))"
 
-  #define H_snd_warning_hook S_snd_warning_hook " (warning-message): called upon snd_warning. \
+  #define H_snd_warning_hook S_snd_warning_hook " (message): called upon snd_warning. \
 If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported it via the hook):\n\
   (define without-warnings\n\
     (lambda (thunk)\n\
       (define no-warning (lambda (hook) (set! (hook 'result) #t)))\n\
-      (set! (hook-functions snd-warning-hook) (cons no-warning (hook-functions snd-warning-hook)))\n\
+      (hook-push snd-warning-hook no-warning) \n\
       (thunk)\n\
       (hook-remove snd-warning-hook no-warning)))"
 #endif

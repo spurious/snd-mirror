@@ -2026,7 +2026,7 @@ and replaces it with the spectrum given in coeffs"
       
       ;; mouse click = move to next scale's ticks
       (define (choose-bark-ticks hook)
-	(if (= axis lisp-graph)
+	(if (= (hook 'axis) lisp-graph)
 	    (begin
 	      (set! bark-tick-function (+ 1 bark-tick-function))
 	      (if (> bark-tick-function 2)

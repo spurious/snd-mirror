@@ -235,8 +235,8 @@
 		      (samplist (map mark-sample marklist))
 		      (samp 0))
 
-		 (define (report-mark-names-play-hook size)
-		   (set! samp (+ samp size))
+		 (define (report-mark-names-play-hook hook)
+		   (set! samp (+ samp (hook 'size)))
 		   (if (and (not (null? samplist))
 			    (>= samp (car samplist)))
 		       (begin
@@ -244,13 +244,13 @@
 			 (set! marklist (cdr marklist))
 			 (set! samplist (cdr samplist)))))
 
-		 (define (report-mark-names-stop-playing-hook snd)
-		   (status-report "" snd)
+		 (define (report-mark-names-stop-playing-hook hook)
+		   (status-report "" (hook 'snd))
 		   (hook-remove play-hook report-mark-names-play-hook)
 		   (hook-remove stop-playing-hook report-mark-names-stop-playing-hook))
 		 
-		 (hook-push stop-playing-hook (lambda (hook) (report-mark-names-stop-playing-hook (hook 'size))))
-		 (hook-push play-hook (lambda (hook) (report-mark-names-play-hook (hook 'snd))))
+		 (hook-push stop-playing-hook report-mark-names-stop-playing-hook)
+		 (hook-push play-hook report-mark-names-play-hook)
 		 #f))))
 
 

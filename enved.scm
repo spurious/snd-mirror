@@ -149,8 +149,7 @@
 		    (remove-envelope-point mouse-pos cur-env)))
 	  (update-lisp-graph snd chn)
 	  (set! mouse-new #f)
-	  (set! (hook 'result) #t))
-	#f)))
+	  (set! (hook 'result) #t)))))
 
 (define (enveloping-key-press hook)
   (let ((snd (hook 'snd))
@@ -169,8 +168,7 @@
 		 (= state 4))
 	    (begin
 	      (set! (channel-envelope snd chn) '(0.0 1.0 1.0 1.0))
-	      (set! (hook 'result) #t))
-	    #f))))
+	      (set! (hook 'result) #t))))))
 
 (define (start-enveloping)
   "(start-enveloping) starts the enved processes, displaying an envelope editor in each channel"

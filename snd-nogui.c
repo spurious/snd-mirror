@@ -362,16 +362,16 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_color_hook " (make-hook))");
   XEN_EVAL_C_STRING("(define " S_drop_hook " (make-hook 'name))");
   XEN_EVAL_C_STRING("(define " S_listener_click_hook " (make-hook 'position)) ");
-  XEN_EVAL_C_STRING("(define " S_mouse_enter_graph_hook " (make-hook 2))");
-  XEN_EVAL_C_STRING("(define " S_mouse_enter_label_hook " (make-hook 3))");
-  XEN_EVAL_C_STRING("(define " S_mouse_enter_listener_hook " (make-hook 1))");
-  XEN_EVAL_C_STRING("(define " S_mouse_enter_text_hook " (make-hook 1))");
-  XEN_EVAL_C_STRING("(define " S_mouse_leave_graph_hook " (make-hook 2))");
-  XEN_EVAL_C_STRING("(define " S_mouse_leave_label_hook " (make-hook 3))");
-  XEN_EVAL_C_STRING("(define " S_mouse_leave_listener_hook " (make-hook 1))");
-  XEN_EVAL_C_STRING("(define " S_mouse_leave_text_hook " (make-hook 1))");
-  XEN_EVAL_C_STRING("(define " S_new_widget_hook " (make-hook 1))");
-  XEN_EVAL_C_STRING("(define " S_orientation_hook " (make-hook 0))");
+  XEN_EVAL_C_STRING("(define " S_mouse_enter_graph_hook " (make-hook 'snd 'chn))");
+  XEN_EVAL_C_STRING("(define " S_mouse_enter_label_hook " (make-hook 'type 'position 'label))");
+  XEN_EVAL_C_STRING("(define " S_mouse_enter_listener_hook " (make-hook 'widget))");
+  XEN_EVAL_C_STRING("(define " S_mouse_enter_text_hook " (make-hook 'widget))");
+  XEN_EVAL_C_STRING("(define " S_mouse_leave_graph_hook " (make-hook 'snd 'chn))");
+  XEN_EVAL_C_STRING("(define " S_mouse_leave_label_hook " (make-hook 'type 'position 'label))");
+  XEN_EVAL_C_STRING("(define " S_mouse_leave_listener_hook " (make-hook 'widget))");
+  XEN_EVAL_C_STRING("(define " S_mouse_leave_text_hook " (make-hook 'widget))");
+  XEN_EVAL_C_STRING("(define " S_new_widget_hook " (make-hook 'widget))");
+  XEN_EVAL_C_STRING("(define " S_orientation_hook " (make-hook))");
 
   XEN_EVAL_C_STRING("(define " S_copy_context " 0)");
   XEN_EVAL_C_STRING("(define " S_cursor_context " 3)");

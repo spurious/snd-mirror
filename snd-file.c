@@ -6014,7 +6014,7 @@ void g_init_file(void)
 
   XEN_ADD_HOOK(ss->snd_open_file_hook, vf_open_file_watcher_w, "view-files-dialog-open-file-handler", "view-files dialog open-file handler");
 
-  #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
+  #define H_open_hook S_open_hook " (name): called each time a file is opened (before the actual open). \
 If it returns " PROC_TRUE ", the file is not opened."
 
   #define H_before_close_hook S_before_close_hook " (snd): called each time a file is closed (before the close). \
@@ -6085,7 +6085,7 @@ This provides a way to set various sound-specific defaults. \n\
 ; add-hook!"
 #endif
 
-  #define H_output_name_hook S_output_name_hook " (current-name): called from the File:New dialog.  If it returns a filename, \
+  #define H_output_name_hook S_output_name_hook " (name): called from the File:New dialog.  If it returns a filename, \
 that name is presented in the New File dialog."
 
   open_hook =           XEN_DEFINE_HOOK(S_open_hook,           "(make-hook 'name)",                1, H_open_hook);
@@ -6098,10 +6098,9 @@ that name is presented in the New File dialog."
   after_open_hook =     XEN_DEFINE_HOOK(S_after_open_hook,     "(make-hook 'snd)",                 1, H_after_open_hook);
   output_name_hook =    XEN_DEFINE_HOOK(S_output_name_hook,    "(make-hook 'name)",                1, H_output_name_hook);
 
-  #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices): called when a headerless sound file is opened. \
+  #define H_open_raw_sound_hook S_open_raw_sound_hook " (name state): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
-The list (passed to subsequent hook functions as 'current-choice') is interpreted as \
-(list chans srate data-format data-location data-length) where trailing elements can \
+The list is interpreted as (list chans srate data-format data-location data-length) where trailing elements can \
 be omitted (location defaults to 0, and length defaults to the file length in bytes)."
 
   open_raw_sound_hook = XEN_DEFINE_HOOK(S_open_raw_sound_hook, "(make-hook 'name 'state)", 2, H_open_raw_sound_hook);

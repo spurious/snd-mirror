@@ -550,30 +550,25 @@
 (defmacro sound-let (snds . body) 
   `(let ((temp-files '())
 	 (old-hook-list (hook-functions new-sound-hook))) ; save old new-sound-hook (nested sound-lets etc)
-     (begin
-       (set! (hook-functions new-sound-hook) '())
-       (hook-push new-sound-hook (lambda (hook)       ; save current sound-let temp file list
-				   (let ((file (hook 'name)))
-				     (if (string? file) ; try to ignore vcts and sound-data objects
-					 (set! temp-files (cons file temp-files))))))
-       (let ((val (let ,(map (lambda (arg) 
-			       (if (> (length arg) 2)
-				                      ; if with-sound, embed with-temp-sound
-				   `(,(car arg) (with-temp-sound ,(cadr arg) ,@(cddr arg)))
-				   arg))              ; else use direct (normal var in the let)
-			     snds)
-		    ,@body)))                         ; sound-let body
-	 (for-each (lambda (file)                     ; clean up all local temps
-		     (if (and (string? file)          ; is it a file? (might be a vct or sound-data object)
-			      (file-exists? file))
-			 (delete-file file)))
-		   temp-files)
-	 (set! (hook-functions new-sound-hook) '())                 ; restore old new-sound-hook (should this happen before ,@body?)
-	 (if (not (null? old-hook-list))
-	     (for-each (lambda (proc)
-			 (hook-push new-sound-hook proc))
-		       old-hook-list))
-	 val))))                                      ; return body result
+     (set! (hook-functions new-sound-hook)
+	   (list (lambda (hook)       ; save current sound-let temp file list
+		   (let ((file (hook 'name)))
+		     (if (string? file) ; try to ignore vcts and sound-data objects
+			 (set! temp-files (cons file temp-files)))))))
+     (let ((val (let ,(map (lambda (arg) 
+			     (if (> (length arg) 2)
+					; if with-sound, embed with-temp-sound
+				 `(,(car arg) (with-temp-sound ,(cadr arg) ,@(cddr arg)))
+				 arg))              ; else use direct (normal var in the let)
+			   snds)
+		  ,@body)))                         ; sound-let body
+       (for-each (lambda (file)                     ; clean up all local temps
+		   (if (and (string? file)          ; is it a file? (might be a vct or sound-data object)
+			    (file-exists? file))
+		       (delete-file file)))
+		 temp-files)
+       (set! (hook-functions new-sound-hook) old-hook-list)
+       val)))
 
 
 

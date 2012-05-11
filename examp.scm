@@ -1972,8 +1972,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
   (hook-push mouse-click-hook
 	     (lambda (hook)
 	       (if (= (hook 'button) 2)
-		   (open-next-file-in-directory)
-		   #f)))) ; else handle it normally
+		   (set! (hook 'result) (open-next-file-in-directory))))))
 
 
 ;;; -------- chain-dsps

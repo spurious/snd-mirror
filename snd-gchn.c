@@ -1398,8 +1398,8 @@ void g_init_gxchn(void)
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
   (hook-push " S_mouse_enter_graph_hook "\n\
-    (lambda (snd chn)\n\
-      (" S_focus_widget " (car (" S_channel_widgets " snd chn)))))"
+    (lambda (hook)\n\
+      (" S_focus_widget " (car (" S_channel_widgets " (hook 'snd) (hook 'chn))))))"
 
   #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): called when the mouse \
 leaves the drawing area (graph pane) of the given channel."

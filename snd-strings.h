@@ -419,7 +419,6 @@
 #define S_preferences_dialog            "preferences-dialog"
 #define S_previous_sample               "previous-sample"
 #define S_print_dialog                  "print-dialog"
-#define S_print_hook                    "print-hook"
 #define S_print_length                  "print-length"
 #define S_progress_report               "progress-report"
 #define S_ptree_channel                 "ptree-channel"

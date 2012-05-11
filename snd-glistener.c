@@ -29,8 +29,7 @@ int save_listener_text(FILE *fp)
 void append_listener_text(int end, const char *msg)
 {
   /* "end" arg needed in Motif */
-  if ((listener_print_p(msg)) && 
-      (listener_text))
+  if (listener_text)
     {
       int chars;
       chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
@@ -162,7 +161,7 @@ static void text_at_cursor(GtkWidget *w)
 
 void listener_append(const char *msg)
 {
-  append_listener_text(0, msg); /* do this in any case to make sure print-hook gets to run (listener_print_p in append_listener_text) */
+  append_listener_text(0, msg);
   if (listener_text)
     {
       if (ss->graph_is_active)
@@ -1292,11 +1291,11 @@ XEN_NARGIFY_0(g_goto_listener_end_w, g_goto_listener_end)
 void g_init_gxlistener(void)
 {
 #if HAVE_SCHEME
-  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (widget): called when the mouse \
 enters the lisp listener pane:\n\
   (hook-push " S_mouse_enter_listener_hook "\n\
-    (lambda (widget)\n\
-      (" S_focus_widget " widget)))"
+    (lambda (hook)\n\
+      (" S_focus_widget " (hook 'widget))))"
 #endif
 #if HAVE_RUBY
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
@@ -1311,7 +1310,7 @@ enters the lisp listener pane:\n\
 " S_mouse_enter_listener_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
 #endif
 
-  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (listener): called when the mouse \
+  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (widget): called when the mouse \
 leaves the lisp listener pane"
 
   mouse_enter_listener_hook = XEN_DEFINE_HOOK(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);
