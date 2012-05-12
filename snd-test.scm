@@ -2198,7 +2198,7 @@
 		       'play-hook 'player-home 'player? 'players
 		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
 		       'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
-		       'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
+		       'previous-sample 'print-dialog 'print-length 'progress-report
 		       'ptree-channel 'pulse-train
 		       'pulse-train? 'radians->degrees 'radians->hz
 		       'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
@@ -3305,6 +3305,10 @@
 	  (let ((sd1 (copy sd)))
 	    (if (not (equal? sd sd1)) (snd-display #__line__ ";copy sd: ~A ~A" sd sd1))))
 	
+;	(set! ((procedure-environment open-raw-sound-hook) 'end) (list (lambda (hook) (format *stderr* ";open-raw-sound-hook: ~A~%" (hook 'result)))))
+;	(set! ((procedure-environment bad-header-hook) 'end) (list (lambda (hook) (format *stderr* ";bad-header-hook: ~A~%" (hook 'result)))))
+;	(set! ((procedure-environment open-hook) 'end) (list (lambda (hook) (format *stderr* ";open-hook: ~A~%" (hook 'result)))))
+;	(set! ((procedure-environment after-open-hook) 'end) (list (lambda (hook) (format *stderr* ";after-open-hook: ~A~%" (hook 'result)))))
 	(for-each
 	 (lambda (file)
 	   (let ((tag (catch #t
@@ -8994,8 +8998,6 @@ EDITS: 5
 	(set! (transform-size) 512)
 	
 	(set! (transform-graph?) #t)
-	(let ((pk (fft-peak index 0 1.0)))
-	  (if (not pk) (snd-display #__line__ ";fft-peak? ")))
 	(set! (time-graph?) #t)
 	
 	(if with-gui
@@ -29387,7 +29389,7 @@ EDITS: 2
       (add-mark 456 ind 0 "a mark" 2)
       (add-mark 567 ind 0 #f 1)
       
-      (hook-push output-comment-hook (lambda (hook) (marks->string (selected-sound))))
+      (hook-push output-comment-hook (lambda (hook) (set! (hook 'result) (marks->string (selected-sound)))))
       (save-sound-as "tst.snd")
       (let ((new-file-name (file-name ind)))
 	(close-sound ind)
@@ -29996,41 +29998,6 @@ EDITS: 2
 
 
 
-(defmacro carg0 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions ,hook)))))))
-     (if (not (string=? str "((lambda () 32))"))
-	 (snd-display #__line__ ";~A: ~A?" ',hook str))))
-
-(defmacro carg1 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions ,hook)))))))
-     (if (not (string=? str "((lambda (n) (if (number? n) (+ n 32) n)))"))
-	 (snd-display #__line__ ";~A: ~A?" ',hook str))))
-
-(defmacro carg2 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions ,hook)))))))
-     (if (not (string=? str "((lambda (n m) (if (and (number? n) (number? m)) (+ n m 32) n)))"))
-	 (snd-display #__line__ ";~A: ~A?" ',hook str))))
-
-(defmacro carg3 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions ,hook)))))))
-     (if (not (string=? str "((lambda (a b c) (if (and (number? a) (number? b) (number? c)) (+ a b c 32) a)))"))
-	 (snd-display #__line__ ";~A: ~A?" ',hook str))))
-
-(defmacro carg4 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions ,hook)))))))
-     (if (not (string=? str "((lambda (a b c d) (if (and (number? a) (number? b) (number? c) (number? d)) (+ a b c 32) a)))"))
-	 (snd-display #__line__ ";~A: ~A?" ',hook str))))
-
-(defmacro carg5 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions ,hook)))))))
-     (if (not (string=? str "((lambda (a b c d e) (list 0 0 1 1)))"))
-	 (snd-display #__line__ ";~A: ~A?" ',hook str))))
-
-(defmacro carg6 (hook)
-  `(let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions ,hook)))))))
-     (if (not (string=? str "((lambda (a b c d e f) (if (and (number? a) (number? b) (number? c) (number? d) (number? e)) (+ a b c d e f 32) a)))"))
-	 (snd-display #__line__ ";~A: ~A?" ',hook str))))
-
 (define ladspa_inited #f)
 (define clm_buffer_added #f)
 
@@ -30062,85 +30029,7 @@ EDITS: 2
 	    (f (hook (list-ref (hook 'args) 5))))
 	(set! (hook 'result) (if (and (number? a) (number? b) (number? c) (number? d) (number? e)) (+ a b c d e f 32) a))))
     (reset-almost-all-hooks)
-    
-    (hook-push after-graph-hook arg2) (carg2 after-graph-hook)
-    (hook-push after-lisp-graph-hook arg2) (carg2 after-lisp-graph-hook)
-    (hook-push lisp-graph-hook arg2) (carg2 lisp-graph-hook)
-    (hook-push before-transform-hook arg2) (carg2 before-transform-hook)
-    (hook-push mix-release-hook arg2) (carg2 mix-release-hook)
-    (hook-push save-hook arg2) (carg2 save-hook)
-    (hook-push mus-error-hook arg2) (carg2 mus-error-hook)
-    (hook-push mouse-enter-graph-hook arg2) (carg2 mouse-enter-graph-hook)
-    (hook-push mouse-leave-graph-hook arg2) (carg2 mouse-leave-graph-hook)
-    (hook-push open-raw-sound-hook arg2) (carg2 open-raw-sound-hook)
-    (hook-push select-channel-hook arg2) (carg2 select-channel-hook)
-    (hook-push help-hook arg2) (carg2 help-hook)
-    (hook-push view-files-select-hook arg2) (carg2 view-files-select-hook)
-    (hook-push peak-env-hook arg2) (carg2 peak-env-hook)
-    
-    (hook-push save-state-hook arg1) (carg1 save-state-hook)
-    (hook-push new-sound-hook arg1) (carg1 new-sound-hook)
-    (hook-push after-open-hook arg1) (carg1 after-open-hook)
-    (hook-push update-hook arg1) (carg1 update-hook)
-    (hook-push close-hook arg1) (carg1 close-hook)
-    (hook-push before-close-hook arg1) (carg1 before-close-hook)
-    (hook-push clip-hook arg1) (carg1 clip-hook)
-    (hook-push draw-mark-hook arg1) (carg1 draw-mark-hook)
-    (hook-push drop-hook arg1) (carg1 drop-hook)
-    (hook-push mark-click-hook arg1) (carg1 mark-click-hook)
-    (hook-push listener-click-hook arg1) (carg1 listener-click-hook)
-    (hook-push mix-click-hook arg1) (carg1 mix-click-hook)
-    (hook-push after-save-state-hook arg1) (carg1 after-save-state-hook)
-    (hook-push before-save-state-hook arg1) (carg1 before-save-state-hook)
-    (hook-push mark-drag-hook arg1) (carg1 mark-drag-hook)
-    (hook-push name-click-hook arg1) (carg1 name-click-hook)
-    (hook-push after-apply-controls-hook arg1) (carg1 after-apply-controls-hook)
-    (hook-push open-hook arg1) (carg1 open-hook)
-    (hook-push output-comment-hook arg1) (carg1 output-comment-hook)
-    (hook-push play-hook arg1) (carg1 play-hook)
-    (hook-push dac-hook arg1) (carg1 dac-hook)
-    (hook-push new-widget-hook arg1) (carg1 new-widget-hook)
-    (hook-push snd-error-hook arg1) (carg1 snd-error-hook)
-    (hook-push snd-warning-hook arg1) (carg1 snd-warning-hook)
-    (hook-push start-hook arg1) (carg1 start-hook)
-    (hook-push start-playing-hook arg1) (carg1 start-playing-hook)
-    (hook-push stop-playing-hook arg1) (carg1 stop-playing-hook)
-    (hook-push mouse-enter-listener-hook arg1) (carg1 mouse-enter-listener-hook)
-    (hook-push mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook)
-    (hook-push select-sound-hook arg1) (carg1 select-sound-hook)
-    (hook-push info-popup-hook arg1) (carg1 info-popup-hook)
-    (hook-push print-hook arg1) (carg1 print-hook)
-    (hook-push read-hook arg1) (carg1 read-hook)
-    (hook-push bad-header-hook arg1) (carg1 bad-header-hook)
-    (hook-push output-name-hook arg1) (carg1 output-name-hook)
-    
-    (hook-push before-exit-hook arg0) (carg0 before-exit-hook)
-    (hook-push exit-hook arg0) (carg0 exit-hook)
-    (hook-push stop-dac-hook arg0) (carg0 stop-dac-hook)
-    (hook-push stop-playing-selection-hook arg0) (carg0 stop-playing-selection-hook)
-    (hook-push color-hook arg0) (carg0 color-hook)
-    (hook-push orientation-hook arg0) (carg0 orientation-hook)
-    (hook-push start-playing-selection-hook arg0) (carg0 start-playing-selection-hook)
-    
-    (hook-push during-open-hook arg3) (carg3 during-open-hook)
-    (hook-push after-transform-hook arg3) (carg3 after-transform-hook)
-    (hook-push mouse-enter-label-hook arg3) (carg3 mouse-enter-label-hook)
-    (hook-push mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook)
-    (hook-push initial-graph-hook arg3) (carg3 initial-graph-hook)
-    (hook-push after-save-as-hook arg3) (carg3 after-save-as-hook)
-    (hook-push mix-drag-hook arg3) (carg3 mix-drag-hook)
-    
-    (hook-push graph-hook arg4) (carg4 graph-hook)
-    (hook-push key-press-hook arg4) (carg4 key-press-hook)
-    (hook-push mark-hook arg4) (carg4 mark-hook)
-    
-    (hook-push mouse-drag-hook arg6) (carg6 mouse-drag-hook)
-    (hook-push mouse-press-hook arg6) (carg6 mouse-press-hook)
-    
-    (hook-push enved-hook arg5) (carg5 enved-hook)
-    (hook-push draw-mix-hook arg5) (carg5 draw-mix-hook)
-    
-    (reset-almost-all-hooks)
+
     (for-each 
      (lambda (n) 
        (if (and (not (null? (hook-functions n)))
@@ -30526,19 +30415,19 @@ EDITS: 2
       (set! (hook-functions (edit-hook ind 0)) '())
       (hook-push (edit-hook ind 0) (lambda (hook) (set! (hook 'result) #f)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (edit-hook ind 0))))))))
-	(if (not (string=? str "((lambda () #f))"))
+	(if (not (string=? str "((lambda (hook) (set! (hook 'result) #f)))"))
 	    (snd-display #__line__ ";edit-hook: ~A?" str)))
       (set! (hook-functions (edit-hook ind 0)) '())
       (set! (hook-functions (after-edit-hook ind 0)) '())
       (hook-push (after-edit-hook ind 0) (lambda (hook) (set! (hook 'result) #f)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (after-edit-hook ind 0))))))))
-	(if (not (string=? str "((lambda () #f))"))
+	(if (not (string=? str "((lambda (hook) (set! (hook 'result) #f)))"))
 	    (snd-display #__line__ ";after-edit-hook: ~A?" str)))
       (set! (hook-functions (after-edit-hook ind 0)) '())
       (set! (hook-functions (undo-hook ind 0)) '())
       (hook-push (undo-hook ind 0) (lambda (hook) (set! (hook 'result) #f)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (undo-hook ind 0))))))))
-	(if (not (string=? str "((lambda () #f))"))
+	(if (not (string=? str "((lambda (hook) (set! (hook 'result) #f)))"))
 	    (snd-display #__line__ ";undo-hook: ~A?" str)))
       (set! (hook-functions (undo-hook ind 0)) '())
       (let ((calls 0))
@@ -30607,10 +30496,10 @@ EDITS: 2
 			 (header-type ind) (data-format ind) (chans ind) (srate ind) (frames ind)))
 	(close-sound ind)
 	(hook-append open-raw-sound-hook
-		     (lambda (file choice)
-		       (if (not (equal? choice (list 2 44100 mus-mulaw)))
-			   (snd-display #__line__ ";open-raw-sound-hook 2: ~A" choice))
-		       (list 1 22050 mus-lint)))
+		     (lambda (hook)
+		       (if (not (equal? (hook 'state) (list 2 44100 mus-mulaw)))
+			   (snd-display #__line__ ";open-raw-sound-hook 2: ~A" (hook 'state)))
+		       (set! (hook 'result) (list 1 22050 mus-lint))))
 	
 	(set! ind (open-sound "test.snd"))
 	(if (or (not (= (header-type ind) mus-raw))
@@ -30999,9 +30888,8 @@ EDITS: 2
 	    (snd-display #__line__ ";snd-error-hook saw: ~A" se))
 	(set! (hook-functions snd-error-hook) '()))
       
-      (hook-push before-exit-hook (lambda (hook) (set! (hook 'result) #f)))
       (hook-push before-exit-hook (lambda (hook) (set! (hook 'result) #t)))
-      (hook-push exit-hook (lambda (hook) (set! (hook 'result) #f)))
+      (hook-push exit-hook (lambda (hook) #f))
       (exit)
       (set! (hook-functions exit-hook) '())
       (set! (hook-functions before-exit-hook) '())
@@ -31039,41 +30927,6 @@ EDITS: 2
       (if (not cl) (snd-display #__line__ ";close-hook not called?"))
       (set! (hook-functions close-hook) '())
       (close-sound other))
-    
-    (hook-push print-hook (lambda (hook)
-			    (let ((str (hook 'text)))
-			      (if (and (char=? (str 0) #\#) 
-				       (or (and (= (print-length) 30) ; test 9
-						(not (string=? str "#(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ...)")))
-					   (and (= (print-length) 12) ; just test 13
-						(not (string=? str "#(0 0 0 0 0 0 0 0 0 0 0 0 ...)")))))
-				  (snd-display #__line__ ";vector abbreviation: ~A" str))
-			      (set! (hook 'result) #f))))
-    (let ((v (make-vector 128 0)))
-      (snd-print v)
-      (set! (hook-functions print-hook) '()))
-    
-					;      (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "auto-update test"))
-					;	    (ind1 (new-sound "fmv1.snd" mus-next mus-bshort 22050 1 "auto-update test"))
-					;	    (old-update (auto-update)))
-					;	(pad-channel 0 1000 ind 0)
-					;	(pad-channel 0 1000 ind1 0)
-					;	(save-sound ind)
-					;	(save-sound ind1)
-					;	(set! (auto-update) #t)
-					;	(sleep 1) ; make sure write dates differ(!)
-					;	(system "cp oboe.snd fmv1.snd") ; ind1 needs auto-update now
-					;	(set-sample 100 0.55 ind 0 #f)
-					;	(if (fneq (sample 100 ind 0) 0.55) (snd-display #__line__ ";set-sample: ~A" (sample 100 ind 0)))
-					;	(save-sound ind) ; this should cause auto-update scan of all files
-					;	(set! ind1 (find-sound "fmv1.snd")) ; hmmm auto-update can change any file's index!
-					;	(if (not (= (frames ind1) (mus-sound-frames "oboe.snd")))
-					;	    (snd-display #__line__ ";fmv1 after update: ~A" (frames ind1)))
-					;	(set! (auto-update) old-update)
-					;	(close-sound ind)
-					;	(close-sound ind1)
-					;	(delete-file "fmv.snd")
-					;	(delete-file "fmv1.snd"))
     
     (if (not (provided? 'alsa))
 	(let ((in1 (open-sound "oboe.snd"))
@@ -43186,7 +43039,6 @@ EDITS: 1
 		(let ((comments (show-comments ind1 0)))
 		  (update-time-graph)
 		  (if (null? comments) (snd-display #__line__ ";add-comment failed?")))
-		(display-db ind1 0)
 		(display-samps-in-red ind1 0)
 		(update-time-graph)
 		(catch #t (lambda () (show-greeting ind1 0)) (lambda args args))

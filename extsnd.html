@@ -2144,7 +2144,7 @@ so you can write preliminary stuff via this hook, then instruct Snd not to clobb
 <pre class="indented">
 (hook-push <em class=red>before-save-state-hook</em>
   (lambda (hook) 
-    (call-with-output-file (hook 'name)</span>
+    (call-with-output-file (hook 'name)
       (lambda (p)
         (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> p ";this comment will be at the top of the saved state file.~%~%")))
     (set! (hook 'result) #t)))
@@ -2938,7 +2938,7 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 </pre>
 
 <p>This hook is called upon mus-error.
-If its functions return #t, Snd ignores the error (it assumes you've handled it via the hook).
+If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
 This hook is used in <a href="sndscm.html#playsound">play-sound</a> in play.scm to flush an error message 
 that the Snd ALSA support code generates (or used to generate).
 Both mus_error and mus_print run this hook; in the mus_print case, the 'type' is mus-no-error (0).
@@ -3050,7 +3050,7 @@ on-going list result as the 'state (the empty list is the default).
 <pre class="indented">
 (hook-push <em class=red>open-raw-sound-hook</em> 
   (lambda (hook) 
-    (set! (hook 'result) (list 1 44100 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-lshort</a>)))
+    (set! (hook 'result) (list 1 44100 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-lshort</a>))))
 </pre>
 
 <p>Return '() to accept all the current raw header defaults; return #f to fallback on the Raw File Dialog.
@@ -3295,8 +3295,6 @@ found (this code has to be in the ~/.snd_s7 init file):
 
 
 
-
-<!-- HERE -->
 <!-- start-playing-hook -->
 <pre class="indented">
 <em class=def id="startplayinghook">start-playing-hook</em> (snd)
@@ -3310,18 +3308,15 @@ selection is active:
 
 <pre class="indented">
 (hook-push <em class=red>start-playing-hook</em>
-  (lambda (snd)
+  (lambda (hook)
     (if (and (<a class=quiet href="#selectionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionok_tip)">selection?</a>)
-	     (<a class=quiet href="#selectionmember" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionmember_tip)">selection-member?</a> snd))
+	     (<a class=quiet href="#selectionmember" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionmember_tip)">selection-member?</a> (hook 'snd)))
 	(begin
 	  (play (selection))
-	  #t) ; there's a selection so don't play the entire sound
-	#f))) ; no selection, so go ahead and play it all
+	  (set! (hook 'result) #t))))) ; there's a selection so don't play the entire sound
 </pre>
-
-<p>See also <a href="sndscm.html#reportmarknames">report-mark-names</a> in marks.scm.
-</p>
 <div class="spacer"></div>
+
 
 
 <!-- start-playing-selection-hook -->
@@ -3335,6 +3330,7 @@ If its function returns #t, Snd does not play the selection.
 <div class="spacer"></div>
 
 
+
 <!-- stop-dac-hook -->
 <pre class="indented">
 <em class=def id="stopdachook">stop-dac-hook</em> ()
@@ -3344,6 +3340,7 @@ If its function returns #t, Snd does not play the selection.
 It is used by <a href="sndscm.html#withlevelmeters">with-level-meters</a> to start draining away the red bubble in the VU meter.
 </p>
 <div class="spacer"></div>
+
 
 
 <!-- stop-playing-hook -->
@@ -3374,7 +3371,7 @@ It is used by <a href="sndscm.html#withlevelmeters">with-level-meters</a> to sta
 <p>update-hook is called just before a sound is updated ("update" means the sound is re-read from the disk, flushing the current version; this
 is useful if you overwrite a sound file with some other program, while viewing it in Snd). 
 The update process can be triggered by a variety of situations, not just by <a href="#updatesound">update-sound</a>. 
-The hook is passed the sound's index.  If its function returns #t, the update is cancelled (this is not 
+The hook is passed the sound's index.  If it returns #t, the update is cancelled (this is not 
 recommended!); if it returns a procedure of one argument, that procedure is called upon 
 completion of the update operation; its argument is the (possibly different) sound. 
 Snd tries to maintain the index across the update, but if you change the number of channels 
@@ -3384,11 +3381,10 @@ the returned procedure to make sure the mark pane is reactivated right away when
 
 <pre class="indented">
 (hook-push <em class=red>update-hook</em>
-  (lambda (snd-about-to-be-updated)
-    ;; this function called just before update
-    (lambda (updated-snd)
-      ;; this code executed when update is complete
-      (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "ok!"))))
+  (lambda (hook)             
+    (set! (hook 'result) 
+      (lambda (updated-snd)  ; this code executed when update is complete
+        (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "ok!")))))
 </pre>
 
 <p>I use update-hook to make sure the y axis bounds reflect the new maxamp, if it is greater than 1.0:
@@ -3396,41 +3392,25 @@ the returned procedure to make sure the mark pane is reactivated right away when
 
 <pre class="indented">
 (hook-push <em class=red>update-hook</em>
-  (lambda (old-snd)
-    (lambda (snd)
-      (do ((i 0 (+ 1 i)))
-	  ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd)))
-	(let ((mx (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> snd i)))
-	  (if (&gt; mx 1.0)
-  	      (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list (- mx) mx))
-	      (if (and (&gt; (cadr (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd)) 1.0) ; previous (pre-update) version was &gt; 1.0
-		       (&lt;= mx 1.0))                  ; but current is not, so reset axes
-		  (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list -1.0 1.0)))))))))
+  (lambda (hook)
+    (let ((old-snd (hook 'snd)))  ; (hook 'snd) is the sound about to be updated
+      (set (hook 'result) 
+           (lambda (snd)
+              (do ((i 0 (+ 1 i)))
+	          ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd)))
+	        (let ((mx (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> snd i)))
+	        (if (&gt; mx 1.0)
+  	            (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list (- mx) mx))
+	            (if (and (&gt; (cadr (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> old-snd)) 1.0) ; previous (pre-update) version was &gt; 1.0
+		             (&lt;= mx 1.0))                      ; but current is not, so reset axes
+		        (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list -1.0 1.0)))))))))))
 </pre>
-
-<p>Say we're editing a sound in several different windows, and want to save and re-apply any
-edits we may have in the other windows when we save the sound from one window:
-</p>
-
-<pre class="indented">
-(let ((eds #f))
-  (hook-push <em class=red>update-hook</em>
-	     (lambda (cursnd)     ; called before actual update &mdash; save our edits
-	       (set! eds (<a href="#editlisttofunction">edit-list-&gt;function</a> cursnd 0))
-	       (lambda (newsnd)   ; called after update &mdash; reapply our edits
-		 (if eds (eds newsnd 0))))))
-</pre>
-
-<p>Actually this only works if there are just two windows on the same (mono) sound.  I suppose for
-trickier cases, we could set up an association list with the old sound ("cursnd" above) and its edits,
-but it's probably better to bind some keystroke to a function that performs the same operations.
-</p>
 <div class="spacer"></div>
 
 
 <!-- view-files-select-hook -->
 <pre class="indented">
-<em class=def id="viewfilesselecthook">view-files-select-hook</em> (dialog filename)
+<em class=def id="viewfilesselecthook">view-files-select-hook</em> (dialog name)
 </pre>
 
 <p>This hook is called each time a file is selected in a View Files dialog's files list.
@@ -3448,13 +3428,13 @@ but it's probably better to bind some keystroke to a function that performs the 
 </pre>
 
 <p>These are functions that return the hooks in question associated with the specified channel.
-The functions on these hooks are thunks &mdash; they should take no arguments.
+In Ruby and Forth the functions on these hooks are thunks &mdash; they should take no arguments.
 edit-hook is called just before any attempt to edit the channel's data; if it returns #t,
 the edit is cancelled. So,
 </p>
 
 <pre class="indented">
-Scheme: (hook-push (edit-hook snd chn) (lambda () #t))
+Scheme: (hook-push (edit-hook hook) (lambda (hook) (set! (hook 'result) #t)))
 Ruby:   edit_hook(snd, chn).add_hook!(\"stop-edit\") do | | true end
 Forth:  snd chn edit-hook lambda: &lt;{ }&gt; #t ; add-hook!
 </pre>
@@ -3474,16 +3454,16 @@ up protected portions of the edit history:
   "(protect snd chn) disallows any edits before the current one"
   (let* ((edit-pos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn))
          (hook (<em class=red>edit-hook</em> snd chn)))
-    (hook-clear hook)
-    (hook-push hook 
-      (lambda ()
-        (let ((val (&lt; (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn) edit-pos)))
-          (if val (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> "protected"))
-          val)))))
+    (set! (hook functions hook)
+      (list 
+        (lambda ()
+          (let ((val (&lt; (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> snd chn) edit-pos)))
+            (if val (<a class=quiet href="#statusreport" onmouseout="UnTip()" onmouseover="Tip(extsnd_statusreport_tip)">status-report</a> "protected"))
+            (set! (hook 'result) val)))))))
 
 (define* (unprotect snd chn)
   "(unprotect snd chn) allows edits at any edit history position"
-  (hook-clear (<em class=red>edit-hook</em> snd chn)))
+  (set! (hook-functions (<em class=red>edit-hook</em> snd chn)) ()))
 </pre>
 
 <p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
@@ -7556,9 +7536,9 @@ The following code sets the 'unite' button if the current sound has more than 4 
 
 <pre class="indented">
 (hook-push <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
-  (lambda (snd)
-    (if (&gt; (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd) 4)
-        (set! (<em class=red>channel-style</em> snd) <a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>))))
+  (lambda (hook)
+    (if (&gt; (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> (hook 'snd)) 4)
+        (set! (<em class=red>channel-style</em> (hook 'snd)) <a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>))))
 </pre>
 <div class="separator"></div>
 
@@ -7886,10 +7866,10 @@ these files automatically in Snd.  Perhaps the simplest is to use one of the ope
 
 <pre class="indented">
 (hook-push <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
-  (lambda (snd) 
+  (lambda (hook) 
     ;; this could also (alternatively) set the y-bounds as above
-    (if (= (<em class=red>data-format</em> snd) mus-lint)
-        (set! (<em class=red>data-format</em> snd) mus-lintn))))
+    (if (= (<em class=red>data-format</em> (hook 'snd)) mus-lint)
+        (set! (<em class=red>data-format</em> (hook 'snd)) mus-lintn))))
 </pre>
 
 <p>or (an alternative that sets the underlying database entry, rather than the current in-Snd choice):
@@ -7897,10 +7877,9 @@ these files automatically in Snd.  Perhaps the simplest is to use one of the ope
 
 <pre class="indented">
 (hook-push <a class=quiet href="#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a> 
-  (lambda (name)
-    (if (= (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> name) mus-lint)
-        (set! (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> name) mus-lintn))
-    #f))
+  (lambda (hook)
+    (if (= (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> (hook 'name)) mus-lint)
+        (set! (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> (hook 'name)) mus-lintn))))
 </pre>
 
 <p>If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatesound_tip)">update-sound</a>).
@@ -8470,7 +8449,7 @@ the lisp-graph-hook, where the redisplay is automatic.
       (<a class=quiet href="#vctmultiply" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmultiply_tip)">vct-multiply!</a> data data)
       (<em class=red>graph</em> data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
 
-(hook-push <a href="#lispgraphhook">lisp-graph-hook</a> display-energy)
+(hook-push <a href="#lispgraphhook">lisp-graph-hook</a> (lambda (hook) (display-energy (hook 'snd) (hook 'chn))))
 </pre>
 <img class="indented" src="pix/energy.png" alt="picture of examp.scm in action">
 <div class="separator"></div>
@@ -9102,6 +9081,7 @@ giving the correct values in the call to open-raw-sound.
 <div class="separator"></div>
 
 
+
 <!-- open-sound -->
 <pre class="indented">
 <em class=def id="opensound">open-sound</em> filename
@@ -9196,8 +9176,9 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 </p>
 
 <pre class="indented">
-(hook-push <a class=quiet href="#aftertransformhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftertransformhook_tip)">after-transform-hook</a> (lambda (a b c) 
-                                  (<em class=red>peaks</em>))) ; post a detailed list of peaks after each FFT
+(hook-push <a class=quiet href="#aftertransformhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftertransformhook_tip)">after-transform-hook</a> 
+  (lambda (hook)
+    (<em class=red>peaks</em>))) ; post a detailed list of peaks after each FFT
 </pre>
 <div class="separator"></div>
 
@@ -9283,8 +9264,8 @@ And here we play from the cursor with a moving ("tracking") cursor:
   (let ((old-tracking (<a class=quiet href="#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>)))
     (set! (<a class=quiet href="#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) #t)
     (hook-push <a class=quiet href="#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
-	       (lambda (snd)
-		 (set! (<a class=quiet href="#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
+      (lambda (hook)
+        (set! (<a class=quiet href="#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
     (<em class=red>play</em> (selected-sound) (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))))
 </pre>
 
@@ -15467,7 +15448,9 @@ currently in the time-domain graph:
                (free-cairo cr)))))
      comments)))
 
-(hook-push <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> show-comments)
+(hook-push <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a>
+  (lambda (hook) 
+    (show-comments (hook 'snd) (hook 'chn))))
 </pre>
 <div class="spacer"></div>
 
@@ -15629,7 +15612,9 @@ The result can be used in the lisp graph:
 	            0.0 60.0
 	            snd chn))))))
 
-(hook-push <a class=quiet href="#lispgraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_lispgraphhook_tip)">lisp-graph-hook</a> display-db)
+(hook-push <a class=quiet href="#lispgraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_lispgraphhook_tip)">lisp-graph-hook</a> 
+  (lambda (hook)
+    (display-db (hook 'snd) (hook 'chn))))
 </pre>
 
 <p>Here we are taking whatever is displayed in the time domain, and

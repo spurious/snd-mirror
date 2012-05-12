@@ -275,7 +275,9 @@
   "(superimpose-ffts hook) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"
   (let ((maxsync (apply max (map sync (sounds))))
 	(snd (hook 'snd))
-	(chn (hook 'chn)))
+	(chn (hook 'chn))
+	(y0 (hook 'y0))
+	(y1 (hook 'y1)))
     (if (and (> (sync snd) 0)
 	     (> (right-sample snd chn) (left-sample snd chn))
 	     (equal? snd (integer->sound (apply min (map (lambda (n) 
@@ -298,8 +300,7 @@
 						     (spectr (make-vct (/ fftlen 2))))
 						 (list (vct-add! spectr (spectrum fdr fdi #f 2))))))))
 		 (sounds))
-		(graph ffts "spectra" 0.0 0.5 y0 y1 snd chn)))))
-    #f))
+		(graph ffts "spectra" 0.0 0.5 y0 y1 snd chn)))))))
 
 ;(hook-push graph-hook superimpose-ffts)
 

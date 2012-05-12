@@ -11,7 +11,7 @@
 	mark-click-hook mark-drag-hook name-click-hook open-hook help-hook before-save-state-hook
 	output-comment-hook play-hook snd-error-hook snd-warning-hook start-hook start-playing-hook stop-playing-hook
 	mouse-enter-listener-hook mouse-leave-listener-hook select-sound-hook
-	print-hook exit-hook output-name-hook during-open-hook after-transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
+	exit-hook output-name-hook during-open-hook after-transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
 	graph-hook key-press-hook mouse-drag-hook mouse-press-hook enved-hook read-hook mouse-click-hook new-widget-hook
 	mark-hook view-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-controls-hook draw-mark-hook
 	bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
@@ -33,6 +33,20 @@
        (set! (hook-functions (after-edit-hook snd chn)) '())
        (set! (hook-functions (undo-hook snd chn)) '())))
    (sounds)))
+
+
+(define (add-to-all-hook-inits func)
+  (for-each 
+   (lambda (n)
+     (set! ((procedure-environment n) 'init) (list func ((procedure-environment n) 'init))))
+   (snd-hooks)))
+
+(define (add-to-all-hook-ends func)
+  (for-each 
+   (lambda (n)
+     (set! ((procedure-environment n) 'end) (list func ((procedure-environment n) 'end))))
+   (snd-hooks)))
+
 
 
 ;;; -------- describe-hook

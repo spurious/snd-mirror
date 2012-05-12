@@ -443,8 +443,8 @@
      (marks sndf))
     (string-append str (format #f "  m)~%"))))
 		   
-(hook-push output-comment-hook (lambda (hook) (marks->string (selected-sound))))
-(hook-push after-open-hook (lambda (hook) (eval-header (hook 'snd))))
+(hook-push output-comment-hook (lambda (hook) (set! (hook 'result) (marks->string (selected-sound)))))
+(hook-push after-open-hook (lambda (hook) (set! (hook 'result) (eval-header (hook 'snd)))))
 |#
 
 

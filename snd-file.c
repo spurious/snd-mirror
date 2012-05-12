@@ -6115,7 +6115,7 @@ the newly updated sound may have a different index."
 
   update_hook = XEN_DEFINE_HOOK(S_update_hook, "(make-hook 'snd)", 1, H_update_hook);
 
-  #define H_view_files_select_hook S_view_files_select_hook "(filename): called when a file is selected in the \
+  #define H_view_files_select_hook S_view_files_select_hook "(dialog name): called when a file is selected in the \
 files list of the View Files dialog.  If it returns " PROC_TRUE ", the default action, opening the file, is omitted."
 
   view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, "(make-hook 'dialog 'name)", 2, H_view_files_select_hook);

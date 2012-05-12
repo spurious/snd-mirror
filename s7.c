@@ -3108,7 +3108,7 @@ static void stack_reset(s7_scheme *sc)
 
 
 #define stack_code(Stack, Loc)        vector_element(Stack, Loc - 3)
-#define stack_environment(Stack, Loc) vector_element(Stack, Loc - 2)
+/* #define stack_environment(Stack, Loc) vector_element(Stack, Loc - 2) */
 #define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
 #define stack_op(Stack, Loc)          ((opcode_t)(vector_element(Stack, Loc)))
 
@@ -54744,7 +54744,7 @@ s7_scheme *s7_init(void)
 	                        (body ())                                                  \n\
 	                        (end ()))                                                  \n\
                             (apply lambda* args                                            \n\
-                              '(let ((result #<unspecified>)) ; (format *stderr* \"args: ~S~%\" args)                            \n\
+                              '(let ((result #<unspecified>))                              \n\
                                  (let ((e (current-environment)))                          \n\
                                    (dynamic-wind                                           \n\
 	                             (lambda () (for-each (lambda (f) (f e)) init))        \n\
@@ -54779,8 +54779,6 @@ s7_scheme *s7_init(void)
                                lst))))))");
 
   /* TODO: documentation strings, add-to-hook? clear-hook? hook-result?
-   * TODO: all html examples [these all need to keep track of and/or/concat cases, and progn][and match examps/arg names]
-   * TODO: remember to check the Snd watchers.
    *
    * file local var could be a macro expanding to
    *   (if (not (defined? 'local-var)) (define local-var new-value))

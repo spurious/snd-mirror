@@ -16,7 +16,7 @@ static bool ignore_mus_error(int type, char *msg)
 			 XEN_LIST_2(C_TO_XEN_INT(type), 
 				    C_TO_XEN_STRING(msg)),
 			 S_mus_error_hook);
-  return(XEN_NOT_FALSE_P(result));
+  return(XEN_TRUE_P(result));
 }
 
 #if HAVE_SETJMP_H
