@@ -63462,7 +63462,16 @@ but it's the printout that is at fault:
 (test (/ 0/3) 'error)
 (test (/ 0 1 "hi") 'error)
 (test (/ 2/3 0) 'error)
-
+(test (/ 0 0) 'error)
+(test (/ 1 0) 'error)
+(test (/ 0 0.0) 'error)
+(test (/ 1 0.0) 'error)
+(test (/ 0.0 0.0) 'error)
+(test (/ 1.0 0.0) 'error)
+(test (/ 0 1 2 3 0 4) 'error)
+(test (/ 0.0 1 2.0 3 0.0 4) 'error)
+(let ((NaN 1/0)) (test (/ 0 1 NaN 2 0 3) 'error)) ; i.e. divide by zero takes precedence over the NaN
+(let ((NaN 1/0)) (test (/ 0.0 1.0 NaN 0 1+i) 'error))
 
 (if with-bignums
     (let ((old-prec (bignum-precision)))

@@ -11161,6 +11161,8 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	    {
 	      if (!is_number(car(p)))
 		return(s7_wrong_type_arg_error(sc, "/", position_of(p, args), car(p), "a number"));
+	      if (s7_is_zero(car(p)))
+		return(division_by_zero_error(sc, "/", args));
 	      if (type(car(p)) > T_RATIO)
 		{
 		  return_real_zero = true;		  
@@ -11355,6 +11357,8 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	    {
 	      if (!is_number(car(p)))
 		return(s7_wrong_type_arg_error(sc, "/", position_of(p, args), car(p), "a number"));
+	      if (s7_is_zero(car(p)))
+		return(division_by_zero_error(sc, "/", args));
 	      if ((type(car(p)) == T_REAL) && 
 		  (is_NaN(real(car(p)))))
 		return_nan = true;
@@ -54777,6 +54781,8 @@ s7_scheme *s7_init(void)
                                            name))                          \n\
                                      f))                                   \n\
                                lst))))))");
+  /* if the error checks are removed, s7test will be very unhappy 
+   */
 
   /* TODO: documentation strings, add-to-hook? clear-hook? hook-result?
    *
@@ -54788,7 +54794,32 @@ s7_scheme *s7_init(void)
    *   (set! local-var (car (symbol-access 'local-var))) ; or pop
    * 
    * TODO: looping-catch, reraise error + error expls in s7.html
-   * TODO: hook as method? -> before/after/around methods, *format-hook*?
+
+  (catch #t
+    (lambda ()
+      (catch 'division-by-zero
+	(lambda ()
+	  (/ 1 0))
+	(lambda args
+	  (format #t "inner: ~A~%" args)
+	  (apply error args))))
+    (lambda args
+      (format #t "outer: ~A~%" args)))
+
+inner: (division-by-zero ("~A: division by zero, ~S" "/" (1 0)))
+outer: (division-by-zero (("~A: division by zero, ~S" "/" (1 0))))
+
+or 
+
+      (catch 'a-special-error
+	(lambda ()
+	  (error 'a-special-error "this is an error: ~A" "1/0"))
+	(lambda args
+	  (apply format #t (cadr args))))
+
+"this is an error: 1/0"
+
+   * TODO: hook as method? -> before/after/around methods, *format-hook*?  before/after-hooks collapsed into main?
    * TODO: export s7_list varargs, also maybe vector string etc [does every C have varargs now?]
    */
   
