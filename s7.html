@@ -4205,6 +4205,10 @@ adds:
 
 <div class="header" id="errors"><h4>error handling</h4></div>
 
+<pre class="indented">
+(error tag . info)           ; signal an error of type tag with addition information
+(catch tag body err)         ; if error of type tag signalled in body (a thunk), call err with tag and info
+</pre>
 
 <p>s7's error handling mimics that of Guile.  An error is signalled
 via the error function, and can be trapped and dealt with via <em class=def id="catch">catch</em>.
@@ -4335,6 +4339,25 @@ map-with-exit would be
 	     (division-by-zero 0)
 	     (else 123))
   (abs -1))
+</pre>
+
+<p>Along the same lines:
+</p>
+<pre class="indented">
+(define-macro (catch-if test func err)
+  (let ((args (gensym)))
+    `(catch #t
+       ,func
+       (lambda ,args
+	 (if (,test (car ,args))
+	     (apply ,err ,args)
+	     (apply error ,args)))))) ; if not caught, re-raise the same error
+
+(define-macro (catch-member lst func err)
+   `(catch-if (lambda (tag) (member tag ,lst)) ,func ,err))
+
+(define-macro (catch-while test fnc)
+  `(do () () (catch-if ,test ,fnc (lambda args #f))))
 </pre>
 </div>
 
@@ -5589,6 +5612,15 @@ g_io_channel_unref(channel);
 <p>If we accidentally get into an infinite loop in our REPL, we have to exit the program.
 See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook to the rescue!</a> below for two ways to fix this.
 </p>
+
+<p>Speaking of emacs, I have these lines in my ~/.emacs file:
+</p>
+
+<pre class="indented">
+(put 'with-environment 'scheme-indent-function 1)
+(put 'with-baffle 'scheme-indent-function 0)
+(put 'catch 'scheme-indent-function 1)
+</pre>
 
 
 

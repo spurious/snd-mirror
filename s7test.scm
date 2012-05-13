@@ -8364,6 +8364,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (let ((h (make-hook 'x)))
   (test (procedure? h) #t)
+  (test (procedure-arity h) '(0 1 #f)) ; apply lambda* to ('x)
+  (test (eq? h h) #t)
+  (test (eqv? h h) #t)
+  (test (equal? h h) #t)
+  (test (morally-equal? h h) #t)
+  (let ((h1 (copy h)))
+    (test (eq? h h1) #t)
+    (test (morally-equal? h h1) #t))
   (test (hook-functions h) ())
   (test (h) #<unspecified>)
   (test (h 1) #<unspecified>)
@@ -8386,6 +8394,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (let ((h (make-hook)))
   (test (procedure? h) #t)
+  (test (procedure-arity h) '(0 0 #f))
   (test (hook-functions h) ())
   (test (h) #<unspecified>)
   (test (h 1) 'error)
@@ -41725,6 +41734,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (quotient 3 0) 'error)
 (test (quotient) 'error)
 (test (quotient 3 1+i) 'error)
+(test (quotient 3 0.0) 'error)
 
 
 
@@ -42249,6 +42259,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (remainder) 'error)
 (test (remainder 2.3 1.0+0.1i) 'error)
 (test (remainder 3.0+2.3i 3) 'error)
+(test (remainder 3 0.0) 'error)
 
 
 (if with-bignums

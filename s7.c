@@ -54785,42 +54785,13 @@ s7_scheme *s7_init(void)
    */
 
   /* TODO: documentation strings, add-to-hook? clear-hook? hook-result?
-   *
-   * file local var could be a macro expanding to
-   *   (if (not (defined? 'local-var)) (define local-var new-value))
-   *   (set-car! (symbol-access 'local-var) local-var) ; or push so we can load other files in this one
-   *   (set! local-var new-value) 
-   *   ....
-   *   (set! local-var (car (symbol-access 'local-var))) ; or pop
-   * 
-   * TODO: looping-catch, reraise error + error expls in s7.html
-
-  (catch #t
-    (lambda ()
-      (catch 'division-by-zero
-	(lambda ()
-	  (/ 1 0))
-	(lambda args
-	  (format #t "inner: ~A~%" args)
-	  (apply error args))))
-    (lambda args
-      (format #t "outer: ~A~%" args)))
-
-inner: (division-by-zero ("~A: division by zero, ~S" "/" (1 0)))
-outer: (division-by-zero (("~A: division by zero, ~S" "/" (1 0))))
-
-or 
-
-      (catch 'a-special-error
-	(lambda ()
-	  (error 'a-special-error "this is an error: ~A" "1/0"))
-	(lambda args
-	  (apply format #t (cadr args))))
-
-"this is an error: 1/0"
-
-   * TODO: hook as method? -> before/after/around methods, *format-hook*?  before/after-hooks collapsed into main?
+   * TODO: hook as method? -> before/after/around methods, before/after-hooks collapsed into main?
+   *       or *formatters* along the lines of *#readers* = list of (ctrl-char (lambda (ctl-string  arg) ...)) -> string
+   *          when is this useful?
+   *       also emacs info?
    * TODO: export s7_list varargs, also maybe vector string etc [does every C have varargs now?]
+   * TODO: what if catch tag hook ...?  catch tag named-let ...? or vice versa, dynamic-wind hook...? call-with-* hook?
+   *   check also call/cc, map/for-each with hook
    */
   
   /* -------- *load-hook* -------- */
