@@ -1063,7 +1063,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
   if (XEN_HOOKED(open_raw_sound_hook))
     {
 #if HAVE_SCHEME
-      res = s7_call(s7, open_raw_sound_hook, s7_cons(s7, C_TO_XEN_STRING(fullname), s7_cons(s7, XEN_FALSE, XEN_EMPTY_LIST)));
+      res = s7_call(s7, open_raw_sound_hook, s7_list(s7, 2, C_TO_XEN_STRING(fullname), XEN_FALSE));
 #else
       XEN arg1, procs;
       procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);

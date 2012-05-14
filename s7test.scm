@@ -8256,9 +8256,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 ;;; --------------------------------------------------------------------------------
 ;;; HOOKS
+;;; make-hook
+;;; hook-functions
 ;;; --------------------------------------------------------------------------------
-
-;;; built-in: make-hook hook-functions *load-hook* *error-hook* *unbound-variable-hook*
 
 (for-each
  (lambda (arg)
@@ -8395,6 +8395,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (let ((h (make-hook)))
   (test (procedure? h) #t)
   (test (procedure-arity h) '(0 0 #f))
+  (test (procedure-name h) "#<closure>")
+  (test (procedure-documentation h) "")
   (test (hook-functions h) ())
   (test (h) #<unspecified>)
   (test (h 1) 'error)
@@ -8517,6 +8519,19 @@ zzy" (lambda (p) (eval (read p))))) 32)
 			       (set! endx (* 2 (hook 'result))))))
 		 (h 1)))))
     (test (list val endx) '(32 2)))
+  )
+
+(let ((h (make-hook)))
+  (hook-push h (lambda (hook) (set! (hook 'result) 32)))
+  (test (dynamic-wind h h h) 32)
+  (test (catch h h h) 32)
+  )
+
+(let ((h (make-hook 'x)))
+  (hook-push h (lambda (hook) (set! (hook 'result) (hook 'x))))
+  (test (continuation? (call/cc h)) #t)
+  (set! (hook-functions h) (list (lambda (hook) (set! (hook 'result) (+ 1 (hook 'x))))))
+  (test (map h '(1 2 3)) '(2 3 4))
   )
 
 
@@ -12602,7 +12617,7 @@ so anything that quotes ` is not going to equal quote quasiquote
 (test (let () (define (hi a) (+ 1 a)) (object->string hi)) "hi")
 (test (let () (define* (hi a) (+ 1 a)) (object->string hi)) "hi")
 (test (object->string dynamic-wind) "dynamic-wind")
-(test (object->string (make-procedure-with-setter (lambda () 1) (lambda (val) val))) "#<procedure-with-setter>")
+(test (object->string (make-procedure-with-setter (lambda () 1) (lambda (val) val))) "#<closure>")
 (test (object->string object->string) "object->string")
 (test (object->string 'if) "if")
 (test (object->string begin) "begin")
@@ -23511,7 +23526,7 @@ func
   (test (hi (1 2 3)) 6))
 
 
-;;; TODO: #\; reader: 
+;;; #\; reader: 
 ;;; (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 ;;; :(eval-string "(+ #; 1 2 3 4)") -> 9
 ;;; but (eval-string "(+ #; #; 1 2 3 4)") is also 9?
@@ -25671,6 +25686,30 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (make-procedure-with-setter (lambda () 1) (lambda (a) a) (lambda () 2)) 'error)
 (test (make-procedure-with-setter (lambda () 1) 2) 'error)
 
+(for-each
+ (lambda (arg)
+   (test (make-procedure-with-setter arg (lambda () #f)) 'error)
+   (test (make-procedure-with-setter (lambda () #f) arg) 'error))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (procedure-with-setter? arg) #f))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) abs (lambda () #f) (list (lambda () #f) (lambda (val) val)) (list 1 2 3) '(1 . 2) #<eof> #<unspecified> #<undefined>))
+
+(let ((pws (make-procedure-with-setter vector-ref vector-set!)))
+  (let ((v (vector 1 2 3)))
+    (test (procedure-with-setter? pws) #t)
+    (test (procedure-with-setter? pws pws) 'error)
+    (test (pws v 1) 2)
+    (set! (pws v 1) 32)
+    (test (pws v 1) 32)
+    (test (procedure-arity pws) '(2 0 #t))
+    (test (procedure-arity (procedure-setter pws)) '(3 0 #t))))
+
+(test (procedure-with-setter?) 'error)
+
+#|
 (let ()
   (define pws-args (make-procedure-with-setter
 		    (lambda args args)
@@ -25690,29 +25729,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (set! l2 (pws1))
 	  (test lst '(1 2 3)))))))
 
-(for-each
- (lambda (arg)
-   (test (make-procedure-with-setter arg (lambda () #f)) 'error)
-   (test (make-procedure-with-setter (lambda () #f) arg) 'error))
- (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
-
-(let ((pws (make-procedure-with-setter vector-ref vector-set!)))
-  (let ((v (vector 1 2 3)))
-    (test (procedure-with-setter? pws) #t)
-    (test (procedure-with-setter? pws pws) 'error)
-    (test (pws v 1) 2)
-    (set! (pws v 1) 32)
-    (test (pws v 1) 32)
-    (test (procedure-arity pws) '(2 0 #t))
-    (test (procedure-arity (procedure-setter pws)) '(3 0 #t))))
-
-(for-each
- (lambda (arg)
-   (test (procedure-with-setter? arg) #f))
- (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) abs (lambda () #f) (list (lambda () #f) (lambda (val) val)) (list 1 2 3) '(1 . 2) #<eof> #<unspecified> #<undefined>))
-
-(test (procedure-with-setter?) 'error)
 (test (call-with-exit (lambda (return) (procedure-with-setter? return))) #f)
+|#
+
 (test (procedure-with-setter? quasiquote) #f)
 (test (procedure-with-setter? -s7-symbol-table-locked?) #t)
 (test (procedure-arity -s7-symbol-table-locked?) '(0 0 #f))

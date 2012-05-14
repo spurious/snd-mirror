@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.0"
-#define S7_DATE "11-May-12"
+#define S7_VERSION "2.1"
+#define S7_DATE "14-May-12"
 
 
 typedef long long int s7_Int;
@@ -289,6 +289,7 @@ s7_pointer s7_cddaar(s7_pointer p);
 
 bool s7_is_list(s7_scheme *sc, s7_pointer p);                                /* (list? p) -> (or (pair? p) (null? p)) */
 int s7_list_length(s7_scheme *sc, s7_pointer a);                             /* (length a) */
+s7_pointer s7_list(s7_scheme *sc, int num_values, ...);                      /* (list ...) */
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a);                          /* (reverse a) */
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b);             /* (append a b) */
 s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num);              /* (list-ref lst num) */
@@ -666,19 +667,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 					 int set_req_args, int set_opt_args,
 					 const char *documentation);
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj);
-s7_pointer s7_procedure_getter(s7_scheme *sc, s7_pointer obj);
-
-  /* a procedure_with_setter is an object that can be called either as a normal function,
-   *   or as the object of set!  There is an extended example in s7.html.  The 'getter'
-   *   is the normal (outside set!) function (normally a struct field reader of some sort),
-   *   and the 'setter' is the set! function (a field writer in most cases).
-   *
-   *   In the example in s7.html we have dax-x as the procedure-with-setter,
-   *     (dac-x obj)              returns the x field of obj
-   *     (set! (dac-x obj) value) sets that field to value
-   *   
-   * In the set! case, the new value is the last of the args passed to the setter.
-   */
+s7_pointer s7_procedure_set_setter(s7_scheme *sc, s7_pointer obj, s7_pointer setter);
 
 
 int s7_new_type(const char *name, 
@@ -782,7 +771,7 @@ void s7_mark_object(s7_pointer p);
  *    char=? char>=? char>? copy cos cosh dynamic-wind environment? eof-object? eval even? 
  *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
- *    integer-length keyword->symbol lcm list list->string list->vector list-tail log logand 
+ *    integer-length keyword->symbol lcm list->string list->vector list-tail log logand 
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memv min modulo nan? negative? not odd? outer-environment port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
@@ -802,7 +791,8 @@ void s7_mark_object(s7_pointer p);
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
- *
+ *								
+ * 14-May:    s7_list. s7_procedure_set_setter.  Removed s7_procedure_getter.
  * 11-May:    s7 2.0: hook implementation changed completely.
  *            s7_environment_ref|set.
  * 4-May:     *error-info* replaced by error-environment, and stacktrace has changed.

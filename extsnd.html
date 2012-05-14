@@ -2335,7 +2335,7 @@ check that 'reason' is 1, or perhaps 1, 3, or 6 (these read the external form of
 
 <!-- enved-hook -->
 <pre class="indented">
-<em class=def id="envedhook">enved-hook</em> (env point x y reason)
+<em class=def id="envedhook">enved-hook</em> (envelope point x y reason)
 </pre>
 
 <p>Each time a breakpoint is changed in the envelope editor, this hook 
@@ -2358,7 +2358,7 @@ and decay portions in the envelope editor, or use functions such as
                       (new-env (<em class=red>stretch-envelope</em> env old-x x)))
                  (set! (new-env (+ (* pt 2) 1)) y)
                  (set! (hook 'result) new-env)))))
-     (hook 'env) (hook 'point) (hook 'x) (hook 'y) (hook 'reason))))
+     (hook 'envelope) (hook 'point) (hook 'x) (hook 'y) (hook 'reason))))
 </pre>
 
 <p>In Forth/Ruby, if there are several functions on the hook, each gets the envelope

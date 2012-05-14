@@ -176,7 +176,7 @@ indented and on a sort of brownish background.
   <li><a href="#macros">define-macro</a>
   <li><a href="#constants">define-constant, symbol-access</a>
   <li><a href="#maketype1">make-type</a>
-  <li><a href="#pws">procedure-with-setter</a>
+  <li><a href="#pws">procedure-setter</a>
   <li><a href="#generalizedset">generalized set!</a>
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
   <li><a href="#hashtables">hash tables</a>
@@ -209,7 +209,7 @@ indented and on a sort of brownish background.
       <li><a href="#defvar">call a Scheme function from C, and get/set Scheme variable values in C</a>
       <li><a href="#juce">C++ and Juce</a>
       <li><a href="#sndlib">load sndlib using the XEN functions and macros</a>
-      <li><a href="#pwstype">add a new Scheme type and a procedure-with-setter</a>
+      <li><a href="#pwstype">add a new Scheme type and a procedure with a setter</a>
       <li><a href="#functionportexample">redirect display output to a C procedure</a>
       <li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
       <li><a href="#definestar1">C-side define* (s7_define_function_star)</a>
@@ -1311,7 +1311,7 @@ or in C; I wanted this many years ago in Snd).  The notification function is esp
 you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
 All of these cases modify
 the path between a symbol and its value.  
-s7 gives you a handle on that path via the procedure-with-setter <em class=def id="symbolaccess">symbol-access</em>.
+s7 gives you a handle on that path via <em class=def id="symbolaccess">symbol-access</em>.
 <code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
 changes them.  The symbol-accessor value is a list of three or more items, primarily the set, and bind functions, the second
 and third entries in the list respectively.
@@ -1732,11 +1732,16 @@ Here's an idle thought:
 
 
 
-<div class="header" id="pws"><h4>procedure-with-setter</h4></div>
+<div class="header" id="pws"><h4>procedure-setter</h4></div>
 
-<p>A <em class=def id="procedurewithsetter">procedure-with-setter</em> 
-consists of two functions, the "getter" and the "setter".The getter is called when the object is encountered as a function, and the setter when
-it is set:
+<pre class="indented">
+(<em class=def>procedure-setter</em> proc)
+(<em class=def id="procedurewithsetter">make-procedure-with-setter</em> proc setter)
+</pre>
+
+<p>Each function can have an associated setter, much like defsetf in CL.  As a convenience, there's also
+a way to associate the two functions under one name: make-procedure-with-setter.
+The setter is called when the procedure is the target of set!:
 </p>
 
 <pre class="indented">
@@ -1771,6 +1776,7 @@ it is set:
 32
 </pre>
 
+<!-- TODO: fix this
 <p>make-procedure-with-setter can add generalized set! support to any function:
 </p>
 
@@ -1790,8 +1796,10 @@ cadr
 
 <p>To get the setter from a procedure-with-setter (for procedure-arity for example),
 use procedure-setter.  If procedure-setter were settable, there would be no need
-for make-procedure-with-setter; hmmm.
+for make-procedure-with-setter; hmmm.  (This change is underway &mdash; soon make-procedure-with-setter
+will simply be a wrapper).
 </p>
+-->
 
 <blockquote>
 
@@ -1955,7 +1963,7 @@ Even better: "dilambda":
 <div class="header" id="generalizedset"><h4>applicable objects, generalized set!, generic functions</h4></div>
 
 
-<p>procedure-with-setters can be viewed as one generalization of set!.  Another
+<p>A procedure with a setter can be viewed as one generalization of set!.  Another
 treats objects as having predefined get and set functions.  In s7
 lists, strings, vectors, hash-tables, environments, and any cooperating C or Scheme-defined objects
 are both applicable and settable.  newLisp calls this implicit indexing, Gauche implements it
@@ -3814,10 +3822,7 @@ s7_gc_protect(s7, hook);
 </p>
 
 <pre class="indented">
-result = s7_call(s7, hook, 
-                     s7_cons(s7, s7_make_integer(s7, 1), 
-                                 s7_cons(s7, s7_make_integer(s7, 2), 
-                                             s7_nil(s7))));
+result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_integer(s7, 2)));
 </pre>
 
 
@@ -3844,7 +3849,7 @@ result = s7_call(s7, hook,
 Scheme function.
 procedure-documentation returns the documentation string associated with a procedure: the initial string in the
 function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
-procedure-setter returns the set function associated with a procedure (set-car! with car, for example).
+procedure-setter returns or sets the set function associated with a procedure (set-car! with car, for example).
 procedure-source returns the source, as a list, of a procedure. procedure-environment returns
 a procedure's environment.  procedure-name returns the procedure's name.
 </p>
@@ -4200,8 +4205,6 @@ adds:
 
 
 
-
-<!-- TODO: show how to signal an error -->
 
 <div class="header" id="errors"><h4>error handling</h4></div>
 
@@ -4905,7 +4908,6 @@ bind it to something else, which is asking for confusion).
 <li>remove the 4-way cxxxxr functions
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
-<li>replace procedure-with-setter with settable procedure-setter.
 </ul>
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
@@ -5865,7 +5867,7 @@ int main(int argc, char **argv)
 
 
 
-<div class="header" id="pwstype"><h4>Add a new Scheme type and procedure-with-setters</h4></div>
+<div class="header" id="pwstype"><h4>Add a new Scheme type and a procedure with a setter</h4></div>
 
 
 <div class="indented">
@@ -6246,9 +6248,7 @@ static s7_pointer plus(s7_scheme *sc, s7_pointer args)
   s7_pointer a, b;
   a = s7_car(args);
   b = s7_car(s7_cdr(args));
-  return(s7_cons(sc, s7_make_symbol(sc, "+"),  /* we are forming the list `(+ ,a ,b) */
-	   s7_cons(sc, a,
-	     s7_cons(sc, b, s7_nil(sc)))));
+  return(s7_list(sc, 3, s7_make_symbol(sc, "+"),  a, b));
 }
 
 int main(int argc, char **argv)
@@ -6489,13 +6489,7 @@ int main(int argc, char **argv)
   s7_define_variable(s7, "notified-var", s7_make_integer(s7, 0));
   <em class=red>s7_symbol_set_access</em>(s7,   /* set symbol-access of notified-var to (list #f notify-C #f) */
 		       s7_make_symbol(s7, "notified-var"),
-		       s7_cons(s7, 
-			       s7_f(s7), 
-			       s7_cons(s7, 
-				       s7_name_to_value(s7, "notify-C"), 
-				       s7_cons(s7, 
-					       s7_f(s7),
-					       s7_nil(s7)))));
+		       s7_list(s7, 3, s7_f(s7), s7_name_to_value(s7, "notify-C"), s7_f(s7)));
 
   if (argc == 2)
     {

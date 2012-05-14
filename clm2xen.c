@@ -5,6 +5,10 @@
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
  */
 
+/* if the optimizer stops working inexplicably, look for any symbols used before this that
+ *    might shadow a generator name; one such case was (make-hook 'env...) in snd-env.c
+ */
+
 #include <mus-config.h>
 
 #if USE_SND
