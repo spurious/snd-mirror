@@ -133,7 +133,7 @@
 		       lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
 		       list? log logand logior lognot logxor 
 		       macro? magnitude make-hash-table make-hook make-keyword make-list make-polar make-procedure-with-setter 
-		       make-random-state make-rectangular make-string make-type make-vector map max member memq memv min modulo 
+		       make-random-state make-rectangular make-string make-vector map max member memq memv min modulo 
 		       nan? negative? not null? number->string number? numerator 
 		       object->string odd? or output-port? 
 		       pair? port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 

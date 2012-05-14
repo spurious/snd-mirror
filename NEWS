@@ -4,8 +4,13 @@ Snd 12.11:
         directory? file-exists? delete-file getenv directory->list system
       with-baffle to limit the scope of continuations
       #_<name> is the initial (built-in, startup) value of <name>
-      *error-info* replaced by error-environment, and stacktrace changed slightly.
-      hooks changed completely
+      *error-info* replaced by error-environment, stacktrace changed slightly.
+      hooks changed completely (s7 version bumped to 2.0 since this is a
+        large backwards imcompatible change).
+      procedure-setter is settable, so most of the old procedure-with-setter
+        stuff is gone.
+      s7_list, s7_environment_ref|set, s7_procedure_set_setter in s7.h.
+      make-type has changed completely, and is currently completely broken.
 
   sndlib: removed mus-audio-describe, audinfo, ESD audio support.
 

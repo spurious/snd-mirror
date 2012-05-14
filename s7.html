@@ -45,6 +45,14 @@
 		      -moz-border-radius: 20px;
 		      -webkit-border-radius: 20px;
 		      }
+
+	DIV.obsolete {background-color: #F2F2F2; 
+		      border: 1px solid black;
+	              padding-left: 0.5cm; 
+	              padding-right: 0.5cm; 
+		      padding-top: 0.5cm; 
+		      padding-bottom: 0.5cm;
+		      }
         DIV.header {margin-top: 60px;
 	            margin-bottom: 30px;
 	            border: 4px solid #00ff00; /* green */
@@ -174,8 +182,6 @@ indented and on a sort of brownish background.
   <li><a href="#math">math functions</a>
   <li><a href="#define*">define*</a>
   <li><a href="#macros">define-macro</a>
-  <li><a href="#constants">define-constant, symbol-access</a>
-  <li><a href="#maketype1">make-type</a>
   <li><a href="#pws">procedure-setter</a>
   <li><a href="#generalizedset">generalized set!</a>
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
@@ -189,6 +195,8 @@ indented and on a sort of brownish background.
   <li><a href="#evalstring">eval</a>
   <li><a href="#IO">IO and other OS functions</a>
   <li><a href="#errors">errors</a>
+  <li><a href="#constants">define-constant, symbol-access</a>
+  <li><a href="#maketype1">make-type</a>
   <li><a href="#miscellanea">miscellaneous:</a> 
 
     <a href="#loadpath">*load-path*</a>,
@@ -1268,470 +1276,6 @@ the loop!
 
 
 
-
-
-<div class="header" id="constants"><h4>define-constant, constant?, symbol-access</h4></div>
-
-
-<p><em class=def id="defineconstant">define-constant</em> defines a constant and 
-<em class=def id="constantp">constant?</em> returns #t if its argument
-is a constant.  A constant in s7 is really constant: it can't be set or rebound.
-</p>
-
-<pre class="indented">
-&gt; (define-constant var 32)
-var
-
-&gt; (set! var 1)
-;set!: can't alter immutable object: var
-
-&gt; (let ((var 1)) var)
-;can't bind or set an immutable object: var, line 1
-</pre>
-
-<p>This has the possibly surprising side effect that previous uses of the constant name
-become constants:
-</p>
-
-<pre class="indented">
-(define (func a) (let ((cvar (+ a 1))) cvar))
-(define-constant cvar 23)
-(func 1)
-;can't bind or set an immutable object: cvar
-</pre>
-
-<p>So, obviously, choose unique names for your constants, or don't use define-constant.
-A function can also be a constant. 
-</p>
-
-<p>Constants are very similar to things such as keywords (no set, always return itself as its value),
-variable trace (informative function upon set or keeping a history of past values), typed variables (restricting a
-variable's values or doing automatic conversions upon set), and notification upon set (either in Scheme
-or in C; I wanted this many years ago in Snd).  The notification function is especially useful if
-you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
-All of these cases modify
-the path between a symbol and its value.  
-s7 gives you a handle on that path via <em class=def id="symbolaccess">symbol-access</em>.
-<code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
-changes them.  The symbol-accessor value is a list of three or more items, primarily the set, and bind functions, the second
-and third entries in the list respectively.
-These two functions take two arguments, the symbol in question
-and the value that it is about to be set or bound to.  The variable is set or bound to the value they return.
-We could replace define-constant, and add
-local constants with:
-</p>
-
-<pre class="indented">
-(define constant-access 
-  (list #f
-	(lambda (symbol new-value) 
-	  (format #t "can't change constant ~A's value to ~A" symbol new-value)
-          'error)
-	(lambda (symbol new-value) 
-	  (format #t "can't bind constant ~A to a new value, ~A" symbol new-value)
-          'error)))
-
-(define-macro (define-constant symbol value)
-  `(begin
-     (define ,symbol ,value)
-     (set! (<em class=red>symbol-access</em> ',symbol) constant-access)
-     ',symbol))
-
-(define-macro (let-constant vars . body)
-  (let ((varlist (map car vars)))
-    `(let ,vars
-       ,@(map (lambda (var)
-		`(set! (<em class=red>symbol-access</em> ',var) constant-access))
-	      varlist)
-       ,@body)))
-</pre>
-
-
-<p>In the next example, we restrict the values a variable can take to integers:
-</p>
-
-<pre class="indented">
-(define-macro (define-integer var value)
-  `(begin
-     (define ,var ,value)
-     (set! (<em class=red>symbol-access</em> ',var) 
-	   (list #f
-		 (lambda (symbol new-value)
-		   (if (real? new-value)
-		       (floor new-value) ; or min/max to restrict it to some range etc
-                       (begin 
-                         (format #t "~A can only take an integer value, not ~S" symbol new-value)
-                         'error)))
-		 #f))
-     ',var))
-
-&gt; (define-integer int 123)
-int
-&gt; (set! int 321.67)
-321
-&gt; (set! int (list 1 2))
-;int can only take an integer value, not (1 2)
-</pre>
-
-
-<blockquote>
-<div class="indented">
-
-<p>Here are trace and untrace.  We save the previous accessors in trace, restore them upon untrace,
-and in between, call the previous set accessor, if any, after reporting the set:
-</p>
-
-<pre class="indented">
-(define (trace var)
-  (let* ((cur-access (<em class=red>symbol-access</em> var))
-	 (cur-set (and cur-access (cadr cur-access))))
-    (set! (<em class=red>symbol-access</em> var)
-	  (list (and cur-access (car cur-access))
-		(lambda (symbol new-value) 
-		  (format #t "~A set to ~A~%" symbol new-value) 
-		  (if cur-set 
-		      (cur-set symbol new-value)
-		      new-value))
-		(and cur-access (caddr cur-access))
-		cur-access)))) ; save the old version 
-
-(define (untrace var)
-  (if (and (symbol-access var)
-	   (cdddr (symbol-access var)))
-      (set! (symbol-access var) (cadddr (symbol-access var)))))
-</pre>
-</div>
-</blockquote>
-
-<p>The first element of the symbol-accessor list is not used by s7.
-It is used for CL-style property lists by symbol-plist and friends in s7test.scm.
-I believe symbol-access is similar to Ruby's hooked variables, or perhaps Perl's tied variables.
-</p>
-
-
-
-
-
-
-<div class="header" id="maketype1"><h4>make-type</h4></div>
-
-<p><em class=def id="maketype">make-type</em>, borrowed from Alaric Snell-Pym,
-returns a type-object: a list of three functions
-'?, 'make, and 'ref.  The <b>?</b> func returns #t if its argument
-is of the new type, the <b>make</b> function returns a new object of the new type with the
-value of the argument to the make function, and the <b>ref</b> function returns that value
-when passed that object. 
-</p>
-
-<pre class="indented">
-(define special-value ((cadr (<em class=red>make-type</em>)) 'special))
-;; now special-value's value can't be eq? to any other Scheme object
-
-;; expand, for example, (define-record rec (a 1) (b 2))
-(begin
-  (define rec? #f)
-  (define make-rec #f)
-  (define rec-a #f)
-  (define rec-b #f)
-
-  (let* ((rec-type (<em class=red>make-type</em>))
-	 (? (car rec-type))
-	 (make (cadr rec-type))
-	 (ref (caddr rec-type)))
-
-    (set! make-rec (lambda* ((a 1) (b 2))
-		     (make (vector a b))))
-
-    (set! rec? ?)
-  
-    (set! rec-a (make-procedure-with-setter
-		 (lambda (obj)
-		   (and (rec? obj)
-			(vector-ref (ref obj) 0)))
-		 (lambda (obj val)
-		   (if (rec? obj)
-		       (vector-set! (ref obj) 0 val)))))
-
-    (set! rec-b (make-procedure-with-setter
-		 (lambda (obj)
-		   (and (rec? obj)
-			(vector-ref (ref obj) 1)))
-		 (lambda (obj val)
-		   (if (rec? obj)
-		       (vector-set! (ref obj) 1 val)))))))
-
-
-(let ((hi (make-rec 32 '(1 2))))
-  (set! (rec-b hi) 123)
-  (format #t "rec: ~A ~A" 
-	  (rec-a hi)
-	  (rec-b hi)))
-
-"rec: 32 123"
-</pre>
-
-<p>Currently make-type takes some optional arguments to specify other actions.  
-I may change this (see <a href="#environments">environments</a>).  For now,
-the optional (optkey) arguments are: print equal getter setter length name copy reverse fill.
-Except for the 'name' argument, these are functions.
-When these functions are called, the argument representing the object is
-the value of the object, not the object itself; see the examples below.
-If no print function is specified, the 'name' argument is used when the
-object is displayed.
-The 'equal' function checks two objects of the new type for equality.
-The 'getter' function applies the object to whatever arguments are
-passed, and the 'setter' function does the same in the context of set!.
-The 'length' function returns the length of the object's value.
-The 'copy function returns a new object of the same type with the copy
-function applied to the old object's value.
-The 'reverse' function returns a new object with the old object's contents reversed.
-The 'fill' function takes two arguments, the object and what to
-fill its value with.
-So, remembering that (cadr type) is the make function:
-</p>
-
-<pre class="indented">
-&gt; ((cadr (make-type)) 3.14)
-#&lt;anonymous-type 3.14&gt;
-
-&gt; ((cadr (make-type :name "hiho")) 123)
-#&lt;hiho 123&gt;
-
-&gt; ((cadr (make-type :print (lambda (a) (format #f "#&lt;typo: |~A|&gt;" a)))) 1)
-#&lt;typo: |1|&gt;
-
-&gt; (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1)
-2
-</pre>
-
-<p>The last is easier to read if we separate out the steps:
-</p>
-
-<pre class="indented">
-&gt; (let* ((type (make-type 
-                 :getter (lambda (a b) 
-                           (vector-ref a b))))   ; make a new type with its own getter function
-         (object ((cadr type) (vector 1 2 3))))  ; create an object of the new type, its value is a vector
-       (object 1))                               ; apply the object to 1 =&gt; (vector-ref object 1) via the getter
-2
-</pre>
-
-<p>The objects created in this way, or via s7_new_type in C, can be passed to map and for-each
-if you supply the length and getter functions to make-type.
-</p>
-
-<pre class="indented">
-&gt; (define-macro (enum . args)
-     `(for-each define ',args ((cadr (make-type :getter (lambda (a b) b) 
-                                                :length (lambda (a) ,(length args)))))))
-enum
-&gt; (enum zero one two three)
-#&lt;unspecified&gt;
-&gt; two
-2
-</pre>
-
-
-<blockquote>
-
-
-<div class="indented">
-
-<p>Here is define-record using make-type.  It has a few Common Lisp extensions:
-</p>
-
-<pre>
-(define-macro (define-record struct-name . fields)
-  (let* ((name (if (list? struct-name) (car struct-name) struct-name))
-	 (sname (if (string? name) name (symbol-&gt;string name)))
-		 
-	 (fsname (if (list? struct-name)
-		     (let ((cname (assoc :conc-name (cdr struct-name))))
-		       (if cname 
-			   (symbol-&gt;string (cadr cname))
-			   sname))
-		     sname))
-		 
-	 (make-name (if (list? struct-name)
-			(let ((cname (assoc :constructor (cdr struct-name))))
-			  (if cname 
-			      (cadr cname)
-			      (string-&gt;symbol (string-append "make-" sname))))
-			(string-&gt;symbol (string-append "make-" sname))))
-
-	 (is-name (string-&gt;symbol (string-append sname "?")))
-		 
-	 (copy-name (if (list? struct-name)
-			(let ((cname (assoc :copier (cdr struct-name))))
-			  (if cname 
-			      (cadr cname)
-			      (string-&gt;symbol (string-append "copy-" sname))))
-			(string-&gt;symbol (string-append "copy-" sname))))
-		 
-	 (field-names (map (lambda (n)
-			     (symbol-&gt;string (if (list? n) (car n) n)))
-			   fields))
-		 
-	 (field-types (map (lambda (field)
-			     (if (list? field)
-				 (apply (lambda* (val type read-only) type) (cdr field))
-				 #f))
-			   fields))
-		 
-	 (field-read-onlys (map (lambda (field)
-				  (if (list? field)
-				      (apply (lambda* (val type read-only) read-only) (cdr field))
-				      #f))
-				fields)))
-    `(begin
-
-       ;; declare our globally-accessible names
-       (define ,is-name #f)
-       (define ,make-name #f)
-       (define ,copy-name #f)
-
-       ,@(map (lambda (n)
-		`(define ,(string-&gt;symbol (string-append fsname "-" n)) #f))
-	      field-names)
-
-       (let* ((rec-type (<em class=red>make-type</em>))
-	      (? (car rec-type))
-	      (make (cadr rec-type))
-	      (ref (caddr rec-type)))
-	       
-	 (set! ,is-name ?)
-
-	 (set! ,make-name (lambda* ,(map (lambda (n)
-					    (if (and (list? n)
-						     (&gt;= (length n) 2))
-						(list (car n) (cadr n))
-						(list n #f)))
-					  fields)
-			    (make (vector ',(string-&gt;symbol sname) 
-                                          ,@(map string-&gt;symbol field-names)))))
-
-	 (set! ,copy-name (lambda (obj) 
-			    (make (copy (ref obj)))))	       
-
-	 ,@(map (let ((ctr 1))
-		  (lambda (n type read-only)
-		    (let ((val (if read-only
-				   `(set! ,(string-&gt;symbol (string-append fsname "-" n))
-					  (lambda (arg) ((ref arg) ,ctr)))
-				   `(set! ,(string-&gt;symbol (string-append fsname "-" n))
-					  (make-procedure-with-setter 
-					   (lambda (arg) ((ref arg) ,ctr)) 
-					   (lambda (arg val) (set! ((ref arg) ,ctr) val)))))))
-		      (set! ctr (+ 1 ctr))
-		      val)))
-		field-names field-types field-read-onlys)
-
-	',struct-name))))
-
-&gt; (define-record point (x 0.0) (y 0.0))
-point
-&gt; (let ((pt (make-point 1.0))) 
-    (set! (point-y pt) 3.0)
-    (list (point? pt) (point-x pt) (point-y pt)))
-(#t 1.0 3.0)
-</pre>	
-</div>
-
-
-
-<div class="indented">
-
-<p>In the next example, we define a float-vector type:
-</p>
-
-<pre>
-(begin
-  (define make-float-vector #f)
-  (define float-vector? #f)
-  (define float-vector #f)
-
-  (let* ((fv-type (<em class=red>make-type</em>
-		   :getter vector-ref :length length :copy copy :fill fill! :reverse reverse
-		   :setter (lambda (obj index value)
-			     (if (not (real? value))
-				 (error 'wrong-type-arg-error 
-                                        "float-vector element must be real: ~S" value))
-			     (vector-set! obj index (exact-&gt;inexact value)))
-		   :name "float-vector"))
-	 (fv? (car fv-type))
-	 (make-fv (cadr fv-type))
-	 (fv-ref (caddr fv-type)))
-
-    (set! make-float-vector 
-      (lambda* (len (initial-element 0.0))
-        (if (not (real? initial-element))
-	    (error 'wrong-type-arg-error 
-                   "make-float-vector initial element must be real: ~S" initial-element))
-	(make-fv (make-vector len (exact-&gt;inexact initial-element)))))
-    
-    (set! float-vector? fv?)
-    
-    (set! float-vector
-      (lambda args
-	(let* ((len (length args))
-	       (fv (make-float-vector len))
-	       (v (fv-ref fv)))
-	  (do ((lst args (cdr lst)))
-	       (i 0 (+ i 1)))
-	      ((null? lst) fv)
-	    (let ((arg (car lst)))
-	      (if (not (real? arg))
-		  (error 'wrong-type-arg-error 
-                         "float-vector element must be real: ~S in ~S" arg args))
-	      (set! (v i) (exact-&gt;inexact arg))))))))
-
-&gt; (let ((v (make-float-vector 3))) (set! (v 1) 32) v)
-#&lt;float-vector #(0.0 32.0 0.0)&gt;
-
-&gt; (let ((v (make-float-vector 3))) (set! (v 1) "hi") v)
-;float-vector element must be real: "hi"
-
-&gt; (map + (list 1 2 3) (float-vector 1 2 3)) ; we have a getter and length, so map works
-(2.0 4.0 6.0)
-</pre>
-
-<p>See also make-adjustable-vector in s7test.scm.
-</p>
-</div>
-
-
-<div class="indented">
-
-<p>Scheme needs a more elegant way to define functions that share a closure.  The begin+define+let+set! shuffle used
-above is an embarrassment.
-Here's an idle thought:
-</p>
-
-<pre class="indented">
-(define f1 (let ((x 23))
-	     (lambda (a)
-	       (+ x a))))
-(define f2
-  (with-environment (procedure-environment f1) ; import f1's closure ("x") into f2
-   (lambda (b)
-     (+ b (* 2 x)))))
-
-&gt; (+ (f1 1) (f2 1))
-71
-</pre>
-
-<p>or perhaps better, use define-bacro with augment-environment! as in the <a href="#objectsystem">object system</a> example.
-</p>
-</div>
-
-
-</blockquote>
-
-
-
-
-
-
 <div class="header" id="pws"><h4>procedure-setter</h4></div>
 
 <pre class="indented">
@@ -1741,66 +1285,36 @@ Here's an idle thought:
 
 <p>Each function can have an associated setter, much like defsetf in CL.  As a convenience, there's also
 a way to associate the two functions under one name: make-procedure-with-setter.
-The setter is called when the procedure is the target of set!:
+The setter is called when the procedure is the target of set!  Its last argument is the
+value passed to set!:
 </p>
 
 <pre class="indented">
-(define xx (let ((x 32))
-             (<em class=red>make-procedure-with-setter</em>
-               (lambda () x) 
-               (lambda (val) (set! x val) x))))
-(xx) -&gt; 32
-(set! (xx) 1)
-(xx) -&gt; 1
-</pre>
-
-<p>The setter's last argument is the value passed to set!.  That is, 
-</p>
-
-<pre class="indented">
-(define v123 
-  (let ((vect (vector 1 2 3)))
-    (make-procedure-with-setter
-      (lambda (index) 
-        (vector-ref vect index))     
-        ;; using explicit indexing &mdash; (vect index) is the same 
-        ;;   (see "generalized set!" below)
-      (lambda (index value) 
-        (vector-set! vect index value)))))
-
-&gt; (v123 2)
-3
-&gt; (set! (v123 2) 32)
-32
-&gt; (v123 2)
-32
-</pre>
-
-<!-- TODO: fix this
-<p>make-procedure-with-setter can add generalized set! support to any function:
-</p>
-
-<pre class="indented">
-&gt; (define cadr (make-procedure-with-setter 
-                 cadr 
-                 (lambda (lst val) 
-                   (set! (car (cdr lst) ) val))))
-cadr
-&gt; (cadr '(1 2 3))
-2
+&gt; (procedure-setter cadr)
+#f
+&gt; (set! (procedure-setter cadr) 
+    (lambda (lst val) 
+      (set! (car (cdr lst)) val)))
+#&lt;closure&gt;
+&gt; (procedure-source (procedure-setter cadr))
+(lambda (lst val) (set! (car (cdr lst)) val))
 &gt; (let ((lst (list 1 2 3))) 
     (set! (cadr lst) 4) 
     lst)
 (1 4 3)
+
+&gt; (define xx (let ((x 32))
+               (make-procedure-with-setter
+                 (lambda () x) 
+                 (lambda (val) (set! x val) x))))
+xx
+&gt; (xx)
+32
+&gt; (set! (xx) 1)
+1
+&gt; (xx)
+1
 </pre>
-
-<p>To get the setter from a procedure-with-setter (for procedure-arity for example),
-use procedure-setter.  If procedure-setter were settable, there would be no need
-for make-procedure-with-setter; hmmm.  (This change is underway &mdash; soon make-procedure-with-setter
-will simply be a wrapper).
-</p>
--->
-
 <blockquote>
 
 
@@ -1933,7 +1447,7 @@ will simply be a wrapper).
 <div class="indented">
 
 <p>I wonder if it would be more consistent to use the
-name "procedure/setter" in place of "make-procedure-with-setter".
+name "procedure/setter" in place of Guile's "make-procedure-with-setter".
 Its syntax is closer to
 vector than make-vector, for example.  
 Even better: "dilambda":
@@ -3066,9 +2580,6 @@ class-3
 at class definition time:
     (list 'mac (symbol->value (define-macro (mac a) `(+ ,a 1))))
 -->
-
-<p>Perhaps make-type should be built on this?
-</p>
 </div>
 
 <div class="indented">
@@ -4520,6 +4031,158 @@ well if WITH_OPTIMIZATION is 1 (the default).
 
 
 
+<div class="header" id="constants"><h4>define-constant, constant?, symbol-access</h4></div>
+
+
+<p><em class=def id="defineconstant">define-constant</em> defines a constant and 
+<em class=def id="constantp">constant?</em> returns #t if its argument
+is a constant.  A constant in s7 is really constant: it can't be set or rebound.
+</p>
+
+<pre class="indented">
+&gt; (define-constant var 32)
+var
+
+&gt; (set! var 1)
+;set!: can't alter immutable object: var
+
+&gt; (let ((var 1)) var)
+;can't bind or set an immutable object: var, line 1
+</pre>
+
+<p>This has the possibly surprising side effect that previous uses of the constant name
+become constants:
+</p>
+
+<pre class="indented">
+(define (func a) (let ((cvar (+ a 1))) cvar))
+(define-constant cvar 23)
+(func 1)
+;can't bind or set an immutable object: cvar
+</pre>
+
+<p>So, obviously, choose unique names for your constants, or don't use define-constant.
+A function can also be a constant. 
+</p>
+
+<p>Constants are very similar to things such as keywords (no set, always return itself as its value),
+variable trace (informative function upon set or keeping a history of past values), typed variables (restricting a
+variable's values or doing automatic conversions upon set), and notification upon set (either in Scheme
+or in C; I wanted this many years ago in Snd).  The notification function is especially useful if
+you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
+All of these cases modify
+the path between a symbol and its value.  
+s7 gives you a handle on that path via <em class=def id="symbolaccess">symbol-access</em>.
+<code>(symbol-access symbol)</code> returns that symbol's accessors, and <code>(set! (symbol-access symbol) accessor-list)</code>
+changes them.  The symbol-accessor value is a list of three or more items, primarily the set, and bind functions, the second
+and third entries in the list respectively.
+These two functions take two arguments, the symbol in question
+and the value that it is about to be set or bound to.  The variable is set or bound to the value they return.
+We could replace define-constant, and add
+local constants with:
+</p>
+
+<pre class="indented">
+(define constant-access 
+  (list #f
+	(lambda (symbol new-value) 
+	  (format #t "can't change constant ~A's value to ~A" symbol new-value)
+          'error)
+	(lambda (symbol new-value) 
+	  (format #t "can't bind constant ~A to a new value, ~A" symbol new-value)
+          'error)))
+
+(define-macro (define-constant symbol value)
+  `(begin
+     (define ,symbol ,value)
+     (set! (<em class=red>symbol-access</em> ',symbol) constant-access)
+     ',symbol))
+
+(define-macro (let-constant vars . body)
+  (let ((varlist (map car vars)))
+    `(let ,vars
+       ,@(map (lambda (var)
+		`(set! (<em class=red>symbol-access</em> ',var) constant-access))
+	      varlist)
+       ,@body)))
+</pre>
+
+
+<p>In the next example, we restrict the values a variable can take to integers:
+</p>
+
+<pre class="indented">
+(define-macro (define-integer var value)
+  `(begin
+     (define ,var ,value)
+     (set! (<em class=red>symbol-access</em> ',var) 
+	   (list #f
+		 (lambda (symbol new-value)
+		   (if (real? new-value)
+		       (floor new-value) ; or min/max to restrict it to some range etc
+                       (begin 
+                         (format #t "~A can only take an integer value, not ~S" symbol new-value)
+                         'error)))
+		 #f))
+     ',var))
+
+&gt; (define-integer int 123)
+int
+&gt; (set! int 321.67)
+321
+&gt; (set! int (list 1 2))
+;int can only take an integer value, not (1 2)
+</pre>
+
+
+<blockquote>
+<div class="indented">
+
+<p>Here are trace and untrace.  We save the previous accessors in trace, restore them upon untrace,
+and in between, call the previous set accessor, if any, after reporting the set:
+</p>
+
+<pre class="indented">
+(define (trace var)
+  (let* ((cur-access (<em class=red>symbol-access</em> var))
+	 (cur-set (and cur-access (cadr cur-access))))
+    (set! (<em class=red>symbol-access</em> var)
+	  (list (and cur-access (car cur-access))
+		(lambda (symbol new-value) 
+		  (format #t "~A set to ~A~%" symbol new-value) 
+		  (if cur-set 
+		      (cur-set symbol new-value)
+		      new-value))
+		(and cur-access (caddr cur-access))
+		cur-access)))) ; save the old version 
+
+(define (untrace var)
+  (if (and (symbol-access var)
+	   (cdddr (symbol-access var)))
+      (set! (symbol-access var) (cadddr (symbol-access var)))))
+</pre>
+</div>
+</blockquote>
+
+<p>The first element of the symbol-accessor list is not used by s7.
+It is used for CL-style property lists by symbol-plist and friends in s7test.scm.
+I believe symbol-access is similar in spirit to a hooked variable in Ruby, or perhaps a tied variable in Perl (I know nothing about Perl).
+</p>
+
+
+
+
+
+
+<div class="header" id="maketype1"><h4>make-type</h4></div>
+
+<p>make-type is being completely redone.  The old make-type has gone away, and the
+new one is still under construction &mdash; sorry about that!
+</p>
+
+
+
+
 <div class="header" id="miscellanea"><h4>miscellaneous stuff</h4></div>
 
 <p>
@@ -4916,8 +4579,7 @@ same kind of name.  All the environment function names are bad &mdash; even the 
 is bad since it refers to one way of using that data type, as if we 
 called all strings "symbol-names".  get-output-string should be current-output-string.
 "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
-operate with the *features* list; perhaps "cond-provided"?  symbol-access and make-type are not ideal, 
-as names and in every other way.
+operate with the *features* list; perhaps "cond-provided"?  symbol-access is not ideal.
 Better ideas are always welcome!
 </p>
 </div>
@@ -5490,7 +5152,7 @@ The examples that follow show:
 <li><a href="#defvar">call a Scheme function from C, and get/set Scheme variable values in C</a>
 <li><a href="#juce">C++ and Juce</a>
 <li><a href="#sndlib">load sndlib using the XEN functions and macros</a>
-<li><a href="#pwstype">add a new Scheme type and a procedure-with-setter</a>
+<li><a href="#pwstype">add a new Scheme type and a procedure with a setter</a>
 <li><a href="#functionportexample">redirect display output to a C procedure</a>
 <li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
 <li><a href="#definestar1">C-side define* (s7_define_function_star)</a>

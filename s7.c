@@ -24,7 +24,7 @@
  *        full continuations, call-with-exit for goto or return, dynamic-wind
  *        ratios and complex numbers (and ints are 64-bit by default)
  *          optional multiprecision arithmetic for all numeric types and functions
- *        generalized set!, procedure-with-setter, applicable objects
+ *        generalized set!, procedure-setter, applicable objects
  *        defmacro and define-macro
  *        keywords, hash tables, block comments, define*
  *        format
@@ -72,7 +72,6 @@
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        trace and untrace, __func__, macroexpand
  *        length, copy, fill!, reverse, map, for-each are generic
- *        make-type creates a new scheme type
  *        symbol-access modifies symbol value lookup
  *        member and assoc accept an optional 3rd argument, the comparison function
  *        morally-equal?
@@ -1019,7 +1018,6 @@ struct s7_scheme {
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer FEED_TO;                 /* => */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET, BODY;
-  s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
@@ -1246,7 +1244,7 @@ static void init_types(void)
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 2))
 #define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
-/* closure, c_function, procedure-with-setter, settable object, goto or continuation 
+/* closure, c_function, settable object, goto or continuation 
  *   perhaps this should be T_APPLICABLE?
  */
 
@@ -21940,9 +21938,6 @@ If its first argument is a list, the list is copied (despite the '!')."
 	  return(data);
 	}
       break;
-
-      /* SOMEDAY: to sort c/s objects requires another arg to s7_new_type_x and make-type
-       */
     }
 
   if (len < 2) return(data);
@@ -23642,7 +23637,6 @@ typedef struct {
   char *(*print)(s7_scheme *sc, void *value);
   void (*free)(void *value);
   bool (*equal)(void *val1, void *val2);
-  bool (*scheme_equal)(s7_scheme *sc, void *val1, void *val2);
   void (*gc_mark)(void *val);
   s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
@@ -23650,7 +23644,6 @@ typedef struct {
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-  s7_pointer print_func, equal_func, getter_func, setter_func, length_func, copy_func, reverse_func, fill_func;
 } s7_object_t;
 
 
@@ -23685,6 +23678,15 @@ static s7_pointer fallback_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 static s7_pointer fallback_length(s7_scheme *sc, s7_pointer obj)
 {
   return(eval_error(sc, "attempt to get length of ~S?", obj));
+}
+
+
+/* generalized set! calls g_internal_object_set which then calls the object's set function 
+ */
+
+static s7_pointer g_internal_object_set(s7_scheme *sc, s7_pointer args)
+{
+  return((*(object_set(car(args))))(sc, car(args), cdr(args)));
 }
 
 
@@ -23726,7 +23728,6 @@ int s7_new_type(const char *name,
     object_types[tag].equal = equal;
   else object_types[tag].equal = fallback_equal;
 
-  object_types[tag].scheme_equal = NULL;
   object_types[tag].gc_mark = gc_mark;
 
   if (apply)
@@ -23741,14 +23742,6 @@ int s7_new_type(const char *name,
   object_types[tag].copy = NULL;
   object_types[tag].reverse = NULL;
   object_types[tag].fill = NULL;
-  object_types[tag].print_func = NULL;
-  object_types[tag].length_func = NULL;
-  object_types[tag].equal_func = NULL;
-  object_types[tag].getter_func = NULL;
-  object_types[tag].setter_func = NULL;
-  object_types[tag].copy_func = NULL;
-  object_types[tag].reverse_func = NULL;
-  object_types[tag].fill_func = NULL;
   return(tag);
 }
 
@@ -23799,8 +23792,6 @@ static bool objects_are_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
       tag = object_type(a);
       if (object_types[tag].equal)
 	return((*(object_types[tag].equal))(object_value(a), object_value(b)));
-      if (object_types[tag].scheme_equal)
-	return((*(object_types[tag].scheme_equal))(sc, object_value(a), object_value(b)));
       return(a == b);
     }
   return(false);
@@ -23894,484 +23885,6 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
 }
 
 
-
-
-/* ---------------- scheme-level new types ---------------- */
-
-typedef struct {
-  int type;
-  s7_pointer value;
-} s_type_t;
-
-/* this just holds the type tag locally!  Very bad planning!
- */
-
-static char *call_s_object_print(s7_scheme *sc, void *value)
-{
-  /* value here is the s_type_t object, the (scheme) function to call is object_types[tag].print_func */
-  /*   it will be passed the value, not the original object */
-
-  s_type_t *obj = (s_type_t *)value;
-  car(sc->s_function_args) = obj->value;
-  return(copy_string((char *)s7_string(s7_call(sc, object_types[obj->type].print_func, sc->s_function_args))));
-  /* object_print assumes the value returned here can be freed */
-}
-
-
-static  bool s_type_equal(s7_scheme *sc, void *a, void *b)
-{
-  /* this is the fallback if no equal func is specified */
-  s_type_t *obj1 = (s_type_t *)a;
-  s_type_t *obj2 = (s_type_t *)b;
-  return(s7_is_equal(sc, obj1->value, obj2->value));
-}
-
-
-static bool call_s_object_equal(s7_scheme *sc, void *a, void *b)
-{
-  /* we get here if an equal func was specified in make-type */
-  s_type_t *obj1 = (s_type_t *)a;
-  s_type_t *obj2 = (s_type_t *)b;
-  return(s7_boolean(sc, s7_call(sc, object_types[obj1->type].equal_func, list_2(sc, obj1->value, obj2->value))));
-}
-
-
-static s7_pointer call_s_object_getter(s7_scheme *sc, s7_pointer a, s7_pointer args)
-{
-  /* still accessible via for-each */
-  s_type_t *obj;
-  obj = (s_type_t *)s7_object_value(a);
-  return(s7_call(sc, object_types[obj->type].getter_func, cons(sc, obj->value, args))); /* ?? */
-}
-
-
-static s7_pointer call_s_object_setter(s7_scheme *sc, s7_pointer a, s7_pointer args)
-{
-  /* still accessible via reverse, for-each */
-  s_type_t *obj;
-  obj = (s_type_t *)s7_object_value(a);
-  return(s7_call(sc, object_types[obj->type].setter_func, cons(sc, obj->value, args))); /* ?? */
-}
-
-
-/* generalized set! calls g_internal_object_set which then calls the object's set function 
- */
-
-static s7_pointer g_internal_object_set(s7_scheme *sc, s7_pointer args)
-{
-  return((*(object_set(car(args))))(sc, car(args), cdr(args)));
-}
-
-
-#define SAVE_X_Y_Z(X, Y, Z)	     \
-  do {                               \
-    X = ((is_null(sc->x)) ? -1 : s7_gc_protect(sc, sc->x));	\
-    Y = ((is_null(sc->y)) ? -1 : s7_gc_protect(sc, sc->y));	\
-    Z = ((is_null(sc->z)) ? -1 : s7_gc_protect(sc, sc->z));	\
-  } while (0)
-
-#define RESTORE_X_Y_Z(X, Y, Z)                \
-  do {                                        \
-    if (X == -1) sc->x = sc->NIL; else {sc->x = s7_gc_protected_at(sc, X); s7_gc_unprotect_at(sc, X);} \
-    if (Y == -1) sc->y = sc->NIL; else {sc->y = s7_gc_protected_at(sc, Y); s7_gc_unprotect_at(sc, Y);} \
-    if (Z == -1) sc->z = sc->NIL; else {sc->z = s7_gc_protected_at(sc, Z); s7_gc_unprotect_at(sc, Z);} \
-    } while (0)
-
-static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
-{
-  s_type_t *obj;
-  s7_pointer result;
-  int save_x = -1, save_y = -1, save_z = -1;
-
-  obj = (s_type_t *)s7_object_value(a);
-  car(sc->s_function_args) = obj->value;
-  SAVE_X_Y_Z(save_x, save_y, save_z);
-  result = s7_call(sc, object_types[obj->type].length_func, sc->s_function_args);
-  RESTORE_X_Y_Z(save_x, save_y, save_z);
-
-  return(result);
-}
-
-
-/* s7_call in this context can lead to segfaults:
- *
- *    (call-with-exit (lambda (exit) (length ((cadr (make-type :length (lambda (a) (exit 32)))) 1))))
- *      [TODO: not a segfault, but generates the error message "unknown operator"!]
- *      does this make sense?  Is "exit" part of the length function's closure? 
- *    (let ((nt (call-with-exit (lambda (exit) (make-type :length (lambda (a) (exit 32))))))) (let ((obj ((cadr nt) 1))) (length obj)))
- *      -> invalid-escape-function
- *    why does the 1st case work in s7test?
- * 
- *    (call-with-exit (lambda (exit) (object->string ((cadr (make-type :print (lambda (a) (exit 32)))) 1))))
- *      [hard to fix -- very low level access to the method (atom_to_c_string)]
- *    (let ((nt (call-with-exit (lambda (exit) (make-type :print (lambda (a) (exit 32))))))) (let ((obj ((cadr nt) 1))) (object->string obj)))
- *      -> invalid-escape-function
- *
- *    (call-with-exit (lambda (exit) (copy ((cadr (make-type :copy (lambda (a) (exit 32)))) 1))))
- *      [called in s7_copy, g_copy calls s7_copy]
- *      [hard to fix because hash-tables use s7_copy -- needs at least expansion of g_copy]
- *      [  and in g_copy we'd need another operator OP_S7_MAKE_OBJECT maybe, to handle the ]
- *      [  result = s7_make_object(sc, new_obj->type, (void *)new_obj) business after the  ]
- *      [  value has been copied.]
- *
- *    (call-with-exit (lambda (exit) (fill! ((cadr (make-type :fill (lambda (a n) (exit 32)))) 1) 0)))
- *      [fixed]
- *
- *    (call-with-exit (lambda (exit) (let ((typ (make-type :equal (lambda (a n) (exit 32))))) (equal? ((cadr typ) 1) ((cadr typ) 1)))))
- *      [callable via s7_is_equal and s7_is_equal_ci]
- *      [hard to fix: g_is_equal calls s7_is_equal, but here I think we could split out s_object_equal if equal_func exists]
- *      [  but that requires a separate copy of s7_is_equal etc]
- *
- * the *#readers*, *unbound-variable-hook* funcs have the same problem [symbol-bind]
- *   [reader funcs are s7_call'ed in check_sharp_readers called from make_sharp_constant]
- */ 
-
-
-static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
-{
-  s_type_t *obj, *new_obj;
-
-  obj = (s_type_t *)s7_object_value(a);
-  car(sc->s_function_args) = obj->value;
-
-  new_obj = (s_type_t *)calloc(1, sizeof(s_type_t));
-  new_obj->type = obj->type;
-
-  new_obj->value = s7_call(sc, object_types[new_obj->type].copy_func, sc->s_function_args);
-  return(s7_make_object(sc, new_obj->type, (void *)new_obj));
-}
-
-
-static s7_pointer call_s_object_reverse(s7_scheme *sc, s7_pointer a)
-{
-  s_type_t *obj, *new_obj;
-
-  obj = (s_type_t *)s7_object_value(a);
-  car(sc->s_function_args) = obj->value;
-
-  new_obj = (s_type_t *)calloc(1, sizeof(s_type_t));
-  new_obj->type = obj->type;
-
-  new_obj->value = s7_call(sc, object_types[new_obj->type].reverse_func, sc->s_function_args);
-  return(s7_make_object(sc, new_obj->type, (void *)new_obj));
-}
-
-
-static s7_pointer call_s_object_fill(s7_scheme *sc, s7_pointer a, s7_pointer val)
-{
-  s_type_t *obj;
-  obj = (s_type_t *)s7_object_value(a);
-  return(s7_call(sc, object_types[obj->type].fill_func, list_2(sc, obj->value, val)));
-}
-
-
-static char *s_type_print(s7_scheme *sc, void *val)
-{
-  /* object_print assumes the string is allocated here */
-  s_type_t *obj = (s_type_t *)val;
-  char *str, *full_str;
-  int len, tag;
-  
-  tag = obj->type;
-  str = s7_object_to_c_string(sc, obj->value);
-  len = safe_strlen(str) + safe_strlen(object_types[tag].name) + 16;
-  full_str = (char *)calloc(len, sizeof(char));
-  snprintf(full_str, len, "#<%s %s>", object_types[tag].name, str);
-  free(str);
-  return(full_str);
-}
-
-
-static void s_type_free(void *val)
-{
-  free(val);
-}
-
-
-static void s_type_gc_mark(void *val)
-{
-  s_type_t *obj = (s_type_t *)val;
-  s7_mark_object(obj->value);
-}
-
-
-static s7_pointer s_is_type(s7_scheme *sc, s7_pointer args)
-{
-  if (is_c_object(cadr(args)))
-    {
-      s_type_t *obj;
-      obj = (s_type_t *)s7_object_value(cadr(args));
-      return(s7_make_boolean(sc, obj->type == s7_integer(car(args))));
-    }
-  return(sc->F);
-}
-
-
-static s7_pointer s_type_make(s7_scheme *sc, s7_pointer args)
-{
-  s_type_t *obj;
-  obj = (s_type_t *)calloc(1, sizeof(s_type_t));
-  obj->type = s7_integer(car(args));
-  obj->value = cadr(args);
-  return(s7_make_object(sc, obj->type, (void *)obj));
-}
-
-
-static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer x;
-  int tag;
-
-  if (s7_is_integer(car(args)))
-    {
-      tag = s7_integer(car(args));
-      x = cadr(args);
-      if (is_c_object(x))
-	{
-	  s_type_t *obj;
-	  obj = (s_type_t *)s7_object_value(x);
-	  if (obj->type == tag)
-	    return(obj->value);
-	}
-
-      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		      list_4(sc, 
-			     make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
-			     make_protected_string(sc, object_types[tag].name),
-			     x,
-			     make_protected_string(sc, type_name(x, INDEFINITE_ARTICLE)))));
-    }
-  return(sc->F); /* someone has completely messed up */
-}
-
-
-/* instead of this, just return a new type as a wrapper around an environment.
- *   if these args are passed, tie via slot_value to the C struct
- *   no ref function needed, make=copy?, ? passed back?
- */
-
-static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_type "(make-type print equal getter setter length name copy reverse fill) returns a new type object, \
-a list of three functions: ?, make, and ref.  The '?' function returns #t if passed an argument of the new type, \
-the 'make' function creates a new object of that type, and the 'ref' function returns the value of that object.\
-The optional arguments to make-type are functions that specify how objects of the new type display themselves (print, 1 argument), \
-check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number \
-of args, see vector for an example), respond to the generalized set! and length functions, and finally, \
-one special case: name sets the type name (a string), which only matters if you're not specifying the print function. \
-In each case, the argument is the value of the object, not the object itself."
-
-  int tag;
-
-  tag = s7_new_type("anonymous-type", s_type_print, s_type_free, NULL, s_type_gc_mark, NULL, NULL);
-  object_types[tag].equal = NULL;
-  object_types[tag].scheme_equal = s_type_equal;
-
-  if (is_not_null(args))
-    {
-      int i, args_loc = -1, func_loc = -1;
-      s7_pointer x;
-
-      args_loc = s7_gc_protect(sc, args);
-
-      /* if any of the special functions are specified, store them in the type object so we can find them later.
-       *    they also need to be GC-protected:
-       *    (let ((ctr ((cadr (make-type :getter (lambda (a b) b))))))
-       *      (gc)
-       *      ;; any reference here to the getter is likely to fail if it hasn't been protected
-       */
-      for (i = 0, x = args; is_not_null(x); i++, x = cdr(x))
-	{
-	  s7_pointer func, proc_args;
-	  int nargs = 0;
-	  bool rest_arg = false;
-
-	  /* the closure_star mechanism passes the args in declaration order */
-	  func = car(x);
-	  if (func != sc->F)            /* #f means arg was not set */
-	    {
-	      if (i != 5)
-		{
-		  if (!is_procedure(func))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, 
-					     make_protected_string(sc, "make-type arg, ~S, should be a function"),
-					     func)));
-		    }
-		  func_loc = s7_gc_protect(sc, func); /* this ought to be faster in the mark phase than checking every function field of every scheme type(?) */
-		  proc_args = s7_procedure_arity(sc, func);
-		  nargs = s7_integer(car(proc_args)) + s7_integer(cadr(proc_args));
-		  rest_arg = (caddr(proc_args) != sc->F);
-		}
-
-	      switch (i)
-		{
-		case 0:                 /* print, ((cadr (make-type :print (lambda (a) (format #f "#<typo: ~S>" a)))) "gypo") -> #<typo: "gypo"> */
-		  if ((s7_integer(car(proc_args)) > 1) || 
-		      ((nargs == 0) && (!rest_arg)))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :print procedure, ~S, should take one argument"), func)));
-		    }
-
-		  object_types[tag].print_func = func;
-		  object_types[tag].print = call_s_object_print;
-		  break;
-
-		case 1:                 /* equal */
-		  /* (let ((typo (make-type :equal (lambda (a b) (equal? a b))))) (let ((a ((cadr typo) 123)) (b ((cadr typo) 321))) (equal? a b))) */
-		  if ((s7_integer(car(proc_args)) > 2) || 
-		      ((nargs < 2) && (!rest_arg)))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :equal procedure, ~S, should take two arguments"), func)));
-		    }
-		  object_types[tag].equal = NULL;
-		  object_types[tag].equal_func = func;
-		  object_types[tag].scheme_equal = call_s_object_equal;
-		  break;
-
-		case 2:                 /* getter: (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1) -> 2 */
-		  if ((nargs == 0) && (!rest_arg))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :getter procedure, ~S, should take at least one argument"), func)));
-		    }
-		  object_types[tag].getter_func = func;
-		  object_types[tag].apply = call_s_object_getter;
-		  break;
-
-		case 3:                 /* setter: (set! (((cadr (make-type :setter (lambda (a b c) (vector-set! a b c)))) (vector 1 2 3)) 1) 23) */
-		  if ((nargs < 2) && (!rest_arg))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :setter procedure, ~S, should take at least two arguments"), func)));
-		    }
-		  object_types[tag].setter_func = func;
-		  object_types[tag].set = call_s_object_setter;
-		  break;
-
-		case 4:                 /* length: (length ((cadr (make-type :length (lambda (a) (vector-length a)))) (vector 1 2 3))) -> 3 */
-		  if ((s7_integer(car(proc_args)) > 1) || 
-		      ((nargs == 0) && (!rest_arg)))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :length procedure, ~S, should take at one argument"), func)));
-		    }
-
-		  object_types[tag].length_func = func;
-		  object_types[tag].length = call_s_object_length;
-		  break;
-
-		case 5:                 /* name, ((cadr (make-type :name "hiho")) 123) -> #<hiho 123> */
-		  if (!s7_is_string(func))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :name arg, ~S, should be a string"), func)));
-		    }
-		  object_types[tag].name = copy_string(s7_string(func));
-		  break;
-
-		case 6:                 /* copy */
-		  if ((s7_integer(car(proc_args)) > 1) || 
-		      ((nargs == 0) && (!rest_arg)))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :copy procedure, ~S, should take at one argument"), func)));
-		    }
-		  object_types[tag].copy_func = func;
-		  object_types[tag].copy = call_s_object_copy;
-		  break;
-
-		case 7:                 /* reverse */
-		  if ((s7_integer(car(proc_args)) > 1) || 
-		      ((nargs == 0) && (!rest_arg)))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :reverse procedure, ~S, should take at one argument"), func)));
-		    }
-		  object_types[tag].reverse_func = func;
-		  object_types[tag].reverse = call_s_object_reverse;
-		  break;
-
-		case 8:                 /* fill */
-		  if ((s7_integer(car(proc_args)) > 2) || 
-		      ((nargs < 2) && (!rest_arg)))
-		    {
-		      s7_gc_unprotect_at(sc, args_loc);
-		      if (func_loc != -1) s7_gc_unprotect_at(sc, func_loc);
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				      list_2(sc, make_protected_string(sc, "make-type :fill procedure, ~S, should take at two arguments"), func)));
-		    }
-		  object_types[tag].fill_func = func;
-		  object_types[tag].fill = call_s_object_fill;
-		  break;
-		}
-	    }
-	}
-      s7_gc_unprotect_at(sc, args_loc);
-    }
-
-  {
-    s7_pointer result;
-    int result_loc;
-    result = list_3(sc, sc->NIL, sc->NIL, sc->NIL);
-    result_loc = s7_gc_protect(sc, result);
-
-    /* ? method: (lambda (arg) (s_is_type tag arg)) 
-     *     returns #t if arg is of the new type
-     */
-    car(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
-			       list_1(sc, list_3(sc, sc->S_IS_TYPE, make_integer(sc, tag), sc->S_TYPE_ARG)),
-			       T_CLOSURE);
-
-    /* make method: (lambda* (arg) (s_type_make tag arg))
-     *   returns an object of the new type with its value specified by arg (defaults to #f)
-     */
-    cadr(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
-				list_1(sc, list_3(sc, sc->S_TYPE_MAKE, make_integer(sc, tag), sc->S_TYPE_ARG)),
-				T_CLOSURE_STAR);
-
-    /* ref method: (lambda (arg) (s_type_ref arg))
-     *   returns the value passed to make above 
-     */
-    caddr(result) = make_closure(sc, list_1(sc, sc->S_TYPE_ARG),
-				 list_1(sc, list_3(sc, sc->S_TYPE_REF, make_integer(sc, tag), sc->S_TYPE_ARG)),
-				 T_CLOSURE);
-    s7_gc_unprotect_at(sc, result_loc);
-    return(result);
-  }
-}
-
-/* here it would be neat if we allowed any keywords, and those not handled explicitly could
- *    be added to the methods list under the key-word->symbol name.  :rest arg to current define*
- *    undeclared key would be bound in the new object's env under its
- *    name and value.  Then new methods could be added or changed at any time, as
- *    in the object system in s7.html (and it could use make-type perhaps?)
- * but we need :s|getter, :print=:display or :object->string, :equal=:equal?, :name
- */
-
-
-
-
 /* -------- procedure-with-setter -------- */
 
 s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
@@ -24425,7 +23938,7 @@ s7_pointer s7_procedure_set_setter(s7_scheme *sc, s7_pointer obj, s7_pointer set
 {
   if (is_c_function(obj))
     c_function_setter(obj) = setter;
-  closure_setter(obj) = setter;
+  else closure_setter(obj) = setter;
   return(setter);
 }
 
@@ -24436,10 +23949,25 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
 
   p = car(args);
-  if ((typeflag(p) & T_PROCEDURE) == 0)
-    return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure"));
+  switch (type(p))
+    {
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      return(closure_setter(p));
 
-  return(s7_procedure_setter(sc, p));
+    case T_C_FUNCTION:
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
+      return(c_function_setter(p));
+
+    case T_GOTO:
+    case T_CONTINUATION:
+      return(sc->F);
+    }
+
+  return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure"));
 }
 
 
@@ -24455,7 +23983,27 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
   if ((typeflag(p) & T_PROCEDURE) == 0)
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter setter", 2, setter, "a procedure"));
 
-  return(s7_procedure_set_setter(sc, p, setter));
+  switch (type(p))
+    {
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      closure_setter(p) = setter;
+      break;
+
+    case T_C_FUNCTION:
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
+      c_function_setter(p) = setter;
+      break;
+
+    case T_GOTO:
+    case T_CONTINUATION:
+      return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure (not a continuation)"));
+    }
+
+  return(setter);
 }
 
 
@@ -24633,7 +24181,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 
 static s7_pointer g_symbol_get_access(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_access "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a \
+  #define H_symbol_access "(symbol-access sym) is a procedure that adds or removes controls on how a \
 symbol accesses its current binding."
 
   if (!is_symbol(car(args)))
@@ -25795,20 +25343,10 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       {
 	int tag;
 	tag = object_type(car(args));
-	if (object_types[tag].fill_func)
-	  {
-	    s_type_t *obj;
-	    obj = (s_type_t *)s7_object_value(car(args));
-	    car(args) = obj->value;
-	    push_stack(sc, OP_APPLY, args, object_types[obj->type].fill_func);
-	    return(sc->UNSPECIFIED);
-	  }
-
 	if (object_types[tag].fill)
 	  return((*(object_types[tag].fill))(sc, car(args), cadr(args)));
 	return(eval_error(sc, "attempt to fill ~S?", car(args)));
       }
-
     case T_PAIR:
       return(list_fill(sc, car(args), cadr(args)));
 
@@ -25818,6 +25356,22 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 
   return(s7_wrong_type_arg_error(sc, "fill!", 1, car(args), "a fillable object")); /* (fill! 1 0) */
 }
+
+
+
+#define SAVE_X_Y_Z(X, Y, Z)	     \
+  do {                               \
+    X = ((is_null(sc->x)) ? -1 : s7_gc_protect(sc, sc->x));	\
+    Y = ((is_null(sc->y)) ? -1 : s7_gc_protect(sc, sc->y));	\
+    Z = ((is_null(sc->z)) ? -1 : s7_gc_protect(sc, sc->z));	\
+  } while (0)
+
+#define RESTORE_X_Y_Z(X, Y, Z)                \
+  do {                                        \
+    if (X == -1) sc->x = sc->NIL; else {sc->x = s7_gc_protected_at(sc, X); s7_gc_unprotect_at(sc, X);} \
+    if (Y == -1) sc->y = sc->NIL; else {sc->y = s7_gc_protected_at(sc, Y); s7_gc_unprotect_at(sc, Y);} \
+    if (Z == -1) sc->z = sc->NIL; else {sc->z = s7_gc_protected_at(sc, Z); s7_gc_unprotect_at(sc, Z);} \
+    } while (0)
 
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
@@ -29771,6 +29325,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
     {
       int cur_code_loc, value_loc;
       s7_pointer result, cur_code, value;
+      int save_x = -1, save_y = -1, save_z = -1;
       
       /* sc->args and sc->code are pushed on the stack by s7_call, then
        *   restored by eval, so they are protected, but sc->value and sc->cur_code are
@@ -29794,7 +29349,9 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	}
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
+      SAVE_X_Y_Z(save_x, save_y, save_z); /* this is needed to protect entire expression context */
       result = s7_call(sc, sc->unbound_variable_hook, list_1(sc, sym));
+      RESTORE_X_Y_Z(save_x, save_y, save_z);
 
       sc->value = value;
       s7_gc_unprotect_at(sc, value_loc);
@@ -53839,18 +53396,6 @@ s7_scheme *s7_init(void)
   sc->BAFFLE =      make_symbol(sc, "(baffle)");
   sc->BODY =        make_symbol(sc, "body");
 
-  #define s_is_type_name "[?]"                         /* these were "(?)" etc, but the procedure-source needs to be usable */
-  sc->S_IS_TYPE = make_symbol(sc, s_is_type_name);
-
-  #define s_type_make_name "[make]"
-  sc->S_TYPE_MAKE = make_symbol(sc, s_type_make_name);
-
-  #define s_type_ref_name "[ref]"
-  sc->S_TYPE_REF = make_symbol(sc, s_type_ref_name);
-
-  #define s_type_arg_name "[arg]"
-  sc->S_TYPE_ARG = make_symbol(sc, s_type_arg_name);
-
   s7_make_slot(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
 
   sc->VECTOR = make_symbol(sc, "vector");
@@ -54278,13 +53823,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, object_set_name,                  g_internal_object_set,      1, 0, true,  "internal object setter redirection");
   sc->OBJECT_SET = s7_symbol_value(sc, make_symbol(sc, object_set_name));
 
-  s7_define_function(sc, s_is_type_name,                   s_is_type,                  2, 0, false, "internal object type check");
-  s7_define_function(sc, s_type_make_name,                 s_type_make,                2, 0, false, "internal object creation");
-  s7_define_function(sc, s_type_ref_name,                  s_type_ref,                 2, 0, false, "internal object value");
-
-  s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy reverse fill", H_make_type);
-  set_global(make_symbol(sc, "length"));
-  set_global(make_symbol(sc, "copy"));
 
   /* -------- *gc-stats* -------- */
   s7_define_variable(sc, "*gc-stats*", sc->F);
@@ -54490,8 +54028,8 @@ s7_scheme *s7_init(void)
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
 
 
-  /* procedure-with-setter scheme side support 
-   */
+  /* ---------------- make-procedure-with-setter ---------------- */
+
   s7_eval_c_string(sc, "(define (make-procedure-with-setter g s)                                               \n\
                           \"(make-procedure-with-setter g s) returns a function (g) whose setter is s.\"       \n\
                           (if (or (not (procedure? g)) (not (procedure? s)))                                   \n\
@@ -54503,6 +54041,8 @@ s7_scheme *s7_init(void)
                           \"(procedure-with-setter? obj) returns #t if obj is a procedure with setter.\"    \n\
                           (and (procedure? obj) (procedure? (procedure-setter obj))))");
 
+
+  /* ---------------- cond-expand ---------------- */
 
   /* cond-expand (uses *features*) 
    */
@@ -54589,6 +54129,7 @@ s7_scheme *s7_init(void)
 	                              *error-hook*)                                                             \n\
 	                            #f))");
 
+  s7_eval_c_string(sc, "(define (make-type . args) (error 'temporary-s7-bug \"make-type is broken; please check back in a few days.\"))");
 
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 263 */
@@ -54608,15 +54149,9 @@ s7_scheme *s7_init(void)
 /* PERHAPS: hook as method? -> before/after/around methods, before/after-hooks collapsed into main?
  * PERHAPS: *formatters* along the lines of *#readers* = list of (ctrl-char (lambda (ctl-string  arg) ...)) -> string
  *
- * UNDERWAY:
- *    on the C side, we aren't actually using the pws mechanism -- just c_function_setter directly!
- * so: leave s7_make_procedure_with_setter
- *     add s7_procedure_set_setter, and maybe s7_procedure_setter
- *     add settable procedure-setter using c_function_setter and closure_setter
- *     call it via procedure_setter in set!
- *     fix up s7.html and add settable setter
- *     add s7tests for the settable setter
- *  a macro could have a setter!
+ * TODO: add s7tests for the settable setter
+ * TODO: (set! (procedure-setter abs) (lambda ...)) almost certainly won't work and needs GC protection
+ * TODO: check the other setter case -- abs as value for closure
  *
  * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
@@ -54626,7 +54161,6 @@ s7_scheme *s7_init(void)
  *    also, shouldn't NaN travel through any calculation?
  *    integer(NAN) | pair_line_number, then decode that later? + there's room for a func index as well
  *    but we'd have to notice NaNs in log and elsewhere -- slightly slower (see end of s7test)
- * PERHAPS: the built-in variables like *error-hook* could use the 1st symbol-access field as documentation (or the 4th?)
  *
  * lint     13424 -> 1231 [1237]
  * bench    52019 -> 7875 [8268]

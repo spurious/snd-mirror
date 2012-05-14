@@ -793,6 +793,8 @@ void s7_mark_object(s7_pointer p);
  *        s7 changes
  *								
  * 14-May:    s7_list. s7_procedure_set_setter.  Removed s7_procedure_getter.
+ *              procedure-setter is settable: removed most of procedure-with-setter.
+ *            make-type has changed completely, and is currently completely broken.
  * 11-May:    s7 2.0: hook implementation changed completely.
  *            s7_environment_ref|set.
  * 4-May:     *error-info* replaced by error-environment, and stacktrace has changed.
