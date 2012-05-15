@@ -10,7 +10,8 @@ Snd 12.11:
       procedure-setter is settable, so most of the old procedure-with-setter
         stuff is gone.
       s7_list, s7_environment_ref|set, s7_procedure_set_setter in s7.h.
-      make-type has changed completely, and is currently completely broken.
+      make-type replaced by open-environment. s7.html has a largely backwards
+        compatible scheme version of make-type.
 
   sndlib: removed mus-audio-describe, audinfo, ESD audio support.
 

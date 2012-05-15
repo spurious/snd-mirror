@@ -771,7 +771,7 @@ void s7_mark_object(s7_pointer p);
  *    char=? char>=? char>? copy cos cosh dynamic-wind environment? eof-object? eval even? 
  *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
- *    integer-length keyword->symbol lcm list->string list->vector list-tail log logand 
+ *    integer-length keyword->symbol lcm length list->string list->vector list-tail log logand 
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
  *    make-rectangular map max memv min modulo nan? negative? not odd? outer-environment port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
@@ -794,7 +794,7 @@ void s7_mark_object(s7_pointer p);
  *								
  * 14-May:    s7_list. s7_procedure_set_setter.  Removed s7_procedure_getter.
  *              procedure-setter is settable: removed most of procedure-with-setter.
- *            make-type has changed completely, and is currently completely broken.
+ *            make-type replaced by open-environment.
  * 11-May:    s7 2.0: hook implementation changed completely.
  *            s7_environment_ref|set.
  * 4-May:     *error-info* replaced by error-environment, and stacktrace has changed.

@@ -196,7 +196,6 @@ indented and on a sort of brownish background.
   <li><a href="#IO">IO and other OS functions</a>
   <li><a href="#errors">errors</a>
   <li><a href="#constants">define-constant, symbol-access</a>
-  <li><a href="#maketype1">make-type</a>
   <li><a href="#miscellanea">miscellaneous:</a> 
 
     <a href="#loadpath">*load-path*</a>,
@@ -2178,6 +2177,7 @@ Environments are first class (and applicable) objects in s7.
 
 (<em class=def id="augmentenvironment">augment-environment</em> env . bindings)   add bindings to env
 (<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings)
+(<em class=def id="openenvironment">open-environment</em> env)
 (<em class=def id="environmenttolist">environment-&gt;list</em> env)       return the environment bindings as a list of (symbol . value) cons's
 (<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
 (<em class=def id="definedp">defined?</em> sym (env (current-environment)))
@@ -2335,7 +2335,7 @@ its top-level bindings are imported into the current environment:
 
 <div class="indented">
 
-<p id="objectsystem">Here is yet another object system.  Each class and each instance is an environment.
+<p>Here is yet another object system.  Each class and each instance is an environment.
 A class might be thought of as a template for instances, but
 there's actually no difference between them.  To make an instance of a class, copy it.  To inherit from
 another class, concatenate the environments. To access (get or set) a field or a method, use the implicit
@@ -2401,17 +2401,18 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 						    (environment-&gt;list obj))))))
 		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
 
-    (let ((new-class (apply augment-environment           ; the local slots
-		       (augment-environment               ; the global slots
-		         (apply augment-environment ()    ; the methods
-			   (reverse new-methods))
-		         (cons 'class-name ',class-name)  ; class-name slot
-			 (cons 'inherited ,inherited-classes)
-			 (cons 'inheritors ()))           ; classes that inherit from this class
-		       new-slots)))
+    (let ((new-class (open-environment
+                       (apply augment-environment           ; the local slots
+		         (augment-environment               ; the global slots
+		           (apply augment-environment ()    ; the methods
+			     (reverse new-methods))
+		           (cons 'class-name ',class-name)  ; class-name slot
+			   (cons 'inherited ,inherited-classes)
+			   (cons 'inheritors ()))           ; classes that inherit from this class
+		         new-slots))))
 
       (augment-environment! outer-env                  
-        (cons ',class-name new-class)                     ; define the class as class-name in the calling environment
+        (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
 
 	;; define class-name? type check
 	(cons (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
@@ -2643,6 +2644,40 @@ b
 b
 </pre>
 </div>
+</div>
+
+
+<div class="indented">
+<p>open-environment replaces make-type.  For old-time's sake, here is a Scheme
+version of make-type:
+</p>
+
+<pre class="indented">
+(define (make-type . args)
+  (let* ((type (gensym "make-type type"))   ; built-in type and value slots have gensym'd names
+	 (value (gensym "make-type value"))
+	 (obj (open-environment 
+	       (augment-environment ()
+		 (cons type type)
+		 (cons value #&lt;unspecified&gt;)))))
+
+    ;; load up any methods/slots
+    (do ((arg args (cddr arg)))
+	((null? arg))
+      (augment-environment! obj
+	(cons (keyword-&gt;symbol (car arg)) (cadr arg))))
+
+    ;; return a list of '(? make ref) funcs
+    (list (lambda (x)
+	    (and (environment? x)
+		 (eq? (x type) type)))
+	  (lambda (new-value)
+	    (let ((new-obj (copy obj)))
+              (set! (new-obj value) new-value))
+	      new-obj))
+	  (lambda (x)
+	    (x value)))))
+</pre>
 </div>
 
 </blockquote>
@@ -4172,17 +4207,6 @@ I believe symbol-access is similar in spirit to a hooked variable in Ruby, or pe
 
 
 
-
-
-<div class="header" id="maketype1"><h4>make-type</h4></div>
-
-<p>make-type is being completely redone.  The old make-type has gone away, and the
-new one is still under construction &mdash; sorry about that!
-</p>
-
-
-
-
 <div class="header" id="miscellanea"><h4>miscellaneous stuff</h4></div>
 
 <p>
@@ -5067,9 +5091,6 @@ the current environment, so defines happen in the enclosing environment.
   ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
   ;;   in any name should raise a red flag.
 
-  ;; define-record-type falls between two stools: the type mechanism should be separate
-  ;;   from the notion of a structure with fields. 
-
   ;; command-line is problematic: s7 has no access to the caller's "main" function, and
   ;;   outside Windows, there's no reasonable way to get these arguments.
 </pre>
@@ -5284,6 +5305,7 @@ See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook t
 (put 'with-environment 'scheme-indent-function 1)
 (put 'with-baffle 'scheme-indent-function 0)
 (put 'catch 'scheme-indent-function 1)
+(put 'augment-environment 'scheme-indent-function 1)
 </pre>
 
 

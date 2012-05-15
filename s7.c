@@ -1017,7 +1017,8 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer FEED_TO;                 /* => */
-  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET, BODY;
+  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET;
+  s7_pointer BODY, COPY, LENGTH, OBJECT_TO_STRING, FILL, REVERSE;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
@@ -1372,7 +1373,13 @@ static void init_types(void)
 #define is_gensym(p)                  ((typeflag(p) & T_GENSYM) != 0)
 #define clear_gensym(p)               typeflag(p) = (typeflag(p) & (~T_GENSYM))
 /* symbol is from gensym (GC-able etc)
+ * it can be used in other (non-symbol contexts)
  */
+
+#define T_OPEN_ENVIRONMENT            T_GENSYM
+#define is_open_environment(p)        is_gensym(p)
+#define set_open_environment(p)       typeflag(p) |= T_OPEN_ENVIRONMENT
+/* this marks an environment that is "opened" up to generic functions etc */
 
 #define T_ACCESSED                    (1 << (TYPE_BITS + 22))
 #define is_accessed(p)                ((typeflag(p) & T_ACCESSED) != 0)
@@ -3626,12 +3633,36 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer find_symbol_value_in_open_environment(s7_scheme *sc, s7_pointer env, s7_pointer symbol) 
+{ 
+  s7_pointer x, y;
+
+  for (x = env; is_environment(x); x = next_environment(x))
+    for (y = environment_slots(x); is_slot(y); y = next_slot(y))
+      if (slot_symbol(y) == symbol)
+	return(slot_value(y));
+
+  return(sc->UNDEFINED);
+} 
+
+
 static int environment_length(s7_scheme *sc, s7_pointer e)
 {
+  /* used by length, applicable_length, and some length optimizations */
   int i;
   s7_pointer p;
+
   if (e == sc->global_env)
     return(vector_fill_pointer(e));
+
+  if (is_open_environment(e))
+    {
+      s7_pointer length_func;
+      length_func = find_symbol_value_in_open_environment(sc, e, sc->LENGTH);
+      if (length_func != sc->UNDEFINED)
+	return((int)s7_integer(s7_call(sc, length_func, list_1(sc, e))));
+    }
+
   for (i = 0, p = environment_slots(e); is_slot(p); i++, p = next_slot(p));
   return(i);
 }
@@ -3839,6 +3870,20 @@ static void save_null_environment(s7_scheme *sc)
 #endif
 
 
+static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_open_environment "(open-environment e) marks the environment 'e for special handling by generic functions and so on."
+  s7_pointer e;
+
+  e = car(args);
+  if (!is_environment(e))
+    return(s7_wrong_type_arg_error(sc, "open-environment!", 0, e, "an environment"));
+
+  set_open_environment(e);
+  return(e);
+}
+
+
 /* should these two augment-envs check for symbol accessors?
  */
 
@@ -3998,10 +4043,10 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
+  s7_pointer x, y;
   /* (let ((a 1)) ((current-environment) 'a)) 
    * ((global-environment) 'abs) 
    */
-  s7_pointer x, y;
   
   if (env == sc->global_env)
     {
@@ -4085,7 +4130,18 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
       if (env == sc->global_env)   /* (copy (global-environment)) or (copy (procedure-environment abs)) etc */
 	return(sc->global_env);
 
-      new_e = new_frame_in_env(sc, next_environment(env));
+      if (is_open_environment(env))
+	{
+	  s7_pointer copy_func;
+	  copy_func = find_symbol_value_in_open_environment(sc, env, sc->COPY);
+	  if (copy_func != sc->UNDEFINED)
+	    return(s7_call(sc, copy_func, list_1(sc, env)));
+	  
+	  /* else mark the new env as open */
+	  new_e = new_frame_in_env(sc, next_environment(env));
+	  set_open_environment(new_e);
+	}
+      else new_e = new_frame_in_env(sc, next_environment(env));
       gc_loc = s7_gc_protect(sc, new_e);
 
       for (x = environment_slots(env); is_slot(x); x = next_slot(x))
@@ -13689,6 +13745,7 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
     case T_STRING:
     case T_HASH_TABLE:
     case T_ENVIRONMENT:
+      /* TODO: if open, should we actually check? */
       return(sc->F);
 
     case T_C_OBJECT:
@@ -18074,6 +18131,14 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(copy_string("#<vector>"));
 
     case T_ENVIRONMENT:
+      if (is_open_environment(obj))
+	{
+	  /* look for object->string method else fallback on ordinary case */
+	  s7_pointer print_func;
+	  print_func = find_symbol_value_in_open_environment(sc, obj, sc->OBJECT_TO_STRING);
+	  if (print_func != sc->UNDEFINED)
+	    return(copy_string(s7_string(s7_call(sc, print_func, list_1(sc, obj)))));
+	}
       return(copy_string("#<environment>"));
 
     case T_PAIR: 
@@ -21937,6 +22002,10 @@ If its first argument is a list, the list is copied (despite the '!')."
 	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), vector_compare);
 	  return(data);
 	}
+
+      /* TODO: if open env, look for sort? see above for arg check
+       */
+
       break;
     }
 
@@ -24082,6 +24151,7 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
     case T_STRING:
     case T_HASH_TABLE:
     case T_ENVIRONMENT:
+      /* TODO: if open, check? is this the getter func? */
       return(args == 1);
       
     case T_PAIR:
@@ -24617,6 +24687,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       return(numbers_are_eqv(x, y));
 
     case T_ENVIRONMENT:
+      /* TODO if open, look for equal? */
       return(structures_are_equal(sc, x, y, new_shared_info(sc)));
 
     case T_VECTOR:
@@ -24840,6 +24911,8 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       return(hash_tables_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc))); 
 
     case T_ENVIRONMENT:
+      /* TODO if open, look for morally-equal? */
+
       /* if the environment contains a function whose environment is the current environment, infinite loop?
        *    so we pass the ci arg in the macro/function cases below
        */
@@ -25118,6 +25191,7 @@ list has infinite length."
       return(object_length(sc, car(args)));
 
     case T_ENVIRONMENT:
+      /* TODO: embed the open length calc */
       return(make_integer(sc, environment_length(sc, car(args))));
 
     default:
@@ -25274,6 +25348,17 @@ also accepts a string or vector argument."
     case T_C_OBJECT:
       return(object_reverse(sc, p));
 
+    case T_ENVIRONMENT:
+      if (is_open_environment(p))
+	{
+	  s7_pointer reverse_func;
+	  reverse_func = find_symbol_value_in_open_environment(sc, p, sc->REVERSE);
+	  if (reverse_func != sc->UNDEFINED)
+	    return(s7_call(sc, reverse_func, args));
+	  /* TODO: embed this */
+	}
+      /* fall through */
+
     default:
       return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list, string, vector, or hash-table"));
     }
@@ -25325,8 +25410,10 @@ static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_fill "(fill! obj val) fills obj with the value val"
-
-  switch (type(car(args)))
+  s7_pointer p;
+  
+  p = car(args);
+  switch (type(p))
     {
     case T_STRING:
       return(g_string_fill(sc, args));
@@ -25334,7 +25421,7 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
     case T_HASH_TABLE:
       if (is_not_null(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "fill! hash-table value,", 2, cadr(args), "nil"));
-      return(hash_table_clear(sc, car(args)));
+      return(hash_table_clear(sc, p));
 
     case T_VECTOR:
       return(g_vector_fill(sc, args));
@@ -25342,19 +25429,29 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
     case T_C_OBJECT:
       {
 	int tag;
-	tag = object_type(car(args));
+	tag = object_type(p);
 	if (object_types[tag].fill)
-	  return((*(object_types[tag].fill))(sc, car(args), cadr(args)));
-	return(eval_error(sc, "attempt to fill ~S?", car(args)));
+	  return((*(object_types[tag].fill))(sc, p, cadr(args)));
+	return(eval_error(sc, "attempt to fill ~S?", p));
       }
     case T_PAIR:
-      return(list_fill(sc, car(args), cadr(args)));
+      return(list_fill(sc, p, cadr(args)));
 
     case T_NIL:
       return(cadr(args));        /* this parallels the empty vector case */
+
+    case T_ENVIRONMENT:
+      if (is_open_environment(p))
+	{
+	  s7_pointer fill_func;
+	  fill_func = find_symbol_value_in_open_environment(sc, p, sc->FILL);
+	  if (fill_func != sc->UNDEFINED)
+	    return(s7_call(sc, fill_func, args));
+	}
+      /* fall through */
     }
 
-  return(s7_wrong_type_arg_error(sc, "fill!", 1, car(args), "a fillable object")); /* (fill! 1 0) */
+  return(s7_wrong_type_arg_error(sc, "fill!", 1, p, "a fillable object")); /* (fill! 1 0) */
 }
 
 
@@ -25408,6 +25505,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       }
       
     case T_ENVIRONMENT:
+      /* TODO: if open does this check length? */
       return(s7_environment_to_list(sc, obj));
 
     case T_C_OBJECT:
@@ -26372,6 +26470,7 @@ static const char *type_name(s7_pointer arg, int article)
     case T_BAFFLE:       return(baffles[article]);
     case T_SLOT:         return(slots[article]);
     case T_ENVIRONMENT:  return(environments[article]);
+      /* TODO: if open, perhaps use its name? */
 
     case T_INTEGER:      return(integers[article]);
     case T_RATIO:        return(ratios[article]);
@@ -27790,7 +27889,7 @@ static bool next_for_each(s7_scheme *sc)
 
 	      /* we can't use car(sc->args) directly here -- it is a counter.
 	       *   the object application (the getter function) might return the index.
-	       *   Then, if we pre-increment, and the for-each application sees the incremented value.
+	       *   Then, if we pre-increment, the for-each application sees the incremented value.
 	       *
                *    (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 4))))) (sum 0))
                *      (for-each (lambda (a b) (set! sum (+ sum a b))) ctr ctr) sum)
@@ -36767,6 +36866,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
       if (is_symbol(car(indices)))
 	return(s7_environment_ref(sc, obj, car(indices)));
       return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
+      /* TODO: this case could probably be embedded */
 
     default:                             /* (#(a b c) 0 1) -> error, but ((list (lambda (x) x)) 0 "hi") -> "hi" */
       return(g_apply(sc, list_2(sc, obj, indices)));
@@ -42745,7 +42845,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else
 	{
-	  /* here sc->code is not a pair */
+	  /* here sc->code is not a pair, the matching "if" is around line 38473!
+	   */
 	  if (is_symbol(sc->code))
 	    {
 	      sc->value = finder(sc, sc->code);
@@ -53395,6 +53496,11 @@ s7_scheme *s7_init(void)
   sc->SET =         make_symbol(sc, "set!");
   sc->BAFFLE =      make_symbol(sc, "(baffle)");
   sc->BODY =        make_symbol(sc, "body");
+  sc->COPY =        make_symbol(sc, "copy");
+  sc->FILL =        make_symbol(sc, "fill!");
+  sc->COPY =        make_symbol(sc, "copy");
+  sc->REVERSE =     make_symbol(sc, "reverse");
+  sc->OBJECT_TO_STRING = make_symbol(sc, "object->string");
 
   s7_make_slot(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
 
@@ -53459,16 +53565,17 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "current-environment",       g_current_environment,      0, 0, false, H_current_environment);
   s7_define_constant_function(sc, "initial-environment",   g_initial_environment,      0, 0, false, H_initial_environment);
   s7_define_function(sc, "augment-environment",            g_augment_environment,      1, 0, true,  H_augment_environment);
-  s7_define_function(sc, "augment-environment!",           g_augment_environment_direct, 1, 0, true,  H_augment_environment_direct);
+  s7_define_function(sc, "augment-environment!",           g_augment_environment_direct, 1, 0, true, H_augment_environment_direct);
   s7_define_safe_function(sc, "environment?",              g_is_environment,           1, 0, false, H_is_environment);
   s7_define_safe_function(sc, "environment->list",         g_environment_to_list,      1, 0, false, H_environment_to_list);
   s7_define_safe_function(sc, "error-environment",         g_error_environment,        0, 0, false, H_error_environment);
+  s7_define_safe_function(sc, "open-environment",          g_open_environment,         1, 0, false, H_open_environment);
+
   s7_define_safe_function(sc, "provided?",                 g_is_provided,              1, 0, false, H_is_provided);
   s7_define_safe_function(sc, "provide",                   g_provide,                  1, 0, false, H_provide);
   s7_define_safe_function(sc, "defined?",                  g_is_defined,               1, 1, false, H_is_defined);
   s7_define_safe_function(sc, "constant?",                 g_is_constant,              1, 0, false, H_is_constant);
   s7_define_safe_function(sc, "macro?",                    g_is_macro,                 1, 0, false, H_is_macro);
-
 
   s7_define_safe_function(sc, "keyword?",                  g_is_keyword,               1, 0, false, H_is_keyword);
   s7_define_safe_function(sc, "make-keyword",              g_make_keyword,             1, 0, false, H_make_keyword);
@@ -54129,8 +54236,6 @@ s7_scheme *s7_init(void)
 	                              *error-hook*)                                                             \n\
 	                            #f))");
 
-  s7_eval_c_string(sc, "(define (make-type . args) (error 'temporary-s7-bug \"make-type is broken; please check back in a few days.\"))");
-
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 263 */
 #if WITH_GMP
@@ -54149,11 +54254,15 @@ s7_scheme *s7_init(void)
 /* PERHAPS: hook as method? -> before/after/around methods, before/after-hooks collapsed into main?
  * PERHAPS: *formatters* along the lines of *#readers* = list of (ctrl-char (lambda (ctl-string  arg) ...)) -> string
  *
+ * should all the internal hook s7_call's be protected? *load-hook* set and (+ 1 (load "a-file.scm"))? reader case?
+ *   load case seems to be ok
+ *
  * TODO: add s7tests for the settable setter
  * TODO: (set! (procedure-setter abs) (lambda ...)) almost certainly won't work and needs GC protection
  * TODO: check the other setter case -- abs as value for closure
  *
- * other uses of s7_call: all the object stuff [see note in that section], readers, [unbound_variable -- unavoidable I think]
+ * TODO: open-environment support/doc/test + old-style make-type doc/test + new object code
+ *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
  * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
