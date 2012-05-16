@@ -1019,7 +1019,7 @@ struct s7_scheme {
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer FEED_TO;                 /* => */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET;
-  s7_pointer BODY, COPY, LENGTH, OBJECT_TO_STRING, FILL, REVERSE;
+  s7_pointer BODY, COPY, LENGTH, OBJECT_TO_STRING, FILL, REVERSE, EQUALP, MORALLY_EQUALP;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
@@ -1615,6 +1615,7 @@ static void init_types(void)
 #define closure_setter(p)             ((p)->object.func.setter)
 #define closure_arity(p)              ((p)->object.func.arity)
 #define CLOSURE_ARITY_NOT_SET         0x40000000
+#define ARITY_MAX                     0x20000000
 
 #define catch_tag(p)                  (p)->object.rcatch.tag
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
@@ -1777,7 +1778,6 @@ static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void free_object(s7_pointer a);
 static char *object_print(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error);
-static bool object_is_applicable(s7_pointer x);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
@@ -5050,24 +5050,21 @@ static void call_with_exit(s7_scheme *sc)
 static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_cc "(call-with-current-continuation func) needs more than a one sentence explanation"
-  s7_pointer proc_args;
+  s7_pointer p;
 
-  /* car(args) is the procedure passed to call/cc */
+  p = car(args);  /* this is the procedure passed to call/cc */
   
-  if (!is_procedure(car(args)))                      /* this includes continuations */
-    return(s7_wrong_type_arg_error(sc, "call/cc", 0, car(args), "a procedure"));
+  if (!is_procedure(p))                      /* this includes continuations */
+    return(s7_wrong_type_arg_error(sc, "call/cc", 0, p, "a procedure"));
 
-  proc_args = s7_procedure_arity(sc, car(args));
-  if ((s7_integer(car(proc_args)) > 1) ||
-      ((s7_integer(car(proc_args)) == 0) &&
-       (s7_integer(cadr(proc_args)) == 0) &&
-       (caddr(proc_args) == sc->F)))
+  if (!is_aritable(sc, p, 1))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		    list_2(sc, make_protected_string(sc, "call/cc procedure, ~A, should take one argument"), car(args))));
+		    list_2(sc, make_protected_string(sc, "call/cc procedure, ~A, should take one argument"), p)));
 
   sc->w = s7_make_continuation(sc);
-  push_stack(sc, OP_APPLY, list_1(sc, sc->w), car(args));
+  push_stack(sc, OP_APPLY, list_1(sc, sc->w), p);
   sc->w = sc->NIL;
+
   return(sc->NIL);
 }
 
@@ -23140,7 +23137,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   c_function_optional_args(x) = optional_args;
   c_function_has_rest_arg(x) = rest_arg;
   if (rest_arg)
-    c_function_all_args(x) = 10000000;
+    c_function_all_args(x) = ARITY_MAX;
   else c_function_all_args(x) = required_args + optional_args;
 
 #if WITH_OPTIMIZATION
@@ -23192,7 +23189,7 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
    *   is_procedure. 
    * 
    * Unfortunately much C code depends on s7_is_procedure treating applicable
-   *  objects and macros as procedures.  Ideally we'd have s7_is_applicable.
+   *  objects and macros as procedures.  We can use arity = applicable?
    */
   return(make_boolean(sc,
 		      (typ == T_CLOSURE)      || 
@@ -23799,13 +23796,6 @@ static void mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's ma
 }
 
 
-static bool object_is_applicable(s7_pointer x)
-{
-  return((is_c_object(x)) &&
-	 (object_types[object_type(x)].apply));
-}
-
-
 void *s7_object_value(s7_pointer obj)
 {
   return(object_value(obj));
@@ -24051,9 +24041,6 @@ static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- arity -------------------------------- */
 
-/* TODO: use and set closure_arity here
- */
-
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 {
   if (is_c_function(x))
@@ -24066,13 +24053,12 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
    */
 
   if ((is_closure(x)) ||
-      (is_closure_star(x)) ||
-      (is_pair(x)))
+      (is_closure_star(x)))
     {
       int len;
       
       if (is_pair(x))
-	len = s7_list_length(sc, car(x));
+	len = s7_list_length(sc, closure_args(x));
       else 
 	{
 	  if (is_symbol(closure_args(x)))
@@ -24107,14 +24093,10 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
       return(list_3(sc, make_integer(sc, abs(len)), small_int(0), make_boolean(sc, len < 0)));
     }
   
-  if ((object_is_applicable(x)) ||
-      (s7_is_continuation(x)) ||
+  if ((is_continuation(x)) ||
       (is_goto(x)))
     return(list_3(sc, small_int(0), small_int(0), sc->T));
 
-  /* it's not straightforward to add support for macros here -- the arity from the
-   *   user's point of view refers to the embedded lambda, not the outer lambda.
-   */
   return(sc->NIL);
 }
 
@@ -24139,11 +24121,207 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer closure_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer x_args)
+{
+  /* x_args is unprocessed -- it is exactly the list as used in the closure[*] definition
+   */
+  int len;
+  if (is_symbol(x_args))                    /* any number of args is ok */
+    return(s7_cons(sc, small_int(0), s7_make_integer(sc, ARITY_MAX)));
+	
+  len = closure_arity(x);
+  if (len == CLOSURE_ARITY_NOT_SET)
+    {
+      len = s7_list_length(sc, x_args);
+      closure_arity(x) = len;
+    }
+  if (len < 0)                               /* dotted list => rest arg, (length '(a b . c)) is -2 */
+    return(s7_cons(sc, s7_make_integer(sc, -len), s7_make_integer(sc, ARITY_MAX)));
+  return(s7_cons(sc, s7_make_integer(sc, len), s7_make_integer(sc, len)));
+}
+
+
+static s7_pointer closure_star_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer x_args)
+{
+  if (is_symbol(x_args))
+    return(s7_cons(sc, small_int(0), s7_make_integer(sc, ARITY_MAX)));
+
+  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+    {
+      s7_pointer p;
+      int i;
+      for (i = 0, p = closure_args(x); is_pair(p); p = cdr(p))
+	{
+	  s7_pointer arg;
+	  arg = car(p);
+	  if ((arg != sc->KEY_KEY) &&
+	      (arg != sc->KEY_OPTIONAL))
+	    {
+	      if ((arg == sc->KEY_REST) ||
+		  (arg == sc->KEY_ALLOW_OTHER_KEYS))
+		break;
+	      i++;
+	    }
+	}
+      if (is_null(p))
+	closure_arity(x) = i;
+      else closure_arity(x) = -1;
+    }
+
+  if (closure_arity(x) == -1)
+    return(s7_cons(sc, small_int(0), s7_make_integer(sc, ARITY_MAX)));
+  return(s7_cons(sc, small_int(0), s7_make_integer(sc, closure_arity(x))));
+}
+
+
 static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_arity "(arity obj) the min and max acceptable args for obj if it is applicable, otherwise #f."
+  s7_pointer x;
+
+  x = car(args);
+  switch (type(x))
+    {
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
+    case T_C_FUNCTION:
+      return(s7_cons(sc, s7_make_integer(sc, c_function_required_args(x)), s7_make_integer(sc, c_function_all_args(x))));
+
+    case T_CLOSURE:
+      return(closure_arity_to_cons(sc, x, closure_args(x)));
+
+    case T_CLOSURE_STAR:
+      return(closure_star_arity_to_cons(sc, x, closure_args(x)));
+
+    case T_C_MACRO:
+      return(s7_cons(sc, s7_make_integer(sc, c_macro_required_args(x)), s7_make_integer(sc, c_macro_all_args(x))));
+
+    case T_MACRO:
+    case T_BACRO:
+      if (car(cadr(car(closure_body(x)))) == sc->LAMBDA)
+	return(closure_arity_to_cons(sc, x, cadr(cadr(car(closure_body(x))))));
+      return(closure_star_arity_to_cons(sc, x, cadr(cadr(car(closure_body(x))))));
+
+    case T_GOTO:
+    case T_CONTINUATION:
+      return(s7_cons(sc, small_int(0), s7_make_integer(sc, ARITY_MAX)));
+
+    case T_STRING:
+    case T_ENVIRONMENT:
+      return(s7_cons(sc, small_int(1), small_int(1)));
+      
+    case T_C_OBJECT:
+      if (object_types[object_type(x)].apply != fallback_ref)
+	return(s7_cons(sc, small_int(0), s7_make_integer(sc, ARITY_MAX)));
+      return(sc->F);
+
+    case T_HASH_TABLE:
+    case T_PAIR:
+    case T_VECTOR:
+      return(s7_cons(sc, small_int(1), s7_make_integer(sc, ARITY_MAX)));
+
+    case T_SYNTAX:
+      switch (syntax_opcode(x))
+	{
+	case OP_QUOTE:
+	  return(s7_cons(sc, small_int(1), small_int(1)));
+	  
+	case OP_IF:
+	  return(s7_cons(sc, small_int(2), small_int(3)));
+
+	case OP_SET:
+	  return(s7_cons(sc, small_int(3), small_int(3)));
+
+	case OP_COND:
+	case OP_WITH_ENV:
+	  return(s7_cons(sc, small_int(1), s7_make_integer(sc, ARITY_MAX)));
+
+	case OP_LET:
+	case OP_LET_STAR:
+	case OP_LETREC:
+	case OP_CASE:
+	case OP_LAMBDA:
+	case OP_LAMBDA_STAR:
+	case OP_DEFINE:
+	case OP_DEFINE_STAR:
+	case OP_DEFINE_CONSTANT:
+	case OP_DEFINE_MACRO:
+	case OP_DEFINE_MACRO_STAR:
+	case OP_DEFINE_EXPANSION:
+	case OP_DEFINE_BACRO:
+	case OP_DEFINE_BACRO_STAR:
+	  return(s7_cons(sc, small_int(2), s7_make_integer(sc, ARITY_MAX)));
+
+	case OP_DO:
+	case OP_DEFMACRO:
+	case OP_DEFMACRO_STAR:
+	  return(s7_cons(sc, small_int(3), s7_make_integer(sc, ARITY_MAX)));
+
+	default:
+	  return(s7_cons(sc, small_int(0), s7_make_integer(sc, ARITY_MAX)));
+	}
+    }
 
   return(sc->F);
+}
+
+
+static bool closure_is_aritable(s7_scheme *sc, s7_pointer x, s7_pointer x_args, int args)
+{
+  /* x_args is unprocessed -- it is exactly the list as used in the closure[*] definition
+   */
+  int len;
+  if (is_symbol(x_args))                    /* any number of args is ok */
+    return(true);
+	
+  len = closure_arity(x);
+  if (len == CLOSURE_ARITY_NOT_SET)
+    {
+      len = s7_list_length(sc, x_args);
+      closure_arity(x) = len;
+    }
+  if (len < 0)                               /* dotted list => rest arg, (length '(a b . c)) is -2 */
+    return((-len) <= args);                  /*   so we have enough to take care of the required args */
+  return(args == len);                       /* in a normal lambda list, there are no other possibilities */
+}
+
+
+static bool closure_star_is_aritable(s7_scheme *sc, s7_pointer x, s7_pointer x_args, int args)
+{
+  if (is_symbol(x_args))
+    return(true);
+
+  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+    {
+      /* The lambda* list can contain the pure noise words :key and :optional,
+       *   :rest = any number ok, :allow-other-keywords = any number of key/value pairs
+       * but all args are optional, so here arity reflects the max args possible, min is always 0.
+       * arity = mx or -1
+       */
+      s7_pointer p;
+      int i;
+      for (i = 0, p = closure_args(x); is_pair(p); p = cdr(p))
+	{
+	  s7_pointer arg;
+	  arg = car(p);
+	  if ((arg != sc->KEY_KEY) &&
+	      (arg != sc->KEY_OPTIONAL))
+	    {
+	      if ((arg == sc->KEY_REST) ||
+		  (arg == sc->KEY_ALLOW_OTHER_KEYS))
+		break;
+	      i++;
+	    }
+	}
+      if (is_null(p))
+	closure_arity(x) = i;
+      else closure_arity(x) = -1;
+    }
+
+  return((closure_arity(x) == -1) ||
+	 (args <= closure_arity(x)));
 }
 
 
@@ -24160,66 +24338,25 @@ static bool is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	     ((int)c_function_all_args(x) >= args));
 
     case T_CLOSURE:
-      {
-	/* closure_args is unprocessed -- it is exactly the list as used in the closure* definition
-	 */
-	int len;
-	if (is_symbol(closure_args(x)))            /* any number of args is ok */
-	  return(true);
-	
-	len = closure_arity(x);
-	if (len == CLOSURE_ARITY_NOT_SET)
-	  {
-	    len = s7_list_length(sc, closure_args(x));
-	    closure_arity(x) = len;
-	  }
-	if (len < 0)                               /* dotted list => rest arg, (length '(a b . c)) is -2 */
-	  return((-len) <= args);                  /*   so we have enough to take care of the required args */
-	return(args == len);                       /* in a normal lambda list, there are no other possibilities */
-      }
+      return(closure_is_aritable(sc, x, closure_args(x), args));
 
     case T_CLOSURE_STAR:
-      {
-	if (is_symbol(closure_args(x)))            /* any number of args is ok */
-	  return(true);
-
-	if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
-	  {
-	    /* The lambda* list can contain the pure noise words :key and :optional,
-	     *   :rest = any number ok, :allow-other-keywords = any number of key/value pairs
-	     * but all args are optional, so here arity reflects the max args possible, min is always 0.
-	     * arity = mx or -1
-	     */
-	    s7_pointer p;
-	    int i;
-	    for (i = 0, p = closure_args(x); is_pair(p); p = cdr(p))
-	      {
-		s7_pointer arg;
-		arg = car(p);
-		if ((arg != sc->KEY_KEY) &&
-		    (arg != sc->KEY_OPTIONAL))
-		  {
-		    if ((arg == sc->KEY_REST) ||
-			(arg == sc->KEY_ALLOW_OTHER_KEYS))
-		      break;
-		    i++;
-		  }
-	      }
-	    if (is_null(p))
-	      closure_arity(x) = i;
-	    else closure_arity(x) = -1;
-	  }
-
-	return((closure_arity(x) == -1) ||
-	       (args <= closure_arity(x)));
-      }
+      return(closure_star_is_aritable(sc, x, closure_args(x), args));
 
     case T_C_MACRO:
       return(((int)c_macro_required_args(x) <= args) &&
 	     ((int)c_macro_all_args(x) >= args));
 
-      /* TODO: with macros, the arity is reflected in the inner lambda?
+    case T_MACRO:
+    case T_BACRO:
+      /* we need to look at the embedded lambda to choose between closure and closure_star 
+       *   closure_body here is of the form: ((apply (lambda (a b) ...) (cdr {defmac}-14)))
+       *   so car is                          (apply (lambda (a b) ...) (cdr {defmac}-14))
+       *      cadr(car) is                           (lambda (a b) ...)
        */
+      if (car(cadr(car(closure_body(x)))) == sc->LAMBDA)
+	return(closure_is_aritable(sc, x, cadr(cadr(car(closure_body(x)))), args));
+      return(closure_star_is_aritable(sc, x, cadr(cadr(car(closure_body(x)))), args));
 
     case T_GOTO:
     case T_CONTINUATION:
@@ -24230,30 +24367,82 @@ static bool is_aritable(s7_scheme *sc, s7_pointer x, int args)
       return(args == 1);
       
     case T_C_OBJECT:
-      return(true);
+      return(object_types[object_type(x)].apply != fallback_ref);
+      /* unfortunately, that's the best we can do -- the actual arity is not available:
+       *
+       * (let ((v (vct 0 1 2 3))) (v)) -> vct-ref argument 2, #<unspecified>, is untyped but should be an integer
+       * (let ((v (vct 0 1 2 3))) (v 2 1)) -> 2.0
+       * SOMEDAY: an arity arg somewhere?
+       */
 
     case T_HASH_TABLE:
     case T_PAIR:
     case T_VECTOR:
       return(args > 0);
+
+    case T_SYNTAX:
+      switch (syntax_opcode(x))
+	{
+	case OP_QUOTE:
+	  return(args == 1);
+	  
+	case OP_IF:
+	  return((args == 2) || (args == 3));
+
+	case OP_SET:
+	  return(args == 3);
+
+	case OP_COND:
+	case OP_WITH_ENV:
+	  return(args > 0);
+
+	case OP_LET:
+	case OP_LET_STAR:
+	case OP_LETREC:
+	case OP_CASE:
+	case OP_LAMBDA:
+	case OP_LAMBDA_STAR:
+	case OP_DEFINE:
+	case OP_DEFINE_STAR:
+	case OP_DEFINE_CONSTANT:
+	case OP_DEFINE_MACRO:
+	case OP_DEFINE_MACRO_STAR:
+	case OP_DEFINE_EXPANSION:
+	case OP_DEFINE_BACRO:
+	case OP_DEFINE_BACRO_STAR:
+	  return(args > 1);
+
+	case OP_DO:
+	case OP_DEFMACRO:
+	case OP_DEFMACRO_STAR:
+	  return(args > 2);
+
+	default:
+	  return(true); /* and begin etc */
+	}
     }
   return(false);
 }
 
-/* TODO: arity c/doc/test + aritable syntax doc/test, syntax is tricky if opt
- * TODO: fix too_many_arguments?
+/* TODO: arity + aritable test
  */
 
 static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_aritable "(aritable? obj num-args) returns #t if 'obj can be applied to 'num-args arguments."
   s7_pointer n;
+  s7_Int num;
 
   n = cadr(args);
   if (!is_integer(n))
     return(s7_wrong_type_arg_error(sc, "aritable?", 2, n, "an integer"));
 
-  return(make_boolean(sc, is_aritable(sc, car(args), (int)s7_integer(n))));
+  num = s7_integer(n);
+  if (num < 0)
+    return(s7_out_of_range_error(sc, "aritable?", 2, n, "should be a non-negative integer"));
+  if (num > ARITY_MAX) num = ARITY_MAX;
+
+  return(make_boolean(sc, is_aritable(sc, car(args), (int)num)));
 }
 
 
@@ -24780,7 +24969,17 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       return(numbers_are_eqv(x, y));
 
     case T_ENVIRONMENT:
-      /* TODO if open, look for equal? */
+      if (is_open_environment(x))
+	{
+	  if (is_open_environment(y))
+	    {
+	      s7_pointer equal_func;
+	      equal_func = find_symbol_value_in_open_environment(sc, x, sc->EQUALP);
+	      if (equal_func != sc->UNDEFINED)
+		return(s7_call(sc, equal_func, list_2(sc, x, y)));
+	    }
+	  else return(false);
+	}
       return(structures_are_equal(sc, x, y, new_shared_info(sc)));
 
     case T_VECTOR:
@@ -25004,8 +25203,17 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       return(hash_tables_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc))); 
 
     case T_ENVIRONMENT:
-      /* TODO if open, look for morally-equal? */
-
+      if (is_open_environment(x))
+	{
+	  if (is_open_environment(y))
+	    {
+	      s7_pointer equal_func;
+	      equal_func = find_symbol_value_in_open_environment(sc, x, sc->MORALLY_EQUALP);
+	      if (equal_func != sc->UNDEFINED)
+		return(s7_call(sc, equal_func, list_2(sc, x, y)));
+	    }
+	  else return(false);
+	}
       /* if the environment contains a function whose environment is the current environment, infinite loop?
        *    so we pass the ci arg in the macro/function cases below
        */
@@ -27525,18 +27733,6 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
 }
 
 
-/* TODO: perhaps (!is_aritable(proc, len)) ? */
-
-static bool too_many_arguments(s7_scheme *sc, s7_pointer proc, int len)
-{
-  s7_pointer proc_args;
-  proc_args = s7_procedure_arity(sc, proc);
-  return((is_pair(proc_args)) &&
-	 (caddr(proc_args) == sc->F) &&
-	 ((s7_integer(car(proc_args)) + s7_integer(cadr(proc_args))) < len));
-}
-
-
 #define SYMBOL_TO_VALUE(Sc, Sym) ((is_global(Sym)) ? slot_value(global_slot(Sym)) : finder(Sc, Sym))
 
 static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
@@ -27555,7 +27751,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 	      if (((s7_is_eq(caar(p), s7_make_symbol(sc, "if"))) &&
 		   (len > 4)) ||
 		  ((s7_is_procedure(SYMBOL_TO_VALUE(sc, caar(p)))) &&
-		   (too_many_arguments(sc, SYMBOL_TO_VALUE(sc, caar(p)), len))) ||
+		   (!is_aritable(sc, SYMBOL_TO_VALUE(sc, caar(p)), len))) ||
 		  ((s7_is_eq(caar(p), s7_make_symbol(sc, "define"))) &&
 		   (is_pair(cdr(p))) &&
 		   (is_symbol(cadr(p))) &&
@@ -53596,6 +53792,8 @@ s7_scheme *s7_init(void)
   sc->FILL =        make_symbol(sc, "fill!");
   sc->COPY =        make_symbol(sc, "copy");
   sc->REVERSE =     make_symbol(sc, "reverse");
+  sc->EQUALP =      make_symbol(sc, "equal?");
+  sc->MORALLY_EQUALP = make_symbol(sc, "morally-equal?");
   sc->OBJECT_TO_STRING = make_symbol(sc, "object->string");
 
   s7_make_slot(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);

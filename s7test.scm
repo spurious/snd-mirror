@@ -21137,6 +21137,7 @@ abs     1       2
 ;;; TODO: should (lambda* (:key) 1) be an error?
 (test ((lambda* (:key) 1)) 1) ; !! same: (let () (define* (hi :key) 1) (hi)) and (let () (define* (hi :key :optional) 1) (hi))
 ;;; TODO: try more like this
+;;; (procedure-arity (lambda* (:key :optional) 1)) -> (0 0 #f)
 
 ;;; :(procedure-arity (lambda* (:key :optional :rest) 1))
 ;;;lambda* :rest parameter missing? (:rest)
@@ -21757,6 +21758,43 @@ abs     1       2
 
 
 ;;; --------------------------------------------------------------------------------
+;;; aritable?
+
+(for-each
+ (lambda (arg)
+   (if (aritable? arg 0)
+       (format #t ";(aritable? ~A) -> #t?~%" arg)))
+ (list :hi (integer->char 65) 1 #t 3.14 3/4 1.0+1.0i #\f #<eof> #<unspecified>))
+
+(for-each
+ (lambda (arg)
+   (let ((val (catch #t (lambda () (aritable? abs arg)) (lambda args 'error))))
+     (if (not (eq? val 'error))
+	 (format #t ";(aritable? abs ~A) -> ~A?~%" arg val))))
+ (list :hi (integer->char 65) -1 most-negative-fixnum macroexpand quasiquote (lambda () #f) 
+       car #() "hi" (list 1 2) 3.14 3/4 1.0+1.0i #\f #<eof> #<unspecified>))
+
+(test (aritable?) 'error)
+(test (aritable abs) 'error)
+
+(test (aritable? car 0) #f)
+(test (aritable? car 1) #t)
+(test (aritable? car 2) #f)
+(test (aritable? car 3) #f)
+(test (aritable? car most-negative-fixnum) 'error)
+(test (aritable? car most-positive-fixnum) #f)
+(test (aritable? + most-positive-fixnum) #t)
+(test (aritable? + 0) #t)
+(test (aritable? log 2) #t)
+(test (aritable? catch 2) #f)
+(test (aritable? set! 0) #f)
+(test (aritable? begin 0) #t)
+(test (aritable? (make-random-state 123) 0) #f)
+
+
+
+
+;;; --------------------------------------------------------------------------------
 ;;; procedure-arity
 
 (test (procedure-arity car) '(1 0 #f))
@@ -21810,25 +21848,18 @@ abs     1       2
  (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
 (define (for-each-subset func args)
-  (let* ((arity (procedure-arity func))
-	 (min-args (car arity))
-	 (max-args (if (caddr arity)
-		       (length args)
-		       (+ min-args (cadr arity))))
-	 (subsets '()))
-    
+  (let ((subsets '()))
     (define (subset source dest len)
       (if (null? source)
 	  (begin
 	    (if (member dest subsets)
 		(format #t ";got ~S twice in for-each-subset: ~S~%" dest args))
 	    (set! subsets (cons dest subsets))
-	    (if (<= min-args len max-args)
+	    (if (aritable? func len)
 		(apply func dest)))
 	  (begin
 	    (subset (cdr source) (cons (car source) dest) (+ len 1))
 	    (subset (cdr source) dest len))))
-    
     (subset args '() 0)))
 
 (test (let ((ctr 0))
