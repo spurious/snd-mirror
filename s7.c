@@ -885,6 +885,7 @@ typedef struct s7_cell {
 
     struct {
       s7_pointer args, body, env, setter;
+      int arity;
     } func;
 
     struct {               /* symbols */
@@ -1612,6 +1613,8 @@ static void init_types(void)
 #define closure_body(p)               ((p)->object.func.body)
 #define closure_environment(p)        ((p)->object.func.env)
 #define closure_setter(p)             ((p)->object.func.setter)
+#define closure_arity(p)              ((p)->object.func.arity)
+#define CLOSURE_ARITY_NOT_SET         0x40000000
 
 #define catch_tag(p)                  (p)->object.rcatch.tag
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
@@ -1790,7 +1793,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
 static void pop_input_port(s7_scheme *sc);
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
-static bool args_match(s7_scheme *sc, s7_pointer x, int args);
+static bool is_aritable(s7_scheme *sc, s7_pointer x, int args);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
@@ -3661,6 +3664,7 @@ static int environment_length(s7_scheme *sc, s7_pointer e)
       length_func = find_symbol_value_in_open_environment(sc, e, sc->LENGTH);
       if (length_func != sc->UNDEFINED)
 	return((int)s7_integer(s7_call(sc, length_func, list_1(sc, e))));
+      /* this is very unlikely to be useful -- perhaps return 0 to turn off map/for-each, but why? */
     }
 
   for (i = 0, p = environment_slots(e); is_slot(p); i++, p = next_slot(p));
@@ -4358,6 +4362,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
   closure_args(x) = args;
   closure_body(x) = code;
   closure_setter(x) = sc->F;
+  closure_arity(x) = CLOSURE_ARITY_NOT_SET;
   closure_environment(x) = sc->envir;
   if (type == T_CLOSURE)
     set_type(x, type | T_PROCEDURE | T_COPY_ARGS);
@@ -4385,6 +4390,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
        closure_args(X) = Args; \
        closure_body(X) = Code; \
        closure_setter(X) = sc->F; \
+       closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
        closure_environment(X) = Env; \
        set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
       } while (0)
@@ -13745,7 +13751,6 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
     case T_STRING:
     case T_HASH_TABLE:
     case T_ENVIRONMENT:
-      /* TODO: if open, should we actually check? */
       return(sc->F);
 
     case T_C_OBJECT:
@@ -20338,7 +20343,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       if (!is_procedure(eq_func))
 	return(s7_wrong_type_arg_error(sc, "assoc function,", 3, eq_func, "a function"));
 
-      if (!args_match(sc, eq_func, 2))
+      if (!is_aritable(sc, eq_func, 2))
 	return(s7_wrong_type_arg_error(sc, "assoc", 3, eq_func, "a procedure that can take 2 arguments"));
 
       /* now maybe there's a simple case */
@@ -20763,7 +20768,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       if (!is_procedure(eq_func))
 	return(s7_wrong_type_arg_error(sc, "member function,", 3, eq_func, "a function"));
 
-      if (!args_match(sc, eq_func, 2))
+      if (!is_aritable(sc, eq_func, 2))
 	return(s7_wrong_type_arg_error(sc, "member", 3, eq_func, "a procedure that can take 2 arguments"));
 
       /* now maybe there's a simple case */
@@ -21962,7 +21967,7 @@ If its first argument is a list, the list is copied (despite the '!')."
     return(s7_wrong_type_arg_error(sc, "sort! function,", 2, lessp, "a function"));
   if ((is_continuation(lessp)) || is_goto(lessp))
     return(s7_wrong_type_arg_error(sc, "sort!", 2, lessp, "a normal procedure (not a continuation)"));
-  if (!args_match(sc, lessp, 2))
+  if (!is_aritable(sc, lessp, 2))
     return(s7_wrong_type_arg_error(sc, "sort!", 2, lessp, "a procedure that can take 2 arguments"));
 
   switch (type(data))
@@ -23586,91 +23591,6 @@ static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
-{
-  if (is_c_function(x))
-    return(list_3(sc, 
-		  make_integer(sc, c_function_required_args(x)),
-		  make_integer(sc, c_function_optional_args(x)),
-		  make_boolean(sc, c_function_has_rest_arg(x))));
-  /* this was optimized to be a permanent immutable list, but makes a mess of all the setters,
-   *   and then there are cases like: (fill! (append (list 1) (procedure-arity abs)) 0)
-   */
-
-  if ((is_closure(x)) ||
-      (is_closure_star(x)) ||
-      (is_pair(x)))
-    {
-      int len;
-      
-      if (is_pair(x))
-	len = s7_list_length(sc, car(x));
-      else 
-	{
-	  if (is_symbol(closure_args(x)))
-	    return(list_3(sc, small_int(0), small_int(0), sc->T));
-	  len = s7_list_length(sc, closure_args(x));
-	}
-
-      if (is_closure_star(x))
-	{
-	  s7_pointer tmp;        /* make sure we aren't counting :optional and friends as arguments */
-	  int opts = 0;
-
-	  if (is_pair(x))
-	    tmp = car(x);
-	  else tmp = closure_args(x);
-
-	  for (; is_pair(tmp); tmp = cdr(tmp))
-	    {
-	      if ((car(tmp) == sc->KEY_KEY) ||
-		  (car(tmp) == sc->KEY_OPTIONAL) ||
-		  (car(tmp) == sc->KEY_ALLOW_OTHER_KEYS))
-		opts++;
-	      if (car(tmp) == sc->KEY_REST)
-		{
-		  opts += 2;     /* both :rest and the arg name are not counted as optional args */
-		  if (len > 0) len = -len;
-		}
-	    }
-	  return(list_3(sc, small_int(0), make_integer(sc, abs(len) - opts), make_boolean(sc, len < 0)));
-	}
-
-      return(list_3(sc, make_integer(sc, abs(len)), small_int(0), make_boolean(sc, len < 0)));
-    }
-  
-  if ((object_is_applicable(x)) ||
-      (s7_is_continuation(x)) ||
-      (is_goto(x)))
-    return(list_3(sc, small_int(0), small_int(0), sc->T));
-
-  /* it's not straightforward to add support for macros here -- the arity from the
-   *   user's point of view refers to the embedded lambda, not the outer lambda.
-   */
-  return(sc->NIL);
-}
-
-
-static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
-{
-  #define H_procedure_arity "(procedure-arity func) returns a list describing func's arguments: '(required optional rest)"
-  s7_pointer p;
-
-  p = car(args);
-  if (is_symbol(p))
-    {
-      p = s7_symbol_value(sc, p);
-      if (p == sc->UNDEFINED)
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			list_2(sc, make_protected_string(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
-    }
-
-  if (!is_procedure(p))
-    return(s7_wrong_type_arg_error(sc, "procedure-arity", 0, car(args), "a procedure"));
-  return(s7_procedure_arity(sc, p));
-}
-
-
 static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 {
   s7_pointer x;
@@ -24128,7 +24048,106 @@ static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
 }
 
 
-static bool args_match(s7_scheme *sc, s7_pointer x, int args)
+
+/* -------------------------------- arity -------------------------------- */
+
+/* TODO: use and set closure_arity here
+ */
+
+s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
+{
+  if (is_c_function(x))
+    return(list_3(sc, 
+		  make_integer(sc, c_function_required_args(x)),
+		  make_integer(sc, c_function_optional_args(x)),
+		  make_boolean(sc, c_function_has_rest_arg(x))));
+  /* this was optimized to be a permanent immutable list, but makes a mess of all the setters,
+   *   and then there are cases like: (fill! (append (list 1) (procedure-arity abs)) 0)
+   */
+
+  if ((is_closure(x)) ||
+      (is_closure_star(x)) ||
+      (is_pair(x)))
+    {
+      int len;
+      
+      if (is_pair(x))
+	len = s7_list_length(sc, car(x));
+      else 
+	{
+	  if (is_symbol(closure_args(x)))
+	    return(list_3(sc, small_int(0), small_int(0), sc->T));
+	  len = s7_list_length(sc, closure_args(x));
+	}
+
+      if (is_closure_star(x))
+	{
+	  s7_pointer tmp;        /* make sure we aren't counting :optional and friends as arguments */
+	  int opts = 0;
+
+	  if (is_pair(x))
+	    tmp = car(x);
+	  else tmp = closure_args(x);
+
+	  for (; is_pair(tmp); tmp = cdr(tmp))
+	    {
+	      if ((car(tmp) == sc->KEY_KEY) ||
+		  (car(tmp) == sc->KEY_OPTIONAL) ||
+		  (car(tmp) == sc->KEY_ALLOW_OTHER_KEYS))
+		opts++;
+	      if (car(tmp) == sc->KEY_REST)
+		{
+		  opts += 2;     /* both :rest and the arg name are not counted as optional args */
+		  if (len > 0) len = -len;
+		}
+	    }
+	  return(list_3(sc, small_int(0), make_integer(sc, abs(len) - opts), make_boolean(sc, len < 0)));
+	}
+
+      return(list_3(sc, make_integer(sc, abs(len)), small_int(0), make_boolean(sc, len < 0)));
+    }
+  
+  if ((object_is_applicable(x)) ||
+      (s7_is_continuation(x)) ||
+      (is_goto(x)))
+    return(list_3(sc, small_int(0), small_int(0), sc->T));
+
+  /* it's not straightforward to add support for macros here -- the arity from the
+   *   user's point of view refers to the embedded lambda, not the outer lambda.
+   */
+  return(sc->NIL);
+}
+
+
+static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
+{
+  #define H_procedure_arity "(procedure-arity func) returns a list describing func's arguments: '(required optional rest)"
+  s7_pointer p;
+
+  p = car(args);
+  if (is_symbol(p))
+    {
+      p = s7_symbol_value(sc, p);
+      if (p == sc->UNDEFINED)
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			list_2(sc, make_protected_string(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
+    }
+
+  if (!is_procedure(p))
+    return(s7_wrong_type_arg_error(sc, "procedure-arity", 0, car(args), "a procedure"));
+  return(s7_procedure_arity(sc, p));
+}
+
+
+static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
+{
+  #define H_arity "(arity obj) the min and max acceptable args for obj if it is applicable, otherwise #f."
+
+  return(sc->F);
+}
+
+
+static bool is_aritable(s7_scheme *sc, s7_pointer x, int args)
 {
   switch (type(x))
     {
@@ -24141,28 +24160,100 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 	     ((int)c_function_all_args(x) >= args));
 
     case T_CLOSURE:
-      return((is_symbol(closure_args(x))) ||
-	     (safe_list_length(sc, closure_args(x)) == args));
+      {
+	/* closure_args is unprocessed -- it is exactly the list as used in the closure* definition
+	 */
+	int len;
+	if (is_symbol(closure_args(x)))            /* any number of args is ok */
+	  return(true);
+	
+	len = closure_arity(x);
+	if (len == CLOSURE_ARITY_NOT_SET)
+	  {
+	    len = s7_list_length(sc, closure_args(x));
+	    closure_arity(x) = len;
+	  }
+	if (len < 0)                               /* dotted list => rest arg, (length '(a b . c)) is -2 */
+	  return((-len) <= args);                  /*   so we have enough to take care of the required args */
+	return(args == len);                       /* in a normal lambda list, there are no other possibilities */
+      }
 
     case T_CLOSURE_STAR:
-    return((is_symbol(closure_args(x))) ||
-	   (safe_list_length(sc, closure_args(x)) >= args));
+      {
+	if (is_symbol(closure_args(x)))            /* any number of args is ok */
+	  return(true);
 
-    case T_STRING:
-    case T_HASH_TABLE:
-    case T_ENVIRONMENT:
-      /* TODO: if open, check? is this the getter func? */
-      return(args == 1);
-      
-    case T_PAIR:
+	if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+	  {
+	    /* The lambda* list can contain the pure noise words :key and :optional,
+	     *   :rest = any number ok, :allow-other-keywords = any number of key/value pairs
+	     * but all args are optional, so here arity reflects the max args possible, min is always 0.
+	     * arity = mx or -1
+	     */
+	    s7_pointer p;
+	    int i;
+	    for (i = 0, p = closure_args(x); is_pair(p); p = cdr(p))
+	      {
+		s7_pointer arg;
+		arg = car(p);
+		if ((arg != sc->KEY_KEY) &&
+		    (arg != sc->KEY_OPTIONAL))
+		  {
+		    if ((arg == sc->KEY_REST) ||
+			(arg == sc->KEY_ALLOW_OTHER_KEYS))
+		      break;
+		    i++;
+		  }
+	      }
+	    if (is_null(p))
+	      closure_arity(x) = i;
+	    else closure_arity(x) = -1;
+	  }
+
+	return((closure_arity(x) == -1) ||
+	       (args <= closure_arity(x)));
+      }
+
+    case T_C_MACRO:
+      return(((int)c_macro_required_args(x) <= args) &&
+	     ((int)c_macro_all_args(x) >= args));
+
+      /* TODO: with macros, the arity is reflected in the inner lambda?
+       */
+
+    case T_GOTO:
+    case T_CONTINUATION:
       return(true);
 
-    case T_VECTOR:
-      if (vector_is_multidimensional(x))
-	return(args <= (int)vector_ndims(x));
+    case T_STRING:
+    case T_ENVIRONMENT:
       return(args == 1);
+      
+    case T_C_OBJECT:
+      return(true);
+
+    case T_HASH_TABLE:
+    case T_PAIR:
+    case T_VECTOR:
+      return(args > 0);
     }
   return(false);
+}
+
+/* TODO: arity c/doc/test + aritable syntax doc/test, syntax is tricky if opt
+ * TODO: fix too_many_arguments?
+ */
+
+static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_aritable "(aritable? obj num-args) returns #t if 'obj can be applied to 'num-args arguments."
+  s7_pointer n;
+
+  n = cadr(args);
+  if (!is_integer(n))
+    return(s7_wrong_type_arg_error(sc, "aritable?", 2, n, "an integer"));
+
+  return(make_boolean(sc, is_aritable(sc, car(args), (int)s7_integer(n))));
 }
 
 
@@ -24183,7 +24274,9 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
 
 static bool is_thunkable(s7_scheme *sc, s7_pointer x)
 {
-  /* can be called with 0 args */
+  /* can be called with 0 args.
+   *    don't use is_aritable here because this needs to be restricted to procedures
+   */
   switch (type(x))
     {
     case T_C_FUNCTION:
@@ -24273,9 +24366,9 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
       if ((!is_pair(funcs)) ||
 	  (s7_list_length(sc, funcs) < 3))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 2, funcs, "a list of 3 or more items"));	
-      if ((is_procedure(cadr(funcs))) && (!args_match(sc, cadr(funcs), 2)))
+      if ((is_procedure(cadr(funcs))) && (!is_aritable(sc, cadr(funcs), 2)))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access set function,", 2, cadr(funcs), "a procedure of 2 arguments"));	
-      if ((is_procedure(caddr(funcs))) && (!args_match(sc, caddr(funcs), 2)))
+      if ((is_procedure(caddr(funcs))) && (!is_aritable(sc, caddr(funcs), 2)))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access bind function,", 2, caddr(funcs), "a procedure of 2 arguments"));	
     }
   return(s7_symbol_set_access(sc, sym, funcs));
@@ -25191,7 +25284,6 @@ list has infinite length."
       return(object_length(sc, car(args)));
 
     case T_ENVIRONMENT:
-      /* TODO: embed the open length calc */
       return(make_integer(sc, environment_length(sc, car(args))));
 
     default:
@@ -25505,7 +25597,6 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       }
       
     case T_ENVIRONMENT:
-      /* TODO: if open does this check length? */
       return(s7_environment_to_list(sc, obj));
 
     case T_C_OBJECT:
@@ -27025,7 +27116,7 @@ GOT_CATCH:
        *   when this apply tries to call the handler.  So, we need a special case
        *   error check here!
        */
-      if (!args_match(sc, sc->code, 2))
+      if (!is_aritable(sc, sc->code, 2))
 	return(s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~S", sc->args));
 
       sc->op = OP_APPLY;
@@ -27433,6 +27524,8 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
   return(truncate_string(s7_object_to_c_string(sc, p), len, false));
 }
 
+
+/* TODO: perhaps (!is_aritable(proc, len)) ? */
 
 static bool too_many_arguments(s7_scheme *sc, s7_pointer proc, int len)
 {
@@ -28037,7 +28130,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
 	  if ((is_safe_procedure(sc->code)) &&
 	      (is_c_function(sc->code)) &&
-	      (args_match(sc, sc->code, 1)))
+	      (is_aritable(sc, sc->code, 1)))
 	    {
 	      s7_function func;
 	      s7_pointer p;
@@ -28404,7 +28497,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
 	  if ((is_safe_procedure(sc->code)) &&
 	      (is_c_function(sc->code)) &&
-	      (args_match(sc, sc->code, 1)))
+	      (is_aritable(sc, sc->code, 1)))
 	    {
 	      s7_pointer p;
 	      s7_function func;
@@ -31640,11 +31733,11 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
    */
   /*
   if ((is_not_null(p)) ||
-      (!args_match(sc, func, args)))
-    fprintf(stderr, "%s null: %d, match: %d\n", DISPLAY_80(car(x)), is_null(p), args_match(sc, func, args));
+      (!is_aritable(sc, func, args)))
+    fprintf(stderr, "%s null: %d, match: %d\n", DISPLAY_80(car(x)), is_null(p), is_aritable(sc, func, args));
   */
   if ((is_null(p)) &&                /* if not null, dotted list of args? */
-      (args_match(sc, func, args)))  /* we have a legit call, at least syntactically */
+      (is_aritable(sc, func, args)))  /* we have a legit call, at least syntactically */
     {
       /*
       if (is_closure_star(func))
@@ -39869,7 +39962,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			break;
 			
 		      case T_C_OBJECT:
-			if (args_match(sc, f, 1))
+			if (is_aritable(sc, f, 1))
 			  {
 			    optimize_data(code) = OP_C_OBJECT_S;
 			    ecdr(code) = f;
@@ -39907,7 +40000,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
 		    
-		    if (args_match(sc, f, 1))
+		    if (is_aritable(sc, f, 1))
 		      {
 			switch (type(f))
 			  {
@@ -39991,7 +40084,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
 		    
-		    if (args_match(sc, f, 2))
+		    if (is_aritable(sc, f, 2))
 		      {
 			switch (type(f))
 			  {
@@ -40037,7 +40130,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
-		    if (args_match(sc, f, 2))
+		    if (is_aritable(sc, f, 2))
 		      {
 			switch (type(f))
 			  {
@@ -40079,7 +40172,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
-		    if (args_match(sc, f, 2))
+		    if (is_aritable(sc, f, 2))
 		      {
 			switch (type(f))
 			  {
@@ -40121,7 +40214,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
-		    if (args_match(sc, f, 2))
+		    if (is_aritable(sc, f, 2))
 		      {
 			switch (type(f))
 			  {
@@ -40163,7 +40256,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
-		    if (args_match(sc, f, 3))
+		    if (is_aritable(sc, f, 3))
 		      {
 			switch (type(f))
 			  {
@@ -40207,7 +40300,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    /* fprintf(stderr, "unknown: %s\n", DISPLAY(code)); */
 		    f = find_symbol_or_bust(sc, car(code));
 		    
-		    if (args_match(sc, f, 1))
+		    if (is_aritable(sc, f, 1))
 		      {
 			switch (type(f))
 			  {
@@ -40288,7 +40381,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
-		    if (args_match(sc, f, 1))
+		    if (is_aritable(sc, f, 1))
 		      {
 			switch (type(f))
 			  {
@@ -40344,7 +40437,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
-		    if (args_match(sc, f, 2))
+		    if (is_aritable(sc, f, 2))
 		      {
 			switch (type(f))
 			  {
@@ -40392,7 +40485,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
 
-		    if (args_match(sc, f, 2))
+		    if (is_aritable(sc, f, 2))
 		      {
 			switch (type(f))
 			  {
@@ -40438,7 +40531,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer f;
 		    f = find_symbol_or_bust(sc, car(code));
-		    if (args_match(sc, f, 2))
+		    if (is_aritable(sc, f, 2))
 		      {
 			switch (type(f))
 			  {
@@ -43915,6 +44008,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_body(x) = cdr(sc->code);
 	closure_environment(x) = sc->envir;
 	closure_setter(x) = sc->F;
+	closure_arity(x) = CLOSURE_ARITY_NOT_SET;
 	set_type(x, T_CLOSURE_STAR | T_PROCEDURE);
 	sc->value = x;
 	sc->code = caar(sc->code);
@@ -47371,6 +47465,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						 list_1(sc, list_2(sc, sc->CDR, sc->y)))));
       closure_environment(sc->value) = sc->envir;
       closure_setter(sc->value) = sc->F;
+      closure_arity(sc->value) = 1;
       sc->code = sc->x;
       sc->y = sc->NIL;
       sc->z = sc->NIL;
@@ -47436,6 +47531,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						   list_1(sc, list_2(sc, sc->CDR, sc->y)))));
       closure_environment(sc->value) = sc->envir;
       closure_setter(sc->value) = sc->F;
+      closure_arity(sc->value) = 1;
       sc->code = sc->x; 
       sc->y = sc->NIL;
       sc->z = sc->NIL;
@@ -53916,6 +54012,9 @@ s7_scheme *s7_init(void)
 				g_procedure_setter, 1, 0,
 				g_procedure_set_setter, 2, 0,
 				H_procedure_setter);
+
+  s7_define_safe_function(sc, "arity",                     g_arity,                    1, 0, false, H_arity);
+  s7_define_safe_function(sc, "aritable?",                 g_is_aritable,              2, 0, false, H_is_aritable);
   
   s7_define_safe_function(sc, "not",                       g_not,                      1, 0, false, H_not);
   s7_define_safe_function(sc, "boolean?",                  g_is_boolean,               1, 0, false, H_is_boolean);
@@ -54192,20 +54291,16 @@ s7_scheme *s7_init(void)
                             (lambda (hook)                                                 \n\
                               ((procedure-environment hook) 'body))                        \n\
                             (lambda (hook lst)                                             \n\
-			      (define (procedure-1? f) ; check for old-style hook funcs    \n\
-			        (and (procedure? f)                                        \n\
-				     (let ((arity (procedure-arity f)))                    \n\
-				       (or (= (car arity) 1)                               \n\
-				           (and (= (car arity) 0)                          \n\
-					        (or (caddr arity) (> (cadr arity) 0))))))) \n\
                               (if (or (null? lst)                                          \n\
                                       (and (pair? lst)                                     \n\
-                                           (apply and (map procedure-1? lst))))            \n\
+                                           (apply and (map (lambda (f)                     \n\
+                                                             (and (procedure? f)           \n\
+                                                                  (aritable? f 1)))        \n\
+                                                           lst))))                         \n\
                                   (set! ((procedure-environment hook) 'body) lst)          \n\
                                   (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst)))))");
 
   /* if the error checks are removed, s7test will be very unhappy 
-   *   perhaps add (procedure-arity-ok? proc args-to-be-passed)
    */
   
   /* -------- *load-hook* -------- */
@@ -54261,7 +54356,10 @@ s7_scheme *s7_init(void)
  * TODO: (set! (procedure-setter abs) (lambda ...)) almost certainly won't work and needs GC protection
  * TODO: check the other setter case -- abs as value for closure
  *
- * TODO: open-environment support/doc/test + old-style make-type doc/test + new object code
+ * TODO: all the arity problems in s7test, test symbols as runtime keys
+ * TODO: doc/test aritable? and use here and in lint at least
+ *
+ * TODO: open-environment doc/test + old-style make-type test + new object code/test [with open-auto-generics]
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*

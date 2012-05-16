@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.1"
-#define S7_DATE "14-May-12"
+#define S7_VERSION "2.2"
+#define S7_DATE "17-May-12"
 
 
 typedef long long int s7_Int;
@@ -67,6 +67,7 @@ typedef double s7_Double;
    *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
    *    procedure-documentation doc string associated with a procedure
    *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
+   *    aritable?               #t if a function can be called with a given number of arguments
    *    procedure-source        returns the source (a list) of a procedure
    *    help                    tries to find a help string associated with its argument
    *    symbol-calls            if profiling is enabled, returns the number of times its argument (a symbol) has been called
@@ -792,6 +793,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *								
+ * 17-May:    arity, aritable?
  * 14-May:    s7_list. s7_procedure_set_setter.  Removed s7_procedure_getter.
  *              procedure-setter is settable: removed most of procedure-with-setter.
  *            make-type replaced by open-environment.

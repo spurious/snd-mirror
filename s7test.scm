@@ -5790,6 +5790,28 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (assoc 1 '((3 . 2) 3) =) 'error)
 (test (assoc 1 '((1 . 2) 3) =) '(1 . 2)) ; this is like other trailing error unchecked cases -- should we check?
 
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda (a) (eq? a b))) 'error)
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda (a b) (eq? a b))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda (a b c) (eq? a b))) 'error)
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda (a b c . d) (eq? a b))) 'error)
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda (a b . c) (eq? a b))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda a (apply eq? a))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda (a . b) (eq? a (car b)))) '(a 1))
+
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (a) (eq? a b))) 'error)
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (a b) (eq? a b))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (a b c) (eq? a b))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (a b c . d) (eq? a b))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (a b . c) (eq? a b))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* a (apply eq? a))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (a . b) (eq? a (car b)))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (a :rest b) (eq? a (car b)))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (a :rest b :rest c) (eq? a (car b)))) '(a 1))
+(test (assoc 'a '((c 3) (a 1) (b 2)) (lambda* (:rest a) (apply eq? a))) '(a 1))
+
+;;; same set in member, sort, symbol-access, catch error, map, for-each
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -19088,7 +19110,7 @@ who says the continuation has to restart the map from the top?
 (test (call-with-exit (lambda (k) (for-each k '(1 2 3)))) 1)
 (test (call-with-exit (lambda (k) (catch #t k k))) 'error)
 (test (call-with-exit (lambda (k) (catch #t (lambda () #f) k))) #f)
-(test (call-with-exit (lambda (k) (catch #t (lambda () (error 'an-error)) k))) 'error)
+;(test (call-with-exit (lambda (k) (catch #t (lambda () (error 'an-error)) k))) 'error) ; this seems like it could be either
 (test (procedure? (call-with-exit (lambda (return) (call-with-exit return)))) #t)
 ;(test (call-with-exit (lambda (k) (sort! '(1 2 3) k))) 'error) -- currently returns (values 2 3) which is plausible
 (test (sort! '(1 2 3) (lambda () #f)) 'error)
@@ -21109,6 +21131,37 @@ abs     1       2
 (test (let ((hi (lambda* ((a 0.0 . "hi")) a))) (hi)) 'error)
 (test (let ((hi (lambda* ((a)) a))) (hi)) 'error)
 (test (let ((hi (lambda* (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
+(test (lambda (:key) 1) 'error)
+(test (lambda (:key a) 1) 'error)
+
+;;; TODO: should (lambda* (:key) 1) be an error?
+(test ((lambda* (:key) 1)) 1) ; !! same: (let () (define* (hi :key) 1) (hi)) and (let () (define* (hi :key :optional) 1) (hi))
+;;; TODO: try more like this
+
+;;; :(procedure-arity (lambda* (:key :optional :rest) 1))
+;;;lambda* :rest parameter missing? (:rest)
+;;; :(procedure-arity (lambda* (:key :optional) 1))
+;;; (0 0 #f)
+;;; :(procedure-arity (lambda* (a :allow-other-keys) 1))
+;;; (0 1 #f) -- but:
+;;; :((lambda* (:key (a 32) :allow-other-keys) a) :a-key 1 :a 2 :another-key)
+;;; 2
+;;; so allow-other-keys is a special kind of rest arg -- only keyword pairs in any number!
+;;; :((lambda* (:key (a 32) :allow-other-keys) a) 1 :a 2 3)
+;;; 1 -- a bug! ((lambda* (:key (a 32) :allow-other-keys) a) :a 1 2 3) complains as does ((lambda* (:key (a 32) :allow-other-keys) a) 1 2 :a 3)
+;;; :((lambda* (:key (a 32) :allow-other-keys) a) :a 1 :a 2 3 4 5 6 )
+;;; 1
+
+;;; TODO: make a tester all possible define|lambda(*) arg (a :etc) with args+keys -- ie try everything here 
+;;;         and check that arity is ok, and look for mismatch between apply success and aritable? prediction
+;;;         what about a variable as arg that evals to a keyword -- have I tested that?
+;;; :(let ((akey :a) (bkey :b)) ((lambda* (a b) (list a b)) akey 32)) -> (32 #f) so arity check is in trouble!
+;;; (let ((akey :a) (bkey :b)) ((lambda* (a b) (list a b)) bkey 12 akey 43)) ->  (43 12)
+;;; can for-each be fooled by a list of keywords?
+;;; (for-each (lambda* (a) (format #t "~A~%" a)) (list :a :a :a) (list 1 2 3)) displays 1 2 3 ! how?
+
+;;; why not store the closure min/max nums? I think there is room: rest|allow|opt|req
+
 
 (test (let () (define* (hi) 0) (hi)) 0)
 (test (let () (define* (hi a . b) b) (hi 1 2 3)) '(2 3))

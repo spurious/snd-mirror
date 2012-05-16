@@ -84,15 +84,11 @@
     
     (define (thunkable? p)
       (and (procedure? p)
-	   (= (car (procedure-arity p)) 0)))
+	   (aritable? p 0)))
     
     (define (one-argable? p)
       (and (procedure? p)
-	   (let ((arity (procedure-arity p)))
-	     (or (= (car arity) 1)
-		 (and (= (car arity) 0)
-		      (or (> (cadr arity) 0)
-			  (caddr arity)))))))
+	   (aritable? p 1)))
     
     (define (integer-between-0-and-255? i) 
       (and (integer? i) (<= 0 i 255)))

@@ -12,6 +12,8 @@ Snd 12.11:
       s7_list, s7_environment_ref|set, s7_procedure_set_setter in s7.h.
       make-type replaced by open-environment. s7.html has a largely backwards
         compatible scheme version of make-type.
+      aritable? to check arity match (named "procedure-arity-includes" in srfi-102).
+      arity to generalize and replace procedure-arity
 
   sndlib: removed mus-audio-describe, audinfo, ESD audio support.
 

@@ -2602,11 +2602,9 @@ abs
 
 
 <div class="indented">
-
-<div class="bluishbordered">
 <pre>
 (define-bacro (value-&gt;symbol val)
-   ;; here the current-environment is the calling environment
+   ;; (outer-environment (current-environment)) is the calling environment
   `(call-with-exit
     (lambda (return)
       (do ((e (current-environment) (outer-environment e))) ()
@@ -2624,32 +2622,30 @@ b
 </pre>
 </div>
 
-<div class="brownishbordered">
-<pre>
 
-(define (value-&gt;symbol val env)
-  ;; here we have to pass in the current-environment
-  (call-with-exit
-   (lambda (return)
-     (for-each 
-      (lambda (slot)
-	(if (equal? val (cdr slot))
-	    (return (car slot))))
-      env)
-     (and (not (eq? env (global-environment)))
-	  (value-&gt;symbol val (outer-environment env))))))
+<div class="indented">
+<p>Scheme needs an elegant way to define functions that share a closure.
+Here's an idle thought:
+</p>
 
-&gt; (let ((a 1) (b "hi")) 
-    (value-&gt;symbol "hi" (current-environment)))
-b
+<pre class="indented">
+(define f1 (let ((x 23))
+	     (lambda (a)
+	       (+ x a))))
+(define f2
+  (with-environment (procedure-environment f1) ; import f1's closure ("x") into f2
+   (lambda (b)
+     (+ b (* 2 x)))))
+
+&gt; (+ (f1 1) (f2 1))
+71
 </pre>
-</div>
 </div>
 
 
 <div class="indented">
-<p>open-environment replaces make-type.  For old-time's sake, here is a Scheme
-version of make-type:
+<p>open-environment replaces make-type.  For old-time's sake, here is an implementation
+of make-type:
 </p>
 
 <pre class="indented">
@@ -3389,6 +3385,9 @@ result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_intege
 (<em class=def id="proceduredocumentation">procedure-documentation</em> proc)
 (<em class=def id="proceduresetter">procedure-setter</em> proc)
 (procedure-environment proc)
+
+(<em class=def id="arity">arity</em> obj)
+(<em class=def id="aritablep">aritable?</em> obj num-args)
 </pre>
 
 <p>procedure-source, procedure-arity, procedure-setter, procedure-documentation, and help provide a look into a
@@ -3398,6 +3397,16 @@ function's body. procedure-arity returns a list describing the argument list of 
 procedure-setter returns or sets the set function associated with a procedure (set-car! with car, for example).
 procedure-source returns the source, as a list, of a procedure. procedure-environment returns
 a procedure's environment.  procedure-name returns the procedure's name.
+</p>
+
+<p>In s7 lots of things are applicable, so procedure-arity is too restrictive.
+procedure-arity's main use is to see if a given function can be applied to an argument list,
+and for that we don't care about all the details.  So, there are two new generic functions in s7:
+arity and aritable.  arity takes any object and returns either #f if it is not applicable,
+or a cons containing the minimum and maximum number of arguments acceptable.  If the maximum
+is a really big number, that means any number of arguments is ok.
+aritable? takes two arguments, an applicable object and a number, and returns #t if the object can be
+called with that many arguments.
 </p>
 
 <pre class="indented">
@@ -4599,9 +4608,9 @@ bind it to something else, which is asking for confusion).
 
 <p>There are several other less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
 *most-positive-fixnum* so that all the built-in variables and constants have the
-same kind of name.  All the environment function names are bad &mdash; even the name "environment"
-is bad since it refers to one way of using that data type, as if we 
-called all strings "symbol-names".  get-output-string should be current-output-string.
+same kind of name.  All the environment function names are bad &mdash; "environment" by itself
+is annoying.  At least we can say s7 is environmentally sound!
+get-output-string should be current-output-string.
 "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
 operate with the *features* list; perhaps "cond-provided"?  symbol-access is not ideal.
 Better ideas are always welcome!
