@@ -8548,7 +8548,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
     case T_INTEGER:
       if (integer(n) == 0) return(small_int(0));                    /* (asin 0) -> 0 */
 
-      /* TODO: in netBSD, (asin 2) returns 0.25383842987008+0.25383842987008i according to Peter Bex
+      /* in netBSD, (asin 2) returns 0.25383842987008+0.25383842987008i according to Peter Bex
        */
 
     case T_REAL:
@@ -24424,7 +24424,7 @@ static bool is_aritable(s7_scheme *sc, s7_pointer x, int args)
   return(false);
 }
 
-/* TODO: arity + aritable test
+/* TODO: rest of aritable tests
  */
 
 static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
@@ -25655,7 +25655,6 @@ also accepts a string or vector argument."
 	  reverse_func = find_symbol_value_in_open_environment(sc, p, sc->REVERSE);
 	  if (reverse_func != sc->UNDEFINED)
 	    return(s7_call(sc, reverse_func, args));
-	  /* TODO: embed this */
 	}
       /* fall through */
 
@@ -26769,8 +26768,6 @@ static const char *type_name(s7_pointer arg, int article)
     case T_BAFFLE:       return(baffles[article]);
     case T_SLOT:         return(slots[article]);
     case T_ENVIRONMENT:  return(environments[article]);
-      /* TODO: if open, perhaps use its name? */
-
     case T_INTEGER:      return(integers[article]);
     case T_RATIO:        return(ratios[article]);
     case T_REAL:         return(reals[article]);
@@ -30012,6 +30009,8 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 			      /* in CL: (defun hi (&key (a 1) &allow-other-keys) a) (hi :b :a :a 3) -> 3 
 			       * in s7: (define* (hi (a 1) :allow-other-keys) a)    (hi :b :a :a 3) -> 3
 			       */
+
+			      /* fprintf(stderr, "%s %s\n", DISPLAY(sc->y), DISPLAY(sc->x)); */
 			      sc->y = cddr(sc->y);
 			      continue;
 			    }
@@ -30033,6 +30032,8 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 					}
 				      else 
 					{
+					  /* this case is not caught yet: ((lambda* (a :optional b :allow-other-keys ) a) :b 1 :c :a :a ) */
+
 					  return(s7_error(sc, sc->WRONG_TYPE_ARG,
 							  list_4(sc,
 								 make_protected_string(sc, "~A: parameter set twice, ~S in ~S"),
@@ -30087,11 +30088,38 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 	}
       else
 	{
-	  if ((!allow_other_keys) ||
-	      (!is_keyword(car(sc->y))))
+	  if (!allow_other_keys)                       /* ((lambda* (a) a) :a 1 2) */
+	    return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
+			    list_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
+	  else
 	    {
-	      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			      list_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
+	      /* check trailing args for repeated keys or keys with no values or values with no keys */
+	      while (is_pair(sc->y))
+		{
+		  if ((!is_keyword(car(sc->y))) ||     /* ((lambda* (a :allow-other-keys) a) :a 1 :b 2 3) */
+		      (!is_pair(cdr(sc->y))))          /* ((lambda* (a :allow-other-keys) a) :a 1 :b) */
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG,
+				    list_3(sc, 
+					   make_protected_string(sc, "~A: not a key/value pair: ~S"),
+					   closure_name(sc, sc->code), sc->y)));
+#if 0
+		  s7_pointer x;
+		  for (x = sc->args; (is_pair(x)) && (x != sc->y); x = cdr(x))
+		    if (car(x) == car(sc->y))          /* ((lambda* (a :allow-other-keys) a) :a 1 :a 2) */
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG,
+				      list_4(sc,
+					     make_protected_string(sc, "~A: parameter set twice, ~S in ~S"),
+					     closure_name(sc, sc->code), sc->y, sc->args)));
+
+		  /* this is very tricky! ((lambda* (:allow-other-keys ) #f) :b :a :a :b ) or offset if 1 par etc
+		   */
+
+		  /* ((lambda* (:key b :allow-other-keys ) b) 1 :b 2) -> 1
+		   *  that is, the argument is set twice, but the 2nd setting is in the trailing args
+		   */
+#endif
+		  sc->y = cddr(sc->y);
+		}
 	    }
 	} 
     }
@@ -34374,18 +34402,28 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
 	    {
 	      if (car(w) != sc->KEY_REST)
 		{
-		  if ((s7_is_constant(car(w))) &&
-		      (car(w) != sc->KEY_KEY) &&
-		      (car(w) != sc->KEY_OPTIONAL) &&
-		      (car(w) != sc->KEY_ALLOW_OTHER_KEYS))           /* (lambda* (pi) ...) */
-		    return(eval_error(sc, "lambda* parameter '~A is a constant", car(w)));
-
+		  if (s7_is_constant(car(w)))
+		    {
+		      if ((car(w) == sc->KEY_KEY) || 
+			  (car(w) == sc->KEY_OPTIONAL))
+			{
+			  if ((!is_pair(cdr(w))) ||                   /* (lambda* (:key) 1) or (lambda* (:key . b) 1) */
+			      (is_immutable(cadr(w))))                /* (lambda* (:key :optional) 1) */
+			    return(eval_error(sc, "lambda* :key or :optional parameter must be a normal symbol: ~A", w));
+			}
+		      else
+			{
+			  if (car(w) == sc->KEY_ALLOW_OTHER_KEYS)
+			    {
+			      if (is_not_null(cdr(w)))                /* (lambda* (:allow-other-keys x) x) */
+				eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
+			    }
+			  else                                        /* (lambda* (pi) ...) */
+			    return(eval_error(sc, "lambda* parameter '~A is a constant", car(w)));
+			}
+		    }
 		  if (symbol_is_in_arg_list(car(w), cdr(w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
 		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(w)));
-
-		  if ((car(w) == sc->KEY_ALLOW_OTHER_KEYS) &&         /* (lambda* (:allow-other-keys x) x) */
-		      (is_not_null(cdr(w))))
-		    eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
 
 		  if (!is_keyword(car(w))) set_local(car(w));
 		}
@@ -37155,7 +37193,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
       if (is_symbol(car(indices)))
 	return(s7_environment_ref(sc, obj, car(indices)));
       return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
-      /* TODO: this case could probably be embedded */
 
     default:                             /* (#(a b c) 0 1) -> error, but ((list (lambda (x) x)) 0 "hi") -> "hi" */
       return(g_apply(sc, list_2(sc, obj, indices)));
@@ -54553,9 +54590,6 @@ s7_scheme *s7_init(void)
  * TODO: add s7tests for the settable setter
  * TODO: (set! (procedure-setter abs) (lambda ...)) almost certainly won't work and needs GC protection
  * TODO: check the other setter case -- abs as value for closure
- *
- * TODO: all the arity problems in s7test, test symbols as runtime keys
- * TODO: doc/test aritable? and use here and in lint at least
  *
  * TODO: open-environment doc/test + old-style make-type test + new object code/test [with open-auto-generics]
  *
