@@ -14,6 +14,7 @@ Snd 12.11:
         compatible scheme version of make-type.
       aritable? to check arity match (named "procedure-arity-includes" in srfi-102).
       arity to generalize and replace procedure-arity
+      removed trace and untrace (replaced by the trace macro in s7.html).
 
   sndlib: removed mus-audio-describe, audinfo, ESD audio support.
 

@@ -71,7 +71,6 @@ typedef double s7_Double;
    *    procedure-source        returns the source (a list) of a procedure
    *    help                    tries to find a help string associated with its argument
    *    symbol-calls            if profiling is enabled, returns the number of times its argument (a symbol) has been called
-   *    trace and untrace       add or subtract functions from the trace list; (trace abs). 
    *    macro?                  returns #t is its argument is a macro or a symbol whose value is a macro
    *    with-baffle             limit scope of continuations
    *
@@ -779,7 +778,7 @@ void s7_mark_object(s7_pointer p);
  *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-ref 
  *    string-set! string<=? string<? string=? string>=? string>? substring symbol symbol->keyword 
- *    symbol-table tan tanh trace truncate untrace vector vector->list with-input-from-file 
+ *    symbol-table tan tanh truncate vector vector->list with-input-from-file 
  *    with-input-from-string with-output-to-file with-output-to-string write-byte zero?
  *
  * and these variables: *safety* *#readers* *error-hook* *unbound-variable-hook*
@@ -794,6 +793,7 @@ void s7_mark_object(s7_pointer p);
  *        s7 changes
  *								
  * 17-May:    arity, aritable?
+ *            removed trace and untrace.
  * 14-May:    s7_list. s7_procedure_set_setter.  Removed s7_procedure_getter.
  *              procedure-setter is settable: removed most of procedure-with-setter.
  *            make-type replaced by open-environment.

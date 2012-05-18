@@ -70,7 +70,6 @@
  *        gc, *load-hook*, *error-hook*, (error-environment), *unbound-variable-hook*
  *        *features*, *load-path*, *vector-print-length*, *#readers*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
- *        trace and untrace, __func__, macroexpand
  *        length, copy, fill!, reverse, map, for-each are generic
  *        symbol-access modifies symbol value lookup
  *        member and assoc accept an optional 3rd argument, the comparison function
@@ -182,8 +181,6 @@
  *    might be vulnerable to the GC. 
  */
 
-#define INITIAL_TRACE_LIST_SIZE 2
-/* a list of currently-traced functions */
 
 
 
@@ -272,7 +269,7 @@
  *    eq?
  *    generic length, copy, fill!
  *    format
- *    error handlers, trace
+ *    error handlers
  *    sundry leftovers
  *    multiple-values, quasiquote
  *    eval
@@ -359,7 +356,7 @@ enum {OP_NO_OP,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_BAFFLE, OP_EXPANSION,
+      OP_ERROR_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_BAFFLE, OP_EXPANSION,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
@@ -433,7 +430,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "catch", "dynamic-wind", "define-constant", "define-constant", 
    "do", "do", "do", "do", "do", "do",
    "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
-   "trace-return", "error-hook-quit", "with-environment", "with-environment", "define-expansion",
+   "error-hook-quit", "with-environment", "with-environment", "define-expansion",
    "for-each", "for-each", "for-each", "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
    "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", 
@@ -498,7 +495,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_CATCH", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
   "OP_DO", "OP_DO_END", "OP_DO_END1", "OP_DO_STEP", "OP_DO_STEP2", "OP_DO_INIT",
   "OP_DEFINE_STAR", "OP_LAMBDA_STAR", "OP_LAMBDA_STAR_DEFAULT", "OP_ERROR_QUIT", "OP_UNWIND_INPUT", "OP_UNWIND_OUTPUT", 
-  "OP_TRACE_RETURN", "OP_ERROR_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_WITH_BAFFLE", "OP_EXPANSION",
+  "OP_ERROR_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_WITH_BAFFLE", "OP_EXPANSION",
   "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
   
   "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
@@ -1086,8 +1083,6 @@ struct s7_scheme {
   void (*error_exiter)(void);
   bool (*begin_hook)(s7_scheme *sc);
   
-  s7_pointer *trace_list;
-  int trace_list_size, trace_top, trace_depth;
   int no_values, current_line, s7_call_line, safety;
   const char *current_file, *s7_call_file, *s7_call_name;
 
@@ -1778,7 +1773,6 @@ static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void free_object(s7_pointer a);
 static char *object_print(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error);
-static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
@@ -1799,8 +1793,6 @@ static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
-
-static bool tracing, trace_all;
 
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl);
 
@@ -4871,14 +4863,6 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	    call_exit_active(stack_args(sc->stack, i)) = false;
 	  break;
 
-	case OP_TRACE_RETURN:
-	  if (i > continuation_stack_top(c))
-	    {
-	      sc->trace_depth--;
-	      if (sc->trace_depth < 0) sc->trace_depth = 0;
-	    }
-	  break;
-	  
 	default:
 	  break;
 	}
@@ -5004,11 +4988,6 @@ static void call_with_exit(s7_scheme *sc)
 
 	case OP_DEACTIVATE_GOTO:        /* here we're jumping into an unrelated call-with-exit block */
 	  call_exit_active(stack_args(sc->stack, i)) = false;
-	  break;
-
-	case OP_TRACE_RETURN:
-	  sc->trace_depth--;
-	  if (sc->trace_depth < 0) sc->trace_depth = 0;
 	  break;
 
 	  /* call/cc does not close files, but I think call-with-exit should */
@@ -26521,185 +26500,6 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
 
 
 
-/* -------- trace -------- */
-
-/* 
-    (define (hiho arg) (if (> arg 0) (+ 1 (hiho (- arg 1))) 0))
-    (trace hiho)
-    (hiho 3)
-
-    [hiho 3]
-     [hiho 2]
-      [hiho 1]
-       [hiho 0]
-        0
-       1
-      2
-     3
-*/
-
-/* to trace an internal function, put the trace/untrace pair in the enclosing function
- */
-
-static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)
-{
-  #define H_trace "(trace . args) adds each function in its argument list to the trace list.\
-Each argument can be a function, symbol, macro, or any applicable object: (trace abs '+ v) where v is a vct \
-prints out data about any call on abs or +, and any reference to the vct v. Trace output is sent \
-to the current-output-port.  If trace is called without any arguments, everything is traced -- use \
-untrace without arguments to turn this off."
-
-  int i;
-  s7_pointer x;
-
-  if (is_null(args))
-    {
-      trace_all = true;
-      tracing = true;
-      return(sc->F);
-    }
-  
-  for (i = 1, x = args; is_not_null(x); i++, x = cdr(x)) 
-    if ((!is_symbol(car(x))) &&
-	(!is_procedure(car(x))) &&
-	(!is_any_macro(car(x))))
-      return(s7_wrong_type_arg_error(sc, "trace", i, car(x), "a symbol, a function, or some other applicable object"));
-
-  for (x = args; is_not_null(x); x = cdr(x)) 
-    {
-      if (is_symbol(car(x)))
-	sc->trace_list[sc->trace_top++] = eval_symbol(sc, car(x));
-      else sc->trace_list[sc->trace_top++] = car(x);
-      if (sc->trace_top >= sc->trace_list_size)
-	{
-	  sc->trace_list_size *= 2;
-	  sc->trace_list = (s7_pointer *)realloc(sc->trace_list, sc->trace_list_size * sizeof(s7_pointer));
-	}
-    }
-
-  tracing = (sc->trace_top > 0);
-  return(sc->T);
-}
-
-
-static s7_pointer g_untrace(s7_scheme *sc, s7_pointer args)
-{
-  #define H_untrace "(untrace . args) removes each function in its arg list from the trace list. \
-If untrace is called with no arguments, all functions are removed, turning off all tracing."
-  int i, j, ctr;
-  s7_pointer x;
-
-  if (is_null(args))
-    {
-      trace_all = false;
-      for (i = 0; i < sc->trace_top; i++)
-	sc->trace_list[i] = sc->NIL;
-      sc->trace_top = 0;
-      tracing = false;
-      return(sc->F);
-    }
-
-  for (ctr = 1, x = args; is_not_null(x); ctr++, x = cdr(x)) 
-    {
-      s7_pointer value;
-      if (is_symbol(car(x)))
-	value = eval_symbol(sc, car(x));
-      else 
-	{
-	  if ((is_procedure(car(x))) ||
-	      (is_any_macro(car(x))))
-	    value = car(x);
-	  else return(s7_wrong_type_arg_error(sc, "untrace", ctr, car(x), "a symbol or procedure")); /* (untrace "hi") */
-	}
-      for (i = 0; i < sc->trace_top; i++)
-	if (value == sc->trace_list[i])
-	  sc->trace_list[i] = sc->NIL;
-    }
-  
-  /* now collapse list and reset trace_top (and possibly tracing) */
-  for (i = 0, j = 0; i < sc->trace_top; i++)
-    if (is_not_null(sc->trace_list[i]))
-      sc->trace_list[j++] = sc->trace_list[i];
-  
-  sc->trace_top = j;
-  tracing = (sc->trace_top > 0);
-  return(sc->T);
-}
-
-
-static void trace_apply(s7_scheme *sc)
-{
-  int i;
-  bool trace_it = false;
-
-  if (trace_all)
-    trace_it = true;
-  else
-    {
-      for (i = 0; i < sc->trace_top; i++)
-	if (sc->code == sc->trace_list[i])
-	  {
-	    trace_it = true;
-	    break;
-	  }
-    }
-
-  if (trace_it)
-    {
-      int k, len;
-      char *tmp1, *tmp2, *str;
-      push_stack(sc, OP_TRACE_RETURN, sc->code, sc->NIL);
-      tmp1 = s7_object_to_c_string(sc, sc->code);
-      tmp2 = s7_object_to_c_string(sc, sc->args);
-
-      len = safe_strlen(tmp2);
-      tmp2[0] = ' ';
-      tmp2[len - 1] = ']';
-      
-      len += (safe_strlen(tmp1) + sc->trace_depth + 64);
-      str = (char *)calloc(len, sizeof(char));
-      
-      for (k = 0; k < sc->trace_depth; k++) str[k] = ' ';
-      str[k] = '[';
-      strcat(str, tmp1);
-      strcat(str, tmp2);
-      free(tmp1);
-      free(tmp2);
-      
-      strcat(str, "\n");
-      port_display(sc->output_port)(sc, str, sc->output_port);
-      free(str);
-      
-      sc->trace_depth++;
-    }
-}
-
-
-static void trace_return(s7_scheme *sc)
-{
-  int k, len;
-  char *str, *tmp;
-
-  tmp = s7_object_to_c_string(sc, sc->value);  
-
-  len = sc->trace_depth + safe_strlen(tmp) + 3;
-  str = (char *)calloc(len, sizeof(char));
-
-  for (k = 0; k < sc->trace_depth; k++) str[k] = ' ';
-  strcat(str, tmp);
-  strcat(str, "\n");
-  free(tmp);
-
-  port_display(sc->output_port)(sc, str, sc->output_port);
-  free(str);
-
-  sc->trace_depth--;
-  if (sc->trace_depth < 0) sc->trace_depth = 0;
-}
-
-
-
-
 
 /* -------- error handlers -------- */
 
@@ -27284,15 +27084,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	case OP_DEACTIVATE_GOTO:
 	  call_exit_active(stack_args(sc->stack, i)) = false;
 	  break;
-
-	case OP_TRACE_RETURN:
-	  sc->trace_depth--;
-	  if (sc->trace_depth < 0) sc->trace_depth = 0;
-	  break;
-
-	  /* perhaps also OP_LOAD_CLOSE_AND_POP_IF_EOF 
-	   *  currently an error during a nested load stops all loads
-	   */
 
 	case OP_ERROR_HOOK_QUIT:
 	  sc->error_hook = stack_code(sc->stack, i);
@@ -28292,6 +28083,8 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    *   otherwise (for-each = "" 123) -> #<unspecified> 
    * the function may not actually be applicable to its sequence elements, but that isn't an error:
    *   (map abs "") -> '()
+   * and the function's max arity might be less than the number of sequences, but that also isn't an error!
+   *   (let ((x 0)) (for-each (lambda* (a) (set! x (+ x a))) (list :a :a :a) (list 1 2 3)) x)
    */
   obj = cadr(args); 
 
@@ -29751,18 +29544,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
     }
   
   return(eval_error(sc, "~A: unbound variable", sym));
-}
-
-
-static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
-{
-  s7_pointer x;
-
-  x = find_symbol(sc, sym);
-  if (is_slot(x)) 
-    return(slot_value(x));
-
-  return(unbound_variable(sc, sym));
 }
 
 
@@ -37796,8 +37577,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* ---------------- OP_APPLY ---------------- */
     case OP_APPLY:      /* apply 'code' to 'args' */
-      if (tracing) 
-	trace_apply(sc);
       if (needs_copied_args(sc->code))
 	sc->args = copy_list(sc, sc->args);
       goto APPLY;
@@ -43762,12 +43541,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * now (tfe 0 1000) triggers the stack increase.
        */
 
-      if (tracing) 
-	trace_apply(sc);
-
-      /* SOMEDAY: trace needs to be either removed or re-invigorated (with optimization, it's not very useful)
-       */
-
     APPLY:
       switch (type(sc->code))
 	{
@@ -48072,11 +47845,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
-    case OP_TRACE_RETURN:
-      trace_return(sc);
-      goto START;
-      
-      
     case OP_ERROR_HOOK_QUIT:
       sc->error_hook = sc->code;  /* restore old value */
 
@@ -53591,13 +53359,6 @@ s7_scheme *s7_init(void)
   sc->symbol_table->hloc = NOT_IN_HEAP;
   
   sc->gensym_counter = 0;
-  tracing = false;
-  trace_all = false;
-
-  sc->trace_list = (s7_pointer *)calloc(INITIAL_TRACE_LIST_SIZE, sizeof(s7_pointer));
-  sc->trace_list_size = INITIAL_TRACE_LIST_SIZE;
-  sc->trace_top = 0;
-  sc->trace_depth = 0;
   sc->no_values = 0;
   sc->s7_call_line = 0;
   sc->s7_call_file = NULL;
@@ -54233,8 +53994,6 @@ s7_scheme *s7_init(void)
   sc->QQ_LIST =         s7_define_constant_function(sc, "{list}",           g_qq_list,        0, 0, true,  H_qq_list);
   set_type(sc->QQ_LIST, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
 
-  s7_define_safe_function(sc, "trace",                     g_trace,                    0, 0, true,  H_trace);
-  s7_define_safe_function(sc, "untrace",                   g_untrace,                  0, 0, true,  H_untrace);
   s7_define_safe_function(sc, "gc",                        g_gc,                       0, 1, false, H_gc);
 
   s7_define_safe_function(sc, "procedure?",                g_is_procedure,             1, 0, false, H_is_procedure);
@@ -54590,10 +54349,25 @@ s7_scheme *s7_init(void)
  *   load case seems to be ok
  *
  * TODO: add s7tests for the settable setter
- * TODO: (set! (procedure-setter abs) (lambda ...)) almost certainly won't work and needs GC protection
- * TODO: check the other setter case -- abs as value for closure
- * TODO: open-environment doc/test + old-style make-type test + new object code/test [with open-auto-generics]
+ * TODO: (set! (procedure-setter logbit?) (lambda ...)) almost certainly won't work and needs GC protection
+ * TODO: open-environment doc/test + new object code/test [with open-auto-generics]
+ * TODO: how to implement the float|adjustable-vectors now?
+ * TODO: s7test make-type could use augment-env! to try out reverse et al without deglobalizing the names
+ * TODO: profile 
+ *
  * TODO: check out setter for macro
+ *   here is a simple case:
+    :(define-macro (vref v a) `(vector-ref ,v ,a))
+    vref
+    :(vref #(1 2 3) 1)
+    2
+    :(set! (vector-ref #(1 2 3) 1) 2)
+    2
+    :(set! (vref #(1 2 3) 1) 2)
+    ;no generalized set for vref
+ *  we need the set code to call eval as in the nornal macro case
+ *  we can use closure_setter and c_function_setter here [need a c_macro_setter macro for it]
+ *  but the "procedure-setter" is not a great name: setter?
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
