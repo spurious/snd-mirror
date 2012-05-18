@@ -23959,7 +23959,7 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter procedure", 1, p, "a procedure"));
 
   setter = cadr(args);
-  if ((typeflag(p) & T_PROCEDURE) == 0)
+  if ((typeflag(setter) & T_PROCEDURE) == 0)
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter setter", 2, setter, "a procedure"));
 
   switch (type(p))
@@ -24094,7 +24094,10 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
     }
   
   if ((is_continuation(x)) ||
-      (is_goto(x)))
+      (is_goto(x)) ||
+      /* this is called in xen.h, XEN_ARITY, where Snd (snd-xen.c procedure_ok) expects it to handle generators, so... */
+      ((is_c_object(x)) &&
+       (object_types[object_type(x)].apply != fallback_ref)))
     return(list_3(sc, small_int(0), small_int(0), sc->T));
 
   return(sc->NIL);
@@ -24126,6 +24129,7 @@ static s7_pointer closure_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer 
   /* x_args is unprocessed -- it is exactly the list as used in the closure[*] definition
    */
   int len;
+
   if (is_symbol(x_args))                    /* any number of args is ok */
     return(s7_cons(sc, small_int(0), s7_make_integer(sc, ARITY_MAX)));
 	
@@ -24150,7 +24154,7 @@ static s7_pointer closure_star_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_poi
     {
       s7_pointer p;
       int i;
-      for (i = 0, p = closure_args(x); is_pair(p); p = cdr(p))
+      for (i = 0, p = x_args; is_pair(p); p = cdr(p))
 	{
 	  s7_pointer arg;
 	  arg = car(p);
@@ -24302,7 +24306,7 @@ static bool closure_star_is_aritable(s7_scheme *sc, s7_pointer x, s7_pointer x_a
        */
       s7_pointer p;
       int i;
-      for (i = 0, p = closure_args(x); is_pair(p); p = cdr(p))
+      for (i = 0, p = x_args; is_pair(p); p = cdr(p))
 	{
 	  s7_pointer arg;
 	  arg = car(p);
@@ -24424,8 +24428,6 @@ static bool is_aritable(s7_scheme *sc, s7_pointer x, int args)
   return(false);
 }
 
-/* TODO: rest of aritable tests
- */
 
 static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
 {
@@ -47698,7 +47700,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						 list_1(sc, list_2(sc, sc->CDR, sc->y)))));
       closure_environment(sc->value) = sc->envir;
       closure_setter(sc->value) = sc->F;
-      closure_arity(sc->value) = 1;
+      closure_arity(sc->value) = CLOSURE_ARITY_NOT_SET;
       sc->code = sc->x;
       sc->y = sc->NIL;
       sc->z = sc->NIL;
@@ -47764,7 +47766,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						   list_1(sc, list_2(sc, sc->CDR, sc->y)))));
       closure_environment(sc->value) = sc->envir;
       closure_setter(sc->value) = sc->F;
-      closure_arity(sc->value) = 1;
+      closure_arity(sc->value) = CLOSURE_ARITY_NOT_SET;
       sc->code = sc->x; 
       sc->y = sc->NIL;
       sc->z = sc->NIL;
@@ -54590,8 +54592,8 @@ s7_scheme *s7_init(void)
  * TODO: add s7tests for the settable setter
  * TODO: (set! (procedure-setter abs) (lambda ...)) almost certainly won't work and needs GC protection
  * TODO: check the other setter case -- abs as value for closure
- *
  * TODO: open-environment doc/test + old-style make-type test + new object code/test [with open-auto-generics]
+ * TODO: check out setter for macro
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*

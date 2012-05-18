@@ -801,8 +801,8 @@ you can have more than one :rest parameter:
 </p>
 
 <pre class="indented">
-&gt; ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5)
-(1 (2 3 4 5) (3 4 5))
+&gt; ((lambda* (:rest a :rest b) (map + a b)) 1 2 3 4 5) 
+'(3 5 7 9))
 </pre>
 
 <p>and second, the rest parameter, if any, takes up an argument slot just like any other

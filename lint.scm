@@ -77,11 +77,9 @@
     
     (define (thunk? p)
       (and (procedure? p)
-	   (let ((arity (procedure-arity p)))
-	     (and (= (car arity) 0)
-		  (= (cadr arity) 0)
-		  (not (caddr arity))))))
-    
+	   (aritable? p 0)
+	   (not (aritable? p 1))))
+
     (define (thunkable? p)
       (and (procedure? p)
 	   (aritable? p 0)))
@@ -1891,8 +1889,9 @@
 	      (if (and (symbol? head)
 		       (procedure? (symbol->value head)))
 		  ;; check arg number
-		  (let ((arity (procedure-arity (symbol->value head)))
-			(args (length (cdr form))))
+		  (let* ((head-value (symbol->value head)) ; head might be "arity"!
+			 (arity (procedure-arity head-value))
+			 (args (length (cdr form))))
 		    
 		    (if (pair? arity)
 			(if (< args (car arity))
@@ -1912,7 +1911,7 @@
 			(begin
 			  ;; if keywords, check that they are acceptable
 			  ;;    this only applies to lambda*'s that have been previously loaded (lint doesn't create them)
-			  (let ((source (procedure-source (symbol->value head))))
+			  (let ((source (procedure-source head-value)))
 			    (if (and (pair? source)
 				     (eq? (car source) 'lambda*))
 				(let ((decls (cadr source)))

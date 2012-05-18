@@ -21046,6 +21046,10 @@ abs     1       2
 	(format #t "first_even (tagbody, gensym, reverse!) (6): '~A~%" val)))
   )
 
+
+;;; --------------------------------------------------------------------------------
+;;; define* lambda*
+
 (let ((hi (lambda* (a) a)))
   (test (hi 1) 1)
   (test (hi) #f)          ; all args are optional
@@ -21155,13 +21159,9 @@ abs     1       2
 (test (lambda (:key) 1) 'error)
 (test (lambda (:key a) 1) 'error)
 
-;;; TODO: should (lambda* (:key) 1) be an error?
 (test ((lambda* (:key) 1)) 'error) 
 (test (let () (define* (hi :key) 1) (hi)) 'error)
 (test  (let () (define* (hi :key :optional) 1) (hi)) 'error)
-
-;;; TODO: try more like this
-;;; (procedure-arity (lambda* (:key :optional) 1)) -> (0 0 #f)
 
 ;;; :(procedure-arity (lambda* (:key :optional :rest) 1))
 ;;;lambda* :rest parameter missing? (:rest)
@@ -21176,10 +21176,7 @@ abs     1       2
 ;;; 1 -- a bug! ((lambda* (:key (a 32) :allow-other-keys) a) :a 1 2 3) complains as does ((lambda* (:key (a 32) :allow-other-keys) a) 1 2 :a 3)
 ;;; :((lambda* (:key (a 32) :allow-other-keys) a) :a 1 :a 2 3 4 5 6 )
 ;;; 1
-
-;;; TODO: make a tester all possible define|lambda(*) arg (a :etc) with args+keys -- ie try everything here 
-;;;         and check that arity is ok, and look for mismatch between apply success and aritable? prediction
-;;;         what about a variable as arg that evals to a keyword -- have I tested that?
+;;; TODO: what about a variable as arg that evals to a keyword -- have I tested that?
 ;;; :(let ((akey :a) (bkey :b)) ((lambda* (a b) (list a b)) akey 32)) -> (32 #f) so arity check is in trouble!
 ;;; (let ((akey :a) (bkey :b)) ((lambda* (a b) (list a b)) bkey 12 akey 43)) ->  (43 12)
 ;;; can for-each be fooled by a list of keywords?
@@ -21337,7 +21334,121 @@ abs     1       2
 (test ((lambda* ((a: 3)) a:) :a: 4) 'error)
 (test ((lambda* ((a 3)) a) a: 4) 4)
 
-;; not sure the next 4 aren't errors
+
+(test ((lambda* a (list a)) 1 2 3) '((1 2 3)))
+(test ((lambda* () #f) 1 2 3) 'error)
+(test ((lambda* (a ) (list a)) 1) '(1))
+(test ((lambda* (a b ) (list a b)) 1 2) '(1 2))
+(test ((lambda* (a b :allow-other-keys ) (list a b)) 1 2 :c 3) '(1 2))
+(test ((lambda* (a  . b ) (list a b)) 1 2 3) '(1 (2 3)))
+(test ((lambda* (a :rest b ) (list a b)) 1 2 3) '(1 (2 3)))
+(test ((lambda* (a :rest b :allow-other-keys ) (list a b)) 1 2 :c 3) '(1 (2 :c 3)))
+(test ((lambda* (a :optional b ) (list a b)) 1 2) '(1 2))
+(test ((lambda* (a :optional b :allow-other-keys ) (list a b)) 1) '(1 #f))
+(test ((lambda* (a :key b ) (list a b)) :a 1 :b 2) '(1 2))
+(test ((lambda* (a :key b :allow-other-keys ) (list a b)) 1 2 :c 3) '(1 2))
+(test ((lambda* (a :allow-other-keys ) (list a)) :b 2) '(#f))
+(test ((lambda* (:rest a ) (list a)) 1 2 3) '((1 2 3)))
+(test ((lambda* (:rest a b ) (list a b)) 1 2 3) '((1 2 3) 2))
+(test ((lambda* (:rest a b :allow-other-keys ) (list a b)) :c 1 2 3) '((:c 1 2 3) 1)) ; seems inconsistent
+(test ((lambda* (:rest a  . b ) (list a b)) 1 2 3) '((1 2 3) (2 3)))
+(test ((lambda* (:rest a :rest b ) (list a b)) 1 2 3) '((1 2 3) (2 3)))
+(test ((lambda* (:rest a :rest b :allow-other-keys ) (list a b)) 1 2 3) '((1 2 3) (2 3)))
+(test ((lambda* (:rest a :optional b ) (list a b)) 1 2 3) '((1 2 3) 2))
+(test ((lambda* (:rest a :optional b :allow-other-keys ) (list a b)) 1 :c 2 3) '((1 :c 2 3) 3))
+(test ((lambda* (:rest a :key b ) (list a b)) :a 1 :b 2) '((:a 1 :b 2) 1)) ; !!
+(test ((lambda* (:rest a :key b :allow-other-keys ) (list a b)) :b 1 2 3) '((:b 1 2 3) 1))
+(test ((lambda* (:rest a :allow-other-keys ) (list a)) 1 2 3) '((1 2 3)))
+(test ((lambda* (:optional a ) (list a))) '(#f))
+(test ((lambda* (:optional a b ) (list a b)) :b 1 :a 2) '(2 1))
+(test ((lambda* (:optional a b :allow-other-keys ) (list a b)) :c 1 :b 2 :a 3) '(3 2))
+(test ((lambda* (:optional a b :allow-other-keys ) (list a b)) :c 1 :a 3) '(3 #f))
+(test ((lambda* (:optional a  . b ) (list a b)) 1 2 3) '(1 (2 3)))
+(test ((lambda* (:optional a :rest b ) (list a b)) 1 2 3) '(1 (2 3)))
+(test ((lambda* (:optional a :rest b :allow-other-keys ) (list a b)) 1 2 3) '(1 (2 3)))
+(test ((lambda* (:optional a :key b ) (list a b)) 1 2) '(1 2))
+(test ((lambda* (:optional a :key b :allow-other-keys ) (list a b)) :c 1 :d 2 :e 3) '(#f #f))
+(test ((lambda* (:optional a :allow-other-keys ) (list a)) :c 1 2) '(2)) ; !!
+(test ((lambda* (:key a ) (list a)) :a 1) '(1))
+(test ((lambda* (:key a b ) (list a b)) :b 1) '(#f 1)) 
+(test ((lambda* (:key a b :allow-other-keys ) (list a b)) :c 1 :d 2 :a 3) '(3 #f))
+(test ((lambda* (:key a  . b ) (list a b)) 1 2 3) '(1 (2 3)))
+(test ((lambda* (:key a :rest b ) (list a b))) '(#f ()))
+(test ((lambda* (:key a :rest b :allow-other-keys ) (list a b)) 1) '(1 ()))
+(test ((lambda* (:key a :optional b ) (list a b)) :b 1) '(#f 1))
+(test ((lambda* (:key a :optional b :allow-other-keys ) (list a b)) :c 1) '(#f #f))
+(test ((lambda* (:key a :allow-other-keys ) (list a))) '(#f))
+(test ((lambda* (:allow-other-keys ) (list)) :a 1 :c 3) ())
+
+(test ((lambda* (:rest a :rest b) (map + a b)) 1 2 3 4 5) '(3 5 7 9))
+(test ((lambda* (:rest a c :rest b) (map (lambda (a b) (+ a b c)) a b)) 1 2 3 4 5) '(6 8 10))
+
+(test ((lambda* (a :rest (b 2)) (list a b)) 1 2 3 4) 'error)
+(test ((lambda* (:key (a 1) :allow-other-keys ) a) :b :b :b :b ) 1) ; ?
+
+#|
+(let ((choices (list "a " "b " " . " ":rest " ":optional "  ":key " ":allow-other-keys "))
+      (args (list "1 " ":a " ":b " ":c ")))
+
+  (define-bacro (display-abc)
+    `(format #f "~A ~A" (if (defined? 'a) (symbol->value 'a) '?) (if (defined? 'b) (symbol->value 'b) '?)))
+
+  (define (next-arg str n)
+
+    (let ((expr (string-append str ")")))
+      (catch #t
+	(lambda ()
+	  (let ((val (eval-string expr)))
+	    (format #t "~A -> ~A~%" expr val)))
+	(lambda args
+	  ;(format #t "    ~A: ~A~%" expr (apply format #f (cadr args)))
+	  'error)))
+
+    (if (< n 6)
+	(for-each
+	 (lambda (arg)
+	   (next-arg (string-append str arg) (+ n 1)))
+	 args)))
+
+  (define (next-choice str n)
+    (next-arg (string-append str ") (display-abc)) ") 0)
+    (if (< n 4)
+	(for-each
+	 (lambda (choice)
+	   (next-choice (string-append str choice) (+ n 1)))
+	 choices)))
+
+  (for-each
+   (lambda (choice)
+     (next-arg (string-append "((lambda* " choice "(display-abc)) ") 0))
+   choices)
+
+  (next-choice "((lambda* (" 0))
+|#
+
+;;; here be bugs...
+(test ((lambda* a a) :a) '(:a))
+(test ((lambda* (a b :optional) a) 1) 'error)
+(test ((lambda* (a b :optional :key c) a) 1) 'error)
+(test ((lambda* (a . b ) (list a b)) :b 1) '(#f 1)) ; ??? why doesn't the 1st arg work this way?
+(test ((lambda* (a :rest b) (list a b)) :b 1) '(#f 1))
+(test ((lambda* (:rest a) (list a)) :a 1) '((:a 1))) ; surely these are inconsistent
+(test ((lambda* (a  . b ) (list a b)) :b 1 1) '(#f (1))) ; so if trailer, overwrite is not error?
+
+(test ((lambda* (:rest a b ) (list a b)) 1 1) '((1 1) 1))
+(test ((lambda* (:rest a :rest b ) (list a b)) :a 1) '((:a 1) (1)))
+(test ((lambda* (:allow-other-keys) #f) :c 1) #f)
+(test ((lambda* (a :allow-other-keys) a) :a) #f) ; now that has to be wrong
+;; why does ((lambda* (a) a) :a) get unknown key: (:a) in (:a)?
+(test ((lambda* (a :allow-other-keys) a) :a 1 :a 2) 1) ; this is very tricky to catch
+(test ((lambda* (a :allow-other-keys) a) :c :c :c :c) #f)
+(test ((lambda* (a :allow-other-keys) a) :c) #f)
+(test ((lambda* (a b :allow-other-keys ) (list a b)) :b :a :c 1 :a) '(#f :a))
+
+(test ((lambda* (a :allow-other-keys ) a) :c 1 1) 1) ; ??
+(test ((lambda* (:rest b (a 1)) (list a b))) '(1 ()))
+(test ((lambda* (:allow-other-keys) #f) :b :a :a :b) #f)
+
 (test ((lambda* (:key . x) x) :x 1) 'error)
 (test ((lambda* (:key . x) x)) 'error)
 (test ((lambda* (:optional . y) y) :y 1) 'error)
@@ -21402,6 +21513,7 @@ abs     1       2
 (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi 2)) '(2))
 (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi :a 2)) '(2))
 (test (let () (define-macro* (hi (a 1) :rest b :allow-other-keys) `(list ,a ,@b)) (hi :a 2 :b 3)) '(2 :b 3))
+(test (let () (define-macro* (mac1 a :rest b) `(,a ,@b)) (mac1 + 2 3 4)) 9)
 
 					;  (test (let () (define-macro ,@a 23)) 'error)
 					;  (test (let () (define-macro ,a 23)) 'error)
@@ -21811,6 +21923,34 @@ abs     1       2
 (test (aritable? set! 0) #f)
 (test (aritable? begin 0) #t)
 (test (aritable? (make-random-state 123) 0) #f)
+;;; more tests under arity
+
+(test (let () (define-macro (mac1 a b c) `(+ ,a ,b)) (aritable? mac1 2))   #f)
+(test (let () (define-macro (mac1 a b . c) `(+ ,a ,b)) (aritable? mac1 2)) #t)
+(test (let () (define-bacro (mac1 a b c) `(+ ,a ,b)) (aritable? mac1 1))   #f)
+(test (let () (define-bacro (mac1 a b . c) `(+ ,a ,b)) (aritable? mac1 3)) #t)
+(test (let () (defmacro mac1 (a b c) `(+ ,a ,b)) (aritable? mac1 4))       #f)
+(test (let () (defmacro mac1 (a b . c) `(+ ,a ,b)) (aritable? mac1 2))     #t)
+(test (let () (define-macro (mac1 a) `(+ 1 ,a)) (aritable? mac1 0))        #f)
+
+(test (let () (define-macro* (mac1 . a) `(+ ,a ,b)) (aritable? mac1 3))    #t)
+(test (let () (define-macro* (mac1 a) `(+ 1 ,a)) (aritable? mac1 0))       #t)
+
+(test (let () (define-macro* (mac1 a :rest b) `(+ 1 ,a)) (aritable? mac1 21)) #t)
+(test (let () (define-macro* (mac1 a . b) `(,a ,@b)) (aritable? mac1 4))   #t)
+(test (let () (define-macro* (mac1 a b c) `(+ ,a ,b)) (aritable? mac1 2))  #t)
+
+(test (aritable? "hiho" 0) #f)
+(test (aritable? "" 1) #t)
+(test (aritable? () 0) #f)
+(test (aritable? #() 1) #t)
+(test (aritable? #(1 2 3) 0) #f)
+(test (aritable? (hash-table '(a . 1)) 2) #t)
+(test (aritable? (current-environment) 1) #t)
+(test (let () (call-with-exit (lambda (goto) (aritable? goto 1)))) #t)
+(test (aritable? (make-hash-table-iterator (hash-table '(a . 1))) 1) #t)
+
+
 
 
 
@@ -22018,7 +22158,6 @@ abs     1       2
 (test (arity object->string)                                         '(1 . 2))
 (test (arity string)                                                 '(0 . 536870912))
 (test (arity dynamic-wind)                                           '(3 . 3))
-(test (arity *#readers*)                                             '#f)
 (test (arity symbol-access)                                          '(1 . 1))
 (test (arity augment-environment)                                    '(1 . 536870912))
 (test (arity vector-length)                                          '(1 . 1))
@@ -22036,14 +22175,14 @@ abs     1       2
 (test (arity call-with-exit)                                         '(1 . 1))
 (test (arity gensym)                                                 '(0 . 1))
 (test (arity make-hash-table)                                        '(0 . 1))
-(test (arity multiple-value-bind)                                    '(1 . 1))
+(test (arity multiple-value-bind)                                    '(2 . 536870912))
 (test (arity procedure-setter)                                       '(1 . 1))
 (test (arity define-bacro)                                           '(2 . 536870912))
 (test (arity string-append)                                          '(0 . 536870912))
 (test (arity port-line-number)                                       '(0 . 1))
 (test (arity make-procedure-with-setter)                             '(2 . 2))
-(test (arity letrec*)                                                '(1 . 1))
-(test (arity multiple-value-set!)                                    '(1 . 1))
+(test (arity letrec*)                                                '(1 . 536870912))
+(test (arity multiple-value-set!)                                    '(2 . 536870912))
 (test (arity make-hash-table-iterator)                               '(1 . 1))
 (test (arity make-random-state)                                      '(1 . 2))
 (test (arity format)                                                 '(1 . 536870912))
@@ -22105,7 +22244,7 @@ abs     1       2
 (test (arity hash-table-set!)                                        '(3 . 3))
 (test (arity hash-table-ref)                                         '(2 . 536870912))
 (test (arity :optional)                                              '#f)
-(test (arity call-with-values)                                       '(1 . 1))
+(test (arity call-with-values)                                       '(2 . 2))
 (test (arity logand)                                                 '(0 . 536870912))
 (test (arity logior)                                                 '(0 . 536870912))
 (test (arity lognot)                                                 '(1 . 1))
@@ -22161,6 +22300,32 @@ abs     1       2
 (test (arity hash-table?)                                            '(1 . 1))
 (test (arity hash-table)                                             '(0 . 536870912))
 (test (arity close-output-port)                                      '(1 . 1))
+
+(test (let () (define-macro (mac1 a b c) `(+ ,a ,b)) (arity mac1))   '(3 . 3))
+(test (let () (define-macro (mac1 a b . c) `(+ ,a ,b)) (arity mac1)) '(2 . 536870912))
+(test (let () (define-bacro (mac1 a b c) `(+ ,a ,b)) (arity mac1))   '(3 . 3))
+(test (let () (define-bacro (mac1 a b . c) `(+ ,a ,b)) (arity mac1)) '(2 . 536870912))
+(test (let () (defmacro mac1 (a b c) `(+ ,a ,b)) (arity mac1))       '(3 . 3))
+(test (let () (defmacro mac1 (a b . c) `(+ ,a ,b)) (arity mac1))     '(2 . 536870912))
+(test (let () (define-macro (mac1 a) `(+ 1 ,a)) (arity mac1))        '(1 . 1))
+
+(test (let () (define-macro* (mac1 . a) `(+ ,a ,b)) (arity mac1))    '(0 . 536870912))
+(test (let () (define-macro* (mac1 a) `(+ 1 ,a)) (arity mac1))       '(0 . 1))
+
+(test (let () (define-macro* (mac1 a :rest b) `(+ 1 ,a)) (arity mac1)) '(0 . 536870912))
+(test (let () (define-macro* (mac1 a . b) `(,a ,@b)) (arity mac1))   '(0 . 536870912))
+(test (let () (define-macro* (mac1 a b c) `(+ ,a ,b)) (arity mac1))  '(0 . 3))
+
+(test (arity "hiho") '(1 . 1))
+(test (arity "") '(1 . 1))          ; hmmm
+(test (arity ()) #f)
+(test (arity #()) '(1 . 536870912)) ; hmmm
+(test (arity #(1 2 3)) '(1 . 536870912))
+(test (arity (hash-table '(a . 1))) '(1 . 536870912))
+(test (arity (current-environment)) '(1 . 1))
+(test (let () (call-with-exit (lambda (goto) (arity goto)))) '(0 . 536870912))
+(test (arity (make-hash-table-iterator (hash-table '(a . 1)))) '(0 . 536870912)) ; we don't have any info on this
+(test (arity (make-random-state 123)) #f)
 
 
 
@@ -22374,6 +22539,11 @@ abs     1       2
 (for-each
  (lambda (arg)
    (test (procedure-setter arg) 'error))
+ (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi 'car "car" :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+(for-each
+ (lambda (arg)
+   (test (set! (procedure-setter abs) arg) 'error))
  (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi 'car "car" :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
 (let ()
