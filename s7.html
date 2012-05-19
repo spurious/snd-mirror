@@ -3377,6 +3377,15 @@ s7_gc_protect(s7, hook);
 result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_integer(s7, 2)));
 </pre>
 
+<div class="indented">
+<pre>
+(define-macro (hook . body)
+  `(let ((h (make-hook)))
+     (set! (hook-functions h) (list (lambda (h) (set! (h 'result) (begin ,@body)))))
+     h))
+</pre>
+</div>
+
 
 <!-- *unbound-variable-hook* is another case: it stops as soon as it gets something other then #undefined -->
 <!-- what about *error-hook* etc? -->

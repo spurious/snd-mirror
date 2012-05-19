@@ -776,7 +776,7 @@ typedef struct s7_port_t {
 } s7_port_t;
 
 
-typedef struct s7_func_t {
+typedef struct c_proc_t {
   s7_function ff;
   const char *name;
   char *doc;
@@ -788,7 +788,7 @@ typedef struct s7_func_t {
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   void *chooser_data;
 #endif
-} s7_func_t;
+} c_proc_t;
 
 
 typedef struct {               /* call/cc */
@@ -871,7 +871,7 @@ typedef struct s7_cell {
       unsigned int fill_ptr;
     } vector;
     
-    s7_func_t *ffptr;      /* C functions, macros */
+    c_proc_t *c_proc;     /* C functions, macros */
     
     struct {               /* pairs */ 
       s7_pointer car, cdr, ecdr, fcdr;
@@ -1377,6 +1377,11 @@ static void init_types(void)
 #define set_open_environment(p)       typeflag(p) |= T_OPEN_ENVIRONMENT
 /* this marks an environment that is "opened" up to generic functions etc */
 
+#define T_OPEN_CLOSURE                T_GENSYM
+#define is_open_closure(p)            is_gensym(p)
+#define set_open_closure(p)           typeflag(p) |= T_OPEN_CLOSURE
+/* this marks a closure that is "opened" up to generic functions etc */
+
 #define T_ACCESSED                    (1 << (TYPE_BITS + 22))
 #define is_accessed(p)                ((typeflag(p) & T_ACCESSED) != 0)
 #define set_accessed(p)               typeflag(p) |= T_ACCESSED
@@ -1556,29 +1561,30 @@ static void init_types(void)
 #define port_read_name(p)             (p)->object.port->read_name
 
 #define is_c_function(f)              (type(f) >= T_C_FUNCTION)
-#define c_function(f)                 (f)->object.ffptr
-#define c_function_call(f)            (f)->object.ffptr->ff
-#define c_function_name(f)            (f)->object.ffptr->name
-#define c_function_documentation(f)   (f)->object.ffptr->doc
-#define c_function_required_args(f)   (f)->object.ffptr->required_args
-#define c_function_optional_args(f)   (f)->object.ffptr->optional_args
-#define c_function_has_rest_arg(f)    (f)->object.ffptr->rest_arg
-#define c_function_all_args(f)        (f)->object.ffptr->all_args
-#define c_function_setter(f)          (f)->object.ffptr->setter
+#define c_function(f)                 (f)->object.c_proc
+#define c_function_call(f)            (f)->object.c_proc->ff
+#define c_function_name(f)            (f)->object.c_proc->name
+#define c_function_documentation(f)   (f)->object.c_proc->doc
+#define c_function_required_args(f)   (f)->object.c_proc->required_args
+#define c_function_optional_args(f)   (f)->object.c_proc->optional_args
+#define c_function_has_rest_arg(f)    (f)->object.c_proc->rest_arg
+#define c_function_all_args(f)        (f)->object.c_proc->all_args
+#define c_function_setter(f)          (f)->object.c_proc->setter
 #if WITH_OPTIMIZATION
-#define c_function_class(f)           (f)->object.ffptr->id
-#define c_function_chooser(f)         (f)->object.ffptr->chooser
-#define c_function_chooser_data(f)    (f)->object.ffptr->chooser_data
+#define c_function_class(f)           (f)->object.c_proc->id
+#define c_function_chooser(f)         (f)->object.c_proc->chooser
+#define c_function_chooser_data(f)    (f)->object.c_proc->chooser_data
 #endif
 
 #define c_call(f)                     ((s7_function)(fcdr(f)))
 #define set_c_function(f, X)          do {ecdr(f) = X; fcdr(f) = (s7_pointer)(c_function_call(ecdr(f)));} while (0)
 
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
-#define c_macro_call(f)               (f)->object.ffptr->ff
-#define c_macro_name(f)               (f)->object.ffptr->name
-#define c_macro_required_args(f)      (f)->object.ffptr->required_args
-#define c_macro_all_args(f)           (f)->object.ffptr->all_args
+#define c_macro_call(f)               (f)->object.c_proc->ff
+#define c_macro_name(f)               (f)->object.c_proc->name
+#define c_macro_required_args(f)      (f)->object.c_proc->required_args
+#define c_macro_all_args(f)           (f)->object.c_proc->all_args
+#define c_macro_setter(f)             (f)->object.c_proc->setter
 
 #define continuation(p)               (p)->object.continuation
 #define continuation_stack(p)         (p)->object.continuation->stack
@@ -2359,6 +2365,13 @@ static void just_mark(s7_pointer p)
 }
 
 
+static void mark_c_proc(s7_pointer p)
+{
+  set_mark(p);
+  S7_MARK(c_function_setter(p));
+}
+
+
 static void mark_pair(s7_pointer p)
 {
   if (!is_marked(p)) 
@@ -2549,7 +2562,7 @@ static void init_mark_functions(void)
   mark_function[T_BAFFLE]              = just_mark;
   mark_function[T_C_MACRO]             = just_mark;
   mark_function[T_C_POINTER]           = just_mark;
-  mark_function[T_C_FUNCTION]          = just_mark;
+  mark_function[T_C_FUNCTION]          = just_mark;  /* these change if needed to mark_c_proc when setter is a scheme function */
   mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
@@ -3872,10 +3885,19 @@ static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
   s7_pointer e;
 
   e = car(args);
-  if (!is_environment(e))
-    return(s7_wrong_type_arg_error(sc, "open-environment!", 0, e, "an environment"));
+  if (is_environment(e))
+    {
+      set_open_environment(e);
+      return(e);
+    }
 
-  set_open_environment(e);
+  if ((!is_closure(e)) &&
+      (!is_closure_star(e)))
+    return(s7_wrong_type_arg_error(sc, "open-environment!", 0, e, "an environment or a closure"));
+
+  set_open_closure(e);
+  set_open_environment(closure_environment(e));
+  
   return(e);
 }
 
@@ -23078,14 +23100,14 @@ void **s7_expression_data(s7_pointer expr)
 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
-  s7_func_t *ptr;
+  c_proc_t *ptr;
   int ftype = T_C_FUNCTION;
   s7_pointer x;
 
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
 
-  ptr = (s7_func_t *)permanent_calloc(sizeof(s7_func_t));
+  ptr = (c_proc_t *)permanent_calloc(sizeof(c_proc_t));
   if (required_args == 0)
     {
       if (rest_arg)
@@ -23181,6 +23203,8 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 
 static void s7_function_set_setter(s7_scheme *sc, const char *getter, const char *setter)
 {
+  /* this is internal, used only with c_function setters, so we don't need to worry about the GC mark choice
+   */
   c_function_setter(s7_name_to_value(sc, getter)) = s7_name_to_value(sc, setter);
 }
 
@@ -23198,12 +23222,12 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     {
       return(cons(sc, 
-		     append_in_place(sc, 
-				     list_2(sc, 
-					    (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-					    closure_args(p)),
-				     closure_body(p)),
-		     closure_environment(p)));
+		  append_in_place(sc, 
+				  list_2(sc, 
+					 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
+					 closure_args(p)),
+				  closure_body(p)),
+		  closure_environment(p)));
     }
   
   return(sc->NIL);
@@ -23894,8 +23918,14 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
 
 s7_pointer s7_procedure_set_setter(s7_scheme *sc, s7_pointer obj, s7_pointer setter)
 {
+  /* setter can be #f to clear an old setting */
   if (is_c_function(obj))
-    c_function_setter(obj) = setter;
+    {
+      c_function_setter(obj) = setter;
+      if ((is_closure(setter)) ||
+	  (is_closure_star(setter)))
+	mark_function[type(obj)] = mark_c_proc;
+    }
   else closure_setter(obj) = setter;
   return(setter);
 }
@@ -23938,8 +23968,9 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter procedure", 1, p, "a procedure"));
 
   setter = cadr(args);
-  if ((typeflag(setter) & T_PROCEDURE) == 0)
-    return(s7_wrong_type_arg_error(sc, "set! procedure-setter setter", 2, setter, "a procedure"));
+  if ((setter != sc->F) &&
+      ((typeflag(setter) & T_PROCEDURE) == 0))
+    return(s7_wrong_type_arg_error(sc, "set! procedure-setter setter", 2, setter, "a procedure or #f"));
 
   switch (type(p))
     {
@@ -23954,6 +23985,9 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_LST_ARGS_FUNCTION:
       c_function_setter(p) = setter;
+      if ((is_closure(setter)) ||
+	  (is_closure_star(setter)))
+	mark_function[type(p)] = mark_c_proc;
       break;
 
     case T_GOTO:
@@ -44675,6 +44709,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 0) 2) lst) */
 	    case T_C_FUNCTION:
 	      /* perhaps it has a setter */
+	      /* TODO: what about T_C_LST_ARGS setter? */
 	      
 	      if (is_procedure(c_function_setter(sc->x)))
 		{
@@ -45814,12 +45849,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *
 	 * c_call(sc->code) here refers to the fcdr field which is g_add_2, but we have any number of args from a values call
 	 *   the original (unoptimized) function is not directly accessible: ecdr is the holder of sc->code,
-	 *   its type is T_C_FUNCTION, so ecdr(sc->code).object.ffptr points to the g_add_2 function data,
+	 *   its type is T_C_FUNCTION, so ecdr(sc->code).object.c_proc points to the g_add_2 function data,
 	 *   which is not helpful (the class doesn't give us a backpointer).  car(sc->code) is a symbol, its
 	 *   local|global_slot points to a slot, slot_value(local_slot(car(sc-code))) is our original function?!?!
 	 *   so we want c_function_call(slot_value(local_slot(car(sc->code)))), I guess.  Surely this could be simpler.
 	 *   And safer -- what if someone defines + at top-level after using it in this case?  Perhaps add orig_func
-	 *   field to ffptr info, then c_original_function_call(sc->code)(...).
+	 *   field to c_proc info, then c_original_function_call(sc->code)(...).
 	 */
 
 	sc->value = c_function_call(slot_value(global_slot(car(sc->code))))(sc, safe_reverse_in_place(sc, cons(sc, sc->value, p)));
@@ -54348,12 +54383,22 @@ s7_scheme *s7_init(void)
  * should all the internal hook s7_call's be protected? *load-hook* set and (+ 1 (load "a-file.scm"))? reader case?
  *   load case seems to be ok
  *
- * TODO: add s7tests for the settable setter
- * TODO: (set! (procedure-setter logbit?) (lambda ...)) almost certainly won't work and needs GC protection
  * TODO: open-environment doc/test + new object code/test [with open-auto-generics]
- * TODO: how to implement the float|adjustable-vectors now?
+ * TODO: how to implement the float|adjustable-vectors now? see t473 for a stab at it
  * TODO: s7test make-type could use augment-env! to try out reverse et al without deglobalizing the names
  * TODO: profile 
+ * TODO: has the OP_APPLY copy_list expanded?
+ * TODO: there has to be a way to get implicit indexing from open-evironment
+ *         if the make-type stuff used explicit indexing (symbol->value or environment-ref|set!??)
+ *         then it could perhaps be hijacked for value indexing.
+ *       we really want a value to have an attached open-env!
+ *         T_OPEN_OBJECT: obj+env otherwise like T_C_OBJECT, but checks env for generics/get/set
+ *         why not just a T_C_OBJECT that is an env?, or add the env to all these, and use it for the methods
+ *         how to create one in scheme? a new make-type?
+ *       try the current stuff first!
+ *
+ * would a hook? function be possible by having a hidden gensym'd hook type field with itself as the value?
+ *   could float-vector be done similarly? pws with type?
  *
  * TODO: check out setter for macro
  *   here is a simple case:
@@ -54366,8 +54411,9 @@ s7_scheme *s7_init(void)
     :(set! (vref #(1 2 3) 1) 2)
     ;no generalized set for vref
  *  we need the set code to call eval as in the nornal macro case
- *  we can use closure_setter and c_function_setter here [need a c_macro_setter macro for it]
- *  but the "procedure-setter" is not a great name: setter?
+ *  we can use closure_setter and c_macro_setter here
+ *  but then "procedure-setter" is not a great name: setter?
+ *  also need mark_c_proc (currently it uses just_mark)
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*

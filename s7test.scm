@@ -8606,6 +8606,48 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (map h '(1 2 3)) '(2 3 4))
   )
 
+(let ()
+  (define-macro (hook . body)
+    `(let ((h (make-hook)))
+       (set! (hook-functions h) 
+	     (list (lambda (h) 
+		     (set! (h 'result) (begin ,@body)))))
+       h)) 
+  (let ((x 0))
+    (define hi (hook (set! x 32) (+ 2 3 1)))
+    (test (hi) 6)
+    (test x 32)))
+
+(let ()
+  (define-macro (hooked-catch hook . body)
+    `(catch #t 
+       (lambda () 
+	 ,@body) 
+       (lambda args 
+	 (let ((val (apply ,hook args)))
+	   (if (eq? val #<unspecified>) ; hook did not do anything
+	       (apply error args)       ; so re-raise the error
+	       val)))))
+
+ (let ((a-hook (make-hook 'error-type :rest 'error-info)))
+   (set! (hook-functions a-hook)
+         (list (lambda (hook) 
+		 ;(format #t "hooked-catch: ~A~%" (apply format #t (car (hook 'error-info))))
+		 (set! (hook 'result) 32))))
+   (test (hooked-catch a-hook (abs "hi")) 32)
+   
+   (set! (hook-functions a-hook) ())
+
+   (test (catch #t
+	   (lambda ()
+	     (hooked-catch a-hook (abs "hi")))
+	   (lambda args
+	     123))
+	 123)
+   ))
+
+
+
 
 
 
@@ -22558,7 +22600,7 @@ abs     1       2
 (for-each
  (lambda (arg)
    (test (set! (procedure-setter abs) arg) 'error))
- (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi 'car "car" :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+ (list -1 #\a #t _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi 'car "car" :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
 (let ()
   (define (hiho a) a)
@@ -22582,6 +22624,18 @@ abs     1       2
   (define (vref v i) (vector-ref v i))
   (set! (procedure-setter vref) vector-set!)
   (test (let ((v (vector 1 2 3))) (set! (vref v 1) 32) v) #(1 32 3)))
+
+(let ((old-setter (procedure-setter cadr)))
+  (set! (procedure-setter cadr) 
+	(lambda (lst val) 
+	  (set! (car (cdr lst)) val)))
+  (test (let ((lst (list 1 2 3))) 
+	  (set! (cadr lst) 4) 
+	  lst)
+	'(1 4 3))
+  (test (procedure? (procedure-setter cadr)) #t)
+  (set! (procedure-setter cadr) old-setter))
+
 
 
 
@@ -25397,7 +25451,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
        (test (rec3? arg) #f)
        (test (rec4? arg) #f))
      (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2))))
-  )
+
+    )
 
 
 
