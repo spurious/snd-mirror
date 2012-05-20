@@ -1008,6 +1008,7 @@ struct s7_scheme {
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE;
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY_VALUES, QQ_APPEND, MULTIVECTOR;
+  s7_pointer Apply, Vector;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer SIMPLE_WRONG_TYPE_ARG_INFO, SIMPLE_OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
@@ -1015,7 +1016,8 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer FEED_TO;                 /* => */
-  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET;
+  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET, CONS; /* these are symbols */
+  s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Environment_Set, Cons; /* these are the associated functions */
   s7_pointer BODY, COPY, LENGTH, OBJECT_TO_STRING, FILL, REVERSE, EQUALP, MORALLY_EQUALP;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
@@ -1372,22 +1374,10 @@ static void init_types(void)
  * it can be used in other (non-symbol contexts)
  */
 
-#define T_OPEN_ENVIRONMENT            T_GENSYM
-#define is_open_environment(p)        is_gensym(p)
-#define set_open_environment(p)       typeflag(p) |= T_OPEN_ENVIRONMENT
-/* this marks an environment that is "opened" up to generic functions etc */
-
-#define T_OPEN_CLOSURE                T_GENSYM
-#define is_open_closure(p)            is_gensym(p)
-#define set_open_closure(p)           typeflag(p) |= T_OPEN_CLOSURE
-/* this marks a closure that is "opened" up to generic functions etc */
-
-#define T_ACCESSED                    (1 << (TYPE_BITS + 22))
-#define is_accessed(p)                ((typeflag(p) & T_ACCESSED) != 0)
-#define set_accessed(p)               typeflag(p) |= T_ACCESSED
-#define clear_accessed(p)             typeflag(p) = (typeflag(p) & (~T_ACCESSED))
-/* symbol has extra symbol-accessor data -- this is a very small optimization over checking the name accessor value 
- */
+#define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
+#define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
+#define set_has_methods(p)            typeflag(p) |= T_HAS_METHODS
+/* this marks an environment or closure that is "opened" up to generic functions etc */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
@@ -1493,7 +1483,7 @@ static void init_types(void)
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
 #define symbol_accessor(p)            (symbol_name_cell(p))->object.string.accessor
-#define symbol_has_accessor(p)        is_accessed(p) /* (symbol_accessor(p) != -1) */
+#define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
 #define symbol_accessor_data(p)       (symbol_name_cell(p))->object.string.accessor_data
 #define symbol_op_data(p)             (symbol_name_cell(p))->object.string.op_data
 
@@ -3641,7 +3631,7 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer find_symbol_value_in_open_environment(s7_scheme *sc, s7_pointer env, s7_pointer symbol) 
+static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol) 
 { 
   s7_pointer x, y;
 
@@ -3663,13 +3653,12 @@ static int environment_length(s7_scheme *sc, s7_pointer e)
   if (e == sc->global_env)
     return(vector_fill_pointer(e));
 
-  if (is_open_environment(e))
+  if (has_methods(e))
     {
       s7_pointer length_func;
-      length_func = find_symbol_value_in_open_environment(sc, e, sc->LENGTH);
+      length_func = find_method(sc, e, sc->LENGTH);
       if (length_func != sc->UNDEFINED)
 	return((int)s7_integer(s7_call(sc, length_func, list_1(sc, e))));
-      /* this is very unlikely to be useful -- perhaps return 0 to turn off map/for-each, but why? */
     }
 
   for (i = 0, p = environment_slots(e); is_slot(p); i++, p = next_slot(p));
@@ -3885,20 +3874,14 @@ static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
   s7_pointer e;
 
   e = car(args);
-  if (is_environment(e))
+  if ((is_environment(e)) ||
+      (is_closure(e)) ||
+      (is_closure_star(e)))
     {
-      set_open_environment(e);
+      set_has_methods(e);
       return(e);
     }
-
-  if ((!is_closure(e)) &&
-      (!is_closure_star(e)))
-    return(s7_wrong_type_arg_error(sc, "open-environment!", 0, e, "an environment or a closure"));
-
-  set_open_closure(e);
-  set_open_environment(closure_environment(e));
-  
-  return(e);
+  return(s7_wrong_type_arg_error(sc, "open-environment!", 0, e, "an environment or a closure"));
 }
 
 
@@ -4148,16 +4131,16 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
       if (env == sc->global_env)   /* (copy (global-environment)) or (copy (procedure-environment abs)) etc */
 	return(sc->global_env);
 
-      if (is_open_environment(env))
+      if (has_methods(env))
 	{
 	  s7_pointer copy_func;
-	  copy_func = find_symbol_value_in_open_environment(sc, env, sc->COPY);
+	  copy_func = find_method(sc, env, sc->COPY);
 	  if (copy_func != sc->UNDEFINED)
 	    return(s7_call(sc, copy_func, list_1(sc, env)));
 	  
 	  /* else mark the new env as open */
 	  new_e = new_frame_in_env(sc, next_environment(env));
-	  set_open_environment(new_e);
+	  set_has_methods(new_e);
 	}
       else new_e = new_frame_in_env(sc, next_environment(env));
       gc_loc = s7_gc_protect(sc, new_e);
@@ -4409,6 +4392,22 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
        set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
       } while (0)
 
+
+
+static int closure_length(s7_scheme *sc, s7_pointer e)
+{
+  /* we can't use environment_length(sc, closure_environment(e)) because the closure_environment(closure)
+   *   changes, for example when a variable is defined to be it (__func__).  So the open bit is not
+   *   always on.  Besides, the fallbacks need to be for closures, not environments.
+   */
+  s7_pointer length_func;
+  length_func = find_method(sc, closure_environment(e), sc->LENGTH);
+  if (length_func != sc->UNDEFINED)
+    return((int)s7_integer(s7_call(sc, length_func, list_1(sc, e))));
+
+  /* there are cases where this should raise a wrong-type-arg error, but for now... */
+  return(-1);
+}
 
 
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
@@ -12131,6 +12130,11 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
     case T_ENVIRONMENT:
       return(make_boolean(sc, environment_length(sc, val) == ilen));
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      if (has_methods(val))
+	return(make_boolean(sc, closure_length(sc, val) == ilen));
+
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, val, "a list, vector, string, or hash-table"));
     }
@@ -13066,6 +13070,11 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
 
     case T_ENVIRONMENT:
       return(make_boolean(sc, environment_length(sc, val) < ilen));
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      if (has_methods(val))
+	return(make_boolean(sc, closure_length(sc, val) < ilen));
 
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, val, "a list, vector, string, or hash-table"));
@@ -17918,7 +17927,7 @@ static char *describe_type_bits(s7_pointer obj)
 	   is_one_liner(obj) ?          " one-liner" : "",
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_gensym(obj) ?             " gensym" : "",
-	   is_accessed(obj) ?           " is accessed" : "",
+	   has_methods(obj) ?           " has methods" : "",
 	   is_tail_call(obj) ?          " tail-call" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
   return(buf);
@@ -18095,6 +18104,16 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   
     case T_CLOSURE:
     case T_CLOSURE_STAR:
+      if (has_methods(obj))
+	{
+	  /* look for object->string method else fallback on ordinary case.
+	   * can't use recursion on closure_environment here because then the fallback name is #<environment>.
+	   */
+	  s7_pointer print_func;
+	  print_func = find_method(sc, closure_environment(obj), sc->OBJECT_TO_STRING);
+	  if (print_func != sc->UNDEFINED)
+	    return(copy_string(s7_string(s7_call(sc, print_func, list_1(sc, obj)))));
+	}
       return(copy_string(c_closure_name(sc, obj))); /* this looks for __func__ */
   
     case T_C_OPT_ARGS_FUNCTION:
@@ -18134,11 +18153,11 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(copy_string("#<vector>"));
 
     case T_ENVIRONMENT:
-      if (is_open_environment(obj))
+      if (has_methods(obj))
 	{
 	  /* look for object->string method else fallback on ordinary case */
 	  s7_pointer print_func;
-	  print_func = find_symbol_value_in_open_environment(sc, obj, sc->OBJECT_TO_STRING);
+	  print_func = find_method(sc, obj, sc->OBJECT_TO_STRING);
 	  if (print_func != sc->UNDEFINED)
 	    return(copy_string(s7_string(s7_call(sc, print_func, list_1(sc, obj)))));
 	}
@@ -23314,20 +23333,24 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
-  s7_pointer func;
+  s7_pointer func, sym;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  s7_define(sc, sc->NIL, make_symbol(sc, name), func);
+  sym = make_symbol(sc, name);
+  s7_define(sc, sc->NIL, sym, func);
+  return(sym);
 }
 
 
-void s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
-  s7_pointer func;
+  s7_pointer func, sym;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   typeflag(func) |= T_SAFE_PROCEDURE;
-  s7_define(sc, sc->NIL, make_symbol(sc, name), func);
+  sym = make_symbol(sc, name);
+  s7_define(sc, sc->NIL, sym, func);
+  return(sym);
 }
 
 
@@ -23345,12 +23368,14 @@ static s7_pointer s7_define_constant_function(s7_scheme *sc, const char *name, s
 }
 
 
-void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
-  s7_pointer func;
+  s7_pointer func, sym;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   set_type(func, T_C_MACRO | T_ANY_MACRO | T_DONT_EVAL_ARGS); /* this used to include T_PROCEDURE */
-  s7_define(sc, sc->NIL, make_symbol(sc, name), func);
+  sym = make_symbol(sc, name);
+  s7_define(sc, sc->NIL, sym, func);
+  return(sym);
 }
 
 /* would define_bacro be useful in C?
@@ -24528,7 +24553,6 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
     {
       s7_gc_unprotect_at(sc, symbol_accessor(symbol));
       symbol_accessor(symbol) = -1;
-      clear_accessed(symbol);
     }
 
   if (is_pair(funcs))
@@ -24538,7 +24562,6 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 	if (car(x) != sc->F)                      /* if any field is not #f, reset symbol_accessor */
 	  {
 	    symbol_accessor(symbol) = s7_gc_protect(sc, funcs);
-	    set_accessed(symbol);
 	    break;
 	  }
     }
@@ -24984,12 +25007,12 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
       return(numbers_are_eqv(x, y));
 
     case T_ENVIRONMENT:
-      if (is_open_environment(x))
+      if (has_methods(x))
 	{
-	  if (is_open_environment(y))
+	  if (has_methods(y))
 	    {
 	      s7_pointer equal_func;
-	      equal_func = find_symbol_value_in_open_environment(sc, x, sc->EQUALP);
+	      equal_func = find_method(sc, x, sc->EQUALP);
 	      if (equal_func != sc->UNDEFINED)
 		return(s7_call(sc, equal_func, list_2(sc, x, y)));
 	    }
@@ -25218,12 +25241,12 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
       return(hash_tables_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc))); 
 
     case T_ENVIRONMENT:
-      if (is_open_environment(x))
+      if (has_methods(x))
 	{
-	  if (is_open_environment(y))
+	  if (has_methods(y))
 	    {
 	      s7_pointer equal_func;
-	      equal_func = find_symbol_value_in_open_environment(sc, x, sc->MORALLY_EQUALP);
+	      equal_func = find_method(sc, x, sc->MORALLY_EQUALP);
 	      if (equal_func != sc->UNDEFINED)
 		return(s7_call(sc, equal_func, list_2(sc, x, y)));
 	    }
@@ -25504,10 +25527,15 @@ list has infinite length."
       return(g_hash_table_size(sc, args));
 
     case T_C_OBJECT:
-      return(object_length(sc, car(args)));
+      return(object_length(sc, lst));
 
     case T_ENVIRONMENT:
-      return(make_integer(sc, environment_length(sc, car(args))));
+      return(make_integer(sc, environment_length(sc, lst)));
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      if (has_methods(lst))
+	return(make_integer(sc, closure_length(sc, lst)));
 
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
@@ -25614,6 +25642,16 @@ static s7_pointer complete_environment_copy(s7_scheme *sc, s7_pointer env)
 #endif
 
 
+#define CHECK_METHOD(Sc, Obj, Method, Args) \
+{                                           \
+  s7_pointer func;                          \
+  if ((has_methods(Obj)) &&                 \
+      ((func = find_method(Sc, (is_environment(Obj)) ? Obj : closure_environment(Obj), Method)) != Sc->UNDEFINED)) \
+    return(s7_call(Sc, func, Args));        \
+}
+
+
+
 static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order.  reverse \
@@ -25664,13 +25702,9 @@ also accepts a string or vector argument."
       return(object_reverse(sc, p));
 
     case T_ENVIRONMENT:
-      if (is_open_environment(p))
-	{
-	  s7_pointer reverse_func;
-	  reverse_func = find_symbol_value_in_open_environment(sc, p, sc->REVERSE);
-	  if (reverse_func != sc->UNDEFINED)
-	    return(s7_call(sc, reverse_func, args));
-	}
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      CHECK_METHOD(sc, p, sc->REVERSE, args);
       /* fall through */
 
     default:
@@ -25679,6 +25713,7 @@ also accepts a string or vector argument."
   
   return(np);
 }
+
 
 
 static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
@@ -25755,13 +25790,9 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(cadr(args));        /* this parallels the empty vector case */
 
     case T_ENVIRONMENT:
-      if (is_open_environment(p))
-	{
-	  s7_pointer fill_func;
-	  fill_func = find_symbol_value_in_open_environment(sc, p, sc->FILL);
-	  if (fill_func != sc->UNDEFINED)
-	    return(s7_call(sc, fill_func, args));
-	}
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      CHECK_METHOD(sc, p, sc->FILL, args);
       /* fall through */
     }
 
@@ -27962,6 +27993,12 @@ static s7_Int applicable_length(s7_scheme *sc, s7_pointer obj)
     case T_ENVIRONMENT:
       return(environment_length(sc, obj));
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      if (has_methods(obj))
+	return(closure_length(sc, obj));
+      return(-1);
+
     case T_NIL:
       return(0);
     }
@@ -28003,9 +28040,6 @@ static bool next_for_each(s7_scheme *sc)
 	      /* we can't use car(sc->args) directly here -- it is a counter.
 	       *   the object application (the getter function) might return the index.
 	       *   Then, if we pre-increment, the for-each application sees the incremented value.
-	       *
-               *    (let ((ctr ((cadr (make-type :getter (lambda (a b) b) :length (lambda (a) 4))))) (sum 0))
-               *      (for-each (lambda (a b) (set! sum (+ sum a b))) ctr ctr) sum)
 	       */
 	      zloc = s7_gc_protect(sc, z);
 	    }
@@ -28023,6 +28057,9 @@ static bool next_for_each(s7_scheme *sc)
       case T_STRING:
 	car(x) = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
 	break;
+
+	/* TODO: if closure, s7_call car(y) applied to list_1(loc)? or use z as above?
+	 */
 
       default:           /* see comment in next_map: (let ((L (list 1 2 3 4 5))) (for-each (lambda (x) (set-cdr! (cddr L) 5) (display x)) L)) */
 	if (is_not_null(z))
@@ -28057,7 +28094,8 @@ static bool is_sequence(s7_scheme *sc, s7_pointer p)
 	 (s7_is_string(p)) ||
 	 (s7_is_hash_table(p)) ||
 	 (is_environment(p)) ||
-	 (is_c_object(p)));
+	 (is_c_object(p)) ||
+	 (has_methods(p)));
 }
 
 
@@ -28237,13 +28275,10 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
        *   (map 0 '()) -> '()
        * so we check by hand before returning #<unspecified>
        */
-      if (((typeflag(sc->code) & (T_ANY_MACRO | T_PROCEDURE)) != 0) ||
-	  (is_pair(sc->code)) ||                   /* if this used is_sequence (above), (map '()...) would not be an error */
-	  (s7_is_string(sc->code)) ||
-	  (s7_is_vector(sc->code)) ||
-	  (s7_is_hash_table(sc->code)) ||
-	  (is_environment(sc->code)) ||
-	  (is_syntax(sc->code)))
+      if ((!is_null(sc->code)) &&
+	  (((typeflag(sc->code) & (T_ANY_MACRO | T_PROCEDURE)) != 0) ||
+	   (is_sequence(sc, sc->code)) ||
+	   (is_syntax(sc->code))))
 	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
       return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure or something applicable"));
     }
@@ -28594,13 +28629,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   if (len == 0)   /* (map 1 "hi" '()) */
     {
-      if (((typeflag(sc->code) & (T_ANY_MACRO | T_PROCEDURE)) != 0) ||
-	  (is_pair(sc->code)) ||
-	  (s7_is_string(sc->code)) ||
-	  (s7_is_vector(sc->code)) ||
-	  (s7_is_hash_table(sc->code)) ||
-	  (is_environment(sc->code)) ||
-	  (is_syntax(sc->code)))
+      if ((!is_null(sc->code)) &&
+	  (((typeflag(sc->code) & (T_ANY_MACRO | T_PROCEDURE)) != 0) ||
+	   (is_sequence(sc, sc->code)) ||
+	   (is_syntax(sc->code))))
 	return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
       return(s7_wrong_type_arg_error(sc, "map", 1, sc->code, "a procedure or something applicable"));
     }
@@ -31488,7 +31520,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* vector-set! */
-  f = slot_value(global_slot(make_symbol(sc, "vector-set!")));
+  f = slot_value(global_slot(sc->VECTOR_SET));
   c_function_chooser(f) = vector_set_chooser;
 
   vector_set_ic = s7_make_function(sc, "vector-set!", g_vector_set_ic, 3, 0, false, "vector-set! optimization");
@@ -31502,7 +31534,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   /* list-set! */
-  f = slot_value(global_slot(make_symbol(sc, "list-set!")));
+  f = slot_value(global_slot(sc->LIST_SET));
   c_function_chooser(f) = list_set_chooser;
 
   list_set_ic = s7_make_function(sc, "list-set!", g_list_set_ic, 3, 0, false, "list-set! optimization");
@@ -35711,7 +35743,7 @@ static s7_pointer check_set(s7_scheme *sc)
 				    {
 				      if ((car(sc->code) == caddr(cadr(sc->code))) &&
 					  (is_symbol(cadr(cadr(sc->code)))) &&
-					  (caadr(sc->code) == s7_make_symbol(sc, "cons")))
+					  (caadr(sc->code) == sc->CONS))
 					{
 					  car(ecdr(sc->code)) = sc->SET_CONS;
 					  fcdr(sc->code) = cadr(cadr(sc->code));
@@ -44542,7 +44574,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (sc->args != sc->NIL)
 		{
-		  push_op_stack(sc, sc->LIST_SET);
+		  push_op_stack(sc, sc->List_Set);
 		  push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
 		  sc->code = car(sc->args);
 		}
@@ -44562,7 +44594,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       */
 	      if (sc->args != sc->NIL)
 		{
-		  push_op_stack(sc, sc->VECTOR_SET);
+		  push_op_stack(sc, sc->Vector_Set);
 		  push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
 		  sc->code = car(sc->args);
 		}
@@ -44634,19 +44666,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_VECTOR:
 	      /* sc->x is the vector, sc->code is expr without the set! */
 	      /*  args have not been evaluated! */
-	      /* sc->code = cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+	      /* sc->code = cons(sc, sc->Vector_Set, s7_append(sc, car(sc->code), cdr(sc->code))); */
 
 	      if (cdar(sc->code) != sc->NIL)
 		{
-		  push_op_stack(sc, sc->VECTOR_SET);
+		  push_op_stack(sc, sc->Vector_Set);
 		  push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		  sc->code = cadar(sc->code);
 		}
-	      else sc->code = cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      else sc->code = cons(sc, sc->Vector_Set, s7_append(sc, car(sc->code), cdr(sc->code)));
 	      break;
 	      
 	    case T_STRING:
-	      /* sc->code = cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      /* sc->code = cons(sc, sc->String_Set, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	       *  it is slower to break out the normal case and handle it here.
 	       *
 	       * here only one index makes sense, and it is required, so 
@@ -44666,41 +44698,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (cdar(sc->code) != sc->NIL)
 		{
 		  push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), sc->y = s7_append(sc, cddar(sc->code), cdr(sc->code)));
-		  push_op_stack(sc, sc->STRING_SET);
+		  push_op_stack(sc, sc->String_Set);
 		  sc->code = cadar(sc->code);
 		}
-	      else sc->code = cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      else sc->code = cons(sc, sc->String_Set, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	      break;
 
 	    case T_PAIR:
 	      /* code: ((lst 1) 32) from (let ((lst '(1 2 3))) (set! (lst 1) 32))
 	       * old form:
-	       *    sc->code = cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	       *    sc->code = cons(sc, sc->List_Set, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	       *    old: 2.32, new: 1.77 (1.50 direct), (12.2): 1.07
 	       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
 	       */
 	      if (cdar(sc->code) != sc->NIL)
 		{
-		  push_op_stack(sc, sc->LIST_SET);
+		  push_op_stack(sc, sc->List_Set);
 		  push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		  sc->code = cadar(sc->code);
 		}
-	      else sc->code = cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      else sc->code = cons(sc, sc->List_Set, s7_append(sc, car(sc->code), cdr(sc->code))); 
 	      break;
 
 	    case T_HASH_TABLE:
 	      if (cdar(sc->code) != sc->NIL)
 		{
-		  push_op_stack(sc, sc->HASH_TABLE_SET);
+		  push_op_stack(sc, sc->Hash_Table_Set);
 		  push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
 		  sc->code = cadar(sc->code);
 		}
-	      else sc->code = cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      else sc->code = cons(sc, sc->Hash_Table_Set, s7_append(sc, car(sc->code), cdr(sc->code)));
 	      break;
 
 
 	    case T_ENVIRONMENT:
-	      sc->code = cons(sc, sc->ENVIRONMENT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      sc->code = cons(sc, sc->Environment_Set, s7_append(sc, car(sc->code), cdr(sc->code)));
 	      break;
 
 
@@ -47500,7 +47532,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       closure_args(sc->value) = list_1(sc, sc->y);
       closure_body(sc->value) = list_1(sc, 
 				       cons(sc, 
-					    sc->APPLY,
+					    sc->Apply,
 					    cons(sc, 
 						 cons(sc, 
 						      (sc->op == OP_DEFMACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
@@ -47562,7 +47594,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       closure_args(sc->value) = list_1(sc, sc->y);
       closure_body(sc->value) = list_1(sc, 
 					 cons(sc, 
-					      sc->APPLY,
+					      sc->Apply,
 					      cons(sc, 
 						   cons(sc, 
 							((sc->op == OP_DEFINE_MACRO_STAR) || 
@@ -48277,7 +48309,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *
        * Originally, I used:
        *
-       *   sc->value = list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
+       *   sc->value = list_3(sc, sc->Apply, sc->Vector, g_quasiquote_1(sc, sc->value));
        *   goto START;
        *
        * which means that #(...) makes a vector at read time, but `#(...) is just like (vector ...).
@@ -48294,8 +48326,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * The tricky part in s7 is that we might have quasiquoted multidimensional vectors:
        */
       if (sc->args == small_int(1))
-	sc->code = list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value)); /* qq result will be evaluated (might include {list} etc) */
-      else sc->code = list_4(sc, sc->APPLY, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
+	sc->code = list_3(sc, sc->Apply, sc->Vector, g_quasiquote_1(sc, sc->value)); /* qq result will be evaluated (might include {list} etc) */
+      else sc->code = list_4(sc, sc->Apply, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
       goto EVAL_PAIR;
 
       
@@ -53619,23 +53651,12 @@ s7_scheme *s7_init(void)
   sc->UNQUOTE =     make_symbol(sc, "unquote");
   sc->MACROEXPAND = make_symbol(sc, "macroexpand");
   sc->FEED_TO =     make_symbol(sc, "=>");
-  sc->CDR =         make_symbol(sc, "cdr");
   sc->SET =         make_symbol(sc, "set!");
   sc->BAFFLE =      make_symbol(sc, "(baffle)");
   sc->BODY =        make_symbol(sc, "body");
-  sc->COPY =        make_symbol(sc, "copy");
-  sc->FILL =        make_symbol(sc, "fill!");
-  sc->COPY =        make_symbol(sc, "copy");
-  sc->REVERSE =     make_symbol(sc, "reverse");
-  sc->EQUALP =      make_symbol(sc, "equal?");
-  sc->MORALLY_EQUALP = make_symbol(sc, "morally-equal?");
-  sc->OBJECT_TO_STRING = make_symbol(sc, "object->string");
 
   s7_make_slot(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
 
-  sc->VECTOR = make_symbol(sc, "vector");
-  typeflag(sc->VECTOR) |= T_SETTER; 
-  
   sc->ERROR =          make_symbol(sc, "error");
   sc->READ_ERROR =     make_symbol(sc, "read-error");
   sc->SYNTAX_ERROR =   make_symbol(sc, "syntax-error");
@@ -53886,7 +53907,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "make-string",               g_make_string,              1, 1, false, H_make_string);
   s7_define_safe_function(sc, "string-length",             g_string_length,            1, 0, false, H_string_length);
   s7_define_safe_function(sc, "string-ref",                g_string_ref,               2, 0, false, H_string_ref);
-  s7_define_safe_function(sc, "string-set!",               g_string_set,               3, 0, false, H_string_set);
+  sc->STRING_SET = s7_define_safe_function(sc, "string-set!",               g_string_set,               3, 0, false, H_string_set);
   s7_define_safe_function(sc, "string=?",                  g_strings_are_equal,        2, 0, true,  H_strings_are_equal);
   s7_define_safe_function(sc, "string<?",                  g_strings_are_less,         2, 0, true,  H_strings_are_less);
   s7_define_safe_function(sc, "string>?",                  g_strings_are_greater,      2, 0, true,  H_strings_are_greater);
@@ -53905,17 +53926,17 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "string",                    g_string,                   0, 0, true,  H_string);
   s7_define_safe_function(sc, "list->string",              g_list_to_string,           1, 0, false, H_list_to_string);
   s7_define_safe_function(sc, "string->list",              g_string_to_list,           1, 0, false, H_string_to_list);
-  s7_define_safe_function(sc, "object->string",            g_object_to_string,         1, 1, false, H_object_to_string);
+  sc->OBJECT_TO_STRING = s7_define_safe_function(sc, "object->string", g_object_to_string, 1, 1, false, H_object_to_string);
   s7_define_safe_function(sc, "format",                    g_format,                   1, 0, true,  H_format);
 
 
   s7_define_safe_function(sc, "null?",                     g_is_null,                  1, 0, false, H_is_null);
   s7_define_safe_function(sc, "list?",                     g_is_list,                  1, 0, false, H_is_list);
   s7_define_safe_function(sc, "pair?",                     g_is_pair,                  1, 0, false, H_is_pair);
-  s7_define_safe_function(sc, "cons",                      g_cons,                     2, 0, false, H_cons);
+  sc->CONS = s7_define_safe_function(sc, "cons",                      g_cons,                     2, 0, false, H_cons);
 
   s7_define_safe_function(sc, "car",                       g_car,                      1, 0, false, H_car);
-  s7_define_safe_function(sc, "cdr",                       g_cdr,                      1, 0, false, H_cdr);
+  sc->CDR = s7_define_safe_function(sc, "cdr",             g_cdr,                      1, 0, false, H_cdr);
   s7_define_function(sc, "set-car!",                       g_set_car,                  2, 0, false, H_set_car);
   s7_define_function(sc, "set-cdr!",                       g_set_cdr,                  2, 0, false, H_set_cdr);
   s7_define_safe_function(sc, "caar",                      g_caar,                     1, 0, false, H_caar);
@@ -53962,15 +53983,15 @@ s7_scheme *s7_init(void)
     set_copy_args(p);
   }
   s7_define_safe_function(sc, "list-ref",                  g_list_ref,                 2, 0, true,  H_list_ref);
-  s7_define_safe_function(sc, "list-set!",                 g_list_set,                 3, 0, true,  H_list_set);
+  sc->LIST_SET = s7_define_safe_function(sc, "list-set!",                 g_list_set,                 3, 0, true,  H_list_set);
   s7_define_function(sc, "list-tail",                      g_list_tail,                2, 0, false, H_list_tail);
   /* perhaps with setter? */
   s7_define_safe_function(sc, "make-list",                 g_make_list,                1, 1, false, H_make_list);
 
-  s7_define_safe_function(sc, "length",                    g_length,                   1, 0, false, H_length);
-  s7_define_safe_function(sc, "copy",                      g_copy,                     1, 0, false, H_copy);
-  s7_define_function(sc, "fill!",                          g_fill,                     2, 0, false, H_fill);
-  s7_define_safe_function(sc, "reverse",                   g_reverse,                  1, 0, false, H_reverse);
+  sc->LENGTH =  s7_define_safe_function(sc, "length",      g_length,                   1, 0, false, H_length);
+  sc->COPY =    s7_define_safe_function(sc, "copy",        g_copy,                     1, 0, false, H_copy);
+  sc->FILL =    s7_define_function(sc, "fill!",            g_fill,                     2, 0, false, H_fill);
+  sc->REVERSE = s7_define_safe_function(sc, "reverse",     g_reverse,                  1, 0, false, H_reverse);
   s7_define_function(sc, "reverse!",                       g_reverse_in_place,         1, 0, false, H_reverse_in_place); /* used by Snd code */
   
 
@@ -53978,14 +53999,13 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "vector->list",              g_vector_to_list,           1, 0, false, H_vector_to_list);
   s7_define_safe_function(sc, "list->vector",              g_list_to_vector,           1, 0, false, H_list_to_vector);
   s7_define_safe_function(sc, "vector-fill!",              g_vector_fill,              2, 0, false, H_vector_fill);
-  s7_define_safe_function(sc, "vector",                    g_vector,                   0, 0, true,  H_vector);
-  sc->VECTOR = s7_symbol_value(sc, sc->VECTOR);
-#if WITH_OPTIMIZATION
-    set_setter(sc->VECTOR); /* for optimized DO's benefit */
-#endif
+  sc->VECTOR = s7_define_safe_function(sc, "vector",       g_vector,                   0, 0, true,  H_vector);
+  set_setter(sc->VECTOR); /* ?? */
+  sc->Vector = s7_symbol_value(sc, sc->VECTOR);
+  set_setter(sc->Vector);
   s7_define_safe_function(sc, "vector-length",             g_vector_length,            1, 0, false, H_vector_length);
   s7_define_safe_function(sc, "vector-ref",                g_vector_ref,               2, 0, true,  H_vector_ref);
-  s7_define_safe_function(sc, "vector-set!",               g_vector_set,               3, 0, true,  H_vector_set);
+  sc->VECTOR_SET = s7_define_safe_function(sc, "vector-set!",  g_vector_set,           3, 0, true,  H_vector_set);
   s7_define_safe_function(sc, "make-vector",               g_make_vector,              1, 1, false, H_make_vector);
   s7_define_safe_function(sc, "vector-dimensions",         g_vector_dimensions,        1, 0, false, H_vector_dimensions);
   s7_define_function(sc, "sort!",                          g_sort,                     2, 0, false, H_sort);
@@ -53995,7 +54015,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "hash-table?",               g_is_hash_table,            1, 0, false, H_is_hash_table);
   s7_define_safe_function(sc, "make-hash-table",           g_make_hash_table,          0, 1, false, H_make_hash_table);
   s7_define_safe_function(sc, "hash-table-ref",            g_hash_table_ref,           2, 0, true,  H_hash_table_ref);
-  s7_define_safe_function(sc, "hash-table-set!",           g_hash_table_set,           3, 0, false, H_hash_table_set);
+  sc->HASH_TABLE_SET = s7_define_safe_function(sc, "hash-table-set!",           g_hash_table_set,           3, 0, false, H_hash_table_set);
   s7_define_safe_function(sc, "hash-table-size",           g_hash_table_size,          1, 0, false, H_hash_table_size);
 
   ht_iter_tag = s7_new_type_x("hash-table-iterator", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
@@ -54010,8 +54030,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "load",                           g_load,                     1, 1, false, H_load);
   s7_define_function(sc, "eval",                           g_eval,                     1, 1, false, H_eval);
   s7_define_function(sc, "eval-string",                    g_eval_string,              1, 1, false, H_eval_string);
-  s7_define_function(sc, "apply",                          g_apply,                    1, 0, true,  H_apply);
-  sc->APPLY = s7_symbol_value(sc, make_symbol(sc, "apply"));
+  sc->APPLY = s7_define_function(sc, "apply",              g_apply,                    1, 0, true,  H_apply);
+  sc->Apply = s7_symbol_value(sc, sc->APPLY);
 
   s7_define_function(sc, "for-each",                       g_for_each,                 2, 0, true,  H_for_each);
   s7_define_function(sc, "map",                            g_map,                      2, 0, true,  H_map);
@@ -54028,6 +54048,8 @@ s7_scheme *s7_init(void)
   sc->MULTIVECTOR =     s7_define_constant_function(sc, "{multivector}",    g_qq_multivector, 1, 0, true,  H_qq_multivector);
   sc->QQ_LIST =         s7_define_constant_function(sc, "{list}",           g_qq_list,        0, 0, true,  H_qq_list);
   set_type(sc->QQ_LIST, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
+
+  /* TODO: define_constant_function should return a symbol etc */
 
   s7_define_safe_function(sc, "gc",                        g_gc,                       0, 1, false, H_gc);
 
@@ -54051,8 +54073,8 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "boolean?",                  g_is_boolean,               1, 0, false, H_is_boolean);
   s7_define_safe_function(sc, "eq?",                       g_is_eq,                    2, 0, false, H_is_eq);
   s7_define_safe_function(sc, "eqv?",                      g_is_eqv,                   2, 0, false, H_is_eqv);
-  s7_define_safe_function(sc, "equal?",                    g_is_equal,                 2, 0, false, H_is_equal);
-  s7_define_safe_function(sc, "morally-equal?",            g_is_morally_equal,         2, 0, false, H_is_morally_equal);
+  sc->EQUALP = s7_define_safe_function(sc, "equal?",       g_is_equal,                 2, 0, false, H_is_equal);
+  sc->MORALLY_EQUALP = s7_define_safe_function(sc, "morally-equal?", g_is_morally_equal, 2, 0, false, H_is_morally_equal);
   
   s7_define_safe_function(sc, "s7-version",                g_s7_version,               0, 0, false, H_s7_version);
 
@@ -54134,31 +54156,28 @@ s7_scheme *s7_init(void)
   s7_provide(sc, "system-extras");
 #endif
 
-  {
-    s7_pointer sym;
-    sc->VECTOR_SET = s7_symbol_value(sc, sym = make_symbol(sc, "vector-set!"));
-    typeflag(sc->VECTOR_SET) |= T_SETTER; 
-    set_setter(sym);
-    
-    sc->LIST_SET = s7_symbol_value(sc, sym = make_symbol(sc, "list-set!"));
-    typeflag(sc->LIST_SET) |= T_SETTER; 
-    set_setter(sym);
-    
-    sc->HASH_TABLE_SET = s7_symbol_value(sc, sym = make_symbol(sc, "hash-table-set!"));
-    typeflag(sc->HASH_TABLE_SET) |= T_SETTER; 
-    set_setter(sym);
-
-    sc->ENVIRONMENT_SET = s7_make_function(sc, "(environment-set!)", g_environment_set, 3, 0, false, "internal setter for environments");
-    typeflag(sc->ENVIRONMENT_SET) |= T_SETTER; 
-    set_setter(sym);
-
-    sym = make_symbol(sc, "cons");
-    set_setter(sym);
-    sym = s7_symbol_value(sc, sym);
-    set_setter(sym);
-    
-    sc->STRING_SET = s7_symbol_value(sc, make_symbol(sc, "string-set!"));
-  }
+  sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);
+  set_setter(sc->Vector_Set);
+  set_setter(sc->VECTOR_SET);
+  
+  sc->List_Set = s7_symbol_value(sc, sc->LIST_SET);
+  set_setter(sc->List_Set);
+  set_setter(sc->LIST_SET);
+  
+  sc->Hash_Table_Set = s7_symbol_value(sc, sc->HASH_TABLE_SET);
+  set_setter(sc->Hash_Table_Set);
+  set_setter(sc->HASH_TABLE_SET);
+  
+  sc->Environment_Set = s7_make_function(sc, "(environment-set!)", g_environment_set, 3, 0, false, "internal setter for environments");
+  set_setter(sc->Environment_Set);
+  
+  set_setter(sc->CONS); /* ?? */
+  sc->Cons = s7_symbol_value(sc, sc->CONS);
+  set_setter(sc->Cons); 
+  
+  sc->String_Set = s7_symbol_value(sc, sc->STRING_SET);
+  set_setter(sc->String_Set);
+  set_setter(sc->STRING_SET);
 
   s7_function_set_setter(sc, "car",                 "set-car!");
   s7_function_set_setter(sc, "cdr",                 "set-cdr!");
@@ -54379,23 +54398,16 @@ s7_scheme *s7_init(void)
 
 /* PERHAPS: hook as method? -> before/after/around methods, before/after-hooks collapsed into main?
  * PERHAPS: *formatters* along the lines of *#readers* = list of (ctrl-char (lambda (ctl-string  arg) ...)) -> string
+ *             lambda (port(?) numeric-arg-or-#f format-arg) ... -> string
  *
  * should all the internal hook s7_call's be protected? *load-hook* set and (+ 1 (load "a-file.scm"))? reader case?
  *   load case seems to be ok
  *
  * TODO: open-environment doc/test + new object code/test [with open-auto-generics]
- * TODO: how to implement the float|adjustable-vectors now? see t473 for a stab at it
- * TODO: s7test make-type could use augment-env! to try out reverse et al without deglobalizing the names
  * TODO: profile 
  * TODO: has the OP_APPLY copy_list expanded?
- * TODO: there has to be a way to get implicit indexing from open-evironment
- *         if the make-type stuff used explicit indexing (symbol->value or environment-ref|set!??)
- *         then it could perhaps be hijacked for value indexing.
- *       we really want a value to have an attached open-env!
- *         T_OPEN_OBJECT: obj+env otherwise like T_C_OBJECT, but checks env for generics/get/set
- *         why not just a T_C_OBJECT that is an env?, or add the env to all these, and use it for the methods
- *         how to create one in scheme? a new make-type?
- *       try the current stuff first!
+ * TODO: finish the open closure cases, adjustable vector/float vector to s7test
+ * TODO: with_baffle tests, also #_?
  *
  * would a hook? function be possible by having a hidden gensym'd hook type field with itself as the value?
  *   could float-vector be done similarly? pws with type?
@@ -54410,10 +54422,9 @@ s7_scheme *s7_init(void)
     2
     :(set! (vref #(1 2 3) 1) 2)
     ;no generalized set for vref
- *  we need the set code to call eval as in the nornal macro case
- *  we can use closure_setter and c_macro_setter here
+ *  we need the set code to call eval as in the normal macro case
+ *  we can use c_macro_setter here
  *  but then "procedure-setter" is not a great name: setter?
- *  also need mark_c_proc (currently it uses just_mark)
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*

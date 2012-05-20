@@ -13815,6 +13815,7 @@ this prints:
 (test (((map lambda '(()) #(1 2)) 0)) 1)
 (test (((map lambda '((x)) '((+ x 1))) 0) 32) 33)
 (test (map #() '()) '()) ; hmmm -- (map '() '()) is an error
+(test (map () ()) 'error)
 (test (map "" "") '())
 (test (map (let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) lst) '(0)) '(1))
 (let ((lst (list 1 2))) (set! (cdr (cdr lst)) lst) (test (map lst lst) 'error))
@@ -18824,6 +18825,9 @@ who says the continuation has to restart the map from the top?
 		 (set! sum (+ sum 100)))
 	  sum)
 	348))
+
+
+;;; with-baffle
 
 (test (with-baffle
        (let ((x 0)
