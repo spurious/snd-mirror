@@ -1018,7 +1018,7 @@ struct s7_scheme {
   s7_pointer FEED_TO;                 /* => */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET, CONS; /* these are symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Environment_Set, Cons; /* these are the associated functions */
-  s7_pointer BODY, COPY, LENGTH, OBJECT_TO_STRING, FILL, REVERSE, EQUALP, MORALLY_EQUALP;
+  s7_pointer BODY, COPY, LENGTH, OBJECT_TO_STRING, FILL, REVERSE, EQUALP, MORALLY_EQUALP, SORT;
   s7_pointer VECTORP, VECTOR_FILL, VECTOR_REF, VECTOR_LENGTH, VECTOR_DIMENSIONS, VECTOR_TO_LIST;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
@@ -3231,7 +3231,7 @@ static int symbol_table_hash(const char *key, unsigned int *loc)
 static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location) 
 { 
   s7_pointer x, str; 
-  
+
   str = s7_make_permanent_string(name);
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
@@ -6650,7 +6650,6 @@ static void init_ctables(void)
     not_eol[i] = true;
   not_eol[0] = false;
   not_eol['\n'] = false;
-  /* TODO: also '\r'? */
 
   for (i = 1; i < CTABLE_SIZE; i++)
     char_ok_in_a_name[i] = true;
@@ -16518,7 +16517,7 @@ static void stderr_display(s7_scheme *sc, const char *s, s7_pointer port)
 static token_t file_read_semicolon(s7_scheme *sc, s7_pointer pt)
 {
   int c;
-  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF)); /* TODO: not_eol[c]? and include \r? */
+  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
   port_line_number(pt)++;
   if (c == EOF)
     return(TOKEN_EOF);
@@ -21501,16 +21500,15 @@ static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer vec, x;
+  s7_pointer vec, x, func = sc->UNDEFINED;
   s7_Int index;
 
   vec = finder(sc, car(args));
   if (!s7_is_vector(vec))
     {
-      /* TODO: how to handle the expr? 
-       *   check for func, if found, check index, get index + 1, make a new arg list
-       */
-      return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
+      if ((!has_methods(vec)) ||
+	  ((func = find_method(sc, (is_environment(vec)) ? vec : closure_environment(vec), sc->VECTOR_REF)) == sc->UNDEFINED))
+	return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
     }
   x = finder(sc, cadr(cadr(args)));
   if (!s7_is_integer(x))
@@ -21524,6 +21522,8 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
   if (vector_is_multidimensional(vec))
     return(make_shared_vector(sc, vec, 1, index));
 
+  if (func != sc->UNDEFINED)
+    return(s7_call(sc, func, list_2(sc, vec, s7_make_integer(sc, index))));
   return(vector_element(vec, index));
 }
 
@@ -21642,41 +21642,6 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
 
   val = finder(sc, caddr(args));
   vector_element(vec, index) = val;
-  return(val);
-}
-
-static s7_pointer vector_set_ref;
-static s7_pointer g_vector_set_ref(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer vec1, vec2, ind, val;
-  s7_Int index;
-
-  vec1 = finder(sc, car(args));
-  if (!s7_is_vector(vec1))
-    {
-      /* TODO: if has_methods we have a problem */
-      return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
-    }
-  vec2 = finder(sc, cadr(caddr(args)));
-  if (!s7_is_vector(vec2))
-    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, cadr(caddr(args)), "a vector"));
-  
-  ind = finder(sc, cadr(args));
-  if (!s7_is_integer(ind))
-    return(s7_wrong_type_arg_error(sc, "vector-set! index,", 2, cadr(args), "an integer"));
-
-  index = s7_integer(ind);
-  if ((index < 0) ||
-      (index >= vector_length(vec1)) ||
-      (index >= vector_length(vec2)))
-    return(s7_out_of_range_error(sc, "vector-set! index,", 2, ind, "should be between 0 and the vector length"));
-
-  val = vector_element(vec2, index);
-
-  if (vector_is_multidimensional(vec1))
-    return(g_vector_set(sc, list_3(sc, vec1, ind, val)));
-
-  vector_element(vec1, index) = val;
   return(val);
 }
 
@@ -22037,7 +22002,8 @@ If its first argument is a list, the list is copied (despite the '!')."
   data = car(args);
   if (is_null(data)) return(sc->NIL);
   if ((!is_pair(data)) && 
-      (!s7_is_vector(data)))
+      (!s7_is_vector(data)) &&
+      (!has_methods(data)))
     /* (!is_c_object(data))) */
     return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector or a list"));
 
@@ -22086,11 +22052,13 @@ If its first argument is a list, the list is copied (despite the '!')."
 	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), vector_compare);
 	  return(data);
 	}
-
-      /* TODO: if open env, look for sort? see above for arg check
-       */
-
       break;
+
+    case T_ENVIRONMENT:
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      CHECK_METHOD(sc, data, sc->SORT, args);
+      return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector or a list"));
     }
 
   if (len < 2) return(data);
@@ -25083,6 +25051,18 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	}
       return(structures_are_equal(sc, x, y, new_shared_info(sc)));
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      if ((has_methods(x)) &&
+	  (has_methods(y)))
+	{
+	  s7_pointer equal_func;
+	  equal_func = find_method(sc, closure_environment(x), sc->EQUALP);
+	  if (equal_func != sc->UNDEFINED)
+	    return(s7_boolean(sc, s7_call(sc, equal_func, list_2(sc, x, y))));
+	}
+      return(false);
+
     case T_VECTOR:
       return((vector_length(x) == vector_length(y)) &&
 	     (structures_are_equal(sc, x, y, new_shared_info(sc))));
@@ -25506,8 +25486,17 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 
     case T_CLOSURE:
     case T_CLOSURE_STAR:
-      return((type(y) == type(x)) &&
-	     (s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), ci)) &&
+      if (type(x) != type(y))
+	return(false);
+      if ((has_methods(x)) &&
+	  (has_methods(y)))
+	{
+	  s7_pointer equal_func;
+	  equal_func = find_method(sc, closure_environment(x), sc->MORALLY_EQUALP);
+	  if (equal_func != sc->UNDEFINED)
+	    return(s7_boolean(sc, s7_call(sc, equal_func, list_2(sc, x, y))));
+	}
+      return((s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), ci)) &&
 	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), ci)) &&
 	     (s7_is_morally_equal_1(sc, closure_body(x), closure_body(y), ci)));
 
@@ -30567,21 +30556,6 @@ static s7_pointer vector_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	  optimize_data(expr) = HOP_SAFE_C_C;
 	  return(vector_set_ssc);
 	}
-      if ((is_symbol(cadr(expr))) &&
-	  (is_symbol(caddr(expr))) &&
-	  (is_pair(cadddr(expr))) &&
-	  (is_optimized(cadddr(expr))))
-	{
-	  s7_pointer vref;
-	  vref = cadddr(expr);
-	  if ((is_symbol(cadr(vref))) &&
-	      (caddr(vref) == caddr(expr)) &&
-	      (c_call(vref) == g_vector_ref_2))
-	    {
-	      optimize_data(expr) = HOP_SAFE_C_C;
-	      return(vector_set_ref);
-	    }
-	}
       return(vector_set_3);
     }
   return(f);
@@ -31587,8 +31561,6 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(vector_set_ssc) = c_function_class(f);
   vector_set_3 = s7_make_function(sc, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! optimization");
   c_function_class(vector_set_3) = c_function_class(f);
-  vector_set_ref = s7_make_function(sc, "vector-set!", g_vector_set_ref, 3, 0, false, "vector-set! optimization");
-  c_function_class(vector_set_ref) = c_function_class(f);
 
 
   /* list-set! */
@@ -37097,7 +37069,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
       return((*(object_ref(obj)))(sc, obj, indices));
 
     case T_ENVIRONMENT:
-      /* TODO: getter method? */
       if (is_symbol(car(indices)))
 	return(s7_environment_ref(sc, obj, car(indices)));
       return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
@@ -44800,7 +44771,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 0) 2) lst) */
 	    case T_C_FUNCTION:
 	      /* perhaps it has a setter */
-	      /* TODO: what about T_C_LST_ARGS setter? */
+	      /* the only T_C_LST_ARGS function is internal: {list}, so it doesn't need a setter */
 	      
 	      if (is_procedure(c_function_setter(sc->x)))
 		{
@@ -54069,7 +54040,7 @@ s7_scheme *s7_init(void)
   sc->Vector = s7_symbol_value(sc, sc->VECTOR);
   set_setter(sc->Vector);
 
-  s7_define_function(sc, "sort!",                          g_sort,                     2, 0, false, H_sort);
+  sc->SORT = s7_define_function(sc, "sort!",                          g_sort,                     2, 0, false, H_sort);
 
 
   s7_define_safe_function(sc, "hash-table",                g_hash_table,               0, 0, true,  H_hash_table);
@@ -54464,8 +54435,8 @@ s7_scheme *s7_init(void)
  * TODO: open-environment doc/test + new object code/test [with open-auto-generics]
  * TODO: profile 
  * TODO: has the OP_APPLY copy_list expanded?
- * TODO: finish the open closure cases, adjustable vector/float vector to s7test
- * TODO: with_baffle tests, also #_?
+ * TODO: float vector to s7test
+ * TODO: check the fatty3 compsnd lint complaint
  *
  * would a hook? function be possible by having a hidden gensym'd hook type field with itself as the value?
  *   could float-vector be done similarly? pws with type?
@@ -54489,6 +54460,6 @@ s7_scheme *s7_init(void)
  * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
  *
  * lint     13424 -> 1231 [1237] 1286
- * bench    52019 -> 7875 [8268] 8347
+ * bench    52019 -> 7875 [8268] 8037
  * index    44300 -> 4988 [4992] 4235
  */
