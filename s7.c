@@ -1019,6 +1019,7 @@ struct s7_scheme {
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET, ENVIRONMENT_SET, CONS; /* these are symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Environment_Set, Cons; /* these are the associated functions */
   s7_pointer BODY, COPY, LENGTH, OBJECT_TO_STRING, FILL, REVERSE, EQUALP, MORALLY_EQUALP;
+  s7_pointer VECTORP, VECTOR_FILL, VECTOR_REF, VECTOR_LENGTH, VECTOR_DIMENSIONS, VECTOR_TO_LIST;
   s7_pointer s_function_args;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
@@ -3642,6 +3643,16 @@ static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 
   return(sc->UNDEFINED);
 } 
+
+
+#define CHECK_METHOD(Sc, Obj, Method, Args) \
+{                                           \
+  s7_pointer func;                          \
+  if ((has_methods(Obj)) &&                 \
+      ((func = find_method(Sc, (is_environment(Obj)) ? Obj : closure_environment(Obj), Method)) != Sc->UNDEFINED)) \
+    return(s7_call(Sc, func, Args));        \
+}
+
 
 
 static int environment_length(s7_scheme *sc, s7_pointer e)
@@ -6639,6 +6650,7 @@ static void init_ctables(void)
     not_eol[i] = true;
   not_eol[0] = false;
   not_eol['\n'] = false;
+  /* TODO: also '\r'? */
 
   for (i = 1; i < CTABLE_SIZE; i++)
     char_ok_in_a_name[i] = true;
@@ -13758,6 +13770,7 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
     case T_STRING:
     case T_HASH_TABLE:
     case T_ENVIRONMENT:
+      /* TODO: check has_method for closure */
       return(sc->F);
 
     case T_C_OBJECT:
@@ -16505,7 +16518,7 @@ static void stderr_display(s7_scheme *sc, const char *s, s7_pointer port)
 static token_t file_read_semicolon(s7_scheme *sc, s7_pointer pt)
 {
   int c;
-  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
+  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF)); /* TODO: not_eol[c]? and include \r? */
   port_line_number(pt)++;
   if (c == EOF)
     return(TOKEN_EOF);
@@ -21213,8 +21226,10 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
   x = car(args);
 
   if (!s7_is_vector(x))
-    return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a vector"));
-
+    {
+      CHECK_METHOD(sc, x, sc->VECTOR_FILL, args);
+      return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a vector"));
+    }
   s7_vector_fill(sc, x, cadr(args));
   return(cadr(args));
 }
@@ -21295,10 +21310,16 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 
 static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer vec;
   #define H_vector_to_list "(vector->list v) returns the elements of the vector v as a list; (map values v)"
-  if (!s7_is_vector(car(args)))
-    return(s7_wrong_type_arg_error(sc, "vector->list", 0, car(args), "a vector"));
-  return(s7_vector_to_list(sc, car(args)));
+
+  vec = car(args);
+  if (!s7_is_vector(vec))
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_TO_LIST, args);
+      return(s7_wrong_type_arg_error(sc, "vector->list", 0, vec, "a vector"));
+    }
+  return(s7_vector_to_list(sc, vec));
 }
 
 
@@ -21343,10 +21364,16 @@ static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer vec;
   #define H_vector_length "(vector-length v) returns the length of vector v"
-  if (!s7_is_vector(car(args)))
-    return(s7_wrong_type_arg_error(sc, "vector-length", 0, car(args), "a vector"));
-  return(make_integer(sc, vector_length(car(args))));
+
+  vec = car(args);
+  if (!s7_is_vector(vec))
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_LENGTH, args);
+      return(s7_wrong_type_arg_error(sc, "vector-length", 0, vec, "a vector"));
+    }
+  return(make_integer(sc, vector_length(vec)));
 }
 
 
@@ -21440,7 +21467,10 @@ are the indices, or omit 'vector-ref': (v ...)."
 
   vec = car(args);
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_REF, args);
+      return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
+    }
 
   return(vector_ref_1(sc, vec, cdr(args)));
 }
@@ -21454,7 +21484,10 @@ static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
 
   vec = finder(sc, car(args));
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_REF, args);
+      return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
+    }
 
   index = s7_integer(cadr(args));
   if (index >= vector_length(vec))
@@ -21473,8 +21506,12 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
 
   vec = finder(sc, car(args));
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
-
+    {
+      /* TODO: how to handle the expr? 
+       *   check for func, if found, check index, get index + 1, make a new arg list
+       */
+      return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
+    }
   x = finder(sc, cadr(cadr(args)));
   if (!s7_is_integer(x))
     return(s7_wrong_type_arg_error(sc, "vector-ref", 2, cadr(args), "an integer"));
@@ -21498,7 +21535,10 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
 
   vec = car(args);
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_REF, args); /* should be ok because we go to g_vector_ref below */
+      return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
+    }
   if (vector_is_multidimensional(vec))
     return(g_vector_ref(sc, args));
   
@@ -21526,7 +21566,10 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 
   vec = car(args);
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_SET, args);
+      return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
+    }
   if (vector_length(vec) == 0)
     return(s7_out_of_range_error(sc, "vector-set!", 1, vec, "this vector has no elements, so vector-set! is hopeless"));
   
@@ -21586,7 +21629,10 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
 
   vec = finder(sc, car(args));
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_SET, list_3(sc, vec, cadr(args), finder(sc, caddr(args)))); /* the list_3 happens only if we find the method */
+      return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
+    }
   if (vector_is_multidimensional(vec))
     return(g_vector_set(sc, list_3(sc, vec, cadr(args), finder(sc, caddr(args)))));
 
@@ -21607,8 +21653,10 @@ static s7_pointer g_vector_set_ref(s7_scheme *sc, s7_pointer args)
 
   vec1 = finder(sc, car(args));
   if (!s7_is_vector(vec1))
-    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
-
+    {
+      /* TODO: if has_methods we have a problem */
+      return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
+    }
   vec2 = finder(sc, cadr(caddr(args)));
   if (!s7_is_vector(vec2))
     return(s7_wrong_type_arg_error(sc, "vector-ref", 1, cadr(caddr(args)), "a vector"));
@@ -21640,7 +21688,10 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
 
   vec = car(args);
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_SET, args);
+      return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
+    }
   if (vector_is_multidimensional(vec))
     return(g_vector_set(sc, args));
   
@@ -21665,7 +21716,10 @@ static s7_pointer g_vector_set_ssc(s7_scheme *sc, s7_pointer args)
 
   vec = finder(sc, car(args));
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_SET, list_3(sc, vec, finder(sc, cadr(args)), caddr(args)));
+      return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
+    }
   if (vector_is_multidimensional(vec))
     return(g_vector_set(sc, list_3(sc, vec, finder(sc, cadr(args)), caddr(args))));
 
@@ -21783,8 +21837,13 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 
 static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer p;
   #define H_is_vector "(vector? obj) returns #t if obj is a vector"
-  return(make_boolean(sc, s7_is_vector(car(args))));
+  p = car(args);
+  if (s7_is_vector(p))
+    return(sc->T);
+  CHECK_METHOD(sc, p, sc->VECTORP, args);
+  return(sc->F);
 }
 
 
@@ -21806,7 +21865,10 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 
   x = car(args);
   if (!s7_is_vector(x))
-    return(s7_wrong_type_arg_error(sc, "vector-dimensions", 0, x, "a vector"));
+    {
+      CHECK_METHOD(sc, x, sc->VECTOR_DIMENSIONS, args);
+      return(s7_wrong_type_arg_error(sc, "vector-dimensions", 0, x, "a vector"));
+    }
 
   if (vector_is_multidimensional(x))
     {
@@ -24262,6 +24324,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
     case T_HASH_TABLE:
     case T_PAIR:
     case T_VECTOR:
+      /* TODO: special method arity? aritable? */
       return(s7_cons(sc, small_int(1), s7_make_integer(sc, ARITY_MAX)));
 
     case T_SYNTAX:
@@ -25574,6 +25637,11 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_ENVIRONMENT:             /* this copies only the local env and points to outer envs */
       return(environment_copy(sc, obj));
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      CHECK_METHOD(sc, obj, sc->COPY, list_1(sc, obj));
+      return(obj);
+
     case T_VECTOR:
       return(vector_copy(sc, obj)); /* "shallow" copy */
 
@@ -25640,16 +25708,6 @@ static s7_pointer complete_environment_copy(s7_scheme *sc, s7_pointer env)
   return(new_e);
 }
 #endif
-
-
-#define CHECK_METHOD(Sc, Obj, Method, Args) \
-{                                           \
-  s7_pointer func;                          \
-  if ((has_methods(Obj)) &&                 \
-      ((func = find_method(Sc, (is_environment(Obj)) ? Obj : closure_environment(Obj), Method)) != Sc->UNDEFINED)) \
-    return(s7_call(Sc, func, Args));        \
-}
-
 
 
 static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
@@ -37039,6 +37097,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
       return((*(object_ref(obj)))(sc, obj, indices));
 
     case T_ENVIRONMENT:
+      /* TODO: getter method? */
       if (is_symbol(car(indices)))
 	return(s7_environment_ref(sc, obj, car(indices)));
       return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
@@ -53995,19 +54054,21 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "reverse!",                       g_reverse_in_place,         1, 0, false, H_reverse_in_place); /* used by Snd code */
   
 
-  s7_define_safe_function(sc, "vector?",                   g_is_vector,                1, 0, false, H_is_vector);
-  s7_define_safe_function(sc, "vector->list",              g_vector_to_list,           1, 0, false, H_vector_to_list);
   s7_define_safe_function(sc, "list->vector",              g_list_to_vector,           1, 0, false, H_list_to_vector);
-  s7_define_safe_function(sc, "vector-fill!",              g_vector_fill,              2, 0, false, H_vector_fill);
+  sc->VECTOR_TO_LIST =    s7_define_safe_function(sc, "vector->list",      g_vector_to_list,     1, 0, false, H_vector_to_list);
+  sc->VECTORP =           s7_define_safe_function(sc, "vector?",           g_is_vector,          1, 0, false, H_is_vector);
+  sc->VECTOR_FILL =       s7_define_safe_function(sc, "vector-fill!",      g_vector_fill,        2, 0, false, H_vector_fill);
+  sc->VECTOR_LENGTH =     s7_define_safe_function(sc, "vector-length",     g_vector_length,      1, 0, false, H_vector_length);
+  sc->VECTOR_REF =        s7_define_safe_function(sc, "vector-ref",        g_vector_ref,         2, 0, true,  H_vector_ref);
+  sc->VECTOR_SET =        s7_define_safe_function(sc, "vector-set!",       g_vector_set,         3, 0, true,  H_vector_set);
+  sc->VECTOR_DIMENSIONS = s7_define_safe_function(sc, "vector-dimensions", g_vector_dimensions,  1, 0, false, H_vector_dimensions);
+
+  s7_define_safe_function(sc, "make-vector",               g_make_vector,              1, 1, false, H_make_vector);
   sc->VECTOR = s7_define_safe_function(sc, "vector",       g_vector,                   0, 0, true,  H_vector);
   set_setter(sc->VECTOR); /* ?? */
   sc->Vector = s7_symbol_value(sc, sc->VECTOR);
   set_setter(sc->Vector);
-  s7_define_safe_function(sc, "vector-length",             g_vector_length,            1, 0, false, H_vector_length);
-  s7_define_safe_function(sc, "vector-ref",                g_vector_ref,               2, 0, true,  H_vector_ref);
-  sc->VECTOR_SET = s7_define_safe_function(sc, "vector-set!",  g_vector_set,           3, 0, true,  H_vector_set);
-  s7_define_safe_function(sc, "make-vector",               g_make_vector,              1, 1, false, H_make_vector);
-  s7_define_safe_function(sc, "vector-dimensions",         g_vector_dimensions,        1, 0, false, H_vector_dimensions);
+
   s7_define_function(sc, "sort!",                          g_sort,                     2, 0, false, H_sort);
 
 
@@ -54397,9 +54458,6 @@ s7_scheme *s7_init(void)
 
 
 /* PERHAPS: hook as method? -> before/after/around methods, before/after-hooks collapsed into main?
- * PERHAPS: *formatters* along the lines of *#readers* = list of (ctrl-char (lambda (ctl-string  arg) ...)) -> string
- *             lambda (port(?) numeric-arg-or-#f format-arg) ... -> string
- *
  * should all the internal hook s7_call's be protected? *load-hook* set and (+ 1 (load "a-file.scm"))? reader case?
  *   load case seems to be ok
  *
@@ -54429,13 +54487,8 @@ s7_scheme *s7_init(void)
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
  * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
- * PERHAPS: if NaN, we could save the line&file numbers in the lower 30 bits, or perhaps the func name (we have room for about 11 chars)
- *    also, shouldn't NaN travel through any calculation?
- *    integer(NAN) | pair_line_number, then decode that later? + there's room for a func index as well
- *    but we'd have to notice NaNs in log and elsewhere -- slightly slower (see end of s7test)
  *
- * lint     13424 -> 1231 [1237]
- * bench    52019 -> 7875 [8268]
- * index    44300 -> 4988 [4992]
- * (these numbers are obsolete since lint/index have changed a lot)
+ * lint     13424 -> 1231 [1237] 1286
+ * bench    52019 -> 7875 [8268] 8347
+ * index    44300 -> 4988 [4992] 4235
  */

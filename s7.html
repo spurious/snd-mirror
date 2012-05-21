@@ -2634,7 +2634,7 @@ b
 
 
 <div class="indented">
-<p>Scheme needs an elegant way to define functions that share a closure.
+<p>Scheme needs a way to define functions that share a closure.
 Here's an idle thought:
 </p>
 
@@ -2642,51 +2642,21 @@ Here's an idle thought:
 (define f1 (let ((x 23))
 	     (lambda (a)
 	       (+ x a))))
-(define f2
-  (with-environment (procedure-environment f1) ; import f1's closure ("x") into f2
-   (lambda (b)
-     (+ b (* 2 x)))))
+(define (f2 b)
+  (+ b (* 2 ((procedure-environment f1) 'x)))) ; import f1's x into f2
 
 &gt; (+ (f1 1) (f2 1))
 71
 </pre>
+<p>That has now blossomed into...
+</p>
 </div>
 
 
 <div class="indented">
-<p>open-environment replaces make-type.  For old-time's sake, here is an implementation
-of make-type:
-</p>
-
-<pre class="indented">
-(define (make-type . args)
-  (let* ((type (gensym "make-type type"))   ; built-in type and value slots have gensym'd names
-	 (value (gensym "make-type value"))
-	 (obj (open-environment 
-	       (augment-environment ()
-		 (cons type type)
-		 (cons value #&lt;unspecified&gt;)))))
-
-    ;; load up any methods/slots
-    (do ((arg args (cddr arg)))
-	((null? arg))
-      (augment-environment! obj
-	(cons (keyword-&gt;symbol (car arg)) (cadr arg))))
-
-    ;; return a list of '(? make ref) funcs
-    (list (lambda (x)
-	    (and (environment? x)
-		 (eq? (x type) type)))
-	  (lambda* (new-value)
-	    (let ((new-obj (copy obj)))
-              (set! (new-obj value) new-value)
-	      new-obj))
-	  (lambda (x)
-	    (x value)))))
-</pre>
-
-<p>Here is the old float-vector implementation in a new rendition,
-using open-environment, not make-type:
+<p>open-environment replaces make-type.  s7test.scm has a nearly backwards-compatible implementation of make-type.
+open-environment is still under development, but
+as an example, here is an implementation of float-vectors:
 </p>
 
 <pre class="indented">
@@ -2694,39 +2664,29 @@ using open-environment, not make-type:
   (define float-vector? #f)
   (define make-float-vector #f)
   
-  (let ((type (gensym)))
+  (let ((type (gensym))
+	(-&gt;float (lambda (x)
+		   (if (real? x)
+		       (* x 1.0)
+		       (error 'wrong-type-arg "float-vector new value is not a real: ~A" x)))))
+
+    (augment-environment! (current-environment)
+      (cons 'length (lambda (p) ((procedure-environment p) 'len)))
+      (cons 'object-&gt;string (lambda (p) "#&lt;float-vector&gt;")))
+
     (set! make-float-vector
 	  (lambda* (len (init 0.0)) 
-	    (if (not (real? init))
-		(error 'wrong-type-arg "float-vector initial value is not a real: ~A" init)
-		(let ((obj (make-vector len (* 1.0 init))))
-		  (let ((fv (make-procedure-with-setter
-			     (lambda (i) 
-			       (vector-ref obj i))
-			     (lambda (i val)
-			       (if (real? val)
-				   (vector-set! obj i (* 1.0 val))
-				   (error 'wrong-type-arg "float-vector new value is not a real: ~A" val))))))
-		    (<em class=red>open-environment</em> fv)
-		    (augment-environment! (procedure-environment fv)
-		      (cons 'length (lambda (obj) len))
-		      (cons 'object-&gt;string (lambda (obj) "#&lt;float-vector&gt;")))
-		    fv)))))
+	    (let ((obj (make-vector len (-&gt;float init))))
+	      (<em class=red>open-environment</em>
+	        (make-procedure-with-setter
+		  (lambda (i) (#_vector-ref obj i))
+		  (lambda (i val) (#_vector-set! obj i (-&gt;float val))))))))
     
     (set! float-vector?
-	  (lambda (obj)
-	    (and (procedure? obj)
-		 (eq? ((procedure-environment obj) 'type) type))))))
+	  (lambda (p)
+	    (and (procedure? p)
+		 (eq? ((procedure-environment p) 'type) type))))))
   
-(define (float-vector . args)
-  (let* ((len (length args))
-	 (v (make-float-vector len)))
-    (do ((i 0 (+ i 1))
-	 (arg args (cdr arg)))
-	((= i len) v)
-      (set! (v i) (car arg)))))
-
-
 &gt; (define fv (make-float-vector 32))
 fv
 &gt; fv
@@ -2738,6 +2698,25 @@ fv
 &gt; (fv 0)
 123.0
 </pre>
+
+<p>If we add the following lines to the augment-environment! section above:
+</p>
+
+<pre class="indented">
+(cons 'vector? (lambda (p) #t))
+(cons 'vector-length (lambda (p) ((procedure-environment p) 'len)))
+(cons 'vector-dimensions (lambda (p) (list ((procedure-environment p) 'len))))
+(cons 'vector-ref (lambda (p ind) (#_vector-ref ((procedure-environment p) 'obj) ind)))
+(cons 'vector-set! (lambda (p ind val) (#_vector-set! ((procedure-environment p) 'obj) ind (-&gt;float val))))
+(cons 'vector-fill! (lambda (p val) (#_vector-fill! ((procedure-environment p) 'obj) (-&gt;float val))))
+(cons 'fill! (lambda (p val) (#_vector-fill! ((procedure-environment p) 'obj) (-&gt;float val))))
+(cons 'vector-&gt;list (lambda (p) (#_vector-&gt;list ((procedure-environment p) 'obj))))
+(cons 'reverse (lambda (p) (#_reverse ((procedure-environment p) 'obj))))
+</pre>
+
+<p>then our float-vectors are fully legitimate Scheme vectors. It is irrelevant to Scheme that
+they happen to be procedures; a vector is any value that behaves like a vector.
+</p>
 
 </div>
 </blockquote>
