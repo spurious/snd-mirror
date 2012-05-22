@@ -861,7 +861,7 @@ implement the standard old-time macros.
 </p>
 
 <pre class="indented">
-&gt; (define-macro (trace f)
+&gt; (define-macro (<em class=def id="trace">trace</em> f)
     `(define ,f 
        (apply lambda 'args 
          `((format #t "(~A ~{~A~^ ~}) -&gt; " ',,f args)
@@ -4331,6 +4331,8 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 13.25
 </pre>
 
+
+<div class="indented">
 <p>I use *#readers* primarily to implement a way to get the current line number and file name, along
 the lines of C's __LINE__ and __FILE__.  port-line-number works if we're reading a file (during load
 for example), and (error-environment) has the same information if an error happens.  But during Snd's auto-test
@@ -4370,6 +4372,7 @@ I need to know where something unexpected happened.  So:
 &gt; (+ 1 #;(* 2 3) 4)
 5
 </pre>
+</div>
 
 
 <div class="separator"></div>
@@ -4441,6 +4444,9 @@ Here we scan the symbol table looking for any function that doesn't have documen
         lst))))
 </pre>
 
+
+<div class="indented">
+
 <p>But geez how boring can something be?  Nobody cares about procedure-documentation!
 Here's a better example, an automatic software torture tester.
 </p>
@@ -4477,6 +4483,56 @@ Here's a better example, an automatic software torture tester.
 			     (autotest val '() (+ req opt 1 (if rst 1 0))))))))))
 	 lst)))))
 </pre>
+
+<p>Equally useful, a profiler:
+</p>
+
+<pre class="indented">
+(define (<em class=def id="profile">profile</em> expression)
+  "(profile func) evaluates the function, then reports profiling information. \
+The function takes one argument, the environment in which loads and evals should operate."
+
+  (define calls (make-vector 4096 (cons 'unused -1)))
+  (define call 0)
+
+  (define (profile-1 n)
+    (set! (cdr (calls n)) (+ (cdr (calls n)) 1)))
+  
+  (define (wrap-all)
+    (let ((st (<em class=red>symbol-table</em>))
+	  (e (augment-environment ())))
+      (do ((i 0 (+ i 1))) 
+	  ((= i (length st)))
+	(let ((lst (st i)))
+	  (for-each 
+	   (lambda (sym)
+	     (if (and (<em class=red>defined?</em> sym)
+		      (not (constant? sym)))
+		 (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+		   (if (procedure? val)
+		       (let ((new-val (apply lambda 'args `((profile-1 ,call) (apply ,val args)))))
+			 (set! (calls call) (cons sym 0))
+			 (set! call (+ call 1))
+			 (if (procedure-setter val)
+			     (set! (procedure-setter new-val) (procedure-setter val)))
+			 (augment-environment! e (cons sym new-val)))))))
+	   lst)))
+      e))
+
+  (expression (wrap-all))
+  (sort! calls (lambda (a b) (&gt; (cdr a) (cdr b))))
+  (do ((i 0 (+ i 1)))
+      ((= i call))
+    (if (&gt; (cdr (calls i)) 0)
+	(format #t "~A: ~A~%" (car (calls i)) (cdr (calls i))))))
+
+&gt; (profile (lambda (e) 
+             (load "lint.scm" e) 
+             (eval '(lint "dsp.scm") e)))
+;;; many lines of data print out
+</pre>
+</div>
+
 
 
 <div class="separator"></div>

@@ -1258,6 +1258,7 @@ static void init_types(void)
 
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 4))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
+#define is_procedure_or_macro(p)      ((typeflag(p) & (T_ANY_MACRO | T_PROCEDURE)) != 0)
 /* this marks scheme and C-defined macros 
  */
 
@@ -4676,7 +4677,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   else car(nobj) = copy_object(sc, car(obj));
   
   if ((dont_copy(cdr(obj))) ||
-      ((typeflag(obj) & (T_PROCEDURE | T_ANY_MACRO)) != 0))
+      (is_procedure_or_macro(obj)))
     cdr(nobj) = cdr(obj); /* closure_environment in func cases */
   else cdr(nobj) = copy_object(sc, cdr(obj));
   
@@ -23363,7 +23364,7 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
 			list_2(sc, make_protected_string(sc, "procedure-environment arg, '~S, is unbound"), car(args)))); /* not p here */
     }
 
-  if ((typeflag(p) & (T_PROCEDURE | T_ANY_MACRO)) == 0)
+  if (!is_procedure_or_macro(p))
     return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, car(args), "a procedure or a macro"));
 
   if ((is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p)) &&
@@ -23633,7 +23634,7 @@ shorthand for (define func (lambda args ...))");
     obj = s7_symbol_value(sc, obj);
     }
 
-  if ((typeflag(obj) & (T_ANY_MACRO | T_PROCEDURE)) != 0)
+  if (is_procedure_or_macro(obj))
     return(s7_procedure_documentation(sc, obj));
 
   /* if is string, apropos? (can scan symbol table)
@@ -24004,6 +24005,9 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
   p = car(args);
   switch (type(p))
     {
+    case T_MACRO:
+    case T_BACRO:
+      /* macros are closures internally */
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       return(closure_setter(p));
@@ -24015,12 +24019,15 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     case T_C_LST_ARGS_FUNCTION:
       return(c_function_setter(p));
 
+    case T_C_MACRO:
+      return(c_macro_setter(p));
+
     case T_GOTO:
     case T_CONTINUATION:
       return(sc->F);
     }
 
-  return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure"));
+  return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure or a reasonable facsimile thereof"));
 }
 
 
@@ -24029,16 +24036,18 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
   s7_pointer p, setter;
 
   p = car(args);
-  if ((typeflag(p) & T_PROCEDURE) == 0)
+  if (!is_procedure_or_macro(p))
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter procedure", 1, p, "a procedure"));
 
   setter = cadr(args);
   if ((setter != sc->F) &&
-      ((typeflag(setter) & T_PROCEDURE) == 0))
+      (!is_procedure_or_macro(setter)))
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter setter", 2, setter, "a procedure or #f"));
 
   switch (type(p))
     {
+    case T_MACRO:
+    case T_BACRO:
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       closure_setter(p) = setter;
@@ -24053,6 +24062,13 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
       if ((is_closure(setter)) ||
 	  (is_closure_star(setter)))
 	mark_function[type(p)] = mark_c_proc;
+      break;
+
+    case T_C_MACRO:
+      if ((is_closure(setter)) ||
+	  (is_closure_star(setter)))
+	mark_function[T_C_MACRO] = mark_c_proc;
+      c_macro_setter(p) = setter;
       break;
 
     case T_GOTO:
@@ -28338,7 +28354,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
        * so we check by hand before returning #<unspecified>
        */
       if ((!is_null(sc->code)) &&
-	  (((typeflag(sc->code) & (T_ANY_MACRO | T_PROCEDURE)) != 0) ||
+	  ((is_procedure_or_macro(sc->code)) ||
 	   (is_sequence(sc, sc->code)) ||
 	   (is_syntax(sc->code))))
 	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
@@ -28698,7 +28714,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   if (len == 0)   /* (map 1 "hi" '()) */
     {
       if ((!is_null(sc->code)) &&
-	  (((typeflag(sc->code) & (T_ANY_MACRO | T_PROCEDURE)) != 0) ||
+	  ((is_procedure_or_macro(sc->code)) ||
 	   (is_sequence(sc, sc->code)) ||
 	   (is_syntax(sc->code))))
 	return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
@@ -54447,10 +54463,9 @@ s7_scheme *s7_init(void)
  * should all the internal hook s7_call's be protected? *load-hook* set and (+ 1 (load "a-file.scm"))? reader case?
  *   load case seems to be ok
  *
- * TODO: open-environment doc/test + new object code/test [with open-auto-generics]
- * TODO: profile 
+ * TODO: open-environment doc/test + new object code/test [with open-auto-generics] [t471.scm]
  * TODO: has the OP_APPLY copy_list expanded?
- * TODO: check out setter for macro
+ * TODO: check out setter for macro [it's now settable...]
  *   here is a simple case:
     :(define-macro (vref v a) `(vector-ref ,v ,a))
     vref
@@ -54461,8 +54476,6 @@ s7_scheme *s7_init(void)
     :(set! (vref #(1 2 3) 1) 2)
     ;no generalized set for vref
  *  we need the set code to call eval as in the normal macro case
- *  we can use c_macro_setter here
- *  but then "procedure-setter" is not a great name: setter?
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*

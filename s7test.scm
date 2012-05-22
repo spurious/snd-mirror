@@ -22590,8 +22590,8 @@ abs     1       2
 (test (procedure-setter car) set-car!)
 (test (procedure-setter vector-ref) vector-set!)
 (test (procedure-setter make-string) #f)
-(test (procedure-setter quasiquote) 'error)
-(test (procedure-setter macroexpand) 'error)
+(test (procedure-setter quasiquote) #f)
+(test (procedure-setter macroexpand) #f)
 
 (test (procedure-setter cdr) set-cdr!)
 (test (procedure-setter hash-table-ref) hash-table-set!)
@@ -22614,9 +22614,11 @@ abs     1       2
 (let ()
   (define (hiho a) a)
   (define-macro (hiha a) `(+ 1 ,a))
+  (define-bacro* (hoha a) `(+ 1 ,a))
   (define pws (make-procedure-with-setter (lambda () 1) (lambda (x) x)))
   (test (procedure-setter hiho) #f)
-  (test (procedure-setter hiha) 'error)
+  (test (procedure-setter hiha) #f)
+  (test (procedure-setter hoha) #f)
   (test (procedure? (procedure-setter pws)) #t)
   (test ((procedure-setter pws) 32) 32)
   )
@@ -25665,14 +25667,15 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 						    (environment->list obj))))))
 		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
 
-    (let ((new-class (apply augment-environment           ; the local slots
+    (let ((new-class (open-environment 
+                      (apply augment-environment           ; the local slots
 		       (augment-environment               ; the global slots
 		         (apply augment-environment ()    ; the methods
 			   (reverse new-methods))
 		         (cons 'class-name ',class-name)  ; class-name slot
 			 (cons 'inherited ,inherited-classes)
 			 (cons 'inheritors ()))           ; classes that inherit from this class
-		       new-slots)))
+		       new-slots))))
 
       (augment-environment! outer-env                  
         (cons ',class-name new-class)                     ; define the class as class-name in the calling environment
