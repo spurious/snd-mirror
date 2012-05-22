@@ -326,6 +326,11 @@
 (test (eq? *stdout* *stderr*) #f)
 (test (eq? *stdin* *stderr*) #f)
 (test (eq? else else) #t)
+(test (eq? :else else) #f)
+(test (eq? :else 'else) #f)
+(test (eq? :if if) #f)
+(test (eq? 'if 'if) #t)
+(test (eq? :if :if) #t)
 
 (test (eq? (string) (string)) #f)
 (test (eq? (string) "") #f)
@@ -2726,7 +2731,7 @@
  (lambda (arg)
    (test (integer->char arg) 'error))
  (list -1 257 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
-       3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
+       3.14 3/4 1.0+1.0i #t :hi most-positive-fixnum 1/0 (if #f #f) (lambda (a) (+ a 1))))
 
 (test (#\a) 'error)
 (test (#\newline 1) 'error)
@@ -25457,6 +25462,147 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
      (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2))))
 
     )
+
+
+;;; float-vector
+(let ()
+  (begin
+    (define float-vector? #f)
+    (define make-float-vector #f)
+    
+    (let ((type (gensym))
+	  (->float (lambda (x)
+		     (if (real? x)
+			 (* x 1.0)
+			 (error 'wrong-type-arg "float-vector new value is not a real: ~A" x)))))
+      
+      (augment-environment! (current-environment)
+	(cons 'length (lambda (p) ((procedure-environment p) 'len)))
+	(cons 'object->string (lambda (p) "#<float-vector>"))
+	(cons 'vector? (lambda (p) #t))
+	(cons 'vector-length (lambda (p) ((procedure-environment p) 'len)))
+	(cons 'vector-dimensions (lambda (p) (list ((procedure-environment p) 'len))))
+	(cons 'vector-ref (lambda (p ind) (#_vector-ref ((procedure-environment p) 'obj) ind)))
+	(cons 'vector-set! (lambda (p ind val) (#_vector-set! ((procedure-environment p) 'obj) ind (->float val))))
+	(cons 'vector-fill! (lambda (p val) (#_vector-fill! ((procedure-environment p) 'obj) (->float val))))
+	(cons 'fill! (lambda (p val) (#_vector-fill! ((procedure-environment p) 'obj) (->float val))))
+	(cons 'vector->list (lambda (p) (#_vector->list ((procedure-environment p) 'obj))))
+	(cons 'equal? (lambda (x y) (#_equal? ((procedure-environment x) 'obj) ((procedure-environment y) 'obj))))
+	(cons 'morally-equal? (lambda (x y) (#_morally-equal? ((procedure-environment x) 'obj) ((procedure-environment y) 'obj))))
+	(cons 'reverse (lambda (p) (vector->float-vector (#_reverse ((procedure-environment p) 'obj)))))
+	(cons 'copy (lambda (p) (vector->float-vector ((procedure-environment p) 'obj))))
+	(cons 'sort! (lambda (p f) (vector->float-vector (#_sort! ((procedure-environment p) 'obj) f))))
+	)
+      
+      (set! make-float-vector
+	    (lambda* (len (init 0.0)) 
+	      (let ((obj (make-vector len (->float init))))
+		(open-environment
+		 (make-procedure-with-setter
+		  (lambda (i) (#_vector-ref obj i))
+		  (lambda (i val) (#_vector-set! obj i (->float val))))))))
+      
+      (set! float-vector?
+	    (lambda (obj)
+	      (and (procedure? obj)
+		   (eq? ((procedure-environment obj) 'type) type))))))
+  
+  (define (float-vector . args)
+    (let* ((len (length args))
+	   (v (make-float-vector len)))
+      (do ((i 0 (+ i 1))
+	   (arg args (cdr arg)))
+	  ((= i len) v)
+	(set! (v i) (car arg)))))
+  
+  (define (vector->float-vector v)
+    (let* ((len (length v))
+	   (fv (make-float-vector len)))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(set! (fv i) (v i)))
+      fv))
+  
+  (let ((v (make-float-vector 3 0.0)))
+    (test (length v) 3)
+    (set! (v 1) 32.0)
+    (test (v 0) 0.0)
+    (test (v 1) 32.0)
+    (test (eq? v v) #t)
+    (test (eq? v (float-vector 0.0 32.0 0.0)) #f)
+    (test (equal? v (float-vector 0.0 32.0 0.0)) #t)
+    (test (morally-equal? v (float-vector 0.0 32.0 0.0)) #t)
+    (test (map + (list 1 2 3) (float-vector 1 2 3)) '(2.0 4.0 6.0))
+    (test (reverse (float-vector 1.0 2.0 3.0)) (float-vector 3.0 2.0 1.0))
+    (test (copy (float-vector 1.0 2.0 3.0)) (float-vector 1.0 2.0 3.0))
+    (test (let () (fill! v 1.0) v) (float-vector 1.0 1.0 1.0))
+    (test (object->string v) "#<float-vector>")
+    (test (let ((v (float-vector 1.0 2.0 3.0))) (map v (list 2 1 0))) '(3.0 2.0 1.0))
+    (test (v -1) 'error)
+    (test (v 32) 'error)
+    (for-each
+     (lambda (arg)
+       (test (v arg) 'error))
+     (list #\a 'a-symbol 1.0+1.0i #f #t abs #(1 2) '() 3/4 3.14 '(1 . 2)))
+    
+    (test (map (lambda (a b)
+		 (floor (apply + (map + (list a b) (float-vector a b)))))
+	       (float-vector 1 2 3) (float-vector 4 5 6))
+	  '(10 14 18))
+    
+    (test (set! (v 0) "hi") 'error)
+    (test (set! (v -1) "hi") 'error)
+    (test (set! (v 32) "hi") 'error)
+    (for-each
+     (lambda (arg)
+       (test (set! (v 0) arg) 'error))
+     (list #\a 'a-symbol 1.0+1.0i #f #t abs #(1 2) '() '(1 . 2)))
+    (test (let ((sum 0.0))
+	    (for-each
+	     (lambda (x)
+	       (set! sum (+ sum x)))
+	     (float-vector 1.0 2.0 3.0))
+	    sum)
+	  6.0)
+    (test (length v) 3)
+    )
+  
+  (let ((v1 (float-vector 3 1 4 8 2)))
+    (let ((v2 (sort! v1 <)))
+      (test (equal? v2 (float-vector 1 2 3 4 8)) #t)
+      (test (vector? v1) #t)
+      (test (float-vector? v1) #t)
+      (test (vector-length v1) 5)
+      (test (vector->list v1) '(1.0 2.0 3.0 4.0 8.0))
+      (test (vector-ref v1 1) 2.0)
+      (test (vector-set! v1 1 3/2) 1.5)
+      (test (vector-ref v1 1) 1.5)
+      (test (vector-dimensions v1) '(5))
+      (fill! v1 32)
+      (test v1 (float-vector 32.0 32.0 32.0 32.0 32.0))
+      (test (float-vector? #(1 2 3)) #f)
+
+      (for-each
+       (lambda (arg)
+	 (test (float-vector? arg) #f))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+      
+      (for-each
+       (lambda (arg)
+	 (test (make-float-vector arg) 'error))
+       (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() #f '#(()) '(1 . 2) "hi" '((a . 1))))
+      
+      (for-each
+       (lambda (arg)
+	 (test (make-float-vector 3 arg) 'error))
+       (list #\a '#(1 2 3) 1.0+1.0i '() #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+      
+      (for-each
+       (lambda (arg)
+	 (test (float-vector (list arg)) 'error))
+       (list #\a '#(1 2 3) 1.0+1.0i '() #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+
+      )))
 
 
 
@@ -67893,7 +68039,7 @@ in non-gmp,
 		       (if (or (> (+ opt req) 4)
 		       	       (member (symbol->string sym) '("exit" "abort" 
 							      "(generalized set!)" "(environment set!)"
-							      "[make]" "[ref]" "autotest" "{multivector}"
+							      "autotest" "{multivector}"
 							      "[set--s7-symbol-table-locked?]")))
 			   (format #t ";skip ~A for now~%" sym)
 			   (begin

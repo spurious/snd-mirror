@@ -13768,8 +13768,18 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
     case T_NIL:
     case T_STRING:
     case T_HASH_TABLE:
+      return(sc->F);
+
     case T_ENVIRONMENT:
-      /* TODO: check has_method for closure */
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      if (has_methods(val))
+	{
+	  s7_pointer func;
+	  func = find_method(sc, (is_environment(val)) ? val : closure_environment(val), sc->LENGTH);
+	  if (func != sc->UNDEFINED)
+	    return(make_boolean(sc, s7_integer(s7_call(sc, func, list_1(sc, val))) < 0));
+	}
       return(sc->F);
 
     case T_C_OBJECT:
@@ -24292,7 +24302,6 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
     case T_HASH_TABLE:
     case T_PAIR:
     case T_VECTOR:
-      /* TODO: special method arity? aritable? */
       return(s7_cons(sc, small_int(1), s7_make_integer(sc, ARITY_MAX)));
 
     case T_SYNTAX:
@@ -28067,53 +28076,59 @@ static bool next_for_each(s7_scheme *sc)
 
   /* for-each func ... -- each trailing sequence arg contributes one arg to the current call on func, 
    *   so in the next loop, gather one arg from each sequence.
+   *   environments are turned into lists at the start.
    */
 
   for (x = fargs, y = vargs; is_not_null(x); x = cdr(x), y = cdr(y))
-    switch (type(car(y)))
-      {
-      case T_PAIR:
-	car(x) = caar(y);
-	car(y) = cdar(y);
-	break;
-
-      case T_C_OBJECT: 
+    {
+      s7_pointer car_y;
+      car_y = car(y);
+      switch (type(car_y))
 	{
-	  int save_x = -1, save_y = -1, save_z = -1;
-	  if (is_null(z))
-	    {
-	      z = list_1(sc, make_integer(sc, loc));
-
-	      /* we can't use car(sc->args) directly here -- it is a counter.
-	       *   the object application (the getter function) might return the index.
-	       *   Then, if we pre-increment, the for-each application sees the incremented value.
-	       */
-	      zloc = s7_gc_protect(sc, z);
-	    }
-
-	  SAVE_X_Y_Z(save_x, save_y, save_z);
-	  car(x) = (*(object_ref(car(y))))(sc, car(y), z);
-	  RESTORE_X_Y_Z(save_x, save_y, save_z);
+	case T_PAIR:
+	  car(x) = car(car_y);
+	  car(y) = cdr(car_y);
+	  break;
+	  
+	case T_VECTOR:
+	  car(x) = vector_element(car_y, loc); 
+	  break;
+	  
+	case T_STRING:
+	  car(x) = s7_make_character(sc, ((unsigned char)(string_value(car_y)[loc])));
+	  break;
+	  
+	case T_C_OBJECT:
+	case T_CLOSURE:
+	case T_CLOSURE_STAR:
+	  {
+	    int save_x = -1, save_y = -1, save_z = -1;
+	    if (is_null(z))
+	      {
+		z = list_1(sc, make_integer(sc, loc));
+		/* we can't use car(sc->args) directly here -- it is a counter.
+		 *   the object application (the getter function) might return the index.
+		 *   Then, if we pre-increment, the for-each application sees the incremented value.
+		 */
+		zloc = s7_gc_protect(sc, z);
+	      }
+	    
+	    SAVE_X_Y_Z(save_x, save_y, save_z);
+	    if (type(car_y) == T_C_OBJECT)
+	      car(x) = (*(object_ref(car_y)))(sc, car_y, z);
+	    else car(x) = s7_call(sc, car_y, z);
+	    /* (define fv (float-vector 1 2 3)) (for-each (lambda (x) (format #t "~A~%" x)) fv) */
+	    RESTORE_X_Y_Z(save_x, save_y, save_z);
+	  }
+	  break;
+	  
+	default:           /* see comment in next_map: (let ((L (list 1 2 3 4 5))) (for-each (lambda (x) (set-cdr! (cddr L) 5) (display x)) L)) */
+	  if (is_not_null(z))
+	    s7_gc_unprotect_at(sc, zloc);
+	  return(false);
+	  break;
 	}
-	break;
-
-      case T_VECTOR:
-	car(x) = vector_element(car(y), loc); 
-	break;
-
-      case T_STRING:
-	car(x) = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
-	break;
-
-	/* TODO: if closure, s7_call car(y) applied to list_1(loc)? or use z as above?
-	 */
-
-      default:           /* see comment in next_map: (let ((L (list 1 2 3 4 5))) (for-each (lambda (x) (set-cdr! (cddr L) 5) (display x)) L)) */
-	if (is_not_null(z))
-	  s7_gc_unprotect_at(sc, zloc);
-	return(false);
-	break;
-      }
+    }
 
   if (zloc != -1)
     s7_gc_unprotect_at(sc, zloc);
@@ -28492,15 +28507,26 @@ static bool next_map(s7_scheme *sc)
 
   for (y = vargs; is_not_null(y); y = cdr(y))
     {
-      s7_pointer x;
-      switch (type(car(y)))
+      s7_pointer x, car_y;
+      car_y = car(y);
+      switch (type(car_y))
 	{
 	case T_PAIR:
-	  x = caar(y);
-	  car(y) = cdar(y);
+	  x = car(car_y);
+	  car(y) = cdr(car_y);
 	  break;
 	  
+	case T_VECTOR:
+	  x = vector_element(car_y, loc); 
+	  break;
+
+	case T_STRING:
+	  x = s7_make_character(sc, ((unsigned char)(string_value(car_y)[loc])));
+	  break;
+
 	case T_C_OBJECT: 
+	case T_CLOSURE:
+	case T_CLOSURE_STAR:
 	  {
 	    int save_x = -1, save_y = -1, save_z = -1;
 	    if (is_null(z))
@@ -28509,17 +28535,12 @@ static bool next_map(s7_scheme *sc)
 		zloc = s7_gc_protect(sc, z);
 	      }
 	    SAVE_X_Y_Z(save_x, save_y, save_z);
-	    x = (*(object_ref(car(y))))(sc, car(y), z);
+	    if (type(car_y) == T_C_OBJECT)
+	      x = (*(object_ref(car_y)))(sc, car_y, z);
+	    else x = s7_call(sc, car_y, z);
+	    /* (define fv (float-vector 1 2 3)) (map (lambda (x) x) fv) */
 	    RESTORE_X_Y_Z(save_x, save_y, save_z);
 	  }
-	  break;
-	
-	case T_VECTOR:
-	  x = vector_element(car(y), loc); 
-	  break;
-
-	case T_STRING:
-	  x = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
 	  break;
 
 	default: 
@@ -54415,12 +54436,6 @@ s7_scheme *s7_init(void)
 
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 263 */
-#if WITH_GMP
-  /* fprintf(stderr, "sizes: %d %d %d %d\n", sizeof(mpz_t), sizeof(mpq_t), sizeof(mpfr_t), sizeof(mpc_t)); */
-  /* sizes: 16 32 32 64 
-   *   which means if we embed mpc_t in the s7_cell number union, it will grow by 24 bytes? 72 from 48
-   */
-#endif
 
   save_initial_environment(sc);
   return(sc);
@@ -54435,12 +54450,6 @@ s7_scheme *s7_init(void)
  * TODO: open-environment doc/test + new object code/test [with open-auto-generics]
  * TODO: profile 
  * TODO: has the OP_APPLY copy_list expanded?
- * TODO: float vector to s7test
- * TODO: check the fatty3 compsnd lint complaint
- *
- * would a hook? function be possible by having a hidden gensym'd hook type field with itself as the value?
- *   could float-vector be done similarly? pws with type?
- *
  * TODO: check out setter for macro
  *   here is a simple case:
     :(define-macro (vref v a) `(vector-ref ,v ,a))
