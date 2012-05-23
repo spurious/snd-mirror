@@ -950,7 +950,7 @@ when, loop, dotimes, do*, enum, pushnew, and defstruct.
 <p>As the setf example shows, a macro is a first-class citizen of s7.  You can
 pass it as a function argument, apply it to a list, return it from a function,
 call it recursively, 
-and assign it to a variable:
+and assign it to a variable.  You can even set its procedure-setter!
 </p>
 
 <pre class="indented">
@@ -973,6 +973,14 @@ make-mac
 &gt; (let ((x (make-mac)))
     (x 2))
 3
+&gt; (define-macro (ref v i) `(vector-ref ,v ,i))
+ref
+&gt; (define-macro (set v i x) `(vector-set! ,v ,i ,x))
+set
+&gt; (set! (procedure-setter ref) set)
+#&lt;macro&gt;
+&gt; (let ((v (vector 1 2 3))) (set! (ref v 0) 32) v)
+#(32 2 3)
 </pre>
 </div>
 
@@ -1295,7 +1303,7 @@ the loop!
 (<em class=def id="procedurewithsetter">make-procedure-with-setter</em> proc setter)
 </pre>
 
-<p>Each function can have an associated setter, much like defsetf in CL.  As a convenience, there's also
+<p>Each function (or macro!) can have an associated setter, much like defsetf in CL.  As a convenience, there's also
 a way to associate the two functions under one name: make-procedure-with-setter.
 The setter is called when the procedure is the target of set!  Its last argument is the
 value passed to set!:
@@ -1305,8 +1313,8 @@ value passed to set!:
 &gt; (procedure-setter cadr)
 #f
 &gt; (set! (procedure-setter cadr) 
-    (lambda (lst val) 
-      (set! (car (cdr lst)) val)))
+        (lambda (lst val) 
+          (set! (car (cdr lst)) val)))
 #&lt;closure&gt;
 &gt; (procedure-source (procedure-setter cadr))
 (lambda (lst val) (set! (car (cdr lst)) val))
@@ -1314,19 +1322,24 @@ value passed to set!:
     (set! (cadr lst) 4) 
     lst)
 (1 4 3)
-
-&gt; (define xx (let ((x 32))
-               (make-procedure-with-setter
-                 (lambda () x) 
-                 (lambda (val) (set! x val) x))))
-xx
-&gt; (xx)
-32
-&gt; (set! (xx) 1)
-1
-&gt; (xx)
-1
 </pre>
+
+<p>In some cases, the setter needs to be a macro:
+</p>
+<pre class="indented">
+&gt; (set! (procedure-setter logbit?)
+        (symbol-&gt;value 
+          (define-macro (m var index on) ; here we want to set "var", so we need a macro
+	    `(if ,on
+	         (set! ,var (logior ,var (ash 1 ,index)))
+	         (set! ,var (logand ,var (lognot (ash 1 ,index))))))))
+#&lt;macro&gt;
+&gt; (let ((int #b1010))
+    (set! (logbit? int 0) #t)
+    int)
+11
+</pre>
+
 <blockquote>
 
 
@@ -2716,6 +2729,9 @@ fv
 
 <p>then our float-vectors are fully legitimate Scheme vectors. It is irrelevant to Scheme that
 they happen to be procedures; a vector is any value that behaves like a vector.
+Extend this to math ops, and we can treat float-vectors as matrices, so <code>(* v1 v2)</code>
+is matrix multiplication.  Or add quaternions, gap-buffers as strings &mdash; I'd say "the possibilities
+are endless", but actually I can't think of any others right at the moment.
 </p>
 
 </div>
@@ -5075,8 +5091,7 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 
 <pre class="indented">
 (define-macro (mu args . body)
-  (let ((m (gensym)))
-    `(symbol-&gt;value (apply define-macro '((,m ,@args) ,@body)))))
+  `(symbol-&gt;value (apply define-macro '((,(gensym) ,@args) ,@body))))
 
 &gt; ((mu (a) `(+ 1 ,a)) 3)
 4

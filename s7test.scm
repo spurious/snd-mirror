@@ -22647,6 +22647,32 @@ abs     1       2
   (test (procedure? (procedure-setter cadr)) #t)
   (set! (procedure-setter cadr) old-setter))
 
+(let ()
+  (define-macro (vref v a) `(vector-ref ,v ,a))
+  (define-macro (vset! v a x) `(vector-set! ,v ,a ,x))
+  (set! (procedure-setter vref) vset!)
+
+  (let ((v (vector 1 2 3)))
+    (set! (vref v 1) 32)
+    (test v #(1 32 3)))
+
+  (define hi 0)
+  (define-macro (xx) `hi)
+  (define-macro (set-xx val) `(set! hi ,val))
+  (set! (procedure-setter xx) set-xx)
+
+  (set! (xx) 32)
+  (test hi 32))
+
+(let ()
+  (set! (procedure-setter logbit?)
+        (symbol->value 
+          (define-macro (m var index on) ; here we want to set "var", so we need a macro
+	    `(if ,on
+	         (set! ,var (logior ,var (ash 1 ,index)))
+	         (set! ,var (logand ,var (lognot (ash 1 ,index))))))))
+  (test (let ((int #b1010)) (set! (logbit? int 0) #t) int) 11))
+
 
 
 
