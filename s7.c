@@ -1825,7 +1825,7 @@ static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
-
+static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst);
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl);
 
 #if WITH_OPTIMIZATION
@@ -1842,6 +1842,37 @@ static int position_of(s7_pointer p, s7_pointer args)
   return(i);
 }
 
+
+/* I'm currently thinking that all built-in s7 functions should be generic, so here is
+ *   the macro that handles that. 
+ */
+#define CHECK_METHOD(Sc, Obj, Method, Args)   \
+  {                                           \
+    s7_pointer func;                          \
+    if ((has_methods(Obj)) &&                 \
+        ((func = find_method(Sc, (is_environment(Obj)) ? Obj : closure_environment(Obj), Method)) != Sc->UNDEFINED)) \
+      return(s7_call(Sc, func, Args));        \
+  }
+
+/* unfortunately, in the simplest cases, where a function (like number?) accepts any argument,
+ *   this costs about a factor of two in speed (we're doing the normal check like s7_is_number,
+ *   but then have to check has_methods before returning #f).  We can't use the old form until
+ *   open-environment is seen because the prior code might use #_number? which gets the value
+ *   before the switch.  These simple functions normally do not dominate timing info, so I'll 
+ *   go ahead. It's mostly boilerplate:
+ */
+
+#define CHECK_BOOLEAN_METHOD(Sc, Obj, Checker, Method, Args) \
+  {                                                          \
+    s7_pointer p;                                            \
+    p = car(Args);                                           \
+    if (Checker(p)) return(Sc->T);                           \
+    CHECK_METHOD(Sc, p, Method, Args);                       \
+    return(sc->F);                                           \
+  }
+
+/* the old form would be: return(make_boolean(Sc, Checker(car(Args))))
+ */
 
 
 
@@ -3680,16 +3711,6 @@ static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 } 
 
 
-#define CHECK_METHOD(Sc, Obj, Method, Args) \
-{                                           \
-  s7_pointer func;                          \
-  if ((has_methods(Obj)) &&                 \
-      ((func = find_method(Sc, (is_environment(Obj)) ? Obj : closure_environment(Obj), Method)) != Sc->UNDEFINED)) \
-    return(s7_call(Sc, func, Args));        \
-}
-
-
-
 static int environment_length(s7_scheme *sc, s7_pointer e)
 {
   /* used by length, applicable_length, and some length optimizations */
@@ -3986,7 +4007,6 @@ environment."
 s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindings)
 {
   s7_pointer new_e;
-  /* fprintf(stderr, "e: %p, slots: %p, next: %p\n", e, environment_slots(e), next_environment(e)); */
 
   if (e == sc->global_env)
     new_e = new_frame_in_env(sc, sc->NIL);
@@ -4004,7 +4024,6 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
       s7_gc_unprotect_at(sc, gc_loc);
     }
 
-  /* fprintf(stderr, "new_e: %p, slots: %p, next: %p\n", new_e, environment_slots(new_e), next_environment(new_e)); */
   return(new_e);
 }
 
@@ -4968,10 +4987,8 @@ static bool call_with_current_continuation(s7_scheme *sc)
    */
   if (continuation_key(c) >= 0)
     {
-      /* fprintf(stderr, "found baffle: %d\n", continuation_key(c)); */
       if (!(find_baffle(sc, continuation_key(c))))
 	{
-	  /* fprintf(stderr, "  probably from outside\n"); */
 	  /* should this raise an error? */
 	  return(false);
 	}
@@ -10027,7 +10044,10 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
   if (is_null(p))
     {
       if (!is_number(x))
-	return(s7_wrong_type_arg_error(sc, "+", 0, x, "a number"));
+	{
+	  CHECK_METHOD(sc, x, sc->ADD, args);
+	  return(s7_wrong_type_arg_error(sc, "+", 0, x, "a number"));
+	}
       return(x);
     }
 
@@ -10075,6 +10095,11 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  im_a = imag_part(x);
 	  goto ADD_COMPLEX;
 	  
+	case T_CLOSURE:
+	case T_CLOSURE_STAR:
+	case T_ENVIRONMENT:
+	  CHECK_METHOD(sc, x, sc->ADD, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, copy_list(sc, p))));
+
 	default:
 	  return(s7_wrong_type_arg_error(sc, "+", position_of(p, args) - 1, x, "a number")); /* p is 1 past the current arg */
 	}
@@ -13555,6 +13580,11 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
     case T_COMPLEX:
       return(s7_make_real(sc, real_part(p)));
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, p, sc->REAL_PART, args);
+
     default:
       return(s7_wrong_type_arg_error(sc, "real-part", 0, p, "a number"));
     }
@@ -13571,10 +13601,22 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
   switch (type(p))
     {
     case T_INTEGER:   
-    case T_RATIO:   return(small_int(0));
-    case T_REAL:    return(real_zero);
-    case T_COMPLEX: return(s7_make_real(sc, imag_part(p)));
-    default:        return(s7_wrong_type_arg_error(sc, "imag-part", 0, p, "a number"));
+    case T_RATIO:   
+      return(small_int(0));
+
+    case T_REAL:    
+      return(real_zero);
+
+    case T_COMPLEX: 
+      return(s7_make_real(sc, imag_part(p)));
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, p, sc->IMAG_PART, args);
+
+    default:       
+      return(s7_wrong_type_arg_error(sc, "imag-part", 0, p, "a number"));
     }
 }
 #endif
@@ -13597,6 +13639,11 @@ static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
     case T_INTEGER:
       return(x);
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->NUMERATOR, args);
+
     case T_REAL:
     case T_COMPLEX:
     default:
@@ -13618,6 +13665,11 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
       
     case T_INTEGER:
       return(small_int(1));
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->DENOMINATOR, args);
 
     case T_REAL:
     case T_COMPLEX:
@@ -13649,6 +13701,11 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
     case T_COMPLEX:
       return(make_boolean(sc, (is_NaN(real_part(x))) || (is_NaN(imag_part(x)))));
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->NANP, args);
+
     default:
       return(sc->F);
     }
@@ -13672,6 +13729,11 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
     case T_COMPLEX:
       return(make_boolean(sc, (isinf(real_part(x))) || (isinf(imag_part(x)))));
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->INFINITEP, args);
+
     default:
       return(sc->F);
     }
@@ -13685,35 +13747,40 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_number(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_number "(number? obj) returns #t if obj is a number"
-  return(make_boolean(sc, s7_is_number(car(args))));    /* we need the s7_* versions here for the GMP case */
+  CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_number, sc->NUMBERP, args);
+  /* return(make_boolean(sc, s7_is_number(car(args))));  */  /* we need the s7_* versions here for the GMP case */
 }
 
 
 static s7_pointer g_is_integer(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_integer "(integer? obj) returns #t if obj is an integer"
-  return(make_boolean(sc, s7_is_integer(car(args))));
+  CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_integer, sc->INTEGERP, args);
+  /* return(make_boolean(sc, s7_is_integer(car(args)))); */
 }
 
 
 static s7_pointer g_is_real(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_real "(real? obj) returns #t if obj is a real number"
-  return(make_boolean(sc, s7_is_real(car(args))));
+  CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_real, sc->REALP, args);
+  /* return(make_boolean(sc, s7_is_real(car(args)))); */
 }
 
 
 static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_complex "(complex? obj) returns #t if obj is a number"
-  return(make_boolean(sc, s7_is_number(car(args))));
+  CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_number, sc->COMPLEXP, args);
+  /* return(make_boolean(sc, s7_is_number(car(args)))); */
 }
 
 
 static s7_pointer g_is_rational(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_rational "(rational? obj) returns #t if obj is a rational number (either an integer or a ratio)"
-  return(make_boolean(sc, s7_is_rational(car(args))));
+  CHECK_BOOLEAN_METHOD(sc, car(args), s7_is_rational, sc->RATIONALP, args);
+  /* return(make_boolean(sc, s7_is_rational(car(args)))); */
 
   /* in the non-gmp case, (rational? 455702434782048082459/86885567283849955830) -> #f, not #t
    *  and similarly for exact? etc.
@@ -13726,9 +13793,14 @@ static s7_pointer g_is_rational(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_even "(even? int) returns #t if the integer int is even"
-  if (!s7_is_integer(car(args)))
-    return(s7_wrong_type_arg_error(sc, "even?", 0, car(args), "an integer"));
-  return(make_boolean(sc, (integer(car(args)) & 1) == 0));
+  s7_pointer p;
+  p = car(args);
+  if (!s7_is_integer(p))
+    {
+      CHECK_METHOD(sc, p, sc->EVENP, args);
+      return(s7_wrong_type_arg_error(sc, "even?", 0, p, "an integer"));
+    }
+  return(make_boolean(sc, ((integer(p) & 1) == 0)));
 
   /* extension to gaussian integers: odd if a+b is odd? */
 }
@@ -13737,10 +13809,16 @@ static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_odd "(odd? int) returns #t if the integer int is odd"
-  if (!s7_is_integer(car(args)))
-    return(s7_wrong_type_arg_error(sc, "odd?", 0, car(args), "an integer"));
-  return(make_boolean(sc, (integer(car(args)) & 1) == 1));
+  s7_pointer p;
+  p = car(args);
+  if (!s7_is_integer(p))
+    {
+      CHECK_METHOD(sc, p, sc->ODDP, args);
+      return(s7_wrong_type_arg_error(sc, "odd?", 0, p, "an integer"));
+    }
+  return(make_boolean(sc, ((integer(p) & 1) == 1)));
 }
+
 
 
 /* ---------------------------------------- zero? positive? negative? ---------------------------------------- */
@@ -13765,6 +13843,11 @@ static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
       /* ratios and complex numbers are already collapsed into integers and reals */
       return(sc->F);
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->ZEROP, args);
+
     default:
       return(s7_wrong_type_arg_error(sc, "zero?", 0, x, "a number"));
     }
@@ -13779,10 +13862,22 @@ static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
   x = car(args);
   switch (type(x))
     {
-    case T_INTEGER: return(make_boolean(sc, integer(x) > 0));
-    case T_RATIO:   return(make_boolean(sc, numerator(x) > 0));
-    case T_REAL:    return(make_boolean(sc, real(x) > 0.0));
-    default:        return(s7_wrong_type_arg_error(sc, "positive?", 0, x, "a real"));
+    case T_INTEGER: 
+      return(make_boolean(sc, integer(x) > 0));
+
+    case T_RATIO:   
+      return(make_boolean(sc, numerator(x) > 0));
+
+    case T_REAL:    
+      return(make_boolean(sc, real(x) > 0.0));
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->POSITIVEP, args);
+
+    default:       
+      return(s7_wrong_type_arg_error(sc, "positive?", 0, x, "a real"));
     }
 }
 
@@ -13852,10 +13947,22 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
   x = car(args);
   switch (type(x))
     {
-    case T_INTEGER: return(make_boolean(sc, integer(x) < 0));
-    case T_RATIO:   return(make_boolean(sc, numerator(x) < 0));
-    case T_REAL:    return(make_boolean(sc, real(x) < 0.0));
-    default:        return(s7_wrong_type_arg_error(sc, "negative?", 0, x, "a real"));
+    case T_INTEGER: 
+      return(make_boolean(sc, integer(x) < 0));
+
+    case T_RATIO:   
+      return(make_boolean(sc, numerator(x) < 0));
+
+    case T_REAL:    
+      return(make_boolean(sc, real(x) < 0.0));
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->NEGATIVEP, args);
+
+    default:        
+      return(s7_wrong_type_arg_error(sc, "negative?", 0, x, "a real"));
     }
 }
 
@@ -13905,6 +14012,11 @@ static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 #endif
 
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->EXACTP, args);
+
     default:
       return(s7_wrong_type_arg_error(sc, "exact?", 0, x, "a number"));
     }
@@ -13936,6 +14048,11 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
     case T_BIG_COMPLEX:
       return(sc->T);
 #endif
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->INEXACTP, args);
 
     default:
       return(s7_wrong_type_arg_error(sc, "inexact?", 0, x, "a number"));
@@ -13993,10 +14110,16 @@ static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_length "(integer-length arg) returns the number of bits required to represent the integer 'arg': (ceiling (log (abs arg) 2))"
   s7_Int x;
-  if (!s7_is_integer(car(args)))
-      return(s7_wrong_type_arg_error(sc, "integer-length", 0, car(args), "an integer"));
-    
-  x = s7_integer(car(args));
+  s7_pointer p;
+
+  p = car(args);
+  if (!s7_is_integer(p))
+    {
+      CHECK_METHOD(sc, p, sc->INTEGER_LENGTH, args);
+      return(s7_wrong_type_arg_error(sc, "integer-length", 0, p, "an integer"));
+    }
+
+  x = s7_integer(p);
   if (x < 0)
     return(make_integer(sc, integer_length(-(x + 1))));
   return(make_integer(sc, integer_length(x)));
@@ -14018,34 +14141,43 @@ static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
 sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 
   s7_Int ix;
-  s7_pointer arg;
-  arg = car(args);
+  s7_pointer x;
+  x = car(args);
 
   /* frexp doesn't work in edge cases.  Since the double and long long int fields are equivalenced
    *   in the s7_num struct, we can get the actual bits of the double from the int.  The problem with doing this
    *   is that bignums don't use that struct.  Assume IEEE 754 and double = s7_Double.
    */
 
-  if ((!s7_is_real(arg)) ||
-      (s7_is_rational(arg)))
-    return(s7_wrong_type_arg_error(sc, "integer-decode-float", 0, arg, "a non-rational real"));
-
-  if (s7_real(arg) == 0.0)
-    return(list_3(sc, small_int(0), small_int(0), small_int(1)));
+  switch (type(x))
+    {
+    case T_REAL:
+      if (real(x) == 0.0)
+	return(list_3(sc, small_int(0), small_int(0), small_int(1)));
+      ix = integer(x);
+      break;
 
 #if WITH_GMP
-  if (s7_is_bignum(arg)) 
-    {
-      decode_float_t num;
-      num.value.real_value = s7_number_to_real(arg);
-      if ((is_NaN(num.value.real_value)) || (isinf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
-	return(s7_out_of_range_error(sc, "integer-decode-float", 0, arg, "a real that s7_Double can handle"));
-      ix = num.value.integer_value;
-    }
-  else
+    case T_BIG_REAL:
+      {
+	decode_float_t num;
+	num.value.real_value = s7_number_to_real(x);
+	if ((is_NaN(num.value.real_value)) || (isinf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
+	  return(s7_out_of_range_error(sc, "integer-decode-float", 0, x, "a real that s7_Double can handle"));
+	ix = num.value.integer_value;
+	break;
+      }
 #endif
 
-  ix = integer(arg);
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_ENVIRONMENT:
+      CHECK_METHOD(sc, x, sc->INTEGER_DECODE_FLOAT, args);
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "integer-decode-float", 0, x, "a non-rational real"));
+    }
+
   return(list_3(sc,
 		make_integer(sc, (s7_Int)((ix & 0xfffffffffffffLL) | 0x10000000000000LL)),
 		make_integer(sc, (s7_Int)(((ix & 0x7fffffffffffffffLL) >> 52) - 1023 - 52)),
@@ -23252,8 +23384,6 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
   if (is_c_function(fnc))
     return(c_function_call(fnc)(sc, args));
 
-  /* fprintf(stderr, "%s %s\n", DISPLAY(closure_body(fnc)), DISPLAY(args)); */
-
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
   sc->args = args;
   sc->code = fnc;
@@ -26000,6 +26130,8 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 
 /* -------------------------------- format -------------------------------- */
 
+static int format_depth = -1;
+
 static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *dat, bool in_error_handler)
 {
   int len;
@@ -26149,32 +26281,33 @@ static bool s7_is_one_or_big_one(s7_pointer p);
 static char *truncate_string(char *form, int len, bool use_write);
 
 
-static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg, int fdepth, bool in_error_handler)
+static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg, bool in_error_handler)
 {
   #define INITIAL_FORMAT_LENGTH 128
   int i = 0, str_len = 0;
   format_data *fdat = NULL;
   char *result, *tmp = NULL;
 
+  format_depth++;
   str_len = safe_strlen(str);
 
-  if (fdepth >= sc->num_fdats)
+  if (format_depth >= sc->num_fdats)
     {
       int i, new_num_fdats;
-      new_num_fdats = fdepth * 2;
+      new_num_fdats = format_depth * 2;
       sc->fdats = (format_data **)realloc(sc->fdats, sizeof(format_data *) * new_num_fdats);
       for (i = sc->num_fdats; i < new_num_fdats; i++) sc->fdats[i] = NULL;
       sc->num_fdats = new_num_fdats;
     }
 
-  fdat = sc->fdats[fdepth];
+  fdat = sc->fdats[format_depth];
 
   if (!fdat)
     {
       fdat = (format_data *)malloc(sizeof(format_data));
       fdat->loc = 0;
       fdat->args = args;
-      sc->fdats[fdepth] = fdat;
+      sc->fdats[format_depth] = fdat;
     }
   else
     {
@@ -26323,7 +26456,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			    while (is_not_null(curly_arg))
 			      {
 				s7_pointer new_arg = sc->NIL;
-				tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg, fdepth + 1, in_error_handler);
+				tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg, in_error_handler);
 				format_append_string(fdat, tmp);
 				if (tmp) free(tmp);
 				if (curly_arg == new_arg)
@@ -26446,7 +26579,6 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			   *   (format #f "~0,0F" pi) -> "3.0"
 			   *   (format #f "~0,0D" 123) -> "123"
 			   */
-
 			  tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), WITH_ELLIPSES, ci);
 
 			  sc->print_width = MAX_STRING_LENGTH;
@@ -26600,7 +26732,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
   result = fdat->str;
   fdat->str = NULL;
-
+  format_depth--;
   return(result);
 }
 
@@ -26618,7 +26750,7 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
       return(make_protected_string(sc, ""));
     }
 
-  result = make_string_uncopied(sc, format_to_c_string(sc, in_str, args, NULL, 0, in_error_handler));
+  result = make_string_uncopied(sc, format_to_c_string(sc, in_str, args, NULL, in_error_handler));
 
   if (out_loc != sc->F)
     s7_display(sc, result, out_loc);
@@ -26646,6 +26778,8 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
 ~G: (format #f \"~G\" 100.1) -&gt; \"100.1\"        (%g in C)"
 
   s7_pointer pt;
+
+  sc->args = sc->NIL;
   pt = car(args);
 
   if (s7_is_string(pt))
@@ -27143,6 +27277,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    *   else send out the error info ourselves.
    */
   sc->no_values = 0; 
+  format_depth = -1;
+
 #if WITH_OPTIMIZATION
   sc->safe_do_level = 0; 
   finder = find_symbol_or_bust;
@@ -27976,7 +28112,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
    *   and if we reset the stack, the previously running evaluation steps off the end
    *   of the stack == segfault. 
    */
-
   if (is_c_function(func))
     return(c_function_call(func)(sc, args));  /* no check for wrong-number-of-args -- is that reasonable? */
 
@@ -28878,7 +29013,6 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
       if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_SET1)  /* (set! var (values)) */
 	return(eval_error(sc, "set!: can't assign (values) to something", args));
 
-      /* fprintf(stderr, "values nil: %s %s %s\n", real_op_names[stack_op(sc->stack, s7_stack_top(sc) - 1)], DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
       return(sc->NO_VALUE); 
     }
 
@@ -30500,6 +30634,12 @@ static s7_pointer not_chooser(s7_scheme *sc, s7_pointer g, int args, s7_pointer 
 	      optimize_data(expr) = HOP_SAFE_C_C;
 	      return(not_is_list);
 	    }
+
+	  /* g_is_number is c_function_call(slot_value(global_slot(sc->NUMBERP)))
+	   *   so if this is changed (via open_environment??) the latter is perhaps better??
+	   * but user might have (#_number? e), so we can't change later and catch this.
+	   */
+
 	  if ((f == g_is_number) || (f == g_is_complex))
 	    {
 	      optimize_data(expr) = HOP_SAFE_C_C;
@@ -43231,7 +43371,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    NEW_CELL(sc, x);
 	    set_type(x, T_PAIR);
 	  }
-
 	car(x) = sc->value;
 	cdr(x) = sc->args;
 	if (type(sc->args) != T_NIL)
@@ -44836,6 +44975,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 
 
+	    case T_C_MACRO:
 	    case T_C_OPT_ARGS_FUNCTION:
 	    case T_C_RST_ARGS_FUNCTION:
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 0) 2) lst) */
@@ -54047,8 +54187,14 @@ s7_scheme *s7_init(void)
   sc->LIST_TO_STRING = s7_define_safe_function(sc,    "list->string",              g_list_to_string,           1, 0, false, H_list_to_string);
   sc->STRING_TO_LIST = s7_define_safe_function(sc,    "string->list",              g_string_to_list,           1, 0, false, H_string_to_list);
   sc->OBJECT_TO_STRING = s7_define_safe_function(sc,  "object->string",            g_object_to_string,         1, 1, false, H_object_to_string);
-  sc->FORMAT = s7_define_safe_function(sc,            "format",                    g_format,                   1, 0, true,  H_format);
-
+  sc->FORMAT = s7_define_function(sc,                 "format",                    g_format,                   1, 0, true,  H_format);
+  /* format runs through the saved args, ~A can call object->string, it can call format, and 
+   *    sc->TEMP_CELL_2 can be stepped on in the arg evaluation of the recursive format call,
+   *    so format isn't safe if we've seen open_env + object->string.  This isn't called
+   *    millions of times, normally, so I think I'll just leave it "unsafe" (rather than
+   *    clearing that flag in open_environment).  Any other function that keeps sc->args
+   *    in play long enough for s7_call should also be unsafe.
+   */
 
   sc->NULLP = s7_define_safe_function(sc,             "null?",                     g_is_null,                  1, 0, false, H_is_null);
   sc->LISTP = s7_define_safe_function(sc,             "list?",                     g_is_list,                  1, 0, false, H_is_list);
@@ -54521,8 +54667,6 @@ s7_scheme *s7_init(void)
  *     (* v1 v2) -> matrix multiplication [we'd want multidim float vects eventually I guess]
  *     vcts could be presented as float-vectors, as could frames/mixers/sound-data etc
  *     but this needs to be really fast (vct-ref)
- * TODO: has the OP_APPLY copy_list expanded?
- * SOMEDAY: c_macro setter eval code, test this
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*

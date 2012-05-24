@@ -25506,7 +25506,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       
       (augment-environment! (current-environment)
 	(cons 'length (lambda (p) ((procedure-environment p) 'len)))
-	(cons 'object->string (lambda (p) "#<float-vector>"))
+	(cons 'object->string (lambda* (p (use-write #t)) "#<float-vector>"))
 	(cons 'vector? (lambda (p) #t))
 	(cons 'vector-length (lambda (p) ((procedure-environment p) 'len)))
 	(cons 'vector-dimensions (lambda (p) (list ((procedure-environment p) 'len))))
@@ -25684,9 +25684,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 			     (cons method #f)))
 		       ,methods)                     ; the incoming new methods
 
-		  ;; add a print method for this class. 
-		  (list (cons 'print (lambda* (obj (port #f))
-				       (format port "#<~A: ~{~A~^ ~}>" 
+		  ;; add an object->string method for this class (this is a built-in function, so it is already generic)
+		  (list (cons 'object->string (lambda* (obj (use-write #t))
+				       (format #f "#<~A: ~{~A~^ ~}>" 
 					       ',class-name
 					       (map (lambda (slot)
 						      (list (car slot) (cdr slot)))
@@ -25847,7 +25847,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (class-1 'divide) #<undefined>)
     (test (class-1 'inheritors) ())
     (test ((class-1 'add) class-1) 3)
-    (test ((class-1 'print) class-1) "#<class-1: (a 1) (b 2)>")
+    (test (object->string class-1) "#<class-1: (a 1) (b 2)>")
     (test (format #f "~{~A~^ ~}" class-1) "(a . 1) (b . 2)"))
 
   (let ((v (make-class-1)))
@@ -25857,7 +25857,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (v 'class-name) 'class-1)
     (test (v 'inheritors) ())
     (test ((v 'add) v) 3)
-    (test ((v 'print) v) "#<class-1: (a 1) (b 2)>")
+    (test (object->string v) "#<class-1: (a 1) (b 2)>")
     (test (format #f "~{~A~^ ~}" v) "(a . 1) (b . 2)")
     (set! (v 'a) 32)
     (test ((v 'add) v) 34)
@@ -25875,7 +25875,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (v 'class-name) 'class-1)
     (test (v 'inheritors) ())
     (test ((v 'add) v) 34)
-    (test ((v 'print) v) "#<class-1: (a 32) (b 2)>"))
+    (test (object->string v) "#<class-1: (a 32) (b 2)>"))
 
   (let ((v (make-class-1 32 3)))
     (test (class-1? v) #t)
@@ -25884,7 +25884,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (v 'class-name) 'class-1)
     (test (v 'inheritors) ())
     (test ((v 'add) v) 35)
-    (test ((v 'print) v) "#<class-1: (a 32) (b 3)>"))
+    (test (object->string v) "#<class-1: (a 32) (b 3)>"))
 
   (define-generic add)
 
@@ -25892,7 +25892,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (add class-1) 3)
     (test (add (make-class-1 :b 0)) 1)
     (test (add 2) 'error)
-    (test (print 2) 'error)
     (test ((v 'add) 2) 'error))
 
   (define-class class-2 (list class-1)
@@ -25913,7 +25912,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (v 'inheritors) ())
     (test (class-1 'inheritors) (list class-2))
     (test ((v 'add) v) 34)
-    (test ((v 'print) v) "#<class-2: (c 3) (a 32) (b 2)>")
+    (test (object->string v) "#<class-2: (c 3) (a 32) (b 2)>")
     (test ((v 'multiply) v) 192)
     (test (add v) 34))
 
@@ -25944,7 +25943,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (class-1 'inheritors) (list class-3 class-2))
     (test (class-2 'inheritors) (list class-3))
     (test ((v 'add) v) 3)
-    (test ((v 'print) v) "#<class-3: (c 3) (a 1) (b 2)>")
+    (test (object->string v) "#<class-3: (c 3) (a 1) (b 2)>")
     (test ((v 'multiply) v) 'error)
     (test ((v 'multiply) v 4) (* 4 6 3))
     (test (add v) 3))

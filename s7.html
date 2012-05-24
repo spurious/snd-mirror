@@ -2415,9 +2415,9 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 			     (cons method #f)))
 		       ,methods)                     ; the incoming new methods
 
-		  ;; add a print method for this class. 
-		  (list (cons 'print (lambda* (obj (port #f))
-				       (format port "#&lt;~A: ~{~A~^ ~}&gt;" 
+		  ;; add an object-&gt;string method for this class (this is already a generic function).
+		  (list (cons 'object->string (lambda* (obj (use-write #t))
+				       (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
 					       ',class-name
 					       (map (lambda (slot)
 						      (list (car slot) (cdr slot)))
@@ -2540,8 +2540,8 @@ class-1
 v 
 &gt; (v 'a)                         ; to set the 'a slot, (set! (v 'a) 0) 
 32
-&gt; ((v 'print) v)                 ; environments are applicable objects much like hash-tables
-"#&lt;class-1: (a 32) (b 2)&gt;"       ;   so (v 'print) is v's print method
+&gt; (object-&gt;string v)             ; built-in functions are all generic
+"#&lt;class-1: (a 32) (b 2)&gt;"       ;   so this uses the method defined in the class definition
 &gt; ((v 'add) v)
 34
 &gt; (define-generic add)
@@ -2562,7 +2562,7 @@ slot-a
 class-2
 &gt; (define v2 (make-class-2 :a 32))
 v2
-&gt; ((v2 'print) v2)
+&gt; v2                            ; will use object-&gt;string
 "#&lt;class-2: (c 3) (a 32) (b 2)&gt;"
 &gt; ((v2 'multiply) v2)
 192
