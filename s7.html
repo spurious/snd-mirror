@@ -2734,6 +2734,54 @@ is matrix multiplication.  Or add quaternions, gap-buffers as strings &mdash; I'
 are endless", but actually I can't think of any others right at the moment.
 </p>
 
+<p>I can't resist adding at least some of the quaternion implementation.  In the following code
+we add quaternions to some of the math functions (finally "number?" is not the same
+as "complex?"!), and add support for possible additional numeric types that might be
+added later.  As in the earlier case, a number is whatever behaves like a number &mdash;
+we aren't bound by any previous classes, and we don't have to define separate methods for every possibility.
+The '+' function for instance, can take any mix of numbers:
+</p>
+
+<pre class="indented">
+(define-class quaternion () 
+  '((r 0) (i 0) (j 0) (k 0))
+  (list (list 'real-part (lambda (obj) (obj 'r)))
+	(list 'imag-part (lambda (obj) (obj 'i)))
+
+	(list 'number? (lambda (obj) #t))
+	(list 'complex? (lambda (obj) #f))
+	(list 'real? (lambda (obj) #f))
+	(list 'integer? (lambda (obj) #f))
+	(list 'rational? (lambda (obj) #f))
+
+	(list '+ (lambda args
+		   (let add ((r ())
+			     (i ())
+			     (j ())
+			     (k ())
+			     (args args))
+		     (if (null? args)
+			 (<em class=red>make-quaternion</em> (apply + r) (apply + i) (apply + j) (apply + k)) 
+			 (let ((n (car args)))
+			   (cond
+			    ((real? n)
+			     (add (cons n r) i j k (cdr args)))
+			    ((complex? n)
+			     (add (cons (real-part n) r) (cons (imag-part n) i) j k (cdr args)))
+			    ((<em class=red>quaternion?</em> n)
+			       (add (cons (n 'r) r) (cons (n 'i) i) (cons (n 'j) j) (cons (n 'k) k) (cdr args)))
+			    ((open-environment? n) ; maybe we'll add octonions later!
+			     (apply (n '+) 
+				    (cons (make-quaternion (apply + r) (apply + i) (apply + j) (apply + k))
+					  (cdr args))))
+			    (else (error 'wrong-type-arg "+ argument ~A is not a number" n))))))))
+	))
+
+&gt; (let ((q1 (make-quaternion 1.0 1.0 0.0 0.0)))
+       (+ 1 q1 2.5+i))
+#&lt;quaternion: (r 4.5) (i 2.0) (j 0.0) (k 0.0)&gt;
+</pre>
+
 </div>
 </blockquote>
 

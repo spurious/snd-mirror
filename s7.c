@@ -49,7 +49,7 @@
  *        modulo, remainder, and quotient take integer, ratio, or real args 
  *        lcm and gcd can take integer or ratio args
  *        continuation? function to distinguish a continuation from a procedure
- *        log takes an optional 2nd arg (base)
+ *        log takes an optional second arg (base)
  *        '.' and an exponent can occur in a number in any base -- they do not mean "base 10"!  
  *           However, the exponent itself is always in base 10 (this follows gmp usage).
  *
@@ -72,7 +72,7 @@
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        length, copy, fill!, reverse, map, for-each are generic
  *        symbol-access modifies symbol value lookup
- *        member and assoc accept an optional 3rd argument, the comparison function
+ *        member and assoc accept an optional third argument, the comparison function
  *        morally-equal?
  *
  *
@@ -1851,7 +1851,7 @@ static int position_of(s7_pointer p, s7_pointer args)
     s7_pointer func;                          \
     if ((has_methods(Obj)) &&                 \
         ((func = find_method(Sc, (is_environment(Obj)) ? Obj : closure_environment(Obj), Method)) != Sc->UNDEFINED)) \
-      return(s7_call(Sc, func, Args));        \
+      return(s7_apply_function(Sc, func, Args));        \
   }
 
 /* unfortunately, in the simplest cases, where a function (like number?) accepts any argument,
@@ -2889,7 +2889,7 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 
 #define NEW_CELL_NO_CHECK(Sc, Obj) do {Obj = (*(--(Sc->free_heap_top)));} while (0)
   /* since sc->free_heap_trigger is GC_TRIGGER_SIZE above the free heap base, we don't need
-   *   to check it repeatedly after the 1st such check.
+   *   to check it repeatedly after the first such check.
    */
 
 
@@ -3175,12 +3175,6 @@ static void resize_op_stack(s7_scheme *sc)
 }
 
 
-static void stack_reset(s7_scheme *sc) 
-{ 
-  sc->stack_end = sc->stack_start;
-} 
-
-
 #define stack_code(Stack, Loc)        vector_element(Stack, Loc - 3)
 /* #define stack_environment(Stack, Loc) vector_element(Stack, Loc - 2) */
 #define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
@@ -3226,6 +3220,12 @@ static void stack_reset(s7_scheme *sc)
   Sc->stack_end += 4; \
   } while (0)
 
+
+static void stack_reset(s7_scheme *sc) 
+{ 
+  sc->stack_end = sc->stack_start;
+  push_stack(sc, OP_BARRIER, sc->NIL, sc->NIL);
+} 
 
 
 static void increase_stack_size(s7_scheme *sc)
@@ -3725,7 +3725,7 @@ static int environment_length(s7_scheme *sc, s7_pointer e)
       s7_pointer length_func;
       length_func = find_method(sc, e, sc->LENGTH);
       if (length_func != sc->UNDEFINED)
-	return((int)s7_integer(s7_call(sc, length_func, list_1(sc, e))));
+	return((int)s7_integer(s7_apply_function(sc, length_func, list_1(sc, e))));
     }
 
   for (i = 0, p = environment_slots(e); is_slot(p); i++, p = next_slot(p));
@@ -3933,6 +3933,13 @@ static void save_null_environment(s7_scheme *sc)
     }
 }
 #endif
+
+
+static s7_pointer g_is_open_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_open_environment "(open-environment? obj) returns #t is 'obj' has methods."
+  return(make_boolean(sc, has_methods(car(args))));
+}
 
 
 static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
@@ -4201,7 +4208,7 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 	  s7_pointer copy_func;
 	  copy_func = find_method(sc, env, sc->COPY);
 	  if (copy_func != sc->UNDEFINED)
-	    return(s7_call(sc, copy_func, list_1(sc, env)));
+	    return(s7_apply_function(sc, copy_func, list_1(sc, env)));
 	  
 	  /* else mark the new env as open */
 	  new_e = new_frame_in_env(sc, next_environment(env));
@@ -4468,7 +4475,7 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
   s7_pointer length_func;
   length_func = find_method(sc, closure_environment(e), sc->LENGTH);
   if (length_func != sc->UNDEFINED)
-    return((int)s7_integer(s7_call(sc, length_func, list_1(sc, e))));
+    return((int)s7_integer(s7_apply_function(sc, length_func, list_1(sc, e))));
 
   /* there are cases where this should raise a wrong-type-arg error, but for now... */
   return(-1);
@@ -6791,7 +6798,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 	      args = list_1(sc, s7_make_string(sc, name));
 	      args_loc = s7_gc_protect(sc, args);
 	    }
-	  value = s7_call(sc, cdar(reader), args);
+	  value = s7_apply_function(sc, cdar(reader), args);
 	  if (value != sc->F)
 	    break;
 	}
@@ -7582,7 +7589,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
       break;
     }
 
-  /* now it's possibly a number -- the 1st character(s) could be part of a number in the current radix */
+  /* now it's possibly a number -- the first character(s) could be part of a number in the current radix */
 
   {
     char *slash1 = NULL, *slash2 = NULL, *plus = NULL, *ex1 = NULL, *ex2 = NULL;
@@ -11693,7 +11700,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 	RATIO_MAX_RATIO:
 	  /* there are tricky cases here where long ints outrun doubles:
 	   *   (max 92233720368547758/9223372036854775807 92233720368547757/9223372036854775807)
-	   * which should be 92233720368547758/9223372036854775807) but 1st the fraction gets reduced
+	   * which should be 92233720368547758/9223372036854775807) but first the fraction gets reduced
 	   * to 13176245766935394/1317624576693539401, so we fall into the double comparison, and
 	   * there we should be comparing 
 	   *    9.999999999999999992410584792601468961145E-3 and
@@ -13908,7 +13915,7 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
 	  s7_pointer func;
 	  func = find_method(sc, (is_environment(val)) ? val : closure_environment(val), sc->LENGTH);
 	  if (func != sc->UNDEFINED)
-	    return(make_boolean(sc, s7_integer(s7_call(sc, func, list_1(sc, val))) < 0));
+	    return(make_boolean(sc, s7_integer(s7_apply_function(sc, func, list_1(sc, val))) < 0));
 	}
       return(sc->F);
 
@@ -16774,7 +16781,7 @@ static s7_pointer file_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 {
   int c;
   unsigned i = 1;
-  /* sc->strbuf[0] has the 1st char of the string we're reading */
+  /* sc->strbuf[0] has the first char of the string we're reading */
 
   do {
     c = fgetc(port_file(pt)); /* might return EOF */
@@ -16812,7 +16819,7 @@ static s7_pointer file_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 
 static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt, bool atom_case)
 {
-  /* sc->strbuf[0] has the 1st char of the string we're reading */
+  /* sc->strbuf[0] has the first char of the string we're reading */
 
   unsigned int k = 0;
   char *orig_str, *str;
@@ -16986,7 +16993,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
    *   memory, we gradually core-up.  
    */
   port_filename(port) = copy_string(name);
-  port_line_number(port) = 1;  /* 1st line is numbered 1 */
+  port_line_number(port) = 1;  /* first line is numbered 1 */
   add_input_port(sc, port);
 
   fseek(fp, 0, SEEK_END);
@@ -17753,7 +17760,7 @@ defaults to the global environment.  To load into the current environment instea
    */
   
   if (is_not_null(s7_hook_functions(sc, sc->load_hook)))
-    s7_call(sc, sc->load_hook, list_1(sc, s7_make_string(sc, fname)));
+    s7_apply_function(sc, sc->load_hook, list_1(sc, s7_make_string(sc, fname)));
 
   return(sc->UNSPECIFIED);
 }
@@ -18301,7 +18308,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	  s7_pointer print_func;
 	  print_func = find_method(sc, closure_environment(obj), sc->OBJECT_TO_STRING);
 	  if (print_func != sc->UNDEFINED)
-	    return(copy_string(s7_string(s7_call(sc, print_func, list_1(sc, obj)))));
+	    return(copy_string(s7_string(s7_apply_function(sc, print_func, list_1(sc, obj)))));
 	}
       return(copy_string(c_closure_name(sc, obj))); /* this looks for __func__ */
   
@@ -18348,7 +18355,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	  s7_pointer print_func;
 	  print_func = find_method(sc, obj, sc->OBJECT_TO_STRING);
 	  if (print_func != sc->UNDEFINED)
-	    return(copy_string(s7_string(s7_call(sc, print_func, list_1(sc, obj)))));
+	    return(copy_string(s7_string(s7_apply_function(sc, print_func, list_1(sc, obj)))));
 	}
       return(copy_string("#<environment>"));
 
@@ -20543,7 +20550,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
   if (is_not_null(cddr(args))) 
     {
       s7_pointer eq_func;
-      /* check 3rd arg before 2nd (trailing arg error check) */
+      /* check third arg before second (trailing arg error check) */
 
       eq_func = caddr(args);
       if (!is_procedure(eq_func))
@@ -20968,7 +20975,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
   if (is_not_null(cddr(args))) 
     {
       s7_pointer eq_func;
-      /* check 3rd arg before 2nd (trailing arg error check) */
+      /* check third arg before second (trailing arg error check) */
 
       eq_func = caddr(args);
       if (!is_procedure(eq_func))
@@ -21044,7 +21051,7 @@ static s7_pointer g_member_sq(s7_scheme *sc, s7_pointer args)
 static s7_pointer member_sym_s;
 static s7_pointer g_member_sym_s(s7_scheme *sc, s7_pointer args)
 {
-  /* 1st arg is quoted symbol */
+  /* first arg is quoted symbol */
   s7_pointer lst;
 
   lst = finder(sc, cadr(args));
@@ -21700,7 +21707,7 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
     return(make_shared_vector(sc, vec, 1, index));
 
   if (func != sc->UNDEFINED)
-    return(s7_call(sc, func, list_2(sc, vec, s7_make_integer(sc, index))));
+    return(s7_apply_function(sc, func, list_2(sc, vec, s7_make_integer(sc, index))));
   return(vector_element(vec, index));
 }
 
@@ -24273,7 +24280,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
 	slot = find_symbol(sc, proc); /* we don't want unbound-variable errors here */
 	if ((!is_null(slot)) &&
 	    (proc != slot_value(slot)) &&       /* (procedure-name :hi) -> infinite loop */
-	    (is_procedure(slot_value(slot))))   /* a symbol -> symbol -> back to 1st?? */
+	    (is_procedure(slot_value(slot))))   /* a symbol -> symbol -> back to first?? */
 	  return(s7_procedure_name(sc, slot_value(slot)));
 	return(NULL);
       }
@@ -24848,7 +24855,7 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
 	  bool old_off;
 	  old_off = sc->gc_off;
 	  sc->gc_off = true;
-	  new_value = s7_call(sc, func, list_2(sc, symbol, new_value));
+	  new_value = s7_apply_function(sc, func, list_2(sc, symbol, new_value));
 	  sc->gc_off = old_off;
 	}
       if (new_value == sc->ERROR)
@@ -25233,7 +25240,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	      s7_pointer equal_func;
 	      equal_func = find_method(sc, x, sc->EQUALP);
 	      if (equal_func != sc->UNDEFINED)
-		return(s7_call(sc, equal_func, list_2(sc, x, y)));
+		return(s7_apply_function(sc, equal_func, list_2(sc, x, y)));
 	    }
 	  else return(false);
 	}
@@ -25247,7 +25254,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	  s7_pointer equal_func;
 	  equal_func = find_method(sc, closure_environment(x), sc->EQUALP);
 	  if (equal_func != sc->UNDEFINED)
-	    return(s7_boolean(sc, s7_call(sc, equal_func, list_2(sc, x, y))));
+	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
 	}
       return(false);
 
@@ -25479,7 +25486,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	      s7_pointer equal_func;
 	      equal_func = find_method(sc, x, sc->MORALLY_EQUALP);
 	      if (equal_func != sc->UNDEFINED)
-		return(s7_call(sc, equal_func, list_2(sc, x, y)));
+		return(s7_apply_function(sc, equal_func, list_2(sc, x, y)));
 	    }
 	  else return(false);
 	}
@@ -25682,7 +25689,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  s7_pointer equal_func;
 	  equal_func = find_method(sc, closure_environment(x), sc->MORALLY_EQUALP);
 	  if (equal_func != sc->UNDEFINED)
-	    return(s7_boolean(sc, s7_call(sc, equal_func, list_2(sc, x, y))));
+	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
 	}
       return((s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), ci)) &&
 	     (s7_is_morally_equal_1(sc, closure_environment(x), closure_environment(y), ci)) &&
@@ -27741,7 +27748,7 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
 {
   #define H_error "(error type ...) signals an error.  The 'type' can be used with catch to trap \
-particular errors.  If the error is not caught, s7 treats the 2nd argument as a format control string, \
+particular errors.  If the error is not caught, s7 treats the second argument as a format control string, \
 and applies it to the rest of the arguments."
 
   if (is_not_null(args))
@@ -28137,6 +28144,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       if ((sc->op == OP_ERROR_QUIT) &&
 	  (sc->longjmp_ok))
 	{
+	  fprintf(stderr, "s7_call jumps\n");
 	  longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
 	}
 
@@ -28300,7 +28308,7 @@ static bool next_for_each(s7_scheme *sc)
 	    SAVE_X_Y_Z(save_x, save_y, save_z);
 	    if (type(car_y) == T_C_OBJECT)
 	      car(x) = (*(object_ref(car_y)))(sc, car_y, z);
-	    else car(x) = s7_call(sc, car_y, z);
+	    else car(x) = s7_apply_function(sc, car_y, z);
 	    /* (define fv (float-vector 1 2 3)) (for-each (lambda (x) (format #t "~A~%" x)) fv) */
 	    RESTORE_X_Y_Z(save_x, save_y, save_z);
 	  }
@@ -28382,7 +28390,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    *
    *    (define-macro (hi a) `(+ ,a 1))
    *    (apply hi '(1))                 ; internally rewritten as (apply hi '((hi 1)))
-   *    2                               ; apply adds the evaluation if its 1st arg is a macro
+   *    2                               ; apply adds the evaluation if its first arg is a macro
    *    (map hi '((hi 1) (hi 2)))       ; here we've rewritten the arg lists by hand
    *    ((+ 1 1) (+ 2 1))               ; but no evaluation
    *
@@ -28391,7 +28399,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    *    (map hi '(1 2))
    *    (2 3)
    *
-   * OP_APPLY knows this is happening (in the 2nd case) and raises an error -- what would break
+   * OP_APPLY knows this is happening (in the second case) and raises an error -- what would break
    *   if we handle it locally instead?  This actually affects only T_C_MACRO (quasiquote) --
    *   normal macros/bacros would still be broken.
    * or could we rewrite the args to fit just as in apply? (also need the evaluation)
@@ -28517,7 +28525,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
     }
   else /* len == 0 */
     {
-      /* here we can't depend on OP_APPLY to do the error check on the 1st arg:
+      /* here we can't depend on OP_APPLY to do the error check on the first arg:
        *   (map 0 '()) -> '()
        * so we check by hand before returning #<unspecified>
        */
@@ -28576,7 +28584,7 @@ static bool is_lambda(s7_scheme *sc, s7_pointer sym)
 static s7_pointer for_each_1;
 static s7_pointer g_for_each_1(s7_scheme *sc, s7_pointer args)
 {
-  /* 1st arg is (lambda (sym) ...) when sym has no complications, only 2 args passed
+  /* first arg is (lambda (sym) ...) when sym has no complications, only 2 args passed
    */
   s7_pointer obj;
   s7_Int len;
@@ -28596,7 +28604,7 @@ static s7_pointer g_for_each_1(s7_scheme *sc, s7_pointer args)
 static s7_pointer for_each_2;
 static s7_pointer g_for_each_2(s7_scheme *sc, s7_pointer args)
 {
-  /* 1st arg is (lambda (sym) (...)) -- one pair in lambda, when sym has no complications, only 2 args passed
+  /* first arg is (lambda (sym) (...)) -- one pair in lambda, when sym has no complications, only 2 args passed
    */
   s7_pointer obj;
   s7_Int len;
@@ -28616,7 +28624,7 @@ static s7_pointer g_for_each_2(s7_scheme *sc, s7_pointer args)
 static s7_pointer for_each_3;
 static s7_pointer g_for_each_3(s7_scheme *sc, s7_pointer args)
 {
-  /* 1st arg is (lambda (sym) (...)) when sym has no complications, lambda body is safe, only 2 args passed
+  /* first arg is (lambda (sym) (...)) when sym has no complications, lambda body is safe, only 2 args passed
    */
   s7_pointer arg, obj, func;
   s7_Int len;
@@ -28721,7 +28729,7 @@ static bool next_map(s7_scheme *sc)
 	    SAVE_X_Y_Z(save_x, save_y, save_z);
 	    if (type(car_y) == T_C_OBJECT)
 	      x = (*(object_ref(car_y)))(sc, car_y, z);
-	    else x = s7_call(sc, car_y, z);
+	    else x = s7_apply_function(sc, car_y, z);
 	    /* (define fv (float-vector 1 2 3)) (map (lambda (x) x) fv) */
 	    RESTORE_X_Y_Z(save_x, save_y, save_z);
 	  }
@@ -28951,7 +28959,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	   *   we'll take value->code->args and reverse in args5
 	   *   if one value, return it, else
 	   *      put code onto args, splice as above until there are 2 left
-	   *      set code to 1st and value to last
+	   *      set code to first and value to last
 	   */
 	  if (is_null(args))
 	    return(sc->UNSPECIFIED);
@@ -29847,7 +29855,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
       SAVE_X_Y_Z(save_x, save_y, save_z); /* this is needed to protect entire expression context */
-      result = s7_call(sc, sc->unbound_variable_hook, list_1(sc, sym));
+      result = s7_apply_function(sc, sc->unbound_variable_hook, list_1(sc, sym));
       RESTORE_X_Y_Z(save_x, save_y, save_z);
 
       sc->value = value;
@@ -30215,7 +30223,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 		   */
 
 		  /* ((lambda* (:key b :allow-other-keys ) b) 1 :b 2) -> 1
-		   *  that is, the argument is set twice, but the 2nd setting is in the trailing args
+		   *  that is, the argument is set twice, but the second setting is in the trailing args
 		   */
 #endif
 		  sc->y = cddr(sc->y);
@@ -32390,7 +32398,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      if (func_is_c_function)
 		{
 		  if ((func_is_safe) ||
-		      (c_function_call(func) == g_member) || /* the unsafe case has a 3rd arg */
+		      (c_function_call(func) == g_member) || /* the unsafe case has a third arg */
 		      (c_function_call(func) == g_assoc))
 		    {
 		      if (symbols == 0)
@@ -32851,7 +32859,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 	  
 	  /*
-	    also g_member/assoc with safe closure 3rd arg is safe
+	    also g_member/assoc with safe closure third arg is safe
 	    closure* all arg choices (CS SS SOX in index)
 	    (fneq (car b) (vct-ref a i))
 	    SP case in all: (try-peval example1 (list ...))
@@ -33957,7 +33965,7 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
       if (!is_optimized(expr))
 	return(false);
 
-      /* we're checking twice in some cases, but the 2nd (later) check can't be
+      /* we're checking twice in some cases, but the second (later) check can't be
        *   omitted, (by using is_checked), because the function might 
        *   have been redefined since the initial check.  
        */
@@ -36855,7 +36863,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	  end = cadr(sc->code);
 	  body = cddr(sc->code);
 
-	  /* check end expression 1st */
+	  /* check end expression first */
 	  if (!is_end_dox_safe(sc, car(end)))
 	    {
 #if PRINTING
@@ -37870,7 +37878,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else push_stack(sc, OP_ASSOC_IF1, sc->args, sc->code);
 
       if (!is_pair(car(ecdr(sc->args))))     /* (assoc 1 '((2 . 2) 3) =) -- we access caaadr below */
-	return(eval_error(sc, "assoc: 2nd arg is not an alist: ~S", sc->args));
+	return(eval_error(sc, "assoc: second arg is not an alist: ~S", sc->args));
       /* not sure about this -- we could simply skip the entry both here and in g_assoc
        *   (assoc 1 '((2 . 2) 3)) -> #f
        *   (assoc 1 '((2 . 2) 3) =) -> error currently
@@ -38833,7 +38841,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->args = cons(sc, safe_reverse_in_place(sc, sc->value), cadr(sc->code));
 	sc->code = cddr(sc->code);
 	
-	/* here args is a list of 2 or 3 lists, 1st is (list (list (var . binding) incr-expr init-value) ...), 2nd is end-expr, 3rd can be result expr
+	/* here args is a list of 2 or 3 lists, first is (list (list (var . binding) incr-expr init-value) ...), second is end-expr, third can be result expr
 	 *   so for (do ((i 0 (+ i 1))) ((= i 3) (+ i 1)) ...) args is ((((i . 0) (+ i 1) 0 #f)) (= i 3) (+ i 1))
 	 */
       }
@@ -38934,7 +38942,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       /* fall through */
 
-      /* 1st statement of more than 1:
+      /* first statement of more than 1:
        * s7: [75467, 240203] OP_DEFINE_UNCHECKED: 18129 OP_SET_UNCHECKED: 6842 OP_SET_SYMBOL_P: 3125 OP_SAFE_IF_CC_P: 11265 OP_SAFE_IF1: 5325 h_safe_c_sss: 4400
        * lg: [828113, 286974] OP_IF_B_P: 173866 closure_ss: 105271 closure_all_s: 83812 OP_SAFE_IF_CC_P_P: 67182
        * in: [750321, 7873843] OP_IF_B_P: 207387 OP_SIMPLE_DO: 82858 OP_IF_X_P_P: 78918 OP_DECREMENT_1: 79191 OP_IF_X_P: 66396
@@ -39486,7 +39494,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_S_opSq:
 		  {
 		    s7_pointer val;
-		    val = finder(sc, cadr(code)); /* the 1st S */
+		    val = finder(sc, cadr(code)); /* the first S */
 
 		    car(sc->T1_1) = finder(sc, cadr(caddr(code)));
 		    car(sc->T2_2) = c_call(caddr(code))(sc, sc->T1_1);
@@ -42724,7 +42732,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer args;
 		    args = cdr(code);
 		    car(sc->T2_1) = c_call(car(args))(sc, cdr(car(args)));
-		    car(sc->T2_2) = cadr(args); /* the 2nd C stands for 1 arg? */
+		    car(sc->T2_2) = cadr(args); /* the second C stands for 1 arg? */
 		    sc->value = c_call(code)(sc, sc->T2_1);
 		    goto START;
 		  }
@@ -43669,7 +43677,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     EVAL_ARGS:
-      /* 1st time, value = op, args = nil, code is args */
+      /* first time, value = op, args = nil, code is args */
 
       if (is_pair(sc->code))  /* evaluate current arg -- must check for pair here, not sc->NIL (improper list as args) */
 	{ 
@@ -46691,7 +46699,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer x, y;
 
 	NEW_CELL(sc, x);
-	car(x) = sc->value; /* the 1st time (now handled above), this saves the entire let body across the evaluations -- we pick it up later */
+	car(x) = sc->value; /* the first time (now handled above), this saves the entire let body across the evaluations -- we pick it up later */
 	cdr(x) = sc->args;
 	set_type(x, T_PAIR);
 	sc->args = x;
@@ -46830,7 +46838,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_LET_STAR1, cdr(sc->code), car(sc->code));
                                       /* args is the let body, saved for later, code is the list of vars+initial-values */
       sc->code = cadaar(sc->code);
-                                      /* caar(code) = 1st var/val pair, we've checked that all these guys are legit, so cadr of that is the value */
+                                      /* caar(code) = first var/val pair, we've checked that all these guys are legit, so cadr of that is the value */
       goto EVAL;
       
       
@@ -48186,6 +48194,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->op = OP_ERROR_QUIT;
       if (sc->longjmp_ok)
 	{
+	  fprintf(stderr, "error-hook jumps\n");
 	  longjmp(sc->goto_start, 1);
 	}
       return(sc->value); /* not executed I hope */
@@ -48408,7 +48417,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * 
 	   * but... first we can't tell for sure at this point that "hi" really is a macro
 	   *
-	   *   (letrec ((hi ... (hi...))) will be confused about the 2nd hi,
+	   *   (letrec ((hi ... (hi...))) will be confused about the second hi,
 	   *   or (call/cc (lambda (hi) (hi 1))) etc.
 	   *
 	   * second, figuring out that we're quoted is not easy -- we have to march all the
@@ -48609,7 +48618,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       fprintf(stderr, "unknown operator: %d, %s\n", 
 	      (int)(sc->op), 
 	      (((int)(sc->op) < OP_MAX_DEFINED) && ((int)(sc->op) >= 0)) ? op_names[(int)(sc->op)] : "?");
-      return(eval_error(sc, "~A: unknown operator!", make_integer(sc, sc->op))); /* not small_int because it's bogus */
+      return(sc->F);
     }
 
   return(sc->F);
@@ -50895,7 +50904,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 {
   #define H_log "(log z1 (z2 e)) returns log(z1) / log(z2) where z2 (the base) defaults to e: (log 8 2) = 3"
-  /* either arg can be big, 2nd is optional */
+  /* either arg can be big, second is optional */
   s7_pointer p0, p1 = NULL, p;
 
   p0 = car(args);
@@ -53979,6 +53988,7 @@ s7_scheme *s7_init(void)
   sc->ENVIRONMENT_TO_LIST = s7_define_safe_function(sc, "environment->list",       g_environment_to_list,      1, 0, false, H_environment_to_list);
   s7_define_safe_function(sc,                         "error-environment",         g_error_environment,        0, 0, false, H_error_environment);
   s7_define_safe_function(sc,                         "open-environment",          g_open_environment,         1, 0, false, H_open_environment);
+  s7_define_safe_function(sc,                         "open-environment?",         g_is_open_environment,      1, 0, false, H_is_open_environment);
 
   sc->PROVIDEDP = s7_define_safe_function(sc,         "provided?",                 g_is_provided,              1, 0, false, H_is_provided);
   sc->PROVIDE = s7_define_safe_function(sc,           "provide",                   g_provide,                  1, 0, false, H_provide);

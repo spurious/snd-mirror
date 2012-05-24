@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.2"
-#define S7_DATE "17-May-12"
+#define S7_VERSION "2.3"
+#define S7_DATE "24-May-12"
 
 
 typedef long long int s7_Int;
@@ -791,7 +791,8 @@ void s7_mark_object(s7_pointer p);
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
- *								
+ *			
+ * 24-May:    open-environment?
  * 17-May:    arity, aritable?
  *            removed trace and untrace.
  * 14-May:    s7_list. s7_procedure_set_setter.  Removed s7_procedure_getter.
