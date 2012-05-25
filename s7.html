@@ -613,7 +613,7 @@ have any number after, for example, #b:
 	       (if (= i 0)
 		   (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) (cdr ints)))))
 		   (let* ((mid (cdr prev))
-			  (nxt (if (= i (- len 1)) '() (cdr mid))))
+			  (nxt (if (= i (- len 1)) () (cdr mid))))
 		     (set! (cdr prev) nxt)  
 		     (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) ints))))
 		     (set! (cdr prev) mid)
@@ -1364,7 +1364,7 @@ value passed to set!:
     (for-each
      (lambda (f)
        (set! body (list f body)))
-     (reverse (X-marks-the-spot '() path)))
+     (reverse (X-marks-the-spot () path)))
 
     `(<em class=red>make-procedure-with-setter</em>
       (lambda (lst) 
@@ -1416,7 +1416,7 @@ value passed to set!:
   ;; tie all the goto's to their respective labels (via set-cdr! essentially)
   
   (define (find-accessor type)
-    (let ((labels '()))
+    (let ((labels ()))
       (define (gather-labels accessor tree)
 	(if (pair? tree)
 	    (if (equal? (car tree) type)
@@ -1435,7 +1435,7 @@ value passed to set!:
 		(begin
 		  (gather-labels (cons 'car accessor) (car tree))
 		  (gather-labels (cons 'cdr accessor) (cdr tree))))))
-      (gather-labels '() body)
+      (gather-labels () body)
       labels))
 	
   (let ((labels (find-accessor 'label))
@@ -2138,7 +2138,7 @@ make-hash-table-iterator internally).
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
-<code>(fill! table '())</code> removes all entries from the hash-table.
+<code>(fill! table ())</code> removes all entries from the hash-table.
 </p>
 
 <p>Two hash-tables are equal if they have the same keys with the same values.  This is independent
@@ -2419,7 +2419,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 		       ,methods)                     ; the incoming new methods
 
 		  ;; add an object-&gt;string method for this class (this is already a generic function).
-		  (list (cons 'object->string (lambda* (obj (use-write #t))
+		  (list (cons 'object-&gt;string (lambda* (obj (use-write #t))
 				       (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
 					       ',class-name
 					       (map (lambda (slot)
@@ -2754,8 +2754,8 @@ The '+' function for instance, can take any mixture of numbers:
 	(list 'integer? (lambda (obj) #f))
 	(list 'rational? (lambda (obj) #f))
 
-	(list '+ (lambda args
-		   (let add ((r ()) (i ()) (j ()) (k ()) (args args))
+	(list '+ (lambda orig-args
+		   (let add ((r ()) (i ()) (j ()) (k ()) (args orig-args))
 		     (if (null? args)
 			 (<em class=red>make-quaternion</em> 
                            (apply + r) (apply + i) (apply + j) (apply + k)) 
@@ -2770,10 +2770,17 @@ The '+' function for instance, can take any mixture of numbers:
                                     (cons (n 'j) j) (cons (n 'k) k) 
                                     (cdr args)))
 			    ((<em class=red>open-environment?</em> n) ; maybe we'll add octonions later!
-			     (apply (n '+) 
-				    (make-quaternion 
-                                      (apply + r) (apply + i) (apply + j) (apply + k))
-				    (cdr args)))
+			    ((open-environment? n)
+			     (if (eq? n (car orig-args))
+                                 ;; if we are not the first argument, and we don't know how to handle the
+                                 ;; first argument, then we have to raise an error.  Otherwise, the two
+                                 ;; methods will get into an infinite loop saying very politely
+                                 ;;   "please, you go first".
+				 (error 'missing-method "+ can't handle these arguments: ~A" args)
+				 (apply (n '+) 
+                                        (make-quaternion 
+                                          (apply + r) (apply + i) (apply + j) (apply + k)) 
+                                        (cdr args))))
 			    (else (error 'wrong-type-arg "+ argument ~A is not a number" n))))))))
 	))
 
@@ -3040,7 +3047,7 @@ is 15, as anyone would expect.
 <div class="brownishbordered">
 <pre>
 (define (boring-flatten x)
-  (cond ((null? x) '())
+  (cond ((null? x) ())
         ((not (pair? x)) (list x))
         (#t (append (boring-flatten (car x))
 		    (boring-flatten (cdr x))))))
@@ -3070,10 +3077,10 @@ is 15, as anyone would expect.
 		  (loop L))
 		(loop (cdr L)))))
     (if (equal? lst '(()))
-	'()
+	()
 	(let ((len (length lst)))
 	  (if (null? (car (list-tail lst (- len 1))))
-	      (set! (cdr (list-tail lst (- len 2))) '()))
+	      (set! (cdr (list-tail lst (- len 2))) ()))
 	  lst))))
 </pre>
 </div>
@@ -3679,7 +3686,7 @@ this in procedure-arity?
 	(begin
 	  (subset (cdr source) (cons (car source) dest) (+ len 1))
 	  (subset (cdr source) dest len))))
-  (subset args '() 0))
+  (subset args () 0))
 </pre>
 </div>
 
@@ -3725,7 +3732,7 @@ following code in ex.scm:
       (lambda (return)
 	(do () ()                       ; our debugger's own REPL
 	  (display prompt)              ; show where we stopped
-	  (let ((str (read-line '())))  ; read a line of input, :go -&gt; exit the debugger
+	  (let ((str (read-line)))      ; read a line of input, :go -&gt; exit the debugger
 	    ;; the nil argument to read-line makes sure that we read C's stdin.  In any normal
 	    ;;    program, we'd get the string from a text widget.
 	    (if (&gt; (length str) 0)
@@ -4550,7 +4557,7 @@ Here's a better example, an automatic software torture tester.
 			   (format #t ";skip ~A for now~%" sym) ; no time! no time!
 			   (begin
 			     (format #t ";whack on ~A...~%" sym)
-			     (autotest val '() (+ req opt 1 (if rst 1 0))))))))))
+			     (autotest val () (+ req opt 1 (if rst 1 0))))))))))
 	 lst)))))
 </pre>
 
@@ -4979,8 +4986,8 @@ the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
               (set! (cdr start) nvals))))))       ; restore original circle
   (let ((len (length vals)))
     (set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
-    (pinner '() vals len)
-    (set-cdr! (list-tail vals (- len 1)) '())))   ; restore its original shape
+    (pinner () vals len)
+    (set-cdr! (list-tail vals (- len 1)) ())))    ; restore its original shape
 </pre>
 </div>
 

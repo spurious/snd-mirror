@@ -25637,11 +25637,14 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 ;;; environments as objects
 
 (define-bacro* (define-class class-name inherited-classes (slots ()) (methods ()))
+
   ;; a bacro is needed so that the calling environment is accessible via outer-environment
-  
+  ;;   we could also use the begin/let shuffle, but it's too embarrassing
+
   `(let ((outer-env (outer-environment (current-environment)))
 	 (new-methods ())
-	 (new-slots ()))
+	 (new-slots ())
+	 (new-type (gensym "define-class")))
 
     (for-each
      (lambda (class)
@@ -25684,33 +25687,35 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 			     (cons method #f)))
 		       ,methods)                     ; the incoming new methods
 
-		  ;; add an object->string method for this class (this is a built-in function, so it is already generic)
-		  (list (cons 'object->string (lambda* (obj (use-write #t))
-				       (format #f "#<~A: ~{~A~^ ~}>" 
-					       ',class-name
-					       (map (lambda (slot)
-						      (list (car slot) (cdr slot)))
-						    (environment->list obj))))))
+		  ;; add an object->string method for this class. 
+		  (list (cons 'object->string
+                              (lambda* (obj (port #f))
+				(format port "#<~A: ~{~A~^ ~}>" 
+					',class-name
+					(map (lambda (slot)
+					       (list (car slot) (cdr slot)))
+					     (environment->list obj))))))
 		  (reverse! new-methods)))           ; the inherited methods, shadowed automatically
 
-    (let ((new-class (open-environment 
-                      (apply augment-environment           ; the local slots
-		       (augment-environment               ; the global slots
-		         (apply augment-environment ()    ; the methods
-			   (reverse new-methods))
-		         (cons 'class-name ',class-name)  ; class-name slot
-			 (cons 'inherited ,inherited-classes)
-			 (cons 'inheritors ()))           ; classes that inherit from this class
-		       new-slots))))
+    (let ((new-class (open-environment
+                       (apply augment-environment           ; the local slots
+		         (augment-environment               ; the global slots
+		           (apply augment-environment ()    ; the methods
+			     (reverse new-methods))
+		           (cons 'class-name ',class-name)  ; class-name slot
+			   (cons 'class-type new-type)      ; save a unique type identifier (unneeded if class-names are unique)
+			   (cons 'inherited ,inherited-classes)
+			   (cons 'inheritors ()))           ; classes that inherit from this class
+		         new-slots))))
 
       (augment-environment! outer-env                  
-        (cons ',class-name new-class)                     ; define the class as class-name in the calling environment
+        (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
 
 	;; define class-name? type check
 	(cons (string->symbol (string-append (symbol->string ',class-name) "?"))
 	      (lambda (obj)
 		(and (environment? obj)
-		     (eq? (obj 'class-name) ',class-name)))))
+		     (eq? (obj 'class-type) new-type)))))
 
       (augment-environment! outer-env
         ;; define the make-instance function for this class.  
@@ -25740,10 +25745,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (define-macro (define-generic name)
   `(define ,name (lambda args (apply ((car args) ',name) args))))
 
-(define (make-instance class . args)
-  (let* ((cls (if (symbol? class) (symbol->value class) class))
-	 (make (symbol->value (string->symbol (string-append "make-" (symbol->string (cls 'class-name)))))))
-    (apply make args)))
 
 (define-macro (define-slot-accessor name slot)
   `(define ,name (make-procedure-with-setter 
@@ -25761,6 +25762,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (method (apply lambda* method-args ',body)))
 
      ;; define the method as a normal-looking function
+     ;;   s7test.scm has define-method-with-next-method that implements call-next-method here
+     ;;   it also has make-instance 
      (augment-environment! outer-env
        (cons method-name 
 	     (apply lambda* method-args 
@@ -25784,7 +25787,27 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (class 'inheritors))
 
      method-name))
-     
+
+
+(define (all-methods obj method)
+  ;; for arbitrary method combinations: this returns a list of all the methods of a given name
+  ;;   in obj's class and the classes it inherits from (see example below)
+  (let* ((base-method (obj method))
+	 (methods (if (procedure? base-method) (list base-method) ())))
+    (for-each 
+     (lambda (ancestor)
+       (let ((next-method (ancestor method)))
+	 (if (and (procedure? next-method)
+		  (not (memq next-method methods)))
+	     (set! methods (cons next-method methods)))))
+     (obj 'inherited))
+    (reverse methods)))
+
+(define (make-instance class . args)
+  (let* ((cls (if (symbol? class) (symbol->value class) class))
+	 (make (symbol->value (string->symbol (string-append "make-" (symbol->string (cls 'class-name)))))))
+    (apply make args)))
+
 (define-bacro (define-method-with-next-method name-and-args . body)
   `(let* ((outer-env (outer-environment (current-environment)))
 	  (method-name (car ',name-and-args))
@@ -25990,7 +26013,141 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
   )
 
+(define-class quaternion () 
+  '((r 0) (i 0) (j 0) (k 0))
+  (list (list 'real-part (lambda (obj) (obj 'r)))
+	(list 'imag-part (lambda (obj) (vector (obj 'i) (obj 'j) (obj 'k))))
 
+	(list 'number? (lambda (obj) #t))
+	(list 'complex? (lambda (obj) #f))
+	(list 'real? (lambda (obj) #f))
+	(list 'integer? (lambda (obj) #f))
+	(list 'rational? (lambda (obj) #f))
+
+	(list '+ (lambda orig-args
+		   (let add ((r ()) (i ()) (j ()) (k ()) (args orig-args))
+		     (if (null? args)
+			 (make-quaternion (apply + r) (apply + i) (apply + j) (apply + k)) 
+			 (let ((n (car args)))
+			   (cond
+			    ((real? n) (add (cons n r) i j k (cdr args)))
+			    ((complex? n) (add (cons (real-part n) r) (cons (imag-part n) i) j k (cdr args)))
+			    ((quaternion? n) (add (cons (n 'r) r) (cons (n 'i) i) (cons (n 'j) j) (cons (n 'k) k) (cdr args)))
+			    ((open-environment? n)
+			     (if (eq? n (car orig-args))
+				 (error 'missing-method "+ can't handle these arguments: ~A" args)
+				 (apply (n '+) (make-quaternion (apply + r) (apply + i) (apply + j) (apply + k)) (cdr args))))
+
+			    ;; this code is trying to make sure we don't start bouncing:
+			    ;; if (+ q1 o1) goes to (o1 '+) which also can't handle this
+			    ;; combination, don't bounce back here!
+			    ;; In the current case, it would be (+ o1 q1) bouncing us here.
+			    ;; we're assuming (+ a b c) = (+ (+ a b) c), and that any other
+			    ;; + method will behave that way.  I think the optimizer also
+			    ;; assumes that (+ a b) = (+ b a).
+
+			    (else (error 'wrong-type-arg "+ argument ~A is not a number" n))))))))
+
+	(list '- (lambda args
+		   (let ((first (car args)))
+		     (if (null? (cdr args)) ; (- q) is not the same as (- q 0)
+			 (make-quaternion (- (first 'r)) (- (first 'i)) (- (first 'j)) (- (first 'k)))
+			 (let ((q (cond ((real? first) (make-quaternion first 0 0 0))
+					((complex? first) (make-quaternion (real-part first) (imag-part first) 0 0))
+					(else (copy first))))
+			       (n (apply + (cdr args))))
+			   (cond ((real? n) (set! (q 'r) (- (q 'r) n)) q)
+				 ((complex? n) (make-quaternion (- (q 'r) (real-part n)) (- (q 'i) (imag-part n)) (q 'j) (q 'k)))
+				 ((quaternion? n) (make-quaternion (- (q 'r) (n 'r)) (- (q 'i) (n 'i)) (- (q 'j) (n 'j)) (- (q 'k) (n 'k))))
+				 (else (apply (n '-) (list q n)))))))))
+	))
+
+(let ((old-make-quaternion make-quaternion))
+  (augment-environment! (outer-environment (current-environment))
+    (cons 'make-quaternion (lambda args
+			     (let ((q (apply old-make-quaternion args)))
+			       (if (or (not (real? (q 'r)))
+				       (not (real? (q 'i)))
+				       (not (real? (q 'j)))
+				       (not (real? (q 'k))))
+				   (error 'wrong-type-arg "quaternion fields should all be real: ~A" q)
+				   q))))))
+
+
+(define-class float ()
+  '((x 0.0))
+  (list (list '+ (lambda orig-args
+		   (let add ((x ()) (args orig-args))
+		     (if (null? args)
+			 (make-float (apply + x))
+			 (let ((n (car args)))
+			   (cond
+			    ((float? n) (add (cons (n 'x) x) (cdr args)))
+			    ((real? n) (add (cons n x) (cdr args)))
+			    ((complex? n) (add (cons (real-part n) x) (cdr args)))
+			    ((open-environment? n)
+			     (if (eq? n (car orig-args))
+				 (error 'missing-method "+ can't handle these arguments: ~A" args)
+				 (apply (n '+) (make-float (apply + x)) (cdr args))))
+			    (else (error 'wrong-type-arg "+ argument ~A is not a number" n))))))))))
+
+
+(let ((q1 (make-quaternion 1.0 1.0 0.0 0.0)))
+  (test (complex? q1) #f)
+  (test (number? q1) #t)
+  (test (quaternion? q1) #t)
+  (test (quaternion? 1) #f)
+  (test (quaternion? 1+i) #f)
+  (test (integer? q1) #f)
+  (test (real? q1) #f)
+  (test (rational? q1) #f)
+
+  (test (real-part q1) 1.0)
+  (test (imag-part q1) #(1.0 0.0 0.0))
+
+  (test (eq? q1 q1) #t)
+  (test (eqv? q1 q1) #t)
+  (test (equal? q1 q1) #t)
+
+  (let ((q2 (make-quaternion 1.0 1.0 0.0 0.0)))
+    (test (eq? q1 q2) #f)
+    (test (eqv? q1 q2) #f)
+    (test (equal? q1 q2) #t)
+    (set! (q2 'r) 2.0)
+    (test (equal? q1 q2) #f)
+    
+    (test (+ q1) q1)
+    (test (+ 1 q1) q2)
+    (test (+ q1 1) q2)
+    (test (+ 1/2 q1 1/2) q2)
+    (test (+ .5 1/2 q1) q2)
+    (test (+ 1+i q1 0-i) q2)
+    (test (+ 1.0 q1) q2)
+    (test (+ q1 1+i 0-i) q2)
+    (test (+ 0+i q1 1 0-i) q2)
+
+    (test (- q1) (make-quaternion -1.0 -1.0 0.0 0.0))
+    (test (- q1 1) (make-quaternion 0.0 1.0 0.0 0.0))
+    (test (- q1 1 0.0+i) (make-quaternion 0.0 0.0 0.0 0.0))
+    (test (- 1 q1) (make-quaternion 0.0 -1.0 0.0 0.0))
+
+    (test (+ (make-float 1.0) 1.0) (make-float 2.0))
+    (test (+ (make-quaternion 1 0 0 0) (make-float 1.0)) 'error)
+    (test (+ (make-float 1.0) 2 (make-quaternion 1 1 1 1)) 'error)
+    (test (+ 1 (make-float 1.0) 2 (make-quaternion 1 1 1 1)) 'error)
+
+    (test (make-quaternion 1 2+i 0 0) 'error)
+    (test (make-quaternion 1 2 3 "hi") 'error)
+
+    (let () (define (a1 q) (+ q 1)) (test (a1 q1) (make-quaternion 2.0 1.0 0.0 0.0)))
+    (let () (define (a1 q) (+ 1 q)) (test (a1 q1) (make-quaternion 2.0 1.0 0.0 0.0)))
+    (let () (define (a1 q) (+ q q)) (test (a1 q1) (make-quaternion 2.0 2.0 0.0 0.0)))
+    (let () (define (a1 q) (- q 1)) (test (a1 q1) (make-quaternion 0.0 1.0 0.0 0.0)))
+    ))
+
+
+
+;;; --------------------------------------------------------------------------------
 ;;; error-environment
 (test (vector? (error-environment)) #f)
 (test (environment? (error-environment)) #t)
@@ -26006,6 +26163,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
     (test (integer? error-line) #t)
     (test ((error-environment) 'error-file) error-file)
     ))
+
 
 ;;; stacktrace
 
