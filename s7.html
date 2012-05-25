@@ -2189,19 +2189,22 @@ Environments are first class (and applicable) objects in s7.
 
 <pre class="indented">
 (<em class=def id="environmentp">environment?</em> obj)            #t if obj is an environment
+(<em class=def id="withenvironment">with-environment</em> env . body) evaluate body in the environment env 
+(<em class=def id="outerenvironment">outer-environment</em> env)       the environment that encloses the environment env
+(<em class=def id="environmenttolist">environment-&gt;list</em> env)       return the environment bindings as a list of (symbol . value) cons's
+
 (<em class=def id="globalenvironment">global-environment</em>)          the top-level environment
 (<em class=def id="currentenvironment">current-environment</em>)         the currently visible variables and their values
 (<em class=def id="procedureenvironment">procedure-environment</em> proc)  the environment at the time when proc was defined
 (error-environment)           the environment at the point of the last error
 (<em class=def id="initialenvironment">initial-environment</em>)         the current environment, but all built-in functions have their original values
-(<em class=def id="outerenvironment">outer-environment</em> env)       the environment that encloses the environment env
-
-(<em class=def id="withenvironment">with-environment</em> env . body) evaluate body in the environment env 
 
 (<em class=def id="augmentenvironment">augment-environment</em> env . bindings)   add bindings to env
 (<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings)
+
 (<em class=def id="openenvironment">open-environment</em> env)
-(<em class=def id="environmenttolist">environment-&gt;list</em> env)       return the environment bindings as a list of (symbol . value) cons's
+(<em class=def id="openenvironmentp">open-environment?</em> env)
+
 (<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
 (<em class=def id="definedp">defined?</em> sym (env (current-environment)))
 </pre>
@@ -2469,7 +2472,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 
 
 (define-macro (define-generic name)
-  `(define ,name (lambda args (apply ((car args) ',name) args))))
+  `(define ,name (lambda args (apply ((car args) ',name) args)))) ; (define (genfun any) ((any 'genfun) any))
 
 
 (define-macro (define-slot-accessor name slot)
@@ -2736,32 +2739,26 @@ are endless", but actually I can't think of any others right at the moment.
 
 <p>I can't resist adding at least some of the quaternion implementation.  In the following code
 we add quaternions to some of the math functions (finally "number?" is not the same
-as "complex?"!), and add support for possible additional numeric types that might be
+as "complex?"!), and include support for possible additional numeric types that might be
 added later.  As in the earlier case, a number is whatever behaves like a number &mdash;
 we aren't bound by any previous classes, and we don't have to define separate methods for every possibility.
-The '+' function for instance, can take any mix of numbers:
+The '+' function for instance, can take any mixture of numbers:
 </p>
 
 <pre class="indented">
 (define-class quaternion () 
   '((r 0) (i 0) (j 0) (k 0))
-  (list (list 'real-part (lambda (obj) (obj 'r)))
-	(list 'imag-part (lambda (obj) (obj 'i)))
-
-	(list 'number? (lambda (obj) #t))
+  (list (list 'number? (lambda (obj) #t))
 	(list 'complex? (lambda (obj) #f))
 	(list 'real? (lambda (obj) #f))
 	(list 'integer? (lambda (obj) #f))
 	(list 'rational? (lambda (obj) #f))
 
 	(list '+ (lambda args
-		   (let add ((r ())
-			     (i ())
-			     (j ())
-			     (k ())
-			     (args args))
+		   (let add ((r ()) (i ()) (j ()) (k ()) (args args))
 		     (if (null? args)
-			 (<em class=red>make-quaternion</em> (apply + r) (apply + i) (apply + j) (apply + k)) 
+			 (<em class=red>make-quaternion</em> 
+                           (apply + r) (apply + i) (apply + j) (apply + k)) 
 			 (let ((n (car args)))
 			   (cond
 			    ((real? n)
@@ -2769,16 +2766,19 @@ The '+' function for instance, can take any mix of numbers:
 			    ((complex? n)
 			     (add (cons (real-part n) r) (cons (imag-part n) i) j k (cdr args)))
 			    ((<em class=red>quaternion?</em> n)
-			       (add (cons (n 'r) r) (cons (n 'i) i) (cons (n 'j) j) (cons (n 'k) k) (cdr args)))
-			    ((open-environment? n) ; maybe we'll add octonions later!
+			       (add (cons (n 'r) r) (cons (n 'i) i) 
+                                    (cons (n 'j) j) (cons (n 'k) k) 
+                                    (cdr args)))
+			    ((<em class=red>open-environment?</em> n) ; maybe we'll add octonions later!
 			     (apply (n '+) 
-				    (cons (make-quaternion (apply + r) (apply + i) (apply + j) (apply + k))
-					  (cdr args))))
+				    (make-quaternion 
+                                      (apply + r) (apply + i) (apply + j) (apply + k))
+				    (cdr args)))
 			    (else (error 'wrong-type-arg "+ argument ~A is not a number" n))))))))
 	))
 
 &gt; (let ((q1 (make-quaternion 1.0 1.0 0.0 0.0)))
-       (+ 1 q1 2.5+i))
+    (+ 1 q1 2.5+i))
 #&lt;quaternion: (r 4.5) (i 2.0) (j 0.0) (k 0.0)&gt;
 </pre>
 
@@ -4384,10 +4384,7 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 </p>
 
 <pre class="indented">
-(set! *#readers* 
-      (cons (cons #\t (lambda (str) 
-                        (string-&gt;number (substring str 1) 12)))
-            *#readers*))
+(set! *#readers* (cons (cons #\t (lambda (str) (string-&gt;number (substring str 1) 12))) *#readers*))
 
 &gt; #tb
 11
@@ -4395,6 +4392,15 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 13.25
 </pre>
 
+<p>Or have #c(real imag) be read as a complex number:
+</p>
+
+<pre class="indented">
+(set! *#readers* (cons (cons #\c (lambda (str) (apply make-rectangular (read)))) *#readers*))
+
+&gt; #c(1 2)
+1+2i
+</pre>
 
 <div class="indented">
 <p>I use *#readers* primarily to implement a way to get the current line number and file name, along
@@ -4746,6 +4752,7 @@ bind it to something else, which is asking for confusion).
 <li>remove char-ready?
 <li>change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
 <li>remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
+<li>change make-rectangular to make-complex, and remove make-polar.
 </ul>
 
 <p>and perhaps:

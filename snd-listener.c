@@ -352,6 +352,8 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	    }
 	  else
 	    {
+	      /* (set! *#readers* (cons (cons #\c (lambda (str) (apply make-rectangular (read)))) *#readers*))
+	       */
 	      if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
 		return(i);
 	      else 
@@ -364,16 +366,20 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 			{
 			  if (expr[k] == '(')
 			    {
+			      /* should we look at the readers here? I want to support #c(1 2) for example */
+			      non_whitespace_p = false;
+			      prev_separator = false;
 			      incr = k - i;
 			      break;
 			    }
 			  else
 			    {
-			      if ((!isdigit(expr[k])) &&
+			      if ((!isdigit(expr[k])) && /* #2d(...)? */
+				  (!isalpha(expr[k])) && /* #c(1 2)? */
 				  (expr[k] != 'D') && 
 				  (expr[k] != 'd') &&
-				  (expr[k] != '=') &&
-				  (expr[k] != '#'))
+				  (expr[k] != '=') &&   /* what is this for? */
+				  (expr[k] != '#'))     /* perhaps #1d(#(1 2) 3) ? */
 				break;
 			    }
 			}
