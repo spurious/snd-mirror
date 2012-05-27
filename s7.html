@@ -6785,7 +6785,9 @@ int main(int argc, char **argv)
 <p>We can use dlopen to load a shared library, and dlsym to initialize
 that library in our main program.  The tricky part is to conjure up the right
 compiler and loader flags.
-First we define a module that defines a new s7 function, add-1:
+First we define a module that defines a new s7 function, add-1 that we'll tie
+into s7 explicitly, and another
+function that we'll try to call by waving a wand.
 </p>
 
 
@@ -6797,6 +6799,12 @@ First we define a module that defines a new s7 function, add-1:
 
 #include "s7.h"
 
+double a_function(double an_arg);
+double a_function(double an_arg)
+{
+  return(an_arg + 1.0);
+}
+
 static s7_pointer add_1(s7_scheme *sc, s7_pointer args) 
 {
   return(s7_make_integer(sc, s7_integer(s7_car(args)) + 1)); 
@@ -6805,6 +6813,7 @@ static s7_pointer add_1(s7_scheme *sc, s7_pointer args)
 void init_ex(s7_scheme *sc);
 void init_ex(s7_scheme *sc)  /* this needs to be globally accessible (not "static") */
 {
+  /* tell s7 about add-1, but leave a_function hidden */
   s7_define_function(sc, "add-1", add_1, 1, 0, false, "(add-1 x) adds 1 to x");
 }
 
@@ -6826,13 +6835,33 @@ void init_ex(s7_scheme *sc)  /* this needs to be globally accessible (not "stati
 static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
 
 #include &lt;dlfcn.h&gt;
+
+static void *library = NULL;
+
+static s7_pointer try(s7_scheme *sc, s7_pointer args)
+{
+  /* try tries to call an arbitrary function in the shared library */
+  void *func;
+  func = <em class=red>dlsym</em>(library, s7_string(s7_car(args)));
+  if (func)
+    {
+      /* we'll assume double f(double) */
+      typedef double (*dl_func)(double arg);
+      return(s7_make_real(sc, ((dl_func)<em class=red>func</em>)(s7_real(s7_cadr(args)))));
+    }
+  return(s7_error(sc, s7_make_symbol(sc, "can't find function"), 
+		  s7_list(sc, 2, s7_make_string(sc, "loader error: ~S"), 
+			         s7_make_string(sc, dlerror()))));
+}
+
 static s7_pointer cload(s7_scheme *sc, s7_pointer args)
 {
-  #define CLOAD_HELP "(cload so-file-name init-func-name) loads the module and calls the init function"
-  void *library;
-  library = <em class=red>dlopen</em>(s7_string(s7_car(args)), RTLD_LAZY);
+  /* cload loads a shared library */
+  #define CLOAD_HELP "(cload so-file-name) loads the module"
+  library = dlopen(s7_string(s7_car(args)), RTLD_LAZY);
   if (library)
     {
+      /* call our init func to define add-1 in s7 */
       void *init_func;
       init_func = <em class=red>dlsym</em>(library, s7_string(s7_car(s7_cdr(args))));
       if (init_func)
@@ -6841,10 +6870,10 @@ static s7_pointer cload(s7_scheme *sc, s7_pointer args)
 	  ((dl_func)<em class=red>init_func</em>)(sc);  /* call the initialization function (init_ex above) */
 	  return(s7_t(sc));
 	}
-      else fprintf(stderr, "loader error: %s\n", <em class=red>dlerror</em>());
     }
-  else fprintf(stderr, "loader error: %s\n", <em class=red>dlerror</em>());
-  return(s7_f(sc));
+  return(s7_error(sc, s7_make_symbol(sc, "load-error"), 
+		      s7_list(sc, 2, s7_make_string(sc, "loader error: ~S"), 
+			             s7_make_string(sc, dlerror()))));
 }
 
 int main(int argc, char **argv)
@@ -6854,8 +6883,12 @@ int main(int argc, char **argv)
   s7_scheme *s7;
 
   s7 = s7_init();  
+
   s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
   s7_define_function(s7, "cload", cload, 2, 0, false, CLOAD_HELP);
+  s7_define_function(s7, "try", try, 2, 0, false, 
+                         "(try name num) tries to call name in the shared library with the argument num.");
+
   while (1) 
     {
       fprintf(stdout, "\n&gt; ");
@@ -6890,6 +6923,8 @@ int main(int argc, char **argv)
  *   #t
  *   &gt; (add-1 2)
  *   3
+ *   &gt; (try "a_function" 2.5)
+ *   3.5
  */
 </pre></div>
 
