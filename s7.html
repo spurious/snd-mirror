@@ -2770,7 +2770,6 @@ The '+' function for instance, can take any mixture of numbers:
                                     (cons (n 'j) j) (cons (n 'k) k) 
                                     (cdr args)))
 			    ((<em class=red>open-environment?</em> n) ; maybe we'll add octonions later!
-			    ((open-environment? n)
 			     (if (eq? n (car orig-args))
                                  ;; if we are not the first argument, and we don't know how to handle the
                                  ;; first argument, then we have to raise an error.  Otherwise, the two

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.3"
-#define S7_DATE "24-May-12"
+#define S7_VERSION "2.4"
+#define S7_DATE "28-May-12"
 
 
 typedef long long int s7_Int;
@@ -483,6 +483,7 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env);           /* (
 bool s7_is_environment(s7_pointer e);
 s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym); /* (env sym) */
 s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (set! (env sym) val) */
+s7_pointer s7_open_environment(s7_scheme *sc, s7_pointer e);                /* (open-environment e) */
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);

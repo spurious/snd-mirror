@@ -62210,5 +62210,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,654,002,973  clm.c:mus_src [/home/bil/snd-12/snd]
  2,216,029,830  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
  2,051,926,172  s7.c:gc [/home/bil/snd-12/snd]
+
+26-May-12:
+154,970,007,703 
+15,972,773,163  ???:sin [/lib64/libm-2.12.so]
+15,712,899,734  io.c:mus_read_any_1 [/home/bil/snd-12/snd]
+10,496,022,409  s7.c:eval [/home/bil/snd-12/snd]
+ 9,462,200,622  snd-edits.c:channel_local_maxamp [/home/bil/snd-12/snd]
+ 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-12/snd]
+ 8,729,495,812  run.c:eval_ptree [/home/bil/snd-12/snd]
+ 7,224,197,275  io.c:mus_write_1 [/home/bil/snd-12/snd]
+ 4,302,198,256  s7.c:eval'2 [/home/bil/snd-12/snd]
+ 3,042,345,461  clm.c:mus_src [/home/bil/snd-12/snd]
+ 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-12/snd]
+ 2,775,989,275  ???:cos [/lib64/libm-2.12.so]
+ 2,765,493,217  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
+ 2,230,051,768  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
+
 |#
 

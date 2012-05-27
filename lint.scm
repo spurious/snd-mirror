@@ -945,14 +945,14 @@
 			    (for-each
 			     (lambda (var)
 			       (set! pos (+ pos 1))
-			       (let ((bit (ash 1 pos)))
-				 (call-with-exit
-				  (lambda (return)
-				    (do ((ctr 0 (+ ctr 1)))
-					((= ctr vsize)
-					 (set! none-vars (cons var none-vars)))
-				      (if (zero? (logand ctr bit))
-					  (if (not (equal? (vector-ref v ctr) (vector-ref v (logior ctr bit))))
+			       (call-with-exit
+				(lambda (return)
+				  (do ((ctr 0 (+ ctr 1)))
+				      ((= ctr vsize)
+				       (set! none-vars (cons var none-vars)))
+				    (let ((bit (logbit? ctr pos)))
+				      (if (not bit)
+					  (if (not (equal? (vector-ref v ctr) (vector-ref v (logior ctr (ash 1 pos)))))
 					      (return))))))))
 			     vars)
 			    
