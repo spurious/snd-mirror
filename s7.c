@@ -5279,7 +5279,8 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 /* can't use abs even in gcc -- it doesn't work with long long ints! */
 #define s7_Double_abs(x) fabs(x)
 #define s7_fabsl(x) (((x) < 0.0) ? -(x) : (x))
-/* fabsl doesn't exist in netBSD! */
+/* fabsl doesn't exist in netBSD! There is a __NetBSD__ flag I think
+ */
 
 static bool is_NaN(s7_Double x) {return(x != x);}
 /* callgrind says this is faster than isnan, I think (very confusing data...) */
@@ -55256,6 +55257,7 @@ s7_scheme *s7_init(void)
  *   load case seems to be ok
  *
  * TODO: open-environment doc (and direct tests also the open-evironment? cases)
+ *       also we really should add error check tests, and make sure s7test hits every optimizer choice
  * TODO: c example of using this
  *   s7_augment_environment to add fields, s7_open_environment to open it, gc_protect?
  *   do we even need c objects? should c objects be environmentalizable?
@@ -55274,11 +55276,6 @@ s7_scheme *s7_init(void)
  *     i.e. skip the indirection to the table by building in a pointer to the table (skip tag)
  *
  * TODO: why this: 44250: (lcm 10781274/17087915 3880899/2744210) got 13947011828442/5 (2789402365688.4) but expected 2789402365688.4
- *
- * cload a shared library, keep handle, now user calls some unknown function
- *   we scan all stored libraries looking for that name via dlsym
- *   the scheme call gives the number and (scheme) type of the args
- *   but (see s7.html) it looks like we have ambiguities and an explosion of types
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*

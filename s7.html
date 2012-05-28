@@ -5626,7 +5626,7 @@ int main(int argc, const char* argv[])
 
 
 
-<div class="header" id="sndlib"><h4>Load sndlib using the XEN functions and macros into an s7 repl</h4></div>
+<div class="header" id="sndlib"><h4>Load sndlib into an s7 repl</h4></div>
 
 
 <div class="indented">
@@ -5636,7 +5636,9 @@ int main(int argc, const char* argv[])
 #include &lt;string.h&gt;
 #include &lt;unistd.h&gt;
 
-/* assume we've configured and built sndlib, so it has created a mus-config.h file */
+/* assume we've configured and built sndlib, so it has created a mus-config.h file.
+ * also assume we've built s7 with WITH_SYSTEM_EXTRAS set, so we have file-exists? and delete-file
+ */
 
 #include "mus-config.h"
 #include "s7.h"
@@ -5659,27 +5661,6 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
   return(s7_nil(sc));
 }
 
-/* the next functions are needed for either with-sound or many standard instruments, like fm-violin */
-/*   (these are in the xen-style FFI) */
-
-static XEN g_file_exists_p(XEN name)
-{
-  #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
-  return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
-}
-
-XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
-
-static XEN g_delete_file(XEN name)
-{
-  #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
-  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
-}
-
-XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
-
 int main(int argc, char **argv)
 {
   char buffer[512];
@@ -5690,9 +5671,6 @@ int main(int argc, char **argv)
   Init_sndlib();                      /* initialize sndlib with all the functions linked into s7 */  
 
   mus_error_set_handler(mus_error_to_s7); /* catch low-level errors and pass them to s7-error */
-
-  XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("delete-file",  g_delete_file_w,   1, 0, 0, H_delete_file);
   s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
 
   while (1)                           /* fire up a "repl" */
@@ -6172,7 +6150,7 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer our_sleep(s7_scheme *sc, s7_pointer args)
 {
-  /* slow down out infinite loop for demo purposes */
+  /* slow down our infinite loop for demo purposes */
   sleep(1);
   return(s7_f(sc));
 }

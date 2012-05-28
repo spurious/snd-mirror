@@ -57170,6 +57170,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 ;; this is actually inconsistent in one way:
 ;; (log 1/0 2) -> nannani, (log 1/0 1) -> inf.0
 
+(num-test (log -1) (make-rectangular 0 pi))
+
 (for-each
  (lambda (num-and-val)
    (let ((num (car num-and-val)) (val (cadr num-and-val))) (num-test-1 'log num (log num) val)))

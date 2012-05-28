@@ -1161,12 +1161,20 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid */
 
-static XEN g_dlopen(XEN name)
+/* apparently netBSD does not have dlerror? 
+    #ifdef __NetBSD__
+      #define dlerror() g_strerror(errno)
+    #endif
+
+    to get symbols from current program: handle = dlopen(NULL, RTLD_GLOBAL | RTLD_LAZY);
+ */
+
+static XEN g_dlopen(XEN name, XEN flags)
 {
-  #define H_dlopen "(dlopen lib) loads the dynamic library 'lib' and returns a handle for it (for dlinit and dlclose)"
+  #define H_dlopen "(dlopen lib (flags RTLD_LAZY)) loads the dynamic library 'lib' and returns a handle for it (for dlinit and dlclose)"
   void *handle;
   const char *cname;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "dlopen", "a string (filename)");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, "dlopen", "a string (filename)");
   cname = XEN_TO_C_STRING(name);
   if (cname)
     {
@@ -1174,9 +1182,13 @@ static XEN g_dlopen(XEN name)
       if (handle == NULL)
 	{
 	  char *longname;
+
 	  longname = mus_expand_filename(cname);
-	  handle = dlopen(longname, RTLD_LAZY);
+	  if (XEN_INTEGER_P(flags))
+	    handle = dlopen(longname, XEN_TO_C_INT(flags));
+	  else handle = dlopen(longname, RTLD_LAZY);
 	  free(longname);
+
 	  if (handle == NULL)
 	    {
 	      char *err;
@@ -1207,6 +1219,20 @@ static XEN g_dlerror(void)
 }
 
 
+static XEN g_dlsym(XEN handle, XEN func)
+{
+  #define H_dlsym "(dlsym library function-name) returns a pointer to function in library, or #f."
+  void *proc;
+
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(handle), handle, XEN_ARG_1, "dlsym", "a library handle");
+  XEN_ASSERT_TYPE(XEN_STRING_P(func), func, XEN_ARG_2, "dlsym", "a string (function name)");
+
+  proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
+  if (proc == NULL) return(XEN_FALSE);
+  return(XEN_WRAP_C_POINTER(func));
+}
+
+
 static XEN g_dlinit(XEN handle, XEN func)
 {
   #define H_dlinit "(dlinit handle func) calls 'func' from the library referred to by 'handle'."
@@ -1221,22 +1247,6 @@ static XEN g_dlinit(XEN handle, XEN func)
   ((snd_dl_func)proc)();
   return(XEN_TRUE);
 }
-
-#if 0
-static XEN g_dlinit(XEN handle, XEN func)
-{
-  /* 'man dlopen' suggests: double (*cosine)(double); *(void **) (&cosine) = dlsym(handle, "cos"); printf("%f\n", (*cosine)(2.0)); */
-  void (*proc)(void);
-  /* typedef void *(*snd_dl_func)(void); */
-  /* void *proc; */
-  (*(void **)(&proc)) = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
-  /* but this line triggers warnings from gcc */
-  if (proc == NULL) return(C_TO_XEN_STRING(dlerror()));
-  /* ((snd_dl_func)proc)(); */
-  (*proc)();
-  return(XEN_TRUE);
-}
-#endif
 #endif
 
 
@@ -2413,10 +2423,11 @@ static s7_pointer g_string_ci_list_position(s7_scheme *sc, s7_pointer args)
 
 #ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
-  XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
+  XEN_ARGIFY_2(g_dlopen_w, g_dlopen)
   XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
   XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
   XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
+  XEN_NARGIFY_2(g_dlsym_w, g_dlsym)
 #endif
 #if HAVE_SCHEME
   XEN_VARGIFY(g_snd_s7_error_handler_w, g_snd_s7_error_handler);
@@ -2472,6 +2483,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #define g_dlclose_w g_dlclose
   #define g_dlerror_w g_dlerror
   #define g_dlinit_w g_dlinit
+  #define g_dlsym_w g_dlsym
 #endif
 #if HAVE_SCHEME
   #define g_snd_s7_error_handler_w g_snd_s7_error_handler
@@ -2709,10 +2721,15 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
-  XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, H_dlopen);
+  XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 1 ,0, H_dlopen);
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, H_dlclose);
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, H_dlerror);
   XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, H_dlinit);
+  XEN_DEFINE_PROCEDURE("dlsym",   g_dlsym_w,   2, 0 ,0, H_dlsym);
+
+  XEN_DEFINE_CONSTANT("RTLD_LAZY", RTLD_LAZY, "dlopen flag");
+  XEN_DEFINE_CONSTANT("RTLD_NOW", RTLD_NOW, "dlopen flag");
+  XEN_DEFINE_CONSTANT("RTLD_GLOBAL", RTLD_GLOBAL, "dlopen flag");
 #endif
 
 #if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H && HAVE_DLOPEN

@@ -972,7 +972,7 @@ void post_basic_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
-      basic_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"basic-popup-menu", args, n + 1);
+      basic_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"basic-popup-menu", args, n);
 
       add_menu_item(basic_popup_menu, "Info",           popup_info_callback);
       add_menu_item(basic_popup_menu, "Select all",     edit_select_all_callback);
@@ -1127,7 +1127,7 @@ void post_selection_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
-      selection_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"selection-popup-menu", args, n + 1);
+      selection_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"selection-popup-menu", args, n);
 
       add_menu_item(selection_popup_menu, "Fill window",    popup_show_selection_callback);
       add_menu_item(selection_popup_menu, "Cut",            edit_cut_callback);
@@ -1240,7 +1240,7 @@ void post_fft_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
-      fft_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"fft-popup-menu", args, n + 1);
+      fft_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"fft-popup-menu", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
