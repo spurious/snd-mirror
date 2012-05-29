@@ -129,9 +129,10 @@
 		       (rational? result))
 		   (real? expected)
 		   (real? result)
-		   (> (abs (- result expected)) error-12))
+		   (> (/ (abs (- result expected)) (max 1.0 (abs expected))) error-12))
 	      (and (pair? tst)
 		   (> (op-error (car tst) result expected) error-6)))
+
 	  (begin
 	    (format #t "~A: ~A got ~A~Abut expected ~A~%" 
 		    (port-line-number) tst result 
@@ -142,35 +143,35 @@
 	    
 	    (if (and (not (number? expected))
 		     (not (eq? result expected)))
-		(format #t ", (eq? ~A ~A) -> #f" result expected)
+		(format #t "    (eq? ~A ~A) -> #f" result expected)
 		(if (and (number? expected)
 			 (or (not (number? result))
 			     (nan? result)))
 		    (begin
 		      (if (not (number? result))
-			  (format #t ", (number? ~A) but not (number? ~A)" expected result)
-			  (format #t ", (number? ~A) but (nan? ~A)" expected result)))
+			  (format #t "    (number? ~A) but not (number? ~A)" expected result)
+			  (format #t "    (number? ~A) but (nan? ~A)" expected result)))
 		    (if (and (rational? expected)
 			     (rational? result)
 			     (not (= result expected)))
-			(format #t ", exact results but not (= ~A ~A): ~A" expected result (= result expected))
+			(format #t "    exact results but not (= ~A ~A): ~A" expected result (= result expected))
 			(if (and (or (rational? expected) 
 				     (rational? result))
 				 (real? expected)
 				 (real? result)
 				 (> (abs (- result expected)) error-12))
-			    (format #t ", rational results but diff > ~A: ~A" error-12 (abs (- result expected)))
+			    (format #t "    rational results but diff > ~A: ~A" error-12 (abs (- result expected)))
 			    (if (and (pair? tst)
 				     (< (op-error (car tst) result expected) error-6))
 				(let ((n result))
-				  (format #t ", result not internally consistent")
+				  (format #t "    result not internally consistent")
 				  (if (and (integer? n) 
 					   (or (not (= (denominator n) 1))
 					       (not (= n (numerator n)))
 					       (not (zero? (imag-part n)))
 					       (not (= (floor n) (ceiling n) (truncate n) (round n) n))
 					       (not (= n (real-part n)))))
-				      (format #t ", ~A integer but den: ~A, num: ~A, imag: ~A, real: ~A, floors: ~A ~A ~A ~A"
+				      (format #t "    ~A integer but den: ~A, num: ~A, imag: ~A, real: ~A, floors: ~A ~A ~A ~A"
 					      n (denominator n) (numerator n) (imag-part n) (real-part n)
 					      (floor n) (ceiling n) (truncate n) (round n))
 				      (if (and (rational? n)
@@ -180,16 +181,16 @@
 						   (= (denominator n) 0)
 						   (not (= n (real-part n)))
 						   (not (= n (/ (numerator n) (denominator n))))))
-					  (format #t ", ~A ratio but imag: ~A, den: ~A, real: ~A, ~A/~A=~A"
+					  (format #t "    ~A ratio but imag: ~A, den: ~A, real: ~A, ~A/~A=~A"
 						  n (imag-part n) (denominator n) (real-part n) 
 						  (numerator n) (denominator n) (* 1.0 (/ (numerator n) (denominator n))))
 					  (if (and (real? n)
 						   (not (rational? n))
 						   (or (not (zero? (imag-part n)))
 						       (not (= n (real-part n)))))
-					      (format #t ", ~A real but rational: ~A, imag: ~A, real: ~A"
+					      (format #t "    ~A real but rational: ~A, imag: ~A, real: ~A"
 						      n (rational? n) (imag-part n) (real-part n))
-					      (format #t ", ~A complex but real? ~A, imag: ~A, ~A+~A=~A"
+					      (format #t "    ~A complex but real? ~A, imag: ~A, ~A+~A=~A"
 						      n (real? n) (imag-part n) (real-part n) (imag-part n)
 						      (+ (real-part n) (* 0+i (imag-part n)))))))))))))
 	    (newline) (newline)))))
@@ -16781,6 +16782,10 @@ in s7:
 ;; this only works if we haven't called (string->symbol "") making : into a keyword (see also other cases below)
 ;; perhaps I should document this weird case -- don't use : as a variable name
 
+;;; optimizer troubles
+(test (let () (define (f x) (let asd ())) (f 1)) 'error)
+(test (let () (define (f x) (let ())) (f 1)) 'error)
+
 (test (let ((pi 3)) pi) 'error)
 (test (let ((:key 1)) :key) 'error)
 (test (let ((:3 1)) 1) 'error)
@@ -24880,6 +24885,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (set! (initial-environment) 1) 'error)
 (test (let () (set! initial-environment 2)) 'error)
 (test (let ((initial-environment 2)) initial-environment) 'error)
+
+(test (let ((e (augment-environment () '(a . 1)))) ((lambda (x) (x *)) e)) 'error)
+(test (let ((e (augment-environment () '(a . 1)))) ((lambda (x) (x pi)) e)) 'error)
+(test (let () (augment-environment () (cons pi 1))) 'error)
+(test (let () (augment-environment () (cons "hi" 1))) 'error)
+(test (let () (augment-environment! () (cons pi 1))) 'error)
+(test (let () (augment-environment! () (cons "hi" 1))) 'error)
 
 (test (eq? (global-environment) '()) #f)
 (test (eq? (global-environment) (global-environment)) #t)

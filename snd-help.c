@@ -3978,11 +3978,20 @@ If more than one hook function, each function gets the previous function's outpu
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE(S_autoload_file, g_autoload_file_w,  1, 0, 0, H_autoload_file);
 
-  XEN_EVAL_C_STRING("(set! (hook-functions *unbound-variable-hook*) \
-                       (list (lambda (hook) \
-			       (let* ((sym (hook 'variable)) \
-                                      (file (autoload-file (symbol->string sym)))) \
-			         (if file (load file)) \
-			         (set! (hook 'result) (symbol->value sym))))))");
+  XEN_EVAL_C_STRING("(let ((arg (gensym)))                                            \n\
+                       (set! (hook-functions *unbound-variable-hook*)                 \n\
+ 	                 (list (apply lambda (list arg)                               \n\
+		           `((let* ((sym (,arg 'variable))                            \n\
+			            (file (autoload-file (symbol->string sym))))      \n\
+		               (if file (load file))                                  \n\
+		               (set! (,arg 'result) (symbol->value sym))))))))");
+
+  /* (procedure-source (car (hook-functions *unbound-variable-hook*)))
+   * (lambda ({gensym}-7) 
+       (let* ((sym ({gensym}-7 'variable)) 
+              (file (autoload-file (symbol->string sym)))) 
+         (if file (load file)) 
+         (set! ({gensym}-7 'result) (symbol->value sym))))
+  */
 #endif
 }

@@ -2675,7 +2675,7 @@ open-environment is still under development, but
 as an example, here is an implementation of float-vectors:
 </p>
 
-<pre class="indented">
+<pre>
 (begin
   (define float-vector? #f)
   (define make-float-vector #f)
@@ -2745,7 +2745,7 @@ we aren't bound by any previous classes, and we don't have to define separate me
 The '+' function for instance, can take any mixture of numbers:
 </p>
 
-<pre class="indented">
+<pre>
 (define-class quaternion () 
   '((r 0) (i 0) (j 0) (k 0))
   (list (list 'number? (lambda (obj) #t))
@@ -3489,10 +3489,6 @@ result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_intege
 </div>
 
 
-<!-- *unbound-variable-hook* is another case: it stops as soon as it gets something other then #undefined -->
-<!-- what about *error-hook* etc? -->
-
-
 
 
 
@@ -3572,7 +3568,7 @@ so that everything in s7 knows about the change.
 Here'a an example that adds trace and local variable info for debugging:
 </p>
 
-<pre class="indented">
+<pre>
 (define-bacro (procedure-annotate proc) ; use "bacro" so we can annotate local functions
   (let ((orig (<em class=red>procedure-source</em> proc)))
 
@@ -3638,7 +3634,7 @@ hi
 its bindings (this is borrowed from "nuntius" at reddit lisp):
 </p>
 
-<pre class="indented">
+<pre>
 (define-macro (print-let bindings . body)
   (let ((temp-symbol (gensym)))
     `(let ,(map (lambda (var/val)
@@ -3723,7 +3719,7 @@ example, then any input is evaluated in the environment of the break.  Say we ha
 following code in ex.scm:
 </p>
 
-<pre class="indented">
+<pre>
 (define-macro (break)
   `(let ((break-env (<em class=red>current-environment</em>))
 	 (prompt (format #f "~%~A &gt; " (if (defined? '__func__) __func__ "break"))))
@@ -4105,24 +4101,26 @@ which allows you to stop at some point, then evaluate arbitrary expressions in t
 <!-- INDEX autoload:autoload -->
 <em class=def id="autoload">If</em> s7 encounters an unbound variable, it calls
 <em class=def id="unboundvariablehook">*unbound-variable-hook*</em> before signalling an error.
-This hook's 
-functions take one argument, named 'variable,
-the unbound symbol.  In Snd, *unbound-variable-hook* is used to implement autoloading:
+The offending symbol is named 'variable in the hook environment.
+In Snd, *unbound-variable-hook* is used to implement autoloading:
 </p>
 
 <pre class="indented">
-(set! (hook-functions <em class=red>*unbound-variable-hook*</em>)
-  (list (lambda (hook)
-          (if (memq (hook 'result) '(#&lt;unspecified&gt; #&lt;undefined&gt;))
-              (let* ((sym (hook 'variable))
-                     (file (autoload-file (symbol-&gt;string sym))))
-                ;; autoload-file is a Snd function that knows where a lot of Snd's Scheme functions are
-                (if file (load file))
-                (set! (hook 'result) (symbol-&gt;value sym)))))))
+(let ((arg (gensym)))
+  (set! (hook-functions <em class=red>*unbound-variable-hook*</em>) 
+	(list (apply lambda (list arg)          ; use gensym for the parameter name
+		`((let* ((sym (,arg 'variable)) ; this is the unbound symbol
+			 (file (<em class=red>autoload-file</em> (symbol-&gt;string sym))))
+                         ;; autoload-file is a Snd function that knows where Snd's Scheme functions are
+		    (if file (load file)) 
+		    (set! (,arg 'result) (symbol-&gt;value sym))))))))
 </pre>
+
 <p>If none of the *unbound-variable-hook* functions sets 'result' to something other than #&lt;undefined&gt;,
 s7 calls the error handler.
 </p>
+
+<!-- TODO: check other built-in hook docs -->
 
 <blockquote>
 <div class="indented">
