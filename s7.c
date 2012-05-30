@@ -4782,7 +4782,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   s7_pointer nobj;
   int nloc;
 
-#if DEBUGGING && WITH_GCC
+#if 0
   if ((!sc) || (!obj) || (type(obj) == T_UNTYPED))
     {
       fprintf(stderr, "copy_object trouble!\n");
