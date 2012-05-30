@@ -604,11 +604,10 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_IS_PAIR_S, HOP_SAFE_IS_PAIR_S, OP_SAFE_IS_SYMBOL_S, HOP_SAFE_IS_SYMBOL_S, OP_SAFE_NOT_S, HOP_SAFE_NOT_S,
       
       /* these can't be embedded, and have to be the last thing called */
-      OP_C_LS, HOP_C_LS, OP_C_L_opSq, HOP_C_L_opSq, OP_C_L, HOP_C_L, OP_C_LL, HOP_C_LL, 
+      OP_C_L, HOP_C_L, 
       OP_C_ALL_G, HOP_C_ALL_G, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH,
       OP_C_S_opSq, HOP_C_S_opSq, OP_C_opSq_CC, HOP_C_opSq_CC, 
-      OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2,
-      OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq,
+      OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
       OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P,
       
       OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_opCq, HOP_VECTOR_opCq, 
@@ -700,11 +699,10 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
      "safe_is_pair_s", "h_safe_is_pair_s", "safe_is_symbol_s", "h_safe_is_symbol_s", "safe_not_s", "h_safe_not_s",
 
-     "c_ls", "h_c_ls", "c_l_opsq", "h_c_l_opsq", "c_l", "h_c_l", "c_ll", "h_c_ll", 
+     "c_l", "h_c_l", 
      "c_all_g", "h_c_all_g", "call-with-exit", "h-call-with-exit", "c_catch", "h_c_catch",
      "c_s_opsq", "h_c_s_opsq", "c_opsq_cc", "h_c_opsq_cc",
-     "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2",
-     "c_for_each_l_opsq", "h_c_for_each_l_opsq",
+     "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
      "c_s", "h_c_s", "read_s", "h_read_s", "list_p", "h_list_p",
 
      "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_opcq", "h_vector_opcq", 
@@ -4459,46 +4457,13 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 }
 
 
-#if 0
-static s7_pointer CHECK_ARGS(s7_scheme *sc, int line, s7_pointer args)
-{
-  if ((is_symbol(args)) ||
-      (is_null(args)))
-    return(args);
-  if (!is_pair(args))
-    {
-      fprintf(stderr, "%d bad args:", line); fprintf(stderr, " %s\n", DISPLAY(args));
-      return(args);
-    }
-  {
-    s7_pointer p;
-    for (p = args; is_pair(p); p = cdr(p))
-      {
-	if ((!is_symbol(car(p))) &&
-	    (!is_pair(car(p))))
-	  {
-	    fprintf(stderr, "%d bad args:", line); fprintf(stderr, " %s\n", DISPLAY(args));
-	    return(args);
-	  }
-      }
-    if ((!is_null(p)) &&
-	(!is_symbol(p)))
-      {fprintf(stderr, "%d weird dotted args:", line); fprintf(stderr, " %s\n", DISPLAY(args));}
-  }
-  return(args);
-}
-#else
-#define CHECK_ARGS(Sc, Line, Args) Args
-#endif
-
-
 static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, int type) 
 {
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
 
   s7_pointer x;
   NEW_CELL(sc, x);
-  closure_args(x) = CHECK_ARGS(sc, __LINE__, args);
+  closure_args(x) = args;
   closure_body(x) = code;
   closure_setter(x) = sc->F;
   closure_arity(x) = CLOSURE_ARITY_NOT_SET;
@@ -4526,7 +4491,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
 #define MAKE_CLOSURE(Sc, X, Args, Code, Env)	\
   do { \
        NEW_CELL(Sc, X); \
-       closure_args(X) = CHECK_ARGS(Sc, __LINE__, Args);	\
+       closure_args(X) = Args;	\
        closure_body(X) = Code; \
        closure_setter(X) = sc->F; \
        closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
@@ -4804,10 +4769,36 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
 }
 
 
+#if DEBUGGING
+static int copier = 0;
+#include <sys/resource.h>
+#endif
+
 static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
   int nloc;
+
+#if DEBUGGING
+  if ((!sc) || (!obj) || (type(obj) == T_UNTYPED))
+    {
+      fprintf(stderr, "copy_object trouble!\n");
+      abort();
+    }
+  copier++;
+  if (copier > 1000)
+    {
+      struct rusage usage;
+      int ret;
+      ret = getrusage(RUSAGE_SELF, &usage);
+      if (usage.ru_maxrss > 1000 * 100)
+	{
+	  fprintf(stderr, "we're hung I bet: %ld\n", usage.ru_maxrss);
+	  abort();
+	}
+      copier = 0;
+    }
+#endif
 
   NEW_CELL(sc, nobj);
   nloc = nobj->hloc;
@@ -29736,7 +29727,10 @@ static s7_pointer g_for_each_3(s7_scheme *sc, s7_pointer args)
   return(sc->UNSPECIFIED);
 }
 
-/* (let () (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) a) lst))) (hi)) */
+/* for_each_3: (let () (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) a) lst))) (hi))
+ * for_each_2: (let () (define (f b) b) (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) (f a)) lst))) (hi))
+ * for_each_1: (let () (define (f b) b) (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) 123 (f a)) lst))) (hi))
+ */
 
 static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -29744,11 +29738,14 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
     {
       s7_pointer lexpr;
       lexpr = cadr(expr);
+
       if (is_lambda(sc, car(lexpr)))
 	{
 	  s7_pointer largs, lbody;
+
 	  largs = cadr(lexpr);
 	  lbody = cddr(lexpr);
+
       	  if ((is_pair(largs)) &&
 	      (is_null(cdr(largs))) &&
 	      (!is_immutable(car(largs))) &&
@@ -29772,7 +29769,8 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   return(f);
 }
 
-/* extending this to map made little difference */
+/* extending this to map made little difference 
+ */
 #endif
 
 
@@ -33298,12 +33296,14 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			    }
 			  else
 			    {
-			      if ((is_pair(cadar(x))) &&
-				  (is_lambda(sc, caadar(x))) && /* check for stuff like (define (f) (eval (lambda 2))) */
-				  (is_pair(cdr(cadar(x)))) &&   /* TODO: check other similar cases */
-				  ((is_symbol(cadr(cadar(x)))) ||
-				   (is_pair(cadr(cadar(x))))) &&
-				  (is_pair(cddr(cadar(x)))))
+			      s7_pointer lambda_expr;
+			      lambda_expr = cadar(x);
+			      if ((is_pair(lambda_expr)) &&
+				  (is_lambda(sc, car(lambda_expr))) && /* check for stuff like (define (f) (eval (lambda 2))) */
+				  (is_pair(cdr(lambda_expr))) &&   
+				  ((is_symbol(cadr(lambda_expr))) ||
+				   (is_null(cadr(lambda_expr)))) &&
+				  (is_pair(cddr(lambda_expr))))
 				{
 				  set_optimized(car(x));
 				  set_unsafe(car(x));
@@ -33674,55 +33674,43 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			{
 			  if ((bad_pairs == 1) &&
 			      (is_pair(cadar(x))) &&
-			      (is_lambda(sc, caadar(x))))
+			      (func_is_c_function) &&
+			      ((is_symbol(caddar(x))) ||
+			       ((pairs == 2) &&
+				(is_optimized(caddar(x))) &&
+				(is_safe_c_s(caddar(x))))))
 			    {
-			      if (func_is_c_function)
+			      s7_pointer lambda_expr;
+			      lambda_expr = cadar(x);
+
+			      if ((is_pair(lambda_expr)) &&
+				  (is_lambda(sc, car(lambda_expr))) && /* check for stuff like (define (f) (for-each (lambda 2) ...)) */
+				  (is_pair(cdr(lambda_expr))) &&   
+				  (is_pair(cddr(lambda_expr))) &&
+				  (s7_list_length(sc, cadr(lambda_expr)) == 1) &&
+				  (is_symbol(caadr(lambda_expr))) &&
+				  (!is_immutable(caadr(lambda_expr))))
 				{
-				  if (is_symbol(caddar(x)))
+				  set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
+				  if ((c_call(car(x)) == g_for_each_1) || (c_call(car(x)) == g_for_each_2))
 				    {
-				      set_optimized(car(x));
-				      set_unsafe(car(x));
-				      set_optimize_data(car(x), OP_C_LS);
-				      set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x)));
-				      if (c_call(car(x)) == g_for_each_1)
-					set_optimize_data(car(x), OP_C_FOR_EACH_LS);
-				      else
+				      if (is_symbol(caddar(x)))
 					{
-					  if (c_call(car(x)) == g_for_each_2)
-					    set_optimize_data(car(x), OP_C_FOR_EACH_LS_2);
+					  set_optimized(car(x));
+					  set_unsafe(car(x));
+					  if (c_call(car(x)) == g_for_each_1)
+					    set_optimize_data(car(x), OP_C_FOR_EACH_LS);
+					  else set_optimize_data(car(x), OP_C_FOR_EACH_LS_2);
+					  return(false);
 					}
-				      return(false);
-				    }
-				  if ((pairs == 2) &&
-				      (is_optimized(caddar(x))) &&
-				      (is_safe_c_s(caddar(x))))
-				    {
-				      set_optimized(car(x));
-				      set_unsafe(car(x));
-				      set_optimize_data(car(x), OP_C_L_opSq);
-				      set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x)));
+				      /* so it must be a safe_c_s case */
 				      if (c_call(car(x)) == g_for_each_2)
-					set_optimize_data(car(x), OP_C_FOR_EACH_L_opSq);
-				      return(false);
-				    }
-				}
-			    }
-			  else
-			    {
-			      if ((bad_pairs == 2) &&
-				  (quotes == 0) &&
-				  (is_pair(cadar(x))) &&
-				  (is_lambda(sc, caadar(x))) &&
-				  (is_pair(caddar(x))) &&
-				  (is_lambda(sc, car(caddar(x)))))
-				{
-				  if (func_is_c_function)
-				    {
-				      set_optimized(car(x));
-				      set_unsafe(car(x));
-				      set_optimize_data(car(x), OP_C_LL);
-				      set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x)));
-				      return(false);
+					{
+					  set_optimized(car(x));
+					  set_unsafe(car(x));
+					  set_optimize_data(car(x), OP_C_FOR_EACH_L_opSq);
+					  return(false);
+					}
 				    }
 				}
 			    }
@@ -34049,23 +34037,36 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 
 
-	  /* (define (hi) (catch #t (lambda () 1) (lambda args 2))) */
+	  /* (define (hi) (catch #t (lambda () 1) (lambda args 2))) 
+	   *   first arg list must be (), second a symbol
+	   */
 
 	  if ((bad_pairs == 2) &&
 	      (symbols == 0) &&
 	      (quotes == 0) &&
 	      (func_is_c_function) &&
-	      (c_function_call(func) == g_catch) &&
-	      (is_pair(caddar(x))) &&
-	      (is_lambda(sc, car(caddar(x)))) &&
-	      (is_pair(car(cdddr(car(x))))) &&
-	      (is_lambda(sc, car(car(cdddr(car(x)))))))
+	      (c_function_call(func) == g_catch))
 	    {
-	      set_optimized(car(x));
-	      set_unsafe(car(x));
-	      set_optimize_data(car(x), OP_C_CATCH);
-	      set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
-	      return(false);
+	      s7_pointer body_lambda, error_lambda;
+	      body_lambda = caddar(x);
+	      error_lambda = cadddar(x);
+
+	      if ((is_pair(body_lambda)) &&
+		  (is_lambda(sc, car(body_lambda))) &&
+		  (is_pair(error_lambda)) &&
+		  (is_lambda(sc, car(error_lambda))) &&
+		  (is_null(cadr(body_lambda))) &&
+		  (is_not_null(cddr(body_lambda))) &&
+		  (is_symbol(cadr(error_lambda))) &&
+		  (!is_immutable(cadr(error_lambda))) &&
+		  (is_not_null(cddr(error_lambda))))
+		{
+		  set_optimized(car(x));
+		  set_unsafe(car(x));
+		  set_optimize_data(car(x), OP_C_CATCH);
+		  set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
+		  return(false);
+		}
 	    }
 
 	  if (bad_pairs > quotes) return(false);
@@ -37068,7 +37069,7 @@ static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
       if ((is_optimized(p)) &&
 	  ((optimize_data(p) & 1) != 0) &&
 	  (optimize_data(p) > OP_SAFE_C_C) &&
-	  (optimize_data(p) < OP_C_LS))
+	  (optimize_data(p) < OP_C_L))
 	return(true);
 
       if (direct_memq(car(p), vars))
@@ -43884,10 +43885,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case HOP_C_L:
 		  {
-		    /* (call/cc (lambda (a) arg)) ?? */
+		    /* here we make sure at optimization time that the lambda args are ok (either a symbol or ())
+		     *    (let () (define (f) (apply (lambda () 1))) (f))
+		     */
 		    s7_pointer x, arg1;
 
-		    /* TODO: here we need all kinds of error checks: (define (f) (eval (lambda 2 #f))) */
 		    MAKE_CLOSURE(sc, x, car(cdadr(code)), cdr(cdadr(code)), sc->envir);
 		    NEW_CELL_NO_CHECK(sc, arg1);
 		    set_type(arg1, T_PAIR);
@@ -43937,38 +43939,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  } 
 
 
-		case OP_C_LL:
-		  if (!c_function_is_ok(sc, code))
-		    break;
-		  check_lambda_args(sc, cadr(cadr(code)));
-		  check_lambda_args(sc, cadr(caddr(code)));
-
-		case HOP_C_LL:
-		  {
-		    /* (eqv? (lambda () 1) (lambda () 1)) */
-		    s7_pointer x, y, z, arg1, arg2;
-
-		    z = cdadr(code);
-		    MAKE_CLOSURE(sc, x, car(z), cdr(z), sc->envir);
-		    z = cdaddr(code);
-		    MAKE_CLOSURE(sc, y, car(z), cdr(z), sc->envir);
-
-		    NEW_CELL_NO_CHECK(sc, arg1);
-		    set_type(arg1, T_PAIR);
-		    car(arg1) = x;
-
-		    NEW_CELL_NO_CHECK(sc, arg2);
-		    set_type(arg2, T_PAIR);
-		    car(arg2) = y;
-		    cdr(arg1) = arg2;
-		    cdr(arg2) = sc->NIL;
-		    sc->args = arg1;
-
-		    sc->value = c_call(code)(sc, sc->args);
-		    goto START;
-		  }
-
-
 		case OP_C_FOR_EACH_LS:
 		  if (!c_function_is_ok(sc, code))
 		    break;
@@ -43976,7 +43946,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case HOP_C_FOR_EACH_LS:
 		  {
-		    /* (for-each (lambda (b) (vector-set! f i b) (set! i (+ i 1))) lst) */
+		    /* for_each_1: (let () (define (f b) b) (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) 123 (f a)) lst))) (hi)) 
+		     */
 		    s7_pointer x, y, z;
 
 		    y = cdadr(code);
@@ -44002,7 +43973,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case HOP_C_FOR_EACH_LS_2:
 		  {
-		    /* (for-each (lambda (f) (f e)) init) */
+		    /* for_each_2: (let () (define (f b) b) (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) (f a)) lst))) (hi))
+		     */
 		    s7_pointer x, y, z;
 
 		    y = cdadr(code);
@@ -44030,7 +44002,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case HOP_C_FOR_EACH_L_opSq:
 		  {
-		    /* (for-each (lambda (nsnd) ...) (cdr args)) */
 		    s7_pointer x, y, z;
 
 		    y = cdadr(code);
@@ -44049,71 +44020,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->code = x;
 		    sc->args = z;
 		    goto FOR_EACH_SIMPLER;
-		  }
-
-
-		case OP_C_LS:
-		  if (!c_function_is_ok(sc, code))
-		    break;
-		  check_lambda_args(sc, cadr(cadr(code)));
-
-		case HOP_C_LS:
-		  {
-		    /* (map (lambda (f) (and (procedure? f) (aritable? f 1))) lst) */
-		    s7_pointer x, arg1, arg2, y;
-
-		    y = cdadr(code);
-		    MAKE_CLOSURE(sc, x, car(y), cdr(y), sc->envir);
-
-		    NEW_CELL_NO_CHECK(sc, arg1);
-		    set_type(arg1, T_PAIR);
-		    car(arg1) = x;
-		    
-		    NEW_CELL_NO_CHECK(sc, arg2);
-		    set_type(arg2, T_PAIR);
-		    cdr(arg1) = arg2;
-		    sc->args = arg1;
-		    car(arg2) = find_symbol_or_bust(sc, caddr(code));
-		    cdr(arg2) = sc->NIL;
-		    /* (define (hi a) (for-each (lambda (n) (display n) (newline)) a)) (hi '(1 2 3)) */
-		    
-		    sc->value = c_call(code)(sc, sc->args);
-		    goto START;
-		  }
-
-
-		case OP_C_L_opSq:
-		  if (!c_function_is_ok(sc, code))
-		    break;
-		  if (!indirect_c_function_is_ok(sc, caddr(code)))
-		    break;
-		  check_lambda_args(sc, cadr(cadr(code)));
-
-		case HOP_C_L_opSq:
-		  {
-		    /* (map (lambda (arg) arg) (cdr name-and-args)) */
-		    s7_pointer x, y, arg1, arg2;
-		    
-		    y = cdadr(code);
-		    MAKE_CLOSURE(sc, x, car(y), cdr(y), sc->envir);
-
-		    NEW_CELL_NO_CHECK(sc, arg1);
-		    set_type(arg1, T_PAIR);
-		    car(arg1) = x;
-
-		    NEW_CELL_NO_CHECK(sc, arg2);
-		    set_type(arg2, T_PAIR);
-		    cdr(arg1) = arg2;
-		    sc->args = arg1;
-
-		    car(sc->T1_1) = find_symbol_or_bust(sc, cadr(caddr(code)));
-		    car(arg2) = c_call(caddr(code))(sc, sc->T1_1);
-		    cdr(arg2) = sc->NIL;
-
-		    /* (define (hi a) (for-each (lambda (n) (display n) (newline)) a)) (hi '(1 2 3)) */
-		    
-		    sc->value = c_call(code)(sc, sc->args);
-		    goto START;
 		  }
 
 
@@ -45285,7 +45191,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer x;
 	NEW_CELL(sc, x);
-	closure_args(x) = CHECK_ARGS(sc, __LINE__, cdar(sc->code));
+	closure_args(x) = cdar(sc->code);
 	closure_body(x) = cdr(sc->code);
 	closure_environment(x) = sc->envir;
 	closure_setter(x) = sc->F;
@@ -48805,7 +48711,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * the (cdr defmac...) is an unfortunate historical accident that is now very tricky to fix.
        */
       NEW_CELL_NO_CHECK(sc, sc->value);
-      closure_args(sc->value) = CHECK_ARGS(sc, __LINE__, list_1(sc, sc->y));
+      closure_args(sc->value) = list_1(sc, sc->y);
       closure_body(sc->value) = list_1(sc, 
 				       cons(sc, 
 					    sc->Apply,
@@ -48867,7 +48773,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   sc->code: (lambda ({defmac}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {defmac}-14)))
        */
       NEW_CELL_NO_CHECK(sc, sc->value);
-      closure_args(sc->value) = CHECK_ARGS(sc, __LINE__, list_1(sc, sc->y));
+      closure_args(sc->value) = list_1(sc, sc->y);
       closure_body(sc->value) = list_1(sc, 
 					 cons(sc, 
 					      sc->Apply,

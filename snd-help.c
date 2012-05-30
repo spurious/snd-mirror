@@ -3978,20 +3978,32 @@ If more than one hook function, each function gets the previous function's outpu
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE(S_autoload_file, g_autoload_file_w,  1, 0, 0, H_autoload_file);
 
-  XEN_EVAL_C_STRING("(let ((arg (gensym)))                                            \n\
-                       (set! (hook-functions *unbound-variable-hook*)                 \n\
- 	                 (list (apply lambda (list arg)                               \n\
-		           `((let* ((sym (,arg 'variable))                            \n\
-			            (file (autoload-file (symbol->string sym))))      \n\
-		               (if file (load file))                                  \n\
-		               (set! (,arg 'result) (symbol->value sym))))))))");
+  {
+    /* we're trying to keep any "normal" symbol out of this environment, so the argument to the
+     *   hook function (normally "hook") has to be a gensym, but even the gensym has to be
+     *   outside the expression!
+     */
+    char *arg_name, *expression;
+    arg_name = mus_strdup(s7_symbol_name(s7_gensym(s7, "unbound-variable")));
+    expression = (char *)calloc(1024, sizeof(char));
+    snprintf(expression, 1024, "(set! (hook-functions *unbound-variable-hook*)     \n\
+ 	                          (list (lambda (%s)                               \n\
+		                    (let* ((sym (%s 'variable))                    \n\
+			              (file (autoload-file (symbol->string sym)))) \n\
+		                      (if file (load file))                        \n\
+		                      (set! (%s 'result) (symbol->value sym))))))",
+	     arg_name, arg_name, arg_name);
+    XEN_EVAL_C_STRING(expression);
+    free(expression);
+    free(arg_name);
 
   /* (procedure-source (car (hook-functions *unbound-variable-hook*)))
-   * (lambda ({gensym}-7) 
-       (let* ((sym ({gensym}-7 'variable)) 
+     (lambda ({unbound-variable}-7) 
+       (let* ((sym ({unbound-variable}-7 'variable)) 
               (file (autoload-file (symbol->string sym)))) 
          (if file (load file)) 
-         (set! ({gensym}-7 'result) (symbol->value sym))))
+         (set! ({unbound-variable}-7 'result) (symbol->value sym))))
   */
+  }
 #endif
 }

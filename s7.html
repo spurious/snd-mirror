@@ -2249,7 +2249,7 @@ Perhaps these would be better:
       `(with-environment ,env (define ,@args))))
 
 ;; and much less satisfying...
-(define next-environment outer-environment)                 ; parent-environment?
+(define next-environment outer-environment)                 
 (define current-environment-unshadowed initial-environment) ; pure-environment?
 </pre>
 
@@ -4102,21 +4102,8 @@ which allows you to stop at some point, then evaluate arbitrary expressions in t
 <em class=def id="autoload">If</em> s7 encounters an unbound variable, it calls
 <em class=def id="unboundvariablehook">*unbound-variable-hook*</em> before signalling an error.
 The offending symbol is named 'variable in the hook environment.
-In Snd, *unbound-variable-hook* is used to implement autoloading:
-</p>
-
-<pre class="indented">
-(let ((arg (gensym)))
-  (set! (hook-functions <em class=red>*unbound-variable-hook*</em>) 
-	(list (apply lambda (list arg)          ; use gensym for the parameter name
-		`((let* ((sym (,arg 'variable)) ; this is the unbound symbol
-			 (file (<em class=red>autoload-file</em> (symbol-&gt;string sym))))
-                         ;; autoload-file is a Snd function that knows where Snd's Scheme functions are
-		    (if file (load file)) 
-		    (set! (,arg 'result) (symbol-&gt;value sym))))))))
-</pre>
-
-<p>If none of the *unbound-variable-hook* functions sets 'result' to something other than #&lt;undefined&gt;,
+In Snd, *unbound-variable-hook* is used to implement autoloading (see snd-help.c).
+If none of the *unbound-variable-hook* functions sets 'result' to something other than #&lt;undefined&gt;,
 s7 calls the error handler.
 </p>
 
