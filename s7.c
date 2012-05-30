@@ -434,7 +434,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "catch", "dynamic-wind", "define-constant", "define-constant", 
    "do", "do", "do", "do", "do", "do",
    "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
-   "error-hook-quit", "with-environment", "with-environment", "define-expansion",
+   "error-hook-quit", "with-environment", "with-environment", "with-baffle", "define-expansion",
    "for-each", "for-each", "for-each", "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
    "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", 
@@ -449,9 +449,12 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "let", "let", "let", "case", "case", "case", "case",
    "let", "let", "let", "let", "let", "let", "let",
    "let", "let",
-   "if", "if", "if", "if", "if", "if", "if", "if",
+
+   "if", "if", "if", "if", "if", "if", 
+   "if", "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", "if",
+
    "and", "and", "and", "or", "or", "or", 
 
 #if WITH_OPTIMIZATION
@@ -4779,7 +4782,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   s7_pointer nobj;
   int nloc;
 
-#if DEBUGGING
+#if DEBUGGING && WITH_GCC
   if ((!sc) || (!obj) || (type(obj) == T_UNTYPED))
     {
       fprintf(stderr, "copy_object trouble!\n");
@@ -4791,7 +4794,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
       struct rusage usage;
       int ret;
       ret = getrusage(RUSAGE_SELF, &usage);
-      if (usage.ru_maxrss > 1000 * 100)
+      if (usage.ru_maxrss > 1000 * 1000)
 	{
 	  fprintf(stderr, "we're hung I bet: %ld\n", usage.ru_maxrss);
 	  abort();
@@ -24240,57 +24243,63 @@ static s7_pointer fallback_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 }
 
 
-unsigned int s7_function_class(s7_pointer f)
+unsigned int s7_function_class(s7_scheme *sc, s7_pointer f)
 {
   return(c_function_class(f));
 }
 
-void s7_function_set_class(s7_pointer f, unsigned int c)
+void s7_function_set_class(s7_scheme *sc, s7_pointer f, unsigned int c)
 {
   c_function_class(f) = c;
 }
 
 
-s7_pointer (*s7_function_chooser(s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   return(c_function_chooser(fnc));
 }
 
-void s7_function_set_chooser(s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr))
+void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr))
 {
   c_function_chooser(fnc) = chooser;
 }
 
 
-void *s7_function_chooser_data(s7_pointer expr)
+void *s7_function_chooser_data(s7_scheme *sc, s7_pointer expr)
 {
-  if ((ecdr(expr)) &&
+  if ((is_pair(expr)) &&
+      (is_symbol(car(expr))) &&
+      (car(expr) != sc->QUOTE) &&
+      (ecdr(expr)) &&
       (is_c_function(ecdr(expr))))
     return(c_function_chooser_data(ecdr(expr)));
   return(NULL);
 }
 
-void s7_function_chooser_set_data(s7_pointer f, void *data)
+void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data)
 {
   c_function_chooser_data(f) = data;
 }
 
 
-s7_function s7_function_choice(s7_pointer expr)
+s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr)
 {
-  if ((ecdr(expr)) &&
+  if ((is_pair(expr)) &&
+      (is_symbol(car(expr))) &&
+      (car(expr) != sc->QUOTE) &&
+      (ecdr(expr)) &&
       (is_c_function(ecdr(expr))))
     return(c_function_call(ecdr(expr)));
   return(NULL);
 }
 
-void s7_function_choice_set_direct(s7_pointer expr)
+void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr)
 {
   optimize_data(expr) = HOP_SAFE_C_C;
   clear_unsafe(expr);
 }
 
-bool s7_function_choice_is_direct(s7_pointer expr)
+bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr)
 {
   return(optimize_data(expr) == HOP_SAFE_C_C);
 }
@@ -24342,7 +24351,7 @@ void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size)
 }
 
 
-void **s7_expression_data(s7_pointer expr)
+void **s7_expression_data(s7_scheme *sc, s7_pointer expr)
 {
   /* the has_table check should protect against leftover garbage in the optimize_data_index field */
   if (has_table(expr))
@@ -24352,44 +24361,46 @@ void **s7_expression_data(s7_pointer expr)
 
 #else
 
-unsigned int s7_function_class(s7_pointer f)
+/* TODO: check that this case compiles */
+
+unsigned int s7_function_class(s7_scheme *sc, s7_pointer f)
 {
   return(0);
 }
 
-void s7_function_set_class(s7_pointer f, unsigned int c)
+void s7_function_set_class(s7_scheme *sc, s7_pointer f, unsigned int c)
 {
 }
 
-s7_pointer (*s7_function_chooser(s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   return(NULL); /* not called, I hope */
 }
 
-void s7_function_set_chooser(s7_pointer f,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr))
+void s7_function_set_chooser(s7_scheme *sc, s7_pointer f,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr))
 {
 }
 
-void *s7_function_chooser_data(s7_pointer f)
-{
-  return(NULL);
-}
-
-void s7_function_chooser_set_data(s7_pointer f, void *data)
-{
-}
-
-s7_function s7_function_choice(s7_pointer expr)
+void *s7_function_chooser_data(s7_scheme *sc, s7_pointer f)
 {
   return(NULL);
 }
 
-bool s7_function_choice_is_direct(s7_pointer expr)
+void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data)
+{
+}
+
+s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr)
+{
+  return(NULL);
+}
+
+bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr)
 {
   return(false);
 }
 
-void s7_function_choice_set_direct(s7_pointer expr)
+void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr)
 {
 }
 
@@ -24403,7 +24414,7 @@ void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size)
   return(NULL);
 }
 
-void **s7_expression_data(s7_pointer expr)
+void **s7_expression_data(s7_scheme *sc, s7_pointer expr)
 {
   return(NULL);
 }
@@ -35122,6 +35133,9 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	  if (is_symbol(cadr(x)))
 	    {
 	      s7_pointer vars, p;
+	      if ((!is_pair(cddr(x))) ||
+		  (!is_pair(cdddr(x)))) /* (let asdf) or possibly (let asdf ()) */
+		return(false);
 	      for (vars = caddr(x); is_pair(vars); vars = cdr(vars))
 		{
 		  if ((caar(vars) == func) ||
@@ -55172,6 +55186,15 @@ s7_scheme *s7_init(void)
 
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 263 */
+
+#if DEBUGGING
+  if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)
+    fprintf(stderr, "define-bacro* op: %s\n", op_names[OP_DEFINE_BACRO_STAR]);
+#if WITH_OPTIMIZATION
+  if (strcmp(op_names[OP_SAFE_C_opSq_P_1], "safe_c_opsq_p_1") != 0)
+    fprintf(stderr, "safe_c_opsq_p_1 op: %s\n", op_names[OP_SAFE_C_opSq_P_1]);
+#endif
+#endif
 
   save_initial_environment(sc);
   return(sc);

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.4"
-#define S7_DATE "28-May-12"
+#define S7_VERSION "2.5"
+#define S7_DATE "31-May-12"
 
 
 typedef long long int s7_Int;
@@ -553,19 +553,19 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
   /* this is now the same as s7_make_procedure_with_setter (different args) */
 
 
-s7_pointer (*s7_function_chooser(s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-void s7_function_set_chooser(s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
-void *s7_function_chooser_data(s7_pointer f);
-void s7_function_chooser_set_data(s7_pointer f, void *data);
-unsigned int s7_function_class(s7_pointer f);
-void s7_function_set_class(s7_pointer f, unsigned int c);
-s7_function s7_function_choice(s7_pointer expr);
+s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
+void *s7_function_chooser_data(s7_scheme *sc, s7_pointer f);
+void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data);
+unsigned int s7_function_class(s7_scheme *sc, s7_pointer f);
+void s7_function_set_class(s7_scheme *sc, s7_pointer f, unsigned int c);
+s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr);
 
-bool s7_function_choice_is_direct(s7_pointer expr);
-void s7_function_choice_set_direct(s7_pointer expr);
+bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
+void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
 
-void **s7_expression_data(s7_pointer expr);
+void **s7_expression_data(s7_scheme *sc, s7_pointer expr);
 void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size);
 
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
@@ -792,7 +792,8 @@ void s7_mark_object(s7_pointer p);
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
- *			
+ *		
+ * 31-May:    added s7_scheme argument to all the optimizer chooser functions.
  * 24-May:    open-environment?
  * 17-May:    arity, aritable?
  *            removed trace and untrace.
