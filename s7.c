@@ -343,7 +343,6 @@
 #define DISPLAY(Obj) s7_object_to_c_string(sc, Obj)
 #define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj, 80)
 
-
 enum {OP_NO_OP, 
       OP_READ_INTERNAL, OP_EVAL, 
       OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
@@ -818,6 +817,10 @@ typedef struct s7_cell {
     unsigned char type_field;
   } tf;
   int hloc;
+#if DEBUGGING
+  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type;
+  const char *current_alloc_func, *previous_alloc_func;
+#endif
   union {
     
     struct { 
@@ -1150,54 +1153,55 @@ struct s7_scheme {
  *  the array lookup has exactly the same computational cost as the bit check
  */
 
-#define T_UNTYPED              0
+#define T_FREE                 0
 #define T_NIL                  1
-#define T_BOOLEAN              2
-#define T_CHARACTER            3
-#define T_SYMBOL               4
-#define T_SYNTAX               5
+#define T_UNIQUE               2
+#define T_BOOLEAN              3
+#define T_CHARACTER            4
+#define T_SYMBOL               5
+#define T_SYNTAX               6
 
-#define T_INTEGER              6
-#define T_RATIO                7
-#define T_REAL                 8
-#define T_COMPLEX              9
+#define T_INTEGER              7
+#define T_RATIO                8
+#define T_REAL                 9
+#define T_COMPLEX             10
 
-#define T_BIG_INTEGER         10
-#define T_BIG_RATIO           11
-#define T_BIG_REAL            12
-#define T_BIG_COMPLEX         13
+#define T_BIG_INTEGER         11
+#define T_BIG_RATIO           12
+#define T_BIG_REAL            13
+#define T_BIG_COMPLEX         14
 /* only used in WITH_GMP case -- order matters */
 
-#define T_STRING              14
-#define T_PAIR                15
-#define T_CLOSURE             16
-#define T_CLOSURE_STAR        17
-#define T_CONTINUATION        18
-#define T_VECTOR              19
-#define T_MACRO               20
-#define T_BACRO               21
-#define T_C_OBJECT            22
-#define T_GOTO                23
-#define T_CATCH               24
-#define T_DYNAMIC_WIND        25
-#define T_HASH_TABLE          26
-#define T_ENVIRONMENT         27
-#define T_STACK               28
-#define T_COUNTER             29
-#define T_SLOT                30
-#define T_C_POINTER           31
-#define T_C_MACRO             32
-#define T_OUTPUT_PORT         33
-#define T_INPUT_PORT          34
-#define T_BAFFLE              35
+#define T_STRING              15
+#define T_PAIR                16
+#define T_CLOSURE             17
+#define T_CLOSURE_STAR        18
+#define T_CONTINUATION        19
+#define T_VECTOR              20
+#define T_MACRO               21
+#define T_BACRO               22
+#define T_C_OBJECT            23
+#define T_GOTO                24
+#define T_CATCH               25
+#define T_DYNAMIC_WIND        26
+#define T_HASH_TABLE          27
+#define T_ENVIRONMENT         28
+#define T_STACK               29
+#define T_COUNTER             30
+#define T_SLOT                31
+#define T_C_POINTER           32
+#define T_C_MACRO             33
+#define T_OUTPUT_PORT         34
+#define T_INPUT_PORT          35
+#define T_BAFFLE              36
 
-#define T_C_FUNCTION          36
-#define T_C_ANY_ARGS_FUNCTION 37
-#define T_C_OPT_ARGS_FUNCTION 38
-#define T_C_RST_ARGS_FUNCTION 39
-#define T_C_LST_ARGS_FUNCTION 40
+#define T_C_FUNCTION          37
+#define T_C_ANY_ARGS_FUNCTION 38
+#define T_C_OPT_ARGS_FUNCTION 39
+#define T_C_RST_ARGS_FUNCTION 40
+#define T_C_LST_ARGS_FUNCTION 41
 
-#define BUILT_IN_TYPES        41
+#define BUILT_IN_TYPES        42
 
 
 static bool t_number_p[BUILT_IN_TYPES], t_real_p[BUILT_IN_TYPES], t_rational_p[BUILT_IN_TYPES];
@@ -1232,7 +1236,7 @@ static void init_types(void)
   t_big_number_p[T_BIG_COMPLEX] = true;
 
   t_simple_p[T_NIL] = true;
-  t_simple_p[T_UNTYPED] = true;
+  t_simple_p[T_UNIQUE] = true;
   t_simple_p[T_BOOLEAN] = true;
   t_simple_p[T_CHARACTER] = true;
   t_simple_p[T_SYMBOL] = true;
@@ -1430,7 +1434,20 @@ static void init_types(void)
 
 #define UNUSED_BITS                   0x00000000
 
-#define set_type(p, f)                typeflag(p) = f
+#if DEBUGGING
+#define set_type(p, f) \
+  do { \
+      p->previous_alloc_line = p->current_alloc_line; \
+      p->previous_alloc_func = p->current_alloc_func; \
+      p->previous_alloc_type = p->current_alloc_type; \
+      p->current_alloc_line = __LINE__; \
+      p->current_alloc_func = __func__; \
+      p->current_alloc_type = f; \
+      typeflag(p) = f; \
+    } while (0)
+#else
+  #define set_type(p, f)              typeflag(p) = f
+#endif
 
 #define is_true(Sc, p)                ((p) != Sc->F)
 #define is_false(Sc, p)               ((p) == Sc->F)
@@ -2591,7 +2608,8 @@ static void mark_input_port(s7_pointer p)
 
 static void init_mark_functions(void)
 {
-  mark_function[T_UNTYPED]             = just_mark;
+  mark_function[T_FREE]                = mark_noop;
+  mark_function[T_UNIQUE]              = just_mark;
   mark_function[T_NIL]                 = mark_noop;
   mark_function[T_STRING]              = just_mark;
   mark_function[T_INTEGER]             = just_mark;
@@ -4772,36 +4790,10 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
 }
 
 
-#if DEBUGGING
-static int copier = 0;
-#include <sys/resource.h>
-#endif
-
 static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
   int nloc;
-
-#if 0
-  if ((!sc) || (!obj) || (type(obj) == T_UNTYPED))
-    {
-      fprintf(stderr, "copy_object trouble!\n");
-      abort();
-    }
-  copier++;
-  if (copier > 1000)
-    {
-      struct rusage usage;
-      int ret;
-      ret = getrusage(RUSAGE_SELF, &usage);
-      if (usage.ru_maxrss > 1000 * 1000)
-	{
-	  fprintf(stderr, "we're hung I bet: %ld\n", usage.ru_maxrss);
-	  abort();
-	}
-      copier = 0;
-    }
-#endif
 
   NEW_CELL(sc, nobj);
   nloc = nobj->hloc;
@@ -18987,7 +18979,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_NIL:
       return(copy_string("()"));
   
-    case T_UNTYPED:
+    case T_UNIQUE:
       if (obj == sc->EOF_OBJECT)
 	return(copy_string("#<eof>"));
   
@@ -19209,23 +19201,64 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     default:
       break;
     }
+
+#if DEBUGGING
+  {
+    /* show current state, current allocated state, and previous allocated state.
+     */
+    char *current_bits, *allocated_bits, *previous_bits, *str;
+    int save_typeflag, len;
+    const char *excl_name;
+
+    if (type(obj) == T_FREE)
+      excl_name = "free cell!";
+    else excl_name = "unknown object!";
+
+    current_bits = describe_type_bits(sc, obj);
+    save_typeflag = typeflag(obj);
+    typeflag(obj) = obj->current_alloc_type;
+    allocated_bits = describe_type_bits(sc, obj);
+    typeflag(obj) = obj->previous_alloc_type;
+    previous_bits = describe_type_bits(sc, obj);
+    typeflag(obj) = save_typeflag;
+    
+    len = safe_strlen(excl_name) + 
+          safe_strlen(current_bits) + safe_strlen(allocated_bits) + safe_strlen(previous_bits) + 
+          safe_strlen(obj->previous_alloc_func) + safe_strlen(obj->current_alloc_func) + 512;
+    str = (char *)calloc(len, sizeof(char));
+
+    snprintf(str, len, 
+	     "<%s %s, current: %s[%d] %s, previous: %s[%d] %s>", 
+	     excl_name, current_bits, 
+	     obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
+	     obj->previous_alloc_func, obj->previous_alloc_line, previous_bits);
+
+    free(current_bits);
+    free(allocated_bits);
+    free(previous_bits);
+    return(str);
+  }
+#else
   {
     char *str, *tmp;
     int len;
     tmp = describe_type_bits(sc, obj);
     len = 32 + safe_strlen(tmp);
     str = (char *)malloc(len * sizeof(char));
-    snprintf(str, len, "<unknown object! %s>", tmp);
+    if (type(obj) == T_FREE)
+      snprintf(str, len, "<free cell! %s>", tmp);
+    else snprintf(str, len, "<unknown object! %s>", tmp);
     free(tmp);
     return(str);
   }
+#endif
 }
 
 
 bool s7_is_valid_pointer(s7_pointer arg)
 {
   return((arg) &&
-	 (type(arg) > T_UNTYPED) && (type(arg) < BUILT_IN_TYPES));
+	 (type(arg) > T_FREE) && (type(arg) < BUILT_IN_TYPES));
 }
 
 
@@ -26322,8 +26355,8 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
   
   switch (type(x))
     {
-    case T_UNTYPED: 
-      /* we checked x == y above, and know x and y are T_UNTYPED
+    case T_UNIQUE: 
+      /* we checked x == y above, and know x and y are T_UNIQUE
        */
       if (x == sc->UNSPECIFIED) return(y == sc->NO_VALUE);
       if (x == sc->NO_VALUE) return(y == sc->UNSPECIFIED);
@@ -26558,8 +26591,8 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 
   switch (type(x))
     {
-    case T_UNTYPED: 
-      /* we checked x == y above, and know x and y are T_UNTYPED
+    case T_UNIQUE: 
+      /* we checked x == y above, and know x and y are T_UNIQUE
        */
       if (x == sc->UNSPECIFIED) return(y == sc->NO_VALUE);
       if (x == sc->NO_VALUE) return(y == sc->UNSPECIFIED);
@@ -27939,8 +27972,9 @@ static const char *make_type_name(const char *name, int article)
 
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 {
+  static const char *frees[3] =         {"free cell",      "the free cell",      "a free cell"};
   static const char *nils[3] =          {"nil",            "the null list",      "nil"};
-  static const char *untypeds[3] =      {"untyped",        "the untyped",        "untyped"};
+  static const char *uniques[3] =       {"untyped",        "the untyped",        "untyped"};
   static const char *booleans[3] =      {"boolean",        "the boolean",        "boolean"};
   static const char *strings[3] =       {"string",         "the string",         "a string"};
   static const char *symbols[3] =       {"symbol",         "the symbol",         "a symbol"};
@@ -27973,8 +28007,9 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 
   switch (type(arg))
     {
+    case T_FREE:         return(frees[article]);
     case T_NIL:          return(nils[article]);
-    case T_UNTYPED:      return(untypeds[article]);
+    case T_UNIQUE:       return(uniques[article]);
     case T_BOOLEAN:      return(booleans[article]);
     case T_STRING:       return(strings[article]);
     case T_SYMBOL:       return(symbols[article]);
@@ -29036,10 +29071,13 @@ static void improper_arglist_error(s7_scheme *sc)
   /* sc->code is the last (dotted) arg, sc->args is the arglist reversed not including sc->code
    *   the original was `(,@(reverse args) . ,code) essentially
    */
-  s7_error(sc, sc->SYNTAX_ERROR, 
-	   list_2(sc,
-		  make_protected_string(sc, "improper list of arguments: ~S"),
-		  append_in_place(sc, safe_reverse_in_place(sc, sc->args), sc->code)));
+  if (sc->args == sc->NIL)               /* (abs . 1) */
+    s7_error(sc, sc->SYNTAX_ERROR, 
+	     list_1(sc, make_protected_string(sc, "function call is dotted list?")));
+  else s7_error(sc, sc->SYNTAX_ERROR, 
+		list_2(sc,
+		       make_protected_string(sc, "improper list of arguments: ~S"),
+		       append_in_place(sc, safe_reverse_in_place(sc, sc->args), sc->code)));
 }
 
 
@@ -30926,12 +30964,12 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
    */
   if (is_not_null(s7_hook_functions(sc, sc->unbound_variable_hook)))
     {
-      int cur_code_loc, value_loc;
-      s7_pointer result, cur_code, value;
+      int cur_code_loc, value_loc, args_loc, code_loc;
+      s7_pointer result, cur_code, value, code, args;
       int save_x = -1, save_y = -1, save_z = -1;
       
       /* sc->args and sc->code are pushed on the stack by s7_call, then
-       *   restored by eval, so they are protected, but sc->value and sc->cur_code are
+       *   restored by eval, so they are normally protected, but sc->value and sc->cur_code are
        *   not protected (yet).  We need sc->cur_code so that the possible eventual error
        *   call can tell where the error occurred, and we need sc->value because it might
        *   be awaiting addition to sc->args in e.g. OP_EVAL_ARGS5, and then be clobbered
@@ -30939,6 +30977,10 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
        *   is not protected.
        */
 
+      args = sc->args;
+      args_loc = s7_gc_protect(sc, args);
+      code = sc->code;
+      code_loc = s7_gc_protect(sc, code);
       value = sc->value;
       value_loc = s7_gc_protect(sc, value);
       cur_code = sc->cur_code;
@@ -30953,13 +30995,17 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
       SAVE_X_Y_Z(save_x, save_y, save_z); /* this is needed to protect entire expression context */
-      result = s7_apply_function(sc, sc->unbound_variable_hook, list_1(sc, sym));
+      result = s7_call(sc, sc->unbound_variable_hook, list_1(sc, sym)); /* not s7_apply_function */
       RESTORE_X_Y_Z(save_x, save_y, save_z);
 
       sc->value = value;
       s7_gc_unprotect_at(sc, value_loc);
       sc->cur_code = cur_code;
       s7_gc_unprotect_at(sc, cur_code_loc);
+      sc->args = args;
+      s7_gc_unprotect_at(sc, args_loc);
+      sc->code = code;
+      s7_gc_unprotect_at(sc, code_loc);
 
       if ((result != sc->UNDEFINED) &&
 	  (result != sc->UNSPECIFIED))
@@ -34457,8 +34503,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 
   set_checked(car(x));
   y = caar(x);
-
-  /* fprintf(stderr, "[%p]\noptimize_expression %s\n     e: %s, y: %s %s\n", car(x), DISPLAY(car(x)), DISPLAY(e), DISPLAY(y), describe_type_bits(sc, y)); */
 
   if (is_symbol(y))
     {
@@ -54052,7 +54096,7 @@ s7_scheme *s7_init(void)
   frame_id(sc->NIL) = -1;
   sc->NIL->hloc = NOT_IN_HEAP;
   
-  set_type(sc->GC_NIL, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
+  set_type(sc->GC_NIL, T_UNIQUE | T_GC_MARK | T_IMMUTABLE);
   car(sc->GC_NIL) = cdr(sc->GC_NIL) = sc->UNSPECIFIED;
   sc->GC_NIL->hloc = NOT_IN_HEAP;
   
@@ -54064,23 +54108,23 @@ s7_scheme *s7_init(void)
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   sc->F->hloc = NOT_IN_HEAP;
   
-  set_type(sc->EOF_OBJECT, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
+  set_type(sc->EOF_OBJECT, T_UNIQUE | T_GC_MARK | T_IMMUTABLE);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
   sc->EOF_OBJECT->hloc = NOT_IN_HEAP;  
 
-  set_type(sc->UNSPECIFIED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
+  set_type(sc->UNSPECIFIED, T_UNIQUE | T_GC_MARK | T_IMMUTABLE);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   sc->UNSPECIFIED->hloc = NOT_IN_HEAP;
   
-  set_type(sc->UNDEFINED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
+  set_type(sc->UNDEFINED, T_UNIQUE | T_GC_MARK | T_IMMUTABLE);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   sc->UNDEFINED->hloc = NOT_IN_HEAP;
   
-  set_type(sc->NO_VALUE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
+  set_type(sc->NO_VALUE, T_UNIQUE | T_GC_MARK | T_IMMUTABLE);
   car(sc->NO_VALUE) = cdr(sc->NO_VALUE) = sc->UNSPECIFIED;
   sc->NO_VALUE->hloc = NOT_IN_HEAP;
 
-  set_type(sc->ELSE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE);
+  set_type(sc->ELSE, T_UNIQUE | T_GC_MARK | T_IMMUTABLE);
   car(sc->ELSE) = cdr(sc->ELSE) = sc->UNSPECIFIED;
   sc->ELSE->hloc = NOT_IN_HEAP;
   /* "else" is added to the global environment below -- can't do it here
@@ -55228,6 +55272,10 @@ s7_scheme *s7_init(void)
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
  * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
+ *
+ * how often these: copy obj via doloop, or set all to 1 val
+ * case of char? (currently we have op_case_int which ought to jump!)
+ * (random 100) or some other constant -- this does happen, and we could split out the int/float cases
  *
  * lint     13424 -> 1231 [1237] 1286
  * bench    52019 -> 7875 [8268] 8037

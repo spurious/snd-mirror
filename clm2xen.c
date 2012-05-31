@@ -10189,7 +10189,7 @@ static bool expr_is_clm_gen(s7_scheme *sc, s7_pointer expr)
 
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
-static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol;
+static s7_pointer multiply_symbol, vector_ref_symbol;
 
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
@@ -10414,8 +10414,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	}
       if ((s7_is_symbol(cadr(expr))) &&
 	  (s7_is_pair(cddr(expr))) &&          /* (* + '(vector?)) -- this is the optimizer's fault */
-	  (s7_is_pair(caddr(expr))) &&
-	  (car(caddr(expr)) != quote_symbol))
+	  (s7_is_pair(caddr(expr))))
 	{
 	  s7_pointer *choices;
 	  choices = (s7_pointer *)s7_function_chooser_data(sc, caddr(expr));
@@ -11596,7 +11595,6 @@ static void init_choosers(s7_scheme *sc)
   multiply_symbol = s7_make_symbol(sc, "*");
   reverb_symbol = s7_make_symbol(sc, "*reverb*");
   output_symbol = s7_make_symbol(sc, "*output*");
-  quote_symbol = s7_make_symbol(sc, "quote");
 
   f = s7_name_to_value(sc, "*");
   initial_multiply_chooser = s7_function_chooser(sc, f);

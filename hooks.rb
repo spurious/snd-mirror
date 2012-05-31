@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Thu Feb 23 15:28:23 CET 2012
+# Changed: Sun May 13 00:11:24 CEST 2012
 
 # Commentary:
 #
@@ -194,7 +194,6 @@ need a String or Symbol, not %s"
   $output_name_hook             = Hook.new("$output_name_hook", 1)
   $peak_env_hook                = Hook.new("$peak_env_hook", 2)
   $play_hook                    = Hook.new("$play_hook", 1)
-  $print_hook                   = Hook.new("$print_hook", 1)
   $read_hook                    = Hook.new("$read_hook", 1)
   $save_hook                    = Hook.new("$save_hook", 2)
   $save_state_hook              = Hook.new("$save_state_hook", 1)
@@ -320,7 +319,6 @@ if defined? $after_graph_hook
                $output_name_hook,
                $peak_env_hook,
                $play_hook,
-               $print_hook,
                $read_hook,
                $save_hook,
                $save_state_hook,

@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Tue Apr 17 02:39:00 CEST 2012
+\ Changed: Sun May  6 17:39:52 CEST 2012
 
 \ Commentary:
 \
@@ -1756,6 +1756,7 @@ hide
 #f value xb-current-buffer
 0  value xb-last-width
 0  value xb-last-height
+set-current
 
 : open-current-buffer { width heigth -- }
   width  to xb-last-width
@@ -1770,43 +1771,7 @@ hide
 ;
 
 : close-all-buffers ( -- ) sounds each ( s ) sound-widgets 0 array-ref hide-widget drop end-each ;
-
-: stb-cb <{ response -- f }>
-  xb-current-buffer 0 array-ref
-  sound-widgets 0 array-ref
-  widget-size dup 0 array-ref
-  swap 1 array-ref { width height }
-  response string? not response empty? || if
-    xb-current-buffer { temp }
-    xb-last-buffer if
-      xb-last-buffer to xb-current-buffer
-    else
-      :file        undef
-      :header-type undef
-      :data-format undef
-      :srate       undef
-      :channels    undef
-      :comment     undef
-      :size        undef new-sound { index }
-      #( index 0 ) to xb-current-buffer
-    then
-    temp to xb-last-buffer
-  else
-    response find-file dup false? if drop "" then 0 find-sound { index }
-    index sound? if
-      xb-current-buffer to xb-last-buffer
-      #( index 0 ) to xb-current-buffer
-    else
-      "can't find %s" #( response ) string-format snd-print drop
-      1 sleep
-    then
-  then
-  close-all-buffers
-  "" snd-print drop
-  width height open-current-buffer
-  #f
-;
-set-current
+previous
 
 \ ;;; -------- remove-clicks 
 

@@ -102,6 +102,18 @@ lambda: <{ ins beg dur -- }> "%14s: %5.2f %5.2f" '( ins beg dur ) clm-message ; 
     "" #f clm-message
   ; add-hook!
   after-repl-hook lambda: <{ history -- }>
+    \ Remove duplicates from history file.
+    history readlines array-reverse! { hary }
+    #() "" "" { nhary hline tline }
+    hary array-length 0 ?do
+      hary i    array-ref to hline
+      hary i 1+ array-ref to tline
+      nhary hline array-member? unless
+	nhary hline array-unshift tline array-unshift drop
+      then
+    2 +loop
+    history nhary writelines
+    \ Be polite.
     "" #f clm-message
     "Thank you for using %s!" #( *program-name* string-upcase ) clm-message
     "" #f clm-message
@@ -132,11 +144,6 @@ lambda: <{ ins beg dur -- }> "%14s: %5.2f %5.2f" '( ins beg dur ) clm-message ; 
 "reverb"        	      add-sound-file-extension       drop
 "wave"          	      add-sound-file-extension       drop
 *clm-search-list* [each] ( dir ) undef add-directory-to-view-files-list drop [end-each]
-
-before-save-state-hook lambda: <{ fname -- f }>
-  "\\ -*- snd-forth -*-\n" :filename fname with-output-port
-  #t				      \ #t --> append mode
-; add-hook!
 
 \ make-default-comment from clm.fs
 output-comment-hook lambda: <{ str -- s }>

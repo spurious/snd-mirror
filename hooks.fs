@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Tue Apr 17 02:39:57 CEST 2012
+\ Changed: Sun May 13 00:14:10 CEST 2012
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )
@@ -71,7 +71,6 @@ require examp
      output-name-hook
      peak-env-hook
      play-hook
-     print-hook
      read-hook
      save-hook
      save-state-hook
