@@ -2231,12 +2231,17 @@ just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
 use augment-environment!.  Both of these functions accept nil as the
 'env' argument as shorthand for (global-environment).
+</p>
+
+<blockquote>
+<div class="indented">
+<p>
 Augment-environment is a bad name.  
 Perhaps these would be better:
 </p>
 
 <pre class="indented">
-(define (make-environment parent . args) 
+(define (make-environment parent . args)                    ; or make-let?
   (apply augment-environment parent args))
 
 (define (environment . slots) 
@@ -2249,9 +2254,39 @@ Perhaps these would be better:
       `(with-environment ,env (define ,@args))))
 
 ;; and much less satisfying...
-(define next-environment outer-environment)                 
-(define current-environment-unshadowed initial-environment) ; pure-environment?
+(define next-environment outer-environment)                 ; letcdr?            
+(define current-environment-unshadowed initial-environment) ; pure-let?
 </pre>
+
+<p>So an environment is a disembodied let.
+And a disembodied lambda
+would provide a multi-argument application (i.e. a kind of disembodied let) of 
+an unspecified body?  A generic function!
+Curiouser and curiouser.
+Help me with this list!:
+</p>
+
+<pre>
+environment?          let?, islet
+global-environment    rootlet
+initial-environment   unlet
+with-environment      inlet
+outer-environment     outlet, coverlet
+augment-environment   sublet, novelette
+augment-environment!  varlet
+current-environment   valet
+error-environment     owlet, triplet, roulette
+procedure-environment lambouillet
+environment-&gt;list     (pronounced "environmentalist" of course)
+
+open-environment
+open-environment?
+
+and make-lambda of course.
+</pre>
+</div>
+</blockquote>
+
 
 <p>It is possible in Scheme to redefine built-in functions such as car.
 To ensure that some code sees the original built-in function definitions,

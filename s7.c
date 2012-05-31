@@ -240,7 +240,6 @@
  */
 
 #define DEBUGGING 0
-#define PRINTING 0
 
 #define BOLD_TEXT "\033[1m"
 #define UNBOLD_TEXT "\033[22m"
@@ -1264,14 +1263,8 @@ static void init_types(void)
 #define is_integer(P)                 (type(P) == T_INTEGER)
 #define is_real(P)                    t_real_p[type(P)]
 #define is_rational(P)                t_rational_p[type(P)]
-
 #define is_big_number(p)              t_big_number_p[type(p)]
-#if 0
-#define is_big_integer(p)             (type(p) == T_BIG_INTEGER)
-#define is_big_ratio(p)               (type(p) == T_BIG_RATIO)
-#define is_big_real(p)                (type(p) == T_BIG_REAL)
-#define is_big_complex(p)             (type(p) == T_BIG_COMPLEX)
-#endif
+
 #define is_simple(P)                  t_simple_p[type(P)]
 
 
@@ -29073,7 +29066,7 @@ static void improper_arglist_error(s7_scheme *sc)
    */
   if (sc->args == sc->NIL)               /* (abs . 1) */
     s7_error(sc, sc->SYNTAX_ERROR, 
-	     list_1(sc, make_protected_string(sc, "function call is dotted list?")));
+	     list_1(sc, make_protected_string(sc, "function call is a dotted list?")));
   else s7_error(sc, sc->SYNTAX_ERROR, 
 		list_2(sc,
 		       make_protected_string(sc, "improper list of arguments: ~S"),
@@ -37113,12 +37106,7 @@ static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
    */
   s7_pointer p;
   if (direct_memq(cadr(expr), vars))
-    {
-#if PRINTING
-      fprintf(stderr, "      ;  target memq %s %s\n", DISPLAY(vars), DISPLAY_80(expr));
-#endif
-      return(false);
-    }
+    return(false);
 
   for (p = cdr(expr); is_pair(cdr(p)); p = cdr(p));
 
@@ -37131,22 +37119,12 @@ static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
 	return(true);
 
       if (direct_memq(car(p), vars))
-	{
-#if PRINTING
-	  fprintf(stderr, "      ;  result memq %s %s\n", DISPLAY(vars), DISPLAY_80(expr));
-#endif
-	  return(false);
-	}
+	return(false);
     }
   else 
     {
       if (direct_memq(p, vars))
-	{
-#if PRINTING
-	  fprintf(stderr, "      ;  result memq %s %s\n", DISPLAY(vars), DISPLAY_80(expr));
-#endif
-	  return(false);
-	}
+	return(false);
     }
   return(true);
 }
@@ -37165,10 +37143,6 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
    */
   s7_pointer p;
   /* if (s7_list_length(sc, body) <= 0) return(false); */
-
-#if PRINTING
-  fprintf(stderr, "      ;do check: %s\n", DISPLAY_80(body));
-#endif
 
   for (p = body; is_pair(p); p = cdr(p))
     {
@@ -37193,12 +37167,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 
 		    case OP_LET:
 		      if (is_symbol(cadr(expr)))
-			{
-#if PRINTING
-			  fprintf(stderr, "    ;unsafe named_let %s\n", DISPLAY_80(cadr(expr)));
-#endif
-			  return(false);
-			}
+			return(false);
 
 		    case OP_LET_STAR:
 		    case OP_LETREC:
@@ -37209,50 +37178,25 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			  var = caar(vars);
 			  if ((direct_memq(var, var_list)) ||
 			      (direct_memq(var, steppers)))
-			    {
-#if PRINTING
-			      fprintf(stderr, "      ;stepper renamed %s\n", DISPLAY_80(cadr(expr)));
-#endif
-			      return(false);
-			    }
+			    return(false);
 			  var_list = cons(sc, var, var_list);
 			  sc->x = var_list;
 			  if ((is_pair(cdar(vars))) &&
 			      (!do_is_safe(sc, cdar(vars), steppers, var_list, has_set)))
-			    {
-#if PRINTING
-			      fprintf(stderr, "    ;%s unsafe\n", DISPLAY_80(cdar(vars)));
-#endif
-			      return(false);
-			    }
+			    return(false);
 			}
 
 		      if (!do_is_safe(sc, (op == OP_DO) ? cdddr(expr) : cddr(expr), steppers, var_list, has_set))
-			{
-#if PRINTING
-			  fprintf(stderr, "    ;bad %s\n", (op == OP_DO) ? DISPLAY_80(cdddr(expr)) : DISPLAY_80(cddr(expr)));
-#endif
-			  return(false);
-			}
+			return(false);
 		      break;
 
 		    case OP_SET:
 		      if (!direct_memq(cadr(expr), var_list))
 			(*has_set) = true;
 		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
-			{
-#if PRINTING
-			  fprintf(stderr, "    ;unsafe set: %s\n", DISPLAY_80(expr));
-#endif
-			  return(false);
-			}
+			return(false);
 		      if (!safe_stepper(sc, expr, steppers))
-			{
-#if PRINTING
-			  fprintf(stderr, "    ;unsafe stepper %s\n", DISPLAY_80(expr));
-#endif
-			  return(false);
-			}
+			return(false);
 		      break;
 		      
 		    case OP_IF:
@@ -37262,18 +37206,10 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		    case OP_OR:
 		    case OP_BEGIN:
 		      if (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set))
-			{
-#if PRINTING
-			  fprintf(stderr, "    ;unsafe %s %s\n", real_op_names[op], DISPLAY_80(cdr(expr)));
-#endif
-			  return(false);
-			}
+			return(false);
 		      break;
 
 		    default:
-#if PRINTING
-		      fprintf(stderr, "    ;%s unsafe\n", real_op_names[op]);
-#endif
 		      return(false);
 		      break;
 		    }
@@ -37283,48 +37219,23 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		  if ((!is_optimized(expr)) ||
 		      (is_unsafe(expr)) ||
 		      (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set)))
-		    {
-#if PRINTING
-		      fprintf(stderr, "      ;unsafe (%s): %s\n", 
-			      (is_optimized(expr)) ? ((is_unsafe(expr)) ? "not safe" : "do is not safe") : "unopt",
-			      DISPLAY_80(expr));
-#endif
-		      return(false);
-		    }
+		    return(false);
 		  else
 		    {
 		      if (is_setter(car(expr)))
 			{
 			  if (!direct_memq(cadr(expr), var_list))
-			    {
-#if PRINTING
-			      fprintf(stderr, "      ;set: %s is global\n", DISPLAY(cadr(expr)));
-#endif
-			      (*has_set) = true;
-			    }
+			    (*has_set) = true;
 			  if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
-			    {
-#if PRINTING
-			      fprintf(stderr, "    ; set stepper unsafe: %s\n", DISPLAY_80(cadr(expr)));
-#endif
-			      return(false);		      
-			    }
+			    return(false);		      
 			  if (!safe_stepper(sc, expr, steppers))
-			    {
-#if PRINTING
-			      fprintf(stderr, "      ;unsafe (stepper expr): %s\n", DISPLAY_80(expr)); 
-#endif
-			      return(false);
-			    }
+			    return(false);
 			}
 		    }
 		}
 	    }
 	  else 
 	    {
-#if PRINTING
-	      fprintf(stderr, "      ;unsafe (?): %s\n", DISPLAY_80(expr));
-#endif
 	      return(false); 
 	      /* car(expr) ("x") is not a symbol: ((mus-data loc) chan) for example
 	       *   but that's actually safe since it's just in effect vector-ref
@@ -37333,9 +37244,6 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 	    }
 	}
     }
-#if PRINTING
-  fprintf(stderr, "        ;%s is ok\n", DISPLAY_80(body));
-#endif
   return(true);
 }
 #endif
@@ -37645,15 +37553,10 @@ static s7_pointer check_do(s7_scheme *sc)
 	/* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
 	s7_pointer vars, end, body;
 
-#if PRINTING
-	  fprintf(stderr, "\n----------------------------------------\ncheck %s\n", DISPLAY_80(sc->code));
-#endif	  
-
 	vars = car(sc->code);
 	end = cadr(sc->code);
 	body = cddr(sc->code);
 
-#if PRINTING
 	/* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
 	 *   in OP_DOTIMES, for example, if init value is not an integer, it goes to OP_SIMPLE_DO
  	 * remaining optimizable cases: we can step by 1 and use = for end, and yet simple_do(_p) calls the functions
@@ -37663,12 +37566,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	 *
 	 * also do body is optimized expr: vector_set_3 via hop_safe_c_sss for example or (vset v i (vref w i))
 	 */
-	if ((!is_pair(end)) || (!is_pair(car(end))) ||
-	    (!is_pair(vars)) ||
-	    (!is_null(cdr(vars))))
-	  fprintf(stderr, "    ;end or vars not simple: %s\n", DISPLAY_80(sc->code));
-#endif
-
 	if ((is_pair(end)) && (is_pair(car(end))) &&
 	    (is_pair(vars)) &&
 	    (is_null(cdr(vars))))
@@ -37677,16 +37574,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	     */
 	    vars = car(vars);
 
-#if PRINTING
-	    /* c_ss c_s [end/step also: (= end limit)
-	     */
-	    if ((safe_list_length(sc, vars) != 3) ||
-		((is_pair(cadr(vars))) &&
-		 ((!is_optimized(cadr(vars))) ||
-		  (optimize_data(cadr(vars)) != HOP_SAFE_C_C))))
-	      fprintf(stderr, "    ;var init unsafe: %s %s\n", DISPLAY_80(vars), (is_optimized(cadr(vars))) ? opt_names[optimize_data(cadr(vars))] : "");
-#endif
-
 	    if ((safe_list_length(sc, vars) == 3) &&
 		((!is_pair(cadr(vars))) ||
 		 ((is_optimized(cadr(vars))) &&
@@ -37694,18 +37581,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	      {
 		s7_pointer step_expr;
 		step_expr = caddr(vars);
-#if PRINTING
-		if (!is_optimized(step_expr))
-		  fprintf(stderr, "    ;step expr unsafe: %s\n", DISPLAY_80(step_expr));
-		else
-		  {
-		    if (!((((optimize_data(step_expr) == HOP_SAFE_C_SC) && (car(vars) == cadr(step_expr))) ||
-			   ((optimize_data(step_expr) == HOP_SAFE_C_C) && (car(vars) == cadr(step_expr)) && 
-			    ((ecdr(step_expr) == add_cs1) || (ecdr(step_expr) == subtract_cs1))) ||
-			   ((optimize_data(step_expr) == HOP_SAFE_C_CS) && (car(vars) == caddr(step_expr))))))
-		      fprintf(stderr, "    ;step_expr %s %s\n", opt_names[optimize_data(step_expr)], DISPLAY_80(step_expr));
-		  }
-#endif
 
 		if ((is_optimized(step_expr)) &&
 		    (((optimize_data(step_expr) == HOP_SAFE_C_SC) && (car(vars) == cadr(step_expr))) ||
@@ -37717,17 +37592,6 @@ static s7_pointer check_do(s7_scheme *sc)
 		     */
 		    end = car(end);
 
-#if PRINTING
-		    if (!((is_optimized(end)) &&
-			  (car(vars) == cadr(end)) &&
-			  ((ecdr(end) == equal_s_ic) ||
-			   (optimize_data(end) == HOP_SAFE_C_SS) || 
-			   (optimize_data(end) == HOP_SAFE_C_SC))))
-		      fprintf(stderr, "    ;end unsafe: %s (var: %d) %s\n", 
-			      (is_optimized(end)) ? opt_names[optimize_data(end)] : "unopt", car(vars) == cadr(end),
-			      DISPLAY_80(end));
-#endif
-
 		    if ((is_optimized(end)) &&
 			(car(vars) == cadr(end)) &&
 			((ecdr(end) == equal_s_ic) ||
@@ -37738,12 +37602,6 @@ static s7_pointer check_do(s7_scheme *sc)
 			 *   so at least we can use SIMPLE_DO
 			 */
 			bool has_set = false;
-
-#if PRINTING
-			fprintf(stderr, "      ;step: %s %s, end: %s %s\n",
-				opt_names[optimize_data(step_expr)], c_function_name(ecdr(step_expr)),
-				opt_names[optimize_data(end)], c_function_name(ecdr(end)));
-#endif
 
 			if (ecdr(step_expr) == add_cs1)
 			  {
@@ -37775,10 +37633,6 @@ static s7_pointer check_do(s7_scheme *sc)
 			  {
 			    if (body_is_direct(optimize_data(car(body))))
 			      car(ecdr(sc->code)) = sc->SIMPLE_DO_OPT;
-#if PRINTING
-			    /* c_s c_c */
-			    else fprintf(stderr, "      ;optimizable as simple: %s %s\n", opt_names[optimize_data(car(body))], DISPLAY_80(car(body)));
-#endif
 			  }
 
 			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
@@ -37789,10 +37643,6 @@ static s7_pointer check_do(s7_scheme *sc)
 			      {
 				if (body_is_direct(optimize_data(car(body))))
 				  car(ecdr(sc->code)) = sc->SAFE_SIMPLE_DO;
-#if PRINTING
-				/* c_s c_ss */
-				else fprintf(stderr, "      ;optimizable as safe_simple: %s %s\n", opt_names[optimize_data(car(body))], DISPLAY_80(car(body)));
-#endif
 			      }
 
 			    /* now look for the very common dotimes case
@@ -37826,11 +37676,6 @@ static s7_pointer check_do(s7_scheme *sc)
 				  if ((safe_list_length(sc, body) == 1) &&
 				      (is_pair(car(body))))
 				    {
-#if PRINTING
-				      /* (define (hi a b) (do ((i 0 (+ i 1))) ((= i a)) (vector-set! b i a))) */
-				      fprintf(stderr, "    dotimes: %s\n", opt_names[optimize_data(car(body))]);
-#endif				      
-
 				      if ((is_optimized(car(body))) &&
 					  (optimize_data(car(body)) == HOP_SAFE_C_C))
 					{
@@ -37882,9 +37727,6 @@ static s7_pointer check_do(s7_scheme *sc)
       
 			      }
 			  }
-#if PRINTING
-			fprintf(stderr, "%s: %s\n\n", real_op_names[syntax_opcode(car(ecdr(sc->code)))], DISPLAY_80(sc->code));
-#endif
 			return(sc->NIL); /* tell OP_DO that this is a special case */
 		      }
 		  }
@@ -37902,16 +37744,8 @@ static s7_pointer check_do(s7_scheme *sc)
 
 	  /* check end expression first */
 	  if (!is_end_dox_safe(sc, car(end)))
-	    {
-#if PRINTING
-	      fprintf(stderr, "%send expr %s is trouble (%s)%s\n", 
-		      BOLD_TEXT,
-		      DISPLAY_80(car(end)), 
-		      ((is_pair(car(end))) && (is_optimized(car(end)))) ? opt_names[optimize_data(car(end))] : "unopt",
-		      UNBOLD_TEXT);
-#endif
-	      return(sc->code);
-	    }
+	    return(sc->code);
+
 	  /* vars can be nil (no steppers) */
 	  if (is_pair(vars))
 	    {
@@ -37921,83 +37755,22 @@ static s7_pointer check_do(s7_scheme *sc)
 		  s7_pointer var;
 		  var = car(p);
 		  if (!is_init_dox_safe(sc, cadr(var)))
-		    {
-#if PRINTING
-		      fprintf(stderr, "%s%s init expr %s is trouble (%s)%s\n", 
-			      BOLD_TEXT,
-			      DISPLAY(car(var)), 
-			      DISPLAY_80(cadr(var)),
-			      ((is_pair(cadr(var))) && (is_optimized(cadr(var)))) ? opt_names[optimize_data(cadr(var))] : "unopt",
-			      UNBOLD_TEXT);
-			      
-#endif
-		      return(sc->code);
-		    }
+		    return(sc->code);
+
 		  if ((is_pair(cddr(var))) &&
 		      (!is_step_dox_safe(sc, caddr(var))))
-		    {
-#if PRINTING
-		      fprintf(stderr, "%s%s step expr %s is trouble (%s)%s\n", 
-			      BOLD_TEXT,
-			      DISPLAY(car(var)), 
-			      DISPLAY_80(caddr(var)),
-			      ((is_pair(caddr(var))) && (is_optimized(caddr(var)))) ? opt_names[optimize_data(caddr(var))] : "unopt",
-			      UNBOLD_TEXT);
-#endif
-		      return(sc->code);
-		    }
+		    return(sc->code);
 		}
 	    }
 	  
 	  /* end and steps look ok! */
 	  car(ecdr(sc->code)) = sc->DOX;
 
-#if PRINTING
-	  fprintf(stderr, "dox optimizable: %s\n", DISPLAY_80(sc->code));
-	  if ((safe_list_length(sc, body) == 1) &&
-	      (is_pair(car(body))) &&
-	      (is_optimized(car(body))))
-	    {
-	      /* this is very rare and we need to check do is safe etc */
-	      fprintf(stderr, "      ;dox perhaps optimizable as simple: %s %s\n", opt_names[optimize_data(car(body))], DISPLAY_80(car(body)));
-	    }
-#endif
-#if 0
-	  /* as far as I can tell, this happens very rarely, and p_case below is about 1/2 the cases
-	   */
-	  if ((is_null(cdr(end))) &&
-	      (safe_list_length(sc, body) == 1) &&
-	      (is_pair(car(body))) &&
-	      (is_syntactic(caar(body))))
-	    {
-	      bool has_set = false;
-	      s7_pointer p, var_list;
-	      
-	      for (p = vars, var_list = sc->NIL; is_pair(p); p = cdr(p))
-		var_list = cons(sc, caar(p), var_list);
-	      sc->w = var_list;
-	      
-	      if (do_is_safe(sc, body, var_list, sc->NIL, &has_set))
-		{
-#if PRINTING
-		  fprintf(stderr, "    safe: %s\n", DISPLAY_80(sc->code));
-#endif
-		  car(ecdr(sc->code)) = sc->SAFE_DOX_P;
-		}
-	      
-	      sc->w = sc->NIL;
-	    }
-#endif
-
 	  return(sc->NIL);
 	}
       }
 #endif
     }
-
-#if PRINTING
-  fprintf(stderr, "not simple: %d %s\n\n", is_null(cdr(cddr(sc->code))), DISPLAY_80(sc->code));
-#endif
   return(sc->code);
 }
 
