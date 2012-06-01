@@ -24387,8 +24387,6 @@ void **s7_expression_data(s7_scheme *sc, s7_pointer expr)
 
 #else
 
-/* TODO: check that this case compiles */
-
 unsigned int s7_function_class(s7_scheme *sc, s7_pointer f)
 {
   return(0);
@@ -30276,7 +30274,7 @@ static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 {
-  #define H_apply_values "({apply-values} var) applies values to var.  This is an internal function."
+  #define H_apply_values "({apply} {values} var) applies values to var.  This is an internal function."
   s7_pointer x;
 
   if (is_null(args))
@@ -54260,7 +54258,8 @@ s7_scheme *s7_init(void)
   sc->LAMBDA =      make_symbol(sc, "lambda");
   sc->LAMBDA_STAR = make_symbol(sc, "lambda*");
   sc->QUOTE =       make_symbol(sc, "quote");
-  sc->UNQUOTE =     make_symbol(sc, "unquote");
+  sc->UNQUOTE =     make_symbol(sc, "unquote"); /* this has no value, so it has to be the symbol */
+                                                /* SOMEDAY: make the name "," here and make it a constant. */
   sc->MACROEXPAND = make_symbol(sc, "macroexpand");
   sc->FEED_TO =     make_symbol(sc, "=>");
   sc->SET =         make_symbol(sc, "set!");
@@ -55007,9 +55006,13 @@ s7_scheme *s7_init(void)
 #if DEBUGGING
   if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)
     fprintf(stderr, "define-bacro* op: %s\n", op_names[OP_DEFINE_BACRO_STAR]);
+  if (strcmp(real_op_names[OP_DEFINE_BACRO_STAR], "OP_DEFINE_BACRO_STAR") != 0)
+    fprintf(stderr, "define-bacro* real op: %s\n", op_names[OP_DEFINE_BACRO_STAR]);
 #if WITH_OPTIMIZATION
   if (strcmp(op_names[OP_SAFE_C_opSq_P_1], "safe_c_opsq_p_1") != 0)
     fprintf(stderr, "safe_c_opsq_p_1 op: %s\n", op_names[OP_SAFE_C_opSq_P_1]);
+  if (strcmp(real_op_names[OP_SAFE_C_opSq_P_1], "OP_SAFE_C_OPSQ_P_1") != 0)
+    fprintf(stderr, "safe_c_opsq_p_1 real op: %s\n", real_op_names[OP_SAFE_C_opSq_P_1]);
 #endif
 #endif
 
@@ -55023,7 +55026,7 @@ s7_scheme *s7_init(void)
  * should all the internal hook s7_call's be protected? *load-hook* set and (+ 1 (load "a-file.scm"))? reader case?
  *   load case seems to be ok
  *
- * TODO: open-environment doc (and direct tests also the open-evironment? cases)
+ * TODO: open-environment direct tests, also the open-evironment? cases
  *       also we really should add error check tests, and make sure s7test hits every optimizer choice
  * TODO: c example of using this
  *   s7_augment_environment to add fields, s7_open_environment to open it, gc_protect?
@@ -55031,7 +55034,7 @@ s7_scheme *s7_init(void)
  *   we want a block of C memory (doubles for example), accessible via implicit-indexing in scheme, and otherwise as a vector
  *     possibly multidimensional, what do gsl vectors/matrices assume?
  *     implicit index means it can't be an env itself and the pws version is too much overhead
- *     so: add object-environment somehow (this would be an addition to vct type so that vector* could work
+ *     so: add object-environment somehow (this would be an addition to vct type so that vector* could work)
  *     (environment obj) for procedure/env itself/c-obj (remove procedure-environment)
  *     (setter obj) similarly?
  *   auto c-object env to hold all the methods pass in by new_type, and subsequently,
@@ -55041,10 +55044,57 @@ s7_scheme *s7_init(void)
  *   (vector-ref vct index): ((object_value(vct))->data)[index]
  *   (vct index):  (object_value(vct)->funcs[APPLY_INDEX])(vct, index)
  *     i.e. skip the indirection to the table by building in a pointer to the table (skip tag)
+ *   gsl vectors/matrices are all "blocks" (i.e. one sort of thing), so we could tie in all
+ *     of the linear algebra code.  
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
  * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
+ *
+ * TODO: these make no sense, I hope
+ *    :(eval (define-bacro* ,@ 1 (abs )))
+ *    #<bacro>
+ *    :(procedure-source (eval (define-bacro* ,@ 1 (abs ))))
+ *    (lambda ({defmac}-24) (apply (lambda* (({apply} {values} 1)) (abs)) (cdr {defmac}-24)))
+ *    :(define-bacro* ,@ 1 (abs )) ; only bacro* and macro*
+ *    unquote
+ *    OP_READ_APPLY_VALUES: (unquote (qq_apply_values ...)) so (define* (unquote (apply (values 1))) (abs )) -> unquote!
+ *    :(define* ,() (abs ))
+ *    ;define* is restricted to functions: (define* () (abs))
+ *    :(define-macro* ,(a) ,a)
+ *    unquote
+ *    :(unquote 1)
+ *    ;lambda* parameter default value missing? '(a)
+ *    (define-macro* , (a 1) ,a)
+ *    (unquote 2) -> infinite loop as is (let ((x 2)) ,x)
+ *    :(procedure-source (define-macro* , (a 1) ,a))
+ *    (lambda ({defmac}-15) (apply (lambda* ((a 1)) (unquote a)) (cdr {defmac}-15)))
+ *    so it surreptiously calls itself!  dybvig says ",obj" is converted by the reader to (unquote obj) but that is trouble
+ *    (define (unquote a) (+ a 1))
+ *    (let ((x 1)) ,x) -> 2!   ; this works in Guile as well
+ *    (let ((x 1)) `,x) -> 1!
+ *    `(let ((x 1)) ,x) -> unbound variable
+ *    (let ((x 1)) ,,,,,,x) -> 7
+ *    maybe remove the name "unquote" as we already have removed unquote-splicing
+ *    :(let (,'a) unquote) ; or (let (, '1) unquote)
+ *    a
+ *    :(let (, (lambda (x) (+ x 1))) ,'3) ; ,3 here -> 3
+ *    4
+ *    :(let (, (lambda (x) (+ x 1))) ,,,,'3)
+ *    7
+ *    :(let (,@ '(1)) unquote)
+ *    1
+ *    :(let (,@ ()) ,2)
+ *    2
+ *    :(let (' 1) quote)
+ *    1
+ * so use the value in the unquote case
+ *
+ * (define-macro (make-lambda args . body) `(apply lambda* ',args '(,@body))): (make-lambda (a b) (+ a b))
+ * (define (make-lambda args body) (apply lambda* args body)): (make-lambda '(a b) '((+ a b)))
+ * but we need a no body lambda, if it is applied to a body, you get a "real" lambda
+ * default body of #<unspecified> = closure_body, also closure awaiting args, and closure awaiting env
+ * (make-closure args body env) -- could be done with (apply let env (list (apply lambda args body))) more or less.
  *
  * how often these: copy obj via doloop, or set all to 1 val
  * case of char? (currently we have op_case_int which ought to jump!)

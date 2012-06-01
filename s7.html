@@ -1015,7 +1015,26 @@ hi
 
 <p>and so on.  "{list}" is a special version of "list" to avoid name collisions
 and handle a few tricky details (similarly for "{values}" and "{apply}").  There is no unquote-splicing
-macro in s7;  ",@(...)" becomes "(unquote (apply values ...))" at read-time.
+macro in s7;  ",@(...)" becomes "(unquote ({apply} {values} ...))" at read-time.  There shouldn't be any unquote
+either.  In Scheme the reader turns ,x into (unquote x), so:
+</p>
+
+<pre>
+&gt; (let (,'a) unquote)
+a
+&gt; (let (, (lambda (x) (+ x 1))) ,,,,'3)
+7
+</pre>
+<p>comma becomes a sort of symbol macro! I think I'll remove unquote; ,x and ,@x will still work
+as expected, but there will not be any "unquote" or "unquote-splicing" in the resultant source code.  Just to make life difficult:
+</p>
+<pre>
+&gt; (let (' 1) quote)
+1
+</pre>
+<p>but that translation is so ingrained in lisp (it even works in Clisp) 
+that I'm reluctant to change it.  The two unquote names, on the
+other hand, seem unneceesary.
 </p>
 </div>
 
@@ -2202,7 +2221,7 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="augmentenvironment">augment-environment</em> env . bindings)   add bindings to env
 (<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings)
 
-(<em class=def id="openenvironment">open-environment</em> env)
+(<em class=def id="openenvironment">open-environment</em> env)        mark env as open (see below)
 (<em class=def id="openenvironmentp">open-environment?</em> env)
 
 (<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
@@ -2309,6 +2328,14 @@ so for example, #_+ is the built-in + function, no matter what.
 so you can use it to revert the REPL. 
 </p>
 
+<p>open-environment marks its argument, either an environment or a closure,
+as open.  I need better terminology here!  An open object is one that the
+built-in s7 functions handle specially.  If they encounter one in their
+argument list, they look in the object for their own name, and call that
+function if it exists.  So, <code>(abs obj)</code> where obj is
+an environment containing, for example, <code>(cons 'abs (lambda (x) (- x 1)))</code>
+returns <code>(- obj 1)</code>, <code>((obj 'abs) obj)</code> in effect.
+</p>
 
 
 <blockquote>
@@ -4142,7 +4169,6 @@ If none of the *unbound-variable-hook* functions sets 'result' to something othe
 s7 calls the error handler.
 </p>
 
-<!-- TODO: check other built-in hook docs -->
 
 <blockquote>
 <div class="indented">
@@ -4779,6 +4805,7 @@ bind it to something else, which is asking for confusion).
 <li>change eof-object? to eof? or end-of-input? or just omit it (you can use eq? #&lt;eof&gt;)
 <li>remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
 <li>change make-rectangular to make-complex, and remove make-polar.
+<li>remove unquote (the name, not the functionality).
 </ul>
 
 <p>and perhaps:

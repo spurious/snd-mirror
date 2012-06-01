@@ -1,5 +1,7 @@
 #include "snd.h"
 
+#include <X11/XKBlib.h>
+
 enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scrollers, W_zy, W_sy,
       W_bottom_scrollers, W_sx, W_zx, W_graph, W_gzy, W_gsy,
       NUM_CHAN_WIDGETS
@@ -824,9 +826,9 @@ void graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont)
   int key_state;
   snd_info *sp = (snd_info *)context;
   key_state = ev->state;
-  keysym = XKeycodeToKeysym(XtDisplay(w),
+  keysym = XkbKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),
-			    (key_state & snd_ShiftMask) ? 1 : 0);
+			      (key_state & snd_ShiftMask) ? 1 : 0, 0);
   key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
 }
  
@@ -840,9 +842,9 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   chan_info *cp = (chan_info *)context;
   if ((cp == NULL) || (cp->sound == NULL)) return; /* can't happen */
   key_state = ev->state;
-  keysym = XKeycodeToKeysym(XtDisplay(w),
+  keysym = XkbKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),
-			    (key_state & snd_ShiftMask) ? 1 : 0);
+			      (key_state & snd_ShiftMask) ? 1 : 0, 0);
   key_press_callback(cp, ev->x, ev->y, ev->state, keysym);
 }
 

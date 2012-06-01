@@ -57042,12 +57042,6 @@ EDITS: 1
 	    (if (not (XEvent? (XtLastEventProcessed dpy)))
 		(snd-display #__line__ ";XtLastEventProcessed: ~A" (XtLastEventProcessed dpy)))
 	    (XtBuildEventMask shell)
-	    (let ((k (XtConvertCase dpy (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)))
-		  (x (XConvertCase (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0))))
-	      (if (not (KeySym? (car k)))
-		  (snd-display #__line__ ";XtConvertCase: ~A" k))
-	      (if (not (equal? k x))
-		  (snd-display #__line__ ";X(t)ConvertCase: ~A ~A" k x)))
 	    (let ((val 0))
 	      (XtRegisterCaseConverter 
 	       dpy
@@ -58424,12 +58418,6 @@ EDITS: 1
 	    (XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
 	    (XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
 	    (XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" '())
-	    (XmVaCreateSimpleOptionMenu (caddr (main-widgets)) "hiho" 
-					(XmStringCreateLocalized "away") 
-					(XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)
-					0  (lambda (w c i) #f) '())
-	    
-					;	       (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display #__line__ ";not XmIsMotifWMRunning?"))
 	    (zync)
 	    (make-pixmap (cadr (main-widgets)) arrow-strs)
 	    (display-scanned-synthesis)
@@ -59209,7 +59197,8 @@ EDITS: 1
 		 XCreatePixmapCursor XCreateGlyphCursor XCreateFontCursor XLoadFont XCreateGC XFlushGC
 		 XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
 		 XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
-		 XListExtensions XListProperties XKeycodeToKeysym XLookupKeysym
+		 XListExtensions XListProperties ;XKeycodeToKeysym 
+		 XLookupKeysym
 		 XGetKeyboardMapping ;XStringToKeysym
 		 XDisplayMotionBufferSize XVisualIDFromVisual XMaxRequestSize XExtendedMaxRequestSize
 		 XRootWindow XDefaultRootWindow XRootWindowOfScreen

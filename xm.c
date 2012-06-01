@@ -12207,6 +12207,8 @@ the KeySym from the list that corresponds to the KeyCode member in the XKeyPress
   return(C_TO_XEN_KeySym(XLookupKeysym(XEN_TO_C_XKeyEvent(arg1), XEN_TO_C_INT(arg2))));
 }
 
+#if 0
+/* this has been deprecated for XkbKeycodeToKeysym */
 static XEN gxm_XKeycodeToKeysym(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XKeycodeToKeysym "KeySym XKeycodeToKeysym(display, keycode, index) uses internal Xlib tables and returns the KeySym defined \
@@ -12216,6 +12218,7 @@ for the specified KeyCode and the element of the KeyCode vector."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XKeycodeToKeysym", "int");
   return(C_TO_XEN_KeySym(XKeycodeToKeysym(XEN_TO_C_Display(arg1), XEN_TO_C_KeyCode(arg2), XEN_TO_C_INT(arg3))));
 }
+#endif
 
 static XEN gxm_XListProperties(XEN arg1, XEN arg2)
 {
@@ -20583,7 +20586,9 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(gxm_XGetFontPath_w, gxm_XGetFontPath)
   XEN_NARGIFY_1(gxm_XListExtensions_w, gxm_XListExtensions)
   XEN_NARGIFY_2(gxm_XListProperties_w, gxm_XListProperties)
+#if 0
   XEN_NARGIFY_3(gxm_XKeycodeToKeysym_w, gxm_XKeycodeToKeysym)
+#endif
   XEN_NARGIFY_2(gxm_XLookupKeysym_w, gxm_XLookupKeysym)
   XEN_NARGIFY_3(gxm_XGetKeyboardMapping_w, gxm_XGetKeyboardMapping)
   XEN_NARGIFY_1(gxm_XStringToKeysym_w, gxm_XStringToKeysym)
@@ -22197,7 +22202,9 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XGetFontPath_w gxm_XGetFontPath
   #define gxm_XListExtensions_w gxm_XListExtensions
   #define gxm_XListProperties_w gxm_XListProperties
+#if 0
   #define gxm_XKeycodeToKeysym_w gxm_XKeycodeToKeysym
+#endif
   #define gxm_XLookupKeysym_w gxm_XLookupKeysym
   #define gxm_XGetKeyboardMapping_w gxm_XGetKeyboardMapping
   #define gxm_XStringToKeysym_w gxm_XStringToKeysym
@@ -23819,7 +23826,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XGetFontPath, gxm_XGetFontPath_w, 1, 0, 0, H_XGetFontPath);
   XM_DEFINE_PROCEDURE(XListExtensions, gxm_XListExtensions_w, 1, 0, 0, H_XListExtensions);
   XM_DEFINE_PROCEDURE(XListProperties, gxm_XListProperties_w, 2, 0, 0, H_XListProperties);
+#if 0
   XM_DEFINE_PROCEDURE(XKeycodeToKeysym, gxm_XKeycodeToKeysym_w, 3, 0, 0, H_XKeycodeToKeysym);
+#endif
   XM_DEFINE_PROCEDURE(XLookupKeysym, gxm_XLookupKeysym_w, 2, 0, 0, H_XLookupKeysym);
   XM_DEFINE_PROCEDURE(XGetKeyboardMapping, gxm_XGetKeyboardMapping_w, 3, 0, 0, H_XGetKeyboardMapping);
   XM_DEFINE_PROCEDURE(XStringToKeysym, gxm_XStringToKeysym_w, 1, 0, 0, H_XStringToKeysym);
