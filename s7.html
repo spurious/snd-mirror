@@ -2285,23 +2285,20 @@ Curiouser and curiouser.
 Help me with this list!:
 </p>
 
-<pre>
+<pre class="indented">
 environment?          let?, islet
 global-environment    rootlet
 initial-environment   unlet
 with-environment      inlet
-outer-environment     outlet, coverlet
-augment-environment   sublet, novelette
+outer-environment     outlet
+augment-environment   sublet
 augment-environment!  varlet
 current-environment   valet
-error-environment     owlet, triplet, roulette
-procedure-environment lambouillet
+error-environment     owlet, triplet
+procedure-environment 
 environment-&gt;list     (pronounced "environmentalist" of course)
-
 open-environment
 open-environment?
-
-and make-lambda of course.
 </pre>
 </div>
 </blockquote>
@@ -3550,6 +3547,43 @@ result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_intege
 </pre>
 </div>
 
+<p>Hooks are split into three list of functions to reflect the roles that
+hook functions play.
+Some are "watchers" that simply want notification
+that some event has occurred (the 'init' list).
+Others want to deal with the
+event in some way, possibly returning a result, and possibly interacting
+with any other similar hook functions' results (the 'body' list).
+Still others are only interested in the decision reached by the main functions.
+We need the dynamic-wind to be sure that all the before and after functions are called no matter what
+happens during the handling of the main functions.
+</p>
+
+<p>We can also use a hook as a normal procecdure, but now the function
+lists make it easy to extend an existing function.  
+The next example adds to a numerical function the possibility of calling it
+with a string:
+</p>
+
+<pre class="indented">
+&gt; (define h (make-hook '(x 0.0)))
+h
+&gt; (set! (hook-functions h) ; these are the 'body' functions
+        (list (lambda (hook) 
+                (set! (hook 'result) (+ (hook 'x) 1.0)))))
+(#&lt;closure&gt;)
+&gt; (h 2.5)
+3.5
+&gt; (set! ((procedure-environment h) 'init) 
+        (list (lambda (hook) ; if x is a string, convert it to a number
+                (if (string? (hook 'x)) 
+                    (set! (hook 'x) (string-&gt;number (hook 'x)))))))
+(#&lt;closure&gt;)
+&gt; (h "2.5")
+3.5
+</pre>
+
+
 
 
 
@@ -3574,9 +3608,13 @@ Scheme function.
 procedure-documentation returns the documentation string associated with a procedure: the initial string in the
 function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
 procedure-setter returns or sets the set function associated with a procedure (set-car! with car, for example).
-procedure-source returns the source, as a list, of a procedure. procedure-environment returns
+procedure-source returns the procedure source (a list). procedure-environment returns
 a procedure's environment.  procedure-name returns the procedure's name.
 </p>
+
+<pre class="indented">
+(define (procedure-arglist f) (cadr (procedure-source f)))
+</pre>
 
 <p>In s7 lots of things are applicable, so procedure-arity is too restricted,
 and in its main use (checking that a function can be applied to some arguments),
@@ -3603,6 +3641,12 @@ add-2
 (lambda* (a (b 32)) "add-2 adds its 2 args" (+ a b))
 </pre>
 
+
+
+<blockquote>
+
+<div class="indented">
+
 <p>We can use procedure-environment and __func__ to 
 write a function that tells us where the source is for a function:
 </p>
@@ -3617,9 +3661,8 @@ write a function that tells us where the source is for a function:
 &gt; (where-is enveloped-mix)
 "enveloped-mix is at line 68 of extensions.scm"
 </pre>
+</div>
 
-
-<blockquote>
 
 <div class="indented">
 
@@ -3727,6 +3770,27 @@ its bindings (this is borrowed from "nuntius" at reddit lisp):
 rather than a boolean.  I haven't run into a case where it matters.  Another odd case: 
 <code>(procedure-arity (lambda* (:allow-other-keys) #f))</code>.  How should we indicate
 this in procedure-arity?
+</p>
+
+<p>Speaking of define*, an argument's default value can be a function, so we can store
+argument-specific documentation in the documentation string:
+</p>
+<pre class="indented">
+(define (arg-info f n) 
+  ((procedure-source f) 1 n 1 0 2)) ; get the documentation string of f's n-th argument
+
+(define* (add-1 (arg ((lambda () "arg should be an integer" 0)))) 
+  (+ arg 1))          ; the default value of arg is 0
+
+&gt; (add-1)
+1
+&gt; (arg-info add-1 0)
+"arg should be an integer"
+</pre>
+
+<p>But this is a lot of boilerplate for a simple notion.  I'm thinking of
+adding an optional documentation string to the define* parameter syntax:
+<code>(define* (add-1 (arg 0 "arg should be an integer")) (+ arg 1))</code>.
 </p>
 </div>
 

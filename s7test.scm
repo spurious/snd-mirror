@@ -8524,6 +8524,43 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (set! (hook-functions h) (list f1 f1 f1))
     (test (h) 2)))
 
+(let ((h (make-hook '(x 0)))
+      (end 0))
+  (set! (hook-functions h)
+	(list (lambda (hook)
+		(if (not (integer? (hook 'x))) ; here hook = (procedure-environment h)
+		    'oops
+		    (set! (hook 'result) (+ (hook 'x) 1))))))
+
+  (test (list (h 0) end) '(1 0))
+  (test (h) 1)
+  
+  (set! ((procedure-environment h) 'init)
+	(list (lambda (hook)
+		(if (string? (hook 'x))
+		    (set! (hook 'x) (string->number (hook 'x)))))))
+  
+  (test (h 0) 1)
+  (test (h "0") 1)
+
+  (set! ((procedure-environment h) 'end)
+	(list (lambda (hook)
+		(if (> (hook 'result) 1)
+		    (set! end 1)))))
+
+  (test (list (h 1) end) '(2 1))
+
+  (set! ((procedure-environment h) 'init)
+	(cons
+	 (lambda (hook)
+	   (if (symbol? (hook 'x))
+	       (set! (hook 'x) 123)))
+	 ((procedure-environment h) 'init)))
+
+  (test (h 0) 1)
+  (test (h "14") 15)
+  (test (h 'a) 124))
+
 (let ((hook-init-functions (make-procedure-with-setter
 			    (lambda (hook)
 			      ((procedure-environment hook) 'init))
@@ -13571,7 +13608,7 @@ this prints:
 (test (map quasiquote '((quasiquote 1) (quasiquote 2))) '(1 2))
 (test (map (lambda (a b) (a b)) (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) (list 1 2 3)) '(2 4 27))
 (test (map apply (map lambda '((x) (y) (z)) '((+ x x) (* y y) (expt z z))) '((1) (2) (3))) '(2 4 27))
-
+(test (let () (define (add-some x) (define (add-some x) (+ x 2)) (+ x 1)) (map add-some '(1 2 3 4))) '(2 3 4 5)) ; from some CL website -- kinda ridiculous
 (test (map gcd #(1 2)) '(1 2))
 (test (let ((ht (hash-table '(a . 1) '(b . 2)) )) (for-each set-cdr! ht '(32 33)) (ht 'a)) 32)
 (test (apply vector (map values #(1 2) #(3 4))) #(1 3 2 4))
@@ -19613,9 +19650,35 @@ who says the continuation has to restart the map from the top?
 (test (eq? (cadr '(a, b, c,)) 'b,) #t)
 (test (let ((b, 32)) `(a , b, c,)) '(a 32 c,))
 (test (let ((b, 32)) `(a, , b, c,)) '(a, 32 c,))
-(test (equal? (let ((b, 32)) '(a, , b, c,)) '(a, (unquote b,) c,)) #t) ; comma by itself (no symbol) is an error
-(test (equal? (let ((b, 32)) '(a, ,  , b, c,)) '(a, (unquote (unquote b,)) c,)) #t)
+(if (not (provided? 'immutable-unquote)) (test (equal? (let ((b, 32)) '(a, , b, c,)) '(a, (unquote b,) c,)) #t)) ; comma by itself (no symbol) is an error
+(if (not (provided? 'immutable-unquote)) (test (equal? (let ((b, 32)) '(a, ,  , b, c,)) '(a, (unquote (unquote b,)) c,)) #t))
 ;(test (equal? (let ((b 32)) (let ((b, b)) ``(a, ,  , b, c,))) '({list} 'a, 32 'c,)) #t)
+
+(if (provided? 'immutable-unquote)
+    (begin
+      (test (let () (macro? (eval (define-bacro* ,@ 1 (abs ))))) 'error)
+      (test (let () (define-bacro* ,@ 1 (abs ))) 'error)
+      (test (let () (define* ,() (abs ))) 'error)
+      (test (let () (define-macro* ,(a) ,a)) 'error)
+      (test (let (,'a) unquote) 'error)
+      (test (let (, '1) unquote) 'error)
+      (test (let (, (lambda (x) (+ x 1))) ,,,,'3) 'error)
+      (test (let (,@ '(1)) unquote) 'error)
+      (test (let (,@ ()) ,2) 'error)
+      (test (let (' 1) quote) 1)
+      )
+    (begin
+      (test (let () (macro? (eval (define-bacro* ,@ 1 (abs ))))) #t)
+      (test (let () (define-bacro* ,@ 1 (abs ))) 'unquote)
+      (test (let () (define* ,() (abs ))) 'error)
+      (test (let () (define-macro* ,(a) ,a)) 'unquote)
+      (test (let (,'a) unquote) 'a)
+      (test (let (, '1) unquote) 1)
+      (test (let (, (lambda (x) (+ x 1))) ,,,,'3) 7)
+      (test (let (,@ '(1)) unquote) 1)
+      (test (let (,@ ()) ,2) 2)
+      (test (let (' 1) quote) 1)
+      ))
 
 ;; from gauche
 (let ((quasi0 99)
@@ -19987,7 +20050,7 @@ who says the continuation has to restart the map from the top?
 (let ((d 1)) (test (quasiquote (a b c ,d)) '(a b c 1)))
 (test (let ((a 2)) (quasiquote (a ,a))) (let ((a 2)) `(a ,a)))
 (test (quasiquote 4) 4)
-(test (quasiquote (list (unquote (+ 1 2)) 4)) '(list 3 4))
+(if (not (provided? 'immutable-unquote)) (test (quasiquote (list (unquote (+ 1 2)) 4)) '(list 3 4)))
 (test (quasiquote (1 2 3)) '(1 2 3))
 (test (quasiquote ()) '())
 (test (quasiquote (list ,(+ 1 2) 4))  '(list 3 4))
@@ -20007,7 +20070,7 @@ who says the continuation has to restart the map from the top?
 (test (quasiquote (,1 ,(quasiquote ,@(quasiquote (,1))))) '(1 1))
 (test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
 (test `(+ ,(apply values '(1 2))) '(+ 1 2))
-(test `(apply + (unquote '(1 2))) '(apply + (1 2)))
+(if (not (provided? 'immutable-unquote)) (test `(apply + (unquote '(1 2))) '(apply + (1 2))))
 (test (eval (list (list quasiquote +) -1)) -1)
 
 (test (apply quasiquote '((1 2 3))) '(1 2 3))
@@ -22556,6 +22619,20 @@ abs     1       2
   (define (hi a) (+ a x))
   (test ((apply let '((x 32)) (list (procedure-source hi))) 12) 44))
 ;; i.e. make a closure from (let ((x 32)) <procedure-source hi>)
+
+(let ()
+  (define (arg-info f n) 
+    ((procedure-source f) 1 n 1 0 2)) ; get the documentation string of f's n-th argument
+
+  (define* (add-1 (arg ((lambda () "arg should be an integer" 0)))) 
+    (+ arg 1))          ; the default value of arg is 0
+
+  (test (add-1) 1)
+  (test (add-1 1) 2)
+
+  (test (arg-info add-1 0) "arg should be an integer"))
+
+
 
 
 
@@ -67926,7 +68003,7 @@ etc
 (test `(+ ,(let ((sqrt (lambda (a) (* a a)))) (sqrt 9)) 4) '(+ 81 4))
 (test `(+ (let ((sqrt (lambda (a) (* a a)))) ,(sqrt 9)) 4) '(+ (let ((sqrt (lambda (a) (* a a)))) 3) 4))
 (test (let ((sqrt (lambda (a) (* a a)))) `(+ ,(apply values (map sqrt '(1 4 9))) 2)) '(+ 1 16 81 2))
-(test (let ((sqrt (lambda (a) (* a a)))) `(+ (unquote (apply values (map sqrt '(1 4 9)))) 2)) '(+ 1 16 81 2))
+(if (not (provided? 'immutable-unquote)) (test (let ((sqrt (lambda (a) (* a a)))) `(+ (unquote (apply values (map sqrt '(1 4 9)))) 2)) '(+ 1 16 81 2)))
 
 (test ((((eval lambda) lcm gcd))) 0)
 (test ((((lambda - -) -) 0) 1) -1)

@@ -54258,8 +54258,18 @@ s7_scheme *s7_init(void)
   sc->LAMBDA =      make_symbol(sc, "lambda");
   sc->LAMBDA_STAR = make_symbol(sc, "lambda*");
   sc->QUOTE =       make_symbol(sc, "quote");
-  sc->UNQUOTE =     make_symbol(sc, "unquote"); /* this has no value, so it has to be the symbol */
-                                                /* SOMEDAY: make the name "," here and make it a constant. */
+
+#define WITH_IMMUTABLE_UNQUOTE 0
+#if WITH_IMMUTABLE_UNQUOTE
+  /* unquote has no value, so it has to be the symbol for quasiquote */
+  /* SOMEDAY: this code solves the various unquote redefinition troubles
+   */
+  sc->UNQUOTE =     make_symbol(sc, ","); 
+  set_immutable(sc->UNQUOTE);
+#else
+  sc->UNQUOTE =     make_symbol(sc, "unquote");
+#endif
+
   sc->MACROEXPAND = make_symbol(sc, "macroexpand");
   sc->FEED_TO =     make_symbol(sc, "=>");
   sc->SET =         make_symbol(sc, "set!");
@@ -54773,6 +54783,9 @@ s7_scheme *s7_init(void)
 #if WITH_SYSTEM_EXTRAS
   s7_provide(sc, "system-extras");
 #endif
+#if WITH_IMMUTABLE_UNQUOTE
+  s7_provide(sc, "immutable-unquote");
+#endif
 
   sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);
   set_setter(sc->Vector_Set);
@@ -55026,6 +55039,8 @@ s7_scheme *s7_init(void)
  * should all the internal hook s7_call's be protected? *load-hook* set and (+ 1 (load "a-file.scm"))? reader case?
  *   load case seems to be ok
  *
+ * TODO: make it possible to package extra arg info (type checkers, docs, etc)
+ *
  * TODO: open-environment direct tests, also the open-evironment? cases
  *       also we really should add error check tests, and make sure s7test hits every optimizer choice
  * TODO: c example of using this
@@ -55050,45 +55065,6 @@ s7_scheme *s7_init(void)
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
  * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
- *
- * TODO: these make no sense, I hope
- *    :(eval (define-bacro* ,@ 1 (abs )))
- *    #<bacro>
- *    :(procedure-source (eval (define-bacro* ,@ 1 (abs ))))
- *    (lambda ({defmac}-24) (apply (lambda* (({apply} {values} 1)) (abs)) (cdr {defmac}-24)))
- *    :(define-bacro* ,@ 1 (abs )) ; only bacro* and macro*
- *    unquote
- *    OP_READ_APPLY_VALUES: (unquote (qq_apply_values ...)) so (define* (unquote (apply (values 1))) (abs )) -> unquote!
- *    :(define* ,() (abs ))
- *    ;define* is restricted to functions: (define* () (abs))
- *    :(define-macro* ,(a) ,a)
- *    unquote
- *    :(unquote 1)
- *    ;lambda* parameter default value missing? '(a)
- *    (define-macro* , (a 1) ,a)
- *    (unquote 2) -> infinite loop as is (let ((x 2)) ,x)
- *    :(procedure-source (define-macro* , (a 1) ,a))
- *    (lambda ({defmac}-15) (apply (lambda* ((a 1)) (unquote a)) (cdr {defmac}-15)))
- *    so it surreptiously calls itself!  dybvig says ",obj" is converted by the reader to (unquote obj) but that is trouble
- *    (define (unquote a) (+ a 1))
- *    (let ((x 1)) ,x) -> 2!   ; this works in Guile as well
- *    (let ((x 1)) `,x) -> 1!
- *    `(let ((x 1)) ,x) -> unbound variable
- *    (let ((x 1)) ,,,,,,x) -> 7
- *    maybe remove the name "unquote" as we already have removed unquote-splicing
- *    :(let (,'a) unquote) ; or (let (, '1) unquote)
- *    a
- *    :(let (, (lambda (x) (+ x 1))) ,'3) ; ,3 here -> 3
- *    4
- *    :(let (, (lambda (x) (+ x 1))) ,,,,'3)
- *    7
- *    :(let (,@ '(1)) unquote)
- *    1
- *    :(let (,@ ()) ,2)
- *    2
- *    :(let (' 1) quote)
- *    1
- * so use the value in the unquote case
  *
  * (define-macro (make-lambda args . body) `(apply lambda* ',args '(,@body))): (make-lambda (a b) (+ a b))
  * (define (make-lambda args body) (apply lambda* args body)): (make-lambda '(a b) '((+ a b)))
