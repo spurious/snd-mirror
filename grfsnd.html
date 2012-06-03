@@ -590,8 +590,6 @@ output-comment-hook lambda: &lt;{ str -- s }&gt;
 
 'snd-nogui provided? [unless]
   'snd-motif provided? [if]
-    \ if not configured --with-static-xm
-    'xm provided? not [if] dl-load libxm Init_libxm [then]
     require snd-xm
     add-mark-pane
     #t with-smpte-label
@@ -604,8 +602,6 @@ output-comment-hook lambda: &lt;{ str -- s }&gt;
   [then]
 
   'snd-gtk provided? [if]
-    \ if not configured --with-static-xg
-    'xg provided? not [if] dl-load libxg Init_libxg [then]
     $" Serif 10" set-axis-label-font drop
   [then]
 
@@ -815,7 +811,6 @@ latter are (configure --help):
 Audio choices (normally this is decided automatically):
     --with-alsa              use ALSA (the default in Linux)
     --with-oss               use OSS
-    --with-static-alsa       use ALSA statically loaded
     --with-jack              use JACK (Linux audio stream sharing support, can be used with ALSA)
     --with-pulseaudio        use pulseaudio (may not work yet)
     --with-portaudio         use portaudio (may not work yet)
@@ -824,11 +819,8 @@ Audio choices (normally this is decided automatically):
 Graphics choices:
     --with-gtk               use Gtk+ to build Snd (Gtk+ version 2.0 or later)
     --with-motif             use Motif (version 2.0 or later) to build Snd (the default), Lesstif is not supported
-    --with-static-motif      use libXm.a to build Snd
     --with-motif-prefix=PFX  where Motif is installed (--with-motif-prefix=/usr/X11R6)
     --with-no-gui            make Snd without any graphics support
-    --with-static-xm         include the xm module at build time; this is easier than trying to dynamically load xm.so
-    --with-static-xg         include the xg module at build time; this is easier than trying to dynamically load xg.so
     --with-gl                include OpenGL support (spectrogram, etc, Motif only)
     --with-just-gl           include OpenGL support, but omit the GL/s7/Ruby/Forth bindings (Motif only)
     --with-gl2ps             include gl2ps (GL to Postscript code, Motif only)
@@ -882,7 +874,7 @@ Here at CCRMA, we normally use:
 </p>
 
 <pre class="indented">
-./configure --with-alsa --with-temp-dir=/zap --with-static-xm --with-gl
+./configure --with-alsa --with-temp-dir=/zap --with-gl
 </pre>
 </div>
 
@@ -905,8 +897,6 @@ snd-forth      Forth as extension language (--with-forth)
 snd-ruby       Ruby as extension language (--with-ruby)
 snd-s7         s7 as extension language (--with-s7)
 snd            It's Snd, ferchrissake... (always included)
-xg             Gtk module (xg.c) included (--with-static-xg, or loaded dynamically)
-xm             Motif module (xm.c) included (--with-static-xm, or loaded dynamically)
 gsl            GSL is loaded (--with-gsl)
 alsa           ALSA is in use, rather than OSS (--with-alsa)
 </pre>
@@ -1364,22 +1354,10 @@ Bye!
 
 <div class="innerheader" id="sndwithmotif">Snd and Motif</div>
 
-<p>It is possible to add your own user-interface elements using the xm module
-included with Snd.  'make xm' should create
-a shared library named xm.so; you can load this at any time into Snd:
+<p>It is possible to add your own user-interface elements using the xm (for Motif) or xg (for Gtk) modules
+included with Snd.
+Here's a dialog window with a slider:
 </p>
-
-<pre class="indented">
-&gt; (define hxm (dlopen "/home/bil/snd-12/xm.so"))
-#&lt;unspecified&gt;
-&gt; (dlinit hxm "Init_libxm")
-#t
-</pre>
-
-<p>and now we have access to all of X and Motif.  Alternatively, use the
-configure switch --with-static-xm, and the xm module will be included
-in the base Snd image.
-Here's a dialog window with a slider:</p>
 
 <pre class="indented">
 (define scale-dialog #f)
@@ -1498,8 +1476,7 @@ create_scale_dialog $Snd_widgets[1]
 
 <p>There are tons of examples of using the gtk module.  snd-gtk.scm is one
 place to start.  All of gtk and cairo, and much of pango and glib are accessible from the
-extension language if you loaded the xg module or built Snd with the configuration switch
---with-static-xg.
+extension language.
 Here's the scale-dialog in xg/gtk:
 </p>
 

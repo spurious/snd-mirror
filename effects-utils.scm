@@ -1,12 +1,6 @@
 (provide 'snd-effects-utils.scm)
 (if (not (provided? 'snd-motif)) (snd-error "effects-utils.scm is Motif-specific"))
 
-(if (not (provided? 'xm))
-    (let ((hxm (dlopen "xm.so")))
-      (if (string? hxm)
-	  (snd-error (format #f "new-effects.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
-	  (dlinit hxm "Init_libxm"))))
-
 (define (raise-dialog w)
   "(raise-dialog w) tries to put 'w' on top of any widgets that are obscuring it"
   (if (and (Widget? w) 

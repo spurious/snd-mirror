@@ -28022,7 +28022,7 @@ void Init_libxm(void)
 #endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
 
-      XEN_YES_WE_HAVE("xm");
+      XEN_PROVIDE("xm");
       XEN_DEFINE("xm-version", C_TO_XEN_STRING(XM_DATE));
       xm_already_inited = true;
     }

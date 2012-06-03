@@ -11,19 +11,6 @@
     (if (not (provided? 'snd-snd-motif.scm))
 	(load "snd-motif.scm")))
 
-(if (provided? 'snd-motif)
-    (if (not (provided? 'xm))
-	(let ((hxm (dlopen "xm.so")))
-	  (if (string? hxm)
-	      (snd-error (format #f "xm-enved.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
-	      (dlinit hxm "Init_libxm"))))
-    (if (provided? 'snd-gtk)
-	(if (not (provided? 'xg))
-	    (let ((hxm (dlopen "xg.so")))
-	      (if (string? hxm)
-		  (snd-error (format #f "xm-enved.scm needs the xg module (either 'make xg' or build Snd with --with-static-xg): ~A" hxm))
-		  (dlinit hxm "Init_libxg"))))))
-
 (define xe-envelope
   (make-procedure-with-setter
    (lambda (drawer)

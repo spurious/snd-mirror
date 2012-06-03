@@ -40,12 +40,6 @@
 	((pred (car l)) (car l))
 	(else (find-if pred (cdr l)))))
 
-(if (not (provided? 'xm))
-    (let ((hxm (dlopen "xm.so")))
-      (if (string? hxm)
-	  (snd-error (format #f "snd-motif.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
-	  (dlinit hxm "Init_libxm"))))
-
 (provide 'snd-snd-motif.scm)
 
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))

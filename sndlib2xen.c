@@ -2855,5 +2855,5 @@ void mus_sndlib_xen_initialize(void)
   new_sound_hook = XEN_DEFINE_HOOK(S_new_sound_hook, "(make-hook 'name)", 1, H_new_sound_hook);
   mus_header_write_set_hook(g_new_sound_hook);
 
-  XEN_YES_WE_HAVE("sndlib");
+  XEN_PROVIDE("sndlib");
 }

@@ -1761,6 +1761,25 @@
 (test (not and) #f)
 (test (not case) #f)
 
+(let () ; check some optimizer branches
+  (define (f1 sym) (not (symbol? sym))) (test (f1 'hi) #f) (test (f1 "hi") #t)  
+  (define (f2 sym) (not (integer? sym))) (test (f2 2) #f) (test (f2 'hi) #t)
+  (define (f3 sym) (not (char? sym))) (test (f3 2) #t) (test (f3 #\a) #f)
+  (define (f4 sym) (not (list? sym))) (test (f4 2) #t) (test (f4 '(1 2 3)) #f)
+  (define (f5 sym) (not (boolean? sym))) (test (f5 2) #t) (test (f5 #f) #f)
+  (define (f6 sym) (not (eof-object? sym))) (test (f6 2) #t) (test (f6 #<eof>) #f)
+  (define (f7 sym) (not (pair? (car sym)))) (test (f7 '(hi)) #t) (test (f7 '((1))) #f)
+  (define (f8 sym) (not (eq? sym 'q))) (test (f8 'a) #t) (test (f8 'q) #f)
+  (define (f9 sym) (pair? (cadr sym))) (test (f9 '(1 2 3)) #f) (test (f9 '(1 (2 3) 4)) #t)
+  (define (f10 lst val) (eq? (car lst) val)) (test (f10 '(#f) #f) #t) (test (f10 '(a) 32) #f)
+  (define (f11 lst) (eq? (caar lst) 'q)) (test (f11 '((a))) #f) (test (f11 '((q))) #t)
+  (define (f12 lst) (= (length lst) 2)) (test (f12 '(1 2)) #t) (test (f12 '(1 2 3)) #f)
+  (define (f13 lst) (< (length lst) 2)) (test (f13 '(1 2)) #f) (test (f13 '(1)) #t)
+  (define (f14 lst) (negative? (length lst))) (test (f14 '(1 2)) #f) (test (f14 '(1 . 3)) #t)
+  (define (f15 lst) (memq (car lst) '(a b c))) (test (f15 '(a)) '(a b c)) (test (f15 '(d)) #f)
+  )
+	
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -11630,6 +11649,14 @@ a2" 3) "132")
     (test (char-ready? p) #t)
     (test (read-line p) "345")
     (test (read-line p) "67890")))
+
+(test (write 1 (current-input-port)) 'error)
+(test (write-char #\a (current-input-port)) 'error)
+(test (write-byte 0 (current-input-port)) 'error)
+(test (read (current-output-port)) 'error)
+(test (read-char (current-output-port)) 'error)
+(test (read-byte (current-output-port)) 'error)
+(test (read-line (current-output-port)) 'error)
 
 (let ((op1 (set-current-output-port (open-output-file "tmp1.r5rs"))))
   (display 1)
@@ -22763,6 +22790,7 @@ abs     1       2
 
 (test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
 (test (string=? (let () (define (hi) "this is a string" 1) (help hi)) "this is a string") #t)
+(test (string=? (let () (define (hi) "this is a string" 1) (#_help hi)) "this is a string") #t)
 (test (string=? (let () (define (hi) "this is a string") (procedure-documentation hi)) "this is a string") #t)
 (test (string=? (let () (define (hi) "this is a string") (hi)) "this is a string") #t)
 (test (string=? (let () (define* (hi (a "a string")) a) (procedure-documentation hi)) "") #t)
@@ -22786,6 +22814,7 @@ abs     1       2
 
 (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
 (test (string=? (help abs) "(abs x) returns the absolute value of the real number x") #t)
+(test (string=? (#_help abs) "(abs x) returns the absolute value of the real number x") #t)
 (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
 (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
 	(list (hi 1) (procedure-documentation hi)))
@@ -24941,18 +24970,49 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (environment->list arg) 'error))
- (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i pi '() #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+
+(for-each
+ (lambda (arg)
+   (test (open-environment arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i pi abs macroexpand '() #<eof> #<unspecified> #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
 
 (for-each
  (lambda (arg)
    (test (open-environment? arg) #f))
- (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() abs macroexpand #<eof> #<unspecified> #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
 
 (test (open-environment) 'error)
 (test (open-environment 1 2) 'error)
 (test (open-environment?) 'error)
 (test (open-environment? 1 2) 'error)
 
+(let ((f (lambda (x) (+ x 1))))
+  (test (open-environment? f) #f)
+  (open-environment f)
+  (test (open-environment? f) #t))
+
+(let ((f (lambda* (x) (+ x 1))))
+  (test (open-environment? f) #f)
+  (open-environment f)
+  (test (open-environment? f) #t))
+
+(let ((f (augment-environment ())))
+  (test (open-environment? f) #f)
+  (open-environment f)
+  (test (open-environment? f) #t))
+
+(let ()
+  (define-macro (f x) `(+ ,x 1))
+  (test (open-environment? f) #f)
+  (test (open-environment f) 'error)
+  (test (open-environment? f) #f))
+
+(let ()
+  (define-bacro* (f x) `(+ ,x 1))
+  (test (open-environment? f) #f)
+  (test (open-environment f) 'error)
+  (test (open-environment? f) #f))
 
 (test (current-environment 1) 'error)
 (test (global-environment 1) 'error)
@@ -68498,8 +68558,6 @@ etc
       '* '+ '- '/ '< '= '> 'call-with-output-file 'round 'keyword? '<= '>= 'cdaaar 'cdaadr 'cdadar 'cdaddr 'cddaar 'cddadr 'cdddar 'cddddr 'make-rectangular 'truncate 'string->number 'remainder 'char-downcase 'char->integer 'zero? 'char<? 'char=? 'char>? 'char-ci<? 'char-ci=? 'char-ci>? 'close-input-port 'infinite? 'magnitude 'open-input-file 'string->list 'write-char 'abs 'car 'procedure? 'cdr 'ash 'cos 'gcd 'list->vector 'exp 'symbol->keyword 'lcm 'max 'write-byte 'inexact? 'min 'log 'tan 'sin 'list-ref 'string 'integer-decode-float 'list->string 'symbol 'vector->list 'imag-part 'vector-length 'char-ready? 'random-state->list 'with-output-to-file 'char-alphabetic? 'char-numeric? 'integer-length 'peek-char 'keyword->symbol 'vector? 'ceiling 'real-part 'gensym 'make-hash-table 'negative? 'char<=? 'char>=? 'char-ci<=? 'char-ci>=? 'string-append 'port-line-number 'numerator 'make-hash-table-iterator 'string->symbol 'make-random-state 'string-ci<? 'string-ci=? 'string-ci>? 'make-keyword 'integer->char 'exact? 'string-copy 'string<? 'string=? 'string>? 'vector-ref 'acos 'caar 'with-input-from-file 'cadr 'cdar 'cddr 'string-set! 'rationalize 'atan 'asin 'assq 'assv 'cosh 'expt 'continuation? 'nan? 'memq 'memv 'odd? 'load 'hash-table-iterator? 'read 'tanh 'sinh 'number? 'sqrt 'set-car! 'set-cdr! 'pair-line-number 'string-ci<=? 'char-upcase 'string-ci>=? 'macro? 'list-set! 'list-tail 'reverse! 'symbol->value 'complex? 'symbol->string 'make-vector 'positive? 'string? 'make-polar 'member 'string-fill! 'number->string 'make-list 'reverse 'rational? 'open-input-string 'hash-table-set! 'hash-table-ref 'logand 'hash-table-size 'logior 'lognot 'logbit? 'integer? 'make-string 'exact->inexact 'logxor 'string<=? 'string>=? 'vector-set! 'modulo 'vector-fill! 'acosh 'call-with-output-string 'get-output-string 'caaar 'caadr 'cadar 'caddr 'cdaar 'cdadr 'cddar 'boolean? 'cdddr 'char-upper-case? 'angle 'char? 'inexact->exact 'string-length 'atanh 'symbol? 'denominator 'asinh 'with-output-to-string 'assoc 'input-port? 'call-with-input-file 'fill! 'port-closed? 'newline 'provided? 'char-whitespace? 'random 'floor 'read-char 'vector-dimensions 'even? 'defined? 'read-byte 'output-port? 'substring 'string-ref 'provide 'read-line 'eval-string 'port-filename 'list? 'open-output-file 'quotient 'pair? 'call-with-input-string 'random-state? 'with-input-from-string 'real? 'char-lower-case? 'null? 'eof-object? 'hash-table? 'caaaar 'caaadr 'caadar 'caaddr 'cadaar 'cadadr 'caddar 'cadddr 'close-output-port)))
   )
 
-
-
 (format #t "~%;all done!~%")
 
 
@@ -68624,3 +68682,5 @@ in non-gmp,
 
 ;;; this shows what global funcs have been rebound at some time
 ;;; (with-environment (initial-environment) (format #t "~{~A ~}~%" (current-environment)))
+
+

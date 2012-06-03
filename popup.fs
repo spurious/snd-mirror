@@ -35,10 +35,6 @@
 require snd-xm
 require extensions
 
-\ if not configured --with-static-xm|g
-'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
-'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
-
 \ for prefs
 : edhist-help-edits <{ w c info  -- }>
   "Edit History Functions"

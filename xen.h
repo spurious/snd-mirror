@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 11
-#define XEN_VERSION "3.11"
+#define XEN_MINOR_VERSION 12
+#define XEN_VERSION "3.12"
 
 /* HISTORY:
  *
+ *  4-June:    XEN_PROVIDE as synonym for XEN_YES_WE_HAVE.
  *  8-May:     added description arg to XEN_DEFINE_SIMPLE_HOOK and XEN_DEFINE_HOOK, only used in scheme.
  *  12-Jan-12: added reverse argument to s7 version of XEN_MAKE_OBJECT_TYPE.
  *  --------
@@ -248,8 +249,6 @@
 #define XEN_LIST_REVERSE(Lst)           ((Lst == XEN_EMPTY_LIST) ? XEN_EMPTY_LIST : rb_ary_reverse(XEN_COPY_ARG(Lst)))
 
 /* ---- numbers ---- */
-/* apparently no complex numbers (built-in) in Ruby? */
-
 #define XEN_ZERO                        INT2NUM(0)
 #define XEN_DOUBLE_P(Arg)               XEN_NUMBER_P(Arg)
 #define XEN_TO_C_DOUBLE(a)              NUM2DBL(a)
@@ -261,6 +260,11 @@
 #define C_TO_XEN_DOUBLE(a)              rb_float_new(a)
 #define XEN_TO_C_INT(a)                 rb_num2long(a)
 #define XEN_TO_C_INT_OR_ELSE(a, b)      xen_rb_to_c_int_or_else(a, b)
+
+/* apparently no complex numbers (built-in) in Ruby? */
+#define XEN_COMPLEX_P(Arg)              0
+#define C_TO_XEN_COMPLEX(a)             XEN_ZERO
+#define XEN_TO_C_COMPLEX(a)             0.0
 
 #define XEN_ULONG_P(Arg1)               XEN_INTEGER_P(Arg1)
 #define XEN_EXACT_P(Arg1)               XEN_INTEGER_P(Arg1)
@@ -450,6 +454,7 @@
 #define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
 #define XEN_MAKE_KEYWORD(Arg)           xen_rb_make_keyword(Arg)
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
+#define XEN_PROVIDE(a)                  rb_provide(a)
 #define XEN_PROTECT_FROM_GC(Var)        rb_gc_register_address(&(Var))
 #define XEN_UNPROTECT_FROM_GC(Var)      rb_gc_unregister_address(&(Var))
 
@@ -741,6 +746,7 @@ XEN xen_assoc(XEN key, XEN alist);
 
 #define XEN_DEFINED_P(name)             fth_defined_p((char *)name)
 #define XEN_YES_WE_HAVE(feature)        fth_add_feature(feature)
+#define XEN_PROVIDE(feature)            fth_add_feature(feature)
 
 /* === Boolean, Bound, Equal === */
 #define XEN_BOOLEAN_P(Arg)              FTH_BOOLEAN_P(Arg)
@@ -1112,9 +1118,9 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
   #define C_TO_XEN_COMPLEX(a)                      s7_make_complex(s7, creal(a), cimag(a))
 #else
   #define XEN_HAVE_COMPLEX_NUMBERS                 0
-  #define XEN_COMPLEX_P(Arg)                       Arg
-  #define XEN_TO_C_COMPLEX(a)                      a
-  #define C_TO_XEN_COMPLEX(a)                      a
+  #define XEN_COMPLEX_P(Arg)                       false
+  #define XEN_TO_C_COMPLEX(a)                      0.0
+  #define C_TO_XEN_COMPLEX(a)                      XEN_ZERO
 #endif
 
 #define XEN_HAVE_RATIOS                            1
@@ -1163,6 +1169,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 #define XEN_THROW(Type, Info)                      s7_error(s7, Type, Info)
 
 #define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)
+#define XEN_PROVIDE(Feature)                       s7_provide(s7, Feature)
 #define XEN_PROTECT_FROM_GC(Arg)                   s7_gc_protect(s7, Arg)
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) s7_wrong_type_arg_error(s7, Caller, ArgN, Arg, Descr)
@@ -1529,6 +1536,9 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define C_TO_XEN_INT(a) a
 #define XEN_TO_C_INT(a) 0
 #define XEN_TO_C_INT_OR_ELSE(a, b) b
+#define XEN_COMPLEX_P(Arg) 0
+#define XEN_TO_C_COMPLEX(a) 0.0
+#define C_TO_XEN_COMPLEX(a) a
 #define XEN_ULONG_P(Arg) 0
 #define XEN_TO_C_ULONG(a) 0
 #define C_TO_XEN_ULONG(a) 0
@@ -1635,6 +1645,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_KEYWORD_EQ_P(k1, k2) 0
 #define XEN_MAKE_KEYWORD(Arg) 0
 #define XEN_YES_WE_HAVE(Feature)
+#define XEN_PROVIDE(Feature)
 #define XEN_DOCUMENTATION_SYMBOL 0
 #define XEN_OBJECT_HELP(Name) 0
 #define XEN_PROTECT_FROM_GC(a) 0

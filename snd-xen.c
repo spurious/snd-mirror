@@ -2544,14 +2544,12 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #endif
 
 
-#if HAVE_STATIC_XM
-  #if USE_MOTIF
-    void Init_libxm(void);
-  #else
-    void Init_libxg(void);
-  #endif
-#endif
 
+#if USE_MOTIF
+  void Init_libxm(void);
+#else
+  void Init_libxg(void);
+#endif
 
 #if HAVE_GL && (!JUST_GL)
  void Init_libgl(void);
@@ -2871,17 +2869,17 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
 #endif
 
-#if HAVE_STATIC_XM
-  #if USE_MOTIF
-    Init_libxm();
-    #if HAVE_FORTH
-      fth_add_loaded_files("libxm.so");
-    #endif
-  #else
-    Init_libxg();
-    #if HAVE_FORTH
-      fth_add_loaded_files("libxg.so");
-    #endif
+#if USE_MOTIF
+  Init_libxm();
+  #if HAVE_FORTH
+    fth_add_loaded_files("libxm.so");
+  #endif
+#endif
+
+#if USE_GTK
+  Init_libxg();
+  #if HAVE_FORTH
+    fth_add_loaded_files("libxg.so");
   #endif
 #endif
 
@@ -2890,56 +2888,56 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_ALSA
-  XEN_YES_WE_HAVE("alsa");
+  XEN_PROVIDE("alsa");
 #endif
 
 #if HAVE_OSS
-  XEN_YES_WE_HAVE("oss");
+  XEN_PROVIDE("oss");
 #endif
 
 #if MUS_PULSEAUDIO
-  XEN_YES_WE_HAVE("pulse-audio");
+  XEN_PROVIDE("pulse-audio");
 #endif
 
 #if MUS_JACK
-  XEN_YES_WE_HAVE("jack");
+  XEN_PROVIDE("jack");
 #endif
 
 #if HAVE_GSL
-  XEN_YES_WE_HAVE("gsl");
+  XEN_PROVIDE("gsl");
 #endif
 
 #if USE_MOTIF
-  XEN_YES_WE_HAVE("snd-motif");
+  XEN_PROVIDE("snd-motif");
 #endif
 
 #if USE_GTK
-  XEN_YES_WE_HAVE("snd-gtk");
+  XEN_PROVIDE("snd-gtk");
 #if HAVE_GTK_3
-  XEN_YES_WE_HAVE("gtk3");
+  XEN_PROVIDE("gtk3");
 #else
-  XEN_YES_WE_HAVE("gtk2");
+  XEN_PROVIDE("gtk2");
 #endif
 #endif
 
 #if USE_NO_GUI
-  XEN_YES_WE_HAVE("snd-nogui");
+  XEN_PROVIDE("snd-nogui");
 #endif
 
 #if HAVE_FORTH
-  XEN_YES_WE_HAVE("snd-forth");
+  XEN_PROVIDE("snd-forth");
 #endif
 
 #if HAVE_SCHEME
-  XEN_YES_WE_HAVE("snd-s7");
+  XEN_PROVIDE("snd-s7");
 #endif
 
 #if WITH_AUDIO
-  XEN_YES_WE_HAVE("audio");
+  XEN_PROVIDE("audio");
 #endif
 
 #if HAVE_RUBY
-  XEN_YES_WE_HAVE("snd-ruby");
+  XEN_PROVIDE("snd-ruby");
   /* we need to set up the search path so that load and require will work as in the program irb */
   #ifdef RUBY_SEARCH_PATH
     {
@@ -2970,7 +2968,7 @@ void g_xen_initialize(void)
   #endif
 #endif
 
-  XEN_YES_WE_HAVE("snd");
-  XEN_YES_WE_HAVE("snd" SND_MAJOR_VERSION);
-  XEN_YES_WE_HAVE("snd-" SND_MAJOR_VERSION "." SND_MINOR_VERSION);
+  XEN_PROVIDE("snd");
+  XEN_PROVIDE("snd" SND_MAJOR_VERSION);
+  XEN_PROVIDE("snd-" SND_MAJOR_VERSION "." SND_MINOR_VERSION);
 }

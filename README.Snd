@@ -32,7 +32,6 @@ The configure script has a bunch of arguments:
    Graphics:
 
      --with-motif              use Motif (the default, if it exists)
-       --with-static-motif     same, but load Motif statically
        --with-motif-prefix     set Motif location (will append lib and include)
                                on my machine: --with-motif-prefix=/usr/X11R6
   
@@ -49,18 +48,10 @@ The configure script has a bunch of arguments:
   
        --with-gl2ps            include gl2ps (postscript output from OpenGL graphics)
   
-     --with-static-xm          include the xm module (rather than loading it dynamically)
-  			       this option affects xm.c for Motif, xg.c for Gtk.
-                                 You'll need this (or need to "make xm" and load xm.so
-                                 at runtime) if you want to use Dave Phillips'
-                                 extensions described in the tutorial.
-       --with-static-xg        same as above, but refers to the gtk xg module.    
-                                 To build xg.so separately, use "make xg".  
-           
+
    Audio:
 
      --with-alsa               use ALSA if possible (the default in Linux)
-       --with-static-alsa      use ALSA statically loaded
 
      --with-oss                use OSS (not tested in a long time)
   
@@ -109,10 +100,7 @@ or an extension language, however, there's nothing it can do.
 
 Here at CCRMA, we use this configure invocation:
 
-  ./configure --with-jack --with-temp-dir=/zap --with-static-xm --with-gl --with-gl2ps
-
-but I'd recommend --with-just-gl elsewhere (the various GL implementations
-are different enough that gl.c can be a pain to build).
+  ./configure --with-jack --with-temp-dir=/zap
 
 
 Version info:
@@ -488,7 +476,7 @@ run ranlib: ranlib libXm.a (you may need to admin privileges to do this).
 
 On my OSX 10.4 Mac, the configuration command I use is:
 
-./configure --with-motif-prefix=/usr/OpenMotif --with-static-xm
+./configure --with-motif-prefix=/usr/OpenMotif
 
 So, I believe all the rest of these instructions are obsolete,
 but if the simple case above fails, they may help you get going.
@@ -507,7 +495,7 @@ Here's some info from Josh Mattoon:
     simple solution was to pass in the CFLAGS and LDFLAGS as so:
     
     CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" ./configure \ 
-         --with-gl --with-editres --with-static-xm
+         --with-gl --with-editres
     
     This was after a bit of trial and error.  The linker couldn't find
     some symbols that turned out to be in libmx, so I added that, and the
@@ -518,7 +506,7 @@ Here's some info from Josh Mattoon:
 (fftw is optional in Snd).  Adam Tinsdale had better luck with this:
 
     CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" ./configure  \
-      --with-motif --without-fftw --with-static-xm
+      --with-motif --without-fftw
 
 
 The dac-size variable seems to matter a lot in OSX.  If you're
@@ -567,7 +555,7 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
     
     Next, download and untar the latest snd sources from ccrma
     
-    $ ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif --with-static-xm --with-motif-prefix=/sw
+    $ ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif --with-motif-prefix=/sw
     
     This config was run from a bash shell.  If you are using tcsh (and you
     might be if you upgraded to panther) then you will have to omit the part
@@ -597,7 +585,7 @@ process moved the previous X11R6 directory to X11R6 1, which is untypable).
 
 In OSX 10.6.8, Ludger Brummer suggests:
 
-  ./configure CFLAGS="-arch i386 -I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif --with-static-xm --with-motif-prefix=/sw 
+  ./configure CFLAGS="-arch i386 -I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif --with-motif-prefix=/sw 
 
 
 Here's a note from Brooke Mitchell:
@@ -628,7 +616,6 @@ then:
 4) compile the source 
 
  ./configure \ 
- --with-static-xm  \ 
  --with-motif-prefix=/usr/OpenMotif 
  (--with-ruby  //if you want ruby) 
 

@@ -1,11 +1,5 @@
 ;;; translation of new-effects.scm to gtk/xg
 
-(if (not (provided? 'xg))
-    (let ((hxm (dlopen "xg.so")))
-      (if (string? hxm)
-	  (snd-error (format #f "gtk-effects.scm needs the xg module (either 'make xg' or build Snd with --with-static-xg): ~A" hxm))
-	  (dlinit hxm "Init_libxg"))))
-
 (if (not (provided? 'snd-gtk)) (snd-error "gtk-effects.scm is Gtk-specific"))
 
 (provide 'snd-gtk-effects.scm)

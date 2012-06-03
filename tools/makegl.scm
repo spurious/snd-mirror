@@ -905,7 +905,7 @@
 (hey "    {~%")
 (hey "      define_integers();~%")
 (hey "      define_functions();~%")
-(hey "      XEN_YES_WE_HAVE(\"gl\");~%")
+(hey "      XEN_PROVIDE(\"gl\");~%")
 (hey "      XEN_DEFINE(\"gl-version\", C_TO_XEN_STRING(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "      gl_already_inited = true;~%")
 (hey "    }~%")

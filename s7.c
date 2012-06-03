@@ -4273,8 +4273,7 @@ static s7_pointer environment_copy(s7_scheme *sc, s7_pointer env)
 
 static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 {
-  #define H_global_environment "(global-environment) returns the current top-level definitions (symbol bindings). \
-It is a hash-table."
+  #define H_global_environment "(global-environment) returns the current top-level definitions (symbol bindings)."
   return(sc->global_env);
 }
 
@@ -14992,7 +14991,7 @@ You can later apply make-random-state to this list to continue a random number s
   s7_rng_t *r = NULL;
   s7_pointer obj;
   if (is_null(args))
-    r = sc->default_rng;
+    r = (s7_rng_t *)(sc->default_rng);
   else
     {
       obj = car(args);
@@ -15025,7 +15024,7 @@ void s7_set_default_random_state(s7_scheme *sc, s7_Int seed, s7_Int carry)
 s7_Double s7_random(s7_scheme *sc, s7_pointer state)
 {
   if (!state)
-    return(next_random(sc->default_rng));
+    return(next_random((s7_rng_t *)(sc->default_rng)));
   return(next_random((s7_rng_t *)s7_object_value(state)));
 }
 
@@ -15055,7 +15054,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	  return(s7_wrong_type_arg_error(sc, "random state", 2, state, "a random state as returned by make-random-state"));
 	}
     }
-  else r = sc->default_rng;
+  else r = (s7_rng_t *)(sc->default_rng);
 
   num = car(args);
   switch (type(num))
@@ -15098,6 +15097,33 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
     }
   return(sc->F);
 }
+
+#if WITH_OPTIMIZATION
+static s7_pointer random_ic, random_rc;
+
+static s7_pointer g_random_ic(s7_scheme *sc, s7_pointer args)
+{
+  return(make_integer(sc, (s7_Int)(integer(car(args)) * next_random((s7_rng_t *)(sc->default_rng)))));
+}
+
+static s7_pointer g_random_rc(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_make_real(sc, real(car(args)) * next_random((s7_rng_t *)(sc->default_rng))));
+}
+
+static s7_pointer random_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 1)
+    {
+      if (s7_is_integer(cadr(expr)))
+	return(random_ic);
+      if ((is_real(cadr(expr))) &&
+	  (!is_rational(cadr(expr))))
+	return(random_rc);
+    }
+  return(f);
+}
+#endif
 
 
 
@@ -32561,6 +32587,15 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(geq_2) = c_function_class(f);
   geq_length_ic = s7_make_function(sc, ">=", g_geq_length_ic, 2, 0, false, ">= optimization");
   c_function_class(geq_length_ic) = c_function_class(f);
+
+  /* random */
+  f = slot_value(global_slot(sc->RANDOM));
+  c_function_chooser(f) = random_chooser;
+
+  random_ic = s7_make_function(sc, "random", g_random_ic, 1, 0, false, "random optimization");
+  c_function_class(random_ic) = c_function_class(f);
+  random_rc = s7_make_function(sc, "random", g_random_rc, 1, 0, false, "random optimization");
+  c_function_class(random_rc) = c_function_class(f);
 #endif
 
   /* char=? */
@@ -35514,12 +35549,13 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
 
 	      if (!is_pair(cdar(w)))                                  /* (lambda* ((a . 0.0)) a) */
 		{
-		  if (is_null(cdar(w)))                             /* (lambda* ((a)) ...) */
+		  if (is_null(cdar(w)))                               /* (lambda* ((a)) ...) */
 		    return(eval_error(sc, "lambda* parameter default value missing? '~A", car(w)));
 		  return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(w)));
 		}
-	      if (is_not_null(cddar(w)))                               /* (lambda* ((a 0.0 "hi")) a) */
-		return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(w)));
+	      
+	      if (is_not_null(cddar(w)))                              /* (lambda* ((a 0.0 'hi)) a) */
+		  return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(w)));
 
 	      set_local(caar(w));
 	    }
@@ -55035,15 +55071,8 @@ s7_scheme *s7_init(void)
 
 
 
-/* PERHAPS: hook as method? -> before/after/around methods, before/after-hooks collapsed into main?
- * should all the internal hook s7_call's be protected? *load-hook* set and (+ 1 (load "a-file.scm"))? reader case?
- *   load case seems to be ok
- *
- * TODO: make it possible to package extra arg info (type checkers, docs, etc)
- *
- * TODO: open-environment direct tests, also the open-evironment? cases
- *       also we really should add error check tests, and make sure s7test hits every optimizer choice
- * TODO: c example of using this
+/* SOMEDAY: add error check tests
+ * TODO: c example of using open-env
  *   s7_augment_environment to add fields, s7_open_environment to open it, gc_protect?
  *   do we even need c objects? should c objects be environmentalizable?
  *   we want a block of C memory (doubles for example), accessible via implicit-indexing in scheme, and otherwise as a vector
@@ -55052,7 +55081,7 @@ s7_scheme *s7_init(void)
  *     so: add object-environment somehow (this would be an addition to vct type so that vector* could work)
  *     (environment obj) for procedure/env itself/c-obj (remove procedure-environment)
  *     (setter obj) similarly?
- *   auto c-object env to hold all the methods pass in by new_type, and subsequently,
+ *   auto c-object env to hold all the methods passed in by new_type, and subsequently,
  *     when added or set, tie to the current direct fields, so no slow down.
  *     for fast access, object type struct could have an array holding all the built-ins -- how to index?
  *     CHECK_METHOD needs a switch I guess: func from env if not obj, else table[offset]
@@ -55061,6 +55090,15 @@ s7_scheme *s7_init(void)
  *     i.e. skip the indirection to the table by building in a pointer to the table (skip tag)
  *   gsl vectors/matrices are all "blocks" (i.e. one sort of thing), so we could tie in all
  *     of the linear algebra code.  
+ *   (augment-env obj ...) could set it up
+ *   getter/setter are for free (part of new_type
+ *   so a struct: block {int size; double *data} which matches gsl I think
+ *   vcts wrap this, frame also, mixer adds 2-d access, as does sound-data
+typedef struct
+{
+  size_t size;
+  double * data;
+} gsl_block;
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
@@ -55074,7 +55112,9 @@ s7_scheme *s7_init(void)
  *
  * how often these: copy obj via doloop, or set all to 1 val
  * case of char? (currently we have op_case_int which ought to jump!)
- * (random 100) or some other constant -- this does happen, and we could split out the int/float cases
+ *
+ * who-calls could scan all envs in the current env to global env and examine sources?
+ * gsl bindings, s7_values can handle the extra error info
  *
  * lint     13424 -> 1231 [1237] 1286
  * bench    52019 -> 7875 [8268] 8037

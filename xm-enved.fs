@@ -6,7 +6,7 @@
 
 \ Commentary:
 \
-\ Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
+\ Requires --with-motif|gtk
 \
 \ Tested with Snd 12.x
 \             Fth 1.3.x

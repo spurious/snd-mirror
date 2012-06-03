@@ -234,6 +234,7 @@ indented and on a sort of brownish background.
       <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
       <li><a href="#s7inathread">s7 running in a separate thread</a>
       <li><a href="#replrescue">begin_hook to the rescue!</a>
+      <li><a href="#gsl">GSL</a>
   </ul>
 </ul>
 
@@ -2291,13 +2292,13 @@ global-environment    rootlet
 initial-environment   unlet
 with-environment      inlet
 outer-environment     outlet
-augment-environment   sublet
-augment-environment!  varlet
-current-environment   valet
-error-environment     owlet, triplet
-procedure-environment 
-environment-&gt;list     (pronounced "environmentalist" of course)
-open-environment
+augment-environment   sublet, make-let(?)
+augment-environment!  varlet, let-append(?)
+current-environment   valet,  make-begin(?)
+error-environment     owlet, triplet, error-let(?)
+procedure-environment runlet(?)
+environment-&gt;list  let->list(?)
+open-environment      open-let(?)
 open-environment?
 </pre>
 </div>
@@ -3788,9 +3789,10 @@ argument-specific documentation in the documentation string:
 "arg should be an integer"
 </pre>
 
-<p>But this is a lot of boilerplate for a simple notion.  I'm thinking of
-adding an optional documentation string to the define* parameter syntax:
-<code>(define* (add-1 (arg 0 "arg should be an integer")) (+ arg 1))</code>.
+<p>This is a lot of boilerplate for a simple notion, 
+so I implemented parameter docstrings such as:
+<code>(define* (add-1 (arg 0 "arg should be an integer")) (+ arg 1))</code>,
+but then decided not to go that way after all.
 </p>
 </div>
 
@@ -5474,6 +5476,7 @@ The examples that follow show:
 <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
 <li><a href="#s7inathread">s7 running in a separate thread</a>
 <li><a href="#replrescue">begin_hook to the rescue!</a>
+<li><a href="gsl">GSL</a>
 </ul>
 
 
@@ -8181,6 +8184,131 @@ static void listener_stacktrace_callback(...)            /* the usual callback b
 </pre></div>
 
 
+
+
+<div class="header" id="gsl"><h4>GSL</h4></div>
+
+<p>
+The next example provides access to the GSL functions gsl_sf_bessel_J0 and
+gsl_sf_bessel_J0_e.  In the latter case, we return multiple values (in the
+Scheme sense): the J0 value and an error estimate.  When using GSL, it
+is important to replace the default gsl error handler &mdash; it simply
+aborts the main program upon error!
+</p>
+
+<div class="indented">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include &lt;gsl/gsl_sf.h&gt;
+#include &lt;gsl/gsl_errno.h&gt;
+
+#include "s7.h"
+static s7_scheme *s7;
+
+static void g_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
+{ 
+  /* this is our replacement error handler */
+  s7_error(s7, s7_make_symbol(s7, "gsl-error"),
+	   s7_list(s7, 5, 
+		   s7_make_string(s7, "GSL: ~A, ~A in ~A line ~A"),
+		   s7_make_string(s7, gsl_strerror(gsl_errno)),
+		   s7_make_string(s7, reason),
+		   s7_make_string(s7, file),
+		   s7_make_integer(s7, line)));
+}
+
+static s7_pointer g_J0(s7_scheme *sc, s7_pointer args)
+{
+  /* the simple J0 just returns a result */
+  s7_pointer x;
+  x = s7_car(args);
+  if (!s7_is_real(x))
+    return(s7_wrong_type_arg_error(sc, "J0", 0, x, "a real number"));
+  return(s7_make_real(sc, gsl_sf_bessel_J0(s7_number_to_real(x))));
+}
+
+static s7_pointer g_J0_e(s7_scheme *sc, s7_pointer args)
+{
+  /* J0_e returns a result and an error estimate */
+  s7_pointer x;
+  double jx;
+  gsl_sf_result r;     /* r.val and r.err are returned */
+  int err;
+
+  x = s7_car(args);
+  if (!s7_is_real(x))
+    return(s7_wrong_type_arg_error(sc, "J0", 0, x, "a real number"));
+
+  err = gsl_sf_bessel_J0_e(s7_number_to_real(x), &r);
+  if (err != GSL_SUCCESS)
+    return(s7_error(sc, s7_make_symbol(sc, "gsl-error"),
+		    s7_list(sc, 2,
+			    s7_make_string(sc, "GSL: ~A"),
+			    s7_make_string(sc, gsl_strerror(err)))));
+
+  return(s7_values(sc, 2, s7_make_real(sc, r.val), s7_make_real(sc, r.err)));
+}
+
+static s7_pointer g_exit(s7_scheme *sc, s7_pointer args)
+{
+  exit(0);
+}
+
+int main(int argc, char **argv)
+{
+  gsl_set_error_handler(g_gsl_error); /* use our error handler */
+
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", g_exit, 0, 0, false, "(exit) exits the program");
+
+  s7_define_function(s7, "J0", g_J0, 1, 0, false, "(J0 x) returns the bessel function value J0(x)");
+  s7_define_function(s7, "J0_e", g_J0_e, 1, 0, false, "(J0_e x) returns the bessel function value J0(x) and an error estimate");
+
+  /* and now the usual repl */
+  if (argc == 2)
+    {
+      fprintf(stderr, "load %s\n", argv[1]);
+      s7_load(s7, argv[1]);
+    }
+  else
+    {
+      char buffer[512];
+      char response[1024];
+      while (1) 
+	{
+	  fprintf(stdout, "\n&gt; ");
+	  fgets(buffer, 512, stdin);
+	  
+	  if ((buffer[0] != '\n') || 
+	      (strlen(buffer) &gt; 1))
+	    {                            
+	      sprintf(response, "(write %s)", buffer);
+	      s7_eval_c_string(s7, response);
+	    }
+	}
+    }
+}
+
+/* 
+ *  gcc -c s7.c -I.
+ *  gcc -o ex14 ex14.c s7.o -I. -lm -lgsl -lgslcblas
+ *
+ *  &gt; (J0 1.0)
+ *  0.76519768655797
+ *  &gt; (J0 0.0)
+ *  1.0
+ *  &gt; (list (J0_e 1.0))
+ *  (0.76519768655797 6.7261301656723e-16)
+ */
+             
+</pre>
+
+
+
 </body>
 </html>
+
 

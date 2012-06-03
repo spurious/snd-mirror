@@ -754,16 +754,12 @@ enable_option_checking
 with_alsa
 with_oss
 with_jack
-with_static_alsa
 with_gtk
 with_no_gui
-with_static_xm
-with_static_xg
 with_gl
 with_just_gl
 with_gl2ps
 with_motif
-with_static_motif
 with_editres
 with_ladspa
 with_float_samples
@@ -1433,16 +1429,12 @@ Optional Packages:
   --with-alsa		  use ALSA
   --with-oss		  use OSS
   --with-jack		  use JACK
-  --with-static-alsa	  use ALSA statically loaded
   --with-gtk		  use Gtk+ to build Snd
   --with-no-gui  	  make Snd without any graphics support
-  --with-static-xm	  include the xm module
-  --with-static-xg	  include the xg module
   --with-gl		  include OpenGL support, Motif only
   --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only
   --with-gl2ps		  include gl2ps, Motif only
   --with-motif	  	  use libXm to build Snd
-  --with-static-motif	  use libXm.a to build Snd
   --with-editres	  include editres in xm
   --with-ladspa  	  include support for LADSPA plugins, Linux only
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
@@ -4021,12 +4013,10 @@ _ACEOF
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
-#   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+
 #   --with-alsa           use ALSA if possible (the default)
 #   --with-oss            use OSS
 #   --with-jack           use Jack
-#   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --without-audio       stub out all audio
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
@@ -4041,7 +4031,6 @@ _ACEOF
 #   --with-ruby-prefix    set location of Ruby
 #   --with-s7             use S7 as the extension language (default = yes)
 #   --with-extension-language use some extension language (default=yes)
-#   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
 #   --with-doc-dir        directory to search for documentation
@@ -4078,12 +4067,6 @@ if test "${with_jack+set}" = set; then :
 fi
 
 
-# Check whether --with-static-alsa was given.
-if test "${with_static_alsa+set}" = set; then :
-  withval=$with_static_alsa;
-fi
-
-
 # Check whether --with-gtk was given.
 if test "${with_gtk+set}" = set; then :
   withval=$with_gtk;
@@ -4093,18 +4076,6 @@ fi
 # Check whether --with-no-gui was given.
 if test "${with_no_gui+set}" = set; then :
   withval=$with_no_gui;
-fi
-
-
-# Check whether --with-static-xm was given.
-if test "${with_static_xm+set}" = set; then :
-  withval=$with_static_xm;
-fi
-
-
-# Check whether --with-static-xg was given.
-if test "${with_static_xg+set}" = set; then :
-  withval=$with_static_xg;
 fi
 
 
@@ -4129,12 +4100,6 @@ fi
 # Check whether --with-motif was given.
 if test "${with_motif+set}" = set; then :
   withval=$with_motif;
-fi
-
-
-# Check whether --with-static-motif was given.
-if test "${with_static_motif+set}" = set; then :
-  withval=$with_static_motif;
 fi
 
 
@@ -4252,10 +4217,6 @@ else
 
 fi
 
-if test "$with_static_xg" = yes ; then
-  with_static_xm=yes
-fi
-
 
 # Check whether --with-motif-prefix was given.
 if test "${with_motif_prefix+set}" = set; then :
@@ -4264,10 +4225,6 @@ else
   motif_prefix=""
 fi
 
-
-if test "$with_static_motif" = yes ; then
-  with_motif=yes
-fi
 
 
 # Check whether --with-temp-dir was given.
@@ -7052,83 +7009,18 @@ if test "x$ac_cv_lib_Xft_XftFontOpen" = xyes; then :
 fi
 
 
-    if test "$with_static_motif" = yes ; then
-      if test x$motif_prefix != x ; then
-      as_ac_File=`$as_echo "ac_cv_file_$motif_prefix/lib/libXm.a" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $motif_prefix/lib/libXm.a" >&5
-$as_echo_n "checking for $motif_prefix/lib/libXm.a... " >&6; }
-if eval \${$as_ac_File+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r "$motif_prefix/lib/libXm.a"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-eval ac_res=\$$as_ac_File
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
-
-        X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
-        XFLAGS="-I$motif_prefix/include $XFLAGS"
-
-else
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find $motif_prefix/lib/libXm.a!" >&5
-$as_echo "$as_me: WARNING: can't find $motif_prefix/lib/libXm.a!" >&2;}
-        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-
-fi
-
-      else
-        as_ac_File=`$as_echo "ac_cv_file_$x_libraries/libXm.a" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $x_libraries/libXm.a" >&5
-$as_echo_n "checking for $x_libraries/libXm.a... " >&6; }
-if eval \${$as_ac_File+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  test "$cross_compiling" = yes &&
-  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
-if test -r "$x_libraries/libXm.a"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-eval ac_res=\$$as_ac_File
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
-
-           X_PRE_LIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
-
-else
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find $x_libraries/libXm.a!" >&5
-$as_echo "$as_me: WARNING: can't find $x_libraries/libXm.a!" >&2;}
-        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-
-fi
-
-      fi
+    if test x$motif_prefix != x ; then
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
+      XFLAGS="-I$motif_prefix/include $XFLAGS"
     else
-      if test x$motif_prefix != x ; then
-        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
-        XFLAGS="-I$motif_prefix/include $XFLAGS"
-      else
-        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-      fi
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
     fi
 
     TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
     TEST_POST_LIBS="$X_POST_LIBS"
     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
-    GX_FILES="X_O_FILES"
+    GX_FILES="MOTIF_O_FILES"
     GX_HEADERS="SND_X_HEADERS"
 
   fi
@@ -7351,13 +7243,6 @@ if test "x$ac_cv_lib_m_XmCreateForm" = xyes; then :
 
   	  XLIBS="$XLIBS -lXpm"
 	  TEST_LIBS="$TEST_LIBS -lXpm"
-
-	  if test "$with_static_xm" = yes ; then
-  	    GX_FILES="XM_O_FILES"
-	    $as_echo "#define HAVE_STATIC_XM 1" >>confdefs.h
-
-          fi
-
 
 
 
@@ -8181,7 +8066,7 @@ $as_echo "$as_me: WARNING: trouble with gtk (we need version 2.12.0 or later) --
     fi
 
     if test "$with_gtk" = yes ; then
-     	GX_FILES="G_O_FILES"
+     	GX_FILES="GTK_O_FILES"
       	GX_HEADERS="SND_G_HEADERS"
 
 	case "$host" in
@@ -8911,11 +8796,6 @@ fi
       	XFLAGS=""
 
 
-      	if test "$with_static_xm" = yes ; then
-          GX_FILES="XG_O_FILES"
-          $as_echo "#define HAVE_STATIC_XM 1" >>confdefs.h
-
-      	fi
      fi
   fi
 
@@ -9969,17 +9849,9 @@ $as_echo "$alsa_ok" >&6; }
 		if test "$alsa_ok" = yes ; then
 	    	    $as_echo "#define HAVE_ALSA 1" >>confdefs.h
 
-		    if test "$with_static_alsa" = yes ; then
-                      AUDIO_LIB="/usr/lib/libasound.a"
-		    else
-	    	      AUDIO_LIB="-lasound"
-		    fi
+	    	    AUDIO_LIB="-lasound"
 		    if test "$with_jack" = yes ; then
-		      if test "$with_static_alsa" = yes ; then
-			 AUDIO_LIB="/usr/lib/libasound.a -lsamplerate"
-		      else
-			 AUDIO_LIB="-lasound -lsamplerate"
-	              fi
+		      AUDIO_LIB="-lasound -lsamplerate"
 		      $as_echo "#define HAVE_JACK_IN_LINUX 1" >>confdefs.h
 
 		    fi

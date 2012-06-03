@@ -78,13 +78,9 @@ NO_GUI_HEADERS = snd-nogui0.h snd-nogui1.h
 
 O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-kbd.o snd-sig.o snd-draw.o run.o
 
-X_O_FILES = snd-xutils.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xenv.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xprefs.o
+MOTIF_O_FILES = snd-xutils.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xenv.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xprefs.o xm.o
 
-XM_O_FILES = snd-xutils.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xenv.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xprefs.o xm.o
-
-G_O_FILES = snd-gutils.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-genv.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gprefs.o
-
-XG_O_FILES = snd-gutils.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-genv.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gprefs.o xg.o
+GTK_O_FILES = snd-gutils.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gdrop.o snd-gmain.o snd-gmix.o snd-genv.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gprint.o snd-gfile.o snd-gprefs.o xg.o
 
 NO_GUI_O_FILES = snd-nogui.o
 GM_FILES = xm.o
@@ -126,15 +122,15 @@ snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(SND
 
 $(SNDLIB_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(S7_HEADERS)
 $(O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(S7_HEADERS)
-$(X_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(S7_HEADERS)
-$(G_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_G_HEADERS) $(S7_HEADERS)
+$(MOTIF_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(S7_HEADERS)
+$(GTK_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_G_HEADERS) $(S7_HEADERS)
 $(S7_O_FILES): $(S7_HEADERS) $(S7_FILES)
 
 clean:
 	rm -f $(SNDLIB_O_FILES)
 	rm -f $(O_FILES)
-	rm -f $(X_O_FILES)
-	rm -f $(G_O_FILES)
+	rm -f $(MOTIF_O_FILES)
+	rm -f $(GTK_O_FILES)
 	rm -f $(NO_GUI_O_FILES)
 	rm -f $(GM_FILES)
 	rm -f $(GM_SO_FILE)

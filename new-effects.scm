@@ -1,11 +1,5 @@
 (if (not (provided? 'snd-motif)) (snd-error "new-effects.scm is Motif-specific"))
 
-(if (not (provided? 'xm))
-    (let ((hxm (dlopen "xm.so")))
-      (if (string? hxm)
-	  (snd-error (format #f "new-effects.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
-	  (dlinit hxm "Init_libxm"))))
-
 (provide 'snd-new-effects.scm)
 
 (if (not (provided? 'snd-effects-utils.scm)) (load "effects-utils.scm"))

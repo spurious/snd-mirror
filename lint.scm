@@ -670,7 +670,7 @@
 						 name line-number head arg-number
 						 (truncated-list->string form))
 				    (if (memq op '(number-or-eof char-or-eof string-or-eof))
-					(lint-format "~A argument ~D might be the eof object:~A"
+					(lint-format "~A argument ~D might be #<eof>:~A"
 						     name line-number head arg-number
 						     (truncated-list->string form)))))
 			    (if (or (and op

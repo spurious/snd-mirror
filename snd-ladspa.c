@@ -1314,7 +1314,7 @@ void g_ladspa_to_snd(void)
   XEN_DEFINE_PROCEDURE(S_ladspa_set_run_adding_gain, g_ladspa_set_run_adding_gain_w, 3, 0, 0, H_ladspa_set_run_adding_gain);
   XEN_DEFINE_PROCEDURE(S_ladspa_connect_port,        g_ladspa_connect_port_w,        4, 0, 0, H_ladspa_connect_port);
 
-  XEN_YES_WE_HAVE("snd-ladspa");
+  XEN_PROVIDE("snd-ladspa");
 }
 
 #endif

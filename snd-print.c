@@ -831,6 +831,6 @@ void g_init_print(void)
 				   S_setB S_eps_size, g_set_eps_size_w,  0, 0, 1, 0);
 
 #if HAVE_GL && WITH_GL2PS
-  XEN_YES_WE_HAVE("gl2ps");
+  XEN_PROVIDE("gl2ps");
 #endif
 }

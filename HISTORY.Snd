@@ -1,5 +1,6 @@
 Snd change log
 
+ 4-Jun:     remvoed the --with-static-* configuration switches.
  21-May:    Snd 12.11.
  11-May:    all scheme-side hook code changed.  removed print-hook.
  1-May:     removed mus-audio-describe, ESD audio support, audinfo.

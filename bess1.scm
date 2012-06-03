@@ -8,13 +8,6 @@
 
 (if (not (provided? 'snd-motif)) (error "bess1.scm needs motif"))
 
-(if (not (provided? 'xm))
-    (let ((hxm (dlopen "xm.so")))
-      (if (string? hxm)
-	  (error "bess1.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm)
-	  (dlinit hxm "Init_libxm"))))
-
-
 ;;; Commentary:
 
 ;; This file provides simple mono real time output to DAC.  Tempo,

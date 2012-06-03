@@ -17,13 +17,6 @@
 
 (if (not (provided? 'snd-gtk)) (snd-error "snd-gtk.scm is Gtk-specific"))
 
-
-(if (not (provided? 'xg))
-    (let ((hxm (dlopen "xg.so")))
-      (if (string? hxm)
-	  (snd-error (format #f "snd-gtk.scm needs the xg module (either 'make xg' or build Snd with --with-static-xg): ~A" hxm))
-	  (dlinit hxm "Init_libxg"))))
-
 (provide 'snd-snd-gtk.scm)
 
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))

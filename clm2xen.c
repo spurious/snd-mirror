@@ -12808,11 +12808,11 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
 #endif
 
 
-  XEN_YES_WE_HAVE("clm");
+  XEN_PROVIDE("clm");
   {
     char *clm_version;
     clm_version = mus_format("clm%d", MUS_VERSION);
-    XEN_YES_WE_HAVE(clm_version);
+    XEN_PROVIDE(clm_version);
     free(clm_version);
   }
 

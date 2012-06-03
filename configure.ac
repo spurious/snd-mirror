@@ -30,12 +30,10 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #--------------------------------------------------------------------------------
 # configuration options
 #   --with-motif          use Motif (the default)
-#   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+	
 #   --with-alsa           use ALSA if possible (the default)
 #   --with-oss            use OSS 
 #   --with-jack           use Jack
-#   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --without-audio       stub out all audio
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
@@ -50,7 +48,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-ruby-prefix    set location of Ruby
 #   --with-s7             use S7 as the extension language (default = yes)
 #   --with-extension-language use some extension language (default=yes)
-#   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
 #   --with-doc-dir        directory to search for documentation
@@ -71,16 +68,12 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 AC_ARG_WITH(alsa,        [  --with-alsa		  use ALSA])
 AC_ARG_WITH(oss,         [  --with-oss		  use OSS])
 AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
-AC_ARG_WITH(static-alsa, [  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(no-gui,      [  --with-no-gui  	  make Snd without any graphics support])
-AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
-AC_ARG_WITH(static-xg,   [  --with-static-xg	  include the xg module])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
 AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only])
 AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps, Motif only])
 AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
-AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
@@ -120,16 +113,8 @@ else
   AC_DEFINE(SNDLIB_USE_FLOATS, 0)
 fi
 
-if test "$with_static_xg" = yes ; then
-  with_static_xm=yes
-fi
-
 AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
             motif_prefix="$withval", motif_prefix="")
-
-if test "$with_static_motif" = yes ; then
-  with_motif=yes
-fi
 
 AC_ARG_WITH(temp-dir,
 	[  --with-temp-dir	  directory to use for temp files],
@@ -579,39 +564,18 @@ else
                  TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 		 ], , $TEST_LIBS)
 
-    if test "$with_static_motif" = yes ; then
-      if test x$motif_prefix != x ; then
-      AC_CHECK_FILE($motif_prefix/lib/libXm.a,[
-        X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
-        XFLAGS="-I$motif_prefix/include $XFLAGS"
-      	  ],	
-	  [
-        AC_MSG_WARN(can't find $motif_prefix/lib/libXm.a!)
-        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-	  ])
-      else
-        AC_CHECK_FILE($x_libraries/libXm.a,[
-           X_PRE_LIBS="$x_libraries/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
-	  ],
- 	  [
-        AC_MSG_WARN(can't find $x_libraries/libXm.a!)
-        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-	  ])
-      fi
+    if test x$motif_prefix != x ; then
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
+      XFLAGS="-I$motif_prefix/include $XFLAGS"
     else
-      if test x$motif_prefix != x ; then
-        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -L$motif_prefix/lib -lXm -lXt"
-        XFLAGS="-I$motif_prefix/include $XFLAGS"
-      else
-        X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
-      fi
+      X_PRE_LIBS="$X_LIBS $X_PRE_LIBS -lXm -lXt"
     fi
 
     TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
     TEST_POST_LIBS="$X_POST_LIBS"
     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
-    GX_FILES="X_O_FILES"
+    GX_FILES="MOTIF_O_FILES"
     GX_HEADERS="SND_X_HEADERS"
 
   fi
@@ -672,12 +636,6 @@ else
 
   	  XLIBS="$XLIBS -lXpm"
 	  TEST_LIBS="$TEST_LIBS -lXpm"
-
-	  if test "$with_static_xm" = yes ; then
-  	    GX_FILES="XM_O_FILES"
-	    AC_DEFINE(HAVE_STATIC_XM)
-          fi
-
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
 
@@ -952,7 +910,7 @@ else
     fi
 
     if test "$with_gtk" = yes ; then
-     	GX_FILES="G_O_FILES"
+     	GX_FILES="GTK_O_FILES"
       	GX_HEADERS="SND_G_HEADERS"
 
 	case "$host" in
@@ -1035,10 +993,6 @@ else
       	XFLAGS=""
       	AC_SUBST(XLIBS)
       	AC_SUBST(XFLAGS)
-      	if test "$with_static_xm" = yes ; then
-          GX_FILES="XG_O_FILES"
-          AC_DEFINE(HAVE_STATIC_XM)
-      	fi
      fi
   fi
 
@@ -1496,17 +1450,9 @@ case "$host" in
 		AC_MSG_RESULT($alsa_ok)
 		if test "$alsa_ok" = yes ; then
 	    	    AC_DEFINE(HAVE_ALSA)
-		    if test "$with_static_alsa" = yes ; then
-                      AUDIO_LIB="/usr/lib/libasound.a"
-		    else
-	    	      AUDIO_LIB="-lasound"
-		    fi
+	    	    AUDIO_LIB="-lasound"
 		    if test "$with_jack" = yes ; then 
-		      if test "$with_static_alsa" = yes ; then
-			 AUDIO_LIB="/usr/lib/libasound.a -lsamplerate"
-		      else
-			 AUDIO_LIB="-lasound -lsamplerate"
-	              fi
+		      AUDIO_LIB="-lasound -lsamplerate"
 		      AC_DEFINE(HAVE_JACK_IN_LINUX)
 		    fi
  		else
