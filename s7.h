@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.5"
-#define S7_DATE "31-May-12"
+#define S7_VERSION "2.6"
+#define S7_DATE "4-June-12"
 
 
 typedef long long int s7_Int;
@@ -696,6 +696,8 @@ int s7_object_type(s7_pointer obj);
 void *s7_object_value(s7_pointer obj);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
+s7_pointer s7_object_environment(s7_pointer obj);
+s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e);
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
@@ -793,6 +795,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *		
+ * 4-June.    s7_object_environment.
  * 31-May:    added s7_scheme argument to all the optimizer chooser functions.
  * 24-May:    open-environment?
  * 17-May:    arity, aritable?

@@ -62,13 +62,6 @@
 #include "sndlib2xen.h"
 #include "vct.h"
 
-#ifndef calloc
-  #define calloc(a, b)  calloc(a, b)
-  #define malloc(a)     malloc(a)
-  #define free(a)       free(a)
-  #define realloc(a, b) realloc(a, b)
-#endif
-
 #ifndef PROC_FALSE
   #if HAVE_RUBY
     #define PROC_FALSE "false"

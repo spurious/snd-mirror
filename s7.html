@@ -8222,7 +8222,7 @@ static void g_gsl_error(const char *reason, const char *file, int line, int gsl_
 
 static s7_pointer g_J0(s7_scheme *sc, s7_pointer args)
 {
-  /* the simple J0 just returns a result */
+  #define J0_help "(J0 x) returns the bessel function value J0(x)"
   s7_pointer x;
   x = s7_car(args);
   if (!s7_is_real(x))
@@ -8232,7 +8232,7 @@ static s7_pointer g_J0(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_J0_e(s7_scheme *sc, s7_pointer args)
 {
-  /* J0_e returns a result and an error estimate */
+  #define J0_e_help "(J0_e x) returns the bessel function value J0(x) and an error estimate"
   s7_pointer x;
   double jx;
   gsl_sf_result r;     /* r.val and r.err are returned */
@@ -8254,6 +8254,7 @@ static s7_pointer g_J0_e(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_exit(s7_scheme *sc, s7_pointer args)
 {
+  #define exit_help "(exit) exits the program"
   exit(0);
 }
 
@@ -8262,10 +8263,10 @@ int main(int argc, char **argv)
   gsl_set_error_handler(g_gsl_error); /* use our error handler */
 
   s7 = s7_init();  
-  s7_define_function(s7, "exit", g_exit, 0, 0, false, "(exit) exits the program");
+  s7_define_function(s7, "exit", g_exit, 0, 0, false, exit_help);
 
-  s7_define_function(s7, "J0", g_J0, 1, 0, false, "(J0 x) returns the bessel function value J0(x)");
-  s7_define_function(s7, "J0_e", g_J0_e, 1, 0, false, "(J0_e x) returns the bessel function value J0(x) and an error estimate");
+  s7_define_function(s7, "J0", g_J0, 1, 0, false, J0_help);
+  s7_define_function(s7, "J0_e", g_J0_e, 1, 0, false, J0_e_help);
 
   /* and now the usual repl */
   if (argc == 2)

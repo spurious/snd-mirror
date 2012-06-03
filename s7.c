@@ -911,12 +911,12 @@ typedef struct s7_cell {
       long long int val, len;
     } ctr;
 
-    struct {               /* additional object types (C and Scheme) */
+    struct {               /* additional object types (C) */
       int type;
       void *value;
       s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
       s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-      void *table;
+      s7_pointer e;
     } fobj;
     
     s7_continuation_t *continuation;
@@ -1672,10 +1672,10 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
 #define object_type(p)                (p)->object.fobj.type
-#define object_table(p)               (p)->object.fobj.table
 #define object_value(p)               (p)->object.fobj.value
 #define object_ref(p)                 (p)->object.fobj.apply
 #define object_set(p)                 (p)->object.fobj.set
+#define object_environment(p)         (p)->object.fobj.e
 
 #define raw_pointer(p)                (p)->object.c_pointer
 
@@ -1844,6 +1844,7 @@ static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst);
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl);
 static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol);
+static s7_pointer find_environment(s7_scheme *sc, s7_pointer obj);
 
 #if WITH_OPTIMIZATION
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end, bool *bad_set);
@@ -1863,11 +1864,12 @@ static int position_of(s7_pointer p, s7_pointer args)
 /* I'm currently thinking that all built-in s7 functions should be generic, so here is
  *   the macro that handles that. 
  */
+
 #define CHECK_METHOD(Sc, Obj, Method, Args)   \
   {                                           \
     s7_pointer func;                          \
     if ((has_methods(Obj)) &&                 \
-        ((func = find_method(Sc, (is_environment(Obj)) ? Obj : closure_environment(Obj), Method)) != Sc->UNDEFINED)) \
+        ((func = find_method(Sc, find_environment(Sc, Obj), Method)) != Sc->UNDEFINED)) \
       return(s7_apply_function(Sc, func, Args));        \
   }
 
@@ -3723,6 +3725,24 @@ static s7_pointer g_is_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_environment "(environment? obj) returns #t if obj is an environment."
   CHECK_BOOLEAN_METHOD(sc, car(args), is_environment, sc->ENVIRONMENTP, args);
+}
+
+
+static s7_pointer find_environment(s7_scheme *sc, s7_pointer obj)
+{
+  switch (type(obj))
+    {
+    case T_ENVIRONMENT:
+      return(obj);
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      return(closure_environment(obj));
+
+    case T_C_OBJECT:
+      return(object_environment(obj));
+    }
+  return(sc->NIL);
 }
 
 
@@ -14421,7 +14441,7 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
       if (has_methods(val)) /* this is a special case */
 	{
 	  s7_pointer func;
-	  func = find_method(sc, (is_environment(val)) ? val : closure_environment(val), sc->LENGTH);
+	  func = find_method(sc, find_environment(sc, val), sc->LENGTH);
 	  if (func != sc->UNDEFINED)
 	    return(make_boolean(sc, s7_integer(s7_apply_function(sc, func, list_1(sc, val))) < 0));
 	}
@@ -19197,7 +19217,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_DYNAMIC_WIND:                 /* this can't happen */
       return(copy_string("#<dynamic-wind>"));
   
-    case T_C_OBJECT:
+    case T_C_OBJECT: /* TODO: obj method */
       return(object_print(sc, obj));     /* this allocates already */
 
     case T_VECTOR: 
@@ -21880,7 +21900,7 @@ static s7_pointer g_memq_car(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer func;
       if ((has_methods(obj)) &&
-	  ((func = find_method(sc, (is_environment(obj)) ? obj : closure_environment(obj), sc->CAR)) != sc->UNDEFINED))
+	  ((func = find_method(sc, find_environment(sc, obj), sc->CAR)) != sc->UNDEFINED))
 	obj = s7_apply_function(sc, func, list_1(sc, obj));
       if (!is_pair(obj))
 	return(s7_wrong_type_arg_error(sc, "car", 0, obj, "a pair"));
@@ -22803,7 +22823,7 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
   if (!s7_is_vector(vec))
     {
       if ((!has_methods(vec)) ||
-	  ((func = find_method(sc, (is_environment(vec)) ? vec : closure_environment(vec), sc->VECTOR_REF)) == sc->UNDEFINED))
+	  ((func = find_method(sc, find_environment(sc, vec), sc->VECTOR_REF)) == sc->UNDEFINED))
 	return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
     }
   x = finder(sc, cadr(cadr(args)));
@@ -25175,8 +25195,6 @@ static bool objects_are_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 static void mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's mark func */
 {
-  /* PERHAPS: this could be sped up either with a direct pointer or by going through object_table
-   */
   int tag;
   tag = object_type(a);
   if (tag < num_types)
@@ -25208,7 +25226,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   NEW_CELL(sc, x);
   object_type(x) = type;
   object_value(x) = value;
-  object_table(x) = (void *)(&(object_types[type]));
+  object_environment(x) = sc->NIL;
   set_type(x, T_C_OBJECT); /* free_object checks that the free function exists */
 
   if (object_types[type].apply)
@@ -25228,16 +25246,32 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 }
 
 
+s7_pointer s7_object_environment(s7_pointer obj)
+{
+  return(object_environment(obj));
+}
+
+
+s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e)
+{
+  object_environment(obj) = e;
+  return(e);
+}
+
+
+static s7_pointer g_object_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_object_environment "(object-environment obj) returns the environment associated with obj."
+  s7_pointer obj;
+  obj = car(args);
+  if (!is_c_object(obj))
+    return(s7_wrong_type_arg_error(sc, "object-environment", 0, obj, "a c object (created by s7_make_object)"));
+  return(object_environment(obj));
+}
+
+
 static s7_pointer object_length(s7_scheme *sc, s7_pointer obj)
 {
-#if 0
-  fprintf(stderr, "obj len: %lld %lld\n",
-	  s7_integer((*(object_types[object_type(obj)].length))(sc, obj)),
-	  s7_integer((*(((s7_object_t *)(object_table(obj)))->length))(sc, obj)));
-	  
-  if ((void *)(&object_types[object_type(obj)]) != (void *)(object_table(obj)))
-    fprintf(stderr, "%p != %p\n", (void *)(&object_types[object_type(obj)]), (void *)object_table(obj));
-#endif
   return((*(object_types[object_type(obj)].length))(sc, obj));
 }
 
@@ -45966,7 +46000,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer char_func;
 	    if ((has_methods(sym)) &&
-		(char_func = find_method(sc, sym, sc->CHAR_EQ)))
+		(char_func = find_method(sc, find_environment(sc, sym), sc->CHAR_EQ)))
 	      {
 		do {
 		  if (is_true(sc, s7_apply_function(sc, char_func, list_2(sc, sym, fcdr(code)))))
@@ -46260,7 +46294,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer char_func;
 	    if ((has_methods(sym)) &&
-		(char_func = find_method(sc, sym, sc->CHAR_EQ)))
+		(char_func = find_method(sc, find_environment(sc, sym), sc->CHAR_EQ)))
 	      {
 		do {
 		  if (is_true(sc, s7_apply_function(sc, char_func, list_2(sc, sym, fcdr(code)))))
@@ -46604,7 +46638,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer char_func;
 		if ((has_methods(c)) &&
-		    (char_func = find_method(sc, c, sc->CHAR_EQ)))
+		    (char_func = find_method(sc, find_environment(sc, c), sc->CHAR_EQ)))
 		  {
 		    if (is_true(sc, s7_apply_function(sc, char_func, list_2(sc, c, cadr(code)))))
 		      sc->code = cadr(sc->code);
@@ -54376,6 +54410,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc,                         "error-environment",         g_error_environment,        0, 0, false, H_error_environment);
   sc->OPEN_ENVIRONMENT = s7_define_safe_function(sc,  "open-environment",          g_open_environment,         1, 0, false, H_open_environment);
   sc->OPEN_ENVIRONMENTP = s7_define_safe_function(sc, "open-environment?",         g_is_open_environment,      1, 0, false, H_is_open_environment);
+  s7_define_safe_function(sc,                         "object-environment",        g_object_environment,       1, 0, false, H_object_environment);
 
   sc->PROVIDEDP = s7_define_safe_function(sc,         "provided?",                 g_is_provided,              1, 0, false, H_is_provided);
   sc->PROVIDE = s7_define_safe_function(sc,           "provide",                   g_provide,                  1, 0, false, H_provide);

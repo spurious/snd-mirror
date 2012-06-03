@@ -190,13 +190,6 @@
   #define NOT_A_GC_LOC -1
 #endif
 
-#ifndef calloc
-  #define calloc(a, b)  calloc((size_t)(a), (size_t)(b))
-  #define malloc(a)     malloc((size_t)(a))
-  #define free(a)       free(a)
-  #define realloc(a, b) realloc(a, (size_t)(b))
-#endif
-
 #include <X11/xpm.h>
 #if HAVE_XmCreateDataField
   #include <Xm/DataF.h>
