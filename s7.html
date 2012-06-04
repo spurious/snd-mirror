@@ -221,6 +221,7 @@ indented and on a sort of brownish background.
       <li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
       <li><a href="#definestar1">C-side define* (s7_define_function_star)</a>
       <li><a href="#definemacro1">C-side define-macro (s7_define_macro)</a>
+      <li><a href="#definegeneric">define a generic function in C</a>
       <li><a href="#signal">signal handling (C-C to break out of an infinite loop)</a>
       <li><a href="#vector">direct multidimensional vector element access</a>
       <li><a href="#notify">notification in C that a Scheme variable has been set!</a>
@@ -2257,34 +2258,10 @@ use augment-environment!.  Both of these functions accept nil as the
 <blockquote>
 <div class="indented">
 <p>
-Augment-environment is a bad name.  
-Perhaps these would be better:
-</p>
-
-<pre class="indented">
-(define (make-environment parent . args)                    ; or make-let?
-  (apply augment-environment parent args))
-
-(define (environment . slots) 
-  (apply augment-environment () args))
-
-(define-macro (define! env . args) 
-  (if (or (null? env) 
-          (eq? env (current-environment)))
-      `(define ,@args)
-      `(with-environment ,env (define ,@args))))
-
-;; and much less satisfying...
-(define next-environment outer-environment)                 ; letcdr?            
-(define current-environment-unshadowed initial-environment) ; pure-let?
-</pre>
-
-<p>So an environment is a disembodied let.
-And a disembodied lambda
-would provide a multi-argument application (i.e. a kind of disembodied let) of 
-an unspecified body?  A generic function!
-Curiouser and curiouser.
-Help me with this list!:
+Augment-environment is a bad name, but
+I'm at a loss for a better one.  If we view an environment as a disembodied let,
+akin to viewing a generic function as a disembodied lambda,
+these names come to mind:
 </p>
 
 <pre class="indented">
@@ -2302,6 +2279,17 @@ environment-&gt;list  let->list(?)
 open-environment      open-let(?)
 open-environment?
 object-environment
+</pre>
+
+<p>Or perhaps more dignified:
+</p>
+
+<pre class="indented">
+(current-environment)        -&gt; (environment)
+(global-environment)         -&gt; (environment ())
+(procedure-environment p)    -&gt; (environment p)
+(object-environment p)       -&gt; (environment p)
+(augment-environment p . b)  -&gt; (environment p . b)
 </pre>
 </div>
 </blockquote>
@@ -2327,16 +2315,6 @@ so for example, #_+ is the built-in + function, no matter what.
 <code>(initial-environment)</code> cleans up the current environment whenever it's called,
 so you can use it to revert the REPL. 
 </p>
-
-<p>open-environment marks its argument, either an environment or a closure,
-as open.  I need better terminology here!  An open object is one that the
-built-in s7 functions handle specially.  If they encounter one in their
-argument list, they look in the object for their own name, and call that
-function if it exists.  So, <code>(abs obj)</code> where obj is
-an environment containing, for example, <code>(cons 'abs (lambda (x) (- x 1)))</code>
-returns <code>(- obj 1)</code>, <code>((obj 'abs) obj)</code> in effect.
-</p>
-
 
 <blockquote>
 
@@ -2418,9 +2396,30 @@ its top-level bindings are imported into the current environment:
 </p>
 
 </div>
+</blockquote>
 
 
+<p>open-environment marks its argument, either an environment, a closure, or a c-object
+as open.  I need better terminology here!  An open object is one that the
+built-in s7 functions handle specially.  If they encounter one in their
+argument list, they look in the object for their own name, and call that
+function if it exists.  A bare-bones example:
+</p>
 
+<pre class="indented">
+&gt; (abs (open-environment
+         (augment-environment () 
+           (cons 'abs (lambda (x) 47)))))
+47
+</pre>
+
+<p>In CLOS, we'd have to declare a class and a method, then call make-instance,
+and then we'd discover that it wouldn't work anyway.
+Here we have, in effect, an anonymous instance of an anonymous class.
+</p>
+
+
+<blockquote>
 <div class="indented">
 
 <p>Here is yet another object system.  Each class and each instance is an environment.
@@ -5465,6 +5464,7 @@ The examples that follow show:
 <li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
 <li><a href="#definestar1">C-side define* (s7_define_function_star)</a>
 <li><a href="#definemacro1">C-side define-macro (s7_define_macro)</a>
+<li><a href="#definegeneric">define a generic function in C</a>
 <li><a href="#signal">signal handling (C-C to break out of an infinite loop)</a>
 <li><a href="#vector">direct multidimensional vector element access</a>
 <li><a href="#notify">notification in C that a Scheme variable has been set!</a>
@@ -6230,6 +6230,71 @@ int main(int argc, char **argv)
 </pre></div>
 
 
+
+<div class="header" id="definegeneric"><h4>define a generic function in C</h4></div>
+
+<p>In scheme, a function becomes generic simply by <code>(apply ((car args) 'func) args)</code>.
+To accomplish the same thing in C, we use s7_search_open_environment and s7_apply_function:
+</p>
+
+<div class="indented">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include "s7.h"
+
+static s7_pointer plus(s7_scheme *sc, s7_pointer args)
+{
+  #define plus_help "(plus obj ...) applies obj's plus method to obj and any trailing arguments."
+  s7_pointer obj;
+  obj = s7_car(args);
+  if (<em class=red>s7_is_open_environment</em>(obj))          /* does obj have methods? */
+    {
+      s7_pointer method;                    /* does it have a 'plus method? */
+      method = <em class=red>s7_search_open_environment</em>(sc, s7_make_symbol(sc, "plus"), obj);
+      if (s7_is_procedure(method))
+	return(<em class=red>s7_apply_function</em>(sc, method, args));
+    }
+  return(s7_f(sc));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  s7 = s7_init();
+  s7_define_function(s7, "plus", plus, 1, 0, true, plus_help);
+  while (1)
+    {
+      char buffer[512];
+      char response[1024];
+      fprintf(stdout, "\n&gt; ");
+      fgets(buffer, 512, stdin);
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) &gt; 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/* gcc -c s7.c -I.
+ * gcc -o ex15 ex15.c s7.o -I. -lm 
+ *
+ * &gt; (plus 1 2)
+ * #f
+ * (define obj (open-environment 
+ *               (augment-environment () 
+ *                 (cons 'plus (lambda args 
+ *                               (apply + 1 (cdr args)))))))
+ * obj
+ * &gt; (plus obj 2 3)
+ * 6
+ */
+</pre>
+</div>
 
 
 
@@ -8364,7 +8429,7 @@ static s7_pointer g_make_block(s7_scheme *sc, s7_pointer args)
   g-&gt;data = (double *)calloc(g-&gt;size, sizeof(double));
   new_g = s7_make_object(sc, g_block_type, (void *)g);
   <em class=red>s7_object_set_environment</em>(new_g, g_block_methods);
-  <em class=red>s7_open_environment</em>(sc, new_g);
+  <em class=red>s7_open_environment</em>(new_g);
   return(new_g);
 }
 
@@ -8523,13 +8588,9 @@ int main(int argc, char **argv)
   s7_define_function(s7, "make-block", g_make_block, 1, 0, false, g_make_block_help);
   s7_define_function(s7, "block", g_to_block, 0, 0, true, g_block_help);
 
-  s7_gc_on(s7, false);
-  g_block_methods = <em class=red>s7_augment_environment</em>(s7, s7_nil(s7),
-    s7_list(s7, 1,
-	    /* here load up all the methods ... */
-	    s7_cons(s7, s7_make_symbol(s7, "vector?"), s7_eval_c_string(s7, "(lambda (obj) #t)"))));
+  g_block_methods = s7_eval_c_string(s7, "(augment-environment () (cons 'vector? (lambda (p) #t)))");
+  /* here load up all the methods ... */
   s7_gc_protect(s7, g_block_methods);
-  s7_gc_on(s7, true);
 
   s7_define_function(s7, "solve", g_solve, 2, 0, false, g_solve_help);
 
@@ -8586,7 +8647,17 @@ int main(int argc, char **argv)
  *  "-4.052050229574 -12.605611395907 1.6609116267088 8.6937669287952"
  */
 </pre>
+</div>
 
+<p>I have toyed with adding a set of GSL bindings, along the lines of the
+current Motif/Gtk/OpenGL bindings in Snd, but I think the situation here
+is different.  If you look at the examples in the GSL doc/examples directory,
+or snd-xen.c in Snd, it's evident that GSL users will want to write 
+their own C code, then bind that into Scheme (blithely assuming they
+would rather use Scheme than Matlab!).  If we provide GSL-level bindings,
+the Scheme code becomes a forest of opaque C pointers, and the reader
+would have to know how the C stuff fits together.
+</p>
 
 
 </body>

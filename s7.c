@@ -1861,10 +1861,6 @@ static int position_of(s7_pointer p, s7_pointer args)
 }
 
 
-/* I'm currently thinking that all built-in s7 functions should be generic, so here is
- *   the macro that handles that. 
- */
-
 #define CHECK_METHOD(Sc, Obj, Method, Args)   \
   {                                           \
     s7_pointer func;                          \
@@ -4008,10 +4004,22 @@ static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_open_environment(s7_scheme *sc, s7_pointer e)
+s7_pointer s7_open_environment(s7_pointer e)
 {
   set_has_methods(e);
   return(e);
+}
+
+
+bool s7_is_open_environment(s7_pointer e)
+{
+  return(has_methods(e));
+}
+
+
+s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
+{
+  return(find_method(sc, find_environment(sc, e), symbol));
 }
 
 
@@ -55107,7 +55115,8 @@ s7_scheme *s7_init(void)
 
 
 /* SOMEDAY: add error check tests
- * TODO: gsl bindings, vectorization of vct/sound-data/frame/mixer
+ * TODO: vectorization of vct/sound-data/frame/mixer [vct is done]
+ * TODO: check_methods in all the exported funcs also so e.g. vector-ref works in any context
  * TODO: doc/test object-environment -- perhaps (environment obj) replacing procedure|object-environment?
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX

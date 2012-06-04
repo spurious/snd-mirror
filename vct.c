@@ -350,6 +350,11 @@ vct *mus_vct_copy(vct *vc)
 }
 
 
+#if HAVE_SCHEME
+  static s7_pointer g_vct_methods;
+#endif
+
+
 XEN xen_make_vct(mus_long_t len, mus_float_t *data)
 {
   vct *new_vct;
@@ -365,7 +370,17 @@ XEN xen_make_vct(mus_long_t len, mus_float_t *data)
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = false;
+#if (!HAVE_SCHEME)
   XEN_MAKE_AND_RETURN_OBJECT(vct_tag, new_vct, 0, free_vct);
+#else
+  {
+    s7_pointer nv;
+    nv = s7_make_object(s7, vct_tag, new_vct);
+    s7_object_set_environment(nv, g_vct_methods);
+    s7_open_environment(nv);
+    return(nv);
+  }
+#endif
 }
 
 
@@ -376,8 +391,19 @@ XEN xen_make_vct_wrapper(mus_long_t len, mus_float_t *data)
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = true;
+#if (!HAVE_SCHEME)
   XEN_MAKE_AND_RETURN_OBJECT(vct_tag, new_vct, 0, free_vct);
+#else
+  {
+    s7_pointer nv;
+    nv = s7_make_object(s7, vct_tag, new_vct);
+    s7_object_set_environment(nv, g_vct_methods);
+    s7_open_environment(nv);
+    return(nv);
+  }
+#endif
 }
+
 
 
 XEN vct_to_xen(vct *v)
@@ -1441,4 +1467,16 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_setB,          g_vct_set_w,       3, 0, 0, H_vct_setB);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_times,         g_vct_times_w,     2, 0, 0, H_vct_times);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_plus,          g_vct_plus_w,      2, 0, 0, H_vct_plus);
+
+#if HAVE_SCHEME
+  g_vct_methods = s7_eval_c_string(s7, "(augment-environment ()                                        \n\
+                                          (cons 'vector? (lambda (p) #t))                              \n\
+                                          (cons 'vector-length vct-length)                             \n\
+                                          (cons 'vector-dimensions (lambda (p) (list (vct-length p)))) \n\
+                                          (cons 'vector-ref vct-ref)                                   \n\
+                                          (cons 'vector-set! vct-set!)                                 \n\
+                                          (cons 'vector-fill! vct-fill!)                               \n\
+                                          (cons 'vector->list vct->list))");
+  s7_gc_protect(s7, g_vct_methods);
+#endif
 }

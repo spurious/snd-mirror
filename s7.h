@@ -483,7 +483,9 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env);           /* (
 bool s7_is_environment(s7_pointer e);
 s7_pointer s7_environment_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym); /* (env sym) */
 s7_pointer s7_environment_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (set! (env sym) val) */
-s7_pointer s7_open_environment(s7_scheme *sc, s7_pointer e);                /* (open-environment e) */
+s7_pointer s7_open_environment(s7_pointer e);                               /* (open-environment e) */
+bool s7_is_open_environment(s7_pointer e);                                  /* (open-environment? e) */
+s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
