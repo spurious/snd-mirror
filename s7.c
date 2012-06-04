@@ -5597,7 +5597,7 @@ bool s7_is_real(s7_pointer p)
 	 (type(p) == T_BIG_RATIO) ||
 	 (type(p) == T_BIG_REAL));
 #else
-  return(is_real(p));
+  return(is_real(p)); /* in GSL, a NaN or inf is not a real, or perhaps better, finite = not (nan or inf) */
 #endif
 }
 
@@ -55107,33 +55107,8 @@ s7_scheme *s7_init(void)
 
 
 /* SOMEDAY: add error check tests
- * TODO: c example of using open-env
- *   s7_augment_environment to add fields, s7_open_environment to open it, gc_protect?
- *   do we even need c objects? should c objects be environmentalizable?
- *   we want a block of C memory (doubles for example), accessible via implicit-indexing in scheme, and otherwise as a vector
- *     possibly multidimensional, what do gsl vectors/matrices assume?
- *     implicit index means it can't be an env itself and the pws version is too much overhead
- *     so: add object-environment somehow (this would be an addition to vct type so that vector* could work)
- *     (environment obj) for procedure/env itself/c-obj (remove procedure-environment)
- *     (setter obj) similarly?
- *   auto c-object env to hold all the methods passed in by new_type, and subsequently,
- *     when added or set, tie to the current direct fields, so no slow down.
- *     for fast access, object type struct could have an array holding all the built-ins -- how to index?
- *     CHECK_METHOD needs a switch I guess: func from env if not obj, else table[offset]
- *   (vector-ref vct index): ((object_value(vct))->data)[index]
- *   (vct index):  (object_value(vct)->funcs[APPLY_INDEX])(vct, index)
- *     i.e. skip the indirection to the table by building in a pointer to the table (skip tag)
- *   gsl vectors/matrices are all "blocks" (i.e. one sort of thing), so we could tie in all
- *     of the linear algebra code.  
- *   (augment-env obj ...) could set it up
- *   getter/setter are for free (part of new_type
- *   so a struct: block {int size; double *data} which matches gsl I think
- *   vcts wrap this, frame also, mixer adds 2-d access, as does sound-data
-typedef struct
-{
-  size_t size;
-  double * data;
-} gsl_block;
+ * TODO: gsl bindings, vectorization of vct/sound-data/frame/mixer
+ * TODO: doc/test object-environment -- perhaps (environment obj) replacing procedure|object-environment?
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
@@ -55149,7 +55124,6 @@ typedef struct
  * case of char? (currently we have op_case_int which ought to jump!)
  *
  * who-calls could scan all envs in the current env to global env and examine sources?
- * gsl bindings, s7_values can handle the extra error info
  *
  * lint     13424 -> 1231 [1237] 1286
  * bench    52019 -> 7875 [8268] 8037

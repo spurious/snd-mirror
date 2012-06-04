@@ -344,8 +344,8 @@ static int oss_mus_audio_initialize(void)
        *  Ensoniq uses 2 dsps and 1 mixer.
        * 
        * the data we are gathering here:
-       *   int audio_dsp[MAX_SOUNDCARDS] -> main_dsp_port[MUS_AUDIO_PACK_SYSTEM(n)] (-1 => no such system dsp)
-       *   int audio_mixer[MAX_SOUNDCARDS] -> main_mixer_port[MUS_AUDIO_PACK_SYSTEM(n)]
+       *   int audio_dsp[MAX_SOUNDCARDS] -> main_dsp_port[n] (-1 => no such system dsp)
+       *   int audio_mixer[MAX_SOUNDCARDS] -> main_mixer_port[n]
        *   int sound_cards = 0 -> usable systems
        * all auxiliary ports are currently ignored (SB equalizer, etc)
        */
@@ -563,7 +563,6 @@ static bool fragment_set_failed = false;
 
 static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
 {
-  /* ur_dev is in general MUS_AUDIO_PACK_SYSTEM(n) | MUS_AUDIO_DEVICE */
   int oss_format, buffer_info, audio_out = -1, sys, dev;
   char *dev_name;
 #ifndef NEW_OSS
