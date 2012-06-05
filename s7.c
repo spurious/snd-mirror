@@ -20334,7 +20334,7 @@ static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type)
 }
 
 
-bool s7_is_pair(s7_pointer p) 
+bool s7_is_pair(s7_pointer p)
 {
   return(is_pair(p));
 }
@@ -54756,8 +54756,6 @@ s7_scheme *s7_init(void)
   sc->QQ_LIST =         s7_define_constant_function(sc, "{list}",                  g_qq_list,                  0, 0, true,  H_qq_list);
   set_type(sc->QQ_LIST, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
 
-  /* TODO: define_constant_function should return a symbol etc */
-
   s7_define_safe_function(sc,                         "gc",                        g_gc,                       0, 1, false, H_gc);
 
   sc->PROCEDUREP = s7_define_safe_function(sc,        "procedure?",                g_is_procedure,             1, 0, false, H_is_procedure);
@@ -55115,8 +55113,8 @@ s7_scheme *s7_init(void)
 
 
 /* SOMEDAY: add error check tests
- * TODO: vectorization of vct/sound-data/frame/mixer [vct is done]
- * TODO: check_methods in all the exported funcs also so e.g. vector-ref works in any context
+ * TODO: doc vectorization
+ * TODO: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
  * TODO: doc/test object-environment -- perhaps (environment obj) replacing procedure|object-environment?
  *
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX

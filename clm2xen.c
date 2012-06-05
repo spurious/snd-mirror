@@ -1206,6 +1206,8 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 #endif
 
 #if HAVE_SCHEME
+static s7_pointer g_frame_methods, g_mixer_methods;
+
 static XEN g_frame_set(XEN uf1, XEN uchan, XEN val);
 static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
 
@@ -3862,7 +3864,17 @@ static XEN g_make_frame_2(int len, XEN args)
 		XEN_WRONG_TYPE_ARG_ERROR(S_make_frame, i, XEN_CAR(lst), "a number");
 	      }
 	}
+#if (!HAVE_SCHEME)
       return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)))));
+#else
+      {
+	s7_pointer nv;
+	nv = mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge))));
+	s7_object_set_environment(nv, g_frame_methods);
+	s7_open_environment(nv);
+	return(nv);
+      }
+#endif
     }
   return(XEN_FALSE);
 }
@@ -4269,7 +4281,17 @@ with 'chans' channels, and 'val' along the diagonal"
   if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_scalar_mixer, 1, chans, "too many chans: ~A");
   mx = mus_make_scalar_mixer(size, XEN_TO_C_DOUBLE(val));
   if (mx)
+#if (!HAVE_SCHEME)
     return(mus_xen_to_object(mus_any_to_mus_xen(mx)));
+#else
+      {
+	s7_pointer nv;
+	nv = mus_xen_to_object(mus_any_to_mus_xen(mx));
+	s7_object_set_environment(nv, g_mixer_methods);
+	s7_open_environment(nv);
+	return(nv);
+      }
+#endif
   return(XEN_FALSE);
 }
 
@@ -4307,7 +4329,17 @@ static XEN g_make_mixer_2(int len, XEN args)
 		}
 	    }
 	}
+#if (!HAVE_SCHEME)
       return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+#else
+      {
+	s7_pointer nv;
+	nv = mus_xen_to_object(mus_any_to_mus_xen(ge));
+	s7_object_set_environment(nv, g_mixer_methods);
+	s7_open_environment(nv);
+	return(nv);
+      }
+#endif
     }
   return(XEN_FALSE);
 
@@ -12786,6 +12818,34 @@ static void mus_xen_init(void)
 
 #if HAVE_SCHEME
   init_choosers(s7);
+  g_frame_methods = s7_eval_c_string(s7, "(augment-environment ()                                        \n\
+                                            (cons 'vector? (lambda (p) #t))                              \n\
+                                            (cons 'vector-length mus-length)                             \n\
+                                            (cons 'vector-dimensions (lambda (p) (list (mus-length p)))) \n\
+                                            (cons 'vector-ref frame-ref)                                 \n\
+                                            (cons 'vector-set! frame-set!)                               \n\
+                                            (cons 'vector-fill! fill!)                                   \n\
+                                            (cons 'vector->list frame->list))");
+  s7_gc_protect(s7, g_frame_methods);
+
+  g_mixer_methods = s7_eval_c_string(s7, "(augment-environment ()                                        \n\
+                                            (cons 'vector? (lambda (p) #t))                              \n\
+                                            (cons 'vector-length                                         \n\
+                                                  (lambda (p) (* (mus-length p) (mus-length p))))        \n\
+                                            (cons 'vector-dimensions                                     \n\
+                                                  (lambda (p) (list (mus-length p) (mus-length p))))     \n\
+                                            (cons 'vector-ref mixer-ref)                                 \n\
+                                            (cons 'vector-set! mixer-set!)                               \n\
+                                            (cons 'vector-fill! fill!)                                   \n\
+                                            (cons 'vector->list                                          \n\
+                                                  (lambda (p)                                            \n\
+                                                    (do ((i (- (mus-length p) 1) (- i 1))                \n\
+                                                         (lst ()))                                       \n\
+                                                        ((< i 0) lst)                                    \n\
+                                                      (do ((j (- (mus-length p) 1) (- j 1)))             \n\
+                                                          ((< j 0))                                      \n\
+                                                        (set! lst (cons (p i j) lst)))))))");
+  s7_gc_protect(s7, g_mixer_methods);
 #endif
 
 

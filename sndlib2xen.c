@@ -1582,6 +1582,10 @@ static XEN g_sound_data_chans(XEN obj)
 }
 
 
+#if HAVE_SCHEME
+  static s7_pointer g_sound_data_methods;
+#endif
+
 sound_data *c_make_sound_data(int chans, mus_long_t frames)
 {
   int i;
@@ -1603,7 +1607,17 @@ XEN make_sound_data(int chans, mus_long_t frames)
   #define H_make_sound_data "(" S_make_sound_data " chans frames): return a new sound-data object with 'chans' channels, each having 'frames' samples"
   sound_data *sd;
   sd = c_make_sound_data(chans, frames);
+#if (!HAVE_SCHEME)
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sd, 0, free_sound_data);
+#else
+  {
+    s7_pointer nv;
+    nv = s7_make_object(s7, sound_data_tag, sd);
+    s7_object_set_environment(nv, g_sound_data_methods);
+    s7_open_environment(nv);
+    return(nv);
+  }
+#endif
 }
 
 
@@ -1615,7 +1629,17 @@ XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data)
   sd->chans = chans;
   sd->wrapped = true;
   sd->data = data;
+#if (!HAVE_SCHEME)
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sd, 0, free_sound_data);
+#else
+  {
+    s7_pointer nv;
+    nv = s7_make_object(s7, sound_data_tag, sd);
+    s7_object_set_environment(nv, g_sound_data_methods);
+    s7_open_environment(nv);
+    return(nv);
+  }
+#endif
 }
 
 
@@ -1961,7 +1985,17 @@ static XEN g_sound_data_copy(XEN obj)
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ONLY_ARG, S_sound_data_copy, "a sound-data object");
 
   sdnew = sound_data_copy(XEN_TO_SOUND_DATA(obj));
+#if (!HAVE_SCHEME)
   XEN_MAKE_AND_RETURN_OBJECT(sound_data_tag, sdnew, 0, free_sound_data);
+#else
+  {
+    s7_pointer nv;
+    nv = s7_make_object(s7, sound_data_tag, sdnew);
+    s7_object_set_environment(nv, g_sound_data_methods);
+    s7_open_environment(nv);
+    return(nv);
+  }
+#endif
 }
 
 
@@ -2848,6 +2882,26 @@ void mus_sndlib_xen_initialize(void)
 
 #if MUS_MAC_OSX
   XEN_DEFINE_PROCEDURE(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable);
+#endif
+
+#if HAVE_SCHEME
+  g_sound_data_methods = s7_eval_c_string(s7, "(augment-environment ()                                        \n\
+                                          (cons 'vector? (lambda (p) #t))                                     \n\
+                                          (cons 'vector-length                                                \n\
+                                                (lambda (p) (* (sound-data-length p) (sound-data-chans p))))  \n\
+                                          (cons 'vector-dimensions                                            \n\
+                                                (lambda (p)                                                   \n\
+                                                 (make-list (sound-data-chans p) (sound-data-length p))))     \n\
+                                          (cons 'vector-ref sound-data-ref)                                   \n\
+                                          (cons 'vector-set! sound-data-set!)                                 \n\
+                                          (cons 'vector-fill! sound-data-fill!)                               \n\
+                                          (cons 'vector->list                                                 \n\
+                                                (lambda (p)                                                   \n\
+                                                  (do ((i (- (sound-data-chans p) 1) (- i 1))                 \n\
+                                                       (lst ()))                                              \n\
+                                                      ((< i 0) lst)                                           \n\
+                                                    (set! lst (cons (vct->list (sound-data->vct p i)) lst))))))");
+  s7_gc_protect(s7, g_sound_data_methods);
 #endif
 
 

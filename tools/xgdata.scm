@@ -8415,6 +8415,11 @@
 ;;; 3.5.2 -- a few deprecations (below)
 
 
+;;; 3.5.4
+(CFNC "void gtk_button_set_always_show_image GtkButton* button gboolean always_show")
+(CFNC "gboolean gtk_button_get_always_show_image GtkButton* button")
+
+;;; GTK_UNIT_NONE as a GtkUnit (like pixel) but this enum is commented out above
 
 |#
 
