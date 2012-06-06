@@ -31,15 +31,35 @@
 (define bold-text (format #f "~C[1m" #\escape))
 (define unbold-text (format #f "~C[22m" #\escape))
 
+(set! (hook-functions *unbound-variable-hook*) ())
+
 ;;; --------------------------------------------------------------------------------
 
 (if (and (defined? 'current-time) ; in Snd
 	 (defined? 'mus-rand-seed))
     (set! (mus-rand-seed) (current-time)))
 
+(define (show-error args)
+  (if (pair? args)
+      (begin
+	(if (pair? (cdr args))
+	    (begin
+	      (format #t ";~D ~A: " (port-line-number) (car args))
+	      (if (and (pair? (cadr args))
+		       (string? (caadr args)))
+		  (apply format #t (cadr args))
+		  (format #t "cdr args is messed up: ~A" (cdr args)))
+	      (if (not (null? (cddr args)))
+		  (format #t "~A~A~A" bold-test (cddr args) unbold-text)))
+	    (format #t ";~D args is ~A" (port-line-number) args)))
+      (format #t ";~D args is ~A" (port-line-number) args))
+  (format #t "~%~%"))
+
+
 (define (ok? otst ola oexp)
   (let ((result (catch #t ola
 		       (lambda args
+			 ;(show-error args)
 			 (if (not (eq? oexp 'error)) 
 			     (begin (display args) (newline)))
 			 'error))))
@@ -54,7 +74,11 @@
 
 (define (tok? otst ola)
   (let* ((data #f)
-	 (result (catch #t ola (lambda args (set! data args) 'error))))
+	 (result (catch #t ola 
+			(lambda args 
+			 ;(show-error args)
+			 (set! data args) 
+			 'error))))
     (if (or (not result)
 	    (eq? result 'error))
 	(format #t "~A: ~A got ~S ~A~%~%" (port-line-number) otst result (or data "")))))
@@ -63,7 +87,10 @@
   `(tok? ',tst (lambda () ,tst)))
 
 (defmacro test-e (tst op arg) ;(display tst) (newline)
-  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
+  `(let ((result (catch #t (lambda () ,tst) 
+			(lambda args 
+			 ;(show-error args)
+			 'error))))
      (if (not (eq? result 'error))
 	 (format #t "~A: (~A ~S) got ~S but expected 'error~%~%" (port-line-number) ,op ,arg result))))
 
@@ -196,18 +223,27 @@
 	    (newline) (newline)))))
 
 (define (nok? otst ola oexp)
-  (let ((result (catch #t ola (lambda args 'error))))
+  (let ((result (catch #t ola 
+		       (lambda args 
+			 ;(show-error args)
+			 'error))))
      (number-ok? otst result oexp)))
 
 (defmacro num-test (tst expected) ;(display tst) (newline)
   `(nok? ',tst  (lambda () ,tst) ,expected))
 
 (define-macro (num-test-1 proc val tst expected)
-  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
+  `(let ((result (catch #t (lambda () ,tst) 
+			(lambda args 
+			 ;(show-error args)
+			 'error))))
      (number-ok? (list ,proc ,val) result ,expected)))
 
 (define-macro (num-test-2 proc val1 val2 tst expected)
-  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
+  `(let ((result (catch #t (lambda () ,tst) 
+			(lambda args 
+			 ;(show-error args)
+			 'error))))
      (number-ok? (list ,proc ,val1 ,val2) result ,expected)))
 
 (define-macro (reinvert n op1 op2 arg)
@@ -3490,6 +3526,12 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test ((let () "hi")) 'error)
 (test ((let () "hi") 0) #\h)
 
+(test ("abs" most-negative-fixnum) 'error)
+(test (string-ref "abs" most-negative-fixnum) 'error)
+(test ("abs" (+ 1 most-negative-fixnum)) 'error)
+(test ("abs" most-positive-fixnum) 'error)
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4984,6 +5026,19 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
+;;; pair-line-number
+
+(test (pair-line-number) 'error)
+(test (pair-line-number () ()) 'error)
+(for-each
+ (lambda (arg)
+   (test (pair-line-number arg) 'error))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+       3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+
+
+
 ;;; --------------------------------------------------------------------------------
 ;;; list?
 
@@ -6405,6 +6460,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (list #\a '() -1 #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 
        3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
 
+(test (eval-string "#2147483649D()") 'error)
+(test (eval-string "#-9223372036854775808D()") 'error)
+
+
 
 
 
@@ -6887,7 +6946,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		      (begin 
 			(set! (v (inexact->exact y)) 100)
 			(set! y x) 
-			(exit x)) 
+			(exit x))
 		      (set! y x)))
 		v)))))
        
@@ -8826,6 +8885,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (hash-table-ref ht (cadr l1))) ; 123
   (test (hi) #f))
 
+(test (make-hash-table most-positive-fixnum) 'error)
+(test (make-hash-table (+ 1 (expt 2 31))) 'error)
+(test (make-hash-table most-negative-fixnum) 'error)
+
 (let ((hi (make-hash-table 7)))
   (test (object->string hi) "#<hash-table>")
   (set! (hi 1) "1")
@@ -10667,6 +10730,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "hi ~S ho" "abc") "hi \"abc\" ho")
 (test (format #f "~s~a" #\a #\b) "#\\ab")
 (test (format #f "~C~c~C" #\a #\b #\c) "abc")
+(test (format #f "1 2~C 3 4" #\null) "1 2") ; ?? everyone does something different here
+;; s7 used to return "1 2 3 4" because it treated ~C as a string (empty in this case)
 
 (test (format #f "~{~A~}" '(1 2 3)) "123")
 (test (format #f "asb~{~A ~}asb" '(1 2 3 4)) "asb1 2 3 4 asb")
@@ -12087,6 +12152,16 @@ a2" 3) "132")
 
 (test (with-output-to-string (lambda () (format (current-output-port) "a test ~D" 123))) "a test 123")
 ;(test (with-output-to-string (lambda () (format *stdout* "a test ~D" 1234))) "a test 1234")
+
+(test (string=? (with-output-to-string (lambda () (write #\null))) "#\\null") #t)
+(test (string=? (with-output-to-string (lambda () (write #\space))) "#\\space") #t)
+(test (string=? (with-output-to-string (lambda () (write #\return))) "#\\return") #t)
+(test (string=? (with-output-to-string (lambda () (write #\escape))) "#\\escape") #t)
+(test (string=? (with-output-to-string (lambda () (write #\tab))) "#\\tab") #t)
+(test (string=? (with-output-to-string (lambda () (write #\newline))) "#\\newline") #t)
+(test (string=? (with-output-to-string (lambda () (write #\backspace))) "#\\backspace") #t)
+(test (string=? (with-output-to-string (lambda () (write #\alarm))) "#\\alarm") #t)
+(test (string=? (with-output-to-string (lambda () (write #\delete))) "#\\delete") #t)
 
 (let ((str (call-with-input-string "12345"
 	    (lambda (p)
@@ -15999,6 +16074,8 @@ in s7:
 (let () (test (if (not (and (define x 2) (define y 4))) (+ x y) (if (define x 3) x)) 3))
 (let () (test (if (and (define x 2) (not (define y 4))) (+ x y) (- x y)) -2))
 (test (let () (define (f a) (lambda () a)) (+ ((f 1)) ((f 2)))) 3)
+(test (let () (define (hi) (let ((a 1)) (set! a 2) (define (ho) a) (set! a 3) (ho))) (hi)) 3)
+;;; (define-macro (make-lambda args . body) `(apply lambda* ',args '(,@body))): (make-lambda (a b) (+ a b))
 
 ;; y combinator example from some CS website
 (let ()
@@ -20674,6 +20751,7 @@ who says the continuation has to restart the map from the top?
 ;(test (vector? (sort! (symbol-table) (lambda (a b) (< (length a) (length b))))) #t) ; (symbol-table) copies the table
 ;;; TODO: if gc during copy, we lose somewhere I think
 (test (sort! (global-environment) <) 'error)
+(test (sort! () #f) 'error)
 
 (test (equal? (sort! (vector 3 4 8 2 0 1 5 9 7 6) <) (vector 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! '#() <) '#()) #t)
@@ -20749,7 +20827,7 @@ who says the continuation has to restart the map from the top?
 (test (sort! '(1 2 #t) <) 'error)
 (test (sort! '(1 2 . #t) <) 'error)
 (test (sort! '(#\c #\a #\b) <) 'error)
-(test (sort! (begin) if) '())
+(test (sort! (begin) if) 'error)
 
 (test (sort! (list) <) '())
 (test (sort! (vector) <) #())
@@ -20766,7 +20844,8 @@ who says the continuation has to restart the map from the top?
 
 (for-each
  (lambda (arg)
-   (test (sort! arg <) 'error))
+   (test (sort! arg <) 'error)
+   (test (sort! () arg) 'error))
  (list -1 #\a 1 0 "" "hiho" (make-hash-table) :hi 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
 
 (for-each
@@ -21704,6 +21783,15 @@ abs     1       2
   (test (let ((i 0) (sum 0)) (until (= i 4) (set! sum (+ sum i)) (set! i (+ i 1))) sum) 6))
 
 (let ()
+  (define-macro (glambda args) ; returns an anonymous macro that will return a function given a body
+    `(symbol->value (define-macro (,(gensym) . body) 
+                      `(lambda ,',args ,@body))))
+
+  (test (let ((gf (glambda (a b))))  ; gf is now ready for any body that involves arguments 'a and 'b
+	  ((gf (+ a b)) 1 2))        ; apply (lambda (a b) (+ a b)) to '(1 2)
+	3))
+
+(let ()
   (define-macro (alambda pars . body)
     `(letrec ((self (lambda* ,pars ,@body)))
        self))
@@ -22064,7 +22152,7 @@ abs     1       2
        car #() "hi" (list 1 2) 3.14 3/4 1.0+1.0i #\f #<eof> #<unspecified>))
 
 (test (aritable?) 'error)
-(test (aritable abs) 'error)
+(test (aritable? abs) 'error)
 
 (test (aritable? car 0) #f)
 (test (aritable? car 1) #t)
@@ -22910,6 +22998,7 @@ func
    (test (procedure-environment arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
+
 (let ()
   (define (make-iterator obj)
     (let ((ctr 0))
@@ -23233,6 +23322,19 @@ func
        lst)))
   (close-output-port p))
 |#
+
+
+;;; object-environment
+(for-each
+ (lambda (arg)
+   (test (object-environment arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi" car macroexpand (lambda () 1) (lambda* (a) a)))
+(test (object-environment) 'error)
+(test (object-environment 1 2) 'error)
+(test (object-environment (make-random-state 123)) ())
+(test (set! (object-environment (make-random-state 123)) ()) 'error)
+
+
 
 
 
@@ -24986,6 +25088,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (open-environment 1 2) 'error)
 (test (open-environment?) 'error)
 (test (open-environment? 1 2) 'error)
+(test (open-environment (global-environment)) 'error)
 
 (let ((f (lambda (x) (+ x 1))))
   (test (open-environment? f) #f)
@@ -26072,8 +26175,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   (let ()
     (test (add class-1) 3)
     (test (add (make-class-1 :b 0)) 1)
-    (test (add 2) 'error)
-    (test ((v 'add) 2) 'error))
+    (test (add 2) 'error))
 
   (define-class class-2 (list class-1)
     '((c 3)) 
@@ -36685,7 +36787,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (inexact->exact? arg) 'error))
+   (test (inexact->exact arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -37618,12 +37720,15 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (make-rectangular arg 0.0) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+ (list "hi" '() (integer->char 65) #f #t '(1 2) 0+i _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 (for-each
  (lambda (arg)
-   (test (make-rectangular 0.0 arg) 'error))
+   (test (make-rectangular 0.0 arg) 'error)
+   (test (make-rectangular 1 arg) 'error)
+   (test (make-rectangular 1/2 arg) 'error)
+   (test (make-rectangular 1+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -38148,13 +38253,16 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (make-polar arg 0.0) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+ (list "hi" '() (integer->char 65) #f #t 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 (for-each
  (lambda (arg)
-   (test (make-polar 0.0 arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+   (test (make-polar 0.0 arg) 'error)
+   (test (make-polar 1 arg) 'error)
+   (test (make-polar 1/2 arg) 'error)
+   (test (make-polar 1+i arg) 'error))
+ (list "hi" '() (integer->char 65) #f #t 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 
@@ -42016,8 +42124,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (modulo 2 arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+   (test (modulo 2 arg) 'error)
+   (test (modulo 1/2 arg) 'error)
+   (test (modulo 2.0 arg) 'error)
+   (test (modulo 2+i arg) 'error))
+ (list "hi" '() (integer->char 65) #f #t 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 
@@ -42540,13 +42651,16 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (quotient arg 2) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+ (list "hi" '() (integer->char 65) #f #t 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 (for-each
  (lambda (arg)
-   (test (quotient 2 arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+   (test (quotient 2 arg) 'error)
+   (test (quotient 1/2 arg) 'error)
+   (test (quotient 2.0 arg) 'error)
+   (test (quotient 2+i arg) 'error))
+ (list "hi" '() (integer->char 65) #f #t 0 0.0 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 
@@ -43078,13 +43192,16 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (remainder arg 2) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+ (list "hi" '() (integer->char 65) 0+i #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 (for-each
  (lambda (arg)
-   (test (remainder 2 arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+   (test (remainder 2 arg) 'error)
+   (test (remainder 2.0 arg) 'error)
+   (test (remainder 1/2 arg) 'error)
+   (test (remainder 2+i arg) 'error))
+ (list "hi" '() (integer->char 65) #f #t 0 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 
@@ -43634,7 +43751,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (gcd 2 arg) 'error))
+   (test (gcd 2 arg) 'error)
+   (test (gcd 1/2 arg) 'error)
+   (test (gcd 2.0 arg) 'error)
+   (test (gcd 2+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -44812,7 +44932,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (lcm arg 2) 'error))
+   (test (lcm arg 2) 'error)
+   (test (lcm arg 1/2) 'error)
+   (test (lcm arg 2.0) 'error)
+   (test (lcm arg 2+i) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -45356,7 +45479,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (rationalize 0.1 arg) 'error))
+   (test (rationalize 0.1 arg) 'error)
+   (test (rationalize 1 arg) 'error)
+   (test (rationalize 1/2 arg) 'error)
+   (test (rationalize 0+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -45737,7 +45863,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (min 0 arg) 'error))
+   (test (min 0 arg) 'error)
+   (test (min 0.0 arg) 'error)
+   (test (min 1/2 arg) 'error)
+   (test (min 1+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -46126,7 +46255,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (max 0 arg) 'error))
+   (test (max 0 arg) 'error)
+   (test (max 0.0 arg) 'error)
+   (test (max 1/2 arg) 'error)
+   (test (max 0+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -46360,7 +46492,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (< 1 0 arg) 'error))
+   (test (< 1 0 arg) 'error)
+   (test (< 1 arg) 'error)
+   (test (< 1.0 arg) 'error)
+   (test (< 1/2 arg) 'error)
+   (test (< arg 1) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -46875,7 +47011,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (<= 1 0 arg) 'error))
+   (test (<= 1 0 arg) 'error)
+   (test (<= 1 arg) 'error)
+   (test (<= 1.0 arg) 'error)
+   (test (<= 1/2 arg) 'error)
+   (test (<= arg 1) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -47474,7 +47614,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (= 1 0 arg) 'error))
+   (test (= 1 0 arg) 'error)
+   (test (= 1 arg) 'error)
+   (test (= 1.0 arg) 'error)
+   (test (= 1/2 arg) 'error)
+   (test (= 1+i arg) 'error)
+   (test (= arg 1) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -47961,7 +48106,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (> 0 1 arg) 'error))
+   (test (> 0 1 arg) 'error)
+   (test (> 1 arg) 'error)
+   (test (> 1/2 arg) 'error)
+   (test (> 1.0 arg) 'error)
+   (test (> 1+i arg) 'error)
+   (test (> arg 1) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -48248,6 +48398,17 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (>=- 1 2) 'error)
 
 (for-each
+ (lambda (arg)
+   (test (>= 0 1 arg) 'error)
+   (test (>= 1 arg) 'error)
+   (test (>= 1/2 arg) 'error)
+   (test (>= 1.0 arg) 'error)
+   (test (>= 1+i arg) 'error)
+   (test (>= arg 1) 'error))
+ (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
+
+(for-each
  (lambda (op)
    (for-each 
     (lambda (arg1)
@@ -48260,12 +48421,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
        (list "hi" '() 1 1.5 3/2 1+i (cons 1 2) (list 1 2) #\a 'a-symbol #(1) abs #f (lambda (a) (+ a 1)) #<unspecified> :hi #<eof> #<undefined>)))
     (list "hi" '() (cons 1 2) (list 1 2) #\a 'a-symbol #(1) abs #f (lambda (a) (+ a 1)) #<unspecified> :hi #<eof> #<undefined>)))
  (list + - * / > < >= <= ))
-
-(for-each
- (lambda (arg)
-   (test (>= 0 1 arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
-       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 (for-each
  (lambda (op)
@@ -52080,6 +52235,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (atan 0 1 2) 'error)
 (test (atan 0 0-i) 'error)
 (test (atan 1+i 0-i) 'error)
+(test (atan 1 0-i) 'error)
 
 (for-each
  (lambda (arg)
@@ -52089,13 +52245,19 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (atan 1 arg) 'error))
+   (test (atan 1 arg) 'error)
+   (test (atan 1.0 arg) 'error)
+   (test (atan 1/2 arg) 'error)
+   (test (atan 1+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 (for-each
  (lambda (arg)
-   (test (atan arg 1) 'error))
+   (test (atan arg 1) 'error)
+   (test (atan arg 1/2) 'error)
+   (test (atan arg 1.0) 'error)
+   (test (atan arg 1+i) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -60714,15 +60876,15 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (* 0 arg) 'error))
+   (test (* 0 arg) 'error)
+   (test (* 0.0 arg) 'error)
+   (test (* 1 arg) 'error)
+   (test (* 1.0 arg) 'error)
+   (test (* 1/2 arg) 'error)
+   (test (* 1+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
-(for-each
- (lambda (arg)
-   (test (* 0.0 arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
-       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 
 
@@ -62187,7 +62349,13 @@ but it's the printout that is at fault:
 
 (for-each
  (lambda (arg)
-   (test (+ arg) 'error))
+   (test (+ arg) 'error)
+   (test (+ 0 arg) 'error)
+   (test (+ 0.0 arg) 'error)
+   (test (+ 1 arg) 'error)
+   (test (+ 1/2 arg) 'error)
+   (test (+ 1.0 arg) 'error)
+   (test (+ 1+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
   
@@ -63444,7 +63612,11 @@ but it's the printout that is at fault:
 
 (for-each
  (lambda (arg)
-   (test (- arg) 'error))
+   (test (- arg) 'error)
+   (test (- 1 arg) 'error)
+   (test (- 1/2 arg) 'error)
+   (test (- 1.0 arg) 'error)
+   (test (- 1+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -64534,20 +64706,17 @@ but it's the printout that is at fault:
 
 (for-each
  (lambda (arg)
-   (test (/ 0 arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
-       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
-
-(for-each
- (lambda (arg)
-   (test (/ 0.0 arg) 'error))
+   (test (/ 0 arg) 'error)
+   (test (/ 0.0 arg) 'error)
+   (test (/ 1/2 arg) 'error)
+   (test (/ 1+i arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 (for-each
  (lambda (arg)
    (test (/ arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+ (list "hi" '() (integer->char 65) 0 0.0 0+0i -0.0 -0 0-0i #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
 (if with-bignums
@@ -68626,7 +68795,7 @@ in non-gmp,
 		  1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 		  1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
 		  most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
-		  -1 0 0.0 1 1.5 1.0+1.0i 3/4 63 -63 (make-hash-table) (hash-table '(a . 2) '(b .3))
+		  -1 0 0.0 1 1.5 1.0+1.0i 3/4 63 -63 (make-hash-table) ;(hash-table '(a . 2) '(b .3))
 		  '((1 2) (3 4)) '((1 (2)) (((3) 4))) '(()) "" (list #(1) "1") '(1 2 . 3)
 		  #(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args) (lambda* ((a 3) (b 2)) (+ a b))
 		  (augment-environment '() (cons 'a 1)) (current-environment) (global-environment)
@@ -68636,51 +68805,66 @@ in non-gmp,
 		  #<undefined> #<eof> #<unspecified>
 		  )))
 
-  (define (autotest func args args-left)
+  (define (autotest func args args-now args-left)
     (set! (-s7-symbol-table-locked?) #t)
-    (catch #t 
-	   (lambda () 
-	     (apply func args))
-	   (lambda any #f))
+    (if (aritable? func args-now)
+	(let ((val (catch #t 
+		     (lambda () 
+		       ;(format *stderr* "(~S ~S)~%" func args) 
+		       (apply func args))
+		     (lambda any 'error))))
+	  (if (and val (not (eq? val 'error)))
+	      (format *stderr* "(apply ~S ~{~S~^ ~}) -> ~S~%" func args val))))
     (set! (-s7-symbol-table-locked?) #f)
     (if (> args-left 0)
 	(for-each
 	 (lambda (c)
-	   (autotest func (cons c args) (- args-left 1)))
+	   (autotest func (cons c args) (+ args-now 1) (- args-left 1)))
 	 constants)))
 
   (let ((st (symbol-table)))
     (do ((i 0 (+ i 1))) 
-	((= i (length st)))
+	((= i (length st)) 
+	 (format *stderr* "~%all done~%"))
       (let ((lst (st i)))
 	(for-each 
 	 (lambda (sym)
 	   (if (defined? sym)
 	       (let ((val (symbol->value sym)))
-		 (if (procedure? val)
-		     (let* ((arity (procedure-arity val))
-			    (req (car arity))
-			    (opt (cadr arity))
-			    (rst (caddr arity)))
-		       (if (or (> (+ opt req) 4)
-		       	       (member (symbol->string sym) '("exit" "abort" 
-							      "(generalized set!)" "(environment set!)"
-							      "autotest" "{multivector}"
-							      "[set--s7-symbol-table-locked?]")))
-			   (format #t ";skip ~A for now~%" sym)
-			   (begin
-			     (format #t ";whack on ~A...~%" sym)
-			     (autotest val '() (+ req opt 1)))))
-		     (begin
-		       (if (member (symbol->string sym) '("do"))
-			   (format #t ";skip ~A for now~%" sym)
-			   (begin
-			     (format #t ";whack on ~A...~%" sym)
-			     (autotest val '() 2))))))))
+		 (if (or (aritable? val 0)
+			 (aritable? val 1)
+			 (aritable? val 2)
+			 (aritable? val 3))
+		     (if (procedure? val)
+			 (let ((strname (symbol->string sym)))
+			   (if (or (member (strname 0) '(#\{ #\[ #\())
+				   (member strname '("exit" "abort" "unoptimize" "autotest" "delete-file" "system" "set-cdr!"
+						     "augment-environment!" "make-procedure-with-setter" "open-environment")))
+			       (format *stderr* ";skip ~A for now~%" sym) ; no time! no time!
+			       (begin
+				 (format *stderr* ";whack on ~A...~%" sym)
+				 (autotest val '() 0 3))))
+			 (begin
+			   (if (or #t (member (symbol->string sym) 
+					      '("do" "begin" "set!" "constants" "st" "i" "lst"
+						"define" "define*" "define-expansion" "symbol-table"
+						"define-macro" "define-bacro" "define-macro*" "define-bacro*"
+						"defmacro" "defmacro*" "define-constant")))
+			       (format *stderr* ";skip ~A for now~%" sym)
+			       (begin
+				 (format *stderr* ";whack on ~A...~%" sym)
+				 (autotest val '() 0 3)))))))))
 	 lst)))))
 |#
 
 ;;; this shows what global funcs have been rebound at some time
 ;;; (with-environment (initial-environment) (format #t "~{~A ~}~%" (current-environment)))
 
+#|
+;;; TODO: (round 1e308) -> garbage (-9223372036854775808)
 
+c1 (unopt with printout) 574
+
+opt format esp if no output needed
+
+|#

@@ -1819,7 +1819,7 @@ static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
   
   p = s7_car(args);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(p), p, XEN_ARG_2, S_sound_data_ref, "an integer");
-  chn = s7_number_to_integer(p);
+  chn = s7_integer(p);
 
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, p, "~A: invalid channel");
@@ -1831,7 +1831,7 @@ static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
 
   p = s7_cadr(args);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(p), p, XEN_ARG_3, S_sound_data_ref, "an integer");
-  loc = s7_number_to_integer(p);
+  loc = s7_integer(p);
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, p, "~A: invalid frame");
@@ -1857,7 +1857,7 @@ static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
 
   p = s7_car(args);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(p), p, XEN_ARG_2, S_sound_data_setB, "an integer");
-  chn = s7_number_to_integer(p);
+  chn = s7_integer(p);
 
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 2, p, "~A: invalid channel");
@@ -1869,7 +1869,7 @@ static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
 
   p = s7_cadr(args);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(p), p, XEN_ARG_3, S_sound_data_setB, "an integer");
-  loc = s7_number_to_integer(p);
+  loc = s7_integer(p);
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_setB, 3, p, "~A: invalid frame");
   if (loc >= sd->length)

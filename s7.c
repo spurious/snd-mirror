@@ -861,7 +861,10 @@ typedef struct s7_cell {
 
     s7_port_t *port;
     
-    unsigned char chr;
+    struct{
+      unsigned char c;
+      const char *c_name;
+    } chr;
 
     void *c_pointer;
 
@@ -1526,7 +1529,9 @@ static void init_types(void)
 #define string_length(p)              (p)->object.string.length
 #define string_hash(p)                (p)->object.string.hash
 #define string_needs_free(p)          (p)->object.string.needs_free
-#define character(p)                  (p)->object.chr
+
+#define character(p)                  (p)->object.chr.c
+#define character_name(p)             (p)->object.chr.c_name
 
 #define is_symbol(p)                  (type(p) == T_SYMBOL)
 #define symbol_name_cell(p)           (p)->object.sym.name
@@ -3992,7 +3997,7 @@ static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
   s7_pointer e;
 
   e = car(args);
-  if ((is_environment(e)) ||
+  if (((is_environment(e)) && (e != sc->global_env)) ||
       (is_closure(e)) ||
       (is_closure_star(e)))
     {
@@ -4049,9 +4054,10 @@ environment."
   for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
     {
       s7_pointer sym, val;
-      if ((!is_pair(car(x))) ||
-	  (!is_symbol(caar(x))))
+      if (!is_pair(car(x)))
 	return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair: '(symbol . value)"));
+      if (!is_symbol(caar(x)))
+	return(s7_wrong_type_arg_error(sc, "augment-environment!", i, car(x), "a pair whose car is a symbol: '(symbol . value)"));
 
       sym = caar(x);
       val = cdar(x);
@@ -4133,10 +4139,11 @@ new environment."
     for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
       {
 	s7_pointer sym, val;
-	if ((!is_pair(car(x))) ||
-	    (!is_symbol(caar(x))))
+	if (!is_pair(car(x)))
 	  return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair: '(symbol . value)"));
-	
+	if (!is_symbol(caar(x)))
+	  return(s7_wrong_type_arg_error(sc, "augment-environment", i, car(x), "a pair whose car is a symbol: '(symbol . value)"));
+
 	sym = caar(x);
 	val = cdar(x);
 	if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
@@ -6749,6 +6756,9 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
   switch (type(obj))
     {
     case T_INTEGER:
+      /* TODO: here and in ratio if rad==10 and width=0(?) and its a small int, we could have it already stringified, and copy that 
+       *   see also atom_to_c_string
+       */
       p = (char *)malloc((128 + width) * sizeof(char));
       s7_Int_to_string(p, s7_integer(obj), radix, width);
       return(p);
@@ -9841,6 +9851,9 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 
 	case T_RATIO:
 	  {
+	    /* bad cases here start around 1e16: (remainder 1e15 3/13) -> 0.0 with loss of digits earlier
+	     *   would long double help?  
+	     */
 	    s7_Double frac;
 	    frac = fraction(y);
 	    pre_quo = real(x) / frac;
@@ -19131,50 +19144,15 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(copy_string("\"\""));
 
     case T_CHARACTER:
-      {
-	#define P_SIZE 16
-	char *p;
-	unsigned char c;
-	p = (char *)malloc(P_SIZE * sizeof(char));
-	c = (unsigned char)s7_character(obj);             /* if not unsigned, (write (integer->char 212) -> #\xffffffd4! */
-	if (!use_write) 
-	  {
-	    p[0]= c;
-	    p[1]= 0;
-	  } 
-	else 
-	  {
-	    switch (c) 
-	      {
-	      case ' ':
-		snprintf(p, P_SIZE, "#\\space"); 
-		break;
-
-	      case '\n':
-		snprintf(p, P_SIZE, "#\\newline"); 
-		break;
-
-	      case '\r':
-		snprintf(p, P_SIZE, "#\\return"); 
-		break;
-
-	      case '\t':
-		snprintf(p, P_SIZE, "#\\tab"); 
-		break;
-
-	      case '\0':
-		snprintf(p, P_SIZE, "#\\null");
-		break;
-
-	      default:
-		if ((c < 32) || (c >= 127))
-		  snprintf(p, P_SIZE, "#\\x%x", c);
-		else snprintf(p, P_SIZE, "#\\%c", c); 
-		break;
-	      }
-	  }
-	return(p);
-      }
+      if (!use_write) 
+	{
+	  char *p;
+	  p = (char *)calloc(2, sizeof(char));
+	  p[0]= character(obj);
+	  p[1]= 0;
+	  return(p);
+	} 
+      return(copy_string(character_name(obj)));
 
     case T_MACRO:
       return(copy_string("#<macro>"));
@@ -19225,7 +19203,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_DYNAMIC_WIND:                 /* this can't happen */
       return(copy_string("#<dynamic-wind>"));
   
-    case T_C_OBJECT: /* TODO: obj method */
+    case T_C_OBJECT: 
       return(object_print(sc, obj));     /* this allocates already */
 
     case T_VECTOR: 
@@ -23213,9 +23191,13 @@ static s7_pointer s7_multivector_error(s7_scheme *sc, const char *message, s7_po
 }
 
 
-static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
+static s7_pointer g_multivector(s7_scheme *sc, s7_Int dims, s7_pointer data)
 {
-  /* get the dimension bounds from data, make the new vector, fill it from data */
+  /* get the dimension bounds from data, make the new vector, fill it from data 
+   *
+   * dims needs to be s7_Int so we can at least give correct error messages.
+   * also should we let an empty vector have any number of dimensions? currently ndims is an int.
+   */
   s7_pointer vec, x;
   int i, total_size = 1, vec_loc, err;
   int *sizes;
@@ -23230,7 +23212,7 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
    * but a special case: #nD() is an n-dimensional empty vector
    */
 
-  if (dims <= 0)      /* #0d(...) */
+  if (dims <= 0)      /* #0d(...) #2147483649D() [if dims is int this is negative] */
     return(s7_out_of_range_error(sc, "#nD(...) dimensions", 1, make_integer(sc, dims), "must be 1 or more"));
 
   sc->w = sc->NIL;
@@ -23321,7 +23303,17 @@ If its first argument is a list, the list is copied (despite the '!')."
   s7_Int len = 0, n, k;
 
   data = car(args);
-  if (is_null(data)) return(sc->NIL);
+  if (is_null(data)) 
+    {
+      /* (apply sort! () #f) should be an error I think 
+       */
+      lessp = cadr(args);
+      if ((!is_procedure(lessp)) ||
+	  (!is_aritable(sc, lessp, 2)))
+	return(s7_wrong_type_arg_error(sc, "sort!", 2, lessp, "a function of 2 arguments"));
+      return(sc->NIL);
+    }
+
   if ((!is_pair(data)) && 
       (!s7_is_vector(data)) &&
       (!has_methods(data)))
@@ -23330,6 +23322,7 @@ If its first argument is a list, the list is copied (despite the '!')."
       CHECK_METHOD(sc, data, sc->SORT, args);
       return(s7_wrong_type_arg_error(sc, "sort! data", 1, data, "a vector or a list"));
     }
+
   lessp = cadr(args);
   if (!is_procedure(lessp))
     return(s7_wrong_type_arg_error(sc, "sort! function", 2, lessp, "a function"));
@@ -23665,8 +23658,16 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
     case T_COMPLEX:
       return(hash_complex_1(sc, table, loc, key));
+
+    case T_HASH_TABLE:
+      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+	if (fcdr(x) == key)
+	  return(car(x));
       
     default:
+      /* we can get into an infinite loop here, but it requires 2 hash tables that are members of each other
+       *    and key is one of them, so I changed the equality check above to use eq? -- not sure this is right.
+       */
       for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
 	if (s7_is_equal(sc, fcdr(x), key))
 	  return(car(x));
@@ -23726,14 +23727,14 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table (size 511)) returns a new hash table"
-  int size = DEFAULT_HASH_TABLE_SIZE;
+  s7_Int size = DEFAULT_HASH_TABLE_SIZE;
 
   if (is_not_null(args))
     {
       if (s7_is_integer(car(args)))
 	{
-	  size = (int)s7_integer(car(args));
-	  if (size <= 0)
+	  size = s7_integer(car(args));
+	  if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
 	    return(s7_out_of_range_error(sc, "make-hash-table, size", 0, car(args), "should be a positive integer"));
 	  if (size > MAX_LIST_LENGTH)
 	    return(s7_out_of_range_error(sc, "make-hash-table, size", 0, car(args), "should be a reasonable integer"));
@@ -23978,7 +23979,10 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 
   int len, ht_loc;
   s7_pointer x, ht;
-  
+
+  /* this accepts repeated keys: (hash-table '(a . 1) '(a . 1)) -- or just '(a) for that matter
+   */
+
   len = s7_list_length(sc, args);
   ht = s7_make_hash_table(sc, (len > 512) ? 4095 : 511);
   if (is_not_null(args))
@@ -27383,6 +27387,15 @@ static void format_append_char(format_data *dat, char c)
       dat->str = (char *)realloc(dat->str, dat->len * sizeof(char));
     }
   dat->str[dat->loc++] = c;
+  /* if c is #\null, is this the right thing to do? We used to return "1 2 3 4" because ~C was first turned into a string (empty in this case)
+   * (format #f "1 2~C3 4" #\null)
+   * "1 2"
+   * Clisp does this:
+   * (format nil "1 2~C3 4" (int-char 0))
+   * "1 23 4"
+   * whereas sbcl says int-char is undefined, and
+   * Guile returns "1 2\x003 4"
+   */
 }
 
 
@@ -27694,9 +27707,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    if (!s7_is_character(obj))
 		      return(format_error(sc, "'C' directive requires a character argument", str, args, fdat, in_error_handler));
 		    
-		    tmp = atom_to_c_string(sc, obj, false);
-		    format_append_string(fdat, tmp);
-		    if (tmp) free(tmp);
+		    /* here atom_to_c_string use_write is false, so we just add the char, not its name */
+		    format_append_char(fdat, character(obj));
 		    fdat->args = cdr(fdat->args);
 		  }
 		  break;
@@ -30214,7 +30226,7 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
   if (is_null(args))
     {
       if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_SET1)  /* (set! var (values)) */
-	return(eval_error(sc, "set!: can't assign (values) to something", args));
+	return(eval_error(sc, "set!: can't assign (values) to something: ~A", args));
 
       return(sc->NO_VALUE); 
     }
@@ -30540,7 +30552,17 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 
   if (isdigit(c)) /* #2D(...) */
     {
-      int dims, dig, d, loc = 0;
+      /* here we can get an overflow: #1231231231231232131D() 
+       *   and we can't shrug it off:
+       *   :#2147483649123D()
+       *   ;#nD(...) dimensions argument 1, -2147483647, is out of range (must be 1 or more)
+       * but
+       *   :#2147483649123D()
+       *   creates a vector with 512 dimensions!
+       * ndims in the vector struct is an unsigned int, so we'll complain if it goes over short max for now
+       */
+      s7_Int dims;
+      int dig, d, loc = 0;
       sc->strbuf[loc++] = c;
       dims = digits[c];
 
@@ -30554,6 +30576,10 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	  dig = digits[d];
 	  if (dig >= 10) break;
 	  dims = dig + (dims * 10);
+	  if ((dims <= 0) ||
+	      (dims > S7_SHORT_MAX))
+	    s7_error(sc, sc->READ_ERROR,
+		     list_2(sc, make_protected_string(sc, "overflow while reading #nD: ~A"), make_integer(sc, dims)));
 	  sc->strbuf[loc++] = d;
 	}
       sc->strbuf[loc++] = d;
@@ -35383,7 +35409,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	default:
 	  /* try to catch weird cases like: 
 	   * (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
-	   * TODO: what about trailers?
 	   * (let () (define (hi1 a) (define (ho1 b) b) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
 	   */
 	  /*
@@ -37611,12 +37636,12 @@ static s7_pointer check_do(s7_scheme *sc)
     {
       for (x = cadr(sc->code); is_pair(x); x = cdr(x));
       if (is_not_null(x))
-	return(eval_error(sc, "stray dot in do end section?", sc->code));
+	return(eval_error(sc, "stray dot in do end section? ~A", sc->code));
     }
 
   for (x = cddr(sc->code); is_pair(x); x = cdr(x));
   if (is_not_null(x))
-    return(eval_error(sc, "stray dot in do body?", sc->code));
+    return(eval_error(sc, "stray dot in do body? ~A", sc->code));
 
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
@@ -44999,10 +45024,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (s7_is_integer(car(sc->args)))
 		{
-		  int index;
-		  index = (int)s7_integer(car(sc->args));
+		  s7_Int index;                  /* not int: ("abs" most-negative-fixnum) */
+		  index = s7_integer(car(sc->args));
 		  if ((index >= 0) &&
-		      (index < (int)string_length(sc->code)))
+		      (index < string_length(sc->code)))
 		    {
 		      sc->value = s7_make_character(sc, ((unsigned char *)string_value(sc->code))[index]);
 		      goto START;
@@ -49385,9 +49410,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_proper_list(sc, sc->value))       /* #(1 . 2) */
 	return(read_error(sc, "vector constant data is not a proper list"));
 
-      if (sc->args == small_int(1))
+      if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
 	sc->value = g_vector(sc, sc->value);
-      else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
+      else sc->value = g_multivector(sc, s7_integer(sc->args), sc->value);
       goto START;
 
       
@@ -54160,12 +54185,66 @@ s7_scheme *s7_init(void)
     cells = (s7_cell *)calloc(NUM_CHARS, sizeof(s7_cell));
     for (i = 0; i < NUM_CHARS; i++) 
       {
-	s7_pointer p;
-	p = &cells[i];
-	typeflag(p) = T_IMMUTABLE | T_CHARACTER;
-	p->hloc = NOT_IN_HEAP;
-	character(p) = (unsigned char)i;
-	chars[i] = p;
+	s7_pointer cp;
+	unsigned char c;
+
+	c = (unsigned char)i;
+	cp = &cells[i];
+	typeflag(cp) = T_IMMUTABLE | T_CHARACTER;
+	cp->hloc = NOT_IN_HEAP;
+	character(cp) = c;
+	chars[i] = cp;
+	  
+	switch (c) 
+	  {
+	  case ' ':
+	    character_name(cp) = copy_string("#\\space"); 
+	    break;
+	    
+	  case '\n':
+	    character_name(cp) = copy_string("#\\newline"); 
+	    break;
+	    
+	  case '\r':
+	    character_name(cp) = copy_string("#\\return"); 
+	    break;
+	    
+	  case '\t':
+	    character_name(cp) = copy_string("#\\tab"); 
+	    break;
+	    
+	  case '\0':
+	    character_name(cp) = copy_string("#\\null");
+	    break;
+
+	  case (char)0x1b:
+	    character_name(cp) = copy_string("#\\escape");
+	    break;
+
+	  case (char)0x7f:
+	    character_name(cp) = copy_string("#\\delete");
+	    break;
+
+	  case (char)7:
+	    character_name(cp) = copy_string("#\\alarm");
+	    break;
+	    
+	  case (char)8:
+	    character_name(cp) = copy_string("#\\backspace");
+	    break;
+	    
+	  default:
+	    {
+              #define P_SIZE 16
+	      char *p;
+	      p = (char *)malloc(P_SIZE * sizeof(char));
+	      if ((c < 32) || (c >= 127))
+		snprintf(p, P_SIZE, "#\\x%x", c);
+	      else snprintf(p, P_SIZE, "#\\%c", c); 
+	      character_name(cp) = p;
+	      break;
+	    }
+	  }
       }
   }
 
@@ -54435,6 +54514,8 @@ s7_scheme *s7_init(void)
   sc->PORT_LINE_NUMBER = s7_define_safe_function(sc,  "port-line-number",          g_port_line_number,         0, 1, false, H_port_line_number);
   sc->PORT_FILENAME = s7_define_safe_function(sc,     "port-filename",             g_port_filename,            0, 1, false, H_port_filename);
   sc->PAIR_LINE_NUMBER = s7_define_safe_function(sc,  "pair-line-number",          g_pair_line_number,         1, 0, false, H_pair_line_number);
+  /* TODO: apparently pair-line-number is not in s7.html?
+   */
   
   sc->INPUT_PORTP = s7_define_safe_function(sc,       "input-port?",               g_is_input_port,            1, 0, false, H_is_input_port);
   sc->OUTPUT_PORTP = s7_define_safe_function(sc,      "output-port?",              g_is_output_port,           1, 0, false, H_is_output_port);
@@ -54993,7 +55074,12 @@ s7_scheme *s7_init(void)
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)   \n\
                           (let ((local-vars (map (lambda (n) (gensym)) vars))) \n\
-                            `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
+                            `((lambda ,local-vars                              \n\
+                                ,@(map (lambda (n ln)                          \n\
+                                         `(set! ,n ,ln))                       \n\
+                                       vars local-vars)                        \n\
+                                ,@body)                                        \n\
+                              ,expr)))");
 
 
   /* ---------------- make-procedure-with-setter ---------------- */
@@ -55001,8 +55087,8 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define (make-procedure-with-setter g s)                                               \n\
                           \"(make-procedure-with-setter g s) returns a function (g) whose setter is s.\"       \n\
                           (if (or (not (procedure? g)) (not (procedure? s)))                                   \n\
-                              (error 'wrong-type-arg \"procedure-with-setter takes 2 procedures: ~A ~A\" g s)) \n\
-                          (set! (procedure-setter g) s)                                                        \n\
+                              (error 'wrong-type-arg \"procedure-with-setter takes 2 procedures: ~A ~A\" g s)  \n\
+                              (set! (procedure-setter g) s))                                                   \n\
                           g)");
 
   s7_eval_c_string(sc, "(define (procedure-with-setter? obj)                                                \n\
@@ -55055,7 +55141,10 @@ s7_scheme *s7_init(void)
                             (lambda (hook lst)                                             \n\
                               (if (or (null? lst)                                          \n\
                                       (and (pair? lst)                                     \n\
-                                           (apply and (map (lambda (f) (and (procedure? f) (aritable? f 1))) lst)))) \n\
+                                           (apply and (map (lambda (f)                     \n\
+                                                             (and (procedure? f)           \n\
+                                                                  (aritable? f 1)))        \n\
+                                                           lst))))                         \n\
                                   (set! ((procedure-environment hook) 'body) lst)          \n\
                                   (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst)))))");
 
@@ -55112,25 +55201,13 @@ s7_scheme *s7_init(void)
 
 
 
-/* SOMEDAY: add error check tests
- * TODO: doc vectorization
- * TODO: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
- * TODO: doc/test object-environment -- perhaps (environment obj) replacing procedure|object-environment?
- *
+/* PERHAPS: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
  * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
- * PERHAPS: to be more consistent: *pi*, *most-negative|positive-fixnum*
- * PERHAPS: s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
- *
- * (define-macro (make-lambda args . body) `(apply lambda* ',args '(,@body))): (make-lambda (a b) (+ a b))
- * (define (make-lambda args body) (apply lambda* args body)): (make-lambda '(a b) '((+ a b)))
- * but we need a no body lambda, if it is applied to a body, you get a "real" lambda
- * default body of #<unspecified> = closure_body, also closure awaiting args, and closure awaiting env
- * (make-closure args body env) -- could be done with (apply let env (list (apply lambda args body))) more or less.
+ * to be more consistent: *pi*, *most-negative|positive-fixnum*
+ * s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
  *
  * how often these: copy obj via doloop, or set all to 1 val
  * case of char? (currently we have op_case_int which ought to jump!)
- *
- * who-calls could scan all envs in the current env to global env and examine sources?
  *
  * lint     13424 -> 1231 [1237] 1286
  * bench    52019 -> 7875 [8268] 8037

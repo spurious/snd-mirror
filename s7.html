@@ -2280,17 +2280,6 @@ open-environment      open-let(?)
 open-environment?
 object-environment
 </pre>
-
-<p>Or perhaps more dignified:
-</p>
-
-<pre class="indented">
-(current-environment)        -&gt; (environment)
-(global-environment)         -&gt; (environment ())
-(procedure-environment p)    -&gt; (environment p)
-(object-environment p)       -&gt; (environment p)
-(augment-environment p . b)  -&gt; (environment p . b)
-</pre>
 </div>
 </blockquote>
 
@@ -5269,6 +5258,13 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 
 &gt; ((mu (a) `(+ 1 ,a)) 3)
 4
+&gt; (define-macro (glambda args) ; returns an anonymous macro that will return a function given a body
+    `(symbol->value (define-macro (,(gensym) . body) 
+                      `(lambda ,',args ,@body))))
+glambda
+&gt; (let ((gf (glambda (a b))))  ; gf is now ready for any body that involves arguments 'a and 'b
+    ((gf (+ a b)) 1 2))        ; apply (lambda (a b) (+ a b)) to '(1 2)
+3
 </pre>
 
 <p>
@@ -8376,7 +8372,11 @@ int main(int argc, char **argv)
 </div>
 
 <p>Here is a sketch of a connection to the GSL linear algebra functions,
-using objects that look like vectors in s7.  We implement the basic
+using objects that look like vectors in s7.  
+An object returned by s7_make_object can have an environment,
+accessible in scheme via object-environment.  It can hold whatever
+methods the object responds to.  Below,
+we implement the basic
 generic functions via s7_new_type_x, and vector? via an open_environment.
 The rest of the vector functions could be added in that section.
 </p>
@@ -8655,8 +8655,10 @@ is different.  If you look at the examples in the GSL doc/examples directory,
 or snd-xen.c in Snd, it's evident that GSL users will want to write 
 their own C code, then bind that into Scheme (blithely assuming they
 would rather use Scheme than Matlab!).  If we provide GSL-level bindings,
-the Scheme code becomes a forest of opaque C pointers, and the reader
-would have to know how the C stuff fits together.
+the Scheme code becomes a forest of opaque C pointers, and the (human) reader
+would have to know how the C stuff fits together.  The other libraries
+work out better in this regard because they don't expose internal structs
+and types unnecessarily.
 </p>
 
 

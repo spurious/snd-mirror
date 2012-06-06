@@ -242,11 +242,16 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
   mus_long_t loc;
   s7_pointer pos;
 
+  if (s7_is_null(s7, args))
+    return(s7_wrong_number_of_args_error(s7, "not enough args for vct-ref: ~A", args));
+  if (!s7_is_null(s7, s7_cdr(args)))
+    return(s7_wrong_number_of_args_error(s7, "too many args for vct-ref: ~A", args));
+
   v = XEN_TO_VCT(obj);
 
   pos = XEN_CAR(args);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
-  loc = s7_number_to_integer(pos);
+  loc = s7_integer(pos);
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, pos, "index ~A < 0?");
@@ -265,9 +270,18 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
 
   v = XEN_TO_VCT(obj);
 
+  /* TODO: s7 should check this for us!
+   */
+  if (s7_is_null(s7, args))
+    return(s7_wrong_number_of_args_error(s7, "not enough args for vct-set!: ~A", args));
+  if (s7_is_null(s7, s7_cdr(args)))
+    return(s7_wrong_number_of_args_error(s7, "not enough args for vct-set!: ~A", args));
+  if (!s7_is_null(s7, s7_cddr(args)))
+    return(s7_wrong_number_of_args_error(s7, "too many args for vct-set!: ~A", args));
+
   pos = XEN_CAR(args);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
-  loc = s7_number_to_integer(pos);
+  loc = s7_integer(pos); /* this was number_to_integer? */
 
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A < 0?");
