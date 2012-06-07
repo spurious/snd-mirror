@@ -1765,6 +1765,7 @@
 
 
 
+
 ;;; --------------------------------------------------------------------------------
 ;;; not
 
@@ -1813,6 +1814,7 @@
   (define (f13 lst) (< (length lst) 2)) (test (f13 '(1 2)) #f) (test (f13 '(1)) #t)
   (define (f14 lst) (negative? (length lst))) (test (f14 '(1 2)) #f) (test (f14 '(1 . 3)) #t)
   (define (f15 lst) (memq (car lst) '(a b c))) (test (f15 '(a)) '(a b c)) (test (f15 '(d)) #f)
+  (define (f16 a b) (if a (begin (+ b a) (format #f "~A" a) (+ a a)))) (test (f16 1 2) 2)
   )
 	
 
@@ -4976,6 +4978,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (reverse! arg) 'error))
  (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand 
        3.14 3/4 1.0+1.0i #\f #t (if #f #f) #(1 2 3) "hiho" (lambda (a) (+ a 1))))
+
 
 
 
@@ -9684,7 +9687,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;;; PORTS
 ;;; --------------------------------------------------------------------------------
 
-
 (define start-input-port (current-input-port))
 (define start-output-port (current-output-port))
 
@@ -9882,8 +9884,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (output-port? (current-error-port)) #t)
 (test (output-port? *stderr*) #t)
 
-(write-char #\space (current-output-port))
-(write " " (current-output-port))
+;(write-char #\space (current-output-port))
+;(write " " (current-output-port))
 (newline (current-output-port))
 
 
@@ -11673,8 +11675,8 @@ a2" 3) "132")
 					   (lambda (p) (return "oops"))))))
       "oops")
 
-(format #t "format #t: ~D" 1)
-(format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
+;(format #t "format #t: ~D" 1)
+;(format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
 
 (call-with-output-file "tmp1.r5rs"
   (lambda (p)
@@ -12162,6 +12164,9 @@ a2" 3) "132")
 (test (string=? (with-output-to-string (lambda () (write #\backspace))) "#\\backspace") #t)
 (test (string=? (with-output-to-string (lambda () (write #\alarm))) "#\\alarm") #t)
 (test (string=? (with-output-to-string (lambda () (write #\delete))) "#\\delete") #t)
+
+(test (string=? (with-output-to-string (lambda () (write-char #\space))) " ") #t)  ; weird -- the name is backwards
+(test (string=? (with-output-to-string (lambda () (display #\space))) " ") #t)
 
 (let ((str (call-with-input-string "12345"
 	    (lambda (p)
@@ -22561,9 +22566,9 @@ abs     1       2
 (test (let () (define-macro* (mac1 a b c) `(+ ,a ,b)) (arity mac1))  '(0 . 3))
 
 (test (arity "hiho") '(1 . 1))
-(test (arity "") '(1 . 1))          ; hmmm
+(test (arity "") #f) 
 (test (arity ()) #f)
-(test (arity #()) '(1 . 536870912)) ; hmmm
+(test (arity #()) #f)
 (test (arity #(1 2 3)) '(1 . 536870912))
 (test (arity (hash-table '(a . 1))) '(1 . 536870912))
 (test (arity (current-environment)) '(1 . 1))
@@ -22765,16 +22770,16 @@ abs     1       2
 (test (let () (define* (hi (a 1)) a) (let ((b #f)) (set! b hi) (procedure-name b))) "hi")
 (for-each
  (lambda (arg)
-   (test (procedure-name arg) ""))
- (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi :hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+   (test (procedure-name arg) 'error))
+ (list -1 #\a #f _ht_ 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() #(()) (list 1 2 3) '(1 . 2) "hi"))
 
 (if (defined? '1+) (test (procedure-name 1+) "1+"))
 (if (defined? 'identity) (test (procedure-name identity) "identity"))
 (test (procedure-name cddr-1) "cddr-1")
 (test (cddr-1 '(1 2 3 4)) (cddr '(1 2 3 4)))
 (test (procedure-name cddr) "cddr")
+(test (let () (define-macro (hiho a) `(+ ,a 1)) (procedure-name hiho)) "")
 
-;; (let () (define-macro (hiho a) `(+ ,a 1)) (procedure-name hiho)) -> ""
 
 
 
@@ -40741,7 +40746,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (num-test (floor 9007199254740993.95) 9007199254740993)
       (num-test (floor (+ 0.995 (expt 2.0 46))) 70368744177664)
       (num-test (floor (+ 0.9995 (expt 2.0 45))) 35184372088832)
-      ))
+      )
+    (begin
+      (test (floor 1e308) 'error)
+      (test (floor 1e19) 'error)
+      (test (floor -1e308) 'error)
+      (test (floor -1e19) 'error)))
 
 (test (= (floor (* 111738283365989051/177100989030047175 1.0)) (floor 130441933147714940/206745572560704147)) #t)
 (test (= (floor (* 114243/80782 114243/80782 1.0)) (floor (* 275807/195025 275807/195025))) #f)
@@ -40878,17 +40888,22 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (ceiling most-positive-fixnum) most-positive-fixnum)
 (num-test (ceiling 8922337203685477.9) 8922337203685478)
 
-;;; but unfortunately (ceiling 9223372036854775806.9) => -9223372036854775808
-;;;                   (ceiling 922337203685477580.9)  => 922337203685477632
-;;;                   (ceiling 9223372036854770.9)    => 9223372036854770
-;;;   etc
-
 (if with-bignums
     (begin
       (num-test (ceiling 8388608.0000000005) 8388609)
       (num-test (ceiling 8388609.0000000005) 8388610)
       (num-test (ceiling 8388607.9999999995) 8388608)
       (num-test (ceiling 9223372036854775806.9) 9223372036854775807)
+      )
+    (begin
+      (test (ceiling 1e308) 'error)
+      (test (ceiling 1e19) 'error)
+      (test (ceiling -1e308) 'error)
+      (test (ceiling -1e19) 'error)
+
+      ;; but unfortunately (ceiling 9223372036854775806.9) => -9223372036854775808
+      ;;                   (ceiling 922337203685477580.9)  => 922337203685477632
+      ;;                   (ceiling 9223372036854770.9)    => 9223372036854770
       ))
 
 (test (= (ceiling (* 111738283365989051/177100989030047175 1.0)) (ceiling 130441933147714940/206745572560704147)) #t)
@@ -41042,7 +41057,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (if with-bignums
     (begin
       (num-test (round 9007199254740992.51) 9007199254740993)
-      (num-test (round 9007199254740993.99) 9007199254740994)))
+      (num-test (round 9007199254740993.99) 9007199254740994))
+    (begin
+      (test (round 1e308) 'error)
+      (test (round 1e19) 'error)
+      (test (round -1e308) 'error)
+      (test (round -1e19) 'error)))
 
 (test (= (round (* 111738283365989051/177100989030047175 1.0)) (round 130441933147714940/206745572560704147)) #t)
 (test (= (round (* 114243/80782 114243/80782 1.0)) (round (* 275807/195025 275807/195025))) #t)
@@ -68861,10 +68881,35 @@ in non-gmp,
 ;;; (with-environment (initial-environment) (format #t "~{~A ~}~%" (current-environment)))
 
 #|
-;;; TODO: (round 1e308) -> garbage (-9223372036854775808)
-
 c1 (unopt with printout) 574
+c2 (opt with printout)   265
+c3 (opt + err1)          259
 
 opt format esp if no output needed
+
+(apply aritable? '2 8) -> #t
+(apply gensym "a\x00b") -> {a}-10 for unreadable gensym??
+
+vector-fill! of subvector?
+
+:(let ((v #2d((1 2 3) (4 5 6)))) (vector-fill! (v 1) 12) v)
+#2D((1 2 3) (12 12 12))
+
+(length '((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((0)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+1
+('(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((0))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+0
+
+apply apply lambda
+(apply apply quasiquote (#<unspecified>)) -> #<unspecified>
+
+logxor -1 8 8 and 8 8 8
+(apply quotient 1e+18 8) -> 125000000000000000
+
+:(quotient 1/9223372036854775807 -1/9223372036854775807)
+-1
+:(quotient -4611686018427387904 1/2)
+-9223372036854775808
+
 
 |#

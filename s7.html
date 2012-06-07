@@ -2275,7 +2275,7 @@ augment-environment!  varlet, let-append(?)
 current-environment   valet,  make-begin(?)
 error-environment     owlet, triplet, error-let(?)
 procedure-environment runlet(?)
-environment-&gt;list  let->list(?)
+environment-&gt;list  let-&gt;list(?)
 open-environment      open-let(?)
 open-environment?
 object-environment
@@ -4879,7 +4879,8 @@ same kind of name.  All the environment function names are bad &mdash; "environm
 is annoying.  At least we can say s7 is environmentally sound!
 get-output-string should be current-output-string.
 "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
-operate with the *features* list; perhaps "cond-provided"?  symbol-access is not ideal.
+operate with the *features* list; perhaps "cond-provided"?  
+write-char behaves like display, not write.  symbol-access is not ideal.
 Better ideas are always welcome!
 </p>
 </div>
@@ -5259,7 +5260,7 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 &gt; ((mu (a) `(+ 1 ,a)) 3)
 4
 &gt; (define-macro (glambda args) ; returns an anonymous macro that will return a function given a body
-    `(symbol->value (define-macro (,(gensym) . body) 
+    `(symbol-&gt;value (define-macro (,(gensym) . body) 
                       `(lambda ,',args ,@body))))
 glambda
 &gt; (let ((gf (glambda (a b))))  ; gf is now ready for any body that involves arguments 'a and 'b
@@ -5474,7 +5475,7 @@ The examples that follow show:
 <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
 <li><a href="#s7inathread">s7 running in a separate thread</a>
 <li><a href="#replrescue">begin_hook to the rescue!</a>
-<li><a href="gsl">GSL</a>
+<li><a href="#gsl">GSL</a>
 </ul>
 
 
@@ -8305,7 +8306,7 @@ static s7_pointer g_J0_e(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "J0", 0, x, "a real number"));
 
-  err = gsl_sf_bessel_J0_e(s7_number_to_real(x), &r);
+  err = gsl_sf_bessel_J0_e(s7_number_to_real(x), &amp;r);
   if (err != GSL_SUCCESS)
     return(s7_error(sc, s7_make_symbol(sc, "gsl-error"),
 		    s7_list(sc, 2,
@@ -8474,7 +8475,7 @@ static s7_pointer g_block_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   g_block *g = (g_block *)s7_object_value(obj);
   size_t index;
   index = (size_t)s7_integer(s7_car(args));
-  if ((index &gt;= 0) && (index &lt; g-&gt;size))
+  if ((index &gt;= 0) &amp;&amp; (index &lt; g-&gt;size))
     return(s7_make_real(sc, g-&gt;data[index]));
   return(s7_out_of_range_error(sc, "block-ref", 2, s7_car(args), "should be less than block length"));
 }
@@ -8484,7 +8485,7 @@ static s7_pointer g_block_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   g_block *g = (g_block *)s7_object_value(obj);
   s7_Int index;
   index = s7_integer(s7_car(args));
-  if ((index &gt;= 0) && (index &lt; g-&gt;size))
+  if ((index &gt;= 0) &amp;&amp; (index &lt; g-&gt;size))
     {
       g-&gt;data[index] = s7_number_to_real(s7_cadr(args));
       return(s7_cadr(args));
@@ -8557,8 +8558,8 @@ static s7_pointer g_solve(s7_scheme *sc, s7_pointer args)
   x = gsl_vector_alloc(len);
   p = gsl_permutation_alloc(len);
 
-  gsl_linalg_LU_decomp (&m.matrix, p, &s);
-  gsl_linalg_LU_solve (&m.matrix, p, &b.vector, x);
+  gsl_linalg_LU_decomp (&amp;m.matrix, p, &amp;s);
+  gsl_linalg_LU_solve (&amp;m.matrix, p, &amp;b.vector, x);
 
   result = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, len), s7_nil(sc)));
   gx = (g_block *)s7_object_value(result);
