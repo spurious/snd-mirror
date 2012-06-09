@@ -4116,18 +4116,19 @@ map-with-exit would be
 	     (set! base `(lambda () 
 			   (catch ',(if (eq? tag 'else) #t tag)
 			     ,base 
-			     (lambda args ,@(cdr clause)))))))
+			     ,@(cdr clause))))))
 	 clauses)
     (caddr base)))
 
 ;;; the code above becomes:
-(catch-case ((wrong-type-arg (format #t "got a bad arg~%") -1)
-	     (division-by-zero 0)
-	     (else 123))
+(catch-case ((wrong-type-arg   (lambda args (format #t "got a bad arg~%") -1))
+	     (division-by-zero (lambda args 0))
+	     (else             (lambda args 123)))
   (abs -1))
 </pre>
 
-<p>Along the same lines:
+<p>This is similar to r7rs scheme's "guard", but I don't want a pointless thunk for the body of the catch.
+Along the same lines:
 </p>
 <pre class="indented">
 (define-macro (catch-if test func err)

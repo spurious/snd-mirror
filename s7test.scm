@@ -1815,6 +1815,7 @@
   (define (f14 lst) (negative? (length lst))) (test (f14 '(1 2)) #f) (test (f14 '(1 . 3)) #t)
   (define (f15 lst) (memq (car lst) '(a b c))) (test (f15 '(a)) '(a b c)) (test (f15 '(d)) #f)
   (define (f16 a b) (if a (begin (+ b a) (format #f "~A" a) (+ a a)))) (test (f16 1 2) 2)
+  (define (f17 a) (aritable? a 1)) (test (f17 abs) #t)
   )
 	
 
@@ -6961,7 +6962,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
      
      (let ((correct (vector 0 100 2 100 4 100 6 100 8 9)))
        (do ((i 0 (+ i 1)))
-	   ((= i 10))
+	   ((= i (length v)))
 	 (if (not (= (correct i) (inexact->exact (v i))))
 	     (format #t ";for-each call/cc data: ~A~%" v))))))
  
@@ -8722,6 +8723,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		 (h 1)))))
     (test (list val endx) '(32 2)))
   )
+
+(if (not (defined? 'hook-push))
+    (define (hook-push hook func)
+      (set! (hook-functions hook) (cons func (hook-functions hook)))))
 
 (let ((h (make-hook)))
   (hook-push h (lambda (hook) (set! (hook 'result) 32)))
@@ -13617,6 +13622,19 @@ this prints:
 	(for-each
 	 (lambda (arg)
 	   (set! (saved-args i) (lambda () arg))
+	   (set! i (+ i 1)))
+	 (list 0 1 2 3 4 5 6 7 8 9))
+	(let ((sum 0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10) sum)
+	    (set! sum (+ sum ((saved-args i)))))))
+      45)
+
+(test (let ((saved-args (make-list 10))
+	    (i 0))
+	(for-each
+	 (lambda (arg)
+	   (list-set! saved-args i (lambda () arg))
 	   (set! i (+ i 1)))
 	 (list 0 1 2 3 4 5 6 7 8 9))
 	(let ((sum 0))
@@ -68965,6 +68983,7 @@ in non-gmp,
 c1 (unopt with printout) 574
 c2 (opt with printout)   265
 c3 (opt + err1)          259
+c4 (for-each)            256 [t455 changed before this]
 
 (apply aritable? '2 8) -> #t
 (apply gensym "a\x00b") -> {a}-10 for unreadable gensym??

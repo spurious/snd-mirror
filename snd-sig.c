@@ -6396,7 +6396,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
       {
 	int happy = 3;
 	for (k = 1; k < len; k++)
-	  diff_phases[k] = new_pk->phases[k] - data->phases[k];
+	  diff_phases[k] = new_pk->phases[k] - phases[k];
 
 	while (happy > 0)
 	  {
@@ -6535,7 +6535,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   diff_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
 
   {
-    int start, n1;
+    int k, start, n1;
 
     if (choice == ALL)
       n1 = n;
@@ -6563,10 +6563,17 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     local_best = (mus_float_t)n;
     increment = orig_incr;
     
-    for (start = 0; start < size; start++)
+    /* try to reduce the wandering (9-June-12) -- this may not be a good idea
+     *   it makes it harder to escape a local minimum, but at least we don't
+     *   wander away indefinitely.
+     */
+    for (k = 0; k < n; k++) choices[0]->phases[k] = initial_phases[k];
+    choices[0]->pk = get_peak(initial_phases);
+    
+    for (start = 1; start < size; start++)
       {
 	mus_float_t pk, local_pk = 100000.0;
-	int k, init_try;
+	int init_try;
 	
 	for (init_try = 0;  init_try < INIT_TRIES; init_try++)
 	  {
