@@ -3996,6 +3996,7 @@ adds:
 <pre class="indented">
 (error tag . info)           ; signal an error of type tag with addition information
 (catch tag body err)         ; if error of type tag signalled in body (a thunk), call err with tag and info
+(throw tag . info)           ; jump to corresponding catch
 </pre>
 
 <p>s7's error handling mimics that of Guile.  An error is signalled
@@ -4138,7 +4139,7 @@ Along the same lines:
        (lambda ,args
 	 (if (,test (car ,args))
 	     (apply ,err ,args)
-	     (apply error ,args)))))) ; if not caught, re-raise the same error
+	     (apply throw ,args)))))) ; if not caught, re-raise the same error
 
 (define-macro (catch-member lst func err)
    `(catch-if (lambda (tag) (member tag ,lst)) ,func ,err))

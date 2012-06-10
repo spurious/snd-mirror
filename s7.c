@@ -562,13 +562,6 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, OP_CLOSURE_ALL_C, HOP_CLOSURE_ALL_C, OP_CLOSURE_ALL_G, HOP_CLOSURE_ALL_G, 
       OP_CLOSURE_CDR_S, HOP_CLOSURE_CDR_S, 
 
-      OP_TCLOSURE_S, HOP_TCLOSURE_S, 
-      OP_TCLOSURE_SS, HOP_TCLOSURE_SS, 
-      OP_TCLOSURE_opSq, HOP_TCLOSURE_opSq, OP_TCLOSURE_opCq, HOP_TCLOSURE_opCq, 
-      OP_TCLOSURE_opSq_S, HOP_TCLOSURE_opSq_S,
-      OP_TCLOSURE_S_opSq, HOP_TCLOSURE_S_opSq, 
-      OP_TCLOSURE_CDR_S, HOP_TCLOSURE_CDR_S, 
-      
       OP_SAFE_THUNK, HOP_SAFE_THUNK,
       OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_Q, HOP_SAFE_CLOSURE_Q, 
       OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS, OP_SAFE_CLOSURE_CC, HOP_SAFE_CLOSURE_CC, 
@@ -658,13 +651,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "closure_all_s", "h_closure_all_s", "closure_all_c", "h_closure_all_c", "closure_all_g", "h_closure_all_g",
      "closure_cdr_s", "h_closure_cdr_s",
 
-     "tclosure_s", "h_tclosure_s", 
-     "tclosure_ss", "h_tclosure_ss", 
-     "tclosure_opsq", "h_tclosure_opsq", "closure_opcq", "h_closure_opcq", 
-     "tclosure_opsq_s", "h_tclosure_opsq_s", 
-     "tclosure_s_opsq", "h_tclosure_s_opsq", 
-     "tclosure_cdr_s", "h_tclosure_cdr_s",
-
      "safe_thunk", "h_safe_thunk",
      "safe_closure_s", "h_safe_closure_s", "safe_closure_c", "h_safe_closure_c", "safe_closure_q", "h_safe_closure_q", 
      "safe_closure_ss", "h_safe_closure_ss", "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs", "safe_closure_cc", "h_safe_closure_cc", 
@@ -743,7 +729,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 #endif
 
 
-#define NUM_SMALL_INTS 2048
 #define NUM_CHARS 256
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -847,6 +832,11 @@ typedef struct s7_cell {
 	s7_Double rl;
 	s7_Double im;
       } complex_value;
+
+      struct {
+	s7_Int n;
+	const char *name;
+      } small_value;
 
       unsigned long ul_value; /* these two are not used by s7 in any way */
       unsigned long long ull_value;
@@ -1335,12 +1325,6 @@ static void init_types(void)
  *    on only for a very short time.
  */
 
-#define T_TAIL_CALL                   (1 << (TYPE_BITS + 9))
-#define is_tail_call(p)               ((typeflag(p) & T_TAIL_CALL) != 0)
-#define set_tail_call(p)              typeflag(p) |= T_TAIL_CALL
-/* this bit marks tail calls for the optimizer
- */
-
 #define T_KEYWORD                     (1 << (TYPE_BITS + 10))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
@@ -1421,6 +1405,8 @@ static void init_types(void)
 /* symbol is from gensym (GC-able etc)
  * it can be used in other (non-symbol contexts)
  */
+#define T_SMALL_INT                   T_GENSYM
+#define is_small_int(p)               ((typeflag(p) & T_SMALL_INT) != 0)
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
@@ -1435,7 +1421,8 @@ static void init_types(void)
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x00000000
+/* bit +9 is unused */
+#define UNUSED_BITS                   0x00020000
 
 #if DEBUGGING
 #define set_type(p, f) \
@@ -1714,8 +1701,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
   static s7_Double Imag(complex<s7_Double> x) {return(imag(x));}
 #endif
 
-#define small_int(Val)                small_ints[Val]
-
 #define integer(p)                    p->object.number.integer_value
 #define real(p)                       p->object.number.real_value
 #define numerator(p)                  p->object.number.fraction_value.numerator
@@ -1725,6 +1710,12 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define real_part(p)                  p->object.number.complex_value.rl
 #define imag_part(p)                  p->object.number.complex_value.im
 #define as_c_complex(p)               (real_part(p) + (imag_part(p) * _Complex_I))
+
+#define NUM_SMALL_INTS 2048
+#define small_int(Val)                small_ints[Val]
+#define small_int_n(p)                p->object.number.small_value.n
+#define small_int_name(p)             p->object.number.small_value.name
+#define is_small(n)                   ((n & ~(NUM_SMALL_INTS - 1)) == 0)
 
 #if WITH_GMP
   #define big_integer(p)             (p->object.number.big_integer)
@@ -2527,6 +2518,7 @@ static void mark_counter(s7_pointer p)
       set_mark(p);
       S7_MARK(counter_result(p));
       S7_MARK(counter_list(p));
+      S7_MARK(counter_environment(p));
     }
 }
 
@@ -3759,8 +3751,6 @@ static s7_pointer old_frame_with_slot(s7_scheme *sc, s7_pointer env, s7_pointer 
 {
   s7_pointer x;
   unsigned long long int id;
-  /* TODO: this sequence comes up a lot -- try this or macro version
-   */
 
   id = ++frame_number;
   frame_id(env) = id;
@@ -3768,6 +3758,7 @@ static s7_pointer old_frame_with_slot(s7_scheme *sc, s7_pointer env, s7_pointer 
   slot_set_value(x, val);
   symbol_id(slot_symbol(x)) = id;
   local_slot(slot_symbol(x)) = x;
+
   return(env);
 }
 
@@ -5977,7 +5968,8 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
 
-  if ((n & ~(NUM_SMALL_INTS - 1)) == 0)            /* ((n >= 0) && (n < NUM_SMALL_INTS)) is slower */
+  /* if ((n & ~(NUM_SMALL_INTS - 1)) == 0)   */         /* ((n >= 0) && (n < NUM_SMALL_INTS)) is slower */
+  if (is_small(n))
     return(small_int(n));
 
   NEW_CELL(sc, x);
@@ -5998,7 +5990,8 @@ static s7_pointer make_integer_1(s7_scheme *sc, s7_Int n)
   return(x);
 }
 
-#define make_integer(Sc, N) ({ s7_Int _N_; _N_ = N; (((_N_ & ~(NUM_SMALL_INTS - 1)) == 0) ? small_int(_N_) : make_integer_1(Sc, _N_)); })
+/* #define make_integer(Sc, N) ({ s7_Int _N_; _N_ = N; (((_N_ & ~(NUM_SMALL_INTS - 1)) == 0) ? small_int(_N_) : make_integer_1(Sc, _N_)); }) */
+#define make_integer(Sc, N) ({ s7_Int _N_; _N_ = N; (is_small(_N_) ? small_int(_N_) : make_integer_1(Sc, _N_)); })
 #else
 #define make_integer(Sc, N) s7_make_integer(Sc, N)
 #endif
@@ -6713,6 +6706,28 @@ static char *pad_number(const char *p, int len, int width)
 }
 
 
+static char *integer_to_string_base_10_no_width(s7_pointer obj)
+{
+  char *p;
+
+  if (is_small_int(obj))
+    {
+      if (!small_int_name(obj))
+	{
+	  p = (char *)malloc(32 * sizeof(char));
+	  snprintf(p, 32, "%d", (int)integer(obj));
+	  small_int_name(obj) = p;
+	}
+      return(copy_string(small_int_name(obj)));
+    }
+
+  p = (char *)malloc(64 * sizeof(char));
+  snprintf(p, 64, "%lld", (long long int)integer(obj));
+
+  return(p);
+}
+
+
 #define BASE_10 10
 
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice)
@@ -6734,6 +6749,8 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
   switch (type(obj))
     {
     case T_INTEGER:
+      if (width == 0)
+	return(integer_to_string_base_10_no_width(obj));
       len = 64 + width;
       p = (char *)malloc(len * sizeof(char));
       snprintf(p, len, "%*lld", width, (long long int)integer(obj));
@@ -6831,9 +6848,9 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
   switch (type(obj))
     {
     case T_INTEGER:
-      /* TODO: here and in ratio if rad==10 and width=0(?) and its a small int, we could have it already stringified, and copy that 
-       *   see also atom_to_c_string
-       */
+      if ((width == 0) &&
+	  (radix == 10))
+	return(integer_to_string_base_10_no_width(obj));
       p = (char *)malloc((128 + width) * sizeof(char));
       s7_Int_to_string(p, s7_integer(obj), radix, width);
       return(p);
@@ -19111,11 +19128,9 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure)
 
 static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
-  /* extracted from atom_to_c_string for debugging (gdb printout)
-   */
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(sc, obj, NO_ARTICLE),
 	   typeflag(obj),
@@ -19141,7 +19156,6 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_gensym(obj) ?             " gensym" : "",
 	   has_methods(obj) ?           " has methods" : "",
-	   is_tail_call(obj) ?          " tail-call" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
   return(buf);
 }
@@ -19208,6 +19222,8 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       }
 
     case T_INTEGER:
+      return(integer_to_string_base_10_no_width(obj));
+
     case T_RATIO:
     case T_REAL:
     case T_COMPLEX:
@@ -29920,11 +29936,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	       * checking for and (only rarely) using the safe_do machinery here was much slower.
 	       * one-liner here plus separate loop in eval was only slightly faster 
 	       */
-#if PRINTING
-	      fprintf(stderr, "%d to simple\n", __LINE__);
-#endif
 	      obj = make_counter(sc, sc->NIL, obj, sc->NIL, 0, 0); /* counter_list(sc->args) => original list (cadr(args)) */
-
 	      push_stack(sc, OP_FOR_EACH_SIMPLE, obj, sc->code);
 	      return(sc->UNSPECIFIED);
 
@@ -29942,9 +29954,6 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	    {
 	      s7_function func;
 	      s7_pointer p;
-#if PRINTING
-	      fprintf(stderr, "(5 local) ");
-#endif
 	      func = c_function_call(sc->code);
 	      for (p = obj; is_pair(p); p = cdr(p))
 		{
@@ -30061,9 +30070,6 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   sc->x = sc->NIL;
   sc->y = sc->NIL;
   sc->z = sc->NIL;
-#if PRINTING
-  fprintf(stderr, "%d to normal\n", __LINE__);
-#endif
   push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
@@ -30095,9 +30101,6 @@ static s7_pointer g_for_each_1(s7_scheme *sc, s7_pointer args)
   len = s7_list_length(sc, obj);
   if (len == 0)                   /* circular list */
     return(g_for_each(sc, args)); /* this is faster than calling s7_error here -- weird! */
-#if PRINTING  
-  fprintf(stderr, "%d to simple\n", __LINE__);
-#endif
   obj = make_counter(sc, sc->NIL, obj, sc->NIL, 0, 0);
 
   push_stack(sc, OP_FOR_EACH_SIMPLE, obj, car(args));
@@ -30119,9 +30122,6 @@ static s7_pointer g_for_each_2(s7_scheme *sc, s7_pointer args)
   len = s7_list_length(sc, obj);
   if (len == 0)                   /* circular list */
     return(g_for_each(sc, args)); /* this is faster than calling s7_error here -- weird! */
-#if PRINTING
-  fprintf(stderr, "%d to simpler\n", __LINE__);
-#endif
   obj = make_counter(sc, sc->NIL, obj, sc->NIL, 0, 0);
 
   push_stack(sc, OP_FOR_EACH_SIMPLER, obj, car(args));
@@ -33902,10 +33902,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
 				  if (op == OP_SAFE_C_ZZ)
 				    {
-#if 0
-				      fprintf(stderr, "pp->zz: %s %s %s\n", opt_names[optimize_data(cadar(x))], opt_names[optimize_data(caddar(x))], DISPLAY(car(x)));
-				      fprintf(stderr, " ecdrs: %p %p\n", ecdr(cadar(x)), ecdr(caddar(x)));
-#endif
 				      if ((is_orx_safe(cadar(x))) &&
 					  (is_orx_safe(caddar(x))))
 					set_optimize_data(car(x), OP_SAFE_C_ALL_X);
@@ -34555,28 +34551,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	      set_optimize_data(car(x), OP_SAFE_C_ALL_X);
 	      set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
 	    }
-
-#if 0
-	  if ((!is_optimized(car(x))) &&
-	      (pairs == 3) &&
-	      (func_is_c_function) &&
-	      (func_is_safe) &&
-	      (is_optimized(cadar(x))) &&
-	      (is_optimized(caddar(x))) &&
-	      (is_optimized(cadddar(x))) &&
-	      (c_function_has_rest_arg(func))) /* so I don't have to worry about values here */
-	    {
-	      fprintf(stderr, "3 case: %s\n", DISPLAY_80(car(x)));
-#if 0
-		      set_optimized(car(x));
-		      set_unsafe(car(x));
-		      set_optimize_data(car(x), OP_SAFE_C_PP);
-		      /* set_c_function(car(x), func); */
-		      set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x))); 
-		      return(false);
-#endif
-	    }
-#endif
 	  
 	  /* closure*: (checked-substring dline 0 epos)
 	   * (safe-)closure(?): (matrix-ref a mm (vector-ref l1 k))  (matrix-ref a (+ i 1) 0) (href harr (+ x 3) (+ y 1))
@@ -35737,17 +35711,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  /* we still miss a few cases, and need more unknown optimizations, or set them here
 		   *   (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1)) 2)
 		   */
-		  /*
-		  fprintf(stderr, "%s%s tail-call: %s x: %s, arg1: %s%s\n", 
-			  BOLD_TEXT, 
-			  DISPLAY(func), 
-			  DISPLAY(x), 
-			  (is_optimized(x)) ? opt_names[optimize_data(x)] : "none",
-			  ((is_not_null(cdr(x))) && (is_pair(cadr(x))) && (is_optimized(cadr(x)))) ? opt_names[optimize_data(cadr(x))] : "none",
-			  UNBOLD_TEXT);
-		  */
-		  set_tail_call(x);
-		  /* fcdr(x) = NULL; */
 		  return(true);
 		}
 	      return(false);
@@ -38430,7 +38393,6 @@ static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
 #endif
 
 
-
 static void annotate_expansion(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer x;
@@ -38868,12 +38830,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (counter_length(sc->args) != sc->capture_env_counter)
 		  {
 		    NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->x);
-		    counter_environment(sc->args) = sc->envir;
-		    counter_length(sc->args) = sc->capture_env_counter;
+		    counter_environment(args) = sc->envir;
+		    counter_length(args) = sc->capture_env_counter;
 		  }
 		else
 		  {
-		    sc->envir = old_frame_with_slot(sc, counter_environment(sc->args), sc->x);
+		    sc->envir = old_frame_with_slot(sc, counter_environment(args), sc->x);
 		  }
 		sc->code = closure_body(code);
 		goto BEGIN;
@@ -38931,10 +38893,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
 	s7_pointer args;
-#if PRINTING
-	fprintf(stderr, "(1 %lld) ", sc->capture_env_counter); 
-#endif
-
 	args = counter_list(sc->args);
 
 	if (is_pair(args))
@@ -38974,9 +38932,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_FOR_EACH_SIMPLER:
       {
 	s7_pointer args;
-#if PRINTING
-	fprintf(stderr, "(2 %lld) ", sc->capture_env_counter); 
-#endif
 	/* args = sc->args; */
 	args = counter_list(sc->args);
 
@@ -39012,9 +38967,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_FOR_EACH:
-#if PRINTING
-      fprintf(stderr, "(3 %lld) ", sc->capture_env_counter); /* here args has a counter already */
-#endif
       if (counter_count(sc->args) < counter_length(sc->args))
 	{
 	  if (next_for_each(sc)) 
@@ -40303,16 +40255,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   *   about to call the same func.
 		   */
 		  {
-		    s7_pointer env, x;
-
-		    env = closure_environment(ecdr(code));
-		    x = environment_slots(env);
-		    slot_set_value(x, finder(sc, fcdr(code)));
-
-		    frame_id(env) = ++frame_number;
-		    symbol_id(slot_symbol(x)) = frame_number;
-		    local_slot(slot_symbol(x)) = x;
-		    sc->envir = env;
+		    sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), finder(sc, fcdr(code)));
 		    sc->code = closure_body(ecdr(code));
 		    if (is_one_liner(sc->code))
 		      {
@@ -40333,29 +40276,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  
 		case HOP_SAFE_CLOSURE_S_one:
-		  {
-		    s7_pointer env, x;
-
-		    env = closure_environment(ecdr(code));
-		    x = environment_slots(env);
-		    slot_set_value(x, finder(sc, fcdr(code)));
-
-		    frame_id(env) = ++frame_number;
-		    symbol_id(slot_symbol(x)) = frame_number;
-		    local_slot(slot_symbol(x)) = x;
-		    sc->envir = env;
-		    sc->code = car(closure_body(ecdr(code)));
-		    /* lg: syn: 39750 h_safe_c_sq: 45690
-		     * in: syn: 23871
-		     * al: syn: 4534616 h_safe_c_c: 456347 h_safe_c_ss: 863554 [h_safe_c_s: 4467]
-		     * 
-		     * if syn:
-		     * lg  OP_SAFER_OR_S: 34582
-		     * in: OP_SAFER_OR_S: 18391
-		     * al: OP_LET_READ_CHAR_P: 4460056 OP_AND_P: 70741
-		     */
-		    goto EVAL_PAIR;
-		  }
+		  sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), finder(sc, fcdr(code)));
+		  sc->code = car(closure_body(ecdr(code)));
+		  goto EVAL_PAIR;
 
 
 		case OP_SAFE_CLOSURE_S_vref:
@@ -40440,24 +40363,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		SAFE_CLOSURE_ONE:
-		  {
-		    s7_pointer env, x;
-		    env = closure_environment(ecdr(code));
-		    frame_id(env) = ++frame_number;
-		    x = environment_slots(env);
-		    slot_set_value(x, sc->value);
-		    symbol_id(slot_symbol(x)) = frame_number;
-		    local_slot(slot_symbol(x)) = x;
-		    sc->envir = env;
-		    sc->code = closure_body(ecdr(code));
-
-		    /* if (is_one_liner(sc->code))
-		     * lg: 20243 syn [OP_SAFER_OR_S: 17530]
-		     * in: none
-		     * al: unopt: 124269
-		     */
-		    goto BEGIN;
-		  }
+		  sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), sc->value);
+		  sc->code = closure_body(ecdr(code));
+		  goto BEGIN;
 
 
 		case OP_SAFE_CLOSURE_SS:
@@ -40896,8 +40804,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		UNSAFE_CLOSURE_TWO:
 		  {
 		    s7_pointer frame, slot1, slot2, args, sym, val, rest;
-		    /* the other common tclosure case that still comes here is opsq_opsq
-		     */
 		    if (sc->stack_end >= sc->stack_resize_trigger)
 		      increase_stack_size(sc);
 		    sc->code = ecdr(sc->code);
@@ -41235,229 +41141,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		  /* -------------------------------------------------------------------------------- */
-		case OP_TCLOSURE_S:
-		  check_tfunction(code);
-
-		case HOP_TCLOSURE_S:
-		  sc->value = find_symbol_or_bust(sc, fcdr(code)); 
-		  goto TCLOSURE_ONE;
-
-
-		case OP_TCLOSURE_opCq:
-		  check_tfunction(code);
-		  if (!indirect_c_function_is_ok(sc, cadr(code)))
-		    break;
-		  
-		case HOP_TCLOSURE_opCq:
-		  sc->value = c_call(fcdr(code))(sc, cdr(fcdr(code)));
-		  goto TCLOSURE_ONE;
-
-
-		case OP_TCLOSURE_opSq:
-		  check_tfunction(code);
-		  if (!indirect_c_function_is_ok(sc, cadr(code)))
-		    break;
-		  
-		case HOP_TCLOSURE_opSq:
-		  car(sc->T1_1) = find_symbol_or_bust(sc, fcdr(code));
-		  sc->value = c_call(cadr(code))(sc, sc->T1_1);
-		  goto TCLOSURE_ONE;
-
-
-		case OP_TCLOSURE_CDR_S:
-		  check_tfunction(code);
-		  if (!indirect_c_function_is_ok(sc, cadr(code))) 
-		    break;
-		  
-		case HOP_TCLOSURE_CDR_S:
-		  {
-		    s7_pointer p;
-		    p = find_symbol_or_bust(sc, fcdr(code));
-		    if (!is_pair(p))
-		      sc->value = g_cdr(sc, list_1(sc, p));
-		    else sc->value = cdr(p);
-		    /* goto TCLOSURE_ONE; */
-		  }
-
-
-		TCLOSURE_ONE:
-		  {
-		    s7_pointer args, slot, e, target_env;
-
-		    code = ecdr(code);
-		    target_env = closure_environment(code);
-		    e = sc->envir;
-		    while (next_environment(e) != target_env)
-		      {
-			typeflag(e) = 0;
-			(*(sc->free_heap_top++)) = e;
-			e = next_environment(e);
-		      }
-		    slot = environment_slots(e);
-		    sc->envir = e;
-		    /* the extra slots can also be released, but in my tests that rarely happens, so checking for them slows us down */
-
-		    args = closure_args(code);
-		    if (is_pair(args))
-		      {
-			slot_set_value(slot, sc->value);
-			args = cdr(args);
-			if (!is_null(args))
-			  {
-			    slot = next_slot(slot);
-			    slot_set_value(slot, sc->NIL);
-			  }
-		      }
-		    else slot_set_value(slot, list_1(sc, sc->value));
-		    next_slot(slot) = sc->NIL;
-		    
-		    code = closure_body(code);
-		    if (is_one_liner(code))
-		      {
-			sc->code = car(code);
-			goto EVAL_PAIR; 
-			/* all: OP_LET_READ_CHAR_P: 4460056
-			 */
-		      }
-
-		    /* here we can't possibly be a non-pair, I think (how else would there be a tail-call?)
-		     *   but skipping the is_pair business gains very little, and I feel uneasy omitting
-		     *   the sc->begin_hook check.
-		     */
-		    sc->code = code;
-		    goto BEGIN;
-		    
-		    /* here is the alternate version:
-		       
-		    if (!is_null(cdr(code)))
-		      push_stack(sc, OP_BEGIN1, sc->NIL, cdr(code)); 
-		    sc->code = car(code);
-		    goto EVAL;
-
-		    */
-		  }
-
-
-		case OP_TCLOSURE_SS:
-		  check_tfunction(code);
-		  
-		case HOP_TCLOSURE_SS:
-		  car(sc->T2_1) = find_symbol_or_bust(sc, cadr(code));
-		  car(sc->T2_2) = find_symbol_or_bust(sc, fcdr(code));
-		  goto TCLOSURE_TWO;
-
-
-		  /* (define (hi a b) (eval '(+ 1 2)) (if (null? a) b (hi (cdr a) b))) 
-		   * (hi '(1 2) 321)
-		   *
-		   * (define (n1) (let hi ((a '(1 2)) (b 321)) (eval '(+ 1 2)) (if (null? a) b (hi (cdr a) b))))
-		   * (n1)
-		   */
-		case OP_TCLOSURE_opSq_S:
-		  check_tfunction(code);
-		  if (!indirect_c_function_is_ok(sc, cadr(code)))
-		    break;
-		  
-		case HOP_TCLOSURE_opSq_S:
-		  car(sc->T2_2) = find_symbol_or_bust(sc, fcdr(code));
-		  car(sc->T1_1) = find_symbol_or_bust(sc, cadr(cadr(code)));
-		  car(sc->T2_1) = c_call(cadr(code))(sc, sc->T1_1);
-		  goto TCLOSURE_TWO;
-
-
-		case OP_TCLOSURE_S_opSq:
-		  check_tfunction(code);
-		  if (!indirect_c_function_is_ok(sc, caddr(code)))
-		    break;
-		  
-		case HOP_TCLOSURE_S_opSq:
-		  {
-		    s7_pointer args;
-		    car(sc->T2_1) = find_symbol_or_bust(sc, cadr(code));
-		    args = caddr(code);
-		    car(sc->T1_1) = find_symbol_or_bust(sc, cadr(args));
-		    car(sc->T2_2) = c_call(args)(sc, sc->T1_1);
-		    /* goto TCLOSURE_TWO; */
-		  }
-
-
-		TCLOSURE_TWO:
-		  {
-		    s7_pointer args, slot, e, target_env;
-		    /* call without new frame */
-
-		    code = ecdr(code);
-		    target_env = closure_environment(code);
-		    e = sc->envir;
-		    while (next_environment(e) != target_env)
-		      {
-			typeflag(e) = 0;
-			(*(sc->free_heap_top++)) = e;
-			e = next_environment(e);
-		      }
-		    slot = environment_slots(e);
-		    sc->envir = e;
-
-		    args = closure_args(code);
-		    /* if func above, code: (hi (cdr a) b)
-		     *                args: (a b)
-		     *                sc->envir: #<slot: b 321> #<slot: a #<pair>> ()
-		     *                next up:   #<slot: __func__ hi> ()
-		     *
-		     * if named let, code: #<closure>
-		     *               args: (a b)
-		     *               sc->envir: #<slot: b 321> #<slot: a #<pair>> ()
-		     *               next up: #<slot: hi #<closure>>
-		     */
-		    if (is_pair(args))
-		      {
-			bool reversed;
-			reversed = (slot_symbol(slot) != car(args));
-			/*
-			if (!reversed)
-			  fprintf(stderr, "not reversed: %s\n", DISPLAY(code));
-			*/
-
-			slot_set_value(slot, car((reversed) ? sc->T2_2 : sc->T2_1));
-			slot = next_slot(slot);
-			args = cdr(args);
-			if (is_pair(args))
-			  slot_set_value(slot, car((reversed) ? sc->T2_1 : sc->T2_2));
-			else slot_set_value(slot, list_1(sc, car((reversed) ? sc->T2_1: sc->T2_2)));
-
-			args = cdr(args);
-			if (!is_null(args))
-			  {
-			    slot = next_slot(slot);
-			    slot_set_value(slot, sc->NIL);
-			  }
-		      }
-		    else 
-		      {
-			slot_set_value(slot, list_2(sc, car(sc->T2_1), car(sc->T2_2)));
-		      }
-		    next_slot(slot) = sc->NIL;
-		    
-		    code = closure_body(code);
-		    if (is_one_liner(code))
-		      {
-			sc->code = car(code);
-			goto EVAL_PAIR; 
-		      }
-
-		    sc->code = code;
-		    goto BEGIN;
-
-		    /* see note above 
-		    if (!is_null(cdr(code)))
-		      push_stack(sc, OP_BEGIN1, sc->NIL, cdr(code)); 
-		    sc->code = car(code);
-		    goto EVAL;
-		    */
-		  }
-
-
-		  /* -------------------------------------------------------------------------------- */
 
 		case OP_UNKNOWN_S:
 		case HOP_UNKNOWN_S:
@@ -41511,9 +41194,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      }
 			    else 
 			      {
-				if (is_tail_call(code))
-				  optimize_data(code) = OP_TCLOSURE_S;
-				else optimize_data(code) = OP_CLOSURE_S;
+				optimize_data(code) = OP_CLOSURE_S;
 			      }
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
@@ -41659,9 +41340,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      optimize_data(code) = OP_SAFE_CLOSURE_SS;
 			    else 
 			      {
-				if (is_tail_call(code))
-				  optimize_data(code) = OP_TCLOSURE_SS;
-				else optimize_data(code) = OP_CLOSURE_SS;
+				optimize_data(code) = OP_CLOSURE_SS;
 			      }
 			    if (is_global(car(code)))
 			      optimize_data(code) |= 1;
@@ -41907,9 +41586,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  optimize_data(code) = OP_SAFE_CLOSURE_opCq;
 				else 
 				  {
-				    if (is_tail_call(code))
-				      optimize_data(code) = OP_TCLOSURE_opCq;
-				    else optimize_data(code) = OP_CLOSURE_opCq;
+				    optimize_data(code) = OP_CLOSURE_opCq;
 				  }
 				if ((is_global(car(code))) &&
 				    (is_hopping(cadr(code))))
@@ -41969,18 +41646,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      optimize_data(code) = OP_SAFE_CLOSURE_opSq;
 			    else 
 			      {
-				if (is_tail_call(code))
-				  {
-				    if (c_call(cadr(code)) == g_cdr)
-				      optimize_data(code) = OP_TCLOSURE_CDR_S;
-				    else optimize_data(code) = OP_TCLOSURE_opSq;
-				  }
-				else
-				  {
-				    if (c_call(cadr(code)) == g_cdr)
-				      optimize_data(code) = OP_CLOSURE_CDR_S;
-				    else optimize_data(code) = OP_CLOSURE_opSq;
-				  }
+				if (c_call(cadr(code)) == g_cdr)
+				  optimize_data(code) = OP_CLOSURE_CDR_S;
+				else optimize_data(code) = OP_CLOSURE_opSq;
 			      }
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))))
@@ -42025,9 +41693,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      optimize_data(code) = OP_SAFE_CLOSURE_opSq_S;
 			    else 
 			      {
-				if (is_tail_call(code))
-				  optimize_data(code) = OP_TCLOSURE_opSq_S;
-				else optimize_data(code) = OP_CLOSURE_opSq_S;
+				optimize_data(code) = OP_CLOSURE_opSq_S;
 			      }
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))))
@@ -42060,9 +41726,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      optimize_data(code) = OP_SAFE_CLOSURE_S_opSq;
 			    else 
 			      {
-				if (is_tail_call(code))
-				  optimize_data(code) = OP_TCLOSURE_S_opSq;
-				else optimize_data(code) = OP_CLOSURE_S_opSq;
+				optimize_data(code) = OP_CLOSURE_S_opSq;
 			      }
 			    if ((is_global(car(code))) &&
 				(is_hopping(caddr(code))))
@@ -44249,9 +43913,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		    sc->code = x;
 		    sc->args = z;
-#if PRINTING
-		    fprintf(stderr, "%d to simpler\n", __LINE__);
-#endif
 		    sc->args = make_counter(sc, sc->NIL, sc->args, sc->NIL, 0, 0);
 		    goto FOR_EACH_SIMPLER;
 		  }
@@ -44283,9 +43944,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		    sc->code = x;
 		    sc->args = z;
-#if PRINTING
-		    fprintf(stderr, "%d to simpler\n", __LINE__);
-#endif
 		    sc->args = make_counter(sc, sc->NIL, sc->args, sc->NIL, 0, 0);
 		    goto FOR_EACH_SIMPLER;
 		  }
@@ -45775,7 +45433,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_Int n;
 		    n = integer(val) + 1;
-		    if ((n & ~(NUM_SMALL_INTS - 1)) == 0)
+		    /* if ((n & ~(NUM_SMALL_INTS - 1)) == 0) */
+		    if (is_small(n))
 		      sc->value = small_int(n);
 		    else
 		      {
@@ -54520,9 +54179,10 @@ s7_scheme *s7_init(void)
 	s7_pointer p;
 	small_ints[i] = &cells[i];
 	p = small_ints[i];
-	typeflag(p) = T_IMMUTABLE | T_INTEGER;
+	typeflag(p) = T_IMMUTABLE | T_INTEGER | T_SMALL_INT;
 	p->hloc = NOT_IN_HEAP;
 	integer(p) = i;
+	small_int_name(p) = NULL;
       }
   }
 
@@ -55602,21 +55262,17 @@ s7_scheme *s7_init(void)
  * need throw after all -- reraise error without affecting error-env [TODO: throw doc/test current code -- also 1212. s7.html etc]
  *    [test that error-env maintained etc]
  *
- * for-each et al remake the local frame, but that's only needed if the local env is exported,
- *   and that can only happen through make-closure in various guises and current-environment.
- *   c_objects call object_set_env but that requires a prior current or augment
- *   save that ctr, call body, on rerun check ctr, if it has not changed we are safe and can reuse frame.
- *   this could apply to do loop as well, and perhaps lead to reduction in safe-body special cases
- *   for each works i think!!  map works!!  do/named let?/tail rec?
- *   why did it work? t455 is making closures every time?!?
  * since CLL, LL, LS, and L_opSq removed -- what optimizer choosers and blocks are no-ops besides for_each_3?
  *
  * if format not last in sequence and value not used, no need to make a string return value
  *   (if in addition, port=#f, the thing is a no-op -- does lint notice this?)
+ * display/newline in block -- don't pop stack, just cdr(code), also set in block
  *
  * all the atom_to_c_string cases could defer the copy_string
  *
- * lint     13424 -> 1231 [1237] 1286
- * bench    52019 -> 7875 [8268] 8037
- * index    44300 -> 4988 [4992] 4235
+ * lint     13424 -> 1231 [1237] 1286 1326
+ * bench    52019 -> 7875 [8268] 8037 8592
+ * index    44300 -> 4988 [4992] 4235 4725
+ * s7test            1721             1456
+ * t455                           265  256
  */

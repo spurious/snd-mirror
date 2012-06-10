@@ -13678,6 +13678,83 @@ this prints:
 	    (set! sum (+ sum ((saved-args i)))))))
       45)
 
+;; and again but with named let
+(test (let ((saved-args (make-vector 10)))
+	(let runner ((arg 0))
+	  (set! (saved-args arg) arg)
+	  (if (< arg 9)
+	      (runner (+ arg 1))))
+	(set! (saved-args 0) 32)
+	saved-args)
+      #(32 1 2 3 4 5 6 7 8 9))
+
+(test (let ((f #f))
+	(let runner ((i 0))
+	  (let ()
+	    (define (x) i)
+	    (if (= i 1) (set! f x))
+	    (if (< i 3)
+		(runner (+ i 1)))))
+	(f))
+      1)
+
+(test (let ((saved-args (make-vector 10)))
+	(let runner ((i 0))
+	  (set! (saved-args i) (lambda () i))
+	  (if (< i 9)
+	      (runner (+ i 1))))
+	(let ((sum 0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10) sum)
+	    (set! sum (+ sum ((saved-args i)))))))
+      45)
+
+
+;;; and recursion
+(test (let ((saved-args (make-vector 10)))
+	(define (runner arg)
+	  (set! (saved-args arg) arg)
+	  (if (< arg 9)
+	      (runner (+ arg 1))))
+	(runner 0)
+	(set! (saved-args 0) 32)
+	saved-args)
+      #(32 1 2 3 4 5 6 7 8 9))
+
+(test (let ((f #f))
+	(define (runner i)
+	  (let ()
+	    (define (x) i)
+	    (if (= i 1) (set! f x))
+	    (if (< i 3)
+		(runner (+ i 1)))))
+	(runner 0)
+	(f))
+      1)
+
+(test (let ((saved-args (make-vector 10)))
+	(define (runner i)
+	  (set! (saved-args i) (lambda () i))
+	  (if (< i 9)
+	      (runner (+ i 1))))
+	(runner 0)
+	(let ((sum 0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10) sum)
+	    (set! sum (+ sum ((saved-args i)))))))
+      45)
+
+(test (let ((saved-args (make-vector 10)))
+	(member 'a '(0 1 2 3 4 5 6 7 8 9) 
+		(lambda (a b)
+		  (set! (saved-args b) (lambda () b))
+		  #f))
+	(let ((sum 0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10) sum)
+	    (set! sum (+ sum ((saved-args i)))))))
+      45)
+
 
 
 
@@ -21100,33 +21177,30 @@ who says the continuation has to restart the map from the top?
   (let ((val (catch-all (+ 1 asdf))))
     (test (car val) 'syntax-error)))
 
-#|
-(for-each 
- (lambda (str) 
-   (format #t "~A ~A~%" str (catch #t (lambda () 
-					(catch str (lambda () 
-						     (error str))  ; use throw for guile
-					       (lambda args 1))) 
-				   (lambda args 2)))) 
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
-       3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
+;;; since catch is a function, everything is evaluated:
+(test
+ (catch (#(0 #t 1) 1)
+   ((lambda (a) 
+      (lambda () 
+	(+ a "asdf")))
+    1)
+   ((lambda (b) 
+      (lambda args 
+	(format #f "got: ~A" b)))
+    2))
+ "got: 2")
 
-        s7     Guile
-"hi"    2       2
-()      1       2
-(1)     1       2
-(1 . 2) 1       2
-#f      1       2
-a-symbol 1      1
-#(#<unspecified> #<unspecified> #<unspecified>) 1 2
-abs     1       2
-3.14    1       2
-3/4     1       2
-1+1i    1       2
-#t      1       1
-#<unspecified> 1 2
-#<closure> 1    2
-|#
+(test
+ (catch (#(0 #t 1) 1)
+   (values ((lambda (a) 
+	      (lambda () 
+		(+ a "asdf")))
+	    1)
+	   ((lambda (b) 
+	      (lambda args 
+		(format #f "got: ~A" b)))
+	    2)))
+ "got: 2")
 
 (let ((x 0))
   (catch #t
