@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Tue Apr 17 02:24:52 CEST 2012
+\ Changed: Sun Jun  3 23:52:59 CEST 2012
 
 \ Commentary:
 \
@@ -11,7 +11,7 @@
 \ Tested with Snd 12.x
 \             Fth 1.3.x
 \             Motif 2.3.3 X11R6
-\             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+\             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \
 \ This is an example of an object type written in Forth.
 \

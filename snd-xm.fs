@@ -2,16 +2,16 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Tue Apr 17 02:22:34 CEST 2012
+\ Changed: Sun Jun  3 23:54:06 CEST 2012
 
 \ Commentary:
 \
 \ Requires --with-motif|gtk
 \
 \ Tested with Snd 12.x
-\             Fth 1.2.x
+\             Fth 1.3.x
 \             Motif 2.3.3 X11R6
-\             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+\             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \ 
 \ Motif and Gtk:
 \
@@ -68,10 +68,6 @@
 [then]
 
 "X error" create-exception x-error
-
-\ if not configured --with-static-xm|g
-'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
-'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
 
 require extensions
 

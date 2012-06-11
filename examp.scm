@@ -73,7 +73,7 @@
 	       (sqrt (/ sum len))))
 	  (let ((val (next-sample reader)))
 	    (set! sum (+ sum (* val val))))))
-      (throw 'no-active-selection (list "selection-rms-1"))))
+      (error 'no-active-selection (list "selection-rms-1"))))
 
 
 ;;; if you'd rather use recursion:
@@ -93,7 +93,7 @@
 	(let ((val (rsum len 0.0)))
 	  (free-sampler reader)
 	  val))
-      (throw 'no-active-selection (list "selection-rms"))))
+      (error 'no-active-selection (list "selection-rms"))))
 
 
 (define (region-rms reg)
@@ -101,7 +101,7 @@
   (if (region? reg)
       (let ((data (region->vct reg 0 0)))
 	(sqrt (/ (dot-product data data) (length data))))
-      (throw 'no-such-region (list "region-rms" reg))))
+      (error 'no-such-region (list "region-rms" reg))))
 
 
 (define* (window-samples snd chn)
@@ -1210,7 +1210,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (compand-channel beg dur index chn)))
-	(throw 'no-such-sound (list "compand-sound" snd)))))
+	(error 'no-such-sound (list "compand-sound" snd)))))
 
 
 
@@ -1956,10 +1956,10 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	      (get-current-files (getcwd))
 	      (get-current-files (directory-from-path last-file-opened))))
       (if (null? current-sorted-files)
-	  (throw 'no-such-file (list "open-next-file-in-directory" current-directory))
+	  (error 'no-such-file (list "open-next-file-in-directory" current-directory))
 	  (let ((next-file (find-next-file)))
 	    (if (find-sound next-file)
-		(throw 'file-already-open (list "open-next-file-in-directory" next-file))
+		(error 'file-already-open (list "open-next-file-in-directory" next-file))
 		(begin
 		  (if (not (null? (sounds)))
 		      (close-sound (or (selected-sound)

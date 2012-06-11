@@ -1,17 +1,17 @@
-# popup.rb -- Specialize Popup Menus converted from Guile to Ruby. -*- snd-ruby -*-
+# popup.rb -- Specialize Popup Menus converted from Guile to Ruby.
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Sat Jul 30 18:28:13 CEST 2011
+# Changed: Sun Jun  3 23:39:10 CEST 2012
 
 # Commentary:
 #
 # Requires --with-motif|gtk
 # 
 # Tested with Snd 12.x
-#             Ruby 1.8.0/7, 1.9.2/4
-#             Motif 2.3.0 X11R6
-#             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+#             Ruby 1.8-2.x
+#             Motif 2.3.3 X11R6
+#             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 # $edhist_save_hook:  lambda do |prc| ... end

@@ -3747,8 +3747,8 @@ in the Scheme, Ruby, and Forth files.
 	    (do ((i 0 (+ 1 i)))
 		((= i len) data)
 	      (set! (data i) (<em class=red>reader</em>))))
-	  (throw 'no-such-channel (list "region-&gt;vct" reg chn)))
-      (throw 'no-such-region (list "region-&gt;vct" reg))))
+	  (error 'no-such-channel (list "region-&gt;vct" reg chn)))
+      (error 'no-such-region (list "region-&gt;vct" reg))))
 </pre>
 <div class="spacer"></div>
 
@@ -7565,10 +7565,10 @@ so the function call is:
 		    (<a class=quiet href="#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a> snd chn)
 		    snd chn)
       (if (<a class=quiet href="#selectionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionok_tip)">selection?</a>)
-          (throw 'no-such-channel 
+          (error 'no-such-channel 
                  (list "selection-&gt;vct"
      	               (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "snd ~A channel ~D is not a member of the selection" snd chn)))
-	  (throw 'no-active-selection (list "selection-&gt;vct")))))
+	  (error 'no-active-selection (list "selection-&gt;vct")))))
 </pre>
 
 <p>See also mark-explode in marks.scm.
@@ -8894,7 +8894,7 @@ See <a href="#setsamples">step-src</a> for example.
                    (if (&gt; y 1.0)
                        (begin 
                          (set! go-on stop) 
-                         (throw 'oops))))) 
+                         (error 'oops))))) 
                .2))
 </pre>
 
@@ -14873,7 +14873,7 @@ throws the error 'no-such-file:
 (define look-for-file
   (lambda (file)
     (or (file-exists? file)
-	(throw 'no-such-file (list "look-for-file" file)))))
+	(error 'no-such-file (list "look-for-file" file)))))
 </pre>
 
 <p>There is one special catch: 'snd-top-level.  This is used by the

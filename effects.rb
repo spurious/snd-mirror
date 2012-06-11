@@ -2,16 +2,16 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Sat Jul 30 18:27:20 CEST 2011
+# Changed: Sun Jun  3 23:40:53 CEST 2012
 
 # Commentary:
 #
 # Requires --with-motif|gtk
 #
 # Tested with Snd 12.x
-#             Ruby 1.8.0/7, 1.9.2/4
-#             Motif 2.3.0 X11R6
-#             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+#             Ruby 1.8-2.x
+#             Motif 2.3.3 X11R6
+#             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples

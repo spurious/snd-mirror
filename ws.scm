@@ -486,7 +486,7 @@
   (let* ((outsnd (or snd (selected-sound) (car (sounds))))
 	 (mix-info (sound-property 'with-mixed-sound-info outsnd)))
     (if (not mix-info)
-	(throw 'no-such-mixed-sound (list "with-mixed-sound->notelist" outsnd))
+	(error 'no-such-mixed-sound (list "with-mixed-sound->notelist" outsnd))
 	(let ((cur-mixes (mixes outsnd 0)) ; for now assume each mix is multichannel
 	      (oput (open-output-file output-file)))
 	  (display (format #f "(with-sound (:channels ~D)~%" (channels snd)) oput)
@@ -696,7 +696,7 @@ finish-with-sound to complete the process."
 	      (update-time-graph snd-output)))
 	(set! (mus-srate) old-srate)
 	output)
-      (throw 'wrong-type-arg
+      (error 'wrong-type-arg
 	     (list "finish-with-sound" wsd))))
 
 

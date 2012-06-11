@@ -80,7 +80,7 @@
                 (set! descr (cons (mark-sample id i) descr))
                 (set! descr (cons #f descr))))
           (cons header descr))
-        (throw 'no-such-mark (list "describe-mark" id)))))
+        (error 'no-such-mark (list "describe-mark" id)))))
 
 
 ;;; -------- click marks between start-sync and stop-sync to sync them together
@@ -120,7 +120,7 @@
 	(m1-home (mark-home m1))
 	(m2-home (mark-home m2)))
     (if (not (selection?))
-	(throw 'no-active-selection))
+	(error 'no-active-selection))
     (if (not (equal? m1-home m2-home))
 	(snd-print (format #f "~A is in ~A[~A] but ~A is in ~A[~A]?" 
 			   m1 (car m1-home) (cadr m1-home)

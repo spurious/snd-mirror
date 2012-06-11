@@ -240,7 +240,7 @@
 	    (format p "static const char *autoload_files[AUTOLOAD_FILES] = {~%  ")
 	    (do ((i 0 (+ i 1)))
 		((= i fl-1))
-	      (if (and (> i 0)
+	      (if (and (positive? i)
 		       (= (modulo i 6) 0))
 		  (format p "~S, ~%  " (places i))
 		  (format p "~S, " (places i))))
@@ -250,7 +250,7 @@
 	    (format p "static const char *autoload_names[AUTOLOAD_NAMES] = {~%  ")
 	    (do ((i 0 (+ i 1)))
 		((= i nl-1))
-	      (if (and (> i 0)
+	      (if (and (positive? i)
 		       (= (modulo i 4) 0))
 		  (format p "~S, ~%  " (symbol->string (car (names i))))
 		  (format p "~S, " (symbol->string (car (names i))))))
@@ -259,7 +259,7 @@
 	    (format p "static int autoload_indices[AUTOLOAD_NAMES] = {~%  ")
 	    (do ((i 0 (+ i 1)))
 		((= i nl-1))
-	      (if (and (> i 0)
+	      (if (and (positive? i)
 		       (= (modulo i 24) 0))
 		  (format p "~D, ~%  " (find-file (cdr (names i))))
 		  (format p "~D, " (find-file (cdr (names i))))))
@@ -813,7 +813,7 @@
 	  ((= i n))
         (set! (tnames ctr)
 	      (clean-and-downcase-first-char (names i) capitalized (topics i) (files i)))
-	(if (> (length (ind-sortby (tnames ctr))) 0)
+	(if (positive? (length (ind-sortby (tnames ctr))))
 	    (incf ctr)))
 
       (when (not (= ctr n))
@@ -824,7 +824,7 @@
 	    (set! (temp i) (tnames i)))
 	  (set! tnames temp)))
       
-      (when (> g 0)
+      (when (positive? g)
 	(if (< (length tnames) (+ g n))
 	  (let ((temp (make-vector (+ g n) #f)))
 	    (do ((i 0 (+ i 1)))
@@ -1002,7 +1002,7 @@
 						      (checked-substring ind (+ gpos 4)))))
 			 (when (and ind
 				    (string? ind)
-				    (> (length ind) 0))
+				    (positive? (length ind)))
 			   (push ind help-names)
 			   (push url help-urls)))))
 
@@ -1124,8 +1124,8 @@
 			   (let ((c (line i)))
 			     (case c
 			       ((#\<)
-				(if (and (not (= openctr 0))
-					 (not (> p-quotes 0)))
+				(if (and (not (zero? openctr))
+					 (not (positive? p-quotes)))
 				    (if (not in-comment) 
 					(format #t "~A[~D]: ~A has unclosed <?~%" file linectr line)))
 				(incf openctr)
@@ -1160,8 +1160,8 @@
 					  (begin
 					    (format #t "~A[~D]: extra -->?~%" file linectr)
 					    (set! comments 0))))
-				    (if (and (not (= openctr 0))
-					     (not (> p-quotes 0)))
+				    (if (and (not (zero? openctr))
+					     (not (positive? p-quotes)))
 					(if (not in-comment) 
 					    (format #t "~A[~D]: ~A has unmatched >?~%" file linectr line))))
 				(set! openctr 0)
@@ -1218,7 +1218,7 @@
 				       (begin
 					 (if start
 					     (if (and (not scripting)
-						      (not (> p-quotes 0)))
+						      (not (positive? p-quotes)))
 						 (format #t "~A[~D]: nested < ~A~%" file linectr line))
 					     (set! start i))
 					 )

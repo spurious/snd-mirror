@@ -2,16 +2,16 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sat Oct 29 00:08:43 CEST 2011
+# Changed: Sun Jun  3 23:59:04 CEST 2012
 
 # Commentary:
 #
 # Requires --with-motif|gtk
 #
 # Tested with Snd 12.x
-#             Ruby 1.8.0/7, 1.9.2, 2.0.0
-#             Motif 2.3.0 X11R6
-#             Gtk+ 3.0.12, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+#             Ruby 1.8-2.x
+#             Motif 2.3.3 X11R6
+#             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -169,12 +169,8 @@
 
 require "clm"
 
-provided?(:snd_motif) and (not provided?(:xm)) and require "libxm.so"
-provided?(:snd_gtk)   and (not provided?(:xg)) and require "libxg.so"
-
 unless provided?(:xm) or provided?(:xg)
-  Snd.raise(:runtime_error, __FILE__, "file requires --with-motif or --with-gtk \
-and module libxm.so or libxg.so, or --with-static-xm")
+  Snd.raise(:runtime_error, __FILE__, "file requires --with-motif or --with-gtk")
 end
 
 $with_motif = provided?(:xm)

@@ -529,7 +529,7 @@
 	(format #f "~%        ~80A" form))
       
       (define (lint-format str name line . args)
-	(if (and (> line 0)
+	(if (and (positive? line)
 		 (< line 100000))
 	    (apply format #t (string-append "  ~A (line ~D): " str "~%") name line args)
 	    (apply format #t (string-append "  ~A: " str "~%") name args)))

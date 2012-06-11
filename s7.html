@@ -4044,7 +4044,7 @@ send that info to the current-error-port.
   ;;   func takes escape thunk, then args
   (let* ((result ())
 	 (escape-tag (gensym))
-	 (escape (lambda () (error escape-tag)))) ; error here = throw
+	 (escape (lambda () (throw escape-tag))))
     (<em class=red>catch</em> escape-tag
       (lambda ()
 	(let ((len (apply max (map length args))))

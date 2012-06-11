@@ -71,7 +71,7 @@
 	  (set! (v i) (read-mix-sample reader)))
 	(free-sampler reader)
 	v)
-      (throw 'no-such-mix (list "mix->vct" id))))
+      (error 'no-such-mix (list "mix->vct" id))))
 
 
 ;;; 12-Nov-09: moved save-mix to C (snd-mix.c)
@@ -91,7 +91,7 @@
 		(set! peak val))))
 	(free-sampler reader)
 	peak)
-      (throw 'no-such-mix (list "mix-maxamp" id))))
+      (error 'no-such-mix (list "mix-maxamp" id))))
 	  
 
 ;;; -------- snap dragged mix(es) to the nearest beat
@@ -437,9 +437,9 @@ panning operation."
 	 (deletion-choice (if auto-delete 3 0)) ; multichannel deletion case
 	 (end-deletion-choice (if (= deletion-choice 3) 4 0)))
     (if (not (sound? index))
-	(throw 'no-such-sound (list "pan-mix" snd)))
+	(error 'no-such-sound (list "pan-mix" snd)))
     (if (not (file-exists? name))
-	(throw 'no-such-file (list "pan-mix" name)))
+	(error 'no-such-file (list "pan-mix" name)))
     
     (as-one-edit
      (lambda ()
@@ -523,7 +523,7 @@ panning operation."
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (if (not (selection?))
-      (throw 'no-active-selection (list "pan-mix-selection"))
+      (error 'no-active-selection (list "pan-mix-selection"))
       (pan-mix (save-selection (snd-tempnam)) beg pan snd #t)))
 
 
@@ -533,7 +533,7 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (if (not (region? reg))
-      (throw 'no-such-region (list "pan-mix-region" reg))
+      (error 'no-such-region (list "pan-mix-region" reg))
       (pan-mix (save-region reg (snd-tempnam)) beg pan snd #t)))
 
 

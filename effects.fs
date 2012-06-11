@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Tue Apr 17 02:37:09 CEST 2012
+\ Changed: Sun Jun  3 23:49:00 CEST 2012
 
 \ Commentary:
 \
@@ -41,9 +41,9 @@
 \ Requires --with-motif|gtk
 \
 \ Tested with Snd 12.x
-\             Fth 1.2.x
-\             Motif 2.3.0 X11R6
-\             Gtk+ 3.0.11, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+\             Fth 1.3.x
+\             Motif 2.3.3 X11R6
+\             Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
 \
 \ make-menu                      ( name parent -- gen )
 \ menu-entry                     ( gen prc disp-prc -- )

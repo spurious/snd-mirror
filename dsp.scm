@@ -2274,7 +2274,7 @@ is assumed to be outside -1.0 to 1.0."
   "(unclip-sound snd) applies unclip-channel to each channel of 'snd'."
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
-	(throw 'no-such-sound (list "unclip-sound" snd))
+	(error 'no-such-sound (list "unclip-sound" snd))
 	(let ((chns (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn chns))

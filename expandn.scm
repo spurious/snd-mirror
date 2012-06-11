@@ -30,7 +30,7 @@
 
   (let ((fnam (file-name filename)))
     (if (not (file-exists? fnam))
-	(throw 'no-such-file (list 'expandn filename))
+	(error 'no-such-file (list 'expandn filename))
 
 	(let* ((beg (seconds->samples time))
 	       (end (+ beg (seconds->samples duration)))
@@ -87,7 +87,7 @@
 	       (next-samp 0.0))
 	  
 	  (if (or minramp-bug maxramp-bug)
-	      (throw 'out-of-range (list expand 
+	      (error 'out-of-range (list expand 
 					 "ramp argument to expandn must always be "
 					 (if (and minramp-bug maxramp-bug) "between 0.0 and 0.5"
 					     (if minramp-bug "greater than 0.0"

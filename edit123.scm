@@ -92,10 +92,10 @@
 	      (get-current-files (getcwd))
 	      (get-current-files (directory-from-path last-file-opened))))
       (if (null? current-sorted-files)
-	  (throw 'no-such-file (list "open-next-file-in-directory" current-directory))
+	  (error 'no-such-file (list "open-next-file-in-directory" current-directory))
 	  (let ((next-file (find-next-file)))
 	    (if (find-sound next-file)
-		(throw 'file-already-open (list "open-next-file-in-directory" next-file))
+		(error 'file-already-open (list "open-next-file-in-directory" next-file))
 		(begin
 		  (if (not (null? (sounds)))
 		      (close-sound (or (selected-sound)  ; not sure this is what you want -- closes current file

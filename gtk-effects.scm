@@ -16,7 +16,7 @@
 	 (chn (selected-channel))
 	 (ms (sort! (map mark-sample (marks snd chn)) <)))
     (if (< (length ms) 2)
-	(throw 'no-such-mark (list "mark-related action requires two marks"))
+	(error 'no-such-mark (list "mark-related action requires two marks"))
 	(if (= (length ms) 2)
 	    ms
 	    (let* ((lw (left-sample snd chn))

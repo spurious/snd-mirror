@@ -1687,7 +1687,7 @@ based on some previously chosen loop positions:
          (loop-data (<a class=quiet href="extsnd.html#mussoundloopinfo" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundloopinfo_tip)">mus-sound-loop-info</a> sound)))
     (if (or (null? loop-data)
             (&lt;= (cadr loop-data) (car loop-data)))
-        (throw 'no-loop-positions)
+        (error 'no-loop-positions)
         (let* ((loop-start (car loop-data))
                (loop-end (cadr loop-data))
                (loop-length (+ 1 (- loop-end loop-start)))

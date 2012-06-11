@@ -162,7 +162,7 @@ a list (file-name-or-sound-object [beg [channel]])."
 			 input-beg)))
 	 (start (or beg 0)))
     (if (< start 0) 
-	(throw 'no-such-sample (list "mix-channel" beg))
+	(error 'no-such-sample (list "mix-channel" beg))
 	(if (> len 0)
 	    (if (not with-tag)
 
@@ -211,7 +211,7 @@ a list (file-name-or-sound-object [beg [channel]])."
 			   (caddr file-data)))
 	 (len (or dur (- (frames file-name) file-beg)))
 	 (start (or beg 0)))
-    (if (< start 0) (throw 'no-such-sample (list "insert-channel" beg)))
+    (if (< start 0) (error 'no-such-sample (list "insert-channel" beg)))
     (if (> len 0)
 	(let ((reader (make-sampler file-beg file-name file-channel))
 	      (data (make-vct len)))
@@ -435,7 +435,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (offset-channel off beg dur index chn)))
-	(throw 'no-such-sound (list "offset-sound" snd)))))
+	(error 'no-such-sound (list "offset-sound" snd)))))
 
 
 ;;; -------- pad-sound
@@ -448,7 +448,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (pad-channel beg dur index chn)))
-	(throw 'no-such-sound (list "pad-sound" snd)))))
+	(error 'no-such-sound (list "pad-sound" snd)))))
 
 
 ;;; -------- dither-channel
@@ -468,7 +468,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (dither-channel amount beg dur index chn)))
-	(throw 'no-such-sound (list "dither-sound" snd)))))
+	(error 'no-such-sound (list "dither-sound" snd)))))
 
 
 ;;; -------- contrast-channel
@@ -490,7 +490,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (contrast-channel index beg dur ind chn)))
-	(throw 'no-such-sound (list "contrast-sound" snd)))))
+	(error 'no-such-sound (list "contrast-sound" snd)))))
 
 
 ;;; -------- scale-sound
@@ -505,7 +505,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (scale-channel scl beg dur index chn)))
-	(throw 'no-such-sound (list "scale-sound" snd)))))
+	(error 'no-such-sound (list "scale-sound" snd)))))
 
 
 ;;; -------- normalize-sound
@@ -519,7 +519,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (scale-channel (/ amp mx) beg dur index chn)))
-	(throw 'no-such-sound (list "normalize-sound" snd)))))
+	(error 'no-such-sound (list "normalize-sound" snd)))))
 
 
 

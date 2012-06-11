@@ -2229,7 +2229,7 @@
 	 (loop-data (mus-sound-loop-info sound)))
     (if (or (null? loop-data)
 	    (<= (cadr loop-data) (car loop-data)))
-	(throw 'no-loop-positions)
+	(error 'no-loop-positions)
 	(let* ((loop-start (car loop-data))
 	       (loop-end (cadr loop-data))
 	       (loop-length (+ 1 (- loop-end loop-start)))

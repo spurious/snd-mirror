@@ -1022,6 +1022,7 @@ struct s7_scheme {
   s7_pointer load_hook;               /* *load-hook* hook object */
   s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
   s7_pointer error_hook;              /* *error-hook* hook object */
+  s7_pointer direct_str;
 
   bool gc_off, gc_stats;              /* gc_off: if true, the GC won't run, gc_stats: if true, print stats during GC */
   unsigned int gensym_counter;
@@ -10764,8 +10765,10 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer add1(s7_scheme *sc, s7_pointer x, int arg_num)
+static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer x;
+  x = car(args);
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) + 1));
@@ -10774,24 +10777,43 @@ static s7_pointer add1(s7_scheme *sc, s7_pointer x, int arg_num)
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
     default:        
       CHECK_METHOD(sc, x, sc->ADD, list_2(sc, x, small_int(1)));
-      return(wrong_type_argument_with_type(sc, sc->ADD, small_int(arg_num), x, A_NUMBER));
+      return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
     }
   return(x);
 }
 
-static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
-{
-  return(add1(sc, car(args), 1));
-}
-
 static s7_pointer g_add_cs1(s7_scheme *sc, s7_pointer args)
 {
-  return(add1(sc, finder(sc, car(args)), 1));
+  s7_pointer x;
+  x = finder(sc, car(args));
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_integer(sc, integer(x) + 1));
+    case T_RATIO:   return(add_ratios(sc, x, small_int(1)));
+    case T_REAL:    return(s7_make_real(sc, real(x) + 1.0));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
+    default:        
+      CHECK_METHOD(sc, x, sc->ADD, list_2(sc, x, small_int(1)));
+      return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
+    }
+  return(x);
 }
 
 static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
 {
-  return(add1(sc, cadr(args), 2));
+  s7_pointer x;
+  x = cadr(args);
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_integer(sc, integer(x) + 1));
+    case T_RATIO:   return(add_ratios(sc, x, small_int(1)));
+    case T_REAL:    return(s7_make_real(sc, real(x) + 1.0));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
+    default:        
+      CHECK_METHOD(sc, x, sc->ADD, list_2(sc, x, small_int(2)));
+      return(wrong_type_argument_with_type(sc, sc->ADD, small_int(2), x, A_NUMBER));
+    }
+  return(x);
 }
 
 static s7_pointer g_add_si(s7_scheme *sc, s7_pointer args)
@@ -11214,8 +11236,10 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer sub1(s7_scheme *sc, s7_pointer x, int arg_num)
+static s7_pointer g_subtract_cs1(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer x;
+  x = finder(sc, car(args));
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) - 1));
@@ -11224,19 +11248,26 @@ static s7_pointer sub1(s7_scheme *sc, s7_pointer x, int arg_num)
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
     default:        
       CHECK_METHOD(sc, x, sc->MINUS, list_2(sc, x, small_int(1)));
-      return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(arg_num), x, A_NUMBER));
+      return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(1), x, A_NUMBER));
     }
   return(x);
 }
 
-static s7_pointer g_subtract_cs1(s7_scheme *sc, s7_pointer args)
-{
-  return(sub1(sc, finder(sc, car(args)), 1));
-}
-
 static s7_pointer g_subtract_s1(s7_scheme *sc, s7_pointer args)
 {
-  return(sub1(sc, car(args), 1));
+  s7_pointer x;
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER: return(make_integer(sc, integer(x) - 1));
+    case T_RATIO:   return(subtract_ratios(sc, x, small_int(1)));
+    case T_REAL:    return(s7_make_real(sc, real(x) - 1.0));
+    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
+    default:        
+      CHECK_METHOD(sc, x, sc->MINUS, list_2(sc, x, small_int(1)));
+      return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(1), x, A_NUMBER));
+    }
+  return(x);
 }
 
 static s7_pointer g_subtract_csn(s7_scheme *sc, s7_pointer args)
@@ -23094,6 +23125,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 
       if (is_not_null(cdddr(args)))
 	return(g_vector_set(sc, cons(sc, vector_element(vec, index), cddr(args))));
+      /* TODO: this could be direct */
 
       val = caddr(args);
     }
@@ -27620,23 +27652,21 @@ static void format_append_char(format_data *dat, char c)
 }
 
 
-static void format_append_string(format_data *dat, const char *str)
+static void format_append_string(format_data *dat, const char *str, int str_len)
 {
-  const char *s;
-  int loc, len;
+  int new_len;
+
   if (!str) return;
-  len = dat->len - 3;
-  for (loc = dat->loc, s = str; (*s) != 0; loc++, s++)
+
+  new_len = str_len + dat->loc + 3;
+  if (new_len > dat->len)
     {
-      if (len < loc)
-	{
-	  dat->len *= 2;
-	  dat->str = (char *)realloc(dat->str, dat->len * sizeof(char));
-	  len = dat->len - 3;
-	}
-      dat->str[loc] = (*s);
+      dat->len = new_len * 2; 
+      dat->str = (char *)realloc(dat->str, dat->len * sizeof(char));
     }
-  dat->loc = loc;
+  memcpy((void *)(dat->str + dat->loc), (void *)str, str_len);
+  dat->loc += str_len;
+  dat->str[dat->loc] = '\0';
 }
 
 
@@ -27694,6 +27724,7 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
   /* should (format #f "~F" 1/3) return "1/3"?? in CL it's "0.33333334" */
 
   tmp = number_to_string_with_radix(sc, car(fdat->args), radix, width, precision, float_choice);
+  /* TODO: pass len here */
 
   if (pad != ' ')
     {
@@ -27701,7 +27732,7 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
       padtmp = tmp;
       while (*padtmp == ' ') (*(padtmp++)) = pad;
     }
-  format_append_string(fdat, tmp);
+  format_append_string(fdat, tmp, safe_strlen(tmp));
   free(tmp);
   fdat->args = cdr(fdat->args);
 }
@@ -27712,10 +27743,10 @@ static bool s7_is_one_or_big_one(s7_pointer p);
 #else
 #define s7_is_one_or_big_one(Num) s7_is_one(Num)
 #endif
-static char *truncate_string(char *form, int len, bool use_write);
+static char *truncate_string(char *form, int len, bool use_write, int *s_len);
 
 
-static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg, bool in_error_handler)
+static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg, bool in_error_handler, int *new_len)
 {
   #define INITIAL_FORMAT_LENGTH 128
   int i = 0, str_len = 0;
@@ -27819,7 +27850,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    return(format_error(sc, "'@P' directive argument is not a real number", str, args, fdat, in_error_handler));
 
 		  if (!s7_is_one_or_big_one(car(fdat->args)))
-		    format_append_string(fdat, "ies");
+		    format_append_string(fdat, "ies", 3);
 		  else format_append_char(fdat, 'y');
 
 		  fdat->args = cdr(fdat->args);
@@ -27889,10 +27920,13 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 			    while (is_not_null(curly_arg))
 			      {
+				int tmp_len = 0;
 				s7_pointer new_arg = sc->NIL;
-				tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg, in_error_handler);
-				format_append_string(fdat, tmp);
+
+				tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg, in_error_handler, &tmp_len);
+				format_append_string(fdat, tmp, tmp_len);
 				if (tmp) free(tmp);
+
 				if (curly_arg == new_arg)
 				  {
 				    if (curly_str) free(curly_str);
@@ -27993,6 +28027,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			{
 			  shared_info *ci = NULL;
 			  s7_pointer obj;
+			  int tmp_len;
 			  
 			  if (is_null(fdat->args))
 			    return(format_error(sc, "missing argument", str, args, fdat, in_error_handler));
@@ -28013,12 +28048,17 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			   *   (format #f "~0,0D" 123) -> "123"
 			   */
 			  tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), WITH_ELLIPSES, ci);
+			  tmp_len = safe_strlen(tmp);
 
 			  sc->print_width = MAX_STRING_LENGTH;
-			  if (width > 0)
-			    truncate_string(tmp, width, ((str[i] == 'S') || (str[i] == 's')));
+			  if ((width > 0) &&
+			      (width < tmp_len))
+			    {
+			      tmp_len = width;
+			      truncate_string(tmp, width, ((str[i] == 'S') || (str[i] == 's')), &tmp_len);
+			    }
 
-			  format_append_string(fdat, tmp);
+			  format_append_string(fdat, tmp, tmp_len);
 			  if (tmp) free(tmp);
 			  fdat->args = cdr(fdat->args);
 			}
@@ -28161,7 +28201,9 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
     }
   if (i < str_len)
     format_append_char(fdat, str[i]);    /* possible trailing ~ is sent out */
-  format_append_char(fdat, '\0');
+  /* format_append_char(fdat, '\0'); */
+  fdat->str[fdat->loc] = '\0';           /* no need to check -- we always leave room for the trailing null */
+  (*new_len) = fdat->loc;
 
   result = fdat->str;
   fdat->str = NULL;
@@ -28171,8 +28213,10 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 
 static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char *in_str, s7_pointer args, bool in_error_handler)
-{
+{						
   s7_pointer result;
+  int str_len = 0;
+  char *msg;
 
   if ((!in_str) || (!(*in_str)))
     {
@@ -28183,8 +28227,34 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
       return(make_protected_string(sc, ""));
     }
 
-  result = make_string_uncopied(sc, format_to_c_string(sc, in_str, args, NULL, in_error_handler));
+  /* fprintf(stderr, "op: %s\n", real_op_names[stack_op(sc->stack, s7_stack_top(sc) - 1)]);
+   */
+  /* (begin (format #f "1 2 ~D" 3)) -> "1 2 3" and op is eval_done
+   * (begin (format #f "1 2 ~D" 3) 4) -> 4 and op is begin? format is a no-op
+   */
 
+  if ((in_error_handler) ||
+      (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BEGIN1))
+    {
+      /* send output direct to port, return sc-F or something */
+      if (out_loc != sc->F)
+	{
+	  msg = format_to_c_string(sc, in_str, args, NULL, in_error_handler, &str_len);
+	  /* fprintf(stderr, "don't return %s\n", msg); */
+
+	  string_length(sc->direct_str) = str_len;
+	  string_value(sc->direct_str) = msg;
+	  s7_display(sc, sc->direct_str, out_loc);
+	  string_length(sc->direct_str) = 0;
+
+	  if (msg) free(msg);
+	}
+      /* else fprintf(stderr, "format %s is a no-op\n", in_str); */
+      return(sc->UNSPECIFIED);
+    }
+  
+  msg = format_to_c_string(sc, in_str, args, NULL, in_error_handler, &str_len);
+  result = make_string_uncopied_with_length(sc, msg, str_len);
   if (out_loc != sc->F)
     s7_display(sc, result, out_loc);
 
@@ -29264,14 +29334,8 @@ and applies it to the rest of the arguments."
 }
 
 
-static char *truncate_string(char *form, int len, bool use_write)
+static char *truncate_string(char *form, int len, bool use_write, int *form_len)
 {
-  int form_len;
-
-  form_len = safe_strlen(form);
-  if (form_len <= len)
-    return(form);
-
   if (use_write)
     {
       /* I guess we need to protect the outer double quotes in this case */
@@ -29284,6 +29348,7 @@ static char *truncate_string(char *form, int len, bool use_write)
 	    form[i + 2] = '.';
 	    form[i + 3] = '"';
 	    form[i + 4] = '\0';
+	    (*form_len) = i + 4;
 	    return(form);
 	  }
       i = len - 4;
@@ -29314,6 +29379,7 @@ static char *truncate_string(char *form, int len, bool use_write)
 	    form[i + 1] = '.';
 	    form[i + 2] = '.';
 	    form[i + 3] = '\0';
+	    (*form_len) = i + 3;
 	    return(form);
 	  }
       i = len - 3;
@@ -29332,7 +29398,13 @@ static char *truncate_string(char *form, int len, bool use_write)
 
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
 {
-  return(truncate_string(s7_object_to_c_string(sc, p), len, false));
+  char *s;
+  int s_len;
+  s = s7_object_to_c_string(sc, p);
+  s_len = safe_strlen(s);
+  if (s_len > len)
+    return(truncate_string(s7_object_to_c_string(sc, p), len, false, &s_len));
+  return(s);
 }
 
 
@@ -54161,6 +54233,7 @@ s7_scheme *s7_init(void)
   sc->circle_info = NULL;
   sc->fdats = (format_data **)calloc(8, sizeof(format_data *));
   sc->num_fdats = 8;
+  sc->direct_str = s7_make_permanent_string(NULL);
 
   sc->global_env = s7_make_vector(sc, 512);
   type(sc->global_env) = T_ENVIRONMENT;
@@ -55259,16 +55332,20 @@ s7_scheme *s7_init(void)
  * why make the error handler closure in advance -- just save the pieces in case needed later
  *   in fact, why the catch object -- just a push and go
  *
- * need throw after all -- reraise error without affecting error-env [TODO: throw doc/test current code -- also 1212. s7.html etc]
- *    [test that error-env maintained etc]
- *
  * since CLL, LL, LS, and L_opSq removed -- what optimizer choosers and blocks are no-ops besides for_each_3?
+ * put CLL back but on the drect-catch line [op-simple-catch, no struct, deferred error lambda eval]
+ * do examples in saved-args section
+ * direct (temp-cell) for direct apply et al
+ * memq->hash, find string in vector to hash
+ * catch as if..then example
+ * can more actual values be used during lambda building?
+ * 
  *
- * if format not last in sequence and value not used, no need to make a string return value
- *   (if in addition, port=#f, the thing is a no-op -- does lint notice this?)
+ * check for other direct_str possibilities
  * display/newline in block -- don't pop stack, just cdr(code), also set in block
  *
  * all the atom_to_c_string cases could defer the copy_string
+ * make-vector or vector with constant args?
  *
  * lint     13424 -> 1231 [1237] 1286 1326
  * bench    52019 -> 7875 [8268] 8037 8592

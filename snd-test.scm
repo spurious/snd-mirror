@@ -34132,7 +34132,7 @@ EDITS: 2
 					 i val0 val1 pval0 pval1
 					 reader0 reader1 preader0 preader1
 					 (safe-display-edits cursnd curchn))
-			    (throw 'mus-error))))))))
+			    (error 'mus-error))))))))
 	
 	((13) (let ((beg (random (- (frames cursnd curchn) 100))))
 		(scale-channel .5 beg (+ 10 (random 100)) cursnd curchn)))
@@ -34199,7 +34199,7 @@ EDITS: 2
 					 e i val0 val1
 					 reader0 reader1 e0 val00
 					 (safe-display-edits cursnd curchn))
-			    (throw 'mus-error))))))))
+			    (error 'mus-error))))))))
 	
 	;; env-channel
 	((2) (let* ((pts (+ 1 (random 6)))
@@ -34233,7 +34233,7 @@ EDITS: 2
 	       (if (> (- (maxamp cursnd curchn) .01) (* maxpt cur-amp))
 		   (begin
 		     (snd-display #__line__ ";env-channel ~A[~A] maxamp: ~A ~A from ~A" (short-file-name cursnd) curchn (maxamp cursnd curchn) (* maxpt cur-amp) e)
-		     (throw 'mus-error)))
+		     (error 'mus-error)))
 	       (for-each
 		(lambda (s c amp ed fr)
 		  (if (not (and (equal? s cursnd)
@@ -34436,7 +34436,7 @@ EDITS: 2
 		      (if (and expected-vals (not (vequal split-vals expected-vals)))
 			  (let ((bad-data (vequal-at split-vals expected-vals)))
 			    (snd-display #__line__ ";checking ~A, split vals disagree (loc cur expect): ~A" name bad-data)
-			    (throw 'uhoh1)
+			    (error 'uhoh1)
 			    )))))))))
   
   (define (reversed-read snd chn)
@@ -36941,7 +36941,7 @@ EDITS: 3
 		     (if (fneq rv ev) 
 			 (begin
 			   (snd-display #__line__ ";~A env check [~A]: ~A ~A" name i rv ev)
-			   (throw 'uhoh2)
+			   (error 'uhoh2)
 			   (set! happy #f)))))))
 	     (define (check-envs name r-maker e-maker)
 	       (check-env (format #f "~A-1-0" name) (r-maker i1 0) (e-maker i1 0))
