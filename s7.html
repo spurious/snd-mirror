@@ -1116,8 +1116,7 @@ mac
 <p>But the unquote trick won't work if we have previously loaded some file that redefined '+'
 at the top-level (so at macro definition time, + is *, but we want the built-in +).
 Although this example is silly, the problem is real in Scheme
-because Scheme has no reserved words and only one name space.  
-And this problem is not restricted to macros:
+because Scheme has no reserved words and only one name space.
 </p>
 
 <pre class="indented">
@@ -1127,9 +1126,17 @@ And this problem is not restricted to macros:
 add
 &gt; (add 2 3)
 6
+&gt; (define (divide a b) (/ a b))
+divide
+&gt; (divide 2 3)
+2/3
+&gt; (set! / -) ; a bad idea &mdash; this turns off s7's optimizer
+-
+&gt; (divide 2 3)
+-1
 </pre>
 
-<p>Since 
+<p>Obviously macros are not the problem here.  Since 
 we might be loading
 code written by others, it's sometimes hard to tell what names
 that code depends on or redefines.

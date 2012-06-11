@@ -13745,6 +13745,8 @@ this prints:
 	    (set! sum (+ sum ((saved-args i)))))))
       45)
 
+
+;;; and member
 (test (let ((saved-args (make-vector 10)))
 	(member 'a '(0 1 2 3 4 5 6 7 8 9) 
 		(lambda (a b)
@@ -13755,6 +13757,20 @@ this prints:
 	      ((= i 10) sum)
 	    (set! sum (+ sum ((saved-args i)))))))
       45)
+
+;;; and do which has never worked in this way -- maybe soon!
+#|
+(test (let ((saved-args (make-vector 10)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 10))
+	  (set! (saved-args i) (lambda () i)))
+	(let ((sum 0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10) sum)
+	    (set! sum (+ sum ((saved-args i)))))))
+      45)
+|#
+
 
 
 
@@ -14359,7 +14375,6 @@ in s7:
 (test (let ((j 1)) (do ((i 0 j)) ((= i j) i) (set! j 2))) 2)
 (test (do ((j 1 2) (i 0 j)) ((= i j) i)) 2)
 (test (let ((old+ +) (j 0)) (do ((i 0 (old+ i 1))) ((or (< i -3) (> i 3))) (set! old+ -) (set! j (+ j i))) j) -6)
-(test (let ((old+ +) (j 0)) (do ((i 0 (+ i 1))) ((or (< i -3) (> i 3))) (set! + -) (set! j (old+ j i))) (set! + old+) j) -6)
 (test (do ((i 0 (case i ((0) 1) ((1) "hi")))) ((string? i) i)) "hi")
 (test (do ((i if +)) ((equal? i +) i)) +)
 (test (let ((k 0)) (do ((j 0 (+ j 1)) (i 0 ((if (= i 0) + -) i 1))) ((= j 5)) (set! k (+ k i))) k) 2)
@@ -21190,6 +21205,19 @@ who says the continuation has to restart the map from the top?
     2))
  "got: 2")
 
+(let ()
+  (define (hi c)
+    (catch c
+      ((lambda (a) 
+	 (lambda () 
+	   (+ a "asdf")))
+       1)
+      ((lambda (b) 
+	 (lambda args 
+	   (format #f "got: ~A" b)))
+       2)))
+  (test (hi #t) "got: 2"))
+
 (test
  (catch (#(0 #t 1) 1)
    (values ((lambda (a) 
@@ -24878,7 +24906,7 @@ func
 
 (test (symbol-access) 'error)
 (test (symbol-access '_int_ 2) 'error)
-(test (symbol-access 'abs) #f)
+;(test (symbol-access 'abs) #f)
 (test (symbol-access 'xyzzy) #f)
 (test (set! (symbol-access _int_) '()) 'error)
 (test (set! (symbol-access _int_) '(#f)) 'error)
@@ -25024,11 +25052,12 @@ func
 	  (or (car access) ())
 	  ())))
 
+  ;; using s7-version here is bad -- all safe funcs share the same immutable accessor
   (test (symbol-plist 's7-version) ())
   (test (get 's7-version 'hiho) #f)
   (test (set! (get 's7-version 'hiho) 123) 123)
   (test (symbol-plist 's7-version) '((hiho . 123)))
-  (test (symbol-access 's7-version) '(((hiho . 123)) #f #f))
+;  (test (symbol-access 's7-version) '(((hiho . 123)) #f #f))
   (test (get 's7-version 'hiho) 123)
   (test (set! (get 's7-version 'hiho) 321) 321)
   (test (get 's7-version 'hiho) 321)
@@ -25468,57 +25497,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 			 (+ val caar))))) ; -105
 	   (caar '((30) 3)))) ; 30 + 19
       49)
-
-#|
-(let ((old+ +))
-  (let ((vals 
-	 (list (let ()
-		 (define a 32)
-		 (define p +)
-		 (define (f b) (+ a b))
-		 (set! a 1)
-		 (let ((t1 (f 2)))
-		   (set! + -)
-		   (let ((t2 (f 2)))
-		     (let ((t3 (equal? p +)))
-		       (list t1 t2 t3)))))
-	       
-	       ;; s7: (3 -1 #f) ; this is now (3 3 #f) which strikes me as correct
-	       ;; guile: (3 3 #f)
-	       
-	       (let ()
-		 (define a 32)
-		 (define p old+)
-		 (define (f b) (p a b))
-		 (set! a 1)
-		 (let ((t1 (f 2)))
-		   (set! p -)
-		   (let ((t2 (f 2)))
-		     (let ((t3 (equal? p old+)))
-		       (list t1 t2 t3)))))
-	       
-	       ;; s7 (3 -1 #t)
-	       ;; guile (3 -1 #t)
-	       )))
-    (set! + old+)
-    (test (car vals) (cadr vals))))
-|#
-
-(let ((old+ +))
-  (define (f x) (with-environment (initial-environment) (+ x 1)))
-  (set! + -)
-  (test (+ 1 1) 0)
-  (test (f 1) 2)
-  (set! + old+))
-
-(let ((old+ +))
-  (let ((f #f))
-    (let ((+ -))
-      (set! f (lambda (a) (+ 1 a))))
-    (test (f 2) -1)
-    (set! + *)
-    (test (f 2) -1)
-    (set! + old+)))
 
 (test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
 (test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32))) a)) 34)
@@ -69028,6 +69006,66 @@ etc
      (list 
       '* '+ '- '/ '< '= '> 'call-with-output-file 'round 'keyword? '<= '>= 'cdaaar 'cdaadr 'cdadar 'cdaddr 'cddaar 'cddadr 'cdddar 'cddddr 'make-rectangular 'truncate 'string->number 'remainder 'char-downcase 'char->integer 'zero? 'char<? 'char=? 'char>? 'char-ci<? 'char-ci=? 'char-ci>? 'close-input-port 'infinite? 'magnitude 'open-input-file 'string->list 'write-char 'abs 'car 'procedure? 'cdr 'ash 'cos 'gcd 'list->vector 'exp 'symbol->keyword 'lcm 'max 'write-byte 'inexact? 'min 'log 'tan 'sin 'list-ref 'string 'integer-decode-float 'list->string 'symbol 'vector->list 'imag-part 'vector-length 'char-ready? 'random-state->list 'with-output-to-file 'char-alphabetic? 'char-numeric? 'integer-length 'peek-char 'keyword->symbol 'vector? 'ceiling 'real-part 'gensym 'make-hash-table 'negative? 'char<=? 'char>=? 'char-ci<=? 'char-ci>=? 'string-append 'port-line-number 'numerator 'make-hash-table-iterator 'string->symbol 'make-random-state 'string-ci<? 'string-ci=? 'string-ci>? 'make-keyword 'integer->char 'exact? 'string-copy 'string<? 'string=? 'string>? 'vector-ref 'acos 'caar 'with-input-from-file 'cadr 'cdar 'cddr 'string-set! 'rationalize 'atan 'asin 'assq 'assv 'cosh 'expt 'continuation? 'nan? 'memq 'memv 'odd? 'load 'hash-table-iterator? 'read 'tanh 'sinh 'number? 'sqrt 'set-car! 'set-cdr! 'pair-line-number 'string-ci<=? 'char-upcase 'string-ci>=? 'macro? 'list-set! 'list-tail 'reverse! 'symbol->value 'complex? 'symbol->string 'make-vector 'positive? 'string? 'make-polar 'member 'string-fill! 'number->string 'make-list 'reverse 'rational? 'open-input-string 'hash-table-set! 'hash-table-ref 'logand 'hash-table-size 'logior 'lognot 'logbit? 'integer? 'make-string 'exact->inexact 'logxor 'string<=? 'string>=? 'vector-set! 'modulo 'vector-fill! 'acosh 'call-with-output-string 'get-output-string 'caaar 'caadr 'cadar 'caddr 'cdaar 'cdadr 'cddar 'boolean? 'cdddr 'char-upper-case? 'angle 'char? 'inexact->exact 'string-length 'atanh 'symbol? 'denominator 'asinh 'with-output-to-string 'assoc 'input-port? 'call-with-input-file 'fill! 'port-closed? 'newline 'provided? 'char-whitespace? 'random 'floor 'read-char 'vector-dimensions 'even? 'defined? 'read-byte 'output-port? 'substring 'string-ref 'provide 'read-line 'eval-string 'port-filename 'list? 'open-output-file 'quotient 'pair? 'call-with-input-string 'random-state? 'with-input-from-string 'real? 'char-lower-case? 'null? 'eof-object? 'hash-table? 'caaaar 'caaadr 'caadar 'caaddr 'cadaar 'cadadr 'caddar 'cadddr 'close-output-port)))
   )
+
+
+(test (let ((x (abs -1)) (sba abs)) (set! abs odd?) (let ((y (abs 1))) (set! abs sba) (list x y abs))) (list 1 #t abs))
+(test (let () (define (hi z) (abs z)) (let ((x (hi -1)) (sba abs)) (set! abs odd?) (let ((y (hi 1))) (set! abs sba) (list x y)))) (list 1 #t))
+(test (let () (define (hi z) (abs z)) (let ((x (hi -1)) (sba abs)) (set! abs (lambda (a b) (+ a b))) (let ((y (hi 1))) (set! abs sba) (list x y)))) 'error)
+(test (let () (define (hi) (let ((cond 3)) (set! cond 4) cond)) (hi)) 4)
+(test (let ((old+ +) (j 0)) (do ((i 0 (+ i 1))) ((or (< i -3) (> i 3))) (set! + -) (set! j (old+ j i))) (set! + old+) j) -6)
+
+#|
+(let ((old+ +))
+  (let ((vals 
+	 (list (let ()
+		 (define a 32)
+		 (define p +)
+		 (define (f b) (+ a b))
+		 (set! a 1)
+		 (let ((t1 (f 2)))
+		   (set! + -)
+		   (let ((t2 (f 2)))
+		     (let ((t3 (equal? p +)))
+		       (list t1 t2 t3)))))
+	       
+	       ;; s7: (3 -1 #f) ; this is now (3 3 #f) which strikes me as correct
+	       ;; guile: (3 3 #f)
+	       
+	       (let ()
+		 (define a 32)
+		 (define p old+)
+		 (define (f b) (p a b))
+		 (set! a 1)
+		 (let ((t1 (f 2)))
+		   (set! p -)
+		   (let ((t2 (f 2)))
+		     (let ((t3 (equal? p old+)))
+		       (list t1 t2 t3)))))
+	       
+	       ;; s7 (3 -1 #t)
+	       ;; guile (3 -1 #t)
+	       )))
+    (set! + old+)
+    (test (car vals) (cadr vals))))
+|#
+
+(let ((old+ +))
+  (define (f x) (with-environment (initial-environment) (+ x 1)))
+  (set! + -)
+  (test (+ 1 1) 0)
+  (test (f 1) 2)
+  (set! + old+))
+
+(let ((old+ +))
+  (let ((f #f))
+    (let ((+ -))
+      (set! f (lambda (a) (+ 1 a))))
+    (test (f 2) -1)
+    (set! + *)
+    (test (f 2) -1)
+    (set! + old+)))
+
+
 
 (format #t "~%;all done!~%")
 

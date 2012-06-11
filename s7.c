@@ -381,7 +381,7 @@ enum {OP_NO_OP,
       OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
       
 #if WITH_OPTIMIZATION
-      OP_SAFE_IF1, OP_SAFE_IF2,
+      OP_SAFE_IF1, OP_SAFE_IF2, OP_CATCH_1,
       OP_SAFE_OR_S, OP_SAFER_OR_S, OP_SAFER_OR_C, OP_SAFER_OR_CEQ,
       OP_SAFE_AND_S, OP_SAFE_CASE_S, OP_SAFER_OR_X, OP_SAFER_AND_X, OP_COND_SIMPLER,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_DOTIMES_C_C,
@@ -456,7 +456,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "and", "and", "and", "or", "or", "or", 
 
 #if WITH_OPTIMIZATION
-   "safe_if1", "safe_if2",
+   "safe_if1", "safe_if2", "catch_1",
    "safe_or_s", "safer_or_s", "safer_or_c", "safer_or_ceq",
    "safe_and_s", "safe_case_s", "safer_or_x", "safer_and_x", "cond_simpler",
    "simple_do", "simple_do_step", "dotimes", "dotimes_step", "simple_dotimes", "safe_do", "safe_do_step", "dotimes_c_c",
@@ -523,7 +523,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
   
 #if WITH_OPTIMIZATION
-  "OP_SAFE_IF1", "OP_SAFE_IF2",
+  "OP_SAFE_IF1", "OP_SAFE_IF2", "OP_CATCH_1",
   "OP_SAFE_OR_S", "OP_SAFER_OR_S", "OP_SAFER_OR_C", "OP_SAFER_OR_CEQ",
   "OP_SAFE_AND_S", "OP_SAFE_CASE_S", "OP_SAFER_OR_X", "OP_SAFER_AND_X", "OP_COND_SIMPLER",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_DOTIMES", "OP_DOTIMES_STEP", "OP_SIMPLE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_DOTIMES_C_C",
@@ -1345,7 +1345,8 @@ static void init_types(void)
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 13))
 #define set_optimized(p)              typeflag(p) |= T_OPTIMIZED
-#define is_optimized(p)               ((typeflag(p) & T_OPTIMIZED) != 0)
+static int t_optimized = T_OPTIMIZED;
+#define is_optimized(p)               ((typeflag(p) & t_optimized) != 0)
 #define clear_optimized(p)            typeflag(p) &= ~(T_OPTIMIZED)
 /* optimizer flag for an expression that has optimization info
  */
@@ -3242,7 +3243,7 @@ static void resize_op_stack(s7_scheme *sc)
 
 
 #define stack_code(Stack, Loc)        vector_element(Stack, Loc - 3)
-/* #define stack_environment(Stack, Loc) vector_element(Stack, Loc - 2) */
+#define stack_environment(Stack, Loc) vector_element(Stack, Loc - 2)
 #define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
 #define stack_op(Stack, Loc)          ((opcode_t)(vector_element(Stack, Loc)))
 
@@ -4056,11 +4057,11 @@ static s7_pointer g_open_environment(s7_scheme *sc, s7_pointer args)
   #define H_open_environment "(open-environment e) marks the environment 'e for special handling by generic functions and so on."
   s7_pointer e;
 
-  /* TODO: what about a c_object that has an environment? */
   e = car(args);
   if (((is_environment(e)) && (e != sc->global_env)) ||
       (is_closure(e)) ||
-      (is_closure_star(e)))
+      (is_closure_star(e)) ||
+      ((is_c_object(e)) && (object_environment(e) != sc->NIL)))
     {
       set_has_methods(e);
       return(e);
@@ -5307,19 +5308,19 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_exit "(call-with-exit func) is call/cc without the ability to jump back into a previous computation."
-  s7_pointer x;
+  s7_pointer p, x;
   
   /* (call-with-exit (lambda (return) ...)) */
-  
-  if (!is_procedure(car(args)))                              /* this includes continuations */
+  p = car(args);
+  if (!is_procedure(p))                           /* this includes continuations */
     {
-      CHECK_METHOD(sc, car(args), sc->CALL_WITH_EXIT, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->CALL_WITH_EXIT, car(args), A_PROCEDURE));
+      CHECK_METHOD(sc, p, sc->CALL_WITH_EXIT, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->CALL_WITH_EXIT, p, A_PROCEDURE));
     }
   x = make_goto(sc);
   push_stack(sc, OP_DEACTIVATE_GOTO, x, sc->NIL); /* this means call-with-exit is not tail-recursive */
-  push_stack(sc, OP_APPLY, cons_unchecked(sc, x, sc->NIL), car(args));
-  
+  push_stack(sc, OP_APPLY, cons_unchecked(sc, x, sc->NIL), p);
+
   /* if the lambda body calls the argument as a function, 
    *   it is applied to its arguments, apply notices that it is a goto, and...
    *   
@@ -18956,9 +18957,11 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
+  s7_pointer p;
+  p = cadr(args);
   port_original_input_string(port) = car(args);
   push_stack(sc, OP_UNWIND_INPUT, sc->input_port, port);
-  push_stack(sc, OP_APPLY, list_1(sc, port), cadr(args));
+  push_stack(sc, OP_APPLY, list_1(sc, port), p);
   return(sc->F);
 }
 
@@ -24950,6 +24953,25 @@ s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, 
 }
 
 
+#if WITH_OPTIMIZATION
+/* if (set! abs odd?) for example, and abs has been optimized into earlier functions,
+ *   we either have to turn off optimizing, or fixup the previous calls
+ */
+static int safe_function_accessor = -1;
+static s7_pointer g_safe_function_accessor(s7_scheme *sc, s7_pointer args)
+{
+  if (is_global(car(args)))
+    {
+#if DEBUGGING
+      fprintf(stderr, "%s so optimizer off\n", DISPLAY(args));
+#endif
+      t_optimized = 0;
+    }
+  return(cadr(args));
+}
+#endif
+
+
 s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func, sym;
@@ -24957,6 +24979,14 @@ s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function 
   typeflag(func) |= T_SAFE_PROCEDURE;
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, func);
+
+#if WITH_OPTIMIZATION
+  /* symbol_accessor(sym) = gc_protected location of a permanent list (#f set-safe #f)
+   *   set-safe sets t_optimized to 0 if val is not compatible with func, or func has chooser
+   *   else it resets c_function_call?? 
+   */
+  symbol_accessor(sym) = safe_function_accessor;
+#endif
   return(sym);
 }
 
@@ -26234,6 +26264,9 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 {
   if (symbol_has_accessor(symbol))
     {
+      if (is_immutable(s7_gc_protected_at(sc, symbol_accessor(symbol))))
+	return(funcs); /* PERHAPS: an error here? */
+
       s7_gc_unprotect_at(sc, symbol_accessor(symbol));
       symbol_accessor(symbol) = -1;
     }
@@ -28842,6 +28875,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	    }
 	  break;
 
+	case OP_CATCH_1:
 	case OP_CATCH:
 	  x = stack_code(sc->stack, i);
 	  if ((type == sc->T) ||
@@ -28853,7 +28887,18 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	      catcher = x;
 
 	      sc->args = list_2(sc, type, info);
-	      sc->code = catch_handler(catcher);
+
+	      /* if OP_CATCH_1, we deferred making the error handler until it is actually needed
+	       *    (let () (define (hi a) (catch #t (lambda () (+ 1 "asdf")) (lambda args (+ a 1)))) (hi 2))
+	       */
+	      if (op == OP_CATCH_1)
+		{
+		  s7_pointer y, z;
+		  z = catch_handler(catcher);
+		  MAKE_CLOSURE(sc, y, car(z), cdr(z), stack_environment(sc->stack, i));
+		  sc->code = y;
+		}
+	      else sc->code = catch_handler(catcher);
 	      loc = catch_goto_loc(catcher);
 	      sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(catcher));
 	      sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
@@ -34370,6 +34415,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		}
 	      else
 		{
+		  /* TODO: catch 3 syms? */
 		  if ((func_is_closure) &&
 		      (s7_list_length(sc, closure_args(func)) == 3) &&
 		      (symbols == 3))
@@ -34546,33 +34592,60 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	   *   first arg list must be (), second a symbol
 	   */
 
-	  if ((bad_pairs == 2) &&
-	      (symbols == 0) &&
-	      (quotes == 0) &&
-	      (func_is_c_function) &&
+	  /* TODO: handle 1st/2nd funcs as symbols (catch ... func error-handler)
+	   */
+	  if ((func_is_c_function) &&
 	      (c_function_call(func) == g_catch))
 	    {
-	      s7_pointer body_lambda, error_lambda;
-	      body_lambda = caddar(x);
-	      error_lambda = cadddar(x);
-
-	      if ((is_pair(body_lambda)) &&
-		  (is_lambda(sc, car(body_lambda))) &&
-		  (is_pair(error_lambda)) &&
-		  (is_lambda(sc, car(error_lambda))) &&
-		  (is_null(cadr(body_lambda))) &&
-		  (is_not_null(cddr(body_lambda))) &&
-		  (is_symbol(cadr(error_lambda))) &&
-		  (!is_immutable(cadr(error_lambda))) &&
-		  (is_not_null(cddr(error_lambda))))
+	      if (bad_pairs == 2)
 		{
-		  set_optimized(car(x));
-		  set_unsafe(car(x));
-		  set_optimize_data(car(x), OP_C_CATCH);
-		  set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
-		  return(false);
+		  s7_pointer body_lambda, error_lambda;
+		  body_lambda = caddar(x);
+		  error_lambda = cadddar(x);
+
+		  if ((is_pair(body_lambda)) &&
+		      (is_lambda(sc, car(body_lambda))) &&
+		      (is_pair(error_lambda)) &&
+		      (is_lambda(sc, car(error_lambda))) &&
+		      (is_null(cadr(body_lambda))) &&
+		      (is_not_null(cddr(body_lambda))) &&
+		      (is_symbol(cadr(error_lambda))) &&
+		      (!is_immutable(cadr(error_lambda))) &&
+		      (is_not_null(cddr(error_lambda))))
+		    {
+		      hop = 0;
+		      set_optimized(car(x));
+		      set_unsafe(car(x));
+		      set_optimize_data(car(x), OP_C_CATCH);
+		      set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
+		      return(false);
+		    }
+		}
+	      else
+		{
+		  if ((bad_pairs == 1) &&
+		      (is_symbol(caddar(x))))
+		    {
+		      s7_pointer error_lambda;
+		      error_lambda = cadddar(x);
+
+		      if ((is_pair(error_lambda)) &&
+			  (is_lambda(sc, car(error_lambda))) &&
+			  (is_symbol(cadr(error_lambda))) &&
+			  (!is_immutable(cadr(error_lambda))) &&
+			  (is_not_null(cddr(error_lambda))))
+			{
+			  hop = 0;
+			  set_optimized(car(x));
+			  set_unsafe(car(x));
+			  set_optimize_data(car(x), OP_C_CATCH);
+			  set_c_function(car(x), c_function_chooser(func)(sc, func, args, car(x)));
+			  return(false);
+			}
+		    }
 		}
 	    }
+		
 
 	  if (bad_pairs > quotes) return(false);
 
@@ -38757,7 +38830,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    push_stack(sc, OP_SORT1, sc->args, sc->code);
 	    sc->x = SORT_LESSP; /* cadr of sc->args */
-	    sc->args = list_2(sc, SORT_DATA(j), SORT_DATA(j + 1));
+	    sc->args = list_2(sc, SORT_DATA(j), SORT_DATA(j + 1)); 
 	    sc->code = sc->x;
 	    goto APPLY;
 	  }
@@ -38776,7 +38849,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_SORT2, sc->args, sc->code);
 	sc->x = SORT_LESSP;
-	sc->args = list_2(sc, SORT_DATA(k), SORT_DATA(j));
+	sc->args = list_2(sc, SORT_DATA(k), SORT_DATA(j)); 
 	sc->code = sc->x;
 	goto APPLY;
       }
@@ -44024,32 +44097,60 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_C_CATCH:
 		  if (!c_function_is_ok(sc, code))
 		    break;
-		  check_lambda_args(sc, cadr(caddr(code)));
+		  /* check_lambda_args(sc, cadr(caddr(code))); */
 		  check_lambda_args(sc, cadr(cadddr(code)));
 
 		case HOP_C_CATCH:
 		  {
-		    /* (catch #t (lambda () (set! ("hi") #\a)) (lambda args args)) */
-		    s7_pointer y, p, z, args;
-		    /* code is (catch #t (lambda () ....) (lambda args ....)) */
+		    /* (catch #t (lambda () (set! ("hi") #\a)) (lambda args args)) 
+		     *    code is (catch #t (lambda () ....) (lambda args ....))
+		     */
+		    s7_pointer p, e, f, body, args;
 
 		    args = cddr(code);
-		    if (!is_null(cadar(args)))
-		      return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), car(args), make_protected_string(sc, "a thunk")));
-		    
-		    z = cdadr(args);
-		    MAKE_CLOSURE(sc, y, car(z), cdr(z), sc->envir); /* this is the error handler */
+		    body = car(args);
+		    if (is_symbol(body))
+		      {
+			body = find_symbol_or_bust(sc, body);
+			/* now if body is not a lambda form, we have to cancel the optimization */
+			if (!is_closure(body))
+			  break;
+			if (!is_null(closure_args(body)))
+			  return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), body, make_protected_string(sc, "a thunk")));
+			e = closure_environment(body);
+			body = closure_body(body);
+		      }
+		    else
+		      {
+			if (!is_null(cadr(body)))
+			  return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), body, make_protected_string(sc, "a thunk")));
+			body = cddr(body);
+			e = sc->envir;
+		      }
 
-		    NEW_CELL_NO_CHECK(sc, p);
-		    catch_tag(p) = cadr(code);
+		    /* defer making the error lambda */
+		    /* z = cdadr(args); MAKE_CLOSURE(sc, y, car(z), cdr(z), sc->envir); */ 
+
+		    NEW_CELL(sc, p);                     /* the catch object sitting on the stack */
+
+		    /* check target */
+		    f = cadr(code);
+		    if (!is_pair(f))                     /* (catch #t ...) or (catch sym ...) */
+		      {
+			if (is_symbol(f))
+			  catch_tag(p) = find_symbol_or_bust(sc, f);
+			else catch_tag(p) = f;
+		      }
+		    else catch_tag(p) = cadr(f);         /* (catch 'sym ...) */
+
 		    catch_goto_loc(p) = s7_stack_top(sc);
 		    catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
-		    catch_handler(p) = y;
+		    catch_handler(p) = cdadr(args);      /* not yet a closure... */
 		    set_type(p, T_CATCH);
 
-		    push_stack(sc, OP_CATCH, code, p); /* code ignored here, except by GC */
-		    sc->code = cddar(args);
-		    NEW_FRAME(sc, sc->envir, sc->envir);
+		    push_stack(sc, OP_CATCH_1, code, p); /* code ignored here, except by GC */
+		    sc->code = body;
+		    NEW_FRAME(sc, e, sc->envir); 
 		    goto BEGIN;
 		  }
 
@@ -49102,6 +49203,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_BARRIER:
     case OP_CATCH:
+    case OP_CATCH_1:
       goto START;
 
 
@@ -54582,6 +54684,18 @@ s7_scheme *s7_init(void)
       else prepackaged_type_names[i] = sc->F;
     }
 
+#if WITH_OPTIMIZATION
+  {
+    s7_pointer lst;
+    lst = list_3(sc, sc->F,
+		 s7_make_function(sc, "(set safe-function)", g_safe_function_accessor, 2, 0, false, 
+				  "called if a global safe function is set"), 
+		 sc->F);
+    set_immutable(lst);
+    safe_function_accessor = s7_gc_protect(sc, lst);
+  }
+#endif
+
   sc->gc_off = false;
 
   sc->GENSYM = s7_define_safe_function(sc,            "gensym",                    g_gensym,                   0, 1, false, H_gensym);
@@ -55322,30 +55436,23 @@ s7_scheme *s7_init(void)
  * if not gmp, most-negative-fixnum as widest int rep has 20 bytes, so it fits in the rest of the number cell
  *   unique names also fit and char names
  *
- * catch closure?  why not a let() internally? same for for-each/map etc
- *   (define-macro (catch tag body err) `({ catch } ,tag (let () ,@(cddr body)) ,err))
  *   (case-catch ((tag handler) ...)
  *     body)
  *   (catch-case alist thunk)  ;; function form
  *   (with-catch (...) . body) ;; macro form
  *
- * why make the error handler closure in advance -- just save the pieces in case needed later
- *   in fact, why the catch object -- just a push and go
- *
  * since CLL, LL, LS, and L_opSq removed -- what optimizer choosers and blocks are no-ops besides for_each_3?
- * put CLL back but on the drect-catch line [op-simple-catch, no struct, deferred error lambda eval]
- * do examples in saved-args section
- * direct (temp-cell) for direct apply et al
- * memq->hash, find string in vector to hash
- * catch as if..then example
- * can more actual values be used during lambda building?
- * 
  *
+ * memq->hash
  * check for other direct_str possibilities
  * display/newline in block -- don't pop stack, just cdr(code), also set in block
+ *   catch (display (object->string...))
  *
  * all the atom_to_c_string cases could defer the copy_string
  * make-vector or vector with constant args?
+ *
+ * opt mark begin non-final pair T_BEGIN? after apply, or any GOTO START,
+ *   check for that flag and cdr(stack-code), get stack_env, goto EVAL_PAIR -- set to OP_BEGIN1?
  *
  * lint     13424 -> 1231 [1237] 1286 1326
  * bench    52019 -> 7875 [8268] 8037 8592
