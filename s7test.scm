@@ -13597,181 +13597,182 @@ this prints:
 (test (position-if even? #(1 3 5 2)) 3)
 (test (position-if > #(1 3 5 2) '(2 2 2 3)) 1)
 
-(test (let ((saved-args (make-vector 10))
-	    (i 0))
-	(for-each
-	 (lambda (arg)
-	   (set! (saved-args i) arg)
-	   (set! i (+ i 1)))
-	 (list 0 1 2 3 4 5 6 7 8 9))
-	(set! (saved-args 0) 32)
-	saved-args)
-      #(32 1 2 3 4 5 6 7 8 9))
-
-(test (let ((f #f))
-	(for-each
-	 (lambda (i)
-	   (let ()
-	     (define (x) i)
-	     (if (= i 1) (set! f x))))
-	 (list 0 1 2 3))
-	(f))
-      1)
-
-(test (let ((saved-args (make-vector 10))
-	    (i 0))
-	(for-each
-	 (lambda (arg)
-	   (set! (saved-args i) (lambda () arg))
-	   (set! i (+ i 1)))
-	 (list 0 1 2 3 4 5 6 7 8 9))
-	(let ((sum 0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 10) sum)
-	    (set! sum (+ sum ((saved-args i)))))))
-      45)
-
-(test (let ((saved-args (make-list 10))
-	    (i 0))
-	(for-each
-	 (lambda (arg)
-	   (list-set! saved-args i (lambda () arg))
-	   (set! i (+ i 1)))
-	 (list 0 1 2 3 4 5 6 7 8 9))
-	(let ((sum 0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 10) sum)
-	    (set! sum (+ sum ((saved-args i)))))))
-      45)
-
+(let ((summer (lambda (v)
+		(let ((sum 0))
+		  (do ((i 0 (+ i 1)))
+		      ((= i 10) sum)
+		    (set! sum (+ sum ((v i)))))))))
+		
+  (test (let ((saved-args (make-vector 10))
+	      (i 0))
+	  (for-each
+	   (lambda (arg)
+	     (set! (saved-args i) arg)
+	     (set! i (+ i 1)))
+	   (list 0 1 2 3 4 5 6 7 8 9))
+	  (set! (saved-args 0) 32)
+	  saved-args)
+	#(32 1 2 3 4 5 6 7 8 9))
+  
+  (test (let ((f #f))
+	  (for-each
+	   (lambda (i)
+	     (let ()
+	       (define (x) i)
+	       (if (= i 1) (set! f x))))
+	   (list 0 1 2 3))
+	  (f))
+	1)
+  
+  (test (let ((saved-args (make-vector 10))
+	      (i 0))
+	  (for-each
+	   (lambda (arg)
+	     (set! (saved-args i) (lambda () arg))
+	     (set! i (+ i 1)))
+	   (list 0 1 2 3 4 5 6 7 8 9))
+	  (summer saved-args))
+	45)
+  
+  (test (let ((saved-args (make-list 10))
+	      (i 0))
+	  (for-each
+	   (lambda (arg)
+	     (list-set! saved-args i (lambda () arg))
+	     (set! i (+ i 1)))
+	   (list 0 1 2 3 4 5 6 7 8 9))
+	  (summer saved-args))
+	45)
+  
 ;;; these are the same but use map
-(test (let ((saved-args (make-vector 10))
-	    (i 0))
-	(map
-	 (lambda (arg)
-	   (set! (saved-args i) arg)
-	   (set! i (+ i 1)))
-	 (list 0 1 2 3 4 5 6 7 8 9))
-	(set! (saved-args 0) 32)
-	saved-args)
-      #(32 1 2 3 4 5 6 7 8 9))
-
-(test (let ((f #f))
-	(map
-	 (lambda (i)
-	   (let ()
-	     (define (x) i)
-	     (if (= i 1) (set! f x))))
-	 (list 0 1 2 3))
-	(f))
-      1)
-
-(test (let ((saved-args (make-vector 10))
-	    (i 0))
-	(map
-	 (lambda (arg)
-	   (set! (saved-args i) (lambda () arg))
-	   (set! i (+ i 1)))
-	 (list 0 1 2 3 4 5 6 7 8 9))
-	(let ((sum 0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 10) sum)
-	    (set! sum (+ sum ((saved-args i)))))))
-      45)
-
-;; and again but with named let
-(test (let ((saved-args (make-vector 10)))
-	(let runner ((arg 0))
-	  (set! (saved-args arg) arg)
-	  (if (< arg 9)
-	      (runner (+ arg 1))))
-	(set! (saved-args 0) 32)
-	saved-args)
-      #(32 1 2 3 4 5 6 7 8 9))
-
-(test (let ((f #f))
-	(let runner ((i 0))
-	  (let ()
-	    (define (x) i)
-	    (if (= i 1) (set! f x))
-	    (if (< i 3)
-		(runner (+ i 1)))))
-	(f))
-      1)
-
-(test (let ((saved-args (make-vector 10)))
-	(let runner ((i 0))
-	  (set! (saved-args i) (lambda () i))
-	  (if (< i 9)
-	      (runner (+ i 1))))
-	(let ((sum 0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 10) sum)
-	    (set! sum (+ sum ((saved-args i)))))))
-      45)
-
-
+  (test (let ((saved-args (make-vector 10))
+	      (i 0))
+	  (map
+	   (lambda (arg)
+	     (set! (saved-args i) arg)
+	     (set! i (+ i 1)))
+	   (list 0 1 2 3 4 5 6 7 8 9))
+	  (set! (saved-args 0) 32)
+	  saved-args)
+	#(32 1 2 3 4 5 6 7 8 9))
+  
+  (test (let ((f #f))
+	  (map
+	   (lambda (i)
+	     (let ()
+	       (define (x) i)
+	       (if (= i 1) (set! f x))))
+	   (list 0 1 2 3))
+	  (f))
+	1)
+  
+  (test (let ((saved-args (make-vector 10))
+	      (i 0))
+	  (map
+	   (lambda (arg)
+	     (set! (saved-args i) (lambda () arg))
+	     (set! i (+ i 1)))
+	   (list 0 1 2 3 4 5 6 7 8 9))
+	  (summer saved-args))
+	45)
+  
+  ;; and again but with named let
+  (test (let ((saved-args (make-vector 10)))
+	  (let runner ((arg 0))
+	    (set! (saved-args arg) arg)
+	    (if (< arg 9)
+		(runner (+ arg 1))))
+	  (set! (saved-args 0) 32)
+	  saved-args)
+	#(32 1 2 3 4 5 6 7 8 9))
+  
+  (test (let ((f #f))
+	  (let runner ((i 0))
+	    (let ()
+	      (define (x) i)
+	      (if (= i 1) (set! f x))
+	      (if (< i 3)
+		  (runner (+ i 1)))))
+	  (f))
+	1)
+  
+  (test (let ((saved-args (make-vector 10)))
+	  (let runner ((i 0))
+	    (set! (saved-args i) (lambda () i))
+	    (if (< i 9)
+		(runner (+ i 1))))
+	  (summer saved-args))
+	45)
+  
+  
 ;;; and recursion
-(test (let ((saved-args (make-vector 10)))
-	(define (runner arg)
-	  (set! (saved-args arg) arg)
-	  (if (< arg 9)
-	      (runner (+ arg 1))))
-	(runner 0)
-	(set! (saved-args 0) 32)
-	saved-args)
-      #(32 1 2 3 4 5 6 7 8 9))
-
-(test (let ((f #f))
-	(define (runner i)
-	  (let ()
-	    (define (x) i)
-	    (if (= i 1) (set! f x))
-	    (if (< i 3)
-		(runner (+ i 1)))))
-	(runner 0)
-	(f))
-      1)
-
-(test (let ((saved-args (make-vector 10)))
-	(define (runner i)
-	  (set! (saved-args i) (lambda () i))
-	  (if (< i 9)
-	      (runner (+ i 1))))
-	(runner 0)
-	(let ((sum 0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 10) sum)
-	    (set! sum (+ sum ((saved-args i)))))))
-      45)
-
-
-;;; and member
-(test (let ((saved-args (make-vector 10)))
-	(member 'a '(0 1 2 3 4 5 6 7 8 9) 
-		(lambda (a b)
-		  (set! (saved-args b) (lambda () b))
-		  #f))
-	(let ((sum 0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 10) sum)
-	    (set! sum (+ sum ((saved-args i)))))))
-      45)
-
+  (test (let ((saved-args (make-vector 10)))
+	  (define (runner arg)
+	    (set! (saved-args arg) arg)
+	    (if (< arg 9)
+		(runner (+ arg 1))))
+	  (runner 0)
+	  (set! (saved-args 0) 32)
+	  saved-args)
+	#(32 1 2 3 4 5 6 7 8 9))
+  
+  (test (let ((f #f))
+	  (define (runner i)
+	    (let ()
+	      (define (x) i)
+	      (if (= i 1) (set! f x))
+	      (if (< i 3)
+		  (runner (+ i 1)))))
+	  (runner 0)
+	  (f))
+	1)
+  
+  (test (let ((saved-args (make-vector 10)))
+	  (define (runner i)
+	    (set! (saved-args i) (lambda () i))
+	    (if (< i 9)
+		(runner (+ i 1))))
+	  (runner 0)
+	  (summer saved-args))
+	45)
+  
+  
+;;; and member/assoc
+  (test (let ((saved-args (make-vector 10)))
+	  (member 'a '(0 1 2 3 4 5 6 7 8 9) 
+		  (lambda (a b)
+		    (set! (saved-args b) (lambda () b))
+		    #f))
+	  (summer saved-args))
+	45)
+  
+  (test (let ((saved-args (make-vector 10)))
+	  (assoc 'a '((0 b) (1 b) (2 b) (3 b) (4 b) (5 b) (6 b) (7 b) (8 b) (9 b))
+		 (lambda (a b)
+		   (set! (saved-args b) (lambda () b))
+		   #f))
+	  (summer saved-args))
+	45)
+  
+  (test (let ((saved-args (make-vector 10 #f)))
+	  (sort! '(3 2 1 4 6 5 9 8 7 0)
+		 (lambda (a b)
+		   (if (not (saved-args b))
+		       (set! (saved-args b) (lambda () b)))
+		   (< a b)))
+	  (summer saved-args))
+	45)
+  
 ;;; and do which has never worked in this way -- maybe soon!
-#|
-(test (let ((saved-args (make-vector 10)))
-	(do ((i 0 (+ i 1)))
-	    ((= i 10))
-	  (set! (saved-args i) (lambda () i)))
-	(let ((sum 0))
+#|  
+  (test (let ((saved-args (make-vector 10)))
 	  (do ((i 0 (+ i 1)))
-	      ((= i 10) sum)
-	    (set! sum (+ sum ((saved-args i)))))))
-      45)
+	      ((= i 10))
+	    (set! (saved-args i) (lambda () i)))
+	  (summer saved-args))
+	45)
 |#
-
-
+  )
 
 
 
@@ -69205,6 +69206,7 @@ c1 (unopt with printout) 574
 c2 (opt with printout)   265
 c3 (opt + err1)          259
 c4 (for-each)            256 [t455 changed before this]
+c6 (catch)               252
 
 (apply aritable? '2 8) -> #t
 (apply gensym "a\x00b") -> {a}-10 for unreadable gensym??

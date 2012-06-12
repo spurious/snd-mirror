@@ -4139,20 +4139,16 @@ map-with-exit would be
 Along the same lines:
 </p>
 <pre class="indented">
-(define-macro (catch-if test func err)
-  (let ((args (gensym)))
-    `(catch #t
-       ,func
-       (lambda ,args
-	 (if (,test (car ,args))
-	     (apply ,err ,args)
-	     (apply throw ,args)))))) ; if not caught, re-raise the same error
+(define (catch-if test func err)
+  (catch #t
+    func
+    (lambda args
+      (if (test (car args))
+	  (apply err args)
+	  (apply throw args))))) ; if not caught, re-raise the error
 
-(define-macro (catch-member lst func err)
-   `(catch-if (lambda (tag) (member tag ,lst)) ,func ,err))
-
-(define-macro (catch-while test fnc)
-  `(do () () (catch-if ,test ,fnc (lambda args #f))))
+(define (catch-member lst func err)
+  (catch-if (lambda (tag) (member tag lst)) func err))
 </pre>
 </div>
 

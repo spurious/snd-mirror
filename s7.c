@@ -1326,6 +1326,12 @@ static void init_types(void)
  *    on only for a very short time.
  */
 
+#define T_IN_BEGIN                    (1 << (TYPE_BITS + 9))
+#define is_in_begin(p)                ((typeflag(p) & T_IN_BEGIN) != 0)
+#define set_in_begin(p)               typeflag(p) |= T_IN_BEGIN
+/* this bit marks a form whose value is ignored -- it's in a begin block, and not the last
+ */
+
 #define T_KEYWORD                     (1 << (TYPE_BITS + 10))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
@@ -1423,8 +1429,8 @@ static int t_optimized = T_OPTIMIZED;
 /* using bit 23 for this makes a big difference in the GC
  */
 
-/* bit +9 is unused */
-#define UNUSED_BITS                   0x00020000
+/* #define UNUSED_BITS                   0x00020000 */
+#define UNUSED_BITS                    0
 
 #if DEBUGGING
 #define set_type(p, f) \
@@ -6879,12 +6885,12 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	x = s7_real(obj);
 
 	if (is_NaN(x))
-	  return(copy_string("nan.0"));
+	  return(copy_string_with_len("nan.0", 5));
 	if (isinf(x))
 	  {
 	    if (x < 0.0)
-	      return(copy_string("-inf.0"));    
-	    return(copy_string("inf.0"));    
+	      return(copy_string_with_len("-inf.0", 6));    
+	    return(copy_string_with_len("inf.0", 5));    
 	  }
 
 	if (x < 0.0)
@@ -19164,7 +19170,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(sc, obj, NO_ARTICLE),
 	   typeflag(obj),
@@ -19190,6 +19196,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_gensym(obj) ?             " gensym" : "",
 	   has_methods(obj) ?           " has methods" : "",
+	   is_in_begin(obj) ?           " in begin" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
   return(buf);
 }
@@ -19202,24 +19209,24 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     {
     case T_BOOLEAN:
       if (obj == sc->T)
-	return(copy_string("#t"));
-      return(copy_string("#f"));
+	return(copy_string_with_len("#t", 2));
+      return(copy_string_with_len("#f", 2));
 
     case T_NIL:
-      return(copy_string("()"));
+      return(copy_string_with_len("()", 2));
   
     case T_UNIQUE:
       if (obj == sc->EOF_OBJECT)
-	return(copy_string("#<eof>"));
+	return(copy_string_with_len("#<eof>", 6));
   
       if (obj == sc->UNDEFINED) 
-	return(copy_string("#<undefined>"));
+	return(copy_string_with_len("#<undefined>", 12));
   
       if ((is_unspecified(obj)) || (obj == sc->NO_VALUE))
-	return(copy_string("#<unspecified>"));
+	return(copy_string_with_len("#<unspecified>", 14));
 
       if (obj == sc->ELSE)
-	return(copy_string("else"));
+	return(copy_string_with_len("else", 4));
       break;
 
     case T_INPUT_PORT:
@@ -19312,7 +19319,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	}
       if (!use_write)
 	return(NULL);
-      return(copy_string("\"\""));
+      return(copy_string_with_len("\"\"", 2));
 
     case T_CHARACTER:
       if (!use_write) 
@@ -19326,9 +19333,9 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(copy_string(character_name(obj)));
 
     case T_MACRO:
-      return(copy_string("#<macro>"));
+      return(copy_string_with_len("#<macro>", 8));
     case T_BACRO:
-      return(copy_string("#<bacro>"));
+      return(copy_string_with_len("#<bacro>", 8));
   
     case T_CLOSURE:
     case T_CLOSURE_STAR:
@@ -19363,10 +19370,10 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       }
   
     case T_CONTINUATION:
-      return(copy_string("#<continuation>"));
+      return(copy_string_with_len("#<continuation>", 15));
   
     case T_GOTO:
-      return(copy_string("#<goto>"));
+      return(copy_string_with_len("#<goto>", 7));
   
     case T_CATCH:                        /* this can't happen */
       return(copy_string("#<catch>"));
@@ -19786,7 +19793,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
 	  snprintf(buf, 16, "#%dD()", vector_ndims(vect));
 	  return(buf);
 	}
-      else return(copy_string("#()"));
+      else return(copy_string_with_len("#()", 3));
     }
   
   if (!to_file)
@@ -19911,7 +19918,7 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 	{
 	  if (is_not_null(lst))
 	    len = circular_list_entries(lst);
-	  else return(copy_string("()"));
+	  else return(copy_string_with_len("()", 2));
 	}
       else len = true_len;
     }
@@ -21881,6 +21888,8 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 		      car(sc->T2_2) = caar(x);
 		      if (is_true(sc, (*func)(sc, sc->T2_1)))
 			return(car(x));
+		      /* I wonder if the assoc equality function should get the cons, not just caar?
+		       */
 		    }
 		  else return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), cadr(args), make_protected_string(sc, "an a-list")));
 		}
@@ -23127,9 +23136,11 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	return(out_of_range(sc, sc->VECTOR_SET, small_int(2), cadr(args), "should be between 0 and the vector length"));
 
       if (is_not_null(cdddr(args)))
-	return(g_vector_set(sc, cons(sc, vector_element(vec, index), cddr(args))));
-      /* TODO: this could be direct */
-
+	{
+	  car(sc->TEMP_CELL_1) = vector_element(vec, index);
+	  cdr(sc->TEMP_CELL_1) = cddr(args);
+	  return(g_vector_set(sc, sc->TEMP_CELL_1));
+	}
       val = caddr(args);
     }
   
@@ -26265,7 +26276,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
   if (symbol_has_accessor(symbol))
     {
       if (is_immutable(s7_gc_protected_at(sc, symbol_accessor(symbol))))
-	return(funcs); /* PERHAPS: an error here? */
+	return(funcs); 
 
       s7_gc_unprotect_at(sc, symbol_accessor(symbol));
       symbol_accessor(symbol) = -1;
@@ -34415,7 +34426,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		}
 	      else
 		{
-		  /* TODO: catch 3 syms? */
 		  if ((func_is_closure) &&
 		      (s7_list_length(sc, closure_args(func)) == 3) &&
 		      (symbols == 3))
@@ -34590,9 +34600,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
 	  /* (define (hi) (catch #t (lambda () 1) (lambda args 2))) 
 	   *   first arg list must be (), second a symbol
-	   */
-
-	  /* TODO: handle 1st/2nd funcs as symbols (catch ... func error-handler)
 	   */
 	  if ((func_is_c_function) &&
 	      (c_function_call(func) == g_catch))
@@ -38590,10 +38597,14 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
     case T_PAIR:                         /* (#((1 2) (3 4)) 1 0) -> 3, (#((1 (2 3))) 0 1 0) -> 2 */
       if (is_null(cdr(indices)))
 	return(list_ref_1(sc, obj, car(indices)));
-      return(g_list_ref(sc, cons(sc, obj, indices)));
+      car(sc->TEMP_CELL_1) = obj;
+      cdr(sc->TEMP_CELL_1) = indices;
+      return(g_list_ref(sc, sc->TEMP_CELL_1));
       
     case T_HASH_TABLE:                   /* ((vector (hash-table '(a . 1) '(b . 2))) 0 'a) -> 1 */
-      return(g_hash_table_ref(sc, cons(sc, obj, indices)));
+      car(sc->TEMP_CELL_1) = obj;
+      cdr(sc->TEMP_CELL_1) = indices;
+      return(g_hash_table_ref(sc, sc->TEMP_CELL_1));
       
     case T_C_OBJECT:                     /* ((vector (vct 1 2 3)) 0 2) -> 3.0 */
       return((*(object_ref(obj)))(sc, obj, indices));
@@ -39044,9 +39055,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    /* now call the function directly as in map above. 
 	     *    counter_environment does not need mark because it is sc->envir here
-	     * TODO: check named let export env [trec?]
-	     * TODO: hit other cases with this
-	     * TODO: all of this should be directly compatible with map
   	     */
 	    s7_pointer code;
 	    code = sc->code;
@@ -39084,12 +39092,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer code;
 	    code = sc->code;
-	    /* PERHAPS: wouldn't it be safe here (and above) to reuse this frame (ie don't allocate a new one each time), but
-	     *    make a new slot? REUSE_FRAME_AND_SLOT?
-	     *    if the frame is ticked, and the slot value set, how can this be equivalenced?
-	     * 
-	     * also to get here we make a closure -- why?
-	     */
 	    if (counter_length(sc->args) != sc->capture_env_counter)
 	      {
 		NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), car(args));  /* set function arg value */
@@ -54736,8 +54738,6 @@ s7_scheme *s7_init(void)
   sc->PORT_LINE_NUMBER = s7_define_safe_function(sc,  "port-line-number",          g_port_line_number,         0, 1, false, H_port_line_number);
   sc->PORT_FILENAME = s7_define_safe_function(sc,     "port-filename",             g_port_filename,            0, 1, false, H_port_filename);
   sc->PAIR_LINE_NUMBER = s7_define_safe_function(sc,  "pair-line-number",          g_pair_line_number,         1, 0, false, H_pair_line_number);
-  /* TODO: apparently pair-line-number is not in s7.html?
-   */
   
   sc->INPUT_PORTP = s7_define_safe_function(sc,       "input-port?",               g_is_input_port,            1, 0, false, H_is_input_port);
   sc->OUTPUT_PORTP = s7_define_safe_function(sc,      "output-port?",              g_is_output_port,           1, 0, false, H_is_output_port);
@@ -55425,7 +55425,6 @@ s7_scheme *s7_init(void)
 
 
 /* PERHAPS: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
- * these are currently scarcely ever used: SAFE_C_opQSq C_XDX
  * to be more consistent: *pi*, *most-negative|positive-fixnum*
  * s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
  *
@@ -55436,27 +55435,20 @@ s7_scheme *s7_init(void)
  * if not gmp, most-negative-fixnum as widest int rep has 20 bytes, so it fits in the rest of the number cell
  *   unique names also fit and char names
  *
- *   (case-catch ((tag handler) ...)
- *     body)
- *   (catch-case alist thunk)  ;; function form
- *   (with-catch (...) . body) ;; macro form
- *
- * since CLL, LL, LS, and L_opSq removed -- what optimizer choosers and blocks are no-ops besides for_each_3?
- *
- * memq->hash
- * check for other direct_str possibilities
  * display/newline in block -- don't pop stack, just cdr(code), also set in block
  *   catch (display (object->string...))
+ *   format as template
  *
  * all the atom_to_c_string cases could defer the copy_string
  * make-vector or vector with constant args?
  *
  * opt mark begin non-final pair T_BEGIN? after apply, or any GOTO START,
  *   check for that flag and cdr(stack-code), get stack_env, goto EVAL_PAIR -- set to OP_BEGIN1?
+ *   do this in the check_* sections?
  *
  * lint     13424 -> 1231 [1237] 1286 1326
  * bench    52019 -> 7875 [8268] 8037 8592
  * index    44300 -> 4988 [4992] 4235 4725
  * s7test            1721             1456
- * t455                           265  256
+ * t455                           265  256 252
  */

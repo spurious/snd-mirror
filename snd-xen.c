@@ -592,7 +592,7 @@ static char *gl_print(XEN result)
 #if HAVE_SCHEME
   /* expand \t first (neither gtk nor motif handles this automatically)
    *   but... "#\\t" is the character t not a tab indication!
-   *   (object->string #\t)
+   *   (object->string #\t) or worse #\tab
    */
   #define TAB_SPACES 4
   int tabs = 0, len, j = 0;
@@ -601,7 +601,7 @@ static char *gl_print(XEN result)
   len = mus_strlen(newbuf);
 
   for (i = 0; i < len - 1; i++)
-    if (((i == 0) || (newbuf[i - 1] != '\\')) && 
+    if (((i == 0) || ((newbuf[i - 1] != '\\') && (newbuf[i - 1] != '#'))) &&
 	(newbuf[i] == '\\') && 
 	(newbuf[i + 1] == 't'))
       tabs++;
