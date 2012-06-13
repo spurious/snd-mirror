@@ -1816,6 +1816,7 @@
   (define (f15 lst) (memq (car lst) '(a b c))) (test (f15 '(a)) '(a b c)) (test (f15 '(d)) #f)
   (define (f16 a b) (if a (begin (+ b a) (format #f "~A" a) (+ a a)))) (test (f16 1 2) 2)
   (define (f17 a) (aritable? a 1)) (test (f17 abs) #t)
+  (define (f18) (set! (-s7-symbol-table-locked?) #f)) (f18) (test (f18) #f)
   )
 	
 
@@ -69201,14 +69202,6 @@ in non-gmp,
 ;;; this shows what global funcs have been rebound at some time
 ;;; (with-environment (initial-environment) (format #t "~{~A ~}~%" (current-environment)))
 
-#|
-c1 (unopt with printout) 574
-c2 (opt with printout)   265
-c3 (opt + err1)          259
-c4 (for-each)            256 [t455 changed before this]
-c6 (catch)               252
+;;; (apply aritable? '2 8) -> #t
+;;; (apply gensym "a\x00b") -> {a}-10 for unreadable gensym??
 
-(apply aritable? '2 8) -> #t
-(apply gensym "a\x00b") -> {a}-10 for unreadable gensym??
-
-|#
