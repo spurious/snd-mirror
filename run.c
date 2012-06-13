@@ -282,7 +282,9 @@ static s7_pointer symbol_to_value(s7_pointer code, s7_pointer sym)
 	  s7_object_to_c_string(s7, s7_cdr(code)),
 	  s7_cdr(code));
   */
-  return(s7_symbol_local_value(s7, sym, s7_cdr(code)));
+  if (code != scheme_false)
+    return(s7_symbol_local_value(s7, sym, s7_cdr(code)));
+  return(s7_symbol_value(s7, sym));
 }
 
 static void symbol_set_value(s7_pointer code, s7_pointer sym, s7_pointer new_val)
@@ -16012,10 +16014,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 
       if ((s7_is_symbol(form)) &&
 	  (s7_is_constant(form)))
-	{
-	  /* fprintf(stderr, "constant form: %s, %s\n", s7_object_to_c_string(s7, form), s7_object_to_c_string(s7, s7_cdr(prog->code))); */
-	  form = s7_symbol_local_value(s7, form, s7_cdr(prog->code));
-	}
+	form = symbol_to_value(prog->code, form);
 
       type = mus_run_xen_to_run_type(form);
       /* fprintf(stderr, "line 15924 %s %s\n", s7_object_to_c_string(s7, form), type_name(type)); */

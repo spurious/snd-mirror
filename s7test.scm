@@ -1817,6 +1817,13 @@
   (define (f16 a b) (if a (begin (+ b a) (format #f "~A" a) (+ a a)))) (test (f16 1 2) 2)
   (define (f17 a) (aritable? a 1)) (test (f17 abs) #t)
   (define (f18) (set! (-s7-symbol-table-locked?) #f)) (f18) (test (f18) #f)
+  (define (f18a) (set! (-s7-symbol-table-locked?) #f)) (test (f18a) #f) (test (let () (f18a)) #f)
+  (define (f19) (set! (-s7-symbol-table-locked?) #f) 1) (f19) (test (f19) 1)
+  (define (f19a) (set! (-s7-symbol-table-locked?) #f) 1) (test (f19a) 1) (test (let () (f19a)) 1)
+  (define (f20) (set! (-s7-symbol-table-locked?) #f) (+ 1 2)) (f20) (test (f20) 3)
+  (define (f20a) (set! (-s7-symbol-table-locked?) #f) (+ 1 2)) (test (f20a) 3) (test (let () (f20a)) 3)
+  (define (f21) (set! (-s7-symbol-table-locked?) #f) (+ 1 2) 4) (f21) (test (f21) 4)
+  (define (f21a) (set! (-s7-symbol-table-locked?) #f) (+ 1 2) 4) (test (f21a) 4) (test (let () (f21a)) 4)
   )
 	
 
@@ -69198,9 +69205,6 @@ in non-gmp,
 				 (autotest val '() 0 3)))))))))
 	 lst)))))
 |#
-
-;;; this shows what global funcs have been rebound at some time
-;;; (with-environment (initial-environment) (format #t "~{~A ~}~%" (current-environment)))
 
 ;;; (apply aritable? '2 8) -> #t
 ;;; (apply gensym "a\x00b") -> {a}-10 for unreadable gensym??

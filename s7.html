@@ -2392,6 +2392,38 @@ its top-level bindings are imported into the current environment:
 </p>
 
 </div>
+
+<div class="indented">
+<p>Well, almost, darn it.  If the loaded library file sets (via set!) a global value
+such as abs, we need to put it back to its original form:
+</p>
+
+<pre>
+(define (safe-load file)
+  (let ((e (with-environment          ; save the environment before loading
+	       (initial-environment) 
+	     (environment-&gt;list (current-environment)))))
+    (<em class=red>load</em> file (current-environment))
+    (let ((new-e (with-environment    ; get the environment after loading
+		     (initial-environment) 
+		   (environment-&gt;list (current-environment)))))
+      (for-each                       ; see if any built-in functions were stepped on
+       (lambda (sym)
+	 (if (not (assoc (car sym) e))
+	     (begin
+	       (format #t "~S clobbered ~A~%" file (car sym))
+	       (apply set! (car sym) (list (cdr (assoc (car sym) new-e)))))))
+       new-e))))
+
+;; say libtest.scm has the line (set! abs odd?)
+
+&gt; (safe-load "libtest.scm")
+"libtest.scm" clobbered abs
+&gt; (abs -2)
+2
+</pre>
+</div>
+
 </blockquote>
 
 
