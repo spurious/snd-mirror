@@ -1824,6 +1824,7 @@
   (define (f20a) (set! (-s7-symbol-table-locked?) #f) (+ 1 2)) (test (f20a) 3) (test (let () (f20a)) 3)
   (define (f21) (set! (-s7-symbol-table-locked?) #f) (+ 1 2) 4) (f21) (test (f21) 4)
   (define (f21a) (set! (-s7-symbol-table-locked?) #f) (+ 1 2) 4) (test (f21a) 4) (test (let () (f21a)) 4)
+  (define (f22) (begin (display ":") (display (object->string 2)) (display ":"))) (test (with-output-to-string (lambda () (f22))) ":2:")
   )
 	
 
@@ -40669,6 +40670,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (ash most-positive-fixnum -2) 2305843009213693951)
 (test (ash most-positive-fixnum -62) 1)
 (test (ash (ash most-negative-fixnum -2) 2) most-negative-fixnum)
+;; (test (ash most-positive-fixnum 2) 'error) if not bignums?
 
 (do ((i 0 (+ i 1))) 
     ((= i 15)) 
@@ -40682,6 +40684,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (if with-bignums
     (begin
       (num-test (ash 1 48) 281474976710656)
+      (num-test (ash most-positive-fixnum 2) 36893488147419103228)
       (num-test (ash 281474976710656 -48) 1)
       (num-test (ash -100000000000000000000000000000000 -100) -79)
       ;; (floor (/ -100000000000000000000000000000000 (expt 2 100))) = -79
@@ -65804,6 +65807,24 @@ etc....
 (test (equal? 0.0 0.0+0e0123456789i) #t)
 (num-test 0.0 1e-1000)
 
+(num-test 0e123412341231231231231231231231231231 0.0)
+(num-test 0e-123412341231231231231231231231231231 0.0)
+(num-test 0.00000e123412341231231231231231231231231231 0.0)
+(num-test .0e-123412341231231231231231231231231231 0.0)
+(num-test 2e-123412341231231231231 0.0)
+(num-test 2e-123412341231231231231231231231231231 0.0)
+(num-test 2.001234e-123412341231231231231 0.0)
+(num-test .00122e-123412341231231231231231231231231231 0.0)
+(num-test 2e00000000000000000000000000000000000000001 20.0)
+(num-test 2e+00000000000000000000000000000000000000001 20.0)
+(num-test 2e-00000000000000000000000000000000000000001 0.2)
+
+(if (not with-bignums)
+    (begin
+      (test (infinite? 2e123412341231231231231) #t)
+      (test (infinite? 2e12341234123123123123123123) #t)
+      (test (infinite? 2e12341234123123123123213123123123) #t)))
+      
 (if (provided? 'dfls-exponents)
     (begin
       (test (> 1.0L10 1.0e9) #t)

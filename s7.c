@@ -3244,6 +3244,12 @@ static void resize_op_stack(s7_scheme *sc)
 #define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
 #define stack_op(Stack, Loc)          ((opcode_t)(vector_element(Stack, Loc)))
 
+#define main_stack_op(Sc)             ((opcode_t)(Sc->stack_end[-1]))
+#define main_stack_args(Sc)           (Sc->stack_end[-2]
+#define main_stack_environment(Sc)    (Sc->stack_end[-3])
+#define main_stack_code(Sc)           (Sc->stack_end[-4])
+#define pop_main_stack(Sc)            Sc->stack_end -= 4
+
 /* these macros are faster than the equivalent simple function calls.  If the s7_scheme struct is set up to reflect the
  *    stack order [code envir args op], we can use memcpy here: 
  *      #define pop_stack(Sc) do {Sc->stack_end -= 4; memcpy((void *)Sc, (void *)(Sc->stack_end), 4 * sizeof(s7_pointer));} while (0)
@@ -4250,6 +4256,10 @@ static s7_pointer g_environment_to_list(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, env, sc->ENVIRONMENT_TO_LIST, args);
       return(simple_wrong_type_argument_with_type(sc, sc->ENVIRONMENT_TO_LIST, env, AN_ENVIRONMENT));
     }
+  /*
+  if (main_stack_op(sc) == OP_BEGIN1)
+    return(sc->F);
+  */
   return(s7_environment_to_list(sc, env));
 }
 
@@ -7605,7 +7615,20 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	}
       while ((dig = digits[(int)(*str++)]) < 10) /* exponent itself is always base 10 */
 	exponent = dig + (exponent * 10);
-      if (exp_negative) exponent = -exponent;
+      
+      if (exponent < 0)         /* we overflowed, so make sure we notice it below (need to check for 0.0e... first) (Brian Damgaard) */
+	exponent = 1000000;     /*   see below for examples -- this number needs to be very big but not too big for add */
+      if (exp_negative) 
+	exponent = -exponent;
+
+      /*           2e12341234123123123123213123123123 -> 0.0
+       * but exp len is not the decider: 2e00000000000000000000000000000000000000001 -> 20.0
+       * 1st zero: 2e123412341231231231231
+       * then:     2e12341234123123123123123123 -> inf
+       * then:     2e123412341231231231231231231231231231 -> 0.0
+       *           2e-123412341231231231231 -> inf
+       * but:      0e123412341231231231231231231231231231
+       */
     }
 
 #if WITH_GMP
@@ -7647,7 +7670,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	  else break;
 	}
 
-      /* if the exponent is huge, check for 0 int_part and frac_part before complaining (0e1000 or 0.0e1000) */
+      /* if the exponent is huge, check for 0 int_part and frac_part before complaining (0e1000 or 0.0e1000) 
+       */
       if ((int_part == 0) &&
 	  (exponent > max_len))
 	{
@@ -16296,6 +16320,20 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 	return(s7_object_to_string(sc, car(args), s7_boolean(sc, cadr(args))));
       return(wrong_type_argument(sc, sc->OBJECT_TO_STRING, small_int(2), cadr(args), T_BOOLEAN));
     }
+
+  /* if (main_stack_op(sc) == OP_BEGIN1) return(sc->F)
+   * only safe if we are not being optimized: 
+   *      (define (hi) (begin (display ":") (display (object->string 2)) (newline))) -> ":#f"!
+   *   here cur_code: (display (object->string 2))
+   *        opt_name: h_safe_c_opcq
+   * so we'd need to check for OP_BEGIN1, then
+   *   is_optimized(sc->code), and !is_embedded[optimize_data(sc->code)]
+   *   and check all embeddings to make sure sc->code is trustworthy at the point of c_call
+   * which is getting ridiculous.
+   * and probably would be foolable anyway by the standard combination (OR_P etc).
+   * we need to know, I guess, that we're called by apply in the evaluator, or directly in the optimizer
+   */
+
   return(s7_object_to_string(sc, car(args), USE_WRITE));
 }
 
@@ -23270,7 +23308,10 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	    }
 	}
     }
-  
+  /*
+  if (main_stack_op(sc) == OP_BEGIN1)
+    return(sc->F);
+  */
   if (is_not_null(cdr(args))) 
     fill = cadr(args);
 
@@ -24194,7 +24235,10 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
     if ((!is_pair(car(x))) &&
 	(!is_null(car(x))))
       return(wrong_type_argument(sc, sc->HASH_TABLE, make_integer(sc, position_of(x, args)), car(x), T_PAIR));
-
+  /*
+  if (main_stack_op(sc) == OP_BEGIN1)
+    return(sc->F);
+  */
   ht = s7_make_hash_table(sc, (len > 512) ? 4095 : 511);
   if (len > 0)
     {
@@ -28246,9 +28290,11 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
    */
 
   if ((in_error_handler) ||
-      (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BEGIN1))
+      (main_stack_op(sc) == OP_BEGIN1)) /* (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BEGIN1)) or ((opcode_t)(sc->stack_end[-1])) */
     {
-      /* send output direct to port, return sc-F or something */
+      /* send output direct to port, return sc-F or something 
+       *   I think it is safe to check OP_BEGIN1 here because format is not a safe procedure (so not embedded in the optimization)
+       */
       if (out_loc != sc->F)
 	{
 	  msg = format_to_c_string(sc, in_str, args, NULL, in_error_handler, &str_len);
@@ -42390,13 +42436,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->T2_1) = val;
 		    c_call(code)(sc, sc->T2_1);
 
-		    sc->envir = sc->stack_end[-3];
-		    code = sc->stack_end[-4];
+		    sc->envir = main_stack_environment(sc); /* sc->stack_end[-3]; */
+		    code = main_stack_code(sc);             /* sc->stack_end[-4]; */
 		    sc->code =  car(code);
 
 		    if (is_null(cdr(code)))
-		      sc->stack_end -= 4;
-		    else sc->stack_end[-4] = cdr(code);
+		      pop_main_stack(sc);                 /* sc->stack_end -= 4; */
+		    else main_stack_code(sc) = cdr(code); /* sc->stack_end[-4] = cdr(code); */
 		    
 		    goto EVAL;
 		  }
@@ -45687,19 +45733,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = c_function_call(c_function_setter(obj))(sc, sc->T1_1);
 	  }
 	else return(eval_error(sc, "no generalized set for ~A", obj)); 
-
-	if ((opcode_t)(sc->stack_end[-1]) == OP_BEGIN1)
+#if 0
+	/* this doesn't quite work -- somehow I think a set is being embedded!
+	 */
+	if (main_stack_op(sc) == OP_BEGIN1)        /* ((opcode_t)(sc->stack_end[-1]) == OP_BEGIN1) */
 	  {
 	    s7_pointer code;
-	    code = sc->stack_end[-4];
+	    code = main_stack_code(sc); /* code = sc->stack_end[-4]; */
 	    sc->code =  car(code);
 
 	    if (is_null(cdr(code)))
-	      sc->stack_end -= 4;
-	    else sc->stack_end[-4] = cdr(code);
+	      pop_main_stack(sc);                 /* sc->stack_end -= 4; */
+	    else main_stack_code(sc) = cdr(code); /* sc->stack_end[-4] = cdr(code); */
 	    
 	    goto EVAL;
 	  }
+#endif
 	goto START;
       }
       
@@ -55530,15 +55579,8 @@ s7_scheme *s7_init(void)
  *
  * if not gmp, most-negative-fixnum as widest int rep has 20 bytes, so it fits in the rest of the number cell
  *
- * display/newline in block -- don't pop stack, just cdr(code), also set in block
- *   catch (display (object->string...))
- *   format as template, Line 34773
+ * format as template, Line 34773
  * all the atom_to_c_string cases could defer the copy_string
- *
- * opt mark begin non-final pair T_BEGIN? after apply, or any GOTO START,
- *   check for that flag and cdr(stack-code), get stack_env, goto EVAL_PAIR -- set to OP_BEGIN1?
- *   do this in the check_* sections?
- *   try this for set 1st + format?
  *
  * perhaps make the outer catch frame once (it has no slots) and store in somewhere (e|fcdr catch? -- is this safe?)
  *   on each call, clear the slots in case left over.
@@ -55547,12 +55589,13 @@ s7_scheme *s7_init(void)
  * any apply where we know the args fit and is c_function, just call it!
  *    that is any case where args are not pairs (no values) and is_aritable
  *
- * mag most-neg -> most neg!
- * ash most pos 2 etc -- test all of these!
+ * if begin1 don't allocate or run a long no-side-effect func -- currently in make-vector, hash-table, env->list
+ *   perhaps extend this to cop, make-*, *->list, *->string, etc
+ *   this is tricky -- see object_to_string for commentary
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1323
  * bench    52019 -> 7875 [8268] 8037 8592 8569
  * index    44300 -> 4988 [4992] 4235 4725 4691
  * s7test            1721             1456 1444
- * t455                           265  256  227
+ * t455                           265  256  223
  */

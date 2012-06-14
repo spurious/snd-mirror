@@ -3707,7 +3707,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    (s7_is_pair(s7_car(source)))) /* (lambda (y) 0.1) */
 	  {
 	    s7_pointer arg, body;
-	    body = s7_cdr(s7_cdr(s7_car(source)));
+	    body = s7_cddar(source);
 	    /* fprintf(stderr, "%s %s\n", s7_object_to_c_string(s7, source), s7_object_to_c_string(s7, body)); */
 	    
 	    /* look for (lambda (y) <constant>) */
@@ -3727,7 +3727,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		    s7_pointer sym, val;
 		    
 		    sym = s7_car(body);
-		    arg = s7_car(s7_cdr(s7_car(source)));
+		    arg = s7_cadr(s7_car(source));
 		    if ((s7_is_pair(arg)) &&
 			(sym == s7_car(arg)))
 		      goto TRY_RUN;
