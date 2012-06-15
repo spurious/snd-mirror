@@ -37988,13 +37988,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (make-rectangular arg 0.0) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) 0+i _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
-       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
-
-(for-each
- (lambda (arg)
+   (test (make-rectangular arg 0.0) 'error)
    (test (make-rectangular 0.0 arg) 'error)
+   (test (make-rectangular arg nan.0) 'error)
+   (test (make-rectangular nan.0 arg) 'error)
+   (test (make-rectangular arg inf.0) 'error)
+   (test (make-rectangular inf.0 arg) 'error)
    (test (make-rectangular 1 arg) 'error)
    (test (make-rectangular 1/2 arg) 'error)
    (test (make-rectangular 1+i arg) 'error))
@@ -38521,16 +38520,15 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (make-polar arg 0.0) 'error))
- (list "hi" '() (integer->char 65) #f #t 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
-       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
-
-(for-each
- (lambda (arg)
+   (test (make-polar arg 0.0) 'error)
    (test (make-polar 0.0 arg) 'error)
    (test (make-polar 1 arg) 'error)
    (test (make-polar 1/2 arg) 'error)
-   (test (make-polar 1+i arg) 'error))
+   (test (make-polar 1+i arg) 'error)
+   (test (make-polar arg nan.0) 'error)
+   (test (make-polar nan.0 arg) 'error)
+   (test (make-polar arg inf.0) 'error)
+   (test (make-polar inf.0 arg) 'error))
  (list "hi" '() (integer->char 65) #f #t 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
 
@@ -40081,6 +40079,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 
 
+
 ;;; --------------------------------------------------------------------------------
 ;;; logand
 ;;; --------------------------------------------------------------------------------
@@ -40938,9 +40937,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (truncate arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
-       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
-
+  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
+ 
 
 
 
@@ -42406,6 +42405,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (modulo arg nan.0) 'error)
+   (test (modulo nan.0 arg) 'error)
+   (test (modulo arg inf.0) 'error)
+   (test (modulo inf.0 arg) 'error)
    (test (modulo arg 2) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
@@ -42416,9 +42419,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
    (test (modulo 1/2 arg) 'error)
    (test (modulo 2.0 arg) 'error)
    (test (modulo 2+i arg) 'error))
- (list "hi" '() (integer->char 65) #f #t 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
+ (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
-
 
 
 
@@ -42863,6 +42865,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 ;;;  for 1e-14 however, there is no number of zeros that will work, but you can set precision to 1024
 ;;;  or you can spell it out: (quotient 0.0000000000001 0.00000000000000001) -> 10000
 
+;;;  (quotient 1e+18 3/4) -> 1333333333333333248
+;;;  which should be 333 at the end of course
+;;;  (quotient 1e+15 3/4) -> 1333333333333333
+
 (num-test (quotient 1e16 1e14) 100)
 
 (if with-bignums
@@ -42942,6 +42948,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (quotient arg nan.0) 'error)
+   (test (quotient nan.0 arg) 'error)
+   (test (quotient arg inf.0) 'error)
+   (test (quotient inf.0 arg) 'error)
    (test (quotient arg 2) 'error))
  (list "hi" '() (integer->char 65) #f #t 0+i '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
@@ -43483,6 +43493,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (remainder arg nan.0) 'error)
+   (test (remainder nan.0 arg) 'error)
+   (test (remainder arg inf.0) 'error)
+   (test (remainder inf.0 arg) 'error)
    (test (remainder arg 2) 'error))
  (list "hi" '() (integer->char 65) 0+i #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
@@ -44037,6 +44051,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (gcd arg nan.0) 'error)
+   (test (gcd nan.0 arg) 'error)
+   (test (gcd arg inf.0) 'error)
+   (test (gcd inf.0 arg) 'error)
    (test (gcd arg 2) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
@@ -45218,6 +45236,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (lcm arg nan.0) 'error)
+   (test (lcm nan.0 arg) 'error)
+   (test (lcm arg inf.0) 'error)
+   (test (lcm inf.0 arg) 'error)
    (test (lcm 2 arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
@@ -45771,6 +45793,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (rationalize arg nan.0) 'error)
+   (test (rationalize nan.0 arg) 'error)
+   (test (rationalize arg inf.0) 'error)
+   (test (rationalize inf.0 arg) 'error)
    (test (rationalize 0.1 arg) 'error)
    (test (rationalize 1 arg) 'error)
    (test (rationalize 1/2 arg) 'error)
@@ -46155,6 +46181,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (min arg nan.0) 'error)
+   (test (min nan.0 arg) 'error)
+   (test (min arg inf.0) 'error)
+   (test (min inf.0 arg) 'error)
    (test (min 0 arg) 'error)
    (test (min 0.0 arg) 'error)
    (test (min 1/2 arg) 'error)
@@ -46547,6 +46577,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (max arg nan.0) 'error)
+   (test (max nan.0 arg) 'error)
+   (test (max arg inf.0) 'error)
+   (test (max inf.0 arg) 'error)
    (test (max 0 arg) 'error)
    (test (max 0.0 arg) 'error)
    (test (max 1/2 arg) 'error)
@@ -46784,6 +46818,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (< arg nan.0) 'error)
+   (test (< nan.0 arg) 'error)
+   (test (< arg inf.0) 'error)
+   (test (< inf.0 arg) 'error)
    (test (< 1 0 arg) 'error)
    (test (< 1 arg) 'error)
    (test (< 1.0 arg) 'error)
@@ -47303,6 +47341,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (<= arg nan.0) 'error)
+   (test (<= nan.0 arg) 'error)
+   (test (<= arg inf.0) 'error)
+   (test (<= inf.0 arg) 'error)
    (test (<= 1 0 arg) 'error)
    (test (<= 1 arg) 'error)
    (test (<= 1.0 arg) 'error)
@@ -47906,6 +47948,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (= arg nan.0) 'error)
+   (test (= nan.0 arg) 'error)
+   (test (= arg inf.0) 'error)
+   (test (= inf.0 arg) 'error)
    (test (= 1 0 arg) 'error)
    (test (= 1 arg) 'error)
    (test (= 1.0 arg) 'error)
@@ -48398,6 +48444,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (> arg nan.0) 'error)
+   (test (> nan.0 arg) 'error)
+   (test (> arg inf.0) 'error)
+   (test (> inf.0 arg) 'error)
    (test (> 0 1 arg) 'error)
    (test (> 1 arg) 'error)
    (test (> 1/2 arg) 'error)
@@ -48691,6 +48741,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (>= arg nan.0) 'error)
+   (test (>= nan.0 arg) 'error)
+   (test (>= arg inf.0) 'error)
+   (test (>= inf.0 arg) 'error)
    (test (>= 0 1 arg) 'error)
    (test (>= 1 arg) 'error)
    (test (>= 1/2 arg) 'error)
@@ -52537,6 +52591,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (atan arg nan.0) 'error)
+   (test (atan nan.0 arg) 'error)
+   (test (atan arg inf.0) 'error)
+   (test (atan inf.0 arg) 'error)
    (test (atan 1 arg) 'error)
    (test (atan 1.0 arg) 'error)
    (test (atan 1/2 arg) 'error)
@@ -57991,12 +58049,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (log 10 arg) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
-       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
-
-(for-each
- (lambda (arg)
+   (test (log arg nan.0) 'error)
+   (test (log nan.0 arg) 'error)
+   (test (log arg inf.0) 'error)
+   (test (log inf.0 arg) 'error)
+   (test (log 10 arg) 'error)
    (test (log arg 10) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
@@ -59678,12 +59735,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (expt arg 2) 'error))
- (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
-       #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
-
-(for-each
- (lambda (arg)
+   (test (expt arg nan.0) 'error)
+   (test (expt nan.0 arg) 'error)
+   (test (expt arg inf.0) 'error)
+   (test (expt inf.0 arg) 'error)
+   (test (expt arg 2) 'error)
    (test (expt 2 arg) 'error))
  (list "hi" '() (integer->char 65) #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
@@ -61168,6 +61224,14 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
+   (test (* arg nan.0) 'error)
+   (test (* nan.0 arg) 'error)
+   (test (* arg inf.0) 'error)
+   (test (* inf.0 arg) 'error)
+   (test (* 0 arg nan.0) 'error)
+   (test (* 0 nan.0 arg) 'error)
+   (test (* 0 arg inf.0) 'error)
+   (test (* 0 inf.0 arg) 'error)
    (test (* 0 arg) 'error)
    (test (* 0.0 arg) 'error)
    (test (* 1 arg) 'error)
@@ -62641,6 +62705,10 @@ but it's the printout that is at fault:
 
 (for-each
  (lambda (arg)
+   (test (+ arg nan.0) 'error)
+   (test (+ nan.0 arg) 'error)
+   (test (+ arg inf.0) 'error)
+   (test (+ inf.0 arg) 'error)
    (test (+ arg) 'error)
    (test (+ 0 arg) 'error)
    (test (+ 0.0 arg) 'error)
@@ -63904,6 +63972,10 @@ but it's the printout that is at fault:
 
 (for-each
  (lambda (arg)
+   (test (- arg nan.0) 'error)
+   (test (- nan.0 arg) 'error)
+   (test (- arg inf.0) 'error)
+   (test (- inf.0 arg) 'error)
    (test (- arg) 'error)
    (test (- 1 arg) 'error)
    (test (- 1/2 arg) 'error)
@@ -64998,6 +65070,14 @@ but it's the printout that is at fault:
 
 (for-each
  (lambda (arg)
+   (test (/ arg nan.0) 'error)
+   (test (/ nan.0 arg) 'error)
+   (test (/ arg inf.0) 'error)
+   (test (/ inf.0 arg) 'error)
+   (test (/ 0 arg nan.0) 'error)
+   (test (/ nan.0 0 arg) 'error)
+   (test (/ arg inf.0 0) 'error)
+   (test (/ 0 inf.0 arg) 'error)
    (test (/ 0 arg) 'error)
    (test (/ 0.0 arg) 'error)
    (test (/ 1/2 arg) 'error)
@@ -65818,12 +65898,16 @@ etc....
 (num-test 2e00000000000000000000000000000000000000001 20.0)
 (num-test 2e+00000000000000000000000000000000000000001 20.0)
 (num-test 2e-00000000000000000000000000000000000000001 0.2)
+(num-test 2e-9223372036854775807 0.0)
+(num-test 2000.000e-9223372036854775807 0.0)
 
 (if (not with-bignums)
     (begin
       (test (infinite? 2e123412341231231231231) #t)
       (test (infinite? 2e12341234123123123123123123) #t)
-      (test (infinite? 2e12341234123123123123213123123123) #t)))
+      (test (infinite? 2e12341234123123123123213123123123) #t)
+      (test (infinite? 2e9223372036854775807) #t)
+      ))
       
 (if (provided? 'dfls-exponents)
     (begin
@@ -69229,4 +69313,20 @@ in non-gmp,
 
 ;;; (apply aritable? '2 8) -> #t
 ;;; (apply gensym "a\x00b") -> {a}-10 for unreadable gensym??
-
+;;; (apply string=? "a\x00b" "a\x00b" "a\x00b") -> #t
+;;; procedure-source of cons is () -- is this the default?
+;;; (expt 1e18 -63) -> 0.0
+;;; (apply expt 1+1i -63) -> 2.3283064365387e-10+2.3283064365387e-10i
+;;; check sqrt most-pos|neg
+;;; (make-polar nan <any>) -> nan?? <any> should generate an error
+;;; (apply angle 1+infi) -> 1.5707963267949
+;;; (apply apply cons #<undefined> (#<unspecified>)) -> (#<undefined> . #<unspecified>)
+;;;   :(apply apply cons #<undefined> (#<unspecified>))(
+;;;   ;attempt to apply the untyped #<unspecified> to ()?
+;;; :(make-polar 1/0 "j") ->  nan.0
+;;; :(apply cons #<undefined> ''(#<unspecified>))
+;;; ;cons: too many arguments: (#<undefined> quote (#<unspecified>))
+;;; :(apply cons ''(#<unspecified>))
+;;; '#<unspecified>
+;;; :(apply apply cons ''(#<unspecified>))
+;;; (quote . #<unspecified>)
