@@ -58745,6 +58745,10 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (expt 1e-15 1e100) 0.0)
 (num-test (expt 1e15 -1e1) 1e-150)
 (num-test (expt 1e15 1e1) 1e150)
+(num-test (expt 1e18 -3) 1e-54)
+(if (not with-bignums) (num-test (expt 1e18 -63) 0.0)) ; 1e-1134
+(num-test (expt 1+1i -63) 2.3283064365386962890625E-10+2.3283064365386962890625E-10i)
+(num-test (expt 1+1i -3) -0.25-0.25i)
 (num-test (expt 2 (real-part (log 0))) (expt 2.0 (real-part (log 0))))
 (num-test (expt 2 -0.0) 1.0)
 (num-test (expt 2 -0.00000001) 0.99999999306853)
@@ -69311,22 +69315,7 @@ in non-gmp,
 	 lst)))))
 |#
 
-;;; (apply aritable? '2 8) -> #t
-;;; (apply gensym "a\x00b") -> {a}-10 for unreadable gensym??
-;;; (apply string=? "a\x00b" "a\x00b" "a\x00b") -> #t
-;;; procedure-source of cons is () -- is this the default?
-;;; (expt 1e18 -63) -> 0.0
-;;; (apply expt 1+1i -63) -> 2.3283064365387e-10+2.3283064365387e-10i
-;;; check sqrt most-pos|neg
-;;; (make-polar nan <any>) -> nan?? <any> should generate an error
-;;; (apply angle 1+infi) -> 1.5707963267949
-;;; (apply apply cons #<undefined> (#<unspecified>)) -> (#<undefined> . #<unspecified>)
-;;;   :(apply apply cons #<undefined> (#<unspecified>))(
-;;;   ;attempt to apply the untyped #<unspecified> to ()?
-;;; :(make-polar 1/0 "j") ->  nan.0
-;;; :(apply cons #<undefined> ''(#<unspecified>))
-;;; ;cons: too many arguments: (#<undefined> quote (#<unspecified>))
-;;; :(apply cons ''(#<unspecified>))
-;;; '#<unspecified>
-;;; :(apply apply cons ''(#<unspecified>))
-;;; (quote . #<unspecified>)
+;;; (aritable? '2 8) -> #t
+;;; (gensym "a\x00b") -> {a}-10 for unreadable gensym??
+
+

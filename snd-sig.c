@@ -6562,7 +6562,14 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     day_counter = 0;
     local_best = (mus_float_t)n;
     increment = orig_incr;
-    
+
+    /* here to stay focussed,
+     *     for (k = 0; k < n; k++) choices[0]->phases[k] = initial_phases[k];
+     *     choices[0]->pk = get_peak(initial_phases);
+     *     for (start = 1; start < size; start++)
+     *     etc
+     * but this is not an improvement
+     */
     for (start = 0; start < size; start++)
       {
 	mus_float_t pk, local_pk = 100000.0;

@@ -4074,6 +4074,24 @@ send that info to the current-error-port.
 
 <blockquote>
 <div class="indented">
+<p>Normally when reading a file, we have to check for #&lt;eof&gt;, but we can let s7
+do that:
+</p>
+
+<pre>
+(define (copy-file infile outfile)
+  (call-with-output-file outfile
+    (lambda (out)
+      (call-with-input-file infile
+	(lambda (in)
+	  (<em class=red>catch</em> 'wrong-type-arg   ; s7 raises this error if write-char gets #&lt;eof&gt;
+	    (lambda () 
+	      (do () ()            ; read/write until #&lt;eof&gt;
+		(write-char (read-char in) out)))
+	    (lambda err 
+	      outfile)))))))
+</pre>
+
 <p>catch is not limited to error handling:
 </p>
 
