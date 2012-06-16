@@ -4080,10 +4080,10 @@ do that:
 
 <pre>
 (define (copy-file infile outfile)
-  (call-with-output-file outfile
-    (lambda (out)
-      (call-with-input-file infile
-	(lambda (in)
+  (call-with-input-file infile
+    (lambda (in)
+      (call-with-output-file outfile
+	(lambda (out)
 	  (<em class=red>catch</em> 'wrong-type-arg   ; s7 raises this error if write-char gets #&lt;eof&gt;
 	    (lambda () 
 	      (do () ()            ; read/write until #&lt;eof&gt;

@@ -14801,34 +14801,101 @@ in s7:
   (__c-func__ 3))
 
 ;;; more optimizer checks
-(let () (define (do-test-1) (do ((i 0 (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test-1))) "0123456789"))
-(let () (define (do-test-2) (do ((i 0 (+ 1 i))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test-2))) "0123456789"))
-(let ((start 0)) (define (do-test-3) (do ((i start (+ i 1))) ((= i 10)) (display i))) (test (with-output-to-string (lambda () (do-test-3))) "0123456789"))
-(let ((start 0) (end 10)) (define (do-test-4) (do ((i start (+ i 1))) ((= i end)) (display i))) (test (with-output-to-string (lambda () (do-test-4))) "0123456789"))
-(let ((start 0) (end 10)) (define (do-test-5) (do ((i start (+ i 1))) ((= end i)) (display i))) (test (with-output-to-string (lambda () (do-test-5))) "0123456789"))
-(let () (define (do-test-6) (do ((i 0 (+ i 1))) ((= i 10)) (let ((k i)) (display k)))) (test (with-output-to-string (lambda () (do-test-6))) "0123456789"))
-(let () (define (do-test-7) (do ((i 0 (+ i 2))) ((= i 20)) (display (/ i 2)))) (test (with-output-to-string (lambda () (do-test-7))) "0123456789"))
-(let () (define (do-test-8) (do ((i 0 (+ i 1))) ((= i 10)) (let ((a (+ 1 2))) (display #\0)))) (test (with-output-to-string (lambda () (do-test-8))) "0000000000"))
+(let () 
+  (define (do-test-1) (do ((i 0 (+ i 1))) ((= i 10)) (display i)))
+  (test (with-output-to-string (lambda () (do-test-1))) "0123456789"))
 
-(let () (define (do-test-9) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j i) (display j)))) (test (with-output-to-string (lambda () (do-test-9))) "0123456789"))
-(let () (define (do-test-10) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (display i)))) (test (with-output-to-string (lambda () (do-test-10))) "0123456789"))
-(let () (define (do-test-11) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j 32) (display i)))) (test (with-output-to-string (lambda () (do-test-11))) "0123456789"))
-(let () (define (do-test-12) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (display j)))) (test (with-output-to-string (lambda () (do-test-12))) "0123456789"))
-(let () (define (do-test-13) (do ((i 0 (+ i 1))) ((= i 5)) (let ((j (+ i 1))) (let ((i j)) (display (- i 1)))))) (test (with-output-to-string (lambda () (do-test-13))) "01234"))
+(let () 
+  (define (do-test-2) (do ((i 0 (+ 1 i))) ((= i 10)) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-2))) "0123456789"))
 
-(let () (define (do-test-14) (do ((i 0 (+ i 1))) ((= i 10)) (set! i (+ i 1)) (display i))) (test (with-output-to-string (lambda () (do-test-14))) "13579"))
-(let ((lst '())) (define (do-test-15) (do ((i 0 (+ i 1))) ((= i 10)) (set! lst (cons i lst))) lst) (test (do-test-15) '(9 8 7 6 5 4 3 2 1 0)))
-(let ((lst (list 9 8 7 6 5 4 3 2 1 0))) (define (do-test-16) (do ((i 0 (+ i 1))) ((= i 10)) (list-set! lst i i)) lst) (test (do-test-16) '(0 1 2 3 4 5 6 7 8 9)))
-(let ((lst '())) (define (do-test-17) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (set! lst (cons j lst)))) lst) (test (do-test-17) '(9 8 7 6 5 4 3 2 1 0)))
-(let () (define (do-test-18) (do ((i 0 (+ i 1)) (j 0)) ((= i 10) j) (if (= i 3) (set! j i)))) (test (do-test-18) 3))
+(let ((start 0)) 
+  (define (do-test-3) (do ((i start (+ i 1))) ((= i 10)) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-3))) "0123456789"))
 
-(let ((end 10)) (define (do-test-19) (do ((i 0 (+ i 1))) ((= i end)) (display i))) (test (with-output-to-string (lambda () (do-test-19))) "0123456789"))
-(let ((end 10)) (define (do-test-19A) (do ((i 0 (+ 1 i))) ((= end i)) (display i))) (test (with-output-to-string (lambda () (do-test-19A))) "0123456789"))
-(let ((end 10)) (define (do-test-20) (do ((i 0 (+ i 1))) ((= i end)) (set! end 8) (display i))) (test (with-output-to-string (lambda () (do-test-20))) "01234567"))
-(let ((end 10)) (define (do-test-20A) (do ((i 0 (+ 1 i))) ((= end i)) (set! end 8) (display i))) (test (with-output-to-string (lambda () (do-test-20A))) "01234567"))
+(let ((start 0) (end 10)) 
+  (define (do-test-4) (do ((i start (+ i 1))) ((= i end)) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-4))) "0123456789"))
 
-(let () (define (do-test-21) (do ((i 0 (+ i 1))) ((= i 3)) (with-environment (global-environment) (+ 1 2)))) (do-test-21))
-(let ((v (vector 0 0 0))) (define (hi a) (do ((i 0 (+ i 1))) ((> i a)) (vector-set! v i 1))) (hi 2) (test v (vector 1 1 1)))
+(let ((start 0) (end 10)) 
+  (define (do-test-5) (do ((i start (+ i 1))) ((= end i)) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-5))) "0123456789"))
+
+(let () 
+  (define (do-test-6) (do ((i 0 (+ i 1))) ((= i 10)) (let ((k i)) (display k)))) 
+  (test (with-output-to-string (lambda () (do-test-6))) "0123456789"))
+
+(let () 
+  (define (do-test-7) (do ((i 0 (+ i 2))) ((= i 20)) (display (/ i 2)))) 
+  (test (with-output-to-string (lambda () (do-test-7))) "0123456789"))
+
+(let () 
+  (define (do-test-8) (do ((i 0 (+ i 1))) ((= i 10)) (let ((a (+ 1 2))) (display #\0)))) 
+  (test (with-output-to-string (lambda () (do-test-8))) "0000000000"))
+
+(let () 
+  (define (do-test-9) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j i) (display j)))) 
+  (test (with-output-to-string (lambda () (do-test-9))) "0123456789"))
+
+(let () 
+  (define (do-test-10) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (display i)))) 
+  (test (with-output-to-string (lambda () (do-test-10))) "0123456789"))
+
+(let () 
+  (define (do-test-11) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j 0)) (set! j 32) (display i)))) 
+  (test (with-output-to-string (lambda () (do-test-11))) "0123456789"))
+
+(let ()
+  (define (do-test-12) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (display j)))) 
+  (test (with-output-to-string (lambda () (do-test-12))) "0123456789"))
+
+(let () 
+  (define (do-test-13) (do ((i 0 (+ i 1))) ((= i 5)) (let ((j (+ i 1))) (let ((i j)) (display (- i 1)))))) 
+  (test (with-output-to-string (lambda () (do-test-13))) "01234"))
+
+(let () 
+  (define (do-test-14) (do ((i 0 (+ i 1))) ((= i 10)) (set! i (+ i 1)) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-14))) "13579"))
+
+(let ((lst '()))
+  (define (do-test-15) (do ((i 0 (+ i 1))) ((= i 10)) (set! lst (cons i lst))) lst) 
+  (test (do-test-15) '(9 8 7 6 5 4 3 2 1 0)))
+
+(let ((lst (list 9 8 7 6 5 4 3 2 1 0))) 
+  (define (do-test-16) (do ((i 0 (+ i 1))) ((= i 10)) (list-set! lst i i)) lst) 
+  (test (do-test-16) '(0 1 2 3 4 5 6 7 8 9)))
+
+(let ((lst '())) 
+  (define (do-test-17) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (set! lst (cons j lst)))) lst) 
+  (test (do-test-17) '(9 8 7 6 5 4 3 2 1 0)))
+
+(let () 
+  (define (do-test-18) (do ((i 0 (+ i 1)) (j 0)) ((= i 10) j) (if (= i 3) (set! j i))))
+  (test (do-test-18) 3))
+
+(let ((end 10)) 
+  (define (do-test-19) (do ((i 0 (+ i 1))) ((= i end)) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-19))) "0123456789"))
+
+(let ((end 10)) 
+  (define (do-test-19A) (do ((i 0 (+ 1 i))) ((= end i)) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-19A))) "0123456789"))
+
+(let ((end 10)) 
+  (define (do-test-20) (do ((i 0 (+ i 1))) ((= i end)) (set! end 8) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-20))) "01234567"))
+
+(let ((end 10)) 
+  (define (do-test-20A) (do ((i 0 (+ 1 i))) ((= end i)) (set! end 8) (display i))) 
+  (test (with-output-to-string (lambda () (do-test-20A))) "01234567"))
+
+(let () 
+  (define (do-test-21) (do ((i 0 (+ i 1))) ((= i 3)) (with-environment (global-environment) (+ 1 2)))) 
+  (do-test-21))
+
+(let ((v (vector 0 0 0))) 
+  (define (hi a) (do ((i 0 (+ i 1))) ((> i a)) (vector-set! v i 1))) (hi 2) 
+  (test v (vector 1 1 1)))
 
 (let () ; dotimes_c_c case can't involve set so we use write-char
   (define (hi a) 
@@ -14842,6 +14909,41 @@ in s7:
 	       (lambda () 
 		 (read-line)))))
     (test str "aaa")))
+
+(let ()
+  (define (do-test-22) (do ((i 0 (+ i 1))) ((= i 10)) (display i)))
+  (test (with-output-to-string (lambda () (do-test-22))) "0123456789"))
+
+(let ((v (make-list 10)))
+  (define (do-test-23) (do ((i 0 (+ i 1))) ((= i 10)) (list-set! v i i)))
+  (do-test-23) 
+  (test v '(0 1 2 3 4 5 6 7 8 9)))
+
+;;; safe simple h_safe_c_s
+(let ()
+  (define (do-test-24) (do ((i 0 (+ i 1))) ((> i 10)) (display i)))
+  (test (with-output-to-string (lambda () (do-test-24))) "012345678910"))
+
+;;; safe simple h_safe_c_ss
+(let ()
+  (define (do-test-25 p) (do ((i 0 (+ i 1))) ((> i 10)) (display i p)))
+  (test (call-with-output-string (lambda (p) (do-test-25 p))) "012345678910"))
+
+;;; safe simple h_safe_c_c
+(let ()
+  (define (do-test-26) (do ((i 0 (+ i 1))) ((> i 10)) (display 0)))
+  (test (with-output-to-string (lambda () (do-test-26))) "00000000000"))
+
+;;; safe simple h_safe_c_opsq_s
+(let ()
+  (define (do-test-27 p) (do ((i 0 (+ i 1))) ((> i 10)) (display (- i) p)))
+  (test (call-with-output-string (lambda (p) (do-test-27 p))) "0-1-2-3-4-5-6-7-8-9-10"))
+
+(let ()
+  (define (do-test-22 i o) (catch #t (lambda () (do () () (write-char (read-char i) o))) (lambda err (get-output-string o))))
+  (test (call-with-output-string (lambda (out) (call-with-input-string "0123" (lambda (in) (do-test-22 in out))))) "0123"))
+
+
 
 
 
@@ -69184,8 +69286,9 @@ etc
     (set! + old+)))
 
 
-
-(format #t "~%;all done!~%")
+(if (provided? 'debugging)
+    (format #t "~%;all done! (debugging flag is on)~%")
+    (format #t "~%;all done!~%"))
 
 
 
