@@ -6740,6 +6740,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test ((#(#(1 2)) (#(1 0) 1)) (#(3 2 1 0) 2)) 2)
 (test (apply min (#(1 #\a (3)) (#(1 2) 1))) 3) ; i.e vector ref here 2 levels -- (#(1 2) 1) is 2 and (#(1 #\a (3)) 2) is (3) 
 
+(define global_vector (vector 1 2 3)) ; opt check
+(let ()
+  (define (hi i) (vector-ref global_vector i))
+  (test (hi 1) 2))
+(let ()
+  (define (hi i) (vector-ref global_vector (vector-ref global_vector i)))
+  (test (hi 0) 2))
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -9438,6 +9447,30 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (if (not (hash-table? ht))
 	(format #t ";can't find memo? ~A~%" (environment->list (outer-environment (procedure-environment f1))))
 	(test (length (map (lambda (x) x) ht)) 2))))
+
+(let ()
+  (define-macro (define-memoized name&args . body)
+    (let ((args (cdr name&args))
+	  (memo (gensym "memo")))
+      `(define ,(car name&args)
+	 (let ((,memo (make-hash-table)))
+	   (lambda ,args
+	     (or (,memo (list ,@args))
+		 (set! (,memo (list ,@args)) (begin ,@body))))))))
+
+  (define (ack m n)
+    (cond ((= m 0) (+ n 1))
+	  ((= n 0) (ack (- m 1) 1))
+	  (else (ack (- m 1) (ack m (- n 1))))))
+
+  (define-memoized (ack1 m n)
+    (cond ((= m 0) (+ n 1))
+	  ((= n 0) (ack1 (- m 1) 1))
+	  (else (ack1 (- m 1) 
+		      (ack1 m (- n 1))))))
+
+  (test (ack 2 3) (ack1 2 3)))
+
  
 (let ((ht (make-hash-table)))
   (test (eq? (car (catch #t (lambda () (set! (ht) 2)) (lambda args args))) 'wrong-number-of-args) #t)
@@ -11922,6 +11955,11 @@ a2" 3) "132")
 	 (lambda (p) (format p "hiho"))
 	 newline))
   (close-input-port hi))
+
+(let ((hi (open-output-file "tmp1.r5rs")))
+  (write-byte 1 hi)
+  (close-output-port hi)
+  (test (write-byte 1 hi) 'error))
 
 (let ((hi (open-output-string)))
   (for-each
@@ -16412,6 +16450,43 @@ in s7:
 		(* n (func-arg (- n 1)))))))
        5)
       120)
+
+;;; from a paper by Mayer Goldberg
+(let ()
+  (define curry-fps
+    (lambda fs
+      (let ((xs
+	     (map
+	      (lambda (fi)
+		(lambda xs
+		  (apply fi
+			 (map
+			  (lambda (xi)
+			    (lambda args
+			      (apply (apply xi xs) args)))
+			  xs))))
+	      fs)))
+	(map (lambda (xi)
+	       (apply xi xs)) xs))))
+  
+  (define E
+    (lambda (even? odd?)
+      (lambda (n)
+        (if (zero? n) #t ; return Boolean True
+            (odd? (- n 1))))))
+  
+  (define O
+    (lambda (even? odd?)
+      (lambda (n)
+        (if (zero? n) #f ; return Boolean False
+            (even? (- n 1))))))
+  
+  (define list-even?-odd? (curry-fps E O))
+  (define new-even? (car list-even?-odd?))
+  (define new-odd? (cadr list-even?-odd?))
+  
+  (test (new-even? 6) #t)
+  (test (new-odd? 6) #f))
 
 (let ()
   (define (Cholesky:decomp P)
@@ -48050,10 +48125,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 (for-each
  (lambda (arg)
-   (test (= arg nan.0) 'error)
-   (test (= nan.0 arg) 'error)
-   (test (= arg inf.0) 'error)
-   (test (= inf.0 arg) 'error)
+   (if (not with-bignums)
+       (begin
+	 (test (= arg nan.0) 'error)
+	 (test (= nan.0 arg) 'error)
+	 (test (= arg inf.0) 'error)
+	 (test (= inf.0 arg) 'error)))
    (test (= 1 0 arg) 'error)
    (test (= 1 arg) 'error)
    (test (= 1.0 arg) 'error)

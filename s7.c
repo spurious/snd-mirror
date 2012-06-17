@@ -3924,7 +3924,7 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
     }
   else 
     {
-      set_local(symbol);
+      set_local(symbol); 
 
       NEW_CELL(sc, slot);
       slot_symbol(slot) = symbol;
@@ -3962,7 +3962,10 @@ static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value)
 } 
 
 
+
+
 /* -------- initial-environment -------- */
+
 #define INITIAL_ENV_ENTRIES 400
 
 static void save_initial_environment(s7_scheme *sc)
@@ -4256,6 +4259,12 @@ new environment."
 
   return(s7_augment_environment(sc, e, cdr(args)));
 }
+
+
+/* augment-environment is, it turns out, not quite the right thing for method lists -- in that case
+ *   we don't want to redirect searchers from the global value which is still correct, or turn off
+ *   optimization (based on safe=global).
+ */
 
 
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
@@ -4559,6 +4568,8 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
   return(s7_symbol_value(sc, sym)); 
 }
 
+
+#define SYMBOL_TO_VALUE(Sc, Sym) ((is_global(Sym)) ? slot_value(global_slot(Sym)) : finder(Sc, Sym))
 
 static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
@@ -18704,8 +18715,6 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, port, sc->READ, args);
       return(simple_wrong_type_argument_with_type(sc, sc->READ, port, make_protected_string(sc, "an input port")));
     }
-  if (port_is_closed(port))
-    return(simple_wrong_type_argument_with_type(sc, sc->READ, port, make_protected_string(sc, "an open input port")));
 
   if (is_function_port(port))
     return((*(port_input_function(port)))(sc, S7_READ, port));
@@ -19282,9 +19291,6 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_gensym(obj) ?             " gensym" : "",
 	   has_methods(obj) ?           " has methods" : "",
-#if 0
-	   is_in_begin(obj) ?           " in begin" : "",
-#endif
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
   return(buf);
 }
@@ -20362,18 +20368,16 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, port, sc->WRITE_BYTE, args);
       return(wrong_type_argument_with_type(sc, sc->WRITE_BYTE, small_int(2), port, make_protected_string(sc, "an output file or function port")));
     }
-  /* TODO: the check port_is_closed is not needed here and above, I think
-   */
-  if (port_is_closed(port))
-    return(wrong_type_argument_with_type(sc, sc->WRITE_BYTE, small_int(2), port, make_protected_string(sc, "an open output port")));
 
   s7_write_char(sc, (int)(s7_integer(car(args))), port);
+
 #if 0
   /* this segfaults if port is *stdout* */
   if (is_file_port(port))
     file_write_char(sc, (unsigned char)s7_integer(car(args)), port);
   else (*(port_output_function(port)))(sc, (char)s7_integer(car(args)), port);
 #endif
+
   return(car(args));
 }
 
@@ -23160,7 +23164,7 @@ are the indices, or omit 'vector-ref': (v ...)."
 }
 
 #if WITH_OPTIMIZATION
-static s7_pointer vector_ref_ic, vector_ref_add1;
+static s7_pointer vector_ref_ic;
 static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer vec;
@@ -23183,6 +23187,80 @@ static s7_pointer g_vector_ref_ic(s7_scheme *sc, s7_pointer args)
   return(vector_element(vec, index));
 }
 
+static s7_pointer vector_ref_gs;
+static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, vec;
+  s7_Int index;
+
+  vec = SYMBOL_TO_VALUE(sc, car(args));
+  if (!s7_is_vector(vec))
+    {
+      CHECK_METHOD(sc, vec, sc->VECTOR_REF, args);
+      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
+    }
+
+  x = finder(sc, cadr(args));
+  if (!s7_is_integer(x))
+    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
+  index = s7_integer(x);
+  if ((index < 0) ||
+      (index >= vector_length(vec)))
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
+
+  if (vector_is_multidimensional(vec))
+    return(make_shared_vector(sc, vec, 1, index));
+
+  return(vector_element(vec, index));
+}
+
+/* this is marginal */
+static s7_pointer vector_ref_ggs;
+static s7_pointer g_vector_ref_ggs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, vec1, vec2;
+  s7_Int index;
+
+  vec1 = SYMBOL_TO_VALUE(sc, car(args));
+  if (!s7_is_vector(vec1))
+    {
+      CHECK_METHOD(sc, vec1, sc->VECTOR_REF, args);
+      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec1, T_VECTOR));
+    }
+
+  vec2 = SYMBOL_TO_VALUE(sc, cadr(cadr(args)));
+  if (!s7_is_vector(vec2))
+    {
+      CHECK_METHOD(sc, vec2, sc->VECTOR_REF, args);
+      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec2, T_VECTOR));
+    }
+
+  if (vector_is_multidimensional(vec2))
+    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec2, T_VECTOR));
+
+  x = finder(sc, caddr(cadr(args)));
+  if (!s7_is_integer(x))
+    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
+  index = s7_integer(x);
+  if ((index < 0) ||
+      (index >= vector_length(vec2)))
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
+
+  x = vector_element(vec2, index);
+  if (!s7_is_integer(x))
+    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), x, T_INTEGER));
+  index = s7_integer(x);
+  if ((index < 0) ||
+      (index >= vector_length(vec1)))
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), "should be between 0 and the vector length"));
+
+  if (vector_is_multidimensional(vec1))
+    return(make_shared_vector(sc, vec1, 1, index));
+
+  return(vector_element(vec1, index));
+}
+
+static s7_pointer vector_ref_add1;
 static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer vec, x, func = sc->UNDEFINED;
@@ -23883,7 +23961,10 @@ static int hash_loc(s7_scheme *sc, s7_pointer key)
       return(vector_length(key));
 
     case T_PAIR:
-      return(s7_list_length(sc, key));
+      loc = (int)s7_list_length(sc, key);
+      if (loc > 0)
+	return(loc + hash_loc(sc, car(key)));
+      return(0);
 
     default:
       break;
@@ -29676,8 +29757,6 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
 }
 
 
-#define SYMBOL_TO_VALUE(Sc, Sym) ((is_global(Sym)) ? slot_value(global_slot(Sym)) : finder(Sc, Sym))
-
 static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 {
   s7_pointer p;
@@ -32526,6 +32605,26 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	      return(vector_ref_ic);
 	    }
 
+	  if (is_global(cadr(expr)))
+	    {
+	      if (is_symbol(caddr(expr)))
+		{
+		  optimize_data(expr) = HOP_SAFE_C_C;
+		  return(vector_ref_gs);
+
+		  /* (define global_vector (vector 1 2 3))
+		   * (define (hi i) (vector-ref global_vector i))
+		   */
+		}
+	      if ((is_pair(caddr(expr))) &&
+		  (is_optimized(caddr(expr))) &&
+		  (c_call(caddr(expr)) == g_vector_ref_gs))
+		{
+		  optimize_data(expr) = HOP_SAFE_C_C;
+		  return(vector_ref_ggs);
+		}
+	    }
+
 	  if ((is_pair(caddr(expr))) &&
 	      (is_optimized(caddr(expr))) &&
 	      (c_call(caddr(expr)) == g_add_cs1))
@@ -33534,6 +33633,10 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(vector_ref_add1) = c_function_class(f);
   vector_ref_2 = s7_make_function(sc, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref optimization");
   c_function_class(vector_ref_2) = c_function_class(f);
+  vector_ref_gs = s7_make_function(sc, "vector-ref", g_vector_ref_gs, 2, 0, false, "vector-ref optimization");
+  c_function_class(vector_ref_gs) = c_function_class(f);
+  vector_ref_ggs = s7_make_function(sc, "vector-ref", g_vector_ref_ggs, 2, 0, false, "vector-ref optimization");
+  c_function_class(vector_ref_ggs) = c_function_class(f);
 
 
   /* vector-set! */
@@ -36133,19 +36236,6 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool a
 {
   s7_pointer p;
   /* fprintf(stderr, "b: %s %s %d\n", DISPLAY(func), DISPLAY_80(body), at_end); */
-#if 0
-  for (p = body; is_pair(p); p = cdr(p))
-    {
-      if ((is_pair(car(p))) &&
-	  (is_pair(cdr(p))) &&
-	  (is_pair(cadr(p))) &&
-	  (is_pair(cddr(p))))
-	{
-	  /* fprintf(stderr, "set begin: %s\n", DISPLAY(car(p))); */
-	  set_in_begin(cdar(p));
-	}
-    }
-#endif
   for (p = body; is_pair(p); p = cdr(p))
     {
       if ((is_pair(car(p))) &&
@@ -42612,15 +42702,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->T2_2) = finder(sc, cadr(args));
 		    car(sc->T2_1) = val;
 		    sc->value = c_call(code)(sc, sc->T2_1);
-		    /* counts[stack_op(sc->stack, s7_stack_top(sc) - 1)]++;  */
 #if TRY_STACK
 		    IF_BEGIN_POP_STACK(sc);
 #endif
 		    goto START; 
-		    /* al 6012910 OP_BEGIN1: 4460056
-		     *     actually write-char
-		     */
-
 		  }
 		  
 		case OP_SAFE_CONS_SS:
@@ -43398,6 +43483,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			sc->value = g_read(sc, list_1(sc, port));
 			goto START;
 		      }
+		    /* I guess this port_is_closed check is needed because we're going down a level below */
 		    if (port_is_closed(port))
 		      simple_wrong_type_argument_with_type(sc, sc->READ, port, make_protected_string(sc, "an open input port"));
 		    
@@ -48659,7 +48745,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T1_1) = c_call(args)(sc, sc->T1_1);
 		sc->value = c_call(code)(sc, sc->T1_1);
 		break;
-		
+
+	      case HOP_SAFE_C_C_opCq:
+		args = cdr(code);
+		car(sc->T2_2) = c_call(cadr(args))(sc, cdr(cadr(args))); /* any # of args */
+		car(sc->T2_1) = car(args);
+		sc->value = c_call(code)(sc, sc->T2_1);
+		break;
+
 	      case HOP_SAFE_C_opSq_opSq:
 		args = cdr(code);
 		car(sc->T1_1) = finder(sc, cadr(car(args)));
@@ -55794,15 +55887,8 @@ s7_scheme *s7_init(void)
  * get gmp to work again in the opt case
  * try to get safe-do lookup stuff into named let
  *
- * global recursive func of deterministic/no-side-effect innards, gets small int arg,
- *   T_MEMO_CLOSURE, int memo; after arity in func field, sweep in gc to unprotect
- *   make array indexed up to 100 or so of s7_pointers = result given int,
- *   if seen subsequently, and arr[i] != null, use it, else call and fill.
- *   how often does this happen in honest code?  Would need a bit to mark a candidate,
- *   and how to get at the result?
- *    in apply, check ((proc-env 'memo) . args), if #f, 
- *              push-op-stack vector-set, push args (append 'memo args), maybe push apply?
- *              call func -- upon its return it will set the vector and return its result
+ * can we save the port as a static var, if == on recall just go directly to the
+ *   associated IO proc?  It's a value not a variable, so how can this fail?
  *
  * case of char? (currently we have op_case_int which ought to jump!)
  *
@@ -55810,8 +55896,17 @@ s7_scheme *s7_init(void)
  *   format, make-vector, vector, make-string, string, make-list, make-hash-table, hash-table,
  *   environment->list, copy?, rationalize?, *->string, *->list
  *
- * lint     13424 -> 1231 [1237] 1286 1326 1310
+ * one case in the benchmarks: (display (list->string huge-ridiculous-list)) -- here s7
+ *   is slow because it is strcat'ing all those list elements
+ *   (display <structure>) or (display (*->string)) (display (object->string obj)) -- redundant?
+ *   (write... ) also.
+ * also these IO guys probably hit global ports very often, or no port arg->current-in|out
+ *
+ * TODO: fix the method list problem!   as it is now we lose all vector opts in Snd
+ *
+ * lint     13424 -> 1231 [1237] 1286 1326 1320
  * bench    52019 -> 7875 [8268] 8037 8592 8402
+ *   (new)                [8764]
  * index    44300 -> 4988 [4992] 4235 4725 4671
  * s7test            1721             1456 1430
  * t455                           265  256  219
