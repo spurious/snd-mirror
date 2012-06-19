@@ -491,7 +491,7 @@
      (if (not (eq? x y))
 	 (format #t ";(eq? x y) of ~A ~A -> #f?~%" x y))))
  ;; actually I hear that #f is ok here for numbers
- (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3/4 #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
 ;; this used to include 3.14 and 1+i but that means the (eq? x x) case differs from the (eq? 3.14 3.14) case
 
@@ -1663,7 +1663,7 @@
 	       most-negative-fixnum most-positive-fixnum 
 	       'a-symbol 
 	       (make-vector 3 #f) #() #2d((1 2) (3 4))
-	       abs quasiquote macroexpand 
+	       abs quasiquote macroexpand (log 0) 
 	       (hash-table '(a . 1) '(b . 2)) (hash-table)
 	       (augment-environment (current-environment) '(a . 1)) (global-environment)
 	       #f #t :hi 
@@ -1679,7 +1679,7 @@
 	       -9223372036854775808 9223372036854775807 
 	       (string->symbol "a-symbol")
 	       (vector #f #f #f) (vector)  #2d((1 2) (3 4))
-	       abs quasiquote macroexpand 
+	       abs quasiquote macroexpand (log 0) 
 	       (let ((h (make-hash-table 31))) (set! (h 'a) 1) (set! (h 'b) 2) h) (make-hash-table 123)
 	       (augment-environment (current-environment) '(a . 1)) (global-environment)
 	       #f #t :hi 
@@ -1749,7 +1749,7 @@
  (lambda (arg)
    (if (boolean? arg)
        (format #t ";(boolean? ~A) -> #t?~%" arg)))
- (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" '(1 2) (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi (if #f #f) #<eof> #<undefined>))
 
 (test (recompose 12 boolean? #f) #t)
@@ -1788,7 +1788,7 @@
  (lambda (arg)
    (if (not arg)
        (format #t ";(not ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) :hi #<eof> #<undefined> (if #f #f)))
 
 (test (recompose 12 not #f) #f)
@@ -1872,7 +1872,7 @@
  (lambda (arg)
    (if (symbol? arg)
        (format #t ";(symbol? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined>))
 
 (test (symbol?) 'error)
@@ -2011,7 +2011,7 @@
  (lambda (arg)
    (if (char? arg)
        (format #t ";(char? ~A) -> #t?~%" arg)))
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) :hi (lambda (a) (+ a 1))))
 
 (test (char? begin) #f)
@@ -2345,7 +2345,7 @@
      (for-each
       (lambda (arg)
 	(test (op arg) 'error))
-      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	    3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
    (list char-upper-case? char-lower-case? char-upcase char-downcase char-numeric? char-whitespace? char-alphabetic?))
 
@@ -2401,7 +2401,7 @@
      (for-each
       (lambda (arg)
 	(test (op #\a arg) 'error))
-      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	    3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
    (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
 
@@ -2410,7 +2410,7 @@
      (for-each
       (lambda (arg)
 	(test (op arg #\a) 'error))
-      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	    3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
    (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
 
@@ -2795,13 +2795,13 @@
 (for-each
  (lambda (arg)
    (test (char->integer arg) 'error))
- (list -1 1 0 123456789 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list -1 1 0 123456789 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (integer->char arg) 'error))
- (list -1 257 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list -1 257 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi most-positive-fixnum 1/0 (if #f #f) (lambda (a) (+ a 1))))
 
 (test (#\a) 'error)
@@ -2830,7 +2830,7 @@
 (for-each
  (lambda (arg)
    (test (string? arg) #f))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (string?) 'error)
@@ -2900,7 +2900,7 @@
  (lambda (arg)
    (test (string=? "hi" arg) 'error)
    (test (string=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -2975,7 +2975,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string<? "hi" arg) 'error)
    (test (string<? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3026,7 +3026,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string>? "hi" arg) 'error)
    (test (string>? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3075,7 +3075,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string<=? "hi" arg) 'error)
    (test (string<=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3127,7 +3127,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string>=? "hi" arg) 'error)
    (test (string>=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3165,7 +3165,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci=? "hi" arg) 'error)
    (test (string-ci=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3241,7 +3241,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci<? "hi" arg) 'error)
    (test (string-ci<? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3287,7 +3287,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci>? "hi" arg) 'error)
    (test (string-ci>? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3331,7 +3331,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci<=? "hi" arg) 'error)
    (test (string-ci<=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3377,7 +3377,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (string-ci>=? "hi" arg) 'error)
    (test (string-ci>=? arg "hi") 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3419,7 +3419,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string-length arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3432,7 +3432,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (string #\a arg) 'error)
    (test (string #\a #\null arg) 'error)
    (test (string arg) 'error))
- (list '() (list 1) '(1 . 2) "a" #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list '() (list 1) '(1 . 2) "a" #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (string) "")
@@ -3471,19 +3471,19 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (make-string 3 arg) 'error))
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (make-string arg #\a) 'error))
- (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (make-string arg) 'error))
- (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3517,13 +3517,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string-ref arg 0) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-ref "hiho" arg) 'error))
- (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test ("hi" 1) #\i)
@@ -3569,7 +3569,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string-copy arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (length (string-copy (string #\null))) 1)
@@ -3621,19 +3621,19 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string-set! arg 0 #\a) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-set! "hiho" arg #\a) 'error))
- (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-set! "hiho" 0 arg) 'error))
- (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (equal? (let ((str "hiho")) (string-set! str 2 #\null) str) "hi") #f)
@@ -3669,13 +3669,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (let ((hiho "hiho")) (string-fill! hiho arg) hiho) 'error))
- (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-fill! arg #\a) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3755,20 +3755,20 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (substring "hiho" arg 0) 'error))
- (list "hi" #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (substring "0123" arg) 'error)
    (test (substring "hiho" 1 arg) 'error))
- (list "hi" #\a -1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" #\a -1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (substring arg 1 2) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (define (substring? pattern target) ; taken from net somewhere (umich?) with changes for s7, see also snd-xen.c apropos definition
@@ -3889,7 +3889,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (string-append "hiho" arg) 'error)
    (test (string-append arg "hi") 'error)
    (test (string-append "a" "b" arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3997,7 +3997,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (string->list arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->string x)) 'error)
@@ -4007,7 +4007,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (list->string arg) 'error))
- (list "hi" #\a 1 ''foo '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" #\a 1 ''foo '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let ((str (list->string '(#\x #\space #\null #\x))))
@@ -4181,14 +4181,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (symbol->string arg) 'error))
- (list #\a 1 "hi" '() (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 "hi" '() (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string->symbol arg) 'error)
    (test (symbol arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
@@ -4231,14 +4231,14 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (lambda (arg)
      (set! sym arg)
      (test (symbol->value 'sym) arg))
-   (list #\a 1 '() (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand 
+   (list #\a 1 () (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
 	 3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1)))))
 
 (for-each
  (lambda (arg)
    (test (symbol->value arg) 'error)
    (test (symbol->value 'abs arg) 'error))
- (list #\a 1 '() (list 1) "hi" '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) "hi" '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1))))
   
 (test (symbol->value) 'error)
@@ -4390,7 +4390,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (if (not (equal? (car (cons arg '())) arg))
        (format #t ";(car '(~A)) returned ~A?~%" arg (car (cons arg '()))))
    (test (car arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (reinvert 12 car (lambda (a) (cons a '())) '(1)) '(1))
@@ -4428,7 +4428,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (if (not (equal? (cdr (cons '() arg)) arg))
        (format #t ";(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg))))
    (test (cdr arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let* ((a (list 1 2 3))
@@ -4859,7 +4859,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (length arg) 'error))
- (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand 
+ (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (length 'x) 'error)
@@ -4941,7 +4941,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (reverse arg) 'error))
- (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand 
+ (list (integer->char 65) #f 'a-symbol abs quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -4988,7 +4988,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (reverse! arg) 'error))
- (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t (if #f #f) #(1 2 3) "hiho" (lambda (a) (+ a 1))))
 
 
@@ -5036,7 +5036,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (if (pair? arg)
        (format #t ";(pair? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -5048,7 +5048,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (pair-line-number arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -5094,7 +5094,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (if (list? arg)
        (format #t ";(list? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -5145,7 +5145,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (if (null? arg)
        (format #t ";(null? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t (if #f #f) :hi #<eof> #<undefined> (values) (lambda (a) (+ a 1))))
 
 
@@ -5266,7 +5266,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (list-ref (list 1 arg) 1) arg))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 0)) 1)
@@ -5389,7 +5389,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
      (test (list-ref (list 1 2) arg) 'error)
      (test ((list 1 2) arg) 'error)
      (test (lst arg) 'error))
-   (list "hi" (integer->char 65) #f '(1 2) '() 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+   (list "hi" (integer->char 65) #f '(1 2) '() 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	 3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
 
 
@@ -5421,7 +5421,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (let ((x (list 1 2))) (list-set! x 0 arg) (list-ref x 0)) arg))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((L '((1 2 3) (4 5 6)))) (list-set! L 1 32) L) '((1 2 3) 32))
@@ -5511,7 +5511,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (list-set! (list 1 2) arg arg) 'error)
    (test (list-set! arg 1 2) 'error)
    (test (list-set! (list 1 2) arg 1) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -5610,7 +5610,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (test (list-tail (list 1 2) arg) 'error)
    (test (list-tail arg 0) 'error))
  (list "hi" -1 3 most-negative-fixnum most-positive-fixnum 
-       (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+       (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t (if #f #f) #<eof> #() #(1 2 3) (lambda (a) (+ a 1))))
 
 
@@ -6267,7 +6267,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	    (format #t ";(~A ~A) returned ~A?~%" op arg result))
 	(test (op arg '() arg) 'error)
 	(test (op arg) 'error)))
-    (list '() "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+    (list '() "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	  3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
        caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
@@ -6287,7 +6287,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (let ((result (catch #t (lambda () (op #f arg)) (lambda args 'error))))
 	(if (not (eq? result 'error))
 	    (format #t ";(~A #f ~A) returned ~A?~%" op arg result))))
-    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	  3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list assq assv assoc memq memv member))
 
@@ -6409,7 +6409,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector? arg) #f))
- (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (vector?) 'error)
@@ -6453,7 +6453,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-ref (make-vector 1 arg) 0) arg))
- (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand (log 0) 
        3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
 
 (test (make-vector) 'error)
@@ -6472,7 +6472,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (make-vector arg) 'error)
    (test (make-vector (list 2 arg)) 'error))
- (list #\a '() -1 #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list #\a () -1 #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
 
 (test (eval-string "#2147483649D()") 'error)
@@ -6504,7 +6504,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-ref (vector arg) 0) arg))
- (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand (log 0) 
        3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
 
 
@@ -6553,7 +6553,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector->list arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol "hi" abs _ht_ quasiquote macroexpand 
+ (list #\a 1 () (list 1) '(1 . 2) #f 'a-symbol "hi" abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->vector x)) 'error)
@@ -6565,7 +6565,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (list->vector arg) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -6591,7 +6591,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-length arg) 'error))
- (list "hi" #\a 1 '() '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list "hi" #\a 1 () '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -6658,7 +6658,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
      (test (vector-ref v arg) 'error)
      (test (vector-ref v arg 0) 'error)
      (test (vector-ref #2d((1 2) (3 4)) 0 arg) 'error))
-   (list "hi" '() #() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 
+   (list "hi" '() #() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1)) (make-hash-table))))
 
 
@@ -6761,7 +6761,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (lambda (arg)
      (vector-set! v 1 arg)
      (test (vector-ref v 1) arg))
-   (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 
+   (list #\a 1 () (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand (log 0) 
 	 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1)))))
 (test (let ((v (vector 1 2 3))) (vector-set! v 1 0) v) '#(1 0 3))
 (test (let ((v (vector #f))) (vector-set! v 0 (vector)) v) '#(#()))
@@ -6780,20 +6780,20 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-set! arg 0 0) 'error))
- (list "hi" '() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list "hi" '() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1)) (make-hash-table)))
 
 (let ((v (vector 1 2 3)))
   (for-each
    (lambda (arg)
      (test (vector-set! v arg 0) 'error))
-   (list "hi" '() #() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 
+   (list "hi" '() #() #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	 3.14 3/4 1.0+1.0i #t (make-vector 3) (lambda (a) (+ a 1)))))
 
 (for-each
  (lambda (arg)
    (test (vector-set! arg 0 0) 'error))
- (list "hi" '() #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list "hi" '() #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let ((v (vector)))
@@ -6894,7 +6894,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (lambda (arg)
      (vector-fill! v arg)
      (test (vector-ref v 1) arg))
-   (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand 
+   (list #\a 1 () (list 1) '(1 . 2) #f "hi" 'a-symbol abs _ht_ quasiquote macroexpand (log 0) 
 	 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1)))))
 
 (test (let ((str "hi") (v (make-vector 3))) (vector-fill! v str) (string-set! (vector-ref v 0) 1 #\a) str) "ha")
@@ -6915,7 +6915,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (vector-fill! arg 0) 'error))
- (list "hi" #\a '() 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list "hi" #\a '() 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (if with-bignums
@@ -7965,7 +7965,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	  (test (equal? l2 vect) #t)
 	  (test (equal? s2 lst) #t)))))
 
-(let* ((vals (list "hi" #\A 1 'a #(1) abs _ht_ quasiquote macroexpand 
+(let* ((vals (list "hi" #\A 1 'a #(1) abs _ht_ quasiquote macroexpand (log 0) 
 		   3.14 3/4 1.0+1.0i #\f '(1 . 2)))
        (vlen (length vals)))
   (do ((i 0 (+ i 1)))
@@ -9859,7 +9859,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (test (load arg) 'error)
    (test (load "empty-file" arg) 'error))
- (list '() (list 1) '(1 . 2) #f #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list '() (list 1) '(1 . 2) #f #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 (test (load) 'error)
 (test (load "empty-file" (current-environment) 1) 'error)
@@ -9967,7 +9967,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
  (lambda (arg)
    (if (eof-object? arg)
        (format #t ";(eof-object? ~A) -> #t?~%" arg)))
- (list "hi" '() '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" '() '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> (lambda (a) (+ a 1))))
 
 (for-each
@@ -9977,7 +9977,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 		     (lambda args 'error))))
      (if (not (eq? val 'error))
 	 (format #t ";(port-closed? ~A) -> ~S?~%" arg val))))
- (list "hi" '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" '(1 2) -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> #<eof> (lambda (a) (+ a 1))))
 
 (test (port-closed?) 'error)
@@ -10305,7 +10305,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (lambda (arg) ;(format #t ";(~A ~A)~%" op arg)
       (test (op arg) 'error))
     (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs lambda with-environment
-	  _ht_ quasiquote macroexpand 
+	  _ht_ quasiquote macroexpand 1/0 (log 0) 
 	  3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list char-ready? set-current-output-port set-current-input-port set-current-error-port
        close-input-port close-output-port open-input-file open-output-file
@@ -10524,7 +10524,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (directory? arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; file-exists?
@@ -10535,7 +10535,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (file-exists? arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; delete-file
@@ -10547,7 +10547,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (delete-file arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; getenv
@@ -10558,7 +10558,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (getenv arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; directory->list
@@ -10567,7 +10567,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (directory->list arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
       ;;; system
@@ -10577,7 +10577,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
       (for-each
        (lambda (arg)
 	 (test (system arg) 'error))
-       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+       (list -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
 	     3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
       
       ))
@@ -10587,7 +10587,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (for-each
  (lambda (arg)
    (test (char-ready? arg) 'error))
- (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -10628,7 +10628,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (lambda (arg)
       (test (format #f directive arg) 'error)
       (test (format #f directive) 'error))
-    (list "hi" #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand 
+    (list "hi" #\a 'a-symbol (make-vector 3) abs _ht_ quasiquote macroexpand
 	  #f #t :hi (if #f #f) (lambda (a) (+ a 1)))))
  (list "~D" "~F" "~G" "~X" "~B" "~O" "~E" "~P"))
 
@@ -12964,6 +12964,7 @@ this prints:
 (test (object->string #\tab) "#\\tab")
 (test (object->string #\null) "#\\null")
 (test (object->string #\space) "#\\space")
+(test (object->string (integer->char 8)) "#\\backspace")
 (test (object->string ''#\a) "'#\\a")
 (test (object->string (list 1 '.' 2)) "(1 .' 2)")
 (test (object->string (quote (quote))) "(quote)")
@@ -24594,7 +24595,7 @@ func
 	 (set-args (map (lambda (a g) `(list ',g ,a)) args gensyms))
 	 (get-args (map (lambda (a g) `(quote (cons ',a ,g))) args gensyms))
 	 (blocked-args (map (lambda (a) `(,a ',a)) args))
-	 (new-body (list (eval `(let (,@blocked-args) ,@body)))))
+	 (new-body (list (apply let blocked-args body))))
     `(define-macro ,name-and-args
        `(let ,(list ,@set-args)
 	  ,(list 'with-environment 
@@ -24602,6 +24603,11 @@ func
 			 (list (list 'procedure-environment ,name)) 
 			 (list ,@get-args))
 		 ',@new-body)))))
+
+;;; this is not perfect: if unquote is on expr involving an arg, it's going to be unhappy,
+;;;   but we can always move the unquote in, so it's purely stylistic.  Another way would
+;;;   be to remove one level of unquotes throughout -- then the blocked-args and new-body
+;;;   would be unneeded.
 
 (test (let ()
 	(define-clean-macro (hi a) `(+ ,a 1))
@@ -27053,14 +27059,14 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (fill! arg 1) 'error))
- (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (let ((str (string #\a #\b)))
      (test (fill! str arg) 'error)))
- (list "hi" '(1 2 3) #() #f 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list "hi" '(1 2 3) #() #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let ((c1 #f))
@@ -27127,7 +27133,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (for-each
  (lambda (arg)
    (test (gc arg) 'error))
- (list "hi" '(1 2 3) #() 'a-symbol abs _ht_ quasiquote macroexpand 
+ (list "hi" '(1 2 3) #() 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
        3.14 3/4 1.0+1.0i 1 '() "" :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (test (gc #f #t) 'error)

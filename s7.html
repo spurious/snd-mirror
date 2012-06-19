@@ -1229,8 +1229,7 @@ with the macro arguments getting their values from the call-time environment:
 	 (set-args (map (lambda (a g) `(list ',g ,a)) args gensyms))
 	 (get-args (map (lambda (a g) `(quote (cons ',a ,g))) args gensyms))
 	 (blocked-args (map (lambda (a) `(,a ',a)) args))        
-	 (new-body (list (eval `(let (,@blocked-args) ,@body)))))
-
+	 (new-body (list (apply let blocked-args body))))
     `(define-macro ,name-and-args
        `(let ,(list ,@set-args)
           ,(list 'with-environment 
@@ -2259,7 +2258,7 @@ To add or change a symbol's value, use augment-environment:
 just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
 use augment-environment!.  Both of these functions accept nil as the
-'env' argument as shorthand for (global-environment).
+'env' argument as shorthand for <code>(global-environment)</code>.
 </p>
 
 <blockquote>

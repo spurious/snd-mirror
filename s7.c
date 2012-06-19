@@ -591,6 +591,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_G, HOP_SAFE_C_ALL_G, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X,
 
       OP_SAFE_CAR_Q, HOP_SAFE_CAR_Q, OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CAR_OPT, HOP_SAFE_CAR_OPT, OP_SAFE_CAR_P, HOP_SAFE_CAR_P, 
+      OP_SAFE_WRITE_CHAR_SS, HOP_SAFE_WRITE_CHAR_SS,
       
       OP_SAFE_C_opCq, HOP_SAFE_C_opCq, OP_SAFE_C_opQq, HOP_SAFE_C_opQq, OP_SAFE_C_opSq, HOP_SAFE_C_opSq, 
       OP_SAFE_C_opSSq, HOP_SAFE_C_opSSq, OP_SAFE_C_opSCq, HOP_SAFE_C_opSCq, OP_SAFE_C_opSQq, HOP_SAFE_C_opSQq, 
@@ -681,7 +682,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_c_xxx", "h_safe_c_xxx", "safe_c_sss", "h_safe_c_sss",
      "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_g", "h_safe_c_all_g", "safe_c_all_x", "h_safe_c_all_x",
 
-      "safe_car_q", "h_safe_car_q", "safe_car_s", "h_safe_car_s", "safe_car_opt", "h_safe_car_opt", "safe_car_p", "h_safe_car_p", 
+     "safe_car_q", "h_safe_car_q", "safe_car_s", "h_safe_car_s", "safe_car_opt", "h_safe_car_opt", "safe_car_p", "h_safe_car_p", 
+     "op_safe_write_char_ss", "h_safe_write_char_ss",
 
      "safe_c_opcq", "h_safe_c_opcq", "safe_c_opqq", "h_safe_c_opqq", "safe_c_opsq", "h_safe_c_opsq", 
      "safe_c_opssq", "h_safe_c_opssq", "safe_c_opscq", "h_safe_c_opscq", "safe_c_opsqq", "h_safe_c_opsqq", 
@@ -19540,11 +19542,6 @@ static char *object_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write, b
 {
   /* we assume *free_it is always preset to true and nlen to 0
    */
-#if DEBUGGING
-  if (!(*free_it)) fprintf(stderr, "free_it is false?\n");
-  if ((*nlen) != 0) fprintf(stderr, "nlen: %d\n", (*nlen));
-#endif
-
   if (has_structure(obj))
     {
       if (s7_is_vector(obj))
@@ -20279,18 +20276,24 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
  */
 
 
-static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
+static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
 {
   char *val;
   bool free_it = true;
   shared_info *ci = NULL;
   int nlen = 0;
 
+  if (port_is_closed(port))
+    return(s7_wrong_type_arg_error(sc, (use_write) ? "write" : "display", 2, port, "an open input port"));
+
   if (has_structure(obj))
     ci = make_shared_info(sc, obj);
   val = object_to_c_string_with_circle_check(sc, obj, use_write, is_file_port(port), ci, &free_it, &nlen);
-  port_display(port)(sc, val, port); /* this can raise an error if port closed, so a memory leak -- should we check? */
+
+  port_display(port)(sc, val, port); 
+
   if ((free_it) && (val)) free(val);
+  return(obj);
 }
 
 
@@ -20328,7 +20331,7 @@ void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 
 static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 {
-  #define H_display "(display str (port (current-output-port))) writes str (a string) to the output port"
+  #define H_display "(display obj (port (current-output-port))) prints obj"
   s7_pointer port;
   
   if (is_pair(cdr(args)))
@@ -27536,13 +27539,13 @@ list has infinite length."
       return(small_int(0));
 
     case T_VECTOR:
-      return(g_vector_length(sc, args));
+      return(make_integer(sc, vector_length(lst)));
 
     case T_STRING:
-      return(g_string_length(sc, args));
+      return(make_integer(sc, string_length(lst)));
 
     case T_HASH_TABLE:
-      return(g_hash_table_size(sc, args));
+      return(make_integer(sc, hash_table_length(lst)));
 
     case T_C_OBJECT:
       return(object_length(sc, lst));
@@ -27773,7 +27776,7 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
   switch (type(p))
     {
     case T_STRING:
-      return(g_string_fill(sc, args));
+      return(g_string_fill(sc, args)); /* redundant type check here and below */
 
     case T_HASH_TABLE:
       if (is_not_null(cadr(args)))
@@ -32374,6 +32377,21 @@ static s7_pointer car_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
   return(f);
 }
 
+
+static s7_pointer write_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+#if 0
+  if (is_optimized(expr))
+    {
+      if ((is_symbol(cadr(expr))) &&
+	  (is_symbol(caddr(expr))))
+	set_optimize_op(expr, HOP_SAFE_WRITE_CHAR_SS);
+    }
+#endif
+  return(f);
+}
+
+
 static s7_pointer is_symbol_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((is_symbol(cadr(expr))) &&
@@ -33706,6 +33724,11 @@ static void init_choosers(s7_scheme *sc)
   /* car */
   f = slot_value(global_slot(sc->CAR));
   c_function_chooser(f) = car_chooser;
+
+
+  /* write-char */
+  f = slot_value(global_slot(sc->WRITE_CHAR));
+  c_function_chooser(f) = write_char_chooser;
 
 
   /* not */
@@ -42738,12 +42761,45 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = cadr(sc->code);
 		  goto EVAL_PAIR;
 
+		  /* -------------------------------- */
+
+
+		case OP_SAFE_WRITE_CHAR_SS:
+		case HOP_SAFE_WRITE_CHAR_SS:
+		  {
+		    /* TODO: this is cheating -- I just want to check some timings... the global case does matter
+		     *   add error checks and so on.
+		     */
+		    s7_pointer args, pt;
+		    args = cdr(code);
+		    sc->value = finder(sc, car(args));
+		    pt = SYMBOL_TO_VALUE(sc, cadr(args));
+		    port_write_character(pt)(sc, character(sc->value), pt);
+#if TRY_STACK
+		    IF_BEGIN_POP_STACK(sc);
+#endif
+		    goto START; 
+		  }
+		  
+
 #if 0
-		  /* no overhead write-char? 
+		  /* lazy case:
+		case OP_MAKE_VECTOR_S:
+		  get len and other args (S SS SP etc)
+		    because arg eval might have side effect,
+		    then 
+		  IF_BEGIN_POP_STACK(sc);
+		  if we get here, we aren't in begin -- try this!
+
+		OP_MAKE_VECTOR_1:
+		  if len not int or list, method check
+		  if len<0 or too big range error
+		  make vector
+		    
+		   no overhead write-char? 
 		   *  -- needs 4 base points (8 case labels), (or + 2 if both symbols case)
 		   *           2 return points for eval
 		   *           2 eval labels
-		   * bad side: not combinable unless these label mascarade as C_SS etc?
 		   * 1st arg can be C S X, 2nd X S N G [ignoring CG and SG that leaves 10 = 20 ops]
 		   *
 
@@ -43598,7 +43654,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		  
 		case HOP_APPLY_SS:
-		  sc->code = finder(sc, cadr(code));
+		  sc->code = finder(sc, cadr(code)); /* TODO: global search here */
 		  sc->args = finder(sc, caddr(code));
 		  if (!is_null(sc->args))
 		    {
@@ -47836,6 +47892,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START_WITHOUT_POP_STACK;
       }
 
+      /* TODO: this is cheating -- remove? 
+       */
     case OP_LET_READ_CHAR_P:
       {
 	s7_pointer port, code, fc, c;
@@ -55869,21 +55927,21 @@ s7_scheme *s7_init(void)
  * format as template or lazy function (also make-* and (struct...)
  *   format, make-vector, vector, make-string, string, make-list, make-hash-table, hash-table,
  *   environment->list, copy?, rationalize?, *->string, *->list
- *
- * one case in the benchmarks: (display (list->string huge-ridiculous-list)) -- here s7
- *   is slow because it is strcat'ing all those list elements
- *   (display <structure>) or (display (*->string)) (display (object->string obj)) -- redundant?
- *   (write... ) also.
- * also these IO guys probably hit global ports very often, or no port arg->current-in|out
+ *   These are easy now!  
  *
  * does #_xxx get optimized? no.
+ *   lg: cdr hash-table-ref length pair? not | cons member eval call-with-exit
+ *   index:  vector-ref char=? string? pair? | string-append string-set! substring vector-set
+ *   bench:  write-char car not cons cdr null? | vector-set 
+ *   t455:   aritable? positive? format 
+ *   actually we want overheads here, not calls
  *
- * TODO: fix the method list problem!   as it is now we lose all vector opts in Snd
+ * TODO: fix the method list problem! as it is now we lose all vector opts in Snd
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320
  * bench    52019 -> 7875 [8268] 8037 8592 8402
  *   (new)                [8764]
  * index    44300 -> 4988 [4992] 4235 4725 4671
  * s7test            1721             1456 1430
- * t455                           265  256  219
+ * t455                           265  256  218
  */
