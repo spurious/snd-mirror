@@ -7550,7 +7550,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 
 
-
 ;;; -------- circular structures --------
 
 (let ((lst (list 1 2 3)))
@@ -8437,6 +8436,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	(set-cdr! lst2 lst2) 
 	(equal? lst1 lst2))
       #t)
+
 
 
 
@@ -12286,7 +12286,9 @@ a2" 3) "132")
 	  (lambda args
 	    (set! cerr #t)))
    (format #f "~A ~A" cin cerr))
- "<port string input (closed)> #t")
+ "<input-string-port (closed)> #t")
+
+;;; old form:  "<port string input (closed)> #t")
 
 (test
  (let ((cout #f)
@@ -12300,7 +12302,9 @@ a2" 3) "132")
 	  (lambda args
 	    (set! cerr #t)))
    (format #f "~A ~A" cout cerr))
- "<port string output (closed)> #t")
+ "<output-string-port (closed)> #t")
+
+;;; old form:  "<port string output (closed)> #t")
 
 (call-with-output-file "tmp1.r5rs"
   (lambda (p)
@@ -69505,3 +69509,5 @@ in non-gmp,
 ;;; (gensym "a\x00b") -> {a}-10 for unreadable gensym??
 
 
+;;; write/display hash-table stdin lambda? macro/bacro cont/goto func/closure etc, all the pair types, circular etc
+;;; obj->str list of string?

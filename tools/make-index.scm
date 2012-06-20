@@ -691,7 +691,7 @@
       (if (char=? (str i) #\space)
 	  (set! (str i) #\_)))))
 
-(define ids '())
+(define ids (make-hash-table))
 
 (define* (make-index-1 file-names (output "test.html") (cols 3) (capitalized #f) no-bold with-scm with-clm-locals)
   ;; read html file, gather all names, create index (in lower-case, *=space in sort)
@@ -709,7 +709,7 @@
 	(names (make-vector array-length #f))
 	(local-ids '())
 	)
-    (set! ids '())
+    (fill! ids ())
     
     (do ((file file-names (cdr file))
 	 (file-ctr 0 (+ file-ctr 1)))
@@ -740,10 +740,9 @@
 			  (let* ((start (char-position #\" (checked-substring dline id-pos)))
 				 (end (char-position #\" (checked-substring dline (+ id-pos start 2))))
 				 (name (substring dline (+ id-pos start 1) (+ id-pos start 2 end))))
-			    (let* ((sym-name (string->symbol name))
-				   (data (assq sym-name ids)))
-			      (if (not data)
-				  (set! ids (cons (cons sym-name 0) ids))
+			    (let ((sym-name (string->symbol name)))
+			      (if (not (hash-table-ref ids sym-name))
+				  (hash-table-set! ids sym-name 0)
 				  (if (memq sym-name local-ids)
 				      (format #t "~S: id ~S is set twice~%" file sym-name)))
 			      (set! local-ids (cons sym-name local-ids)))))
@@ -1093,10 +1092,7 @@
 (define (html-check files)
   (let ((name 0)
 	(href 0)
-	(names (make-vector array-size #f))
-	(hrefs (make-vector array-size #f))
-	(refs (make-vector array-size #f))
-	(lines (make-vector array-size #f))
+	(names (make-hash-table 2048))
 	(commands '()))
     (for-each
      (lambda (file)
@@ -1399,12 +1395,12 @@
 				     (if (and (number? min-epos)
 					      (< min-epos epos))
 					 (set! epos min-epos))
-				     (set! (names name) (string-append file "#" (checked-substring dline 0 (- epos 1))))
-				     (let ((target (names name)))
-				       (do ((i 0 (+ i 1)))
-					   ((= i name))
-					 (if (string=? (vector-ref names i) target)
-					     (format #t "~A[~D]: ambiguous name: ~A~%" file linectr (vector-ref names i)))))
+
+				     (let ((new-name (string-append file "#" (checked-substring dline 0 (- epos 1)))))
+				       (if (hash-table-ref names new-name)
+					   (format #t "~A[~D]: ambiguous name: ~A~%" file linectr new-name))
+				       (hash-table-set! names new-name file))
+
 				     (incf name)
 				     (set! dline (checked-substring dline epos))
 				     (set! pos-def1 (string-ci-position "<em class=def id=" dline))
@@ -1423,33 +1419,30 @@
 			     (let ((epos (char-position #\> dline)))
 			       (if (not epos) 
 				   (format #t "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)
-				   (begin
+				   (let ((cur-href #f))
 				     (set! epos (char-position #\" dline 1))
 				     (if (char=? (dline 0) #\#)
-					 (set! (hrefs href) (string-append file (checked-substring dline 0 epos)))
+					 (set! cur-href (string-append file (checked-substring dline 0 epos)))
 					 (begin
-					   (set! (hrefs href) (checked-substring dline 0 epos))
-					   (let ((pos (char-position #\# (hrefs href))))
+					   (set! cur-href (checked-substring dline 0 epos))
+					   (let ((pos (char-position #\# cur-href)))
 					     (if (and (not pos)
-						      (not (string-ci=? (checked-substring (hrefs href) 0 4) "ftp:"))
-						      (not (string-ci=? (checked-substring (hrefs href) 0 5) "http:"))
-						      (not (file-exists? (hrefs href))))
-						 (format #t "~A[~D]: reference to missing file ~S~%" file linectr (hrefs href))))))
+						      (not (string-ci=? (checked-substring cur-href 0 4) "ftp:"))
+						      (not (string-ci=? (checked-substring cur-href 0 5) "http:"))
+						      (not (file-exists? cur-href)))
+						 (format #t "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
 
-				     (set! (lines href) linectr)
-				     (set! (refs href) file)
-				     
-				     ;; (hrefs href) here is the full link: sndclm.html#make-filetosample for example
+				     ;; cur-href here is the full link: sndclm.html#make-filetosample for example
 				     ;;   it can also be a bare file name
-				     (let* ((start (char-position #\# (hrefs href)))
+				     (let* ((start (char-position #\# cur-href))
 					    (name (and (number? start) 
-						       (string->symbol (substring (hrefs href) (+ start 1)))))
+						       (string->symbol (substring cur-href (+ start 1)))))
 					    (data (and (symbol? name) 
-						       (assq name ids))))
+						       (hash-table-ref ids name))))
 				       (if name 
 					   (if (not data)
 					       (format #t ";can't find id ~A~%" name)
-					       (set-cdr! data (+ (cdr data) 1)))))
+					       (hash-table-set! ids name (+ data 1)))))
 				     
 				     (incf href)
 				     (set! dline (checked-substring dline epos))
@@ -1479,6 +1472,7 @@
 (html-check '("sndlib.html" "snd.html" "extsnd.html" "grfsnd.html" "sndclm.html"
 	      "sndscm.html" "fm.html" "quick.html" "s7.html"
 	      "xen.html" "libxm.html" "index.html"))
+
 
 (exit)
 
