@@ -525,9 +525,20 @@
     
       ;; --------------------------------------------------------------------------------
       
-      (define (truncated-list->string form)
-	(format #f "~%        ~80A" form))
-      
+    (define (truncated-list->string form)
+      ;; return form -> string with limits on its length
+      (let* ((str (object->string form))
+	     (len (length str)))
+	(if (<= len 80)
+	    (format #f "~%        ~A" str)
+	    (call-with-exit
+	     (lambda (return)
+	       (do ((i 77 (- i 1)))
+		   ((= i 40)
+		    (format #f "~%        ~A..." (substring str 0 77)))
+		 (if (char-whitespace? (str i))
+		     (return (format #f "~%        ~A..." (substring str 0 i))))))))))
+
       (define (lint-format str name line . args)
 	(if (and (positive? line)
 		 (< line 100000))

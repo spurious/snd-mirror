@@ -11119,30 +11119,32 @@ a2" 3) "132")
 
 (test (format #f "~12,A" #\a) "a") ; s7 misses padding errors such as (format #f "~12,' A" #\a)
 
-(test (format #f "~12A" "012345678901234567890") "012345678...")
-(test (format #f "~1A" "012345678901234567890") "0")
-(test (format #f "~40A" "012345678901234567890") "012345678901234567890")
-(test (format #f "~12s" "012345678901234567890") "\"0123456...\"")
 
-(let ((old-len *vector-print-length*))
-  (set! *vector-print-length* 32)
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~A" v)) "#(1 2 3 4 5 6 7 8 9 10)")
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10A" v)) "#(1 2 3...")
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~20A" v)) "#(1 2 3 4 5 6 7 8...")
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~30A" v)) "#(1 2 3 4 5 6 7 8 9 10)")
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~-10A" v)) 'error)
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10.0A" v)) 'error)
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,0A" v)) 'error)
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,A" v)) "#(1 2 3...")
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,,A" v)) 'error)
-  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~,10A" v)) 'error)
-  (set! *vector-print-length* old-len))
+;;; I removed this feature 21-Jun-12
+;(test (format #f "~12A" "012345678901234567890") "012345678...")
+;(test (format #f "~1A" "012345678901234567890") "0")
+;(test (format #f "~40A" "012345678901234567890") "012345678901234567890")
+;(test (format #f "~12s" "012345678901234567890") "\"0123456...\"")
+;
+;(let ((old-len *vector-print-length*))
+;  (set! *vector-print-length* 32)
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~A" v)) "#(1 2 3 4 5 6 7 8 9 10)")
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10A" v)) "#(1 2 3...")
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~20A" v)) "#(1 2 3 4 5 6 7 8...")
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~30A" v)) "#(1 2 3 4 5 6 7 8 9 10)")
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~-10A" v)) 'error)
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10.0A" v)) 'error)
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,0A" v)) 'error)
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,A" v)) "#(1 2 3...")
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~10,,A" v)) 'error)
+;  (test (let ((v (vector 1 2 3 4 5 6 7 8 9 10))) (format #f "~,10A" v)) 'error)
+;  (set! *vector-print-length* old-len))
+;
+;(test (let ((v (hash-table '(a . 1) '(b . 2) '(c . 3) '(d . 4)))) (format #f "~20A" v)) "#<hash-table (a ....")
+;(test (let ((v (hash-table '(a . 1) '(b . 2) '(c . 3) '(d . 4)))) (format #f "~40A" v)) "#<hash-table (a . 1) (b . 2) (c . 3)...")
+;
+;(test (let ((v (list 1 2 3 4 5 6 7 8 9 10))) (format #f "~20A" v)) "(1 2 3 4 5 6 7 8...")
 
-
-(test (let ((v (hash-table '(a . 1) '(b . 2) '(c . 3) '(d . 4)))) (format #f "~20A" v)) "#<hash-table (a ....")
-(test (let ((v (hash-table '(a . 1) '(b . 2) '(c . 3) '(d . 4)))) (format #f "~40A" v)) "#<hash-table (a . 1) (b . 2) (c . 3)...")
-
-(test (let ((v (list 1 2 3 4 5 6 7 8 9 10))) (format #f "~20A" v)) "(1 2 3 4 5 6 7 8...")
 
 #|
 (let ((v (vector 1 2 3 4 5 6 7 8 9 10)))
