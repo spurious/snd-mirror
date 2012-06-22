@@ -2100,7 +2100,7 @@ If the hook returns #t, Snd does not exit.
 
 <!-- before-save-as-hook -->
 <pre class="indented">
-<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection srate type format comment)
+<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection sampling-rate header-type data-format comment)
 </pre>
 
 <p>This hook is called before <a href="#savesoundas">save-sound-as</a> or File:Save as.  
@@ -2114,18 +2114,18 @@ we're saving the selection.
 <pre class="indented">
 (hook-push <em class=red>before-save-as-hook</em>
   (lambda (hook)	   
-    ((lambda (index filename sr type format comment)
+    ((lambda (index filename sr htype dformat comment)
       (if (not (= sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index)))
           (let ((chns (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> index)))
 	    (do ((i 0 (+ 1 i)))
 	        ((= i chns))
 	      (<a class=quiet href="#srcchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_srcchannel_tip)">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index) sr)) 0 #f index i))
-	    (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> filename index :header-type type :data-format format :srate sr :comment comment) 
+	    (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> filename index :header-type htype :data-format dformat :srate sr :comment comment) 
 	    (do ((i 0 (+ 1 i)))
 	        ((= i chns))
 	      (<a class=quiet href="#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> 1 index i))
 	    (set! (hook 'result) #t)))) ; tell Snd that the sound is already saved
-     (hook 'snd) (hook 'name) (hook 'srate) (hook 'type) (hook 'format) (hook 'comment))))
+     (hook 'snd) (hook 'name) (hook 'sampling-rate) (hook 'header-type) (hook 'data-format) (hook 'comment))))
 
 </pre>
 <div class="spacer"></div>

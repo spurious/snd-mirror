@@ -31195,16 +31195,16 @@ EDITS: 2
 		 (lambda (hook)
 		   (let ((index (hook 'snd))
 			 (filename (hook 'name))
-			 (sr (hook 'srate))
-			 (type (hook 'type))
-			 (format (hook 'format))
+			 (sr (hook 'sampling-rate))
+			 (type (hook 'header-type))
+			 (dformat (hook 'data-format))
 			 (comment (hook 'comment)))
 		     (if (not (= sr (srate index)))
 			 (let ((chns (chans index)))
 			   (do ((i 0 (+ 1 i)))
 			       ((= i chns))
 			     (src-channel (exact->inexact (/ (srate index) sr)) 0 #f index i))
-			   (save-sound-as filename index :header-type type :data-format format :srate sr :comment comment) 
+			   (save-sound-as filename index :header-type type :data-format dformat :srate sr :comment comment) 
 			   ;; hook won't be invoked recursively
 			   (do ((i 0 (+ 1 i)))
 			       ((= i chns))
@@ -31227,9 +31227,9 @@ EDITS: 2
 		   (let ((index (hook 'snd))
 			 (filename (hook 'name))
 			 (selection (hook 'selection))
-			 (sr (hook 'srate))
-			 (type (hook 'type))
-			 (format (hook 'format))
+			 (sr (hook 'sampling-rate))
+			 (type (hook 'header-type))
+			 (dformat (hook 'data-format))
 			 (comment (hook 'comment)))
 		     (set! need-save-as-undo #f)
 		     (if (not (= sr (srate index)))
@@ -62215,6 +62215,23 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,775,989,275  ???:cos [/lib64/libm-2.12.so]
  2,765,493,217  clm.c:mus_out_any_to_file [/home/bil/snd-12/snd]
  2,230,051,768  s7.c:find_symbol_or_bust [/home/bil/snd-12/snd]
+
+15-Jun-12:
+152,712,761,434  PROGRAM TOTALS
+15,965,305,624  ???:sin [/lib64/libm-2.12.so]
+14,837,167,614  io.c:mus_read_any_1 [/home/bil/ruby-snd/snd]
+10,465,753,772  s7.c:eval [/home/bil/ruby-snd/snd]
+ 9,241,261,923  snd-edits.c:channel_local_maxamp [/home/bil/ruby-snd/snd]
+ 8,913,093,185  snd-sig.c:direct_filter [/home/bil/ruby-snd/snd]
+ 8,728,277,277  run.c:eval_ptree [/home/bil/ruby-snd/snd]
+ 7,219,610,887  io.c:mus_write_1 [/home/bil/ruby-snd/snd]
+ 4,321,175,180  s7.c:eval'2 [/home/bil/ruby-snd/snd]
+ 3,042,066,026  clm.c:mus_src [/home/bil/ruby-snd/snd]
+ 2,960,895,840  clm.c:mus_fir_filter [/home/bil/ruby-snd/snd]
+ 2,764,663,444  clm.c:mus_out_any_to_file [/home/bil/ruby-snd/snd]
+ 2,749,574,289  ???:cos [/lib64/libm-2.12.so]
+ 2,266,162,326  s7.c:find_symbol_or_bust [/home/bil/ruby-snd/snd]
+ 1,841,434,887  s7.c:gc [/home/bil/ruby-snd/snd]
 
 |#
 

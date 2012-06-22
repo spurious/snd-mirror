@@ -610,13 +610,14 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_opXXXq, HOP_SAFE_C_opXXXq, 
       
       OP_SAFE_IS_PAIR_S, HOP_SAFE_IS_PAIR_S, OP_SAFE_IS_SYMBOL_S, HOP_SAFE_IS_SYMBOL_S, OP_SAFE_NOT_S, HOP_SAFE_NOT_S,
+      OP_SAFE_IS_EOF_S, HOP_SAFE_IS_EOF_S,
       
       /* these can't be embedded, and have to be the last thing called */
       OP_C_L, HOP_C_L, OP_APPLY_SS, HOP_APPLY_SS,
       OP_C_ALL_G, HOP_C_ALL_G, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH,
       OP_C_S_opSq, HOP_C_S_opSq, OP_C_opSq_CC, HOP_C_opSq_CC, 
       OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
-      OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P,
+      OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, 
       
       OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_opCq, HOP_VECTOR_opCq, 
       OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_opCq, HOP_STRING_opCq, 
@@ -702,12 +703,13 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_c_opxxxq", "h_safe_c_opxxxq", 
 
      "safe_is_pair_s", "h_safe_is_pair_s", "safe_is_symbol_s", "h_safe_is_symbol_s", "safe_not_s", "h_safe_not_s",
+     "safe_is_eof_s", "h_safe_is_eof_s",
 
      "c_l", "h_c_l", "apply_ss", "h_apply_ss",
      "c_all_g", "h_c_all_g", "call-with-exit", "h-call-with-exit", "c_catch", "h_c_catch",
      "c_s_opsq", "h_c_s_opsq", "c_opsq_cc", "h_c_opsq_cc",
      "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
-     "c_s", "h_c_s", "read_s", "h_read_s", "list_p", "h_list_p",
+     "c_s", "h_c_s", "read_s", "h_read_s", "list_p", "h_list_p", 
 
      "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_opcq", "h_vector_opcq", 
      "string_c", "h_string_c", "string_s", "h_string_s", "string_opcq", "h_string_opcq", 
@@ -968,8 +970,7 @@ typedef struct {
 } shared_info;
 
 typedef struct {
-  char *str;
-  int len, loc;
+  int loc, col, gc_loc;
   s7_pointer args;
 } format_data;
 
@@ -1328,7 +1329,6 @@ static void init_types(void)
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
 #define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
 
-
 #define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 8))
 #define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
@@ -1437,6 +1437,18 @@ static int t_optimized = T_OPTIMIZED;
  */
 
 #define UNUSED_BITS                   0x00020000
+
+#if 0
+/* to find who is stomping on our symbols:
+ */
+static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line) 
+{
+  if (is_global(symbol)) fprintf(stderr, "%s[%d]: make %s local\n", func, line, DISPLAY(symbol));
+  typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
+}
+#define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
+#endif
+
 
 #if DEBUGGING
 #define set_type(p, f) \
@@ -3337,7 +3349,8 @@ static void resize_op_stack(s7_scheme *sc)
 #define pop_main_stack(Sc)            Sc->stack_end -= 4
 
 #define TRY_STACK 1
-/* this macro should only occur just before goto START.
+/* this macro should only occur just before goto START.  And even then, only in the OPT_EVAL section --
+ *    we're depending on a very restricted context!
  */
 #define IF_BEGIN_POP_STACK(Sc) \
   do { \
@@ -20346,8 +20359,10 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_wri
   shared_info *ci = NULL;
   char *str;
   s7_pointer strport;
+  int gc_loc;
 
   strport = s7_open_output_string(sc);
+  gc_loc = s7_gc_protect(sc, strport);
 
   if (has_structure(obj))
     ci = make_shared_info(sc, obj);
@@ -20358,6 +20373,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_wri
   port_string(strport) = NULL;
   port_needs_free(strport) = false;
   s7_close_output_port(sc, strport);
+  s7_gc_unprotect_at(sc, gc_loc);
 
   return(str);
 }
@@ -20553,11 +20569,6 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* TODO: format choice, use strport here also (directly)
- * TODO: strlen of strport -> subtract?
- * TODO: internal sc->stdstr? what about recursive obj->str?
- */
-
 
 
 /* -------------------------------- format -------------------------------- */
@@ -20565,16 +20576,13 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj);
 static int format_depth = -1;
 
-static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *dat, bool in_error_handler)
+static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *fdat)
 {
   int len;
   char *errmsg;
   s7_pointer x;
 
-  if (in_error_handler)       /* actually, this must be an internal bug, but don't call s7_error recursively! */
-    return(copy_string(msg)); /* this will be freed in by the string sweep in the GC */
-
-  if (dat->loc == 0)
+  if (fdat->loc == 0)
     {
       len = safe_strlen(msg) + 32;
       errmsg = (char *)malloc(len * sizeof(char));
@@ -20586,10 +20594,10 @@ static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_po
     {
       char *filler;
       int i;
-      filler = (char *)calloc(dat->loc + 12, sizeof(char));
-      for (i = 0; i < dat->loc + 11; i++)
+      filler = (char *)calloc(fdat->loc + 12, sizeof(char));
+      for (i = 0; i < fdat->loc + 11; i++)
 	filler[i] = ' ';
-      len = safe_strlen(msg) + 32 + dat->loc + 12;
+      len = safe_strlen(msg) + 32 + fdat->loc + 12;
       errmsg = (char *)malloc(len * sizeof(char));
       if (is_pair(args))
 	snprintf(errmsg, len, "format: ~S ~{~S~^ ~}\n%s^: %s", filler, msg);
@@ -20601,21 +20609,21 @@ static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_po
     x = list_3(sc, make_string_uncopied(sc, errmsg), make_protected_string(sc, str), args);
   else x = list_2(sc, make_string_uncopied(sc, errmsg), make_protected_string(sc, str));
 
-  if (dat->str) {free(dat->str); dat->str = NULL;}
+  if (fdat->gc_loc >= 0)
+    {
+      s7_gc_unprotect_at(sc, fdat->gc_loc);
+      fdat->gc_loc = -1;
+    }
 
-  s7_error(sc, sc->FORMAT_ERROR, x);
-  return(NULL);
+  return(s7_error(sc, sc->FORMAT_ERROR, x));
 }
 
 
-static void format_append_char(format_data *dat, char c)
+static void format_append_char(s7_scheme *sc, format_data *fdat, char c, s7_pointer port)
 {
-  if (dat->len <= dat->loc + 2)
-    {
-      dat->len *= 2;
-      dat->str = (char *)realloc(dat->str, dat->len * sizeof(char));
-    }
-  dat->str[dat->loc++] = c;
+  port_write_character(port)(sc, c, port);
+  fdat->col++;
+
   /* if c is #\null, is this the right thing to do? 
    * We used to return "1 2 3 4" because ~C was first turned into a string (empty in this case)
    *   (format #f "1 2~C3 4" #\null)
@@ -20628,22 +20636,18 @@ static void format_append_char(format_data *dat, char c)
    */
 }
 
-
-static void format_append_string(format_data *dat, const char *str, int str_len)
+static void format_append_newline(s7_scheme *sc, format_data *fdat, s7_pointer port)
 {
-  int new_len;
+  port_write_character(port)(sc, '\n', port);
+  fdat->col = 0;
+}
 
-  if (!str) return;
 
-  new_len = str_len + dat->loc + 3;
-  if (new_len > dat->len)
-    {
-      dat->len = new_len * 2; 
-      dat->str = (char *)realloc(dat->str, dat->len * sizeof(char));
-    }
-  memcpy((void *)(dat->str + dat->loc), (void *)str, str_len);
-  dat->loc += str_len;
-  dat->str[dat->loc] = '\0';
+static void format_append_string(s7_scheme *sc, format_data *fdat, const char *str, int len, s7_pointer port)
+{
+  port_write_string(port)(sc, str, len, port);
+  fdat->loc += len;
+  fdat->col += len;
 }
 
 
@@ -20656,20 +20660,20 @@ static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const cha
     {
       tmp = (char *)(str + i);
       if (sscanf(tmp, "%d", &arg1) < 1)
-	format_error(sc, "bad number?", str, args, fdat, false);
+	format_error(sc, "bad number?", str, args, fdat);
 
       for (i = i + 1; i < str_len - 1; i++)
 	if (!isdigit(str[i]))
 	  break;
       if (i >= str_len)
-	format_error(sc, "numeric argument, but no directive!", str, args, fdat, false);
+	format_error(sc, "numeric argument, but no directive!", str, args, fdat);
     }
   *cur_i = i;
   return(arg1);
 }
 
 
-static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width, int precision, char float_choice, char pad)
+static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width, int precision, char float_choice, char pad, s7_pointer port)
 {
   char *tmp;
   int nlen = 0;
@@ -20708,14 +20712,10 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
       char *padtmp;
       padtmp = tmp;
       while (*padtmp == ' ') (*(padtmp++)) = pad;
-      format_append_string(fdat, tmp, safe_strlen(tmp));
     }
-  else
-    {
-      if (nlen == 0)
-	format_append_string(fdat, tmp, safe_strlen(tmp));
-      else format_append_string(fdat, tmp, nlen);
-    }
+
+  format_append_string(sc, fdat, tmp, (nlen == 0) ? safe_strlen(tmp) : nlen, port);
+
   free(tmp);
   fdat->args = cdr(fdat->args);
 }
@@ -20726,19 +20726,29 @@ static bool s7_is_one_or_big_one(s7_pointer p);
 #else
 #define s7_is_one_or_big_one(Num) s7_is_one(Num)
 #endif
-static char *truncate_string(char *form, int len, bool use_write, int *s_len);
 
 
-static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg, bool in_error_handler, int *new_len)
+static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *str, s7_pointer args, s7_pointer *next_arg, bool with_result, bool columnized)
 {
-  #define INITIAL_FORMAT_LENGTH 128
   int i = 0, str_len = 0;
   format_data *fdat = NULL;
-  char *result, *tmp = NULL;
+  s7_pointer deferred_port = sc->F;
+
+  if ((!with_result) &&
+      (port == sc->F))
+    return(sc->F);
+
+  str_len = safe_strlen(str);
+  if (str_len == 0)
+    {
+      if (is_not_null(args))
+	return(s7_error(sc, 
+			sc->FORMAT_ERROR, 
+			list_2(sc, make_protected_string(sc, "format control string is null, but there are other arguments: ~S"), args)));
+      return(make_protected_string(sc, ""));
+    }
 
   format_depth++;
-  str_len = safe_strlen(str);
-
   if (format_depth >= sc->num_fdats)
     {
       int i, new_num_fdats;
@@ -20749,405 +20759,399 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
     }
 
   fdat = sc->fdats[format_depth];
-
   if (!fdat)
     {
       fdat = (format_data *)malloc(sizeof(format_data));
-      fdat->loc = 0;
-      fdat->args = args;
       sc->fdats[format_depth] = fdat;
     }
   else
     {
-      fdat->loc = 0;
-      fdat->args = args;
+      if (fdat->gc_loc >= 0)
+	s7_gc_unprotect_at(sc, fdat->gc_loc); /* TODO: can this happen? */
+    }
+  fdat->gc_loc = -1;
+  fdat->loc = 0;
+  fdat->col = 0;
+  fdat->args = args;
+
+  /* choose whether to write to a temporary string port, or simply use the in-coming port
+   *   if with_result, returned string is wanted.
+   *   if port is sc->F, no non-string result is wanted.
+   *   if port is not boolean, it better be a port.
+   *   if we are about to goto START in eval, and main_stack_op(Sc) == OP_BEGIN1, no return string is wanted
+   */
+
+  if (with_result)
+    {
+      deferred_port = port;
+      port = s7_open_output_string(sc);
+      fdat->gc_loc = s7_gc_protect(sc, port);
     }
 
-  fdat->len = INITIAL_FORMAT_LENGTH;
-  fdat->str = (char *)calloc(fdat->len, sizeof(char)); /* ~nT col checks need true current string length, so malloc here is messy */
-  /* fdat->str[0] = '\0'; */
-
-  if (str_len == 0)
+  for (i = 0; i < str_len; i++)
     {
-      if ((is_not_null(args)) &&
-	  (next_arg == NULL))
-	return(format_error(sc, "too many arguments", str, args, fdat, in_error_handler));
-    }
-  else
-    {
-      for (i = 0; i < str_len; i++)
+      if (str[i] == '~')
 	{
-	  if (str[i] == '~')
+	  if (i == str_len - 1)
+	    return(format_error(sc, "control string ends in tilde", str, args, fdat));
+	  
+	  switch (str[i + 1])
 	    {
-	      if (i == str_len - 1)
-		return(format_error(sc, "control string ends in tilde", str, args, fdat, in_error_handler));
-
-	      switch (str[i + 1])
-		{
-		case '%':                           /* -------- newline -------- */
-		  /* sbcl apparently accepts numeric args here (including 0) */
-		  format_append_char(fdat, '\n');
-		  i++;
-		  break;
-
-		case '&':                           /* -------- conditional newline -------- */
-		  if ((fdat->loc > 0) &&
-		      (fdat->str[fdat->loc - 1] != '\n'))
-		    format_append_char(fdat, '\n');
-		  i++;
-		  break;
-		  
-		case '~':                           /* -------- tilde -------- */
-		  format_append_char(fdat, '~');
-		  i++;
-		  break;
-
-		case '\n':                          /* -------- trim white-space -------- */
-		  for (i = i + 2; i <str_len - 1; i++)
-		    if (!(white_space[(unsigned char)(str[i])]))
-		      {
-			i--;
-			break;
-		      }
-		  break;
-		  
-		case '*':                           /* -------- ignore arg -------- */
-		  i++;
-		  fdat->args = cdr(fdat->args);
-		  break;
-
-		case '^':                           /* -------- exit -------- */
-		  if (is_null(fdat->args))
-		    {
-		      i = str_len;
-		      goto ALL_DONE;
-		    }
-		  i++;
-		  break;
-
-		case '@':                           /* -------- plural, 'y' or 'ies' -------- */
-		  i += 2;
-		  if ((str[i] != 'P') && (str[i] != 'p'))
-		    return(format_error(sc, "unknown '@' directive", str, args, fdat, in_error_handler));
-		  if (!s7_is_real(car(fdat->args)))        /* CL accepts non numbers here */
-		    return(format_error(sc, "'@P' directive argument is not a real number", str, args, fdat, in_error_handler));
-
-		  if (!s7_is_one_or_big_one(car(fdat->args)))
-		    format_append_string(fdat, "ies", 3);
-		  else format_append_char(fdat, 'y');
-
-		  fdat->args = cdr(fdat->args);
-		  break;
-
-		case 'P': case 'p':                 /* -------- plural in 's' -------- */
-		  if (!s7_is_real(car(fdat->args)))
-		    return(format_error(sc, "'P' directive argument is not a real number", str, args, fdat, in_error_handler));
-		  if (!s7_is_one_or_big_one(car(fdat->args)))
-		    format_append_char(fdat, 's');
-		  i++;
-		  fdat->args = cdr(fdat->args);
-		  break;
-		  
-		case '{':                           /* -------- iteration -------- */
+	    case '%':                           /* -------- newline -------- */
+	      /* sbcl apparently accepts numeric args here (including 0) */
+	      format_append_newline(sc, fdat, port);
+	      i++;
+	      break;
+	      
+	    case '&':                           /* -------- conditional newline -------- */
+	      if (fdat->col > 0)
+		format_append_newline(sc, fdat, port);
+	      i++;
+	      break;
+	      
+	    case '~':                           /* -------- tilde -------- */
+	      format_append_char(sc, fdat, '~', port);
+	      i++;
+	      break;
+	      
+	    case '\n':                          /* -------- trim white-space -------- */
+	      for (i = i + 2; i <str_len - 1; i++)
+		if (!(white_space[(unsigned char)(str[i])]))
 		  {
-		    int k, curly_len = -1, curly_nesting = 1;
-
-		    if (is_null(fdat->args))
-		      return(format_error(sc, "missing argument", str, args, fdat, in_error_handler));
-
-		    for (k = i + 2; k < str_len - 1; k++)
-		      if (str[k] == '~')
+		    i--;
+		    break;
+		  }
+	      break;
+	      
+	    case '*':                           /* -------- ignore arg -------- */
+	      i++;
+	      fdat->args = cdr(fdat->args);
+	      break;
+	      
+	    case '^':                           /* -------- exit -------- */
+	      if (is_null(fdat->args))
+		{
+		  i = str_len;
+		  goto ALL_DONE;
+		}
+	      i++;
+	      break;
+	      
+	    case '@':                           /* -------- plural, 'y' or 'ies' -------- */
+	      i += 2;
+	      if ((str[i] != 'P') && (str[i] != 'p'))
+		return(format_error(sc, "unknown '@' directive", str, args, fdat));
+	      if (!s7_is_real(car(fdat->args)))        /* CL accepts non numbers here */
+		return(format_error(sc, "'@P' directive argument is not a real number", str, args, fdat));
+	      
+	      if (!s7_is_one_or_big_one(car(fdat->args)))
+		format_append_string(sc, fdat, "ies", 3, port);
+	      else format_append_char(sc, fdat, 'y', port);
+	      
+	      fdat->args = cdr(fdat->args);
+	      break;
+	      
+	    case 'P': case 'p':                 /* -------- plural in 's' -------- */
+	      if (!s7_is_real(car(fdat->args)))
+		return(format_error(sc, "'P' directive argument is not a real number", str, args, fdat));
+	      if (!s7_is_one_or_big_one(car(fdat->args)))
+		format_append_char(sc, fdat, 's', port);
+	      i++;
+	      fdat->args = cdr(fdat->args);
+	      break;
+	      
+	    case '{':                           /* -------- iteration -------- */
+	      {
+		int k, curly_len = -1, curly_nesting = 1;
+		
+		if (is_null(fdat->args))
+		  return(format_error(sc, "missing argument", str, args, fdat));
+		
+		for (k = i + 2; k < str_len - 1; k++)
+		  if (str[k] == '~')
+		    {
+		      if (str[k + 1] == '}')
 			{
-			  if (str[k + 1] == '}')
+			  curly_nesting--;
+			  if (curly_nesting == 0)
 			    {
-			      curly_nesting--;
-			      if (curly_nesting == 0)
-				{
-				  curly_len = k - i - 1;
-				  break;
-				}
-			    }
-			  else
-			    {
-			      if (str[k + 1] == '{')
-				curly_nesting++;
+			      curly_len = k - i - 1;
+			      break;
 			    }
 			}
-
-		    if (curly_len == -1)
-		      return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat, in_error_handler));
-
-		    /* what about cons's here?  I can't see any way in CL either to specify the car or cdr of a cons within the format string 
-		     *   (cons 1 2) is applicable: ((cons 1 2) 0) -> 1
-		     *   also there can be applicable objects that won't work in the map context (arg not integer etc)
-		     */
- 		    if (is_not_null(car(fdat->args)))               /* (format #f "~{~A ~}" '()) -> "" */
+		      else
+			{
+			  if (str[k + 1] == '{')
+			    curly_nesting++;
+			}
+		    }
+		
+		if (curly_len == -1)
+		  return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
+		
+		/* what about cons's here?  I can't see any way in CL either to specify the car or cdr of a cons within the format string 
+		 *   (cons 1 2) is applicable: ((cons 1 2) 0) -> 1
+		 *   also there can be applicable objects that won't work in the map context (arg not integer etc)
+		 */
+		if (is_not_null(car(fdat->args)))               /* (format #f "~{~A ~}" '()) -> "" */
+		  {
+		    s7_pointer curly_arg;
+		    
+		    curly_arg = object_to_list(sc, car(fdat->args)); 
+		    if (is_not_null(curly_arg))                /* (format #f "~{~A ~}" #()) -> "" */
 		      {
-			s7_pointer curly_arg;
-
-			curly_arg = object_to_list(sc, car(fdat->args)); 
-			if (is_not_null(curly_arg))                 /* (format #f "~{~A ~}" #()) -> "" */
+			char *curly_str = NULL;                /* this is the local (nested) format control string */
+			int curly_gc;
+			
+			if (!is_proper_list(sc, curly_arg))
+			  return(format_error(sc, "'{' directive argument should be a proper list or something we can turn into a list", 
+					      str, args, fdat));
+			curly_gc = s7_gc_protect(sc, curly_arg);
+			
+			curly_str = (char *)malloc(curly_len * sizeof(char));
+			for (k = 0; k < curly_len - 1; k++)
+			  curly_str[k] = str[i + 2 + k];
+			curly_str[curly_len - 1] = '\0';
+			
+			while (is_not_null(curly_arg))
 			  {
-			    char *curly_str = NULL;               /* this is the local (nested) format control string */
-			    int curly_gc;
-
-			    if (!is_proper_list(sc, curly_arg))
-			      return(format_error(sc, "'{' directive argument should be a proper list or something we can turn into a list", 
-						  str, args, fdat, in_error_handler));
-			    curly_gc = s7_gc_protect(sc, curly_arg);
-
-			    curly_str = (char *)malloc(curly_len * sizeof(char));
-			    for (k = 0; k < curly_len - 1; k++)
-			      curly_str[k] = str[i + 2 + k];
-			    curly_str[curly_len - 1] = '\0';
-
-			    while (is_not_null(curly_arg))
+			    s7_pointer new_arg = sc->NIL;
+			    
+			    format_to_port_1(sc, port, curly_str, curly_arg, &new_arg, false, columnized);
+			    if (curly_arg == new_arg)
 			      {
-				int tmp_len = 0;
-				s7_pointer new_arg = sc->NIL;
-
-				tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg, in_error_handler, &tmp_len);
-				format_append_string(fdat, tmp, tmp_len);
-				if (tmp) free(tmp);
-
-				if (curly_arg == new_arg)
-				  {
-				    if (curly_str) free(curly_str);
-				    s7_gc_unprotect_at(sc, curly_gc);
-				    return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat, in_error_handler));
-				  }
-				curly_arg = new_arg;
+				if (curly_str) free(curly_str);
+				s7_gc_unprotect_at(sc, curly_gc);
+				return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
 			      }
-
-			    free(curly_str);
-			    s7_gc_unprotect_at(sc, curly_gc);
+			    curly_arg = new_arg;
 			  }
+			
+			free(curly_str);
+			s7_gc_unprotect_at(sc, curly_gc);
 		      }
-
-		    i += (curly_len + 2); /* jump past the ending '}' too */
-		    fdat->args = cdr(fdat->args);
 		  }
-		  break;
-		  
-		case '}':
-		  return(format_error(sc, "unmatched '}'", str, args, fdat, in_error_handler));
+		
+		i += (curly_len + 2); /* jump past the ending '}' too */
+		fdat->args = cdr(fdat->args);
+	      }
+	      break;
+	      
+	    case '}':
+	      return(format_error(sc, "unmatched '}'", str, args, fdat));
+	      
+	    case 'C': case 'c':
+	      {
+		s7_pointer obj;
+		
+		if (is_null(fdat->args))
+		  return(format_error(sc, "~~C: missing argument", str, args, fdat));
+		/* the "~~" here and below protects against "~C" being treated as a directive */
+		i++;
+		obj = car(fdat->args);
+		
+		if (!s7_is_character(obj))
+		  return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
+		
+		/* here use_write is false, so we just add the char, not its name */
+		format_append_char(sc, fdat, character(obj), port);
+		fdat->args = cdr(fdat->args);
+	      }
+	      break;
+	      
+	    case 'A': case 'a': 
+	    case 'S': case 's':
+	      /* object->string */
+	      {
+		s7_pointer obj;
 
-		case 'C': case 'c':
+		i++;
+
+		if (is_null(fdat->args))
+		  return(format_error(sc, "missing argument", str, args, fdat));
+
+		obj = car(fdat->args);
+		/* for the column check, we need to know the length of the object->string output
+		 */
+
+		if (!columnized)
 		  {
-		    s7_pointer obj;
-		    
-		    if (is_null(fdat->args))
-		      return(format_error(sc, "~~C: missing argument", str, args, fdat, in_error_handler));
-		    /* the "~~" here and below protects against "~C" being treated as a directive */
-		    i++;
-		    obj = car(fdat->args);
-		    
-		    if (!s7_is_character(obj))
-		      return(format_error(sc, "'C' directive requires a character argument", str, args, fdat, in_error_handler));
-		    
-		    /* here use_write is false, so we just add the char, not its name */
-		    format_append_char(fdat, character(obj));
-		    fdat->args = cdr(fdat->args);
+		    if (has_structure(obj))
+		      object_to_port_with_circle_check(sc, obj, port, (str[i] == 'S') || (str[i] == 's'), is_file_port(port), make_shared_info(sc, obj));
+		    else object_to_port(sc, obj, port, (str[i] == 'S') || (str[i] == 's'), is_file_port(port), NULL);
 		  }
-		  break;
-		  
-		  /* -------- numeric args -------- */
-		case '0': case '1': case '2': case '3': case '4': case '5':
-		case '6': case '7': case '8': case '9': case ',':
-
-		case 'B': case 'b':
-		case 'D': case 'd':
-		case 'E': case 'e':
-		case 'F': case 'f':
-		case 'G': case 'g':
-		case 'O': case 'o':
-		case 'X': case 'x':
-
-		case 'A': case 'a': 
-		case 'S': case 's':
-		  
-		case 'T': case 't':
+		else
 		  {
-		    int width = -1, precision = -1;
-		    char pad = ' ';
-		    i++;
+		    char *s;
+		    int nlen = 0;
+		    s = s7_object_to_c_string_1(sc, obj, (str[i] == 'S') || (str[i] == 's'), &nlen);
+		    format_append_string(sc, fdat, s, nlen, port);
+		    free(s);
+		  }
 
+		fdat->args = cdr(fdat->args);
+	      }
+	      break;
+		    
+
+	      /* -------- numeric args -------- */
+	    case '0': case '1': case '2': case '3': case '4': case '5':
+	    case '6': case '7': case '8': case '9': case ',':
+	      
+	    case 'B': case 'b':
+	    case 'D': case 'd':
+	    case 'E': case 'e':
+	    case 'F': case 'f':
+	    case 'G': case 'g':
+	    case 'O': case 'o':
+	    case 'X': case 'x':
+	      
+	    case 'T': case 't':
+	      {
+		int width = -1, precision = -1;
+		char pad = ' ';
+		i++;
+		
+		if (isdigit(str[i]))
+		  {
+		    width = format_read_integer(sc, &i, str_len, str, args, fdat);
+		    if ((width < 0) ||  /* sccanf is 32 bit so (format #f "~922337203685477580F" pi) gets a width of -1 or some such number */
+			(width > MAX_STRING_LENGTH))
+		      return(format_error(sc, "numeric argument too large", str, args, fdat));
+		  }
+		
+		if (str[i] == ',')
+		  {
+		    i++;
 		    if (isdigit(str[i]))
 		      {
-			width = format_read_integer(sc, &i, str_len, str, args, fdat);
-			if ((width < 0) ||  /* sccanf is 32 bit so (format #f "~922337203685477580F" pi) gets a width of -1 or some such number */
-			    (width > MAX_STRING_LENGTH))
-			  return(format_error(sc, "numeric argument too large", str, args, fdat, in_error_handler));
+			precision = format_read_integer(sc, &i, str_len, str, args, fdat);
+			if ((precision < 0) ||
+			    (precision > MAX_STRING_LENGTH)) /* needed in 32-bit case */
+			  return(format_error(sc, "numeric argument too large", str, args, fdat));
 		      }
-
-		    if (str[i] == ',')
+		    /* is (format #f "~12,12D" 1) an error?  The precision has no use here. */
+		    else
 		      {
-			i++;
-			if (isdigit(str[i]))
+			if (str[i] == '\'')       /* (format #f "~12,'xD" 1) -> "xxxxxxxxxxx1" */
 			  {
-			    precision = format_read_integer(sc, &i, str_len, str, args, fdat);
-			    if ((precision < 0) ||
-				(precision > MAX_STRING_LENGTH)) /* needed in 32-bit case */
-			      return(format_error(sc, "numeric argument too large", str, args, fdat, in_error_handler));
+			    pad = str[i + 1];
+			    i += 2;
 			  }
-			/* is (format #f "~12,12D" 1) an error?  The precision has no use here. */
-			else
-			  {
-			    if (str[i] == '\'')       /* (format #f "~12,'xD" 1) -> "xxxxxxxxxxx1" */
-			      {
-				pad = str[i + 1];
-				i += 2;
-			      }
-			    /* is (let ((str "~12,'xD")) (set! (str 5) #\null) (format #f str 1)) an error? */
-			  }
-		      }
-
-		    switch (str[i])
-		      {
-			/* object->string */
-		      case 'A': case 'a':
-		      case 'S': case 's':
-			{
-			  int tmp_len = 0;
-			  
-			  if (is_null(fdat->args))
-			    return(format_error(sc, "missing argument", str, args, fdat, in_error_handler));
-			  if (precision != -1)
-			    return(format_error(sc, "extra numeric argument", str, args, fdat, in_error_handler));
-
-			  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'), &tmp_len);
-			  format_append_string(fdat, tmp, tmp_len);
-			  if (tmp) free(tmp);
-
-			  fdat->args = cdr(fdat->args);
-			}
-			break;
-
-
-			/* -------- pad to column -------- */
-			/*   are columns numbered from 1 or 0?  there seems to be disagreement about this directive */
-			/*   does "space over to" mean including? */
-		      case 'T': case 't':
-			if (width == -1) width = 0;
-			if (precision == -1) precision = 0;
-			if ((width > 0) || (precision > 0))         /* (format #f "a~8Tb") */
-			  {
-			    int j, k, outstr_len;
-			    outstr_len = safe_strlen(fdat->str);
-			    for (k = outstr_len - 1; k >= 0; k--)
-			      if (fdat->str[k] == '\n')
-				break;
-
-			    /* (length (substring (format #f "~%~10T.") 1)) == (length (format #f "~10T."))
-			     * (length (substring (format #f "~%-~10T.~%") 1)) == (length (format #f "-~10T.~%"))
-			     */
-
-			    if (precision > 0)
-			      {
-				int mult;
-				mult = (int)(ceil((s7_Double)(outstr_len - k - width) / (s7_Double)precision)); /* CLtL2 ("least positive int") */
-				if (mult < 1) mult = 1;
-				width += (precision * mult);
-			      }
-			    for (j = outstr_len - k; j < width; j++)
-			      format_append_char(fdat, pad);
-			  }
-			break;
-
-
-			/* -------- numbers -------- */
-		      case 'F': case 'f':
-			if (is_null(fdat->args))
-			  return(format_error(sc, "~~F: missing argument", str, args, fdat, in_error_handler));
-			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~~F: numeric argument required", str, args, fdat, in_error_handler));
-
-			format_number(sc, fdat, 10, width, precision, 'f', pad);
-			break;
-
-		      case 'G': case 'g':
-			if (is_null(fdat->args))
-			  return(format_error(sc, "~~G: missing argument", str, args, fdat, in_error_handler));
-			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~~G: numeric argument required", str, args, fdat, in_error_handler));
-
-			format_number(sc, fdat, 10, width, precision, 'g', pad);
-			break;
-
-		      case 'E': case 'e':
-			if (is_null(fdat->args))
-			  return(format_error(sc, "~~E: missing argument", str, args, fdat, in_error_handler));
-			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~~E: numeric argument required", str, args, fdat, in_error_handler));
-
-			format_number(sc, fdat, 10, width, precision, 'e', pad);
-			break;
-
-			/* how to handle non-integer arguments in the next 4 cases?  clisp just returns
-			 *   the argument: (format nil "~X" 1.25) -> "1.25" which is perverse (ClTl2 p 581:
-			 *   "if arg is not an integer, it is printed in ~A format and decimal base")!!
-			 *   Guile raises an error ("argument is not an integer").  slib also raise an error.
-			 *   I think I'll use the type of the number to choose the output format.
-			 */
-		      case 'D': case 'd':
-			if (is_null(fdat->args))
-			  return(format_error(sc, "~~D: missing argument", str, args, fdat, in_error_handler));
-			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~~D: numeric argument required", str, args, fdat, in_error_handler));
-
-			format_number(sc, fdat, 10, width, precision, 'd', pad);
-			break;
-
-		      case 'O': case 'o':
-			if (is_null(fdat->args))
-			  return(format_error(sc, "~~O: missing argument", str, args, fdat, in_error_handler));
-			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~~O: numeric argument required", str, args, fdat, in_error_handler));
-
-			format_number(sc, fdat, 8, width, precision, 'o', pad);
-			break;
-
-		      case 'X': case 'x':
-			if (is_null(fdat->args))
-			  return(format_error(sc, "~~X: missing argument", str, args, fdat, in_error_handler));
-			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~~X: numeric argument required", str, args, fdat, in_error_handler));
-
-			format_number(sc, fdat, 16, width, precision, 'x', pad);
-			break;
-
-		      case 'B': case 'b':
-			if (is_null(fdat->args))
-			  return(format_error(sc, "~~B: missing argument", str, args, fdat, in_error_handler));
-			if (!(s7_is_number(car(fdat->args))))
-			  return(format_error(sc, "~~B: numeric argument required", str, args, fdat, in_error_handler));
-
-			format_number(sc, fdat, 2, width, precision, 'b', pad);
-			break;
-		      
-		      default:
-			if (width > 0)
-			  return(format_error(sc, "format directive does not take a numeric argument", str, args, fdat, in_error_handler));
-			return(format_error(sc, "unimplemented format directive", str, args, fdat, in_error_handler));
+			/* is (let ((str "~12,'xD")) (set! (str 5) #\null) (format #f str 1)) an error? */
 		      }
 		  }
-		  break;
-
-		default:
-		  return(format_error(sc, "unimplemented format directive", str, args, fdat, in_error_handler));
-		}
-	    }
-	  else 
-	    {
-	      /* format_append_char(fdat, str[i]); */
-	      if (fdat->len <= fdat->loc + 2)
-		{
-		  fdat->len *= 2;
-		  fdat->str = (char *)realloc(fdat->str, fdat->len * sizeof(char));
-		}
-	      fdat->str[fdat->loc++] = str[i];
+		
+		switch (str[i])
+		  {
+		    /* -------- pad to column -------- */
+		    /*   are columns numbered from 1 or 0?  there seems to be disagreement about this directive */
+		    /*   does "space over to" mean including? */
+		  case 'T': case 't':
+		    if (width == -1) width = 0;
+		    if (precision == -1) precision = 0;
+		    if ((width > 0) || (precision > 0))         /* (format #f "a~8Tb") */
+		      {
+			/* (length (substring (format #f "~%~10T.") 1)) == (length (format #f "~10T."))
+			 * (length (substring (format #f "~%-~10T.~%") 1)) == (length (format #f "-~10T.~%"))
+			 */
+			int j;
+			if (precision > 0)
+			  {
+			    int mult;
+			    mult = (int)(ceil((s7_Double)(fdat->col + 1 - width) / (s7_Double)precision)); /* CLtL2 ("least positive int") */
+			    if (mult < 1) mult = 1;
+			    width += (precision * mult);
+			  }
+			for (j = fdat->col + 1; j < width; j++)
+			  format_append_char(sc, fdat, pad, port);
+		      }
+		    break;
+		    
+		    
+		    /* -------- numbers -------- */
+		  case 'F': case 'f':
+		    if (is_null(fdat->args))
+		      return(format_error(sc, "~~F: missing argument", str, args, fdat));
+		    if (!(s7_is_number(car(fdat->args))))
+		      return(format_error(sc, "~~F: numeric argument required", str, args, fdat));
+		    
+		    format_number(sc, fdat, 10, width, precision, 'f', pad, port);
+		    break;
+		    
+		  case 'G': case 'g':
+		    if (is_null(fdat->args))
+		      return(format_error(sc, "~~G: missing argument", str, args, fdat));
+		    if (!(s7_is_number(car(fdat->args))))
+		      return(format_error(sc, "~~G: numeric argument required", str, args, fdat));
+		    
+		    format_number(sc, fdat, 10, width, precision, 'g', pad, port);
+		    break;
+		    
+		  case 'E': case 'e':
+		    if (is_null(fdat->args))
+		      return(format_error(sc, "~~E: missing argument", str, args, fdat));
+		    if (!(s7_is_number(car(fdat->args))))
+		      return(format_error(sc, "~~E: numeric argument required", str, args, fdat));
+		    
+		    format_number(sc, fdat, 10, width, precision, 'e', pad, port);
+		    break;
+		    
+		    /* how to handle non-integer arguments in the next 4 cases?  clisp just returns
+		     *   the argument: (format nil "~X" 1.25) -> "1.25" which is perverse (ClTl2 p 581:
+		     *   "if arg is not an integer, it is printed in ~A format and decimal base")!!
+		     *   Guile raises an error ("argument is not an integer").  slib also raise an error.
+		     *   I think I'll use the type of the number to choose the output format.
+		     */
+		  case 'D': case 'd':
+		    if (is_null(fdat->args))
+		      return(format_error(sc, "~~D: missing argument", str, args, fdat));
+		    if (!(s7_is_number(car(fdat->args))))
+		      return(format_error(sc, "~~D: numeric argument required", str, args, fdat));
+		    
+		    format_number(sc, fdat, 10, width, precision, 'd', pad, port);
+		    break;
+		    
+		  case 'O': case 'o':
+		    if (is_null(fdat->args))
+		      return(format_error(sc, "~~O: missing argument", str, args, fdat));
+		    if (!(s7_is_number(car(fdat->args))))
+		      return(format_error(sc, "~~O: numeric argument required", str, args, fdat));
+		    
+		    format_number(sc, fdat, 8, width, precision, 'o', pad, port);
+		    break;
+		    
+		  case 'X': case 'x':
+		    if (is_null(fdat->args))
+		      return(format_error(sc, "~~X: missing argument", str, args, fdat));
+		    if (!(s7_is_number(car(fdat->args))))
+		      return(format_error(sc, "~~X: numeric argument required", str, args, fdat));
+		    
+		    format_number(sc, fdat, 16, width, precision, 'x', pad, port);
+		    break;
+		    
+		  case 'B': case 'b':
+		    if (is_null(fdat->args))
+		      return(format_error(sc, "~~B: missing argument", str, args, fdat));
+		    if (!(s7_is_number(car(fdat->args))))
+		      return(format_error(sc, "~~B: numeric argument required", str, args, fdat));
+		    
+		    format_number(sc, fdat, 2, width, precision, 'b', pad, port);
+		    break;
+		    
+		  default:
+		    if (width > 0)
+		      return(format_error(sc, "format directive does not take a numeric argument", str, args, fdat));
+		    return(format_error(sc, "unimplemented format directive", str, args, fdat));
+		  }
+	      }
+	      break;
+	      
+	    default:
+	      return(format_error(sc, "unimplemented format directive", str, args, fdat));
 	    }
 	}
+      else format_append_char(sc, fdat, str[i], port);
     }
 
  ALL_DONE:
@@ -21156,67 +21160,93 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
   else
     {
       if (is_not_null(fdat->args))
-	return(format_error(sc, "too many arguments", str, args, fdat, in_error_handler));
+	return(format_error(sc, "too many arguments", str, args, fdat));
     }
   if (i < str_len)
-    format_append_char(fdat, str[i]);    /* possible trailing ~ is sent out */
-  /* format_append_char(fdat, '\0'); */
-  fdat->str[fdat->loc] = '\0';           /* no need to check -- we always leave room for the trailing null */
-  (*new_len) = fdat->loc;
+    format_append_char(sc, fdat, str[i], port);    /* possible trailing ~ is sent out */
 
-  result = fdat->str;
-  fdat->str = NULL;
   format_depth--;
-  return(result);
+
+  if (with_result)
+    {
+      s7_pointer result;
+
+      if (is_output_port(deferred_port))
+	port_write_string(deferred_port)(sc, port_string(port), port_string_point(port), deferred_port);
+
+      result = make_string_uncopied_with_length(sc, port_string(port), port_string_point(port));
+      port_string(port) = NULL;
+      port_needs_free(port) = false;
+      s7_close_output_port(sc, port);
+
+      if (fdat->gc_loc >= 0)
+	{
+	  s7_gc_unprotect_at(sc, fdat->gc_loc);
+	  fdat->gc_loc = -1;
+	}
+
+      return(result);
+    }
+  return(sc->F);
 }
 
 
-static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char *in_str, s7_pointer args, bool in_error_handler)
-{						
-  s7_pointer result;
-  int str_len = 0;
-  char *msg;
+static bool is_columnizing(const char *str)
+{
+  char *p;
+  bool in_tilde = false;
 
-  if ((!in_str) || (!(*in_str)))
+  for (p = (char *)str; (*p); p++)
     {
-      if (is_not_null(args))
-	return(s7_error(sc, 
-			sc->FORMAT_ERROR, 
-			list_2(sc, make_protected_string(sc, "format control string is null, but there are other arguments: ~S"), args)));
-      return(make_protected_string(sc, ""));
-    }
-
-  /* fprintf(stderr, "op: %s\n", real_op_names[stack_op(sc->stack, s7_stack_top(sc) - 1)]);
-   */
-  /* (begin (format #f "1 2 ~D" 3)) -> "1 2 3" and op is eval_done
-   * (begin (format #f "1 2 ~D" 3) 4) -> 4 and op is begin? format is a no-op
-   */
-
-  if (in_error_handler)
-    {
-      /* send output direct to port, return sc->F or something 
-       */
-      if (out_loc != sc->F)
+      if (*p == '~')
+	in_tilde = !in_tilde;
+      else
 	{
-	  msg = format_to_c_string(sc, in_str, args, NULL, in_error_handler, &str_len);
-	  /* fprintf(stderr, "don't return %s\n", msg);  */
-
-	  string_length(sc->direct_str) = str_len;
-	  string_value(sc->direct_str) = msg;
-	  s7_display(sc, sc->direct_str, out_loc);
-	  string_length(sc->direct_str) = 0;
-
-	  if (msg) free(msg);
+	  if ((in_tilde) &&
+	      ((*p == 'T') || (*p == 't')))
+	    return(true);
+	  else
+	    {
+	      if ((!isdigit((int)(*p))) &&
+		  (*p != ','))
+		in_tilde = false;
+	    }
 	}
-      return(sc->UNSPECIFIED);
     }
-  
-  msg = format_to_c_string(sc, in_str, args, NULL, in_error_handler, &str_len);
-  result = make_string_uncopied_with_length(sc, msg, str_len);
-  if (out_loc != sc->F)
-    s7_display(sc, result, out_loc);
+  return(false);
+}
 
-  return(result);
+
+static s7_pointer format_to_port(s7_scheme *sc, s7_pointer port, const char *str, s7_pointer args, s7_pointer *next_arg, bool with_result)
+{
+  return(format_to_port_1(sc, port, str, args, next_arg, with_result, is_columnizing(str)));
+}
+
+
+static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args, bool with_result)
+{
+  s7_pointer pt;
+
+  sc->args = sc->NIL;
+  pt = car(args);
+
+  if (s7_is_string(pt))
+    return(format_to_port(sc, sc->F, s7_string(pt), cdr(args), NULL, with_result));
+
+  if (!s7_is_string(cadr(args)))
+    {
+      CHECK_METHOD(sc, cadr(args), sc->FORMAT, args);
+      return(wrong_type_argument(sc, sc->FORMAT, small_int(2), cadr(args), T_STRING));
+    }
+  if (!((s7_is_boolean(pt)) ||               /* #f or #t */
+	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
+	 (!port_is_closed(pt)))))
+    {
+      CHECK_METHOD(sc, pt, sc->FORMAT, args);
+      return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, 
+					   make_protected_string(sc, "#f, #t, or an open output port")));
+    }
+  return(format_to_port(sc, (pt == sc->T) ? sc->output_port : pt, s7_string(cadr(args)), cddr(args), NULL, with_result));
 }
 
 
@@ -21238,34 +21268,17 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
 ~F: (format #f \"~F\" 100.1) -&gt; \"100.100000\"   (%f in C)\n\
 ~G: (format #f \"~G\" 100.1) -&gt; \"100.1\"        (%g in C)"
 
-  s7_pointer pt;
-
-  sc->args = sc->NIL;
-  pt = car(args);
-
-  if (s7_is_string(pt))
-    return(format_to_output(sc, sc->F, s7_string(pt), cdr(args), false));
-
-  if (!s7_is_string(cadr(args)))
-    {
-      CHECK_METHOD(sc, cadr(args), sc->FORMAT, args);
-      return(wrong_type_argument(sc, sc->FORMAT, small_int(2), cadr(args), T_STRING));
-    }
-  if (!((s7_is_boolean(pt)) ||               /* #f or #t */
-	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
-	 (!port_is_closed(pt)))))
-    {
-      CHECK_METHOD(sc, pt, sc->FORMAT, args);
-      return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, 
-					   make_protected_string(sc, "#f, #t, or an open output port")));
-    }
-  return(format_to_output(sc, (pt == sc->T) ? sc->output_port : pt, s7_string(cadr(args)), cddr(args), false));
+  return(g_format_1(sc, args, true)); 
 }
+
+/* TODO: can we predigest or memoize the columnized state?
+ *    also pre-choose the templates?
+ */
 
 
 const char *s7_format(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_string(g_format(sc, args))); /* for the run macro in run.c */
+  return(s7_string(g_format_1(sc, args, true))); /* for the run macro in run.c */
 }
 
 
@@ -29374,7 +29387,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       
       if ((!s7_is_list(sc, info)) ||
 	  (!s7_is_string(car(info))))
-	format_to_output(sc, error_port, "\n;~S ~S", list_2(sc, type, info), type == sc->FORMAT_ERROR);
+	format_to_port(sc, error_port, "\n;~S ~S", list_2(sc, type, info), NULL, false);
       else
 	{
 	  const char *carstr;
@@ -29397,10 +29410,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	      len += 8;
 	      errstr = (char *)malloc(len * sizeof(char));
 	      snprintf(errstr, len, "\n;%s", s7_string(car(info)));
-	      format_to_output(sc, error_port, errstr, cdr(info), type == sc->FORMAT_ERROR);
+	      format_to_port(sc, error_port, errstr, cdr(info), NULL, false);
 	      free(errstr);
 	    }
-	  else format_to_output(sc, error_port, "\n;~S ~S", list_2(sc, type, info), type == sc->FORMAT_ERROR);
+	  else format_to_port(sc, error_port, "\n;~S ~S", list_2(sc, type, info), NULL, false);
 	}
       
       /* now display location at end */
@@ -29415,15 +29428,11 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  line = port_line_number(sc->input_port);
 	  
 	  if (filename)
-	    format_to_output(sc, error_port, "\n;  ~A[~D]",
-			     list_2(sc, make_protected_string(sc, filename), make_integer(sc, line)), 
-			     type == sc->FORMAT_ERROR);
+	    format_to_port(sc, error_port, "\n;  ~A[~D]", list_2(sc, make_protected_string(sc, filename), make_integer(sc, line)), NULL, false);
 	  else 
 	    {
 	      if (line > 0)
-		format_to_output(sc, error_port, "\n;  line ~D", 
-				 list_1(sc, make_integer(sc, line)), 
-				 type == sc->FORMAT_ERROR);
+		format_to_port(sc, error_port, "\n;  line ~D", list_1(sc, make_integer(sc, line)), NULL, false);
 	    }
 	}
       else
@@ -29432,30 +29441,28 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	      (call_name != NULL) &&
 	      (call_line >= 0))
 	    {
-	      format_to_output(sc, error_port, "\n;  ~A ~A[~D]",
-			       list_3(sc, 
-				      make_protected_string(sc, call_name), 
-				      make_protected_string(sc, call_file), 
-				      make_integer(sc, call_line)), 
-			       type == sc->FORMAT_ERROR);
+	      format_to_port(sc, error_port, "\n;  ~A ~A[~D]",
+			     list_3(sc, 
+				    make_protected_string(sc, call_name), 
+				    make_protected_string(sc, call_file), 
+				    make_integer(sc, call_line)), 
+			     NULL, false);
 	    }
 	}
       s7_newline(sc, error_port);
       
       if (is_pair(slot_value(sc->error_code)))
 	{
-	  format_to_output(sc, error_port, ";    ~S", 
-			   list_1(sc, slot_value(sc->error_code)),
-			   type == sc->FORMAT_ERROR);
+	  format_to_port(sc, error_port, ";    ~S", list_1(sc, slot_value(sc->error_code)), NULL, false);
 	  s7_newline(sc, error_port);
 	  
 	  if (s7_is_string(slot_value(sc->error_file)))
 	    {
-	      format_to_output(sc, error_port, ";    [~S, line ~D]",
-			       list_2(sc, 
-				      slot_value(sc->error_file),
-				      slot_value(sc->error_line)),
-			       type == sc->FORMAT_ERROR);
+	      format_to_port(sc, error_port, ";    [~S, line ~D]",
+			     list_2(sc, 
+				    slot_value(sc->error_file),
+				    slot_value(sc->error_line)),
+			     NULL, false);
 	      s7_newline(sc, error_port);
 	    }
 	}
@@ -32346,10 +32353,59 @@ static s7_pointer write_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
   return(f);
 }
 
+static s7_pointer format_allg, format_allg_no_column;
+static s7_pointer g_format_allg(s7_scheme *sc, s7_pointer args)
+{
+  return(g_format_1(sc, args, (main_stack_op(sc) != OP_BEGIN1)));
+}
+static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer pt;
+  pt = car(args);
+ 
+  if (!((s7_is_boolean(pt)) ||               /* #f or #t */
+	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
+	 (!port_is_closed(pt)))))
+    {
+      CHECK_METHOD(sc, pt, sc->FORMAT, args);
+      return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, 
+					   make_protected_string(sc, "#f, #t, or an open output port")));
+    }
+  return(format_to_port_1(sc, (pt == sc->T) ? sc->output_port : pt, s7_string(cadr(args)), cddr(args), NULL,
+			  (main_stack_op(sc) != OP_BEGIN1),
+			  false));
+}
+
+static s7_pointer format_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((is_optimized(expr)) &&
+      (op_no_hop(expr) == OP_C_ALL_G))
+    {
+      if ((args > 1) &&
+	  (!s7_is_string(cadr(expr))) &&
+	  (s7_is_string(caddr(expr))) &&
+	  (!is_columnizing(s7_string(caddr(expr)))))
+	return(format_allg_no_column);
+      return(format_allg);
+    }
+  return(f);
+}
+
+static s7_pointer is_eof_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((is_symbol(cadr(expr))) &&
+      (is_optimized(expr)) &&
+      (optimize_data(expr) == HOP_SAFE_C_S))
+    {
+      set_optimize_op(expr, HOP_SAFE_IS_EOF_S);
+    }
+  return(f);
+}
 
 static s7_pointer is_symbol_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((is_symbol(cadr(expr))) &&
+      (is_optimized(expr)) &&
       (optimize_data(expr) == HOP_SAFE_C_S))
     {
       set_optimize_op(expr, HOP_SAFE_IS_SYMBOL_S);
@@ -32486,6 +32542,11 @@ static s7_pointer not_chooser(s7_scheme *sc, s7_pointer g, int args, s7_pointer 
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(not_is_symbol);
+	}
+      if (optimize_op(cadr(expr)) == HOP_SAFE_IS_EOF_S)
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(not_is_eof);
 	}
 
       if (optimize_data(cadr(expr)) == HOP_SAFE_C_S)
@@ -33696,6 +33757,16 @@ static void init_choosers(s7_scheme *sc)
   c_function_chooser(f) = write_char_chooser;
 
 
+  /* format */
+  f = slot_value(global_slot(sc->FORMAT));
+  c_function_chooser(f) = format_chooser;
+
+  format_allg = s7_make_function(sc, "format", g_format_allg, 1, 0, true, "format optimization");
+  c_function_class(format_allg) = c_function_class(f);
+  format_allg_no_column = s7_make_function(sc, "format", g_format_allg_no_column, 1, 0, true, "format optimization");
+  c_function_class(format_allg_no_column) = c_function_class(f);
+
+
   /* not */
   f = slot_value(global_slot(sc->NOT));
   c_function_chooser(f) = not_chooser;
@@ -33759,6 +33830,11 @@ static void init_choosers(s7_scheme *sc)
   /* symbol? */
   f = slot_value(global_slot(sc->SYMBOLP));
   c_function_chooser(f) = is_symbol_chooser;
+
+
+  /* eof-object? */
+  f = slot_value(global_slot(sc->EOF_OBJECTP));
+  c_function_chooser(f) = is_eof_chooser;
 
 
   /* eq? */
@@ -42665,6 +42741,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START;
 
 		  
+		case OP_SAFE_IS_EOF_S:
+		  if (!c_function_is_ok(sc, code))
+		    break;
+		  
+		case HOP_SAFE_IS_EOF_S:
+		  sc->value = make_boolean(sc, finder(sc, cadr(code)) == sc->EOF_OBJECT);
+		  goto START;
+
+		  /* TODO: I suppose these should check for methods?
+		   */
+		  
 		case OP_SAFE_NOT_S:
 		  if (!c_function_is_ok(sc, code))
 		    break;
@@ -42725,7 +42812,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto EVAL_PAIR;
 
 		  /* -------------------------------- */
-
 
 		case OP_SAFE_WRITE_CHAR_SS:
 		case HOP_SAFE_WRITE_CHAR_SS:
@@ -55879,20 +55965,16 @@ s7_scheme *s7_init(void)
  * fix do envs (unopt case -- saved-args)
  * how often these: copy obj via doloop, or set all to 1 val
  * get gmp to work again in the opt case
- * try to get safe-do lookup stuff into named let
  *
  * can we save the port as a static var, if == on recall just go directly to the
  *   associated IO proc?  It's a value not a variable, so how can this fail?
  *
  * case of char? (currently we have op_case_int which ought to jump!)
  *
- * format as template or lazy function (also make-* and (struct...)
- *   format, make-vector, vector, make-string, string, make-list, make-hash-table, hash-table,
+ * format as template, also make-* and (struct...) as lazy functions
+ *   make-vector, vector, make-string, string, make-list, make-hash-table, hash-table,
  *   environment->list, copy?, rationalize?, *->string, *->list
  *   These are easy now!  
- *
- * display/write and format+in-begin do not return a string, so we don't need to make one
- *  [this is half done -- format still makes a string]
  *
  * does #_xxx get optimized? no.
  *   lg: cdr hash-table-ref length pair? not | cons member eval call-with-exit
@@ -55900,10 +55982,10 @@ s7_scheme *s7_init(void)
  *   bench:  write-char car not cons cdr null? | vector-set 
  *   t455:   aritable? positive? format 
  *   actually we want overheads here, not calls
- *   PERHAPS: opt slashify. 
  *
  * TODO: fix the method list problem! as it is now we lose all vector opts in Snd
  *   this is tricky -- maybe not fixable.  
+ * TODO: opt calls (is_eof for example) are ignoring the method possibility
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320
  * bench    52019 -> 7875 [8268] 8037 8592 8402

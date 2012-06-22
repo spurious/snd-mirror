@@ -10826,6 +10826,19 @@ a2" 3) "132")
 
 ;; ~nT handling is a mess -- what are the defaults?  which is column 1? do we space up to or up to and including?
 
+(test (format #f "~A:~8T~A" 100 'a)   "100:   a")
+(test (format #f "~A:~8T~A" 0 'a)     "0:     a")
+(test (format #f "~A:~8T~A" 10000 'a) "10000: a")
+(test (format #f "~8T~A" 'a)      "       a")
+(test (format #f "1212:~8T~A" 'a) "1212:  a")
+(test (format #f "~D:~8T~A" 100 'a)   "100:   a")
+(test (format #f "~D:~8T~A" 0 'a)     "0:     a")
+(test (format #f "~D:~8T~A" 10000 'a) "10000: a")
+(test (format #f "~a~10,7Tb" 1)     "1               b")
+(test (format #f "~a~10,7Tb" 10000) "10000           b")
+(test (format #f "~a~10,12Tb" 1)     "1                    b")
+(test (format #f "~a~10,12Tb" 10000) "10000                b")
+
 (test (format #f "asdh~20Thiho") "asdh               hiho")
 (test (format #f "asdh~2Thiho") "asdhhiho")
 (test (format #f "a~Tb") "ab")
@@ -11117,7 +11130,7 @@ a2" 3) "132")
 (test (format #f "~12{" #\a) 'error)
 (test (format #f "~12,2A" #\a) 'error)
 
-(test (format #f "~12,A" #\a) "a") ; s7 misses padding errors such as (format #f "~12,' A" #\a)
+(test (format #f "~12,A" #\a) 'error) ; s7 misses padding errors such as (format #f "~12,' A" #\a)
 
 
 ;;; I removed this feature 21-Jun-12
@@ -59187,6 +59200,22 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (expt -1 most-negative-fixnum) 1)
 (num-test (expt 1 most-positive-fixnum) 1)
 (num-test (expt -1 most-positive-fixnum) -1)
+(num-test (expt most-positive-fixnum 1) most-positive-fixnum)
+(num-test (expt most-positive-fixnum -1) (/ most-positive-fixnum))
+(num-test (expt most-negative-fixnum 1) most-negative-fixnum)
+
+;;; without gmp:
+;;;     (expt -9223372036854775808 8) -> 0
+;;; but (expt -922337203685477580 8) -> 5.2374249726338e+143
+;;;     (expt most-negative-fixnum -1) -> nan because the denominator has to be positive in our representation
+;;;     (expt most-negative-fixnum -2) -> division by zero error in make-ratio
+;;; but (expt most-positive-fixnum -2) -> 1.1754943508223e-38 ??
+;;; and similarly for other cases -- is this a bug?
+;;;     (expt most-negative-fixnum 2.0) -> 8.5070591730235e+37
+;;;     (expt most-negative-fixnum 8.0) -> 5.2374249726338e+151
+;;;     (expt most-negative-fixnum -1.0) -> -1.0842021724855e-19
+;;; perhaps we should fall back on floating point in the earlier cases
+;;; TODO: try to make expt more consistent!
 
 (num-test (expt 0+i (+ 0 (expt 2 16))) 1.0)
 (num-test (expt 0+i (+ 1 (expt 2 16))) 0+i)
