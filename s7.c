@@ -569,6 +569,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS, OP_CLOSURE_CC, HOP_CLOSURE_CC, 
       OP_CLOSURE_opSq, HOP_CLOSURE_opSq, OP_CLOSURE_opCq, HOP_CLOSURE_opCq, 
       OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq, 
+      OP_CLOSURE_CAR_CAR, HOP_CLOSURE_CAR_CAR, OP_CLOSURE_CDR_CDR, HOP_CLOSURE_CDR_CDR, 
       OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_SSS, HOP_CLOSURE_SSS,
       OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, OP_CLOSURE_ALL_C, HOP_CLOSURE_ALL_C, OP_CLOSURE_ALL_G, HOP_CLOSURE_ALL_G, 
       OP_CLOSURE_CDR_S, HOP_CLOSURE_CDR_S, 
@@ -662,6 +663,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "closure_ss", "h_closure_ss", "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs", "closure_cc", "h_closure_cc", 
      "closure_opsq", "h_closure_opsq", "closure_opcq", "h_closure_opcq", 
      "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
+     "closure_car_car", "h_closure_car_car", "closure_cdr_cdr", "h_closure_cdr_cdr", 
      "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_sss", "h_closure_sss",
      "closure_all_s", "h_closure_all_s", "closure_all_c", "h_closure_all_c", "closure_all_g", "h_closure_all_g",
      "closure_cdr_s", "h_closure_cdr_s",
@@ -10574,18 +10576,28 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER:
 	  if (is_null(p)) return(make_integer(sc, num_a + integer(x)));
 	  num_a += integer(x);
+	  /* (+ 4611686018427387904 4611686018427387904) -> -9223372036854775808 
+	   */
 	  goto ADD_INTEGERS;
 	  
 	case T_RATIO:
-	  if (is_null(p)) return(s7_make_ratio(sc, numerator(x) + (num_a * denominator(x)), denominator(x)));
 	  den_a = denominator(x);
-	  num_a = numerator(x) + (num_a * denominator(x));
-	  /* this can overflow:
+	  if ((integer_length(num_a) + integer_length(den_a)) > s7_int_bits)
+	    {
+	      if (is_null(p))
+		return(s7_make_real(sc, num_a + fraction(x)));
+	      rl_a = (s7_Double)num_a + fraction(x);
+	      goto ADD_REALS;
+	    }
+	  if (is_null(p)) return(s7_make_ratio(sc, numerator(x) + (num_a * den_a), den_a));
+	  num_a = numerator(x) + (num_a * den_a);
+
+	  /* overflow examples:
 	   *   (+ 100000 1/142857142857140) -> -832205957599110323/28571428571428
-	   * what to do??
+	   *   (+ 4611686018427387904 3/4) -> 3/4
 	   */
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
-	    goto ADD_INTEGERS;
+	  /* there's no point in reduce_fraction here -- it can be reduced! 
+	   */
 	  goto ADD_RATIOS;
 	  
 	case T_REAL:
@@ -10621,6 +10633,17 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
+	  if ((integer_length(integer(x)) + integer_length(den_a)) > s7_int_bits)
+	    {
+	      /* (+ 3/4 4611686018427387904) -> 3/4
+	       * (+ 1/17179869184 1073741824) -> 1/17179869184
+	       * (+ 1/8589934592 1073741824) -> -9223372036854775807/8589934592
+	       */
+	      if (is_null(p))
+		return(s7_make_real(sc, (s7_Double)integer(x) + ((long double)num_a / (long double)den_a)));
+	      rl_a = (s7_Double)integer(x) + ((long double)num_a / (long double)den_a);
+	      goto ADD_REALS;
+	    }
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a + (den_a * integer(x)), den_a));
 	  num_a += (den_a * integer(x));
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
@@ -11071,6 +11094,14 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_INTEGERS;
 	  
 	case T_RATIO:
+	  den_a = denominator(x);
+	  if ((integer_length(num_a) + integer_length(den_a)) > s7_int_bits)
+	    {
+	      if (is_null(p))
+		return(s7_make_real(sc, num_a - fraction(x)));
+	      rl_a = (s7_Double)num_a - fraction(x);
+	      goto SUBTRACT_REALS;
+	    }
 	  if (is_null(p)) return(s7_make_ratio(sc, (num_a * denominator(x)) - numerator(x), denominator(x)));
 	  den_a = denominator(x);
 	  num_a = (num_a * denominator(x)) - numerator(x);
@@ -11111,6 +11142,14 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
+	  if ((integer_length(integer(x)) + integer_length(den_a)) > s7_int_bits)
+	    {
+	      if (is_null(p))
+		return(s7_make_real(sc, ((long double)num_a / (long double)den_a) - integer(x)));
+	      rl_a = ((long double)num_a / (long double)den_a) - integer(x);
+	      goto SUBTRACT_REALS;
+	    }
+
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a - (den_a * integer(x)), den_a));
 	  num_a -= (den_a * integer(x));
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
@@ -11518,6 +11557,13 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
+	  /* as in +, this can overflow:
+	   *   (* 8 -9223372036854775807 8) -> 64
+	   *   (* 3/4 -9223372036854775807 8) -> 6
+	   *   (* 8 -9223372036854775808 8) -> 0
+	   *   (* -1 9223372036854775806 8) -> 16
+	   *   (* -9223372036854775808 8 1e+308) -> 0.0
+	   */
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a * integer(x), den_a));
 	  num_a *= integer(x);
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
@@ -11949,14 +11995,14 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  goto DIVIDE_RATIOS;
 	  
 	case T_RATIO:
-	  if ((num_a > S7_LONG_MAX) ||
-	      (denominator(x) > S7_LONG_MAX) ||
-	      (num_a < S7_LONG_MIN))
+	  den_a = denominator(x);
+	  if ((integer_length(num_a) + integer_length(den_a)) > s7_int_bits)
 	    {
-	      den_a = 1;
-	      goto RATIO_OVER_RATIO;
+	      if (is_null(p))
+		return(s7_make_real(sc, num_a * inverted_fraction(x)));
+	      rl_a = (s7_Double)num_a * inverted_fraction(x);
+	      goto DIVIDE_REALS;
 	    }
-
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a * denominator(x), numerator(x)));
 	  den_a = numerator(x);
 	  num_a *= denominator(x);
@@ -12014,13 +12060,20 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER:
 	  if (integer(x) == 0)
 	    return(division_by_zero_error(sc, sc->DIVIDE, args));
+
+	  if ((integer_length(integer(x)) + integer_length(den_a)) > s7_int_bits)
+	    {
+	      if (is_null(p))
+		return(s7_make_real(sc, (long double)num_a / ((long double)den_a * (s7_Double)integer(x))));
+	      rl_a = (long double)num_a / ((long double)den_a * (s7_Double)integer(x));
+	      goto DIVIDE_REALS;
+	    }
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a * integer(x)));
 	  den_a *= integer(x);
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto DIVIDE_INTEGERS;
 	  goto DIVIDE_RATIOS;
 
-	RATIO_OVER_RATIO:
 	case T_RATIO:
 	  {
 	    s7_Int d1, d2, n1, n2;
@@ -34494,7 +34547,21 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			    {
 			      set_optimized(car(x));
 			      set_unsafe(car(x));
-			      set_optimize_data(car(x), hop + ((is_safe_closure(closure_body(func)) ? OP_SAFE_CLOSURE_opSq_opSq : OP_CLOSURE_opSq_opSq)));
+			      if (is_safe_closure(closure_body(func)))
+				set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_opSq_opSq);
+			      else
+				{
+				  if ((c_call(cadar(x)) == g_car) &&
+				      (c_call(caddar(x)) == g_car))
+				    set_optimize_data(car(x), hop + OP_CLOSURE_CAR_CAR);
+				  else
+				    {
+				      if ((c_call(cadar(x)) == g_cdr) &&
+					  (c_call(caddar(x)) == g_cdr))
+					set_optimize_data(car(x), hop + OP_CLOSURE_CDR_CDR);
+				      else set_optimize_data(car(x), hop + OP_CLOSURE_opSq_opSq);
+				    }
+				}
 			      ecdr(car(x)) = func;
 			      fcdr(car(x)) = cadr(caddar(x));
 			      return(false);
@@ -40980,14 +41047,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->T1_1) = finder(sc, cadr(car(args)));
 		    sc->temp4 = c_call(car(args))(sc, sc->T1_1);
 		    car(sc->T1_1) = finder(sc, fcdr(code));
-		    
 		    car(sc->T2_2) = c_call(cadr(args))(sc, sc->T1_1);
 		    car(sc->T2_1) = sc->temp4;
 		    sc->code = ecdr(code);
 		    goto SAFE_CLOSURE_TWO;
 		  }
 		  
-		  
+
 		case OP_SAFE_CLOSURE_SSS:
 		  if (!function_is_ok(code))
 		    {
@@ -41468,6 +41534,54 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 
+		case OP_CLOSURE_CAR_CAR:
+		  if (!function_is_ok(code))
+		    {
+		      set_optimize_data(code, OP_UNKNOWN_opSq_opSq);
+		      goto OPT_EVAL;
+		    }
+		  if (!indirect_c_function_is_ok(sc, cadr(code)))
+		    break;
+		  
+		case HOP_CLOSURE_CAR_CAR:
+		  {
+		    s7_pointer p;
+		    p = finder(sc, cadr(cadr(code)));
+		    if (is_pair(p))
+		      car(sc->T2_1) = car(p);
+		    else car(sc->T2_2) = g_car(sc, list_1(sc, p));
+		    p = finder(sc, fcdr(code));
+		    if (is_pair(p))
+		      car(sc->T2_2) = car(p);
+		    else car(sc->T2_2) = g_car(sc, list_1(sc, p));
+		    goto UNSAFE_CLOSURE_TWO;
+		  }
+		  
+
+		case OP_CLOSURE_CDR_CDR:
+		  if (!function_is_ok(code))
+		    {
+		      set_optimize_data(code, OP_UNKNOWN_opSq_opSq);
+		      goto OPT_EVAL;
+		    }
+		  if (!indirect_c_function_is_ok(sc, cadr(code)))
+		    break;
+		  
+		case HOP_CLOSURE_CDR_CDR:
+		  {
+		    s7_pointer p;
+		    p = finder(sc, cadr(cadr(code)));
+		    if (is_pair(p))
+		      car(sc->T2_1) = cdr(p);
+		    else car(sc->T2_2) = g_cdr(sc, list_1(sc, p));
+		    p = finder(sc, fcdr(code));
+		    if (is_pair(p))
+		      car(sc->T2_2) = cdr(p);
+		    else car(sc->T2_2) = g_cdr(sc, list_1(sc, p));
+		  goto UNSAFE_CLOSURE_TWO;
+		  }
+		  
+		  
 		case OP_CLOSURE_SSS:
 		  if (!function_is_ok(code))
 		    {
@@ -42358,7 +42472,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  case T_CLOSURE:
 			    if (is_safe_closure(closure_body(f)))
 			      set_optimize_data(code, OP_SAFE_CLOSURE_opSq_opSq);
-			    else set_optimize_data(code, OP_CLOSURE_opSq_opSq);
+			    else 
+			      {
+				if ((c_call(cadr(code)) == g_car) &&
+				    (c_call(caddr(code)) == g_car))
+				  set_optimize_data(code, OP_CLOSURE_CAR_CAR);
+				else
+				  {
+				    if ((c_call(cadr(code)) == g_cdr) &&
+					(c_call(caddr(code)) == g_cdr))
+				      set_optimize_data(code, OP_CLOSURE_CDR_CDR);
+				   else set_optimize_data(code, OP_CLOSURE_opSq_opSq);
+				  }
+			      }
 
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))) &&
@@ -55976,11 +56102,13 @@ s7_scheme *s7_init(void)
  *   environment->list, copy?, rationalize?, *->string, *->list
  *   These are easy now!  
  *
+ * format is mostly format_append_char of the underlying string which seems wasteful --
+ *   perhaps collect until ~ or end, and flush as string?
+ *
  * does #_xxx get optimized? no.
  *   lg: cdr hash-table-ref length pair? not | cons member eval call-with-exit
  *   index:  list-ref char=? string? pair? | string-set!
  *   bench:  write-char car not cons cdr null? | vector-set 
- *   t455:   aritable? positive? format 
  *   actually we want overheads here, not calls
  *
  * TODO: fix the method list problem! as it is now we lose all vector opts in Snd
@@ -55989,8 +56117,9 @@ s7_scheme *s7_init(void)
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320
  * bench    52019 -> 7875 [8268] 8037 8592 8402
- *   (new)                [8764]           9192
+ *   (new)                [8764]           9370
  * index    44300 -> 4988 [4992] 4235 4725 3935
  * s7test            1721             1456 1430
- * t455                           265  256  218
+ * t455                           265  256  218 88
  */
+
