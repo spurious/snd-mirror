@@ -1992,14 +1992,13 @@ static XEN g_gsl_eigenvectors(XEN matrix)
 {
   double *data;
   mus_any *u1;
-  mus_float_t *vals;
   int i, j, len;
   XEN values = XEN_FALSE, vectors = XEN_FALSE;
 
   XEN_ASSERT_TYPE(mus_xen_p(matrix), matrix, XEN_ONLY_ARG, "gsl-eigenvectors", "a mixer (matrix)");
   u1 = XEN_TO_MUS_ANY(matrix);
   if (!mus_mixer_p(u1)) return(XEN_FALSE);
-  vals = mus_data(u1);
+
   len = mus_length(u1);
   data = (double *)calloc(len * len, sizeof(double));
   for (i = 0; i < len; i++)

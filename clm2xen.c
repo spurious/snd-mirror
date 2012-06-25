@@ -1206,7 +1206,9 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 #endif
 
 #if HAVE_SCHEME
+#if 0
 static s7_pointer g_frame_methods, g_mixer_methods;
+#endif
 
 static XEN g_frame_set(XEN uf1, XEN uchan, XEN val);
 static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
@@ -3870,8 +3872,10 @@ static XEN g_make_frame_2(int len, XEN args)
       {
 	s7_pointer nv;
 	nv = mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge))));
+#if 0
 	s7_object_set_environment(nv, g_frame_methods);
 	s7_open_environment(nv);
+#endif
 	return(nv);
       }
 #endif
@@ -4287,8 +4291,10 @@ with 'chans' channels, and 'val' along the diagonal"
       {
 	s7_pointer nv;
 	nv = mus_xen_to_object(mus_any_to_mus_xen(mx));
+#if 0
 	s7_object_set_environment(nv, g_mixer_methods);
 	s7_open_environment(nv);
+#endif
 	return(nv);
       }
 #endif
@@ -4335,8 +4341,10 @@ static XEN g_make_mixer_2(int len, XEN args)
       {
 	s7_pointer nv;
 	nv = mus_xen_to_object(mus_any_to_mus_xen(ge));
+#if 0
 	s7_object_set_environment(nv, g_mixer_methods);
 	s7_open_environment(nv);
+#endif
 	return(nv);
       }
 #endif
@@ -12818,6 +12826,7 @@ static void mus_xen_init(void)
 
 #if HAVE_SCHEME
   init_choosers(s7);
+#if 0
   g_frame_methods = s7_eval_c_string(s7, "(augment-environment ()                                        \n\
                                             (cons 'vector? (lambda (p) #t))                              \n\
                                             (cons 'vector-length mus-length)                             \n\
@@ -12846,6 +12855,7 @@ static void mus_xen_init(void)
                                                           ((< j 0))                                      \n\
                                                         (set! lst (cons (p i j) lst)))))))");
   s7_gc_protect(s7, g_mixer_methods);
+#endif
 #endif
 
 

@@ -364,7 +364,7 @@ vct *mus_vct_copy(vct *vc)
 }
 
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME && 0
   static s7_pointer g_vct_methods;
 #endif
 
@@ -390,8 +390,10 @@ XEN xen_make_vct(mus_long_t len, mus_float_t *data)
   {
     s7_pointer nv;
     nv = s7_make_object(s7, vct_tag, new_vct);
+#if 0
     s7_object_set_environment(nv, g_vct_methods);
     s7_open_environment(nv);
+#endif
     return(nv);
   }
 #endif
@@ -411,8 +413,10 @@ XEN xen_make_vct_wrapper(mus_long_t len, mus_float_t *data)
   {
     s7_pointer nv;
     nv = s7_make_object(s7, vct_tag, new_vct);
+#if 0
     s7_object_set_environment(nv, g_vct_methods);
     s7_open_environment(nv);
+#endif
     return(nv);
   }
 #endif
@@ -1482,7 +1486,7 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_times,         g_vct_times_w,     2, 0, 0, H_vct_times);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_plus,          g_vct_plus_w,      2, 0, 0, H_vct_plus);
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME && 0
   g_vct_methods = s7_eval_c_string(s7, "(augment-environment ()                                        \n\
                                           (cons 'vector? (lambda (p) #t))                              \n\
                                           (cons 'vector-length vct-length)                             \n\

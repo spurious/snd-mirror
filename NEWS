@@ -1,26 +1,14 @@
-Snd 12.11:
+Snd 12.12:
 
-  s7: if WITH_SYSTEM_EXTRAS is 1 (default is 0) include
-        directory? file-exists? delete-file getenv directory->list system
-      with-baffle to limit the scope of continuations
-      #_<name> is the initial (built-in, startup) value of <name>
-      *error-info* replaced by error-environment, stacktrace changed slightly.
-      hooks changed completely (s7 version bumped to 2.0 since this is a
-        large backwards imcompatible change).
-      procedure-setter is settable, so most of the old procedure-with-setter
-        stuff is gone.
-      s7_list, s7_environment_ref|set, s7_procedure_set_setter in s7.h.
-      make-type replaced by open-environment. s7.html has a largely backwards
-        compatible scheme version of make-type.
-      aritable? to check arity match (named "procedure-arity-includes" in srfi-102).
-      arity to generalize and replace procedure-arity
-      removed trace and untrace (replaced by the trace macro in s7.html).
+s7: open-environment?
+    all built-in functions are generic, and any scheme (or C) function can be.
+    added throw (like error, but does not affect error-environment, nor call *error-hook*).
 
-  sndlib: removed mus-audio-describe, audinfo, ESD audio support.
+Snd: removed the --with-static-* configuration switches.  The difference
+       in either file size or runtime size is miniscule compared to
+       everything else, and memory is extremely cheap.  This includes
+       --with-static-xm|xg|alsa|motif
 
-  Snd: removed print-hook.
+checked: sbcl 1.0.57, FC 17 (gcc 4.7.0), gtk 3.5.4
 
-checked: sbcl 1.0.56, gtk 3.4.1|3.5.2, autoconf 2.69, ruby 1.9.3-p194, cairo 1.12.2
-         gmp 5.0.5
-
-Thanks!: Ludger Brummer, Torsten Anders, Mike Scholz, Rick Taube, Peter Bex.
+Thanks!: Michael Alcorn, Mike Scholz, Brian Damgaard.

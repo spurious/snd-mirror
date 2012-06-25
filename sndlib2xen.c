@@ -1582,7 +1582,7 @@ static XEN g_sound_data_chans(XEN obj)
 }
 
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME && 0
   static s7_pointer g_sound_data_methods;
 #endif
 
@@ -1613,8 +1613,10 @@ XEN make_sound_data(int chans, mus_long_t frames)
   {
     s7_pointer nv;
     nv = s7_make_object(s7, sound_data_tag, sd);
+#if 0
     s7_object_set_environment(nv, g_sound_data_methods);
     s7_open_environment(nv);
+#endif
     return(nv);
   }
 #endif
@@ -1635,8 +1637,10 @@ XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data)
   {
     s7_pointer nv;
     nv = s7_make_object(s7, sound_data_tag, sd);
+#if 0
     s7_object_set_environment(nv, g_sound_data_methods);
     s7_open_environment(nv);
+#endif
     return(nv);
   }
 #endif
@@ -1991,8 +1995,10 @@ static XEN g_sound_data_copy(XEN obj)
   {
     s7_pointer nv;
     nv = s7_make_object(s7, sound_data_tag, sdnew);
+#if 0
     s7_object_set_environment(nv, g_sound_data_methods);
     s7_open_environment(nv);
+#endif
     return(nv);
   }
 #endif
@@ -2884,7 +2890,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable);
 #endif
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME && 0
   g_sound_data_methods = s7_eval_c_string(s7, "(augment-environment ()                                        \n\
                                           (cons 'vector? (lambda (p) #t))                                     \n\
                                           (cons 'vector-length                                                \n\

@@ -1,5 +1,6 @@
 Snd change log
 
+ 26-Jun:    Snd 12.12.
  4-Jun:     removed the --with-static-* configuration switches.
  21-May:    Snd 12.11.
  11-May:    all scheme-side hook code changed.  removed print-hook.

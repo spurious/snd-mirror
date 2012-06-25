@@ -3880,7 +3880,6 @@ the added complexity.
 garbage collector when it can't be referenced any further.  To get 
 an element of a vct, use <a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a>; similarly <a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a>
 sets an element.  (vct's are applicable objects, so vct-ref can always be omitted, and set! can replace vct-set!).
-Vcts are legitimate scheme vectors, so you can use, for example, vector-&gt;list with a vct.
 Once created, a vct can be passed to a variety of built-in
 functions:
 </p>
@@ -4409,7 +4408,6 @@ true
 each vct representing one channel's data, or as an array of frames, each frame holding a sample from
 each channel at that position in the sound.  <a href="sndscm.html#framedoc">frame.scm</a> has a number of useful functions that use
 sound-data objects.
-sound-data objects are legitimate vectors in scheme.
 As with vcts, sound-data objects partake in the Enumerable and Comparable
 classes in Ruby.
 </p>

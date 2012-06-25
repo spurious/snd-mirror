@@ -462,9 +462,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+26-Jun:  Snd 12.12.\n\
+4-Jun:   removed the --with-static-* configuration switches.\n\
 21-May:  Snd 12.11\n\
 1-May:   removed mus-audio-describe, ESD audio support, audinfo.\n\
-12-Apr:  Snd 12.10.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
