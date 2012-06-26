@@ -1074,6 +1074,10 @@ struct s7_scheme {
   void *default_rng;
 #if WITH_GMP
   void *default_big_rng;
+
+  s7_pointer *bigints, *bigratios, *bigreals, *bignumbers;
+  int bigints_size, bigratios_size, bigreals_size, bignumbers_size;
+  int bigints_loc, bigratios_loc, bigreals_loc, bignumbers_loc;
 #endif
 
   /* these are symbols, primarily for the generic function search.  
@@ -2365,6 +2369,68 @@ static void sweep(s7_scheme *sc)
 	}
       sc->continuations_loc = j;
     }
+
+#if WITH_GMP
+  if (sc->bigints_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->bigints_loc; i++)
+	{
+	  s7_pointer s1;
+	  s1 = sc->bigints[i];
+	  if (type(s1) == 0)
+	    {
+	      mpz_clear(big_integer(s1));
+	    }
+	  else sc->bigints[j++] = s1;
+	}
+      sc->bigints_loc = j;
+    }
+
+  if (sc->bigratios_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->bigratios_loc; i++)
+	{
+	  s7_pointer s1;
+	  s1 = sc->bigratios[i];
+	  if (type(s1) == 0)
+	    {
+	      mpq_clear(big_ratio(s1));
+	    }
+	  else sc->bigratios[j++] = s1;
+	}
+      sc->bigratios_loc = j;
+    }
+
+  if (sc->bigreals_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->bigreals_loc; i++)
+	{
+	  s7_pointer s1;
+	  s1 = sc->bigreals[i];
+	  if (type(s1) == 0)
+	    {
+	      mpfr_clear(big_real(s1));
+	    }
+	  else sc->bigreals[j++] = s1;
+	}
+      sc->bigreals_loc = j;
+    }
+
+  if (sc->bignumbers_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->bignumbers_loc; i++)
+	{
+	  s7_pointer s1;
+	  s1 = sc->bignumbers[i];
+	  if (type(s1) == 0)
+	    {
+	      mpc_clear(big_complex(s1));
+	    }
+	  else sc->bignumbers[j++] = s1;
+	}
+      sc->bignumbers_loc = j;
+    }
+#endif
 }
 
 
@@ -2456,6 +2522,52 @@ static void add_continuation(s7_scheme *sc, s7_pointer p)
   sc->continuations[sc->continuations_loc++] = p;
 }
 
+#if WITH_GMP
+static void add_bigint(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->bigints_loc == sc->bigints_size)
+    {
+      sc->bigints_size *= 2;
+      sc->bigints = (s7_pointer *)realloc(sc->bigints, sc->bigints_size * sizeof(s7_pointer));
+    }
+  sc->bigints[sc->bigints_loc++] = p;
+}
+
+
+static void add_bigratio(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->bigratios_loc == sc->bigratios_size)
+    {
+      sc->bigratios_size *= 2;
+      sc->bigratios = (s7_pointer *)realloc(sc->bigratios, sc->bigratios_size * sizeof(s7_pointer));
+    }
+  sc->bigratios[sc->bigratios_loc++] = p;
+}
+
+
+static void add_bigreal(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->bigreals_loc == sc->bigreals_size)
+    {
+      sc->bigreals_size *= 2;
+      sc->bigreals = (s7_pointer *)realloc(sc->bigreals, sc->bigreals_size * sizeof(s7_pointer));
+    }
+  sc->bigreals[sc->bigreals_loc++] = p;
+}
+
+
+static void add_bignumber(s7_scheme *sc, s7_pointer p)
+{
+  if (sc->bignumbers_loc == sc->bignumbers_size)
+    {
+      sc->bignumbers_size *= 2;
+      sc->bignumbers = (s7_pointer *)realloc(sc->bignumbers, sc->bignumbers_size * sizeof(s7_pointer));
+    }
+  sc->bignumbers[sc->bignumbers_loc++] = p;
+}
+#endif
+
+
 
 #define INIT_GC_CACHE_SIZE 512
 static void init_gc_caches(s7_scheme *sc)
@@ -2484,6 +2596,20 @@ static void init_gc_caches(s7_scheme *sc)
   sc->c_objects_size = INIT_GC_CACHE_SIZE;
   sc->c_objects_loc = 0;
   sc->c_objects = (s7_pointer *)malloc(sc->c_objects_size * sizeof(s7_pointer));
+#if WITH_GMP
+  sc->bigints_size = INIT_GC_CACHE_SIZE;
+  sc->bigints_loc = 0;
+  sc->bigints = (s7_pointer *)malloc(sc->bigints_size * sizeof(s7_pointer));
+  sc->bigratios_size = INIT_GC_CACHE_SIZE;
+  sc->bigratios_loc = 0;
+  sc->bigratios = (s7_pointer *)malloc(sc->bigratios_size * sizeof(s7_pointer));
+  sc->bigreals_size = INIT_GC_CACHE_SIZE;
+  sc->bigreals_loc = 0;
+  sc->bigreals = (s7_pointer *)malloc(sc->bigreals_size * sizeof(s7_pointer));
+  sc->bignumbers_size = INIT_GC_CACHE_SIZE;
+  sc->bignumbers_loc = 0;
+  sc->bignumbers = (s7_pointer *)malloc(sc->bignumbers_size * sizeof(s7_pointer));
+#endif
 }
 
 
@@ -4701,6 +4827,18 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
       } while (0)
 
 
+#define MAKE_CLOSURE_NO_CAPTURE(Sc, X, Args, Code, Env)	\
+  do { \
+       NEW_CELL(Sc, X); \
+       closure_args(X) = Args;	\
+       closure_body(X) = Code; \
+       closure_setter(X) = sc->F; \
+       closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
+       closure_environment(X) = Env; \
+       set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
+      } while (0)
+
+
 
 static int closure_length(s7_scheme *sc, s7_pointer e)
 {
@@ -5736,7 +5874,6 @@ static s7_Complex catanh(s7_Complex z)
 #endif
 
 
-/* TODO: simplify these! */
 bool s7_is_number(s7_pointer p)
 {
 #if WITH_GMP
@@ -6467,6 +6604,7 @@ static int integer_length(s7_Int a)
   if (a < I_16) return(8 + bits[a >> 8]);
   if (a < I_24) return(16 + bits[a >> 16]);
   if (a < I_32) return(24 + bits[a >> 24]);
+  /* this generates compiler warnings if s7_Int = int: how to make C happy? (we can't assume SIZEOF* is available) */
   if (a < I_40) return(32 + bits[a >> 32]);
   if (a < I_48) return(40 + bits[a >> 40]);
   if (a < I_56) return(48 + bits[a >> 48]);
@@ -17963,7 +18101,7 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
       loc = port_string_length(pt);
       port_string_length(pt) = new_len * 2;
       port_string(pt) = (char *)realloc(port_string(pt), port_string_length(pt) * sizeof(char));
-      memset((void *)(port_string(pt) + loc), 0, port_string_length(pt) - loc); /* TODO: this is wasteful */
+      memset((void *)(port_string(pt) + loc), 0, port_string_length(pt) - loc);
     }
 
   memcpy((void *)(port_string(pt) + port_string_point(pt)), (void *)str, len);
@@ -21426,10 +21564,6 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
 
   return(g_format_1(sc, args, true)); 
 }
-
-/* TODO: can we predigest or memoize the columnized state?
- *    also pre-choose the templates?
- */
 
 
 const char *s7_format(s7_scheme *sc, s7_pointer args)
@@ -29333,7 +29467,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		  z = catch_handler(catcher);
 		  if (is_symbol(car(z)))
 		    arity_checked = true;
-		  MAKE_CLOSURE(sc, y, car(z), cdr(z), stack_environment(sc->stack, i));
+		  MAKE_CLOSURE_NO_CAPTURE(sc, y, car(z), cdr(z), stack_environment(sc->stack, i));
 		  sc->code = y;
 		}
 	      else sc->code = catch_handler(catcher);
@@ -43932,7 +44066,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		  
 		case HOP_APPLY_SS:
-		  sc->code = finder(sc, cadr(code)); /* TODO: global search here */
+		  sc->code = finder(sc, cadr(code)); /* global search here was slower */
 		  sc->args = finder(sc, caddr(code));
 		  if (!is_null(sc->args))
 		    {
@@ -44814,7 +44948,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer x, y, z;
 
 		    y = cdadr(code);
-		    MAKE_CLOSURE(sc, x, car(y), cdr(y), sc->envir);
+		    MAKE_CLOSURE_NO_CAPTURE(sc, x, car(y), cdr(y), sc->envir);
 
 		    z = find_symbol_or_bust(sc, caddr(code));
 		    if ((!is_pair(z)) ||
@@ -44844,7 +44978,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer x, y, z;
 
 		    y = cdadr(code);
-		    MAKE_CLOSURE(sc, x, car(y), cdr(y), sc->envir);
+		    MAKE_CLOSURE_NO_CAPTURE(sc, x, car(y), cdr(y), sc->envir);
 
 		    z = find_symbol_or_bust(sc, caddr(code));
 		    if ((!is_pair(z)) ||
@@ -44872,7 +45006,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer x, y, z;
 
 		    y = cdadr(code);
-		    MAKE_CLOSURE(sc, x, car(y), cdr(y), sc->envir);
+		    MAKE_CLOSURE_NO_CAPTURE(sc, x, car(y), cdr(y), sc->envir);
 
 		    y = caddr(code);
 		    car(sc->T1_1) = find_symbol_or_bust(sc, cadr(y));
@@ -50618,6 +50752,7 @@ static s7_pointer string_to_big_integer(s7_scheme *sc, const char *str, int radi
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_INTEGER);
+  add_bigint(sc, x);
   mpz_init_set_str(big_integer(x), (str[0] == '+') ? (const char *)(str + 1) : str, radix);
 
   return(x);
@@ -50630,6 +50765,7 @@ static s7_pointer mpz_to_big_integer(s7_scheme *sc, mpz_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_INTEGER);
+  add_bigint(sc, x);
   mpz_init_set(big_integer(x), val);
 
   return(x);
@@ -50657,6 +50793,7 @@ static s7_pointer string_to_big_ratio(s7_scheme *sc, const char *str, int radix)
     {
       NEW_CELL(sc, x);
       set_type(x, T_BIG_RATIO);
+      add_bigratio(sc, x);
       mpq_init(big_ratio(x));
       mpq_set_num(big_ratio(x), mpq_numref(n));
       mpq_set_den(big_ratio(x), mpq_denref(n));
@@ -50673,6 +50810,7 @@ static s7_pointer mpq_to_big_ratio(s7_scheme *sc, mpq_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_RATIO);
+  add_bigratio(sc, x);
   mpq_init(big_ratio(x));
   mpq_set_num(big_ratio(x), mpq_numref(val));
   mpq_set_den(big_ratio(x), mpq_denref(val));
@@ -50693,6 +50831,7 @@ static s7_pointer mpz_to_big_ratio(s7_scheme *sc, mpz_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_RATIO);
+  add_bigratio(sc, x);
   mpq_init(big_ratio(x));
   mpq_set_num(big_ratio(x), val);
   
@@ -50714,6 +50853,7 @@ static s7_pointer string_to_big_real(s7_scheme *sc, const char *str, int radix)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_REAL);
+  add_bigreal(sc, x);
   mpfr_init_set_str(big_real(x), str, radix, GMP_RNDN);
 
   return(x);
@@ -50727,6 +50867,7 @@ static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_REAL);
+  add_bigreal(sc, x);
 
   switch (type(p))
     {
@@ -50779,6 +50920,7 @@ static s7_pointer mpz_to_big_real(s7_scheme *sc, mpz_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_REAL);
+  add_bigreal(sc, x);
   mpfr_init_set_z(big_real(x), val, GMP_RNDN);
 
   return(x);
@@ -50791,6 +50933,7 @@ static s7_pointer mpq_to_big_real(s7_scheme *sc, mpq_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_REAL);
+  add_bigreal(sc, x);
   mpfr_init_set_q(big_real(x), val, GMP_RNDN);
 
   return(x);
@@ -50803,6 +50946,7 @@ static s7_pointer mpfr_to_big_real(s7_scheme *sc, mpfr_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_REAL);
+  add_bigreal(sc, x);
   mpfr_init_set(big_real(x), val, GMP_RNDN);
   
   /* fprintf(stderr, "%s: %s\n", __func__, DISPLAY(x)); */
@@ -50822,6 +50966,7 @@ static s7_pointer big_pi(s7_scheme *sc)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_REAL);
+  add_bigreal(sc, x);
   mpfr_init(big_real(x));
   mpfr_const_pi(big_real(x), GMP_RNDN);
   
@@ -50835,6 +50980,7 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_COMPLEX);
+  add_bignumber(sc, x);
   mpc_init(big_complex(x));
 
   switch (type(p))
@@ -50904,6 +51050,7 @@ static s7_pointer mpz_to_big_complex(s7_scheme *sc, mpz_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_COMPLEX);
+  add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpfr_init_set_z(temp, val, GMP_RNDN);
   mpc_set_fr(big_complex(x), temp, MPC_RNDNN);
@@ -50920,6 +51067,7 @@ static s7_pointer mpq_to_big_complex(s7_scheme *sc, mpq_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_COMPLEX);
+  add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpfr_init_set_q(temp, val, GMP_RNDN);
   mpc_set_fr(big_complex(x), temp, MPC_RNDNN);
@@ -50935,6 +51083,7 @@ static s7_pointer mpfr_to_big_complex(s7_scheme *sc, mpfr_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_COMPLEX);
+  add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpc_set_fr(big_complex(x), val, MPC_RNDNN);
 
@@ -50948,6 +51097,7 @@ static s7_pointer mpc_to_big_complex(s7_scheme *sc, mpc_t val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_COMPLEX);
+  add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpc_set(big_complex(x), val, MPC_RNDNN);
 
@@ -50971,6 +51121,7 @@ static s7_pointer make_big_complex(s7_scheme *sc, mpfr_t rl, mpfr_t im)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_COMPLEX);
+  add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpc_set_fr_fr(big_complex(x), rl ,im, MPC_RNDNN);
 
@@ -51020,6 +51171,7 @@ static s7_pointer s7_Int_to_big_integer(s7_scheme *sc, s7_Int val)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_INTEGER);
+  add_bigint(sc, x);
   mpz_init_set_s7_Int(big_integer(x), val);
 
   return(x);
@@ -51108,6 +51260,7 @@ static s7_pointer s7_ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den)
 
   NEW_CELL(sc, x);
   set_type(x, T_BIG_RATIO);
+  add_bigratio(sc, x);
   mpq_init(big_ratio(x));
 
   if ((num <= S7_LONG_MAX) && (num >= S7_LONG_MIN) &&
@@ -51932,6 +52085,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 
 	  NEW_CELL(sc, x);
 	  set_type(x, T_BIG_RATIO);
+	  add_bigratio(sc, x);
 
 	  mpz_init_set_s7_Int(n1, 1);
 	  mpz_init_set_s7_Int(d1, S7_LLONG_MIN);
@@ -51980,6 +52134,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 
 	NEW_CELL(sc, x);
 	set_type(x, T_BIG_RATIO);
+	add_bigratio(sc, x);
 	mpq_init(big_ratio(x));
 
 	mpz_set_ui(n, 1);
@@ -52013,6 +52168,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 
 	NEW_CELL(sc, x);
 	set_type(x, T_BIG_RATIO);
+	add_bigratio(sc, x);
 
 	mpq_init(big_ratio(x));
 	mpq_set_num(big_ratio(x), mpq_denref(big_ratio(p)));
@@ -52103,6 +52259,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
       {
 	NEW_CELL(sc, x);
 	set_type(x, T_BIG_RATIO);
+	add_bigratio(sc, x);
 
 	mpq_init(big_ratio(x));
 	mpq_set_num(big_ratio(x), big_integer(result));
@@ -52268,6 +52425,7 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
 	s7_pointer x;
 	NEW_CELL(sc, x);
 	set_type(x, T_BIG_REAL);
+	add_bigreal(sc, x);
 	mpfr_init(big_real(x));
 	mpc_arg(big_real(x), big_complex(p), GMP_RNDN);
 	return(x);
@@ -52315,6 +52473,7 @@ static s7_pointer big_make_rectangular(s7_scheme *sc, s7_pointer args)
 
   NEW_CELL(sc, p);
   set_type(p, T_BIG_COMPLEX);
+  add_bignumber(sc, p);
   mpc_init(big_complex(p));
   mpc_set_fr_fr(big_complex(p), rl, im, MPC_RNDNN);
 
@@ -52392,6 +52551,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
 
   NEW_CELL(sc, p);
   set_type(p, T_BIG_COMPLEX);
+  add_bignumber(sc, p);
   mpc_init(big_complex(p));
   mpc_set_fr_fr(big_complex(p), rl, im, MPC_RNDNN);
 
@@ -52469,6 +52629,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 		{
 		  NEW_CELL(sc, p);
 		  set_type(p, T_BIG_INTEGER);
+		  add_bigint(sc, p);
 		  mpz_init(big_integer(p));
 		  mpfr_get_z(big_integer(p), n, GMP_RNDN);
 		}
@@ -52488,6 +52649,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	    {
 	      NEW_CELL(sc, p);
 	      set_type(p, T_BIG_INTEGER);
+	      add_bigint(sc, p);
 	      mpz_init(big_integer(p));
 	      mpfr_get_z(big_integer(p), n, GMP_RNDN);
 	    }
@@ -55931,6 +56093,9 @@ s7_scheme *s7_init(void)
 #if DEBUGGING
   s7_provide(sc, "debugging");
 #endif
+#if WITH_COMPLEX
+  s7_provide(sc, "complex-numbers");
+#endif
 
   sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);
   set_setter(sc->Vector_Set);
@@ -56194,7 +56359,6 @@ s7_scheme *s7_init(void)
  * fix do envs (unopt case -- saved-args)
  *
  * get gmp to work again in the opt case
- * TODO: I forgot to free all the gmp bignums!  We'll need another sweep list, or an explicit check in the gc?
  *
  * can we save the port as a static var, if == on recall just go directly to the
  *   associated IO proc?  It's a value not a variable, so how can this fail?
@@ -56220,15 +56384,13 @@ s7_scheme *s7_init(void)
  *   much Snd scheme code (output locs for example) distinguish vectors and vcts.
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
  *
- * TODO: a feature if complex numbers available
- * TODO: if s7_Int is int, fix the innteger_length shift troubles
- * TODO: include int/float in s7.h as compsnd case
- * TODO: compsnd WITH_EXTRA_EXPONENT_MARKERS=0 WITH_AT_SIGN_AS_EXPONENT=0 WITH_SYSTEM_EXTRAS=0/1
- *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
  *   what is free?  Perhaps leave it until it's needed?
  *   TODO: these fixups are ignored by the optimized cases
  *   also I didn't look at divide yet, and expt might use *?
+ *
+ * optimizer could mark the non-capture lambdas (for-each/map/catch/with-output...) 
+ *   so that env not incremented (line 49850)
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320
  * bench    52019 -> 7875 [8268] 8037 8592 8402

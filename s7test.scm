@@ -15458,6 +15458,7 @@ in s7:
 	  (define (hi a) (+ a 1))))
 	(hi 1))
       1)
+
 (test (let ()
 	(cond-expand 
 	 ((and s7 dfls-exponents)
@@ -15465,7 +15466,7 @@ in s7:
 	 (else 
 	  (define (hi a) (+ a 1))))
 	(hi 1))
-      1)
+      (if (provided? 'dfls-exponents) 1 2))
 (test (let ()
 	(cond-expand 
 	 ((or s7 guile)
@@ -48230,7 +48231,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (= (* 15601/24727 1.0) 79335/125743) #f)
 
 ;;; (if with-bignums (test (= (* 171928773/272500658 1.0) (* 397573379/630138897 1.0)) #f)) -- needs more bits
-(test (= (* 171928773/272500658 1.0) 397573379/630138897) #f)
+;;; (test (= (* 171928773/272500658 1.0) 397573379/630138897) #f)
 
 (test (= (* 190537/301994 1.0) (* 7161071/11350029 1.0)) #f)
 (test (= (* 190537/301994 1.0) 7161071/11350029) #f)

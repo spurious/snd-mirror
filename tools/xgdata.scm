@@ -8421,6 +8421,36 @@
 
 ;;; GTK_UNIT_NONE as a GtkUnit (like pixel) but this enum is commented out above
 
+;;; 3.5.6
++ gboolean gtk_icon_view_get_cell_rect                          (GtkIconView     *icon_view,
++ 							       GtkTreePath     *path,
++ 							       GtkCellRenderer *cell,
++ 							       GdkRectangle    *rect);
+
+gtkmenubutton new 
+gtksearchentry new
+
+
+#define GTK_MENU_BUTTON(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_MENU_BUTTON, GtkMenuButton))
+#define GTK_IS_MENU_BUTTON(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_MENU_BUTTON))
+GtkWidget   *gtk_menu_button_new            (void);
+void         gtk_menu_button_set_menu       (GtkMenuButton *menu_button,
+                                             GtkWidget     *menu);
+GtkMenu     *gtk_menu_button_get_menu       (GtkMenuButton *menu_button);
+void         gtk_menu_button_set_direction  (GtkMenuButton *menu_button,
+                                             GtkArrowType   direction);
+GtkArrowType gtk_menu_button_get_direction  (GtkMenuButton *menu_button);
+void         gtk_menu_button_set_menu_model (GtkMenuButton *menu_button,
+                                             GMenuModel    *menu_model);
+GMenuModel  *gtk_menu_button_get_menu_model (GtkMenuButton *menu_button);
+void         gtk_menu_button_set_align_widget (GtkMenuButton *menu_button,
+                                               GtkWidget     *align_widget);
+GtkWidget   *gtk_menu_button_get_align_widget (GtkMenuButton *menu_button);
+
+#define GTK_SEARCH_ENTRY(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_SEARCH_ENTRY, GtkSearchEntry))
+#define GTK_IS_SEARCH_ENTRY(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_SEARCH_ENTRY))
+GtkWidget*      gtk_search_entry_new            (void);
+
 |#
 
 
