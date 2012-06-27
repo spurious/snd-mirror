@@ -1246,6 +1246,59 @@ mac
 136    ; (+ 12 3 21 (* 10 10)), (+ b 10) is treated as (* b 10)
        ;   because (+ b 10) refers to the '+' and 'b' in the calling environment
 </pre>
+
+<p>Here's a simpler version that does not try to import the definition environment.
+Better would be to use a gensym rather than "e" for the current-environment.
+</p>
+<pre>
+(define-macro (define-immaculo name-and-args . body)
+  (let ((new-args (map (lambda (arg) 
+                         `(list (quote ,arg) ,arg)) 
+                       (cdr name-and-args)))
+	(wrapped-args (map (lambda (arg) 
+                             `(,arg (quote (with-environment e ,arg)))) 
+                           (cdr name-and-args))))
+    (let ((new-body (apply let wrapped-args body)))
+      `(define-macro ,name-and-args
+	 `(let ,(list ,@new-args)
+	    (let ((e (current-environment)))
+	      ,',new-body))))))
+
+&gt; (define-immaculo (mac b) 
+    `(let ((a 1)) (+ a ,b)))
+mac
+:(let ((a 32)) (mac a))
+33
+:(procedure-source mac) ; I've edited the results to try to make the transformation clearer
+(define-macro (mac b)
+  `(let ((b ,b))
+     (let ((e (current-environment)))	      
+       (let ((a 1))     ; here is the original macro body
+         (+ a (with-environment e b))))))
+</pre>
+<p>Apply let is very similar to eval:
+</p>
+<pre>
+&gt; (apply let '((a 2) (b 3)) '((+ a b)))
+5
+&gt; (eval '(+ a b) (augment-environment () '(a . 2) '(b . 3)))
+5
+&gt; ((apply lambda '(a b) '((+ a b))) 2 3)
+5
+</pre>
+<p>But we're using it here as a kind of "replace":
+</p>
+<pre>
+&gt; (apply let '((a 2) (b 3)) '((list + a b))) ; a -&gt; 2, b -&gt; 3
+(+ 2 3)
+</pre>
+<p>The redundant-looking double lists are for apply's benefit.  We could
+use a trailing null instead (mimicking apply* in some ancient lisps):
+</p>
+<pre>
+:(apply let '((a 2) (b 3)) '(list + a b) ())
+(+ 2 3)
+</pre>
 </div>
 
 
@@ -2275,7 +2328,7 @@ these names come to mind:
 environment?          let?, islet
 global-environment    rootlet
 initial-environment   unlet
-with-environment      inlet
+with-environment      inlet (with-e is very close to let: (let env . body)
 outer-environment     outlet
 augment-environment   sublet, make-let(?)
 augment-environment!  varlet, let-append(?)

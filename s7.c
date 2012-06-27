@@ -56360,6 +56360,8 @@ s7_scheme *s7_init(void)
  *
  * get gmp to work again in the opt case
  *
+ * (with-environment e . body) = (let e . body) if we accept env as 1st arg
+ *
  * can we save the port as a static var, if == on recall just go directly to the
  *   associated IO proc?  It's a value not a variable, so how can this fail?
  *
