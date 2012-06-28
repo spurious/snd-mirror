@@ -2294,6 +2294,8 @@ Environments are first class (and applicable) objects in s7.
 
 <p><code>(with-environment env . body)</code> evaluates its body in the environment env.
 There are several examples of its use in the <a href="#macros">macro</a> section.
+It is very close to let: <code>(let env . body)</code>, but named let usurps that possibility,
+and eval: <code>(eval form env)</code>.
 defined? returns #t if the symbol is defined in the environment, and
 symbol-&gt;value returns the value associated with it.
 To add or change a symbol's value, use augment-environment:
@@ -2328,7 +2330,7 @@ these names come to mind:
 environment?          let?, islet
 global-environment    rootlet
 initial-environment   unlet
-with-environment      inlet (with-e is very close to let: (let env . body)
+with-environment      inlet 
 outer-environment     outlet
 augment-environment   sublet, make-let(?)
 augment-environment!  varlet, let-append(?)

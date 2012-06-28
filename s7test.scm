@@ -59197,7 +59197,15 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (num-test (expt -1.0 (- 1 (expt 2 54))) -1.0)
       (num-test (expt -1.0 (expt 2 54)) 1.0)
       (num-test (expt 2.0 (- (expt 2 53))) 0.0)
-      (num-test (expt 2 most-negative-fixnum) 0)))
+      (num-test (expt 2 most-negative-fixnum) 0)
+      (test (nan? (expt 1/0 0)) #t)
+      (test (nan? (expt (make-rectangular 0 1/0) 0)) #t)
+      (test (nan? (expt (make-rectangular 1/0 1/0) 0)) #t)
+      (test (nan? (expt (make-rectangular 1/0 0) 0)) #t)
+      (num-test (expt most-negative-fixnum 8) 5.237424972633826992021103514924158643547E151)
+      (num-test (expt most-negative-fixnum 2) 8.5070591730234615865843651857942052864E37)
+      (num-test (expt most-negative-fixnum -1) -1.084202172485504434007452800869941711426E-19)
+      (num-test (expt most-negative-fixnum -2) 1.175494350822287507968736537222245677819E-38)))
 
 (num-test (expt 1 most-negative-fixnum) 1)
 (num-test (expt -1 most-negative-fixnum) 1)
@@ -59206,19 +59214,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (expt most-positive-fixnum 1) most-positive-fixnum)
 (num-test (expt most-positive-fixnum -1) (/ most-positive-fixnum))
 (num-test (expt most-negative-fixnum 1) most-negative-fixnum)
-
-;;; without gmp:
-;;;     (expt -9223372036854775808 8) -> 0
-;;; but (expt -922337203685477580 8) -> 5.2374249726338e+143
-;;;     (expt most-negative-fixnum -1) -> nan because the denominator has to be positive in our representation
-;;;     (expt most-negative-fixnum -2) -> division by zero error in make-ratio
-;;; but (expt most-positive-fixnum -2) -> 1.1754943508223e-38 ??
-;;; and similarly for other cases -- is this a bug?
-;;;     (expt most-negative-fixnum 2.0) -> 8.5070591730235e+37
-;;;     (expt most-negative-fixnum 8.0) -> 5.2374249726338e+151
-;;;     (expt most-negative-fixnum -1.0) -> -1.0842021724855e-19
-;;; perhaps we should fall back on floating point in the earlier cases
-;;; TODO: try to make expt more consistent!
+(num-test (expt most-negative-fixnum 0) 1)
 
 (num-test (expt 0+i (+ 0 (expt 2 16))) 1.0)
 (num-test (expt 0+i (+ 1 (expt 2 16))) 0+i)
@@ -64816,6 +64812,13 @@ but it's the printout that is at fault:
 
 (num-test (/ 2/9223372036854775807 2) 1/9223372036854775807)
 (num-test (/ -63/288230376151711744 -63) 1/288230376151711744)
+
+(if (not with-bignums)
+    (begin
+      (num-test (/ 1/2305843009213693952 -1 4194304/2097151) -2.168403310995243176730312012479018335398E-19)
+      (num-test (/ 1/2199023255552 -63 8388608/4194303) -3.609105098938467225452985162735872325445E-15)
+      (num-test (/ 1/17179869184 -1 1073741824/536870911) -2.91038304025235949890060282996273599565E-11)
+      ))
 
 (for-each-permutation 
  (lambda (a b c d)

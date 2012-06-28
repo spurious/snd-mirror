@@ -1953,7 +1953,7 @@ static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointe
 static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
-static s7_pointer A_LIST, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
+static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST;
 
 #if WITH_OPTIMIZATION
@@ -9696,10 +9696,12 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       y = s7_integer(pw);
       if (y == 0)
 	{
-	  /* (expt +nan.0 0) ?? */
-	  if (is_rational(n))
+	  if (is_rational(n))                                 /* (expt 3 0) */
 	    return(small_int(1));
-	  return(real_one);
+	  if ((is_NaN(s7_real_part(n))) ||                    /* (expt 1/0 0) -> NaN */
+	      (is_NaN(s7_imag_part(n))))                      /* (expt (make-rectangular 0 1/0) 0) -> NaN */
+	    return(n);                                        
+	  return(real_one);                                   /* (expt 3.0 0) */
 	}
 
       switch (type(n))
@@ -9708,21 +9710,23 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  {
 	    s7_Int x;
 	    x = s7_integer(n);
-	    if (x == 1)
+	    if (x == 1)                                       /* (expt 1 y) */
 	      return(n);
 	    
 	    if (x == -1)
 	      {
-		if (y == S7_LLONG_MIN)
+		if (y == S7_LLONG_MIN)                        /* (expt -1 most-negative-fixnum) */
 		  return(small_int(1));
 		
-		if (s7_Int_abs(y) & 1)
+		if (s7_Int_abs(y) & 1)                        /* (expt -1 odd-int) */
 		  return(n);
-		return(small_int(1));
+		return(small_int(1));                         /* (expt -1 even-int) */
 	      }
 	    
-	    if (y == S7_LLONG_MIN)
-	      return(small_int(0));                      /* (expt x most-negative-fixnum) !! */
+	    if (y == S7_LLONG_MIN)                            /* (expt x most-negative-fixnum) */
+	      return(small_int(0));                      
+	    if (x == S7_LLONG_MIN)                            /* (expt most-negative-fixnum y) */
+	      return(s7_make_real(sc, pow((double)x, (double)y)));
 	    
 	    if (int_pow_ok(x, s7_Int_abs(y)))
 	      {
@@ -10668,12 +10672,20 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 
 static int reduce_fraction(s7_Int *numer, s7_Int *denom)
 {
+  /* we're assuming in several places that we have a normal s7 rational after returning,
+   *    so the denominator needs to be positive.
+   */
   s7_Int divisor;
 
   if (*numer == 0)
     {
       *denom = 1;
       return(T_INTEGER);
+    }
+  if (*denom < 0)
+    {
+      *denom = -*denom;
+      *numer = -*numer;
     }
   divisor = c_gcd(*numer, *denom);
   if (divisor != 1)
@@ -17699,7 +17711,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
       if (!is_input_port(pt))
 	{
 	  CHECK_METHOD(sc, pt, sc->CHAR_READYP, args);
-	  return(simple_wrong_type_argument_with_type(sc, sc->CHAR_READYP, pt, make_protected_string(sc, "an input port")));
+	  return(simple_wrong_type_argument_with_type(sc, sc->CHAR_READYP, pt, AN_INPUT_PORT));
 	}
       if (port_is_closed(pt))
 	return(simple_wrong_type_argument_with_type(sc, sc->CHAR_READYP, pt, make_protected_string(sc, "an open input port")));
@@ -17777,7 +17789,7 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
   if (!is_input_port(pt))
     {
       CHECK_METHOD(sc, pt, sc->CLOSE_INPUT_PORT, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->CLOSE_INPUT_PORT, pt, make_protected_string(sc, "an input port")));
+      return(simple_wrong_type_argument_with_type(sc, sc->CLOSE_INPUT_PORT, pt, AN_INPUT_PORT));
     }
   if (!is_immutable(pt))
     s7_close_input_port(sc, pt);
@@ -17837,7 +17849,7 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
   if (!is_output_port(pt))
     {
       CHECK_METHOD(sc, pt, sc->CLOSE_OUTPUT_PORT, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->CLOSE_OUTPUT_PORT, pt, make_protected_string(sc, "an output port")));
+      return(simple_wrong_type_argument_with_type(sc, sc->CLOSE_OUTPUT_PORT, pt, AN_OUTPUT_PORT));
     }
   if (!(is_immutable(pt)))
     s7_close_output_port(sc, pt);
@@ -17870,7 +17882,7 @@ static int string_read_char(s7_scheme *sc, s7_pointer port)
 
 static int output_read_char(s7_scheme *sc, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, port, make_protected_string(sc, "an input port"));
+  simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, port, AN_INPUT_PORT);
   return(0);
 }
 
@@ -17887,7 +17899,7 @@ static int closed_port_read_char(s7_scheme *sc, s7_pointer port)
 
 static s7_pointer output_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 {
-  return(simple_wrong_type_argument_with_type(sc, sc->READ_LINE, port, make_protected_string(sc, "an input port")));
+  return(simple_wrong_type_argument_with_type(sc, sc->READ_LINE, port, AN_INPUT_PORT));
 }
 
 
@@ -18044,7 +18056,7 @@ static void file_write_char(s7_scheme *sc, int c, s7_pointer port)
 
 static void input_write_char(s7_scheme *sc, int c, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->WRITE_CHAR, port, make_protected_string(sc, "an output port"));
+  simple_wrong_type_argument_with_type(sc, sc->WRITE_CHAR, port, AN_OUTPUT_PORT);
 }
 
 
@@ -18059,7 +18071,7 @@ static void closed_port_write_char(s7_scheme *sc, int c, s7_pointer port)
 
 static void input_write_string(s7_scheme *sc, const char *str, int len, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->WRITE, port, make_protected_string(sc, "an output port"));
+  simple_wrong_type_argument_with_type(sc, sc->WRITE, port, AN_OUTPUT_PORT);
 }
 
 
@@ -18071,7 +18083,7 @@ static void closed_port_write_string(s7_scheme *sc, const char *str, int len, s7
 
 static void input_display(s7_scheme *sc, const char *s, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->WRITE, port, make_protected_string(sc, "an output port"));
+  simple_wrong_type_argument_with_type(sc, sc->WRITE, port, AN_OUTPUT_PORT);
 }
 
 static void closed_port_display(s7_scheme *sc, const char *s, s7_pointer port)
@@ -18978,7 +18990,7 @@ static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
   if (!is_input_port(port))
     {
       CHECK_METHOD(sc, port, sc->READ_CHAR, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, port, make_protected_string(sc, "an input port")));
+      return(simple_wrong_type_argument_with_type(sc, sc->READ_CHAR, port, AN_INPUT_PORT));
     }
   return(chars[port_read_character(port)(sc, port)]);
 }
@@ -18999,7 +19011,7 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
     {
       port = cadr(args);
       if (!is_output_port(port))
-	return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, make_protected_string(sc, "an output port")));
+	return(wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT));
     }
   else port = sc->output_port;
 
@@ -19027,7 +19039,7 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
   if (!is_input_port(port))
     {
       CHECK_METHOD(sc, port, sc->PEEK_CHAR, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->PEEK_CHAR, port, make_protected_string(sc, "an input port")));
+      return(simple_wrong_type_argument_with_type(sc, sc->PEEK_CHAR, port, AN_INPUT_PORT));
     }
   if (port_is_closed(port))
     return(simple_wrong_type_argument_with_type(sc, sc->PEEK_CHAR, port, make_protected_string(sc, "an open input port")));
@@ -19050,7 +19062,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
   if (!is_input_port(port))
     {
       CHECK_METHOD(sc, port, sc->READ_BYTE, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->READ_BYTE, port, make_protected_string(sc, "an input port")));
+      return(simple_wrong_type_argument_with_type(sc, sc->READ_BYTE, port, AN_INPUT_PORT));
     }
   c = port_read_character(port)(sc, port);
   if (c == EOF)
@@ -19107,7 +19119,7 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
       if (!is_input_port(port))
 	{
 	  CHECK_METHOD(sc, port, sc->READ_LINE, args);
-	  return(wrong_type_argument_with_type(sc, sc->READ_LINE, small_int(1), port, make_protected_string(sc, "an input port")));
+	  return(wrong_type_argument_with_type(sc, sc->READ_LINE, small_int(1), port, AN_INPUT_PORT));
 	}
       if (is_not_null(cdr(args)))
 	{
@@ -19144,7 +19156,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
       pop_input_port(sc);
       return(sc->value);
     }
-  return(simple_wrong_type_argument_with_type(sc, sc->READ, port, make_protected_string(sc, "an input port")));
+  return(simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_INPUT_PORT));
 }
 
 
@@ -19169,7 +19181,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
   if (!is_input_port(port)) /* was also not stdin */
     {
       CHECK_METHOD(sc, port, sc->READ, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->READ, port, make_protected_string(sc, "an input port")));
+      return(simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_INPUT_PORT));
     }
 
   if (is_function_port(port))
@@ -20708,7 +20720,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
       if (!is_output_port(port))
 	{
 	  CHECK_METHOD(sc, port, sc->NEWLINE, args);
-	  return(simple_wrong_type_argument_with_type(sc, sc->NEWLINE, port, make_protected_string(sc, "an output port")));
+	  return(simple_wrong_type_argument_with_type(sc, sc->NEWLINE, port, AN_OUTPUT_PORT));
 	}
     }
   else port = sc->output_port;
@@ -20735,7 +20747,7 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
       if (!is_output_port(port))
 	{
 	  CHECK_METHOD(sc, port, sc->WRITE, args);
-	  return(wrong_type_argument_with_type(sc, sc->WRITE, small_int(2), port, make_protected_string(sc, "an output port")));
+	  return(wrong_type_argument_with_type(sc, sc->WRITE, small_int(2), port, AN_OUTPUT_PORT));
 	}
     }
   else port = sc->output_port;
@@ -20761,7 +20773,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
       if (!is_output_port(port))
 	{
 	  CHECK_METHOD(sc, port, sc->DISPLAY, args);
-	  return(wrong_type_argument_with_type(sc, sc->DISPLAY, small_int(2), port, make_protected_string(sc, "an output port")));
+	  return(wrong_type_argument_with_type(sc, sc->DISPLAY, small_int(2), port, AN_OUTPUT_PORT));
 	}
     }
   else port = sc->output_port;
@@ -21537,8 +21549,7 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args, bool with_result)
 	 (!port_is_closed(pt)))))
     {
       CHECK_METHOD(sc, pt, sc->FORMAT, args);
-      return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, 
-					   make_protected_string(sc, "#f, #t, or an open output port")));
+      return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, AN_OUTPUT_PORT));
     }
   return(format_to_port(sc, (pt == sc->T) ? sc->output_port : pt, s7_string(cadr(args)), cddr(args), NULL, with_result));
 }
@@ -22479,6 +22490,7 @@ static void init_car_a_list(void)
   CDDDR_A_LIST = s7_make_permanent_string("a list whose cdddr is also a list");
 
   A_LIST = s7_make_permanent_string("a list");
+  AN_ASSOCIATION_LIST = s7_make_permanent_string("an association list");
   A_NORMAL_REAL = s7_make_permanent_string("a normal real");
   A_RATIONAL = s7_make_permanent_string("an integer or a ratio");
   A_NUMBER = s7_make_permanent_string("a number");
@@ -22486,6 +22498,8 @@ static void init_car_a_list(void)
   AN_ENVIRONMENT = s7_make_permanent_string("an environment");
   A_PROPER_LIST = s7_make_permanent_string("a proper list");
   A_CLOSURE = s7_make_permanent_string("a function");
+  AN_INPUT_PORT = s7_make_permanent_string("an input port");
+  AN_OUTPUT_PORT = s7_make_permanent_string("an output port");
 }
 
 
@@ -23061,7 +23075,7 @@ static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
     {
       if (is_null(x)) return(sc->F);
       CHECK_METHOD(sc, x, sc->ASSQ, args);
-      return(wrong_type_argument_with_type(sc, sc->ASSQ, small_int(2), x, A_LIST));
+      return(wrong_type_argument_with_type(sc, sc->ASSQ, small_int(2), x, AN_ASSOCIATION_LIST));
     }
   return(s7_assq(sc, car(args), x));
 }
@@ -23077,7 +23091,7 @@ static s7_pointer g_assv(s7_scheme *sc, s7_pointer args)
     {
       if (is_null(x)) return(sc->F);
       CHECK_METHOD(sc, x, sc->ASSV, args);
-      return(wrong_type_argument_with_type(sc, sc->ASSV, small_int(2), x, A_LIST));
+      return(wrong_type_argument_with_type(sc, sc->ASSV, small_int(2), x, AN_ASSOCIATION_LIST));
     }
   obj = car(args);
   if (is_simple(obj))
@@ -23116,11 +23130,11 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       if (is_null(x)) 
 	return(sc->F);
       CHECK_METHOD(sc, x, sc->ASSOC, args);
-      return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), x, A_LIST));
+      return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), x, AN_ASSOCIATION_LIST));
     }
   if (!is_pair(car(x)))
-    return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), x, 
-					 make_protected_string(sc, "an a-list"))); /* we're assuming caar below so it better exist */
+    return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), x, AN_ASSOCIATION_LIST)); /* we're assuming caar below so it better exist */
+
   if (is_not_null(cddr(args))) 
     {
       s7_pointer eq_func;
@@ -23153,7 +23167,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 		      /* I wonder if the assoc equality function should get the cons, not just caar?
 		       */
 		    }
-		  else return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), cadr(args), make_protected_string(sc, "an a-list")));
+		  else return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), cadr(args), AN_ASSOCIATION_LIST));
 		}
 	      return(sc->F);
 	    }
@@ -23173,7 +23187,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
     {
       if (is_null(x)) return(sc->F);
       CHECK_METHOD(sc, x, sc->ASSOC, args);
-      return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), x, A_LIST));
+      return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(2), x, AN_ASSOCIATION_LIST));
     }
   obj = car(args);
 
@@ -48362,15 +48376,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = fcdr(sc->code);
       if (!is_optimized(sc->code))
 	goto EVAL_PAIR;
-      /* this is primarily safe_closure_ss or other such stuff
-       */
       goto OPT_EVAL;
 
     case OP_LET_O2:
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, sc->args, sc->value);
       goto EVAL_PAIR;
-      /* handling syntax case explicitly here was a toss-up
-       */
 
 
     case OP_LET_OX_P:
@@ -56354,42 +56364,17 @@ s7_scheme *s7_init(void)
 
 
 /* PERHAPS: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
- * to be more consistent: *pi*, *most-negative|positive-fixnum*
- * s7_free as other side of s7_init, but this requires keeping track of the permanent blocks
  * fix do envs (unopt case -- saved-args)
  *
  * get gmp to work again in the opt case
  *
- * (with-environment e . body) = (let e . body) if we accept env as 1st arg
- *
- * can we save the port as a static var, if == on recall just go directly to the
- *   associated IO proc?  It's a value not a variable, so how can this fail?
- *
- * case of char? (currently we have op_case_int which ought to jump!)
- *
- * format as template, also make-* and (struct...) as lazy functions
- *   make-vector, vector, make-string, string, make-list, make-hash-table, hash-table,
- *   environment->list, copy?, rationalize?, *->string, *->list
- *   These are easy now!  
- *
- * format is mostly format_append_char of the underlying string which seems wasteful --
- *   perhaps collect until ~ or end, and flush as string?
- *
- * does #_xxx get optimized? no.
- *   lg: cdr hash-table-ref length pair? not | cons member eval call-with-exit
- *   index:  list-ref char=? string? pair? | string-set!
- *   bench:  write-char car not cons cdr null? | vector-set 
- *   actually we want overheads here, not calls
- *
- * TODO: fix the method list problem! as it is now we lose all vector opts in Snd
- *   this is tricky -- maybe not fixable.  Had to remove this stuff anyway, since
- *   much Snd scheme code (output locs for example) distinguish vectors and vcts.
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
  *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
  *   what is free?  Perhaps leave it until it's needed?
  *   TODO: these fixups are ignored by the optimized cases
  *   also I didn't look at divide yet, and expt might use *?
+ *   TODO: finish numtst!
  *
  * optimizer could mark the non-capture lambdas (for-each/map/catch/with-output...) 
  *   so that env not incremented (line 49850)
