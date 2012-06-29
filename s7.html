@@ -1267,9 +1267,9 @@ Better would be to use a gensym rather than "e" for the current-environment.
 &gt; (define-immaculo (mac b) 
     `(let ((a 1)) (+ a ,b)))
 mac
-:(let ((a 32)) (mac a))
+&gt; (let ((a 32)) (mac a))
 33
-:(procedure-source mac) ; I've edited the results to try to make the transformation clearer
+&gt; (procedure-source mac) ; I've edited the results to try to make the transformation clearer
 (define-macro (mac b)
   `(let ((b ,b))
      (let ((e (current-environment)))	      
@@ -1296,7 +1296,7 @@ mac
 use a trailing null instead (mimicking apply* in some ancient lisps):
 </p>
 <pre>
-:(apply let '((a 2) (b 3)) '(list + a b) ())
+&gt; (apply let '((a 2) (b 3)) '(list + a b) ())
 (+ 2 3)
 </pre>
 </div>
@@ -5480,6 +5480,7 @@ the current environment, so defines happen in the enclosing environment.
   ;;   are not spliced.  The "division library" is a trivial, pointless micro-optimization.
   ;;   (define (floor-remainder x y) (- x (* y (floor (/ x y)))))
   ;; and why no euclidean-rationalize or exact-integer-expt?
+  ;;   (imagine what will happen when r8rs stumbles on the zoo of continued fraction algorithms!)
 
   ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
   ;;   in any name should raise a red flag.

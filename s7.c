@@ -385,8 +385,8 @@ enum {OP_NO_OP,
       OP_SAFE_IF1, OP_SAFE_IF2, OP_CATCH_1,
       OP_SAFE_OR_S, OP_SAFER_OR_S, OP_SAFER_OR_C, OP_SAFER_OR_CEQ,
       OP_SAFE_AND_S, OP_SAFE_CASE_S, OP_SAFER_OR_X, OP_SAFER_AND_X, OP_COND_SIMPLER,
-      OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_DOTIMES, OP_DOTIMES_STEP, OP_SIMPLE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_DOTIMES_C_C,
-      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP, OP_SIMPLE_DO_FOREVER,
+      OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DOTIMES_C_C,
+      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP, OP_SIMPLE_DO_FOREVER, OP_DOTIMES_P, OP_DOTIMES_STEP_P,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, OP_SAFE_IF_CEQ_P_P, 
       OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_CS_Q_P,
       OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_P_A,
@@ -463,8 +463,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe_if1", "safe_if2", "catch_1",
    "safe_or_s", "safer_or_s", "safer_or_c", "safer_or_ceq",
    "safe_and_s", "safe_case_s", "safer_or_x", "safer_and_x", "cond_simpler",
-   "simple_do", "simple_do_step", "dotimes", "dotimes_step", "simple_dotimes", "safe_do", "safe_do_step", "dotimes_c_c",
-   "simple_do_p", "simple_do_step_p", "safe_simple_do", "dox", "dox_step", "simple_do_forever",
+   "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_dotimes_c_c",
+   "simple_do_p", "simple_do_step_p", "safe_simple_do", "dox", "dox_step", "simple_do_forever", "dotimes_p", "dotimes_step_p",
    "safe_if1_1", "safe_if2_1", "safe_if_cc_x_p", "safe_if_cc_p_p", "safe_if_ceq_p_p", 
    "safe_if_cs_p_p", "safe_if_cs_x_p", "safe_if_cc_p", "safe_if_cs_p", "safe_if_cs_p_x", "safe_if_cs_q_p",
    "safe_if_css_x_p", "safe_if_csc_x_p", "safe_if_csc_x_p_a",
@@ -534,8 +534,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF1", "OP_SAFE_IF2", "OP_CATCH_1",
   "OP_SAFE_OR_S", "OP_SAFER_OR_S", "OP_SAFER_OR_C", "OP_SAFER_OR_CEQ",
   "OP_SAFE_AND_S", "OP_SAFE_CASE_S", "OP_SAFER_OR_X", "OP_SAFER_AND_X", "OP_COND_SIMPLER",
-  "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_DOTIMES", "OP_DOTIMES_STEP", "OP_SIMPLE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_DOTIMES_C_C",
-  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP", "OP_SIMPLE_DO_FOREVER",
+  "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DOTIMES_C_C",
+  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP", "OP_SIMPLE_DO_FOREVER", "OP_DOTIMES_P", "OP_DOTIMES_STEP_P",
   "OP_SAFE_IF1_1", "OP_SAFE_IF2_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", "OP_SAFE_IF_CEQ_P_P", 
   "OP_SAFE_IF_CS_P_P", "OP_SAFE_IF_CS_X_P", "OP_SAFE_IF_CC_P", "OP_SAFE_IF_CS_P", "OP_SAFE_IF_CS_P_X", "OP_SAFE_IF_CS_Q_P",
   "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_P_A",
@@ -1060,7 +1060,7 @@ struct s7_scheme {
   void (*error_exiter)(void);
   bool (*begin_hook)(s7_scheme *sc);
   
-  int no_values, current_line, s7_call_line, safety;
+  int no_values, current_line, s7_call_line, safety, class_name_location;
   const char *current_file, *s7_call_file, *s7_call_name;
 
   shared_info *circle_info;
@@ -1109,6 +1109,7 @@ struct s7_scheme {
   s7_pointer SYMBOL_ACCESS, SYMBOLP, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_VALUE, TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR;
   s7_pointer VECTORP, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, ZEROP;
+  s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH;
 
 #if WITH_GMP
   s7_pointer BIGNUM, BIGNUM_PRECISION;
@@ -1150,7 +1151,7 @@ struct s7_scheme {
   s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_X, SAFE_IF_IS_SYMBOL_P_P, SAFE_IF_IS_EOF_P_P;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS;
   s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_R_P, LET_OX_P, LET_UNKNOWN_S_P, LET_READ_CHAR_P, LET_CAR_P;
-  s7_pointer SIMPLE_DO, DOTIMES, SIMPLE_DOTIMES, DOTIMES_C_C, SAFE_DO, SIMPLE_DO_P, SAFE_SIMPLE_DO, SIMPLE_DO_FOREVER;
+  s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DO, SIMPLE_DO_P, SAFE_SIMPLE_DO, SIMPLE_DO_FOREVER, DOTIMES_P;
   s7_pointer DOX, IF_ORCEQ_P, IF_ORCEQ_P_P;
   int safe_do_level, safe_do_ids_size;
   long long int *safe_do_ids;
@@ -1954,7 +1955,7 @@ static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
-static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST;
+static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 
 #if WITH_OPTIMIZATION
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end, bool *bad_set);
@@ -3236,7 +3237,7 @@ static s7_pointer g_gc_stats_set(s7_scheme *sc, s7_pointer args)
 void s7_gc_stats(s7_scheme *sc, bool on)
 {
   sc->gc_stats = on;
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "*gc-stats*"), make_boolean(sc, on));
+  s7_symbol_set_value(sc, sc->GC_STATS, make_boolean(sc, on));
 }
 
 
@@ -6100,7 +6101,7 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
 }
 
 #if 0
-/* there is another way to rationalize.  Here is a scheme version of
+/* there is another way to rationalize (in fact there are many ways!).  Here is a scheme version of
  *   Bill Gosper's farint:
 
 (define* (farint x (err 1/1000000))
@@ -17996,17 +17997,6 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
   if (i == port_start)
     return(sc->EOF_OBJECT);
 
-#if 0
-  if (port_needs_free(port))
-    {
-      /* here and above like this, and don't free port string until GC */
-      s7_pointer result;
-      result = make_string_uncopied_with_length(sc, (char *)(port_str + port_start), i - port_start);
-      string_needs_free(result) = false;
-      return(result);
-    }
-#endif
-  
   return(s7_make_terminated_string_with_length(sc, (char *)(port_str + port_start), i - port_start));
 }
 
@@ -18372,13 +18362,8 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
       return(result);
     }
 
-#if 0
-  endc = orig_str[k];
-  orig_str[k] = '\0';
-#else
   endc = (*str);
   (*str) = '\0';
-#endif
   
   switch (*orig_str)
     {
@@ -19093,14 +19078,6 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
     }
 
   s7_write_char(sc, (int)(s7_integer(car(args))), port);
-
-#if 0
-  /* this segfaults if port is *stdout* */
-  if (is_file_port(port))
-    file_write_char(sc, (unsigned char)s7_integer(car(args)), port);
-  else (*(port_output_function(port)))(sc, (char)s7_integer(car(args)), port);
-#endif
-
   return(car(args));
 }
 
@@ -19380,21 +19357,18 @@ defaults to the global environment.  To load into the current environment instea
 
 s7_pointer s7_load_path(s7_scheme *sc)
 {
-  return(s7_symbol_value(sc, make_symbol(sc, "*load-path*")));
+  return(s7_symbol_value(sc, sc->LOAD_PATH));
 }
 
 
 s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 {
-  s7_pointer load_path;
-  load_path = make_symbol(sc, "*load-path*");
-
   s7_symbol_set_value(sc, 
-		      load_path,
+		      sc->LOAD_PATH,
 		      cons(sc, 
 			      s7_make_string(sc, dir), 
-			      s7_symbol_value(sc, load_path)));
-  return(s7_load_path(sc));
+			      s7_symbol_value(sc, sc->LOAD_PATH)));
+  return(s7_symbol_value(sc, sc->LOAD_PATH));
 }
 
 
@@ -19592,7 +19566,7 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->WITH_INPUT_FROM_STRING, small_int(1), car(args), T_STRING));
     }
   if (!is_thunk(sc, cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_STRING, small_int(2), cadr(args), make_protected_string(sc, "a thunk")));
+    return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_STRING, small_int(2), cadr(args), A_THUNK));
   
   /* since the arguments are evaluated before we get here, we can get some confusing situations:
    *   (with-input-from-string "#x2.1" (read))
@@ -19614,7 +19588,7 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->WITH_INPUT_FROM_FILE, small_int(1), car(args), T_STRING));
     }
   if (!is_thunk(sc, cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_FILE, small_int(2), cadr(args), make_protected_string(sc, "a thunk")));
+    return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_FILE, small_int(2), cadr(args), A_THUNK));
   
   return(with_input(sc, open_input_file_1(sc, s7_string(car(args)), "r", "with-input-from-file"), args));
 }
@@ -20841,7 +20815,7 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   if (!is_thunk(sc, car(args)))
     {
       CHECK_METHOD(sc, car(args), sc->WITH_OUTPUT_TO_STRING, args);
-      return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_STRING, small_int(1), car(args), make_protected_string(sc, "a thunk")));
+      return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_STRING, small_int(1), car(args), A_THUNK));
     }
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_string(sc);
@@ -20865,7 +20839,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->WITH_OUTPUT_TO_FILE, small_int(1), car(args), T_STRING));
     }
   if (!is_thunk(sc, cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_FILE, small_int(2), cadr(args), make_protected_string(sc, "a thunk")));
+    return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_FILE, small_int(2), cadr(args), A_THUNK));
   
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_file(sc, s7_string(car(args)), "w");
@@ -22033,20 +22007,14 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
 {
-#if 0
-  /* the non-recursive version of this was only slightly faster 
+  /* the non-recursive version of this is only slightly faster 
    *   but isn't the recursive version slightly dangerous in regard to the GC? 
    */
-  if (is_null(lst))
-    return(sc->NIL);
-  return(cons(sc, car(lst), copy_list(sc, cdr(lst))));
-#else
   s7_pointer p;
   sc->w = sc->NIL;
   for (p = lst; is_pair(p); p = cdr(p))
     sc->w = cons(sc, car(p), sc->w);
   return(safe_reverse_in_place(sc, sc->w));
-#endif
 }
 
 
@@ -22500,6 +22468,7 @@ static void init_car_a_list(void)
   A_CLOSURE = s7_make_permanent_string("a function");
   AN_INPUT_PORT = s7_make_permanent_string("an input port");
   AN_OUTPUT_PORT = s7_make_permanent_string("an output port");
+  A_THUNK = s7_make_permanent_string("a thunk");
 }
 
 
@@ -23775,20 +23744,18 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 {
   #define H_provide "(provide symbol) adds symbol to the *features* list"
-  s7_pointer features;
-
   if (!is_symbol(car(args)))
     {
       CHECK_METHOD(sc, car(args), sc->PROVIDE, args);
       return(simple_wrong_type_argument(sc, sc->PROVIDE, car(args), T_SYMBOL));
     }
-  features = make_symbol(sc, "*features*");
-  if (!is_member(car(args), s7_symbol_value(sc, features)))
+
+  if (!is_member(car(args), s7_symbol_value(sc, sc->S7_FEATURES)))
     s7_symbol_set_value(sc, 
-			features,
+			sc->S7_FEATURES,
 			cons(sc, 
 				car(args), 
-				s7_symbol_value(sc, features)));
+				s7_symbol_value(sc, sc->S7_FEATURES)));
   return(car(args));
 }
 
@@ -28931,22 +28898,17 @@ static const char *make_type_name(const char *name, int article)
       typnam = (char *)calloc(len, sizeof(char));
       typnam_len = len;
     }
-#if 0
-  /* c11 290 */
-  if ((article == INDEFINITE_ARTICLE) &&
-      ((name[0] == 'a') || (name[0] == 'e') || (name[0] == 'i') || (name[0] == 'o') || (name[0] == 'u')))
-    snprintf(typnam, len, "an %s", name);
-  else snprintf(typnam, len, "%s%s", articles[article], name);
-#else
   if ((article == INDEFINITE_ARTICLE) &&
       ((name[0] == 'a') || (name[0] == 'e') || (name[0] == 'i') || (name[0] == 'o') || (name[0] == 'u')))
     strcpy(typnam, "an ");
   else strcpy(typnam, articles[article]);
   strcat(typnam, name);
-#endif
   return(typnam);
 }
 
+
+static const char *environments[3] =    {"environment",         "the environment",        "an environment"};
+static const char *closures[3] =        {"closure",             "the closure",            "a closure"};
 
 static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 {
@@ -29026,8 +28988,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 {
   const char *str;
-  static const char *environments[3] =  {"environment",    "the environment",    "an environment"};
-  static const char *closures[3] =      {"closure",        "the closure",        "a closure"};
+  s7_pointer class_sym;
 
   str = type_name_from_type(sc, type(arg), article);
   if (str) return(str);
@@ -29046,12 +29007,15 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
     case T_ENVIRONMENT:  
       if (has_methods(arg))
 	{
-	  /* look for class-name at least */
-	  s7_pointer class_name;
-	  class_name = find_method(sc, arg, make_symbol(sc, "class-name"));
-	  if ((class_name != sc->UNDEFINED) &&
-	      (is_symbol(class_name)))
-	    return(make_type_name(symbol_name(class_name), article));
+	  class_sym = symbol_table_find_by_name(sc, "class-name", sc->class_name_location);
+	  if (!is_null(class_sym))
+	    {
+	      s7_pointer class_name;
+	      class_name = find_method(sc, arg, class_sym);
+	      if ((class_name != sc->UNDEFINED) &&
+		  (is_symbol(class_name)))
+		return(make_type_name(symbol_name(class_name), article));
+	    }
 	}
       return(environments[article]);
 
@@ -29059,11 +29023,15 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
     case T_CLOSURE_STAR: 
       if (has_methods(arg))
 	{
-	  s7_pointer class_name;
-	  class_name = find_method(sc, closure_environment(arg), make_symbol(sc, "class-name"));
-	  if ((class_name != sc->UNDEFINED) &&
-	      (is_symbol(class_name)))
-	    return(make_type_name(symbol_name(class_name), article));
+	  class_sym = symbol_table_find_by_name(sc, "class-name", sc->class_name_location);
+	  if (!is_null(class_sym))
+	    {
+	      s7_pointer class_name;
+	      class_name = find_method(sc, closure_environment(arg), class_sym);
+	      if ((class_name != sc->UNDEFINED) &&
+		  (is_symbol(class_name)))
+		return(make_type_name(symbol_name(class_name), article));
+	    }
 	}
       return(closures[article]);
     }
@@ -29073,6 +29041,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 
 static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
 {
+  const char *name;
   if (type(x) < BUILT_IN_TYPES)
     {
       s7_pointer p;
@@ -29080,7 +29049,12 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
       if (s7_is_string(p))
 	return(p);
     }
-  return(make_protected_string(sc, type_name(sc, x, INDEFINITE_ARTICLE)));
+  name = type_name(sc, x, INDEFINITE_ARTICLE);
+  if (name == closures[INDEFINITE_ARTICLE])
+    return(A_CLOSURE);
+  if (name == environments[INDEFINITE_ARTICLE])
+    return(AN_ENVIRONMENT);
+  return(make_protected_string(sc, name));
 }
 
 
@@ -29208,11 +29182,11 @@ each a function of no arguments, guaranteeing that finish is called even if body
    */
 
   if (!is_thunkable(sc, car(args)))
-    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(1), car(args), make_protected_string(sc, "a thunk")));
+    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(1), car(args), A_THUNK));
   if (!is_thunkable(sc, cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(2), cadr(args), make_protected_string(sc, "a thunk")));
+    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(2), cadr(args), A_THUNK));
   if (!is_thunkable(sc, caddr(args)))
-    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(3), caddr(args), make_protected_string(sc, "a thunk")));
+    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(3), caddr(args), A_THUNK));
 
   /* this won't work:
 
@@ -29259,7 +29233,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
    */
 
   if (!is_thunk(sc, cadr(args)))
-    return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), cadr(args), make_protected_string(sc, "a thunk")));
+    return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), cadr(args), A_THUNK));
   if (!is_procedure(caddr(args)))
     return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(3), caddr(args), A_PROCEDURE));
   
@@ -35401,7 +35375,27 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    }
 		}
 	    }
-		
+
+#if 0
+	  if ((func_is_c_function) &&
+	      (c_function_call(func) == g_dynamic_wind) &&
+	      (hop == 1) &&
+	      (bad_pairs == 3) &&
+	      (quotes == 0) &&
+	      (is_pair(cadar(x))) &&
+	      (is_lambda(sc, caadar(x))) &&
+	      (is_null(cadr(cadar(x)))) &&
+	      (is_pair(caddar(x))) &&
+	      (is_lambda(sc, car(caddar(x)))) &&
+	      (is_null(cadr(caddar(x)))) &&
+	      (is_pair(car(cdddar(x)))) &&
+	      (is_lambda(sc, caar(cdddar(x)))) &&
+	      (is_null(cadar(cdddar(x)))))
+	    {
+	      /* fprintf(stderr, "found dynamic wind\n"); */
+	      /* now mark each as no capture */
+	    }
+#endif
 
 	  if (bad_pairs > quotes) return(false);
 
@@ -38788,7 +38782,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	/* fprintf(stderr, "do %s\n", DISPLAY(body)); */
 
 	/* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
-	 *   in OP_DOTIMES, for example, if init value is not an integer, it goes to OP_SIMPLE_DO
+	 *   in OP_SAFE_DOTIMES, for example, if init value is not an integer, it goes to OP_SIMPLE_DO
  	 * remaining optimizable cases: we can step by 1 and use = for end, and yet simple_do(_p) calls the functions
  	 * geq happens as often as =, and -1 as step
  	 * also cdr as step to is_null as end
@@ -38824,6 +38818,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
 		    if ((is_optimized(end)) &&
 			(car(vars) == cadr(end)) &&
+			(cadr(end) != caddr(end)) &&
 			((ecdr(end) == equal_s_ic) ||
 			 (optimize_data(end) == HOP_SAFE_C_SS) || 
 			 (optimize_data(end) == HOP_SAFE_C_SC)))
@@ -38858,6 +38853,16 @@ static s7_pointer check_do(s7_scheme *sc)
 			    /* fprintf(stderr, "choose simple_do_p\n"); */
 			    car(ecdr(sc->code)) = sc->SIMPLE_DO_P;
 			    fcdr(sc->code) = caddr(caar(sc->code));
+
+			    if ((s7_is_integer(caddr(step_expr))) &&
+				(s7_integer(caddr(step_expr)) == 1) &&
+				(c_function_class(ecdr(step_expr)) == add_class) &&
+				/* we check above that (car(vars) == cadr(step_expr))
+				 *    and that         (car(vars) == cadr(end))
+				 */
+				((c_function_class(ecdr(end)) == equal_class) ||
+				 (ecdr(end) == geq_2)))
+			      car(ecdr(sc->code)) = sc->DOTIMES_P;
 			  }
 
 			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
@@ -38903,7 +38908,7 @@ static s7_pointer check_do(s7_scheme *sc)
 				    (c_function_class(ecdr(end)) == equal_class))
 				{
 				  /* fprintf(stderr, "dotimes\n"); */
-				  car(ecdr(sc->code)) = sc->DOTIMES;
+				  car(ecdr(sc->code)) = sc->SAFE_DOTIMES;
 
 				  /* what are the most common cases here?
 				   */
@@ -38915,7 +38920,7 @@ static s7_pointer check_do(s7_scheme *sc)
 					  (optimize_data(car(body)) == HOP_SAFE_C_C))
 					{
 					  /* fprintf(stderr, "dotimes_c_c\n"); */
-					  car(ecdr(sc->code)) = sc->DOTIMES_C_C;
+					  car(ecdr(sc->code)) = sc->SAFE_DOTIMES_C_C;
 					}
 				      else
 					{
@@ -38953,7 +38958,7 @@ static s7_pointer check_do(s7_scheme *sc)
 						  if (happy)
 						    {
 						      /* fprintf(stderr, "safe: %s\n", DISPLAY_80(sc->code));  */
-						      car(ecdr(sc->code)) = sc->SIMPLE_DOTIMES;
+						      car(ecdr(sc->code)) = sc->SIMPLE_SAFE_DOTIMES;
 						    }
 						}
 					    }
@@ -39977,9 +39982,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * (with-sound () (nrev 0 .1))
        */
 
-    SIMPLE_DOTIMES:
-    case OP_SIMPLE_DOTIMES:
-      /* set up as in DOTIMES, pull in all the let vars
+    SIMPLE_SAFE_DOTIMES:
+    case OP_SIMPLE_SAFE_DOTIMES:
+      /* set up as in SAFE_DOTIMES, pull in all the let vars
        *   run body without any jumps: update and check step,
        *   SAFE_C_C of each let var, SAFE_C_C of body
        *   goto START
@@ -40023,7 +40028,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		if (num_vars != 1)
 		  {
-		  SIMPLE_DOTIMES_LET_LOOP:
+		  SIMPLE_SAFE_DOTIMES_LET_LOOP:
 		    
 		    /* eval let + body  (cddr(sc->code)) */
 		    for (let_var = lets; is_pair(let_var); let_var = cdr(let_var))
@@ -40042,7 +40047,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			finalize_safe_do(sc);
 			goto BEGIN;
 		      }
-		    goto SIMPLE_DOTIMES_LET_LOOP;
+		    goto SIMPLE_SAFE_DOTIMES_LET_LOOP;
 		  }
 		else
 		  {
@@ -40050,7 +40055,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    let_var = cdadar(lets);
 		    lets = cadar(lets);
 		    
-		  SIMPLE_DOTIMES_LOOP:
+		  SIMPLE_SAFE_DOTIMES_LOOP:
 		    slot_set_value(p, c_call(lets)(sc, let_var));
 		    c_call(func)(sc, body);
 		    numerator(stepper)++;
@@ -40060,7 +40065,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			finalize_safe_do(sc);
 			goto BEGIN;
 		      }
-		    goto SIMPLE_DOTIMES_LOOP;
+		    goto SIMPLE_SAFE_DOTIMES_LOOP;
 		  }
 	      }
 	  }
@@ -40073,8 +40078,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
-    DOTIMES_C_C:
-    case OP_DOTIMES_C_C:
+    SAFE_DOTIMES_C_C:
+    case OP_SAFE_DOTIMES_C_C:
       {
 	s7_pointer vars, init_val, func, body, stepper;
 
@@ -40113,7 +40118,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		body = cdr(caddr(sc->code));
 		stepper = slot_value(sc->args);
 		
-	      DOTIMES_C_C_LOOP:
+	      SAFE_DOTIMES_C_C_LOOP:
 		/* eval body  (cddr(sc->code)) */
 		c_call(func)(sc, body);
 		numerator(stepper)++;
@@ -40123,7 +40128,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    finalize_safe_do(sc);
 		    goto BEGIN;
 		  }
-		goto DOTIMES_C_C_LOOP;
+		goto SAFE_DOTIMES_C_C_LOOP;
 	      }
 	  }
 	car(ecdr(sc->code)) = sc->SIMPLE_DO;
@@ -40132,8 +40137,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
-    DOTIMES:
-    case OP_DOTIMES:
+    SAFE_DOTIMES:
+    case OP_SAFE_DOTIMES:
       {
 	s7_pointer vars, init_val;
 	vars = car(sc->code);
@@ -40165,7 +40170,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
 		initialize_safe_do(sc, sc->code);
 
-		push_stack(sc, OP_DOTIMES_STEP, sc->args, sc->code);
+		push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, sc->code);
 		sc->code = cddr(sc->code);
 
 		goto BEGIN;
@@ -40176,7 +40181,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SIMPLE_DO;
       }
 
-    case OP_DOTIMES_STEP:
+    case OP_SAFE_DOTIMES_STEP:
       numerator(slot_value(sc->args))++;
       if (numerator(slot_value(sc->args)) == denominator(slot_value(sc->args)))
 	{
@@ -40184,7 +40189,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  finalize_safe_do(sc);
 	  goto BEGIN;
 	}
-      push_stack(sc, OP_DOTIMES_STEP, sc->args, sc->code);
+      push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, sc->code);
       sc->code = cddr(sc->code);
       goto BEGIN;
 
@@ -40550,6 +40555,90 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
+    DOTIMES_P:
+    case OP_DOTIMES_P:
+      {
+	s7_pointer init, end;
+	sc->envir = new_frame_in_env(sc, sc->envir);
+
+	init = cadaar(sc->code);
+	if (is_symbol(init))
+	  sc->value = finder(sc, init);
+	else 
+	  {
+	    if (is_pair(init))
+	      sc->value = c_call(init)(sc, cdr(init));
+	    else sc->value = init;
+	  }
+	
+	end = caddr(car(cadr(sc->code)));
+	if (is_symbol(end))
+	  sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), find_symbol(sc, end));
+	else 
+	  {
+	    s7_pointer slot;
+	    NEW_CELL_NO_CHECK(sc, slot);
+	    slot_symbol(slot) = end;
+	    slot_set_value(slot, end);
+	    set_type(slot, T_SLOT | T_IMMUTABLE);
+	    sc->args = cons_unchecked(sc, add_slot(sc, caaar(sc->code), sc->value), slot);
+	  }
+	goto DOTIMES_END_P;
+      }
+
+    case OP_DOTIMES_STEP_P:
+      {
+	s7_pointer car_args;
+	car_args = car(sc->args);
+	if (is_integer(slot_value(car_args)))
+	  slot_set_value(car_args, make_integer(sc, integer(slot_value(car_args)) + 1));
+	else
+	  {
+	    car(sc->T1_1) = slot_value(car_args);
+	    slot_set_value(car_args, g_add_s1(sc, sc->T1_1)); /* TODO: test this case! */
+	    /* (define (hi) (let ((x 0.0) (y 1.0)) (do ((i y (+ i 1))) ((= i 6)) (do ((i i (+ i 1))) ((>= i 7)) (set! x (+ x i)))) x))
+	     */
+	  }
+      }
+
+    DOTIMES_END_P:
+      {
+	s7_pointer end_test, code, args, now, end;
+	args = sc->args;
+	code = sc->code;
+	end_test = car(cadr(code));
+	now = slot_value(car(args));
+	end = slot_value(cdr(args));
+	if ((is_integer(now)) && (is_integer(end)))
+	  {
+	    if ((integer(now) == integer(end)) ||
+		((integer(now) > integer(end)) && 
+		 (ecdr(end_test) == geq_2)))
+	      {
+		sc->code = cdr(cadr(code));
+		goto BEGIN;
+	      }
+	  }
+	else
+	  {
+	    car(sc->T2_1) = now;
+	    car(sc->T2_2) = end;
+	    if (is_true(sc, c_call(end_test)(sc, sc->T2_1)))
+	      {
+		sc->code = cdr(cadr(code));
+		goto BEGIN;
+	      }
+	  }
+	push_stack(sc, OP_DOTIMES_STEP_P, args, code);
+	code = caddr(code);
+	sc->cur_code = code;
+	sc->op = (opcode_t)syntax_opcode(car(code));
+	sc->code = cdr(code);
+	goto START_WITHOUT_POP_STACK;
+      }
+
+
+
       /* DOX cases */
     DOX:
     case OP_DOX:
@@ -40707,19 +40796,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto SIMPLE_DO;
 	  if (car(ecdr(sc->code)) == sc->SIMPLE_DO_P)
 	    goto SIMPLE_DO_P;
+	  if (car(ecdr(sc->code)) == sc->DOTIMES_P)
+	    goto DOTIMES_P;
 	  if (car(ecdr(sc->code)) == sc->SIMPLE_DO_FOREVER)
 	    goto SIMPLE_DO_FOREVER;
 	  if (car(ecdr(sc->code)) == sc->SAFE_SIMPLE_DO)
 	    goto SAFE_SIMPLE_DO;
-	  if (car(ecdr(sc->code)) == sc->DOTIMES_C_C)
-	    goto DOTIMES_C_C;
-	  if (car(ecdr(sc->code)) == sc->SIMPLE_DOTIMES)
-	    goto SIMPLE_DOTIMES;
+	  if (car(ecdr(sc->code)) == sc->SAFE_DOTIMES_C_C)
+	    goto SAFE_DOTIMES_C_C;
+	  if (car(ecdr(sc->code)) == sc->SIMPLE_SAFE_DOTIMES)
+	    goto SIMPLE_SAFE_DOTIMES;
 	  if (car(ecdr(sc->code)) == sc->SAFE_DO)
 	    goto SAFE_DO;
 	  if (car(ecdr(sc->code)) == sc->DOX)
 	    goto DOX;
-	  goto DOTIMES;
+	  goto SAFE_DOTIMES;
 	}
 #else
       check_do(sc);
@@ -42922,7 +43013,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			goto START;
 		      }
-		    sc->value = string_ref_1(sc, s, cons(sc, ind, sc->NIL));
+		    sc->value = string_ref_1(sc, s, ind);
 		    goto START;
 		  }
 		  
@@ -45061,14 +45152,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (!is_closure(body))
 			  break;
 			if (!is_null(closure_args(body)))
-			  return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), body, make_protected_string(sc, "a thunk")));
+			  return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), body, A_THUNK));
 			e = closure_environment(body);
 			body = closure_body(body);
 		      }
 		    else
 		      {
 			if (!is_null(cadr(body)))
-			  return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), body, make_protected_string(sc, "a thunk")));
+			  return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(2), body, A_THUNK));
 			body = cddr(body);
 			e = sc->envir;
 		      }
@@ -47782,7 +47873,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	IF_BEGIN_POP_STACK(sc);
 #endif
 	goto START;
-	/* in OP_DOTIMES_STEP: 2153849
+	/* in OP_SAFE_DOTIMES_STEP: 2153849
 	 */ 
       }
 
@@ -55265,6 +55356,10 @@ s7_scheme *s7_init(void)
   sc->s7_call_file = NULL;
   sc->s7_call_name = NULL;
   sc->safety = 0;
+  {
+    unsigned int loc = 0;
+    sc->class_name_location = symbol_table_hash("class-name", &loc); 
+  }
   sc->circle_info = NULL;
   sc->fdats = (format_data **)calloc(8, sizeof(format_data *));
   sc->num_fdats = 8;
@@ -55530,13 +55625,14 @@ s7_scheme *s7_init(void)
   sc->DECREMENT_1 =           assign_internal_syntax(sc, "set!",    OP_DECREMENT_1);  
   sc->SET_CDR =               assign_internal_syntax(sc, "set!",    OP_SET_CDR);
   sc->SET_CONS =              assign_internal_syntax(sc, "set!",    OP_SET_CONS);
+  sc->DOTIMES_P =             assign_internal_syntax(sc, "do",      OP_DOTIMES_P);
   sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",      OP_SIMPLE_DO);
   sc->SIMPLE_DO_P =           assign_internal_syntax(sc, "do",      OP_SIMPLE_DO_P);
   sc->SIMPLE_DO_FOREVER =     assign_internal_syntax(sc, "do",      OP_SIMPLE_DO_FOREVER);
   sc->SAFE_SIMPLE_DO =        assign_internal_syntax(sc, "do",      OP_SAFE_SIMPLE_DO);
-  sc->DOTIMES =               assign_internal_syntax(sc, "do",      OP_DOTIMES);
-  sc->DOTIMES_C_C =           assign_internal_syntax(sc, "do",      OP_DOTIMES_C_C);
-  sc->SIMPLE_DOTIMES =        assign_internal_syntax(sc, "do",      OP_SIMPLE_DOTIMES);
+  sc->SAFE_DOTIMES =          assign_internal_syntax(sc, "do",      OP_SAFE_DOTIMES);
+  sc->SAFE_DOTIMES_C_C =      assign_internal_syntax(sc, "do",      OP_SAFE_DOTIMES_C_C);
+  sc->SIMPLE_SAFE_DOTIMES =   assign_internal_syntax(sc, "do",      OP_SIMPLE_SAFE_DOTIMES);
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);
   sc->DOX =                   assign_internal_syntax(sc, "do",      OP_DOX);
   sc->safe_do_level = 0;
@@ -56027,7 +56123,8 @@ s7_scheme *s7_init(void)
 
   /* -------- *gc-stats* -------- */
   s7_define_variable(sc, "*gc-stats*", sc->F);
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*gc-stats*"), 
+  sc->GC_STATS = s7_make_symbol(sc, "*gc-stats*");
+  s7_symbol_set_access(sc, sc->GC_STATS,
 		       list_3(sc, 
 			      sc->F, 
 			      s7_make_function(sc, "(set *gc-stats*)", g_gc_stats_set, 2, 0, false, "called if *gc-stats* is set"), 
@@ -56035,7 +56132,8 @@ s7_scheme *s7_init(void)
 
   /* -------- *features* -------- */
   s7_define_variable(sc, "*features*", sc->NIL);
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*features*"), 
+  sc->S7_FEATURES = s7_make_symbol(sc, "*features*");
+  s7_symbol_set_access(sc, sc->S7_FEATURES,
 		       list_3(sc, 
 			      sc->F, 
 			      s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "called if *features* is set"), 
@@ -56062,7 +56160,8 @@ s7_scheme *s7_init(void)
 
   /* -------- *load-path* -------- */
   s7_define_variable(sc, "*load-path*", sc->NIL);
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*load-path*"), 
+  sc->LOAD_PATH = s7_make_symbol(sc, "*load-path*");
+  s7_symbol_set_access(sc, sc->LOAD_PATH,
 		       list_3(sc, 
 			      sc->F, 
 			      s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "called if *load-path* is set"), 
@@ -56373,17 +56472,16 @@ s7_scheme *s7_init(void)
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
  *   what is free?  Perhaps leave it until it's needed?
  *   TODO: these fixups are ignored by the optimized cases
- *   also I didn't look at divide yet, and expt might use *?
  *   TODO: finish numtst!
  *
- * optimizer could mark the non-capture lambdas (for-each/map/catch/with-output...) 
- *   so that env not incremented (line 49850)
+ * optimizer could mark the non-capture lambdas (for-each/map/catch/dynamic-wind/run/with-output...)  what about call-with-exit?
+ *   so that env not incremented (line 49920)
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320
  * bench    52019 -> 7875 [8268] 8037 8592 8402
  *   (new)                [8764]           9370
- * index    44300 -> 4988 [4992] 4235 4725 3935
+ * index    44300 -> 4988 [4992] 4235 4725 3935 3631
  * s7test            1721             1456 1430
- * t455                           265  256  218 85
+ * t455                           265  256  218   85
  */
 
