@@ -3606,6 +3606,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (set! ("hi" 1) "ho") 'error)
 (test (set! ("hi") #\i) 'error)
 (test (let ((x "hi") (y 'x)) (string-set! y 0 #\x) x) 'error)
+(test (let ((str "ABS")) (set! (str 0) #\a)) #\a)
+(test (let ((str "ABS")) (string-set! str 0 #\a)) #\a)
+(test (let ((str "ABS")) (set! (string-ref str 0) #\a)) #\a)
 
 (test (let ((hi (make-string 3 #\a)))
 	(string-set! hi 1 (let ((ho (make-string 4 #\x)))
@@ -5194,6 +5197,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (set-car!) 'error)
 (test (set-car! '(1 2) 1 2) 'error)
 (test (let ((lst (list 1 2))) (set-car! lst (values 2 3)) lst) 'error)
+(test (let ((lst '(1 2))) (set-car! lst 32)) 32)
+(test (let ((lst '(1 2))) (set! (car lst) 32)) 32)
 
 (test (let ((c (cons 1 2))) (set-car! c #\a) (car c)) #\a)
 (test (let ((c (cons 1 2))) (set-car! c #()) (car c)) #())
@@ -5231,6 +5236,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (set-cdr! #f 32) 'error)
 (test (set-cdr!) 'error)
 (test (set-cdr! '(1 2) 1 2) 'error)
+(test (let ((lst '(1 2))) (set-cdr! lst 32)) 32)
+(test (let ((lst '(1 2))) (set! (cdr lst) 32)) 32)
 
 (test (let ((c (cons 1 2))) (set-cdr! c #\a) (cdr c)) #\a)
 (test (let ((c (cons 1 2))) (set-cdr! c #()) (cdr c)) #())
@@ -5429,6 +5436,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (list-set! '(1 2 . 3) 1 23) 23)
 (test (list-set! '(1 2 . 3) 2 23) 'error)
 (test (set! ('(1 2 . 3) 1) 23) 23)
+(test (let ((lst '(1 2 3))) (list-set! lst 0 32)) 32)
+(test (let ((lst '(1 2 3))) (set! (lst 0) 32)) 32)
+(test (let ((lst '(1 2 3))) (set! (list-ref lst 0) 32)) 32)
 
 (for-each
  (lambda (arg)
@@ -6788,6 +6798,9 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (vector-set! #(1) #(0) 1) 'error)
 (test (vector-set! '#(1 2) 0 2) 2)
 (test (let ((x 2) (v (vector 1 2))) (vector-set! (let () (set! x 3) v) 1 23) (list x v)) '(3 #(1 23)))
+(test (let ((v #(1 2))) (vector-set! v 0 32)) 32)
+(test (let ((v #(1 2))) (set! (v 0) 32)) 32)
+(test (let ((v #(1 2))) (set! (vector-ref v 0) 32)) 32)
 
 (for-each
  (lambda (arg)
@@ -8847,7 +8860,11 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (set! (ht 123) 43)
     (set! (ht "123") 45)
     (test (ht 123) 43)
-    (test (ht "123") 45))
+    (test (ht "123") 45)
+    (test (hash-table-set! ht "1" 1) 1)
+    (test (set! (ht "2") 1) 1)
+    (test (set! (hash-table-ref ht "3") 1) 1)
+    (test (hash-table-ref ht "3") 1))
   (test (let () (set! (hash-table-ref ht 'key) 32) (hash-table-ref ht 'key)) 32)
 
   (for-each
@@ -15993,6 +16010,7 @@ in s7:
       348)
 (test ((lambda (x) "a useless string" x) 32) 32)
 (test ((lambda (>< =0=? .arg.) (+ >< =0=? .arg.)) 1 2 3) 6)
+(test ((apply ((lambda () lambda)) ((lambda () (list 'a))) ((lambda () '((+ a 1))))) 3) 4)
 
 (test
  (let ()
@@ -24476,6 +24494,24 @@ func
 	    (list ctr lst)))
 	'(2 (1 2 3 4))))
 
+(defmacro once-only-2 (names . body)
+  (let ((gensyms (map (lambda (n) (gensym)) names)))
+    `(let (,@(map (lambda (g) (list g '(gensym))) gensyms))
+       `(let (,,@(map (lambda (g n) (list list g n)) gensyms names))
+          ,(let (,@(map (lambda (n g) (list n g)) names gensyms))
+             ,@body)))))
+
+(let ()
+  (defmacro hiho (start end) 
+    (once-only-2 (start end) 
+	       `(list ,start ,end (+ 2 ,start) (+ ,end 2))))
+  
+  (test (let ((ctr 0)) 
+	  (let ((lst (hiho (let () (set! ctr (+ ctr 1)) ctr) 
+			   (let () (set! ctr (+ ctr 1)) ctr))))
+	    (list ctr lst)))
+	'(2 (1 2 3 4))))
+
 ;;; (define-bacro (once-only-1 names . body)
 ;;;   `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
 ;;;     ,@body))
@@ -24492,7 +24528,7 @@ func
     once))
 
 (let ()
-  (define-bacro (hiho start end) 
+  (define-bacro (hiho start end) ; note the bacro!  not a macro here
     (once-only-1 (start end) 
 		 `(list ,start ,end (+ 2 ,start) (+ ,end 2))))
   
@@ -24504,6 +24540,29 @@ func
 
   (test (let ((names 1)) (once-only-1 (names) (+ names 1))) 2)
   (test (let ((body 1)) (once-only-1 (body) (+ body 1))) 2) ; so body above also has to be gensym'd
+  )
+
+
+(define once-only-3
+  (let ((names (gensym))
+	(body (gensym)))
+    (symbol->value (apply define-bacro `((,(gensym) ,names . ,body)
+      `(let (,@(map (lambda (name) `(,name ,(eval name))) ,names))
+	 ,@,body))))))
+
+(let ()
+  (define-bacro (hiho start end) ; note the bacro!  not a macro here
+    (once-only-3 (start end) 
+		 `(list ,start ,end (+ 2 ,start) (+ ,end 2))))
+  
+  (test (let ((ctr 0)) 
+	  (let ((lst (hiho (let () (set! ctr (+ ctr 1)) ctr) 
+			   (let () (set! ctr (+ ctr 1)) ctr))))
+	    (list ctr lst)))
+	'(2 (1 2 3 4)))
+
+  (test (let ((names 1)) (once-only-3 (names) (+ names 1))) 2)
+  (test (let ((body 1)) (once-only-3 (body) (+ body 1))) 2) ; so body above also has to be gensym'd
   )
   
 
@@ -69590,3 +69649,5 @@ in non-gmp,
 
 
 ;;; write/display hash-table stdin lambda? macro/bacro cont/goto func/closure etc, all the pair types, circular etc
+
+;;; TODO: make sure (set! (...) ...) returns the value

@@ -1351,24 +1351,31 @@ the loop!
 <pre class="indented">
 (defmacro once-only (names . body)
   (let ((gensyms (map (lambda (n) (gensym)) names)))
+    `(let (,@(map (lambda (g) (list g '(gensym))) gensyms))
+       `(let (,,@(map (lambda (g n) (list list g n)) gensyms names))
+          ,(let (,@(map (lambda (n g) (list n g)) names gensyms))
+             ,@body)))))
+</pre>
+
+<!-- this was:
+(defmacro once-only (names . body)
+  (let ((gensyms (map (lambda (n) (gensym)) names)))
     `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
        `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
           ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
              ,@body)))))
-</pre>
+-->
 
 <p>From the land of sparkling bacros:
 </p>
 
 <pre class="indented">
-(define once-only 
+(define once-only
   (let ((names (gensym))
 	(body (gensym)))
-    (apply define-bacro 
-           `((once ,names . ,body)
-	      `(let (,@(map (lambda (name) `(,name ,(eval name))) ,names))
-	         ,@,body)))
-    once))
+    (symbol-&gt;value (apply define-bacro `((,(gensym) ,names . ,body)
+      `(let (,@(map (lambda (name) `(,name ,(eval name))) ,names))
+	 ,@,body))))))
 </pre>
 </div>
 
