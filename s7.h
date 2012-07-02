@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.6"
-#define S7_DATE "4-June-12"
+#define S7_VERSION "2.8"
+#define S7_DATE "2-July-12"
 
 
 typedef long long int s7_Int;
@@ -700,6 +700,9 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
 s7_pointer s7_object_environment(s7_pointer obj);
 s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e);
+void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index));
+void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value));
+void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args);
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
@@ -797,6 +800,8 @@ s7_pointer s7_object_set_environment(s7_pointer obj, s7_pointer e);
  * 
  *        s7 changes
  *		
+ * 2-July:    s7_object_set_* functions.
+ * 11-June:   throw.
  * 4-June.    s7_object_environment.
  * 31-May:    added s7_scheme argument to all the optimizer chooser functions.
  * 24-May:    open-environment?

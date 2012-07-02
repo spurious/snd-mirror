@@ -1734,7 +1734,8 @@ And of course:
 <div class="indented">
 
 <p>By my count, around 20 of the Scheme built-in functions are already generic in the sense
-that they accept arguments of many types (leaving aside the numeric functions).  s7 extends that list with map, for-each, reverse,
+that they accept arguments of many types (leaving aside the numeric and type checking functions, take for example equal?, display,
+member, assoc, apply, eval, quasiquote, and values).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
 newLisp takes a more radical approach than s7: it extends operators such as '&gt;' 
 to compare strings and lists, as well as numbers.  In map and for-each, however, you can mix the argument
@@ -4953,6 +4954,7 @@ bind it to something else, which is asking for confusion).
 <li>member and assoc accept an optional third argument, the comparison function (equal? is the default).
 <li>case accepts =&gt; much like cond (the function argument is the selector).
 <li>if WITH_SYSTEM_EXTRAS is 1, the following are built-in: directory?, file-exists?, delete-file, system, directory-&gt;list, getenv.
+<li>s7 is case sensitive.
 </ul>
 
 </div>

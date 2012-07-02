@@ -9199,7 +9199,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
    (set! hti2 (copy hti))
    (test (equal? hti2 hti) #f)
    ;; (test (morally-equal? hti2 hti) #t)
-   (test (hti2) '(123 . "123"))
+   (test (let ((val (hti2))) (or (equal? val '(123 . "123")) (equal? val '(456 . "456")))) #t) ; order depends on table size
    )
 
  (let ((vals (list (hti) (hti))))

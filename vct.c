@@ -296,6 +296,42 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
   return(val);
 }
 
+static XEN s7_vct_ref_2(s7_scheme *sc, void *obj, s7_pointer index)
+{
+  vct *v = (vct *)obj;
+  mus_long_t loc;
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_vct_ref, "an integer");
+  loc = s7_integer(index);
+
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, index, "index ~A < 0?");
+  if (loc >= v->length)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, index, "index ~A too high?");
+
+  return(C_TO_XEN_DOUBLE(v->data[loc]));
+}
+
+static XEN s7_vct_set_3(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer value)
+{
+  vct *v = (vct *)obj;
+  mus_long_t loc;
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_vct_setB, "an integer");
+  loc = s7_integer(index); 
+
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index ~A < 0?");
+  if (loc >= v->length)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index ~A too high?");
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ARG_3, S_vct_setB, "a real");
+
+  v->data[loc] = s7_number_to_real(value);
+  return(value);
+}
+
+
 static XEN s7_mus_vct_length(s7_scheme *sc, XEN obj)
 {
   return(g_vct_length(obj));
@@ -1391,6 +1427,9 @@ void mus_vct_init(void)
   vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, NULL, 
 				 s7_mus_vct_apply, s7_mus_vct_set, s7_mus_vct_length, 
 				 s7_mus_vct_copy, s7_mus_vct_reverse, s7_mus_vct_fill);
+  s7_set_object_ref_2(vct_tag, s7_vct_ref_2);
+  s7_set_object_set_3(vct_tag, s7_vct_set_3);
+  s7_set_object_ref_arity(vct_tag, 2, 2);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #endif
