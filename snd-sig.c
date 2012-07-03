@@ -4079,9 +4079,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   int counts = 0, pos;
   char *errmsg;
   XEN proc = XEN_FALSE;
-#if HAVE_SCHEME
-  struct ptree *pt = NULL;
-#endif
 
   proc = proc_and_list;
 
@@ -4121,33 +4118,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   if (num <= 0) return(XEN_FALSE);
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) return(XEN_TRUE);
-
-#if HAVE_SCHEME
-  if (optimization(ss) > 0)
-    {
-      pt = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc_and_list));
-      if (pt)
-	{
-	  for (kp = 0; kp < num; kp++)
-	    if (mus_run_evaluate_ptree_1f2b(pt, read_sample(sf)))
-	      {
-		if (counting)
-		  counts++;
-		else
-		  {
-		    sf = free_snd_fd(sf);
-		    mus_run_free_ptree(pt);
-		    return(C_TO_XEN_LONG_LONG(kp + beg));
-		  }
-	      }
-	  sf = free_snd_fd(sf);
-	  mus_run_free_ptree(pt);
-	  if (counting)
-	    return(C_TO_XEN_INT(counts));
-	  return(XEN_FALSE);
-	}
-    }
-#endif
 
   reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(cp);

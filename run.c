@@ -8103,7 +8103,7 @@ static xen_value *string_set_1(ptree *pt, xen_value **args, int num_args)
 static void strref_1(int *args, ptree *pt) {CHAR_RESULT = (char)(STRING_ARG_1[INT_ARG_2]);}
 
 
-static xen_value *string_ref_1(ptree *pt, xen_value **args, int num_args)
+static xen_value *r_string_ref_1(ptree *pt, xen_value **args, int num_args)
 {
   if ((args[1]->constant == R_CONSTANT) && (args[2]->constant == R_CONSTANT))
     return(make_xen_value(R_CHAR, add_int_to_ptree(pt, (int)(pt->strs[args[1]->addr][pt->ints[args[2]->addr]])), R_CONSTANT));
@@ -9773,7 +9773,7 @@ static xen_value *package_clm_struct(ptree *prog, int struct_type, xen_value **a
 }
 
 
-static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
+static xen_value *r_list_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   list *xl;
   /* these are list constants, we know in advance what all element types are */
@@ -9806,7 +9806,7 @@ static xen_value *cxr_1(ptree *prog, xen_value **args, int num_args, int loc)
   true_args[0] = args[0];
   true_args[1] = args[1];
   true_args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, loc), R_CONSTANT);
-  rtn = list_ref_1(prog, true_args, 2);
+  rtn = r_list_ref_1(prog, true_args, 2);
   free(true_args[2]);
   return(rtn);
 }
@@ -10061,7 +10061,7 @@ static void vector_ref_l(int *args, ptree *pt) {LIST_RESULT = VECT_ARG_1->data.l
 static void vector_add_i2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2 + INT_ARG_3];}
 static void vector_subtract_i2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_3 - INT_ARG_2];}
 
-static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
+static xen_value *r_vector_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   switch (args[1]->type)
     {
@@ -10151,7 +10151,7 @@ static void int_vector_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen
   add_triple_to_ptree(prog, va_make_triple(vector_set_i, "vector_set_i", 4, NULL, in_v, in_v1, v));
 }
 
-static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
+static xen_value *r_vector_set_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
@@ -10485,7 +10485,7 @@ static xen_value *make_vct_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static xen_value *make_vector_1(ptree *prog, xen_value **args, int num_args)
+static xen_value *r_make_vector_1(ptree *prog, xen_value **args, int num_args)
 {
   if ((num_args == 2) && (args[2]->type == R_INT))
     {
@@ -15491,7 +15491,7 @@ static s7_pointer g_add_clm_field(s7_pointer struct_name, s7_pointer name, s7_po
 
   /* now declare the get and set walkers */
 
-  w = make_walker(list_ref_1, NULL, clm_struct_field_set_1, 1, 1, field_type, false, 1, R_LIST);
+  w = make_walker(r_list_ref_1, NULL, clm_struct_field_set_1, 1, 1, field_type, false, 1, R_LIST);
   w->data = field_offset;
 
   scheme_set_walker((s7_pointer)(s7_make_symbol(s7, field_name)), 
@@ -15772,7 +15772,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		    new_args = (xen_value **)calloc(3, sizeof(xen_value *));
 		    new_args[1] = v;
 		    new_args[2] = args[1];
-		    res = list_ref_1(prog, new_args, 2);
+		    res = r_list_ref_1(prog, new_args, 2);
 		    new_args[1] = NULL;
 		    if (args[0]) free(args[0]);
 		    return(clean_up(res, new_args, 2));
@@ -15790,7 +15790,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		    new_args = (xen_value **)calloc(3, sizeof(xen_value *));
 		    new_args[1] = v;
 		    new_args[2] = args[1];
-		    res = string_ref_1(prog, new_args, 2);
+		    res = r_string_ref_1(prog, new_args, 2);
 		    new_args[1] = NULL;
 		    if (args[0]) free(args[0]);
 		    return(clean_up(res, new_args, 2));
@@ -16694,7 +16694,7 @@ static void init_walkers(void)
   INIT_WALKER("string-ci<?",   make_walker(string_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
   INIT_WALKER("string-length", make_walker(string_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
   INIT_WALKER("string-copy",   make_walker(string_copy_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_STRING));
-  INIT_WALKER("string-ref",    make_walker(string_ref_1, NULL, NULL, 2, 2, R_CHAR, false, 2, R_STRING, R_INT));
+  INIT_WALKER("string-ref",    make_walker(r_string_ref_1, NULL, NULL, 2, 2, R_CHAR, false, 2, R_STRING, R_INT));
   INIT_WALKER("substring",     make_walker(substring_1, NULL, NULL, 3, 3, R_STRING, false, 3, R_STRING, R_INT, R_INT));
   INIT_WALKER("string-fill!",  make_walker(string_fill_1, NULL, NULL, 2, 2, R_STRING, false, 2, R_STRING, R_CHAR));
   INIT_WALKER("string-set!",   make_walker(string_set_1, NULL, NULL, 3, 3, R_STRING, false, 3, R_STRING, R_INT, R_CHAR));
@@ -16706,16 +16706,16 @@ static void init_walkers(void)
   INIT_WALKER("symbol->string", make_walker(symbol2string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_SYMBOL));
 
   /* -------- vector funcs */
-  INIT_WALKER("vector-ref",    make_walker(vector_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_VECTOR, R_INT));
+  INIT_WALKER("vector-ref",    make_walker(r_vector_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_VECTOR, R_INT));
   INIT_WALKER("vector-length", make_walker(vector_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VECTOR));
   INIT_WALKER("vector-fill!",  make_walker(vector_fill_1, NULL, NULL, 2, 2, R_INT, false, 1, R_VECTOR));
-  INIT_WALKER("vector-set!",   make_walker(vector_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_VECTOR, R_INT));
-  INIT_WALKER("make-vector",   make_walker(make_vector_1, NULL, NULL, 1, 2, R_ANY, false, 2, R_INT, R_NUMBER));
+  INIT_WALKER("vector-set!",   make_walker(r_vector_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_VECTOR, R_INT));
+  INIT_WALKER("make-vector",   make_walker(r_make_vector_1, NULL, NULL, 1, 2, R_ANY, false, 2, R_INT, R_NUMBER));
   INIT_WALKER(S_vct_to_vector, make_walker(vct_copy_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
   INIT_WALKER(S_vector_to_vct, make_walker(vct_copy_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VECTOR));
 
   /* -------- list funcs */
-  INIT_WALKER("list-ref",  make_walker(list_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_LIST, R_INT));
+  INIT_WALKER("list-ref",  make_walker(r_list_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_LIST, R_INT));
   INIT_WALKER("list-set!", make_walker(list_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_LIST, R_INT));
   INIT_WALKER("car",       make_walker(car_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
   INIT_WALKER("cadr",      make_walker(cadr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));

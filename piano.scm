@@ -42,7 +42,7 @@
 (define (pnoise gen amp)
   (declare (gen pnoise) (amp float))
   ;; very special noise generator
-  (set! (pnoise-seed gen) (logand (+ (* (pnoise-seed gen) 1103515245) 12345) #xffffffff))
+  (set! (pnoise-seed gen) (logand (floor (+ (* (pnoise-seed gen) 1103515245) 12345)) #xffffffff))
   ;; (bil) added the logand -- otherwise we get an overflow somewhere
   (* amp (- (* (modulo (floor (/ (pnoise-seed gen) 65536)) 65536) 0.0000305185) 1.0)))
 

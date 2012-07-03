@@ -832,7 +832,9 @@ typedef struct c_object_t {
   s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
+  s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index);
   s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
+  void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value);
   unsigned int min_args, max_args;
 } c_object_t;
 
@@ -1153,8 +1155,8 @@ struct s7_scheme {
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS;
   s7_pointer __FUNC__;
-  s7_pointer Object_Set;              /* applicable object set method */
-  s7_pointer FEED_TO;                 /* => */
+  s7_pointer Object_Set, Object_Set_3; /* applicable object set method */
+  s7_pointer FEED_TO;                  /* => */
   s7_pointer BODY;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
@@ -1764,7 +1766,9 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define c_object_ref(p)               (p)->object.c_obj.info->ref
 #define c_object_set(p)               (p)->object.c_obj.info->set
 #define c_object_ref_2(p)             (p)->object.c_obj.info->ref_2
+#define c_object_ref_2i(p)            (p)->object.c_obj.info->ref_2i
 #define c_object_set_3(p)             (p)->object.c_obj.info->set_3
+#define c_object_set_3if(p)           (p)->object.c_obj.info->set_3if
 #define c_object_print(p)             (p)->object.c_obj.info->print
 #define c_object_length(p)            (p)->object.c_obj.info->length
 #define c_object_equal(p)             (p)->object.c_obj.info->equal
@@ -10817,6 +10821,11 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 		{
 		  rl_a = (s7_Double)num_a + (s7_Double)integer(x);
 		  if (is_null(p)) return(s7_make_real(sc, rl_a));
+
+		  /* this is not ideal!  piano.scm has its own noise generator that wants integer
+		   *    arithmetic to overflow as an integer.  Perhaps *safety*==0 would not check
+		   *    anywhere?
+		   */
 		  goto ADD_REALS;
 		}
 	    }
@@ -26677,8 +26686,21 @@ static s7_pointer fallback_length(s7_scheme *sc, s7_pointer obj)
 }
 
 
-/* when in doubt, generalized set! calls g_internal_object_set which then calls the object's set function 
- */
+static s7_pointer g_internal_object_set_3(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer obj, index, value;
+  obj = car(args);
+  index = cadr(args);
+  value = caddr(args);
+  if ((c_object_set_3if(obj)) &&
+      (is_integer(index)) &&
+      (type(value) == T_REAL))
+    {
+      (*(c_object_set_3if(obj)))(sc, c_object_value(obj), integer(index), real(value));
+      return(value);
+    }
+  return((*(c_object_set_3(obj)))(sc, c_object_value(obj), index, value));
+}
 
 static s7_pointer g_internal_object_set(s7_scheme *sc, s7_pointer args)
 {
@@ -26818,9 +26840,21 @@ void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val,
 }
 
 
+void s7_set_object_ref_2i(int type, s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index))
+{
+  object_types[type].ref_2i = ref_2i;
+}
+
+
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value))
 {
   object_types[type].set_3 = set_3;
+}
+
+
+void s7_set_object_set_3if(int type, void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value))
+{
+  object_types[type].set_3if = set_3if;
 }
 
 
@@ -27291,7 +27325,9 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
       return(s7_cons(sc, small_int(1), small_int(1)));
       
     case T_C_OBJECT:
-      return(s7_cons(sc, make_integer(sc, c_object_min_args(x)), make_integer(sc, c_object_max_args(x))));
+      if (is_procedure(x))
+	return(s7_cons(sc, make_integer(sc, c_object_min_args(x)), make_integer(sc, c_object_max_args(x))));
+      return(sc->F);
 
     case T_VECTOR:
       if (vector_length(x) == 0)
@@ -27446,7 +27482,8 @@ static bool is_aritable(s7_scheme *sc, s7_pointer x, int args)
       return(args == 1);
       
     case T_C_OBJECT:
-      return(((int)c_object_min_args(x) <= args) &&
+      return((is_procedure(x)) &&
+	     ((int)c_object_min_args(x) <= args) &&
 	     ((int)c_object_max_args(x) >= args));
 
     case T_HASH_TABLE:
@@ -43191,16 +43228,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
-	      /* are these actually safe? 
-	       */
 	    case OP_C_OBJECT_C:
 	    case HOP_C_OBJECT_C:
 	      {
-		s7_pointer c;
+		s7_pointer c, ind;
 		c = find_symbol_or_bust(sc, car(code));
 		if (!is_c_object(c))
 		  break;
-		sc->value = (*(c_object_ref(c)))(sc, c, cdr(code));
+
+		ind = cadr(code);
+		if ((c_object_ref_2i(c)) &&
+		    (is_integer(ind)))
+		  sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
+		else
+		  {
+		    if (c_object_ref_2(c))
+		      sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
+		    else sc->value = (*(c_object_ref(c)))(sc, c, cdr(code));
+		  }
 		goto START;
 	      }
 	      
@@ -43209,24 +43254,50 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	    case HOP_C_OBJECT_opCq:
 	      {
-		s7_pointer c;
+		s7_pointer c, ind;
 		c = find_symbol_or_bust(sc, car(code));
 		if (!is_c_object(c))
 		  break;
-		car(sc->T1_1) = c_call(cadr(code))(sc, cdadr(code));
-		sc->value = (*(c_object_ref(c)))(sc, c, sc->T1_1);
+
+		ind = c_call(cadr(code))(sc, cdadr(code));
+		if ((c_object_ref_2i(c)) &&
+		    (is_integer(ind)))
+		  sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
+		else
+		  {
+		    if (c_object_ref_2(c))
+		      sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
+		    else
+		      {
+			car(sc->T1_1) = ind;
+			sc->value = (*(c_object_ref(c)))(sc, c, sc->T1_1);
+		      }
+		  }
 		goto START;
 	      }
 	      
 	    case OP_C_OBJECT_S:
 	    case HOP_C_OBJECT_S:
 	      {
-		s7_pointer c;
+		s7_pointer c, ind;
 		c = find_symbol_or_bust(sc, car(code));
 		if (!is_c_object(c))
 		  break;
-		car(sc->T1_1) = find_symbol_or_bust(sc, cadr(code));
-		sc->value = (*(c_object_ref(c)))(sc, c, sc->T1_1);
+
+		ind = find_symbol_or_bust(sc, cadr(code));
+		if ((c_object_ref_2i(c)) &&
+		    (is_integer(ind)))
+		  sc->value = (*(c_object_ref_2i(c)))(sc, c_object_value(c), integer(ind));
+		else
+		  {
+		    if (c_object_ref_2(c))
+		      sc->value = (*(c_object_ref_2(c)))(sc, c_object_value(c), ind);
+		    else
+		      {
+			car(sc->T1_1) = ind;
+			sc->value = (*(c_object_ref(c)))(sc, c, sc->T1_1);
+		      }
+		  }
 		goto START;
 	      }
 	      
@@ -46260,20 +46331,35 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	  
 	case T_C_OBJECT:                          /* -------- applicable (new-type) object -------- */
-	  if ((!is_null(sc->args)) &&
-	      (is_null(cdr(sc->args))))
-	    {
-	      s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
-	      ref_2 = c_object_ref_2(sc->code);
-	      if (ref_2)
-		{
-		  sc->value = (*ref_2)(sc, c_object_value(sc->code), car(sc->args));
-		  goto START;
-		}
-	    }
-	  sc->value = (*(c_object_ref(sc->code)))(sc, sc->code, sc->args);
+	  {
+	    s7_pointer args, obj;
+	    obj = sc->code;
+	    args = sc->args;
+	    if ((!is_null(args)) &&
+		(is_null(cdr(args))))
+	      {
+		s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index);
+		s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index);
+
+		if (is_integer(car(args)))
+		  {
+		    ref_2i = c_object_ref_2i(obj);
+		    if (ref_2i)
+		      {
+			sc->value = (*(ref_2i))(sc, c_object_value(obj), integer(car(args)));
+			goto START;
+		      }
+		  }
+		ref_2 = c_object_ref_2(obj);
+		if (ref_2)
+		  {
+		    sc->value = (*(ref_2))(sc, c_object_value(obj), car(args));
+		    goto START;
+		  }
+	      }
+	  sc->value = (*(c_object_ref(obj)))(sc, obj, args);
 	  goto START;
-	  
+	  }
 	  
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of indices 
@@ -46634,10 +46720,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	  case T_C_OBJECT:
 	    {
-	      s7_pointer (*set_3)(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer value);
+	      s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
+	      void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value);
+	      
+	      if ((is_integer(arg)) &&
+		  (type(value) == T_REAL))
+		{
+		  set_3if = c_object_set_3if(obj);
+		  if (set_3if)
+		    {
+		      (*(set_3if))(sc, c_object_value(obj), integer(arg), real(value));
+		      sc->value = value;
+		      break;
+		    }
+		}
 	      set_3 = c_object_set_3(obj);
 	      if (set_3)
-		sc->value = (*set_3)(sc, c_object_value(obj), arg, value);
+		sc->value = (*(set_3))(sc, c_object_value(obj), arg, value);
 	      else
 		{
 		  car(sc->T2_1) = arg;
@@ -47040,10 +47139,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * (setf (elt (symbol-name 'xyz) 1) #\X) -> error in CL "read-only string"
 	   */
 
-	  /* TODO: remember to ref_2/set_3 ht-iterators and random state etc
-	   * TODO: object_ref|set should use ref_2|set_3 if possible throughout
-	   * TODO: ref_2i, ref_2f, ref_3f, set_3if
-	   * TODO: tie these into sndlib/clm
+	  /* TODO: ref_2i[ok], ref_2f, ref_3f, perhaps ref_3i[mixer/sound-data], set_4iff (same)
+	   * TODO: tie these into sndlib/clm/snd
+	   * TODO: check other UNKNOWN->OBJECT cases to avoid APPLY
 	   */
 
 	  switch (type(sc->x))
@@ -47081,16 +47179,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    if (is_symbol(index))
 		      index = finder(sc, index);
+
 		    val = cadr(sc->code);
 		    if (!is_pair(val))
 		      {
-			s7_pointer (*set_3)(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer value);
+			s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value);
+			void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value);
+	      
 			if (is_symbol(val))
 			  val = finder(sc, val);
+
+			if ((is_integer(index)) &&
+			    (type(val) == T_REAL))
+			  {
+			    set_3if = c_object_set_3if(sc->x);
+			    if (set_3if)
+			      {
+				(*(set_3if))(sc, c_object_value(sc->x), integer(index), real(val));
+				sc->value = val;
+				goto START;
+			      }
+			  }
 			set_3 = c_object_set_3(sc->x);
 			if (set_3)
-			  sc->value = (*set_3)(sc, c_object_value(sc->x), index, val);
-			else 
+			  sc->value = (*(set_3))(sc, c_object_value(sc->x), index, val);
+			else
 			  {
 			    car(sc->T2_1) = index;
 			    car(sc->T2_2) = val;
@@ -47098,7 +47211,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			goto START;
 		      }
-		    push_op_stack(sc, sc->Object_Set);
+
+		    if ((c_object_set_3(sc->x)) &&
+			(c_object_set_3if(sc->x)))
+		      push_op_stack(sc, sc->Object_Set_3);
+		    else push_op_stack(sc, sc->Object_Set);
 		    sc->args = list_2(sc, index, sc->x);
 		    sc->code = cdr(sc->code);
 		    goto EVAL_ARGS;
@@ -47106,7 +47223,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		else
 		  {
 		    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), cdr(sc->code));
-		    push_op_stack(sc, sc->Object_Set);
+		    if ((c_object_set_3(sc->x)) &&
+			(c_object_set_3if(sc->x)))
+		      push_op_stack(sc, sc->Object_Set_3);
+		    else push_op_stack(sc, sc->Object_Set);
 		    sc->code = cadr(settee);
 		  }
 		goto EVAL;
@@ -47246,14 +47366,43 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *    old: 2.32, new: 1.77 (1.50 direct), (12.2): 1.07
 	       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
 	       */
-	      if (cdar(sc->code) != sc->NIL) 
-		{
-		  push_op_stack(sc, sc->List_Set);
-		  push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), s7_append(sc, cddar(sc->code), cdr(sc->code)));
-		  sc->code = cadar(sc->code);
-		}
-	      else sc->code = cons(sc, sc->List_Set, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      {
+		s7_pointer settee, index, val;
+		
+		if (is_null(cdr(sc->code)))
+		  s7_wrong_number_of_args_error(sc, "no value for list-set!: ~S", sc->code);
+		if (!is_null(cddr(sc->code)))
+		  s7_wrong_number_of_args_error(sc, "too many values for list-set!: ~S", sc->code);
+		
+		settee = car(sc->code);
+		if (is_null(cdr(settee)))
+		  s7_wrong_number_of_args_error(sc, "no index for list-set!: ~S", sc->code);
+
+		index = cadr(settee);
+		val = cadr(sc->code);
+
+		if ((!is_null(cddr(settee))) ||
+		    (is_pair(index)) ||
+		    (is_pair(val)))
+		  {
+		    push_op_stack(sc, sc->List_Set);
+		    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), s7_append(sc, cddr(settee), cdr(sc->code)));
+		    sc->code = index;
+		    goto EVAL;
+		  }
+
+		if (is_symbol(index))
+		  index = finder(sc, index);
+		if (is_symbol(val))
+		  val = finder(sc, val);
+
+		car(sc->T2_1) = index;
+		car(sc->T2_2) = val;
+		sc->value = g_list_set_1(sc, sc->x, sc->T2_1, 2);
+		goto START;
+	      }
 	      break;
+
 	      
 	    case T_HASH_TABLE:
 	      {
@@ -56370,9 +56519,13 @@ s7_scheme *s7_init(void)
   
   s7_define_safe_function(sc,                         "s7-version",                g_s7_version,               0, 0, false, H_s7_version);
 
-  #define object_set_name "(generalized set!)"
-  s7_define_function(sc,                              object_set_name,             g_internal_object_set,      1, 0, true,  "internal object setter redirection");
-  sc->Object_Set = s7_symbol_value(sc, make_symbol(sc, object_set_name));
+  {
+    s7_pointer sym;
+    sym = s7_define_function(sc,                      "(c-object set)",            g_internal_object_set,      1, 0, true,  "internal object setter redirection");
+    sc->Object_Set = s7_symbol_value(sc, sym);
+    sym = s7_define_function(sc,                      "(c-object set-3)",          g_internal_object_set_3,    1, 0, true,  "internal object setter redirection");
+    sc->Object_Set_3 = s7_symbol_value(sc, sym);
+  }
 
 
   /* -------- *gc-stats* -------- */

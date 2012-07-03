@@ -270,8 +270,6 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
 
   v = XEN_TO_VCT(obj);
 
-  /* TODO: s7 should check this for us!
-   */
   if (s7_is_null(s7, args))
     return(s7_wrong_number_of_args_error(s7, "not enough args for vct-set!: ~A", args));
   if (s7_is_null(s7, s7_cdr(args)))
@@ -312,6 +310,17 @@ static XEN s7_vct_ref_2(s7_scheme *sc, void *obj, s7_pointer index)
   return(C_TO_XEN_DOUBLE(v->data[loc]));
 }
 
+static XEN s7_vct_ref_2i(s7_scheme *sc, void *obj, s7_Int loc)
+{
+  vct *v = (vct *)obj;
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_make_integer(sc, loc), "index ~A < 0?");
+  if (loc >= v->length)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_make_integer(sc, loc), "index ~A too high?");
+
+  return(C_TO_XEN_DOUBLE(v->data[loc]));
+}
+
 static XEN s7_vct_set_3(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer value)
 {
   vct *v = (vct *)obj;
@@ -329,6 +338,18 @@ static XEN s7_vct_set_3(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer v
 
   v->data[loc] = s7_number_to_real(value);
   return(value);
+}
+
+static void s7_vct_set_3if(s7_scheme *sc, void *obj, s7_Int loc, s7_Double value)
+{
+  vct *v = (vct *)obj;
+
+  if (loc < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_make_integer(sc, loc), "index ~A < 0?");
+  if (loc >= v->length)
+    XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, s7_make_integer(sc, loc), "index ~A too high?");
+
+  v->data[loc] = value;
 }
 
 
@@ -780,57 +801,9 @@ v. " vct_map_example " is the same as " vct_fill_example
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
 
   v = XEN_TO_VCT(obj);
-#if HAVE_SCHEME && USE_SND
-  {
-    struct ptree *pt = NULL;
-
-    if ((optimization(ss)) > 0)
-      {
-	pt = mus_run_form_to_ptree_0_f(XEN_PROCEDURE_SOURCE(proc));
-	if (pt)
-	  {
-	    for (i = 0; i < v->length; i++) 
-	      v->data[i] = mus_run_evaluate_ptree_0f2f(pt);
-	    mus_run_free_ptree(pt);
-	    return(obj);
-	  }
-      }
-
-    XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
-    v->data[0] = XEN_TO_C_DOUBLE(s7_call_with_location(s7, proc, XEN_EMPTY_LIST, c__FUNCTION__, __FILE__, __LINE__));
-    /* s7_call gives us elaborate error checks, but subsequent calls can be direct, I hope
-     */
-    {
-      s7_pointer source, body, e;
-      s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
-
-      source = s7_procedure_source(s7, proc);
-      if (s7_is_pair(source))
-	{
-	  body = s7_cddar(source);
-	  e = s7_cdr(source);
-	  if (s7_is_null(s7, s7_cdr(body)))
-	    {
-	      eval = s7_eval_form;
-	      body = s7_car(body);
-	    }
-	  else eval = s7_eval;
-
-	  for (i = 1; i < v->length; i++) 
-	    v->data[i] = XEN_TO_C_DOUBLE(eval(s7, body, e));
-	}
-      else
-	{
-	for (i = 1; i < v->length; i++) 
-	  v->data[i] = XEN_TO_C_DOUBLE(s7_apply_function(s7, proc, XEN_EMPTY_LIST));
-	}
-    }
-  }
-#else
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
   for (i = 0; i < v->length; i++) 
     v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc));
-#endif
 
   return(obj);
 }
@@ -1428,7 +1401,9 @@ void mus_vct_init(void)
 				 s7_mus_vct_apply, s7_mus_vct_set, s7_mus_vct_length, 
 				 s7_mus_vct_copy, s7_mus_vct_reverse, s7_mus_vct_fill);
   s7_set_object_ref_2(vct_tag, s7_vct_ref_2);
+  s7_set_object_ref_2i(vct_tag, s7_vct_ref_2i);
   s7_set_object_set_3(vct_tag, s7_vct_set_3);
+  s7_set_object_set_3if(vct_tag, s7_vct_set_3if);
   s7_set_object_ref_arity(vct_tag, 2, 2);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));

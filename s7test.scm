@@ -69650,4 +69650,3 @@ in non-gmp,
 
 ;;; write/display hash-table stdin lambda? macro/bacro cont/goto func/closure etc, all the pair types, circular etc
 
-;;; TODO: make sure (set! (...) ...) returns the value
