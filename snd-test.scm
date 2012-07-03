@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [591]
-;;;  test 1: defaults                           [1183]
-;;;  test 2: headers                            [1401]
-;;;  test 3: variables                          [1716]
-;;;  test 4: sndlib                             [2294]
-;;;  test 5: simple overall checks              [4851]
-;;;  test 6: vcts                               [11780]
-;;;  test 7: colors                             [12216]
-;;;  test 8: clm                                [12736]
-;;;  test 9: mix                                [24040]
-;;;  test 10: marks                             [25864]
-;;;  test 11: dialogs                           [26831]
-;;;  test 12: extensions                        [27024]
-;;;  test 13: menus, edit lists, hooks, etc     [27290]
-;;;  test 14: all together now                  [28670]
-;;;  test 15: chan-local vars                   [29557]
-;;;  test 16: regularized funcs                 [31343]
-;;;  test 17: dialogs and graphics              [36144]
-;;;  test 18: enved                             [36243]
-;;;  test 19: save and restore                  [36262]
-;;;  test 20: transforms                        [37984]
-;;;  test 21: new stuff                         [40138]
-;;;  test 22: run                               [42160]
-;;;  test 23: with-sound                        [48937]
-;;;  test 25: X/Xt/Xm                           [53049]
-;;;  test 26:                                   [56731]
-;;;  test 27: GL                                [56737]
-;;;  test 28: errors                            [56861]
-;;;  test 29: s7                                [59028]
-;;;  test all done                              [59100]
-;;;  test the end                               [59290]
+;;;  test 1: defaults                           [1180]
+;;;  test 2: headers                            [1397]
+;;;  test 3: variables                          [1712]
+;;;  test 4: sndlib                             [2290]
+;;;  test 5: simple overall checks              [4795]
+;;;  test 6: vcts                               [9575]
+;;;  test 7: colors                             [9895]
+;;;  test 8: clm                                [10415]
+;;;  test 9: mix                                [21703]
+;;;  test 10: marks                             [23493]
+;;;  test 11: dialogs                           [24460]
+;;;  test 12: extensions                        [24653]
+;;;  test 13: menus, edit lists, hooks, etc     [24919]
+;;;  test 14: all together now                  [26297]
+;;;  test 15: chan-local vars                   [27184]
+;;;  test 16: regularized funcs                 [28970]
+;;;  test 17: dialogs and graphics              [32212]
+;;;  test 18: enved                             [32311]
+;;;  test 19: save and restore                  [32330]
+;;;  test 20: transforms                        [34013]
+;;;  test 21: new stuff                         [36167]
+;;;  test 22: run                               [38189]
+;;;  test 23: with-sound                        [44955]
+;;;  test 25: X/Xt/Xm                           [49067]
+;;;  test 26:                                   [52749]
+;;;  test 27: GL                                [52755]
+;;;  test 28: errors                            [52879]
+;;;  test 29: s7                                [55002]
+;;;  test all done                              [55074]
+;;;  test the end                               [55264]
 
 (define tests 1)
 (define keep-going #f)
@@ -941,9 +941,6 @@
     (set! (max-regions) (max-regions))
     (if (not (equal? (max-regions)  16 )) 
 	(snd-display #__line__ ";max-regions set def: ~A" (max-regions)))
-    (set! (max-virtual-ptrees) (max-virtual-ptrees))
-    (if (not (equal? (max-virtual-ptrees)  32 )) 
-	(snd-display #__line__ ";max-virtual-ptrees set def: ~A" (max-virtual-ptrees)))
     (set! (min-dB) (min-dB))
     (if (fneq (min-dB)  -60.0 )
 	(snd-display #__line__ ";min-dB set def: ~A" (min-dB)))
@@ -1304,7 +1301,6 @@
       'mark-tag-height (mark-tag-height) 4
       'mark-tag-width (mark-tag-width) 10
       'max-regions (max-regions) 16 
-      'max-virtual-ptrees (max-virtual-ptrees) 32
       'max-transform-peaks (max-transform-peaks) 100
       'min-dB (min-dB) -60.0 
       'mix-tag-height (mix-tag-height) 14
@@ -2142,7 +2138,7 @@
 		       'map-chan 'map-channel 'mark-click-hook 'mark-color 'mark-context
 		       'mark-drag-hook 'mark-home 'mark-hook 'mark-name 'mark-properties 'mark-property
 		       'mark-sample 'mark-sync 'mark-sync-max 'mark-tag-height 'mark-tag-width
-		       'mark? 'marks 'max-regions 'max-transform-peaks 'max-virtual-ptrees 'maxamp
+		       'mark? 'marks 'max-regions 'max-transform-peaks 'maxamp
 		       'maxamp-position 'menu-widgets 'min-dB 'mix
 		       'mix-amp 'mix-amp-env 'mix-click-hook 'mix-color
 		       'mix-dialog-mix 'mix-drag-hook 'mix-file-dialog 'mix-length 'mix-home
@@ -2199,7 +2195,7 @@
 		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
 		       'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
 		       'previous-sample 'print-dialog 'print-length 'progress-report
-		       'ptree-channel 'pulse-train
+		       'pulse-train
 		       'pulse-train? 'radians->degrees 'radians->hz
 		       'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
 		       'read-hook 'read-mix-sample 'read-only 'read-region-sample
@@ -3462,58 +3458,6 @@
 		  (list mus-ubshort mus-next))))
 	 (list 1 2 4 8))
 	
-#|
-	;; big sound-data objects (needs 32 Gbytes):
-	(if (and (string? (getenv "HOSTNAME"))
-		 (string=? (getenv "HOSTNAME") "fatty8"))
-	    (let ((size (+ 2 (expt 2 31))))
-	      (if (not (= size 2147483650))
-		  (snd-display #__line__ ";big sd, size: ~A (~A ~A)" size 2147483650 (- 2147483650 size)))
-	      (set! (mus-max-malloc) (expt 2 40))
-	      (if (not (= (mus-max-malloc) 1099511627776))
-		  (snd-display #__line__ ";big sd, mus-max-malloc: ~A" (mus-max-malloc)))
-	      (let ((hi (make-sound-data 1 size)))
-		(if (not (sound-data? hi))
-		    (snd-display #__line__ ";big sd, not a sound-data?? ~A" hi))
-		(if (fneq (hi 0 (expt 2 31)) 0.0)
-		    (snd-display #__line__ ";big sd, created at end: ~A" (hi 0 (expt 2 31))))
-		(if (not (= (sound-data-chans hi) 1))
-		    (snd-display #__line__ ";big sd, sound-data-chans: ~A" (sound-data-chans hi)))
-		(sound-data+ hi .1)
-		(if (fneq (hi 0 (expt 2 31)) 0.1)
-		    (snd-display #__line__ ";big sd, add .1 at end: ~A" (hi 0 (expt 2 31))))
-		(let ((pk (sound-data-peak hi)))
-		  (if (fneq pk .1)
-		      (snd-display #__line__ ";big sd, sound-data-peak: ~A" pk)))
-		(let ((len (sound-data-length hi)))
-		  (if (not (= len size))
-		      (snd-display #__line__ ";big sd, len: ~A" len)))
-		(sound-data-scale! hi 2.0)
-		(if (fneq (hi 0 (+ 1 (expt 2 31))) .2)
-		    (snd-display #__line__ ";big sd, scale: ~A ~A" (hi 0 (+ 1 (expt 2 31))) hi))
-		(sound-data-set! hi 0 (expt 2 31) 1.0)
-		(if (fneq (hi 0 (expt 2 31)) 1.0)
-		    (snd-display #__line__ ";big sd, set at end: ~A" (hi 0 (expt 2 31))))
-		(sound-data-offset! hi .2)
-		(if (fneq (hi 0 (expt 2 31)) 1.2)
-		    (snd-display #__line__ ";big sd, offset: ~A" (hi 0 (expt 2 31))))
-		(let ((pk (sound-data-maxamp hi)))
-		  (if (fneq (car pk) 1.2)
-		      (snd-display #__line__ ";big sd, subtract sound-data-maxamp: ~A ~A" pk hi)))
-		(let ((pk (sound-data-peak hi)))
-		  (if (fneq pk 1.2)
-		      (snd-display #__line__ ";big sd, sound-data-peak: ~A ~A" pk hi)))
-		(sound-data-fill! hi 1.0)
-		(if (fneq (hi 0 (expt 2 31)) 1.0)
-		    (snd-display #__line__ ";big sd, fill: ~A ~A" (hi 0 (expt 2 31)) hi))
-		(sound-data-reverse! hi)
-		(let ((v (sound-data->vct hi 0)))
-		  (if (not (= (vct-length v) size))
-		      (snd-display #__line__ ";big sd, sound-data->vct length: ~A" (vct-length v)))
-		  (if (fneq (v (expt 2 31)) 1.0)
-		      (snd-display #__line__ ";big sd, sd->v ref: ~A" (v (expt 2 31)))))
-		)))
-|#
 	
 	(let ((ind (open-sound (string-append "/usr//usr/include/" home-dir "/cl/oboe.snd"))))
 	  (show-input-1)
@@ -4857,23 +4801,6 @@
 (if (not (provided? 'snd-pvoc.scm)) (load "pvoc.scm"))
 (if (and with-gui (not (provided? 'snd-edit-menu.scm))) (load "edit-menu.scm"))
 
-(define* (cosine-channel-via-ptree (beg 0) dur snd chn edpos)
-  ;; vct: angle increment
-  (ptree-channel
-   (lambda (y data forward)
-     (let* ((angle (data 0))
-	    (incr (data 1))
-	    (val (* y (cos angle))))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-   beg dur snd chn edpos #t
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ pi frag-dur)))
-       (vct (+ (* -0.5 pi) (* frag-beg incr))
-	    incr)))))
-
 (define old-opt-val (optimization))
 
 (define (snd_test_5)
@@ -5018,33 +4945,6 @@
   
   (define (region2vct r c len)
     (region->vct r 0 len c))
-  
-  ;; extensions.scm (commented out)
-  (define* (delay-channel dly (beg 0) dur snd chn edpos)
-    (let ((cur-edpos (if (or (not edpos)
-			     (= edpos current-edit-position))
-			 (edit-position snd chn)
-			 edpos)))
-      (ptree-channel (lambda (y data dir)
-		       (let* ((pos (floor (data 0)))
-			      (len (floor (data 1)))
-			      (val (data (+ pos 2))))
-			 (set! (data (+) pos 2) y)
-			 (set! pos (+ 1 pos))
-			 (if (>= pos len) (set! (data 0) 0) (set! (data 0) pos))
-			 val))
-		     beg dur snd chn edpos #f
-		     (lambda (fpos fdur)
-		       (let ((data (make-vct (+ dly 2))))
-			 (set! (data 0) 0.0)
-			 (set! (data 1) dly)
-			 (if (= fpos 0)
-			     data
-			     (let ((reader (make-sampler (- fpos 1) snd chn -1 cur-edpos)))
-			       (do ((i (- dly 1) (- i 1)))
-				   ((< i 0))
-				 (set! (data (+ i 2)) (reader)))
-			       data)))))))
   
   (begin
     
@@ -6023,668 +5923,6 @@ EDITS: 5
 "))
 	    (snd-display #__line__ ";multi-ramp 5: ~A" (safe-display-edits ind 0 12)))
 	(close-sound ind))
-      
-      (let ((old-pmax (max-virtual-ptrees)))
-	
-	(set! (max-virtual-ptrees) 10)
-	
-	(let ((ind (new-sound "test.snd" :size 20)))
-	  (vct->channel (make-vct 20 1.0))
-	  
-	  (env-channel '(0 0 1 1 2 1 3 0))
-	  (let ((ramp-to-1 (channel->vct)))
-	    (undo)
-	    (xramp-channel 0 1 8)
-	    (let ((xramp-to-1 (channel->vct)))
-	      (undo)
-	      (ptree-channel (lambda (y) (* y 2.5)))
-	      (let ((pdata (channel->vct)))
-		(undo)
-		
-		;; -------- ramp-ptree-ramp -------- 
-		
-		(set! (edit-position) 1)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(let ((rpr (channel->vct)))
-		  (let ((nrpr (vct-multiply! 
-			       (vct-multiply! 
-				(vct-multiply! (make-vct 20 1.0) ramp-to-1)
-				pdata)
-			       ramp-to-1)))
-		    (if (not (vequal rpr nrpr))
-			(snd-display #__line__ ";simple rpr:~%; ~A~%; ~A" rpr nrpr))))
-		
-		(set! (edit-position) 1)
-		(scale-by 3.0)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by -1.234)
-		(let ((rpr (channel->vct)))
-		  (let ((nrpr (vct-scale!
-			       (vct-multiply! 
-				(vct-scale! 
-				 (vct-multiply! 
-				  (vct-scale! 
-				   (vct-multiply! (make-vct 20 3.0) ramp-to-1) 
-				   1.25)
-				  pdata)
-				 -0.8)
-				ramp-to-1)
-			       -1.234)))
-		    (if (not (vequal rpr nrpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * rpr:~%; ~A~%; ~A" rpr nrpr))))
-		
-		
-		;; -------- ramp-ptree-xramp -------- 
-		
-		(set! (edit-position) 1)
-		(xramp-channel 0 1 8)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(let ((rpr (channel->vct)))
-		  (let ((nrpr (vct-multiply! 
-			       (vct-multiply! 
-				(vct-multiply! (make-vct 20 1.0) xramp-to-1)
-				pdata)
-			       ramp-to-1)))
-		    (if (not (vequal rpr nrpr))
-			(snd-display #__line__ ";simple rpx:~%; ~A~%; ~A" rpr nrpr))))
-		
-		(set! (edit-position) 1)
-		(scale-by 3.0)
-		(xramp-channel 0 1 8)
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by -1.234)
-		(let ((rpr (channel->vct)))
-		  (let ((nrpr (vct-scale!
-			       (vct-multiply! 
-				(vct-scale! 
-				 (vct-multiply! 
-				  (vct-scale! 
-				   (vct-multiply! (make-vct 20 3.0) xramp-to-1) 
-				   1.25)
-				  pdata)
-				 -0.8)
-				ramp-to-1)
-			       -1.234)))
-		    (if (not (vequal rpr nrpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * rpx:~%; ~A~%; ~A" rpr nrpr))))
-		
-		
-		;; -------- ramp-ptree-xramp-ramp -------- 
-		
-		(set! (edit-position) 1)
-		(xramp-channel 0 1 8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(let ((rpr (channel->vct)))
-		  (let ((nrpr (vct-multiply! 
-			       (vct-multiply! 
-				(vct-multiply! 
-				 (vct-multiply! (make-vct 20 1.0) ramp-to-1)
-				 xramp-to-1)
-				pdata)
-			       ramp-to-1)))
-		    (if (not (vequal rpr nrpr))
-			(snd-display #__line__ ";simple rpxr:~%; ~A~%; ~A" rpr nrpr))))
-		
-		(set! (edit-position) 1)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by 3.0)
-		(xramp-channel 0 1 8)
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by -1.0)
-		(let ((rpr (channel->vct)))
-		  (let ((nrpr (vct-scale!
-			       (vct-multiply! 
-				(vct-scale! 
-				 (vct-multiply! 
-				  (vct-scale! 
-				   (vct-multiply!
-				    (vct-multiply! (make-vct 20 3.0) ramp-to-1)
-				    xramp-to-1) 
-				   1.25)
-				  pdata)
-				 -0.8)
-				ramp-to-1)
-			       -1.0)))
-		    (if (not (vequal rpr nrpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * rpxr:~%; ~A~%; ~A" rpr nrpr))))
-		
-		
-		;; -------- xramp-ptree-ramp -------- 
-		
-		(set! (edit-position) 1)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply! 
-			       (vct-multiply! 
-				(vct-multiply! (make-vct 20 1.0) ramp-to-1)
-				pdata)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";simple xpr:~%; ~A~%; ~A" xpr nxpr))))
-		
-		(set! (edit-position) 1)
-		(scale-by 3.0)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(xramp-channel 0 1 8)
-		(scale-by -1.234)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-scale!
-			       (vct-multiply! 
-				(vct-scale! 
-				 (vct-multiply! 
-				  (vct-scale! 
-				   (vct-multiply! (make-vct 20 3.0) ramp-to-1) 
-				   1.25)
-				  pdata)
-				 -0.8)
-				xramp-to-1)
-			       -1.234)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * xpr:~%; ~A~%; ~A" xpr nxpr))))
-		
-		
-		;; -------- xramp-ptree-xramp -------- 
-		
-		(set! (edit-position) 1)
-		(xramp-channel 0 1 8)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply! 
-			       (vct-multiply! 
-				(vct-multiply! (make-vct 20 1.0) xramp-to-1)
-				pdata)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";simple xpx:~%; ~A~%; ~A" xpr nxpr))))
-		
-		(set! (edit-position) 1)
-		(scale-by 3.0)
-		(xramp-channel 0 1 8)
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(xramp-channel 0 1 8)
-		(scale-by -1.234)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-scale!
-			       (vct-multiply! 
-				(vct-scale! 
-				 (vct-multiply! 
-				  (vct-scale! 
-				   (vct-multiply! (make-vct 20 3.0) xramp-to-1) 
-				   1.25)
-				  pdata)
-				 -0.8)
-				xramp-to-1)
-			       -1.234)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * xpx:~%; ~A~%; ~A" xpr nxpr))))
-		
-		
-		;; -------- xramp-ptree-xramp-ramp --------
-		
-		(set! (edit-position) 1)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(xramp-channel 0 1 8)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply! 
-			       (vct-multiply! 
-				(vct-multiply! 
-				 (vct-multiply! (make-vct 20 1.0) ramp-to-1)
-				 xramp-to-1)
-				pdata)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";simple xpxr:~%; ~A~%; ~A" xpr nxpr))))
-		
-		(set! (edit-position) 1)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by 3.0)
-		(xramp-channel 0 1 8)
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(xramp-channel 0 1 8)
-		(scale-by -1.234)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-scale!
-			       (vct-multiply! 
-				(vct-scale! 
-				 (vct-multiply! 
-				  (vct-scale! 
-				   (vct-multiply!
-				    (vct-multiply! (make-vct 20 3.0) ramp-to-1)
-				    xramp-to-1) 
-				   1.25)
-				  pdata)
-				 -0.8)
-				xramp-to-1)
-			       -1.234)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * xpxr:~%; ~A~%; ~A" xpr nxpr))))
-		
-		
-		;; -------- xramp-ramp-ptree-ramp -------- 
-		
-		(set! (edit-position) 1)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply!
-			       (vct-multiply! 
-				(vct-multiply! 
-				 (vct-multiply! (make-vct 20 1.0) ramp-to-1)
-				 pdata)
-				ramp-to-1)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";simple xrpr:~%; ~A~%; ~A" xpr nxpr))))
-		
-		(set! (edit-position) 1)
-		(scale-by 3.0)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by -1.234)
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply!
-			       (vct-scale!
-				(vct-multiply! 
-				 (vct-scale! 
-				  (vct-multiply! 
-				   (vct-scale! 
-				    (vct-multiply! (make-vct 20 3.0) ramp-to-1) 
-				    1.25)
-				   pdata)
-				  -0.8)
-				 ramp-to-1)
-				-1.234)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * xrpr:~%; ~A~%; ~A" xpr nxpr))))
-		
-		;; -------- xramp-ramp-ptree-xramp -------- 
-		
-		(set! (edit-position) 1)
-		(xramp-channel 0 1 8)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply!
-			       (vct-multiply! 
-				(vct-multiply! 
-				 (vct-multiply! (make-vct 20 1.0) xramp-to-1)
-				 pdata)
-				ramp-to-1)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";simple xrpx:~%; ~A~%; ~A" xpr nxpr))))
-		
-		(set! (edit-position) 1)
-		(scale-by 3.0)
-		(xramp-channel 0 1 8)
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by -1.234)
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply!
-			       (vct-scale!
-				(vct-multiply! 
-				 (vct-scale! 
-				  (vct-multiply! 
-				   (vct-scale! 
-				    (vct-multiply! (make-vct 20 3.0) xramp-to-1) 
-				    1.25)
-				   pdata)
-				  -0.8)
-				 ramp-to-1)
-				-1.234)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * xrpx:~%; ~A~%; ~A" xpr nxpr))))
-		
-		
-		
-		;; -------- xramp-ramp-ptree-xramp-ramp -------- 
-		
-		(set! (edit-position) 1)
-		(xramp-channel 0 1 8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply!
-			       (vct-multiply! 
-				(vct-multiply! 
-				 (vct-multiply! (vct-multiply! (make-vct 20 1.0) xramp-to-1) ramp-to-1)
-				 pdata)
-				ramp-to-1)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";simple xrpxr:~%; ~A~%; ~A" xpr nxpr))))
-		
-		(set! (edit-position) 1)
-		(scale-by 3.0)
-		(xramp-channel 0 1 8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by 1.25)
-		(ptree-channel (lambda (y) (* y 2.5)))
-		(scale-by -0.8)
-		(env-channel '(0 0 1 1 2 1 3 0))
-		(scale-by -1.234)
-		(xramp-channel 0 1 8)
-		(let ((xpr (channel->vct)))
-		  (let ((nxpr (vct-multiply!
-			       (vct-scale!
-				(vct-multiply! 
-				 (vct-scale! 
-				  (vct-multiply! 
-				   (vct-scale! 
-				    (vct-multiply! (vct-multiply! (make-vct 20 3.0) xramp-to-1) ramp-to-1)
-				    1.25)
-				   pdata)
-				  -0.8)
-				 ramp-to-1)
-				-1.234)
-			       xramp-to-1)))
-		    (if (not (vequal xpr nxpr))
-			(snd-display #__line__ ";3.0 1.25 -0.8 -1.234 * xrpxr:~%; ~A~%; ~A" xpr nxpr))))
-		
-		(close-sound ind)))))
-	(set! (max-virtual-ptrees) old-pmax))
-      
-      (let ((data (make-vct 101 1.0))
-	    (rto1-data (make-vct 101))
-	    (xto1-data (make-vct 101))
-	    (cos-data (make-vct 101))
-	    (ind (new-sound "test.snd")))
-	;; test-ops.scm for 7 and 8 cases (40 min per branch)
-	
-	(define (set-to-1) (map-chan (lambda (y) 1.0) 0 100))
-	(define (cset-to-1 dat) (do ((i 0 (+ 1 i))) ((= i 101)) (set! (dat i) 1.0)))
-	(define (ramp-to-1) (ramp-channel 0.0 1.0))
-	(define (cramp-to-1 dat) (vct-multiply! dat rto1-data))
-	(define (scale-by-half) (scale-channel 0.5))
-	(define (cscale-by-half dat) (vct-scale! dat 0.5000))
-	(define (scale-by-two) (scale-channel 2.0 30 40))
-	(define (cscale-by-two dat) (do ((i 30 (+ 1 i))) ((= i 70)) (set! (dat i) (* (dat i) 2.0))))
-	(define (xramp-to-1) (xramp-channel 0.0 1.0 32.0))
-	(define (cxramp-to-1 dat) (vct-multiply! dat xto1-data))
-	(define (scale-mid) (scale-channel 0.125 30 30))
-	(define (cscale-mid dat) (do ((i 30 (+ 1 i))) ((= i 60)) (set! (dat i) (* (dat i) 0.125))))
-	(define (on-air) (scale-channel 0.0 10 30))
-	(define (con-air dat) (do ((i 10 (+ 1 i))) ((= i 40)) (set! (dat i) 0.0)))
-	(define (ptree) (ptree-channel (lambda (y) (* y 0.75)) 20 20))
-	(define (cptree dat) (do ((i 20 (+ 1 i))) ((= i 40)) (set! (dat i) (* (dat i) .75))))
-	(define (ptreec) (cosine-channel-via-ptree))
-	(define (cptreec dat) (vct-multiply! dat cos-data))
-	(define (xen) (ptree-channel (lambda (y) (* y 0.25)) 0 (frames) ind 0))
-	(define (cxen dat) (vct-scale! dat 0.25))
-	(define (rev-channel->vct)
-	  (let* ((l (vct-length data))
-		 (r (make-sampler (- l 1) ind 0 -1))
-		 (d (make-vct l)))
-	    (do ((i (- l 1) (- i 1)))
-		((< i 0))
-	      (set! (d i) (r)))
-	    d))
-	(define (ptreec1)
-	  (ptree-channel (lambda (y data forward)
-			   (* y (data 0)))
-			 10 50 ind 0 #f #f
-			 (lambda (pos dur)
-			   (vct 0.625))))
-	(define (cptreec1 dat) (do ((i 10 (+ 1 i))) ((= i 60)) (set! (dat i) (* (dat i) 0.625))))
-	
-	(let ((xe (make-env '(0 0 1 1) :length 101 :base 32.0)))
-	  (do ((i 0 (+ 1 i))
-	       (incr (/ pi 101.0))
-	       (ang (* -0.5 pi)))
-	      ((= i 101))
-	    (set! (rto1-data i) (* i .01))
-	    (set! (xto1-data i) (env xe))
-	    (set! (cos-data i) (cos ang))
-	    (set! ang (+ ang incr))))
-	
-	(set! (squelch-update ind) #t)
-	
-	;; 0 case
-	(set-to-1)
-	(if (not (vvequal data (channel->vct)))
-	    (snd-display #__line__ ";0 case! ~A" (channel->vct)))
-	(if (not (vvequal data (rev-channel->vct)))
-	    (snd-display #__line__ ";0 case rev! ~A" (rev-channel->vct)))
-	
-	;; 1 case
-	(for-each
-	 (lambda (func check)
-	   (revert-sound)
-	   (set-to-1)
-	   (cset-to-1 data)
-	   (func)
-	   (check data)
-	   (if (not (vvequal data (channel->vct)))
-	       (snd-display #__line__ ";1 case: ~A ~A" (procedure-name func) (channel->vct)))
-	   (if (not (vvequal data (rev-channel->vct)))
-	       (snd-display #__line__ ";1 rev case: ~A ~A" (procedure-name func) (rev-channel->vct))))
-	 (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-	 (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
-	
-	;; 2 case
-	(for-each
-	 (lambda (func check)
-	   (for-each
-	    (lambda (func1 check1)
-	      (revert-sound)
-	      (set-to-1)
-	      (cset-to-1 data)
-	      (func)
-	      (check data)
-	      (func1)
-	      (check1 data)
-	      (if (not (vvequal data (channel->vct)))
-		  (snd-display #__line__ ";2 case: ~A(~A): ~A" (procedure-name func1) (procedure-name func) (channel->vct)))
-	      (if (not (vvequal data (rev-channel->vct)))
-		  (snd-display #__line__ ";2 rev case: ~A(~A): ~A" (procedure-name func1) (procedure-name func) (rev-channel->vct))))
-	    (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-	    (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-	 (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-	 (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
-	
-	(set! (print-length) 200)
-	
-	;; 3 case
-	(for-each
-	 (lambda (func check)
-	   (for-each
-	    (lambda (func1 check1)
-	      (for-each
-	       (lambda (func2 check2)
-		 (revert-sound)
-		 (set-to-1)
-		 (cset-to-1 data)
-		 (func)
-		 (check data)
-		 (func1)
-		 (check1 data)
-		 (func2)
-		 (check2 data)
-		 (if (not (vvequal data (channel->vct)))
-		     (snd-display #__line__ ";3 case: ~A(~A(~A)): off by ~A~%; calc: ~A~%; chan: ~A" 
-				  (procedure-name func2) (procedure-name func1) (procedure-name func) 
-				  (vmaxdiff data (channel->vct)) data (channel->vct)))
-		 (if (not (vvequal data (rev-channel->vct)))
-		     (snd-display #__line__ ";3 rev case: ~A(~A(~A)) off by ~A:~%; calc: ~A~%; chan: ~A" 
-				  (procedure-name func2) (procedure-name func1) (procedure-name func) 
-				  (vmaxdiff data (rev-channel->vct)) data (rev-channel->vct))))
-	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-	    (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-	    (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-	 (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-	 (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
-	
-	(if all-args
-	    (begin
-	      ;; 4 case
-	      (for-each
-	       (lambda (func check)
-		 (for-each
-		  (lambda (func1 check1)
-		    (for-each
-		     (lambda (func2 check2)
-		       (for-each
-			(lambda (func3 check3)
-			  (revert-sound)
-			  (set-to-1)
-			  (cset-to-1 data)
-			  (func)
-			  (check data)
-			  (func1)
-			  (check1 data)
-			  (func2)
-			  (check2 data)
-			  (func3)
-			  (check3 data)
-			  (if (not (vvequal data (channel->vct)))
-			      (snd-display #__line__ ";4 case: ~A(~A(~A(~A))): ~A" 
-					   (procedure-name func3) (procedure-name func2) (procedure-name func1) (procedure-name func) 
-					   (channel->vct)))
-			  (if (not (vvequal data (rev-channel->vct)))
-			      (snd-display #__line__ ";4 rev case: ~A(~A(~A(~A))): ~A" 
-					   (procedure-name func3) (procedure-name func2) (procedure-name func1) (procedure-name func) 
-					   (rev-channel->vct))))
-			(list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-			(list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-		     (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-		     (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-		  (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-		  (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen))
-	      
-	      ;; 5 case
-	      (for-each
-	       (lambda (func check)
-		 (for-each
-		  (lambda (func1 check1)
-		    (for-each
-		     (lambda (func2 check2)
-		       (for-each
-			(lambda (func3 check3)
-			  (for-each
-			   (lambda (func4 check4)
-			     (revert-sound)
-			     (set-to-1)
-			     (cset-to-1 data)
-			     (func)
-			     (check data)
-			     (func1)
-			     (check1 data)
-			     (func2)
-			     (check2 data)
-			     (func3)
-			     (check3 data)
-			     (func4)
-			     (check4 data)
-			     (if (not (vvequal data (channel->vct)))
-				 (snd-display #__line__ ";5 case: ~A(~A(~A(~A(~A)))): ~A" 
-					      (procedure-name func4) (procedure-name func3) (procedure-name func2) 
-					      (procedure-name func1) (procedure-name func) 
-					      (channel->vct))))
-			   (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-			   (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-			(list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-			(list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-		     (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-		     (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-		  (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1)
-		  (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1)))
-	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1)
-	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1))
-	      
-	      ;; 6 case
-	      (for-each
-	       (lambda (func check)
-		 (for-each
-		  (lambda (func1 check1)
-		    (for-each
-		     (lambda (func2 check2)
-		       (for-each
-			(lambda (func3 check3)
-			  (for-each
-			   (lambda (func4 check4)
-			     (for-each
-			      (lambda (func5 check5)
-				(revert-sound)
-				(set-to-1)
-				(cset-to-1 data)
-				(func)
-				(check data)
-				(func1)
-				(check1 data)
-				(func2)
-				(check2 data)
-				(func3)
-				(check3 data)
-				(func4)
-				(check4 data)
-				(func5)
-				(check5 data)
-				(if (not (vvequal data (channel->vct)))
-				    (snd-display #__line__ ";6 case: ~A(~A(~A(~A(~A(~A))))): ~A" 
-						 (procedure-name func5) (procedure-name func4) (procedure-name func3) 
-						 (procedure-name func2) (procedure-name func1) (procedure-name func) 
-						 (channel->vct))))
-			      (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-			      (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-			   (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-			   (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-			(list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1 xen)
-			(list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1 cxen)))
-		     (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air ptree ptreec ptreec1)
-		     (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air cptree cptreec cptreec1)))
-		  (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air)
-		  (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air)))
-	       (list scale-by-two ramp-to-1 xramp-to-1 scale-by-half scale-mid on-air)
-	       (list cscale-by-two cramp-to-1 cxramp-to-1 cscale-by-half cscale-mid con-air))
-	      ))
-	(close-sound ind))
-      
-      (set! (optimization) old-opt-val)
       
       (let ((ind (open-sound "oboe.snd")))
 	(if (not (= (redo 1 ind 0) 0)) (snd-display #__line__ ";open redo with no ops: ~A" (redo)))
@@ -8510,47 +7748,6 @@ EDITS: 5
 		(env-channel (make-env '(0 0 1 1 2 0) :base .10 :length (frames)))
 		(peak-env-equal? "env-channel base .1 peak" ind (channel-amp-envs ind 0 1) .003)
 		(undo)
-		(ptree-channel (lambda (y) (* y 2)) 0 (frames) ind 0 #f #t)
-		(peak-env-equal? "ptree-channel peak" ind (channel-amp-envs ind 0 1) .0001)
-		(undo)
-		(ramp-channel 0.0 1.0)
-		(ptree-channel (lambda (y) (* y 2)) 0 (frames) ind 0 #f #t)
-		(peak-env-equal? "ptree+ramp peak" ind (channel-amp-envs ind 0 2) .01)
-		(undo 2)
-		(xramp-channel 0.0 1.0 3.0)
-		(ptree-channel (lambda (y) (* y 2)) 0 (frames) ind 0 #f #t)
-		(peak-env-equal? "ptree+xramp peak" ind (channel-amp-envs ind 0 2) .004)
-		(undo 2)
-		(ptree-channel (lambda (y data forward)
-				 (* y (data 0)))
-			       0 (frames) ind 0 #f #t
-			       (lambda (pos dur)
-				 (vct 0.5)))
-		(peak-env-equal? "ptree+closure peak" ind (channel-amp-envs ind 0 1) .009)
-		(undo)
-		(ramp-channel 0.0 1.0)
-		(ptree-channel (lambda (y data forward)
-				 (* y (data 0)))
-			       0 (frames) ind 0 #f #t
-			       (lambda (pos dur)
-				 (vct 0.5)))
-		(peak-env-equal? "ptree+ramp+closure peak" ind (channel-amp-envs ind 0 2) .01)
-		(undo 2)
-		(xramp-channel 0.0 1.0 3.0)
-		(ptree-channel (lambda (y data forward)
-				 (* y (data 0)))
-			       0 (frames) ind 0 #f #t
-			       (lambda (pos dur)
-				 (vct 0.5)))
-		(peak-env-equal? "ptree+xramp+closure peak" ind (channel-amp-envs ind 0 2) .001)
-		(undo 2)
-		(insert-samples 1000 5000 (make-vct 5000 .5))
-		(peak-env-equal? "insert-samples peak" ind (channel-amp-envs ind 0 1) .0001)
-		(undo)
-		(set! (samples 500 100) (make-vct 100 .1))
-		(peak-env-equal? "set-samples peak" ind (channel-amp-envs ind 0) .0001)
-		(undo)
-		
 		(revert-sound ind)
 		(ramp-channel 0.0 1.0)
 		(ramp-channel 1.0 0.0)
@@ -8560,12 +7757,6 @@ EDITS: 5
 		(env-channel '(0 0 1 1))
 		(env-channel '(0 0 1 1 2 0))
 		(peak-env-equal? "env ramp2 peak" ind (channel-amp-envs ind 0 2) .002)
-		
-		(revert-sound ind)
-		(env-channel '(0 0 1 1))
-		(env-channel '(0 0 1 1 2 0))
-		(ptree-channel (lambda (y) (* y 2.0)))
-		(peak-env-equal? "ptree-ramp20 peak" ind (channel-amp-envs ind 0 3) .0001)
 		
 		(revert-sound ind)
 		(ramp-channel 0.0 1.0 12000 5000)
@@ -8592,33 +7783,6 @@ EDITS: 5
 		(env-channel (make-env '(0 0 1 1 2 .5 3 0) :base 10.0 :length 5000) 12000 5000)
 		(peak-env-equal? "env-channel base 10.0 peak" ind (channel-amp-envs ind 0 1) .1)
 		;; this can be way off because the envelope is not very closely sampled in this case
-		(undo)
-		(ptree-channel (lambda (y) (* y 2)) 2000 1000 ind 0 #f #t)
-		(peak-env-equal? "ptree-channel peak" ind (channel-amp-envs ind 0 1) .0001)
-		(undo)
-		(ramp-channel 0.0 1.0)
-		(ptree-channel (lambda (y) (* y 2)) 2000 1000 ind 0 #f #t)
-		(peak-env-equal? "ptree+ramp peak" ind (channel-amp-envs ind 0 2) .001)
-		(undo 2)
-		(xramp-channel 0.0 1.0 3.0)
-		(ptree-channel (lambda (y) (* y 2)) 2000 1000 ind 0 #f #t)
-		(peak-env-equal? "ptree+xramp peak" ind (channel-amp-envs ind 0 2) .001)
-		(undo 2)
-		(ptree-channel (lambda (y data forward)
-				 (* y (data 0)))
-			       2000 1000 ind 0 #f #t
-			       (lambda (pos dur)
-				 (vct 0.5)))
-		(peak-env-equal? "ptree+closure peak" ind (channel-amp-envs ind 0 1) .0001)
-		(undo)
-		(ramp-channel 0.0 1.0)
-		(ptree-channel (lambda (y data forward)
-				 (* y (data 0)))
-			       2000 1000 ind 0 #f #t
-			       (lambda (pos dur)
-				 (vct 0.5)))
-		(peak-env-equal? "ptree+ramp+closure peak" ind (channel-amp-envs ind 0 2) .001)
-		
 		(revert-sound ind)
 		(ramp-channel 0.0 1.0)
 		(ramp-channel 1.0 0.0 2000 1000)
@@ -8632,12 +7796,6 @@ EDITS: 5
 		(revert-sound ind)
 		(env-channel '(0 0 1 1))
 		(env-channel '(0 0 1 1 2 0))
-		(ptree-channel (lambda (y) (* y 2.0)) 2000 1000)
-		(peak-env-equal? "ptree-ramp21 peak" ind (channel-amp-envs ind 0 3) .002)
-		
-		(revert-sound ind)
-		(env-channel '(0 0 1 1))
-		(env-channel '(0 0 1 1 2 0))
 		(env-channel '(0 0 1 1) 12000 5000)
 		(peak-env-equal? "ptree-ramp3 peak" ind (channel-amp-envs ind 0 3) .01)
 		
@@ -8645,204 +7803,6 @@ EDITS: 5
 		
 		))
 	  (close-sound ind))
-	
-	;; ptree-channel init-func state cases
-	(let ((ind (new-sound "test.snd" :size 10 :comment "ptree-channel state tests")))
-	  (set! (sample 5) 1.0)
-	  (set! (sample 4) -0.5)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val float) (dir boolean))
-			   (* y val))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   0.5)
-			 "ptree channel float arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -0.250 0.500 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with float state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val int) (dir boolean))
-			   (* y val))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   3)
-			 "ptree channel int arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -1.500 3.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with int state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val boolean) (dir boolean))
-			   (if val y (* y 100)))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   #t)
-			 "ptree channel boolean arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -0.500 1.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with boolean state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val char) (dir boolean))
-			   (if (char=? val #\f) y (* 10 y)))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   #\f)
-			 "ptree channel char arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -.500 1.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with char state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val string) (dir boolean))
-			   (if (string=? val "hiho") y (* 10 y)))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   "hiho")
-			 "ptree channel string arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -.500 1.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with string state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val vct) (dir boolean))
-			   (* y (val 0)))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   (make-vct 1 2.0))
-			 "ptree channel vct arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -1.000 2.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with vct state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val sound-data) (dir boolean))
-			   (* y (val 0 0)))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   (let ((sd (make-sound-data 1 2)))
-			     (sound-data-set! sd 0 0 4.0)
-			     sd))
-			 "ptree channel sound-data arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -2.000 4.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with sound-data state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val symbol) (dir boolean))
-			   (if (eq? val 'hiho) y (* y 100)))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   'hiho)
-			 "ptree channel symbol arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -0.500 1.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with symbol state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val keyword) (dir boolean))
-			   (if (eq? val :hiho) y (* y 100)))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   :hiho)
-			 "ptree channel keyword arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -0.500 1.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with keyword state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  ;; this works, but can't currently be optimized:
-	  ;;  (ptree-channel (lambda (y val dir)
-	  ;;		       (declare (y real) (val list) (dir boolean))
-	  ;;		       (* y (car val)))
-	  ;;		     0 10 ind 0 -1 #t
-	  ;;		     (lambda (beg dur)
-	  ;;		       (list 2.0 100.0)))
-	  ;;  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -1.000 2.000 0.000 0.000 0.000 0.000)))
-	  ;;      (snd-display #__line__ ";ptree-channel with list state: ~A" (channel->vct 0 10 ind 0)))
-	  ;;  (undo)
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val sampler) (dir boolean))
-			   (let ((n (read-sample val)))
-			     (* y n)))
-			 0 10 ind 0 -1 #f
-			 (lambda (beg dur)
-			   (make-sampler beg ind 0 1 2)) ; beg here is vital! as is "2" for edpos
-			 "ptree channel sampler arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 0.250 1.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with reader state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  
-	  ;; this can't work because it needs access to previous samples (the generator has internal state)
-					;	  (ptree-channel (lambda (y val dir)
-					;			   (declare (y real) (val clm) (dir boolean))
-					;			   (one-zero val y))
-					;			 0 10 ind 0 -1 #t
-					;			 (lambda (beg dur)
-					;			   (make-one-zero .5 .5))
-					;			 "ptree channel clm arg")
-					;	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -0.250 0.250 0.500 0.000 0.000 0.000)))
-					;	      (snd-display #__line__ ";ptree-channel with clm state: ~A from ~A"
-					;			   (channel->vct 0 10 ind 0) 
-					;			   (channel->vct 0 10 ind 0 (- (edit-position ind 0) 1))))
-					;	  (undo)
-	  (let ((mx (mix-vct (vct .2 .3 .4) 2 ind 0 #t)))
-	    (ptree-channel (lambda (y val dir)
-			     (declare (y real) (val mix-sampler) (dir boolean))
-			     (let ((n (read-mix-sample val)))
-			       (+ y n)))
-			   0 10 ind 0 -1 #f
-			   (lambda (beg dur)
-			     (make-mix-sampler mx beg))
-			   "ptree channel mix-sampler arg"))
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.200 0.300 0.600 0.300 -0.100 1.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with mix reader state: ~A" (channel->vct 0 10 ind 0)))
-	  (set! (edit-position ind 0) 2)
-	  
-	  ;; now check error handling...
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val vct) (dir boolean))
-			   (* y 2.0))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   (make-vct 1 2.0))
-			 "ptree channel vct unrefd arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -1.000 2.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with unrefd vct state: ~A" (channel->vct 0 10 ind 0)))
-	  (undo)
-	  
-	  ;; this does print an error message, but trying to halt execution leads to a segfault
-	  ;;	  (let ((tag (catch #t
-	  ;;			    (lambda ()
-	  ;;			      (ptree-channel (lambda (y val dir)
-	  ;;					       (declare (y real) (val float-vector) (dir boolean))
-	  ;;					       (* y (vector-ref val 0)))
-	  ;;					     0 10 ind 0 -1 #t
-	  ;;					     (lambda (beg dur)
-	  ;;					       (make-vector 1 2.0))
-	  ;;					     "ptree channel vector arg"))
-	  ;;			    (lambda args (car args)))))
-	  ;;	    (if (not (eq? tag 'snd-error))
-	  ;;		(snd-display #__line__ ";ptree-channel vector arg: ~A" tag)))
-	  
-	  ;; now check 3 ptrees with different types
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val float) (dir boolean))
-			   (* y val))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   0.5)
-			 "ptree channel float arg")
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val int) (dir boolean))
-			   (* y val))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   2)
-			 "ptree channel int arg")
-	  (ptree-channel (lambda (y val dir)
-			   (declare (y real) (val boolean) (dir boolean))
-			   (if val y (* y 100)))
-			 0 10 ind 0 -1 #t
-			 (lambda (beg dur)
-			   #t)
-			 "ptree channel boolean arg")
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.000 0.000 0.000 0.000 -0.500 1.000 0.000 0.000 0.000 0.000)))
-	      (snd-display #__line__ ";ptree-channel with 3 states: ~A" (channel->vct 0 10 ind 0)))
-	  
-	  (close-sound ind)
-	  (if (file-exists? "test.snd") (delete-file "test.snd")))
 	
 	(let ((ind (new-sound "test.snd")))
 	  (map-chan (lambda (y) 1.0) 0 50000)
@@ -9798,1069 +8758,11 @@ EDITS: 5
 			 (env-sound '(0 0 1 1 3 0))
 			 (env-sound '(0 0 1 1 2 0) 0 100 2.0)
 			 (env-sound '(0 0 1 1) 0 100 3.0)))
-		 (list "ptree-ramp" #t
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (ptree-channel (lambda (y) (* y 2.0))))
-		       (lambda ()
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1))))
-		 (list "ptree-xramp" #t
-		       (lambda ()
-			 (env-sound '(0 0 1 1) 0 100 2.0)
-			 (ptree-channel (lambda (y) (* y 2.0))))
-		       (lambda ()
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1) 0 100 2.0)))
-		 (list "ptree-ramp2 (1)" #t
-		       (lambda ()
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0)))
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1 2 0))))
-		 (list "ptree-ramp2 (2)" #t
-		       (lambda ()
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0)))
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0))
-			 (ptree-channel (lambda (y) (* y 2.0)))))
-		 (list "xramp-ptree-ramp (1)" #t
-		       (lambda ()
-			 (env-sound '(0 0 1 1 2 0) 0 100 2.0)
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1)))
-		       (lambda ()
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1 2 0) 0 100 2.0)
-			 (env-sound '(0 0 1 1))))
-		 (list "xramp-ptree-ramp (2)" #t
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1 2 0) 0 100 2.0))
-		       (lambda ()
-			 (env-sound '(0 0 1 1 2 0) 0 100 2.0)
-			 (env-sound '(0 0 1 1))
-			 (ptree-channel (lambda (y) (* y 2.0)))))
-		 (list "xramp-ptree-ramp (3)" #t
-		       (lambda ()
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0) 0 100 2.0))
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0) 0 100 2.0)
-			 (ptree-channel (lambda (y) (* y 2.0)))))
-		 (list "xramp-ptree-ramp-zero" #f
-		       (lambda ()
-			 (scale-by 0.0)
-			 (ptree-channel (lambda (y) 1.0))
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0) 0 100 2.0))
-		       (lambda ()
-			 (scale-by 0.0)
-			 (ptree-channel (lambda (y) 1.0))
-			 (env-sound '(0 0 1 1 2 0) 0 100 2.0)
-			 (env-sound '(0 0 1 1))))
-		 (list "ptree-ramp3 (1)" #t
-		       (lambda ()
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0))
-			 (env-sound '(0 0 1 1 3 0)))
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1 2 0))
-			 (env-sound '(0 0 1 1 3 0))))
-		 (list "ptree-ramp3 (2)" #t
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0))
-			 (ptree-channel (lambda (y) (* y 2.0)))
-			 (env-sound '(0 0 1 1 3 0)))
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0))
-			 (env-sound '(0 0 1 1 3 0))
-			 (ptree-channel (lambda (y) (* y 2.0)))))
-		 (list "ramp4" #t
-		       (lambda ()
-			 (env-sound '(0 0 1 1))
-			 (env-sound '(0 0 1 1 2 0))
-			 (env-sound '(0 0 1 1 3 0))
-			 (env-sound '(0 0 1 1 4 0)))
-		       (lambda ()
-			 (env-sound '(0 0 1 1 4 0))
-			 (env-sound '(0 0 1 1 2 0))
-			 (env-sound '(0 0 1 1 3 0))
-			 (env-sound '(0 0 1 1))))
-		 
 		 ))
 	  (close-sound ind))
-	
-	(let ((ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "2nd ramp re-order tests" 100))
-	      (oldopt (optimization)))
-	  
-	  (define (reversed-channel->vct start dur snd chn)
-	    (let ((data (make-vct dur))
-		  (sf (make-sampler (+ start dur -1) snd chn -1)))
-	      (do ((i (+ start dur -1) (- i 1)))
-		  ((< i start))
-		(set! (data i) (read-sample sf)))
-	      data))
-	  
-	  (if (and (provided? 'snd-motif)
-		   (provided? 'xm))
-	      (let* ((edhist ((channel-widgets ind 0) 7))
-		     (edp (XtParent edhist)))
-		(XtUnmanageChild edp) 
-		(XtVaSetValues edp (list XmNpaneMinimum 100)) 
-		(XtManageChild edp)))
-	  
-	  (set! (squelch-update ind) #t)
-	  
-	  (do ((k 0 (+ 1 k)))
-	      ((= k 2))
-	    (revert-sound ind)
-	    (if (= k 0)
-		(map-channel (lambda (y) 1.0))
-		(begin
-		  (scale-by 0.0)
-		  (ptree-channel (lambda (y) 1.0))))
-	    (let* ((ramp1 (lambda () (env-sound '(0 0 1 1))))
-		   (ramp2 (lambda () (env-sound '(0 0 1 1 2 0))))
-		   (ramp3 (lambda () (env-sound '(0 1 1 0 2 0 3 1))))
-		   (ramp4 (lambda () (env-sound '(0 1 1 0 2 1))))
-		   (xramp1 (lambda () (env-sound '(0 0 1 1) 0 100 2.0)))
-		   (xramp2 (lambda () (env-sound '(0 1 1 0 2 0 3 1) 0 100 .6)))
-		   (ptree1 (lambda () (ptree-channel (lambda (y) (+ y .2)))))
-		   (ptree2 (lambda () (ptree-channel (lambda (y) (- y .1)))))
-		   (map1 (lambda () (map-channel (lambda (y) (+ y .2)))))
-		   (map2 (lambda () (map-channel (lambda (y) (- y .1)))))
-		   (ops (list ramp1 ramp2 ramp3 xramp1 xramp2 ptree1 ptree2 ramp4))
-		   (op-names (list "ramp1" "ramp2" "ramp3" "xramp1" "xramp2" "ptree1" "ptree2" "ramp4"))
-		   (op (lambda (which) ((ops which))))
-		   (op-name (lambda (which) (op-names which)))
-		   (vals1 #f)
-		   (vals2 #f)
-		   (scl 1.0)
-		   (scalers '())
-		   (saved-scalers '())
-		   (edpos (edit-position ind 0)))
-	      
-	      (let ((op1 (list 0 3 5))
-		    (op2 (list 1 4 6)))
-		(for-each
-		 (lambda (first)
-		   (for-each 
-		    (lambda (second)
-		      (if (and (not (= first second))
-			       (let ((val (+ k
-					     (if (> first 4) 1 0)
-					     (if (> second 4) 1 0))))
-				 (not (> val 2))))
-			  (begin
-			    (set! scalers '())
-			    (set! scl (+ .5 (random 1.0)))
-			    (scale-by scl)
-			    (set! scalers (cons scl scalers))
-			    (op first)
-			    (set! scl (+ .5 (random 1.0)))
-			    (scale-by scl)
-			    (set! scalers (cons scl scalers))
-			    (op second)
-			    (set! scl (+ .5 (random 1.0)))
-			    (scale-by scl)
-			    (set! scalers (cons scl scalers))
-			    (set! vals1 (channel->vct 0 100 ind 0))
-			    (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-			      (if (not (vequal rvals vals1))
-				  (snd-display #__line__ ";1 virtual op reversed tests: ~A(~A~A) * ~A:~%; ~A~%; ~A => ~A"
-					       (op-name second) (op-name first)
-					       (if (= k 1) "(ptree_zero)" "")
-					       scalers vals1 rvals
-					       (vct-peak (vct-subtract! (vct-copy vals1) rvals)))))
-			    (set! (edit-position ind 0) edpos)
-			    (set! (optimization) 0)
-			    (set! scalers (reverse scalers))
-			    (set! saved-scalers scalers)
-			    (scale-by (car scalers)) (set! scalers (cdr scalers))
-			    (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
-			    (scale-by (car scalers)) (set! scalers (cdr scalers))
-			    (if (= second 5) (map1) (if (= second 6) (map2) (op second)))
-			    (scale-by (car scalers)) (set! scalers (cdr scalers))
-			    (set! (optimization) oldopt)
-			    (set! vals2 (channel->vct 0 100 ind 0))
-			    (if (not (vequal vals1 vals2)) 
-				(snd-display #__line__ ";1 virtual op tests: ~A(~A~A) * ~A:~%; ~A~%; ~A => ~A at ~A"
-					     (op-name second) (op-name first)
-					     (if (= k 1) "(ptree_zero)" "")
-					     saved-scalers vals1 vals2
-					     (vct-peak (vct-subtract! (vct-copy vals1) vals2))
-					     (let* ((pks (vct-subtract! (vct-copy vals1) vals2))
-						    (pk (abs (pks 0)))
-						    (loc 0))
-					       (do ((i 1 (+ 1 i)))
-						   ((= i 100) (list loc (pks loc) (vals1 loc) (vals2 loc)))
-						 (if (> (abs (pks i)) pk)
-						     (begin
-						       (set! loc i)
-						       (set! pk (abs (pks i)))))))
-					     ))
-			    (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-			      (if (not (vequal rvals vals2))
-				  (snd-display #__line__ ";1 virtual op reversed tests (2): ~A(~A~A) * ~A:~%; ~A~%; ~A => ~A"
-					       (op-name second) (op-name first)
-					       (if (= k 1) "(ptree_zero)" "")
-					       saved-scalers vals2 rvals
-					       (vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
-			    (set! (edit-position ind 0) edpos))))
-		    op2))
-		 op1))
-	      (let ((op1 (list 0 3 5))
-		    (op2 (list 1 4 6))
-		    (op3 (list 2 3 4 5 6)))
-		(for-each
-		 (lambda (first)
-		   (for-each 
-		    (lambda (second)
-		      (if (not (= first second))
-			  (for-each
-			   (lambda (third)
-			     (if (and (not (= first third))
-				      (not (= second third))
-				      (let ((val (+ k
-						    (if (or (= first 5) (= first 6)) 1 0)
-						    (if (or (= second 5) (= second 6)) 1 0)
-						    (if (or (= third 5) (= third 6)) 1 0))))
-					(not (> val 2))))
-				 (begin
-				   (set! scalers '())
-				   (set! scl (+ .5 (random 1.0)))
-				   (scale-by scl)
-				   (set! scalers (cons scl scalers))
-				   (op first)
-				   (set! scl (+ .5 (random 1.0)))
-				   (scale-by scl)
-				   (set! scalers (cons scl scalers))
-				   (op second)
-				   (set! scl (+ .5 (random 1.0)))
-				   (scale-by scl)
-				   (set! scalers (cons scl scalers))
-				   (op third)
-				   (set! scl (+ .5 (random 1.0)))
-				   (scale-by scl)
-				   (set! scalers (cons scl scalers))
-				   (set! vals1 (channel->vct 0 100 ind 0))
-				   (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-				     (if (not (vequal rvals vals1))
-					 (snd-display #__line__ ";2 virtual op reversed tests: ~A(~A(~A~A)) * ~A:~%; ~A~%; ~A => ~A"
-						      (op-name third) (op-name second) (op-name first)
-						      (if (= k 1) "(ptree_zero)" "")
-						      scalers vals1 rvals
-						      (vct-peak (vct-subtract! (vct-copy vals1) rvals)))))
-				   (set! (edit-position ind 0) edpos)
-				   (set! (optimization) 0)
-				   (set! scalers (reverse scalers))
-				   (set! saved-scalers scalers)				     
-				   (scale-by (car scalers)) (set! scalers (cdr scalers))
-				   (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
-				   (scale-by (car scalers)) (set! scalers (cdr scalers))
-				   (if (= second 5) (map1) (if (= second 6) (map2) (op second)))
-				   (scale-by (car scalers)) (set! scalers (cdr scalers))
-				   (if (= third 5) (map1) (if (= third 6) (map2) (op third)))
-				   (scale-by (car scalers)) (set! scalers (cdr scalers))
-				   (set! (optimization) oldopt)
-				   (set! vals2 (channel->vct 0 100 ind 0))
-				   (if (not (vequal vals1 vals2)) 
-				       (snd-display #__line__ ";2 virtual op tests: ~A * ~A(~A(~A~A)): ~A ~A => ~A at ~A"
-						    saved-scalers (op-name third) (op-name second) (op-name first) 
-						    (if (= k 1) "(ptree_zero)" "")
-						    vals1 vals2
-						    (vct-peak (vct-subtract! (vct-copy vals1) vals2))
-						    (let* ((pks (vct-subtract! (vct-copy vals1) vals2))
-							   (pk (abs (pks 0)))
-							   (loc 0))
-						      (do ((i 1 (+ 1 i)))
-							  ((= i 100) (list loc (pks loc) (vals1 loc) (vals2 loc)))
-							(if (> (abs (pks i)) pk)
-							    (begin
-							      (set! loc i)
-							      (set! pk (abs (pks i)))))))
-						    ))
-				   (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-				     (if (not (vequal rvals vals2))
-					 (snd-display #__line__ ";2 virtual op reversed tests (2): ~A(~A(~A~A)) * ~A:~%; ~A~%; ~A => ~A"
-						      (op-name third) (op-name second) (op-name first)
-						      (if (= k 1) "(ptree_zero)" "")
-						      saved-scalers vals2 rvals
-						      (vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
-				   (set! (edit-position ind 0) edpos))))
-			   op3)))
-		    op2))
-		 op1))
-	      (let ((op1 (list 0 3 5))
-		    (op2 (list 0 1 3 4 5 6))
-		    (op3 (list 0 1 2 3 4 5 6))
-		    (op4 (list 0 1 2 3 4 5 6)))
-		(for-each
-		 (lambda (first)
-		   (for-each 
-		    (lambda (second)
-		      (if (not (= first second))
-			  (for-each
-			   (lambda (third)
-			     (if (and (not (= first third))
-				      (not (= second third)))
-				 (for-each
-				  (lambda (fourth)
-				    (if (and (not (= first fourth))
-					     (not (= second fourth))
-					     (not (= third fourth))
-					     (let ((val (+ k
-							   (if (or (= first 5) (= first 6)) 1 0)
-							   (if (or (= second 5) (= second 6)) 1 0)
-							   (if (or (= third 5) (= third 6)) 1 0)
-							   (if (or (= fourth 5) (= fourth 6)) 1 0))))
-					       (not (> val 2))))
-					(begin
-					  (set! scalers '())
-					  (set! scl (+ .5 (random 1.0)))
-					  (scale-by scl)
-					  (set! scalers (cons scl scalers))
-					  (op first)
-					  (set! scl (+ .5 (random 1.0)))
-					  (scale-by scl)
-					  (set! scalers (cons scl scalers))
-					  (op second)
-					  (set! scl (+ .5 (random 1.0)))
-					  (scale-by scl)
-					  (set! scalers (cons scl scalers))
-					  (op third)
-					  (set! scl (+ .5 (random 1.0)))
-					  (scale-by scl)
-					  (set! scalers (cons scl scalers))
-					  (op fourth)
-					  (set! scl (+ .5 (random 1.0)))
-					  (scale-by scl)
-					  (set! scalers (cons scl scalers))
-					  (set! vals1 (channel->vct 0 100 ind 0))
-					  (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-					    (if (not (vequal rvals vals1))
-						(snd-display #__line__ ";3 virtual op reversed tests: ~A(~A(~A(~A~A))) * ~A:~%; ~A~%; ~A => ~A"
-							     (op-name fourth) (op-name third) (op-name second) (op-name first)
-							     (if (= k 1) "(ptree_zero)" "")
-							     scalers vals1 rvals
-							     (vct-peak (vct-subtract! (vct-copy vals1) rvals)))))
-					  (set! (edit-position ind 0) edpos)
-					  (set! (optimization) 0)
-					  (set! scalers (reverse scalers))
-					  (set! saved-scalers scalers)
-					  (scale-by (car scalers)) (set! scalers (cdr scalers))
-					  (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
-					  (scale-by (car scalers)) (set! scalers (cdr scalers))
-					  (if (= second 5) (map1) (if (= second 6) (map2) (op second)))
-					  (scale-by (car scalers)) (set! scalers (cdr scalers))
-					  (if (= third 5) (map1) (if (= third 6) (map2) (op third)))
-					  (scale-by (car scalers)) (set! scalers (cdr scalers))
-					  (if (= fourth 5) (map1) (if (= fourth 6) (map2) (op fourth)))
-					  (scale-by (car scalers)) (set! scalers (cdr scalers))
-					  (set! (optimization) oldopt)
-					  (set! vals2 (channel->vct 0 100 ind 0))
-					  (if (not (vequal vals1 vals2)) 
-					      (snd-display #__line__ ";3 virtual op tests: ~A * ~A(~A(~A(~A~A))):~%  opt vals:   ~A~%  unopt vals: ~A~%  => ~A at ~A"
-							   saved-scalers
-							   (op-name fourth) (op-name third) (op-name second) (op-name first)
-							   (if (= k 1) "(ptree_zero)" "") 
-							   vals1 vals2
-							   (vct-peak (vct-subtract! (vct-copy vals1) vals2))
-							   (let* ((pks (vct-subtract! (vct-copy vals1) vals2))
-								  (pk (abs (pks 0)))
-								  (loc 0))
-							     (do ((i 1 (+ 1 i)))
-								 ((= i 100) (list loc (pks loc) (vals1 loc) (vals2 loc)))
-							       (if (> (abs (pks i)) pk)
-								   (begin
-								     (set! loc i)
-								     (set! pk (abs (pks i)))))))
-							   ))
-					  (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-					    (if (not (vequal rvals vals2))
-						(snd-display #__line__ ";3 virtual op reversed tests (2): ~A(~A(~A(~A~A))) * ~A: ~A ~A => ~A"
-							     (op-name fourth) (op-name third) (op-name second) (op-name first)
-							     (if (= k 1) "(ptree_zero)" "")
-							     saved-scalers vals2 rvals
-							     (vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
-					  (set! (edit-position ind 0) edpos))))
-				  op4)))
-			   op3)))
-		    op2))
-		 op1))
-	      
-	      (if all-args
-		  (let ((op1 (list 0 3 5))
-			(op2 (list 0 1 3 4 5 6))
-			(op3 (list 0 1 2 3 4 5 6))
-			(op4 (list 0 1 2 3 4 5 6 7))
-			(op5 (list 7 3 5)))
-		    (for-each
-		     (lambda (first)
-		       (for-each 
-			(lambda (second)
-			  (if (not (= first second))
-			      (for-each
-			       (lambda (third)
-				 (if (and (not (= first third))
-					  (not (= second third)))
-				     (for-each
-				      (lambda (fourth)
-					(if (and (not (= first fourth))
-						 (not (= second fourth))
-						 (not (= third fourth)))
-					    (for-each
-					     (lambda (fifth)
-					       (if (and (not (= first fifth))
-							(not (= second fifth))
-							(not (= third fifth))
-							(not (= fourth fifth))
-							(let ((val (+ k
-								      (if (or (= first 5) (= first 6)) 1 0)
-								      (if (or (= second 5) (= second 6)) 1 0)
-								      (if (or (= third 5) (= third 6)) 1 0)
-								      (if (or (= fourth 5) (= fourth 6)) 1 0)
-								      (if (or (= fifth 5) (= fifth 6)) 1 0))))
-							  (not (> val 2))))
-						   (begin
-						     (set! scalers '())
-						     (set! scl (+ .5 (random 1.0)))
-						     (scale-by scl)
-						     (set! scalers (cons scl scalers))
-						     (op first)
-						     (set! scl (+ .5 (random 1.0)))
-						     (scale-by scl)
-						     (set! scalers (cons scl scalers))
-						     (op second)
-						     (set! scl (+ .5 (random 1.0)))
-						     (scale-by scl)
-						     (set! scalers (cons scl scalers))
-						     (op third)
-						     (set! scl (+ .5 (random 1.0)))
-						     (scale-by scl)
-						     (set! scalers (cons scl scalers))
-						     (op fourth)
-						     (set! scl (+ .5 (random 1.0)))
-						     (scale-by scl)
-						     (set! scalers (cons scl scalers))
-						     (op fifth)
-						     (set! scl (+ .5 (random 1.0)))
-						     (scale-by scl)
-						     (set! scalers (cons scl scalers))
-						     (set! vals1 (channel->vct 0 100 ind 0))
-						     (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-						       (if (not (vequal rvals vals1))
-							   (snd-display #__line__ ";4 virtual op reversed tests: ~A(~A(~A(~A(~A~A)))) * ~A: ~A ~A => ~A"
-									(op-name fifth) (op-name fourth) (op-name third) (op-name second) (op-name first)
-									(if (= k 1) "(ptree_zero)" "")
-									scalers vals1 rvals
-									(vct-peak (vct-subtract! (vct-copy vals1) rvals)))))
-						     (set! (edit-position ind 0) edpos)
-						     (set! (optimization) 0)
-						     (set! scalers (reverse scalers))
-						     (set! saved-scalers scalers)
-						     (scale-by (car scalers)) (set! scalers (cdr scalers))
-						     (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
-						     (scale-by (car scalers)) (set! scalers (cdr scalers))
-						     (if (= second 5) (map1) (if (= second 6) (map2) (op second)))
-						     (scale-by (car scalers)) (set! scalers (cdr scalers))
-						     (if (= third 5) (map1) (if (= third 6) (map2) (op third)))
-						     (scale-by (car scalers)) (set! scalers (cdr scalers))
-						     (if (= fourth 5) (map1) (if (= fourth 6) (map2) (op fourth)))
-						     (scale-by (car scalers)) (set! scalers (cdr scalers))
-						     (if (= fifth 5) (map1) (if (= fifth 6) (map2) (op fifth)))
-						     (scale-by (car scalers)) (set! scalers (cdr scalers))
-						     (set! (optimization) oldopt)
-						     (set! vals2 (channel->vct 0 100 ind 0))
-						     (if (not (vequal vals1 vals2)) 
-							 (snd-display #__line__ ";4 virtual op tests: ~A * ~A(~A(~A(~A(~A~A)))): ~A ~A => ~A at ~A"
-								      saved-scalers
-								      (op-name fifth) (op-name fourth) (op-name third) (op-name second) (op-name first)
-								      (if (= k 1) "(ptree_zero)" "") 
-								      vals1 vals2
-								      (vct-peak (vct-subtract! (vct-copy vals1) vals2))
-								      (let* ((pks (vct-subtract! (vct-copy vals1) vals2))
-									     (pk (abs (pks 0)))
-									     (loc 0))
-									(do ((i 1 (+ 1 i)))
-									    ((= i 100) (list loc (pks loc) (vals1 loc) (vals2 loc)))
-									  (if (> (abs (pks i)) pk)
-									      (begin
-										(set! loc i)
-										(set! pk (abs (pks i)))))))
-								      ))
-						     (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-						       (if (not (vequal rvals vals2))
-							   (snd-display #__line__ ";4 virtual op reversed tests (2): ~A(~A(~A(~A(~A~A)))) * ~A: ~A ~A => ~A"
-									(op-name fifth) (op-name fourth) (op-name third) (op-name second) (op-name first)
-									(if (= k 1) "(ptree_zero)" "")
-									saved-scalers vals2 rvals
-									(vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
-						     (set! (edit-position ind 0) edpos))))
-					     op5)))
-				      op4)))
-			       op3)))
-			op2))
-		     op1)))
-	      
-	      (if all-args
-		  (let ((op1 (list 0 3 5))
-			(op2 (list 0 1 3 4 5 6))
-			(op3 (list 0 1 2 3 4 5 6))
-			(op4 (list 0 1 2 3 4 5 6))
-			(op5 (list 7 3 5))
-			(op6 (list 0 1 2 3 4 5 6 7)))
-		    (for-each
-		     (lambda (first)
-		       (for-each 
-			(lambda (second)
-			  (if (not (= first second))
-			      (for-each
-			       (lambda (third)
-				 (if (and (not (= first third))
-					  (not (= second third)))
-				     (for-each
-				      (lambda (fourth)
-					(if (and (not (= first fourth))
-						 (not (= second fourth))
-						 (not (= third fourth)))
-					    (for-each
-					     (lambda (fifth)
-					       (if (and (not (= first fifth))
-							(not (= second fifth))
-							(not (= third fifth))
-							(not (= fourth fifth)))
-						   (for-each
-						    (lambda (sixth)
-						      (if (and (not (= first sixth))
-							       (not (= second sixth))
-							       (not (= third sixth))
-							       (not (= fourth sixth))
-							       (not (= fifth sixth))
-							       (let ((val (+ k
-									     (if (or (= first 5) (= first 6)) 1 0)
-									     (if (or (= second 5) (= second 6)) 1 0)
-									     (if (or (= third 5) (= third 6)) 1 0)
-									     (if (or (= fourth 5) (= fourth 6)) 1 0)
-									     (if (or (= fifth 5) (= fifth 6)) 1 0)
-									     (if (or (= sixth 5) (= sixth 6)) 1 0))))
-								 (not (> val 2)))
-							       (let ((val (+ (if (member first (list 0 1 2 3 4 7)) 1 0)
-									     (if (member second (list 0 1 2 3 4 7)) 1 0)
-									     (if (member third (list 0 1 2 3 4 7)) 1 0)
-									     (if (member fourth (list 0 1 2 3 4 7)) 1 0)
-									     (if (member fifth (list 0 1 2 3 4 7)) 1 0)
-									     (if (member sixth (list 0 1 2 3 4 7)) 1 0))))
-								 (not (> val 4))))
-							  (begin
-							    (set! scalers '())
-							    (set! scl (+ .5 (random 1.0)))
-							    (scale-by scl)
-							    (set! scalers (cons scl scalers))
-							    (op first)
-							    (set! scl (+ .5 (random 1.0)))
-							    (scale-by scl)
-							    (set! scalers (cons scl scalers))
-							    (op second)
-							    (set! scl (+ .5 (random 1.0)))
-							    (scale-by scl)
-							    (set! scalers (cons scl scalers))
-							    (op third)
-							    (set! scl (+ .5 (random 1.0)))
-							    (scale-by scl)
-							    (set! scalers (cons scl scalers))
-							    (op fourth)
-							    (set! scl (+ .5 (random 1.0)))
-							    (scale-by scl)
-							    (set! scalers (cons scl scalers))
-							    (op fifth)
-							    (set! scl (+ .5 (random 1.0)))
-							    (scale-by scl)
-							    (set! scalers (cons scl scalers))
-							    (op sixth)
-							    (set! scl (+ .5 (random 1.0)))
-							    (scale-by scl)
-							    (set! scalers (cons scl scalers))
-							    (set! vals1 (channel->vct 0 100 ind 0))
-							    (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-							      (if (not (vequal rvals vals1))
-								  (snd-display #__line__ ";5 virtual op reversed tests: ~A(~A(~A(~A(~A(~A~A))))) * ~A: ~A ~A => ~A"
-									       (op-name sixth) (op-name fifth) (op-name fourth) 
-									       (op-name third) (op-name second) (op-name first)
-									       (if (= k 1) "(ptree_zero)" "")
-									       scalers vals1 rvals
-									       (vct-peak (vct-subtract! (vct-copy vals1) rvals)))))
-							    (set! (edit-position ind 0) edpos)
-							    (set! (optimization) 0)
-							    (set! scalers (reverse scalers))
-							    (set! saved-scalers scalers)
-							    (scale-by (car scalers)) (set! scalers (cdr scalers))
-							    (if (= first 5) (map1) (if (= first 6) (map2) (op first)))
-							    (scale-by (car scalers)) (set! scalers (cdr scalers))
-							    (if (= second 5) (map1) (if (= second 6) (map2) (op second)))
-							    (scale-by (car scalers)) (set! scalers (cdr scalers))
-							    (if (= third 5) (map1) (if (= third 6) (map2) (op third)))
-							    (scale-by (car scalers)) (set! scalers (cdr scalers))
-							    (if (= fourth 5) (map1) (if (= fourth 6) (map2) (op fourth)))
-							    (scale-by (car scalers)) (set! scalers (cdr scalers))
-							    (if (= fifth 5) (map1) (if (= fifth 6) (map2) (op fifth)))
-							    (scale-by (car scalers)) (set! scalers (cdr scalers))
-							    (if (= sixth 5) (map1) (if (= sixth 6) (map2) (op sixth)))
-							    (scale-by (car scalers)) (set! scalers (cdr scalers))
-							    (set! (optimization) oldopt)
-							    (set! vals2 (channel->vct 0 100 ind 0))
-							    (if (not (vequal vals1 vals2)) 
-								(snd-display #__line__ ";5 virtual op tests: ~A * ~A(~A(~A(~A(~A(~A~A))))): ~A ~A => ~A at ~A"
-									     saved-scalers
-									     (op-name sixth) (op-name fifth) (op-name fourth) 
-									     (op-name third) (op-name second) (op-name first)
-									     (if (= k 1) "(ptree_zero)" "") 
-									     vals1 vals2
-									     (vct-peak (vct-subtract! (vct-copy vals1) vals2))
-									     (let* ((pks (vct-subtract! (vct-copy vals1) vals2))
-										    (pk (abs (pks 0)))
-										    (loc 0))
-									       (do ((i 1 (+ 1 i)))
-										   ((= i 100) (list loc (pks loc) (vals1 loc) (vals2 loc)))
-										 (if (> (abs (pks i)) pk)
-										     (begin
-										       (set! loc i)
-										       (set! pk (abs (pks i)))))))
-									     ))
-							    (let ((rvals (reversed-channel->vct 0 100 ind 0)))
-							      (if (not (vequal rvals vals2))
-								  (snd-display #__line__ ";5 virtual op reversed tests (2): ~A(~A(~A(~A(~A(~A~A))))) * ~A: ~A ~A => ~A"
-									       (op-name sixth) (op-name fifth) (op-name fourth) 
-									       (op-name third) (op-name second) (op-name first)
-									       (if (= k 1) "(ptree_zero)" "")
-									       saved-scalers vals2 rvals
-									       (vct-peak (vct-subtract! (vct-copy vals2) rvals)))))
-							    (set! (edit-position ind 0) edpos))))
-						    op6)))
-					     op5)))
-				      op4)))
-			       op3)))
-			op2))
-		     op1)))))
-	  (close-sound ind))
-	
-	(if all-args ; include mix in cycling tests
-	    (let ((old-ptrees (max-virtual-ptrees)))
-	      
-	      (set! (max-virtual-ptrees) 10)
-	      
-	      (letrec ((local-vequal (lambda (v0 v1 n)
-				       (let ((old-fudge (mus-float-equal-fudge-factor)))
-					 (set! (mus-float-equal-fudge-factor) (* n .001))
-					 (let ((result (equal? v0 v1)))
-					   (set! (mus-float-equal-fudge-factor) old-fudge)
-					   result))))
-		       
-		       (add-1 (lambda (ind)
-				(ptree-channel (lambda (y) (+ y 1.0)) 0 20 ind 0)
-				(let ((data (channel->vct 0 20 ind 1)))
-				  (vct-offset! data 1.0)
-				  (vct->channel data 0 20 ind 1))))
-		       
-		       (ramp-1 (lambda (ind)
-				 (ramp-channel 0 1.0 0 21 ind 0)
-				 (let ((data (channel->vct 0 20 ind 1)))
-				   (do ((i 0 (+ 1 i))
-					(val 0 (+ val .05)))
-				       ((= i 20))
-				     (set! (data i) (* (data i) val)))
-				   (vct->channel data 0 20 ind 1))))
-		       
-		       (mix-1 (lambda (ind)
-				(let ((mdata (vct 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 -0.5)))
-				  (mix-vct mdata 5 ind 0 #t)
-				  (let ((data (channel->vct 5 10 ind 1)))
-				    (vct-add! data mdata)
-				    (vct->channel data 5 10 ind 1)))))
-		       
-		       (env-1 (lambda (ind)
-				(env-channel '(0 0 1 1 2 1 3 0) 0 20 ind 0)
-				(let ((e1 (vct 0.0 0.166667 0.333333 0.5 0.666667 0.833333 1.0 1.0 1.0 1.0 
-					       1.0 1.0 1.0 1.0 0.833333 0.666667 0.5 0.333333 0.166667 0.0))
-				      (data (channel->vct 0 20 ind 1)))
-				  (vct-multiply! data e1)
-				  (vct->channel data 0 20 ind 1))))
-		       
-		       (env-2 (lambda (ind)
-				(env-channel-with-base '(0 0 1 1 2 1 3 0) 8.0 0 20 ind 0)
-				(let ((e1 (vct 0.0 0.059173 0.142857 0.261204 0.428571 0.665265 1.0 1.0 1.0 
-					       1.0 1.0 1.0 1.0 1.0 0.665265 0.428571 0.261204 0.142857 0.059173 0.0))
-				      (data (channel->vct 0 20 ind 1)))
-				  (vct-multiply! data e1)
-				  (vct->channel data 0 20 ind 1))))
-		       
-		       (env-3 (lambda (ind)
-				(env-channel '(0 1 1 0 2 0 3 1) 0 20 ind 0)
-				(let ((e1 (vct 1.0 0.833333 0.666667 0.5 0.333333 0.166667 0.0 0.0 0.0 0.0 
-					       0.0 0.0 0.0 0.0 0.166667 0.333333 0.5 0.666667 0.833333 1.0))
-				      (data (channel->vct 0 20 ind 1)))
-				  (vct-multiply! data e1)
-				  (vct->channel data 0 20 ind 1))))
-		       
-		       (env-4 (lambda (ind)
-				(env-channel-with-base '(0 1 1 0 2 0 3 1) 8.0 0 20 ind 0)
-				(let ((e1 (vct 1.0 0.665265 0.428571 0.261204 0.142857 0.059173 0.0 0.0 0.0 
-					       0.0 0.0 0.0 0.0 0.0 0.059173 0.142857 0.261204 0.428571 0.665265 1.0))
-				      (data (channel->vct 0 20 ind 1)))
-				  (vct-multiply! data e1)
-				  (vct->channel data 0 20 ind 1))))
-		       
-		       (env-5 (lambda (ind)
-				(env-channel '(0 1 1 .5 2 .5 3 1) 0 20 ind 0)
-				(let ((e1 (vct 1.0 0.916667 0.833333 0.750000 0.666667 0.583333 0.5 0.5 0.5 
-					       0.5 0.5 0.5 0.5 0.5 0.583333 0.666667 0.750000 0.833333 0.916667 1.0))
-				      (data (channel->vct 0 20 ind 1)))
-				  (vct-multiply! data e1)
-				  (vct->channel data 0 20 ind 1))))
-		       
-		       (env-6 (lambda (ind)
-				(env-channel-with-base '(0 1 1 .5 2 .5 3 1) 8.0 0 20 ind 0)
-				(let ((e1 (vct 1.0 0.832632 0.714286 0.630602 0.571429 0.529587 0.5 0.5 0.5 
-					       0.5 0.5 0.5 0.5 0.5 0.529587 0.571429 0.630602 0.714286 0.832632 1.0))
-				      (data (channel->vct 0 20 ind 1)))
-				  (vct-multiply! data e1)
-				  (vct->channel data 0 20 ind 1))))
-		       
-		       (set-1 (lambda (ind)
-				(set! (sample 10 ind 0) -0.5)
-				(let ((data (channel->vct 0 20 ind 1)))
-				  (set! (data 10) -0.5)
-				  (vct->channel data 0 20 ind 1))))
-		       
-		       (scl-1 (lambda (ind)
-				(ptree-channel (lambda (y data forward)
-						 (* y (data 0)))
-					       0 20 ind 0 #f #f
-					       (lambda (pos dur)
-						 (vct 0.625)))
-				(scale-channel 0.625 0 20 ind 1)))
-		       
-		       (rvequal (lambda (ind name n)
-				  (let ((r1 (make-sampler 19 ind 0 -1))
-					(r2 (make-sampler 19 ind 1 -1))
-					(v1 (make-vct 20))
-					(v2 (make-vct 20)))
-				    (do ((i 0 (+ 1 i)))
-					((= i 20))
-				      (set! (v1 i) (r1))
-				      (set! (v2 i) (r2)))
-				    (if (not (local-vequal v1 v2 n))
-					(snd-display #__line__ ";!~A reversed: ~A ~A" name v1 v2))
-				    (free-sampler r1)
-				    (free-sampler r2)))))
-		
-		(let ((all-ops (list add-1 ramp-1 mix-1 env-1 env-2 env-3 env-4 env-5 env-6 set-1 scl-1))
-		      (all-op-names (list 'add-1 'ramp-1 'mix-1 'env-1 'env-2 'env-3 'env-4 'env-5 'env-6 'set-1 'scl-1))
-		      (two-ops (list add-1 ramp-1))
-		      (two-op-names (list 'add-1 'ramp-1)))
-		  
-		  (let ((ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat)))
-		    
-		    (set! (squelch-update ind 0) #t)
-		    (set! (squelch-update ind 1) #t)
-		    
-		    (for-each ; check that they are the same
-		     (lambda (op op-name)
-		       (do ((k 0 (+ 1 k)))
-			   ((= k 2))
-			 (if (= k 1)
-			     (vct->channel (make-vct 20 0.0) 0 20 ind 1)
-			     (begin
-			       (vct->channel (make-vct 20 1.0) 0 20 ind 0)
-			       (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
-			 (op ind)
-			 (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-			     (snd-display #__line__ ";unequal: ~A by ~A (~A, ~A, ~A):~%; ~A~%; ~A~%;  ~A~%;  ~A" 
-					  op-name 
-					  (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) 
-					  (mus-float-equal-fudge-factor) (mus-clipping) (mus-file-clipping ind)
-					  (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 
-					  (display-edits ind 0) (display-edits ind 1))
-			     (rvequal ind op-name 1))
-			 (revert-sound ind)))
-		     all-ops all-op-names)
-		    
-		    (close-sound ind)
-		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
-		    (set! (squelch-update ind 0) #t)
-		    (set! (squelch-update ind 1) #t)
-		    
-		    ;; 2 ops
-		    (for-each
-		     (lambda (op2 op2-name)
-		       (for-each
-			(lambda (op1 op1-name)
-			  (let ((op-name (format #f "~A(~A)" op2-name op1-name)))
-			    (do ((k 0 (+ 1 k)))
-				((= k 2))
-			      (if (= k 1)
-				  (vct->channel (make-vct 20 0.0) 0 20 ind 1)
-				  (begin
-				    (vct->channel (make-vct 20 1.0) 0 20 ind 0)
-				    (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
-			      (op1 ind)
-			      (op2 ind)
-			      (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-				  (snd-display #__line__ ";unequal: ~A~A by ~A (~A):~%; ~A~%; ~A~%;  ~A~%;  ~A"
-					       op-name (if (= k 0) "[0]" "") 
-					       (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor)
-					       (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)
-					       (display-edits ind 0) (display-edits ind 1))
-				  (rvequal ind op-name 1))
-			      (revert-sound ind))))
-			all-ops all-op-names))
-		     all-ops all-op-names)
-		    
-		    (close-sound ind)
-		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
-		    (set! (squelch-update ind 0) #t)
-		    (set! (squelch-update ind 1) #t)
-		    
-		    ;; 3 ops
-		    (for-each
-		     (lambda (op3 op3-name)
-		       (for-each
-			(lambda (op2 op2-name)
-			  (for-each
-			   (lambda (op1 op1-name)
-			     (let ((op-name (format #f "~A(~A(~A))" op3-name op2-name op1-name)))
-			       (do ((k 0 (+ 1 k)))
-				   ((= k 2))
-				 (if (= k 1)
-				     (vct->channel (make-vct 20 0.0) 0 20 ind 1)
-				     (begin
-				       (vct->channel (make-vct 20 1.0) 0 20 ind 0)
-				       (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
-				 (op1 ind)
-				 (op2 ind)
-				 (op3 ind)
-				 (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-				     (snd-display #__line__ ";unequal: ~A by ~A (~A):~%; ~A~%; ~A~%;  ~A~%;  ~A"
-						  op-name 
-						  (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor)
-						  (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)
-						  (display-edits ind 0) (display-edits ind 1))
-				     (rvequal ind op-name 1))
-				 (revert-sound ind))))
-			   all-ops all-op-names))
-			all-ops all-op-names))
-		     all-ops all-op-names)
-		    
-		    (close-sound ind)
-		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
-		    (set! (squelch-update ind 0) #t)
-		    (set! (squelch-update ind 1) #t)
-		    
-		    ;; 4 ops
-		    (for-each
-		     (lambda (op4 op4-name)
-		       (for-each
-			(lambda (op3 op3-name)
-			  (for-each
-			   (lambda (op2 op2-name)
-			     (for-each
-			      (lambda (op1 op1-name)
-				(let ((op-name (format #f "~A(~A(~A(~A)))" op4-name op3-name op2-name op1-name)))
-				  (do ((k 0 (+ 1 k)))
-				      ((= k 2))
-				    (if (= k 1)
-					(vct->channel (make-vct 20 0.0) 0 20 ind 1)
-					(begin
-					  (vct->channel (make-vct 20 1.0) 0 20 ind 0)
-					  (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
-				    (op1 ind)
-				    (op2 ind)
-				    (op3 ind)
-				    (op4 ind)
-				    (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-					(snd-display #__line__ ";unequal: ~A~A by ~A (~A):~%; ~A~%; ~A"
-						     op-name (if (= k 0) "[0]" "") 
-						     (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor)
-						     (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
-					(rvequal ind op-name 1))
-				    (revert-sound ind))))
-			      all-ops all-op-names))
-			   all-ops all-op-names))
-			all-ops all-op-names))
-		     all-ops all-op-names)
-		    
-		    (close-sound ind)
-		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
-		    (set! (squelch-update ind 0) #t)
-		    (set! (squelch-update ind 1) #t)
-		    
-		    ;; 5 ops
-		    (for-each
-		     (lambda (op5 op5-name)
-		       (for-each
-			(lambda (op4 op4-name)
-			  (for-each
-			   (lambda (op3 op3-name)
-			     (for-each
-			      (lambda (op2 op2-name)
-				(for-each
-				 (lambda (op1 op1-name)
-				   (let ((op-name (format #f "~A(~A(~A(~A(~A))))" op5-name op4-name op3-name op2-name op1-name)))
-				     (do ((k 0 (+ 1 k)))
-					 ((= k 2))
-				       (if (= k 1)
-					   (vct->channel (make-vct 20 0.0) 0 20 ind 1)
-					   (begin
-					     (vct->channel (make-vct 20 1.0) 0 20 ind 0)
-					     (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
-				       (op1 ind)
-				       (op2 ind)
-				       (op3 ind)
-				       (op4 ind)
-				       (op5 ind)
-				       (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-					   (snd-display #__line__ ";unequal: ~A by ~A (~A),  ~A in ~A:~%; ~A~%; ~A" 
-							op-name
-							(vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor) 
-							(map (lambda (lst) (edit-fragment-type-name (lst 7))) (edit-tree ind 0))
-							(edit-tree ind 0)
-							(channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
-					   (rvequal ind op-name 1))
-				       (revert-sound ind))))
-				 all-ops all-op-names))
-			      all-ops all-op-names))
-			   all-ops all-op-names))
-			all-ops all-op-names))
-		     all-ops all-op-names)
-		    
-		    (close-sound ind)
-		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
-		    (set! (squelch-update ind 0) #t)
-		    (set! (squelch-update ind 1) #t)
-		    
-		    ;; 6 ops
-		    (for-each
-		     (lambda (op6 op6-name)
-		       (for-each
-			(lambda (op5 op5-name)
-			  (for-each
-			   (lambda (op4 op4-name)
-			     (for-each
-			      (lambda (op3 op3-name)
-				(for-each
-				 (lambda (op2 op2-name)
-				   (for-each
-				    (lambda (op1 op1-name)
-				      (let ((op-name (format #f "~A(~A(~A(~A(~A(~A)))))" op6-name op5-name op4-name op3-name op2-name op1-name)))
-					(do ((k 0 (+ 1 k)))
-					    ((= k 2))
-					  (if (= k 1)
-					      (vct->channel (make-vct 20 0.0) 0 20 ind 1)
-					      (begin
-						(vct->channel (make-vct 20 1.0) 0 20 ind 0)
-						(vct->channel (make-vct 20 1.0) 0 20 ind 1)))
-					  (op1 ind)
-					  (op2 ind)
-					  (op3 ind)
-					  (op4 ind)
-					  (op5 ind)
-					  (op6 ind)
-					  (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-					      (snd-display #__line__ ";unequal: ~A by ~A (~A):~%; ~A~%; ~A" 
-							   op-name 
-							   (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor) 
-							   (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
-					      (rvequal ind op-name 1))
-					  (revert-sound ind))))
-				    two-ops two-op-names))
-				 all-ops all-op-names))
-			      all-ops all-op-names))
-			   all-ops all-op-names))
-			all-ops all-op-names))
-		     two-ops two-op-names)
-		    
-		    (close-sound ind)
-		    (set! ind (new-sound "test.snd" :size 20 :channels 2 :data-format mus-lfloat))
-		    (set! (squelch-update ind 0) #t)
-		    (set! (squelch-update ind 1) #t)
-		    
-		    ;; 7 ops
-		    (for-each
-		     (lambda (op7 op7-name)
-		       (for-each
-			(lambda (op6 op6-name)
-			  (for-each
-			   (lambda (op5 op5-name)
-			     (for-each
-			      (lambda (op4 op4-name)
-				(for-each
-				 (lambda (op3 op3-name)
-				   (for-each
-				    (lambda (op2 op2-name)
-				      (for-each
-				       (lambda (op1 op1-name)
-					 (let ((op-name (format #f "~A(~A(~A(~A(~A(~A(~A))))))" op7-name op6-name op5-name op4-name op3-name op2-name op1-name)))
-					   (do ((k 0 (+ 1 k)))
-					       ((= k 2))
-					     (if (= k 1)
-						 (vct->channel (make-vct 20 0.0) 0 20 ind 1)
-						 (begin
-						   (vct->channel (make-vct 20 1.0) 0 20 ind 0)
-						   (vct->channel (make-vct 20 1.0) 0 20 ind 1)))
-					     (op1 ind)
-					     (op2 ind)
-					     (op3 ind)
-					     (op4 ind)
-					     (op5 ind)
-					     (op6 ind)
-					     (op7 ind)
-					     (if (not (local-vequal (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1) 1))
-						 (snd-display #__line__ ";unequal: ~A by ~A (~A):~%; ~A~%; ~A" 
-							      op-name 
-							      (vmaxdiff (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1)) (mus-float-equal-fudge-factor) 
-							      (channel->vct 0 20 ind 0) (channel->vct 0 20 ind 1))
-						 (rvequal ind op-name 1))
-					     (revert-sound ind))))
-				       two-ops two-op-names))
-				    all-ops all-op-names))
-				 all-ops all-op-names))
-			      all-ops all-op-names))
-			   two-ops two-op-names))
-			two-ops two-op-names))
-		     two-ops two-op-names)
-		    
-		    (set! (squelch-update ind 0) #f)
-		    (set! (squelch-update ind 1) #f)
-		    (set! (max-virtual-ptrees) old-ptrees)
-		    
-		    (if (and (provided? 'snd-motif)
-			     (provided? 'xm))
-			(let* ((edhist ((channel-widgets ind 0) 7))
-			       (edp (XtParent edhist)))
-			  (XtUnmanageChild edp) 
-			  (XtVaSetValues edp (list XmNpaneMinimum 1))  ; not 0 here -- Xt warnings
-			  (XtManageChild edp)))
-		    
-		    (close-sound ind)))
-		)))))
-    
+	))
+
     (let ((ind (open-sound "oboe.snd")))
-      
       ;; simple cases
       
       (as-one-edit
@@ -11239,13 +9141,6 @@ EDITS: 2
     
     (let* ((ind (open-sound "oboe.snd"))
 	   (mx (maxamp ind 0)))
-      (as-one-edit
-       (lambda ()
-	 (ptree-channel (lambda (y) (* y 2)))
-	 (env-sound '(0 0 1 1))))
-      (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";as-one-edit env+ptree pos: ~A" (edit-position ind 0)))
-      (if (fneq (maxamp ind 0) .1825) (snd-display #__line__ ";as-one-edit env+ptree max: ~A" (maxamp ind 0)))
-      (undo)
       (let ((tag (catch #t
 			(lambda () (as-one-edit (lambda (oops) #f)))
 			(lambda args (car args)))))
@@ -11256,12 +9151,6 @@ EDITS: 2
 			(lambda args (car args)))))
 	(if (not (eq? tag 'bad-arity))
 	    (snd-display #__line__ ";as-one-edit arg? ~A" tag)))
-      (as-one-edit
-       (lambda ()
-	 (ptree-channel (lambda (y) (* y 2)))
-	 (ptree-channel (lambda (y) (* y 2)))))
-      (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";as-one-edit ptree+ptree pos: ~A" (edit-position ind 0)))
-      (if (fneq (maxamp ind 0) (* 4 mx)) (snd-display #__line__ ";as-one-edit ptree+ptree max: ~A ~A" (maxamp ind 0) (* 4 mx)))
       (close-sound ind))
     (let ((ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "ptree tests" 10)))
       ;; offset-channel
@@ -11286,16 +9175,10 @@ EDITS: 2
       (sine-ramp 1.0 0.0)
       (if (not (vequal (channel->vct) (vct 1.000 0.976 0.905 0.794 0.655 0.500 0.345 0.206 0.095 0.024)))
 	  (snd-display #__line__ ";sine-ramp 1 0: ~A" (channel->vct)))
-      (if (> (optimization) 0)
-	  (if (not (string=? (edit-fragment-type-name ((car (edit-tree)) 7)) "ed_ptree_zero"))
-	      (snd-display #__line__ ";sine-ramp tree op: ~A ~A" (edit-fragment-type-name ((car (edit-tree)) 7)) (edit-tree))))
       (close-sound ind)
       (set! ind (new-sound  "test.snd" mus-next mus-bfloat 22050 1 "sine-env tests" 100))
       (map-channel (lambda (y) 1.0))
       (sine-env-channel '(0 0 1 1 2 -.5 3 1))
-      (if (or (not (vequal (channel->vct 20 10) (vct 0.664 0.708 0.750 0.790 0.827 0.862 0.893 0.921 0.944 0.964)))
-	      (not (vequal (channel->vct 60 10) (vct -0.381 -0.417 -0.446 -0.470 -0.486 -0.497 -0.500 -0.497 -0.486 -0.470))))
-	  (snd-display #__line__ ";sine-env-channel 0: ~A ~A" (channel->vct 20 10) (channel->vct 60 10)))
       (if (not (= (edit-position ind 0) 2)) (snd-display #__line__ ";as-one-edit sine-env-channel: ~A" (edit-position ind 0)))
       (revert-sound ind)
       (offset-channel -1.0)
@@ -11304,8 +9187,6 @@ EDITS: 2
 						     -1.000 -1.000 -1.000 -1.000 -1.000 -0.950 -0.812 -0.611 -0.389 -0.188)))
 	      (not (vequal (channel->vct 30 10) (make-vct 10 -1.0))))
 	  (snd-display #__line__ ";off+sine-env: ~A ~A" (channel->vct 40 20) (channel->vct 30 10)))
-      (revert-sound ind)
-      (ptree-channel (lambda (y d f) (* y 2)) 0 (frames) ind 0 #f #f (lambda (p d) (vct 1.0)))
       (revert-sound ind)
       (scale-by 0.0)
       (dither-channel)
@@ -11462,52 +9343,6 @@ EDITS: 2
 		(begin
 		  (snd-display #__line__ ";contrast-channel: ~A ~A ~A" val y ny)
 		  (set! happy #f))))))
-      (undo)
-      (compand-channel)
-      (let ((reader (make-sampler 0))
-	    (happy #t))
-	(do ((i 0 (+ 1 i))
-	     (val 0.0 (+ val .01)))
-	    ((or (not happy) (= i 100)))
-	  (let ((y (reader))
-		(ny (array-interp compand-table (+ 8.0 (* 8.0 val)) 17)))
-	    (if (fneq y ny)
-		(begin
-		  (snd-display #__line__ ";compand-channel: ~A ~A ~A" val y ny)
-		  (set! happy #f))))))
-      (undo 2)
-      (ring-modulate-channel 1000)
-      (let ((reader (make-sampler 0))
-	    (incr (/ (* 2 pi 1000) (srate)))
-	    (happy #t))
-	(do ((i 0 (+ 1 i))
-	     (val 0.0 (+ val incr)))
-	    ((or (not happy) (= i 100)))
-	  (let ((y (reader))
-		(ny (sin val)))
-	    (if (fneq y ny)
-		(begin
-		  (snd-display #__line__ ";ring-modulate-channel: ~A ~A ~A" val y ny)
-		  (set! happy #f))))))
-      (undo)
-      (env-sound '(0 0 1 1))
-      (smooth-channel-via-ptree)
-      (let ((reader (make-sampler 0))
-	    (incr (/ pi 101))
-	    (happy #t))
-	(do ((i 0 (+ 1 i))
-	     (val pi (+ val incr)))
-	    ((or (not happy) (= i 100)))
-	  (let ((y (reader))
-		(ny (+ 0.5 (* 0.5 (cos val)))))
-	    (if (fneq y ny)
-		(begin
-		  (snd-display #__line__ ";smooth-channel-via-ptree: ~A ~A ~A" val y ny)
-		  (set! happy #f))))))
-      (undo 2)
-      (env-channel '(0 1 1 0 2 1) 10 11)
-      (if (not (vequal (channel->vct 0 30) (vct 1 1 1 1 1 1 1 1 1 1 1.000 0.800 0.600 0.400 0.200 0.000 0.200 0.400 0.600 0.800 1 1 1 1 1 1 1 1 1 1)))
-	  (snd-display #__line__ ";env+ptree: ~A ~A ~A" (channel->vct 0 10) (channel->vct 10 10) (channel->vct 20 10)))
       (close-sound ind))
     
     (let ((ind0 (open-sound "oboe.snd"))
@@ -11538,47 +9373,7 @@ EDITS: 2
       
       (close-sound ind1)
       (revert-sound ind0)
-      (let ((old-opt (optimization)))
-	(set! (optimization) 6)
-	(let ((val (sample 1990)))
-	  (delay-channel 10) ; this assume ptree-channel is fully operational
-	  (if (fneq (sample 2000) val) (snd-display #__line__ ";delay-channel: ~A ~A" val (sample 2000))))
-	(set! (optimization) old-opt))
       (close-sound ind0))
-    
-    (let ((ind (new-sound "test.snd" :size 20)))
-      
-      (vct->channel (make-vct 20 1.0))
-      (ramp-channel 0 1)
-      (env-sound '(0 1 1 .5 2 .5 3 1) 0 20 .6)
-      (let ((data (channel->vct)))
-	(if (not (vequal data (vct 0.000 0.049 0.091 0.123 0.146 0.158 0.158 0.184 0.211 0.237 0.263 0.289 0.316 0.342 0.444 0.549 0.658 0.770 0.884 1.000)))
-	    (snd-display #__line__ ";env-sound xramp with flat segment: ~A" data)))
-      (ptree-channel (lambda (y) (+ y .5)))
-      (xramp-channel .1 .2 32.0)
-      (let ((data (channel->vct)))
-	(if (not (vequal data (vct 0.050 0.055 0.060 0.064 0.067 0.069 0.070 0.074 0.079 0.084 0.089 0.095 0.102 0.111 0.130 0.154 0.181 0.214 0.253 0.300)))
-	    (snd-display #__line__ ";ramp->xramp->ptree->xramp: ~A" data)))
-      
-      (set! (edit-position) 1)
-      (ramp-channel 0 1)
-      (env-sound '(0 1 1 0.0 2 0.0 3 1) 0 20 .6)
-      (ptree-channel (lambda (y) (+ y .5)))
-      (xramp-channel .1 .2 32.0)
-      (let ((data (channel->vct)))
-	(if (not (vequal data (vct 0.050 0.055 0.058 0.060 0.060 0.058 0.053 0.054 0.055 0.057 0.058 0.060 0.063 0.066 0.090 0.119 0.153 0.193 0.241 0.300)))
-	    (snd-display #__line__ ";1 ramp->xramp->ptree->xramp: ~A" data)))
-      
-      (set! (edit-position) 1)
-      (env-sound '(0 1 1 0.5 2 0.5 3 1) 0 20 .6)
-      (env-sound '(0 1 1 0 2 0 3 1) 0 20)
-      (ptree-channel (lambda (y) (+ y .5)))
-      (xramp-channel .1 .2 32.0)
-      (let ((data (channel->vct)))
-	(if (not (vequal data (vct 0.150 0.129 0.109 0.091 0.076 0.063 0.053 0.054 0.055 0.057 0.058 0.060 0.063 0.066 0.083 0.107 0.139 0.181 0.234 0.300)))
-	    (snd-display #__line__ ";2 ramp->xramp->ptree->xramp: ~A" data)))
-      
-      (close-sound ind))
     
     (let ((s1 (open-sound "oboe.snd")))
       (let ((s2 (copy s1)))
@@ -12088,122 +9883,6 @@ EDITS: 2
 	  (if (not (vvequal v (vct 12.0 12.0 12.0)))
 	      (snd-display #__line__ ";vct s7 fill: ~A" (fill! v 12.0)))
 	  )
-	
-#|
-	;; a test of big vcts (needs 16 Gbytes):
-	(if (and (string? (getenv "HOSTNAME"))
-		 (string=? (getenv "HOSTNAME") "fatty8"))
-	    (let ((size (+ 2 (expt 2 31))))
-	      (if (not (= size 2147483650))
-		  (snd-display #__line__ ";big vct, size: ~A (~A ~A)" size 2147483650 (- 2147483650 size)))
-	      (set! (mus-max-malloc) (expt 2 40))
-	      (if (not (= (mus-max-malloc) 1099511627776))
-		  (snd-display #__line__ ";big vct, mus-max-malloc: ~A" (mus-max-malloc)))
-	      (let ((hi (make-vct size)))
-		(if (not (vct? hi))
-		    (snd-display #__line__ ";big vct, not a vct?? ~A" hi))
-		(if (fneq (hi (expt 2 31)) 0.0)
-		    (snd-display #__line__ ";big vct, created at end: ~A" (hi (expt 2 31))))
-		(vct+ hi .1)
-		(if (fneq (hi (expt 2 31)) 0.1)
-		    (snd-display #__line__ ";big vct, add .1 at end: ~A" (hi (expt 2 31))))
-		(let ((pk (vct-peak hi)))
-		  (if (fneq pk .1)
-		      (snd-display #__line__ ";big vct, vct-peak: ~A" pk)))
-		(let ((len (vct-length hi)))
-		  (if (not (= len size))
-		      (snd-display #__line__ ";big vct, len: ~A" len)))
-		(vct-scale! hi 2.0)
-		(if (fneq (hi (+ 1 (expt 2 31))) .2)
-		    (snd-display #__line__ ";big vct, scale: ~A ~A" (hi (+ 1 (expt 2 31))) hi))
-		(set! (hi (expt 2 31)) 1.0)
-		(if (fneq (hi (expt 2 31)) 1.0)
-		    (snd-display #__line__ ";big vct, set at end: ~A" (hi (expt 2 31))))
-		(vct-offset! hi .2)
-		(if (fneq (hi (expt 2 31)) 1.2)
-		    (snd-display #__line__ ";big vct, offset: ~A" (hi (expt 2 31))))
-		(vct-subtract! hi hi)
-		(let ((pk (vct-peak hi)))
-		  (if (fneq pk 0.0)
-		      (snd-display #__line__ ";big vct, subtract vct-peak: ~A ~A" pk hi)))
-		(vct-fill! hi 1.0)
-		(if (fneq (hi (expt 2 31)) 1.0)
-		    (snd-display #__line__ ";big vct, fill: ~A ~A" (hi (expt 2 31)) hi))
-		(set! (hi (expt 2 31)) 0.0)
-		(let ((ho (vct-subseq hi (- (expt 2 31) 3) (+ (expt 2 31) 1))))
-		  (if (not (vequal ho (vct 1.0 1.0 1.0 0.0 1.0)))
-		      (snd-display #__line__ ";big vct, subseq: ~A" ho)))
-		(vct-reverse! hi)
-		(let ((ho (vct-subseq hi 0 5)))
-		  (if (not (vequal ho (vct 1.0 0.0 1.0 1.0 1.0 1.0)))
-		      (snd-display #__line__ ";big vct, reverse: ~A" ho)))
-		(set! (hi (expt 2 31)) 10.0)
-		(vct-move! hi (- (expt 2 31) 3) (expt 2 31))
-		(let ((ho (vct-subseq hi (- (expt 2 31) 3) (+ (expt 2 31) 1))))
-		  (if (not (vequal ho (vct 10.0 1.0 1.0 10.0 1.0)))
-		      (snd-display #__line__ ";big vct, subseq: ~A" ho)))
-		)
-	      
-	      ;; big vectors/hash-tables also
-	      
-	      
-	      (let ((size (+ 2 (expt 2 31))))
-		(if (not (= size 2147483650))
-		    (snd-display #__line__ ";big vector size: ~A (~A ~A)" size 2147483650 (- 2147483650 size)))
-		(let ((hi (make-vector size '())))
-		  (if (not (vector? hi))
-		      (snd-display #__line__ ";big vector not a vector?? ~A" hi))
-		  (if (not (null? (vector-ref hi (expt 2 31))))
-		      (snd-display #__line__ ";big vector created at end: ~A" (vector-ref hi (expt 2 31))))
-		  (set! (hi (expt 2 31)) 100)
-		  (if (not (= (vector-ref hi (expt 2 31)) 100))
-		      (snd-display #__line__ ";big vector set to 100 at end: ~A" (vector-ref hi (expt 2 31))))
-		  (let ((len (vector-length hi)))
-		    (if (not (= len size))
-			(snd-display #__line__ ";big vector len: ~A" len)))
-		  (vector-fill! hi 2)
-		  (if (not (= (vector-ref hi (expt 2 31)) 2))
-		      (snd-display #__line__ ";big vector fill: ~A" (vector-ref hi (expt 2 31))))))
-	      
-	      
-	      
-	      (let ((hi (make-vector (list (+ 2 (expt 2 30)) 2) '())))
-		(if (not (= (vector-length hi) (* 2 (+ 2 (expt 2 30)))))
-		    (snd-display #__line__ ";big vector 2dim size: ~A ~A" (vector-length hi) (* 2 (+ 2 (expt 2 30)))))
-		(if (not (null? (vector-ref hi (expt 2 30) 0)))
-		    (snd-display #__line__ ";big vector 2dim created at end (0): ~A" (vector-ref hi (expt 2 30) 0)))
-		(if (not (null? (vector-ref hi (expt 2 30) 1)))
-		    (snd-display #__line__ ";big vector 2dim created at end (1): ~A" (vector-ref hi (expt 2 30) 1)))
-		(set! (hi (expt 2 30) 1) 100)
-		(if (not (= (vector-ref hi (expt 2 30) 1) 100))
-		    (snd-display #__line__ ";big vector 2dim set to 100 at end: ~A" (vector-ref hi (expt 2 30) 1)))
-		(vector-fill! hi 2)
-		(if (not (= (vector-ref hi (expt 2 30) 0) 2))
-		    (snd-display #__line__ ";big vector 2dim fill: ~A" (vector-ref hi (expt 2 30) 0))))
-	      
-	      
-	      
-	      (let ((hi (make-hash-table (+ 2 (expt 2 31)))))
-		(if (not (= (hash-table-size hi) (+ 2 (expt 2 31))))
-		    (snd-display #__line__ ";big hash size: ~A ~A" (hash-table-size hi) (+ 2 (expt 2 31))))
-		(if (fneq (let () (hash-table-set! hi 'key 3.14) (hash-table-ref hi 'key)) 3.14)
-		    (snd-display #__line__ ";big hash 3.14: ~A" (hash-table-ref hi 'key)))
-		(if (not (equal? (let () (hash-table-set! hi 123 "hiho") (hash-table-ref hi 123)) "hiho"))
-		    (snd-display #__line__ ";big hash 123: ~A" (hash-table-ref hi 123)))
-		(if (not (equal? (let () 
-				   (hash-table-set! hi 'hiho-this-is-a-big-name-to-overflow-32-bits-I-hope "hiho")
-				   (hash-table-ref hi 'hiho-this-is-a-big-name-to-overflow-32-bits-I-hope))
-				 "hiho"))
-		    (snd-display #__line__ ";big hash big symbol: ~A" (hash-table-ref hi 'hiho-this-is-a-big-name-to-overflow-32-bits-I-hope)))
-		(if (not (equal? (let () 
-				   (hash-table-set! hi 12345678912345 "hiho")
-				   (hash-table-ref hi 12345678912345))
-				 "hiho"))
-		    (snd-display #__line__ ";big hash big symbol: ~A" (hash-table-ref hi 12345678912345))))
-	      
-	      
-	      ))
-|#
 	
 	(let ((sum 0)) 
 	  (for-each (lambda (n) (set! sum (+ sum n))) (vct 1 2 3))
@@ -20113,22 +17792,6 @@ EDITS: 2
       (if (> (edit-position ind 0) 2) (snd-display #__line__ ";map-channel pad edits (3): ~A" (edit-position ind 0)))
       (revert-sound ind)
       (if (scan-channel (lambda (y) #f) 30 10) (snd-display #__line__ ";scan-channel past end?"))
-      (ptree-channel (lambda (y) 1.0) 7 8)
-      (if (not (= (frames) 15)) (snd-display #__line__ ";ptree-channel 7 8: ~A" (frames)))
-      (ptree-channel (lambda (y) 1.0))
-      (if (not (= (frames) 15)) (snd-display #__line__ ";ptree-channel (no dur): ~A" (frames)))
-      (revert-sound ind)
-      (ptree-channel (lambda (y) 1.0) 9 10)
-      (if (not (= (frames) 19)) (snd-display #__line__ ";ptree-channel 9 10: ~A" (frames)))
-      (if (> (edit-position ind 0) 2) (snd-display #__line__ ";ptree-channel pad edits: ~A" (edit-position ind 0)))
-      (revert-sound ind)
-      (ptree-channel (lambda (y) 1.0) 10 10)
-      (if (not (= (frames) 20)) (snd-display #__line__ ";ptree-channel 10 10: ~A" (frames)))
-      (if (> (edit-position ind 0) 2) (snd-display #__line__ ";ptree-channel pad edits (2): ~A" (edit-position ind 0)))
-      (revert-sound ind)
-      (ptree-channel (lambda (y) 1.0) 20 10)
-      (if (not (= (frames) 30)) (snd-display #__line__ ";ptree-channel 20 10: ~A" (frames)))
-      (if (> (edit-position ind 0) 2) (snd-display #__line__ ";ptree-channel pad edits (3): ~A" (edit-position ind 0)))
       (let ((new-file-name (file-name ind)))
 	(close-sound ind)
 	(if (file-exists? new-file-name) (delete-file new-file-name))))
@@ -24692,10 +22355,6 @@ EDITS: 2
 	    (undo)
 	    (set! (mix-position m2) 500)
 	    (undo)
-	    (ptree-channel (lambda (y) (* y 0.5)) 2000 100)
-	    (if (not (= (mix-position m2) 123)) (snd-display #__line__ ";mix-position m2[6]: ~A" (mix-position m2)))
-	    (if (not (= (mix-position m1) 321)) (snd-display #__line__ ";mix-position m1[6]: ~A" (mix-position m1)))
-	    (undo)
 	    (set! (mix-position m2) 500)
 	    (undo-edit)
 	    (ramp-channel 0.0 1.0 3000 100)
@@ -25042,15 +22701,8 @@ EDITS: 2
 	      (if (not (= (mix-position id) 11)) (snd-display #__line__ ";mix vct position after env reset edit position: ~A" (mix-position id)))
 	      (if (not (vequal (channel->vct 10 10) (vct 0 .5 .5 .5 .5 .5 0 0 0 0)))
 		  (snd-display #__line__ ";vct .5 at 11 after env reset edit: ~A" (channel->vct 10 10)))
-	      
-	      (ptree-channel (lambda (y) (* y 2)))
-					;	    (if (mix? id) (snd-display #__line__ ";ptree over mix but exists?: ~A" (mix? id)))
-	      (if (not (mix? id)) (snd-display #__line__ ";ptree over mix but no mix?: ~A" (mix? id)))
-	      (if (not (vequal (channel->vct 10 10) (vct 0 1 1 1 1 1 0 0 0 0)))
-		  (snd-display #__line__ ";vct 1 at 11 after ptree: ~A" (channel->vct 10 10)))
-	      (undo)
+
 	      (scale-by 0.0)
-					;	    (if (mix? id) (snd-display #__line__ ";zero mix but exists?: ~A" (mix? id)))
 	      (if (not (mix? id)) (snd-display #__line__ ";zero mix but no mix?: ~A" (mix? id)))
 	      (if (not (vequal (channel->vct 10 10) (vct 0 0 0 0 0 0 0 0 0 0)))
 		  (snd-display #__line__ ";vct 1 at 11 scale 0: ~A" (channel->vct 10 10)))
@@ -25179,19 +22831,6 @@ EDITS: 2
 	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
 	      (if (not (mix? id))
 		  (snd-display #__line__ ";mix lock 0: ~A ~A" id (mix? id)))
-	      (ptree-channel (lambda (y) .5) 0 20)
-	      (if (not (mix? id))
-		  (snd-display #__line__ ";mix lock 1: ~A ~A" id (mix? id)))
-	      (ptree-channel (lambda (y) .5) 0 20)
-	      (if (not (mix? id))
-		  (snd-display #__line__ ";mix lock 2: ~A ~A" id (mix? id)))
-	      (undo)
-	      (if (not (mix? id))
-		  (snd-display #__line__ ";mix lock 3: ~A ~A" id (mix? id)))
-	      (ptree-channel (lambda (y) .5) 25 20)
-	      (if (not (mix? id))
-		  (snd-display #__line__ ";mix lock 4: ~A ~A" id (mix? id)))
-	      (undo)
 	      (ramp-channel 0.0 1.0 0 20)
 	      (if (not (mix? id))
 		  (snd-display #__line__ ";mix lock 5: ~A ~A" id (mix? id)))
@@ -25562,17 +23201,7 @@ EDITS: 2
 	      (list (lambda () (env-channel '(0 0 1 1) 1110 100)) 1000 #f 'env1110)
 	      (list (lambda () (env-channel '(0 0 1 1) 2000 100)) 1000 #f 'env2000)
 	      
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 0 100)) 1000 #f 'ptree0)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 0 2000)) 1000 #t 'ptree20)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 800 100)) 1000 #f 'ptree800)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 850 100)) 1000 #f 'ptree850)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 950 40)) 1000 #f 'ptree950)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 990 100)) 1000 #t 'ptree990)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 1010 100)) 1000 #t 'ptree1010)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 1050 10)) 1000 #t 'ptree1050)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 1110 100)) 1000 #f 'ptree1110)
-	      (list (lambda () (ptree-channel (lambda (y) (* y 2)) 2000 100)) 1000 #f 'ptree2000)))
-	    
+	      ))
 	    (close-sound ind))
 	  
 	  (set! (optimization) old-opt-val)
@@ -28400,8 +26029,6 @@ EDITS: 2
 					     (mix-vct (make-vct 10 .3) 123)))
 			    (list 'pad-channel (lambda () 
 						 (pad-channel 123 456 ind 0)))
-			    (list 'ptree-channel (lambda () 
-						   (ptree-channel (lambda (y) (+ y .2)))))
 			    (list 'ramp-channel (lambda () 
 						  (ramp-channel 0.0 0.5 123 456)))
 			    (list 'reverse-channel (lambda () 
@@ -31489,28 +29116,6 @@ EDITS: 2
 	((11) (let ((beg (random (+ (frames cursnd curchn) 100))))
 		(pad-channel beg (+ 10 (random 100)) cursnd curchn)))
 	
-	((12) (let* ((beg (random (- (frames cursnd curchn) 210)))
-		     (dur (+ 10 (random 200)))
-		     (preader0 (make-sampler (+ beg dur -1) cursnd curchn -1))
-		     (reader0 (make-sampler beg cursnd curchn)))
-		(ptree-channel (lambda (y) (* y 2.0)) beg dur cursnd curchn #f #t)
-		(let* ((preader1 (make-sampler (+ beg dur -1) cursnd curchn -1))
-		       (reader1 (make-sampler beg cursnd curchn)))
-		  (do ((i 0 (+ 1 i)))
-		      ((= i dur))
-		    (let ((pval0 (preader0))
-			  (val0 (reader0))
-			  (pval1 (preader1))
-			  (val1 (reader1)))
-		      (if (or (fneq (* val0 2) val1)
-			      (fneq (* pval0 2) pval1))
-			  (begin
-			    (snd-display #__line__ ";read ptree at ~A: ~A ~A ~A ~A (~A ~A ~A ~A): ~A" 
-					 i val0 val1 pval0 pval1
-					 reader0 reader1 preader0 preader1
-					 (safe-display-edits cursnd curchn))
-			    (error 'mus-error))))))))
-	
 	((13) (let ((beg (random (- (frames cursnd curchn) 100))))
 		(scale-channel .5 beg (+ 10 (random 100)) cursnd curchn)))
 	
@@ -31541,7 +29146,7 @@ EDITS: 2
 	((20) (let ((beg (random (- (frames cursnd curchn) 200))))
 		(ramp-channel (- (random 2.0) 1.0) (- (random 2.0) 1.0) beg (+ 10 (random 100)) cursnd curchn)))
 	
-	((21) (let* ((pts (+ 1 (random 8)))
+	((12) (let* ((pts (+ 1 (random 8)))
 		     (maxpt 0.0)
 		     (e (let ((e1 '())
 			      (x 0.0)
@@ -31957,12 +29562,11 @@ EDITS: 2
 	  (lambda () (env-sound '(0 0 1 1) -1 123 oboe))
 	  (lambda () (set-samples -1 123 (make-vct 3) oboe))
 	  (lambda () (smooth-sound -1 123 oboe))
-	  (lambda () (insert-silence -1 123 oboe))
-	  (lambda () (ptree-channel (lambda (y) (+ y .1)) -1 123 oboe)))
+	  (lambda () (insert-silence -1 123 oboe)))
 	 (list 
 	  "scale-channel" "env-channel" "clm-channel" "vct->channel" "smooth-channel" "pad-channel" "src-channel"
 	  "mix-channel" "insert-channel" "reverse-channel"
-	  "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence" "ptree-channel"))
+	  "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
 	
 	(scale-channel 2.0 12345678 123 oboe)
 	(if (not (= (edit-position oboe) 0))
@@ -32321,123 +29925,8 @@ EDITS: 2
 	  (funcs-equal? "insert-sound"
 			(lambda args (apply insert-sound (list "pistol.snd" 0 0 (if (> (length args) 2) (caddr args) #f))))
 			(lambda args (apply insert-channel "pistol.snd" args)))
-	  (funcs-equal? "ptree-channel"
-			(lambda args scale-channel (cons 2.0 args))
-			(lambda args ptree-channel (cons (lambda (y) (* y 2.0)) args)))
-	  (funcs-equal? "ptree-channel"
-			(lambda args map-channel (cons (lambda (n) (+ n .2)) args))
-			(lambda args ptree-channel (cons (lambda (y) (+ y .2)) args)))
 	  (close-sound oboe0)
 	  (close-sound oboe1))
-	
-	(if (= test-16 0)
-	    (let ((ind (open-sound "oboe.snd")))
-	      (scale-by .5)
-	      (scale-by .25)
-	      (undo)
-	      (for-each
-	       (lambda (func name)
-		 (let ((tag (catch #t (lambda () (func ind)) (lambda args (car args)))))
-		   (if (not (eq? tag 'no-such-edit))
-		       (snd-display #__line__ ";~A upon about-to-be-clobbered data: ~A" name tag))))
-	       (list (lambda (n) (scale-channel .5 0 #f n 0 2))
-		     (lambda (n) (env-channel '(0 0 1 1 2 0) 0 #f n 0 2))
-		     (if (> (optimization) 0)
-			 (lambda (n) (ptree-channel (lambda (y1) y1) 0 #f n 0 2 #f))
-			 (lambda (n) (pad-channel 0 100 n 0 2)))
-		     ;;(lambda (n) (map-channel (lambda (y2) y2) 0 #f n 0 2)) ; actually will work
-		     (lambda (n) (pad-channel 100 100 n 0 2))
-		     (lambda (n) (delete-sample 100 n 0 2))
-		     (lambda (n) (set! (sample 100 n 0 2) .52))
-		     )
-	       (list "scale" "env" "ptree" 
-		     ;;"map" 
-		     "pad" "delete" "set"
-		     ))
-	      (close-sound ind)))
-	
-	(let ((ind (new-sound "test.snd")))
-	  (insert-silence 0 1000)
-	  (map-chan (lambda (y) 1.0))
-	  (ptree-channel (lambda (y) (* y .5)))
-	  (insert-silence 100 200)
-	  (if (fneq (sample 500) 0.5)
-	      (snd-display #__line__ ";trailing ptree rmp0 trouble: ~A" (sample 500)))
-	  (revert-sound ind)
-	  
-	  (insert-silence 0 1000)
-	  (map-chan (lambda (y) 1.0))
-	  (scale-by .5)
-	  (ptree-channel (lambda (y) (* y .5)))
-	  (insert-silence 100 200)
-	  (if (fneq (sample 500) 0.25)
-	      (snd-display #__line__ ";trailing ptree scaled rmp0 trouble: ~A" (sample 500)))
-	  (scale-by 2.0)
-	  (if (fneq (sample 500) 0.5)
-	      (snd-display #__line__ ";trailing ptree post scaled rmp0 trouble: ~A" (sample 500)))
-	  (revert-sound ind)
-	  
-	  (insert-silence 0 1000)
-	  (map-chan (lambda (y) 1.0))
-	  (ptree-channel (lambda (y) (* y .5)))
-	  (delete-samples 100 200)
-	  (if (fneq (sample 500) 0.5)
-	      (snd-display #__line__ ";trailing ptree post delete rmp0 trouble: ~A" (sample 500)))
-	  (if (fneq (sample 0) 0.5)
-	      (snd-display #__line__ ";trailing ptree pre delete rmp0 trouble: ~A" (sample 500)))
-	  (revert-sound ind)
-	  
-	  (insert-silence 0 1000)
-	  (map-chan (lambda (y) 1.0))
-	  (ptree-channel (lambda (y) (* y .5)))
-	  (set! (sample 100) .95)
-	  (if (fneq (sample 500) 0.5)
-	      (snd-display #__line__ ";trailing ptree post change rmp0 trouble: ~A" (sample 500)))
-	  (if (fneq (sample 0) 0.5)
-	      (snd-display #__line__ ";trailing ptree pre change rmp0 trouble: ~A" (sample 500)))
-	  (revert-sound ind)
-	  
-	  (insert-silence 0 1000)
-	  (map-chan (lambda (y) 1.0))
-	  (ptree-channel (lambda (y) (* y .1)))
-	  (delete-samples 100 200)
-	  (if (fneq (sample 500) 0.1)
-	      (snd-display #__line__ ";trailing ptree post delete(1) loc trouble: ~A" (sample 500)))
-	  (if (fneq (sample 0) 0.1)
-	      (snd-display #__line__ ";trailing ptree pre delete(1) loc trouble: ~A" (sample 500)))
-	  
-	  (insert-silence 0 1000)
-	  (map-chan (lambda (y) 1.0))
-	  (scale-by .5)
-	  (ptree-channel (lambda (y) (* y .5)))
-	  (scale-by .5)
-	  (if (fneq (sample 500) 0.125)
-	      (snd-display #__line__ ";scl-ptree-scl trouble: ~A" (sample 500)))
-	  (revert-sound ind)
-	  
-	  (insert-silence 0 1000)
-	  (map-chan (lambda (y) 1.0))
-	  (ptree-channel (lambda (y) (* y .5)))
-	  (env-sound '(0 0 1 1 2 0))
-	  (if (or (fneq (sample 0) 0.0)
-		  (fneq (sample 999) 0.0005)
-		  (fneq (sample 500) 0.5)
-		  (fneq (sample 250) 0.25)
-		  (fneq (sample 750) 0.25))
-	      (snd-display #__line__ ";ptree-env trouble: ~A"
-			   (map sample (list 0 999 500 250 750))))
-	  
-	  (insert-silence 0 1000)
-	  (map-chan (lambda (y) 1.0))
-	  (ptree-channel (lambda (y) (* y .5)))
-	  (make-selection 100 200)
-	  (scale-selection-by .5)
-	  (if (or (fneq (sample 500) 0.5)
-		  (fneq (sample 50) 0.5)
-		  (fneq (sample 150) 0.25))
-	      (snd-display #__line__ ";ptree-scl-selection trouble: ~A" (map sample (list 500 50 150))))
-	  (revert-sound ind)
-	  (close-sound ind))
 	
 	(let ((ind (open-sound "oboe.snd"))
 	      (ind1 (new-sound "test.snd"))
@@ -32462,838 +29951,12 @@ EDITS: 2
 	    (close-sound ind))
 	  (set! (save-dir) old-save-dir))
 	
-	(let ((ind (open-sound "oboe.snd")))
-	  (for-each
-	   (lambda (func val name)
-	     (func ind)
-	     (if (file-exists? "s61.scm") (delete-file "s61.scm"))
-	     (save-state "s61.scm")
-	     (close-sound ind)
-	     (for-each forget-region (regions))
-	     (load (string-append cwd "s61.scm"))
-	     (set! ind (find-sound "oboe.snd"))
-	     (if (fneq (maxamp ind) val)
-		 (snd-display #__line__ ";saved ~A max: ~A ~A (at ~A of ~A)" 
-			      name (maxamp ind) val (edit-position ind 0) (display-edits ind 0)))
-	     (revert-sound ind))
-	   (list (lambda (ind)
-		   (ptree-channel (lambda (y) (* y .5))))
-		 (lambda (ind)
-		   (ptree-channel (lambda (y data forward)
-				    (* y (data 0)))
-				  0 #f ind 0 #f #f
-				  (lambda (pos dur)
-				    (vct 0.5))))
-		 (lambda (ind)
-		   (scale-by 0.0)
-		   (pad-channel 0 10 ind 0 0))
-		 (lambda (ind)
-		   (scale-by 0.0)
-		   (scale-channel 0.5 0 #f ind 0 0))
-		 (lambda (ind)
-		   (scale-by 0.0)
-		   (env-channel '(0 0 1 .5 2 0) 0 #f ind 0 0))
-		 (lambda (ind)
-		   (scale-by 0.0)
-		   (set! (sample 0 ind 0 0) 0.9))
-		 (lambda (ind)
-		   (scale-by 0.0)
-		   (delete-samples 0 100 ind 0 0))
-		 (lambda (ind)
-		   (scale-by 0.0)
-		   (ptree-channel (lambda (y) (* y 0.5)) 0 #f ind 0 0 #f))
-		 (lambda (ind)
-		   (scale-by 0.0)
-		   (ptree-channel (lambda (y data forward)
-				    (* y (data 0)))
-				  0 #f ind 0 0 #f
-				  (lambda (pos dur)
-				    (vct 0.5))))
-		 (lambda (ind)
-		   (insert-samples 100 10 (make-vct 10 0.1) ind 0 0))	  
-		 )
-	   (list .0736 .0736 .147 .0736 .0736 0.9 .147 .0736 .0736 .147)
-	   (list "ptree" "ptree with init" "pad edpos" "scl edpos" "env edpos" 
-		 "set edpos" "delete edpos" "ptree edpos" "init ptree edpos" "insert edpos"))
-	  (close-sound ind))
-	
-	(let ((ind-ptree (new-sound "test1.snd"))
-	      (ind-closure (new-sound "test2.snd"))
-	      (ind-map (new-sound "test3.snd")))
-	  (for-each
-	   (lambda (m)
-	     (insert-silence 0 9 m 0)
-	     (map-channel (lambda (y) 1.0) 0 #f m 0))
-	   (list ind-ptree ind-closure ind-map))
-	  (for-each
-	   (lambda (pt cl mp vc name)
-	     (let ((edpt (edit-position ind-ptree 0))
-		   (edcl (edit-position ind-closure 0))
-		   (edmp (edit-position ind-map 0)))
-	       (pt ind-ptree)
-	       (cl ind-closure)
-	       (mp ind-map)
-	       (let ((ptv (channel->vct 0 (frames ind-ptree) ind-ptree 0))
-		     (ptc (channel->vct 0 (frames ind-closure) ind-closure 0))
-		     (ptm (channel->vct 0 (frames ind-map) ind-map 0)))
-		 (if (not (vequal ptv vc)) (snd-display #__line__ ";~A ptree: ~A ~A" name ptv vc))
-		 (if (not (vequal ptc vc)) (snd-display #__line__ ";~A closure: ~A ~A" name ptc vc))
-		 (if (not (vequal ptm vc)) (snd-display #__line__ ";~A map: ~A ~A" name ptm vc)))
-	       
-	       (let ((ptv (reversed-read ind-ptree 0))
-		     (ptc (reversed-read ind-closure 0))
-		     (ptm (reversed-read ind-map 0)))
-		 (if (not (vequal ptv vc)) (snd-display #__line__ ";reversed ~A ptree: ~A ~A" name ptv vc))
-		 (if (not (vequal ptc vc)) (snd-display #__line__ ";reversed ~A closure: ~A ~A" name ptc vc))
-		 (if (not (vequal ptm vc)) (snd-display #__line__ ";reversed ~A map: ~A ~A" name ptm vc)))
-	       
-	       (let ((ptv (zigzag-read ind-ptree 0))
-		     (ptc (zigzag-read ind-closure 0))
-		     (ptm (zigzag-read ind-map 0)))
-		 (if (not (vequal ptv vc)) (snd-display #__line__ ";zigzag ~A ptree: ~A ~A" name ptv vc))
-		 (if (not (vequal ptc vc)) (snd-display #__line__ ";zigzag ~A closure: ~A ~A" name ptc vc))
-		 (if (not (vequal ptm vc)) (snd-display #__line__ ";zigzag ~A map: ~A ~A" name ptm vc)))
-	       
-	       (set! (edit-position ind-ptree 0) edpt)
-	       (set! (edit-position ind-closure 0) edcl)
-	       (set! (edit-position ind-map 0) edmp)))
-	   
-	   (list 
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y) 1.0) 0 #f ind 0 #f #f))
-	    (lambda (ind) 
-	      (scale-by 0.5 ind 0) 
-	      (ptree-channel (lambda (y3) y3) 0 #f ind 0 #f #f))
-	    (lambda (ind)
-	      (ptree-channel (lambda (y4) y4) 0 #f ind 0 #f #f)
-	      (scale-by 0.5 ind 0))
-	    (lambda (ind)
-	      (ptree-channel (lambda (y) (* y 0.5)) 0 #f ind 0 #f #f)
-	      (delete-samples 2 3 ind 0))
-	    (lambda (ind)
-	      (ptree-channel (lambda (y) (* y 0.5)) 0 #f ind 0 #f #f)
-	      (set! (samples 2 3 ind 0) (make-vct 3)))
-	    (lambda (ind)
-	      (set! (samples 0 10 ind 0) (vct 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0))
-	      (ptree-channel (lambda (y) (* y 0.5)) 0 #f ind 0 #f #f)
-	      (delete-sample 2 ind 0)
-	      (delete-sample 6 ind 0))
-	    
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y) 1.0) 2 #f ind 0 #f #f))
-	    (lambda (ind) 
-	      (scale-by 0.5 ind 0) 
-	      (ptree-channel (lambda (y5) y5) 2 #f ind 0 #f #f))
-	    (lambda (ind)
-	      (ptree-channel (lambda (y6) y6) 2 #f ind 0 #f #f)
-	      (scale-by 0.5 ind 0))
-	    (lambda (ind)
-	      (ptree-channel (lambda (y) (* y 0.5)) 2 #f ind 0 #f #f)
-	      (delete-samples 2 3 ind 0))
-	    (lambda (ind)
-	      (ptree-channel (lambda (y) (* y 0.5)) 2 #f ind 0 #f #f)
-	      (set! (samples 2 3 ind 0) (make-vct 3)))
-	    (lambda (ind)
-	      (set! (samples 0 10 ind 0) (vct 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0))
-	      (ptree-channel (lambda (y) (* y 0.5)) 2 #f ind 0 #f #f)
-	      (delete-sample 2 ind 0)
-	      (delete-sample 6 ind 0))
-	    
-	    (lambda (ind)
-	      ;; forced-fallback
-	      (ptree-channel (let ((sym (list 1))) (lambda (y) (if (equal? (car sym) 1) (* y 0.5) y))) 2 3 ind 0 #f #f))
-	    (lambda (ind)
-	      ;; forced-fallback
-	      (ptree-channel (let ((sym (list 1))) (lambda (y) (if (equal? (car sym) 1) (* y 0.5) y))) 0 #f ind 0 #f #f))
-	    
-	    (lambda (ind)
-	      (scale-by 0.0)
-	      (ptree-channel (lambda (y7) y7) 0 #f ind 0 2 #f)
-	      (scale-by 0.5 ind 0))
-	    
-	    )
-	   
-	   (list 
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y data dir) 
-			       1.0) 
-			     0 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.0))))
-	    (lambda (ind) 
-	      (scale-by 0.5 ind 0) 
-	      (ptree-channel (lambda (y data dir) 
-			       y) 
-			     0 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.0))))
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y data dir) 
-			       y) 
-			     0 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.0)))
-	      (scale-by 0.5 ind 0) )
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y data dir) 
-			       (* y (data 0)))
-			     0 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.5)))
-	      (delete-samples 2 3 ind 0))
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y data dir) 
-			       (* y (data 0)))
-			     0 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.5)))
-	      (set! (samples 2 3 ind 0) (make-vct 3)))
-	    (lambda (ind) 
-	      (set! (samples 0 10 ind 0) (vct 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0))
-	      (ptree-channel (lambda (y data dir) 
-			       (* y (data 0)))
-			     0 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.5)))
-	      (delete-sample 2 ind 0)
-	      (delete-sample 6 ind 0))
-	    
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y data dir) 
-			       1.0) 
-			     2 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.0))))
-	    (lambda (ind) 
-	      (scale-by 0.5 ind 0) 
-	      (ptree-channel (lambda (y data dir) 
-			       y) 
-			     2 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.0))))
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y data dir) 
-			       y) 
-			     2 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.0)))
-	      (scale-by 0.5 ind 0) )
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y data dir) 
-			       (* y (data 0)))
-			     2 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.5)))
-	      (delete-samples 2 3 ind 0))
-	    (lambda (ind) 
-	      (ptree-channel (lambda (y data dir) 
-			       (* y (data 0)))
-			     2 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.5)))
-	      (set! (samples 2 3 ind 0) (make-vct 3)))
-	    (lambda (ind) 
-	      (set! (samples 0 10 ind 0) (vct 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0))
-	      (ptree-channel (lambda (y data dir) 
-			       (* y (data 0)))
-			     2 #f ind 0 #f #f 
-			     (lambda (pos dur) (vct 0.5)))
-	      (delete-sample 2 ind 0)
-	      (delete-sample 6 ind 0))
-	    
-	    (lambda (ind)
-	      ;; forced-fallback
-	      (ptree-channel (let ((sym (list 1))) 
-			       (lambda (y data dir)
-				 (if (equal? (car sym) 1) (* y 0.5) (* y (data 0)))))
-			     2 3 ind 0 #f #f
-			     (lambda (pos dur)
-			       (vct 1.0))))
-	    (lambda (ind)
-	      ;; forced-fallback
-	      (ptree-channel (let ((sym (list 1))) 
-			       (lambda (y data dir)
-				 (if (equal? (car sym) 1) (* y 0.5) (* y (data 0)))))
-			     0 #f ind 0 #f #f
-			     (lambda (pos dur)
-			       (vct 1.0))))
-	    (lambda (ind) 
-	      (scale-by 0.0)
-	      (ptree-channel (lambda (y data dir) 
-			       y) 
-			     0 #f ind 0 2 #f 
-			     (lambda (pos dur) (vct 0.0)))
-	      (scale-by 0.5 ind 0) )
-	    
-	    )
-	   
-	   (list 
-	    (lambda (ind) 
-	      (map-channel (lambda (y) 1.0) 0 #f ind 0))
-	    (lambda (ind)
-	      (scale-by 0.5 ind 0)
-	      (map-channel (lambda (y8) y8) 0 #f ind 0))
-	    (lambda (ind)
-	      (map-channel (lambda (y9) y9) 0 #f ind 0)
-	      (scale-by 0.5 ind 0))
-	    (lambda (ind)
-	      (map-channel (lambda (y) (* y 0.5)) 0 #f ind 0)
-	      (delete-samples 2 3 ind 0))
-	    (lambda (ind)
-	      (map-channel (lambda (y) (* y 0.5)) 0 #f ind 0)
-	      (set! (samples 2 3 ind 0) (make-vct 3)))
-	    (lambda (ind)
-	      (set! (samples 0 10 ind 0) (vct 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0))
-	      (map-channel (lambda (y) (* y 0.5)) 0 #f ind 0)
-	      (delete-sample 2 ind 0)
-	      (delete-sample 6 ind 0))
-	    
-	    (lambda (ind) 
-	      (map-channel (lambda (y) 1.0) 2 #f ind 0))
-	    (lambda (ind)
-	      (scale-by 0.5 ind 0)
-	      (map-channel (lambda (y10) y10) 2 #f ind 0))
-	    (lambda (ind)
-	      (map-channel (lambda (y11a) y11a) 2 #f ind 0)
-	      (scale-by 0.5 ind 0))
-	    (lambda (ind)
-	      (map-channel (lambda (y) (* y 0.5)) 2 #f ind 0)
-	      (delete-samples 2 3 ind 0))
-	    (lambda (ind)
-	      (map-channel (lambda (y) (* y 0.5)) 2 #f ind 0)
-	      (set! (samples 2 3 ind 0) (make-vct 3)))
-	    (lambda (ind)
-	      (set! (samples 0 10 ind 0) (vct 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0))
-	      (map-channel (lambda (y) (* y 0.5)) 2 #f ind 0)
-	      (delete-sample 2 ind 0)
-	      (delete-sample 6 ind 0))
-	    
-	    (lambda (ind)
-	      ;; forced-fallback
-	      (map-channel (let ((sym (list 1))) (lambda (y) (if (equal? (car sym) 1) (* y 0.5) y))) 2 3 ind 0))
-	    (lambda (ind)
-	      ;; forced-fallback
-	      (map-channel (let ((sym (list 1))) (lambda (y) (if (equal? (car sym) 1) (* y 0.5) y))) 0 #f ind 0))
-	    (lambda (ind)
-	      (scale-by 0.0)
-	      (map-channel (lambda (y12a) y12a) 0 #f ind 0 2)
-	      (scale-by 0.5 ind 0))
-	    
-	    )
-	   
-	   (list 
-	    (make-vct 10 1.0)
-	    (make-vct 10 0.5)
-	    (make-vct 10 0.5)
-	    (make-vct 7 0.5)
-	    (vct 0.5 0.5 0.0 0.0 0.0 0.5 0.5 0.5 0.5 0.5)
-	    (vct-scale! (vct 0.0 1.0 3.0 4.0 5.0 6.0 8.0 9.0) 0.5)
-	    
-	    (make-vct 10 1.0)
-	    (make-vct 10 0.5)
-	    (make-vct 10 0.5)
-	    (vct 1.0 1.0 0.5 0.5 0.5 0.5 0.5)
-	    (vct 1.0 1.0 0.0 0.0 0.0 0.5 0.5 0.5 0.5 0.5)
-	    (vct 0.0 1.0 1.5 2.0 2.5 3.0 4.0 4.5)
-	    
-	    (vct 1.0 1.0 0.5 0.5 0.5 1.0 1.0 1.0 1.0 1.0)
-	    (make-vct 10 0.5)
-	    (make-vct 10 0.5)
-	    )
-	   
-	   (list 
-	    "identity"
-	    "half"
-	    "flah"
-	    "2:3 delete"
-	    "2:3 change"
-	    "step delete"
-	    
-	    "2 identity"
-	    "2 half"
-	    "2 flah"
-	    "2 2:3 delete"
-	    "2 2:3 change"
-	    "2 step delete"
-	    
-	    "fallback 1"
-	    "fallback 2"
-	    "edpos"
-	    )
-	   )
-	  
-	  (for-each
-	   (lambda (m)
-	     (close-sound m))
-	   (list ind-ptree ind-closure ind-map))
-	  )
-	
 	(let ((ind (new-sound "test.snd")))
 	  (map-chan (lambda (y) (random 1.0)) 0 10)
 	  (ramp-channel 0.0 1.0)
 	  (zigzag-check "ramp" ind 0)
 	  (undo)
-	  
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree" ind 0)
-	  (undo)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ptree-channel (lambda (y) (* y 1.5)))
-	  (zigzag-check "ptree2" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp-ptree2" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp2-ptree2" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp3-ptree2" ind 0)
-	  (undo 3)
-	  (xramp-channel 0.0 1.0 32.0)
-	  (zigzag-check "xramp-ptree2" ind 0)
-	  (undo 3)
-	  
-	  (scale-channel 0.0)
-	  (ptree-channel (lambda (y) (+ y 0.5)))
-	  (zigzag-check "ptree-zero" ind 0)
-	  (undo)
-	  (ptree-channel (lambda (y) (+ y 0.5)))
-	  (ptree-channel (lambda (y) (+ y 1.5)))
-	  (zigzag-check "ptree2-zero" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp-ptree2-zero" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp2-ptree2-zero" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp3-ptree2-zero" ind 0)
-	  (undo 3)
-	  (xramp-channel 0.0 1.0 32.0)
-	  (zigzag-check "xramp-ptree2-zero" ind 0)
-	  (undo 4)
-	  
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 1.0 0.0)
-	  (zigzag-check "ramp2" ind 0)
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 3.0)
-	  (xramp-channel 1.0 0.0 0.3)
-	  (zigzag-check "xramp2" ind 0)
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 3.0)
-	  (xramp-channel 1.0 0.0 0.3)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp+xramp2" ind 0)
-	  (undo 3)
-	  (ramp-channel 0.0 1.0)
-	  (xramp-channel 1.0 0.0 0.3)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp+xramp+ramp" ind 0)
-	  (undo 3)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 1.0 0.0)
-	  (ramp-channel 0.1 0.8)
-	  (zigzag-check "ramp3" ind 0)
-	  (undo 3)
-	  (xramp-channel 0.0 1.0 32.0)
-	  (zigzag-check "xramp" ind 0)
-	  (undo)
-	  (scale-channel 0.5)
-	  (set! (sample 4) .5)
-	  (delete-sample 2)
-	  (insert-sample 1 .1)
-	  (zigzag-check "simple" ind 0)
-	  (undo 4)
-	  (ramp-channel 0.0 1.0)
-	  (xramp-channel 1.0 0.0 32.0)
-	  (zigzag-check "xramp+ramp" ind 0)
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 32.0)
-	  (ramp-channel 1.0 0.0)
-	  (zigzag-check "ramp+xramp" ind 0)
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 32.0)
-	  (ramp-channel 1.0 0.0)
-	  (ramp-channel 1.0 0.0)
-	  (zigzag-check "ramp2+xramp" ind 0)
-	  (undo 3)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree+ramp" ind 0)
-	  (undo 2)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree+ramp2" ind 0)
-	  (undo 3)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (+ y 0.5)))
-	  (zigzag-check "ptree+ramp3" ind 0)
-	  (undo 4)
-	  (ramp-channel 0.0 1.0)
-	  (xramp-channel 0.0 1.0 32.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree+xramp+ramp" ind 0)
-	  (undo 1)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree+ramp+xramp+ramp" ind 0)
-	  (undo 4)
-	  
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp+ptree+ramp" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp2+ptree+ramp" ind 0)
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 .3)
-	  (zigzag-check "xramp+ptree+ramp" ind 0)
-	  (undo 3)
-	  (xramp-channel 0.0 1.0 .3)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp+ptree+xramp" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp2+ptree+xramp" ind 0)
-	  (undo 4)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp+ptree+ramp2" ind 0)
-	  (undo 4)
-	  
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y data forward)
-			   (* y (data 0)))
-			 0 (frames) ind 0 #f #f
-			 (lambda (pos dur)
-			   (vct 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp+ptreec+ramp" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp2+ptreec+ramp" ind 0)
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 .3)
-	  (zigzag-check "xramp+ptreec+ramp" ind 0)
-	  (undo 3)
-	  (xramp-channel 0.0 1.0 .3)
-	  (ptree-channel (lambda (y data forward)
-			   (* y (data 0)))
-			 0 (frames) ind 0 #f #f
-			 (lambda (pos dur)
-			   (vct 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp+ptreec+xramp" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp2+ptreec+xramp" ind 0)
-	  (undo 4)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y data forward)
-			   (* y (data 0)))
-			 0 (frames) ind 0 #f #f
-			 (lambda (pos dur)
-			   (vct 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp+ptreec+ramp2" ind 0)
-	  (undo 4)
-	  
-	  (pad-channel 2 3)
-	  (zigzag-check "zero" ind 0)
-	  (undo)
-	  (ptree-channel (lambda (y data forward)
-			   (* y (data 0)))
-			 0 (frames) ind 0 #f #f
-			 (lambda (pos dur)
-			   (vct 0.5)))
-	  (zigzag-check "ptree+closure" ind 0)
-	  (undo)
-	  (ramp-channel 0.0 1.0)
-	  (cosine-channel-via-ptree 0 (frames) ind 0 #f)
-	  (zigzag-check "ptree+ramp" ind 0)
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 .3)
-	  (cosine-channel-via-ptree 0 (frames) ind 0 #f)
-	  (zigzag-check "ptree+xramp" ind 0)
-	  (undo 2)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 1.0 0.0)
-	  (cosine-channel-via-ptree 0 (frames) ind 0 #f)
-	  (zigzag-check "ptree+ramp2" ind 0)
-	  (undo 3)
-	  (cosine-channel-via-ptree 0 (frames) ind 0 #f)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree+ptreec" ind 0)
-	  (undo 2)
-	  (scale-channel 0.0 3 4)
-	  (cosine-channel-via-ptree 0 (frames) ind 0 #f)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree+ptreec+zero" ind 0)
-	  (undo 3)
-	  
-	  ;; zero checks
-	  (scale-channel 0.0 3 4)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree+zero" ind 0)
-	  (undo 2)
-	  (scale-channel 0.0 3 4)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ptree-channel (lambda (y) (+ y .1)))
-	  (zigzag-check "ptree2+zero" ind 0)
-	  (undo 3)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ptree-channel (lambda (y) (+ y .1)))
-	  (zigzag-check "ptree2+ramp" ind 0)
-	  (undo 3)
-	  (pad-channel 2 4)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree+pad" ind 0)
-	  (undo 2)
-	  (scale-channel 0.0 3 4)
-	  (cosine-channel-via-ptree 0 (frames) ind 0 #f)
-	  (zigzag-check "ptree+closure+zero" ind 0)
-	  (undo 2)
-	  (ramp-channel 0.0 1.0)
-	  (scale-channel 0.0 2 4)
-	  (cosine-channel-via-ptree 0 (frames) ind 0 #f)
-	  (zigzag-check "ptree+ramp+zero" ind 0)
-	  (undo 3)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (zigzag-check "ptree+ramp+ptree" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ptree+ramp+ptree+ramp" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ptree+ramp+ptree+ramp2" ind 0)
-	  (undo 3)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (zigzag-check "ptree+ramp2+ptree" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ptree+ramp2+ptree+ramp" ind 0)
-	  (undo 2)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (zigzag-check "ptree+ramp3+ptree" ind 0)
-	  (undo 5)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree2+ramp2" ind 0)
-	  (undo 4)
-	  (xramp-channel 0.0 1.0 32)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "ptree2+xramp" ind 0)
-	  (undo)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "ramp2+ptree+xramp" ind 0)
-	  (undo 4)
-	  (xramp-channel 0.0 1.0 32)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (zigzag-check "prx" ind 0)
-	  (undo 3)
-	  (scale-channel 0.0)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (xramp-channel 0.0 1.0 32)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "rxpz" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "r2xpz" ind 0)
-	  (undo 3)
-	  (ramp-channel 0.0 1.0)
-	  (xramp-channel 0.0 1.0 32)
-	  (zigzag-check "xrpz" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "rxrpz" ind 0)
-	  (undo 5)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (ramp-channel 0.0 1.0)
-	  (xramp-channel 0.0 1.0 32)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "rxrp" ind 0)
-	  (undo 4)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (xramp-channel 0.0 1.0 32)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "r2xp" ind 0)
-	  (undo 4)
-	  (scale-channel 0.0)
-	  (ptree-channel (lambda (y) (* y 0.25)))
-	  (xramp-channel 0.0 1.0 32)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "pxpz" ind 0)
-	  (undo 2)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "prpz" ind 0)
-	  (undo)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "pr2pz" ind 0)
-	  (undo)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "pr3pz" ind 0)
-	  (undo 6)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "p2r3" ind 0)
-	  (undo 4)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "prpr" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "rprpr" ind 0)
-	  (undo 2)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "pr2pr" ind 0)
-	  (undo 4)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "prpr2" ind 0)
-	  (undo 5)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "prpr" ind 0)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "rprpr" ind 0)
-	  (undo 5)
-	  (xramp-channel 0.0 1.0 32)
-	  (ramp-channel 0.0 1.0)
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "pr2x" ind 0)
-	  (undo 4)
-	  (xramp-channel 0.0 1.0 32)
-	  (xramp-channel 0.0 1.0 32)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "px2" ind 0)
-	  (undo 3)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (xramp-channel 0.0 1.0 32)
-	  (ramp-channel 0.0 1.0)
-	  (zigzag-check "rxp" ind 0)
-	  (undo 2)
-	  (ramp-channel 0.0 1.0)
-	  (xramp-channel 0.0 1.0 32)
-	  (zigzag-check "xrp" ind 0)
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 32)
-	  (ptree-channel (lambda (y) (* y 0.5)))
-	  (zigzag-check "pxp" ind 0)
-	  (undo 3)
-	  
-	  ;; ramp[n]-ptree[c][zero] or xen checks
 	  (revert-sound ind)
-	  (map-chan (lambda (y) (random 1.0)) 0 10)
-	  (for-each
-	   (lambda (func name twice)
-	     (func)
-	     (zigzag-check "first" ind 0)
-	     (ramp-channel 0.0 1.0)
-	     (zigzag-check name ind 0)
-	     (undo 2)
-	     (scale-channel 0.0)
-	     (func)
-	     (zigzag-check "first-zero" ind 0)
-	     (ramp-channel 0.0 1.0)
-	     (zigzag-check (string-append name "-zero") ind 0)
-	     (undo 3)
-	     (func)
-	     (ramp-channel 0.0 1.0)
-	     (ramp-channel 0.0 1.0)
-	     (zigzag-check (string-append name "2") ind 0)
-	     (undo 3)
-	     (scale-channel 0.0)
-	     (func)
-	     (ramp-channel 0.0 1.0)
-	     (ramp-channel 0.0 1.0)
-	     (zigzag-check (string-append name "2-zero") ind 0)
-	     (undo 4)
-	     (func)
-	     (ramp-channel 0.0 1.0)
-	     (ramp-channel 0.0 1.0)
-	     (ramp-channel 0.0 1.0)
-	     (zigzag-check (string-append name "3") ind 0)
-	     (undo 4)
-	     (scale-channel 0.0)
-	     (func)
-	     (ramp-channel 0.0 1.0)
-	     (ramp-channel 0.0 1.0)
-	     (ramp-channel 0.0 1.0)
-	     (zigzag-check (string-append name "4-zero") ind 0)
-	     (undo 5)
-	     (func)
-	     (xramp-channel 0.0 1.0 32.0)
-	     (zigzag-check (string-append name "x1") ind 0)
-	     (if twice
-		 (begin
-		   (xramp-channel 0.0 1.0 32.0)
-		   (zigzag-check (string-append name "x2") ind 0)
-		   (undo 1)))
-	     (undo 2)
-	     (scale-channel 0.0)
-	     (func)
-	     (xramp-channel 0.0 1.0 32)
-	     (zigzag-check (string-append name "x1-zero") ind 0)
-	     (if twice
-		 (begin
-		   (xramp-channel 0.0 1.0 32.0)
-		   (zigzag-check (string-append name "x2-zero") ind 0)
-		   (undo 1)))
-	     (undo 3)
-	     (ramp-channel 0.0 1.0)
-	     (ramp-channel 0.0 1.0)
-	     (ramp-channel 0.0 1.0)
-	     (func)
-	     (zigzag-check (string-append name "-r3") ind 0)
-	     (undo 4))
-	   (list (lambda () (ptree-channel (lambda (y) (+ y 0.5))))
-		 (lambda () (ptree-channel (lambda (y data forward)
-					     (* y (data 0)))
-					   0 (frames) ind 0 #f #f
-					   (lambda (pos dur)
-					     (vct 0.5))))
-		 )
-	   (list "ramp-ptree" "ramp-ptreec")
-	   (list #t #t))
-	  (close-sound ind))
-	
-	(let ((ind (new-sound "test.snd")))
-	  (insert-silence 0 100)
-	  (map-chan (lambda (y) 1.0))
-	  (cosine-channel-via-ptree)
-	  (delete-sample 10)
-	  (set! (sample 20) .5)
-	  (insert-silence 30 1)
-	  (if (or (fneq (sample 12) .393)
-		  (fneq (sample 0) 0.0)
-		  (fneq (sample 25) .723)
-		  (fneq (sample 30) 0.0)
-		  (fneq (sample 20) 0.5)
-		  (fneq (sample 21) .632)
-		  (fneq (sample 31) .822)
-		  (fneq (sample 50) 1.0))
-	      (snd-display #__line__ ";cosine-chan with edits: ~A"
-			   (map sample (list 12 0 25 30 20 21 31 50))))
-	  (close-sound ind))
-	
-	(let ((ind (new-sound "test.snd")))
-	  (map-chan (lambda (y) 1.0) 0 100)
-	  (ramp-channel 0.0 1.0)
-	  (smooth-channel 0 99)
-	  (let ((orig-data (channel->vct)))
-	    (undo)
-	    (smooth-channel-via-ptree 0 99)
-	    (let ((diff (vct-peak (vct-subtract! orig-data (channel->vct)))))
-	      (if (> diff .00001)
-		  (snd-display #__line__ ";smooth-channel-via-ptree diff: ~A" diff))))
 	  (close-sound ind))
 	
 	(set! (x-axis-style) x-axis-in-beats)
@@ -34253,7 +30916,6 @@ EDITS: 2
 						 (lambda () (reverse-channel))
 						 (lambda () (env-channel '(0 0 1 1)))
 						 (lambda () (map-channel (lambda (y) (* y 2))))
-						 (lambda () (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t))
 						 (lambda () (scan-channel (lambda (y) (> y 1.0))))
 						 (lambda () (pad-channel 0 2000))
 						 (lambda () (vct->channel (vct-fill! (make-vct 1000) .1) 0 1000))
@@ -34270,7 +30932,7 @@ EDITS: 2
 			   (list "1a.snd" "oboe.snd" "storm.snd" away)
 			   (list "1a.snd" "oboe.snd" "storm.snd" "lola.snd"))))))
 	  
-	  (snd-display #__line__ ";         scl    rev    env    map    ptree   scn   pad    wrt    clm    mix    src    del")
+	  (snd-display #__line__ ";         scl    rev    env    map    scn    pad    wrt    clm    mix    src    del")
 	  (snd-display #__line__ ";1a:   ~{~A ~}" (map (lambda (a) (if (< a .005) "   0.0" (format #f "~6,2F" a))) (car data)))
 	  (snd-display #__line__ ";oboe: ~{~A ~}" (map (lambda (a) (if (< a .005) "   0.0" (format #f "~6,2F" a))) (cdar data)))
 	  (snd-display #__line__ ";storm:~{~A ~}" (map (lambda (a) (if (< a .005) "   0.0" (format #f "~6,2F" a))) (caddr data)))
@@ -34301,10 +30963,6 @@ EDITS: 2
 					     (let ((ma (maxamp)))
 					       (env-channel '(0 0 1 1))
 					       (if (fneq (maxamp) ma) (snd-display #__line__ ";bigger env max: ~A ~A" ma (maxamp)))))
-					   (lambda () 
-					     (let ((ma (maxamp)))
-					       (ptree-channel (lambda (y) (+ y .2)) #f #f ind 0 #f #t)
-					       (if (fneq (maxamp) (+ ma .2)) (snd-display #__line__ ";bigger ptree max: ~A ~A" ma (maxamp)))))
 					   (lambda () (pad-channel 0 2000))
 					   (lambda () (pad-channel 1336909605 297671280))
 					   (lambda () (insert-silence (+ (frames ind) 100) 100))
@@ -34492,163 +31150,6 @@ EDITS: 2
 		(set! (squelch-update) #f)
 		(close-sound ind))))
 	
-	(let ((ind-map (view-sound "oboe.snd"))
-	      (ind-ptree (view-sound "oboe.snd")))
-	  (map-channel (lambda (y) (+ y .1)) #f #f ind-map)
-	  (ptree-channel (lambda (y) (+ y .1)) #f #f ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree + .1 differs"))
-	  (undo 1 ind-map)
-	  (undo 1 ind-ptree)
-	  (scale-by 2.0 ind-map)
-	  (scale-by 2.0 ind-ptree)
-	  (map-channel (lambda (y) (+ y .1)) #f #f ind-map)
-	  (ptree-channel (lambda (y) (+ y .1)) #f #f ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree + .1 differs"))
-	  (scale-by 2.0 ind-map)
-	  (scale-by 2.0 ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree + .1 differs"))
-	  (if (and (> (optimization) 0)
-		   (not (string=? (safe-display-edits ind-ptree) (string-append "
-EDITS: 3
-
- (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (scale 0 50828) ; scale-channel 2.000 0 #f [1:2]:
-   (at 0, cp->sounds[0][0:50827, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (ptree[0] 0 50828) ; ptree-channel [2:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000, loc: 0, pos: 0, scl: 2.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (scale 0 50828) ; scale-channel 2.000 0 #f [3:2]:
-   (at 0, cp->sounds[0][0:50827, 2.000, loc: 0, pos: 0, scl: 2.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-"))))
-	      (snd-display #__line__ ";ptree display edits: ~A" (safe-display-edits ind-ptree)))
-	  (revert-sound ind-map)
-	  (revert-sound ind-ptree)
-	  
-	  (map-channel (lambda (y) (* 2.0 (sin y))) #f #f ind-map)
-	  (ptree-channel (lambda (y) (* 2.0 (sin y))) #f #f ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree sin differs"))
-	  (map-channel (lambda (y) (* 2.0 (sin y))) #f #f ind-map)
-	  (ptree-channel (lambda (y) (* 2.0 (sin y))) #f #f ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree sin (2) differs"))
-	  (if (and (> (optimization) 0)
-		   (not (string=? (safe-display-edits ind-ptree) (string-append "
-EDITS: 2
-
- (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (ptree[0] 0 50828) ; ptree-channel [1:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* 2.0 (sin y)))]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (ptree[1] 0 50828) ; ptree-channel [2:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* 2.0 (sin y)))]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-"))))
-	      (snd-display #__line__ ";ptree display: ~A" (safe-display-edits ind-ptree)))
-	  
-	  (revert-sound ind-map)
-	  (revert-sound ind-ptree)
-	  (env-channel '(0 0 1 1 2 0) #f #f ind-map)
-	  (env-channel '(0 0 1 1 2 0) #f #f ind-ptree)
-	  (map-channel (lambda (y) (* y y)) #f #f ind-map)
-	  (ptree-channel (lambda (y) (* y y)) #f #f ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree y*y differs"))
-	  
-	  (revert-sound ind-map)
-	  (revert-sound ind-ptree)
-	  (map-channel (lambda (y) (* y y)) #f #f ind-map)
-	  (ptree-channel (lambda (y) (* y y)) #f #f ind-ptree)
-	  (env-channel '(0 0 1 1 2 0) #f #f ind-map)
-	  (env-channel '(0 0 1 1 2 0) #f #f ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree y*y differs"))
-	  
-	  (revert-sound ind-map)
-	  (revert-sound ind-ptree)
-	  (map-channel (lambda (y) (+ y .1)) 100 100 ind-map)
-	  (ptree-channel (lambda (y) (+ y .1)) 100 100 ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree[100] + .1 differs"))
-	  (scale-by 2.0 ind-map)
-	  (scale-by 2.0 ind-ptree)
-	  (map-channel (lambda (y) (+ y .2))  1000 100 ind-map)
-	  (ptree-channel (lambda (y) (+ y .2)) 1000 100 ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree[1000] + .2 differs"))
-	  (if (and (> (optimization) 0)
-		   (not (string=? (safe-display-edits ind-ptree) (string-append "
-EDITS: 3
-
- (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (ptree[0] 100 100) ; ptree-channel [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (scale 0 50828) ; scale-channel 2.000 0 #f [2:4]:
-   (at 0, cp->sounds[0][0:99, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
-   (at 200, cp->sounds[0][200:50827, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (ptree[1] 1000 100) ; ptree-channel [3:6]:
-   (at 0, cp->sounds[0][0:99, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 100, cp->sounds[0][100:199, 2.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
-   (at 200, cp->sounds[0][200:999, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 1000, cp->sounds[0][1000:1099, 1.000, loc: 1, pos: 0, scl: 2.000, code: (lambda (y) (+ y 0.2))]) [file: " cwd "oboe.snd[0]]
-   (at 1100, cp->sounds[0][1100:50827, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-"))))
-	      (snd-display #__line__ ";ptree[1000] display: ~A" (safe-display-edits ind-ptree)))
-	  
-	  (env-channel '(0 0 1 1 2 0) 2000 1000 ind-map)
-	  (env-channel '(0 0 1 1 2 0) 2000 1000 ind-ptree)
-	  (map-channel (lambda (y) (+ y .3))  4000 100 ind-map)
-	  (ptree-channel (lambda (y) (+ y .3)) 4000 100 ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree[2000] + .2 differs"))
-	  (map-channel (lambda (y) (+ y .1)) 0 3200 ind-map)
-	  (ptree-channel (lambda (y) (+ y .1)) 0 3200 ind-ptree)
-	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
-	      (snd-display #__line__ ";ptree[3200] + .2 differs"))
-	  (undo 1 ind-ptree)
-	  (let ((reader (make-sampler (- (frames) 1) ind-ptree 0 -1)))
-	    (map-channel (lambda (y) (read-sample reader)) 0 (frames) ind-ptree))
-	  (let ((reader (make-sampler (- (frames) 1) ind-ptree 0 -1)))
-	    (map-channel (lambda (y) (read-sample reader)) 0 (frames) ind-ptree))
-	  (scan-channel (let ((old-reader (make-sampler 0 ind-ptree 0 1 (- (edit-position ind-ptree 0) 2)))
-			      (pos 0))
-			  (lambda (y)
-			    (let ((val (read-sample old-reader)))
-			      (if (fneq y val)
-				  (begin
-				    (display (format #f "~%;trouble in reverse ptree read at ~D ~A ~A" pos val y))
-				    #t)
-				  (begin
-				    (set! pos (+ 1 pos))
-				    #f))))))
-	  (close-sound ind-map)
-	  (close-sound ind-ptree))
-	
 	(let ((ind (new-sound "fmv.snd" mus-next mus-bfloat)))
 	  (set! (sinc-width) 10)
 	  (pad-channel 0 1000 ind)
@@ -34748,22 +31249,6 @@ EDITS: 3
 	  (scale-by 0.5)
 	  (amp-envs-equal? ind 0 (edit-position) (- (edit-position) 2) .001)
 	  (revert-sound ind)
-	  (ptree-channel (lambda (y) y) #f #f ind 0 0 #t)
-	  (amp-envs-equal? ind 0 (edit-position) (- (edit-position) 1) .001)
-	  (close-sound ind))
-	(let ((ind (open-sound "storm.snd")))
-	  (ptree-channel (lambda (y) (* y .5)) 1000 123000 ind 0 0 #t) ; get the amp-env code too
-	  (pad-channel 0 10000)
-	  (ptree-channel (lambda (y) .1))
-	  (let ((reader (make-sampler 1000 ind 0 -1))
-		(happy #t))
-	    (do ((i 0 (+ 1 i)))
-		((or (not happy) (= i 10)))
-	      (let ((val (reader)))
-		(if (fneq val .1)
-		    (begin
-		      (snd-display #__line__ ";ptree previous: ~A ~A" i val)
-		      (set! happy #f))))))
 	  (close-sound ind))
 	
      	;; recursion tests
@@ -34890,19 +31375,6 @@ EDITS: 3
 	  
 	  (close-sound ind))
 	
-	(let ((ind (new-sound "test.snd")))
-	  (pad-channel 0 100000) ; force tempfile in fallback
-	  (ptree-channel (lambda (y) (if (current-input-port) 1.0 0.0)))
-	  (if (fneq (maxamp ind) 1.0)
-	      (snd-display #__line__ ";ptree fallback: ~A" (maxamp ind)))
-	  (undo)
-	  (ptree-channel (lambda (y data dir)
-			   (if (current-input-port) (* y 0.5) (* y (data 0))))
-			 0 #f ind 0 #f #f
-			 (lambda (pos dur)
-			   (vct 1.0)))
-	  (close-sound ind))
-	
 	(let ((ind0 (open-sound "oboe.snd"))
 	      (ind1 (open-sound "2.snd"))
 	      (ind2 (open-sound "4.aiff")))
@@ -34926,35 +31398,6 @@ EDITS: 3
 	  (close-sound ind0)
 	  (close-sound ind1)
 	  (close-sound ind2))
-	
-	(let ((ind (open-sound "oboe.snd")))
-	  (env-channel '(0 0 1 1 2 0) 1000 10000)
-	  (ptree-channel (lambda (y) (* y 2)) 20000 10000)
-	  (ramp-channel .2 .6 40000 10000)
-	  (scale-channel .5 0 500)
-	  (if (> (optimization) 0)
-	      (check-edit-tree '((0 0 0 499 0.5 0.0 0.0 0) (500 0 500 999 1.0 0.0 0.0 0) (1000 0 1000 5999 1.0 0.0 1.99999994947575e-4 4) (6000 0 6000 10999 1.0 1.0 -2.00040012714453e-4 4) (11000 0 11000 19999 1.0 0.0 0.0 0) (20000 0 20000 29999 1.0 0.0 0.0 16) (30000 0 30000 39999 1.0 0.0 0.0 0) (40000 0 40000 49999 1.0 0.200000002980232 4.00040007662028e-5 4) (50000 0 50000 50827 1.0 0.0 0.0 0) (50828 -2 0 0 0.0 0.0 0.0 0))
-			       #f "no-overlaps"))
-	  (revert-sound ind)
-	  (pad-channel 0 1000)
-	  (ptree-channel (lambda (y) (+ y .1)) 0 2000)
-	  (let ((val (sample 100)))
-	    (if (fneq val .1)
-		(snd-display #__line__ ";pad+ptree: ~A" val)))
-	  (undo 2)
-	  (pad-channel 0 2000)
-	  (ptree-channel (lambda (y) (+ y .1)) 1000 200)
-	  (let ((val (sample 1100)))
-	    (if (fneq val .1)
-		(snd-display #__line__ ";pad+ptree(2): ~A" val)))
-	  (undo 2)
-	  (pad-channel 1000 1000)
-	  (ptree-channel (lambda (y) (+ y .1)) 0 1500)
-	  (let ((val (sample 1100)))
-	    (if (fneq val .1)
-		(snd-display #__line__ ";pad+ptree(3): ~A" val)))
-	  (undo 2)
-	  (close-sound ind))
 	
 	(catch #t
 	       (lambda ()
@@ -34989,17 +31432,10 @@ EDITS: 3
 	  (delete-samples 2 3 ind 0)
 	  (env-channel '(0 0 1 1 2 0) 0 (frames ind 1) ind 1)
 	  (swap-channels)
-	  (if (not (= (frames ind 1) 11)) (snd-display #__line__ ";frames swapped: ~A" (frames ind 1)))
-	  (if (not (vequal (channel->vct 0 (frames ind 0) ind 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.400 0.300 0.200 0.100 0.000)))
-	      (snd-display #__line__ ";swapped env: ~A" (channel->vct 0 (frames ind 0) ind 0)))
 	  (undo 2 ind 0)
 	  (undo 2 ind 1)
 	  (delete-samples 2 7 ind 0)
 	  (swap-channels ind 0 ind 1 5 4)
-	  (if (not (vequal (channel->vct 0 10 ind 0) (vct 0.500 0.500 0.500 0.500 0.000 0.500 0.500 0.500 0.500 0.000)))
-	      (snd-display #__line__ ";partial swap 1: ~A" (channel->vct 0 10 ind 0)))
-	  (if (not (vequal (channel->vct 0 10 ind 1) (vct 0.500 0.500 0.500 0.500 0.500 0.000 0.000 0.000 0.000 0.500)))
-	      (snd-display #__line__ ";partial swap 2: ~A" (channel->vct 0 10 ind 1)))
 	  (revert-sound ind)
 	  (let ((m0 (add-mark 3 ind 0))
 		(m1 (add-mark 4 ind 1))
@@ -35089,56 +31525,6 @@ EDITS: 1
 	  (check-back-and-forth ind "ramp 10" (vct 0.000 0.001 0.008 0.027 0.064 0.125 0.216 0.343 0.512 0.729 1.000))
 	  (undo 3)
 	  
-	  
-	  ;; -------- ramp+ptree
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (check-back-and-forth ind "ramp+ptree 1" (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800 2.000))
-	  (scale-channel .5)
-	  (check-back-and-forth ind "ramp+ptree 2" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
-	  (ptree-channel (lambda (y) (+ y .5)))
-	  (check-back-and-forth ind "ramp+ptree 3" (vct 0.500 0.600 0.700 0.800 0.900 1.000 1.100 1.200 1.300 1.400 1.500))
-	  (undo 4)
-	  (env-channel '(0 0 1 1 2 0))
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (check-back-and-forth ind "ramp+ptree 4" (vct 0.000 0.400 0.800 1.200 1.600 2.000 1.600 1.200 0.800 0.400 0.000))
-	  (undo 2)
-	  (scale-channel .5)
-	  (env-channel '(0 0 1 1 2 0))
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (check-back-and-forth ind "ramp+ptree 5" (vct 0.000 0.200 0.400 0.600 0.800 1.000 0.800 0.600 0.400 0.200 0.000))
-	  (scale-by .5)
-	  (check-back-and-forth ind "ramp+ptree 6" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.400 0.300 0.200 0.100 0.000))
-	  (undo 4)
-	  (ramp-channel 0.0 1.0)
-	  (scale-channel 0.5)
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (check-back-and-forth ind "ramp+ptree 7" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
-	  (scale-channel 0.5)
-	  (check-back-and-forth ind "ramp+ptree 8" (vct 0.000 0.050 0.100 0.150 0.200 0.250 0.300 0.350 0.400 0.450 0.500))
-	  (undo 4)
-	  (ramp-channel 0.0 1.0 0 5)
-	  (ptree-channel (lambda (y) (* y 2.0)) 3 3)
-	  (check-back-and-forth ind "ramp+ptree 9" (vct 0.000 0.250 0.500 1.500 2.000 2.000 1.000 1.000 1.000 1.000 1.000))
-	  (undo 2)
-	  (ramp-channel 0.0 1.0 0 5)
-	  (ptree-channel (lambda (y) (* y 2.0)) 0 3)
-	  (check-back-and-forth ind "ramp+ptree 10" (vct 0.000 0.500 1.000 0.750 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
-	  (undo 2)
-	  (ramp-channel 1.0 0.0 5 5)
-	  (ptree-channel (lambda (y) (* y 2.0)) 3 4)
-	  (check-back-and-forth ind "ramp+ptree 11" (vct 1.000 1.000 1.000 2.000 2.000 2.000 1.500 0.500 0.250 0.000 1.000))
-	  (undo 2)
-	  
-	  ;; ramp+scl (checking split loc)
-	  (ramp-channel 0.0 1.0 0 5)
-	  (scale-channel 0.5 3 3)
-	  (check-back-and-forth ind "ramp+scl 12" (vct 0.000 0.250 0.500 0.375 0.500 0.500 1.000 1.000 1.000 1.000 1.000))
-	  (undo 2)
-	  (ramp-channel 1.0 0.0 5 5)
-	  (scale-channel 0.5 4 3)
-	  (check-back-and-forth ind "ramp+scl 13" (vct 1.000 1.000 1.000 1.000 0.500 0.500 0.375 0.500 0.250 0.000 1.000))
-	  (undo 2)
 	  
 	  ;; ramp+scl (checking split loc)
 	  
@@ -35250,234 +31636,7 @@ EDITS: 1
 	      (lambda (scl beg dur)
 		(scale-channel scl beg dur))
 	      (lambda (scl beg dur)
-		(ptree-channel (lambda (y) (* y scl)) beg dur))
-	      (lambda (scl beg dur)
-		(map-channel (lambda (y) (* y scl)) beg dur))
-	      (lambda (scl beg dur)
-		(ptree-channel (lambda (y data dir)
-				 (* y (data 0))) 
-			       beg dur ind 0 #f #f (lambda (pos dur) (vct scl)))))))
-	  
-	  ;; -------- ramp+ptree-closure
-	  (ramp-channel 0.0 1.0)
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "ramp+ptreec 1" (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800 2.000))
-	  (scale-channel .5)
-	  (check-back-and-forth ind "ramp+ptreec 2" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
-	  (ptree-channel (lambda (y data dir) 
-			   (+ y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 0.5)))
-	  (check-back-and-forth ind "ramp+ptreec 3" (vct 0.500 0.600 0.700 0.800 0.900 1.000 1.100 1.200 1.300 1.400 1.500))
-	  (undo 4)
-	  (env-channel '(0 0 1 1 2 0))
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "ramp+ptreec 4" (vct 0.000 0.400 0.800 1.200 1.600 2.000 1.600 1.200 0.800 0.400 0.000))
-	  (undo 2)
-	  (scale-channel .5)
-	  (env-channel '(0 0 1 1 2 0))
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "ramp+ptreec 5" (vct 0.000 0.200 0.400 0.600 0.800 1.000 0.800 0.600 0.400 0.200 0.000))
-	  (scale-by .5)
-	  (check-back-and-forth ind "ramp+ptreec 6" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.400 0.300 0.200 0.100 0.000))
-	  (undo 4)
-	  (ramp-channel 0.0 1.0)
-	  (scale-channel 0.5)
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "ramp+ptreec 7" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
-	  (scale-channel 0.5)
-	  (check-back-and-forth ind "ramp+ptreec 8" (vct 0.000 0.050 0.100 0.150 0.200 0.250 0.300 0.350 0.400 0.450 0.500))
-	  (undo 4)
-	  
-	  
-	  ;; -------- xramp+ptree+closure
-	  (xramp-channel 0.0 1.0 .0325)
-	  (check-back-and-forth ind "xramp(+ptree+closure) 0" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "xramp+ptree-closure 1" (vct-scale! (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000) 2.0))
-	  (scale-channel .5)
-	  (check-back-and-forth ind "xramp+ptree-closure 2" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
-	  (ptree-channel (lambda (y data dir) 
-			   (+ y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 0.5)))
-	  (check-back-and-forth ind "xramp+ptree-closure 3" (vct-offset! (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000) 0.5))
-	  (undo 4)
-	  (env-sound '(0 0 1 1 2 0) 0 11 .0325)
-	  (check-back-and-forth ind "xramp(+ptree-closure) 4" (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000))
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "xramp+ptree-closure 4" (vct-scale! (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000) 2.0))
-	  (undo 2)
-	  (scale-channel .5)
-	  (env-sound '(0 0 1 1 2 0) 0 11 .0325)
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "xramp+ptree-closure 5" (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000))
-	  (scale-by .5)
-	  (check-back-and-forth ind "ramp+ptree-closure 6" (vct-scale! (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000) 0.5))
-	  (undo 4)
-	  (xramp-channel 0.0 1.0 .0325)
-	  (scale-channel 0.5)
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "xramp+ptree-closure 7" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
-	  (scale-channel 0.5)
-	  (check-back-and-forth ind "ramp+ptree-closure 8" (vct-scale! (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000) 0.5))
-	  (undo 4)
-	  (xramp-channel 0.0 1.0 .0325 0 5)
-	  (check-back-and-forth ind "xramp(+ptree-closure) 9" (vct 0.000 0.595 0.847 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 3 3 ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "xramp+ptree-closure 9" (vct 0.000 0.595 0.847 1.909 2.000 2.000 1.000 1.000 1.000 1.000 1.000))
-	  (undo 2)
-	  (xramp-channel 0.0 1.0 .0325 0 5)
-	  (check-back-and-forth ind "xramp(+ptree-closure) 10" (vct 0.000 0.595 0.847 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 0 3 ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "xramp+ptree-closure 10" (vct 0.000 1.189 1.695 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
-	  (undo 2)
-	  (xramp-channel 1.0 0.0 .0325 5 5)
-	  (check-back-and-forth ind "xramp(+ptree-closure) 11" (vct 1.000 1.000 1.000 1.000 1.000 1.000 0.954 0.847 0.595 0.000 1.000))
-	  (ptree-channel (lambda (y data dir) 
-			   (* y (data 0))) 
-			 3 4 ind 0 #f #f (lambda (pos dur) (vct 2.0)))
-	  (check-back-and-forth ind "xramp+ptree-closure 11" (vct 1.000 1.000 1.000 2.000 2.000 2.000 1.909 0.847 0.595 0.000 1.000))
-	  (undo 2)
-	  
-	  ;; -------- ptree+ramp
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (ramp-channel 0.0 1.0)
-	  (check-back-and-forth ind "ptree+ramp 1" (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800 2.000))
-	  (scale-channel .5)
-	  (check-back-and-forth ind "ptree+ramp 2" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
-	  (undo 3)
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (env-channel '(0 0 1 1 2 0))
-	  (check-back-and-forth ind "ptree+ramp 3" (vct 0.000 0.400 0.800 1.200 1.600 2.000 1.600 1.200 0.800 0.400 0.000))
-	  (undo 2)
-	  (scale-channel .5)
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (env-channel '(0 0 1 1 2 0))
-	  (check-back-and-forth ind "ptree+ramp 4" (vct 0.000 0.200 0.400 0.600 0.800 1.000 0.800 0.600 0.400 0.200 0.000))
-	  (scale-by .5)
-	  (check-back-and-forth ind "ptree+ramp 5" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.400 0.300 0.200 0.100 0.000))
-	  (undo 4)
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (scale-channel 0.5)
-	  (ramp-channel 0.0 1.0)
-	  (check-back-and-forth ind "ptree+ramp 6" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
-	  (undo 3)
-	  ;; try on-air cases
-	  (undo 1)
-	  (ptree-channel (lambda (y) 2.0))
-	  (ramp-channel 0.0 1.0)
-	  (check-back-and-forth ind "ptree+ramp air 1" (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800 2.000))
-	  (scale-channel .5)
-	  (check-back-and-forth ind "ptree+ramp air 2" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
-	  (undo 3)
-	  (ptree-channel (lambda (y) 2.0))
-	  (env-channel '(0 0 1 1 2 0))
-	  (check-back-and-forth ind "ptree+ramp air 3" (vct 0.000 0.400 0.800 1.200 1.600 2.000 1.600 1.200 0.800 0.400 0.000))
-	  (undo 2)
-	  (ptree-channel (lambda (y) 2.0))
-	  (scale-channel 0.5)
-	  (ramp-channel 0.0 1.0)
-	  (check-back-and-forth ind "ptree+ramp air 4" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
-	  (undo 3)
-	  
-	  ;; -------- xramp+ptree
-	  (map-chan (lambda (y) 1.0))
-	  
-	  (ptree-channel (lambda (y) y))
-	  (xramp-channel 0.0 1.0 .0325)
-	  (let ((orig-data (channel->vct)))
-	    (undo 2)
-	    (xramp-channel 0.0 1.0 .0325)
-	    (if (not (vequal orig-data (channel->vct)))
-		(snd-display #__line__ ";xramp cases: ~A ~A" orig-data (channel->vct)))
-	    (check-back-and-forth ind "xramp(+ptree) 0" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
-	    (ptree-channel (lambda (y) (* y 2.0)))
-	    (check-back-and-forth ind "xramp+ptree 1" (vct-scale! (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000) 2.0))
-	    (scale-channel .5)
-	    (check-back-and-forth ind "xramp+ptree 2" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
-	    (ptree-channel (lambda (y) (+ y .5)))
-	    (check-back-and-forth ind "xramp+ptree 3" (vct-offset! (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000) 0.5))
-	    (undo 4)
-	    (ptree-channel (lambda (y) y))
-	    (env-sound '(0 0 1 1 2 0) 0 11 .0325)
-	    (set! orig-data (channel->vct))
-	    (undo 2)
-	    (env-sound '(0 0 1 1 2 0) 0 11 .0325)
-	    (if (not (vequal orig-data (channel->vct)))
-		(snd-display #__line__ ";xramp cases 1: ~A ~A" orig-data (channel->vct)))
-	    (check-back-and-forth ind "xramp(+ptree) 4" (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000))
-	    (ptree-channel (lambda (y) (* y 2.0)))
-	    (check-back-and-forth ind "xramp+ptree 4" (vct-scale! (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000) 2.0))
-	    (undo 2)
-	    (scale-channel .5)
-	    (env-sound '(0 0 1 1 2 0) 0 11 .0325)
-	    (ptree-channel (lambda (y) (* y 2.0)))
-	    (check-back-and-forth ind "xramp+ptree 5" (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000))
-	    (scale-by .5)
-	    (check-back-and-forth ind "ramp+ptree 6" (vct-scale! (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000) 0.5))
-	    (undo 4)
-	    (xramp-channel 0.0 1.0 .0325)
-	    (scale-channel 0.5)
-	    (ptree-channel (lambda (y) (* y 2.0)))
-	    (check-back-and-forth ind "xramp+ptree 7" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
-	    (scale-channel 0.5)
-	    (check-back-and-forth ind "ramp+ptree 8" (vct-scale! (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000) 0.5))
-	    (undo 4)
-	    (xramp-channel 0.0 1.0 .0325 0 5)
-	    (check-back-and-forth ind "xramp(+ptree) 9" (vct 0.000 0.595 0.847 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
-	    (ptree-channel (lambda (y) (* y 2.0)) 3 3)
-	    (check-back-and-forth ind "xramp+ptree 9" (vct 0.000 0.595 0.847 1.909 2.000 2.000 1.000 1.000 1.000 1.000 1.000))
-	    (undo 2)
-	    (xramp-channel 0.0 1.0 .0325 0 5)
-	    (check-back-and-forth ind "xramp(+ptree) 10" (vct 0.000 0.595 0.847 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
-	    (ptree-channel (lambda (y) (* y 2.0)) 0 3)
-	    (check-back-and-forth ind "xramp+ptree 10" (vct 0.000 1.189 1.695 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
-	    (undo 2)
-	    (xramp-channel 1.0 0.0 .0325 5 5)
-	    (check-back-and-forth ind "xramp(+ptree) 11" (vct 1.000 1.000 1.000 1.000 1.000 1.000 0.954 0.847 0.595 0.000 1.000))
-	    (ptree-channel (lambda (y) (* y 2.0)) 3 4)
-	    (check-back-and-forth ind "xramp+ptree 11" (vct 1.000 1.000 1.000 2.000 2.000 2.000 1.909 0.847 0.595 0.000 1.000))
-	    (undo 2))
-	  
-	  ;; -------- ptree chains
-	  (map-chan (lambda (y) 1.0))
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (check-back-and-forth ind "ptree+ptree 1" (vct 4.000 4.000 4.000 4.000 4.000 4.000 4.000 4.000 4.000 4.000 4.000))
-	  (undo)
-	  (ptree-channel (lambda (y) (let ((a (* y .5))) (+ y a))))
-	  (check-back-and-forth ind "ptree+ptree 2" (vct 3.000 3.000 3.000 3.000 3.000 3.000 3.000 3.000 3.000 3.000 3.000))
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (check-back-and-forth ind "ptree+ptree 3" (vct 6.000 6.000 6.000 6.000 6.000 6.000 6.000 6.000 6.000 6.000 6.000))
-	  (undo 3)
-	  (scale-channel 2.0)
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (scale-channel 0.5)
-	  (ptree-channel (lambda (y) (* y 2.0)))
-	  (check-back-and-forth ind "ptree+ptree 4" (vct 4.000 4.000 4.000 4.000 4.000 4.000 4.000 4.000 4.000 4.000 4.000))
-	  (scale-channel 0.5)
-	  (check-back-and-forth ind "ptree+ptree 4" (vct 2.000 2.000 2.000 2.000 2.000 2.000 2.000 2.000 2.000 2.000 2.000))
-	  (undo 5)
-	  
+		(map-channel (lambda (y) (* y scl)) beg dur)))))
 	  (close-sound ind)
 	  )	
 	
@@ -35539,7 +31698,7 @@ EDITS: 1
 						(exact->inexact (/ (+ (hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1)))
 								   (max 1 (+ (hundred (- mid-time start-time)) (hundred (- end-time mid-time)))))))))))))))))
 	       
-	       (list "scale" "set!" "env" "env-exp" "env-step" "delete" "insert" "ptree" "pad"
+	       (list "scale" "set!" "env" "env-exp" "env-step" "delete" "insert" "pad"
 		     "mix-no-tag" "mix-tag" "mix-amp" "mix-scale" "src-2" "src" 
 		     "filter" "filter-sym" "f10" "f10sym" "clm" 
 		     "reverse" 
@@ -35559,8 +31718,6 @@ EDITS: 1
 		  (delete-sample (* 10 i)))
 		(lambda (snd i)
 		  (insert-sample (* 10 i) .5))
-		(lambda (snd i)
-		  (ptree-channel (lambda (y) (* y .999))))
 		(lambda (snd i)
 		  (pad-channel (* 10 i) (* 10 i)))
 		(lambda (snd i)
@@ -35717,13 +31874,6 @@ EDITS: 1
 		  (snd-display #__line__ ";map len edpos: ~A ~A" len (frames ind 0)))
 	      (undo)
 	      
-	      (ptree-channel (lambda (y) y) 0 #f ind 0 edpos)
-	      (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
-		(if diff (snd-display #__line__ ";1 edpos ptree 1 diff: ~A" diff)))
-	      (if (not (= (frames ind 0) len))
-		  (snd-display #__line__ ";ptree len edpos: ~A ~A" len (frames ind 0)))
-	      (undo)
-	      
 	      (smooth-channel 0 len ind 0 edpos)
 	      (if (not (= (frames ind 0) len))
 		  (snd-display #__line__ ";smooth len edpos: ~A ~A" len (frames ind 0)))
@@ -35786,11 +31936,6 @@ EDITS: 1
 	    (if (fneq (maxamp ind 0) .09) (snd-display #__line__ ";env edpos max: ~A" (maxamp ind 0)))
 	    (undo)
 	    
-	    (ptree-channel (lambda (y) y) 0 5 ind 0 edpos)
-	    (if (not (= (frames ind 0) 10)) (snd-display #__line__ ";ptree edpos len: ~A" (frames ind 0)))
-	    (if (fneq (maxamp ind 0) .09) (snd-display #__line__ ";ptree edpos max: ~A" (maxamp ind 0)))
-	    (undo)
-	    
 	    (smooth-channel 0 5 ind 0 edpos)
 	    (if (not (= (frames ind 0) 10)) (snd-display #__line__ ";smooth edpos len: ~A" (frames ind 0)))
 	    (if (fneq (maxamp ind 0) .09) (snd-display #__line__ ";smooth edpos max: ~A" (maxamp ind 0)))
@@ -35835,85 +31980,8 @@ EDITS: 1
 	    (if (not (vequal (channel->vct 0 20) (vct 0.000 0.053 0.105 0.158 0.211 0.263 0.316 0.368 0.421 0.474 0.526 0.579 0.632 0.684 0.737 0.789 0.842 0.895 0.947 1.000)))
 		(snd-display #__line__ ";env edpos: ~A" (channel->vct 0 20)))
 	    (undo)
-	    (ptree-channel (lambda (y) 0.5) 0 #f ind 0 edpos)
-	    (if (not (= (frames ind 0) 20)) (snd-display #__line__ ";ptree edpos len: ~A" (frames ind 0)))
-	    (if (not (vequal (channel->vct 0 20) (make-vct 20 0.5))) (snd-display #__line__ ";ptree edpos: ~A" (channel->vct 0 20)))
-	    (undo)
 	    (close-sound ind)))
 	
-	;; virtual filter as ptree
-	(let ((ind (new-sound "fmv.snd" :size 20)))
-	  (set! (sample 5) 1.0)
-	  
-	  ;; forward all
-	  (filter-channel (vct 1.0 0.5 0.25))
-	  (let ((data (channel->vct 0 20 ind 0)))
-	    (undo)
-	    (virtual-filter-channel (vct 1.0 0.5 0.25) 0 #f ind 0 1)
-	    (let ((vdata (channel->vct 0 20 ind 0)))
-	      (undo)
-	      (if (not (vequal data vdata))
-		  (snd-display #__line__ ";virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
-	  
-	  ;; reverse all
-	  (filter-channel (vct 0.25 0.5 1.0))
-	  (reverse-sound)
-	  (let ((data (channel->vct 3 20))) ; filter-channel assumes ring
-	    (undo 2)
-	    (virtual-filter-channel (vct 0.25 0.5 1.0) 0 #f ind 0 1)
-	    (reverse-sound)
-	    (let ((vdata (channel->vct 0 20)))
-	      (undo 2)
-	      (if (not (vequal data vdata))
-		  (snd-display #__line__ ";reverse virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
-	  
-	  ;; insert block
-	  (filter-channel (vct 0.25 0.5 1.0 0.9 0.6 0.3))
-	  (pad-channel 8 5)
-	  (let ((data (channel->vct 0 20)))
-	    (undo 2)
-	    (virtual-filter-channel (vct 0.25 0.5 1.0 0.9 0.6 0.3) 0 #f ind 0 1)
-	    (pad-channel 8 5)
-	    (let ((vdata (channel->vct 0 20)))
-	      (undo 2)
-	      (if (not (vequal data vdata))
-		  (snd-display #__line__ ";pad virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
-	  
-	  ;; delete block
-	  (filter-channel (vct 0.25 0.5 1.0 0.9 0.6 0.3))
-	  (delete-samples 7 2)
-	  (let ((data (channel->vct 0 20)))
-	    (undo 2)
-	    (virtual-filter-channel (vct 0.25 0.5 1.0 0.9 0.6 0.3) 0 #f ind 0 1)
-	    (delete-samples 7 2)
-	    (let ((vdata (channel->vct 0 20)))
-	      (undo 2)
-	      (if (not (vequal data vdata))
-		  (snd-display #__line__ ";delete virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
-	  
-	  ;; forward partial
-	  (filter-channel (vct 1.0 0.5 0.25) 3 3 10) ; 3=order! + pre-ring?? -- this is too clever
-	  (let ((data (channel->vct 0 20)))
-	    (undo)
-	    (virtual-filter-channel (vct 1.0 0.5 0.25) 3 10 ind 0 1)
-	    (let ((vdata (channel->vct 2 20)))
-	      (undo)
-	      (if (not (vequal data vdata))
-		  (snd-display #__line__ ";partial virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
-	  
-	  ;; forward partial reversed
-	  (filter-channel (vct 1.0 0.5 0.25 .6 .3) 5 2 10)
-	  (reverse-sound)
-	  (let ((data (channel->vct 2 20)))
-	    (undo 2)
-	    (virtual-filter-channel (vct 1.0 0.5 0.25 .6 .3) 2 10 ind 0 1)
-	    (reverse-sound)
-	    (let ((vdata (channel->vct 0 20)))
-	      (undo)
-	      (if (not (vequal data vdata))
-		  (snd-display #__line__ ";partial virtual filter reversed: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
-	  
-	  (close-sound ind))
 	
 	(let ((ind (new-sound "fmv.snd" :size 20)))
 	  (set! (sample 5) 1.0)
@@ -36471,18 +32539,6 @@ EDITS: 1
       (xramp-channel 0.000 1.000 32.000 0 #f sfile 0 #f)
 "))
 	    (snd-display #__line__ ";file->string: ~A" str)))
-      (let ((old-opt (optimization)))
-	(set! (optimization) 5)
-	(if (>= (optimization) 5)
-	    (begin
-	      (ptree-channel (lambda (y) (* y 2)))
-	      (save-edit-history "hiho.scm")
-	      (revert-sound nind)
-	      (set! sfile nind)
-	      (load (string-append cwd "hiho.scm"))
-	      (if (not (equal? (edit-fragment 1) '("ptree-channel" "ptree" 0 50828)))
-		  (snd-display #__line__ ";save-edit-history ptree 1: ~A?" (edit-fragment 1)))))
-	(set! (optimization) old-opt))
       (close-sound nind))
     
     (add-sound-file-extension "ogg")
@@ -36782,7 +32838,7 @@ EDITS: 1
 	(lambda (ind) (set! (sample 10 ind 0) .5) (scale-channel .5))
 	(lambda (ind) (vct->channel (make-vct 10 .5) 10 5 ind 0) (pad-channel 12 5 ind 0))
 	(lambda (ind) (map-channel (lambda (y) 1.0)) (env-channel '(0 0 1 1) 0 11 ind 0))
-	(lambda (ind) (ptree-channel (lambda (y) (+ y .1))))
+	(lambda (ind) (map-channel (lambda (y) (+ y .1))))
 	
 	;; map-channel as backup
 	(lambda (ind)
@@ -37102,27 +33158,6 @@ EDITS: 1
 	  (func ind 0)
 	  (if (fneq (sample 4000) 0.0) (snd-display #__line__ ";edit-list function 7g: ~A" (sample 4000))))
 	(revert-sound ind)
-	
-	;; ---- simple ptree
-	
-	(let ((old-opt (optimization)))
-	  (set! (optimization) 6)
-	  (if (> (optimization) 0)
-	      (begin
-		(ptree-channel (lambda (y) (+ y .1)))
-		(if (fneq (maxamp) 0.247) (snd-display #__line__ ";edit-list ptree: ~A" (maxamp)))
-		(let ((func (edit-list->function)))
-		  (if (not (procedure? func)) 
-		      (snd-display #__line__ ";edit-list->function 8: ~A" func)
-		      (begin
-			(if (not (string=? (object->string (procedure-source func)) 
-					   "(lambda (snd chn) (ptree-channel (lambda (y) (+ y 0.1)) 0 #f snd chn))"))
-			    (snd-display #__line__ ";edit-list->function 8: ~A" (object->string (procedure-source func))))
-			(func ind 0)
-			(let ((mx (maxamp)))
-			  (if (fneq mx 0.347) (snd-display #__line__ ";edit-list->function called (8): ~A" mx))))))
-		(revert-sound ind)))
-	  (set! (optimization) old-opt))
 	
 	;; ---- simple 1 sample insert
 	(insert-sample 100 .1)
@@ -37669,9 +33704,6 @@ EDITS: 1
 		      (lambda () (expsnd '(0 1 1 2)))
 		      (lambda () (env-sound-interp '(0 0 1 1 2 0) 2.0))
 		      (lambda () (add-notes '(("1a.snd") ("pistol.snd" 1.0 2.0))))
-		      (lambda () (compand-channel))
-		      (lambda () (smooth-channel-via-ptree))
-		      (lambda () (ring-modulate-channel 300))
 		      (lambda () (filtered-env '(0 0 1 1 2 0)))
 		      (lambda () (reverse-by-blocks .1))
 		      (lambda () (reverse-within-blocks .1))
@@ -37742,9 +33774,6 @@ EDITS: 1
 		      "(lambda (snd chn) (expsnd '(0 1 1 2) snd chn))"
 		      "(lambda (snd chn) (env-sound-interp '(0 0 1 1 2 0) 2.0 snd chn))"
 		      "(lambda (snd chn) (add-notes '((\"1a.snd\") (\"pistol.snd\" 1.0 2.0)) snd chn))"
-		      "(lambda (snd chn) (compand-channel 0 #f snd chn))"
-		      "(lambda (snd chn) (smooth-channel-via-ptree 0 #f snd chn))"
-		      "(lambda (snd chn) (ring-modulate-channel 300 0 #f snd chn))"
 		      "(lambda (snd chn) (filtered-env '(0 0 1 1 2 0) snd chn))"
 		      "(lambda (snd chn) (reverse-by-blocks 0.1 snd chn))"
 		      "(lambda (snd chn) (reverse-within-blocks 0.1 snd chn))"
@@ -46492,7 +42521,8 @@ EDITS: 1
 	  
 	  (run (lambda ()
 		 (define (hi a) (+ a 1))
-		 (display "---------------------------------------------------------------") (display #\newline)
+		 (newline)
+		 (display "---------------------------------------------------------------") (newline)
 		 (display 3) (display .14) (display "15") (display #\1) (display #f) 
 		 (display osc) (display vi) (display vf) (display v) (display vv) (display vc) (display sm)
 		 (display mxr) (display sd) (display vi1) (display vv1) (display vc1)
@@ -46503,7 +42533,9 @@ EDITS: 1
 		 (call/cc (lambda (hiho) (if #f (hiho) (display hiho))))
 		 (call-with-current-continuation (lambda (hiho) (if #f (hiho) (display hiho))))
 		 (display svar)
-		 (display #\newline) (display "---------------------------------------------------------------") (display #\newline)
+		 (newline) 
+		 (display "---------------------------------------------------------------") 
+		 (newline)
 		 ))
 	  (close-sound ind)))
     
@@ -46886,12 +42918,6 @@ EDITS: 1
 			    (read-sample (ho))))))
 	    (if (fneq val (sample 1000)) (snd-display #__line__ ";run embedded lambda rtn sampler: ~A ~A" (sample 1000) val)))
 	  (close-sound ind)))
-    
-    (let ((ind (open-sound "oboe.snd")))
-      ;; check that sequestering works with init-func/ptree-channel
-      (ring-modulate-channel 100)
-      (make-region 0 10000)
-      (close-sound ind))
     
     (let ((lrla (make-vct 16))
 	  (lvok #f))
@@ -48060,14 +44086,6 @@ EDITS: 1
 	(if (not (vequal (channel->vct 0 14 index chn) (vct 1 1 0 0 0 0 1 1 1 1 1 1 1 1)))
 	    (snd-display #__line__ ";pad-sound chan ~A: ~A" chn (channel->vct 0 14 index chn))))
       (revert-sound)
-      (do ((i 0 (+ 1 i)))
-	  ((= i 10))
-	(set! (sample i index 2) (+ -1.0 (* i .2))))
-      (compand-sound)
-      (if (not (vequal (channel->vct 0 10 index 2)
-		       (vct -1.000 -0.924 -0.800 -0.624 -0.370 0.000 0.370 0.624 0.800 0.924)))
-	  (snd-display #__line__ ";compand-sound 2: ~A" (channel->vct 0 10 index 2)))
-      (revert-sound index)
       (offset-sound 0.5)
       (dither-sound 0.1)
       (contrast-sound 2.0)
@@ -57002,7 +53020,7 @@ EDITS: 1
 		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
 		     main-widgets make-color make-graph-data make-mix-sampler make-player make-region
 		     make-region-sampler make-sampler map-chan mark-color mark-name mark-properties mark-property
-		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions max-virtual-ptrees
+		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 		     maxamp maxamp-position menu-widgets min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-color mix-length mix? view-mixes-dialog mix-position
 		     mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties mix-property 
@@ -57095,7 +53113,7 @@ EDITS: 1
 		     clm-channel env-channel env-channel-with-base map-channel scan-channel
 		     reverse-channel seconds->samples samples->seconds
 		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel normalize-channel
-		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
+		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel
 		     snd->sample snd->sample? make-snd->sample make-scalar-mixer
 		     
 		     beats-per-minute beats-per-measure channel-amp-envs convolve-files filter-control-coeffs 
@@ -57134,7 +53152,7 @@ EDITS: 1
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 			 mark-name mark-properties mark-property mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
-			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties mix-property max-virtual-ptrees
+			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties mix-property 
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
 			 position-color view-files-sort print-length play-arrow-size
@@ -57206,31 +53224,7 @@ EDITS: 1
 	     (procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
 	     (procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
 	     )
-	#|
-	(for-each 
-	(lambda (n)
-	(if (and (not (member n procs0))
-	(not (member n procs1))
-	(not (member n procs2))
-	(not (member n procs3))
-	(not (member n procs4))
-	(not (member n procs5))
-	(not (member n procs6))
-	(not (member n procs8))
-	(not (member n procs10)))
-	(snd-display #__line__ ";not in any list: ~A" n)))
-	procs)
-	
-	(for-each 
-	(lambda (n)
-	(if (and (not (member n set-procs0))
-	(not (member n set-procs1))
-	(not (member n set-procs2))
-	(not (member n set-procs3))
-	(not (member n set-procs4)))
-	(snd-display #__line__ ";not in any set list: ~A" n)))
-	set-procs)
-	|#	
+
 	(if all-args
 	    (snd-display #__line__ ";procs 0: ~A ~A, 1: ~A ~A, 2: ~A ~A, 3: ~A ~A, 4: ~A ~A, 5: ~A, 6: ~A, 7: ~A, 8: ~A, 10: ~A"
 			 (length procs0) (length set-procs0) 
@@ -58060,8 +54054,6 @@ EDITS: 1
 		  (check-error-tag 'wrong-type-arg (lambda () (read-only (list ind))))
 		  (check-error-tag 'wrong-type-arg (lambda () (frames ind (list 0))))
 		  (check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
-		  (check-error-tag 'bad-arity (lambda () (ptree-channel (lambda (a b c) #f) 0 10 #f #f #f #f (lambda (a) #f))))
-		  (check-error-tag 'bad-arity (lambda () (ptree-channel (lambda (a) #f) 0 10 #f #f #f #f (lambda (a b) #f))))
 		  (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))
 		  (check-error-tag 'no-such-channel (lambda () (insert-selection 0 ind 123)))
 		  (check-error-tag 'out-of-range (lambda () (set! (channels ind) 0)))
@@ -58841,24 +54833,6 @@ EDITS: 1
 	  (if (not (eq? tag 'no-such-channel)) (snd-display #__line__ ";map-channel closing own chan: ~A" tag)))
 	(if (sound? (find-sound "oboe.snd"))
 	    (snd-display #__line__ ";oboe.snd is still open?"))
-	
-	#|
-	;; this will return a truncated (at the start) result, but I currently can't think of a
-	;;    reasonable way to disallow it.  We either need a before-undo-hook, or edit-hook that is
-	;;    local to the map-channel lambda (so that we can remove it before map-channel itself
-	;;    wants to edit, but adding/removing it on every call seems silly).
-	
-	(let ((ind (open-sound "oboe.snd"))
-	(ctr 0))
-	(set! (sample 100) .5)
-	(map-channel (lambda (y)
-	(if (= ctr 0)
-	(begin
-	(revert-sound ind)
-	(set! (sample 200) .6)))
-	(set! ctr (+ 1 ctr))
-	(* y 3))))
-	|#	
 	
 	(let ((ind1 (open-sound "oboe.snd"))
 	      (ind2 (open-sound "pistol.snd")))

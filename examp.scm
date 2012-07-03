@@ -43,8 +43,6 @@
 ;;; open-next-file-in-directory -- middle button click closes current file and opens next
 ;;; chain-dsps
 ;;; cursor-follows-play and stays where it was when the play ended
-;;; smooth-channel as virtual op
-;;; ring-modulate-channel (ring-mod as virtual op)
 ;;; scramble-channels -- reorder chans
 ;;; scramble-channel -- randomly reorder segments within a sound
 ;;; reverse-by-blocks and reverse-within-blocks -- reorder or reverse blocks within a channel
@@ -1190,30 +1188,6 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
       (array-interp compand-table index 17))))
 
 
-;;; here's the virtual op version:
-
-(define* (compand-channel (beg 0) dur snd chn edpos)
-  "(compand-channel (beg 0) dur snd chn edpos) applies a standard compander to sound"
-  ;; this is the "regularized version of the compander using ptree-channel
-  (ptree-channel (lambda (inval)
-		   (let ((index (+ 8.0 (* 8.0 inval))))
-		     (array-interp compand-table index 17)))
-		 beg dur snd chn edpos #t #f
-		 (format #f "compand-channel ~A ~A" beg dur)))
-
-
-(define* (compand-sound (beg 0) dur snd)
-  "(compand-sound beg dur snd) applies companding to every channel of 'snd'"
-  (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (sound? index)
-	(let ((out-chans (channels index)))
-	  (do ((chn 0 (+ 1 chn)))
-	      ((= chn out-chans))
-	    (compand-channel beg dur index chn)))
-	(error 'no-such-sound (list "compand-sound" snd)))))
-
-
-
 ;;; -------- shift pitch keeping duration constant
 ;;;
 ;;; both src and granulate take a function argument to get input whenever it is needed.
@@ -2069,55 +2043,6 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	  (hook-remove stop-playing-hook local-stop-playing-func)))))
 
 
-;;; -------- smooth-channel as virtual op
-
-(define* (smooth-channel-via-ptree (beg 0) dur snd chn edpos)
-  "(smooth-channel-via-ptree (beg 0) dur snd chn edpos) is smooth-channel implemented as a virtual edit"
-  (let* ((y0 (sample beg snd chn edpos))
-	 (y1 (sample (+ beg (or dur (- (frames) 1))) snd chn edpos))
-	 (init-angle (if (> y1 y0) pi 0.0)) 
-	 (off (* .5 (+ y0 y1))) 
-	 (scale (* 0.5 (abs (- y1 y0))))
-	 (data (vct 0.0 0.0 init-angle off scale)))
-    (ptree-channel
-     (lambda (y data forward)
-       (let* ((angle (data 0))
-	      (incr (data 1))
-	      (val (+ (data 3) 
-		      (* (data 4) 
-			 (cos (+ (data 2) angle))))))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-     beg dur snd chn edpos #t
-     (lambda (frag-beg frag-dur)
-       (let ((incr (/ pi frag-dur)))
-	 (set! (data 1) incr)
-	 (set! (data 0) (* frag-beg incr))
-	 data))
-     (format #f "smooth-channel-via-ptree ~A ~A" beg dur))))
-
-
-;;; -------- ring-modulate-channel (ring-mod as virtual op)
-
-(define* (ring-modulate-channel freq (beg 0) dur snd chn edpos)
-  "(ring-modulate-channel freq (beg 0) dur snd chn edpos) ring-modulates the given channel"
-  (ptree-channel
-   (lambda (y data forward)
-     (let* ((angle (data 0))
-	    (incr (data 1))
-	    (val (* y (sin angle))))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-   beg dur snd chn edpos #f
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ (* 2 pi freq) (srate snd))))
-       (vct (modulo (* frag-beg incr) (* 2 pi)) incr)))
-   (format #f "ring-modulate-channel ~A ~A ~A" freq beg dur)))
-
 ;;; amplitude-modulate-channel could be (lambda (y data forward) (* y 0.5 (+ 1.0 (sin angle))) etc ...)
 
 
@@ -2449,87 +2374,3 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
      (lambda (snd)
        (set! (sync snd) new-sync))
      (sounds))))
-
-
-
-;;; -------- fir filter as virtual edit
-
-(define (virtual-filter-channel coeffs beg dur snd chn edpos)
-  (ptree-channel
-     
-   (lambda (y data forward)
-     (let* ((sum 0.0)
-	    (order (floor (data 0)))
-	    (cur-loc (floor (data 1)))
-	    (init-time (> (data 2) 0.0))
-	    (last-forward (> (data 3) 0.0))
-	    (coeffs-0 4)
-	    (state-0 (+ coeffs-0 order)))
-       
-       (if (eq? last-forward forward)
-	   (if init-time
-	       (begin
-		 (set! (data 2) -1.0))
-	       (begin
-		 (if forward
-		     (begin
-		       (do ((i (- order 1) (- i 1)))
-			   ((= i 0))
-			 (set! (data (+ i state-0)) (data (+ i -1 state-0))))
-		       (set! (data state-0) y)
-		       (set! cur-loc (+ 1 cur-loc)))
-		     
-		     (let ((pos (max 0 (- cur-loc order))))
-		       (if (< pos 0)
-			   (set! y 0.0)
-			   (set! y (sample pos snd chn edpos)))
-		       (do ((i 0 (+ i 1)))
-			   ((= i (- order 1)))
-			 (set! (data (+ i state-0)) (data (+ i 1 state-0))))
-		       (set! (data (+ state-0 order -1)) y)
-		       (set! cur-loc (- cur-loc 1))))))
-	   )
-       
-       (do ((i 0 (+ i 1)))
-	   ((= i order))
-	 (set! sum (+ sum (* (data (+ coeffs-0 i)) 
-			     (data (+ state-0 i))))))
-       
-       (set! (data 1) cur-loc)
-       (if forward (set! (data 3) 1.0) (set! (data 3) -1.0))
-       
-       sum))
-   
-   beg dur snd chn edpos #f
-   
-   (lambda (frag-beg frag-dur forward)
-     (let* ((order (length coeffs))
-	    (coeffs-0 4)
-	    (state-0 (+ order coeffs-0))
-	    (d (make-vct (+ coeffs-0 (* 2 order)))))
-       (set! (d 0) order)
-       (set! (d 2) 1.0) ; first sample flag
-       (if forward (set! (d 3) 1.0) (set! (d 3) -1.0))
-       
-       (do ((i 0 (+ i 1)))
-	   ((= i order))
-	 (set! (d (+ i coeffs-0)) (coeffs i)))
-       
-       (let ((start (- (+ 1 frag-beg beg) order))
-	     (i (- order 1)))
-	 (if (< start 0)
-	     (do ()
-		 ((= start 0))
-	       (set! (d (+ i state-0)) 0)
-	       (set! i (- i 1))
-	       (set! start (+ 1 start))))
-	 (if (>= i 0)
-	     (let ((rd (make-sampler start snd chn 1 edpos)))
-	       (do ()
-		   ((= i -1))
-		 (set! (d (+ i state-0)) (rd))
-		 (set! i (- i 1)))
-	       (free-sampler rd)))
-	 (set! (d 1) (+ frag-beg beg))
-	   
-	 d)))))

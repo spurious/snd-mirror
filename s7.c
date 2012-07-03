@@ -28878,13 +28878,10 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(g_vector_fill(sc, args));
 
     case T_C_OBJECT:
-      {
-	int tag;
-	tag = c_object_type(p);
-	if (object_types[tag].fill)
-	  return((*(object_types[tag].fill))(sc, p, cadr(args)));
-	return(eval_error(sc, "attempt to fill ~S?", p));
-      }
+      if (c_object_fill(p))
+	return((*(c_object_fill(p)))(sc, p, cadr(args)));
+      return(eval_error(sc, "attempt to fill ~S?", p));
+
     case T_PAIR:
       return(list_fill(sc, p, cadr(args)));
 

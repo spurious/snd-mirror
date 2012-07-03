@@ -1102,18 +1102,6 @@ displays.  log-freq-start to the rescue?  For other ideas along these lines, see
 <div class="spacer"></div>
 
 
-<!-- max-virtual-ptrees -->
-<pre class="indented">
-<em class=def id="maxvirtualptrees">max-virtual-ptrees</em> (default: 32)
-</pre>
-
-<p>This sets the maximum number of parse-trees (see <a href="#ptreechannel">ptree-channel</a>) that the
-virtual editor will allow in any virtual edit (once the maximum is reached, the operation is handled
-locally, not via a virtual edit).
-</p>
-<div class="spacer"></div>
-
-
 <!-- mus-max-malloc -->
 <pre class="indented">
 <em class=def id="musmaxmalloc">mus-max-malloc</em> (default: 67108864)
@@ -1176,9 +1164,6 @@ find out what the optimizer found confusing:
   (lambda (hook) 
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "opt: ~A~%" (hook 'message))))
 </pre>
-
-<p>See also <a href="#maxvirtualptrees">max-virtual-ptrees</a>.
-</p>
 <div class="spacer"></div>
 
 
@@ -8020,7 +8005,7 @@ Panning: place-sound in examp.scm<br>
 Envelope over mix: <a href="sndscm.html#envelopedmix">enveloped-mix</a><br>
 Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
-Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="sndclm.html#bellcurve">bell-curve</a><br>
+Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="sndclm.html#bellcurve">bell-curve</a><br>
 envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
 envelope with separate base for each segment: <a href="#powenvchannel">powenv-channel</a><br>
 envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squared-channel</a><br>
@@ -8277,7 +8262,6 @@ draw frequency response: use <a href="snd.html#editenvelope">envelope editor</a>
 Moog filter: <a href="sndscm.html#moogdoc">moog.scm</a><br>
 Savitzky-Golay filter: <a href="sndscm.html#sgfilter">savitzky-golay-filter</a><br>
 Click reduction: <a href="sndscm.html#removeclicks">remove-clicks</a>, <a href="sndscm.html#cleanchannel">clean-channel</a><br>
-FIR filter as virtual edit: <a href="sndscm.html#virtualfilterchannel">virtual-filter-channel</a><br>
 Max Mathews resonator: <a href="sndclm.html#firmant">firmant</a>, <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 graphical equalizer filter bank: <a href="sndscm.html#clminsdoc">graphEq</a><br>
@@ -9132,14 +9116,12 @@ To insert a block of arbitrary-valued samples:
 </p>
 
 <pre class="indented">
-(define* (<em class="noem" id="blockchannel">block-channel</em> value (beg 0) dur snd chn edpos)
-  (<em class=red>pad-channel</em> beg dur snd chn edpos) ; insert 'dur' samples, ptree-channel sets their values
-  (<a class=quiet href="#ptreechannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_ptreechannel_tip)">ptree-channel</a> (lambda (y) value) beg dur snd chn))
+(define* (<em class="noem">block-channel</em> value (beg 0) dur snd chn edpos)
+  (<em class=red>pad-channel</em> beg dur snd chn edpos) ; insert 'dur' samples
+  (map-channel (lambda (y) value) beg dur snd chn))
 </pre>
 
-<p>We could also use map-channel here (rather than ptree-channel), but this version
-uses only virtual edits, so no matter how big the block of samples we insert,
-no disk space or memory is needed.
+<p>
 The multichannel version is <a href="sndscm.html#padsound">pad-sound</a> in frame.scm.
 </p>
 <div class="separator"></div>
@@ -9481,356 +9463,6 @@ the sound's status area using 'name' to identify itself.
 </p>
 <div class="separator"></div>
 
-
-
-<!-- INDEX ptreechannel:Virtual Edits -->
-<!-- ptree-channel -->
-<pre class="indented">
-<em class=def id="ptreechannel">ptree-channel</em> proc beg dur snd chn edpos env-too init-func origin
-</pre>
-
-<p>ptree-channel
-applies the function 'proc' as a 'virtual edit'; that is, the effect of 'proc'
-comes about as an implicit change in the way the data is read. 
-</p>
-
-<p>To be less Orphic:
-all the data accesses in Snd go through the edit-history list.  The currently
-active member of that list
-chooses a channel data accessor based on the type of edit. A  multiply by 2, for
-example, does not multiply anything by 2 internally; it just chooses
-the accessor that multiplies by 2 on any read.  Since every other data access goes through this reader, from any other
-point of view, the data has been multiplied.  These accessors make it
-unnecessary to save any data in temp files or internal arrays, and editing the edit-history list is very
-fast &mdash; we just tack a new accessor choice onto the edit-history list, so the edit operation
-appears to be instantaneous and memory-less.  Lots of other operations
-are already being done this way in Snd (deletions, scaling, most
-envelopes, some channel swaps, etc).  ptree-channel extends the idea to (nearly) arbitrary
-functions.  When you call 
-</p>
-
-<pre class="indented">
-(ptree-channel (lambda (y) (* y 2)))
-</pre>
-
-<p>which has the same effect as 
-</p>
-
-<pre class="indented">
-(<a class=quiet href="#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) (* y 2)))
-</pre>
-
-<p>the
-optimizer makes the parse-tree that represents (lambda (y) (* y 2)), then the
-data accessor system uses that parse-tree every time the data is
-read.
-</p>
-
-<p>If the argument 'env-too' is #t,
-the same function is applied to the peak env values to get the new version of the peak env data.  
-The default is #f, and should be #t only if the old max and min values as processed through 'proc'
-will be the new max and min values. 
-Snd uses the peak env values when the graph of the sound covers very large amounts of data.
-If 'env-too' is #f, a background process is launched reading all the sound data through
-'proc'; this can be time-consuming, so if you're viewing a half-hour of sound data,
-it can take awhile for the ptree-channel results to be displayed.
-</p>
-
-<p>Here is an example that adds a constant to each sample in a file. 
-</p>
-
-<pre class="indented">
-(define* (offset-channel dc (beg 0) dur snd chn edpos)
-  (<em class=red>ptree-channel</em> (lambda (y) (+ y dc)) beg dur snd chn edpos <em class=red>#t</em>))
-</pre>
-
-<p>The actual edit that takes place is (+ y dc); that is, 'dc' is added to
-every sample.  As subsequent editing takes place, the entries representing the 'offset-channel'
-call can become thoroughly fragmented.  
-If your editing operation has any state (i.e. needs to
-know where it is in the data), you need to add an 'init-func' (the 8th argument to ptree-channel).
-The 'init-func' takes two arguments, the begin time of the read operation, relative to
-the original start of the fragment, and the original fragment duration (both in samples).
-It should return 
-the information the main function ('proc' above) needs to
-handle the current fragment correctly.  Global variables are not guaranteed to 
-be set within the body of 'proc', so use a vct for local values that change
-as the read operation progresses.
-</p>
-
-<p>The other new argument to 'proc'
-is the read direction; the read operations can change direction at any
-time, and any ptree-channel function needs to know how to deal with that.
-So, in the complicated, 3 argument case,
-the sequence of operations is:
-a read is requested, 'init-func' is called with the read start point (relative to the
-original segment start),
-it returns any state that 'proc' may need
-to refer to, then each time a sample is needed from the current sample
-reader, 'proc' is called passing it the current underlying sample, the return value of 'init-func',
-and the read direction.
-Here is an example that mixes a sine wave into the current channel:
-</p>
-
-<pre class="indented">
-(define* (sine-channel freq amp (beg 0) dur snd chn edpos)
-  (<em class=red>ptree-channel</em>
-   (lambda (y data forward)
-     (let* ((angle (data 0))
-	    (incr (data 1))
-	    (val (+ y (* (data 2) (sin angle)))))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-   beg dur snd chn edpos #f
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ (* 2 pi freq) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
-       (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip('fmod is mod with float arguments')">fmod</a> (* frag-beg incr) (* 2 pi)) incr amp))))) ; fmod from C
-</pre>
-
-<p>In the normal case,
-this function just mixes in a sine wave: <code>(+ y (* (data 2) (sin angle)))</code>
-where the amplitude scaler is stored in (data 2).  In subsequent
-reads, the init-func sets up a vct with the current phase (dependent on the frequency
-and the fragment begin sample), the phase increment (dependent on the frequency), and
-the amplitude (passed as an argument to sine-channel, but stored in the vct since
-the outer function's arguments won't be accessible in the main function ('proc')).
-See 'sine-ramp' in extensions.scm for another example.
-</p>
-
-<p>In our 'sine-channel' function, we passed #f as the 'env-too' argument,
-to make sure Snd doesn't blithely apply the sine mix to the peak amplitude
-envelopes.  When 'env-too' is #t,
-'proc' is evaluated over the peak env data, rather than the
-original data.  This makes redisplay much faster whenever a lot of data
-is being displayed, but only works if the function's output at the peak
-env min and max values are still the min and max values in the actual
-data (this is the case in the sinusoidal envelope, sine-ramp, mentioned above).
-When 'proc' is being called to calculate the new peak env, 
-the duration passed to the init-func is the envelope size. 
-Here is a
-version of cosine-channel given under
-<a href="#mapchannel">map-channel</a> that can handle peak-envs:
-</p>
-
-<pre class="indented">
-(define* (<em class="noem" id="cosinechannelviaptree">cosine-channel-via-ptree</em> (beg 0) dur snd chn edpos)
-  ;; vct: angle increment
-  (<em class=red>ptree-channel</em>
-   (lambda (y data forward)
-     (let* ((angle (data 0))
-	    (incr (data 1))
-	    (val (* y (cos angle))))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-   beg dur snd chn edpos <em class=red>#t</em>
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ pi <em class=red>frag-dur</em>)))
-       (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> (+ (* -0.5 pi) (* frag-beg incr))
-	    incr)))))
-</pre>
-
-<p>If the underlying data
-has too many previous ptree operations (more than <a href="#maxvirtualptrees">max-virtual-ptrees</a>), map-channel is called instead and the new
-data is saved in the normal manner.
-</p>
-
-<p>If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
-the context in which it is called;  in this case, there's no way for 'proc' to know where it starts, or when it is being restarted,
-or which direction it is running, so,
-the following call:
-</p>
-
-<pre class="indented">
-(let ((ctr 0)) 
-  (<em class=red>ptree-channel</em> (lambda (y) 
-                   (set! ctr (+ 1 ctr)) 
-                   (* ctr .0001))))
-</pre>
-
-<p>will never reset ctr to 0!  Every time a portion of the data is read by Snd, the samples will be
-higher.  But, the notion of an accessor that returns a different thing each time a sample
-is accessed is not foolish:
-</p>
-
-<pre class="indented">
-(define* (dither-channel (amount .00006) beg dur snd chn edpos)
-  (let ((dither (* .5 amount)))
-    (<em class=red>ptree-channel</em> 
-      (lambda (y) 
-        (+ y (<a class=quiet href="sndclm.html#mus-random" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_random_tip)">mus-random</a> dither) (<a class=quiet href="sndclm.html#mus-random" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_random_tip)">mus-random</a> dither))) 
-      beg dur snd chn edpos #t)))
-</pre>
-
-<p>This gives a slightly different take on the sound each time you look at it or listen to it;
-the dithering is never exactly the same.  But if the details of the noise don't
-matter (presumably the case with dithering), the difference is unproblematic.  You're editing a sort
-of mobile in sound (analogous to mobile sculpture).
-</p>
-
-<p>One major limitation of ptree-channel with an 'init-func' is that <a href="#savestate">save-state</a>
-currently doesn't know how to save the enclosing environment along with the init-func. So,
-</p>
-
-<pre class="indented">
-  (let ((outer 0.5))
-    (<em class=red>ptree-channel</em> (lambda (y data forward)
- 		     (<a class=quiet href="#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (y real) (data float) (forward boolean))
-		     (* y data))
-		   0 #f ind 0 #f #f
-		   (lambda (pos dur)
-		     outer)))
-</pre>
-
-<p>will not save the "outer" declaration in the saved state file. 
-This is a general problem with save-state; there's no obvious way in Scheme to
-save the current closure as text.
-You can fix the saved state file by hand (it is just Scheme, Ruby, or Forth code, of course),
-but that's not a very elegant solution.
-</p>
-
-<p>The real limitation in using ptree-channel, however, arises from the fact that the read direction
-can not only be backwards, but it can also change at any time.  In conjunction with
-the fragmentation during editing, this makes it
-hard to use CLM generators, or anything that depends on previous samples.
-Since the run macro (on which ptree-channel depends) is currently limited in
-the kinds of vector or list elements it can decipher, you're pretty tightly
-constricted in this context.
-The read direction argument can be ignored if you know you're not going to read backwards.
-The only hidden reverse read is in the src generator where a negative increment can be
-generated in a variety of ways (for example, src driven by oscil).  A one zero filter
-could in this case be:
-</p>
-
-<pre class="indented">
-  (<em class=red>ptree-channel</em> (lambda (y data forward)
-		   (let ((val (* 0.5 (+ y (data 0)))))
-		     (set! (data 0) y)
-		     val))
-		 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) ind 0 #f #f ; "ind" is the sound 
-		 (let ((edpos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> ind 0)))
-		   (lambda (pos dur)
-		     (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> (if (= pos 0) 0.0
-			      (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (- pos 1) ind 0 edpos))))))
-</pre>
-
-<p>See also virtual-filter-channel in snd-test.scm; it uses the optional third argument to the init function
-to set up the filter state correctly, and has code to run the filter backwards if necessary.
-Here are several more examples:
-</p>
-
-<pre class="indented">
-(define* (ptree-scale scl (beg 0) dur snd chn edpos)
-  "ptree-channel version of scale-channel"
-  (<em class=red>ptree-channel</em>
-    (lambda (y) 
-      (* scl y)) 
-    beg dur snd chn edpos #t))
-
-(define* (ptree-xramp r0 r1 ubase (beg 0) dur snd chn edpos)
-  "exponential version of ramp-channel"
-  ;; this is essentially what CLM's exponential envelope generator is doing
-  ;;   to accommodate C, it uses (exp (* power (log base))) prescaling power by (log base)
-  (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
-    (<em class=red>ptree-channel</em>
-     (lambda (y data forward)
-       (let* ((lr0 (data 0))
-	      (lbase (data 1))
-	      (incr (data 2))
-	      (scl (data 3))
-	      (power (data 4))
-	      (val (* y (+ lr0 (* scl (- (expt lbase power) 1.0))))))
-	 (if forward
-	     (set! (data 4) (+ power incr))
-	     (set! (data 4) (- power incr)))
-	 val))
-     beg dur snd chn edpos #t
-     (lambda (frag-beg frag-dur)
-       ;; r0, base, incr, (/ (- r1 r0) (- base 1.0)), current power
-       (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> r0
-	    base
-	    (/ 1.0 frag-dur)
-	    (/ (- r1 r0) (- base 1.0))
-	    (/ frag-beg frag-dur))))))
-
-(define* (virtual-mix file beg snd chn)
-  (let ((len (<a class=quiet href="#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> file)))
-    (<em class=red>ptree-channel</em>
-     (lambda (y state forward)
-       (<a class=quiet href="#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (y real) (state sampler) (forward boolean))
-       (+ y (if forward (<a class=quiet href="#nextsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_nextsample_tip)">next-sample</a> state) (<a class=quiet href="#previoussample" onmouseout="UnTip()" onmouseover="Tip(extsnd_previoussample_tip)">previous-sample</a> state))))
-     beg len snd chn -1 #f
-     (lambda (frag-beg frag-dur)
-       (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> frag-beg file)))))
-
-</pre>
-
-<p id="powenvchannel">To handle an envelope in a ptree-channel application, it's probably
-easiest to split it up into a sequence of ramps, each ramp keeping track
-of its local begin point and increment.  This is how sine-env-channel
-works, not to mention the built-in linear and exponential envelopes.
-The underlying procedure is <a href="sndscm.html#anyenvchannel">any-env-channel</a>
-which needs only the segment connecting function, and handles the rest itself.
-Here is an implementation of Anders Vinjar's power-envelope (a list
-of breakpoints with an added base for each segment), that splits
-the envelope into a sequence of <a href="#xrampchannel">xramp-channel</a>
-calls.  It also uses <a href="#asoneedit">as-one-edit</a> to make the
-result appear to be one operation in the edit history list.
-</p>
-
-<pre class="indented">
-(define* (powenv-channel envelope (beg 0) dur snd chn edpos)
-  ;; envelope with a separate base for each segment: 
-  ;;    (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))
-  (let* ((curbeg beg)
-	 (fulldur (or dur (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn edpos)))
-	 (len (length envelope))
-	 (x1 (car envelope))
-	 (xrange (- (envelope (- len 3)) x1))
-	 (y1 (cadr envelope))
-	 (base (caddr envelope))
-	 (x0 0.0)
-	 (y0 0.0))
-    (if (= len 3)
-	(<a class=quiet href="#scalechannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_scalechannel_tip)">scale-channel</a> y1 beg dur snd chn edpos)
-	(<em class=red>as-one-edit</em>
-	 (lambda ()
-	   (do ((i 3 (+ i 3)))
-	       ((= i len))
-	     (set! x0 x1)
-	     (set! y0 y1)
-	     (set! x1 (envelope i))
-	     (set! y1 (envelope (+ i 1)))
-	     (let* ((curdur (round (* fulldur (/ (- x1 x0) xrange)))))
-	       (<em class=red>xramp-channel</em> y0 y1 base curbeg curdur snd chn edpos)
-	       (set! curbeg (+ curbeg curdur)))
-	     (set! base (envelope (+ i 2)))))))))
-</pre>
-
-<p>If the init-func returns something other than a vct, you need to declare its type
-for the run macro.  There are several examples in snd-test.scm.
-</p>
-
-<table class="method">
-<tr><th class="title">ptree examples</th></tr><tr><td>
-<blockquote><small>
-smoothing: smooth-channel-via-ptree (examp.scm)<br>
-compander: <a href="sndscm.html#compandchannel">compand-channel</a> (examp.scm)<br>
-insert a block of arbitrary-valued samples: <a href="#blockchannel">block-channel</a><br>
-sinusoidal ramp: <a href="sndscm.html#sineramp">sine-ramp</a> (extensions.scm)<br>
-sinusoidal envelope: <a href="sndscm.html#sineenvchannel">sine-env-channel</a> (extensions.scm)<br>
-CLM-style contrast-enhancement: <a href="sndscm.html#contrastchannel">contrast-channel</a> (extensions.scm)<br>
-add a constant to every sample: <a href="sndscm.html#offsetchannel">offset-channel</a> (extensions.scm)<br>
-ring modulation: ring-modulate-channel (examp.scm)<br>
-delay by n samples (an experiment!): delay-channel in extensions.scm<br>
-dithering: <a href="sndscm.html#ditherchannel">dither-channel</a> (extensions.scm)<br>
-FIR filter: <a href="sndscm.html#virtualfilterchannel">virtual-filter-channel</a> (examp.scm)<br>
-</small></blockquote>
-</td></tr></table>
-<div class="separator"></div>
 
 
 
@@ -10588,7 +10220,6 @@ This is the 'peaks' button in the <a href="snd.html#viewfft">Transform</a> optio
 </pre>
 
 <p>smooth-channel is the <a class=quiet href="#regularizedargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_regularizedargs_tip)">regularized</a> version of <a href="#smoothsound">smooth-sound</a>.
-smooth-channel-via-ptree in examp.scm is the virtual form.
 </p>
 
 <!-- INDEX smoothexamples:Smoothing -->
@@ -10600,7 +10231,6 @@ smooth channel: <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
 smooth all channels: <a href="extsnd.html#smoothsound">smooth-sound</a><br>
 smooth selection: <a href="extsnd.html#smoothselection">smooth-selection</a><br>
 delete the selection and smooth the splice: <a href="extsnd.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
-smoothing as virtual op: smooth-channel-via-ptree in examp.scm<br>
 smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 smooth via low-pass <a href="extsnd.html#filtersinsnd">filter</a><br>
 smooth over click: <a href="sndscm.html#removeclicks">remove-clicks</a> in examp.scm<br>
@@ -14467,8 +14097,7 @@ or some variant thereof.
 </p>
 
 <p>There are a variety of
-limitations to this process; the worst is that save-state does not try to save hook values or global variable values &mdash;
-see also <a href="#ptreechannel">ptree-channel</a> in this regard.
+limitations to this process; the worst is that save-state does not try to save hook values or global variable values.
 If you call save-state with active regions, and have the region browser running all the time, and subsequently
 want to back up to the saved state, it's safer to delete all the regions first (via <a href="#forgetregion">forget-region</a>), 
 then load the saved-state file.

@@ -2993,96 +2993,6 @@ void cos_smooth(chan_info *cp, mus_long_t beg, mus_long_t num, bool over_selecti
 }
 
 
-#if HAVE_SCHEME
-static char *run_channel(chan_info *cp, struct ptree *pt, mus_long_t beg, mus_long_t dur, int edpos, const char *origin, const char *caller)
-{
-  snd_info *sp;
-  file_info *hdr = NULL;
-  int j, ofd = 0, datumb = 0, err = 0;
-  bool temp_file;
-  mus_long_t k;
-  mus_sample_t **data;
-  mus_sample_t *idata;
-  char *ofile = NULL;
-  snd_fd *sf;
-
-  if ((beg < 0) || (dur <= 0)) return(NULL);
-  if (!(editable_p(cp))) return(NULL);
-  sp = cp->sound;
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
-  if (sf == NULL) 
-    {
-      return(mus_format("%s: can't read %s[%d] channel data!", caller, sp->short_filename, cp->chan));
-    }
-
-  if (dur > MAX_BUFFER_SIZE)
-    {
-      io_error_t io_err = IO_NO_ERROR;
-      temp_file = true; 
-      ofile = snd_tempnam();
-      hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, "run_channel temp");
-      ofd = open_temp_file(ofile, 1, hdr, &io_err);
-      if (ofd == -1)
-	{
-	  free_snd_fd(sf); 
-	  return(mus_format("%s %s temp file %s: %s\n", 
-			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
-			    caller, ofile, 
-			    snd_open_strerror()));
-	}
-      datumb = mus_bytes_per_sample(hdr->format);
-    }
-  else temp_file = false;
-
-  data = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-  data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
-  idata = data[0];
-
-  if (temp_file)
-    {
-      j = 0;
-      ss->stopped_explicitly = false;
-      for (k = 0; k < dur; k++)
-	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE(mus_run_evaluate_ptree_1f2f(pt, read_sample(sf)));
-	  if (j == MAX_BUFFER_SIZE)
-	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err != MUS_NO_ERROR) break;
-	      check_for_event();
-	      if (ss->stopped_explicitly) break;
-	    }
-	}
-      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofile, ofd, hdr->type, dur * datumb);
-      hdr = free_file_info(hdr);
-      if (err != -1)
-	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, origin, edpos);
-      if (ofile) 
-	{
-	  free(ofile); 
-	  ofile = NULL;
-	}
-    }
-  else 
-    {
-      if (dur > 0) 
-	{
-	  for (k = 0; k < dur; k++)
-	    idata[k] = MUS_FLOAT_TO_SAMPLE(mus_run_evaluate_ptree_1f2f(pt, read_sample(sf)));
-	  change_samples(beg, dur, idata, cp, origin, edpos);
-	}
-    }
-
-  update_graph(cp); 
-  free_snd_fd(sf);
-  free(data[0]);
-  free(data);
-  return(NULL);
-}
-#endif
-
 
 typedef struct {
   snd_fd **fds;
@@ -3697,119 +3607,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  pos = cp->edit_ctr;
 	}
 
-#if HAVE_SCHEME
-      {
-	s7_pointer source;
-	source = s7_procedure_source(s7, proc);
-	/* this is a pair: procedure . environment */
-	
-	if ((s7_is_pair(source)) &&
-	    (s7_is_pair(s7_car(source)))) /* (lambda (y) 0.1) */
-	  {
-	    s7_pointer arg, body;
-	    body = s7_cddar(source);
-	    /* fprintf(stderr, "%s %s\n", s7_object_to_c_string(s7, source), s7_object_to_c_string(s7, body)); */
-	    
-	    /* look for (lambda (y) <constant>) */
-	    if (((s7_is_real(s7_car(body))) || (s7_is_symbol(s7_car(body)))) &&
-		(num <= MAX_BUFFER_SIZE))
-	      {
-		mus_sample_t x;
-		int data_pos;
-		mus_sample_t *data;
-		
-		if (s7_is_real(s7_car(body)))
-		  x = MUS_DOUBLE_TO_SAMPLE(s7_number_to_real(s7_car(body)));
-		else
-		  {
-		    /* (let ((scl 0.5)) (map-channel (lambda (y) scl)))
-		     */
-		    s7_pointer sym, val;
-		    
-		    sym = s7_car(body);
-		    arg = s7_cadr(s7_car(source));
-		    if ((s7_is_pair(arg)) &&
-			(sym == s7_car(arg)))
-		      goto TRY_RUN;
-		    /* not necessarily a no-op -- pos might be an earlier edit that we are moving up in the tree
-		     */
-		    
-		    val = s7_symbol_local_value(s7, sym, s7_cdr(source));
-		    if (s7_is_real(val))
-		      x = MUS_DOUBLE_TO_SAMPLE(s7_number_to_real(val));
-		    else goto TRY_RUN;
-		  }
-		data = (mus_sample_t *)malloc(num * sizeof(mus_sample_t));
-		for (data_pos = 0; data_pos < num; data_pos++)
-		  data[data_pos] = x;
-		change_samples(beg, data_pos, data, cp, caller, pos);
-		update_graph(cp);
-		free(data);
-		return(s7_car(body));
-	      }
-	    
-	    /* look for (lambda (y) (* y <constant>)) or (lambda (y) (* <constant> y)) */
-	    if ((s7_is_null(s7, s7_cdr(body))) &&
-		(s7_is_pair(s7_car(body))) &&
-		(s7_list_length(s7, s7_car(body)) == 3))
-	      {
-		arg = s7_car(s7_cdr(s7_car(source)));
-		if (s7_is_pair(arg))
-		  {
-		    arg = s7_car(arg);
-		    body = s7_car(body);
-		    if ((s7_is_pair(s7_cdr(body))) &&
-			(s7_is_pair(s7_cdr(s7_cdr(body)))) &&
-			(s7_car(body) == s7_make_symbol(s7, "*")))
-		      {
-			if ((s7_car(s7_cdr(body)) == arg) &&
-			    (s7_is_real(s7_car(s7_cdr(s7_cdr(body))))))
-			  {
-			    mus_float_t scl;
-			    scl = s7_number_to_real(s7_car(s7_cdr(s7_cdr(body))));
-			    scale_channel(cp, scl, beg, num, pos, false);
-			    return(s7_car(s7_cdr(s7_cdr(body))));
-			  }
-			else
-			  {
-			    if ((s7_is_real(s7_car(s7_cdr(body)))) &&
-				(s7_car(s7_cdr(s7_cdr(body))) == arg))
-			      {
-				mus_float_t scl;
-				scl = s7_number_to_real(s7_car(s7_cdr(body)));
-				scale_channel(cp, scl, beg, num, pos, false);
-				return(s7_car(s7_cdr(s7_cdr(body))));
-			      }
-			  }
-		      }
-		  }
-	      }
-	  }
-	/* fprintf(stderr, "unopt: %lld %s\n", num, s7_object_to_c_string(s7, s7_car(source))); 
-	 */
-	/* 
-	 * simple gen case (filter g y) etc 
-	 * +/- arg real, * arg sym
-	 * read-sample sym
-	 */
- TRY_RUN:
-	if (optimization(ss) > 0)
-	  {
-	    struct ptree *pt = NULL;
-	    pt = mus_run_form_to_ptree_1_f(source);
-	    if (pt)
-	      {
-		char *err_str;
-		err_str = run_channel(cp, pt, beg, num, pos, caller, S_map_channel);
-		mus_run_free_ptree(pt);
-		if (err_str == NULL)
-		  return(XEN_ZERO);
-		else free(err_str); /* and fallback on normal evaluator */
-	      }
-	  }
-      }
-#endif
-
       sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
       if (sf == NULL) 
 	return(XEN_TRUE);
@@ -3825,243 +3622,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       update_graph(cp);
     }
   return(res);
-}
-
-
-#define MUS_OUTA_1(Frame, Val, Fd) ((*(Fd->core)->write_sample))(Fd, Frame, 0, Val)
-/* avoids all the CLM error checking */
-
-static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, mus_long_t beg, mus_long_t num, int pos, const char *origin)
-{ 
-  snd_fd *sf = NULL;
-  bool temp_file;
-  char *filename = NULL;
-  mus_long_t kp;
-  int loc = NOT_A_GC_LOC;
-  mus_sample_t *data = NULL;
-  XEN res = XEN_FALSE, v = XEN_FALSE;
-
-  if (!(editable_p(cp))) return(XEN_FALSE);
-
-  sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
-  if (sf == NULL) 
-    return(XEN_TRUE);
-
-  if (XEN_PROCEDURE_P(init_func))
-    {
-      if (XEN_REQUIRED_ARGS_OK(init_func, 3))
-	v = XEN_CALL_3(init_func,
-		       C_TO_XEN_LONG_LONG(0),
-		       C_TO_XEN_LONG_LONG(num),
-		       XEN_TRUE,             /* reading forward */
-		       origin);
-      else v = XEN_CALL_2(init_func,
-			  C_TO_XEN_LONG_LONG(0),
-			  C_TO_XEN_LONG_LONG(num),
-			  origin);
-      loc = snd_protect(v);
-    }
-
-  temp_file = (num > MAX_BUFFER_SIZE);
-  if (temp_file)
-    {
-      mus_any *outgen = NULL;
-      filename = snd_tempnam();
-      outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, origin);
-      if (XEN_REQUIRED_ARGS_OK(proc, 3))
-	{
-	  for (kp = 0; kp < num; kp++)
-	    {
-	      res = XEN_CALL_3(proc, 
-			       C_TO_XEN_DOUBLE((double)read_sample(sf)),
-			       v,
-			       XEN_TRUE,
-			       origin);
-	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
-	    }
-	}
-      else
-	{
-	  for (kp = 0; kp < num; kp++)
-	    {
-	      res = XEN_CALL_1(proc, 
-			       C_TO_XEN_DOUBLE((double)read_sample(sf)),
-			       origin);
-	      MUS_OUTA_1(kp, XEN_TO_C_DOUBLE(res), outgen);
-	    }
-	}
-      if (outgen) mus_free(outgen);
-    }
-  else
-    {
-      data = (mus_sample_t *)calloc(num, sizeof(mus_sample_t)); 
-      if (XEN_REQUIRED_ARGS_OK(proc, 3))
-	{
-	  for (kp = 0; kp < num; kp++)
-	    {
-	      res = XEN_CALL_3(proc, 
-			       C_TO_XEN_DOUBLE((double)read_sample(sf)),
-			       v,
-			       XEN_TRUE,
-			       origin);
-	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
-	    }
-	}
-      else
-	{
-	  for (kp = 0; kp < num; kp++)
-	    {
-	      res = XEN_CALL_1(proc, 
-			       C_TO_XEN_DOUBLE((double)read_sample(sf)),
-			       origin);
-	      data[kp] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
-	    }
-	}
-    }
-  free_snd_fd(sf);
-  if (temp_file)
-    {
-      file_change_samples(beg, num, filename, cp, 0, DELETE_ME, origin, pos);
-      free(filename);
-    }
-  else 
-    {
-      change_samples(beg, num, data, cp, origin, pos);
-      free(data);
-    }
-  if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
-  update_graph(cp); 
-  return(proc);
-}
-
-
-static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, 
-			   XEN edpos, XEN env_too, XEN init_func, XEN origin)
-{
-  #define H_ptree_channel "(" S_ptree_channel " proc :optional (beg 0) (dur len) snd chn edpos peak-env-also init-func origin): \
-apply 'proc' as a 'virtual edit'; that is, the effect of 'proc' (a function of one argument, the \
-current sample, if init-func is not specified), comes about as an implicit change in the way the data is read.  \
-This is similar to scaling and some envelope operations in that no data actually changes.  If 'peak-env-also' is " PROC_TRUE ", \
-the same function is applied to the peak env values to get the new version. \
-If 'proc' needs some state, it can be supplied in a vct returned by 'init-func'. \
-'init-func' is a function of 2 or 3 args, the current fragment-relative begin position, \
-the overall fragment duration, and optionally the read direction. In this case, 'proc' is a function of 3 args: \
-the current sample, the vct returned by 'init-func', and the current read direction."
-
-  chan_info *cp;
-  char *caller = NULL;
-  mus_long_t beg = 0, dur = 0;
-  int pos;
-#if HAVE_SCHEME
-  bool backup = false;
-  bool too_many_ptrees = false;
-  struct ptree *pt = NULL;
-#endif
-  XEN proc = XEN_FALSE;
-  /* (ptree-channel (lambda (y) (* y 2))) -> ((lambda (y) (* y 2)) #<procedure #f ((y) (* y 2))>) as "proc_and_list" */
-  /*   the cadr proc gives access to the environment, run walks the car */
-
-  proc = proc_and_list;
-
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)) && ((XEN_REQUIRED_ARGS_OK(proc, 1)) || (XEN_REQUIRED_ARGS_OK(proc, 3))),
-		  proc, XEN_ARG_1, S_ptree_channel, "a procedure of one or three args");
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, 10, S_ptree_channel, "a string");
-  ASSERT_SAMPLE_TYPE(S_ptree_channel, s_beg, XEN_ARG_2);
-  ASSERT_SAMPLE_TYPE(S_ptree_channel, s_dur, XEN_ARG_3);
-  ASSERT_CHANNEL(S_ptree_channel, snd, chn, 4); 
-  cp = get_cp(snd, chn, S_ptree_channel);
-  if (!cp) return(XEN_FALSE);
-  pos = to_c_edit_position(cp, edpos, S_ptree_channel, 6);
-  if (pos > cp->edit_ctr)
-    {
-      XEN_ERROR(NO_SUCH_EDIT,
-		XEN_LIST_6(C_TO_XEN_STRING("~A: no such edpos: ~A, ~S chan ~A has ~A edits"),
-			   C_TO_XEN_STRING(S_ptree_channel),
-			   edpos,
-			   C_TO_XEN_STRING(cp->sound->short_filename),
-			   chn,
-			   C_TO_XEN_INT(cp->edit_ctr)));
-    }
-  beg = beg_to_sample(s_beg, S_ptree_channel);
-  dur = dur_to_samples(s_dur, beg, cp, pos, 3, S_ptree_channel);
-  if (dur <= 0) return(XEN_FALSE);
-  if ((beg + dur) > cp->edits[pos]->samples)
-    {
-      if (!(extend_with_zeros(cp, cp->edits[pos]->samples, beg + dur - cp->edits[pos]->samples, pos, "extend for " S_ptree_channel))) 
-	return(XEN_FALSE);
-#if HAVE_SCHEME
-      backup = true;
-#endif
-      pos = cp->edit_ctr;
-    }
-
-#if (!HAVE_SCHEME)
-  if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_ptree_channel);
-  g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
-  if (caller) {free(caller); caller = NULL;}
-#else
-
-  too_many_ptrees = unptreeable(cp, beg, dur, pos);
-
-  if (XEN_PROCEDURE_P(init_func))
-    {
-
-      /* fprintf(stderr, "init: %s\n", XEN_AS_STRING(XEN_CAR(XEN_PROCEDURE_SOURCE(init_func)))); */
-
-      if ((!(XEN_REQUIRED_ARGS_OK(init_func, 2))) &&
-	  (!(XEN_REQUIRED_ARGS_OK(init_func, 3))))
-	XEN_BAD_ARITY_ERROR(S_ptree_channel, 8, init_func, "init-func must take 2 or 3 args");
-      if (!(XEN_REQUIRED_ARGS_OK(proc, 3)))
-	XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if the init-func is present");
-      if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_ptree_channel);
-
-      if (!too_many_ptrees)
-	{
-	  pt = mus_run_form_to_ptree_3_f(XEN_PROCEDURE_SOURCE(proc_and_list));
-	  if (pt)
-	    {
-	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
-	      if (backup)
-		backup_edit_list(cp);
-	      if (caller) {free(caller); caller = NULL;}
-	      return(proc_and_list);
-	    }
-	}
-
-      /* fallback on map chan */
-      g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
-      if (backup)
-	backup_edit_list(cp);
-      if (caller) {free(caller); caller = NULL;}
-      return(proc_and_list);
-    }
-
-  /* no init-func from here on */
-
-  if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_ptree_channel);
-  if (XEN_REQUIRED_ARGS_OK(proc, 1))
-    pt = mus_run_form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(proc_and_list));
-  else
-    {
-      if ((!too_many_ptrees) && (XEN_REQUIRED_ARGS_OK(proc, 3)))
-	pt = mus_run_form_to_ptree_3_f(XEN_PROCEDURE_SOURCE(proc_and_list));
-    }
-  if (pt)
-    {
-      if (too_many_ptrees)
-	{
-	  run_channel(cp, pt, beg, dur, pos, caller, S_ptree_channel);
-	  mus_run_free_ptree(pt);
-	  pt = NULL;
-	}
-      else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
-    }
-  else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
-  if (backup)
-    backup_edit_list(cp);
-  if (caller) {free(caller); caller = NULL;}
-#endif
-  return(proc_and_list);
 }
 
 
@@ -6732,7 +6292,6 @@ XEN_ARGIFY_3(g_filter_selection_w, g_filter_selection)
 XEN_ARGIFY_8(g_clm_channel_w, g_clm_channel)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
-XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
@@ -6778,7 +6337,6 @@ XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 #define g_clm_channel_w g_clm_channel
 #define g_sinc_width_w g_sinc_width
 #define g_set_sinc_width_w g_set_sinc_width
-#define g_ptree_channel_w g_ptree_channel
 #if HAVE_NESTED_FUNCTIONS
 #define g_find_min_peak_phases_w g_find_min_peak_phases
 #define g_fpsap_w g_fpsap
@@ -6793,7 +6351,6 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_count_matches,               g_count_matches_w,               1, 4, 0, H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan,                    g_map_chan_w,                    1, 6, 0, H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel,                 g_map_channel_w,                 1, 6, 0, H_map_channel);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel,               g_ptree_channel_w,               1, 8, 0, H_ptree_channel);
 
   XEN_DEFINE_PROCEDURE(S_smooth_sound,                g_smooth_sound_w,                0, 4, 0, H_smooth_sound);
   XEN_DEFINE_PROCEDURE(S_smooth_selection,            g_smooth_selection_w,            0, 0, 0, H_smooth_selection);
@@ -6838,6 +6395,9 @@ void g_init_sig(void)
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
 #endif
+#endif
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(define (ptree-channel . args) \"ptree-channel has been removed -- please use map-channel instead\")");
 #endif
 }
 

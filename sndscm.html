@@ -4552,20 +4552,6 @@ formant frequencies (thereby setting the width of the warbling).
 <div class="spacer"></div>
 
 
-<!-- virtual-filter-channel -->
-<pre class="indented">
-<em class=def id="virtualfilterchannel">virtual-filter-channnel</em> coeffs beg dur snd chn edpos
-</pre>
-
-<p>This is a virtual edit version of <a href="extsnd.html#filterchannel">filter-channel</a>.
-</p>
-
-<pre class="indented">
-(virtual-filter-channel (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 1.0 .5 .25) 0 10 0 0 1)
-</pre>
-
-
-
 <!--  examp SOUND EFFECTS  -->
 
 <div class="innerheader" id="sseffects">sound effects</div>
@@ -4614,7 +4600,6 @@ then "pistol.snd" at 1.0 (second) scaled by 2.0.
 <p>am uses the CLM <a href="sndclm.html#amplitude-modulate">amplitude-modulate</a> generator;
 the others are little more than <a href="sndclm.html#oscil">oscil</a> and a multiply.
 'gliss-env' in ring-mod controls the frequency of the modulation.
-ring-modulate-channel uses <a href="extsnd.html#ptreechannel">ptree-channel</a> for maximum speed and efficiency.
 See also <a href="sndclm.html#ssb-am">ssb-am</a>.
 </p>
 <div class="spacer"></div>
@@ -4670,30 +4655,12 @@ end
 <!-- compand -->
 <pre class="indented">
 <em class=emdef>compand</em> 
-<em class=def id="compandchannel">compand-channel</em> beg dur snd chn edpos
 </pre>
 
 <p>These functions lookup a table value based on the current sample amplitude; the table is set up
-so that soft portions are slightly amplified.  compand-channel is the same as compand except
-that it uses <a href="extsnd.html#ptreechannel">ptree-channel</a>.  The companding curve is
+so that soft portions are slightly amplified. 
+The companding curve is
 taken from Steiglitz "A DSP Primer".
-</p>
-
-<pre class="indented">
-(<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (compand))
-(compand-channel)
-</pre>
-
-<div class="spacer"></div>
-
-
-<!-- compand-sound -->
-<pre class="indented">
-<em class=def id="compandsound">compand-sound</em> (beg 0) dur snd
-</pre>
-
-<p>compand-sound applies companding to every channel of the sound 'snd'.
-It is the multichannel version of <a href="#compandchannel">compand-channel</a>.
 </p>
 <div class="spacer"></div>
 
@@ -4980,17 +4947,6 @@ those silences, and randomly re-orders the segments.
 </pre>
 
 <p>This function needs cleaner splices between the sections.
-</p>
-<div class="spacer"></div>
-
-
-<!-- smooth-channel-via-ptree -->
-<pre class="indented">
-<em class=emdef>smooth-channel-via-ptree</em> beg dur snd chn edpos
-</pre>
-
-<p>This function is a "virtual edit" (<a href="extsnd.html#ptreechannel">ptree-channel</a>) version of 
-<a href="extsnd.html#smoothchannel">smooth-channel</a>.
 </p>
 <div class="spacer"></div>
 

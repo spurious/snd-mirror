@@ -16333,22 +16333,6 @@ static struct ptree *form_to_ptree_with_predeclarations(s7_pointer code, int dec
 
 /* ---------------- various tree-building wrappers ---------------- */
 
-struct ptree *mus_run_form_to_ptree_1_f(s7_pointer code)
-{
-  /* map-channel and simple form of ptree-channel */
-  ptree *pt;
-  s7_unoptimize(s7, code);
-  pt = form_to_ptree_with_predeclarations(code, 1, R_FLOAT);
-  if (pt)
-    {
-      if ((pt->result->type == R_FLOAT) && (pt->arity == 1))
-	return(pt);
-      mus_run_free_ptree(pt);
-    }
-  return(NULL);
-}
-
-
 struct ptree *mus_run_form_to_ptree_3_f(s7_pointer code)
 {
   /* ptree-channel, snd-sig.c */
@@ -16381,58 +16365,9 @@ struct ptree *mus_run_form_to_ptree_0_f(s7_pointer code)
 }
 
 
-struct ptree *mus_run_form_to_ptree_1_b(s7_pointer code)
-{
-  /* find */
-  ptree *pt;
-  s7_unoptimize(s7, code);
-  pt = form_to_ptree_with_predeclarations(code, 1, R_FLOAT);
-  if (pt)
-    {
-      if ((pt->result->type == R_BOOL) && (pt->arity == 1))
-	return(pt);
-      mus_run_free_ptree(pt);
-    }
-  return(NULL);
-}
-
-
 
 
 /* ---------------- various evaluator wrappers ---------------- */
-
-mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg)
-{
-  pt->dbls[pt->args[0]] = arg;
-  eval_ptree(pt);
-  return(pt->dbls[pt->result->addr]);
-}
-
-
-mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir)
-{
-  pt->dbls[pt->args[0]] = arg;
-  pt->vcts[pt->args[1]] = v;
-  pt->ints[pt->args[2]] = (Int)dir;
-  eval_ptree(pt);
-  return(pt->dbls[pt->result->addr]);
-}
-
-
-mus_float_t mus_run_evaluate_ptree_0f2f(struct ptree *pt)
-{
-  eval_ptree(pt);
-  return(pt->dbls[pt->result->addr]);
-}
-
-
-int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg)
-{
-  pt->dbls[pt->args[0]] = arg;
-  eval_ptree(pt);
-  return(pt->ints[pt->result->addr]);
-}
-
 
 mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, s7_pointer object, bool dir, int type)
 {
@@ -17396,11 +17331,6 @@ You can often slightly rewrite the form to make run happy."
 #define S_run "run"
 
 /* XEN here, not s7_pointer in case no s7 */
-struct ptree *mus_run_form_to_ptree_1_b(XEN code) {return(NULL);}
-struct ptree *mus_run_form_to_ptree_1_f(XEN code) {return(NULL);}
-mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir) {return(0.0);}
-mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg) {return(0.0);}
-int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg) {return(0);}
 void mus_run_free_ptree(struct ptree *pt) {}
 XEN mus_run_ptree_code(struct ptree *pt) {return(XEN_FALSE);}
 mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type) {return(0.0);}

@@ -276,24 +276,17 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
   "(sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
-  ;; vct: angle incr off scl
-  (ptree-channel
-   (lambda (y data forward)
-     (let* ((angle (data 0))
-	    (incr (data 1))
-	    (val (* y (+ (data 2) (* (data 3) (+ 0.5 (* 0.5 (cos angle))))))))
-       ;; this could be optimized into offset=off+scl/2 and scl=scl/2, then (* y (+ off (* scl cos)))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-   beg dur snd chn edpos #t
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ pi frag-dur)))
-       (vct (+ (* -1.0 pi) (* frag-beg incr))
-	    incr
-	    rmp0
-	    (- rmp1 rmp0))))
+  (map-channel
+   (let ((angle (- pi))
+	 (incr (/ pi (if (number? dur)
+			 dur
+			 (- (frames snd chn) beg)))))
+     (lambda (y)
+       (let ((result (* y (+ rmp0 (* (- rmp1 rmp0) 
+				     (+ 0.5 (* 0.5 (cos angle))))))))
+	 (set! angle (+ angle incr))
+	 result)))
+   beg dur snd chn edpos
    (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 
@@ -312,26 +305,19 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
   "(blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"
   ;; vct: angle incr off scl
-  (ptree-channel
-   (lambda (y data forward)
-     (let* ((angle (data 0))
-	    (incr (data 1))
-	    (cx (cos angle))
-	    (val (* y (+ (data 2) 
-			 (* (data 3) 
-			    (+ .084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194)))))))))))))
-       ;; blackman2 would be: (+ .34401 (* cx (+ -.49755 (* cx .15844))))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-   beg dur snd chn edpos #t
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ pi frag-dur)))
-       (vct (* frag-beg incr)
-	    incr
-	    rmp0
-	    (- rmp1 rmp0))))
+  (map-channel
+   (let ((angle 0.0)
+	 (incr (/ pi (if (number? dur)
+			 dur
+			 (- (frames snd chn) beg)))))
+     (lambda (y)
+       (let* ((cx (cos angle))
+	      (val (* y (+ rmp0
+			   (* (- rmp1 rmp0)
+			      (+ .084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194)))))))))))))
+	 (set! angle (+ angle incr))
+	 val)))
+   beg dur snd chn edpos
    (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 
@@ -339,33 +325,25 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(blackman4-env-channel e (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'e'"
   (any-env-channel e blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" e beg dur)))
 
-;;; any curve can be used as the connecting line between envelope breakpoints in the
-;;;   same manner -- set up each ramp to take the current position and increment,
-;;;   then return the value in ptree-channel.  A simple one would have a table of
-;;;   values and use array-interp.
 
 
 ;;; -------- ramp-squared, env-squared-channel
 
+;;; TODO: reimplement the symmetric arg
+
 (define* (ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos)
   "(ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
   ;; vct: start incr off scl
-  (ptree-channel
-   (lambda (y data forward)
-     (let* ((angle (data 0))
-	    (incr (data 1))
-	    (val (* y (+ (data 2) (* angle angle (data 3))))))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-   beg dur snd chn edpos #t
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ 1.0 frag-dur)))
-       (if (and symmetric
-		(< rmp1 rmp0))
-	   (vct (* (- frag-dur frag-beg) incr) (- incr) rmp1 (- rmp0 rmp1))
-	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0)))))
+  (map-channel
+   (let ((angle 0.0)
+	 (incr (/ 1.0 (if (number? dur)
+			  dur
+			  (- (frames snd chn) beg)))))
+     (lambda (y)
+       (let* ((val (* y (+ rmp0 (* angle angle (- rmp1 rmp0))))))
+	 (set! angle (+ angle incr))
+	 val)))
+   beg dur snd chn edpos
    (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))
 
 
@@ -420,8 +398,10 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (offset-channel dc (beg 0) dur snd chn edpos)
   "(offset-channel amount (beg 0) dur snd chn edpos) adds amount to each sample"
-  (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f
-		 (format #f "offset-channel ~A ~A ~A" dc beg dur)))
+  (map-channel (lambda (y) 
+		 (+ y dc)) 
+	       beg dur snd chn edpos
+	       (format #f "offset-channel ~A ~A ~A" dc beg dur)))
 
 
 (define* (offset-sound off (beg 0) dur snd)
@@ -456,7 +436,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (dither-channel (amount .00006) (beg 0) dur snd chn edpos)
   "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"
   (let ((dither (* .5 amount)))
-    (ptree-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos #t #f
+    (map-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos
 		   (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))
 
 
@@ -475,10 +455,11 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (contrast-channel index (beg 0) dur snd chn edpos)
   "(contrast-channel index (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"
-  (ptree-channel
+  (map-channel
    (lambda (y)
-     (sin (+ (* y 0.5 pi) (* index (sin (* y 2.0 pi))))))
-   beg dur snd chn edpos #f #f
+     (sin (+ (* y 0.5 pi) 
+	     (* index (sin (* y 2.0 pi))))))
+   beg dur snd chn edpos
    (format #f "contrast-channel ~A ~A ~A" index beg dur)))
 
 
@@ -522,39 +503,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	(error 'no-such-sound (list "normalize-sound" snd)))))
 
 
-
-#|
-;;; -------- delay-channel 
-;;;
-;;; this is ok going forward (I think), but not in reverse
-
-(define* (delay-channel dly (beg 0) dur snd chn edpos)
-  "(delay-channel amount (beg 0) dur snd chn edpos) implements a delay using virtual edits"
-  (let ((cur-edpos (if (or (not edpos)
-			   (= edpos current-edit-position))
-		       (edit-position snd chn)
-		       edpos)))
-    (ptree-channel (lambda (y data dir)
-		     (let* ((pos (floor (data 0)))
-			    (len (floor (data 1)))
-			    (val (data (+ pos 2))))
-		       (set! (data (+ pos 2)) y)
-		       (set! pos (+ 1 pos))
-		       (if (>= pos len) (set! (data 0) 0) (set! (data 0) pos))
-		       val))
-		   beg dur snd chn edpos #f
-		   (lambda (fpos fdur)
-		     (let ((data (make-vct (+ dly 2))))
-		       (set! (data 0) 0.0)
-		       (set! (data 1) dly)
-		       (if (= fpos 0)
-			   data
-			   (let ((reader (make-sampler (- fpos 1) snd chn -1 cur-edpos)))
-			     (do ((i (- dly 1) (- i 1)))
-				 ((< i 0))
-			       (set! (data (+ i 2)) (reader)))
-			     data)))))))
-|#
 
 ;;; -------- channels-equal
 

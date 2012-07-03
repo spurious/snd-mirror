@@ -991,7 +991,6 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
 bool ramp_channel(chan_info *cp, double start, double incr, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit);
 bool xramp_channel(chan_info *cp, double start, double incr, double scaler, double offset, 
 		   mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit, mus_any *e, int xramp_seg_loc);
-void ptree_channel(chan_info *cp, struct ptree *tree, mus_long_t beg, mus_long_t num, int pos, bool env_it, XEN init_func, const char *origin);
 snd_fd *init_sample_read(mus_long_t samp, chan_info *cp, read_direction_t direction);
 snd_fd *init_sample_read_any(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position);
 snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize);
@@ -1497,8 +1496,6 @@ void reverb_control_set_feedback(mus_float_t hop);
 void amp_env_env(chan_info *cp, mus_float_t *brkpts, int npts, int pos, mus_float_t base, mus_float_t scaler, mus_float_t offset);
 peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, mus_long_t beg, mus_long_t num, int pos);
-void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func);
-void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, mus_long_t beg, mus_long_t num, int pos, XEN init_func);
 void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int pos);
 snd_info *snd_new_file(const char *newname, int header_type, int data_format, int srate, int chans, const char *new_comment, mus_long_t samples);
 #if XEN_HAVE_RATIOS

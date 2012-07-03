@@ -1,5 +1,7 @@
 #include "snd.h"
 
+#define S_ptree_channel "oops"
+#define S_max_virtual_ptrees "oops"
 
 static XEN save_hook;
 
@@ -128,43 +130,6 @@ void free_ptree_list(chan_info *cp)
     }
   cp->ptree_ctr = -1;
   cp->ptree_size = 0;
-}
-
-
-static int add_ptree(chan_info *cp)
-{
-  int i;
-  if (cp->ptrees)
-    for (i = 0; i <= cp->ptree_ctr; i++)
-      if (cp->ptrees[i] == NULL)
-	return(i);
-  cp->ptree_ctr++;
-  if (cp->ptree_ctr >= cp->ptree_size)
-    {
-      cp->ptree_size += EDIT_ALLOC_SIZE;
-      if (cp->ptrees)
-	{
-	  cp->ptrees = (struct ptree **)realloc(cp->ptrees, cp->ptree_size * sizeof(struct ptree *));
-	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptrees[i] = NULL;
- 	  cp->ptree_inits = (XEN *)realloc(cp->ptree_inits, cp->ptree_size * sizeof(XEN));
- 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
- 	  cp->init_locs = (int *)realloc(cp->init_locs, cp->ptree_size * sizeof(int));
- 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->init_locs[i] = -1;
- 	  cp->init_args = (int *)realloc(cp->init_args, cp->ptree_size * sizeof(int));
- 	  for (i = cp->ptree_ctr; i < cp->ptree_size; i++) cp->init_args[i] = 2;
- 	}
-       else 
- 	{
- 	  cp->ptrees = (struct ptree **)calloc(cp->ptree_size, sizeof(struct ptree *));
- 	  cp->ptree_inits = (XEN *)calloc(cp->ptree_size, sizeof(XEN));
- 	  for (i = 0; i < cp->ptree_size; i++) cp->ptree_inits[i] = XEN_FALSE;
- 	  cp->init_locs = (int *)calloc(cp->ptree_size, sizeof(int));
- 	  for (i = 0; i < cp->ptree_size; i++) cp->init_locs[i] = -1;
- 	  cp->init_args = (int *)calloc(cp->ptree_size, sizeof(int));
- 	  for (i = 0; i < cp->ptree_size; i++) cp->init_args[i] = 2;
-	}
-    }
-  return(cp->ptree_ctr);
 }
 
 
@@ -2083,12 +2048,6 @@ static fragment_type_info type_info[NUM_OPS] = {
 static bool ptree_op(int type)
 {
   return(type_info[type].ptrees);
-}
-
-
-static bool split_ptree_op(int type)
-{
-  return(type >= ED_PTREE_RAMP_PTREE);  /* order matters here */
 }
 
 
@@ -5322,32 +5281,6 @@ static bool found_virtual_mix(chan_info *cp, int edpos)
 }
 
 
-static bool found_unmixable_ptreed_op(chan_info *cp, int edpos, mus_long_t beg, mus_long_t end)
-{
-  ed_list *ed;
-  int i;
-  ed = cp->edits[edpos];
-  for (i = 0; i < ed->size - 1; i++) 
-    {
-      mus_long_t loc, next_loc;
-      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
-      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
-      if (loc > end) return(false);
-      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
-      /* this fragment (i) starts at loc, ends just before next_loc, is of type typ */
-      if (next_loc > beg)
-	{
-	  int after_ptree_op;
-	  after_ptree_op = type_info[FRAGMENT_TYPE(ed, i)].add_ptree;
-	  if ((after_ptree_op == -1) ||        /* this should not happen since we check for it ahead of time */
-	      (!(is_mixable_op(after_ptree_op))))
-	    return(true);
-	}
-    }
-  return(false);
-}
-
-
 static bool found_unmixable_ramped_op(chan_info *cp, int edpos, mus_long_t beg, mus_long_t end, bool is_xramp)
 {
   ed_list *ed;
@@ -5864,178 +5797,7 @@ bool xramp_channel(chan_info *cp, double start, double incr, double scaler, doub
 }
 
 
-static void add_ptree_to_fragment(ed_list *new_ed, int i, int ptree_loc, mus_long_t beg, mus_long_t num)
-{
-  int typ, tree;
-  ed_fragment *ed;
-  ed = FRAGMENT(new_ed, i);
 
-  typ = ED_TYPE(ed);
-  if (typ < ED_SIMPLE) return; /* end mark! trying to avoid it in copy loops */
-
-  ED_TYPE(ed) = type_info[typ].add_ptree;
-  tree = ensure_ed_ptrees(ed, (ED_PTREES(ed)) ? (ED_PTREE_LIST_SIZE(ed) + 1) : 1) - 1;
-
-  if (ramp_op(typ))
-    {
-      if (ptree_op(typ))
-	{
-	  if ((split_ptree_op(ED_TYPE(ed))) && (ED_PSPLIT(ed) == 0))
-	    ED_PSPLIT(ed) = ED_PTREE_LIST_SIZE(ed) - 1; /* we made room for the new (split) ptree already */
-	}
-      else
-	{
-	  /* if old was (pure)ramp_op, set ramp split locs */
-	  ED_RSPLIT(ed) = ED_RAMP_LIST_SIZE(ed);
-	  ED_XSPLIT(ed) = ED_XRAMP_LIST_SIZE(ed);
-	}
-    }
-
-
-  if (tree == 0)
-    ED_PTREE_SCALER(ed, tree) = MUS_SAMPLE_TO_FLOAT(ED_SCALER(ed)); /* arg is mus_sample data, need convert to float */
-  else ED_PTREE_SCALER(ed, tree) = ED_SCALER(ed);                   /* already float, so no need to convert */
-
-  ED_PTREE_INDEX(ed, tree) = ptree_loc;
-  ED_PTREE_DUR(ed, tree) = num;
-  ED_PTREE_POSITION(ed, tree) = ED_GLOBAL_POSITION(ed) - beg;
-
-  ED_SCALER(ed) = 1.0;
-}
-
-
-void ptree_channel(chan_info *cp, struct ptree *tree, mus_long_t beg, mus_long_t num, int pos, bool env_it, XEN init_func, const char *origin)
-{
-  mus_long_t len;
-  int i, ptree_loc = 0;
-  ed_list *new_ed, *old_ed;
-  bool backup = false;
-
-  old_ed = cp->edits[pos];
-  if ((beg < 0) || 
-      (num <= 0) ||
-      (beg >= old_ed->samples) ||
-      (tree == NULL))
-    {
-      if (tree) 
-	{
-	  mus_run_free_ptree(tree);
-	  tree = NULL;
-	}
-      return; 
-    }
-
-  len = old_ed->samples;
-  if (pos > cp->edit_ctr)
-    {
-      /* prepare_edit_list will throw 'no-such-edit, but we need to clean up the ptree first */
-      mus_run_free_ptree(tree);
-      tree = NULL;
-    }
-
-  if (!(prepare_edit_list(cp, pos, S_ptree_channel)))
-    {
-      /* perhaps edit-hook blocked the edit */
-      if (tree) 
-	{
-	  mus_run_free_ptree(tree);
-	  tree = NULL;
-	}
-      return;
-    }
-
-  /* if there are any virtual mixes, we need to check the ptreed section for either mixes present, or
-   *    ptreed-opcodes that are unmixable (since the user may drag the virtual mix into this new section).
-   *    In the latter case, all mixes must be locked, not just those directly affected.
-   */
-  if (found_virtual_mix(cp, pos))
-    {
-      mus_long_t lock_beg, lock_end;
-      if (found_unmixable_ptreed_op(cp, pos, beg, beg + num))
-	{
-	  lock_beg = 0;
-	  lock_end = len - 1;
-	}
-      else
-	{
-	  lock_beg = beg;
-	  lock_end = beg + num;
-	}
-      if (lock_affected_mixes(cp, pos, lock_beg, lock_end))
-	{
-	  pos = cp->edit_ctr;
-	  old_ed = cp->edits[pos];  /* add ptrees to the changed list, not the original incoming list */
-	  increment_edit_ctr(cp);
-	  backup = true;
-	}
-    }
-
-  ptree_loc = add_ptree(cp);
-  cp->ptrees[ptree_loc] = tree;
-  if (XEN_PROCEDURE_P(init_func))
-    {
-      cp->init_locs[ptree_loc] = snd_protect(init_func);
-      cp->ptree_inits[ptree_loc] = init_func;
-      if (XEN_REQUIRED_ARGS_OK(init_func, 3))
-	cp->init_args[ptree_loc] = 3;
-      else cp->init_args[ptree_loc] = 2;
-    }
-  else cp->ptree_inits[ptree_loc] = XEN_FALSE;
-
-  if ((beg == 0) && 
-      (num >= old_ed->samples))
-    {
-      num = len;
-      new_ed = make_ed_list(old_ed->size);
-      new_ed->beg = beg;
-      new_ed->len = num;
-      new_ed->samples = len;
-      cp->edits[cp->edit_ctr] = new_ed;
-
-      for (i = 0; i < new_ed->size; i++) 
-	{
-	  copy_ed_fragment(FRAGMENT(new_ed, i), FRAGMENT(old_ed, i));
-	  if (i < new_ed->size - 1) /* ignore end mark! */
-	    add_ptree_to_fragment(new_ed, i, ptree_loc, beg, num);
-	}
-      if (env_it)
-	peak_env_ptree(cp, tree, pos, init_func);
-    }
-  else 
-    {
-      if (beg + num > len) num = len - beg;
-      new_ed = copy_and_split_list(beg, num, old_ed);
-      new_ed->samples = len;
-      cp->edits[cp->edit_ctr] = new_ed;
-      for (i = 0; i < new_ed->size; i++) 
-	{
-	  if (FRAGMENT_GLOBAL_POSITION(new_ed, i) > (beg + num - 1)) 
-	    break;                                                    /* not >= (1 sample selections) */
-	  if ((FRAGMENT_GLOBAL_POSITION(new_ed, i) >= beg) &&
-	      (i < new_ed->size - 1))
-	    add_ptree_to_fragment(new_ed, i, ptree_loc, beg, num);
-	}
-      if (env_it)
-	peak_env_ptree_selection(cp, tree, beg, num, pos, init_func);
-    }
-  new_ed->cursor = old_ed->cursor;
-  new_ed->edit_type = PTREE_EDIT;
-  new_ed->sound_location = 0;
-  new_ed->ptree_location = ptree_loc;
-  new_ed->origin = mus_strdup(origin);
-  new_ed->edpos = pos;
-  new_ed->ptree_env_too = env_it;
-  new_ed->selection_beg = old_ed->selection_beg;
-  new_ed->selection_end = old_ed->selection_end;
-
-  ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
-  reflect_mix_change(ANY_MIX_ID);
-  after_edit(cp);
-
-  if (backup)
-    backup_edit_list(cp);
-  update_graph(cp);
-}
 
 
 /* -------------------------------- samplers -------------------------------- */
@@ -7063,7 +6825,7 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 /* ramp on mix is techically possible, but ambiguous -- currently if we mix, then ramp elsewhere, then drag the mix
  *   to the ramped portion, the mix treats the ramp as prior data (adding);  if we had ramp_mix, it would want to
  *   treat that ramp as an envelope on the mix if the ramp happened after the mix was established but as data if before.
- *   Too tricky (and ptrees make it worse).  (We'd also need ED_RAMP_ZERO to make clean fixups upon drag and so on).
+ *   Too tricky.  (We'd also need ED_RAMP_ZERO to make clean fixups upon drag and so on).
  *   Three times and out so far...
  *   ...
  *   but, if the envelope is global, it is not ambiguous, (except that we have scaled portions?) --
@@ -9852,14 +9614,11 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 
 static XEN g_max_virtual_ptrees(void)
 {
-  #define H_max_virtual_ptrees "(" S_max_virtual_ptrees "): most ptrees running at once in virtual edits (default: 32)"
-  return(C_TO_XEN_INT(max_virtual_ptrees));
+  return(XEN_FALSE);
 }
 
 static XEN g_set_max_virtual_ptrees(XEN num)
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ONLY_ARG, S_setB S_max_virtual_ptrees, "integer");
-  max_virtual_ptrees = XEN_TO_C_INT(num);
   return(num);
 }
 
@@ -10029,7 +9788,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_snd_to_sample,                g_snd_to_sample_w,                2, 1, 0, H_snd_to_sample);
   XEN_DEFINE_PROCEDURE(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_virtual_ptrees, g_max_virtual_ptrees_w, H_max_virtual_ptrees,
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_virtual_ptrees, g_max_virtual_ptrees_w, "obsolete function",
 				   S_setB S_max_virtual_ptrees, g_set_max_virtual_ptrees_w, 0, 0, 1, 0);
 
 

@@ -1064,172 +1064,6 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, mus_long_t beg, mus_lon
 }
 
 
-void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
-{
-  peak_env_info *old_ep;
-  old_ep = cp->edits[pos]->peak_env;
-  if ((old_ep) && (old_ep->completed))
-    {
-      int i;
-      vct *vlo = NULL, *vhi = NULL;
-      mus_float_t fmin, fmax, dmin, dmax;
-      peak_env_info *new_ep;
-
-      new_ep = cp->edits[cp->edit_ctr]->peak_env;
-      if ((new_ep) && 
-	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
-	new_ep = free_peak_env(cp, cp->edit_ctr);
-
-      if (new_ep == NULL)
-	{
-	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
-	  new_ep->data_max = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
-	  new_ep->data_min = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
-	}
-
-      new_ep->peak_env_size = old_ep->peak_env_size;
-      new_ep->samps_per_bin = old_ep->samps_per_bin;
-      fmin = MIN_INIT;
-      fmax = MAX_INIT;
-
-      if (XEN_PROCEDURE_P(init_func))
-	{
-	  /* probably faster to copy locally than protect from GC */
-	  vlo = mus_vct_copy(XEN_TO_VCT(XEN_CALL_2(init_func,
-						   C_TO_XEN_LONG_LONG(0),
-						   C_TO_XEN_LONG_LONG(new_ep->peak_env_size),
-						   S_ptree_channel " init func")));
-	  vhi = mus_vct_copy(vlo);
-	}
-
-      for (i = 0; i < new_ep->peak_env_size; i++) 
-	{
-	  if (vlo)
-	    {
-	      dmin = mus_run_evaluate_ptree_1f1v1b2f(pt, old_ep->data_min[i], vlo, true);
-	      dmax = mus_run_evaluate_ptree_1f1v1b2f(pt, old_ep->data_max[i], vhi, true);
-	    }
-	  else
-	    {
-	      dmin = mus_run_evaluate_ptree_1f2f(pt, old_ep->data_min[i]);
-	      dmax = mus_run_evaluate_ptree_1f2f(pt, old_ep->data_max[i]);
-	    }
-	  if (dmin <= dmax)
-	    {
-	      new_ep->data_min[i] = dmin;
-	      new_ep->data_max[i] = dmax;
-	    }
-	  else
-	    {
-	      new_ep->data_min[i] = dmax;
-	      new_ep->data_max[i] = dmin;
-	    }
-	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
-	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
-	}
-
-      if (vlo) mus_vct_free(vlo);
-      if (vhi) mus_vct_free(vhi);
-      new_ep->fmin = fmin;
-      new_ep->fmax = fmax;
-      new_ep->completed = true;
-      new_ep->bin = old_ep->bin;
-      new_ep->top_bin = old_ep->top_bin;
-      cp->edits[cp->edit_ctr]->peak_env = new_ep;
-    }
-}
-
-
-void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, mus_long_t beg, mus_long_t num, int pos, XEN init_func)
-{
-  peak_env_info *old_ep;
-  old_ep = cp->edits[pos]->peak_env;
-  if ((old_ep) && (old_ep->completed))
-    {
-      peak_env_info *new_ep;
-      mus_float_t fmax = MAX_INIT, fmin = MIN_INIT, dmin, dmax;
-      int i;
-      bool closure = false, inited = false;
-      vct *vlo = NULL, *vhi = NULL;
-      mus_long_t cursamp, start, end;
-
-      new_ep = cp->edits[cp->edit_ctr]->peak_env;
-      if ((new_ep) && 
-	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
-	new_ep = free_peak_env(cp, cp->edit_ctr);
-
-      if (new_ep == NULL)
-	{
-	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
-	  new_ep->data_max = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
-	  new_ep->data_min = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
-	}
-
-      new_ep->peak_env_size = old_ep->peak_env_size;
-      new_ep->samps_per_bin = old_ep->samps_per_bin;
-      end = beg + num - 1;
-      start = beg - new_ep->samps_per_bin;
-      if (XEN_PROCEDURE_P(init_func)) closure = true;
-
-      for (i = 0, cursamp = 0; i < new_ep->peak_env_size; i++, cursamp += new_ep->samps_per_bin) 
-	{
-	  if ((cursamp >= end) || (cursamp <= start))
-	    {
-	      new_ep->data_min[i] = old_ep->data_min[i];
-	      new_ep->data_max[i] = old_ep->data_max[i];
-	    }
-	  else
-	    {
-	      if ((cursamp >= beg) && ((cursamp + new_ep->samps_per_bin) <= end))
-		{
-		  if (closure)
-		    {
-		      if (!inited)
-			{
-			  vlo = mus_vct_copy(XEN_TO_VCT(XEN_CALL_2(init_func,
-								   C_TO_XEN_LONG_LONG((mus_long_t)((mus_float_t)(cursamp - beg) / (mus_float_t)(num))),
-								   C_TO_XEN_LONG_LONG((mus_long_t)(num / new_ep->samps_per_bin)),
-								   S_ptree_channel " init func")));
-			  vhi = mus_vct_copy(vlo);
-			  inited = true;
-			}
-		      dmin = mus_run_evaluate_ptree_1f1v1b2f(pt, old_ep->data_min[i], vlo, true);
-		      dmax = mus_run_evaluate_ptree_1f1v1b2f(pt, old_ep->data_max[i], vhi, true);
-		    }
-		  else
-		    {
-		      dmin = mus_run_evaluate_ptree_1f2f(pt, old_ep->data_min[i]);
-		      dmax = mus_run_evaluate_ptree_1f2f(pt, old_ep->data_max[i]);
-		    }
-		  if (dmin <= dmax)
-		    {
-		      new_ep->data_min[i] = dmin;
-		      new_ep->data_max[i] = dmax;
-		    }
-		  else
-		    {
-		      new_ep->data_min[i] = dmax;
-		      new_ep->data_max[i] = dmin;
-		    }
-		}
-	      else pick_one_bin(new_ep, i, cursamp, cp, cp->edit_ctr);
-	    }
-	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
-	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
-	}
-
-      if (vlo) mus_vct_free(vlo);
-      if (vhi) mus_vct_free(vhi);
-      new_ep->fmin = fmin;
-      new_ep->fmax = fmax;
-      new_ep->completed = true;
-      new_ep->bin = old_ep->bin;
-      new_ep->top_bin = old_ep->top_bin;
-      cp->edits[cp->edit_ctr]->peak_env = new_ep;
-    }
-}
-
-
 void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int pos)
 {
   peak_env_info *old_ep;
@@ -2431,50 +2265,26 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 	  /* this was #if (!HAVE_SCHEME) which makes no sense -- I think it meant (!HAVE_RUN)
 	   *   but that means (fill! <sound>) fails if optimization is off.
 	   */
-	  if (optimization(ss) == 0)
+	  mus_long_t len = -1, j;
+	  mus_sample_t *data = NULL;
+	  mus_sample_t value;
+	  value = MUS_FLOAT_TO_SAMPLE(valf);	  
+	  
+	  for (i = 0; i < sp->nchans; i++)
 	    {
-	      mus_long_t len = -1, j;
-	      mus_sample_t *data = NULL;
-	      mus_sample_t value;
-	      value = MUS_FLOAT_TO_SAMPLE(valf);	  
-	      
-	      for (i = 0; i < sp->nchans; i++)
+	      cp = sp->chans[i];
+	      if ((!data) || (CURRENT_SAMPLES(cp) != len))
 		{
-		  cp = sp->chans[i];
-		  if ((!data) || (CURRENT_SAMPLES(cp) != len))
-		    {
-		      len = CURRENT_SAMPLES(cp);
-		      if (data) free(data);
-		      data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
-		      for (j = 0; j < len; j++)
-			data[j] = value;
-		    }
-		  if (change_samples(0, len, data, cp, "fill! sound", cp->edit_ctr))
-		    update_graph(cp);
+		  len = CURRENT_SAMPLES(cp);
+		  if (data) free(data);
+		  data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
+		  for (j = 0; j < len; j++)
+		    data[j] = value;
 		}
-	      free(data);
+	      if (change_samples(0, len, data, cp, "fill! sound", cp->edit_ctr))
+		update_graph(cp);
 	    }
-	  else
-	    {
-	      char *expr;
-	      XEN func;
-	      int gc_loc;
-	      
-	      func = s7_eval_c_string(s7, expr = mus_format("(lambda (y) %f)", valf));
-	      gc_loc = s7_gc_protect(s7, func);
-	      free(expr);
-	      
-	      for (i = 0; i < sp->nchans; i++)
-		{
-		  cp = sp->chans[i];
-		  /* we need a separate ptree for each channel */
-		  ptree_channel(cp, 
-				mus_run_form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(func)), 
-				0, CURRENT_SAMPLES(cp), cp->edit_ctr, true, XEN_FALSE, "fill! sound");
-		}
-	      
-	      s7_gc_unprotect_at(s7, gc_loc);
-	    }
+	  free(data);
 	}
     }
   return(XEN_FALSE);
