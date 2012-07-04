@@ -284,7 +284,7 @@ void preload_best_completions(void)
   best_completions[n++] = mus_strdup("*output*");
   best_completions[n++] = mus_strdup("lambda");
   best_completions[n++] = mus_strdup("define");
-  best_completions[n++] = mus_strdup(S_vct_length);
+  best_completions[n++] = mus_strdup("vct-length");
 }
 
 

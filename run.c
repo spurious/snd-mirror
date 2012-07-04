@@ -143,6 +143,37 @@
 #include "clm-strings.h"
 #include "sndlib-strings.h"
 
+#define S_make_vct       "make-vct"
+#define S_vct_addB       "vct-add!"
+#define S_vct_subtractB  "vct-subtract!"
+#define S_vct_copy       "vct-copy"
+#define S_vct_length     "vct-length"
+#define S_vct_multiplyB  "vct-multiply!"
+#define S_vct_offsetB    "vct-offset!"
+#define S_vct_ref        "vct-ref"
+#define S_vct_scaleB     "vct-scale!"
+#define S_vct_fillB      "vct-fill!"
+#define S_vct_setB       "vct-set!"
+#define S_vct_mapB       "vct-map!"
+#define S_vct_peak       "vct-peak"
+#define S_vct_p          "vct?"
+#define S_list_to_vct    "list->vct"
+#define S_vct_to_list    "vct->list"
+#define S_vector_to_vct  "vector->vct"
+#define S_vct_to_vector  "vct->vector"
+#define S_vct_moveB      "vct-move!"
+#define S_vct_subseq     "vct-subseq"
+#define S_vct            "vct"
+#define S_vct_reverse    "vct-reverse!"
+#define S_vct_to_string  "vct->string"
+#if HAVE_RUBY
+  #define S_vct_times    "vct_multiply"
+  #define S_vct_plus     "vct_add"
+#else
+  #define S_vct_times    "vct*"
+  #define S_vct_plus     "vct+"
+#endif
+
 #define NOT_A_GC_LOC -1
 
 static int safe_strcmp(const char *s1, const char *s2)
@@ -13942,7 +13973,7 @@ static mus_float_t src_input(void *arg, int direction)
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
-  pt = gn->input_ptree;
+  pt = mus_xen_input(gn);
   outer = pt->outer_tree;
   outer->ints[pt->args[0]] = direction;
   eval_embedded_ptree(pt, outer);
@@ -13952,7 +13983,7 @@ static mus_float_t src_input(void *arg, int direction)
 
 static void src_2f(int *args, ptree *pt) 
 {
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_3;
+  mus_xen_set_input((mus_xen *)mus_environ(CLM_ARG_1), FNC_ARG_3);
   FLOAT_RESULT = mus_src(CLM_ARG_1, FLOAT_ARG_2, src_input);
 }
 
@@ -13990,7 +14021,7 @@ static xen_value *src_1(ptree *prog, xen_value **args, int num_args)
 
 static void convolve_1f(int *args, ptree *pt)
 {
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
+  mus_xen_set_input((mus_xen *)mus_environ(CLM_ARG_1), FNC_ARG_2);
   FLOAT_RESULT = mus_convolve(CLM_ARG_1, src_input);
 }
 
@@ -14021,9 +14052,9 @@ static int grn_edit(void *arg)
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
-  pt = gn->edit_ptree;
+  pt = mus_xen_edit(gn);
   outer = pt->outer_tree;
-  outer->clms[pt->args[0]] = gn->gen;
+  outer->clms[pt->args[0]] = mus_xen_gen(gn);
   eval_embedded_ptree(pt, outer);
   return(outer->ints[pt->result->addr]);
 }
@@ -14032,8 +14063,8 @@ static int grn_edit(void *arg)
 static void granulate_2f(int *args, ptree *pt)
 {
   mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_1);
-  gn->input_ptree = FNC_ARG_2;
-  gn->edit_ptree = FNC_ARG_3;
+  mus_xen_set_input(gn, FNC_ARG_2);
+  mus_xen_set_edit(gn, FNC_ARG_3);
   FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, src_input, grn_edit);
 }
 
@@ -14041,14 +14072,14 @@ static void granulate_2f(int *args, ptree *pt)
 static void granulate_2f_split(int *args, ptree *pt)
 {
   mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_1);
-  gn->edit_ptree = FNC_ARG_3;
+  mus_xen_set_edit(gn, FNC_ARG_3);
   FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, NULL, grn_edit);
 }
 
 
 static void granulate_1f(int *args, ptree *pt)
 {
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
+  mus_xen_set_input((mus_xen *)mus_environ(CLM_ARG_1), FNC_ARG_2);
   FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, src_input, NULL);
 }
 
@@ -14108,9 +14139,9 @@ static bool pv_analyze(void *arg, mus_float_t (*input)(void *arg1, int direction
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
-  pt = gn->analyze_ptree;
+  pt = mus_xen_analyze(gn);
   outer = pt->outer_tree;
-  outer->clms[pt->args[0]] = gn->gen;
+  outer->clms[pt->args[0]] = mus_xen_gen(gn);
   /* I think the input function is handled by mus_phase_vocoder */
   eval_embedded_ptree(pt, outer);
   return(outer->ints[pt->result->addr]);
@@ -14120,9 +14151,9 @@ static mus_float_t pv_synthesize(void *arg)
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
-  pt = gn->synthesize_ptree;
+  pt = mus_xen_synthesize(gn);
   outer = pt->outer_tree;
-  outer->clms[pt->args[0]] = gn->gen;
+  outer->clms[pt->args[0]] = mus_xen_gen(gn);
   eval_embedded_ptree(pt, outer);
   return(outer->dbls[pt->result->addr]);
 }
@@ -14133,10 +14164,10 @@ static void phase_vocoder_5f(int *args, ptree *pt)
   /* in-coming arg1 is descr of which funcs are active -- all arg ctrs are shifted over one to make room */
   mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_2);
 
-  if (INT_ARG_1 & 1) gn->input_ptree = FNC_ARG_3;
-  if (INT_ARG_1 & 2) gn->analyze_ptree = FNC_ARG_4;
-  if (INT_ARG_1 & 4) gn->edit_ptree = FNC_ARG_5;
-  if (INT_ARG_1 & 8) gn->synthesize_ptree = FNC_ARG_6;
+  if (INT_ARG_1 & 1) mus_xen_set_input(gn, FNC_ARG_3);
+  if (INT_ARG_1 & 2) mus_xen_set_analyze(gn, FNC_ARG_4);
+  if (INT_ARG_1 & 4) mus_xen_set_edit(gn, FNC_ARG_5);
+  if (INT_ARG_1 & 8) mus_xen_set_synthesize(gn, FNC_ARG_6);
   FLOAT_RESULT = mus_phase_vocoder_with_editors(CLM_ARG_2, 
 						(INT_ARG_1 & 1) ? src_input : NULL, 
 						(INT_ARG_1 & 2) ? pv_analyze : NULL, 
@@ -14147,7 +14178,7 @@ static void phase_vocoder_5f(int *args, ptree *pt)
 
 static void phase_vocoder_1f(int *args, ptree *pt)
 {
-  ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
+  mus_xen_set_input((mus_xen *)mus_environ(CLM_ARG_1), FNC_ARG_2);
   FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, src_input);
 }
 
@@ -14702,7 +14733,7 @@ static s7_pointer wrap_generator(ptree *pt, int addr)
   {
     mus_xen *gn;
     gn = mus_any_to_mus_xen(gen);
-    gn->dont_free_gen = true;
+    mus_xen_set_dont_free(gn, true);
     return(mus_xen_to_object(gn));
   }
 }

@@ -56,6 +56,28 @@
   #endif
 #endif
 
+struct mus_xen {
+  mus_any *gen;
+  XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
+  int nvcts;
+  bool dont_free_gen;
+  struct ptree *input_ptree; /* added 24-Apr-02 for run optimizer */
+  struct ptree *edit_ptree;  /* ditto 26-Jul-04 */
+  struct ptree *analyze_ptree;
+  struct ptree *synthesize_ptree;
+};
+
+mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
+struct ptree *mus_xen_input(mus_xen *x) {return(x->input_ptree);}
+void mus_xen_set_input(mus_xen *x, struct ptree *input) {x->input_ptree = input;}
+struct ptree *mus_xen_edit(mus_xen *x) {return(x->edit_ptree);}
+void mus_xen_set_edit(mus_xen *x, struct ptree *edit) {x->edit_ptree = edit;}
+struct ptree *mus_xen_analyze(mus_xen *x) {return(x->analyze_ptree);}
+void mus_xen_set_analyze(mus_xen *x, struct ptree *analyze) {x->analyze_ptree = analyze;}
+struct ptree *mus_xen_synthesize(mus_xen *x) {return(x->synthesize_ptree);}
+void mus_xen_set_synthesize(mus_xen *x, struct ptree *synthesize) {x->synthesize_ptree = synthesize;}
+void mus_xen_set_dont_free(mus_xen *x, bool val) {x->dont_free_gen = val;}
+
 
 #if HAVE_SCHEME
 #define DISPLAY(Expr) s7_object_to_c_string(sc, Expr)
@@ -1745,18 +1767,15 @@ static XEN g_mus_set_length(XEN gen, XEN val)
 
   if ((ptr) && (!mus_env_p(ptr)) && (!mus_src_p(ptr))) /* set length doesn't refer to data vct here */
     {
-      if ((ptr->core->set_length) && (ptr->core->set_data)) /* else throw error below (backwards compatibility) */
+      ms = XEN_TO_MUS_XEN(gen);
+      if ((ms->vcts) && (!(XEN_EQ_P(ms->vcts[MUS_DATA_WRAPPER], XEN_UNDEFINED))))
 	{
-	  ms = XEN_TO_MUS_XEN(gen);
-	  if ((ms->vcts) && (!(XEN_EQ_P(ms->vcts[MUS_DATA_WRAPPER], XEN_UNDEFINED))))
-	    {
-	      vct *v;
-	      v = XEN_TO_VCT(ms->vcts[MUS_DATA_WRAPPER]);
-	      if ((v) && (len > v->length))
-		XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_length, XEN_ONLY_ARG, val, "must be <= current data size");
-	      /* set_offset refers only to env, set_width only to square_wave et al, set_location only readin */
-	      /* filters are protected by keeping allocated_size and not allowing arrays to be set */
-	    }
+	  vct *v;
+	  v = XEN_TO_VCT(ms->vcts[MUS_DATA_WRAPPER]);
+	  if ((v) && (len > v->length))
+	    XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_length, XEN_ONLY_ARG, val, "must be <= current data size");
+	  /* set_offset refers only to env, set_width only to square_wave et al, set_location only readin */
+	  /* filters are protected by keeping allocated_size and not allowing arrays to be set */
 	}
     }
   return(C_TO_XEN_LONG_LONG(mus_set_length(ptr, len)));
@@ -6937,7 +6956,10 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 
 static mus_float_t as_needed_input_generator(void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
-  return(MUS_RUN(XEN_TO_MUS_ANY(((mus_xen *)ptr)->vcts[MUS_INPUT_FUNCTION]), 0.0, 0.0));
+  mus_xen *x = (mus_xen *)ptr;
+  XEN v;
+  v = x->vcts[MUS_INPUT_FUNCTION];
+  return(MUS_RUN(XEN_TO_MUS_ANY(v), 0.0, 0.0));
 }
 
 

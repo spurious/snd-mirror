@@ -156,7 +156,7 @@
  *      8k: 2432, 32k: 2419, 128k: 2401, 512k: 2394, 8192k: 2417
  *    (valgrind timings from 23-Feb-10 running s7test.scm)
  *
- * If the initial heap is small, s7 can run in less than 1 Mbyte of memory.
+ * If the initial heap is small, s7 can run in less than 2 Mbytes of memory.
  * As of 5-May-2011, the heap size must be a multiple of 32.
  */
 
@@ -192,7 +192,7 @@
    * WITH_GMP adds the following functions: bignum, bignum?, bignum-precision
    * using gmp with precision=128 is about 3 times slower than using C doubles and long long ints.
    *
-   * WITH_GMP and WITH_OPTIMIZATION can't both be 1
+   * WITH_GMP and WITH_OPTIMIZATION can't both be 1 (this is a temporary situation)
    */
 #endif
 
@@ -28105,7 +28105,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	      s7_pointer equal_func;
 	      equal_func = find_method(sc, x, sc->EQUALP);
 	      if (equal_func != sc->UNDEFINED)
-		return(s7_apply_function(sc, equal_func, list_2(sc, x, y)));
+		return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
 	    }
 	  else return(false);
 	}
@@ -28351,7 +28351,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	      s7_pointer equal_func;
 	      equal_func = find_method(sc, x, sc->MORALLY_EQUALP);
 	      if (equal_func != sc->UNDEFINED)
-		return(s7_apply_function(sc, equal_func, list_2(sc, x, y)));
+		return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
 	    }
 	  else return(false);
 	}

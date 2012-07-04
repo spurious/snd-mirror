@@ -3,19 +3,10 @@
 
 #include "vct.h"
 
-typedef struct mus_xen {
-  mus_any *gen;
-  XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
-  int nvcts;
-  bool dont_free_gen;
-  struct ptree *input_ptree; /* added 24-Apr-02 for run optimizer */
-  struct ptree *edit_ptree;  /* ditto 26-Jul-04 */
-  struct ptree *analyze_ptree;
-  struct ptree *synthesize_ptree;
-} mus_xen;
+typedef struct mus_xen mus_xen;
 
 #define XEN_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
-#define XEN_TO_MUS_ANY(obj) ((mus_any *)((XEN_TO_MUS_XEN(obj))->gen))
+#define XEN_TO_MUS_ANY(obj) mus_xen_gen(XEN_TO_MUS_XEN(obj))
 #define MUS_CLM_DEFAULT_TABLE_SIZE 512
 #define MUS_CLM_DEFAULT_FREQUENCY 0.0
 
@@ -25,6 +16,17 @@ extern "C" {
 
 MUS_EXPORT mus_long_t clm_default_table_size_c(void);
 MUS_EXPORT double clm_default_frequency_c(void);
+
+MUS_EXPORT mus_any *mus_xen_gen(mus_xen *x);
+MUS_EXPORT struct ptree *mus_xen_input(mus_xen *x);
+MUS_EXPORT void mus_xen_set_input(mus_xen *x, struct ptree *input);
+MUS_EXPORT struct ptree *mus_xen_edit(mus_xen *x);
+MUS_EXPORT void mus_xen_set_edit(mus_xen *x, struct ptree *edit);
+MUS_EXPORT struct ptree *mus_xen_analyze(mus_xen *x);
+MUS_EXPORT void mus_xen_set_analyze(mus_xen *x, struct ptree *analyze);
+MUS_EXPORT struct ptree *mus_xen_synthesize(mus_xen *x);
+MUS_EXPORT void mus_xen_set_synthesize(mus_xen *x, struct ptree *synthesize);
+MUS_EXPORT void mus_xen_set_dont_free(mus_xen *x, bool val);
 
 MUS_EXPORT bool mus_xen_p(XEN obj);
 MUS_EXPORT const char *mus_fft_window_xen_name(mus_fft_window_t i);

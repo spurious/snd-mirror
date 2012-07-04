@@ -8002,7 +8002,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp'"
 
 #include "clm2xen.h"
 
-static int SND_TO_SAMPLE = 0;
+static int snd_to_sample_tag = 0;
 
 typedef struct {
   mus_any_class *core;
@@ -8012,7 +8012,7 @@ typedef struct {
   mus_long_t *samps;
 } snd_to_sample;
 
-bool snd_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND_TO_SAMPLE));}
+bool snd_to_sample_p(mus_any *ptr) {return(mus_type(ptr) == snd_to_sample_tag);}
 
 static bool snd_to_sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
@@ -8128,43 +8128,17 @@ mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan)
 }
 
 
-static mus_any_class SND_TO_SAMPLE_CLASS = {
-  -1,
-  (char *)S_snd_to_sample,
-  &snd_to_sample_free,
-  &snd_to_sample_describe,
-  &snd_to_sample_equalp,
-  0, 0,
-  &snd_to_sample_length, 0,
-  0, 0, 0, 0,
-  0, 0,
-  0, 0,
-  0,
-  MUS_INPUT,
-  NULL,               /* environ */
-  &snd_to_sample_channels,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &snd_to_sample_read,
-  0,
-  &snd_to_sample_file_name,
-  0,
-  &snd_to_sample_location,
-  0,  /* set location (ptr, mus_long_t loc) */
-  0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-
+static mus_any_class *snd_to_sample_class;
 
 static mus_any *make_snd_to_sample(snd_info *sp)
 {
   snd_to_sample *gen;
   gen = (snd_to_sample *)calloc(1, sizeof(snd_to_sample));
-  gen->core = &SND_TO_SAMPLE_CLASS;
-  gen->core->type = SND_TO_SAMPLE;
+  gen->core = snd_to_sample_class;
   gen->chans = sp->nchans;
   gen->sp = sp;
   gen->samps = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
-  gen->sfs = NULL; /* created as needed */
+  gen->sfs = NULL;           /* created as needed */
   return((mus_any *)gen);
 }
 
@@ -8438,7 +8412,16 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
   save_state_hook = XEN_DEFINE_HOOK(S_save_state_hook, "(make-hook 'name)", 1, H_save_state_hook); 
 
-  SND_TO_SAMPLE = mus_make_class_tag();
+
+  snd_to_sample_tag = mus_make_class_tag();
+  snd_to_sample_class = mus_make_mus_any_class(snd_to_sample_tag, (char *)S_snd_to_sample, snd_to_sample_free, snd_to_sample_describe, snd_to_sample_equalp);
+  mus_any_class_set_length(snd_to_sample_class, snd_to_sample_length);
+  mus_any_class_set_channels(snd_to_sample_class, snd_to_sample_channels);
+  mus_any_class_set_read_sample(snd_to_sample_class, snd_to_sample_read);
+  mus_any_class_set_file_name(snd_to_sample_class, snd_to_sample_file_name);
+  mus_any_class_set_location(snd_to_sample_class, snd_to_sample_location);
+  mus_any_class_set_extended_type(snd_to_sample_class, MUS_INPUT);
+
 
 #if DEBUG_EDIT_TABLES
   /* consistency checks for the accessor state table */

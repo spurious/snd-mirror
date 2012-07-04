@@ -1,9 +1,9 @@
 #ifndef CLM_H
 #define CLM_H
 
-#define MUS_VERSION 4
-#define MUS_REVISION 33
-#define MUS_DATE "1-Sep-11"
+#define MUS_VERSION 5
+#define MUS_REVISION 0
+#define MUS_DATE "4-July-12"
 
 /* isn't mus_env_interp backwards? */
 
@@ -24,60 +24,10 @@
 
 typedef enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT, MUS_DELAY_LINE} mus_clm_extended_t;
 
+typedef struct mus_any_class mus_any_class;
 typedef struct {
   struct mus_any_class *core;
 } mus_any;
-
-typedef struct mus_any_class {
-  int type;
-  char *name;
-  int (*release)(mus_any *ptr);
-  char *(*describe)(mus_any *ptr);                            /* caller should free the string */
-  bool (*equalp)(mus_any *gen1, mus_any *gen2);
-  mus_float_t *(*data)(mus_any *ptr);
-  mus_float_t *(*set_data)(mus_any *ptr, mus_float_t *new_data);
-  mus_long_t (*length)(mus_any *ptr);
-  mus_long_t (*set_length)(mus_any *ptr, mus_long_t new_length);
-  mus_float_t (*frequency)(mus_any *ptr);
-  mus_float_t (*set_frequency)(mus_any *ptr, mus_float_t new_freq);
-  mus_float_t (*phase)(mus_any *ptr); 
-  mus_float_t (*set_phase)(mus_any *ptr, mus_float_t new_phase);
-  mus_float_t (*scaler)(mus_any *ptr);
-  mus_float_t (*set_scaler)(mus_any *ptr, mus_float_t val);
-  mus_float_t (*increment)(mus_any *ptr);
-  mus_float_t (*set_increment)(mus_any *ptr, mus_float_t val);
-  mus_float_t (*run)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
-  mus_clm_extended_t extended_type;
-  void *(*closure)(mus_any *gen);
-  int (*channels)(mus_any *ptr);
-  mus_float_t (*offset)(mus_any *ptr);
-  mus_float_t (*set_offset)(mus_any *ptr, mus_float_t val);
-  mus_float_t (*width)(mus_any *ptr);
-  mus_float_t (*set_width)(mus_any *ptr, mus_float_t val);
-  mus_float_t (*xcoeff)(mus_any *ptr, int index);
-  mus_float_t (*set_xcoeff)(mus_any *ptr, int index, mus_float_t val);
-  mus_long_t (*hop)(mus_any *ptr);
-  mus_long_t (*set_hop)(mus_any *ptr, mus_long_t new_length);
-  mus_long_t (*ramp)(mus_any *ptr);
-  mus_long_t (*set_ramp)(mus_any *ptr, mus_long_t new_length);
-  mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan);
-  mus_float_t (*write_sample)(mus_any *ptr, mus_long_t samp, int chan, mus_float_t data);
-  char *(*file_name)(mus_any *ptr);
-  int (*end)(mus_any *ptr);
-  mus_long_t (*location)(mus_any *ptr);
-  mus_long_t (*set_location)(mus_any *ptr, mus_long_t loc);
-  int (*channel)(mus_any *ptr);
-  mus_float_t (*ycoeff)(mus_any *ptr, int index);
-  mus_float_t (*set_ycoeff)(mus_any *ptr, int index, mus_float_t val);
-  mus_float_t *(*xcoeffs)(mus_any *ptr);
-  mus_float_t *(*ycoeffs)(mus_any *ptr);
-  void *original_class; /* class chain perhaps */
-  void (*reset)(mus_any *ptr);
-  void *(*set_closure)(mus_any *gen, void *e);
-  int (*safety)(mus_any *ptr);
-  int (*set_safety)(mus_any *ptr, int val);
-} mus_any_class;
-
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
 	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE, MUS_NUM_INTERPS} mus_interp_t;
@@ -96,13 +46,10 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 typedef enum {MUS_SPECTRUM_IN_DB, MUS_SPECTRUM_NORMALIZED, MUS_SPECTRUM_RAW} mus_spectrum_t;
 typedef enum {MUS_CHEBYSHEV_EITHER_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
 
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); \
-                                       ((*((_clm_h_1->core)->run))(_clm_h_1, ARG_1, ARG_2)); })
-#else
-  #define MUS_RUN(GEN, ARG_1, ARG_2) ((*(((GEN)->core)->run))(GEN, ARG_1, ARG_2))
-#endif
-#define MUS_RUN_P(GEN) (((GEN)->core)->run)
+
+#define MUS_RUN(GEN, ARG_1, ARG_2) mus_apply(GEN, ARG_1, ARG_2)
+#define MUS_RUN_P(GEN) mus_run_exists(GEN)
+
 #define MUS_MAX_CLM_SINC_WIDTH 65536
 #define MUS_MAX_CLM_SRC 65536.0
 
@@ -113,6 +60,18 @@ extern "C" {
 MUS_EXPORT void mus_initialize(void);
 
 MUS_EXPORT int mus_make_class_tag(void);
+MUS_EXPORT mus_any_class *mus_make_mus_any_class(int type, char *name, 
+						 int (*release)(mus_any *ptr), 
+						 char *(*describe)(mus_any *ptr), 
+						 bool (*equalp)(mus_any *gen1, mus_any *gen2));
+MUS_EXPORT void mus_any_class_set_length(mus_any_class *p, mus_long_t (*length)(mus_any *ptr));
+MUS_EXPORT void mus_any_class_set_channels(mus_any_class *p, int (*channels)(mus_any *ptr));
+MUS_EXPORT void mus_any_class_set_location(mus_any_class *p, mus_long_t (*location)(mus_any *ptr));
+MUS_EXPORT void mus_any_class_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
+MUS_EXPORT void mus_any_class_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan));
+MUS_EXPORT void mus_any_class_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr));
+
+
 MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);
 MUS_EXPORT mus_float_t mus_hz_to_radians(mus_float_t hz);
 MUS_EXPORT mus_float_t mus_degrees_to_radians(mus_float_t degrees);
@@ -151,6 +110,7 @@ MUS_EXPORT bool mus_interp_type_p(int val);
 MUS_EXPORT bool mus_fft_window_p(int val);
 
 MUS_EXPORT int mus_data_format_zero(int format);
+MUS_EXPORT bool mus_run_exists(mus_any *gen);
 
 
 /* -------- generic functions -------- */
@@ -596,6 +556,9 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 4-July-12:  moved various struct definitions to clm.c
+ *             added accessors for mus_any_class etc.
+ * --------
  * 1-Sep:      mus_type.
  * 20-Aug:     changed type of mus_locsig to void, added mus_locsig_function_reset.
  *             removed function-as-output-location from locsig et al.

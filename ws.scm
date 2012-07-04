@@ -791,7 +791,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;  :(define hi (make-osc 440.0 0.0))
 ;;;  #<unspecified>
 ;;;  :hi
-;;;  (osc 0.125378749798983 0.0)
+;;;  (osc 0.125378749798983 0.0 ((mus-phase #<closure> #<closure>) (mus-describe #<closure>) (mus-run #<closure>) (mus-reset #<closure>) (mus-name #<closure> #<closure>)))
 
 ;;; besides setting up the list accessors, the make function, and the type predicate, defgenerator
 ;;;   calls add-clm-field to tell run the type of each list element (only actually needed if
