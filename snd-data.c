@@ -43,9 +43,6 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->sound_ctr = NOT_A_SOUND;
   cp->edit_ctr = -1;
   cp->sound_size = 0;
-  cp->ptrees = NULL;
-  cp->ptree_size = 0;
-  cp->ptree_ctr = -1;
   cp->edit_size = 0;
   cp->cursor_on = false;
   cp->cursor_visible = false;
@@ -155,7 +152,6 @@ static chan_info *free_chan_info(chan_info *cp)
   cp->graph_time_p = true;
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
-  if (cp->ptrees) free_ptree_list(cp);
   free_channel_mixes(cp);
   cp->sound = NULL;  /* a backpointer */
   cp->cursor_on = false;

@@ -4281,8 +4281,8 @@ swap the indicated channels"
 	    {
 	      /* look for simple cases where copying the current edit tree entry is not too hard */
 	      if ((num < FILE_BUFFER_SIZE) ||
-		  (ptree_or_sound_fragments_in_use(cp0, pos0)) ||
-		  (ptree_or_sound_fragments_in_use(cp1, pos1)))
+		  (sound_fragments_in_use(cp0, pos0)) ||
+		  (sound_fragments_in_use(cp1, pos1)))
 		swap_channels(cp0, cp1, beg0, num, pos0, pos1);
 	      else copy_then_swap_channels(cp0, cp1, pos0, pos1); /* snd-edits.c */
 	    }
@@ -6395,9 +6395,6 @@ void g_init_sig(void)
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
 #endif
-#endif
-#if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(define (ptree-channel . args) \"ptree-channel has been removed -- please use map-channel instead\")");
 #endif
 }
 

@@ -1,8 +1,5 @@
 #include "snd.h"
 
-#define S_ptree_channel "oops"
-#define S_max_virtual_ptrees "oops"
-
 static XEN save_hook;
 
 static bool dont_save(snd_info *sp, const char *newname)
@@ -101,35 +98,6 @@ static int add_sound_file_to_edit_list(chan_info *cp, const char *name, snd_io *
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_file(name, io, hdr, temp, cp->edit_ctr, chan);
   return(cp->sound_ctr);
-}
-
-
-void free_ptree_list(chan_info *cp)
-{
-  if (cp->ptrees)
-    {
-      int i;
-      for (i = 0; i < cp->ptree_size; i++)
- 	{
-	  if (cp->ptrees[i])
-	    {
-	      mus_run_free_ptree(cp->ptrees[i]);
-	      cp->ptrees[i] = NULL;
-	    }
-	  if (XEN_PROCEDURE_P(cp->ptree_inits[i]))
-	    snd_unprotect_at(cp->init_locs[i]);
-	}
-      free(cp->ptrees);
-      cp->ptrees = NULL;
-      free(cp->ptree_inits);
-      cp->ptree_inits = NULL;
-      free(cp->init_locs);
-      cp->init_locs = NULL;
-      free(cp->init_args);
-      cp->init_args = NULL;
-    }
-  cp->ptree_ctr = -1;
-  cp->ptree_size = 0;
 }
 
 
@@ -314,39 +282,16 @@ char *run_save_state_hook(const char *file)
  * redo: push position foward
  * No actual changes are flushed out to the file system until the file is saved.
  *
- * the editing possibilities are insert, change, delete, scale, zero, env, mix, ptree. 
+ * the editing possibilities are insert, change, delete, scale, zero, env, mix
  * All input goes through these lists (with minor exceptions -- see chn_sample below).
  *
  * The accessors are highly optimized (split into numerous choices) since everything else in Snd
- *   goes through the accessors to get at the data.  My tests indicate that even a lowly old
- *   267 MHz PC (and equivalent Sun) can play stereo 44KHz through the ptree2 op
- *   without glitches, and on a modern machine the readers scarcely register in loadav.
- *
- * (3.2 GHz):          -ffast-math  (double)   (3.8 GHz, float): after arrayification:
- *    straight     21    20           26             22             17
- *    ramp         24    21           26             25             20
- *    ramp2        27    22           27             29             25
- *    ramp3        38    24           29             33             38
- *    ramp4        35    44           30             43             43
- *    ptree-zero   46    47           61             49             46
- *    ptree        52    58           71             57             52
- *    ptreec       80    80           93             74             65
- *    ptree2       105  100          107             94             83
- *    ptree3       129  125          157            128            114 
- *    cosine       304  270          355 (290)      199            194 xramp changed:
- *    xramp        152   94          140 (91)       121            111   23
- *    xramp2       290  148          242 (154)      211            206   38
- *    mix                                                                38
- *    ramp10                                                             88
- *    xramp10                                                            96
- *    mix10                                                             169
+ *   goes through the accessors to get at the data.  
  *
  * I tried a flattened version (using ed_fragment* rather than ed_fragment**) which involves fewer calls on malloc,
  *   but the edit list is a "real" list -- we do internal insertions and deletions and so on, so it's simpler
  *   to use in the current form.
  */
-
-static int max_virtual_ptrees = 32; /* was 3 */
 
 
 /* fragment ramp info */
@@ -367,21 +312,6 @@ typedef struct {
 } ed_ramps;
 
 
-/* fragment ptree info */
-
-typedef struct {
-  mus_float_t scl;                                /* scales the arg to the ptree */
-  short loc;                                /* index into the cp->ptrees array */
-  mus_long_t pos,                                /* segment position within original at time of ptree edit */
-        dur;                                /* original (unfragmented) segment length */
-} ptree_state;
-
-typedef struct {
-  short size, rsplit, xsplit, psplit;
-  ptree_state *ptree_list;
-} ed_ptrees;
-
-
 /* fragment mix info */
 
 typedef struct {
@@ -400,25 +330,9 @@ typedef struct ed_fragment {               /* this name is necessary even in str
         end;                               /* index into the associated data => end point of data used in current segment */
   mus_float_t scl;                               /* segment scaler */
   ed_ramps *ramps;
-  ed_ptrees *ptrees;
   ed_mixes *mixes; 
 } ed_fragment;
 
-
-
-/* reader ptree info */
-
-typedef struct {
-  struct ptree *ptree;
-  XEN closure;
-  int gc_loc, closure_type;
-} ptree_info;
-
-typedef struct {
-  short size, rsplit, xsplit, psplit;
-  ptree_info *ptree_list;
-  bool zero;
-} reader_ptrees;
 
 
 /* reader ramp info */
@@ -456,10 +370,6 @@ typedef struct {
 /* #define FRAGMENT_XRAMP_LIST(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->xramp_list */
 #define FRAGMENT_XRAMP_LIST_SIZE(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->xramps
 
-#define FRAGMENT_PTREES(Ed, Pos)             ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees
-#define FRAGMENT_PTREE_LIST_SIZE(Ed, Pos)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->size
-/* #define FRAGMENT_PTREE_LIST(Ed, Pos)         ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list */
-
 #define FRAGMENT_MIXES(Ed, Pos)              ((ed_fragment **)((Ed)->fragments))[Pos]->mixes
 #define FRAGMENT_MIX_LIST_SIZE(Ed, Pos)      ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->size
 #define FRAGMENT_MIX_LIST(Ed, Pos)           ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list
@@ -478,11 +388,6 @@ typedef struct {
 #define FRAGMENT_XRAMP_INCR(Ed, Pos, Rmp)    ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->xramp_list[Rmp].incr
 #define FRAGMENT_XRAMP_SCALER(Ed, Pos, Rmp)  ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->xramp_list[Rmp].scl
 #define FRAGMENT_XRAMP_OFFSET(Ed, Pos, Rmp)  ((ed_fragment **)((Ed)->fragments))[Pos]->ramps->xramp_list[Rmp].off
-
-#define FRAGMENT_PTREE_SCALER(Ed, Pos, Pt)   ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].scl
-#define FRAGMENT_PTREE_INDEX(Ed, Pos, Pt)    ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].loc
-/* #define FRAGMENT_PTREE_DUR(Ed, Pos, Pt)      ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].dur */
-#define FRAGMENT_PTREE_POSITION(Ed, Pos, Pt) ((ed_fragment **)((Ed)->fragments))[Pos]->ptrees->ptree_list[Pt].pos
 
 #define FRAGMENT_MIX_STATE(Ed, Pos, Mix)     ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]
 /* #define FRAGMENT_MIX_INDEX(Ed, Pos, Mix)     ((ed_fragment **)((Ed)->fragments))[Pos]->mixes->mix_list[Mix]->index */
@@ -510,17 +415,6 @@ typedef struct {
 #define ED_XRAMP_INCR(Ed, Rmp)               (Ed)->ramps->xramp_list[Rmp].incr
 #define ED_XRAMP_SCALER(Ed, Rmp)             (Ed)->ramps->xramp_list[Rmp].scl
 #define ED_XRAMP_OFFSET(Ed, Rmp)             (Ed)->ramps->xramp_list[Rmp].off
-
-#define ED_PTREES(Ed)                        (Ed)->ptrees
-#define ED_PTREE_LIST(Ed)                    (Ed)->ptrees->ptree_list
-#define ED_PTREE_LIST_SIZE(Ed)               (Ed)->ptrees->size
-#define ED_PTREE_POSITION(Ed, Pt)            (Ed)->ptrees->ptree_list[Pt].pos
-#define ED_PTREE_DUR(Ed, Pt)                 (Ed)->ptrees->ptree_list[Pt].dur
-#define ED_PTREE_SCALER(Ed, Pt)              (Ed)->ptrees->ptree_list[Pt].scl
-#define ED_PTREE_INDEX(Ed, Pt)               (Ed)->ptrees->ptree_list[Pt].loc
-#define ED_PSPLIT(Ed)                        (Ed)->ptrees->psplit
-#define ED_RSPLIT(Ed)                        (Ed)->ptrees->rsplit
-#define ED_XSPLIT(Ed)                        (Ed)->ptrees->xsplit
 
 #define ED_MIXES(Ed)                         (Ed)->mixes
 #define ED_MIX_LIST(Ed)                      (Ed)->mixes->mix_list
@@ -565,24 +459,6 @@ typedef struct {
 #define READER_XVAL(Sf, Pos)                 ((reader_ramps *)((Sf)->ramps))->xvals[Pos]
 #define READER_RAMPF(Sf)                     ((reader_ramps *)((Sf)->ramps))->rampf
 #define READER_REV_RAMPF(Sf)                 ((reader_ramps *)((Sf)->ramps))->rev_rampf
-
-#define READER_PTREE_SCALER(Sf, Pt)          ((ed_fragment *)((Sf)->cb))->ptrees->ptree_list[Pt].scl
-#define READER_PTREE_INDEX(Sf, Pt)           ((ed_fragment *)((Sf)->cb))->ptrees->ptree_list[Pt].loc
-#define READER_PTREE_DUR(Sf, Pt)             ((ed_fragment *)((Sf)->cb))->ptrees->ptree_list[Pt].dur
-#define READER_PTREE_POSITION(Sf, Pt)        ((ed_fragment *)((Sf)->cb))->ptrees->ptree_list[Pt].pos
-
-#define READER_PTREES(Sf)                    ((reader_ptrees *)((Sf)->ptrees))
-#define READER_PTREE_LIST(Sf)                ((reader_ptrees *)((Sf)->ptrees))->ptree_list
-#define READER_PTREE_LIST_SIZE(Sf)           ((reader_ptrees *)((Sf)->ptrees))->size
-#define READER_PTREE_ZERO(Sf)                ((reader_ptrees *)((Sf)->ptrees))->zero
-#define READER_PSPLIT(Sf)                    ((reader_ptrees *)((Sf)->ptrees))->psplit
-#define READER_RSPLIT(Sf)                    ((reader_ptrees *)((Sf)->ptrees))->rsplit
-#define READER_XSPLIT(Sf)                    ((reader_ptrees *)((Sf)->ptrees))->xsplit
-
-#define READER_PTREE(Sf, Pt)                 ((reader_ptrees *)((Sf)->ptrees))->ptree_list[Pt].ptree
-#define READER_PTREE_TYPE(Sf, Pt)            ((reader_ptrees *)((Sf)->ptrees))->ptree_list[Pt].closure_type
-#define READER_PTREE_CLOSURE(Sf, Pt)         ((reader_ptrees *)((Sf)->ptrees))->ptree_list[Pt].closure
-#define READER_PTREE_GC_LOC(Sf, Pt)          ((reader_ptrees *)((Sf)->ptrees))->ptree_list[Pt].gc_loc
 
 /* #define READER_MIXES(Sf)                     ((ed_fragment *)((Sf)->cb))->mixes */
 #define READER_MIX_LIST_SIZE(Sf)             ((ed_fragment *)((Sf)->cb))->mixes->size
@@ -1021,618 +897,6 @@ static mus_float_t previous_mix_xramp_f_ramp_f(snd_fd *sf)
 
 
 
-static mus_float_t next_ptree_value(snd_fd *sf)
-{
-  mus_float_t val1 = 0.0;
-  int i;
-  if (!(READER_PTREE_ZERO(sf)))
-    val1 = sf->data[sf->loc];
-  sf->loc++;
-  for (i = 0; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-static mus_float_t previous_ptree_value(snd_fd *sf)
-{
-  mus_float_t val1 = 0.0;
-  int i;
-  if (!(READER_PTREE_ZERO(sf)))
-    val1 = sf->data[sf->loc];
-  sf->loc--;
-  for (i = 0; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-
-static mus_float_t next_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(READER_SCALER(sf) * next_ptree_value(sf));
-}
-
-static mus_float_t previous_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(READER_SCALER(sf) * previous_ptree_value(sf));
-}
-
-
-static mus_float_t next_mix_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  return((READER_SCALER(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
-}
-
-static mus_float_t previous_mix_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  return((READER_SCALER(sf) * previous_ptree_value(sf)) + read_mix_list_samples(sf));
-}
-
-
-static mus_float_t next_ptree_ramp_f_value(snd_fd *sf)
-{
-  mus_float_t val1;
-  int i;
-  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
-				 (*(READER_RAMPF(sf)))(sf) * sf->data[sf->loc++], 
-				 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
-  for (i = 1; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-static mus_float_t previous_ptree_ramp_f_value(snd_fd *sf)
-{
-  mus_float_t val1;
-  int i;
-  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
-				 (*(READER_REV_RAMPF(sf)))(sf) * sf->data[sf->loc--], 
-				 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
-  for (i = 1; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-
-static mus_float_t next_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(READER_SCALER(sf) * next_ptree_ramp_f_value(sf));
-}
-
-static mus_float_t previous_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(READER_SCALER(sf) * previous_ptree_ramp_f_value(sf));
-}
-
-
-static mus_float_t next_mix_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf));
-  return((READER_SCALER(sf) * next_ptree_ramp_f_value(sf)) + read_mix_list_samples(sf));
-}
-
-static mus_float_t previous_mix_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  return((READER_SCALER(sf) * previous_ptree_ramp_f_value(sf)) + read_mix_list_samples(sf));
-}
-
-
-static mus_float_t next_ptree_xramp_value(snd_fd *sf)
-{
-  mus_float_t val1;
-  int i;
-  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
-				 sf->data[sf->loc++] * READER_PTREE_SCALER(sf, 0) * next_xramp_value(sf), 
-				 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
-  for (i = 1; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-static mus_float_t previous_ptree_xramp_value(snd_fd *sf)
-{
-  mus_float_t val1;
-  int i;
-  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
-				 sf->data[sf->loc--] * READER_PTREE_SCALER(sf, 0) * previous_xramp_value(sf), 
-				 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
-  for (i = 1; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-
-static mus_float_t next_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(READER_SCALER(sf) * next_ptree_xramp_value(sf));
-}
-
-static mus_float_t previous_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(READER_SCALER(sf) * previous_ptree_xramp_value(sf));
-}
-
-
-static mus_float_t next_mix_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return((READER_SCALER(sf) * next_ptree_xramp_value(sf)) + read_mix_list_samples(sf));
-}
-
-static mus_float_t previous_mix_ptree_xramp(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return((READER_SCALER(sf) * previous_ptree_xramp_value(sf)) + read_mix_list_samples(sf));
-}
-
-
-static mus_float_t next_ramp_f_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return((*(READER_RAMPF(sf)))(sf) * next_ptree_value(sf));
-}
-
-static mus_float_t previous_ramp_f_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return((*(READER_REV_RAMPF(sf)))(sf) * previous_ptree_value(sf));
-}
-
-
-static mus_float_t next_mix_ramp_f_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  return(((*(READER_RAMPF(sf)))(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
-}
-
-static mus_float_t previous_mix_ramp_f_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  return(((*(READER_REV_RAMPF(sf)))(sf) * previous_ptree_value(sf)) + read_mix_list_samples(sf));
-}
-
-
-static mus_float_t next_xramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(next_xramp_value(sf) * READER_SCALER(sf) * next_ptree_value(sf));
-}
-
-static mus_float_t previous_xramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(previous_xramp_value(sf) * READER_SCALER(sf) * previous_ptree_value(sf));
-}
-
-
-static mus_float_t next_mix_xramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return((next_xramp_value(sf) * READER_SCALER(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
-}
-
-static mus_float_t previous_mix_xramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return((previous_xramp_value(sf) * READER_SCALER(sf) * previous_ptree_value(sf)) + read_mix_list_samples(sf));
-}
-
-
-
-
-static mus_float_t next_ramp_to_split_value(snd_fd *sf)
-{
-  mus_float_t val = 1.0;
-  int i;
-  for (i = 0; i < READER_RSPLIT(sf); i++)
-    {
-      val *= READER_VAL(sf, i);
-      READER_VAL(sf, i) += READER_INCR(sf, i);
-    }
-  return(val);
-}
-
-static mus_float_t previous_ramp_to_split_value(snd_fd *sf)
-{
-  mus_float_t val = 1.0;
-  int i;
-  for (i = 0; i < READER_RSPLIT(sf); i++)
-    {
-      val *= READER_VAL(sf, i);
-      READER_VAL(sf, i) -= READER_INCR(sf, i);
-    }
-  return(val);
-}
-
-
-static mus_float_t next_ramp_from_split_value(snd_fd *sf)
-{
-  mus_float_t val = 1.0;
-  int i;
-  for (i = READER_RSPLIT(sf); i < READER_RAMPS(sf); i++)
-    {
-      val *= READER_VAL(sf, i);
-      READER_VAL(sf, i) += READER_INCR(sf, i);
-    }
-  return(val);
-}
-
-static mus_float_t previous_ramp_from_split_value(snd_fd *sf)
-{
-  mus_float_t val = 1.0;
-  int i;
-  for (i = READER_RSPLIT(sf); i < READER_RAMPS(sf); i++)
-    {
-      val *= READER_VAL(sf, i);
-      READER_VAL(sf, i) -= READER_INCR(sf, i);
-    }
-  return(val);
-}
-
-
-static mus_float_t next_xramp_to_split_value(snd_fd *sf)
-{
-  int i;
-  mus_float_t val = READER_PTREE_SCALER(sf, 0);
-  for (i = 0; i < READER_XSPLIT(sf); i++)
-    {
-      val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
-      READER_XVAL(sf, i) *= READER_XINCR(sf, i);
-    }
-  return(val);
-}
-
-static mus_float_t previous_xramp_to_split_value(snd_fd *sf)
-{
-  int i;
-  mus_float_t val = READER_PTREE_SCALER(sf, 0);
-  for (i = 0; i < READER_XSPLIT(sf); i++)
-    {
-      val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
-      READER_XVAL(sf, i) /= READER_XINCR(sf, i);
-    }
-  return(val);
-}
-
-
-static mus_float_t next_unscaled_xramp_to_split_value(snd_fd *sf)
-{
-  int i;
-  mus_float_t val = 1.0;
-  for (i = 0; i < READER_XSPLIT(sf); i++)
-    {
-      val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
-      READER_XVAL(sf, i) *= READER_XINCR(sf, i);
-    }
-  return(val);
-}
-
-static mus_float_t previous_unscaled_xramp_to_split_value(snd_fd *sf)
-{
-  int i;
-  mus_float_t val = 1.0;
-  for (i = 0; i < READER_XSPLIT(sf); i++)
-    {
-      val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
-      READER_XVAL(sf, i) /= READER_XINCR(sf, i);
-    }
-  return(val);
-}
-
-
-static mus_float_t next_xramp_from_split_value(snd_fd *sf)
-{
-  int i;
-  mus_float_t val = 1.0;
-  for (i = READER_XSPLIT(sf); i < READER_XRAMPS(sf); i++)
-    {
-      val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
-      READER_XVAL(sf, i) *= READER_XINCR(sf, i);
-    }
-  return(val);
-}
-
-static mus_float_t previous_xramp_from_split_value(snd_fd *sf)
-{
-  int i;
-  mus_float_t val = 1.0;
-  for (i = READER_XSPLIT(sf); i < READER_XRAMPS(sf); i++)
-    {
-      val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
-      READER_XVAL(sf, i) /= READER_XINCR(sf, i);
-    }
-  return(val);
-}
-
-
-static mus_float_t next_xramp_ramp_to_split_value(snd_fd *sf)
-{
-  return(next_xramp_to_split_value(sf) * next_ramp_to_split_value(sf));
-}
-
-static mus_float_t previous_xramp_ramp_to_split_value(snd_fd *sf)
-{
-  return(previous_xramp_to_split_value(sf) * previous_ramp_to_split_value(sf));
-}
-
-
-static mus_float_t next_unscaled_xramp_ramp_to_split_value(snd_fd *sf)
-{
-  return(next_unscaled_xramp_to_split_value(sf) * next_ramp_to_split_value(sf));
-}
-
-static mus_float_t previous_unscaled_xramp_ramp_to_split_value(snd_fd *sf)
-{
-  return(previous_unscaled_xramp_to_split_value(sf) * previous_ramp_to_split_value(sf));
-}
-
-
-static mus_float_t next_xramp_ramp_from_split_value(snd_fd *sf)
-{
-  return(next_xramp_from_split_value(sf) * next_ramp_from_split_value(sf));
-}
-
-static mus_float_t previous_xramp_ramp_from_split_value(snd_fd *sf)
-{
-  return(previous_xramp_from_split_value(sf) * previous_ramp_from_split_value(sf));
-}
-
-
-
-static mus_float_t next_ramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(next_ramp_from_split_value(sf) * next_ptree_ramp_f_value(sf));
-}
-
-static mus_float_t previous_ramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(previous_ramp_from_split_value(sf) * previous_ptree_ramp_f_value(sf));
-}
-
-
-static mus_float_t next_xramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(next_xramp_from_split_value(sf) * READER_SCALER(sf) * next_ptree_ramp_f_value(sf));
-}
-
-static mus_float_t previous_xramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(previous_xramp_from_split_value(sf) * READER_SCALER(sf) * previous_ptree_ramp_f_value(sf));
-}
-
-
-static mus_float_t next_xramp_ramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(next_xramp_ramp_from_split_value(sf) * next_ptree_ramp_f_value(sf));
-}
-
-static mus_float_t previous_xramp_ramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(previous_xramp_ramp_from_split_value(sf) * previous_ptree_ramp_f_value(sf));
-}
-
-
-
-static mus_float_t next_ptree_to_split_value(snd_fd *sf)
-{
-  mus_float_t val1 = 0.0;
-  int i;
-  if (!(READER_PTREE_ZERO(sf)))
-    val1 = sf->data[sf->loc];
-  sf->loc++;
-  for (i = 0; (i < READER_PSPLIT(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-static mus_float_t previous_ptree_to_split_value(snd_fd *sf)
-{
-  mus_float_t val1 = 0.0;
-  int i;
-  if (!(READER_PTREE_ZERO(sf)))
-    val1 = sf->data[sf->loc];
-  sf->loc--;
-  for (i = 0; (i < READER_PSPLIT(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-
-static mus_float_t next_ptree_from_split_value(snd_fd *sf, mus_float_t val1)
-{
-  int i;
-  for (i = READER_PSPLIT(sf); (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-static mus_float_t previous_ptree_from_split_value(snd_fd *sf, mus_float_t val1)
-{
-  int i;
-  for (i = READER_PSPLIT(sf); (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-
-static mus_float_t next_ptree_ramp_f_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      next_ptree_from_split_value(sf, (*(READER_RAMPF(sf)))(sf) * next_ptree_to_split_value(sf)));
-}
-
-static mus_float_t previous_ptree_ramp_f_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      previous_ptree_from_split_value(sf, (*(READER_REV_RAMPF(sf)))(sf) * previous_ptree_to_split_value(sf)));
-}
-
-
-
-static mus_float_t next_ptree_to_split_ramp_f_value(snd_fd *sf)
-{
-  mus_float_t val1;
-  int i;
-  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
-				 (*(READER_RAMPF(sf)))(sf) * READER_PTREE_SCALER(sf, 0) * sf->data[sf->loc++], 
-				 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
-  for (i = 1; (i < READER_PSPLIT(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-static mus_float_t previous_ptree_to_split_ramp_f_value(snd_fd *sf)
-{
-  mus_float_t val1;
-  int i;
-  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
-				 (*(READER_REV_RAMPF(sf)))(sf) * READER_PTREE_SCALER(sf, 0) * sf->data[sf->loc--], 
-				 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
-  for (i = 1; (i < READER_PSPLIT(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
-				   READER_PTREE_SCALER(sf, i) * val1, 
-				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
-  return(val1);
-}
-
-
-static mus_float_t next_ptree_ramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      next_ptree_from_split_value(sf, next_ramp_from_split_value(sf) * next_ptree_to_split_ramp_f_value(sf)));
-}
-
-static mus_float_t previous_ptree_ramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      previous_ptree_from_split_value(sf, previous_ramp_from_split_value(sf) * previous_ptree_to_split_ramp_f_value(sf)));
-}
-
-
-static mus_float_t next_ptree_xramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      next_ptree_from_split_value(sf, next_xramp_from_split_value(sf) * next_ptree_to_split_ramp_f_value(sf)));
-}
-
-static mus_float_t previous_ptree_xramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      previous_ptree_from_split_value(sf, previous_xramp_from_split_value(sf) * previous_ptree_to_split_ramp_f_value(sf)));
-}
-
-
-static mus_float_t next_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      next_ptree_from_split_value(sf, next_xramp_ramp_from_split_value(sf) * next_ptree_to_split_ramp_f_value(sf)));
-}
-
-static mus_float_t previous_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      previous_ptree_from_split_value(sf, previous_xramp_ramp_from_split_value(sf) * previous_ptree_to_split_ramp_f_value(sf)));
-}
-
-
-
-static mus_float_t next_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc > sf->last) 
-    return(next_sound(sf)); 
-  else return(READER_SCALER(sf) *                      /* here ramps may be 0, so we can't embed the scaler */
-	      next_xramp_ramp_from_split_value(sf) *
-	      next_ptree_from_split_value(sf, next_unscaled_xramp_ramp_to_split_value(sf) * next_ptree_to_split_value(sf)));
-}
-
-static mus_float_t previous_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
-{
-  if (sf->loc < sf->first) 
-    return(previous_sound(sf)); 
-  else return(READER_SCALER(sf) * 
-	      previous_xramp_ramp_from_split_value(sf) *
-	      previous_ptree_from_split_value(sf, previous_unscaled_xramp_ramp_to_split_value(sf) * previous_ptree_to_split_value(sf)));
-}
-
-
 
 
 /* this is a kind of state machine for the virtual editor: if, for example, the current
@@ -1659,44 +923,13 @@ enum {ED_SIMPLE,                ED_MIX,
       ED_XRAMP,                 ED_MIX_XRAMP,
       ED_XRAMP_RAMP,            ED_MIX_XRAMP_RAMP,
 
-      /* ptrees */
-      ED_PTREE,                 ED_MIX_PTREE, 
-      ED_PTREE_ZERO,            ED_MIX_PTREE_ZERO,
-      ED_PTREE_RAMP,            ED_MIX_PTREE_RAMP,
-      ED_PTREE_XRAMP,           ED_MIX_PTREE_XRAMP,  
-      ED_PTREE_XRAMP_RAMP,      ED_MIX_PTREE_XRAMP_RAMP,
-
-      ED_RAMP_PTREE,            ED_MIX_RAMP_PTREE, 
-      ED_RAMP_PTREE_ZERO,       ED_MIX_RAMP_PTREE_ZERO,
-      ED_XRAMP_PTREE,           ED_MIX_XRAMP_PTREE, 
-      ED_XRAMP_PTREE_ZERO,      ED_MIX_XRAMP_PTREE_ZERO, 
-      ED_XRAMP_RAMP_PTREE,      ED_MIX_XRAMP_RAMP_PTREE, 
-      ED_XRAMP_RAMP_PTREE_ZERO, ED_MIX_XRAMP_RAMP_PTREE_ZERO,
-
-      /* split envelopes */
-      ED_RAMP_PTREE_RAMP, ED_RAMP_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP_RAMP,
-      ED_XRAMP_PTREE_RAMP, ED_XRAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP_RAMP, 
-      ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP,
-
-      /* split ptrees/envelopes */
-      ED_PTREE_RAMP_PTREE, ED_PTREE_RAMP_PTREE_ZERO,
-      ED_PTREE_XRAMP_PTREE, ED_PTREE_XRAMP_PTREE_ZERO, 
-      ED_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, 
-
-      ED_PTREE_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_XRAMP, ED_PTREE_RAMP_PTREE_XRAMP_RAMP,
-      ED_PTREE_XRAMP_PTREE_RAMP, ED_PTREE_XRAMP_PTREE_XRAMP, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, 
-      ED_PTREE_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP,
-
-      ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE,
-      ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO,
-
       NUM_OPS
 };
 
 
 typedef struct {
-  int type, add_ramp, add_xramp, add_ptree, add_mix, subtract_mix;
-  bool ptrees, ramps, zero, mixes; /* zero = no underlying data (mix, ptree, etc), mixes = involves virtual mixes in some way */
+  int type, add_ramp, add_xramp, add_mix, subtract_mix;
+  bool ramps, zero, mixes; /* zero = no underlying data (mix, etc), mixes = involves virtual mixes in some way */
   int scale_op;
   const char *name;
   mus_float_t (*next)(struct snd_fd *sf);  
@@ -1706,355 +939,97 @@ typedef struct {
 } fragment_type_info;
 
 
-enum {NO_SCALE, SIMPLE_SCALE, SCALE_R, SCALE_P, SCALE_P_R, SCALE_X};
+enum {NO_SCALE, SIMPLE_SCALE, SCALE_R, SCALE_X};
 
-#define NO_PTREE false
 #define NO_RAMP false
 #define NO_MIX false
 #define ON_ZERO true
 #define ON_DATA false
-#define PTREED true
 #define MIXED true
 #define RAMPED true
 
 static fragment_type_info type_info[NUM_OPS] = {
 
-  {ED_SIMPLE, ED_RAMP1, ED_XRAMP1, ED_PTREE, ED_MIX, -1, 
-   NO_PTREE, NO_RAMP, ON_DATA, NO_MIX, SIMPLE_SCALE,
+  {ED_SIMPLE, ED_RAMP1, ED_XRAMP1, ED_MIX, -1, 
+   NO_RAMP, ON_DATA, NO_MIX, SIMPLE_SCALE,
    "ed_simple", next_sample_value, previous_sample_value, 
    NULL, NULL},
 
-  {ED_MIX, -1, -1, -1, ED_MIX, ED_SIMPLE, 
-   NO_PTREE, NO_RAMP, ON_DATA, MIXED, NO_SCALE,
+  {ED_MIX, -1, -1, ED_MIX, ED_SIMPLE, 
+   NO_RAMP, ON_DATA, MIXED, NO_SCALE,
    "ed_mix_simple", next_mix, previous_mix, 
    NULL, NULL},
 
-  {ED_ZERO, ED_ZERO, ED_ZERO, ED_PTREE_ZERO, ED_MIX_ZERO, -1, 
-   NO_PTREE, NO_RAMP, ON_ZERO, NO_MIX, NO_SCALE,
+  {ED_ZERO, ED_ZERO, ED_ZERO, ED_MIX_ZERO, -1, 
+   NO_RAMP, ON_ZERO, NO_MIX, NO_SCALE,
    "ed_zero", next_zero, previous_zero, 
    NULL, NULL},
 
-  {ED_MIX_ZERO, -1, -1, -1, ED_MIX_ZERO, ED_ZERO, 
-   NO_PTREE, NO_RAMP, ON_ZERO, MIXED, NO_SCALE,
+  {ED_MIX_ZERO, -1, -1, ED_MIX_ZERO, ED_ZERO, 
+   NO_RAMP, ON_ZERO, MIXED, NO_SCALE,
    "ed_mix_zero", next_mix_zero, previous_mix_zero, 
    NULL, NULL},
 
-  {ED_RAMP1, ED_RAMP2, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP1, -1, 
-   NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+  {ED_RAMP1, ED_RAMP2, ED_XRAMP_RAMP, ED_MIX_RAMP1, -1, 
+   RAMPED, ON_DATA, NO_MIX, SCALE_R,
    "ed_ramp1", next_ramp1, previous_ramp1, 
    NULL, NULL},
 
-  {ED_MIX_RAMP1, -1, -1, -1, ED_MIX_RAMP1, ED_RAMP1, 
-   NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
+  {ED_MIX_RAMP1, -1, -1, ED_MIX_RAMP1, ED_RAMP1, 
+   RAMPED, ON_DATA, MIXED, SCALE_R,
    "ed_mix_ramp1", next_mix_ramp1, previous_mix_ramp1, 
    NULL, NULL},
 
-  {ED_RAMP2, ED_RAMP, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP2, -1, 
-   NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+  {ED_RAMP2, ED_RAMP, ED_XRAMP_RAMP, ED_MIX_RAMP2, -1, 
+   RAMPED, ON_DATA, NO_MIX, SCALE_R,
    "ed_ramp2", next_ramp_f, previous_ramp_f, 
    next_ramp2_value, previous_ramp2_value},
 
-  {ED_MIX_RAMP2, -1, -1, -1, ED_MIX_RAMP2, ED_RAMP2, 
-   NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
+  {ED_MIX_RAMP2, -1, -1, ED_MIX_RAMP2, ED_RAMP2, 
+   RAMPED, ON_DATA, MIXED, SCALE_R,
    "ed_mix_ramp2", next_mix_ramp2, previous_mix_ramp2, 
    NULL, NULL},
 
-  {ED_XRAMP1, ED_XRAMP_RAMP, ED_XRAMP, ED_PTREE_XRAMP, ED_MIX_XRAMP1, -1, 
-   NO_PTREE, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+  {ED_XRAMP1, ED_XRAMP_RAMP, ED_XRAMP, ED_MIX_XRAMP1, -1, 
+   RAMPED, ON_DATA, NO_MIX, NO_SCALE,
    "ed_xramp1", next_xramp1, previous_xramp1, 
    NULL, NULL},
   
-  {ED_MIX_XRAMP1, -1, -1, -1, ED_MIX_XRAMP1, ED_XRAMP1, 
-   NO_PTREE, RAMPED, ON_DATA, MIXED, NO_SCALE,
+  {ED_MIX_XRAMP1, -1, -1, ED_MIX_XRAMP1, ED_XRAMP1, 
+   RAMPED, ON_DATA, MIXED, NO_SCALE,
    "ed_mix_xramp1", next_mix_xramp1, previous_mix_xramp1, 
    NULL, NULL},
 
-  {ED_RAMP, ED_RAMP, ED_XRAMP_RAMP, ED_PTREE_RAMP, ED_MIX_RAMP, -1, 
-   NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+  {ED_RAMP, ED_RAMP, ED_XRAMP_RAMP, ED_MIX_RAMP, -1, 
+   RAMPED, ON_DATA, NO_MIX, SCALE_R,
    "ed_ramp", next_ramp, previous_ramp, 
    NULL, NULL},
 
-  {ED_MIX_RAMP, -1, -1, -1, ED_MIX_RAMP, ED_RAMP, 
-   NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
+  {ED_MIX_RAMP, -1, -1, ED_MIX_RAMP, ED_RAMP, 
+   RAMPED, ON_DATA, MIXED, SCALE_R,
    "ed_mix_ramp", next_mix_ramp, previous_mix_ramp, 
    NULL, NULL},
 
-  {ED_XRAMP, ED_XRAMP_RAMP, ED_XRAMP, ED_PTREE_XRAMP, ED_MIX_XRAMP, -1,
-   NO_PTREE, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
+  {ED_XRAMP, ED_XRAMP_RAMP, ED_XRAMP, ED_MIX_XRAMP, -1,
+   RAMPED, ON_DATA, NO_MIX, NO_SCALE,
    "ed_xramp", next_xramp, previous_xramp, 
    NULL, NULL},
 
-  {ED_MIX_XRAMP, -1, -1, -1, ED_MIX_XRAMP, ED_XRAMP, 
-   NO_PTREE, RAMPED, ON_DATA, MIXED, NO_SCALE,
+  {ED_MIX_XRAMP, -1, -1, ED_MIX_XRAMP, ED_XRAMP, 
+   RAMPED, ON_DATA, MIXED, NO_SCALE,
    "ed_mix_xramp", next_mix_xramp, previous_mix_xramp, 
    NULL, NULL},
 
-  {ED_XRAMP_RAMP, ED_XRAMP_RAMP, ED_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP, ED_MIX_XRAMP_RAMP, -1, 
-   NO_PTREE, RAMPED, ON_DATA, NO_MIX, SCALE_R,
+  {ED_XRAMP_RAMP, ED_XRAMP_RAMP, ED_XRAMP_RAMP, ED_MIX_XRAMP_RAMP, -1, 
+   RAMPED, ON_DATA, NO_MIX, SCALE_R,
    "ed_xramp_ramp", next_ramp_f, previous_ramp_f, 
    next_xramp_ramp_value, previous_xramp_ramp_value},
 
-  {ED_MIX_XRAMP_RAMP, -1, -1, -1, ED_MIX_XRAMP_RAMP, ED_XRAMP_RAMP, 
-   NO_PTREE, RAMPED, ON_DATA, MIXED, SCALE_R,
+  {ED_MIX_XRAMP_RAMP, -1, -1, ED_MIX_XRAMP_RAMP, ED_XRAMP_RAMP, 
+   RAMPED, ON_DATA, MIXED, SCALE_R,
    "ed_mix_xramp_ramp", next_mix_xramp_f_ramp_f, previous_mix_xramp_f_ramp_f, 
    next_xramp_ramp_value, previous_xramp_ramp_value},
-
-
-  /* ptree */
-  {ED_PTREE, ED_RAMP_PTREE, ED_XRAMP_PTREE, ED_PTREE, ED_MIX_PTREE, -1, 
-   PTREED, NO_RAMP, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree", next_ptree, previous_ptree, 
-   NULL, NULL},
-
-  {ED_MIX_PTREE, -1, -1, -1, ED_MIX_PTREE, ED_PTREE, 
-   PTREED, NO_RAMP, ON_DATA, MIXED, NO_SCALE,
-   "ed_mix_ptree", next_mix_ptree, previous_mix_ptree, 
-   NULL, NULL},
-
-  {ED_PTREE_ZERO, ED_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, ED_PTREE_ZERO, ED_MIX_PTREE_ZERO, -1, 
-   PTREED, NO_RAMP, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_ptree_zero", next_ptree, previous_ptree, 
-   NULL, NULL},
-
-  {ED_MIX_PTREE_ZERO, -1, -1, -1, ED_MIX_PTREE_ZERO, ED_PTREE_ZERO, 
-   PTREED, NO_RAMP, ON_ZERO, MIXED, NO_SCALE,
-   "ed_mix_ptree_zero", next_mix_ptree, previous_mix_ptree, 
-   NULL, NULL},
-
-  {ED_PTREE_RAMP, ED_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP, ED_PTREE_RAMP, ED_MIX_PTREE_RAMP, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
-   "ed_ptree_ramp", next_ptree_ramp_f, previous_ptree_ramp_f, 
-   next_ramp_value, previous_ramp_value},
-
-  {ED_MIX_PTREE_RAMP, -1, -1, -1, ED_MIX_PTREE_RAMP, ED_PTREE_RAMP, 
-   PTREED, RAMPED, ON_DATA, MIXED, SCALE_P,
-   "ed_mix_ptree_ramp", next_mix_ptree_ramp_f, previous_mix_ptree_ramp_f, 
-   next_ramp_value, previous_ramp_value},
-
-  {ED_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE_XRAMP, ED_MIX_PTREE_XRAMP, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp", next_ptree_xramp, previous_ptree_xramp, 
-   NULL, NULL},
-
-  {ED_MIX_PTREE_XRAMP, -1, -1, -1, ED_MIX_PTREE_XRAMP, ED_PTREE_XRAMP, 
-   PTREED, RAMPED, ON_DATA, MIXED, NO_SCALE,
-   "ed_mix_ptree_xramp", next_mix_ptree_xramp, previous_mix_ptree_xramp, 
-   NULL, NULL},
-
-  {ED_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP, ED_MIX_PTREE_XRAMP_RAMP, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
-   "ed_ptree_xramp_ramp", next_ptree_ramp_f, previous_ptree_ramp_f, 
-   next_xramp_ramp_value, previous_xramp_ramp_value},
-
-  {ED_MIX_PTREE_XRAMP_RAMP, -1, -1, -1, ED_MIX_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP, 
-   PTREED, RAMPED, ON_DATA, MIXED, SCALE_P,
-   "ed_mix_ptree_xramp_ramp", next_mix_ptree_ramp_f, previous_mix_ptree_ramp_f, 
-   next_xramp_ramp_value, previous_xramp_ramp_value},
-
-
-  {ED_RAMP_PTREE, ED_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_PTREE_RAMP_PTREE, ED_MIX_RAMP_PTREE, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_ramp_ptree", next_ramp_f_ptree, previous_ramp_f_ptree, 
-   next_ramp_value, previous_ramp_value},
-
-  {ED_MIX_RAMP_PTREE, -1, -1, -1, ED_MIX_RAMP_PTREE, ED_RAMP_PTREE, 
-   PTREED, RAMPED, ON_DATA, MIXED, SCALE_R,
-   "ed_mix_ramp_ptree", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, 
-   next_ramp_value, previous_ramp_value},
-
-  {ED_RAMP_PTREE_ZERO, ED_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_RAMP_PTREE_ZERO, ED_MIX_RAMP_PTREE_ZERO, -1, 
-   PTREED, RAMPED, ON_ZERO, NO_MIX, SCALE_R,
-   "ed_ramp_ptree_zero", next_ramp_f_ptree, previous_ramp_f_ptree, 
-   next_ramp_value, previous_ramp_value},
-
-  {ED_MIX_RAMP_PTREE_ZERO, -1, -1, -1, ED_MIX_RAMP_PTREE_ZERO, ED_RAMP_PTREE_ZERO, 
-   PTREED, RAMPED, ON_ZERO, MIXED, SCALE_R,
-   "ed_mix_ramp_ptree_zero", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, 
-   next_ramp_value, previous_ramp_value},
-
-  {ED_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_XRAMP_PTREE, ED_PTREE_XRAMP_PTREE, ED_MIX_XRAMP_PTREE, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp_ptree", next_xramp_ptree, previous_xramp_ptree, 
-   NULL, NULL},
-
-  {ED_MIX_XRAMP_PTREE, -1, -1, -1, ED_MIX_XRAMP_PTREE, ED_XRAMP_PTREE, 
-   PTREED, RAMPED, ON_DATA, MIXED, NO_SCALE,
-   "ed_mix_xramp_ptree", next_mix_xramp_ptree, previous_mix_xramp_ptree, 
-   NULL, NULL},
-
-  {ED_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_ZERO, ED_MIX_XRAMP_PTREE_ZERO, -1, 
-   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_xramp_ptree_zero", next_xramp_ptree, previous_xramp_ptree, 
-   NULL, NULL},
-
-  {ED_MIX_XRAMP_PTREE_ZERO, -1, -1, -1, ED_MIX_XRAMP_PTREE_ZERO, ED_XRAMP_PTREE_ZERO, 
-   PTREED, RAMPED, ON_ZERO, MIXED, NO_SCALE,
-   "ed_mix_xramp_ptree_zero", next_mix_xramp_ptree, previous_mix_xramp_ptree, 
-   NULL, NULL},
-
-  {ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE, ED_MIX_XRAMP_RAMP_PTREE, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_xramp_ramp_ptree", next_ramp_f_ptree, previous_ramp_f_ptree, 
-   next_xramp_ramp_value, previous_xramp_ramp_value},
-
-  {ED_MIX_XRAMP_RAMP_PTREE, -1, -1, -1, ED_MIX_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE, 
-   PTREED, RAMPED, ON_DATA, MIXED, SCALE_R,
-   "ed_mix_xramp_ramp_ptree", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, 
-   next_xramp_ramp_value, previous_xramp_ramp_value},
-
-  {ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_MIX_XRAMP_RAMP_PTREE_ZERO, -1,
-   PTREED, RAMPED, ON_ZERO, NO_MIX, SCALE_R,
-   "ed_xramp_ramp_ptree_zero", next_ramp_f_ptree, previous_ramp_f_ptree, 
-   next_xramp_ramp_value, previous_xramp_ramp_value},
-
-  {ED_MIX_XRAMP_RAMP_PTREE_ZERO, -1, -1, -1, ED_MIX_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_ZERO, 
-   PTREED, RAMPED, ON_ZERO, MIXED, SCALE_R,
-   "ed_mix_xramp_ramp_ptree_zero", next_mix_ramp_f_ptree, previous_mix_ramp_f_ptree, 
-   next_xramp_ramp_value, previous_xramp_ramp_value},
-
-  
-  /* split ramps */
-  {ED_RAMP_PTREE_RAMP, ED_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_RAMP_PTREE_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P_R,
-   "ed_ramp_ptree_ramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, 
-   next_ramp_to_split_value, previous_ramp_to_split_value},
-
-  {ED_RAMP_PTREE_XRAMP, ED_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_ramp_ptree_xramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, 
-   next_xramp_to_split_value, previous_xramp_to_split_value},
-
-  {ED_RAMP_PTREE_XRAMP_RAMP, ED_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_X,
-   "ed_ramp_ptree_xramp_ramp", next_ramp_ptree_ramp_f, previous_ramp_ptree_ramp_f, 
-   next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
-
-  {ED_XRAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_PTREE_RAMP, ED_PTREE_XRAMP_PTREE_RAMP, -1, -1,
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P,
-   "ed_xramp_ptree_ramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, 
-   next_ramp_to_split_value, previous_ramp_to_split_value},
-
-  {ED_XRAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_PTREE_XRAMP, ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp_ptree_xramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, 
-   next_xramp_to_split_value, previous_xramp_to_split_value},
-
-  {ED_XRAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1,
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp_ptree_xramp_ramp", next_xramp_ptree_ramp_f, previous_xramp_ptree_ramp_f, 
-   next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
-
-  {ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_XRAMP_RAMP_PTREE_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_P_R,
-   "ed_xramp_ramp_ptree_ramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, 
-   next_ramp_to_split_value, previous_ramp_to_split_value},
-
-  {ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_XRAMP_RAMP_PTREE_XRAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_R,
-   "ed_xramp_ramp_ptree_xramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, 
-   next_xramp_to_split_value, previous_xramp_to_split_value},
-
-  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, SCALE_X,
-   "ed_xramp_ramp_ptree_xramp_ramp", next_xramp_ramp_ptree_ramp_f, previous_xramp_ramp_ptree_ramp_f, 
-   next_xramp_ramp_to_split_value, previous_xramp_ramp_to_split_value},
-
-
-  /* split ptrees */
-  {ED_PTREE_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_RAMP_PTREE, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_ramp_value, previous_ramp_value},
-
-  {ED_PTREE_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_RAMP_PTREE_ZERO, -1, -1, 
-   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_ramp_value, previous_ramp_value},
-
-  {ED_PTREE_XRAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_PTREE, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_xramp_value, previous_xramp_value},
-
-  {ED_PTREE_XRAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_PTREE_ZERO, -1, -1, 
-   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, next_xramp_value, previous_xramp_value},
-
-  {ED_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_PTREE_XRAMP_RAMP_PTREE, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, 
-   next_xramp_ramp_value, previous_xramp_ramp_value},
-
-  {ED_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, 
-   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree_zero", next_ptree_ramp_f_ptree, previous_ptree_ramp_f_ptree, 
-   next_xramp_ramp_value, previous_xramp_ramp_value},
-
-  {ED_PTREE_RAMP_PTREE_RAMP, -1, -1, ED_PTREE_RAMP_PTREE_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree_ramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, 
-   next_ramp_to_split_value, previous_ramp_to_split_value},
-
-  {ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, ED_PTREE_RAMP_PTREE_XRAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree_xramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, 
-   next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
-
-  {ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_RAMP_PTREE_XRAMP_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_ramp_ptree_xramp_ramp", next_ptree_ramp_ptree_ramp_f, previous_ptree_ramp_ptree_ramp_f, 
-   next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
-
-  {ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, ED_PTREE_XRAMP_PTREE_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree_ramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, 
-   next_ramp_to_split_value, previous_ramp_to_split_value},
-
-  {ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, ED_PTREE_XRAMP_PTREE_XRAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree_xramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, 
-   next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
-
-  {ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_XRAMP_PTREE_XRAMP_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ptree_xramp_ramp", next_ptree_xramp_ptree_ramp_f, previous_ptree_xramp_ptree_ramp_f, 
-   next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
-
-  {ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree_ramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, 
-   next_ramp_to_split_value, previous_ramp_to_split_value},
-
-  {ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree_xramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, 
-   next_unscaled_xramp_to_split_value, previous_unscaled_xramp_to_split_value},
-
-  {ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_ptree_xramp_ramp_ptree_xramp_ramp", next_ptree_xramp_ramp_ptree_ramp_f, previous_ptree_xramp_ramp_ptree_ramp_f, 
-   next_unscaled_xramp_ramp_to_split_value, previous_unscaled_xramp_ramp_to_split_value},
-  
-  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE, -1, -1, -1, 
-   PTREED, RAMPED, ON_DATA, NO_MIX, NO_SCALE,
-   "ed_xramp_ramp_ptree_xramp_ramp_ptree", next_xramp_ramp_ptree_xramp_ramp_ptree, previous_xramp_ramp_ptree_xramp_ramp_ptree, 
-   NULL, NULL},
-  
-  {ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO, -1, -1, -1, 
-   PTREED, RAMPED, ON_ZERO, NO_MIX, NO_SCALE,
-   "ed_xramp_ramp_ptree_xramp_ramp_ptree_zero", next_xramp_ramp_ptree_xramp_ramp_ptree, previous_xramp_ramp_ptree_xramp_ramp_ptree, 
-   NULL, NULL},
-  
 };
-
-
-static bool ptree_op(int type)
-{
-  return(type_info[type].ptrees);
-}
-
-
-static bool double_split_op(int type)
-{
-  return(type >= ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE);
-}
 
 
 static bool zero_op(int type)
@@ -2066,12 +1041,6 @@ static bool zero_op(int type)
 static bool ramp_op(int type)
 {
   return(type_info[type].ramps);
-}
-
-
-static bool ramp_or_ptree_op(int type)
-{
-  return((ramp_op(type)) || (ptree_op(type)));
 }
 
 
@@ -2116,7 +1085,7 @@ static void report_unhit_entries(void)
 }
 
 
-static void check_type_info_entry(int op, int expected_ramps, int expected_xramps, int expected_ptrees, bool is_zero)
+static void check_type_info_entry(int op, int expected_ramps, int expected_xramps, bool is_zero)
 {
   hit_entry[op]++;
   if (op != type_info[op].type) 
@@ -2131,14 +1100,12 @@ static void check_type_info_entry(int op, int expected_ramps, int expected_xramp
   if (is_zero != type_info[op].zero) 
     fprintf(stderr, "%s zero: %d %d\n", type_info[op].name, is_zero, type_info[op].zero);  
   if ((type_info[op].add_ramp != -1) && (type_info[op].add_ramp != op))
-    check_type_info_entry(type_info[op].add_ramp, expected_ramps + 1, expected_xramps, expected_ptrees, is_zero);
+    check_type_info_entry(type_info[op].add_ramp, expected_ramps + 1, expected_xramps, is_zero);
   if ((type_info[op].add_xramp != -1) && (type_info[op].add_xramp != op))
-    check_type_info_entry(type_info[op].add_xramp, expected_ramps, expected_xramps + 1, expected_ptrees, is_zero);
-  if ((type_info[op].add_ptree != -1) && (type_info[op].add_ptree != op))
-    check_type_info_entry(type_info[op].add_ptree, expected_ramps, expected_xramps, expected_ptrees + 1, is_zero);
+    check_type_info_entry(type_info[op].add_xramp, expected_ramps, expected_xramps + 1, is_zero);
   if ((type_info[op].add_mix != -1) &&
       (type_info[op].subtract_mix == -1)) /* not a loop! */
-    check_type_info_entry(type_info[op].add_mix, expected_ramps, expected_xramps, expected_ptrees, is_zero);
+    check_type_info_entry(type_info[op].add_mix, expected_ramps, expected_xramps, is_zero);
 
   if ((!(type_info[op].mixes)) && (type_info[op].subtract_mix != -1))
     fprintf(stderr, "%s: mix confused (#f)?\n", type_info[op].name);
@@ -2153,7 +1120,6 @@ static void check_type_info_entry(int op, int expected_ramps, int expected_xramp
 	  (op != ED_MIX_ZERO))
 	fprintf(stderr, "%s add_ramp: %s\n", type_info[op].name, type_info[type_info[op].add_ramp].name);
       if (type_info[op].add_xramp != -1) fprintf(stderr, "%s add_xramp: %s\n", type_info[op].name, type_info[type_info[op].add_xramp].name);
-      if (type_info[op].add_ptree != -1) fprintf(stderr, "%s add_ptree: %s\n", type_info[op].name, type_info[type_info[op].add_ptree].name);
 
       if (type_info[type_info[op].subtract_mix].add_mix != op)
 	fprintf(stderr, "%s subtract: %s but its add: %s\n",
@@ -2222,39 +1188,6 @@ static snd_fd *cancel_reader(snd_fd *sf)
 }
 
 
-static XEN empty_closure;
-
-static void get_sf_closure(snd_fd *sf, int pt)
-{
-  XEN proc;
-  proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf, pt)];
-  if (READER_PTREE_GC_LOC(sf, pt) != NOT_A_GC_LOC)
-    {
-      snd_unprotect_at(READER_PTREE_GC_LOC(sf, pt));
-      READER_PTREE_GC_LOC(sf, pt) = NOT_A_GC_LOC;
-    }
-  READER_PTREE_CLOSURE(sf, pt) = empty_closure;
-  if (XEN_PROCEDURE_P(proc))
-    {
-      if (sf->cp->init_args[READER_PTREE_INDEX(sf, pt)] == 3)
-	READER_PTREE_CLOSURE(sf, pt) = XEN_CALL_3(proc,
-						  C_TO_XEN_LONG_LONG(sf->frag_pos + READER_PTREE_POSITION(sf, pt)),
-						  C_TO_XEN_LONG_LONG(READER_PTREE_DUR(sf, pt)),	/* ptree_dur is the original (full) ptree-channel duration */
-						  C_TO_XEN_BOOLEAN(sf->direction == READ_FORWARD),
-						  S_ptree_channel " init func");
-      else READER_PTREE_CLOSURE(sf, pt) = XEN_CALL_2(proc,
-						     C_TO_XEN_LONG_LONG(sf->frag_pos + READER_PTREE_POSITION(sf, pt)),
-						     C_TO_XEN_LONG_LONG(READER_PTREE_DUR(sf, pt)),	/* ptree_dur is the original (full) ptree-channel duration */
-						     S_ptree_channel " init func");
-      if (XEN_BOUND_P(READER_PTREE_CLOSURE(sf, pt)))
-	{
-	  READER_PTREE_GC_LOC(sf, pt) = snd_protect(READER_PTREE_CLOSURE(sf, pt));
-	  READER_PTREE_TYPE(sf, pt) = mus_run_xen_to_run_type(READER_PTREE_CLOSURE(sf, pt));
-	}
-    }
-}
-
-
 static reader_mixes *free_reader_mixes(reader_mixes *md);
 
 static void setup_mix(snd_fd *sf)
@@ -2305,49 +1238,6 @@ static void setup_mix(snd_fd *sf)
 	    }
 	}
     }
-}
-
-
-static void setup_ptrees(snd_fd *sf, int typ)
-{
-  int i, pts;
-  if (sf->ptrees == NULL)
-    sf->ptrees = (void *)calloc(1, sizeof(reader_ptrees));
-
-  pts = ED_PTREE_LIST_SIZE((ed_fragment *)(sf->cb));
-  if (pts > READER_PTREE_LIST_SIZE(sf))
-    {
-      if (READER_PTREE_LIST_SIZE(sf) == 0)
-	READER_PTREE_LIST(sf) = (ptree_info *)calloc(pts, sizeof(ptree_info));
-      else READER_PTREE_LIST(sf) = (ptree_info *)realloc(READER_PTREE_LIST(sf), pts * sizeof(ptree_info)); 
-      for (i = READER_PTREE_LIST_SIZE(sf); i < pts; i++)
-	{
-	  READER_PTREE_CLOSURE(sf, i) = XEN_UNDEFINED; /* make sure no XEN field is 0! */
-	  READER_PTREE_GC_LOC(sf, i) = NOT_A_GC_LOC;
-	  READER_PTREE(sf, i) = NULL;
-	}
-      READER_PTREE_LIST_SIZE(sf) = pts;
-    }
-  
-  for (i = 0; i < pts; i++)
-    {
-      READER_PTREE(sf, i) = sf->cp->ptrees[READER_PTREE_INDEX(sf, i)];
-      get_sf_closure(sf, i);
-    }
-  
-  for (i = pts; i < READER_PTREE_LIST_SIZE(sf); i++)
-    {
-      if (READER_PTREE_GC_LOC(sf, i) != NOT_A_GC_LOC)
-	snd_unprotect_at(READER_PTREE_GC_LOC(sf, i));
-      READER_PTREE_CLOSURE(sf, i) = XEN_UNDEFINED;
-      READER_PTREE_GC_LOC(sf, i) = NOT_A_GC_LOC;
-      READER_PTREE(sf, i) = NULL;
-    }
-  
-  READER_PTREE_ZERO(sf) = zero_op(typ);
-  READER_PSPLIT(sf) = ED_PSPLIT((ed_fragment *)(sf->cb));
-  READER_RSPLIT(sf) = ED_RSPLIT((ed_fragment *)(sf->cb));
-  READER_XSPLIT(sf) = ED_XSPLIT((ed_fragment *)(sf->cb));
 }
 
 
@@ -2451,20 +1341,6 @@ static void scale_inputs(snd_fd *sf, int scl_type)
     case SCALE_R:
       scale_ramp(sf, 0, READER_SCALER(sf));
       break;
-
-    case SCALE_P:
-      scale_ramp(sf, 0, READER_PTREE_SCALER(sf, 0));
-      break;
-
-    case SCALE_P_R:
-      scale_ramp(sf, 0, READER_PTREE_SCALER(sf, 0));
-      scale_ramp(sf, READER_RSPLIT(sf), READER_SCALER(sf));
-      break;
-
-    case SCALE_X:
-      scale_ramp(sf, READER_RSPLIT(sf), READER_SCALER(sf));
-      break;
-
     }
 }
 
@@ -2479,9 +1355,6 @@ static void choose_accessor(snd_fd *sf)
   if (ramp_op(typ))
     setup_ramps(sf, typ);
 
-  if (ptree_op(typ))
-    setup_ptrees(sf, typ);
-
   if (is_mix_op(typ))
     setup_mix(sf);
 
@@ -2494,7 +1367,7 @@ static void choose_accessor(snd_fd *sf)
 }
 
 
-static const char *edit_names[NUM_EDIT_TYPES] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", "mix", "change mix"};
+static const char *edit_names[NUM_EDIT_TYPES] = {"insert", "delete", "set", "init", "scale", "zero", "env", "extend", "mix", "change mix"};
 
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
@@ -2520,7 +1393,6 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
     case SCALED_EDIT:     fprintf(outp, "\n (scale %lld %lld) ", ed->beg, ed->len);                         break;
     case ZERO_EDIT:       fprintf(outp, "\n (silence %lld %lld) ", ed->beg, ed->len);                       break;
     case RAMP_EDIT:       fprintf(outp, "\n (ramp %lld %lld) ", ed->beg, ed->len);                          break;
-    case PTREE_EDIT:      fprintf(outp, "\n (ptree[%d] %lld %lld) ", ed->ptree_location, ed->beg, ed->len); break; 
     case EXTEND_EDIT:     fprintf(outp, "\n (extend edit list with no-op)");                                            break;
     case MIX_EDIT:        fprintf(outp, "\n (mix %lld %lld) ", ed->beg, ed->len);                           break; 
     case CHANGE_MIX_EDIT: fprintf(outp, "\n (change mix %lld %lld) ", ed->beg, ed->len);                    break; 
@@ -2565,32 +1437,6 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		}
 	    }
 
-	  if (ptree_op(typ))
-	    {
-	      XEN code;
-	      for (k = FRAGMENT_PTREE_LIST_SIZE(ed, j) - 1; k >= 1; k--)
-		fprintf(outp, ", loc%d: %d, pos%d: %lld, scl%d: %.3f",
-			k + 1, FRAGMENT_PTREE_INDEX(ed, j, k),
-			k + 1, FRAGMENT_PTREE_POSITION(ed, j, k),
-			k + 1, FRAGMENT_PTREE_SCALER(ed, j, k));
-	      fprintf(outp, ", loc: %d, pos: %lld, scl: %.3f",
-		      FRAGMENT_PTREE_INDEX(ed, j, k),
-		      FRAGMENT_PTREE_POSITION(ed, j, k),
-		      FRAGMENT_PTREE_SCALER(ed, j, k));
-	      
-	      if (with_source)
-		{
-		  char *temp1 = NULL, *temp2 = NULL;
-		  code = mus_run_ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j, 0)]);
-		  if (XEN_LIST_P(code))
-		    fprintf(outp, ", code: %s", temp1 = (char *)XEN_AS_STRING(code));
-		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
-		  if (XEN_PROCEDURE_P(code))
-		    fprintf(outp, ", init: %s", temp2 = (char *)XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code))); /* ptree_code = car */
-		  if (temp1) free(temp1);
-		  if (temp2) free(temp2);
-		}
-	    }
 	  if (is_mix_op(typ))
 	    {
 	      ed_mixes *mxs;
@@ -3123,29 +1969,6 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  }
 		  break;
 
-		case PTREE_EDIT:
-		  forth_func = S_ptree_channel;
-		  if ((ed->origin) && 
-		      (strcmp(ed->origin, S_ptree_channel) != 0))
-		    {
-		      char *func;
-		      if ((func = split_origin(ed->origin, &forth_func)))
-			{
-			  fprintf(fd, "%s sfile %d", func, cp->chan);
-			  free(func);
-			}
-		      else fprintf(fd, "sfile %d", cp->chan);
-		    }
-		  else
-		    {
-		      fprintf(fd, "%s %lld %lld sfile %d",
-			      XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
-			      ed->beg,
-			      ed->len,
-			      cp->chan);
-		    }
-		  break;
-
 		case MIX_EDIT:
 		case CHANGE_MIX_EDIT:
 		  mix_ed = true;
@@ -3225,26 +2048,6 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			  cp->chan);
 		  break;
 
-		case PTREE_EDIT:
-		  {
-		    char *temp = NULL;
-		    if ((ed->origin) && 
-			(strcmp(ed->origin, S_ptree_channel) != 0))
-		      fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
-			      ed->origin,
-			      cp->chan);
-		    else fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP "%lld" PROC_SEP  "%lld" PROC_SEP "sfile" PROC_SEP "%d",
-				 TO_PROC_NAME(S_ptree_channel),
-				 temp = (char *)XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
-				 ed->beg,
-				 ed->len,
-				 cp->chan);
-#if HAVE_EXTENSION_LANGUAGE
-		    if (temp) free(temp);
-#endif
-		  }
-		  break;
-
 		case MIX_EDIT:
 		  fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d", ed->origin, cp->chan);
 		  break;
@@ -3275,20 +2078,6 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		{
 		  if (!mix_ed)
 		    fprintf(fd, " #f");
-		}
-#endif
-#if HAVE_SCHEME
-	      if (ed->edit_type == PTREE_EDIT)
-		{
-		  XEN code;
-		  fprintf(fd, " %s", (ed->ptree_env_too) ? "#t" : "#f");
-		  code = cp->ptree_inits[ed->ptree_location];
-		  if (XEN_PROCEDURE_P(code))
-		  {
-		    char *temp = NULL;
-		    fprintf(fd, " %s", temp = XEN_AS_STRING(XEN_CAR(XEN_PROCEDURE_SOURCE(code))));
-		    if (temp) free(temp);
-		  }
 		}
 #endif
 	      if (nfile) 
@@ -3384,7 +2173,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	  function = NULL;
 
 	  /* most of these depend on the caller to supply a usable re-call string (origin). */
-	  /*   In insert/change/ptree/xen cases, there's basically no choice */
+	  /*   In insert/change cases, there's basically no choice */
 	  if (ed->backed_up)
 	    {
 	      if ((ed->origin) && 
@@ -3444,25 +2233,6 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 
 		case EXTEND_EDIT:
 		  /* mix drag case */
-		  break;
-
-		case PTREE_EDIT:
-		  if ((ed->origin) &&
-		      (strcmp(ed->origin, S_ptree_channel) != 0))
-		    function = mus_format("%s\n  (%s snd chn)", old_function, ed->origin);
-		  else 
-		    {
-		      char *durstr, *temp = NULL;
-		      if (ed->len == cp->edits[i]->samples)
-			durstr = mus_strdup("#f");
-		      else durstr = mus_format("%lld", ed->len);
-		      function = mus_format("%s\n  (%s %s %lld %s snd chn)",
-					    old_function, S_ptree_channel,
-					    temp = XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
-					    ed->beg, durstr);
-		      free(durstr);
-		      if (temp) free(temp);
-		    }
 		  break;
 
 		case RAMP_EDIT:
@@ -3530,7 +2300,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	{
 	  old_function = function;
 	  /* most of these depend on the caller to supply a usable re-call string (origin). */
-	  /*   In insert/change/ptree/xen cases, there's basically no choice */
+	  /*   In insert/change/ cases, there's basically no choice */
 	  if (ed->backed_up)
   	    {
  	      if ((ed->origin) &&
@@ -3661,7 +2431,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	{
 	  old_function = function;
 	  /* most of these depend on the caller to supply a usable re-call string (origin). */
-	  /*   In insert/change/ptree/xen cases, there's basically no choice */
+	  /*   In insert/change cases, there's basically no choice */
 	  if (ed->backed_up)
 	    {
 	      char *name, *func;
@@ -3749,40 +2519,6 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 }
 
 
-static int ensure_ed_ptrees(ed_fragment *ed, int size)
-{
-  if (ED_PTREES(ed))
-    {
-      if (ED_PTREE_LIST_SIZE(ed) < size)
-	{
-	  ED_PTREE_LIST_SIZE(ed) = size;
-	  ED_PTREE_LIST(ed) = (ptree_state *)realloc(ED_PTREE_LIST(ed), size * sizeof(ptree_state));
-	}
-    }
-  else
-    {
-      ED_PTREES(ed) = (ed_ptrees *)calloc(1, sizeof(ed_ptrees));
-      ED_PTREE_LIST_SIZE(ed) = size;
-      ED_PTREE_LIST(ed) = (ptree_state *)calloc(size, sizeof(ptree_state));
-    }
-  return(size);
-}
-
-
-static ed_ptrees *copy_fragment_ptrees(ed_ptrees *old_ptrees)
-{
-  ed_ptrees *np;
-  np = (ed_ptrees *)calloc(1, sizeof(ed_ptrees));
-  np->size = old_ptrees->size;
-  np->psplit = old_ptrees->psplit;
-  np->rsplit = old_ptrees->rsplit;
-  np->xsplit = old_ptrees->xsplit;
-  np->ptree_list = (ptree_state *)malloc(np->size * sizeof(ptree_state));
-  memcpy((void *)(np->ptree_list), (void *)(old_ptrees->ptree_list), np->size * sizeof(ptree_state));
-  return(np);
-}
-
-
 static ed_fragment *make_ed_fragment(void)
 {
   return((ed_fragment *)calloc(1, sizeof(ed_fragment)));
@@ -3833,9 +2569,6 @@ static void copy_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
   if (ED_RAMPS(old_ed))
     ED_RAMPS(new_ed) = copy_fragment_ramps(ED_RAMPS(old_ed));
 
-  if (ED_PTREES(old_ed))
-    ED_PTREES(new_ed) = copy_fragment_ptrees(ED_PTREES(old_ed));
-
   if (ED_MIXES(old_ed))
     ED_MIXES(new_ed) = copy_fragment_mixes(ED_MIXES(old_ed));
 }
@@ -3850,13 +2583,6 @@ static void copy_checked_ed_fragment(ed_fragment *new_ed, ed_fragment *old_ed)
       if (ED_RAMP_LIST(new_ed))	free(ED_RAMP_LIST(new_ed));
       if (ED_XRAMP_LIST(new_ed)) free(ED_XRAMP_LIST(new_ed));
       free(ED_RAMPS(new_ed));
-    }
-
-  if ((ED_PTREES(old_ed)) &&
-      (ED_PTREES(new_ed)))
-    {
-      if (ED_PTREE_LIST(new_ed)) free(ED_PTREE_LIST(new_ed));
-      free(ED_PTREES(new_ed));
     }
 
   if ((ED_MIXES(old_ed)) &&
@@ -3880,13 +2606,6 @@ static void clear_ed_fragment(ed_fragment *ed)
       if (ED_XRAMP_LIST(ed)) free(ED_XRAMP_LIST(ed));
       free(ED_RAMPS(ed));
       ED_RAMPS(ed) = NULL;
-    }
-
-  if (ED_PTREES(ed)) 
-    {
-      if (ED_PTREE_LIST(ed)) free(ED_PTREE_LIST(ed));
-      free(ED_PTREES(ed));
-      ED_PTREES(ed) = NULL;
     }
 
   if (ED_MIXES(ed)) 
@@ -4017,22 +2736,6 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	  free(ed->origin);
 	  ed->origin = NULL;
 	}
-      if (ed->edit_type == PTREE_EDIT)
-	{
-	  int loc;
-	  loc = ed->ptree_location;
-	  if (cp->ptrees[loc])
-	    {
-	      mus_run_free_ptree(cp->ptrees[loc]);
-	      cp->ptrees[loc] = NULL;
-	    }
-	  if (XEN_PROCEDURE_P(cp->ptree_inits[loc]))
-	    {
-	      snd_unprotect_at(cp->init_locs[loc]);
-	      cp->init_locs[loc] = -1;
-	      cp->ptree_inits[loc] = XEN_FALSE;
-	    }
-	}
       if (ed->marks)
 	free_mark_list(ed);
       if (ed->peak_env)
@@ -4090,12 +2793,6 @@ void backup_edit_list(chan_info *cp)
   if (old_end > new_end) new_end = old_end;
   if (old_ed->beg < new_ed->beg) new_ed->beg = old_ed->beg;
   new_ed->len = new_end - new_ed->beg + 1;
-
-  /* make sure backup_edit_list (as-one-edit) doesn't clobber our ptrees */
-  /* this puts off gc of un-needed ptrees until close time -- a bit wasteful. */
-  /*   it might be enough to save the second tree loc in ptree2 cases, and include it in the block above */
-  if (old_ed->edit_type == PTREE_EDIT)
-    old_ed->edit_type = INITIALIZE_EDIT; /* was ED_SIMPLE which is obviously confused -- anything but PTREE_EDIT should be ok */
 
   old_ed = free_ed_list(old_ed, cp);
   cp->edits[cur - 1] = new_ed;
@@ -4276,13 +2973,6 @@ static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, mus_l
 	  ED_XRAMP_START(new_after, i) = ED_XRAMP_START(old_after, i) * exp(log(ED_XRAMP_INCR(old_after, i)) * d_dur);
 	}
     }
-  if ((ED_PTREES(new_after)) && (ED_PTREES(old_after)))
-    {
-      int i, trees;
-      trees = ensure_ed_ptrees(new_after, ED_PTREE_LIST_SIZE(old_after));
-      for (i = 0; i < trees; i++)
-	ED_PTREE_POSITION(new_after, i) = ED_PTREE_POSITION(old_after, i) + dur;
-    }
 }
 
 
@@ -4461,8 +3151,8 @@ static ed_list *insert_section_into_list(mus_long_t samp, mus_long_t num, ed_lis
 		  ED_LOCAL_POSITION(split_back_f) = ED_LOCAL_END(split_front_f) + 1;
 		  ED_GLOBAL_POSITION(split_back_f) = samp + num; /* rippled */
 		  
-		  /* now fixup ramps/ptrees affected by the split */
-		  if (ramp_or_ptree_op(ED_TYPE(cur_f)))
+		  /* now fixup ramps affected by the split */
+		  if (ramp_op(ED_TYPE(cur_f)))
 		    {
 		      new_before_ramp(split_front_f, cur_f);
 		      new_after_ramp(split_back_f, cur_f, samp);
@@ -4841,7 +3531,7 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
 		  new_i++;
 		  ED_LOCAL_END(split_front_f) = ED_LOCAL_POSITION(split_front_f) + beg - ED_GLOBAL_POSITION(split_front_f) - 1;
 		  /* samp - global position = where in current fragment, offset that by its local offset, turn into end sample */
-		  if (ramp_or_ptree_op(ED_TYPE(cur_f)))
+		  if (ramp_op(ED_TYPE(cur_f)))
 		    new_before_ramp(split_front_f, cur_f);
 		}
 	      next_pos = FRAGMENT_GLOBAL_POSITION(current_state, (cur_i + 1));
@@ -4854,7 +3544,7 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
 		  new_i++;
 		  ED_GLOBAL_POSITION(split_back_f) = beg;
 		  ED_LOCAL_POSITION(split_back_f) += end - ED_GLOBAL_POSITION(cur_f);
-		  if (ramp_or_ptree_op(ED_TYPE(cur_f)))
+		  if (ramp_op(ED_TYPE(cur_f)))
 		    new_after_ramp(split_back_f, cur_f, end);
 		}
 	    }
@@ -5169,7 +3859,7 @@ bool change_samples(mus_long_t beg, mus_long_t num, mus_sample_t *vals, chan_inf
 }
 
 
-/* -------------------------------- ramp/scale/ptree -------------------------------- */
+/* -------------------------------- ramp/scale -------------------------------- */
 
 bool unrampable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos, bool is_xramp)
 {
@@ -5200,36 +3890,7 @@ bool unrampable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos, bool is_
 }
 
 
-bool unptreeable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos)
-{
-  /* from ptree-channel (snd-sig.c) check for pre-existing ptree-channel */
-  ed_list *ed;
-  int i;
-  mus_long_t end;
-  ed = cp->edits[pos];
-  end = beg + dur - 1;
-  for (i = 0; i < ed->size - 1; i++) 
-    {
-      mus_long_t loc, next_loc;
-      if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
-      loc = FRAGMENT_GLOBAL_POSITION(ed, i);
-      if (loc > end) return(false);
-      next_loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);         /* i.e. next loc = current fragment end point */
-      /* fragment starts at loc, ends just before next_loc, is of type typ */
-      if (next_loc > beg)
-	{
-	  if (type_info[FRAGMENT_TYPE(ed, i)].add_ptree == -1)
-	    return(true);
-	  if ((FRAGMENT_PTREES(ed, i)) &&
-	      (FRAGMENT_PTREE_LIST_SIZE(ed, i) >= max_virtual_ptrees))
-	    return(true);
-	}
-    }
-  return(false);
-}
-
-
-bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
+bool sound_fragments_in_use(chan_info *cp, int pos)
 {
   /* (swap-channels): are there any non-simple/non-ramp edits? */
   int i;
@@ -5242,8 +3903,6 @@ bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos)
       if (index == EDIT_LIST_END_MARK) return(false);
       if ((index != 0) &&
 	  (index != EDIT_LIST_ZERO_MARK))
-	return(true);
-      if (ptree_op(FRAGMENT_TYPE(ed, i)))
 	return(true);
     }
   return(false);
@@ -5388,8 +4047,8 @@ static ed_list *copy_and_split_list(mus_long_t beg, mus_long_t num, ed_list *cur
 		      ED_LOCAL_POSITION(split_back_f) = ED_LOCAL_END(split_front_f) + 1;
 		      ED_GLOBAL_POSITION(split_back_f) = beg;
 
-		      /* now fixup ramps/ptrees affected by the split */
-		      if (ramp_or_ptree_op(ED_TYPE(cur_f)))
+		      /* now fixup ramps affected by the split */
+		      if (ramp_op(ED_TYPE(cur_f)))
 			{
 			  new_before_ramp(split_front_f, cur_f);
 			  new_after_ramp(split_back_f, cur_f, beg);
@@ -5410,8 +4069,8 @@ static ed_list *copy_and_split_list(mus_long_t beg, mus_long_t num, ed_list *cur
 		      ED_LOCAL_POSITION(split_back_f) = ED_LOCAL_END(split_front_f) + 1;
 		      ED_GLOBAL_POSITION(split_back_f) = end;
 
-		      /* now fixup ramps/ptrees affected by the split */
-		      if (ramp_or_ptree_op(ED_TYPE(cur_f)))
+		      /* now fixup ramps affected by the split */
+		      if (ramp_op(ED_TYPE(cur_f)))
 			{
 			  if (ED_RAMPS(split_front_f))
 			    {
@@ -5441,7 +4100,6 @@ static ed_list *copy_and_split_list(mus_long_t beg, mus_long_t num, ed_list *cur
 			      if (ramp_begs) free(ramp_begs);
 			      if (xramp_begs) free(xramp_begs);
 			    }
-			  /* possibly also just ptrees in new trailer */
 			  new_after_ramp(split_back_f, cur_f, end);
 			}
 		    }
@@ -5631,13 +4289,6 @@ static void add_ramp_to_fragment(ed_list *new_ed, int i, double start, double in
       ED_RAMP_START(ed, loc) = start;
       ED_RAMP_INCR(ed, loc) = incr;
       ED_TYPE(ed) = type_info[typ].add_ramp;
-    }
-
-  if ((double_split_op(ED_TYPE(ed))) &&
-      (!(double_split_op(typ))))
-    {
-      ED_RSPLIT(ed) = (is_xramp) ? rmps : loc;
-      ED_XSPLIT(ed) = (is_xramp) ? loc : xrmps;
     }
 }
 
@@ -5839,24 +4490,6 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 
 	  free(sf->ramps);
 	  sf->ramps = NULL;
-	}
-
-      if (READER_PTREES(sf))
-	{
-	  int i, pts;
-	  pts = READER_PTREE_LIST_SIZE(sf);
-	  for (i = 0; i < pts; i++)
-	    {
-	      if (READER_PTREE_GC_LOC(sf, i) != NOT_A_GC_LOC)
-		{
-		  snd_unprotect_at(READER_PTREE_GC_LOC(sf, i));
-		  READER_PTREE_CLOSURE(sf, i) = XEN_UNDEFINED;
-		  READER_PTREE_GC_LOC(sf, i) = NOT_A_GC_LOC;
-		}
-	    }
-	  if (READER_PTREE_LIST(sf)) free(READER_PTREE_LIST(sf));
-	  free(sf->ptrees);
-	  sf->ptrees = NULL;
 	}
 
       if (sf->mixes)
@@ -9612,14 +8245,15 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 }
 
 
-static XEN g_max_virtual_ptrees(void)
-{
-  return(XEN_FALSE);
-}
+#define S_max_virtual_ptrees "max-virtual-ptrees"
+static XEN g_max_virtual_ptrees(void) {return(XEN_FALSE);}
+static XEN g_set_max_virtual_ptrees(XEN num) {return(num);}
 
-static XEN g_set_max_virtual_ptrees(XEN num)
+#define S_ptree_channel "ptree-chaannel"
+static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN env_too, XEN init_func, XEN origin)
 {
-  return(num);
+  fprintf(stderr, "ptree-channel is obsolete; please use map-channel instead");
+  return(XEN_FALSE);
 }
 
 
@@ -9665,6 +8299,7 @@ XEN_ARGIFY_1(g_make_snd_to_sample_w, g_make_snd_to_sample)
 XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
 XEN_NARGIFY_0(g_max_virtual_ptrees_w, g_max_virtual_ptrees)
 XEN_NARGIFY_1(g_set_max_virtual_ptrees_w, g_set_max_virtual_ptrees)
+XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 #else
 #define g_make_sampler_w g_make_sampler
@@ -9708,6 +8343,7 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 #define g_edit_list_to_function_w g_edit_list_to_function
 #define g_max_virtual_ptrees_w g_max_virtual_ptrees
 #define g_set_max_virtual_ptrees_w g_set_max_virtual_ptrees
+#define g_ptree_channel_w g_ptree_channel
 #define g_edit_fragment_type_name_w g_edit_fragment_type_name
 #endif
 
@@ -9790,7 +8426,7 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_virtual_ptrees, g_max_virtual_ptrees_w, "obsolete function",
 				   S_setB S_max_virtual_ptrees, g_set_max_virtual_ptrees_w, 0, 0, 1, 0);
-
+  XEN_DEFINE_PROCEDURE(S_ptree_channel,                g_ptree_channel_w,               1, 8, 0, "obsolete");
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \
 If it returns " PROC_TRUE ", the file is not saved.  'name' is " PROC_FALSE " unless the file is being saved under a new name (as in sound-save-as)."
@@ -9804,8 +8440,6 @@ If the hook returns a string, it is treated as the new temp filename.  This hook
 keep track of which files are in a given saved state batch, and a way to rename or redirect those files."
 
   save_state_hook = XEN_DEFINE_HOOK(S_save_state_hook, "(make-hook 'name)", 1, H_save_state_hook); 
-  empty_closure = xen_make_vct(1, (mus_float_t *)calloc(1, sizeof(mus_float_t)));
-  XEN_PROTECT_FROM_GC(empty_closure);
 
   SND_TO_SAMPLE = mus_make_class_tag();
 

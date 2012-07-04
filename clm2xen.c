@@ -12895,6 +12895,8 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
 }
 
 
+void mus_init_run(void);
+
 void Init_sndlib(void)
 {
   mus_sndlib_xen_initialize();

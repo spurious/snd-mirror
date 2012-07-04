@@ -113,12 +113,12 @@ typedef struct {
   mus_long_t beg, len;                      /* beg and len of changed portion */
   char *origin;
   edit_t edit_type;
-  int sound_location, ptree_location;
+  int sound_location;
   mus_long_t selection_beg, selection_end;  /* selection needs to follow edit list */
   mus_float_t maxamp, selection_maxamp;
   mus_long_t maxamp_position, selection_maxamp_position;
   int edpos;
-  bool ptree_env_too, backed_up;
+  bool backed_up;
   mus_long_t samples, cursor;
   int mark_size, mark_ctr;
   mark **marks;                        /* mark positions */
@@ -148,7 +148,7 @@ typedef struct snd_fd {
   mus_long_t frag_pos;
   int edit_ctr, region;
   reader_t type;
-  void *ptrees, *ramps, *mixes;
+  void *ramps, *mixes;
 } snd_fd;
 
 typedef struct {mus_float_t freq; mus_float_t amp;} fft_peak;
@@ -252,11 +252,6 @@ typedef struct chan_info {
   int sound_size;          /* edit_list associated temp sound buffers */
   int sound_ctr;           /* current location in sounds list */
   snd_data **sounds;       /* the associated temp buffer/file/struct list */
-  int ptree_size;          /* ditto for ptrees */
-  int ptree_ctr;
-  struct ptree **ptrees;
-  XEN *ptree_inits;
-  int *init_locs, *init_args;
   fft_info *fft;           /* possibly null fft data */
   struct snd_info *sound;  /* containing sound */
   axis_info *axis;         /* time domain axis */
@@ -965,7 +960,6 @@ void free_edit_list(chan_info *cp);
 void backup_edit_list(chan_info *cp);
 void as_one_edit(chan_info *cp, int one_edit);
 void free_sound_list(chan_info *cp);
-void free_ptree_list(chan_info *cp);
 void after_edit(chan_info *cp);
 bool extend_with_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, const char *origin);
 bool insert_samples(mus_long_t beg, mus_long_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
@@ -996,8 +990,7 @@ snd_fd *init_sample_read_any(mus_long_t samp, chan_info *cp, read_direction_t di
 snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize);
 void read_sample_change_direction(snd_fd *sf, read_direction_t dir);
 bool unrampable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos, bool is_xramp);
-bool ptree_or_sound_fragments_in_use(chan_info *cp, int pos);
-bool unptreeable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos);
+bool sound_fragments_in_use(chan_info *cp, int pos);
 #define read_sample_to_mus_sample(Sf) MUS_FLOAT_TO_SAMPLE((*((Sf)->runf))(Sf))
 #define read_sample(Sf) (*((Sf)->runf))(Sf)
 mus_float_t protected_next_sample(snd_fd *sf);

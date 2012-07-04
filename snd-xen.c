@@ -2597,6 +2597,9 @@ XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
 #endif
 #endif
 
+#if (!WITH_SHARED_SNDLIB)
+  void mus_init_run(void);
+#endif
 
 
 /* -------------------------------------------------------------------------------- */

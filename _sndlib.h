@@ -43,6 +43,10 @@
 #endif
 
 
+#include "xen.h"
+#include "vct.h"
+
+
 #if (SIZEOF_SSIZE_T == SIZEOF_INT) && (!HAVE_OSX)
   #define SSIZE_TD "%d"
 #else
@@ -500,22 +504,6 @@ MUS_EXPORT char *mus_strdup(const char *str);
 MUS_EXPORT int mus_strlen(const char *str);
 MUS_EXPORT bool mus_strcmp(const char *str1, const char *str2);
 MUS_EXPORT char *mus_strcat(char *errmsg, const char *str, int *err_size);
-
-
-/* -------- run.c -------- */
-
-#include "xen.h"
-#include "vct.h"
-
-MUS_EXPORT struct ptree *mus_run_form_to_ptree_0_f(XEN code);
-MUS_EXPORT struct ptree *mus_run_form_to_ptree_3_f(XEN code);
-
-MUS_EXPORT void mus_run_free_ptree(struct ptree *pt);
-MUS_EXPORT void mus_init_run(void);
-MUS_EXPORT XEN mus_run_ptree_code(struct ptree *pt);
-MUS_EXPORT mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type);
-MUS_EXPORT int mus_run_xen_to_run_type(XEN val);
-
 
 
 /* -------- headers.c -------- */

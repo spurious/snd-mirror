@@ -15,21 +15,6 @@
  *   6: all opts
  *
  *
- * exported:
- *      (static struct ptree *form_to_ptree(s7_pointer code) parse code, returning pointer to tree (a list) or null if code has something we can't handle)
- *   struct ptree *form_to_ptree_1_f(s7_pointer code) -- (1 arg) adds type check that result is mus_float_t
- *   struct ptree *form_to_ptree_0_f(s7_pointer code) -- (no args) adds type check that result is mus_float_t
- *   struct ptree *form_to_ptree_1_b(s7_pointer code) -- (1 arg) adds type check that result is boolean
- *   mus_float_t evaluate_ptree_1f2f(struct ptree *tree, mus_float_t arg)
- *     evaluate ptree passing it the single mus_float_t arg, returning a mus_float_t result
- *   mus_float_t evaluate_ptree_0f2f(struct ptree *tree, mus_float_t arg)
- *     evaluate ptree (no args), returning a mus_float_t result
- *   mus_float_t evaluate_ptree_1f2b(struct ptree *tree, mus_float_t arg)
- *     evaluate ptree passing it the single mus_float_t arg, returning a boolean result
- *   void free_ptree(struct ptree *pt)
- *     release resources allocated to ptree
- *
- *
  * currently handled, at least partially:
  *
  *   types: float int char string boolean symbol keyword vct snd_fd mus_any vector function list
@@ -721,11 +706,6 @@ static char *str_append(char *oldstr, int *oldsize, char *newstr)
 }
 
 
-XEN mus_run_ptree_code(struct ptree *pt)
-{
-  return(pt->form);
-}
-
 #define INT_PT  "i%d(%lld)"
 #define INT_STR "%lld"
 #define B2S(Arg) ((Arg) ? "#t" : "#f")
@@ -1322,6 +1302,8 @@ static list *xen_to_list_with_type(ptree *pt, s7_pointer lst, int type) /* list 
 }
 
 
+static int mus_run_xen_to_run_type(s7_pointer val);
+
 static list *xen_to_list(ptree *pt, s7_pointer lst)
 {
   /* load xen original into its list shadow */
@@ -1540,7 +1522,7 @@ static ptree *free_embedded_ptree(ptree *pt)
 }
 
 
-void mus_run_free_ptree(struct ptree *pt)
+static void mus_run_free_ptree(struct ptree *pt)
 {
   if (pt)
     {
@@ -2383,7 +2365,7 @@ static vect *read_vector(ptree *pt, s7_pointer vector, int type)
 }
 
 
-int mus_run_xen_to_run_type(s7_pointer val)
+static int mus_run_xen_to_run_type(s7_pointer val)
 {
   /* fprintf(stderr, "get type of %s\n", s7_object_to_c_string(s7, val)); */
 
@@ -2842,8 +2824,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define INT_ARG_4 pt->ints[args[4]]
 #define INT_ARG_5 pt->ints[args[5]]
 #define INT_ARG_6 pt->ints[args[6]]
-#define INT_ARG_7 pt->ints[args[7]]
-#define INT_ARG_8 pt->ints[args[8]]
 #define INT_ARG_9 pt->ints[args[9]]
 
 #define FLOAT_RESULT pt->dbls[args[0]]
@@ -2896,12 +2876,8 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define SAMPLER_ARG_2 pt->samplers[args[2]]
 #define SAMPLER_ARG_3 pt->samplers[args[3]]
 
-#define SOUND_RESULT pt->ints[args[0]]
 #define SOUND_ARG_1 pt->ints[args[1]]
-#define MIX_RESULT pt->ints[args[0]]
 #define MIX_ARG_1 pt->ints[args[1]]
-#define MARK_RESULT pt->ints[args[0]]
-#define MARK_ARG_1 pt->ints[args[1]]
 #define REGION_ARG_1 pt->ints[args[1]]
 #endif
 
@@ -11060,10 +11036,7 @@ static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
 #define GEN2_1(Name) \
   static void Name ## _1f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, FLOAT_ARG_2);}
 
-#define mus_comb_no_input(Ptr) mus_comb_unmodulated(Ptr, 0.0)
 #define mus_filtered_comb_no_input(Ptr) mus_filtered_comb_unmodulated(Ptr, 0.0)
-#define mus_notch_no_input(Ptr) mus_notch_unmodulated(Ptr, 0.0)
-#define mus_all_pass_no_input(Ptr) mus_all_pass_unmodulated(Ptr, 0.0)
 #define mus_ssb_am_no_input(Ptr) mus_ssb_am_unmodulated(Ptr, 0.0)
 
 #define GEN3(Name) \
@@ -16305,134 +16278,6 @@ static struct ptree *form_to_ptree(s7_pointer code)
 }
 
 
-static struct ptree *form_to_ptree_with_predeclarations(s7_pointer code, int decls, ...)
-{
-  ptree *result;
-  int *types = NULL;
-
-  if (decls > 0)
-    {
-      int i;
-      va_list ap;
-
-      types = (int *)calloc(decls, sizeof(int));
-      va_start(ap, decls);
-      for (i = 0; i < decls; i++)
-	types[i] = va_arg(ap, int);
-      va_end(ap);
-    }
-
-  result = form_to_ptree_1(code, decls, types);
-  free(types);
-  return(result);
-}
-
-
-
-
-
-/* ---------------- various tree-building wrappers ---------------- */
-
-struct ptree *mus_run_form_to_ptree_3_f(s7_pointer code)
-{
-  /* ptree-channel, snd-sig.c */
-  ptree *pt;
-  s7_unoptimize(s7, code);
-  pt = form_to_ptree_with_predeclarations(code, 3, R_FLOAT, R_VCT, R_BOOL);
-  if (pt)
-    {
-      if ((pt->result->type == R_FLOAT) && (pt->arity == 3))
-	return(pt);
-      mus_run_free_ptree(pt);
-    }
-  return(NULL);
-}
-
-
-struct ptree *mus_run_form_to_ptree_0_f(s7_pointer code)
-{
-  /* vct-map! */
-  ptree *pt;
-  s7_unoptimize(s7, code);
-  pt = form_to_ptree(code);
-  if (pt)
-    {
-      if ((pt->result->type == R_FLOAT) && (pt->arity == 0))
-	return(pt);
-      mus_run_free_ptree(pt);
-    }
-  return(NULL);
-}
-
-
-
-
-/* ---------------- various evaluator wrappers ---------------- */
-
-mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, s7_pointer object, bool dir, int type)
-{
-  /* set the "val" (current sample) arg */
-
-  /* this assumes the init func returns the correct type of "data".  This will segfault:
-   *    (define (tp) (ptree-channel (lambda (y data forward) (declare (y real)) (+ y .1)) 0 10 0 0 1 #f (lambda (b d) #f)))
-   */
-
-  pt->dbls[pt->args[0]] = arg;
-  if (pt->arity > 1)
-    {
-      int addr;
-
-      /* set the "dir" (read direction) arg */
-      pt->ints[pt->args[2]] = (Int)dir;
-
-      /* set the "state" (init-func return value) arg -- "type" is decided when init-func is evaluated */
-      addr = pt->args[1];
-
-      switch (type)
-	{
-	case R_FLOAT:        pt->dbls[addr] = (Double)s7_number_to_real(object);                              break;
-	case R_INT:          pt->ints[addr] = s7_number_to_integer(object);                                       break;
-	case R_CHAR:         pt->ints[addr] = (Int)s7_character(object);                                   break;
-	case R_BOOL:         pt->ints[addr] = (Int)scheme_to_c_bool(object);                                break;
-	case R_VCT:          if (pt->vcts) pt->vcts[addr] = XEN_TO_VCT(object);                             break;
-	  /* dumb cases force the pt->vcts check -- vct returned, but never used for example */
-	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = XEN_TO_SOUND_DATA(object);                        break;
-	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);                         break;
-#if USE_SND
-	case R_SAMPLER:      if (pt->samplers) pt->samplers[addr] = xen_to_sampler(object);                 break;
-	case R_MIX:          pt->ints[addr] = XEN_MIX_TO_C_INT(object);                                     break;
-	case R_MARK:         pt->ints[addr] = XEN_MARK_TO_C_INT(object);                                    break;
-	case R_REGION:       pt->ints[addr] = XEN_REGION_TO_C_INT(object);                                  break;
-	case R_SOUND:        pt->ints[addr] = XEN_SOUND_TO_C_INT(object);                                   break;
-#endif
-	case R_STRING:       
-	  if (pt->strs)
-	    {
-	      if (pt->strs[addr]) free(pt->strs[addr]);
-	      pt->strs[addr] = mus_strdup(s7_string(object));
-	    }
-	  break; 
-	case R_SYMBOL:
-	case R_KEYWORD:      if (pt->xens) pt->xens[addr] = object;                                         break;
-	default:
-	  /* disaster -- init-func returned something we can't handle, so we're heading for a segfault
-	   *   unless the overly-clever user forgot to refer to it.  Not sure how to exit completely...
-	   */
-#if USE_SND
-	  snd_error("ptree-channel init-func returned a %s which we can't handle", type_name(type));
-#else
-	  mus_error(MUS_WRONG_TYPE_ARG, "ptree-channel init-func returned a %s which we can't handle", type_name(type));
-#endif
-	  return(0.0);
-	  break;
-	}
-    }
-
-  eval_ptree(pt);
-  return(pt->dbls[pt->result->addr]);
-}
-
-
 static ptree *last_ptree = NULL, *last_error_ptree = NULL;
 
 #if USE_SND
@@ -17248,6 +17093,7 @@ XEN_NARGIFY_0(g_clear_counts_w, g_clear_counts)
 #endif
 
 
+void mus_init_run(void);
 void mus_init_run(void)
 {
   static bool run_inited = false;
@@ -17331,10 +17177,6 @@ You can often slightly rewrite the form to make run happy."
 #define S_run "run"
 
 /* XEN here, not s7_pointer in case no s7 */
-void mus_run_free_ptree(struct ptree *pt) {}
-XEN mus_run_ptree_code(struct ptree *pt) {return(XEN_FALSE);}
-mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type) {return(0.0);}
-int mus_run_xen_to_run_type(XEN val) {return(0);}
 
 #define S_optimization "optimization"
 static XEN g_optimization(void) {return(XEN_ZERO);}
