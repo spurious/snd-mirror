@@ -5,6 +5,7 @@
 ;; Last: Sun Jun 15 03:50:21 CEST 2003
 ;; changed slightly 14-Jun-06 Bill to match bess.scm, fix pitch problem in make-oscil.
 ;;   then again 18-Dec-09 to use s7 rather than Guile
+;; changed vct-map! to use a loop instead (Bill 4-July-12)
 
 (if (not (provided? 'snd-motif)) (error "bess1.scm needs motif"))
 
@@ -43,10 +44,11 @@
 ;; called by XtAppAddWorkProc
 (define (rt-send->dac func)
   (if cplay
-      (begin
-	(mus-audio-write *output* (vct->sound-data (vct-map! (make-vct *clm-rt-bufsize*) (func))
-						   (make-sound-data 1 *clm-rt-bufsize*) 0)
-			 *clm-rt-bufsize*)
+      (let ((data (make-vct *clm-rt-bufsize*)))
+	(do ((i 0 (+ i 1)))
+	    ((= i *clm-rt-bufsize*))
+	  (set! (data i) (func)))
+	(mus-audio-write *output* (vct->sound-data data (make-sound-data 1 *clm-rt-bufsize*) 0) *clm-rt-bufsize*)
 	#f)
       (begin
 	(mus-audio-close *output*)

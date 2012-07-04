@@ -1370,7 +1370,7 @@ static void choose_accessor(snd_fd *sf)
 static const char *edit_names[NUM_EDIT_TYPES] = {"insert", "delete", "set", "init", "scale", "zero", "env", "extend", "mix", "change mix"};
 
 
-static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
+static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 {
   int len, j, index;
   snd_data *sd;
@@ -1524,12 +1524,12 @@ char *edit_to_string(chan_info *cp, int edit)
 }
 
 
-static void display_edits(chan_info *cp, FILE *outp, bool with_source)
+static void display_edits(chan_info *cp, FILE *outp)
 {
   int i;
   fprintf(outp, "\nEDITS: %d\n", cp->edit_ctr);
   for (i = 0; i <= cp->edit_ctr; i++)
-    display_ed_list(cp, outp, i, cp->edits[i], with_source);
+    display_ed_list(cp, outp, i, cp->edits[i]);
 }
 
 
@@ -6010,24 +6010,21 @@ void end_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len)
 
 /* ----------------------- Xen connection -------------------------------- */
 
-static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
+static XEN g_display_edits(XEN snd, XEN chn, XEN edpos)
 {
-  #define H_display_edits "(" S_display_edits " :optional snd chn edpos (with-source " PROC_TRUE ")): current edit tree"
+  #define H_display_edits "(" S_display_edits " :optional snd chn edpos): current edit tree"
   FILE *tmp = NULL;
   char *buf, *name;
   chan_info *cp;
   int fd, pos = AT_CURRENT_EDIT_POSITION;
-  bool include_source = true;
   mus_long_t len;
   XEN res;
   ssize_t bytes;
 
   ASSERT_CHANNEL(S_display_edits, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(with_source), with_source, XEN_ARG_4, S_display_edits, "boolean");
   cp = get_cp(snd, chn, S_display_edits);
   if (!cp) return(XEN_FALSE);
 
-  if (XEN_BOOLEAN_P(with_source)) include_source = XEN_TO_C_BOOLEAN(with_source);
   if (XEN_INTEGER_P(edpos)) 
     {
       pos = XEN_TO_C_INT(edpos);
@@ -6043,8 +6040,8 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   if (tmp)
     {
       if (pos != AT_CURRENT_EDIT_POSITION)
-	display_ed_list(cp, tmp, pos, cp->edits[pos], include_source);
-      else display_edits(cp, tmp, include_source);
+	display_ed_list(cp, tmp, pos, cp->edits[pos]);
+      else display_edits(cp, tmp);
       snd_fclose(tmp, name);
     }
   else XEN_ERROR(CANNOT_SAVE,
@@ -8249,7 +8246,7 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 static XEN g_max_virtual_ptrees(void) {return(XEN_FALSE);}
 static XEN g_set_max_virtual_ptrees(XEN num) {return(num);}
 
-#define S_ptree_channel "ptree-chaannel"
+#define S_ptree_channel "ptree-channel"
 static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN env_too, XEN init_func, XEN origin)
 {
   fprintf(stderr, "ptree-channel is obsolete; please use map-channel instead");
@@ -8275,7 +8272,7 @@ XEN_ARGIFY_3(g_edit_fragment_w, g_edit_fragment)
 XEN_ARGIFY_3(g_undo_w, g_undo)
 XEN_ARGIFY_3(g_redo_w, g_redo)
 XEN_ARGIFY_2(g_as_one_edit_w, g_as_one_edit)
-XEN_ARGIFY_4(g_display_edits_w, g_display_edits)
+XEN_ARGIFY_3(g_display_edits_w, g_display_edits)
 XEN_ARGIFY_3(g_edit_tree_w, g_edit_tree)
 XEN_ARGIFY_4(g_delete_sample_w, g_delete_sample)
 XEN_ARGIFY_5(g_delete_samples_w, g_delete_samples)
@@ -8393,7 +8390,7 @@ void g_init_edits(void)
 #endif
   XEN_DEFINE_SAFE_PROCEDURE(S_redo,                   g_redo_w,                         0, 3, 0, H_redo);
   XEN_DEFINE_PROCEDURE(S_as_one_edit,                 g_as_one_edit_w,                  1, 1, 0, H_as_one_edit);
-  XEN_DEFINE_SAFE_PROCEDURE(S_display_edits,          g_display_edits_w,                0, 4, 0, H_display_edits);
+  XEN_DEFINE_SAFE_PROCEDURE(S_display_edits,          g_display_edits_w,                0, 3, 0, H_display_edits);
   XEN_DEFINE_SAFE_PROCEDURE(S_edit_tree,              g_edit_tree_w,                    0, 3, 0, H_edit_tree);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_delete_sample,          g_delete_sample_w,                1, 3, 0, H_delete_sample);

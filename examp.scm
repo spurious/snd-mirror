@@ -1146,11 +1146,10 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 					       0.0)))
 				  (set! i (+ i dir)) 
 				  val)))))
-    (vct->channel
-     (vct-map! out-data
-	       (lambda ()
-		 (src rd (rand-interp rn))))
-     0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
+    (do ((i 0 (+ i 1)))
+	((= i out-len))
+      (set! (out-data i) (src rd (rand-interp rn))))
+    (vct->channel out-data 0 len snd chn #f (format #f "hello-dentist ~A ~A" frq amp))))
 
 
 ;;; a very similar function uses oscil instead of rand-interp, giving
@@ -1164,13 +1163,14 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	 (sf (make-sampler 0 snd chn))
 	 (out-data (make-vct len))
 	 (amp osamp))
-    (vct-map! out-data
-	      (lambda () 
-		(src s (* amp (oscil os))
-		     (lambda (dir)
-		       (if (> dir 0)
-			   (next-sample sf)
-			   (previous-sample sf))))))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (set! (out-data i) 
+	    (src s (* amp (oscil os))
+		 (lambda (dir)
+		   (if (> dir 0)
+		       (next-sample sf)
+		       (previous-sample sf))))))
     (free-sampler sf)
     (vct->channel out-data 0 len snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
 	    
@@ -1234,10 +1234,12 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 	 (len (max sound-len (frames snd chn)))
 	 (out-data (make-vct len))
 	 (sf (make-sampler 0 snd chn)))
-    (vct-map! out-data (lambda ()
-			 (let ((val (granulate gr (lambda (dir) (next-sample sf)))))
-			   (set! (mus-increment gr) (env ge))
-			   val)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (set! (out-data i) 
+	    (let ((val (granulate gr (lambda (dir) (next-sample sf)))))
+	      (set! (mus-increment gr) (env ge))
+	      val)))
     (free-sampler sf)
     (vct->channel out-data 0 len snd chn #f (format #f "expsnd '~A" gr-env))))
 
@@ -1389,7 +1391,9 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)))
 	 (sf (make-sampler 0 snd1))
 	 (out-data (make-vct total-len)))
-    (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
+    (do ((i 0 (+ i 1)))
+	((= i total-len))
+      (set! (out-data i) (convolve cnv (lambda (dir) (next-sample sf)))))
     (free-sampler sf)
     (vct-scale! out-data amp)
     (let ((max-samp (vct-peak out-data)))
@@ -1500,7 +1504,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 
 (define* (env-sound-interp envelope (time-scale 1.0) snd chn)
   "(env-sound-interp env (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"
-  ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-channel or vct-map!
+  ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-channel
   (let* ((len (frames snd chn))
 	 (newlen (floor (* time-scale len)))
 	 (reader (make-sound-interp 0 snd chn))

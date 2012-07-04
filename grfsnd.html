@@ -1168,27 +1168,6 @@ an oscil or a sawtooth-wave:
 
 ; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (moving-formant .01 '(0 1200 1 2400)))
 
-;;; various "Forbidden Planet" sound effects:
-
-(define fp
-  (lambda (sr osamp osfrq)
-    (let* ((os (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> osfrq))
-	   (sr (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate sr))
-	   (len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
-	   (sf (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a>))
-	   (out-data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len)))
-      (<a class=quiet href="extsnd.html#vctmap" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmap_tip)">vct-map!</a> out-data
-		  (lambda () 
-		    (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> sr (* osamp (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> os))
-			 (lambda (dir)
-			   (if (&gt; dir 0)
-			       (<a class=quiet href="extsnd.html#nextsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_nextsample_tip)">next-sample</a> sf)
-			       (<a class=quiet href="extsnd.html#previoussample" onmouseout="UnTip()" onmouseover="Tip(extsnd_previoussample_tip)">previous-sample</a> sf))))))
-      (<a class=quiet href="extsnd.html#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a> sf)
-      (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> out-data 0 len))))
-
-; (fp 1.0 .3 20)
-
 
 ;;; -------- shift pitch keeping duration constant
 ;;;

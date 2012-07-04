@@ -286,7 +286,6 @@ static XEN g_set_search_procedure(XEN proc)
   XEN errstr;
 
   /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> as "proc" */
-  /*   why is this different from ptree-channel's proc arg? */
   
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) || XEN_FALSE_P(proc), proc, XEN_ONLY_ARG, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
 

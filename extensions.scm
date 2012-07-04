@@ -340,7 +340,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 			  dur
 			  (- (frames snd chn) beg)))))
      (lambda (y)
-       (let* ((val (* y (+ rmp0 (* angle angle (- rmp1 rmp0))))))
+       (let ((val (* y (+ rmp0 (* angle angle (- rmp1 rmp0))))))
 	 (set! angle (+ angle incr))
 	 val)))
    beg dur snd chn edpos
@@ -360,26 +360,22 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- ramp-expt, env-expt-channel
 
+;;; TODO: fix ramp-expt!
+
 (define* (ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos)
   "(ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
   ;; vct: start incr off scl exponent
   ;; a^x = exp(x * log(a))
-  (ptree-channel
-   (lambda (y data forward)
-     (let* ((angle (data 0))
-	    (incr (data 1))
-	    (val (* y (+ (data 2) (* (exp (* (log angle) (data 4))) (data 3))))))
-       (if forward
-	   (set! (data 0) (+ angle incr))
-	   (set! (data 0) (- angle incr)))
-       val))
-   beg dur snd chn edpos #t
-   (lambda (frag-beg frag-dur)
-     (let ((incr (/ 1.0 frag-dur)))
-       (if (and symmetric
-		(< rmp1 rmp0))
-	   (vct (* (- frag-dur frag-beg) incr) (- incr) rmp1 (- rmp0 rmp1) exponent)
-	   (vct (* frag-beg incr) incr rmp0 (- rmp1 rmp0) exponent))))
+  (map-channel
+   (let ((angle 0.0)
+	 (incr (/ 1.0 (if (number? dur)
+			  dur
+			  (- (frames snd chn) beg)))))
+     (lambda (y)
+       (let ((val (* y (+ rmp0 (* (expt angle exponent) (- rmp1 rmp0))))))
+	 (set! angle (+ angle incr))
+	 val)))
+   beg dur snd chn edpos
    (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
 
 

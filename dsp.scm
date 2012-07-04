@@ -464,7 +464,6 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (map-channel
      (lambda (y)
        (* mx (polynomial pcoeffs (/ y mx)))))))
-;; I think this could be a virtual op (ptree)
 
 
 

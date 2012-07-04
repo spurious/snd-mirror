@@ -4042,17 +4042,6 @@ copy vector: <a href="#vectortovct">vector-&gt;vct</a><br>
 <div class="spacer"></div>
 
 
-<!-- vct-map! -->
-<pre class="indented">
-<em class=def id="vctmap">vct-map!</em> v proc
-</pre>
-
-<p>vct-map! sets each element of 'v' to the value returned by the thunk 'proc': <code>(vct-map! v (lambda () 3.0))</code>
-is the same as <code>(<a class=quiet href="#vctfill" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctfill_tip)">vct-fill!</a> v 3.0)</code>.
-</p>
-<div class="spacer"></div>
-
-
 <!-- vct-move! -->
 <pre class="indented">
 <em class=def id="vctmove">vct-move!</em> v new old backwards
@@ -4346,22 +4335,6 @@ channel:
 ;;; (channel-polynomial (<em class=red>vct</em> 0.0 .5)) = x*.5
 ;;; (channel-polynomial (<em class=red>vct</em> 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
 </pre>
-
-<p>There is one slightly
-unusual function in this family: vct-map!.
-This is a do-loop (or for-each) over a vct, calling some 
-function to get the values to assign into the vct.  For example
-</p>
-
-<pre class="indented">
-  (<a class=quiet href="#vctmap" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmap_tip)">vct-map!</a> out-data (lambda () 
-                       (<a class=quiet href="sndclm.html#convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_convolve_tip)">convolve</a> cnv (lambda (dir) 
-                                       (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> sf)))))
-</pre>
-
-<p>in the cnvtest function in <a href="sndscm.html#exampdoc">examp.scm</a> is calling the convolve generator and
-assigning the result to each successive member of the out-data vct.
-</p>
 
 <p>In some cases (s7, Ruby) it's possible to access a vct's
 elements with the syntax (v index), equivalent to (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> v index).
@@ -8007,7 +7980,7 @@ Local envelope editor: <a href="sndscm.html#enveddoc">enved.scm</a>, xm-enved.sc
 Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
 Cosine as envelope: <a href="#cosinechannel">cosine-channel</a>, <a href="sndclm.html#bellcurve">bell-curve</a><br>
 envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
-envelope with separate base for each segment: <a href="#powenvchannel">powenv-channel</a><br>
+envelope with separate base for each segment: <a href="sndscm.html#powenvchannel">powenv-channel</a><br>
 envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squared-channel</a><br>
 envelope with x^n connections: <a href="sndscm.html#envexptchannel">env-expt-channel</a><br>
 envelope with <a href="sndclm.html#ncos">ncos</a> connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
@@ -11948,12 +11921,12 @@ to copy the last edit history string and use its associated bounds &mdash; unlik
 <div class="spacer"></div>
 
 
-<!-- TODO: remove with-source arg, fixup ptree-channel etc in *.rb *.fs
+<!-- TODO: fixup ptree-channel etc in *.rb *.fs
 -->
 
 <!-- display-edits -->
 <pre class="indented">
-<em class=def id="displayedits">display-edits</em> snd chn edpos with-source
+<em class=def id="displayedits">display-edits</em> snd chn edpos
 </pre>
 
 <p>This returns the current edit list contents as a string.  If 'edpos' is specified, only that position is described.

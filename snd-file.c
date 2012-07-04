@@ -1630,7 +1630,6 @@ void snd_close_file(snd_info *sp)
     }
 
   /* if sequester_deferred_regions is in free_snd_info (moved up to this level 15-12-03)
-   *   if needs an active-looking sound if its active edit op is a ptree read with an in-use closure.
    *   If the sound is set to SOUND_IDLE, the init function returns 'no-such-sound, and the
    *   subsequent read segfaults.
    */

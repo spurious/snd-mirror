@@ -777,6 +777,7 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
 }
 
 
+#if (!SND_DISABLE_DEPRECATED)
 static XEN g_vct_mapB(XEN obj, XEN proc)
 {
   #if HAVE_SCHEME
@@ -807,6 +808,7 @@ v. " vct_map_example " is the same as " vct_fill_example
 
   return(obj);
 }
+#endif
 
 
 double mus_vct_peak(vct *v)
@@ -1105,7 +1107,9 @@ XEN_NARGIFY_2(g_vct_fill_w, g_vct_fill)
 XEN_ARGIFY_3(g_vct_add_w, g_vct_add)
 XEN_NARGIFY_2(g_vct_subtract_w, g_vct_subtract)
 XEN_NARGIFY_2(g_vct_offset_w, g_vct_offset)
-XEN_NARGIFY_2(g_vct_mapB_w, g_vct_mapB)
+#if (!SND_DISABLE_DEPRECATED)
+  XEN_NARGIFY_2(g_vct_mapB_w, g_vct_mapB)
+#endif
 XEN_NARGIFY_1(g_vct_peak_w, g_vct_peak)
 XEN_NARGIFY_1(g_vct_peak_and_location_w, g_vct_peak_and_location)
 XEN_ARGIFY_4(g_vct_move_w, g_vct_move)
@@ -1132,7 +1136,9 @@ XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
 #define g_vct_add_w g_vct_add
 #define g_vct_subtract_w g_vct_subtract
 #define g_vct_offset_w g_vct_offset
-#define g_vct_mapB_w g_vct_mapB
+#if (!SND_DISABLE_DEPRECATED)
+  #define g_vct_mapB_w g_vct_mapB
+#endif
 #define g_vct_peak_w g_vct_peak
 #define g_vct_peak_and_location_w g_vct_peak_and_location
 #define g_vct_move_w g_vct_move
@@ -1487,7 +1493,9 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_reverse,       g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
+#if (!SND_DISABLE_DEPRECATED)
   XEN_DEFINE_PROCEDURE(S_vct_mapB,               g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
+#endif
 
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref,    g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);

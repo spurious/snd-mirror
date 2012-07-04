@@ -102,7 +102,9 @@
 		(if (not (pvoc-in-data pv))
 		    (begin
 		      (set-pvoc-in-data pv (make-vct N))
-		      (vct-map! (pvoc-in-data pv) input))
+		      (do ((i 0 (+ i 1)))
+			  ((= i N))
+			(set! ((pvoc-in-data pv) i) (input))))
 		    (let ((indat (pvoc-in-data pv)))
 		      ;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
 		      (vct-move! indat 0 D)
@@ -208,9 +210,9 @@
 	   (len (floor (* time (frames))))
 	   (data (make-vct len))
 	   )
-      (vct-map! data
-		(lambda ()
-		  (phase-vocoder pv (lambda (dir) (next-sample reader)))))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(set! (data i) (phase-vocoder pv (lambda (dir) (next-sample reader)))))
       (free-sampler reader)
       (vct->channel data 0 len))))
 

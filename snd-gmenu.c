@@ -1519,6 +1519,22 @@ static gboolean save_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean key
 }
 
 
+static gboolean save_as_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp)
+    {
+      char *tip;
+      tip = mus_format("save %s in a new file", sp->short_filename);
+      gtk_tooltip_set_text(tooltip, tip);
+      free(tip);
+    }
+  else gtk_tooltip_set_text(tooltip, "save the current sound in a new file");
+  return(true);
+}
+
+
 static gboolean revert_selected_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboard_tip, GtkTooltip *tooltip, gpointer data)
 {
   snd_info *sp;
@@ -1815,8 +1831,11 @@ void show_toolbar(void)
       add_to_toolbar(toolbar, GTK_STOCK_NEW,                 "open a new sound",           (GCallback)file_new_callback);
       add_to_toolbar(toolbar, GTK_STOCK_OPEN,                "open a sound",               (GCallback)file_open_callback);
 
-      w = add_to_toolbar(toolbar, GTK_STOCK_SAVE_AS,         "save selected sound",        (GCallback)file_save_as_callback);
+      w = add_to_toolbar(toolbar, GTK_STOCK_SAVE,            "save current sound, overwriting", (GCallback)file_save_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(save_selected_tooltip), NULL);
+
+      w = add_to_toolbar(toolbar, GTK_STOCK_SAVE_AS,         "save selected sound in new file", (GCallback)file_save_as_callback);
+      g_signal_connect(w, "query-tooltip", G_CALLBACK(save_as_tooltip), NULL);
 
       w = add_to_toolbar(toolbar, GTK_STOCK_REVERT_TO_SAVED, "revert to saved",            (GCallback)file_revert_callback);
       g_signal_connect(w, "query-tooltip", G_CALLBACK(revert_selected_tooltip), NULL);

@@ -52,6 +52,7 @@ static void file_open_recent_callback(Widget w, XtPointer info, XtPointer contex
 	    {
 	      int n = 0;
 	      Arg args[6];
+
 	      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
 
 	      recent_file_items[i] = XtCreateManagedWidget(recent_file_names[i], xmPushButtonWidgetClass, file_open_recent_menu, args, n);
@@ -1640,7 +1641,8 @@ void show_toolbar(void)
 
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_NEW),           "new sound",                  file_new_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_OPEN),          "open sound",                 file_open_callback);
-      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_SAVE),          "save selected sound",        file_save_as_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_SAVE),          "save current sound, overwriting it", file_save_callback);
+      add_to_toolbar(toolbar, toolbar_icon(SND_XPM_SAVE_AS),       "save current sound in a new file", file_save_as_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_REVERT),        "revert to saved",            file_revert_callback); 
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_UNDO),          "undo edit",                  edit_undo_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_REDO),          "redo last (undone) edit",    edit_redo_callback);
