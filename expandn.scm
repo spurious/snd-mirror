@@ -118,7 +118,6 @@
 	      (let ((ingen (vector-ref ex-array 0))
 		    (sample-0 0.0)
 		    (sample-1 0.0))
-		(run
 		 (do ((i beg (+ i 1)))
 		     ((= i end))
 		   
@@ -167,7 +166,7 @@
 		     (frame->file *output* i (frame->frame inframe mx outframe))
 		     ;; if reverb is turned on, output to the reverb streams
 		     (if rev-mx
-			 (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))
+			 (frame->file *reverb* i (frame->frame outframe rev-mx revframe))))))
 	      
 	      (if (= in-chans 2)
 		  (let ((sample-0-0 0.0)
@@ -176,7 +175,6 @@
 			(sample-1-1 0.0)
 			(ingen0 (vector-ref ex-array 0))
 			(ingen1 (vector-ref ex-array 1)))
-		    (run
 		     (do ((i beg (+ i 1)))
 			 ((= i end))
 		       
@@ -237,16 +235,13 @@
 			 (frame->file *output* i (frame->frame inframe mx outframe))
 			 ;; if reverb is turned on, output to the reverb streams
 			 (if rev-mx
-			     (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))
+			     (frame->file *reverb* i (frame->frame outframe rev-mx revframe))))))
 
 		  (let ((samples-0 (make-vct in-chans))
 			(samples-1 (make-vct in-chans)))
 		    ;; more than 2 chans in input file
-		    (run
 		     (do ((i beg (+ i 1)))
 			 ((= i end))
-		       (declare (ex-array clm-vector))
-		       
 		       (let ((vol (env ampenv))
 			     (resa (env srenv)))
 			 
@@ -307,6 +302,6 @@
 			 (frame->file *output* i (frame->frame inframe mx outframe))
 			 ;; if reverb is turned on, output to the reverb streams
 			 (if rev-mx
-			     (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))))))))
+			     (frame->file *reverb* i (frame->frame outframe rev-mx revframe))))))))))))
 
 ;;; (with-sound () (expandn 0 1 "oboe.snd" 1 :expand 4))

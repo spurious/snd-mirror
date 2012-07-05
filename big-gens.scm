@@ -132,7 +132,6 @@
   (frequency *clm-default-frequency*) (angle 0.0))
 
 (define* (big-oscil gen (fm 0.0) (pm 0.0))
-  (declare (gen big-oscil) (fm float) (pm float))
   (let ((x (big-oscil-angle gen)))
     (set! (big-oscil-angle gen) (+ fm x (big-oscil-frequency gen)))
     (sin (+ x pm))))
@@ -151,7 +150,6 @@
    (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (r 1.0))
 
 (define* (big-ncos gen (fm 0.0))
-  (declare (gen big-ncos) (fm float))
   (let* ((n (big-ncos-n gen))
 	 (x (big-ncos-angle gen))
 	 (scl (big-ncos-r gen))
@@ -192,7 +190,6 @@
    (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (r 1.0))
 
 (define* (big-nsin gen (fm 0.0))
-  (declare (gen big-nsin) (fm float))
   (let* ((n (big-nsin-n gen))
 	 (x (big-nsin-angle gen))
 	 (a2 (/ x 2))
@@ -226,7 +223,6 @@
   (frequency *clm-default-frequency*) (angle 0.0) (wave #f :type vector) (size *clm-table-size*))
 
 (define* (big-table-lookup gen (fm 0.0))
-  (declare (gen big-table-lookup) (fm float))
   (let ((x (big-table-lookup-angle gen))
 	(w (big-table-lookup-wave gen))
 	(n (big-table-lookup-size gen)))
@@ -251,7 +247,6 @@
 (defgenerator big-one-zero (a0 1.0) (a1 0.0) (x1 0.0))
 
 (define* (big-one-zero gen x)
-  (declare (gen big-one-zero) (x float))
   (let ((val (+ (* x (big-one-zero-a0 gen))
 		(* (big-one-zero-x1 gen) (big-one-zero-a1 gen)))))
     (set! (big-one-zero-x1 gen) x)
@@ -263,7 +258,6 @@
 (defgenerator big-one-pole (a0 1.0) (b1 0.0) (y1 0.0))
 
 (define* (big-one-pole gen x)
-  (declare (gen big-one-pole) (x float))
   (let ((val (- (* x (big-one-pole-a0 gen))
 		(* (big-one-pole-y1 gen) (big-one-pole-b1 gen)))))
     (set! (big-one-pole-y1 gen) val)

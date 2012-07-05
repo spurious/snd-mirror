@@ -447,7 +447,6 @@
 	 (dist-rscl 0.0)
 	 (where-bins-len (if (vct? where-bins) (length where-bins) 0)))
     (if reverse (set! (mus-increment in-file-reader) -1.0))
-    (run
      (do () ((not happy))
        (if (< gr-offset gr-samples)
 	   ;;
@@ -633,7 +632,7 @@
 		 (if (< in-start 0)
 		     (set! in-start 0)))
 	     ;; reset position of input file reader
-	     (set! (mus-location rd) in-start)))))))
+	     (set! (mus-location rd) in-start))))))
 
 ;; (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))
 ;; (with-sound (:channels 2) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))

@@ -487,8 +487,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;  (osc 0.125378749798983 0.0)
 
 ;;; besides setting up the list accessors, the make function, and the type predicate, defgenerator
-;;;   calls add-clm-field to tell run the type of each list element (only actually needed if
-;;;   there are different types in use)
 ;;; it also adds the built-in methods mus-name, mus-reset, mus-run, and mus-describe (if they don't already exist), and
 ;;;   mus-frequency if a "frequency" field exists (treated as radians)
 ;;;   mus-phase if a "phase" or "angle" field exists
@@ -732,7 +730,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				   (arg ,ctr))
 				 (lambda (arg val)
 				   (list-set! arg ,ctr val))))))
-		    (add-clm-field sname (string-append sname "-" n) ctr type)
 		    (set! ctr (+ 1 ctr))
 		    val)))
 	      field-names field-types))))

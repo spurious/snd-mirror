@@ -274,7 +274,6 @@ void preload_best_completions(void)
   best_completions[n++] = mus_strdup(S_frames);
   best_completions[n++] = mus_strdup(S_map_channel);
   best_completions[n++] = mus_strdup(S_maxamp);
-  best_completions[n++] = mus_strdup(S_optimization);
   best_completions[n++] = mus_strdup(S_play);
   best_completions[n++] = mus_strdup(S_save_sound);
   best_completions[n++] = mus_strdup(S_scale_channel);

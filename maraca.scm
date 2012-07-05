@@ -29,7 +29,6 @@
     (set! (coeffs 0) (* -2.0 shell-reso (cos (hz->radians shell-freq))))
     (set! (coeffs 1) (* shell-reso shell-reso))
 
-    (run
      (do ((i st (+ 1 i)))
 	 ((= i nd))
        (if (< temp two-pi)
@@ -57,7 +56,7 @@
        (set! (output 1) (output 0))
        (set! (output 0) input)
        ;; extra zero for spectral shape, also fixup amp since Perry is assuming maxamp 16384
-       (outa i (* sndamp (- (output 0) (output 1))))))))
+       (outa i (* sndamp (- (output 0) (output 1)))))))
 
 ;;; maraca: (maraca 0 5 .5)
 ;;; cabasa: (maraca 0 5 .5 0.95 0.997 0.5 3000.0 0.7)
@@ -98,7 +97,6 @@
       (set! (basesf i) (coeffs (+ (* i 2) 0)))
       (set! (coeffs (+ (* i 2) 1)) (* (shell-resos i) (shell-resos i))))
 
-    (run
      (do ((i st (+ 1 i)))
 	 ((= i nd))
        (if (< temp two-pi)
@@ -144,7 +142,7 @@
 	     (set! temp1 (+ last-diff diff)))
 	   (set! temp1 sum))
        ;; extra zero for spectral shape, also fixup amp since Perry is assuming maxamp 16384
-       (outa i (* sndamp temp1))))))
+       (outa i (* sndamp temp1)))))
 
 ;;; tambourine: (big-maraca 0 1 .25 0.95 0.9985 .03125 '(2300 5600 8100) '(0.96 0.995 0.995) .01)
 ;;; sleighbells: (big-maraca 0 2 .15 0.97 0.9994 0.03125 '(2500 5300 6500 8300 9800) '(0.999 0.999 0.999 0.999 0.999))

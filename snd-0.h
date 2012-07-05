@@ -498,10 +498,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define in_set_log_freq_start(a) ss->Log_Freq_Start = a
 #define DEFAULT_LOG_FREQ_START 32.0
 
-#define optimization(ss) ss->Optimization
-#define set_optimization(a) ss->Optimization = a
-#define DEFAULT_OPTIMIZATION 6
-
 #define dot_size(ss) ss->Dot_Size
 #define in_set_dot_size(a) ss->Dot_Size = a
 #define DEFAULT_DOT_SIZE 1

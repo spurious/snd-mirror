@@ -793,9 +793,11 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;  :hi
 ;;;  (osc 0.125378749798983 0.0 ((mus-phase #<closure> #<closure>) (mus-describe #<closure>) (mus-run #<closure>) (mus-reset #<closure>) (mus-name #<closure> #<closure>)))
 
+
+;;; this will change radically very soon
+
+
 ;;; besides setting up the list accessors, the make function, and the type predicate, defgenerator
-;;;   calls add-clm-field to tell run the type of each list element (only actually needed if
-;;;   there are different types in use)
 ;;; it also adds the built-in methods mus-name, mus-reset, mus-run, and mus-describe (if they don't already exist), and
 ;;;   mus-frequency if a "frequency" field exists (treated as radians)
 ;;;   mus-phase if a "phase" or "angle" field exists
@@ -1039,7 +1041,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				   (arg ,ctr))
 				 (lambda (arg val)
 				   (set! (arg ,ctr) val))))))
-		    (add-clm-field sname (string-append sname "-" n) ctr type)
 		    (set! ctr (+ 1 ctr))
 		    val)))
 	      field-names field-types))))
@@ -1099,11 +1100,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 (with-sound ()
   (let ((fd (make-file->sample "oboe.snd"))
 	(len (mus-sound-frames "oboe.snd")))
-    (run
-     (lambda ()
-       (do ((i 0 (+ i 1)))
-	   ((= i len))
-	 (outa i (* .5 (file->sample fd i 0))))))))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (outa i (* .5 (file->sample fd i 0))))))
 |#
 
 

@@ -228,7 +228,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Listener_Prompt =             mus_strdup(DEFAULT_LISTENER_PROMPT);
   ss->listener_prompt_length =      mus_strlen(ss->Listener_Prompt);
   ss->Clipping =                    DEFAULT_CLIPPING;
-  ss->Optimization =                DEFAULT_OPTIMIZATION;
   ss->Print_Length =                DEFAULT_PRINT_LENGTH;
   ss->View_Files_Sort =             DEFAULT_VIEW_FILES_SORT;
   ss->Just_Sounds =                 DEFAULT_JUST_SOUNDS;

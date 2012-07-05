@@ -145,7 +145,8 @@
  * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__
  *     (and __FreeBSD_version if HAVE_SYS_PARAM_H)
  *
- * if SIZEOF_VOID_P is not defined, we look for __SIZEOF__POINTER__ instead
+ * if SIZEOF_VOID_P is not defined, we look for __SIZEOF_POINTER__ instead
+ *   the default is to assume that we're running on a 64-bit machine.
  *
  * The __bfin__ switch refers to the Blackfin processor where int accesses must be 4-byte aligned.
  *   I can't find any built-in compiler switch to detect this case.
@@ -3428,7 +3429,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
  *   this does not work as is if run on a system that requires aligned accesses
  *   so we need a compilt-time switch.
  *
- * TODO: test timing here if we force 4-byte boundaries
+ * timing tests here if we force 4-byte boundaries found no difference on x86
  */
 
 #if (__bfin__)
@@ -4381,13 +4382,42 @@ s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_point
 }
 
 
+static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e)
+{
+  s7_pointer x;
+
+  if (old_e == sc->global_env) 
+    return;
+
+  if (new_e != sc->global_env)
+    {
+      for (x = environment_slots(old_e); is_slot(x); x = next_slot(x))
+	s7_make_slot(sc, new_e, slot_symbol(x), slot_value(x));
+    }
+  else
+    {
+      for (x = environment_slots(old_e); is_slot(x); x = next_slot(x))
+	{
+	  s7_pointer sym, val;
+	  sym = slot_symbol(x);
+	  val = slot_value(x);
+	  if (is_slot(global_slot(sym)))
+	    slot_set_value(global_slot(sym), val);
+	  else s7_make_slot(sc, new_e, sym, val);
+	}
+    }
+}
+
+
 /* should these two augment-envs check for symbol accessors?
+ *
+ * TODO: test envs as args
  */
 
 static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
 {
   #define H_augment_environment_direct "(augment-environment! env ...) adds its \
-arguments (each a cons: symbol . value) directly to the environment env, and returns the \
+arguments (each an environment or a cons: symbol . value) directly to the environment env, and returns the \
 environment."
 
   s7_pointer x, e;
@@ -4406,33 +4436,49 @@ environment."
     }
   for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
     {
-      s7_pointer sym, val;
-      if (!is_pair(car(x)))
-	return(wrong_type_argument(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), car(x), T_PAIR));
-      if (!is_symbol(caar(x)))
-	return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), car(x), 
-					     make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
-      sym = caar(x);
-      val = cdar(x);
-      if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
-	  (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
-	return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, 
-					     make_protected_string(sc, "a non-contant symbol")));
+      s7_pointer sym, val, p;
+      p = car(x);
+      if (!is_environment(p))
+	{
+	  if (!is_pair(p))
+	    return(wrong_type_argument(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), p, T_PAIR));
+	  if (!is_symbol(car(p)))
+	    return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), p, 
+						 make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
+	  sym = car(p);
+	  val = cdr(p);
+	  if ((is_immutable(sym)) &&                     /* check for (eval 'pi (augment-environment! () '(pi . 1))) */
+	      (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
+	    return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, 
+						 make_protected_string(sc, "a non-contant symbol")));
+	}
     }
   
   if (e == sc->global_env)
     {
       for (x = cdr(args); is_not_null(x); x = cdr(x))
 	{
-	  if (is_slot(global_slot(caar(x))))
-	    slot_set_value(global_slot(caar(x)), cdar(x));
-	  else s7_make_slot(sc, e, caar(x), cdar(x));
+	  s7_pointer p;
+	  p = car(x);
+	  if (is_pair(p))
+	    {
+	      if (is_slot(global_slot(car(p))))
+		slot_set_value(global_slot(car(p)), cdr(p));
+	      else s7_make_slot(sc, e, car(p), cdr(p));
+	    }
+	  else append_environment(sc, e, p);
 	}
     }
   else
     {
       for (x = cdr(args); is_not_null(x); x = cdr(x))
-	s7_make_slot(sc, e, caar(x), cdar(x));
+	{
+	  s7_pointer p;
+	  p = car(x);
+	  if (is_pair(p))
+	    s7_make_slot(sc, e, car(p), cdr(p));
+	  else append_environment(sc, e, p);
+	}
     }
   return(e);
 }
@@ -4453,8 +4499,20 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
       gc_loc = s7_gc_protect(sc, new_e);
 
       for (x = bindings; is_not_null(x); x = cdr(x))
-	s7_make_slot(sc, new_e, caar(x), cdar(x));
-
+	{
+	  s7_pointer p;
+	  p = car(x);
+	  if (is_pair(p))
+	    s7_make_slot(sc, new_e, car(p), cdr(p));
+	  else append_environment(sc, new_e, p);
+	  /* env as arg for common case: 
+	   *   (with-environment (augment-environment (current-environment) (object-environment obj)) ...)
+	   * to bring in all of obj's fields/methods but keep access to the surrounding context.
+	   *
+	   * TODO: but we want to do this only once, at definition time -- define-method as macro
+	   *   that appends the obj to current env, then uses that as the closure for the func?
+	   */
+	}
       s7_gc_unprotect_at(sc, gc_loc);
     }
 
@@ -4471,7 +4529,7 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_augment_environment "(augment-environment env ...) adds its \
-arguments (each a cons: symbol . value) to the environment env, and returns the \
+arguments (each an environment or a cons: symbol . value) to the environment env, and returns the \
 new environment."
 
   s7_pointer e, x;
@@ -4488,24 +4546,25 @@ new environment."
 	  return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, small_int(1), e, AN_ENVIRONMENT));
 	}
     }
-
   if (!is_null(cdr(args)))
     for (i = 2, x = cdr(args); is_not_null(x); x = cdr(x), i++)
       {
-	s7_pointer sym, val;
-	if (!is_pair(car(x)))
-	  return(wrong_type_argument(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), car(x), T_PAIR));
-	if (!is_symbol(caar(x)))
-	  return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), car(x), 
-					       make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
-	sym = caar(x);
-	val = cdar(x);
-	if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
-	    (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
-	  return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), sym,
-					       make_protected_string(sc, "a non-constant symbol")));
+	s7_pointer sym, val, p;
+	p = car(x);
+	if (!is_environment(p))
+	  {
+	    if (!is_pair(p))
+	      return(wrong_type_argument(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), p, T_PAIR));
+	    if (!is_symbol(car(p)))
+	      return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), p, 
+						   make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
+	    sym = car(p);
+	    val = cdr(p);
+	    if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
+		(!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
+	      return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENT, make_integer(sc, i), sym, make_protected_string(sc, "a non-constant symbol")));
+	  }
       }
-
   return(s7_augment_environment(sc, e, cdr(args)));
 }
 
@@ -23960,6 +24019,9 @@ static s7_pointer append_in_place(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 
 /* -------------------------------- vectors -------------------------------- */
+
+/* TODO: check (copy subvector)
+ */
 
 bool s7_is_vector(s7_pointer p)    
 { 
@@ -50765,15 +50827,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
 	}
       else sc->envir = sc->value;
-      /* body is implicit in stack -- sc->code is ready to go 
-       *
-       * but... what we usually want here is to append the new environment to the current one, as if with let
-       *   how to do that when there's only the one way back?
-       *   and this allows the with-env body to change the env -- is this a good idea?
-       *   perhaps NEW_FRAME(sc, sc->value, sc->envir) to protect it?
-       * TODO: augment-e* take env as 2nd arg, and incorporate slots from it
-       *   maybe make a macro too to check?
-       */
+      /* body is implicit in stack -- sc->code is ready to go */
       goto BEGIN;
 
 

@@ -245,7 +245,6 @@
 	   (cascadeout 0.0)
 	   (start (floor (* (mus-srate) beg)))
 	   (end (+ start (floor (* (mus-srate) dur)))))
-      (run
        (do ((i start (+ i 1)))
 	   ((> i end))
 	 (set! vib (+ (env freqenv) 
@@ -265,7 +264,7 @@
 			  (* (env gens7ampenv) 
 			     (oscil gens7 (+ (* vib freqratios7)
 					     (* (env gens4ampenv) 
-						(oscil gens4 (+ cascadeout (* vib freqratios4))))))))))))))
+						(oscil gens4 (+ cascadeout (* vib freqratios4)))))))))))))
 
 #|
 (let ((ampf '(0 0 1 1 2 1 3 0))) 

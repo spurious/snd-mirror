@@ -146,7 +146,7 @@
     (set! posl (modulo (inexact->exact (+ end posl)) bufsize))
     (set! posrt (modulo (inexact->exact (+ end posrt)) bufsize))
     (set! poslt (modulo (inexact->exact (+ end poslt)) bufsize))
-    (run
+
      (do ((i beg (+ i 1)))
 	 ((= i end))
        (set! indexl (modulo (inexact->exact (- (+ i posl bufsize) samp_lperiod)) bufsize))
@@ -285,7 +285,7 @@
        (set! (vinutt updrt) xnnt)
        (locsig loc i (* xnb (env ampf)))
        (set! lhs #f)
-       (set! rhs #f)))))
+       (set! rhs #f))))
 
 					;(with-sound (:channels 2) (bow 0 3 400 0.5 :vb 0.15 :fb 0.1 :inharm 0.25))
 					;(with-sound (:channels 2) (bow 0 2 440 0.5  :fb 0.25))

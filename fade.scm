@@ -35,7 +35,6 @@
 	((= k fs))
       (set! (fs1 k) (make-formant (* k bin) radius)))
 
-    (run
      (do ((i start (+ 1 i)))
 	 ((= i end))
        
@@ -107,7 +106,7 @@
 				       (set! outval (+ outval (formant (fs1 (+ k 1 half-fs)) 
 								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				   (set! val outval)))))))))
-       (outa i (* amp val))))))
+       (outa i (* amp val)))))
 
 
 ;;; (vct->channel (with-sound (:output (make-vct 22050)) (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2)))
@@ -136,7 +135,6 @@
 	((= k hi))
       (set! (fs k) (make-formant (* k bin) radius)))
     
-    (run
      (do ((i start (+ 1 i)))
 	 ((= i end))
        (let ((outval 0.0)
@@ -172,7 +170,7 @@
 	     (set! outval (+ outval (formant (fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))
 	     (if (> 1.0 sp 0.0)
 		 (set! (spectr k) (- (spectr k) ramp-inc)))))
-	 (outa i (* amp outval)))))))
+	 (outa i (* amp outval))))))
 
 
 ;;; (with-sound () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))

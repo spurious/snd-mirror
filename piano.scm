@@ -9,7 +9,6 @@
 (defgenerator one-pole-allpass (coeff 0.0) (x1 0.0) (y1 0.0))
 
 (define (one-pole-allpass gen input)
-  (declare (gen one-pole-allpass) (input float))
   (let ((coeff (one-pole-allpass-coeff gen))
 	(y1 (one-pole-allpass-y1 gen))
 	(x1 (one-pole-allpass-x1 gen)))
@@ -21,7 +20,6 @@
 (defgenerator expseg (currentValue 0.0) (targetValue 0.0)) ; (like musickit asymp)
 
 (define (expseg gen r)
-  (declare (gen expseg) (r float))
   (let ((cv (expseg-currentValue gen))
 	(tv (expseg-targetValue gen)))
     (set! (expseg-currentValue gen) (+ cv (* (- tv cv) r)))
@@ -31,7 +29,6 @@
 (defgenerator one-pole-swept (y1 0.0))
 
 (define (one-pole-swept gen input coef)
-  (declare (gen one-pole-swept) (input float) (coef float))
   ;; signal controlled one-pole lowpass filter
   (set! (one-pole-swept-y1 gen) (- (* (+ 1 coef) input) (* coef (one-pole-swept-y1 gen))))
   (one-pole-swept-y1 gen))
@@ -40,7 +37,6 @@
 (defgenerator pnoise (seed 16383))
 
 (define (pnoise gen amp)
-  (declare (gen pnoise) (amp float))
   ;; very special noise generator
   (set! (pnoise-seed gen) (logand (floor (+ (* (pnoise-seed gen) 1103515245) 12345)) #xffffffff))
   ;; (bil) added the logand -- otherwise we get an overflow somewhere
@@ -394,7 +390,6 @@
       (do ((i 0 (+ 1 i))) ((= i 8))
 	(set! (string3-stiffness-ap i) (make-one-pole-allpass stiffnessCoefficient)))
       
-      (run
        (do ((i beg (+ 1 i)))
 	   ((= i end))
 	 (if is-release-time
@@ -449,7 +444,7 @@
 	 (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
 	 (set! couplingFilter-output (one-pole-one-zero cou0 cou1 couplingFilter-input))
 	 (set! sampCount (+ 1 sampCount))
-	 (outa i couplingFilter-input))))))
+	 (outa i couplingFilter-input)))))
 
 
 #|

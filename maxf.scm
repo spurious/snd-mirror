@@ -316,7 +316,6 @@ the desired phase.
 	  (t
 	   (snd-msg "Please leave default or enter [1] [2] [4] [9] [12] [13]~%")
 	   (set! numf 1)))
-    (run
      (do ((i beg (+ 1 i)))
 	 ((= i end))
        (let ((outvalA (* att (readin rdA)))
@@ -343,7 +342,7 @@ the desired phase.
 			      (array-ref state-3 j 1) (array-ref state-3 j 2))))
 	   (let ((filsig (mvmfilt formfil outvalA)))
 	     (set! add-fl (+ add-fl filsig))))
-	 (locsig loc i (* (env ampf) add-fl)))))))
+	 (locsig loc i (* (env ampf) add-fl))))))
 
 ;; (let* ((ifile "dog.snd")
 ;;        (ofile "gmax_dog.snd")

@@ -1307,7 +1307,6 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (run
        (do ((k 0 (+ 1 k)))
 	   ((= k outlen))
 	 (let ((outval 0.0))
@@ -1328,7 +1327,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
 	   (set! (out-data k) outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
-       (vct->channel out-data 0 (max len outlen) snd chn))))
+       (vct->channel out-data 0 (max len outlen) snd chn)))
 
 
 ;;; very similar but use ncos (glottal pulse train?) instead of white noise
@@ -1352,7 +1351,6 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (run
        (do ((k 0 (+ 1 k)))
 	   ((= k len))
 	 (let ((outval 0.0))
@@ -1373,7 +1371,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
 	   (set! (out-data k) outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
-       (vct->channel out-data 0 len snd chn))))
+       (vct->channel out-data 0 len snd chn)))
 
 ;;; (pulse-voice 80 20.0 1.0 1024 0.01)
 ;;; (pulse-voice 80 120.0 1.0 1024 0.2)
@@ -1971,7 +1969,6 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	 (samps (seconds->samples dur))
 	 (end (+ start samps))
 	 (len (length dsp-chain)))
-    (run
      (do ((k start (+ 1 k)))
 	 ((= k end))
        (let ((val 0.0))
@@ -1984,7 +1981,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 		 (if (readin? gen)
 		     (set! val (+ val (gen)))
 		     (set! val (gen val))))))
-	 (outa k val))))))
+	 (outa k val)))))
 
 #|
 (with-sound ()
@@ -2233,10 +2230,9 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
   (define (segment-maxamp name beg dur)
     (let ((mx 0.0)
 	  (rd (make-sampler beg name)))
-      (run
        (do ((i 0 (+ i 1)))
 	   ((= i dur))
-	 (set! mx (max mx (abs (next-sample rd))))))
+	 (set! mx (max mx (abs (next-sample rd)))))
       (free-sampler rd)
       mx))
 
@@ -2249,7 +2245,6 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	   (segctr 0)
 	   (possible-end 0)
 	   (in-sound #f))
-      (run 
        ;; this block is where 99% of the time goes
        (do ((i 0 (+ i 1)))
 	   ((= i end))
@@ -2269,7 +2264,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		   (begin
 		     (set! (segments segctr) (- i 128))
 		     (set! segctr (+ 1 segctr))
-		     (set! in-sound #t)))))))
+		     (set! in-sound #t))))))
       (free-sampler reader)
       (if in-sound
 	  (begin

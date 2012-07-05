@@ -480,7 +480,6 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (q (/ (* pi 2.0) n)))
     (if (not (vct? spectr))
 	(error "spectrum->coeffs spectrum argument should be a vct"))
-    (run
      (do ((j 0 (+ 1 j))
 	  (jj (- n 1) (- jj 1)))
 	 ((= j m) coeffs)
@@ -490,7 +489,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	   (set! xt (+ xt (* (spectr i) (cos (* q i (- am j 1)))))))
 	 (let ((coeff (* 2.0 (/ xt n))))
 	   (set! (coeffs j) coeff)
-	   (set! (coeffs jj) coeff)))))))
+	   (set! (coeffs jj) coeff))))))
 
 ;; (filter-channel et al reflect around the midpoint, so to match exactly you need to take
 ;;   the env passed and flip it backwards for the back portion -- that is to say, this function
@@ -519,7 +518,6 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   (let* ((arrlen (+ 1 (* 2 len)))
 	 (arr (make-vct arrlen))
 	 (lim (if (even? len) len (+ 1 len))))
-    (run
      (do ((i (- len) (+ i 1)))
 	 ((= i lim))
        (let ((k (+ i len))
@@ -533,7 +531,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	     ;; this is the Hamming window version:
 	     (set! (arr k) (* (/ num denom) 
 			      (+ .54 (* .46 (cos (/ (* i pi) len)))))) ; window
-	     ))))
+	     )))
     (make-fir-filter arrlen arr)))
 
 (define (hilbert-transform f in)
@@ -1096,7 +1094,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let ((hr (make-vct n))
 	(hi (make-vct n))
 	(ph0 (/ (* v 2 pi) n)))
-    (run
      (do ((w 0 (+ 1 w)))
 	 ((= w n))
        (let ((sr 0.0)
@@ -1113,7 +1110,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	     (set! sr (+ sr r))
 	     (set! si (+ si i))))
 	 (set! (hr w) sr)
-	 (set! (hi w) si))))
+	 (set! (hi w) si)))
     (list hr hi)))
 
 (define (z-transform f n z)
@@ -1144,7 +1141,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let* ((len (length data)) 
 	 (arr (make-vct len))
 	 (w (/ (* 2.0 pi) len)))
-    (run
      (do ((i 0 (+ i 1)))
 	 ((= i len))
        (do ((j 0 (+ 1 j)))
@@ -1152,7 +1148,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (set! (arr i) (+ (arr i) 
 			  (* (data j) 
 			     (+ (cos (* i j w)) 
-				(sin (* i j w)))))))))
+				(sin (* i j w))))))))
     arr))
 
 (define* (find-sine freq beg dur snd)
@@ -1161,12 +1157,11 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(sw 0.0)
 	(cw 0.0)
 	(reader (make-sampler beg snd)))
-    (run
      (do ((i 0 (+ i 1))) ; this could also use edot-product
 	 ((= i dur))
        (let ((samp (next-sample reader)))
 	 (set! sw (+ sw (* samp (sin (* i incr)))))
-	 (set! cw (+ cw (* samp (cos (* i incr))))))))
+	 (set! cw (+ cw (* samp (cos (* i incr)))))))
     (list (* 2 (/ (sqrt (+ (* sw sw) (* cw cw))) dur))
 	  (atan cw sw))))
 
@@ -1337,10 +1332,9 @@ the era when computers were human beings"
 	(sum 0.0)
 	(r1 (make-sampler 0 s1 c1))
 	(r2 (make-sampler 0 s2 c2)))
-    (run
      (do ((i 0 (+ i 1)))
 	 ((= i N))
-       (set! sum (+ sum (* (r1) (r2))))))
+       (set! sum (+ sum (* (r1) (r2)))))
     sum))
 
 (define (channel2-angle s1 c1 s2 c2)                 ; acos(<f, g> / (sqrt(<f, f>) * sqrt(<g, g>)))
@@ -1368,11 +1362,10 @@ the era when computers were human beings"
 	(r2 (make-sampler 0 s2 c2))
 	(sum 0.0)
 	(N (min (frames s1 c1) (frames s2 c2))))
-    (run
      (do ((i 0 (+ i 1)))
 	 ((= i N))
        (let ((diff (- (r1) (r2))))
-	 (set! sum (+ sum (* diff diff))))))
+	 (set! sum (+ sum (* diff diff)))))
     (sqrt sum)))
 
 
@@ -1384,7 +1377,6 @@ the era when computers were human beings"
 	 (N2 (* 2 N))
 	 (rl (make-vct N2))
 	 (im (make-vct N2)))
-    (run
      (do ((i 0 (+ i N)))
 	 ((>= i len))
        (vct-scale! rl 0.0)
@@ -1397,7 +1389,7 @@ the era when computers were human beings"
 	   ((= k N))
 	 (set! (average-data k) (+ (average-data k) 
 				   (* (rl k) (rl k)) 
-				   (* (im k) (im k)))))))
+				   (* (im k) (im k))))))
     (graph (vct-scale! average-data (/ 1.0 (ceiling (/ len N)))))))
 
 
@@ -1659,7 +1651,6 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 	 (fft2 (floor (/ fftsize 2)))
 	 (binwidth (* 1.0 (/ fsr fftsize)))
 	 (rd (make-readin file)))
-    (run
      (do ((i start (+ i incrsamps))
 	  (loc 0 (+ 1 loc)))
 	 ((>= i end))
@@ -1680,7 +1671,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 		   ((= k fft2))
 		 (set! numsum (+ numsum (* k binwidth (fdr k))))
 		 (set! densum (+ densum (fdr k))))
-	       (set! (results loc) (/ numsum densum)))))))
+	       (set! (results loc) (/ numsum densum))))))
     results))
 	     
 
@@ -1817,7 +1808,6 @@ and replaces it with the spectrum given in coeffs"
 	 (intrp 0.0)
 	 (tempfile 
 	  (with-sound (:output (snd-tempnam) :srate (srate snd) :to-snd #f)
-	    (run
 	     (do ((samp 0 (+ 1 samp)))
 		 ((sampler-at-end? rd))
 	       (out-any samp
@@ -1831,7 +1821,7 @@ and replaces it with the spectrum given in coeffs"
 				(set! pos (- pos num))))
 			  (set! intrp (+ pos sr))
 			  (+ last (* pos (- next last))))
-			0)))))
+			0))))
 	 (len (frames tempfile)))
     (set-samples 0 (- len 1) tempfile snd chn #t "linear-src" 0 #f #t)
     ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
@@ -1904,7 +1894,6 @@ and replaces it with the spectrum given in coeffs"
 			    
 			    (set! bark-fft-size fftlen)
 			    
-			    (run 
 			     (do ((i 0 (+ i 1)))
 				 ((= i data-len))
 			       (let* ((val (fftdata i))
@@ -1931,7 +1920,7 @@ and replaces it with the spectrum given in coeffs"
 				   (if (> (abs (- mx mmx)) .01)
 				       (vct-scale! mel-data (/ mx mmx)))
 				   (if (> (abs (- mx emx)) .01)
-				       (vct-scale! erb-data (/ mx emx))))))
+				       (vct-scale! erb-data (/ mx emx)))))
 			    
 			    (graph (list bark-data mel-data erb-data) 
 				   "ignored" 
@@ -2074,7 +2063,6 @@ and replaces it with the spectrum given in coeffs"
 	  (wk1 (make-vector n 0.0))
 	  (wk2 (make-vector n 0.0))
 	  (wkm (make-vector n 0.0)))
-      (run
        (set! (wk1 0) (data 0))
        (set! (wk2 (- n 2)) (data (- n 1)))
        (do ((j 1 (+ 1 j)))
@@ -2102,7 +2090,7 @@ and replaces it with the spectrum given in coeffs"
 		 (do ((j 0 (+ 1 j)))
 		     ((= j (- n k 2)))
 		   (set! (wk1 j) (- (wk1 j) (* (wkm k) (wk2 j))))
-		   (set! (wk2 j) (- (wk2 (+ 1 j)) (* (wkm k) (wk1 (+ 1 j))))))))))))))
+		   (set! (wk2 j) (- (wk2 (+ 1 j)) (* (wkm k) (wk1 (+ 1 j)))))))))))))
 
 (define* (lpc-predict data n coeffs m nf clipped)
   ;; translated and changed to use 0-based arrays from predic of NRinC
@@ -2114,7 +2102,6 @@ is assumed to be outside -1.0 to 1.0."
 
   (let ((future (make-vct nf 0.0))
 	(reg (make-vct m 0.0)))
-    (run
      (do ((i 0 (+ i 1))
 	  (j (- n 1) (- j 1)))
 	 ((= i m))
@@ -2138,7 +2125,7 @@ is assumed to be outside -1.0 to 1.0."
 		     (set! sum -1.0))))
 	 
 	 (set! (reg 0) sum)
-	 (set! (future j) sum))))))
+	 (set! (future j) sum)))))
 
 
 ;;; -------- unclip-channel
@@ -2293,7 +2280,6 @@ is assumed to be outside -1.0 to 1.0."
 	(del (make-moving-average 256))
 	(K 0.0))
 
-    (run
      (do ((k 1 (+ 1 k)))
 	 ((= k size))
        (let ((datum (data k))
@@ -2312,7 +2298,7 @@ is assumed to be outside -1.0 to 1.0."
 	 (set! K (/ Pminus (+ Pminus R)))
 	 (set! xhat (+ xhatminus
 		       (* K (- datum xhatminus))))
-	 (set! P (* (- 1.0 K) Pminus)))))
+	 (set! P (* (- 1.0 K) Pminus))))
     
     (as-one-edit
      (lambda ()

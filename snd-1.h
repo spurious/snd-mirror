@@ -453,7 +453,7 @@ typedef struct snd_state {
   mus_float_t Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle;
   mus_float_t Spectrum_End, Spectrum_Start;
   int Default_Output_Header_Type, Default_Output_Data_Format, Default_Output_Chans, Default_Output_Srate;
-  int Spectro_Hop, Color_Map, Color_Map_Size, Wavelet_Type, Transform_Type, Optimization;
+  int Spectro_Hop, Color_Map, Color_Map_Size, Wavelet_Type, Transform_Type;
   int Dot_Size;
   int Zero_Pad, Wavo_Hop, Wavo_Trace;
   mus_long_t Transform_Size;

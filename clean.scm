@@ -45,7 +45,6 @@
 	 (block-beg 0)
 	 (block (make-vct block-size))
 	 (block-changed #f))
-    (run
      (do ((ctr 0 (+ 1 ctr)))
 	 ((= ctr len))
        (set! samp0 samp1)
@@ -79,7 +78,7 @@
 	     (set! block-ctr 1)
 	     (set! (block 0) samp2))))
      (if block-changed
-	 (vct->channel block block-beg block-ctr snd chn)))
+	 (vct->channel block block-beg block-ctr snd chn))
     fixed))
 
 (define (test-remove-single-clicks)
@@ -151,7 +150,6 @@
 	 (block (make-vct block-size))
 	 (block-changed #f))
     
-    (run
      (let ((check-val 0.0)
 	   (check-start 0)
 	   (checker 0)
@@ -220,7 +218,7 @@
 		 (set! block-ctr pad)))))
        
        (if block-changed
-	   (vct->channel block block-beg block-ctr snd chn))))
+	   (vct->channel block block-beg block-ctr snd chn)))
 
     fixed))
 
@@ -258,10 +256,9 @@
   (let ((test (with-sound (:output "test.snd" :srate 22050)
 		(let ((osc (make-oscil 60.0))
 		      (e (make-env '(0 0 1 .5 9 .5 10 0) :length 44100)))
-		  (run
 		   (do ((i 0 (+ 1 i)))
 		       ((= i 44100))
-		     (outa i (* (env e) (oscil osc)))))))))
+		     (outa i (* (env e) (oscil osc))))))))
     
     (notch-channel (list 60.0) #f #f #f #f #f #f #t 8)
     (let ((mx (maxamp)))
@@ -273,10 +270,9 @@
 		      (osc1 (make-oscil 40.0))
 		      (osc2 (make-oscil 80.0))
 		      (e (make-env '(0 0 1 .3 9 .3 10 0) :length 44100)))
-		  (run
 		   (do ((i 0 (+ 1 i)))
 		       ((= i 44100))
-		     (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2))))))))))
+		     (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2)))))))))
     
     (let ((v60 (goertzel 60.0))
 	  (v40 (goertzel 40.0))
@@ -296,10 +292,9 @@
 		      (osc1 (make-oscil 55.0))
 		      (osc2 (make-oscil 65.0))
 		      (e (make-env '(0 0 1 .3 9 .3 10 0) :length 44100)))
-		  (run
 		   (do ((i 0 (+ 1 i)))
 		       ((= i 44100))
-		     (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2))))))))))
+		     (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2)))))))))
     
     (let ((v60 (goertzel 60.0))
 	  (v40 (goertzel 55.0))

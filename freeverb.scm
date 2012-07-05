@@ -138,10 +138,8 @@
 	      (set! len (+ len (floor (* srate-scale stereo-spread)))))
 	  (vector-set! allpasses (+ (* c numallpasses) i)
 		       (make-all-pass :size len :feedforward -1 :feedback 0.5)))))
-    (run
      (do ((i beg (+ 1 i)))
 	 ((= i end))
-       (declare (predelays clm-vector) (allpasses clm-vector) (fcombs clm-vector))
        (file->frame *reverb* i f-in)
        (if (> in-chans 1)
 	   (do ((c 0 (+ 1 c)))
@@ -169,6 +167,6 @@
 	     ((= j numallpasses))
 	   (frame-set! f-out c (all-pass (vector-ref allpasses (+ (* c numallpasses) j))
 					 (f-out c)))))
-       (frame->file *output* i (frame->frame f-out out-mix out-buf))))))
+       (frame->file *output* i (frame->frame f-out out-mix out-buf)))))
 
 ;; freeverb.scm ends here

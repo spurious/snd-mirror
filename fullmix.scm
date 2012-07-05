@@ -100,8 +100,6 @@
 	    (let ((sr (make-src :input (vector-ref file 0) :srate (if (number? srate) (abs srate) 0.0)))
 		  (outframe (make-frame out-chans)))
 	      (if envs
-		  (run 
-		   (declare (envs clm-vector))
 		   (do ((i st (+ i 1)))
 		       ((= i nd))
 		     (do ((outp 0 (+ 1 outp)))
@@ -110,15 +108,14 @@
 			   (mixer-set! mx 0 outp (env (vector-ref envs outp)))))
 		     (let ((inframe (src sr (if srcenv (env srcenv) 0.0))))
 		       (frame->file *output* i (sample->frame mx inframe outframe))
-		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))
+		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))
 		  
 		  ;; no envs
-		  (run 
 		   (do ((i st (+ i 1)))
 		       ((= i nd))
 		     (let ((inframe (src sr (if srcenv (env srcenv) 0.0))))
 		       (frame->file *output* i (sample->frame mx inframe outframe))
-		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))))
+		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))))
 	    
 	    ;; more than 1 chan input
 	    (let ((inframe (make-frame in-chans))
@@ -129,8 +126,6 @@
 		(vector-set! srcs inp (make-src :input (vector-ref file inp) :srate (if (number? srate) (abs srate) 0.0))))
 	      
 	      (if envs 
-		  (run
-		   (declare (envs clm-vector))
 		   (do ((i st (+ i 1)))
 		       ((= i nd))
 		     (do ((inp 0 (+ 1 inp))
@@ -145,10 +140,9 @@
 			   ((= inp in-chans))
 			 (frame-set! inframe inp (src (vector-ref srcs inp) sr-val)))
 		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))
+		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))
 		  
 		  ;; no envs
-		  (run 
 		   (do ((i st (+ i 1)))
 		       ((= i nd))
 		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
@@ -156,7 +150,7 @@
 			   ((= inp in-chans))
 			 (frame-set! inframe inp (src (vector-ref srcs inp) sr-val)))
 		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))))))
+		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))
 
 #|
 (with-sound (:channels 2 :statistics #t)

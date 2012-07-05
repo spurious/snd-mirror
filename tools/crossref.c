@@ -199,7 +199,7 @@ static int greater_compare(const void *a, const void *b)
 }
 
 #define NAME_SIZE 8192
-#define ID_SIZE 8192
+#define ID_SIZE 16384
 
 int main(int argc, char **argv)
 {
@@ -293,7 +293,6 @@ int main(int argc, char **argv)
   add_file("snd-env.c");
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
-  add_file("run.c");
   add_file("snd-xutils.c");
   add_file("snd-xhelp.c");
   add_file("snd-xfind.c");

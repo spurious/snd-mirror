@@ -8413,14 +8413,14 @@ keep track of which files are in a given saved state batch, and a way to rename 
   save_state_hook = XEN_DEFINE_HOOK(S_save_state_hook, "(make-hook 'name)", 1, H_save_state_hook); 
 
 
-  snd_to_sample_tag = mus_make_class_tag();
-  snd_to_sample_class = mus_make_mus_any_class(snd_to_sample_tag, (char *)S_snd_to_sample, snd_to_sample_free, snd_to_sample_describe, snd_to_sample_equalp);
-  mus_any_class_set_length(snd_to_sample_class, snd_to_sample_length);
-  mus_any_class_set_channels(snd_to_sample_class, snd_to_sample_channels);
-  mus_any_class_set_read_sample(snd_to_sample_class, snd_to_sample_read);
-  mus_any_class_set_file_name(snd_to_sample_class, snd_to_sample_file_name);
-  mus_any_class_set_location(snd_to_sample_class, snd_to_sample_location);
-  mus_any_class_set_extended_type(snd_to_sample_class, MUS_INPUT);
+  snd_to_sample_tag = mus_make_generator_type();
+  snd_to_sample_class = mus_make_generator(snd_to_sample_tag, (char *)S_snd_to_sample, snd_to_sample_free, snd_to_sample_describe, snd_to_sample_equalp);
+  mus_generator_set_length(snd_to_sample_class, snd_to_sample_length);
+  mus_generator_set_channels(snd_to_sample_class, snd_to_sample_channels);
+  mus_generator_set_read_sample(snd_to_sample_class, snd_to_sample_read);
+  mus_generator_set_file_name(snd_to_sample_class, snd_to_sample_file_name);
+  mus_generator_set_location(snd_to_sample_class, snd_to_sample_location);
+  mus_generator_set_extended_type(snd_to_sample_class, MUS_INPUT);
 
 
 #if DEBUG_EDIT_TABLES
@@ -8446,20 +8446,3 @@ into some arbitrary place in the tree again?  Would pasting it in
 be analogous to take a certain stage of the edit-history and
 append the rest?
 */
-
-/* for virtual filter (and ultimately virtual src), see virtual-filter-channel (examp.scm) and convolve-coeffs (snd-test.scm)
- * this almost works! -- it can repeat one sample if previous-sample after next-sample (but the standard case repeats as well!)
- *   sampler-position is ahead 1 if reading forward, back 1 if reading backward,
- *   so in C, I guess we could use that for "cur-loc"
- *   but how to store in ed_fragment?
- *   and how often is this actually going to be used?
- *   and if we need the peak env anyway, why not write the data out somewhere?
- * filter on filter if combined orders < max, convolve coeffs
- *
- * reverse is too tricky: we'd need to reverse the ed list and remember to reverse it internally on any subsequent list change (deletion etc)
- *    then the reader would need the start-time fixups (not hard) internally reading backward, but next-sound at end not previous
- */
-
-/* it would reduce edit list length to combine successive changes/inserts (deletes already combine)
- *   but that requires another buffer (if buffers) or messing around with combined temp files
- */

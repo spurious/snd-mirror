@@ -47,7 +47,7 @@
 	    ;;convert signed float y values into signed integers 
 	    (floor (* b
 		      ((init-array jy) 1)))))
-    (run
+
      (do ((i beg (+ 1 i)))
 	 ((= i end))
        (if (= dx dt);;when current sample is a breakpoint
@@ -85,7 +85,7 @@
        (set! dt (+ 1 dt))
        (set! j (+ j (/ dy dx)));linear interpolation
        (set! output (/ j b));normalization -1 to 1
-       (outa i (* amp output (env d-click)))))))
+       (outa i (* amp output (env d-click))))))
   
 ;(with-sound (:statistics #t)(stochastic 0 10 :xwig .25 :ywig 10.0))
   

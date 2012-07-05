@@ -59,17 +59,17 @@ extern "C" {
 
 MUS_EXPORT void mus_initialize(void);
 
-MUS_EXPORT int mus_make_class_tag(void);
-MUS_EXPORT mus_any_class *mus_make_mus_any_class(int type, char *name, 
-						 int (*release)(mus_any *ptr), 
-						 char *(*describe)(mus_any *ptr), 
-						 bool (*equalp)(mus_any *gen1, mus_any *gen2));
-MUS_EXPORT void mus_any_class_set_length(mus_any_class *p, mus_long_t (*length)(mus_any *ptr));
-MUS_EXPORT void mus_any_class_set_channels(mus_any_class *p, int (*channels)(mus_any *ptr));
-MUS_EXPORT void mus_any_class_set_location(mus_any_class *p, mus_long_t (*location)(mus_any *ptr));
-MUS_EXPORT void mus_any_class_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
-MUS_EXPORT void mus_any_class_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan));
-MUS_EXPORT void mus_any_class_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr));
+MUS_EXPORT int mus_make_generator_type(void);
+MUS_EXPORT mus_any_class *mus_make_generator(int type, char *name, 
+					     int (*release)(mus_any *ptr), 
+					     char *(*describe)(mus_any *ptr), 
+					     bool (*equalp)(mus_any *gen1, mus_any *gen2));
+MUS_EXPORT void mus_generator_set_length(mus_any_class *p, mus_long_t (*length)(mus_any *ptr));
+MUS_EXPORT void mus_generator_set_channels(mus_any_class *p, int (*channels)(mus_any *ptr));
+MUS_EXPORT void mus_generator_set_location(mus_any_class *p, mus_long_t (*location)(mus_any *ptr));
+MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
+MUS_EXPORT void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan));
+MUS_EXPORT void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr));
 
 
 MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);

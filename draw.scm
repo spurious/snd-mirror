@@ -78,7 +78,6 @@
 	      (lambda ()
 		(set! (foreground-color snd chn) red))
 	      (lambda ()
-		(run
 		 (if (< start left)                ; check previous samples to get first rms value
 		     (do ((i start (+ 1 i)))
 			 ((= i left))
@@ -98,7 +97,7 @@
 			   (set! (lines (+ 1 line-ctr)) y1)
 			   (set! line-ctr (+ line-ctr 2))
 			   (set! x0 x1)
-			   (set! y0 y1))))))      ; else should we do "max" here? or draw a vertical line from min to max?
+			   (set! y0 y1)))))      ; else should we do "max" here? or draw a vertical line from min to max?
 		(if (< line-ctr (length lines))
 		    (do ((j line-ctr (+ j 2)))       ; off-by-one in vector size calc -- need to pad so we don't get a bogus line to (0, 0)
 			((>= j (length lines)))

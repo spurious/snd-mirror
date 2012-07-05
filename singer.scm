@@ -227,7 +227,6 @@
       (set! (radii-pole-gains 4) tong-hump-gain)
       (set! (radii-pole-gains 5) tong-tip-gain)
 
-      (run
        (do ((i bg (+ 1 i)))
 	   ((= i nd))
 	 (if (= i next-offset)
@@ -523,7 +522,7 @@
 	   (set! last-tract-plus (* (dline1 tractlength-1) lip-radius)))
 	 (set! (lt 1) (* ltgain (+ (lt 0) (* ltcoeff (lt 1)))))
 	 (outa i (* amp (+ last-lip-out nose-last-output (lt 1))) *output*)
-	 )))))
+	 ))))
 
 #|
 (with-sound () (singer 0 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01))))

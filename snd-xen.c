@@ -2597,9 +2597,6 @@ XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
 #endif
 #endif
 
-#if (!WITH_SHARED_SNDLIB)
-  void mus_init_run(void);
-#endif
 
 
 /* -------------------------------------------------------------------------------- */
@@ -2736,9 +2733,6 @@ void g_xen_initialize(void)
   g_init_gxfind();
 #endif
 
-#if (!WITH_SHARED_SNDLIB)
-  mus_init_run(); /* this needs to be called after Snd's run-optimizable functions are defined (sampler_p for example) */
-#endif
 
 #if HAVE_SCHEME && HAVE_DLFCN_H && HAVE_DLOPEN
   XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 1 ,0, H_dlopen);

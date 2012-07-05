@@ -50,7 +50,6 @@
 	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (dly-len 13)) #f))
 	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (dly-len 14)) #f)))
       (if (not chan2)
-	  (run
 	   (do ((i 0 (+ i 1)))
 	       ((= i len))
 	     (let ((rev (* volume (ina i *reverb*))))
@@ -65,8 +64,7 @@
 										       (comb comb3 rev)
 										       (comb comb4 rev)
 										       (comb comb5 rev)
-										       (comb comb6 rev))))))))))))
-	  (run
+										       (comb comb6 rev)))))))))))
 	   (do ((i 0 (+ i 1)))
 	       ((= i len))
 	     (let* ((rev (* volume (ina i *reverb*)))
@@ -84,6 +82,6 @@
 	       (outa i (all-pass allpass5 outrev))
 	       (outb i (all-pass allpass6 outrev))
 	       (if chan4 (outc i (all-pass allpass7 outrev)))
-	       (if chan4 (outd i (all-pass allpass8 outrev))))))))))
+	       (if chan4 (outd i (all-pass allpass8 outrev)))))))))
 
 

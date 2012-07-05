@@ -58,9 +58,8 @@
 
 struct mus_xen {
   mus_any *gen;
-  s7_pointer *fields;
-  s7_pointer *methods;
-  s7_pointer envir;
+  XEN *fields;
+  XEN *methods;
 
   XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
   int nvcts;
@@ -71,6 +70,47 @@ struct mus_xen {
   struct ptree *analyze_ptree;
   struct ptree *synthesize_ptree;
 };
+
+struct {
+  XEN release;
+  XEN describe;
+  XEN equalp;
+  XEN data;
+  XEN set_data;
+  XEN length;
+  XEN set_length;
+  XEN frequency;
+  XEN set_frequency;
+  XEN phase;
+  XEN set_phase;
+  XEN scaler;
+  XEN set_scaler;
+  XEN increment;
+  XEN set_increment;
+  XEN run;
+  XEN channels;
+  XEN offset;
+  XEN set_offset;
+  XEN width;
+  XEN set_width;
+  XEN xcoeff;
+  XEN set_xcoeff;
+  XEN hop;
+  XEN set_hop;
+  XEN ramp;
+  XEN set_ramp;
+  XEN read_sample;
+  XEN write_sample;
+  XEN file_name;
+  XEN location;
+  XEN set_location;
+  XEN ycoeff;
+  XEN set_ycoeff;
+  XEN xcoeffs;
+  XEN ycoeffs;
+  XEN reset;
+} clm_xen_methods;
+
 
 mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 struct ptree *mus_xen_input(mus_xen *x) {return(x->input_ptree);}
@@ -83,7 +123,7 @@ struct ptree *mus_xen_synthesize(mus_xen *x) {return(x->synthesize_ptree);}
 void mus_xen_set_synthesize(mus_xen *x, struct ptree *synthesize) {x->synthesize_ptree = synthesize;}
 void mus_xen_set_dont_free(mus_xen *x, bool val) {x->dont_free_gen = val;}
 
-/* new mus_* accessors -- go direct to class, if null CHECK_METHOD in effect using the envir as an open-env
+/* new mus_* accessors -- go direct to class, if null CHECK_METHOD in effect using the envir as an open-env (but this should be in mus-* itself)
  *   shadow all the built-in methods with s7_pointers (*methods above), and wrappers that
  *   access them so the path is mus-* -> class -> wrapper -> methods[n] -> s7_call
  * for defgen local fields, they currently use implicit indexing of the generator as a list/vector
@@ -100,6 +140,27 @@ void mus_xen_set_dont_free(mus_xen *x, bool val) {x->dont_free_gen = val;}
   return mus_xen_to_object(gn)
       do we need vcts/self-wrapper?
  */
+
+/* make_clm_generator type -> make_mus_xen with the class pointers to the method struct, and a new initialized vector of fields
+ *   ge = (mus_any *)calloc(1, sizeof(mus_any)) with its core -> class that we made for this type
+ *   mus-freq(gn) -> wrapper set at make time (or later) -> s7_call(sc, gn->methods->frequency, list_1(sc, gn))
+ */
+
+
+/* TODO: doc/test mus-make-generator-type
+ * what to do with all the run-specific clm.c stuff like frame_to_frame_mono?
+ * the with-... envlet for mus-apply of a gen should check for that gen, etc
+ */
+
+#define S_mus_make_generator_type "mus-make-generator-type"
+#define S_mus_make_generator "mus-make-generator"
+
+static XEN g_mus_make_generator_type(void)
+{
+  #define H_mus_make_generator_type "(" S_mus_make_generator_type ") returns a new type tag for " S_mus_make_generator "."
+  return(C_TO_XEN_INT(mus_make_generator_type()));
+}
+
 
 #if HAVE_SCHEME
 #define DISPLAY(Expr) s7_object_to_c_string(sc, Expr)
@@ -8010,609 +8071,6 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 
 
 
-/* ---------------- export ---------------- */
-
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_mus_srate_w, g_mus_srate)
-XEN_NARGIFY_1(g_mus_set_srate_w, g_mus_set_srate)
-XEN_NARGIFY_0(g_mus_float_equal_fudge_factor_w, g_mus_float_equal_fudge_factor)
-XEN_NARGIFY_1(g_mus_set_float_equal_fudge_factor_w, g_mus_set_float_equal_fudge_factor)
-XEN_NARGIFY_0(g_mus_array_print_length_w, g_mus_array_print_length)
-XEN_NARGIFY_1(g_mus_set_array_print_length_w, g_mus_set_array_print_length)
-XEN_NARGIFY_1(g_radians_to_hz_w, g_radians_to_hz)
-XEN_NARGIFY_1(g_hz_to_radians_w, g_hz_to_radians)
-XEN_NARGIFY_1(g_radians_to_degrees_w, g_radians_to_degrees)
-XEN_NARGIFY_1(g_degrees_to_radians_w, g_degrees_to_radians)
-XEN_NARGIFY_1(g_db_to_linear_w, g_db_to_linear)
-XEN_NARGIFY_1(g_linear_to_db_w, g_linear_to_db)
-XEN_NARGIFY_1(g_seconds_to_samples_w, g_seconds_to_samples)
-XEN_NARGIFY_1(g_samples_to_seconds_w, g_samples_to_seconds)
-XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
-XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
-XEN_ARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
-XEN_ARGIFY_3(g_dot_product_w, g_dot_product)
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
-XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
-#endif
-XEN_NARGIFY_1(g_clear_array_w, g_clear_array)
-XEN_NARGIFY_2(g_polynomial_w, g_polynomial)
-XEN_ARGIFY_3(g_multiply_arrays_w, g_multiply_arrays)
-XEN_ARGIFY_4(g_make_fft_window_w, g_make_fft_window)
-XEN_ARGIFY_4(g_mus_fft_w, g_mus_fft)
-XEN_ARGIFY_4(g_spectrum_w, g_spectrum)
-XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
-XEN_NARGIFY_2(g_correlate_w, g_correlate)
-XEN_ARGIFY_3(g_convolution_w, g_convolution)
-XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
-XEN_NARGIFY_2(g_rectangular_to_magnitudes_w, g_rectangular_to_magnitudes)
-XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
-XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
-XEN_ARGIFY_5(g_mus_interpolate_w, g_mus_interpolate)
-XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
-XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
-XEN_NARGIFY_2(g_mus_set_name_w, g_mus_set_name)
-XEN_ARGIFY_3(g_mus_run_w, g_mus_run)
-XEN_NARGIFY_1(g_mus_phase_w, g_mus_phase)
-XEN_NARGIFY_2(g_mus_set_phase_w, g_mus_set_phase)
-XEN_NARGIFY_1(g_mus_width_w, g_mus_width)
-XEN_NARGIFY_2(g_mus_set_width_w, g_mus_set_width)
-XEN_NARGIFY_1(g_mus_scaler_w, g_mus_scaler)
-XEN_NARGIFY_2(g_mus_set_scaler_w, g_mus_set_scaler)
-XEN_NARGIFY_1(g_mus_safety_w, g_mus_safety)
-XEN_NARGIFY_2(g_mus_set_safety_w, g_mus_set_safety)
-XEN_NARGIFY_1(g_mus_feedforward_w, g_mus_feedforward)
-XEN_NARGIFY_2(g_mus_set_feedforward_w, g_mus_set_feedforward)
-XEN_NARGIFY_1(g_mus_reset_w, g_mus_reset)
-XEN_NARGIFY_1(g_mus_offset_w, g_mus_offset)
-XEN_NARGIFY_2(g_mus_set_offset_w, g_mus_set_offset)
-XEN_NARGIFY_1(g_mus_frequency_w, g_mus_frequency)
-XEN_NARGIFY_2(g_mus_set_frequency_w, g_mus_set_frequency)
-XEN_NARGIFY_1(g_mus_length_w, g_mus_length)
-XEN_NARGIFY_1(g_mus_file_name_w, g_mus_file_name)
-XEN_NARGIFY_2(g_mus_set_length_w, g_mus_set_length)
-XEN_NARGIFY_1(g_mus_type_w, g_mus_type)
-XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
-XEN_NARGIFY_1(g_mus_data_w, g_mus_data)
-XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
-XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
-#if (!HAVE_SCHEME)
-XEN_ARGIFY_3(g_oscil_w, g_oscil)
-#endif
-XEN_VARGIFY(g_mus_apply_w, g_mus_apply)
-XEN_VARGIFY(g_make_delay_w, g_make_delay)
-XEN_VARGIFY(g_make_comb_w, g_make_comb)
-XEN_VARGIFY(g_make_filtered_comb_w, g_make_filtered_comb)
-XEN_VARGIFY(g_make_notch_w, g_make_notch)
-XEN_VARGIFY(g_make_all_pass_w, g_make_all_pass)
-XEN_VARGIFY(g_make_moving_average_w, g_make_moving_average)
-XEN_ARGIFY_3(g_delay_w, g_delay)
-XEN_ARGIFY_2(g_delay_tick_w, g_delay_tick)
-XEN_ARGIFY_2(g_tap_w, g_tap)
-XEN_ARGIFY_3(g_notch_w, g_notch)
-XEN_ARGIFY_3(g_comb_w, g_comb)
-XEN_ARGIFY_3(g_filtered_comb_w, g_filtered_comb)
-XEN_ARGIFY_3(g_all_pass_w, g_all_pass)
-XEN_ARGIFY_2(g_moving_average_w, g_moving_average)
-XEN_NARGIFY_1(g_delay_p_w, g_delay_p)
-XEN_NARGIFY_1(g_notch_p_w, g_notch_p)
-XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
-XEN_NARGIFY_1(g_filtered_comb_p_w, g_filtered_comb_p)
-XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
-XEN_NARGIFY_1(g_moving_average_p_w, g_moving_average_p)
-
-XEN_ARGIFY_2(g_ncos_w, g_ncos)
-XEN_NARGIFY_1(g_ncos_p_w, g_ncos_p)
-XEN_ARGIFY_2(g_nsin_w, g_nsin)
-XEN_NARGIFY_1(g_nsin_p_w, g_nsin_p)
-
-XEN_VARGIFY(g_make_rand_w, g_make_rand)
-XEN_VARGIFY(g_make_rand_interp_w, g_make_rand_interp)
-XEN_ARGIFY_2(g_rand_w, g_rand)
-XEN_ARGIFY_2(g_rand_interp_w, g_rand_interp)
-XEN_NARGIFY_1(g_rand_p_w, g_rand_p)
-XEN_NARGIFY_1(g_rand_interp_p_w, g_rand_interp_p)
-XEN_NARGIFY_1(g_mus_random_w, g_mus_random)
-XEN_NARGIFY_0(g_mus_rand_seed_w, g_mus_rand_seed)
-XEN_NARGIFY_1(g_mus_set_rand_seed_w, g_mus_set_rand_seed)
-XEN_NARGIFY_1(g_table_lookup_p_w, g_table_lookup_p)
-XEN_VARGIFY(g_make_table_lookup_w, g_make_table_lookup)
-XEN_ARGIFY_2(g_table_lookup_w, g_table_lookup)
-XEN_ARGIFY_3(g_partials_to_wave_w, g_partials_to_wave)
-XEN_ARGIFY_3(g_phase_partials_to_wave_w, g_phase_partials_to_wave)
-XEN_ARGIFY_6(g_make_sawtooth_wave_w, g_make_sawtooth_wave)
-XEN_ARGIFY_2(g_sawtooth_wave_w, g_sawtooth_wave)
-XEN_NARGIFY_1(g_sawtooth_wave_p_w, g_sawtooth_wave_p)
-XEN_ARGIFY_6(g_make_triangle_wave_w, g_make_triangle_wave)
-XEN_ARGIFY_2(g_triangle_wave_w, g_triangle_wave)
-XEN_NARGIFY_1(g_triangle_wave_p_w, g_triangle_wave_p)
-XEN_ARGIFY_6(g_make_square_wave_w, g_make_square_wave)
-XEN_ARGIFY_2(g_square_wave_w, g_square_wave)
-XEN_NARGIFY_1(g_square_wave_p_w, g_square_wave_p)
-XEN_ARGIFY_6(g_make_pulse_train_w, g_make_pulse_train)
-XEN_ARGIFY_2(g_pulse_train_w, g_pulse_train)
-XEN_NARGIFY_1(g_pulse_train_p_w, g_pulse_train_p)
-XEN_ARGIFY_3(g_asymmetric_fm_w, g_asymmetric_fm)
-XEN_NARGIFY_1(g_asymmetric_fm_p_w, g_asymmetric_fm_p)
-XEN_ARGIFY_4(g_make_one_zero_w, g_make_one_zero)
-XEN_ARGIFY_2(g_one_zero_w, g_one_zero)
-XEN_NARGIFY_1(g_one_zero_p_w, g_one_zero_p)
-XEN_ARGIFY_4(g_make_one_pole_w, g_make_one_pole)
-XEN_ARGIFY_2(g_one_pole_w, g_one_pole)
-XEN_NARGIFY_1(g_one_pole_p_w, g_one_pole_p)
-XEN_ARGIFY_6(g_make_two_zero_w, g_make_two_zero)
-XEN_ARGIFY_2(g_two_zero_w, g_two_zero)
-XEN_NARGIFY_1(g_two_zero_p_w, g_two_zero_p)
-XEN_ARGIFY_6(g_make_two_pole_w, g_make_two_pole)
-XEN_ARGIFY_2(g_two_pole_w, g_two_pole)
-XEN_NARGIFY_1(g_two_pole_p_w, g_two_pole_p)
-XEN_ARGIFY_3(g_formant_bank_w, g_formant_bank)
-
-XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
-XEN_ARGIFY_4(g_make_formant_w, g_make_formant)
-XEN_ARGIFY_3(g_formant_w, g_formant)
-
-XEN_NARGIFY_1(g_firmant_p_w, g_firmant_p)
-XEN_ARGIFY_4(g_make_firmant_w, g_make_firmant)
-XEN_ARGIFY_3(g_firmant_w, g_firmant)
-
-XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
-XEN_VARGIFY(g_make_frame_w, g_make_frame)
-XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
-XEN_VARGIFY(g_frame_w, g_frame)
-XEN_NARGIFY_1(g_frame_p_w, g_frame_p)
-XEN_ARGIFY_3(g_frame_add_w, g_frame_add)
-XEN_ARGIFY_3(g_frame_multiply_w, g_frame_multiply)
-XEN_NARGIFY_2(g_frame_ref_w, g_frame_ref)
-XEN_NARGIFY_3(g_frame_set_w, g_frame_set)
-XEN_VARGIFY(g_make_mixer_w, g_make_mixer)
-XEN_VARGIFY(g_make_mixer_unchecked_w, g_make_mixer_unchecked)
-XEN_VARGIFY(g_mixer_w, g_mixer)
-XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
-XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
-XEN_ARGIFY_3(g_mixer_add_w, g_mixer_add)
-XEN_NARGIFY_2(g_make_scalar_mixer_w, g_make_scalar_mixer)
-XEN_NARGIFY_3(g_mixer_ref_w, g_mixer_ref)
-XEN_NARGIFY_4(g_mixer_set_w, g_mixer_set)
-XEN_NARGIFY_2(g_frame_to_sample_w, g_frame_to_sample)
-XEN_NARGIFY_1(g_frame_to_list_w, g_frame_to_list)
-XEN_ARGIFY_3(g_frame_to_frame_w, g_frame_to_frame)
-XEN_ARGIFY_3(g_sample_to_frame_w, g_sample_to_frame)
-XEN_VARGIFY(g_make_wave_train_w, g_make_wave_train)
-XEN_ARGIFY_2(g_wave_train_w, g_wave_train)
-XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
-XEN_VARGIFY(g_make_polyshape_w, g_make_polyshape)
-XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
-XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
-XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
-XEN_NARGIFY_1(g_normalize_partials_w, g_normalize_partials)
-XEN_NARGIFY_2(g_chebyshev_t_sum_w, g_chebyshev_t_sum)
-XEN_NARGIFY_2(g_chebyshev_u_sum_w, g_chebyshev_u_sum)
-XEN_NARGIFY_3(g_chebyshev_tu_sum_w, g_chebyshev_tu_sum)
-XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
-XEN_ARGIFY_2(g_polywave_w, g_polywave)
-XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
-
-XEN_VARGIFY(g_make_nrxysin_w, g_make_nrxysin)
-XEN_ARGIFY_2(g_nrxysin_w, g_nrxysin)
-XEN_NARGIFY_1(g_nrxysin_p_w, g_nrxysin_p)
-XEN_VARGIFY(g_make_nrxycos_w, g_make_nrxycos)
-XEN_ARGIFY_2(g_nrxycos_w, g_nrxycos)
-XEN_NARGIFY_1(g_nrxycos_p_w, g_nrxycos_p)
-
-XEN_ARGIFY_6(g_make_filter_w, g_make_filter)
-XEN_NARGIFY_2(g_filter_w, g_filter)
-XEN_NARGIFY_1(g_filter_p_w, g_filter_p)
-XEN_ARGIFY_4(g_make_fir_filter_w, g_make_fir_filter)
-XEN_NARGIFY_2(g_make_fir_coeffs_w, g_make_fir_coeffs)
-XEN_NARGIFY_2(g_fir_filter_w, g_fir_filter)
-XEN_NARGIFY_1(g_fir_filter_p_w, g_fir_filter_p)
-XEN_ARGIFY_4(g_make_iir_filter_w, g_make_iir_filter)
-XEN_NARGIFY_2(g_iir_filter_w, g_iir_filter)
-XEN_NARGIFY_1(g_iir_filter_p_w, g_iir_filter_p)
-XEN_NARGIFY_1(g_mus_xcoeffs_w, g_mus_xcoeffs)
-XEN_NARGIFY_1(g_mus_ycoeffs_w, g_mus_ycoeffs)
-XEN_NARGIFY_2(g_mus_xcoeff_w, g_mus_xcoeff)
-XEN_NARGIFY_3(g_mus_set_xcoeff_w, g_mus_set_xcoeff)
-XEN_NARGIFY_2(g_mus_ycoeff_w, g_mus_ycoeff)
-XEN_NARGIFY_3(g_mus_set_ycoeff_w, g_mus_set_ycoeff)
-XEN_NARGIFY_1(g_env_p_w, g_env_p)
-XEN_NARGIFY_1(g_env_w, g_env)
-XEN_VARGIFY(g_make_env_w, g_make_env)
-XEN_NARGIFY_2(g_env_interp_w, g_env_interp)
-XEN_NARGIFY_2(g_env_any_w, g_env_any)
-XEN_NARGIFY_1(g_file_to_sample_p_w, g_file_to_sample_p)
-XEN_ARGIFY_2(g_make_file_to_sample_w, g_make_file_to_sample)
-XEN_ARGIFY_3(g_file_to_sample_w, g_file_to_sample)
-XEN_NARGIFY_1(g_file_to_frame_p_w, g_file_to_frame_p)
-XEN_ARGIFY_2(g_make_file_to_frame_w, g_make_file_to_frame)
-XEN_ARGIFY_3(g_file_to_frame_w, g_file_to_frame)
-XEN_NARGIFY_1(g_sample_to_file_p_w, g_sample_to_file_p)
-XEN_ARGIFY_5(g_make_sample_to_file_w, g_make_sample_to_file)
-XEN_NARGIFY_1(g_continue_sample_to_file_w, g_continue_sample_to_file)
-XEN_NARGIFY_1(g_continue_frame_to_file_w, g_continue_frame_to_file)
-XEN_NARGIFY_4(g_sample_to_file_w, g_sample_to_file)
-XEN_NARGIFY_2(g_sample_to_file_add_w, g_sample_to_file_add)
-XEN_NARGIFY_1(g_frame_to_file_p_w, g_frame_to_file_p)
-XEN_NARGIFY_3(g_frame_to_file_w, g_frame_to_file)
-XEN_ARGIFY_5(g_make_frame_to_file_w, g_make_frame_to_file)
-XEN_NARGIFY_1(g_input_p_w, g_input_p)
-XEN_NARGIFY_1(g_output_p_w, g_output_p)
-XEN_NARGIFY_3(g_in_any_w, g_in_any)
-XEN_NARGIFY_2(g_ina_w, g_ina)
-XEN_NARGIFY_2(g_inb_w, g_inb)
-XEN_ARGIFY_4(g_out_any_w, g_out_any)
-XEN_ARGIFY_3(g_outa_w, g_outa)
-XEN_ARGIFY_3(g_outb_w, g_outb)
-XEN_ARGIFY_3(g_outc_w, g_outc)
-XEN_ARGIFY_3(g_outd_w, g_outd)
-XEN_NARGIFY_1(g_mus_close_w, g_mus_close)
-XEN_NARGIFY_0(g_mus_file_buffer_size_w, g_mus_file_buffer_size)
-XEN_NARGIFY_1(g_mus_set_file_buffer_size_w, g_mus_set_file_buffer_size)
-XEN_NARGIFY_1(g_readin_p_w, g_readin_p)
-XEN_NARGIFY_1(g_readin_w, g_readin)
-XEN_VARGIFY(g_make_readin_w, g_make_readin)
-XEN_NARGIFY_1(g_mus_channel_w, g_mus_channel)
-XEN_NARGIFY_1(g_mus_interp_type_w, g_mus_interp_type)
-XEN_NARGIFY_1(g_mus_location_w, g_mus_location)
-XEN_NARGIFY_2(g_mus_set_location_w, g_mus_set_location)
-XEN_NARGIFY_1(g_mus_increment_w, g_mus_increment)
-XEN_NARGIFY_2(g_mus_set_increment_w, g_mus_set_increment)
-XEN_NARGIFY_1(g_mus_feedback_w, g_mus_feedback)
-XEN_NARGIFY_2(g_mus_set_feedback_w, g_mus_set_feedback)
-XEN_NARGIFY_1(g_locsig_p_w, g_locsig_p)
-XEN_NARGIFY_3(g_locsig_w, g_locsig)
-XEN_VARGIFY(g_make_locsig_w, g_make_locsig)
-XEN_NARGIFY_3(g_move_locsig_w, g_move_locsig)
-XEN_NARGIFY_0(g_locsig_type_w, g_locsig_type)
-XEN_NARGIFY_1(g_set_locsig_type_w, g_set_locsig_type)
-XEN_NARGIFY_1(g_mus_channels_w, g_mus_channels)
-XEN_NARGIFY_2(g_locsig_ref_w, g_locsig_ref)
-XEN_NARGIFY_2(g_locsig_reverb_ref_w, g_locsig_reverb_ref)
-XEN_NARGIFY_3(g_locsig_set_w, g_locsig_set)
-XEN_NARGIFY_3(g_locsig_reverb_set_w, g_locsig_reverb_set)
-XEN_NARGIFY_1(g_move_sound_p_w, g_move_sound_p)
-XEN_NARGIFY_3(g_move_sound_w, g_move_sound)
-XEN_ARGIFY_3(g_make_move_sound_w, g_make_move_sound)
-XEN_NARGIFY_0(g_mus_clear_sincs_w, g_mus_clear_sincs)
-XEN_NARGIFY_1(g_src_p_w, g_src_p)
-XEN_ARGIFY_3(g_src_w, g_src)
-XEN_ARGIFY_6(g_make_src_w, g_make_src)
-XEN_NARGIFY_1(g_granulate_p_w, g_granulate_p)
-XEN_ARGIFY_3(g_granulate_w, g_granulate)
-XEN_VARGIFY(g_make_granulate_w, g_make_granulate)
-XEN_NARGIFY_1(g_mus_ramp_w, g_mus_ramp)
-XEN_NARGIFY_2(g_mus_set_ramp_w, g_mus_set_ramp)
-XEN_NARGIFY_1(g_convolve_p_w, g_convolve_p)
-XEN_ARGIFY_2(g_convolve_w, g_convolve)
-XEN_VARGIFY(g_make_convolve_w, g_make_convolve)
-XEN_ARGIFY_4(g_convolve_files_w, g_convolve_files)
-XEN_NARGIFY_1(g_phase_vocoder_p_w, g_phase_vocoder_p)
-XEN_ARGIFY_5(g_phase_vocoder_w, g_phase_vocoder)
-XEN_VARGIFY(g_make_phase_vocoder_w, g_make_phase_vocoder)
-XEN_NARGIFY_1(g_phase_vocoder_amp_increments_w, g_phase_vocoder_amp_increments)
-XEN_NARGIFY_1(g_phase_vocoder_amps_w, g_phase_vocoder_amps)
-XEN_NARGIFY_1(g_phase_vocoder_freqs_w, g_phase_vocoder_freqs)
-XEN_NARGIFY_1(g_phase_vocoder_phases_w, g_phase_vocoder_phases)
-XEN_NARGIFY_1(g_phase_vocoder_phase_increments_w, g_phase_vocoder_phase_increments)
-XEN_NARGIFY_1(g_mus_hop_w, g_mus_hop)
-XEN_NARGIFY_2(g_mus_set_hop_w, g_mus_set_hop)
-XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
-XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
-XEN_ARGIFY_3(g_ssb_am_w, g_ssb_am)
-XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
-XEN_NARGIFY_4(g_ssb_bank_w, g_ssb_bank)
-XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
-XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
-XEN_NARGIFY_0(g_clm_default_frequency_w, g_clm_default_frequency)
-XEN_NARGIFY_1(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
-XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
-XEN_NARGIFY_1(g_mus_frandom_w, g_mus_frandom)
-XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
-XEN_ARGIFY_4(g_make_oscil_w, g_make_oscil)
-XEN_ARGIFY_4(g_make_ncos_w, g_make_ncos)
-XEN_ARGIFY_4(g_make_nsin_w, g_make_nsin)
-XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
-
-#else
-#define g_mus_srate_w g_mus_srate
-#define g_mus_set_srate_w g_mus_set_srate
-#define g_mus_float_equal_fudge_factor_w g_mus_float_equal_fudge_factor
-#define g_mus_set_float_equal_fudge_factor_w g_mus_set_float_equal_fudge_factor
-#define g_mus_array_print_length_w g_mus_array_print_length
-#define g_mus_set_array_print_length_w g_mus_set_array_print_length
-#define g_radians_to_hz_w g_radians_to_hz
-#define g_hz_to_radians_w g_hz_to_radians
-#define g_radians_to_degrees_w g_radians_to_degrees
-#define g_degrees_to_radians_w g_degrees_to_radians
-#define g_db_to_linear_w g_db_to_linear
-#define g_linear_to_db_w g_linear_to_db
-#define g_seconds_to_samples_w g_seconds_to_samples
-#define g_samples_to_seconds_w g_samples_to_seconds
-#define g_ring_modulate_w g_ring_modulate
-#define g_amplitude_modulate_w g_amplitude_modulate
-#define g_contrast_enhancement_w g_contrast_enhancement
-#define g_dot_product_w g_dot_product
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
-#define g_edot_product_w g_edot_product
-#endif
-#define g_clear_array_w g_clear_array
-#define g_polynomial_w g_polynomial
-#define g_multiply_arrays_w g_multiply_arrays
-#define g_make_fft_window_w g_make_fft_window
-#define g_mus_fft_w g_mus_fft
-#define g_spectrum_w g_spectrum
-#define g_autocorrelate_w g_autocorrelate
-#define g_correlate_w g_correlate
-#define g_convolution_w g_convolution
-#define g_rectangular_to_polar_w g_rectangular_to_polar
-#define g_rectangular_to_magnitudes_w g_rectangular_to_magnitudes
-#define g_polar_to_rectangular_w g_polar_to_rectangular
-#define g_array_interp_w g_array_interp
-#define g_mus_interpolate_w g_mus_interpolate
-#define g_mus_describe_w g_mus_describe
-#define g_mus_name_w g_mus_name
-#define g_mus_set_name_w g_mus_set_name
-#define g_mus_run_w g_mus_run
-#define g_mus_phase_w g_mus_phase
-#define g_mus_set_phase_w g_mus_set_phase
-#define g_mus_scaler_w g_mus_scaler
-#define g_mus_set_scaler_w g_mus_set_scaler
-#define g_mus_safety_w g_mus_safety
-#define g_mus_set_safety_w g_mus_set_safety
-#define g_mus_feedforward_w g_mus_feedforward
-#define g_mus_set_feedforward_w g_mus_set_feedforward
-#define g_mus_width_w g_mus_width
-#define g_mus_set_width_w g_mus_set_width
-#define g_mus_reset_w g_mus_reset
-#define g_mus_offset_w g_mus_offset
-#define g_mus_set_offset_w g_mus_set_offset
-#define g_mus_frequency_w g_mus_frequency
-#define g_mus_set_frequency_w g_mus_set_frequency
-#define g_mus_length_w g_mus_length
-#define g_mus_type_w g_mus_type
-#define g_mus_order_w g_mus_order
-#define g_mus_file_name_w g_mus_file_name
-#define g_mus_set_length_w g_mus_set_length
-#define g_mus_data_w g_mus_data
-#define g_mus_set_data_w g_mus_set_data
-#define g_oscil_p_w g_oscil_p
-#define g_make_oscil_w g_make_oscil
-#define g_oscil_w g_oscil
-#define g_mus_apply_w g_mus_apply
-#define g_make_delay_w g_make_delay
-#define g_make_comb_w g_make_comb
-#define g_make_filtered_comb_w g_make_filtered_comb
-#define g_make_notch_w g_make_notch
-#define g_make_all_pass_w g_make_all_pass
-#define g_make_moving_average_w g_make_moving_average
-#define g_delay_w g_delay
-#define g_delay_tick_w g_delay_tick
-#define g_tap_w g_tap
-#define g_notch_w g_notch
-#define g_comb_w g_comb
-#define g_filtered_comb_w g_filtered_comb
-#define g_all_pass_w g_all_pass
-#define g_moving_average_w g_moving_average
-#define g_delay_p_w g_delay_p
-#define g_notch_p_w g_notch_p
-#define g_comb_p_w g_comb_p
-#define g_filtered_comb_p_w g_filtered_comb_p
-#define g_all_pass_p_w g_all_pass_p
-#define g_moving_average_p_w g_moving_average_p
-
-#define g_make_ncos_w g_make_ncos
-#define g_ncos_w g_ncos
-#define g_ncos_p_w g_ncos_p
-#define g_make_nsin_w g_make_nsin
-#define g_nsin_w g_nsin
-#define g_nsin_p_w g_nsin_p
-
-#define g_make_rand_w g_make_rand
-#define g_make_rand_interp_w g_make_rand_interp
-#define g_rand_w g_rand
-#define g_rand_interp_w g_rand_interp
-#define g_rand_p_w g_rand_p
-#define g_rand_interp_p_w g_rand_interp_p
-#define g_mus_random_w g_mus_random
-#define g_mus_rand_seed_w g_mus_rand_seed
-#define g_mus_set_rand_seed_w g_mus_set_rand_seed
-#define g_table_lookup_p_w g_table_lookup_p
-#define g_make_table_lookup_w g_make_table_lookup
-#define g_table_lookup_w g_table_lookup
-#define g_partials_to_wave_w g_partials_to_wave
-#define g_phase_partials_to_wave_w g_phase_partials_to_wave
-#define g_make_sawtooth_wave_w g_make_sawtooth_wave
-#define g_sawtooth_wave_w g_sawtooth_wave
-#define g_sawtooth_wave_p_w g_sawtooth_wave_p
-#define g_make_triangle_wave_w g_make_triangle_wave
-#define g_triangle_wave_w g_triangle_wave
-#define g_triangle_wave_p_w g_triangle_wave_p
-#define g_make_square_wave_w g_make_square_wave
-#define g_square_wave_w g_square_wave
-#define g_square_wave_p_w g_square_wave_p
-#define g_make_pulse_train_w g_make_pulse_train
-#define g_pulse_train_w g_pulse_train
-#define g_pulse_train_p_w g_pulse_train_p
-#define g_make_asymmetric_fm_w g_make_asymmetric_fm
-#define g_asymmetric_fm_w g_asymmetric_fm
-#define g_asymmetric_fm_p_w g_asymmetric_fm_p
-#define g_make_one_zero_w g_make_one_zero
-#define g_one_zero_w g_one_zero
-#define g_one_zero_p_w g_one_zero_p
-#define g_make_one_pole_w g_make_one_pole
-#define g_one_pole_w g_one_pole
-#define g_one_pole_p_w g_one_pole_p
-#define g_make_two_zero_w g_make_two_zero
-#define g_two_zero_w g_two_zero
-#define g_two_zero_p_w g_two_zero_p
-#define g_make_two_pole_w g_make_two_pole
-#define g_two_pole_w g_two_pole
-#define g_two_pole_p_w g_two_pole_p
-#define g_formant_bank_w g_formant_bank
-
-#define g_formant_p_w g_formant_p
-#define g_make_formant_w g_make_formant
-#define g_formant_w g_formant
-
-#define g_firmant_p_w g_firmant_p
-#define g_make_firmant_w g_make_firmant
-#define g_firmant_w g_firmant
-
-#define g_set_formant_radius_and_frequency_w g_set_formant_radius_and_frequency
-#define g_make_frame_w g_make_frame
-#define g_make_frame_unchecked_w g_make_frame_unchecked
-#define g_frame_w g_frame
-#define g_frame_p_w g_frame_p
-#define g_frame_add_w g_frame_add
-#define g_frame_multiply_w g_frame_multiply
-#define g_frame_ref_w g_frame_ref
-#define g_frame_set_w g_frame_set
-#define g_make_mixer_w g_make_mixer
-#define g_make_mixer_unchecked_w g_make_mixer_unchecked
-#define g_mixer_w g_mixer
-#define g_mixer_p_w g_mixer_p
-#define g_mixer_multiply_w g_mixer_multiply
-#define g_mixer_add_w g_mixer_add
-#define g_make_scalar_mixer_w g_make_scalar_mixer
-#define g_mixer_ref_w g_mixer_ref
-#define g_mixer_set_w g_mixer_set
-#define g_frame_to_sample_w g_frame_to_sample
-#define g_frame_to_list_w g_frame_to_list
-#define g_frame_to_frame_w g_frame_to_frame
-#define g_sample_to_frame_w g_sample_to_frame
-#define g_make_wave_train_w g_make_wave_train
-#define g_wave_train_w g_wave_train
-#define g_wave_train_p_w g_wave_train_p
-#define g_make_polyshape_w g_make_polyshape
-#define g_polyshape_w g_polyshape
-#define g_polyshape_p_w g_polyshape_p
-#define g_partials_to_polynomial_w g_partials_to_polynomial
-#define g_normalize_partials_w g_normalize_partials
-#define g_chebyshev_t_sum_w g_chebyshev_t_sum
-#define g_chebyshev_u_sum_w g_chebyshev_u_sum
-#define g_chebyshev_tu_sum_w g_chebyshev_tu_sum
-#define g_make_polywave_w g_make_polywave
-#define g_polywave_w g_polywave
-#define g_polywave_p_w g_polywave_p
-
-#define g_make_nrxysin_w g_make_nrxysin
-#define g_nrxysin_w g_nrxysin
-#define g_nrxysin_p_w g_nrxysin_p
-#define g_make_nrxycos_w g_make_nrxycos
-#define g_nrxycos_w g_nrxycos
-#define g_nrxycos_p_w g_nrxycos_p
-
-#define g_make_filter_w g_make_filter
-#define g_filter_w g_filter
-#define g_filter_p_w g_filter_p
-#define g_make_fir_filter_w g_make_fir_filter
-#define g_make_fir_coeffs_w g_make_fir_coeffs
-#define g_fir_filter_w g_fir_filter
-#define g_fir_filter_p_w g_fir_filter_p
-#define g_make_iir_filter_w g_make_iir_filter
-#define g_iir_filter_w g_iir_filter
-#define g_iir_filter_p_w g_iir_filter_p
-#define g_mus_xcoeffs_w g_mus_xcoeffs
-#define g_mus_xcoeff_w g_mus_xcoeff
-#define g_mus_set_xcoeff_w g_mus_set_xcoeff
-#define g_mus_ycoeffs_w g_mus_ycoeffs
-#define g_mus_ycoeff_w g_mus_ycoeff
-#define g_mus_set_ycoeff_w g_mus_set_ycoeff
-#define g_env_p_w g_env_p
-#define g_env_w g_env
-#define g_make_env_w g_make_env
-#define g_env_interp_w g_env_interp
-#define g_env_any_w g_env_any
-#define g_file_to_sample_p_w g_file_to_sample_p
-#define g_make_file_to_sample_w g_make_file_to_sample
-#define g_file_to_sample_w g_file_to_sample
-#define g_file_to_frame_p_w g_file_to_frame_p
-#define g_make_file_to_frame_w g_make_file_to_frame
-#define g_file_to_frame_w g_file_to_frame
-#define g_sample_to_file_p_w g_sample_to_file_p
-#define g_make_sample_to_file_w g_make_sample_to_file
-#define g_continue_sample_to_file_w g_continue_sample_to_file
-#define g_continue_frame_to_file_w g_continue_frame_to_file
-#define g_sample_to_file_w g_sample_to_file
-#define g_sample_to_file_add_w g_sample_to_file_add
-#define g_frame_to_file_p_w g_frame_to_file_p
-#define g_frame_to_file_w g_frame_to_file
-#define g_make_frame_to_file_w g_make_frame_to_file
-#define g_input_p_w g_input_p
-#define g_output_p_w g_output_p
-#define g_in_any_w g_in_any
-#define g_ina_w g_ina
-#define g_inb_w g_inb
-#define g_out_any_w g_out_any
-#define g_outa_w g_outa
-#define g_outb_w g_outb
-#define g_outc_w g_outc
-#define g_outd_w g_outd
-#define g_mus_close_w g_mus_close
-#define g_mus_file_buffer_size_w g_mus_file_buffer_size
-#define g_mus_set_file_buffer_size_w g_mus_set_file_buffer_size
-#define g_readin_p_w g_readin_p
-#define g_readin_w g_readin
-#define g_make_readin_w g_make_readin
-#define g_mus_channel_w g_mus_channel
-#define g_mus_interp_type_w g_mus_interp_type
-#define g_mus_location_w g_mus_location
-#define g_mus_set_location_w g_mus_set_location
-#define g_mus_increment_w g_mus_increment
-#define g_mus_set_increment_w g_mus_set_increment
-#define g_mus_feedback_w g_mus_feedback
-#define g_mus_set_feedback_w g_mus_set_feedback
-#define g_locsig_p_w g_locsig_p
-#define g_locsig_w g_locsig
-#define g_make_locsig_w g_make_locsig
-#define g_move_locsig_w g_move_locsig
-#define g_locsig_type_w g_locsig_type
-#define g_set_locsig_type_w g_set_locsig_type
-#define g_mus_channels_w g_mus_channels
-#define g_locsig_ref_w g_locsig_ref
-#define g_locsig_reverb_ref_w g_locsig_reverb_ref
-#define g_locsig_set_w g_locsig_set
-#define g_locsig_reverb_set_w g_locsig_reverb_set
-#define g_move_sound_p_w g_move_sound_p
-#define g_move_sound_w g_move_sound
-#define g_make_move_sound_w g_make_move_sound
-#define g_mus_clear_sincs_w g_mus_clear_sincs
-#define g_src_p_w g_src_p
-#define g_src_w g_src
-#define g_make_src_w g_make_src
-#define g_granulate_p_w g_granulate_p
-#define g_granulate_w g_granulate
-#define g_make_granulate_w g_make_granulate
-#define g_mus_ramp_w g_mus_ramp
-#define g_mus_set_ramp_w g_mus_set_ramp
-#define g_convolve_p_w g_convolve_p
-#define g_convolve_w g_convolve
-#define g_make_convolve_w g_make_convolve
-#define g_convolve_files_w g_convolve_files
-#define g_phase_vocoder_p_w g_phase_vocoder_p
-#define g_phase_vocoder_w g_phase_vocoder
-#define g_make_phase_vocoder_w g_make_phase_vocoder
-#define g_phase_vocoder_amp_increments_w g_phase_vocoder_amp_increments
-#define g_phase_vocoder_amps_w g_phase_vocoder_amps
-#define g_phase_vocoder_freqs_w g_phase_vocoder_freqs
-#define g_phase_vocoder_phases_w g_phase_vocoder_phases
-#define g_phase_vocoder_phase_increments_w g_phase_vocoder_phase_increments
-#define g_mus_hop_w g_mus_hop
-#define g_mus_set_hop_w g_mus_set_hop
-#define g_mus_mix_w g_mus_mix
-#define g_make_ssb_am_w g_make_ssb_am
-#define g_ssb_am_w g_ssb_am
-#define g_ssb_am_p_w g_ssb_am_p
-#define g_ssb_bank_w g_ssb_bank
-#define g_clm_table_size_w g_clm_table_size
-#define g_set_clm_table_size_w g_set_clm_table_size
-#define g_clm_default_frequency_w g_clm_default_frequency
-#define g_set_clm_default_frequency_w g_set_clm_default_frequency
-#define g_mus_generator_p_w g_mus_generator_p
-#define g_mus_frandom_w g_mus_frandom
-#define g_mus_irandom_w g_mus_irandom
-#endif
-
 
 /* -------------------------------- scheme-side (run) optimization -------------------------------- */
 
@@ -12363,6 +11821,615 @@ static void init_choosers(s7_scheme *sc)
 /* -------------------------------------------------------------------------------- */
 
 
+
+/* ---------------- export ---------------- */
+
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_mus_srate_w, g_mus_srate)
+XEN_NARGIFY_1(g_mus_set_srate_w, g_mus_set_srate)
+XEN_NARGIFY_0(g_mus_float_equal_fudge_factor_w, g_mus_float_equal_fudge_factor)
+XEN_NARGIFY_1(g_mus_set_float_equal_fudge_factor_w, g_mus_set_float_equal_fudge_factor)
+XEN_NARGIFY_0(g_mus_array_print_length_w, g_mus_array_print_length)
+XEN_NARGIFY_1(g_mus_set_array_print_length_w, g_mus_set_array_print_length)
+XEN_NARGIFY_1(g_radians_to_hz_w, g_radians_to_hz)
+XEN_NARGIFY_1(g_hz_to_radians_w, g_hz_to_radians)
+XEN_NARGIFY_1(g_radians_to_degrees_w, g_radians_to_degrees)
+XEN_NARGIFY_1(g_degrees_to_radians_w, g_degrees_to_radians)
+XEN_NARGIFY_1(g_db_to_linear_w, g_db_to_linear)
+XEN_NARGIFY_1(g_linear_to_db_w, g_linear_to_db)
+XEN_NARGIFY_1(g_seconds_to_samples_w, g_seconds_to_samples)
+XEN_NARGIFY_1(g_samples_to_seconds_w, g_samples_to_seconds)
+XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
+XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
+XEN_ARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
+XEN_ARGIFY_3(g_dot_product_w, g_dot_product)
+#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
+#endif
+XEN_NARGIFY_1(g_clear_array_w, g_clear_array)
+XEN_NARGIFY_2(g_polynomial_w, g_polynomial)
+XEN_ARGIFY_3(g_multiply_arrays_w, g_multiply_arrays)
+XEN_ARGIFY_4(g_make_fft_window_w, g_make_fft_window)
+XEN_ARGIFY_4(g_mus_fft_w, g_mus_fft)
+XEN_ARGIFY_4(g_spectrum_w, g_spectrum)
+XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
+XEN_NARGIFY_2(g_correlate_w, g_correlate)
+XEN_ARGIFY_3(g_convolution_w, g_convolution)
+XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
+XEN_NARGIFY_2(g_rectangular_to_magnitudes_w, g_rectangular_to_magnitudes)
+XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
+XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
+XEN_ARGIFY_5(g_mus_interpolate_w, g_mus_interpolate)
+XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
+XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
+XEN_NARGIFY_2(g_mus_set_name_w, g_mus_set_name)
+XEN_ARGIFY_3(g_mus_run_w, g_mus_run)
+XEN_NARGIFY_1(g_mus_phase_w, g_mus_phase)
+XEN_NARGIFY_2(g_mus_set_phase_w, g_mus_set_phase)
+XEN_NARGIFY_1(g_mus_width_w, g_mus_width)
+XEN_NARGIFY_2(g_mus_set_width_w, g_mus_set_width)
+XEN_NARGIFY_1(g_mus_scaler_w, g_mus_scaler)
+XEN_NARGIFY_2(g_mus_set_scaler_w, g_mus_set_scaler)
+XEN_NARGIFY_1(g_mus_safety_w, g_mus_safety)
+XEN_NARGIFY_2(g_mus_set_safety_w, g_mus_set_safety)
+XEN_NARGIFY_1(g_mus_feedforward_w, g_mus_feedforward)
+XEN_NARGIFY_2(g_mus_set_feedforward_w, g_mus_set_feedforward)
+XEN_NARGIFY_1(g_mus_reset_w, g_mus_reset)
+XEN_NARGIFY_1(g_mus_offset_w, g_mus_offset)
+XEN_NARGIFY_2(g_mus_set_offset_w, g_mus_set_offset)
+XEN_NARGIFY_1(g_mus_frequency_w, g_mus_frequency)
+XEN_NARGIFY_2(g_mus_set_frequency_w, g_mus_set_frequency)
+XEN_NARGIFY_1(g_mus_length_w, g_mus_length)
+XEN_NARGIFY_1(g_mus_file_name_w, g_mus_file_name)
+XEN_NARGIFY_2(g_mus_set_length_w, g_mus_set_length)
+XEN_NARGIFY_1(g_mus_type_w, g_mus_type)
+XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
+XEN_NARGIFY_1(g_mus_data_w, g_mus_data)
+XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
+XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
+#if (!HAVE_SCHEME)
+XEN_ARGIFY_3(g_oscil_w, g_oscil)
+#endif
+XEN_VARGIFY(g_mus_apply_w, g_mus_apply)
+XEN_VARGIFY(g_make_delay_w, g_make_delay)
+XEN_VARGIFY(g_make_comb_w, g_make_comb)
+XEN_VARGIFY(g_make_filtered_comb_w, g_make_filtered_comb)
+XEN_VARGIFY(g_make_notch_w, g_make_notch)
+XEN_VARGIFY(g_make_all_pass_w, g_make_all_pass)
+XEN_VARGIFY(g_make_moving_average_w, g_make_moving_average)
+XEN_ARGIFY_3(g_delay_w, g_delay)
+XEN_ARGIFY_2(g_delay_tick_w, g_delay_tick)
+XEN_ARGIFY_2(g_tap_w, g_tap)
+XEN_ARGIFY_3(g_notch_w, g_notch)
+XEN_ARGIFY_3(g_comb_w, g_comb)
+XEN_ARGIFY_3(g_filtered_comb_w, g_filtered_comb)
+XEN_ARGIFY_3(g_all_pass_w, g_all_pass)
+XEN_ARGIFY_2(g_moving_average_w, g_moving_average)
+XEN_NARGIFY_1(g_delay_p_w, g_delay_p)
+XEN_NARGIFY_1(g_notch_p_w, g_notch_p)
+XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
+XEN_NARGIFY_1(g_filtered_comb_p_w, g_filtered_comb_p)
+XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
+XEN_NARGIFY_1(g_moving_average_p_w, g_moving_average_p)
+
+XEN_ARGIFY_2(g_ncos_w, g_ncos)
+XEN_NARGIFY_1(g_ncos_p_w, g_ncos_p)
+XEN_ARGIFY_2(g_nsin_w, g_nsin)
+XEN_NARGIFY_1(g_nsin_p_w, g_nsin_p)
+
+XEN_VARGIFY(g_make_rand_w, g_make_rand)
+XEN_VARGIFY(g_make_rand_interp_w, g_make_rand_interp)
+XEN_ARGIFY_2(g_rand_w, g_rand)
+XEN_ARGIFY_2(g_rand_interp_w, g_rand_interp)
+XEN_NARGIFY_1(g_rand_p_w, g_rand_p)
+XEN_NARGIFY_1(g_rand_interp_p_w, g_rand_interp_p)
+XEN_NARGIFY_1(g_mus_random_w, g_mus_random)
+XEN_NARGIFY_0(g_mus_rand_seed_w, g_mus_rand_seed)
+XEN_NARGIFY_1(g_mus_set_rand_seed_w, g_mus_set_rand_seed)
+XEN_NARGIFY_1(g_table_lookup_p_w, g_table_lookup_p)
+XEN_VARGIFY(g_make_table_lookup_w, g_make_table_lookup)
+XEN_ARGIFY_2(g_table_lookup_w, g_table_lookup)
+XEN_ARGIFY_3(g_partials_to_wave_w, g_partials_to_wave)
+XEN_ARGIFY_3(g_phase_partials_to_wave_w, g_phase_partials_to_wave)
+XEN_ARGIFY_6(g_make_sawtooth_wave_w, g_make_sawtooth_wave)
+XEN_ARGIFY_2(g_sawtooth_wave_w, g_sawtooth_wave)
+XEN_NARGIFY_1(g_sawtooth_wave_p_w, g_sawtooth_wave_p)
+XEN_ARGIFY_6(g_make_triangle_wave_w, g_make_triangle_wave)
+XEN_ARGIFY_2(g_triangle_wave_w, g_triangle_wave)
+XEN_NARGIFY_1(g_triangle_wave_p_w, g_triangle_wave_p)
+XEN_ARGIFY_6(g_make_square_wave_w, g_make_square_wave)
+XEN_ARGIFY_2(g_square_wave_w, g_square_wave)
+XEN_NARGIFY_1(g_square_wave_p_w, g_square_wave_p)
+XEN_ARGIFY_6(g_make_pulse_train_w, g_make_pulse_train)
+XEN_ARGIFY_2(g_pulse_train_w, g_pulse_train)
+XEN_NARGIFY_1(g_pulse_train_p_w, g_pulse_train_p)
+XEN_ARGIFY_3(g_asymmetric_fm_w, g_asymmetric_fm)
+XEN_NARGIFY_1(g_asymmetric_fm_p_w, g_asymmetric_fm_p)
+XEN_ARGIFY_4(g_make_one_zero_w, g_make_one_zero)
+XEN_ARGIFY_2(g_one_zero_w, g_one_zero)
+XEN_NARGIFY_1(g_one_zero_p_w, g_one_zero_p)
+XEN_ARGIFY_4(g_make_one_pole_w, g_make_one_pole)
+XEN_ARGIFY_2(g_one_pole_w, g_one_pole)
+XEN_NARGIFY_1(g_one_pole_p_w, g_one_pole_p)
+XEN_ARGIFY_6(g_make_two_zero_w, g_make_two_zero)
+XEN_ARGIFY_2(g_two_zero_w, g_two_zero)
+XEN_NARGIFY_1(g_two_zero_p_w, g_two_zero_p)
+XEN_ARGIFY_6(g_make_two_pole_w, g_make_two_pole)
+XEN_ARGIFY_2(g_two_pole_w, g_two_pole)
+XEN_NARGIFY_1(g_two_pole_p_w, g_two_pole_p)
+XEN_ARGIFY_3(g_formant_bank_w, g_formant_bank)
+
+XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
+XEN_ARGIFY_4(g_make_formant_w, g_make_formant)
+XEN_ARGIFY_3(g_formant_w, g_formant)
+
+XEN_NARGIFY_1(g_firmant_p_w, g_firmant_p)
+XEN_ARGIFY_4(g_make_firmant_w, g_make_firmant)
+XEN_ARGIFY_3(g_firmant_w, g_firmant)
+
+XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
+XEN_VARGIFY(g_make_frame_w, g_make_frame)
+XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
+XEN_VARGIFY(g_frame_w, g_frame)
+XEN_NARGIFY_1(g_frame_p_w, g_frame_p)
+XEN_ARGIFY_3(g_frame_add_w, g_frame_add)
+XEN_ARGIFY_3(g_frame_multiply_w, g_frame_multiply)
+XEN_NARGIFY_2(g_frame_ref_w, g_frame_ref)
+XEN_NARGIFY_3(g_frame_set_w, g_frame_set)
+XEN_VARGIFY(g_make_mixer_w, g_make_mixer)
+XEN_VARGIFY(g_make_mixer_unchecked_w, g_make_mixer_unchecked)
+XEN_VARGIFY(g_mixer_w, g_mixer)
+XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
+XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
+XEN_ARGIFY_3(g_mixer_add_w, g_mixer_add)
+XEN_NARGIFY_2(g_make_scalar_mixer_w, g_make_scalar_mixer)
+XEN_NARGIFY_3(g_mixer_ref_w, g_mixer_ref)
+XEN_NARGIFY_4(g_mixer_set_w, g_mixer_set)
+XEN_NARGIFY_2(g_frame_to_sample_w, g_frame_to_sample)
+XEN_NARGIFY_1(g_frame_to_list_w, g_frame_to_list)
+XEN_ARGIFY_3(g_frame_to_frame_w, g_frame_to_frame)
+XEN_ARGIFY_3(g_sample_to_frame_w, g_sample_to_frame)
+XEN_VARGIFY(g_make_wave_train_w, g_make_wave_train)
+XEN_ARGIFY_2(g_wave_train_w, g_wave_train)
+XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
+XEN_VARGIFY(g_make_polyshape_w, g_make_polyshape)
+XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
+XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
+XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
+XEN_NARGIFY_1(g_normalize_partials_w, g_normalize_partials)
+XEN_NARGIFY_2(g_chebyshev_t_sum_w, g_chebyshev_t_sum)
+XEN_NARGIFY_2(g_chebyshev_u_sum_w, g_chebyshev_u_sum)
+XEN_NARGIFY_3(g_chebyshev_tu_sum_w, g_chebyshev_tu_sum)
+XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
+XEN_ARGIFY_2(g_polywave_w, g_polywave)
+XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
+
+XEN_VARGIFY(g_make_nrxysin_w, g_make_nrxysin)
+XEN_ARGIFY_2(g_nrxysin_w, g_nrxysin)
+XEN_NARGIFY_1(g_nrxysin_p_w, g_nrxysin_p)
+XEN_VARGIFY(g_make_nrxycos_w, g_make_nrxycos)
+XEN_ARGIFY_2(g_nrxycos_w, g_nrxycos)
+XEN_NARGIFY_1(g_nrxycos_p_w, g_nrxycos_p)
+
+XEN_ARGIFY_6(g_make_filter_w, g_make_filter)
+XEN_NARGIFY_2(g_filter_w, g_filter)
+XEN_NARGIFY_1(g_filter_p_w, g_filter_p)
+XEN_ARGIFY_4(g_make_fir_filter_w, g_make_fir_filter)
+XEN_NARGIFY_2(g_make_fir_coeffs_w, g_make_fir_coeffs)
+XEN_NARGIFY_2(g_fir_filter_w, g_fir_filter)
+XEN_NARGIFY_1(g_fir_filter_p_w, g_fir_filter_p)
+XEN_ARGIFY_4(g_make_iir_filter_w, g_make_iir_filter)
+XEN_NARGIFY_2(g_iir_filter_w, g_iir_filter)
+XEN_NARGIFY_1(g_iir_filter_p_w, g_iir_filter_p)
+XEN_NARGIFY_1(g_mus_xcoeffs_w, g_mus_xcoeffs)
+XEN_NARGIFY_1(g_mus_ycoeffs_w, g_mus_ycoeffs)
+XEN_NARGIFY_2(g_mus_xcoeff_w, g_mus_xcoeff)
+XEN_NARGIFY_3(g_mus_set_xcoeff_w, g_mus_set_xcoeff)
+XEN_NARGIFY_2(g_mus_ycoeff_w, g_mus_ycoeff)
+XEN_NARGIFY_3(g_mus_set_ycoeff_w, g_mus_set_ycoeff)
+XEN_NARGIFY_1(g_env_p_w, g_env_p)
+XEN_NARGIFY_1(g_env_w, g_env)
+XEN_VARGIFY(g_make_env_w, g_make_env)
+XEN_NARGIFY_2(g_env_interp_w, g_env_interp)
+XEN_NARGIFY_2(g_env_any_w, g_env_any)
+XEN_NARGIFY_1(g_file_to_sample_p_w, g_file_to_sample_p)
+XEN_ARGIFY_2(g_make_file_to_sample_w, g_make_file_to_sample)
+XEN_ARGIFY_3(g_file_to_sample_w, g_file_to_sample)
+XEN_NARGIFY_1(g_file_to_frame_p_w, g_file_to_frame_p)
+XEN_ARGIFY_2(g_make_file_to_frame_w, g_make_file_to_frame)
+XEN_ARGIFY_3(g_file_to_frame_w, g_file_to_frame)
+XEN_NARGIFY_1(g_sample_to_file_p_w, g_sample_to_file_p)
+XEN_ARGIFY_5(g_make_sample_to_file_w, g_make_sample_to_file)
+XEN_NARGIFY_1(g_continue_sample_to_file_w, g_continue_sample_to_file)
+XEN_NARGIFY_1(g_continue_frame_to_file_w, g_continue_frame_to_file)
+XEN_NARGIFY_4(g_sample_to_file_w, g_sample_to_file)
+XEN_NARGIFY_2(g_sample_to_file_add_w, g_sample_to_file_add)
+XEN_NARGIFY_1(g_frame_to_file_p_w, g_frame_to_file_p)
+XEN_NARGIFY_3(g_frame_to_file_w, g_frame_to_file)
+XEN_ARGIFY_5(g_make_frame_to_file_w, g_make_frame_to_file)
+XEN_NARGIFY_1(g_input_p_w, g_input_p)
+XEN_NARGIFY_1(g_output_p_w, g_output_p)
+XEN_NARGIFY_3(g_in_any_w, g_in_any)
+XEN_NARGIFY_2(g_ina_w, g_ina)
+XEN_NARGIFY_2(g_inb_w, g_inb)
+XEN_ARGIFY_4(g_out_any_w, g_out_any)
+XEN_ARGIFY_3(g_outa_w, g_outa)
+XEN_ARGIFY_3(g_outb_w, g_outb)
+XEN_ARGIFY_3(g_outc_w, g_outc)
+XEN_ARGIFY_3(g_outd_w, g_outd)
+XEN_NARGIFY_1(g_mus_close_w, g_mus_close)
+XEN_NARGIFY_0(g_mus_file_buffer_size_w, g_mus_file_buffer_size)
+XEN_NARGIFY_1(g_mus_set_file_buffer_size_w, g_mus_set_file_buffer_size)
+XEN_NARGIFY_1(g_readin_p_w, g_readin_p)
+XEN_NARGIFY_1(g_readin_w, g_readin)
+XEN_VARGIFY(g_make_readin_w, g_make_readin)
+XEN_NARGIFY_1(g_mus_channel_w, g_mus_channel)
+XEN_NARGIFY_1(g_mus_interp_type_w, g_mus_interp_type)
+XEN_NARGIFY_1(g_mus_location_w, g_mus_location)
+XEN_NARGIFY_2(g_mus_set_location_w, g_mus_set_location)
+XEN_NARGIFY_1(g_mus_increment_w, g_mus_increment)
+XEN_NARGIFY_2(g_mus_set_increment_w, g_mus_set_increment)
+XEN_NARGIFY_1(g_mus_feedback_w, g_mus_feedback)
+XEN_NARGIFY_2(g_mus_set_feedback_w, g_mus_set_feedback)
+XEN_NARGIFY_1(g_locsig_p_w, g_locsig_p)
+XEN_NARGIFY_3(g_locsig_w, g_locsig)
+XEN_VARGIFY(g_make_locsig_w, g_make_locsig)
+XEN_NARGIFY_3(g_move_locsig_w, g_move_locsig)
+XEN_NARGIFY_0(g_locsig_type_w, g_locsig_type)
+XEN_NARGIFY_1(g_set_locsig_type_w, g_set_locsig_type)
+XEN_NARGIFY_1(g_mus_channels_w, g_mus_channels)
+XEN_NARGIFY_2(g_locsig_ref_w, g_locsig_ref)
+XEN_NARGIFY_2(g_locsig_reverb_ref_w, g_locsig_reverb_ref)
+XEN_NARGIFY_3(g_locsig_set_w, g_locsig_set)
+XEN_NARGIFY_3(g_locsig_reverb_set_w, g_locsig_reverb_set)
+XEN_NARGIFY_1(g_move_sound_p_w, g_move_sound_p)
+XEN_NARGIFY_3(g_move_sound_w, g_move_sound)
+XEN_ARGIFY_3(g_make_move_sound_w, g_make_move_sound)
+XEN_NARGIFY_0(g_mus_clear_sincs_w, g_mus_clear_sincs)
+XEN_NARGIFY_1(g_src_p_w, g_src_p)
+XEN_ARGIFY_3(g_src_w, g_src)
+XEN_ARGIFY_6(g_make_src_w, g_make_src)
+XEN_NARGIFY_1(g_granulate_p_w, g_granulate_p)
+XEN_ARGIFY_3(g_granulate_w, g_granulate)
+XEN_VARGIFY(g_make_granulate_w, g_make_granulate)
+XEN_NARGIFY_1(g_mus_ramp_w, g_mus_ramp)
+XEN_NARGIFY_2(g_mus_set_ramp_w, g_mus_set_ramp)
+XEN_NARGIFY_1(g_convolve_p_w, g_convolve_p)
+XEN_ARGIFY_2(g_convolve_w, g_convolve)
+XEN_VARGIFY(g_make_convolve_w, g_make_convolve)
+XEN_ARGIFY_4(g_convolve_files_w, g_convolve_files)
+XEN_NARGIFY_1(g_phase_vocoder_p_w, g_phase_vocoder_p)
+XEN_ARGIFY_5(g_phase_vocoder_w, g_phase_vocoder)
+XEN_VARGIFY(g_make_phase_vocoder_w, g_make_phase_vocoder)
+XEN_NARGIFY_1(g_phase_vocoder_amp_increments_w, g_phase_vocoder_amp_increments)
+XEN_NARGIFY_1(g_phase_vocoder_amps_w, g_phase_vocoder_amps)
+XEN_NARGIFY_1(g_phase_vocoder_freqs_w, g_phase_vocoder_freqs)
+XEN_NARGIFY_1(g_phase_vocoder_phases_w, g_phase_vocoder_phases)
+XEN_NARGIFY_1(g_phase_vocoder_phase_increments_w, g_phase_vocoder_phase_increments)
+XEN_NARGIFY_1(g_mus_hop_w, g_mus_hop)
+XEN_NARGIFY_2(g_mus_set_hop_w, g_mus_set_hop)
+XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
+XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
+XEN_ARGIFY_3(g_ssb_am_w, g_ssb_am)
+XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
+XEN_NARGIFY_4(g_ssb_bank_w, g_ssb_bank)
+XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
+XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
+XEN_NARGIFY_0(g_clm_default_frequency_w, g_clm_default_frequency)
+XEN_NARGIFY_1(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
+XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
+XEN_NARGIFY_1(g_mus_frandom_w, g_mus_frandom)
+XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
+XEN_ARGIFY_4(g_make_oscil_w, g_make_oscil)
+XEN_ARGIFY_4(g_make_ncos_w, g_make_ncos)
+XEN_ARGIFY_4(g_make_nsin_w, g_make_nsin)
+XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
+
+XEN_NARGIFY_0(g_mus_make_generator_type_w, g_mus_make_generator_type)
+
+#else
+#define g_mus_srate_w g_mus_srate
+#define g_mus_set_srate_w g_mus_set_srate
+#define g_mus_float_equal_fudge_factor_w g_mus_float_equal_fudge_factor
+#define g_mus_set_float_equal_fudge_factor_w g_mus_set_float_equal_fudge_factor
+#define g_mus_array_print_length_w g_mus_array_print_length
+#define g_mus_set_array_print_length_w g_mus_set_array_print_length
+#define g_radians_to_hz_w g_radians_to_hz
+#define g_hz_to_radians_w g_hz_to_radians
+#define g_radians_to_degrees_w g_radians_to_degrees
+#define g_degrees_to_radians_w g_degrees_to_radians
+#define g_db_to_linear_w g_db_to_linear
+#define g_linear_to_db_w g_linear_to_db
+#define g_seconds_to_samples_w g_seconds_to_samples
+#define g_samples_to_seconds_w g_samples_to_seconds
+#define g_ring_modulate_w g_ring_modulate
+#define g_amplitude_modulate_w g_amplitude_modulate
+#define g_contrast_enhancement_w g_contrast_enhancement
+#define g_dot_product_w g_dot_product
+#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
+#define g_edot_product_w g_edot_product
+#endif
+#define g_clear_array_w g_clear_array
+#define g_polynomial_w g_polynomial
+#define g_multiply_arrays_w g_multiply_arrays
+#define g_make_fft_window_w g_make_fft_window
+#define g_mus_fft_w g_mus_fft
+#define g_spectrum_w g_spectrum
+#define g_autocorrelate_w g_autocorrelate
+#define g_correlate_w g_correlate
+#define g_convolution_w g_convolution
+#define g_rectangular_to_polar_w g_rectangular_to_polar
+#define g_rectangular_to_magnitudes_w g_rectangular_to_magnitudes
+#define g_polar_to_rectangular_w g_polar_to_rectangular
+#define g_array_interp_w g_array_interp
+#define g_mus_interpolate_w g_mus_interpolate
+#define g_mus_describe_w g_mus_describe
+#define g_mus_name_w g_mus_name
+#define g_mus_set_name_w g_mus_set_name
+#define g_mus_run_w g_mus_run
+#define g_mus_phase_w g_mus_phase
+#define g_mus_set_phase_w g_mus_set_phase
+#define g_mus_scaler_w g_mus_scaler
+#define g_mus_set_scaler_w g_mus_set_scaler
+#define g_mus_safety_w g_mus_safety
+#define g_mus_set_safety_w g_mus_set_safety
+#define g_mus_feedforward_w g_mus_feedforward
+#define g_mus_set_feedforward_w g_mus_set_feedforward
+#define g_mus_width_w g_mus_width
+#define g_mus_set_width_w g_mus_set_width
+#define g_mus_reset_w g_mus_reset
+#define g_mus_offset_w g_mus_offset
+#define g_mus_set_offset_w g_mus_set_offset
+#define g_mus_frequency_w g_mus_frequency
+#define g_mus_set_frequency_w g_mus_set_frequency
+#define g_mus_length_w g_mus_length
+#define g_mus_type_w g_mus_type
+#define g_mus_order_w g_mus_order
+#define g_mus_file_name_w g_mus_file_name
+#define g_mus_set_length_w g_mus_set_length
+#define g_mus_data_w g_mus_data
+#define g_mus_set_data_w g_mus_set_data
+#define g_oscil_p_w g_oscil_p
+#define g_make_oscil_w g_make_oscil
+#define g_oscil_w g_oscil
+#define g_mus_apply_w g_mus_apply
+#define g_make_delay_w g_make_delay
+#define g_make_comb_w g_make_comb
+#define g_make_filtered_comb_w g_make_filtered_comb
+#define g_make_notch_w g_make_notch
+#define g_make_all_pass_w g_make_all_pass
+#define g_make_moving_average_w g_make_moving_average
+#define g_delay_w g_delay
+#define g_delay_tick_w g_delay_tick
+#define g_tap_w g_tap
+#define g_notch_w g_notch
+#define g_comb_w g_comb
+#define g_filtered_comb_w g_filtered_comb
+#define g_all_pass_w g_all_pass
+#define g_moving_average_w g_moving_average
+#define g_delay_p_w g_delay_p
+#define g_notch_p_w g_notch_p
+#define g_comb_p_w g_comb_p
+#define g_filtered_comb_p_w g_filtered_comb_p
+#define g_all_pass_p_w g_all_pass_p
+#define g_moving_average_p_w g_moving_average_p
+
+#define g_make_ncos_w g_make_ncos
+#define g_ncos_w g_ncos
+#define g_ncos_p_w g_ncos_p
+#define g_make_nsin_w g_make_nsin
+#define g_nsin_w g_nsin
+#define g_nsin_p_w g_nsin_p
+
+#define g_make_rand_w g_make_rand
+#define g_make_rand_interp_w g_make_rand_interp
+#define g_rand_w g_rand
+#define g_rand_interp_w g_rand_interp
+#define g_rand_p_w g_rand_p
+#define g_rand_interp_p_w g_rand_interp_p
+#define g_mus_random_w g_mus_random
+#define g_mus_rand_seed_w g_mus_rand_seed
+#define g_mus_set_rand_seed_w g_mus_set_rand_seed
+#define g_table_lookup_p_w g_table_lookup_p
+#define g_make_table_lookup_w g_make_table_lookup
+#define g_table_lookup_w g_table_lookup
+#define g_partials_to_wave_w g_partials_to_wave
+#define g_phase_partials_to_wave_w g_phase_partials_to_wave
+#define g_make_sawtooth_wave_w g_make_sawtooth_wave
+#define g_sawtooth_wave_w g_sawtooth_wave
+#define g_sawtooth_wave_p_w g_sawtooth_wave_p
+#define g_make_triangle_wave_w g_make_triangle_wave
+#define g_triangle_wave_w g_triangle_wave
+#define g_triangle_wave_p_w g_triangle_wave_p
+#define g_make_square_wave_w g_make_square_wave
+#define g_square_wave_w g_square_wave
+#define g_square_wave_p_w g_square_wave_p
+#define g_make_pulse_train_w g_make_pulse_train
+#define g_pulse_train_w g_pulse_train
+#define g_pulse_train_p_w g_pulse_train_p
+#define g_make_asymmetric_fm_w g_make_asymmetric_fm
+#define g_asymmetric_fm_w g_asymmetric_fm
+#define g_asymmetric_fm_p_w g_asymmetric_fm_p
+#define g_make_one_zero_w g_make_one_zero
+#define g_one_zero_w g_one_zero
+#define g_one_zero_p_w g_one_zero_p
+#define g_make_one_pole_w g_make_one_pole
+#define g_one_pole_w g_one_pole
+#define g_one_pole_p_w g_one_pole_p
+#define g_make_two_zero_w g_make_two_zero
+#define g_two_zero_w g_two_zero
+#define g_two_zero_p_w g_two_zero_p
+#define g_make_two_pole_w g_make_two_pole
+#define g_two_pole_w g_two_pole
+#define g_two_pole_p_w g_two_pole_p
+#define g_formant_bank_w g_formant_bank
+
+#define g_formant_p_w g_formant_p
+#define g_make_formant_w g_make_formant
+#define g_formant_w g_formant
+
+#define g_firmant_p_w g_firmant_p
+#define g_make_firmant_w g_make_firmant
+#define g_firmant_w g_firmant
+
+#define g_set_formant_radius_and_frequency_w g_set_formant_radius_and_frequency
+#define g_make_frame_w g_make_frame
+#define g_make_frame_unchecked_w g_make_frame_unchecked
+#define g_frame_w g_frame
+#define g_frame_p_w g_frame_p
+#define g_frame_add_w g_frame_add
+#define g_frame_multiply_w g_frame_multiply
+#define g_frame_ref_w g_frame_ref
+#define g_frame_set_w g_frame_set
+#define g_make_mixer_w g_make_mixer
+#define g_make_mixer_unchecked_w g_make_mixer_unchecked
+#define g_mixer_w g_mixer
+#define g_mixer_p_w g_mixer_p
+#define g_mixer_multiply_w g_mixer_multiply
+#define g_mixer_add_w g_mixer_add
+#define g_make_scalar_mixer_w g_make_scalar_mixer
+#define g_mixer_ref_w g_mixer_ref
+#define g_mixer_set_w g_mixer_set
+#define g_frame_to_sample_w g_frame_to_sample
+#define g_frame_to_list_w g_frame_to_list
+#define g_frame_to_frame_w g_frame_to_frame
+#define g_sample_to_frame_w g_sample_to_frame
+#define g_make_wave_train_w g_make_wave_train
+#define g_wave_train_w g_wave_train
+#define g_wave_train_p_w g_wave_train_p
+#define g_make_polyshape_w g_make_polyshape
+#define g_polyshape_w g_polyshape
+#define g_polyshape_p_w g_polyshape_p
+#define g_partials_to_polynomial_w g_partials_to_polynomial
+#define g_normalize_partials_w g_normalize_partials
+#define g_chebyshev_t_sum_w g_chebyshev_t_sum
+#define g_chebyshev_u_sum_w g_chebyshev_u_sum
+#define g_chebyshev_tu_sum_w g_chebyshev_tu_sum
+#define g_make_polywave_w g_make_polywave
+#define g_polywave_w g_polywave
+#define g_polywave_p_w g_polywave_p
+
+#define g_make_nrxysin_w g_make_nrxysin
+#define g_nrxysin_w g_nrxysin
+#define g_nrxysin_p_w g_nrxysin_p
+#define g_make_nrxycos_w g_make_nrxycos
+#define g_nrxycos_w g_nrxycos
+#define g_nrxycos_p_w g_nrxycos_p
+
+#define g_make_filter_w g_make_filter
+#define g_filter_w g_filter
+#define g_filter_p_w g_filter_p
+#define g_make_fir_filter_w g_make_fir_filter
+#define g_make_fir_coeffs_w g_make_fir_coeffs
+#define g_fir_filter_w g_fir_filter
+#define g_fir_filter_p_w g_fir_filter_p
+#define g_make_iir_filter_w g_make_iir_filter
+#define g_iir_filter_w g_iir_filter
+#define g_iir_filter_p_w g_iir_filter_p
+#define g_mus_xcoeffs_w g_mus_xcoeffs
+#define g_mus_xcoeff_w g_mus_xcoeff
+#define g_mus_set_xcoeff_w g_mus_set_xcoeff
+#define g_mus_ycoeffs_w g_mus_ycoeffs
+#define g_mus_ycoeff_w g_mus_ycoeff
+#define g_mus_set_ycoeff_w g_mus_set_ycoeff
+#define g_env_p_w g_env_p
+#define g_env_w g_env
+#define g_make_env_w g_make_env
+#define g_env_interp_w g_env_interp
+#define g_env_any_w g_env_any
+#define g_file_to_sample_p_w g_file_to_sample_p
+#define g_make_file_to_sample_w g_make_file_to_sample
+#define g_file_to_sample_w g_file_to_sample
+#define g_file_to_frame_p_w g_file_to_frame_p
+#define g_make_file_to_frame_w g_make_file_to_frame
+#define g_file_to_frame_w g_file_to_frame
+#define g_sample_to_file_p_w g_sample_to_file_p
+#define g_make_sample_to_file_w g_make_sample_to_file
+#define g_continue_sample_to_file_w g_continue_sample_to_file
+#define g_continue_frame_to_file_w g_continue_frame_to_file
+#define g_sample_to_file_w g_sample_to_file
+#define g_sample_to_file_add_w g_sample_to_file_add
+#define g_frame_to_file_p_w g_frame_to_file_p
+#define g_frame_to_file_w g_frame_to_file
+#define g_make_frame_to_file_w g_make_frame_to_file
+#define g_input_p_w g_input_p
+#define g_output_p_w g_output_p
+#define g_in_any_w g_in_any
+#define g_ina_w g_ina
+#define g_inb_w g_inb
+#define g_out_any_w g_out_any
+#define g_outa_w g_outa
+#define g_outb_w g_outb
+#define g_outc_w g_outc
+#define g_outd_w g_outd
+#define g_mus_close_w g_mus_close
+#define g_mus_file_buffer_size_w g_mus_file_buffer_size
+#define g_mus_set_file_buffer_size_w g_mus_set_file_buffer_size
+#define g_readin_p_w g_readin_p
+#define g_readin_w g_readin
+#define g_make_readin_w g_make_readin
+#define g_mus_channel_w g_mus_channel
+#define g_mus_interp_type_w g_mus_interp_type
+#define g_mus_location_w g_mus_location
+#define g_mus_set_location_w g_mus_set_location
+#define g_mus_increment_w g_mus_increment
+#define g_mus_set_increment_w g_mus_set_increment
+#define g_mus_feedback_w g_mus_feedback
+#define g_mus_set_feedback_w g_mus_set_feedback
+#define g_locsig_p_w g_locsig_p
+#define g_locsig_w g_locsig
+#define g_make_locsig_w g_make_locsig
+#define g_move_locsig_w g_move_locsig
+#define g_locsig_type_w g_locsig_type
+#define g_set_locsig_type_w g_set_locsig_type
+#define g_mus_channels_w g_mus_channels
+#define g_locsig_ref_w g_locsig_ref
+#define g_locsig_reverb_ref_w g_locsig_reverb_ref
+#define g_locsig_set_w g_locsig_set
+#define g_locsig_reverb_set_w g_locsig_reverb_set
+#define g_move_sound_p_w g_move_sound_p
+#define g_move_sound_w g_move_sound
+#define g_make_move_sound_w g_make_move_sound
+#define g_mus_clear_sincs_w g_mus_clear_sincs
+#define g_src_p_w g_src_p
+#define g_src_w g_src
+#define g_make_src_w g_make_src
+#define g_granulate_p_w g_granulate_p
+#define g_granulate_w g_granulate
+#define g_make_granulate_w g_make_granulate
+#define g_mus_ramp_w g_mus_ramp
+#define g_mus_set_ramp_w g_mus_set_ramp
+#define g_convolve_p_w g_convolve_p
+#define g_convolve_w g_convolve
+#define g_make_convolve_w g_make_convolve
+#define g_convolve_files_w g_convolve_files
+#define g_phase_vocoder_p_w g_phase_vocoder_p
+#define g_phase_vocoder_w g_phase_vocoder
+#define g_make_phase_vocoder_w g_make_phase_vocoder
+#define g_phase_vocoder_amp_increments_w g_phase_vocoder_amp_increments
+#define g_phase_vocoder_amps_w g_phase_vocoder_amps
+#define g_phase_vocoder_freqs_w g_phase_vocoder_freqs
+#define g_phase_vocoder_phases_w g_phase_vocoder_phases
+#define g_phase_vocoder_phase_increments_w g_phase_vocoder_phase_increments
+#define g_mus_hop_w g_mus_hop
+#define g_mus_set_hop_w g_mus_set_hop
+#define g_mus_mix_w g_mus_mix
+#define g_make_ssb_am_w g_make_ssb_am
+#define g_ssb_am_w g_ssb_am
+#define g_ssb_am_p_w g_ssb_am_p
+#define g_ssb_bank_w g_ssb_bank
+#define g_clm_table_size_w g_clm_table_size
+#define g_set_clm_table_size_w g_set_clm_table_size
+#define g_clm_default_frequency_w g_clm_default_frequency
+#define g_set_clm_default_frequency_w g_set_clm_default_frequency
+#define g_mus_generator_p_w g_mus_generator_p
+#define g_mus_frandom_w g_mus_frandom
+#define g_mus_irandom_w g_mus_irandom
+
+#define g_mus_make_generator_type_w g_mus_make_generator_type
+#endif
+
+
 static void mus_xen_init(void)
 {
   mus_initialize();
@@ -12862,6 +12929,10 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
 
+
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_make_generator_type, g_mus_make_generator_type_w, 0, 0, 0, H_mus_make_generator_type);
+
+
 #if HAVE_SCHEME
   init_choosers(s7);
 #if 0
@@ -12929,6 +13000,17 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
     struct timezone z0;
     gettimeofday(&overall_start_time, &z0);
   }
+#endif
+
+#if HAVE_SCHEME
+  s7_eval_c_string(s7, "(define-macro (run . code) \n\
+                          (if (and (symbol? (caar code)) \n\
+                                   (string=? (symbol->string (caar code)) \"lambda\"))   \n\
+                              `(,@code) \n\
+                              `((lambda () ,@code))))");
+  s7_eval_c_string(s7, "(define-macro (declare . args) #f)");
+  s7_eval_c_string(s7, "(define optimization (make-procedure-with-setter (lambda () 0) (lambda (val) 0)))");
+  XEN_DEFINE_HOOK("optimization-hook", "(make-hook 'message)", 1, "a no-op");
 #endif
 }
 

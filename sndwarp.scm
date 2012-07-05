@@ -179,7 +179,7 @@
 	   (overlap-ratio-compl 0.0)
 	   (outa-val 0.0)
 	   (outb-val 0.0))
-      (run
+
        (do ((overlap 0 (+ 1 overlap)))
 	   ((or eow-flag (= overlap overlaps)))
 	 (set! overlap-ratio (/ overlap overlaps))
@@ -299,7 +299,7 @@
 		   ;; For first section, have to backup readstart
 		   (if (and (= section 0) (> overlap 0) (not time-ptr))
 		       (set! readstart (- readstart (round (* fsr winlen overlap-ratio-compl)))))))
-	     (set! writestart (+ writestart winsamps)))))))))
+	     (set! writestart (+ writestart winsamps))))))))
 
 
 

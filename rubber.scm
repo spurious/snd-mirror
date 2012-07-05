@@ -50,7 +50,6 @@
 	   (sum 0.0)
 	   (last-cross 0)
 	   (silence (* extension .001)))
-      (run
        (do ((i 0 (+ 1 i)))
 	   ((= i len))
 	 (let ((samp1 (next-sample sr0)))
@@ -63,7 +62,7 @@
 		     (set! last-cross i)
 		     (set! sum 0.0))))
 	   (set! sum (+ sum (abs samp0)))
-	   (set! samp0 samp1))))
+	   (set! samp0 samp1)))
       crosses))
   
   (define (env-add s0 s1 samps)
@@ -72,12 +71,11 @@
 	  (xinc (/ 1.0 samps))
 	  (sr0 (make-sampler (floor s0)))
 	  (sr1 (make-sampler (floor s1))))
-      (run
        (do ((i 0 (+ 1 i)))
 	   ((= i samps))
 	 (set! (data i) (+ (* x (next-sample sr0))
 			     (* (- 1.0 x) (next-sample sr1))))
-	 (set! x (+ x xinc))))
+	 (set! x (+ x xinc)))
       data))
   
   (as-one-edit
@@ -90,7 +88,6 @@
 	    (cross-weights (make-vct crosses))
 	    (cross-marks (make-vct crosses))
 	    (cross-periods (make-vct crosses)))
-       (run
 	(let* ((sr0 (make-sampler 0 snd chn)) ;; get cross points (sample numbers)
 	       (samp0 (next-sample sr0))
 	       (len (frames))
@@ -111,10 +108,9 @@
 		    (set! (cross-samples cross) i)
 		    (set! cross (+ cross 1))))
 	      (set! sum (+ sum (abs samp0)))
-	      (set! samp0 samp1)))))
+	      (set! samp0 samp1))))
        
        ;; now run through crosses getting period match info
-       (run
 	(do ((i 0 (+ 1 i)))
 	    ((= i (- crosses 1)))
 	  (let ((start (floor (cross-samples i)))
@@ -203,7 +199,7 @@
 		      (set! (cross-periods i) (- (cross-samples current-mark) (cross-samples i)))
 		      ))
 		))
-	    )))
+	    ))
        ;; now sort weights to scatter the changes as evenly as possible
        (let* ((len (frames snd chn))
 	      (adding (> stretch 1.0))
@@ -214,7 +210,6 @@
 	      (curs 0)
 	      (weights (length cross-weights))
 	      (edits (make-vct weights)))
-	 (run
 	  (do ()
 	      ((or (= curs weights) (>= handled needed-samps)))
 	    ;; need to find (more than) enough splice points to delete samps
@@ -237,7 +232,7 @@
 		    (set! (edits curs) best-mark)
 		    (set! curs (+ 1 curs))))
 	      (set! (cross-weights best-mark) 1000.0)))
-	  )
+	  
 	 (if (>= curs weights)
 	     (set! mult (ceiling (/ needed-samps handled))))
 	 

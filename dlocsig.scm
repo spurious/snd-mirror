@@ -3067,10 +3067,9 @@
 	 (end (caddr vals)))
     (let* ((osc (make-oscil :frequency freq))
 	   (aenv (make-env :envelope amp-env :scaler amp :duration duration)))
-      (run
        (do ((i beg (+ 1 i)))
 	   ((= i end))
-	 (dlocsig dloc i (* (env aenv) (oscil osc))))))))
+	 (dlocsig dloc i (* (env aenv) (oscil osc)))))))
 
 (with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 

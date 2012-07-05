@@ -1,6 +1,6 @@
 Snd change log
 
- 3-July:    removed ptree-channel and max-virtual-ptrees.
+ 3-July:    removed ptree-channel and max-virtual-ptrees, optimization, run.c.
  26-Jun:    Snd 12.12.
  4-Jun:     removed the --with-static-* configuration switches.
  21-May:    Snd 12.11.

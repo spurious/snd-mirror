@@ -93,13 +93,12 @@
 			   :duration dur :scaler (hz->radians (- freq1 freq0))))
 	 (rfreq-f (make-env (stretch-envelope rfreqfun 25 rfreq-attack 75 rfreq-decay)
 			    :duration dur :scaler (hz->radians (- rfreq1 rfreq0)))))
-    (run
      (do ((i beg (+ 1 i)))
 	 ((= i end))
        (locsig loc i (* (env amp-f)
 			(oscil carrier (+ (env freq-f)
 					  (* (+ dev-0 (env dev-f)) 
-					     (rand modulator (env rfreq-f)))))))))))
+					     (rand modulator (env rfreq-f))))))))))
 
 ;; (let* ((ofile "test.snd")
 ;;        (snd (find-sound ofile)))

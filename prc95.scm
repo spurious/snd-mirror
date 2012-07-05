@@ -90,11 +90,10 @@
 	((= i len))
       (set! dout (delaya delayline (+ (* 0.99 dout)
 				      (* maxa (- 1.0 (random 2.0)))))))
-    (run
      (do ((i start (+ 1 i)))
 	 ((= i end))
        (set! dout (delaya delayline (one-zero filter dout)))
-       (outa i (* amplitude dout))))))
+       (outa i (* amplitude dout)))))
 
 
 ;;; freq is off in this one (in prc's original also)
@@ -121,7 +120,6 @@
 	 (neckout 0.0))
     (set-pole filt 0.6)
     (set-gain filt 0.3)
-    (run
      (do ((i st (+ 1 i)))
 	 ((= i end))
        (let ((bridgerefl 0.0)
@@ -151,7 +149,7 @@
 		   (set! bowing #f)
 		   (set! attackrate .0005)))
 	     (set! ctr (+ ctr 1))
-	     (outa i result))))))))
+	     (outa i result)))))))
 
 
 (definstrument (brass beg dur freq amplitude maxa)
@@ -171,7 +169,6 @@
 	 (release (floor (* .8 durlen)))
 	 (ctr 0)
 	 (dout 0.0))
-    (run
      (do ((i st (+ 1 i)))
 	 ((= i end))
        (if blowing
@@ -191,7 +188,7 @@
 	       (set! blowing #f)
 	       (set! attackrate .0005)))
 	 (set! ctr (+ ctr 1))
-	 (outa i result))))))
+	 (outa i result)))))
 
 
 (definstrument (clarinet beg dur freq amplitude maxa)
@@ -211,7 +208,6 @@
 	 (ctr 0)
 	 (release (floor (* .8 durlen)))
 	 (dlyout 0.0))
-    (run
      (do ((i st (+ 1 i)))
 	 ((= i end))
        (let ((pressurediff 0.0))
@@ -233,7 +229,7 @@
 		 (set! blowing #f)
 		 (set! attackrate .0005)))
 	   (set! ctr (+ ctr 1))
-	   (outa i result)))))))
+	   (outa i result))))))
 
 
 (definstrument (flute beg dur freq amplitude maxa)
@@ -261,7 +257,6 @@
 	 (boreout 0.0))
     (set-pole filter 0.8)
     (set-gain filter -1.0)
-    (run
      (do ((i st (+ 1 i)))
 	 ((= i end))
        (let ((randpressure (* 0.1 breathpressure (random 1.0)))
@@ -290,7 +285,7 @@
 		 (set! blowing #f)
 		 (set! attackrate .0005)))
 	   (set! ctr (+ ctr 1))
-	   (outa i result)))))))
+	   (outa i result))))))
 
 #|
 (with-sound ()

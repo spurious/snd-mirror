@@ -2323,6 +2323,8 @@ just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
 use augment-environment!.  Both of these functions accept nil as the
 'env' argument as shorthand for <code>(global-environment)</code>.
+Both also accept other environments as well as individual bindings,
+adding all the argument's bindings to the new environment.
 </p>
 
 <blockquote>

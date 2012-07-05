@@ -10674,10 +10674,10 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;           ^: too many arguments
 ;    (format #f "~D" 1 2)
 
-(test (format "~D~" 1) 'error)
+(test (format #f "~D~" 1) 'error)
 ;format: "~D~" 1
 ;           ^: control string ends in tilde
-;    (format "~D~" 1)
+;    (format #f "~D~" 1)
 
 (test (format #f "~@D" 1) 'error)
 ;format "~@D" 1: unknown '@' directive

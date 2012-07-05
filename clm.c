@@ -115,28 +115,6 @@ struct mus_any_class {
 };
 
 
-void mus_any_class_set_length(mus_any_class *p, mus_long_t (*length)(mus_any *ptr)) {p->length = length;}
-void mus_any_class_set_channels(mus_any_class *p, int (*channels)(mus_any *ptr)) {p->channels = channels;}
-void mus_any_class_set_location(mus_any_class *p, mus_long_t (*location)(mus_any *ptr)) {p->location = location;}
-void mus_any_class_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type) {p->extended_type = extended_type;}
-void mus_any_class_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan)) {p->read_sample = read_sample;}
-void mus_any_class_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr)) {p->file_name = file_name;}
-
-mus_any_class *mus_make_mus_any_class(int type, char *name, 
-				      int (*release)(mus_any *ptr), 
-				      char *(*describe)(mus_any *ptr), 
-				      bool (*equalp)(mus_any *gen1, mus_any *gen2))
-{
-  mus_any_class *p;
-  p = (mus_any_class *)calloc(1, sizeof(mus_any_class));
-  p->type = type;
-  p->name = name;
-  p->release = release;
-  p->describe = describe;
-  p->equalp = equalp;
-  return(p);
-}
-
 
 enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
@@ -150,6 +128,34 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_INITIAL_GEN_TAG};
 
 
+
+void mus_generator_set_length(mus_any_class *p, mus_long_t (*length)(mus_any *ptr)) {p->length = length;}
+void mus_generator_set_channels(mus_any_class *p, int (*channels)(mus_any *ptr)) {p->channels = channels;}
+void mus_generator_set_location(mus_any_class *p, mus_long_t (*location)(mus_any *ptr)) {p->location = location;}
+void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type) {p->extended_type = extended_type;}
+void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan)) {p->read_sample = read_sample;}
+void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr)) {p->file_name = file_name;}
+
+mus_any_class *mus_make_generator(int type, char *name, 
+				  int (*release)(mus_any *ptr), 
+				  char *(*describe)(mus_any *ptr), 
+				  bool (*equalp)(mus_any *gen1, mus_any *gen2))
+{
+  mus_any_class *p;
+  p = (mus_any_class *)calloc(1, sizeof(mus_any_class));
+  p->type = type;
+  p->name = name;
+  p->release = release;
+  p->describe = describe;
+  p->equalp = equalp;
+  return(p);
+}
+
+static int mus_generator_type = MUS_INITIAL_GEN_TAG;
+
+int mus_make_generator_type(void) {return(mus_generator_type++);}
+
+
 static const char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
 
 static const char *interp_type_to_string(int type)
@@ -158,11 +164,6 @@ static const char *interp_type_to_string(int type)
     return(interp_name[type]);
   return("unknown");
 }
-
-
-static int mus_class_tag = MUS_INITIAL_GEN_TAG;
-
-int mus_make_class_tag(void) {return(mus_class_tag++);}
 
 
 static mus_float_t sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
@@ -12355,7 +12356,7 @@ void mus_initialize(void)
   #define ALAW_ZERO 213
   #define UBYTE_ZERO 128
 
-  mus_class_tag = MUS_INITIAL_GEN_TAG;
+  mus_generator_type = MUS_INITIAL_GEN_TAG;
   sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
   w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
   array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;

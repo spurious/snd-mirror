@@ -132,17 +132,6 @@ var extsnd_dataformat_tip = "<code>(data-format snd)</code>: snd's data format (
 
 var extsnd_datalocation_tip = "<code>(data-location snd)</code>: snd's data location (bytes)";
 
-var extsnd_declare_tip = "Functions embedded within run may need to declare the type of their arguments;<br>" +
-                         " run assumes each variable has one type (integer by default) throughout its life.<br>" +
-                         " So, the following code displays \"0\", rather than \"3.14\":<br><br>" +
-                         " <code>  (run (let ((x 3.14)) (define (a b) (display b)) (a x)))</code><br><br>" +
-                         " The \"b\" argument to \"a\" is assumed to be an integer, and passing in a float<br>" +
-                         " causes nothing but confusion.  To get this code to work right:<br><br>" +
-                         " <code>  (run (let ((x 3.14)) (define (a b) (<b>declare</b> (b real)) (display b)) (a x)))</code><br><br>" +
-                         " The current declarable types include:<br><br>" +
-                         " <code>    int float boolean char string list symbol keyword vct sampler mix-sampler</code><br>" +
-                         " <code>    sound-data clm float-vector int-vector vct-vector list-vector clm-vector</code>";
-
 var extsnd_defineenvelope_tip = "<code>(define-envelope name data)</code>: define 'name' to have the value 'data'<br>" +
                                 " (a list of breakpoints), and load it into the envelope editor.";
 
@@ -229,12 +218,6 @@ var extsnd_filtersound_tip = "<code>(filter-sound filter order snd chn edpos ori
                              " applies FIR filter to snd's channel chn.<br>" +
                              " 'filter' is either the frequency response envelope,<br>" +
                              " a CLM filter, or a vct with the actual coefficients";
-
-var extsnd_findchannel_tip = "<code>(find-channel func (start-samp 0) snd chn edpos)</code>:<br>" +
-                             " apply func, a function of one argument, the current sample,<br>" +
-                             " to each sample in snd's channel chn, starting at 'start-samp'<br>" +
-                             " until func returns something other than #f: <br>" +
-                             " <code>  (find-channel (lambda (y) (> y .1)))</code>";
 
 var extsnd_focuswidget_tip = "<code>(focus-widget widget)</code>: cause widget to receive input focus";
 
@@ -475,11 +458,6 @@ var extsnd_openrawsoundhook_tip = "<code>open-raw-sound-hook (filename current-c
 var extsnd_opensound_tip = "<code>(open-sound filename)</code>: open filename <br>" +
                            " (as if opened from File:Open menu option), and return the new sound's index";
 
-var extsnd_optimizationhook_tip = "<code>optimization-hook (msg)</code>: called if the run macro encounters something it can't optimize.<br>" +
-                                  " 'msg' is a string description of the offending form:<br>" +
-                                  "<code>  (hook-push optimization-hook (lambda (msg) (snd-print msg)))</code>.<br>" +
-                                  "  You can often slightly rewrite the form to make run happy.";
-
 var extsnd_padchannel_tip = "<code>(pad-channel beg dur snd chn edpos)</code>: insert dur zeros at beg in snd's chn";
 
 var extsnd_peaksfont_tip = "<code>(peaks-font)</code>: normal font used by fft peak display";
@@ -499,16 +477,6 @@ var extsnd_playhook_tip = "<code>play-hook (samps)</code>: called each time a bu
 var extsnd_positiontox_tip = "<code>(position-&gt;x val snd chn (ax time-graph))</code>: x axis value corresponding to pixel val";
 
 var extsnd_previoussample_tip = "<code>(previous-sample reader)</code>: previous sample from reader";
-
-var extsnd_ptreechannel_tip = "<code>(ptree-channel proc (beg 0) (dur len) snd chn edpos peak-env-also init-func origin)</code>:<br>" +
-                              " apply 'proc' as a 'virtual edit';<br>" +
-                              " that is, the effect of 'proc' (a function of one argument, the current sample, if init-func is not specified),<br>" +
-                              " comes about as an implicit change in the way the data is read.  This is similar to scaling and some envelope<br>" +
-                              " operations in that no data actually changes.  If 'peak-env-also' is #t, the same function is applied to the peak<br>" +
-                              " env values to get the new version. If 'proc' needs some state, it can be supplied in a vct returned by 'init-func'.<br>" +
-                              " 'init-func' is a function of 2 or 3 args, the current fragment-relative begin position, the overall fragment duration,<br>" +
-                              " and optionally the read direction. In this case, 'proc' is a function of 3 args: the current sample, the vct<br>" +
-                              " returned by 'init-func', and the current read direction.";
 
 var extsnd_readmixsample_tip = "<code>(read-mix-sample reader)</code>: read sample from mix reader";
 
@@ -532,10 +500,6 @@ var extsnd_reversesound_tip = "<code>(reverse-sound snd chn edpos)</code>: rever
 var extsnd_revertsound_tip = "<code>(revert-sound snd)</code>: return 'snd' to its unedited state (undo all edits).";
 
 var extsnd_rightsample_tip = "<code>(right-sample snd chn)</code>: right sample number in time domain window";
-
-var extsnd_run_tip = "<code>(run code)</code>: try to optimize the forms (or thunk) passed as its argument,<br>" +
-                     " then evaluate it; if the optimizer can't handle something in the forms,<br>" +
-                     " it is passed to Scheme.";
 
 var extsnd_sample_tip = "<code>(sample samp snd chn edpos)</code>:<br>" +
                         " return sample samp in snd's channel chn<br>" +
@@ -737,10 +701,6 @@ var extsnd_vctadd_tip = "<code>(vct-add! v1 v2 (offset 0))</code>: element-wise 
 var extsnd_vctcopy_tip = "<code>(vct-copy v)</code>: returns a copy of vct v";
 
 var extsnd_vctfill_tip = "<code>(vct-fill! v val)</code>: set each element of v to val: v[i] = val, returns v";
-
-var extsnd_vctmap_tip = "<code>(vct-map! v proc)</code>: set each element of v to value of proc (a thunk):<br>" +
-                        " v[i] = (proc), returns v.<br>" +
-                        "<code>  (vct-map! v (lambda () 3.0))</code> is the same as <code>(vct-fill! v 3.0)</code>";
 
 var extsnd_vctmove_tip = "<code>(vct-move! obj new old backwards)</code>: moves vct obj data from old to new:<br>" +
                          " v[new++] = v[old++], or v[new--] = v[old--] if backwards is #f.";
@@ -1002,9 +962,6 @@ var sndclm_mus_length_tip = "<code>(mus-length gen)</code>: gen's length";
 
 var sndclm_mus_offset_tip = "<code>(mus-offset gen)</code>: gen's offset";
 
-var sndclm_mus_random_tip = "<code>(mus-random val)</code>: a random number between -val and val.<br>" +
-                            " the built-in 'random' function returns values between 0 and its argument";
-
 var sndclm_mus_scaler_tip = "<code>(mus-scaler gen)</code>: gen's scaler, if any.<br>" +
                             "  This is often an amplitude adjustment of some sort.";
 
@@ -1078,8 +1035,7 @@ var sndscm_channelproperty_tip = "<code>(channel-property key snd chn)</code>: r
                                  "<code>  (set! (channel-property 'info 0 0) \"this is sound 0, first channel\")</code><br>" +
                                  " now <code>(channel-property 'info 0 0)</code> returns \"this is sound 0, first channel\".";
 
-var sndclm_defgenerator_tip = "defgenerator sets up a structure, an object with named slots that you can get and set,<br>" +
-                                " and ties it into the optimizer so that you can use the structures without any speed penalty.<br>" +
+var sndclm_defgenerator_tip = "defgenerator sets up a structure, an object with named slots that you can get and set.<br>" +
                                 " It also defines a \"make\" function to create an instance of the structure, and a predicate for it.<br><br>" +
                                 "<code>    (defgenerator osc freq phase)</code><br><br>" +
                                 " defines a struct named \"osc\" with the (float) fields freq and phase.<br>" +

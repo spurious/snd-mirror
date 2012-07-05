@@ -1132,41 +1132,6 @@ displays.  log-freq-start to the rescue?  For other ideas along these lines, see
 <div class="spacer"></div>
 
 
-<!-- optimization -->
-<pre class="indented">
-<em class=def id="optimization">optimization</em> (default: 6)
-</pre>
-
-<p>optimization affects optimization levels in Scheme.
-If non-zero, it causes Snd to try to optimize simple lambda forms passed to the searches and so forth.
-This applies only to s7.
-The actual values of the optimization switch are:
-</p>
-
-<pre class="indented">
-0:  no optimization (use the standard Scheme parser/evaluator)
-1:  optimize simple stuff (if complex result possible, give up)
-2:  assume nothing will return a complex number
-3:  if an undefined variable is encountered, try to guess its type
-4:  make questionable assumptions about variable types
-5:  make dangerous assumptions about variable locations (for set!)
-6:  try to splice in user-defined functions
-</pre>
-
-<p>Currently, the optimizer is able to speed up Scheme code by factors between
-2 and 5; see run.c for what is implemented, what the major limitations are, and so on.
-If you set the optimization-hook to print out whatever its argument is, you can
-find out what the optimizer found confusing:  
-</p>
-
-<pre class="indented">
-(hook-push <a class=quiet href="#optimizationhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_optimizationhook_tip)">optimization-hook</a> 
-  (lambda (hook) 
-    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "opt: ~A~%" (hook 'message))))
-</pre>
-<div class="spacer"></div>
-
-
 <!-- peak-env-dir -->
 <pre class="indented">
 <em class=def id="peakenvdir">peak-env-dir</em> (default: #f)
@@ -3046,26 +3011,6 @@ If the hook returns #t, <a href="#opensound">open-sound</a> returns without open
 </p>
 <div class="spacer"></div>
 
-
-
-<!-- optimization-hook -->
-<pre class="indented">
-<em class=def id="optimizationhook">optimization-hook</em> (message)
-</pre>
-
-<p>This hook is called each time the optimizer hits something it can't handle; 'message' tries to give some information about the situation.
-</p>
-
-<pre class="indented">
-(hook-push <em class=red>optimization-hook</em> 
-  (lambda (hook) 
-    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #t "~A~%" (hook 'message))))
-</pre>
-
-<p>Normally, if the optimizer fails for some reason, it falls back silently on the Scheme evaluator, so
-the code runs slower.  This hook gives you a way to find out why the optimizer gave up.
-</p>
-<div class="spacer"></div>
 
 
 <!-- orientation-hook -->
@@ -9574,68 +9519,6 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
 <div class="separator"></div>
 
 
-<!-- run -->
-<pre class="indented">
-<em class=def id="run">run</em> thunk
-</pre>
-
-<p>run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around a numerically-intensive
-block of code, and the result will usually run 2 to 5 times faster.  In the context of <a href="sndscm.html#wsdoc">with-sound</a>, run is used
-to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
-of the speed of CL+run+C in CLM.  Currently, only s7 supports this optimization.
-</p>
-
-<pre class="indented">
-(define (ws-sine freq)
-  (let ((o (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
-    (<em class=red>run</em>
-     (do ((i 0 (+ 1 i)))
-         ((= i 100))
-       (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o))))))
-</pre>
-
-<p>In the past, the argument to run had to be a "thunk", a procedure of no arguments;
-this style of use is still supported.
-</p>
-
-<p id="declare">
-Functions embedded within run may need to declare the type of their arguments; run assumes each variable has one type (integer by default) throughout its life.
-So, the following code
-displays "0", rather than "3.14":
-</p>
-
-<pre class="indented">
-(run (let ((x 3.14)) (define (a b) (display b)) (a x)))
-</pre>
-
-<p>The "b" argument to "a" is assumed to be an integer, and passing in a float 
-causes nothing but confusion.  To get this code to work right:
-</p>
-
-<pre class="indented">
-(run (let ((x 3.14)) (define (a b) (<em class=red>declare</em> (b real)) (display b)) (a x)))
-</pre>
-
-<p>The current declarable types include any <a href="sndclm.html#defgenerator">defgenerator</a> type and:
-</p>
-
-<pre class="indented">
-int float boolean char string list symbol keyword vct sampler mix-sampler 
-sound-data clm float-vector int-vector vct-vector list-vector clm-vector 
-</pre>
-
-<p>declare is modelled after Common Lisp's declare; it is specific to run.
-</p>
-
-<p>The use of the run macro is hidden in many contexts: <a class=quiet href="#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a>, 
-<a class=quiet href="#findchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_findchannel_tip)">find-channel</a>, etc.  Internally the Snd run macro
-uses 64-bit ints and doubles.
-See <a href="#optimization">optimization</a>
-for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
-</p>
-<div class="separator"></div>
-
-
 <!-- sample -->
 <pre class="indented">
 <em class=def id="sample">sample</em> samp snd chn edpos
@@ -10066,12 +9949,11 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 	 (s (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate 0.0))
 	 (incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))	  
 	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>) :srate (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) :to-snd #f)
-		     (<a class=quiet href="#run">run</a>
-		      (do ((samp 0 (+ 1 samp)))
-			  ((<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> rd))
-		        (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
-		        (if (= (modulo samp 2205) 0)
-			    (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o))))))))
+		     (do ((samp 0 (+ 1 samp)))
+			 ((<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> rd))
+		       (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
+		       (if (= (modulo samp 2205) 0)
+			   (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))))))
 	 (len (<a class=quiet href="#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> tempfile)))
     (<em class=red>set-samples</em> 0 (- len 1) tempfile #f #f #t "step-src" 0 #f #t)))
 </pre>
