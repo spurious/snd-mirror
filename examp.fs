@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sun May  6 17:39:52 CEST 2012
+\ Changed: Wed Jul  4 16:55:33 CEST 2012
 
 \ Commentary:
 \
@@ -74,9 +74,7 @@
 \ 
 \ hello-dentist       	    ( frq amp :optional snd chn -- vct )
 \ fp                  	    ( sr osamp osfrq :optional snd chn -- vct )
-\ compand             	    ( -- prc; y self -- val )
-\ compand-channel     	    ( :optional beg dur snd chn edpos -- val )
-\ compand-sound       	    ( :optional beg dur snd -- )
+\ compand                   ( -- prc; y self -- val )
 \ expsrc                    ( rate :optional snd chn -- val )
 \ expsnd              	    ( gr-env :optional snd chn -- vct )
 \ cross-synthesis           ( cross-snd amp fftsize r -- prc; y self -- val )
@@ -106,8 +104,6 @@
 \ click-middle-button-to-open-next-file-in-directory ( -- )
 \ chain-dsps                ( start dur :optional dsps -- )
 \ 
-\ smooth-channel-via-ptree  ( :optional beg dur snd chn edpos -- val )
-\ ring-modulate-channel     ( freq :optional beg dur snd chn edpos -- val )
 \ scramble-channels         ( new-order -- )
 \ scramble-channel          ( silence -- )
 \ reverse-by-blocks         ( block-len :optional snd chn -- val )
@@ -1325,33 +1321,14 @@ set-current
 ;
 previous
 
-\ ;;; -------- compand, compand-channel
+vct( -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
+      0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000 ) constant compand-table
 
-: compand <{ -- prc; y self -- val }>
+: compand ( -- prc; y self -- val )
   doc" Return compander: compand map-channel."
-  1 proc-create { prc }
-  vct( -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250 
-     0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000 ) ,
-  prc
- does> { inval self -- val }
-  self @ ( tbl ) inval 8.0 f* 8.0 f+ ( index ) 17 array-interp
-;
-
-: compand-channel <{ :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Apply standard compander to sound."
-  compand beg dur snd chn edpos #t #f "%s %s %s" #( beg dur get-func-name ) format ptree-channel
-;
-
-: compand-sound <{ :optional beg 0 dur #f snd #f -- }>
-  doc" Apply companding to every channel of SND."
-  snd snd-snd to snd
-  snd sound? if
-    snd channels 0 ?do
-      beg dur snd i ( chn ) #f compand-channel drop
-    loop
-  else
-    'no-such-sound #( get-func-name snd ) fth-throw
-  then
+  1 proc-create ( prc )
+ does> { y self -- val }
+  compand-table  y 8.0 f* 8.0 f+ compand-table vct-length  array-interp
 ;
 
 \ ;;; -------- shift pitch keeping duration constant
@@ -2159,63 +2136,6 @@ lambda: ( -- )
   0 1.0   #( #( 0 0 1 1 2 0 ) cb )     chain-dsps
 ; with-sound
 [then]
-previous
-
-\ ;;; -------- smooth-channel as virtual op
-
-hide
-: scvp3-cb <{ y data forward -- val }>
-  data 0 vct-ref { angle }
-  data 1 vct-ref { incr }
-  data 3 vct-ref  data 4 vct-ref  data 2 vct-ref angle f+ fcos  f*  f+ ( val )
-  data 0 angle incr forward if f+ else f- then vct-set! drop ( val )
-;
-
-: scvp1-cb { data -- prc1; frag-beg frag-dur self -- vct }
-  2 proc-create { prc } data , prc
- does> { frag-beg frag-dur self -- vct }
-  self @ { data }
-  pi frag-dur f/ { incr }
-  data 1          incr    vct-set! drop
-  data 0 frag-beg incr f* vct-set! drop
-  data
-;
-set-current
-
-: smooth-channel-via-ptree <{ :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  beg snd chn edpos sample { y0 }
-  beg dur snd chn #f frames 1- || snd chn edpos sample { y1 }
-  y1 y0 f> if pi else 0.0 then { init-angle }
-  y0 y1 f+ f2/ { off }
-  y1 y0 f- fabs f2/ { scale }
-  vct( 0.0 0.0 init-angle off scale ) { data }
-  "%s %s %s" #( beg dur get-func-name ) string-format { origin }
-  <'> scvp3-cb beg dur snd chn edpos #t data scvp1-cb origin ptree-channel
-;
-previous
-
-\ ;;; -------- ring-modulate-channel (ring-mod as virtual op)
-
-hide
-: rmc-cb3 <{ y data forward -- val }>
-  data 0 vct-ref { angle }
-  data 1 vct-ref { incr }
-  angle fsin y f* ( val )
-  data 0 angle incr forward if f+ else f- then vct-set! drop ( val )
-;
-
-: rmc-cb2 { freq snd -- prc; frag-beg frag-dur self -- vct }
-  2 proc-create { prc } freq , snd , prc
- does> { frag-beg frag-dur self -- vct }
-  two-pi self @ ( freq ) f* self cell+ @ ( snd ) srate f/ { incr }
-  vct( frag-beg incr f* two-pi fmod incr )
-;
-set-current
-
-: ring-modulate-channel <{ freq :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  "%s %s %s %s" #( freq beg dur get-func-name ) string-format { origin }
-  <'> rmc-cb3  beg dur snd chn edpos #f  freq snd rmc-cb2  origin ptree-channel
-;
 previous
 
 \ ;;; -------- re-order channels 

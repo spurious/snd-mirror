@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Tue Feb 28 15:54:32 CET 2012
+# Changed: Wed Jul  4 16:45:19 CEST 2012
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -69,8 +69,7 @@
 #  vibro(speed, depth)
 #  hello_dentist(freq, amp, snd, chn)
 #  fp(sr, osamp, osfreq, snd, chn)
-#  compand(doc)
-#  compand_channel(beg, dur, snd, chn, edpos)
+#  compand()
 #  expsrc(rate, snd, chn)
 #  expsnd(gr_env, snd, chn)
 #  cross_synthesis(cross_snd, amp, fftsize, r)
@@ -123,8 +122,6 @@
 #   set_original_cursor(val, snd, chn)
 #  if_cursor_follows_play_it_stays_where_play_stopped(enable)
 #
-#  smooth_channel_via_ptree(beg, dur, snd, chn, edpos)
-#  ring_modulate_channel(freq, beg, dur, snd, chn, edpos)
 #  scramble_channels(*new_order)
 #  scramble_channel(silence)
 #
@@ -1181,24 +1178,15 @@ varies the sampling rate via an oscil: fp(1.0, 0.3, 20)")
                 format("%s(%s, %s, %s", get_func_name, sr, osamp, osfreq))
   end
 
-  # compand, compand-channel
+  # compand
 
+  Compand_table = vct(-1.000, -0.960, -0.900, -0.820, -0.720, -0.600, -0.450, -0.250, 
+                       0.000, 0.250, 0.450, 0.600, 0.720, 0.820, 0.900, 0.960, 1.000)
   add_help(:compand, "compand() returns a compander: map_channel(compand())")
-  def compand(doc = false)
-    tbl = vct(-1.000, -0.960, -0.900, -0.820, -0.720, -0.600, -0.450, -0.250, 
-              0.000, 0.250, 0.450, 0.600, 0.720, 0.820, 0.900, 0.960, 1.000)
-    lambda do |inval| array_interp(tbl, 8.0 + 8.0 * inval, tbl.length) end
-  end
-
-  add_help(:compand_channel,
-           "compand_channel([beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
-applies a standard compander to sound")
-  def compand_channel(beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    tbl = vct(-1.000, -0.960, -0.900, -0.820, -0.720, -0.600, -0.450, -0.250, 
-              0.000, 0.250, 0.450, 0.600, 0.720, 0.820, 0.900, 0.960, 1.000)
-    ptree_channel(lambda { |inval| array_interp(tbl, 8.0 + 8.0 * inval, tbl.length)},
-                  beg, dur, snd, chn, edpos, true, false,
-                  format("%s(%s, %s", get_func_name, beg, dur))
+  def compand()
+    lambda do |inval|
+      array_interp(Compand_table, 8.0 + 8.0 * inval, Compand_table.length)
+    end
   end
 
   # shift pitch keeping duration constant
@@ -2063,54 +2051,6 @@ turns the currently selected soundfont file into a bunch of files of the form sa
     end
   end
   
-  # smooth-channel as virtual op
-
-  def smooth_channel_via_ptree(beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    y0 = sample(beg, snd, chn, edpos)
-    y1 = sample(beg + (dur or frames(snd, chn) - 1), snd, chn, edpos)
-    init_angle = y1 > y0 ? PI : 0.0
-    off = 0.5 * (y0 + y1)
-    scale = 0.5 * (y1 - y0).abs
-    data1 = vct(0.0, 0.0, init_angle, off, scale)
-    ptree_channel(lambda { |y, data, forward|
-                    angle = data[0]
-                    incr = data[1]
-                    val = data[3] + data[4] * cos(data[2] + angle)
-                    if forward
-                      data[0] = angle + incr
-                    else
-                      data[0] = angle - incr
-                    end
-                    val
-                  }, beg, dur, snd, chn, edpos, true,
-                  lambda { |frag_beg, frag_dur|
-                    incr = PI / frag_dur
-                    data1[1] = incr
-                    data1[0] = frag_beg * incr
-                    data1
-                  }, format("%s(%s, %s", get_func_name, beg, dur))
-  end
-
-  # ring-modulate-channel (ring-mod as virtual op)
-
-  def ring_modulate_channel(freq, beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    ptree_channel(lambda { |y, data, forward|
-                    angle = data[0]
-                    incr = data[1]
-                    val = y * sin(angle)
-                    if forward
-                      data[0] = angle + incr
-                    else
-                      data[0] = angle - incr
-                    end
-                    val
-                  }, beg, dur, snd, chn, edpos, false,
-                  lambda { |frag_beg, frag_dur|
-                    incr = (TWO_PI * freq) / srate(snd)
-                    vct((frag_beg * incr).divmod(TWO_PI).last, incr)
-                  }, format("%s(%s, %s, %s", get_func_name, freq, beg, dur))
-  end
-
   # re-order channels
 
   def scramble_channels(*new_order)

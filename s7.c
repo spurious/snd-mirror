@@ -50711,12 +50711,33 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       if (!is_pair(sc->code))                            /* (with-environment . "hi") */
 	eval_error(sc, "with-environment takes an environment argument: ~A", sc->code);
-      if (!is_pair(cdr(sc->code)))
+      if (!is_pair(cdr(sc->code)))                       /* (with-environment e) -> an error? */
 	eval_error(sc, "with-environment body is messed up: ~A", sc->code);
 
-      push_stack(sc, OP_WITH_ENV1, sc->NIL, cdr(sc->code));
-      sc->code = car(sc->code);                          /* eval env arg */
-      goto EVAL;
+      sc->value = car(sc->code);
+      if (!is_pair(sc->value))
+	{
+	  if (is_symbol(sc->value))
+	    sc->value = finder(sc, sc->value);
+	  sc->code = cdr(sc->code);
+
+	  if (!is_pair(sc->code))
+	    {
+	      if (!is_environment(sc->value))            /* (with-environment e abs) */
+		eval_error(sc, "with-environment takes an environment argument: ~A", sc->value);
+	      if (is_symbol(sc->code))
+		sc->value = s7_symbol_local_value(sc, sc->code, sc->value);
+	      else sc->value = sc->code;
+	      goto START;
+	    }
+	  /* else fall through */
+	}
+      else
+	{
+	  push_stack(sc, OP_WITH_ENV1, sc->NIL, cdr(sc->code));
+	  sc->code = sc->value;                          /* eval env arg */
+	  goto EVAL;
+	}
 
       
     case OP_WITH_ENV1:
@@ -50728,7 +50749,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
 	}
       else sc->envir = sc->value;
-      /* body is implicit in stack -- sc->code is ready to go */
+      /* body is implicit in stack -- sc->code is ready to go 
+       *
+       * but... what we usually want here is to append the new environment to the current one, as if with let
+       *   how to do that when there's only the one way back?
+       *   and this allows the with-env body to change the env -- is this a good idea?
+       *   perhaps NEW_FRAME(sc, sc->value, sc->envir) to protect it?
+       */
       goto BEGIN;
 
 

@@ -2,13 +2,13 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sat Apr 28 00:42:23 CEST 2012
+\ Changed: Wed Jul  4 18:30:20 CEST 2012
 
 \ Commentary:
 \
 \ Tested with:
-\   Snd version 12.11 of 30-Apr-12
-\   FTH 1.3.3 (27-Apr-2012)
+\   Snd version 12.13 of 4-July-12
+\   FTH 1.3.3 (12-Jun-2012)
 
 \
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
@@ -877,7 +877,6 @@ SIGINT lambda: { sig -- }
      #( <'> listener-prompt ">" )
      #( <'> max-transform-peaks 100 )
      #( <'> max-regions 16 )
-     #( <'> max-virtual-ptrees 32 )
      #( <'> min-dB -60.0 )
      #( <'> log-freq-start 32.0 )
      #( <'> selection-creates-region #t )
@@ -1075,7 +1074,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> mark-tag-height 4 )
      #( <'> mark-tag-width 10 )
      #( <'> max-regions 16 )
-     #( <'> max-virtual-ptrees 32 )
      #( <'> max-transform-peaks 100 )
      #( <'> min-dB -60.0 )
      #( <'> mix-tag-height 14 )
@@ -1924,7 +1922,7 @@ black-and-white-colormap constant *better-colormap*
      'mark-color 'mark-context 'mark-drag-hook 'mark-home 'mark-hook
      'mark-name 'mark-properties 'mark-property 'mark-sample 'mark-sync 'mark-sync-max
      'mark-tag-height 'mark-tag-width 'mark? 'marks 'max-regions 'max-transform-peaks
-     'max-virtual-ptrees 'maxamp 'maxamp-position 'menu-widgets 'min-dB
+     'maxamp 'maxamp-position 'menu-widgets 'min-dB
      'mix 'mix-amp 'mix-amp-env 'mix-click-hook 'mix-color 'mix-dialog-mix 'mix-drag-hook
      'mix-file-dialog 'mix-length 'mix-home 'mix-name 'mix-position 'mix-properties 'mix-property
      'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max 'mix-sampler? 'mix-selection
@@ -1976,8 +1974,8 @@ black-and-white-colormap constant *better-colormap*
      'play-arrow-size 'play-hook 'player-home 'player? 'players
      'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
      'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
-     'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
-     'ptree-channel 'pulse-train 'pulse-train? 'radians->degrees 'radians->hz
+     'previous-sample 'print-dialog 'print-length 'progress-report
+     'pulse-train 'pulse-train? 'radians->degrees 'radians->hz
      'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
      'read-hook 'read-mix-sample 'read-only 'read-region-sample 'read-sample 'readin 'readin? 
      'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
@@ -2230,11 +2228,6 @@ black-and-white-colormap constant *better-colormap*
   res 0 array-ref string-chomp $" sound table:" $" print-cache 1" #() snd-test-neq
   hiho file-delete
   10 { req }
-  mus-audio-describe to res
-  res string-length { rln }
-  rln req < if
-    rln req "<" $" mus-audio-describe: %s?" #( res ) snd-format #() snd-display
-  then
   chns  1             $" oboe: mus-sound-chans"         #() snd-test-neq
   dl    28            $" oboe: mus-sound-data-location" #() snd-test-neq
   fr    50828         $" oboe: mus-sound-frames"        #() snd-test-neq
@@ -4360,13 +4353,6 @@ half-pi fnegate constant -half-pi
   incr 2 >vct
 ;
 
-: cosine-channel-via-ptree <{ :optional beg 0 dur #f snd #f chn #f edpos #f -- }>
-  <'> ccvp-01-cb
-  beg dur snd chn edpos #t
-  <'> ccvp-02-cb
-  ptree-channel drop
-;
-
 0 value a-ctr
 0 value g-init-val
 
@@ -4874,15 +4860,6 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    #( lambda: <{ -- val }> #( #( "1a.snd" ) #( "pistol.snd" 1 2 ) ) #f #f add-notes ;
       $" lambda: <{ snd chn -- val }> #( #( \"1a.snd\" ) #( \"pistol.snd\" 1 2 ) ) snd chn add-notes drop ;"
       "add-notes" )
-   #( lambda: <{ -- val }> 0 #f #f #f compand-channel ;
-      $" lambda: <{ snd chn -- val }> 0 #f snd chn compand-channel drop ;"
-      "compand-channel" )
-   #( lambda: <{ -- val }> 0 #f #f #f #f smooth-channel-via-ptree ;
-      $" lambda: <{ snd chn -- val }> 0 #f snd chn smooth-channel-via-ptree drop ;"
-      "smooth-channel-via-ptree" )
-   #( lambda: <{ -- val }> 300 0 #f #f #f #f ring-modulate-channel ;
-      $" lambda: <{ snd chn -- val }> 300 0 #f snd chn ring-modulate-channel drop ;"
-      "ring-modulate-channel" )
    #( lambda: <{ -- val }> #( 0 0 1 1 2 0 ) #f #f filtered-env ;
       $" lambda: <{ snd chn -- val }> #( 0 0 1 1 2 0 ) snd chn filtered-env drop ;"
       "filtered-env" )
@@ -7455,7 +7432,6 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> mus-header-type-name <'> mus-data-format-name <'> mus-sound-comment
    <'> mus-sound-write-date
    <'> mus-bytes-per-sample <'> mus-sound-loop-info
-   'snd-nogui [unless] <'> mus-audio-describe [then]
    <'> mus-alsa-squelch-warning <'> mus-sound-maxamp
    <'> mus-sound-maxamp-exists?
    <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
@@ -7528,7 +7504,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> samples->seconds <'> smooth-channel <'> vct->channel <'> channel->vct
    <'> src-channel <'> scale-channel <'> ramp-channel <'> pad-channel
    <'> normalize-channel <'> cursor-position <'> show-listener <'> mus-sound-prune
-   <'> mus-sound-forget <'> xramp-channel <'> ptree-channel <'> snd->sample
+   <'> mus-sound-forget <'> xramp-channel <'> snd->sample
    <'> snd->sample? <'> make-snd->sample <'> make-scalar-mixer <'> beats-per-minute
    <'> beats-per-measure <'> channel-amp-envs <'> convolve-files <'> filter-control-coeffs
    <'> locsig-type <'> make-phase-vocoder <'> mus-describe

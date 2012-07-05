@@ -2,16 +2,16 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Feb 18 10:18:34 CET 2005
-# Changed: Sat Apr 28 00:45:06 CEST 2012
+# Changed: Thu Jul  5 02:33:49 CEST 2012
 
 # Commentary:
 #
 # Tested with:
-#   Snd version 12.11 of 30-Apr-12
+#   Snd version 12.13 of 5-July-12
 #   (ruby 1.8.0 (2003-08-04))
-#   ruby 1.8.7 (2012-02-08 patchlevel 358)
-#   ruby 1.9.3p125 (2012-02-16 revision 34643)
-#   ruby 2.0.0dev (2012-04-27 trunk 35485)
+#   (ruby 1.8.7 (2012-02-08 patchlevel 358))
+#   ruby 1.9.3p194 (2012-04-20 revision 35410)
+#   ruby 2.0.0dev (2012-07-05 trunk 36311)
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
 # hooks, etc.
@@ -1454,7 +1454,6 @@ def test_00
    [:listener_prompt, ">"],
    [:max_transform_peaks, 100],
    [:max_regions, 16],
-   [:max_virtual_ptrees, 32],
    [:min_dB, -60.0],
    [:log_freq_start, 32.0],
    [:selection_creates_region, true],
@@ -1661,7 +1660,6 @@ def test_01
    ["mark_tag_height", mark_tag_height(), 4],
    ["mark_tag_width", mark_tag_width(), 10],
    ["max_regions", max_regions(), 16],
-   ["max_virtual_ptrees", max_virtual_ptrees(), 32],
    ["max_transform_peaks", max_transform_peaks(), 100],
    ["min_dB", min_dB(), -60.0],
    ["mix_tag_height", mix_tag_height(), 14],
@@ -2491,7 +2489,7 @@ def test_03
    :map_chan, :map_channel, :mark_click_hook, :mark_color, :mark_context, :mark_drag_hook,
    :mark_home, :mark_hook, :mark_name, :mark_properties,
    :mark_property, :mark_sample, :mark_sync, :mark_sync_max, :mark_tag_height,
-   :mark_tag_width, :mark?, :marks, :max_regions, :max_transform_peaks, :max_virtual_ptrees,
+   :mark_tag_width, :mark?, :marks, :max_regions, :max_transform_peaks,
    :maxamp, :maxamp_position, :menu_widgets, :min_dB, :mix,
    :mix_amp, :mix_amp_env, :mix_click_hook, :mix_color, :mix_dialog_mix, :mix_drag_hook,
    :mix_file_dialog, :mix_length, :mix_home, :mix_name, :mix_position, :mix_properties,
@@ -2543,8 +2541,8 @@ def test_03
    :play, :play_arrow_size, :play_hook, :player_home, :player?, :players, :playing,
    :poisson_window, :polar2rectangular, :polynomial, :polyshape, :polywave, :polyshape?,
    :polywave?, :position2x, :position2y, :position_color, :preferences_dialog, :previous_sample,
-   :print_dialog, :print_hook, :print_length, :progress_report,
-   :ptree_channel, :pulse_train, :pulse_train?, :radians2degrees, :radians2hz, :ramp_channel,
+   :print_dialog, :print_length, :progress_report,
+   :pulse_train, :pulse_train?, :radians2degrees, :radians2hz, :ramp_channel,
    :rand, :rand_interp, :rand_interp?, :rand?, :read_hook, :read_mix_sample, :read_only,
    :read_region_sample, :read_sample, :readin, :readin?, :rectangular2magnitudes,
    :rectangular2polar, :rectangular_window, :redo_edit, :region2vct, :region_chans,
@@ -2728,10 +2726,6 @@ def test_04_00
   fp.close
   delete_file(hiho)
   req = 10
-  res = mus_audio_describe.length
-  if res < req
-    snd_display(snd_format(res, req, "<", "mus_audio_describe: %s?", mus_audio_describe))
-  end
   snd_test_neq(chns, 1, "oboe: mus_sound_chans")
   snd_test_neq(dl, 28, "oboe: mus_sound_data_location")
   snd_test_neq(fr, 50828, "oboe: mus_sound_frames")
@@ -7253,9 +7247,6 @@ def test_05_10
   snd_test_neq(transform_frames, 0, "transform_frames")
   set_transform_size(512)
   set_transform_graph?(true)
-  unless (res = fft_peak(ind, 0, 1.0))
-    snd_display("fft_peak %s?", res.inspect)
-  end
   set_time_graph?(true)
   # 
   Snd.catch(:all, lambda do |*args| snd_display("axis label error: %s", args) end) do
@@ -17082,38 +17073,6 @@ def test_08_10
   if scan_channel(lambda do |y| false end, 30, 10)
     snd_display("scan_channel past end?")
   end
-  ptree_channel($init_channel, 7, 8)
-  if frames != 15
-    snd_display("ptree_channel 7 8: %s?", frames)
-  end
-  ptree_channel($init_channel)
-  if frames != 15
-    snd_display("ptree_channel (no dur): %s?", frames)
-  end
-  revert_sound(ind)
-  ptree_channel($init_channel, 9, 10)
-  if frames != 19
-    snd_display("ptree_channel 9 10: %s?", frames)
-  end
-  if (res = edit_position(ind, 0)) > 2
-    snd_display("ptree_channel pad edits (1): %s?", res)
-  end
-  revert_sound(ind)
-  ptree_channel($init_channel, 10, 10)
-  if frames != 20
-    snd_display("ptree_channel 10 10: %s?", frames)
-  end
-  if (res = edit_position(ind, 0)) > 2
-    snd_display("ptree_channel pad edits (2): %s?", res)
-  end
-  revert_sound(ind)
-  ptree_channel($init_channel, 20, 10)
-  if frames != 30
-    snd_display("ptree_channel 20 10: %s?", frames)
-  end
-  if (res = edit_position(ind, 0)) > 2
-    snd_display("ptree_channel pad edits (3): %s?", res)
-  end
   close_sound(ind)
   #
   ind = new_sound(:size, 1000)
@@ -21677,22 +21636,6 @@ def test_09_02
     snd_display("mix 1->1 (7): %s %s?", samps1, v)
   end
   undo_edit
-  set_cursor(5, ind)
-  mix("test.snd", cursor, true).car
-  samps0 = channel2vct(0, 20, ind, 0)
-  samps1 = channel2vct(0, 20, ind, 1)
-  v = make_vct(20)
-  v[7] = 0.5
-  v[10] = 0.25
-  unless  vequal(samps0, v)
-    snd_display("mix 1->1 (8): %s %s?", samps0, v)
-  end
-  v[7] = 0.95
-  v[10] = 0.125
-  unless  vequal(samps1, v)
-    snd_display("mix 1->1 (9): %s %s?", samps1, v)
-  end
-  undo_edit
   close_sound(ind)
   delete_files("test.snd", "fmv.snd")
   #
@@ -24507,17 +24450,6 @@ def test_13_01
 end
 
 def test_13_02
-  $print_hook.add_hook!("snd-test") do |str|
-    if str[0] == ?[ and (print_length == 30 and
-                           str != "[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ...]" or
-                           print_length == 12 and
-                           str != "[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ...]")
-      snd_display("array abbreviation: %s?", str)
-    end
-    false
-  end
-  snd_print(make_array(128, 1))
-  $print_hook.reset_hook!
   unless $with_test_alsa
     in1 = open_sound("oboe.snd")
     in2 = open_sound("2.snd")
@@ -27401,7 +27333,7 @@ end
 def undo_env(snd, chn)
   if (len = (edits(snd, chn) or []).first) > 0
     1.upto(len) do |i|
-      if (ed = edit_fragment(i, snd, chn)) and (ed[1] == "env" or ed[1] == "ptree")
+      if (ed = edit_fragment(i, snd, chn)) and ed[1] == "env"
         set_edit_position(i - 1, snd, chn)
         return true
       end
@@ -27651,56 +27583,6 @@ def opt_test(choice)
   when 11
     pad_channel(random(frames(cursnd, curchn) + 100), random(100) + 10, cursnd, curchn)
   when 12
-    beg = random(frames(cursnd, curchn) - 210)
-    dur = random(200) + 10
-    preader0 = make_sampler(beg + dur - 1, cursnd, curchn, -1)
-    reader0 = make_sampler(beg, cursnd, curchn)
-    ptree_channel(lambda do |y| y * 2.0 end, beg, dur, cursnd, curchn, false, true)
-    preader1 = make_sampler(beg + dur - 1, cursnd, curchn, -1)
-    reader1 = make_sampler(beg, cursnd, curchn)
-    dur.times do |i|
-      pval0 = preader0.call
-      val0 = reader0.call
-      pval1 = preader1.call
-      val1 = reader1.call
-      if fneq(val0 * 2.0, val1) or fneq(pval0 * 2.0, pval1)
-        snd_display("read ptree at %s: %s %s %s %s (%s %s %s %s): %s?",
-                    i, val0 * 2.0, val1, pval0 * 2.0, pval1,
-                    reader0, reader1, preader0, preader1,
-                    safe_display_edits(cursnd, curchn))
-        Snd_throw(:mus_error, "read ptree at", i)
-      end
-    end
-  when 13
-    scale_channel(0.5, random(frames(cursnd, curchn) - 100), random(100) + 10, cursnd, curchn)
-  when 14
-    beg = random(frames(cursnd, curchn) - 200)
-    scale_channel(0.5, beg, random(100) + 10, cursnd, curchn)
-    scale_channel(0.5, beg + 10, random(100) + 10, cursnd, curchn)
-  when 15
-    beg = random(frames(cursnd, curchn) - 200)
-    scale_channel(0.5, beg, random(100) + 10, cursnd, curchn)
-    scale_channel(2.0, beg, random(100) + 10, cursnd, curchn)
-  when 16
-    beg = random(frames(cursnd, curchn) - 200)
-    pad_channel(beg, random(100) + 10, cursnd, curchn)
-    pad_channel(beg + 10, random(100) + 10, cursnd, curchn)
-  when 17
-    beg = random(frames(cursnd, curchn) - 200)
-    pad_channel(beg, random(100) + 10, cursnd, curchn)
-    pad_channel(beg, random(100) + 10, cursnd, curchn)
-  when 18
-    beg = random(frames(cursnd, curchn) - 200)
-    delete_sample(beg, cursnd, curchn)
-    delete_sample(beg + random(100), cursnd, curchn)
-  when 19
-    beg = random(frames(cursnd, curchn) + 200)
-    set_sample(beg, 0.1, cursnd, curchn)
-    set_sample(beg + random(100), 0.2, cursnd, curchn)
-  when 20
-    beg = random(frames(cursnd, curchn) - 200)
-    ramp_channel(random(2.0) - 1.0, random(2.0) - 1.0, beg, random(100) + 10, cursnd, curchn)
-  when 21
     pts = random(8) + 1
     maxpt = 0.0
     x = y = 0.0
@@ -27736,6 +27618,35 @@ def opt_test(choice)
         Snd_throw(:mus_error, "read env off at", i)
       end
     end
+  when 13
+    scale_channel(0.5, random(frames(cursnd, curchn) - 100), random(100) + 10, cursnd, curchn)
+  when 14
+    beg = random(frames(cursnd, curchn) - 200)
+    scale_channel(0.5, beg, random(100) + 10, cursnd, curchn)
+    scale_channel(0.5, beg + 10, random(100) + 10, cursnd, curchn)
+  when 15
+    beg = random(frames(cursnd, curchn) - 200)
+    scale_channel(0.5, beg, random(100) + 10, cursnd, curchn)
+    scale_channel(2.0, beg, random(100) + 10, cursnd, curchn)
+  when 16
+    beg = random(frames(cursnd, curchn) - 200)
+    pad_channel(beg, random(100) + 10, cursnd, curchn)
+    pad_channel(beg + 10, random(100) + 10, cursnd, curchn)
+  when 17
+    beg = random(frames(cursnd, curchn) - 200)
+    pad_channel(beg, random(100) + 10, cursnd, curchn)
+    pad_channel(beg, random(100) + 10, cursnd, curchn)
+  when 18
+    beg = random(frames(cursnd, curchn) - 200)
+    delete_sample(beg, cursnd, curchn)
+    delete_sample(beg + random(100), cursnd, curchn)
+  when 19
+    beg = random(frames(cursnd, curchn) + 200)
+    set_sample(beg, 0.1, cursnd, curchn)
+    set_sample(beg + random(100), 0.2, cursnd, curchn)
+  when 20
+    beg = random(frames(cursnd, curchn) - 200)
+    ramp_channel(random(2.0) - 1.0, random(2.0) - 1.0, beg, random(100) + 10, cursnd, curchn)
   end
 end
 
@@ -29452,7 +29363,7 @@ def test_16_04
     end
   end
   if $VERBOSE
-    snd_info("          scl   rev   env   map   ptree scn   pad   wrt   clm   mix   src")
+    snd_info("          scl   rev   env   map   scn   pad   wrt   clm   mix   src")
     str = ""
     data[0].each do |x| str << "%6.2f" % x end
     snd_info("    1a: %s", str)
@@ -29710,25 +29621,10 @@ def test_16_05
   delete_samples(2, 3, ind, 0)
   env_channel([0, 0, 1, 1, 2, 0], 0, frames(ind, 1), ind, 1)
   swap_channels
-  if (res = frames(ind, 1)) != 11
-    snd_display("frames swapped: %s?", res)
-  end
-  unless vequal(res = channel2vct(0, frames(ind, 0), ind, 0),
-                vct(0.000, 0.100, 0.200, 0.300, 0.400, 0.500, 0.400, 0.300, 0.200, 0.100, 0.000))
-    snd_display("swapped env: %s", res)
-  end
   undo_edit(2, ind, 0)
   undo_edit(2, ind, 1)
   delete_samples(2, 7, ind, 0)
   swap_channels(ind, 0, ind, 1, 5, 4)
-  unless vequal(res = channel2vct(0, 10, ind, 0),
-                vct(0.500, 0.500, 0.500, 0.500, 0.000, 0.500, 0.500, 0.500, 0.500, 0.000))
-    snd_display("partial swap 1: %s?", res)
-  end
-  unless vequal(res = channel2vct(0, 10, ind, 1),
-                vct(0.500, 0.500, 0.500, 0.500, 0.500, 0.000, 0.000, 0.000, 0.000, 0.500))
-    snd_display("partial swap 2: %s?", res)
-  end
   revert_sound(ind)
   m0 = add_mark(3, ind, 0)
   m1 = add_mark(4, ind, 1)
@@ -30984,7 +30880,6 @@ def test_19_02
     snd_display("edit_list2function called (7g): %s?", res)
   end
   revert_sound(ind)
-  # simple ptree skipped
   # simple 1 sample insert
   insert_sample(100, 0.1)
   if (res = frames) != frs + 1
@@ -31358,12 +31253,6 @@ def test_19_02
     "Proc.new {|snd, chn|  env_sound_interp([0, 0, 1, 1, 2, 0], 2.0, snd, chn) }"],
    [lambda { add_notes([["1a.snd"], ["pistol.snd", 1.0, 2.0]]) },
     "Proc.new {|snd, chn|  add_notes([[\"1a.snd\"], [\"pistol.snd\", 1.0, 2.0]], snd, chn) }"],
-   [lambda { compand_channel },
-    "Proc.new {|snd, chn|  compand_channel(0, false, snd, chn) }"],
-   [lambda { smooth_channel_via_ptree },
-    "Proc.new {|snd, chn|  smooth_channel_via_ptree(0, false, snd, chn) }"],
-   [lambda { ring_modulate_channel(300) },
-    "Proc.new {|snd, chn|  ring_modulate_channel(300, 0, false, snd, chn) }"],
    [lambda { filtered_env([0, 0, 1, 1, 2, 0]) },
     "Proc.new {|snd, chn|  filtered_env([0, 0, 1, 1, 2, 0], snd, chn) }"],
    [lambda { reverse_by_blocks(0.1) },
@@ -35787,7 +35676,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :make_region_sampler, :make_sampler, :map_chan, :mark_color, :mark_name,
          :mark_properties, :mark_property, :mark_sample, :mark_sync, :mark_sync_max,
          :mark_home, :marks, :mark?, :max_transform_peaks, :max_regions,
-         :max_virtual_ptrees, :maxamp, :maxamp_position, :menu_widgets,
+         :maxamp, :maxamp_position, :menu_widgets,
          :min_dB, :log_freq_start, :mix, :mixes, :mix_amp,
          :mix_amp_env, :mix_color, :mix_length, :mix?, :view_mixes_dialog, :mix_position,
          :mix_dialog_mix, :mix_name, :mix_sync_max, :mix_sync, :mix_properties, :mix_property,
@@ -35846,7 +35735,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type, :mus_sound_data_format,
          :mus_sound_length, :mus_sound_type_specifier, :mus_header_type_name,
          :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date, :mus_bytes_per_sample,
-         :mus_sound_loop_info, :mus_sound_mark_info, :mus_audio_describe,
+         :mus_sound_loop_info, :mus_sound_mark_info,
          :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler,
          :mus_prescaler, :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
          :moving_average, :moving_average?, :make_moving_average, :mus_expand_filename,
@@ -35894,7 +35783,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension, :soun
          :clm_channel, :env_channel, :map_channel, :scan_channel, :reverse_channel,
          :seconds2samples, :samples2seconds, :vct2channel, :smooth_channel, :channel2vct,
          :src_channel, :scale_channel, :ramp_channel, :pad_channel, :normalize_channel,
-         :cursor_position, :mus_sound_prune, :mus_sound_forget, :xramp_channel, :ptree_channel,
+         :cursor_position, :mus_sound_prune, :mus_sound_forget, :xramp_channel,
          :snd2sample, :snd2sample?, :make_snd2sample, :make_scalar_mixer, :beats_per_minute,
          :beats_per_measure, :channel_amp_envs, :convolve_files, :filter_control_coeffs,
          :locsig_type, :make_phase_vocoder, :mus_describe, :mus_error_type2string,
@@ -35937,7 +35826,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
              :mark_properties, :mark_property, :mark_sample, :mark_sync, :max_transform_peaks,
              :max_regions, :min_dB, :log_freq_start, :mix_amp, :mix_amp_env, :mix_color,
              :mix_name, :mix_position, :mix_sync, :mix_properties, :mix_property,
-             :max_virtual_ptrees, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
+             :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
              :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
              :open_file_dialog_directory, :position_color, :view_files_sort, :print_length,
              :play_arrow_size, :region_graph_style, :reverb_control_decay, :reverb_control_feedback,

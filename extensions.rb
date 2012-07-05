@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Thu Feb 23 15:27:23 CET 2012
+# Changed: Thu Jul  5 02:25:15 CEST 2012
 
 # Commentary:
 # 
@@ -117,8 +117,12 @@
 #  ramp_expt(rmp0, rmp1, exponent, symmetric, beg, dur, snd, chn, edpos)
 #  env_expt_channel(env, exponent, symmetric, beg, dur, snd, chn, edpos)
 #  offset_channel(amount, beg, dur, snd, chn, edpos)
+#  offset_sound(amount, beg, dur, snd)
+#  pad_sound(beg, dur, snd)
 #  dither_channel(amnt, beg, dur, snd, chn, edpos)
+#  dither_sound(amnt, beg, dur, snd)
 #  contrast_channel(index, beg, dur, snd, chn, edpos)
+#  contrast_sound(index, beg, dur, snd)
 #  channels_eql?(snd1, chn1, snd2, chn2, allowable_difference)
 #  channels_equal?(snd1, chn1, snd2, chn2, allowable_difference)
 #  mono2stereo(new_name, snd1, chn1, snd2, chn2)
@@ -1439,26 +1443,23 @@ inserts the file. file can be the file name or a list [file_name, beg = 0, chn =
     end
   end
   
-  # vct: angle, incr, off, scl
   add_help(:sine_ramp,
            "sine_ramp(rmp0, rmp1, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
 produces a sinsusoidal connection from rmp0 to rmp1")
   def sine_ramp(rmp0, rmp1, beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    ptree_channel(lambda { |y, data, forward|
-                    angle = data[0]
-                    incr = data[1]
-                    if forward
-                      data[0] = angle + incr
-                    else
-                      data[0] = angle - incr
-                    end
-                    y * (data[2] + data[3] * (0.5 + 0.5 * cos(angle)))
+    angle = -PI
+    len = if number?(dur)
+            dur
+          else
+            frames(snd, chn) - beg
+          end
+    incr = PI / len
+    map_channel(lambda { |y|
+		    result = y * (rmp0 + (rmp1 - rmp0) * (0.5 + 0.5 * cos(angle)))
+                    angle += incr
+		    result
                   },
-                  beg, dur, snd, chn, edpos, true,
-                  lambda { |frag_beg, frag_dur|
-                    incr = PI / frag_dur
-                    vct(-PI + frag_beg * incr, incr, rmp0, rmp1 - rmp0)
-                  },
+                  beg, dur, snd, chn, edpos,
                   format("%s(%s, %s, %s, %s", get_func_name, rmp0, rmp1, beg, dur))
   end
 
@@ -1478,28 +1479,25 @@ connects env's dots with sinusoids")
   # formulas to get sharper sinusoids (i.e. use the sum of n cosines,
   # rather than just 1).
   
-  # vct: angle, incr, off, scl
   def blackman4_ramp(rmp0, rmp1, beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    ptree_channel(lambda { |y, data, forward|
-                    angle = data[0]
-                    incr = data[1]
-                    if forward
-                      data[0] = angle + incr
-                    else
-                      data[0] = angle - incr
-                    end
+    angle = 0.0
+    len = if number?(dur)
+            dur
+          else
+            frames(snd, chn) - beg
+          end
+    incr = PI / len
+    map_channel(lambda { |y|
                     cx = cos(angle)
-                    y * (data[2] + data[3] *
-                                  (0.084037 + cx *
-                                             (-0.29145 + cx *
-                                                        (0.375696 + cx *
-                                                                   (-0.20762 + cx * 0.041194)))))
+                    result = y * (rmp0 + (rmp1 - rmp0) *
+                                   (0.084037 + cx *
+                                     (-0.29145 + cx *
+                                       (0.375696 + cx *
+                                         (-0.20762 + cx * 0.041194)))))
+                    angle += incr
+		    result
                   },
-                  beg, dur, snd, chn, edpos, true,
-                  lambda { |frag_beg, frag_dur|
-                    incr = PI / frag_dur
-                    vct(frag_beg * incr, incr, rmp0, rmp1 - rmp0)
-                  },
+                  beg, dur, snd, chn, edpos,
                   format("%s(%s, %s, %s, %s", get_func_name, rmp0, rmp1, beg, dur))
   end
   
@@ -1511,37 +1509,24 @@ connects env's dots with sinusoids")
     end
   end
   
-  # Any curve can be used as the connecting line between envelope
-  # breakpoints in the same manner -- set up each ramp to take the
-  # current position and increment, then return the value in
-  # ptree-channel.  A simple one would have a table of values and use
-  # array_interp.
-  
-  # vct: start, incr, off, scl
   add_help(:ramp_squared,
            "ramp_squared(rmp0, rmp1, [symmetric=true, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) \
 connects rmp0 and rmp1 with an x^2 curve")
   def ramp_squared(rmp0, rmp1, symmetric = true,
                    beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    ptree_channel(lambda { |y, data, forward|
-                    angle = data[0]
-                    incr = data[1]
-                    if forward
-                      data[0] = angle + incr
-                    else
-                      data[0] = angle - incr
-                    end
-                    y * (data[2] + angle * angle * data[3])
+    angle = 0.0
+    len = if number?(dur)
+            dur
+          else
+            frames(snd, chn) - beg
+          end
+    incr = 1.0 / len
+    map_channel(lambda { |y|
+                    result = y * (rmp0 + angle * angle * (rmp1 - rmp0))
+                    angle += incr
+		    result
                   },
-                  beg, dur, snd, chn, edpos, true,
-                  lambda { |frag_beg, frag_dur|
-                    incr = 1.0 / frag_dur
-                    if symmetric and rmp1 < rmp0
-                      vct((frag_dur - frag_beg) * incr, -incr, rmp1, rmp0 - rmp1)
-                    else
-                      vct(frag_beg * incr, incr, rmp0, rmp1 - rmp0)
-                    end
-                  },
+                  beg, dur, snd, chn, edpos,
                   format("%s(%s, %s, %s, %s, %s", get_func_name, rmp0, rmp1, symmetric, beg, dur))
   end
 
@@ -1559,38 +1544,26 @@ connects env's dots with x^2 curves")
   end
   # env_squared_channel([0, 0, 1, 1, 2, -0.5, 3, 1])
   
-  # vct: start, incr, off, scl, exponent
   add_help(:ramp_expt,
            "ramp_expt(rmp0, rmp1, exponent, [symmetric=true, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) connects rmp0 and rmp1 with an x^exponent curve")
   def ramp_expt(rmp0, rmp1, exponent, symmetric = true,
                 beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    rmp0 = rmp0.to_f
-    rmp1 = rmp1.to_f
-    exponent = exponent.to_f
-    ptree_channel(lambda { |y, data, forward|
-                    angle = data[0]
-                    incr = data[1]
-                    if forward
-                      data[0] = angle + incr
-                    else
-                      data[0] = angle - incr
-                    end
+    angle = 0.0
+    len = if number?(dur)
+            dur
+          else
+            frames(snd, chn) - beg
+          end
+    incr = 1.0 / len
+    map_channel(lambda { |y|
                     begin
-                      y * (data[2] + exp(log(angle) * data[4]) * data[3])
+                      result = y * (rmp0 + exp(log(angle) * exponent) * (rmp1 - rmp0))
                     rescue
-                      0.0
+                      result = 0.0
                     end
-                  }, beg, dur, snd, chn, edpos, true,
-                  lambda { |frag_beg, frag_dur|
-                    frag_beg = frag_beg.to_f
-                    frag_dur = frag_dur.to_f
-                    incr = 1.0 / frag_dur
-                    if symmetric and rmp1 < rmp0
-                      vct((frag_dur - frag_beg) * incr, -incr, rmp1, rmp0 - rmp1, exponent)
-                    else
-                      vct(frag_beg * incr, incr, rmp0, rmp1 - rmp0, exponent)
-                    end
-                  },
+                    angle += incr
+		    result
+                  }, beg, dur, snd, chn, edpos,
                   format("%s(%s, %s, %s, %s, %s, %s",
                          get_func_name, rmp0, rmp1, exponent, symmetric, beg, dur))
   end
@@ -1615,26 +1588,83 @@ connects env's dots with x^2 curves")
            "offset_channel(amount, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
 adds amount to each sample")
   def offset_channel(amount, beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    ptree_channel(lambda { |y| y + amount }, beg, dur, snd, chn, edpos, true, false,
-                  format("%s(%s, %s, %s", get_func_name, amount, beg, dur))
+    map_channel(lambda { |y| y + amount },
+                beg, dur, snd, chn, edpos,
+                format("%s(%s, %s, %s", get_func_name, amount, beg, dur))
+  end
+
+  add_help(:offset_sound,
+           "offset_sound(off, [beg=0, [dur=false, [snd=false]]]) \
+adds OFF to every sample in SND.")
+  def offset_sound(off, beg = 0, dur = false, snd = false)
+    snd = Snd.snd(snd)
+    if sound?(snd)
+      channels(snd).times do |chn|
+        offset_channel(off, beg, dur, snd, chn)
+      end
+    else
+      Snd.raise(:no_such_sound, snd)
+    end
+  end
+
+  add_help(:pad_sound,
+           "pad_sound(beg, dur, [snd=false]) \
+places a block of DUR zeros in every channel of SND starting at BEG.")
+  def pad_sound(beg, dur, snd = false)
+    snd = Snd.snd(snd)
+    if sound?(snd)
+      channels(snd).times do |chn|
+        pad_channel(beg, dur, snd, chn)
+      end
+    else
+      Snd.raise(:no_such_sound, snd)
+    end
   end
 
   add_help(:dither_channel,
            "dither_channel([amount, 0.00006, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) adds amount dither to each sample")
   def dither_channel(amnt = 0.00006, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     dither = 0.5 * amnt
-    ptree_channel(lambda { |y| mus_random(dither) + mus_random(dither) + y },
-                  beg, dur, snd, chn, edpos, true, false,
+    map_channel(lambda { |y| mus_random(dither) + mus_random(dither) + y },
+                  beg, dur, snd, chn, edpos,
                   format("%s(%s, %s, %s", get_func_name, amnt, beg, dur))
+  end
+
+  add_help(:dither_sound,
+           "dither_sound([amount, 0.00006, [beg=0, [dur=false, [snd=false]]]]) \
+adds dithering to every channel of SND.")
+  def dither_sound(amnt = 0.00006, beg = 0, dur = false, snd = false)
+    snd = Snd.snd(snd)
+    if sound?(snd)
+      channels(snd).times do |chn|
+        dither_channel(amnt, beg, dur, snd, chn)
+      end
+    else
+      Snd.raise(:no_such_sound, snd)
+    end
   end
 
   add_help(:contrast_channel,
            "contrast_channel(index, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]) \
-applies contrast enhancement to the sound" )
+applies contrast-enhancement to the sound" )
   def contrast_channel(index, beg = 0, dur = false, snd = false, chn = false, edpos = false)
-    ptree_channel(lambda { |y| sin(y * HALF_PI + index * sin(y * TWO_PI))},
-                  beg, dur, snd, chn, edpos, false, false,
+    map_channel(lambda { |y| sin(y * HALF_PI + index * sin(y * TWO_PI))},
+                  beg, dur, snd, chn, edpos,
                   format("%s(%s, %s, %s", get_func_name, index, beg, dur))
+  end
+
+  add_help(:contrast_sound,
+           "contrast_sound(index, [beg=0, [dur=false, [snd=false]]]) \
+applies contrast-enhancement to every channel of SND." )
+  def contrast_sound(index, beg = 0, dur = false, snd = false)
+    snd = Snd.snd(snd)
+    if sound?(snd)
+      channels(snd).times do |chn|
+        contrast_channel(index, beg, dur, snd, chn)
+      end
+    else
+      Snd.raise(:no_such_sound, snd)
+    end
   end
 
   # channels-equal

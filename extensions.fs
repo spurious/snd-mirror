@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Tue Apr 17 02:39:29 CEST 2012
+\ Changed: Wed Jul  4 17:50:22 CEST 2012
 
 \ Commentary:
 \
@@ -688,32 +688,31 @@ previous
 \ ;;; -------- sine-ramp sine-env-channel 
 
 hide
-: sr3-cb <{ y data forward -- val }>
-  data 0 vct-ref { angle }
-  data 1 vct-ref { incr }
-  angle fcos f2/ 0.5 f+ data 3 vct-ref f* data 2 vct-ref f+ y f* ( val )
-  data 0  forward angle incr if f+ else f- then  vct-set! drop
-  ( val )
-;
-
-: sr2-cb { rmp0 rmp1 -- prc; frag-beg frag-dur self -- vct }
-  2 proc-create rmp0 , rmp1 ,
- does> { frag-beg frag-dur self -- vct }
-  self @ { rmp0 }
-  self cell+ @ { rmp1 }
-  pi frag-dur f/ { incr }
-  vct( pi fnegate frag-beg incr f* f+
-     incr
-     rmp0
-     rmp1 rmp0 f- )
+: sine-ramp-cb { rmp0 rmpd incr -- prc; y self -- val }
+  1 proc-create ( prc )
+  rmp0 ,
+  rmpd ,
+  pi fnegate ( angle ) , 
+  incr ,
+ does> { y self -- val }
+  self           @ { rmp0 }
+  self 1 cells + @ { rmpd }
+  self 2 cells + @ { angle }
+  self 3 cells + @ { incr }
+  angle fcos 0.5 f* 0.5 f+ rmpd f* rmp0 f+ y f* ( val )
+  angle incr f+ self 2 cells + ! ( angle += incr )
 ;
 set-current
 
 : sine-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Produce a sinsusoidal connection from RMP0 to RMP1."
-  \ ;; vct: angle incr off scl
   "%s %s %s %s %s" #( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
-  <'> sr3-cb beg dur snd chn edpos #t  rmp0 rmp1 sr2-cb  origin ptree-channel
+  dur number? if
+    dur
+  else
+    snd chn edpos frames  beg  f-
+  then pi swap f/ { incr }
+  rmp0  rmp1 rmp0 f-  incr  sine-ramp-cb  beg dur snd chn edpos origin map-channel
 ;
 previous
 
@@ -730,32 +729,36 @@ previous
 \ ;;; -------- blackman4-ramp, blackman4-env-channel
 
 hide
-: b4r3-cb <{ y data forward -- val }>
-  data 0 vct-ref { angle }
-  data 1 vct-ref { incr }
+: b4r-cb { rmp0 rmpd incr -- prc; y self -- val }
+  1 proc-create ( prc )
+  rmp0 ,
+  rmpd ,
+  0.0 ( angle ) , 
+  incr ,
+ does> { y self -- val }
+  self           @ { rmp0 }
+  self 1 cells + @ { rmpd }
+  self 2 cells + @ { angle }
+  self 3 cells + @ { incr }
   angle fcos { cx }
-  cx 0.041194 f* -0.20762 f+ cx f* 0.375696 f+ cx f* -0.29145 f+ cx f* 0.084037 f+
-  data 3 vct-ref f* data 2 vct-ref f+ y f* ( val )
-  data 0  forward angle incr if f+ else f- then  vct-set! drop
-  ( val )
-;
-
-: b4r2-cb { rmp0 rmp1 -- prc; frag-beg frag-dur self -- vct }
-  2 proc-create rmp0 , rmp1 , ( prc )
- does> { frag-beg frag-dur self -- vct }
-  self       @ { rmp0 }
-  self cell+ @ { rmp1 }
-  pi frag-dur f/ { incr }
-  vct( frag-beg incr f*
-     incr
-     rmp0
-     rmp1 rmp0 f- )
+  cx 0.041194 f* -0.20762 f+
+    cx f* 0.375696 f+ 
+      cx f* -0.29145 f+ 
+        cx f* 0.084037 f+
+          rmpd f* rmp0 f+ 
+            y f* ( val )
+  angle incr f+ self 2 cells + ! ( angle += incr )
 ;
 set-current
 
 : blackman4-ramp <{ rmp0 rmp1 :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   "%s %s %s %s %s" #( rmp0 rmp1 beg dur get-func-name ) string-format { origin }
-  <'> b4r3-cb beg dur snd chn edpos #f rmp0 rmp1 b4r2-cb origin ptree-channel
+  dur number? if
+    dur
+  else
+    snd chn edpos frames  beg  f-
+  then pi swap f/ { incr }
+  rmp0  rmp1 rmp0 f-  incr  b4r-cb  beg dur snd chn edpos origin map-channel
 ;
 previous
 
@@ -764,41 +767,34 @@ previous
   en <'> blackman4-ramp beg dur snd chn edpos origin any-env-channel
 ;
 
-\ ;;; any curve can be used as the connecting line between envelope breakpoints in the
-\ ;;;   same manner -- set up each ramp to take the current position and increment,
-\ ;;;   then return the value in ptree-channel.  A simple one would have a table of
-\ ;;;   values and use array-interp.
-\ 
 \ ;;; -------- ramp-squared, env-squared-channel
 
 hide
-: rsq3-cb <{ y data forward -- val }>
-  data 0 vct-ref { angle }
-  data 1 vct-ref { incr }
-  angle dup f* data 3 vct-ref f* data 2 vct-ref f+ y f* ( val )
-  data 0  forward angle incr if f+ else f- then  vct-set! drop
-  ( val )
-;
-
-: rsq2-cb { rmp0 rmp1 symmetric -- prc; frag-beg frag-dur self -- vct }
-  2 proc-create rmp0 , rmp1 , symmetric , ( prc )
- does> { frag-beg frag-dur self -- vct }
+: rsq-cb { rmp0 rmpd incr -- prc; y self -- val }
+  1 proc-create ( prc )
+  rmp0 ,
+  rmpd ,
+  0.0 ( angle ) , 
+  incr ,
+ does> { y self -- val }
   self           @ { rmp0 }
-  self cell+     @ { rmp1 }
-  self 2 cells + @ { symmetric }
-  frag-dur 1/f { incr }
-  symmetric rmp1 rmp0 f< && if
-    vct( frag-dur frag-beg f- incr f*  incr fnegate  rmp1  rmp0 rmp1 f- )
-  else
-    vct( frag-beg incr f*  incr  rmp0  rmp1 rmp0 f- )
-  then
+  self 1 cells + @ { rmpd }
+  self 2 cells + @ { angle }
+  self 3 cells + @ { incr }
+  angle dup f* rmpd f* rmp0 f+ y f* ( val )
+  angle incr f+ self 2 cells + ! ( angle += incr )
 ;
 set-current
 
 : ramp-squared <{ rmp0 rmp1 :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Connect RMP0 and RMP1 with an x^2 curve."
   "%s %s %s %s %s %s" #( rmp0 rmp1 symmetric beg dur get-func-name ) string-format { origin }
-  <'> rsq3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric rsq2-cb  origin ptree-channel
+  dur number? if
+    dur
+  else
+    snd chn edpos frames  beg  f-
+  then 1/f { incr }
+  rmp0  rmp1 rmp0 f-  incr  rsq-cb  beg dur snd chn edpos origin map-channel
 ;
 previous
 
@@ -821,38 +817,36 @@ previous
 \ ;;; -------- ramp-expt, env-expt-channel
 
 hide
-: rex3-cb <{ y data forward -- val }>
-  data 0 vct-ref { angle }
-  data 1 vct-ref { incr }
-  data 4 vct-ref angle flog f* fexp data 3 vct-ref f* data 2 vct-ref f+ y f* ( val )
-  data 0  forward angle incr if f+ else f- then  vct-set! drop
-  ( val )
-;
-
-: rex2-cb { rmp0 rmp1 symmetric exponent -- prc; frag-beg frag-dur self -- vct }
-  2 proc-create rmp0 , rmp1 , symmetric , exponent , ( prc )
- does> { frag-beg frag-dur self -- vct }
+: rex-cb { rmp0 rmpd incr exponent -- prc; y self -- val }
+  1 proc-create ( prc )
+  rmp0 ,
+  rmpd ,
+  0.0 ( angle ) , 
+  incr ,
+  exponent ,
+ does> { y self -- val }
   self           @ { rmp0 }
-  self cell+     @ { rmp1 }
-  self 2 cells + @ { symmetric }
-  self 3 cells + @ { exponent }
-  frag-dur 1/f { incr }
-  symmetric rmp1 rmp0 f< && if
-    vct( frag-dur frag-beg f- incr f*  incr fnegate  rmp1  rmp0 rmp1 f-  exponent )
-  else
-    vct( frag-beg incr f*  incr  rmp0  rmp1 rmp0 f-  exponent )
-  then
+  self 1 cells + @ { rmpd }
+  self 2 cells + @ { angle }
+  self 3 cells + @ { incr }
+  self 4 cells + @ { exponent }
+  angle flog exponent f* fexp rmpd f* rmp0 f+ y f* ( val )
+  angle incr f+ self 2 cells + ! ( angle += incr )
 ;
 set-current
 
 : ramp-expt <{ rmp0 rmp1 exponent
      :optional symmetric #t beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Connect RMP0 and RMP1 with an x^exponent curve."
-  \ ;; vct: start incr off scl exponent
   \ ;; a^x = exp(x * log(a))
   "%s %s %s %s %s %s %s"
   #( rmp0 rmp1 exponent symmetric beg dur get-func-name ) string-format { origin }
-  <'> rex3-cb beg dur snd chn edpos #t  rmp0 rmp1 symmetric exponent rex2-cb origin ptree-channel
+  dur number? if
+    dur
+  else
+    snd chn edpos frames  beg  f-
+  then 1/f { incr }
+  rmp0  rmp1 rmp0 f-  incr  exponent  rex-cb  beg dur snd chn edpos origin map-channel
 ;
 previous
 
@@ -885,7 +879,7 @@ set-current
 : offset-channel <{ amount :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Add AMOUNT to each sample."
   "%s %s %s %s" #( amount beg dur get-func-name ) string-format { origin }
-  amount offc-cb beg dur snd chn edpos #t #f origin ptree-channel
+  amount offc-cb beg dur snd chn edpos origin map-channel
 ;
 previous
 
@@ -924,7 +918,7 @@ set-current
 : dither-channel <{ :optional amount 0.00006 beg 0 dur #f snd #f chn #f edpos #f -- val }>
   doc" Add AMOUNT dither to each sample."
   "%s %s %s %s" #( amount beg dur get-func-name ) string-format { origin }
-  amount f2/ dith-cb beg dur snd chn edpos #t #f origin ptree-channel
+  amount f2/ dith-cb beg dur snd chn edpos origin map-channel
 ;
 
 : dither-sound <{ :optional amount 0.00006 beg 0 dur #f snd #f -- }>
@@ -948,9 +942,9 @@ hide
 set-current
 
 : contrast-channel <{ index :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
-  doc" Apply contrast enhancement to the sound."
+  doc" Apply contrast-enhancement to the sound."
   "%s %s %s %s" #( index beg dur get-func-name ) string-format { origin }
-  index cntr-cb beg dur snd chn edpos #f #f origin ptree-channel
+  index cntr-cb beg dur snd chn edpos origin map-channel
 ;
 
 : contrast-sound <{ index :optional beg 0 dur #f snd #f -- }>

@@ -58,9 +58,14 @@
 
 struct mus_xen {
   mus_any *gen;
+  s7_pointer *fields;
+  s7_pointer *methods;
+  s7_pointer envir;
+
   XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
   int nvcts;
   bool dont_free_gen;
+
   struct ptree *input_ptree; /* added 24-Apr-02 for run optimizer */
   struct ptree *edit_ptree;  /* ditto 26-Jul-04 */
   struct ptree *analyze_ptree;
@@ -78,6 +83,23 @@ struct ptree *mus_xen_synthesize(mus_xen *x) {return(x->synthesize_ptree);}
 void mus_xen_set_synthesize(mus_xen *x, struct ptree *synthesize) {x->synthesize_ptree = synthesize;}
 void mus_xen_set_dont_free(mus_xen *x, bool val) {x->dont_free_gen = val;}
 
+/* new mus_* accessors -- go direct to class, if null CHECK_METHOD in effect using the envir as an open-env
+ *   shadow all the built-in methods with s7_pointers (*methods above), and wrappers that
+ *   access them so the path is mus-* -> class -> wrapper -> methods[n] -> s7_call
+ * for defgen local fields, they currently use implicit indexing of the generator as a list/vector
+ *   this could be an index into *fields above
+ * for added methods, I guess envir -- no current defgen uses these
+ * make, ?, and apply are defined in place in scheme, but at least make needs to call something
+ *   to get the xen side set up.
+  osc *gen;
+  gen = (osc *)calloc(1, sizeof(osc));
+  gen->core = &OSCIL_CLASS;
+
+  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
+      gn->gen = ge; -- a bare mus_any struct (i.e. just the core pointer?)
+  return mus_xen_to_object(gn)
+      do we need vcts/self-wrapper?
+ */
 
 #if HAVE_SCHEME
 #define DISPLAY(Expr) s7_object_to_c_string(sc, Expr)
@@ -1107,12 +1129,6 @@ static XEN g_mus_generator_p(XEN obj)
 
   return(XEN_FALSE);
 }
-
-/* if we used make-type in defgenerator, this could use the ? func,
- *   but to keep Forth and Scheme together, maybe the type could be in C
- *   mus-make-generator|generator?
- */
-
 
 static XEN *make_vcts(int size)
 {
