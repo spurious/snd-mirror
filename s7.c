@@ -142,8 +142,13 @@
  *     WITH_COMPLEX, WITH_COMPLEX_TRIG, HAVE_STDBOOL_H, HAVE_SYS_PARAM_H, SIZEOF_VOID_P, 
  *     HAVE_GETTIMEOFDAY, HAVE_LSTAT, HAVE_DIRENT_H
  *
- * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__,
+ * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __bfin__
  *     (and __FreeBSD_version if HAVE_SYS_PARAM_H)
+ *
+ * if SIZEOF_VOID_P is not defined, we look for __SIZEOF__POINTER__ instead
+ *
+ * The __bfin__ switch refers to the Blackfin processor where int accesses must be 4-byte aligned.
+ *   I can't find any built-in compiler switch to detect this case.
  */
 
 
@@ -411,7 +416,7 @@ enum {OP_NO_OP,
 #define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 1)
 
 
-#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
+#if (((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4)) || ((defined(__SIZEOF_POINTER__)) && (__SIZEOF_POINTER__ == 4)))
   #define opcode_t unsigned int
 #else
   #define opcode_t unsigned long long int
@@ -3418,7 +3423,17 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 }
 
 
-/* permanent memory for objects that we know will not (normally) be deallocated */
+/* permanent memory for objects that we know will not (normally) be deallocated 
+ *
+ *   this does not work as is if run on a system that requires aligned accesses
+ *   so we need a compilt-time switch.
+ *
+ * TODO: test timing here if we force 4-byte boundaries
+ */
+
+#if (__bfin__)
+  #define permanent_calloc calloc
+#else
 
 #define PERMANENT_HEAP_SIZE 65536
 static unsigned char *permanent_heap = NULL, *permanent_heap_top = NULL;
@@ -3444,6 +3459,7 @@ static unsigned char *permanent_calloc(int bytes)
   return(cur);
 }
 
+#endif
 
 
 
@@ -50755,6 +50771,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   how to do that when there's only the one way back?
        *   and this allows the with-env body to change the env -- is this a good idea?
        *   perhaps NEW_FRAME(sc, sc->value, sc->envir) to protect it?
+       * TODO: augment-e* take env as 2nd arg, and incorporate slots from it
+       *   maybe make a macro too to check?
        */
       goto BEGIN;
 
