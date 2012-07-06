@@ -18,14 +18,6 @@ MUS_EXPORT mus_long_t clm_default_table_size_c(void);
 MUS_EXPORT double clm_default_frequency_c(void);
 
 MUS_EXPORT mus_any *mus_xen_gen(mus_xen *x);
-MUS_EXPORT struct ptree *mus_xen_input(mus_xen *x);
-MUS_EXPORT void mus_xen_set_input(mus_xen *x, struct ptree *input);
-MUS_EXPORT struct ptree *mus_xen_edit(mus_xen *x);
-MUS_EXPORT void mus_xen_set_edit(mus_xen *x, struct ptree *edit);
-MUS_EXPORT struct ptree *mus_xen_analyze(mus_xen *x);
-MUS_EXPORT void mus_xen_set_analyze(mus_xen *x, struct ptree *analyze);
-MUS_EXPORT struct ptree *mus_xen_synthesize(mus_xen *x);
-MUS_EXPORT void mus_xen_set_synthesize(mus_xen *x, struct ptree *synthesize);
 MUS_EXPORT void mus_xen_set_dont_free(mus_xen *x, bool val);
 
 MUS_EXPORT bool mus_xen_p(XEN obj);

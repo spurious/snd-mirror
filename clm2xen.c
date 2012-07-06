@@ -64,11 +64,6 @@ struct mus_xen {
   XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
   int nvcts;
   bool dont_free_gen;
-
-  struct ptree *input_ptree; /* added 24-Apr-02 for run optimizer */
-  struct ptree *edit_ptree;  /* ditto 26-Jul-04 */
-  struct ptree *analyze_ptree;
-  struct ptree *synthesize_ptree;
 };
 
 struct {
@@ -113,14 +108,6 @@ struct {
 
 
 mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
-struct ptree *mus_xen_input(mus_xen *x) {return(x->input_ptree);}
-void mus_xen_set_input(mus_xen *x, struct ptree *input) {x->input_ptree = input;}
-struct ptree *mus_xen_edit(mus_xen *x) {return(x->edit_ptree);}
-void mus_xen_set_edit(mus_xen *x, struct ptree *edit) {x->edit_ptree = edit;}
-struct ptree *mus_xen_analyze(mus_xen *x) {return(x->analyze_ptree);}
-void mus_xen_set_analyze(mus_xen *x, struct ptree *analyze) {x->analyze_ptree = analyze;}
-struct ptree *mus_xen_synthesize(mus_xen *x) {return(x->synthesize_ptree);}
-void mus_xen_set_synthesize(mus_xen *x, struct ptree *synthesize) {x->synthesize_ptree = synthesize;}
 void mus_xen_set_dont_free(mus_xen *x, bool val) {x->dont_free_gen = val;}
 
 /* new mus_* accessors -- go direct to class, if null CHECK_METHOD in effect using the envir as an open-env (but this should be in mus-* itself)
@@ -13002,6 +12989,7 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
   }
 #endif
 
+#if (!SND_DISABLE_DEPRECATED)
 #if HAVE_SCHEME
   s7_eval_c_string(s7, "(define-macro (run . code) \n\
                           (if (and (symbol? (caar code)) \n\
@@ -13011,6 +12999,7 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
   s7_eval_c_string(s7, "(define-macro (declare . args) #f)");
   s7_eval_c_string(s7, "(define optimization (make-procedure-with-setter (lambda () 0) (lambda (val) 0)))");
   XEN_DEFINE_HOOK("optimization-hook", "(make-hook 'message)", 1, "a no-op");
+#endif
 #endif
 }
 

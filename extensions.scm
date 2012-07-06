@@ -215,7 +215,9 @@ a list (file-name-or-sound-object [beg [channel]])."
     (if (> len 0)
 	(let ((reader (make-sampler file-beg file-name file-channel))
 	      (data (make-vct len)))
-	  (vct-map! data (lambda () (next-sample reader)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i len))
+	    (set! (data i) (next-sample reader)))
 	  (insert-samples start len data snd chn edpos #f 
 			  (if (string? file-data)
 			      (format #f "insert-channel ~S ~A ~A" file-data beg dur)

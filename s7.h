@@ -23,7 +23,7 @@ typedef double s7_Double;
    *   is a regression test for s7 -- it still turns up a few problems.  More tests are certainly welcome!  
    *   Extended examples of s7 usage are:
    *
-   *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-12.tar.gz (a sound editor)
+   *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-13.tar.gz (a sound editor)
    *     which includes:
    *       libxm: libxm.tar.gz (X, Motif, Gtk, Cairo, and openGL bindings)
    *       sndlib: sndlib.tar.gz (sound file, audio port, and CLM bindings plus an optimizer (run))
@@ -35,10 +35,7 @@ typedef double s7_Double;
    * s7 (Scheme) variables:
    *
    *    *features*              a list of symbols describing what is currently available (initially '(s7)).
-   *                               "provide" adds a symbol to the list, 
-   *                               "provided?" returns #t if its symbol arg is in the list.
    *    *vector-print-length*   how many elements of a vector are printed (initially 8)
-   *    __func__                equivalent to C's __func__.  Data about the current function.
    *    *load-path*             a list of directory names that "load" searches for Scheme input files (initially '())
    *    *load-hook*             hook called before a file is loaded; takes a function of one arg, the name of the file.
    *    *error-hook*            hook called upon error; takes a function of two args, 
@@ -46,6 +43,7 @@ typedef double s7_Double;
    *    *unbound-variable-hook* hook called when an unbound symbol is accessed.
    *    *#readers*              #... readers
    *    *gc-stats*              #t to turn on GC statistics
+   *    __func__                equivalent to C's __func__.  Data about the current function.
    *
    * s7 constants:
    *
