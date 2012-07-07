@@ -363,6 +363,7 @@ s7_Int *s7_vector_dimensions(s7_pointer vec);                                   
 s7_Int *s7_vector_offsets(s7_pointer vec);                                            /* precalculated offsets to speed-up addressing */
 s7_Int s7_vector_print_length(s7_scheme *sc);                                         /* value of *vector-print-length* */
 s7_Int s7_set_vector_print_length(s7_scheme *sc, s7_Int new_len);
+s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect);
 
   /* 
    *  (vect i) is the same as (vector-ref vect i)

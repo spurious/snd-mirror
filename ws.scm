@@ -810,7 +810,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	((pred (car l)) (car l))
 	(else (find-if pred (cdr l)))))
 
-(defmacro defgenerator (struct-name . fields)
+
+(define-macro (defgenerator struct-name . fields)
+  ;; (format *stderr* "(defgenerator ~A~%    ~{~A~%~^     ~}~%" struct-name fields)
   (let* ((name (if (list? struct-name) (car struct-name) struct-name))
 
 	 (wrapper (or (and (list? struct-name)
@@ -852,14 +854,14 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				     'float)))
 			   fields))
 
-	 (original-methods (or (and (list? struct-name)
+	 (original-methods (eval (or (and (list? struct-name)
 				    (or (and (> (length struct-name) 2)
 					     (equal? (struct-name 1) :methods)
 					     (struct-name 2))
 					(and (= (length struct-name) 5)
 					     (equal? (struct-name 3) :methods)
 					     (struct-name 4))))
-			       (list)))
+			       (list))))
 
 	 (method-exists? (lambda (method)
 			   (and (not (null? original-methods))
@@ -878,7 +880,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 	 (frequency-field-name (and (not (method-exists? 'mus-frequency))
 				    (find-if (lambda (name) 
-					       (string=? name "frequency"))
+					       (or (string=? name "frequency")
+						   (string=? name "freq")))
 					     field-names)
 				    "-frequency"))
 
@@ -902,151 +905,128 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 						    field-names)))
 				  (and fld (string-append "-" fld)))))
 
+	 ;; TODO: use the generator-ref offset here not the extra indirection
+	 ;; SOMEDAY: ideally all the fields would be in the new object's environment
+
 	 ;; using append to splice out unwanted entries
-	 (methods `(append ,original-methods
+	 (methods (append original-methods
 			   
-			   (if ,phase-field-name
+			   (if phase-field-name
 			       (list 
 				(list 'mus-phase
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or phase-field-name "oops"))) g))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or phase-field-name "oops"))) g) val))))
+				  (apply lambda `((g)
+						  (,(string->symbol (string-append sname phase-field-name)) g)))
+				  (apply lambda `((g val)
+						  (set! (,(string->symbol (string-append sname phase-field-name)) g) val)))))
 			       (list))
 			   
-			   (if ,frequency-field-name
-			       (list 
+			   (if frequency-field-name
+			       (list
 				(list 'mus-frequency
-				      (lambda (g)
-					(radians->hz (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g)))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g) (hz->radians val))
-					val)))
+				      (apply lambda `((g) 
+						      (radians->hz (,(string->symbol (string-append sname frequency-field-name)) g))))
+				      (apply lambda `((g val)
+						      (set! (,(string->symbol (string-append sname frequency-field-name)) g) (hz->radians val))
+						      val))))
 			       (list))
 			   
-			   (if ,offset-field-name
+			   (if offset-field-name
 			       (list 
 				(list 'mus-offset
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or offset-field-name "oops"))) g))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or offset-field-name "oops"))) g) val)
-					val)))
+				  (apply lambda `((g)
+						  (,(string->symbol (string-append sname offset-field-name)) g)))
+				  (apply lambda `((g val)
+						  (set! (,(string->symbol (string-append sname offset-field-name)) g) val)
+						  val))))
 			       (list))
 			   
-			   (if ,order-field-name
+			   (if order-field-name
 			       (list  ; not settable -- maybe use mus-length?
 				(list 'mus-order
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or order-field-name "oops"))) g))))
+				  (apply lambda `((g)
+						  (,(string->symbol (string-append sname order-field-name)) g)))))
 			       (list))
 			   
-			   (if ,scaler-field-name
+			   (if scaler-field-name
 			       (list 
 				(list 'mus-scaler
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or scaler-field-name "oops"))) g))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or scaler-field-name "oops"))) g) val))))
+				  (apply lambda `((g)
+						  (,(string->symbol (string-append sname scaler-field-name)) g)))
+				  (apply lambda `((g val)
+						  (set! (,(string->symbol (string-append sname scaler-field-name)) g) val)))))
 			       (list))
 			   
-			   (if ,(not (method-exists? 'mus-describe))
+			   (if (not (method-exists? 'mus-describe))
 			       (list 
 				(list 'mus-describe
-				      (lambda (g)
-					(let ((desc (mus-name g))
-					      (first-time #t))
-					  (for-each
-					   (lambda (field)
-					     (set! desc (string-append desc 
-								       (format #f "~A~A: ~A"
-									       (if first-time " " ", ")
-									       field
-									       (if (string=? field "frequency")
-										   (radians->hz ((symbol->value (string->symbol (string-append ,sname "-" field))) g))
-										   ((symbol->value (string->symbol (string-append ,sname "-" field))) g)))))
-					     (set! first-time #f))
-					   (list ,@field-names))
-					  desc))))
+				  (apply lambda `((g)
+						  (mus_describe-generator g)))))
 			       (list))
 			   
-			   (if ,(not (method-exists? 'mus-run))
+			   (if (not (method-exists? 'mus-run))
 			       (list
 				(list 'mus-run
-				      (lambda (g arg1 arg2)
-					(,(string->symbol sname) g arg1)))) ; this assumes the run-time function takes two args
+				  (apply lambda `((g arg1 arg2)
+						  (,(string->symbol sname) g arg1))))) ; this assumes the run-time function takes two args
 			       (list))
 			   
-			   (if ,(not (method-exists? 'mus-reset))
+			   (if (not (method-exists? 'mus-reset))
 			       (list 
 				(list 'mus-reset
-				      (lambda (g)
-					(for-each
-					 (lambda (name type orig)
-					   (if (or (not (string=? type "clm"))
-						   (not ((symbol->value (string->symbol (string-append ,sname "-" name))) g)))
-					       (set! ((string->symbol (string-append ,sname "-" name)) g) orig)
-					       (mus-reset ((symbol->value (string->symbol (string-append ,sname "-" name))) g))))
-					 (list ,@field-names)
-					 (list ,@(map symbol->string field-types))
-					 (list ,@(map (lambda (n)
-							(if (and (list? n)
-								 (>= (length n) 2))
-							    (cadr n)
-							    0.0))
-						      fields))))))
+				  (apply lambda `((g)
+						  (mus-reset-generator g)))))
 			       (list))
 			   
-			   (if ,(not (method-exists? 'mus-name))
+			   (if (not (method-exists? 'mus-name))
 			       (list 
 				(list 'mus-name
-				      (lambda (g) 
-					,sname)
-				      (lambda (g new-name)
-					(set-car! (cdr (assoc 'mus-name (g (- (length g) 1))))
-						  (lambda (g) 
-						    new-name))))) ; depend on closures?
+				  (apply lambda `((g) 
+						  ,sname))))
 			       (list)))))
     
-    `(begin
-       (define ,(string->symbol (string-append sname "?"))
-	 (lambda (obj)
-	   (and (list? obj)
-		(eq? (car obj) ',(string->symbol sname)))))
+    `(begin 
+       (define ,(string->symbol (string-append sname "?")) #f)
+       (define ,(string->symbol (string-append "make-" sname)) #f)
+       ,@(map (lambda (n)
+		`(define ,(string->symbol (string-append sname "-" n)) #f))
+	      field-names)
 
-       (define ,(string->symbol (string-append sname "-methods"))
-	 (lambda ()
-	   ,methods))
+       (let ((gen-type (mus-make-generator-type ,sname ',fields ',methods)))
 
-       (define* (,(string->symbol (string-append "make-" sname))
-		 ,@(map (lambda (n)
-			  (if (and (list? n)
-				   (>= (length n) 2))
-			      (list (car n) (cadr n))
-			      (list n 0.0)))
-			fields))
-	 (,wrapper (if (list? ,methods)
-		       (list ',(string->symbol sname)
-			     ,@(map string->symbol field-names)
-			     ,methods)
-		       (list ',(string->symbol sname)
-			     ,@(map string->symbol field-names)))))
+	 (set! ,(string->symbol (string-append sname "?"))
+	   (lambda (obj)
+	     (and (mus-generator? obj)
+		  (= (mus-type obj) gen-type))))
 
-       ,@(map (let ((ctr 1))
-		(lambda (n type)
-		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
-				(make-procedure-with-setter
-				 (lambda (arg)
-				   "generator field accessor"
-				   (arg ,ctr))
-				 (lambda (arg val)
-				   (set! (arg ,ctr) val))))))
-		    (set! ctr (+ 1 ctr))
-		    val)))
-	      field-names field-types))))
+	 (set! ,(string->symbol (string-append "make-" sname))
+	   (lambda* (,@(map (lambda (n)
+			     (if (and (list? n)
+				      (>= (length n) 2))
+				 (list (car n) (cadr n))
+				 (list n 0.0)))
+			   fields))
+	   (,wrapper 
+	    (let ((gen (mus-make-generator gen-type)))
+	      ,@(map (let ((ctr 0))
+		       (lambda (n)
+			 (let ((val `(mus-generator-set! gen ,ctr ,(if (pair? n) (car n) n))))
+			   (set! ctr (+ ctr 1))
+			   val)))
+		     fields)
+	      gen))))
 
+	 ,@(map (let ((ctr 0))
+		  (lambda (n type)
+		    (let ((val `(set! ,(string->symbol (string-append sname "-" n))
+				       (make-procedure-with-setter
+					(lambda (arg)
+					  (mus-generator-ref arg ,ctr))
+					(lambda (arg val)
+					  (mus-generator-set! arg ,ctr val))))))
+		      (set! ctr (+ 1 ctr))
+		      val)))
+		field-names field-types)))))
 
-(define def-clm-struct defgenerator)
 
 
 

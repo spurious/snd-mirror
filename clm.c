@@ -115,7 +115,6 @@ struct mus_any_class {
 };
 
 
-
 enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
       MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
@@ -128,13 +127,49 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_INITIAL_GEN_TAG};
 
 
-
+void mus_generator_set_release(mus_any_class *p, int (*release)(mus_any *ptr)) {p->release = release;}
+void mus_generator_set_describe(mus_any_class *p, char *(*describe)(mus_any *ptr)) {p->describe = describe;}
+void mus_generator_set_equalp(mus_any_class *p, bool (*equalp)(mus_any *gen1, mus_any *gen2)) {p->equalp = equalp;}
+void mus_generator_set_data(mus_any_class *p, mus_float_t *(*data)(mus_any *ptr)) {p->data = data;}
+void mus_generator_set_set_data(mus_any_class *p, mus_float_t *(*set_data)(mus_any *ptr, mus_float_t *new_data)) {p->set_data = set_data;}
 void mus_generator_set_length(mus_any_class *p, mus_long_t (*length)(mus_any *ptr)) {p->length = length;}
+void mus_generator_set_set_length(mus_any_class *p, mus_long_t (*set_length)(mus_any *ptr, mus_long_t new_length)) {p->set_length = set_length;}
+void mus_generator_set_frequency(mus_any_class *p, mus_float_t (*frequency)(mus_any *ptr)) {p->frequency = frequency;}
+void mus_generator_set_set_frequency(mus_any_class *p, mus_float_t (*set_frequency)(mus_any *ptr, mus_float_t new_freq)) {p->set_frequency = set_frequency;}
+void mus_generator_set_phase(mus_any_class *p, mus_float_t (*phase)(mus_any *ptr)) {p->phase = phase;} 
+void mus_generator_set_set_phase(mus_any_class *p, mus_float_t (*set_phase)(mus_any *ptr, mus_float_t new_phase)) {p->set_phase = set_phase;}
+void mus_generator_set_scaler(mus_any_class *p, mus_float_t (*scaler)(mus_any *ptr)) {p->scaler = scaler;}
+void mus_generator_set_set_scaler(mus_any_class *p, mus_float_t (*set_scaler)(mus_any *ptr, mus_float_t val)) {p->set_scaler = set_scaler;}
+void mus_generator_set_increment(mus_any_class *p, mus_float_t (*increment)(mus_any *ptr)) {p->increment = increment;}
+void mus_generator_set_set_increment(mus_any_class *p, mus_float_t (*set_increment)(mus_any *ptr, mus_float_t val)) {p->set_increment = set_increment;}
+void mus_generator_set_run(mus_any_class *p, mus_float_t (*run)(mus_any *gen, mus_float_t arg1, mus_float_t arg2)) {p->run = run;}
+void mus_generator_set_closure(mus_any_class *p, void *(*closure)(mus_any *gen)) {p->closure = closure;}
 void mus_generator_set_channels(mus_any_class *p, int (*channels)(mus_any *ptr)) {p->channels = channels;}
-void mus_generator_set_location(mus_any_class *p, mus_long_t (*location)(mus_any *ptr)) {p->location = location;}
-void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type) {p->extended_type = extended_type;}
+void mus_generator_set_offset(mus_any_class *p, mus_float_t (*offset)(mus_any *ptr)) {p->offset = offset;}
+void mus_generator_set_set_offset(mus_any_class *p, mus_float_t (*set_offset)(mus_any *ptr, mus_float_t val)) {p->set_offset = set_offset;}
+void mus_generator_set_width(mus_any_class *p, mus_float_t (*width)(mus_any *ptr)) {p->width = width;}
+void mus_generator_set_set_width(mus_any_class *p, mus_float_t (*set_width)(mus_any *ptr, mus_float_t val)) {p->set_width = set_width;}
+void mus_generator_set_xcoeff(mus_any_class *p, mus_float_t (*xcoeff)(mus_any *ptr, int index)) {p->xcoeff = xcoeff;}
+void mus_generator_set_set_xcoeff(mus_any_class *p, mus_float_t (*set_xcoeff)(mus_any *ptr, int index, mus_float_t val)) {p->set_xcoeff = set_xcoeff;}
+void mus_generator_set_hop(mus_any_class *p, mus_long_t (*hop)(mus_any *ptr)) {p->hop = hop;}
+void mus_generator_set_set_hop(mus_any_class *p, mus_long_t (*set_hop)(mus_any *ptr, mus_long_t new_length)) {p->set_hop = set_hop;}
+void mus_generator_set_ramp(mus_any_class *p, mus_long_t (*ramp)(mus_any *ptr)) {p->ramp = ramp;}
+void mus_generator_set_set_ramp(mus_any_class *p, mus_long_t (*set_ramp)(mus_any *ptr, mus_long_t new_length)) {p->set_ramp = set_ramp;}
 void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan)) {p->read_sample = read_sample;}
+void mus_generator_set_write_sample(mus_any_class *p, mus_float_t (*write_sample)(mus_any *ptr, mus_long_t samp, int chan, mus_float_t data)) {p->write_sample = write_sample;}
 void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr)) {p->file_name = file_name;}
+void mus_generator_set_end(mus_any_class *p, int (*end)(mus_any *ptr)) {p->end = end;}
+void mus_generator_set_location(mus_any_class *p, mus_long_t (*location)(mus_any *ptr)) {p->location = location;}
+void mus_generator_set_set_location(mus_any_class *p, mus_long_t (*set_location)(mus_any *ptr, mus_long_t loc)) {p->set_location = set_location;}
+void mus_generator_set_channel(mus_any_class *p, int (*channel)(mus_any *ptr)) {p->channel = channel;}
+void mus_generator_set_ycoeff(mus_any_class *p, mus_float_t (*ycoeff)(mus_any *ptr, int index)) {p->ycoeff = ycoeff;}
+void mus_generator_set_set_ycoeff(mus_any_class *p, mus_float_t (*set_ycoeff)(mus_any *ptr, int index, mus_float_t val)) {p->set_ycoeff = set_ycoeff;}
+void mus_generator_set_xcoeffs(mus_any_class *p, mus_float_t *(*xcoeffs)(mus_any *ptr)) {p->xcoeffs = xcoeffs;}
+void mus_generator_set_ycoeffs(mus_any_class *p, mus_float_t *(*ycoeffs)(mus_any *ptr)) {p->ycoeffs = ycoeffs;}
+void mus_generator_set_reset(mus_any_class *p, void (*reset)(mus_any *ptr)) {p->reset = reset;}
+void mus_generator_set_set_closure(mus_any_class *p, void *(*set_closure)(mus_any *gen, void *e)) {p->set_closure = set_closure;}
+void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type) {p->extended_type = extended_type;}
+
 
 mus_any_class *mus_make_generator(int type, char *name, 
 				  int (*release)(mus_any *ptr), 
@@ -154,6 +189,7 @@ mus_any_class *mus_make_generator(int type, char *name,
 static int mus_generator_type = MUS_INITIAL_GEN_TAG;
 
 int mus_make_generator_type(void) {return(mus_generator_type++);}
+
 
 
 static const char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};

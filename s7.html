@@ -1321,8 +1321,8 @@ f
 &gt;(f 1)
 </pre>
 
-<p>And now we are hung.  As I think is clear from the procedure source, we've created a procedure with a
-circular list in its definition!  This is surprisingly easy to do by accident.
+<p>And now we are hung &mdash; we've created a procedure with an
+infinite loop!  This is surprisingly easy to do by accident.
 Here's one way out:
 </p>
 
@@ -1336,10 +1336,6 @@ f
 &gt; (f 1)
 (list 1)
 </pre>
-
-<p>The moral of this story is: if you see a circular list in macroexpand, break
-the loop! 
-</p>
 </div>
 
 

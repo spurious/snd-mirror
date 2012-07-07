@@ -462,6 +462,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+3-July:  removed ptree-channel and max-virtual-ptrees, optimization, run.c.\n\
 26-Jun:  Snd 12.12.\n\
 4-Jun:   removed the --with-static-* configuration switches.\n\
 21-May:  Snd 12.11\n\

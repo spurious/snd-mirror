@@ -1,14 +1,25 @@
-Snd 12.12:
+Snd 13.0:
 
-s7: open-environment?
-    all built-in functions are generic, and any scheme (or C) function can be.
-    added throw (like error, but does not affect error-environment, nor call *error-hook*).
+Matti Koskinen got s7 working in uclinux on the blackfin processor.
 
-Snd: removed the --with-static-* configuration switches.  The difference
-       in either file size or runtime size is miniscule compared to
-       everything else, and memory is extremely cheap.  This includes
-       --with-static-xm|xg|alsa|motif
+removed run.c and the run macro (34000 lines!). 
 
-checked: sbcl 1.0.57, FC 17 (gcc 4.7.0), gtk 3.5.4
+removed ptree-channel, max-virtual-ptrees, optimization, 
+  optimization-hook, add-clm-field, declare, and all the scheme
+  functions that depended on these.
 
-Thanks!: Michael Alcorn, Mike Scholz, Brian Damgaard.
+deprecated vct-map! and removed it from the Snd scheme files.
+removed trailing with-source arg from display-edits.
+
+added Save icon to the toolbars
+
+moved the clm/clm2xen struct declarations out of the header files,
+  and added accessor functions.  (Bumped clm to 5.0, sndlib to 22.0).
+
+added mus_make_generator, mus_make_generator_type, mus_xen_gen
+  (moved parts of defgenerator to C).  removed def-clm-struct.
+
+checked: gtk 3.5.6
+
+Thanks!:  Matti Koskinen, Mike Scholz
+

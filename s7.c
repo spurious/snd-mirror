@@ -1960,7 +1960,6 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
-static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
 static void pop_input_port(s7_scheme *sc);
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
 static bool is_aritable(s7_scheme *sc, s7_pointer x, int args);
@@ -3693,7 +3692,7 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_table "(symbol-table) returns the s7 symbol table (a vector)"
-  return(vector_copy(sc, sc->symbol_table));
+  return(s7_vector_copy(sc, sc->symbol_table));
 }
 
 
@@ -24966,7 +24965,7 @@ static s7_pointer g_qq_multivector(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
+s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 {
   s7_Int len;
   s7_pointer new_vect;
@@ -28770,7 +28769,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       return(obj);
 
     case T_VECTOR:
-      return(vector_copy(sc, obj)); /* "shallow" copy */
+      return(s7_vector_copy(sc, obj)); /* "shallow" copy */
 
     case T_PAIR:                    /* top level only, as in the other cases, last arg checks for circles */
       return(cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
@@ -56825,6 +56824,13 @@ s7_scheme *s7_init(void)
                                               (list 'set! (car var&init) (cadr var&init))) \n\
                                              bindings)                                     \n\
                                      ,@body))))");
+
+  /* minor bug here: (letrec* ((x 1) (x 2)) ...) complains: duplicate identifier in let, but it should say letrec*, might use:
+   *   (define (duplicate-car-memq lst) 
+   *      (and (not (null? lst))
+   *           (or (member (caar lst) (cdr lst) (lambda (x y) (eq? x (car y)))) 
+   *               (duplicate-car-memq (cdr lst)))))
+   */
 
 
   /* call-with-values is almost a no-op in this context 

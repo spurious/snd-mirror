@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 12
-#define XEN_VERSION "3.12"
+#define XEN_MINOR_VERSION 13
+#define XEN_VERSION "3.13"
 
 /* HISTORY:
  *
+ *  9-July:    XEN_VECTOR_ELEMENT and XEN_VECTOR_COPY.
  *  4-June:    XEN_PROVIDE as synonym for XEN_YES_WE_HAVE.
  *  8-May:     added description arg to XEN_DEFINE_SIMPLE_HOOK and XEN_DEFINE_HOOK, only used in scheme.
  *  12-Jan-12: added reverse argument to s7 version of XEN_MAKE_OBJECT_TYPE.
@@ -1147,6 +1148,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 #define XEN_MAKE_VECTOR(Num, Fill)                 s7_make_and_fill_vector(s7, Num, Fill)
 #define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(s7, Vect)
 #define XEN_VECTOR_RANK(Vect)                      s7_vector_rank(Vect)
+#define XEN_VECTOR_ELEMENT(Vect, N)                s7_vector_elements(Vect)[N]
+#define XEN_VECTOR_COPY(Vect)                      s7_vector_copy(s7, Vect)
 
 #define XEN_CHAR_P(Arg)                            s7_is_character(Arg)
 #define XEN_TO_C_CHAR(Arg)                         s7_character(Arg)
