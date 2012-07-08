@@ -69,8 +69,8 @@
        ,doc
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
-       ((lambda () ; for inner defines, if any
-	  ,@body)))
+       (let ()           ; for inner defines, if any
+	 ,@body))
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))
@@ -815,6 +815,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
   ;; (format *stderr* "(defgenerator ~A~%    ~{~A~%~^     ~}~%" struct-name fields)
   (let* ((name (if (list? struct-name) (car struct-name) struct-name))
 
+	 (gen-type (gensym))
+
 	 (wrapper (or (and (list? struct-name)
 			   (or (and (> (length struct-name) 2)
 				    (equal? (struct-name 1) :make-wrapper)
@@ -956,25 +958,11 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 						  (set! (,(string->symbol (string-append sname scaler-field-name)) g) val)))))
 			       (list))
 			   
-			   (if (not (method-exists? 'mus-describe))
-			       (list 
-				(list 'mus-describe
-				  (apply lambda `((g)
-						  (mus_describe-generator g)))))
-			       (list))
-			   
 			   (if (not (method-exists? 'mus-run))
 			       (list
 				(list 'mus-run
 				  (apply lambda `((g arg1 arg2)
 						  (,(string->symbol sname) g arg1))))) ; this assumes the run-time function takes two args
-			       (list))
-			   
-			   (if (not (method-exists? 'mus-reset))
-			       (list 
-				(list 'mus-reset
-				  (apply lambda `((g)
-						  (mus-reset-generator g)))))
 			       (list))
 			   
 			   (if (not (method-exists? 'mus-name))
@@ -985,47 +973,38 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 			       (list)))))
     
     `(begin 
-       (define ,(string->symbol (string-append sname "?")) #f)
-       (define ,(string->symbol (string-append "make-" sname)) #f)
-       ,@(map (lambda (n)
-		`(define ,(string->symbol (string-append sname "-" n)) #f))
-	      field-names)
+       (define ,gen-type (mus-make-generator-type ,sname ',fields ',methods))
 
-       (let ((gen-type (mus-make-generator-type ,sname ',fields ',methods)))
+       (define (,(string->symbol (string-append sname "?")) obj)
+	 (and (mus-generator? obj)
+	      (= (mus-type obj) ,gen-type)))
 
-	 (set! ,(string->symbol (string-append sname "?"))
-	   (lambda (obj)
-	     (and (mus-generator? obj)
-		  (= (mus-type obj) gen-type))))
-
-	 (set! ,(string->symbol (string-append "make-" sname))
-	   (lambda* (,@(map (lambda (n)
-			     (if (and (list? n)
-				      (>= (length n) 2))
-				 (list (car n) (cadr n))
-				 (list n 0.0)))
-			   fields))
-	   (,wrapper 
-	    (let ((gen (mus-make-generator gen-type)))
-	      ,@(map (let ((ctr 0))
-		       (lambda (n)
-			 (let ((val `(mus-generator-set! gen ,ctr ,(if (pair? n) (car n) n))))
-			   (set! ctr (+ ctr 1))
-			   val)))
-		     fields)
-	      gen))))
+       (define* (,(string->symbol (string-append "make-" sname))
+		 ,@(map (lambda (n)
+			  (if (and (list? n)
+				   (>= (length n) 2))
+			      (list (car n) (cadr n))
+			      (list n 0.0)))
+			fields))
+	 (,wrapper 
+	  (let ((gen (mus-make-generator ,gen-type)))
+	    ,@(map (let ((ctr 0))
+		     (lambda (n)
+		       (let ((val `(mus-generator-set! gen ,ctr ,(if (pair? n) (car n) n))))
+			 (set! ctr (+ ctr 1))
+			 val)))
+		   fields)
+	    gen)))
 
 	 ,@(map (let ((ctr 0))
 		  (lambda (n type)
-		    (let ((val `(set! ,(string->symbol (string-append sname "-" n))
-				       (make-procedure-with-setter
-					(lambda (arg)
-					  (mus-generator-ref arg ,ctr))
-					(lambda (arg val)
-					  (mus-generator-set! arg ,ctr val))))))
+		    (let ((val `(begin 
+				  (define (,(string->symbol (string-append sname "-" n)) arg) (mus-generator-ref arg ,ctr))
+				  (define (,(string->symbol (string-append sname "-" n "-setter")) arg val) (mus-generator-set! arg ,ctr val))
+				  (set! (procedure-setter ,(string->symbol (string-append sname "-" n))) ,(string->symbol (string-append sname "-" n "-setter"))))))
 		      (set! ctr (+ 1 ctr))
 		      val)))
-		field-names field-types)))))
+		field-names field-types))))
 
 
 
