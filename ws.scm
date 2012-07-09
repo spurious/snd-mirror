@@ -793,10 +793,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;  :hi
 ;;;  (osc 0.125378749798983 0.0 ((mus-phase #<closure> #<closure>) (mus-describe #<closure>) (mus-run #<closure>) (mus-reset #<closure>) (mus-name #<closure> #<closure>)))
 
-
-;;; this will change radically very soon
-
-
 ;;; besides setting up the list accessors, the make function, and the type predicate, defgenerator
 ;;; it also adds the built-in methods mus-name, mus-reset, mus-run, and mus-describe (if they don't already exist), and
 ;;;   mus-frequency if a "frequency" field exists (treated as radians)
@@ -881,11 +877,11 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				  (and fld (string-append "-" fld)))))
 
 	 (frequency-field-name (and (not (method-exists? 'mus-frequency))
-				    (find-if (lambda (name) 
-					       (or (string=? name "frequency")
-						   (string=? name "freq")))
-					     field-names)
-				    "-frequency"))
+				    (let ((fld (find-if (lambda (name) 
+							  (or (string=? name "frequency")
+							      (string=? name "freq")))
+							field-names)))
+				      (and fld (string-append "-" fld)))))
 
 	 (offset-field-name (and (not (method-exists? 'mus-offset))
 				 (find-if (lambda (name) 
@@ -957,20 +953,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				  (apply lambda `((g val)
 						  (set! (,(string->symbol (string-append sname scaler-field-name)) g) val)))))
 			       (list))
-			   
-			   (if (not (method-exists? 'mus-run))
-			       (list
-				(list 'mus-run
-				  (apply lambda `((g arg1 arg2)
-						  (,(string->symbol sname) g arg1))))) ; this assumes the run-time function takes two args
-			       (list))
-			   
-			   (if (not (method-exists? 'mus-name))
-			       (list 
-				(list 'mus-name
-				  (apply lambda `((g) 
-						  ,sname))))
-			       (list)))))
+			   )))
     
     `(begin 
        (define ,gen-type (mus-make-generator-type ,sname ',fields ',methods))
@@ -980,7 +963,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	      (= (mus-type obj) ,gen-type)))
 
        (define* (,(string->symbol (string-append "make-" sname))
-		 ,@(map (lambda (n)
+		 ,@(map (lambda (n) 
 			  (if (and (list? n)
 				   (>= (length n) 2))
 			      (list (car n) (cadr n))

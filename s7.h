@@ -353,6 +353,8 @@ bool s7_is_vector(s7_pointer p);                                                
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                /* (vector-ref vec index) */
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);  /* (vector-set! vec index a) */
+s7_pointer s7_safe_vector_ref(s7_scheme *sc, s7_pointer vec, s7_pointer index);       /* no error checks */
+s7_pointer s7_safe_vector_set(s7_scheme *sc, s7_pointer vec, s7_pointer index, s7_pointer a);  /* no error checks */
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len);                                 /* (make-vector len) */
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill);       /* (make-vector len fill) */
 s7_Int s7_vector_length(s7_pointer vec);                                              /* (vector-length vec) */

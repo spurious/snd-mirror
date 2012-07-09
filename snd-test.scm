@@ -22,7 +22,7 @@
 ;;;  test 19: save and restore                  [32258]
 ;;;  test 20: transforms                        [33941]
 ;;;  test 21: new stuff                         [36093]
-;;;  test 22: (run)                             [38115]
+;;;  test 22:                                   [38115]
 ;;;  test 23: with-sound                        [38121]
 ;;;  test 25: X/Xt/Xm                           [41955]
 ;;;  test 26:                                   [45637]
@@ -33,7 +33,7 @@
 ;;;  test the end                               [48141]
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 					;(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "load ~S~%" name))))
@@ -41739,15 +41739,11 @@ EDITS: 1
        (set! order (mus-order gen))
        (set! frequency (mus-frequency gen))
        (nssb gen 1.0)
-       (set! val (mus-run gen 0.0 0.0))
        (set! name (mus-name gen))
        
     (if (not (string=? name "nssb")) (snd-display #__line__ ";run mus-name nssb: ~A" name))
     (if (not (= order 3)) (snd-display #__line__ ";run mus-order nssb: ~A" order))
-    (if (fneq frequency 440.0) (snd-display #__line__ ";run mus-frequency nssb: ~A" frequency))
-    (if (fneq val 0.371) (snd-display #__line__ ";run mus-run nssb: ~A" val)))
-  
-  ;; mus-reset and mus-describe in this case have an embedded for-each, so not optimizable
+    (if (fneq frequency 440.0) (snd-display #__line__ ";run mus-frequency nssb: ~A" frequency)))
   
   (let ((gen (make-oscil 123.0)))
     (set! (mus-name gen) "oscil123")

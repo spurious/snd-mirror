@@ -45,7 +45,7 @@
 	 (envs #f)
 	 (srcenv (if (list? srate)
 		     (make-env srate :duration dur :scaler (if reversed -1.0 1.0))
-		     #f)))
+		     (make-env '(0 0 1 0) :duration dur))))
 
     (if matrix
 	(begin
@@ -106,14 +106,14 @@
 			 ((= outp out-chans))
 		       (if (env? (vector-ref envs outp))
 			   (mixer-set! mx 0 outp (env (vector-ref envs outp)))))
-		     (let ((inframe (src sr (if srcenv (env srcenv) 0.0))))
+		     (let ((inframe (src sr (env srcenv))))
 		       (frame->file *output* i (sample->frame mx inframe outframe))
 		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))
 		  
 		  ;; no envs
 		   (do ((i st (+ i 1)))
 		       ((= i nd))
-		     (let ((inframe (src sr (if srcenv (env srcenv) 0.0))))
+		     (let ((inframe (src sr (env srcenv))))
 		       (frame->file *output* i (sample->frame mx inframe outframe))
 		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))))
 	    
@@ -135,7 +135,7 @@
 			   ((= outp out-chans))
 			 (if (env? (vector-ref envs (+ off outp)))
 			     (mixer-set! mx inp outp (env (vector-ref envs (+ off outp)))))))
-		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
+		     (let ((sr-val (env srcenv)))
 		       (do ((inp 0 (+ 1 inp)))
 			   ((= inp in-chans))
 			 (frame-set! inframe inp (src (vector-ref srcs inp) sr-val)))
@@ -145,7 +145,7 @@
 		  ;; no envs
 		   (do ((i st (+ i 1)))
 		       ((= i nd))
-		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
+		     (let ((sr-val (env srcenv)))
 		       (do ((inp 0 (+ 1 inp)))
 			   ((= inp in-chans))
 			 (frame-set! inframe inp (src (vector-ref srcs inp) sr-val)))

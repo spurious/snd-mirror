@@ -1389,7 +1389,7 @@ static const char *save_xpm[] = {
 "      . . . . . . . . . . . . . . . . 7+.       ",
 "                                                "};
 
-static char *saveas_xpm[] = {
+static const char *saveas_xpm[] = {
 "24 24 262 2",
 "  	c None",
 ". 	c #000000",

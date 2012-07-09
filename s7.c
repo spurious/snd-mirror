@@ -597,7 +597,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_CONS_SS, HOP_SAFE_CONS_SS,
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
-      OP_SAFE_C_XXX, HOP_SAFE_C_XXX, OP_SAFE_C_SSS, HOP_SAFE_C_SSS,
+      OP_SAFE_C_XXX, HOP_SAFE_C_XXX, OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_G, HOP_SAFE_C_ALL_G, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X,
 
       OP_SAFE_CAR_Q, HOP_SAFE_CAR_Q, OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CAR_OPT, HOP_SAFE_CAR_OPT, OP_SAFE_CAR_P, HOP_SAFE_CAR_P, 
@@ -625,7 +625,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       /* these can't be embedded, and have to be the last thing called */
       OP_APPLY_SS, HOP_APPLY_SS,
       OP_C_ALL_G, HOP_C_ALL_G, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH,
-      OP_C_S_opSq, HOP_C_S_opSq, OP_C_opSq_CC, HOP_C_opSq_CC, 
+      OP_C_S_opSq, HOP_C_S_opSq, OP_C_opSq_CC, HOP_C_opSq_CC, OP_C_opSSq_S, HOP_C_opSSq_S,
       OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
       OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, 
       
@@ -691,7 +691,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", "safe_cons_ss", "h_safe_cons_ss",
      "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
      "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq", 
-     "safe_c_xxx", "h_safe_c_xxx", "safe_c_sss", "h_safe_c_sss",
+     "safe_c_xxx", "h_safe_c_xxx", "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs",
      "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_g", "h_safe_c_all_g", "safe_c_all_x", "h_safe_c_all_x",
 
      "safe_car_q", "h_safe_car_q", "safe_car_s", "h_safe_car_s", "safe_car_opt", "h_safe_car_opt", "safe_car_p", "h_safe_car_p", 
@@ -718,7 +718,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
      "apply_ss", "h_apply_ss",
      "c_all_g", "h_c_all_g", "call-with-exit", "h-call-with-exit", "c_catch", "h_c_catch",
-     "c_s_opsq", "h_c_s_opsq", "c_opsq_cc", "h_c_opsq_cc",
+     "c_s_opsq", "h_c_s_opsq", "c_opsq_cc", "h_c_opsq_cc", "c_opssq_s", "h_c_opssq_s",
      "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
      "c_s", "h_c_s", "read_s", "h_read_s", "list_p", "h_list_p", 
 
@@ -1003,6 +1003,7 @@ typedef struct {
   int size, top, ref;
   int *refs;
   void *tree;
+  bool has_hits;
 } shared_info;
 
 typedef struct {
@@ -20001,7 +20002,10 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
       {
 	i = (int)(p - ci->objs);
 	if (ci->refs[i] == 0)
-	  ci->refs[i] = ++ci->ref;  /* if found, set the ref number */
+	  {
+	    ci->has_hits = true;
+	    ci->refs[i] = ++ci->ref;  /* if found, set the ref number */
+	  }
 	ref = ci->refs[i];
 	break;
       }
@@ -20080,6 +20084,7 @@ static shared_info *new_shared_info(s7_scheme *sc)
     }
   ci->top = 0;
   ci->ref = 0;
+  ci->has_hits = false;
   return(ci);
 }
 
@@ -20104,7 +20109,8 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 		no_problem = false;
 		break;
 	      }
-	  if ((!is_null(x)) &&
+	  if ((no_problem) &&
+	      (!is_null(x)) &&
 	      (has_structure(x)))
 	    no_problem = false;
 	    
@@ -20131,6 +20137,10 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 
   /* collect all pointers associated with top */
   collect_shared_info(sc, ci, top);
+
+  if (!(ci->has_hits))
+    return(NULL);
+
   ci_objs = ci->objs;
   ci_refs = ci->refs;
 
@@ -20150,9 +20160,6 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 	  }
       }
   ci->top = refs;
-
-  if (refs == 0)
-    return(NULL);
   return(ci);
 }
 
@@ -20522,11 +20529,17 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 
     case T_INTEGER:
       nlen = 0;
-      str = integer_to_string_base_10_no_width(obj, &free_it, &nlen);
-      if (nlen > 0)
-	port_write_string(port)(sc, str, nlen, port);
-      else port_display(port)(sc, str, port);
-      if (free_it) free(str);
+      if ((is_small_int(obj)) &&
+	  (small_int_name(obj)))
+	port_write_string(port)(sc, small_int_name(obj), small_int_name_length(obj), port);
+      else
+	{
+	  str = integer_to_string_base_10_no_width(obj, &free_it, &nlen);
+	  if (nlen > 0)
+	    port_write_string(port)(sc, str, nlen, port);
+	  else port_display(port)(sc, str, port);
+	  if (free_it) free(str);
+	}
       break;
 
     case T_RATIO:
@@ -24028,9 +24041,6 @@ static s7_pointer append_in_place(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 /* -------------------------------- vectors -------------------------------- */
 
-/* TODO: check (copy subvector)
- */
-
 bool s7_is_vector(s7_pointer p)    
 { 
   return(type(p) == T_VECTOR);
@@ -24183,6 +24193,19 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer
     return(out_of_range(sc, sc->VECTOR_SET, small_int(2), make_integer(sc, index), "should be less than vector length"));
 
   vector_element(vec, index) = a;
+  return(a);
+}
+
+
+s7_pointer s7_safe_vector_ref(s7_scheme *sc, s7_pointer vec, s7_pointer index) 
+{
+  return(vector_element(vec, integer(index)));
+}
+
+
+s7_pointer s7_safe_vector_set(s7_scheme *sc, s7_pointer vec, s7_pointer index, s7_pointer a) 
+{
+  vector_element(vec, integer(index)) = a;
   return(a);
 }
 
@@ -32672,6 +32695,7 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
 
 #define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_data(P) == HOP_SAFE_C_S))
 #define is_safe_c_s(P)   ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_S))
+#define is_safe_c_ss(P)  ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_SS))
 
 static bool is_h_optimized(s7_pointer p)
 {
@@ -35064,6 +35088,17 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 				  set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x))); /* added */
 				  return(false);
 				}
+			      if ((symbols == 1) &&
+				  (is_symbol(caddar(x))) &&
+				  (is_safe_c_ss(cadar(x))))
+				{
+				  set_optimized(car(x));
+				  set_unsafe(car(x));
+				  set_optimize_data(car(x), hop + OP_C_opSSq_S);
+				  set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x))); 
+				  return(false);
+				}
+			      
 			    }
 			}
 		      else
@@ -35365,7 +35400,13 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			{
 			  if (symbols == 3)
 			    set_optimize_data(car(x), hop + OP_SAFE_C_SSS);
-			  else set_optimize_data(car(x), hop + OP_SAFE_C_XXX);
+			  else
+			    {
+			      if ((symbols == 2) &&
+				  (!is_symbol(caddar(x))))
+				set_optimize_data(car(x), hop + OP_SAFE_C_SCS);
+			      else set_optimize_data(car(x), hop + OP_SAFE_C_XXX);
+			    }
 			}
 		      set_c_function(car(x), c_function_chooser(func)(sc, func, 3, car(x)));
 		    }
@@ -36498,6 +36539,7 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 	    case OP_SAFE_C_QQ:
 	    case OP_SAFE_C_XXX:
 	    case OP_SAFE_C_SSS:
+	    case OP_SAFE_C_SCS:
 	    case OP_SAFE_C_ALL_S:
 	    case OP_SAFE_C_ALL_G:
 	    case OP_SAFE_C_ALL_X:
@@ -38445,6 +38487,7 @@ static s7_pointer check_set(s7_scheme *sc)
 		set_syntax_op(sc->code, sc->SET_PWS);
 	      else
 		{
+		  /* TODO: this needs a case for (set! (mus-* g0) (gen g1)) or OP_SAFE_C_SC etc */
 		  if ((is_pair(cdr(inner))) &&
 		      (!is_pair(cddr(inner))) &&
 		      (!is_pair(cadr(inner))) &&
@@ -44543,6 +44586,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
+	    case OP_C_opSSq_S:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      
+	    case HOP_C_opSSq_S:
+	      {
+		/* (define (hi) (let ((x 1) (y 2) (z "hiho")) (format (equal? x y) z))) */
+		s7_pointer args, val, val1;
+		args = cdr(code);
+		val = finder(sc, cadr(car(args)));
+		val1 = finder(sc, cadr(args));
+		car(sc->T2_2) = finder(sc, caddr(car(args)));
+		car(sc->T2_1) = val;
+		sc->args = list_2(sc, c_call(car(args))(sc, sc->T2_1), val1);
+		sc->value = c_call(code)(sc, sc->args);
+		goto START;
+	      }
+	      
+	      
 	    case OP_C_S:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -44681,6 +44745,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
+	    case OP_SAFE_C_SCS:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      
+	    case HOP_SAFE_C_SCS:
+	      {
+		/* (define (hi) (let ((x 32) (lst '(0 1))) (list-set! lst 0 x) v)) */
+		s7_pointer val1, args;
+		args = cdr(code);
+		
+		val1 = find_symbol_or_bust(sc, car(args));
+		car(sc->T3_3) = find_symbol_or_bust(sc, caddr(args));
+		car(sc->T3_2) = cadr(args);
+		car(sc->T3_1) = val1;
+		sc->value = c_call(code)(sc, sc->T3_1);
+		goto START;
+	      }
+	      
+
 	    case OP_SAFE_C_SSS:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -45046,7 +45129,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto START;
 	      }
 	      
-	      
+
 	    case OP_SAFE_C_opSSq_S:
 	      if (!c_function_is_ok(sc, code))
 		break;

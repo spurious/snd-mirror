@@ -204,10 +204,6 @@
 			(* s s)))))
 	 (- (* c ta) s))))
   
-  (define (signum x) 
-    (if (= x 0.0) 0 
-	(if (< x 0.0) -1 1)))
-  
   (define (apfloor len wT)
     (let* ((len-int (floor len))
 	   (len-frac (- len len-int)))

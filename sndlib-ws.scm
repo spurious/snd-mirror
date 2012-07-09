@@ -735,8 +735,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	      field-names field-types))))
 
 
-(define def-clm-struct defgenerator)
-
 (define (ws-interrupt?) #f)
 
 

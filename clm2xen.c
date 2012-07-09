@@ -268,9 +268,14 @@ static void reset_wrapped(mus_any *ptr)
   XEN_CALL_1(x->caller->methods->reset, x->obj, S_mus_reset);
 }
 
+static mus_float_t run_wrapped(mus_any *ptr, mus_float_t arg1, mus_float_t arg2)
+{
+  xen_any *x = (xen_any *)ptr;
+  return(XEN_TO_C_DOUBLE(XEN_CALL_3(x->caller->methods->run, x->obj, C_TO_XEN_DOUBLE(arg1), C_TO_XEN_DOUBLE(arg2), S_mus_run)));
+}
+
 
 /* TODO: need wrappers for all the rest */
-/* TODO: also need setters in clm */
 /* TODO: direct refs where possible: freq field 0, use mus_float_t field_0f[] return(gn->fields[0] essentially)
  * TODO: do the fallbacks here and the freq->mus_frequency translations so the above opt is easy
  */
@@ -473,8 +478,14 @@ static XEN g_mus_make_generator_type(XEN name, XEN fields, XEN methods)
 	  mus_generator_set_reset(new_core, reset_wrapped);
 	}
       
+      if (strcmp(name, "mus-run") == 0)
+	{
+	  new_methods->run = get_func;
+	  XEN_PROTECT_FROM_GC(get_func);
+	  mus_generator_set_run(new_core, run_wrapped);
+	}
+      
       /* TODO: still need at least x|ycoeff|s
-       *   also there are explicit mus-run
        */
     }
     
@@ -533,7 +544,11 @@ static XEN g_mus_generator_ref(XEN gen, XEN n)
   #define H_mus_generator_ref "(" S_mus_generator_ref " gen n) returns the nth field in gen's local variables"
   mus_xen *gn;
   gn = XEN_TO_MUS_XEN(gen);
+#if (!HAVE_SCHEME)
   return(vector_element(gn->fields, XEN_TO_C_INT(n)));
+#else
+  return(s7_safe_vector_ref(s7, gn->fields, n));
+#endif
 }
 
 
@@ -542,8 +557,12 @@ static XEN g_mus_generator_set(XEN gen, XEN n, XEN val)
   #define H_mus_generator_set "(" S_mus_generator_set " gen n val) set the nth field in gen's local variables to val"
   mus_xen *gn;
   gn = XEN_TO_MUS_XEN(gen);
+#if (!HAVE_SCHEME)
   vector_element(gn->fields, XEN_TO_C_INT(n)) = val;
   return(val);
+#else
+  return(s7_safe_vector_set(s7, gn->fields, n, val));
+#endif
 }
 
 #else
@@ -2102,7 +2121,7 @@ static XEN g_mus_safety(XEN gen)
 static XEN g_mus_set_safety(XEN gen, XEN val) 
 {
   mus_any *g = NULL;
-  int n;
+  int n = 0;
   XEN_TO_C_ANY_GENERATOR(gen, g, S_setB S_mus_safety, "a generator");
   XEN_TO_C_INTEGER_OR_ERROR(val, n, S_setB S_mus_safety, XEN_ARG_2);
   mus_set_safety(g, n);
@@ -2386,14 +2405,19 @@ static XEN g_mus_describe(XEN gen)
 static XEN g_mus_run(XEN gen, XEN arg1, XEN arg2) 
 {
   #define H_mus_run "(" S_mus_run " gen (arg1 0.0) (arg2 0.0)): apply gen to arg1 and arg2"
-  mus_any *g = NULL;
   mus_float_t a1 = 0.0, a2 = 0.0;
+  mus_xen *ms;
 
-  XEN_TO_C_ANY_GENERATOR(gen, g, S_mus_run, "a generator");
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_run, "a generator");
+
+  ms = XEN_TO_MUS_XEN(gen);
+  if ((ms->methods) &&
+      (ms->methods->run))
+    return(XEN_CALL_3(ms->methods->run, gen, arg1, arg2, S_mus_run));
+
   XEN_TO_C_DOUBLE_IF_BOUND(arg1, a1, S_mus_run, XEN_ARG_2);
   XEN_TO_C_DOUBLE_IF_BOUND(arg2, a2, S_mus_run, XEN_ARG_3);
-
-  return(C_TO_XEN_DOUBLE(mus_run(g, a1, a2)));
+  return(C_TO_XEN_DOUBLE(mus_run(ms->gen, a1, a2)));
 }
 
 
@@ -12828,10 +12852,11 @@ static void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_chebyshev_first_kind,  MUS_CHEBYSHEV_FIRST_KIND,  "Chebyshev polynomial of first kind, for " S_partials_to_polynomial);
   XEN_DEFINE_CONSTANT(S_mus_chebyshev_second_kind, MUS_CHEBYSHEV_SECOND_KIND, "Chebyshev polynomial of second kind, for " S_partials_to_polynomial);
 
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_describe,  g_mus_describe_w,  1, 0, 0,  H_mus_describe);
+  XEN_DEFINE_PROCEDURE(S_mus_describe,       g_mus_describe_w,  1, 0, 0,  H_mus_describe);
+  /* not safe_procedure because mus_describe might call format recursively */
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0,  H_mus_file_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_reset,     g_mus_reset_w,     1, 0, 0,  H_mus_reset);
-  XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w,       1, 2, 0,  H_mus_run);
+  XEN_DEFINE_PROCEDURE(S_mus_run,            g_mus_run_w,       1, 2, 0,  H_mus_run);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_name,      g_mus_name_w,      H_mus_name,      S_setB S_mus_name,      g_mus_set_name_w,       1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
@@ -13256,3 +13281,9 @@ void Init_sndlib(void)
   mus_init_run();
 #endif
 }
+
+/* TODO: vct set chooser to use set_3i if possible
+ *   op_safe_c_ssc or even ssi for generator-set
+ *   op_safe_c_si for ref [small int for the index in both cases]
+ *   both could use vector_ei(gn->fields, s7-int) -- ie let s7 decode elements[small_int]
+ */
