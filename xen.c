@@ -1915,22 +1915,22 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   xen_zero = s7_make_integer(s7, 0);
   s7_gc_protect(s7, xen_zero);
 
-  XEN_DEFINE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
+  XEN_DEFINE_SAFE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
 #if (!WITH_SYSTEM_EXTRAS)
-  XEN_DEFINE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("directory?",          g_directory_p_w,        1, 0, 0, H_directory_p);
-  XEN_DEFINE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
-  XEN_DEFINE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
-  XEN_DEFINE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
+  XEN_DEFINE_SAFE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
+  XEN_DEFINE_SAFE_PROCEDURE("directory?",          g_directory_p_w,        1, 0, 0, H_directory_p);
+  XEN_DEFINE_SAFE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
+  XEN_DEFINE_SAFE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
+  XEN_DEFINE_SAFE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
 #endif
-  XEN_DEFINE_PROCEDURE("getcwd",              g_getcwd_w,             0, 0, 0, H_getcwd);
-  XEN_DEFINE_PROCEDURE("strftime",            g_strftime_w,           2, 0, 0, H_strftime);
-  XEN_DEFINE_PROCEDURE("tmpnam",              g_tmpnam_w,             0, 0, 0, H_tmpnam);
-  XEN_DEFINE_PROCEDURE("localtime",           g_localtime_w,          1, 0, 0, H_localtime);
-  XEN_DEFINE_PROCEDURE("current-time",        g_current_time_w,       0, 0, 0, H_current_time);
-  XEN_DEFINE_PROCEDURE("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");
-  XEN_DEFINE_PROCEDURE(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
-  XEN_DEFINE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
+  XEN_DEFINE_SAFE_PROCEDURE("getcwd",              g_getcwd_w,             0, 0, 0, H_getcwd);
+  XEN_DEFINE_SAFE_PROCEDURE("strftime",            g_strftime_w,           2, 0, 0, H_strftime);
+  XEN_DEFINE_SAFE_PROCEDURE("tmpnam",              g_tmpnam_w,             0, 0, 0, H_tmpnam);
+  XEN_DEFINE_SAFE_PROCEDURE("localtime",           g_localtime_w,          1, 0, 0, H_localtime);
+  XEN_DEFINE_SAFE_PROCEDURE("current-time",        g_current_time_w,       0, 0, 0, H_current_time);
+  XEN_DEFINE_SAFE_PROCEDURE("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");
+  XEN_DEFINE_SAFE_PROCEDURE(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
+  XEN_DEFINE_SAFE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
 
   XEN_EVAL_C_STRING("(define (hook-push hook func) \n\
                        \"(hook-push hook func) adds func to hook's function list\" \n\

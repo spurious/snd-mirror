@@ -1885,18 +1885,18 @@ void g_init_selection(void)
 					    S_setB S_selection_member, g_set_selection_member_w, g_set_selection_member_reversed,
 					    0, 2, 1, 2);
 
-  XEN_DEFINE_PROCEDURE(S_selection,        g_selection_w,        0, 0, 0, H_selection);
-  XEN_DEFINE_PROCEDURE(S_selection_p,      g_selection_p_w,      0, 1, 0, H_selection_p);
-  XEN_DEFINE_PROCEDURE(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans);
-  XEN_DEFINE_PROCEDURE(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
-  XEN_DEFINE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);
-  XEN_DEFINE_PROCEDURE(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position);
-  XEN_DEFINE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
-  XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
-  XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
-  XEN_DEFINE_PROCEDURE(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
-  XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
-  XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
-  XEN_DEFINE_PROCEDURE(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
-  XEN_DEFINE_PROCEDURE(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
+  XEN_DEFINE_SAFE_PROCEDURE(S_selection,        g_selection_w,        0, 0, 0, H_selection);
+  XEN_DEFINE_SAFE_PROCEDURE(S_selection_p,      g_selection_p_w,      0, 1, 0, H_selection_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans);
+  XEN_DEFINE_SAFE_PROCEDURE(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
+  XEN_DEFINE_SAFE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);
+  XEN_DEFINE_SAFE_PROCEDURE(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position);
+  XEN_DEFINE_SAFE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
+  XEN_DEFINE_SAFE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
+  XEN_DEFINE_SAFE_PROCEDURE(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
+  XEN_DEFINE_SAFE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
+  XEN_DEFINE_SAFE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
+  XEN_DEFINE_SAFE_PROCEDURE(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
+  XEN_DEFINE_SAFE_PROCEDURE(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
 }

@@ -697,6 +697,7 @@ int s7_new_type_x(const char *name,
 bool s7_is_object(s7_pointer p);
 int s7_object_type(s7_pointer obj);
 void *s7_object_value(s7_pointer obj);
+void *s7_object_value_checked(s7_pointer obj, int type);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
 s7_pointer s7_object_environment(s7_pointer obj);

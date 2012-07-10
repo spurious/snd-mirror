@@ -2035,12 +2035,12 @@ XEN_ARGIFY_4(g_set_y_bounds_w, g_set_y_bounds)
   
 void g_init_axis(void)
 {
-  XEN_DEFINE_PROCEDURE(S_x_to_position, g_x_to_position_w,   1, 3, 0, H_x_to_position);
-  XEN_DEFINE_PROCEDURE(S_y_to_position, g_y_to_position_w,   1, 3, 0, H_y_to_position);
-  XEN_DEFINE_PROCEDURE(S_position_to_x, g_position_to_x_w,   1, 3, 0, H_position_to_x);
-  XEN_DEFINE_PROCEDURE(S_position_to_y, g_position_to_y_w,   1, 3, 0, H_position_to_y);
-  XEN_DEFINE_PROCEDURE(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
-  XEN_DEFINE_PROCEDURE(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
+  XEN_DEFINE_SAFE_PROCEDURE(S_x_to_position, g_x_to_position_w,   1, 3, 0, H_x_to_position);
+  XEN_DEFINE_SAFE_PROCEDURE(S_y_to_position, g_y_to_position_w,   1, 3, 0, H_y_to_position);
+  XEN_DEFINE_SAFE_PROCEDURE(S_position_to_x, g_position_to_x_w,   1, 3, 0, H_position_to_x);
+  XEN_DEFINE_SAFE_PROCEDURE(S_position_to_y, g_position_to_y_w,   1, 3, 0, H_position_to_y);
+  XEN_DEFINE_SAFE_PROCEDURE(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
+  XEN_DEFINE_SAFE_PROCEDURE(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
 					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);

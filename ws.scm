@@ -806,6 +806,14 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	((pred (car l)) (car l))
 	(else (find-if pred (cdr l)))))
 
+(define (position-if pred l)
+  (define (pos-1 pred l pos)
+    (if (null? l)
+	-1
+	(if (pred (car l))
+	    pos
+	    (pos-1 pred (cdr l) (+ pos 1)))))
+  (pos-1 pred l 0))
 
 (define-macro (defgenerator struct-name . fields)
   ;; (format *stderr* "(defgenerator ~A~%    ~{~A~%~^     ~}~%" struct-name fields)
@@ -903,55 +911,82 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 						    field-names)))
 				  (and fld (string-append "-" fld)))))
 
-	 ;; TODO: use the generator-ref offset here not the extra indirection
 	 ;; SOMEDAY: ideally all the fields would be in the new object's environment
 
 	 ;; using append to splice out unwanted entries
 	 (methods (append original-methods
 			   
 			   (if phase-field-name
-			       (list 
-				(list 'mus-phase
-				  (apply lambda `((g)
-						  (,(string->symbol (string-append sname phase-field-name)) g)))
-				  (apply lambda `((g val)
-						  (set! (,(string->symbol (string-append sname phase-field-name)) g) val)))))
-			       (list))
+			       (let ((pos (position-if (lambda (name) 
+							 (or (string=? name "phase")
+							     (string=? name "angle")))
+						       field-names)))
+				 (if (>= pos 0)
+				     (list
+				      (list 'mus-phase
+					    (apply lambda `((g) (mus-generator-ref g ,pos)))
+					    (apply lambda `((g val) (mus-generator-set! g ,pos val)))))
+				     (list 
+				      (list 'mus-phase
+					    (apply lambda `((g) (,(string->symbol (string-append sname phase-field-name)) g)))
+					    (apply lambda `((g val) (set! (,(string->symbol (string-append sname phase-field-name)) g) val)))))))
+				 (list))
 			   
 			   (if frequency-field-name
-			       (list
-				(list 'mus-frequency
-				      (apply lambda `((g) 
-						      (radians->hz (,(string->symbol (string-append sname frequency-field-name)) g))))
-				      (apply lambda `((g val)
-						      (set! (,(string->symbol (string-append sname frequency-field-name)) g) (hz->radians val))
-						      val))))
+			       (let ((pos (position-if (lambda (name) 
+							 (or (string=? name "frequency")
+							     (string=? name "freq")))
+						       field-names)))
+				 (if (>= pos 0)
+				     (list
+				      (list 'mus-frequency
+					    (apply lambda `((g) (radians->hz (mus-generator-ref g ,pos))))
+					    (apply lambda `((g val) (mus-generator-set! g ,pos (hz->radians val))))))
+				     (list
+				      (list 'mus-frequency
+					    (apply lambda `((g) (radians->hz (,(string->symbol (string-append sname frequency-field-name)) g))))
+					    (apply lambda `((g val) (set! (,(string->symbol (string-append sname frequency-field-name)) g) (hz->radians val))))))))
 			       (list))
 			   
 			   (if offset-field-name
-			       (list 
-				(list 'mus-offset
-				  (apply lambda `((g)
-						  (,(string->symbol (string-append sname offset-field-name)) g)))
-				  (apply lambda `((g val)
-						  (set! (,(string->symbol (string-append sname offset-field-name)) g) val)
-						  val))))
+			       (let ((pos (position-if (lambda (name) (string=? name "ratio")) field-names)))
+				 (if (>= pos 0)
+				     (list
+				      (list 'mus-offset
+					    (apply lambda `((g) (mus-generator-ref g ,pos)))
+					    (apply lambda `((g val) (mus-generator-set! g ,pos val)))))
+				     (list 
+				      (list 'mus-offset
+					    (apply lambda `((g) (,(string->symbol (string-append sname offset-field-name)) g)))
+					    (apply lambda `((g val) (set! (,(string->symbol (string-append sname offset-field-name)) g) val)))))))
 			       (list))
 			   
 			   (if order-field-name
-			       (list  ; not settable -- maybe use mus-length?
-				(list 'mus-order
-				  (apply lambda `((g)
-						  (,(string->symbol (string-append sname order-field-name)) g)))))
+			       (let ((pos (position-if (lambda (name) 
+							 (or (string=? name "n")
+							     (string=? name "order")))
+						       field-names)))
+				 (if (>= pos 0)
+				     (list (list 'mus-order (apply lambda `((g) (mus-generator-ref g ,pos)))))
+				     (list  ; not settable -- maybe use mus-length?
+				      (list 'mus-order
+					    (apply lambda `((g) (,(string->symbol (string-append sname order-field-name)) g)))))))
 			       (list))
 			   
 			   (if scaler-field-name
-			       (list 
-				(list 'mus-scaler
-				  (apply lambda `((g)
-						  (,(string->symbol (string-append sname scaler-field-name)) g)))
-				  (apply lambda `((g val)
-						  (set! (,(string->symbol (string-append sname scaler-field-name)) g) val)))))
+			       (let ((pos (position-if (lambda (name) 
+							 (or (string=? name "r")
+							     (string=? name "amplitude")))
+						       field-names)))
+				 (if (>= pos 0)
+				     (list
+				      (list 'mus-scaler
+					    (apply lambda `((g) (mus-generator-ref g ,pos)))
+					    (apply lambda `((g val) (mus-generator-set! g ,pos val)))))
+				     (list 
+				      (list 'mus-scaler
+					    (apply lambda `((g) (,(string->symbol (string-append sname scaler-field-name)) g)))
+					    (apply lambda `((g val) (set! (,(string->symbol (string-append sname scaler-field-name)) g) val)))))))
 			       (list))
 			   )))
     

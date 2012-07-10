@@ -2580,6 +2580,7 @@ typedef struct {
   mus_float_t *coeffs;
   int n, cheby_choice;
   mus_float_t index;
+  mus_float_t (*polyw)(mus_any *ptr, mus_float_t fm);
 } pw;
 
 
@@ -2777,6 +2778,20 @@ static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t ind
 }
 
 
+static mus_float_t polyw_first(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  return(mus_chebyshev_t_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs));
+}
+
+
+static mus_float_t polyw_second(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  return(mus_chebyshev_u_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs));
+}
+
+
 mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm)
 {
   /* changed to use recursion, rather than polynomial in x, 25-May-08
@@ -2786,10 +2801,12 @@ mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm)
   pw *gen = (pw *)ptr;
   mus_float_t result;
 
+  result = (gen->polyw)(ptr, fm);
+#if 0
   if (gen->cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
     result = mus_chebyshev_t_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs);
   else result = mus_chebyshev_u_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs);
-
+#endif
   gen->phase += (gen->freq + fm);
   return(result);
 }
@@ -2797,7 +2814,7 @@ mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm)
 
 mus_float_t mus_polywave_unmodulated(mus_any *ptr)
 {
-  return(mus_polywave(ptr, 0.0));
+  return(mus_polywave(ptr, 0.0)); 
 }
 
 
@@ -2863,6 +2880,9 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
   gen->n = n;
   gen->index = 1.0;
   gen->cheby_choice = cheby_choice;
+  if (cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
+    gen->polyw = polyw_first;
+  else gen->polyw = polyw_second;
   return((mus_any *)gen);
 }
 
@@ -7320,17 +7340,6 @@ static mus_float_t mus_read_sample(mus_any *fd, mus_long_t frame, int chan)
 }
 
 
-static mus_float_t mus_write_sample(mus_any *fd, mus_long_t frame, int chan, mus_float_t samp) 
-{
-  if ((check_gen(fd, "mus-write-sample")) &&
-      ((fd->core)->write_sample))
-    return(((*(fd->core)->write_sample))(fd, frame, chan, samp));
-  return((mus_float_t)mus_error(MUS_NO_SAMPLE_OUTPUT, 
-			  "can't find %s's sample output function", 
-			  mus_name(fd)));
-}
-
-
 char *mus_file_name(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_file_name)) &&
@@ -8257,9 +8266,16 @@ mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chan
 }
 
 
-mus_float_t mus_sample_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val)
+mus_float_t mus_sample_to_file(mus_any *fd, mus_long_t samp, int chan, mus_float_t val)
 {
-  return(mus_write_sample(ptr, samp, chan, val)); /* write_sample -> write_sample in class struct -> mus_out_any_to_file for example */
+  /* return(mus_write_sample(ptr, samp, chan, val)); */
+  if ((fd) &&
+      ((fd->core)->write_sample))
+    return(((*(fd->core)->write_sample))(fd, samp, chan, val));
+  mus_error(MUS_NO_SAMPLE_OUTPUT, 
+	    "can't find %s's sample output function", 
+	    mus_name(fd));
+  return(val);
 }
 
 
@@ -8275,8 +8291,26 @@ int mus_close_file(mus_any *ptr)
 
 mus_float_t mus_out_any(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 {
-  if ((IO) && (samp >= 0))
-    return(mus_write_sample(IO, samp, chan, val));
+  if ((IO) && 
+      (samp >= 0))
+    {
+      if ((IO->core)->write_sample)
+	{
+	  rdout *gen = (rdout *)IO;
+	  if ((gen->safety == 1) &&
+	      (IO->core->write_sample == mus_out_any_to_file))
+	    {
+	      gen->obufs[chan][samp] += MUS_FLOAT_TO_SAMPLE(val);
+	      if (samp > gen->out_end) 
+		gen->out_end = samp;
+	      return(val);
+	    }
+	  return(((*(IO->core)->write_sample))(IO, samp, chan, val));
+	}
+      mus_error(MUS_NO_SAMPLE_OUTPUT, 
+		"can't find %s's sample output function", 
+		mus_name(IO));
+    }
   return(val);
 }
 

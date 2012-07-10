@@ -18119,7 +18119,9 @@ EDITS: 2
     
     (let ((gen (make-oscil 440.0)))
       (let ((tag (catch #t (lambda () (outa 0 .1 gen)) (lambda args (car args)))))
-	(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";outa -> oscil: ~A" tag)))
+	(if (and (not (eq? tag 'wrong-type-arg)) 
+		 (not (eq? tag 'mus-error)))
+	    (snd-display #__line__ ";outa -> oscil: ~A" tag)))
       (let ((val (catch #t (lambda () (outa 0 .1 #f)) (lambda args (car args)))))
 	(if (or (not (number? val)) (fneq val .1)) (snd-display #__line__ ";outa -> #f: ~A" val))))
     
