@@ -375,8 +375,8 @@ enum {OP_NO_OP,
       OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
       
       OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
-      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_R, 
-      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_SAFE_VREF, OP_SET_SAFE_VREF_1,
+      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C,
+      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_SAFE_VREF, OP_SET_SAFE_VREF_1,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, 
       OP_DEFINE_WITH_ACCESSOR, OP_DEFMACRO_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
@@ -453,7 +453,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "member", "assoc", "member", "assoc",
    
    "quote", "lambda", "let", "case", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", 
    "define", "defmacro", "define-macro",
@@ -525,8 +525,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_MEMBER_IF", "OP_ASSOC_IF", "OP_MEMBER_IF1", "OP_ASSOC_IF1",
   
   "OP_QUOTE_UNCHECKED", "OP_LAMBDA_UNCHECKED", "OP_LET_UNCHECKED", "OP_CASE_UNCHECKED", 
-  "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_R", 
-  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_SAFE_VREF", "OP_SET_SAFE_VREF_1",
+  "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C",
+  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_SAFE_VREF", "OP_SET_SAFE_VREF_1",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", 
   "OP_DEFINE_WITH_ACCESSOR", "OP_DEFMACRO_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
@@ -757,6 +757,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 #endif
 
 #endif
+
 
 #define NUM_CHARS 256
 
@@ -1169,7 +1170,7 @@ struct s7_scheme {
   s7_pointer BODY;
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
-  s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_R, SET_NORMAL, SET_PAIR, SET_PWS, SET_SAFE_VREF;
+  s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_C, SET_NORMAL, SET_PAIR, SET_PAIR_P, SET_PWS, SET_SAFE_VREF;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_STAR_UNCHECKED, CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLEST, CASE_INT;
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_Q, LET_ALL_G, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
@@ -1586,20 +1587,21 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
 
-#define optimize_data(p)              (p)->object.cons.dat.d.data
-/* static unsigned short optimize_data(s7_pointer p) {return(p->object.cons.dat.d.data);} */
-/* #define set_optimize_data(P, X)       do {(P)->object.cons.dat.d.data = (X); (P)->object.cons.dat.d.data_index = (X);} while (0) */
-#define optimize_data_match(P, Q)     ((optimize_data(P) & 0xfffe) == Q)
-#define optimize_data_index(p)        (p)->object.cons.dat.d.data_index
-#define is_hopping(P)                 ((optimize_data(P) & 0x1) == 1)
-#define op_no_hop(P)                  (optimize_data(P) & 0xfffe)
-static void set_optimize_data(s7_pointer p, unsigned short op) {p->object.cons.dat.d.data = op; optimize_data_index(p) = op;}
-static void set_optimize_op(s7_pointer p, unsigned short op) {optimize_data_index(p) = op;}
-#define clear_optimize_data(P)        set_optimize_data(P, 0)
-static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_data_index(p) |= 1;}
-#define optimize_type(p)              optimize_data(p)
-#define optimize_op(p)                optimize_data_index(p)
-
+#if WITH_OPTIMIZATION
+  #define optimize_data(p)            (p)->object.cons.dat.d.data
+  /* static unsigned short optimize_data(s7_pointer p) {return(p->object.cons.dat.d.data);} */
+  /* #define set_optimize_data(P, X)  do {(P)->object.cons.dat.d.data = (X); (P)->object.cons.dat.d.data_index = (X);} while (0) */
+  #define optimize_data_match(P, Q)   ((optimize_data(P) & 0xfffe) == Q)
+  #define optimize_data_index(p)      (p)->object.cons.dat.d.data_index
+  #define is_hopping(P)               ((optimize_data(P) & 0x1) == 1)
+  #define op_no_hop(P)                (optimize_data(P) & 0xfffe)
+  static void set_optimize_data(s7_pointer p, unsigned short op) {p->object.cons.dat.d.data = op; optimize_data_index(p) = op;}
+  static void set_optimize_op(s7_pointer p, unsigned short op) {optimize_data_index(p) = op;}
+  #define clear_optimize_data(P)      set_optimize_data(P, 0)
+  static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_data_index(p) |= 1;}
+  #define optimize_type(p)            optimize_data(p)
+  #define optimize_op(p)              optimize_data_index(p)
+#endif
 
 #define symbol_id(p)                  (p)->object.sym.id
 /* we need 64-bits here, I think, since we don't want this thing to wrap around, and frames are created at a great rate 
@@ -1888,6 +1890,12 @@ static s7_Int s7_Int_max = 0, s7_Int_min = 0;
  *    but we don't currently give an error in this case -- not sure what the right thing is.
  */
 
+#if 0
+static int counts[OPT_MAX_DEFINED + 1];
+static void clear_counts(void) {int i; for (i = 0; i <= OPT_MAX_DEFINED; i++) counts[i]=0;}
+static void tick(s7_pointer e) {if ((is_pair(e)) && (is_optimized(e)) && (is_hopping(e))) counts[optimize_data(e)]++;}
+static void report_counts(void) {int i; for (i=0; i<=OPT_MAX_DEFINED;i++) if (counts[i]>0) fprintf(stderr, "%s: %d\n", opt_names[i], counts[i]);}
+#endif
 
 
 static int safe_strlen(const char *str)
@@ -4819,6 +4827,34 @@ s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol)
 s7_pointer s7_slot_value(s7_scheme *sc, s7_pointer slot)
 {
   return(slot_value(slot));
+}
+
+
+bool s7_slot_value_is_real(s7_pointer slot)
+{
+  return(is_real(slot_value(slot)));
+}
+
+
+bool s7_slot_value_is_integer(s7_pointer slot)
+{
+  return(is_integer(slot_value(slot)));
+}
+
+
+s7_Double s7_slot_value_to_real(s7_scheme *sc, s7_pointer slot)
+{
+  s7_pointer val;
+  val = slot_value(slot);
+  if (is_real(val))
+    return(real(val));
+  return((s7_Double)(integer(val)));
+}
+
+
+s7_Int s7_slot_value_to_integer(s7_scheme *sc, s7_pointer slot)
+{
+  return(integer(slot_value(slot)));
 }
 
 
@@ -27608,6 +27644,7 @@ static bool is_aritable(s7_scheme *sc, s7_pointer x, int args)
       return(args == 1);
       
     case T_C_OBJECT:
+      /* fprintf(stderr, "arit: %d %d %d\n", is_procedure(x), c_object_min_args(x), c_object_max_args(x)); */
       return((is_procedure(x)) &&
 	     ((int)c_object_min_args(x) <= args) &&
 	     ((int)c_object_max_args(x) >= args));
@@ -30613,6 +30650,7 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
+  /* report_counts(); */
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -31376,6 +31414,10 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	case OP_SET1:                                             /* (set! var (values 1 2 3)) */
 	  set_multiple_value(args);
 	  return(eval_error(sc, "can't set! some variable to ~S", args));
+
+	case OP_SET_PAIR_P_1:
+	  set_multiple_value(args);
+	  return(eval_error(sc, "too many values to set! ~S", args));
 
 	case OP_LET1:                                             /* (let ((var (values 1 2 3))) ...) */
 	case OP_LET_STAR1:
@@ -35927,7 +35969,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
   p = car(x);
 
   /* fprintf(stderr, "opt func: %s, x: %s\n", DISPLAY(func), DISPLAY(x)); */
-  /* fprintf(stderr, "optimize syntax %s\n     e: %s\n", DISPLAY(p), DISPLAY(e)); */
+  /* fprintf(stderr, "optimize syntax %s\n     e: %s\n", DISPLAY(p), DISPLAY(e));  */
 
   if (!is_pair(cdr(p))) /* cddr(p) might be null if, for example, (begin (let ...)) */
     return(false);
@@ -36005,6 +36047,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
    */
   for (p = cdar(x); is_pair(p); p = cdr(p))
     {
+      /* fprintf(stderr, "check: %s %d\n", DISPLAY(car(p)), is_checked(car(p))); */
       if (is_pair(car(p)))
 	{
 	  if (!is_checked(car(p)))
@@ -36047,6 +36090,9 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
 static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e)
 {
   s7_pointer y;
+
+  /* fprintf(stderr, "opt expr %s\n", DISPLAY_80(car(x))); */
+
   set_checked(car(x));
   y = caar(x);
 
@@ -38635,6 +38681,7 @@ static s7_pointer check_set(s7_scheme *sc)
 	  inner = car(sc->code);
 	  value = cadr(sc->code);
 
+#if WITH_OPTIMIZATION
 	  {
 	    s7_pointer body, func;
 	    body = inner;
@@ -38652,6 +38699,26 @@ static s7_pointer check_set(s7_scheme *sc)
 		if (is_not_null(func))
 		  {
 		    func = slot_value(func);
+		    /* fprintf(stderr, "func: %s in %s\n", DISPLAY(func), DISPLAY(body)); */
+		    
+#if 0
+		    if (is_c_object(func))
+		      fprintf(stderr, "obj: %s\n", DISPLAY_80(sc->code));
+
+		    /* (set! (v i) x) -> ((v i) x) -> object_set_s_s?
+		     *   the vast majority have (obj s) as settee
+		     *   then either s c p where p can also be (obj s) or hop_safe_c_s or anything
+		     *
+		     * set pair below wants all s or c, but leaves type check to OP_SET_PAIR
+		     */
+
+		    if (s7_is_vector(func))
+		      fprintf(stderr, "vect: %s\n", DISPLAY_80(sc->code));
+
+		    if (s7_is_string(func))
+		      fprintf(stderr, "string: %s\n", DISPLAY_80(sc->code)); /* here cons val is very common */
+#endif
+
 		    if ((is_closure(func)) &&
 			(is_safe_closure(closure_body(func))) &&
 			(is_one_liner(closure_body(func))))
@@ -38676,6 +38743,9 @@ static s7_pointer check_set(s7_scheme *sc)
 			    /* this must be generator-set! currently -- eventually we'll need to fix this assumption
 			     */
 			    set_syntax_op(sc->code, sc->SET_SAFE_VREF);
+
+			    fcdr(sc->code) = caddr(body);
+
 			    return(sc->code);
 			    /*
 			      set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_S_safe_vref);
@@ -38686,6 +38756,7 @@ static s7_pointer check_set(s7_scheme *sc)
 		  }
 	      }
 	  }
+#endif
 
 	  if (is_symbol(car(inner)))
 	    {
@@ -38701,9 +38772,17 @@ static s7_pointer check_set(s7_scheme *sc)
 		  if ((is_pair(cdr(inner))) &&
 		      (!is_pair(cddr(inner))) &&
 		      (!is_pair(cadr(inner))) &&
-		      (!is_pair(cddr(sc->code))) &&
-		      (!is_pair(value)))
-		    set_syntax_op(sc->code, sc->SET_PAIR);
+		      (!is_pair(cddr(sc->code))))
+		    {
+		      if (!is_pair(value))
+			set_syntax_op(sc->code, sc->SET_PAIR);
+		      else 
+			{
+			  /* fprintf(stderr, "set-pair-p: %s\n", DISPLAY(sc->code)); */
+			  /* splice_in_values protects us here from values */
+			  set_syntax_op(sc->code, sc->SET_PAIR_P);
+			}
+		    }
 		  else set_syntax_op(sc->code, sc->SET_UNCHECKED);
 		}
 	    }
@@ -38734,8 +38813,17 @@ static s7_pointer check_set(s7_scheme *sc)
 		       * this can be done in all combined cases where a symbol is repeated (do in particular)
 		       */
 		      
-		      /* (define (hi) (let ((x 1)) (set! x (+ x 1)))) */
+		      /* (define (hi) (let ((x 1)) (set! x (+ x 1)))) 
+		       *   but the value might be values:
+		       *   (let () (define (hi) (let ((x 0)) (set! x (values 1 2)) x)) (catch #t hi (lambda a a)) (hi))
+		       *   which is caught in splice_in_values
+		       */
 		      set_syntax_op(sc->code, sc->SET_SYMBOL_P);
+		      /*
+		      if ((is_pair(cadr(sc->code))) &&
+			  (is_optimized(cadr(sc->code))))
+			fprintf(stderr, "setp: %s\n", DISPLAY_80(cadr(sc->code)));
+		      */
 #if WITH_OPTIMIZATION
 		      if ((!symbol_has_accessor(car(sc->code))) &&
 			  /* (!is_global(car(sc->code))) && */ /* we use find_symbol to get the slot, so this should be ok */
@@ -38795,8 +38883,17 @@ static s7_pointer check_set(s7_scheme *sc)
 				{
 				  if (is_h_safe_c_s(cadr(sc->code)))
 				    {
-				      set_syntax_op(sc->code, sc->SET_SYMBOL_R);
+				      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_S);
 				      fcdr(sc->code) = cadr(cadr(sc->code));
+				    }
+				  else
+				    {
+				      if ((is_optimized(cadr(sc->code))) && 
+					  (optimize_data(cadr(sc->code)) == HOP_SAFE_C_C))
+					{
+					  set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_C);
+					  fcdr(sc->code) = cdr(cadr(sc->code));
+					}
 				    }
 				}
 			    }
@@ -42905,6 +43002,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		    
 		  case T_C_OBJECT:
+		    /* fprintf(stderr, "is aritable: %d\n", is_aritable(sc, f, 1)); */
 		    if (is_aritable(sc, f, 1))
 		      {
 			set_optimize_data(code, OP_C_OBJECT_S);
@@ -45967,7 +46065,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------------------------------------------------------- */
 	  
 	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code));  */
-	  
+#if 0
+	  if ((is_pair(sc->code)) &&
+	      (car(sc->code) == sc->ADD))
+	    {
+	      s7_pointer p;
+	      fprintf(stderr, "add: %s: ", DISPLAY_80(sc->code));
+	      for (p = cdr(sc->code); is_pair(p); p = cdr(p))
+		fprintf(stderr, "%s ", ((is_pair(car(p))) && (is_optimized(car(p)))) ? opt_names[optimize_data(car(p))] : "?");
+	      fprintf(stderr, "\n");
+	    }
+	  /* add cases: (+ (vrf) (vrf) (vrf)) -- each obj_c
+	   *            (+ s s c_obj_c -- could c_object_c or any type_c be in op_safe_c place?
+	   *            (+ (* ...) (* ...) (* ...))
+	   */
+#endif	  
 	  /* trailers */
 	  sc->cur_code = sc->code;
 	  
@@ -47332,33 +47444,50 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_SET_SAFE_VREF_1:
       {
-	s7_pointer gen, func, index, new_value;
+	s7_pointer func, new_value;
 
 	new_value = sc->value;
-	func = closure_setter(finder(sc, caar(sc->code)));
-	gen = finder(sc, cadar(sc->code));
-	index = caddr(car(closure_body(func)));
+	func = car(closure_body(closure_setter(finder(sc, caar(sc->code)))));
 
-	func = car(closure_body(func));
+	/* gen = finder(sc, cadar(sc->code)); */
+	/* index = caddr(car(closure_body(func))); */
+	/* func = car(closure_body(func)); */
 
-	car(sc->T3_1) = gen;
-	car(sc->T3_2) = index;
+	car(sc->T3_1) = finder(sc, cadar(sc->code));
+	car(sc->T3_2) = fcdr(sc->code);
 	car(sc->T3_3) = new_value;
-
-	/* fprintf(stderr, "gen: %s, index: %s, new_value: %s\n", DISPLAY(gen), DISPLAY(index), DISPLAY(new_value)); */
-
 	sc->value = c_call(func)(sc, sc->T3_1);
 	goto START;
       }
 
+
+    case OP_SET_PAIR_P:
+      /* here the pair can't generate multiple values, or if it does, it's an error (caught below) 
+       *  splice_in_values will notice the OP_SET_PAIR_P_1 and complain.
+       * (let () (define (hi) (let ((str "123")) (set! (str 0) (values #\a)) str)) (hi) (hi)) is "a23"
+       * (let () (define (hi) (let ((str "123")) (set! (str 0) (values #\a #\b)) str)) (hi) (hi)) is an error from the first call (caught elsewhere)
+       * (let () (define (hi) (let ((str "123")) (set! (str 0) (values #\a #\b)) str)) (catch #t hi (lambda a a)) (hi)) is an error from the second call
+       */
+      push_stack_no_args(sc, OP_SET_PAIR_P_1, sc->code);
+      sc->code = cadr(sc->code);
+      goto EVAL;
+
     case OP_SET_PAIR:
+      sc->value = cadr(sc->code);
+      if (is_symbol(sc->value))
+	sc->value = finder(sc, sc->value);
+      /* fall through */
+      
+    case OP_SET_PAIR_P_1:
       /* car(sc->code) is a pair, caar(code) is the object with a setter, it has one (safe) argument, and one safe value to set
        *   (set! (str i) #\a) in a function (both inner things need to be symbols to get here)
        *   the inner list is a proper list, with no embedded list at car.
        */
       {
 	s7_pointer obj, arg, value;
-	
+	/* fprintf(stderr, "p1: %s %s\n", DISPLAY(sc->code), DISPLAY(sc->value));  */
+	value = sc->value;
+
 	obj = caar(sc->code);
 	if (is_symbol(obj))
 	  {
@@ -47372,11 +47501,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	arg = cadar(sc->code);
 	if (is_symbol(arg))
 	  arg = finder(sc, arg);
-	
-	value = cadr(sc->code);
-	if (is_symbol(value))
-	  value = finder(sc, value);
-	
+
 	switch (type(obj))
 	  {
 	  case T_C_OBJECT:
@@ -47475,6 +47600,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START;
       }
       
+
+      /* this is (set! (getter) val) where getter is a global c_function (a built-in pws) and val is not a pair
+       */
     case OP_SET_PWS:
       {
 	s7_pointer obj;
@@ -47639,8 +47767,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cadr(sc->code);
       goto EVAL; 
       
+
+    case OP_SET_SYMBOL_SAFE_C:
+      sc->value = c_call(cadr(sc->code))(sc, fcdr(sc->code));
+      sc->code = car(sc->code);
+      goto SET1;
+
       
-    case OP_SET_SYMBOL_R:
+    case OP_SET_SYMBOL_SAFE_S:
       sc->temp4 = sc->code;
       car(sc->T1_1) = finder(sc, fcdr(sc->code));
       sc->value = c_call(cadr(sc->code))(sc, sc->T1_1);
@@ -47682,14 +47816,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
     case OP_SET_SYMBOL_P:
+      /* tick(cadr(sc->code)); */
       push_stack_no_args(sc, OP_SET1, car(sc->code)); 
       sc->code = cadr(sc->code);
-      /* s7: mostly not opt
-       * lg: closure_sss: 176901 h_safe_c_opssq_s: 12762 h_safe_c_c: 4882
-       * in: h_safe_c_ps: 175863 h_safe_c_cs: 26220 but not opt: 116946
-       * al: h_safe_closure_ss: 26487 h_safe_c_opssq_s: 22591
+      goto EVAL; 
+      /* lg: h_safe_c_opssq_s: 12762
+       * in: h_safe_c_pc: 93636, h_safe_c_cs: 11862
+       * be: h_safe_c_opssq_s: 22591
+       * rn: h_safe_c_opssq_s: 705598, h_safe_c_c: 4973938, h_safe_c_ss: 1350607, h_safe_c_sss: 165374
+       *     but h_safe_c_cp: 1935129
        */
-      goto EVAL;  /* lg: opt */
       
       
     case OP_SET2:
@@ -56614,7 +56750,8 @@ s7_scheme *s7_init(void)
   sc->SET_SYMBOL_C =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_C);  
   sc->SET_SYMBOL_S =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_S);  
   sc->SET_SYMBOL_Q =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_Q);  
-  sc->SET_SYMBOL_R =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_R);  
+  sc->SET_SYMBOL_SAFE_S =     assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_SAFE_S);  
+  sc->SET_SYMBOL_SAFE_C =     assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_SAFE_C);  
   sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_P);  
   sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",    OP_CASE_UNCHECKED);  
   sc->CASE_INT =              assign_internal_syntax(sc, "case",    OP_CASE_INT);  
@@ -56631,6 +56768,7 @@ s7_scheme *s7_init(void)
   sc->SET_NORMAL =            assign_internal_syntax(sc, "set!",    OP_SET_NORMAL);
   sc->SET_PWS =               assign_internal_syntax(sc, "set!",    OP_SET_PWS);
   sc->SET_PAIR =              assign_internal_syntax(sc, "set!",    OP_SET_PAIR);
+  sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_P);
   sc->SET_SAFE_VREF =         assign_internal_syntax(sc, "set!",    OP_SET_SAFE_VREF);
   sc->AND_UNCHECKED =         assign_internal_syntax(sc, "and",     OP_AND_UNCHECKED);
   sc->AND_P =                 assign_internal_syntax(sc, "and",     OP_AND_P);
@@ -57560,6 +57698,7 @@ s7_scheme *s7_init(void)
 #endif
 
   save_initial_environment(sc);
+  /* clear_counts(); */
   return(sc);
 }
 
@@ -57582,9 +57721,9 @@ s7_scheme *s7_init(void)
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1283
  * bench    52019 -> 7875 [8268] 8037 8592 8402
  *   (new)                [8764]           9370 8960
- * index    44300 -> 4988 [4992] 4235 4725 3935 3604
- * s7test            1721             1456 1430 1415
+ * index    44300 -> 4988 [4992] 4235 4725 3935 3545
+ * s7test            1721             1456 1430 1396
  * t455                           265  256  218   83
- * t502                                 90   72
+ * t502                                 90   72   63
  */
 

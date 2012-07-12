@@ -107,6 +107,7 @@ MUS_EXPORT void mus_generator_set_ycoeffs(mus_any_class *p, mus_float_t *(*ycoef
 MUS_EXPORT void mus_generator_set_reset(mus_any_class *p, void (*reset)(mus_any *ptr));
 MUS_EXPORT void mus_generator_set_set_closure(mus_any_class *p, void *(*set_closure)(mus_any *gen, void *e));
 MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
+MUS_EXPORT void mus_generator_set_set_safety(mus_any_class *p, int (*set_safety)(mus_any *ptr, int val));
 
 MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);
 MUS_EXPORT mus_float_t mus_hz_to_radians(mus_float_t hz);
@@ -448,6 +449,8 @@ MUS_EXPORT bool mus_readin_p(mus_any *ptr);
 MUS_EXPORT bool mus_output_p(mus_any *ptr);
 MUS_EXPORT bool mus_input_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_in_any(mus_long_t frame, int chan, mus_any *IO);
+MUS_EXPORT mus_float_t mus_safe_in_any(mus_long_t samp, int chan, mus_any *IO);
+MUS_EXPORT bool mus_in_any_is_safe(mus_any *IO);
 
 MUS_EXPORT mus_any *mus_make_file_to_frame(const char *filename);
 MUS_EXPORT bool mus_file_to_frame_p(mus_any *ptr);
@@ -463,6 +466,8 @@ MUS_EXPORT int mus_close_file(mus_any *ptr);
 MUS_EXPORT mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2);
 
 MUS_EXPORT mus_float_t mus_out_any(mus_long_t frame, mus_float_t val, int chan, mus_any *IO);
+MUS_EXPORT mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
+MUS_EXPORT bool mus_out_any_is_safe(mus_any *IO);
 MUS_EXPORT mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
 MUS_EXPORT bool mus_frame_to_file_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *data);

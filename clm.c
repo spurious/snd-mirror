@@ -169,7 +169,7 @@ void mus_generator_set_ycoeffs(mus_any_class *p, mus_float_t *(*ycoeffs)(mus_any
 void mus_generator_set_reset(mus_any_class *p, void (*reset)(mus_any *ptr)) {p->reset = reset;}
 void mus_generator_set_set_closure(mus_any_class *p, void *(*set_closure)(mus_any *gen, void *e)) {p->set_closure = set_closure;}
 void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type) {p->extended_type = extended_type;}
-
+void mus_generator_set_set_safety(mus_any_class *p, int (*set_safety)(mus_any *ptr, int val)) {p->set_safety = set_safety;}
 
 mus_any_class *mus_make_generator(int type, char *name, 
 				  int (*release)(mus_any *ptr), 
@@ -2781,14 +2781,20 @@ static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t ind
 static mus_float_t polyw_first(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
-  return(mus_chebyshev_t_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs));
+  mus_float_t ph;
+  ph = gen->phase;
+  gen->phase += (gen->freq + fm);
+  return(mus_chebyshev_t_sum_with_index(ph, gen->index, gen->n, gen->coeffs));
 }
 
 
 static mus_float_t polyw_second(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
-  return(mus_chebyshev_u_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs));
+  mus_float_t ph;
+  ph = gen->phase;
+  gen->phase += (gen->freq + fm);
+  return(mus_chebyshev_u_sum_with_index(ph, gen->index, gen->n, gen->coeffs));
 }
 
 
@@ -2797,18 +2803,7 @@ mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm)
   /* changed to use recursion, rather than polynomial in x, 25-May-08
    *   this algorithm taken from Mason and Handscomb, "Chebyshev Polynomials" p27
    */
-
-  pw *gen = (pw *)ptr;
-  mus_float_t result;
-
-  result = (gen->polyw)(ptr, fm);
-#if 0
-  if (gen->cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
-    result = mus_chebyshev_t_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs);
-  else result = mus_chebyshev_u_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs);
-#endif
-  gen->phase += (gen->freq + fm);
-  return(result);
+  return((((pw *)ptr)->polyw)(ptr, fm));
 }
 
 
@@ -7745,6 +7740,22 @@ mus_float_t mus_in_any(mus_long_t samp, int chan, mus_any *IO)
 }
 
 
+mus_float_t mus_safe_in_any(mus_long_t samp, int chan, mus_any *IO)
+{
+  /* assume IO is ok and IO->core->read_sample is mus_i_any_from_file */
+  /* return(((*(IO->core)->read_sample))(IO, samp, chan)); */
+  return(mus_in_any_from_file(IO, samp, chan));
+}
+
+
+bool mus_in_any_is_safe(mus_any *ptr)
+{
+  rdin *gen = (rdin *)ptr;
+  return((gen) && (gen->core->read_sample == mus_in_any_from_file));
+}
+
+
+
 /* ---------------- file->frame ---------------- */
 
 /* also built on file->sample */
@@ -8312,6 +8323,27 @@ mus_float_t mus_out_any(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 		mus_name(IO));
     }
   return(val);
+}
+
+
+mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
+{
+  rdout *gen = (rdout *)IO;
+  if (gen->safety == 1)
+    {
+      gen->obufs[chan][samp] += MUS_FLOAT_TO_SAMPLE(val);
+      if (samp > gen->out_end) 
+	gen->out_end = samp;
+      return(val);
+    }
+  return(((*(IO->core)->write_sample))(IO, samp, chan, val));
+}
+
+
+bool mus_out_any_is_safe(mus_any *IO)
+{
+  rdout *gen = (rdout *)IO;
+  return((gen) && (gen->core->write_sample == mus_out_any_to_file));
 }
 
 

@@ -1109,7 +1109,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
 #define XEN_TO_C_DOUBLE(Arg)                       ((double)s7_number_to_real(Arg))
-#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          xen_to_c_double_or_else(Arg, Def)
+#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((Def == 0.0) ? s7_number_to_real(Arg) : xen_to_c_double_or_else(Arg, Def))
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
 #if WITH_COMPLEX

@@ -1441,7 +1441,7 @@ void mus_vct_init(void)
   s7_set_object_ref_2i(vct_tag, s7_vct_ref_2i);
   s7_set_object_set_3(vct_tag, s7_vct_set_3);
   s7_set_object_set_3if(vct_tag, s7_vct_set_3if);
-  s7_set_object_ref_arity(vct_tag, 2, 2);
+  s7_set_object_ref_arity(vct_tag, 1, 1);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #endif
