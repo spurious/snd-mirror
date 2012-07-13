@@ -49,40 +49,6 @@ static void free_snd_itoa(void)
 }
 
 
-static char *format_to_name(int bits)
-{
-  if (bits == 4)
-    return(mus_strdup("float"));
-  if (bits == 8)
-    return(mus_strdup("double"));
-  return(mus_format("int%d", bits));
-}
-
-
-static char *sndlib_consistency_check(void)
-{
-  /* sizeof is not usable in this context, unfortunately; bits/bytes jumbled together here */
-  int sndlib_bits, snd_bits;
-  sndlib_bits = mus_sample_bits();
-#if SNDLIB_USE_FLOATS
-  snd_bits = mus_bytes_per_sample(MUS_OUT_FORMAT);
-#else
-  snd_bits = MUS_SAMPLE_BITS;
-#endif
-  if (snd_bits != sndlib_bits)
-    {
-      char *snd_name, *sndlib_name, *val;
-      snd_name = format_to_name(snd_bits);
-      sndlib_name = format_to_name(sndlib_bits);
-      val = mus_format(" Snd expects %s samples, but sndlib uses %s!", snd_name, sndlib_name);
-      free(snd_name);
-      free(sndlib_name);
-      return(val);
-    }
-  return(NULL);
-}
-
-
 static char *vstrcat(const char *arg1, ...)
 {
   char *buf;
@@ -307,7 +273,6 @@ char *version_info(void)
 #endif
   snd_itoa_ctr = 0;
   xversion = xen_version();
-  consistent = sndlib_consistency_check();
   result = vstrcat(
 	  "This is Snd version ",
 	  SND_VERSION,
@@ -319,13 +284,8 @@ char *version_info(void)
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
                            snd_itoa(SNDLIB_REVISION), 
                            " (", SNDLIB_DATE,
-#if SNDLIB_USE_FLOATS
 	  ", ", (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double", " samples",
-#else
-	  ", int", snd_itoa(MUS_SAMPLE_BITS), " samples",
-#endif
 	  ")",
-	  (consistent) ? consistent : "",
 	  "\n    CLM ", snd_itoa(MUS_VERSION), ".", 
 	                snd_itoa(MUS_REVISION), " (", 
                         MUS_DATE, ")",

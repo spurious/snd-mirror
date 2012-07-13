@@ -331,22 +331,32 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- ramp-squared, env-squared-channel
 
-;;; TODO: reimplement the symmetric arg
-
 (define* (ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos)
   "(ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
   ;; vct: start incr off scl
-  (map-channel
-   (let ((angle 0.0)
-	 (incr (/ 1.0 (if (number? dur)
-			  dur
-			  (- (frames snd chn) beg)))))
-     (lambda (y)
-       (let ((val (* y (+ rmp0 (* angle angle (- rmp1 rmp0))))))
-	 (set! angle (+ angle incr))
-	 val)))
-   beg dur snd chn edpos
-   (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))
+  (let ((incr (/ 1.0 (if (number? dur)
+			 dur
+			 (- (frames snd chn) beg)))))
+    (if (and symmetric
+	     (< rmp1 rmp0))
+
+	(map-channel
+	 (let ((angle 1.0))
+	   (lambda (y)
+	     (let ((val (* y (+ rmp1 (* angle angle (- rmp0 rmp1))))))
+	       (set! angle (- angle incr))
+	       val)))
+	 beg dur snd chn edpos
+	 (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur))
+
+	(map-channel
+	 (let ((angle 0.0))
+	   (lambda (y)
+	     (let ((val (* y (+ rmp0 (* angle angle (- rmp1 rmp0))))))
+	       (set! angle (+ angle incr))
+	       val)))
+	 beg dur snd chn edpos
+	 (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))))
 
 
 (define* (env-squared-channel e (symmetric #t) (beg 0) dur snd chn edpos)
@@ -362,23 +372,33 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- ramp-expt, env-expt-channel
 
-;;; TODO: fix ramp-expt!
-
 (define* (ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos)
   "(ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
   ;; vct: start incr off scl exponent
   ;; a^x = exp(x * log(a))
-  (map-channel
-   (let ((angle 0.0)
-	 (incr (/ 1.0 (if (number? dur)
+  (let ((incr (/ 1.0 (if (number? dur)
 			  dur
 			  (- (frames snd chn) beg)))))
-     (lambda (y)
-       (let ((val (* y (+ rmp0 (* (expt angle exponent) (- rmp1 rmp0))))))
-	 (set! angle (+ angle incr))
-	 val)))
-   beg dur snd chn edpos
-   (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
+    (if (and symmetric
+	     (< rmp1 rmp0))
+
+	(map-channel
+	 (let ((angle 1.0))
+	   (lambda (y)
+	     (let ((val (* y (+ rmp1 (* (expt angle exponent) (- rmp0 rmp1))))))
+	       (set! angle (- angle incr))
+	       val)))
+	 beg dur snd chn edpos
+	 (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur))
+
+	(map-channel
+	 (let ((angle 0.0))
+	   (lambda (y)
+	     (let ((val (* y (+ rmp0 (* (expt angle exponent) (- rmp1 rmp0))))))
+	       (set! angle (+ angle incr))
+	       val)))
+	 beg dur snd chn edpos
+	 (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))))
 
 
 (define* (env-expt-channel e exponent (symmetric #t) (beg 0) dur snd chn edpos)

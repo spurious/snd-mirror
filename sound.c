@@ -239,16 +239,6 @@ static time_t local_file_write_date(const char *filename)
 }
 
 
-int mus_sample_bits(void)
-{
-  /* this to check for inconsistent loads */
-#if SNDLIB_USE_FLOATS
-  return(sizeof(mus_float_t));
-#else
-  return(MUS_SAMPLE_BITS);
-#endif
-}
-
 
 /* -------- sound file table -------- */
 
@@ -1376,39 +1366,14 @@ int mus_array_to_file(const char *filename, mus_sample_t *ddata, mus_long_t len,
 
 mus_long_t mus_file_to_float_array(const char *filename, int chan, mus_long_t start, mus_long_t samples, mus_float_t *array)
 {
-#if SNDLIB_USE_FLOATS
   return(mus_file_to_array(filename, chan, start, samples, array));
-#else
-  mus_sample_t *idata;
-  mus_long_t i, len;
-
-  idata = (mus_sample_t *)calloc(samples, sizeof(mus_sample_t));
-  len = mus_file_to_array(filename, chan, start, samples, idata);
-  if (len != -1) 
-    for (i = 0; i < samples; i++)
-      array[i] = MUS_SAMPLE_TO_FLOAT(idata[i]);
-  free(idata);
-
-  return(len);
-#endif
 }
 
 
 int mus_float_array_to_file(const char *filename, mus_float_t *ddata, mus_long_t len, int srate, int channels)
 {
   const char *errmsg;
-#if SNDLIB_USE_FLOATS
   errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
-#else
-  mus_sample_t *idata;
-  mus_long_t i;
-
-  idata = (mus_sample_t *)calloc(len, sizeof(mus_sample_t));
-  for (i = 0; i < len; i++) 
-    idata[i] = MUS_FLOAT_TO_SAMPLE(ddata[i]);
-  errmsg = mus_array_to_file_with_error(filename, idata, len, srate, channels);
-  free(idata);
-#endif
   if (errmsg)
     return(mus_error(MUS_CANT_OPEN_FILE, "%s", errmsg));
 

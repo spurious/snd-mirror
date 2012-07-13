@@ -1846,12 +1846,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	  else 
 	    {
 	      /* amp == 0.0 means un-normalized output */
-#if SNDLIB_USE_FLOATS
 	      memcpy((void *)pbuf, (void *)rl0, data_size * sizeof(mus_sample_t));
-#else
-	      for (i = 0; i < data_size; i++) 
-		pbuf[i] = MUS_FLOAT_TO_SAMPLE(rl0[i]);
-#endif
 	    }
 	  progress_report(gcp, .9);
 

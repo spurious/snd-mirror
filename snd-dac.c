@@ -1840,22 +1840,8 @@ static int fill_dac_buffers(int write_ok)
     {
       if (XEN_FALSE_P(sdobj))
 	{
-#if SNDLIB_USE_FLOATS
 	  sdobj = wrap_sound_data(snd_dacp->channels, snd_dacp->frames, dac_buffers);
 	  sdobj_loc = snd_protect(sdobj);
-#else
-	  {
-	    sound_data *sd;
-	    int j;
-	    mus_long_t i;
-	    sdobj = make_sound_data(snd_dacp->channels, snd_dacp->frames);
-	    sdobj_loc = snd_protect(sdobj);
-	    sd = XEN_TO_SOUND_DATA(sdobj);
-	    for (j = 0; j < sd->chans; j++)
-	      for (i = 0; i < sd->length; i++)
-		sd->data[j][i] = MUS_SAMPLE_TO_DOUBLE(dac_buffers[j][i]);
-	  }
-#endif
 	}
     run_hook(dac_hook, 
 	     XEN_LIST_1(sdobj),

@@ -626,9 +626,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 MAKE_TARGET
 ORIGINAL_LDFLAGS
-SNDLIB_LIB
-SNDLIB_FILES
-SNDLIB_CONFIG
 PATH_WVUNPACK
 PATH_WAVPACK
 PATH_TTA
@@ -773,7 +770,6 @@ with_s7
 with_extension_language
 with_directfb
 with_audio
-with_sample_width
 with_motif_prefix
 with_temp_dir
 with_save_dir
@@ -787,7 +783,6 @@ with_ruby_prefix
 with_ruby
 with_forth
 enable_snd_debug
-with_shared_sndlib
 enable_deprecated
 '
       ac_precious_vars='build_alias
@@ -1448,7 +1443,6 @@ Optional Packages:
   --with-extension-language	use some extension language, default=yes
   --with-directfb	  use directfb config scripts, rather than gtk, default=no
   --without-audio       don't include any audio functionality
-  --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
@@ -1459,7 +1453,6 @@ Optional Packages:
   --with-ruby-prefix=PFX  where Ruby is installed
   --with-ruby            use Ruby as the extension language
   --with-forth	  	  use Forth as the extension language
-  --with-shared-sndlib	  try to load libsndlib.so
 
 Some influential environment variables:
   CC          C compiler command
@@ -4019,11 +4012,9 @@ _ACEOF
 #   --with-jack           use Jack
 #   --without-audio       stub out all audio
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
-#   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
-#   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif
 #   --with-forth          use Forth as the extension language
@@ -4038,7 +4029,6 @@ _ACEOF
 #   --with-just-gl        include OpenGL support but omit the extension language bindings (default=no, Motif only)
 #   --with-gl2ps          include gl2ps (Motif only)
 #   --with-editres 	  include EditRes in xm
-#   --with-shared-sndlib  load sndlib.so if possible
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
@@ -4186,36 +4176,6 @@ if test "${with_audio+set}" = set; then :
 fi
 
 
-
-# -------- internal sample data type --------
-
-# sample-width only applies to the int case (ignored if float)
-LOCAL_SNDLIB_BITS="0"
-
-# Check whether --with-sample-width was given.
-if test "${with_sample_width+set}" = set; then :
-  withval=$with_sample_width; { $as_echo "$as_me:${as_lineno-$LINENO}: result: Using $with_sample_width bit samples" >&5
-$as_echo "Using $with_sample_width bit samples" >&6; }
-	 cat >>confdefs.h <<_ACEOF
-#define MUS_SAMPLE_BITS $with_sample_width
-_ACEOF
-
-         LOCAL_SNDLIB_BITS=$with_sample_width
-
-else
-  $as_echo "#define MUS_SAMPLE_BITS 24" >>confdefs.h
-
-
-fi
-
-
-if test "$with_float_samples" != no ; then
-  $as_echo "#define SNDLIB_USE_FLOATS 1" >>confdefs.h
-
-else
-  $as_echo "#define SNDLIB_USE_FLOATS 0" >>confdefs.h
-
-fi
 
 
 # Check whether --with-motif-prefix was given.
@@ -10920,154 +10880,6 @@ rm -f core conftest.err conftest.$ac_objext \
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $trap_segfault" >&5
 $as_echo "$trap_segfault" >&6; }
 fi
-
-
-#--------------------------------------------------------------------------------
-# sndlib
-#--------------------------------------------------------------------------------
-#
-# look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
-#   also language (s7, Ruby, Forth) needs to match (what about versions!) and audio choice
-# check against needed version (17.2 for now -- need mus_vct_copy in vct.c)
-# set SNDLIB_FILES and SNDLIB_LIB
-
-SNDLIB_FILES="SNDLIB_O_FILES"
-if test "$enable_snd_debug" != yes ; then
-  SNDLIB_LIB=""
-fi
-SNDLIB_PREFIX=""
-
-# Check whether --with-shared-sndlib was given.
-if test "${with_shared_sndlib+set}" = set; then :
-  withval=$with_shared_sndlib;
-fi
-
-if test "$with_shared_sndlib" = yes; then
-  if test "$SNDLIB_CONFIG_path" != "" ; then
-    if ! test -x "${SNDLIB_CONFIG_path}sndlib-config" ; then
-      # try adding the "/" to the path
-      SNDLIB_CONFIG_path="${SNDLIB_CONFIG_path}/"
-    fi
-  fi
-  if ! test -x "${SNDLIB_CONFIG_path}sndlib-config" ; then
-    # Extract the first word of "sndlib-config", so it can be a program name with args.
-set dummy sndlib-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_SNDLIB_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $SNDLIB_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_SNDLIB_CONFIG="$SNDLIB_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_SNDLIB_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_SNDLIB_CONFIG" && ac_cv_path_SNDLIB_CONFIG="no"
-  ;;
-esac
-fi
-SNDLIB_CONFIG=$ac_cv_path_SNDLIB_CONFIG
-if test -n "$SNDLIB_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SNDLIB_CONFIG" >&5
-$as_echo "$SNDLIB_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  else
-    SNDLIB_CONFIG="${SNDLIB_CONFIG_path}sndlib-config"
-  fi
-  if test "$SNDLIB_CONFIG" = "no" ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-  else
-    SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
-    OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS -L$SNDLIB_PREFIX/lib"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mus_vct_copy in -lsndlib" >&5
-$as_echo_n "checking for mus_vct_copy in -lsndlib... " >&6; }
-if ${ac_cv_lib_sndlib_mus_vct_copy+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsndlib  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char mus_vct_copy ();
-int
-main ()
-{
-return mus_vct_copy ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_sndlib_mus_vct_copy=yes
-else
-  ac_cv_lib_sndlib_mus_vct_copy=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sndlib_mus_vct_copy" >&5
-$as_echo "$ac_cv_lib_sndlib_mus_vct_copy" >&6; }
-if test "x$ac_cv_lib_sndlib_mus_vct_copy" = xyes; then :
-
-	SNDLIB_AUDIO_CHOICE=`$SNDLIB_CONFIG --audio`
-        if test "$SNDLIB_AUDIO_CHOICE" != "$AUDIO_SYSTEM" ; then
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $AUDIO_SYSTEM" >&5
-$as_echo "$as_me: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $AUDIO_SYSTEM" >&2;}
-        fi
-	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
-	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
-          SNDLIB_LANGUAGE=`$SNDLIB_CONFIG --language`
-          if test "$SNDLIB_LANGUAGE" = $LOCAL_LANGUAGE ; then
-	    SNDLIB_FILES="NO_FILES"
-            SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
-            OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES sndlib"
-            $as_echo "#define WITH_SHARED_SNDLIB 1" >>confdefs.h
-
-          else
-	    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: libsndlib.so was built with $SNDLIB_LANGUAGE, but current choice is $LOCAL_LANGUAGE" >&5
-$as_echo "$as_me: WARNING: libsndlib.so was built with $SNDLIB_LANGUAGE, but current choice is $LOCAL_LANGUAGE" >&2;}
-          fi
-        else
-	  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: libsndlib.so is not compatible with current Snd mus_sample_t choice" >&5
-$as_echo "$as_me: WARNING: libsndlib.so is not compatible with current Snd mus_sample_t choice" >&2;}
-   	fi
-
-fi
-
-    CFLAGS="$OLD_CFLAGS"
-    fi
-fi
-
 
 
 

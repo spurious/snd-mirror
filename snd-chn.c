@@ -7351,13 +7351,10 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 	return(g_mus_length(snd));
 
       if (sound_data_p(snd))                     /* sound-data-length */
-	return(C_TO_XEN_LONG_LONG((XEN_TO_SOUND_DATA(snd))->length));
+	return(C_TO_XEN_LONG_LONG(mus_sound_data_length(XEN_TO_SOUND_DATA(snd))));
 
       if (MUS_VCT_P(snd))                        /* vct-length */
 	return(C_TO_XEN_LONG_LONG((XEN_TO_VCT(snd))->length));
-
-      if (XEN_VECTOR_P(snd))                     /* vector as *output* */
-	return(C_TO_XEN_INT(XEN_VECTOR_LENGTH(snd)));
 
       if (XEN_MIX_P(snd))                        /* mix-length */
 	return(g_mix_length(snd));
@@ -9401,27 +9398,7 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
 
   cp = get_cp(snd, chn, S_channel_data);
   if ((cp) && (cp->sound) && (cp->sound->inuse == SOUND_WRAPPER))
-#if SNDLIB_USE_FLOATS
     return(wrap_sound_data(1, cp->edits[0]->samples, &(cp->sounds[0]->buffered_data)));
-#else
-  {
-    /* actually this can't work.  We expect that anything we write to the channel data (sound-data) object
-     *   will be displayed in the associated variable graph, but in the int mus_sample_t case, the two
-     *   arrays are separate.
-     */
-    XEN result;
-    sound_data *sd;
-    mus_long_t i;
-    int loc;
-    result = make_sound_data(1, cp->edits[0]->samples); /* need actual gc-able object here */
-    loc = snd_protect(result);
-    sd = XEN_TO_SOUND_DATA(result);
-    for (i = 0; i < sd->length; i++)
-      sd->data[0][i] = MUS_SAMPLE_TO_DOUBLE(cp->sounds[0]->buffered_data[i]);
-    snd_unprotect_at(loc);
-    return(result);
-  }
-#endif
   return(XEN_FALSE);
 }
 

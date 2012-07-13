@@ -961,15 +961,9 @@ static const mus_sample_t mus_ubyte[256] = {
 #define UBYTE_ZERO 128
 #define USHORT_ZERO 32768
 
-#if SNDLIB_USE_FLOATS
-  #define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
-  /* see note in _sndlib.h" values are "unscaled" from the DAC's point of view */
-#else
-  #define MUS_SAMPLE_UNSCALED(n) ((n) * (1 << (MUS_SAMPLE_BITS - 16)))
-#endif
+#define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
+/* see note in _sndlib.h" values are "unscaled" from the DAC's point of view */
 
-
-#if SNDLIB_USE_FLOATS
 static float *swapped_shorts = NULL;
 static void initialize_swapped_shorts(void)
 {
@@ -982,7 +976,6 @@ static void initialize_swapped_shorts(void)
       swapped_shorts[i] = MUS_SHORT_TO_SAMPLE(x);
     }
 }
-#endif
 
 
 static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
@@ -1012,11 +1005,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
       siz = fd->bytes_per_sample;
       if ((format == MUS_OUT_FORMAT) && 
 	  (chans == 1) && 
-	  (beg == 0)
-#if SNDLIB_USE_FLOATS 
-	  && (fd->prescaler == 1.0)
-#endif
-	  )
+	  (beg == 0) && 
+	  (fd->prescaler == 1.0))
 	{
 	  ssize_t total;
 
@@ -1061,14 +1051,12 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
   total_read = 0;
   loc = beg;
 
-#if SNDLIB_USE_FLOATS
 #if MUS_LITTLE_ENDIAN
   if ((format == MUS_BSHORT) && (!swapped_shorts))
     initialize_swapped_shorts();
 #else
   if ((format == MUS_LSHORT) && (!swapped_shorts))
     initialize_swapped_shorts();
-#endif
 #endif
 
   while (leftover > 0)
@@ -1130,7 +1118,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	      switch (format)
 		{
 		case MUS_BSHORT:      
-#if MUS_LITTLE_ENDIAN && SNDLIB_USE_FLOATS
+#if MUS_LITTLE_ENDIAN
 		  for (; bufnow <= bufend; jchar += 2) 
 		    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
 #else       
@@ -1140,7 +1128,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_LSHORT: 
-#if (!MUS_LITTLE_ENDIAN) && SNDLIB_USE_FLOATS
+#if (!MUS_LITTLE_ENDIAN)
 		  for (; bufnow <= bufend; jchar += 2) 
 		    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
 #else
@@ -1161,12 +1149,12 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  
 		case MUS_BINTN:              
 		  for (; bufnow <= bufend; jchar += 4) 
-		    (*bufnow++) = MUS_INT_TO_SAMPLE((big_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
+		    (*bufnow++) = MUS_INT_TO_SAMPLE((big_endian_int(jchar) >> 8));
 		  break;
 		  
 		case MUS_LINTN: 
 		  for (; bufnow <= bufend; jchar += 4) 
-		    (*bufnow++) = MUS_INT_TO_SAMPLE((little_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
+		    (*bufnow++) = MUS_INT_TO_SAMPLE((little_endian_int(jchar) >> 8));
 		  break;
 		  
 		case MUS_MULAW:  	              
@@ -1306,7 +1294,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		      switch (format)
 			{
 			case MUS_BSHORT:      
-#if MUS_LITTLE_ENDIAN && SNDLIB_USE_FLOATS
+#if MUS_LITTLE_ENDIAN
 			  for (; bufnow <= bufend; jchar += siz_chans) 
 			    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
 #else       
@@ -1316,7 +1304,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  break;
 			  
 			case MUS_LSHORT: 
-#if (!MUS_LITTLE_ENDIAN) && SNDLIB_USE_FLOATS
+#if (!MUS_LITTLE_ENDIAN)
 			  for (; bufnow <= bufend; jchar += siz_chans) 
 			    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
 #else
@@ -1337,12 +1325,12 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  
 			case MUS_BINTN:              
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_INT_TO_SAMPLE((big_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
+			    (*bufnow++) = MUS_INT_TO_SAMPLE((big_endian_int(jchar) >> 8));
 			  break;
 			  
 			case MUS_LINTN: 
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_INT_TO_SAMPLE((little_endian_int(jchar) >> (32 - MUS_SAMPLE_BITS)));
+			    (*bufnow++) = MUS_INT_TO_SAMPLE((little_endian_int(jchar) >> 8));
 			  break;
 			  
 			case MUS_MULAW:  	              
@@ -1727,12 +1715,12 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
 
 	    case MUS_BINTN:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(*bufnow++) << (32 - MUS_SAMPLE_BITS));
+		set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(*bufnow++) << 8);
 	      break;
 
 	    case MUS_LINTN:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(*bufnow++) << (32 - MUS_SAMPLE_BITS));
+		set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(*bufnow++) << 8);
 	      break;
 
 	    case MUS_MULAW:     

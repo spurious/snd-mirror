@@ -2,13 +2,9 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 22
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "5-July-12"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "16-July-12"
 
-
-/* these are picked up during configuration */
-#undef SNDLIB_USE_FLOATS
-#undef MUS_SAMPLE_BITS
 
 #ifndef mus_float_t
 #define mus_float_t double
@@ -80,74 +76,32 @@
 
 #ifndef MUS_OUT_FORMAT
   #if WORDS_BIGENDIAN
-    #if SNDLIB_USE_FLOATS
-        #define MUS_OUT_FORMAT MUS_BDOUBLE
-    #else
-        #define MUS_OUT_FORMAT MUS_BINT
-    #endif
+    #define MUS_OUT_FORMAT MUS_BDOUBLE
   #else
-    #if SNDLIB_USE_FLOATS
-        #define MUS_OUT_FORMAT MUS_LDOUBLE
-    #else
-        #define MUS_OUT_FORMAT MUS_LINT
-    #endif
+    #define MUS_OUT_FORMAT MUS_LDOUBLE
   #endif
 #endif
 
 
-#if (!SNDLIB_USE_FLOATS)
-  #define mus_sample_t int
-  #ifndef MUS_SAMPLE_BITS
-    #define MUS_SAMPLE_BITS 24
-  #endif
-  #define MUS_SAMPLE_0 0
-  #define MUS_BYTE_TO_SAMPLE(n) ((mus_sample_t)((n) << (MUS_SAMPLE_BITS - 8)))
-  #define MUS_SAMPLE_TO_BYTE(n) ((n) >> (MUS_SAMPLE_BITS - 8))
-  #define MUS_SHORT_TO_SAMPLE(n) ((mus_sample_t)((n) << (MUS_SAMPLE_BITS - 16)))
-  #define MUS_SAMPLE_TO_SHORT(n) ((short)((n) >> (MUS_SAMPLE_BITS - 16)))
-  #if (MUS_SAMPLE_BITS < 24)
-    #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((n) >> (24 - MUS_SAMPLE_BITS)))
-    #define MUS_SAMPLE_TO_INT24(n) ((int)((n) << (24 - MUS_SAMPLE_BITS)))
-  #else
-    #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((n) << (MUS_SAMPLE_BITS - 24)))
-    #define MUS_SAMPLE_TO_INT24(n) ((int)((n) >> (MUS_SAMPLE_BITS - 24)))
-  #endif
-  #define MUS_INT_TO_SAMPLE(n) ((mus_sample_t)(n))
-  #define MUS_SAMPLE_TO_INT(n) ((int)(n))
-  /* these are for direct read/write (no cross-image assumption is made about 32 bit int scaling) */
-  #define MUS_FLOAT_TO_FIX ((MUS_SAMPLE_BITS < 32) ? (1 << (MUS_SAMPLE_BITS - 1)) : 0x7fffffff)
-  #define MUS_FIX_TO_FLOAT (1.0 / (float)(MUS_FLOAT_TO_FIX))
-  #define MUS_FLOAT_TO_SAMPLE(n) ((mus_sample_t)((n) * MUS_FLOAT_TO_FIX))
-  #define MUS_SAMPLE_TO_FLOAT(n) ((float)((n) * MUS_FIX_TO_FLOAT))
-  #define MUS_DOUBLE_TO_SAMPLE(n) ((mus_sample_t)((n) * MUS_FLOAT_TO_FIX))
-  #define MUS_SAMPLE_TO_DOUBLE(n) ((double)((n) * MUS_FIX_TO_FLOAT))
-  #define MUS_SAMPLE_MAX ((mus_sample_t)((MUS_SAMPLE_BITS < 32) ? (MUS_FLOAT_TO_FIX - 1) : 0x7fffffff))
-  #define MUS_SAMPLE_MIN ((mus_sample_t)((MUS_SAMPLE_BITS < 32) ? (-(MUS_FLOAT_TO_FIX)) : -0x7fffffff))
-  #define mus_sample_abs(Sample) abs(Sample)
-#else
-  #define mus_sample_t mus_float_t
-  #ifndef MUS_SAMPLE_BITS
-    #define MUS_SAMPLE_BITS 24
-  #endif
-  #define MUS_SAMPLE_0 0.0
-  #define MUS_BYTE_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 7)))
-  #define MUS_SHORT_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 15)))
-  #define MUS_INT_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << (MUS_SAMPLE_BITS - 1))))
-  #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 23)))
-  #define MUS_FLOAT_TO_FIX 1.0
-  #define MUS_FIX_TO_FLOAT 1.0
-  #define MUS_FLOAT_TO_SAMPLE(n) ((mus_sample_t)(n))
-  #define MUS_DOUBLE_TO_SAMPLE(n) ((mus_sample_t)(n))
-  #define MUS_SAMPLE_TO_FLOAT(n) ((mus_float_t)(n))
-  #define MUS_SAMPLE_TO_DOUBLE(n) ((double)(n))
-  #define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << (MUS_SAMPLE_BITS - 1))))
-  #define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
-  #define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
-  #define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))
-  #define MUS_SAMPLE_MAX 0.99999
-  #define MUS_SAMPLE_MIN (-1.0)
-  #define mus_sample_abs(Sample) fabs(Sample)
-#endif
+#define mus_sample_t mus_float_t
+#define MUS_SAMPLE_0 0.0
+#define MUS_BYTE_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 7)))
+#define MUS_SHORT_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 15)))
+#define MUS_INT_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 23)))
+#define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 23)))
+#define MUS_FLOAT_TO_FIX 1.0
+#define MUS_FIX_TO_FLOAT 1.0
+#define MUS_FLOAT_TO_SAMPLE(n) ((mus_sample_t)(n))
+#define MUS_DOUBLE_TO_SAMPLE(n) ((mus_sample_t)(n))
+#define MUS_SAMPLE_TO_FLOAT(n) ((mus_float_t)(n))
+#define MUS_SAMPLE_TO_DOUBLE(n) ((double)(n))
+#define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << 23)))
+#define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
+#define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
+#define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))
+#define MUS_SAMPLE_MAX 0.99999
+#define MUS_SAMPLE_MIN (-1.0)
+#define mus_sample_abs(Sample) fabs(Sample)
 
 
 enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS_SVX, MUS_VOC, 
@@ -272,7 +226,6 @@ MUS_EXPORT char *mus_sound_comment(const char *name);
 MUS_EXPORT int mus_bytes_per_sample(int format);
 MUS_EXPORT float mus_sound_duration(const char *arg);
 MUS_EXPORT int mus_sound_initialize(void);
-MUS_EXPORT int mus_sample_bits(void);
 MUS_EXPORT int mus_sound_override_header(const char *arg, int srate, int chans, int format, int type, mus_long_t location, mus_long_t size);
 MUS_EXPORT int mus_sound_forget(const char *name);
 MUS_EXPORT int mus_sound_prune(void);

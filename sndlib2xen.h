@@ -11,12 +11,7 @@
 #define NO_DATA              XEN_ERROR_TYPE("no-data")
 #define BAD_HEADER           XEN_ERROR_TYPE("bad-header")
 
-typedef struct {
-  mus_long_t length;
-  int chans;
-  mus_float_t **data;
-  bool wrapped;
-} sound_data;
+typedef struct sound_data sound_data;
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,6 +33,12 @@ MUS_EXPORT sound_data *sound_data_reverse(sound_data *sd);
 MUS_EXPORT sound_data *sound_data_add(sound_data *sd1, sound_data *sd2);
 MUS_EXPORT sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2);
 MUS_EXPORT sound_data *sound_data_offset(sound_data *sd, mus_float_t off);
+
+MUS_EXPORT mus_float_t mus_sound_data_ref(sound_data *sd, int chan, mus_long_t pos);
+MUS_EXPORT mus_float_t mus_sound_data_set(sound_data *sd, int chan, mus_long_t pos, mus_float_t val);
+MUS_EXPORT int mus_sound_data_chans(sound_data *sd);
+MUS_EXPORT mus_long_t mus_sound_data_length(sound_data *sd);
+MUS_EXPORT void mus_sound_data_add_frame(sound_data *sd, mus_long_t pos, mus_float_t *data);
 
 #define XEN_TO_SOUND_DATA(Obj) (sound_data *)XEN_OBJECT_REF(Obj)
 

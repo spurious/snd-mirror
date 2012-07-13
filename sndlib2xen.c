@@ -41,6 +41,53 @@
   #endif
 #endif
 
+struct sound_data {
+  mus_long_t length;
+  int chans;
+  mus_float_t **data;
+  bool wrapped;
+};
+
+
+int mus_sound_data_chans(sound_data *sd)
+{
+  return(sd->chans);
+}
+
+mus_long_t mus_sound_data_length(sound_data *sd)
+{
+  return(sd->length);
+}
+
+mus_float_t mus_sound_data_ref(sound_data *sd, int chan, mus_long_t pos)
+{
+  if ((sd) &&
+      (chan < sd->chans) &&
+      (pos >= 0) &&
+      (pos < sd->length))
+    return(sd->data[chan][pos]);
+  return(0.0);
+}
+
+mus_float_t mus_sound_data_set(sound_data *sd, int chan, mus_long_t pos, mus_float_t val)
+{
+  if ((sd) &&
+      (chan < sd->chans) &&
+      (pos >= 0) &&
+      (pos < sd->length))
+    sd->data[chan][pos] = val;
+  return(val);
+}
+
+void mus_sound_data_add_frame(sound_data *sd, mus_long_t pos, mus_float_t *data)
+{
+  int i;
+  if ((pos >= 0) &&
+      (pos < sd->length))
+    for (i = 0; i < sd->chans; i++)
+      sd->data[i][pos] += data[i];
+}
+
 
 /* originally I tried to simplify C GC by using global static strings that were 
  *   freed whenever the associated function was called again, on the assumption
@@ -878,25 +925,7 @@ filling sound-data sdata's buffers starting at beg (buffer location), going to e
 			 beg, 
 			 C_TO_XEN_LONG_LONG(sd->length)));
 
-#if SNDLIB_USE_FLOATS
   return(C_TO_XEN_INT(mus_file_read(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), sd->data)));
-#else
-  {
-    mus_sample_t **sdata;
-    int i;
-    mus_long_t j, result;
-    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
-    for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
-    result = mus_file_read(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), sdata);
-    for (i = 0; i < sd->chans; i++)
-      for (j = 0; j < sd->length; j++)
-	sd->data[i][j] = MUS_SAMPLE_TO_DOUBLE(sdata[i][j]);
-    for (i = 0; i < sd->chans; i++)
-      free(sdata[i]);
-    free(sdata);
-    return(C_TO_XEN_INT(result));
-  }
-#endif
 }
 
 
@@ -925,26 +954,7 @@ starting at beg (buffer location), going to end"
 			 beg, 
 			 C_TO_XEN_LONG_LONG(sd->length)));
 
-#if SNDLIB_USE_FLOATS
   return(C_TO_XEN_INT(mus_file_write(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), sd->data)));
-#else
-  {
-    mus_sample_t **sdata;
-    int i;
-    mus_long_t j, result;
-    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
-    for (i = 0; i < sd->chans; i++)
-      sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
-    for (i = 0; i < sd->chans; i++)
-      for (j = 0; j < sd->length; j++)
-	sdata[i][j] = MUS_DOUBLE_TO_SAMPLE(sd->data[i][j]);
-    result = mus_file_write(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), sdata);
-    for (i = 0; i < sd->chans; i++)
-      free(sdata[i]);
-    free(sdata);
-    return(C_TO_XEN_INT(result));
-  }
-#endif
 }
 
 
@@ -1140,25 +1150,8 @@ to the audio line from sound-data sdata."
   fmt = audio_io_write_format(fd);
   outbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
   obuf = (char *)calloc(outbytes, sizeof(char));
-#if SNDLIB_USE_FLOATS
+
   mus_file_write_buffer(fmt, beg, beg + frms - 1, sd->chans, sd->data, obuf, true); /* true -> clipped */
-#else
-  {
-    mus_sample_t **sdata;
-    int i;
-    mus_long_t j;
-    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
-    for (i = 0; i < sd->chans; i++) 
-      sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
-    for (i = 0; i < sd->chans; i++)
-      for (j = 0; j < sd->length; j++)
-	sdata[i][j] = MUS_DOUBLE_TO_SAMPLE(sd->data[i][j]);
-    mus_file_write_buffer(fmt, beg, beg + frms - 1, sd->chans, sdata, obuf, true);
-    for (i = 0; i < sd->chans; i++)
-      free(sdata[i]);
-    free(sdata);
-  }
-#endif
   val = mus_audio_write(fd, obuf, outbytes);
   free(obuf);
   return(C_TO_XEN_INT(val));
@@ -1186,24 +1179,8 @@ from the audio line into sound-data sdata."
   inbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
   inbuf = (char *)calloc(inbytes, sizeof(char));
   val = mus_audio_read(fd, inbuf, inbytes);
-#if SNDLIB_USE_FLOATS
+
   mus_file_read_buffer(fmt, 0, sd->chans, frms, sd->data, inbuf); /* frms here because this is "nints" not "end"! */
-#else
-  {
-    mus_sample_t **sdata;
-    int i;
-    mus_long_t j;
-    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
-    for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
-    mus_file_read_buffer(fmt, 0, sd->chans, frms, sdata, inbuf);
-    for (i = 0; i < sd->chans; i++)
-      for (j = 0; j < sd->length; j++)
-	sd->data[i][j] = MUS_SAMPLE_TO_DOUBLE(sdata[i][j]);
-    for (i = 0; i < sd->chans; i++)
-      free(sdata[i]);
-    free(sdata);
-  }
-#endif
   free(inbuf);
   return(C_TO_XEN_INT(val));
 }

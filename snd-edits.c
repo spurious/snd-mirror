@@ -7214,7 +7214,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	}
       else
 	{
-	  /* this block only triggered if not SNDLIB_USE_FLOATS */
+	  /* this block probably can't happen anymore */
 	  if (MUS_VCT_P(obj))
 	    {
 	      vct *v;
@@ -7437,7 +7437,6 @@ the new data's end."
     }
   else
     {
-#if SNDLIB_USE_FLOATS
       if (MUS_VCT_P(vect))
 	{
 	  vct *v;
@@ -7446,7 +7445,6 @@ the new data's end."
 	  change_samples(beg, len, v->data, cp, caller, pos);
 	}
       else
-#endif
 	{
 	  mus_sample_t *ivals;
 	  int ilen;
@@ -7886,7 +7884,6 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
     }
   else
     {
-#if SNDLIB_USE_FLOATS
       if (MUS_VCT_P(vect))
 	{
 	  vct *v;
@@ -7896,7 +7893,6 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	  insert_samples(beg, len, v->data, cp, origin, pos);
 	}
       else
-#endif
 	{
 	  int ilen;
 	  mus_sample_t *ivals;

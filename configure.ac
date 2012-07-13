@@ -36,11 +36,9 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-jack           use Jack
 #   --without-audio       stub out all audio
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
-#   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
-#   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif
 #   --with-forth          use Forth as the extension language
@@ -55,7 +53,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-just-gl        include OpenGL support but omit the extension language bindings (default=no, Motif only)
 #   --with-gl2ps          include gl2ps (Motif only)
 #   --with-editres 	  include EditRes in xm
-#   --with-shared-sndlib  load sndlib.so if possible
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
@@ -93,25 +90,6 @@ AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension 
 AC_ARG_WITH(directfb,    [  --with-directfb	  use directfb config scripts, rather than gtk, default=no])
 AC_ARG_WITH(audio,       [  --without-audio       don't include any audio functionality])
 
-
-# -------- internal sample data type --------
-
-# sample-width only applies to the int case (ignored if float)
-LOCAL_SNDLIB_BITS="0"
-AC_ARG_WITH(sample-width,
-	[  --with-sample-width=N   use N bits of samples],
-	[AC_MSG_RESULT(Using $with_sample_width bit samples)
-	 AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS, $with_sample_width)
-         LOCAL_SNDLIB_BITS=$with_sample_width
-	],
-	[AC_DEFINE(MUS_SAMPLE_BITS, 24)]
-	)
-
-if test "$with_float_samples" != no ; then
-  AC_DEFINE(SNDLIB_USE_FLOATS, 1)
-else
-  AC_DEFINE(SNDLIB_USE_FLOATS, 0)
-fi
 
 AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
             motif_prefix="$withval", motif_prefix="")
@@ -1781,66 +1759,6 @@ if test "$enable_snd_debug" != yes ; then
   AC_MSG_RESULT($trap_segfault)
 fi
 
-
-#--------------------------------------------------------------------------------
-# sndlib
-#--------------------------------------------------------------------------------
-#
-# look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
-#   also language (s7, Ruby, Forth) needs to match (what about versions!) and audio choice
-# check against needed version (17.2 for now -- need mus_vct_copy in vct.c)
-# set SNDLIB_FILES and SNDLIB_LIB
-
-SNDLIB_FILES="SNDLIB_O_FILES"
-if test "$enable_snd_debug" != yes ; then
-  SNDLIB_LIB=""
-fi
-SNDLIB_PREFIX=""
-AC_ARG_WITH(shared-sndlib,[  --with-shared-sndlib	  try to load libsndlib.so])
-if test "$with_shared_sndlib" = yes; then
-  if test "$SNDLIB_CONFIG_path" != "" ; then
-    if ! test -x "${SNDLIB_CONFIG_path}sndlib-config" ; then
-      # try adding the "/" to the path    
-      SNDLIB_CONFIG_path="${SNDLIB_CONFIG_path}/"
-    fi
-  fi
-  if ! test -x "${SNDLIB_CONFIG_path}sndlib-config" ; then
-    AC_PATH_PROG(SNDLIB_CONFIG, sndlib-config, no)
-  else
-    SNDLIB_CONFIG="${SNDLIB_CONFIG_path}sndlib-config"
-  fi
-  if test "$SNDLIB_CONFIG" = "no" ; then
-    AC_MSG_RESULT(no)
-  else
-    SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
-    OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS -L$SNDLIB_PREFIX/lib"
-    AC_CHECK_LIB(sndlib, mus_vct_copy,
-      [
-	SNDLIB_AUDIO_CHOICE=`$SNDLIB_CONFIG --audio`
-        if test "$SNDLIB_AUDIO_CHOICE" != "$AUDIO_SYSTEM" ; then
-	  AC_MSG_WARN([libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $AUDIO_SYSTEM])
-        fi
-	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
-	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
-          SNDLIB_LANGUAGE=`$SNDLIB_CONFIG --language`
-          if test "$SNDLIB_LANGUAGE" = $LOCAL_LANGUAGE ; then
-	    SNDLIB_FILES="NO_FILES"
-            SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
-            OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES sndlib"
-            AC_DEFINE(WITH_SHARED_SNDLIB)
-          else
-	    AC_MSG_WARN([libsndlib.so was built with $SNDLIB_LANGUAGE, but current choice is $LOCAL_LANGUAGE])
-          fi
-        else
-	  AC_MSG_WARN([libsndlib.so is not compatible with current Snd mus_sample_t choice])
-   	fi
-       ])
-    CFLAGS="$OLD_CFLAGS"
-    fi
-fi
-AC_SUBST(SNDLIB_FILES)
-AC_SUBST(SNDLIB_LIB)
 
 
 #--------------------------------------------------------------------------------

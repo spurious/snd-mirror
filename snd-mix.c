@@ -3256,16 +3256,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   if (!with_mixer)
     return(C_TO_XEN_BOOLEAN(mix_vct_untagged(v, cp, bg, edname)));
 
-#if SNDLIB_USE_FLOATS
   data = v->data;
-#else
-  {
-    int i;
-    data = (mus_sample_t *)calloc(len, sizeof(mus_sample_t));
-    for (i = 0; i < len; i++)
-      data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
-  }
-#endif
   
   /* make_snd_data_buffer copies the data array, so we don't need GC protection */
   /*    we can't use v->data directly because the user might change it */
@@ -3302,9 +3293,6 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
     free(new_origin);
   }
 
-#if (!SNDLIB_USE_FLOATS)
-  free(data);
-#endif
   update_graph(cp);
 
   return(new_xen_mix(mix_id));

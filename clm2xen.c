@@ -2193,7 +2193,7 @@ XEN g_mus_channels(XEN gen)
     return(C_TO_XEN_INT(1));
 
   if (sound_data_p(gen))
-    return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(gen))->chans));
+    return(C_TO_XEN_INT(mus_sound_data_chans(XEN_TO_SOUND_DATA(gen))));
 
   XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_channels, "an output generator, vct, or sound-data object");
   return(XEN_FALSE); /* make compiler happy */
@@ -2217,7 +2217,7 @@ XEN g_mus_length(XEN gen)
     return(C_TO_XEN_INT((XEN_TO_VCT(gen))->length));
 
   if (sound_data_p(gen))
-    return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(gen))->length));
+    return(C_TO_XEN_INT(mus_sound_data_length(XEN_TO_SOUND_DATA(gen))));
 
   XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_length, "a generator, vct, or sound-data object");
   return(XEN_FALSE); /* make compiler happy */
@@ -6352,15 +6352,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
     }
 
   if (sound_data_p(inp))
-    {
-      sound_data *sd;
-      sd = XEN_TO_SOUND_DATA(inp);
-      if ((in_chan < sd->chans) && 
-	  (pos < sd->length))
-	return(C_TO_XEN_DOUBLE(sd->data[in_chan][pos]));
-      return(C_TO_XEN_DOUBLE(0.0)); /* say *reverb* is inp and we're adding decay time, so run off the end... */
-      /* in any case, sound-data obj looks like a procedure, and we don't want to hit that in the next block. */
-    }
+    return(C_TO_XEN_DOUBLE(mus_sound_data_ref(XEN_TO_SOUND_DATA(inp), in_chan, pos)));
 
   if (XEN_VECTOR_P(inp))
     {
@@ -6424,14 +6416,8 @@ static XEN fallback_out_any_2(XEN outp, mus_long_t pos, mus_float_t inv, int chn
     }
 
   if (sound_data_p(outp))
-    {
-      sound_data *sd;
-      sd = XEN_TO_SOUND_DATA(outp);
-      if ((chn < sd->chans) &&
-	  (pos < sd->length))
-	sd->data[chn][pos] += inv;
-      return(val);
-    }
+    return(C_TO_XEN_DOUBLE(mus_sound_data_set(XEN_TO_SOUND_DATA(outp), chn, pos, 
+					      mus_sound_data_ref(XEN_TO_SOUND_DATA(outp), chn, pos) + inv)));
 
   if (XEN_VECTOR_P(outp))
     {
@@ -6475,9 +6461,7 @@ static XEN out_any_2_to_vct(mus_long_t pos, mus_float_t inv, int chn, const char
 
 static XEN out_any_2_to_sound_data(mus_long_t pos, mus_float_t inv, int chn, const char *caller, XEN val)
 {
-  if ((chn < clm_output_sd->chans) &&
-      (pos < clm_output_sd->length))
-    clm_output_sd->data[chn][pos] += inv;
+  mus_sound_data_set(clm_output_sd, chn, pos, mus_sound_data_ref(clm_output_sd, chn, pos) + inv);
   return(val);
 }
 
@@ -6563,10 +6547,7 @@ static double in_any_2_to_vct(mus_long_t pos, int chn)
 
 static double in_any_2_to_sound_data(mus_long_t pos, int chn)
 {
-  if ((chn < clm_input_sd->chans) &&
-      (pos < clm_input_sd->length))
-    return(clm_input_sd->data[chn][pos]);
-  return(0.0);
+  return(mus_sound_data_ref(clm_input_sd, chn, pos));
 }
 
 static double in_any_2_to_vector(mus_long_t pos, int chn)
@@ -7143,14 +7124,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
       else 
 	{
 	  if (sound_data_p(output))
-	    {
-	      sound_data *sd;
-	      int i;
-	      sd = XEN_TO_SOUND_DATA(output);
-	      if (pos < sd->length)
-		for (i = 0; i < sd->chans; i++)
-		  sd->data[i][pos] += mus_frame_ref(outfr, i);
-	    }
+	    mus_sound_data_add_frame(XEN_TO_SOUND_DATA(output), pos, mus_data(outfr));
 	  else
 	    {
 	      if ((XEN_VECTOR_P(output)) &&
@@ -7197,14 +7171,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
       else 
 	{
 	  if (sound_data_p(reverb))
-	    {
-	      sound_data *sd;
-	      int i;
-	      sd = XEN_TO_SOUND_DATA(reverb);
-	      if (pos < sd->length)
-		for (i = 0; i < sd->chans; i++)
-		  sd->data[i][pos] += mus_frame_ref(revfr, i);
-	    }
+	    mus_sound_data_add_frame(XEN_TO_SOUND_DATA(reverb), pos, mus_data(revfr)); /* TODO: this won't work if chns>1 */
 	  else
 	    {
 	      if ((XEN_VECTOR_P(reverb)) &&
@@ -7360,7 +7327,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    {
 	      ov = keys3;
 	      if (out_chans < 0) 
-		out_chans = (XEN_TO_SOUND_DATA(ov))->chans;
+		out_chans = mus_sound_data_chans(XEN_TO_SOUND_DATA(ov));
 	    }
 	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, vector, or a sound-data object");
 	}
@@ -7386,7 +7353,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    {
 	      rv = keys4;
 	      if (rev_chans < 0)
-		rev_chans = (XEN_TO_SOUND_DATA(rv))->chans;
+		rev_chans = mus_sound_data_chans(XEN_TO_SOUND_DATA(rv));
 	    }
 	  else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[4]) || XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output generator");
 	}
