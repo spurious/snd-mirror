@@ -8472,6 +8472,7 @@ typedef struct {
   void *closure;
   int safety;
   void (*locsig_func)(mus_any *ptr, mus_long_t loc, mus_float_t val);
+  void (*detour)(mus_any *ptr, mus_long_t loc);
 } locs;
 
 
@@ -8593,6 +8594,12 @@ mus_any *mus_locsig_revf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revf))
 
 void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);}            /* run.c */
 static void *locsig_set_closure(mus_any *ptr, void *e) {((locs *)ptr)->closure = e; return(e);}
+
+void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val))
+{
+  locs *gen = (locs *)ptr;
+  gen->detour = detour;
+}
 
 
 static void locsig_reset(mus_any *ptr)
@@ -8917,6 +8924,23 @@ static void mus_locsig_any(mus_any *ptr, mus_long_t loc, mus_float_t val)
     }
 }
 
+static void mus_locsig_detour(mus_any *ptr, mus_long_t loc, mus_float_t val)
+{
+  /* here we let the closure data decide what to do with the output */
+  int i;
+  locs *gen = (locs *)ptr;
+  if (gen->detour)
+    {
+      for (i = 0; i < gen->chans; i++)
+	(gen->outf)->vals[i] = val * gen->outn[i];
+      
+      for (i = 0; i < gen->rev_chans; i++)
+	(gen->revf)->vals[i] = val * gen->revn[i];
+      
+      (*(gen->detour))(ptr, loc);
+    }
+}
+
 static void mus_locsig_any_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   int i;
@@ -8968,13 +8992,6 @@ static void mus_locsig_safe_any_no_reverb(mus_any *ptr, mus_long_t loc, mus_floa
 }
 
 
-void mus_locsig_function_reset(mus_any *ptr)
-{
-  locs *gen = (locs *)ptr;
-  gen->locsig_func = mus_locsig_any;
-}
-
-
 mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t reverb, 
 			 int chans, mus_any *output,      /* direct signal output */
 			 int rev_chans, mus_any *revput,  /* reverb output */
@@ -9020,6 +9037,10 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 
   /* now choose the output function based on safety, chans, and reverb
    */
+  if ((output == NULL) && (revput == NULL))
+    gen->locsig_func = mus_locsig_detour;
+  else
+    {
   gen->locsig_func = mus_locsig_any;
 
   if (gen->safety == 1)
@@ -9071,6 +9092,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 	    default: gen->locsig_func = mus_locsig_any_no_reverb;    break;
 	    }
 	}
+    }
     }
 
   return((mus_any *)gen);
@@ -9132,6 +9154,7 @@ typedef struct {
   int *out_map;
   bool free_arrays, free_gens;
   void *closure;
+  void (*detour)(mus_any *ptr, mus_long_t loc);
 } dloc;
 
 
@@ -9145,6 +9168,13 @@ mus_any *mus_move_sound_revf(mus_any *ptr) {return((mus_any *)(((dloc *)ptr)->re
 
 void *mus_move_sound_closure(mus_any *ptr) {return(((dloc *)ptr)->closure);}
 static void *move_sound_set_closure(mus_any *ptr, void *e) {((dloc *)ptr)->closure = e; return(e);}
+
+void mus_move_sound_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val))
+{
+  dloc *gen = (dloc *)ptr;
+  gen->detour = detour;
+}
+
 
 
 static char *describe_move_sound(mus_any *ptr)
@@ -9273,7 +9303,8 @@ mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t uval)
     }
 
   /* reverb */
-  if (gen->revn_writer)
+  if ((gen->rev_env) &&
+      (gen->revf))
     {
       val *= mus_env(gen->rev_env);
       if (gen->rev_envs)
@@ -9287,13 +9318,17 @@ mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t uval)
 	    }
 	}
       else gen->revf->vals[0] = val;
-      mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
+      
+      if (gen->revn_writer)
+	mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
     }
 
   /* file output */
   if (gen->outn_writer)
     mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
 
+  if (gen->detour)
+    (*(gen->detour))(ptr, loc);
   return(uval);
 }
 

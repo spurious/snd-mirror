@@ -21329,7 +21329,8 @@ EDITS: 2
     (let ((gen (make-moving-max 4)))
       (let ((descr (mus-describe gen)))
 	(if (and (not (string=? descr "moving-max n: 4, gen: #<delay line[4, step]: [0.000 0.000 0.000 0.000]>"))
-		 (not (string=? descr "moving-max n: 4, gen: delay line[4, step]: [0.000 0.000 0.000 0.000]")))
+		 (not (string=? descr "moving-max n: 4, gen: delay line[4, step]: [0.000 0.000 0.000 0.000]"))
+		 (not (string=? descr " #<moving-max: #(4 delay line[4, step]: [0.000 0.000 0.000 0.000])>")))
 	    (snd-display #__line__ ";moving-max mus-describe: ~A" descr))
 	(if (not (string=? (mus-name gen) "moving-max")) (snd-display #__line__ ";moving-max mus-name: ~A" (mus-name gen))))
       (let ((ov (make-vct 10))
@@ -21397,7 +21398,8 @@ EDITS: 2
       (set! g (make-moving-length 4))
       (let ((descr (mus-describe g)))
 	(if (and (not (string=? descr "moving-length n: 4, gen: #<moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]>"))
-		 (not (string=? descr "moving-length n: 4, gen: moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]")))
+		 (not (string=? descr "moving-length n: 4, gen: moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]"))
+		 (not (string=? descr "#<moving-length: #(4 moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000])>")))
 	    (snd-display #__line__ ";moving-length mus-describe: ~A" descr))
 	(if (not (string=? (mus-name g) "moving-length")) (snd-display #__line__ ";moving-length mus-name: ~A" (mus-name g))))
       (do ((i 0 (+ 1 i))) ((= i 12)) (set! (odata i) (moving-length g (data i))))
@@ -21417,7 +21419,8 @@ EDITS: 2
       (set! g (make-moving-sum 4))
       (let ((descr (mus-describe g)))
 	(if (and (not (string=? descr "moving-sum n: 4, gen: #<moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]>"))
-		 (not (string=? descr "moving-sum n: 4, gen: moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]")))
+		 (not (string=? descr "moving-sum n: 4, gen: moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]"))
+		 (not (string=? descr "#<moving-sum: #(4 moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000])>")))
 	    (snd-display #__line__ ";moving-sum mus-describe: ~A" descr))
 	(if (not (string=? (mus-name g) "moving-sum")) (snd-display #__line__ ";moving-sum mus-name: ~A" (mus-name g))))
       (do ((i 0 (+ 1 i))) ((= i 12)) (set! (odata i) (moving-sum g (data i))))
@@ -21437,7 +21440,8 @@ EDITS: 2
       (set! g (make-moving-rms 4))
       (let ((descr (mus-describe g)))
 	(if (and (not (string=? descr "moving-rms n: 4, gen: #<moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]>"))
-		 (not (string=? descr "moving-rms n: 4, gen: moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]")))
+		 (not (string=? descr "moving-rms n: 4, gen: moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]"))
+		 (not (string=? descr "#<moving-rms: #(4 moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000])>")))
 	    (snd-display #__line__ ";moving-rms mus-describe: ~A" descr))
 	(if (not (string=? (mus-name g) "moving-rms")) (snd-display #__line__ ";moving-rms mus-name: ~A" (mus-name g))))
       (do ((i 0 (+ 1 i))) ((= i 12)) (set! (odata i) (moving-rms g (data i))))
@@ -38546,9 +38550,6 @@ EDITS: 1
   (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
     (log-mem clmtest)
     
-    (set! (mus-srate) 22050)
-    (set! (default-output-srate) 22050)
-    
     ;; check clm output for bad zero case
     (for-each
      (lambda (type)
@@ -38565,17 +38566,6 @@ EDITS: 1
 	   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
 	   mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
 	   mus-ldouble))
-    
-    (with-sound (:continue-old-file #t) (fm-violin .2 .1 440 .25))
-    (let ((ind (find-sound "test.snd")))
-      (if (not ind) (snd-display #__line__ ";with-sound continued: ~A" (map file-name (sounds))))
-      (if (not (= (length (sounds)) 1)) (snd-display #__line__ ";with-sound continued: ~{~A ~}" (map short-file-name (sounds))))
-      (let ((mx (maxamp)))
-	(if (fneq mx .25) (snd-display #__line__ ";with-sound continued max: ~A" (maxamp)))
-	(if (not (= (srate ind) 22050)) (snd-display #__line__ ";with-sound continued srate: ~A (~A, ~A)" 
-						     (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
-	(if (not (= (frames ind) (* 3 2205))) (snd-display #__line__ ";with-sound continued frames: ~A (~A)" (frames ind) (srate ind))))
-      (close-sound ind))
     
     (with-sound () (fm-violin 0 .1 440 .1))
     (with-sound (:continue-old-file #t) (fm-violin .2 .1 660 .04))
@@ -40331,7 +40321,8 @@ EDITS: 1
     (if (and (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"))
 	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.001\n"))
 	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.002\n"))
-	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n")))
+	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n"))
+	     (not (string=? stats-string "\n;sound-data:\n  maxamp (before scaling): 0.1000\n  compute time: 0.009\n")))
 	(snd-display #__line__ ";with-sound to sound-data stats: [~A]" stats-string))
     
     (with-sound (:output (make-sound-data 4 2210) :channels 4 :statistics (lambda (str) (set! stats-string str)))
@@ -41756,16 +41747,6 @@ EDITS: 1
       (if (not (string=? descr "another-name freq: 123.000Hz, phase: 0.000"))
 	  (snd-display #__line__ ";set mus-name describe: ~A" descr))))
   
-  (let ((gen (make-nssb 123.0)))
-    (set! (mus-name gen) "nssb123")
-    (if (not (string=? (mus-name gen) "nssb123")) (snd-display #__line__ ";set mus-name nssb123: ~A" (mus-name gen)))
-    (set! (mus-name gen) "another-name")
-    (if (not (string=? (mus-name gen) "another-name")) (snd-display #__line__ ";set mus-name nssb again: ~A" (mus-name gen)))
-    (set! (mus-frequency gen) 0.0)
-    (let ((descr (mus-describe gen)))
-      (if (not (string=? descr "another-name frequency: 0.0, ratio: 1.0, n: 1, angle: 0.0"))
-	  (snd-display #__line__ ";set mus-name nssb describe: ~A" descr))))
-  
   (let ((gen (make-oscil 123.0))
 	(gen1 (make-oscil 440.0)))
     (set! (mus-name gen) "oscil123")
@@ -41778,20 +41759,6 @@ EDITS: 1
     (let ((descr (mus-describe gen1)))
       (if (not (string=? descr "another-name freq: 440.000Hz, phase: 0.000"))
 	  (snd-display #__line__ ";set mus-name describe 1: ~A" descr))))
-  
-  (let ((gen (make-nssb 123.0))
-	(gen1 (make-nssb 440.0)))
-    (set! (mus-name gen) "nssb123")
-    (set! (mus-name gen1) "440")
-    (if (not (string=? (mus-name gen) "nssb123")) (snd-display #__line__ ";set mus-name nssb123 1: ~A" (mus-name gen)))
-    (if (not (string=? (mus-name gen1) "440")) (snd-display #__line__ ";set mus-name nssb 440 1: ~A" (mus-name gen)))
-    (set! (mus-name gen) "another-name")
-    (if (not (string=? (mus-name gen) "another-name")) (snd-display #__line__ ";set mus-name nssb again 1: ~A" (mus-name gen)))
-    (set! (mus-frequency gen) 0.0)
-    (let ((descr (mus-describe gen)))
-      (if (not (string=? descr "another-name frequency: 0.0, ratio: 1.0, n: 1, angle: 0.0"))
-	  (snd-display #__line__ ";set mus-name nssb describe 1: ~A" descr))))
-  
   
   (if (not (null? (sounds))) (for-each close-sound (sounds)))
   

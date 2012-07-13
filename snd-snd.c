@@ -3241,6 +3241,9 @@ static XEN g_channels(XEN snd)
   if (XEN_SELECTION_P(snd))                      /* selection-chans */
     return(g_selection_chans());
 
+  if (XEN_VECTOR_P(snd))                         /* vector as output in clm */
+    return(C_TO_XEN_INT(XEN_VECTOR_RANK(snd)));
+
   return(sound_get(snd, SP_NCHANS, S_channels));
 }
 

@@ -7356,6 +7356,9 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
       if (MUS_VCT_P(snd))                        /* vct-length */
 	return(C_TO_XEN_LONG_LONG((XEN_TO_VCT(snd))->length));
 
+      if (XEN_VECTOR_P(snd))                     /* vector as *output* */
+	return(C_TO_XEN_INT(XEN_VECTOR_LENGTH(snd)));
+
       if (XEN_MIX_P(snd))                        /* mix-length */
 	return(g_mix_length(snd));
 

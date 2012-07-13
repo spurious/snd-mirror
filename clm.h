@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 0
-#define MUS_DATE "4-July-12"
+#define MUS_REVISION 1
+#define MUS_DATE "15-July-12"
 
 /* isn't mus_env_interp backwards? */
 
@@ -486,6 +486,7 @@ MUS_EXPORT void mus_move_locsig(mus_any *ptr, mus_float_t degree, mus_float_t di
 MUS_EXPORT mus_any *mus_locsig_outf(mus_any *ptr);
 MUS_EXPORT mus_any *mus_locsig_revf(mus_any *ptr);
 MUS_EXPORT void *mus_locsig_closure(mus_any *ptr);
+MUS_EXPORT void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val));
 
   /* these are for the optimizer (run.c) */
 MUS_EXPORT void mus_locsig_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val);
@@ -499,7 +500,6 @@ MUS_EXPORT void mus_locsig_safe_stereo(mus_any *ptr, mus_long_t loc, mus_float_t
 MUS_EXPORT int mus_locsig_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_reverb_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_safety(mus_any *ptr);
-MUS_EXPORT void mus_locsig_function_reset(mus_any *ptr);
 
 MUS_EXPORT bool mus_move_sound_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t val);
@@ -510,6 +510,7 @@ MUS_EXPORT mus_any *mus_make_move_sound(mus_long_t start, mus_long_t end, int ou
 MUS_EXPORT mus_any *mus_move_sound_outf(mus_any *ptr);
 MUS_EXPORT mus_any *mus_move_sound_revf(mus_any *ptr);
 MUS_EXPORT void *mus_move_sound_closure(mus_any *ptr);
+MUS_EXPORT void mus_move_sound_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val));
 
 MUS_EXPORT mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure);
 MUS_EXPORT mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(void *arg, int direction));
@@ -597,6 +598,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 15-Jul:     more changes for clm2xen.
  * 4-July-12:  moved various struct definitions to clm.c
  *             added accessors for mus_any_class etc.
  * --------

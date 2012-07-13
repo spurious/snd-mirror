@@ -581,6 +581,7 @@ s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 bool s7_in_safe_do(s7_scheme *sc);
 bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
 bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol);
+void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level));
   /* these are for optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
