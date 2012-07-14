@@ -978,7 +978,7 @@ typedef struct s7_cell {
     } ctr;
 
     struct {               /* additional object types (C) */
-      c_object_t *info;    /*  the "class" struct */
+      int type;
       void *value;         /*  the value the caller associates with the object */
       s7_pointer e;        /*   the method list, if any (open environment) */
     } c_obj;
@@ -1786,25 +1786,26 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
 #define c_object_value(p)             (p)->object.c_obj.value
-#define c_object_info(p)              (p)->object.c_obj.info
-#define c_object_type(p)              (p)->object.c_obj.info->type
-#define c_object_ref(p)               (p)->object.c_obj.info->ref
-#define c_object_set(p)               (p)->object.c_obj.info->set
-#define c_object_ref_2(p)             (p)->object.c_obj.info->ref_2
-#define c_object_ref_2i(p)            (p)->object.c_obj.info->ref_2i
-#define c_object_set_3(p)             (p)->object.c_obj.info->set_3
-#define c_object_set_3if(p)           (p)->object.c_obj.info->set_3if
-#define c_object_print(p)             (p)->object.c_obj.info->print
-#define c_object_length(p)            (p)->object.c_obj.info->length
-#define c_object_equal(p)             (p)->object.c_obj.info->equal
-#define c_object_fill(p)              (p)->object.c_obj.info->fill
-#define c_object_copy(p)              (p)->object.c_obj.info->copy
-#define c_object_free(p)              (p)->object.c_obj.info->free
-#define c_object_mark(p)              (p)->object.c_obj.info->gc_mark
-#define c_object_reverse(p)           (p)->object.c_obj.info->reverse
-#define c_object_min_args(p)          (p)->object.c_obj.info->min_args
-#define c_object_max_args(p)          (p)->object.c_obj.info->max_args
+#define c_object_type(p)              (p)->object.c_obj.type
 #define c_object_environment(p)       (p)->object.c_obj.e
+
+#define c_object_info(p)              object_types[c_object_type(p)]
+#define c_object_ref(p)               c_object_info(p)->ref
+#define c_object_set(p)               c_object_info(p)->set
+#define c_object_ref_2(p)             c_object_info(p)->ref_2
+#define c_object_ref_2i(p)            c_object_info(p)->ref_2i
+#define c_object_set_3(p)             c_object_info(p)->set_3
+#define c_object_set_3if(p)           c_object_info(p)->set_3if
+#define c_object_print(p)             c_object_info(p)->print
+#define c_object_length(p)            c_object_info(p)->length
+#define c_object_equal(p)             c_object_info(p)->equal
+#define c_object_fill(p)              c_object_info(p)->fill
+#define c_object_copy(p)              c_object_info(p)->copy
+#define c_object_free(p)              c_object_info(p)->free
+#define c_object_mark(p)              c_object_info(p)->gc_mark
+#define c_object_reverse(p)           c_object_info(p)->reverse
+#define c_object_min_args(p)          c_object_info(p)->min_args
+#define c_object_max_args(p)          c_object_info(p)->max_args
 
 #define raw_pointer(p)                (p)->object.c_pointer
 
@@ -26831,7 +26832,7 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 
 /* -------------------------------- new types -------------------------------- */
 
-static c_object_t *object_types = NULL;
+static c_object_t **object_types = NULL;
 static int object_types_size = 0;
 static int num_types = 0;
 
@@ -26902,49 +26903,50 @@ int s7_new_type(const char *name,
       if (object_types_size == 0)
 	{
 	  object_types_size = 8;
-	  object_types = (c_object_t *)calloc(object_types_size, sizeof(c_object_t));
+	  object_types = (c_object_t **)calloc(object_types_size, sizeof(c_object_t *));
 	}
       else
 	{
 	  object_types_size = tag + 8;
-	  object_types = (c_object_t *)realloc((void *)object_types, object_types_size * sizeof(c_object_t));
+	  object_types = (c_object_t **)realloc((void *)object_types, object_types_size * sizeof(c_object_t *));
 	}
     }
-  object_types[tag].type = tag;
-  object_types[tag].name = copy_string(name);
+  object_types[tag] = (c_object_t *)calloc(1, sizeof(c_object_t));
+  object_types[tag]->type = tag;
+  object_types[tag]->name = copy_string(name);
 
   if (free)
-    object_types[tag].free = free;
-  else object_types[tag].free = fallback_free;
+    object_types[tag]->free = free;
+  else object_types[tag]->free = fallback_free;
 
   if (print)
-    object_types[tag].print = print;
-  else object_types[tag].print = fallback_print;
+    object_types[tag]->print = print;
+  else object_types[tag]->print = fallback_print;
 
   if (equal)
-    object_types[tag].equal = equal;
-  else object_types[tag].equal = fallback_equal;
+    object_types[tag]->equal = equal;
+  else object_types[tag]->equal = fallback_equal;
 
-  object_types[tag].gc_mark = gc_mark;
+  object_types[tag]->gc_mark = gc_mark;
 
   if (apply)
-    object_types[tag].ref = apply;
-  else object_types[tag].ref = fallback_ref;
+    object_types[tag]->ref = apply;
+  else object_types[tag]->ref = fallback_ref;
 
   if (set)
-    object_types[tag].set = set;
-  else object_types[tag].set = fallback_set;
+    object_types[tag]->set = set;
+  else object_types[tag]->set = fallback_set;
 
-  object_types[tag].length = fallback_length;
-  object_types[tag].copy = NULL;
-  object_types[tag].reverse = NULL;
-  object_types[tag].fill = NULL;
+  object_types[tag]->length = fallback_length;
+  object_types[tag]->copy = NULL;
+  object_types[tag]->reverse = NULL;
+  object_types[tag]->fill = NULL;
   
-  object_types[tag].ref_2 = NULL;
-  object_types[tag].set_3 = NULL;
+  object_types[tag]->ref_2 = NULL;
+  object_types[tag]->set_3 = NULL;
 
-  object_types[tag].min_args = 0;
-  object_types[tag].max_args = MAX_ARITY;
+  object_types[tag]->min_args = 0;
+  object_types[tag]->max_args = MAX_ARITY;
 
   return(tag);
 }
@@ -26966,12 +26968,12 @@ int s7_new_type_x(const char *name,
   tag = s7_new_type(name, print, free, equal, gc_mark, apply, set);
 
   if (length)
-    object_types[tag].length = length;
-  else object_types[tag].length = fallback_length;
+    object_types[tag]->length = length;
+  else object_types[tag]->length = fallback_length;
 
-  object_types[tag].copy = copy;
-  object_types[tag].reverse = reverse;
-  object_types[tag].fill = fill;
+  object_types[tag]->copy = copy;
+  object_types[tag]->reverse = reverse;
+  object_types[tag]->fill = fill;
   return(tag);
 }
 
@@ -27024,32 +27026,32 @@ void *s7_object_value_checked(s7_pointer obj, int type)
 
 void s7_set_object_ref_2(int type, s7_pointer (*ref_2)(s7_scheme *sc, void *val, s7_pointer index))
 {
-  object_types[type].ref_2 = ref_2;
+  object_types[type]->ref_2 = ref_2;
 }
 
 
 void s7_set_object_ref_2i(int type, s7_pointer (*ref_2i)(s7_scheme *sc, void *val, s7_Int index))
 {
-  object_types[type].ref_2i = ref_2i;
+  object_types[type]->ref_2i = ref_2i;
 }
 
 
 void s7_set_object_set_3(int type, s7_pointer (*set_3)(s7_scheme *sc, void *val, s7_pointer index, s7_pointer value))
 {
-  object_types[type].set_3 = set_3;
+  object_types[type]->set_3 = set_3;
 }
 
 
 void s7_set_object_set_3if(int type, void (*set_3if)(s7_scheme *sc, void *val, s7_Int index, s7_Double value))
 {
-  object_types[type].set_3if = set_3if;
+  object_types[type]->set_3if = set_3if;
 }
 
 
 void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_args)
 {
-  object_types[type].min_args = min_args;
-  object_types[type].max_args = max_args;
+  object_types[type]->min_args = min_args;
+  object_types[type]->max_args = max_args;
 }
 
 
@@ -27065,7 +27067,12 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  c_object_info(x) = &(object_types[type]);
+  
+  /* c_object_info(x) = &(object_types[type]); */
+  /* that won't work because object_types can move when it is realloc'd and the old stuff is freed by realloc
+   *   and since we're checking (for example) ref_2i existence as not null, we can't use a table of c_object_t's!
+   */
+
   c_object_type(x) = type;
   c_object_value(x) = value;
   c_object_environment(x) = sc->NIL;
@@ -27073,6 +27080,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
     set_type(x, T_C_OBJECT | T_PROCEDURE | T_SAFE_PROCEDURE);
   else set_type(x, T_C_OBJECT); 
   add_c_object(sc, x);
+
   return(x);
 }
 
@@ -29303,7 +29311,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
   switch (type(arg))
     {
     case T_C_OBJECT:     
-      return(make_type_name(object_types[c_object_type(arg)].name, article));
+      return(make_type_name(object_types[c_object_type(arg)]->name, article));
 
     case T_INPUT_PORT:   
       return(make_type_name((is_file_port(arg)) ? "input file port" : ((is_string_port(arg)) ? "input string port" : "input port"), article));
@@ -38835,6 +38843,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			      set_syntax_op(sc->code, sc->SET_PAIR_P);
 			    }
 			}
+#if WITH_OPTIMIZATION
 		      else
 			{
 			  if ((is_optimized(cadr(inner))) &&
@@ -38849,6 +38858,7 @@ static s7_pointer check_set(s7_scheme *sc)
 				}
 			    }
 			}
+#endif
 		    }
 		}
 	    }
@@ -57918,12 +57928,12 @@ s7_scheme *s7_init(void)
  *
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
  *
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1281
+ * lint     13424 -> 1231 [1237] 1286 1326 1320 1280
  * bench    52019 -> 7875 [8268] 8037 8592 8402
  *   (new)                [8764]           9370 8937
  * index    44300 -> 4988 [4992] 4235 4725 3935 3545
  * s7test            1721             1456 1430 1375
  * t455                           265  256  218   83
- * t502                                 90   72   62
+ * t502                                 90   72   60
  */
 

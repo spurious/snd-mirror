@@ -309,75 +309,6 @@ echo ' '
 ./snd --version
 make allclean
 
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                  -- int samples                                       ----  '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features "'clm 'snd-s7"
-
-echo ' '
-echo ' '
-make allclean
-rm -f snd
-rm -f config.cache
-rm -f makefile
-rm -f mus-config.h
-rm -f sndinfo
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                  --without-float-samples --without-ladspa --with-gl --with-gl2ps --without-gsl '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --without-ladspa --with-gl --with-gl2ps --without-gsl
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features "'clm 'gl 'gl2ps"
-make clmclean
-
-echo ' '
-echo ' '
-make allclean
-rm -f snd
-rm -f config.cache
-rm -f makefile
-rm -f mus-config.h
-rm -f sndinfo
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                 --without-float-samples --with-sample-width=32 --with-just-gl --without-fftw '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --with-sample-width=32 --with-just-gl --without-fftw
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features "'clm 'snd-motif"
-
-echo ' '
-echo ' '
-make allclean
-rm -f snd
-rm -f config.cache
-rm -f makefile
-rm -f mus-config.h
-rm -f sndinfo
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                 --without-float-samples --with-sample-width=24 g++    ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --with-sample-width=24
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features "'clm"
-
-make allclean
 rm -f snd
 rm -f config.cache
 
@@ -545,15 +476,6 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -noinit --features ":clm, :snd_gtk, :snd_ruby"
-make allclean
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 g++ --with-ruby sample-width=24                        ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --without-float-samples --with-sample-width=24
-make
-./snd --version
-./snd -noinit --features ":clm, :snd_ruby"
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '

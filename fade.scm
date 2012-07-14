@@ -31,7 +31,7 @@
 	 (val 0.0)
 	 (ifs (/ 1.0 fs)))
 
-    (do ((k 0 (+ 1 k)))
+    (do ((k 0 (+ k 1)))
 	((= k fs))
       (set! (fs1 k) (make-formant (* k bin) radius)))
 
@@ -51,9 +51,9 @@
 		   (let ((inval (read-sample fil1))
 			 (outval 0.0))
 		     (set! bank1 (+ bank1 bank-incr))
-		     (do ((k 0 (+ 1 k)))
+		     (do ((k 0 (+ k 1)))
 			 ((= k (- fs 1)))
-		       (set! outval (+ outval (formant (fs1 (+ 1 k)) inval))))
+		       (set! outval (+ outval (formant (fs1 (+ k 1)) inval))))
 		     (set! val (+ (* bank1 outval) (* (- 1.0 bank1) inval))))
 		   
 		   (if (> i ramp-end)
@@ -61,9 +61,9 @@
 		       (let ((inval (read-sample fil2))
 			     (outval 0.0))
 			 (set! bank2 (- bank2 bank-incr))
-			 (do ((k 0 (+ 1 k)))
+			 (do ((k 0 (+ k 1)))
 			     ((= k (- fs 1)))
-			   (set! outval (+ outval (formant (fs1 (+ 1 k)) inval))))
+			   (set! outval (+ outval (formant (fs1 (+ k 1)) inval))))
 			 (set! val (+ (* bank2 outval) (* (- 1.0 bank2) inval))))
 		       
 		       ;; in the fade section
@@ -76,31 +76,31 @@
 			 (if (= ramp-type 0)
 			     (let ((r2 (* 2 ramp)))
 			       ;; sweep up so low freqs go first
-			       (do ((k 0 (+ 1 k)))
+			       (do ((k 0 (+ k 1)))
 				   ((= k (- fs 1)))
 				 (let ((rfs (max 0.0 (min 1.0 (- r2 (* k ifs))))))
-				   (set! outval (+ outval (formant (fs1 (+ 1 k)) 
+				   (set! outval (+ outval (formant (fs1 (+ k 1)) 
 								   (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 			       (set! val outval))
 			     
 			     (if (= ramp-type 1)
 				 (let ((r2 (* 2 ramp)))
 				   ;; sweep up so high freqs go first
-				   (do ((k 0 (+ 1 k)))
+				   (do ((k 0 (+ k 1)))
 				       ((= k (- fs 1)))
 				     (let ((rfs (max 0.0 (min 1.0 (- r2 (* (- fs k) ifs))))))
-				       (set! outval (+ outval (formant (fs1 (+ 1 k)) 
+				       (set! outval (+ outval (formant (fs1 (+ k 1)) 
 								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				   (set! val outval))
 				 
 				 ;; sweep from midpoint out
 				 (let ((r2 (* 2 ramp)))
-				   (do ((k 0 (+ 1 k)))
+				   (do ((k 0 (+ k 1)))
 				       ((= k half-fs))
 				     (let ((rfs (max 0.0 (min 1.0 (- (+ r2 0.5) (* (- fs k) ifs))))))
-				       (set! outval (+ outval (formant (fs1 (+ 1 k)) 
+				       (set! outval (+ outval (formant (fs1 (+ k 1)) 
 								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
-				   (do ((k 0 (+ 1 k)))
+				   (do ((k 0 (+ k 1)))
 				       ((= k (- half-fs 1)))
 				     (let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
 				       (set! outval (+ outval (formant (fs1 (+ k 1 half-fs)) 
@@ -131,7 +131,7 @@
 	 (ctr 0))
     
     (if (not (number? hi)) (set! hi freq-inc))
-    (do ((k 0 (+ 1 k)))
+    (do ((k 0 (+ k 1)))
 	((= k hi))
       (set! (fs k) (make-formant (* k bin) radius)))
     
@@ -164,7 +164,7 @@
 				(bbreak)))))))
 		 (set! (spectr next) (- (spectr next) ramp-inc))
 		 (set! ctr 0))))
-	 (do ((k lo (+ 1 k)))
+	 (do ((k lo (+ k 1)))
 	     ((= k hi))
 	   (let ((sp (spectr k)))
 	     (set! outval (+ outval (formant (fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))

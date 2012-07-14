@@ -118,7 +118,7 @@
 			(vct-add! amps (pvoc-in-data pv))
 			(vct-multiply! amps (pvoc-window pv)))
 		      (begin
-			(do ((k 0 (+ 1 k)))
+			(do ((k 0 (+ k 1)))
 			    ((= k N))
 			  (set! (amps buf) (* ((pvoc-window pv) k) ((pvoc-in-data pv) k)))
 			  (set! buf (+ 1 buf))
@@ -131,7 +131,7 @@
 	      ((pvoc-edit pv) pv)
 	      (begin
 		;; if no editing func:
-		(do ((k 0 (+ 1 k))
+		(do ((k 0 (+ k 1))
 		     (pscl (/ 1.0 D))
 		     (kscl (/ pi2 N)))
 		    ((= k (floor (/ N 2))))
@@ -312,7 +312,7 @@
 		 (vct-fill! lastfreq 0.0)
 		 (vct-add! lastamp fdr)
 		 (vct-add! lastfreq fdi)
-		 (do ((k 0 (+ 1 k)))
+		 (do ((k 0 (+ k 1)))
 		     ((= k N))
 		   ;; apply the window and then stuff into the input array
 		   (set! (fdr buffix) (* (window k) (in-data (- filptr in-data-beg))))
@@ -331,7 +331,7 @@
 		 ;; compute the fft
 		 (mus-fft fdr fdi N 1)
 		 ;; now convert into magnitude and interpolated frequency
-		 (do ((k 0 (+ 1 k)))
+		 (do ((k 0 (+ k 1)))
 		     ((= k N2))
 		   (let* ((a (fdr k))
 			  (b (fdi k))

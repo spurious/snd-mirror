@@ -5758,7 +5758,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		  (set! (data i) (readin (moving-fft-input gen)))))
 	      (begin
 		(do ((i 0 (+ i 1))
-		     (j hop (+ 1 j)))
+		     (j hop (+ j 1)))
 		    ((= j n))
 		  (set! (data i) (data j)))
 		(do ((i (- n hop) (+ i 1)))
@@ -5839,7 +5839,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		  (set! (data i) (readin (moving-spectrum-input gen)))))
 	      (begin
 		(do ((i 0 (+ i 1))
-		     (j hop (+ 1 j)))
+		     (j hop (+ j 1)))
 		    ((= j n))
 		  (set! (data i) (data j)))
 		(do ((i (- n hop) (+ i 1)))
@@ -5851,7 +5851,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
 	  (clear-array new-freq-incs)
 	  (do ((i 0 (+ i 1))
-	       (j dataloc (+ 1 j)))
+	       (j dataloc (+ j 1)))
 	      ((= i n))
 	    (if (= j n) (set! j 0))
 	    (set! (amp-incs j) (* (fft-window i)
@@ -6054,7 +6054,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 		  (set! (data i) (readin (moving-autocorrelation-input gen)))))
 	      (begin
 		(do ((i 0 (+ i 1))
-		     (j hop (+ 1 j)))
+		     (j hop (+ j 1)))
 		    ((= j n))
 		  (set! (data i) (data j)))
 		(do ((i (- n hop) (+ i 1)))
