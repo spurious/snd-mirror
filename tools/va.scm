@@ -22,7 +22,7 @@
    (lambda (line file count)
      (let ((len (string-length line)))
        ;; look for "XtVa..." then NULL);
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len))
 	 (let ((ch (line i)))
 	   (if (char=? ch (integer->char #o015))
@@ -64,7 +64,7 @@
 	       ;; look for * miscounts
 	       (call-with-exit
 		(lambda (return)
-		  (do ((i 0 (+ 1 i)))
+		  (do ((i 0 (+ i 1)))
 		      ((= i len))
 		    (let ((ch (line i)))
 		      (if (char=? ch #\*)
@@ -112,7 +112,7 @@
 	    (let ((len (string-length line)))
 	      (if (and (> len 8)
 		       (string=? "var " (substring line 0 4)))
-		  (let ((end (do ((i 4 (+ 1 i)))
+		  (let ((end (do ((i 4 (+ i 1)))
 				 ((or (>= i len)
 				      (char=? (line i) #\space))
 				  i))))
@@ -129,7 +129,7 @@
 	       (let ((len (string-length line)))
 		 (if (> len 8)
 		     (let ((start 0))
-		       (do ((i 0 (+ 1 i)))
+		       (do ((i 0 (+ i 1)))
 			   ((>= i len))
 			 (let ((chr (line i)))
 			   (if (char=? chr #\))
@@ -182,7 +182,7 @@
 		     (set! line-number (+ line-number 1))
 		     (if (> len 8)
 			 (let ((start 0))
-			   (do ((i 1 (+ 1 i)))
+			   (do ((i 1 (+ i 1)))
 			       ((>= i len))
 			     (let ((chr (line i)))
 			       (if (or (char-whitespace? chr)
@@ -308,6 +308,50 @@
   "s7.html"
   "sndlib.html"
   ))
+
+
+#|
+(for-each
+ (lambda (filename)
+   (call-with-input-file filename
+     (lambda (file)
+       (let ((line-number 0)
+	     (last-name ""))
+	 (let loop ((line (read-line file #t)))
+	   (or (eof-object? line)
+	       (let ((len (string-length line)))
+		 (set! line-number (+ line-number 1))
+		 (if (> len 0)
+		     (let ((start #f))
+		       (do ((i 0 (+ i 1)))
+			   ((>= i len))
+			 (let ((chr (line i)))
+			   (if (not (char-whitespace? chr))
+			       (if (not start)
+				   (set! start i))
+			       (if start
+				   (let* ((name (substring line start i))
+					  (name-len (string-length name)))
+				     ;(format #t "~C: ~A~%" chr name)
+				     (if (and (> name-len 0)
+					      (char-alphabetic? (name 0))
+					      (string=? name last-name))
+					 (format #t ";~A[~D]: ~A repeats in ~A~%" filename line-number name line))
+				     (set! last-name name)
+				     (set! start #f))))))))
+		 (loop (read-line file #t)))))))))
+ (list
+  "snd.html"
+  "sndscm.html"
+  "grfsnd.html"
+  "extsnd.html"
+  "libxm.html"
+  "sndclm.html"
+  "fm.html"
+  "s7.html"
+  "sndlib.html"
+  ))
+|#
 
 
 #|

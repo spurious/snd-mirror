@@ -27,7 +27,7 @@
 	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration (/ len (mus-srate))) #f))
 	 (scl volume))
     (if (or amp-env low-pass)
-	 (do ((i 0 (+ 1 i)))
+	 (do ((i 0 (+ i 1)))
 	     ((= i len))
 	   (let* ((inval (ina i *reverb*))
 		  (allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval))))
@@ -44,7 +44,7 @@
 		 (set! all-sums comb-sum))
 	     (outa i (* amp (delay outdel1 all-sums)))
 	     (if (> chns 1) (outb i (* amp (delay outdel2 all-sums))))))
-	 (do ((i 0 (+ 1 i)))
+	 (do ((i 0 (+ i 1)))
 	     ((= i len))
 	   (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
 	     (set! comb-sum 

@@ -237,8 +237,8 @@
 			 (if rev-mx
 			     (frame->file *reverb* i (frame->frame outframe rev-mx revframe))))))
 
-		  (let ((samples-0 (make-vct in-chans))
-			(samples-1 (make-vct in-chans)))
+		  (let ((samples-0 (make-vector in-chans 0.0))
+			(samples-1 (make-vector in-chans 0.0)))
 		    ;; more than 2 chans in input file
 		     (do ((i beg (+ i 1)))
 			 ((= i end))
@@ -269,8 +269,8 @@
 			       (do ((ix 0 (+ 1 ix)))
 				   ((= ix in-chans))
 				 (let ((gen (vector-ref ex-array ix)))
-				   (vct-set! samples-0 ix (* vol (granulate gen)))
-				   (vct-set! samples-1 ix (* vol (granulate gen)))))
+				   (vector-set! samples-0 ix (* vol (granulate gen)))
+				   (vector-set! samples-1 ix (* vol (granulate gen)))))
 			       (set! ex-samp (+ 1 ex-samp))
 			       (set! next-samp ex-samp))
 			     (begin
@@ -282,20 +282,20 @@
 				       (do ((ix 0 (+ 1 ix)))
 					   ((= ix in-chans))
 					 (let ((gen (vector-ref ex-array ix)))
-					   (vct-set! samples-0 ix (vct-ref samples-1 ix))
-					   (vct-set! samples-1 ix (* vol (granulate gen)))))
+					   (vector-set! samples-0 ix (vector-ref samples-1 ix))
+					   (vector-set! samples-1 ix (* vol (granulate gen)))))
 				       (set! ex-samp (+ 1 ex-samp)))))))
 			 
 			 (if (= next-samp ex-samp)
 			     ;; output actual samples
 			     (do ((ix 0 (+ 1 ix)))
 				 ((= ix in-chans))
-			       (frame-set! inframe ix (vct-ref samples-0 ix)))
+			       (frame-set! inframe ix (vector-ref samples-0 ix)))
 			     ;; output interpolated samples
 			     (do ((ix 0 (+ 1 ix)))
 				 ((= ix in-chans))
-			       (let ((v0 (vct-ref samples-0 ix))
-				     (v1 (vct-ref samples-1 ix)))
+			       (let ((v0 (vector-ref samples-0 ix))
+				     (v1 (vector-ref samples-1 ix)))
 				 (frame-set! inframe ix (+ v0 (* (- next-samp ex-samp)
 								 (- v1 v0)))))))
 			 ;; output mixed result

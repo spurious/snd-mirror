@@ -150,6 +150,7 @@
 		   (if (file-exists? output-1) 
 		       (delete-file output-1))
 		   (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
+
 	     (if *output*
 		 (set! (mus-safety *output*) output-safety)))
 	   (begin
@@ -168,7 +169,12 @@
 		     (begin
 		       (if (file-exists? reverb-1) 
 			   (delete-file reverb-1))
-		       (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
+		       (set! *reverb* (make-sample->file reverb-1 
+							 reverb-channels 
+							 (if (mus-header-writable header-type mus-ldouble)
+							     mus-ldouble
+							     data-format)
+							 header-type))))
 		 (if *reverb*
 		     (set! (mus-safety *reverb*) output-safety)))
 	       (begin

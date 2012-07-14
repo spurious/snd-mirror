@@ -114,7 +114,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 		    (newe '()))
 		(set! xs (sort! (remove-duplicates xs) <))
 		(let ((len (length xs)))
-		  (do ((i 0 (+ 1 i)))
+		  (do ((i 0 (+ i 1)))
 		      ((= i len))
 		    (let ((x (xs i)))
 		      (set! newe (append newe (list x (op (envelope-interp x ee1) (envelope-interp x ee2)))))))
@@ -332,7 +332,7 @@ repetition to be in reverse."
 	 (first-y-is-last-y (= first-y (e (- (length e) 1))))
 	 (new-env (list first-y x))
 	 (len (length e)))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i times))
       (do ((j 2 (+ j 2)))
 	  ((>= j len))
@@ -379,7 +379,7 @@ repetition to be in reverse."
 			:current-env 0
 			:current-pass 0))
 	 (xext (- (envelope (- (length envelope) 3)) (car envelope))))
-    (do ((i 0 (+ 1 i))
+    (do ((i 0 (+ i 1))
 	 (j 0 (+ j 3)))
 	((= i len))
       (let ((x0 (envelope j))
@@ -398,7 +398,7 @@ repetition to be in reverse."
   (let ((curbeg beg)) ; sample number
     (as-one-edit
      (lambda ()
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i (penv-total-envs pe)))
 	 (let* ((e (vector-ref (penv-envs pe) i))
 		(len (length e)))

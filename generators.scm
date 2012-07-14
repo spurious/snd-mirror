@@ -1177,7 +1177,7 @@
 				 (set! (nsincos-frequency g) (hz->radians (nsincos-frequency g)))
 				 (set! (nsincos-n2 g) (/ (+ n 1) 2))
 				 (set! (nsincos-cosn g) (cos (/ pi (+ n 1))))
-				 (do ((k 1 (+ 1 k)))
+				 (do ((k 1 (+ k 1)))
 				     ((> k n))
 				   (set! (nsincos-norm g) (+ (nsincos-norm g) 
 							     (/ (sin (/ (* k pi) (+ n 1))) 
@@ -1505,17 +1505,17 @@
 
 #|
 (with-sound (:play #t)
-  (do ((k 0 (+ 1 k))) 
+  (do ((k 0 (+ k 1))) 
       ((= k 10))
     (bump (* 0.4 k) 1 (* 16.3 (expt 2.0 (+ 3 (/ k 12)))) .5 520 1190 2390))
-  (do ((k 0 (+ 1 k))) 
+  (do ((k 0 (+ k 1))) 
       ((= k 10))
     (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12)))))
 	   (scl (sqrt (/ freq 120))))
       (bump (+ 4 (* 0.4 k)) 1 freq  .5 (* scl 520) (* scl 1190) (* scl 2390)))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
-  (do ((k 0 (+ 1 k))) 
+  (do ((k 0 (+ k 1))) 
       ((= k 10))
     (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12))))) ; if oct=5 (and env end at 100), sort of hammered string effect
 	   (f0 520) ; "uh"
@@ -1543,7 +1543,7 @@
 					 (* .05 (rssb-interp gen3 (* res2 vib) 1))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
-  (do ((k 0 (+ 1 k))) 
+  (do ((k 0 (+ k 1))) 
       ((= k 10))
     (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12))))) ; froggy if oct=1 or 2 and "ah" (env end at 10 = cycling) ("er" is good too at oct=2)
 	   (scl (sqrt (/ freq 120)))
@@ -1571,7 +1571,7 @@
 					 (* .05 (rssb-interp gen3 (* res2 vib) 1))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
-  (do ((k 0 (+ 1 k))) 
+  (do ((k 0 (+ k 1))) 
       ((= k 10))
     (let* ((freq (* 16.3 (expt 2.0 (+ 3 (/ k 12)))))
 	   (scl (sqrt (/ freq 120)))
@@ -2278,7 +2278,7 @@
        (outa i (* (env ampf) (rk!cos gen (env frqf)))))))
 
 (with-sound (:play #t :scaled-to .5)
-  (do ((k 0 (+ 1 k)))
+  (do ((k 0 (+ k 1)))
       ((= k 6))
     (let ((gen (make-rk!cos 3000.0 :r 0.6)) (ampf (make-env '(0 0 1 1 2 1 3 0) :length 3000))
 	  (frqf (make-env '(0 0 1 1) :base .1 :scaler (hz->radians 2000) :length 3000))) ; '(0 .5  1 1 2 0 3 0) '(0 1 1 0 2 1 6 -1)
@@ -2289,7 +2289,7 @@
 		  (rk!cos gen (env frqf))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
-	    (do ((k 0 (+ 1 k)))
+	    (do ((k 0 (+ k 1)))
       ((= k 6))
     (let ((gen (make-rk!cos 1000.0 :r 1.0)) (ampf (make-env '(0 0 1 1 2 1 3 0) :length 3000))
 	  (frqf (make-env '(0 .9 1 1 2 -1) :base .1 :scaler (hz->radians 500) :length 3000)))
@@ -2298,7 +2298,7 @@
 	 (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (do ((k 0 (+ 1 k)))
+  (do ((k 0 (+ k 1)))
       ((= k 6))
     (let ((gen (make-rk!cos 500.0 :r 1.5)) (ampf (make-env '(0 0 1 1 2 1 3 0) :length 3000))
 	  (frqf (make-env '(0 1 1 1 2 -1) :base .5 :scaler (hz->radians 400) :length 3000)))
@@ -4291,7 +4291,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))
 	     (sum (* (env resf)
 		     (nrssb resc 0.0))))
-	 (do ((k 0 (+ 1 k))
+	 (do ((k 0 (+ k 1))
 	      (n 1 (* n 2)))
 	     ((= k 3))
 	   (set! sum (+ sum (* (env (ampfs k))
@@ -5282,7 +5282,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			((= i 88200))
 		      (let ((poly-sum 0.0)
 			    (sin-sum 0.0))
-			(do ((k 0 (+ 1 k)))
+			(do ((k 0 (+ k 1)))
 			    ((= k n))
 			  (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (cur-phases (+ (* 3 k) 2)))))))
 			(set! poly-sum (polyoid gen))
@@ -5308,7 +5308,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			 ((= i 88200))
 		       (let ((poly-sum 0.0)
 			     (sin-sum 0.0))
-			 (do ((k 0 (+ 1 k)))
+			 (do ((k 0 (+ k 1)))
 			     ((= k n))
 			   (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (cur-phases (+ (* 3 k) 2)))))))
 			 (set! poly-sum (polyoid gen))
@@ -5422,7 +5422,7 @@ index 10 (so 10/2 is the bes-jn arg):
 					       (let* ((a-val (val 1))
 						      (a-len (length val))
 						      (a-data (list a-val (val 2))))
-						 (do ((k 2 (+ 1 k)))
+						 (do ((k 2 (+ k 1)))
 						     ((= k a-len))
 						   (if (and (number? (val k))
 							    (< (val k) a-val))
@@ -5635,7 +5635,7 @@ index 10 (so 10/2 is the bes-jn arg):
 					       (let* ((a-val (val 1))
 						      (a-len (length val))
 						      (a-data (list a-val (val 2))))
-						 (do ((k 2 (+ 1 k)))
+						 (do ((k 2 (+ k 1)))
 						     ((= k a-len))
 						   (if (and (number? (val k))
 							    (< (val k) a-val))
@@ -5893,7 +5893,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
   (let ((pv (make-phase-vocoder (make-readin "oboe.snd") ))
 	(sv (make-moving-spectrum (make-readin "oboe.snd"))))
-     (do ((k 0 (+ 1 k)))
+     (do ((k 0 (+ k 1)))
 	 ((= k 20))
        (do ((i 0 (+ i 1))) 
 	   ((= i 2000)) 
@@ -5910,7 +5910,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 (define* (sine-bank amps phases size)
   (let ((len (or size (length amps)))
 	(sum 0.0))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i len))
       (set! sum (+ sum (* (amps i)
 			  (sin (phases i))))))
@@ -5974,7 +5974,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		  (vct-subseq data 0 (- n 1) rl)
 		  (mus-fft rl im n 1)          ; we can use the delay line contents un-reordered because phases are ignored here
 		  (rectangular->magnitudes rl im)
-		  (do ((k 0 (+ 1 k)))
+		  (do ((k 0 (+ k 1)))
 		      ((= k fft2))
 		   (set! numsum (+ numsum (* k (rl k))))
 		   (set! densum (+ densum (rl k))))
@@ -6137,7 +6137,7 @@ taking input from the readin generator 'reader'.  The output data is available v
   ;; sum i from 1 to k (-1)^(i + 1) * (sin i) / i
   (with-sound (:clipped #f :statistics #t) 
     (let ((harmonics (make-vct (* 2 k))))
-      (do ((i 1 (+ 1 i))
+      (do ((i 1 (+ i 1))
 	   (j 0 (+ j 2))
 	   (n -1 (- n))) 
 	  ((= i k)) 
@@ -6152,7 +6152,7 @@ taking input from the readin generator 'reader'.  The output data is available v
   (with-sound (:clipped #f :statistics #t :play #t) 
     (let ((harmonics (make-vct (* 2 num)))
 	  (freqe (make-env e :length num)))
-      (do ((i 1 (+ 1 i))
+      (do ((i 1 (+ i 1))
 	   (j 0 (+ j 2)))
 	  ((= i num)) 
 	(set! (harmonics j) i)
@@ -6306,7 +6306,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 	 (decay-dur (mus-srate))
 	 (len (floor (+ decay-dur file-dur))))
 
-	 (do ((i 0 (+ 1 i)))
+	 (do ((i 0 (+ i 1)))
 	     ((= i len))
 	   
 	   (let* ((allpass-sum (all-pass allpass31 

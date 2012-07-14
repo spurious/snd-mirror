@@ -41,6 +41,7 @@
 #define S_mus_header_raw_defaults       "mus-header-raw-defaults"
 #define S_mus_header_type_name          "mus-header-type-name"
 #define S_mus_header_type_to_string     "mus-header-type->string"
+#define S_mus_header_writable           "mus-header-writable"
 #define S_mus_ircam                     "mus-ircam"
 #define S_mus_l24int                    "mus-l24int"
 #define S_mus_ldouble                   "mus-ldouble"

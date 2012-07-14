@@ -89,8 +89,6 @@
 #define MUS_SHORT_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 15)))
 #define MUS_INT_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 23)))
 #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((mus_float_t)(n) / (mus_float_t)(1 << 23)))
-#define MUS_FLOAT_TO_FIX 1.0
-#define MUS_FIX_TO_FLOAT 1.0
 #define MUS_FLOAT_TO_SAMPLE(n) ((mus_sample_t)(n))
 #define MUS_DOUBLE_TO_SAMPLE(n) ((mus_sample_t)(n))
 #define MUS_SAMPLE_TO_FLOAT(n) ((mus_float_t)(n))

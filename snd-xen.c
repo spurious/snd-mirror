@@ -15,7 +15,6 @@
 
 int snd_protect(XEN obj) {return(s7_gc_protect(s7, obj));}
 void snd_unprotect_at(int loc) {s7_gc_unprotect_at(s7, loc);}
-XEN snd_protected_at(int loc) {return(s7_gc_protected_at(s7, loc));}
 
 #else
 static XEN gc_protection;
@@ -100,14 +99,6 @@ void snd_unprotect_at(int loc)
       XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
       gc_last_cleared = loc;
     }
-}
-
-
-XEN snd_protected_at(int loc)
-{
-  if (loc >= 0)
-    return(XEN_VECTOR_REF(gc_protection, loc));
-  return(DEFAULT_GC_VALUE);
 }
 #endif
 

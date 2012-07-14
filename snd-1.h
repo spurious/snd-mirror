@@ -1101,7 +1101,6 @@ bool procedure_arity_ok(XEN proc, int args);
 int snd_protect(XEN obj);
 void snd_unprotect_at(int loc);
 
-XEN snd_protected_at(int loc);
 XEN run_or_hook(XEN hook, XEN args, const char *caller);
 XEN run_progn_hook(XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);

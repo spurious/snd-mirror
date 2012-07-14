@@ -51,7 +51,7 @@
 (define* (sine-bank amps phases size)
   (let ((len (or size (length amps)))
 	(sum 0.0))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i len))
       (set! sum (+ sum (* (amps i)
 			  (sin (phases i))))))
@@ -108,7 +108,7 @@
 		    (let ((indat (pvoc-in-data pv)))
 		      ;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
 		      (vct-move! indat 0 D)
-		      (do ((i (- N D) (+ 1 i)))
+		      (do ((i (- N D) (+ i 1)))
 			  ((= i N))
 			(set! (indat i) (input)))))
 		(let ((buf (modulo filptr N)))
@@ -223,7 +223,7 @@
 				  #f ;no change to analysis
 				  (lambda (v)
 				    (let ((N (mus-length v)))
-				      (do ((i 0 (+ 1 i)))
+				      (do ((i 0 (+ i 1)))
 					  ((= i N))
 					(if (< ((phase-vocoder-amp-increments v) i) gate)
 					    (vct-set! (phase-vocoder-amp-increments v) i 0.0)))
@@ -247,7 +247,7 @@
 	 (sum 0.0)
 	 (amps (if (not (vct? amps1)) (vector->vct amps1) amps1))
 	 (inp1 (if (not (vct? fms)) (vector->vct fms) (or fms (make-vct len 0.0)))))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i len))
       (set! sum (+ sum (* (amps i) (oscil (vector-ref gens i) (inp1 i))))))
     sum))
@@ -294,13 +294,13 @@
 	   (in-data (channel->vct 0 (* N 2) snd chn))
 	   (in-data-beg 0))
       ;; setup oscillators
-      (do ((i 0 (+ 1 i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i N2))
 	(set! (resynth-oscils i) (make-oscil :frequency 0)))
       (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
       (call-with-exit
        (lambda (break)
-	 (do ((i 0 (+ 1 i)))
+	 (do ((i 0 (+ i 1)))
 	     ((>= i outlen))
 	   (if (>= output interp) ;; if all the samples have been output then do the next frame
 	       (let ((buffix (modulo filptr N)))

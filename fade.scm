@@ -35,7 +35,7 @@
 	((= k fs))
       (set! (fs1 k) (make-formant (* k bin) radius)))
 
-     (do ((i start (+ 1 i)))
+     (do ((i start (+ i 1)))
 	 ((= i end))
        
        (if (< i bank1-start)
@@ -135,7 +135,7 @@
 	((= k hi))
       (set! (fs k) (make-formant (* k bin) radius)))
     
-     (do ((i start (+ 1 i)))
+     (do ((i start (+ i 1)))
 	 ((= i end))
        (let ((outval 0.0)
 	     (inval1 (read-sample fil1))

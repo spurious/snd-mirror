@@ -157,7 +157,7 @@
     (define (local-dac-func hook)
       (for-each
        (lambda (snd)
-   (do ((i 0 (+ 1 i)))
+   (do ((i 0 (+ i 1)))
        ((= i (channels snd)))
      (if (not (= (cursor snd i) (original-cursor snd i)))
          (set! (current-cursor snd i) (cursor snd i)))))
@@ -165,7 +165,7 @@
     
     (define (local-start-playing-func hook)
       (let ((snd (hook 'snd)))
-	(do ((i 0 (+ 1 i)))
+	(do ((i 0 (+ i 1)))
 	    ((= i (channels snd)))
 	  (set! (original-cursor snd i) (cursor snd i))
 	  (set! (current-cursor snd i) (cursor snd i)))))

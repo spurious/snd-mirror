@@ -650,7 +650,7 @@ static mus_float_t next_ramp1(snd_fd *sf)
   else 
     {
       mus_float_t val;
-      val = sf->data[sf->loc++] * READER_VAL(sf, 0) * MUS_FIX_TO_FLOAT;
+      val = sf->data[sf->loc++] * READER_VAL(sf, 0);
       READER_VAL(sf, 0) += READER_INCR(sf, 0);
       return(val);
     }
@@ -663,7 +663,7 @@ static mus_float_t previous_ramp1(snd_fd *sf)
   else
     {
       mus_float_t val;
-      val = sf->data[sf->loc--] * READER_VAL(sf, 0) * MUS_FIX_TO_FLOAT;
+      val = sf->data[sf->loc--] * READER_VAL(sf, 0);
       READER_VAL(sf, 0) -= READER_INCR(sf, 0);
       return(val);
     }
@@ -4591,7 +4591,7 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
   sf->type = SAMPLER;
   sf->initial_samp = samp;
   sf->cp = cp;
-  sf->fscaler = MUS_FIX_TO_FLOAT;
+  sf->fscaler = 1.0;
   sf->direction = direction;
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
@@ -4618,7 +4618,7 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
 	  ind0 = READER_LOCAL_POSITION(sf);                   /* cb->beg */
 	  indx = ind0 + sf->frag_pos;
 	  ind1 = READER_LOCAL_END(sf);                        /* cb->end */
-	  sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
+	  sf->fscaler = READER_SCALER(sf);
 	  if (zero_op(READER_TYPE(sf)))
 	    {
 	      sf->current_sound = NULL;
@@ -4751,7 +4751,7 @@ static void previous_sound_1(snd_fd *sf)
       sf->cb = FRAGMENT((sf->current_state), sf->cbi);
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
-      sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
+      sf->fscaler = READER_SCALER(sf);
       if (zero_op(READER_TYPE(sf)))
 	{
 	  sf->current_sound = NULL;
@@ -4849,7 +4849,7 @@ static void next_sound_1(snd_fd *sf)
 	}
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
-      sf->fscaler = MUS_FIX_TO_FLOAT * READER_SCALER(sf);
+      sf->fscaler = READER_SCALER(sf);
       if (zero_op(READER_TYPE(sf)))
 	{
 	  sf->current_sound = NULL;
@@ -5817,7 +5817,7 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, mus_long_t beg, mus_long_t len, i
   ind0 = 0;
   indx = beg;
   ind1 = len - 1; /* ind1 (LOCAL_END...) is a sample number, not a length */
-  sf->fscaler = scl * MUS_FIX_TO_FLOAT;
+  sf->fscaler = scl;
 
   if ((scl == 1.0) &&
       (sf->fscaler == 1.0))

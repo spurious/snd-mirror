@@ -356,6 +356,14 @@ static XEN g_mus_sound_write_date(XEN filename)
 }
 
 
+static XEN g_mus_header_writable(XEN head, XEN data)
+{
+  #define H_mus_header_writable "(" S_mus_header_writable " header-type data-format) returns " PROC_TRUE " if the header can handle the data format"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(head), head, XEN_ARG_1, S_mus_header_writable, "a header type");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(data), data, XEN_ARG_2, S_mus_header_writable, "a data format");
+  return(C_TO_XEN_BOOLEAN(mus_header_writable(XEN_TO_C_INT(head), XEN_TO_C_INT(data))));
+}
+
 static XEN g_mus_header_raw_defaults(void)
 {
   #define H_mus_header_raw_defaults "(" S_mus_header_raw_defaults "): returns list '(srate chans format) of current raw sound default attributes"
@@ -2505,6 +2513,7 @@ XEN_NARGIFY_1(g_mus_file_prescaler_w, g_mus_file_prescaler)
 XEN_NARGIFY_2(g_mus_file_set_prescaler_w, g_mus_file_set_prescaler)
 XEN_NARGIFY_0(g_mus_header_raw_defaults_w, g_mus_header_raw_defaults)
 XEN_NARGIFY_1(g_mus_header_set_raw_defaults_w, g_mus_header_set_raw_defaults)
+XEN_NARGIFY_2(g_mus_header_writable_w, g_mus_header_writable)
 XEN_NARGIFY_1(g_mus_expand_filename_w, g_mus_expand_filename)
 XEN_ARGIFY_6(g_mus_sound_open_output_w, g_mus_sound_open_output)
 XEN_ARGIFY_5(g_mus_sound_reopen_output_w, g_mus_sound_reopen_output)
@@ -2584,6 +2593,7 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_mus_sound_length_w g_mus_sound_length
 #define g_mus_sound_type_specifier_w g_mus_sound_type_specifier
 #define g_mus_header_type_name_w g_mus_header_type_name
+#define g_mus_header_writable_w g_mus_header_writable
 #define g_mus_data_format_name_w g_mus_data_format_name
 #define g_mus_header_type_to_string_w g_mus_header_type_to_string
 #define g_mus_data_format_to_string_w g_mus_data_format_to_string
@@ -2784,6 +2794,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_type_specifier, g_mus_sound_type_specifier_w,   1, 0, 0, H_mus_sound_type_specifier);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_data_format_name,     g_mus_data_format_name_w,       1, 0, 0, H_mus_data_format_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_data_format_to_string,g_mus_data_format_to_string_w,  1, 0, 0, H_mus_data_format_to_string);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment);

@@ -29,7 +29,7 @@
     (set! (coeffs 0) (* -2.0 shell-reso (cos (hz->radians shell-freq))))
     (set! (coeffs 1) (* shell-reso shell-reso))
 
-     (do ((i st (+ 1 i)))
+     (do ((i st (+ i 1)))
 	 ((= i nd))
        (if (< temp two-pi)
 	   (begin
@@ -91,13 +91,13 @@
 	 (srate4 (floor (/ (mus-srate) 4)))
 	 (gain (/ (* (/ (log num-beans) (log 4)) 40) num-beans)))
     ;; gourd resonance filters
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i resn))
       (set! (coeffs    (* i 2)   ) (* -2.0 (shell-resos i) (cos (hz->radians (shell-freqs i)))))
       (set! (basesf i) (coeffs (+ (* i 2) 0)))
       (set! (coeffs (+ (* i 2) 1)) (* (shell-resos i) (shell-resos i))))
 
-     (do ((i st (+ 1 i)))
+     (do ((i st (+ i 1)))
 	 ((= i nd))
        (if (< temp two-pi)
 	   (begin
@@ -115,7 +115,7 @@
 	   (begin
 	     (set! snd-level (+ snd-level (* gain shake-energy)))
 	     ;; randomize res freqs a bit
-	     (do ((i 0 (+ 1 i)))
+	     (do ((i 0 (+ i 1)))
 		 ((= i resn))
 	       (set! (coeffs (* i 2)) (+ (basesf i) (- (random (* 2.0 randiff)) randiff))))))
        ;; actual sound is random
@@ -126,7 +126,7 @@
        (set! temp1 input)
        (set! last-sum sum)
        (set! sum 0.0)
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i resn))
 	 (set! input temp1)
 	 (set! input (- input 

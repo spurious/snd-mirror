@@ -48,7 +48,7 @@
 	    (floor (* b
 		      ((init-array jy) 1)))))
 
-     (do ((i beg (+ 1 i)))
+     (do ((i beg (+ i 1)))
 	 ((= i end))
        (if (= dx dt);;when current sample is a breakpoint
 	   (begin

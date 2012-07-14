@@ -46,7 +46,7 @@
 	(len (string-length data)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len) (substring data sp1))
 	 (if (char=? (data i) #\space)
 	     (if (= sp1 -1)
@@ -59,7 +59,7 @@
 	(len (string-length data)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len) (substring data sp2))
 	 (if (char=? (data i) #\space)
 	     (if (= sp1 -1)
@@ -72,7 +72,7 @@
   (let ((len (string-length data)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len) data)
 	 (if (char=? (data i) #\space)
 	     (return (substring data 0 i))))))))
@@ -81,15 +81,15 @@
   (let ((len (string-length data)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len) data)
 	 (if (char=? (data i) #\space)
-	     (return (substring data (+ 1 i)))))))))
+	     (return (substring data (+ i 1)))))))))
 
 (define (string-upcase name)
   (let* ((len (string-length name))
 	 (str (make-string len)))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i len))
       (set! (str i) (char-upcase (name i))))
     str))
@@ -160,7 +160,7 @@
 	  "XVisualInfo"
 	  (let ((len (string-length type))
 		(val (string-copy type)))
-	    (do ((i 0 (+ 1 i)))
+	    (do ((i 0 (+ i 1)))
 		((= i len) val)
 	      (if (char=? (val i) #\*)
 		  (set! (val i) #\_)))))))
@@ -169,7 +169,7 @@
   (let ((len (string-length name)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len) name)
 	 (if (or (char=? (name i) #\()
 		 (char=? (name i) #\*))
@@ -182,14 +182,14 @@
 	(len (string-length args)))
     (if (string=? args "void")
 	'()
-	(do ((i 0 (+ 1 i)))
+	(do ((i 0 (+ i 1)))
 	    ((= i len) (reverse data))
 	  (let ((ch (args i)))
 	    (if (or (char=? ch #\space)
 		    (= i (- len 1)))
 		(begin
 		  (if type
-		      (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ 1 i) i)))
+		      (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i)))
 			    (reftype #f))
 			(if (char=? (given-name 0) #\@)
 			    (set! data (cons (list type 
@@ -230,7 +230,7 @@
 	 (typed #f)
 	 (help-max 100))
     (hey initial)
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i len))
       (let ((ch (args i)))
 	(if (char=? ch #\space)
@@ -396,7 +396,7 @@
   (let ((len (string-length name)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (+ 1 i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len) name)
 	 (if (char=? (name i) #\()
 	     (return (substring name 0 i))))))))
@@ -599,7 +599,7 @@
        (if (> line-len line-max)
 	   (begin
 	     (hey "~%")
-	     (do ((i 0 (+ 1 i)))
+	     (do ((i 0 (+ i 1)))
 		 ((= i arg-start))
 	       (heyc " "))
 	     (set! line-len arg-start))))

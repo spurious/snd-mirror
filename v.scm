@@ -124,7 +124,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	    (locsig locs i (* (env ampf) amp-fuzz
 			      (oscil carrier (+ vib (* ind-fuzz modulation))))))
 	  
-	  (do ((i beg (+ 1 i)))
+	  (do ((i beg (+ i 1)))
 	      ((= i end))
 	    (let ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
 	      (locsig locs i (* (env ampf) 

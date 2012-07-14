@@ -27,7 +27,7 @@
 
 (define (g-list-foreach glist func)
   (let ((len (g_list_length glist)))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i len))
       (func (g_list_nth_data glist i)))))
 
@@ -95,7 +95,7 @@
 	     (p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
 	     (p2 (/ km denom))
 	     (p3 (/ -1.0 denom)))
-	(do ((i 0 (+ 1 i)))
+	(do ((i 0 (+ i 1)))
 	    ((= i size))
 	  (set! (x0 i) (min (+ (* p1 (x1 i))
 			       (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
@@ -163,7 +163,7 @@
     (define (cairo-draw-lines cr data size)
       (cairo_set_line_width cr 4.0)
       (cairo_move_to cr (data 0) (data 1))
-      (do ((i 1 (+ 1 i))
+      (do ((i 1 (+ i 1))
 	   (j 2 (+ j 2)))
 	  ((= i size))
 	(cairo_line_to cr (data j) (data (+ j 1))))
@@ -188,7 +188,7 @@
 	      (cairo_move_to cr x y)
 	      (set! (vect 0) x)
 	      (set! (vect 1) y))
-	    (do ((i 1 (+ 1 i))
+	    (do ((i 1 (+ i 1))
 		 (j 2 (+ j 2))
 		 (xi (+ ax0 xincr) (+ xi xincr)))
 		((= i size))
@@ -231,7 +231,7 @@
       (vct-fill! gx0 0.0)
       (vct-fill! gx1 0.0)
       (vct-fill! gx2 0.0)
-      (do ((i 0 (+ 1 i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i 12))
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
 	  (set! (gx1 (+ i (- (/ size 4) 6))) val)))
@@ -375,7 +375,7 @@
 	    (chn (cadr context)))
 	(if (sound-property 'dragger snd)
 	    (begin
-	      (do ((i 0 (+ 1 i)))
+	      (do ((i 0 (+ i 1)))
 		  ((= i (channels snd)))
 		(if (not (= i chn))
 		    (begin
@@ -697,7 +697,7 @@
       
       ;; ticks
       (cairo_rotate cr (* 5 (/ pi 4)))
-      (do ((i 0 (+ 1 i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i 5))
 	(cairo_set_line_width cr (/ 1.5 width))
 	(if (or (= i 0) (= i 4))
@@ -760,7 +760,7 @@
     (gtk_box_pack_start (GTK_BOX parent) meters #f #f 4)
     (gtk_widget_set_size_request meters width height)
     (gtk_widget_show meters)
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i n))
       (set! meter-list (cons (make-level-meter meters width height) meter-list)))
     (hook-push dac-hook 

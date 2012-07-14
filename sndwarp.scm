@@ -259,7 +259,7 @@
 		   (mus-reset rdB)))
 	     ;; Write window out
 	     (do ((k 0 (+ 1 k))
-		  (i writestart (+ 1 i)))
+		  (i writestart (+ i 1)))
 		 ((or eow-flag (= k winsamps)))
 	       (if (> i end)
 		   (begin
