@@ -32,7 +32,6 @@ MUS_EXPORT mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int 
 MUS_EXPORT const char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def);
 MUS_EXPORT XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err);
 MUS_EXPORT mus_xen *mus_any_to_mus_xen(mus_any *ge);
-MUS_EXPORT mus_float_t mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, mus_long_t pos, mus_float_t fval, bool from_locsig);
 MUS_EXPORT mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_code);
 MUS_EXPORT XEN mus_clm_output(void);
 MUS_EXPORT XEN mus_clm_reverb(void);

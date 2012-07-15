@@ -1499,11 +1499,30 @@ static XEN g_polynomial(XEN arr, XEN x)
 {
   #define H_polynomial "(" S_polynomial " coeffs x): evaluate a polynomial at x.  coeffs are in order \
 of degree, so coeff[0] is the constant term."
-  vct *v;
-  XEN_ASSERT_TYPE(MUS_VCT_P(arr), arr, XEN_ARG_1, S_polynomial, "a vct");
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_polynomial, "a number");
-  v = XEN_TO_VCT(arr);
-  return(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(x), v->length)));
+  if (MUS_VCT_P(arr))
+    {
+      vct *v;
+      v = XEN_TO_VCT(arr);
+      return(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(x), v->length)));
+    }
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(arr), arr, XEN_ARG_1, S_polynomial, "a vector or vct");
+  {
+    double sum, cx;
+    int i, ncoeffs;
+
+    ncoeffs = XEN_VECTOR_LENGTH(arr);
+    if (ncoeffs <= 0) return(C_TO_XEN_DOUBLE(0.0));
+    if (ncoeffs == 1) return(XEN_VECTOR_REF(arr, 0)); /* just a constant term */
+
+    cx = XEN_TO_C_DOUBLE(x);
+    sum = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(arr, ncoeffs - 1));
+    for (i = ncoeffs - 2; i >= 0; i--) 
+      sum = (sum * cx) + XEN_TO_C_DOUBLE(XEN_VECTOR_REF(arr, i));
+    return(C_TO_XEN_DOUBLE(sum));
+  }
 }
 
 
@@ -5310,21 +5329,58 @@ partial amplitudes in the vct or list 'partials' by the inverse of their sum (so
 }
 
 
+static mus_float_t *vector_to_float_array(XEN v)
+{
+  mus_float_t *data;
+  s7_Int i, len;
+  len = XEN_VECTOR_LENGTH(v);
+  data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
+  for (i = 0; i < len; i++)
+    data[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(v, i));
+  return(data);
+}
+
 static XEN g_chebyshev_tu_sum(XEN x, XEN tn, XEN un)
 {
   #define H_chebyshev_tu_sum "(" S_mus_chebyshev_tu_sum " x tn un) returns the sum of the weighted\
-Chebyshev polynomials Tn and Un (vcts), with phase x."
+Chebyshev polynomials Tn and Un (vectors or vcts), with phase x."
 
-  vct *Tn, *Un;
+  bool need_free;
+  int len;
+  mus_float_t *tdata, *udata;
+  XEN result;
   
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
-  XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
-  XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_3, S_mus_chebyshev_tu_sum, "a vct");
 
-  Tn = XEN_TO_VCT(tn);
-  Un = XEN_TO_VCT(un);
+  if (XEN_VECTOR_P(tn))
+    {
+      len = XEN_VECTOR_LENGTH(tn);
+      tdata = vector_to_float_array(tn);
+      udata = vector_to_float_array(un);
+      need_free = true;
+    }
+  else
+    {
+      vct *Tn, *Un;
+      XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+      XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_3, S_mus_chebyshev_tu_sum, "a vct");
 
-  return(C_TO_XEN_DOUBLE(mus_chebyshev_tu_sum(XEN_TO_C_DOUBLE(x), Tn->length, Tn->data, Un->data)));
+      Tn = XEN_TO_VCT(tn);
+      tdata = Tn->data;
+      Un = XEN_TO_VCT(un);
+      udata = Un->data;
+      len = Tn->length;
+      need_free = false;
+    }
+
+  result = C_TO_XEN_DOUBLE(mus_chebyshev_tu_sum(XEN_TO_C_DOUBLE(x), len, tdata, udata));
+  if (need_free)
+    {
+      free(tdata);
+      free(udata);
+    }
+
+  return(result);
 }
 
 
@@ -5333,14 +5389,32 @@ static XEN g_chebyshev_t_sum(XEN x, XEN tn)
   #define H_chebyshev_t_sum "(" S_mus_chebyshev_t_sum " x tn) returns the sum of the weighted \
 Chebyshev polynomials Tn (a vct)."
 
-  vct *Tn;
+  bool need_free;
+  int len;
+  mus_float_t *data;
+  XEN result;
   
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
-  XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+  if (XEN_VECTOR_P(tn))
+    {
+      len = XEN_VECTOR_LENGTH(tn);
+      data = vector_to_float_array(tn);
+      need_free = true;
+    }
+  else
+    {
+      vct *Tn;
+      XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+      Tn = XEN_TO_VCT(tn);
+      data = Tn->data;
+      len = Tn->length;
+      need_free = false;
+    }
 
-  Tn = XEN_TO_VCT(tn);
-
-  return(C_TO_XEN_DOUBLE(mus_chebyshev_t_sum(XEN_TO_C_DOUBLE(x), Tn->length, Tn->data)));
+  result = C_TO_XEN_DOUBLE(mus_chebyshev_t_sum(XEN_TO_C_DOUBLE(x), len, data));
+  if (need_free)
+    free(data);
+  return(result);
 }
 
 
@@ -5349,14 +5423,33 @@ static XEN g_chebyshev_u_sum(XEN x, XEN un)
   #define H_chebyshev_u_sum "(" S_mus_chebyshev_u_sum " x un) returns the sum of the weighted \
 Chebyshev polynomials Un (a vct)."
 
-  vct *Un;
-  
+  bool need_free;
+  int len;
+  mus_float_t *data;
+  XEN result;
+
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
-  XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
 
-  Un = XEN_TO_VCT(un);
+  if (XEN_VECTOR_P(un))
+    {
+      len = XEN_VECTOR_LENGTH(un);
+      data = vector_to_float_array(un);
+      need_free = true;
+    }
+  else
+    {
+      vct *Un;
+      XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+      Un = XEN_TO_VCT(un);
+      len = Un->length;
+      data = Un->data;
+      need_free = false;
+    }
 
-  return(C_TO_XEN_DOUBLE(mus_chebyshev_u_sum(XEN_TO_C_DOUBLE(x), Un->length, Un->data)));
+  result = C_TO_XEN_DOUBLE(mus_chebyshev_u_sum(XEN_TO_C_DOUBLE(x), len, data));
+  if (need_free)
+    free(data);
+  return(result);
 }
 
 

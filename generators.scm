@@ -3181,7 +3181,7 @@
 ;;; bess (returns bes-jn, like oscil returns sin) normalized to peak at 1.0
 ;;;   frequency here is the frequency in Hz of the damped sinusoid part of the bessel function
 
-(define bessel-peaks (vct 1.000 0.582 0.487 0.435 0.400 0.375 0.355 0.338 0.325 0.313 0.303 0.294 0.286 0.279 0.273 0.267 0.262 0.257 0.252 0.248))
+(define bessel-peaks (vector 1.000 0.582 0.487 0.435 0.400 0.375 0.355 0.338 0.325 0.313 0.303 0.294 0.286 0.279 0.273 0.267 0.262 0.257 0.252 0.248))
 
 (defgenerator (bess
 	       :make-wrapper (lambda (g)
@@ -3899,20 +3899,20 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! n (min (max n 1) 10))
 				 (set! (blackman-frequency g) (hz->radians (blackman-frequency g)))
 				 (case n
-				   ((1) (set! (blackman-coeffs g) (vct 0.54 -0.46)))
-				   ((2) (set! (blackman-coeffs g) (vct 0.34401 -0.49755 0.15844)))
-				   ((3) (set! (blackman-coeffs g) (vct 0.21747 -0.45325 0.28256 -0.04672)))
-				   ((4) (set! (blackman-coeffs g) (vct 0.084037 -0.29145 0.375696 -0.20762 0.041194)))
-				   ((5) (set! (blackman-coeffs g) (vct 0.097167 -0.3088448 0.3626224 -0.1889530 0.04020952 -0.0022008)))
-				   ((6) (set! (blackman-coeffs g) (vct 0.063964353 -0.239938736 0.3501594961 -0.247740954 0.0854382589
+				   ((1) (set! (blackman-coeffs g) (vector 0.54 -0.46)))
+				   ((2) (set! (blackman-coeffs g) (vector 0.34401 -0.49755 0.15844)))
+				   ((3) (set! (blackman-coeffs g) (vector 0.21747 -0.45325 0.28256 -0.04672)))
+				   ((4) (set! (blackman-coeffs g) (vector 0.084037 -0.29145 0.375696 -0.20762 0.041194)))
+				   ((5) (set! (blackman-coeffs g) (vector 0.097167 -0.3088448 0.3626224 -0.1889530 0.04020952 -0.0022008)))
+				   ((6) (set! (blackman-coeffs g) (vector 0.063964353 -0.239938736 0.3501594961 -0.247740954 0.0854382589
 								       -0.012320203 0.0004377882)))
-				   ((7) (set! (blackman-coeffs g) (vct 0.04210723 -0.18207621 0.3177137375 -0.284437984 0.1367622316
+				   ((7) (set! (blackman-coeffs g) (vector 0.04210723 -0.18207621 0.3177137375 -0.284437984 0.1367622316
 								       -0.033403806 0.0034167722 -0.000081965)))
-				   ((8) (set! (blackman-coeffs g) (vct 0.027614462 -0.135382235 0.2752871215 -0.298843294 0.1853193194
+				   ((8) (set! (blackman-coeffs g) (vector 0.027614462 -0.135382235 0.2752871215 -0.298843294 0.1853193194
 								       -0.064888448 0.0117641902 -0.000885987 0.0000148711)))
-				   ((9) (set! (blackman-coeffs g) (vct 0.01799071953 -0.098795950 0.2298837751 -0.294112951 0.2243389785
+				   ((9) (set! (blackman-coeffs g) (vector 0.01799071953 -0.098795950 0.2298837751 -0.294112951 0.2243389785
 								       -0.103248745 0.0275674108 -0.003839580	0.0002189716 -0.000002630)))
-				   ((10) (set! (blackman-coeffs g) (vct 0.0118717384 -0.071953468 0.1878870875 -0.275808066 0.2489042133 
+				   ((10) (set! (blackman-coeffs g) (vector 0.0118717384 -0.071953468 0.1878870875 -0.275808066 0.2489042133 
 									-0.141729787 0.0502002984 -0.010458985 0.0011361511 -0.000049617
 									0.0000004343))))
 				 g))
@@ -3920,7 +3920,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			   (list 'mus-reset
 				 (lambda (g)
 				   (set! (blackman-angle g) 0.0)))))
-    (frequency *clm-default-frequency*) (n 4 :type int) (coeffs #f :type vct) (angle 0.0))
+    (frequency *clm-default-frequency*) (n 4 :type int) (coeffs #f :type vector) (angle 0.0))
 
 
 (define* (blackman gen (fm 0.0))
@@ -4159,12 +4159,10 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; k3sin
 
-;;; mostly useful as a test of a vct field 
-
 (defgenerator (k3sin
 	       :make-wrapper (lambda (g)
 			       (set! (k3sin-frequency g) (hz->radians (k3sin-frequency g)))
-			       (set! (k3sin-coeffs g) (vct 0.0
+			       (set! (k3sin-coeffs g) (vector 0.0
 							   (/ (* pi pi) 6.0)
 							   (/ pi -4.0)
 							   (/ 1.0 12.0)))
@@ -4174,7 +4172,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g)
 				 (set! (k3sin-frequency g) 0.0)
 				 (set! (k3sin-angle g) 0.0)))))
-  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f :type vct))
+  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f :type vector))
 		   
 
 (define* (k3sin gen (fm 0.0))
@@ -5173,8 +5171,8 @@ index 10 (so 10/2 is the bes-jn arg):
 						  ((>= i len))
 						(set! n (max n (floor (lst i)))))
 					      n))
-				      (sin-amps (make-vct (+ topk 1)))
-				      (cos-amps (make-vct (+ topk 1))))
+				      (sin-amps (make-vector (+ topk 1)))
+				      (cos-amps (make-vector (+ topk 1))))
 				 (do ((j 0 (+ j 3)))
 				     ((>= j len))
 				   (let ((n (floor (lst j)))
@@ -5202,15 +5200,15 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g ind)
 				 ((polyoid-tn g) ind))
 			       (lambda (g ind val)
-				 (vct-set! (polyoid-tn g) ind val)))
+				 (vector-set! (polyoid-tn g) ind val)))
 			 (list 'mus-ycoeff
 			       (lambda (g ind)
 				 ((polyoid-un g) ind))
 			       (lambda (g ind val)
-				 (vct-set! (polyoid-un g) ind val)))))
+				 (vector-set! (polyoid-un g) ind val)))))
 
-  (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type vct) (angle 0.0)
-  (tn #f :type vct) (un #f :type vct))
+  (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type vector) (angle 0.0)
+  (tn #f :type vct) (un #f :type vector))
 
 
 (define* (polyoid gen (fm 0.0))
@@ -5245,7 +5243,7 @@ index 10 (so 10/2 is the bes-jn arg):
 #|
 (with-sound (:clipped #f)
   (let ((samps 44100)
-	(gen (make-polyoid 100.0 (vct 1 1 0.0))))
+	(gen (make-polyoid 100.0 (vector 1 1 0.0))))
     (do ((i 0 (+ i 1)))
 	((= i samps))
       (outa i (polyoid gen)))))
@@ -5261,7 +5259,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (with-sound (:clipped #f :statistics #t)
   (let ((samps 44100)
-	(gen (make-polyoid 100.0 (vct 1 0.5 0.0 51 0.25 0.0 64 .25 (/ pi 2)))))
+	(gen (make-polyoid 100.0 (vector 1 0.5 0.0 51 0.25 0.0 64 .25 (/ pi 2)))))
      (do ((i 0 (+ i 1)))
 	 ((= i samps))
        (outa i (polyoid gen)))))
@@ -5270,7 +5268,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (let* ((res (with-sound (:channels 2 :clipped #f)
                 (let ((angle 0.0)
 		      (incr (hz->radians 1.0))
-		      (cur-phases (make-vct (* 3 n))))
+		      (cur-phases (make-vector (* 3 n))))
 		  (do ((i 0 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((= i n))
@@ -5296,7 +5294,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (let* ((res (with-sound (:channels 2 :clipped #f)
                 (let ((angle 0.0)
 		      (incr (hz->radians 1.0))
-		      (cur-phases (make-vct (* 3 n))))
+		      (cur-phases (make-vector (* 3 n))))
 		  (do ((i 0 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((= i n))
@@ -5323,8 +5321,8 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (with-sound (:clipped #f :channels 2 :statistics #t)
   (let* ((samps 44100)
-	 (gen1 (make-polyoid 100.0 (vct 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
-	 (gen2 (make-polyoid 100.0 (vct 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
+	 (gen1 (make-polyoid 100.0 (vector 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
+	 (gen2 (make-polyoid 100.0 (vector 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
 	 (amps1 (vector (make-env '(0 0 1 1 2 0) :end samps :scaler 0.5)
 		       (make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
 		       (make-env '(0 1 1 0) :end samps :scaler 0.25)))
@@ -5345,9 +5343,9 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (with-sound (:clipped #f :channels 2 :channels 3 :statistics #t)
   (let* ((samps 44100)
-	 (gen1 (make-polyoid 100.0 (vct 1 1 0 2 1 0 3 1 0)))
-	 (gen2 (make-polyoid 100.0 (vct 1 1 0 2 1 0 3 1 0)))
-	 (gen3 (make-polyoid 100.0 (vct 1 1 (/ pi 2) 2 1 (/ pi 2) 3 1 (/ pi 2))))
+	 (gen1 (make-polyoid 100.0 (vector 1 1 0 2 1 0 3 1 0)))
+	 (gen2 (make-polyoid 100.0 (vector 1 1 0 2 1 0 3 1 0)))
+	 (gen3 (make-polyoid 100.0 (vector 1 1 (/ pi 2) 2 1 (/ pi 2) 3 1 (/ pi 2))))
 	 (amps1 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
 	 (amps2 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
 	 (amps3 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
@@ -5372,14 +5370,14 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;; noid -- sum of n sinusoids at arbitrary (default=random) initial phases
 ;;;
-;;;   for max peak (all cos), set phases arg to (make-vct n (/ pi 2))
+;;;   for max peak (all cos), set phases arg to (make-vector n (/ pi 2))
 ;;;   for min peak, use one of the sets in peak-phases.scm (multiplied through by pi)
 ;;;
 ;;; since initial phases are 0 or pi in peak-phases.scm if n>20, this code could be optimized
 
 (define* (make-noid (frequency 0.0) (n 1) (phases #f) (choice 'all))
   (make-polyoid frequency
-		(let ((amps (make-vct (* 3 n))))
+		(let ((amps (make-vector (* 3 n))))
 		  (do ((i 1 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((> i n))
@@ -5392,7 +5390,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    
 		    (set! (amps (+ j 1)) (/ 1.0 n))
 
-		    (if (vct? phases)
+		    (if (vector? phases)
 			(set! (amps (+ j 2)) (phases (- i 1)))
 			(if (not phases)
 			    (set! (amps (+ j 2)) (random (* 2 pi)))
@@ -5545,7 +5543,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (with-sound (:clipped #f :channels 4)
   (let ((samps 44100)
 	(gen1 (make-noid 100.0 32 'max-peak))
-	(gen2 (make-noid 100.0 32 (make-vct 32 0.0)))
+	(gen2 (make-noid 100.0 32 (make-vector 32 0.0)))
 	(gen3 (make-noid 100.0 32))
 	(gen4 (make-noid 100.0 32 'min-peak)))
     (do ((i 0 (+ i 1)))
@@ -5561,7 +5559,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (with-sound (:clipped #f :output (string-append "test-noid-" (number->string i) ".snd"))
       (let ((samps 44100)
 	    (gen (make-noid 100.0 32 (if (= i 0) 'max-peak
-					 (if (= i 1) (make-vct 32 0.0)
+					 (if (= i 1) (make-vector 32 0.0)
 					     (if (= i 2) #f
 						 'min-peak))))))
 	(do ((i 0 (+ i 1)))
@@ -5584,7 +5582,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (with-sound (:clipped #f)
   (let ((samps 44100)
-	(gen (make-noid 100.0 19 (apply vct (map (lambda (n) (* pi n)) (list 0 1 0 0 1 1 1 1 1 1 0 0 1 1 1 0 1 0 1) )))))
+	(gen (make-noid 100.0 19 (apply vector (map (lambda (n) (* pi n)) (list 0 1 0 0 1 1 1 1 1 1 0 0 1 1 1 0 1 0 1) )))))
     (do ((i 0 (+ i 1))) 
 	((= i samps))
       (outa i (noid gen)))))
@@ -5597,7 +5595,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define* (make-roid (frequency 0.0) (n 1) (r 1.0) (phases #f))
   (make-polyoid frequency
-		(let ((amps (make-vct (* 3 n)))
+		(let ((amps (make-vector (* 3 n)))
 		      (rn (/ 1.0 n)))
 		  (do ((i 1 (+ i 1))
 		       (j 0 (+ j 3)))
@@ -5605,7 +5603,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    (set! (amps j) i)
 		    (set! (amps (+ j 1)) rn)
 		    (set! rn (* rn r))
-		    (if (vct? phases)
+		    (if (vector? phases)
 			(set! (amps (+ j 2)) (phases (- i 1)))
 			(if (not phases)
 			    (set! (amps (+ j 2)) (random (* 2 pi)))

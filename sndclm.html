@@ -1126,7 +1126,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 
 <pre class="indented">
 <em class=def id="make-env">make-env</em> 
-      envelope      ; list or vct of x,y break-point pairs
+      envelope      ; list, vector, or vct of x,y break-point pairs
       (scaler 1.0)  ; scaler on every y value (before offset is added)
       duration      ; duration in seconds
       (offset 0.0)  ; value added to every y value
@@ -10111,7 +10111,7 @@ This function determines how many mixer elements are printed by mus-describe.
 
 <p>The polynomial function evaluates a polynomial, defined by giving its coefficients,
 at the point "x".
-"coeffs" is a vct of coefficients where
+"coeffs" is a vector or vct of coefficients where
 coeffs[0] is the constant term, and so on. 
 </p>
 

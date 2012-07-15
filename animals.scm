@@ -679,7 +679,7 @@
 	 (pulse-dur .009)
 	 (pulsef (make-env '(0.000 0.000 0.065 0.5 0.117 0.85 0.179 1.0 0.236 0.9 0.503 0.4 0.606 0.2 1.000 0.000) :duration pulse-dur))
 	 (pulses (if (> (random 1.0) .6) 5 4))
-	 (pulse-amps (vct .7 .9 1.0 .9 .6))
+	 (pulse-amps (vector .7 .9 1.0 .9 .6))
 	 
 	 (pitch 205.0)
 	 (gen1 (make-oscil (* 10 pitch) (* 0.5 pi)))
@@ -1129,8 +1129,8 @@
 						(+ 0.04 (random .04)) 
 						(+ .01 (random .02)))))
 	     (pulse-ampf (make-env (if cur-is-long 
-				       (vct 0 0 .1 .5 2 1 3 0) 
-				       (vct 0 0 1 1 1.5 .3 2 0)) 
+				       (vector 0 0 .1 .5 2 1 3 0) 
+				       (vector 0 0 1 1 1.5 .3 2 0)) 
 				   :scaler (if cur-is-long (+ .6 (random .4)) (+ .1 (random .7)))
 				   :length pulse-samps
 				   :base (if cur-is-long 6.0 3.0)))
@@ -1387,10 +1387,10 @@
 		  (polywave gen1 (env frqf))))))
   
   ;; 4 tinks
-  (let ((begs (vct 0.085 0.118 0.141 0.162))
-	(amps (vct 1.0 1.0 .8 .6))
-	(frqs (vct 6840 6940 6890 6940)))
-    (do ((call 0 (+ 1 call)))
+  (let ((begs (vector 0.085 0.118 0.141 0.162))
+	(amps (vector 1.0 1.0 .8 .6))
+	(frqs (vector 6840 6940 6890 6940)))
+    (do ((call 0 (+ call 1)))
 	((= call 4))
       
       (let* ((start (seconds->samples (+ beg (begs call))))
@@ -1430,9 +1430,9 @@
 	 (ampf3 (make-env (list 0 .2  .1 1 (- dur .2) 1  dur .5) :duration dur :scaler .1))
 	 (rnd (make-rand-interp 4000 (hz->radians 200)))
 	 
-	 (env1 (vct 0 0  .6 1   1 0))
-	 (env2 (vct 0 0  .3 .7  .5 1  .8 .9  1 0))
-	 (env3 (vct 0 0  .2 .7 .3 .1 .5 1 .7 .8 1 0))
+	 (env1 (vector 0 0  .6 1   1 0))
+	 (env2 (vector 0 0  .3 .7  .5 1  .8 .9  1 0))
+	 (env3 (vector 0 0  .2 .7 .3 .1 .5 1 .7 .8 1 0))
 	 
 	 (next-pulse start)
 	 (pulse-samps 0)
@@ -1485,10 +1485,10 @@
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))
   
-  (let ((begs (vct 0.0 0.15 0.325 0.47 0.61))
-	(durs (vct 0.027 0.06 0.065 0.042 0.05))
-	(amps (vct 0.9 1.0 1.0 0.4 0.1))
-	(frqs (vct 14800 14020 (* 1/3 14800) 14800 (* 1/2 14800)))
+  (let ((begs (vector 0.0 0.15 0.325 0.47 0.61))
+	(durs (vector 0.027 0.06 0.065 0.042 0.05))
+	(amps (vector 0.9 1.0 1.0 0.4 0.1))
+	(frqs (vector 14800 14020 (* 1/3 14800) 14800 (* 1/2 14800)))
 	 
 	 (ampenvs (vector '(0.000 0.000 0.085 0.906 0.117 1.000 0.328 0.909 0.715 0.464 0.892 0.118 1.000 0.000)
 			  '(0.000 0.000 0.025 1.000 0.056 0.201 0.121 0.848 0.151 0.503 0.217 0.395 0.441 0.556 
@@ -1507,7 +1507,7 @@
 			  '(0.000 0.071 0.063 0.081 0.097 0.083 0.155 0.073 0.195 0.069 0.832 0.069 1.000 0.053)
 			  '(0.000 0.120 0.132 0.128 0.218 0.126 0.272 0.120 0.326 0.120 0.513 0.120 0.730 0.118 
 				  1.000 0.096))))
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 5))
       (amargosa-toad-1 
        (+ beg1 (begs call))
@@ -1713,7 +1713,7 @@
 	 (stop (+ start (seconds->samples dur)))
 	 (freqs (list 6439 6585 6860 6940 7090 7266 7362))
 	 (num (length freqs))
-	 (amps (let* ((v (make-vct num))
+	 (amps (let* ((v (make-vector num))
 		      (lst (list 1.0  1.0  .25  .17  .2   .1   .1))
 		      (scl (apply + lst)))
 		 (do ((i 0 (+ i 1)))
@@ -3152,10 +3152,10 @@
   ;; 2 portions -- simple tones, then a buzz (calif case has much tighter (faster) buzz)
   (let* ((start (seconds->samples beg))
 	 
-	 (begs (vct 0.0 .24 .36 .44 .55))
-	 (durs (vct 0.019 0.020 0.011 0.021 1.09))
-	 (amps (vct .48 .54 .07 .22 1.0))
-	 (frqs (vct 8500 7240 9730 4920 8000))
+	 (begs (vector 0.0 .24 .36 .44 .55))
+	 (durs (vector 0.019 0.020 0.011 0.021 1.09))
+	 (amps (vector .48 .54 .07 .22 1.0))
+	 (frqs (vector 8500 7240 9730 4920 8000))
 	 (starts (make-vector 4 0))
 	 (stops (make-vector 4 0))
 	 (ampfs (make-vector 4 #f))
@@ -3212,9 +3212,9 @@
 	 (starts (make-vector 4 0))
 	 (stops (make-vector 4 0))
 	 
-	 (begs (vct 0.0 0.6 1.3 1.8))
-	 (durs (vct 0.34 0.25 0.16 0.39))
-	 (amps (vct 0.6 1.0 0.7 0.95))
+	 (begs (vector 0.0 0.6 1.3 1.8))
+	 (durs (vector 0.34 0.25 0.16 0.39))
+	 (amps (vector 0.6 1.0 0.7 0.95))
 	 
 	 (gen1 (make-polywave :partials (list 1 .95  2 .03 3 .01 4 .01)))
 	 
@@ -3346,9 +3346,9 @@
 	 (starts (make-vector 3 0))
 	 (stops (make-vector 3 0))
 	 
-	 (begs (vct 0.0 0.42 0.84))
-	 (durs (vct 0.34 0.35 0.56))
-	 (amps (vct 0.6 0.8 1.0))
+	 (begs (vector 0.0 0.42 0.84))
+	 (durs (vector 0.34 0.35 0.56))
+	 (amps (vector 0.6 0.8 1.0))
 	 
 	 (gen1 (make-polywave :partials (list 1 .95  2 .01 3 .03)))
 	 (gen2 (make-polywave :partials (list 1 .95  2 .01 3 .03)))
@@ -3480,9 +3480,9 @@
 	 (dur 1.17)
 	 (stop (+ start (seconds->samples dur)))
 	 ;; peep pitch changes
-	 (amps (vct .5 .8 .85 .9 .95 1.0))
-	 (begs (vct 0.0 0.39 0.67 0.86 0.96 1.09))
-	 (frqs (vct 4750 4950 4880 4920 5210 5140))
+	 (amps (vector .5 .8 .85 .9 .95 1.0))
+	 (begs (vector 0.0 0.39 0.67 0.86 0.96 1.09))
+	 (frqs (vector 4750 4950 4880 4920 5210 5140))
 	 (starts (make-vector 7 0))
 	 (peep-dur 0.055)
 	 (ampf (make-env '(0.000 0.000 0.141 0.119 0.220 0.652 0.329 0.968 0.495 0.830 0.603 0.399 0.715 0.178 1.000 0.000)
@@ -3725,11 +3725,11 @@
 ;;; Great-horned owl
 
 (definstrument (great-horned-owl beg amp)
-  (let ((begs (vct 0.0  0.26 1.42 2.16))
-	(durs (vct 0.14 0.40 0.43 0.37))
-	(amps (vct .75 .9 .95 1.0)))
+  (let ((begs (vector 0.0  0.26 1.42 2.16))
+	(durs (vector 0.14 0.40 0.43 0.37))
+	(amps (vector .75 .9 .95 1.0)))
     
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 4))
       (let* ((start (seconds->samples (+ beg (begs call))))
 	     (stop (+ start (seconds->samples (durs call))))
@@ -3752,9 +3752,9 @@
 
 (definstrument (western-tanager beg amp)
   (let* ((gen (make-polywave :partials '(1 .98 2 .02)))
-	 (begs (vct 0.0  0.7  1.4  2.0))
-	 (durs (vct 0.27 0.32 0.25 0.24))
-	 (amps (vct 0.32 0.85 1.0  0.65))
+	 (begs (vector 0.0  0.7  1.4  2.0))
+	 (durs (vector 0.27 0.32 0.25 0.24))
+	 (amps (vector 0.32 0.85 1.0  0.65))
 	 
 	 (ampfs (vector 
 		 (make-env '(0.000 0.000 0.086 0.398 0.247 0.610 0.363 0.000 0.416 0.000 0.513 0.603 0.610 0.603 
@@ -3797,7 +3797,7 @@
 				   0.885 0.539 0.914 0.439 0.938 0.541 0.965 0.433 1.000 0.472)
 			   :duration (durs 3) :scaler (hz->radians 6000)))))
     
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 4))
       (let* ((ampf (ampfs call))
 	     (frqf (frqfs call))
@@ -3970,13 +3970,13 @@
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))
   
-  (let ((amps1 (vct .2 .5 .7 .9 1.0 1.0)))
+  (let ((amps1 (vector .2 .5 .7 .9 1.0 1.0)))
     
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 6))
       (nashville-warbler-1 (+ beg (* .21 call)) (+ .15 (random .02)) (* amp (amps1 call))))
     
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 3))
       (nashville-warbler-2 (+ beg 1.26 (* .17 call)) (+ .13 (random .02)) amp))
     
@@ -4329,7 +4329,7 @@
   (let* ((start (seconds->samples beg))
 	 (dur 0.4)
 	 (stop (+ start (seconds->samples dur)))
-	 (frqs (vct .9 .95 .95 1.0 1.0 1.0))
+	 (frqs (vector .9 .95 .95 1.0 1.0 1.0))
 	 
 	 (pulse-dur .08)
 	 (pulse-samps (seconds->samples pulse-dur))
@@ -4379,8 +4379,8 @@
 ;;; California Quail
 
 (definstrument (california-quail beg amp)
-  (let ((durs (vct .075 .23 .16))
-	 (begs (vct 0.0 .21 .58))
+  (let ((durs (vector .075 .23 .16))
+	 (begs (vector 0.0 .21 .58))
 	 (ampfs (make-vector 3 #f))
 	 (frqfs (make-vector 3 #f))
 	 (gens (make-vector 3 #f))
@@ -4496,7 +4496,7 @@
 	 ((= i stop))
        (if (>= i next-call)
 	   (begin
-	     (set! call (+ 1 call))
+	     (set! call (+ call 1))
 	     (if (= call 1)
 		 (begin
 		   (set! next-call (+ start (seconds->samples 0.63)))
@@ -6088,7 +6088,7 @@
 			 (* (env ampf2)
 			    (polywave gen2 frq)))))))))
   
-  (let ((amps (vct .5 1.0 1.0 .9)))
+  (let ((amps (vector .5 1.0 1.0 .9)))
     (do ((i 0 (+ i 1))
 	 (bg beg1 (+ bg .35)))
 	((= i 4))
@@ -6177,13 +6177,13 @@
 			  (polywave gen2 (+ (env frqf2)
 					    (rand-interp rnd1))))))))))
   
-  (let ((amps (vct .4 .6 .8 .9 1.0)))
+  (let ((amps (vector .4 .6 .8 .9 1.0)))
     (do ((note 0 (+ 1 note))
 	 (bg beg1 (+ bg 0.18)))
 	((= note 5))
       (macgillivrays-warbler-1 bg (* amp1 (amps note)))))
   
-  (let ((amps (vct 1.0 .9 .7)))
+  (let ((amps (vector 1.0 .9 .7)))
     (do ((note 0 (+ 1 note))
 	 (bg (+ beg1 0.93) (+ bg 0.17)))
 	((= note 3))
@@ -6490,9 +6490,9 @@
   (wilsons-warbler-1 beg1 .046 (* .05 amp1))
   (wilsons-warbler-1 (+ beg1 .147) .05 (* .1 amp1))
   
-  (let ((durs2 (vct 0.067 0.07 0.075 0.08 0.086 0.084 0.08 0.08 0.078))
-	(frqs2 (vct 1.0   1.0  0.95  0.93 1.0   1.0   1.0  1.0  0.95))
-	(amps2 (vct .2    .4    .7   1    1      .8   1    1    1)))
+  (let ((durs2 (vector 0.067 0.07 0.075 0.08 0.086 0.084 0.08 0.08 0.078))
+	(frqs2 (vector 1.0   1.0  0.95  0.93 1.0   1.0   1.0  1.0  0.95))
+	(amps2 (vector .2    .4    .7   1    1      .8   1    1    1)))
     (do ((i 0 (+ i 1)))
 	((= i 9))
       (wilsons-warbler-2 (+ beg1 0.285 (* i .13)) (durs2 i) (frqs2 i) (* amp1 (amps2 i)))))
@@ -6760,8 +6760,8 @@
 	   (ampf (make-env '(0.000 0.000 0.106 0.826 0.190 0.996 0.418 0.818 0.688 0.458 0.897 0.447 0.962 0.348 1.000 0.000)
 			   :duration dur :scaler amp))
 	   (frqf (make-env '(0 4400 .4 4200 1 4300) :duration dur :scaler (hz->radians 1.0)))
-	   (gen-up (make-polywave :partials (vct 1 .95  2 .03  3 .02)))
-	   (gen-down (make-polywave :partials (vct 1 .95  2 .03  3 .02)))
+	   (gen-up (make-polywave :partials (vector 1 .95  2 .03  3 .02)))
+	   (gen-down (make-polywave :partials (vector 1 .95  2 .03  3 .02)))
 	   (mod-up (make-oscil 142.0))
 	   (mod-down (make-oscil 142.0))
 	   (pulser (make-pulse-train 142.0))
@@ -6932,7 +6932,7 @@
   (song-sparrow-little-buzz (+ beg1 .37) (* .4 amp1))
   (song-sparrow-clear-tone (+ beg1 0.57) 1.0 amp1)
   
-  (let ((amps (vct .14 .33 .37 .37 .30 .30 .30)))
+  (let ((amps (vector .14 .33 .37 .37 .30 .30 .30)))
     (do ((i 0 (+ i 1))
 	 (x 0.68 (+ x .1)))
 	((= i 7)) 
@@ -7593,8 +7593,8 @@
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))
   
-  (let ((amps (vct .3 .5 .8 .8 .8 .8 .8 1.0 .8 .8 .4)))
-    (do ((call 0 (+ 1 call)))
+  (let ((amps (vector .3 .5 .8 .8 .8 .8 .8 1.0 .8 .8 .4)))
+    (do ((call 0 (+ call 1)))
 	((= call 11))
       (dark-eyed-junco-1 (+ beg1 (* call .122)) (* amp1 (amps call))))))
 
@@ -8645,9 +8645,9 @@
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))
   
-  (let ((amps (vct .1 .3 .6  .8 .9 1.0))
-	(begs (vct 0.0 0.156 .311 .454  .594 .731)))
-    (do ((call 0 (+ 1 call)))
+  (let ((amps (vector .1 .3 .6  .8 .9 1.0))
+	(begs (vector 0.0 0.156 .311 .454  .594 .731)))
+    (do ((call 0 (+ call 1)))
 	((= call 6))
       (chestnut-sided-warbler-1 (+ beg1 (begs call))
 				(* amp1 (amps call)))))
@@ -9036,14 +9036,14 @@
 
 (definstrument (verdin beg amp)
   ;; south 57 18
-  (let ((begs (vct 0.0 0.28 0.57))
-	 (durs (vct 0.12 0.15 0.15))
-	 (amps (vct 0.25 0.75 1.0))
+  (let ((begs (vector 0.0 0.28 0.57))
+	 (durs (vector 0.12 0.15 0.15))
+	 (amps (vector 0.25 0.75 1.0))
 	 (frqs (vector (list 0.000 0.162 0.246 0.168 0.505 0.168 0.867 0.183 0.956 0.198 1.000 0.192)
 		       (list 0.000 0.162 0.246 0.168 0.867 0.183 0.897 0.186 0.926 0.204 1.000 0.192)
 		       (list 0.000 0.189 0.039 0.168 0.246 0.168 1.000 0.192)))
 	 (gen1 (make-polywave :partials (list 1 .98  2 .015  3 .005))))
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 3))
       (let* ((start (seconds->samples (+ beg (begs call))))
 	     (dur (durs call))
@@ -9413,7 +9413,7 @@
 	(frqf (make-env (list 0 1 1 (/ 3050.0 3200.0)) :length 10))
 	(call-init 1.0))
     
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 10))
       (let ((call-amp (env ampf))
 	    (call-frq (env frqf)))
@@ -9627,7 +9627,7 @@
   (townsends-solitaire-1 (+ beg1 .37) amp1)
   (townsends-solitaire-1 (+ beg1 .59) amp1)
   
-  (do ((call 0 (+ 1 call)))
+  (do ((call 0 (+ call 1)))
       ((= call 5))
     (townsends-solitaire-2 (+ beg1 .85 (* call .059)) (* .3 amp1)))
   
@@ -9791,7 +9791,7 @@
   
   (let ((call-ampf (make-env '(0 .05 1 .2  3 .8 5 1 10 1 16 .4) :length 16))
 	(call-frqf (make-env '(0 1.1 4 1.0 13 .98 15 1.0) :length 16)))
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 16))
       (let* ((start (seconds->samples (+ beg (* call .115) (random .01))))
 	     (dur (+ .105 (random .01)))
@@ -9892,11 +9892,11 @@
   (black-throated-sparrow-3 beg1 (* .4 amp1))
   
   (let ((ampf (make-env '(0 .4  5 1.0 7 .9) :length 7)))
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 7))
       (black-throated-sparrow-1 (+ beg1 .2 (* call .042) (random .003)) (* amp1 (env ampf)))))
   
-  (do ((call 0 (+ 1 call)))
+  (do ((call 0 (+ call 1)))
       ((= call 3))
     (black-throated-sparrow-2 (+ beg1 .53 (* call .134)) (* 0.6 amp1))))
 
@@ -9929,9 +9929,9 @@
 		  (oscil gen1 (env frqf))))))
   
   ;; next 4 notes
-  (let ((begs (vct 0.31 0.61 0.86 1.11))
-	 (durs (vct 0.23 0.19 0.18 0.18))
-	 (amps (vct 0.6  0.95 1.0  0.8))
+  (let ((begs (vector 0.31 0.61 0.86 1.11))
+	 (durs (vector 0.23 0.19 0.18 0.18))
+	 (amps (vector 0.6  0.95 1.0  0.8))
 	 (ampenv '(0.000 0.000 0.081 0.593 0.118 0.676 0.139 0.952 0.174 1.000 0.198 0.762 0.255 0.701 0.276 0.824 
 			 0.316 0.572 0.372 0.794 0.411 0.572 0.506 0.663 0.550 0.514 0.582 0.622 0.633 0.337 0.653 0.520 
 			 0.685 0.536 0.700 0.389 0.780 0.462 0.796 0.267 0.804 0.380 0.814 0.231 0.832 0.330 0.895 0.310 
@@ -9939,7 +9939,7 @@
 	 (frqenv '(0.000 0.326 0.102 0.344 0.182 0.351 0.269 0.360 0.352 0.373 0.503 0.382 0.614 0.394 0.730 0.410 
 			 0.833 0.423 1.000 0.434))
 	 (gen1 (make-oscil)))
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 4))
       (let* ((start (seconds->samples (+ beg (begs call))))
 	     (dur (durs call))
@@ -9972,10 +9972,10 @@
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))
   
-  (let ((begs (vct 0.0  0.25 0.47 0.65 0.79 0.99 1.17 1.33))
-         (durs (vct 0.05 0.05 0.06 0.07 0.14 0.14 0.12 0.11))
-         (amps (vct 0.04 0.6  0.8  0.80 1.0  0.94 0.92 0.75))
-	 (frqs (vct 6020 6020 13370  13360  13360  13360  13360  13360))
+  (let ((begs (vector 0.0  0.25 0.47 0.65 0.79 0.99 1.17 1.33))
+         (durs (vector 0.05 0.05 0.06 0.07 0.14 0.14 0.12 0.11))
+         (amps (vector 0.04 0.6  0.8  0.80 1.0  0.94 0.92 0.75))
+	 (frqs (vector 6020 6020 13370  13360  13360  13360  13360  13360))
 	 
 	 (ampenvs (vector '(0.000 0.000 0.063 0.289 0.098 0.838 0.139 0.960 0.217 0.213 0.389 0.115 0.484 0.775 
 				  0.524 0.530 0.546 0.842 0.587 0.375 0.630 0.909 0.739 0.613 0.764 0.320 0.829 0.443 
@@ -10031,7 +10031,7 @@
 			  '(0.000 0.123 0.079 0.148 0.131 0.153 0.274 0.168 0.340 0.170 0.432 0.194 0.494 0.200 
 				  0.520 0.215 0.595 0.219 0.628 0.241 0.675 0.245 0.752 0.273 0.864 0.310 0.898 0.297
 				  0.930 0.292 0.964 0.269 1.000 0.247))))
-    (do ((call 0 (+ 1 call)))
+    (do ((call 0 (+ call 1)))
 	((= call 8))
       (kirtlands-warbler-1 (+ beg1 (begs call))
 			   (durs call)

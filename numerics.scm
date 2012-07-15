@@ -15,7 +15,7 @@
 		(old-facts factorials))
 	    (set! num-factorials n)
 	    (set! factorials (make-vector num-factorials 0))
-	    (do ((i 0 (+ 1 i)))
+	    (do ((i 0 (+ i 1)))
 		((= i old-num))
 	      (set! (factorials i) (old-facts i)))))
       (if (zero? (factorials n))
@@ -59,7 +59,7 @@
 	    1
 	    (let* ((mx (max k (- n k)))
 		   (cnk (+ 1 mx)))
-	      (do ((i 2 (+ 1 i)))
+	      (do ((i 2 (+ i 1)))
 		  ((> i mn) cnk)
 		(set! cnk (/ (* cnk (+ mx i)) i))))))))
 
@@ -81,7 +81,7 @@
 	    (begin
 	      (set! somx2 (sqrt (* (- 1.0 x) (+ 1.0 x))))
 	      (set! fact 1.0)
-	      (do ((i 1 (+ 1 i)))
+	      (do ((i 1 (+ i 1)))
 		  ((> i m))
 		(set! pmm (* (- pmm) fact somx2))
 		(set! fact (+ fact 2.0)))))
@@ -124,12 +124,12 @@
 			 v)
 		       x))
 
-;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ 1 i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (legendre 20 (cos x)))))
+;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ i 1)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (legendre 20 (cos x)))))
 
 #|
 ;; if l odd, there seems to be sign confusion:
 (with-sound (:channels 2 :scaled-to 1.0)
-  (do ((i 0 (+ 1 i))
+  (do ((i 0 (+ i 1))
        (theta 0.0 (+ theta 0.01)))
       ((= i 10000))
     (outa i (plgndr 1 1 (cos theta)))
@@ -138,7 +138,7 @@
 
 ;; this works:
 (with-sound (:channels 2 :scaled-to 1.0)
-  (do ((i 0 (+ 1 i))
+  (do ((i 0 (+ i 1))
        (theta 0.0 (+ theta 0.01)))
       ((= i 10000))
     (let ((x (cos theta)))
@@ -173,11 +173,11 @@
 			  (set! fn1 fn)))))))))
 
 
-;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ 1 i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0))))
+;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ i 1)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0))))
 
 #|
 (with-sound (:scaled-to 0.5)
-  (do ((i 0 (+ 1 i))
+  (do ((i 0 (+ i 1))
        (theta 0.0 (+ theta 0.05)))
       ((= i 10000))
     (let ((x (cos theta)))
@@ -266,7 +266,7 @@
 
 (define* (automorph a b c d snd chn)
   (let* ((len (frames snd chn))
-	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl (channel->vct 0 fftlen snd chn))

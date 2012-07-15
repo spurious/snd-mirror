@@ -31463,6 +31463,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  return(eval_error(sc, "can't set! some variable to ~S", args));
 
 	case OP_SET_PAIR_P_1:
+	case OP_SET_PAIR_C_P_1:
 	  set_multiple_value(args);
 	  return(eval_error(sc, "too many values to set! ~S", args));
 
@@ -33470,7 +33471,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
        *   save free_heap top
        *   val = c_call(add)(its_args)
        *   is heap top different and val == old free heap top [(*(sc->free_heap_top+1)))?]
-       *   of so, val is a temp directly from add and we can use remake real in the subsequent multiply, or
+       *   if so, val is a temp directly from add and we can use remake real in the subsequent multiply, or
        *     we can use it normally, then release it by hand after multiply returns
        *
        * or have sc->temp_value, clear in add if not temp, else set
@@ -47670,6 +47671,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     */
 	  case T_VECTOR:
 	    /* TODO: if is int arg, and not multidim obj, (check ind in range) set directly */
+#if WITH_GMP
+	    car(sc->T3_1) = obj;
+	    car(sc->T3_2) = arg;
+	    car(sc->T3_3) = value;
+	    sc->value = g_vector_set(sc, sc->T3_1);
+#else
 	    if (vector_is_multidimensional(obj))
 	      {
 		car(sc->T3_1) = obj;
@@ -47690,9 +47697,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		vector_element(obj, index) = value;
 		sc->value = value;
 	      }
+#endif
 	    break;
 	    
 	  case T_STRING:
+#if WITH_GMP
+	    car(sc->T3_1) = obj;
+	    car(sc->T3_2) = arg;
+	    car(sc->T3_3) = value;
+	    sc->value = g_string_set(sc, sc->T3_1);
+#else
 	    {
 	      s7_Int index;
 	      if (!is_integer(arg))
@@ -47707,6 +47721,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      string_value(obj)[index] = (char)s7_character(value);
 	      sc->value = value;
 	    }
+#endif
 	    break;
 	    
 	  case T_PAIR:
@@ -48140,6 +48155,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * TODO: check other UNKNOWN->OBJECT cases to avoid APPLY
 	   */
 
+	  /* for gmp case, indices need to be decoded via s7_integer, not just integer */
+
 	  switch (type(sc->x))
 	    {
 	    case T_C_OBJECT:
@@ -48185,13 +48202,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (is_symbol(val))
 			  val = finder(sc, val);
 
-			if ((is_integer(index)) &&
+			if ((s7_is_integer(index)) &&
 			    (type(val) == T_REAL))
 			  {
 			    set_3if = c_object_set_3if(sc->x);
 			    if (set_3if)
 			      {
-				(*(set_3if))(sc, c_object_value(sc->x), integer(index), real(val));
+				(*(set_3if))(sc, c_object_value(sc->x), s7_integer(index), real(val));
 				sc->value = val;
 				goto START;
 			      }
@@ -48263,11 +48280,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      index = finder(sc, index);
 		    if (!s7_is_integer(index))
 		      eval_error(sc, "vector-set!: index must be an integer: ~S", sc->code);
-		    ind = integer(index);
+		    ind = s7_integer(index);
 		    if ((ind < 0) ||
 			(ind >= vector_length(sc->x)))
 		      out_of_range(sc, sc->VECTOR_SET, small_int(2), index, "should be between 0 and the vector length");
-		    
 		    val = cadr(sc->code);
 		    if (!is_pair(val))
 		      {
@@ -48327,7 +48343,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      index = finder(sc, index);
 		    if (!s7_is_integer(index))
 		      eval_error(sc, "string-set!: index must be an integer: ~S", sc->code);
-		    ind = integer(index);
+		    ind = s7_integer(index);
 		    if ((ind < 0) ||
 			(ind >= string_length(sc->x)))
 		      out_of_range(sc, sc->STRING_SET, small_int(2), index, "should be between 0 and the string length");
@@ -57927,6 +57943,8 @@ s7_scheme *s7_init(void)
  *   so that env not incremented (line 49920)
  *
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
+ * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
+ * PERHAPS: closure direct
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1280
  * bench    52019 -> 7875 [8268] 8037 8592 8402

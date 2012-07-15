@@ -124,7 +124,7 @@
   ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
   ;;  see stretch-sound-via-dft below for a general version
   (let* ((len (frames snd chn))
-	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl1 (channel->vct 0 fftlen snd chn))
@@ -388,7 +388,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (zero-phase snd chn)
   "(zero-phase snd chn) calls fft, sets all phases to 0, and un-ffts"
   (let* ((len (frames snd chn))
-	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl (channel->vct 0 fftlen snd chn))
@@ -407,7 +407,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (rotate-phase func snd chn)
   "(rotate-phase func snd chn) calls fft, applies func to each phase, then un-ffts"
   (let* ((len (frames snd chn))
-	 (pow2 (ceiling (/ (log len) (log 2))))
+	 (pow2 (ceiling (log len 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (fftlen2 (floor (/ fftlen 2)))
 	 (fftscale (/ 1.0 fftlen))

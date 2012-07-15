@@ -686,7 +686,7 @@
 
 (define (make-vector-name str)
   (let ((len (length str)))
-    (do ((i 0 (+ 1 i)))
+    (do ((i 0 (+ i 1)))
 	((= i len) str)
       (if (char=? (str i) #\space)
 	  (set! (str i) #\_)))))
@@ -917,7 +917,7 @@
 	  (let ((row 0)
 		(ctr 0)
 		(offset (ceiling (/ n cols))))
-	    (do ((i 0 (+ 1 i)))
+	    (do ((i 0 (+ i 1)))
 		((>= row offset))
 	      (let ((x (+ row (* ctr offset))))
 		(if (< x n)
@@ -1474,5 +1474,6 @@
 	      "xen.html" "libxm.html" "index.html"))
 
 
+(s7-version)
 (exit)
 
