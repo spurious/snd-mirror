@@ -8822,6 +8822,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   return(NULL);
 }
 
+
 #define GET_GENERATOR(Obj, Type, Safe, Val)		\
   do { s7_pointer _Obj_ = Obj; mus_any *_Val_ = NULL;	\
        if (Safe) \
@@ -8844,49 +8845,11 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
        Val = _Val_; } while (0)
 
 
-#define GET_NUMBER(Obj, Caller, Safe, Val)			\
-  do { s7_pointer _Obj_ = Obj; s7_pointer _Val_ = NULL;	\
-       if (Safe) \
-         _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
-       if (!_Val_) \
-         { \
-           _Val_ = s7_slot(sc, _Obj_); \
-           if (s7_is_do_local_or_global(sc, _Obj_)) \
- 	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-           if (!s7_is_number(slot_value(_Val_))) \
-	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, Caller, "a number"); \
-         } \
-       Val = slot_value(_Val_); } while (0)
+/* TODO: val = clm* here or no macro at all */
 
-
-#define GET_REAL(Obj, Caller, Safe, Val)			\
-  do { s7_pointer _Obj_ = Obj; s7_pointer _Val_ = NULL;	\
-       if (Safe) \
-         _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
-       if (!_Val_) \
-         { \
-           _Val_ = s7_slot(sc, _Obj_); \
-           if (s7_is_do_local_or_global(sc, _Obj_)) \
- 	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-           if (!s7_slot_value_is_real(_Val_)) \
-	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, S_ ## Caller, "a real"); \
-         } \
-       Val = s7_slot_value_to_real(s7, _Val_); } while (0)
-
-
-#define GET_INTEGER(Obj, Caller, Safe, Val)			\
-  do { s7_pointer _Obj_ = Obj; s7_pointer _Val_ = NULL;	\
-       if (Safe) \
-         _Val_ = (s7_pointer)s7_symbol_accessor_data(_Obj_); \
-       if (!_Val_) \
-         { \
-           _Val_ = s7_slot(sc, _Obj_); \
-           if (s7_is_do_local_or_global(sc, _Obj_)) \
- 	     s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-           if (!s7_slot_value_is_integer(_Val_)) \
-	     XEN_ASSERT_TYPE(false, _Val_, XEN_ARG_2, S_ ## Caller, "an integer"); \
-         } \
-       Val = s7_slot_value_to_integer(s7, _Val_); } while (0)
+#define GET_NUMBER(Obj, Caller, Safe, Val) Val = s7_symbol_to_safe_do_number(s7, Obj, Safe, Caller)
+#define GET_REAL(Obj, Caller, Safe, Val) Val = s7_symbol_to_safe_do_real(s7, Obj, Safe, S_ ## Caller)
+#define GET_INTEGER(Obj, Caller, Safe, Val) Val = s7_symbol_to_safe_do_integer(s7, Obj, Safe, S_ ## Caller)
 
 
 #define GEN_1(Type, Func) \
@@ -9369,7 +9332,7 @@ static s7_pointer fm_violin_2_fallback(s7_scheme *sc, s7_pointer args)
   GET_REAL(cadr(vargs), polywave, false, vibrato);
   
   mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
-  return(args); /* just return something! */
+  return(XEN_ZERO); /* just return something! */
 }
 
 static s7_pointer fm_violin_2;
@@ -9477,7 +9440,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
   val = mus_env((mus_any *)syms[3]) * mus_oscil_fm((mus_any *)syms[4], 
 						   vibrato + (mus_env((mus_any *)syms[5]) * mus_polywave((mus_any *)syms[6], vibrato)));
   mus_locsig((mus_any *)syms[0], pos, val);
-  return(args);
+  return(XEN_ZERO);
 }
 
 
@@ -9887,7 +9850,7 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
   GET_INTEGER(cadr(args), outa, in_safe_do, pos);
   x = s7_call_direct(sc, caddr(args));
   mus_locsig(locs, pos, s7_number_to_real(x));
-  return(x);
+  return(XEN_ZERO);
 }
 
 
@@ -11844,6 +11807,7 @@ static s7_pointer clm_make_function(s7_scheme *sc, const char *name, s7_function
   fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(sc, fin, gclass);
   s7_function_chooser_set_data(sc, fin, (void *)make_choices(mul_c, mul_s, e, mul_c1, mul_s1, e1));
+  s7_function_set_returns_temp(fin);
   return(fin);
 }
 
@@ -11854,6 +11818,7 @@ static s7_pointer clm_make_function_no_choice(s7_scheme *sc, const char *name, s
   s7_pointer fin;
   fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(sc, fin, gclass);
+  s7_function_set_returns_temp(fin);
   return(fin);
 }
 
@@ -12514,62 +12479,49 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "frame->frame");
   s7_function_set_chooser(sc, f, frame_to_frame_chooser);
   gen_class = s7_function_class(sc, f);
-  frame_to_frame_sss = s7_make_function(sc, "frame->frame", g_frame_to_frame_sss, 3, 0, false, "frame->frame optimization");
-  s7_function_set_class(sc, frame_to_frame_sss, gen_class);
+  frame_to_frame_sss = clm_make_function_no_choice(sc, "frame->frame", g_frame_to_frame_sss, 3, 0, false, "frame->frame optimization", gen_class);
 
 
   f = s7_name_to_value(sc, "locsig");
   s7_function_set_chooser(sc, f, locsig_chooser);
   gen_class = s7_function_class(sc, f);
 
-  fm_violin_2 = s7_make_function(sc, "locsig", g_fm_violin_2, 3, 0, false, "fm-violin optimization");
-  s7_function_set_class(sc, fm_violin_2, gen_class);
-  indirect_locsig_3 = s7_make_function(sc, "locsig", g_indirect_locsig_3, 2, 0, false, "locsig optimization");
-  s7_function_set_class(sc, indirect_locsig_3, gen_class);
+  fm_violin_2 = clm_make_function_no_choice(sc, "locsig", g_fm_violin_2, 3, 0, false, "fm-violin optimization", gen_class);
+  indirect_locsig_3 = clm_make_function_no_choice(sc, "locsig", g_indirect_locsig_3, 2, 0, false, "locsig optimization", gen_class);
 
 
   f = s7_name_to_value(sc, "outa");
   s7_function_set_chooser(sc, f, outa_chooser);
   gen_class = s7_function_class(sc, f);
 
-  outa_mul_s_delay = s7_make_function(sc, "outa", g_outa_mul_s_delay, 2, 0, false, "outa optimization");
-  s7_function_set_class(sc, outa_mul_s_delay, gen_class);
-  outa_env_polywave_env = s7_make_function(sc, "outa", g_outa_env_polywave_env, 2, 0, false, "outa optimization");
-  s7_function_set_class(sc, outa_env_polywave_env, gen_class);
-  indirect_outa_2 = s7_make_function(sc, "outa", g_indirect_outa_2, 2, 0, false, "outa optimization");
-  s7_function_set_class(sc, indirect_outa_2, gen_class);
-  indirect_outa_add_2 = s7_make_function(sc, "outa", g_indirect_outa_add_2, 2, 0, false, "outa optimization");
-  s7_function_set_class(sc, indirect_outa_add_2, gen_class);
-  indirect_outa_sub_2 = s7_make_function(sc, "outa", g_indirect_outa_sub_2, 2, 0, false, "outa optimization");
-  s7_function_set_class(sc, indirect_outa_sub_2, gen_class);
-  indirect_outa_ss = s7_make_function(sc, "outa", g_indirect_outa_ss, 2, 0, false, "outa optimization");
-  s7_function_set_class(sc, indirect_outa_ss, gen_class);
+  outa_mul_s_delay = clm_make_function_no_choice(sc, "outa", g_outa_mul_s_delay, 2, 0, false, "outa optimization", gen_class);
+  outa_env_polywave_env = clm_make_function_no_choice(sc, "outa", g_outa_env_polywave_env, 2, 0, false, "outa optimization", gen_class);
+  indirect_outa_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2, 2, 0, false, "outa optimization", gen_class);
+  indirect_outa_add_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_add_2, 2, 0, false, "outa optimization", gen_class);
+  indirect_outa_sub_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_sub_2, 2, 0, false, "outa optimization", gen_class);
+  indirect_outa_ss = clm_make_function_no_choice(sc, "outa", g_indirect_outa_ss, 2, 0, false, "outa optimization", gen_class);
 
 
   f = s7_name_to_value(sc, "outb");
   s7_function_set_chooser(sc, f, outb_chooser);
   gen_class = s7_function_class(sc, f);
 
-  outb_mul_s_delay = s7_make_function(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization");
-  s7_function_set_class(sc, outb_mul_s_delay, gen_class);
+  outb_mul_s_delay = clm_make_function_no_choice(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization", gen_class);
 
 
   f = s7_name_to_value(sc, "ina");
   s7_function_set_chooser(sc, f, ina_chooser);
   gen_class = s7_function_class(sc, f);
 
-  ina_reverb_2 = s7_make_function(sc, "ina", g_ina_reverb_2, 2, 0, false, "ina optimization");
-  s7_function_set_class(sc, ina_reverb_2, gen_class);
-  mul_s_ina_reverb_2 = s7_make_function(sc, "*", g_mul_s_ina_reverb_2, 2, 0, false, "* optimization");
-  s7_function_set_class(sc, mul_s_ina_reverb_2, gen_class);
+  ina_reverb_2 = clm_make_function_no_choice(sc, "ina", g_ina_reverb_2, 2, 0, false, "ina optimization", gen_class);
+  mul_s_ina_reverb_2 = clm_make_function_no_choice(sc, "*", g_mul_s_ina_reverb_2, 2, 0, false, "* optimization", gen_class);
   s7_function_chooser_set_data(sc, ina_reverb_2, (void *)make_choices(NULL, mul_s_ina_reverb_2, NULL, NULL, NULL, NULL));
 
   f = s7_name_to_value(sc, "frame->file");
   s7_function_set_chooser(sc, f, frame_to_file_chooser);
   gen_class = s7_function_class(sc, f);
 
-  indirect_frame_to_file_3 = s7_make_function(sc, "frame->file", g_indirect_frame_to_file_3, 3, 0, false, "frame->file optimization");
-  s7_function_set_class(sc, indirect_frame_to_file_3, gen_class);
+  indirect_frame_to_file_3 = clm_make_function_no_choice(sc, "frame->file", g_indirect_frame_to_file_3, 3, 0, false, "frame->file optimization", gen_class);
 
   f = s7_name_to_value(sc, "mus-generator-ref");
   s7_function_chooser_set_data(sc, f, (void *)s7_safe_vector_ref);

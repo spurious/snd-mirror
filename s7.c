@@ -1398,6 +1398,16 @@ static int t_optimized = T_OPTIMIZED;
  *    on only for a very short time.
  */
 
+#define T_RETURNS_TEMP                (1 << (TYPE_BITS + 9))
+#define returns_temp(p)               ((typeflag(p) & T_RETURNS_TEMP) != 0)
+#define set_returns_temp(p)           typeflag(p) |= T_RETURNS_TEMP
+void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
+bool s7_function_returns_temp(s7_pointer f) {return(returns_temp(f));}
+/* this marks functions that guarantee their returned value is either a newly minted temporary cell
+ *   (not one of the function args and not stored anywhere outside-accessible), or an immutable 
+ *   constant like real_zero.
+ */
+
 #define T_KEYWORD                     (1 << (TYPE_BITS + 10))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
@@ -1497,7 +1507,7 @@ static void set_unsafe_1(s7_scheme *sc, s7_pointer p, int line) {fprintf(stderr,
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS                   0x00020000
+#define UNUSED_BITS                   0x00000000
 
 #if 0
 /* to find who is stomping on our symbols:
@@ -1913,7 +1923,7 @@ static int safe_strlen(const char *str)
 {
   /* this is safer than strlen, and slightly faster */
   char *tmp = (char *)str;
-  if (!tmp) return(0);
+  if ((!tmp) || (!(*tmp))) return(0);
   while (*tmp++) {};
   return(tmp - str - 1);
 }
@@ -6679,6 +6689,9 @@ s7_Double s7_number_to_real(s7_pointer x)
 
 s7_Int s7_number_to_integer(s7_pointer x)
 {
+  if (type(x) == T_INTEGER)
+    return(integer(x));
+
   switch (type(x))
     {
     case T_INTEGER: 
@@ -18324,7 +18337,7 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
       loc = port_string_length(pt);
       port_string_length(pt) = new_len * 2;
       port_string(pt) = (char *)realloc(port_string(pt), port_string_length(pt) * sizeof(char));
-      memset((void *)(port_string(pt) + loc), 0, port_string_length(pt) - loc);
+      memset((void *)(port_string(pt) + loc), 0, port_string_length(pt) - loc); /* TODO: can len-loc be 0? (valgrind is complaining) */
     }
 
   memcpy((void *)(port_string(pt) + port_string_point(pt)), (void *)str, len);
@@ -19939,7 +19952,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
   char *buf;
   buf = (char *)calloc(512, sizeof(char));
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
 	   type(obj), 
 	   type_name(sc, obj, NO_ARTICLE),
 	   typeflag(obj),
@@ -19965,6 +19978,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_gensym(obj) ?             " gensym" : "",
 	   has_methods(obj) ?           " has methods" : "",
+	   returns_temp(obj) ?          " returns temp cell" : "",
 	   ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
   return(buf);
 }
@@ -28025,6 +28039,61 @@ void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level))
 {
 }
 #endif
+
+
+void *s7_symbol_to_safe_do_number(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller)
+{
+  s7_pointer val = NULL;
+  if (in_safe_do)
+    val = symbol_accessor_data(obj);
+  if (!val)
+    {
+      val = find_symbol(sc, obj); 
+      if (s7_is_do_local_or_global(sc, obj))
+	symbol_accessor_data(obj) = (void *)val;
+      if (!s7_is_number(slot_value(val)))
+	s7_wrong_type_arg_error(sc, caller, 2, obj, "a number");
+    }
+  return(slot_value(val));
+}
+
+s7_Double s7_symbol_to_safe_do_real(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller)
+{
+  s7_pointer val = NULL;
+  if (in_safe_do)
+    val = symbol_accessor_data(obj);
+  if (!val)
+    {
+      val = find_symbol(sc, obj); 
+      if (s7_is_do_local_or_global(sc, obj))
+	symbol_accessor_data(obj) = (void *)val;
+      if (!s7_is_real(slot_value(val)))
+	s7_wrong_type_arg_error(sc, caller, 2, obj, "a real");
+    }
+#if WITH_GMP
+  return(s7_number_to_real(slot_value(val)));
+#else
+  if (is_real(slot_value(val)))
+    return(real(slot_value(val)));
+  return((s7_Double)integer(slot_value(val)));
+#endif
+}
+
+s7_Int s7_symbol_to_safe_do_integer(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller)
+{
+  s7_pointer val = NULL;
+  if (in_safe_do)
+    val = symbol_accessor_data(obj);
+  if (!val)
+    {
+      val = find_symbol(sc, obj); 
+      if (s7_is_do_local_or_global(sc, obj))
+	symbol_accessor_data(obj) = (void *)val;
+      if (!s7_is_integer(slot_value(val)))
+	s7_wrong_type_arg_error(sc, caller, 2, obj, "an integer");
+    }
+  return(s7_integer(slot_value(val)));
+}
 
 
 
@@ -37053,7 +37122,12 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 #endif
 	  /* an experiment */
 	  if (is_symbol(caddr(x)))
-	    return(false);
+	    {
+#if PRINTING
+	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+#endif
+	      return(false);
+	    }
 	  if (((s7_is_constant(caddr(x))) ||
 	       (form_is_safe(sc, func, caddr(x), false, bad_set))) &&
 	      (is_pair(cadr(x))) &&
@@ -38829,7 +38903,6 @@ static s7_pointer check_set(s7_scheme *sc)
 		set_syntax_op(sc->code, sc->SET_PWS);
 	      else
 		{
-		  /* TODO: this needs a case for (set! (mus-* g0) (gen g1)) or OP_SAFE_C_SC etc */
 		  if ((is_pair(cdr(inner))) &&
 		      (!is_pair(cddr(inner))) &&
 		      (!is_pair(cddr(sc->code))))
@@ -39254,6 +39327,9 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 	    }
 	}
     }
+#if PRINTING
+  fprintf(stderr, "safe\n");
+#endif
   return(true);
 }
 #endif
@@ -39547,7 +39623,6 @@ static s7_pointer check_do(s7_scheme *sc)
     {
       set_syntax_op(sc->code, sc->DO_UNCHECKED);
 
-
 #if WITH_OPTIMIZATION
       {
 	/* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
@@ -39645,6 +39720,12 @@ static s7_pointer check_do(s7_scheme *sc)
 
 			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
 			  {
+#if PRINTING
+			    fprintf(stderr, "do is safe %d %d %d -> ",
+				    (safe_list_length(sc, body)),
+				    (is_pair(car(body))),
+				    (is_optimized(car(body))));
+#endif
 			    if ((safe_list_length(sc, body) == 1) &&
 				(is_pair(car(body))) &&
 				(is_optimized(car(body))))
@@ -39680,7 +39761,9 @@ static s7_pointer check_do(s7_scheme *sc)
 				/* we're stepping by +1 and going to =
 				 *   the final integer check has to wait until run time (symbol value dependent)
 				 */
-				/* fprintf(stderr, "safe do\n"); */
+#if PRINTING
+				fprintf(stderr, "%d safe do\n", __LINE__);
+#endif
 				set_syntax_op(sc->code, sc->SAFE_DO);
 				if ((!has_set) &&
 				    (c_function_class(ecdr(end)) == equal_class))
@@ -39697,7 +39780,7 @@ static s7_pointer check_do(s7_scheme *sc)
 				      if ((is_optimized(car(body))) &&
 					  (optimize_data(car(body)) == HOP_SAFE_C_C))
 					{
-					  /* fprintf(stderr, "dotimes_c_c\n"); */
+					  /* fprintf(stderr, "dotimes_c_c\n");*/
 					  set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_C);
 					}
 				      else
@@ -39708,59 +39791,45 @@ static s7_pointer check_do(s7_scheme *sc)
 					      /* not sure this matters -- trying to avoid special slots for step vars */
 					      (optimize_data(car(body)) == HOP_SAFE_C_S))
 					    {
-					      /* fprintf(stderr, "dotimes_c_s\n"); */
+					      /* fprintf(stderr, "dotimes_c_s\n");*/
 					      set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_S);
 					    }
 					  else
 					    {
-					      /* fprintf(stderr, "safe: %s\n", DISPLAY(body)); */
+					      /* fprintf(stderr, "perhaps safe: %s\n", DISPLAY(body)); */
 					      /* HOP_SAFE_C_SS also happens, HOP_SAFE_opSq_S
 					       */
 					      if ((is_syntactic(caar(body))) &&
-						  (syntax_opcode(caar(body)) == OP_LET))
+						  (syntax_opcode(caar(body)) == OP_LET) &&
+						  (!is_null(cadar(body))) && /* it has at least one let var */
+						  (is_null(cdadar(body))))   /* but only one */
 						{
 						  s7_pointer x;
 						  x = cddar(body);
 
-						  /* fprintf(stderr, "let safe: %s\n", DISPLAY(x)); */
+						  /* fprintf(stderr, "let safe: %s from %s\n", DISPLAY(x), DISPLAY(body)); */
 						  /* HOP_SAFE_C_S here also */
 						  
 						  if ((is_pair(car(x))) &&
 						      (is_optimized(car(x))) &&
-						      (is_null(cdr(x))) &&
+						      (is_null(cdr(x))) && /* one liner? */
 						      (optimize_data(car(x)) == HOP_SAFE_C_C))
 						    {
-						      bool happy = true;
-						      
-						      /* fprintf(stderr, "safe let?: %s\n", DISPLAY_80(sc->code));  */
-						      
-						      for (x = cadar(body); is_pair(x); x = cdr(x))
-							{
-							  /* fprintf(stderr, "let var: %s\n", DISPLAY(car(x)));  */
-							  if ((!is_pair(cadar(x))) ||
-							      (!is_optimized(cadar(x))) ||
-							      (optimize_data(cadar(x)) != HOP_SAFE_C_C))
-							    {
-							      /*
-								fprintf(stderr, "%d %d %s\n", 
-								is_pair(cadar(x)),
-								is_optimized(cadar(x)),
-								opt_names[optimize_data(cadar(x))]);
-							      */
-							      happy = false;
-							      break;
-							    }
-							}
-						      if (happy)
-							{
-							  /* fprintf(stderr, "safe: %s\n", DISPLAY_80(sc->code));  */
-							  set_syntax_op(sc->code, sc->SIMPLE_SAFE_DOTIMES);
-							}
+						      x = cadar(cadar(body));
+						      if ((is_pair(x)) &&
+							  (is_optimized(x)) &&
+							  (returns_temp(ecdr(x)) == 1) &&
+							  (optimize_data(x) == HOP_SAFE_C_C))
+							set_syntax_op(sc->code, sc->SIMPLE_SAFE_DOTIMES);
 						    }
 						}
 					    }
 					}
 				    }
+				  /*
+				  if (car(ecdr(sc->code)) == sc->DOTIMES_P)
+				    fprintf(stderr, "oops\n");
+				  */
 				}
 				/* else fprintf(stderr, "unsafe: %s\n", DISPLAY_80(sc->code)); */
 			      }
@@ -40873,13 +40942,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		else
 		  {
+		    s7_pointer temp_val;
+		    bool free_safe;
 		    p = environment_slots(sc->envir);
 		    let_var = cdadar(lets);
 		    lets = cadar(lets);
 		    
+		    free_safe = (returns_temp(ecdr(lets)));
+		    /* PERHAPS: ideally this would split the code in 2 here */
+		    
 		  SIMPLE_SAFE_DOTIMES_LOOP:
-		    slot_set_value(p, c_call(lets)(sc, let_var));
+		    slot_set_value(p, temp_val = c_call(lets)(sc, let_var));
 		    c_call(func)(sc, body);
+
+		    /* TODO: extend this to all the temp funcs here and in snd/clm,
+		     *  reuse or release can occur anywhere, but this is tricky!!
+		     */
+		    if ((free_safe) &&
+			(typeflag(temp_val) == T_REAL)) /* i.e. not immutable, not integer or something else unexpected */
+		      {
+			typeflag(temp_val) = 0;
+			(*(sc->free_heap_top++)) = temp_val;
+		      }
+
 		    numerator(stepper)++;
 		    if (numerator(stepper) == denominator(stepper))
 		      {
@@ -41436,7 +41521,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = cdr(code);
 	goto START_WITHOUT_POP_STACK;
       }
-
 
 
     DOTIMES_P:
@@ -44998,6 +45082,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		cdr(sc->all_g_args[i - 1]) = sc->NIL;
 		sc->value = c_call(code)(sc, sc->all_g_args[0]);
+		
+		/* we can't release a temp here:
+		 *   (define (hi) (vector 14800 14020 (oscil os) (* 1/3 14800) 14800 (* 1/2 14800))) (hi) where os returns non-zero:
+		 *   #(14800 14020 <output-string-port> 14800/3 14800 7400)
+		 */
 		goto START;
 	      }
 	      
@@ -47667,10 +47756,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	    break;
 	    
-	    /* these are wasteful -- we know the object type!
+	    /* some of these are wasteful -- we know the object type! (list hash-table)
 	     */
 	  case T_VECTOR:
-	    /* TODO: if is int arg, and not multidim obj, (check ind in range) set directly */
 #if WITH_GMP
 	    car(sc->T3_1) = obj;
 	    car(sc->T3_2) = arg;
@@ -47965,9 +48053,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(sc->T2_2) = finder(sc, caddr(arg));
 	car(sc->T2_1) = val;
 	sc->value = c_call(arg)(sc, sc->T2_1);
-	if (sc->code != sc->temp4)
-	  sc->code = car(sc->temp4);
-	else sc->code = car(sc->code);
+	sc->code = car(sc->temp4);
 	goto SET1;
       }
 
@@ -47976,9 +48062,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       car(sc->T2_1) = finder(sc, car(fcdr(sc->code)));
       car(sc->T2_2) = finder(sc, cadr(fcdr(sc->code)));
       sc->value = c_call(cadr(sc->code))(sc, sc->T2_1);
-      if (sc->code != sc->temp4)
-	sc->code = car(sc->temp4);
-      else sc->code = car(sc->code);
+      sc->code = car(sc->temp4);
       goto SET1;
 
 
@@ -47997,9 +48081,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * (this is independent of c_function_call: it happens with optimization off, so set below
        * also needs to be protected, I guess).
        */
-      if (sc->code != sc->temp4)
-	sc->code = car(sc->temp4);
-      else sc->code = car(sc->code);
+      sc->code = car(sc->temp4);
       goto SET1;
 #endif      
       
@@ -48151,8 +48233,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 
 	  /* TODO: ref_2i[ok], ref_2f, ref_3f, perhaps ref_3i[mixer/sound-data], set_4iff (same)
-	   * TODO: tie these into sndlib/clm/snd
-	   * TODO: check other UNKNOWN->OBJECT cases to avoid APPLY
 	   */
 
 	  /* for gmp case, indices need to be decoded via s7_integer, not just integer */

@@ -1418,10 +1418,15 @@ value passed to set!:
 	         (set! ,var (logior ,var (ash 1 ,index)))
 	         (set! ,var (logand ,var (lognot (ash 1 ,index))))))))
 #&lt;macro&gt;
-&gt; (let ((int #b1010))
-    (set! (logbit? int 0) #t)
-    int)
-11
+&gt; (define (mingle a b)
+    (let ((r 0))
+      (do ((i 0 (+ i 1)))
+          ((= i 31) r)
+        (set! (logbit? r (* 2 i)) (logbit? a i))
+        (set! (logbit? r (+ (* 2 i) 1)) (logbit? b i)))))
+mingle
+&gt; (mingle 6 3) ; the INTERCAL mingle operator?
+30
 </pre>
 
 <blockquote>
@@ -5447,6 +5452,8 @@ the current environment, so defines happen in the enclosing environment.
 
   (define exact-integer? integer?)	
   (define (exact-integer-sqrt i) (let ((sq (floor (sqrt i)))) (values sq (- i (* sq sq)))))
+  (define inexact exact-&gt;inexact)
+  (define exact inexact-&gt;exact)
 
   (define (port-open? p) (not (port-closed? p))) 
   (define (character-port? p) #t) 

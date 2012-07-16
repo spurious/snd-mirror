@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.8"
-#define S7_DATE "2-July-12"
+#define S7_VERSION "2.9"
+#define S7_DATE "16-July-12"
 
 
 typedef long long int s7_Int;
@@ -576,11 +576,15 @@ void **s7_expression_data(s7_scheme *sc, s7_pointer expr);
 void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size);
 
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
-
+void s7_function_set_returns_temp(s7_pointer f);
+bool s7_function_returns_temp(s7_pointer f);
 bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
 bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol);
 void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level));
-  /* these are for optimization choices */
+void *s7_symbol_to_safe_do_number(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller);
+s7_Double s7_symbol_to_safe_do_real(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller);
+s7_Int s7_symbol_to_safe_do_integer(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller);
+  /* these are for experimental optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e);
@@ -807,6 +811,7 @@ void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_a
  * 
  *        s7 changes
  *		
+ * 16-July:   s7_function_returns_temp (an experiment).
  * 2-July:    s7_object_set_* functions.
  * 11-June:   throw.
  * 4-June.    s7_object_environment.
