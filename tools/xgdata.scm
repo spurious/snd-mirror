@@ -8438,6 +8438,40 @@
 (CCHK "GTK_IS_SEARCH_ENTRY" "GtkWidget*")
 (CFNC "GtkWidget* gtk_search_entry_new void")
 
+;;; 3.5.8 (which requires atk-bridge which is not builable!)
+  void                  gtk_button_set_always_show_image (GtkButton   *button,
+                                                          gboolean     always_show);
++ typedef enum {
++   GTK_LEVEL_BAR_MODE_CONTINUOUS,
++   GTK_LEVEL_BAR_MODE_DISCRETE
++ } GtkLevelBarMode;
+#define GTK_LEVEL_BAR(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_LEVEL_BAR, GtkLevelBar))
+#define GTK_IS_LEVEL_BAR(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_LEVEL_BAR))
+GtkWidget *gtk_level_bar_new                (void);
+GtkWidget *gtk_level_bar_new_for_interval   (gdouble      min_value,
+                                             gdouble      max_value);
+void       gtk_level_bar_set_mode           (GtkLevelBar *self,
+                                             GtkLevelBarMode mode);
+GtkLevelBarMode gtk_level_bar_get_mode      (GtkLevelBar *self);
+void       gtk_level_bar_set_value          (GtkLevelBar *self,
+                                             gdouble      value);
+gdouble    gtk_level_bar_get_value          (GtkLevelBar *self);
+void       gtk_level_bar_set_min_value      (GtkLevelBar *self,
+                                             gdouble      value);
+gdouble    gtk_level_bar_get_min_value      (GtkLevelBar *self);
+void       gtk_level_bar_set_max_value      (GtkLevelBar *self,
+                                             gdouble      value);
+gdouble    gtk_level_bar_get_max_value      (GtkLevelBar *self);
+void       gtk_level_bar_add_offset_value   (GtkLevelBar *self,
+                                             const gchar *name,
+                                             gdouble      value);
+void       gtk_level_bar_remove_offset_value (GtkLevelBar *self,
+                                              const gchar *name);
+gboolean   gtk_level_bar_get_offset_value   (GtkLevelBar *self,
+                                             const gchar *name,
+                                             gdouble     *value);
+
+
 |#
 
 

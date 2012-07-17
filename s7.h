@@ -469,8 +469,6 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);                 /* (
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs);
-void *s7_symbol_accessor_data(s7_pointer sym);
-void s7_symbol_set_accessor_data(s7_pointer sym, void *val);
 
 s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_slot_value(s7_scheme *sc, s7_pointer slot);
@@ -581,9 +579,9 @@ bool s7_function_returns_temp(s7_pointer f);
 bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
 bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol);
 void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level));
-void *s7_symbol_to_safe_do_number(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller);
-s7_Double s7_symbol_to_safe_do_real(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller);
-s7_Int s7_symbol_to_safe_do_integer(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller);
+s7_Double s7_call_direct_to_real(s7_scheme *sc, s7_pointer expr);
+s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
+s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
   /* these are for experimental optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);

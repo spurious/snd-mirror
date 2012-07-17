@@ -875,8 +875,7 @@ typedef struct s7_cell {
 
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
       int accessor;
-      void *accessor_data;     /* FFI-accessible */
-      void *op_data;           /*   same purpose, but only s7-accessible */
+      void *op_data;
     } string;
     
     union {
@@ -1401,8 +1400,6 @@ static int t_optimized = T_OPTIMIZED;
 #define T_RETURNS_TEMP                (1 << (TYPE_BITS + 9))
 #define returns_temp(p)               ((typeflag(p) & T_RETURNS_TEMP) != 0)
 #define set_returns_temp(p)           typeflag(p) |= T_RETURNS_TEMP
-void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
-bool s7_function_returns_temp(s7_pointer f) {return(returns_temp(f));}
 /* this marks functions that guarantee their returned value is either a newly minted temporary cell
  *   (not one of the function args and not stored anywhere outside-accessible), or an immutable 
  *   constant like real_zero.
@@ -1647,7 +1644,6 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
 #define symbol_accessor(p)            (symbol_name_cell(p))->object.string.accessor
 #define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
-#define symbol_accessor_data(p)       (symbol_name_cell(p))->object.string.accessor_data
 #define symbol_op_data(p)             (symbol_name_cell(p))->object.string.op_data
 
 #define global_slot(p)                (p)->object.sym.global_slot
@@ -1739,6 +1735,8 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {car(ecdr(p)) = op; lifte
 #define c_function_chooser(f)         (f)->object.c_proc->chooser
 #define c_function_chooser_data(f)    (f)->object.c_proc->chooser_data
 #endif
+void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
+bool s7_function_returns_temp(s7_pointer f) {return(returns_temp(ecdr(f)));}
 
 #define c_call(f)                     ((s7_function)(fcdr(f)))
 #define set_c_function(f, X)          do {ecdr(f) = X; fcdr(f) = (s7_pointer)(c_function_call(ecdr(f)));} while (0)
@@ -4913,6 +4911,12 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
   if (is_keyword(sym))
     return(sym);
   return(sc->UNDEFINED);
+}
+
+
+s7_pointer s7_value(s7_scheme *sc, s7_pointer sym)
+{
+  return(finder(sc, sym));
 }
 
 
@@ -11322,7 +11326,6 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
     }
   return(x);
 }
-
 
 static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
 {
@@ -26172,6 +26175,36 @@ s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr)
 }
 
 
+s7_Double s7_call_direct_to_real(s7_scheme *sc, s7_pointer expr)
+{
+#if (!WITH_GMP)
+  return(real(c_function_call(ecdr(expr))(sc, cdr(expr))));
+#else
+  return(s7_real(c_function_call(ecdr(expr))(sc, cdr(expr))));
+#endif
+}
+
+
+s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
+{
+  s7_Double val;
+  s7_pointer temp;
+#if (!WITH_GMP)
+  temp = c_function_call(ecdr(expr))(sc, cdr(expr));
+  val = real(temp);
+#else
+  temp = c_function_call(ecdr(expr))(sc, cdr(expr));
+  val = s7_real(temp);
+#endif
+  if (typeflag(temp) == T_REAL) /* i.e. not immutable, not integer or something else unexpected */
+    {
+      typeflag(temp) = 0;
+      (*(sc->free_heap_top++)) = temp;
+    }
+  return(val);
+}
+
+
 static unsigned short table_top = 1, tables_size = 0;
 static void ***tables = NULL;
 static int *table_sizes = NULL;
@@ -27971,17 +28004,6 @@ static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer sy
 }
 
 
-void *s7_symbol_accessor_data(s7_pointer sym)
-{
-  return(symbol_accessor_data(sym));
-}
-
-void s7_symbol_set_accessor_data(s7_pointer sym, void *val)
-{
-  symbol_accessor_data(sym) = val;
-}
-
-
 #if WITH_OPTIMIZATION
 
 static s7_pointer find_safe_do_symbol_or_bust(s7_scheme *sc, s7_pointer sym);
@@ -28039,62 +28061,6 @@ void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level))
 {
 }
 #endif
-
-
-void *s7_symbol_to_safe_do_number(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller)
-{
-  s7_pointer val = NULL;
-  if (in_safe_do)
-    val = symbol_accessor_data(obj);
-  if (!val)
-    {
-      val = find_symbol(sc, obj); 
-      if (s7_is_do_local_or_global(sc, obj))
-	symbol_accessor_data(obj) = (void *)val;
-      if (!s7_is_number(slot_value(val)))
-	s7_wrong_type_arg_error(sc, caller, 2, obj, "a number");
-    }
-  return(slot_value(val));
-}
-
-s7_Double s7_symbol_to_safe_do_real(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller)
-{
-  s7_pointer val = NULL;
-  if (in_safe_do)
-    val = symbol_accessor_data(obj);
-  if (!val)
-    {
-      val = find_symbol(sc, obj); 
-      if (s7_is_do_local_or_global(sc, obj))
-	symbol_accessor_data(obj) = (void *)val;
-      if (!s7_is_real(slot_value(val)))
-	s7_wrong_type_arg_error(sc, caller, 2, obj, "a real");
-    }
-#if WITH_GMP
-  return(s7_number_to_real(slot_value(val)));
-#else
-  if (is_real(slot_value(val)))
-    return(real(slot_value(val)));
-  return((s7_Double)integer(slot_value(val)));
-#endif
-}
-
-s7_Int s7_symbol_to_safe_do_integer(s7_scheme *sc, s7_pointer obj, bool in_safe_do, const char *caller)
-{
-  s7_pointer val = NULL;
-  if (in_safe_do)
-    val = symbol_accessor_data(obj);
-  if (!val)
-    {
-      val = find_symbol(sc, obj); 
-      if (s7_is_do_local_or_global(sc, obj))
-	symbol_accessor_data(obj) = (void *)val;
-      if (!s7_is_integer(slot_value(val)))
-	s7_wrong_type_arg_error(sc, caller, 2, obj, "an integer");
-    }
-  return(s7_integer(slot_value(val)));
-}
-
 
 
 
@@ -34013,8 +33979,11 @@ static void init_choosers(s7_scheme *sc)
 
   add_1 = s7_make_function(sc, "+", g_add_1, 1, 0, false, "+ optimization");
   c_function_class(add_1) = c_function_class(f);
+
   add_2 = s7_make_function(sc, "+", g_add_2, 2, 0, false, "+ optimization");
   c_function_class(add_2) = c_function_class(f);
+  s7_function_set_returns_temp(add_2);
+
   add_1s = s7_make_function(sc, "+", g_add_1s, 2, 0, false, "+ optimization");
   c_function_class(add_1s) = c_function_class(f);
   add_s1 = s7_make_function(sc, "+", g_add_s1, 2, 0, false, "+ optimization");
@@ -34038,7 +34007,7 @@ static void init_choosers(s7_scheme *sc)
   subtract_1 = s7_make_function(sc, "-", g_subtract_1, 1, 0, false, "- optimization");
   c_function_class(subtract_1) = c_function_class(f);
   subtract_2 = s7_make_function(sc, "-", g_subtract_2, 2, 0, false, "- optimization");
-  c_function_class(add_2) = c_function_class(f);
+  c_function_class(subtract_2) = c_function_class(f);
   subtract_s1 = s7_make_function(sc, "-", g_subtract_s1, 2, 0, false, "- optimization");
   c_function_class(subtract_s1) = c_function_class(f);
   subtract_cs1 = s7_make_function(sc, "-", g_subtract_cs1, 2, 0, false, "- optimization");
@@ -35568,6 +35537,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		    {
 		      set_optimized(car(x));
 		      set_unsafe(car(x));
+		      /* fprintf(stderr, "c_pp choice: %s %s\n", DISPLAY(func), DISPLAY(car(x))); */
 		      set_optimize_data(car(x), hop + OP_SAFE_C_PP);
 		      /* set_c_function(car(x), func); */
 		      set_c_function(car(x), c_function_chooser(func)(sc, func, 2, car(x))); 
@@ -39087,7 +39057,6 @@ static void initialize_safe_do_1(s7_scheme *sc, s7_pointer tree)
     {
       if (is_symbol(tree))
 	{
-	  symbol_accessor_data(tree) = NULL;
 	  symbol_op_data(tree) = NULL;
 	}
     }
@@ -49693,6 +49662,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SAFE_C_PP_1:
+      /* fprintf(stderr, "c_pp_1: args: %s, code: %s\n", DISPLAY(sc->args), DISPLAY(sc->code)); */
+
       push_stack(sc, OP_SAFE_C_PP_2, cons(sc, sc->value, sc->args), sc->code);
       sc->code = caddr(sc->code);
       if (is_optimized(sc->code))
@@ -49707,6 +49678,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SAFE_C_PP_2:
       {
 	s7_pointer p;
+	/* fprintf(stderr, "c_pp_2: args: %s, code: %s\n", DISPLAY(sc->args), DISPLAY(sc->code)); */
+
 	p = sc->args;
 	if (is_null(cdr(p)))
 	  {
@@ -49733,7 +49706,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 *   field to c_proc info, then c_original_function_call(sc->code)(...).
 	 */
 	
-	sc->value = c_function_call(slot_value(global_slot(car(sc->code))))(sc, safe_reverse_in_place(sc, cons(sc, sc->value, p)));
+	if (is_global(car(sc->code)))
+	  sc->value = c_function_call(slot_value(global_slot(car(sc->code))))(sc, safe_reverse_in_place(sc, cons(sc, sc->value, p)));
+	else
+	  {
+	    s7_pointer f;
+	    f = s7_symbol_value(sc, car(sc->code)); /* desperation -- we've lost our function! */
+	    sc->value = c_function_call(f)(sc, safe_reverse_in_place(sc, cons(sc, sc->value, p)));
+	  }
+	
 	goto START;
       }
       
@@ -58032,6 +58013,6 @@ s7_scheme *s7_init(void)
  * index    44300 -> 4988 [4992] 4235 4725 3935 3545
  * s7test            1721             1456 1430 1375
  * t455                           265  256  218   83
- * t502                                 90   72   60
+ * t502                                 90   72   59
  */
 

@@ -1543,11 +1543,12 @@
 			       0.5 0.5  0.53 0.36  0.6 1.0  0.64 0.99  0.69 0.6  0.7 0.3  0.77 0.15 
 			       0.8 0.04  1.0 0.0) :duration dur :scaler amp))
 	 (frqf (make-env '(0 1  2 0  6 0 7 3 9 3) :scaler (hz->radians 60) :duration dur))
-	 (vib (make-oscil 2)))
+	 (vib (make-oscil 2))
+	 (scl (hz->radians 10)))
      (do ((i start (+ i 1)))
 	 ((= i stop))
        (let* ((frq (+ (env frqf)
-		      (* (hz->radians 10) (oscil vib))))
+		      (* scl (oscil vib))))
 	      (md (+ (* 2 frq)
 		     (* .125 (oscil gen4 frq)))))
 	 (outa i (* (env ampf)
@@ -5912,14 +5913,14 @@
 			 :duration dur :scaler (hz->radians (* 0.5 8150.0))))
 	 (gen1 (make-polywave :partials (list 1 .09  2 1  3 .07  4 .003 5 .01  6 .03  7 .005  9 .003)))
 	 (buzz (make-oscil 240))
-	 (buzz1 (make-oscil 240)))
+	 (buzz1 (make-oscil 240))
+	 (scl (hz->radians 20)))
      (do ((i start (+ i 1)))
 	 ((= i stop))
        (outa i (* (env ampf)
 		  (+ .8 (* .2 (oscil buzz)))
 		  (polywave gen1 (+ (env frqf)
-				    (* (hz->radians 20)
-				       (oscil buzz1))))))))
+				    (* scl (oscil buzz1))))))))
   
   ;; note 3
   (let* ((start (seconds->samples (+ beg .254)))
@@ -6903,15 +6904,15 @@
 	   (frqf (make-env '(0 3100  .4 3430  1 3140)
 			   :duration dur :offset (hz->radians 40) :scaler (hz->radians 0.5)))
 	   (gen1 (make-polywave :partials (list 1 .1 2 .5  3 .2  4 .1  6 .05  8 .03)))
-	   (vib (make-blackman 320 4)))
+	   (vib (make-blackman 320 4))
+	   (scl (hz->radians 200)))
        (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((vb (blackman vib)))
 	   (outa i (* (env ampf)
 		      (+ .4 (* .6 vb))
 		      (polywave gen1 (+ (env frqf)
-					(* (hz->radians 200) vb)))))))))
-  
+					(* scl vb)))))))))
   
   (definstrument (song-sparrow-chiff beg amp)
     (let* ((start (seconds->samples beg))
@@ -7961,13 +7962,13 @@
 	 (outa i (* (env ampf)
 		    (+ (* (env ampf1) 
 			  (polywave gen1 (+ frq1
-					    (* (env rndf1) rn))))
+					    (* rn (env rndf1)))))
 		       (* (env ampf2) 
 			  (polywave gen2 (+ frq2
-					    (* (env rndf2) rn))))
+					    (* rn (env rndf2)))))
 		       (* (env ampf3) 
 			  (polywave gen3 (+ frq1
-					    (* (env rndf3) rn)))))))))))
+					    (* rn (env rndf3))))))))))))
 
 ;; (with-sound (:play #t) (whooping-crane 0 .5))
 

@@ -8815,49 +8815,39 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
 {
   s7_pointer g;
   mus_xen *gn;
-  g = s7_symbol_value(sc, sym);
+  g = s7_value(sc, sym);
   gn = (mus_xen *)s7_object_value_checked(g, mus_xen_tag);
   if (gn)
     return(gn->gen);
   return(NULL);
 }
 
-
-#define GET_GENERATOR(Obj, Type, Safe, Val)		\
-  do { s7_pointer _Obj_ = Obj; mus_any *_Val_ = NULL;	\
-       if (Safe) \
-         _Val_ = (mus_any *)s7_symbol_accessor_data(_Obj_); \
-       if (!_Val_) \
-         { \
-           s7_pointer g; \
-           mus_xen *gn;  \
-           g = s7_symbol_value(sc, _Obj_); \
-           gn = (mus_xen *)s7_object_value_checked(g, mus_xen_tag);	\
-           if (gn) \
-	     { \
-	       _Val_ = gn->gen; \
-	       if (s7_is_do_global(sc, _Obj_)) \
-	         s7_symbol_set_accessor_data(_Obj_, (void *)_Val_); \
-	     } \
-           if ((!_Val_) || (!mus_ ## Type ## _p(_Val_))) \
-	     XEN_ASSERT_TYPE(false, g, XEN_ARG_1, S_ ## Type, #Type " generator"); \
-         } \
-       Val = _Val_; } while (0)
-
+/* TODO: this still needs the type check 
+ * TODO: get rid of all the safe-do stuff and clean out these macros
+ */
+#if 0
+#define GET_GENERATOR(Obj, Type, Val) Val = get_generator(s7, Obj)
+#else
+#define GET_GENERATOR(Obj, Type, Val) \
+  do { \
+  mus_xen *gn; \
+  gn = (mus_xen *)s7_object_value_checked(s7_value(s7, Obj), mus_xen_tag); \
+  Val = gn->gen; \
+  } while (0)
+#endif
 
 /* TODO: val = clm* here or no macro at all */
 
-#define GET_NUMBER(Obj, Caller, Safe, Val) Val = s7_symbol_to_safe_do_number(s7, Obj, Safe, Caller)
-#define GET_REAL(Obj, Caller, Safe, Val) Val = s7_symbol_to_safe_do_real(s7, Obj, Safe, S_ ## Caller)
-#define GET_INTEGER(Obj, Caller, Safe, Val) Val = s7_symbol_to_safe_do_integer(s7, Obj, Safe, S_ ## Caller)
-
+#define GET_NUMBER(Obj, Caller, Val) Val = s7_value(s7, Obj)
+#define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(s7_value(s7, Obj))
+#define GET_INTEGER(Obj, Caller, Val) Val = s7_integer(s7_value(s7, Obj))
 
 #define GEN_1(Type, Func) \
   static s7_pointer Type ## _1; \
   static s7_pointer g_ ## Type ## _1(s7_scheme *sc, s7_pointer args) \
   { \
     mus_any *_o_;	  \
-    GET_GENERATOR(car(args), Type, in_safe_do, _o_); \
+    GET_GENERATOR(car(args), Type, _o_); \
     return(s7_make_real(sc, Func(_o_))); \
   } \
   static s7_pointer mul_c_ ## Type ## _1; \
@@ -8867,7 +8857,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     double _mul_;    \
    \
     _mul_ = s7_number_to_real(car(args)); /* we checked that it's not complex in the chooser */	\
-    GET_GENERATOR(s7_cadadr(args), Type, in_safe_do, _o_);	\
+    GET_GENERATOR(s7_cadadr(args), Type, _o_);	\
     return(s7_make_real(sc, _mul_ * Func(_o_))); \
   } \
   static s7_pointer mul_s_ ## Type ## _1; \
@@ -8877,8 +8867,8 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     s7_pointer _mul_;    \
     double _f_; \
    \
-    GET_NUMBER(car(args), "*", in_safe_do, _mul_); \
-    GET_GENERATOR(s7_cadadr(args), Type, in_safe_do, _o_);	\
+    GET_NUMBER(car(args), "*", _mul_); \
+    GET_GENERATOR(s7_cadadr(args), Type, _o_);	\
     _f_ = Func(_o_); \
     if (s7_is_real(_mul_))				      \
       return(s7_make_real(sc, s7_number_to_real(_mul_) * _f_)); \
@@ -8889,8 +8879,8 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   { \
     mus_any *_o_, *_e_;  \
    \
-    GET_GENERATOR(s7_cadr(car(args)), env, in_safe_do, _e_);		\
-    GET_GENERATOR(s7_cadadr(args), Type, in_safe_do, _o_);	\
+    GET_GENERATOR(s7_cadr(car(args)), env, _e_);		\
+    GET_GENERATOR(s7_cadadr(args), Type, _o_);	\
     return(s7_make_real(sc, mus_env(_e_) * Func(_o_)));		\
   }
 
@@ -8909,8 +8899,8 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     mus_any *_o_; \
     double _fm_; \
    \
-    GET_GENERATOR(car(args), Type, in_safe_do, _o_); \
-    GET_REAL(cadr(args), Type, in_safe_do, _fm_); \
+    GET_GENERATOR(car(args), Type, _o_); \
+    GET_REAL(cadr(args), Type, _fm_); \
     return(s7_make_real(sc, Func(_o_, _fm_))); \
   } \
   static s7_pointer mul_c_ ## Type ## _2; \
@@ -8921,8 +8911,8 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
    \
     _mul_ = s7_number_to_real(car(args)); \
     args = cdr(args); \
-    GET_GENERATOR(s7_cadar(args), Type, in_safe_do, _o_);	\
-    GET_REAL(s7_caddar(args), Type, in_safe_do, _fm_);		\
+    GET_GENERATOR(s7_cadar(args), Type, _o_);	\
+    GET_REAL(s7_caddar(args), Type, _fm_);		\
     return(s7_make_real(sc, _mul_ * Func(_o_, _fm_))); \
   } \
   static s7_pointer mul_s_ ## Type ## _2; \
@@ -8932,10 +8922,10 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     double _fm_, _f_;     \
     s7_pointer _mul_; \
    \
-    GET_NUMBER(car(args), "*", in_safe_do, _mul_); \
+    GET_NUMBER(car(args), "*", _mul_); \
     args = cdr(args); \
-    GET_GENERATOR(s7_cadar(args), Type, in_safe_do, _o_);	\
-    GET_REAL(s7_caddar(args), Type, in_safe_do, _fm_);		\
+    GET_GENERATOR(s7_cadar(args), Type, _o_);	\
+    GET_REAL(s7_caddar(args), Type, _fm_);		\
     _f_ = Func(_o_, _fm_);							\
     if (s7_is_real(_mul_)) \
       return(s7_make_real(sc, s7_number_to_real(_mul_) * _f_)); \
@@ -8947,10 +8937,10 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     mus_any *_o_, *_e_;  \
     double _fm_;    \
    \
-    GET_GENERATOR(s7_cadar(args), env, in_safe_do, _e_);		\
+    GET_GENERATOR(s7_cadar(args), env, _e_);		\
     args = cdr(args); \
-    GET_GENERATOR(s7_cadar(args), Type, in_safe_do, _o_);	\
-    GET_REAL(s7_caddar(args), Type, in_safe_do, _fm_);		\
+    GET_GENERATOR(s7_cadar(args), Type, _o_);	\
+    GET_REAL(s7_caddar(args), Type, _fm_);		\
     return(s7_make_real(sc, mus_env(_e_) * Func(_o_, _fm_)));		\
   } \
   static s7_pointer direct_ ## Type ## _2; \
@@ -8960,7 +8950,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     double _fm_; \
     s7_pointer rl; \
     _fm_ = s7_real(rl = s7_call_direct(sc, cadr(args)));	\
-    GET_GENERATOR(car(args), Type, in_safe_do, _o_); \
+    GET_GENERATOR(car(args), Type, _o_); \
     return(s7_remake_real(sc, rl, Func(_o_, _fm_)));		    \
   } \
   static s7_pointer indirect_ ## Type ## _2; \
@@ -8969,7 +8959,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     mus_any *_o_;	  \
     double _fm_; \
     _fm_ = s7_number_to_real(s7_call_direct(sc, cadr(args)));	\
-    GET_GENERATOR(car(args), Type, in_safe_do, _o_); \
+    GET_GENERATOR(car(args), Type, _o_); \
     return(s7_make_real(sc, Func(_o_, _fm_)));		    \
   }
 
@@ -9060,30 +9050,6 @@ MUS_PHASE_VOCODER,
  * perhaps size must be > 0?  -- make this choice at init time (how?)
  */
 
-/* clm changes: the list-as-generator business needs to be fixed
- *         see snd_to_sample in snd-edits for an example, defgenerator is in ws.scm
- *         need to export mus_make_class_tag to ffi for the type, then add a way
- *         to associate a xen func with a class field via a wrapper.  We also need
- *         a way to access the current "'tag" (type) for xen level type checks
- *         (oscil? looks at the current mus_any->type and compares it to oscil's).
- * [mus-type -- done], mus-make-type(name)
- * mus-method, mus-set-method
- * mus-make-any [make a bare mus_any class with a settable type and class ptr,
- *   is passed known type, use associated class] use mus_any for the C side pointer
- *   as in clm.c mus_set_name.
- * the class pointer can use XEN_WRAP_C_POINTER and friends
- * method(cls, name), g? needs type embedded as in s_type case
- *     (begin (define all names to #f)
- *        (let ((gen-type mus-make-type gen-name))
- *          (set! ,(string->symbol (string-append sname "?")) (lambda (obj) (= (mus-type obj) gen-type)))
- *          ;; but this also needs a mus-any? or generator? check so that mus-type makes sense
- *          ;; is the -methods list needed?
- *          (set! (,(string->symbol (string-append "make-" sname)) args as in ws, list as in 2nd (no-method-list) case?
- *            or would a vector be better now?  (this is the equivalent of the C-side struct for each built-in gen)
- *          ;; for each field, can this be mapped instead to the new mus_any_class fields?
- *          ;;   -- no because these are also the local struct fields.
- * is this an improvement?
- */
 
 
 
@@ -9102,7 +9068,7 @@ static s7_pointer g_oscil_pm_direct(s7_scheme *sc, s7_pointer args)
   mus_any *o;
   s7_pointer x;
 
-  GET_GENERATOR(car(args), oscil, in_safe_do, o);
+  GET_GENERATOR(car(args), oscil, o);
   x = s7_call_direct(sc, caddr(args));
   return(s7_remake_real(sc, x, mus_oscil_pm(o, s7_real(x))));
 }
@@ -9115,9 +9081,9 @@ static s7_pointer g_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
   double x;
   s7_pointer vargs;
 
-  GET_GENERATOR(car(args), oscil, in_safe_do, o);
+  GET_GENERATOR(car(args), oscil, o);
   vargs = s7_cdadr(args);
-  GET_REAL(cadr(vargs), oscil, in_safe_do, x);
+  GET_REAL(cadr(vargs), oscil, x);
   return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(car(vargs)) * x)));
 }
 
@@ -9129,9 +9095,9 @@ static s7_pointer g_oscil_mul_s_c(s7_scheme *sc, s7_pointer args)
   double x;
   s7_pointer vargs;
 
-  GET_GENERATOR(car(args), oscil, in_safe_do, o);
+  GET_GENERATOR(car(args), oscil, o);
   vargs = s7_cdadr(args);
-  GET_REAL(car(vargs), oscil, in_safe_do, x);
+  GET_REAL(car(vargs), oscil, x);
   return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(cadr(vargs)) * x)));
 }
 
@@ -9143,9 +9109,9 @@ static s7_pointer g_polywave_mul_c_s(s7_scheme *sc, s7_pointer args)
   double x;
   s7_pointer vargs;
 
-  GET_GENERATOR(car(args), polywave, in_safe_do, o);
+  GET_GENERATOR(car(args), polywave, o);
   vargs = s7_cdadr(args);
-  GET_REAL(cadr(vargs), polywave, in_safe_do, x);
+  GET_REAL(cadr(vargs), polywave, x);
   return(s7_make_real(sc, mus_polywave(o, s7_number_to_real(car(vargs)) * x)));
 }
 
@@ -9154,11 +9120,11 @@ static s7_pointer fm_violin_vibrato_fallback(s7_scheme *sc, s7_pointer args)
 {
   mus_any *e = NULL, *t = NULL, *r = NULL;
   
-  GET_GENERATOR(cadar(args), env, false, e);
+  GET_GENERATOR(cadar(args), env, e);
   args = cdr(args);
-  GET_GENERATOR(cadar(args), triangle_wave, false, t);
+  GET_GENERATOR(cadar(args), triangle_wave, t);
   args = cdr(args);
-  GET_GENERATOR(cadar(args), rand_interp, false, r);
+  GET_GENERATOR(cadar(args), rand_interp, r);
   
   return(s7_make_real(sc, mus_env(e) + mus_triangle_wave(t, 0.0) + mus_rand_interp(r, 0.0)));			
 }
@@ -9167,7 +9133,7 @@ static s7_pointer abs_rand_interp;
 static s7_pointer g_abs_rand_interp(s7_scheme *sc, s7_pointer args)
 {
   mus_any *o;
-  GET_GENERATOR(cadar(args), rand_interp, in_safe_do, o);
+  GET_GENERATOR(cadar(args), rand_interp, o);
   return(s7_make_real(sc, fabs(mus_rand_interp_unmodulated(o))));
 }
 
@@ -9175,7 +9141,7 @@ static s7_pointer abs_oscil;
 static s7_pointer g_abs_oscil(s7_scheme *sc, s7_pointer args)
 {
   mus_any *o;
-  GET_GENERATOR(cadar(args), oscil, in_safe_do, o);
+  GET_GENERATOR(cadar(args), oscil, o);
   return(s7_make_real(sc, fabs(mus_oscil_unmodulated(o))));
 }
 
@@ -9183,7 +9149,7 @@ static s7_pointer abs_triangle_wave;
 static s7_pointer g_abs_triangle_wave(s7_scheme *sc, s7_pointer args)
 {
   mus_any *o;
-  GET_GENERATOR(cadar(args), triangle_wave, in_safe_do, o);
+  GET_GENERATOR(cadar(args), triangle_wave, o);
   return(s7_make_real(sc, fabs(mus_triangle_wave_unmodulated(o))));
 }
 
@@ -9254,10 +9220,10 @@ static s7_pointer g_env_polywave(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL;
   double fm;
 
-  GET_GENERATOR(cadar(args), env, in_safe_do, e);
+  GET_GENERATOR(cadar(args), env, e);
   args = cadr(args);
-  GET_GENERATOR(cadr(args), polywave, in_safe_do, t);
-  GET_REAL(caddr(args), polywave, in_safe_do, fm);
+  GET_GENERATOR(cadr(args), polywave, t);
+  GET_REAL(caddr(args), polywave, fm);
 
   return(s7_make_real(sc, mus_env(e) * mus_polywave(t, fm)));
 }
@@ -9270,9 +9236,9 @@ static s7_pointer g_fm_violin_modulation(s7_scheme *sc, s7_pointer args)
   double vibrato;
 
   vargs = s7_cdadr(args); /* (* ... ) */
-  GET_GENERATOR(s7_cadar(vargs), env, in_safe_do, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, in_safe_do, t);
-  GET_REAL(car(args), polywave, in_safe_do, vibrato);
+  GET_GENERATOR(s7_cadar(vargs), env, e);
+  GET_GENERATOR(s7_cadadr(vargs), polywave, t);
+  GET_REAL(car(args), polywave, vibrato);
 
   return(s7_make_real(sc, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
 }
@@ -9284,11 +9250,11 @@ static s7_pointer g_fm_violin_with_modulation(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL, *o = NULL;
   double vibrato;
 
-  GET_GENERATOR(car(args), oscil, in_safe_do, o);
+  GET_GENERATOR(car(args), oscil, o);
   vargs = s7_cdaddr(cadr(args)); /* (* ... ) */
-  GET_GENERATOR(s7_cadar(vargs), env, in_safe_do, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, in_safe_do, t);
-  GET_REAL(s7_cadadr(args), polywave, in_safe_do, vibrato);
+  GET_GENERATOR(s7_cadar(vargs), env, e);
+  GET_GENERATOR(s7_cadadr(vargs), polywave, t);
+  GET_REAL(s7_cadadr(args), polywave, vibrato);
 
   return(s7_make_real(sc, mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
 }
@@ -9300,13 +9266,13 @@ static s7_pointer g_fm_violin_1(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL;
   double vibrato;
 
-  GET_GENERATOR(s7_cadar(args), env, in_safe_do, a);
+  GET_GENERATOR(s7_cadar(args), env, a);
   vargs = cadr(args);
-  GET_GENERATOR(cadr(vargs), oscil, in_safe_do, o);
+  GET_GENERATOR(cadr(vargs), oscil, o);
   vargs = s7_cdaddr(caddr(vargs));
-  GET_GENERATOR(s7_cadar(vargs), env, in_safe_do, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, in_safe_do, t);
-  GET_REAL(cadr(caddr(cadr(args))), polywave, in_safe_do, vibrato);
+  GET_GENERATOR(s7_cadar(vargs), env, e);
+  GET_GENERATOR(s7_cadadr(vargs), polywave, t);
+  GET_REAL(cadr(caddr(cadr(args))), polywave, vibrato);
 
   return(s7_make_real(sc, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
 }
@@ -9319,17 +9285,17 @@ static s7_pointer fm_violin_2_fallback(s7_scheme *sc, s7_pointer args)
   mus_long_t pos;
   mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL, *lc = NULL;
 
-  GET_GENERATOR(car(args), locsig, false, lc);
-  GET_INTEGER(cadr(args), locsig, false, pos);
+  GET_GENERATOR(car(args), locsig, lc);
+  GET_INTEGER(cadr(args), locsig, pos);
   vargs = s7_cdaddr(args);
-  GET_GENERATOR(s7_cadar(vargs), env, false, a);
+  GET_GENERATOR(s7_cadar(vargs), env, a);
   vargs = s7_cadr(vargs);
-  GET_GENERATOR(s7_cadr(vargs), oscil, false, o);
+  GET_GENERATOR(s7_cadr(vargs), oscil, o);
   vargs = s7_cdaddr(s7_caddr(vargs));
-  GET_GENERATOR(s7_cadar(vargs), env, false, e);
+  GET_GENERATOR(s7_cadar(vargs), env, e);
   vargs = s7_cdadr(vargs);
-  GET_GENERATOR(car(vargs), polywave, false, t);
-  GET_REAL(cadr(vargs), polywave, false, vibrato);
+  GET_GENERATOR(car(vargs), polywave, t);
+  GET_REAL(cadr(vargs), polywave, vibrato);
   
   mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
   return(XEN_ZERO); /* just return something! */
@@ -9421,7 +9387,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer x;
       sym = (s7_pointer)syms[1];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_2, "locsig", "an integer");
       pos = s7_integer(x);
     }
@@ -9431,7 +9397,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer x;
       sym = (s7_pointer)syms[7];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "polywave", "a real");
       vibrato = s7_number_to_real(x);
     }
@@ -9448,11 +9414,11 @@ static s7_pointer env_polywave_env_fallback(s7_scheme *sc, s7_pointer args)
 {
   mus_any *e1 = NULL, *t = NULL, *e2 = NULL;
 
-  GET_GENERATOR(cadar(args), env, in_safe_do, e1);
+  GET_GENERATOR(cadar(args), env, e1);
   args = cadr(args);
-  GET_GENERATOR(cadr(args), polywave, in_safe_do, t);
+  GET_GENERATOR(cadr(args), polywave, t);
   args = caddr(args);
-  GET_GENERATOR(cadr(args), env, in_safe_do, e2);
+  GET_GENERATOR(cadr(args), env, e2);
 
   return(s7_make_real(sc, mus_env(e1) * mus_polywave(t, mus_env(e2))));
 }
@@ -9504,15 +9470,15 @@ static s7_pointer jc_reverb_combs_fallback(s7_scheme *sc, s7_pointer args)
   mus_any *c1 = NULL, *c2, *c3, *c4;
   double fm;
 
-  GET_GENERATOR(s7_cadar(args), comb, false, c1);
+  GET_GENERATOR(s7_cadar(args), comb, c1);
   vargs = cdr(args);
-  GET_GENERATOR(s7_cadar(vargs), comb, false, c2);
+  GET_GENERATOR(s7_cadar(vargs), comb, c2);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, false, c3);
+  GET_GENERATOR(s7_cadar(vargs), comb, c3);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, false, c4);
+  GET_GENERATOR(s7_cadar(vargs), comb, c4);
   
-  fm = s7_number_to_real(s7_symbol_value(sc, s7_caddar(args)));
+  fm = s7_number_to_real(s7_value(sc, s7_caddar(args)));
 
   return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
 		          mus_comb_unmodulated_noz(c2, fm) + 
@@ -9584,7 +9550,7 @@ static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer x;
       sym = (s7_pointer)syms[4];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "comb", "a real");
       fm = s7_number_to_real(x);
     }
@@ -9622,13 +9588,13 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	{
-	  GET_GENERATOR(car(args), all_pass, false, a1);
+	  GET_GENERATOR(car(args), all_pass, a1);
 	  vargs = s7_cdr(args);
-	  GET_GENERATOR(cadar(vargs), all_pass, false, a2);
+	  GET_GENERATOR(cadar(vargs), all_pass, a2);
 	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR(cadar(vargs), all_pass, false, a3);
+	  GET_GENERATOR(cadar(vargs), all_pass, a3);
 	  vargs = s7_caddar(vargs);
-	  GET_INTEGER(cadr(vargs), ina, false, pos);
+	  GET_INTEGER(cadr(vargs), ina, pos);
 
 	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))))));
 	}
@@ -9674,7 +9640,7 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer x;
       sym = (s7_pointer)syms[3];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, "ina", "an integer");
       pos = s7_integer(x);
     }
@@ -9693,19 +9659,19 @@ static s7_pointer nrev_combs_fallback(s7_scheme *sc, s7_pointer args)
   mus_any *c1 = NULL, *c2, *c3, *c4, *c5, *c6;
   double fm;
 
-  GET_GENERATOR(s7_cadar(args), comb, false, c1);
+  GET_GENERATOR(s7_cadar(args), comb, c1);
   vargs = cdr(args);
-  GET_GENERATOR(s7_cadar(vargs), comb, false, c2);
+  GET_GENERATOR(s7_cadar(vargs), comb, c2);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, false, c3);
+  GET_GENERATOR(s7_cadar(vargs), comb, c3);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, false, c4);
+  GET_GENERATOR(s7_cadar(vargs), comb, c4);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, false, c5);
+  GET_GENERATOR(s7_cadar(vargs), comb, c5);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, false, c6);
+  GET_GENERATOR(s7_cadar(vargs), comb, c6);
   
-  fm = s7_number_to_real(s7_symbol_value(sc, s7_caddar(args)));
+  fm = s7_number_to_real(s7_value(sc, s7_caddar(args)));
 
   return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
 		          mus_comb_unmodulated_noz(c2, fm) + 
@@ -9787,7 +9753,7 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer x;
       sym = (s7_pointer)syms[4];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "comb", "a real");
       fm = s7_number_to_real(x);
     }
@@ -9807,7 +9773,7 @@ static s7_pointer ina_reverb_2;
 static s7_pointer g_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
-  GET_INTEGER(car(args), ina, in_safe_do, pos);
+  GET_INTEGER(car(args), ina, pos);
   return(s7_make_real(sc, in_any_2(pos, 0)));
 }
 
@@ -9816,24 +9782,14 @@ static s7_pointer mul_s_ina_reverb_2;
 static s7_pointer g_mul_s_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
-  s7_pointer scl_ptr = NULL, sym;
+  s7_pointer sym;
   double scl;
   
   sym = car(args);
-  if (in_safe_do)
-    scl_ptr = (s7_pointer)s7_symbol_accessor_data(sym);
-  if (!scl_ptr)
-    {
-      scl_ptr = s7_slot(sc, sym);
-      if (s7_is_do_local_or_global(sc, sym))
-	s7_symbol_set_accessor_data(sym, (void *)scl_ptr);
-      if (!s7_slot_value_is_real(scl_ptr))
-	XEN_ASSERT_TYPE(false, scl_ptr, XEN_ARG_1, "*", "a real");
-    }
-  scl = s7_slot_value_to_real(s7, scl_ptr);
+  GET_REAL(sym, "ina", scl);
 
   args = s7_cdadr(args);
-  GET_INTEGER(car(args), ina, in_safe_do, pos);
+  GET_INTEGER(car(args), ina, pos);
 
   return(s7_make_real(sc, scl * in_any_2(pos, 0)));
 }
@@ -9846,8 +9802,8 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   mus_any *locs;
 
-  GET_GENERATOR(car(args), locsig, in_safe_do, locs);
-  GET_INTEGER(cadr(args), outa, in_safe_do, pos);
+  GET_GENERATOR(car(args), locsig, locs);
+  GET_INTEGER(cadr(args), outa, pos);
   x = s7_call_direct(sc, caddr(args));
   mus_locsig(locs, pos, s7_number_to_real(x));
   return(XEN_ZERO);
@@ -9859,7 +9815,7 @@ static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
   s7_pointer x;
-  GET_INTEGER(car(args), outa, in_safe_do, pos);
+  GET_INTEGER(car(args), outa, pos);
   x = s7_call_direct(sc, cadr(args));
   return(out_any_2(pos, s7_number_to_real(x), 0, "outa", x));
 }
@@ -9870,9 +9826,9 @@ static s7_pointer g_indirect_outa_sub_2(s7_scheme *sc, s7_pointer args)
   s7_Int pos;
   double x, y;
   
-  GET_INTEGER(car(args), outa, in_safe_do, pos);
-  GET_REAL(cadr(cadr(args)), outa, in_safe_do, x);
-  GET_REAL(caddr(cadr(args)), outa, in_safe_do, y);
+  GET_INTEGER(car(args), outa, pos);
+  GET_REAL(cadr(cadr(args)), outa, x);
+  GET_REAL(caddr(cadr(args)), outa, y);
   return(out_any_2(pos, x - y, 0, "outa", xen_zero));
 }
 
@@ -9882,8 +9838,8 @@ static s7_pointer g_indirect_outa_ss(s7_scheme *sc, s7_pointer args)
   s7_Int pos;
   double x;
   
-  GET_INTEGER(car(args), outa, in_safe_do, pos);
-  GET_REAL(cadr(args), outa, in_safe_do, x);
+  GET_INTEGER(car(args), outa, pos);
+  GET_REAL(cadr(args), outa, x);
   return(out_any_2(pos, x, 0, "outa", xen_zero));
 }
 
@@ -9893,8 +9849,8 @@ static s7_pointer g_indirect_outa_add_2(s7_scheme *sc, s7_pointer args)
   s7_Int pos1, pos2;
   s7_pointer x;
 
-  GET_INTEGER(cadr(car(args)), outa, in_safe_do, pos1);
-  GET_INTEGER(caddr(car(args)), outa, in_safe_do, pos2);
+  GET_INTEGER(cadr(car(args)), outa, pos1);
+  GET_INTEGER(caddr(car(args)), outa, pos2);
   x = s7_call_direct(sc, cadr(args));
   return(out_any_2(pos1 + pos2, s7_number_to_real(x), 0, "outa", x));
 }
@@ -9929,15 +9885,15 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
 	  double val, scl;
 	  mus_any *d;
 	  if (chan == 0)
-	    GET_INTEGER(car(args), outa, false, pos);
-	  else GET_INTEGER(car(args), outb, false, pos);
+	    GET_INTEGER(car(args), outa, pos);
+	  else GET_INTEGER(car(args), outb, pos);
 	  args = cadr(args);
 	  if (chan == 0)
-	    GET_REAL(cadr(args), outa, false, scl);
-	  else GET_REAL(cadr(args), outb, false, scl);
+	    GET_REAL(cadr(args), outa, scl);
+	  else GET_REAL(cadr(args), outb, scl);
 	  args = caddr(args);
-	  GET_GENERATOR(cadr(args), delay, false, d);
-	  GET_REAL(caddr(args), delay, false, val);
+	  GET_GENERATOR(cadr(args), delay, d);
+	  GET_REAL(caddr(args), delay, val);
 	  return(out_any_2(pos, scl * mus_delay_unmodulated_noz(d, val), chan, caller, xen_zero));
 	}
       syms = s7_expression_make_data(sc, args, 7);
@@ -9996,7 +9952,7 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
     {
       s7_pointer x;
       sym = (s7_pointer)syms[0];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, caller, "an integer");
       pos = s7_integer(x);
     }
@@ -10006,7 +9962,7 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
     {
       s7_pointer x;
       sym = (s7_pointer)syms[2];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "*", "a real");
       scl = s7_number_to_real(x);
     }
@@ -10016,7 +9972,7 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
     {
       s7_pointer x;
       sym = (s7_pointer)syms[5];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "delay", "a real");
       inval = s7_number_to_real(x);
     }
@@ -10062,13 +10018,13 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
 	{
 	  s7_Int pos;
 	  mus_any *e1, *e2, *t;
-	  GET_INTEGER(car(args), outa, false, pos);
+	  GET_INTEGER(car(args), outa, pos);
 	  args = cdr(cadr(args));
-	  GET_GENERATOR(cadar(args), env, false, e1);
+	  GET_GENERATOR(cadar(args), env, e1);
 	  args = cadr(args);
-	  GET_GENERATOR(cadr(args), polywave, false, t);
+	  GET_GENERATOR(cadr(args), polywave, t);
 	  args = caddr(args);
-	  GET_GENERATOR(cadr(args), env, false, e2);
+	  GET_GENERATOR(cadr(args), env, e2);
 	  return(out_any_2(pos, mus_env(e1) * mus_polywave(t, mus_env(e2)), 0, "outa", xen_zero));
 	}
 
@@ -10112,7 +10068,7 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer x;
       sym = (s7_pointer)syms[0];
-      x = s7_symbol_value(sc, sym);
+      x = s7_value(sc, sym);
       XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, "outa", "an integer");
       pos = s7_integer(x);
     }
@@ -10121,73 +10077,6 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
   return(out_any_2(pos, mus_env((mus_any *)syms[2]) * mus_polywave((mus_any *)syms[3], mus_env((mus_any *)syms[4])), 0, "outa", xen_zero));
 }
 
-static s7_pointer frame_to_frame_sss;
-static s7_pointer g_frame_to_frame_sss(s7_scheme *sc, s7_pointer args)
-{
-  /* can't use syms here as we'd like because there might be many of these things in an instrument
-   *   but wouldn't args differ? TODO: check out frame->frame opt, or can this be in a loop?
-   */
-  s7_pointer sym, result = NULL;
-  mus_any *mx = NULL, *inf = NULL, *outf = NULL;
-
-  if (in_safe_do)
-    {
-      sym = car(args);
-      mx = (mus_any *)s7_symbol_accessor_data(sym);
-      if (!mx)
-	{
-	  mx = get_generator(sc, sym);
-	  if (s7_is_do_global(sc, sym))
-	    s7_symbol_set_accessor_data(sym, (void *)mx);
-	}
-
-      sym = cadr(args);
-      inf = (mus_any *)s7_symbol_accessor_data(sym);
-      if (!inf)
-	{
-	  inf = get_generator(sc, sym);
-	  if (s7_is_do_global(sc, sym))
-	    s7_symbol_set_accessor_data(sym, (void *)inf);
-	}
-
-      sym = caddr(args);
-      result = (s7_pointer)s7_symbol_accessor_data(sym);
-      if (!result)
-	{
-	  result = s7_symbol_value(sc, sym);
-	  if (s7_object_type(result) != mus_xen_tag)
-	    result = NULL;
-	  else
-	    {
-	      if (s7_is_do_global(sc, sym))
-		s7_symbol_set_accessor_data(sym, (void *)result);
-	    }
-	}
-    }
-  else
-    {
-      mx = get_generator(sc, car(args));
-      inf = get_generator(sc, cadr(args));
-      sym = caddr(args);
-      result = s7_symbol_value(sc, sym);
-      if (s7_object_type(result) != mus_xen_tag)
-	result = NULL;
-    }
-
-  if (result)
-    outf = (((mus_xen *)s7_object_value(result))->gen);
-
-  XEN_ASSERT_TYPE((mx) && (inf) && 
-		  ((mus_frame_p(mx) && mus_mixer_p(inf)) || 
-		   (mus_mixer_p(mx) && mus_frame_p(inf))),
-		  car(args), XEN_ARG_1, S_frame_to_frame, "first two args should be mixer and frame");
-  XEN_ASSERT_TYPE((outf) && (mus_frame_p(outf)), caddr(args), XEN_ARG_3, S_frame_to_frame, "a frame");
-
-  mus_frame_to_frame(mx, inf, outf);
-  return(result);
-}
-
-
 static s7_pointer indirect_frame_to_file_3;
 static s7_pointer g_indirect_frame_to_file_3(s7_scheme *sc, s7_pointer args)
 {
@@ -10195,7 +10084,7 @@ static s7_pointer g_indirect_frame_to_file_3(s7_scheme *sc, s7_pointer args)
   s7_Int pos;
   s7_pointer data;
 
-  GET_INTEGER(cadr(args), frame_to_file, in_safe_do, pos);
+  GET_INTEGER(cadr(args), frame_to_file, pos);
   data = s7_call_direct(sc, caddr(args));
   mus_frame_to_file(XEN_TO_MUS_ANY(CLM_OUTPUT), pos, (mus_any *)(((mus_xen *)s7_object_value(data))->gen));
   return(data);
@@ -10218,7 +10107,8 @@ static s7_pointer g_mul_direct_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer y;
   double x;
-  x = s7_real(s7_call_direct(sc, car(args)));
+
+  x = s7_call_direct_to_real_and_free(sc, car(args));
   y = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, y, x * s7_real(y)));
 }
@@ -10228,9 +10118,30 @@ static s7_pointer g_add_direct_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer y;
   double x;
-  x = s7_real(s7_call_direct(sc, car(args)));
+  /* TODO: car(args) is a temp here and in many other cases 
+   * TODO: I think the GEN_* cases are incomplete, also need at least add_direct_4
+   */
+
+  x = s7_call_direct_to_real_and_free(sc, car(args));
   y = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, y, x + s7_real(y)));
+}
+
+static s7_pointer add_direct_s2;
+static s7_pointer g_add_direct_s2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer yp, s;
+  double x, y;
+
+  GET_NUMBER(car(args), "+", s);
+
+  x = s7_call_direct_to_real_and_free(sc, cadr(args));
+  yp = s7_call_direct(sc, caddr(args));
+  y = s7_real(yp);
+
+  if (s7_is_real(s))
+    return(s7_remake_real(sc, yp, x + y + s7_number_to_real(s)));
+  return(s7_make_complex(sc, x + y + s7_real_part(s), s7_imag_part(s)));
 }
 
 static s7_pointer mul_direct_3;
@@ -10238,8 +10149,9 @@ static s7_pointer g_mul_direct_3(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer z;
   double x, y;
-  x = s7_real(s7_call_direct(sc, car(args)));
-  y = s7_real(s7_call_direct(sc, cadr(args)));
+
+  x = s7_call_direct_to_real_and_free(sc, car(args));
+  y = s7_call_direct_to_real_and_free(sc, cadr(args));
   z = s7_call_direct(sc, caddr(args));
   return(s7_remake_real(sc, z, x * y * s7_real(z)));
 }
@@ -10249,10 +10161,24 @@ static s7_pointer g_add_direct_3(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer z;
   double x, y;
-  x = s7_real(s7_call_direct(sc, car(args)));
-  y = s7_real(s7_call_direct(sc, cadr(args)));
+
+  x = s7_call_direct_to_real_and_free(sc, car(args));
+  y = s7_call_direct_to_real_and_free(sc, cadr(args));
   z = s7_call_direct(sc, caddr(args));
   return(s7_remake_real(sc, z, x + y + s7_real(z)));
+}
+
+static s7_pointer add_direct_4;
+static s7_pointer g_add_direct_4(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer z;
+  double w, x, y;
+
+  x = s7_call_direct_to_real_and_free(sc, car(args));
+  y = s7_call_direct_to_real_and_free(sc, cadr(args));
+  w = s7_call_direct_to_real_and_free(sc, caddr(args));
+  z = s7_call_direct(sc, cadddr(args));
+  return(s7_remake_real(sc, z, w + x + y + s7_real(z)));
 }
 
 static s7_pointer mul_env_direct;
@@ -10262,7 +10188,7 @@ static s7_pointer g_mul_env_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   mus_any *e = NULL;
 
-  GET_GENERATOR(s7_cadar(args), env, in_safe_do, e);
+  GET_GENERATOR(s7_cadar(args), env, e);
   x = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, x, mus_env(e) * s7_real(x)));
 }
@@ -10292,7 +10218,7 @@ static s7_pointer g_mul_s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(car(args), "*", in_safe_do, mul);
+  GET_NUMBER(car(args), "*", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10309,7 +10235,7 @@ static s7_pointer g_mul_1s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(caddr(car(args)), "*", in_safe_do, mul);
+  GET_NUMBER(caddr(car(args)), "*", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10326,7 +10252,7 @@ static s7_pointer g_add_s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(car(args), "*", in_safe_do, mul);
+  GET_NUMBER(car(args), "*", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10343,7 +10269,7 @@ static s7_pointer g_add_1s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(caddr(car(args)), "+", in_safe_do, mul);
+  GET_NUMBER(caddr(car(args)), "+", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10360,7 +10286,7 @@ static s7_pointer g_add_cs_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval, cval;
 
-  GET_NUMBER(caddr(car(args)), "+", in_safe_do, mul);
+  GET_NUMBER(caddr(car(args)), "+", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10374,24 +10300,20 @@ static s7_pointer g_add_cs_direct(s7_scheme *sc, s7_pointer args)
 /* ---------------- */
 
 
-#define CLM_GEN 0
-#define CLM_GENERATOR xen_zero
+#define MUL_C_GEN 0
+#define MUL_S_GEN 1
+#define ENV_GEN 2
 
-#define MUL_C_GEN 1
-#define MUL_S_GEN 2
-#define ENV_GEN 3
+#define MUL_C_GEN_1 3
+#define MUL_S_GEN_1 4
+#define ENV_GEN_1 5
 
-#define MUL_C_GEN_1 4
-#define MUL_S_GEN_1 5
-#define ENV_GEN_1 6
-
-#define NUM_CHOICES 7
+#define NUM_CHOICES 6
 
 static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e, s7_pointer mul_c1, s7_pointer mul_s1, s7_pointer e1)
 {
   s7_pointer *choices;
   choices = (s7_pointer *)calloc(NUM_CHOICES, sizeof(s7_pointer));
-  choices[CLM_GEN] = CLM_GENERATOR; /* just something that won't be confused */
   choices[MUL_C_GEN] = mul_c;
   choices[MUL_S_GEN] = mul_s;
   choices[ENV_GEN] = e;
@@ -10399,15 +10321,6 @@ static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e
   choices[MUL_S_GEN_1] = mul_s1;
   choices[ENV_GEN_1] = e1;
   return(choices);
-}
-
-
-static bool expr_is_clm_gen(s7_scheme *sc, s7_pointer expr)
-{
-  s7_pointer *choices;
-  choices = (s7_pointer *)s7_function_chooser_data(sc, expr);
-  return((choices) &&
-	 (choices[CLM_GEN] == CLM_GENERATOR));
 }
 
 
@@ -10449,7 +10362,24 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
   if (args == 4)
     {
+      bool happy = true;
       s7_pointer p, fm = NULL;
+
+      for (p = cdr(expr); s7_is_pair(p); p = cdr(p))
+	if ((!s7_is_pair(car(p))) ||
+	    (!(s7_function_choice_is_direct(sc, car(p)))) ||
+	    (!s7_function_returns_temp(car(p))))
+	  {
+	    happy = false;
+	    break;
+	  }
+      if (happy)
+	{
+	  /* fprintf(stderr, "add 4 direct: %s\n", DISPLAY(expr)); */
+	  s7_function_choice_set_direct(sc, expr);
+	  return(add_direct_4);
+	}
+
       for (p = cdr(expr); s7_is_pair(p); p = cdr(p))
 	if ((!s7_is_pair(car(p))) ||
 	    (!s7_is_symbol(cadar(p))) ||
@@ -10496,7 +10426,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
   if ((args == 2) &&
       (s7_is_pair(caddr(expr))) &&
       (s7_function_choice_is_direct(sc, caddr(expr))) &&
-      (expr_is_clm_gen(sc, caddr(expr))))
+      (s7_function_returns_temp(caddr(expr))))
     {
       if (s7_is_real(cadr(expr)))
 	{
@@ -10514,7 +10444,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
       if ((s7_is_pair(cadr(expr))) &&
 	  (s7_function_choice_is_direct(sc, cadr(expr))) &&
-	  (expr_is_clm_gen(sc, cadr(expr))))
+	  (s7_function_returns_temp(cadr(expr))))
 	{
 	  /* fprintf(stderr, "add 2 direct\n"); */
 	  s7_function_choice_set_direct(sc, expr);
@@ -10545,15 +10475,29 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_is_pair(caddr(expr))) &&
       (s7_is_pair(cadddr(expr))) &&
       (s7_function_choice_is_direct(sc, cadr(expr))) &&
-      (expr_is_clm_gen(sc, cadr(expr))) &&
+      (s7_function_returns_temp(cadr(expr))) &&
       (s7_function_choice_is_direct(sc, caddr(expr))) &&
-      (expr_is_clm_gen(sc, caddr(expr))) &&
+      (s7_function_returns_temp(caddr(expr))) &&
       (s7_function_choice_is_direct(sc, cadddr(expr))) &&
-      (expr_is_clm_gen(sc, cadddr(expr))))
+      (s7_function_returns_temp(cadddr(expr))))
     {
       /* fprintf(stderr, "add 3 direct\n"); */
       s7_function_choice_set_direct(sc, expr);
       return(add_direct_3);
+    }
+
+  if ((args == 3) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_pair(caddr(expr))) &&
+      (s7_is_pair(cadddr(expr))) &&
+      (s7_function_choice_is_direct(sc, caddr(expr))) &&
+      (s7_function_returns_temp(caddr(expr))) &&
+      (s7_function_choice_is_direct(sc, cadddr(expr))) &&
+      (s7_function_returns_temp(cadddr(expr))))
+    {
+      /* fprintf(stderr, "add s2 direct\n"); */
+      s7_function_choice_set_direct(sc, expr);
+      return(add_direct_s2);
     }
 
   /* fprintf(stderr, "unchosen: %s\n", DISPLAY(expr)); */
@@ -10631,7 +10575,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 		}
 
 	      if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
-		  (choices[CLM_GEN] == CLM_GENERATOR))
+		  (s7_function_returns_temp(caddr(expr))))
 		{
 		  s7_function_choice_set_direct(sc, expr);
 		  return(mul_c_direct);
@@ -10660,7 +10604,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 		}
 
 	      if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
-		  (choices[CLM_GEN] == CLM_GENERATOR))
+		  (s7_function_returns_temp(caddr(expr))))
 		{
 		  /* fprintf(stderr, "\nmul s direct: %s\n\n", DISPLAY_80(expr)); */
 		  s7_function_choice_set_direct(sc, expr);
@@ -10691,7 +10635,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 		}
 	    }
 	  if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
-	      (expr_is_clm_gen(sc, caddr(expr))))
+	      (s7_function_returns_temp(caddr(expr))))
 	    {
 	      /* fprintf(stderr, "\nmul env direct: %s\n\n", DISPLAY_80(expr)); */
 	      s7_function_choice_set_direct(sc, expr);
@@ -10706,7 +10650,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  (s7_is_symbol(caddr(cadr(expr)))) &&
 	  (s7_number_to_real(cadr(cadr(expr))) == 1.0) &&
 	  (s7_function_choice_is_direct(sc, caddr(expr))) &&
-	  (expr_is_clm_gen(sc, caddr(expr))))
+	  (s7_function_returns_temp(caddr(expr))))
 	{
 	  /* fprintf(stderr, "\nmul (- 1 s) direct: %s\n\n", DISPLAY_80(expr)); */
 	  s7_function_choice_set_direct(sc, expr);
@@ -10718,9 +10662,9 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
       (s7_is_pair(cadr(expr))) &&
       (s7_is_pair(caddr(expr))) &&
       (s7_function_choice_is_direct(sc, cadr(expr))) &&
-      (expr_is_clm_gen(sc, cadr(expr))) &&
+      (s7_function_returns_temp(cadr(expr))) &&
       (s7_function_choice_is_direct(sc, caddr(expr))) &&
-      (expr_is_clm_gen(sc, caddr(expr))))
+      (s7_function_returns_temp(caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
       /* fprintf(stderr, "mul 2 direct\n"); */
@@ -10732,11 +10676,11 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
       (s7_is_pair(caddr(expr))) &&
       (s7_is_pair(cadddr(expr))) &&
       (s7_function_choice_is_direct(sc, cadr(expr))) &&
-      (expr_is_clm_gen(sc, cadr(expr))) &&
+      (s7_function_returns_temp(cadr(expr))) &&
       (s7_function_choice_is_direct(sc, caddr(expr))) &&
-      (expr_is_clm_gen(sc, caddr(expr))) &&
+      (s7_function_returns_temp(caddr(expr))) &&
       (s7_function_choice_is_direct(sc, cadddr(expr))) &&
-      (expr_is_clm_gen(sc, cadddr(expr))))
+      (s7_function_returns_temp(cadddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
       /* fprintf(stderr, "mul 3 direct: %s\n", DISPLAY(expr)); */
@@ -10831,7 +10775,8 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_oscil_2);
+	      if (s7_function_returns_temp(caddr(expr))) 
+		return(direct_oscil_2);
 	      return(indirect_oscil_2);
 	    }
 	}
@@ -10841,7 +10786,7 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       (s7_number_to_real(caddr(expr)) == 0.0) &&
       (s7_is_pair(cadddr(expr))) &&
       (s7_function_choice_is_direct(sc, cadddr(expr))) &&
-      (expr_is_clm_gen(sc, cadddr(expr))))
+      (s7_function_returns_temp(cadddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
       return(oscil_pm_direct);
@@ -10882,7 +10827,8 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_polywave_2);
+	      if (s7_function_returns_temp(caddr(expr))) 
+		return(direct_polywave_2);
 	      return(indirect_polywave_2);
 	    }
 	}
@@ -10912,7 +10858,8 @@ static s7_pointer table_lookup_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_table_lookup_2);
+	      if (s7_function_returns_temp(caddr(expr))) 
+		return(direct_table_lookup_2);
 	      return(indirect_table_lookup_2);
 	    }
 	}
@@ -10942,7 +10889,8 @@ static s7_pointer wave_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	  if (s7_function_choice_is_direct(sc, caddr(expr)))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
-	      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_wave_train_2);
+	      if (s7_function_returns_temp(caddr(expr))) 
+		return(direct_wave_train_2);
 	      return(indirect_wave_train_2);
 	    }
 	}
@@ -10972,7 +10920,8 @@ static s7_pointer nsin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_nsin_2);
+      if (s7_function_returns_temp(caddr(expr))) 
+	return(direct_nsin_2);
       return(indirect_nsin_2);
     }
   return(f);
@@ -10999,7 +10948,8 @@ static s7_pointer ncos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_ncos_2);
+      if (s7_function_returns_temp(caddr(expr))) 
+	return(direct_ncos_2);
       return(indirect_ncos_2);
     }
   return(f);
@@ -11026,7 +10976,7 @@ static s7_pointer nrxysin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_nrxysin_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_nrxysin_2);
       return(indirect_nrxysin_2);
     }
   return(f);
@@ -11053,7 +11003,7 @@ static s7_pointer nrxycos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_nrxycos_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_nrxycos_2);
       return(indirect_nrxycos_2);
     }
   return(f);
@@ -11096,7 +11046,7 @@ static s7_pointer comb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_comb_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_comb_2);
       return(indirect_comb_2);
     }
   return(f);
@@ -11117,7 +11067,7 @@ static s7_pointer notch_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_notch_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_notch_2);
       return(indirect_notch_2);
     }
   return(f);
@@ -11155,7 +11105,7 @@ static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_all_pass_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_all_pass_2);
       return(indirect_all_pass_2);
     }
   return(f);
@@ -11177,7 +11127,7 @@ static s7_pointer delay_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_delay_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_delay_2);
       return(indirect_delay_2);
     }
   return(f);
@@ -11199,7 +11149,7 @@ static s7_pointer one_pole_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_one_pole_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_one_pole_2);
       return(indirect_one_pole_2);
     }
   return(f);
@@ -11220,7 +11170,7 @@ static s7_pointer two_pole_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_two_pole_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_two_pole_2);
       return(indirect_two_pole_2);
     }
   return(f);
@@ -11241,7 +11191,7 @@ static s7_pointer one_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_one_zero_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_one_zero_2);
       return(indirect_one_zero_2);
     }
   return(f);
@@ -11262,7 +11212,7 @@ static s7_pointer two_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_two_zero_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_two_zero_2);
       return(indirect_two_zero_2);
     }
   return(f);
@@ -11283,7 +11233,7 @@ static s7_pointer moving_average_chooser(s7_scheme *sc, s7_pointer f, int args, 
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_moving_average_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_moving_average_2);
       return(indirect_moving_average_2);
     }
   return(f);
@@ -11304,7 +11254,7 @@ static s7_pointer formant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_formant_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_formant_2);
       return(indirect_formant_2);
     }
   return(f);
@@ -11325,7 +11275,7 @@ static s7_pointer firmant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_firmant_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_firmant_2);
       return(indirect_firmant_2);
     }
   return(f);
@@ -11346,7 +11296,7 @@ static s7_pointer filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_filter_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_filter_2);
       return(indirect_filter_2);
     }
   return(f);
@@ -11367,7 +11317,7 @@ static s7_pointer fir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_fir_filter_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_fir_filter_2);
       return(indirect_fir_filter_2);
     }
   return(f);
@@ -11388,7 +11338,7 @@ static s7_pointer iir_filter_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_iir_filter_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_iir_filter_2);
       return(indirect_iir_filter_2);
     }
   return(f);
@@ -11415,7 +11365,7 @@ static s7_pointer triangle_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_triangle_wave_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_triangle_wave_2);
       return(indirect_triangle_wave_2);
     }
   return(f);
@@ -11442,7 +11392,7 @@ static s7_pointer sawtooth_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_sawtooth_wave_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_sawtooth_wave_2);
       return(indirect_sawtooth_wave_2);
     }
   return(f);
@@ -11469,7 +11419,7 @@ static s7_pointer square_wave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_square_wave_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_square_wave_2);
       return(indirect_square_wave_2);
     }
   return(f);
@@ -11496,7 +11446,7 @@ static s7_pointer pulse_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_pulse_train_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_pulse_train_2);
       return(indirect_pulse_train_2);
     }
   return(f);
@@ -11524,7 +11474,7 @@ static s7_pointer rand_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_rand_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_rand_2);
       return(indirect_rand_2);
     }
   return(f);
@@ -11551,7 +11501,7 @@ static s7_pointer rand_interp_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_rand_interp_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_rand_interp_2);
       return(indirect_rand_interp_2);
     }
   return(f);
@@ -11572,7 +11522,7 @@ static s7_pointer polyshape_chooser(s7_scheme *sc, s7_pointer f, int args, s7_po
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_polyshape_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_polyshape_2);
       return(indirect_polyshape_2);
     }
   return(f);
@@ -11593,7 +11543,7 @@ static s7_pointer ssb_am_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_ssb_am_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_ssb_am_2);
       return(indirect_ssb_am_2);
     }
   return(f);
@@ -11614,7 +11564,7 @@ static s7_pointer asymmetric_fm_chooser(s7_scheme *sc, s7_pointer f, int args, s
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_asymmetric_fm_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_asymmetric_fm_2);
       return(indirect_asymmetric_fm_2);
     }
   return(f);
@@ -11635,7 +11585,7 @@ static s7_pointer filtered_comb_chooser(s7_scheme *sc, s7_pointer f, int args, s
       (s7_function_choice_is_direct(sc, caddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      if (expr_is_clm_gen(sc, caddr(expr))) return(direct_filtered_comb_2);
+      if (s7_function_returns_temp(caddr(expr))) return(direct_filtered_comb_2);
       return(indirect_filtered_comb_2);
     }
   return(f);
@@ -11644,15 +11594,6 @@ static s7_pointer filtered_comb_chooser(s7_scheme *sc, s7_pointer f, int args, s
 
 static s7_pointer frame_to_frame_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 3) &&
-      (s7_is_symbol(s7_cadr(expr))) &&
-      (s7_is_symbol(s7_caddr(expr))) &&
-      (s7_is_symbol(s7_cadddr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      return(frame_to_frame_sss);
-    }
-
   /* PERHAPS: (sample->frame s s s) (sample->file ?)
    * TODO: in snd-test: 17835: ;delay size 0: #<vct[len=5]: 0.000 1.000 0.000 0.000 0.000>
    */
@@ -12021,7 +11962,11 @@ static void init_choosers(s7_scheme *sc)
 				 NULL, NULL, NULL, NULL, NULL, NULL);
   add_direct_2 = clm_make_function(sc, "+", g_add_direct_2, 2, 0, false, "+ optimization", gen_class,
 				   NULL, NULL, NULL, NULL, NULL, NULL);
+  add_direct_s2 = clm_make_function(sc, "+", g_add_direct_s2, 3, 0, false, "+ optimization", gen_class,
+				   NULL, NULL, NULL, NULL, NULL, NULL);
   add_direct_3 = clm_make_function(sc, "+", g_add_direct_3, 3, 0, false, "+ optimization", gen_class,
+				   NULL, NULL, NULL, NULL, NULL, NULL);
+  add_direct_4 = clm_make_function(sc, "+", g_add_direct_4, 4, 0, false, "+ optimization", gen_class,
 				   NULL, NULL, NULL, NULL, NULL, NULL);
   add_c_direct = clm_make_function(sc, "+", g_add_c_direct, 2, 0, false, "+ optimization", gen_class,
 				   NULL, NULL, NULL, NULL, NULL, NULL);
@@ -12479,7 +12424,6 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "frame->frame");
   s7_function_set_chooser(sc, f, frame_to_frame_chooser);
   gen_class = s7_function_class(sc, f);
-  frame_to_frame_sss = clm_make_function_no_choice(sc, "frame->frame", g_frame_to_frame_sss, 3, 0, false, "frame->frame optimization", gen_class);
 
 
   f = s7_name_to_value(sc, "locsig");
@@ -13154,6 +13098,17 @@ XEN_NARGIFY_3(g_mus_generator_set_w, g_mus_generator_set)
 
 #endif
 
+#if HAVE_SCHEME
+#define XEN_DEFINE_DIRECT_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  do { \
+  s7_pointer sym, f;							\
+  sym = s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc); \
+  f = s7_value(s7, sym); \
+  s7_function_set_returns_temp(f);\
+  } while (0)
+#else
+#define XEN_DEFINE_DIRECT_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#endif
 
 static void mus_xen_init(void)
 {
@@ -13386,7 +13341,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_rand_interp,      g_rand_interp_w,   1, 1, 0, H_rand_interp);
   XEN_DEFINE_SAFE_PROCEDURE(S_rand_p,           g_rand_p_w,        1, 0, 0, H_rand_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_rand_interp_p,    g_rand_interp_p_w, 1, 0, 0, H_rand_interp_p);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_random,       g_mus_random_w,    1, 0, 0, H_mus_random);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_mus_random,     g_mus_random_w,    1, 0, 0, H_mus_random);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_mus_rand_seed_w, H_mus_rand_seed,
 				   S_setB S_mus_rand_seed, g_mus_set_rand_seed_w, 0, 0, 1, 0);
