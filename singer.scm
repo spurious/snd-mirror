@@ -157,7 +157,9 @@
 	   (nose1 (make-real-vector noselength))
 	   (nose2 (make-real-vector noselength))
 	   (velum-pos 0.0)
-	   (alpha (make-real-vector 4))
+	   (alpha1 0.0)
+	   (alpha2 0.0)
+	   (alpha3 0.0)
 	   (nose-last-minus-refl 0.0)
 	   (nose-last-plus-refl 0.0)
 	   (nose-last-output 0.0)
@@ -175,7 +177,8 @@
 	   (dline1 (make-real-vector tractlength))
 	   (dline2 (make-real-vector tractlength))
 	   ;; throat radiation low-pass filter
-	   (lt (make-real-vector 2))
+	   (lt0 0.0)
+	   (lt1 0.0)
 	   (ltcoeff .9995)
 	   (ltgain .05)			; a low order iir filter
 	   (lip-radius   0.0)
@@ -319,13 +322,13 @@
 		   ;; nasal tract (set nasal shape)
 		   (set! temp (- rightradius velumradius))
 		   (if (< temp 0.0) (set! temp 0.0))
-		   (set! (alpha 1) (* leftradius leftradius))
-		   (set! (alpha 2) (* temp temp))
-		   (set! (alpha 3) (* velumradius velumradius))
-		   (set! temp1 (/ 2.0 (+ (alpha 1) (alpha 2) (alpha 3))))
-		   (set! (alpha 1) (* (alpha 1) temp1))
-		   (set! (alpha 2) (* (alpha 2) temp1))
-		   (set! (alpha 3) (* (alpha 3) temp1))))))
+		   (set! alpha1 (* leftradius leftradius))
+		   (set! alpha2 (* temp temp))
+		   (set! alpha3 (* velumradius velumradius))
+		   (set! temp1 (/ 2.0 (+ alpha1 alpha2 alpha3)))
+		   (set! alpha1 (* alpha1 temp1))
+		   (set! alpha2 (* alpha2 temp1))
+		   (set! alpha3 (* alpha3 temp1))))))
 	 
 	 (if (not (= new-tract 0))
 	     (begin
@@ -441,7 +444,7 @@
 	 (let ((j 0)
 	       (temp1 0.0)
 	       (temp 0.0))
-	   (set! (lt 0) (+ (dline1 2) (dline2 2)))
+	   (set! lt0 (+ (dline1 2) (dline2 2)))
 	   (set! (dline2 1) (+ (dline2 2) (* (coeffs 1) (- glotsamp (dline2 2)))))
 	   (set! temp (+ glotsamp (- (dline2 1) (dline2 2))))
 	   (do ((j 2 (+ j 1)))
@@ -457,8 +460,8 @@
 		 (nose-reftemp 0.0))
 	     (if (and (= velum-pos 0.0)
 		      (>= time-nose-closed nose-ring-time))
-		 (begin
-		   (set! nose-reftemp (+ (* (alpha 1) plussamp) (* (alpha 2) minussamp) (* (alpha 3) (nose2 1))))
+		 (let ((nose2-1 (vector-ref nose2 1)))
+		   (set! nose-reftemp (+ (* alpha1 plussamp) (* alpha2 minussamp) (* alpha3 nose2-1)))
 		   (set! nose-last-minus-refl (- nose-reftemp plussamp))
 		   (set! nose-last-plus-refl (- nose-reftemp minussamp)))
 		 (begin
@@ -468,7 +471,7 @@
 		   ;; nasal tick
 		   (let* ((nose-t1 0.0)
 			  (nose-temp 0.0)
-			  (nose-reftemp (+ (* (alpha 1) plussamp) (* (alpha 2) minussamp) (* (alpha 3) (nose2 1))))
+			  (nose-reftemp (+ (* alpha1 plussamp) (* alpha2 minussamp) (* alpha3 (nose2 1))))
 			  (plus-in (* velum-pos (- nose-reftemp (nose2 1)))))
 		     (set! nose-last-minus-refl (- nose-reftemp plussamp))
 		     (set! nose-last-plus-refl (- nose-reftemp minussamp))
@@ -522,8 +525,8 @@
 		 (set! inz1 noise-input)
 		 (set! (dline1 noise-pos) (+ (dline1 noise-pos) (* noise-output noise-gain s-noise)))))
 	   (set! last-tract-plus (* (dline1 tractlength-1) lip-radius)))
-	 (set! (lt 1) (* ltgain (+ (lt 0) (* ltcoeff (lt 1)))))
-	 (outa i (* amp (+ last-lip-out nose-last-output (lt 1))) *output*)
+	 (set! lt1 (* ltgain (+ lt0 (* ltcoeff lt1))))
+	 (outa i (* amp (+ last-lip-out nose-last-output lt1)))
 	 ))))
 
 #|

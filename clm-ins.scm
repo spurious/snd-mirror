@@ -171,7 +171,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 					       (+ even-freq (* (indices k) carrier))))
 			    (* odd-amp (oscil (odds k) 
 					      (+ odd-freq (* (indices k) carrier)))))))))
-       (locsig loc i (* (env ampf) sum))))))
+       (locsig loc i (* sum (env ampf)))))))
 
 ;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
 ;;; (vox 0 2 300 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 I 5 OW 10 I 50 AE 100 OO) '(.8 .15 .05) '(.05 .0125 .025) .02 .1)
@@ -397,7 +397,7 @@ vocal sounds using phase quadrature waveshaping"
 						     (* fax (oscil (cos-evens k) even-freq))))
 				      (* odd-amp (- (* yfax (oscil (sin-odds k) odd-freq))
 						    (* fax (oscil (cos-odds k) odd-freq)))))))))))
-	 (outa i (* (env ampf) sum))))))
+	 (outa i (* sum (env ampf)))))))
 
 ;;; (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
 ;;; (a test to see if the cancellation is working -- sounds like a mosquito)
@@ -2372,7 +2372,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	       (set! (gains k) (* (env (env-size k)) (- 1.0 a1))))
 	   (set! outval (+ outval (* (gains k)
 				     (formant (frm-size k) inval)))))
-	 (outa i (* (env ampenv) outval))))))
+	 (outa i (* outval (env ampenv)))))))
 
 
 (definstrument (anoi infile start dur (fftsize 128) (amp-scaler 1.0) rr)

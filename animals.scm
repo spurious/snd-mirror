@@ -621,8 +621,7 @@
 		     (env pulsef)
 		     (rk!cos gen1 (env pulse-frqf)))))
 	 
-	 (outa i (+ (* (env ampf1) 
-		       val)
+	 (outa i (+ (* val (env ampf1))
 		    (* (env ampfr1)
 		       (formant frm1 val))
 		    (* (env ampfr2)
@@ -7109,7 +7108,7 @@
 	 (do ((k 0 (+ k 1)))
 	     ((= k 5))
 	   (set! sum (+ sum (* (env (ampfs k)) (oscil (oscs k) (* (+ k 1) frq))))))
-	 (outa i (* (env ampf) sum) ))))
+	 (outa i (* sum (env ampf))))))
   
   ;; part 2
   (let* ((start (seconds->samples (+ beg 0.1)))

@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [9542]
 ;;;  test 7: colors                             [9862]
 ;;;  test 8: clm                                [10382]
-;;;  test 9: mix                                [21652]
-;;;  test 10: marks                             [23439]
-;;;  test 11: dialogs                           [24406]
-;;;  test 12: extensions                        [24599]
-;;;  test 13: menus, edit lists, hooks, etc     [24865]
-;;;  test 14: all together now                  [26242]
-;;;  test 15: chan-local vars                   [27129]
-;;;  test 16: regularized funcs                 [28915]
-;;;  test 17: dialogs and graphics              [32140]
-;;;  test 18: enved                             [32239]
-;;;  test 19: save and restore                  [32258]
-;;;  test 20: transforms                        [33941]
-;;;  test 21: new stuff                         [36093]
-;;;  test 22:                                   [38115]
-;;;  test 23: with-sound                        [38121]
-;;;  test 25: X/Xt/Xm                           [41955]
-;;;  test 26:                                   [45637]
-;;;  test 27: GL                                [45643]
-;;;  test 28: errors                            [45767]
-;;;  test 29: s7                                [47889]
-;;;  test all done                              [47961]
-;;;  test the end                               [48141]
+;;;  test 9: mix                                [21649]
+;;;  test 10: marks                             [23436]
+;;;  test 11: dialogs                           [24403]
+;;;  test 12: extensions                        [24596]
+;;;  test 13: menus, edit lists, hooks, etc     [24862]
+;;;  test 14: all together now                  [26239]
+;;;  test 15: chan-local vars                   [27126]
+;;;  test 16: regularized funcs                 [28912]
+;;;  test 17: dialogs and graphics              [32137]
+;;;  test 18: enved                             [32236]
+;;;  test 19: save and restore                  [32255]
+;;;  test 20: transforms                        [33938]
+;;;  test 21: new stuff                         [36090]
+;;;  test 22: (run)                             [38111]
+;;;  test 23: with-sound                        [38117]
+;;;  test 25: X/Xt/Xm                           [41792]
+;;;  test 26:                                   [45474]
+;;;  test 27: GL                                [45480]
+;;;  test 28: errors                            [45604]
+;;;  test 29: s7                                [47726]
+;;;  test all done                              [47798]
+;;;  test the end                               [47978]
 
 (define tests 1)
 (define keep-going #f)
@@ -19515,6 +19515,25 @@ EDITS: 2
 	    (if (fneq old-val new-val)
 		(snd-display #__line__ ";reset src ~A ~A ~A" i old-val new-val))))))
     
+    (let ()
+      (define (so1 s p)
+	(src s (env p)))
+      
+      (let ((s1 (make-src :srate 2.0 :input (make-readin "oboe.snd" 0 10000)))
+	    (s2 (make-src :srate 2.0 :input (make-readin "oboe.snd" 0 10000)))
+	    (s3 (make-src :srate 2.0 :input (make-readin "oboe.snd" 0 10000)))
+	    (e1 (make-env '(0 1 2 0.5) :duration 1000))
+	    (e2 (make-env '(0 1 2 0.5) :duration 1000))
+	    (e3 (make-env '(0 1 2 0.5) :duration 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100))
+	  (let ((x1 (src s1 (env e1)))
+		(ex2 (env e2)))
+	    (let ((x2 (src s2 ex2))
+		  (x3 (so1 s3 e3)))
+	      (if (not (= x1 x2 x3))
+		  (format #t "~D ~A ~A ~A~%" i x1 x2 x3)))))))
+
     (let ((gen (make-granulate :expansion 2.0))
 	  (v0 (make-vct 1000))
 	  (rd (make-readin "oboe.snd" 0 4000 1 2048))
