@@ -4,273 +4,64 @@
 ;(set! (hook-functions *load-hook*) (list (lambda (filename) (format #t "loading ~S~%" filename))))
 (set! (hook-functions *unbound-variable-hook*) '())
 
-;;; --------------------------------------------------------------------------------
-;;; get indexer.data
-
-(load "ws.scm")
-					;(load "clm23.scm")		   
-					;(load "edit123.scm")		   
-					;(load "snd7.scm")
-(load "snd11.scm")
-					;(load "snd6.scm")
-					;(load "snd9.scm")
-					;(load "snd8.scm")
-					;(load "snd10.scm")
-(load "analog-filter.scm")	   
-					; (load "new-backgrounds.scm")
-(load "animals.scm")		   
-					; (load "new-effects.scm")
-(load "autosave.scm")	   
-(load "noise.scm")
-(load "binary-io.scm")
-					;(load "bess1.scm")		   
-(load "nrev.scm")
-					;(load "bess.scm")		  
-(load "numerics.scm")
-(load "big-gens.scm")	  
-					;(load "oscope.scm")
-(load "bird.scm")		   
-(load "clean.scm")	
-(load "peak-phases.scm")
-(load "piano.scm")
-(load "clm-ins.scm")		   
-(load "play.scm")
-(load "dlocsig.scm")		   
-(load "poly.scm")
-(load "draw.scm")		  
-					;(load "popup.scm")
-(load "dsp.scm")		   
-(load "prc95.scm")
-(load "pretty-print.scm")
-					; (load "edit-menu.scm")	   
-(load "primes.scm")
-					; (load "effects-utils.scm")	   
-(load "pvoc.scm")
-(load "enved.scm")		   
-(load "rgb.scm")
-(load "env.scm")		   
-(load "rtio.scm")
-(load "examp.scm")		   
-(load "rubber.scm")
-(load "expandn.scm")		   
-					;(load "s7-slib-init.scm")
-(load "extensions.scm")	   
-					;(load "s7test.scm")
-(load "fade.scm")		   
-(load "selection.scm")
-					; (load "fft-menu.scm")	   
-(load "singer.scm")
-					; (load "fmv.scm")		   
-(load "frame.scm")		   
-(load "freeverb.scm")	   
-(load "fullmix.scm")		   
-(load "generators.scm")	   
-(load "grani.scm")		   
-					; (load "gtk-effects.scm")	   
-(load "snddiff.scm")
-					; (load "gtk-effects-utils.scm")  
-					; (load "snd-gl.scm")
-					; (load "gtk-popup.scm")	   
-					; (load "snd-gtk.scm")
-(load "hooks.scm")		   
-					;(load "sndlib-ws.scm")
-(load "index.scm")		   
-					; (load "snd-motif.scm")
-(load "jcrev.scm")		   
-					;(load "snd-test.scm")
-(load "jcvoi.scm")		   
-(load "sndwarp.scm")
-
-					; (load "kmenu.scm")	
-
-					; (load "special-menu.scm")
-(load "maraca.scm")		   
-(load "spectr.scm")
-					; (load "marks-menu.scm")	   
-(load "spokenword.scm")
-(load "marks.scm")		   
-(load "stochastic.scm")
-(load "maxf.scm")		   
-(load "strad.scm")
-					; (load "misc.scm")		   
-(load "mixer.scm")		  
-(load "v.scm")
-(load "mix.scm")		   
-(load "moog.scm")		   
-					; (load "xm-enved.scm")
-(load "musglyphs.scm")	   
-(load "zip.scm")
-(load "nb.scm")
+(define scheme-variable-names
+  (list "after-graph-hook" "lisp-graph-hook" "before-transform-hook" "mix-release-hook" "stop-playing-channel-hook" "save-hook" "mus-error-hook"
+	"mouse-enter-graph-hook" "mouse-leave-graph-hook" "open-raw-sound-hook" "select-channel-hook" "after-open-hook" "close-hook" "drop-hook" "update-hook"
+	"just-sounds-hook" "mark-click-hook" "mark-drag-hook" "name-click-hook" "open-hook" "help-hook"
+	"output-comment-hook" "play-hook" "snd-error-hook" "snd-warning-hook" "start-hook" "start-playing-hook" "stop-playing-hook"
+	"stop-playing-region-hook" "mouse-enter-listener-hook" "mouse-leave-listener-hook" "window-property-changed-hook" "select-sound-hook"
+	"print-hook" "exit-hook" "output-name-hook" "during-open-hook" "transform-hook" "mouse-enter-label-hook" "mouse-leave-label-hook" "initial-graph-hook"
+	"graph-hook" "key-press-hook" "mouse-drag-hook" "mouse-press-hook" "enved-hook" "read-hook" "mouse-click-hook" "new-widget-hook"
+	"mark-hook" "previous-files-select-hook" "dac-hook" "stop-dac-hook" "stop-playing-selection-hook" "after-apply-controls-hook"
+	"draw-mark-hook" "bad-header-hook" "save-state-hook" "new-sound-hook" "color-hook" "orientation-hook" "listener-click-hook"
+	"mix-click-hook" "after-save-state-hook" "mouse-enter-text-hook" "mouse-leave-text-hook" "mix-drag-hook"
+	"start-playing-selection-hook" "selection-changed-hook" "*current-sound*"
+	"before-save-state-hook" "after-save-as-hook" "after-transform-hook" "before-save-as-hook"))
 
 
-(let ()
-  (define (report-places)
-    (let ((names ())
-	  (places ()))
-      
-      (define (where-is func)
-	(let ((addr (symbol->value '__func__ (procedure-environment func))))
-	  ;; this misses scheme-side pws because their environment is (probably) the global env
-	  (if (not (pair? addr))
-	      #f
-	      (cadr addr))))
-      
-      (define (apropos-1 alist)
-	(for-each
-	 (lambda (binding)
-	   (if (pair? binding)
-	       (let ((symbol (car binding))
-		     (value (cdr binding)))
-		 (if (and (procedure? value) 
-			  (not (assq symbol names)))
-		     (let ((file (where-is value)))
-		       (if (and file
-				(not (string=? file "~/.snd_s7"))
-				(not (string=? file "/home/bil/.snd_s7"))
-				(not (string=? file "t.scm"))
-				(not (string=? file "/home/bil/cl/t.scm"))
-				)
-			   (begin
-			     (set! names (cons (cons symbol file) names))
-			     (if (not (member file places))
-				 (set! places (cons file places))))))))))
-	 alist))
-      
-      ;; handle the main macros by hand
-      (for-each
-       (lambda (symbol-and-file)
-	 (let ((symbol (car symbol-and-file))
-	       (file (cadr symbol-and-file)))
-	   (if (not (file-exists? file))
-	       (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
-	   (set! names (cons (cons symbol file) names))
-	   (if (not (member file places))
-	       (set! places (cons file places)))))
-       (list 
-	(list 'with-sound "ws.scm")
-	(list 'with-mixed-sound "ws.scm")
-	(list 'with-full-sound "ws.scm")
-	(list 'with-temp-sound "ws.scm")
-	(list 'with-marked-sound "ws.scm")
-	(list 'with-simple-sound "ws.scm")
-	(list 'sound-let "ws.scm")
-;	(list 'def-clm-struct "ws.scm")
-	(list 'definstrument "ws.scm")
-	(list 'defgenerator "generators.scm")
-
-	(list 'channel-sync "extensions.scm")
-	(list 'cursor-follows-play "snd11.scm")
-	(list 'xe-envelope "xm-enved.scm")
-	))
-      
-      ;; and some of the main variables
-      (for-each
-       (lambda (symbol-and-file)
-	 (let ((symbol (car symbol-and-file))
-	       (file (cadr symbol-and-file)))
-	   (if (not (file-exists? file))
-	       (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
-	   (set! names (cons (cons symbol file) names))
-	   (if (not (member file places))
-	       (set! places (cons file places)))))
-       
-       (list
-	(list '*clm-srate* "ws.scm")
-	(list '*clm-file-name* "ws.scm")
-	(list '*clm-channels* "ws.scm")
-	(list '*clm-data-format* "ws.scm")
-	(list '*clm-header-type* "ws.scm")
-	(list '*clm-verbose* "ws.scm")
-	(list '*clm-play* "ws.scm")
-	(list '*clm-statistics* "ws.scm")
-	(list '*clm-reverb* "ws.scm")
-	(list '*clm-reverb-channels* "ws.scm")
-	(list '*clm-reverb-data* "ws.scm")
-	(list '*clm-table-size* "ws.scm")
-	(list '*clm-file-buffer-size* "ws.scm")
-	(list '*clm-locsig-type* "ws.scm")
-	(list '*clm-clipped* "ws.scm")
-	(list '*clm-array-print-length* "ws.scm")
-	(list '*clm-player* "ws.scm")
-	(list '*clm-notehook* "ws.scm")
-	(list '*clm-with-sound-depth* "ws.scm")
-	(list '*clm-default-frequency* "ws.scm")
-;	(list '*clm-safety* "ws.scm")
-	(list '*clm-delete-reverb* "ws.scm")
-	(list '*clm-output-safety* "ws.scm")
-	(list '*to-snd* "ws.scm")
-	(list '*clm-search-list* "ws.scm")
-	(list '*definstrument-hook* "ws.scm")))
-      
-      (apropos-1 (reverse (environment->list (global-environment))))
-
-      (let* ((name-len (length names))
-	     (nl-1 (- name-len 1))
-	     (file-len (length places))
-	     (fl-1 (- file-len 1)))
-	(do ((i 0 (+ i 1)))
-	    ((= i file-len))
-	  (let* ((pos -1)
-		 (place (list-ref places i))
-		 (slen (length place)))
-	    (do ((k 0 (+ k 1)))
-		((= k slen))
-	      (if (char=? (place k) #\/)
-		  (set! pos k)))
-	    (if (> pos -1)
-		(set! (places i) (substring place (+ pos 1))))))
-	
-	(set! places (sort! places string<?))
-	(set! names (sort! names (lambda (a b)
-				   (string<? (symbol->string (car a)) 
-					     (symbol->string (car b))))))
-	
-	(call-with-output-file "indexer.data"
-	  (lambda (p)
-	    
-	    (define (find-file name)
-	      (call-with-exit
-	       (lambda (return)
-		 (do ((i 0 (+ i 1)))
-		     ((= i file-len) (format #t "oops! ~A~%" name) 0)
-		   (if (string=? name (list-ref places i))
-		       (return i))))))
-	    
-	    (format p "#define AUTOLOAD_FILES ~D~%~%" file-len)
-	    (format p "static const char *autoload_files[AUTOLOAD_FILES] = {~%  ")
-	    (do ((i 0 (+ i 1)))
-		((= i fl-1))
-	      (if (and (positive? i)
-		       (= (modulo i 6) 0))
-		  (format p "~S, ~%  " (places i))
-		  (format p "~S, " (places i))))
-	    (format p "~S};~%~%" (places fl-1))
-	    
-	    (format p "#define AUTOLOAD_NAMES ~D~%~%" name-len)
-	    (format p "static const char *autoload_names[AUTOLOAD_NAMES] = {~%  ")
-	    (do ((i 0 (+ i 1)))
-		((= i nl-1))
-	      (if (and (positive? i)
-		       (= (modulo i 4) 0))
-		  (format p "~S, ~%  " (symbol->string (car (names i))))
-		  (format p "~S, " (symbol->string (car (names i))))))
-	    (format p "~S};~%~%" (symbol->string (car (names nl-1))))
-	    
-	    (format p "static int autoload_indices[AUTOLOAD_NAMES] = {~%  ")
-	    (do ((i 0 (+ i 1)))
-		((= i nl-1))
-	      (if (and (positive? i)
-		       (= (modulo i 24) 0))
-		  (format p "~D, ~%  " (find-file (cdr (names i))))
-		  (format p "~D, " (find-file (cdr (names i))))))
-	    (format p "~D};~%~%" (find-file (cdr (names nl-1)))))))))
-  
-  (report-places))
+(define scheme-constant-names
+  (list "mus-out-format" "mus-unsupported" "mus-next" "mus-aifc" "mus-riff" "mus-rf64" "mus-nist" "mus-raw" "mus-ircam" "mus-aiff" "mus-bicsf"
+	"mus-voc" "mus-svx" "mus-soundfont" "mus-unknown" "mus-bshort" "mus-lshort" "mus-mulaw" "mus-alaw" "mus-byte" "mus-ubyte"
+	"mus-bfloat" "mus-lfloat" "mus-bint" "mus-lint" "mus-bintn" "mus-lintn" "mus-b24int" "mus-l24int" "mus-bdouble" "mus-ldouble"
+	"mus-ubshort" "mus-ulshort" "mus-bdouble-unscaled" "mus-ldouble-unscaled" "mus-bfloat-unscaled" "mus-lfloat-unscaled"
+	"mus-audio-default"
+	"rectangular-window" "hann-window" "welch-window"
+	"parzen-window" "bartlett-window" "hamming-window" "blackman2-window" "blackman3-window" "blackman4-window" "exponential-window"
+	"riemann-window" "kaiser-window" "cauchy-window" "poisson-window" "gaussian-window" "tukey-window" "dolph-chebyshev-window"
+	"samaraki-window" "ultraspherical-window" "blackman5-window" "blackman6-window" "blackman7-window" "blackman8-window" 
+	"blackman9-window" "blackman10-window" "rv2-window" "rv3-window" "rv4-window"
+	"zoom-focus-left" "zoom-focus-right" "zoom-focus-active" "zoom-focus-middle" "graph-once"
+	"graph-as-wavogram" "graph-as-sonogram" "graph-as-spectrogram" "cursor-cross" "cursor-line" "graph-lines" "graph-dots"
+	"graph-filled" "graph-dots-and-lines" "graph-lollipops" "x-axis-in-seconds" "x-axis-in-samples" "x-axis-in-beats" "x-axis-in-measures"
+	"x-axis-as-percentage" "show-all-axes" "show-all-axes-unlabelled" "show-no-axes" "show-x-axis" "show-x-axis-unlabelled"
+	"cursor-in-view" "cursor-on-left" "cursor-on-right" "cursor-in-middle" "keyboard-no-action" "fourier-transform"
+	"wavelet-transform" "haar-transform" "cepstrum" "hadamard-transform" "walsh-transform" "autocorrelation" "dont-normalize"
+	"normalize-by-channel" "normalize-by-sound" "normalize-globally" "current-edit-position" "channels-separate"
+	"channels-combined" "channels-superimposed" "speed-control-as-float" "speed-control-as-ratio" "speed-control-as-semitone"
+	"enved-amplitude" "enved-spectrum" "enved-srate" "envelope-linear" "envelope-exponential" "enved-add-point"
+	"enved-delete-point" "enved-move-point" "time-graph" "transform-graph" "lisp-graph" "copy-context" "cursor-context"
+	"selection-context" "mark-context" "mus-interp-all-pass" "mus-interp-bezier" "mus-interp-hermite" "mus-interp-lagrange"
+	"mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"
+	"sync-none" "sync-all" "sync-by-sound"
+	))	
 
 
 
-;;; --------------------------------------------------------------------------------
-;;; make-index 
+(define* (checked-substring str start end)
+  (let ((len (length str)))
+    (if (>= start len)
+	""
+	(if end
+	    (substring str start (min end len))
+	    (substring str start)))))
+
+(define (without-dollar-sign str)
+  (if (char=? (str 0) #\$)
+      (substring str 1)
+      str))
+
+(define (creation-date)
+  (strftime "%d-%b-%y %H:%M %Z" (localtime (current-time))))
 
 (define (alphanumeric? c) (or (char-alphabetic? c) (char-numeric? c)))
 (define-expansion (incf sym) `(set! ,sym (+ ,sym 1)))
@@ -293,9 +84,9 @@
 
 (define array-length 4096)
 
-
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
+
 (define ind-name    (make-procedure-with-setter (lambda (obj) (obj 0)) (lambda (obj val) (set! (obj 0) val))))
 (define ind-sortby  (make-procedure-with-setter (lambda (obj) (obj 1)) (lambda (obj val) (set! (obj 1) val))))
 (define ind-topic   (make-procedure-with-setter (lambda (obj) (obj 2)) (lambda (obj val) (set! (obj 2) val))))
@@ -313,15 +104,6 @@
   (if (char-position #\& str)
       (- (length str) 3)
       (length str)))
-
-
-(define* (checked-substring str start end)
-  (let ((len (length str)))
-    (if (>= start len)
-	""
-	(if end
-	    (substring str start (min end len))
-	    (substring str start)))))
 
 
 (define* (remove item sequence count)
@@ -450,48 +232,6 @@
 	      :file file
 	      :general #t
 	      :sortby (string-downcase (checked-substring str (+ 1 mid))))))
-
-
-(define scheme-variable-names
-  (list "after-graph-hook" "lisp-graph-hook" "before-transform-hook" "mix-release-hook" "stop-playing-channel-hook" "save-hook" "mus-error-hook"
-	"mouse-enter-graph-hook" "mouse-leave-graph-hook" "open-raw-sound-hook" "select-channel-hook" "after-open-hook" "close-hook" "drop-hook" "update-hook"
-	"just-sounds-hook" "mark-click-hook" "mark-drag-hook" "name-click-hook" "open-hook" "help-hook"
-	"output-comment-hook" "play-hook" "snd-error-hook" "snd-warning-hook" "start-hook" "start-playing-hook" "stop-playing-hook"
-	"stop-playing-region-hook" "mouse-enter-listener-hook" "mouse-leave-listener-hook" "window-property-changed-hook" "select-sound-hook"
-	"print-hook" "exit-hook" "output-name-hook" "during-open-hook" "transform-hook" "mouse-enter-label-hook" "mouse-leave-label-hook" "initial-graph-hook"
-	"graph-hook" "key-press-hook" "mouse-drag-hook" "mouse-press-hook" "enved-hook" "read-hook" "mouse-click-hook" "new-widget-hook"
-	"mark-hook" "previous-files-select-hook" "dac-hook" "stop-dac-hook" "stop-playing-selection-hook" "after-apply-controls-hook"
-	"draw-mark-hook" "bad-header-hook" "save-state-hook" "new-sound-hook" "color-hook" "orientation-hook" "listener-click-hook"
-	"mix-click-hook" "after-save-state-hook" "mouse-enter-text-hook" "mouse-leave-text-hook" "mix-drag-hook"
-	"start-playing-selection-hook" "selection-changed-hook" "*current-sound*"
-	"before-save-state-hook" "after-save-as-hook" "after-transform-hook" "before-save-as-hook"))
-
-
-(define scheme-constant-names
-  (list "mus-out-format" "mus-unsupported" "mus-next" "mus-aifc" "mus-riff" "mus-rf64" "mus-nist" "mus-raw" "mus-ircam" "mus-aiff" "mus-bicsf"
-	"mus-voc" "mus-svx" "mus-soundfont" "mus-unknown" "mus-bshort" "mus-lshort" "mus-mulaw" "mus-alaw" "mus-byte" "mus-ubyte"
-	"mus-bfloat" "mus-lfloat" "mus-bint" "mus-lint" "mus-bintn" "mus-lintn" "mus-b24int" "mus-l24int" "mus-bdouble" "mus-ldouble"
-	"mus-ubshort" "mus-ulshort" "mus-bdouble-unscaled" "mus-ldouble-unscaled" "mus-bfloat-unscaled" "mus-lfloat-unscaled"
-	"mus-audio-default"
-	"rectangular-window" "hann-window" "welch-window"
-	"parzen-window" "bartlett-window" "hamming-window" "blackman2-window" "blackman3-window" "blackman4-window" "exponential-window"
-	"riemann-window" "kaiser-window" "cauchy-window" "poisson-window" "gaussian-window" "tukey-window" "dolph-chebyshev-window"
-	"samaraki-window" "ultraspherical-window" "blackman5-window" "blackman6-window" "blackman7-window" "blackman8-window" 
-	"blackman9-window" "blackman10-window" "rv2-window" "rv3-window" "rv4-window"
-	"zoom-focus-left" "zoom-focus-right" "zoom-focus-active" "zoom-focus-middle" "graph-once"
-	"graph-as-wavogram" "graph-as-sonogram" "graph-as-spectrogram" "cursor-cross" "cursor-line" "graph-lines" "graph-dots"
-	"graph-filled" "graph-dots-and-lines" "graph-lollipops" "x-axis-in-seconds" "x-axis-in-samples" "x-axis-in-beats" "x-axis-in-measures"
-	"x-axis-as-percentage" "show-all-axes" "show-all-axes-unlabelled" "show-no-axes" "show-x-axis" "show-x-axis-unlabelled"
-	"cursor-in-view" "cursor-on-left" "cursor-on-right" "cursor-in-middle" "keyboard-no-action" "fourier-transform"
-	"wavelet-transform" "haar-transform" "cepstrum" "hadamard-transform" "walsh-transform" "autocorrelation" "dont-normalize"
-	"normalize-by-channel" "normalize-by-sound" "normalize-globally" "current-edit-position" "channels-separate"
-	"channels-combined" "channels-superimposed" "speed-control-as-float" "speed-control-as-ratio" "speed-control-as-semitone"
-	"enved-amplitude" "enved-spectrum" "enved-srate" "envelope-linear" "envelope-exponential" "enved-add-point"
-	"enved-delete-point" "enved-move-point" "time-graph" "transform-graph" "lisp-graph" "copy-context" "cursor-context"
-	"selection-context" "mark-context" "mus-interp-all-pass" "mus-interp-bezier" "mus-interp-hermite" "mus-interp-lagrange"
-	"mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"
-	"sync-none" "sync-all" "sync-by-sound"
-	))	
 
 
 (define (scheme->ruby scheme-name)
@@ -674,14 +414,276 @@
      url-str)))
 
 
-(define (without-dollar-sign str)
-  (if (char=? (str 0) #\$)
-      (substring str 1)
-      str))
+
+;;; --------------------------------------------------------------------------------
+;;; get indexer.data
+
+(load "ws.scm")
+					;(load "clm23.scm")		   
+					;(load "edit123.scm")		   
+					;(load "snd7.scm")
+(load "snd11.scm")
+					;(load "snd6.scm")
+					;(load "snd9.scm")
+					;(load "snd8.scm")
+					;(load "snd10.scm")
+(load "analog-filter.scm")	   
+					; (load "new-backgrounds.scm")
+(load "animals.scm")		   
+					; (load "new-effects.scm")
+(load "autosave.scm")	   
+(load "noise.scm")
+(load "binary-io.scm")
+					;(load "bess1.scm")		   
+(load "nrev.scm")
+					;(load "bess.scm")		  
+(load "numerics.scm")
+(load "big-gens.scm")	  
+					;(load "oscope.scm")
+(load "bird.scm")		   
+(load "clean.scm")	
+(load "peak-phases.scm")
+(load "piano.scm")
+(load "clm-ins.scm")		   
+(load "play.scm")
+(load "dlocsig.scm")		   
+(load "poly.scm")
+(load "draw.scm")		  
+					;(load "popup.scm")
+(load "dsp.scm")		   
+(load "prc95.scm")
+(load "pretty-print.scm")
+					; (load "edit-menu.scm")	   
+(load "primes.scm")
+					; (load "effects-utils.scm")	   
+(load "pvoc.scm")
+(load "enved.scm")		   
+(load "rgb.scm")
+(load "env.scm")		   
+(load "rtio.scm")
+(load "examp.scm")		   
+(load "rubber.scm")
+(load "expandn.scm")		   
+					;(load "s7-slib-init.scm")
+(load "extensions.scm")	   
+					;(load "s7test.scm")
+(load "fade.scm")		   
+(load "selection.scm")
+					; (load "fft-menu.scm")	   
+(load "singer.scm")
+					; (load "fmv.scm")		   
+(load "frame.scm")		   
+(load "freeverb.scm")	   
+(load "fullmix.scm")		   
+(load "generators.scm")	   
+(load "grani.scm")		   
+					; (load "gtk-effects.scm")	   
+(load "snddiff.scm")
+					; (load "gtk-effects-utils.scm")  
+					; (load "snd-gl.scm")
+					; (load "gtk-popup.scm")	   
+					; (load "snd-gtk.scm")
+(load "hooks.scm")		   
+					;(load "sndlib-ws.scm")
+(load "index.scm")		   
+					; (load "snd-motif.scm")
+(load "jcrev.scm")		   
+					;(load "snd-test.scm")
+(load "jcvoi.scm")		   
+(load "sndwarp.scm")
+
+					; (load "kmenu.scm")	
+
+					; (load "special-menu.scm")
+(load "maraca.scm")		   
+(load "spectr.scm")
+					; (load "marks-menu.scm")	   
+(load "spokenword.scm")
+(load "marks.scm")		   
+(load "stochastic.scm")
+(load "maxf.scm")		   
+(load "strad.scm")
+					; (load "misc.scm")		   
+(load "mixer.scm")		  
+(load "v.scm")
+(load "mix.scm")		   
+(load "moog.scm")		   
+					; (load "xm-enved.scm")
+(load "musglyphs.scm")	   
+(load "zip.scm")
+(load "nb.scm")
 
 
-(define (creation-date)
-  (strftime "%d-%b-%y %H:%M %Z" (localtime (current-time))))
+(let ()
+  (define (report-places)
+    (let ((names ())
+	  (places ()))
+      
+      (define (where-is func)
+	(let ((addr (symbol->value '__func__ (procedure-environment func))))
+	  ;; this misses scheme-side pws because their environment is (probably) the global env
+	  (if (not (pair? addr))
+	      #f
+	      (cadr addr))))
+      
+      (define (apropos-1 alist)
+	(for-each
+	 (lambda (binding)
+	   (if (pair? binding)
+	       (let ((symbol (car binding))
+		     (value (cdr binding)))
+		 (if (and (procedure? value) 
+			  (not (assq symbol names)))
+		     (let ((file (where-is value)))
+		       (if (and file
+				(not (string=? file "~/.snd_s7"))
+				(not (string=? file "/home/bil/.snd_s7"))
+				(not (string=? file "t.scm"))
+				(not (string=? file "/home/bil/cl/t.scm"))
+				(not (string=? file "/home/bil/cl/make-index.scm"))
+				)
+			   (begin
+			     (set! names (cons (cons symbol file) names))
+			     (if (not (member file places))
+				 (set! places (cons file places))))))))))
+	 alist))
+      
+      ;; handle the main macros by hand
+      (for-each
+       (lambda (symbol-and-file)
+	 (let ((symbol (car symbol-and-file))
+	       (file (cadr symbol-and-file)))
+	   (if (not (file-exists? file))
+	       (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
+	   (set! names (cons (cons symbol file) names))
+	   (if (not (member file places))
+	       (set! places (cons file places)))))
+       (list 
+	(list 'with-sound "ws.scm")
+	(list 'with-mixed-sound "ws.scm")
+	(list 'with-full-sound "ws.scm")
+	(list 'with-temp-sound "ws.scm")
+	(list 'with-marked-sound "ws.scm")
+	(list 'with-simple-sound "ws.scm")
+	(list 'sound-let "ws.scm")
+;	(list 'def-clm-struct "ws.scm")
+	(list 'definstrument "ws.scm")
+	(list 'defgenerator "generators.scm")
+
+	(list 'channel-sync "extensions.scm")
+	(list 'cursor-follows-play "snd11.scm")
+	(list 'xe-envelope "xm-enved.scm")
+	))
+      
+      ;; and some of the main variables
+      (for-each
+       (lambda (symbol-and-file)
+	 (let ((symbol (car symbol-and-file))
+	       (file (cadr symbol-and-file)))
+	   (if (not (file-exists? file))
+	       (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
+	   (set! names (cons (cons symbol file) names))
+	   (if (not (member file places))
+	       (set! places (cons file places)))))
+       
+       (list
+	(list '*clm-srate* "ws.scm")
+	(list '*clm-file-name* "ws.scm")
+	(list '*clm-channels* "ws.scm")
+	(list '*clm-data-format* "ws.scm")
+	(list '*clm-header-type* "ws.scm")
+	(list '*clm-verbose* "ws.scm")
+	(list '*clm-play* "ws.scm")
+	(list '*clm-statistics* "ws.scm")
+	(list '*clm-reverb* "ws.scm")
+	(list '*clm-reverb-channels* "ws.scm")
+	(list '*clm-reverb-data* "ws.scm")
+	(list '*clm-table-size* "ws.scm")
+	(list '*clm-file-buffer-size* "ws.scm")
+	(list '*clm-locsig-type* "ws.scm")
+	(list '*clm-clipped* "ws.scm")
+	(list '*clm-array-print-length* "ws.scm")
+	(list '*clm-player* "ws.scm")
+	(list '*clm-notehook* "ws.scm")
+	(list '*clm-with-sound-depth* "ws.scm")
+	(list '*clm-default-frequency* "ws.scm")
+;	(list '*clm-safety* "ws.scm")
+	(list '*clm-delete-reverb* "ws.scm")
+	(list '*clm-output-safety* "ws.scm")
+	(list '*to-snd* "ws.scm")
+	(list '*clm-search-list* "ws.scm")
+	(list '*definstrument-hook* "ws.scm")))
+      
+      (apropos-1 (reverse (environment->list (global-environment))))
+
+      (let* ((name-len (length names))
+	     (nl-1 (- name-len 1))
+	     (file-len (length places))
+	     (fl-1 (- file-len 1)))
+	(do ((i 0 (+ i 1)))
+	    ((= i file-len))
+	  (let* ((pos -1)
+		 (place (list-ref places i))
+		 (slen (length place)))
+	    (do ((k 0 (+ k 1)))
+		((= k slen))
+	      (if (char=? (place k) #\/)
+		  (set! pos k)))
+	    (if (> pos -1)
+		(set! (places i) (substring place (+ pos 1))))))
+	
+	(set! places (sort! places string<?))
+	(set! names (sort! names (lambda (a b)
+				   (string<? (symbol->string (car a)) 
+					     (symbol->string (car b))))))
+	
+	(call-with-output-file "indexer.data"
+	  (lambda (p)
+	    
+	    (define (find-file name)
+	      (call-with-exit
+	       (lambda (return)
+		 (do ((i 0 (+ i 1)))
+		     ((= i file-len) (format #t "oops! ~A~%" name) 0)
+		   (if (string=? name (list-ref places i))
+		       (return i))))))
+	    
+	    (format p "#define AUTOLOAD_FILES ~D~%~%" file-len)
+	    (format p "static const char *autoload_files[AUTOLOAD_FILES] = {~%  ")
+	    (do ((i 0 (+ i 1)))
+		((= i fl-1))
+	      (if (and (positive? i)
+		       (= (modulo i 6) 0))
+		  (format p "~S, ~%  " (places i))
+		  (format p "~S, " (places i))))
+	    (format p "~S};~%~%" (places fl-1))
+	    
+	    (format p "#define AUTOLOAD_NAMES ~D~%~%" name-len)
+	    (format p "static const char *autoload_names[AUTOLOAD_NAMES] = {~%  ")
+	    (do ((i 0 (+ i 1)))
+		((= i nl-1))
+	      (if (and (positive? i)
+		       (= (modulo i 4) 0))
+		  (format p "~S, ~%  " (symbol->string (car (names i))))
+		  (format p "~S, " (symbol->string (car (names i))))))
+	    (format p "~S};~%~%" (symbol->string (car (names nl-1))))
+	    
+	    (format p "static int autoload_indices[AUTOLOAD_NAMES] = {~%  ")
+	    (do ((i 0 (+ i 1)))
+		((= i nl-1))
+	      (if (and (positive? i)
+		       (= (modulo i 24) 0))
+		  (format p "~D, ~%  " (find-file (cdr (names i))))
+		  (format p "~D, " (find-file (cdr (names i))))))
+	    (format p "~D};~%~%" (find-file (cdr (names nl-1)))))))))
+  
+  (report-places))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; make-index 
+
 
 
 (define (make-vector-name str)
