@@ -4501,7 +4501,7 @@ static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e
 
 /* should these two augment-envs check for symbol accessors?
  *
- * TODO: test envs as args
+ * TODO: test envs as args (i.e. append-environment option)
  */
 
 static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
@@ -26356,6 +26356,11 @@ s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr)
   return(sc->UNSPECIFIED);
 }
 
+s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
+{
+  return(0.0);
+}
+
 void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size)
 {
   return(NULL);
@@ -42732,7 +42737,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer x, val1, val2;
 		/* the finders have to operate in the current environment, so we can't change sc->envir until later */
 		val1 = finder(sc, cadr(code));
-		val2 = finder(sc, caddr(code)); /* TODO: fcdr? */
+		val2 = finder(sc, caddr(code));
 		sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), val1);
 		x = next_slot(environment_slots(closure_environment(ecdr(code))));
 		slot_set_value(x, val2); 
@@ -48619,10 +48624,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * (string-set! (symbol->string 'symbol->string) 1 #\X) -> error currently also in Guile "string is read-only"
 	   * (setf (elt (symbol-name 'xyz) 1) #\X) -> error in CL "read-only string"
 	   */
-
-	  /* TODO: ref_2i[ok], ref_2f, ref_3f, perhaps ref_3i[mixer/sound-data], set_4iff (same)
-	   */
-
 	  /* for gmp case, indices need to be decoded via s7_integer, not just integer */
 
 	  switch (type(sc->x))
@@ -48768,7 +48769,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		else
 		  {
-		    /* TODO: here the index calc might be trivial -- (+ i 1) or (- j 1)
+		    /* here the index calc might be trivial -- (+ i 1) or (- j 1) but this branch hardly ever happens
 		     */
 		    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), cdr(sc->code));
 		    push_op_stack(sc, sc->Vector_Set);

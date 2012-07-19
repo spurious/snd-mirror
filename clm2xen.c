@@ -4966,6 +4966,138 @@ static XEN g_mixer(XEN args)
 }
 
 
+#ifdef XEN_VECTOR_ELEMENT
+#define S_mus_mix_with_envs "mus-mix-with-envs"
+
+static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XEN envs, XEN srcs, XEN srcenv, XEN outstream, XEN revstream)
+{
+  int i, in_chans, out_chans;
+  mus_long_t st, nd;
+  mus_any *s_env = NULL, *mix, *rev_mix = NULL, *ostr, *rstr = NULL;
+  mus_any **mix_envs, **mix_srcs, **mix_rds;
+  mus_xen *gn;
+  XEN ve;
+
+  /* (with-sound () (fullmix "pistol.snd" 0 2 2 #f -1.0))
+   */
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(file), file, XEN_ARG_1, S_mus_mix_with_envs, "a vector of readin generators");
+  in_chans = XEN_VECTOR_LENGTH(file);
+  
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, XEN_ARG_2, S_mus_mix_with_envs, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(dur), dur, XEN_ARG_3, S_mus_mix_with_envs, "an integer");
+
+  st = XEN_TO_C_INT(beg);
+  nd = st + XEN_TO_C_INT(dur);
+
+  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(mx, mus_xen_tag);
+  if (!gn) XEN_ASSERT_TYPE(false, mx, XEN_ARG_4, S_mus_mix_with_envs, "a mixer");
+  mix = gn->gen;
+  XEN_ASSERT_TYPE(mus_mixer_p(mix), mx, XEN_ARG_4, S_mus_mix_with_envs, "a mixer");
+
+  if (!XEN_FALSE_P(revmx))
+    {
+      gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(revmx, mus_xen_tag);
+      if (!gn) XEN_ASSERT_TYPE(false, mx, XEN_ARG_5, S_mus_mix_with_envs, "a mixer");
+      rev_mix = gn->gen;
+      XEN_ASSERT_TYPE(mus_mixer_p(rev_mix), revmx, XEN_ARG_5, S_mus_mix_with_envs, "a mixer");
+    }
+
+  if (!XEN_FALSE_P(srcenv))
+    {
+      gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(srcenv, mus_xen_tag);
+      if (!gn) XEN_ASSERT_TYPE(false, srcenv, XEN_ARG_8, S_mus_mix_with_envs, "an env generator");
+      s_env = gn->gen;
+      XEN_ASSERT_TYPE(mus_env_p(s_env), srcenv, XEN_ARG_8, S_mus_mix_with_envs, "an env generator");
+    }
+
+  if (XEN_BOUND_P(outstream))
+    {
+      gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(outstream, mus_xen_tag);
+      ostr = gn->gen;
+    }
+  else ostr = XEN_TO_MUS_ANY(mus_clm_output());
+  out_chans = mus_channels(ostr);
+
+  if (rev_mix)
+    {
+      if (XEN_BOUND_P(revstream))
+	{
+	  gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(revstream, mus_xen_tag);
+	  rstr = gn->gen;
+	}
+      else rstr = XEN_TO_MUS_ANY(mus_clm_reverb());
+    }
+
+  if (!XEN_FALSE_P(envs))
+    XEN_ASSERT_TYPE(XEN_VECTOR_P(envs), envs, XEN_ARG_6, S_mus_mix_with_envs, "a vector of env generators");
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(srcs), srcs, XEN_ARG_7, S_mus_mix_with_envs, "a vector of src generators");
+
+  mix_rds = (mus_any **)calloc(in_chans, sizeof(mus_any *));
+  mix_srcs = (mus_any **)calloc(in_chans, sizeof(mus_any *));
+
+  for (i = 0; i < in_chans; i++)
+    {
+      mix_rds[i] = XEN_TO_MUS_ANY(XEN_VECTOR_ELEMENT(file, i));
+      ve = XEN_VECTOR_ELEMENT(srcs, i);
+      if (!XEN_FALSE_P(ve)) mix_srcs[i] = XEN_TO_MUS_ANY(ve);
+    }
+
+  mix_envs = (mus_any **)calloc(in_chans * out_chans, sizeof(mus_any *));
+  if (XEN_VECTOR_P(envs))
+    for (i = 0; i < in_chans * out_chans; i++)
+      {
+	ve = XEN_VECTOR_ELEMENT(envs, i);
+	if (!XEN_FALSE_P(ve)) mix_envs[i] = XEN_TO_MUS_ANY(ve);
+      }
+
+  {
+    mus_long_t samp;
+    int inp, outp, off;
+    mus_float_t src_env_val = 0.0;
+    mus_any *in_frame, *out_frame, *rev_frame = NULL;
+
+    in_frame = mus_make_empty_frame(in_chans);
+    out_frame = mus_make_empty_frame(out_chans);
+    if (rev_mix) rev_frame = mus_make_empty_frame(1);
+
+    for (samp = st; samp < nd; samp++)
+      {
+	for (inp = 0, off = 0; inp < in_chans; inp++, off += out_chans)
+	  for (outp = 0; outp < out_chans; outp++)
+	    {
+	      mus_any *e;
+	      e = mix_envs[off + outp];
+	      if (e)
+		mus_mixer_set(mix, inp, outp, mus_env(e));
+	    }
+	if (s_env)
+	  src_env_val = mus_env(s_env);
+	for (inp = 0; inp < in_chans; inp++)
+	  {
+	    mus_any *s;
+	    s = mix_srcs[inp];
+	    if (s)
+	      mus_frame_set(in_frame, inp, mus_src(s, src_env_val, NULL));
+	    else mus_frame_set(in_frame, inp, 0.0);
+	  }
+	mus_frame_to_file(ostr, samp, mus_frame_to_frame(in_frame, mix, out_frame));
+	if (rev_mix) mus_frame_to_file(rstr, samp, mus_frame_to_frame(in_frame, rev_mix, rev_frame));
+      }
+
+    mus_free(in_frame);
+    mus_free(out_frame);
+    if (rev_frame) mus_free(rev_frame);
+  }
+  
+  free(mix_rds);
+  free(mix_srcs);
+  free(mix_envs);
+  return(XEN_FALSE);
+}
+#endif
+
+
 
 
 /* ---------------- wave-train ---------------- */
@@ -8832,6 +8964,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   do { \
   mus_xen *gn; \
   gn = (mus_xen *)s7_object_value_checked(s7_value(s7, Obj), mus_xen_tag); \
+  if (!gn) XEN_ASSERT_TYPE(false, s7_value(s7, Obj), XEN_ARG_1, "gen-lookup", "a generator"); \
   Val = gn->gen; \
   } while (0)
 #endif
@@ -9650,6 +9783,95 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 }
 
 /* (with-sound (:reverb jc-reverb) (outa 0 .1 *reverb*)) */
+
+
+static s7_pointer nrev_all_passes;
+static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
+{
+  static s7_pointer last_args = NULL;
+  static void **last_syms = NULL;
+  s7_pointer vargs, combs;
+  mus_any *a1 = NULL, *a2, *a3, *a4, *lp;
+  void **syms;
+
+  if (args == last_args)
+    syms = last_syms;
+  else
+    {
+      syms = s7_expression_data(sc, args);
+      last_args = args;
+      last_syms = syms;
+    }
+
+  if (!syms)
+    {
+      if (!in_safe_do) 
+	{
+	  GET_GENERATOR(car(args), all-pass, a1);
+	  vargs = s7_cdr(args);
+	  GET_GENERATOR(cadar(vargs), one-pole, lp);
+	  vargs = s7_cddar(vargs);
+	  GET_GENERATOR(cadar(vargs), all_pass, a2);
+	  vargs = s7_cddar(vargs);
+	  GET_GENERATOR(cadar(vargs), all_pass, a3);
+	  vargs = s7_cddar(vargs);
+	  GET_GENERATOR(cadar(vargs), all_pass, a4);
+	  vargs = s7_caddar(vargs);
+
+	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, 
+ 			            mus_one_pole(lp,							       
+				      mus_all_pass_unmodulated_noz(a2, 
+                                        mus_all_pass_unmodulated_noz(a3, 
+                                          mus_all_pass_unmodulated_noz(a4, 
+					    s7_real(s7_call_direct(sc, vargs)))))))));
+	}
+	
+      syms = s7_expression_make_data(sc, args, 6);
+      last_args = args;
+      last_syms = syms;
+    }
+
+  if (!(syms[0])) 
+    {
+      syms[0] = get_generator(sc, car(args));
+      XEN_ASSERT_TYPE((syms[0]) && (mus_all_pass_p((mus_any *)syms[0])), car(args), XEN_ARG_1, "all-pass", "all-pass generator");
+
+      vargs = s7_cdr(args);
+      syms[1] = get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((syms[1]) && (mus_one_pole_p((mus_any *)syms[1])), cadar(args), XEN_ARG_1, "one-pole", "one-pole generator");
+      
+      vargs = s7_cddar(vargs);
+      syms[2] = get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((syms[2]) && (mus_all_pass_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
+
+      vargs = s7_cddar(vargs);
+      syms[3] = get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((syms[3]) && (mus_all_pass_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
+
+      vargs = s7_cddar(vargs);
+      syms[4] = get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((syms[4]) && (mus_all_pass_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
+
+      syms[5] = s7_caddar(vargs);
+    }
+
+  a1 = (mus_any *)syms[0];
+  lp = (mus_any *)syms[1];
+  a2 = (mus_any *)syms[2];
+  a3 = (mus_any *)syms[3];
+  a4 = (mus_any *)syms[4];
+  combs = (s7_pointer)syms[5];
+  
+  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, 
+			    mus_one_pole(lp,							       
+			      mus_all_pass_unmodulated_noz(a2, 
+                                mus_all_pass_unmodulated_noz(a3, 
+                                  mus_all_pass_unmodulated_noz(a4, 
+				    s7_call_direct_to_real_and_free(sc, combs))))))));
+}
+
+/* (with-sound (:reverb jc-reverb) (outa 0 .1 *reverb*)) */
+
 
 
 /* (with-sound (:reverb nrev) (outa 0 .1 *reverb*)) */
@@ -10770,6 +10992,17 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 /* (define (hi) (let ((fm .1) (o (make-oscil 440)) (e (make-env (list 0 0 1 1) :duration .01))) (do ((i 0 (+ i 1))) ((= i 100)) (* (env e) (oscil o fm)))))
  */
 
+#if 0
+static s7_pointer (*initial_subtract_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+
+static s7_pointer clm_subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  /* fprintf(stderr, "sub: %s\n", DISPLAY(expr)); */
+
+  return((*initial_subtract_chooser)(sc, f, args, expr));
+}
+#endif
+
 
 static s7_pointer (*initial_abs_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
@@ -11172,6 +11405,30 @@ static s7_pointer all_pass_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(jc_reverb_all_passes);
+	}
+
+      if ((s7_is_pair(caddr(expr))) &&
+	  (car(caddr(expr)) == s7_make_symbol(sc, "one-pole")) &&
+	  (s7_is_symbol(cadr(caddr(expr)))) &&
+
+	  (s7_is_pair(caddr(caddr(expr)))) &&
+	  (car(caddr(caddr(expr))) == s7_make_symbol(sc, "all-pass")) &&
+	  (s7_is_symbol(cadr(caddr(caddr(expr))))) &&
+
+	  (s7_is_pair(caddr(caddr(caddr(expr))))) &&
+	  (car(caddr(caddr(caddr(expr)))) == s7_make_symbol(sc, "all-pass")) &&
+	  (s7_is_symbol(cadr(caddr(caddr(caddr(expr)))))) &&
+
+	  (s7_is_pair(caddr(caddr(caddr(caddr(expr)))))) &&
+	  (car(caddr(caddr(caddr(caddr(expr))))) == s7_make_symbol(sc, "all-pass")) &&
+	  (s7_is_symbol(cadr(caddr(caddr(caddr(caddr(expr))))))) &&
+
+	  (s7_is_pair(caddr(caddr(caddr(caddr(caddr(expr))))))) &&
+	  (car(caddr(caddr(caddr(caddr(caddr(expr)))))) == s7_make_symbol(sc, "+")) &&
+	  (s7_function_choice(sc, caddr(caddr(caddr(caddr(caddr(expr)))))) == g_nrev_combs))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(nrev_all_passes);
 	}
     }
   if ((args == 2) &&
@@ -11687,7 +11944,6 @@ static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(fm_violin_2);
-	  /* TODO: how to go direct here? let->safe->safe with matching names? */
 	}
       if (s7_function_choice_is_direct(sc, cadr(cddr(expr))))
 	{
@@ -12047,6 +12303,14 @@ static void init_choosers(s7_scheme *sc)
   add_s_direct = clm_make_function_no_choice(sc, "+", g_add_s_direct, 2, 0, false, "+ optimization", gen_class);
   add_1s_direct = clm_make_function_no_choice(sc, "+", g_add_1s_direct, 2, 0, false, "+ optimization", gen_class);
   add_cs_direct = clm_make_function_no_choice(sc, "+", g_add_cs_direct, 2, 0, false, "+ optimization", gen_class);
+
+
+#if 0
+  f = s7_name_to_value(sc, "-");
+  initial_subtract_chooser = s7_function_chooser(sc, f);
+  s7_function_set_chooser(sc, f, clm_subtract_chooser);
+  gen_class = s7_function_class(sc, f);
+#endif
 
 
   f = s7_name_to_value(sc, "abs");
@@ -12435,6 +12699,8 @@ static void init_choosers(s7_scheme *sc)
   indirect_all_pass_2 = clm_make_function(sc, "all-pass", g_indirect_all_pass_2, 2, 0, false, "all-pass optimization", gen_class,
 					NULL, NULL, NULL, NULL, NULL, NULL);
   jc_reverb_all_passes = clm_make_function(sc, "all-pass", g_jc_reverb_all_passes, 2, 0, false, "all-pass optimization", gen_class,
+					   NULL, NULL, NULL, NULL, NULL, NULL);
+  nrev_all_passes = clm_make_function(sc, "all-pass", g_nrev_all_passes, 2, 0, false, "all-pass optimization", gen_class,
 					   NULL, NULL, NULL, NULL, NULL, NULL);
 
 
@@ -12857,6 +13123,10 @@ XEN_ARGIFY_4(g_make_ncos_w, g_make_ncos)
 XEN_ARGIFY_4(g_make_nsin_w, g_make_nsin)
 XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 
+#ifdef XEN_VECTOR_ELEMENT
+XEN_ARGIFY_10(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
+#endif
+
 #if HAVE_DEFGENERATOR
 XEN_ARGIFY_3(g_mus_make_generator_type_w, g_mus_make_generator_type)
 XEN_NARGIFY_1(g_mus_make_generator_w, g_mus_make_generator)
@@ -13162,6 +13432,10 @@ XEN_NARGIFY_3(g_mus_generator_set_w, g_mus_generator_set)
 #define g_mus_generator_p_w g_mus_generator_p
 #define g_mus_frandom_w g_mus_frandom
 #define g_mus_irandom_w g_mus_irandom
+
+#ifdef XEN_VECTOR_ELEMENT
+#define g_mus_mix_with_envs_w g_mus_mix_with_envs
+#endif
 
 #if HAVE_DEFGENERATOR
 #define g_mus_make_generator_type_w g_mus_make_generator_type
@@ -13658,6 +13932,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_mus_hop_w, H_mus_hop, S_setB S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_mix_with_envs, g_mus_mix_with_envs_w, 8, 2, 0, "an experiment");
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_ssb_am,   g_make_ssb_am_w,   0, 4, 0, H_make_ssb_am); 
   XEN_DEFINE_SAFE_PROCEDURE(S_ssb_am,        g_ssb_am_w,        1, 2, 0, H_ssb_am);
