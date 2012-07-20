@@ -278,10 +278,12 @@ MUS_EXPORT bool mus_square_wave_p(mus_any *gen);
 MUS_EXPORT mus_float_t mus_triangle_wave(mus_any *gen, mus_float_t fm);
 MUS_EXPORT mus_any *mus_make_triangle_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase);
 MUS_EXPORT bool mus_triangle_wave_p(mus_any *gen);
-
+MUS_EXPORT mus_float_t mus_triangle_wave_unmodulated(mus_any *ptr);
+ 
 MUS_EXPORT mus_float_t mus_pulse_train(mus_any *gen, mus_float_t fm);
 MUS_EXPORT mus_any *mus_make_pulse_train(mus_float_t freq, mus_float_t amp, mus_float_t phase);
 MUS_EXPORT bool mus_pulse_train_p(mus_any *gen);
+MUS_EXPORT mus_float_t mus_pulse_train_unmodulated(mus_any *ptr);
 
 MUS_EXPORT void mus_set_rand_seed(unsigned long seed);
 MUS_EXPORT unsigned long mus_rand_seed(void);

@@ -2778,6 +2778,108 @@ static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t ind
 }
 
 
+static mus_float_t polyw_first_4(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x;
+  mus_float_t *tn;
+
+  x = gen->phase;
+  tn = gen->coeffs;
+  gen->phase += (gen->freq + fm);
+
+  {
+    double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  
+    cx = gen->index * cos(x);
+    x2 = 2.0 * cx;
+    b = tn[3];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[2];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[1];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[0];
+
+    return((mus_float_t)(b - b1 * cx));
+  }
+}
+
+
+static mus_float_t polyw_first_5(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x;
+  mus_float_t *tn;
+
+  x = gen->phase;
+  tn = gen->coeffs;
+  gen->phase += (gen->freq + fm);
+
+  {
+    double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  
+    cx = gen->index * cos(x);
+    x2 = 2.0 * cx;
+    b = tn[4];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[3];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[2];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[1];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[0];
+
+    return((mus_float_t)(b - b1 * cx));
+  }
+}
+
+
+static mus_float_t polyw_first_6(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x;
+  mus_float_t *tn;
+
+  x = gen->phase;
+  tn = gen->coeffs;
+  gen->phase += (gen->freq + fm);
+
+  {
+    double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  
+    cx = gen->index * cos(x);
+    x2 = 2.0 * cx;
+    b = tn[5];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[4];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[3];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[2];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[1];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + tn[0];
+
+    return((mus_float_t)(b - b1 * cx));
+  }
+}
+
+
 static mus_float_t polyw_first(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
@@ -2795,6 +2897,44 @@ static mus_float_t polyw_second(mus_any *ptr, mus_float_t fm)
   ph = gen->phase;
   gen->phase += (gen->freq + fm);
   return(mus_chebyshev_u_sum_with_index(ph, gen->index, gen->n, gen->coeffs));
+}
+
+
+static mus_float_t polyw_second_5(mus_any *ptr, mus_float_t fm)
+{
+  pw *gen = (pw *)ptr;
+  mus_float_t x;
+  mus_float_t *un;
+
+  x = gen->phase;
+  gen->phase += (gen->freq + fm);
+  /* gen->n is 5 */
+  un = gen->coeffs;
+
+  {
+    double x2, b, b1 = 0.0, b2 = 0.0, cx;
+
+    /* this is a candidate for sincos, but gcc is already using it here! */
+
+    cx = gen->index * cos(x);
+    x2 = 2.0 * cx;
+    b = un[4];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + un[3];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + un[2];
+    b2 = b1;
+    b1 = b;
+    b = x2 * b1 - b2 + un[1];
+
+#if 0
+    if (fabs(sin(x)*b - mus_chebyshev_u_sum_with_index(x, gen->index, gen->n, gen->coeffs)) > 1e-12)
+      fprintf(stderr, "%f %f\n", sin(x)*b, mus_chebyshev_u_sum_with_index(x, gen->index, gen->n, gen->coeffs));
+#endif
+    return((mus_float_t)(sin(x) * b));
+  }
 }
 
 
@@ -2876,8 +3016,27 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
   gen->index = 1.0;
   gen->cheby_choice = cheby_choice;
   if (cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
-    gen->polyw = polyw_first;
-  else gen->polyw = polyw_second;
+    {
+      if (n == 4)
+	gen->polyw = polyw_first_4;
+      else
+	{
+	  if (n == 5)
+	    gen->polyw = polyw_first_5;
+	  else
+	    {
+	      if (n == 6)
+		gen->polyw = polyw_first_6;
+	      else gen->polyw = polyw_first;
+	    }
+	}
+    }
+  else 
+    {
+      if (n == 5)
+	gen->polyw = polyw_second_5;
+      else gen->polyw = polyw_second;
+    }
   return((mus_any *)gen);
 }
 
@@ -4263,6 +4422,28 @@ mus_float_t mus_triangle_wave(mus_any *ptr, mus_float_t fm)
 }
 
 
+mus_float_t mus_triangle_wave_unmodulated(mus_any *ptr)
+{
+  sw *gen = (sw *)ptr;
+  mus_float_t result;
+
+  result = gen->current_value;
+
+  gen->phase += gen->freq;
+  if (gen->phase >= TWO_PI)
+    gen->phase -= TWO_PI;
+
+  if (gen->phase < (M_PI / 2.0)) 
+    gen->current_value = gen->base * gen->phase;
+  else
+    if (gen->phase < (M_PI * 1.5)) 
+      gen->current_value = gen->base * (M_PI - gen->phase);
+    else gen->current_value = gen->base * (gen->phase - TWO_PI);
+
+  return(result);
+}
+
+
 bool mus_triangle_wave_p(mus_any *ptr) 
 {
   return((ptr) && 
@@ -4315,6 +4496,12 @@ mus_any *mus_make_triangle_wave(mus_float_t freq, mus_float_t amp, mus_float_t p
   sw *gen;
   gen = (sw *)calloc(1, sizeof(sw));
   gen->core = &TRIANGLE_WAVE_CLASS;
+  if (freq < 0.0) 
+    {
+      freq = -freq;
+      phase += M_PI;
+      if (phase > TWO_PI) phase -= TWO_PI;
+    }
   gen->freq = mus_hz_to_radians(freq);
   gen->base = (2.0 * amp / M_PI);
   gen->phase = phase;
@@ -4339,6 +4526,20 @@ mus_float_t mus_pulse_train(mus_any *ptr, mus_float_t fm)
     }
   else gen->current_value = 0.0;
   gen->phase += (gen->freq + fm);
+  return(gen->current_value);
+}
+
+
+mus_float_t mus_pulse_train_unmodulated(mus_any *ptr)
+{
+  sw *gen = (sw *)ptr;
+  if (gen->phase >= TWO_PI)
+    {
+      gen->phase -= TWO_PI;
+      gen->current_value = gen->base;
+    }
+  else gen->current_value = 0.0;
+  gen->phase += gen->freq;
   return(gen->current_value);
 }
 
@@ -4395,6 +4596,7 @@ mus_any *mus_make_pulse_train(mus_float_t freq, mus_float_t amp, mus_float_t pha
   sw *gen;
   gen = (sw *)calloc(1, sizeof(sw));
   gen->core = &PULSE_TRAIN_CLASS;
+  if (freq < 0.0) freq = -freq;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = amp;
   gen->phase = phase;
@@ -4527,6 +4729,10 @@ mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
   gen->output += gen->incr;
+#if 0
+  /* since this is not modulated, how can we overflow? 
+   *   I suppose someone might set the frequency via mus_frequency, but that's their problem!
+   */
   if (gen->output > gen->base) 
     gen->output = gen->base;
   else 
@@ -4534,6 +4740,7 @@ mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
       if (gen->output < -gen->base)
 	gen->output = -gen->base;
     }
+#endif
   if (gen->phase >= TWO_PI)
     {
       gen->phase = fmod(gen->phase, TWO_PI);
@@ -5915,7 +6122,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
 typedef struct {
   mus_any_class *core;
   double rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
-  mus_long_t loc, end;
+  mus_long_t loc, end, cur_end;
   mus_env_t style;
   int index, size;
   bool data_allocated;
@@ -5983,9 +6190,10 @@ mus_float_t mus_env_step(mus_any *ptr)
   seg *gen = (seg *)ptr;
   mus_float_t val;
   val = gen->current_value;
-  if (gen->loc >= gen->locs[gen->index])
+  if (gen->loc >= gen->cur_end) /* gen->locs[gen->index]) */
     {
       gen->index++;
+      gen->cur_end = gen->locs[gen->index];
       gen->rate = gen->rates[gen->index];
     }
   gen->current_value = gen->rate; 
@@ -5999,9 +6207,10 @@ mus_float_t mus_env_linear(mus_any *ptr)
   seg *gen = (seg *)ptr;
   mus_float_t val;
   val = gen->current_value;
-  if (gen->loc >= gen->locs[gen->index])
+  if (gen->loc >= gen->cur_end) /* gen->locs[gen->index]) */
     {
       gen->index++;
+      gen->cur_end = gen->locs[gen->index];
       gen->rate = gen->rates[gen->index];
     }
   gen->current_value += gen->rate; 
@@ -6015,9 +6224,10 @@ mus_float_t mus_env_exponential(mus_any *ptr)
   seg *gen = (seg *)ptr;
   mus_float_t val;
   val = gen->current_value;
-  if (gen->loc >= gen->locs[gen->index])
+  if (gen->loc >= gen->cur_end) /* gen->locs[gen->index]) */
     {
       gen->index++;
+      gen->cur_end = gen->locs[gen->index];
       gen->rate = gen->rates[gen->index];
     }
   gen->power *= gen->rate;
@@ -6270,6 +6480,7 @@ static void env_reset(mus_any *ptr)
   gen->current_value = gen->init_y;
   gen->loc = 0;
   gen->index = 0;
+  gen->cur_end = gen->locs[0];
   gen->rate = gen->rates[0];
   gen->power = gen->init_power;
 }
@@ -6436,6 +6647,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
     }
 
   e->rate = e->rates[0];
+  e->cur_end = e->locs[0];
 
   return((mus_any *)e);
 }
@@ -6482,7 +6694,10 @@ static void env_set_location(mus_any *ptr, mus_long_t val)
 	{
 	  gen->index++;
 	  if (gen->index < gen->size)
-	    gen->rate = gen->rates[gen->index];
+	    {
+	      gen->cur_end = gen->locs[gen->index];
+	      gen->rate = gen->rates[gen->index];
+	    }
 	}
     }
 }

@@ -5981,6 +5981,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
       n = 2; 
     }
   orig_v = xen_make_vct(n, coeffs);
+  /* n is usually 5 (fm-violin) */
 
   ge = mus_make_polywave(freq, coeffs, n, kind);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
@@ -9090,8 +9091,6 @@ static mus_float_t mus_nrxysin_unmodulated(mus_any *p) {return(mus_nrxysin(p, 0.
 static mus_float_t mus_nrxycos_unmodulated(mus_any *p) {return(mus_nrxycos(p, 0.0));}
 static mus_float_t mus_square_wave_unmodulated(mus_any *p) {return(mus_square_wave(p, 0.0));}
 static mus_float_t mus_sawtooth_wave_unmodulated(mus_any *p) {return(mus_sawtooth_wave(p, 0.0));}
-static mus_float_t mus_pulse_train_unmodulated(mus_any *p) {return(mus_pulse_train(p, 0.0));}
-static mus_float_t mus_triangle_wave_unmodulated(mus_any *p) {return(mus_triangle_wave(p, 0.0));}
 
 static bool in_safe_do = false;
 static void clm_safe_do_notifier(int level)
@@ -9418,7 +9417,7 @@ static s7_pointer fm_violin_vibrato_fallback(s7_scheme *sc, s7_pointer args)
   args = cdr(args);
   GET_GENERATOR(cadar(args), rand_interp, r);
   
-  return(s7_make_real(sc, mus_env(e) + mus_triangle_wave(t, 0.0) + mus_rand_interp(r, 0.0)));			
+  return(s7_make_real(sc, mus_env(e) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r)));			
 }
 
 static s7_pointer abs_rand_interp;
@@ -9502,7 +9501,7 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
   env_func = (mus_float_t (*)(mus_any *))syms[1];
 
   return(s7_make_real(sc, env_func((mus_any *)syms[0]) + 
-		          mus_triangle_wave((mus_any *)syms[2], 0.0) + 
+		          mus_triangle_wave_unmodulated((mus_any *)syms[2]) + 
 		          mus_rand_interp_unmodulated((mus_any *)syms[3])));			
 }
 
