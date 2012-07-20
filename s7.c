@@ -39430,10 +39430,35 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		    }
 		  else
 		    {
-		      if (is_setter(car(expr)))
+		      if (is_setter(car(expr))) /* "setter" includes stuff like cons and vector */
 			{
+#if 0
+			  fprintf(stderr, "setter: %s, memq: %s %s %s -> %d %d\n",
+				  DISPLAY(car(expr)),
+				  DISPLAY(cadr(expr)),
+				  DISPLAY(var_list),
+				  DISPLAY(steppers),
+				  direct_memq(cadr(expr), var_list),
+				  direct_memq(cadr(expr), steppers));
+			  if ((is_pair(cddr(expr))) &&
+			      (is_pair(cdddr(expr))))
+			  fprintf(stderr, "opt: %d, safe: %d, name: %s, val: %s %d\n",
+				  is_optimized(expr),
+				  (!is_unsafe(expr)),
+				  opt_names[optimize_data(expr)],
+				  DISPLAY(cadddr(expr)),
+				  (!is_pair(cadddr(expr))) && (!is_symbol(cadddr(expr))));
+#endif
 			  if (!direct_memq(cadr(expr), var_list))
-			    (*has_set) = true;
+			    {
+			      if ((direct_memq(cadr(expr), steppers)) ||
+				  (!is_pair(cddr(expr))) ||
+				  (!is_pair(cdddr(expr))) ||
+				  (is_pair(cddddr(expr))) ||
+				  (is_symbol(cadddr(expr))) ||
+				  (is_pair(cadddr(expr))))
+				(*has_set) = true;
+			    }
 			  if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
 			    {
 #if PRINTING
@@ -46640,26 +46665,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------------------------------------------------------- */
 	  
 	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code));  */
-#if 0
-	  /*
-	502:
-165375 (* (expseg dryTap-amp-expseg dryamprate) (one-pole-swept...
-165375 (* (expseg wetTap-amp-expseg wetamprate) (one-pole-swept...
-165375 (one-pole-allpass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn)) ?? -- should be closure_s_opssq? or perhaps closure_s_opcq?
-165375 (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp))
-165375 (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp))
-165375 (one-pole-swept dryTap-one-pole-swept (one-pole-one-zero dryTap0 dryTap1...
-165375 (one-pole-swept wetTap-one-pole-swept (one-pole-one-zero wetTap0 wetTap1...
-
-321048 (+ x fm (rxyk!cos-frequency gen))
-131283 (polynomial (blackman-coeffs gen) (cos x))
-352800 (mixer-set! mx inp outp (env (vector-ref envs (+ off outp))))
-435724 (* (amps k) (oscil (resynth-oscils k) (freqs k)))
-435724 (oscil (resynth-oscils k) (freqs k))
-441000 (frame-set! inframe inp (src (vector-ref srcs inp) sr-val))
-445410 (* (env ampf) (pulsed-env peep frq) md md (nrxysin carrier (+ (* frq 825.0)...
-	  */
-#endif	  
 	  /* trailers */
 #if WITH_COUNTS
 	  add_expr(sc, sc->code);
@@ -58437,6 +58442,6 @@ s7_scheme *s7_init(void)
  * index    44300 -> 4988 [4992] 4235 4725 3935 3527
  * s7test            1721             1456 1430 1375
  * t455                           265  256  218   83
- * t502                                 90   72   57
+ * t502                                 90   72   55
  */
 

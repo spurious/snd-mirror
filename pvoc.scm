@@ -241,8 +241,8 @@
 
 ;;; -------- another version of the phase vocoder --------
 
-(define (oscil-bank amps1 gens fms)
-  "(oscil-bank amps1 gens fms) sums a vector of oscils"
+(define (old-oscil-bank amps1 gens fms)
+  "(old-oscil-bank amps1 gens fms) sums a vector of oscils"
   (let* ((len (vector-length gens))
 	 (sum 0.0)
 	 (amps (if (not (vct? amps1)) (vector->vct amps1) amps1))
@@ -366,7 +366,7 @@
 	   ;; loop over the partials interpolate frequency and amplitude
 	   (vct-add! lastamp ampinc)
 	   (vct-add! lastfreq freqinc)
-	   (set! (out-data i) (oscil-bank lastamp resynth-oscils lastfreq))
+	   (set! (out-data i) (old-oscil-bank lastamp resynth-oscils lastfreq))
 	   (set! output (+ 1 output)))
 	 (vct->channel out-data 0 (max len outlen)))))))
 

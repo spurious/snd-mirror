@@ -431,10 +431,6 @@ MUS_EXPORT mus_any *mus_make_scalar_mixer(int chans, mus_float_t scalar);
 MUS_EXPORT mus_any *mus_mixer_copy(mus_any *uf);
 MUS_EXPORT mus_float_t mus_mixer_fill(mus_any *uf, mus_float_t val);
 
-MUS_EXPORT mus_any *mus_frame_to_frame_mono(mus_any *frame, mus_any *mix, mus_any *out);
-MUS_EXPORT mus_any *mus_frame_to_frame_stereo(mus_any *frame, mus_any *mix, mus_any *out);
-MUS_EXPORT mus_any *mus_frame_to_frame_mono_to_stereo(mus_any *frame, mus_any *mix, mus_any *out);
-
 MUS_EXPORT bool mus_file_to_sample_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_file_to_sample(const char *filename);
 MUS_EXPORT mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long_t buffer_size);

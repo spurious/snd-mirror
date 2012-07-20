@@ -15,7 +15,7 @@
 
 /* HISTORY:
  *
- *  9-July:    XEN_VECTOR_ELEMENT and XEN_VECTOR_COPY.
+ *  9-July:    XEN_VECTOR_ELEMENTS and XEN_VECTOR_COPY.
  *  4-June:    XEN_PROVIDE as synonym for XEN_YES_WE_HAVE.
  *  8-May:     added description arg to XEN_DEFINE_SIMPLE_HOOK and XEN_DEFINE_HOOK, only used in scheme.
  *  12-Jan-12: added reverse argument to s7 version of XEN_MAKE_OBJECT_TYPE.
@@ -85,7 +85,7 @@
  *  8-Mar-05:  Ruby improvements in keywords and hooks (Mike Scholz).
  *  7-Mar-05:  C99 complex number changes (creal, _Complex_I) (Steve Bankowitz).
  *  2-Mar-05:  Ruby support for off_t (Mike Scholz).
- *  4-Jan-05:  more guile changes, deprecated XEN_VECTOR_ELEMENTS.
+ *  4-Jan-05:  more guile changes.
  *  --------
  *  31-Dec-04: removed "caller" arg from *_NO_CATCH.
  *  10-Nov-04: scm_c_vector* (new Guile functions)
@@ -1149,8 +1149,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 #define XEN_MAKE_VECTOR(Num, Fill)                 s7_make_and_fill_vector(s7, Num, Fill)
 #define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(s7, Vect)
 #define XEN_VECTOR_RANK(Vect)                      s7_vector_rank(Vect)
-#define XEN_VECTOR_ELEMENT(Vect, N)                s7_vector_elements(Vect)[N]
 #define XEN_VECTOR_COPY(Vect)                      s7_vector_copy(s7, Vect)
+#define XEN_VECTOR_ELEMENTS(Vect)                  s7_vector_elements(Vect)
 
 #define XEN_CHAR_P(Arg)                            s7_is_character(Arg)
 #define XEN_TO_C_CHAR(Arg)                         s7_character(Arg)

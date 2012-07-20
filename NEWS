@@ -19,7 +19,8 @@ moved the clm/clm2xen struct declarations out of the header files,
 added mus_make_generator, mus_make_generator_type, mus_xen_gen
   (moved parts of defgenerator to C).  removed def-clm-struct.
 
+added mus-mix-with-envs (for fullmix), and oscil-bank.
+
 checked: gtk 3.5.6|8
 
 Thanks!:  Matti Koskinen, Mike Scholz
-

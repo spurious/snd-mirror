@@ -38559,7 +38559,7 @@ EDITS: 1
   
   (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
     (log-mem clmtest)
-    
+
     ;; check clm output for bad zero case
     (for-each
      (lambda (type)
@@ -38856,7 +38856,7 @@ EDITS: 1
       (if (not (> (maxamp ind) .16)) (snd-display #__line__ ";freeverb 3.0 global 0.5: ~A" (maxamp ind)))
       (close-sound ind)
       (delete-file "test1.snd"))
-    
+
     (set! (mus-srate) 22050)
     (set! (default-output-srate) 22050)
     
@@ -39047,7 +39047,7 @@ EDITS: 1
     (with-sound (:channels 2) 
 		(fullmix "4.aiff" 0.0 0.1 36.4 '((0.0 0.0) (0.0 0.0) (1.0 0.0) (0.0 1.0))))
     (let ((ind (find-sound "test.snd")))
-      (if (fneq (maxamp) 0.664947509765625) (snd-display #__line__ ";4->2(0) fullmix: ~A" (maxamp)))
+      (if (fneq (maxamp) 0.8865) (snd-display #__line__ ";4->2(0) fullmix: ~A" (maxamp)))
       (close-sound ind))
     
     (with-sound (:channels 1) 
@@ -39111,7 +39111,7 @@ EDITS: 1
     (with-sound (:channels 2) 
 		(fullmix "4.aiff" 0.0 0.1 36.4 '((0.0 0.0) (0.0 0.0) (1.0 0.0) (0.0 1.0))))
     (let ((ind (find-sound "test.snd")))
-      (if (fneq (maxamp) 0.664947509765625) (snd-display #__line__ ";4->2(0) fullmix.scm: ~A" (maxamp)))
+      (if (fneq (maxamp) 0.8865) (snd-display #__line__ ";4->2(0) fullmix.scm: ~A" (maxamp)))
       (close-sound ind))
     
     (with-sound (:channels 1) 

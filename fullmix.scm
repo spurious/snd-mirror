@@ -29,7 +29,6 @@
 			 (mixer-set! rmx i 0 reverb-amount)) ; 0->assume 1 chan reverb stream, I think
 		       rmx)
 		     #f))
-	 ;(revframe (if rev-mx (make-frame 1) #f))
 	 (reversed (or (and (number? srate) (negative? srate))
 		       (and (list? srate) (negative? (cadr srate)))))
 	 (file (if (or (not srate) 
@@ -44,7 +43,7 @@
 	 (envs #f)
 	 (srcenv (if (list? srate)
 		     (make-env srate :duration dur :scaler (if reversed -1.0 1.0))
-		     #f))) ;(make-env '(0 0 1 0) :duration dur))))
+		     #f)))
 
     (if matrix
 	(begin

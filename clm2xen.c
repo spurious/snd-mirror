@@ -67,7 +67,7 @@
 
 
 /* defgenerator support */
-#if (defined(XEN_VECTOR_ELEMENT) && defined(XEN_VECTOR_COPY))
+#if defined(XEN_VECTOR_COPY)
 #define HAVE_DEFGENERATOR 1
 
 typedef struct {
@@ -329,7 +329,7 @@ static void reset_fallback(mus_any *ptr)
 #define S_mus_generator_ref "mus-generator-ref"
 #define S_mus_generator_set "mus-generator-set!"
 
-#define vector_element(v, i) XEN_VECTOR_ELEMENT(v, i)
+#define vector_element(v, i) XEN_VECTOR_REF(v, i)
 
 static XEN g_mus_make_generator_type(XEN name, XEN fields, XEN methods)
 {
@@ -504,12 +504,12 @@ static XEN g_mus_make_generator_type(XEN name, XEN fields, XEN methods)
 	  XEN val;
 	  val = XEN_CADR(field);
 	  if (XEN_PAIR_P(val))
-	    vector_element(new_fields, i) = XEN_EVAL_FORM(XEN_CADR(field));
+	    XEN_VECTOR_SET(new_fields, i, XEN_EVAL_FORM(XEN_CADR(field)));
 	  else
 	    {
 	      if (XEN_SYMBOL_P(val))
-		vector_element(new_fields, i) = XEN_VARIABLE_REF(val);
-	      else vector_element(new_fields, i) = val;
+		XEN_VECTOR_SET(new_fields, i, XEN_VARIABLE_REF(val));
+	      else XEN_VECTOR_SET(new_fields, i, val);
 	    }
 	}
     }
@@ -4966,7 +4966,9 @@ static XEN g_mixer(XEN args)
 }
 
 
-#ifdef XEN_VECTOR_ELEMENT
+/* TODO: doc/test mus-mix-with-envs
+ */
+
 #define S_mus_mix_with_envs "mus-mix-with-envs"
 
 static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XEN envs, XEN srcs, XEN srcenv, XEN outstream, XEN revstream)
@@ -5038,8 +5040,8 @@ static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XE
 
   for (i = 0; i < in_chans; i++)
     {
-      mix_rds[i] = XEN_TO_MUS_ANY(XEN_VECTOR_ELEMENT(file, i));
-      ve = XEN_VECTOR_ELEMENT(srcs, i);
+      mix_rds[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(file, i));
+      ve = XEN_VECTOR_REF(srcs, i);
       if (!XEN_FALSE_P(ve)) mix_srcs[i] = XEN_TO_MUS_ANY(ve);
     }
 
@@ -5047,7 +5049,7 @@ static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XE
   if (XEN_VECTOR_P(envs))
     for (i = 0; i < in_chans * out_chans; i++)
       {
-	ve = XEN_VECTOR_ELEMENT(envs, i);
+	ve = XEN_VECTOR_REF(envs, i);
 	if (!XEN_FALSE_P(ve)) mix_envs[i] = XEN_TO_MUS_ANY(ve);
       }
 
@@ -5095,7 +5097,163 @@ static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XE
   free(mix_envs);
   return(XEN_FALSE);
 }
+
+
+#define S_oscil_bank "oscil-bank"
+
+static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN sweeps)
+{
+  int i, size;
+  mus_any **oscils;
+  double *ampls = NULL, *fms = NULL;
+  double sum = 0.0;
+#if defined(XEN_VECTOR_ELEMENTS)
+  XEN *x_oscs, *x_amps, *x_freqs, *x_rates, *x_sweeps;
+  #define xen_vector_ref(Vect, Num) x_ ## Vect [Num]
+  #define xen_vector_set(Vect, Num, Val) x_ ## Vect [Num] = Val
+#else
+  #define xen_vector_ref(Vect, Num) XEN_VECTOR_REF(Vect, Num)
+  #define xen_vector_set(Vect, Num, Val) XEN_VECTOR_SET(Vect, Num, Val)
+#endif  
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_oscil_bank, "an integer");
+  size = XEN_TO_C_INT(n);
+
+  if (XEN_FALSE_P(oscs)) return(XEN_ZERO);
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(oscs), oscs, XEN_ARG_2, S_oscil_bank, "a vector of oscil generators");
+  if (size > XEN_VECTOR_LENGTH(oscs))
+    size = XEN_VECTOR_LENGTH(oscs);
+
+#if defined(XEN_VECTOR_ELEMENTS)
+  x_oscs = XEN_VECTOR_ELEMENTS(oscs);
 #endif
+
+  oscils = (mus_any **)calloc(size, sizeof(mus_any *));
+  for (i = 0; i < size; i++)
+    {
+      oscils[i] = XEN_TO_MUS_ANY(xen_vector_ref(oscs, i));
+      XEN_ASSERT_TYPE(mus_oscil_p(oscils[i]), oscs, XEN_ARG_2, S_oscil_bank, "a vector of oscil generators");
+    }
+
+  if (!XEN_BOUND_P(amps))
+    {
+      for (i = 0; i < size; i++)
+	sum += mus_oscil_unmodulated(oscils[i]);
+      free(oscils);
+      return(C_TO_XEN_DOUBLE(sum));
+    }
+
+  if (!XEN_FALSE_P(amps))
+    {
+      XEN_ASSERT_TYPE(XEN_VECTOR_P(amps), amps, XEN_ARG_3, S_oscil_bank, "a vector");
+      if (size > XEN_VECTOR_LENGTH(amps))
+	size = XEN_VECTOR_LENGTH(amps);
+
+#if defined(XEN_VECTOR_ELEMENTS)
+      x_amps = XEN_VECTOR_ELEMENTS(amps);
+#endif
+
+      ampls = (double *)calloc(size, sizeof(double));
+      for (i = 0; i < size; i++)
+	ampls[i] = XEN_TO_C_DOUBLE(xen_vector_ref(amps, i));
+    }
+
+  if (!XEN_BOUND_P(freqs))
+    {
+      if (ampls)
+	{
+	  for (i = 0; i < size; i++)
+	    sum += ampls[i] * mus_oscil_unmodulated(oscils[i]);
+	  free(ampls);
+	}
+      else
+	{
+	  for (i = 0; i < size; i++)
+	    sum += mus_oscil_unmodulated(oscils[i]);
+	}
+      free(oscils);
+      return(C_TO_XEN_DOUBLE(sum));
+    }
+  
+  if (!XEN_FALSE_P(freqs))
+    {
+      XEN_ASSERT_TYPE(XEN_VECTOR_P(freqs), freqs, XEN_ARG_4, S_oscil_bank, "a vector");
+      if (size > XEN_VECTOR_LENGTH(freqs))
+	size = XEN_VECTOR_LENGTH(freqs);
+
+#if defined(XEN_VECTOR_ELEMENTS)
+      x_freqs = XEN_VECTOR_ELEMENTS(freqs);
+#endif
+
+      fms = (double *)calloc(size, sizeof(double));
+      for (i = 0; i < size; i++)
+	fms[i] = XEN_TO_C_DOUBLE(xen_vector_ref(freqs, i));
+    }
+
+  if (!XEN_BOUND_P(rates))
+    {
+      if (ampls)
+	{
+	  if (fms)
+	    {
+	      for (i = 0; i < size; i++)
+		sum += ampls[i] * mus_oscil_fm(oscils[i], fms[i]);
+	      free(fms);
+	    }
+	  else
+	    {
+	      for (i = 0; i < size; i++)
+		sum += ampls[i] * mus_oscil_unmodulated(oscils[i]);
+	    }
+	  free(ampls);
+	}
+      else
+	{
+	  if (fms)
+	    {
+	      for (i = 0; i < size; i++)
+		sum += mus_oscil_fm(oscils[i], fms[i]);
+	      free(fms);
+	    }
+	  else
+	    {
+	      for (i = 0; i < size; i++)
+		sum += mus_oscil_unmodulated(oscils[i]);
+	    }
+	}
+      free(oscils);
+      return(C_TO_XEN_DOUBLE(sum));
+    }
+
+  /* no more funny business! */
+  if ((!ampls) || (!fms))
+    XEN_ASSERT_TYPE(false, rates, XEN_ARG_5, S_oscil_bank, "if rates/sweeps are passed, amps/freqs must be also");
+
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(rates), rates, XEN_ARG_5, S_oscil_bank, "a vector");
+  if (size > XEN_VECTOR_LENGTH(rates))
+    size = XEN_VECTOR_LENGTH(rates);
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(sweeps), sweeps, XEN_ARG_6, S_oscil_bank, "a vector");
+  if (size > XEN_VECTOR_LENGTH(sweeps))
+    size = XEN_VECTOR_LENGTH(sweeps);
+
+#if defined(XEN_VECTOR_ELEMENTS)
+  x_rates = XEN_VECTOR_ELEMENTS(rates);
+  x_sweeps = XEN_VECTOR_ELEMENTS(sweeps);
+#endif
+
+  for (i = 0; i< size; i++)
+    {
+      sum += ampls[i] * mus_oscil_fm(oscils[i], fms[i]);
+      xen_vector_set(amps, i, C_TO_XEN_DOUBLE(ampls[i] + XEN_TO_C_DOUBLE(xen_vector_ref(rates, i))));
+      xen_vector_set(freqs, i, C_TO_XEN_DOUBLE(fms[i] + XEN_TO_C_DOUBLE(xen_vector_ref(sweeps, i))));
+    }
+  
+  free(oscils);
+  free(ampls);
+  free(fms);
+  return(C_TO_XEN_DOUBLE(sum));
+}
+
 
 
 
@@ -8925,7 +9083,6 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
 #define cadar(E)  s7_cadar(E)
-#define cddddr(E) s7_cddddr(E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
@@ -9177,6 +9334,8 @@ MUS_PHASE_VOCODER,
 ;(set! (mus-location ...) ...)?
 */
 
+/* TODO: src granulate are ok if GEN_1
+ */
 
 /* for the noz part, run seems to be checking that safety==0 -- this is zdly!
  *   that the gen arg is correct, but we check that too.
@@ -13123,9 +13282,8 @@ XEN_ARGIFY_4(g_make_ncos_w, g_make_ncos)
 XEN_ARGIFY_4(g_make_nsin_w, g_make_nsin)
 XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 
-#ifdef XEN_VECTOR_ELEMENT
 XEN_ARGIFY_10(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
-#endif
+XEN_ARGIFY_6(g_oscil_bank_w, g_oscil_bank)
 
 #if HAVE_DEFGENERATOR
 XEN_ARGIFY_3(g_mus_make_generator_type_w, g_mus_make_generator_type)
@@ -13433,9 +13591,8 @@ XEN_NARGIFY_3(g_mus_generator_set_w, g_mus_generator_set)
 #define g_mus_frandom_w g_mus_frandom
 #define g_mus_irandom_w g_mus_irandom
 
-#ifdef XEN_VECTOR_ELEMENT
 #define g_mus_mix_with_envs_w g_mus_mix_with_envs
-#endif
+#define g_oscil_bank_w g_oscil_bank
 
 #if HAVE_DEFGENERATOR
 #define g_mus_make_generator_type_w g_mus_make_generator_type
@@ -13653,8 +13810,9 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_ycoeffs, g_mus_ycoeffs_w, 1, 0, 0, H_mus_ycoeffs);
   XEN_DEFINE_SAFE_PROCEDURE(S_oscil_p,g_oscil_p_w,     1, 0, 0, H_oscil_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_oscil,  g_oscil_w,       1, 2, 0, H_oscil);
-  XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
+  XEN_DEFINE_SAFE_PROCEDURE(S_oscil_bank, g_oscil_bank_w, 2, 4, 0, "an experiment");
 
+  XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_delay,           g_make_delay_w,      0, 0, 1, H_make_delay);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_comb,            g_make_comb_w,       0, 0, 1, H_make_comb);

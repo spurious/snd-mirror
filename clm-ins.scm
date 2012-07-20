@@ -1786,9 +1786,9 @@ is a physical model of a flute:
 			   (set! cur-sample (+ cur-sample dir))
 			   inval)))))
 	 (if (= turning 0)
-	     (if (and forwards (>= cur-sample turn-sample)) ;; we past turn point going forwards
+	     (if (and forwards (>= cur-sample turn-sample)) ;; we passed turn point going forwards
 		 (set! turning 1)
-		 (if (and (not forwards) (<= cur-sample turn-sample)) ;; we past turn point going backwards
+		 (if (and (not forwards) (<= cur-sample turn-sample)) ;; we passed turn point going backwards
 		     (set! turning -1)))
 	     ;; wait for an inflection...
 	     (if (or (and (<= last-val2 last-val) (>= last-val val))
@@ -2018,11 +2018,15 @@ is a physical model of a flute:
 		   (set! sum (ramped-attack ramp-ind))
 		   (set! ramp-ind (+ 1 ramp-ind))
 		   (if (= ramp-ind ramped) (set! ramped 0))))
+
+	     (set! sum (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps))
+#|
 	     (do ((k 0 (+ k 1)))
 		 ((= k cur-oscils))
 	       (set! sum (+ sum (* (amps k) (oscil (resynth-oscils k) (freqs k)))))
 	       (set! (amps k) (+ (amps k) (rates k)))
 	       (set! (freqs k) (+ (freqs k) (sweeps k))))
+|#
 	     (outa i (* amp sum)))))))
 
 
@@ -2902,7 +2906,6 @@ mjkoskin@sci.fi
 |#
 
 
-
 (definstrument (fullmix in-file beg outdur inbeg matrix srate reverb-amount)
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
@@ -2914,7 +2917,6 @@ mjkoskin@sci.fi
 		  (/ (- (mus-sound-duration in-file) (or inbeg 0.0))
 		     (or (and srate (number? srate) (abs srate)) 1.0))))
 	 (samps (seconds->samples dur))
-	 (nd (+ st samps))
 	 (in-chans (channels in-file))
 	 (inloc (floor (* (or inbeg 0.0) (mus-sound-srate in-file))))
 	 (out-chans (channels *output*))
@@ -2925,10 +2927,9 @@ mjkoskin@sci.fi
 		     (let ((rmx (make-mixer in-chans)))
 		       (do ((i 0 (+ i 1)))
 			   ((= i in-chans))
-			 (set! (rmx i 0) reverb-amount)) ; 0->assume 1 chan reverb stream, I think
+			 (mixer-set! rmx i 0 reverb-amount)) ; 0->assume 1 chan reverb stream, I think
 		       rmx)
 		     #f))
-	 (revframe (if rev-mx (make-frame 1) #f))
 	 (reversed (or (and (number? srate) (negative? srate))
 		       (and (list? srate) (negative? (cadr srate)))))
 	 (file (if (or (not srate) 
@@ -2938,12 +2939,12 @@ mjkoskin@sci.fi
 		   (let ((vect (make-vector in-chans #f)))
 		     (do ((i 0 (+ i 1)))
 			 ((= i in-chans))
-		       (set! (vect i) (make-readin in-file i inloc :direction (if reversed -1 1))))
+		       (vector-set! vect i (make-readin in-file i inloc :direction (if reversed -1 1))))
 		     vect)))
 	 (envs #f)
 	 (srcenv (if (list? srate)
 		     (make-env srate :duration dur :scaler (if reversed -1.0 1.0))
-		     #f)))
+		     #f))) 
 
     (if matrix
 	(begin
@@ -2951,104 +2952,53 @@ mjkoskin@sci.fi
 	      (do ((inp 0 (+ inp 1))
 		   (off 0 (+ off out-chans)))
 		  ((= inp in-chans))
-		(let ((inlist (matrix inp)))
+		(let ((inlist (list-ref matrix inp)))
 		  (do ((outp 0 (+ outp 1)))
 		      ((= outp out-chans))
-		    (let ((outn (inlist outp)))
+		    (let ((outn (list-ref inlist outp)))
 		      (if outn
 			  (if (number? outn)
-			      (set! (mx inp outp) outn)
+			      (mixer-set! mx inp outp outn)
 			      (if (or (env? outn)
 				      (list? outn))
 				  (begin
 				    (if (not envs)
 					(set! envs (make-vector (* in-chans out-chans) #f)))
 				    (if (env? outn)
-					(set! (envs (+ off outp)) outn)
-					(set! (envs (+ off outp)) (make-env outn :duration dur))))
+					(vector-set! envs (+ off outp) outn)
+					(vector-set! envs (+ off outp) (make-env outn :duration dur))))
 				  (format #t "unknown element in matrix: ~A" outn))))))))
 	      (do ((inp 0 (+ inp 1))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)
-		    (set! (mx inp inp) matrix))))))
+		    (mixer-set! mx inp inp matrix))))))
 
     (if (or (not srate)
 	    (and (number? srate)
 		 (= srate 1.0)))
-	(begin
+	(let ((mxe (if envs
+		       (let ((v (make-vector in-chans)))
+			 (do ((i 0 (+ i 1))
+			      (off 0 (+ off out-chans)))
+			     ((= i in-chans))
+			   (let ((vo (make-vector out-chans #f)))
+			     (vector-set! v i vo)
+			     (do ((j 0 (+ j 1)))
+				 ((= j out-chans))
+			       (vector-set! vo j (vector-ref envs (+ off j))))))
+			 v)
+		       envs)))
 	  ;; -------- no src
-	  (mus-mix *output* file st samps inloc mx (if envs
-						       (let ((v (make-vector in-chans)))
-							 (do ((i 0 (+ i 1))
-							      (off 0 (+ off out-chans)))
-							     ((= i in-chans))
-							   (let ((vo (make-vector out-chans #f)))
-							     (set! (v i) vo)
-							     (do ((j 0 (+ j 1)))
-								 ((= j out-chans))
-							       (set! (vo j) (envs (+ off j))))))
-							 v)
-						       envs))
+	  (mus-mix *output* file st samps inloc mx mxe)
 	  (if rev-mx
 	      (mus-mix *reverb* file st samps inloc rev-mx #f)))
 
-	;; -------- with src
-	;; unroll the loops if 1 chan input
-	(if (= in-chans 1)
-	    (let ((sr (make-src :input (file 0) :srate (if (number? srate) (abs srate) 0.0)))
-		  (outframe (make-frame out-chans)))
-	      (if envs
-		   (do ((i st (+ i 1)))
-		       ((= i nd))
-		     (do ((outp 0 (+ outp 1)))
-			 ((= outp out-chans))
-		       (if (env? (envs outp))
-			   (set! (mx 0 outp) (env (envs outp)))))
-		     (let ((inframe (src sr (if srcenv (env srcenv) 0.0))))
-		       (frame->file *output* i (sample->frame mx inframe outframe))
-		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))
-		  
-		  ;; no envs
-		   (do ((i st (+ i 1)))
-		       ((= i nd))
-		     (let ((inframe (src sr (if srcenv (env srcenv) 0.0))))
-		       (frame->file *output* i (sample->frame mx inframe outframe))
-		       (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))))
-	    
-	    ;; more than 1 chan input
-	    (let ((inframe (make-frame in-chans))
-		  (outframe (make-frame out-chans))
-		  (srcs (make-vector in-chans #f)))
-	      (do ((inp 0 (+ inp 1)))
-		  ((= inp in-chans))
-		(set! (srcs inp) (make-src :input (file inp) :srate (if (number? srate) (abs srate) 0.0))))
-	      
-	      (if envs 
-		   (do ((i st (+ i 1)))
-		       ((= i nd))
-		     (do ((inp 0 (+ inp 1))
-			  (off 0 (+ off out-chans)))
-			 ((= inp in-chans))
-		       (do ((outp 0 (+ outp 1)))
-			   ((= outp out-chans))
-			 (if (env? (envs (+ off outp)))
-			     (set! (mx inp outp) (env (envs (+ off outp)))))))
-		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
-		       (do ((inp 0 (+ inp 1)))
-			   ((= inp in-chans))
-			 (set! (inframe inp) (src (srcs inp) sr-val)))
-		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))
-		  
-		  ;; no envs
-		   (do ((i st (+ i 1)))
-		       ((= i nd))
-		     (let ((sr-val (if srcenv (env srcenv) 0.0)))
-		       (do ((inp 0 (+ inp 1)))
-			   ((= inp in-chans))
-			 (set! (inframe inp) (src (srcs inp) sr-val)))
-		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))
+	(let ((srcs (make-vector in-chans #f)))
+	  (do ((inp 0 (+ inp 1)))
+	      ((= inp in-chans))
+	    (vector-set! srcs inp (make-src :input (vector-ref file inp) :srate (if (number? srate) (abs srate) 0.0))))
+	  (mus-mix-with-envs file st samps mx rev-mx envs srcs srcenv *output* *reverb*)
+	  ))))
 
 #|
 (with-sound (:channels 2 :statistics #t)
@@ -3080,7 +3030,7 @@ mjkoskin@sci.fi
 	(e0->1 (make-env '(0 1 1 0) :duration 2))
 	(e1->0 (make-env '(0 1 1 0) :duration 2))
 	(e1->1 (make-env '(0 0 1 1) :duration 2)))
-    (fullmix "2.snd" 0 2 0 (list (list e0->0 e0->1) (list e1->0 e1->1))) 2.0))
+    (fullmix "2.snd" 6 2 0 (list (list e0->0 e0->1) (list e1->0 e1->1))) 2.0))
 
   
 (with-sound () (fullmix "pistol.snd"))

@@ -7094,32 +7094,6 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
 }
 
 
-mus_any *mus_frame_to_frame_mono(mus_any *frame, mus_any *mix, mus_any *out)
-{
-  /* assume every possible problem has already been checked somewhere */
-  ((mus_frame *)out)->vals[0] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][0];
-  return(out);
-}
-
-
-mus_any *mus_frame_to_frame_stereo(mus_any *frame, mus_any *mix, mus_any *out)
-{
-  ((mus_frame *)out)->vals[0] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][0] + 
-                                ((mus_frame *)frame)->vals[1] * ((mus_mixer *)mix)->vals[1][0];
-  ((mus_frame *)out)->vals[1] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][1] + 
-                                ((mus_frame *)frame)->vals[1] * ((mus_mixer *)mix)->vals[1][1];
-  return(out);
-}
-
-
-mus_any *mus_frame_to_frame_mono_to_stereo(mus_any *frame, mus_any *mix, mus_any *out)
-{
-  ((mus_frame *)out)->vals[0] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][0];
-  ((mus_frame *)out)->vals[1] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][1];
-  return(out);
-}
-
-
 static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_out)
 {
   /* (frame->frame mixer frame frame) = mixer * frame -> frame */
