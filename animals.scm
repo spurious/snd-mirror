@@ -8909,7 +8909,7 @@
 				   0.184 0.305 0.192 0.937 0.198 0.296 0.199 0.596 0.203 0.350 0.207 0.738 0.212 0.399 
 				   0.213 0.602 0.222 0.650 0.228 0.464 0.238 0.526 0.246 0.266 0.259 0.403 0.283 0.320 
 				   0.323 0.365 0.388 0.249 0.405 0.196 0.432 0.191 0.496 0.135 0.582 0.120 0.621 0.071 1.000 0.000)
-			   :duration dur :scaler amp))
+			   :duration dur :scaler (* 0.3 amp)))
 	   (frqf (make-env '(0.000 0.157 0.051 0.204 0.075 0.267 0.142 0.281 0.196 0.267 0.268 0.191 0.353 0.171 1.000 0.175)
 			   :duration dur :scaler (hz->radians frqscl)))
 	   (gen1 (make-oscil))
@@ -8938,7 +8938,7 @@
 			  (+ (oscil vib)
 			     (rand-interp rnd)))))
 	       (frm (env frmf)))
-	   (let ((val (* 0.3 (env ampf)
+	   (let ((val (* (env ampf)
 			 (+ (* 2 (env ampf1) (oscil gen1 frq))
 			    (* (env ampf4) (oscil gen4 (* frq 5)))
 			    (* (env ampf5) (oscil gen5 (* frq 6)))
@@ -10705,7 +10705,8 @@
 
 
 (define (calling-all-animals)
-  (with-sound (:scaled-to .5 :srate 44100 :data-format mus-ldouble) ;(srate needed by snd-test)
+  (with-sound (;:scaled-to .5 
+	       :srate 44100 :data-format mus-ldouble) ;(srate needed by snd-test)
 	      (let ((beg 0.0))
 		(set! beg (calling-all-frogs beg))
 		(set! beg (calling-all-mammals beg))

@@ -21,6 +21,8 @@ added mus_make_generator, mus_make_generator_type, mus_xen_gen
 
 added mus-mix-with-envs (for fullmix), and oscil-bank.
 
+removed gamin support (ancient libfam replacement, used only in Motif version).
+
 checked: gtk 3.5.6|8
 
 Thanks!:  Matti Koskinen, Mike Scholz

@@ -11118,6 +11118,9 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	}
     }
 
+  /* (* c dir dir)? (* c dir c*) (c* s dir) (c* s opssq)
+   */
+
 #if 0
   {
     s7_pointer p;

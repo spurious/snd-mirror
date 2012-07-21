@@ -71,7 +71,6 @@
 #undef HAVE_ALSA_ASOUNDLIB_H
 #undef HAVE_BYTESWAP_H
 #undef HAVE_STDINT_H
-#undef HAVE_FAM_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_DIRENT_H
 #undef FGREP_PROG
@@ -119,9 +118,6 @@
 #undef HAVE_RUBY
 #undef HAVE_FORTH
 #undef HAVE_EXTENSION_LANGUAGE
-
-#undef HAVE_FAM
-#undef MUS_GAMIN_VERSION
 
 #undef HAVE_GL
 #undef JUST_GL

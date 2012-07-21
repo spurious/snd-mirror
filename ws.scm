@@ -293,6 +293,7 @@
 			 (if scaled-by
 			     (scale-by scaled-by scale-output)))
 		     (save-sound scale-output)
+		     ;; SOMEDAY: perhaps the whole file is in the clm output buffer -- could we scale in place?
 		     (if (not to-snd) 
 			 (close-sound scale-output)))
 		   (if (vct? output-1)

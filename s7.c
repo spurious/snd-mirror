@@ -2070,7 +2070,7 @@ static void add_expr(s7_scheme *sc, s7_pointer expr)
   val = s7_hash_table_ref(sc, hashes, expr);
   if (val == sc->F)
     {
-      fprintf(stderr, "unopt: %s\n", DISPLAY_80(expr));
+      /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(expr)); */
       s7_hash_table_set(sc, hashes, expr, s7_make_integer(sc, 1));
     }
   else
@@ -2091,12 +2091,14 @@ static void report_counts(s7_scheme *sc)
   len = hash_table_length(hashes);
   elements = hash_table_elements(hashes);
 
+  fprintf(stderr, "counts:\n");
+
   for (i = 0; i < len; i++)
     {
       s7_pointer x;
       for (x = elements[i]; is_pair(x); x = cdr(x))
 	if (s7_integer(cdar(x)) > 1000)
-	  fprintf(stderr, "%lld %s\n", s7_integer(cdar(x)), DISPLAY_80(caar(x)));
+	  fprintf(stderr, "%lld %s\n\n", s7_integer(cdar(x)), DISPLAY(caar(x)));
     }
 }
 #endif
@@ -58442,6 +58444,6 @@ s7_scheme *s7_init(void)
  * index    44300 -> 4988 [4992] 4235 4725 3935 3527
  * s7test            1721             1456 1430 1375
  * t455                           265  256  218   83
- * t502                                 90   72   54
+ * t502                                 90   72   53
  */
 

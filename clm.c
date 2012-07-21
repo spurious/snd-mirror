@@ -4729,18 +4729,6 @@ mus_float_t mus_rand_interp_unmodulated(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
   gen->output += gen->incr;
-#if 0
-  /* since this is not modulated, how can we overflow? 
-   *   I suppose someone might set the frequency via mus_frequency, but that's their problem!
-   */
-  if (gen->output > gen->base) 
-    gen->output = gen->base;
-  else 
-    {
-      if (gen->output < -gen->base)
-	gen->output = -gen->base;
-    }
-#endif
   if (gen->phase >= TWO_PI)
     {
       gen->phase = fmod(gen->phase, TWO_PI);

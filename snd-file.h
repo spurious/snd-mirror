@@ -1,18 +1,6 @@
 #ifndef SND_FILE_H
 #define SND_FILE_H
 
-#if HAVE_FAM
-#include <fam.h>
-
-typedef struct fam_info {
-  FAMRequest *rp;
-  void (*action)(struct fam_info *fp, FAMEvent *fe);
-  void *data;
-  char *filename;
-} fam_info;
-#endif
-
-
 typedef enum {VF_AT_CURSOR, VF_AT_END, VF_AT_BEGINNING, VF_AT_MARK, VF_AT_SAMPLE} vf_location_t;
 
 typedef struct {
@@ -47,14 +35,10 @@ typedef struct {
   mus_long_t beg;
 
   int dirs_size;
-#if HAVE_FAM
-  fam_info **dirs;
-#else
 #if HAVE_G_FILE_MONITOR_DIRECTORY
   GFileMonitor **dirs;
 #else
   void *dirs;
-#endif
 #endif
   char **dir_names;
   bool need_update;

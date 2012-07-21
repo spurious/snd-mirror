@@ -1,9 +1,6 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 #include "clm-strings.h"
-#if HAVE_FAM_H
-  #include <fam.h>
-#endif
 
 static const char **snd_xrefs(const char *topic);
 static const char **snd_xref_urls(const char *topic);
@@ -345,13 +342,6 @@ char *version_info(void)
 	  "1.1",
   #else
 	  "1.0",
-  #endif
-#endif
-#if HAVE_FAM
-  #ifdef MUS_GAMIN_VERSION
-	  "\n    Gamin: ", MUS_GAMIN_VERSION,
-  #else
-	  "\n    with fam",
   #endif
 #endif
 #if WITH_GMP
@@ -2433,8 +2423,7 @@ in the directory list). \
 The 'sound files only' button filters out all non-sound files from the files list (using the \
 extension -- you can add to the list of sound file extensions via " S_add_sound_file_extension ". \
 When a sound file is selected, information about it is posted under the lists, and a 'play' \
-button is displayed.  If you have libgamin (fam), it is tied into the file list, so what you \
-see should always be up-to-date. The name field has <TAB> completion, of course, and also \
+button is displayed.  The name field has <TAB> completion, of course, and also \
 watches as you type a new name, reflecting that partial name by moving the file list to \
 display possible matches.",
 		      WITH_WORD_WRAP,

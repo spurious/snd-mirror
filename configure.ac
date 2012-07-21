@@ -55,7 +55,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-editres 	  include EditRes in xm
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
-#   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
@@ -80,7 +79,6 @@ AC_ARG_WITH(portaudio,   [  --with-portaudio 		  use portaudio, default=no])
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
-AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default=yes])
 AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no])
 
 AC_ARG_WITH(s7,          [  --with-s7  	          use S7, default=yes])
@@ -135,7 +133,7 @@ AC_CHECK_LIB(c,main)
 # AC_CHECK_LIB(dl,main)
 
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h stdint.h fam.h dirent.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h stdint.h dirent.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
@@ -616,40 +614,6 @@ else
 	  TEST_LIBS="$TEST_LIBS -lXpm"
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
-
-	  # --------------------------------
-          # fam/gamin (motif only)
-          FAM_LIB=""
-
-          if test "$with_fam" != no ; then
-            # look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
-            AC_MSG_CHECKING(for Gamin)
-            if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
-               gamin_version="`$PKG_CONFIG gamin --modversion`"
-               AC_MSG_RESULT($gamin_version)
-               # before version 0.0.18, gamin.pc messed up the --libs result, so we'll just insist on a later version
-               if $PKG_CONFIG --atleast-version 0.1.0 gamin; then
-                 AC_DEFINE_UNQUOTED(MUS_GAMIN_VERSION,"${gamin_version}")
-                 FAM_LIB="`$PKG_CONFIG gamin --libs`"
-                 AC_DEFINE(HAVE_FAM)
-                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gamin"
-               else
-        	AC_MSG_WARN([need gamin version 0.1.0 or later])
-               fi
-            else
-              AC_MSG_RESULT(no)
-              AC_MSG_CHECKING(for Fam)
-              AC_CHECK_LIB(fam, FAMOpen, 
-               [
-                 AC_DEFINE(HAVE_FAM)
-                 FAM_LIB="-lfam"
-                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fam"
-               ])
-            fi
-          fi
-
-          AC_SUBST(FAM_LIB)
-	  # --------------------------------
 
           AC_MSG_CHECKING(for XmDataField)
           AC_LINK_IFELSE(
