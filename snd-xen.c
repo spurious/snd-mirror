@@ -343,7 +343,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	}
     }
 
-  rb_raise(err, msg);
+  rb_raise(err, "%s", msg);
 }
 #endif
 /* end HAVE_RUBY */

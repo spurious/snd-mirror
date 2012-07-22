@@ -562,7 +562,7 @@ static gboolean name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
   str = sp_name_click(sp);
   if (str)
     {
-      status_report(sp, str);
+      status_report(sp, "%s", str);
       free(str);
     }
   return(false);

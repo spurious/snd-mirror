@@ -10,8 +10,8 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 14
-#define XEN_VERSION "3.14"
+#define XEN_MINOR_VERSION 15
+#define XEN_VERSION "3.15"
 
 /* HISTORY:
  *
@@ -330,6 +330,7 @@
 #define XEN_VECTOR_SET(Vect, Num, Val)  xen_rb_list_set(Vect, Num, Val)
 #define XEN_MAKE_VECTOR(Num, Fill)      xen_rb_ary_new_with_initial_element(Num, Fill)
 #define XEN_VECTOR_TO_LIST(a)           a
+#define XEN_VECTOR_COPY(Vect)           rb_ary_dup(Vect)
 
 #define XEN_ASSOC_REF(Item, Lst)        xen_assoc(Item, Lst)
 #define XEN_ASSOC_SET(Sym, Val, Lst)    xen_set_assoc(Sym, Val, Lst)
@@ -854,6 +855,7 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_VECTOR_TO_LIST(Vect)        fth_array_to_list(Vect)
 #define XEN_VECTOR_REF(Vect, Num)       fth_array_ref(Vect, Num)
 #define XEN_VECTOR_SET(Vect, Num, Val)  fth_array_set(Vect, Num, Val)
+#define XEN_VECTOR_COPY(Vect)           fth_array_copy(Vect)
 
 /* === List === */
 #define XEN_NULL_P(a)                   FTH_NIL_P(a)

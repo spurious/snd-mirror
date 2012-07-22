@@ -76,7 +76,7 @@ static void sp_file_changed(GFileMonitor *mon, GFile *file, GFile *other, GFileM
 	    {
 	      char *msg;
 	      msg = mus_format("%s is read-protected!", sp->short_filename);
-	      status_report(sp, msg);
+	      status_report(sp, "%s", msg);
 	      free(msg);
 	      sp->file_unreadable = true;
 	      start_bomb(sp);
@@ -137,7 +137,7 @@ void monitor_sound(snd_info *sp)
 
   sp->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
   if (err != NULL)
-    snd_warning(err->message);
+    snd_warning("%s", err->message);
   else g_signal_connect(G_OBJECT(sp->file_watcher), "changed", G_CALLBACK(sp_file_changed), (gpointer)sp);   
 
   g_object_unref(file); /* is this safe? */
@@ -253,7 +253,7 @@ void view_files_monitor_directory(view_files_info *vdat, const char *dirname)
   file = g_file_new_for_path(dirname);
   vdat->dirs[loc] = g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, &err);
   if (err != NULL)
-    snd_warning(err->message);
+    snd_warning("%s", err->message);
   else g_signal_connect(G_OBJECT(vdat->dirs[loc]), "changed", G_CALLBACK(vf_watch_directory), (gpointer)vdat);   
   g_object_unref(file); 
   redirect_snd_error_to(NULL, NULL);
@@ -479,7 +479,7 @@ static void fsb_update_lists(fsb *fs)
       file = g_file_new_for_path(fs->directory_name);
       fs->directory_watcher = (void *)g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, &err);
       if (err != NULL)
-	snd_warning(err->message);
+	snd_warning("%s", err->message);
       else g_signal_connect(G_OBJECT(fs->directory_watcher), "changed", G_CALLBACK(watch_current_directory_contents), (gpointer)fs);
       g_object_unref(file);
 
@@ -1374,7 +1374,7 @@ static void dialog_select_callback(const char *filename, void *context)
 	file = g_file_new_for_path(filename);
 	fd->info_filename_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
 	if (err != NULL)
-	  snd_warning(err->message);
+	  snd_warning("%s", err->message);
 	else g_signal_connect(G_OBJECT(fd->info_filename_watcher), "changed", G_CALLBACK(watch_info_file), (gpointer)fd);
 	g_object_unref(file);
       }
@@ -1647,7 +1647,7 @@ static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
   file = g_file_new_for_path(fd->unsound_dirname);
   fd->unsound_directory_watcher = (void *)g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, &err);
   if (err != NULL)
-    snd_warning(err->message);
+    snd_warning("%s", err->message);
   else g_signal_connect(G_OBJECT(fd->unsound_directory_watcher), "changed", G_CALLBACK(unpost_unsound_error), (gpointer)fd);
   g_object_unref(file);
 }
@@ -3036,7 +3036,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 		file = g_file_new_for_path(fullname);
 		sd->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
 		if (err != NULL)
-		  snd_warning(err->message);
+		  snd_warning("%s", err->message);
 		else g_signal_connect(G_OBJECT(sd->file_watcher), "changed", G_CALLBACK(watch_save_as_file), (gpointer)sd);
 		g_object_unref(file);
 	      }
@@ -3962,7 +3962,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 		file = g_file_new_for_path(new_file_filename);
 		new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
 		if (err != NULL)
-		  snd_warning(err->message);
+		  snd_warning("%s", err->message);
 		else g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
 		g_object_unref(file);
 	      }
@@ -3992,7 +3992,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 		      file = g_file_new_for_path(new_file_filename);
 		      new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
 		      if (err != NULL)
-			snd_warning(err->message);
+			snd_warning("%s", err->message);
 		      else g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
 		      g_object_unref(file);
 		    }
@@ -4522,7 +4522,7 @@ GtkWidget *edit_header(snd_info *sp)
     file = g_file_new_for_path(ep->sp->filename);
     ep->file_ro_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
     if (err != NULL)
-      snd_warning(err->message);
+      snd_warning("%s", err->message);
     else g_signal_connect(G_OBJECT(ep->file_ro_watcher), "changed", G_CALLBACK(watch_file_read_only), (gpointer)ep);
     g_object_unref(file);
   }
@@ -4730,7 +4730,7 @@ void save_edits_now(snd_info *sp)
   dialog = unsaved_edits_dialog(sp);
   if (!dialog)
     {
-      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, (const gchar *)question);
+      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s", question);
       SG_SIGNAL_CONNECT(dialog, "response", unsaved_edits_activate, (gpointer)sp);
       save_unsaved_edits_dialog(dialog, sp);
     }
@@ -4825,7 +4825,7 @@ void changed_file_dialog(snd_info *sp)
   dialog = file_has_changed_dialog(sp);
   if (!dialog)
     {
-      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, (const gchar *)question);
+      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, "%s", question);
       SG_SIGNAL_CONNECT(dialog, "response", file_has_changed_activate, (gpointer)sp);
       save_file_has_changed_dialog(dialog, sp);
     }

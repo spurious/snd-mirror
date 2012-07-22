@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Sun May 13 00:11:24 CEST 2012
+# Changed: Sun Jul 22 01:14:26 CEST 2012
 
 # Commentary:
 #
@@ -188,7 +188,6 @@ need a String or Symbol, not %s"
   $new_widget_hook              = Hook.new("$new_widget_hook", 1)
   $open_hook                    = Hook.new("$open_hook", 1)
   $open_raw_sound_hook          = Hook.new("$open_raw_sound_hook", 2)
-  $optimization_hook            = Hook.new("$optimization_hook", 1)
   $orientation_hook             = Hook.new("$orientation_hook", 0)
   $output_comment_hook          = Hook.new("$output_comment_hook", 1)
   $output_name_hook             = Hook.new("$output_name_hook", 1)
@@ -313,7 +312,6 @@ if defined? $after_graph_hook
                $new_widget_hook,
                $open_hook,
                $open_raw_sound_hook,
-               $optimization_hook,
                $orientation_hook,
                $output_comment_hook,
                $output_name_hook,

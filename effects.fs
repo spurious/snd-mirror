@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Sun Jun  3 23:49:00 CEST 2012
+\ Changed: Sat Jul 21 00:48:52 CEST 2012
 
 \ Commentary:
 \
@@ -390,15 +390,6 @@ hide
  does> { dir self -- res }
   self @ ( sf ) next-sample
 ;
-
-: cnv-vct-cb { cnv sf -- prc; self -- res }
-  sf cnv-cb { func }
-  0 proc-create func , cnv , ( prc )
- does> { self -- res }
-  self @ { func }
-  self cell+ @ { cnv }
-  cnv func convolve
-;
 set-current
 
 : effects-cnv <{ snd0 amp :optional snd #f chn #f -- res }>
@@ -407,15 +398,19 @@ set-current
   snd chn #f frames flt-len + { total-len }
   :filter 0 flt-len snd0 #f #f channel->vct make-convolve { cnv }
   0 snd chn 1 #f make-sampler { sf }
-  total-len 0.0 make-vct { out-data }
-  cnv sf cnv-vct-cb { func }
-  out-data func vct-map! drop
+  sf cnv-cb { cnv-func }
+  total-len 0.0 make-vct map!
+    cnv cnv-func convolve
+  end-map { out-data }
   sf free-sampler drop
   out-data amp vct-scale! drop
   out-data vct-peak { max-samp }
-  "%s %s %s" #( snd0 amp get-func-name ) string-format { origin }
-  out-data 0 total-len snd chn #f origin vct->channel drop
-  max-samp 1.0 f> if #( max-samp fnegate max-samp ) snd chn set-y-bounds drop then
+  out-data 0 total-len snd chn #f
+    "%s %s %s" #( snd0 amp get-func-name ) string-format
+    vct->channel drop
+  max-samp 1.0 f> if
+    #( max-samp fnegate max-samp ) snd chn set-y-bounds drop
+  then
   max-samp
 ;
 previous
@@ -553,16 +548,6 @@ hide
  does> { dir self -- samp }
   self @ ( sf ) dir 0> if next-sample else previous-sample then
 ;
-
-: vct-fp-cb ( os sr sf amp -- prc; self -- res )
-  { os sr sf amp }
-  sf src-fp-read-cb { src-cb }
-  0 proc-create os , sr , amp , src-cb , ( prc )
- does> { self -- res }
-  self cell+ @ ( sr )
-  self @ ( os ) 0.0 0.0 oscil self 2 cells + @ ( amp ) f*
-  self 3 cells + @ ( src-cb ) src
-;
 set-current
 
 : effects-fp <{ srf amp freq :optional beg 0 dur #f snd #f  chn #f -- vct }>
@@ -570,10 +555,12 @@ set-current
   :srate srf make-src { sr }
   beg snd chn 1 #f make-sampler { sf }
   dur if dur else snd chn #f frames then { len }
-  len 0.0 make-vct { out-data }
-  out-data   os sr sf amp vct-fp-cb   vct-map! drop
-  "%s %s %s %s %s %s" #( srf amp freq beg dur get-func-name ) string-format { origin }
-  out-data beg len snd chn #f origin vct->channel
+  sf src-fp-read-cb { src-cb }
+  len 0.0 make-vct map!
+    sr  os 0.0 0.0 oscil amp f*  src-cb  src
+  end-map ( out-data ) beg len snd chn #f
+    "%s %s %s %s %s %s" #( srf amp freq beg dur get-func-name ) string-format
+    vct->channel
 ;
 previous
 

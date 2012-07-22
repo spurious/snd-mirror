@@ -96,7 +96,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
 	snd_info *sp;
 	sp = any_selected_sound();
 	if ((sp) && (sp->active))
-	  status_report(sp, msg);
+	  status_report(sp, "%s", msg);
 	else post_it("Error", msg);
       }
 #endif

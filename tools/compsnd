@@ -716,27 +716,6 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --without-fam                                          ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-fam --quiet
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-s7 'snd-motif 'sndlib"
-make allclean
-make allclean
-echo ' '
-echo ' '
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-fam --with-gtk                               ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --without-fam --with-gtk --quiet
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk"
-make allclean
-
-echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-portaudio                                       ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --with-portaudio --quiet

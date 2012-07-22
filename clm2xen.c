@@ -46,8 +46,10 @@
 #define DISPLAY(Expr) s7_object_to_c_string(s7, Expr)
 #define DISPLAY_80(Expr) s7_object_to_c_string(s7, Expr)
 #define XEN_OBJECT_REF_CHECKED(Obj, Type) s7_object_value_checked(Obj, Type)
+#define XEN_NULL NULL
 #else
-#define XEN_OBJECT_REF_CHECKED(Obj, Type) ((XEN_OBJECT_TYPE(Obj) == Type) ? XEN_OBJECT_REF(Obj) : NULL)
+#define XEN_OBJECT_REF_CHECKED(Obj, Type) (XEN_OBJECT_TYPE_P(Obj, Type) ? XEN_OBJECT_REF(Obj) : NULL)
+#define XEN_NULL 0
 #endif
 
 
@@ -67,8 +69,6 @@
 
 
 /* defgenerator support */
-#if defined(XEN_VECTOR_COPY)
-#define HAVE_DEFGENERATOR 1
 
 typedef struct {
   XEN release;
@@ -150,7 +150,7 @@ static void save_clm_type(int type, mus_any_class *core, XEN field, method_table
 	    {
 	      clm_xen_cores[i] = NULL;
 	      clm_xen_methods[i] = NULL;
-	      clm_xen_fields[i] = NULL;
+	      clm_xen_fields[i] = XEN_NULL;
 	    }
 	}
     }
@@ -354,7 +354,7 @@ static XEN g_mus_make_generator_type(XEN name, XEN fields, XEN methods)
   /* methods is a list ((name getter [setter]) ...) */
   for (p = methods; XEN_PAIR_P(p); p = XEN_CDR(p))
     {
-      XEN method, get_func, set_func = NULL;
+      XEN method, get_func, set_func = XEN_NULL;
       const char *name;
 
       method = XEN_CAR(p);
@@ -507,9 +507,13 @@ static XEN g_mus_make_generator_type(XEN name, XEN fields, XEN methods)
 	    XEN_VECTOR_SET(new_fields, i, XEN_EVAL_FORM(XEN_CADR(field)));
 	  else
 	    {
+#if HAVE_SCHEME
 	      if (XEN_SYMBOL_P(val))
 		XEN_VECTOR_SET(new_fields, i, XEN_VARIABLE_REF(val));
 	      else XEN_VECTOR_SET(new_fields, i, val);
+#else
+	      XEN_VECTOR_SET(new_fields, i, val);
+#endif
 	    }
 	}
     }
@@ -563,17 +567,12 @@ static XEN g_mus_generator_set(XEN gen, XEN n, XEN val)
   mus_xen *gn;
   gn = XEN_TO_MUS_XEN(gen);
 #if (!HAVE_SCHEME)
-  vector_element(gn->fields, XEN_TO_C_INT(n)) = val;
+  XEN_VECTOR_SET(gn->fields, XEN_TO_C_INT(n), val);
   return(val);
 #else
   return(s7_safe_vector_set(s7, gn->fields, n, val));
 #endif
 }
-
-#else
-#define HAVE_DEFGENERATOR 0
-#endif
-/* defgenerator */
 
 
 
@@ -1867,7 +1866,7 @@ mus_xen *mus_any_to_mus_xen(mus_any *ge)
   gn->gen = ge;
   gn->nvcts = 0;
   gn->vcts = NULL;
-  gn->fields = NULL;
+  gn->fields = XEN_NULL;
   gn->methods = NULL;
   return(gn);
 }
@@ -1881,7 +1880,7 @@ static mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, XEN v)
   gn->nvcts = 1;
   gn->vcts = make_vcts(gn->nvcts);
   gn->vcts[MUS_DATA_WRAPPER] = v;
-  gn->fields = NULL;
+  gn->fields = XEN_NULL;
   gn->methods = NULL;
   return(gn);
 }
@@ -1896,7 +1895,7 @@ static mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2)
   gn->vcts = make_vcts(gn->nvcts);
   gn->vcts[MUS_DATA_WRAPPER] = v1;
   gn->vcts[MUS_INPUT_FUNCTION] = v2;
-  gn->fields = NULL;
+  gn->fields = XEN_NULL;
   gn->methods = NULL;
   return(gn);
 }
@@ -5622,7 +5621,7 @@ partial amplitudes in the vct or list 'partials' by the inverse of their sum (so
 static mus_float_t *vector_to_float_array(XEN v)
 {
   mus_float_t *data;
-  s7_Int i, len;
+  mus_long_t i, len;
   len = XEN_VECTOR_LENGTH(v);
   data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
   for (i = 0; i < len; i++)
@@ -6315,7 +6314,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
       gn->vcts[G_FILTER_STATE] = xen_make_vct_wrapper(order, mus_data(fgen));
       gn->vcts[G_FILTER_XCOEFFS] = xwave;
       gn->vcts[G_FILTER_YCOEFFS] = ywave;
-      gn->fields = NULL;
+      gn->fields = XEN_NULL;
       gn->methods = NULL;
       return(mus_xen_to_object(gn));
     }
@@ -6428,7 +6427,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       if (!(XEN_KEYWORD_P(keys[0])))
         {
 	  vct *v = NULL;
-	  XEN vect = NULL;
+	  XEN vect = XEN_NULL;
 	  if (MUS_VCT_P(keys[0]))
 	    {
 	      v = XEN_TO_VCT(keys[0]);
@@ -7006,11 +7005,19 @@ static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp
   XEN_TO_C_DOUBLE_OR_ERROR(val, inv, caller, XEN_ARG_2);
 
   if (XEN_NOT_BOUND_P(outp))
+#if (!HAVE_SCHEME)
+    return(out_any_2(CLM_OUTPUT, pos, inv, chn, caller, val));
+#else
     return(out_any_2(pos, inv, chn, caller, val));
+#endif
 
+#if (!HAVE_SCHEME)
+  return(out_any_2(outp, pos, inv, chn, caller, val));
+#else
   if (outp == CLM_OUTPUT)
     return(out_any_2(pos, inv, chn, caller, val));
   return(fallback_out_any_2(outp, pos, inv, chn, caller, val));
+#endif
 }
 
 static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
@@ -7751,7 +7758,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
   if (ge)
     {
       gn = (mus_xen *)calloc(1, sizeof(mus_xen));
-      gn->fields = NULL;
+      gn->fields = XEN_NULL;
       gn->methods = NULL;
 
       if ((XEN_BOUND_P(ov)) || (XEN_BOUND_P(rv)))
@@ -7991,7 +7998,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
   if (ge)
     {
       gn = (mus_xen *)calloc(1, sizeof(mus_xen));
-      gn->fields = NULL;
+      gn->fields = XEN_NULL;
       gn->methods = NULL;
       if ((XEN_BOUND_P(ov)) || (XEN_BOUND_P(rv)))
 	gn->nvcts = 4;
@@ -8151,7 +8158,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     }
 
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));
-  gn->fields = NULL;
+  gn->fields = XEN_NULL;
   gn->methods = NULL;
   /* mus_make_src assumes it can invoke the input function! */
   gn->nvcts = MUS_MAX_VCTS;
@@ -8309,7 +8316,7 @@ The edit function, if any, should return the length in samples of the grain, or 
     }
 
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));
-  gn->fields = NULL;
+  gn->fields = XEN_NULL;
   gn->methods = NULL;
   {
     mus_error_handler_t *old_error_handler;
@@ -8419,7 +8426,7 @@ return a new convolution generator which convolves its input with the impulse re
   if (fft_size < fftlen) fft_size = fftlen;
 
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));
-  gn->fields = NULL;
+  gn->fields = XEN_NULL;
   gn->methods = NULL;
   {
     mus_error_handler_t *old_error_handler;
@@ -8663,7 +8670,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
     }
 
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));
-  gn->fields = NULL;
+  gn->fields = XEN_NULL;
   gn->methods = NULL;
   {
     mus_error_handler_t *old_error_handler;
@@ -9074,7 +9081,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 
 
 
-/* -------------------------------- scheme-side (run) optimization -------------------------------- */
+/* -------------------------------- scheme-side optimization -------------------------------- */
 
 #if HAVE_SCHEME
 #define car(E)    s7_car(E)
@@ -9084,6 +9091,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
 #define cadar(E)  s7_cadar(E)
+#define cdaddr(E) s7_cdaddr(E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
@@ -9091,6 +9099,11 @@ static mus_float_t mus_nrxysin_unmodulated(mus_any *p) {return(mus_nrxysin(p, 0.
 static mus_float_t mus_nrxycos_unmodulated(mus_any *p) {return(mus_nrxycos(p, 0.0));}
 static mus_float_t mus_square_wave_unmodulated(mus_any *p) {return(mus_square_wave(p, 0.0));}
 static mus_float_t mus_sawtooth_wave_unmodulated(mus_any *p) {return(mus_sawtooth_wave(p, 0.0));}
+
+/*
+static mus_float_t mus_src_simple(mus_any *p) {return(mus_src(p, 0.0, NULL));}
+static mus_float_t mus_granulate_simple(mus_any *p) {return(mus_granulate_with_editor(p, NULL, NULL));}
+*/
 
 static bool in_safe_do = false;
 static void clm_safe_do_notifier(int level)
@@ -9312,6 +9325,11 @@ GEN_2(polyshape, mus_polyshape_unmodulated)
 GEN_2(filtered_comb, mus_filtered_comb_unmodulated)
 
 /*
+GEN_1(granulate, mus_granulate_simple)
+GEN_1(src, mus_src_simple)
+*/
+
+/*
 GEN3(ssb_am)         ;(ssb-am gen (insig 0.0) (fm 0.0)), mus_ssb_am_unmodulated
 GEN3(asymmetric_fm)  ;(asymmetric-fm gen (index 0.0) (fm 0.0)), mus_*_no_input(1), unmod(2)
 GEN3(polyshape)      ;(polyshape gen (index 1.0) (fm 0.0)), unmod(2), no_input(1)
@@ -9332,9 +9350,6 @@ MUS_PHASE_VOCODER,
 
 ;(set! (mus-location ...) ...)?
 */
-
-/* TODO: src granulate are ok if GEN_1
- */
 
 /* for the noz part, run seems to be checking that safety==0 -- this is zdly!
  *   that the gen arg is correct, but we check that too.
@@ -10470,6 +10485,24 @@ static s7_pointer g_indirect_frame_to_file_3(s7_scheme *sc, s7_pointer args)
   return(data);
 }
 
+static s7_pointer frame_to_file_ff;
+static s7_pointer g_frame_to_file_ff(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer ff_expr;
+  s7_Int pos;
+  mus_any *ogen, *ff, *fmx, *fout;
+
+  GET_GENERATOR(car(args), frame_to_file, ogen);
+  GET_INTEGER(cadr(args), frame_to_file, pos);
+  ff_expr = cdaddr(args);
+  GET_GENERATOR(car(ff_expr), frame_to_frame, ff);
+  GET_GENERATOR(cadr(ff_expr), frame_to_frame, fmx);
+  GET_GENERATOR(caddr(ff_expr), frame_to_frame, fout);
+
+  mus_frame_to_file(ogen, pos, mus_frame_to_frame(ff, fmx, fout));
+  return(XEN_FALSE);
+}
+
 
 
 
@@ -11118,7 +11151,10 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	}
     }
 
-  /* (* c dir dir)? (* c dir c*) (c* s dir) (c* s opssq)
+  /* PERHAPS: (* c dir dir)? (* c dir c*) (c* s dir) (c* s opssq)
+   *
+   * index: (c* s opsc) (c* s s opsc) -- might be add->c? (c* s opsc s) is main case
+   * 
    */
 
 #if 0
@@ -12216,13 +12252,25 @@ static s7_pointer frame_to_file_chooser(s7_scheme *sc, s7_pointer f, int args, s
   /* fprintf(stderr, "f->file %s\n", DISPLAY(expr)); */
   if (args == 3)
     {
+      s7_pointer ff_expr;
+      ff_expr = cadddr(expr);
       if ((s7_cadr(expr) == output_symbol) &&
 	  (s7_is_symbol(s7_caddr(expr))) &&
-	  (s7_is_pair(s7_cadddr(expr))) &&
-	  (s7_function_choice_is_direct(sc, s7_cadddr(expr))))
+	  (s7_is_pair(ff_expr)))
 	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(indirect_frame_to_file_3);
+	  if (s7_function_choice_is_direct(sc, ff_expr))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      return(indirect_frame_to_file_3);
+	    }
+	  if ((car(ff_expr) == s7_make_symbol(sc, "frame->frame")) &&
+	      (s7_is_symbol(cadr(ff_expr))) &&
+	      (s7_is_symbol(caddr(ff_expr))) &&
+	      (s7_is_symbol(cadddr(ff_expr))))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      return(frame_to_file_ff);
+	    }
 	}
     }
   return(f);
@@ -12967,6 +13015,7 @@ static void init_choosers(s7_scheme *sc)
   gen_class = s7_function_class(sc, f);
 
   indirect_frame_to_file_3 = clm_make_function_no_choice(sc, "frame->file", g_indirect_frame_to_file_3, 3, 0, false, "frame->file optimization", gen_class);
+  frame_to_file_ff = clm_make_function_no_choice(sc, "frame->file", g_frame_to_file_ff, 3, 0, false, "frame->file optimization", gen_class);
 
   f = s7_name_to_value(sc, "mus-generator-ref");
   s7_function_chooser_set_data(sc, f, (void *)s7_safe_vector_ref);
@@ -13287,12 +13336,10 @@ XEN_ARGIFY_8(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 XEN_ARGIFY_10(g_mus_mix_with_envs_w, g_mus_mix_with_envs)
 XEN_ARGIFY_6(g_oscil_bank_w, g_oscil_bank)
 
-#if HAVE_DEFGENERATOR
 XEN_ARGIFY_3(g_mus_make_generator_type_w, g_mus_make_generator_type)
 XEN_NARGIFY_1(g_mus_make_generator_w, g_mus_make_generator)
 XEN_NARGIFY_2(g_mus_generator_ref_w, g_mus_generator_ref)
 XEN_NARGIFY_3(g_mus_generator_set_w, g_mus_generator_set)
-#endif
 
 #else
 #define g_mus_srate_w g_mus_srate
@@ -13596,13 +13643,10 @@ XEN_NARGIFY_3(g_mus_generator_set_w, g_mus_generator_set)
 #define g_mus_mix_with_envs_w g_mus_mix_with_envs
 #define g_oscil_bank_w g_oscil_bank
 
-#if HAVE_DEFGENERATOR
 #define g_mus_make_generator_type_w g_mus_make_generator_type
 #define g_mus_make_generator_w g_mus_make_generator
 #define g_mus_generator_ref_w g_mus_generator_ref
 #define g_mus_generator_set_w g_mus_generator_set
-#endif
-
 #endif
 
 #if HAVE_SCHEME
@@ -13920,17 +13964,17 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_make_mixer,        g_make_mixer_w,           0, 0, 1, H_make_mixer);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_mixer "!",    g_make_mixer_unchecked_w, 0, 0, 1, H_make_mixer_unchecked);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer,             g_mixer_w,                0, 0, 1, H_mixer);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mixer_p,      g_mixer_p_w,              1, 0, 0, H_mixer_p);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mixer_p,           g_mixer_p_w,              1, 0, 0, H_mixer_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,       2, 1, 0, H_mixer_multiply);
   XEN_DEFINE_SAFE_PROCEDURE(S_mixer_add,         g_mixer_add_w,            2, 1, 0, H_mixer_add);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w,    2, 0, 0, H_make_scalar_mixer);
 #if HAVE_SCHEME || HAVE_FORTH
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_mixer_set_w,  3, 0, 4, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref,  g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_mixer_set_w,  3, 0, 4, 0);
 #endif
 #if HAVE_RUBY
-  XEN_DEFINE_PROCEDURE(S_mixer_ref,         g_mixer_ref_w,         3, 0, 0, H_mixer_ref);
+  XEN_DEFINE_PROCEDURE(S_mixer_ref,              g_mixer_ref_w,         3, 0, 0, H_mixer_ref);
 #endif
-  XEN_DEFINE_SAFE_PROCEDURE(S_mixer_set,    g_mixer_set_w,         4, 0, 0, H_mixer_set);
+  XEN_DEFINE_SAFE_PROCEDURE(S_mixer_set,         g_mixer_set_w,         4, 0, 0, H_mixer_set);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_sample,   g_frame_to_sample_w,   2, 0, 0, H_frame_to_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_list,     g_frame_to_list_w,     1, 0, 0, H_frame_to_list);
   XEN_DEFINE_SAFE_PROCEDURE(S_frame_to_frame,    g_frame_to_frame_w,    2, 1, 0, H_frame_to_frame);
@@ -13984,7 +14028,7 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_env_p,       g_env_p_w,       1, 0, 0, H_env_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_env,         g_env_w,         1, 0, 0, H_env);
-  XEN_DEFINE_SAFE_PROCEDURE(S_make_env,         g_make_env_w,    0, 0, 1, H_make_env);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_env,    g_make_env_w,    0, 0, 1, H_make_env);
   XEN_DEFINE_SAFE_PROCEDURE(S_env_interp,  g_env_interp_w,  2, 0, 0, H_env_interp);
   XEN_DEFINE_PROCEDURE(S_env_any,          g_env_any_w,     2, 0, 0, H_env_any);
 
@@ -14132,12 +14176,10 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
 
-#if HAVE_DEFGENERATOR
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_make_generator_type, g_mus_make_generator_type_w, 1, 2, 0, H_mus_make_generator_type);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_make_generator,      g_mus_make_generator_w,      1, 0, 0, H_mus_make_generator);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_generator_ref,       g_mus_generator_ref_w,       2, 0, 0, H_mus_generator_ref);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_generator_set,       g_mus_generator_set_w,       3, 0, 0, H_mus_generator_set);
-#endif
 
 #if HAVE_SCHEME
   init_choosers(s7);

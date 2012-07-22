@@ -979,11 +979,16 @@ typedef struct s7_cell {
     struct {               /* environments (frames) */
       s7_pointer slots, nxt;
       long long int id;
-      
+    } envr;
+
+    struct {
+      /* these 3 are just place-holders */
+      s7_pointer slots, nxt;
+      long long int id;
       /* these two fields are for some special case objects like #<unspecified> */
       const char *name;
       int len;
-    } envr;
+    } unq;
 
     struct {               /* counter (internal) */
       s7_pointer result, list, env;
@@ -1685,8 +1690,8 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {car(ecdr(p)) = op; lifte
 #define environment_slots(p)          (p)->object.envr.slots
 #define next_environment(p)           (p)->object.envr.nxt
 
-#define unique_name(p)                (p)->object.envr.name
-#define unique_name_length(p)         (p)->object.envr.len
+#define unique_name(p)                (p)->object.unq.name
+#define unique_name_length(p)         (p)->object.unq.len
 
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
@@ -2084,22 +2089,47 @@ static void init_hashes(s7_scheme *sc)
   s7_gc_protect(sc, hashes);
 }
 
+typedef struct {
+  s7_Int count;
+  s7_pointer expr;
+} datum;
+
+static datum *new_datum(s7_Int ctr, s7_pointer e)
+{
+  datum *d;
+  d = calloc(1, sizeof(datum));
+  d->count = ctr;
+  d->expr = e;
+  return(d);
+}
+static int sort_data(const void *v1, const void *v2)
+{
+  datum *d1 = *(datum **)v1;
+  datum *d2 = *(datum **)v2;
+  if (d1->count > d2->count)
+    return(-1);
+  return(1);
+}
 static void report_counts(s7_scheme *sc)
 {
-  int len, i;
+  int len, i, loc = 0, entries;
   s7_pointer *elements;
+  datum **data;
   len = hash_table_length(hashes);
   elements = hash_table_elements(hashes);
-
-  fprintf(stderr, "counts:\n");
+  entries = hash_table_entries(hashes);
+  data = (datum **)calloc(entries, sizeof(datum *));
 
   for (i = 0; i < len; i++)
     {
       s7_pointer x;
       for (x = elements[i]; is_pair(x); x = cdr(x))
-	if (s7_integer(cdar(x)) > 1000)
-	  fprintf(stderr, "%lld %s\n\n", s7_integer(cdar(x)), DISPLAY(caar(x)));
+	data[loc++] = new_datum(s7_integer(cdar(x)), caar(x));
     }
+  qsort((void *)data, loc, sizeof(datum *), sort_data);
+  for (i = 0; i < loc; i++)
+    if (data[i]->count > 1000)
+      fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY(data[i]->expr));
 }
 #endif
 
@@ -3707,13 +3737,12 @@ static s7_pointer g_stack_size(s7_scheme *sc, s7_pointer args)
 
 #define HASH_MULT 4
 
-static int symbol_table_hash(const char *key, unsigned int *loc) 
+static int symbol_table_hash(const char *key) 
 { 
   unsigned int hashed = 0;
   const char *c; 
   for (c = key; *c; c++) 
     hashed = *c + hashed * HASH_MULT;
-  if (loc) (*loc) = hashed;
   return(hashed % SYMBOL_TABLE_SIZE); 
 
   /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
@@ -3842,9 +3871,8 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
 {
   s7_pointer x; 
   int location;
-  unsigned int loc = 0;
 
-  location = symbol_table_hash(name, &loc); 
+  location = symbol_table_hash(name); 
   x = symbol_table_find_by_name(sc, name, location); 
   if (is_not_null(x)) 
     return(x); 
@@ -3853,7 +3881,7 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
     return(s7_error(sc, sc->ERROR, sc->NIL));
 
   x = new_symbol(sc, name, location); 
-  symbol_hash(x) = loc;
+  symbol_hash(x) = location;
   return(x);
 } 
 
@@ -3869,7 +3897,8 @@ static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
 {
   unsigned int loc;
   s7_pointer x, y; 
-  loc = symbol_hash(sym) % SYMBOL_TABLE_SIZE;
+
+  loc = symbol_hash(sym);
   x = vector_element(sc->symbol_table, loc);
   if (car(x) == sym)
     {
@@ -3896,7 +3925,6 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   char *name;
   int len, location;
   s7_pointer x;
-  unsigned int loc = 0;
   
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
@@ -3904,9 +3932,9 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
    *    the user can screw up no matter what we do.
    */
   snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
-  location = symbol_table_hash(name, &loc); 
+  location = symbol_table_hash(name); 
   x = new_symbol(sc, name, location);  /* not T_GENSYM -- might be called from outside */
-  symbol_hash(x) = loc;
+  symbol_hash(x) = location;
   free(name);
   return(x); 
 } 
@@ -3920,7 +3948,6 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   char *name;
   int len, location;
   s7_pointer x, str, stc;
-  unsigned int loc = 0;
 
   /* get symbol name */
   if (is_not_null(args))
@@ -3936,7 +3963,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
   snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
-  location = symbol_table_hash(name, &loc); 
+  location = symbol_table_hash(name); 
       
   /* make-string for symbol name */
   str = (s7_cell *)calloc(1, sizeof(s7_cell));
@@ -3955,7 +3982,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   local_slot(x) = sc->NIL;
   symbol_id(x) = 0;
   symbol_accessor(x) = -1;
-  symbol_hash(x) = loc;
+  symbol_hash(x) = location;
 
   /* place new symbol in symbol-table, but using calloc so we can easily free it (remove it from the table) in GC sweep */
   stc = (s7_cell *)calloc(1, sizeof(s7_cell));
@@ -18679,10 +18706,6 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 	unsigned int loc = 0;
 	const char *c; 
 	
-	/* expanding these two calls saves a lot of time */
-	/* location = symbol_table_hash(orig_str, &loc); */
-	/* result = symbol_table_find_by_name(sc, orig_str, location); */
-	
 	for (c = orig_str; *c; c++) 
 	  loc = *c + loc * HASH_MULT;
 	location = loc % SYMBOL_TABLE_SIZE; 
@@ -18709,7 +18732,7 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 	    else 
 	      {
 		result = new_symbol(sc, orig_str, location); 
-		symbol_hash(result) = loc;
+		symbol_hash(result) = location; /* was loc */
 	      }
 	  }
       }
@@ -28100,19 +28123,9 @@ bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol)
   return(sc->safe_do_ids[sc->safe_do_level] >= symbol_id(symbol));
 }
 
-bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol)
-{
-  return(sc->safe_do_ids[sc->safe_do_level] > symbol_id(symbol));
-}
-
 #else
 
 bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol)
-{
-  return(false);
-}
-
-bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol)
 {
   return(false);
 }
@@ -32481,9 +32494,10 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x, syn;
-  unsigned int loc = 0;
+  unsigned int loc;
 
-  x = new_symbol(sc, name, symbol_table_hash(name, &loc)); 
+  loc = symbol_table_hash(name);
+  x = new_symbol(sc, name, loc);
   symbol_hash(x) = loc;
 
   syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
@@ -32504,7 +32518,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x, str, syn; 
-  unsigned int loc = 0;
+  unsigned int loc;
 
   str = s7_make_permanent_string(name);
 
@@ -32516,7 +32530,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   global_slot(x) = sc->NIL;
   local_slot(x) = sc->NIL;
   initial_slot(x) = sc->UNDEFINED;
-  symbol_table_hash(name, &loc); 
+  loc = symbol_table_hash(name); 
   symbol_hash(x) = loc;
   symbol_id(x) = 0;
   symbol_accessor(x) = -1;
@@ -32536,15 +32550,28 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 }
 
 
-static bool direct_memq(s7_pointer symbol, s7_pointer list)
+static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
 {
   s7_pointer x;
-  for (x = list; is_pair(x); x = cdr(x))
+  for (x = symbols; is_pair(x); x = cdr(x))
     if (car(x) == symbol)
       return(true);
   return(false);
 }
 
+#if 0
+static bool tree_memq(s7_scheme *sc, s7_pointer tree, s7_pointer symbols)
+{
+  if (is_null(tree))
+    return(false);
+  if (is_symbol(tree))
+    return(direct_memq(tree, symbols));
+  if (is_pair(tree))
+    return((tree_memq(sc, car(tree), symbols)) ||
+	   (tree_memq(sc, cdr(tree), symbols)));
+  return(false);
+}
+#endif
 
 #if 0
 static s7_pointer remq(s7_scheme *sc, s7_pointer a, s7_pointer obj) 
@@ -32862,6 +32889,7 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
 
   for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
 
+  /* this looks redundant, but every attempt to improve it is much slower! */
   if (frame_id(x) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));
 
@@ -32874,7 +32902,8 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
     }
 
   x = global_slot(hdl);
-  if (is_not_null(x)) return(slot_value(x));
+  if (is_not_null(x)) 
+    return(slot_value(x));
 
   return(unbound_variable(sc, hdl));
 }
@@ -39257,7 +39286,7 @@ static void finalize_safe_do(s7_scheme *sc)
 static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
 {
   /* for now, just look for stepper as last element of any list
-   *    any embedded set is handled by do_is_safe, so we don't need to descend into the depths
+   *    any embedded set is handled by do-is-safe, so we don't need to descend into the depths
    */
   s7_pointer p;
   if (direct_memq(cadr(expr), vars))
@@ -39371,7 +39400,26 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 
 		    case OP_SET:
 		      if (!direct_memq(cadr(expr), var_list))
-			(*has_set) = true;
+			{
+#if 0
+			  if (is_pair(cddr(expr)))
+			    fprintf(stderr, "%s: %d %d %s %d %d %s\n", 
+				    DISPLAY(expr), 
+				    is_unsafe(caddr(expr)),
+				    is_optimized(caddr(expr)), (is_optimized(caddr(expr))) ? opt_names[optimize_data(caddr(expr))] : "",
+				    direct_memq(cadr(expr), steppers),
+				    tree_memq(sc, caddr(expr), steppers),
+				    DISPLAY(steppers));
+#endif
+#if 0
+			  if ((!is_pair(cddr(expr))) ||
+			      (!is_optimized(caddr(expr))) ||
+			      (is_unsafe(caddr(expr))) ||
+			      (direct_memq(cadr(expr), steppers)) ||
+			      (tree_memq(sc, caddr(expr), steppers)))
+#endif
+			    (*has_set) = true;
+			}
 		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
 			{
 #if PRINTING
@@ -57285,10 +57333,9 @@ s7_scheme *s7_init(void)
   sc->s7_call_file = NULL;
   sc->s7_call_name = NULL;
   sc->safety = 0;
-  {
-    unsigned int loc = 0;
-    sc->class_name_location = symbol_table_hash("class-name", &loc); 
-  }
+
+  sc->class_name_location = symbol_table_hash("class-name"); 
+
   sc->circle_info = NULL;
   sc->fdats = (format_data **)calloc(8, sizeof(format_data *));
   sc->num_fdats = 8;
@@ -58426,6 +58473,7 @@ s7_scheme *s7_init(void)
  * get gmp to work again in the opt case
  *
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
+ * TODO: gather the add_slot/new_frame cases into one macro (they're scattered all over right now)
  *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
  *   what is free?  Perhaps leave it until it's needed?
@@ -58437,6 +58485,10 @@ s7_scheme *s7_init(void)
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  * PERHAPS: closure direct
+ * TODO: does augment-env update the id correctly?  local_slot?
+ (let ((a 1)) (+ (let ((a 2)) (+ (let ((a 3)) a) a)) a)) -> 6
+ (let ((a 1)) (+ (let () (+ (let ((a 3)) (augment-environment! (outer-environment (current-environment)) '(a . 2)) a) a)) a)) -> 5??
+ (let () (let ((a 1)) (augment-environment! (outer-environment (current-environment)) '(a . 2))) a) -> 2
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1272
  * bench    52019 -> 7875 [8268] 8037 8592 8402

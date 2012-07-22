@@ -1,7 +1,7 @@
 # dlocsig.rb -- CLM -> Snd/Ruby translation of dlocsig.lisp
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Copyright (c) 2003--2011 Michael Scholz <mi-scholz@users.sourceforge.net>
+# Copyright (c) 2003-2012 Michael Scholz <mi-scholz@users.sourceforge.net>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -825,7 +825,7 @@ module DL
           end
         else
           out = vct_multiply!(vct_copy(out_data),
-                              vct_map!(make_vct(len), lambda do | | env(@output_gains[chn]) end))
+                              Vct.new(len) do |x| env(@output_gains[chn]) end)
           mix_vct(out, @run_beg, @rbm_output, chn, false)
         end
       end
@@ -836,7 +836,7 @@ module DL
           end
         else
           out = vct_multiply!(vct_copy(out_data),
-                              vct_map!(make_vct(len), lambda do | | env(@reverb_gains[chn]) end))
+                              Vct.new(len) do |x| env(@reverb_gains[chn]) end)
           mix_vct(out, @run_beg, @rbm_reverb, chn, false)
         end
       end

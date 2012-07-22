@@ -105,7 +105,7 @@ static void name_click_callback(Widget w, XtPointer context, XtPointer info)
   str = sp_name_click(sp);
   if (str)
     {
-      status_report(sp, str);
+      status_report(sp, "%s", str);
       free(str);
     }
 }
@@ -1720,7 +1720,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
   if (make_widgets)
     {
-      if ((sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS))
+      if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);

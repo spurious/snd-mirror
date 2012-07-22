@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Sun May 13 00:14:10 CEST 2012
+\ Changed: Sun Jul 22 00:54:10 CEST 2012
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )
@@ -65,7 +65,6 @@ require examp
      new-widget-hook
      open-hook
      open-raw-sound-hook
-     optimization-hook
      orientation-hook
      output-comment-hook
      output-name-hook

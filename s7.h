@@ -577,7 +577,6 @@ s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 void s7_function_set_returns_temp(s7_pointer f);
 bool s7_function_returns_temp(s7_pointer f);
 bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
-bool s7_is_do_global(s7_scheme *sc, s7_pointer symbol);
 void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level));
 s7_Double s7_call_direct_to_real(s7_scheme *sc, s7_pointer expr);
 s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);

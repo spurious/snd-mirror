@@ -105,10 +105,10 @@
 						    :scaler segment-scaler)))
 	  (if matrix
 	      (begin
-		(do ((inp 0 (+ 1 inp)))
+		(do ((inp 0 (+ inp 1)))
 		    ((= inp in-chans))
 		  (let ((inlist (list-ref matrix inp)))
-		    (do ((outp 0 (+ 1 outp)))
+		    (do ((outp 0 (+ outp 1)))
 			((= outp out-chans))
 		      (let ((outn (list-ref inlist outp)))
 			(mixer-set! mx inp outp outn)))))))
@@ -256,7 +256,7 @@
 					  (sl (floor (* segl (mus-srate))))
 					  (rl (floor (* rmpl sl))))
 				     (set! update-ctr 0)
-				     (do ((ix 0 (+ 1 ix)))
+				     (do ((ix 0 (+ ix 1)))
 					 ((= ix in-chans))
 				       (let ((gen (vector-ref ex-array ix)))
 					 (set! (mus-length gen) sl)
@@ -266,7 +266,7 @@
 			 
 			 (if (negative? ex-samp)
 			     (begin
-			       (do ((ix 0 (+ 1 ix)))
+			       (do ((ix 0 (+ ix 1)))
 				   ((= ix in-chans))
 				 (let ((gen (vector-ref ex-array ix)))
 				   (vector-set! samples-0 ix (* vol (granulate gen)))
@@ -279,7 +279,7 @@
 				   (let ((samps (floor (- next-samp ex-samp))))
 				     (do ((k 0 (+ k 1)))
 					 ((= k samps))
-				       (do ((ix 0 (+ 1 ix)))
+				       (do ((ix 0 (+ ix 1)))
 					   ((= ix in-chans))
 					 (let ((gen (vector-ref ex-array ix)))
 					   (vector-set! samples-0 ix (vector-ref samples-1 ix))
@@ -288,11 +288,11 @@
 			 
 			 (if (= next-samp ex-samp)
 			     ;; output actual samples
-			     (do ((ix 0 (+ 1 ix)))
+			     (do ((ix 0 (+ ix 1)))
 				 ((= ix in-chans))
 			       (frame-set! inframe ix (vector-ref samples-0 ix)))
 			     ;; output interpolated samples
-			     (do ((ix 0 (+ 1 ix)))
+			     (do ((ix 0 (+ ix 1)))
 				 ((= ix in-chans))
 			       (let ((v0 (vector-ref samples-0 ix))
 				     (v1 (vector-ref samples-1 ix)))
