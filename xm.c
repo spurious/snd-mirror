@@ -15638,7 +15638,7 @@ new source of events, which is usually file input but can also be file output."
   gc_loc = xm_protect(descr);
   id = XtAppAddInput(XEN_TO_C_XtAppContext(arg1), 
 		     XEN_TO_C_INT(arg2), 
-#if (SIZEOF_LONG_LONG != SIZEOF_VOID_P)
+#if (SIZEOF_UNSIGNED_LONG_LONG != SIZEOF_VOID_P)
 		     (XtPointer)((int)XEN_TO_C_ULONG(arg3)),
 #else
 		     (XtPointer)XEN_TO_C_LONG_LONG(arg3),
@@ -25115,7 +25115,7 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(first_keycode, gxm_first_keycode_w, set_first_keycode, gxm_set_first_keycode_w, 1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(request, gxm_request_w, set_request, gxm_set_request_w, 1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(resourceid, gxm_resourceid_w, set_resourceid, gxm_set_resourceid_w, 1, 0, 2, 0); 
-  XM_DEFINE_ACCESSOR(format, gxm_format_w, set_format, gxm_set_format_w, 1, 0, 2, 0); 
+  XM_DEFINE_ACCESSOR(format, gxm_format_w, set_format, gxm_set_format_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(data, gxm_data_w, set_data, gxm_set_data_w, 1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(message_type, gxm_message_type_w, set_message_type, gxm_set_message_type_w, 1, 0, 2, 0); 
   XM_DEFINE_ACCESSOR(new, gxm_new_w, set_new, gxm_set_new_w, 1, 0, 2, 0); 
