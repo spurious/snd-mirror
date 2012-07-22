@@ -603,7 +603,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_opCq, HOP_SAFE_CLOSURE_opCq, 
       OP_SAFE_CLOSURE_S_one, HOP_SAFE_CLOSURE_S_one, OP_SAFE_CLOSURE_S_vref, HOP_SAFE_CLOSURE_S_vref, OP_SAFE_CLOSURE_S_safe_vref, HOP_SAFE_CLOSURE_S_safe_vref, 
 
-      OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
+      OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, OP_SAFE_CLOSURE_STAR_SoS, HOP_SAFE_CLOSURE_STAR_SoS, 
       
       OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_CONS_SS, HOP_SAFE_CONS_SS,
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
@@ -704,7 +704,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_closure_opcq", "h_safe_closure_opcq", 
      "safe_closure_s_one", "h_safe_closure_s_one", "safe_closure_s_vref", "h_safe_closure_s_vref", "safe_closure_s_safe_vref", "h_safe_closure_s_safe_vref",
 
-     "safe_closure*_s", "h_safe_closure*_s", "safe_closure*_ss", "h_safe_closure*_ss", 
+     "safe_closure*_s", "h_safe_closure*_s", "safe_closure*_ss", "h_safe_closure*_ss", "safe_closure*_sos", "h_safe_closure*_sos", 
 
      "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", "safe_cons_ss", "h_safe_cons_ss",
      "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
@@ -1755,7 +1755,7 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {car(ecdr(p)) = op; lifte
 #define c_function_chooser_data(f)    (f)->object.c_proc->chooser_data
 #endif
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
-bool s7_function_returns_temp(s7_pointer f) {return(returns_temp(ecdr(f)));}
+bool s7_function_returns_temp(s7_pointer f) {return((is_pair(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
 
 #define c_call(f)                     ((s7_function)(fcdr(f)))
 #define set_c_function(f, X)          do {ecdr(f) = X; fcdr(f) = (s7_pointer)(c_function_call(ecdr(f)));} while (0)
@@ -4301,8 +4301,14 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       set_type(slot, T_SLOT | T_IMMUTABLE);
       next_slot(slot) = environment_slots(env);
       environment_slots(env) = slot;
-      symbol_id(symbol) = frame_id(env);
-      local_slot(symbol) = slot;
+      /* this is called by augment-environment! so we have to be careful about the resultant frame_id
+       *   check for greater to ensure shadowing stays in effect, and equal to do updates (set! in effect)
+       */
+      if (frame_id(env) >= symbol_id(symbol))
+	{
+	  symbol_id(symbol) = frame_id(env);
+	  local_slot(symbol) = slot;
+	}
     }
 
   /* there are about the same number of frames as local variables -- this
@@ -36001,6 +36007,25 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 #endif
 
+		      if ((is_closure_star(func)) &&
+			  (symbols == 2) &&
+			  (!is_keyword(cadar(x))) &&
+			  (is_pair(caddar(x))) &&
+			  (is_optimized(caddar(x))) &&
+			  (optimize_data(caddar(x)) == HOP_SAFE_C_C) &&
+			  (!is_keyword(cadddar(x))) &&
+			  (safe_list_length(sc, closure_args(func)) == 3) &&
+			  (is_safe_closure(closure_body(func))))
+			{
+			  set_optimized(car(x));
+			  set_unsafe(car(x)); 
+			  set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_STAR_SoS);
+			  ecdr(car(x)) = func;
+			  fcdr(car(x)) = caddar(x);
+			  return(false); 
+			}
+
+
 	  if (bad_pairs > quotes) return(false);
 
 	  if ((!is_optimized(car(x))) &&
@@ -42800,6 +42825,40 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* -------------------------------------------------------------------------------- */
 
 
+	    case OP_SAFE_CLOSURE_STAR_SoS:
+	      if (!function_is_ok(code))
+		break;
+	      
+	    case HOP_SAFE_CLOSURE_STAR_SoS:
+	      {
+		s7_pointer x, val1, val2, val3;
+		/* the finders have to operate in the current environment, so we can't change sc->envir until later */
+		val2 = c_call(fcdr(code))(sc, cdr(fcdr(code)));
+		val1 = finder(sc, cadr(code));
+		val3 = finder(sc, cadddr(code));
+
+		sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), val1);
+
+		x = next_slot(environment_slots(closure_environment(ecdr(code))));
+		slot_set_value(x, val2); 
+		symbol_id(slot_symbol(x)) = frame_id(sc->envir);
+		local_slot(slot_symbol(x)) = x;
+
+		x = next_slot(x);
+		slot_set_value(x, val3); 
+		symbol_id(slot_symbol(x)) = frame_id(sc->envir);
+		local_slot(slot_symbol(x)) = x;
+		
+		sc->code = closure_body(ecdr(code));
+		if (is_one_liner(sc->code))
+		  {
+		    sc->code = car(sc->code);
+		    goto EVAL; 
+		  }
+		goto BEGIN;
+	      }
+	      
+	      
 	    case OP_SAFE_CLOSURE_STAR_SS:
 	      if (!function_is_ok(code))
 		{
@@ -58485,17 +58544,13 @@ s7_scheme *s7_init(void)
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  * PERHAPS: closure direct
- * TODO: does augment-env update the id correctly?  local_slot?
- (let ((a 1)) (+ (let ((a 2)) (+ (let ((a 3)) a) a)) a)) -> 6
- (let ((a 1)) (+ (let () (+ (let ((a 3)) (augment-environment! (outer-environment (current-environment)) '(a . 2)) a) a)) a)) -> 5??
- (let () (let ((a 1)) (augment-environment! (outer-environment (current-environment)) '(a . 2))) a) -> 2
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1272
  * bench    52019 -> 7875 [8268] 8037 8592 8402
  *   (new)                [8764]           9370 8937
- * index    44300 -> 4988 [4992] 4235 4725 3935 3527
+ * index    44300 -> 4988 [4992] 4235 4725 3935 3495
  * s7test            1721             1456 1430 1375
  * t455                           265  256  218   83
- * t502                                 90   72   53
+ * t502                                 90   72   46
  */
 

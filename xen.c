@@ -526,7 +526,7 @@ static XEN xen_rb_rep(XEN ig)
       line_read = NULL;
     }
 #else
-  int size = 512;
+  size_t size = 512;
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));

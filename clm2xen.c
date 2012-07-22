@@ -5152,28 +5152,29 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
       x_amps = XEN_VECTOR_ELEMENTS(amps);
 #endif
 
+      if (!XEN_BOUND_P(freqs))
+	{
+	  for (i = 0; i < size; i++)
+	    sum += XEN_TO_C_DOUBLE(xen_vector_ref(amps, i)) * mus_oscil_unmodulated(oscils[i]);
+	  free(oscils);
+	  return(C_TO_XEN_DOUBLE(sum));
+	}
+
       ampls = (double *)calloc(size, sizeof(double));
       for (i = 0; i < size; i++)
 	ampls[i] = XEN_TO_C_DOUBLE(xen_vector_ref(amps, i));
     }
-
-  if (!XEN_BOUND_P(freqs))
+  else
     {
-      if (ampls)
-	{
-	  for (i = 0; i < size; i++)
-	    sum += ampls[i] * mus_oscil_unmodulated(oscils[i]);
-	  free(ampls);
-	}
-      else
+      if (!XEN_BOUND_P(freqs))
 	{
 	  for (i = 0; i < size; i++)
 	    sum += mus_oscil_unmodulated(oscils[i]);
+	  free(oscils);
+	  return(C_TO_XEN_DOUBLE(sum));
 	}
-      free(oscils);
-      return(C_TO_XEN_DOUBLE(sum));
     }
-  
+
   if (!XEN_FALSE_P(freqs))
     {
       XEN_ASSERT_TYPE(XEN_VECTOR_P(freqs), freqs, XEN_ARG_4, S_oscil_bank, "a vector");

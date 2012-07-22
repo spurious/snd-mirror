@@ -25992,6 +25992,11 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	       a))
 	   a))
       41)
+
+(test (let ((a 1)) (+ (let ((a 2)) (+ (let ((a 3)) a) a)) a)) 6)
+(test (let ((a 1)) (+ (let () (+ (let ((a 3)) (augment-environment! (outer-environment (current-environment)) '(a . 2)) a) a)) a)) 6)
+(test (let () (let ((a 1)) (augment-environment! (outer-environment (current-environment)) '(a . 2))) a) 2)
+
 (test (let ((a 1))
 	(let ((e (current-environment)))
 	  (+ (with-environment

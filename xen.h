@@ -504,11 +504,11 @@
 
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
   rb_raise(rb_eRangeError, "%s: arg %d, %s, out of range: %s\n", \
-           Caller, ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
+	   Caller, (int)ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
   rb_raise(rb_eTypeError, "%s: wrong type arg %d, %s, wanted %s\n", \
-           Caller, ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
+	   Caller, (int)ArgN, XEN_TO_C_STRING(XEN_TO_STRING(Arg)), Descr)
 
 #endif
 

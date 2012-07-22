@@ -1754,13 +1754,16 @@
 		   (do ((k 0 (+ k 1)))
 		       ((= k num))
 		     (mus-reset (gens k)))))))
+#|       
        (let ((sum 0.0))
 	 (do ((k 0 (+ k 1)))
 	     ((= k num))
 	   (set! sum (+ sum (* (amps k) (oscil (gens k))))))
+|#
 	 (outa i (* (env ampf) 
 		    (env pulsef)
-		    sum))))))
+		    (oscil-bank num gens amps)
+		    )))))
 
 ;; (with-sound () (handsome-trig 0 2 .5))
 
@@ -7100,15 +7103,20 @@
 				   :duration dur :scaler .07))
     (set! (ampfs 4) (make-env '(0.000 0.000 0.159 0.995 0.314 0.997 0.598 0.000 1.000 0.000)
 				   :duration dur :scaler .01))
-    
+
+    (let ((frqs (make-vector 5))
+	  (amps (make-vector 5)))
      (do ((i start (+ i 1)))
 	 ((= i stop))
        (let ((frq (env frqf))
 	     (sum 0.0))
 	 (do ((k 0 (+ k 1)))
 	     ((= k 5))
-	   (set! sum (+ sum (* (env (ampfs k)) (oscil (oscs k) (* (+ k 1) frq))))))
-	 (outa i (* sum (env ampf))))))
+	   (vector-set! amps k (env (ampfs k)))
+	   (vector-set! frqs k (* (+ k 1) frq)))
+	 ;(set! sum (+ sum (* (env (ampfs k)) (oscil (oscs k) (* (+ k 1) frq))))))
+	 (set! sum (oscil-bank 5 oscs amps frqs))
+	 (outa i (* sum (env ampf)))))))
   
   ;; part 2
   (let* ((start (seconds->samples (+ beg 0.1)))
