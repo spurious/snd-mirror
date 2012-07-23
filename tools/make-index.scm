@@ -216,7 +216,7 @@
 	   (make-ind :name line 
 		     :topic topic 
 		     :file file 
-		     :sortby (string-downcase (checked-substring line (+ 1 bpos) epos))))))))
+		     :sortby (string-downcase (checked-substring line (+ bpos 1) epos))))))))
 
 
 (define (create-general str file)
@@ -226,12 +226,12 @@
 				   "#" 
 				   (checked-substring str 0 mid) 
 				   "\"><b>" 
-				   (checked-substring str (+ 1 mid)) 
+				   (checked-substring str (+ mid 1)) 
 				   "</b></a>")
 	      :topic #f
 	      :file file
 	      :general #t
-	      :sortby (string-downcase (checked-substring str (+ 1 mid))))))
+	      :sortby (string-downcase (checked-substring str (+ mid 1))))))
 
 
 (define (scheme->ruby scheme-name)
@@ -254,163 +254,164 @@
 				  (let* ((len (length scheme-name))
 					 (var-case (string-list-position scheme-name scheme-variable-names))
 					 (strlen (if var-case (+ 1 len) len))
-					 (rb-name (make-string strlen #\space)))
-				    (let ((i 0)
-					  (j 0))
-				      (if var-case
-					  (begin
-					    (set! (rb-name 0) #\$)
-					    (set! j 1))
-					  (if (string-list-position scheme-name scheme-constant-names)
-					      (begin
-						(set! (rb-name 0) (char-upcase (scheme-name 0)))
-						(set! i 1)
-						(set! j 1))))
-				      (do ()
-					  ((>= i len))
-					(let ((c (scheme-name i)))
-					  (if (or (alphanumeric? c)
-						  (char=? c #\?)
-						  (char=? c #\!))
-					      (begin
-						(set! (rb-name j) c)
-						(incf i)
-						(incf j))
-					      (if (and (char=? c #\-)
-						       (char=? (scheme-name (+ i 1)) #\>))
-						  (begin
-						    (set! (rb-name j) #\2)
-						    (incf j)
-						    (set! i (+ i 2)))
-						  (begin
-						    (set! (rb-name j) #\_)
-						    (incf i)
-						    (incf j))))))
-				      (if (not (= j strlen))
-					  (substring rb-name 0 j)
-					  rb-name))))))))))))
+					 (rb-name (make-string strlen #\space))
+					 (i 0)
+					 (j 0))
+				    (if var-case
+					(begin
+					 (set! (rb-name 0) #\$)
+					 (set! j 1))
+					(if (string-list-position scheme-name scheme-constant-names)
+					    (begin
+					     (set! (rb-name 0) (char-upcase (scheme-name 0)))
+					     (set! i 1)
+					     (set! j 1))))
+				    (do ()
+					((>= i len))
+				      (let ((c (scheme-name i)))
+					(if (or (alphanumeric? c)
+						(char=? c #\?)
+						(char=? c #\!))
+					    (begin
+					     (set! (rb-name j) c)
+					     (incf i)
+					     (incf j))
+					    (if (and (char=? c #\-)
+						     (char=? (scheme-name (+ i 1)) #\>))
+						(begin
+						 (set! (rb-name j) #\2)
+						 (incf j)
+						 (set! i (+ i 2)))
+						(begin
+						 (set! (rb-name j) #\_)
+						 (incf i)
+						 (incf j))))))
+				    (if (not (= j strlen))
+					(substring rb-name 0 j)
+					rb-name)))))))))))
 
 (define (clean-up-xref xref file)
   (let* ((len (length xref))
-	 (outstr (make-string (* len 2) #\space)))
-    (let ((url-str "")
-	  (i 0)
-	  (j 0)
-	  (need-start #f)
-	  (in-bracket #f)
-	  (in-href #f)
-	  (in-name #f))
-      
-      (let ((loc 0))
-	(do ()
-	    ((>= loc len))
-	  (let* ((leof (or (char-position #\newline xref loc)
-			   len))
-		 (href-normal-start (or (string-position "<a href=" xref loc)
-					(string-position "<A HREF=" xref loc)))
-		 (href-quiet-start (string-position "<a class=quiet href=" xref loc))
-		 (href-def-start (string-position "<a class=def href=" xref loc))
-		 (href-start (or href-normal-start href-quiet-start href-def-start))
-		 (href-len (if href-normal-start 8 20))
-		 (href-end (and href-start
-				(< href-start leof)
-				(char-position #\> xref (+ 1 href-start))))
-		 (href (and href-start href-end (checked-substring xref (+ href-start href-len) href-end))))
-	    (if href
-		(if (char=? (href 1) #\#)
-		    (set! url-str (string-append url-str (string #\") file (checked-substring href 1) (format #f ",~%  ")))
-		    (set! url-str (string-append url-str href (format #f ",~%  "))))
-		(set! url-str (string-append url-str (format #f "NULL,~%  "))))
-	    (set! loc (+ 1 leof))
-	  )))
-      (set! (outstr j) #\")
-      (incf j)
+	 (outstr (make-string (* len 2) #\space))
+	 (url-str "")
+	 (i 0)
+	 (j 0)
+	 (need-start #f)
+	 (in-bracket #f)
+	 (in-href #f)
+	 (in-name #f))
+    
+    (let ((loc 0))
       (do ()
-	  ((>= i len))
-	(let ((c (xref i)))
-	  (if in-bracket
-	      (if (char=? c #\>)
-		  (begin
-		    (set! in-bracket #f)
-		    (if in-href
-			(set! in-name #t))
-		    (set! in-href #f)))
-	      (case c
-		((#\<)
-		 (if in-name
+	  ((>= loc len))
+	(let* ((leof (or (char-position #\newline xref loc)
+			 len))
+	       (href-normal-start (or (string-position "<a href=" xref loc)
+				      (string-position "<A HREF=" xref loc)))
+	       (href-quiet-start (string-position "<a class=quiet href=" xref loc))
+	       (href-def-start (string-position "<a class=def href=" xref loc))
+	       (href-start (or href-normal-start href-quiet-start href-def-start))
+	       (href-len (if href-normal-start 8 20))
+	       (href-end (and href-start
+			      (< href-start leof)
+			      (char-position #\> xref (+ 1 href-start))))
+	       (href (and href-start href-end (checked-substring xref (+ href-start href-len) href-end))))
+	  (if href
+	      (if (char=? (href 1) #\#)
+		  (set! url-str (string-append url-str (string #\") file (checked-substring href 1) (format #f ",~%  ")))
+		  (set! url-str (string-append url-str href (format #f ",~%  "))))
+	      (set! url-str (string-append url-str (format #f "NULL,~%  "))))
+	  (set! loc (+ 1 leof))
+	  ))
+      )
+    (set! (outstr j) #\")
+    (incf j)
+    (do ()
+	((>= i len))
+      (let ((c (xref i)))
+	(if in-bracket
+	    (if (char=? c #\>)
+		(begin
+		 (set! in-bracket #f)
+		 (if in-href
+		     (set! in-name #t))
+		 (set! in-href #f)))
+	    (case c
+	      ((#\<)
+	       (if in-name
+		   (begin
+		     (set! (outstr j) #\})
+		     (incf j)
+		     (set! in-name #f)))
+	       (set! in-bracket #t)
+	       (if (or (and (< (+ i 7) len) 
+			    (string=? "<a href" (checked-substring xref i (+ i 7))))
+		       (and (< (+ i 17) len) 
+			    (string=? "<a class=def href" (checked-substring xref i (+ i 17))))
+		       (and (< (+ i 19) len) 
+			    (string=? "<a class=quiet href" (checked-substring xref i (+ i 19)))))
+		   (begin
+		     (if need-start
+			 (begin
+			   (set! (outstr j) #\,)
+			   (incf j)
+			   (set! (outstr j) #\newline)
+			   (incf j)
+			   (set! (outstr j) #\space)
+			   (incf j)	    
+			   (set! (outstr j) #\space)
+			   (incf j)	    
+			   (set! (outstr j) #\")
+			   (incf j)
+			   (set! need-start #f)))
+		     (set! in-href #t)
+		     (set! (outstr j) #\{)
+		     (incf j))))
+
+	      ((#\&)
+	       (if (and (< (+ i 4) len) 
+			(string=? (substring xref i (+ i 4)) "&gt;"))
+		   (begin
+		     (set! (outstr j) #\>)
+		     (incf j)
+		     (set! i (+ i 3))))) ; incf'd again below
+
+	      ((#\newline)
+	       (begin
+		 (set! (outstr j) #\")
+		 (incf j)
+		 (set! need-start #t)))
+
+	      ((#\")
+	       (begin
+		 (set! (outstr j) #\\)
+		 (incf j)
+		 (set! (outstr j) c)
+		 (incf j)))
+
+	      (else
+	       (begin
+		 (if need-start
 		     (begin
-		       (set! (outstr j) #\})
+		       (set! (outstr j) #\,)
 		       (incf j)
-		       (set! in-name #f)))
-		 (set! in-bracket #t)
-		 (if (or (and (< (+ i 7) len) 
-			      (string=? "<a href" (checked-substring xref i (+ i 7))))
-			 (and (< (+ i 17) len) 
-			      (string=? "<a class=def href" (checked-substring xref i (+ i 17))))
-			 (and (< (+ i 19) len) 
-			      (string=? "<a class=quiet href" (checked-substring xref i (+ i 19)))))
-		     (begin
-		       (if need-start
-			   (begin
-			     (set! (outstr j) #\,)
-			     (incf j)
-			     (set! (outstr j) #\newline)
-			     (incf j)
-			     (set! (outstr j) #\space)
-			     (incf j)	    
-			     (set! (outstr j) #\space)
-			     (incf j)	    
-			     (set! (outstr j) #\")
-			     (incf j)
-			     (set! need-start #f)))
-		       (set! in-href #t)
-		       (set! (outstr j) #\{)
-		       (incf j))))
-		
-		((#\&)
-		 (if (and (< (+ i 4) len) 
-			  (string=? (substring xref i (+ i 4)) "&gt;"))
-		     (begin
-		       (set! (outstr j) #\>)
+		       (set! (outstr j) #\newline)
 		       (incf j)
-		       (set! i (+ i 3))))) ; incf'd again below
-		
-		((#\newline)
-		 (begin
-		   (set! (outstr j) #\")
-		   (incf j)
-		   (set! need-start #t)))
-		
-		((#\")
-		 (begin
-		   (set! (outstr j) #\\)
-		   (incf j)
-		   (set! (outstr j) c)
-		   (incf j)))
-		
-		(else
-		 (begin
-		   (if need-start
-		       (begin
-			 (set! (outstr j) #\,)
-			 (incf j)
-			 (set! (outstr j) #\newline)
-			 (incf j)
-			 (set! (outstr j) #\space)
-			 (incf j)	    
-			 (set! (outstr j) #\space)
-			 (incf j)	    
-			 (set! (outstr j) #\")
-			 (incf j)
-			 (set! need-start #f)))
-		   (set! (outstr j) c)
-		   (incf j))))
-	      )
-	  )
-	(incf i))
-      (list 
-       (checked-substring outstr 0 j)
-       url-str))))
+		       (set! (outstr j) #\space)
+		       (incf j)	    
+		       (set! (outstr j) #\space)
+		       (incf j)	    
+		       (set! (outstr j) #\")
+		       (incf j)
+		       (set! need-start #f)))
+		 (set! (outstr j) c)
+		 (incf j))))
+	    )
+	)
+      (incf i))
+    (list 
+     (checked-substring outstr 0 j)
+     url-str)))
 
 
 
@@ -994,7 +995,7 @@
 			      (dpos (char-position #\> line))
 			      (url (checked-substring line 1 (- dpos 1)))
 			      (epos (char-position #\< line))
-			      (ind (checked-substring line (+ dpos 1) epos))
+			      (ind (checked-substring line (+ 1 dpos) epos))
 			      (gpos (string-position "&gt;" ind)))
 			 (if gpos 
 			     (set! ind (string-append (checked-substring ind 0 gpos) 

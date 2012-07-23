@@ -58533,6 +58533,8 @@ s7_scheme *s7_init(void)
  *
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
  * TODO: gather the add_slot/new_frame cases into one macro (they're scattered all over right now)
+ * TODO: in do, locals that aren't stepped should not glom up the step process
+ * TOOD: move do-locals inward in clm-ins/etc (current code was written to accomodate the run macro)
  *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
  *   what is free?  Perhaps leave it until it's needed?
