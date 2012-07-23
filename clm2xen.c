@@ -6440,6 +6440,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    }
 	  else
 	    {
+#if HAVE_SCHEME
+	      /* in Ruby and Forth vectors and lists are the same, so stay with the old code */
 	      if (XEN_VECTOR_P(keys[0]))
 		{
 		  vect = keys[0];
@@ -6449,6 +6451,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 		}
 	      else
 		{
+#endif
 		  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0], S_make_env, "a list, vector, or vct");
 		  if (len == 0)
 		    XEN_ERROR(NO_DATA,
@@ -6468,8 +6471,9 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 			XEN_ASSERT_TYPE(false, keys[0], orig_arg[0], S_make_env, "a list of numbers (breakpoints)");
 		    }
 		}
-
+#if HAVE_SCHEME
 	    }
+#endif
 	  npts = len / 2;
 	  brkpts = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	  if (brkpts == NULL)
@@ -14266,16 +14270,11 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt args -- )");
 }
 
 
-void mus_init_run(void);
-
 void Init_sndlib(void)
 {
   mus_sndlib_xen_initialize();
   mus_vct_init();
   mus_xen_init();
-#if (!USE_SND)
-  mus_init_run();
-#endif
 }
 
 /* TODO: op_safe_c_ssc or even ssi for generator-set
