@@ -1,5 +1,5 @@
 /* s7, a Scheme interpreter
-  *
+ *
  *    derived from:
  */
 
@@ -1456,14 +1456,7 @@ static int t_optimized = T_OPTIMIZED;
  */
 
 #define T_UNSAFE                      (1 << (TYPE_BITS + 15))
-
-#if 1
 #define set_unsafe(p)                 typeflag(p) |= T_UNSAFE
-#else
-static void set_unsafe_1(s7_scheme *sc, s7_pointer p, int line) {fprintf(stderr, "  %d: set unsafe: %s\n", line, DISPLAY(p)); typeflag(p) |= T_UNSAFE;}
-#define set_unsafe(p) set_unsafe_1(sc, p, __LINE__)
-#endif
-
 #define is_unsafe(p)                  ((typeflag(p) & T_UNSAFE) != 0)
 #define clear_unsafe(p)               typeflag(p) &= (~T_UNSAFE)
 /* optimizer flag saying "this expression is not completely self-contained.  It might involve the stack, etc"
@@ -1509,6 +1502,10 @@ static void set_unsafe_1(s7_scheme *sc, s7_pointer p, int line) {fprintf(stderr,
 
 #define T_SMALL_INT                   T_GENSYM
 #define is_small_int(p)               ((typeflag(p) & T_SMALL_INT) != 0)
+
+#define T_SIMPLE_ARGS                 T_GENSYM
+#define has_simple_args(p)            ((typeflag(p) & T_SIMPLE_ARGS) != 0)
+#define set_simple_args(p)            typeflag(p) |= T_SIMPLE_ARGS
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
@@ -4121,6 +4118,18 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 } 
 
 
+static s7_pointer make_simple_frame(s7_scheme *sc)
+{
+  s7_pointer frame;
+  NEW_CELL(sc, frame);
+  frame_id(frame) = frame_number + 1;
+  environment_slots(frame) = sc->NIL;
+  next_environment(frame) = sc->envir;
+  set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
+  return(frame);
+}
+
+
 #define ADD_SLOT(Frame, Symbol, Value) \
   do {\
     s7_pointer _slot_;\
@@ -4155,6 +4164,53 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
       next_slot(_slot_) = sc->NIL;\
       environment_slots(_x_) = _slot_;\
      } while (0)
+
+
+#define NEW_FRAME_WITH_CHECKED_SLOT(Sc, Old_Env, New_Env, Symbol, Value) \
+  do {                                   \
+      s7_pointer _x_, _slot_;			 \
+      NEW_CELL(Sc, _x_);                   \
+      frame_id(_x_) = ++frame_number; \
+      next_environment(_x_) = Old_Env;		         \
+      set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
+      New_Env = _x_;		   \
+      NEW_CELL_NO_CHECK(Sc, _slot_);\
+      slot_symbol(_slot_) = Symbol;\
+      symbol_id(slot_symbol(_slot_)) = frame_number;	\
+      local_slot(slot_symbol(_slot_)) = _slot_;\
+      if (symbol_has_accessor(Symbol)) \
+        slot_set_value(_slot_, call_symbol_bind(Sc, Symbol, Value)); \
+      else slot_set_value(_slot_, Value);		\
+      set_type(_slot_, T_SLOT | T_IMMUTABLE);\
+      next_slot(_slot_) = sc->NIL;\
+      environment_slots(_x_) = _slot_;\
+     } while (0)
+
+
+#define ADD_CHECKED_SLOT(Frame, Symbol, Value) \
+  do {\
+    s7_pointer _slot_;\
+    NEW_CELL_NO_CHECK(sc, _slot_);\
+    slot_symbol(_slot_) = Symbol;\
+    symbol_id(slot_symbol(_slot_)) = frame_id(Frame);	\
+    local_slot(slot_symbol(_slot_)) = _slot_;\
+    if (symbol_has_accessor(Symbol)) \
+      slot_set_value(_slot_, call_symbol_bind(sc, Symbol, Value)); \
+    else slot_set_value(_slot_, Value);		\
+    set_type(_slot_, T_SLOT | T_IMMUTABLE);\
+    next_slot(_slot_) = environment_slots(Frame);\
+    environment_slots(Frame) = _slot_;\
+  } while (0)
+
+
+static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
+{
+  environment_slots(frame) = sc->NIL;                  
+  next_environment(frame) = next_frame;
+  set_type(frame, T_ENVIRONMENT | T_IMMUTABLE); 
+  frame_id(frame) = ++frame_number; 
+  return(frame);
+}
 
 
 static s7_pointer old_frame_with_slot(s7_scheme *sc, s7_pointer env, s7_pointer val)
@@ -18428,7 +18484,7 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
       loc = port_string_length(pt);
       port_string_length(pt) = new_len * 2;
       port_string(pt) = (char *)realloc(port_string(pt), port_string_length(pt) * sizeof(char));
-      memset((void *)(port_string(pt) + loc), 0, port_string_length(pt) - loc); /* TODO: can len-loc be 0? (valgrind is complaining) */
+      memset((void *)(port_string(pt) + loc), 0, port_string_length(pt) - loc); 
     }
 
   memcpy((void *)(port_string(pt) + port_string_point(pt)), (void *)str, len);
@@ -26631,25 +26687,6 @@ s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, 
 }
 
 
-#if WITH_OPTIMIZATION
-/* if (set! abs odd?) for example, and abs has been optimized into earlier functions,
- *   we either have to turn off optimizing, or fixup the previous calls
- */
-static int safe_function_accessor = -1;
-static s7_pointer g_safe_function_accessor(s7_scheme *sc, s7_pointer args)
-{
-  if (is_global(car(args)))
-    {
-#if DEBUGGING
-      fprintf(stderr, "%s so optimizer off\n", DISPLAY(args));
-#endif
-      t_optimized = 0;
-    }
-  return(cadr(args));
-}
-#endif
-
-
 s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func, sym;
@@ -26657,14 +26694,6 @@ s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function 
   typeflag(func) |= T_SAFE_PROCEDURE;
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, func);
-
-#if WITH_OPTIMIZATION
-  /* symbol_accessor(sym) = gc_protected location of a permanent list (#f set-safe #f)
-   *   set-safe sets t_optimized to 0 if val is not compatible with func, or func has chooser
-   *   else it resets c_function_call?? 
-   */
-  symbol_accessor(sym) = safe_function_accessor;
-#endif
   return(sym);
 }
 
@@ -34909,28 +34938,15 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 		      if ((is_closure_star(func)) &&
 			  (symbols == 1) &&
 			  (!is_keyword(cadar(x))) &&
-			  (is_proper_list(sc, closure_args(func)))) /* so there's at least one arg! */
+			  (is_proper_list(sc, closure_args(func))) && /* so there's at least one arg! */
+			  (has_simple_args(closure_body(func))))
 			{
-			  s7_pointer p;
-			  bool happy = true;
-			  /* check default vals -- if any is an expression or symbol, give up */
-			  for (p = closure_args(func); is_pair(p); p = cdr(p))
-			    if ((is_pair(car(p))) &&
-				((is_pair(cadr(car(p)))) ||
-				 (is_symbol(cadr(car(p))))))
-			      {
-				happy = false;
-				break;
-			      }
-			  if (happy)
-			    {
-			      set_optimized(car(x));
-			      set_unsafe(car(x)); 
-			      set_optimize_data(car(x), hop + ((is_safe_closure(closure_body(func))) ? OP_SAFE_CLOSURE_STAR_S : OP_CLOSURE_STAR_S));
-			      ecdr(car(x)) = func;
-			      fcdr(car(x)) = cadar(x);
-			      return(false); 
-			    }
+			  set_optimized(car(x));
+			  set_unsafe(car(x)); 
+			  set_optimize_data(car(x), hop + ((is_safe_closure(closure_body(func))) ? OP_SAFE_CLOSURE_STAR_S : OP_CLOSURE_STAR_S));
+			  ecdr(car(x)) = func;
+			  fcdr(car(x)) = cadar(x);
+			  return(false); 
 			}
 		    }
 		}
@@ -35253,28 +35269,15 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			  (symbols == 2) &&
 			  (!is_keyword(cadar(x))) &&
 			  (!is_keyword(caddar(x))) &&
-			  (safe_list_length(sc, closure_args(func)) >= 2))
+			  (safe_list_length(sc, closure_args(func)) >= 2) &&
+			  (has_simple_args(closure_body(func))))
 			{
-			  s7_pointer p;
-			  bool happy = true;
-			  /* check default vals -- if any is an expression or symbol, give up */
-			  for (p = closure_args(func); is_pair(p); p = cdr(p))
-			    if ((is_pair(car(p))) &&
-				((is_pair(cadr(car(p)))) ||
-				 (is_symbol(cadr(car(p))))))
-			      {
-				happy = false;
-				break;
-			      }
-			  if (happy)
-			    {
-			      set_optimized(car(x));
-			      set_unsafe(car(x)); 
-			      set_optimize_data(car(x), hop + ((is_safe_closure(closure_body(func))) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SS));
-			      ecdr(car(x)) = func;
-			      fcdr(car(x)) = caddar(x);
-			      return(false); 
-			    }
+			  set_optimized(car(x));
+			  set_unsafe(car(x)); 
+			  set_optimize_data(car(x), hop + ((is_safe_closure(closure_body(func))) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SS));
+			  ecdr(car(x)) = func;
+			  fcdr(car(x)) = caddar(x);
+			  return(false); 
 			}
 		    }
 		}
@@ -36007,25 +36010,25 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 	    }
 #endif
 
-		      if ((is_closure_star(func)) &&
-			  (symbols == 2) &&
-			  (!is_keyword(cadar(x))) &&
-			  (is_pair(caddar(x))) &&
-			  (is_optimized(caddar(x))) &&
-			  (optimize_data(caddar(x)) == HOP_SAFE_C_C) &&
-			  (!is_keyword(cadddar(x))) &&
-			  (safe_list_length(sc, closure_args(func)) == 3) &&
-			  (is_safe_closure(closure_body(func))))
-			{
-			  set_optimized(car(x));
-			  set_unsafe(car(x)); 
-			  set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_STAR_SoS);
-			  ecdr(car(x)) = func;
-			  fcdr(car(x)) = caddar(x);
-			  return(false); 
-			}
-
-
+	  if ((is_closure_star(func)) &&
+	      (symbols == 2) &&
+	      (!is_keyword(cadar(x))) &&
+	      (is_pair(caddar(x))) &&
+	      (is_optimized(caddar(x))) &&
+	      (optimize_data(caddar(x)) == HOP_SAFE_C_C) &&
+	      (!is_keyword(cadddar(x))) &&
+	      (safe_list_length(sc, closure_args(func)) == 3) &&
+	      (has_simple_args(closure_body(func))) &&
+	      (is_safe_closure(closure_body(func))))
+	    {
+	      set_optimized(car(x));
+	      set_unsafe(car(x)); 
+	      set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_STAR_SoS);
+	      ecdr(car(x)) = func;
+	      fcdr(car(x)) = caddar(x);
+	      return(false); 
+	    }
+	  
 	  if (bad_pairs > quotes) return(false);
 
 	  if ((!is_optimized(car(x))) &&
@@ -36264,10 +36267,19 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 
   op = (opcode_t)syntax_opcode(func);
 
+  /* TODO: with-env needs to be able to check quickly whether an env redefines any built-in (optimizable) funcs.
+   *   if so, it needs to cancel any "safe" opts within its block.  So, augment-env* need to set a bit if they
+   *   redefine and also if included envs redefine.  And we need a cancel_all_safe_opts.
+   */
+#if 0
   if ((op == OP_QUOTE) || 
       (op == OP_WITH_BAFFLE) ||
       (op == OP_WITH_ENV))
     return(false);
+#else
+  if (op == OP_QUOTE)
+    return(false);
+#endif
 
   sc->w = e;
   if (op == OP_LET)
@@ -38897,44 +38909,43 @@ static s7_pointer check_define(s7_scheme *sc)
 	  bool bad_set = false;
 	  /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(x), DISPLAY(sc->code)); */
 	  optimize(sc, cdr(sc->code), 1, collect_collisions(sc, cdar(sc->code), list_1(sc, x)));
-	  
+
 	  /* if the body is safe, we can optimize the calling sequence */
 	  if (/* (sc->op == OP_DEFINE) && */
 	      (is_proper_list(sc, cdar(sc->code))) &&
-	      (is_safe_arg_list(sc, cdar(sc->code))) &&
-	      (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set)))
+	      (is_safe_arg_list(sc, cdar(sc->code))))
 	    {
-	      /* (define (hi a) (+ a 1) (hi (- a 1))) */
-	      /*
 	      if (sc->op == OP_DEFINE_STAR)
-		fprintf(stderr, "safe closure*: %s\n", DISPLAY_80(sc->code));
-	      */
-
-	      /* there is one problem with closure* here -- we can't trust anything that
-	       *   has fancy (non-constant) default argument values.
-	       */
-	      if (sc->op == OP_DEFINE)
-		set_safe_closure(cdr(sc->code));
-	      else
 		{
 		  s7_pointer p;
 		  bool happy = true;
-		  /* check default vals -- if any is an expression or symbol, give up */
+		  /* check default vals -- if none is an expression or symbol, set simple args */
 		  for (p = cdar(sc->code); is_pair(p); p = cdr(p))
 		    if ((is_pair(car(p))) &&
 			((is_pair(cadr(car(p)))) ||
 			 (is_symbol(cadr(car(p))))))
 		      {
-			/* fprintf(stderr, "%s is not safe after all\n", DISPLAY_80(sc->code)); */
 			happy = false;
 			break;
 		      }
 		  if (happy)
-		    set_safe_closure(cdr(sc->code));
+		    set_simple_args(cdr(sc->code));
 		}
-#if PRINTING
-	      fprintf(stderr, "%s: safe!\n", DISPLAY(cdr(sc->code)));
-#endif	      
+
+	      if (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set))
+		{
+		  /* (define (hi a) (+ a 1) (hi (- a 1))) */
+		  /* there is one problem with closure* here -- we can't trust anything that
+		   *   has fancy (non-constant) default argument values.
+		   */
+		  if (sc->op == OP_DEFINE)
+		    set_safe_closure(cdr(sc->code));
+		  else
+		    {
+		      if (has_simple_args(cdr(sc->code)))
+			set_safe_closure(cdr(sc->code));
+		    }
+		}
 	    }
 #if PRINTING
 	  else
@@ -38999,6 +39010,16 @@ static s7_pointer check_set(s7_scheme *sc)
     {
       if (!is_symbol(car(sc->code)))                                 /* (set! 12345 1) */
 	return(eval_error(sc, "set! can't change ~S", car(sc->code)));
+
+#if WITH_OPTIMIZATION
+      /* now check for (set! abs 3) and the like -- in this case (safe function, abs currently refers to the global value)
+       *   turn off optimization.
+       */
+      if ((is_global(car(sc->code))) &&
+	  (is_c_function(slot_value(global_slot(car(sc->code))))) &&
+	  (is_safe_procedure(slot_value(global_slot(car(sc->code))))))
+	t_optimized = 0;
+#endif
     }
 
   if ((is_overlaid(sc->code)) &&
@@ -39102,7 +39123,8 @@ static s7_pointer check_set(s7_scheme *sc)
 		      (!is_pair(cddr(inner))) &&
 		      (!is_pair(cddr(sc->code))))
 		    {
-		      if (!is_pair(cadr(inner)))
+		      if ((!is_pair(cadr(inner))) ||
+			  (car(cadr(inner)) == sc->QUOTE))
 			{
 			  if (!is_pair(value))
 			    set_syntax_op(sc->code, sc->SET_PAIR);
@@ -42077,11 +42099,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	/* sc->envir = new_frame_in_env(sc, sc->envir); */
 	/* sc->args was cons'd above, so it should be safe to reuse it as the new frame */
-	environment_slots(z) = sc->NIL;                  
-	next_environment(z) = sc->envir;
-	set_type(z, T_ENVIRONMENT | T_IMMUTABLE); 
-	frame_id(z) = ++frame_number; 
-	sc->envir = z;
+	sc->envir = old_frame_in_env(sc, z, sc->envir);
 	
 	/* run through sc->code and sc->args adding '( caar(car(code)) . car(args) ) to sc->envir,
 	 *    also reuse the value cells as the new frame slots.
@@ -43007,7 +43025,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    UNSAFE_CLOSURE_ONE:
 	      {
-		s7_pointer frame, slot, args, sym, rest;
+		s7_pointer args, sym, rest;
 		
 		if (sc->stack_end >= sc->stack_resize_trigger)
 		  increase_stack_size(sc);
@@ -43028,23 +43046,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    rest = sc->NIL;
 		  }
 		
-		NEW_CELL(sc, frame);                   
-		frame_id(frame) = ++frame_number; 
-		next_environment(frame) = closure_environment(sc->code);
-		set_type(frame, T_ENVIRONMENT | T_IMMUTABLE); 
-		sc->envir = frame;
-		
-		NEW_CELL_NO_CHECK(sc, slot);
-		slot_symbol(slot) = sym;
-		symbol_id(sym) = frame_number;	
-		local_slot(sym) = slot;
-		if (symbol_has_accessor(sym))
-		  slot_set_value(slot, call_symbol_bind(sc, sym, sc->value));
-		else slot_set_value(slot, sc->value);
-		set_type(slot, T_SLOT | T_IMMUTABLE);
-		next_slot(slot) = sc->NIL;
-		environment_slots(frame) = slot;
-		
+		NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(sc->code), sc->envir, sym, sc->value);
 		if (!is_null(rest))
 		  add_slot(sc, rest, sc->NIL);
 		/* here we have a closure with a required arg and a rest arg, and we're called
@@ -43079,7 +43081,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    UNSAFE_CLOSURE_TWO:
 	      {
-		s7_pointer frame, slot1, slot2, args, sym, val, rest;
+		s7_pointer args, sym, val, rest;
 		if (sc->stack_end >= sc->stack_resize_trigger)
 		  increase_stack_size(sc);
 		sc->code = ecdr(sc->code);
@@ -43096,23 +43098,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sym = args;
 		    val = list_2(sc, car(sc->T2_1), car(sc->T2_2));
 		  }
-		
-		NEW_CELL(sc, frame);                   
-		frame_id(frame) = ++frame_number; 
-		next_environment(frame) = closure_environment(sc->code);
-		set_type(frame, T_ENVIRONMENT | T_IMMUTABLE); 
-		sc->envir = frame;
-		
-		NEW_CELL_NO_CHECK(sc, slot1);
-		slot_symbol(slot1) = sym;
-		symbol_id(sym) = frame_number;	
-		local_slot(sym) = slot1;
-		if (symbol_has_accessor(sym))
-		  slot_set_value(slot1, call_symbol_bind(sc, sym, val));
-		else slot_set_value(slot1, val);
-		set_type(slot1, T_SLOT | T_IMMUTABLE);
-		environment_slots(frame) = slot1;
-		
+
+		NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(sc->code), sc->envir, sym, val);
 		if (is_pair(args))
 		  {
 		    args = cdr(args);
@@ -43131,25 +43118,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			rest = sc->NIL;
 		      }
 		    
-		    NEW_CELL_NO_CHECK(sc, slot2);
-		    slot_symbol(slot2) = sym;
-		    symbol_id(sym) = frame_number;	
-		    local_slot(sym) = slot2;
-		    if (symbol_has_accessor(sym))
-		      slot_set_value(slot2, call_symbol_bind(sc, sym, val));
-		    else slot_set_value(slot2, val);
-		    set_type(slot2, T_SLOT | T_IMMUTABLE);
-		    next_slot(slot2) = sc->NIL;
-		    next_slot(slot1) = slot2;
-		    
+		    ADD_CHECKED_SLOT(sc->envir, sym, val);
 		    if (!is_null(rest))
 		      add_slot(sc, rest, sc->NIL);
 		    /* here we have a closure with two required args and a rest arg, and we're called
 		     *   with two args, so the rest arg is nil.
 		     */
 		  }
-		else next_slot(slot1) = sc->NIL;
-		
 		sc->code = closure_body(sc->code);
 		if (is_one_liner(sc->code))
 		  {
@@ -43503,8 +43478,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      /* -------------------------------------------------------------------------------- */
 
-	      /* TODO: check out the unknown_s|ss linkage -> closure* */
-
 	    case OP_CLOSURE_STAR_SS:
 	      if (!function_is_ok(code))
 		{
@@ -43641,9 +43614,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		    break;
 		    
-		  case T_CLOSURE_STAR:
-		    break;
-		    
 		  case T_C_OBJECT:
 		    /* fprintf(stderr, "is aritable: %d\n", is_aritable(sc, f, 1)); */
 		    if (is_aritable(sc, f, 1))
@@ -43735,9 +43705,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_CLOSURE_STAR:
-			break;
-			
 		      case T_C_OBJECT:
 			set_optimize_data(code, OP_C_OBJECT_C);
 			ecdr(code) = f;
@@ -43785,7 +43752,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			ecdr(code) = f;
 			fcdr(code) = caddr(code);
 			goto OPT_EVAL;
-			
+
+			/* the closure* opts assume args are not keywords so it's too late here */
+
 		      case T_C_FUNCTION:
 		      case T_C_ANY_ARGS_FUNCTION:
 		      case T_C_OPT_ARGS_FUNCTION:
@@ -44033,9 +44002,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    fcdr(code) = cadr(code);
 			    goto OPT_EVAL;
 			  }
-			break;
-			
-		      case T_CLOSURE_STAR:
 			break;
 			
 		      case T_C_OBJECT:
@@ -47531,61 +47497,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
-	  /* fprintf(stderr, "apply closure %s %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
-#if 0
-	  /* this check takes longer than the code saves */
-	  
-	  if (is_safe_closure(closure_body(sc->code)))
-	    {
-	      /* here we know nothing funny is going on in the closure body -- not even set!
-	       *   so the new_frame with the args can be preallocated, and the arg values simply
-	       *   stored in their slots.  We still need to update frame_id etc.  Also, we
-	       *   checked earlier that none of the parameter names need access handling.
-	       */
-	      /* sc->args are the arg values, closure_environment is the preallocated env
-	       */
-	      s7_pointer x, z, env;
-	      unsigned long long int id;
-	      
-	      id = ++frame_number;
-	      env = closure_environment(sc->code);
-	      frame_id(env) = id;
-	      
-	      for (x = environment_slots(env), z = sc->args; is_slot(x); x = next_slot(x), z = cdr(z))
-		{
-		  if (is_null(z))
-		    return(s7_error(sc, 
-				    sc->WRONG_NUMBER_OF_ARGS, 
-				    list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
-		  slot_set_value(x, car(z));
-		  symbol_id(slot_symbol(x)) = id;
-		  local_slot(slot_symbol(x)) = x;
-		}
-	      
-	      if ((is_null(x)) &&
-		  (is_not_null(z)))
-		return(s7_error(sc, 
-				sc->WRONG_NUMBER_OF_ARGS, 
-				list_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
-	      
-	      sc->envir = env;
-	      sc->code = closure_body(sc->code);
-	      
-	      if (is_one_liner(sc->code))
-		{
-		  sc->code = car(sc->code);
-		  goto EVAL; 
-		}
-	      goto BEGIN;
-	    }
-#endif
 	  if (sc->stack_end >= sc->stack_resize_trigger)
 	    increase_stack_size(sc);
 	  
-	  /* fprintf(stderr, "unsafe: %s\n", DISPLAY_80(closure_body(sc->code)));  */
-	  
 	case T_MACRO:
-	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
 	  
 	BACRO:
@@ -48062,22 +47977,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else sc->x = sc->code;           /* fallback on (__func__ name) */
 	    
 	    {
-	      s7_pointer x, y;
-	      
-	      NEW_CELL(sc, x);
-	      frame_id(x) = ++frame_number;
-	      next_environment(x) = closure_environment(val);
-	      set_type(x, T_ENVIRONMENT | T_IMMUTABLE);
-	      closure_environment(val) = x;
-	      
-	      NEW_CELL_NO_CHECK(sc, y);
-	      slot_symbol(y) = sc->__FUNC__;
-	      symbol_id(slot_symbol(y)) = frame_id(x);
-	      local_slot(slot_symbol(y)) = y;
-	      slot_set_value(y, sc->x);
-	      set_type(y, T_SLOT | T_IMMUTABLE);
-	      next_slot(y) = sc->NIL;
-	      environment_slots(x) = y;
+	      NEW_FRAME_WITH_SLOT(sc, closure_environment(val), closure_environment(val), sc->__FUNC__, sc->x);
 
 	      /* this should happen only if the closure* default values do not refer in any way to
 	       *   the enclosing environment (else we can accidentally shadow something that happens
@@ -48212,16 +48112,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_SET_PAIR_P_1:
       /* car(sc->code) is a pair, caar(code) is the object with a setter, it has one (safe) argument, and one safe value to set
-       *   (set! (str i) #\a) in a function (both inner things need to be symbols to get here)
+       *   (set! (str i) #\a) in a function (both inner things need to be symbols (or the 2nd can be a quoted symbol) to get here)
        *   the inner list is a proper list, with no embedded list at car.
        */
 	/* fprintf(stderr, "p1: %s %s\n", DISPLAY(sc->code), DISPLAY(sc->value));  */
 	value = sc->value;
 
-	/* pairs won't happen here in either case -- see check_set */
 	arg = cadar(sc->code);
 	if (is_symbol(arg))
 	  arg = finder(sc, arg);
+	else
+	  {
+	    if (is_pair(arg))
+	      arg = cadr(arg); /* can only be (quote ...) in this case */
+	  }
 	
       SET_PAIR_P_2:
 	obj = caar(sc->code);
@@ -49045,7 +48949,49 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case T_ENVIRONMENT:
-	      sc->code = cons(sc, sc->Environment_Set, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      /* sc->code = cons(sc, sc->Environment_Set, s7_append(sc, car(sc->code), cdr(sc->code))); */
+	      {
+		s7_pointer settee, key, val;
+		/* code: ((gen 'input) input) from (set! (gen 'input) input)
+		 */
+
+		if (is_null(cdr(sc->code)))
+		  s7_wrong_number_of_args_error(sc, "no value for environment-set!: ~S", sc->code);
+		if (!is_null(cddr(sc->code)))
+		  s7_wrong_number_of_args_error(sc, "too many values for environment-set!: ~S", sc->code);
+		
+		settee = car(sc->code);
+		if (is_null(cdr(settee)))
+		  s7_wrong_number_of_args_error(sc, "no identifier for environment-set!: ~S", sc->code);
+		if (!is_null(cddr(settee)))
+		  s7_wrong_number_of_args_error(sc, "too many identifiers for environment-set!: ~S", sc->code);
+		
+		key = cadr(settee);
+		if ((is_pair(key)) &&
+		    (car(key) == sc->QUOTE))
+		  {
+		    key = cadr(key);
+		    val = cadr(sc->code);
+		    if (!is_pair(val))
+		      {
+			if (is_symbol(val))
+			  val = finder(sc, val);
+			/* fprintf(stderr, "%s %s %s\n", DISPLAY(settee), DISPLAY(key), DISPLAY(val)); */
+			sc->value = s7_environment_set(sc, sc->x, key, val);
+			goto START;
+		      }
+		    push_op_stack(sc, sc->Environment_Set);
+		    sc->args = list_2(sc, key, sc->x);
+		    sc->code = cdr(sc->code);
+		    goto EVAL_ARGS;
+		  }
+		else
+		  {
+		    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->x), cdr(sc->code));
+		    push_op_stack(sc, sc->Environment_Set);
+		    sc->code = cadar(sc->code);
+		  }
+	      }
 	      break;
 	      
 	      
@@ -50595,24 +50541,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
       
     case OP_LET_ALL_C:
-      /* n vars, all inits are constants.  We need to GC-protect the new frame-list as it is being
-       *    created without tying the new frame into sc->envir until the end.
-       */
       {
-	s7_pointer p, frame;
-	
-	NEW_CELL(sc, frame);
-	frame_id(frame) = frame_number + 1;
-	environment_slots(frame) = sc->NIL;
-	next_environment(frame) = sc->envir;
-	set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
-	sc->args = frame;                    /* GC protect it */
-	
+	s7_pointer p;
+	NEW_FRAME(sc, sc->envir, sc->envir);
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
-	  ADD_SLOT(frame, caar(p), cadar(p)); 
-	
-	frame_number++;
-	sc->envir = frame;
+	  ADD_SLOT(sc->envir, caar(p), cadar(p)); 
 	sc->code = cdr(sc->code);
 	goto BEGIN;
       }
@@ -50620,39 +50553,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_LET_ALL_Q:
       {
-	s7_pointer p, frame;
-	
-	NEW_CELL(sc, frame);
-	frame_id(frame) = frame_number + 1;
-	environment_slots(frame) = sc->NIL;
-	next_environment(frame) = sc->envir;
-	set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
-	sc->args = frame;
-	
+	s7_pointer p;
+	NEW_FRAME(sc, sc->envir, sc->envir);
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
-	  ADD_SLOT(frame, caar(p), cadr(cadar(p)));
-	
-	frame_number++;
-	sc->envir = frame;
+	  ADD_SLOT(sc->envir, caar(p), cadr(cadar(p)));
 	sc->code = cdr(sc->code);
 	goto BEGIN;
       }
       
       
     case OP_LET_ALL_S:
+      /* n vars, all inits are symbols.  We need to GC-protect the new frame-list as it is being
+       *    created without tying the new frame into sc->envir until the end.
+       */
       {
 	s7_pointer p, frame;
-	
-	NEW_CELL(sc, frame);
-	frame_id(frame) = frame_number + 1;
-	environment_slots(frame) = sc->NIL;
-	next_environment(frame) = sc->envir;
-	set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
+	frame = make_simple_frame(sc);
 	sc->args = frame;
-	
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  ADD_SLOT(frame, caar(p), finder(sc, cadar(p)));
-	
 	frame_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
@@ -50663,14 +50582,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_ALL_R:
       {
 	s7_pointer p, frame;
-	
-	NEW_CELL(sc, frame);
-	frame_id(frame) = frame_number + 1;
-	environment_slots(frame) = sc->NIL;
-	next_environment(frame) = sc->envir;
-	set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
+	frame = make_simple_frame(sc);   	
 	sc->args = frame;
-	
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  {
 	    s7_pointer cp;
@@ -50678,7 +50591,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(sc->T1_1) = finder(sc, cadr(cp));
 	    ADD_SLOT(frame, caar(p), c_call(cp)(sc, sc->T1_1)); 
 	  }
-	
 	frame_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
@@ -50690,14 +50602,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_ALL_G:
       {
 	s7_pointer p, frame;
-	
-	NEW_CELL(sc, frame);
-	frame_id(frame) = frame_number + 1;
-	environment_slots(frame) = sc->NIL;
-	next_environment(frame) = sc->envir;
-	set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
+	frame = make_simple_frame(sc);   		
 	sc->args = frame; 
-	
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  {
 	    s7_pointer x, val;
@@ -50721,7 +50627,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    ADD_SLOT(frame, caar(p), val);
 	  }
-	
 	frame_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
@@ -50825,11 +50730,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	x = safe_reverse_in_place(sc, sc->args);
 	sc->code = car(x); /* restore the original form */
 	y = cdr(x);        /* use sc->args as the new frame */
-	environment_slots(x) = sc->NIL;                  
-	next_environment(x) = sc->envir;
-	set_type(x, T_ENVIRONMENT | T_IMMUTABLE); 
-	frame_id(x) = ++frame_number; 
-	sc->envir = x;		   
+	sc->envir = old_frame_in_env(sc, x, sc->envir);
 	
 	{
 	  bool named_let;
@@ -50947,27 +50848,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *
        * will hang.
        */
-      {
-	s7_pointer x, y;
-	NEW_CELL(sc, x); 
-	frame_id(x) = ++frame_number;
-	next_environment(x) = sc->envir;
-	sc->envir = x;
-	set_type(x, T_ENVIRONMENT | T_IMMUTABLE);
-	
-	NEW_CELL_NO_CHECK(sc, y); 
-	slot_symbol(y) = caar(sc->code);
-	symbol_id(slot_symbol(y)) = frame_id(x);
-	local_slot(slot_symbol(y)) = y;
-	if (symbol_has_accessor(slot_symbol(y)))
-	  slot_set_value(y, call_symbol_bind(sc, slot_symbol(y), sc->value));
-	else slot_set_value(y, sc->value);
-	set_type(y, T_SLOT | T_IMMUTABLE);
-	next_slot(y) = sc->NIL;
-	environment_slots(x) = y;
-      }
-      /* NEW_FRAME_WITH_SLOT does not include the symbol_accessor check */
-      
+      NEW_FRAME_WITH_CHECKED_SLOT(sc, sc->envir, sc->envir, caar(sc->code), sc->value);
       
       sc->code = cdr(sc->code);
       if (is_pair(sc->code)) 
@@ -52364,6 +52245,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
 	}
       else sc->envir = sc->value;
+
       /* body is implicit in stack -- sc->code is ready to go */
       goto BEGIN;
 
@@ -57763,18 +57645,6 @@ s7_scheme *s7_init(void)
       else prepackaged_type_names[i] = sc->F;
     }
 
-#if WITH_OPTIMIZATION
-  {
-    s7_pointer lst;
-    lst = list_3(sc, sc->F,
-		 s7_make_function(sc, "(set safe-function)", g_safe_function_accessor, 2, 0, false, 
-				  "called if a global safe function is set"), 
-		 sc->F);
-    set_immutable(lst);
-    safe_function_accessor = s7_gc_protect(sc, lst);
-  }
-#endif
-
   sc->gc_off = false;
 
   sc->GENSYM = s7_define_safe_function(sc,            "gensym",                    g_gensym,                   0, 1, false, H_gensym);
@@ -58532,7 +58402,6 @@ s7_scheme *s7_init(void)
  * get gmp to work again in the opt case
  *
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
- * TODO: gather the add_slot/new_frame cases into one macro (they're scattered all over right now)
  * TODO: in do, locals that aren't stepped should not glom up the step process
  * TOOD: move do-locals inward in clm-ins/etc (current code was written to accomodate the run macro)
  *

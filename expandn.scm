@@ -149,17 +149,17 @@
 			      (begin
 				(set! sample-0 (* vol (granulate ingen)))
 				(set! sample-1 (* vol (granulate ingen)))
-				(set! ex-samp (+ 1 ex-samp))
+				(set! ex-samp (+ ex-samp 1))
 				(set! next-samp ex-samp))
 			      (begin
 				(set! next-samp (+ next-samp resa))
-				(if (> next-samp (+ 1 ex-samp))
+				(if (> next-samp (+ ex-samp 1))
 				    (let ((samps (floor (- next-samp ex-samp))))
 				      (do ((k 0 (+ k 1)))
 					  ((= k samps))
 					(set! sample-0 sample-1)
 					(set! sample-1 (* vol (granulate ingen)))
-					(set! ex-samp (+ 1 ex-samp)))))))
+					(set! ex-samp (+ ex-samp 1)))))))
 			  
 			  (if (= next-samp ex-samp)
 			      ;; output actual samples
@@ -212,11 +212,11 @@
 				    (set! sample-1-0 (* vol (granulate ingen0)))
 				    (set! sample-0-1 (* vol (granulate ingen1)))
 				    (set! sample-1-1 (* vol (granulate ingen1)))
-				    (set! ex-samp (+ 1 ex-samp))
+				    (set! ex-samp (+ ex-samp 1))
 				    (set! next-samp ex-samp))
 				  (begin
 				    (set! next-samp (+ next-samp resa))
-				    (if (> next-samp (+ 1 ex-samp))
+				    (if (> next-samp (+ ex-samp 1))
 					(let ((samps (floor (- next-samp ex-samp))))
 					  (do ((k 0 (+ k 1)))
 					      ((= k samps))
@@ -224,7 +224,7 @@
 					    (set! sample-1-0 (* vol (granulate ingen0)))
 					    (set! sample-0-1 sample-1-1)
 					    (set! sample-1-1 (* vol (granulate ingen1)))
-					    (set! ex-samp (+ 1 ex-samp)))))))
+					    (set! ex-samp (+ ex-samp 1)))))))
 			      
 			      (if (= next-samp ex-samp)
 				  ;; output actual samples
@@ -276,11 +276,11 @@
 				      (let ((gen (vector-ref ex-array ix)))
 					(vector-set! samples-0 ix (* vol (granulate gen)))
 					(vector-set! samples-1 ix (* vol (granulate gen)))))
-				    (set! ex-samp (+ 1 ex-samp))
+				    (set! ex-samp (+ ex-samp 1))
 				    (set! next-samp ex-samp))
 				  (begin
 				    (set! next-samp (+ next-samp resa))
-				    (if (> next-samp (+ 1 ex-samp))
+				    (if (> next-samp (+ ex-samp 1))
 					(let ((samps (floor (- next-samp ex-samp))))
 					  (do ((k 0 (+ k 1)))
 					      ((= k samps))
@@ -289,7 +289,7 @@
 					      (let ((gen (vector-ref ex-array ix)))
 						(vector-set! samples-0 ix (vector-ref samples-1 ix))
 						(vector-set! samples-1 ix (* vol (granulate gen)))))
-					    (set! ex-samp (+ 1 ex-samp)))))))
+					    (set! ex-samp (+ ex-samp 1)))))))
 			      
 			      (if (= next-samp ex-samp)
 				  ;; output actual samples

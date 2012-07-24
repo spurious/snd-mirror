@@ -2022,7 +2022,7 @@ is a physical model of a flute:
 		      (set! ramp-ind (+ 1 ramp-ind))
 		      (if (= ramp-ind ramped) (set! ramped 0))))
 		
-		(set! sum (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps))
+		(set! sum (+ sum (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))
 		(outa i (* amp sum)))))))))
 
 

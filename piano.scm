@@ -3,84 +3,82 @@
 (provide 'snd-piano.scm)
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
-(if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 
 
-(defgenerator one-pole-allpass (coeff 0.0) (x1 0.0) (y1 0.0))
+(define (make-one-pole-allpass coeff)
+  (augment-environment () (cons 'input 0.0) (cons 'coeff coeff) (cons 'x1 0.0) (cons 'y1 0.0)))
 
 (define (one-pole-allpass gen input)
-  (let ((coeff (one-pole-allpass-coeff gen))
-	(y1 (one-pole-allpass-y1 gen))
-	(x1 (one-pole-allpass-x1 gen)))
-    (set! (one-pole-allpass-y1 gen) (+ (* coeff (- input y1)) x1))
-    (set! (one-pole-allpass-x1 gen) input)
-    (one-pole-allpass-y1 gen)))
+  (set! (gen 'input) input)
+  (with-environment gen
+    (set! y1 (+ (* coeff (- input y1)) x1))
+    (set! x1 input)
+    y1))
 
 
-(defgenerator one-pole-allpass-bank (coeff 0.0) 
-  (x1 0.0) (y1 0.0) (x2 0.0) (y2 0.0) (x3 0.0) (y3 0.0) (x4 0.0) (y4 0.0) (x5 0.0) (y5 0.0) (x6 0.0) (y6 0.0) (x7 0.0) (y7 0.0) (x8 0.0) (y8 0.0))
+(define (make-one-pole-allpass-bank coeff)
+  (augment-environment () 
+    (cons 'input 0.0) (cons 'coeff coeff)
+    (cons 'x1 0.0) (cons 'y1 0.0) (cons 'x2 0.0) (cons 'y2 0.0) (cons 'x3 0.0) (cons 'y3 0.0) 
+    (cons 'x4 0.0) (cons 'y4 0.0) (cons 'x5 0.0) (cons 'y5 0.0) (cons 'x6 0.0) (cons 'y6 0.0) 
+    (cons 'x7 0.0) (cons 'y7 0.0) (cons 'x8 0.0) (cons 'y8 0.0)))
 
 (define (one-pole-allpass-bank gen input)
   ;; someday I need to collapse this into one expression!
-  (let ((coeff (one-pole-allpass-bank-coeff gen)))
+  (set! (gen 'input) input)
+  (with-environment gen
+    (set! y1 (+ (* coeff (- input y1)) x1))
+    (set! x1 input)
 
-    (set! (one-pole-allpass-bank-y1 gen) (+ (* coeff (- input (one-pole-allpass-bank-y1 gen))) (one-pole-allpass-bank-x1 gen)))
-    (set! (one-pole-allpass-bank-x1 gen) input)
-    (set! input (one-pole-allpass-bank-y1 gen))
+    (set! y2 (+ (* coeff (- y1 y2)) x2))
+    (set! x2 y1)
 
-    (set! (one-pole-allpass-bank-y2 gen) (+ (* coeff (- input (one-pole-allpass-bank-y2 gen))) (one-pole-allpass-bank-x2 gen)))
-    (set! (one-pole-allpass-bank-x2 gen) input)
-    (set! input (one-pole-allpass-bank-y2 gen))
+    (set! y3 (+ (* coeff (- y2 y3)) x3))
+    (set! x3 y2)
 
-    (set! (one-pole-allpass-bank-y3 gen) (+ (* coeff (- input (one-pole-allpass-bank-y3 gen))) (one-pole-allpass-bank-x3 gen)))
-    (set! (one-pole-allpass-bank-x3 gen) input)
-    (set! input (one-pole-allpass-bank-y3 gen))
+    (set! y4 (+ (* coeff (- y3 y4)) x4))
+    (set! x4 y3)
 
-    (set! (one-pole-allpass-bank-y4 gen) (+ (* coeff (- input (one-pole-allpass-bank-y4 gen))) (one-pole-allpass-bank-x4 gen)))
-    (set! (one-pole-allpass-bank-x4 gen) input)
-    (set! input (one-pole-allpass-bank-y4 gen))
+    (set! y5 (+ (* coeff (- y4 y5)) x5))
+    (set! x5 y4)
 
-    (set! (one-pole-allpass-bank-y5 gen) (+ (* coeff (- input (one-pole-allpass-bank-y5 gen))) (one-pole-allpass-bank-x5 gen)))
-    (set! (one-pole-allpass-bank-x5 gen) input)
-    (set! input (one-pole-allpass-bank-y5 gen))
+    (set! y6 (+ (* coeff (- y5 y6)) x6))
+    (set! x6 y5)
 
-    (set! (one-pole-allpass-bank-y6 gen) (+ (* coeff (- input (one-pole-allpass-bank-y6 gen))) (one-pole-allpass-bank-x6 gen)))
-    (set! (one-pole-allpass-bank-x6 gen) input)
-    (set! input (one-pole-allpass-bank-y6 gen))
+    (set! y7 (+ (* coeff (- y6 y7)) x7))
+    (set! x7 y6)
 
-    (set! (one-pole-allpass-bank-y7 gen) (+ (* coeff (- input (one-pole-allpass-bank-y7 gen))) (one-pole-allpass-bank-x7 gen)))
-    (set! (one-pole-allpass-bank-x7 gen) input)
-    (set! input (one-pole-allpass-bank-y7 gen))
-
-    (set! (one-pole-allpass-bank-y8 gen) (+ (* coeff (- input (one-pole-allpass-bank-y8 gen))) (one-pole-allpass-bank-x8 gen)))
-    (set! (one-pole-allpass-bank-x8 gen) input)
-    (one-pole-allpass-bank-y8 gen)))
+    (set! y8 (+ (* coeff (- y7 y8)) x8))
+    (set! x8 y7)
+    y8))
 
 
-(defgenerator expseg (currentValue 0.0) (targetValue 0.0)) ; (like musickit asymp)
+(define* (make-expseg currentValue targetValue) ; (like musickit asymp)
+  (augment-environment () (cons 'cv currentValue) (cons 'tv targetValue) (cons 'r 0.0)))
 
 (define (expseg gen r)
-  (let ((cv (expseg-currentValue gen))
-	(tv (expseg-targetValue gen)))
-    (set! (expseg-currentValue gen) (+ cv (* (- tv cv) r)))
-    cv)) ; (bil) this is slightly different (getting clicks)
+  (set! (gen 'r) r)
+  (with-environment gen
+    (set! cv (+ cv (* (- tv cv) r)))))
+    ;; (bil) this is slightly different (getting clicks)
 
 
-(defgenerator one-pole-swept (y1 0.0))
+(define (make-one-pole-swept)
+  (vector 0.0))
 
 (define (one-pole-swept gen input coef)
   ;; signal controlled one-pole lowpass filter
-  (set! (one-pole-swept-y1 gen) (- (* (+ 1 coef) input) (* coef (one-pole-swept-y1 gen))))
-  (one-pole-swept-y1 gen))
+  (set! (gen 0) (- (* (+ 1 coef) input) (* coef (gen 0)))))
 
 
-(defgenerator pnoise (seed 16383))
+(define (make-pnoise)
+  (vector 16383))
 
 (define (pnoise gen amp)
   ;; very special noise generator
-  (set! (pnoise-seed gen) (logand (floor (+ (* (pnoise-seed gen) 1103515245) 12345)) #xffffffff))
+  (set! (gen 0) (logand (floor (+ (* (gen 0) 1103515245) 12345)) #xffffffff))
   ;; (bil) added the logand -- otherwise we get an overflow somewhere
-  (* amp (- (* (modulo (floor (/ (pnoise-seed gen) 65536)) 65536) 0.0000305185) 1.0)))
+  (* amp (- (* (modulo (floor (/ (gen 0) 65536.0)) 65536) 0.0000305185) 1.0)))
 
 
 
