@@ -70,12 +70,7 @@
 ;;;       I prefered to translate Hz into the internal parameter rather than controlling
 ;;;       the cutoff frequency in terms of a number that goes between -1 and 1. 
 
-(defgenerator moog
-  (freq 0.0 :type float)
-  (Q 0.0 :type float)
-  (s #f :type vct)
-  (y 0.0 :type float)
-  (fc 0.0 :type float))
+(defgenerator moog freq Q (s #f) y fc)
 
 (define (make-moog-filter frequency Q)
   "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,

@@ -2041,7 +2041,7 @@
 				   )))))))))))
       
       
-      (define (get-generator form env) ; defgenerator funcs
+      (define (get-generator form name line-number head env) ; defgenerator funcs
 	(let ((name (if (pair? (cadr form))
 			(car (cadr form))
 			(cadr form))))
@@ -2057,6 +2057,10 @@
 	    
 	    (for-each
 	     (lambda (field)
+	       (if (and (pair? field) (> (length field) 2))
+		   (lint-format "~A has an obsolete type indication: ~A"
+				name line-number head
+				(truncated-list->string field)))
 	       (let ((fname (string->symbol 
 			     (string-append 
 			      (symbol->string name) "-" (symbol->string (if (pair? field)
@@ -2089,7 +2093,7 @@
 		 (hash-table-set! globals (cadr form) (list (cadr form) #f #f))))
 	    
 	    ((defgenerator)
-	     (get-generator form #f))
+	     (get-generator form 'defgenerator 0 head #f))
 	    
 	    ((if)
 	     (if (pair? (cddr form))
@@ -2440,7 +2444,7 @@
 		    
 		    ;; ---------------- defgenerator ----------------
 		    ((defgenerator)
-		     (get-generator form env)
+		     (get-generator form name line-number head env)
 		     env)
 		    
 		    ;; ---------------- lambda ----------------		  
@@ -2891,16 +2895,10 @@
 		     env) 
 		    
 		    ;; ---------------- declare ----------------		  
-		    ((declare) ; for the run macro
-		     (for-each
-		      (lambda (decl)
-			(if (not (pair? decl))
-			    (format #t "   ~A (line ~D): run declare statement is messed up: ~S~%" 
-				    name line-number form)
-			    (if (not (env-member (car decl) env))
-				(lint-format "run declare statement variable name ~A is unknown: ~S"
-					     name line-number (car decl) form))))
-		      (cdr form))
+		    ((declare) 
+		     (lint-format "~A: declare is obsolete: ~A"
+				  name line-number head
+				  (truncated-list->string form))
 		     env)
 		    
 		    ((with-environment)

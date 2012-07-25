@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.9"
-#define S7_DATE "16-July-12"
+#define S7_VERSION "2.10"
+#define S7_DATE "25-July-12"
 
 
 typedef long long int s7_Int;
@@ -349,23 +349,29 @@ s7_Double s7_imag_part(s7_pointer z);                                       /* (
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (number->string obj radix) */
 
 
-bool s7_is_vector(s7_pointer p);                                                      /* (vector? p) */
-void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */
-s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                /* (vector-ref vec index) */
-s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);  /* (vector-set! vec index a) */
-s7_pointer s7_safe_vector_ref(s7_scheme *sc, s7_pointer vec, s7_pointer index);       /* no error checks */
-s7_pointer s7_safe_vector_set(s7_scheme *sc, s7_pointer vec, s7_pointer index, s7_pointer a);  /* no error checks */
+bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */
+s7_Int s7_vector_length(s7_pointer vec);                                    /* (vector-length vec) */
+int s7_vector_rank(s7_pointer vect);                                        /* number of dimensions in vect */
+s7_Int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions */
+s7_Int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing */
+s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
+
+s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                            /* (vector-ref vec index) */
+s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);              /* (vector-set! vec index a) */
+s7_pointer s7_safe_vector_ref(s7_scheme *sc, s7_pointer vec, s7_pointer index);                   /* no error checks */
+s7_pointer s7_safe_vector_set(s7_scheme *sc, s7_pointer vec, s7_pointer index, s7_pointer a);     /* no error checks */
+s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...);                   /* multidimensional vector-ref */
+s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, int indices, ...); /* multidimensional vector-set! */
+
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len);                                 /* (make-vector len) */
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill);       /* (make-vector len fill) */
-s7_Int s7_vector_length(s7_pointer vec);                                              /* (vector-length vec) */
+
+void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vect) */
-s7_pointer *s7_vector_elements(s7_pointer vec);                                       /* a pointer to the array of s7_pointers */
-int s7_vector_rank(s7_pointer vect);                                                  /* number of dimensions in vect */
-s7_Int *s7_vector_dimensions(s7_pointer vec);                                         /* dimensions */
-s7_Int *s7_vector_offsets(s7_pointer vec);                                            /* precalculated offsets to speed-up addressing */
+s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect);
+
 s7_Int s7_vector_print_length(s7_scheme *sc);                                         /* value of *vector-print-length* */
 s7_Int s7_set_vector_print_length(s7_scheme *sc, s7_Int new_len);
-s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect);
 
   /* 
    *  (vect i) is the same as (vector-ref vect i)
@@ -808,6 +814,7 @@ void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_a
  * 
  *        s7 changes
  *		
+ * 25-July:   environment (in scheme). s7_vector_ref_n and s7_vector_set_n.
  * 16-July:   s7_function_returns_temp (an experiment).
  * 2-July:    s7_object_set_* functions.
  * 11-June:   throw.

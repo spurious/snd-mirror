@@ -18,6 +18,8 @@ moved the clm/clm2xen struct declarations out of the header files,
 
 added mus_make_generator, mus_make_generator_type, mus_xen_gen
   (moved parts of defgenerator to C).  removed def-clm-struct.
+  defgenerator fields no longer have a type option.
+  removed (ancient, obsolete ws-interrupt).
 
 added mus-mix-with-envs (for fullmix), and oscil-bank.
 

@@ -13,14 +13,14 @@
 
 
 (defgenerator zdata
-  (low-start 20 :type int)
-  (frame-loc 0 :type int)
-  (cursamples 0 :type int)
-  (frame0 #f :type vct)
-  (frame1 #f :type vct)
-  (frame2 #f :type vct)
-  (fe #f :type clm)
-  (rampe #f :type clm))
+  (low-start 20)
+  (frame-loc 0)
+  (cursamples 0)
+  (frame0 #f)
+  (frame1 #f)
+  (frame2 #f)
+  (fe #f)
+  (rampe #f))
 
 (define* (make-zipper ramp-env frame-size frame-env)
   "(make-zipper ramp-env frame-size frame-env) makes a zipper generator.  'ramp-env' is 

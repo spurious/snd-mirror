@@ -2174,14 +2174,14 @@ is a physical model of a flute:
 
 
 (defgenerator grn 
-  (rampval 0.0 :type float) 
-  (rampinc 0.0 :type float)
-  (loc 0 :type int) 
-  (segctr 0 :type int)
-  (whichseg 0 :type int)
-  (ramplen 0 :type int)
-  (steadylen 0 :type int)
-  (trigger 0 :type int))
+  (rampval 0.0) 
+  (rampinc 0.0)
+  (loc 0) 
+  (segctr 0)
+  (whichseg 0)
+  (ramplen 0)
+  (steadylen 0)
+  (trigger 0))
 
 (definstrument (expfil start duration hopsecs rampsecs steadysecs file1 file2)
   (let* ((fil1 (make-file->sample file1))
@@ -2478,9 +2478,9 @@ mjkoskin@sci.fi
 ;;; this might be better named "quasi-ssb-fm" -- cancellations are not perfect
 
 (defgenerator sbfm 
-  (am0 #f :type clm) (am1 #f :type clm) 
-  (car0 #f :type clm) (car1 #f :type clm)
-  (mod0 #f :type clm) (mod1 #f :type clm))
+  (am0 #f) (am1 #f) 
+  (car0 #f) (car1 #f)
+  (mod0 #f) (mod1 #f))
 
 (define (make-ssb-fm freq)
   "(make-ssb-fm freq) makes an ssb-fm generator"
@@ -2520,12 +2520,12 @@ mjkoskin@sci.fi
 ;;; This is a translation of the rmsgain code provided by Fabio Furlanete.
 
 (defgenerator rmsg 
-  (c1 0.0 :type float)
-  (c2 0.0 :type float)
-  (q 0.0 :type float)
-  (r 0.0 :type float)
-  (avg 0.0 :type float)
-  (avgc 0 :type int))
+  (c1 0.0)
+  (c2 0.0)
+  (q 0.0)
+  (r 0.0)
+  (avg 0.0)
+  (avgc 0))
 
 (define* (make-rmsgain (hp 10.0))
   "(make-rmsgain (hp 10.0)) makes an RMS gain generator"

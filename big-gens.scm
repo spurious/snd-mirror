@@ -147,7 +147,7 @@
      (set! (big-ncos-r g) (/ (big-ncos-n g)))
      (set! (big-ncos-frequency g) (big-hz->radians (big-ncos-frequency g)))
      g))
-   (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (r 1.0))
+   (frequency *clm-default-frequency*) (n 1) (angle 0.0) (r 1.0))
 
 (define* (big-ncos gen (fm 0.0))
   (let* ((n (big-ncos-n gen))
@@ -187,7 +187,7 @@
      (set! (big-nsin-r g) (/ 1.0 (find-nsin-scaler (big-nsin-n g) 0.0 (/ pi (+ (big-nsin-n g) 1/2)))))
      (set! (big-nsin-frequency g) (big-hz->radians (big-nsin-frequency g)))
      g)))
-   (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (r 1.0))
+   (frequency *clm-default-frequency*) (n 1) (angle 0.0) (r 1.0))
 
 (define* (big-nsin gen (fm 0.0))
   (let* ((n (big-nsin-n gen))
@@ -220,7 +220,7 @@
       (set! (big-table-lookup-frequency g) (/ (* (big-table-lookup-frequency g) (big-table-lookup-size g)) (mus-srate)))
       (set! (big-table-lookup-angle g) (/ (* (big-table-lookup-angle g) (big-table-lookup-size g)) (* 2 pi)))
       g))
-  (frequency *clm-default-frequency*) (angle 0.0) (wave #f :type vector) (size *clm-table-size*))
+  (frequency *clm-default-frequency*) (angle 0.0) (wave #f) (size *clm-table-size*))
 
 (define* (big-table-lookup gen (fm 0.0))
   (let ((x (big-table-lookup-angle gen))

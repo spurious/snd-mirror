@@ -5,6 +5,7 @@
 ;; Version: $Revision: 1.2 $
 
 ;; array -> vector functions added by Bill S, 18-Apr-11
+;; defgenerator changes (Bill 25-Jul-12)
 
 ;; It follows the original header by Juan Reyes.
 
@@ -46,11 +47,7 @@
 	(display str)
 	(snd-print str))))
 
-(defgenerator mvm
-  (pp1 0.0 :type float) (pp2 0.0 :type float) (pp3 0.0 :type float)
-  (yy1 0.0 :type float) (yy2 0.0 :type float)
-  (zz1 0.0 :type float) (zz2 0.0 :type float)
-  (out 0.0 :type float))
+(defgenerator mvm pp1 pp2 pp3 yy1 yy2 zz1 zz2 out)
 
 (define-macro (mvmfilt b sample0)
   `(let ((sample ,sample0))

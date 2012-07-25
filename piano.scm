@@ -6,7 +6,7 @@
 
 
 (define (make-one-pole-allpass coeff)
-  (augment-environment () (cons 'input 0.0) (cons 'coeff coeff) (cons 'x1 0.0) (cons 'y1 0.0)))
+  (environment (cons 'input 0.0) (cons 'coeff coeff) (cons 'x1 0.0) (cons 'y1 0.0)))
 
 (define (one-pole-allpass gen input)
   (set! (gen 'input) input)
@@ -17,7 +17,7 @@
 
 
 (define (make-one-pole-allpass-bank coeff)
-  (augment-environment () 
+  (environment
     (cons 'input 0.0) (cons 'coeff coeff)
     (cons 'x1 0.0) (cons 'y1 0.0) (cons 'x2 0.0) (cons 'y2 0.0) (cons 'x3 0.0) (cons 'y3 0.0) 
     (cons 'x4 0.0) (cons 'y4 0.0) (cons 'x5 0.0) (cons 'y5 0.0) (cons 'x6 0.0) (cons 'y6 0.0) 
@@ -54,7 +54,7 @@
 
 
 (define* (make-expseg currentValue targetValue) ; (like musickit asymp)
-  (augment-environment () (cons 'cv currentValue) (cons 'tv targetValue) (cons 'r 0.0)))
+  (environment (cons 'cv currentValue) (cons 'tv targetValue) (cons 'r 0.0)))
 
 (define (expseg gen r)
   (set! (gen 'r) r)

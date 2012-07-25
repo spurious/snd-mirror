@@ -18,7 +18,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nssb-frequency g) (hz->radians (nssb-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
 
 
 (define* (nssb gen (fm 0.0))
@@ -111,7 +111,7 @@
 			       (set! (nxysin-frequency g) (hz->radians (nxysin-frequency g)))
 			       (set! (nxysin-norm g) (/ 1.0 (find-nxysin-max (nxysin-n g) (nxysin-ratio g))))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0)
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0)
   (norm 1.0))
 
 
@@ -189,7 +189,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nxycos-frequency g) (hz->radians (nxycos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
 
 
 (define* (nxycos gen (fm 0.0))
@@ -226,7 +226,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nxy1cos-frequency g) (hz->radians (nxy1cos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
 
 
 (define* (nxy1cos gen (fm 0.0))
@@ -273,7 +273,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nxy1sin-frequency g) (hz->radians (nxy1sin-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
 
 
 (define* (nxy1sin gen (fm 0.0))
@@ -338,7 +338,7 @@
 			       (set! (noddsin-frequency g) (hz->radians (noddsin-frequency g)))
 			       (set! (noddsin-norm g) (/ 1.0 (find-noddsin-max (noddsin-n g)))) ; these could be precomputed
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (norm 1.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) (norm 1.0))
 
 
 (define* (noddsin gen (fm 0.0))
@@ -378,7 +378,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (noddcos-frequency g) (hz->radians (noddcos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
 
 
 (define* (noddcos gen (fm 0.0))
@@ -414,7 +414,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (noddssb-frequency g) (hz->radians (noddssb-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
 
 
 (define* (noddssb gen (fm 0.0))
@@ -465,7 +465,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (ncos2-frequency g) (hz->radians (ncos2-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
 
 
 (define* (ncos2 gen (fm 0.0))
@@ -522,7 +522,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (npcos-frequency g) (hz->radians (npcos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
 
 
 (define* (npcos gen (fm 0.0))
@@ -563,7 +563,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (ncos5-frequency g) (hz->radians (ncos5-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
 
 
 (define* (ncos5 gen (fm 0.0))
@@ -621,7 +621,7 @@
 			       (set! (nsin5-n g) (max 2 (nsin5-n g)))
 			       (set! (nsin5-norm g) (find-nsin5-max (nsin5-n g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 2 :type int) (angle 0.0) (norm 1.0))
+  (frequency *clm-default-frequency*) (n 2) (angle 0.0) (norm 1.0))
 
 
 (define* (nsin5 gen (fm 0.0))
@@ -733,8 +733,8 @@
 			 (list 'mus-scaler
 			       (lambda (g) (mus-scaler (nrsin-gen g)))
 			       (lambda (g val) (set! (mus-scaler (nrsin-gen g)) val)))))
-  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.5)
-  (gen #f :type clm))
+  (frequency *clm-default-frequency*) (n 1) (r 0.5)
+  (gen #f))
 
 
 (define* (nrsin gen (fm 0.0))
@@ -757,7 +757,7 @@
 			       (lambda (g val)
 				 (set! (nrcos-r g) (generator-clamp-r val))
 				 (nrcos-r g)))))
-  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0))
 
 
 (define* (nrcos gen (fm 0.0))
@@ -849,7 +849,7 @@
 			       (if (< (nrssb-r g) 0.0)
 				   (set! (nrssb-r g) 0.0))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5) (angle 0.0))
 
 
 (define* (nrssb gen (fm 0.0))
@@ -999,7 +999,7 @@
 			 (list 'mus-order
 			       (lambda (g) (- (nkssb-n g) 1))
 			       (lambda (g val) (set! (nkssb-n g) (+ 1 val)) val))))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
 
 
 (define* (nkssb gen (fm 0.0))
@@ -1183,7 +1183,7 @@
 							     (/ (sin (/ (* k pi) (+ n 1))) 
 								(sin (/ pi (+ n 1)))))))
 				 g)))
-  (frequency *clm-default-frequency*) (n 1 :type int) 
+  (frequency *clm-default-frequency*) (n 1) 
   (angle 0.0) (n2 1.0) (cosn 1.0) (norm 0.0))
 
 
@@ -1218,7 +1218,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (n1cos-frequency g) (hz->radians (n1cos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
 
 (define* (n1cos gen (fm 0.0))
   (let* ((n (n1cos-n gen))
@@ -1255,7 +1255,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (npos1cos-frequency g) (hz->radians (npos1cos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
 
 
 (define* (npos1cos gen (fm 0.0))
@@ -1290,7 +1290,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (npos3cos-frequency g) (hz->radians (npos3cos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
 
 
 (define* (npos3cos gen (fm 0.0))
@@ -1345,7 +1345,7 @@
 			       (lambda (g) (mus-phase (rcos-osc g)))
 			       (lambda (g val) (set! (mus-phase (rcos-osc g)) val) val))))
   (frequency *clm-default-frequency*) (r 0.5)
-  (osc #f :type clm))
+  (osc #f))
 
 #|
 ;;; G&R form:
@@ -1791,7 +1791,7 @@
 			       (lambda (g val) (set! (mus-phase (ercos-osc g)) val) val))))
 
   (frequency *clm-default-frequency*) (r 1.0)
-  (osc #f :type clm) scaler offset cosh-t)
+  (osc #f) scaler offset cosh-t)
 
 
 (define* (ercos gen (fm 0.0))
@@ -2002,7 +2002,7 @@
 			       (lambda (g) (mus-phase (eoddcos-osc g)))
 			       (lambda (g val) (set! (mus-phase (eoddcos-osc g)) val) val))))
   (frequency *clm-default-frequency*) (r 1.0)
-  (osc #f :type clm))
+  (osc #f))
 
 
 (define* (eoddcos gen (fm 0.0))
@@ -2100,7 +2100,7 @@
 			       (lambda (g) (mus-phase (rkcos-osc g)))
 			       (lambda (g val) (set! (mus-phase (rkcos-osc g)) val) val))))
   (frequency *clm-default-frequency*) (r 0.5)
-  (osc #f :type clm))
+  (osc #f))
 
 ;;; not very flexible, and very similar to others in the r^k mold
 
@@ -2489,7 +2489,7 @@
 			       (lambda (g) (mus-phase (r2k!cos-osc g)))
 			       (lambda (g val) (set! (mus-phase (r2k!cos-osc g)) val) val))))
   (frequency *clm-default-frequency*) (r 0.5) (k 0.0)
-  (osc #f :type clm))
+  (osc #f))
 
 
 (define* (r2k!cos gen (fm 0.0))
@@ -2887,7 +2887,7 @@
 			       (lambda (g) (mus-phase (abssin-osc g)))
 			       (lambda (g val) (set! (mus-phase (abssin-osc g)) val) val))))
   (frequency *clm-default-frequency*)
-  (osc #f :type clm))
+  (osc #f))
 
 
 (define* (abssin gen (fm 0.0))
@@ -3058,7 +3058,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (blsaw-frequency g) (hz->radians (blsaw-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0))
 
 
 (define* (blsaw gen (fm 0.0))
@@ -3191,7 +3191,7 @@
 				   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
 				   (set! (bess-norm g) (bessel-peaks (bess-n g))))
 			       g))
-  (frequency *clm-default-frequency*) (n 0 :type int) (angle 0.0) (norm 1.0))
+  (frequency *clm-default-frequency*) (n 0) (angle 0.0) (norm 1.0))
 
 (define* (bess gen (fm 0.0))
   "  (make-bess frequency (n 0)) creates a bessel function (Jn) generator.\n\
@@ -3505,7 +3505,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (j2cos-frequency g) (hz->radians (j2cos-frequency g)))
 			       (if (< (j2cos-n g) 1) (set! (j2cos-n g) 1))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.5) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (n 1) (angle 0.0))
 
 
 (define* (j2cos gen (fm 0.0))
@@ -3624,7 +3624,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (jncos :make-wrapper (lambda (g)
 				     (set! (jncos-frequency g) (hz->radians (jncos-frequency g)))
 				     g))
-  (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (n 0 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (n 0) (angle 0.0))
 
 
 (define* (jncos gen (fm 0.0))
@@ -3810,7 +3810,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (jcos-frequency g) (hz->radians (jcos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 0 :type int) (r 1.0) (a 0.5) ; "b" and "c" in the docs
+  (frequency *clm-default-frequency*) (n 0) (r 1.0) (a 0.5) ; "b" and "c" in the docs
   (angle 0.0))
 
 
@@ -3843,7 +3843,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (sin2n-frequency g) (hz->radians (sin2n-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1 :type int) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (r 1.0) (angle 0.0))
 
 
 (define* (sin2n gen (fm 0.0))
@@ -3920,7 +3920,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			   (list 'mus-reset
 				 (lambda (g)
 				   (set! (blackman-angle g) 0.0)))))
-    (frequency *clm-default-frequency*) (n 4 :type int) (coeffs #f :type vector) (angle 0.0))
+    (frequency *clm-default-frequency*) (n 4) (coeffs #f) (angle 0.0))
 
 
 (define* (blackman gen (fm 0.0))
@@ -4172,7 +4172,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g)
 				 (set! (k3sin-frequency g) 0.0)
 				 (set! (k3sin-angle g) 0.0)))))
-  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f :type vector))
+  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f))
 		   
 
 (define* (k3sin gen (fm 0.0))
@@ -4314,7 +4314,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
-(defgenerator plsenv (pulse #f :type clm) (ampf #f :type clm))
+(defgenerator plsenv (pulse #f) (ampf #f))
 
 (define* (make-pulsed-env envelope duration frequency)
   (make-plsenv (make-pulse-train frequency)
@@ -4360,7 +4360,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0)
-  (sum 0.0) (p1 #f :type clm) (p2 #f :type clm))
+  (sum 0.0) (p1 #f) (p2 #f))
 
 
 (define* (adjustable-square-wave gen (fm 0.0))
@@ -4410,7 +4410,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
-  (gen #f :type clm) (top 0.0) (scl 0.0))
+  (gen #f) (top 0.0) (scl 0.0))
 
 
 (define* (adjustable-triangle-wave gen (fm 0.0))
@@ -4460,7 +4460,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
-  (gen #f :type clm) (top 0.0) (scl 0.0))
+  (gen #f) (top 0.0) (scl 0.0))
 
 
 (define* (adjustable-sawtooth-wave gen (fm 0.0))
@@ -4510,7 +4510,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5)
-  (gen #f :type clm) (top 0.0) (scl 0.0))
+  (gen #f) (top 0.0) (scl 0.0))
 
 
 (define* (adjustable-oscil gen (fm 0.0))
@@ -4569,7 +4569,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g val) (set! (mus-phase (round-interp-rnd g)) val) val))))
 
   (frequency *clm-default-frequency*) (n 1) (amplitude 1.0)
-  (rnd #f :type clm) (flt #f :type clm))
+  (rnd #f) (flt #f))
 
 
 (define* (round-interp gen (fm 0.0))
@@ -4712,8 +4712,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (sinc-train-frequency g) (* 0.5 (sinc-train-n g) (hz->radians val)))
 				 val))))
 
-  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0)
-  (original-n 1 :type int) (original-frequency 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0)
+  (original-n 1) (original-frequency 0.0))
 
 	
 (define* (sinc-train gen (fm 0.0))
@@ -4759,7 +4759,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				   (set! ((pink-noise-rands g) i) (make-rand :frequency (/ (mus-srate) (expt 2 i))))
 				   (set! (mus-phase ((pink-noise-rands g) i)) (random pi))))
 			       g))
-  (n 1) (rands #f :type clm-vector))
+  (n 1) (rands #f))
 
 
 (define (pink-noise gen)
@@ -4968,7 +4968,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g val)
 				 (set! (mus-scaler (moving-max-gen g)) val)
 				 val))))
-  (n 128 :type int) (gen #f :type clm))
+  (n 128) (gen #f))
 
 
 (define (moving-max gen y)
@@ -4995,7 +4995,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (moving-sum-gen g) dly)
 				 (set! (mus-increment dly) 1.0) ; this is 1/n by default
 				 g)))
-  (n 128 :type int) (gen #f :type clm))
+  (n 128) (gen #f))
 
 
 (define (moving-sum gen y)
@@ -5020,7 +5020,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (moving-variance-gen2 g) g2)
 				 (set! (mus-increment g2) 1.0)
 				 g)))
-  (n 128 :type int) (gen1 #f :type clm) (gen2 #f :type clm))
+  (n 128) (gen1 #f) (gen2 #f))
 
 
 (define (moving-variance gen y)
@@ -5053,7 +5053,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (moving-rms-gen g) (make-moving-average (moving-rms-n g)))
 			       g))
-  (n 128 :type int) (gen #f :type clm))
+  (n 128) (gen #f))
 
 
 (define (moving-rms gen y)
@@ -5077,7 +5077,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (moving-length-gen g) dly)
 				 (set! (mus-increment dly) 1.0)
 				 g)))
-  (n 128 :type int) (gen #f :type clm))
+  (n 128) (gen #f))
 
 
 (define (moving-length gen y)
@@ -5116,7 +5116,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (mus-increment dly) 1.0)
 				 (set! (weighted-moving-average-gen g) dly)
 				 g)))
-  (n 128 :type int) (gen #f :type clm) (num 0.0) (sum 0.0))
+  (n 128) (gen #f) (num 0.0) (sum 0.0))
 
 
 (define (weighted-moving-average gen y)
@@ -5148,7 +5148,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				      (flt (make-one-pole (/ 1.0 n) (/ (- n) (+ 1.0 n)))))
 				 (set! (exponentially-weighted-moving-average-gen g) flt)
 				 g)))
-  (n 128 :type int) (gen #f :type clm))
+  (n 128) (gen #f))
 
 
 (define (exponentially-weighted-moving-average gen y)
@@ -5207,8 +5207,8 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g ind val)
 				 (vector-set! (polyoid-un g) ind val)))))
 
-  (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type vector) (angle 0.0)
-  (tn #f :type vct) (un #f :type vector))
+  (frequency *clm-default-frequency*) (partial-amps-and-phases #f) (angle 0.0)
+  (tn #f) (un #f))
 
 
 (define* (polyoid gen (fm 0.0))
@@ -5696,7 +5696,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (tanhsin-frequency g) (hz->radians (tanhsin-frequency g))) ; so that mus-frequency works at least read side
 			       g))
   (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
-  (osc #f :type clm))
+  (osc #f))
 
 
 (define* (tanhsin gen (fm 0.0))
@@ -5728,9 +5728,9 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g) (moving-fft-im g)))
 			 (list 'mus-run
 			       (lambda (g arg1 arg2) (moving-fft g)))))
-  (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
-  (rl #f :type vct) (im #f :type vct) (data #f :type vct) 
-  (window #f :type vct))
+  (input #f) (n 512) (hop 128) (outctr 0)
+  (rl #f) (im #f) (data #f) 
+  (window #f))
 
 
 (define (moving-fft gen)
@@ -5806,12 +5806,12 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 				 (vct-scale! (moving-spectrum-fft-window g) (/ 2.0 (* 0.54 n)))
 				 (set! (moving-spectrum-outctr g) (+ n 1)) ; first time fill flag
 				 g)))
-  (input #f :type clm) (n 512) (hop 128) 
-  (outctr 0 :type int)
-  (amps #f :type vct) (phases #f :type vct) 
-  (amp-incs #f :type vct) (freqs #f :type vct) (freq-incs #f :type vct) (new-freq-incs #f :type vct) 
-  (fft-window #f :type vct)
-  (data #f :type vct) (dataloc 0 :type int))
+  (input #f) (n 512) (hop 128) 
+  (outctr 0)
+  (amps #f) (phases #f) 
+  (amp-incs #f) (freqs #f) (freq-incs #f) (new-freq-incs #f) 
+  (fft-window #f)
+  (data #f) (dataloc 0))
 
 (define (moving-spectrum gen)
 
@@ -5948,10 +5948,10 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 				 (set! (moving-scentroid-binwidth g) (/ (mus-srate) n))
 				 g)))
   (dbfloor -40.0) (rfreq 100.0) 
-  (size 4096 :type int) (hop 1024 :type int) (outctr 0 :type int)
+  (size 4096) (hop 1024) (outctr 0)
   (curval 0.0) (binwidth 1.0)
-  (rl #f :type vct) (im #f :type vct) 
-  (dly #f :type clm) (rms #f :type clm))
+  (rl #f) (im #f) 
+  (dly #f) (rms #f))
 
 (define* (moving-scentroid gen (x 0.0))
   (let ((outctr (moving-scentroid-outctr gen)))
@@ -6026,8 +6026,8 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 			       (lambda (g arg1 arg2) (moving-autocorrelation g)))
 			 (list 'mus-data
 			       (lambda (g) (moving-autocorrelation-rl g)))))
-  (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
-  (rl #f :type vct) (im #f :type vct) (data #f :type vct))
+  (input #f) (n 512) (hop 128) (outctr 0)
+  (rl #f) (im #f) (data #f))
 
 
 (define (moving-autocorrelation gen)
@@ -6081,8 +6081,8 @@ taking input from the readin generator 'reader'.  The output data is available v
 			 (list 'mus-run
 			       (lambda (g arg1 arg2) (moving-pitch g)))))
 
-  (input #f :type clm) (n 512 :type int) (hop 128 :type int)
-  (ac #f :type clm) (val 0.0))
+  (input #f) (n 512) (hop 128)
+  (ac #f) (val 0.0))
 
 
 (define (moving-pitch gen)
@@ -6231,8 +6231,8 @@ taking input from the readin generator 'reader'.  The output data is available v
 			       g))
   (reverb-amount 0.0) (frequency 1.0) (amplitude 2.0) offset
   (maxd 0)
-  (out1 #f :type vct) (out2 #f :type vct) (outloc 0)
-  (ri #f :type clm))
+  (out1 #f) (out2 #f) (outloc 0)
+  (ri #f))
 
 (define (flocsig gen samp input)
   ;; signal position and per-channel-delay depends on rand-interp

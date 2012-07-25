@@ -10,8 +10,7 @@
 ;;; run loop ... -> run (do... + extra end close paren
 ;;; aref -> 
 ;;; setf -> set!
-;;; remove declare (or change order of args and remove ":")
-;;;   however in granulate run-time edit-func, the "(declare (g clm))" is necessary
+;;; remove declare
 ;;; double not needed
 ;;; array of gen -> vector (and setf aref to vector-set! in this case)
 ;;; nil -> #f, t -> #t
@@ -2568,7 +2567,7 @@
 
 ;;; ---------------- sndscm-osc ----------------
 
-(defgenerator sndscm-osc freq phase) ;same as (defgenerator sndscm-osc (freq 0.0 :type float) (phase 0.0 :type float))
+(defgenerator sndscm-osc freq phase)
 
 (define (sndscm-osc gen fm)
   (let ((result (sin (sndscm-osc-phase gen))))
@@ -2594,7 +2593,7 @@
   (sndscm-osc1 :make-wrapper (lambda (gen)
 			(set! (sndscm-osc1-freq gen) (hz->radians (sndscm-osc1-freq gen)))
 			gen))
-  (freq 0.0) (phase 0.0 :type float))
+  (freq 0.0) (phase 0.0))
 
 (define* (sndscm-osc1 gen fm)
   (let ((result (sin (sndscm-osc1-phase gen))))

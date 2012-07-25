@@ -354,7 +354,7 @@ enum {OP_NO_OP,
       OP_READ_INTERNAL, OP_EVAL, 
       OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
       OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
-      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
+      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, 
       OP_LETREC, OP_LETREC1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR,
@@ -378,7 +378,7 @@ enum {OP_NO_OP,
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, 
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_opSSq_S,
       OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_SAFE_VREF, OP_SET_SAFE_VREF_1,
-      OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1,
+      OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, 
       OP_DEFINE_WITH_ACCESSOR, OP_DEFMACRO_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
@@ -405,7 +405,7 @@ enum {OP_NO_OP,
       OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_X, OP_SAFE_IF_IS_SYMBOL_P_P, 
       OP_SAFE_IF_IS_EOF_P_P, OP_IF_O_P, OP_IF_O_P_P, OP_SAFE_IF_ANDX_P, OP_SAFE_IF_ORX_P, OP_IF_ORCEQ_P, OP_IF_ORCEQ_P_P,
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4,
-      OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS,
+      OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS, 
       OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_O2, OP_LET_R_P, OP_LET_OX_P, OP_LET_UNKNOWN_S_P, 
       OP_LET_READ_CHAR_P, OP_LET_CAR_P,
 
@@ -455,8 +455,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "member", "assoc", "member", "assoc",
    
    "quote", "lambda", "let", "case", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", 
    "define", "defmacro", "define-macro",
@@ -485,7 +485,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe_if_is_symbol_p", "safe_if_is_symbol_p_x", "safe_if_is_symbol_p_p", 
    "safe_if_is_eof_p_p", "if_o_p", "if_o_p_p", "safe_if_andx_p", "safe_if_orx_p", "if_orceq_p", "if_orceq_p_p",
    "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "eval_args_p_1", "eval_args_p_2", "eval_args_p_3", "eval_args_p_4",
-   "increment_1", "decrement_1", "set_cdr", "set_cons",
+   "increment_1", "decrement_1", "set_cdr", "set_cons", 
    "let_o", "let_o1", "let_r", "let_all_r", "let_c_d", "let_o_p", "let_o2", "let_r_p", "let_ox_p", "let_unknown_s_p", 
    "let_read_char_p", "let_car_p",
 
@@ -507,7 +507,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_READ_INTERNAL", "OP_EVAL", 
   "OP_EVAL_ARGS", "OP_EVAL_ARGS1", "OP_EVAL_ARGS2", "OP_EVAL_ARGS3", "OP_EVAL_ARGS4", "OP_EVAL_ARGS5",
   "OP_APPLY", "OP_EVAL_MACRO", "OP_LAMBDA", "OP_QUOTE", 
-  "OP_DEFINE", "OP_DEFINE1", "OP_BEGIN", "OP_BEGIN1", "OP_IF", "OP_IF1", "OP_SET", "OP_SET1", "OP_SET2", 
+  "OP_DEFINE", "OP_DEFINE1", "OP_BEGIN", "OP_BEGIN1", "OP_IF", "OP_IF1", "OP_SET", "OP_SET1", "OP_SET2",
   "OP_LET", "OP_LET1", "OP_LET_STAR", "OP_LET_STAR1", 
   "OP_LETREC", "OP_LETREC1", "OP_COND", "OP_COND1", "OP_COND_SIMPLE", "OP_COND1_SIMPLE",
   "OP_AND", "OP_AND1", "OP_OR", "OP_OR1", "OP_DEFMACRO", "OP_DEFMACRO_STAR",
@@ -531,7 +531,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", 
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_opSSq_S",
   "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_SAFE_VREF", "OP_SET_SAFE_VREF_1",
-  "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1",
+  "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", 
   "OP_DEFINE_WITH_ACCESSOR", "OP_DEFMACRO_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
@@ -558,7 +558,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_X", "OP_SAFE_IF_IS_SYMBOL_P_P", 
   "OP_SAFE_IF_IS_EOF_P_P", "OP_IF_O_P", "OP_IF_O_P_P", "SAFE_IF_ANDX_P", "SAFE_IF_ORX_P", "OP_IF_ORCEQ_P", "OP_IF_ORCEQ_P_P",
   "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4",
-  "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CDR", "OP_SET_CONS",
+  "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CDR", "OP_SET_CONS", 
   "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_O2", "OP_LET_R_P", "OP_LET_OX_P", "OP_LET_UNKNOWN_S_P", 
   "OP_LET_READ_CHAR_P", "OP_LET_CAR_P",
 
@@ -1151,7 +1151,7 @@ struct s7_scheme {
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, CHARP, CHAR_TO_INTEGER, CHAR_ALPHABETICP, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
   s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, CHAR_LOWER_CASEP, CHAR_NUMERICP, CHAR_READYP, CHAR_UPCASE, CHAR_UPPER_CASEP;
   s7_pointer CHAR_WHITESPACEP, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, COMPLEXP, CONS, CONSTANTP, CONTINUATIONP, COPY, COS, COSH, DEFINEDP;
-  s7_pointer DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT_TO_LIST, EOF_OBJECTP, EQP, EQUALP, EQVP, ERROR, EVAL, EVAL_STRING;
+  s7_pointer DENOMINATOR, DISPLAY, DYNAMIC_WIND, ENVIRONMENTP, ENVIRONMENT, ENVIRONMENT_TO_LIST, EOF_OBJECTP, EQP, EQUALP, EQVP, ERROR, EVAL, EVAL_STRING;
   s7_pointer EVENP, EXACTP, EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOOR, FORMAT, FOR_EACH, GC, GCD, GENSYM, GET_OUTPUT_STRING, HASH_TABLE;
   s7_pointer HASH_TABLEP, HASH_TABLE_ITERATORP, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HELP, IMAG_PART, INEXACTP, INEXACT_TO_EXACT;
   s7_pointer INFINITEP, INPUT_PORTP, INTEGERP, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, KEYWORDP, KEYWORD_TO_SYMBOL, LCM, LENGTH;
@@ -1497,7 +1497,7 @@ static int t_optimized = T_OPTIMIZED;
 #define is_gensym(p)                  ((typeflag(p) & T_GENSYM) != 0)
 #define clear_gensym(p)               typeflag(p) = (typeflag(p) & (~T_GENSYM))
 /* symbol is from gensym (GC-able etc)
- * it can be used in other (non-symbol contexts)
+ *   since this onlt relevant to symbols, this bit is used below in several other non-intersecting ways
  */
 
 #define T_SMALL_INT                   T_GENSYM
@@ -1506,6 +1506,11 @@ static int t_optimized = T_OPTIMIZED;
 #define T_SIMPLE_ARGS                 T_GENSYM
 #define has_simple_args(p)            ((typeflag(p) & T_SIMPLE_ARGS) != 0)
 #define set_simple_args(p)            typeflag(p) |= T_SIMPLE_ARGS
+
+#define T_SIMPLE_ENV                  T_GENSYM
+#define is_simple_env(p)              ((typeflag(p) & T_SIMPLE_ENV) != 0)
+#define set_simple_env(p)             typeflag(p) |= T_SIMPLE_ENV
+
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
@@ -4701,9 +4706,7 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 }
 
 
-/* (define (environment . args) (apply augment-environment '() args))
- * 
- * currently (eval 'a (augment-environment () '(a . 1) '(a . 2))) -> 2,
+/* currently (eval 'a (augment-environment () '(a . 1) '(a . 2))) -> 2,
  *   but should it be an error?
  */
 
@@ -4747,6 +4750,40 @@ new environment."
 	  }
       }
   return(s7_augment_environment(sc, e, cdr(args)));
+}
+
+
+/* TODO: test environment and use in docs etc */
+
+static s7_pointer g_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_environment "(environment ...) adds its \
+arguments (each an environment or a cons: symbol . value) to a new environment, and returns the \
+new environment."
+
+  s7_pointer x;
+  int i;
+
+  if (!is_null(args))
+    for (i = 1, x = cdr(args); is_not_null(x); x = cdr(x), i++)
+      {
+	s7_pointer sym, val, p;
+	p = car(x);
+	if (!is_environment(p))
+	  {
+	    if (!is_pair(p))
+	      return(wrong_type_argument(sc, sc->ENVIRONMENT, make_integer(sc, i), p, T_PAIR));
+	    if (!is_symbol(car(p)))
+	      return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT, make_integer(sc, i), p, 
+						   make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
+	    sym = car(p);
+	    val = cdr(p);
+	    if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
+		(!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
+	      return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT, make_integer(sc, i), sym, make_protected_string(sc, "a non-constant symbol")));
+	  }
+      }
+  return(s7_augment_environment(sc, sc->global_env, args));
 }
 
 
@@ -24413,9 +24450,6 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer
   return(a);
 }
 
-/* SOMEDAY: we need exported multidimensional vector_ref|set!
- */
-
 
 s7_pointer s7_safe_vector_ref(s7_scheme *sc, s7_pointer vec, s7_pointer index) 
 {
@@ -24456,6 +24490,107 @@ s7_Int *s7_vector_offsets(s7_pointer vec)
   offs[0] = 1;
   return(offs);
 }
+
+
+s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...)
+{
+  /* from s7.html */
+  int ndims;
+
+  ndims = s7_vector_rank(vector);
+  if (ndims == indices)
+    {
+      va_list ap;
+      s7_Int index = 0;
+      va_start(ap, indices);
+
+      if (ndims == 1)
+	{
+	  index = va_arg(ap, s7_Int);
+	  va_end(ap);
+	  return(s7_vector_ref(sc, vector, index));
+	}
+      else
+	{
+	  int i;
+	  s7_pointer *elements;
+	  s7_Int *offsets, *dimensions;
+
+	  elements = s7_vector_elements(vector);
+	  dimensions = s7_vector_dimensions(vector);
+	  offsets = s7_vector_offsets(vector);
+
+	  for (i = 0; i < indices; i++)
+	    {
+	      int ind;
+	      ind = va_arg(ap, int);
+	      if ((ind < 0) ||
+		  (ind >= dimensions[i]))
+		{
+		  va_end(ap);
+		  return(s7_out_of_range_error(sc, "s7_vector_ref_n", i, s7_make_integer(sc, ind), "index should be between 0 and the dimension size"));
+		}
+	      index += (ind * offsets[i]);
+	    }
+	  va_end(ap);
+	  return(elements[index]);
+	}
+    }
+  return(s7_wrong_number_of_args_error(sc, "s7_vector_ref_n: wrong number of indices: ~A", s7_make_integer(sc, indices)));
+}
+
+
+
+s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, int indices, ...)
+{
+  int ndims;
+
+  ndims = s7_vector_rank(vector);
+  if (ndims == indices)
+    {
+      va_list ap;
+      s7_Int index = 0;
+      va_start(ap, indices);
+
+      if (ndims == 1)
+	{
+	  index = va_arg(ap, s7_Int);
+	  va_end(ap);
+	  s7_vector_set(sc, vector, index, value);
+	  return(value);
+	}
+      else
+	{
+	  int i;
+	  s7_pointer *elements;
+	  s7_Int *offsets, *dimensions;
+
+	  elements = s7_vector_elements(vector);
+	  dimensions = s7_vector_dimensions(vector);
+	  offsets = s7_vector_offsets(vector);
+
+	  for (i = 0; i < indices; i++)
+	    {
+	      int ind;
+	      ind = va_arg(ap, int);
+	      if ((ind < 0) ||
+		  (ind >= dimensions[i]))
+		{
+		  va_end(ap);
+		  return(s7_out_of_range_error(sc, "s7_vector_set_n", i, s7_make_integer(sc, ind), "index should be between 0 and the dimension size"));
+		}
+	      index += (ind * offsets[i]);
+	    }
+	  va_end(ap);
+	  elements[index] = value;
+	  return(value);
+	}
+    }
+  return(s7_wrong_number_of_args_error(sc, "s7_vector_set_n: wrong number of indices: ~A", s7_make_integer(sc, indices)));
+}
+
+/* TODO: test s7_vector_ref|set_n
+ */
 
 
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
@@ -31601,6 +31736,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  return(cadr(x));
 
 	  /* look for errors here rather than glomming up the set! and let code */
+	case OP_SET_SAFE:
 	case OP_SET1:                                             /* (set! var (values 1 2 3)) */
 	  set_multiple_value(args);
 	  return(eval_error(sc, "can't set! some variable to ~S", args));
@@ -31650,7 +31786,10 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 
   if (is_null(args))
     {
-      if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_SET1)  /* (set! var (values)) */
+      opcode_t op;
+      op = stack_op(sc->stack, s7_stack_top(sc) - 1);
+      if ((op == OP_SET1) || /* (set! var (values)) */
+	  (op == OP_SET_SAFE))
 	return(eval_error(sc, "set!: can't assign (values) to something: ~A", args));
 
       return(sc->NO_VALUE); 
@@ -36269,7 +36408,8 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 
   /* TODO: with-env needs to be able to check quickly whether an env redefines any built-in (optimizable) funcs.
    *   if so, it needs to cancel any "safe" opts within its block.  So, augment-env* need to set a bit if they
-   *   redefine and also if included envs redefine.  And we need a cancel_all_safe_opts.
+   *   redefine and also if included envs redefine.  And we need a cancel_all_safe_opts.  set_simple_env and is_simple_env 
+   *   with OP_ENV_UNCHECKED or equivalent.
    */
 #if 0
   if ((op == OP_QUOTE) || 
@@ -39158,127 +39298,129 @@ static s7_pointer check_set(s7_scheme *sc)
       
       if (is_symbol(car(sc->code)))
 	{
-	  if (is_symbol(cadr(sc->code)))
-	    set_syntax_op(sc->code, sc->SET_SYMBOL_S);
-	  else
+	  if ((!symbol_has_accessor(car(sc->code))) &&
+	      (!is_syntactic(car(sc->code))))
 	    {
-	      if (!is_pair(cadr(sc->code)))
-		set_syntax_op(sc->code, sc->SET_SYMBOL_C);
+	      if (is_symbol(cadr(sc->code)))
+		set_syntax_op(sc->code, sc->SET_SYMBOL_S);
 	      else
 		{
-		  if ((car(cadr(sc->code)) == sc->QUOTE) || 
-		      (car(cadr(sc->code)) == sc->QUOTE_UNCHECKED))
-		    set_syntax_op(sc->code, sc->SET_SYMBOL_Q);
+		  if (!is_pair(cadr(sc->code)))
+		    set_syntax_op(sc->code, sc->SET_SYMBOL_C);
 		  else
 		    {
-		      /* if cadr(cadr) == car, or cdr(cadr) not null and cadr(cadr) == car, and cddr(cadr) == null,
-		       *   it's (set! <var> (<op> <var> val)) or (<op> val <var>) or (<op> <var>)
-		       *   in the set code, we get the slot as usual, then in case 1 above,
-		       *   car(sc->T2_1) = slot_value(slot), car(sc->T2_2) = increment, call <op>, set slot_value(slot)
-		       *
-		       * this can be done in all combined cases where a symbol is repeated (do in particular)
-		       */
-		      
-		      /* (define (hi) (let ((x 1)) (set! x (+ x 1)))) 
-		       *   but the value might be values:
-		       *   (let () (define (hi) (let ((x 0)) (set! x (values 1 2)) x)) (catch #t hi (lambda a a)) (hi))
-		       *   which is caught in splice_in_values
-		       */
-		      set_syntax_op(sc->code, sc->SET_SYMBOL_P);
-		      /*
-		      if ((is_pair(cadr(sc->code))) &&
-			  (is_optimized(cadr(sc->code))))
-			fprintf(stderr, "setp: %s\n", DISPLAY_80(cadr(sc->code)));
-		      */
-#if WITH_OPTIMIZATION
-		      if (is_h_safe_c_s(cadr(sc->code)))
-			{
-			  set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_S);
-			  fcdr(sc->code) = cadr(cadr(sc->code));
-			}
+		      if ((car(cadr(sc->code)) == sc->QUOTE) || 
+			  (car(cadr(sc->code)) == sc->QUOTE_UNCHECKED))
+			set_syntax_op(sc->code, sc->SET_SYMBOL_Q);
 		      else
 			{
-			  if (is_optimized(cadr(sc->code)))
+			  /* if cadr(cadr) == car, or cdr(cadr) not null and cadr(cadr) == car, and cddr(cadr) == null,
+			   *   it's (set! <var> (<op> <var> val)) or (<op> val <var>) or (<op> <var>)
+			   *   in the set code, we get the slot as usual, then in case 1 above,
+			   *   car(sc->T2_1) = slot_value(slot), car(sc->T2_2) = increment, call <op>, set slot_value(slot)
+			   *
+			   * this can be done in all combined cases where a symbol is repeated (do in particular)
+			   */
+			  
+			  /* (define (hi) (let ((x 1)) (set! x (+ x 1)))) 
+			   *   but the value might be values:
+			   *   (let () (define (hi) (let ((x 0)) (set! x (values 1 2)) x)) (catch #t hi (lambda a a)) (hi))
+			   *   which is caught in splice_in_values
+			   */
+			  set_syntax_op(sc->code, sc->SET_SYMBOL_P);
+			  /*
+			    if ((is_pair(cadr(sc->code))) &&
+			    (is_optimized(cadr(sc->code))))
+			    fprintf(stderr, "setp: %s\n", DISPLAY_80(cadr(sc->code)));
+			  */
+#if WITH_OPTIMIZATION
+			  if (is_h_safe_c_s(cadr(sc->code)))
 			    {
-			      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_C)
+			      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_S);
+			      fcdr(sc->code) = cadr(cadr(sc->code));
+			    }
+			  else
+			    {
+			      if (is_optimized(cadr(sc->code)))
 				{
-				  set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_C);
-				  fcdr(sc->code) = cdr(cadr(sc->code));
-				}
-			      else
-				{
-				  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SS)
+				  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_C)
 				    {
-				      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_SS);
+				      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_C);
 				      fcdr(sc->code) = cdr(cadr(sc->code));
 				    }
 				  else
 				    {
-				      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_opSSq_S)
+				      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SS)
 					{
-					  set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_opSSq_S);
+					  set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_SS);
 					  fcdr(sc->code) = cdr(cadr(sc->code));
+					}
+				      else
+					{
+					  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_opSSq_S)
+					    {
+					      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_opSSq_S);
+					      fcdr(sc->code) = cdr(cadr(sc->code));
+					    }
 					}
 				    }
 				}
 			    }
-			}
-
-		      if ((!symbol_has_accessor(car(sc->code))) &&
-			  /* (!is_global(car(sc->code))) && */ /* we use find_symbol to get the slot, so this should be ok */
-			  (is_optimized(cadr(sc->code))) &&
-			  (!is_unsafe(cadr(sc->code))) &&
-			  (is_not_null(cdr(cadr(sc->code)))))               /* (set! x (y)) */
-			{
-			  /* the "!is_unsafe" check is needed in case OP_UNKNOWN_SC gets here --
-			   *   it (formerly) did not clear or set the e|fcdr fields, so they may contain
-			   *   garbage which can confuse the check below.  I now 
-			   *   clear ecdr.  (We can get here with an unknown op if previously
-			   *   + was redefined locally, for example, so the optimizer wants to
-			   *   delay the decision until runtime).
-			   */
-
-			  if (is_not_null(cddr(cadr(sc->code))))
+			  
+			  if ((is_optimized(cadr(sc->code))) &&
+			      (!is_unsafe(cadr(sc->code))) &&
+			      (is_not_null(cdr(cadr(sc->code)))))               /* (set! x (y)) */
 			    {
-			      if ((caddr(cadr(sc->code)) == small_int(1)) &&
-				  (cadr(cadr(sc->code)) == car(sc->code)))
+			      /* the "!is_unsafe" check is needed in case OP_UNKNOWN_SC gets here --
+			       *   it (formerly) did not clear or set the e|fcdr fields, so they may contain
+			       *   garbage which can confuse the check below.  I now 
+			       *   clear ecdr.  (We can get here with an unknown op if previously
+			       *   + was redefined locally, for example, so the optimizer wants to
+			       *   delay the decision until runtime).
+			       */
+			      
+			      if (is_not_null(cddr(cadr(sc->code))))
 				{
-				  if ((ecdr(cadr(sc->code)) == add_s1) ||
-				      (ecdr(cadr(sc->code)) == add_cs1))
-				    set_syntax_op(sc->code, sc->INCREMENT_1);
-				  else 
+				  if ((caddr(cadr(sc->code)) == small_int(1)) &&
+				      (cadr(cadr(sc->code)) == car(sc->code)))
 				    {
-				      if ((ecdr(cadr(sc->code)) == subtract_s1) ||
-					  (ecdr(cadr(sc->code)) == subtract_cs1))
-					set_syntax_op(sc->code, sc->DECREMENT_1);
+				      if ((ecdr(cadr(sc->code)) == add_s1) ||
+					  (ecdr(cadr(sc->code)) == add_cs1))
+					set_syntax_op(sc->code, sc->INCREMENT_1);
+				      else 
+					{
+					  if ((ecdr(cadr(sc->code)) == subtract_s1) ||
+					      (ecdr(cadr(sc->code)) == subtract_cs1))
+					    set_syntax_op(sc->code, sc->DECREMENT_1);
+					}
+				    }
+				  else
+				    {
+				      if ((cadr(cadr(sc->code)) == small_int(1)) &&
+					  (caddr(cadr(sc->code)) == car(sc->code)) &&
+					  (ecdr(cadr(sc->code)) == add_1s))
+					set_syntax_op(sc->code, sc->INCREMENT_1);
+				      else
+					{
+					  if ((car(sc->code) == caddr(cadr(sc->code))) &&
+					      (is_symbol(cadr(cadr(sc->code)))) &&
+					      (caadr(sc->code) == sc->CONS))
+					    {
+					      set_syntax_op(sc->code, sc->SET_CONS);
+					      fcdr(sc->code) = cadr(cadr(sc->code));
+					    }
+					}
 				    }
 				}
 			      else
 				{
-				  if ((cadr(cadr(sc->code)) == small_int(1)) &&
-				      (caddr(cadr(sc->code)) == car(sc->code)) &&
-				      (ecdr(cadr(sc->code)) == add_1s))
-				    set_syntax_op(sc->code, sc->INCREMENT_1);
-				  else
-				    {
-				      if ((car(sc->code) == caddr(cadr(sc->code))) &&
-					  (is_symbol(cadr(cadr(sc->code)))) &&
-					  (caadr(sc->code) == sc->CONS))
-					{
-					  set_syntax_op(sc->code, sc->SET_CONS);
-					  fcdr(sc->code) = cadr(cadr(sc->code));
-					}
-				    }
+				  if ((car(sc->code) == cadr(cadr(sc->code))) &&
+				      (caadr(sc->code) == sc->CDR))
+				    set_syntax_op(sc->code, sc->SET_CDR);
 				}
 			    }
-			  else
-			    {
-			      if ((car(sc->code) == cadr(cadr(sc->code))) &&
-				  (caadr(sc->code) == sc->CDR))
-				set_syntax_op(sc->code, sc->SET_CDR);
-			    }
-			}
 #endif
+			}
 		    }
 		}
 	    }
@@ -48361,7 +48503,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       /* else use standard set */
-      push_stack_no_args(sc, OP_SET1, car(sc->code));
+      push_stack_no_args(sc, OP_SET_SAFE, car(sc->code));
       sc->code = cadr(sc->code);
       goto EVAL; 
       
@@ -48394,7 +48536,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       /* else use standard set */
-      push_stack_no_args(sc, OP_SET1, car(sc->code)); 
+      push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL; 
       
@@ -48420,7 +48562,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       /* else use standard set */
-      push_stack_no_args(sc, OP_SET1, car(sc->code)); 
+      push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL; 
       
@@ -48440,7 +48582,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       /* else use standard set */
-      push_stack_no_args(sc, OP_SET1, car(sc->code)); 
+      push_stack_no_args(sc, OP_SET2, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL; 
       
@@ -48448,7 +48590,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SET_SYMBOL_SAFE_C:
       sc->value = c_call(cadr(sc->code))(sc, fcdr(sc->code));
       sc->code = car(sc->code);
-      goto SET1;
+      goto SET_SAFE;
 
       
     case OP_SET_SYMBOL_SAFE_opSSq_S:
@@ -48465,7 +48607,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(sc->T2_1) = val;
 	sc->value = c_call(arg)(sc, sc->T2_1);
 	sc->code = car(sc->temp4);
-	goto SET1;
+	goto SET_SAFE;
       }
 
     case OP_SET_SYMBOL_SAFE_SS:
@@ -48474,7 +48616,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       car(sc->T2_2) = finder(sc, cadr(fcdr(sc->code)));
       sc->value = c_call(cadr(sc->code))(sc, sc->T2_1);
       sc->code = car(sc->temp4);
-      goto SET1;
+      goto SET_SAFE;
 
 
     case OP_SET_SYMBOL_SAFE_S:
@@ -48493,18 +48635,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * also needs to be protected, I guess).
        */
       sc->code = car(sc->temp4);
-      goto SET1;
+      goto SET_SAFE;
 #endif      
+
       
     case OP_SET_SYMBOL_C:
       sc->value = cadr(sc->code);
       sc->code = car(sc->code);
-      goto SET1;
+      goto SET_SAFE;
       
     case OP_SET_SYMBOL_Q:
       sc->value = cadr(cadr(sc->code));
       sc->code = car(sc->code);
-      goto SET1;
+      goto SET_SAFE;
+      
+    case OP_SET_SYMBOL_P:
+      push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
+      sc->code = cadr(sc->code);
+      goto EVAL; 
       
     case OP_SET_SYMBOL_S:
       {
@@ -48512,29 +48660,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	settee = car(sc->code);
 	sc->value = finder(sc, cadr(sc->code));
 	sc->code = settee;
-	goto SET1;
+	/* goto SET_SAFE; */
       }
       
-    case OP_SET_SYMBOL_P:
-      push_stack_no_args(sc, OP_SET1, car(sc->code)); 
-      sc->code = cadr(sc->code);
-#if 0
-      if ((is_pair(sc->code)) &&
-	  (is_optimized(sc->code)) &&
-	  (optimize_data(sc->code) == HOP_SAFE_C_opSSq_S))
-	fprintf(stderr, "%s %s\n", opt_names[optimize_data(cadr(sc->code))], DISPLAY(sc->code));
+    SET_SAFE:
+    case OP_SET_SAFE:  
+      sc->y = find_symbol(sc, sc->code);
+      if (is_slot(sc->y)) 
+	{
+	  slot_set_value(sc->y, sc->value); 
+#if TRY_STACK
+	  IF_BEGIN_POP_STACK(sc);
 #endif
-      /* opssq case: (* (+ last-lip-in last-tract-plus) lip-refl-gain)
-       */
-      goto EVAL; 
-      /* lg: h_safe_c_opssq_s: 12762
-       * in: h_safe_c_pc: 93636, h_safe_c_cs: 11862
-       * be: h_safe_c_opssq_s: 22591
-       * rn: h_safe_c_opssq_s: 705598, h_safe_c_c: 4973938, h_safe_c_ss: 1350607, h_safe_c_sss: 165374
-       *     but h_safe_c_cp: 1935129
-       */
-      
-      
+	  goto START;
+	}
+      eval_error(sc, "set! ~A: unbound variable", sc->code);
+
+
     case OP_SET2:
       if (is_pair(sc->value))
 	{
@@ -49106,13 +49248,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = car(sc->code);
       }
       
-      
-    SET1:
     case OP_SET1:  
       /* if unbound variable hook here, we need the binding, not the current value */
+#if 0
       if (is_global(sc->code))
 	sc->y = global_slot(sc->code);
-      else sc->y = find_symbol(sc, sc->code);
+      else 
+#endif
+	sc->y = find_symbol(sc, sc->code);
       if (is_slot(sc->y)) 
 	{
 	  if (symbol_has_accessor(sc->code))
@@ -49151,8 +49294,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       eval_error(sc, "set! ~A: unbound variable", sc->code);
-      
-      
+
+
     case OP_SET_WITH_ACCESSOR:
       if (sc->value == sc->ERROR) /* backwards compatibility... */
 	return(s7_error(sc, sc->ERROR,
@@ -57663,6 +57806,7 @@ s7_scheme *s7_init(void)
   s7_define_constant_function(sc,                     "initial-environment",       g_initial_environment,      0, 0, false, H_initial_environment);
   sc->AUGMENT_ENVIRONMENT =  s7_define_function(sc,   "augment-environment",       g_augment_environment,      1, 0, true,  H_augment_environment);
   sc->AUGMENT_ENVIRONMENTB = s7_define_function(sc,   "augment-environment!",      g_augment_environment_direct, 1, 0, true, H_augment_environment_direct);
+  sc->ENVIRONMENT = s7_define_safe_function(sc,       "environment",               g_environment,              0, 0, true,  H_environment);
   sc->ENVIRONMENTP = s7_define_safe_function(sc,      "environment?",              g_is_environment,           1, 0, false, H_is_environment);
   sc->ENVIRONMENT_TO_LIST = s7_define_safe_function(sc, "environment->list",       g_environment_to_list,      1, 0, false, H_environment_to_list);
   s7_define_safe_function(sc,                         "error-environment",         g_error_environment,        0, 0, false, H_error_environment);
@@ -58412,16 +58556,28 @@ s7_scheme *s7_init(void)
  * optimizer could mark the non-capture lambdas (for-each/map/catch/dynamic-wind/run/with-output...)
  *   so that env not incremented (line 49920)
  *
+ * should with-env reset the finder so that we just look at sc->envir etc -- the frame_id and symbol local_slot
+ *   are not very relevant in this context.  But then with-env is not tail-callable.
+ *   could a func tail call in with-env screw up the object or get the wrong (outer) env?
+ *   if so, we'll hace to catch it anyway, hence finder can change -- I don't think this can happen.
+ *   But... if a function has with-env without any tail-call or other opaque exit (i.e. a generator),
+ *   the optimizer could tell it to use a different finder -- OP_WITH_ENV_DIRECT which would
+ *   undo the finder at exit or upon error etc.  The finder could be a binary tree search I think,
+ *   since envs have an extra slot = binary tree access?  Or the special finder could check that
+ *   slot to get the env-specific finder.
+ *
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  * PERHAPS: closure direct
  *
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1272
+ * TODO: defgenerator should use environments!
+ *
+ * lint     13424 -> 1231 [1237] 1286 1326 1320 1270
  * bench    52019 -> 7875 [8268] 8037 8592 8402
  *   (new)                [8764]           9370 8937
- * index    44300 -> 4988 [4992] 4235 4725 3935 3495
+ * index    44300 -> 4988 [4992] 4235 4725 3935 3477
  * s7test            1721             1456 1430 1375
  * t455                           265  256  218   83
- * t502                                 90   72   45
+ * t502                                 90   72   44
  */
 

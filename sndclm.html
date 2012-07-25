@@ -3439,11 +3439,10 @@ getting waveforms and results like these:
 				       (set! ((ngencos-arr g) i) (make-oscil (* frq (+ 1 i)) (phases i)))
 				       (set! ((ngencos-arr g) i) (make-oscil (* frq (+ 1 i)) (random (* 2 pi)))))))
 			       g))
-  (frequency 0.0) (n 1 :type int) (phases #f :type vct) (arr #f :type clm-vector))
+  frequency (n 1) (phases #f) (arr #f))
 
 
 (define* (ngencos gen (fm 0.0)) ; polyoid now, I think
-  (declare (gen ngencos) (fm float))
   (let* ((n (ngencos-n gen))
 	 (arr (ngencos-arr gen))
 	 (sum 0.0))
@@ -9613,7 +9612,7 @@ variants of those given above.
 
 
 <pre class="indented">
-<em class=def id="make-moving-fft">make-moving-fft</em> (input #f :type clm) (n 512) (hop 128)
+<em class=def id="make-moving-fft">make-moving-fft</em> (input #f) (n 512) (hop 128)
 <em class=def id="moving-fft">moving-fft</em> gen
 <em class=def id="moving-fft?">moving-fft?</em> gen
 </pre>
@@ -9638,7 +9637,7 @@ We could mimic the fft display window in the "lisp graph" via:
 <div class="separator"></div>
 
 <pre class="indented">
-<em class=def id="make-moving-spectrum">make-moving-spectrum</em> (input #f :type clm) (n 512) (hop 128)
+<em class=def id="make-moving-spectrum">make-moving-spectrum</em> (input #f) (n 512) (hop 128)
 <em class=def id="moving-spectrum">moving-spectrum</em> gen
 <em class=def id="moving-spectrum?">moving-spectrum?</em> gen
 </pre>
@@ -9652,7 +9651,7 @@ use moving-spectrum-amps, moving-spectrum-phases, and moving-spectrum-freqs.
 
 
 <pre class="indented">
-<em class=def id="make-moving-autocorrelation">make-moving-autocorrelation</em> (input #f :type clm) (n 512) (hop 128)
+<em class=def id="make-moving-autocorrelation">make-moving-autocorrelation</em> (input #f) (n 512) (hop 128)
 <em class=def id="moving-autocorrelation">moving-autocorrelation</em> gen
 <em class=def id="moving-autocorrelation?">moving-autocorrelation?</em> gen
 </pre>
@@ -9665,7 +9664,7 @@ via mus-data.
 
 
 <pre class="indented">
-<em class=def id="make-moving-pitch">make-moving-pitch</em> (input #f :type clm) (n 512) (hop 128)
+<em class=def id="make-moving-pitch">make-moving-pitch</em> (input #f) (n 512) (hop 128)
 <em class=def id="moving-pitch">moving-pitch</em> gen
 <em class=def id="moving-pitch?">moving-pitch?</em> gen
 </pre>
@@ -9795,7 +9794,7 @@ a structure, an object with named slots that you can get and set, and ties it in
 optimizer so that you can use the structures without any speed penalty.  It also defines a "make"
 function to create an instance of the structure, and a predicate for it.  The original impetus for
 this came from user-defined generators in CLM.  We want to package together all the disparate
-variables that make up a generator, just as in function groups such as 
+things that make up a generator, just as in
 <a href="sndclm.html#make-oscil">make-oscil</a>, <a href="sndclm.html#oscil">oscil</a>, and <a href="sndclm.html#oscil?">oscil?</a>.
 So, as a first example, here is a way to define your own oscil using defgenerator (oscil is so simple that
 you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my-oscil</a>).
@@ -9830,18 +9829,10 @@ you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my
 
 <p>
 The first argument to defgenerator is the new struct's name, and the rest are the fields of that struct.
-Each field has a name, a type, and an optional initial value. The type defaults to float, and
-the initial value to 0.0, so our declaration above is the same as any of these:
-</p>
-
-<pre class="indented">
-(defgenerator osc freq (phase 0.0))
-(defgenerator osc (freq 0.0) (phase 0.0))
-(defgenerator osc (freq 0.0 :type float) (phase 0.0 :type float))
-</pre>
-
-<p>and so on. The "make" function (make-osc in our example) uses define* with
-the field names and types as the optional keys.  So make-osc above is declared (by the
+Each field has a name and an optional initial value. 
+The initial value defaults to 0.0.
+The "make" function (make-osc in our example) uses define* with
+the field names and initial values as the optional keys.  So make-osc above is declared (by the
 defgenerator macro) as:
 </p>
 
@@ -9856,15 +9847,6 @@ defgenerator macro) as:
 (make-osc 440)
 (make-osc :phase (/ pi 2) :freq 440)
 (make-osc 440 :phase 0.0)
-</pre>
-
-<p>
-The currently implemented field types are:
-</p>
-
-<pre class="indented">
-int float boolean char string list symbol keyword vct sampler mix-sampler 
-sound-data clm float-vector int-vector vct-vector list-vector clm-vector 
 </pre>
 
 <p>The struct name can be a list; in this case the first element is the actual struct name.  The
@@ -9948,8 +9930,6 @@ fields have been set at that point either by arguments to the make function,
 or from the default values given in the defgenerator declaration.  The make
 function returns whatever
 the make-wrapper function returns, so you almost always want to return the "gen" argument.
-The added methods can be optimized by run, as can the generator function itself, but
-remember to declare the generator type (the "declare" business above).
 Here is an example that produces abs(oscil):
 </p>
 
@@ -9967,10 +9947,9 @@ Here is an example that produces abs(oscil):
 			       (lambda (g) (mus-phase (abssin-osc g)))
 			       (lambda (g val) (set! (mus-phase (abssin-osc g)) val) val))))
   (frequency *clm-default-frequency*)
-  (osc #f :type clm))
+  (osc #f))
 
 (define* (abssin gen (fm 0.0))
-  (declare (gen abssin) (fm float))
   (/ (- (abs (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> (abssin-osc gen) fm))
 	(/ 2.0 pi))  ; remove DC
      (/ 2.0 pi)))    ; normalize
@@ -10135,7 +10114,7 @@ Here's a generator that uses polynomial to produce a Blackman4 waveform (see als
 	 	    (set! (blackman4-incr g) (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (blackman4-frequency g)))
 		    (set! (blackman4-coeffs g) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .084037 -.29145 .375696 -.20762 .041194))
 		    g))
-    (frequency 0.0) (initial-phase 0.0) (coeffs #f :type vct) (angle 0.0) (incr 0.0))
+    (frequency 0.0) (initial-phase 0.0) (coeffs #f) (angle 0.0) (incr 0.0))
 
 (define (blackman4 gen fm)
   (let ((x (blackman4-angle gen)))

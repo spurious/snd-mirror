@@ -1281,7 +1281,7 @@ mac
 <pre>
 &gt; (apply let '((a 2) (b 3)) '((+ a b)))
 5
-&gt; (eval '(+ a b) (augment-environment () '(a . 2) '(b . 3)))
+&gt; (eval '(+ a b) (environment '(a . 2) '(b . 3)))
 5
 &gt; ((apply lambda '(a b) '((+ a b))) 2 3)
 5
@@ -2289,8 +2289,9 @@ Environments are first class (and applicable) objects in s7.
 (error-environment)           the environment at the point of the last error
 (<em class=def id="initialenvironment">initial-environment</em>)         the current environment, but all built-in functions have their original values
 
-(<em class=def id="augmentenvironment">augment-environment</em> env . bindings)   add bindings to env
-(<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings)
+(<em class=def id="environment">environment</em> . bindings)      make a new environment with the given bindings
+(<em class=def id="augmentenvironment">augment-environment</em> env . bindings-or-envs)   add bindings to env
+(<em class=def id="augmentenvironment!">augment-environment!</em> env . bindings-or-env)
 
 (<em class=def id="openenvironment">open-environment</em> env)        mark env as open (see below)
 (<em class=def id="openenvironmentp">open-environment?</em> env)
@@ -2501,9 +2502,7 @@ function if it exists.  A bare-bones example:
 </p>
 
 <pre class="indented">
-&gt; (abs (open-environment
-         (augment-environment () 
-           (cons 'abs (lambda (x) 47)))))
+&gt; (abs (open-environment (environment (cons 'abs (lambda (x) 47)))))
 47
 </pre>
 
@@ -2585,7 +2584,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
     (let ((new-class (open-environment
                        (apply augment-environment           ; the local slots
 		         (augment-environment               ; the global slots
-		           (apply augment-environment ()    ; the methods
+		           (apply environment               ; the methods
 			     (reverse new-methods))
 		           (cons 'class-name ',class-name)  ; class-name slot
 			   (cons 'inherited ,inherited-classes)
@@ -2758,6 +2757,12 @@ class-3
 
 ;; another obvious possibility: generic macros
 </pre>
+
+<p>with-environment (used briefly above) provides an even more striking simplification of syntax
+than implicit indexing or multidimensional vectors, and it is faster as well!
+See Snd's piano.scm for an extended example.  
+</p>
+
 <!--
 at class definition time:
     (list 'mac (symbol->value (define-macro (mac a) `(+ ,a 1))))
@@ -4799,7 +4804,7 @@ The function takes one argument, the environment in which loads and evals should
   
   (define (wrap-all)
     (let ((st (<em class=red>symbol-table</em>))
-	  (e (augment-environment ())))
+	  (e (environment)))
       (do ((i 0 (+ i 1))) 
 	  ((= i (length st)))
 	(let ((lst (st i)))
@@ -6408,7 +6413,7 @@ int main(int argc, char **argv)
  * &gt; (plus 1 2)
  * #f
  * (define obj (open-environment 
- *               (augment-environment () 
+ *               (environment
  *                 (cons 'plus (lambda args 
  *                               (apply + 1 (cdr args)))))))
  * obj
@@ -6588,7 +6593,12 @@ int main(int argc, char **argv)
 
 /* vect[0,0,0]: 0, vect[1,1,1]: 32
  */
-</pre></div>
+</pre>
+</div>
+
+<p>Much later... I decided to add s7_vector_ref_n and s7_vector_set_n to s7.
+</p>
+
 
 
 
@@ -8714,7 +8724,7 @@ int main(int argc, char **argv)
   s7_define_function(s7, "make-block", g_make_block, 1, 0, false, g_make_block_help);
   s7_define_function(s7, "block", g_to_block, 0, 0, true, g_block_help);
 
-  g_block_methods = s7_eval_c_string(s7, "(augment-environment () (cons 'vector? (lambda (p) #t)))");
+  g_block_methods = s7_eval_c_string(s7, "(environment (cons 'vector? (lambda (p) #t)))");
   /* here load up all the methods ... */
   s7_gc_protect(s7, g_block_methods);
 

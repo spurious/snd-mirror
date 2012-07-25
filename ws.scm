@@ -2,9 +2,6 @@
 
 (provide 'snd-ws.scm)
 
-(define (ws-interrupt?) #f) ; backwards compatibility
-
-
 ;;; -------- with-sound defaults --------
 
 (define *clm-srate*             (default-output-srate))
@@ -843,30 +840,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 			     (symbol->string (if (list? n) (car n) n)))
 			   fields))
 
-	 (field-types (map (lambda (n)
-			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
-				 (snd-error (format #f ":type indication for defgenerator (~A) field (~A) should be after the default value" name n)))
-			     (if (and (list? n)
-				      (= (length n) 4)
-				      (eq? (n 2) :type))
-				 (n 3)
-				 (if (and (list? n)
-					  (= (length n) 2))
-				     (if (number? (cadr n))
-					 (if (rational? (cadr n))
-					     'int
-					     'float)
-					 (if (string? (cadr n))
-					     'string
-					     (if (char? (cadr n))
-						 'char
-						 (if (or (equal? (cadr n) #t)
-							 (equal? (cadr n) #f))
-						     'boolean
-						     'float))))
-				     'float)))
-			   fields))
-
 	 (original-methods (eval (or (and (list? struct-name)
 				    (or (and (> (length struct-name) 2)
 					     (equal? (struct-name 1) :methods)
@@ -1006,10 +979,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
        (define* (,(string->symbol (string-append "make-" sname))
 		 ,@(map (lambda (n) 
-			  (if (and (list? n)
-				   (>= (length n) 2))
-			      (list (car n) (cadr n))
-			      (list n 0.0)))
+			  (if (list? n) n (list n 0.0)))
 			fields))
 	 (,wrapper 
 	  (let ((gen (mus-make-generator ,gen-type)))
@@ -1022,15 +992,16 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	    gen)))
 
 	 ,@(map (let ((ctr 0))
-		  (lambda (n type)
+		  (lambda (n)
 		    (let ((val `(begin 
 				  (define (,(string->symbol (string-append sname "-" n)) arg) (mus-generator-ref arg ,ctr))
 				  (define (,(string->symbol (string-append sname "-" n "-setter")) arg val) (mus-generator-set! arg ,ctr val))
 				  (set! (procedure-setter ,(string->symbol (string-append sname "-" n))) ,(string->symbol (string-append sname "-" n "-setter"))))))
 		      (set! ctr (+ 1 ctr))
 		      val)))
-		field-names field-types))))
+		field-names))))
 
+;;; TODO: remove :type and declare from html/scm also ws-interrupt
 
 
 
