@@ -278,7 +278,7 @@ static mus_float_t run_wrapped(mus_any *ptr, mus_float_t arg1, mus_float_t arg2)
   return(XEN_TO_C_DOUBLE(XEN_CALL_3(x->caller->methods->run, x->obj, C_TO_XEN_DOUBLE(arg1), C_TO_XEN_DOUBLE(arg2), S_mus_run)));
 }
 
-
+/* see comment in ws.scm -- all the defgen stuff is changing again!  env refs are much faster and cleaner than vectors */
 /* TODO: need wrappers for all the rest */
 /* TODO: direct refs where possible: freq field 0, use mus_float_t field_0f[] return(gn->fields[0] essentially)
  * TODO: do the fallbacks here and the freq->mus_frequency translations so the above opt is easy
@@ -4965,22 +4965,24 @@ static XEN g_mixer(XEN args)
 }
 
 
-/* TODO: doc/test mus-mix-with-envs
+/* TODO: doc/test mus-mix-with-envs, if file is #f, depend on srcs, else if srcs #f (or element of it) use file
+ *   this thing is messed up! and check it against the old fullmix ins
  */
 
 #define S_mus_mix_with_envs "mus-mix-with-envs"
 
 static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XEN envs, XEN srcs, XEN srcenv, XEN outstream, XEN revstream)
 {
+  #define H_mus_mix_with_envs "(" S_mus_mix_with_envs " file beg dur mx revmx envs srcs srcenv out rev) is an extension of " S_mus_mix ", primarily \
+intended to speed up the fullmix instrument.  file is a vector of readin generators.  beg is the sample at which to start mixing \
+output, dur is the number of samples to write. mx is a mixer, revmx is either #f or a mixer. "
+
   int i, in_chans, out_chans;
   mus_long_t st, nd;
   mus_any *s_env = NULL, *mix, *rev_mix = NULL, *ostr, *rstr = NULL;
   mus_any **mix_envs, **mix_srcs, **mix_rds;
   mus_xen *gn;
   XEN ve;
-
-  /* (with-sound () (fullmix "pistol.snd" 0 2 2 #f -1.0))
-   */
 
   XEN_ASSERT_TYPE(XEN_VECTOR_P(file), file, XEN_ARG_1, S_mus_mix_with_envs, "a vector of readin generators");
   in_chans = XEN_VECTOR_LENGTH(file);
@@ -5032,16 +5034,22 @@ static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XE
 
   if (!XEN_FALSE_P(envs))
     XEN_ASSERT_TYPE(XEN_VECTOR_P(envs), envs, XEN_ARG_6, S_mus_mix_with_envs, "a vector of env generators");
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(srcs), srcs, XEN_ARG_7, S_mus_mix_with_envs, "a vector of src generators");
+  if (!XEN_FALSE_P(srcs))
+    XEN_ASSERT_TYPE(XEN_VECTOR_P(srcs), srcs, XEN_ARG_7, S_mus_mix_with_envs, "a vector of src generators");
 
   mix_rds = (mus_any **)calloc(in_chans, sizeof(mus_any *));
   mix_srcs = (mus_any **)calloc(in_chans, sizeof(mus_any *));
 
   for (i = 0; i < in_chans; i++)
+    mix_rds[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(file, i));
+    
+  if (XEN_VECTOR_P(srcs))
     {
-      mix_rds[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(file, i));
-      ve = XEN_VECTOR_REF(srcs, i);
-      if (!XEN_FALSE_P(ve)) mix_srcs[i] = XEN_TO_MUS_ANY(ve);
+      for (i = 0; i < in_chans; i++)
+	{
+	  ve = XEN_VECTOR_REF(srcs, i);
+	  if (!XEN_FALSE_P(ve)) mix_srcs[i] = XEN_TO_MUS_ANY(ve);
+	}
     }
 
   mix_envs = (mus_any **)calloc(in_chans * out_chans, sizeof(mus_any *));
@@ -7567,7 +7575,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
       else 
 	{
 	  if (sound_data_p(reverb))
-	    mus_sound_data_add_frame(XEN_TO_SOUND_DATA(reverb), pos, mus_data(revfr)); /* TODO: this won't work if chns>1 */
+	    mus_sound_data_add_frame(XEN_TO_SOUND_DATA(reverb), pos, mus_data(revfr));
 	  else
 	    {
 	      if ((XEN_VECTOR_P(reverb)) &&
@@ -9142,8 +9150,6 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   Val = gn->gen; \
   } while (0)
 #endif
-
-/* TODO: val = clm* here or no macro at all */
 
 #define GET_NUMBER(Obj, Caller, Val) Val = s7_value(s7, Obj)
 #define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(s7_value(s7, Obj))
@@ -12128,8 +12134,7 @@ static s7_pointer filtered_comb_chooser(s7_scheme *sc, s7_pointer f, int args, s
 
 static s7_pointer frame_to_frame_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  /* PERHAPS: (sample->frame s s s) (sample->file ?)
-   * TODO: in snd-test: 17835: ;delay size 0: #<vct[len=5]: 0.000 1.000 0.000 0.000 0.000>
+  /* TODO: in snd-test: 17835: ;delay size 0: #<vct[len=5]: 0.000 1.000 0.000 0.000 0.000>
    */
   return(f);
 }
@@ -14141,7 +14146,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_mus_hop_w, H_mus_hop, S_setB S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_mix, g_mus_mix_w, 2, 5, 0, H_mus_mix);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_mix_with_envs, g_mus_mix_with_envs_w, 8, 2, 0, "an experiment");
+  XEN_DEFINE_SAFE_PROCEDURE(S_mus_mix_with_envs, g_mus_mix_with_envs_w, 8, 2, 0, H_mus_mix_with_envs);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_ssb_am,   g_make_ssb_am_w,   0, 4, 0, H_make_ssb_am); 
   XEN_DEFINE_SAFE_PROCEDURE(S_ssb_am,        g_ssb_am_w,        1, 2, 0, H_ssb_am);
@@ -14276,7 +14281,3 @@ void Init_sndlib(void)
   mus_vct_init();
   mus_xen_init();
 }
-
-/* TODO: op_safe_c_ssc or even ssi for generator-set
- *   op_safe_c_si for ref [small int for the index in both cases]
- */

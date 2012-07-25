@@ -748,6 +748,8 @@ void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_a
    *    any embedded s7_pointer variables).
    */
 
+s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
+
 
 #if WITH_GMP
   #include <gmp.h>
@@ -790,7 +792,7 @@ void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_a
  *    call-with-output-file call-with-output-string catch ceiling char->integer char-alphabetic? 
  *    char-ci<=? char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? 
  *    char-numeric? char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<? 
- *    char=? char>=? char>? copy cos cosh dynamic-wind environment? eof-object? eval even? 
+ *    char=? char>=? char>? cos cosh dynamic-wind environment? eof-object? eval even? 
  *    exact->inexact exp expt fill! floor for-each gcd hash-table hash-table-size 
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm length list->string list->vector list-tail log logand 
@@ -814,7 +816,7 @@ void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_a
  * 
  *        s7 changes
  *		
- * 25-July:   environment (in scheme). s7_vector_ref_n and s7_vector_set_n.
+ * 25-July:   environment (in scheme). s7_vector_ref_n and s7_vector_set_n. s7_copy.
  * 16-July:   s7_function_returns_temp (an experiment).
  * 2-July:    s7_object_set_* functions.
  * 11-June:   throw.

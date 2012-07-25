@@ -579,8 +579,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 						    field-names)))
 				  (and fld (string-append "-" fld)))))
 
-	 ;; SOMEDAY: ideally all the fields would be in the new object's environment
-
 	 ;; using append to splice out unwanted entries
 	 (methods (append original-methods
 			   

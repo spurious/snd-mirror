@@ -25569,6 +25569,7 @@ func
 
 ;;; --------------------------------------------------------------------------------
 ;;; environment?
+;;; environment
 ;;; global-environment
 ;;; initial-environment
 ;;; current-environment
@@ -25676,6 +25677,23 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 
 (test (null? (environment->list (global-environment))) #f)
+
+(test (environment? (environment)) #t)
+(test (length (environment)) 0)
+(test (length (environment '(a . 2))) 1)
+(test (with-environment (environment '(a . 2)) a) 2)
+(test (with-environment (environment '(a . 2) '(b . 3)) (+ a b)) 5)
+(test (eq? (environment) (global-environment)) #f)
+
+(for-each
+ (lambda (arg)
+   (test (environment arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i pi abs macroexpand '() #<eof> #<unspecified> #f '#(()) (list 1 2 3) '(1 . 2) "hi" '((a . 1))))
+
+(test (let ((e (environment '(a . 1)))) ((lambda (x) (x *)) e)) 'error)
+(test (let ((e (environment '(a . 1)))) ((lambda (x) (x pi)) e)) 'error)
+(test (let () (environment (cons pi 1))) 'error)
+(test (let () (environment (cons "hi" 1))) 'error)
 
 (for-each
  (lambda (arg)
@@ -25819,6 +25837,12 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (eval 'pi (augment-environment! () (cons 'pi pi))) pi)
 (test (map (augment-environment () '(asdf . 32) '(bsdf . 3)) '(bsdf asdf)) '(3 32))
 (test (equal? (map (global-environment) '(abs cons car)) (list abs cons car)) #t)
+
+(test (with-environment (augment-environment (environment) '(a . 1)) a) 1)
+(test (with-environment (augment-environment (environment '(b . 2)) '(a . 1)) (+ a b)) 3)
+(test (with-environment (augment-environment () (environment) '(a . 1)) a) 1)
+(test (with-environment (augment-environment () (environment '(b . 2)) '(a . 1)) (+ a b)) 3)
+(test (with-environment (augment-environment (environment '(b . 2) '(c . 3)) '(a . 1)) (+ a b c)) 6)
 
 (let ()
   (define-constant _a_constant_ 32)

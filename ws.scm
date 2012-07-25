@@ -791,13 +791,19 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;; -------- defgenerator --------
 
 ;;;  :(defgenerator (osc :make-wrapper (lambda (gen) (set! (osc-freq gen) (hz->radians (osc-freq gen))) gen)) freq phase)
-;;;  #<unspecified>
+;;;  osc-phase-setter
 ;;;  :(define hi (make-osc 440.0 0.0))
-;;;  #<unspecified>
+;;;  hi
 ;;;  :hi
-;;;  (osc 0.125378749798983 0.0 ((mus-phase #<closure> #<closure>) (mus-describe #<closure>) (mus-run #<closure>) (mus-reset #<closure>) (mus-name #<closure> #<closure>)))
+;;;  #<osc: #(0.06268937721449 0.0)>
+;;;
+;;;  but this is very much in flux -- I am about to turn generators into environments...
+;;;  I think the built-in field accessors will go away
+;;;  then get rid of generator-ref|set
+;;;  gen = fields-env -> methods-env, each one getting its own fields-env, pointing to shared methods env, both envs open
+;;;     (mus-frequency g) -- notice open env [currently clm2xen looks at a vector of methods]
 
-;;; besides setting up the list accessors, the make function, and the type predicate, defgenerator
+;;; besides setting up the field accessors, the make function, and the type predicate, defgenerator
 ;;; it also adds the built-in methods mus-name, mus-reset, mus-run, and mus-describe (if they don't already exist), and
 ;;;   mus-frequency if a "frequency" field exists (treated as radians)
 ;;;   mus-phase if a "phase" or "angle" field exists
@@ -849,6 +855,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 					     (struct-name 4))))
 			       (list))))
 
+	 ;; omit the constructed methods
 	 (method-exists? (lambda (method)
 			   (and (not (null? original-methods))
 				(find-if (lambda (g)
@@ -890,8 +897,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 							  (string=? name "order")))
 						    field-names)))
 				  (and fld (string-append "-" fld)))))
-
-	 ;; SOMEDAY: ideally all the fields would be in the new object's environment
 
 	 ;; using append to splice out unwanted entries
 	 (methods (append original-methods
@@ -982,7 +987,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 			  (if (list? n) n (list n 0.0)))
 			fields))
 	 (,wrapper 
-	  (let ((gen (mus-make-generator ,gen-type)))
+	  (let ((gen (mus-make-generator ,gen-type))) ; (apply environment (list->bindings ',fields)) -- but this is actually (cons 'name name)
+	    ;; omit the settings -- 
 	    ,@(map (let ((ctr 0))
 		     (lambda (n)
 		       (let ((val `(mus-generator-set! gen ,ctr ,(if (pair? n) (car n) n))))
@@ -991,17 +997,40 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		   fields)
 	    gen)))
 
-	 ,@(map (let ((ctr 0))
-		  (lambda (n)
-		    (let ((val `(begin 
-				  (define (,(string->symbol (string-append sname "-" n)) arg) (mus-generator-ref arg ,ctr))
-				  (define (,(string->symbol (string-append sname "-" n "-setter")) arg val) (mus-generator-set! arg ,ctr val))
-				  (set! (procedure-setter ,(string->symbol (string-append sname "-" n))) ,(string->symbol (string-append sname "-" n "-setter"))))))
-		      (set! ctr (+ 1 ctr))
-		      val)))
-		field-names))))
+       ;; omit this
+       ,@(map (let ((ctr 0))
+		(lambda (n)
+		  (let ((val `(begin 
+				(define (,(string->symbol (string-append sname "-" n)) arg) (mus-generator-ref arg ,ctr))
+				(define (,(string->symbol (string-append sname "-" n "-setter")) arg val) (mus-generator-set! arg ,ctr val))
+				(set! (procedure-setter ,(string->symbol (string-append sname "-" n))) ,(string->symbol (string-append sname "-" n "-setter"))))))
+		    (set! ctr (+ 1 ctr))
+		    val)))
+	      field-names))))
 
-;;; TODO: remove :type and declare from html/scm also ws-interrupt
+#|
+(define (list->bindings lst)
+  (if (null? lst)
+      ()
+      (cons (if (pair? (car lst))
+		(cons (list 'quote (caar lst)) (caar lst))
+		(cons (list 'quote (car lst)) (car lst)))
+	    (list->bindings (cdr lst)))))
+
+(define (list->bindings lst)
+  (if (null? lst)
+      ()
+      (cons (if (pair? (car lst))
+		`((quote ,(caar lst)) . ,(caar lst))
+		`((quote ,(car lst)) . ,(car lst)))
+	    (list->bindings (cdr lst)))))
+|#
+
+;; no generator-ref|set, fields is set as arg to mus-make-generator, not stored as clm_xen_fields
+;; fields -> object-environment for that gen.
+;; make-gen-type scans methods passed in and assigns wrappers
+;; mus-reset could, I suppose, simply get a new env from somewhere? -- perhaps clm_xen_fields can do this
+;; all methods use (with-environment (object-environment gen) ...) -- try the piano cases first
 
 
 

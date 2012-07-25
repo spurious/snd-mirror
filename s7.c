@@ -2009,7 +2009,6 @@ enum {NO_ARTICLE, DEFINITE_ARTICLE, INDEFINITE_ARTICLE};
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int len);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
-static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static void pop_input_port(s7_scheme *sc);
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
@@ -4596,8 +4595,6 @@ static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e
 
 
 /* should these two augment-envs check for symbol accessors?
- *
- * TODO: test envs as args (i.e. append-environment option)
  */
 
 static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
@@ -4753,8 +4750,6 @@ new environment."
 }
 
 
-/* TODO: test environment and use in docs etc */
-
 static s7_pointer g_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_environment "(environment ...) adds its \
@@ -4765,7 +4760,7 @@ new environment."
   int i;
 
   if (!is_null(args))
-    for (i = 1, x = cdr(args); is_not_null(x); x = cdr(x), i++)
+    for (i = 1, x = args; is_not_null(x); x = cdr(x), i++)
       {
 	s7_pointer sym, val, p;
 	p = car(x);
@@ -24589,8 +24584,6 @@ s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, i
   return(s7_wrong_number_of_args_error(sc, "s7_vector_set_n: wrong number of indices: ~A", s7_make_integer(sc, indices)));
 }
 
-/* TODO: test s7_vector_ref|set_n
- */
 
 
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
@@ -29157,7 +29150,7 @@ static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step
 }
 
 
-static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
+s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 {
   switch (type(obj))
     {
@@ -31741,6 +31734,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  set_multiple_value(args);
 	  return(eval_error(sc, "can't set! some variable to ~S", args));
 
+	case OP_SET_SAFE_VREF_1:
 	case OP_SET_PAIR_P_1:
 	case OP_SET_PAIR_C_P_1:
 	  set_multiple_value(args);
@@ -37603,12 +37597,25 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool a
 #endif
 
 
+/* :(define (hi) (if (> 3 2) 1 2))
+ *  hi
+ * :(hi)
+ * 1
+ * :(eq? (car (caddr (procedure-source hi))) 'if)
+ * #f
+ * :(eq? (car (caddr (unoptimize (procedure-source hi)))) 'if)
+ * #t
+ *
+ * PERHAPS: a better solution -- eq? and friends should be smarter about T_SYNTAX
+ *   it's ok the optimized functions: 
+ * (define (hi a b) (* a b))
+ * (eq? (car (caddr (procedure-source hi))) '*)
+ *
+ * but how to make sure this works in memq case etc?
+ */
+
 void s7_unoptimize(s7_scheme *sc, s7_pointer code)
 {
-  /* needed by the run macro, 
-   * PERHAPS: unoptimize can be caught if code has a circle -- should we check length(code)?
-   *   run calls this function, so we really should check there -- crazy to check here on every pair
-   */
   if (is_pair(code))
     {
       if ((typeflag(car(code)) == SYNTACTIC_TYPE) &&
@@ -37623,12 +37630,14 @@ void s7_unoptimize(s7_scheme *sc, s7_pointer code)
 static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
 {
   #define H_unoptimize "(unoptimize code) erases all the optimizer info in code"
+  s7_pointer code;
+  code = car(args);
 
-  if (typeflag(car(args)) == SYNTACTIC_TYPE)
-    return(car(slot_value(global_slot(car(args)))));
+  if (make_shared_info(sc, code) != NULL)                      /* if not null, we found a cycle */
+    return(wrong_type_argument_with_type(sc, sc->UNOPTIMIZE, small_int(1), code, A_PROPER_LIST));
 
-  s7_unoptimize(sc, car(args));
-  return(car(args));
+  s7_unoptimize(sc, code);
+  return(code);
 }
 
 
@@ -39185,8 +39194,6 @@ static s7_pointer check_set(s7_scheme *sc)
 		(is_symbol(cadr(body))) &&
 		(is_null(cddr(body))))
 	      {
-		/* TODO: check value for bugs
-		 */
 		func = find_uncomplicated_symbol(sc, func, sc->NIL);
 		if (is_not_null(func))
 		  {
@@ -39233,6 +39240,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			    (s7_function_chooser_data(sc, body) == s7_safe_vector_ref))
 			  {
 			    /* this must be generator-set! currently -- eventually we'll need to fix this assumption
+			     * or omit this? 
 			     */
 			    set_syntax_op(sc->code, sc->SET_SAFE_VREF);
 
@@ -42075,18 +42083,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DO_STEP:
       /* increment all vars, return to endtest 
        *   these are also updated in parallel at the end, so we gather all the incremented values first
+       *
+       * here we know car(sc->args) is not null, args is the list of steppable vars,
+       *   any unstepped vars in the do var section are not in this list, so
+       *   (do ((i 0 (+ i 1)) (j 2)) ...)
+       *   arrives here with sc->args:
+       *   '(((+ i 1) . 0))
        */
-      
-      /* here we know car(sc->args) is not null */
       push_stack(sc, OP_DO_END, sc->args, sc->code);
       sc->args = car(sc->args);                /* the var data lists */
       sc->code = sc->args;                     /* save the top of the list */
 
-
     DO_STEP1:
-      /* on each iteration, we first get here with args as the list of var bindings, exprs, and init vals
-       *   e.g. (((i . 0) (+ i 1) 0))
-       * each arg incr expr is evaluated and the value placed in caddr while we cdr down args
+      /* on each iteration, each arg incr expr is evaluated and the value placed in caddr while we cdr down args
        * finally args is nil...
        */
 
@@ -48249,7 +48258,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = cadr(sc->code);
       if (is_symbol(sc->value))
 	sc->value = finder(sc, sc->value);
-      /* TODO: do we need to protect code here? */
       /* fall through */
       
     case OP_SET_PAIR_P_1:
@@ -50513,8 +50521,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START_WITHOUT_POP_STACK;
       }
       
-      /* TODO: this is cheating -- remove? 
-       */
     case OP_LET_READ_CHAR_P:
       {
 	s7_pointer port, code, fc, c;
@@ -58546,7 +58552,6 @@ s7_scheme *s7_init(void)
  * get gmp to work again in the opt case
  *
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
- * TODO: in do, locals that aren't stepped should not glom up the step process
  * TOOD: move do-locals inward in clm-ins/etc (current code was written to accomodate the run macro)
  *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
