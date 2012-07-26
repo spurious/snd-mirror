@@ -5171,8 +5171,8 @@ index 10 (so 10/2 is the bes-jn arg):
 						  ((>= i len))
 						(set! n (max n (floor (lst i)))))
 					      n))
-				      (sin-amps (make-vector (+ topk 1)))
-				      (cos-amps (make-vector (+ topk 1))))
+				      (sin-amps (make-vector (+ topk 1) 0.0))
+				      (cos-amps (make-vector (+ topk 1) 0.0)))
 				 (do ((j 0 (+ j 3)))
 				     ((>= j len))
 				   (let ((n (floor (lst j)))
@@ -5377,7 +5377,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define* (make-noid (frequency 0.0) (n 1) (phases #f) (choice 'all))
   (make-polyoid frequency
-		(let ((amps (make-vector (* 3 n))))
+		(let ((amps (make-vector (* 3 n) 0.0)))
 		  (do ((i 1 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((> i n))
@@ -5595,7 +5595,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define* (make-roid (frequency 0.0) (n 1) (r 1.0) (phases #f))
   (make-polyoid frequency
-		(let ((amps (make-vector (* 3 n)))
+		(let ((amps (make-vector (* 3 n) 0.0))
 		      (rn (/ 1.0 n)))
 		  (do ((i 1 (+ i 1))
 		       (j 0 (+ j 3)))

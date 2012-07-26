@@ -318,8 +318,8 @@ static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A too high?");
 
   val = XEN_CADR(args);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real");
-  x = s7_number_to_real(val);
+  /* XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real"); */
+  x = s7_number_to_real(sc, val);
 
   v->data[loc] = x;
   return(val);
@@ -365,9 +365,9 @@ static XEN s7_vct_set_3(s7_scheme *sc, void *obj, s7_pointer index, s7_pointer v
   if (loc >= v->length)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, index, "index ~A too high?");
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ARG_3, S_vct_setB, "a real");
+  /* XEN_ASSERT_TYPE(XEN_NUMBER_P(value), value, XEN_ARG_3, S_vct_setB, "a real"); */
 
-  v->data[loc] = s7_number_to_real(value);
+  v->data[loc] = s7_number_to_real(sc, value);
   return(value);
 }
 

@@ -24,14 +24,17 @@
 	(next-prime (+ val 2))))
        
   (let ((srscale (/ (mus-srate) 25641))
-	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
+	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19))
+	(chan2 (> (channels *output*) 1))
+	(chan4 (= (channels *output*) 4)))
+	
     (do ((i 0 (+ i 1)))
 	((= i 15))
       (let ((val (floor (* srscale (dly-len i)))))
 	(if (even? val) (set! val (+ 1 val)))
 	(set! (dly-len i) (next-prime val))))
 
-    (let* ((len (+ (floor (mus-srate)) (frames *reverb*)))
+    (let ((len (+ (floor (mus-srate)) (frames *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (dly-len 2)))
@@ -39,8 +42,6 @@
 	   (comb5 (make-comb (* .753 reverb-factor) (dly-len 4)))
 	   (comb6 (make-comb (* .733 reverb-factor) (dly-len 5)))
 	   (low (make-one-pole lp-coeff (- lp-coeff 1.0)))
-	   (chan2 (> (channels *output*) 1))
-	   (chan4 (= (channels *output*) 4))
 	   (allpass1 (make-all-pass -0.700 0.700 (dly-len 6)))
 	   (allpass2 (make-all-pass -0.700 0.700 (dly-len 7)))
 	   (allpass3 (make-all-pass -0.700 0.700 (dly-len 8)))
@@ -49,6 +50,7 @@
 	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (dly-len 12)) #f))
 	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (dly-len 13)) #f))
 	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (dly-len 14)) #f)))
+
       (if (not chan2)
 	   (do ((i 0 (+ i 1)))
 	       ((= i len))

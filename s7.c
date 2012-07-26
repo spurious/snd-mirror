@@ -6826,7 +6826,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 }
 
 
-s7_Double s7_number_to_real(s7_pointer x)
+s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x)
 {
   if (type(x) == T_REAL)
     return(real(x));
@@ -6860,14 +6860,14 @@ s7_Double s7_number_to_real(s7_pointer x)
       return((s7_Double)mpfr_get_d(mpc_realref(big_complex(x)), GMP_RNDN));
 #endif
     }
-  /* what to do with a non-number? -- to return #f or throw an error, we need the s7_scheme pointer
-   *   some sort of check is needed for FFI calls -- not a number -> segfault
-   */
-  return(0.0); 
+
+  /* fprintf(stderr, "real: %s\n", DISPLAY(x)); */
+  /* s7_wrong_type_arg_error(sc, "s7_number_to_real", 0, x, "a real number"); */
+  return(0.0);
 }
 
 
-s7_Int s7_number_to_integer(s7_pointer x)
+s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x)
 {
   if (type(x) == T_INTEGER)
     return(integer(x));
@@ -6900,7 +6900,10 @@ s7_Int s7_number_to_integer(s7_pointer x)
       return((s7_Int)mpfr_get_d(mpc_realref(big_complex(x)), GMP_RNDN));
 #endif
     }
-  return(0); 
+  /* fprintf(stderr, "int: %s\n", DISPLAY(x)); */
+  /* TODO: fix the number->* problems! */
+  /* s7_wrong_type_arg_error(sc, "s7_number_to_integer", 0, x, "an integer"); */
+  return(0);
 }
 
 
@@ -9126,7 +9129,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	  CHECK_METHOD(sc, ex, sc->RATIONALIZE, args);
 	  return(wrong_type_argument(sc, sc->RATIONALIZE, small_int(2), ex, T_REAL));
 	}
-      err = s7_number_to_real(ex);
+      err = s7_number_to_real(sc, ex);
       if (is_NaN(err))
 	return(out_of_range(sc, sc->RATIONALIZE, small_int(2), cadr(args), "error term is NaN"));
       if (err < 0.0) err = -err;
@@ -9159,7 +9162,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	s7_Double rat;
 	s7_Int numer = 0, denom = 1;
 
-	rat = s7_number_to_real(x);
+	rat = s7_number_to_real(sc, x);
 
 	if ((is_NaN(rat)) || (isinf(rat)))
 	  return(wrong_type_argument_with_type(sc, sc->RATIONALIZE, small_int(1), x, A_NORMAL_REAL));
@@ -15635,7 +15638,7 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
     case T_BIG_REAL:
       {
 	decode_float_t num;
-	num.value.real_value = s7_number_to_real(x);
+	num.value.real_value = s7_number_to_real(sc, x);
 	if ((is_NaN(num.value.real_value)) || (isinf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
 	  return(simple_out_of_range(sc, sc->INTEGER_DECODE_FLOAT, x, "a real that s7_Double can handle"));
 	ix = num.value.integer_value;
@@ -22212,7 +22215,6 @@ s7_pointer s7_cddddr(s7_pointer p) {return(cddddr(p));}
 s7_pointer s7_cdddar(s7_pointer p) {return(cdddar(p));}
 s7_pointer s7_cddaar(s7_pointer p) {return(cddaar(p));}
 
-
 s7_pointer s7_set_car(s7_pointer p, s7_pointer q) 
 { 
   car(p) = q;
@@ -22225,6 +22227,407 @@ s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q)
   cdr(p) = q;
   return(p);
 }
+
+/* -------------------------------------------------------------------------------- */
+/* 
+ * this is an (ugly) experiment...
+ */
+
+s7_pointer s7_apply_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1))
+{
+  return(f1(car(args)));
+}
+
+s7_pointer s7_apply_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2))
+{
+  return(f2(car(args), cadr(args)));
+}
+
+s7_pointer s7_apply_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3))
+{
+  s7_pointer a1;
+  a1 = car(args);
+  args = cdr(args);
+  return(f3(a1, car(args), cadr(args)));
+}
+
+s7_pointer s7_apply_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4))
+{
+  s7_pointer a1, a2;
+  a1 = car(args);
+  a2 = cadr(args);
+  args = cddr(args);
+  return(f4(a1, a2, car(args), cadr(args)));
+}
+
+s7_pointer s7_apply_5(s7_scheme *sc, s7_pointer args, s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5))
+{
+  s7_pointer a1, a2, a3, a4;
+  a1 = car(args);
+  a2 = cadr(args);
+  args = cddr(args);
+  a3 = car(args);
+  a4 = cadr(args);
+  args = cddr(args);
+  return(f5(a1, a2, a3, a4, car(args)));
+}
+
+s7_pointer s7_apply_6(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6))
+{
+  s7_pointer a1, a2, a3, a4;
+  a1 = car(args);
+  a2 = cadr(args);
+  args = cddr(args);
+  a3 = car(args);
+  a4 = cadr(args);
+  args = cddr(args);
+  return(f6(a1, a2, a3, a4, car(args), cadr(args)));
+}
+
+s7_pointer s7_apply_7(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7))
+{
+  s7_pointer a1, a2, a3, a4, a5, a6;
+  a1 = car(args);
+  a2 = cadr(args);
+  args = cddr(args);
+  a3 = car(args);
+  a4 = cadr(args);
+  args = cddr(args);
+  a5 = car(args);
+  a6 = cadr(args);
+  args = cddr(args);
+  return(f7(a1, a2, a3, a4, a5, a6, car(args)));
+}
+
+s7_pointer s7_apply_8(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8))
+{
+  s7_pointer a1, a2, a3, a4, a5, a6;
+  a1 = car(args);
+  a2 = cadr(args);
+  args = cddr(args);
+  a3 = car(args);
+  a4 = cadr(args);
+  args = cddr(args);
+  a5 = car(args);
+  a6 = cadr(args);
+  args = cddr(args);
+  return(f8(a1, a2, a3, a4, a5, a6, car(args), cadr(args)));
+}
+
+s7_pointer s7_apply_9(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9))
+{
+  s7_pointer a1, a2, a3, a4, a5, a6;
+  a1 = car(args);
+  a2 = cadr(args);
+  args = cddr(args);
+  a3 = car(args);
+  a4 = cadr(args);
+  args = cddr(args);
+  a5 = car(args);
+  a6 = cadr(args);
+  args = cddr(args);
+  return(f9(a1, a2, a3, a4, a5, a6, car(args), cadr(args), caddr(args)));
+}
+
+s7_pointer s7_apply_n_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1))
+{
+  if (is_pair(args)) 
+    return(f1(car(args)));
+  return(f1(sc->UNDEFINED));
+}
+
+s7_pointer s7_apply_n_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2))
+{
+  if (is_pair(args))
+    {
+      if (is_pair(cdr(args)))
+	return(f2(car(args), cadr(args)));
+      return(f2(car(args), sc->UNDEFINED));
+    }
+  return(f2(sc->UNDEFINED, sc->UNDEFINED));
+}
+
+s7_pointer s7_apply_n_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3))
+{
+  if (is_pair(args))
+    {
+      s7_pointer a1, a2;
+      a1 = car(args);
+      args = cdr(args);
+      if (is_pair(args))
+	{
+	  a2 = car(args);
+	  if (is_pair(cdr(args))) 
+	    return(f3(a1, a2, cadr(args)));
+	  return(f3(a1, a2, sc->UNDEFINED));
+	}
+      return(f3(a1, sc->UNDEFINED, sc->UNDEFINED));
+    }
+  return(f3(sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED));
+}
+
+s7_pointer s7_apply_n_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4))
+{
+  if (is_pair(args))
+    {
+      s7_pointer a1, a2, a3;
+      a1 = car(args);
+      args = cdr(args);
+      if (is_pair(args))
+	{
+	  a2 = car(args);
+	  args = cdr(args);
+	  if (is_pair(args))
+	    {
+	      a3 = car(args);
+	      if (is_pair(cdr(args)))
+		return(f4(a1, a2, a3, cadr(args)));
+	      return(f4(a1, a2, a3, sc->UNDEFINED));
+	    }
+	  return(f4(a1, a2, sc->UNDEFINED, sc->UNDEFINED));
+	}
+      return(f4(a1, sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED));
+    }
+  return(f4(sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED));
+}
+
+s7_pointer s7_apply_n_5(s7_scheme *sc, s7_pointer args, 
+			s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5))
+{
+  if (is_pair(args))
+    {
+      s7_pointer a1, a2, a3, a4;
+      a1 = car(args);
+      args = cdr(args);
+      if (is_pair(args))
+	{
+	  a2 = car(args);
+	  args = cdr(args);
+	  if (is_pair(args))
+	    {
+	      a3 = car(args);
+	      args = cdr(args);
+	      if (is_pair(args))
+		{
+		  a4 = car(args);
+		  if (is_pair(cdr(args))) 
+		    return(f5(a1, a2, a3, a4, cadr(args)));
+		  return(f5(a1, a2, a3, a4, sc->UNDEFINED));
+		}
+	      return(f5(a1, a2, a3, sc->UNDEFINED, sc->UNDEFINED));
+	    }
+	  return(f5(a1, a2, sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED));
+	}
+      return(f5(a1, sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED));
+    }
+  return(f5(sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED, sc->UNDEFINED));
+}
+
+s7_pointer s7_apply_n_6(s7_scheme *sc, s7_pointer args, 
+			s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5, s7_pointer a6))
+{
+  s7_pointer a1, a2, a3, a4, a5, a6;
+  a1 = sc->UNDEFINED; a2 = sc->UNDEFINED; a3 = sc->UNDEFINED; a4 = sc->UNDEFINED; a5 = sc->UNDEFINED; a6 = sc->UNDEFINED;
+  if (is_pair(args))
+    {
+      a1 = car(args);
+      args = cdr(args);
+      if (is_pair(args))
+	{
+	  a2 = car(args);
+	  args = cdr(args);
+	  if (is_pair(args))
+	    {
+	      a3 = car(args);
+	      args = cdr(args);
+	      if (is_pair(args))
+		{
+		  a4 = car(args);
+		  args = cdr(args);
+		  if (is_pair(args))
+		    {
+		      a5 = car(args);
+		      if (is_pair(cdr(args))) a6 = cadr(args);
+		    }}}}}
+  return(f6(a1, a2, a3, a4, a5, a6));
+}
+
+s7_pointer s7_apply_n_7(s7_scheme *sc, s7_pointer args, 
+			s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+					 s7_pointer a5, s7_pointer a6, s7_pointer a7))
+{
+  s7_pointer a1, a2, a3, a4, a5, a6, a7;
+  a1 = sc->UNDEFINED; a2 = sc->UNDEFINED; a3 = sc->UNDEFINED; a4 = sc->UNDEFINED; a5 = sc->UNDEFINED; 
+  a6 = sc->UNDEFINED, a7 = sc->UNDEFINED;
+  if (is_pair(args))
+    {
+      a1 = car(args);
+      args = cdr(args);
+      if (is_pair(args))
+	{
+	  a2 = car(args);
+	  args = cdr(args);
+	  if (is_pair(args))
+	    {
+	      a3 = car(args);
+	      args = cdr(args);
+	      if (is_pair(args))
+		{
+		  a4 = car(args);
+		  args = cdr(args);
+		  if (is_pair(args))
+		    {
+		      a5 = car(args);
+		      args = cdr(args);
+		      if (is_pair(args))
+			{
+			  a6 = car(args);
+			  if (is_pair(cdr(args))) a7 = cadr(args);
+			}}}}}}
+  return(f7(a1, a2, a3, a4, a5, a6, a7));
+}
+
+s7_pointer s7_apply_n_8(s7_scheme *sc, s7_pointer args, 
+			s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+					 s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8))
+{
+  s7_pointer a1, a2, a3, a4, a5, a6, a7, a8;
+  a1 = sc->UNDEFINED; a2 = sc->UNDEFINED; a3 = sc->UNDEFINED; a4 = sc->UNDEFINED; a5 = sc->UNDEFINED; 
+  a6 = sc->UNDEFINED, a7 = sc->UNDEFINED; a8 = sc->UNDEFINED;
+  if (is_pair(args))
+    {
+      a1 = car(args);
+      args = cdr(args);
+      if (is_pair(args))
+	{
+	  a2 = car(args);
+	  args = cdr(args);
+	  if (is_pair(args))
+	    {
+	      a3 = car(args);
+	      args = cdr(args);
+	      if (is_pair(args))
+		{
+		  a4 = car(args);
+		  args = cdr(args);
+		  if (is_pair(args))
+		    {
+		      a5 = car(args);
+		      args = cdr(args);
+		      if (is_pair(args))
+			{
+			  a6 = car(args);
+			  args = cdr(args);
+			  if (is_pair(args))
+			    {
+			      a7 = car(args);
+			      if (is_pair(cdr(args))) a8 = cadr(args);
+			    }}}}}}}
+  return(f8(a1, a2, a3, a4, a5, a6, a7, a8));
+}
+
+s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args, 
+			s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+					 s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8,
+					 s7_pointer a9))
+{
+  s7_pointer a1, a2, a3, a4, a5, a6, a7, a8, a9;
+  a1 = sc->UNDEFINED; a2 = sc->UNDEFINED; a3 = sc->UNDEFINED; a4 = sc->UNDEFINED; a5 = sc->UNDEFINED; 
+  a6 = sc->UNDEFINED, a7 = sc->UNDEFINED; a8 = sc->UNDEFINED; a9 = sc->UNDEFINED;
+  if (is_pair(args))
+    {
+      a1 = car(args);
+      args = cdr(args);
+      if (is_pair(args))
+	{
+	  a2 = car(args);
+	  args = cdr(args);
+	  if (is_pair(args))
+	    {
+	      a3 = car(args);
+	      args = cdr(args);
+	      if (is_pair(args))
+		{
+		  a4 = car(args);
+		  args = cdr(args);
+		  if (is_pair(args))
+		    {
+		      a5 = car(args);
+		      args = cdr(args);
+		      if (is_pair(args))
+			{
+			  a6 = car(args);
+			  args = cdr(args);
+			  if (is_pair(args))
+			    {
+			      a7 = car(args);
+			      args = cdr(args);
+			      if (is_pair(args))
+				{
+				  a8 = car(args);
+				  if (is_pair(cdr(args))) a9 = cadr(args);
+				}}}}}}}}
+  return(f9(a1, a2, a3, a4, a5, a6, a7, a8, a9));
+}
+
+s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args, 
+			 s7_pointer (*f10)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+					   s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8,
+					   s7_pointer a9, s7_pointer a10))
+{
+  s7_pointer a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
+  a1 = sc->UNDEFINED; a2 = sc->UNDEFINED; a3 = sc->UNDEFINED; a4 = sc->UNDEFINED; a5 = sc->UNDEFINED; 
+  a6 = sc->UNDEFINED, a7 = sc->UNDEFINED; a8 = sc->UNDEFINED; a9 = sc->UNDEFINED; a10 = sc->UNDEFINED;
+  if (is_pair(args))
+    {
+      a1 = car(args);
+      args = cdr(args);
+      if (is_pair(args))
+	{
+	  a2 = car(args);
+	  args = cdr(args);
+	  if (is_pair(args))
+	    {
+	      a3 = car(args);
+	      args = cdr(args);
+	      if (is_pair(args))
+		{
+		  a4 = car(args);
+		  args = cdr(args);
+		  if (is_pair(args))
+		    {
+		      a5 = car(args);
+		      args = cdr(args);
+		      if (is_pair(args))
+			{
+			  a6 = car(args);
+			  args = cdr(args);
+			  if (is_pair(args))
+			    {
+			      a7 = car(args);
+			      args = cdr(args);
+			      if (is_pair(args))
+				{
+				  a8 = car(args);
+				  args = cdr(args);
+				  if (is_pair(args))
+				    {
+				      a9 = car(args);
+				      if (is_pair(cdr(args))) a10 = cadr(args);
+				    }}}}}}}}}
+  return(f10(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
+}
+
+/* -------------------------------------------------------------------------------- */
+
 
 
 s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num)
@@ -55825,7 +56228,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	}
       if (is_big_number(p1))
 	mpfr_init_set(error, big_real(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
-      else mpfr_init_set_d(error, s7_number_to_real(p1), GMP_RNDN);
+      else mpfr_init_set_d(error, s7_number_to_real(sc, p1), GMP_RNDN);
 
       err_x = mpfr_get_d(error, GMP_RNDN);
       if (is_NaN(err_x))
@@ -55844,7 +56247,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
   
   if (is_big_number(p0))
     mpfr_init_set(ux, big_real(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
-  else mpfr_init_set_d(ux, s7_number_to_real(p0), GMP_RNDN);
+  else mpfr_init_set_d(ux, s7_number_to_real(sc, p0), GMP_RNDN);
 
   xx = mpfr_get_d(ux, GMP_RNDN);  
   if (is_NaN(xx))
@@ -58583,6 +58986,6 @@ s7_scheme *s7_init(void)
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477
  * s7test            1721             1456 1430 1375
  * t455                           265  256  218   83
- * t502                                 90   72   44
+ * t502                                 90   72   43
  */
 

@@ -534,8 +534,8 @@ is a physical model of a flute:
 			  (degree 0.0)
 		     	       (distance 1.0)
 		               (reverb-amount 0.005))
-  (let* ((beg (seconds->samples startime))
-	 (end (+ beg (seconds->samples dur)))
+  (let ((beg (seconds->samples startime))
+	 (end (seconds->samples (+ startime dur)))
 	 (loc (make-locsig degree distance reverb-amount))
 	 (carrier (make-oscil frequency))
 	 (fm1-osc (make-oscil mod-freq))
@@ -573,52 +573,54 @@ is a physical model of a flute:
 
 (definstrument (fm-drum start-time duration frequency amplitude index 
 			:optional (high #f) (degree 0.0) (distance 1.0) (reverb-amount 0.01))
-  (let* ((beg (seconds->samples start-time))
-	 (end (+ beg (seconds->samples duration)))
-	 ;; many of the following variables were originally passed as arguments
-	 (casrat (if high 8.525 3.515))
-	 (fmrat (if high 3.414 1.414))
-	 (glsfun '(0 0  25 0  75 1  100 1))
-	 (glsf (make-env glsfun :scaler (if high (hz->radians 66) 0.0) :duration duration))
-	 (ampfun '(0 0  3 .05  5 .2  7 .8  8 .95  10 1.0  12 .95  20 .3  30 .1  100 0))
-	 (atdrpt (* 100 (/ (if high .01 .015) duration)))
-	 (ampf (make-env (stretch-envelope ampfun 
-					   10 atdrpt 
-					   15 (max (+ atdrpt 1) 
-						   (- 100 (* 100 (/ (- duration .2) duration)))))
-		  :scaler amplitude :duration duration))
-	 (indxfun '(0  0     5  .014  10 .033  15 .061  20 .099  
-		    25 .153  30 .228  35 .332  40 .477  
-		    45 .681  50 .964  55 .681  60 .478  65 .332  
-		    70 .228  75 .153  80 .099  85 .061  
-		    90 .033  95 .0141 100 0))
-	 (indxpt (- 100 (* 100 (/ (- duration .1) duration))))
-	 (divindxf (stretch-envelope indxfun 50 atdrpt 65 indxpt))
-	 (indxf (make-env divindxf :scaler (min (hz->radians (* index fmrat frequency)) pi) :duration duration))
-	 (mindxf (make-env divindxf :scaler (min (hz->radians (* index casrat frequency)) pi) :duration duration))
-	 (devf (make-env (stretch-envelope ampfun 
-					   10 atdrpt 
-					   90 (max (+ atdrpt 1) 
-						   (- 100 (* 100 (/ (- duration .05) duration)))))
-			 :scaler (min pi (hz->radians 7000)) :duration duration))
-	 (loc (make-locsig degree distance reverb-amount))
-	 (rn (make-rand :frequency 7000 :amplitude 1.0))
-	 (carrier (make-oscil frequency))
-	 (fmosc (make-oscil (* frequency fmrat)))
-	 (cascade (make-oscil (* frequency casrat))))
-     (do ((i beg (+ i 1)))
-	 ((= i end))
-       (let ((gls (env glsf)))
-	 (locsig loc i (* (env ampf) 
-			  (oscil carrier 
-				 (+ gls 
-				    (* (env indxf)
-				       (oscil fmosc 
-					      (+ (* gls fmrat)
-						 (* (env mindxf) 
-						    (oscil cascade 
-							   (+ (* gls casrat)
-							      (* (env devf) (rand rn))))))))))))))))
+  (let (;; many of the following variables were originally passed as arguments
+	(casrat (if high 8.525 3.515))
+	(fmrat (if high 3.414 1.414))
+	(glsfun '(0 0  25 0  75 1  100 1))
+	(indxfun '(0  0     5  .014  10 .033  15 .061  20 .099  
+		      25 .153  30 .228  35 .332  40 .477  
+		      45 .681  50 .964  55 .681  60 .478  65 .332  
+		      70 .228  75 .153  80 .099  85 .061  
+		      90 .033  95 .0141 100 0))
+	(indxpt (- 100 (* 100 (/ (- duration .1) duration))))
+	(ampfun '(0 0  3 .05  5 .2  7 .8  8 .95  10 1.0  12 .95  20 .3  30 .1  100 0))
+	(atdrpt (* 100 (/ (if high .01 .015) duration))))
+    (let (
+	  (divindxf (stretch-envelope indxfun 50 atdrpt 65 indxpt))
+	  )
+      (let ((beg (seconds->samples start-time))
+	    (end (seconds->samples (+ start-time duration)))
+	    (glsf (make-env glsfun :scaler (if high (hz->radians 66) 0.0) :duration duration))
+	    (ampf (make-env (stretch-envelope ampfun 
+					      10 atdrpt 
+					      15 (max (+ atdrpt 1) 
+						      (- 100 (* 100 (/ (- duration .2) duration)))))
+			    :scaler amplitude :duration duration))
+	    (indxf (make-env divindxf :scaler (min (hz->radians (* index fmrat frequency)) pi) :duration duration))
+	    (mindxf (make-env divindxf :scaler (min (hz->radians (* index casrat frequency)) pi) :duration duration))
+	    (devf (make-env (stretch-envelope ampfun 
+					      10 atdrpt 
+					      90 (max (+ atdrpt 1) 
+						      (- 100 (* 100 (/ (- duration .05) duration)))))
+			    :scaler (min pi (hz->radians 7000)) :duration duration))
+	    (loc (make-locsig degree distance reverb-amount))
+	    (rn (make-rand :frequency 7000 :amplitude 1.0))
+	    (carrier (make-oscil frequency))
+	    (fmosc (make-oscil (* frequency fmrat)))
+	    (cascade (make-oscil (* frequency casrat))))
+	(do ((i beg (+ i 1)))
+	    ((= i end))
+	  (let ((gls (env glsf)))
+	    (locsig loc i (* (env ampf) 
+			     (oscil carrier 
+				    (+ gls 
+				       (* (env indxf)
+					  (oscil fmosc 
+						 (+ (* gls fmrat)
+						    (* (env mindxf) 
+						       (oscil cascade 
+							      (+ (* gls casrat)
+								 (* (env devf) (rand rn))))))))))))))))))
 #|
 (with-sound ()
 	    (fm-drum 0 1.5 55 .3 5 #f)
@@ -631,42 +633,42 @@ is a physical model of a flute:
 
 (definstrument (gong start-time duration frequency amplitude
 		     (degree 0.0) (distance 1.0) (reverb-amount 0.005))
-  (let* ((mfq1 (* frequency 1.16))
-	 (mfq2 (* frequency 3.14))
-	 (mfq3 (* frequency 1.005))
-	 (indx01 (hz->radians (* .01 mfq1)))
-	 (indx11 (hz->radians (* .30 mfq1)))
-	 (indx02 (hz->radians (* .01 mfq2)))
-	 (indx12 (hz->radians (* .38 mfq2)))
-	 (indx03 (hz->radians (* .01 mfq3)))
-	 (indx13 (hz->radians (* .50 mfq3)))
-	 (atpt 5)
-	 (atdur (* 100 (/ .002 duration)))
-	 (expf '(0 0  3 1  15 .5  27 .25  50 .1  100 0))  
-	 (rise '(0 0  15 .3  30 1.0  75 .5  100 0))
-	 (fmup '(0 0  75 1.0  98 1.0  100 0))
-	 (fmdwn '(0 0  2 1.0  100 0))
-	 (ampfun (make-env (stretch-envelope expf atpt atdur)
-			   :scaler amplitude :duration duration))
-	 (indxfun1 (make-env fmup :duration duration
-			     :scaler (- indx11 indx01) :offset indx01))
-	 (indxfun2 (make-env fmdwn :duration duration
-			     :scaler (- indx12 indx02) :offset indx02))
-	 (indxfun3 (make-env rise :duration duration
-			     :scaler (- indx13 indx03) :offset indx03))
-	 (loc (make-locsig degree distance reverb-amount))
-	 (carrier (make-oscil frequency))
-	 (mod1 (make-oscil mfq1))
-	 (mod2 (make-oscil mfq2))
-	 (mod3 (make-oscil mfq3))
-	 (beg (seconds->samples start-time))
-	 (end (+ beg (seconds->samples duration))))
-     (do ((i beg (+ i 1)))
-	 ((= i end))
-       (locsig loc i (* (env ampfun) 
-			(oscil carrier (+ (* (env indxfun1) (oscil mod1))
-					  (* (env indxfun2) (oscil mod2))
-					  (* (env indxfun3) (oscil mod3)))))))))
+  (let ((mfq1 (* frequency 1.16))
+	(mfq2 (* frequency 3.14))
+	(mfq3 (* frequency 1.005)))
+    (let ((indx01 (hz->radians (* .01 mfq1)))
+	  (indx11 (hz->radians (* .30 mfq1)))
+	  (indx02 (hz->radians (* .01 mfq2)))
+	  (indx12 (hz->radians (* .38 mfq2)))
+	  (indx03 (hz->radians (* .01 mfq3)))
+	  (indx13 (hz->radians (* .50 mfq3)))
+	  (atpt 5)
+	  (atdur (* 100 (/ .002 duration)))
+	  (expf '(0 0  3 1  15 .5  27 .25  50 .1  100 0))  
+	  (rise '(0 0  15 .3  30 1.0  75 .5  100 0))
+	  (fmup '(0 0  75 1.0  98 1.0  100 0))
+	  (fmdwn '(0 0  2 1.0  100 0)))
+      (let ((ampfun (make-env (stretch-envelope expf atpt atdur)
+			      :scaler amplitude :duration duration))
+	    (indxfun1 (make-env fmup :duration duration
+				:scaler (- indx11 indx01) :offset indx01))
+	    (indxfun2 (make-env fmdwn :duration duration
+				:scaler (- indx12 indx02) :offset indx02))
+	    (indxfun3 (make-env rise :duration duration
+				:scaler (- indx13 indx03) :offset indx03))
+	    (loc (make-locsig degree distance reverb-amount))
+	    (carrier (make-oscil frequency))
+	    (mod1 (make-oscil mfq1))
+	    (mod2 (make-oscil mfq2))
+	    (mod3 (make-oscil mfq3))
+	    (beg (seconds->samples start-time))
+	    (end (seconds->samples (+ start-time duration))))
+	(do ((i beg (+ i 1)))
+	    ((= i end))
+	  (locsig loc i (* (env ampfun) 
+			   (oscil carrier (+ (* (env indxfun1) (oscil mod1))
+					     (* (env indxfun2) (oscil mod2))
+					     (* (env indxfun3) (oscil mod3)))))))))))
 
 ;;; (with-sound () (gong 0 3 261.61 .6))
 
@@ -927,7 +929,6 @@ is a physical model of a flute:
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
   ;; output-scale can be used to boost the reverb output
-
   (define (prime? val)
     (or (= val 2)
 	(and (odd? val)
@@ -935,21 +936,23 @@ is a physical model of a flute:
 		  (lim (sqrt val)))
 		 ((or (= 0 (modulo val i)) (> i lim))
 		  (> i lim))))))
-
   (define (next-prime val)
     (if (prime? val)
 	val
 	(next-prime (+ val 2))))
        
   (let ((srscale (/ (mus-srate) 25641))
-	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
+	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19))
+	(chan2 (> (channels *output*) 1))
+	(chan4 (= (channels *output*) 4)))
+	
     (do ((i 0 (+ i 1)))
 	((= i 15))
       (let ((val (floor (* srscale (dly-len i)))))
 	(if (even? val) (set! val (+ 1 val)))
 	(set! (dly-len i) (next-prime val))))
 
-    (let* ((len (+ (mus-srate) (length *reverb*)))
+    (let ((len (+ (floor (mus-srate)) (frames *reverb*)))
 	   (comb1 (make-comb (* .822 reverb-factor) (dly-len 0)))
 	   (comb2 (make-comb (* .802 reverb-factor) (dly-len 1)))
 	   (comb3 (make-comb (* .773 reverb-factor) (dly-len 2)))
@@ -957,8 +960,6 @@ is a physical model of a flute:
 	   (comb5 (make-comb (* .753 reverb-factor) (dly-len 4)))
 	   (comb6 (make-comb (* .733 reverb-factor) (dly-len 5)))
 	   (low (make-one-pole lp-coeff (- lp-coeff 1.0)))
-	   (chan2 (> (channels *output*) 1))
-	   (chan4 (= (channels *output*) 4))
 	   (allpass1 (make-all-pass -0.700 0.700 (dly-len 6)))
 	   (allpass2 (make-all-pass -0.700 0.700 (dly-len 7)))
 	   (allpass3 (make-all-pass -0.700 0.700 (dly-len 8)))
@@ -967,24 +968,42 @@ is a physical model of a flute:
 	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (dly-len 12)) #f))
 	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (dly-len 13)) #f))
 	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (dly-len 14)) #f)))
-       (do ((i 0 (+ i 1)))
-	   ((= i len))
-	 (let* ((rev (* volume (ina i *reverb*)))
-		(outrev (all-pass allpass4
-				  (one-pole low
-					    (all-pass allpass3
-						      (all-pass allpass2
-								(all-pass allpass1
-									  (+ (comb comb1 rev)
-									     (comb comb2 rev)
-									     (comb comb3 rev)
-									     (comb comb4 rev)
-									     (comb comb5 rev)
-									     (comb comb6 rev)))))))))
-	   (outa i (all-pass allpass5 outrev))
-	   (if chan2 (outb i (all-pass allpass6 outrev)))
-	   (if chan4 (outc i (all-pass allpass7 outrev)))
-	   (if chan4 (outd i (all-pass allpass8 outrev))))))))
+
+      (if (not chan2)
+	   (do ((i 0 (+ i 1)))
+	       ((= i len))
+	     (let ((rev (* volume (ina i *reverb*))))
+		(outa i (all-pass allpass5
+				  (all-pass allpass4
+					    (one-pole low
+						      (all-pass allpass3
+								(all-pass allpass2
+									  (all-pass allpass1
+										    (+ (comb comb1 rev)
+										       (comb comb2 rev)
+										       (comb comb3 rev)
+										       (comb comb4 rev)
+										       (comb comb5 rev)
+										       (comb comb6 rev)))))))))))
+	   (do ((i 0 (+ i 1)))
+	       ((= i len))
+	     (let* ((rev (* volume (ina i *reverb*)))
+		    (outrev (all-pass allpass4
+				      (one-pole low
+						(all-pass allpass3
+							  (all-pass allpass2
+								    (all-pass allpass1
+									      (+ (comb comb1 rev)
+										 (comb comb2 rev)
+										 (comb comb3 rev)
+										 (comb comb4 rev)
+										 (comb comb5 rev)
+										 (comb comb6 rev)))))))))
+	       (outa i (all-pass allpass5 outrev))
+	       (outb i (all-pass allpass6 outrev))
+	       (if chan4 (outc i (all-pass allpass7 outrev)))
+	       (if chan4 (outd i (all-pass allpass8 outrev)))))))))
+
 
 
 (definstrument (reson startime dur pitch amp numformants indxfun skewfun pcskew skewat skewdc

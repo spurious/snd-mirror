@@ -1868,8 +1868,8 @@ static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
 			 C_TO_XEN_LONG_LONG(sd->length)));
 
   val = XEN_CADDR(args);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_sound_data_setB, "a real");
-  x = s7_number_to_real(val);
+  /* XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_sound_data_setB, "a real"); */
+  x = s7_number_to_real(s7, val);
 
   sd->data[chn][loc] = x; 
   return(val);

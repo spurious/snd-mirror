@@ -14,7 +14,6 @@
 */
 
 
-/* TODO: get rid of these leftovers */
 void cleanup_file_monitor(void) {}
 bool initialize_file_monitor(void) {return(false);}
 void *unmonitor_file(void *watcher) {return(NULL);}
@@ -1379,10 +1378,6 @@ static void clear_error_if_open_changes(Widget dialog, file_dialog_info *data)
 }
 
 
-/* TODO: remove this */
-static void start_unsound_watcher(file_dialog_info *fd, const char *filename) {}
-
-
 static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   file_dialog_info *fd = (file_dialog_info *)context;
@@ -1422,7 +1417,6 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 		  /* whatever the error was, I think it is correct here to unpost the error
 		   *   if the underlying file is either changed or created.
 		   */
-		  start_unsound_watcher(fd, filename);
 		}
 	    }
 	  if (filename) XtFree(filename);
@@ -1532,8 +1526,6 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		{
 		  clear_error_if_open_changes(fd->dialog, fd);
-		  if (id_or_error == MIX_FILE_NO_FILE)
-		    start_unsound_watcher(fd, filename);
 		}
 	    }
 	  else 
@@ -1634,13 +1626,8 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		{
-		  char *fullname;
 		  clear_error_if_open_changes(fd->dialog, fd);
 		  /* ideally insert_complete_file would return an indication of what the error was... */
-		  fullname = mus_expand_filename(filename);
-		  if (!(mus_file_probe(fullname)))
-		    start_unsound_watcher(fd, filename);
-		  free(fullname);
 		}
 	    }
 	  else 
@@ -3682,7 +3669,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  snd_info *sp;
 	  /* handle the overwrite hook directly */
 	  if (new_file_filename) free(new_file_filename);
-	  new_file_filename = mus_expand_filename(newer_name); /* TODO: need full filename for fam */
+	  new_file_filename = mus_expand_filename(newer_name); 
 	  if ((!new_file_watcher) &&
 	      (ask_before_overwrite(ss)) && 
 	      (mus_file_probe(new_file_filename)))
@@ -4986,10 +4973,8 @@ static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
 
 
-/* TODO: remove these */
 void view_files_unmonitor_directories(view_files_info *vdat) {}
 void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
-
 
 
 static char *vf_row_get_label(void *ur)

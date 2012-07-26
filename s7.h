@@ -320,8 +320,8 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);                       /* 
 bool s7_is_real(s7_pointer p);                                               /* (real? p) */
 s7_Double s7_real(s7_pointer p);                                             /* Scheme real -> C double */
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> Scheme real */
-s7_Double s7_number_to_real(s7_pointer x);                                   /* x can be any kind of number */
-s7_Int s7_number_to_integer(s7_pointer x);
+s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x);                    /* x can be any kind of number */
+s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x);
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
 unsigned long s7_ulong(s7_pointer p);                                        /* Scheme unsigned long -> C */
@@ -750,6 +750,47 @@ void s7_set_object_ref_arity(int type, unsigned int min_args, unsigned int max_a
 
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 
+  /* this is experimental */
+s7_pointer s7_apply_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1));
+s7_pointer s7_apply_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2));
+s7_pointer s7_apply_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3));
+s7_pointer s7_apply_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4));
+s7_pointer s7_apply_5(s7_scheme *sc, s7_pointer args, s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5));
+s7_pointer s7_apply_6(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+				       s7_pointer a5, s7_pointer a6));
+s7_pointer s7_apply_7(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7));
+s7_pointer s7_apply_8(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8));
+s7_pointer s7_apply_9(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9));
+
+s7_pointer s7_apply_n_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1));
+s7_pointer s7_apply_n_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2));
+s7_pointer s7_apply_n_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3));
+s7_pointer s7_apply_n_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4));
+s7_pointer s7_apply_n_5(s7_scheme *sc, s7_pointer args, s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5));
+s7_pointer s7_apply_n_6(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+				       s7_pointer a5, s7_pointer a6));
+s7_pointer s7_apply_n_7(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7));
+s7_pointer s7_apply_n_8(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8));
+s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9));
+s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f10)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9, s7_pointer a10));
+
+
 
 #if WITH_GMP
   #include <gmp.h>
@@ -817,6 +858,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
  *        s7 changes
  *		
  * 25-July:   environment (in scheme). s7_vector_ref_n and s7_vector_set_n. s7_copy.
+ *              added s7_scheme arg to s7_number_to_real|integer.
  * 16-July:   s7_function_returns_temp (an experiment).
  * 2-July:    s7_object_set_* functions.
  * 11-June:   throw.

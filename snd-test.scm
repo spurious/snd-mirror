@@ -25410,7 +25410,7 @@ EDITS: 2
       )
     (if (not (null? (hook-functions open-raw-sound-hook))) (set! (hook-functions open-raw-sound-hook) '()))
     (hook-push open-raw-sound-hook (lambda (hook) (set! (hook 'result) (list 1 22050 mus-bshort))))
-    (let ((ind (open-sound "../sf1/addf8.nh")))
+    (let ((ind (open-sound "~/sf1/addf8.nh")))
       (play ind :wait #t)
       (set! (hook-functions open-raw-sound-hook) '())
       (if (or (not (= (chans ind) 1))
