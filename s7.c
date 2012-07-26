@@ -58978,8 +58978,6 @@ s7_scheme *s7_init(void)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  * PERHAPS: closure direct
  *
- * TODO: defgenerator should use environments!
- *
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270
  * bench    52019 -> 7875 [8268] 8037 8592 8402
  *   (new)                [8764]           9370 8937

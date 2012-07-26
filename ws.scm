@@ -790,47 +790,20 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; -------- defgenerator --------
 
-;;;  :(defgenerator (osc :make-wrapper (lambda (gen) (set! (osc-freq gen) (hz->radians (osc-freq gen))) gen)) freq phase)
-;;;  osc-phase-setter
-;;;  :(define hi (make-osc 440.0 0.0))
-;;;  hi
-;;;  :hi
-;;;  #<osc: #(0.06268937721449 0.0)>
-;;;
-;;;  but this is very much in flux -- I am about to turn generators into environments...
-;;;  I think the built-in field accessors will go away
-;;;  then get rid of generator-ref|set
-;;;  gen = fields-env -> methods-env, each one getting its own fields-env, pointing to shared methods env, both envs open
-;;;     (mus-frequency g) -- notice open env [currently clm2xen looks at a vector of methods]
-
-;;; besides setting up the field accessors, the make function, and the type predicate, defgenerator
-;;; it also adds the built-in methods mus-name, mus-reset, mus-run, and mus-describe (if they don't already exist), and
-;;;   mus-frequency if a "frequency" field exists (treated as radians)
-;;;   mus-phase if a "phase" or "angle" field exists
-;;;   mus-scaler if "r" or "amplitude",
-;;;   mus-order if "n" or "order"
-;;;   mus-offset if "ratio" (mimics nrxy*)
-
-(define (find-if pred l)
-  (cond ((null? l) #f)
-	((pred (car l)) (car l))
-	(else (find-if pred (cdr l)))))
-
-(define (position-if pred l)
-  (define (pos-1 pred l pos)
-    (if (null? l)
-	-1
-	(if (pred (car l))
-	    pos
-	    (pos-1 pred (cdr l) (+ pos 1)))))
-  (pos-1 pred l 0))
+;;; (defgenerator osc a b)
+;;; (defgenerator (osc :methods (list (cons 'mus-frequency (lambda (obj) 100.0)))) a b)
 
 (define-macro (defgenerator struct-name . fields)
-  ;; (format *stderr* "(defgenerator ~A~%    ~{~A~%~^     ~}~%" struct-name fields)
+
+  (define (list->bindings lst)
+    (if (null? lst)
+	()
+	(cons (if (pair? (car lst))
+		  (list 'cons (list 'quote (caar lst)) (caar lst))
+		  (list 'cons (list 'quote (car lst)) (car lst)))
+	      (list->bindings (cdr lst)))))
+
   (let* ((name (if (list? struct-name) (car struct-name) struct-name))
-
-	 (gen-type (gensym))
-
 	 (wrapper (or (and (list? struct-name)
 			   (or (and (> (length struct-name) 2)
 				    (equal? (struct-name 1) :make-wrapper)
@@ -841,197 +814,40 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		      (lambda (gen) gen)))
 
 	 (sname (if (string? name) name (symbol->string name)))
-
-	 (field-names (map (lambda (n)
-			     (symbol->string (if (list? n) (car n) n)))
-			   fields))
-
-	 (original-methods (eval (or (and (list? struct-name)
-				    (or (and (> (length struct-name) 2)
-					     (equal? (struct-name 1) :methods)
-					     (struct-name 2))
-					(and (= (length struct-name) 5)
-					     (equal? (struct-name 3) :methods)
-					     (struct-name 4))))
-			       (list))))
-
-	 ;; omit the constructed methods
-	 (method-exists? (lambda (method)
-			   (and (not (null? original-methods))
-				(find-if (lambda (g)
-					   (and (list? g)
-						(list? (cadr g))
-						(eq? (car (cadr g)) method)))
-					 (cdr original-methods)))))
-
-	 (phase-field-name (and (not (method-exists? 'mus-phase))
-				(let ((fld (find-if (lambda (name) 
-						      (or (string=? name "phase") 
-							  (string=? name "angle")))
-						    field-names)))
-				  (and fld (string-append "-" fld)))))
-
-	 (frequency-field-name (and (not (method-exists? 'mus-frequency))
-				    (let ((fld (find-if (lambda (name) 
-							  (or (string=? name "frequency")
-							      (string=? name "freq")))
-							field-names)))
-				      (and fld (string-append "-" fld)))))
-
-	 (offset-field-name (and (not (method-exists? 'mus-offset))
-				 (find-if (lambda (name) 
-					    (string=? name "ratio"))
-					  field-names)
-				 "-ratio"))
-
-	 (scaler-field-name (and (not (method-exists? 'mus-scaler))
-				 (let ((fld (find-if (lambda (name) 
-						       (or (string=? name "r")
-							   (string=? name "amplitude")))
-						     field-names)))
-				   (and fld (string-append "-" fld)))))
-
-	 (order-field-name (and (not (method-exists? 'mus-order))
-				(let ((fld (find-if (lambda (name) 
-						      (or (string=? name "n") 
-							  (string=? name "order")))
-						    field-names)))
-				  (and fld (string-append "-" fld)))))
-
-	 ;; using append to splice out unwanted entries
-	 (methods (append original-methods
-			   
-			   (if phase-field-name
-			       (let ((pos (position-if (lambda (name) 
-							 (or (string=? name "phase")
-							     (string=? name "angle")))
-						       field-names)))
-				 (if (>= pos 0)
-				     (list
-				      (list 'mus-phase
-					    (apply lambda `((g) (mus-generator-ref g ,pos)))
-					    (apply lambda `((g val) (mus-generator-set! g ,pos val)))))
-				     (list 
-				      (list 'mus-phase
-					    (apply lambda `((g) (,(string->symbol (string-append sname phase-field-name)) g)))
-					    (apply lambda `((g val) (set! (,(string->symbol (string-append sname phase-field-name)) g) val)))))))
-				 (list))
-			   
-			   (if frequency-field-name
-			       (let ((pos (position-if (lambda (name) 
-							 (or (string=? name "frequency")
-							     (string=? name "freq")))
-						       field-names)))
-				 (if (>= pos 0)
-				     (list
-				      (list 'mus-frequency
-					    (apply lambda `((g) (radians->hz (mus-generator-ref g ,pos))))
-					    (apply lambda `((g val) (mus-generator-set! g ,pos (hz->radians val))))))
-				     (list
-				      (list 'mus-frequency
-					    (apply lambda `((g) (radians->hz (,(string->symbol (string-append sname frequency-field-name)) g))))
-					    (apply lambda `((g val) (set! (,(string->symbol (string-append sname frequency-field-name)) g) (hz->radians val))))))))
-			       (list))
-			   
-			   (if offset-field-name
-			       (let ((pos (position-if (lambda (name) (string=? name "ratio")) field-names)))
-				 (if (>= pos 0)
-				     (list
-				      (list 'mus-offset
-					    (apply lambda `((g) (mus-generator-ref g ,pos)))
-					    (apply lambda `((g val) (mus-generator-set! g ,pos val)))))
-				     (list 
-				      (list 'mus-offset
-					    (apply lambda `((g) (,(string->symbol (string-append sname offset-field-name)) g)))
-					    (apply lambda `((g val) (set! (,(string->symbol (string-append sname offset-field-name)) g) val)))))))
-			       (list))
-			   
-			   (if order-field-name
-			       (let ((pos (position-if (lambda (name) 
-							 (or (string=? name "n")
-							     (string=? name "order")))
-						       field-names)))
-				 (if (>= pos 0)
-				     (list (list 'mus-order (apply lambda `((g) (mus-generator-ref g ,pos)))))
-				     (list  ; not settable -- maybe use mus-length?
-				      (list 'mus-order
-					    (apply lambda `((g) (,(string->symbol (string-append sname order-field-name)) g)))))))
-			       (list))
-			   
-			   (if scaler-field-name
-			       (let ((pos (position-if (lambda (name) 
-							 (or (string=? name "r")
-							     (string=? name "amplitude")))
-						       field-names)))
-				 (if (>= pos 0)
-				     (list
-				      (list 'mus-scaler
-					    (apply lambda `((g) (mus-generator-ref g ,pos)))
-					    (apply lambda `((g val) (mus-generator-set! g ,pos val)))))
-				     (list 
-				      (list 'mus-scaler
-					    (apply lambda `((g) (,(string->symbol (string-append sname scaler-field-name)) g)))
-					    (apply lambda `((g val) (set! (,(string->symbol (string-append sname scaler-field-name)) g) val)))))))
-			       (list))
-			   )))
-    
+	 (methods (and (list? struct-name)
+		       (or (and (> (length struct-name) 2)
+				(equal? (struct-name 1) :methods)
+				(struct-name 2))
+			   (and (= (length struct-name) 5)
+				(equal? (struct-name 3) :methods)
+				(struct-name 4))))))
     `(begin 
-       (define ,gen-type (mus-make-generator-type ,sname ',fields ',methods))
+       (define ,(string->symbol (string-append sname "?")) #f)
+       (define ,(string->symbol (string-append "make-" sname)) #f)
 
-       (define (,(string->symbol (string-append sname "?")) obj)
-	 (and (mus-generator? obj)
-	      (= (mus-type obj) ,gen-type)))
+       (let ((gen-type (gensym)))
+	 
+	 (set! ,(string->symbol (string-append sname "?"))
+	       (lambda (obj)
+		 (and (environment? obj)
+		      (eq? (obj 'mus-generator-type) gen-type))))
 
-       (define* (,(string->symbol (string-append "make-" sname))
-		 ,@(map (lambda (n) 
-			  (if (list? n) n (list n 0.0)))
-			fields))
-	 (,wrapper 
-	  (let ((gen (mus-make-generator ,gen-type))) ; (apply environment (list->bindings ',fields)) -- but this is actually (cons 'name name)
-	    ;; omit the settings -- 
-	    ,@(map (let ((ctr 0))
-		     (lambda (n)
-		       (let ((val `(mus-generator-set! gen ,ctr ,(if (pair? n) (car n) n))))
-			 (set! ctr (+ ctr 1))
-			 val)))
-		   fields)
-	    gen)))
+	 (set! ,(string->symbol (string-append "make-" sname))
+	       (lambda* ,(map (lambda (n) 
+				(if (list? n) n (list n 0.0)))
+			      fields)
+  	         (,wrapper 
+		  (open-environment
+		   ,(if methods
+		       `(augment-environment 
+			   (apply environment ,methods)
+			 (environment ,@(list->bindings fields) (cons 'mus-generator-type gen-type)))
+		       `(environment ,@(list->bindings fields) (cons 'mus-generator-type gen-type)))))))))))
 
-       ;; omit this
-       ,@(map (let ((ctr 0))
-		(lambda (n)
-		  (let ((val `(begin 
-				(define (,(string->symbol (string-append sname "-" n)) arg) (mus-generator-ref arg ,ctr))
-				(define (,(string->symbol (string-append sname "-" n "-setter")) arg val) (mus-generator-set! arg ,ctr val))
-				(set! (procedure-setter ,(string->symbol (string-append sname "-" n))) ,(string->symbol (string-append sname "-" n "-setter"))))))
-		    (set! ctr (+ 1 ctr))
-		    val)))
-	      field-names))))
 
-#|
-(define (list->bindings lst)
-  (if (null? lst)
-      ()
-      (cons (if (pair? (car lst))
-		(cons (list 'quote (caar lst)) (caar lst))
-		(cons (list 'quote (car lst)) (car lst)))
-	    (list->bindings (cdr lst)))))
-
-(define (list->bindings lst)
-  (if (null? lst)
-      ()
-      (cons (if (pair? (car lst))
-		`((quote ,(caar lst)) . ,(caar lst))
-		`((quote ,(car lst)) . ,(car lst)))
-	    (list->bindings (cdr lst)))))
-|#
-
-;; no generator-ref|set, fields is set as arg to mus-make-generator, not stored as clm_xen_fields
-;; fields -> object-environment for that gen.
-;; make-gen-type scans methods passed in and assigns wrappers
-;; mus-reset could, I suppose, simply get a new env from somewhere? -- perhaps clm_xen_fields can do this
-;; all methods use (with-environment (object-environment gen) ...) -- try the piano cases first
-
+;;; TODO: update all scm defgen refs, docs, tests, check methods both built-in and added (clm2xen)
+;;; generators.scm maxf.scm prc95.scm snd-test.scm big-gens.scm clm-ins.scm env.scm
+;;; all the html examples have to change
 
 
 ;;; -------- clm-display-globals --------

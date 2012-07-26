@@ -61,6 +61,7 @@ extern "C" {
 MUS_EXPORT void mus_initialize(void);
 
 MUS_EXPORT int mus_make_generator_type(void);
+
 MUS_EXPORT mus_any_class *mus_make_generator(int type, char *name, 
 					     int (*release)(mus_any *ptr), 
 					     char *(*describe)(mus_any *ptr), 
@@ -108,6 +109,7 @@ MUS_EXPORT void mus_generator_set_reset(mus_any_class *p, void (*reset)(mus_any 
 MUS_EXPORT void mus_generator_set_set_closure(mus_any_class *p, void *(*set_closure)(mus_any *gen, void *e));
 MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
 MUS_EXPORT void mus_generator_set_set_safety(mus_any_class *p, int (*set_safety)(mus_any *ptr, int val));
+
 
 MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);
 MUS_EXPORT mus_float_t mus_hz_to_radians(mus_float_t hz);

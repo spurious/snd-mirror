@@ -186,10 +186,10 @@ mus_any_class *mus_make_generator(int type, char *name,
   return(p);
 }
 
+
 static int mus_generator_type = MUS_INITIAL_GEN_TAG;
 
 int mus_make_generator_type(void) {return(mus_generator_type++);}
-
 
 
 static const char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};

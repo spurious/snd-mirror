@@ -5,8 +5,7 @@
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 
-(define (make-one-pole-allpass coeff)
-  (environment (cons 'input 0.0) (cons 'coeff coeff) (cons 'x1 0.0) (cons 'y1 0.0)))
+(defgenerator one-pole-allpass coeff input x1 y1)
 
 (define (one-pole-allpass gen input)
   (set! (gen 'input) input)
@@ -16,12 +15,7 @@
     y1))
 
 
-(define (make-one-pole-allpass-bank coeff)
-  (environment
-    (cons 'input 0.0) (cons 'coeff coeff)
-    (cons 'x1 0.0) (cons 'y1 0.0) (cons 'x2 0.0) (cons 'y2 0.0) (cons 'x3 0.0) (cons 'y3 0.0) 
-    (cons 'x4 0.0) (cons 'y4 0.0) (cons 'x5 0.0) (cons 'y5 0.0) (cons 'x6 0.0) (cons 'y6 0.0) 
-    (cons 'x7 0.0) (cons 'y7 0.0) (cons 'x8 0.0) (cons 'y8 0.0)))
+(defgenerator one-pole-allpass-bank coeff input x1 y1 x2 y2 x3 y3 x4 y4 x5 y5 x6 y6 x7 y7 x8 y8) 
 
 (define (one-pole-allpass-bank gen input)
   ;; someday I need to collapse this into one expression!
@@ -53,13 +47,12 @@
     y8))
 
 
-(define* (make-expseg currentValue targetValue) ; (like musickit asymp)
-  (environment (cons 'cv currentValue) (cons 'tv targetValue) (cons 'r 0.0)))
+(defgenerator expseg currentValue targetValue r)
 
 (define (expseg gen r)
   (set! (gen 'r) r)
   (with-environment gen
-    (set! cv (+ cv (* (- tv cv) r)))))
+    (set! currentValue (+ currentValue (* (- targetValue currentValue) r)))))
     ;; (bil) this is slightly different (getting clicks)
 
 

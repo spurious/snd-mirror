@@ -70,7 +70,7 @@
 ;;;       I prefered to translate Hz into the internal parameter rather than controlling
 ;;;       the cutoff frequency in terms of a number that goes between -1 and 1. 
 
-(defgenerator moog freq Q (s #f) y fc)
+(defgenerator moog freq Q s y fc)
 
 (define (make-moog-filter frequency Q)
   "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
@@ -85,24 +85,24 @@
   (make-procedure-with-setter
    (lambda (gen)
      "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
-     (moog-freq gen))
+     (gen 'freq))
    (lambda (gen frq)
-     (set! (moog-freq gen) frq)
-     (set! (moog-fc gen) (envelope-interp (/ frq (* (mus-srate) 0.5)) moog-freqtable)))))
+     (set! (gen 'freq) frq)
+     (set! (gen 'fc) (envelope-interp (/ frq (* (mus-srate) 0.5)) moog-freqtable)))))
 
 (define (moog-filter m sig)
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
-  (let ((A (* 0.25 (- sig (moog-y m))))
+  (let ((A (* 0.25 (- sig (m 'y))))
 	(st 0.0))
     (do ((cell 0 (+ 1 cell)))
 	((= cell 4))
-      (set! st (vct-ref (moog-s m) cell))
-      (set! A (min (max -0.95 (+ A (* (moog-fc m) (- A st)))) 0.95))
-      (vct-set! (moog-s m) cell A)
+      (set! st (vct-ref (m 's) cell))
+      (set! A (min (max -0.95 (+ A (* (m 'fc) (- A st)))) 0.95))
+      (vct-set! (m 's) cell A)
       (set! A (min (max -0.95 (+ A st)) 0.95)))
-    (set! (moog-y m)
-	    (* A (moog-Q m)
-	       (array-interp moog-gaintable (+ 99 (* (moog-fc m) 99.0)))))
+    (set! (m 'y)
+	    (* A (m 'Q)
+	       (array-interp moog-gaintable (+ 99 (* (m 'fc) 99.0)))))
     A))
 
 

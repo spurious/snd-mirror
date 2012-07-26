@@ -2570,8 +2570,8 @@
 (defgenerator sndscm-osc freq phase)
 
 (define (sndscm-osc gen fm)
-  (let ((result (sin (sndscm-osc-phase gen))))
-    (set! (sndscm-osc-phase gen) (+ (sndscm-osc-phase gen) (sndscm-osc-freq gen) fm))
+  (let ((result (sin (gen 'phase))))
+    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
     result))
 
 (definstrument (sndscm-osc-fm beg dur freq amp mc-ratio fm-index)
@@ -2591,13 +2591,13 @@
 
 (defgenerator 
   (sndscm-osc1 :make-wrapper (lambda (gen)
-			(set! (sndscm-osc1-freq gen) (hz->radians (sndscm-osc1-freq gen)))
-			gen))
-  (freq 0.0) (phase 0.0))
+			       (set! (gen 'freq) (hz->radians (gen 'freq)))
+			       gen))
+  freq phase)
 
 (define* (sndscm-osc1 gen fm)
-  (let ((result (sin (sndscm-osc1-phase gen))))
-    (set! (sndscm-osc1-phase gen) (+ (sndscm-osc1-phase gen) (sndscm-osc1-freq gen) fm))
+  (let ((result (sin (gen 'phase))))
+    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
     result))
 
 (definstrument (sndscm-osc1-fm beg dur freq amp mc-ratio (fm-index 1.0))
@@ -2616,26 +2616,28 @@
 ;;; ---------------- sndscm-osc2 ----------------
 
 (defgenerator (sndscm-osc2 :make-wrapper (lambda (gen)
-			       (set! (sndscm-osc2-freq gen) (hz->radians (sndscm-osc2-freq gen)))
+			       (set! (gen 'freq) (hz->radians (gen 'freq)))
 			       gen)
 			     :methods (list
-				       (list 'mus-frequency 
-					     (lambda (g) (radians->hz (sndscm-osc2-freq g)))
-					     (lambda (g val) (set! (sndscm-osc2-freq g) (hz->radians val))))
+				       (cons 'mus-frequency 
+					     (make-procedure-with-setter
+					      (lambda (g) (radians->hz (g 'freq)))
+					      (lambda (g val) (set! (g 'freq) (hz->radians val)))))
 				       
-				       (list 'mus-phase 
-					     (lambda (g) (sndscm-osc2-phase g))
-					     (lambda (g val) (set! (sndscm-osc2-phase g) val)))
+				       (cons 'mus-phase 
+					     (make-procedure-with-setter
+					      (lambda (g) (g 'phase))
+					      (lambda (g val) (set! (g 'phase) val))))
 			      
-				       (list 'mus-describe 
+				       (cons 'mus-describe 
 					     (lambda (g) (format #f "sndscm-osc2 freq: ~A, phase: ~A" 
 								 (mus-frequency g) 
 								 (mus-phase g))))))
   freq phase)
 
 (define* (sndscm-osc2 gen fm)
-  (let ((result (sin (sndscm-osc2-phase gen))))
-    (set! (sndscm-osc2-phase gen) (+ (sndscm-osc2-phase gen) (sndscm-osc2-freq gen) fm))
+  (let ((result (sin (gen 'phase))))
+    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
     result))
 
 (definstrument (sndscm-osc2-fm beg dur freq amp mc-ratio (fm-index 1.0))
@@ -2651,53 +2653,55 @@
        (outa i (* amp (sndscm-osc2 carrier (* index (sndscm-osc2 modulator 0.0))))))))
 
 
+
 ;;; -------- asymmetric FM (bes-i0 case)
 
 (defgenerator (dsp-asyfm :make-wrapper (lambda (gen)
-				       (set! (dsp-asyfm-freq gen) (hz->radians (dsp-asyfm-freq gen)))
-				       gen))
-  freq (phase 0.0) (ratio 1.0) (r 1.0) (index 1.0))
+					 (set! (gen 'freq) (hz->radians (gen 'freq)))
+					 gen))
+  freq phase (ratio 1.0) (r 1.0) (index 1.0))
 
 (define (dsp-asyfm-J gen input)
   "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"
-  (let* ((phase (dsp-asyfm-phase gen))
-	 (r (dsp-asyfm-r gen))
+  (let* ((phase (gen 'phase))
+	 (r (gen 'r))
 	 (r1 (/ 1.0 r))
-	 (index (dsp-asyfm-index gen))
-	 (modphase (* (dsp-asyfm-ratio gen) phase))
+	 (index (gen 'index))
+	 (modphase (* (gen 'ratio) phase))
 	 (result (* (exp (* 0.5 index (- r r1) (cos modphase)))
 		    (sin (+ phase (* 0.5 index (+ r r1) (sin modphase)))))))
-    (set! (dsp-asyfm-phase gen) (+ phase input (dsp-asyfm-freq gen)))
+    (set! (gen 'phase) (+ phase input (gen 'freq)))
     result))
 
 (define (dsp-asyfm-I gen input)
   "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
-  (let* ((phase (dsp-asyfm-phase gen))
-	 (r (dsp-asyfm-r gen))
+  (let* ((phase (gen 'phase))
+	 (r (gen 'r))
 	 (r1 (/ 1.0 r))
-	 (index (dsp-asyfm-index gen))
-	 (modphase (* (dsp-asyfm-ratio gen) phase))
+	 (index (gen 'index))
+	 (modphase (* (gen 'ratio) phase))
 	 (result (* (exp (- (* 0.5 index (+ r r1) (cos modphase))
 			    (* 0.5 (log (bes-i0 (* index (+ r r1)))))))
 		    (sin (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
-    (set! (dsp-asyfm-phase gen) (+ phase input (dsp-asyfm-freq gen)))
+    (set! (gen 'phase) (+ phase input (gen 'freq)))
     result))
+
 
 
 (defgenerator (sndclm-expcs 
 		 :make-wrapper (lambda (g)
-				 (if (<= (sndclm-expcs-et g) 0.0) (set! (sndclm-expcs-et g) 0.00001))
-				 (set! (sndclm-expcs-frequency g) (hz->radians (sndclm-expcs-frequency g)))
-				 (set! (sndclm-expcs-sinht g) (* 0.5 (sinh (sndclm-expcs-et g))))
-				 (set! (sndclm-expcs-cosht g) (cosh (sndclm-expcs-et g)))
+				 (if (<= (g 'et) 0.0) (set! (g 'et) 0.00001))
+				 (set! (g 'frequency) (hz->radians (g 'frequency)))
+				 (set! (g 'sinht) (* 0.5 (sinh (g 'et))))
+				 (set! (g 'cosht) (cosh (g 'et)))
 				 g))
   frequency phase et sinht cosht)
 
 (define (sndclm-expcs gen fm)
-  (let ((result (- (/ (sndclm-expcs-sinht gen) 
-		      (- (sndclm-expcs-cosht gen) (cos (sndclm-expcs-phase gen))))
+  (let ((result (- (/ (gen 'sinht) 
+		      (- (gen 'cosht) (cos (gen 'phase))))
 		   0.5)))
-    (set! (sndclm-expcs-phase gen) (+ (sndclm-expcs-phase gen) (sndclm-expcs-frequency gen) fm))
+    (set! (gen 'phase) (+ (gen 'phase) (gen 'frequency) fm))
     result))
 
 

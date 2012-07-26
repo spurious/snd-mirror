@@ -20,7 +20,8 @@
   (frame1 #f)
   (frame2 #f)
   (fe #f)
-  (rampe #f))
+  (rampe #f)
+  input1 input2)
 
 (define* (make-zipper ramp-env frame-size frame-env)
   "(make-zipper ramp-env frame-size frame-env) makes a zipper generator.  'ramp-env' is 
@@ -41,54 +42,55 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 
 (define (zipper zp input1 input2)
   "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two samplers 'in1' and 'in2'"
-  (let* ((ramp-loc (env (zdata-rampe zp)))
-	 (frame-samples (floor (env (zdata-fe zp))))
-	 (frame1 (zdata-frame1 zp))
-	 (frame2 (zdata-frame2 zp))
-	 (chunk-len (round (* frame-samples ramp-loc))))
-    (if (<= chunk-len (zdata-low-start zp))
-	(begin
-	  (set! (zdata-frame-loc zp) 0)
-	  (read-sample input1))
-	(if (>= chunk-len (- frame-samples (zdata-low-start zp)))
-	    (begin
-	      (set! (zdata-frame-loc zp) 0)
-	      (input2))
-	    ;; else we're in the ramp phase
-	    ;;  read frame if we're within its bounds
-	    (begin
-	      (if (>= (zdata-frame-loc zp) (zdata-cursamples zp))
-		  ;; now get next portion of the ramp
-		  (begin
-		    (set! (zdata-frame-loc zp) 0)
-		    (set! (zdata-cursamples zp) frame-samples)
-		    (do ((k 0 (+ 1 k)))
-			((= k frame-samples))
-		      (set! (frame1 k) (read-sample input1))
-		      (set! (frame2 k) (read-sample input2)))
-		    ;; now resample each dependent on location in ramp (samp1 and samp2 are increments)
-		    (vct-fill! (zdata-frame0 zp) 0.0)
-		    (let ((start-ctr 0.0)
-			  (samp2 (floor (/ frame-samples chunk-len))))
+  (set! (zp 'input1) input1)
+  (set! (zp 'input2) input2)
+  (with-environment zp
+    (let* ((ramp-loc (env rampe))
+	   (frame-samples (floor (env fe)))
+	   (chunk-len (round (* frame-samples ramp-loc))))
+      (if (<= chunk-len low-start)
+	  (begin
+	    (set! frame-loc 0)
+	    (read-sample input1))
+	  (if (>= chunk-len (- frame-samples low-start))
+	      (begin
+		(set! frame-loc 0)
+		(input2))
+	      ;; else we're in the ramp phase
+	      ;;  read frame if we're within its bounds
+	      (begin
+		(if (>= frame-loc cursamples)
+		    ;; now get next portion of the ramp
+		    (begin
+		      (set! frame-loc 0)
+		      (set! cursamples frame-samples)
 		      (do ((k 0 (+ 1 k)))
-			  ((= k chunk-len))
-			(let* ((ictr (floor start-ctr))
-			       (y0 (frame2 ictr))
-			       (y1 (frame2 (+ ictr 1))))
-			  (vct-set! (zdata-frame0 zp) k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
-			  (set! start-ctr (+ start-ctr samp2)))))
-		    (let ((start-ctr 0.0)
-			  (samp1 (floor (/ frame-samples (- frame-samples chunk-len)))))
-		      (do ((k chunk-len (+ 1 k)))
 			  ((= k frame-samples))
-			(let* ((ictr (floor start-ctr))
-			       (y0 (frame1 ictr))
-			       (y1 (frame1 (+ ictr 1))))
-			  (vct-set! (zdata-frame0 zp) k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
-			  (set! start-ctr (+ start-ctr samp1)))))))
-	      (let ((result ((zdata-frame0 zp) (zdata-frame-loc zp))))
-		(set! (zdata-frame-loc zp) (+ (zdata-frame-loc zp) 1))
-		result))))))
+			(set! (frame1 k) (read-sample input1))
+			(set! (frame2 k) (read-sample input2)))
+		      ;; now resample each dependent on location in ramp (samp1 and samp2 are increments)
+		      (vct-fill! frame0 0.0)
+		      (let ((start-ctr 0.0)
+			    (samp2 (floor (/ frame-samples chunk-len))))
+			(do ((k 0 (+ 1 k)))
+			    ((= k chunk-len))
+			  (let* ((ictr (floor start-ctr))
+				 (y0 (frame2 ictr))
+				 (y1 (frame2 (+ ictr 1))))
+			    (vct-set! frame0 k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
+			    (set! start-ctr (+ start-ctr samp2)))))
+		      (let ((start-ctr 0.0)
+			    (samp1 (floor (/ frame-samples (- frame-samples chunk-len)))))
+			(do ((k chunk-len (+ 1 k)))
+			    ((= k frame-samples))
+			  (let* ((ictr (floor start-ctr))
+				 (y0 (frame1 ictr))
+				 (y1 (frame1 (+ ictr 1))))
+			    (vct-set! frame0 k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
+			    (set! start-ctr (+ start-ctr samp1)))))))
+		(let ((result (frame0 frame-loc)))
+		  (set! frame-loc (+ frame-loc 1))
+		result)))))))
 
 
 ;; (zip-sound 0 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
