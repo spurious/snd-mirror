@@ -848,7 +848,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 
 ;;; TODO: update all scm defgen refs, docs, tests, rest of built-in methods (and tests)
-;;; generators.scm/animals snd-test.scm clm-ins.scm
+;;; snd-test.scm clm-ins.scm
 ;;; all the html examples have to change
 
 

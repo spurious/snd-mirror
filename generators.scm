@@ -2,6 +2,8 @@
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 
+;;; TODO: check the setters
+
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll use "r".
 ;;;   Where the number of terms in the sum is settable, I'll use "n".
@@ -16,30 +18,31 @@
 
 (defgenerator (nssb 
 	       :make-wrapper (lambda (g)
-			       (set! (nssb-frequency g) (hz->radians (nssb-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
 (define* (nssb gen (fm 0.0))
-  "  (make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin.\n\
+  
+  "(make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin.\n\
    (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio."
-  (let* ((n (nssb-n gen))
-	 (cx (nssb-angle gen))
-	 (mx (* cx (nssb-ratio gen)))
-	 (den (sin (* 0.5 mx))))
-
-    (set! (nssb-angle gen) (+ fm cx (nssb-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	-1.0
-	(/ (- (* (sin cx) 
-		 (sin (* mx (/ (+ n 1) 2)))
-		 (sin (/ (* n mx) 2)))
-	      (* (cos cx) 
-		 0.5 (+ den (sin (* mx (+ n 0.5))))))
-	   (* (+ n 1) den)))))
-
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (den (sin (* 0.5 mx))))
+      (set! angle (+ fm cx frequency))
+      (if (< (abs den) nearly-zero)
+	  -1.0
+	  (/ (- (* (sin cx) 
+		   (sin (* mx (/ (+ n 1) 2)))
+		   (sin (/ (* n mx) 2)))
+		(* (cos cx) 
+		   0.5 (+ den (sin (* mx (+ n 0.5))))))
+	     (* (+ n 1) den))))))
+  
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nssb 1000.0 0.1 3)))
@@ -59,26 +62,27 @@
 |#
 
 
+
 ;;; --------------------------------------------------------------------------------
 
 ;;; G&R 1st col rows 1&2
 
 (define (find-nxysin-max n ratio)
-    
+  
   (define (ns x n) 
     (let* ((a2 (/ x 2))
 	   (den (sin a2)))
       (if (= den 0.0)
 	  0.0
 	  (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
-
+  
   (define (nodds x n) 
     (let ((den (sin x))
 	  (num (sin (* n x))))
       (if (= den 0.0)
 	  0.0
 	  (/ (* num num) den))))
-
+  
   (define (find-mid-max n lo hi)
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (ns lo n))
@@ -88,7 +92,7 @@
 	    (if (> ylo yhi)
 		(find-mid-max n lo mid)
 		(find-mid-max n mid hi))))))
-
+  
   (define (find-nodds-mid-max n lo hi)
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (nodds lo n))
@@ -98,7 +102,7 @@
 	    (if (> ylo yhi)
 		(find-nodds-mid-max n lo mid)
 		(find-nodds-mid-max n mid hi))))))
-
+  
   (if (= ratio 1)
       (find-mid-max n 0.0 (/ pi (+ n .5)))
       (if (= ratio 2)
@@ -108,30 +112,30 @@
 
 (defgenerator (nxysin
 	       :make-wrapper (lambda (g)
-			       (set! (nxysin-frequency g) (hz->radians (nxysin-frequency g)))
-			       (set! (nxysin-norm g) (/ 1.0 (find-nxysin-max (nxysin-n g) (nxysin-ratio g))))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'norm) (/ 1.0 (find-nxysin-max (g 'n) (g 'ratio))))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0)
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm
   (norm 1.0))
 
 
 (define* (nxysin gen (fm 0.0))
-  "  (make-nxysin frequency (ratio 1.0) (n 1)) creates an nxysin generator.\n\
+  
+  "(make-nxysin frequency (ratio 1.0) (n 1)) creates an nxysin generator.\n\
    (nxysin gen (fm 0.0)) returns n sines from frequency spaced by frequency * ratio."
-  (let* ((x (nxysin-angle gen))
-	 (y (* x (nxysin-ratio gen)))
-	 (n (nxysin-n gen))
-	 (norm (nxysin-norm gen))
-	 (den (sin (* y 0.5))))
-
-    (set! (nxysin-angle gen) (+ fm x (nxysin-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	0.0
-	(/ (* (sin (+ x (* 0.5 (- n 1) y)))
-	      (sin (* 0.5 n y))
-	      norm)
-	   den))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio))
+	   (den (sin (* y 0.5))))
+      (set! angle (+ fm x frequency))
+      (if (< (abs den) nearly-zero)
+	  0.0
+	  (/ (* (sin (+ x (* 0.5 (- n 1) y)))
+		(sin (* 0.5 n y))
+		norm)
+	     den)))))
 
 ;;; if x (angle) is constant (an initial-phase offset for a sum of sines,
 ;;;  the peak amp is nsin-max(n) + abs(sin(initial-phase))*(1 - nsin-max(n))
@@ -187,33 +191,34 @@
 
 (defgenerator (nxycos
 	       :make-wrapper (lambda (g)
-			       (set! (nxycos-frequency g) (hz->radians (nxycos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
 (define* (nxycos gen (fm 0.0))
-  "  (make-nxycos frequency (ratio 1.0) (n 1)) creates an nxycos generator.\n\
+  
+  "(make-nxycos frequency (ratio 1.0) (n 1)) creates an nxycos generator.\n\
    (nxycos gen (fm 0.0)) returns n cosines from frequency spaced by frequency * ratio."
-  (let* ((x (nxycos-angle gen))
-	 (y (* x (nxycos-ratio gen)))
-	 (n (nxycos-n gen))
-	 (den (sin (* y 0.5))))
-
-    (set! (nxycos-angle gen) (+ x fm (nxycos-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	1.0
-	(/ (* (cos (+ x (* 0.5 (- n 1) y)))
-	      (sin (* 0.5 n y)))
-	   (* n den))))) ; n=normalization
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio))
+	   (den (sin (* y 0.5))))
+      (set! angle (+ x fm frequency))
+      (if (< (abs den) nearly-zero)
+	  1.0
+	  (/ (* (cos (+ x (* 0.5 (- n 1) y)))
+		(sin (* 0.5 n y)))
+	     (* n den)))))) ; n=normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nxycos 300 1/3 3)))
      (do ((i 0 (+ i 1)))
 	 ((= i 20000))
-       (outa i (nxycos gen)))))
+       (outa i (* .5 (nxycos gen))))))
 |#
 
 
@@ -224,33 +229,34 @@
 
 (defgenerator (nxy1cos
 	       :make-wrapper (lambda (g)
-			       (set! (nxy1cos-frequency g) (hz->radians (nxy1cos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
 (define* (nxy1cos gen (fm 0.0))
-  "  (make-nxy1cos frequency (ratio 1.0) (n 1)) creates an nxy1cos generator.\n\
+  
+  "(make-nxy1cos frequency (ratio 1.0) (n 1)) creates an nxy1cos generator.\n\
    (nxy1cos gen (fm 0.0)) returns 2n cosines from frequency spaced by frequency * ratio with every other cosine multiplied by -1."
-  (let* ((x (nxy1cos-angle gen))
-	 (y (* x (nxy1cos-ratio gen)))
-	 (n (nxy1cos-n gen))
-	 (den (cos (* y 0.5))))
-
-    (set! (nxy1cos-angle gen) (+ x fm (nxy1cos-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	-1.0
-	(max -1.0
-	     (min 1.0
-		  (/ (* (sin (* n y))
-			(sin (+ x (* (- n 0.5) y))))
-		     (* 2 n den)))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio))
+	   (den (cos (* y 0.5))))
+      (set! angle (+ x fm frequency))
+      (if (< (abs den) nearly-zero)
+	  -1.0
+	  (max -1.0
+	       (min 1.0
+		    (/ (* (sin (* n y))
+			  (sin (+ x (* (- n 0.5) y))))
+		       (* 2 n den))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nxy1cos 300 1/3 3)))
-     (do ((i 0 (+ i 1)))
+    (do ((i 0 (+ i 1)))
 	 ((= i 20000))
        (outa i (nxy1cos gen)))))
 
@@ -271,24 +277,25 @@
 
 (defgenerator (nxy1sin
 	       :make-wrapper (lambda (g)
-			       (set! (nxy1sin-frequency g) (hz->radians (nxy1sin-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
 (define* (nxy1sin gen (fm 0.0))
-  "  (make-nxy1sin frequency (ratio 1.0) (n 1)) creates an nxy1sin generator.\n\
+  
+  "(make-nxy1sin frequency (ratio 1.0) (n 1)) creates an nxy1sin generator.\n\
    (nxy1sin gen (fm 0.0)) returns n sines from frequency spaced by frequency * ratio with every other sine multiplied by -1."
-  (let* ((x (nxy1sin-angle gen))
-	 (y (* x (nxy1sin-ratio gen)))
-	 (n (nxy1sin-n gen))
-	 (den (cos (* y 0.5))))
-
-    (set! (nxy1sin-angle gen) (+ x fm (nxy1sin-frequency gen)))
-
-    (/ (* (sin (+ x (* 0.5 (- n 1) (+ y pi))))
-	  (sin (* 0.5 n (+ y pi))))
-       (* n den))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio))
+	   (den (cos (* y 0.5))))
+      (set! angle (+ x fm frequency))
+      (/ (* (sin (+ x (* 0.5 (- n 1) (+ y pi))))
+	    (sin (* 0.5 n (+ y pi))))
+	 (* n den)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -311,14 +318,14 @@
 ;;; sndclm.html (G&R) 1st col 5th row (sum of odd sines)
 
 (define (find-noddsin-max n)
-    
+  
   (define (nodds x n) 
     (let ((den (sin x))
 	  (num (sin (* n x))))
       (if (= den 0.0)
 	  0.0
 	  (/ (* num num) den))))
-
+  
   (define (find-mid-max n lo hi)
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (nodds lo n))
@@ -328,34 +335,33 @@
 	    (if (> ylo yhi)
 		(find-mid-max n lo mid)
 		(find-mid-max n mid hi))))))
-
+  
   (find-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
 
 
 (defgenerator (noddsin 
 	       :make-wrapper (lambda (g)
-			       (if (< (noddsin-n g) 1) (set! (noddsin-n g) 1))
-			       (set! (noddsin-frequency g) (hz->radians (noddsin-frequency g)))
-			       (set! (noddsin-norm g) (/ 1.0 (find-noddsin-max (noddsin-n g)))) ; these could be precomputed
+			       (if (< (g 'n) 1) (set! (g 'n) 1))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'norm) (/ 1.0 (find-noddsin-max (g 'n)))) ; these could be precomputed
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (angle 0.0) (norm 1.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) (norm 1.0) fm)
 
 
 (define* (noddsin gen (fm 0.0))
-  "  (make-noddsin frequency (n 1)) creates an noddsin generator.\n\
+  
+  "(make-noddsin frequency (n 1)) creates an noddsin generator.\n\
    (noddsin gen (fm 0.0)) returns n odd-numbered sines spaced by frequency."
-  (let* ((x (noddsin-angle gen))
-	 (n (noddsin-n gen))
-	 (norm (noddsin-norm gen))
-	 (snx (sin (* n x)))
-	 (den (sin x)))
-
-    (set! (noddsin-angle gen) (+ x fm (noddsin-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	0.0
-	(/ (* norm snx snx) den))))
-	   
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (snx (sin (* n x)))
+	   (den (sin x)))
+      (set! angle (+ x fm frequency))
+      (if (< (abs den) nearly-zero)
+	  0.0
+	  (/ (* norm snx snx) den)))))
 
 ;;; max is at about: 3*pi/(8*n) -- essentially half of the nsin peak
 ;;; and we end up with the same max amp as nsin!!
@@ -374,30 +380,32 @@
 |#
 
 
+
 (defgenerator (noddcos
 	       :make-wrapper (lambda (g)
-			       (set! (noddcos-frequency g) (hz->radians (noddcos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
 (define* (noddcos gen (fm 0.0))
-  "  (make-noddcos frequency (n 1)) creates an noddcos generator.\n\
+  
+  "(make-noddcos frequency (n 1)) creates an noddcos generator.\n\
    (noddcos gen (fm 0.0)) returns n odd-numbered cosines spaced by frequency."
-  (let* ((angle (noddcos-angle gen))
-	 (n (noddcos-n gen))
-	 (den (* 2 n (sin angle)))) ; "n" here is normalization
-
-    (set! (noddcos-angle gen) (+ angle fm (noddcos-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	(let ((fang (modulo (abs angle) (* 2 pi))))
-	  ;; hopefully this almost never happens...
-	  (if (or (< fang 0.001)
-		  (< (abs (- fang (* 2 pi))) 0.001))
-	      1.0
-	      -1.0))
-	(/ (sin (* 2 n angle)) den))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((cx angle)
+	  (den (* 2 n (sin angle)))) ; "n" here is normalization
+      (set! angle (+ cx fm frequency))
+      (if (< (abs den) nearly-zero)
+	  (let ((fang (modulo (abs cx) (* 2 pi))))
+	    ;; hopefully this almost never happens...
+	    (if (or (< fang 0.001)
+		    (< (abs (- fang (* 2 pi))) 0.001))
+		1.0
+		-1.0))
+	  (/ (sin (* 2 n cx)) den)))))
 
 ;;; (Gradshteyn and Ryzhik 1.342)
 
@@ -406,54 +414,56 @@
   (let ((gen (make-noddcos 100 :n 10)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10000))
-	(outa i (noddcos gen)))))
+	(outa i (* .5 (noddcos gen))))))
 |#
+
 
 
 (defgenerator (noddssb
 	       :make-wrapper (lambda (g)
-			       (set! (noddssb-frequency g) (hz->radians (noddssb-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
 (define* (noddssb gen (fm 0.0))
-  "  (make-noddssb frequency (ratio 1.0) (n 1)) creates an noddssb generator.\n\
+  
+  "(make-noddssb frequency (ratio 1.0) (n 1)) creates an noddssb generator.\n\
    (noddssb gen (fm 0.0)) returns n sinusoids from frequency spaced by 2 * ratio * frequency."
-  (let* ((cx (noddssb-angle gen))
-	 (mx (* cx (noddssb-ratio gen)))
-	 (x (- cx mx))
-	 (n (noddssb-n gen))
-	 (sinnx (sin (* n mx)))
-	 (den (* n (sin mx)))) ; "n" is normalization
-
-    (set! (noddssb-angle gen) (+ cx fm (noddssb-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	(if (< (modulo (abs mx) (* 2 pi)) .1)
-	    -1.0
-	    1.0)
-
-	(- (* (sin x)
-	      (/ (* sinnx sinnx) den))
-	   (* (cos x)
-	      (/ (sin (* 2 n mx))
-		 (* 2 den)))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (x (- cx mx))
+	   (sinnx (sin (* n mx)))
+	   (den (* n (sin mx)))) ; "n" is normalization
+      (set! angle (+ cx fm frequency))
+      (if (< (abs den) nearly-zero)
+	  (if (< (modulo (abs mx) (* 2 pi)) .1)
+	      -1.0
+	      1.0)
+	  (- (* (sin x)
+		(/ (* sinnx sinnx) den))
+	     (* (cos x)
+		(/ (sin (* 2 n mx))
+		   (* 2 den))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-noddssb 1000.0 0.1 5)))
-      (do ((i 0 (+ i 1)))
-	  ((= i 10000))
-	(outa i (noddssb gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (noddssb gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-noddssb 1000.0 0.1 5))
 	(vib (make-oscil 5.0)))
-      (do ((i 0 (+ i 1)))
-	  ((= i 10000))
-	(outa i (noddssb gen (* (hz->radians 100.0) (oscil vib)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (noddssb gen (* (hz->radians 100.0) (oscil vib))))))))
 |#
+
 
 
 
@@ -463,145 +473,151 @@
 
 (defgenerator (ncos2
 	       :make-wrapper (lambda (g)
-			       (set! (ncos2-frequency g) (hz->radians (ncos2-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
 (define* (ncos2 gen (fm 0.0))
-  "  (make-ncos2 frequency (n 1)) creates an ncos2 (Fejer kernel) generator.\n\
+  
+  "(make-ncos2 frequency (n 1)) creates an ncos2 (Fejer kernel) generator.\n\
    (ncos2 gen (fm 0.0)) returns n sinusoids spaced by frequency scaled by (n-k)/(n+1)"
-
+  
   ;; from "Trigonometric Series" Zygmund p88 with changes suggested by Katznelson "Introduction to Harmonic Analysis" p12, and
   ;;   scaling by an extra factor of 1/n+1 to make sure we always peak at 1.0 (I assume callers in this context are interested 
   ;;   in the pulse-train aspect and want easily predictable peak amp).  Harmonics go as (n-i)/n+1.
-
-  (let* ((x (ncos2-angle gen))
-	 (n (ncos2-n gen))
-	 (den (sin (* 0.5 x))))
-
-    (set! (ncos2-angle gen) (+ x fm (ncos2-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	1.0
-	(let ((val (/ (sin (* 0.5 (+ n 1) x)) 
-		      (* (+ n 1) den))))
-	  (* val val)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (den (sin (* 0.5 x))))
+      (set! angle (+ x fm frequency))
+      (if (< (abs den) nearly-zero)
+	  1.0
+	  (let ((val (/ (sin (* 0.5 (+ n 1) x)) 
+			(* (+ n 1) den))))
+	    (* val val))))))
 
 ;;; can't use two oscils here because the angles have to line up perfectly
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-ncos2 100.0 :n 10)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (ncos2 gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (* .5 (ncos2 gen))))))
 |#
+
 
 
 (define make-ncos4 make-ncos2)
 
+;; Katznelson p16
+
 (define* (ncos4 gen (fm 0.0))
-  "  (make-ncos4 frequency (n 1)) creates an ncos4 (Jackson kernel) generator.\n\
+  
+  "(make-ncos4 frequency (n 1)) creates an ncos4 (Jackson kernel) generator.\n\
    (ncos4 gen (fm 0.0)) returns n sinusoids spaced by frequency scaled by ((n-k)/(n+1))^2"
-  ;; Katznelson p16
+  
   (let ((val (ncos2 gen fm)))
     (* val val))) ; we already normalized this to 1.0
-
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-ncos4 100.0 :n 10)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (ncos4 gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (* .5 (ncos4 gen))))))
 |#
+
 
 
 (defgenerator (npcos
 	       :make-wrapper (lambda (g)
-			       (set! (npcos-frequency g) (hz->radians (npcos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
 (define* (npcos gen (fm 0.0))
-  "  (make-npcos frequency (n 1)) creates an npcos (Poussin kernel) generator.\n\
+  
+  "(make-npcos frequency (n 1)) creates an npcos (Poussin kernel) generator.\n\
    (npcos gen (fm 0.0)) returns n*2+1 sinusoids spaced by frequency with amplitudes in a sort of tent shape."
-  (let* ((angle (npcos-angle gen))
-	 (den (sin (* 0.5 angle)))
-	 (n (npcos-n gen))
-	 (result (if (< (abs den) nearly-zero)
-		     1.0
-		     (let* ((n1 (+ n 1))
-			    (result1 
-			     (let ((val (/ (sin (* 0.5 n1 angle)) 
-					   (* n1 den))))
-			       (* val val)))
-			    (p2n2 (+ (* 2 n) 2))
-			    (result2 
-			     (let ((val (/ (sin (* 0.5 p2n2 angle)) 
-					   (* p2n2 den))))
-			       (* val val))))
-		       (- (* 2 result2) result1)))))
-    (set! (npcos-angle gen) (+ fm angle (npcos-frequency gen)))
-    result))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((den (sin (* 0.5 angle)))
+	   (result (if (< (abs den) nearly-zero)
+		       1.0
+		       (let* ((n1 (+ n 1))
+			      (result1 
+			       (let ((val (/ (sin (* 0.5 n1 angle)) 
+					     (* n1 den))))
+				 (* val val)))
+			      (p2n2 (+ (* 2 n) 2))
+			      (result2 
+			       (let ((val (/ (sin (* 0.5 p2n2 angle)) 
+					     (* p2n2 den))))
+				 (* val val))))
+			 (- (* 2 result2) result1)))))
+      (set! angle (+ fm angle frequency))
+      result)))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-npcos 100.0 :n 10)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (npcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (* .5 (npcos gen))))))
 |#
 
 
 #|
+
 ;;; ncos5 and nsin5 are minor variants of nsin and ncos -- the last component is at half amplitude
 
 (defgenerator (ncos5
 	       :make-wrapper (lambda (g)
-			       (set! (ncos5-frequency g) (hz->radians (ncos5-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
 (define* (ncos5 gen (fm 0.0))
-  "  (make-ncos5 frequency (n 1)) creates an ncos5 generator.\n\
+  "(make-ncos5 frequency (n 1)) creates an ncos5 generator.\n\
    (ncos5 gen (fm 0.0)) returns n cosines spaced by frequency. All are equal amplitude except the first and last at half amp."
   
   ;; from "Chebyshev Polynomials", Mason and Handscomb, p87
-
-  (let* ((x (ncos5-angle gen))
-	 (n (ncos5-n gen))
-	 (den (tan (* 0.5 x))))
-
-    (set! (ncos5-angle gen) (+ x fm (ncos5-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	1.0
-	(/ (- (/ (sin (* n x))
-		 (* 2 den))
-	      0.5)
-	   (- n 0.5)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (den (tan (* 0.5 x))))
+      (set! angle (+ x fm frequency))
+      (if (< (abs den) nearly-zero)
+	  1.0
+	  (/ (- (/ (sin (* n x))
+		   (* 2 den))
+		0.5)
+	     (- n 0.5))))))
 
 
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-ncos5 100.0 :n 10)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (ncos5 gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (* .5 (ncos5 gen))))))
 
 
 (define (find-nsin5-max n)
-    
+  
   (define (ns x n)
     (let* ((den (tan (* 0.5 x))))
       (if (< (abs den) nearly-zero)
 	  0.0
 	  (/ (- 1.0 (cos (* n x)))
 	     den))))
-
+  
   (define (find-mid-max n lo hi)
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (ns lo n))
@@ -611,47 +627,46 @@
 	    (if (> ylo yhi)
 		(find-mid-max n lo mid)
 		(find-mid-max n mid hi))))))
-
+  
   (find-mid-max n 0.0 (/ pi (+ n .5))))
 
 
 (defgenerator (nsin5
 	       :make-wrapper (lambda (g)
-			       (set! (nsin5-frequency g) (hz->radians (nsin5-frequency g)))
-			       (set! (nsin5-n g) (max 2 (nsin5-n g)))
-			       (set! (nsin5-norm g) (find-nsin5-max (nsin5-n g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'n) (max 2 (g 'n)))
+			       (set! (g 'norm) (find-nsin5-max (g 'n)))
 			       g))
-  (frequency *clm-default-frequency*) (n 2) (angle 0.0) (norm 1.0))
+  (frequency *clm-default-frequency*) (n 2) (angle 0.0) (norm 1.0) fm)
 
 
 (define* (nsin5 gen (fm 0.0))
-  "  (make-nsin5 frequency (n 1)) creates an nsin5 generator.\n\
+  
+  "(make-nsin5 frequency (n 1)) creates an nsin5 generator.\n\
    (nsin5 gen (fm 0.0)) returns n sines spaced by frequency. All are equal amplitude except last at half amp."
   
   ;; from "Chebyshev Polynomials", Mason and Handscomb, p100
-
-  (let* ((x (nsin5-angle gen))
-	 (n (nsin5-n gen))
-	 (norm (nsin5-norm gen))
-	 (den (tan (* 0.5 x))))
-
-    (set! (nsin5-angle gen) (+ x fm (nsin5-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	0.0
-	(/ (- 1.0 (cos (* n x)))
-	   (* den norm)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (den (tan (* 0.5 x))))
+      (set! angle (+ x fm frequency))
+      (if (< (abs den) nearly-zero)
+	  0.0
+	  (/ (- 1.0 (cos (* n x)))
+	     (* den norm))))))
 
 
 (define (find-nsin-max n)
-    
+  
   (define (ns x n) 
     (let* ((a2 (/ x 2))
 	   (den (sin a2)))
       (if (= den 0.0)
 	  0.0
 	  (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
-
+  
   (define (find-mid-max n lo hi)
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (ns lo n))
@@ -661,29 +676,28 @@
 	    (if (> ylo yhi)
 		(find-mid-max n lo mid)
 		(find-mid-max n mid hi))))))
-
+  
   (find-mid-max n 0.0 (/ pi (+ n .5))))
 
 
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-nsin5 100.0 :n 10)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (nsin5 gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (nsin5 gen)))))
 
 (let ((norms (list 1.0 0.0)))
   (do ((i 2 (+ i 1)))
       ((= i 40))
     (let* ((res (with-sound (:clipped #f)
  	          (let ((gen (make-nsin5 100.0 :n i)))
-		     (do ((i 0 (+ i 1)))
-			 ((= i 20000))
-		       (outa i (nsin5 gen))))))
+		    (do ((i 0 (+ i 1)))
+			((= i 20000))
+		      (outa i (nsin5 gen))))))
 	   (snd (find-sound res)))
       (format #t ";~D: ~A" i (maxamp snd 0))
       (set! norms (cons (maxamp snd 0) norms))))
   (reverse norms))
-
 
 ;;; from the same book p 110 is atan(x)/x, if x=cos we get:
 
@@ -702,12 +716,12 @@
   (do ((s 1 (+ s 2)))
       ((>= s 100))
     (set! sum (+ sum (* 4 (/ (expt (- (sqrt 2.0) 1.0) (+ (* 2 s) 1))
-				(+ (* 2 s) 1))))))
+			     (+ (* 2 s) 1))))))
   sum) ; ~ 0.096
 
 ;;; the evens cancel, each of the odds gets through once
-
 |#
+
 
 
 
@@ -723,111 +737,117 @@
 
 (defgenerator (nrsin
 	       :make-wrapper (lambda (g)
-			       (set! (nrsin-r g) (generator-clamp-r (nrsin-r g)))
-			       (set! (nrsin-gen g) (make-nrxysin (nrsin-frequency g) 1.0 (nrsin-n g) (nrsin-r g)))
+			       (set! (g 'r) (generator-clamp-r (g 'r)))
+			       (set! (g 'gen) (make-nrxysin (g 'frequency) 1.0 (g 'n) (g 'r)))
 			       g)
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (nrsin-gen g)))
-			       (lambda (g val) (set! (mus-frequency (nrsin-gen g)) val)))
-			 (list 'mus-scaler
-			       (lambda (g) (mus-scaler (nrsin-gen g)))
-			       (lambda (g val) (set! (mus-scaler (nrsin-gen g)) val)))))
-  (frequency *clm-default-frequency*) (n 1) (r 0.5)
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'gen)))
+				(lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (mus-scaler (g 'gen)))
+				(lambda (g val) (set! (mus-scaler (g 'gen)) val))))))
+  (frequency *clm-default-frequency*) (n 1) (r 0.5) 
   (gen #f))
 
 
 (define* (nrsin gen (fm 0.0))
-  "  (make-nrsin frequency (n 1) (r 0.5)) creates an nrsin generator.\n\
+  
+  "(make-nrsin frequency (n 1) (r 0.5)) creates an nrsin generator.\n\
    (nrsin gen (fm 0.0)) returns n sines spaced by frequency with amplitudes scaled by r^k."
-  (nrxysin (nrsin-gen gen) fm))
+  
+  (nrxysin (gen 'gen) fm))
+
+
 
 (defgenerator (nrcos
 	       :make-wrapper (lambda (g)
-			       (set! (nrcos-frequency g) (hz->radians (nrcos-frequency g)))
-			       (set! (nrcos-n g) (+ 1 (nrcos-n g)))
-			       (set! (nrcos-r g) (generator-clamp-r (nrcos-r g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'n) (+ 1 (g 'n)))
+			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       g)
 	       :methods (list
-			 (list 'mus-order
-			       (lambda (g) (- (nrcos-n g) 1))
-			       (lambda (g val) (set! (nrcos-n g) (+ 1 val)) val))
-			 (list 'mus-scaler
-			       (lambda (g) (nrcos-r g))
-			       (lambda (g val)
-				 (set! (nrcos-r g) (generator-clamp-r val))
-				 (nrcos-r g)))))
-  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0))
+			 (cons 'mus-order
+			       (make-procedure-with-setter
+				(lambda (g) (- (g 'n) 1))
+				(lambda (g val) (set! (g 'n) (+ 1 val)) val)))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val)
+				  (set! (g 'r) (generator-clamp-r val)))))))
+  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm)
 
 
 (define* (nrcos gen (fm 0.0))
-  "  (make-nrcos frequency (n 1) (r 0.5)) creates an nrcos generator.\n\
+  
+  "(make-nrcos frequency (n 1) (r 0.5)) creates an nrcos generator.\n\
    (nrcos gen (fm 0.0)) returns n cosines spaced by frequency with amplitudes scaled by r^k."
-  (let ((x (nrcos-angle gen))
-	(r (nrcos-r gen))
-	(n (nrcos-n gen)))
-
-    (set! (nrcos-angle gen) (+ fm x (nrcos-frequency gen)))
-
-    (if (or (= n 1)
-	    (< (abs r) nearly-zero))
-	0.0
-	(let ((norm (- (/ (- (expt (abs r) n) 1) (- (abs r) 1)) 1.0))) ; n+1??
-
-	  (/ (+ (- (* r (cos x)) 
-		   (* (expt r n) (cos (* n x))) (* r r)) 
-		(* (expt r (+ n 1)) (cos (* (- n 1) x))))
-	     (* norm (+ 1.0 (* -2.0 r (cos x)) (* r r))))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ fm x frequency))
+      (if (or (= n 1)
+	      (< (abs r) nearly-zero))
+	  0.0
+	  (let ((norm (- (/ (- (expt (abs r) n) 1) (- (abs r) 1)) 1.0))) ; n+1??
+	    (/ (+ (- (* r (cos x)) 
+		     (* (expt r n) (cos (* n x))) (* r r)) 
+		  (* (expt r (+ n 1)) (cos (* (- n 1) x))))
+	       (* norm (+ 1.0 (* -2.0 r (cos x)) (* r r)))))))))
 
 ;;; formula changed to start at k=1 and n increased so we get 1 to n
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrcos 400.0 :n 5 :r 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (nrcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (nrcos gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .1)
   (let ((gen (make-nrcos 1200.0 :n 3 :r 0.99))
 	(mod (make-oscil 400.0)) ; multi-carrier fm
 	(index 0.01))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (nrcos gen (* index (oscil mod)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (nrcos gen (* index (oscil mod)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrcos 2000.0 :n 3 :r 0.5))
 	(mod (make-oscil 400.0)) ; multi-carrier fm
 	(index 0.02))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (nrcos gen (* index (oscil mod)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (* .5 (nrcos gen (* index (oscil mod))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrcos 2000.0 :n 3 :r 0.5))
 	(mod (make-oscil 400.0))
 	(index (make-env '(0 0 1 .1) :length 30000))) ; or '(0 .4 1 0)
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (nrcos gen (* (env index) (oscil mod)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (* .5 (nrcos gen (* (env index) (oscil mod))))))))
 |#
 
 (definstrument (lutish beg dur freq amp)
-  (let* ((res1 (max 1 (round (/ 1000.0 (max 1.0 (min 1000.0 freq))))))
-	 (gen (make-nrcos (* freq res1) :n (max 1 (- res1 2))))
-	 (mod (make-oscil freq))
-	 (start (seconds->samples beg))
-	 (stop (+ start (seconds->samples dur)))
-	 (maxind (max .01 (min .3 (/ (- (log freq) 3.5) 8.0))))
-	 (index (make-env (list 0 maxind 1 (* maxind .25) (max dur 2.0) 0.0) :duration dur))
-	 (amplitude (make-env (list 0 0  .01 1  .2 1  .5 .5  1 .25  (max dur 2.0) 0.0) :duration dur :scaler amp)))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (let ((ind (env index)))
-	 (set! (nrcos-r gen) ind)
-	 (outa i (* (env amplitude)
-		    (nrcos gen (* ind (oscil mod)))))))))
+  (let ((res1 (max 1 (round (/ 1000.0 (max 1.0 (min 1000.0 freq))))))
+	(maxind (max .01 (min .3 (/ (- (log freq) 3.5) 8.0)))))
+    (let ((gen (make-nrcos (* freq res1) :n (max 1 (- res1 2))))
+	  (mod (make-oscil freq))
+	  (start (seconds->samples beg))
+	  (stop (seconds->samples (+ beg dur)))
+	  (index (make-env (list 0 maxind 1 (* maxind .25) (max dur 2.0) 0.0) :duration dur))
+	  (amplitude (make-env (list 0 0  .01 1  .2 1  .5 .5  1 .25  (max dur 2.0) 0.0) :duration dur :scaler amp)))
+      (do ((i start (+ i 1)))
+	  ((= i stop))
+	(let ((ind (env index)))
+	  (set! (gen 'r) ind)
+	  (outa i (* (env amplitude)
+		     (nrcos gen (* ind (oscil mod))))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -840,88 +860,92 @@
 |#
 
 
+
 ;;; G&R 2nd col 1st and 2nd rows
 
 (defgenerator (nrssb
 	       :make-wrapper (lambda (g)
-			       (set! (nrssb-frequency g) (hz->radians (nrssb-frequency g)))
-			       (set! (nrssb-r g) (generator-clamp-r (nrssb-r g)))
-			       (if (< (nrssb-r g) 0.0)
-				   (set! (nrssb-r g) 0.0))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'r) (generator-clamp-r (g 'r)))
+			       (if (< (g 'r) 0.0)
+				   (set! (g 'r) 0.0))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5) (angle 0.0) fm interp)
 
 
 (define* (nrssb gen (fm 0.0))
-  "  (make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator.\n\
+  
+  "(make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator.\n\
    (nrssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^k."
-  (let* ((cx (nrssb-angle gen))
-	 (mx (* cx (nrssb-ratio gen)))
-	 (r (nrssb-r gen))
-	 (n (nrssb-n gen))
-	 (rn (- (expt r n)))
-	 (rn1 (expt r (+ n 1)))
-	 (nmx (* n mx))
-	 (n1mx (* (- n 1) mx))
-	 (norm (/ (- rn 1) (- r 1)))
-	 (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (rn (- (expt r n)))
+	   (rn1 (expt r (+ n 1)))
+	   (nmx (* n mx))
+	   (n1mx (* (- n 1) mx))
+	   (norm (/ (- rn 1) (- r 1)))
+	   (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+      (set! angle (+ cx fm frequency))
+      (/ (- (* (sin cx)
+	       (+ (* r (sin mx))
+		  (* rn (sin nmx))
+		  (* rn1 (sin n1mx))))
+	    (* (cos cx)
+	       (+ 1.0
+		  (* -1.0 r (cos mx))
+		  (* rn (cos nmx))
+		  (* rn1 (cos n1mx)))))
+	 den))))
 
-    (set! (nrssb-angle gen) (+ cx fm (nrssb-frequency gen)))
-
-    (/ (- (* (sin cx)
-	     (+ (* r (sin mx))
-		(* rn (sin nmx))
-		(* rn1 (sin n1mx))))
-	  (* (cos cx)
-	     (+ 1.0
-		(* -1.0 r (cos mx))
-		(* rn (cos nmx))
-		(* rn1 (cos n1mx)))))
-       den)))
 
 (define (nrssb-interp gen fm interp)
-  "  (make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator for use with nrssb-interp.\n\
+  
+  "(make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator for use with nrssb-interp.\n\
    (nrssb-interp gen fm interp) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^k.\
-  The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
-  (let* ((cx (nrssb-angle gen))
-	 (mx (* cx (nrssb-ratio gen)))
-	 (r (nrssb-r gen))
-	 (n (nrssb-n gen))
-	 (rn (- (expt r n)))
-	 (rn1 (expt r (+ n 1)))
-	 (nmx (* n mx))
-	 (n1mx (* (- n 1) mx))
-	 (norm (/ (- rn 1) (- r 1)))
-	 (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+   The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
+  
+  (set! (gen 'fm) fm)
+  (set! (gen 'interp) interp)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (rn (- (expt r n)))
+	   (rn1 (expt r (+ n 1)))
+	   (nmx (* n mx))
+	   (n1mx (* (- n 1) mx))
+	   (norm (/ (- rn 1) (- r 1)))
+	   (den (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+      (set! angle (+ cx fm frequency))
+      (/ (- (* interp 
+	       (sin cx)
+	       (+ (* r (sin mx))
+		  (* rn (sin nmx))
+		  (* rn1 (sin n1mx))))
+	    (* (cos cx)
+	       (+ 1.0
+		  (* -1.0 r (cos mx))
+		  (* rn (cos nmx))
+		  (* rn1 (cos n1mx)))))
+	 den))))
 
-    (set! (nrssb-angle gen) (+ cx fm (nrssb-frequency gen)))
 
-    (/ (- (* interp 
-	     (sin cx)
-	     (+ (* r (sin mx))
-		(* rn (sin nmx))
-		(* rn1 (sin n1mx))))
-	  (* (cos cx)
-	     (+ 1.0
-		(* -1.0 r (cos mx))
-		(* rn (cos nmx))
-		(* rn1 (cos n1mx)))))
-       den)))
 
-	  
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrssb 1000 0.1 5 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (nrssb gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (nrssb gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrssb 1000 0.1 5 0.5))
 	(vib (make-oscil 5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (nrssb gen (* (hz->radians 100) (oscil vib)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (nrssb gen (* (hz->radians 100) (oscil vib)))))))
 |#
 
 (definstrument (oboish beg dur freq amp aenv)
@@ -938,49 +962,51 @@
 			  :duration dur :scaler (hz->radians (random (* freq .05)))))
 	 (relamp (+ .85 (random .1)))
 	 (avib (make-rand-interp 5 .2)))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (let* ((vol (* (+ .8 (rand-interp avib)) 
-		      (env amplitude)))
-	      (vib (+ (* (hz->radians (* freq 0.003)) 
-			 (oscil mod))
-		      (env skenv)))
-	      (vola (* 0.05 (/ vol amp)))
-	      (result (* vol
-			 (+ (* (- relamp vola) 
-			       (nrssb-interp gen (* res1 vib) -1.0))
-			    (* (+ (- 1.0 relamp) vola) 
-			       (oscil gen2 (+ (* vib res2)
-					      (* (hz->radians freq)
-						 (oscil gen3 vib)))))))))
-	 (outa i result)
-	 (if *reverb* (outa i (* .01 result) *reverb*))))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (let* ((vol (* (+ .8 (rand-interp avib)) 
+		     (env amplitude)))
+	     (vib (+ (* (hz->radians (* freq 0.003)) 
+			(oscil mod))
+		     (env skenv)))
+	     (vola (* 0.05 (/ vol amp)))
+	     (result (* vol
+			(+ (* (- relamp vola) 
+			      (nrssb-interp gen (* res1 vib) -1.0))
+			   (* (+ (- 1.0 relamp) vola) 
+			      (oscil gen2 (+ (* vib res2)
+					     (* (hz->radians freq)
+						(oscil gen3 vib)))))))))
+	(outa i result)
+	(if *reverb* (outa i (* .01 result) *reverb*))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
-	    (oboish 0 1 300 .1 '(0 0 1 1 2 0)))
+  (oboish 0 1 300 .1 '(0 0 1 1 2 0)))
 
 (with-sound (:clipped #f :statistics #t :play #t)
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (oboish (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    (oboish (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
-	    (let ((rats (vector 1 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2))
-		  (mode (vector 0 0 2 4 11 11 5 6 7 9 2 12 0)))
+  (let ((rats (vector 1 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2))
+	(mode (vector 0 0 2 4 11 11 5 6 7 9 2 12 0)))
     (do ((i 0 (+ i 1)))
 	((= i 20))
       (oboish (/ (random 32) 8) 
-		(/ (+ 3 (random 8)) 8)
-		(* 16.351 16 (rats (mode (random 12))))
-		(+ .25 (random .25))
-		(let* ((pt1 (random 1.0))
-		       (pt2 (+ pt1 (random 1.0)))
-		       (pt3 (+ pt2 (random 1.0))))
-		  (list 0 0 pt1 1 pt2 .5 pt3 0))))))
+	      (/ (+ 3 (random 8)) 8)
+	      (* 16.351 16 (rats (mode (random 12))))
+	      (+ .25 (random .25))
+	      (let* ((pt1 (random 1.0))
+		     (pt2 (+ pt1 (random 1.0)))
+		     (pt3 (+ pt2 (random 1.0))))
+		(list 0 0 pt1 1 pt2 .5 pt3 0))))))
 
 ;;; .85 .15 (* 2 freq) 300, 2400 + 0.5*vib
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -992,83 +1018,86 @@
 
 (defgenerator (nkssb
 	       :make-wrapper (lambda (g)
-			       (set! (nkssb-frequency g) (hz->radians (nkssb-frequency g)))
-			       (set! (nkssb-n g) (+ 1 (nkssb-n g))) ; sum goes 1 to n-1
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'n) (+ 1 (g 'n))) ; sum goes 1 to n-1
 			       g)
 	       :methods (list
-			 (list 'mus-order
-			       (lambda (g) (- (nkssb-n g) 1))
-			       (lambda (g val) (set! (nkssb-n g) (+ 1 val)) val))))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
+			 (cons 'mus-order
+			       (make-procedure-with-setter
+				(lambda (g) (- (g 'n) 1))
+				(lambda (g val) (set! (g 'n) (+ 1 val)) val)))))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm interp)
 
 
 (define* (nkssb gen (fm 0.0))
-  "  (make-nkssb frequency (ratio 1.0) (n 1)) creates an nkssb generator.\n\
+  
+  "(make-nkssb frequency (ratio 1.0) (n 1)) creates an nkssb generator.\n\
    (nkssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio with amplitude k."
-  (let* ((n (nkssb-n gen))
-	 (cx (nkssb-angle gen))
-	 (x (* cx (nkssb-ratio gen)))
-	 (cxx (- cx x))
-	 (sx2 (sin (* 0.5 x)))
-	 (sx22 (* 2 sx2))
-	 (sxsx (* 4 sx2 sx2))
-	 (nx (* n x))
-	 (nx2 (* 0.5 (- (* 2 n) 1) x)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (x (* cx ratio))
+	   (cxx (- cx x))
+	   (sx2 (sin (* 0.5 x)))
+	   (sx22 (* 2 sx2))
+	   (sxsx (* 4 sx2 sx2))
+	   (nx (* n x))
+	   (nx2 (* 0.5 (- (* 2 n) 1) x)))
+      (set! angle (+ cx fm frequency))
+      (if (< (abs sx2) 1.0e-8)
+	  -1.0
+	  (let ((s1 (- (/ (sin nx) sxsx)
+		       (/ (* n (cos nx2)) sx22)))
+		(c1 (- (/ (* n (sin nx2)) sx22)
+		       (/ (- 1.0 (cos nx)) sxsx))))
+	    (/ (- (* (sin cxx) s1)
+		  (* (cos cxx) c1))
+	       (* 0.5 n (- n 1)))))))) ; normalization, nominal n is off by 1
 
-    (set! (nkssb-angle gen) (+ cx fm (nkssb-frequency gen)))
-
-    (if (< (abs sx2) 1.0e-8)
-	-1.0
-	(let ((s1 (- (/ (sin nx) sxsx)
-		     (/ (* n (cos nx2)) sx22)))
-	      (c1 (- (/ (* n (sin nx2)) sx22)
-		     (/ (- 1.0 (cos nx)) sxsx))))
-	  (/ (- (* (sin cxx) s1)
-		(* (cos cxx) c1))
-	     (* 0.5 n (- n 1))))))) ; normalization, nominal n is off by 1
-	       
 
 (define (nkssb-interp gen fm interp)
+  
   "  (make-nkssb frequency (ratio 1.0) (n 1)) creates an nkssb generator for nkssb-interp.\n\
    (nkssb-interp gen fm interp) returns n sinusoids from frequency spaced by frequency * ratio with amplitude k.\
-  The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
-  (let* ((n (nkssb-n gen))
-	 (cx (nkssb-angle gen))
-	 (x (* cx (nkssb-ratio gen)))
-	 (cxx (- cx x))
-	 (sx2 (sin (* 0.5 x)))
-	 (sx22 (* 2 sx2))
-	 (sxsx (* 4 sx2 sx2))
-	 (nx (* n x))
-	 (nx2 (* 0.5 (- (* 2 n) 1) x)))
+   The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
+  
+  (set! (gen 'fm) fm)
+  (set! (gen 'interp) interp)
+  (with-environment gen
+    (let* ((cx angle)
+	   (x (* cx ratio))
+	   (cxx (- cx x))
+	   (sx2 (sin (* 0.5 x)))
+	   (sx22 (* 2 sx2))
+	   (sxsx (* 4 sx2 sx2))
+	   (nx (* n x))
+	   (nx2 (* 0.5 (- (* 2 n) 1) x)))
+      (set! angle (+ cx fm frequency))
+      (if (< (abs sx2) 1.0e-8)
+	  -1.0
+	  (let ((s1 (- (/ (sin nx) sxsx)
+		       (/ (* n (cos nx2)) sx22)))
+		(c1 (- (/ (* n (sin nx2)) sx22)
+		       (/ (- 1.0 (cos nx)) sxsx))))
+	    (/ (- (* (cos cxx) c1)
+		  (* interp (sin cxx) s1))
+	       (* 0.5 n (- n 1)))))))) ; normalization, nominal n is off by 1, peak seems to be solid right through the interpolation
 
-    (set! (nkssb-angle gen) (+ cx fm (nkssb-frequency gen)))
-
-    (if (< (abs sx2) 1.0e-8)
-	-1.0
-	(let ((s1 (- (/ (sin nx) sxsx)
-		     (/ (* n (cos nx2)) sx22)))
-	      (c1 (- (/ (* n (sin nx2)) sx22)
-		     (/ (- 1.0 (cos nx)) sxsx))))
-	  (/ (- (* (cos cxx) c1)
-		(* interp (sin cxx) s1))
-	     (* 0.5 n (- n 1))))))) ; normalization, nominal n is off by 1, peak seems to be solid right through the interpolation
-
-	       
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 1000.0 0.1 5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (nkssb gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (nkssb gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 1000.0 0.1 5))
 	(vib (make-oscil 5.0))
 	(vibamp (hz->radians 50.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (nkssb gen (* vibamp (oscil vib)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (nkssb gen (* vibamp (oscil vib)))))))
 |#
 
 (definstrument (nkssber beg dur freq mfreq n vibfreq amp)
@@ -1079,13 +1108,14 @@
 	 (vib (make-oscil vibfreq))
 	 (vibamp (hz->radians (* (/ freq mfreq) 5.0)))
 	 (ampf (make-env '(0 0 1 1 5 1 6 0) :scaler amp :duration dur)))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (outa i (* (env ampf)
-		  (nkssb-interp gen 
-				(* vibamp (oscil vib))
-				(env move))) ; interp env
-	     ))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (outa i (* (env ampf)
+		 (nkssb-interp gen 
+			       (* vibamp (oscil vib))
+			       (env move))) ; interp env
+	    ))))
+
 #|
 (with-sound (:play #t)
   (nkssber 0 1 1000 100 5 5 0.5)
@@ -1100,68 +1130,68 @@
 	(move (make-env '(0 1 1 -1) :length 30000))
 	(vib (make-oscil 5.0))
 	(vibamp (hz->radians 50.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (* 0.5 (nkssb-interp gen 
-				    (* vibamp (oscil vib))
-				    (env move))) ; interp env
-	     ))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (* 0.5 (nkssb-interp gen 
+				   (* vibamp (oscil vib))
+				   (env move))) ; interp env
+	    ))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 600.0 1/6 4))
 	(vib (make-oscil 1.0))
 	(vibamp (hz->radians 30.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 100000)) 
-       (let ((intrp (oscil vib)))
-	 (outa i (* 0.5 (nkssb-interp gen 
-				      (* vibamp intrp)
-				      intrp)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 100000)) 
+      (let ((intrp (oscil vib)))
+	(outa i (* 0.5 (nkssb-interp gen 
+				     (* vibamp intrp)
+				     intrp)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 1000.0 (/ 540 1000) 3))
 	(vib (make-oscil 3.0)) ; 0.3  or 125 + 0.25 and 2 -> circling sound
 	(vibamp (hz->radians (* (/ 1000 540) 5.0))))
-     (do ((i 0 (+ i 1)))
-	 ((= i 100000)) 
-       (let ((intrp (oscil vib)))
-	 (outa i (* 0.5 (nkssb-interp gen 
-				      (* vibamp intrp)
-				      intrp)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 100000)) 
+      (let ((intrp (oscil vib)))
+	(outa i (* 0.5 (nkssb-interp gen 
+				     (* vibamp intrp)
+				     intrp)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
-	    (let ((gen (make-nkssb 300.0 (/ 120 300) 2))
+  (let ((gen (make-nkssb 300.0 (/ 120 300) 2))
 	(vib (make-oscil 0.25))
 	(vibamp (hz->radians (* (/ 300 120) 5.0))))
-     (do ((i 0 (+ i 1)))
-	 ((= i 300000)) 
-       (let ((intrp (oscil vib)))
-	 (outa i (* 0.5 (nkssb-interp gen 
-				      (* vibamp intrp)
-				      intrp)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 300000)) 
+      (let ((intrp (oscil vib)))
+	(outa i (* 0.5 (nkssb-interp gen 
+				     (* vibamp intrp)
+				     intrp)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 30.0 (/ 4 30) 40))
 	(vib (make-oscil 0.5))
 	(vibamp (hz->radians (* (/ 30 4) 5.0))))
-     (do ((i 0 (+ i 1)))
-	 ((= i 300000)) 
-       (let ((intrp (oscil vib)))
-	 (outa i (* 0.5 (nkssb-interp gen 
-				      (* vibamp intrp)
-				      intrp)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 300000)) 
+      (let ((intrp (oscil vib)))
+	(outa i (* 0.5 (nkssb-interp gen 
+				     (* vibamp intrp)
+				     intrp)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 20.0 (/ 6 20) 80)) ; 120 8 80 (100), 6 400
 	
 	(vib (make-oscil 0.5))
 	(vibamp (hz->radians (* (/ 20 6) 5.0))))
-     (do ((i 0 (+ i 1)))
-	 ((= i 300000))
-       (let ((intrp (oscil vib)))
-	 (outa i (* 0.5 (nkssb-interp gen 
-				      (* vibamp intrp)
-				      intrp)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 300000))
+      (let ((intrp (oscil vib)))
+	(outa i (* 0.5 (nkssb-interp gen 
+				     (* vibamp intrp)
+				     intrp)))))))
 |#
 
 
@@ -1173,41 +1203,44 @@
 
 (defgenerator (nsincos
 	       :make-wrapper (lambda (g)
-			       (let ((n (nsincos-n g)))
-				 (set! (nsincos-frequency g) (hz->radians (nsincos-frequency g)))
-				 (set! (nsincos-n2 g) (/ (+ n 1) 2))
-				 (set! (nsincos-cosn g) (cos (/ pi (+ n 1))))
+			       (let ((n (g 'n)))
+				 (set! (g 'frequency) (hz->radians (g 'frequency)))
+				 (set! (g 'n2) (/ (+ n 1) 2))
+				 (set! (g 'cosn) (cos (/ pi (+ n 1))))
 				 (do ((k 1 (+ k 1)))
 				     ((> k n))
-				   (set! (nsincos-norm g) (+ (nsincos-norm g) 
-							     (/ (sin (/ (* k pi) (+ n 1))) 
-								(sin (/ pi (+ n 1)))))))
+				   (set! (g 'norm) (+ (g 'norm) 
+						      (/ (sin (/ (* k pi) (+ n 1))) 
+							 (sin (/ pi (+ n 1)))))))
 				 g)))
   (frequency *clm-default-frequency*) (n 1) 
-  (angle 0.0) (n2 1.0) (cosn 1.0) (norm 0.0))
+  (angle 0.0) (n2 1.0) (cosn 1.0) (norm 0.0) fm)
 
 
 (define* (nsincos gen (fm 0.0))
-  "  (make-nsincos frequency (n 1)) creates an nsincos generator.\n\
+  
+  "(make-nsincos frequency (n 1)) creates an nsincos generator.\n\
    (nsincos gen (fm 0.0)) returns n cosines spaced by frequency with amplitude sin(k*pi/(n+1))/sin(pi/(n+1))"
-  (let* ((x (nsincos-angle gen))
-	 (n2 (nsincos-n2 gen))
-	 (cosn (nsincos-cosn gen))
-	 (num (cos (* n2 x))))
-
-    (set! (nsincos-angle gen) (+ x fm (nsincos-frequency gen)))
-
-    (/ (* num num)
-       (* (nsincos-norm gen)
-	  (- (cos x) cosn)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (num (cos (* n2 x))))
+      
+      (set! angle (+ x fm frequency))
+      
+      (/ (* num num)
+	 (* norm (- (cos x) cosn))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #f)
   (let ((gen (make-nsincos 100.0 3)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (nsincos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (nsincos gen)))))
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1216,22 +1249,21 @@
 
 (defgenerator (n1cos 
 	       :make-wrapper (lambda (g)
-			       (set! (n1cos-frequency g) (hz->radians (n1cos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 (define* (n1cos gen (fm 0.0))
-  (let* ((n (n1cos-n gen))
-	 (x (n1cos-angle gen))
-	 (tn (tan (* 0.5 x))))
-
-    (set! (n1cos-angle gen) (+ x fm (n1cos-frequency gen)))
-
-    (if (< (abs tn) 1.0e-6)
-	1.0
-	(/ (- 1.0 (cos (* n x)))
-	   (* tn tn
-	      n n 2))))) ; normalization -- this still has the very large DC term
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (tn (tan (* 0.5 x))))
+      (set! angle (+ x fm frequency))
+      (if (< (abs tn) 1.0e-6)
+	  1.0
+	  (/ (- 1.0 (cos (* n x)))
+	     (* tn tn
+		n n 2)))))) ; normalization -- this still has the very large DC term
 
 #|
 (with-sound (:clipped #f)
@@ -1240,7 +1272,6 @@
 	((= i 44100))
       (outa i (n1cos gen)))))
 |#
-
 
 
 
@@ -1253,71 +1284,71 @@
 
 (defgenerator (npos1cos
 	       :make-wrapper (lambda (g)
-			       (set! (npos1cos-frequency g) (hz->radians (npos1cos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
 (define* (npos1cos gen (fm 0.0))
-  "  (make-npos1cos frequency (n 1)) creates an npos1cos generator.\n\
+  
+  "(make-npos1cos frequency (n 1)) creates an npos1cos generator.\n\
    (npos1cos gen (fm 0.0)) returns n cosines spaced by frequency."
-  (let* ((x (npos1cos-angle gen))
-	 (n (npos1cos-n gen))
-	 (num (- (* (+ n 2) (sin (/ (* n x) 2)))
-		 (* n (sin (/ (* (+ n 2) x) 2)))))
-	 (sx (sin (/ x 2)))
-	 (den (* 4 n (+ n 1) (+ n 2) sx sx sx sx)))
-
-    (set! (npos1cos-angle gen) (+ x fm (npos1cos-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	0.0
-
-	(/ (* 3 num num)
-	   den))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (num (- (* (+ n 2) (sin (/ (* n x) 2)))
+		   (* n (sin (/ (* (+ n 2) x) 2)))))
+	   (sx (sin (/ x 2)))
+	   (den (* 4 n (+ n 1) (+ n 2) sx sx sx sx)))
+      (set! angle (+ x fm frequency))
+      (if (< (abs den) nearly-zero)
+	  0.0
+	  (/ (* 3 num num)
+	     den)))))
 
 ;;; needs normalization and no DC.   side amps seem close
 
 
 (with-sound (:clipped #f :statistics #t :play #f)
   (let ((gen (make-npos1cos 100.0 3)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (npos1cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (npos1cos gen)))))
 
 
 (defgenerator (npos3cos
 	       :make-wrapper (lambda (g)
-			       (set! (npos3cos-frequency g) (hz->radians (npos3cos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
 (define* (npos3cos gen (fm 0.0))
-  "  (make-npos3cos frequency (n 1)) creates an npos3cos generator.\n\
+  
+  "(make-npos3cos frequency (n 1)) creates an npos3cos generator.\n\
    (npos3cos gen (fm 0.0)) returns n cosines spaced by frequency."
-  (let* ((x (npos3cos-angle gen))
-	 (n (npos3cos-n gen))
-	 (sx (sin (/ x 2)))
-	 (den (* (+ (* 4 n) 2) sx sx)))
-
-    (set! (npos3cos-angle gen) (+ x fm (npos3cos-frequency gen)))
-
-    (if (< (abs den) nearly-zero)
-	(* 1.0 n)
-
-	(/ (- 2 (cos (* n x)) (cos (* (+ n 1) x)))
-	   den))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (sx (sin (/ x 2)))
+	   (den (* (+ (* 4 n) 2) sx sx)))
+      (set! angle (+ x fm frequency))
+      (if (< (abs den) nearly-zero)
+	  (* 1.0 n)
+	  (/ (- 2 (cos (* n x)) (cos (* (+ n 1) x)))
+	     den)))))
 
 ;;; needs normalization and no DC, peak at den=0 not right.   side amps seem close
 
-
 (with-sound (:clipped #f :statistics #t :play #f)
   (let ((gen (make-npos3cos 100.0 3)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (npos3cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (npos3cos gen)))))
 |#
+
 
 
 
@@ -1327,56 +1358,59 @@
 
 (defgenerator (rcos
 	       :make-wrapper (lambda (g)
-			       (set! (rcos-osc g) (make-oscil (rcos-frequency g) (* 0.5 pi)))
-			       (set! (rcos-r g) (generator-clamp-r (rcos-r g)))
+			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
+			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       g)
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (rcos-osc g)))
-			       (lambda (g val) (set! (mus-frequency (rcos-osc g)) val) val))
-
-			 (list 'mus-scaler
-			       (lambda (g) (rcos-r g))
-			       (lambda (g val)
-				 (set! (rcos-r g) (generator-clamp-r val))
-				 (rcos-r g)))
-				       
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (rcos-osc g)))
-			       (lambda (g val) (set! (mus-phase (rcos-osc g)) val) val))))
-  (frequency *clm-default-frequency*) (r 0.5)
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'osc)))
+				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'osc)))
+				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+  (frequency *clm-default-frequency*) (r 0.5) fm
   (osc #f))
 
 #|
 ;;; G&R form:
 (define* (rcos gen (fm 0.0))
-  (let* ((r (rcos-r gen))
-	 (absr (abs r))
-	 (rcosx (* r (oscil (rcos-osc gen) fm))))
-    (* (- (/ (- 1.0 rcosx)
-	     (+ 1.0 
-		(* r r)
-		(* -2.0 rcosx)))
-	  1.0)
-       (/ (- 1.0 absr) absr)))) ; normalization
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((absr (abs r))
+	   (rcosx (* r (oscil osc fm))))
+      (* (- (/ (- 1.0 rcosx)
+	       (+ 1.0 
+		  (* r r)
+		  (* -2.0 rcosx)))
+	    1.0)
+	 (/ (- 1.0 absr) absr))))) ; normalization
 |#
 
 (define* (rcos gen (fm 0.0))
-  "  (make-rcos frequency (r 0.5)) creates an rcos generator.\n\
+  
+  "(make-rcos frequency (r 0.5)) creates an rcos generator.\n\
    (rcos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude r^k."
+  
   ;; from Andrews, Askey, Roy "Special Functions" 5.1.16, p243. r^k cos sum
   ;; a variant of the G&R 2nd col 4th row
-  (let* ((r (rcos-r gen))
-	 (absr (abs r))
-	 (rr (* r r)))
-
-    (if (< absr nearly-zero)
-	0.0                       ; 1.0 from the formula, but we're subtracting out DC
-	(* (- (/ (- 1.0 rr)
-		 (- (+ 1.0 rr)
-		    (* 2.0 r (oscil (rcos-osc gen) fm))))
-	      1.0)
-	   (/ (- 1.0 absr) (* 2.0 absr)))))) ; normalization
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((absr (abs r))
+	  (rr (* r r)))
+      (if (< absr nearly-zero)
+	  0.0                       ; 1.0 from the formula, but we're subtracting out DC
+	  (* (- (/ (- 1.0 rr)
+		   (- (+ 1.0 rr)
+		      (* 2.0 r (oscil osc fm))))
+		1.0)
+	     (/ (- 1.0 absr) (* 2.0 absr))))))) ; normalization
 
 ;;; if r>0 we get the spike at multiples of 2pi, since the k*pi case is flipping -1 1 -1 etc
 ;;; if r<0, we get the spike at multiples of (2k-1)pi since the r sign now counteracts the cos k*pi sign
@@ -1386,13 +1420,16 @@
 
 
 
+
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rcos 100.0 :r 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (rcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (rcos gen)))))
 |#
+
+;; this uses rkoddssb below
 
 (definstrument (stringy beg dur freq amp)
   (let* ((start (seconds->samples beg))
@@ -1405,14 +1442,14 @@
 	 (clangf (make-env (list 0 0 .1 1 .2 .1 .3 0) :scaler (* amp .5) :duration .1))
 	 (rf (make-env (list 0 1 1 0) :scaler (* 0.5 r) :duration dur))
 	 (crf (make-env (list 0 1 1 0) :scaler r :duration .1)))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (set! (mus-scaler clang) (env crf))
-       (set! (rcos-r carrier) (env rf))
-       (outa i (+ (* (env clangf)
-		     (rkoddssb clang 0.0))
-		  (* (env ampf)
-		     (rcos carrier 0.0)))))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (set! (mus-scaler clang) (env crf))
+      (set! (rcos-r carrier) (env rf))
+      (outa i (+ (* (env clangf)
+		    (rkoddssb clang 0.0))
+		 (* (env ampf)
+		    (rcos carrier 0.0)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -1425,59 +1462,61 @@
 |#
 
 
+
 (defgenerator (rssb 
 	       :make-wrapper (lambda (g)
-			       (set! (rssb-frequency g) (hz->radians (rssb-frequency g)))
-			       (set! (rssb-r g) (generator-clamp-r (rssb-r g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       g)
-
+	       
 	       :methods (list
-			 (list 'mus-scaler
-			       (lambda (g) (rssb-r g))
-			       (lambda (g val)
-				 (set! (rssb-r g) (generator-clamp-r val))
-				 (rssb-r g)))))
-
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm interp)
 
 
 (define* (rssb gen (fm 0.0))
-  "  (make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator.\n\
+  
+  "(make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator.\n\
    (rssb gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
-  (let* ((angle1 (rssb-angle gen))
-	 (angle2 (* angle1 (rssb-ratio gen)))
-	 (carsin (sin angle1))
-	 (canrcos (cos angle1))
-	 (r (rssb-r gen))
-	 (den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
-	 (sumsin (* r (sin angle2)))
-	 (sumcos (- 1.0 (* r (cos angle2)))))
-
-    (set! (rssb-angle gen) (+ angle1 fm (rssb-frequency gen)))
-
-    (/ (- (* carsin sumsin)
-	  (* canrcos sumcos))
-       (* 2 den))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((angle1 angle)
+	   (angle2 (* angle1 ratio))
+	   (carsin (sin angle1))
+	   (canrcos (cos angle1))
+	   (den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
+	   (sumsin (* r (sin angle2)))
+	   (sumcos (- 1.0 (* r (cos angle2)))))
+      (set! angle (+ angle1 fm frequency))
+      (/ (- (* carsin sumsin)
+	    (* canrcos sumcos))
+	 (* 2 den)))))
 
 
 (define (rssb-interp gen fm interp)
-  "  (make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator for rssb-interp.\n\
+  
+  "(make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator for rssb-interp.\n\
    (rssb-interp gen fm interp) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k.\
   The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
-  (let* ((angle1 (rssb-angle gen))
-	 (angle2 (* angle1 (rssb-ratio gen)))
-	 (carsin (sin angle1))
-	 (canrcos (cos angle1))
-	 (r (rssb-r gen))
-	 (den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
-	 (sumsin (* r (sin angle2)))
-	 (sumcos (- 1.0 (* r (cos angle2)))))
-
-    (set! (rssb-angle gen) (+ angle1 fm (rssb-frequency gen)))
-
-    (/ (- (* carsin sumsin)
-	  (* interp canrcos sumcos))
-       (* 2 den))))
+  
+  (set! (gen 'fm) fm)
+  (set! (gen 'interp) interp)
+  (with-environment gen
+    (let* ((angle1 angle)
+	   (angle2 (* angle1 ratio))
+	   (carsin (sin angle1))
+	   (canrcos (cos angle1))
+	   (den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
+	   (sumsin (* r (sin angle2)))
+	   (sumcos (- 1.0 (* r (cos angle2)))))
+      (set! angle (+ angle1 fm frequency))
+      (/ (- (* carsin sumsin)
+	    (* interp canrcos sumcos))
+	 (* 2 den)))))
 
 
 
@@ -1494,14 +1533,14 @@
 	 ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
 	 (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
 	 (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (let ((vib (+ (rand-interp ranvib)
-		     (triangle-wave pervib))))
-	 (outa i (* (env ampf)
-		    (+ (* .85 (rssb-interp gen1 (* res0 vib) -1))
-		       (* .1 (rssb-interp gen2 (* res1 vib) 0))
-		       (* .05 (rssb-interp gen3 (* res2 vib) 1)))))))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (let ((vib (+ (rand-interp ranvib)
+		    (triangle-wave pervib))))
+	(outa i (* (env ampf)
+		   (+ (* .85 (rssb-interp gen1 (* res0 vib) -1))
+		      (* .1 (rssb-interp gen2 (* res1 vib) 0))
+		      (* .05 (rssb-interp gen3 (* res2 vib) 1)))))))))
 
 #|
 (with-sound (:play #t)
@@ -1533,14 +1572,14 @@
 	   ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
 	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
 	   (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
-       (do ((i 0 (+ i 1)))
-	   ((= i 60000))
-	 (let ((vib (+ (rand-interp ranvib)
-		       (triangle-wave pervib))))
-	   (outa (+ i (* k 30000)) (* (env ampf)
-				      (+ (* .85 (rssb-interp gen1 (* res0 vib) -1))
-					 (* .1 (rssb-interp gen2 (* res1 vib) 0))
-					 (* .05 (rssb-interp gen3 (* res2 vib) 1))))))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 60000))
+	(let ((vib (+ (rand-interp ranvib)
+		      (triangle-wave pervib))))
+	  (outa (+ i (* k 30000)) (* (env ampf)
+				     (+ (* .85 (rssb-interp gen1 (* res0 vib) -1))
+					(* .1 (rssb-interp gen2 (* res1 vib) 0))
+					(* .05 (rssb-interp gen3 (* res2 vib) 1))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
   (do ((k 0 (+ k 1))) 
@@ -1561,14 +1600,14 @@
 	   ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
 	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
 	   (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
-       (do ((i 0 (+ i 1)))
-	   ((= i 60000))
-	 (let ((vib (+ (rand-interp ranvib)
-		       (triangle-wave pervib))))
-	   (outa (+ i (* k 30000)) (* (env ampf)
-				      (+ (* .85 (rk!ssb gen1 (* res0 vib)))
-					 (* .1 (rssb-interp gen2 (* res1 vib) 0))
-					 (* .05 (rssb-interp gen3 (* res2 vib) 1))))))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 60000))
+	(let ((vib (+ (rand-interp ranvib)
+		      (triangle-wave pervib))))
+	  (outa (+ i (* k 30000)) (* (env ampf)
+				     (+ (* .85 (rk!ssb gen1 (* res0 vib)))
+					(* .1 (rssb-interp gen2 (* res1 vib) 0))
+					(* .05 (rssb-interp gen3 (* res2 vib) 1))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
   (do ((k 0 (+ k 1))) 
@@ -1588,20 +1627,20 @@
 	   (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 .3 5 .4 6 .1 40 0) :scaler .5 :base 32 :length 30000))
 	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
 	   (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
-       (do ((i 0 (+ i 1)))
-	   ((= i 30000))
-	 (let ((vib (+ (rand-interp ranvib)
-		       (triangle-wave pervib))))
-	   (outa (+ i (* k 30000)) (* (env ampf)
-				      (+ (* .85 (rk!ssb gen1 (* res0 vib)))
-					 (* .1 (rk!ssb gen2 (* res1 vib)))
-					 (* .05 (rk!ssb gen3 (* res2 vib)))))))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 30000))
+	(let ((vib (+ (rand-interp ranvib)
+		      (triangle-wave pervib))))
+	  (outa (+ i (* k 30000)) (* (env ampf)
+				     (+ (* .85 (rk!ssb gen1 (* res0 vib)))
+					(* .1 (rk!ssb gen2 (* res1 vib)))
+					(* .05 (rk!ssb gen3 (* res2 vib)))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rssb 2000.0 (/ 103.0 2000) 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rssb gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (rssb gen)))))
 |#
 
 
@@ -1613,79 +1652,79 @@
 
 (defgenerator (rxysin
 	       :make-wrapper (lambda (g)
-			       (set! (rxysin-frequency g) (hz->radians (rxysin-frequency g)))
-			       (set! (rxysin-r g) (generator-clamp-r (rxysin-r g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       g)
 	       :methods (list
-			 (list 'mus-scaler
-			       (lambda (g) (rxysin-r g))
-			       (lambda (g val)
-				 (set! (rxysin-r g) (generator-clamp-r val))
-				 (rxysin-r g)))))
-
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+  
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
 (define* (rxysin gen (fm 0.0))
-  "  (make-rxysin frequency (ratio 1.0) (r 0.5)) creates an rxysin generator (similar to rssb).\n\
+  
+  "(make-rxysin frequency (ratio 1.0) (r 0.5)) creates an rxysin generator (similar to rssb).\n\
    (rxysin gen (fm 0.0)) returns many sines from frequency spaced by frequency * ratio with amplitude r^k."
-  (let* ((x (rxysin-angle gen))
-	 (y (* x (rxysin-ratio gen)))
-	 (r (rxysin-r gen)))
-
-    (set! (rxysin-angle gen) (+ x fm (rxysin-frequency gen)))
-
-    (/ (- (sin x)
-	  (* r (sin (- x y))))
-       (+ 1.0 
-	  (* -2.0 r (cos y))
-	  (* r r)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio)))
+      (set! angle (+ x fm frequency))
+      (/ (- (sin x)
+	    (* r (sin (- x y))))
+	 (+ 1.0 
+	    (* -2.0 r (cos y))
+	    (* r r))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rxysin 1000 0.1 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rxysin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (rxysin gen)))))
 |#
 
 
 (defgenerator (rxycos
 	       :make-wrapper (lambda (g)
-			       (set! (rxycos-frequency g) (hz->radians (rxycos-frequency g)))
-			       (set! (rxycos-r g) (generator-clamp-r (rxycos-r g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       g)
 	       :methods (list
-			 (list 'mus-scaler
-			       (lambda (g) (rxycos-r g))
-			       (lambda (g val)
-				 (set! (rxycos-r g) (generator-clamp-r val))
-				 (rxycos-r g)))))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
 (define* (rxycos gen (fm 0.0))
-  "  (make-rxycos frequency (ratio 1.0) (r 0.5)) creates an rxycos generator.\n\
+  
+  "(make-rxycos frequency (ratio 1.0) (r 0.5)) creates an rxycos generator.\n\
    (rxycos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
-  (let* ((x (rxycos-angle gen))
-	 (y (* x (rxycos-ratio gen)))
-	 (r (rxycos-r gen)))
-
-    (set! (rxycos-angle gen) (+ x fm (rxycos-frequency gen)))
-
-    (* (/ (- (cos x)
-	     (* r (cos (- x y))))
-	  (+ 1.0 
-	     (* -2.0 r (cos y))
-	     (* r r)))
-       (- 1.0 (abs r))))) ; norm, abs for negative r
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio)))
+      (set! angle (+ x fm frequency))
+      (* (/ (- (cos x)
+	       (* r (cos (- x y))))
+	    (+ 1.0 
+	       (* -2.0 r (cos y))
+	       (* r r)))
+	 (- 1.0 (abs r)))))) ; norm, abs for negative r
 
 #|
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-rxycos 1000 0.1 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rxycos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (rxycos gen)))))
 |#
 
 
@@ -1693,12 +1732,11 @@
   ;; in this case we need to track ratio, as well as r, since the
   ;;   highest frequency goes as x+ky (y=ratio*x); we want the value of k when
   ;;   we reach srate/3, then solve for the corresponding r.
-
-  (let* ((x (radians->hz (+ (safe-rxycos-frequency gen) fm)))
-	 (y (* x (safe-rxycos-ratio gen)))
-	 (r (safe-rxycos-r gen))
+  (let* ((x (radians->hz (+ (gen 'frequency) fm)))
+	 (y (* x (gen 'ratio)))
+	 (r (gen 'r))
 	 (topk (floor (/ (- (/ (mus-srate) 3) x) y)))
-	 (maxr (expt (safe-rxycos-cutoff gen) 
+	 (maxr (expt (gen 'cutoff) 
 		     (/ 1.0 topk))))
     (if (>= r 0.0)
 	(min r maxr)
@@ -1706,63 +1744,62 @@
 
 (defgenerator (safe-rxycos
 	       :make-wrapper (lambda (g)
-			       (set! (safe-rxycos-frequency g) (hz->radians (safe-rxycos-frequency g)))
-			       (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'r) (clamp-rxycos-r g 0.0))
 			       g)
-
+	       
 	       :methods (list
-			 (list 'mus-scaler
-			       (lambda (g) 
-				 (safe-rxycos-r g))
-			       (lambda (g val)
-				 (set! (safe-rxycos-r g) val)
-				 (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
-				 (safe-rxycos-r g)))
-
-			 (list 'mus-frequency
-			       (lambda (g) 
-				 (radians->hz (rxycos-frequency g)))
-			       (lambda (g val)
-				 (set! (safe-rxycos-frequency g) (hz->radians val))
-				 (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
-				 val))
-
-			 (list 'mus-offset ; ratio accessor in defgenerator
-			       (lambda (g)
-				 (safe-rxycos-ratio g))
-			       (lambda (g val)
-				 (set! (safe-rxycos-ratio g) val)
-				 (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
-				 val))))
-			       
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) (cutoff 0.001))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val)
+				  (set! (g 'r) val)
+				  (set! (g 'r) (clamp-rxycos-r g 0.0)))))
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (radians->hz (g 'frequency)))
+				(lambda (g val)
+				  (set! (g 'frequency) (hz->radians val))
+				  (set! (g 'r) (clamp-rxycos-r g 0.0))
+				  val)))
+			 (cons 'mus-offset ; ratio accessor in defgenerator
+			       (make-procedure-with-setter
+				(lambda (g) (g 'ratio))
+				(lambda (g val)
+				  (set! (g 'ratio) val)
+				  (set! (g 'r) (clamp-rxycos-r g 0.0))
+				  val)))))
+  
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) (cutoff 0.001) fm)
 
 
 (define* (safe-rxycos gen (fm 0.0))
-  "  (make-safe-rxycos frequency (ratio 1.0) (r 0.5)) creates a safe-rxycos generator.\n\
+  
+  "(make-safe-rxycos frequency (ratio 1.0) (r 0.5)) creates a safe-rxycos generator.\n\
    (safe-rxycos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k where 'r' is restricted to a safe value."
-  (let* ((x (safe-rxycos-angle gen))
-	 (y (* x (safe-rxycos-ratio gen)))
-	 (r (safe-rxycos-r gen)))
-
-    (set! (safe-rxycos-angle gen) (+ x fm (safe-rxycos-frequency gen)))
-    (if (not (= fm 0.0))
-	(set! r (clamp-rxycos-r gen fm)))
-
-    (* (/ (- (cos x)
-	     (* r (cos (- x y))))
-	  (+ 1.0 
-	     (* -2.0 r (cos y))
-	     (* r r)))
-       (- 1.0 (abs r))))) ; norm, abs for negative r
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio)))
+      (set! angle (+ x fm frequency))
+      (if (not (= fm 0.0))
+	  (set! r (clamp-rxycos-r gen fm)))
+      (* (/ (- (cos x)
+	       (* r (cos (- x y))))
+	    (+ 1.0 
+	       (* -2.0 r (cos y))
+	       (* r r)))
+	 (- 1.0 (abs r)))))) ; norm, abs for negative r
 
 #|
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-safe-rxycos 1000 0.1 0.99)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (safe-rxycos gen)))))
- |#
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (safe-rxycos gen)))))
+|#
+
 
 
 
@@ -1774,54 +1811,59 @@
 
 (defgenerator (ercos
 	       :make-wrapper (lambda (g)
-			       (set! (ercos-osc g) (make-oscil (ercos-frequency g)))
-			       (if (<= (ercos-r g) 0.0) (set! (ercos-r g) 0.00001))
-			       (set! (ercos-cosh-t g) (cosh (ercos-r g)))
-			       (let ((exp-t (exp (- (ercos-r g)))))
-				 (set! (ercos-offset g) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
-				 (set! (ercos-scaler g) (* (sinh (ercos-r g)) (ercos-offset g))))
+			       (set! (g 'osc) (make-oscil (g 'frequency)))
+			       (if (<= (g 'r) 0.0) (set! (g 'r) 0.00001))
+			       (set! (g 'cosh-t) (cosh (g 'r)))
+			       (let ((exp-t (exp (- (g 'r)))))
+				 (set! (g 'offset) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+				 (set! (g 'scaler) (* (sinh (g 'r)) (g 'offset))))
 			       g)
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (ercos-osc g)))
-			       (lambda (g val) (set! (mus-frequency (ercos-osc g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (ercos-osc g)))
-			       (lambda (g val) (set! (mus-phase (ercos-osc g)) val) val))))
-
-  (frequency *clm-default-frequency*) (r 1.0)
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'osc)))
+				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'osc)))
+				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+  
+  (frequency *clm-default-frequency*) (r 1.0) fm
   (osc #f) scaler offset cosh-t)
 
 
 (define* (ercos gen (fm 0.0))
-  "  (make-ercos frequency (r 0.5)) creates an ercos generator (a special case of rcos).\n\
+  
+  "(make-ercos frequency (r 0.5)) creates an ercos generator (a special case of rcos).\n\
    (ercos gen (fm 0.0)) returns many cosines from frequency with amplitude e^(-kr)."
-  (- (/ (ercos-scaler gen) 
-	(- (ercos-cosh-t gen) (oscil (ercos-osc gen) fm)))
-     (ercos-offset gen)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (- (/ scaler 
+	  (- cosh-t (oscil osc fm)))
+       offset)))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-ercos 100 :r 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (ercos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (ercos gen)))))
 |#
 
 (definstrument (ercoser beg dur freq amp r)
-   (let* ((start (seconds->samples beg))
-	  (stop (+ start (seconds->samples dur)))
-	  (gen (make-ercos freq :r r))
-	  (t-env (make-env '(0 .1 1 2) :duration dur)))
-      (do ((i start (+ i 1)))
-	  ((= i stop))
-	(set! (ercos-r gen) (env t-env))
-	(set! (ercos-cosh-t gen) (cosh (ercos-r gen)))
-	(let ((exp-t (exp (- (ercos-r gen)))))
-	  (set! (ercos-offset gen) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
-	  (set! (ercos-scaler gen) (* (sinh (ercos-r gen)) (ercos-offset gen))))
-	(outa i (* amp (ercos gen))))))
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen (make-ercos freq :r r))
+	 (t-env (make-env '(0 .1 1 2) :duration dur)))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (set! (gen 'r) (env t-env))
+      (set! (gen 'cosh-t) (cosh (gen 'r)))
+      (let ((exp-t (exp (- (gen 'r)))))
+	(set! (gen 'offset) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
+	(set! (gen 'scaler) (* (sinh (gen 'r)) (gen 'offset))))
+      (outa i (* amp (ercos gen))))))
 
 #|
 ;; change "t" during note -- smoothly changing sum-of-cosines spectra (damped "lute-stop" effect)
@@ -1832,38 +1874,41 @@
 
 (defgenerator (erssb
 	       :make-wrapper (lambda (g)
-			       (set! (erssb-frequency g) (hz->radians (erssb-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
 (define* (erssb gen (fm 0.0))
-  "  (make-erssb frequency (ratio 1.0) (r 0.5)) creates an erssb generator (a special case of rssb).\n\
+  
+  "(make-erssb frequency (ratio 1.0) (r 0.5)) creates an erssb generator (a special case of rssb).\n\
    (erssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude e^(-kr)."
-  (let* ((cx (erssb-angle gen))
-	 (mx (* cx (erssb-ratio gen)))
-	 (cxx (- cx mx))
-	 (r (erssb-r gen))
-	 (ccmx (- (cosh r) (cos mx))))
-
-    (set! (erssb-angle gen) (+ cx fm (erssb-frequency gen)))
-
-    (if (< (abs ccmx) nearly-zero)
-	1.0
-	(/ (- (* (cos cxx)
-		 (- (/ (sinh r) ccmx)
-		    1.0))
-	      (* (sin cxx)
-		 (/ (sin mx) ccmx)))
-	   (* 2.0 (- (/ 1.0 (- 1.0 (exp (- r)))) 1.0)))))) ; normalization
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (cxx (- cx mx))
+	   (ccmx (- (cosh r) (cos mx))))
+      (set! angle (+ cx fm frequency))
+      (if (< (abs ccmx) nearly-zero)
+	  1.0
+	  (/ (- (* (cos cxx)
+		   (- (/ (sinh r) ccmx)
+		      1.0))
+		(* (sin cxx)
+		   (/ (sin mx) ccmx)))
+	     (* 2.0 (- (/ 1.0 (- 1.0 (exp (- r)))) 1.0))))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-erssb 1000.0 0.1 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (erssb gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (erssb gen)))))
 |#
+
+
 
 
 #|
@@ -1876,108 +1921,113 @@
 
 (defgenerator (r2sin
 	       :make-wrapper (lambda (g)
-			       (set! (r2sin-frequency g) (hz->radians (r2sin-frequency g)))
-			       (if (>= (* (r2sin-r g) (r2sin-r g)) 1.0)
-				   (set! (r2sin-r g) 0.9999999))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (if (>= (* (g 'r) (g 'r)) 1.0)
+				   (set! (g 'r) 0.9999999))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 
 (define* (r2sin gen (fm 0.0))
-  "  (make-r2sin frequency (r 0.5)) creates an r2sin generator.\n\
+  
+  "(make-r2sin frequency (r 0.5)) creates an r2sin generator.\n\
    (r2sin gen (fm 0.0)) returns many even-numbered sines from frequency with amplitude r^(2k)/(2k)!."
-  (let* ((x (r2sin-angle gen))
-	 (r (r2sin-r gen)))
-
-    (set! (r2sin-angle gen) (+ x fm (r2sin-frequency gen)))
-
-    (* (sinh (* r (cos x)))
-       (sin (* r (sin x))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle))
+      (set! angle (+ x fm frequency))
+      (* (sinh (* r (cos x)))
+	 (sin (* r (sin x)))))))
 
 
 ;;; even harmonics, but we can't push the upper partials past the (2k)! range, so not very flexible
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-r2sin 100.0 :r 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (r2sin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (r2sin gen)))))
 
 
 
 (defgenerator (r2cos
 	       :make-wrapper (lambda (g)
-			       (set! (r2cos-frequency g) (hz->radians (r2cos-frequency g)))
-			       (if (>= (* (r2cos-r g) (r2sin-r g)) 1.0)
-				   (set! (r2cos-r g) 0.9999999))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (if (>= (* (g 'r) (g 'r)) 1.0)
+				   (set! (g 'r) 0.9999999))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 
 (define* (r2cos gen (fm 0.0))
-  "  (make-r2cos frequency (r 0.5)) creates an r2cos generator.\n\
+  
+  "(make-r2cos frequency (r 0.5)) creates an r2cos generator.\n\
    (r2cos gen (fm 0.0)) returns many even-numbered cosines from frequency with amplitude r^(2k)/(2k)!."
-  (let* ((x (r2cos-angle gen))
-	 (r (r2cos-r gen)))
-
-    (set! (r2cos-angle gen) (+ x fm (r2cos-frequency gen)))
-
-    (/ (- (* (cosh (* r (cos x)))
-	     (cos (* r (sin x))))
-	  1.0)                   ; omit DC
-       (- (cosh r) 1.0))))       ; normalize
-
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle))
+      (set! angle (+ x fm frequency))
+      (/ (- (* (cosh (* r (cos x)))
+	       (cos (* r (sin x))))
+	    1.0)                   ; omit DC
+	 (- (cosh r) 1.0)))))      ; normalize
 
 ;;; odd harmonics, but we can't push the upper partials past the (2k)! range, so not very flexible
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-r2cos 100.0 :r 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (r2cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (r2cos gen)))))
 
 
 
 (defgenerator (r2ssb
 	       :make-wrapper (lambda (g)
-			       (set! (r2ssb-frequency g) (hz->radians (r2ssb-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
 (define* (r2ssb gen (fm 0.0))
-  "  (make-r2ssb frequency (ratio 1.0) (r 0.5)) creates an r2ssb generator.\n\
+  
+  "(make-r2ssb frequency (ratio 1.0) (r 0.5)) creates an r2ssb generator.\n\
    (r2ssb gen (fm 0.0)) returns many even-numbered sinusoids from frequency spaced by frequency * ratio, if that makes any sense, with amplitude r^(2k)/(2k)!."
-  (let* ((cx (r2ssb-angle gen))
-	 (mx (* cx (r2ssb-ratio gen)))
-	 (a (r2ssb-r gen))
-	 (asinx (* a (sin mx)))
-	 (acosx (* a (cos mx))))
-
-    (set! (r2ssb-angle gen) (+ fm cx (r2ssb-frequency gen)))
-
-    (/ (- (* (cos cx)
-	     (cosh acosx)
-	     (cos asinx))
-	  (* (sin cx)
-	     (sinh acosx)
-	     (sin asinx)))
-       (cosh a)))) ; normalization
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (a r)
+	   (asinx (* a (sin mx)))
+	   (acosx (* a (cos mx))))
+      (set! angle (+ fm cx frequency))
+      (/ (- (* (cos cx)
+	       (cosh acosx)
+	       (cos asinx))
+	    (* (sin cx)
+	       (sinh acosx)
+	       (sin asinx)))
+	 (cosh a))))) ; normalization
 
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-r2ssb 1000.0 0.1 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (r2ssb gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (r2ssb gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-r2ssb 1000.0 0.1 0.5))
 	(vib (make-oscil 5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (r2ssb gen (* (hz->radians 100.0) (oscil vib)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (r2ssb gen (* (hz->radians 100.0) (oscil vib)))))))
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1991,53 +2041,58 @@
 
 (defgenerator (eoddcos 
 	       :make-wrapper (lambda (g)
-			       (set! (eoddcos-osc g) (make-oscil (eoddcos-frequency g) (* 0.5 pi)))
+			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
 			       g)
 	       :methods (list
-			 (list 'mus-frequency 
-			       (lambda (g) (mus-frequency (eoddcos-osc g)))
-			       (lambda (g val) (set! (mus-frequency (eoddcos-osc g)) val) val))
-
-			 (list 'mus-phase 
-			       (lambda (g) (mus-phase (eoddcos-osc g)))
-			       (lambda (g val) (set! (mus-phase (eoddcos-osc g)) val) val))))
-  (frequency *clm-default-frequency*) (r 1.0)
+			 (cons 'mus-frequency 
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'osc)))
+				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+			 (cons 'mus-phase 
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'osc)))
+				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+  (frequency *clm-default-frequency*) (r 1.0) fm
   (osc #f))
 
 
 (define* (eoddcos gen (fm 0.0))
-  "  (make-eoddcos frequency (r 0.5)) creates an eoddcos generator.\n\
+  
+  "(make-eoddcos frequency (r 0.5)) creates an eoddcos generator.\n\
    (eoddcos gen (fm 0.0)) returns many cosines from spaced by frequency with amplitude e^(-r)."
-  (let* ((a (eoddcos-r gen))
-	 (sinha (sinh a)))
-    (if (zero? sinha)
-	0.0 ; just a guess
-	(/ (atan (/ (oscil (eoddcos-osc gen) fm) sinha))
-	   (atan (/ 1.0 sinha)))))) ; normalization
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((a r)
+	   (sinha (sinh a)))
+      (if (zero? sinha)
+	  0.0 ; just a guess
+	  (/ (atan (/ (oscil osc fm) sinha))
+	     (atan (/ 1.0 sinha))))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-eoddcos 400.0 :r 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (eoddcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (eoddcos gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-eoddcos 400.0 :r 0.0))
 	(a-env (make-env '(0 0 1 1) :length 10000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (set! (eoddcos-r gen) (env a-env))
-       (outa i (eoddcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (set! (gen 'r) (env a-env))
+      (outa i (eoddcos gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen1 (make-eoddcos 400.0 :r 0.0))
 	(gen2 (make-oscil 400.0))
 	(a-env (make-env '(0 0 1 1) :length 10000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (set! (eoddcos-r gen1) (env a-env))
-       (outa i (* .5 (eoddcos gen1 (* .1 (oscil gen2))))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (set! (gen 'r1) (env a-env))
+      (outa i (* .5 (eoddcos gen1 (* .1 (oscil gen2))))))))
 |#
 
 
@@ -2052,20 +2107,20 @@
 (define make-koddcos make-oscil)
 
 (define* (koddcos gen (fm 0.0))
-  "  (make-koddcos frequency) creates a koddcos generator.\n\
+  
+  "(make-koddcos frequency) creates a koddcos generator.\n\
    (koddcos gen (fm 0.0)) returns many cosines from spaced by frequency with amplitude too messy to write down, and the output looks wrong anyway."
+  
   (let ((arg (* 2.0 (oscil gen fm))))
     (if (>= arg 0.0)
 	(/ (acos (- 1.0 arg)) pi)
 	(/ (acos (+ 1.0 arg)) (- pi)))))
 
-
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-koddcos 400.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (* .3 (koddcos gen))))))
-
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .3 (koddcos gen))))))
 
 ;;; as printed in J, this is not usable -- 1-2sin can be 3 so acos will be complex -- looks like we're missing: x < pi
 ;;; we get odd harmonics but wrong amps
@@ -2082,124 +2137,125 @@
 
 (defgenerator (rkcos 
 	       :make-wrapper (lambda (g)
-			       (set! (rkcos-osc g) (make-oscil (rkcos-frequency g) (* 0.5 pi)))
-			       (set! (rkcos-r g) (generator-clamp-r (rkcos-r g))) ; or clip at 0.0?
+			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
+			       (set! (g 'r) (generator-clamp-r (g 'r))) ; or clip at 0.0?
 			       g)
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (rkcos-osc g)))
-			       (lambda (g val) (set! (mus-frequency (rkcos-osc g)) val) val))
-			 
-			 (list 'mus-scaler
-			       (lambda (g) (rkcos-r g))
-			       (lambda (g val)
-				 (set! (rkcos-r g) (generator-clamp-r val))
-				 (rkcos-r g)))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (rkcos-osc g)))
-			       (lambda (g val) (set! (mus-phase (rkcos-osc g)) val) val))))
-  (frequency *clm-default-frequency*) (r 0.5)
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'osc)))
+				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'osc)))
+				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+  (frequency *clm-default-frequency*) (r 0.5) fm
   (osc #f))
 
 ;;; not very flexible, and very similar to others in the r^k mold
 
 
 (define* (rkcos gen (fm 0.0))
-  "  (make-rkcos frequency (r 0.5)) creates an rkcos generator.\n\
+  
+  "(make-rkcos frequency (r 0.5)) creates an rkcos generator.\n\
    (rkcos gen (fm 0.0)) returns many cosines from spaced by frequency with amplitude (r^k)/k."
-  (let ((cs (oscil (rkcos-osc gen) fm))
-	(r (rkcos-r gen)))
-    (/ (* 0.5 (log (+ 1.0 (* -2.0 r cs) (* r r))))
-       (log (- 1.0 (abs r)))))) ; norm
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((cs (oscil osc fm)))
+      (/ (* 0.5 (log (+ 1.0 (* -2.0 r cs) (* r r))))
+	 (log (- 1.0 (abs r))))))) ; norm
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rkcos 440.0 :r 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rkcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (rkcos gen)))))
 |#
 
 
 (defgenerator (rksin
 	       :make-wrapper (lambda (g)
-			       (set! (rksin-frequency g) (hz->radians (rksin-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g)
 	       :methods (list
-			 (list 'mus-scaler
-			       (lambda (g) (rksin-r g))
-			       (lambda (g val)
-				 (set! (rksin-r g) (generator-clamp-r val))
-				 (rksin-r g)))))
-
-  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 ;;; normalization based on 0 of derivative of atan arg (for max) at cos x = r,
 ;;;   so we get a maxamp here of (atan (/ (* r (sin (acos r))) (- 1.0 (* r r))))
 
-
 (define* (rksin gen (fm 0.0))
-  "  (make-rksin frequency (r 0.5)) creates an rksin generator.\n\
+  
+  "(make-rksin frequency (r 0.5)) creates an rksin generator.\n\
    (rksin gen (fm 0.0)) returns many sines from spaced by frequency with amplitude (r^k)/k."
-  (let ((x (rksin-angle gen))
-	(r (rksin-r gen)))
-
-    (set! (rksin-angle gen) (+ fm x (rksin-frequency gen)))
-
-    (/ (atan (/ (* r (sin x))
-		(- 1.0 (* r (cos x)))))
-       (atan (/ (* r (sin (acos r)))   ; normalization
-		(- 1.0 (* r r)))))))       
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ fm x frequency))
+      (/ (atan (/ (* r (sin x))
+		  (- 1.0 (* r (cos x)))))
+	 (atan (/ (* r (sin (acos r)))   ; normalization
+		  (- 1.0 (* r r))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rksin 100.0 :r 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rksin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (rksin gen)))))
 |#
+
+
 
 (defgenerator (rkssb
 	       :make-wrapper (lambda (g)
-			       (set! (rkssb-frequency g) (hz->radians (rkssb-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g)
 	       :methods (list
-			 (list 'mus-scaler
-			       (lambda (g) (rkssb-r g))
-			       (lambda (g val)
-				 (set! (rkssb-r g) (generator-clamp-r val))
-				 (rkssb-r g)))))
-
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
 (define* (rkssb gen (fm 0.0))
-  "  (make-rkssb frequency (ratio 1.0) (r 0.5)) creates an rkssb generator.\n\
+  
+  "(make-rkssb frequency (ratio 1.0) (r 0.5)) creates an rkssb generator.\n\
    (rkssb gen (fm 0.0)) returns many sinusoids from frequency from spaced by frequency * ratio with amplitude (r^k)/k."
-  (let* ((cx (rkssb-angle gen))
-	 (mx (* cx (rkssb-ratio gen)))
-	 (cxx (* (- 1.0 (rkssb-ratio gen)) cx))
-	 (r (rkssb-r gen))
-	 (rcosmx (* r (cos mx))))
-
-    (set! (rkssb-angle gen) (+ cx fm (rkssb-frequency gen)))
-
-    (/ (- (* (cos cxx)
-	     -0.5 (log (+ 1.0 (* -2.0 rcosmx) (* r r))))
-	  (* (sin cxx)
-	     (atan (/ (* r (sin mx))
-		      (- 1.0 rcosmx)))))
-       (- (log (- 1.0 (abs r))))))) ; normalization
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (cxx (* (- 1.0 ratio) cx))
+	   (rcosmx (* r (cos mx))))
+      (set! angle (+ cx fm frequency))
+      (/ (- (* (cos cxx)
+	       -0.5 (log (+ 1.0 (* -2.0 rcosmx) (* r r))))
+	    (* (sin cxx)
+	       (atan (/ (* r (sin mx))
+			(- 1.0 rcosmx)))))
+	 (- (log (- 1.0 (abs r)))))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rkssb 1000.0 0.5 :r 0.75)) ; (make-rkssb 300.0 3.0 :r 0.5)
 	(ampf (make-env '(0 0 1 1 2 1 3 0) :length 20000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (* (env ampf) 
-		  (rkssb gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (* (env ampf) 
+		 (rkssb gen))))))
 |#
 
 
@@ -2212,30 +2268,36 @@
 
 (defgenerator (rk!cos
 	       :make-wrapper (lambda (g)
-			       (set! (rk!cos-frequency g) (hz->radians (rk!cos-frequency g)))
-			       g))
-  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       g)
+	       :methods (list
+			 (cons 'mus-phase 
+			       (make-procedure-with-setter
+				(lambda (g) (g 'angle))
+				(lambda (g val) (set! (g 'angle) val))))))
+  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 
 (define* (rk!cos gen (fm 0.0))
-  "  (make-rk!cos frequency (r 0.5)) creates an rk!cos generator.\n\
+  
+  "(make-rk!cos frequency (r 0.5)) creates an rk!cos generator.\n\
    (rk!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude (r^k)/k!."
-  (let ((r (rk!cos-r gen))
-	(x (rk!cos-angle gen)))
-
-    (set! (rk!cos-angle gen) (+ fm x (rk!cos-frequency gen)))
-
-    (/ (- (* (exp (* r (cos x)))
-	     (cos (* r (sin x))))
-	  1.0) ; omit DC
-       (- (exp (abs r)) 1.0)))) ; normalization
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ fm x frequency))
+      (/ (- (* (exp (* r (cos x)))
+	       (cos (* r (sin x))))
+	    1.0) ; omit DC
+	 (- (exp (abs r)) 1.0))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rk!cos 440.0 :r 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rk!cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (rk!cos gen))))))
 |#
 
 ;;; the k! denominator dominates, so r * ratio = formant center approximately; (n!)^(1/n) 
@@ -2246,102 +2308,103 @@
   (let ((gen (make-rk!cos 100.0 :r 40.0)) 
 	(r 40.0) 
 	(incr (/ -40.0 100000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 100000)) 
-       (set! (rk!cos-r gen) r) 
-       (set! r (+ r incr))
-       (outa i (rk!cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 100000)) 
+      (set! (gen 'r) r) 
+      (set! r (+ r incr))
+      (outa i (rk!cos gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rk!cos 300.0 :r 10.0)) 
 	(ampf (make-env '(0 0 .1 1 .2 1 3 .5 5 .25 10 0) :scaler .5 :length 10000))
 	(r 10.0) 
 	(incr (/ -10.0 10000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000)) 
-       (set! (rk!cos-r gen) r) 
-       (set! r (+ r incr))
-       (outa i (* (env ampf) (rk!cos gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000)) 
+      (set! (gen 'r) r) 
+      (set! r (+ r incr))
+      (outa i (* (env ampf) (rk!cos gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rk!cos 1000.0 :r 8.0)) 
 	(frqf (make-env '(0 1 1 0) :base 32 :scaler (hz->radians 1000) :length 10000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000)) 
-       (outa i (rk!cos gen (env frqf))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000)) 
+      (outa i (rk!cos gen (env frqf))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rk!cos 3000.0 :r 1.0)) (ampf (make-env '(0 0 1 1 10 1 11 0) :length 10000))
 	(frqf (make-env '(0 1 1 0 2 .25 3 0) :base 3 :scaler (hz->radians 2000) :length 10000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000)) 
-       (outa i (* (env ampf) (rk!cos gen (env frqf)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000)) 
+      (outa i (* (env ampf) (rk!cos gen (env frqf)))))))
 
 (with-sound (:play #t :scaled-to .5)
   (do ((k 0 (+ k 1)))
       ((= k 6))
     (let ((gen (make-rk!cos 3000.0 :r 0.6)) (ampf (make-env '(0 0 1 1 2 1 3 0) :length 3000))
 	  (frqf (make-env '(0 0 1 1) :base .1 :scaler (hz->radians 2000) :length 3000))) ; '(0 .5  1 1 2 0 3 0) '(0 1 1 0 2 1 6 -1)
-       (do ((i 0 (+ i 1)))
-	   ((= i 3000)) 
-	 (outa (+ i (* k 4000)) 
-	       (* (env ampf) 
-		  (rk!cos gen (env frqf))))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 3000)) 
+	(outa (+ i (* k 4000)) 
+	      (* (env ampf) 
+		 (rk!cos gen (env frqf))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
-	    (do ((k 0 (+ k 1)))
+  (do ((k 0 (+ k 1)))
       ((= k 6))
     (let ((gen (make-rk!cos 1000.0 :r 1.0)) (ampf (make-env '(0 0 1 1 2 1 3 0) :length 3000))
 	  (frqf (make-env '(0 .9 1 1 2 -1) :base .1 :scaler (hz->radians 500) :length 3000)))
-       (do ((i 0 (+ i 1)))
-	   ((= i 3000)) 
-	 (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 3000)) 
+	(outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (do ((k 0 (+ k 1)))
       ((= k 6))
     (let ((gen (make-rk!cos 500.0 :r 1.5)) (ampf (make-env '(0 0 1 1 2 1 3 0) :length 3000))
 	  (frqf (make-env '(0 1 1 1 2 -1) :base .5 :scaler (hz->radians 400) :length 3000)))
-       (do ((i 0 (+ i 1)))
-	   ((= i 3000)) 
-	 (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i 3000)) 
+	(outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))))))))
 |#
 
 
 (defgenerator (rk!ssb
 	       :make-wrapper (lambda (g)
-			       (set! (rk!ssb-frequency g) (hz->radians (rk!ssb-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (angle 0.0) fm)
 
 
 (define* (rk!ssb gen (fm 0.0))
-  "  (make-rk!ssb frequency (ratio 1.0) (r 0.5)) creates an rk!ssb generator.\n\
+  
+  "(make-rk!ssb frequency (ratio 1.0) (r 0.5)) creates an rk!ssb generator.\n\
    (rk!ssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude (r^k)/k!."
-  (let* ((cx (rk!ssb-angle gen))
-	 (mx (* cx (rk!ssb-ratio gen)))
-	 (r (rk!ssb-r gen))
-	 (ercosmx (exp (* r (cos mx))))
-	 (rsinmx (* r (sin mx))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (ercosmx (exp (* r (cos mx))))
+	   (rsinmx (* r (sin mx))))
+      (set! angle (+ fm cx frequency))
+      (/ (- (* (cos cx) ercosmx (cos rsinmx))
+	    (* (sin cx) ercosmx (sin rsinmx)))
+	 (exp (abs r)))))) ; normalization (keeping DC term here to get "carrier")
 
-    (set! (rk!ssb-angle gen) (+ fm cx (rk!ssb-frequency gen)))
-
-    (/ (- (* (cos cx) ercosmx (cos rsinmx))
-	  (* (sin cx) ercosmx (sin rsinmx)))
-       (exp (abs r))))) ; normalization (keeping DC term here to get "carrier")
-	  
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rk!ssb 1000.0 0.1 :r 0.5)) ; (make-rk!ssb 200.0 3.0 :r 2)
 	(ampf (make-env '(0 0 1 1 2 1 3 0) :length 20000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (* (env ampf) (rk!ssb gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (* (env ampf) (rk!ssb gen))))))
 
-; (make-rk!ssb 0.0 120.0 :r 15) gives a widely separated wave-train of pulses
-;   so (make-rk!ssb 0.0 40.0 :r 70) is insecty (:r 100)
-;      (make-rk!ssb 0.0 10.0 :r 100) -- some bird? (make-rk!ssb 0.0 15.0 :r 300)
-;      (make-rk!ssb 1000.0 25.0 :r 10) (make-rk!ssb 3000.0 25.0 :r 100) -- another bird (5000)
+					; (make-rk!ssb 0.0 120.0 :r 15) gives a widely separated wave-train of pulses
+					;   so (make-rk!ssb 0.0 40.0 :r 70) is insecty (:r 100)
+					;      (make-rk!ssb 0.0 10.0 :r 100) -- some bird? (make-rk!ssb 0.0 15.0 :r 300)
+					;      (make-rk!ssb 1000.0 25.0 :r 10) (make-rk!ssb 3000.0 25.0 :r 100) -- another bird (5000)
 |#
 
 (definstrument (bouncy beg dur freq amp (bounce-freq 5) (bounce-amp 20))
@@ -2352,13 +2415,13 @@
 	 (ampf (make-env (list 0 0 .01 1 .03 1 1 .15 (max 2 dur) 0.0) :base 32 :scaler amp :duration dur))
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur))))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (set! (rk!ssb-r gen) (+ (abs (* (env bouncef) 
-				       (oscil gen1))) 
-			       (env rf)))
-       (outa i (* (env ampf)
-		  (rk!ssb gen))))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (set! (gen 'r) (+ (abs (* (env bouncef) 
+				(oscil gen1))) 
+			(env rf)))
+      (outa i (* (env ampf)
+		 (rk!ssb gen))))))
 
 #|
 (with-sound (:statistics #t :play #t :clipped #f)
@@ -2370,64 +2433,68 @@
 			  
 
 
+
 ;;; --------------------------------------------------------------------------------
 ;;; rxyk!cos
 
 (defgenerator (rxyk!sin
 	       :make-wrapper (lambda (g)
-			       (set! (rxyk!sin-frequency g) (hz->radians (rxyk!sin-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
 (define* (rxyk!sin gen (fm 0.0))
-  "  (make-rxyk!sin frequency (ratio 1.0) (r 0.5)) creates an rxyk!sin generator.\n\
+  
+  "(make-rxyk!sin frequency (ratio 1.0) (r 0.5)) creates an rxyk!sin generator.\n\
    (rxyk!sin gen (fm 0.0)) returns many sines from frequency spaced by frequency * ratio with amplitude r^k/k!."
-  (let* ((x (rxyk!sin-angle gen))
-	 (y (* x (rxyk!sin-ratio gen)))
-	 (r (rxyk!sin-r gen)))
-
-    (set! (rxyk!sin-angle gen) (+ x fm (rxyk!sin-frequency gen)))
-
-    (/ (* (exp (* r (cos y)))
-	  (cos (+ x (* r (sin y)))))
-       (exp (abs r)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio)))
+      (set! angle (+ x fm frequency))
+      (/ (* (exp (* r (cos y)))
+	    (cos (+ x (* r (sin y)))))
+	 (exp (abs r))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rxyk!sin 1000 0.1 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rxyk!sin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (rxyk!sin gen)))))
 |#
+
 
 
 (defgenerator (rxyk!cos
 	       :make-wrapper (lambda (g)
-			       (set! (rxyk!cos-frequency g) (hz->radians (rxyk!cos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
 (define* (rxyk!cos gen (fm 0.0))
-  "  (make-rxyk!cos frequency (ratio 1.0) (r 0.5)) creates an rxyk!cos generator.\n\
+  
+  "(make-rxyk!cos frequency (ratio 1.0) (r 0.5)) creates an rxyk!cos generator.\n\
    (rxyk!cos gen (fm 0.0)) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k/k!."
-  (let* ((x (rxyk!cos-angle gen))
-	 (y (* x (rxyk!cos-ratio gen)))
-	 (r (rxyk!cos-r gen)))
-
-    (set! (rxyk!cos-angle gen) (+ x fm (rxyk!cos-frequency gen)))
-
-    (/ (* (exp (* r (cos y)))
-	  (cos (+ x (* r (sin y)))))
-       (exp (abs r)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio)))
+      (set! angle (+ x fm frequency))
+      (/ (* (exp (* r (cos y)))
+	    (cos (+ x (* r (sin y)))))
+	 (exp (abs r))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rxyk!cos 1000 0.1 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rxyk!cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (rxyk!cos gen)))))
 |#
 
 (definstrument (brassy beg dur freq amp ampf freqf gliss)
@@ -2441,30 +2508,31 @@
 	 (slant (make-moving-average (seconds->samples pitch-time)))
 	 (amp-time .1)
 	 (vib (make-oscil 5))
-	 (vib-index (hz->radians 4.0))
-	 )
-     (do ((i 0 (+ i 1)))
-	 ((= i samps))
-       (let* ((pitch (env pitch-env))
-	      (harmfrq (/ pitch base-freq))
-	      (harmonic (floor harmfrq))
-	      (dist (abs (- harmfrq harmonic)))
-	      (frq (* base-freq (moving-average slant harmonic))))
-	 (set! (rxyk!cos-r gen) (* (/ 1.0 amp-time)
-				   2.0
-				   (if (< dist amp-time)
-				       dist
-				       (if (> dist (- 1.0 amp-time))
-					   (- 1.0 dist)
-					   amp-time))))
-	 (outa (+ start i)
-	       (* (env amp-env)
-		  (rxyk!cos gen (+ (hz->radians frq)
-				   (* vib-index (oscil vib))))))))))
+	 (vib-index (hz->radians 4.0)))
+    (do ((i 0 (+ i 1)))
+	((= i samps))
+      (let* ((pitch (env pitch-env))
+	     (harmfrq (/ pitch base-freq))
+	     (harmonic (floor harmfrq))
+	     (dist (abs (- harmfrq harmonic)))
+	     (frq (* base-freq (moving-average slant harmonic))))
+	(set! (gen 'r) (* (/ 1.0 amp-time)
+			  2.0
+			  (if (< dist amp-time)
+			      dist
+			      (if (> dist (- 1.0 amp-time))
+				  (- 1.0 dist)
+				  amp-time))))
+	(outa (+ start i)
+	      (* (env amp-env)
+		 (rxyk!cos gen (+ (hz->radians frq)
+				  (* vib-index (oscil vib))))))))))
 #|
 (with-sound (:statistics #t :play #t)
   (brassy 0 4 50 .5 '(0 0 1 1 10 1 11 0) '(0 1 1 0) 1000))
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2478,48 +2546,51 @@
 
 (defgenerator (r2k!cos
 	       :make-wrapper (lambda (g)
-			       (set! (r2k!cos-osc g) (make-oscil (r2k!cos-frequency g)))
+			       (set! (g 'osc) (make-oscil (g 'frequency)))
 			       g)
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (r2k!cos-osc g)))
-			       (lambda (g val) (set! (mus-frequency (r2k!cos-osc g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (r2k!cos-osc g)))
-			       (lambda (g val) (set! (mus-phase (r2k!cos-osc g)) val) val))))
-  (frequency *clm-default-frequency*) (r 0.5) (k 0.0)
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'osc)))
+				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'osc)))
+				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+  (frequency *clm-default-frequency*) (r 0.5) (k 0.0) fm
   (osc #f))
 
 
 (define* (r2k!cos gen (fm 0.0))
-  "  (make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator.\n\
+  
+  "(make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator.\n\
    (r2k!cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude too messy to write down."
-  (let* ((r (r2k!cos-r gen))
-	 (k (r2k!cos-k gen))
-	 (rr1 (+ 1.0 (* r r)))
-	 (r2 (* 2 (abs r)))) ; abs for negative r
-    (* (expt (- rr1
-		(* r2 (oscil (r2k!cos-osc gen) fm)))
-	     (- k))
-       (expt (- rr1 r2) k)))) ; amplitude normalization
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((rr1 (+ 1.0 (* r r)))
+	   (r2 (* 2 (abs r)))) ; abs for negative r
+      (* (expt (- rr1
+		  (* r2 (oscil osc fm)))
+	       (- k))
+	 (expt (- rr1 r2) k))))) ; amplitude normalization
 
 ;;; there is still noticable DC offset if r != 0.5 -- could precompute it and subtract (and there's lots of DC anyway)
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-r2k!cos 440.0 :r 0.5 :k 3.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (r2k!cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (r2k!cos gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-r2k!cos 440.0 :r 0.5 :k 3.0)) 
 	(indf (make-env '(0 1 1 0 10 0) :length 80000 :scaler 10.0 :offset 1)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 80000)) 
-       (set! (r2k!cos-k gen) (env indf))
-       (outa i (r2k!cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 80000)) 
+      (set! (gen 'k) (env indf))
+      (outa i (r2k!cos gen)))))
 |#
 
 (definstrument (pianoy beg dur freq amp)
@@ -2527,10 +2598,10 @@
 	 (ampf (make-env (list 0 0 .01 1 .03 1 1 .15 (max 2 dur) 0.0) :base 32 :scaler amp :duration dur))
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur))))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (outa i (* (env ampf)
-		  (r2k!cos gen))))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (outa i (* (env ampf)
+		 (r2k!cos gen))))))
 
 #|
 (with-sound (:statistics #t :play #t :clipped #f)
@@ -2546,13 +2617,13 @@
 	 (ampf (make-env (list 0 0 .01 1 .03 1 1 .15 (max 2 dur) 0.0) :base 32 :scaler amp :duration dur))
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur))))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (set! (r2k!cos-r gen) (+ .25 (abs (* (env bouncef) 
-					    (oscil gen1)))
-				(env rf)))
-       (outa i (* (env ampf)
-		  (r2k!cos gen))))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (set! (gen 'r) (+ .25 (abs (* (env bouncef) 
+				    (oscil gen1)))
+			(env rf)))
+      (outa i (* (env ampf)
+		 (r2k!cos gen))))))
 
 #|
 (with-sound (:statistics #t :play #t :clipped #f)
@@ -2567,13 +2638,13 @@
 	 (indf (make-env '(0 1 1 0) :length 30000 :base 3 :scaler 10))
 	 (start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur))))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (set! (fmssb-index knock) (env indf))
-       (outa i (+ (* (env ampf)
-		     (r2k!cos gen))
-		  (* (env kmpf) 
-		     (fmssb knock 0.0)))))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (set! (fmssb-index knock) (env indf))
+      (outa i (+ (* (env ampf)
+		    (r2k!cos gen))
+		 (* (env kmpf) 
+		    (fmssb knock 0.0)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t) 
@@ -2591,84 +2662,92 @@
 
 (defgenerator (k2sin
 	       :make-wrapper (lambda (g)
-			       (set! (k2sin-frequency g) (hz->radians (k2sin-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (angle 0.0))
+  (frequency *clm-default-frequency*) (angle 0.0) fm)
 
 
 (define* (k2sin gen (fm 0.0))
-  "  (make-k2sin frequency) creates a k2sin generator.\n\
+  
+  "(make-k2sin frequency) creates a k2sin generator.\n\
    (k2sin gen (fm 0.0)) returns many sines spaced by frequency with amplitude 1/(2^k)."
-  (let ((x (k2sin-angle gen)))
-
-    (set! (k2sin-angle gen) (+ x fm (k2sin-frequency gen)))
-
-    (/ (* 3.0 (sin x)) ; 3 rather than 4 for normalization
-       (- 5.0 (* 4.0 (cos x))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ x fm frequency))
+      (/ (* 3.0 (sin x)) ; 3 rather than 4 for normalization
+	 (- 5.0 (* 4.0 (cos x)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-k2sin 440.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (k2sin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (k2sin gen)))))
 |#
+
 
 
 ;;; using the 2nd Sansone formula, we get the sum of cos case by using a=-5b/4 or 3/(4cosx-5)
 
 (defgenerator (k2cos
 	       :make-wrapper (lambda (g)
-			       (set! (k2cos-frequency g) (hz->radians (k2cos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (angle 0.0))
+  (frequency *clm-default-frequency*) (angle 0.0) fm)
 
 
 (define* (k2cos gen (fm 0.0))
-  "  (make-k2cos frequency) creates a k2cos generator.\n\
+  
+  "(make-k2cos frequency) creates a k2cos generator.\n\
    (k2cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude 1/(2^k)."
-  (let ((x (k2cos-angle gen)))
-
-    (set! (k2cos-angle gen) (+ x fm (k2cos-frequency gen)))
-
-   (* 0.5 (- (/ 3.0
-		(- 5.0 (* 4.0 (cos x))))
-	     1.0))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ x fm frequency))
+      (* 0.5 (- (/ 3.0
+		   (- 5.0 (* 4.0 (cos x))))
+		1.0)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-k2cos 440.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (k2cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (k2cos gen)))))
 |#
+
 
 
 (defgenerator (k2ssb
 	       :make-wrapper (lambda (g)
-			       (set! (k2ssb-frequency g) (hz->radians (k2ssb-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (angle 0.0) fm)
 
 
 (define* (k2ssb gen (fm 0.0))
-  "  (make-k2ssb frequency (ratio 1.0)) creates a k2ssb generator.\n\
+  
+  "(make-k2ssb frequency (ratio 1.0)) creates a k2ssb generator.\n\
    (k2ssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * ratio with amplitude 1/(2^k)."
-  (let* ((cx (k2ssb-angle gen))
-	 (mx (* cx (k2ssb-ratio gen))))
-
-    (set! (k2ssb-angle gen) (+ fm cx (k2ssb-frequency gen)))
-
-    (/ (- (* 3 (cos cx))
-	  (* (sin cx) 4.0 (sin mx)))
-       (* 3.0 (- 5.0 (* 4.0 (cos mx)))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio)))
+      (set! angle (+ fm cx frequency))
+      (/ (- (* 3 (cos cx))
+	    (* (sin cx) 4.0 (sin mx)))
+	 (* 3.0 (- 5.0 (* 4.0 (cos mx))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-k2ssb 1000.0 0.1)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (k2ssb gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (k2ssb gen))))))
 |#
 
 
@@ -2682,31 +2761,37 @@
 
 (defgenerator (dblsum
 	       :make-wrapper (lambda (g)
-			       (set! (dblsum-frequency g) (hz->radians (* 2 (dblsum-frequency g))))
+			       (set! (g 'frequency) (hz->radians (* 2 (g 'frequency))))
 			       g)
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (radians->hz (* 0.5 (dblsum-frequency g))))
-			       (lambda (g val) (set! (dblsum-frequency g) (hz->radians (* 2 val))) val))))
-  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0))
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (radians->hz (* 0.5 (g 'frequency))))
+				(lambda (g val) (set! (g 'frequency) (hz->radians (* 2 val))) val)))))
+  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 
 (define* (dblsum gen (fm 0.0))
-  "  (make-dblsum frequency (r 0.5)) creates a dblsum generator.\n\
+  
+  "(make-dblsum frequency (r 0.5)) creates a dblsum generator.\n\
    (dblsum gen (fm 0.0)) returns many sines from frequency spaced by frequency * (2k -1) with amplitude r^k (this is buggy)."
-  (let ((x (dblsum-angle gen))
-	(r (dblsum-r gen)))
-    (set! (dblsum-angle gen) (+ fm (dblsum-angle gen) (dblsum-frequency gen)))
-    (/ (* (+ 1 r) (sin (* 0.5 x)))
-       (* (- 1 r) (+ 1.0 (* -2.0 r (cos x)) (* r r))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ fm angle frequency))
+      (/ (* (+ 1 r) (sin (* 0.5 x)))
+	 (* (- 1 r) (+ 1.0 (* -2.0 r (cos x)) (* r r)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-dblsum 100 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (dblsum gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .25 (dblsum gen))))))
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2717,47 +2802,45 @@
 
 (defgenerator (rkoddssb
 	       :make-wrapper (lambda (g)
-			       (set! (rkoddssb-frequency g) (hz->radians (rkoddssb-frequency g)))
-			       (set! (rkoddssb-r g) (generator-clamp-r (rkoddssb-r g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'r) (generator-clamp-r (g 'r)))
 			       g)
-
+	       
 	       :methods (list
-			 (list 'mus-scaler
-			       (lambda (g) (rkoddssb-r g))
-			       (lambda (g val)
-				 (set! (rkoddssb-r g) (generator-clamp-r val))
-				 (rkoddssb-r g)))))
-
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
+				(lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
 (define* (rkoddssb gen (fm 0.0))
-  "  (make-rkoddssb frequency (ratio 1.0) (r 0.5)) creates an rkoddssb generator.\n\
+  
+  "(make-rkoddssb frequency (ratio 1.0) (r 0.5)) creates an rkoddssb generator.\n\
    (rkoddssb gen (fm 0.0)) returns many sinusoids from frequency spaced by frequency * 2 * ratio with amplitude (r^(2k-1))/(2k-1)."
-  (let* ((r (rkoddssb-r gen))
-	 (cx (rkoddssb-angle gen))
-	 (mx (* cx (rkoddssb-ratio gen)))
-	 (cxx (- cx mx)))
-
-    (set! (rkoddssb-angle gen) (+ fm cx (rkoddssb-frequency gen)))
-
-    (/ (- (* (cos cxx)
-	     0.5
-	     (log (/ (+ 1.0 (* 2.0 r (cos mx)) (* r r))
-		     (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
-	  (* (sin cxx)
-	     (atan (/ (* 2.0 r (sin mx))
-		      (- 1.0 (* r r))))))
-
-       (- (log (+ 1 r))    ; normalization (r^k/k for odd k)
-	  (log (- 1 r))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (cxx (- cx mx)))
+      (set! angle (+ fm cx frequency))
+      (/ (- (* (cos cxx)
+	       0.5
+	       (log (/ (+ 1.0 (* 2.0 r (cos mx)) (* r r))
+		       (+ 1.0 (* -2.0 r (cos mx)) (* r r)))))
+	    (* (sin cxx)
+	       (atan (/ (* 2.0 r (sin mx))
+			(- 1.0 (* r r))))))
+	 (- (log (+ 1 r))    ; normalization (r^k/k for odd k)
+	    (log (- 1 r)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rkoddssb 1000.0 0.1 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (rkoddssb gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (rkoddssb gen))))))
 |#
 
 (definstrument (glassy beg dur freq amp)
@@ -2768,11 +2851,11 @@
 	 (clang (make-rkoddssb (* freq 2) (/ 1.618 2) r))
 	 (clangf (make-env (list 0 0 .01 1 .1 1 .2 .4 (max .3 dur) 0) :scaler amp :duration dur))
 	 (crf (make-env (list 0 1 1 0) :scaler r :duration dur)))
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (set! (rkoddssb-r clang) (env crf))
-       (outa i (* (env clangf)
-		  (rkoddssb clang 0.0))))))
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (set! (clang 'r) (env crf))
+      (outa i (* (env clangf)
+		 (rkoddssb clang 0.0))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2787,9 +2870,9 @@
   (let ((gen (make-rkoddssb 5000.0 0.1 0.95))
 	(ampf (make-env '(0 0 9 1 10 0) :base 32 :length 10000))
 	(noi (make-rand 10000 .1)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (* (env ampf) (sin (rkoddssb gen (rand noi))))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* (env ampf) (sin (rkoddssb gen (rand noi))))))))
 |#
 
 
@@ -2805,46 +2888,47 @@
 
 (defgenerator (krksin
 	       :make-wrapper (lambda (g)
-			       (set! (krksin-frequency g) (hz->radians (krksin-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 
 (define* (krksin gen (fm 0.0))
-  "  (make-krksin frequency (r 0.5)) creates a krksin generator.\n\
+  
+  "(make-krksin frequency (r 0.5)) creates a krksin generator.\n\
    (krksin gen (fm 0.0)) returns many sines spaced by frequency with amplitude kr^k."
-  (let* ((x (krksin-angle gen))
-	 (r (krksin-r gen))
-	 (r1 (- 1.0 r))
-	 (r2 (* r r))
-	 (r3 (if (> r .9) r1 1.0)) ; not right yet...
-	 (den (+ 1.0 (* -2.0 r (cos x)) r2)))
-
-    (set! (krksin-angle gen) (+ fm (krksin-angle gen) (krksin-frequency gen)))
-
-    (/ (* r1 r1 r3 (sin x))
-       (* den den))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (r1 (- 1.0 r))
+	   (r2 (* r r))
+	   (r3 (if (> r .9) r1 1.0)) ; not right yet...
+	   (den (+ 1.0 (* -2.0 r (cos x)) r2)))
+      (set! angle (+ fm angle frequency))
+      (/ (* r1 r1 r3 (sin x))
+	 (* den den)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-krksin 440.0 0.5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (krksin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (krksin gen)))))
 
 (with-sound (:clipped #f :statistics #t :scaled-to .5 :play #t)
   (let ((gen (make-krksin 6.0 0.965))) ; 60 .6 also
-     (do ((i 0 (+ i 1)))
-	 ((= i 100000))
-       (outa i (krksin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 100000))
+      (outa i (krksin gen)))))
 
 (do ((i 0 (+ i 1)))
     ((= i 10))
   (let ((mx (maxamp (with-sound (:clipped #f :output (make-vct 10000))
 		      (let ((gen (make-krksin 20.0 (* i 0.1))))
-			 (do ((i 0 (+ i 1)))
-			     ((= i 10000))
-			   (outa i (krksin gen))))))))
+			(do ((i 0 (+ i 1)))
+			    ((= i 10000))
+			  (outa i (krksin gen))))))))
     (format #t ";~A: ~A" (* 0.1 i) mx)))
 
 ;;; relation between 1/(1-x)^2 and peak amp:
@@ -2855,17 +2939,19 @@
     (let ((val (/ 1.0 (expt (- 1 r) 2))))
       (let ((pk 0.0))
 	(let ((gen (make-krksin 1.0 r)))
-	   (do ((k 0 (+ k 1)))
-	       ((= k 100000))
-	     (let ((x (abs (krksin gen))))
-	       (if (> x pk) (set! pk x)))))
+	  (do ((k 0 (+ k 1)))
+	      ((= k 100000))
+	    (let ((x (abs (krksin gen))))
+	      (if (> x pk) (set! pk x)))))
 	(outa i (/ pk val))))))
 
 ;;; r 0: 1.0 (sin(x) in this case)
 ;;; else min den is (1-2r+r^2) so peak should be around (/ (expt (+ 1 (* - 2 r) (* r r)) 2))
 ;;;   but at that point sin(x)->0 as x
-		 
+
 |#
+
+
 
 #|
 ;;; --------------------------------------------------------------------------------
@@ -2876,47 +2962,51 @@
 
 (defgenerator (abssin
 	       :make-wrapper (lambda (g)
-			       (set! (abssin-osc g) (make-oscil (abssin-frequency g)))
+			       (set! (g 'osc) (make-oscil (g 'frequency)))
 			       g)	       
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (abssin-osc g)))
-			       (lambda (g val) (set! (mus-frequency (abssin-osc g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (abssin-osc g)))
-			       (lambda (g val) (set! (mus-phase (abssin-osc g)) val) val))))
-  (frequency *clm-default-frequency*)
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'osc)))
+				(lambda (g val) (set! (mus-frequency (g 'osc)) val))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'osc)))
+				(lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+  (frequency *clm-default-frequency*) fm
   (osc #f))
 
 
 (define* (abssin gen (fm 0.0))
-  "  (make-abssin frequency) creates an abssin generator.\n\
+  
+  "(make-abssin frequency) creates an abssin generator.\n\
    (abssin gen (fm 0.0)) returns (abs oscil)."
-  (/ (- (abs (oscil (abssin-osc gen) fm))
-	(/ 2.0 pi))
-     (/ 2.0 pi)))  ; original went from 0 to 1.0, subtract 2/pi, and we get peak at -2/pi
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (/ (- (abs (oscil osc fm))
+	  (/ 2.0 pi))
+       (/ 2.0 pi))))  ; original went from 0 to 1.0, subtract 2/pi, and we get peak at -2/pi
 
 ;; DC: sin^2 x = 1/2 - cos 2x, 
 ;;   so every term in the sum adds 1/(2(4k^2-1)) -> 1/4 (J 397 or 373)
 ;;   so DC is 2/pi = 0.6366
 
-
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-abssin 440.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (abssin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (abssin gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((vib (make-abssin 100.0)) ; spacing will be 200, if FM you get index-proportional amount as constant offset
 	(gen (make-oscil 1000.0))
 	(ampf (make-env '(0 0 1 1 2 1 3 0) :scaler .5 :length 20000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i 
-	     (* (env ampf)
-		(oscil gen 0.0 (* 3 (abssin vib 0.0))))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i 
+	    (* (env ampf)
+	       (oscil gen 0.0 (* 3 (abssin vib 0.0))))))))
 
 ;;; pitch is 2*freq, 200 1, 400 .203, 600 .087, 800 .049, 1000 .031, 1200 .021
 ;;;                      1      .2        .086      .048       .030       .021 -- (/ 3.0 (- (* 4 (* 6 6)) 1))
@@ -2932,65 +3022,68 @@
 
 (defgenerator (abcos
 	       :make-wrapper (lambda (g)
-			       (set! (abcos-frequency g) (hz->radians (abcos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (a 0.5) (b 0.25) (angle 0.0))
+  (frequency *clm-default-frequency*) (a 0.5) (b 0.25) (angle 0.0) fm)
 
 
 (define* (abcos gen (fm 0.0))
-  "  (make-abcos frequency (a 0.5) (b 0.25)) creates an abcos generator.\n\
+  
+  "(make-abcos frequency (a 0.5) (b 0.25)) creates an abcos generator.\n\
    (abcos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
-  (let* ((x (abcos-angle gen))
-	 (a (abcos-a gen))
-	 (b (abcos-b gen))
-	 (norm (/ 0.5 (- (/ 1.0 
-			    (- 1.0 (/ (abs (- (sqrt (- (* a a) (* b b))) 
-					      a)) 
-				      b))) 
-			 1.0)))) ;; i.e. 1/(1-r) -1 because we start at k=1, r=the complicated a/b business
-
-    (set! (abcos-angle gen) (+ fm x (abcos-frequency gen)))
-
-    (* norm (- (/ (sqrt (- (* a a) (* b b)))
-		  (+ a (* b (cos x))))
-	       1.0))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (norm (/ 0.5 (- (/ 1.0 
+			      (- 1.0 (/ (abs (- (sqrt (- (* a a) (* b b))) 
+						a)) 
+					b))) 
+			   1.0)))) ;; i.e. 1/(1-r) -1 because we start at k=1, r=the complicated a/b business
+      (set! angle (+ fm x frequency))
+      (* norm (- (/ (sqrt (- (* a a) (* b b)))
+		    (+ a (* b (cos x))))
+		 1.0)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-abcos 100.0 0.5 0.25)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (abcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (abcos gen)))))
 |#
+
 
 
 (defgenerator (absin
 	       :make-wrapper (lambda (g)
-			       (set! (absin-frequency g) (hz->radians (absin-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (a 0.5) (b 0.25) (angle 0.0))
+  (frequency *clm-default-frequency*) (a 0.5) (b 0.25) (angle 0.0) fm)
 
 
 (define* (absin gen (fm 0.0))
-  "  (make-absin frequency (a 0.5) (b 0.25)) creates an absin generator.\n\
+  
+  "(make-absin frequency (a 0.5) (b 0.25)) creates an absin generator.\n\
    (absin gen (fm 0.0)) returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
-  (let ((x (absin-angle gen))
-	(a (absin-a gen))
-	(b (absin-b gen)))
-
-    (set! (absin-angle gen) (+ fm x (absin-frequency gen)))
-
-    (/ (* (sin x) 
-	  (sqrt (- (* a a) (* b b))))
-       (+ a (* b (cos x))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ fm x frequency))
+      (/ (* (sin x) 
+	    (sqrt (- (* a a) (* b b))))
+	 (+ a (* b (cos x)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-absin 100.0 0.5 0.25)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (absin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (absin gen))))))
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3001,14 +3094,12 @@
 
 (defgenerator (r2k2cos
 	       :make-wrapper (lambda (g)
-			       (set! (r2k2cos-frequency g) (hz->radians (r2k2cos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 1.0) (angle 0.0) fm)
 
 
 (define (r2k2cos-norm a)
-  "  (make-r2k2cos frequency (r 1.0)) creates an r2k2cos generator.\n\
-   (r2k2cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."
   ;; J 124
   (- (* (/ pi (* 2 a))
 	(/ (cosh (* pi a))
@@ -3017,26 +3108,31 @@
 	(* 2 a a))))
 
 (define* (r2k2cos gen (fm 0.0))
-  (let ((x (r2k2cos-angle gen))
-	(a (r2k2cos-r gen)))
-    (if (> x (* 2 pi))
-	(set! x (modulo x (* 2 pi))))
-
-    (set! (r2k2cos-angle gen) (+ x fm (r2k2cos-frequency gen)))
-
-    (/ (- (* pi (/ (cosh (* a (- pi x)))
-		   (sinh (* a pi))))
-	  (/ 1.0 a))
-       (* 2 a (r2k2cos-norm a)))))
+  
+  "(make-r2k2cos frequency (r 1.0)) creates an r2k2cos generator.\n\
+   (r2k2cos gen (fm 0.0)) returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle)
+	  (a r))
+      (if (> x (* 2 pi))
+	  (set! x (modulo x (* 2 pi))))
+      (set! angle (+ x fm frequency))
+      (/ (- (* pi (/ (cosh (* a (- pi x)))
+		     (sinh (* a pi))))
+	    (/ 1.0 a))
+	 (* 2 a (r2k2cos-norm a))))))
 
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-r2k2cos 100.0 1.0))) ; 400 .25 -- this isn't very flexible
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (r2k2cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (r2k2cos gen))))))
 |#
+
 
 
 
@@ -3056,37 +3152,42 @@
 
 (defgenerator (blsaw
 	       :make-wrapper (lambda (g)
-			       (set! (blsaw-frequency g) (hz->radians (blsaw-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm)
 
 
 (define* (blsaw gen (fm 0.0))
-  "  (make-blsaw frequency (n 1) (r 0.5)) creates a blsaw generator.\n\
+  
+  "(make-blsaw frequency (n 1) (r 0.5)) creates a blsaw generator.\n\
    (blsaw gen (fm 0.0)) returns a band-limited sawtooth wave."
-  (let* ((a (blsaw-r gen))
-	 (N (blsaw-n gen))
-	 (x (blsaw-angle gen))
-	 (incr (blsaw-frequency gen))
-	 (den (+ 1.0 (* -2.0 a (cos x)) (* a a))))
-    (set! (blsaw-angle gen) (+ x fm incr))
-    (if (< (abs den) nearly-zero)
-	0.0
-	(let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) incr))))
-	       (s2 (* (expt a N) (sin (+ (* N x) incr))))
-	       (s3 (* a (sin (+ x incr)))))
-	  (/ (+ (sin incr) 
-		(- s3) 
-		(- s2) 
-		s1) 
-	     den)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((a r)
+	   (N n)
+	   (x angle)
+	   (incr frequency)
+	   (den (+ 1.0 (* -2.0 a (cos x)) (* a a))))
+      (set! angle (+ x fm incr))
+      (if (< (abs den) nearly-zero)
+	  0.0
+	  (let* ((s1 (* (expt a (- N 1.0)) (sin (+ (* (- N 1.0) x) incr))))
+		 (s2 (* (expt a N) (sin (+ (* N x) incr))))
+		 (s3 (* a (sin (+ x incr)))))
+	    (/ (+ (sin incr) 
+		  (- s3) 
+		  (- s2) 
+		  s1) 
+	       den))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-blsaw 440.0 :r 0.5 :n 3)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (blsaw gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (blsaw gen)))))
 |#
+
 
 
 
@@ -3095,42 +3196,43 @@
 ;;; asymmetric fm gens
 
 (defgenerator (asyfm
-	       :make-wrapper (lambda (gen)
-			       (set! (asyfm-frequency gen) (hz->radians (asyfm-frequency gen)))
-			       gen))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (index 1.0) (phase 0.0))
+	       :make-wrapper (lambda (g)
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       g))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (index 1.0) (phase 0.0) fm)
 
 
-(define* (asyfm-J gen (input 0.0))
-  "(asyfm-J gen input) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
-  (let* ((phase (asyfm-phase gen))
-	 (r (asyfm-r gen))
-	 (r1 (/ 1.0 r))
-	 (index (asyfm-index gen))
-	 (one (if (or (> r 1.0) 
-		      (and (< r 0.0)
-			   (> r -1.0)))
-		  -1.0 1.0))
-	 (modphase (* (asyfm-ratio gen) phase))
-	 (result (* (exp (* 0.5 index (- r r1) (+ one (cos modphase))))
-		    (cos (+ phase (* 0.5 index (+ r r1) (sin modphase))))))) ; use cos, not sin, to get predictable amp
-    (set! (asyfm-phase gen) (+ phase input (asyfm-frequency gen)))
-    result))
+(define* (asyfm-J gen (fm 0.0))
+  
+  "(asyfm-J gen fm) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((r1 (/ 1.0 r))
+	   (one (if (or (> r 1.0) 
+			(and (< r 0.0)
+			     (> r -1.0)))
+		    -1.0 1.0))
+	   (modphase (* ratio phase))
+	   (result (* (exp (* 0.5 index (- r r1) (+ one (cos modphase))))
+		      (cos (+ phase (* 0.5 index (+ r r1) (sin modphase))))))) ; use cos, not sin, to get predictable amp
+      (set! phase (+ phase fm frequency))
+      result)))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t) 
   (let ((gen (make-asyfm 2000.0 :ratio .1))) 
-     (do ((i 0 (+ i 1)))
-	 ((= i 1000))
-       (outa i (asyfm-J gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (asyfm-J gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
   (let ((gen (make-asyfm 2000.0 :ratio .1 :index 1))
 	(r-env (make-env '(0 -4 1 -1) :length 20000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (set! (asyfm-r gen) (env r-env))
-       (outa i (asyfm-J gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (set! (gen 'r) (env r-env))
+      (outa i (asyfm-J gen)))))
 
 (define (val index r)
   (let ((sum 0.0))
@@ -3146,34 +3248,37 @@
     (lambda (r)
       (let ((peak (maxamp (with-sound (:clipped #f :output (make-vct 1000))
 			    (let ((gen (make-asymmetric-fm 2000.0 :ratio .1 :r r)))
-			       (do ((i 0 (+ i 1)))
-				   ((= i 1000))
-				 (outa i (asymmetric-fm gen index))))))))
+			      (do ((i 0 (+ i 1)))
+				  ((= i 1000))
+				(outa i (asymmetric-fm gen index))))))))
 	(if (> (abs (- peak 1.0)) .1)
 	    (format #t ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
     (list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
  (list 1.0 3.0 10.0))
 |#
 
-(define* (asyfm-I gen (input 0.0))
-  "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
-  (let* ((phase (asyfm-phase gen))
-	 (r (asyfm-r gen))
-	 (r1 (/ 1.0 r))
-	 (index (asyfm-index gen))
-	 (modphase (* (asyfm-ratio gen) phase))
-	 (result (* (exp (* 0.5 index (+ r r1) (- (cos modphase) 1.0)))
-		    (cos (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
-    (set! (asyfm-phase gen) (+ phase input (asyfm-frequency gen)))
-    result))
+(define* (asyfm-I gen (fm 0.0))
+  
+  "(dsp-asyfm-I gen fm) is the I0 case of the asymmetric-fm generator (dsp.scm)"
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((r1 (/ 1.0 r))
+	   (modphase (* ratio phase))
+	   (result (* (exp (* 0.5 index (+ r r1) (- (cos modphase) 1.0)))
+		      (cos (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
+      (set! phase (+ phase fm frequency))
+      result)))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t) 
   (let ((gen (make-asyfm 2000.0 :ratio .1))) 
-     (do ((i 0 (+ i 1)))
-	 ((= i 1000))
-       (outa i (asyfm-I gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (asyfm-I gen))))))
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3185,36 +3290,39 @@
 
 (defgenerator (bess
 	       :make-wrapper (lambda (g)
-			       (set! (bess-frequency g) (hz->radians (bess-frequency g)))
-			       (if (>= (bess-n g) (length bessel-peaks)) 
-				   (set! (bess-norm g) (/ 0.67 (expt (bess-n g) 1/3)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (if (>= (g 'n) (length bessel-peaks)) 
+				   (set! (g 'norm) (/ 0.67 (expt (g 'n) 1/3)))
 				   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
-				   (set! (bess-norm g) (bessel-peaks (bess-n g))))
+				   (set! (g 'norm) (bessel-peaks (g 'n))))
 			       g))
-  (frequency *clm-default-frequency*) (n 0) (angle 0.0) (norm 1.0))
+  (frequency *clm-default-frequency*) (n 0) (angle 0.0) (norm 1.0) fm)
 
 (define* (bess gen (fm 0.0))
-  "  (make-bess frequency (n 0)) creates a bessel function (Jn) generator.\n\
+  
+  "(make-bess frequency (n 0)) creates a bessel function (Jn) generator.\n\
    (bess gen (fm 0.0)) returns Jn."
-  (let ((result (/ (bes-jn (bess-n gen) (bess-angle gen)) 
-		   (bess-norm gen))))
-    (set! (bess-angle gen) (+ (bess-angle gen) (bess-frequency gen) fm))
-    result))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((result (/ (bes-jn n angle) norm)))
+      (set! angle (+ angle frequency fm))
+      result)))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-bess 100.0 :n 0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 1000))
-       (outa i (bess gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 1000))
+      (outa i (bess gen)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen1 (make-bess 400.0 :n 1))
 	(gen2 (make-bess 400.0 :n 1))
 	(vol (make-env '(0 0 1 1 9 1 10 0) :scaler 2.0 :length 20000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (bess gen1 (* (env vol) (bess gen2 0.0)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (bess gen1 (* (env vol) (bess gen2 0.0)))))))
 
 ;;; max amps:
 (do ((i 1 (+ i 1)))
@@ -3231,12 +3339,14 @@
   (let ((gen1 (make-bess 400.0 :n 1))
 	(gen2 (make-oscil 400.0))
 	(vol (make-env '(0 1 1 0) :scaler 1.0 :length 20000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (bess gen1 (* (env vol) (oscil gen2 0.0)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (bess gen1 (* (env vol) (oscil gen2 0.0)))))))
 
 ;;; also gen2 800, env scl 0.2
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3246,48 +3356,48 @@
 
 (defgenerator (jjcos
 	       :make-wrapper (lambda (g)
-			       (set! (jjcos-frequency g) (hz->radians (jjcos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (k 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (k 1.0) (angle 0.0) fm)
 
 
 (define* (jjcos gen (fm 0.0))
-  "  (make-jjcos frequency (r 0.5) (a 1.0) (k 1)) creates a jjcos generator.\n\
+  
+  "(make-jjcos frequency (r 0.5) (a 1.0) (k 1)) creates a jjcos generator.\n\
    (jjcos gen (fm 0.0)) returns a sum of cosines scaled by a product of Bessel functions."
-  (let* ((x (jjcos-angle gen))
-	 (a (jjcos-a gen))
-	 (r (jjcos-r gen))
-	 (k (jjcos-k gen))
-	 (dc (* (bes-j0 (* k a)) (bes-j0 (* k r))))
-	 (norm (- (bes-j0 (* k (sqrt (+ (* a a) (* r r) (* -2 a r))))) dc)))
-
-    ;; this norm only works if the a/r/k values all small enough that the initial J0 bump dominates
-    ;;   if they're large (k=10 for example), later maxes come into play.
-    ;; we need a formula for a sum of JJ's
-    ;;
-    ;; the resultant spectra are similar to FM (we can get sharper bumps, or low-passed bumps, etc)
-
-    (set! (jjcos-angle gen) (+ x fm (jjcos-frequency gen)))
-
-    (/ (- (bes-j0 (* k (sqrt (+ (* r r) 
-				(* a a)
-				(* a r -2.0 (cos x))))))
-	  dc)             ; get rid of DC component
-       norm)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (dc (* (bes-j0 (* k a)) (bes-j0 (* k r))))
+	   (norm (- (bes-j0 (* k (sqrt (+ (* a a) (* r r) (* -2 a r))))) dc)))
+      
+      ;; this norm only works if the a/r/k values all small enough that the initial J0 bump dominates
+      ;;   if they're large (k=10 for example), later maxes come into play.
+      ;; we need a formula for a sum of JJ's
+      ;;
+      ;; the resultant spectra are similar to FM (we can get sharper bumps, or low-passed bumps, etc)
+      
+      (set! angle (+ x fm frequency))
+      (/ (- (bes-j0 (* k (sqrt (+ (* r r) 
+				  (* a a)
+				  (* a r -2.0 (cos x))))))
+	    dc)             ; get rid of DC component
+	 norm))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (jjcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (jjcos gen))))))
 
 ;;; example:
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-jjcos 100.0 :a 2.0 :r 1.0 :k 1)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (jjcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (jjcos gen)))))
 
 :(* (bes-jn 1 1) (bes-jn 1 2))
 0.253788089467046
@@ -3333,43 +3443,38 @@ set k=10
 
 which again matches
 
-
 (define* (jjsin gen (fm 0.0))
-  (let* ((x (jjcos-angle gen))
-	 (a (jjcos-a gen))
-	 (r (jjcos-r gen))
-	 (k (jjcos-k gen)))
-
-    (set! (jjcos-angle gen) (+ x fm (jjcos-frequency gen)))
-
-    (* (sin x)
-       (bes-j0 (* k (sqrt (+ (* r r) 
-			     (* a a)
-			     (* a r -2.0 (cos x)))))))))
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle))
+      (set! angle (+ x fm frequency))
+      (* (sin x)
+	 (bes-j0 (* k (sqrt (+ (* r r) 
+			       (* a a)
+			       (* a r -2.0 (cos x))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (jjsin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (jjsin gen)))))
 
 (define* (jjesin gen (fm 0.0))
-  (let* ((x (jjcos-angle gen))
-	 (r (jjcos-r gen)))
-
-    (set! (jjcos-angle gen) (+ x fm (jjcos-frequency gen)))
-
-    (* (exp (* r (- (cos x) 1.0))) ; -1 for norm , but there's huge DC offset
-       (bes-j0 (* r (sin x))))))
-
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle))
+      (set! angle (+ x fm frequency))
+      (* (exp (* r (- (cos x) 1.0))) ; -1 for norm , but there's huge DC offset
+	 (bes-j0 (* r (sin x)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-jjcos 100.0 :a 1.0 :r 1.0 :k 1)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (jjesin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (jjesin gen)))))
 
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3379,33 +3484,35 @@ which again matches
 
 (defgenerator (j0evencos
 	       :make-wrapper (lambda (g)
-			       (set! (j0evencos-frequency g) (hz->radians (j0evencos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (index 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (index 1.0) (angle 0.0) fm)
 
 
 (define* (j0evencos gen (fm 0.0))
-  "  (make-j0evencos frequency (index 1.0)) creates a j0evencos generator.\n\
+  
+  "(make-j0evencos frequency (index 1.0)) creates a j0evencos generator.\n\
    (j0evencos gen (fm 0.0)) returns a sum of cosines scaled Jk^2(index/2)."
-  (let* ((x (j0evencos-angle gen))
-	 (z (j0evencos-index gen))
-	 (j0 (bes-j0 (* 0.5 z)))
-	 (dc (* j0 j0)))
-
-    (set! (j0evencos-angle gen) (+ x fm (j0evencos-frequency gen)))
-
-    (if (= dc 1.0)
-	1.0
-	(/ (- (bes-j0 (* z (sin x)))
-	      dc)        ; get rid of DC component
-	   (- 1.0 dc))))) ; normalize
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (z index)
+	   (j0 (bes-j0 (* 0.5 z)))
+	   (dc (* j0 j0)))
+      (set! angle (+ x fm frequency))
+      (if (= dc 1.0)
+	  1.0
+	  (/ (- (bes-j0 (* z (sin x)))
+		dc)        ; get rid of DC component
+	     (- 1.0 dc)))))) ; normalize
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j0evencos 100.0 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (j0evencos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (* .5 (j0evencos gen))))))
 
 index 10 (so 10/2 is the bes-jn arg):
 
@@ -3413,33 +3520,33 @@ index 10 (so 10/2 is the bes-jn arg):
   (do ((i 1 (+ i 1)))
       ((= i 11))
     (format #t ";~A: ~A ~A" i (* (bes-jn i 5.0) (bes-jn i 5.0)) (/ (* (bes-jn i 5.0) (bes-jn i 5.0)) base))))
-;1: 0.107308091385168 0.701072497819036
-;2: 0.00216831005396058 0.0141661502497507
-;3: 0.133101826831083 0.86958987897572
-;4: 0.153062759870046 1.0
-;5: 0.0681943848279407 0.445532178342005
-;6: 0.0171737701015899 0.112200839160164
-;7: 0.00284904116112987 0.0186135488707298
-;8: 3.38752000110201e-4 0.00221315753353599
-;9: 3.04735259399795e-5 1.99091705688911e-4
-;10: 2.15444461145164e-6 1.4075563600714e-5
+					;1: 0.107308091385168 0.701072497819036
+					;2: 0.00216831005396058 0.0141661502497507
+					;3: 0.133101826831083 0.86958987897572
+					;4: 0.153062759870046 1.0
+					;5: 0.0681943848279407 0.445532178342005
+					;6: 0.0171737701015899 0.112200839160164
+					;7: 0.00284904116112987 0.0186135488707298
+					;8: 3.38752000110201e-4 0.00221315753353599
+					;9: 3.04735259399795e-5 1.99091705688911e-4
+					;10: 2.15444461145164e-6 1.4075563600714e-5
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j0evencos 100.0 0.0)) 
 	(indf (make-env '(0 0 1 20) :length 30000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000)) 
-       (set! (j0evencos-index gen) (env indf))
-       (outa i (* 0.5 (j0evencos gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* 0.5 (j0evencos gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j0evencos 100.0 0.0)) 
 	(indf (make-env '(0 0 1 20) :length 30000))
 	(carrier (make-oscil 2000.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000)) 
-       (set! (j0evencos-index gen) (env indf))
-       (outa i (* 0.5 (oscil carrier) (j0evencos gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* 0.5 (oscil carrier) (j0evencos gen))))))
 
 ;;; why no "carrier"?  I subtracted DC out above -- to make this look right, I need to use the bes(sin) without any fixup.
 
@@ -3447,19 +3554,19 @@ index 10 (so 10/2 is the bes-jn arg):
   (let ((gen (make-j0evencos 100.0 0.0)) 
 	(indf (make-env '(0 20 1 0) :length 30000))
 	(carrier (make-oscil 2000.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000)) 
-       (set! (j0evencos-index gen) (env indf))
-       (outa i (* 0.5 (j0evencos gen (oscil carrier)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* 0.5 (j0evencos gen (oscil carrier)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j0evencos 100.0 0.0))                 ; also 20 800, 20 200 (less index mvt), or 200 50 
 	(indf (make-env '(0 10 1 0) :length 30000))
 	(carrier (make-oscil 2000.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000)) 
-       (set! (j0evencos-index gen) (env indf))
-       (outa i (* 0.5 (j0evencos gen (* .1 (oscil carrier))))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* 0.5 (j0evencos gen (* .1 (oscil carrier))))))))
 
 (define (j0even beg dur freq amp mc-ratio index)
   (let* ((gen (make-j0evencos (* mc-ratio freq) 0.0)) 
@@ -3467,15 +3574,15 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (carrier (make-oscil freq))
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur))))
-     (do ((i start (+ i 1)))
-	 ((= i end))
-       (set! (j0evencos-index gen) (env indf))
-       (outa i (* 0.5 (j0evencos gen (* index (oscil carrier))))))))
+    (do ((i start (+ i 1)))
+	((= i end))
+      (set! (gen 'index) (env indf))
+      (outa i (* 0.5 (j0evencos gen (* index (oscil carrier))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (j0even i 1.0 2000.0 0.5 (+ .1 (* .05 i)) 0.1)))
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    (j0even i 1.0 2000.0 0.5 (+ .1 (* .05 i)) 0.1)))
 
 (define* (jfm beg dur freq amp mc-ratio index (index-env '(0 1 1 1 2 0)))
   (let* ((start (seconds->samples beg))
@@ -3486,13 +3593,13 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (vibamp (hz->radians (* freq .01)))
          (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler amp :duration dur)) 
          (indf (make-env index-env :scaler index :duration dur)))
-     (do ((i start (+ i 1)))
-	 ((= i end))
-       (let ((vb (* vibamp (oscil vib))))
-	 (set! (j0evencos-index md) (env indf))
-	 (outa i (* (env ampf)
-		    (oscil cr vb)
-		    (j0evencos md (* vb mc-ratio))))))))
+    (do ((i start (+ i 1)))
+	((= i end))
+      (let ((vb (* vibamp (oscil vib))))
+	(set! (md 'index) (env indf))
+	(outa i (* (env ampf)
+		   (oscil cr vb)
+		   (j0evencos md (* vb mc-ratio))))))))
 
 (with-sound (:output "test1.snd" :play #t) (jfm 0 3.0 400.0 0.5 .5 4.0 '(0 1  1 2  2 .5)))
 |#
@@ -3502,26 +3609,26 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (j2cos
 	       :make-wrapper (lambda (g)
-			       (set! (j2cos-frequency g) (hz->radians (j2cos-frequency g)))
-			       (if (< (j2cos-n g) 1) (set! (j2cos-n g) 1))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (if (< (g 'n) 1) (set! (g 'n) 1))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.5) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (n 1) (angle 0.0) fm)
 
 
 (define* (j2cos gen (fm 0.0))
-  "  (make-j2cos frequency (r 0.5) (n 1)) creates a j2cos generator.\n\
+  
+  "(make-j2cos frequency (r 0.5) (n 1)) creates a j2cos generator.\n\
    (j2cos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
-  (let* ((x (j2cos-angle gen))
-	 (r (j2cos-r gen))
-	 (rsinx2 (* 2.0 r (sin (* 0.5 x))))
-	 (n (j2cos-n gen)))
-
-    (set! (j2cos-angle gen) (+ x fm (j2cos-frequency gen)))
-
-    (if (< (abs rsinx2) nearly-zero)
-	1.0
-	(/ (bes-jn n rsinx2)
-	   rsinx2))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (rsinx2 (* 2.0 r (sin (* 0.5 x)))))
+      (set! angle (+ x fm frequency))
+      (if (< (abs rsinx2) nearly-zero)
+	  1.0
+	  (/ (bes-jn n rsinx2)
+	     rsinx2)))))
 
 ;;; this goes berserk if n=0, needs normalization, dc omission, doc/test
 ;;; if n=1, sample 0 = 1, the rest are in the .5 range!
@@ -3530,53 +3637,54 @@ index 10 (so 10/2 is the bes-jn arg):
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j2cos 100.0 :r 1.0 :n 0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (j2cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .5 (j2cos gen))))))
 |#
+
+
 
 
 ;;; --------------------------------------------------------------------------------
 
 (defgenerator (jpcos
 	       :make-wrapper (lambda (g)
-			       (set! (jpcos-frequency g) (hz->radians (jpcos-frequency g)))
-			       (if (= (jpcos-r g) (jpcos-a g))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (if (= (g 'r) (g 'a))
 				   (begin
-				     (snd-warning (format #f ";jpcos r and a can't be equal (~A)" (jpcos-r g)))
-				     (set! (jpcos-r g) (+ (jpcos-a g) .01))))
+				     (snd-warning (format #f ";jpcos r and a can't be equal (~A)" (g 'r)))
+				     (set! (g 'r) (+ (g 'a) .01))))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.5) (a 0.0) (k 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (a 0.0) (k 1.0) (angle 0.0) fm)
 
 
 (define* (jpcos gen (fm 0.0))
-  "  (make-jpcos frequency (r 0.5) (a 0.0) (k 1)) creates a jpcos generator.\n\
+  
+  "(make-jpcos frequency (r 0.5) (a 0.0) (k 1)) creates a jpcos generator.\n\
    (jpcos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
-  (let* ((x (jpcos-angle gen))
-	 (a (jpcos-a gen))
-	 (r (jpcos-r gen))
-	 (k (jpcos-k gen))
-	 ;; (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
-	 ;; from P0(x)=1, J[1/2](x)=sqrt(2/(pi x))sin(x), omitting original 1/pi
-	 ;;   G&R 914 (8.464), 974 (8.912), but it's missing some remaining (small) component
-	 ;; also omitting the original divide by (* pi (sqrt arg)) -- it's just an amplitude scaler
-	 ;;   and in this context, we get -1..1 peak amps from the sin anyway.
-	 (arg (+ (* r r) 
-		 (* a a)
-		 (* a r -2.0 (cos x)))))
-
-    (set! (jpcos-angle gen) (+ x fm (jpcos-frequency gen)))
-
-    (if (< (abs arg) nearly-zero) ; r = a, darn it! This will produce a spike, but at least it's not a NaN
-	1.0
-	(sin (* k (sqrt arg))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   ;; (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
+	   ;; from P0(x)=1, J[1/2](x)=sqrt(2/(pi x))sin(x), omitting original 1/pi
+	   ;;   G&R 914 (8.464), 974 (8.912), but it's missing some remaining (small) component
+	   ;; also omitting the original divide by (* pi (sqrt arg)) -- it's just an amplitude scaler
+	   ;;   and in this context, we get -1..1 peak amps from the sin anyway.
+	   (arg (+ (* r r) 
+		   (* a a)
+		   (* a r -2.0 (cos x)))))
+      (set! angle (+ x fm frequency))
+      (if (< (abs arg) nearly-zero) ; r = a, darn it! This will produce a spike, but at least it's not a NaN
+	  1.0
+	  (sin (* k (sqrt arg)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-jpcos 100.0 :a 1.0 :r 0.5 :k 1)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 210000))
-       (outa i (jpcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 210000))
+      (outa i (jpcos gen)))))
 
 (with-sound (:clipped #f :statistics #t)
   (let* ((gen (make-jpcos 400.0 :a 1.0 :r 0.5 :k 10))
@@ -3584,11 +3692,11 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (samps (seconds->samples dur))
 	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler 0.5))
 	 (indf (make-env '(0 0 1 1) :duration dur :scaler 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i samps))
-       (set! (jpcos-r gen) (env indf))
-       (outa i (* (env ampf)
-		  (jpcos gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i samps))
+      (set! (gen 'r) (env indf))
+      (outa i (* (env ampf)
+		 (jpcos gen))))))
 
 ;;; -.725, 1/.275
 (with-sound (:clipped #f :scaled-to .5) 
@@ -3611,10 +3719,10 @@ index 10 (so 10/2 is the bes-jn arg):
   (let ((gen (make-rkcos 440.0 :r 0.6)) 
 	(gen1 (make-oscil 440.0)) 
 	(indf (make-env '(0 .1 1 .8) :length 50000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 50000)) 
-       (set! (rkcos-r gen) (env indf))
-       (outa i (oscil gen1 (* (rkcos-r gen) (rkcos gen)))))))
+    (do ((i 0 (+ i 1)))
+	((= i 50000)) 
+      (set! (gen 'r) (env indf))
+      (outa i (oscil gen1 (* (gen 'r) (rkcos gen)))))))
 |#
 
 
@@ -3622,35 +3730,34 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; --------------------------------------------------------------------------------
 
 (defgenerator (jncos :make-wrapper (lambda (g)
-				     (set! (jncos-frequency g) (hz->radians (jncos-frequency g)))
+				     (set! (g 'frequency) (hz->radians (g 'frequency)))
 				     g))
-  (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (n 0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (n 0) (angle 0.0) fm)
 
 
 (define* (jncos gen (fm 0.0))
-  "  (make-jncos frequency (r 0.5) (a 1.0) (n 0)) creates a jncos generator.\n\
+  
+  "(make-jncos frequency (r 0.5) (a 1.0) (n 0)) creates a jncos generator.\n\
    (jncos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
-  (let* ((x (jncos-angle gen))
-	 (a (jncos-a gen))
-	 (r (jncos-r gen))
-	 (n (jncos-n gen))
-	 (arg (sqrt (+ (* r r) 
-		       (* a a)
-		       (* a r -2.0 (cos x))))))
-
-    (set! (jncos-angle gen) (+ x fm (jncos-frequency gen)))
-
-    (if (< arg nearly-zero)
-	1.0
-	(/ (bes-jn n arg)
-	   (expt arg n)))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (arg (sqrt (+ (* r r) 
+			 (* a a)
+			 (* a r -2.0 (cos x))))))
+      (set! angle (+ x fm frequency))
+      (if (< arg nearly-zero)
+	  1.0
+	  (/ (bes-jn n arg)
+	     (expt arg n))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-jncos 100.0 :a 0.5 :r 1.0 :n 0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 41000))
-       (outa i (jncos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 41000))
+      (outa i (jncos gen)))))
 |#
 
 
@@ -3661,30 +3768,32 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (j0j1cos
 	       :make-wrapper (lambda (g)
-			       (set! (j0j1cos-frequency g) (hz->radians (j0j1cos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (index 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (index 1.0) (angle 0.0) fm)
 
 
 (define* (j0j1cos gen (fm 0.0))
-  "  (make-j0j1cos frequency (index 1.0)) creates a j0j1cos generator.\n\
+  
+  "(make-j0j1cos frequency (index 1.0)) creates a j0j1cos generator.\n\
    (j0j1cos gen (fm 0.0)) returns a sum of cosines scaled in a very complicated way."
-  (let* ((x (j0j1cos-angle gen))
-	 (z (j0j1cos-index gen))
-	 (j0 (bes-j0 (* 0.5 z)))
-	 (dc (* j0 j0))
-	 (arg (* z (cos x))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (z index)
+	   (j0 (bes-j0 (* 0.5 z)))
+	   (dc (* j0 j0))
+	   (arg (* z (cos x))))
+      (set! angle (+ x fm frequency))
+      (/ (- (+ (bes-j0 arg)
+	       (bes-j1 arg))
+	    dc)        ; get rid of DC component
+	 1.215))))      ; not the best...
 
-    (set! (j0j1cos-angle gen) (+ x fm (j0j1cos-frequency gen)))
-
-    (/ (- (+ (bes-j0 arg)
-	     (bes-j1 arg))
-	  dc)        ; get rid of DC component
-       1.215)))      ; not the best...
-
-; need to normalize j0j1cos -- min depends on index, so peak depends on max and min and dc
-;       (max (- 1.2154 dc)
-;	    (- -0.5530 dc)
+					; need to normalize j0j1cos -- min depends on index, so peak depends on max and min and dc
+					;       (max (- 1.2154 dc)
+					;	    (- -0.5530 dc)
 
 #|
 (let ((mx 0.0) (x 0.0) (saved-x 0.0))
@@ -3710,69 +3819,72 @@ index 10 (so 10/2 is the bes-jn arg):
   (let ((pk (maxamp 
 	     (with-sound (:output (make-vct 10000))
   	       (let ((gen (make-j0j1cos 100.0 i)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i 10000))
-		    (outa i (j0j1cos gen))))))))
+		 (do ((i 0 (+ i 1)))
+		     ((= i 10000))
+		   (outa i (j0j1cos gen))))))))
     (format #t ";~A: ~A" i pk)))
-;0: 0.0
-;1: 0.555559098720551
-;2: 0.938335597515106
-;3: 0.953315675258636
-;4: 1.16509592533112
-;5: 1.21275520324707
-;6: 1.14727067947388
-;7: 1.07083106040955
-;8: 1.05760526657104
-;9: 1.11238932609558
-;10: 1.1824289560318
-;11: 1.21528387069702
-;12: 1.19094204902649
-;13: 1.14720714092255
-;14: 1.12512302398682
-				  
+					;0: 0.0
+					;1: 0.555559098720551
+					;2: 0.938335597515106
+					;3: 0.953315675258636
+					;4: 1.16509592533112
+					;5: 1.21275520324707
+					;6: 1.14727067947388
+					;7: 1.07083106040955
+					;8: 1.05760526657104
+					;9: 1.11238932609558
+					;10: 1.1824289560318
+					;11: 1.21528387069702
+					;12: 1.19094204902649
+					;13: 1.14720714092255
+					;14: 1.12512302398682
+
 |#
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j0j1cos 100.0 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (j0j1cos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (j0j1cos gen)))))
 |#
+
+
 
 ;;; --------------------------------------------------------------------------------
 
-
 (defgenerator (jycos
 	       :make-wrapper (lambda (g)
-			       (set! (jycos-frequency g) (hz->radians (jycos-frequency g)))
-			       (set! (jycos-r g) (max .0001 (jycos-r g))) ; 0->inf in bes-y0
-			       (let ((a (jycos-a g)) ; "c"
-				     (r (jycos-r g))); "b"
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'r) (max .0001 (g 'r))) ; 0->inf in bes-y0
+			       (let ((a (g 'a)) ; "c"
+				     (r (g 'r))); "b"
 				 (if (<= r a)
 				     (format #t ";jycos a: ~A must be < r: ~A" a r))
 				 (if (<= (+ (* a a) (* r r)) (* 2 a r))
 				     (format #t ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
 			       g))
   (frequency *clm-default-frequency*) (r 1.0) (a 0.5) ; "b" and "c" in the docs
-  (angle 0.0))
+  (angle 0.0) fm)
 
 
 (define* (jycos gen (fm 0.0))
-  "  (make-jycos frequency (r 1.0) (a 0.5)) creates a jycos generator.\n\
+  
+  "(make-jycos frequency (r 1.0) (a 0.5)) creates a jycos generator.\n\
    (jycos gen (fm 0.0)) returns a sum of cosines scaled by Yn(r)*Jn(r)."
-  (let* ((x (jycos-angle gen))
-	 (b (jycos-r gen))
-	 (c (jycos-a gen))
-	 (b2c2 (+ (* b b) (* c c)))
-	 (dc (* (bes-y0 b) (bes-j0 c)))
-	 (norm (abs (- (bes-y0 (sqrt (+ b2c2 (* -2 b c)))) dc))))
-
-    (set! (jycos-angle gen) (+ x fm (jycos-frequency gen)))
-
-    (/ (- (bes-y0 (sqrt (+ b2c2 (* -2.0 b c (cos x)))))
-	  dc)
-       norm)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (b r)
+	   (c a)
+	   (b2c2 (+ (* b b) (* c c)))
+	   (dc (* (bes-y0 b) (bes-j0 c)))
+	   (norm (abs (- (bes-y0 (sqrt (+ b2c2 (* -2 b c)))) dc))))
+      (set! angle (+ x fm frequency))
+      (/ (- (bes-y0 (sqrt (+ b2c2 (* -2.0 b c (cos x)))))
+	    dc)
+	 norm))))
 
 ;;; oops -- bes-y0(0) is -inf!
 ;;; norm only works for "reasonable" a and r
@@ -3783,12 +3895,12 @@ index 10 (so 10/2 is the bes-jn arg):
 	(af (make-env '(0 0 1 1) :length 30000))
 	(rf (make-env '(0 3 1 3) :length 30000))
 	(ampf (make-env '(0 0 1 1 10 1 11 0) :scaler 0.5 :length 30000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (set! (jycos-a gen) (env af))
-       (set! (jycos-r gen) (env rf))
-       (outa i (* (env ampf)
-		  (jycos gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (set! (gen 'a) (env af))
+      (set! (gen 'r) (env rf))
+      (outa i (* (env ampf)
+		 (jycos gen))))))
 
 :(* (bes-yn 1 1.5) (bes-jn 1 1.0))
 -0.181436652807559
@@ -3803,37 +3915,41 @@ index 10 (so 10/2 is the bes-jn arg):
 0.220994475138122  [0.228]
 |#
 
+
+
 ;;; --------------------------------------------------------------------------------
 
 #|
 (defgenerator (jcos
 	       :make-wrapper (lambda (g)
-			       (set! (jcos-frequency g) (hz->radians (jcos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
   (frequency *clm-default-frequency*) (n 0) (r 1.0) (a 0.5) ; "b" and "c" in the docs
-  (angle 0.0))
+  (angle 0.0) fm)
 
 
 (define* (jcos gen (fm 0.0))
-  "  (make-jcos frequency (n 0) (r 1.0) (a 0.5)) creates a jcos generator.\n\
+  
+  "(make-jcos frequency (n 0) (r 1.0) (a 0.5)) creates a jcos generator.\n\
    (jcos gen (fm 0.0)) returns a sum of cosines scaled in some complex manner."
-  (let* ((x (jcos-angle gen))
-	 (b (jcos-r gen))
-	 (c (jcos-a gen))
-	 (n (jcos-n gen))
-	 (dc (* (bes-j0 b) (bes-j0 c))))
-
-    (set! (jcos-angle gen) (+ x fm (jcos-frequency gen)))
-
-    (- (bes-jn n (* (+ n 1) (sqrt (+ (* b b) (* c c) (* -2.0 b c (cos x))))))
-       dc)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (b r)
+	   (c a)
+	   (dc (* (bes-j0 b) (bes-j0 c))))
+      (set! angle (+ x fm frequency))
+      (- (bes-jn n (* (+ n 1) (sqrt (+ (* b b) (* c c) (* -2.0 b c (cos x))))))
+	 dc))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-jcos 100.0 0 1.0 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (jcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (jcos gen)))))
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3841,26 +3957,29 @@ index 10 (so 10/2 is the bes-jn arg):
 #|
 (defgenerator (sin2n
 	       :make-wrapper (lambda (g)
-			       (set! (sin2n-frequency g) (hz->radians (sin2n-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (n 1) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1) (r 1.0) (angle 0.0) fm)
 
 
 (define* (sin2n gen (fm 0.0))
-  "  (make-sin2n frequency (n 0) (r 1.0)) creates a sin2n generator.\n\
+  
+  "(make-sin2n frequency (n 0) (r 1.0)) creates a sin2n generator.\n\
    (sin2n gen (fm 0.0)) returns (r*sin)^(2n)"
-  (let* ((x (sin2n-angle gen))
-	 (n (sin2n-n gen))
-	 (r (sin2n-r gen)))
-    (set! (sin2n-angle gen) (+ x fm (sin2n-frequency gen)))
-    (expt (* r (sin x)) (* 2 n))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle))
+      (set! angle (+ x fm frequency))
+      (expt (* r (sin x)) (* 2 n)))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-sin2n 100.0 2 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (sin2n gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (sin2n gen)))))
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3895,48 +4014,53 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (blackman
 	       :make-wrapper (lambda (g)
-			       (let ((n (blackman-n g)))
+			       (let ((n (g 'n)))
 				 (set! n (min (max n 1) 10))
-				 (set! (blackman-frequency g) (hz->radians (blackman-frequency g)))
+				 (set! (g 'frequency) (hz->radians (g 'frequency)))
 				 (case n
-				   ((1) (set! (blackman-coeffs g) (vector 0.54 -0.46)))
-				   ((2) (set! (blackman-coeffs g) (vector 0.34401 -0.49755 0.15844)))
-				   ((3) (set! (blackman-coeffs g) (vector 0.21747 -0.45325 0.28256 -0.04672)))
-				   ((4) (set! (blackman-coeffs g) (vector 0.084037 -0.29145 0.375696 -0.20762 0.041194)))
-				   ((5) (set! (blackman-coeffs g) (vector 0.097167 -0.3088448 0.3626224 -0.1889530 0.04020952 -0.0022008)))
-				   ((6) (set! (blackman-coeffs g) (vector 0.063964353 -0.239938736 0.3501594961 -0.247740954 0.0854382589
-								       -0.012320203 0.0004377882)))
-				   ((7) (set! (blackman-coeffs g) (vector 0.04210723 -0.18207621 0.3177137375 -0.284437984 0.1367622316
-								       -0.033403806 0.0034167722 -0.000081965)))
-				   ((8) (set! (blackman-coeffs g) (vector 0.027614462 -0.135382235 0.2752871215 -0.298843294 0.1853193194
-								       -0.064888448 0.0117641902 -0.000885987 0.0000148711)))
-				   ((9) (set! (blackman-coeffs g) (vector 0.01799071953 -0.098795950 0.2298837751 -0.294112951 0.2243389785
-								       -0.103248745 0.0275674108 -0.003839580	0.0002189716 -0.000002630)))
-				   ((10) (set! (blackman-coeffs g) (vector 0.0118717384 -0.071953468 0.1878870875 -0.275808066 0.2489042133 
-									-0.141729787 0.0502002984 -0.010458985 0.0011361511 -0.000049617
-									0.0000004343))))
+				   ((1) (set! (g 'coeffs) (vector 0.54 -0.46)))
+				   ((2) (set! (g 'coeffs) (vector 0.34401 -0.49755 0.15844)))
+				   ((3) (set! (g 'coeffs) (vector 0.21747 -0.45325 0.28256 -0.04672)))
+				   ((4) (set! (g 'coeffs) (vector 0.084037 -0.29145 0.375696 -0.20762 0.041194)))
+				   ((5) (set! (g 'coeffs) (vector 0.097167 -0.3088448 0.3626224 -0.1889530 0.04020952 -0.0022008)))
+				   ((6) (set! (g 'coeffs) (vector 0.063964353 -0.239938736 0.3501594961 -0.247740954 0.0854382589
+								  -0.012320203 0.0004377882)))
+				   ((7) (set! (g 'coeffs) (vector 0.04210723 -0.18207621 0.3177137375 -0.284437984 0.1367622316
+								  -0.033403806 0.0034167722 -0.000081965)))
+				   ((8) (set! (g 'coeffs) (vector 0.027614462 -0.135382235 0.2752871215 -0.298843294 0.1853193194
+								  -0.064888448 0.0117641902 -0.000885987 0.0000148711)))
+				   ((9) (set! (g 'coeffs) (vector 0.01799071953 -0.098795950 0.2298837751 -0.294112951 0.2243389785
+								  -0.103248745 0.0275674108 -0.003839580	0.0002189716 -0.000002630)))
+				   ((10) (set! (g 'coeffs) (vector 0.0118717384 -0.071953468 0.1878870875 -0.275808066 0.2489042133 
+								   -0.141729787 0.0502002984 -0.010458985 0.0011361511 -0.000049617
+								   0.0000004343))))
 				 g))
-		 :methods (list
-			   (list 'mus-reset
-				 (lambda (g)
-				   (set! (blackman-angle g) 0.0)))))
-    (frequency *clm-default-frequency*) (n 4) (coeffs #f) (angle 0.0))
+	       :methods (list
+			 (cons 'mus-reset
+			       (lambda (g)
+				 (set! (g 'angle) 0.0)))))
+  (frequency *clm-default-frequency*) (n 4) (coeffs #f) (angle 0.0) fm)
 
 
 (define* (blackman gen (fm 0.0))
-  "  (make-blackman frequency (n 4)) creates a blackman generator.\n\
+  
+  "(make-blackman frequency (n 4)) creates a blackman generator.\n\
    (blackman gen (fm 0.0)) returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10)"
-  (let ((x (blackman-angle gen)))
-    (set! (blackman-angle gen) (+ x fm (blackman-frequency gen)))
-    (polynomial (blackman-coeffs gen) (cos x))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ x fm frequency))
+      (polynomial coeffs (cos x)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((black4 (make-blackman 440.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (blackman black4 0.0)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (blackman black4 0.0)))))
 |#
+
 
 
 
@@ -3950,24 +4074,26 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (fmssb
 	       :make-wrapper (lambda (g)
-			       (set! (fmssb-frequency g) (hz->radians (fmssb-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (index 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (index 1.0) (angle 0.0) fm)
 
 
 (define* (fmssb gen (fm 0.0))
-  "  (make-fmssb frequency (ratio 1.0) (index 1.0)) creates an fmssb generator.\n\
+  
+  "(make-fmssb frequency (ratio 1.0) (index 1.0)) creates an fmssb generator.\n\
    (fmssb gen (fm 0.0)) returns single-sideband FM."
-  (let* ((cx (fmssb-angle gen))
-	 (mx (* cx (fmssb-ratio gen)))
-	 (B (fmssb-index gen)))
-
-    (set! (fmssb-angle gen) (+ fm cx (fmssb-frequency gen)))
-
-    (- (* (cos cx)
-	  (sin (* B (cos mx))))
-       (* (sin cx)
-	  (sin (* B (sin mx))))))) ; use -B for the other side
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((cx angle)
+	   (mx (* cx ratio))
+	   (B index))
+      (set! angle (+ fm cx frequency))
+      (- (* (cos cx)
+	    (sin (* B (cos mx))))
+	 (* (sin cx)
+	    (sin (* B (sin mx)))))))) ; use -B for the other side
 
 ;;; FM with complex index
 (define* (fpmc beg dur freq amp mc-ratio fm-index interp)
@@ -3988,27 +4114,27 @@ index 10 (so 10/2 is the bes-jn arg):
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 1000.0 0.1 :index 8.0)))  ; 1 3 7 11 ... -- interesting effect
-     (do ((i 0 (+ i 1)))
-	 ((= i 10000))
-       (outa i (* .3 (fmssb gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (outa i (* .3 (fmssb gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 1000.0 0.1 :index 8.0)) 
 	(ampf (make-env '(0 0 1 1 100 0) :base 32 :scaler .3 :length 30000))
 	(indf (make-env '(0 1 1 0) :length 30000 :scaler 8)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000)) 
-       (set! (fmssb-index gen) (env indf))
-       (outa i (* (env ampf) (fmssb gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* (env ampf) (fmssb gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 1000.0 0.05 :index 1.0)) 
 	(ampf (make-env '(0 0 1 1 100 0) :base 32 :scaler .3 :length 30000))
 	(indf (make-env '(0 1 1 0) :length 30000 :base 32 :scaler 10)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000)) 
-       (set! (fmssb-index gen) (env indf))
-       (outa i (* (env ampf) (fmssb gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* (env ampf) (fmssb gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 100.0 5.4 :index 1.0)) ; also 100 700
@@ -4016,35 +4142,34 @@ index 10 (so 10/2 is the bes-jn arg):
 	;; '(0 0 1 .75 2 1 3 .95 4 .5 10 0) -> bowed effect, '(0 0 1 .75 2 1 3 .125 4 .25 5 1 6 .8 20 0)
 	;; '(0 0 1 .75 2 1 3 .1 4 .7 5 1 6 .8 100 0) -> clickier attack (300 too)
 	(indf (make-env '(0 1 1 0) :length 30000 :base 32 :scaler 10)))
-        ;; '(0 0 1 1 3 0)
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000)) 
-       (set! (fmssb-index gen) (env indf))
-       (outa i (* (env ampf) (fmssb gen))))))
+    ;; '(0 0 1 1 3 0)
+    (do ((i 0 (+ i 1)))
+	((= i 30000)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* (env ampf) (fmssb gen))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 10.0 2.0 :index 1.0)) 
 	(ampf (make-env '(0 0 1 1 3 1 100 0) :base 32 :scaler .3 :length 30000))
 	(indf (make-env '(0 1 1 0) :length 30000 :base 32 :scaler 10)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000)) 
-       (set! (fmssb-index gen) (env indf))
-       (outa i (* (env ampf) (fmssb gen))))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* (env ampf) (fmssb gen))))))
 
 (with-sound (:statistics #t :scaled-to .5 :play #t)
   (let ((gen1 (make-fmssb 500 1))
 	(gen2 (make-fmssb 1000 .2))
 	(ampf (make-env '(0 0 1 1 100 0) :base 32 :length 30000))
 	(indf (make-env '(0 1 1 1 10 0) :scaler 5.0 :base 32 :length 30000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (let ((ind (env indf)))
-	 (set! (fmssb-index gen1) ind)
-	 (set! (fmssb-index gen2) ind)
-	 (outa i (* (env ampf)
-		    (+ (fmssb gen1 0.0)
-		       (fmssb gen2 0.0))))))))
-
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (let ((ind (env indf)))
+	(set! (gen1 'index) ind)
+	(set! (gen2 'index) ind)
+	(outa i (* (env ampf)
+		   (+ (fmssb gen1 0.0)
+		      (fmssb gen2 0.0))))))))
 
 ;;; imaginary machines (also imaginary beasts)
 |#
@@ -4056,10 +4181,10 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (ampf (make-env '(0 0 1 .75 2 1 3 .1 4 .7 5 1 6 .8 100 0) :base 32 :scaler amp :duration dur))
 	 (indf (make-env '(0 0 1 1 3 0) :duration dur :base 32 :scaler index))
 	 (frqf (make-env (if (> gliss 0.0) '(0 0 1 1) '(0 1 1 0)) :duration dur :scaler (hz->radians (* (/ cfreq mfreq) (abs gliss))))))
-     (do ((i start (+ i 1)))
-	 ((= i stop)) 
-       (set! (fmssb-index gen) (env indf))
-       (outa i (* (env ampf) (fmssb gen (env frqf)))))))
+    (do ((i start (+ i 1)))
+	((= i stop)) 
+      (set! (gen 'index) (env indf))
+      (outa i (* (env ampf) (fmssb gen (env frqf)))))))
 #|
 
 (with-sound (:statistics #t :play #t)
@@ -4093,12 +4218,12 @@ index 10 (so 10/2 is the bes-jn arg):
 	(gen1 (make-rkoddssb 100.0 0.1 0.9))
 	(ampf (make-env '(0 0 1 1 11 1 12 0) :duration 11.0 :scaler .5))
 	(frqf (make-env '(0 0 1 1 2 0 10 0 11 1 12 0 20 0) :duration 11.0 :scaler (hz->radians 10.0))))
-     (do ((i 0 (+ i 1)))
-	 ((= i (* 12 44100)))
-       (outa i (* (env ampf) 
-		  (+ (rkoddssb gen1 (env frqf))
-		     (* .2 (sin (rkoddssb gen (rand noi)))))))))
-
+    (do ((i 0 (+ i 1)))
+	((= i (* 12 44100)))
+      (outa i (* (env ampf) 
+		 (+ (rkoddssb gen1 (env frqf))
+		    (* .2 (sin (rkoddssb gen (rand noi)))))))))
+  
   (do ((i 0.0 (+ i 2)))
       ((>= i 10.0))
     (machine1 i 3 100 700 0.5 4.0 0.0)
@@ -4133,7 +4258,6 @@ index 10 (so 10/2 is the bes-jn arg):
     ))
 |#
 
-
 (define (fm-cancellation beg dur frequency ratio amp index)
   (let* ((cx 0.0)
 	 (mx 0.0)
@@ -4147,12 +4271,14 @@ index 10 (so 10/2 is the bes-jn arg):
 			   (sin (* index (cos mx))))
 			(* (sin cx)
 			   (sin (* index (sin mx))))))
-	                   ;; use -index for reflection
-	   )
+	    ;; use -index for reflection
+	    )
       (set! cx (+ cx car-frequency))
       (set! mx (+ mx mod-frequency)))))
 
-;(with-sound () (fm-cancellation 0 1 1000.0 100.0 0.3 9.0))
+					;(with-sound () (fm-cancellation 0 1 1000.0 100.0 0.3 9.0))
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4161,34 +4287,39 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (k3sin
 	       :make-wrapper (lambda (g)
-			       (set! (k3sin-frequency g) (hz->radians (k3sin-frequency g)))
-			       (set! (k3sin-coeffs g) (vector 0.0
-							   (/ (* pi pi) 6.0)
-							   (/ pi -4.0)
-							   (/ 1.0 12.0)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'coeffs) (vector 0.0
+							 (/ (* pi pi) 6.0)
+							 (/ pi -4.0)
+							 (/ 1.0 12.0)))
 			       g)
 	       :methods (list
-			 (list 'mus-reset
+			 (cons 'mus-reset
 			       (lambda (g)
-				 (set! (k3sin-frequency g) 0.0)
-				 (set! (k3sin-angle g) 0.0)))))
-  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f))
-		   
+				 (set! (g 'frequency) 0.0)
+				 (set! (g 'angle) 0.0)))))
+  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f) fm)
+
 
 (define* (k3sin gen (fm 0.0))
-  "  (make-k3sin frequency) creates a k3sin generator.\n\
+  
+  "(make-k3sin frequency) creates a k3sin generator.\n\
    (k3sin gen (fm 0.0)) returns a sum of sines scaled by k^3."
-  (let ((x (k3sin-angle gen)))
-    (set! (k3sin-angle gen) (modulo (+ x fm (k3sin-frequency gen)) (* 2 pi)))
-    (polynomial (k3sin-coeffs gen) x)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (modulo (+ x fm frequency) (* 2 pi)))
+      (polynomial coeffs x))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-k3sin 100.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (k3sin gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (k3sin gen)))))
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4197,53 +4328,52 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (izcos
 	       :make-wrapper (lambda (g)
-			       (set! (izcos-frequency g) (hz->radians (izcos-frequency g)))
-			       (set! (izcos-dc g) (bes-i0 (izcos-r g)))
-			       (set! (izcos-norm g) (- (exp (izcos-r g)) (izcos-dc g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'dc) (bes-i0 (g 'r)))
+			       (set! (g 'norm) (- (exp (g 'r)) (g 'dc)))
 			       g)
 	       :methods (list
-			 (list 'mus-scaler
-			       (lambda (g)
-				 (izcos-r g))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'r))
 			       (lambda (g val)
-				 (set! (izcos-r g) val)
-				 (set! (izcos-dc g) (bes-i0 val))
-				 (set! (izcos-norm g) (- (exp val) (izcos-dc g)))
-				 val))))
+				 (set! (g 'r) val)
+				 (set! (g 'dc) (bes-i0 val))
+				 (set! (g 'norm) (- (exp val) (g 'dc)))
+				 val)))))
   (frequency *clm-default-frequency*) (r 1.0) (angle 0.0)
-  (dc 0.0) (norm 1.0))
+  (dc 0.0) (norm 1.0) fm)
 
 
 (define* (izcos gen (fm 0.0))
-  "  (make-izcos frequency (r 1.0)) creates an izcos generator.\n\
+  
+  "(make-izcos frequency (r 1.0)) creates an izcos generator.\n\
    (izcos gen (fm 0.0)) returns a sum of sines scaled by In(r)."
-  (let ((x (izcos-angle gen))
-	(z (izcos-r gen))
-	(dc (izcos-dc gen))
-	(norm (izcos-norm gen)))
-
-    (set! (izcos-angle gen) (+ x fm (izcos-frequency gen)))
-
-    (if (< (abs norm) nearly-zero)
-	1.0
-	(/ (- (exp (* z (cos x)))
-	      dc)
-	   norm))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle))
+      (set! angle (+ x fm frequency))
+      (if (< (abs norm) nearly-zero)
+	  1.0
+	  (/ (- (exp (* r (cos x)))
+		dc)
+	     norm)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-izcos 100.0 1.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (izcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (* .5 (izcos gen))))))
 
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-izcos 100.0 1.0))
 	(indf (make-env '(0 0 1 3) :length 30000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (set! (mus-scaler gen) (env indf))
-       (outa i (izcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (set! (mus-scaler gen) (env indf))
+      (outa i (izcos gen)))))
 
 |#
 
@@ -4262,7 +4392,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (ranvib (make-rand-interp 6 (hz->radians (* freq .002))))
 	 (resc (make-nrssb 340.0 1.0 5 .5))
 	 (resf (make-env (list 0 0 .05 1  .1 0 dur 0) :scaler (* amp .05) :duration dur)))
-
+    
     (do ((i 0 (+ i 1)))
 	((= i 3))
       (let* ((frq (* freq (expt 2 i)))
@@ -4275,28 +4405,28 @@ index 10 (so 10/2 is the bes-jn arg):
 						  (list 1 index1
 							3 index2
 							4 index3))))))
-
+    
     (set! (ampfs 0) (make-env (or amp-env '(0 0 1 1 2 1 3 0)) :scaler amp :duration dur))
     (set! (ampfs 1) (make-env (list 0 0  .04 1  .075 0 dur 0) :scaler (* amp .0125) :duration dur))
     (set! (ampfs 2) (make-env (list 0 0  .02 1  .05 0 dur 0) :scaler (* amp .025) :duration dur))
-
+    
     ;; also good:
-    ;(set! (ampfs 1) (make-env (list 0 0  .02 1  .05 0  (- dur .1) 0  (- dur .05) 1 dur 0) :scaler (* amp .025) :duration dur))
-    ;(set! (ampfs 2) (make-env (list 0 0  .01 1 .025 0  (- dur .15) 0 (- dur .1) 1 dur 0) :scaler (* amp .05) :duration dur))
-
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))
-	     (sum (* (env resf)
-		     (nrssb resc 0.0))))
-	 (do ((k 0 (+ k 1))
-	      (n 1 (* n 2)))
-	     ((= k 3))
-	   (set! sum (+ sum (* (env (ampfs k))
-			       (oscil (carriers k)
-				      (+ (* n vib)
-					 (polyshape (fmoscs k) 1.0 (* n vib))))))))
-	 (outa i sum)))))
+					;(set! (ampfs 1) (make-env (list 0 0  .02 1  .05 0  (- dur .1) 0  (- dur .05) 1 dur 0) :scaler (* amp .025) :duration dur))
+					;(set! (ampfs 2) (make-env (list 0 0  .01 1 .025 0  (- dur .15) 0 (- dur .1) 1 dur 0) :scaler (* amp .05) :duration dur))
+    
+    (do ((i start (+ i 1)))
+	((= i stop))
+      (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib)))
+	    (sum (* (env resf)
+		    (nrssb resc 0.0))))
+	(do ((k 0 (+ k 1))
+	     (n 1 (* n 2)))
+	    ((= k 3))
+	  (set! sum (+ sum (* (env (ampfs k))
+			      (oscil (carriers k)
+				     (+ (* n vib)
+					(polyshape (fmoscs k) 1.0 (* n vib))))))))
+	(outa i sum)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -4321,11 +4451,12 @@ index 10 (so 10/2 is the bes-jn arg):
 	       (make-env envelope :duration duration)))
 
 (define* (pulsed-env gen (fm 0.0))
-  (if (> (pulse-train (plsenv-pulse gen) fm) 0.1)
-      (mus-reset (plsenv-ampf gen)))
-  (env (plsenv-ampf gen)))
+  (if (> (pulse-train (gen 'pulse) fm) 0.1)
+      (mus-reset (gen 'ampf)))
+  (env (gen 'ampf)))
 
 (define pulsed-env? plsenv?)
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4333,201 +4464,213 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (adjustable-square-wave 
 	       :make-wrapper 
 	       (lambda (g)
-		 (set! (adjustable-square-wave-p1 g) (make-pulse-train 
-						      (adjustable-square-wave-frequency g) 
-						      (adjustable-square-wave-amplitude g)))
-		 (set! (adjustable-square-wave-p2 g) (make-pulse-train 
-						      (adjustable-square-wave-frequency g) 
-						      (- (adjustable-square-wave-amplitude g))
-						      (* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g)))))
+		 (set! (g 'p1) (make-pulse-train 
+				(g 'frequency) 
+				(g 'amplitude)))
+		 (set! (g 'p2) (make-pulse-train 
+				(g 'frequency) 
+				(- (g 'amplitude))
+				(* 2.0 pi (- 1.0 (g 'duty-factor)))))
 		 g)
-
+	       
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (adjustable-square-wave-p1 g)))
-			       (lambda (g val) (set! (mus-frequency (adjustable-square-wave-p1 g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (adjustable-square-wave-p1 g)))
-			       (lambda (g val) (set! (mus-phase (adjustable-square-wave-p1 g)) val) val))
-
-			 (list 'mus-scaler
-			       (lambda (g) 
-				 (adjustable-square-wave-duty-factor g))
-			       (lambda (g val)
-				 (set! (adjustable-square-wave-duty-factor g) val)
-				 (set! (mus-phase (adjustable-square-wave-p2 g)) (* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g))))
-				 val))))
-
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'p1)))
+				(lambda (g val) (set! (mus-frequency (g 'p1)) val))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'p1)))
+				(lambda (g val) (set! (mus-phase (g 'p1)) val))))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'duty-factor))
+				(lambda (g val)
+				  (set! (g 'duty-factor) val)
+				  (set! (mus-phase (g 'p2)) (* 2.0 pi (- 1.0 (g 'duty-factor))))
+				  val)))))
+  
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0)
-  (sum 0.0) (p1 #f) (p2 #f))
+  (sum 0.0) (p1 #f) (p2 #f) fm)
 
 
 (define* (adjustable-square-wave gen (fm 0.0))
+  
   "  (make-adjustable-square-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-square-wave generator.\n\
    (adjustable-square-wave gen (fm 0.0)) returns a square-wave where the duty-factor sets the ratio of pulse duration to pulse period."
-  (set! (adjustable-square-wave-sum gen) (+ (adjustable-square-wave-sum gen)
-					    (pulse-train (adjustable-square-wave-p1 gen) fm)
-					    (pulse-train (adjustable-square-wave-p2 gen) fm)))
-  (adjustable-square-wave-sum gen))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (set! sum (+ sum
+		 (pulse-train p1 fm)
+		 (pulse-train p2 fm)))))
 
 #|
 (with-sound ()
   (let ((gen (make-adjustable-square-wave 100 .2 .5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 22050))
-       (outa i (adjustable-square-wave gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 22050))
+      (outa i (adjustable-square-wave gen)))))
 |#
 
 
 (defgenerator (adjustable-triangle-wave 
 	       :make-wrapper 
 	       (lambda (g)
-		 (let ((df (adjustable-triangle-wave-duty-factor g)))
-		   (set! (adjustable-triangle-wave-gen g) (make-triangle-wave (adjustable-triangle-wave-frequency g)))
-		   (set! (adjustable-triangle-wave-top g) (- 1.0 df))
+		 (let ((df (g 'duty-factor)))
+		   (set! (g 'gen) (make-triangle-wave (g 'frequency)))
+		   (set! (g 'top) (- 1.0 df))
 		   (if (not (= df 0.0))
-		       (set! (adjustable-triangle-wave-scl g) (/ (adjustable-triangle-wave-amplitude g) df)))
+		       (set! (g 'scl) (/ (g 'amplitude) df)))
 		   g))
-
+	       
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (adjustable-triangle-wave-gen g)))
-			       (lambda (g val) (set! (mus-frequency (adjustable-triangle-wave-gen g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (adjustable-triangle-wave-gen g)))
-			       (lambda (g val) (set! (mus-phase (adjustable-triangle-wave-gen g)) val) val))
-
-			 (list 'mus-scaler
-			       (lambda (g) 
-				 (adjustable-triangle-wave-duty-factor g))
-			       (lambda (g val)
-				 (set! (adjustable-triangle-wave-duty-factor g) val)
-				 (set! (adjustable-triangle-wave-top g) (- 1.0 val))
-				 (if (not (= val 0.0))
-				     (set! (adjustable-triangle-wave-scl g) (/ (adjustable-triangle-wave-amplitude g) val)))
-				 val))))
-
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'gen)))
+				(lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'gen)))
+				(lambda (g val) (set! (mus-phase (g 'gen)) val))))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'duty-factor))
+				(lambda (g val)
+				  (set! (g 'duty-factor) val)
+				  (set! (g 'top) (- 1.0 val))
+				  (if (not (= val 0.0))
+				      (set! (g 'scl) (/ (g 'amplitude) val)))
+				  val)))))
+  
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
-  (gen #f) (top 0.0) (scl 0.0))
+  (gen #f) (top 0.0) (scl 0.0) fm)
 
 
 (define* (adjustable-triangle-wave gen (fm 0.0))
+  
   "  (make-adjustable-triangle-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-triangle-wave generator.\n\
    (adjustable-triangle-wave gen (fm 0.0)) returns a triangle-wave where the duty-factor sets the ratio of pulse duration to pulse period."
-  (let ((val (triangle-wave (adjustable-triangle-wave-gen gen) fm))
-	(top (adjustable-triangle-wave-top gen))
-	(scl (adjustable-triangle-wave-scl gen)))
-    (* scl (- val (max (- top) (min top val))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((val (triangle-wave gen fm)))
+      (* scl (- val (max (- top) (min top val)))))))
 
 #|
 (with-sound ()
   (let ((gen (make-adjustable-triangle-wave 100 .2 .5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 22050))
-       (outa i (adjustable-triangle-wave gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 22050))
+      (outa i (adjustable-triangle-wave gen)))))
 |#
 
 
 (defgenerator (adjustable-sawtooth-wave 
 	       :make-wrapper 
 	       (lambda (g)
-		 (let ((df (adjustable-sawtooth-wave-duty-factor g)))
-		   (set! (adjustable-sawtooth-wave-gen g) (make-sawtooth-wave (adjustable-sawtooth-wave-frequency g)))
-		   (set! (adjustable-sawtooth-wave-top g) (- 1.0 df))
+		 (let ((df (g 'duty-factor)))
+		   (set! (g 'gen) (make-sawtooth-wave (g 'frequency)))
+		   (set! (g 'top) (- 1.0 df))
 		   (if (not (= df 0.0))
-		       (set! (adjustable-sawtooth-wave-scl g) (/ (adjustable-sawtooth-wave-amplitude g) df)))
+		       (set! (g 'scl) (/ (g 'amplitude) df)))
 		   g))
-
+	       
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (adjustable-sawtooth-wave-gen g)))
-			       (lambda (g val) (set! (mus-frequency (adjustable-sawtooth-wave-gen g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (adjustable-sawtooth-wave-gen g)))
-			       (lambda (g val) (set! (mus-phase (adjustable-sawtooth-wave-gen g)) val) val))
-
-			 (list 'mus-scaler
-			       (lambda (g) 
-				 (adjustable-sawtooth-wave-duty-factor g))
-			       (lambda (g val)
-				 (set! (adjustable-sawtooth-wave-duty-factor g) val)
-				 (set! (adjustable-sawtooth-wave-top g) (- 1.0 val))
-				 (if (not (= val 0.0))
-				     (set! (adjustable-sawtooth-wave-scl g) (/ (adjustable-sawtooth-wave-amplitude g) val)))
-				 val))))
-
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'gen)))
+				(lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'gen)))
+				(lambda (g val) (set! (mus-phase (g 'gen)) val))))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'duty-factor))
+				(lambda (g val)
+				  (set! (g 'duty-factor) val)
+				  (set! (g 'top) (- 1.0 val))
+				  (if (not (= val 0.0))
+				      (set! (g 'scl) (/ (g 'amplitude) val)))
+				  val)))))
+  
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
-  (gen #f) (top 0.0) (scl 0.0))
+  (gen #f) (top 0.0) (scl 0.0) fm)
 
 
 (define* (adjustable-sawtooth-wave gen (fm 0.0))
+  
   "  (make-adjustable-sawtooth-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an adjustable-sawtooth-wave generator.\n\
    (adjustable-sawtooth-wave gen (fm 0.0)) returns a sawtooth-wave where the duty-factor sets the ratio of pulse duration to pulse period."
-  (let ((val (sawtooth-wave (adjustable-sawtooth-wave-gen gen) fm))
-	(top (adjustable-sawtooth-wave-top gen))
-	(scl (adjustable-sawtooth-wave-scl gen)))
-    (* scl (- val (max (- top) (min top val))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((val (sawtooth-wave gen fm)))
+      (* scl (- val (max (- top) (min top val)))))))
 
 #|
 (with-sound ()
   (let ((gen (make-adjustable-sawtooth-wave 100 .2 .5)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 22050))
-       (outa i (adjustable-sawtooth-wave gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 22050))
+      (outa i (adjustable-sawtooth-wave gen)))))
 |#
 
 
 ;;; and just for laughs... (almost anything would fit in this hack)
 (defgenerator (adjustable-oscil 
 	       :make-wrapper (lambda (g)
-			       (let ((df (adjustable-oscil-duty-factor g)))
-				 (set! (adjustable-oscil-gen g) (make-oscil (adjustable-oscil-frequency g)))
-				 (set! (adjustable-oscil-top g) (- 1.0 df))
+			       (let ((df (g 'duty-factor)))
+				 (set! (g 'gen) (make-oscil (g 'frequency)))
+				 (set! (g 'top) (- 1.0 df))
 				 (if (not (= df 0.0))
-				     (set! (adjustable-oscil-scl g) (/ 1.0 df)))
+				     (set! (g 'scl) (/ 1.0 df)))
 				 g))
-
+	       
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (adjustable-oscil-gen g)))
-			       (lambda (g val) (set! (mus-frequency (adjustable-oscil-gen g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (adjustable-oscil-gen g)))
-			       (lambda (g val) (set! (mus-phase (adjustable-oscil-gen g)) val) val))
-
-			 (list 'mus-scaler
-			       (lambda (g) 
-				 (adjustable-oscil-duty-factor g))
-			       (lambda (g val)
-				 (set! (adjustable-oscil-duty-factor g) val)
-				 (set! (adjustable-oscil-top g) (- 1.0 val))
-				 (if (not (= val 0.0))
-				     (set! (adjustable-oscil-scl g) (/ 1.0 val)))
-				 val))))
-
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'gen)))
+				(lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'gen)))
+				(lambda (g val) (set! (mus-phase (g 'gen)) val))))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (g 'duty-factor))
+				(lambda (g val)
+				  (set! (g 'duty-factor) val)
+				  (set! (g 'top) (- 1.0 val))
+				  (if (not (= val 0.0))
+				      (set! (g 'scl) (/ 1.0 val)))
+				  val)))))
+  
   (frequency *clm-default-frequency*) (duty-factor 0.5)
-  (gen #f) (top 0.0) (scl 0.0))
+  (gen #f) (top 0.0) (scl 0.0) fm)
 
 
 (define* (adjustable-oscil gen (fm 0.0))
-  "  (make-adjustable-oscil frequency (duty-factor 0.5)) creates an adjustable-oscil generator.\n\
+  
+  "(make-adjustable-oscil frequency (duty-factor 0.5)) creates an adjustable-oscil generator.\n\
    (adjustable-oscil gen (fm 0.0)) returns a sinusoid where the duty-factor sets the ratio of pulse duration to pulse period."
-  (let ((val (oscil (adjustable-oscil-gen gen) fm))
-	(top (adjustable-oscil-top gen))
-	(scl (adjustable-oscil-scl gen)))
-    (* scl (- val (max (- top) (min top val))))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((val (oscil gen fm)))
+      (* scl (- val (max (- top) (min top val)))))))
 
 #|
 (with-sound ()
   (let ((gen (make-adjustable-oscil 100 .2)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 22050))
-       (outa i (adjustable-oscil gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 22050))
+      (outa i (adjustable-oscil gen)))))
 |#
+
+
+
 
 ;;;--------------------------------------------------------------------------------
 
@@ -4555,27 +4698,31 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (round-interp 
 	       :make-wrapper (lambda (g)
-			       (set! (round-interp-rnd g) (make-rand-interp (round-interp-frequency g) (round-interp-amplitude g)))
-			       (set! (round-interp-flt g) (make-moving-average (round-interp-n g)))
+			       (set! (g 'rnd) (make-rand-interp (g 'frequency) (g 'amplitude)))
+			       (set! (g 'flt) (make-moving-average (g 'n)))
 			       g)
-
 	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (round-interp-rnd g)))
-			       (lambda (g val) (set! (mus-frequency (round-interp-rnd g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (round-interp-rnd g)))
-			       (lambda (g val) (set! (mus-phase (round-interp-rnd g)) val) val))))
-
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (mus-frequency (g 'rnd)))
+				(lambda (g val) (set! (mus-frequency (g 'rnd)) val))))
+			 (cons 'mus-phase
+			       (make-procedure-with-setter
+				(lambda (g) (mus-phase (g 'rnd)))
+				(lambda (g val) (set! (mus-phase (g 'rnd)) val))))))
+  
   (frequency *clm-default-frequency*) (n 1) (amplitude 1.0)
-  (rnd #f) (flt #f))
+  (rnd #f) (flt #f) fm)
 
 
 (define* (round-interp gen (fm 0.0))
-  "  (make-round-interp frequency (n 1) (amplitude 1.0)) creates a round-interp generator.\n\
+  
+  "(make-round-interp frequency (n 1) (amplitude 1.0)) creates a round-interp generator.\n\
    (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass filtered by a moving-average generator of length n."
-  (moving-average (round-interp-flt gen) (rand-interp (round-interp-rnd gen) fm)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (moving-average flt (rand-interp rnd fm))))
 
 #|
 (with-sound (:channels 5)
@@ -4584,14 +4731,15 @@ index 10 (so 10/2 is the bes-jn arg):
 	(gen2 (make-round-interp 100 100))
 	(gen3 (make-round-interp 100 1000))
 	(gen4 (make-round-interp 100 10000)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 100000))
-       (out-any i (round-interp gen0 0.0) 0)
-       (out-any i (round-interp gen1 0.0) 1)
-       (out-any i (round-interp gen2 0.0) 2)
-       (out-any i (round-interp gen3 0.0) 3)
-       (out-any i (round-interp gen4 0.0) 4))))
+    (do ((i 0 (+ i 1)))
+	((= i 100000))
+      (out-any i (round-interp gen0 0.0) 0)
+      (out-any i (round-interp gen1 0.0) 1)
+      (out-any i (round-interp gen2 0.0) 2)
+      (out-any i (round-interp gen3 0.0) 3)
+      (out-any i (round-interp gen4 0.0) 4))))
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4619,6 +4767,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		 (/ (- (expt b y) 1.0) (- b 1.0))))))
 
 
+
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; pm with any generator that has mus-phase and mus-run:
@@ -4642,34 +4791,36 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
+
 ;;; --------------------------------------------------------------------------------
 
 ;;; cos^n J 121
 
 (defgenerator (nchoosekcos
 	       :make-wrapper (lambda (g)
-			       (set! (nchoosekcos-frequency g) (hz->radians (nchoosekcos-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 (define* (nchoosekcos gen (fm 0.0))
-  "  (make-nchoosekcos frequency (ratio 1.0) (n 1)) creates an nchoosekcos generator.\n\
+  
+  "(make-nchoosekcos frequency (ratio 1.0) (n 1)) creates an nchoosekcos generator.\n\
    (nchoosekcos gen (fm 0.0)) returns a sum of cosines scaled by the binomial coeffcients."
-  (let* ((x (nchoosekcos-angle gen))
-	 (y (* x (nchoosekcos-ratio gen)))
-	 (n (nchoosekcos-n gen)))
-
-    (set! (nchoosekcos-angle gen) (+ x fm (nchoosekcos-frequency gen)))
-
-    (* (cos x)
-       (expt (cos y) n))))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (y (* x ratio)))
+      (set! angle (+ x fm frequency))
+      (* (cos x)
+	 (expt (cos y) n)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nchoosekcos 2000.0 0.05 10)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 30000))
-       (outa i (nchoosekcos gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 30000))
+      (outa i (* .5 (nchoosekcos gen))))))
 |#
 
 
@@ -4680,69 +4831,70 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (sinc-train 
 	       :make-wrapper (lambda (g)
-			       (if (<= (sinc-train-n g) 0)
+			       (if (<= (g 'n) 0)
 				   (begin
-				     (set! (sinc-train-original-n g) 1)
-				     (set! (sinc-train-n g) 3))
+				     (set! (g 'original-n) 1)
+				     (set! (g 'n) 3))
 				   (begin
-				     (set! (sinc-train-original-n g) (sinc-train-n g))
-				     (set! (sinc-train-n g) (+ 1 (* 2 (sinc-train-n g)))))) ; mimic ncos
-			       (set! (sinc-train-original-frequency g) (sinc-train-frequency g))
-			       (set! (sinc-train-frequency g) (* 0.5 (sinc-train-n g) (hz->radians (sinc-train-frequency g))))
+				     (set! (g 'original-n) (g 'n))
+				     (set! (g 'n) (+ 1 (* 2 (g 'n)))))) ; mimic ncos
+			       (set! (g 'original-frequency) (g 'frequency))
+			       (set! (g 'frequency) (* 0.5 (g 'n) (hz->radians (g 'frequency))))
 			       g)
-
+	       
 	       :methods (list
-			 (list 'mus-order
-			       (lambda (g) (sinc-train-original-n g))
-			       (lambda (g val)
-				 (if (<= val 0)
-				     (begin
-				       (set! (sinc-train-original-n g) 1)
-				       (set! (sinc-train-n g) 3))
-				     (begin
-				       (set! (sinc-train-original-n g) val)
-				       (set! (sinc-train-n g) (+ 1 (* 2 val)))))
-				 (set! (sinc-train-frequency g) (* 0.5 (sinc-train-n g) (hz->radians (sinc-train-original-frequency g))))
-				 (sinc-train-original-n g)))
-
-			 (list 'mus-frequency
-			       (lambda (g) (sinc-train-original-frequency g))
-			       (lambda (g val)
-				 (set! (sinc-train-original-frequency g) val)
-				 (set! (sinc-train-frequency g) (* 0.5 (sinc-train-n g) (hz->radians val)))
-				 val))))
-
+			 (cons 'mus-order
+			       (make-procedure-with-setter
+				(lambda (g) (g 'original-n))
+				(lambda (g val)
+				  (if (<= val 0)
+				      (begin
+					(set! (g 'original-n) 1)
+					(set! (g 'n) 3))
+				      (begin
+					(set! (g 'original-n) val)
+					(set! (g 'n) (+ 1 (* 2 val)))))
+				  (set! (g 'frequency) (* 0.5 (g 'n) (hz->radians (g 'original-frequency))))
+				  (g 'original-n))))
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (g 'original-frequency))
+				(lambda (g val)
+				  (set! (g 'original-frequency) val)
+				  (set! (g 'frequency) (* 0.5 (g 'n) (hz->radians val)))
+				  val)))))
+  
   (frequency *clm-default-frequency*) (n 1) (angle 0.0)
-  (original-n 1) (original-frequency 0.0))
+  (original-n 1) (original-frequency 0.0) fm)
 
-	
+
 (define* (sinc-train gen (fm 0.0))
-  "  (make-sinc-train frequency (n 1)) creates a sinc-train generator with n components.\n\
+  
+  "(make-sinc-train frequency (n 1)) creates a sinc-train generator with n components.\n\
    (sinc-train gen (fm 0.0)) returns a sinc-train"
-  (let* ((x (sinc-train-angle gen))
-	 (n (sinc-train-n gen))
-	 (max-angle (* pi 0.5 n))
-	 (new-angle (+ x fm (sinc-train-frequency gen)))
-	 (DC (/ 1.0 n))
-	 (norm (/ n (- n 1))))
-    
-    (if (> new-angle max-angle)
-	(set! new-angle (- new-angle (* pi n))))
-
-    (set! (sinc-train-angle gen) new-angle)
-
-    (if (< (abs x) nearly-zero)
-	1.0
-	(* norm (- (/ (sin x) x) DC)))))
-
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x angle)
+	   (max-angle (* pi 0.5 n))
+	   (new-angle (+ x fm frequency))
+	   (DC (/ 1.0 n))
+	   (norm (/ n (- n 1))))
+      (if (> new-angle max-angle)
+	  (set! new-angle (- new-angle (* pi n))))
+      (set! angle new-angle)
+      (if (< (abs x) nearly-zero)
+	  1.0
+	  (* norm (- (/ (sin x) x) DC))))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
   (let* ((g (make-sinc-train 100.0 40)))
     (do ((i 0 (+ i 1)))
 	((= i 44100))
-      (outa i (sinc-train g 0.0)))))
+      (outa i (* .5 (sinc-train g 0.0))))))
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4751,28 +4903,29 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (pink-noise
 	       :make-wrapper (lambda (g)
-			       (if (<= (pink-noise-n g) 0) (set! (pink-noise-n g) 1))
-			       (let ((n (pink-noise-n g)))
-				 (set! (pink-noise-rands g) (make-vector n))
+			       (if (<= (g 'n) 0) (set! (g 'n) 1))
+			       (let ((n (g 'n)))
+				 (set! (g 'rands) (make-vector n))
 				 (do ((i 0 (+ i 1)))
 				     ((= i n))
-				   (set! ((pink-noise-rands g) i) (make-rand :frequency (/ (mus-srate) (expt 2 i))))
-				   (set! (mus-phase ((pink-noise-rands g) i)) (random pi))))
+				   (set! ((g 'rands) i) (make-rand :frequency (/ (mus-srate) (expt 2 i))))
+				   (set! (mus-phase ((g 'rands) i)) (random pi))))
 			       g))
   (n 1) (rands #f))
 
 
 (define (pink-noise gen)
-  "  (make-pink-noise (n 1)) creates a pink-noise generator with n octaves of rand (12 is recommended).\n\
+  
+  "(make-pink-noise (n 1)) creates a pink-noise generator with n octaves of rand (12 is recommended).\n\
   (pink-noise gen) returns the next random value in the 1/f stream produced by gen."
+  
   (let ((val 0.0) 
-	(rands (pink-noise-rands gen))
-	(n (pink-noise-n gen)))
+	(rands (gen 'rands))
+	(n (gen 'n)))
     (do ((i 0 (+ i 1)))
         ((= i n))
       (set! val (+ val (rand (rands i)))))
     (/ val (* 2.5 (sqrt n))))) ; this normalization is not quite right
-
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -4784,39 +4937,45 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
+
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; brown-noise
 
 (defgenerator (brown-noise
 	       :make-wrapper (lambda (g)
-			       (set! (brown-noise-frequency g) (hz->radians (brown-noise-frequency g)))
-			       (set! (brown-noise-sum g) (mus-random (brown-noise-amplitude g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'sum) (mus-random (g 'amplitude)))
 			       g))
-  (frequency *clm-default-frequency*) (amplitude 1.0) (angle 0.0) (sum 0.0))
+  (frequency *clm-default-frequency*) (amplitude 1.0) (angle 0.0) (sum 0.0) fm)
 
 
 (define* (brown-noise gen (fm 0.0))
-  "  (make-brown-noise frequency (amplitude 1.0)) returns a generator that produces brownian noise.\n\
-  (brown-noise gen (fm 0.0)) returns the next brownian noise sample."
-  (let ((x (brown-noise-angle gen))
-	(two-pi (* 2 pi)))
-    (if (or (>= x two-pi)
-	    (< x 0.0))
-	(begin
-	  (set! x (modulo x two-pi))
-	  (if (< x 0.0) (set! x (+ x two-pi)))
-	  (set! (brown-noise-sum gen) (+ (brown-noise-sum gen) (mus-random (brown-noise-amplitude gen))))))
-    (set! (brown-noise-angle gen) (+ x fm (brown-noise-frequency gen)))
-    (brown-noise-sum gen)))
   
+  "(make-brown-noise frequency (amplitude 1.0)) returns a generator that produces brownian noise.\n\
+  (brown-noise gen (fm 0.0)) returns the next brownian noise sample."
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle)
+	  (two-pi (* 2 pi)))
+      (if (or (>= x two-pi)
+	      (< x 0.0))
+	  (begin
+	    (set! x (modulo x two-pi))
+	    (if (< x 0.0) (set! x (+ x two-pi)))
+	    (set! sum (+ sum (mus-random amplitude)))))
+      (set! angle (+ x fm frequency))
+      sum)))
+
 #|
 (with-sound (:clipped #f :statistics #t)
   (let* ((gen (make-brown-noise 1000)))
     (do ((i 0 (+ i 1)))
 	((= i 44100))
-      (outa i (brown-noise gen)))))
+      (outa i (* .01 (brown-noise gen))))))
 |#
+
 
 
 
@@ -4826,28 +4985,32 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (green-noise
 	       :make-wrapper (lambda (g)
-			       (set! (green-noise-frequency g) (hz->radians (green-noise-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
   (frequency *clm-default-frequency*) (amplitude 1.0) (low -1.0) (high 1.0)
-  (angle 0.0) (sum 0.0))
+  (angle 0.0) (sum 0.0) fm)
 
 
 (define* (green-noise gen (fm 0.0))
+  
   "(make-green-noise frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new green-noise (bounded brownian noise) generator.\n\
    (green-noise gen (fm 0.0)) returns the next sample in a sequence of bounded brownian noise samples."
-  (let ((x (green-noise-angle gen))
-	(two-pi (* 2 pi)))
-    (if (or (>= x two-pi)
-	    (< x 0.0))
-	(begin
-	  (set! x (modulo x two-pi))
-	  (if (< x 0.0) (set! x (+ x two-pi)))
-	  (let ((val (mus-random (green-noise-amplitude gen))))
-	    (set! (green-noise-sum gen) (+ (green-noise-sum gen) val))
-	    (if (not (<= (green-noise-low gen) (green-noise-sum gen) (green-noise-high gen)))
-		(set! (green-noise-sum gen) (- (green-noise-sum gen) (* 2 val)))))))
-    (set! (green-noise-angle gen) (+ x fm (green-noise-frequency gen)))
-    (green-noise-sum gen)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle)
+	  (two-pi (* 2 pi)))
+      (if (or (>= x two-pi)
+	      (< x 0.0))
+	  (begin
+	    (set! x (modulo x two-pi))
+	    (if (< x 0.0) (set! x (+ x two-pi)))
+	    (let ((val (mus-random amplitude)))
+	      (set! sum (+ sum val))
+	      (if (not (<= low sum high))
+		  (set! sum (- sum (* 2 val)))))))
+      (set! angle (+ x fm frequency))
+      sum)))
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -4866,34 +5029,36 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (green-noise-interp
 	       :make-wrapper (lambda (g)
-			       (set! (green-noise-interp-frequency g) (hz->radians (green-noise-interp-frequency g)))
-			       (set! (green-noise-interp-incr g) (/ (* (mus-random (green-noise-interp-amplitude g))
-								       (green-noise-interp-frequency g))
-								    (* 2 pi)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'incr) (/ (* (mus-random (g 'amplitude))
+						     (g 'frequency))
+						  (* 2 pi)))
 			       g))
   (frequency *clm-default-frequency*) (amplitude 1.0) (low -1.0) (high 1.0)
-  (angle 0.0) (sum 0.0) (incr 0.0))
+  (angle 0.0) (sum 0.0) (incr 0.0) fm)
 
 
 (define* (green-noise-interp gen (fm 0.0))
+  
   "(make-green-noise-interp frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new interpolating green noise (bounded brownian noise) generator.\n\
    (green-noise-interp gen (fm 0.0)) returns the next sample in a sequence of interpolated bounded brownian noise samples."
-  (let ((x (green-noise-interp-angle gen))
-	(two-pi (* 2 pi)))
-    (if (or (>= x two-pi)
-	    (< x 0.0))
-	(begin
-	  (set! x (modulo x two-pi))
-	  (if (< x 0.0) (set! x (+ x two-pi)))
-	  (let* ((val (mus-random (green-noise-interp-amplitude gen)))
-		 (end (+ (green-noise-interp-sum gen) val)))
-	    (if (not (<= (green-noise-interp-low gen) end (green-noise-interp-high gen)))
-		(set! val (* -2 val)))
-	    (set! (green-noise-interp-incr gen) (/ (* val (green-noise-interp-frequency gen))
-						   (* 2 pi))))))
-    (set! (green-noise-interp-angle gen) (+ x fm (green-noise-interp-frequency gen)))
-    (set! (green-noise-interp-sum gen) (+ (green-noise-interp-sum gen) (green-noise-interp-incr gen)))
-    (green-noise-interp-sum gen)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((x angle)
+	  (two-pi (* 2 pi)))
+      (if (or (>= x two-pi)
+	      (< x 0.0))
+	  (begin
+	    (set! x (modulo x two-pi))
+	    (if (< x 0.0) (set! x (+ x two-pi)))
+	    (let* ((val (mus-random amplitude))
+		   (end (+ sum val)))
+	      (if (not (<= low end high))
+		  (set! val (* -2 val)))
+	      (set! incr (/ (* val frequency) (* 2 pi))))))
+      (set! angle (+ x fm frequency))
+      (set! sum (+ sum incr)))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -4905,15 +5070,15 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (definstrument (green1 beg end freq amp lo hi)
   (let ((grn (make-green-noise :frequency freq :amplitude amp :high hi :low lo)))
-     (do ((i beg (+ i 1)))
-	 ((= i end))
-       (outa i (green-noise grn 0.0)))))
+    (do ((i beg (+ i 1)))
+	((= i end))
+      (outa i (green-noise grn 0.0)))))
 
 (definstrument (green2 beg end freq amp lo hi)
   (let ((grn (make-green-noise-interp :frequency freq :amplitude amp :high hi :low lo)))
-     (do ((i beg (+ i 1)))
-	 ((= i end))
-       (outa i (green-noise-interp grn 0.0)))))
+    (do ((i beg (+ i 1)))
+	((= i end))
+      (outa i (green-noise-interp grn 0.0)))))
 
 (with-sound () (green1 0 10000 1000 0.1 -0.5 0.5) (green2 10000 20000 1000 0.1 -0.5 0.5))
 
@@ -4924,11 +5089,11 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (e (make-env amp-env :scaler amp :duration dur))
 	 (beg (seconds->samples start))
 	 (end (+ beg (seconds->samples dur))))
-     (do ((i beg (+ i 1)))
-	 ((= i end))
-       (outa i (* (env e) 
-		  (+ 1.0 (green-noise-interp grn 0.0))
-		  (oscil osc))))))
+    (do ((i beg (+ i 1)))
+	((= i end))
+      (outa i (* (env e) 
+		 (+ 1.0 (green-noise-interp grn 0.0))
+		 (oscil osc))))))
 
 (with-sound () (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
 
@@ -4940,13 +5105,14 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (e (make-env freq-env :scaler gliss :duration dur))
 	 (beg (seconds->samples start))
 	 (end (+ beg (seconds->samples dur))))
-     (do ((i beg (+ i 1)))
-	 ((= i end))
-       (outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))))))
+    (do ((i beg (+ i 1)))
+	((= i end))
+      (outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))))))
 
 (with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
 
 |#
+
 
 
 
@@ -4956,32 +5122,35 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (moving-max
 	       :make-wrapper (lambda (g)
-			       (let ((dly (make-delay (moving-max-n g))))
-				 (set! (moving-max-gen g) dly)
+			       (let ((dly (make-delay (g 'n))))
+				 (set! (g 'dly) dly)
 				 (set! (mus-scaler dly) 0.0)
 				 g))
 	       :methods (list
-			 (list 'mus-data
-			       (lambda (g) (mus-data (moving-max-gen g))))
-			 (list 'mus-scaler
-			       (lambda (g) (mus-scaler (moving-max-gen g)))
-			       (lambda (g val)
-				 (set! (mus-scaler (moving-max-gen g)) val)
-				 val))))
-  (n 128) (gen #f))
+			 (cons 'mus-data
+			       (lambda (g) (mus-data (g 'dly))))
+			 (cons 'mus-scaler
+			       (make-procedure-with-setter
+				(lambda (g) (mus-scaler (g 'dly)))
+				(lambda (g val) (set! (mus-scaler (g 'dly)) val))))))
+  (n 128) (dly #f) fm)
 
 
-(define (moving-max gen y)
+(define (moving-max gen fm)
+  
   "(make-moving-max (n 128) returns a moving-max generator.\n\
   (moving-max gen input) returns the maxamp over the last n inputs."
-  (let* ((absy (abs y))
-	 (dly (moving-max-gen gen))
-	 (mx (delay dly absy)))
-    (if (>= absy (mus-scaler dly))
-	(set! (mus-scaler dly) absy)
-	(if (>= mx (mus-scaler dly))
-	    (set! (mus-scaler dly) (vct-peak (mus-data dly)))))
-    (mus-scaler dly)))
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((absy (abs fm))
+	   (mx (delay dly absy)))
+      (if (>= absy (mus-scaler dly))
+	  (set! (mus-scaler dly) absy)
+	  (if (>= mx (mus-scaler dly))
+	      (set! (mus-scaler dly) (vct-peak (mus-data dly)))))
+      (mus-scaler dly))))
+
 
 
 
@@ -4991,18 +5160,21 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (moving-sum
 	       :make-wrapper (lambda (g)
-			       (let ((dly (make-moving-average (moving-sum-n g))))
-				 (set! (moving-sum-gen g) dly)
+			       (let ((dly (make-moving-average (g 'n))))
+				 (set! (g 'gen) dly)
 				 (set! (mus-increment dly) 1.0) ; this is 1/n by default
 				 g)))
   (n 128) (gen #f))
 
 
 (define (moving-sum gen y)
+  
   "  (make-moving-sum (n 128) returns a moving-sum generator.\n\
   (moving-sum gen input) returns the sum of the absolute values in a moving window over the last n inputs."
-  (moving-average (moving-sum-gen gen) (abs y)))
-			       
+  
+  (moving-average (gen 'gen) (abs y)))
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -5013,23 +5185,25 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (moving-variance
 	       :make-wrapper (lambda (g)
-			       (let ((g1 (make-moving-average (moving-variance-n g)))
-				     (g2 (make-moving-average (moving-variance-n g))))
-				 (set! (moving-variance-gen1 g) g1)
+			       (let ((g1 (make-moving-average (g 'n)))
+				     (g2 (make-moving-average (g 'n))))
+				 (set! (g 'gen1) g1)
 				 (set! (mus-increment g1) 1.0)
-				 (set! (moving-variance-gen2 g) g2)
+				 (set! (g 'gen2) g2)
 				 (set! (mus-increment g2) 1.0)
 				 g)))
-  (n 128) (gen1 #f) (gen2 #f))
+  (n 128) (gen1 #f) (gen2 #f) y)
 
 
 (define (moving-variance gen y)
-  (let ((x1 (moving-average (moving-variance-gen1 gen) y))
-	(x2 (moving-average (moving-variance-gen2 gen) (* y y)))
-	(n (moving-variance-n gen)))
-    (/ (- (* n x2)
-	  (* x1 x1))
-       (* n (- n 1)))))
+  (set! (gen 'y) y)
+  (with-environment gen
+    (let ((x1 (moving-average gen1 y))
+	  (x2 (moving-average gen2 (* y y))))
+      (/ (- (* n x2)
+	    (* x1 x1))
+	 (* n (- n 1))))))
+
 
 #|
 (with-sound (:clipped #f)
@@ -5051,19 +5225,22 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (moving-rms
 	       :make-wrapper (lambda (g)
-			       (set! (moving-rms-gen g) (make-moving-average (moving-rms-n g)))
+			       (set! (g 'gen) (make-moving-average (g 'n)))
 			       g))
-  (n 128) (gen #f))
+  (n 128) (gen #f) y)
 
 
 (define (moving-rms gen y)
-  "  (make-moving-rms (n 128) returns a moving-rms generator.\n\
+  "(make-moving-rms (n 128) returns a moving-rms generator.\n\
   (moving-rms gen input) returns the rms of the values in a window over the last n inputs."
-  (sqrt (max 0.0 ;; this is tricky -- due to floating point inaccuracy, we can get negative output
-  		 ;;   from moving-rms even if all the inputs are positive!  The sqrt then returns
-                 ;;   a complex number and all hell breaks loose (in run, you'll get a complaint
-                 ;;   about an integer > 32 bits).
-	     (moving-average (moving-rms-gen gen) (* y y)))))
+  (set! (gen 'y) y)
+  (with-environment gen
+    (sqrt (max 0.0 ;; this is tricky -- due to floating point inaccuracy, we can get negative output
+	       ;;   from moving-rms even if all the inputs are positive!  The sqrt then returns
+	       ;;   a complex number and all hell breaks loose (in run, you'll get a complaint
+	       ;;   about an integer > 32 bits).
+	       (moving-average gen (* y y))))))
+
 
 
 
@@ -5073,18 +5250,21 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (moving-length
 	       :make-wrapper (lambda (g)
-			       (let ((dly (make-moving-average (moving-length-n g))))
-				 (set! (moving-length-gen g) dly)
+			       (let ((dly (make-moving-average (g 'n))))
+				 (set! (g 'gen) dly)
 				 (set! (mus-increment dly) 1.0)
 				 g)))
-  (n 128) (gen #f))
+  (n 128) (gen #f) y)
 
 
 (define (moving-length gen y)
-  "  (make-moving-length (n 128) returns a moving-length generator.\n\
+  
+  "(make-moving-length (n 128) returns a moving-length generator.\n\
   (moving-length gen input) returns the length of the values in a window over the last few inputs."
-  (sqrt (max 0.0 (moving-average (moving-length-gen gen) (* y y)))))
-
+  
+  (set! (gen 'y) y)
+  (with-environment gen
+    (sqrt (max 0.0 (moving-average gen (* y y))))))
 
 #|
 ;; perhaps also use moving-rms gen to avoid amplifying noise-sections (or even squlech them)
@@ -5112,27 +5292,25 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (weighted-moving-average
 	       :make-wrapper (lambda (g)
-			       (let ((dly (make-moving-average (weighted-moving-average-n g))))
+			       (let ((dly (make-moving-average (g 'n))))
 				 (set! (mus-increment dly) 1.0)
-				 (set! (weighted-moving-average-gen g) dly)
+				 (set! (g 'dly) dly)
 				 g)))
-  (n 128) (gen #f) (num 0.0) (sum 0.0))
+  (n 128) (dly #f) (num 0.0) (sum 0.0) y)
 
 
 (define (weighted-moving-average gen y)
+  
   "  (make-weighted-moving-average (n 128) returns a weighted-moving-average generator.\n\
   (weighted-moving-average gen y) returns the sum of the last n inputs weighted by 1/n"
-  (let* ((dly (weighted-moving-average-gen gen))
-	 (n (mus-order dly))
-	 (den (/ (* (+ 1 n) n) 2))
-	 (num (weighted-moving-average-num gen))
-	 (sum (weighted-moving-average-sum gen)))
-    (set! num (- (+ num (* n y)) sum))
-    (set! sum (moving-average dly y))
-    (set! (weighted-moving-average-num gen) num)
-    (set! (weighted-moving-average-sum gen) sum)
-    (/ num den)))
-
+  
+  (set! (gen 'y) y)
+  (with-environment gen
+    (let* ((n (mus-order dly))
+	   (den (/ (* (+ 1 n) n) 2)))
+      (set! num (- (+ num (* n y)) sum))
+      (set! sum (moving-average dly y))
+      (/ num den))))
 
 
 
@@ -5144,9 +5322,9 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (exponentially-weighted-moving-average
 	       :make-wrapper (lambda (g)
-			       (let* ((n (exponentially-weighted-moving-average-n g))
+			       (let* ((n (g 'n))
 				      (flt (make-one-pole (/ 1.0 n) (/ (- n) (+ 1.0 n)))))
-				 (set! (exponentially-weighted-moving-average-gen g) flt)
+				 (set! (g 'gen) flt)
 				 g)))
   (n 128) (gen #f))
 
@@ -5154,7 +5332,8 @@ index 10 (so 10/2 is the bes-jn arg):
 (define (exponentially-weighted-moving-average gen y)
   "  (make-exponentially-weighted-moving-average (n 128) returns an exponentially-weighted-moving-average generator.\n\
   (exponentially-weighted-moving-average gen y) returns the sum of the last n inputs weighted by (-n/(n+1))^k"
-  (one-pole (exponentially-weighted-moving-average-gen gen) y))
+  (one-pole (gen 'gen) y))
+
 
 
 
@@ -5164,7 +5343,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (polyoid
 	       :make-wrapper (lambda (g)
-			       (let* ((lst (polyoid-partial-amps-and-phases g))
+			       (let* ((lst (g 'partial-amps-and-phases))
 				      (len (length lst))
 				      (topk (let ((n 0))
 					      (do ((i 0 (+ i 3)))
@@ -5181,52 +5360,46 @@ index 10 (so 10/2 is the bes-jn arg):
 				     (if (> n 0)                                   ; constant only applies to cos side
 					 (set! (sin-amps n) (* amp (cos phase))))
 				     (set! (cos-amps n) (* amp (sin phase)))))
-				 (set! (polyoid-tn g) cos-amps)
-				 (set! (polyoid-un g) sin-amps)
-				 (set! (polyoid-frequency g) (hz->radians (polyoid-frequency g)))
+				 (set! (g 'tn) cos-amps)
+				 (set! (g 'un) sin-amps)
+				 (set! (g 'frequency) (hz->radians (g 'frequency)))
 				 g))
-
+	       
 	       :methods (list
-			 (list 'mus-data
-			       (lambda (g)
-				 (polyoid-tn g)))
-			 (list 'mus-xcoeffs
-			       (lambda (g)
-				 (polyoid-tn g)))
-			 (list 'mus-ycoeffs
-			       (lambda (g)
-				 (polyoid-un g)))
-			 (list 'mus-xcoeff
-			       (lambda (g ind)
-				 ((polyoid-tn g) ind))
-			       (lambda (g ind val)
-				 (vector-set! (polyoid-tn g) ind val)))
-			 (list 'mus-ycoeff
-			       (lambda (g ind)
-				 ((polyoid-un g) ind))
-			       (lambda (g ind val)
-				 (vector-set! (polyoid-un g) ind val)))))
-
+			 (cons 'mus-data
+			       (lambda (g) (g 'tn)))
+			 (cons 'mus-xcoeffs
+			       (lambda (g) (g 'tn)))
+			 (cons 'mus-ycoeffs
+			       (lambda (g) (g 'un)))
+			 (cons 'mus-xcoeff
+			       (make-procedure-with-setter
+				(lambda (g ind) ((g 'tn) ind))
+				(lambda (g ind val) (vector-set! (g 'tn) ind val))))
+			 (cons 'mus-ycoeff
+			       (make-procedure-with-setter
+				(lambda (g ind) ((g 'un) ind))
+				(lambda (g ind val) (vector-set! (g 'un) ind val))))))
+  
   (frequency *clm-default-frequency*) (partial-amps-and-phases #f) (angle 0.0)
-  (tn #f) (un #f))
+  (tn #f) (un #f) fm)
 
 
 (define* (polyoid gen (fm 0.0))
-  (let ((result (mus-chebyshev-tu-sum (polyoid-angle gen)
-				      (polyoid-tn gen)
-				      (polyoid-un gen))))
-
-    (set! (polyoid-angle gen) (+ (polyoid-angle gen) fm (polyoid-frequency gen)))
-    result))
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let ((result (mus-chebyshev-tu-sum angle tn un)))
+      (set! angle (+ angle fm frequency))
+      result)))
 
 
 (define (polyoid-env gen fm amps phases)
   ;; amps and phases are the envelopes, one for each harmonic, setting the sample-wise amp and phase
-  (let* ((tn (polyoid-tn gen))
-	 (un (polyoid-un gen))
-	 (original-data (polyoid-partial-amps-and-phases gen))
+  (let* ((original-data (polyoid-partial-amps-and-phases gen))
 	 (data-len (length original-data))
-	 (amps-len (length amps)))
+	 (amps-len (length amps))
+	 (tn (polyoid-tn gen))
+	 (un (polyoid-un gen)))
     (do ((i 0 (+ i 3))
 	 (j 0 (+ j 1)))
 	((or (= j amps-len)
@@ -5237,8 +5410,6 @@ index 10 (so 10/2 is the bes-jn arg):
 	(set! (tn hn) (* amp (sin phase)))
 	(set! (un hn) (* amp (cos phase)))))
     (polyoid gen fm)))
-
-
 
 #|
 (with-sound (:clipped #f)
@@ -5260,9 +5431,9 @@ index 10 (so 10/2 is the bes-jn arg):
 (with-sound (:clipped #f :statistics #t)
   (let ((samps 44100)
 	(gen (make-polyoid 100.0 (vector 1 0.5 0.0 51 0.25 0.0 64 .25 (/ pi 2)))))
-     (do ((i 0 (+ i 1)))
-	 ((= i samps))
-       (outa i (polyoid gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i samps))
+      (outa i (polyoid gen)))))
 
 (define (test-polyoid n)
   (let* ((res (with-sound (:channels 2 :clipped #f)
@@ -5288,7 +5459,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			(outa i (/ sin-sum n))
 			(outb i poly-sum)))))))
 	 (snd (find-sound res)))
-  (channel-distance snd 0 snd 1)))
+    (channel-distance snd 0 snd 1)))
 
 (define (test-polyoid-run n)
   (let* ((res (with-sound (:channels 2 :clipped #f)
@@ -5302,19 +5473,19 @@ index 10 (so 10/2 is the bes-jn arg):
 		    (set! (cur-phases (+ j 1)) (/ 1.0 n))
 		    (set! (cur-phases (+ j 2)) (random (* 2 pi))))
 		  (let ((gen (make-polyoid 1.0 cur-phases)))
-		     (do ((i 0 (+ i 1)))
-			 ((= i 88200))
-		       (let ((poly-sum 0.0)
-			     (sin-sum 0.0))
-			 (do ((k 0 (+ k 1)))
-			     ((= k n))
-			   (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (cur-phases (+ (* 3 k) 2)))))))
-			 (set! poly-sum (polyoid gen))
-			 (set! angle (+ angle incr))
-			 (outa i (/ sin-sum n))
-			 (outb i poly-sum)))))))
+		    (do ((i 0 (+ i 1)))
+			((= i 88200))
+		      (let ((poly-sum 0.0)
+			    (sin-sum 0.0))
+			(do ((k 0 (+ k 1)))
+			    ((= k n))
+			  (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (cur-phases (+ (* 3 k) 2)))))))
+			(set! poly-sum (polyoid gen))
+			(set! angle (+ angle incr))
+			(outa i (/ sin-sum n))
+			(outb i poly-sum)))))))
 	 (snd (find-sound res)))
-  (channel-distance snd 0 snd 1)))
+    (channel-distance snd 0 snd 1)))
 
 ;;; 0 diff up to 4096 so far (unopt and opt) -- 1.0e-12 at 4096, opt is more than 20 times as fast
 
@@ -5324,21 +5495,21 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (gen1 (make-polyoid 100.0 (vector 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
 	 (gen2 (make-polyoid 100.0 (vector 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
 	 (amps1 (vector (make-env '(0 0 1 1 2 0) :end samps :scaler 0.5)
-		       (make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
-		       (make-env '(0 1 1 0) :end samps :scaler 0.25)))
+			(make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
+			(make-env '(0 1 1 0) :end samps :scaler 0.25)))
 	 (phases1 (vector (make-env '(0 0 1 1) :end samps :scaler (/ pi 2))
-			 (make-env '(0 0 1 1) :end samps :scaler (/ pi 2))
-			 (make-env '(0 1 1 0) :end samps :scaler (/ pi 2))))
+			  (make-env '(0 0 1 1) :end samps :scaler (/ pi 2))
+			  (make-env '(0 1 1 0) :end samps :scaler (/ pi 2))))
 	 (amps2 (vector (make-env '(0 0 1 1 2 0) :end samps :scaler 0.5)
-		       (make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
-		       (make-env '(0 1 1 0) :end samps :scaler 0.25)))
+			(make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
+			(make-env '(0 1 1 0) :end samps :scaler 0.25)))
 	 (phases2 (vector (make-env '(0 0 1 0) :end samps)
-			 (make-env '(0 0 1 0) :end samps)
-			 (make-env '(0 0 1 0) :end samps))))
-     (do ((i 0 (+ i 1)))
-	 ((= i samps))
-       (outa i (polyoid-env gen1 0.0 amps1 phases1))
-       (outb i (polyoid-env gen2 0.0 amps2 phases2)))))
+			  (make-env '(0 0 1 0) :end samps)
+			  (make-env '(0 0 1 0) :end samps))))
+    (do ((i 0 (+ i 1)))
+	((= i samps))
+      (outa i (polyoid-env gen1 0.0 amps1 phases1))
+      (outb i (polyoid-env gen2 0.0 amps2 phases2)))))
 
 
 (with-sound (:clipped #f :channels 2 :channels 3 :statistics #t)
@@ -5356,11 +5527,11 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (phases3 (vector (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)) 
 			  (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)) 
 			  (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)))))
-     (do ((i 0 (+ i 1)))
-	 ((= i samps))
-       (outa i (* .1 (polyoid-env gen1 0.0 amps1 phases1)))
-       (outb i (* .1 (polyoid-env gen2 0.0 amps2 phases2)))
-       (outc i (* .1 (polyoid-env gen3 0.0 amps3 phases3))))))
+    (do ((i 0 (+ i 1)))
+	((= i samps))
+      (outa i (* .1 (polyoid-env gen1 0.0 amps1 phases1)))
+      (outb i (* .1 (polyoid-env gen2 0.0 amps2 phases2)))
+      (outc i (* .1 (polyoid-env gen3 0.0 amps3 phases3))))))
 
 |#
 
@@ -5381,7 +5552,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		  (do ((i 1 (+ i 1))
 		       (j 0 (+ j 3)))
 		      ((> i n))
-
+		    
 		    (case choice
 		      ((all)   (set! (amps j) i))
 		      ((odd)   (set! (amps j) (- (* 2 i) 1)))
@@ -5389,7 +5560,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		      ((even)  (set! (amps j) (max 1 (* 2 (- i 1))))))
 		    
 		    (set! (amps (+ j 1)) (/ 1.0 n))
-
+		    
 		    (if (vector? phases)
 			(set! (amps (+ j 2)) (phases (- i 1)))
 			(if (not phases)
@@ -5398,7 +5569,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				(set! (amps (+ j 2)) (/ pi 2))
 				;; else min-peak, handled below
 				))))
-
+		  
 		  (if (eq? phases 'min-peak)
 		      (let ((vector-find-if (lambda (func vect)
 					      (let ((len (length vect))
@@ -5408,10 +5579,10 @@ index 10 (so 10/2 is the bes-jn arg):
 							 result)
 						     result)
 						  (set! result (func (vect i))))))))
-
+			
 			(if (not (defined? 'noid-min-peak-phases))
 			    (load "peak-phases.scm"))
-
+			
 			(let ((min-dat (vector-find-if 
 					(lambda (val)
 					  (and val
@@ -5441,7 +5612,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				    ((> i n))
 				  (set! (amps (+ j 1)) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
 				  (set! (amps (+ j 2)) (* pi (rats (- i 1))))))))))
-			      
+		  
 		  amps)))
 
 (define noid polyoid)
@@ -5449,63 +5620,63 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 (define some-primes (vector 1
-    2    3    5    7   11   13   17   19   23   29   31   37   41   43   47   53   59   61 
-   67   71   73   79   83   89   97  101  103  107  109  113  127  131  137  139  149  151 
-  157  163  167  173  179  181  191  193  197  199  211  223  227  229  233  239  241  251 
-  257  263  269  271  277  281  283  293  307  311  313  317  331  337  347  349  353  359 
-  367  373  379  383  389  397  401  409  419  421  431  433  439  443  449  457  461  463 
-  467  479  487  491  499  503  509  521  523  541  547  557  563  569  571  577  587  593 
-  599  601  607  613  617  619  631  641  643  647  653  659  661  673  677  683  691  701 
-  709  719  727  733  739  743  751  757  761  769  773  787  797  809  811  821  823  827 
-  829  839  853  857  859  863  877  881  883  887  907  911  919  929  937  941  947  953 
-  967  971  977  983  991  997 1009 1013 1019 1021 1031 1033 1039 1049 1051 1061 1063 1069 
- 1087 1091 1093 1097 1103 1109 1117 1123 1129 1151 1153 1163 1171 1181 1187 1193 1201 1213 
- 1217 1223 1229 1231 1237 1249 1259 1277 1279 1283 1289 1291 1297 1301 1303 1307 1319 1321 
- 1327 1361 1367 1373 1381 1399 1409 1423 1427 1429 1433 1439 1447 1451 1453 1459 1471 1481 
- 1483 1487 1489 1493 1499 1511 1523 1531 1543 1549 1553 1559 1567 1571 1579 1583 1597 1601 
- 1607 1609 1613 1619 1621 1627 1637 1657 1663 1667 1669 1693 1697 1699 1709 1721 1723 1733 
- 1741 1747 1753 1759 1777 1783 1787 1789 1801 1811 1823 1831 1847 1861 1867 1871 1873 1877 
- 1879 1889 1901 1907 1913 1931 1933 1949 1951 1973 1979 1987 1993 1997 1999 2003 2011 2017 
- 2027 2029 2039 2053 2063 2069 2081 2083 2087 2089 2099 2111 2113 2129 2131 2137 2141 2143 
- 2153 2161 2179 2203 2207 2213 2221 2237 2239 2243 2251 2267 2269 2273 2281 2287 2293 2297 
- 2309 2311 2333 2339 2341 2347 2351 2357 2371 2377 2381 2383 2389 2393 2399 2411 2417 2423 
- 2437 2441 2447 2459 2467 2473 2477 2503 2521 2531 2539 2543 2549 2551 2557 2579 2591 2593 
- 2609 2617 2621 2633 2647 2657 2659 2663 2671 2677 2683 2687 2689 2693 2699 2707 2711 2713 
- 2719 2729 2731 2741 2749 2753 2767 2777 2789 2791 2797 2801 2803 2819 2833 2837 2843 2851 
- 2857 2861 2879 2887 2897 2903 2909 2917 2927 2939 2953 2957 2963 2969 2971 2999 3001 3011 
- 3019 3023 3037 3041 3049 3061 3067 3079 3083 3089 3109 3119 3121 3137 3163 3167 3169 3181 
- 3187 3191 3203 3209 3217 3221 3229 3251 3253 3257 3259 3271 3299 3301 3307 3313 3319 3323 
- 3329 3331 3343 3347 3359 3361 3371 3373 3389 3391 3407 3413 3433 3449 3457 3461 3463 3467 
- 3469 3491 3499 3511 3517 3527 3529 3533 3539 3541 3547 3557 3559 3571 3581 3583 3593 3607 
- 3613 3617 3623 3631 3637 3643 3659 3671 3673 3677 3691 3697 3701 3709 3719 3727 3733 3739 
- 3761 3767 3769 3779 3793 3797 3803 3821 3823 3833 3847 3851 3853 3863 3877 3881 3889 3907 
- 3911 3917 3919 3923 3929 3931 3943 3947 3967 3989 4001 4003 4007 4013 4019 4021 4027 4049 
- 4051 4057 4073 4079 4091 4093 4099 4111 4127 4129 4133 4139 4153 4157 4159 4177 4201 4211 
- 4217 4219 4229 4231 4241 4243 4253 4259 4261 4271 4273 4283 4289 4297 4327 4337 4339 4349 
- 4357 4363 4373 4391 4397 4409 4421 4423 4441 4447 4451 4457 4463 4481 4483 4493 4507 4513 
- 4517 4519 4523 4547 4549 4561 4567 4583 4591 4597 4603 4621 4637 4639 4643 4649 4651 4657 
- 4663 4673 4679 4691 4703 4721 4723 4729 4733 4751 4759 4783 4787 4789 4793 4799 4801 4813 
- 4817 4831 4861 4871 4877 4889 4903 4909 4919 4931 4933 4937 4943 4951 4957 4967 4969 4973 
- 4987 4993 4999 5003 5009 5011 5021 5023 5039 5051 5059 5077 5081 5087 5099 5101 5107 5113 
- 5119 5147 5153 5167 5171 5179 5189 5197 5209 5227 5231 5233 5237 5261 5273 5279 5281 5297 
- 5303 5309 5323 5333 5347 5351 5381 5387 5393 5399 5407 5413 5417 5419 5431 5437 5441 5443 
- 5449 5471 5477 5479 5483 5501 5503 5507 5519 5521 5527 5531 5557 5563 5569 5573 5581 5591 
- 5623 5639 5641 5647 5651 5653 5657 5659 5669 5683 5689 5693 5701 5711 5717 5737 5741 5743 
- 5749 5779 5783 5791 5801 5807 5813 5821 5827 5839 5843 5849 5851 5857 5861 5867 5869 5879 
- 5881 5897 5903 5923 5927 5939 5953 5981 5987 6007 6011 6029 6037 6043 6047 6053 6067 6073 
- 6079 6089 6091 6101 6113 6121 6131 6133 6143 6151 6163 6173 6197 6199 6203 6211 6217 6221 
- 6229 6247 6257 6263 6269 6271 6277 6287 6299 6301 6311 6317 6323 6329 6337 6343 6353 6359 
- 6361 6367 6373 6379 6389 6397 6421 6427 6449 6451 6469 6473 6481 6491 6521 6529 6547 6551 
- 6553 6563 6569 6571 6577 6581 6599 6607 6619 6637 6653 6659 6661 6673 6679 6689 6691 6701 
- 6703 6709 6719 6733 6737 6761 6763 6779 6781 6791 6793 6803 6823 6827 6829 6833 6841 6857 
- 6863 6869 6871 6883 6899 6907 6911 6917 6947 6949 6959 6961 6967 6971 6977 6983 6991 6997 
- 7001 7013 7019 7027 7039 7043 7057 7069 7079 7103 7109 7121 7127 7129 7151 7159 7177 7187 
- 7193 7207 7211 7213 7219 7229 7237 7243 7247 7253 7283 7297 7307 7309 7321 7331 7333 7349 
- 7351 7369 7393 7411 7417 7433 7451 7457 7459 7477 7481 7487 7489 7499 7507 7517 7523 7529 
- 7537 7541 7547 7549 7559 7561 7573 7577 7583 7589 7591 7603 7607 7621 7639 7643 7649 7669 
- 7673 7681 7687 7691 7699 7703 7717 7723 7727 7741 7753 7757 7759 7789 7793 7817 7823 7829 
- 7841 7853 7867 7873 7877 7879 7883 7901 7907 7919 7927 7933 7937 7949 7951 7963 7993 8009 
- 8011 8017 8039 8053 8059 8069 8081 8087 8089 8093 8101 8111 8117 8123 8147 8161 8167 8171))
+			    2    3    5    7   11   13   17   19   23   29   31   37   41   43   47   53   59   61 
+			    67   71   73   79   83   89   97  101  103  107  109  113  127  131  137  139  149  151 
+			    157  163  167  173  179  181  191  193  197  199  211  223  227  229  233  239  241  251 
+			    257  263  269  271  277  281  283  293  307  311  313  317  331  337  347  349  353  359 
+			    367  373  379  383  389  397  401  409  419  421  431  433  439  443  449  457  461  463 
+			    467  479  487  491  499  503  509  521  523  541  547  557  563  569  571  577  587  593 
+			    599  601  607  613  617  619  631  641  643  647  653  659  661  673  677  683  691  701 
+			    709  719  727  733  739  743  751  757  761  769  773  787  797  809  811  821  823  827 
+			    829  839  853  857  859  863  877  881  883  887  907  911  919  929  937  941  947  953 
+			    967  971  977  983  991  997 1009 1013 1019 1021 1031 1033 1039 1049 1051 1061 1063 1069 
+			    1087 1091 1093 1097 1103 1109 1117 1123 1129 1151 1153 1163 1171 1181 1187 1193 1201 1213 
+			    1217 1223 1229 1231 1237 1249 1259 1277 1279 1283 1289 1291 1297 1301 1303 1307 1319 1321 
+			    1327 1361 1367 1373 1381 1399 1409 1423 1427 1429 1433 1439 1447 1451 1453 1459 1471 1481 
+			    1483 1487 1489 1493 1499 1511 1523 1531 1543 1549 1553 1559 1567 1571 1579 1583 1597 1601 
+			    1607 1609 1613 1619 1621 1627 1637 1657 1663 1667 1669 1693 1697 1699 1709 1721 1723 1733 
+			    1741 1747 1753 1759 1777 1783 1787 1789 1801 1811 1823 1831 1847 1861 1867 1871 1873 1877 
+			    1879 1889 1901 1907 1913 1931 1933 1949 1951 1973 1979 1987 1993 1997 1999 2003 2011 2017 
+			    2027 2029 2039 2053 2063 2069 2081 2083 2087 2089 2099 2111 2113 2129 2131 2137 2141 2143 
+			    2153 2161 2179 2203 2207 2213 2221 2237 2239 2243 2251 2267 2269 2273 2281 2287 2293 2297 
+			    2309 2311 2333 2339 2341 2347 2351 2357 2371 2377 2381 2383 2389 2393 2399 2411 2417 2423 
+			    2437 2441 2447 2459 2467 2473 2477 2503 2521 2531 2539 2543 2549 2551 2557 2579 2591 2593 
+			    2609 2617 2621 2633 2647 2657 2659 2663 2671 2677 2683 2687 2689 2693 2699 2707 2711 2713 
+			    2719 2729 2731 2741 2749 2753 2767 2777 2789 2791 2797 2801 2803 2819 2833 2837 2843 2851 
+			    2857 2861 2879 2887 2897 2903 2909 2917 2927 2939 2953 2957 2963 2969 2971 2999 3001 3011 
+			    3019 3023 3037 3041 3049 3061 3067 3079 3083 3089 3109 3119 3121 3137 3163 3167 3169 3181 
+			    3187 3191 3203 3209 3217 3221 3229 3251 3253 3257 3259 3271 3299 3301 3307 3313 3319 3323 
+			    3329 3331 3343 3347 3359 3361 3371 3373 3389 3391 3407 3413 3433 3449 3457 3461 3463 3467 
+			    3469 3491 3499 3511 3517 3527 3529 3533 3539 3541 3547 3557 3559 3571 3581 3583 3593 3607 
+			    3613 3617 3623 3631 3637 3643 3659 3671 3673 3677 3691 3697 3701 3709 3719 3727 3733 3739 
+			    3761 3767 3769 3779 3793 3797 3803 3821 3823 3833 3847 3851 3853 3863 3877 3881 3889 3907 
+			    3911 3917 3919 3923 3929 3931 3943 3947 3967 3989 4001 4003 4007 4013 4019 4021 4027 4049 
+			    4051 4057 4073 4079 4091 4093 4099 4111 4127 4129 4133 4139 4153 4157 4159 4177 4201 4211 
+			    4217 4219 4229 4231 4241 4243 4253 4259 4261 4271 4273 4283 4289 4297 4327 4337 4339 4349 
+			    4357 4363 4373 4391 4397 4409 4421 4423 4441 4447 4451 4457 4463 4481 4483 4493 4507 4513 
+			    4517 4519 4523 4547 4549 4561 4567 4583 4591 4597 4603 4621 4637 4639 4643 4649 4651 4657 
+			    4663 4673 4679 4691 4703 4721 4723 4729 4733 4751 4759 4783 4787 4789 4793 4799 4801 4813 
+			    4817 4831 4861 4871 4877 4889 4903 4909 4919 4931 4933 4937 4943 4951 4957 4967 4969 4973 
+			    4987 4993 4999 5003 5009 5011 5021 5023 5039 5051 5059 5077 5081 5087 5099 5101 5107 5113 
+			    5119 5147 5153 5167 5171 5179 5189 5197 5209 5227 5231 5233 5237 5261 5273 5279 5281 5297 
+			    5303 5309 5323 5333 5347 5351 5381 5387 5393 5399 5407 5413 5417 5419 5431 5437 5441 5443 
+			    5449 5471 5477 5479 5483 5501 5503 5507 5519 5521 5527 5531 5557 5563 5569 5573 5581 5591 
+			    5623 5639 5641 5647 5651 5653 5657 5659 5669 5683 5689 5693 5701 5711 5717 5737 5741 5743 
+			    5749 5779 5783 5791 5801 5807 5813 5821 5827 5839 5843 5849 5851 5857 5861 5867 5869 5879 
+			    5881 5897 5903 5923 5927 5939 5953 5981 5987 6007 6011 6029 6037 6043 6047 6053 6067 6073 
+			    6079 6089 6091 6101 6113 6121 6131 6133 6143 6151 6163 6173 6197 6199 6203 6211 6217 6221 
+			    6229 6247 6257 6263 6269 6271 6277 6287 6299 6301 6311 6317 6323 6329 6337 6343 6353 6359 
+			    6361 6367 6373 6379 6389 6397 6421 6427 6449 6451 6469 6473 6481 6491 6521 6529 6547 6551 
+			    6553 6563 6569 6571 6577 6581 6599 6607 6619 6637 6653 6659 6661 6673 6679 6689 6691 6701 
+			    6703 6709 6719 6733 6737 6761 6763 6779 6781 6791 6793 6803 6823 6827 6829 6833 6841 6857 
+			    6863 6869 6871 6883 6899 6907 6911 6917 6947 6949 6959 6961 6967 6971 6977 6983 6991 6997 
+			    7001 7013 7019 7027 7039 7043 7057 7069 7079 7103 7109 7121 7127 7129 7151 7159 7177 7187 
+			    7193 7207 7211 7213 7219 7229 7237 7243 7247 7253 7283 7297 7307 7309 7321 7331 7333 7349 
+			    7351 7369 7393 7411 7417 7433 7451 7457 7459 7477 7481 7487 7489 7499 7507 7517 7523 7529 
+			    7537 7541 7547 7549 7559 7561 7573 7577 7583 7589 7591 7603 7607 7621 7639 7643 7649 7669 
+			    7673 7681 7687 7691 7699 7703 7717 7723 7727 7741 7753 7757 7759 7789 7793 7817 7823 7829 
+			    7841 7853 7867 7873 7877 7879 7883 7901 7907 7919 7927 7933 7937 7949 7951 7963 7993 8009 
+			    8011 8017 8039 8053 8059 8069 8081 8087 8089 8093 8101 8111 8117 8123 8147 8161 8167 8171))
 
 
 #|
@@ -5554,17 +5725,17 @@ index 10 (so 10/2 is the bes-jn arg):
       (outd i (noid gen4 0.0)))))
 
 
-  (do ((i 0 (+ i 1)))
-      ((= i 4))
-    (with-sound (:clipped #f :output (string-append "test-noid-" (number->string i) ".snd"))
-      (let ((samps 44100)
-	    (gen (make-noid 100.0 32 (if (= i 0) 'max-peak
-					 (if (= i 1) (make-vector 32 0.0)
-					     (if (= i 2) #f
-						 'min-peak))))))
-	(do ((i 0 (+ i 1)))
-	    ((= i samps))
-	  (outa i (noid gen))))))
+(do ((i 0 (+ i 1)))
+    ((= i 4))
+  (with-sound (:clipped #f :output (string-append "test-noid-" (number->string i) ".snd"))
+    (let ((samps 44100)
+	  (gen (make-noid 100.0 32 (if (= i 0) 'max-peak
+				       (if (= i 1) (make-vector 32 0.0)
+					   (if (= i 2) #f
+					       'min-peak))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i samps))
+	(outa i (noid gen))))))
 
 (define (knoid n)
   (with-sound (:channels 4 :statistics #t) 
@@ -5573,12 +5744,12 @@ index 10 (so 10/2 is the bes-jn arg):
 	  (gen2 (make-noid 10.0 n 'min-peak 'odd))
 	  (gen3 (make-noid 10.0 n 'min-peak 'even))
 	  (gen4 (make-noid 10.0 n 'min-peak 'prime)))
-       (do ((i 0 (+ i 1)))
-	   ((= i samps))
-	 (outa i (* 0.5 (noid gen1 0.0)))
-	 (outb i (* 0.5 (noid gen2 0.0)))
-	 (outc i (* 0.5 (noid gen3 0.0)))
-	 (outd i (* 0.5 (noid gen4 0.0)))))))
+      (do ((i 0 (+ i 1)))
+	  ((= i samps))
+	(outa i (* 0.5 (noid gen1 0.0)))
+	(outb i (* 0.5 (noid gen2 0.0)))
+	(outc i (* 0.5 (noid gen3 0.0)))
+	(outd i (* 0.5 (noid gen4 0.0)))))))
 
 (with-sound (:clipped #f)
   (let ((samps 44100)
@@ -5611,7 +5782,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				(set! (amps (+ j 2)) (/ pi 2))
 				;; else min-peak, handled separately
 				))))
-
+		  
 		  (if (eq? phases 'min-peak)
 		      (let ((vector-find-if (lambda (func vect)
 					      (let ((len (length vect))
@@ -5621,10 +5792,10 @@ index 10 (so 10/2 is the bes-jn arg):
 							 result)
 						     result)
 						  (set! result (func (vect i))))))))
-
+			
 			(if (not (defined? 'roid-min-peak-phases))
 			    (load "peak-phases.scm"))
-
+			
 			(let ((min-dat (vector-find-if 
 					(lambda (val)
 					  (and val
@@ -5652,7 +5823,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				  (set! (amps (+ j 1)) rn)
 				  (set! rn (* rn r))
 				  (set! (amps (+ j 2)) (* pi (rats (- i 1))))))))))
-			      
+		  
 		  amps)))
 
 (define roid polyoid)
@@ -5667,6 +5838,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	((= i samps))
       (outa i (roid gen)))))
 |#
+
 
 
 ;;; ---------------- old waveshape generator ----------------
@@ -5685,25 +5857,29 @@ index 10 (so 10/2 is the bes-jn arg):
 (define* (partials->waveshape partials 
 			      (size *clm-table-size*))
   (partials->polynomial partials))
-		  
+
+
 
 
 ;;; ---------------- tanh(sin(x)) ----------------
 
 (defgenerator (tanhsin
 	       :make-wrapper (lambda (g)
-			       (set! (tanhsin-osc g) (make-oscil (tanhsin-frequency g) (tanhsin-initial-phase g)))
-			       (set! (tanhsin-frequency g) (hz->radians (tanhsin-frequency g))) ; so that mus-frequency works at least read side
+			       (set! (g 'osc) (make-oscil (g 'frequency) (g 'initial-phase)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency))) ; so that mus-frequency works at least read side
 			       g))
   (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
-  (osc #f))
+  (osc #f) fm)
 
 
 (define* (tanhsin gen (fm 0.0))
+  
   "(make-tanhsin (frequency 0.0) (r 1.0) (initial-phase 0.0) returns a tanhsin generator.\n\
 (tanhsin gen (fm 0.0)) produces tanh(r*sin) which approaches a square wave as r increases."
-  (tanh (* (tanhsin-r gen)
-	   (oscil (tanhsin-osc gen) fm))))
+
+  (set! (gen 'fm) fm)
+  (with-environment gen
+  (tanh (* r (oscil osc fm)))))
 
 
 
@@ -5711,69 +5887,59 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator (moving-fft
 	       :make-wrapper (lambda (g)
-			       (let ((n (moving-fft-n g)))
-				 (set! (moving-fft-rl g) (make-vct n))
-				 (set! (moving-fft-im g) (make-vct n))
-				 (set! (moving-fft-data g) (make-vct n))
-				 (set! (moving-fft-window g) (make-fft-window hamming-window n))
-				 (vct-scale! (moving-fft-window g) (/ 2.0 (* 0.54 n)))
-				 (set! (moving-fft-outctr g) (+ n 1)) ; first time fill flag
+			       (let ((n (g 'n)))
+				 (set! (g 'rl) (make-vct n))
+				 (set! (g 'im) (make-vct n))
+				 (set! (g 'data) (make-vct n))
+				 (set! (g 'window) (make-fft-window hamming-window n))
+				 (vct-scale! (g 'window) (/ 2.0 (* 0.54 n)))
+				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g))
 	       :methods (list
-			 (list 'mus-data
-			       (lambda (g) (moving-fft-data g)))
-			 (list 'mus-xcoeffs
-			       (lambda (g) (moving-fft-rl g)))
-			 (list 'mus-ycoeffs
-			       (lambda (g) (moving-fft-im g)))
-			 (list 'mus-run
-			       (lambda (g arg1 arg2) (moving-fft g)))))
+			 (cons 'mus-data (lambda (g) (g 'data)))
+			 (cons 'mus-xcoeffs (lambda (g) (g 'rl)))
+			 (cons 'mus-ycoeffs (lambda (g) (g 'im)))
+			 (cons 'mus-run (lambda (g arg1 arg2) (moving-fft g)))))
   (input #f) (n 512) (hop 128) (outctr 0)
   (rl #f) (im #f) (data #f) 
   (window #f))
 
 
 (define (moving-fft gen)
-
   "(make-moving-fft reader (size 512) (hop 128)) returns a moving-fft generator. \n\
  (moving-fft gen) produces an FFT (polar form) of 'size' samples every 'hop' samples, \n\
 taking input from the readin generator 'reader'.  The magnitudes are available as mus-xcoeffs, \n\
 the phases as mus-ycoeffs, and the current input data as mus-data."
+  
+  (with-environment gen
+    (let ((new-data #f))
+      (if (>= outctr hop)
+	  (let ((fft-window window))
+	    (if (> outctr n) ; must be first time through -- fill data array
+		(begin
+		  (do ((i 0 (+ i 1)))
+		      ((= i n))
+		    (set! (data i) (readin input))))
+		(begin
+		  (do ((i 0 (+ i 1))
+		       (j hop (+ j 1)))
+		      ((= j n))
+		    (set! (data i) (data j)))
+		  (do ((i (- n hop) (+ i 1)))
+		      ((= i n))
+		    (set! (data i) (readin input)))))
+	    (set! outctr 0)
+	    (set! new-data #t)
+	    (clear-array im)
+	    (do ((i 0 (+ i 1)))
+		((= i n))
+	      (set! (rl i) (* (fft-window i) (data i))))
+	    (mus-fft rl im n 1)
+	    (rectangular->polar rl im)))
+      (set! outctr (+ outctr 1))
+      new-data)))
 
-  (let ((n (moving-fft-n gen))
-	(rl (moving-fft-rl gen))
-	(im (moving-fft-im gen))
-	(data (moving-fft-data gen))
-	(hop (moving-fft-hop gen))
-	(outctr (moving-fft-outctr gen))
-	(new-data #f))
-    (if (>= outctr hop)
-	(let ((fft-window (moving-fft-window gen)))
-	  (if (> outctr n) ; must be first time through -- fill data array
-	      (begin
-		(do ((i 0 (+ i 1)))
-		    ((= i n))
-		  (set! (data i) (readin (moving-fft-input gen)))))
-	      (begin
-		(do ((i 0 (+ i 1))
-		     (j hop (+ j 1)))
-		    ((= j n))
-		  (set! (data i) (data j)))
-		(do ((i (- n hop) (+ i 1)))
-		    ((= i n))
-		  (set! (data i) (readin (moving-fft-input gen))))))
-	  (set! outctr 0)
-	  (set! new-data #t)
-	  (clear-array im)
-	  (do ((i 0 (+ i 1)))
-	      ((= i n))
-	    (set! (rl i) (* (fft-window i) (data i))))
-	  (mus-fft rl im n 1)
-	  (rectangular->polar rl im)))
-    (set! (moving-fft-outctr gen) (+ outctr 1))
-    new-data))
 
-    
 #|
 (let* ((snd (new-sound))
        (rd (make-readin "oboe.snd"))
@@ -5794,17 +5960,17 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
 (defgenerator (moving-spectrum
 	       :make-wrapper (lambda (g)
-			       (let ((n (moving-spectrum-n g)))
-				 (set! (moving-spectrum-amps g) (make-vct n))
-				 (set! (moving-spectrum-phases g) (make-vct n))
-				 (set! (moving-spectrum-amp-incs g) (make-vct n))
-				 (set! (moving-spectrum-freqs g) (make-vct n))
-				 (set! (moving-spectrum-freq-incs g) (make-vct n))
-				 (set! (moving-spectrum-new-freq-incs g) (make-vct n))
-				 (set! (moving-spectrum-data g) (make-vct n))
-				 (set! (moving-spectrum-fft-window g) (make-fft-window hamming-window n))
-				 (vct-scale! (moving-spectrum-fft-window g) (/ 2.0 (* 0.54 n)))
-				 (set! (moving-spectrum-outctr g) (+ n 1)) ; first time fill flag
+			       (let ((n (g 'n)))
+				 (set! (g 'amps) (make-vct n))
+				 (set! (g 'phases) (make-vct n))
+				 (set! (g 'amp-incs) (make-vct n))
+				 (set! (g 'freqs) (make-vct n))
+				 (set! (g 'freq-incs) (make-vct n))
+				 (set! (g 'new-freq-incs) (make-vct n))
+				 (set! (g 'data) (make-vct n))
+				 (set! (g 'fft-window) (make-fft-window hamming-window n))
+				 (vct-scale! (g 'fft-window) (/ 2.0 (* 0.54 n)))
+				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g)))
   (input #f) (n 512) (hop 128) 
   (outctr 0)
@@ -5814,91 +5980,80 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
   (data #f) (dataloc 0))
 
 (define (moving-spectrum gen)
-
-  (let* ((n (moving-spectrum-n gen))
-	 (n2 (/ n 2))
-	 (amps (moving-spectrum-amps gen))                           ; un-normalized
-	 (phases (moving-spectrum-phases gen))
-	 (amp-incs (moving-spectrum-amp-incs gen))
-	 (freqs (moving-spectrum-freqs gen))                         ; in radians
-	 (new-freq-incs (moving-spectrum-new-freq-incs gen))
-	 (hop (moving-spectrum-hop gen))
-	 (outctr (moving-spectrum-outctr gen)))
-    (if (>= outctr hop)
-	(let ((data (moving-spectrum-data gen))
-	      (dataloc (moving-spectrum-dataloc gen))
-	      (fft-window (moving-spectrum-fft-window gen))
-	      (freq-incs (moving-spectrum-freq-incs gen)))
-
-	  (if (> outctr n) ; must be first time through -- fill data array
-	      (begin
-		(do ((i 0 (+ i 1)))
-		    ((= i n))
-		  (set! (data i) (readin (moving-spectrum-input gen)))))
-	      (begin
-		(do ((i 0 (+ i 1))
-		     (j hop (+ j 1)))
-		    ((= j n))
-		  (set! (data i) (data j)))
-		(do ((i (- n hop) (+ i 1)))
-		    ((= i n))
-		  (set! (data i) (readin (moving-spectrum-input gen))))))
-
-	  (set! outctr 0) ; -1??
-	  (set! dataloc (modulo dataloc n))
-
-	  (clear-array new-freq-incs)
-	  (do ((i 0 (+ i 1))
-	       (j dataloc (+ j 1)))
-	      ((= i n))
-	    (if (= j n) (set! j 0))
-	    (set! (amp-incs j) (* (fft-window i)
-				    (data i))))
-
-	  (set! (moving-spectrum-dataloc gen) (+ dataloc hop))
-	  
-	  (mus-fft amp-incs new-freq-incs n 1)
-	  (rectangular->polar amp-incs new-freq-incs)
-
-	  (let ((scl (/ 1.0 hop))
-		(kscl (/ (* 2 pi) n)))
-	    (vct-subtract! amp-incs amps)
-	    (vct-scale! amp-incs scl)
-
+  (with-environment gen
+    (let* ((n (gen 'n))
+	   (n2 (/ n 2)))
+      (if (>= outctr hop)
+	  (begin
+	    (if (> outctr n) ; must be first time through -- fill data array
+		(begin
+		  (do ((i 0 (+ i 1)))
+		      ((= i n))
+		    (set! (data i) (readin input))))
+		(begin
+		  (do ((i 0 (+ i 1))
+		       (j hop (+ j 1)))
+		      ((= j n))
+		    (set! (data i) (data j)))
+		  (do ((i (- n hop) (+ i 1)))
+		      ((= i n))
+		    (set! (data i) (readin input)))))
+	    
+	    (set! outctr 0) ; -1??
+	    (set! dataloc (modulo dataloc n))
+	    
+	    (clear-array new-freq-incs)
 	    (do ((i 0 (+ i 1))
-		 (ks 0.0 (+ ks kscl)))
-		((= i n2))
-	      (let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) (* 2 pi))))
-		(set! (freq-incs i) (new-freq-incs i))
-		(if (> diff pi) (set! diff (- diff (* 2 pi))))
-		(if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
-		(set! (new-freq-incs i) (+ (* diff scl) ks))))
-
-	    (vct-subtract! new-freq-incs freqs)
-	    (vct-scale! new-freq-incs scl))))
-	  
-    (set! (moving-spectrum-outctr gen) (+ outctr 1))
-
-    (vct-add! amps amp-incs)
-    (vct-add! freqs new-freq-incs)
-    (vct-add! phases freqs)))
+		 (j dataloc (+ j 1)))
+		((= i n))
+	      (if (= j n) (set! j 0))
+	      (set! (amp-incs j) (* (fft-window i)
+				    (data i))))
+	    
+	    (set! dataloc (+ dataloc hop))
+	    
+	    (mus-fft amp-incs new-freq-incs n 1)
+	    (rectangular->polar amp-incs new-freq-incs)
+	    
+	    (let ((scl (/ 1.0 hop))
+		  (kscl (/ (* 2 pi) n)))
+	      (vct-subtract! amp-incs amps)
+	      (vct-scale! amp-incs scl)
+	      
+	      (do ((i 0 (+ i 1))
+		   (ks 0.0 (+ ks kscl)))
+		  ((= i n2))
+		(let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) (* 2 pi))))
+		  (set! (freq-incs i) (new-freq-incs i))
+		  (if (> diff pi) (set! diff (- diff (* 2 pi))))
+		  (if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
+		  (set! (new-freq-incs i) (+ (* diff scl) ks))))
+	      
+	      (vct-subtract! new-freq-incs freqs)
+	      (vct-scale! new-freq-incs scl))))
+      
+      (set! outctr (+ outctr 1))
+      
+      (vct-add! amps amp-incs)
+      (vct-add! freqs new-freq-incs)
+      (vct-add! phases freqs))))
 
 
 (define (test-sv)
   ;; sv-amps = pv-amps (but len is diff)
   ;; sv-phases = pv-phases
   ;; sv-freqs = pv-phase-increments
-
+  
   (let ((pv (make-phase-vocoder (make-readin "oboe.snd") ))
 	(sv (make-moving-spectrum (make-readin "oboe.snd"))))
-     (do ((k 0 (+ k 1)))
-	 ((= k 20))
-       (do ((i 0 (+ i 1))) 
-	   ((= i 2000)) 
-	 (phase-vocoder pv) 
-	 (moving-spectrum sv))
-       (do ((i 0 (+ i 1)))
-	   ((= i 256))
+    (do ((k 0 (+ k 1)))
+	((= k 20))
+      (do ((i 0 (+ i 1))) 
+	  ((= i 2000)) 
+	(phase-vocoder pv) 
+	(moving-spectrum sv))
+      (do ((i 0 (+ i 1)))
+	  ((= i 256))
 	(if (fneq ((moving-spectrum-amps sv) i) ((phase-vocoder-amps pv) i))
 	    (format #t ";~D amps: ~A ~A" i ((moving-spectrum-amps sv) i) ((phase-vocoder-amps pv) i)))
 	(if (fneq ((moving-spectrum-freqs sv) i) ((phase-vocoder-phase-increments pv) i))
@@ -5918,14 +6073,14 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
   (let* ((gen (make-moving-spectrum (make-readin "oboe.snd")))
 	 (pv (make-phase-vocoder (make-readin "oboe.snd")))
 	 (samps (frames "oboe.snd")))
-     (do ((i 0 (+ i 1)))
-	 ((= i samps))
-       (moving-spectrum gen)
-       (outa i (sine-bank (moving-spectrum-amps gen) (moving-spectrum-phases gen) 256)) ; size = n/2 as in pv
-       (outb i (phase-vocoder pv)))))
+    (do ((i 0 (+ i 1)))
+	((= i samps))
+      (moving-spectrum gen)
+      (outa i (sine-bank (gen 'amps) (gen 'phases) 256)) ; size = n/2 as in pv
+      (outb i (phase-vocoder pv)))))
 
-; :(channel-distance 0 0 0 1)
-; 7.902601100022e-9
+					; :(channel-distance 0 0 0 1)
+					; 7.902601100022e-9
 |#
 
 
@@ -5935,36 +6090,37 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
 
 
+
 ;;; ---------------- moving scentroid ----------------
 
 (defgenerator (moving-scentroid
 	       :make-wrapper (lambda (g)
-			       (let ((n (moving-scentroid-size g)))
-				 (set! (moving-scentroid-rl g) (make-vct n))
-				 (set! (moving-scentroid-im g) (make-vct n))
-				 (set! (moving-scentroid-dly g) (make-delay n))
-				 (set! (moving-scentroid-rms g) (make-moving-rms n))
-				 (set! (moving-scentroid-hop g) (floor (/ (mus-srate) (moving-scentroid-rfreq g))))
-				 (set! (moving-scentroid-binwidth g) (/ (mus-srate) n))
+			       (let ((n (g 'size)))
+				 (set! (g 'rl) (make-vct n))
+				 (set! (g 'im) (make-vct n))
+				 (set! (g 'dly) (make-delay n))
+				 (set! (g 'rms) (make-moving-rms n))
+				 (set! (g 'hop) (floor (/ (mus-srate) (g 'rfreq))))
+				 (set! (g 'binwidth) (/ (mus-srate) n))
 				 g)))
   (dbfloor -40.0) (rfreq 100.0) 
   (size 4096) (hop 1024) (outctr 0)
   (curval 0.0) (binwidth 1.0)
   (rl #f) (im #f) 
-  (dly #f) (rms #f))
+  (dly #f) (rms #f) x)
 
 (define* (moving-scentroid gen (x 0.0))
-  (let ((outctr (moving-scentroid-outctr gen)))
-    (let ((rms (moving-rms (moving-scentroid-rms gen) x)))
-      (if (>= (moving-scentroid-outctr gen) (moving-scentroid-hop gen))
+  (set! (gen 'x) x)
+  (with-environment gen
+    
+    (let ((rms (moving-rms rms x)))
+      (if (>= outctr hop)
 	  (begin
 	    (set! outctr 0)	    
-	    (if (< (linear->db rms) (moving-scentroid-dbfloor gen))
-		(set! (moving-scentroid-curval gen) 0.0)
-		(let* ((rl (moving-scentroid-rl gen))
-		       (im (moving-scentroid-im gen))
-		       (data (mus-data (moving-scentroid-dly gen)))
-		       (n (moving-scentroid-size gen))
+	    (if (< (linear->db rms) dbfloor)
+		(set! curval 0.0)
+		(let* ((data (mus-data dly))
+		       (n size)
 		       (fft2 (/ n 2))
 		       (numsum 0.0)
 		       (densum 0.0))
@@ -5974,35 +6130,35 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		  (rectangular->magnitudes rl im)
 		  (do ((k 0 (+ k 1)))
 		      ((= k fft2))
-		   (set! numsum (+ numsum (* k (rl k))))
-		   (set! densum (+ densum (rl k))))
-		  (set! (moving-scentroid-curval gen) (/ (* (moving-scentroid-binwidth gen) numsum) densum)))))))
-    (delay (moving-scentroid-dly gen) x)       ; our "sliding window" on the input data
-    (set! (moving-scentroid-outctr gen) (+ outctr 1))
-    (moving-scentroid-curval gen)))
+		    (set! numsum (+ numsum (* k (rl k))))
+		    (set! densum (+ densum (rl k))))
+		  (set! curval (/ (* binwidth numsum) densum)))))))
+    (delay dly x)       ; our "sliding window" on the input data
+    (set! outctr (+ outctr 1))
+    curval))
 
 #|
 (let* ((snd (open-sound "oboe.snd"))
        (cur-srate (srate snd))
        (old-srate (mus-srate)))
   (set! (mus-srate) cur-srate)
-
+  
   (let ((scn (make-moving-scentroid -40.0 100.0 128))
 	(vals (scentroid "oboe.snd" 0.0 1.1 -40.0 100.0 128))
 	(k 0))
-
+    
     (let ((data (channel->vct 0 22050 snd 0)))
       (close-sound snd)
       (do ((i 0 (+ i 1)))
-	  ((= i (moving-scentroid-size scn)))
+	  ((= i (scn 'size)))
 	(moving-scentroid scn (data i)))
-      (set! (moving-scentroid-outctr scn) (moving-scentroid-hop scn))
-
-      (do ((i (moving-scentroid-size scn) (+ i 1))
+      (set! (scn 'outctr) (scn 'hop))
+      
+      (do ((i (scn 'size) (+ i 1))
 	   (j 0 (+ j 1)))
 	  ((= i 22050))
 	(let ((val (moving-scentroid scn (data i))))
-	  (if (= (modulo j (moving-scentroid-hop scn)) 0)
+	  (if (= (modulo j (scn 'hop)) 0)
 	      (begin
 		(format #t "[~A ~A]~%" val (vals k))
 		(set! k (+ k 1)))))))
@@ -6015,56 +6171,50 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
 (defgenerator (moving-autocorrelation
 	       :make-wrapper (lambda (g)
-			       (let ((n (moving-autocorrelation-n g)))
-				 (set! (moving-autocorrelation-rl g) (make-vct n))
-				 (set! (moving-autocorrelation-im g) (make-vct n))
-				 (set! (moving-autocorrelation-data g) (make-vct n))
-				 (set! (moving-autocorrelation-outctr g) (+ n 1)) ; first time fill flag
+			       (let ((n (g 'n)))
+				 (set! (g 'rl) (make-vct n))
+				 (set! (g 'im) (make-vct n))
+				 (set! (g 'data) (make-vct n))
+				 (set! (g 'outctr) (+ n 1)) ; first time fill flag
 				 g))
 	       :methods (list
-			 (list 'mus-run
-			       (lambda (g arg1 arg2) (moving-autocorrelation g)))
-			 (list 'mus-data
-			       (lambda (g) (moving-autocorrelation-rl g)))))
+			 (cons 'mus-run (lambda (g arg1 arg2) (moving-autocorrelation g)))
+			 (cons 'mus-data (lambda (g) (g 'rl)))))
   (input #f) (n 512) (hop 128) (outctr 0)
   (rl #f) (im #f) (data #f))
 
 
 (define (moving-autocorrelation gen)
-
+  
   "(make-moving-autocorrelation reader (size 512) (hop 128)) returns a moving-autocorrelation generator. \n\
  (moving-autocorrelation gen) produces the autocorrelation of 'size' samples every 'hop' samples, \n\
 taking input from the readin generator 'reader'.  The output data is available via mus-data."
+  
+  (with-environment gen
+    (let ((new-data #f))
+      (if (>= outctr hop)
+	  (begin
+	    (if (> outctr n) ; must be first time through -- fill data array
+		(begin
+		  (do ((i 0 (+ i 1)))
+		      ((= i n))
+		    (set! (data i) (readin input))))
+		(begin
+		  (do ((i 0 (+ i 1))
+		       (j hop (+ j 1)))
+		      ((= j n))
+		    (set! (data i) (data j)))
+		  (do ((i (- n hop) (+ i 1)))
+		      ((= i n))
+		    (set! (data i) (readin input)))))
+	    (set! outctr 0)
+	    (set! new-data #t)
+	    (clear-array im)
+	    (vct-subseq data 0 (- n 1) rl)
+	    (autocorrelate rl)))
+      (set! outctr (+ outctr 1))
+      new-data)))
 
-  (let ((n (moving-autocorrelation-n gen))
-	(rl (moving-autocorrelation-rl gen))
-	(im (moving-autocorrelation-im gen))
-	(data (moving-autocorrelation-data gen))
-	(hop (moving-autocorrelation-hop gen))
-	(outctr (moving-autocorrelation-outctr gen))
-	(new-data #f))
-    (if (>= outctr hop)
-	(begin
-	  (if (> outctr n) ; must be first time through -- fill data array
-	      (begin
-		(do ((i 0 (+ i 1)))
-		    ((= i n))
-		  (set! (data i) (readin (moving-autocorrelation-input gen)))))
-	      (begin
-		(do ((i 0 (+ i 1))
-		     (j hop (+ j 1)))
-		    ((= j n))
-		  (set! (data i) (data j)))
-		(do ((i (- n hop) (+ i 1)))
-		    ((= i n))
-		  (set! (data i) (readin (moving-autocorrelation-input gen))))))
-	  (set! outctr 0)
-	  (set! new-data #t)
-	  (clear-array im)
-	  (vct-subseq data 0 (- n 1) rl)
-	  (autocorrelate rl)))
-    (set! (moving-autocorrelation-outctr gen) (+ outctr 1))
-    new-data))
 
 
 
@@ -6072,44 +6222,44 @@ taking input from the readin generator 'reader'.  The output data is available v
 
 (defgenerator (moving-pitch
 	       :make-wrapper (lambda (g)
-			       (set! (moving-pitch-ac g) (make-moving-autocorrelation
-							  (moving-pitch-input g)
-							  (moving-pitch-n g)
-							  (moving-pitch-hop g)))
+			       (set! (g 'ac) (make-moving-autocorrelation
+					      (g 'input)
+					      (g 'n)
+					      (g 'hop)))
 			       g)
 	       :methods (list
-			 (list 'mus-run
-			       (lambda (g arg1 arg2) (moving-pitch g)))))
-
+			 (cons 'mus-run (lambda (g arg1 arg2) (moving-pitch g)))))
+  
   (input #f) (n 512) (hop 128)
   (ac #f) (val 0.0))
 
 
 (define (moving-pitch gen)
-  (if (moving-autocorrelation (moving-pitch-ac gen))
-      (let* ((data (mus-data (moving-pitch-ac gen)))
-	     (peak 0.0)
-	     (peak-loc 0)
-	     (len (length data)))
-	(do ((i 8 (+ i 1))) ; assume we're not in the top few octaves
-	    ((= i len))
-	  (let ((apk (abs (data i))))
-	    (if (> apk peak)
-		(begin
-		  (set! peak apk)
-		  (set! peak-loc i)))))
-	(if (or (= peak 0.0)
-		(= peak-loc 0))
-	    (set! (moving-pitch-val gen) 0.0)
-	    (let* ((la (data (- peak-loc 1)))
-		   (ra (data (+ peak-loc 1)))
-		   (logla (log (/ (max la .0000001) peak) 10))
-		   (logra (log (/ (max ra .0000001) peak) 10)))
-	      (set! (moving-pitch-val gen)
-		    (/ (mus-srate)
-		       (+ peak-loc (/ (* 0.5 (- logla logra))
-				      (+ logla logra)))))))))
-  (moving-pitch-val gen))
+  (with-environment gen
+    (if (moving-autocorrelation ac)
+	(let* ((data (mus-data ac))
+	       (peak 0.0)
+	       (peak-loc 0)
+	       (len (length data)))
+	  (do ((i 8 (+ i 1))) ; assume we're not in the top few octaves
+	      ((= i len))
+	    (let ((apk (abs (data i))))
+	      (if (> apk peak)
+		  (begin
+		    (set! peak apk)
+		    (set! peak-loc i)))))
+	  (if (or (= peak 0.0)
+		  (= peak-loc 0))
+	      (set! val 0.0)
+	      (let* ((la (data (- peak-loc 1)))
+		     (ra (data (+ peak-loc 1)))
+		     (logla (log (/ (max la .0000001) peak) 10))
+		     (logra (log (/ (max ra .0000001) peak) 10)))
+		(set! val
+		      (/ (mus-srate)
+			 (+ peak-loc (/ (* 0.5 (- logla logra))
+					(+ logla logra)))))))))
+    val))
 
 #|
 (let* ((rd (make-readin "oboe.snd"))
@@ -6142,9 +6292,9 @@ taking input from the readin generator 'reader'.  The output data is available v
 	(set! (harmonics j) i)
 	(set! (harmonics (+ j 1)) (/ n i)))
       (let ((gen (make-polywave 100.0 :partials (normalize-partials harmonics))))
-	 (do ((i 0 (+ i 1)))
-	     ((= i 100000))
-	   (outa i (polywave gen)))))))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100000))
+	  (outa i (polywave gen)))))))
 
 (define* (adds num freq e amp v (type mus-chebyshev-first-kind))
   (with-sound (:clipped #f :statistics #t :play #t) 
@@ -6157,13 +6307,13 @@ taking input from the readin generator 'reader'.  The output data is available v
 	(set! (harmonics (+ j 1)) (env freqe)))
       (let ((gen (make-polywave freq :partials (normalize-partials harmonics) :type type))
 	    (vib (make-oscil 5)))
-	 (do ((i 0 (+ i 1)))
-	     ((= i 100000))
-	   (outa i (* amp (polywave gen (* (hz->radians v) (oscil vib))))))))))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100000))
+	  (outa i (* amp (polywave gen (* (hz->radians v) (oscil vib))))))))))
 
 
-;(adds 200 20 '(0 0 10 1 12 0 20 0 24 .2 35 0 46 0 57 .1 68 0) .5 2)
-;(adds 300 15 '(0 0 10 1 12 0 20 0 24 .2 35 0 46 0 57 .1 68 0) .5 3)
+					;(adds 200 20 '(0 0 10 1 12 0 20 0 24 .2 35 0 46 0 57 .1 68 0) .5 2)
+					;(adds 300 15 '(0 0 10 1 12 0 20 0 24 .2 35 0 46 0 57 .1 68 0) .5 3)
 
 |#
 
@@ -6171,26 +6321,30 @@ taking input from the readin generator 'reader'.  The output data is available v
 #|
 (defgenerator (circler
 	       :make-wrapper (lambda (g)
-			       (set! (circler-frequency g) (hz->radians (circler-frequency g)))
+			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       g))
-  (frequency *clm-default-frequency*) (angle 0.0))
+  (frequency *clm-default-frequency*) (angle 0.0) fm)
 
 (define* (circler gen (fm 0.0))
+  
   "(make-circler (frequency 0.0) returns a circler generator.\n\
-(circler gen (fm 0.0)) produces a waveform made up of half circles"
-  (let* ((x (modulo (circler-angle gen) (* 2 pi)))
-	 (xx (/ (* 4 x) (* 2 pi)))
-	 (y (if (< xx 2)
-		(sqrt (- 1 (* (- 1 xx) (- 1 xx))))
-		(- (sqrt (- 1 (* (- 3 xx) (- 3 xx))))))))
-    (set! (circler-angle gen) (+ (circler-angle gen) fm (circler-frequency gen)))
-    y))
+   (circler gen (fm 0.0)) produces a waveform made up of half circles"
+  
+  (set! (gen 'fm) fm)
+  (with-environment gen
+    (let* ((x (modulo angle (* 2 pi)))
+	   (xx (/ (* 4 x) (* 2 pi)))
+	   (y (if (< xx 2)
+		  (sqrt (- 1 (* (- 1 xx) (- 1 xx))))
+		  (- (sqrt (- 1 (* (- 3 xx) (- 3 xx))))))))
+      (set! angle (+ angle fm frequency))
+      y)))
 
 (with-sound (:clipped #f :statistics #t)
   (let ((gen (make-circler 10.0)))
-     (do ((i 0 (+ i 1)))
-	 ((= i 20000))
-       (outa i (circler gen)))))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (outa i (circler gen)))))
 
 ;;; odd harmonics: 1, .18 .081 .048 .033 .024, .019
 |#
@@ -6203,14 +6357,14 @@ taking input from the readin generator 'reader'.  The output data is available v
   (with-sound ()
     (let ((tan-scl (tan (/ pi (* 2 (+ N 1)))))
 	  (incr (hz->radians freq)))
-       (do ((k 1 (+ k 1)))
-	   ((= k N))
-	 (let ((cos-coeff (* tan-scl (sin (/ (* k pi) (+ N 1)))))
-	       (kincr (* k incr)))
-	   (do ((i 0 (+ i 1))
-		(x 0.0 (+ x kincr)))
-	       ((= i 40000))
-	     (outa i (* cos-coeff (cos x)))))))))
+      (do ((k 1 (+ k 1)))
+	  ((= k N))
+	(let ((cos-coeff (* tan-scl (sin (/ (* k pi) (+ N 1)))))
+	      (kincr (* k incr)))
+	  (do ((i 0 (+ i 1))
+	       (x 0.0 (+ x kincr)))
+	      ((= i 40000))
+	    (outa i (* cos-coeff (cos x)))))))))
 |#
 
 
@@ -6220,62 +6374,64 @@ taking input from the readin generator 'reader'.  The output data is available v
 (defgenerator (flocsig 
 	       ;; assume stereo out/rev 
 	       :make-wrapper (lambda (g)
-			       (set! (flocsig-maxd g) (ceiling (flocsig-amplitude g))) ; was amplitude?
-			       (set! (flocsig-out1 g) (make-vct (flocsig-maxd g)))
-			       (set! (flocsig-out2 g) (make-vct (flocsig-maxd g)))
-			       (set! (flocsig-ri g) (make-rand-interp 
-						     :frequency (flocsig-frequency g) 
-						     :amplitude (- (flocsig-amplitude g) 1.0)))
-			       (if (not (flocsig-offset g))
-				   (set! (flocsig-offset g) (mus-random (* 0.3 (flocsig-amplitude g)))))
+			       (set! (g 'maxd) (ceiling (g 'amplitude))) ; was amplitude?
+			       (set! (g 'out1) (make-vct (g 'maxd)))
+			       (set! (g 'out2) (make-vct (g 'maxd)))
+			       (set! (g 'ri) (make-rand-interp 
+					      :frequency (g 'frequency) 
+					      :amplitude (- (g 'amplitude) 1.0)))
+			       (if (not (g 'offset))
+				   (set! (g 'offset) (mus-random (* 0.3 (g 'amplitude)))))
 			       g))
   (reverb-amount 0.0) (frequency 1.0) (amplitude 2.0) offset
   (maxd 0)
   (out1 #f) (out2 #f) (outloc 0)
-  (ri #f))
+  (ri #f) samp input)
+
 
 (define (flocsig gen samp input)
   ;; signal position and per-channel-delay depends on rand-interp
-  (let* ((rpos (rand-interp (flocsig-ri gen)))
-	 (pos (min (max (+ rpos (flocsig-offset gen)) (- (flocsig-amplitude gen))) (flocsig-amplitude gen)))
-	 (amp1 (if (<= pos -1.0) 1.0
-		   (if (>= pos 1.0) 0.0
-		       (/ (sqrt (- 1.0 pos)) (sqrt 2.0)))))
-	 (amp2 (if (<= pos -1.0) 0.0
-		   (if (>= pos 1.0) 1.0
-		       (/ (sqrt (+ 1.0 pos)) (sqrt 2.0)))))
-	 (dly1 (abs (min 0.0 pos)))
-	 (frac1 (- dly1 (floor dly1)))
-	 (dly2 (max 0.0 pos))
-	 (frac2 (- dly2 (floor dly2)))
-	 (out1 (flocsig-out1 gen))
-	 (loc (flocsig-outloc gen))
-	 (out2 (flocsig-out2 gen))
-	 (size (flocsig-maxd gen))
-	 (loc10 (modulo (+ loc (floor dly1)) size))
-	 (loc11 (modulo (+ loc 1 (floor dly1)) size))
-	 (loc20 (modulo (+ loc (floor dly2)) size))
-	 (loc21 (modulo (+ loc 1 (floor dly2)) size))
-	 (rev (flocsig-reverb-amount gen)))
-
-    (set! (out1 loc10) (+ (out1 loc10) (* amp1 input (- 1.0 frac1))))
-    (set! (out1 loc11) (+ (out1 loc11) (* amp1 input frac1)))
-    (set! (out2 loc20) (+ (out2 loc20) (* amp2 input (- 1.0 frac2))))
-    (set! (out2 loc21) (+ (out2 loc21) (* amp2 input frac2)))
-
-    (let ((val1 (out1 loc))
-	  (val2 (out2 loc)))
-      (set! (out1 loc) 0.0)
-      (set! (out2 loc) 0.0)
-      (set! loc (+ loc 1))
-      (if (= loc size) (set! loc 0))
-      (outa samp val1)
-      (outb samp val2)
-      (if (> rev 0.0)
-	  (begin
-	    (outa samp (* rev val1) *reverb*)
-	    (outb samp (* rev val2) *reverb*)))
-      (set! (flocsig-outloc gen) loc))))
+  (set! (gen 'samp) samp)
+  (set! (gen 'input) input)
+  (with-environment gen
+    (let* ((rpos (rand-interp ri))
+	   (pos (min (max (+ rpos offset) (- amplitude)) amplitude))
+	   (amp1 (if (<= pos -1.0) 1.0
+		     (if (>= pos 1.0) 0.0
+			 (/ (sqrt (- 1.0 pos)) (sqrt 2.0)))))
+	   (amp2 (if (<= pos -1.0) 0.0
+		     (if (>= pos 1.0) 1.0
+			 (/ (sqrt (+ 1.0 pos)) (sqrt 2.0)))))
+	   (dly1 (abs (min 0.0 pos)))
+	   (frac1 (- dly1 (floor dly1)))
+	   (dly2 (max 0.0 pos))
+	   (frac2 (- dly2 (floor dly2)))
+	   (loc outloc)
+	   (size maxd)
+	   (loc10 (modulo (+ loc (floor dly1)) size))
+	   (loc11 (modulo (+ loc 1 (floor dly1)) size))
+	   (loc20 (modulo (+ loc (floor dly2)) size))
+	   (loc21 (modulo (+ loc 1 (floor dly2)) size))
+	   (rev reverb-amount))
+      
+      (set! (out1 loc10) (+ (out1 loc10) (* amp1 input (- 1.0 frac1))))
+      (set! (out1 loc11) (+ (out1 loc11) (* amp1 input frac1)))
+      (set! (out2 loc20) (+ (out2 loc20) (* amp2 input (- 1.0 frac2))))
+      (set! (out2 loc21) (+ (out2 loc21) (* amp2 input frac2)))
+      
+      (let ((val1 (out1 loc))
+	    (val2 (out2 loc)))
+	(set! (out1 loc) 0.0)
+	(set! (out2 loc) 0.0)
+	(set! loc (+ loc 1))
+	(if (= loc size) (set! loc 0))
+	(outa samp val1)
+	(outb samp val2)
+	(if (> rev 0.0)
+	    (begin
+	      (outa samp (* rev val1) *reverb*)
+	      (outb samp (* rev val2) *reverb*)))
+	(set! outloc loc)))))
 
 
 
@@ -6290,7 +6446,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 	 (comb31 (make-comb 0.715 5399))
 	 (comb41 (make-comb 0.697 5801))
 	 (outdel11 (make-delay (seconds->samples .01)))
-
+	 
 	 (allpass12 (make-all-pass -0.700 0.700 1051))
 	 (allpass22 (make-all-pass -0.700 0.700  337))
 	 (allpass32 (make-all-pass -0.700 0.700  113))
@@ -6299,34 +6455,34 @@ taking input from the readin generator 'reader'.  The output data is available v
 	 (comb32 (make-comb 0.715 5399))
 	 (comb42 (make-comb 0.697 5801))
 	 (outdel12 (make-delay (seconds->samples .01)))
-
+	 
 	 (file-dur (frames *reverb*))
 	 (decay-dur (mus-srate))
 	 (len (floor (+ decay-dur file-dur))))
-
-	 (do ((i 0 (+ i 1)))
-	     ((= i len))
-	   
-	   (let* ((allpass-sum (all-pass allpass31 
-					 (all-pass allpass21 
-						   (all-pass allpass11 
-							     (ina i *reverb*)))))
-		  (comb-sum (+ (comb comb11 allpass-sum)
-			       (comb comb21 allpass-sum)
-			       (comb comb31 allpass-sum)
-			       (comb comb41 allpass-sum))))
-	     (outa i (delay outdel11 comb-sum)))
-	   
-	   (let* ((allpass-sum (all-pass allpass32 
-					 (all-pass allpass22 
-						   (all-pass allpass12 
-							     (inb i *reverb*)))))
-		  (comb-sum (+ (comb comb12 allpass-sum)
-			       (comb comb22 allpass-sum)
-			       (comb comb32 allpass-sum)
-			       (comb comb42 allpass-sum))))
-	     (outb i (delay outdel12 comb-sum)))
-	   )))
+    
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      
+      (let* ((allpass-sum (all-pass allpass31 
+				    (all-pass allpass21 
+					      (all-pass allpass11 
+							(ina i *reverb*)))))
+	     (comb-sum (+ (comb comb11 allpass-sum)
+			  (comb comb21 allpass-sum)
+			  (comb comb31 allpass-sum)
+			  (comb comb41 allpass-sum))))
+	(outa i (delay outdel11 comb-sum)))
+      
+      (let* ((allpass-sum (all-pass allpass32 
+				    (all-pass allpass22 
+					      (all-pass allpass12 
+							(inb i *reverb*)))))
+	     (comb-sum (+ (comb comb12 allpass-sum)
+			  (comb comb22 allpass-sum)
+			  (comb comb32 allpass-sum)
+			  (comb comb42 allpass-sum))))
+	(outb i (delay outdel12 comb-sum)))
+      )))
 
 
 (definstrument (simp beg dur (amp 0.5) (freq 440.0) (ramp 2.0) (rfreq 1.0) offset)
@@ -6337,9 +6493,9 @@ taking input from the readin generator 'reader'.  The output data is available v
 			     :offset offset))
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur))))
-     (do ((i start (+ i 1))) 
-	 ((= i end))
-       (flocsig floc i (* amp (pulse-train os))))))
+    (do ((i start (+ i 1))) 
+	((= i end))
+      (flocsig floc i (* amp (pulse-train os))))))
 
 (with-sound (:channels 2 :reverb-channels 2 :reverb jcrev2) (simp 0 1))
 |#
@@ -6365,5 +6521,4 @@ taking input from the readin generator 'reader'.  The output data is available v
     (machine1 10 .3 100 540 0.5 3.0 0.0)
     (organish 11 .4 100 .5 1.0 #f)
     (brassy 12 4 50 .5 '(0 0 1 1 10 1 11 0) '(0 1 1 0) 1000)))
-
 

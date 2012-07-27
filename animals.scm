@@ -607,7 +607,7 @@
 	
 	(if (>= i pulse-stop)
 	    (begin
-	      (set! (rk!cos-angle gen1) (* -0.1 pi))
+	      (set! (mus-phase gen1) (* -0.1 pi))
 	      (set! pulse-stop (+ pulse-stop pulse-samps))
 	      (mus-reset pulse-frqf)
 	      (mus-reset pulsef)))
