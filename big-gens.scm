@@ -128,13 +128,23 @@
 
 (defgenerator (big-oscil 
   :make-wrapper 
-    (lambda (g) (set! (big-oscil-frequency g) (big-hz->radians (big-oscil-frequency g))) g))
-  (frequency *clm-default-frequency*) (angle 0.0))
+    (lambda (g) (set! (g 'frequency) (big-hz->radians (g 'frequency))) g))
+  (frequency *clm-default-frequency*) 
+  (angle 0.0))
 
 (define* (big-oscil gen (fm 0.0) (pm 0.0))
-  (let ((x (big-oscil-angle gen)))
-    (set! (big-oscil-angle gen) (+ fm x (big-oscil-frequency gen)))
+  (let ((x (gen 'angle)))
+    (set! (gen 'angle) (+ fm x (gen 'frequency)))
     (sin (+ x pm))))
+
+#|
+(with-sound (:statistics #t :clipped #f) 
+  (let ((g (make-big-oscil 440.0)))
+    (do ((i 0 (+ i 1))) 
+	((= i 22050))
+      (outa i (* .5 (big-oscil g))))))
+|#
+
 
 
 ;;; -------- ncos --------
@@ -142,22 +152,34 @@
 (defgenerator (big-ncos
   :make-wrapper
    (lambda (g)
-     (if (<= (big-ncos-n g) 0)
-	 (set! (big-ncos-n g) 1))
-     (set! (big-ncos-r g) (/ (big-ncos-n g)))
-     (set! (big-ncos-frequency g) (big-hz->radians (big-ncos-frequency g)))
+     (if (<= (g 'n) 0)
+	 (set! (g 'n) 1))
+     (set! (g 'r) (/ (g 'n)))
+     (set! (g 'frequency) (big-hz->radians (g 'frequency)))
      g))
-   (frequency *clm-default-frequency*) (n 1) (angle 0.0) (r 1.0))
+   (frequency *clm-default-frequency*) 
+   (n 1) 
+   (angle 0.0)
+   (r 1.0))
 
 (define* (big-ncos gen (fm 0.0))
-  (let* ((n (big-ncos-n gen))
-	 (x (big-ncos-angle gen))
-	 (scl (big-ncos-r gen))
+  (let* ((n (gen 'n))
+	 (x (gen 'angle))
+	 (scl (gen 'r))
 	 (den (* 2 (sin (/ x 2)))))
-    (set! (big-ncos-angle gen) (+ fm x (big-ncos-frequency gen)))
+    (set! (gen 'angle) (+ fm x (gen 'frequency)))
     (if (= den 0.0)
 	1.0
 	(min 1.0 (* scl (- (/ (sin (* (+ n 1/2) x)) den) 1/2))))))
+
+#|
+(with-sound (:statistics #t :clipped #f) 
+  (let ((g (make-big-ncos 100.0 10)))
+    (do ((i 0 (+ i 1))) 
+	((= i 22050))
+      (outa i (* .5 (big-ncos g))))))
+|#
+
 
 
 ;;; -------- nsin --------
@@ -165,7 +187,7 @@
 (defgenerator (big-nsin
   :make-wrapper
    (lambda (g)
-     (letrec ((nsin-ns (lambda (x n)
+     (letrec ((ns (lambda (x n)
 			 (let* ((a2 (/ x 2))
 				(den (sin a2)))
 			   (if (= den 0.0)
@@ -173,29 +195,32 @@
 			       (/ (* (sin (* n a2))
 				     (sin (* (+ n 1) a2)))
 				  den)))))
-	      (find-nsin-scaler (lambda (n lo hi)
+	      (find-scaler (lambda (n lo hi)
 				  (let ((mid (/ (+ lo hi) 2))
-					(ylo (nsin-ns lo n))
-					(yhi (nsin-ns hi n)))
+					(ylo (ns lo n))
+					(yhi (ns hi n)))
 				    (if (< (abs (- yhi ylo)) 1e-12)
-					(nsin-ns mid n)
+					(ns mid n)
 					(if (> ylo yhi)
-					    (find-nsin-scaler n lo mid)
-					    (find-nsin-scaler n mid hi)))))))
-     (if (<= (big-nsin-n g) 0)
-	 (set! (big-nsin-n g) 1))
-     (set! (big-nsin-r g) (/ 1.0 (find-nsin-scaler (big-nsin-n g) 0.0 (/ pi (+ (big-nsin-n g) 1/2)))))
-     (set! (big-nsin-frequency g) (big-hz->radians (big-nsin-frequency g)))
+					    (find-scaler n lo mid)
+					    (find-scaler n mid hi)))))))
+     (if (<= (g 'n) 0)
+	 (set! (g 'n) 1))
+     (set! (g 'r) (/ 1.0 (find-scaler (g 'n) 0.0 (/ pi (+ (g 'n) 1/2)))))
+     (set! (g 'frequency) (big-hz->radians (g 'frequency)))
      g)))
-   (frequency *clm-default-frequency*) (n 1) (angle 0.0) (r 1.0))
+   (frequency *clm-default-frequency*) 
+   (n 1) 
+   (angle 0.0) 
+   (r 1.0))
 
 (define* (big-nsin gen (fm 0.0))
-  (let* ((n (big-nsin-n gen))
-	 (x (big-nsin-angle gen))
+  (let* ((n (gen 'n))
+	 (x (gen 'angle))
 	 (a2 (/ x 2))
-	 (scl (big-nsin-r gen))
+	 (scl (gen 'r))
 	 (den (sin a2)))
-    (set! (big-nsin-angle gen) (+ fm x (big-nsin-frequency gen)))
+    (set! (gen 'angle) (+ fm x (gen 'frequency)))
     (if (= den 0.0)
 	0.0
 	(/ (* scl (sin (* n a2)) (sin (* (+ n 1) a2))) den))))
@@ -214,19 +239,22 @@
 (defgenerator (big-table-lookup
   :make-wrapper
     (lambda (g)
-      (if (not (big-table-lookup-wave g))
-	  (set! (big-table-lookup-wave g) (make-vector (big-table-lookup-size g) 0.0))
-	  (set! (big-table-lookup-size g) (length (big-table-lookup-wave g))))
-      (set! (big-table-lookup-frequency g) (/ (* (big-table-lookup-frequency g) (big-table-lookup-size g)) (mus-srate)))
-      (set! (big-table-lookup-angle g) (/ (* (big-table-lookup-angle g) (big-table-lookup-size g)) (* 2 pi)))
+      (if (not (g 'wave))
+	  (set! (g 'wave) (make-vector (g 'size) 0.0))
+	  (set! (g 'size) (length (g 'wave))))
+      (set! (g 'frequency) (/ (* (g 'frequency) (g 'size)) (mus-srate)))
+      (set! (g 'angle) (/ (* (g 'angle) (g 'size)) (* 2 pi)))
       g))
-  (frequency *clm-default-frequency*) (angle 0.0) (wave #f) (size *clm-table-size*))
+  (frequency *clm-default-frequency*) 
+  (angle 0.0) 
+  (wave #f) 
+  (size *clm-table-size*))
 
 (define* (big-table-lookup gen (fm 0.0))
-  (let ((x (big-table-lookup-angle gen))
-	(w (big-table-lookup-wave gen))
-	(n (big-table-lookup-size gen)))
-    (set! (big-table-lookup-angle gen) (+ x (big-table-lookup-frequency gen) (/ (* fm n) (* 2 pi))))
+  (let ((x (gen 'angle))
+	(w (gen 'wave))
+	(n (gen 'size)))
+    (set! (gen 'angle) (+ x (gen 'frequency) (/ (* fm n) (* 2 pi))))
     (big-array-interp w x n)))
       
 #|
@@ -247,9 +275,9 @@
 (defgenerator big-one-zero (a0 1.0) (a1 0.0) (x1 0.0))
 
 (define* (big-one-zero gen x)
-  (let ((val (+ (* x (big-one-zero-a0 gen))
-		(* (big-one-zero-x1 gen) (big-one-zero-a1 gen)))))
-    (set! (big-one-zero-x1 gen) x)
+  (let ((val (+ (* x (gen 'a0))
+		(* (gen 'x1) (gen 'a1)))))
+    (set! (gen 'x1) x)
     val))
 
 		  
@@ -258,9 +286,9 @@
 (defgenerator big-one-pole (a0 1.0) (b1 0.0) (y1 0.0))
 
 (define* (big-one-pole gen x)
-  (let ((val (- (* x (big-one-pole-a0 gen))
-		(* (big-one-pole-y1 gen) (big-one-pole-b1 gen)))))
-    (set! (big-one-pole-y1 gen) val)
+  (let ((val (- (* x (gen 'a0))
+		(* (gen 'y1) (gen 'b1)))))
+    (set! (gen 'y1) val)
     val))
 
 

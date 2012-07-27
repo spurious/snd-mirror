@@ -9,14 +9,13 @@ removed ptree-channel, max-virtual-ptrees, optimization,
   functions that depended on these.
 
 deprecated vct-map! and removed it from the Snd scheme files.
-removed trailing with-source arg from display-edits.
 
 added Save icon to the toolbars
 
 moved the clm/clm2xen struct declarations out of the header files,
   and added accessor functions.  (Bumped clm to 5.0, sndlib to 22.0).
 
-completely changed defgenerator.
+completely changed defgenerator (in s7 it is now based on environments).
   removed def-clm-struct and ws-interrupt.
 
 added mus-mix-with-envs (for fullmix), and oscil-bank.

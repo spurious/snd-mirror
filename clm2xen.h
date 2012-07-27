@@ -31,7 +31,11 @@ MUS_EXPORT bool mus_optkey_to_bool(XEN key, const char *caller, int n, bool def)
 MUS_EXPORT mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long_t def);
 MUS_EXPORT const char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def);
 MUS_EXPORT XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err);
+
 MUS_EXPORT mus_xen *mus_any_to_mus_xen(mus_any *ge);
+MUS_EXPORT mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, XEN v);
+MUS_EXPORT mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2);
+
 MUS_EXPORT mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_code);
 MUS_EXPORT XEN mus_clm_output(void);
 MUS_EXPORT XEN mus_clm_reverb(void);

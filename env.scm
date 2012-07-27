@@ -360,17 +360,29 @@ repetition to be in reverse."
 
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
+;;; (define pe (make-power-env '(0 0 1 1 2 0) :duration 1.0))
+;;; :(power-env pe)
+;;; 0.0
+;;; :(power-env pe)
+;;; 4.5352502324316e-05
+;;; :(power-env pe)
+;;; 9.0705004648631e-05
+;;; :(power-env pe)
+;;; 0.00013605750697295
+
+
 (defgenerator penv (envs #f) (total-envs 0) (current-env 0) (current-pass 0))
 
 (define (power-env pe)
-  (let ((val (env (vector-ref (penv-envs pe) (penv-current-env pe)))))
-    (set! (penv-current-pass pe) (- (penv-current-pass pe) 1))
-    (if (= (penv-current-pass pe) 0)
-      (if (< (penv-current-env pe) (- (penv-total-envs pe) 1))
+  (with-environment pe
+    (let ((val (env (vector-ref envs current-env))))
+      (set! current-pass (- current-pass 1))
+    (if (= current-pass 0)
+      (if (< current-env (- total-envs 1))
 	  (begin
-	    (set! (penv-current-env pe) (+ 1 (penv-current-env pe)))
-	    (set! (penv-current-pass pe) (- (length (vector-ref (penv-envs pe) (penv-current-env pe))) 1)))))
-    val))
+	    (set! current-env (+ 1 current-env))
+	    (set! current-pass (- (length (vector-ref envs current-env)) 1)))))
+    val)))
 
 (define* (make-power-env envelope (scaler 1.0) (offset 0.0) duration)
   (let* ((len (- (floor (/ (length envelope) 3)) 1))
@@ -387,10 +399,10 @@ repetition to be in reverse."
 	    (y0 (envelope (+ j 1)))
 	    (y1 (envelope (+ j 4)))
 	    (base (envelope (+ j 2))))
-	(vector-set! (penv-envs pe) i (make-env (list 0.0 y0 1.0 y1) 
-						:base base :scaler scaler :offset offset 
-						:duration (* duration (/ (- x1 x0) xext))))))
-    (set! (penv-current-pass pe) (- (length (vector-ref (penv-envs pe) 0)) 1))
+	(vector-set! (pe 'envs) i (make-env (list 0.0 y0 1.0 y1) 
+					    :base base :scaler scaler :offset offset 
+					    :duration (* duration (/ (- x1 x0) xext))))))
+    (set! (pe 'current-pass) (- (length (vector-ref (pe 'envs) 0)) 1))
     pe))
 
 (define* (power-env-channel pe (beg 0) dur snd chn edpos (edname "power-env-channel"))
@@ -399,8 +411,8 @@ repetition to be in reverse."
     (as-one-edit
      (lambda ()
        (do ((i 0 (+ i 1)))
-	   ((= i (penv-total-envs pe)))
-	 (let* ((e (vector-ref (penv-envs pe) i))
+	   ((= i (pe 'total-envs)))
+	 (let* ((e (vector-ref (pe 'envs) i))
 		(len (length e)))
 	   (env-channel e curbeg len snd chn edpos)
 	   (set! curbeg (+ curbeg len)))))

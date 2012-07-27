@@ -803,7 +803,11 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		  (list 'cons (list 'quote (car lst)) (car lst)))
 	      (list->bindings (cdr lst)))))
 
-  (let* ((name (if (list? struct-name) (car struct-name) struct-name))
+  (let* ((name (if (list? struct-name) 
+		   (car struct-name) 
+		   struct-name))
+	 (sname (if (string? name) 
+		    name (symbol->string name)))
 	 (wrapper (or (and (list? struct-name)
 			   (or (and (> (length struct-name) 2)
 				    (equal? (struct-name 1) :make-wrapper)
@@ -812,8 +816,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				    (equal? (struct-name 3) :make-wrapper)
 				    (struct-name 4))))
 		      (lambda (gen) gen)))
-
-	 (sname (if (string? name) name (symbol->string name)))
 	 (methods (and (list? struct-name)
 		       (or (and (> (length struct-name) 2)
 				(equal? (struct-name 1) :methods)
@@ -845,9 +847,10 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		       `(environment ,@(list->bindings fields) (cons 'mus-generator-type gen-type)))))))))))
 
 
-;;; TODO: update all scm defgen refs, docs, tests, check methods both built-in and added (clm2xen)
-;;; generators.scm maxf.scm prc95.scm snd-test.scm big-gens.scm clm-ins.scm env.scm
+;;; TODO: update all scm defgen refs, docs, tests, rest of built-in methods (and tests)
+;;; generators.scm/animals snd-test.scm clm-ins.scm
 ;;; all the html examples have to change
+
 
 
 ;;; -------- clm-display-globals --------

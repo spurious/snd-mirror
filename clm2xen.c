@@ -1381,7 +1381,7 @@ mus_xen *mus_any_to_mus_xen(mus_any *ge)
 }
 
 
-static mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, XEN v)
+mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, XEN v)
 {
   mus_xen *gn;
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));
@@ -1393,7 +1393,7 @@ static mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, XEN v)
 }
 
 
-static mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2)
+mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2)
 {
   mus_xen *gn;
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));

@@ -47,38 +47,35 @@
 	(display str)
 	(snd-print str))))
 
-(defgenerator mvm pp1 pp2 pp3 yy1 yy2 zz1 zz2 out)
+(defgenerator mvm sample pp1 pp2 pp3 yy1 yy2 zz1 zz2 out)
 
-(define-macro (mvmfilt b sample0)
-  `(let ((sample ,sample0))
-     (set! (mvm-yy2 ,b) (- (+ (* (mvm-pp1 ,b) (mvm-yy1 ,b))
-			      (* (mvm-pp2 ,b) (mvm-zz1 ,b)))
-			   (* (mvm-pp3 ,b) sample)))
-     (set! (mvm-zz2 ,b) (- (mvm-zz1 ,b) (* (mvm-pp2 ,b) (mvm-yy2 ,b))))
-     (set! (mvm-zz1 ,b) (mvm-zz2 ,b))
-     (set! (mvm-yy1 ,b) (mvm-yy2 ,b))
-     (set! (mvm-out ,b) (mvm-yy1 ,b))))
+(define (mvmfilt b sample0)
+  (set! (b 'sample) sample0)
+  (with-environment b
+    (set! yy2 (- (+ (* pp1 yy1)
+		    (* pp2 zz1))
+		 (* pp3 sample)))
+    (set! zz2 (- zz1 (* pp2 yy2)))
+    (set! zz1 zz2)
+    (set! yy1 yy2)
+    (set! out yy1)))
 
-(define-macro (set-coeffs nom ampl frequ decaying)
-  `(let* ((b ,nom)
-	  (famp ,ampl)
-	  (ffreq ,frequ)
-	  (fdecay ,decaying)
-	  (tper (/ 1.0 (mus-srate)))
-	  (centerfreq (/ (* 2.0 pi ffreq) (mus-srate)))
-	  (maxdecay (/ (* 2.0 tper) (* centerfreq centerfreq)))
-	  (mindecay (/ tper centerfreq)))
-     ;; Conditions for JOS constraints
-     ;; maxdecay: Filter may be unstable
-     ;; mindecay: Filter may not oscillate
-     (if (>= fdecay maxdecay)
-	 (set! fdecay maxdecay)
-	 (set! fdecay (* 1.0 fdecay)))
-     (if (<= fdecay mindecay)
-	 (set! fdecay mindecay))
-     (set! (mvm-pp1 b) (- 1.0 (/ 2.0  (* fdecay (mus-srate)))))
-     (set! (mvm-pp2 b) (/ (* 2.0 pi ffreq) (mus-srate)))
-     (set! (mvm-pp3 b) (* (mvm-pp2 b) famp))))
+(define (set-coeffs b famp ffreq fdecay)
+  (let* ((tper (/ 1.0 (mus-srate)))
+	 (centerfreq (/ (* 2.0 pi ffreq) (mus-srate)))
+	 (maxdecay (/ (* 2.0 tper) (* centerfreq centerfreq)))
+	 (mindecay (/ tper centerfreq)))
+    ;; Conditions for JOS constraints
+    ;; maxdecay: Filter may be unstable
+    ;; mindecay: Filter may not oscillate
+    (if (>= fdecay maxdecay)
+	(set! fdecay maxdecay)
+	(set! fdecay (* 1.0 fdecay)))
+    (if (<= fdecay mindecay)
+	(set! fdecay mindecay))
+    (set! (b 'pp1) (- 1.0 (/ 2.0  (* fdecay (mus-srate)))))
+    (set! (b 'pp2) (/ (* 2.0 pi ffreq) (mus-srate)))
+    (set! (b 'pp3) (* (b 'pp2) famp))))
 
 (define (make-array initial-value dim1 dim2) ; I'm guessing ...
   (make-vector (list dim1 dim2) initial-value))
