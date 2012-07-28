@@ -847,12 +847,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		       `(environment ,@(list->bindings fields) (cons 'mus-generator-type gen-type)))))))))))
 
 
-;;; TODO: update all scm defgen refs, docs, tests, rest of built-in methods (and tests)
-;;; snd-test.scm clm-ins.scm
-;;; all the html examples have to change
-
-
-
 ;;; -------- clm-display-globals --------
 ;;;
 ;;; display all the globals that might affect with-sound unexpectedly

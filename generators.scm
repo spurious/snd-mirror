@@ -1,15 +1,6 @@
 (provide 'snd-generators.scm)
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
-
-;;; TODO: check the setters
-
-;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
-;;;   Where a factor is involved, I'll use "r".
-;;;   Where the number of terms in the sum is settable, I'll use "n".
-;;;   if you actually want to set the initial-phase, it is usually "angle" just after the documented arguments
-
-
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 
 ;;; --------------------------------------------------------------------------------
@@ -773,6 +764,10 @@
 			       (make-procedure-with-setter
 				(lambda (g) (- (g 'n) 1))
 				(lambda (g val) (set! (g 'n) (+ 1 val)) val)))
+			 (cons 'mus-frequency
+			       (make-procedure-with-setter
+				(lambda (g) (radians->hz (g 'frequency)))
+				(lambda (g val) (set! (g 'frequency) (hz->radians val)))))
 			 (cons 'mus-scaler
 			       (make-procedure-with-setter
 				(lambda (g) (g 'r))
@@ -1445,7 +1440,7 @@
     (do ((i start (+ i 1)))
 	((= i stop))
       (set! (mus-scaler clang) (env crf))
-      (set! (rcos-r carrier) (env rf))
+      (set! (carrier 'r) (env rf))
       (outa i (+ (* (env clangf)
 		    (rkoddssb clang 0.0))
 		 (* (env ampf)
@@ -1780,7 +1775,8 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((x angle)
+    (let* ((gen (current-environment)) ; !
+	   (x angle)
 	   (y (* x ratio)))
       (set! angle (+ x fm frequency))
       (if (not (= fm 0.0))
@@ -2640,7 +2636,7 @@
 	 (stop (+ start (seconds->samples dur))))
     (do ((i start (+ i 1)))
 	((= i stop))
-      (set! (fmssb-index knock) (env indf))
+      (set! (knock 'index) (env indf))
       (outa i (+ (* (env ampf)
 		    (r2k!cos gen))
 		 (* (env kmpf) 
@@ -5980,8 +5976,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
 (define (moving-spectrum gen)
   (with-environment gen
-    (let* ((n (gen 'n))
-	   (n2 (/ n 2)))
+    (let ((n2 (/ n 2)))
       (if (>= outctr hop)
 	  (begin
 	    (if (> outctr n) ; must be first time through -- fill data array
@@ -6053,10 +6048,10 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	(moving-spectrum sv))
       (do ((i 0 (+ i 1)))
 	  ((= i 256))
-	(if (fneq ((moving-spectrum-amps sv) i) ((phase-vocoder-amps pv) i))
-	    (format #t ";~D amps: ~A ~A" i ((moving-spectrum-amps sv) i) ((phase-vocoder-amps pv) i)))
-	(if (fneq ((moving-spectrum-freqs sv) i) ((phase-vocoder-phase-increments pv) i))
-	    (format #t ";~D freqs: ~A ~A" i ((moving-spectrum-freqs sv) i) ((phase-vocoder-phase-increments pv) i)))))))
+	(if (fneq ((sv 'amps) i) ((phase-vocoder-amps pv) i))
+	    (format #t ";~D amps: ~A ~A" i ((sv 'amps) i) ((phase-vocoder-amps pv) i)))
+	(if (fneq ((sv 'freqs) i) ((phase-vocoder-phase-increments pv) i))
+	    (format #t ";~D freqs: ~A ~A" i ((sv 'freqs) i) ((phase-vocoder-phase-increments pv) i)))))))
 
 #|
 (define* (sine-bank amps phases size)
