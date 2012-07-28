@@ -3429,27 +3429,27 @@ getting waveforms and results like these:
 
 (defgenerator (ngencos 
 	       :make-wrapper (lambda (g)
-			       (let ((n (ngencos-n g))
-				     (frq (ngencos-frequency g))
-				     (phases (ngencos-phases g)))
-				 (set! (ngencos-arr g) (make-vector n))
+			       (let ((n (g 'n))
+				     (frq (g 'frequency))
+				     (phases (g 'phases)))
+				 (set! (g 'arr) (make-vector n 0.0))
 				 (do ((i 0 (+ 1 i)))
 				     ((= i n))
 				   (if (vct? phases)
-				       (set! ((ngencos-arr g) i) (make-oscil (* frq (+ 1 i)) (phases i)))
-				       (set! ((ngencos-arr g) i) (make-oscil (* frq (+ 1 i)) (random (* 2 pi)))))))
+				       (set! ((g 'arr) i) (make-oscil (* frq (+ 1 i)) (phases i)))
+				       (set! ((g 'arr) i) (make-oscil (* frq (+ 1 i)) (random (* 2 pi)))))))
 			       g))
-  frequency (n 1) (phases #f) (arr #f))
+  frequency (n 1) (phases #f) (arr #f) fm)
 
 
 (define* (ngencos gen (fm 0.0)) ; polyoid now, I think
-  (let* ((n (ngencos-n gen))
-	 (arr (ngencos-arr gen))
-	 (sum 0.0))
-    (do ((i 0 (+ 1 i)))
-	((= i n))
-      (set! sum (+ sum (oscil (arr i) (* (+ 1 i) fm)))))
-    (/ sum n)))
+  (set! (gen 'fm) fm)
+  (with-environment gen	 
+    (let ((sum 0.0))
+      (do ((i 0 (+ 1 i)))
+	  ((= i n))
+        (set! sum (+ sum (oscil (arr i) (* (+ 1 i) fm)))))
+      (/ sum n))))
 
 (with-sound (:channels 1 :clipped #f)
   (for-each
@@ -8148,9 +8148,7 @@ the default frequency modulation) to any generator:
 <p>
 <em class=def id="musgeneratorp">mus-generator?</em> returns #t if its argument is
 a generator.
-A generator defined via <a href="#defgenerator">defgenerator</a> can take part in these methods.
-If the last element of the list (returned by defgenerator) is an association list, the generic functions
-will search that list for their name, and use the functions that follow to implement their method.
+A generator defined via <a href="#defgenerator">defgenerator</a> can also take part in these methods.
 </p>
 
 
@@ -9790,26 +9788,23 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
 
 <p>defgenerator defines a generator.  Its syntax is modelled after Common Lisp's defstruct.
 It sets up
-a structure, an object with named slots that you can get and set, and ties it into the
-optimizer so that you can use the structures without any speed penalty.  It also defines a "make"
-function to create an instance of the structure, and a predicate for it.  The original impetus for
-this came from user-defined generators in CLM.  We want to package together all the disparate
-things that make up a generator, just as in
-<a href="sndclm.html#make-oscil">make-oscil</a>, <a href="sndclm.html#oscil">oscil</a>, and <a href="sndclm.html#oscil?">oscil?</a>.
-So, as a first example, here is a way to define your own oscil using defgenerator (oscil is so simple that
-you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my-oscil</a>).
+a structure, an environment with variables slots that you can get and set.
+It also defines a "make"
+function to create an instance of the environment, and a predicate for it. 
+Here is a way to define oscil using defgenerator:
 </p>
 
 <pre class="indented">
 (<em class=red>defgenerator</em> osc freq phase)
 
-;;; this defines a struct named "osc" with the (float) fields freq and phase.
-;;;   make-osc creates an osc, and osc? returns #t if passed an osc.
-;;;   the fields are accessed via osc-freq and osc-phase.
+;;; make-osc creates an osc, and osc? returns #t if passed an osc.
+;;; Once we have an osc (an environment with "freq" and "phase" locals)
+;;;   we can either use with-environment, or refer to the local variables
+;;;   directly via (gen 'freq) and (gen 'phase).
 
 (define (osc gen fm)                ; our new generator
-  (let ((result (sin (<em class=red>osc-phase</em> gen))))
-    (set! (<em class=red>osc-phase</em> gen) (+ (<em class=red>osc-phase</em> gen) (<em class=red>osc-freq</em> gen) fm))
+  (let ((result (sin (gen 'phase))))
+    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
     result))
 
 ;;; now we can use the osc generator in an instrument:
@@ -9828,9 +9823,8 @@ you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my
 </pre>
 
 <p>
-The first argument to defgenerator is the new struct's name, and the rest are the fields of that struct.
-Each field has a name and an optional initial value. 
-The initial value defaults to 0.0.
+The first argument to defgenerator is the new object's name, and the rest are the fields of that object.
+Each field has a name and an optional initial value which defaults to 0.0.
 The "make" function (make-osc in our example) uses define* with
 the field names and initial values as the optional keys.  So make-osc above is declared (by the
 defgenerator macro) as:
@@ -9849,9 +9843,9 @@ defgenerator macro) as:
 (make-osc 440 :phase 0.0)
 </pre>
 
-<p>The struct name can be a list; in this case the first element is the actual struct name.  The
-next elements are optionally <code>:make-wrapper</code> followed by a function of one argument
-(the default struct normally returned by defgenerator), and optionally <code>:methods</code>, followed
+<p>The defgenerator "name" parameter can also be a list; in this case the first element is the actual generator name.  The
+next elements are <code>:make-wrapper</code> followed by a function of one argument
+(the default object normally returned by defgenerator), and <code>:methods</code>, followed
 by a list of the methods the generator responds to.  The make wrapper function can 
 make any changes it pleases, then return the fixed-up generator.  For example, in our
 "osc" generator, we had to remember to change frequency in Hz to radians; we can use the
@@ -9861,7 +9855,7 @@ wrapper to handle that:
 <pre class="indented">
 (defgenerator 
   (osc <em class=red>:make-wrapper</em> (lambda (gen)
-                       (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (osc-freq gen)))
+                       (set! (gen 'freq) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (gen 'freq)))
                        gen))
         (freq 0.0) (phase 0.0))
 </pre>
@@ -9877,51 +9871,30 @@ wrapper to handle that:
 </pre>
 
 <p>If you want the struct to take part in the <a href="sndclm.html#genericfunctions">generic function</a> facility
-in CLM, add the desired methods as an association list with the name :methods:
+in CLM, add the desired methods as an association list with the keyword :methods:
 </p>
 
 <pre class="indented">
 (defgenerator (osc :make-wrapper
 		     (lambda (gen)
-		       (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (osc-freq gen)))
+		       (set! (gen 'freq) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (gen 'freq)))
 		       gen)
 		   <em class=red>:methods</em>
 		     (list
-		      (list 'mus-frequency 
-			    (lambda (g) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">radians-&gt;hz</a> (osc-freq g)))
-			    (lambda (g val) (set! (osc-freq g) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> val))))
+		      (cons 'mus-frequency 
+                            (make-procedure-with-setter
+			      (lambda (g) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">radians-&gt;hz</a> (g 'freq)))
+			      (lambda (g val) (set! (g 'freq) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> val)))))
+		      (cons 'mus-phase 
+                            (make-procedure-with-setter		          
+			      (lambda (g) (g 'phase))
+			      (lambda (g val) (set! (g 'phase) val))))
 		      
-		      (list 'mus-phase 
-			    (lambda (g) (osc-phase g))
-			    (lambda (g val) (set! (osc-phase g) val)))
-		      
-		      (list 'mus-describe 
+		      (cons 'mus-describe 
 			    (lambda (g) (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "osc freq: ~A, phase: ~A" 
 					  (mus-frequency g) 
 					  (mus-phase g))))))
   freq phase)
-</pre>
-
-<p>The first function is the "getter" and the (optional) second function is the "setter".
-You can also use make-procedure-with-setter.
-The standard methods are actually defined for you.
-If the generator has a frequency field,
-defgenerator adds the method
-mus-frequency (radians-&gt;hz of the frequency field); similarly "angle" or "phase" become mus-phase,
-"n" or "order" becomes mus-order, and "r" or "amplitude" becomes mus-scaler.
-To specialize the make function,
-or add your own methods, the generator name can be a list: 
-</p>
-
-<pre class="indented">
-(defgenerator (name 
-                :make-wrapper (lambda (gen) ... gen) 
-                :methods (list 
-                           (list 'method-name
-                                  (lambda (gen) ...)     ; get method
-                                  (lambda (gen val) ...) ; set method, if any
-				  ...)))
-   fields...)
 </pre>
 
 <p>The make-wrapper might more accurately be called an after-method; it is
@@ -9930,36 +9903,8 @@ fields have been set at that point either by arguments to the make function,
 or from the default values given in the defgenerator declaration.  The make
 function returns whatever
 the make-wrapper function returns, so you almost always want to return the "gen" argument.
-Here is an example that produces abs(oscil):
+There are many examples in generators.scm.
 </p>
-
-<pre class="indented">
-(defgenerator (<em class="noem" id="abssin">abssin</em>
-	       :make-wrapper (lambda (g)
-			       (set! (abssin-osc g) (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> (abssin-frequency g)))
-			       g)	       
-	       :methods (list
-			 (list 'mus-frequency
-			       (lambda (g) (mus-frequency (abssin-osc g)))
-			       (lambda (g val) (set! (mus-frequency (abssin-osc g)) val) val))
-
-			 (list 'mus-phase
-			       (lambda (g) (mus-phase (abssin-osc g)))
-			       (lambda (g val) (set! (mus-phase (abssin-osc g)) val) val))))
-  (frequency *clm-default-frequency*)
-  (osc #f))
-
-(define* (abssin gen (fm 0.0))
-  (/ (- (abs (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> (abssin-osc gen) fm))
-	(/ 2.0 pi))  ; remove DC
-     (/ 2.0 pi)))    ; normalize
-
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (let ((gen (<em class=red>make-abssin</em> 440.0)))
-     (do ((i 0 (+ 1 i)))
-	 ((= i 10000))
-       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>abssin</em> gen))))))
-</pre>
 
 
 
@@ -10105,29 +10050,7 @@ coeffs[0] is the constant term, and so on.
 <a href="sndscm.html#polydoc">poly.scm</a> has a variety of polynomial-related functions.
 Abramowitz and Stegun, "A Handbook of Mathematical Functions" is a
 treasure-trove of interesting polynomials.
-Here's a generator that uses polynomial to produce a Blackman4 waveform (see also <a href="#make-blackman">make-blackman</a> in generators.scm):
 </p>
-
-<pre class="indented">
-(<a class=quiet href="sndclm.html#defgenerator" onmouseout="UnTip()" onmouseover="Tip(sndclm_defgenerator_tip)">defgenerator</a> (blackman4 :make-wrapper 
-		  (lambda (g)
-	 	    (set! (blackman4-incr g) (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (blackman4-frequency g)))
-		    (set! (blackman4-coeffs g) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .084037 -.29145 .375696 -.20762 .041194))
-		    g))
-    (frequency 0.0) (initial-phase 0.0) (coeffs #f) (angle 0.0) (incr 0.0))
-
-(define (blackman4 gen fm)
-  (let ((x (blackman4-angle gen)))
-    (set! (blackman4-angle gen) (+ x fm (blackman4-incr gen)))
-    (<em class=red>polynomial</em> (blackman4-coeffs gen) (cos x))))
-
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (let ((black4 (make-blackman4 440.0)))
-      (do ((i 0 (+ 1 i)))
-          ((= i 20000))
-	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (blackman4 black4 0.0)))))
-</pre>
-
 
 
 <!--  ARRAY-INTERP  -->

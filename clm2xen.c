@@ -1417,6 +1417,7 @@ static XEN g_mus_reset(XEN gen)
   ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
   if (ms)
     mus_reset(ms->gen);
+#if HAVE_SCHEME
   else
     {
       if (s7_is_open_environment(gen)) 
@@ -1427,8 +1428,41 @@ static XEN g_mus_reset(XEN gen)
 	} 
       XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_reset, "a generator");
     }
+#else
+  XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_reset, "a generator");
+#endif
   return(gen);
 }
+
+
+static XEN g_mus_describe(XEN gen) 
+{
+  #define H_mus_describe "(" S_mus_describe " gen): return a string describing the state of CLM generator generator"
+  mus_xen *ms;
+
+  ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
+  if (ms)
+    {
+      XEN result;
+      char *str;
+      str = mus_describe(ms->gen);
+      result = C_TO_XEN_STRING(str);
+      if (str) free(str);
+      return(result);
+    }
+#if HAVE_SCHEME
+  if (s7_is_open_environment(gen)) 
+    { 
+      s7_pointer func; 
+      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-describe"), gen); 
+      if (func) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+    }
+#endif
+  XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_describe, "a generator");
+  return(gen);
+}
+
+
 
 /* TODO: fixup all the methods */
 
@@ -1492,7 +1526,7 @@ static XEN g_mus_reset(XEN gen)
 #define MUS_INT_GENERIC(Caller, CLM_case)                             \
   mus_xen *gn;                                                                \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
-  if (gn) C_TO_XEN_INT(CLM_case(gn->gen)); \
+  if (gn) return(C_TO_XEN_INT(CLM_case(gn->gen)));			\
   if (s7_is_open_environment(gen)) \
     { \
       s7_pointer func; \
@@ -1971,22 +2005,6 @@ static XEN g_mus_set_ycoeff(XEN gen, XEN index, XEN val)
   if (ind < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_ycoeff, XEN_ARG_2, index, "index must be non-negative");
   return(C_TO_XEN_DOUBLE(mus_set_ycoeff(g, ind, x)));
-}
-
-
-static XEN g_mus_describe(XEN gen) 
-{
-  #define H_mus_describe "(" S_mus_describe " gen): return a string describing the state of CLM generator generator"
-  char *str;
-  XEN result;
-  mus_any *g = NULL;
-  mus_xen *gn;
-
-  XEN_TO_C_ANY_GENERATOR(gen, gn, g, S_mus_describe, "a generator");
-  str = mus_describe(g);
-  result = C_TO_XEN_STRING(str);
-  if (str) free(str);
-  return(result);
 }
 
 

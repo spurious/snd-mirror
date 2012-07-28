@@ -1,31 +1,41 @@
 #!/usr/bin/env ruby
-# -*- snd-ruby -*-
-# agn.rb -- Bill Schottstaedt's agn.cl (see clm-2/clm-example.clm and clm-2/bess5.cl)
+# agn.rb -- Bill Schottstaedt's agn.cl 
+#     (see clm-2/clm-example.clm and clm-2/bess5.cl)
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat May 24 20:35:03 CEST 2003
-# Changed: Thu May 28 17:30:09 CEST 2009
-
-# This file is part of Sndins.
+# Changed: Sat Jul 28 00:37:44 CEST 2012
 
 # Type do_agn
 # or start the script in a shell.
 
+$clm_c_version = true
+
 require "sndlib"
-require "sndins"
-require "examp"
+if $clm_c_version
+  require "sndins"
+else
+  require "v"		# fm_violin_rb, jc_reverb_rb
+  require "clm-ins"	# nrev_rb
+  class Instrument
+    alias fm_violin fm_violin_rb
+    alias jc_reverb jc_reverb_rb
+    alias nrev nrev_rb 
+  end
+end
+require "clm"
 require "ws"
 require "env"
 
-$clm_play            = true
-$clm_statistics      = true
-$clm_verbose         = true
-$clm_srate           = 44100
-$clm_channels        = 2
-$clm_reverb          = :jc_reverb
-$clm_reverb_data     = [:volume, 0.8]
+$clm_play	= true
+$clm_statistics	= true
+$clm_verbose	= true
+$clm_srate	= 44100
+$clm_channels	= 2
+$clm_reverb	= :jc_reverb
+$clm_reverb_data = [:volume, 0.8]
 $clm_reverb_channels = 2
-$clm_delete_reverb   = true
+$clm_delete_reverb = true
 
 class Agn
   include Math
@@ -53,13 +63,12 @@ class Agn
 
   def agn(file)
     File.open(file, "w") do |f|
-      f << "# -*- snd-ruby -*-\n"
       f << "# from agn.cl (see clm-2/clm-example.clm and clm-2/bess5.cl)\n"
       f << "#\n"
-      f << "# " << make_default_comment() << "\n\n"
+      f << make_default_comment() << "\n\n"
       wins = [[0, 0, 40, 0.1, 60, 0.2, 75, 0.4, 82, 1, 90, 1, 100, 0],
               [0, 0, 60, 0.1, 80, 0.2, 90, 0.4, 95, 1, 100, 0],
-              [0, 0, 10, 1, 16, 0, 32, 0.1, 50, 1, 56, 0, 60, 0, 90, 0.3, 100, 0],
+              [0, 0, 10, 1, 16, 0, 32, 0.1, 50, 1, 56, 0, 60, 0, 90, 0.3,100,0],
               [0, 0, 30, 1, 56, 0, 60, 0, 90, 0.3, 100, 0],
               [0, 0, 50, 1, 80, 0.3, 100, 0],
               [0, 0, 40, 0.1, 60, 0.2, 75, 0.4, 82, 1, 90, 1, 100, 0],
@@ -73,7 +82,8 @@ class Agn
         nextbeg = revamt = ranamt = beg = dur = freq = ampl = ind = 0.0
         while beg < Time and cellctr < Limit
           beg += nextbeg
-          nextbeg = dur = [0.25, mytempo * (0.9 + 0.2 * random(1.0)) * @rhys[cellctr]].max
+          nextbeg = dur = [0.25,
+	    mytempo * (0.9 + 0.2 * random(1.0)) * @rhys[cellctr]].max
           freq = (16.352 / 2 ** mi) * tune(@pits[cellctr]) * 2 ** @octs[cellctr]
           dur += dur if freq < 100
           ampl = [0.003, @amps[cellctr] * (1.0 / (60 * base))].max
@@ -81,10 +91,12 @@ class Agn
           revamt = base * 0.1
           winnum = (10 * (beg - beg.floor)).floor
           ranamt = 0.00001 * (logn(freq, 2.0) - 4) ** 4
-          f << format("fm_violin(%.2f, %.2f, %.3f, %.2f, " +
-                      ":fm_index, %.2f, :reverb_amount, %.2f, :noise_amount, %.2f, " +
-                      ":amp_env, %s)\n",
-                      beg, dur, freq, ampl, ind, revamt, ranamt, wins[winnum].inspect)
+          f << format("\
+fm_violin(%f, %f, %f, %f, :fm_index, %f,
+  :amp_env, %s,
+  :reverb_amount, %f, :noise_amount, %f)\n",
+            beg, dur, freq, ampl, ind,
+	    wins[winnum].inspect, revamt, ranamt)
           cellctr += 1
           if cellctr > (cellsiz + cellbeg)
             cellbeg += 1
@@ -105,6 +117,7 @@ class Agn
           end
         end
       end
+      f << "\n# " + file + " ends here\n"
     end
     file
   end
@@ -117,6 +130,8 @@ def do_agn(file = "agn.rbm")
   clm_load(file, :clm, true, :output, sndfile)
 end
 
-do_agn((ARGV[0] or "agn.rbm")) unless provided? :snd
+unless provided?(:snd)
+  do_agn((ARGV[0] or "agn.rbm"))
+end
 
 # agn.rb ends here

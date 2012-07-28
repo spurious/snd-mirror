@@ -1,28 +1,33 @@
-;; -*- snd-scheme -*-
 ;;; Examples of the fm violin (see v.ins) 
 ;;; This file semi-automatically translated from a sambox note list ca 1983.
 ;;;
-;;; Converted into Scheme by Michael Scholz <mi-scholz@users.sourceforge.net>
-
-;; This file is part of Sndins.
+;; Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
+;; Created: Tue Jun 24 19:05:06 CEST 2003
+;; Changed: Sat Jul 28 04:16:19 CEST 2012
 
 ;; Type (short-example)
 ;; or   (long-example)
+
+(define *clm-c-version* #t)
 
 (if (not (provided? 'sndlib))
     (let ((hsndlib (dlopen "libsndlib.so")))
       (if (string? hsndlib)
 	  (snd-error (format #f "script needs the sndlib module: ~A" hsndlib))
 	  (dlinit hsndlib "Init_sndlib"))))
-(if (not (provided? 'sndins))
-    (let ((hsndins (dlopen "libsndins.so")))
-      (if (string? hsndins)
-	  (snd-error (format #f "script needs the sndins module: ~A" hsndins))
-	  (dlinit hsndins "Init_sndins"))))
+(if *clm-c-version*
+  (if (not (provided? 'sndins))
+      (let ((hsndins (dlopen "libsndins.so")))
+        (if (string? hsndins)
+	    (snd-error (format #f "script needs the sndins module: ~A" hsndins))
+	    (dlinit hsndins "Init_sndins"))))
+  (begin
+    (load "v.scm")
+    (load "freeverb.scm")))
 
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
-(define *clm-file-name* "test-ins-g.snd")
+(define *clm-file-name* "test-ins-s.snd")
 (define *clm-play* #t)
 (define *clm-statistics* #t)
 (define *clm-verbose* #t)
@@ -42,10 +47,7 @@
 (define counter 0)
 
 (define (snd-msg frm . args)
-  (let ((str (apply format (append (list #f frm) args))))
-    (if (string? (getenv "EMACS"))
-	(display str))
-    (snd-print str)))
+  (snd-print (apply format (append (list #f frm) args))))
 
 (define (current-score-time time)
   (set! counter (+ counter 1))
@@ -55,8 +57,8 @@
 	       (- time 24)
 	       (/ (- (get-internal-real-time) start-time) 100.0))))
 
-(definstrument (violin-new beg dur freq amp :key
-			   fm1-rat fm2-rat fm3-rat fm-index reverb-amount amp-env)
+(definstrument (violin-new beg dur freq amp fm1-rat fm2-rat fm3-rat fm-index 
+                 reverb-amount amp-env)
   (do ((i 0 (1+ i)))
       ((= 5 i))
     (fm-violin (+ beg (* i .05 (random 1.0)))
@@ -72,9 +74,9 @@
 (define (short-example)
   (with-sound (:reverb nrev :reverb-data '(:lp-coeff 0.6))
 	      (violin-new 0 8.53 993.323 .03 :fm-index .75
-			  :reverb-amount .20 :amp-env (list 0 0 221.00 1 240.00 0))
-	      (violin-new 5 4.53 (* 5/6 993.323) .02 :fm-index
-			  .55 :reverb-amount .20 :amp-env (list 0 0 221.00 1 240.00 0))))
+                :reverb-amount .20 :amp-env (list 0 0 221.00 1 240.00 0))
+	      (violin-new 5 4.53 (* 5/6 993.323) .02 :fm-index .55
+		:reverb-amount .20 :amp-env (list 0 0 221.00 1 240.00 0))))
 
 (define pna '(0 0 1 1 10 .6000 25 .3 100 0))
 (define ind2 '(0 1 25 .4 75 .6000 100 0))
@@ -126,7 +128,8 @@
 (define updown '(0 0 15 1 100 0))
 (define indfunc '(0 1 20 0 100 0))
 (define indfunc2 '(0 1 90 1 100 0))
-(define ampfunc '(0 1 6 1 10 .5 20 .3630 30 .2700 40 .2000 50 .1200 60 .0800 70 .0400 100 0))
+(define ampfunc '(0 1 6 1 10 .5 20 .363 30 .27 40 .2 50 .12
+                  60 .08 70 .04 100 0))
 (define ampfunc1 '(0 0 1 1 3 1 10 .5 30 .2000 60 .0500 100 0))
 (define z1amp '(0 0 20 .5 40 .1 60 .2000 80 1 100 0))
 (define z2amp '(0 0 20 1 60 .1 75 .3 100 0))
@@ -191,64 +194,93 @@
   (set! fm-violin-index2 #f)
   (set! fm-violin-index3 #f))
 
-(definstrument (old-fm-violin startime dur frequency amplitude :key
-			      (fm-index                   fm-violin-fm-index)
-			      (amp-env                    fm-violin-amp-env)
-			      (periodic-vibrato-rate      fm-violin-periodic-vibrato-rate)
-			      (random-vibrato-rate        fm-violin-random-vibrato-rate)
-			      (periodic-vibrato-amplitude fm-violin-periodic-vibrato-amplitude)
-			      (random-vibrato-amplitude   fm-violin-random-vibrato-amplitude)
-			      (noise-amount               fm-violin-noise-amount)
-			      (ind-noise-freq             fm-violin-ind-noise-freq)
-			      (ind-noise-amount           fm-violin-ind-noise-amount)
-			      (amp-noise-freq             fm-violin-amp-noise-freq)
-			      (amp-noise-amount           fm-violin-amp-noise-amount)
-			      (noise-freq                 fm-violin-noise-freq)
-			      (gliss-env                  fm-violin-gliss-env)
-			      (glissando-amount           fm-violin-glissando-amount)
-			      (fm1-env                    fm-violin-fm1-env)
-			      (fm2-env                    fm-violin-fm2-env)
-			      (fm3-env                    fm-violin-fm3-env)
-			      (fm1-rat                    fm-violin-fm1-rat)
-			      (fm2-rat                    fm-violin-fm2-rat)
-			      (fm3-rat                    fm-violin-fm3-rat)
-			      (fm1-index                  fm-violin-index1)
-			      (fm2-index                  fm-violin-index2)
-			      (fm3-index                  fm-violin-index3)
-			      (base                       fm-violin-base)
-			      (reverb-amount              fm-violin-reverb-amount)
-			      (index-type                 fm-violin-index-type)
-			      (degree                     0.0)
-			      (distance                   1.0))
-  (fm-violin startime dur frequency amplitude
-	     :fm-index fm-index
-	     :amp-env amp-env
-	     :periodic-vibrato-rate periodic-vibrato-rate
-	     :random-vibrato-rate random-vibrato-rate
-	     :periodic-vibrato-amplitude periodic-vibrato-amplitude
-	     :random-vibrato-amplitude random-vibrato-amplitude
-	     :noise-amount noise-amount
-	     :ind-noise-freq ind-noise-freq
-	     :ind-noise-amount ind-noise-amount
-	     :amp-noise-freq amp-noise-freq
-	     :amp-noise-amount amp-noise-amount
-	     :noise-freq noise-freq
-	     :gliss-env gliss-env
-	     :glissando-amount glissando-amount
-	     :fm1-env fm1-env
-	     :fm2-env fm2-env
-	     :fm3-env fm3-env
-	     :fm1-rat fm1-rat
-	     :fm2-rat fm2-rat
-	     :fm3-rat fm3-rat
-	     :fm1-index fm1-index
-	     :fm2-index fm2-index
-	     :fm3-index fm3-index
-	     :base base
-	     :reverb-amount reverb-amount
-	     :index-type index-type
-	     :degree degree
-	     :distance distance))
+(definstrument (old-fm-violin startime dur frequency amplitude
+  (fm-index                   fm-violin-fm-index)
+  (amp-env                    fm-violin-amp-env)
+  (periodic-vibrato-rate      fm-violin-periodic-vibrato-rate)
+  (random-vibrato-rate        fm-violin-random-vibrato-rate)
+  (periodic-vibrato-amplitude fm-violin-periodic-vibrato-amplitude)
+  (random-vibrato-amplitude   fm-violin-random-vibrato-amplitude)
+  (noise-amount               fm-violin-noise-amount)
+  (noise-freq                 fm-violin-noise-freq)
+  (ind-noise-freq             fm-violin-ind-noise-freq)
+  (ind-noise-amount           fm-violin-ind-noise-amount)
+  (amp-noise-freq             fm-violin-amp-noise-freq)
+  (amp-noise-amount           fm-violin-amp-noise-amount)
+  (gliss-env                  fm-violin-gliss-env)
+  (glissando-amount           fm-violin-glissando-amount)
+  (fm1-env                    fm-violin-fm1-env)
+  (fm2-env                    fm-violin-fm2-env)
+  (fm3-env                    fm-violin-fm3-env)
+  (fm1-rat                    fm-violin-fm1-rat)
+  (fm2-rat                    fm-violin-fm2-rat)
+  (fm3-rat                    fm-violin-fm3-rat)
+  (fm1-index                  fm-violin-index1)
+  (fm2-index                  fm-violin-index2)
+  (fm3-index                  fm-violin-index3)
+  (degree                     0.0)
+  (distance                   1.0)
+  (reverb-amount              fm-violin-reverb-amount)
+  (base                       fm-violin-base)
+  (index-type                 fm-violin-index-type))
+  (if *clm-c-version*
+    (fm-violin startime dur frequency amplitude
+      :fm-index fm-index
+      :amp-env amp-env
+      :periodic-vibrato-rate periodic-vibrato-rate
+      :random-vibrato-rate random-vibrato-rate
+      :periodic-vibrato-amplitude periodic-vibrato-amplitude
+      :random-vibrato-amplitude random-vibrato-amplitude
+      :noise-amount noise-amount
+      :noise-freq noise-freq
+      :ind-noise-freq ind-noise-freq
+      :ind-noise-amount ind-noise-amount
+      :amp-noise-freq amp-noise-freq
+      :amp-noise-amount amp-noise-amount
+      :gliss-env gliss-env
+      :glissando-amount glissando-amount
+      :fm1-env fm1-env
+      :fm2-env fm2-env
+      :fm3-env fm3-env
+      :fm1-rat fm1-rat
+      :fm2-rat fm2-rat
+      :fm3-rat fm3-rat
+      :fm1-index fm1-index
+      :fm2-index fm2-index
+      :fm3-index fm3-index
+      :degree degree
+      :distance distance
+      :reverb-amount reverb-amount
+      :base base
+      :index-type index-type)
+    (fm-violin startime dur frequency amplitude
+      :fm-index fm-index
+      :amp-env amp-env
+      :periodic-vibrato-rate periodic-vibrato-rate
+      :random-vibrato-rate random-vibrato-rate
+      :periodic-vibrato-amplitude periodic-vibrato-amplitude
+      :random-vibrato-amplitude random-vibrato-amplitude
+      :noise-amount noise-amount
+      :noise-freq noise-freq
+      :ind-noise-freq ind-noise-freq
+      :ind-noise-amount ind-noise-amount
+      :amp-noise-freq amp-noise-freq
+      :amp-noise-amount amp-noise-amount
+      :gliss-env gliss-env
+      :glissando-amount glissando-amount
+      :fm1-env fm1-env
+      :fm2-env fm2-env
+      :fm3-env fm3-env
+      :fm1-rat fm1-rat
+      :fm2-rat fm2-rat
+      :fm3-rat fm3-rat
+      :fm1-index fm1-index
+      :fm2-index fm2-index
+      :fm3-index fm3-index
+      :degree degree
+      :distance distance
+      :reverb-amount reverb-amount
+      :base base)))
 
 (define fullbeg 24.0)
 
@@ -350,582 +382,662 @@
 
 	      (current-score-time 48)
 	      (vln_one_sin_ran 48 5.4000 116.5400 .2500
-			       :fm-index 2.2822 :reverb-amount .0280
-			       :amp-env '(0 0 .0556 1 4.0937 .6000 9.1414 .3 24.2845 .1 100.0 0))
+                :fm-index 2.2822 :reverb-amount .0280
+                :amp-env 
+		'(0 0 .0556 1 4.0937 .6000 9.1414 .3 24.2845 .1 100.0 0))
 	      (vln_one_sin_ran 48.0100 5.4000 43.6538 .2500
-			       :fm-index 2.0867 :reverb-amount .0202
-			       :amp-env '(0 0 .0556 1 4.0937 .6000 9.1414 .3 24.2845 .1 100.0 0))
+		:fm-index 2.0867 :reverb-amount .0202
+		:amp-env 
+		'(0 0 .0556 1 4.0937 .6000 9.1414 .3 24.2845 .1 100.0 0))
 	      (vln_one_sin_ran 48.0200 5.4000 130.8100 .2500
-			       :fm-index 1.9652 :reverb-amount .0270
-			       :amp-env '(0 0 .0556 1 4.0937 .6000 9.1414 .3 24.2845 .1 100.0 0))
+		:fm-index 1.9652 :reverb-amount .0270
+		:amp-env 
+		'(0 0 .0556 1 4.0937 .6000 9.1414 .3 24.2845 .1 100.0 0))
 	      (vln_one_sin_ran 48.0250 5.4000 87.3075 .2500
-			       :fm-index 2.1524 :reverb-amount .0260
-			       :amp-env '(0 0 .0556 1 4.0937 .6000 9.1414 .3 24.2845 .1 100.0 0))
+		:fm-index 2.1524 :reverb-amount .0260
+		:amp-env 
+		'(0 0 .0556 1 4.0937 .6000 9.1414 .3 24.2845 .1 100.0 0))
 	      (vln_one_sin_ran 48.0300 4.5000 261.6200 .1500
-			       :fm-index 2.1384 :reverb-amount .0242
-			       :amp-env '(0 0 .0667 1 4.1044 .6000 9.1515 .3 24.2929 .1 100 0))
+		:fm-index 2.1384 :reverb-amount .0242
+		:amp-env 
+		'(0 0 .0667 1 4.1044 .6000 9.1515 .3 24.2929 .1 100 0))
 	      (vln_one_sin_ran 48.0300 4.5000 174.6150 .1500
-			       :fm-index 2.1425 :reverb-amount .0265
-			       :amp-env '(0 0 .0667 1 4.1044 .6000 9.1515 .3 24.2929 .1 100 0))
+		:fm-index 2.1425 :reverb-amount .0265
+		:amp-env 
+		'(0 0 .0667 1 4.1044 .6000 9.1515 .3 24.2929 .1 100 0))
 	      (vln_one_sin_ran 48.0300 4.5000 130.8100 .1500
-			       :fm-index 1.9805 :reverb-amount .0201
-			       :amp-env '(0 0 .0667 1 4.1044 .6000 9.1515 .3 24.2929 .1 100 0))
+		:fm-index 1.9805 :reverb-amount .0201
+		:amp-env 
+		'(0 0 .0667 1 4.1044 .6000 9.1515 .3 24.2929 .1 100 0))
 	      (vln_one_sin_ran 48.0350 4.5000 43.6538 .1500
-			       :fm-index 2.4876 :reverb-amount .0329
-			       :amp-env '(0 0 .0667 1 4.1044 .6000 9.1515 .3 24.2929 .1 100 0))
+		:fm-index 2.4876 :reverb-amount .0329
+		:amp-env 
+		'(0 0 .0667 1 4.1044 .6000 9.1515 .3 24.2929 .1 100 0))
 	      (vln_one_sin_ran 48.0400 3.6000 220 .1500
-			       :fm-index 1.8282 :reverb-amount .0244
-			       :amp-env '(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
-			       :noise-amount .1500)
+		:fm-index 1.8282 :reverb-amount .0244
+		:amp-env 
+		'(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
+		:noise-amount .1500)
 	      (vln_one_sin_ran 48.0400 3.6000 174.6150 .1500
-			       :fm-index 2.3479 :reverb-amount .0200
-			       :amp-env '(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
-			       :noise-amount .1500)
+		:fm-index 2.3479 :reverb-amount .0200
+		:amp-env 
+		'(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
+		:noise-amount .1500)
 	      (vln_one_sin_ran 48.0400 3.6000 523.2400 .1500
-			       :fm-index 1.6424 :reverb-amount .0286
-			       :amp-env '(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
-			       :noise-amount .1500)
+		:fm-index 1.6424 :reverb-amount .0286
+		:amp-env 
+		'(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
+		:noise-amount .1500)
 	      (vln_one_sin_ran 48.0450 3.6000 349.2300 .1500
-			       :fm-index 1.6449 :reverb-amount .0333
-			       :amp-env '(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
-			       :noise-amount .1500)
+		:fm-index 1.6449 :reverb-amount .0333
+		:amp-env 
+		'(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
+		:noise-amount .1500)
 	      (vln_one_sin_ran 48.0500 6 699.4600 .1500
-			       :fm-index 1.5570 :reverb-amount .1300 :amp-env tap)
+		:fm-index 1.5570 :reverb-amount .1300 :amp-env tap)
 	      (vln_one_sin_ran 48.0500 6 1397.9200 .1500
-			       :fm-index 1.5131 :reverb-amount .1300 :amp-env tap)
+		:fm-index 1.5131 :reverb-amount .1300 :amp-env tap)
 	      (vln_one_sin_ran 48.0500 6 783.9800 .1500
-			       :fm-index 2.2031 :reverb-amount .1300 :amp-env tap)
+		:fm-index 2.2031 :reverb-amount .1300 :amp-env tap)
 	      (vln_one_sin_ran 48.0500 6 1046.4800 .1500
-			       :fm-index 2.2724 :reverb-amount .1300 :amp-env tap)
+		:fm-index 2.2724 :reverb-amount .1300 :amp-env tap)
 	      (vln_one_sin_ran 48.0600 9 21.8269 .1500
-			       :fm-index 2.1048 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.1048 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0600 8 87.3075 .1500
-			       :fm-index 1.8854 :reverb-amount .1 :amp-env tap)
+		:fm-index 1.8854 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0600 7 65.4050 .1500
-			       :fm-index 1.6781 :reverb-amount .1 :amp-env tap)
+		:fm-index 1.6781 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0600 8 43.6538 .1500
-			       :fm-index 1.7862 :reverb-amount .1 :amp-env tap)
+		:fm-index 1.7862 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0700 6 175.6150 .1500
-			       :fm-index 2.2656 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.2656 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0700 6 350.2300 .1500
-			       :fm-index 2.4241 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.4241 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0700 6 131.8100 .1500
-			       :fm-index 2.4294 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.4294 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0700 6 32.7025 .1500
-			       :fm-index 1.5779 :reverb-amount .1 :amp-env tap)
+		:fm-index 1.5779 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0800 6 196.9950 .1500
-			       :fm-index 1.8511 :reverb-amount .1 :amp-env tap)
+		:fm-index 1.8511 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0800 6 1047.4800 .1500
-			       :fm-index 2.2148 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.2148 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0800 6 831.6200 .1500
-			       :fm-index 1.9913 :reverb-amount .1 :amp-env tap)
+		:fm-index 1.9913 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.0800 6 2793.8400 .1500
-			       :fm-index 2.2607 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.2607 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.2700 6 784.9800 .1600
-			       :fm-index 2.0693 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.0693 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.2700 6 64.4050 .1600
-			       :fm-index 1.6920 :reverb-amount .1 :amp-env tap)
+		:fm-index 1.6920 :reverb-amount .1 :amp-env tap)
 	      (vln_one_sin_ran 48.2700 6 208.6550 .1600
-			       :fm-index 2.2597 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.2597 :reverb-amount .1 :amp-env tap)
 					; from lizard
 	      (vln_one_sin_ran 48.2700 6 43.6538 .1600
-			       :fm-index 2.2522 :reverb-amount .1 :amp-env tap)
+		:fm-index 2.2522 :reverb-amount .1 :amp-env tap)
 
 	      (current-score-time 60)
 	      (restore-fm-violin-defaults)
 	      (vln_one_sin_ran 60 1.8000 349.2300 .1600
-			       :fm-index 2.1541 :reverb-amount .0225
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0500)
+		:fm-index 2.1541 :reverb-amount .0225
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0500)
 	      (vln_one_sin_ran 60.0100 2.7000 146.8300 .1600
-			       :fm-index 2.3335 :reverb-amount .0274
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0500)
+		:fm-index 2.3335 :reverb-amount .0274
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0500)
 	      (vln_one_sin_ran 60.0200 1.8000 880 .1600
-			       :fm-index 2.1910 :reverb-amount .0279
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0500)
+		:fm-index 2.1910 :reverb-amount .0279
+		:amp-env
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0500)
 	      (vln_one_sin_ran 60.0250 3.6000 73.4150 .1600
-			       :fm-index 2.1410 :reverb-amount .0223
-			       :amp-env '(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
-			       :noise-amount .0500)
+		:fm-index 2.1410 :reverb-amount .0223
+		:amp-env 
+		'(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
+		:noise-amount .0500)
 	      (vln_one_sin_ran 60.0300 2.7000 87.3075 .1600
-			       :fm-index 1.8491 :reverb-amount .0217
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0010)
+		:fm-index 1.8491 :reverb-amount .0217
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0010)
 	      (vln_one_sin_ran 60.0300 2.7000 75.5662 .1600
-			       :fm-index 1.9191 :reverb-amount .0204
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0010)
+		:fm-index 1.9191 :reverb-amount .0204
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0010)
 	      (vln_one_sin_ran 60.0400 3.6000 52.3432 .1600
-			       :fm-index 1.6090 :reverb-amount .0296
-			       :amp-env '(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
-			       :noise-amount .0010)
+		:fm-index 1.6090 :reverb-amount .0296
+		:amp-env 
+		'(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
+		:noise-amount .0010)
 	      (vln_one_sin_ran 60.0450 1.8000 73.4150 .1600
-			       :fm-index 2.2201 :reverb-amount .0221
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0010)
+		:fm-index 2.2201 :reverb-amount .0221
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0010)
 	      (vln_one_sin_ran 60.0500 4 116.5400 .0600
-			       :fm-index 2.0230 :reverb-amount .1
-			       :amp-env tap :noise-amount .0010)
+		:fm-index 2.0230 :reverb-amount .1
+		:amp-env tap :noise-amount .0010)
 	      (vln_one_sin_ran 60.0500 4 97.9975 .0600
-			       :fm-index 1.7284 :reverb-amount .1
-			       :amp-env tap :noise-amount .0010)
+		:fm-index 1.7284 :reverb-amount .1
+		:amp-env tap :noise-amount .0010)
 	      (vln_one_sin_ran 60.0600 4 36.7075 .0600
-			       :fm-index 1.6845 :reverb-amount .1
-			       :amp-env tap :noise-amount .0010)
+		:fm-index 1.6845 :reverb-amount .1
+		:amp-env tap :noise-amount .0010)
 	      (vln_one_sin_ran 60.0650 4 97.9975 .0600
-			       :fm-index 2.4616 :reverb-amount .1
-			       :amp-env tap :noise-amount .0010)
+		:fm-index 2.4616 :reverb-amount .1
+		:amp-env tap :noise-amount .0010)
 
 	      (current-score-time 67)
 	      (vln_one_sin_ran 67 1.8000 261.6200 .1600
-			       :fm-index 2.2576 :reverb-amount .0286
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 2.2576 :reverb-amount .0286
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 67.0100 2.7000 130.8100 .1600
-			       :fm-index 2.1530 :reverb-amount .0330
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.1530 :reverb-amount .0330
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 67.0200 1.8000 523.2400 .1600
-			       :fm-index 2.0608 :reverb-amount .0235
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 2.0608 :reverb-amount .0235
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 67.0250 3.6000 65.4050 .1600
-			       :fm-index 2.2203 :reverb-amount .0234
-			       :amp-env '(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.2203 :reverb-amount .0234
+		:amp-env 
+		'(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 67.0300 2.7000 65.4050 .1600
-			       :fm-index 1.7089 :reverb-amount .0208
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0010)
+		:fm-index 1.7089 :reverb-amount .0208
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0010)
 	      (vln_one_sin_ran 67.0300 2.7000 130.8100 .1600
-			       :fm-index 2.2948 :reverb-amount .0269
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0010)
+		:fm-index 2.2948 :reverb-amount .0269
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0010)
 	      (vln_one_sin_ran 67.0400 3.6000 32.7025 .1600
-			       :fm-index 1.7677 :reverb-amount .0288
-			       :amp-env '(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
-			       :noise-amount .0010)
+		:fm-index 1.7677 :reverb-amount .0288
+		:amp-env 
+		'(0 0 .0833 1 4.1204 .6000 9.1667 .3 24.3056 .1 100.0 0)
+		:noise-amount .0010)
 	      (vln_one_sin_ran 67.0450 1.8000 32.7025 .1600
-			       :fm-index 1.9030 :reverb-amount .0209
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0010)
+		:fm-index 1.9030 :reverb-amount .0209
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0010)
 	      (vln_one_sin_ran 67.0500 4 65.4050 .0600
-			       :fm-index 2.2757 :reverb-amount .1
-			       :amp-env tap :noise-amount .0010)
+		:fm-index 2.2757 :reverb-amount .1
+		:amp-env tap :noise-amount .0010)
 	      (vln_one_sin_ran 67.0500 4 65.4050 .0600
-			       :fm-index 2.2435 :reverb-amount .1
-			       :amp-env tap :noise-amount .0010)
+		:fm-index 2.2435 :reverb-amount .1
+		:amp-env tap :noise-amount .0010)
 	      (vln_one_sin_ran 67.0600 4 32.7025 .0600
-			       :fm-index 1.9619 :reverb-amount .1
-			       :amp-env tap :noise-amount .0010)
+		:fm-index 1.9619 :reverb-amount .1
+		:amp-env tap :noise-amount .0010)
 	      (vln_one_sin_ran 67.0650 4 65.4050 .0600
-			       :fm-index 2.0207 :reverb-amount .1
-			       :amp-env tap :noise-amount .0010)
+		:fm-index 2.0207 :reverb-amount .1
+		:amp-env tap :noise-amount .0010)
 
 	      (current-score-time 73)
 	      (vln_one_sin_ran 73.0100 .9000 3135.9200 .1600
-			       :fm-index 2.1204 :reverb-amount .0024
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.1204 :reverb-amount .0024
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 73.0100 .4500 1567.9600 .1600
-			       :fm-index 2.0691 :reverb-amount .0025
-			       :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 2.0691 :reverb-amount .0025
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 73.0200 .9000 6271.8400 .1600
-			       :fm-index 2.2081 :reverb-amount .0022
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.2081 :reverb-amount .0022
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 73.0250 .9000 783.9800 .1600
-			       :fm-index 1.8719 :reverb-amount .0022
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.8719 :reverb-amount .0022
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 73.0300 .2700 783.9800 .1600
-			       :fm-index 1.9705 :reverb-amount .0020
-			       :amp-env '(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.9705 :reverb-amount .0020
+		:amp-env 
+		'(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 73.0300 .6300 1567.9600 .1600
-			       :fm-index 1.6778 :reverb-amount .0021
-			       :amp-env '(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.6778 :reverb-amount .0021
+		:amp-env 
+		'(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 73.0400 .9000 391.9900 .1600
-			       :fm-index 1.9558 :reverb-amount .0023
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.9558 :reverb-amount .0023
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 73.0450 .4500 195.9950 .1600
-			       :fm-index 2.1344 :reverb-amount .0027
-			       :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 2.1344 :reverb-amount .0027
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 73.0500 2 783.9800 .1600
-			       :reverb-amount .0100 :amp-env tap :noise-amount .0090)
+		:reverb-amount .0100 :amp-env tap :noise-amount .0090)
 	      (vln_one_sin_ran 73.0500 1 1567.9600 .1600
-			       :reverb-amount .0100 :amp-env tap :noise-amount .0090)
+		:reverb-amount .0100 :amp-env tap :noise-amount .0090)
 	      (vln_one_sin_ran 73.0600 2 391.9900 .1600
-			       :reverb-amount .0100 :amp-env tap :noise-amount .0090)
+		:reverb-amount .0100 :amp-env tap :noise-amount .0090)
 	      (vln_one_sin_ran 73.0650 1 783.9800 .1600
-			       :reverb-amount .0100 :amp-env tap :noise-amount .0090)
+		:reverb-amount .0100 :amp-env tap :noise-amount .0090)
 	      (vln_one_sin_ran 73.0700 2 195.9950 .1600
-			       :reverb-amount .0100 :amp-env tap :noise-amount .0040)
+		:reverb-amount .0100 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 73.0700 1 1567.9600 .1600
-			       :reverb-amount .0100 :amp-env tap :noise-amount .0040)
+		:reverb-amount .0100 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 73.0800 1 784.9800 .1600
-			       :reverb-amount .0100 :amp-env tap :noise-amount .0040)
+		:reverb-amount .0100 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 73.0850 2 391.9900 .1600
-			       :reverb-amount .0100 :amp-env tap :noise-amount .0040)
+		:reverb-amount .0100 :amp-env tap :noise-amount .0040)
 
 	      (current-score-time 79)
 	      (vln_one_sin_ran 79.0100 .9000 97.9975 .1
-			       :fm-index 2.0885 :reverb-amount .0031
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.0885 :reverb-amount .0031
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 79.0100 1.8000 48.9988 .1
-			       :fm-index 2.2269 :reverb-amount .0026
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 2.2269 :reverb-amount .0026
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 79.0200 .9000 195.9950 .1
-			       :fm-index 2.0305 :reverb-amount .0032
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.0305 :reverb-amount .0032
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 79.0250 .9000 24.4994 .1
-			       :fm-index 2.4934 :reverb-amount .0025
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.4934 :reverb-amount .0025
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 79.0300 1.8000 97.9975 .1
-			       :fm-index 2.4039 :reverb-amount .0023
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0400)
+		:fm-index 2.4039 :reverb-amount .0023
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0400)
 	      (vln_one_sin_ran 79.0300 .9000 195.9950 .1
-			       :fm-index 1.5159 :reverb-amount .0021
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0400)
+		:fm-index 1.5159 :reverb-amount .0021
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0400)
 	      (vln_one_sin_ran 79.0300 .9000 392.9900 .1
-			       :fm-index 2.2122 :reverb-amount .0028
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0400)
+		:fm-index 2.2122 :reverb-amount .0028
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0400)
 	      (vln_one_sin_ran 79.0300 1.8000 784.9800 .1
-			       :fm-index 2.1574 :reverb-amount .0020
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0400)
+		:fm-index 2.1574 :reverb-amount .0020
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0400)
 	      (vln_one_sin_ran 79.0300 2.7000 24.4994 .1
-			       :fm-index 2.1963 :reverb-amount .0031
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.1963 :reverb-amount .0031
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 79.0300 1.8000 48.9988 .1
-			       :fm-index 1.9761 :reverb-amount .0032
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 1.9761 :reverb-amount .0032
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 79.0400 2.7000 12.2497 .1
-			       :fm-index 1.5088 :reverb-amount .0021
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.5088 :reverb-amount .0021
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 79.0450 1.8000 6.1248 .1
-			       :fm-index 1.7384 :reverb-amount .0021
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 1.7384 :reverb-amount .0021
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 79.0500 2 24.4994 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0040)
+		:reverb-amount .1 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 79.0500 1 48.9988 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0040)
+		:reverb-amount .1 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 79.0600 2 12.2497 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0040)
+		:reverb-amount .1 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 79.0650 1 24.4994 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0040)
+		:reverb-amount .1 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 79.0700 2 6.1248 .1
-			       :fm-index 1.2474 :reverb-amount .1 :amp-env tap
-			       :noise-amount .0040)
+		:fm-index 1.2474 :reverb-amount .1 :amp-env tap
+		:noise-amount .0040)
 	      (vln_one_sin_ran 79.0700 1 48.9988 .1
-			       :fm-index .7526 :reverb-amount .1 :amp-env tap
-			       :noise-amount .0040)
+		:fm-index .7526 :reverb-amount .1 :amp-env tap
+		:noise-amount .0040)
 	      (vln_one_sin_ran 79.0800 1 25.4994 .1
-			       :fm-index 1.1080 :reverb-amount .1 :amp-env tap
-			       :noise-amount .0040)
+		:fm-index 1.1080 :reverb-amount .1 :amp-env tap
+		:noise-amount .0040)
 	      (vln_one_sin_ran 79.0850 2 12.2497 .1
-			       :fm-index 1.0859 :reverb-amount .1 :amp-env tap
-			       :noise-amount .0040)
+		:fm-index 1.0859 :reverb-amount .1 :amp-env tap
+		:noise-amount .0040)
 	      (vln_one_sin_ran 79.0900 4 97.9975 .1
-			       :fm-index 2.4788 :reverb-amount .1 :amp-env tap
-			       :noise-amount .0040)
+		:fm-index 2.4788 :reverb-amount .1 :amp-env tap
+		:noise-amount .0040)
 	      (vln_one_sin_ran 79.0900 3 48.9988 .1
-			       :fm-index 1.8980 :reverb-amount .1 :amp-env tap
-			       :noise-amount .0040)
+		:fm-index 1.8980 :reverb-amount .1 :amp-env tap
+		:noise-amount .0040)
 	      (vln_one_sin_ran 79.0900 3 25.4994 .1
-			       :fm-index 2.1151 :reverb-amount .1 :amp-env tap
-			       :noise-amount .0040)
+		:fm-index 2.1151 :reverb-amount .1 :amp-env tap
+		:noise-amount .0040)
 	      (vln_one_sin_ran 79.0950 5 12.2497 .1
-			       :fm-index 2.3224 :reverb-amount .1 :amp-env tap
-			       :noise-amount .0040)
+		:fm-index 2.3224 :reverb-amount .1 :amp-env tap
+		:noise-amount .0040)
 
 	      (current-score-time 85)
 	      (vln_one_sin_ran 85.2100 .9000 123.4725 .1
-			       :reverb-amount .0031
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:reverb-amount .0031
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 85.2100 1.8000 61.7363 .1
-			       :reverb-amount .0023
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0100)
+		:reverb-amount .0023
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 85.2200 .9000 246.9450 .1
-			       :reverb-amount .0023
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:reverb-amount .0023
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 85.2250 .9000 30.8681 .1
-			       :reverb-amount .0026
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:reverb-amount .0026
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 85.2300 1.8000 123.4725 .1
-			       :reverb-amount .0027
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0400)
+		:reverb-amount .0027
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0400)
 	      (vln_one_sin_ran 85.2300 .9000 246.9450 .1
-			       :reverb-amount .0026
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0400)
+		:reverb-amount .0026
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0400)
 	      (vln_one_sin_ran 85.2300 .9000 494.8900 .1
-			       :reverb-amount .0020
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0400)
+		:reverb-amount .0020
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0400)
 	      (vln_one_sin_ran 85.2300 1.8000 988.7800 .1
-			       :reverb-amount .0025
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0400)
+		:reverb-amount .0025
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0400)
 	      (vln_one_sin_ran 85.2300 2.7000 30.8681 .1
-			       :reverb-amount .0028
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0100)
+		:reverb-amount .0028
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 85.2300 1.8000 61.7363 .1
-			       :reverb-amount .0023
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0100)
+		:reverb-amount .0023
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 85.2400 2.7000 15.4341 .1
-			       :reverb-amount .0030
-			       :amp-env '(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
-			       :noise-amount .0100)
+		:reverb-amount .0030
+		:amp-env 
+		'(0 0 .1111 1 4.1470 .6000 9.1919 .3 24.3266 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 85.2450 1.8000 20.5788 .1
-			       :reverb-amount .0023
-			       :amp-env '(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
-			       :noise-amount .0100)
+		:reverb-amount .0023
+		:amp-env 
+		'(0 0 .1667 1 4.2003 .6000 9.2424 .3 24.3687 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 85.2500 2 30.8681 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0090)
+		:reverb-amount .1 :amp-env tap :noise-amount .0090)
 	      (vln_one_sin_ran 85.2500 1 61.7363 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0090)
+		:reverb-amount .1 :amp-env tap :noise-amount .0090)
 	      (vln_one_sin_ran 85.2600 2 15.4341 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0090)
+		:reverb-amount .1 :amp-env tap :noise-amount .0090)
 	      (vln_one_sin_ran 85.2650 1 30.8681 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0090)
+		:reverb-amount .1 :amp-env tap :noise-amount .0090)
 	      (vln_one_sin_ran 85.2710 2 30.8681 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0040)
+		:reverb-amount .1 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 85.2710 1 61.7363 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0040)
+		:reverb-amount .1 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 85.2810 1 31.8681 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0040)
+		:reverb-amount .1 :amp-env tap :noise-amount .0040)
 	      (vln_one_sin_ran 85.2860 2 15.4341 .1
-			       :reverb-amount .1 :amp-env tap :noise-amount .0040)
+		:reverb-amount .1 :amp-env tap :noise-amount .0040)
 
 
 	      (current-score-time 93)
 	      (vln_one_sin_ran 93.0100 .9000 3135.9200 .1600
-			       :fm-index 1.7299 :reverb-amount .0026
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.7299 :reverb-amount .0026
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 93.0100 .4500 1464.6987 .1600
-			       :fm-index 1.9173 :reverb-amount .0027
-			       :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 1.9173 :reverb-amount .0027
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 93.0200 .9000 6714.0048 .1600
-			       :fm-index 2.4604 :reverb-amount .0032
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.4604 :reverb-amount .0032
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 93.0250 .9000 684.1190 .1600
-			       :fm-index 1.9969 :reverb-amount .0021
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.9969 :reverb-amount .0021
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 93.0300 .2700 684.1190 .1600
-			       :fm-index 2.0022 :reverb-amount .0026
-			       :amp-env '(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.0022 :reverb-amount .0026
+		:amp-env 
+		'(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 93.0300 .6300 1464.6987 .1600
-			       :fm-index 2.1058 :reverb-amount .0027
-			       :amp-env '(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.1058 :reverb-amount .0027
+		:amp-env 
+		'(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 93.0400 .9000 319.5325 .1600
-			       :fm-index 2.2293 :reverb-amount .0029
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.2293 :reverb-amount .0029
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 93.0450 .4500 149.2445 .1600
-			       :fm-index 1.5780 :reverb-amount .0025
-			       :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 1.5780 :reverb-amount .0025
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 93.0500 1 684.1190 .1600
-			       :reverb-amount .0100 :amp-env yup :noise-amount .0090)
+		:reverb-amount .0100 :amp-env yup :noise-amount .0090)
 	      (vln_one_sin_ran 93.0500 1 1464.6987 .1600
-			       :reverb-amount .0100 :amp-env yup :noise-amount .0090)
+		:reverb-amount .0100 :amp-env yup :noise-amount .0090)
 	      (vln_one_sin_ran 93.0600 1 319.5325 .1600
-			       :reverb-amount .0100 :amp-env yup :noise-amount .0090)
+		:reverb-amount .0100 :amp-env yup :noise-amount .0090)
 	      (vln_one_sin_ran 93.0650 1 684.1190 .1600
-			       :reverb-amount .0100 :amp-env yup :noise-amount .0090)
+		:reverb-amount .0100 :amp-env yup :noise-amount .0090)
 	      (vln_one_sin_ran 93.0700 1 149.2445 .1600
-			       :reverb-amount .0100 :amp-env yup :noise-amount .0040)
+		:reverb-amount .0100 :amp-env yup :noise-amount .0040)
 	      (vln_one_sin_ran 93.0700 1 1464.6987 .1600
-			       :reverb-amount .0100 :amp-env yup :noise-amount .0040)
+		:reverb-amount .0100 :amp-env yup :noise-amount .0040)
 	      (vln_one_sin_ran 93.0800 1 561.6022 .160
-			       0 :reverb-amount .0100 :amp-env yup :noise-amount .0040)
+		:reverb-amount .0100 :amp-env yup :noise-amount .0040)
 	      (vln_one_sin_ran 93.0850 1 319.5325 .1600
-			       :reverb-amount .0100 :amp-env yup :noise-amount .0040)
+		:reverb-amount .0100 :amp-env yup :noise-amount .0040)
 
 	      (current-score-time 96)
 	      (vln_one_sin_ran 96.0100 .9000 3135.9200 .1600
-			       :fm-index 1.6329 :reverb-amount .0031
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.6329 :reverb-amount .0031
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0100 .4500 1810.5774 .1600
-			       :fm-index 1.8298 :reverb-amount .0031
-			       :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 1.8298 :reverb-amount .0031
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0200 .9000 5431.4135 .1600
-			       :fm-index 2.1640 :reverb-amount .0022
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.1640 :reverb-amount .0022
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0250 .9000 1045.3680 .1600
-			       :fm-index 1.6971 :reverb-amount .0032
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.6971 :reverb-amount .0032
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0300 .2700 1045.3680 .1600
-			       :fm-index 2.4855 :reverb-amount .0028
-			       :amp-env '(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.4855 :reverb-amount .0028
+		:amp-env 
+		'(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0300 .6300 1810.5774 .1600
-			       :fm-index 2.1604 :reverb-amount .0020
-			       :amp-env '(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.1604 :reverb-amount .0020
+		:amp-env 
+		'(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0400 .9000 603.5612 .1600
-			       :fm-index 2.4204 :reverb-amount .0031
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.4204 :reverb-amount .0031
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0450 .4500 348.4765 .1600
-			       :fm-index 2.3918 :reverb-amount .0026
-			       :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 2.3918 :reverb-amount .0026
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0460 .9000 201.1989 .1600
-			       :fm-index 1.5205 :reverb-amount .0024
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.5205 :reverb-amount .0024
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0460 .9000 116.1656 .1600
-			       :fm-index 2.3049 :reverb-amount .0028
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.3049 :reverb-amount .0028
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0500 .9000 3135.9200 .1600
-			       :fm-index 2.4363 :reverb-amount .0021
-			       :amp-env '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.4363 :reverb-amount .0021
+		:amp-env 
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0500 .4500 1464.6987 .1600
-			       :fm-index 2.3865 :reverb-amount .0027
-			       :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 2.3865 :reverb-amount .0027
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0600 .9000 6714.0048 .1600
-			       :fm-index 1.7354 :reverb-amount .0021
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.7354 :reverb-amount .0021
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0650 .9000 684.1190 .1600
-			       :fm-index 1.8282 :reverb-amount .0025
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.8282 :reverb-amount .0025
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0700 .2700 684.1190 .1600
-			       :fm-index 2.3923 :reverb-amount .0025
-			       :amp-env
-			       '(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.3923 :reverb-amount .0025
+		:amp-env
+		'(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0700 .6300 1464.6987 .1600
-			       :fm-index 2.2789 :reverb-amount .0028
-			       :amp-env
-			       '(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.2789 :reverb-amount .0028
+		:amp-env
+		'(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0800 .9000 319.5325 .1600
-			       :fm-index 1.5438 :reverb-amount .0027
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.5438 :reverb-amount .0027
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0850 .4500 149.2445 .1600
-			       :fm-index 2.4210 :reverb-amount .0028
-			       :amp-env
-			       '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
-			       :noise-amount .0100)
+		:fm-index 2.4210 :reverb-amount .0028
+		:amp-env
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0860 .9000 69.7078 .1600
-			       :fm-index 2.0288 :reverb-amount .0029
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 2.0288 :reverb-amount .0029
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 	      (vln_one_sin_ran 96.0860 .9000 32.5585 .1600
-			       :fm-index 1.8254 :reverb-amount .0028
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
-			       :noise-amount .0100)
+		:fm-index 1.8254 :reverb-amount .0028
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0)
+		:noise-amount .0100)
 
 	      (set! fm-violin-reverb-amount 0.0)
 	      (set! fm-violin-noise-amount 0.01)
 	      (current-score-time 99)
 	      (vln_one_sin_ran 99.0500 .9000 3135.9200 .1600 :fm-index 1.7334
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.0500 .4500 1810.5774 .1600 :fm-index 2.3629
-			       :amp-env
-			       '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
+		:amp-env
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
 	      (vln_one_sin_ran 99.0600 .9000 5431.4135 .1600 :fm-index 2.2744
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.0650 .9000 1045.3680 .1600 :fm-index 1.8722
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.1100 .2700 1045.3680 .1600 :fm-index 2.3139
-			       :amp-env
-			       '(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0))
+		:amp-env
+		'(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0))
 	      (vln_one_sin_ran 99.1100 .6300 1810.5774 .1600 :fm-index 1.6216
-			       :amp-env
-			       '(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0))
+		:amp-env
+		'(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0))
 	      (vln_one_sin_ran 99.1200 .9000 603.5612 .1600 :fm-index 1.5308
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.1650 .4500 348.4765 .1600 :fm-index 2.0346
-			       :amp-env
-			       '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
+		:amp-env
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
 	      (vln_one_sin_ran 99.1660 .9000 201.1989 .1600 :fm-index 1.8176
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.1660 .9000 116.1656 .1600 :fm-index 1.7145
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.1700 .9000 3135.9200 .1600 :fm-index 2.4459
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.1700 .4500 1464.6987 .1600 :fm-index 2.4644
-			       :amp-env
-			       '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
+		:amp-env
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
 	      (vln_one_sin_ran 99.1800 .9000 6714.0048 .1600 :fm-index 1.9985
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.1850 .9000 684.1190 .1600 :fm-index 2.4542
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.2900 .2700 684.1190 .1600 :fm-index 2.3391
-			       :amp-env
-			       '(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0))
+		:amp-env
+		'(0 0 1.1111 1 5.1066 .6000 10.1010 .3 25.0842 .1 100.0 0))
 	      (vln_one_sin_ran 99.2900 .6300 1464.6987 .1600 :fm-index 1.5138
-			       :amp-env
-			       '(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0))
+		:amp-env
+		'(0 0 .4762 1 4.4974 .6000 9.5238 .3 24.6032 .1 100.0 0))
 	      (vln_one_sin_ran 99.3000 .9000 319.5325 .1600 :fm-index 1.5440
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.3050 .4500 149.2445 .1600 :fm-index 2.2283
-			       :amp-env
-			       '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
+		:amp-env
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
 	      (vln_one_sin_ran 99.3060 .9000 69.7078 .1600 :fm-index 1.9498
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin_ran 99.3060 .9000 32.5585 .1600 :fm-index 2.2943
-			       :amp-env
-			       '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 
 	      (restore-fm-violin-defaults)
 	      (set! fm-violin-amp-env metalamp)
@@ -1382,176 +1494,186 @@
 
 	      (restore-fm-violin-defaults)
 	      (current-score-time 166)
-	      (vln_one_sin 166.1200 .4 2092.9600 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 166.1200 .5 2088.7820 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 166.1200 .3 2097.1460 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 166.1200 .5 2084.6130 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 166.1210 .3 1048.5730 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 166.1220 .3 1040.2260 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 166.1220 .5 1034.0100 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 166.1230 .5 1046.4800 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 166.1240 .3 1044.3900 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1200 .4 2092.9600 .1600 :fm-index 3
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1200 .5 2088.7820 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1200 .3 2097.1460 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1200 .5 2084.6130 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1210 .3 1048.5730 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1220 .3 1040.2260 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1220 .5 1034.0100 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1230 .5 1046.4800 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1240 .3 1044.3900 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
 
 	      (set! fm-violin-fm1-rat 2.718)
 	      (set! fm-violin-fm2-rat 4.414)
 	      (set! fm-violin-fm3-rat 5.141)
 
-	      (vln_one_sin 166.1240 .5 1041.2630 .1600 :fm-index 3 :reverb-amount 0
-			   :amp-env metalamp :fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 166.1240 .5 1041.2630 .1600 :fm-index 3 
+		:reverb-amount 0 :amp-env metalamp 
+		:fm2-rat 1.1410 :fm3-rat 3.1410 :fm1-rat 2.7180)
 	      (current-score-time 168)
 	      (vln_one_sin_ran 168.4880 1.1770 416.6072 .0110 :fm-index 1.1140
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 168.5050 2.4900 859.5863 .0083 :fm-index .5890
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 169.0590 1.0550 1758.0816 .0053 :fm-index 1.8640
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 169.0930 1.8580 229.0566 .0110 :fm-index 1.9690
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 169.3490 3.3680 479.1994 .0083 :fm-index 1.9970
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 169.5010 3.0680 411.8241 .0110 :fm-index 1.5390
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 169.5200 2.8290 984.8456 .0053 :fm-index .0560
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 169.6100 .7040 1767.7444 .0053 :fm-index 1.2620
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 169.8480 3.0510 859.7203 .0083 :fm-index 1.6080
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 170.4880 3.2350 231.9431 .0110 :fm-index .9690
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 170.5610 3.2810 475.2009 .0083 :fm-index .3740
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 170.7970 2.8400 988.8375 .0053 :fm-index .4200
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 171.0620 1.0210 411.7247 .0110 :fm-index .1370
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 171.2130 1.1610 848.5959 .0083 :fm-index 1.3120
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 171.4410 2.6160 390.0600 .0110 :fm-index 1.9030
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 171.4490 .7000 802.3538 .0083 :fm-index 1.5940
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 171.5270 2.5080 1773.9366 .0053 :fm-index 1.8030
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 171.7820 2.7990 232.4344 .0110 :fm-index .0590
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 171.7830 2.7660 1650.1434 .0053 :fm-index .4400
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 171.7890 3.1560 475.7231 .0083 :fm-index .7370
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 172.1540 2.1290 976.0237 .0053 :fm-index 1.2690
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 172.4890 3.3650 390.0525 .0110 :fm-index 1.4580
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 172.7450 1.5070 1665.9722 .0053 :fm-index 1.9330
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 172.8320 1.4430 798.1238 .0083 :fm-index .8560
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 172.9440 3.1560 229.0528 .0110 :fm-index 1.8300
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 173.3930 1.1100 473.7225 .0083 :fm-index 1.6260
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 173.6970 1.6170 988.7953 .0053 :fm-index .4230
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.0620 1.3190 390.9769 .0110 :fm-index .4100
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.0840 3.3660 804.6413 .0083 :fm-index 1.8760
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.1740 2.7210 418.6819 .0110 :fm-index .0910
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.5700 3.4460 845.4019 .0077 :fm-index .7660
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.6440 1.1790 1656.5756 .0049 :fm-index .2960
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.6600 2.8520 1758.9788 .0049 :fm-index .4520
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.8270 1.8840 387.0009 .0099 :fm-index 1.3010
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.8870 3.4040 796.7213 .0077 :fm-index 1.1820
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 174.9640 3.3230 416.3916 .0099 :fm-index .6290
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 175.1320 1.7050 1637.2303 .0049 :fm-index 1.0570
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 175.1500 3.1250 1762.4906 .0049 :fm-index 1.3170
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 175.3860 2.9670 852.0487 .0077 :fm-index 1.4790
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 175.6670 .6780 413.7094 .0099 :fm-index .9470
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 175.8780 2.7490 1749.7509 .0049 :fm-index .5040
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 175.9730 .5990 848.1253 .0077 :fm-index 1.9380
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 176.0880 3.3360 229.9144 .0099 :fm-index 1.3930
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 176.1170 1.1300 984.0816 .0049 :fm-index .3560
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 176.4640 1.7330 478.7184 .0077 :fm-index .2840
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 176.5760 .5680 413.4253 .0099 :fm-index 1.5020
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 176.8200 1.2150 230.9588 .0099 :fm-index 1.0990
-			       :reverb-amount .1 :amp-env z1amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z1amp :noise-amount .0050)
 	      (vln_one_sin_ran 176.8320 3.4590 473.8903 .0077 :fm-index .7680
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 	      (vln_one_sin_ran 176.8320 .7260 857.2875 .0077 :fm-index .7520
-			       :reverb-amount .1 :amp-env z2amp :noise-amount .0050)
+		:reverb-amount .1 :amp-env z2amp :noise-amount .0050)
 
 	      (restore-fm-violin-defaults)
 
 	      (current-score-time 180)
 	      (violin 180.2600 .0500 80 .8000 :fm-index 5 :reverb-amount 0
-		      :amp-env ampfunc1 :fm1-env indfunc2)
+		:amp-env ampfunc1 :fm1-env indfunc2)
 	      (violin 181.2610 .2000 80 .8000 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 182.2600 .0500 80 .8000 :fm-index 5 :reverb-amount 0
-		      :amp-env ampfunc1 :fm1-env indfunc2)
+		:amp-env ampfunc1 :fm1-env indfunc2)
 	      (violin 182.2620 .2000 80 .8000 :fm-index 5 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 183.2600 .0500 80 .8000 :fm-index 6 :reverb-amount 0
-		      :amp-env ampfunc1 :fm1-env indfunc2)
+		:amp-env ampfunc1 :fm1-env indfunc2)
 	      (violin 183.2630 .2000 80 .8000 :fm-index 6 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 184.2600 .0500 80 .3 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc1 :fm1-env indfunc2)
+		:amp-env ampfunc1 :fm1-env indfunc2)
 	      (violin 184.2620 .1 160 .3 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 184.2620 .2500 80 .8000 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 185.2600 .0500 80 .5 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc1 :fm1-env indfunc2)
+		:amp-env ampfunc1 :fm1-env indfunc2)
 	      (violin 185.2610 .1 210 .3 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 185.2620 .2000 80 .1 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 185.2630 .2500 320 .1 :fm-index 2 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 186.2600 .0500 80 .8000 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc1 :fm1-env indfunc2)
+		:amp-env ampfunc1 :fm1-env indfunc2)
 	      (violin 186.2610 .1 210 .1 :fm-index 2 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 186.2620 .2000 80 .2000 :fm-index 4 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 186.2630 .2500 320 .3 :reverb-amount 0 :amp-env ampfunc
-		      :fm1-env indfunc :fm2-rat .6875)
+		:fm1-env indfunc :fm2-rat .6875)
 	      (violin 187.2600 .0500 80 .8000 :fm-index 2 :reverb-amount 0
-		      :amp-env ampfunc1 :fm1-env indfunc2)
+		:amp-env ampfunc1 :fm1-env indfunc2)
 	      (violin 187.2610 .1 210 .1 :fm-index 2 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 187.2620 .2000 80 .2000 :fm-index 2 :reverb-amount 0
-		      :amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
+		:amp-env ampfunc :fm1-env indfunc :fm2-rat .6875)
 	      (violin 187.2630 .2500 320 .3 :reverb-amount 0 :amp-env ampfunc
-		      :fm1-env indfunc :fm2-rat .6875)
+		:fm1-env indfunc :fm2-rat .6875)
 
 	      (set! fm-violin-glissando-amount 0.0)
 	      (set! fm-violin-noise-amount 0.004)
@@ -1561,270 +1683,296 @@
 
 	      (current-score-time 188)
 	      (vln_one_sin_ran 188.2600 4 3286.9937 .1600 :fm-index 2.2165
-			       :reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2603 4 1046.4800 .1600 :fm-index 2.3234
-			       :reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2605 4 2844.3326 .1600 :fm-index 2.4790
-			       :reverb-amount .1 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .1 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2608 4 821.7484 .1 :fm-index 1.8667
-			       :reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2610 4 261.6200 .1 :fm-index 1.8523
-			       :reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2613 4 711.0832 .1 :fm-index 2.2300
-			       :reverb-amount .1 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .1 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2615 4 205.4371 .0600 :fm-index 1.5187
-			       :reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2618 4 65.4050 .0600 :fm-index 2.4074
-			       :reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2620 4 177.7708 .0600 :fm-index 2.4481
-			       :reverb-amount .1 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .1 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2623 4 51.3593 .0100 :fm-index 2.3069
-			       :reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2625 4 16.3513 .0100 :fm-index 2.1008
-			       :reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .0100 :amp-env n_amp :fm1-env n_amp)
 	      (vln_one_sin_ran 188.2628 4 44.4427 .0100 :fm-index 2.4860
-			       :reverb-amount .1 :amp-env n_amp :fm1-env n_amp)
+		:reverb-amount .1 :amp-env n_amp :fm1-env n_amp)
 
 	      (restore-fm-violin-defaults)
 	      (current-score-time 196)
-	      (vln_one_sin 196.2603 1.2000 88.8854 .1 :fm-index 2.3144 :reverb-amount .2000
-			   :amp-env mamp :fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 196.2603 4 88.8854 .1 :fm-index 2.1690 :reverb-amount .2000
-			   :amp-env mamp :fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 196.2605 2.8000 168.1236 .0500 :fm-index 2.1850 :reverb-amount .2000
-			   :amp-env mamp :fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 196.2608 1.2000 168.1236 .0800 :fm-index 1.7743 :reverb-amount .2000
-			   :amp-env mamp :fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 196.2610 2 32.7025 .1 :fm-index 2.4925 :reverb-amount .2000
-			   :amp-env mamp :fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 196.2633 2 32.7025 .1 :fm-index 2.1325 :reverb-amount .2000
-			   :amp-env mamp :fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
-	      (vln_one_sin 196.2643 4 32.7025 .0500 :fm-index 1.7578 :reverb-amount .2000
-			   :amp-env mamp :fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 196.2603 1.2000 88.8854 .1 :fm-index 2.3144 
+		:reverb-amount .2000 :amp-env mamp 
+		:fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 196.2603 4 88.8854 .1 :fm-index 2.1690 
+		:reverb-amount .2000 :amp-env mamp 
+		:fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 196.2605 2.8000 168.1236 .0500 :fm-index 2.1850 
+		:reverb-amount .2000 :amp-env mamp 
+		:fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 196.2608 1.2000 168.1236 .0800 :fm-index 1.7743 
+		:reverb-amount .2000 :amp-env mamp 
+		:fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 196.2610 2 32.7025 .1 :fm-index 2.4925 
+		:reverb-amount .2000 :amp-env mamp 
+		:fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 196.2633 2 32.7025 .1 :fm-index 2.1325 
+		:reverb-amount .2000 :amp-env mamp 
+		:fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
+	      (vln_one_sin 196.2643 4 32.7025 .0500 :fm-index 1.7578 
+		:reverb-amount .2000 :amp-env mamp 
+		:fm2-rat 4.4140 :fm3-rat 5.1410 :fm1-rat 2.7180)
 
 	      (current-score-time 204)
 	      (vln_one_sin_ran 204.2600 6.6830 244.8160 .0060 :fm-index 2
-			       :reverb-amount .2000 :noise-amount .0040)
+		:reverb-amount .2000 :noise-amount .0040)
 	      (vln_one_sin_ran 204.2600 5.5170 495.4040 .0060 :fm-index 2
-			       :reverb-amount .2000 :noise-amount .0040)
+		:reverb-amount .2000 :noise-amount .0040)
 	      (vln_one_sin_ran 204.2600 7.5350 980.6190 .0020 :fm-index 2
-			       :reverb-amount .2000 :noise-amount .0040)
+		:reverb-amount .2000 :noise-amount .0040)
 	      (vln_one_sin_ran 204.2600 7.1990 1965.4290 .0020 :fm-index .8000
-			       :reverb-amount .2000 :noise-amount .0040)
+		:reverb-amount .2000 :noise-amount .0040)
 	      (vln_one_sin_ran 204.2600 4.0790 3835.3170 .0020 :fm-index .8000
-			       :reverb-amount .2000 :noise-amount .0040)
+		:reverb-amount .2000 :noise-amount .0040)
 	      (vln_one_sin_ran 204.5170 4.7400 1320.9670 .0020 :fm-index .8000
-			       :reverb-amount .2000 :noise-amount .0040)
+		:reverb-amount .2000 :noise-amount .0040)
 	      (vln_one_sin_ran 204.7040 7.2080 655.5670 .0040 :fm-index 2
-			       :reverb-amount .2000 :noise-amount .0040)
+		:reverb-amount .2000 :noise-amount .0040)
 	      (vln_one_sin_ran 205.0490 6.6530 169.4230 .0040 :fm-index 2
-			       :reverb-amount .2000 :noise-amount .0040)
+		:reverb-amount .2000 :noise-amount .0040)
 
 	      (set! fm-violin-glissando-amount 0.0)
 	      (set! fm-violin-reverb-amount .9)
 
 	      (current-score-time 213)
 	      (vln_one_sin_exp 213.5450 6.4650 366.3330 .0320 :fm-index 1.0480
-			       :amp-env
-			       '(0 0 1.5468 1 2.0882 .7000 2.3202 1 98.4532 .7500 100.0 0))
+		:amp-env
+		'(0 0 1.5468 1 2.0882 .7000 2.3202 1 98.4532 .7500 100.0 0))
 	      (vln_one_sin_exp 213.5950 8.4340 1172.5830 .0180 :fm-index 1.1350
-			       :amp-env
-			       '(0 0 1.1857 1.0000 1.6007 .7000 1.7785 1 98.8143 .5556 100.0 0))
+		:amp-env
+		'(0 0 1.1857 1.0 1.6007 .7000 1.7785 1 98.8143 .5556 100.0 0))
 	      (vln_one_sin_exp 213.7650 1.6210 369.9940 .0170 :fm-index .0960
-			       :amp-env
-			       '(0 0 6.1690 1.0000 8.3282 .7000 9.2535 1.0 93.8310 .5294 100.0 0))
+		:amp-env
+		'(0 0 6.1690 1.0 8.3282 .7000 9.2535 1.0 93.8310 .5294 100.0 0))
 	      (vln_one_sin_exp 213.8820 3.0640 246.9420 .0170 :fm-index .0020
-			       :amp-env
-			       '(0 0 3.2637 1 4.4060 .7000 4.8956 1.0000 96.7363 .5294 100.0 0))
+		:amp-env
+		'(0 0 3.2637 1 4.4060 .7000 4.8956 1.0 96.7363 .5294 100.0 0))
 	      (vln_one_sin_exp 213.9250 3.1170 123.4710 .0380 :fm-index .2330
-			       :amp-env
-			       '(0 0 3.2082 1 4.3311 .7000 4.8123 1 96.7918 .7895 100.0 0))
+		:amp-env
+		'(0 0 3.2082 1 4.3311 .7000 4.8123 1 96.7918 .7895 100.0 0))
 	      (vln_one_sin_exp 213.9810 3.5670 123.4710 .0420 :fm-index .2330
-			       :amp-env
-			       '(0 0 2.8035 1 3.7847 .7000 4.2052 1.0000 97.1965 .8095 100.0 0))
+		:amp-env
+		'(0 0 2.8035 1 3.7847 .7 4.2052 1.0 97.1965 .8095 100.0 0))
 	      (vln_one_sin_exp 214.1280 1.0450 246.9420 .0170 :fm-index 1.2050
-			       :amp-env
-			       '(0 0 9.5694 1 12.9187 .7000 14.3541 1 90.4306 .5294 100.0 0))
+		:amp-env
+		'(0 0 9.5694 1 12.9187 .7000 14.3541 1 90.4306 .5294 100.0 0))
 	      (vln_one_sin_exp 214.2550 3.3870 374.1370 .0170 :fm-index .1800
-			       :amp-env
-			       '(0 0 2.9525 1.0000 3.9858 .7000 4.4287 1.0 97.0475 .5294 100.0 0))
+		:amp-env
+		'(0 0 2.9525 1.0 3.9858 .7000 4.4287 1.0 97.0475 .5294 100.0 0))
 	      (vln_one_sin_exp 214.2990 8.3050 1576.9120 .0200 :fm-index .2990
-			       :amp-env
-			       '(0 0 1.2041 1 1.6255 .7000 1.8061 1 98.7959 .6000 100.0 0))
+		:amp-env
+		'(0 0 1.2041 1 1.6255 .7000 1.8061 1 98.7959 .6000 100.0 0))
 	      (vln_one_sin_exp 214.3300 4.4630 246.9420 .0170 :fm-index .0020
-			       :amp-env
-			       '(0 0 2.2406 1 3.0249 .7000 3.3610 1.0000 97.7594 .5294 100.0 0))
+		:amp-env
+		'(0 0 2.2406 1 3.0249 .7 3.3610 1.0 97.7594 .5294 100.0 0))
 	      (vln_one_sin_exp 214.6600 8.9940 1576.9120 .0200 :fm-index .2990
-			       :amp-env
-			       '(0 0 1.1119 1 1.5010 .7000 1.6678 1 98.8881 .6000 100.0 0))
+		:amp-env
+		'(0 0 1.1119 1 1.5010 .7000 1.6678 1 98.8881 .6000 100.0 0))
 	      (vln_one_sin_exp 214.9060 8.8360 1172.5830 .0180 :fm-index 1.1350
-			       :amp-env
-			       '(0 0 1.1317 1 1.5278 .7000 1.6976 1 98.8683 .5556 100.0 0))
+		:amp-env
+		'(0 0 1.1317 1 1.5278 .7000 1.6976 1 98.8683 .5556 100.0 0))
 	      (vln_one_sin_exp 215.1510 4.9320 374.1370 .0170 :fm-index .1800
-			       :amp-env
-			       '(0 0 2.0276 1 2.7372 .7000 3.0414 1 97.9724 .5294 100.0 0))
+		:amp-env
+		'(0 0 2.0276 1 2.7372 .7000 3.0414 1 97.9724 .5294 100.0 0))
 	      (vln_one_sin_exp 215.2720 2.3250 369.9940 .0170 :fm-index 1.1030
-			       :amp-env
-			       '(0 0 4.3011 1 5.8065 .7000 6.4516 1 95.6989 .5294 100.0 0))
+		:amp-env
+		'(0 0 4.3011 1 5.8065 .7000 6.4516 1 95.6989 .5294 100.0 0))
 	      (vln_one_sin_exp 216.6960 3.5540 366.3330 .0310 :fm-index 1.0480
-			       :amp-env
-			       '(0 0 2.8137 1 3.7985 .7000 4.2206 1 97.1863 .7419 100.0 0))
+		:amp-env
+		'(0 0 2.8137 1 3.7985 .7000 4.2206 1 97.1863 .7419 100.0 0))
 	      (vln_one_sin_exp 217.7240 .6040 246.9420 .0170 :fm-index 1.2050
-			       :amp-env
-			       '(0 0 16.5563 1 22.3510 .7000 24.8344 1 83.4437 .5294 100 0))
+		:amp-env
+		'(0 0 16.5563 1 22.3510 .7000 24.8344 1 83.4437 .5294 100 0))
 	      (vln_one_sin_exp 217.9420 2.5010 123.4710 .0330 :fm-index .2330
-			       :amp-env
-			       '(0 0 3.9984 1 5.3978 .7000 5.9976 1 96.0016 .7576 100.0 0))
+		:amp-env
+		'(0 0 3.9984 1 5.3978 .7000 5.9976 1 96.0016 .7576 100.0 0))
 	      (vln_one_sin_exp 218.0340 2.3860 246.9420 .0170 :fm-index .0020
-			       :amp-env
-			       '(0 0 4.1911 1 5.6580 .7000 6.2867 1 95.8089 .5294 100.0 0))
+		:amp-env
+		'(0 0 4.1911 1 5.6580 .7000 6.2867 1 95.8089 .5294 100.0 0))
 	      (vln_one_sin_exp 218.3850 1.4510 369.9940 .0170 :fm-index 1.1030
-			       :amp-env
-			       '(0 0 6.8918 1 9.3039 .7000 10.3377 1 93.1082 .5294 100.0 0))
+		:amp-env
+		'(0 0 6.8918 1 9.3039 .7000 10.3377 1 93.1082 .5294 100.0 0))
 	      (vln_one_sin_exp 218.5670 2.6550 374.1370 .0170 :fm-index .1800
-			       :amp-env
-			       '(0 0 3.7665 1 5.0847 .7000 5.6497 1 96.2335 .5294 100.0 0))
+		:amp-env
+		'(0 0 3.7665 1 5.0847 .7000 5.6497 1 96.2335 .5294 100.0 0))
 	      (vln_one_sin_exp 218.9830 2.9860 123.4710 .0380 :fm-index .2330
-			       :amp-env
-			       '(0 0 3.3490 1 4.5211 .7000 5.0234 1 96.6510 .7895 100.0 0))
+		:amp-env
+		'(0 0 3.3490 1 4.5211 .7000 5.0234 1 96.6510 .7895 100.0 0))
 	      (vln_one_sin_exp 219.4910 .6110 123.9770 .0170 :fm-index .7550
-			       :amp-env
-			       '(0 0 16.3666 1 22.0949 .7000 24.5499 1 83.6334 .5294 100.0 0))
+		:amp-env
+		'(0 0 16.3666 1 22.0949 .7000 24.5499 1 83.6334 .5294 100.0 0))
 	      (vln_one_sin_exp 219.7570 1.4440 123.4710 .0170 :fm-index .0020
-			       :amp-env
-			       '(0 0 6.9252 1 9.3490 .7000 10.3878 1 93.0748 .5294 100.0 0))
+		:amp-env
+		'(0 0 6.9252 1 9.3490 .7000 10.3878 1 93.0748 .5294 100.0 0))
 	      (vln_one_sin_exp 219.7750 .5370 92.4435 .0330 :fm-index .9200
-			       :amp-env
-			       '(0 0 18.6220 1 25.1397 .7000 27.9330 1 81.3780 .7576 100.0 0))
+		:amp-env
+		'(0 0 18.6220 1 25.1397 .7000 27.9330 1 81.3780 .7576 100.0 0))
 	      (vln_one_sin_exp 219.7750 10.5370 92.4435 .0130 :fm-index .9200
-			       :amp-env
-			       '(0 0 .9490 1 1.2812 .7000 1.4236 1 99.0510 .3846 100.0 0))
+		:amp-env
+		'(0 0 .9490 1 1.2812 .7000 1.4236 1 99.0510 .3846 100.0 0))
 	      (vln_one_sin_exp 219.9380 .6520 122.2995 .0170 :fm-index 1.8380
-			       :amp-env
-			       '(0 0 15.3374 1 20.7055 .7 23.0061 1 84.6626 .5294 100.0 0))
+		:amp-env
+		'(0 0 15.3374 1 20.7055 .7 23.0061 1 84.6626 .5294 100.0 0))
 	      (vln_one_sin_exp 220.2350 3.7250 586.2915 .0180 :fm-index 1.1350
-			       :amp-env '(0 0 2.6846 1 3.6242 .7 4.0268 1 97.3154 .5556 100.0 0))
+		:amp-env 
+		'(0 0 2.6846 1 3.6242 .7 4.0268 1 97.3154 .5556 100.0 0))
 	      (vln_one_sin_exp 220.2560 2.8900 183.1665 .0260 :fm-index 1.0480
-			       :amp-env
-			       '(0 0 3.4602 1 4.6713 .7000 5.1903 1 96.5398 .6923 100.0 0))
+		:amp-env
+		'(0 0 3.4602 1 4.6713 .7000 5.1903 1 96.5398 .6923 100.0 0))
 	      (vln_one_sin_exp 220.2710 1.6210 187.0685 .0170 :fm-index .1800
-			       :amp-env
-			       '(0 0 6.1690 1.0000 8.3282 .7000 9.2535 1.0 93.8310 .5294 100.0 0))
+		:amp-env
+		'(0 0 6.1690 1.0 8.3282 .7 9.2535 1.0 93.8310 .5294 100.0 0))
 	      (vln_one_sin_exp 220.2920 2.0160 183.1665 .0290 :fm-index 1.0480
-			       :amp-env
-			       '(0 0 4.9603 1 6.6964 .7000 7.4405 1 95.0397 .7241 100.0 0))
+		:amp-env
+		'(0 0 4.9603 1 6.6964 .7000 7.4405 1 95.0397 .7241 100.0 0))
 	      (vln_one_sin_exp 220.2920 12.0160 183.1665 .0290 :fm-index 1.0480
-			       :amp-env
-			       '(0 0 .8322 1 1.1235 .7000 1.2483 1.0000 99.1678 .7241 100.0 0))
+		:amp-env
+		'(0 0 .8322 1 1.1235 .7000 1.2483 1.0000 99.1678 .7241 100.0 0))
 	      (vln_one_sin_exp 220.3300 .7300 184.9970 .0170 :fm-index .0960
-			       :amp-env
-			       '(0 0 13.6986 1 18.4932 .7000 20.5479 1.0000 86.3014 .5294 100 0))
+		:amp-env
+		'(0 0 13.6986 1 18.4932 .7 20.5479 1.0 86.3014 .5294 100 0))
 	      (vln_one_sin_exp 220.3570 1.9600 183.1665 .0280 :fm-index 1.0480
-			       :amp-env
-			       '(0 0 5.1020 1.0 6.8878 .7 7.6531 1.0 94.8980 .7143 100.0 0))
+		:amp-env
+		'(0 0 5.1020 1.0 6.8878 .7 7.6531 1.0 94.8980 .7143 100.0 0))
 	      (vln_one_sin_exp 220.3820 2.2450 61.7355 .0330 :fm-index .2330
-			       :amp-env
-			       '(0 0 4.4543 1 6.0134 .7000 6.6815 1 95.5457 .7576 100.0 0))
+		:amp-env
+		'(0 0 4.4543 1 6.0134 .7000 6.6815 1 95.5457 .7576 100.0 0))
 	      (vln_one_sin_exp 220.3820 12.2450 61.7355 .0330 :fm-index .2330
-			       :amp-env
-			       '(0 0 .8167 1 1.1025 .7000 1.2250 1 99.1833 .7576 100.0 0))
+		:amp-env
+		'(0 0 .8167 1 1.1025 .7000 1.2250 1 99.1833 .7576 100.0 0))
 	      (vln_one_sin_exp 220.5410 3.0130 246.5050 .0360 :fm-index 1.1350
-			       :amp-env
-			       '(0 0 3.3190 1.0000 4.4806 .7000 4.9784 1.0 96.6810 .7778 100.0 0))
+		:amp-env
+		'(0 0 3.3190 1.0 4.4806 .7 4.9784 1.0 96.6810 .7778 100.0 0))
 	      (vln_one_sin_exp 220.5570 2.3220 1251.5960 .0400 :fm-index .2990
-			       :amp-env
-			       '(0 0 4.3066 1 5.8140 .7000 6.4599 1 95.6934 .8000 100.0 0))
+		:amp-env
+		'(0 0 4.3066 1 5.8140 .7000 6.4599 1 95.6934 .8000 100.0 0))
 	      (vln_one_sin_exp 220.5570 18.3220 1251.5960 .0200 :fm-index .2990
-			       :amp-env
-			       '(0 0 .5458 1.0000 .7368 .7000 .8187 1 99.4542 .6000 100.0 0))
-	      (vln_one_sin 220.5600 13.8770 3951.1200 .0060 :fm-index .5 :amp-env updown)
-	      (vln_one_sin 220.7600 17.8770 493.8900 .0170 :fm-index .5280 :amp-env updown)
+		:amp-env
+		'(0 0 .5458 1.0000 .7368 .7000 .8187 1 99.4542 .6000 100.0 0))
+	      (vln_one_sin 220.5600 13.8770 3951.1200 .0060 :fm-index .5 
+		:amp-env updown)
+	      (vln_one_sin 220.7600 17.8770 493.8900 .0170 :fm-index .5280 
+		:amp-env updown)
 	      (vln_one_sin_exp 221.1060 1.9900 183.1665 .0230 :fm-index 1.0480
-			       :amp-env
-			       '(0 0 5.0251 1.0000 6.7839 .7000 7.5377 1 94.9749 .6522 100.0 0))
-	      (vln_one_sin 221.1600 13.8770 1975.5600 .0110 :fm-index 1.2000 :amp-env updown)
+		:amp-env
+		'(0 0 5.0251 1.0 6.7839 .7 7.5377 1 94.9749 .6522 100.0 0))
+	      (vln_one_sin 221.1600 13.8770 1975.5600 .0110 :fm-index 1.2000 
+		:amp-env updown)
 	      (vln_one_sin_exp 221.2570 1.9180 61.7355 .0330 :fm-index .2330
-			       :amp-env
-			       '(0 0 5.2138 1 7.0386 .7000 7.8206 1 94.7862 .7576 100.0 0))
-	      (vln_one_sin 221.2600 15.8770 246.9450 .0170 :fm-index .5280 :amp-env updown)
+		:amp-env
+		'(0 0 5.2138 1 7.0386 .7000 7.8206 1 94.7862 .7576 100.0 0))
+	      (vln_one_sin 221.2600 15.8770 246.9450 .0170 :fm-index .5280 
+		:amp-env updown)
 	      (vln_one_sin_exp 221.6370 1.3090 183.1665 .0310 :fm-index 1.0480
-			       :amp-env
-			       '(0 0 7.6394 1 10.3132 .7000 11.4591 1 92.3606 .7419 100.0 0))
-	      (vln_one_sin 221.8600 16.8770 987.7800 .0130 :fm-index 1.5000 :amp-env updown)
+		:amp-env
+		'(0 0 7.6394 1 10.3132 .7000 11.4591 1 92.3606 .7419 100.0 0))
+	      (vln_one_sin 221.8600 16.8770 987.7800 .0130 :fm-index 1.5000 
+		:amp-env updown)
 	      (vln_one_sin_exp 222.0330 1.1590 183.1665 .0250 :fm-index 1.0480
-			       :amp-env '(0 0 8.6281 1 11.648 .7 12.9422 1.0 91.3719 .68 100.0 0))
+		:amp-env 
+		'(0 0 8.6281 1 11.648 .7 12.9422 1.0 91.3719 .68 100.0 0))
 	      (vln_one_sin 222.0600 13.8770 3951.1200 .0090 :amp-env updown)
 	      (vln_one_sin_exp 222.0980 1.2400 30.8675 .0330 :fm-index .2330
-			       :amp-env
-			       '(0 0 8.0645 1 10.8871 .7000 12.0968 1 91.9355 .7576 100.0 0))
+		:amp-env
+		'(0 0 8.0645 1 10.8871 .7000 12.0968 1 91.9355 .7576 100.0 0))
 	      (vln_one_sin_exp 222.0980 11.2400 30.8675 .0130 :fm-index .2330
-			       :amp-env
-			       '(0 0 .8897 1 1.2011 .7000 1.3345 1 99.1103 .3846 100.0 0))
+		:amp-env
+		'(0 0 .8897 1 1.2011 .7000 1.3345 1 99.1103 .3846 100.0 0))
 	      (vln_one_sin_exp 222.1260 .2600 123.4710 .0170 :fm-index 1.2050
-			       :amp-env
-			       '(0 0 38.4615 1 51.9231 .7000 57.6923 1 61.5385 .5294 100.0 0))
+		:amp-env
+		'(0 0 38.4615 1 51.9231 .7000 57.6923 1 61.5385 .5294 100.0 0))
 	      (vln_one_sin_exp 222.1260 10.2600 123.4710 .0170 :fm-index 1.2050
-			       :amp-env
-			       '(0 0 .9747 1 1.3158 .7000 1.4620 1 99.0253 .5294 100.0 0))
-	      (vln_one_sin 222.2600 14.8770 123.4725 .0170 :fm-index 1.5000 :amp-env updown)
-	      (vln_one_sin 222.2600 13.8770 61.7363 .0170 :fm-index 1.5000 :amp-env updown)
-	      (vln_one_sin 222.2600 12.8770 30.8681 .0170 :fm-index 1.5000 :amp-env updown)
-	      (vln_one_sin 222.2600 11.8770 15.4341 .0170 :fm-index 1.5000 :amp-env updown)
+		:amp-env
+		'(0 0 .9747 1 1.3158 .7000 1.4620 1 99.0253 .5294 100.0 0))
+	      (vln_one_sin 222.2600 14.8770 123.4725 .0170 :fm-index 1.5000 
+		:amp-env updown)
+	      (vln_one_sin 222.2600 13.8770 61.7363 .0170 :fm-index 1.5000 
+		:amp-env updown)
+	      (vln_one_sin 222.2600 12.8770 30.8681 .0170 :fm-index 1.5000 
+		:amp-env updown)
+	      (vln_one_sin 222.2600 11.8770 15.4341 .0170 :fm-index 1.5000 
+		:amp-env updown)
 
 	      (restore-fm-violin-defaults)
 	      (current-score-time 241)
-	      (cel_one_sum 241.2620 .3906 440 .4500 :fm-index 1.2000 :reverb-amount .0013
-			   :amp-env '(0 0 .7680 1 4.7774 .6000 9.7891 .3 24.8243 .1 100 0))
-	      (cel_one_sum 241.2640 .5220 220 .4500 :fm-index 1.2000 :reverb-amount .0012
-			   :amp-env
-			   '(0 0 .5747 1.0000 4.5919 .6000 9.6134 .3 24.6778 .1 100 0))
-	      (cel_one_sum 241.2660 1.5660 880 .4500 :fm-index 1.2000 :reverb-amount .0014
-			   :amp-env
-			   '(0 0 .1916 1.0000 4.2242 .6000 9.2651 .3 24.3876 .1 100.0 0))
-	      (cel_one_sum 241.2680 1.5660 110 .4500 :fm-index 1.2000 :reverb-amount .0013
-			   :amp-env
-			   '(0 0 .1916 1.0000 4.2242 .6000 9.2651 .3 24.3876 .1 100.0 0))
+	      (cel_one_sum 241.2620 .3906 440 .4500 :fm-index 1.2000 
+		:reverb-amount .0013
+		:amp-env 
+		'(0 0 .7680 1 4.7774 .6000 9.7891 .3 24.8243 .1 100 0))
+	      (cel_one_sum 241.2640 .5220 220 .4500 :fm-index 1.2000 
+		:reverb-amount .0012
+		:amp-env
+		'(0 0 .5747 1.0000 4.5919 .6000 9.6134 .3 24.6778 .1 100 0))
+	      (cel_one_sum 241.2660 1.5660 880 .4500 :fm-index 1.2000 
+		:reverb-amount .0014
+		:amp-env
+		'(0 0 .1916 1.0000 4.2242 .6000 9.2651 .3 24.3876 .1 100.0 0))
+	      (cel_one_sum 241.2680 1.5660 110 .4500 :fm-index 1.2000 
+		:reverb-amount .0013
+		:amp-env
+		'(0 0 .1916 1.0000 4.2242 .6000 9.2651 .3 24.3876 .1 100.0 0))
 	      (current-score-time 244)
 	      (vln_one_sin 244.8600 .9000 733.3330 .1875
-			   :fm-index .2000 :distance 1 :reverb-amount .0012
-			   :amp-env
-			   '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:fm-index .2000 :distance 1 :reverb-amount .0012
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin 244.8600 .2250 550 .1875
-			   :fm-index .2000 :distance 1 :reverb-amount .0015
-			   :amp-env
-			   '(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))
+		:fm-index .2000 :distance 1 :reverb-amount .0015
+		:amp-env
+		'(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))
 	      (vln_one_sin 244.8600 .4500 586.6670 .3750
-			   :fm-index .2000 :distance 1 :reverb-amount .0013
-			   :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
+		:fm-index .2000 :distance 1 :reverb-amount .0013
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
 	      (vln_one_sin 244.9020 .9000 733.3330 .1875
-			   :fm-index .4 :distance 1 :reverb-amount .0013
-			   :amp-env
-			   '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:fm-index .4 :distance 1 :reverb-amount .0013
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin 244.9020 .2250 550 .1875
-			   :fm-index .4 :distance 1 :reverb-amount .0010
-			   :amp-env
-			   '(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))
+		:fm-index .4 :distance 1 :reverb-amount .0010
+		:amp-env
+		'(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))
 	      (vln_one_sin 244.9020 .4500 586.6670 .3750
-			   :fm-index .4 :distance 1 :reverb-amount .0015
-			   :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
+		:fm-index .4 :distance 1 :reverb-amount .0015
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
 	      (vln_one_sin 244.9430 .9000 366.6670 .1875
-			   :fm-index .6000 :distance 1 :reverb-amount .0016
-			   :amp-env
-			   '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:fm-index .6000 :distance 1 :reverb-amount .0016
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin 244.9430 .2250 275 .1875
-			   :fm-index .6000 :distance 1 :reverb-amount .0015
-			   :amp-env
-			   '(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))
+		:fm-index .6000 :distance 1 :reverb-amount .0015
+		:amp-env
+		'(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))
 	      (vln_one_sin 244.9430 .4500 293.3340 .3750
-			   :fm-index .6000 :distance 1 :reverb-amount .0015
-			   :amp-env '(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
+		:fm-index .6000 :distance 1 :reverb-amount .0015
+		:amp-env 
+		'(0 0 .6667 1 4.6801 .6000 9.6970 .3 24.7475 .1 100 0))
 	      (vln_one_sin 244.9850 .9000 733.3330 .1875
-			   :fm-index .8000 :distance 1 :reverb-amount .0010
-			   :amp-env
-			   '(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
+		:fm-index .8000 :distance 1 :reverb-amount .0010
+		:amp-env
+		'(0 0 .3333 1 4.3603 .6000 9.3939 .3 24.4950 .1 100.0 0))
 	      (vln_one_sin 244.9850 .2250 550 .1875
-			   :fm-index .8000 :distance 1 :reverb-amount .0013
-			   :amp-env
-			   '(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))))
+		:fm-index .8000 :distance 1 :reverb-amount .0013
+		:amp-env
+		'(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))))
 
 ;; fmviolin.scm ends here

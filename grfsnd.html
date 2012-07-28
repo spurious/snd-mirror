@@ -2529,28 +2529,6 @@ of a bigfloat:
 
 
 
-<p>I think I'll eventually add bignum versions of all the CLM generators.  Here, for example,
-is a bigfloat oscil:
-</p>
-
-
-<pre class="indented">
-(defgenerator (big-oscil 
-  :make-wrapper 
-    (lambda (g)
-      (set! (big-oscil-frequency g) (/ (* (big-oscil-frequency g) 2.0 pi) (mus-srate)))
-      g))
-  (frequency *clm-default-frequency*) (angle 0.0))
-
-(define* (big-oscil gen (fm 0.0) (pm 0.0))
-  (let ((x (big-oscil-angle gen)))
-    (set! (big-oscil-angle gen) (+ fm x (big-oscil-frequency gen)))
-    (sin (+ x pm))))
-</pre>
-
-
-
-
 <div class="header" id="otherstuff">Other stuff</div>
 
 <p>lint.scm is a lint program for s7 scheme.

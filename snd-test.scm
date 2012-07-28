@@ -11809,11 +11809,11 @@ EDITS: 2
   ;; ----------------
   (define* (ssb-am-1 gen y (fm-1 0.0))
     (let* ((fm fm-1)
-	   (ccos (oscil (sa1-coscar gen) fm))
-	   (csin (oscil (sa1-sincar gen) fm))
-	   (yh (hilbert-transform (sa1-hlb gen) y))
-	   (yd (delay (sa1-dly gen) y)))
-      (if (> (sa1-freq gen) 0.0)
+	   (ccos (oscil (gen 'coscar) fm))
+	   (csin (oscil (gen 'sincar) fm))
+	   (yh (hilbert-transform (gen 'hlb) y))
+	   (yd (delay (gen 'dly) y)))
+      (if (> (gen 'freq) 0.0)
 	  (- (* ccos yd) ; shift up
 	     (* csin yh))
 	  (+ (* ccos yd) ; shift down
@@ -20924,11 +20924,11 @@ EDITS: 2
     
     (let ((ind (open-sound "oboe.snd")))
       (let ((gen (make-moog-filter 500.0 .1)))
-	(if (fneq 500.0 (moog-frequency gen)) (snd-display #__line__ ";moog freq: ~A" (moog-frequency gen)))
-	(if (fneq .1 (moog-Q gen)) (snd-display #__line__ ";moog Q: ~A" (moog-Q gen)))
-	(if (not (vct? (moog-s gen))) (snd-display #__line__ ";moog state: ~A" (moog-s gen)))
-	(if (fneq 0.0 (moog-y gen)) (snd-display #__line__ ";moog A? ~A" (moog-y gen)))
-	(if (fneq -0.861 (moog-fc gen)) (snd-display #__line__ ";moog freqtable: ~A" (moog-fc gen)))
+	(if (fneq 500.0 (moog-frequency gen)) (snd-display #__line__ ";moog freq: ~A" (moog-frequency gen))) ; moog-frequency is a separate function
+	(if (fneq .1 (gen 'Q)) (snd-display #__line__ ";moog Q: ~A" (gen 'Q)))
+	(if (not (vct? (gen 's))) (snd-display #__line__ ";moog state: ~A" (gen 's)))
+	(if (fneq 0.0 (gen 'y)) (snd-display #__line__ ";moog A? ~A" (gen 'y)))
+	(if (fneq -0.861 (gen 'fc)) (snd-display #__line__ ";moog freqtable: ~A" (gen 'fc)))
 	(let ((vals (make-vct 20)))
 	  (set! (vals 0) (moog-filter gen 1.0))
 	  (do ((i 1 (+ i 1)))
@@ -38180,35 +38180,32 @@ EDITS: 1
   (cvect #f))
 
 (defgenerator (osc329 :make-wrapper (lambda (gen)
-					(set! (osc329-freq gen) (hz->radians (osc329-freq gen)))
+					(set! (gen 'freq) (hz->radians (gen 'freq)))
 					gen)
 			:methods (list
-				  (list 'mus-frequency 
-					(lambda (g) (radians->hz (osc329-freq g)))
-					(lambda (g val) (set! (osc329-freq g) (hz->radians val))))
-				  
-				  (list 'mus-phase 
-					(lambda (g) (osc329-phase g))
-					(lambda (g val) (set! (osc329-phase g) val)))
-				  
-				  (list 'mus-increment 
+				  (cons 'mus-frequency 
 					(make-procedure-with-setter
-					 (lambda (g) (osc329-incr g))
-					 (lambda (g val) (set! (osc329-incr g) val))))
-				  
-				  (list 'mus-name
+					 (lambda (g) (radians->hz (g 'freq)))
+					 (lambda (g val) (set! (g 'freq) (hz->radians val)))))
+				  (cons 'mus-phase 
+					(make-procedure-with-setter
+					 (lambda (g) (g 'phase))
+					 (lambda (g val) (set! (g 'phase) val))))
+				  (cons 'mus-increment 
+					(make-procedure-with-setter
+					 (lambda (g) (g 'incr))
+					 (lambda (g val) (set! (g 'incr) val))))
+				  (cons 'mus-name
 					(lambda (g) "osc329"))
-				  
-				  (list 'mus-length
-					(lambda (g) (osc329-n g))
-					(lambda (g val) (set! (osc329-n g) val)))
-				  
-				  (list 'mus-hop
+				  (cons 'mus-length
 					(make-procedure-with-setter
-					 (lambda (g) (osc329-n g))
-					 (lambda (g val) (set! (osc329-n g) val))))
-				  
-				  (list 'mus-describe 
+					 (lambda (g) (g 'n))
+					 (lambda (g val) (set! (g 'n) val))))
+				  (cons 'mus-hop
+					(make-procedure-with-setter
+					 (lambda (g) (g 'n))
+					 (lambda (g val) (set! (g 'n) val))))
+				  (cons 'mus-describe 
 					(lambda (g) (format #f "osc329 freq: ~A, phase: ~A" 
 							    (mus-frequency g) 
 							    (mus-phase g))))))
@@ -38216,8 +38213,8 @@ EDITS: 1
   (incr 1.0))
 
 (define (osc329 gen fm)
-  (let ((result (sin (osc329-phase gen))))
-    (set! (osc329-phase gen) (+ (osc329-phase gen) (osc329-freq gen) fm))
+  (let ((result (sin (gen 'phase))))
+    (set! (gen 'phase) (+ (gen 'phase) (gen 'freq) fm))
     result))
 
 
@@ -48125,3 +48122,8 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 
 |#
 
+;;; TODO: much more extensive defgenerator tests
+;;; TODO: test tricks with let->cur-env in with-env etc
+;;; TODO: error in s7_call should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
+;;; TODO: doc with-env interaction with methods like mus-scaler
+;;;   (either don't embed call or check gen type in local method and use #_)

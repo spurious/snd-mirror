@@ -2134,6 +2134,52 @@ static void report_counts(s7_scheme *sc)
 }
 #endif
 
+#if 0
+/*
+;; why are these in the trailers section at all??
+694574: (with-environment gen (set! currentValue (+ currentValue (* (- targetValue currentValue) r))))
+661500: (with-environment gen (set! y1 (+ (* coeff (- input y1)) x1)) (set! x1 input) y1)
+548460: (gen 'ampf)
+548162: (gen 'pulse)
+496125: (with-environment gen (set! y1 (+ (* coeff (- input y1)) x1)) (set! x1 input) (set! y2 (+ (* coeff (- y1 y2)) x2)) (set! x2 y1) (set! y3 (+ (* coeff (- y2 y3)) x3)) (set! x3 y2) (set! y4 (+ (* coeff (- y3 y4)) x4)) (set! x4 y3) (set! y5 (+ (* coeff (- y4 y5)) x5)) (set! x5 y4) (set! y6 (+ (* coeff (- y5 y6)) x6)) (set! x6 y5) (set! y7 (+ (* coeff (- y6 y7)) x7)) (set! x7 y6) (set! y8 (+ (* coeff (- y7 y8)) x8)) (set! x8 y7) y8)
+445409: (* (env ampf) (pulsed-env peep frq) md md (nrxysin carrier (+ (* frq 825.0) (* 0.1 (rand-interp noise)) (* 0.1 md))))
+321048: (with-environment gen (let* ((x angle) (y (* x ratio))) (set! angle (+ x fm frequency)) (/ (* (exp (* r (cos y))) (cos (+ x (* r (sin y))))) (exp (abs r)))))
+165375: (one-pole-swept dryTap-one-pole-swept (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp)) (expseg dryTap-coef-expseg drycoefrate))
+165375: (one-pole-swept wetTap-one-pole-swept (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp)) (expseg wetTap-coef-expseg wetcoefrate))
+165375: (one-pole-allpass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn))
+165375: (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp))
+165375: (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp))
+165375: (* (expseg dryTap-amp-expseg dryamprate) (one-pole-swept dryTap-one-pole-swept (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp)) (expseg dryTap-coef-expseg drycoefrate)))
+165375: (* (expseg wetTap-amp-expseg wetamprate) (one-pole-swept wetTap-one-pole-swept (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp)) (expseg wetTap-coef-expseg wetcoefrate)))
+132300: (* (max (- 1.0 pval) 0.0) 0.05 aval (oscil gen2 (* 2.4 noise)))
+132300: (+ (* (max pval 0.0) (+ (* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise)))) (* (max (- 1.0 pval) 0.0) 0.05 aval (oscil gen2 (* 2.4 noise))))
+132300: (* (env ampf) (+ (* (max pval 0.0) (+ (* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise)))) (* (max (- 1.0 pval) 0.0) 0.05 aval (oscil gen2 (* 2.4 noise)))))
+130083: (with-environment gen (let ((x angle)) (set! angle (+ x fm frequency)) (polynomial coeffs (cos x))))
+95917: (with-environment gen (let ((x angle)) (set! angle (+ fm x frequency)) (if (or (= n 1) (< (abs r) nearly-zero)) 0.0 (let ((norm (- (/ (- (expt (abs r) n) 1) (- (abs r) 1)) 1.0))) (/ (+ (- (* r (cos x)) (* (expt r n) (cos (* n x))) (* r r)) (* (expt r (+ n 1)) (cos (* (- n 1) x)))) (* norm (+ 1.0 (* -2.0 r (cos x)) (* r r))))))))
+88200: (* (env ampf) (env pulsef) pulse-amp (+ (* 0.8 (oscil gen1 0.0 rn)) (* 0.1 (oscil gen2 0.0 (* 2 rn))) (* 0.1 (oscil gen3 0.0 (* 3 rn)))))
+88200: (* (env ampf) 0.5 (+ (oscil gen1 (+ frq (* (env rndf) (rand-interp rnd)) (* 0.15 (oscil gen2)))) (rxyk!cos rx)))
+81585: (* (env ampf) (pulsed-env pulsef) (+ (* (- 1.0 intrp) (polywave poly1 frq)) (* intrp (polywave poly2 frq))))
+67473: (rk!cos gen1 (env pulse-frqf))
+67473: (with-environment gen (let ((x angle)) (set! angle (+ fm x frequency)) (/ (- (* (exp (* r (cos x))) (cos (* r (sin x)))) 1.0) (- (exp (abs r)) 1.0))))
+67473: (* (env ampf) (env pulsef) (rk!cos gen1 (env pulse-frqf)))
+62037: (* (env ampf) (env pulsef) (blackman pulse2) (polywave gen (rand-interp rnd)))
+56007: (* (env ampf) (+ 0.9 (rand-interp rnd1)) (nrcos gen1 frq))
+48510: (locsig loc (+ gr-start-sample gr-offset) (* (if interp-gr-envs (+ (* (- 1 gr-where) (table-lookup gr-env)) (* gr-where (table-lookup gr-env-end))) (table-lookup gr-env)) (env amp-env) (src in-file-reader)))
+48510: (* (if interp-gr-envs (+ (* (- 1 gr-where) (table-lookup gr-env)) (* gr-where (table-lookup gr-env-end))) (table-lookup gr-env)) (env amp-env) (src in-file-reader))
+46305: (+ (polywave gen1 (* 2 frq)) (* amp2 (polywave gen2 frq)) (* (- 1.0 amp2) 2 (polywave gen3 (* 2 frq))) (* (env ampf4) (oscil gen4 (* 6 frq))))
+46305: (* amp (env ampf) (+ (polywave gen1 (* 2 frq)) (* amp2 (polywave gen2 frq)) (* (- 1.0 amp2) 2 (polywave gen3 (* 2 frq))) (* (env ampf4) (oscil gen4 (* 6 frq)))))
+44982: (rxyk!cos gen1 (* 16.8 fm))
+44982: (rxyk!cos gen2 (* 18.8 fm))
+44982: (+ (rxyk!cos gen1 (* 16.8 fm)) (rxyk!cos gen2 (* 18.8 fm)) (* 0.25 (polywave gen3 fm)))
+44982: (* (env ampf) (+ (rxyk!cos gen1 (* 16.8 fm)) (rxyk!cos gen2 (* 18.8 fm)) (* 0.25 (polywave gen3 fm))))
+44100: (* (env ampf) (env pulsef) (blackman gen1) (+ (* intrp (oscil gen2 (* 10 ind))) (* (- 1.0 intrp) (oscil gen3 (* 24 ind))) (* 0.1 (oscil gen5 (* 14 ind))) (* 0.1 (oscil gen6 (* 6 ind)))))
+35721: (rxyk!cos f1 (* 2.0 frq))
+35721: (rxyk!cos f2 (* 2.3 frq))
+35721: (rxyk!cos f3 (* 6.0 frq))
+35721: (rxyk!cos f4 (* 6.3 frq))
+*/
+#endif
+
 
 #if WITH_OPTIMIZATION
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end, bool *bad_set);
@@ -4791,7 +4837,7 @@ new environment."
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
 {
   s7_pointer x;
-
+  sc->temp4 = sc->w;
   sc->w = sc->NIL;
   if (env == sc->global_env)
     {
@@ -4806,7 +4852,7 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
 	sc->w = cons(sc, cons(sc, slot_symbol(x), slot_value(x)), sc->w);
     }
   x = sc->w;
-  sc->w = sc->NIL;
+  sc->w = sc->temp4;
   return(x);
 }
 

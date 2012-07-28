@@ -5141,15 +5141,14 @@ index 10 (so 10/2 is the bes-jn arg):
   "(make-moving-max (n 128) returns a moving-max generator.\n\
   (moving-max gen input) returns the maxamp over the last n inputs."
   
-  (set! (gen 'fm) fm)
-  (with-environment gen
-    (let* ((absy (abs fm))
-	   (mx (delay dly absy)))
-      (if (>= absy (mus-scaler dly))
-	  (set! (mus-scaler dly) absy)
-	  (if (>= mx (mus-scaler dly))
-	      (set! (mus-scaler dly) (vct-peak (mus-data dly)))))
-      (mus-scaler dly))))
+  (let* ((absy (abs fm))
+	 (dly (gen 'dly))
+	 (mx (delay dly absy)))
+    (if (>= absy (mus-scaler dly))
+	(set! (mus-scaler dly) absy)
+	(if (>= mx (mus-scaler dly))
+	    (set! (mus-scaler dly) (vct-peak (mus-data dly)))))
+    (mus-scaler dly)))
 
 
 

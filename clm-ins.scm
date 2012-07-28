@@ -2199,98 +2199,103 @@ is a physical model of a flute:
   (whichseg 0)
   (ramplen 0)
   (steadylen 0)
-  (trigger 0))
+  (trigger 0)
+  file)
 
 (definstrument (expfil start duration hopsecs rampsecs steadysecs file1 file2)
-  (let* ((fil1 (make-file->sample file1))
+  (let ((fil1 (make-file->sample file1))
 	 (fil2 (make-file->sample file2))
 	 (hop (seconds->samples hopsecs))
-	 (ramplen (seconds->samples rampsecs))
-	 (steadylen (seconds->samples steadysecs))
-	 (grn1 (make-grn :rampval 0.0 :rampinc (/ 1.0 ramplen) :loc 0 :segctr 0 :whichseg 0 :ramplen ramplen :steadylen steadylen :trigger 0))
-	 (grn2 (make-grn :rampval 0.0 :rampinc (/ 1.0 ramplen) :loc 0 :segctr 0 :whichseg 0 :ramplen ramplen :steadylen steadylen :trigger 0))
+	 (rampdur (seconds->samples rampsecs))
+	 (steadydur (seconds->samples steadysecs))
 	 (beg (seconds->samples start))
-	 (end (+ beg (seconds->samples duration)))
-	 (out1 beg)
-	 (out2 (+ hop beg)))
-     (do ((i beg (+ i 1)))
-	 ((= i end))
-       (let ((val 0.0))
-	 (if (= i out1)
-	     (let ((inval (ina (grn-loc grn1) fil1)))
-	       (set! (grn-loc grn1) (+ 1 (grn-loc grn1)))
-	       (if (= (grn-whichseg grn1) 0)	;ramp-up
-		   (begin
-		     (set! inval (* inval (grn-rampval grn1)))
-		     (set! (grn-rampval grn1) (+ (grn-rampval grn1) (grn-rampinc grn1)))
-		     (set! (grn-segctr grn1) (+ 1 (grn-segctr grn1)))
-		     (if (= (grn-segctr grn1) (grn-ramplen grn1))
-			 (begin
-			   (set! (grn-segctr grn1) 0)
-			   (set! (grn-whichseg grn1) (+ 1 (grn-whichseg grn1))))))
-		   (if (= (grn-whichseg grn1) 1)		;steady-state
-		       (begin
-			 (set! (grn-segctr grn1) (+ 1 (grn-segctr grn1)))
-			 (if (= (grn-segctr grn1) (grn-steadylen grn1))
-			     (begin
-			       (set! (grn-segctr grn1) 0)
-			       (set! (grn-whichseg grn1) (+ 1 (grn-whichseg grn1))))))
-		       (begin				;ramp-down
-			 (set! inval (* inval (grn-rampval grn1)))
-			 (set! (grn-segctr grn1) (+ 1 (grn-segctr grn1)))
-			 (set! (grn-rampval grn1) (- (grn-rampval grn1) (grn-rampinc grn1)))
-			 (if (= (grn-segctr grn1) (grn-ramplen grn1))
-			     (begin
-			       (set! (grn-segctr grn1) 0)
-			       (set! (grn-trigger grn1) 1)
-			       (set! (grn-whichseg grn1) 0)
-			       (set! (grn-rampval grn1) 0.0))))))
-	       (set! val inval)
-	       (set! out1 (+ 1 out1))
-	       (if (= (grn-trigger grn1) 1)
-		   (begin
-		     (set! (grn-trigger grn1) 0)
-		     (set! out1 (+ out1 hop))))))
-	 (if (= i out2)
-	     (let ((inval (ina (grn-loc grn2) fil2)))
-	       (set! (grn-loc grn2) (+ 1 (grn-loc grn2)))
-	       (if (= (grn-whichseg grn2) 0)	;ramp-up
-		   (begin
-		     (set! inval (* inval (grn-rampval grn2)))
-		     (set! (grn-rampval grn2) (+ (grn-rampval grn2) (grn-rampinc grn2)))
-		     (set! (grn-segctr grn2) (+ 1 (grn-segctr grn2)))
-		     (if (= (grn-segctr grn2) (grn-ramplen grn2))
-			 (begin
-			   (set! (grn-segctr grn2) 0)
-			   (set! (grn-whichseg grn2) (+ 1 (grn-whichseg grn2))))))
-		   (if (= (grn-whichseg grn2) 1)		;steady-state
-		       (begin
-			 (set! (grn-segctr grn2) (+ 1 (grn-segctr grn2)))
-			 (if (= (grn-segctr grn2) (grn-steadylen grn2))
-			     (begin
-			       (set! (grn-segctr grn2) 0)
-			       (set! (grn-whichseg grn2) (+ 1 (grn-whichseg grn2))))))
-		       (begin				;ramp-down
-			 (set! inval (* inval (grn-rampval grn2)))
-			 (set! (grn-segctr grn2) (+ 1 (grn-segctr grn2)))
-			 (set! (grn-rampval grn2) (- (grn-rampval grn2) (grn-rampinc grn2)))
-			 (if (= (grn-segctr grn2) (grn-ramplen grn2))
-			     (begin
-			       (set! (grn-segctr grn2) 0)
-			       (set! (grn-trigger grn2) 1)
-			       (set! (grn-whichseg grn2) 0)
-			       (set! (grn-rampval grn2) 0.0))))))
-	       (set! val (+ val inval))
-	       (set! out2 (+ 1 out2))
-	       (if (= (grn-trigger grn2) 1)
-		   (begin
-		     (set! (grn-trigger grn2) 0)
-		     (set! out2 (+ out2 hop))))))
-	 (outa i val)))))
-
+	 (end (seconds->samples (+ start duration))))
+    (let ((grn1 (make-grn :rampval 0.0 :rampinc (/ 1.0 rampdur) :loc 0 :segctr 0 :whichseg 0 :ramplen rampdur :steadylen steadydur :trigger 0 :file fil1))
+	  (grn2 (make-grn :rampval 0.0 :rampinc (/ 1.0 rampdur) :loc 0 :segctr 0 :whichseg 0 :ramplen rampdur :steadylen steadydur :trigger 0 :file fil2))
+	  (out1 beg)
+	  (out2 (+ hop beg)))
+      (do ((i beg (+ i 1)))
+	  ((= i end))
+	(let ((val 0.0))
+	  (if (= i out1)
+	      (begin
+		(set! val (with-environment grn1
+			    (let ((inval (ina loc file)))
+			      (set! loc (+ 1 loc))
+			      (if (= whichseg 0)	;ramp-up
+				  (begin
+				    (set! inval (* inval rampval))
+				    (set! rampval (+ rampval rampinc))
+				    (set! segctr (+ 1 segctr))
+				    (if (= segctr ramplen)
+					(begin
+					  (set! segctr 0)
+					  (set! whichseg (+ 1 whichseg)))))
+				  (if (= whichseg 1)		;steady-state
+				      (begin
+					(set! segctr (+ 1 segctr))
+					(if (= segctr steadylen)
+					    (begin
+					      (set! segctr 0)
+					      (set! whichseg (+ 1 whichseg)))))
+				      (begin				;ramp-down
+					(set! inval (* inval rampval))
+					(set! segctr (+ 1 segctr))
+					(set! rampval (- rampval rampinc))
+					(if (= segctr ramplen)
+					    (begin
+					      (set! segctr 0)
+					      (set! trigger 1)
+					      (set! whichseg 0)
+					      (set! rampval 0.0))))))
+			      inval)))
+		(set! out1 (+ 1 out1))
+		(if (= (grn1 'trigger) 1)
+		    (begin
+		      (set! (grn1 'trigger) 0)
+		      (set! out1 (+ out1 hop))))))
+	  (if (= i out2)
+	      (begin
+		(set! val (+ val (with-environment grn2
+				   (let ((inval (ina loc file)))
+				     (set! loc (+ 1 loc))
+				     (if (= whichseg 0)	;ramp-up
+					 (begin
+					   (set! inval (* inval rampval))
+					   (set! rampval (+ rampval rampinc))
+					   (set! segctr (+ 1 segctr))
+					   (if (= segctr ramplen)
+					       (begin
+						 (set! segctr 0)
+						 (set! whichseg (+ 1 whichseg)))))
+					 (if (= whichseg 1)		;steady-state
+					     (begin
+					       (set! segctr (+ 1 segctr))
+					       (if (= segctr steadylen)
+						   (begin
+						     (set! segctr 0)
+						     (set! whichseg (+ 1 whichseg)))))
+					     (begin				;ramp-down
+					       (set! inval (* inval rampval))
+					       (set! segctr (+ 1 segctr))
+					       (set! rampval (- rampval rampinc))
+					       (if (= segctr ramplen)
+						   (begin
+						     (set! segctr 0)
+						     (set! trigger 1)
+						     (set! whichseg 0)
+						     (set! rampval 0.0))))))
+				     inval))))
+		(set! out2 (+ 1 out2))
+		(if (= (grn2 'trigger) 1)
+		    (begin
+		      (set! (grn2 'trigger) 0)
+		      (set! out2 (+ out2 hop))))))
+	  (outa i val))))))
+  
 ;;; (with-sound () (expfil 0 2 .2 .01 .1 "oboe.snd" "fyow.snd"))
-
-
+  
+  
 #|
 From: Marco Trevisani <marco@ccrma.Stanford.EDU>
 
@@ -2511,10 +2516,10 @@ mjkoskin@sci.fi
 
 (define (ssb-fm gen modsig)
   "(ssb-fm gen modsig) runs an ssb-fm generator"
-  (+ (* (oscil (sbfm-am0 gen)) 
-	(oscil (sbfm-car0 gen) (hilbert-transform (sbfm-mod0 gen) modsig)))
-     (* (oscil (sbfm-am1 gen)) 
-	(oscil (sbfm-car1 gen) (delay (sbfm-mod1 gen) modsig)))))
+  (+ (* (oscil (gen 'am0)) 
+	(oscil (gen 'car0) (hilbert-transform (gen 'mod0) modsig)))
+     (* (oscil (gen 'am1)) 
+	(oscil (gen 'car1) (delay (gen 'mod1) modsig)))))
 
 
 ;;; if all we want are asymmetric fm-generated spectra, we can just add 2 fm oscil pairs:
@@ -2554,20 +2559,20 @@ mjkoskin@sci.fi
 
 (define (rms gen sig)
   "(rms gen sig) runs an RMS gain generator"
-  (set! (rmsg-q gen) (+ (* (rmsg-c1 gen) sig sig)
-			(* (rmsg-c2 gen) (rmsg-q gen))))
-  (sqrt (rmsg-q gen)))
+  (set! (gen 'q) (+ (* (gen 'c1) sig sig)
+			(* (gen 'c2) (gen 'q))))
+  (sqrt (gen 'q)))
 
 
 (define (gain gen sig rmsval)
   "(gain gen sig rmsval) returns the current RMS gain"
-  (set! (rmsg-r gen) (+ (* (rmsg-c1 gen) sig sig)
-			(* (rmsg-c2 gen) (rmsg-r gen))))
-  (let ((this-gain (if (zero? (rmsg-r gen))
+  (set! (gen 'r) (+ (* (gen 'c1) sig sig)
+			(* (gen 'c2) (gen 'r))))
+  (let ((this-gain (if (zero? (gen 'r))
 		       rmsval
-		       (/ rmsval (sqrt (rmsg-r gen))))))
-    (set! (rmsg-avg gen) (+ (rmsg-avg gen) this-gain))
-    (set! (rmsg-avgc gen) (+ (rmsg-avgc gen) 1))
+		       (/ rmsval (sqrt (gen 'r))))))
+    (set! (gen 'avg) (+ (gen 'avg) this-gain))
+    (set! (gen 'avgc) (+ (gen 'avgc) 1))
     (* sig this-gain)))
 
 (define (balance gen signal compare)
@@ -2576,11 +2581,11 @@ mjkoskin@sci.fi
 
 (define (gain-avg gen)
   "(gain-avg gen) is part of the RMS gain stuff"
-  (/ (rmsg-avg gen) (rmsg-avgc gen)))
+  (/ (gen 'avg) (gen 'avgc)))
 
 (define (balance-avg gen)
   "(balance-avg gen) is part of the RM gain stuff"
-  (rmsg-avg gen))
+  (gen 'avg))
 
 
 
