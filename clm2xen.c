@@ -1416,21 +1416,19 @@ static XEN g_mus_reset(XEN gen)
   mus_xen *ms;
   ms = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);
   if (ms)
-    mus_reset(ms->gen);
-#if HAVE_SCHEME
-  else
     {
-      if (s7_is_open_environment(gen)) 
-	{ 
-	  s7_pointer func; 
-	  func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-reset"), gen); 
-	  if (func != XEN_UNDEFINED) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
-	} 
-      XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_reset, "a generator");
+      mus_reset(ms->gen);
+      return(gen);
     }
-#else
-  XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_reset, "a generator");
+#if HAVE_SCHEME
+  if (s7_is_open_environment(gen)) 
+    { 
+      s7_pointer func; 
+      func = s7_search_open_environment(s7, s7_make_symbol(s7, "mus-reset"), gen); 
+      if (func != XEN_UNDEFINED) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+    } 
 #endif
+  XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_reset, "a generator");
   return(gen);
 }
 
