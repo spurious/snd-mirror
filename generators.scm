@@ -4439,7 +4439,8 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; --------------------------------------------------------------------------------
-
+#|
+;;; this has been moved to clm2xen.c
 (defgenerator plsenv (pulse #f) (ampf #f))
 
 (define* (make-pulsed-env envelope duration frequency)
@@ -4452,7 +4453,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (env (gen 'ampf)))
 
 (define pulsed-env? plsenv?)
-
+|#
 
 
 ;;; --------------------------------------------------------------------------------

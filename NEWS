@@ -1,5 +1,7 @@
 Snd 13.0:
 
+Mike Scholz fixed up the sndins directory.
+
 Matti Koskinen got s7 working in uclinux on the blackfin processor.
 
 removed run.c and the run macro (34000 lines!). 
@@ -8,7 +10,7 @@ removed ptree-channel, max-virtual-ptrees, optimization,
   optimization-hook, add-clm-field, declare, and all the scheme
   functions that depended on these.
 
-deprecated vct-map! and removed it from the Snd scheme files.
+deprecated vct-map! and removed it from the Snd files.
 
 added Save icon to the toolbars
 
@@ -20,7 +22,7 @@ completely changed defgenerator (in s7 it is now based on environments).
 
 added mus-mix-with-envs (for fullmix), and oscil-bank.
 
-removed gamin support (ancient libfam replacement, used only in Motif version).
+removed gamin support (ancient libfam replacement).
 
 checked: gtk 3.5.6|8
 

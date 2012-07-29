@@ -366,7 +366,9 @@ enum {OP_NO_OP,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-      OP_ERROR_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_BAFFLE, OP_EXPANSION,
+      OP_ERROR_HOOK_QUIT, 
+      OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV_UNCHECKED, OP_WITH_ENV_S, 
+      OP_WITH_BAFFLE, OP_EXPANSION,
       OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
@@ -447,7 +449,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "catch", "dynamic-wind", "define-constant", "define-constant", 
    "do", "do", "do", "do", "do", "do",
    "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
-   "error-hook-quit", "with-environment", "with-environment", "with-baffle", "define-expansion",
+   "error-hook-quit", "with-environment", "with-environment", "with-environment", "with-environment", 
+   "with-baffle", "define-expansion",
    "for-each", "for-each", "for-each", "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
    "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", 
@@ -519,7 +522,9 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_CATCH", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
   "OP_DO", "OP_DO_END", "OP_DO_END1", "OP_DO_STEP", "OP_DO_STEP2", "OP_DO_INIT",
   "OP_DEFINE_STAR", "OP_LAMBDA_STAR", "OP_LAMBDA_STAR_DEFAULT", "OP_ERROR_QUIT", "OP_UNWIND_INPUT", "OP_UNWIND_OUTPUT", 
-  "OP_ERROR_HOOK_QUIT", "OP_WITH_ENV", "OP_WITH_ENV1", "OP_WITH_BAFFLE", "OP_EXPANSION",
+  "OP_ERROR_HOOK_QUIT", 
+  "OP_WITH_ENV", "OP_WITH_ENV1", "OP_WITH_ENV_UNCHECKED", "OP_WITH_ENV_S", 
+  "OP_WITH_BAFFLE", "OP_EXPANSION",
   "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
   
   "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
@@ -1140,7 +1145,6 @@ struct s7_scheme {
 #endif
 
   /* these are symbols, primarily for the generic function search.  
-   *   Not many are used yet -- still exploring...
    */
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, ARITABLEP, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
@@ -1191,7 +1195,7 @@ struct s7_scheme {
   s7_pointer Object_Set, Object_Set_3; /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
   s7_pointer BODY;
-  s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED;
+  s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_opSSq_S;
   s7_pointer SET_SYMBOL_SAFE_C, SET_NORMAL, SET_PAIR, SET_PAIR_P, SET_PWS, SET_SAFE_VREF, SET_PAIR_C, SET_PAIR_C_P;
@@ -2139,11 +2143,11 @@ static void report_counts(s7_scheme *sc)
 ;; why are these in the trailers section at all??
 694574: (with-environment gen (set! currentValue (+ currentValue (* (- targetValue currentValue) r))))
 661500: (with-environment gen (set! y1 (+ (* coeff (- input y1)) x1)) (set! x1 input) y1)
-548460: (gen 'ampf)
-548162: (gen 'pulse)
 496125: (with-environment gen (set! y1 (+ (* coeff (- input y1)) x1)) (set! x1 input) (set! y2 (+ (* coeff (- y1 y2)) x2)) (set! x2 y1) (set! y3 (+ (* coeff (- y2 y3)) x3)) (set! x3 y2) (set! y4 (+ (* coeff (- y3 y4)) x4)) (set! x4 y3) (set! y5 (+ (* coeff (- y4 y5)) x5)) (set! x5 y4) (set! y6 (+ (* coeff (- y5 y6)) x6)) (set! x6 y5) (set! y7 (+ (* coeff (- y6 y7)) x7)) (set! x7 y6) (set! y8 (+ (* coeff (- y7 y8)) x8)) (set! x8 y7) y8)
 445409: (* (env ampf) (pulsed-env peep frq) md md (nrxysin carrier (+ (* frq 825.0) (* 0.1 (rand-interp noise)) (* 0.1 md))))
+  -- this is long-spurred-meadow-katydid in animals
 321048: (with-environment gen (let* ((x angle) (y (* x ratio))) (set! angle (+ x fm frequency)) (/ (* (exp (* r (cos y))) (cos (+ x (* r (sin y))))) (exp (abs r)))))
+  -- this is rk!cos I think
 165375: (one-pole-swept dryTap-one-pole-swept (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp)) (expseg dryTap-coef-expseg drycoefrate))
 165375: (one-pole-swept wetTap-one-pole-swept (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp)) (expseg wetTap-coef-expseg wetcoefrate))
 165375: (one-pole-allpass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn))
@@ -36854,15 +36858,8 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
    *   redefine and also if included envs redefine.  And we need a cancel_all_safe_opts.  set_simple_env and is_simple_env 
    *   with OP_ENV_UNCHECKED or equivalent.
    */
-#if 0
-  if ((op == OP_QUOTE) || 
-      (op == OP_WITH_BAFFLE) ||
-      (op == OP_WITH_ENV))
-    return(false);
-#else
   if (op == OP_QUOTE)
     return(false);
-#endif
 
   sc->w = e;
   if (op == OP_LET)
@@ -39568,6 +39565,25 @@ static s7_pointer check_define(s7_scheme *sc)
       else set_syntax_op(sc->code, sc->DEFINE_STAR_UNCHECKED);
     }
 
+  return(sc->code);
+}
+
+
+static s7_pointer check_with_env(s7_scheme *sc)
+{
+  if (!is_pair(sc->code))                            /* (with-environment . "hi") */
+    return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->code));
+  if (!is_pair(cdr(sc->code)))                       /* (with-environment e) -> an error? */
+    return(eval_error(sc, "with-environment body is messed up: ~A", sc->code));
+
+  if ((is_overlaid(sc->code)) &&
+      (cdr(ecdr(sc->code)) == sc->code))
+    {
+      set_syntax_op(sc->code, sc->WITH_ENV_UNCHECKED);
+      if ((is_symbol(car(sc->code))) &&
+	  (is_pair(cadr(sc->code))))
+	set_syntax_op(sc->code, sc->WITH_ENV_S);
+    }
   return(sc->code);
 }
 
@@ -52797,17 +52813,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       break;
-      
+
+
+    case OP_WITH_ENV_S:
+      sc->value = finder(sc, car(sc->code));
+      sc->code = cdr(sc->code);
+      if (sc->value == sc->global_env)
+	{
+	  NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
+	}
+      else 
+	{
+	  if (!is_environment(sc->value))
+	    eval_error(sc, "with-environment takes an environment argument: ~A", sc->value);
+	  sc->envir = sc->value;
+	}
+      goto BEGIN;
 
     case OP_WITH_ENV:
+      check_with_env(sc);
+
+    case OP_WITH_ENV_UNCHECKED:
       /* (with-environment env . body) 
        *   in R this might be "with"
        */
-      if (!is_pair(sc->code))                            /* (with-environment . "hi") */
-	eval_error(sc, "with-environment takes an environment argument: ~A", sc->code);
-      if (!is_pair(cdr(sc->code)))                       /* (with-environment e) -> an error? */
-	eval_error(sc, "with-environment body is messed up: ~A", sc->code);
-
       sc->value = car(sc->code);
       if (!is_pair(sc->value))
 	{
@@ -58040,7 +58069,9 @@ s7_scheme *s7_init(void)
   sc->LET_ALL_Q =             assign_internal_syntax(sc, "let",     OP_LET_ALL_Q);  
   sc->LET_ALL_G =             assign_internal_syntax(sc, "let",     OP_LET_ALL_G);  
   sc->NAMED_LET =             assign_internal_syntax(sc, "let",     OP_NAMED_LET);  
-  sc->NAMED_LET_NO_VARS =     assign_internal_syntax(sc, "let",     OP_NAMED_LET_NO_VARS);  
+  sc->NAMED_LET_NO_VARS =     assign_internal_syntax(sc, "let",     OP_NAMED_LET_NO_VARS); 
+  sc->WITH_ENV_UNCHECKED =    assign_internal_syntax(sc, "with-environment",  OP_WITH_ENV_UNCHECKED);   
+  sc->WITH_ENV_S =            assign_internal_syntax(sc, "with-environment",  OP_WITH_ENV_S);   
   sc->SET_UNCHECKED =         assign_internal_syntax(sc, "set!",    OP_SET_UNCHECKED);  
   sc->SET_SYMBOL_C =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_C);  
   sc->SET_SYMBOL_S =          assign_internal_syntax(sc, "set!",    OP_SET_SYMBOL_S);  

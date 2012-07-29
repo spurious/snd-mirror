@@ -17676,7 +17676,6 @@ EDITS: 2
 	(if (fneq val 0.0) (snd-display #__line__ ";wt reset data: ~A" val)))
       (if (not (vct? (mus-data gen))) (snd-display #__line__ ";mus-data wave-train: ~A" (mus-data gen)))
       (set! (mus-data gen) (make-vct 3)))
-    (set! (mus-data (make-oscil)) (make-vct 3))
     
     (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 100.0 0.0 (make-vct 20)))
     (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 1.0 (make-vct 20)))
@@ -47969,3 +47968,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 ;;; TODO: doc with-env interaction with methods like mus-scaler
 ;;;   (either don't embed call or check gen type in local method and use #_)
 ;;; with 2 envs -> chained if they don't shadow each other
+;;; PERHAPS: rk!cos to C
