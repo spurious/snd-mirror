@@ -6190,6 +6190,13 @@ mus_float_t mus_env_step(mus_any *ptr)
 }
 
 
+static mus_float_t mus_env_line(mus_any *ptr)
+{
+  seg *gen = (seg *)ptr;
+  return(gen->current_value);
+}
+
+
 mus_float_t mus_env_linear(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
@@ -6610,7 +6617,10 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
       if (base == 1.0)
 	{
 	  e->style = MUS_ENV_LINEAR;
-	  e->env_func = mus_env_linear;
+	  if ((npts == 2) &&
+	      (brkpts[1] == brkpts[3]))
+	    e->env_func = mus_env_line;
+	  else e->env_func = mus_env_linear;
 	  dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
 	}
       else

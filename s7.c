@@ -379,7 +379,7 @@ enum {OP_NO_OP,
       OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, 
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, 
       OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_opSSq_S,
-      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_SAFE_VREF, OP_SET_SAFE_VREF_1,
+      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_P, OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, 
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_COND_UNCHECKED,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, 
@@ -458,7 +458,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "member", "assoc", "member", "assoc",
    
    "quote", "lambda", "let", "case", 
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", 
    "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
    "let*", "letrec", "cond",
    "lambda*", "do", "define", "define*", 
@@ -535,7 +535,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_QUOTE_UNCHECKED", "OP_LAMBDA_UNCHECKED", "OP_LET_UNCHECKED", "OP_CASE_UNCHECKED", 
   "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", 
   "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_opSSq_S",
-  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_SAFE_VREF", "OP_SET_SAFE_VREF_1",
+  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_P", "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", 
   "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE",
   "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_COND_UNCHECKED",
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", 
@@ -606,7 +606,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       
       OP_SAFE_C_opSAFE_CLOSURE_SSq, HOP_SAFE_C_opSAFE_CLOSURE_SSq, OP_SAFE_C_opSAFE_CLOSURE_opSq_Sq, HOP_SAFE_C_opSAFE_CLOSURE_opSq_Sq,
       OP_SAFE_CLOSURE_opCq, HOP_SAFE_CLOSURE_opCq, 
-      OP_SAFE_CLOSURE_S_one, HOP_SAFE_CLOSURE_S_one, OP_SAFE_CLOSURE_S_vref, HOP_SAFE_CLOSURE_S_vref, OP_SAFE_CLOSURE_S_safe_vref, HOP_SAFE_CLOSURE_S_safe_vref, 
+      OP_SAFE_CLOSURE_S_one, HOP_SAFE_CLOSURE_S_one, OP_SAFE_CLOSURE_S_vref, HOP_SAFE_CLOSURE_S_vref, 
 
       OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, OP_SAFE_CLOSURE_STAR_SoS, HOP_SAFE_CLOSURE_STAR_SoS, 
       
@@ -707,7 +707,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
      "safe_c_opsafe_closure_ssq", "h_safe_c_opsafe_closure_ssq", "safe_c_opsafe_closure_opsq_sq", "h_safe_c_opsafe_closure_opsq_sq",
      "safe_closure_opcq", "h_safe_closure_opcq", 
-     "safe_closure_s_one", "h_safe_closure_s_one", "safe_closure_s_vref", "h_safe_closure_s_vref", "safe_closure_s_safe_vref", "h_safe_closure_s_safe_vref",
+     "safe_closure_s_one", "h_safe_closure_s_one", "safe_closure_s_vref", "h_safe_closure_s_vref", 
 
      "safe_closure*_s", "h_safe_closure*_s", "safe_closure*_ss", "h_safe_closure*_ss", "safe_closure*_sos", "h_safe_closure*_sos", 
 
@@ -1198,7 +1198,7 @@ struct s7_scheme {
   s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_opSSq_S;
-  s7_pointer SET_SYMBOL_SAFE_C, SET_NORMAL, SET_PAIR, SET_PAIR_P, SET_PWS, SET_SAFE_VREF, SET_PAIR_C, SET_PAIR_C_P;
+  s7_pointer SET_SYMBOL_SAFE_C, SET_NORMAL, SET_PAIR, SET_PAIR_P, SET_PWS, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_STAR_UNCHECKED, CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLEST, CASE_INT;
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_Q, LET_ALL_G, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
@@ -2136,66 +2136,6 @@ static void report_counts(s7_scheme *sc)
     if (data[i]->count > 1000)
       fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY(data[i]->expr));
 }
-#endif
-
-#if 0
-/*
-445409: (* (env ampf) (pulsed-env peep frq) md md (nrxysin carrier (+ (* frq 825.0) (* 0.1 (rand-interp noise)) (* 0.1 md))))
-165375: (one-pole-swept dryTap-one-pole-swept (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp)) (expseg dryTap-coef-expseg drycoefrate))
-165375: (one-pole-swept wetTap-one-pole-swept (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp)) (expseg wetTap-coef-expseg wetcoefrate))
-165375: (one-pole-allpass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn))
-165375: (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp))
-165375: (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp))
-165375: (* (expseg dryTap-amp-expseg dryamprate) (one-pole-swept dryTap-one-pole-swept (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp)) (expseg dryTap-coef-expseg drycoefrate)))
-165375: (* (expseg wetTap-amp-expseg wetamprate) (one-pole-swept wetTap-one-pole-swept (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp)) (expseg wetTap-coef-expseg wetcoefrate)))
-132300: (* (max (- 1.0 pval) 0.0) 0.05 aval (oscil gen2 (* 2.4 noise)))
-132300: (+ (* (max pval 0.0) (+ (* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise)))) (* (max (- 1.0 pval) 0.0) 0.05 aval (oscil gen2 (* 2.4 noise))))
-132300: (* (env ampf) (+ (* (max pval 0.0) (+ (* 0.95 (oscil gen1 noise)) (* 0.05 (oscil gen4 noise)))) (* (max (- 1.0 pval) 0.0) 0.05 aval (oscil gen2 (* 2.4 noise)))))
-88200: (* (env ampf) (env pulsef) pulse-amp (+ (* 0.8 (oscil gen1 0.0 rn)) (* 0.1 (oscil gen2 0.0 (* 2 rn))) (* 0.1 (oscil gen3 0.0 (* 3 rn)))))
-88200: (* (env ampf) 0.5 (+ (oscil gen1 (+ frq (* (env rndf) (rand-interp rnd)) (* 0.15 (oscil gen2)))) (rxyk!cos rx)))
-68211: (* (env ampf) (env pulsef) (blackman pulse2) (polywave gen (rand-interp rnd)))
-67473: (rk!cos gen1 (env pulse-frqf))
-67473: (* (env ampf) (env pulsef) (rk!cos gen1 (env pulse-frqf)))
-56007: (* (env ampf) (+ 0.9 (rand-interp rnd1)) (nrcos gen1 frq))
-48510: (locsig loc (+ gr-start-sample gr-offset) (* (if interp-gr-envs (+ (* (- 1 gr-where) (table-lookup gr-env)) (* gr-where (table-lookup gr-env-end))) (table-lookup gr-env)) (env amp-env) (src in-file-reader)))
-48510: (* (if interp-gr-envs (+ (* (- 1 gr-where) (table-lookup gr-env)) (* gr-where (table-lookup gr-env-end))) (table-lookup gr-env)) (env amp-env) (src in-file-reader))
-46305: (+ (polywave gen1 (* 2 frq)) (* amp2 (polywave gen2 frq)) (* (- 1.0 amp2) 2 (polywave gen3 (* 2 frq))) (* (env ampf4) (oscil gen4 (* 6 frq))))
-46305: (* amp (env ampf) (+ (polywave gen1 (* 2 frq)) (* amp2 (polywave gen2 frq)) (* (- 1.0 amp2) 2 (polywave gen3 (* 2 frq))) (* (env ampf4) (oscil gen4 (* 6 frq)))))
-44982: (rxyk!cos gen1 (* 16.8 fm))
-44982: (rxyk!cos gen2 (* 18.8 fm))
-44982: (+ (rxyk!cos gen1 (* 16.8 fm)) (rxyk!cos gen2 (* 18.8 fm)) (* 0.25 (polywave gen3 fm)))
-44982: (* (env ampf) (+ (rxyk!cos gen1 (* 16.8 fm)) (rxyk!cos gen2 (* 18.8 fm)) (* 0.25 (polywave gen3 fm))))
-44100: (* (env ampf) (env pulsef) (blackman gen1) (+ (* intrp (oscil gen2 (* 10 ind))) (* (- 1.0 intrp) (oscil gen3 (* 24 ind))) (* 0.1 (oscil gen5 (* 14 ind))) (* 0.1 (oscil gen6 (* 6 ind)))))
-35721: (rxyk!cos f1 (* 2.0 frq))
-35721: (rxyk!cos f2 (* 2.3 frq))
-35721: (rxyk!cos f3 (* 6.0 frq))
-35721: (rxyk!cos f4 (* 6.3 frq))
-35721: (+ (rxyk!cos f1 (* 2.0 frq)) (* 0.5 (rxyk!cos f2 (* 2.3 frq))) (* 0.1 (rxyk!cos f3 (* 6.0 frq))) (* 0.1 (rxyk!cos f4 (* 6.3 frq))))
-35721: (* (env ampf) (+ 0.8 (rand-interp rnd)) (+ (rxyk!cos f1 (* 2.0 frq)) (* 0.5 (rxyk!cos f2 (* 2.3 frq))) (* 0.1 (rxyk!cos f3 (* 6.0 frq))) (* 0.1 (rxyk!cos f4 (* 6.3 frq)))))
-33088: (* ihifreq transposition (- (current-peak-freqs k) (last-peak-freqs k)))
-27078: (* (env ampf) (env pulse-ampf) (+ 0.5 (* 0.5 (abs (oscil trem (rand-interp rnd1))))) (oscil gen1 (+ (env frqf) (env pulse-frqf) (rand-interp rnd))))
-23813: (+ (* 0.75 val1) (* fr1 (- 1.0 fintrp) (formant frm1 val)) (* fr2 fintrp (formant frm2 val)) (* fr3 (formant frm3 val)))
-22050: (vector-set! amps k (env (ampfs k)))
-21609: (nrcos gen (+ (env frqf) (rand-interp rnd) (* vib-index (blackman vib))))
-21609: (+ (env frqf) (rand-interp rnd) (* vib-index (blackman vib)))
-21609: (* (env ampf) (+ 0.85 (abs (rand-interp rnd1))) (nrcos gen (+ (env frqf) (rand-interp rnd) (* vib-index (blackman vib)))))
-19845: (+ (* 2 (env ampf1) (oscil gen1 frq)) (* (env ampf4) (oscil gen4 (* frq 5))) (* (env ampf5) (oscil gen5 (* frq 6))) (* 2 (polywave gen2 frq)) (* (env ampf3) (polywave gen3 frq)) (* (env ampf6) (polywave gen6 frq)))
-19845: (* (env ampf) (+ (* 2 (env ampf1) (oscil gen1 frq)) (* (env ampf4) (oscil gen4 (* frq 5))) (* (env ampf5) (oscil gen5 (* frq 6))) (* 2 (polywave gen2 frq)) (* (env ampf3) (polywave gen3 frq)) (* (env ampf6) (polywave gen6 frq))))
-16228: (+ (* (env pulse-ampf) (polywave gen1 (+ (env pulse-frqf) (env frqf)))) (if pulse2 (* (env pulse-ampf2) (polywave gen2 (env pulse-frqf2))) 0.0))
-11907: (nrcos gen (+ (env frqf) (rand-interp rnd)))
-11907: (* (env ampf) (nrcos gen (+ (env frqf) (rand-interp rnd))))
-11025: (* (env ampf) (pulsed-env pulse) (oscil base (+ (if frqf (env frqf) 0.0) (if modm (* index (oscil modm)) 0.0))))
-11025: (+ (if frqf (env frqf) 0.0) (if modm (* index (oscil modm)) 0.0))
-10580: (list (floor fm1-rat) index1 (floor (/ fm2-rat fm1-rat)) index2 (floor (/ fm3-rat fm1-rat)) index3)
-10580: (make-polywave (* fm1-rat frequency) (list (floor fm1-rat) index1 (floor (/ fm2-rat fm1-rat)) index2 (floor (/ fm3-rat fm1-rat)) index3) mus-chebyshev-second-kind)
-10580: (make-locsig (or degree (random 90.0)) distance reverb-amount)
-10010: (+ (glot-table j) (* (cosines k) (cos (* k x))) (* (sines k) (sin (* k x))))
-10000: (fm-violin (* i 0.001) 0.01 440 0.001)
-8820: (+ (* 0.78 (polywave poly frq)) (* 0.2 (oscil gen2770 (* 10 (+ frq md)))) (* 0.02 (oscil gen7479 (* 27 (+ frq md)))) (* 0.25 (polywave poly2 (* 3 frq))))
-8820: (* (env ampf) (pulsed-env pulsef frq) (+ (* 0.78 (polywave poly frq)) (* 0.2 (oscil gen2770 (* 10 (+ frq md)))) (* 0.02 (oscil gen7479 (* 27 (+ frq md)))) (* 0.25 (polywave poly2 (* 3 frq)))))
-6394: (+ (oscil gen1 (* 2 frq)) (* 0.2 (nrcos gens0 frq)) (nrxycos gens (* 6 frq)))
-6394: (* (env ampf) (+ 0.5 (abs (rand-interp rnd1))) (+ (oscil gen1 (* 2 frq)) (* 0.2 (nrcos gens0 frq)) (nrxycos gens (* 6 frq))))
-*/
 #endif
 
 
@@ -4460,6 +4400,17 @@ static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value)
   return(y);
 } 
 
+
+static s7_pointer make_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
+{
+  /* this is for a do-loop optimization -- an unattached slot */
+  s7_pointer y;
+  NEW_CELL(sc, y);
+  slot_symbol(y) = variable;
+  slot_set_value(y, value);
+  set_type(y, T_SLOT | T_IMMUTABLE);
+  return(y);
+}
 
 
 
@@ -24913,19 +24864,6 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer
 }
 
 
-s7_pointer s7_safe_vector_ref(s7_scheme *sc, s7_pointer vec, s7_pointer index) 
-{
-  return(vector_element(vec, integer(index)));
-}
-
-
-s7_pointer s7_safe_vector_set(s7_scheme *sc, s7_pointer vec, s7_pointer index, s7_pointer a) 
-{
-  vector_element(vec, integer(index)) = a;
-  return(a);
-}
-
-
 s7_pointer *s7_vector_elements(s7_pointer vec)
 {
   return(vector_elements(vec));
@@ -31075,8 +31013,16 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
 
 static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 {
-  s7_pointer p;
+  s7_pointer p, old_hook;
+  int old_hook_loc;
   char *msg = NULL;
+
+  /* this can get into an infinite loop if unbound variable hook gets involved so...
+   */
+  old_hook = s7_hook_functions(sc, sc->unbound_variable_hook);
+  old_hook_loc = s7_gc_protect(sc, old_hook);
+  s7_hook_set_functions(sc, sc->unbound_variable_hook, sc->NIL);
+
   for (p = lst; is_pair(p); p = cdr(p))
     {
       if (is_pair(car(p)))
@@ -31110,14 +31056,24 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 		  snprintf(msg, msg_len, ";  this looks bogus: %s", form);
 		  free(form);
 
+		  s7_hook_set_functions(sc, sc->unbound_variable_hook, old_hook);
+		  s7_gc_unprotect_at(sc, old_hook_loc);
+
 		  return(msg);
 		}
 	    }
 	  msg = missing_close_paren_syntax_check(sc, car(p));
 	  if (msg) 
-	    return(msg);
+	    {
+	      s7_hook_set_functions(sc, sc->unbound_variable_hook, old_hook);
+	      s7_gc_unprotect_at(sc, old_hook_loc);
+	      return(msg);
+	    }
 	}
     }
+  s7_hook_set_functions(sc, sc->unbound_variable_hook, old_hook);
+  s7_gc_unprotect_at(sc, old_hook_loc);
+
   return(NULL);
 }
 
@@ -32201,7 +32157,6 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  set_multiple_value(args);
 	  return(eval_error(sc, "can't set! some variable to ~S", args));
 
-	case OP_SET_SAFE_VREF_1:
 	case OP_SET_PAIR_P_1:
 	case OP_SET_PAIR_C_P_1:
 	  set_multiple_value(args);
@@ -35499,26 +35454,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			    set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_S_vref); /* structs often use vectors + constant offsets */
 			  else 
 			    {
-			      /*
-			      fprintf(stderr, "s_one: %s %d %d %d %d %d\n", 
-				      DISPLAY(car(x)),
-				      (is_optimized(body)),
-				      (optimize_data(body) == HOP_SAFE_C_SC),
-				      (is_proper_list(sc, closure_args(func))),
-				      (cadr(body) == car(closure_args(func))),
-				      (s7_function_chooser_data(sc, body) == s7_safe_vector_ref));
-			      */
-			      if ((is_optimized(body)) &&
-				  (optimize_data(body) == HOP_SAFE_C_SC) &&
-				  (is_proper_list(sc, closure_args(func))) &&
-				  (cadr(body) == car(closure_args(func))) &&
-				  (s7_function_chooser_data(sc, body) == s7_safe_vector_ref))
-				{
-				  set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_S_safe_vref);
-				  fcdr(car(x)) = car(closure_body(ecdr(car(x))));
-				  return(true); /* was false? */
-				}
-			      else set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_S_one);
+			      set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_S_one);
 			    }
 			}
 		      return(false); 
@@ -39597,6 +39533,8 @@ static s7_pointer check_with_env(s7_scheme *sc)
       if ((is_symbol(car(sc->code))) &&
 	  (is_pair(cadr(sc->code))))
 	set_syntax_op(sc->code, sc->WITH_ENV_S);
+      if (is_null(cddr(sc->code)))
+	set_one_liner(sc->code);
     }
   return(sc->code);
 }
@@ -39696,42 +39634,6 @@ static s7_pointer check_set(s7_scheme *sc)
 		    if (s7_is_string(func))
 		      fprintf(stderr, "string: %s\n", DISPLAY_80(sc->code)); /* here cons val is very common */
 #endif
-
-		    if ((is_closure(func)) &&
-			(is_safe_closure(closure_body(func))) &&
-			(is_one_liner(closure_body(func))))
-		      {
-			body = car(closure_body(func));
-			/*
-			fprintf(stderr, "s_one: %s %s %d %d %d %d %d\n", 
-				DISPLAY_80(body),
-				DISPLAY(func),
-				(is_optimized(body)),
-				(optimize_data(body) == HOP_SAFE_C_SC),
-				(is_proper_list(sc, closure_args(func))),
-				(cadr(body) == car(closure_args(func))),
-				(s7_function_chooser_data(sc, body) == s7_safe_vector_ref));
-			*/
-			if ((is_optimized(body)) &&
-			    (optimize_data(body) == HOP_SAFE_C_SC) &&
-			    (is_proper_list(sc, closure_args(func))) &&
-			    (cadr(body) == car(closure_args(func))) &&
-			    (s7_function_chooser_data(sc, body) == s7_safe_vector_ref))
-			  {
-			    /* this must be generator-set! currently -- eventually we'll need to fix this assumption
-			     * or omit this? 
-			     */
-			    set_syntax_op(sc->code, sc->SET_SAFE_VREF);
-
-			    fcdr(sc->code) = caddr(body);
-
-			    return(sc->code);
-			    /*
-			      set_optimize_data(car(x), hop + OP_SAFE_CLOSURE_S_safe_vref);
-			      fcdr(car(x)) = car(closure_body(ecdr(car(x))));
-			    */
-			  }
-		      }
 		  }
 	      }
 	  }
@@ -41843,10 +41745,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  SIMPLE_SAFE_DOTIMES_LOOP:
 		    slot_set_value(p, temp_val = c_call(lets)(sc, let_var));
 		    c_call(func)(sc, body);
-
-		    /* TODO: extend this to all the temp funcs here and in snd/clm,
-		     *  reuse or release can occur anywhere, but this is tricky!!
-		     */
 		    if ((free_safe) &&
 			(typeflag(temp_val) == T_REAL)) /* i.e. not immutable, not integer or something else unexpected */
 		      {
@@ -42088,7 +41986,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	if (is_symbol(end))
 	  sc->args = cons(sc, add_slot(sc, caaar(sc->code), init_val), find_symbol(sc, end));
-	else sc->args = cons(sc, add_slot(sc, caaar(sc->code), init_val), cons_unchecked(sc, end, end));
+	else sc->args = cons(sc, add_slot(sc, caaar(sc->code), init_val), make_slot(sc, end, end));
 	
 	initialize_safe_do(sc, sc->code);
 
@@ -42979,7 +42877,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_THUNK:
 	      /* (let ((x 1)) (let () (define (f) x) (let ((x 0)) (define (g) (set! x 32) (f)) (g)))) */
 	      NEW_FRAME(sc, closure_environment(ecdr(code)), sc->envir);
-	      /* PERHAPS: but if there are no internal defines or lets, we don't need a frame here */
 	      sc->code = closure_body(ecdr(code));
 	      goto BEGIN;
 	      
@@ -43033,28 +42930,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL; 
 	      
 	      
-	    case OP_SAFE_CLOSURE_S_safe_vref:
-	      if (!function_is_ok(code))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_S);
-		  goto OPT_EVAL;
-		}
-	      
-	    case HOP_SAFE_CLOSURE_S_safe_vref:
-	      car(sc->T2_1) = finder(sc, cadr(code));
-	      /* fcdr(code) == car(closure_body(ecdr(code))) */
-	      car(sc->T2_2) = caddr(fcdr(code));
-	      sc->value = c_call(fcdr(code))(sc, sc->T2_1);
-	      goto START;
-	      /* TODO: find out where the set case is caught: c_function_setter
-	       * TODO: is there anything special about vectors here?
-	       *   it's just closure(s) -> safe_c_sc checking the s's match
-	       *   so we should be able to do this for any similar case
-	       *   closure(s) -> c_s, c_sc, c_ss etc
-	       * the set case will be closure(ss)->safe_scs etc
-	       */
-	      
-	      
+
 	    case OP_SAFE_CLOSURE_S_vref:
 	      if (!function_is_ok(code))
 		{
@@ -44220,16 +44096,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    if (is_one_liner(closure_body(f)))
 			      {
-				if ((is_optimized(car(closure_body(f)))) &&
-				    (optimize_data(car(closure_body(f))) == HOP_SAFE_C_SC) &&
-				    (is_proper_list(sc, closure_args(f))) &&
-				    (cadar(closure_body(f)) == car(closure_args(f))) &&
-				    (s7_function_chooser_data(sc, car(closure_body(f))) == s7_safe_vector_ref))
-				  {
-				    set_optimize_data(code, OP_SAFE_CLOSURE_S_safe_vref);
-				    fcdr(code) = car(closure_body(f)); /* f becomes ecdr(code) below */
-				  }
-				else set_optimize_data(code, OP_SAFE_CLOSURE_S_one);
+				set_optimize_data(code, OP_SAFE_CLOSURE_S_one);
 			      }
 			    else set_optimize_data(code, OP_SAFE_CLOSURE_S);
 			  }
@@ -48663,40 +48530,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* -------------------------------- SET! -------------------------------- */
       
-    case OP_SET_SAFE_VREF:
-      /* here car is generator-set outer name + symbol
-       *   given current assumptions, we know we're going to generator-set, so the value is the only concern
-       */
-      sc->value = cadr(sc->code);
-      if (is_pair(sc->value))
-	{
-	  push_stack_no_args(sc, OP_SET_SAFE_VREF_1, sc->code);
-	  sc->code = sc->value;
-	  goto EVAL;
-	}
-      if (is_symbol(sc->value))
-	  sc->value = finder(sc, sc->value);
-      /* fall through */
-
-    case OP_SET_SAFE_VREF_1:
-      {
-	s7_pointer func, new_value;
-
-	new_value = sc->value;
-	func = car(closure_body(closure_setter(finder(sc, caar(sc->code)))));
-
-	/* gen = finder(sc, cadar(sc->code)); */
-	/* index = caddr(car(closure_body(func))); */
-	/* func = car(closure_body(func)); */
-
-	car(sc->T3_2) = fcdr(sc->code);
-	car(sc->T3_3) = new_value;
-	car(sc->T3_1) = finder(sc, cadar(sc->code));
-	sc->value = c_call(func)(sc, sc->T3_1);
-	goto START;
-      }
-
-
     case OP_SET_PAIR_P:
       /* here the pair can't generate multiple values, or if it does, it's an error (caught below) 
        *  splice_in_values will notice the OP_SET_PAIR_P_1 and complain.
@@ -52322,6 +52155,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
 
 
+    case OP_EXPANSION:
+      /* after the expander has finished, we need to add some annotations
+       */
+      annotate_expansion(sc, sc->value);
+      goto START;
+
+
     case OP_DEFMACRO:
     case OP_DEFMACRO_STAR:
       /* defmacro(*) could be defined in terms of define-macro(*), but I guess this gives us better error messages */
@@ -52511,6 +52351,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = make_closure(sc, car(sc->code), cdr(sc->code), T_CLOSURE_STAR);
       goto START;
       
+
 
 
       /* -------------------------------- CASE -------------------------------- */
@@ -52829,28 +52670,37 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       break;
 
 
+      /* -------------------------------- with-environment -------------------------------- */
+
     case OP_WITH_ENV_S:
-      sc->value = finder(sc, car(sc->code));
-      sc->code = cdr(sc->code);
-      if (sc->value == sc->global_env)
-	{
-	  NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
-	}
-      else 
-	{
-	  if (!is_environment(sc->value))
-	    eval_error(sc, "with-environment takes an environment argument: ~A", sc->value);
-	  sc->envir = sc->value;
-	}
-      goto BEGIN;
+      {
+	s7_pointer e;
+	e = finder(sc, car(sc->code));
+	if (e == sc->global_env)
+	  {
+	    NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
+	  }
+	else 
+	  {
+	    if (!is_environment(e))
+	      eval_error(sc, "with-environment takes an environment argument: ~A", e);
+	    sc->envir = e;
+	  }
+	if (is_one_liner(sc->code))
+	  {
+	    sc->code = cadr(sc->code);
+	    goto EVAL;
+	  }
+	sc->code = cdr(sc->code);
+	goto BEGIN;
+      }
+      
 
     case OP_WITH_ENV:
       check_with_env(sc);
 
+
     case OP_WITH_ENV_UNCHECKED:
-      /* (with-environment env . body) 
-       *   in R this might be "with"
-       */
       sc->value = car(sc->code);
       if (!is_pair(sc->value))
 	{
@@ -52898,12 +52748,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
 
 
-    case OP_EXPANSION:
-      /* after the expander has finished, we need to add some annotations
-       */
-      annotate_expansion(sc, sc->value);
-      goto START;
 
+      /* -------------------------------- the reader -------------------------------- */
 
     READ_LIST:
     case OP_READ_LIST: 
@@ -58113,7 +57959,6 @@ s7_scheme *s7_init(void)
   sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_P);
   sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",    OP_SET_PAIR_C);
   sc->SET_PAIR_C_P =          assign_internal_syntax(sc, "set!",    OP_SET_PAIR_C_P);
-  sc->SET_SAFE_VREF =         assign_internal_syntax(sc, "set!",    OP_SET_SAFE_VREF);
   sc->AND_UNCHECKED =         assign_internal_syntax(sc, "and",     OP_AND_UNCHECKED);
   sc->AND_P =                 assign_internal_syntax(sc, "and",     OP_AND_P);
   sc->OR_UNCHECKED =          assign_internal_syntax(sc, "or",      OP_OR_UNCHECKED);
@@ -59046,7 +58891,6 @@ s7_scheme *s7_init(void)
  * get gmp to work again in the opt case
  *
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
- * TOOD: move do-locals inward in clm-ins/etc (current code was written to accomodate the run macro)
  *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
  *   what is free?  Perhaps leave it until it's needed?
@@ -59074,7 +58918,7 @@ s7_scheme *s7_init(void)
  *   (new)                [8764]           9370 8937
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477
  * s7test            1721             1456 1430 1375
- * t455                           265  256  218   83
- * t502                                 90   72   43
+ * t455                           265  256  218   86
+ * t502                                 90   72   42
  */
 

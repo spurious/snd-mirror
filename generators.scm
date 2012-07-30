@@ -1,6 +1,12 @@
 (provide 'snd-generators.scm)
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
+;;; it is dangerous to use a method within a generator's definition of that method
+;;;   if the gen is used as the environment in with-environment, the embedded call
+;;;   becomes a recursive call on that method.  You either need to check the type
+;;;   of the method argument, or use #_method to override the name lookup.
+
+
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 
 ;;; --------------------------------------------------------------------------------

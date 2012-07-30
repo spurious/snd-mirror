@@ -41540,7 +41540,6 @@ EDITS: 1
 					  (* (env ampf)
 					     (polywave gen1 (+ (env frqf)
 							       (rand-interp rnd))))))))))
-  
   (calling-all-animals)
   (calling-all-generators)
   
@@ -47935,37 +47934,29 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,373,255,704  s7.c:g_add_2 [/home/bil/snd-13/snd]
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
- 1,950,375,063  clm.c:mus_out_any_to_file [/home/bil/snd-13/snd]
- 1,937,806,833  s7.c:s7_symbol_value [/home/bil/snd-13/snd]
- 1,903,817,628  s7.c:g_subtract_2 [/home/bil/snd-13/snd]
- 1,592,574,569  clm.c:mus_formant [/home/bil/snd-13/snd]
- 1,581,268,752  clm2xen.c:g_formant [/home/bil/snd-13/snd]
- 1,505,570,131  s7.c:s7_number_to_real [/home/bil/snd-13/snd]
- 1,484,203,187  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
- 1,463,872,238  s7.c:s7_object_type [/home/bil/snd-13/snd]
- 1,437,215,117  s7.c:g_greater [/home/bil/snd-13/snd]
- 1,397,066,159  s7.c:mark_pair'2 [/home/bil/snd-13/snd]
- 1,331,726,947  vct.c:s7_vct_ref_2i [/home/bil/snd-13/snd]
- 1,259,645,836  ???:t2_32 [/home/bil/snd-13/snd]
- 1,248,861,769  snd-edits.c:next_sample_value [/home/bil/snd-13/snd]
- 1,187,330,437  s7.c:mark_vector_1'2 [/home/bil/snd-13/snd]
- 1,166,155,399  clm2xen.c:g_env_1 [/home/bil/snd-13/snd]
- 1,129,623,660  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-13/snd]
- 1,129,477,680  clm2xen.c:g_formant_w [/home/bil/snd-13/snd]
- 1,121,511,890  ???:_wordcopy_fwd_aligned [/lib64/libc-2.12.so]
- 1,116,718,494  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-13/snd]
- 1,091,994,970  clm2xen.c:out_any_2 [/home/bil/snd-13/snd]
- 1,074,270,458  clm.c:mus_src_20 [/home/bil/snd-13/snd]
- 1,061,907,514  s7.c:g_multiply [/home/bil/snd-13/snd]
+
+30-Jul:
+276,304,433,884  PROGRAM TOTALS
+80,404,319,549  s7.c:eval [/home/bil/snd-13/snd]
+19,841,123,296  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+15,086,226,626  ???:sin [/lib64/libm-2.12.so]
+14,006,022,537  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+11,011,964,098  s7.c:gc [/home/bil/snd-13/snd]
+ 8,912,322,193  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
+ 8,862,453,220  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 7,528,599,890  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 6,494,693,271  io.c:mus_write_1 [/home/bil/snd-13/snd]
+ 4,746,771,406  s7.c:make_real_1 [/home/bil/snd-13/snd]
+ 4,371,202,120  s7.c:g_add [/home/bil/snd-13/snd]
+ 4,349,585,922  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 4,005,108,335  s7.c:g_multiply_2 [/home/bil/snd-13/snd]
+ 3,040,691,972  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
+ 2,448,212,416  s7.c:g_add_2 [/home/bil/snd-13/snd]
+ 2,042,493,770  s7.c:g_subtract_2 [/home/bil/snd-13/snd]
+ 2,000,294,016  ???:cos [/lib64/libm-2.12.so]
 
 |#
 
 ;;; TODO: much more extensive defgenerator tests
-;;; TODO: test tricks with let->cur-env in with-env etc
-;;;  [save state, pick up later in same context, etc -- passing successive lets around]
-;;;  [transparent let somehow]
 ;;; TODO: error in s7_call should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
-;;; TODO: doc with-env interaction with methods like mus-scaler
-;;;   (either don't embed call or check gen type in local method and use #_)
-;;; with 2 envs -> chained if they don't shadow each other
-;;; PERHAPS: rk!cos to C

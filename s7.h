@@ -358,8 +358,6 @@ s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a
 
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                            /* (vector-ref vec index) */
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);              /* (vector-set! vec index a) */
-s7_pointer s7_safe_vector_ref(s7_scheme *sc, s7_pointer vec, s7_pointer index);                   /* no error checks */
-s7_pointer s7_safe_vector_set(s7_scheme *sc, s7_pointer vec, s7_pointer index, s7_pointer a);     /* no error checks */
 s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...);                   /* multidimensional vector-ref */
 s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, int indices, ...); /* multidimensional vector-set! */
 

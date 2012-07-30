@@ -63,7 +63,7 @@
   ;; signal controlled one-pole lowpass filter
   (set! (gen 0) (- (* (+ 1 coef) input) (* coef (gen 0)))))
 
-
+#|
 (define (make-pnoise)
   (vector 16383))
 
@@ -72,6 +72,14 @@
   (set! (gen 0) (logand (floor (+ (* (gen 0) 1103515245) 12345)) #xffffffff))
   ;; (bil) added the logand -- otherwise we get an overflow somewhere
   (* amp (- (* (modulo (floor (/ (gen 0) 65536.0)) 65536) 0.0000305185) 1.0)))
+  ;; this looks nutty to me -- was it originally running in 32 bits?
+|#
+(define pn-gen 16383)
+(define (pnoise amp)
+  ;; very special noise generator
+  (set! pn-gen (logand (floor (+ (* pn-gen 1103515245) 12345)) #xffffffff))
+  ;; (bil) added the logand -- otherwise we get an overflow somewhere
+  (* amp (- (* pn-gen 4.6566128730774e-10) 1.0)))
 
 
 
@@ -294,10 +302,11 @@
 	(wetTap-one-pole-swept (make-one-pole-swept))
 	
 	(beg (seconds->samples start))
+	(dur (seconds->samples duration))
 	(freq (* 440.0 (expt 2.0 (/ (- keyNum 69.0) 12.0)))))
     
-    (let((end (+ beg (seconds->samples (+ duration release-time-margin))))
-	 (dur (floor (* duration (mus-srate))))
+    (let((end (+ beg dur (seconds->samples release-time-margin)))
+	 (release-time (+ beg dur))
 	 (wT (/ (* two-pi freq) (mus-srate)))
 	 ;;strike position comb filter delay length
 	 (agraffe-len (/ (* (mus-srate) strikePosition) freq))
@@ -418,34 +427,42 @@
 			(string3-junction-input 0.0)
 			(couplingFilter-input 0.0)
 			(couplingFilter-output 0.0)
-			(sampCount 0)
-			(noi (make-pnoise)))
-		    
+			(noi 0.0)
+			(temp1 0.0)
+			(temp2 0.0)
+			)
+			;(noi (make-pnoise))
+		    (set! pn-gen 16383)
+
 		    (do ((i beg (+ i 1)))
 			((= i end))
 		      
 		      (if is-release-time
 			  (set! loop-gain (expseg loop-gain-expseg looprate))
-			  (if (= sampCount dur)
+			  (if (= i release-time)
 			      (begin
 				(set! is-release-time #t)
 				(set! dryamprate sb-cutoff-rate)
-				(set! wetamprate sb-cutoff-rate))
-			      (set! sampCount (+ 1 sampCount))))
+				(set! wetamprate sb-cutoff-rate))))
 		      
+		      (set! noi (pnoise amp))
+		      (set! temp1 (one-pole-one-zero dryTap0 dryTap1 noi))
+		      (set! temp2 (expseg dryTap-coef-expseg drycoefrate))
 		      (set! dryTap (* (expseg dryTap-amp-expseg dryamprate)
-				      (one-pole-swept dryTap-one-pole-swept
-						      (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp)) ;(- (random (* 2 amp)) amp))
-						      (expseg dryTap-coef-expseg drycoefrate))))
+				      (one-pole-swept dryTap-one-pole-swept temp1 temp2)))
+						      
+		      (set! noi (pnoise amp))
+		      (set! temp1 (one-pole-one-zero wetTap0 wetTap1 noi))
+		      (set! temp2 (expseg wetTap-coef-expseg wetcoefrate))
 		      (set! openStrings (* (expseg wetTap-amp-expseg wetamprate)
-					   (one-pole-swept wetTap-one-pole-swept
-							   (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp)) ;(- (random (* 2 amp)) amp))
-							   (expseg wetTap-coef-expseg wetcoefrate))))
+					   (one-pole-swept wetTap-one-pole-swept temp1 temp2)))
+							   
 		      (set! totalTap (+ dryTap openStrings))
 		      
 		      (set! adelIn (one-pole op1 (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))))
 		      (set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
-		      (set! adelOut (one-pole-allpass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn)))
+		      (set! noi (delay agraffe-delay1 adelIn))
+		      (set! adelOut (one-pole-allpass agraffe-tuning-ap1 noi))
 		      
 		      (set! string1-junction-input (+ couplingFilter-output string1-junction-input))
 		      (set! string1-junction-input (one-pole-allpass-bank string1-stiffness-ap string1-junction-input))

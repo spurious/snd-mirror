@@ -133,17 +133,17 @@
 			      (begin
 				(set! update-ctr (+ update-ctr 1))
 				(if (>= update-ctr update-rate)
-				    (let* ((expa (env expenv))                ;current expansion amount
-					   (segl (env lenenv))                ;current segment length
-					   (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					   (hp (env hopenv))                  ;current hop size
-					   (sl (floor (* segl (mus-srate))))
-					   (rl (floor (* rmpl sl))))
-				      (set! update-ctr 0)
-				      (set! (mus-length ingen) sl)
-				      (set! (mus-ramp ingen) rl)
-				      (set! (mus-frequency ingen) hp)
-				      (set! (mus-increment ingen) expa)))))
+				    (let ((expa (env expenv))                ;current expansion amount
+					  (segl (env lenenv))                ;current segment length
+					  (rmpl (env rampenv))               ;current ramp length (0 to .5)
+					  (hp (env hopenv)))                  ;current hop size
+				      (let ((sl (floor (* segl (mus-srate))))
+					    (rl (floor (* rmpl sl))))
+					(set! update-ctr 0)
+					(set! (mus-length ingen) sl)
+					(set! (mus-ramp ingen) rl)
+					(set! (mus-frequency ingen) hp)
+					(set! (mus-increment ingen) expa))))))
 			  
 			  (if (negative? ex-samp)
 			      (begin
@@ -190,21 +190,21 @@
 				  (begin
 				    (set! update-ctr (+ update-ctr 1))
 				    (if (>= update-ctr update-rate)
-					(let* ((expa (env expenv))                ;current expansion amount
-					       (segl (env lenenv))                ;current segment length
-					       (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					       (hp (env hopenv))                  ;current hop size
-					       (sl (floor (* segl (mus-srate))))
-					       (rl (floor (* rmpl sl))))
-					  (set! update-ctr 0)
-					  (set! (mus-length ingen0) sl)
-					  (set! (mus-ramp ingen0) rl)
-					  (set! (mus-frequency ingen0) hp)
-					  (set! (mus-increment ingen0) expa)
-					  (set! (mus-length ingen1) sl)
-					  (set! (mus-ramp ingen1) rl)
-					  (set! (mus-frequency ingen1) hp)
-					  (set! (mus-increment ingen1) expa)))))
+					(let ((expa (env expenv))                ;current expansion amount
+					      (segl (env lenenv))                ;current segment length
+					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
+					      (hp (env hopenv)))                 ;current hop size
+					  (let ((sl (floor (* segl (mus-srate))))
+						(rl (floor (* rmpl sl))))
+					    (set! update-ctr 0)
+					    (set! (mus-length ingen0) sl)
+					    (set! (mus-ramp ingen0) rl)
+					    (set! (mus-frequency ingen0) hp)
+					    (set! (mus-increment ingen0) expa)
+					    (set! (mus-length ingen1) sl)
+					    (set! (mus-ramp ingen1) rl)
+					    (set! (mus-frequency ingen1) hp)
+					    (set! (mus-increment ingen1) expa))))))
 			      
 			      (if (negative? ex-samp)
 				  (begin
@@ -254,20 +254,20 @@
 				  (begin
 				    (set! update-ctr (+ update-ctr 1))
 				    (if (>= update-ctr update-rate)
-					(let* ((expa (env expenv))                ;current expansion amount
-					       (segl (env lenenv))                ;current segment length
-					       (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					       (hp (env hopenv))                  ;current hop size
-					       (sl (floor (* segl (mus-srate))))
-					       (rl (floor (* rmpl sl))))
-					  (set! update-ctr 0)
-					  (do ((ix 0 (+ ix 1)))
-					      ((= ix in-chans))
-					    (let ((gen (vector-ref ex-array ix)))
-					      (set! (mus-length gen) sl)
-					      (set! (mus-ramp gen) rl)
-					      (set! (mus-frequency gen) hp)
-					      (set! (mus-increment gen) expa)))))))
+					(let ((expa (env expenv))                ;current expansion amount
+					      (segl (env lenenv))                ;current segment length
+					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
+					      (hp (env hopenv)))                 ;current hop size
+					  (let ((sl (floor (* segl (mus-srate))))
+						(rl (floor (* rmpl sl))))
+					    (set! update-ctr 0)
+					    (do ((ix 0 (+ ix 1)))
+						((= ix in-chans))
+					      (let ((gen (vector-ref ex-array ix)))
+						(set! (mus-length gen) sl)
+						(set! (mus-ramp gen) rl)
+						(set! (mus-frequency gen) hp)
+						(set! (mus-increment gen) expa))))))))
 			      
 			      (if (negative? ex-samp)
 				  (begin
@@ -308,4 +308,5 @@
 			      ;; if reverb is turned on, output to the reverb streams
 			      (if rev-mx
 				  (frame->file *reverb* i (frame->frame outframe rev-mx revframe)))))))))))))))
+
 ;;; (with-sound () (expandn 0 1 "oboe.snd" 1 :expand 4))

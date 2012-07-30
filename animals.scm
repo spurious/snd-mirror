@@ -1616,12 +1616,12 @@
       (let ((pval (oscil gen3))
 	    (noise (rand-interp gargle))
 	    (aval (+ .7 (* .3 (oscil gen5)))))
-	(outa i (* (env ampf)
-		   (+ (* (max pval 0.0)
-			 (+ (* .95 (oscil gen1 noise))
-			    (* .05 (oscil gen4 noise))))
-		      (* (max (- 1.0 pval) 0.0)
-			 .05 aval (oscil gen2 (* 2.4 noise))))))))))
+	(set! aval (* (max (- 1.0 pval) 0.0) .05 aval (oscil gen2 (* 2.4 noise))))
+	(set! pval (+ aval (* (max pval 0.0)
+			      (+ (* .95 (oscil gen1 noise))
+				 (* .05 (oscil gen4 noise))))))
+
+	(outa i (* pval (env ampf)))))))
 
 ;; (with-sound () (southern-mole-cricket 0 3 .5))
 
@@ -1692,19 +1692,20 @@
 	    (noise (make-rand-interp 5000))
 	    (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
 	    (ampf (make-env (list 0 0 .5 .5 slow-start .4 soft-end .4 (+ soft-end .5) 1 (- dur 1) 1 dur 0.0) :duration dur :scaler amp))
-	    (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8))))
+	    (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8)))
+	    (nrx 0.0))
 	(do ((i start (+ i 1)))
 	    ((= i stop))
 	  (let ((frq (env pulsef))
 		(md (oscil modulator)))
-	    (outa i (* (env ampf)
-		       (pulsed-env peep frq)
-		       md md
-		       (nrxysin carrier (+ (* frq 825.0) ; (/ 13200 16))
-					   (* .1 (rand-interp noise))
-					   (* .1 md)))))))))))
+	    (set! nrx (nrxysin carrier (+ (* frq 825.0) ; (/ 13200 16))
+					  (* .1 (rand-interp noise))
+					  (* .1 md))))
+	    (set! md (* md md nrx (pulsed-env peep frq)))
+	    (outa i (* md (env ampf)))))))))
 
-;; (with-sound () (long-spurred-meadow-katydid 0 .5))
+;; (with-sound (:statistics #t) (long-spurred-meadow-katydid 0 .5))
+
 
 
 ;;; --------------------------------------------------------------------------------
