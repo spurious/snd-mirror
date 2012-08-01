@@ -1637,11 +1637,8 @@ void snd_close_file(snd_info *sp)
 
   ss->active_sounds--;
   reflect_file_change_in_title();
-
-  if (XEN_HOOKED(ss->snd_selection_hook))
-    run_hook(ss->snd_selection_hook, 
-	     XEN_LIST_1(C_TO_XEN_INT(SELECTION_IN_DOUBT)),
-	     "selection-hook");
+  enved_reflect_selection(selection_is_active());
+  reflect_selection_in_save_as_dialog(selection_is_active());
 
   if (XEN_HOOKED(ss->snd_open_file_hook))
     run_hook(ss->snd_open_file_hook,

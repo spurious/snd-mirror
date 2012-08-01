@@ -250,11 +250,7 @@ bool delete_selection(cut_selection_regraph_t regraph)
       for_each_normal_chan(cp_delete_selection);
       if (regraph == UPDATE_DISPLAY) 
 	for_each_normal_chan(update_graph);
-
-      if (XEN_HOOKED(ss->snd_selection_hook))
-	run_hook(ss->snd_selection_hook, 
-		 XEN_LIST_1(C_TO_XEN_INT(SELECTION_INACTIVE)),
-		 "selection-hook");
+      enved_reflect_selection(false);
 
       if (XEN_HOOKED(ss->effects_hook))
 	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
@@ -279,11 +275,7 @@ void deactivate_selection(void)
 {
   for_each_normal_chan(cp_deactivate_selection);
   for_each_normal_chan(update_graph);
-
-  if (XEN_HOOKED(ss->snd_selection_hook))
-    run_hook(ss->snd_selection_hook, 
-	     XEN_LIST_1(C_TO_XEN_INT(SELECTION_INACTIVE)),
-	     "selection-hook");
+  enved_reflect_selection(false);
 
   if (XEN_HOOKED(ss->effects_hook))
     run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
@@ -312,11 +304,8 @@ void reactivate_selection(chan_info *cp, mus_long_t beg, mus_long_t end)
   ed->selection_maxamp = -1.0;
   ed->selection_maxamp_position = -1;
   xen_selection_counter++;
-
-  if (XEN_HOOKED(ss->snd_selection_hook))
-    run_hook(ss->snd_selection_hook, 
-	     XEN_LIST_1(C_TO_XEN_INT(SELECTION_ACTIVE)),
-	     "selection-hook");
+  enved_reflect_selection(true);
+  reflect_selection_in_save_as_dialog(true);
 
   if (XEN_HOOKED(ss->effects_hook))
     run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
@@ -545,11 +534,8 @@ void finish_selection_creation(void)
     {
       if (selection_creates_region(ss)) 
 	make_region_from_selection();
-
-      if (XEN_HOOKED(ss->snd_selection_hook))
-	run_hook(ss->snd_selection_hook, 
-		 XEN_LIST_1(C_TO_XEN_INT(SELECTION_ACTIVE)),
-		 "selection-hook");
+      enved_reflect_selection(true);
+      reflect_selection_in_save_as_dialog(true);
 
       if (XEN_HOOKED(ss->effects_hook))
 	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
@@ -1587,11 +1573,8 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 	  else cp_set_selection_beg(cp, 0);
 	}
       else cp_deactivate_selection(cp);
-
-      if (XEN_HOOKED(ss->snd_selection_hook))
-	run_hook(ss->snd_selection_hook, 
-		 XEN_LIST_1(C_TO_XEN_INT(SELECTION_CHANGED)),
-		 "selection-hook");
+      enved_reflect_selection(selection_is_active());
+      reflect_selection_in_save_as_dialog(selection_is_active());
 
       if (XEN_HOOKED(ss->effects_hook))
 	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
@@ -1891,12 +1874,12 @@ void g_init_selection(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);
   XEN_DEFINE_SAFE_PROCEDURE(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position);
-  XEN_DEFINE_SAFE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
-  XEN_DEFINE_SAFE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
-  XEN_DEFINE_SAFE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
-  XEN_DEFINE_SAFE_PROCEDURE(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
+  XEN_DEFINE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
+  XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
+  XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
+  XEN_DEFINE_PROCEDURE(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
+  XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
+  XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
+  XEN_DEFINE_PROCEDURE(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
+  XEN_DEFINE_PROCEDURE(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
 }

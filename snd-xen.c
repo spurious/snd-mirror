@@ -2612,10 +2612,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension);
 
   ss->snd_open_file_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook 'reason)", 1);
-  ss->snd_selection_hook = XEN_DEFINE_SIMPLE_HOOK("(make-hook 'reason)", 1);
-
   XEN_PROTECT_FROM_GC(ss->snd_open_file_hook);
-  XEN_PROTECT_FROM_GC(ss->snd_selection_hook);
 
   ss->effects_hook = XEN_DEFINE_HOOK(S_effects_hook, "(make-hook)", 0, "called when something changes that the effects dialogs care about");
 

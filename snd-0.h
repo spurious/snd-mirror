@@ -9,6 +9,10 @@
   #undef _
 #endif
 
+#if HAVE_SCHEME
+  #define DISPLAY(Obj) s7_object_to_c_string(s7, Obj)
+#endif
+
 #define NO_SUCH_ENVELOPE XEN_ERROR_TYPE("no-such-envelope")
 #define NO_SUCH_SAMPLE   XEN_ERROR_TYPE("no-such-sample")
 #define NO_SUCH_EDIT     XEN_ERROR_TYPE("no-such-edit")
@@ -152,8 +156,6 @@ enum {BLACK_AND_WHITE_COLORMAP, GRAY_COLORMAP, HOT_COLORMAP, COOL_COLORMAP, BONE
                                (Err != IO_NO_CHANGES))
 
 enum {FILE_OPENED, FILE_CLOSED};
-enum {SELECTION_INACTIVE, SELECTION_ACTIVE, SELECTION_CHANGED, SELECTION_IN_DOUBT};
-
 typedef enum {WITH_READABLE_HEADERS, WITH_WRITABLE_HEADERS, WITH_BUILTIN_HEADERS} header_choice_t;
 enum {SORT_A_TO_Z, SORT_Z_TO_A, SORT_NEW_TO_OLD, SORT_OLD_TO_NEW, SORT_SMALL_TO_BIG, SORT_BIG_TO_SMALL, SORT_XEN};
 

@@ -2758,31 +2758,13 @@ static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 }
 
 
-static XEN save_selection_hook_handler(XEN hook_or_reason)
+void reflect_selection_in_save_as_dialog(bool on)
 {
-  int reason;
-  save_as_dialog_info *sd;
-
-  sd = save_selection_as;
-#if HAVE_SCHEME
-  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
-#else
-  reason = XEN_TO_C_INT(hook_or_reason);
-#endif
-  if ((reason == SELECTION_ACTIVE) ||
-      (selection_is_active()))
-    {
-      clear_dialog_error(sd->panel_data);
-    }
-  return(XEN_FALSE);
+  if ((on) && 
+      (save_selection_as) &&
+      (save_selection_as->panel_data))
+    clear_dialog_error(save_selection_as->panel_data);
 }
-
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(save_selection_hook_handler_w, save_selection_hook_handler)
-#else
-  #define save_selection_hook_handler_w save_selection_hook_handler
-#endif
-
 
 
 void reflect_region_in_save_as_dialog(void)
@@ -3331,7 +3313,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, const char *sound_name,
 
 	case SELECTION_SAVE_AS:
 	  set_dialog_widget(SELECTION_SAVE_AS_DIALOG, fs->dialog);
-	  XEN_ADD_HOOK(ss->snd_selection_hook, save_selection_hook_handler_w, "save-selection-hook-handler", "save selection dialog's selection hook handler");
 	  break;
 
 	case REGION_SAVE_AS:

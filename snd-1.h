@@ -531,7 +531,6 @@ typedef struct snd_state {
   XEN snd_error_hook; 
   XEN snd_warning_hook; 
   XEN snd_open_file_hook;
-  XEN snd_selection_hook;
   XEN effects_hook;
 
 #if USE_MOTIF

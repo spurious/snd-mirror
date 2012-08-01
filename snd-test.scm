@@ -38,6 +38,7 @@
 (define test-at-random 0)
 					;(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "load ~S~%" name))))
 (if (<= tests 0) (set! tests 1))
+;(set! *gc-stats* #t)
 
 (set! *#readers* 
       (cons (cons #\_ (lambda (str)
@@ -38754,7 +38755,15 @@ EDITS: 1
       (if (fneq (gad 'flt1) 1.0) (snd-display #__line__ ";defgenerator flt1: ~A" (gad 'flt1)))
       (if (not (= (gad 'i) 0)) (snd-display #__line__ ";defgenerator i: ~A" (gad 'i)))
       (if (not (= (gad 'i1) 123)) (snd-display #__line__ ";defgenerator i1: ~A" (gad 'i1))))
-    
+
+    (let ()
+      (defgenerator (g1 :methods (list (cons 'g1-method (lambda (g) 440)))))
+      (let ((g (make-g1)))
+	(if (not (g1? g)) 
+	    (format #t ";not g1: ~A~%" (environment->list g)))
+	(if (not (= ((g 'g1-method) g) 440))
+	    (format #t ";g1-method: ~A~%" ((g 'g1-method) g)))))
+
     (if (file-exists? "test.snd") (delete-file "test.snd"))
     (set! (mus-srate) 22050)
     (set! *clm-srate* 22050)
@@ -47957,6 +47966,3 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,000,294,016  ???:cos [/lib64/libm-2.12.so]
 
 |#
-
-;;; TODO: much more extensive defgenerator tests
-;;; TODO: error in s7_call should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off

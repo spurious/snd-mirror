@@ -83,6 +83,7 @@ void set_fft_log_frequency(bool val) {}
 void set_transform_normalization(fft_normalize_t val) {}
 void set_show_selection_transform(bool show) {}
 void reflect_regions_in_region_browser(void) {}
+void reflect_selection_in_save_as_dialog(bool on) {}
 void reflect_no_regions_in_region_browser(void) {}
 int update_region_browser(bool grf_too) {return(0);}
 bool region_browser_is_active(void) {return(false);}
@@ -181,6 +182,7 @@ void set_enved_revert_sensitive(bool val) {}
 void set_enved_undo_sensitive(bool val) {}
 void set_enved_save_sensitive(bool val) {}
 void set_enved_show_sensitive(bool val) {}
+void enved_reflect_selection(bool on) {}
 void make_scrolled_env_list(void) {}
 void enved_reflect_peak_env_completion(snd_info *sp) {}
 void new_active_channel_alert(void) {}

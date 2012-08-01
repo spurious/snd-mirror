@@ -143,6 +143,7 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg, bool use_write);
                                                                      /* (object->string obj) */
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);          /* same as object->string but returns a C char* directly */
                                                                      /*   the returned value should be freed by the caller */
+char *s7_object_to_c_string_with_free(s7_scheme *sc, s7_pointer obj); 
 
 s7_pointer s7_load(s7_scheme *sc, const char *file);                 /* (load file) */
 s7_pointer s7_load_path(s7_scheme *sc);                              /* *load-path* */
@@ -582,7 +583,6 @@ void s7_function_set_returns_temp(s7_pointer f);
 bool s7_function_returns_temp(s7_pointer f);
 bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
 void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level));
-s7_Double s7_call_direct_to_real(s7_scheme *sc, s7_pointer expr);
 s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
   /* these are for experimental optimization choices */

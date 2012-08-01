@@ -894,7 +894,6 @@ typedef struct s7_cell {
 
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
       int accessor;
-      void *op_data;
     } string;
     
     union {
@@ -1669,7 +1668,6 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
 #define symbol_accessor(p)            (symbol_name_cell(p))->object.string.accessor
 #define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
-#define symbol_op_data(p)             (symbol_name_cell(p))->object.string.op_data
 
 #define global_slot(p)                (p)->object.sym.global_slot
 #define initial_slot(p)               (p)->object.sym.initial_slot
@@ -4706,9 +4704,8 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 	  /* env as arg for common case: 
 	   *   (with-environment (augment-environment (current-environment) (object-environment obj)) ...)
 	   * to bring in all of obj's fields/methods but keep access to the surrounding context.
-	   *
-	   * TODO: but we want to do this only once, at definition time -- define-method as macro
-	   *   that appends the obj to current env, then uses that as the closure for the func?
+	   * But chaining is not safe or even unambiguous, and this form will not work if obj's fields
+	   *  are being set -- we've made a new slot!  Not sure how to handle this.
 	   */
 	}
       s7_gc_unprotect_at(sc, gc_loc);
@@ -5011,6 +5008,13 @@ static s7_pointer g_outer_environment(s7_scheme *sc, s7_pointer args)
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
 { 
   s7_pointer x;	
+#if DEBUGGING
+  if (!is_symbol(hdl))
+    {
+      fprintf(stderr, "find_symbol %s??\n", DISPLAY(hdl));
+      abort();
+    }
+#endif
 
   for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
 
@@ -6884,6 +6888,7 @@ s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x)
 
 s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x)
 {
+  /* this is called in xen.c */
   if (type(x) == T_INTEGER)
     return(integer(x));
 
@@ -20958,6 +20963,32 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
        *   (let ((lst (list 1 2 3))) (list-set! lst 1 (current-environment)) lst) 
        *   if we add T_ENVIRONMENT to has_structure, we need to extend all the circle check code.
        */
+#if 0
+      {
+	int i, spaces = 0;
+	if (obj != sc->global_env)
+	  {
+	    s7_pointer p, x;
+	    port_write_string(port)(sc, "\n", 1, port);
+	    for (p = obj; is_environment(p); spaces++, p = next_environment(p))
+	      {
+		for (x = environment_slots(p); is_slot(x); x = next_slot(x))
+		  {
+		    s7_pointer sym, val;
+		    sym = slot_symbol(x);
+		    val = slot_value(x);
+		    for (i = 0; i <= spaces; i++) port_write_string(port)(sc, "    ", 4, port);
+		    port_write_string(port)(sc, symbol_name(sym), symbol_name_length(sym), port);
+		    port_write_string(port)(sc, ": ", 2, port);
+		    if (is_environment(val))
+		      port_write_string(port)(sc, "#<environment>", 14, port);
+		    else object_to_port(sc, val, port, use_write, to_file, ci);
+		    port_write_string(port)(sc, "\n", 1, port);
+		  }
+	      }
+	  }
+      }
+#endif
       if (has_methods(obj))
 	{
 	  s7_pointer print_func;
@@ -21103,6 +21134,21 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
   return(s7_object_to_c_string_1(sc, obj, USE_WRITE, NULL));
 }
+
+
+#if 0
+static int display_ctr = 0;
+static char **strs = NULL;
+
+char *s7_object_to_c_string_with_free(s7_scheme *sc, s7_pointer obj)
+{
+  if (display_ctr >= 32) display_ctr = 0;
+  if (strs == NULL) strs = (char **)calloc(32, sizeof(char *));
+  else if (strs[display_ctr]) free(strs[display_ctr]);
+  strs[display_ctr++] = s7_object_to_c_string_1(sc, obj, USE_WRITE, NULL);
+  return(strs[display_ctr - 1]);
+}
+#endif
 
 
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
@@ -26848,16 +26894,6 @@ s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr)
 }
 
 
-s7_Double s7_call_direct_to_real(s7_scheme *sc, s7_pointer expr)
-{
-#if (!WITH_GMP)
-  return(real(c_function_call(ecdr(expr))(sc, cdr(expr))));
-#else
-  return(s7_real(c_function_call(ecdr(expr))(sc, cdr(expr))));
-#endif
-}
-
-
 s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 {
   s7_Double val;
@@ -27850,10 +27886,10 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
   snprintf(internal_set_name, len, "[set-%s]", name);
 
   get_func = s7_make_function(sc, name, getter, get_req_args, get_opt_args, false, documentation); 
-  typeflag(get_func) |= T_SAFE_PROCEDURE;
+  /* typeflag(get_func) |= T_SAFE_PROCEDURE; */
   s7_define(sc, sc->NIL, make_symbol(sc, name), get_func);
   set_func = s7_make_function(sc, internal_set_name, setter, set_req_args, set_opt_args, false, documentation); 
-  typeflag(set_func) |= T_SAFE_PROCEDURE;
+  /* typeflag(set_func) |= T_SAFE_PROCEDURE; */
   s7_define(sc, sc->NIL, make_symbol(sc, internal_set_name), set_func);
   c_function_setter(get_func) = set_func;
 
@@ -28662,8 +28698,9 @@ static s7_pointer find_safe_do_symbol_or_bust(s7_scheme *sc, s7_pointer sym);
 static void set_safe_do_level(s7_scheme *sc, int new_val)
 {
   sc->safe_do_level = new_val;
-  if (new_val > 0)
-    finder = find_safe_do_symbol_or_bust;
+  if (new_val < -10)
+    finder = find_safe_do_symbol_or_bust; 
+  /* this never happens of course, but by including this crazy code, we get about 10% speed up overall in gcc 4.4 and 4.7 */
   else finder = find_symbol_or_bust;
   if (sc->safe_do_notifier)
     (*(sc->safe_do_notifier))(sc->safe_do_level);
@@ -29987,6 +30024,10 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
   switch (type(arg))
     {
     case T_C_OBJECT:     
+#if DEBUGGING
+      if ((c_object_type(arg) < 0) || (c_object_type(arg) > num_types))
+	return("this is not a c_object!\n");
+#endif
       return(make_type_name(object_types[c_object_type(arg)]->name, article));
 
     case T_INPUT_PORT:   
@@ -31006,9 +31047,23 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
   s = s7_object_to_c_string(sc, p);
   s_len = safe_strlen(s);
   if (s_len > len)
-    return(truncate_string(s7_object_to_c_string(sc, p), len, false, &s_len));
+    return(truncate_string(s, len, false, &s_len));
   return(s);
 }
+
+
+#if 0
+static char *object_to_truncated_string_with_free(s7_scheme *sc, s7_pointer p, int len)
+{
+  char *s;
+  int s_len;
+  s = s7_object_to_c_string_with_free(sc, p);
+  s_len = safe_strlen(s);
+  if (s_len > len)
+    return(truncate_string(s, len, false, &s_len));
+  return(s);
+}
+#endif
 
 
 static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
@@ -33461,15 +33516,6 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 }
 
 
-
-/* even with the frame_id optimization, this is still about 10% of our total computing: 146/1594 in lg
- *   but the separate finders no longer buy us much: 1608 vs 1583.
- * by using 1 function here, I can specialize safe do lookups without any overhead --
- *   so it's worth the 1.5% slow down elsewhere.  Or so it seemed... I am not hitting
- *   safe do much outside of CLM, and when I do, no big win from the specialized lookup.
- */
-
-
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl) 
 {
   s7_pointer x;
@@ -33522,15 +33568,14 @@ static bool is_h_optimized(s7_pointer p)
 
 static s7_pointer find_safe_do_symbol_or_bust(s7_scheme *sc, s7_pointer sym) 
 {
+  /* this is never called but seems to speed up the compiled code by 10%!! */
   s7_pointer val;
-  val = (s7_pointer)symbol_op_data(sym);
+  val = NULL;
   if (!val)
     {
       val = find_symbol(sc, sym);
       if (!is_slot(val)) 
 	return(unbound_variable(sc, sym));
-      if (s7_is_do_local_or_global(sc, sym))
-	symbol_op_data(sym) = (void *)val;
     }
   return(slot_value(val));
 }
@@ -35733,7 +35778,6 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 			      set_optimize_data(car(x), hop + OP_SAFE_C_SS); /* these two symbols are almost never the same, (sqrt (+ (* x x) (* y y))) */
 			      if (c_function_call(func) == g_cons)
 				set_optimize_op(car(x), hop + OP_SAFE_CONS_SS);
-			      /* TODO: this will move to cons_chooser */
 			    }
 			  else
 			    {
@@ -37845,11 +37889,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	      (is_pair(cadr(x))) &&
 	      (form_is_safe(sc, func, cadr(x), false, bad_set)))
 	    return(true);
-
-	  /* PERHAPS: set pws if safe -- isn't this safe also? */
-#if PRINTING
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
-#endif
 	  return(false);
 	  
 	default:
@@ -39830,13 +39869,6 @@ static void initialize_safe_do_1(s7_scheme *sc, s7_pointer tree)
 
       initialize_safe_do_1(sc, car(tree));
       initialize_safe_do_1(sc, cdr(tree));
-    }
-  else
-    {
-      if (is_symbol(tree))
-	{
-	  symbol_op_data(tree) = NULL;
-	}
     }
 }
 
@@ -44134,7 +44166,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    
 		    /* another possibility: goto, also continuation, macro
 		     * case T_GOTO:
-		     *  sc->args = list_1(sc, finder(cadr(code))); ??
+		     *  sc->args = list_1(sc, finder(sc, cadr(code))); ??
 		     *  call_with_exit(sc)
 		     *  goto START;
 		     */
@@ -47066,12 +47098,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		MAKE_CLOSURE_NO_CAPTURE(sc, x, car(y), cdr(y), sc->envir);
 		
 		z = find_symbol_or_bust(sc, caddr(code));
+#if 0
+		if (is_null(z))
+		  {
+		    sc->value = sc->UNSPECIFIED;
+		    goto START;
+		  }
+		if (!is_pair(z))
+		  {
+		    sc->value = g_for_each(sc, list_2(sc, x, z));
+		    goto START;
+		  }
+#else
 		if ((!is_pair(z)) ||
 		    (s7_list_length(sc, z) == 0))
 		  {
 		    sc->value = g_for_each(sc, list_2(sc, x, z));
 		    goto START;
 		  }
+#endif
 		sc->code = x;
 		sc->args = z;
 		
@@ -47096,15 +47141,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		MAKE_CLOSURE_NO_CAPTURE(sc, x, car(y), cdr(y), sc->envir);
 		
 		z = find_symbol_or_bust(sc, caddr(code));
+#if 0
+		if (is_null(z))
+		  {
+		    sc->value = sc->UNSPECIFIED;
+		    goto START;
+		  }
+		if (!is_pair(z))
+		  {
+		    sc->value = g_for_each(sc, list_2(sc, x, z));
+		    goto START;
+		  }
+#else
 		if ((!is_pair(z)) ||
 		    (s7_list_length(sc, z) == 0))
 		  {
 		    sc->value = g_for_each(sc, list_2(sc, x, z));
 		    goto START;
 		  }
+#endif
 		sc->code = x;
 		sc->args = z;
 		sc->args = make_counter(sc, sc->NIL, sc->args, sc->NIL, 0, 0);
+		/*
+		 * there is a well-hidden bug here involving the clm2xen expression data in safe do
+		 *   that has a for-each (in a hook) -- it appears that the dynamic-wind object that is
+		 *   currently at the top of the stack gets its type field set to 23 (c_object?)
+		 *   somehow.  It does not happen in valgrind.  We get here from OPT_EVAL (this is
+		 *   an optimization op), previous from APPLY (of the hook func) in the trailers
+		 *   section (since the hook "(f e)" is not optimized).  It is not a GC problem,
+		 *   I think, although a GC does happen close by.  push|pop_stack do not see it,
+		 *   nor does the outer START switch. 
+		 */
 		goto FOR_EACH_SIMPLER;
 	      }
 	      
@@ -48915,10 +48983,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_SET_SYMBOL_SAFE_opSSq_S:
       {
-	s7_pointer val, arg, inner;
+	s7_pointer val, arg, inner, sym;
+	sym = car(sc->code);
 	arg = cadr(sc->code);
 	inner = cadr(arg);
-	sc->temp4 = sc->code;
 	val = finder(sc, cadr(inner));
 	car(sc->T2_2) = finder(sc, caddr(inner));
 	car(sc->T2_1) = val;
@@ -48926,36 +48994,42 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(sc->T2_2) = finder(sc, caddr(arg));
 	car(sc->T2_1) = val;
 	sc->value = c_call(arg)(sc, sc->T2_1);
-	sc->code = car(sc->temp4);
+	sc->code = sym;
 	goto SET_SAFE;
       }
 
     case OP_SET_SYMBOL_SAFE_SS:
-      sc->temp4 = sc->code;
-      car(sc->T2_1) = finder(sc, car(fcdr(sc->code)));
-      car(sc->T2_2) = finder(sc, cadr(fcdr(sc->code)));
-      sc->value = c_call(cadr(sc->code))(sc, sc->T2_1);
-      sc->code = car(sc->temp4);
-      goto SET_SAFE;
+      {
+	s7_pointer sym;
+	sym = car(sc->code);
+	car(sc->T2_1) = finder(sc, car(fcdr(sc->code)));
+	car(sc->T2_2) = finder(sc, cadr(fcdr(sc->code)));
+	sc->value = c_call(cadr(sc->code))(sc, sc->T2_1);
+	sc->code = sym;
+	goto SET_SAFE;
+      }
 
 
     case OP_SET_SYMBOL_SAFE_S:
-      sc->temp4 = sc->code;
-      car(sc->T1_1) = finder(sc, fcdr(sc->code));
-      sc->value = c_call(cadr(sc->code))(sc, sc->T1_1);
-      /*
-       * I think this is supposed to be a safe c function (is_h_safe_c_s above), but
-       *   it's possible for the call to change sc->code?  
-       *   in snd-test: 
-       *           (set! snd-output (open-sound output-1)) 
-       *   becomes (set! (hook-functions *error-hook*) '())
-       *   because open-sound is calling itself safe, but it can call all kinds of hooks and whatnot,
-       *   and these can hit errors, setting *error-hook*, fallling into s7_call and so on.
-       * (this is independent of c_function_call: it happens with optimization off, so set below
-       * also needs to be protected, I guess).
-       */
-      sc->code = car(sc->temp4);
-      goto SET_SAFE;
+      {
+	s7_pointer sym;
+	sym = car(sc->code);
+	car(sc->T1_1) = finder(sc, fcdr(sc->code));
+	sc->value = c_call(cadr(sc->code))(sc, sc->T1_1);
+	/*
+	 * I think this is supposed to be a safe c function (is_h_safe_c_s above), but
+	 *   it's possible for the call to change sc->code?  
+	 *   in snd-test: 
+	 *           (set! snd-output (open-sound output-1)) 
+	 *   becomes (set! (hook-functions *error-hook*) '())
+	 *   because open-sound is calling itself safe, but it can call all kinds of hooks and whatnot,
+	 *   and these can hit errors, setting *error-hook*, fallling into s7_call and so on.
+	 * (this is independent of c_function_call: it happens with optimization off, so set below
+	 * also needs to be protected, I guess).
+	 */
+	sc->code = sym;
+	goto SET_SAFE;
+      }
 #endif      
 
       
@@ -58066,6 +58140,9 @@ s7_scheme *s7_init(void)
 #if WITH_IMMUTABLE_UNQUOTE
   /* unquote has no value, so it has to be the symbol for quasiquote */
   /* SOMEDAY: this code solves the various unquote redefinition troubles
+   *
+   * if "," -> "(unquote...)" in the reader, (let (, (lambda (x) (+ x 1))) ,,,,1) -> 5
+   *   in s7, this requires a quote: (let (, (lambda (x) (+ x 1))) ,,,,'1)
    */
   sc->UNQUOTE =     make_symbol(sc, ","); 
   set_immutable(sc->UNQUOTE);
@@ -58886,10 +58963,8 @@ s7_scheme *s7_init(void)
 
 
 /* PERHAPS: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
- * fix do envs (unopt case -- saved-args)
- *
- * get gmp to work again in the opt case
- *
+ * SOMEDAY: fix do envs (unopt case -- saved-args)
+ * SOMEDAY: get gmp to work again in the opt case
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
  *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
@@ -58899,19 +58974,10 @@ s7_scheme *s7_init(void)
  * optimizer could mark the non-capture lambdas (for-each/map/catch/dynamic-wind/run/with-output...)
  *   so that env not incremented (line 49920)
  *
- * should with-env reset the finder so that we just look at sc->envir etc -- the frame_id and symbol local_slot
- *   are not very relevant in this context.  But then with-env is not tail-callable.
- *   could a func tail call in with-env screw up the object or get the wrong (outer) env?
- *   if so, we'll hace to catch it anyway, hence finder can change -- I don't think this can happen.
- *   But... if a function has with-env without any tail-call or other opaque exit (i.e. a generator),
- *   the optimizer could tell it to use a different finder -- OP_WITH_ENV_DIRECT which would
- *   undo the finder at exit or upon error etc.  The finder could be a binary tree search I think,
- *   since envs have an extra slot = binary tree access?  Or the special finder could check that
- *   slot to get the env-specific finder.
- *
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
- * PERHAPS: closure direct
+ *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
+ * TODO: error in s7_call should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270
  * bench    52019 -> 7875 [8268] 8037 8592 8402

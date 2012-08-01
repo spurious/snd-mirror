@@ -856,34 +856,6 @@ static XEN reflect_file_in_enved(XEN hook_or_reason)
 #endif
 
 
-static void enved_reflect_selection(bool on);
-
-static XEN enved_selection_handler(XEN hook_or_reason)
-{
-  int reason;
-#if HAVE_SCHEME
-  reason = XEN_TO_C_INT(s7_environment_ref(s7, hook_or_reason, s7_make_symbol(s7, "reason")));
-#else
-  reason = XEN_TO_C_INT(hook_or_reason);
-#endif
-  switch (reason)
-    {
-    case SELECTION_INACTIVE: enved_reflect_selection(false);                 break;
-    case SELECTION_ACTIVE:   enved_reflect_selection(true);                  break;
-    default:                 enved_reflect_selection(selection_is_active()); break;
-    }
-  return(XEN_FALSE);
-}
-
-
-#ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_1(enved_selection_handler_w, enved_selection_handler)
-#else
-  #define enved_selection_handler_w enved_selection_handler
-#endif
-
-
-
 
 #define BB_MARGIN 3
 
@@ -1251,7 +1223,6 @@ GtkWidget *create_envelope_editor(void)
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
 
       XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_in_enved_w, "enved-file-open-handler", "enved dialog's file-open-hook handler");
-      XEN_ADD_HOOK(ss->snd_selection_hook, enved_selection_handler_w, "enved-selection-handler", "enved dialog's selection-hook handler");
     }
   else raise_dialog(enved_dialog);
 
@@ -1330,7 +1301,7 @@ void set_enved_filter_order(int order)
 }
 
 
-static void enved_reflect_selection(bool on)
+void enved_reflect_selection(bool on)
 {
   if ((enved_dialog) && (!within_selection_src))
     {

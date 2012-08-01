@@ -4,7 +4,8 @@
 ;;; it is dangerous to use a method within a generator's definition of that method
 ;;;   if the gen is used as the environment in with-environment, the embedded call
 ;;;   becomes a recursive call on that method.  You either need to check the type
-;;;   of the method argument, or use #_method to override the name lookup.
+;;;   of the method argument, or use #_method to override the name lookup, or use
+;;;   the explicit call style: (((gen 'embedded-gen) 'shared-method) ...)
 
 
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)

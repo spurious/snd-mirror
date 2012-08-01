@@ -5287,11 +5287,8 @@ void revert_edits(chan_info *cp)
   clear_transform_edit_ctrs(cp);
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
-
-  if (XEN_HOOKED(ss->snd_selection_hook))
-    run_hook(ss->snd_selection_hook, 
-	     XEN_LIST_1(C_TO_XEN_INT(SELECTION_IN_DOUBT)),
-	     "selection-hook");
+  enved_reflect_selection(selection_is_active());
+  reflect_selection_in_save_as_dialog(selection_is_active());
 
   if (XEN_HOOKED(ss->effects_hook))
     run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
@@ -5321,15 +5318,12 @@ bool undo_edit(chan_info *cp, int count)
       clear_transform_edit_ctrs(cp);
       reflect_edit_counter_change(cp);
       reflect_sample_change_in_axis(cp);
+      enved_reflect_selection(selection_is_active());
+      reflect_selection_in_save_as_dialog(selection_is_active());
       if (cp->edit_ctr == 0)
 	{
 	  reflect_file_revert_in_label(sp);
 	}
-
-      if (XEN_HOOKED(ss->snd_selection_hook))
-	run_hook(ss->snd_selection_hook, 
-		 XEN_LIST_1(C_TO_XEN_INT(SELECTION_IN_DOUBT)),
-		 "selection-hook");
 
       if (XEN_HOOKED(ss->effects_hook))
 	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
@@ -5399,11 +5393,8 @@ bool redo_edit(chan_info *cp, int count)
 	  reflect_file_change_in_label(cp);
 	  reflect_edit_counter_change(cp);
 	  reflect_sample_change_in_axis(cp);
-
-	  if (XEN_HOOKED(ss->snd_selection_hook))
-	    run_hook(ss->snd_selection_hook, 
-		     XEN_LIST_1(C_TO_XEN_INT(SELECTION_IN_DOUBT)),
-		     "selection-hook");
+	  enved_reflect_selection(selection_is_active());
+	  reflect_selection_in_save_as_dialog(selection_is_active());
 
 	  if (XEN_HOOKED(ss->effects_hook))
 	    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);

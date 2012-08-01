@@ -43,7 +43,7 @@
 #include "clm-strings.h"
 
 #if HAVE_SCHEME
-#define DISPLAY(Expr) s7_object_to_c_string(s7, Expr)
+/* #define DISPLAY(Expr) s7_object_to_c_string(s7, Expr) */
 #define DISPLAY_80(Expr) s7_object_to_c_string(s7, Expr)
 #define XEN_OBJECT_REF_CHECKED(Obj, Type) s7_object_value_checked(Obj, Type)
 #define XEN_NULL NULL
@@ -2593,7 +2593,6 @@ If pm is greater than 0.0, the max-size argument used to create gen should have 
   if (XEN_NOT_BOUND_P(pm))
     return(C_TO_XEN_DOUBLE(mus_delay_unmodulated(g, XEN_TO_C_DOUBLE(input))));
   return(C_TO_XEN_DOUBLE(mus_delay(g, XEN_TO_C_DOUBLE(input), XEN_TO_C_DOUBLE(pm))));
-  /* TODO: if this is faster, it can be extended throughout clm2xen */
 }
 
 
@@ -8856,7 +8855,6 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
 }
 
 /* TODO: this still needs the type check 
- * TODO: get rid of all the safe-do stuff and clean out these macros
  */
 #if 0
 #define GET_GENERATOR(Obj, Type, Val) Val = get_generator(s7, Obj)
