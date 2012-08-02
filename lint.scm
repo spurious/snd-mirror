@@ -737,17 +737,8 @@
 	      (cdr form))))))
       
       
-      (define (ref? name env)
-	(let ((data (env-member name env)))
-	  (if (pair? data)
-	      (list-ref data 1))))
-      
-      
-      (define (set? name env)
-	(let ((data (env-member name env)))
-	  (if (pair? data)
-	      (list-ref data 2))))
-      
+      ;; (define (ref? name env) (let ((data (env-member name env))) (if (pair? data) (list-ref data 1))))
+      ;; (define (set? name env) (let ((data (env-member name env))) (if (pair? data) (list-ref data 2))))
 
       (define (set-ref? name env)
 	;; if name is in env, set its "I've been referenced" flag

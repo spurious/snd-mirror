@@ -3354,7 +3354,7 @@ bool mus_wave_train_p(mus_any *ptr)
 
 typedef struct {
   mus_any_class *core;
-  int loc, size;
+  unsigned int loc, size;
   bool zdly, line_allocated, filt_allocated;
   mus_float_t *line;
   int zloc, zsize;
@@ -3399,8 +3399,8 @@ mus_float_t mus_delay(mus_any *ptr, mus_float_t input, mus_float_t pm)
   mus_float_t result;
   dly *gen = (dly *)ptr;
   if ((gen->size == 0) && (pm < 1.0))
-    return(pm * gen->line[0] + (1.0 - pm) * input);
-  result = mus_tap(ptr, pm);
+    result = pm * gen->line[0] + (1.0 - pm) * input;
+  else result = mus_tap(ptr, pm);
   mus_delay_tick(ptr, input);
   return(result);
 }
@@ -3425,6 +3425,8 @@ mus_float_t mus_delay_unmodulated_noz(mus_any *ptr, mus_float_t input)
 {
   dly *gen = (dly *)ptr;
   mus_float_t result;
+  if (gen->size == 0)
+    return(input);
   result = gen->line[gen->loc];
   gen->line[gen->loc] = input;
   gen->loc++;
@@ -3441,8 +3443,6 @@ mus_float_t mus_tap(mus_any *ptr, mus_float_t loc)
   if (gen->zdly)
     {
       gen->yn1 = mus_interpolate(gen->type, gen->zloc - loc, gen->line, gen->zsize, gen->yn1);
-      /* TODO: doesn't this mean that loc==0 throughout but max_size set is different from simple loc==0 throughout?
-       */
       return(gen->yn1);
     }
   else
@@ -3885,11 +3885,12 @@ mus_float_t mus_all_pass_unmodulated_noz(mus_any *ptr, mus_float_t input)
 {
   mus_float_t result, din;
   dly *gen = (dly *)ptr;
-  din = input + (gen->yscl * gen->line[gen->loc]);
-  result = gen->line[gen->loc] + (gen->xscl * din);
-  gen->line[gen->loc] = din;
-  gen->loc++;
-  if (gen->loc >= gen->size) 
+  unsigned int loc;
+  loc = gen->loc++;
+  din = input + (gen->yscl * gen->line[loc]);
+  result = gen->line[loc] + (gen->xscl * din);
+  gen->line[loc] = din;
+  if (gen->loc >= gen->size)
     gen->loc = 0;
   return(result);
 }

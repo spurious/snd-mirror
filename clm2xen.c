@@ -43,13 +43,17 @@
 #include "clm-strings.h"
 
 #if HAVE_SCHEME
-/* #define DISPLAY(Expr) s7_object_to_c_string(s7, Expr) */
 #define DISPLAY_80(Expr) s7_object_to_c_string(s7, Expr)
 #define XEN_OBJECT_REF_CHECKED(Obj, Type) s7_object_value_checked(Obj, Type)
 #define XEN_NULL NULL
 #else
+#if (HAVE_FORTH) || (HAVE_RUBY)
 #define XEN_OBJECT_REF_CHECKED(Obj, Type) (XEN_OBJECT_TYPE_P(Obj, Type) ? XEN_OBJECT_REF(Obj) : NULL)
 #define XEN_NULL 0
+#else
+#define XEN_OBJECT_REF_CHECKED(Obj, Type) NULL
+#define XEN_NULL 0
+#endif
 #endif
 
 
@@ -4809,7 +4813,7 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
   double *ampls = NULL, *fms = NULL;
   double sum = 0.0;
 #if defined(XEN_VECTOR_ELEMENTS)
-  XEN *x_oscs, *x_amps, *x_freqs, *x_rates, *x_sweeps;
+  XEN *x_oscs, *x_amps = NULL, *x_freqs = NULL, *x_rates, *x_sweeps;
   #define xen_vector_ref(Vect, Num) x_ ## Vect [Num]
   #define xen_vector_set(Vect, Num, Val) x_ ## Vect [Num] = Val
 #else
@@ -6914,7 +6918,7 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 static XEN g_sample_to_file_add(XEN obj1, XEN obj2)
 {
   #define H_sample_to_file_add "(" S_sample_to_file_add " obj1 obj2): mixes obj2 (an output generator) into obj1 (also an output generator)"
-  mus_any *g1, *g2 = NULL;
+  mus_any *g1 = NULL, *g2 = NULL;
   mus_xen *gn1, *gn2;
 
   XEN_TO_C_ANY_GENERATOR(obj1, gn1, g1, S_sample_to_file, "an output generator");
@@ -11867,8 +11871,6 @@ static s7_pointer filtered_comb_chooser(s7_scheme *sc, s7_pointer f, int args, s
 
 static s7_pointer frame_to_frame_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  /* TODO: in snd-test: 17835: ;delay size 0: #<vct[len=5]: 0.000 1.000 0.000 0.000 0.000>
-   */
   return(f);
 }
 

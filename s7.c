@@ -237,13 +237,21 @@
 #endif
 
 
-/* PERHAPS: WITH_PURE_S7 or something like that to get rid of remaining bad ideas:
- *          inexact/exact and #i #e
- *          `#() special cases
- *          call-with-values etc
- *          char-ready? and eof-object? [s7-slib-init.scm currently says we have char-ready? otherwise only occurs in s7test.scm]
- *          dfls exponents
+#ifndef WITH_IMMUTABLE_UNQUOTE
+  #define WITH_IMMUTABLE_UNQUOTE 0
+  /* this removes the name "unquote" */
+#endif
+
+/* we could add WITH_PURE_S7 or something like that to get rid of remaining bad ideas:
+ *      inexact/exact and #i #e
+ *      `#() special cases
+ *      call-with-values etc
+ *      char-ready? and eof-object? [s7-slib-init.scm currently says we have char-ready? otherwise only occurs in s7test.scm]
+ *      dfls exponents
+ *      unquote (on the switch WITH_IMMUTABLE_UNQUOTE currently)
  */
+
+
 
 #define DEBUGGING 0
 
@@ -886,16 +894,6 @@ typedef struct s7_cell {
 #endif
   union {
     
-    struct { 
-      unsigned int length;
-      unsigned int hash;  
-      char *svalue;
-      bool needs_free;
-
-      /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
-      int accessor;
-    } string;
-    
     union {
       s7_Int integer_value;
       s7_Double real_value;
@@ -971,9 +969,20 @@ typedef struct s7_cell {
       int arity;
     } func;
 
+    struct { 
+      unsigned int length;
+      unsigned int hash;  
+      char *svalue;
+      bool needs_free;
+
+      /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
+      s7_pointer initial_slot;
+    } string;
+    
     struct {               /* symbols */
-      s7_pointer name, global_slot, local_slot, initial_slot;
+      s7_pointer name, global_slot, local_slot;
       long long int id;
+      int accessor;
     } sym;
 
     struct {               /* slots (bindings) */
@@ -1510,10 +1519,6 @@ static int t_optimized = T_OPTIMIZED;
 #define has_simple_args(p)            ((typeflag(p) & T_SIMPLE_ARGS) != 0)
 #define set_simple_args(p)            typeflag(p) |= T_SIMPLE_ARGS
 
-#define T_SIMPLE_ENV                  T_GENSYM
-#define is_simple_env(p)              ((typeflag(p) & T_SIMPLE_ENV) != 0)
-#define set_simple_env(p)             typeflag(p) |= T_SIMPLE_ENV
-
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
@@ -1666,11 +1671,11 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #define symbol_name(p)                string_value(symbol_name_cell(p))
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
-#define symbol_accessor(p)            (symbol_name_cell(p))->object.string.accessor
+#define symbol_accessor(p)            (p)->object.sym.accessor
 #define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
 
 #define global_slot(p)                (p)->object.sym.global_slot
-#define initial_slot(p)               (p)->object.sym.initial_slot
+#define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
 #define local_slot(p)                 (p)->object.sym.local_slot
 
 #define is_slot(p)                    (type(p) == T_SLOT)
@@ -6880,8 +6885,7 @@ s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x)
 #endif
     }
 
-  /* fprintf(stderr, "real: %s\n", DISPLAY(x)); */
-  /* s7_wrong_type_arg_error(sc, "s7_number_to_real", 0, x, "a real number"); */
+  s7_wrong_type_arg_error(sc, "s7_number_to_real", 0, x, "a real number"); 
   return(0.0);
 }
 
@@ -6920,9 +6924,7 @@ s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x)
       return((s7_Int)mpfr_get_d(mpc_realref(big_complex(x)), GMP_RNDN));
 #endif
     }
-  /* fprintf(stderr, "int: %s\n", DISPLAY(x)); */
-  /* TODO: fix the number->* problems! */
-  /* s7_wrong_type_arg_error(sc, "s7_number_to_integer", 0, x, "an integer"); */
+  s7_wrong_type_arg_error(sc, "s7_number_to_integer", 0, x, "an integer");
   return(0);
 }
 
@@ -36846,12 +36848,6 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     return(false);
 
   op = (opcode_t)syntax_opcode(func);
-
-  /* TODO: with-env needs to be able to check quickly whether an env redefines any built-in (optimizable) funcs.
-   *   if so, it needs to cancel any "safe" opts within its block.  So, augment-env* need to set a bit if they
-   *   redefine and also if included envs redefine.  And we need a cancel_all_safe_opts.  set_simple_env and is_simple_env 
-   *   with OP_ENV_UNCHECKED or equivalent.
-   */
   if (op == OP_QUOTE)
     return(false);
 
@@ -41772,7 +41768,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    lets = cadar(lets);
 		    
 		    free_safe = (returns_temp(ecdr(lets)));
-		    /* PERHAPS: ideally this would split the code in 2 here */
 		    
 		  SIMPLE_SAFE_DOTIMES_LOOP:
 		    slot_set_value(p, temp_val = c_call(lets)(sc, let_var));
@@ -58136,10 +58131,9 @@ s7_scheme *s7_init(void)
   sc->LAMBDA_STAR = make_symbol(sc, "lambda*");
   sc->QUOTE =       make_symbol(sc, "quote");
 
-#define WITH_IMMUTABLE_UNQUOTE 0
 #if WITH_IMMUTABLE_UNQUOTE
   /* unquote has no value, so it has to be the symbol for quasiquote */
-  /* SOMEDAY: this code solves the various unquote redefinition troubles
+  /* this code solves the various unquote redefinition troubles
    *
    * if "," -> "(unquote...)" in the reader, (let (, (lambda (x) (+ x 1))) ,,,,1) -> 5
    *   in s7, this requires a quote: (let (, (lambda (x) (+ x 1))) ,,,,'1)
@@ -58979,12 +58973,12 @@ s7_scheme *s7_init(void)
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
  * TODO: error in s7_call should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
  *
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1270
+ * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1266
  * bench    52019 -> 7875 [8268] 8037 8592 8402
- *   (new)                [8764]           9370 8937
- * index    44300 -> 4988 [4992] 4235 4725 3935 3477
+ *   (new)                [8764]           9370 8937 8963
+ * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3332
  * s7test            1721             1456 1430 1375
  * t455                           265  256  218   86
- * t502                                 90   72   42
+ * t502                                 90   72   42   42
  */
 

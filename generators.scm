@@ -2571,8 +2571,8 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((rr1 (+ 1.0 (* r r)))
-	   (r2 (* 2 (abs r)))) ; abs for negative r
+    (let ((rr1 (+ 1.0 (* r r)))
+	  (r2 (* 2 (abs r)))) ; abs for negative r
       (* (expt (- rr1
 		  (* r2 (oscil osc fm)))
 	       (- k))
@@ -3037,7 +3037,7 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((x angle)
+    (let ((x angle)
 	   (norm (/ 0.5 (- (/ 1.0 
 			      (- 1.0 (/ (abs (- (sqrt (- (* a a) (* b b))) 
 						a)) 

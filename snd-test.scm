@@ -13187,7 +13187,7 @@ EDITS: 2
 	  ((= i 5))
 	(set! (data i) (delay dly1 impulse 0.4))
 	(set! impulse 0.0))
-      (if (not (vequal data (vct 0.6 0.0 0.0 0.0 0.0)))
+      (if (not (vequal data (vct 0.6 0.4 0.0 0.0 0.0)))
 	  (snd-display #__line__ ";delay size 0, max 1, off 0.4: ~A" data))
       
       (set! dly1 (make-delay :size 0 :max-size 1))
@@ -13200,7 +13200,7 @@ EDITS: 2
 	  ((= i 5))
 	(set! (data i) (delay dly1 impulse -0.4)) ; shorter than 0? should this be an error?
 	(set! impulse 0.0))
-      (if (not (vequal data (vct 1.4 0.0 0.0 0.0 0.0))) ; hmmm -- they're asking for undefined values here 
+      (if (not (vequal data (vct 1.4 -0.4 0.0 0.0 0.0))) ; hmmm -- they're asking for undefined values here 
 	  (snd-display #__line__ ";delay size 0, max 1, off -0.4: ~A" data))
       
       (set! dly1 (make-delay 0))
@@ -13226,7 +13226,7 @@ EDITS: 2
       (do ((i 9 (- i 1)))
 	  ((< i 0))
 	(set! (v i) (delay gen 0.5 i)))
-      (if (not (vequal v (vct 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.000)))
+      (if (not (vequal v (vct 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500)))
 	  (snd-display #__line__ ";delay 100 -> 0: ~A" v))
       (mus-reset gen)
       (if (not (vequal (mus-data gen) (make-vct 100 0.0)))
@@ -46113,7 +46113,7 @@ EDITS: 1
 					sawtooth-wave nrxysin nrxycos square-wave src 
 					ncos nsin table-lookup tap triangle-wave
 					two-pole two-zero wave-train ssb-am))))
-		    (list (make-vector 1) color-95 0+i (list 1.0)))
+		    (list (make-vector 1) color-95 (list 1.0)))
 	  
 	  
 	  (for-each (lambda (n)

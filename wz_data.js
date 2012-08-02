@@ -1035,13 +1035,6 @@ var sndscm_channelproperty_tip = "<code>(channel-property key snd chn)</code>: r
                                  "<code>  (set! (channel-property 'info 0 0) \"this is sound 0, first channel\")</code><br>" +
                                  " now <code>(channel-property 'info 0 0)</code> returns \"this is sound 0, first channel\".";
 
-var sndclm_defgenerator_tip = "defgenerator sets up a structure, an object with named slots that you can get and set.<br>" +
-                                " It also defines a \"make\" function to create an instance of the structure, and a predicate for it.<br><br>" +
-                                "<code>    (defgenerator osc freq phase)</code><br><br>" +
-                                " defines a struct named \"osc\" with the (float) fields freq and phase.<br>" +
-                                "  it also defines make-osc which creates an osc, and osc? returns #t if passed an osc.<br>" +
-                                " the struct fields are accessed via osc-freq and osc-phase.";
-
 var sndscm_definstrument_tip = "definstrument is very much like define, but with added code to support notehook<br>" +
                                " and (for Common Music) *definstrument-hook*.";
 

@@ -21192,7 +21192,6 @@ who says the continuation has to restart the map from the top?
 (test (sort! '(3 2 1) (lambda* (a) #f)) 'error)
 (test (sort! '(3 1 2 4) (lambda args (< (car args) (cadr args)))) '(1 2 3 4))
 ;(test (vector? (sort! (symbol-table) (lambda (a b) (< (length a) (length b))))) #t) ; (symbol-table) copies the table
-;;; TODO: if gc during copy, we lose somewhere I think
 (test (sort! (global-environment) <) 'error)
 (test (sort! () #f) 'error)
 
