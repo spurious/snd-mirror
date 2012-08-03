@@ -199,8 +199,7 @@
 
 (define (display-correlation hook)
   "(display-correlation hook) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."
-  (let ((snd (hook 'snd))
-	(chn (hook 'chn)))
+  (let ((snd (hook 'snd)))
     (if (and (= (channels snd) 2)
 	     (> (frames snd 0) 1)
 	     (> (frames snd 1) 1))

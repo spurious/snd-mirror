@@ -122,8 +122,6 @@
 (define (mouse-release-envelope hook)
   (let ((snd (hook 'snd))
 	(chn (hook 'chn))
-	(ux (hook 'x))
-	(uy (hook 'y))
 	(axis (hook 'axis)))
 
     (define (remove-envelope-point pos cur-env)

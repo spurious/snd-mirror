@@ -2319,6 +2319,10 @@
 	;; (format #t "walk function ~A ~A ~A ~A~%" head name args (if (pair? env) (car env) ""))
 	(if (null? args)
 	    (begin
+	      (if (memq head '(define* lambda* defmacro* define-macro* define-bacro*))
+		  (lint-format "~A could be ~A" 
+			       name line-number head
+			       (symbol (substring (symbol->string head) 0 (- (length (symbol->string head)) 1)))))
 	      (lint-walk-function-body name line-number head args '() val env)
 	      (append (list (list name #f #f (list head args))) env))
 	    

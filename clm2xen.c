@@ -1533,6 +1533,7 @@ static XEN g_mus_describe(XEN gen)
 
 
 #if HAVE_SCHEME
+/* TODO: all of these can probably use the static pointers as in GET_GENERATOR */
 #define MUS_DOUBLE_GENERIC(Caller, CLM_case)                          \
   mus_xen *gn;                                                                \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
@@ -8858,17 +8859,28 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   return(NULL);
 }
 
-/* TODO: this still needs the type check 
- */
+
 #if 0
 #define GET_GENERATOR(Obj, Type, Val) Val = get_generator(s7, Obj)
 #else
 #define GET_GENERATOR(Obj, Type, Val) \
   do { \
+  static s7_pointer g = NULL; \
+  static mus_any *gg = NULL; \
+  s7_pointer gp; \
   mus_xen *gn; \
-  gn = (mus_xen *)s7_object_value_checked(s7_value(s7, Obj), mus_xen_tag); \
-  if (!gn) XEN_ASSERT_TYPE(false, s7_value(s7, Obj), XEN_ARG_1, "gen-lookup", "a generator"); \
-  Val = gn->gen; \
+  gp = s7_value(sc, Obj); \
+  if (gp != g) \
+    { \
+      gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag); \
+      if (gn) \
+        { \
+          g = gp; \
+          gg = gn->gen; \
+        } \
+      else XEN_ASSERT_TYPE(false, s7_value(s7, Obj), XEN_ARG_1, "gen-lookup", "a generator"); \
+    } \
+    Val = gg; \
   } while (0)
 #endif
 

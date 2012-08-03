@@ -21990,6 +21990,7 @@ who says the continuation has to restart the map from the top?
 (test (let ((x 0)) (for-each (lambda* (a) (set! x (+ x a))) (list :a :a :a) (list 1 2 3)) x) 6) ; how can this work?
 
 (test (let () (define* (hi) 0) (hi)) 0)
+(test (let () (define* (hi) 0) (hi 1)) 'error)
 (test (let () (define* (hi a . b) b) (hi 1 2 3)) '(2 3))
 (test (let () (define* (hi a . b) b) (hi :a 1 2 3)) '(2 3))
 (test (let () (define* (hi a . b) b) (hi 1)) '())
@@ -69693,3 +69694,10 @@ in non-gmp,
 
 ;;; write/display hash-table stdin lambda? macro/bacro cont/goto func/closure etc, all the pair types, circular etc
 
+#|
+(let ((lst ()))
+   (do ((i 0 (+ i 1)))
+       ((= i 1000) (reverse lst)) 
+     (set! lst (cons i lst))))
+;;; ok (tested) up to 10000000 
+|#

@@ -240,7 +240,7 @@
       (/ (+ (- ta) 
 	    (* (signum ta)
 	       (sqrt (* (+ 1 (* ta ta)) 
-			(* s s)))))
+			(* s s))))) ; is this correct? it's in the original
 	 (- (* c ta) s))))
   
   (define (apfloor len wT)
