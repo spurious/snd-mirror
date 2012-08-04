@@ -1640,7 +1640,7 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
   static void set_optimize_op(s7_pointer p, unsigned short op) {optimize_data_index(p) = op;}
   #define clear_optimize_data(P)      set_optimize_data(P, 0)
   static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_data_index(p) |= 1;}
-  #define optimize_type(p)            optimize_data(p)
+  /* #define optimize_type(p)         optimize_data(p) */
   #define optimize_op(p)              optimize_data_index(p)
 #endif
 
@@ -36634,18 +36634,13 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 	    sc->w = cons(sc, cadr(p), sc->w);
 	  sc->w = collect_collisions(sc, caddr(p), sc->w);
 	}
-      else 
-	{
-	  sc->w = collect_collisions(sc, cadr(p), sc->w);
-	}
+      else sc->w = collect_collisions(sc, cadr(p), sc->w);
     }
   else
     {
       if ((op == OP_LET_STAR) ||
 	  (op == OP_LETREC))
-	{
-	  sc->w = collect_collisions(sc, cadr(p), sc->w);
-	}
+	sc->w = collect_collisions(sc, cadr(p), sc->w);
       else
 	{
 	  if ((op == OP_DEFINE) || 
@@ -36676,8 +36671,22 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 	      else
 		{
 		  if (op == OP_DO)
+		    sc->w = collect_collisions(sc, cadr(p), sc->w);
+		  else
 		    {
-		      sc->w = collect_collisions(sc, cadr(p), sc->w);
+		      if (op == OP_WITH_ENV)
+			hop = 0;
+		      /* we can't trust anything here, so hop has to be off.  For example,
+		       *
+		       *    (define (hi)
+		       *      (let ((e (augment-environment (current-environment)
+		       *                 (cons 'abs (lambda (a) (- a 1))))))
+		       *        (with-environment e (abs -1))))
+		       *
+		       * returns 1 if hop is 1, but -2 outside the function body.
+		       *
+		       * SOMEDAY: figure out how to make this with-env decision at run time
+		       */
 		    }
 		}
 	    }
@@ -58720,6 +58729,7 @@ s7_scheme *s7_init(void)
  * SOMEDAY: get gmp to work again in the opt case
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
  * TODO: *optimize* switch. (currently t_optimized int, but we could get rid of WITH_OPTIMIZATION if the gmp side could be fixed)
+ *   first step here is to get rid of the tricky #if stuff
  *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
  *   what is free?  Perhaps leave it until it's needed?
@@ -58732,8 +58742,6 @@ s7_scheme *s7_init(void)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
  * TODO: error in s7_call should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
- * TODO: with-env probably can be confused by redefined globals and optimized body -- need an example
- *        (but if global is redefined, it is not a global anymore, so this must involve augment-env?)
  *
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1266
  * bench    52019 -> 7875 [8268] 8037 8592 8402

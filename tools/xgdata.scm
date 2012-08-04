@@ -8383,96 +8383,82 @@
 
 ;; also GDK_BUTTON_PRIMARY|MIDDLE|SECONDARY but they are just ints (from gdkevents.h)
 
-#|
+
 ;;; 3.3.18
 
-(CINT "GDK_EXTENSION_EVENTS_NONE" "GdkExtensionMode")
-(CINT "GDK_EXTENSION_EVENTS_ALL" "GdkExtensionMode")
-(CINT "GDK_EXTENSION_EVENTS_CURSOR" "GdkExtensionMode")
+;(CINT-358 "GDK_EXTENSION_EVENTS_NONE" "GdkExtensionMode")
+;(CINT-358 "GDK_EXTENSION_EVENTS_ALL" "GdkExtensionMode")
+;(CINT-358 "GDK_EXTENSION_EVENTS_CURSOR" "GdkExtensionMode")
 
-(CINT "GDK_TOUCH_BEGIN" "GdkEventType")
-(CINT "GDK_TOUCH_UPDATE" "GdkEventType")
-(CINT "GDK_TOUCH_END" "GdkEventType")
-(CINT "GDK_TOUCH_CANCEL" "GdkEventType")
+(CINT-358 "GDK_TOUCH_BEGIN" "GdkEventType")
+(CINT-358 "GDK_TOUCH_UPDATE" "GdkEventType")
+(CINT-358 "GDK_TOUCH_END" "GdkEventType")
+(CINT-358 "GDK_TOUCH_CANCEL" "GdkEventType")
 
-(CINT "GDK_SCROLL_SMOOTH" "GdkScrollDirection")
+(CINT-358 "GDK_SCROLL_SMOOTH" "GdkScrollDirection")
 
-(CINT "GDK_CROSSING_TOUCH_BEGIN" "GdkCrossingMode")
-(CINT "GDK_CROSSING_TOUCH_END" "GdkCrossingMode")
-(CINT "GDK_CROSSING_DEVICE_SWITCH" "GdkCrossingMode")
+(CINT-358 "GDK_CROSSING_TOUCH_BEGIN" "GdkCrossingMode")
+(CINT-358 "GDK_CROSSING_TOUCH_END" "GdkCrossingMode")
+(CINT-358 "GDK_CROSSING_DEVICE_SWITCH" "GdkCrossingMode")
 
-(CINT "GDK_EVENT_POINTER_EMULATED" "GdkEventFlags")
+;(CINT-358 "GDK_EVENT_POINTER_EMULATED" "GdkEventFlags")
 
-(CINT "GDK_TOUCH_MASK" "GdkEventMask")
-(CINT "GDK_SMOOTH_SCROLL_MASK" "GdkEventMask")
+(CINT-358 "GDK_TOUCH_MASK" "GdkEventMask")
+(CINT-358 "GDK_SMOOTH_SCROLL_MASK" "GdkEventMask")
 
-(CFNC "gboolean gdk_event_get_scroll_deltas GdkEvent* event gdouble* [delta_x] gdouble* [delta_y]")
+(CFNC-358 "gboolean gdk_event_get_scroll_deltas GdkEvent* event gdouble* [delta_x] gdouble* [delta_y]")
 
 ;;; 3.3.20 -- nothing new but "XI2" requirement -- what is that?? -- apparently some sort of typo
-(CFNC "void gtk_color_chooser_add_palette GtkColorChooser* chooser GtkOrientation horizontal gint colors_per_line gint n_colors GdkRGBA* colors") ; was gboolean horizontal
+(CFNC-358 "void gtk_color_chooser_add_palette GtkColorChooser* chooser GtkOrientation horizontal gint colors_per_line gint n_colors GdkRGBA* colors") ; was gboolean horizontal
 
 ;;; 3.4.0|1 -- nothing new
 ;;; 3.5.2 -- a few deprecations (below)
 
 
 ;;; 3.5.4
-(CFNC "void gtk_button_set_always_show_image GtkButton* button gboolean always_show")
-(CFNC "gboolean gtk_button_get_always_show_image GtkButton* button")
+(CFNC-358 "void gtk_button_set_always_show_image GtkButton* button gboolean always_show")
+(CFNC-358 "gboolean gtk_button_get_always_show_image GtkButton* button")
 
 ;;; GTK_UNIT_NONE as a GtkUnit (like pixel) but this enum is commented out above
 
 ;;; 3.5.6
-(CFNC "gboolean gtk_icon_view_get_cell_rect GtkIconView* icon_view GtkTreePath* path GtkCellRenderer* cell GdkRectangle* [rect]")
-(CCAST "GTK_MENU_BUTTON" "GtkMenuButton*")
-(CCHK "GTK_IS_MENU_BUTTON" "GtkMenuButton*")
-(CFNC "GtkWidget* gtk_menu_button_new void")
-(CFNC "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
-(CFNC "GtkMenu* gtk_menu_button_get_menu GtkMenuButton* menu_button")
-(CFNC "void gtk_menu_button_set_direction GtkMenuButton* menu_button GtkArrowType direction")
-(CFNC "GtkArrowType gtk_menu_button_get_direction GtkMenuButton* menu_button")
-(CFNC "void gtk_menu_button_set_menu_model GtkMenuButton* menu_button GMenuModel* menu_model")
-(CFNC "GMenuModel* gtk_menu_button_get_menu_model GtkMenuButton* menu_button")
-(CFNC "void gtk_menu_button_set_align_widget GtkMenuButton* menu_button GtkWidget* align_widget")
-(CFNC "GtkWidget* gtk_menu_button_get_align_widget GtkMenuButton* menu_button")
-(CCAST "GTK_SEARCH_ENTRY" "GtkWidget*")
-(CCHK "GTK_IS_SEARCH_ENTRY" "GtkWidget*")
-(CFNC "GtkWidget* gtk_search_entry_new void")
+;(CFNC-358 "gboolean gtk_icon_view_get_cell_rect GtkIconView* icon_view GtkTreePath* path GtkCellRenderer* cell GdkRectangle** [rect]")
+(CCAST-358 "GTK_MENU_BUTTON" "GtkMenuButton*")
+(CCHK-358 "GTK_IS_MENU_BUTTON" "GtkMenuButton*")
+(CFNC-358 "GtkWidget* gtk_menu_button_new void")
+(CFNC-358 "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
+(CFNC-358 "GtkMenu* gtk_menu_button_get_menu GtkMenuButton* menu_button")
+(CFNC-358 "void gtk_menu_button_set_direction GtkMenuButton* menu_button GtkArrowType direction")
+(CFNC-358 "GtkArrowType gtk_menu_button_get_direction GtkMenuButton* menu_button")
+(CFNC-358 "void gtk_menu_button_set_menu_model GtkMenuButton* menu_button GMenuModel* menu_model")
+(CFNC-358 "GMenuModel* gtk_menu_button_get_menu_model GtkMenuButton* menu_button")
+(CFNC-358 "void gtk_menu_button_set_align_widget GtkMenuButton* menu_button GtkWidget* align_widget")
+(CFNC-358 "GtkWidget* gtk_menu_button_get_align_widget GtkMenuButton* menu_button")
+(CCAST-358 "GTK_SEARCH_ENTRY" "GtkWidget*")
+(CCHK-358 "GTK_IS_SEARCH_ENTRY" "GtkWidget*")
+(CFNC-358 "GtkWidget* gtk_search_entry_new void")
 
 ;;; 3.5.8 (which requires atk-bridge which is not builable!)
-  void                  gtk_button_set_always_show_image (GtkButton   *button,
-                                                          gboolean     always_show);
-+ typedef enum {
-+   GTK_LEVEL_BAR_MODE_CONTINUOUS,
-+   GTK_LEVEL_BAR_MODE_DISCRETE
-+ } GtkLevelBarMode;
-#define GTK_LEVEL_BAR(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_LEVEL_BAR, GtkLevelBar))
-#define GTK_IS_LEVEL_BAR(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_LEVEL_BAR))
-GtkWidget *gtk_level_bar_new                (void);
-GtkWidget *gtk_level_bar_new_for_interval   (gdouble      min_value,
-                                             gdouble      max_value);
-void       gtk_level_bar_set_mode           (GtkLevelBar *self,
-                                             GtkLevelBarMode mode);
-GtkLevelBarMode gtk_level_bar_get_mode      (GtkLevelBar *self);
-void       gtk_level_bar_set_value          (GtkLevelBar *self,
-                                             gdouble      value);
-gdouble    gtk_level_bar_get_value          (GtkLevelBar *self);
-void       gtk_level_bar_set_min_value      (GtkLevelBar *self,
-                                             gdouble      value);
-gdouble    gtk_level_bar_get_min_value      (GtkLevelBar *self);
-void       gtk_level_bar_set_max_value      (GtkLevelBar *self,
-                                             gdouble      value);
-gdouble    gtk_level_bar_get_max_value      (GtkLevelBar *self);
-void       gtk_level_bar_add_offset_value   (GtkLevelBar *self,
-                                             const gchar *name,
-                                             gdouble      value);
-void       gtk_level_bar_remove_offset_value (GtkLevelBar *self,
-                                              const gchar *name);
-gboolean   gtk_level_bar_get_offset_value   (GtkLevelBar *self,
-                                             const gchar *name,
-                                             gdouble     *value);
+(CINT-358 "GTK_LEVEL_BAR_MODE_CONTINUOUS" "GtkLevelBarMode")
+(CINT-358 "GTK_LEVEL_BAR_MODE_DISCRETE" "GtkLevelBarMode")
 
+(CCAST-358 "GTK_LEVEL_BAR" "GtkLevelBar*")
+(CCHK-358 "GTK_IS_LEVEL_BAR" "GtkLevelBar*")
 
-|#
+(CFNC-358 "GtkWidget* gtk_level_bar_new void")
+(CFNC-358 "GtkWidget* gtk_level_bar_new_for_interval gdouble min_value gdouble max_value")
+(CFNC-358 "void gtk_level_bar_set_mode GtkLevelBar* self GtkLevelBarMode mode")
+(CFNC-358 "GtkLevelBarMode gtk_level_bar_get_mode GtkLevelBar* self")
+(CFNC-358 "void gtk_level_bar_set_value GtkLevelBar* self gdouble value")
+(CFNC-358 "gdouble gtk_level_bar_get_value GtkLevelBar* self")
+(CFNC-358 "void gtk_level_bar_set_min_value GtkLevelBar* self gdouble value")
+(CFNC-358 "gdouble gtk_level_bar_get_min_value GtkLevelBar* self")
+(CFNC-358 "void gtk_level_bar_set_max_value GtkLevelBar* self gdouble value")
+(CFNC-358 "gdouble gtk_level_bar_get_max_value GtkLevelBar* self")
+(CFNC-358 "void gtk_level_bar_add_offset_value GtkLevelBar* self gchar* name gdouble value" 'const)
+(CFNC-358 "void gtk_level_bar_remove_offset_value GtkLevelBar* self gchar* name" 'const)
+(CFNC-358 "gboolean gtk_level_bar_get_offset_value GtkLevelBar* self gchar* name gdouble* [value]" 'const)
+
 
 
  

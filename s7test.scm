@@ -18412,6 +18412,36 @@ in s7:
 	(map check '((1 2 3) (1 3 2) (2 1 3) (2 3 1) (3 1 2) (3 2 1))))
       '((-1 4 5 3) (4 -1 5 3) (-1 5 4 3) (5 -1 4 3) (4 5 -1 3) (5 4 -1 3)))
 
+(let () ; Matt Might perhaps or maybe Paul Hollingsworth?
+  (define (current-continuation)
+    (call/cc (lambda (cc) (cc cc))))
+  (define fail-stack '())
+  (define (fail)
+    (if (not (pair? fail-stack))
+	(error "back-tracking stack exhausted!")
+	(begin
+	  (let ((back-track-point (car fail-stack)))
+	    (set! fail-stack (cdr fail-stack))
+	    (back-track-point back-track-point)))))
+  (define (amb choices)
+    (let ((cc (current-continuation)))
+      (cond
+       ((null? choices)      (fail))
+       ((pair? choices)      (let ((choice (car choices)))
+			       (set! choices (cdr choices))
+			       (set! fail-stack (cons cc fail-stack))
+			       choice)))))
+  (define (assert condition)
+    (if (not condition)
+	(fail)
+	#t))
+  (let ((a (amb (list 1 2 3 4 5 6 7)))
+	(b (amb (list 1 2 3 4 5 6 7)))
+	(c (amb (list 1 2 3 4 5 6 7))))
+    (assert (= (* c c) (+ (* a a) (* b b))))
+    (assert (< b a))
+    (test (list a b c) (list 4 3 5))))
+
 (let ((c1 #f))
   (let ((x ((call/cc (lambda (r1) (set! c1 r1) (r1 "hiho"))) 0)))
     (if (char=? x #\h)
@@ -25940,6 +25970,20 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (with-environment (augment-environment (current-environment) (cons '+ (lambda args (apply * args)))) (+ 1 2 3 4)) 24)
 (test (with-environment (current-environment) (let ((x 1)) x)) 1)
 
+(let ()
+  (define (hi)
+    (let ((e (augment-environment (current-environment)
+	       (cons 'abs (lambda (a) (- a 1))))))
+      (with-environment e
+	(abs -1))))
+  (test (hi) -2)
+  (test (hi) -2)
+  (test (let ((e (augment-environment (current-environment)
+		   (cons 'abs (lambda (a) (- a 1))))))
+	  (with-environment e
+	    (abs -1)))
+	-2))
+
 (test (let ((x 12))
 	(let ((e (current-environment)))
 	  (let ((x 32))
@@ -26099,7 +26143,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       33)
 
 (test (let () ((current-environment) 'abs)) #<undefined>)
-(test (let () ((initial-environment) 'abs)) #<undefined>)
 (test ((global-environment) 'abs) abs)
 
 (test (catch #t
