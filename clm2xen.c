@@ -1533,7 +1533,6 @@ static XEN g_mus_describe(XEN gen)
 
 
 #if HAVE_SCHEME
-/* TODO: all of these can probably use the static pointers as in GET_GENERATOR */
 #define MUS_DOUBLE_GENERIC(Caller, CLM_case)                          \
   mus_xen *gn;                                                                \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
@@ -4664,10 +4663,6 @@ static XEN g_mixer(XEN args)
 }
 
 
-/* TODO: doc/test mus-mix-with-envs, if file is #f, depend on srcs, else if srcs #f (or element of it) use file
- *   this thing is messed up! and check it against the old fullmix ins
- */
-
 #define S_mus_mix_with_envs "mus-mix-with-envs"
 
 static XEN g_mus_mix_with_envs(XEN file, XEN beg, XEN dur, XEN mx, XEN revmx, XEN envs, XEN srcs, XEN srcenv, XEN outstream, XEN revstream)
@@ -4787,7 +4782,13 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 	    s = mix_srcs[inp];
 	    if (s)
 	      mus_frame_set(in_frame, inp, mus_src(s, src_env_val, NULL));
-	    else mus_frame_set(in_frame, inp, 0.0);
+	    else 
+	      {
+		s = mix_rds[inp];
+		if (s) 
+		  mus_frame_set(in_frame, inp, mus_readin(s));
+		else mus_frame_set(in_frame, inp, 0.0);
+	      }
 	  }
 	mus_frame_to_file(ostr, samp, mus_frame_to_frame(in_frame, mix, out_frame));
 	if (rev_mix) mus_frame_to_file(rstr, samp, mus_frame_to_frame(in_frame, rev_mix, rev_frame));

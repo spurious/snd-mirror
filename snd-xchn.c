@@ -827,8 +827,8 @@ void graph_key_press(Widget w, XtPointer context, XEvent *event, Boolean *cont)
   snd_info *sp = (snd_info *)context;
   key_state = ev->state;
   keysym = XkbKeycodeToKeysym(XtDisplay(w),
-			    (int)(ev->keycode),
-			      (key_state & snd_ShiftMask) ? 1 : 0, 0);
+			      (int)(ev->keycode),
+			      0, (key_state & snd_ShiftMask) ? 1 : 0);
   key_press_callback(any_selected_channel(sp), ev->x, ev->y, ev->state, keysym);
 }
  
@@ -843,8 +843,8 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   if ((cp == NULL) || (cp->sound == NULL)) return; /* can't happen */
   key_state = ev->state;
   keysym = XkbKeycodeToKeysym(XtDisplay(w),
-			    (int)(ev->keycode),
-			      (key_state & snd_ShiftMask) ? 1 : 0, 0);
+			      (int)(ev->keycode),
+			      0, (key_state & snd_ShiftMask) ? 1 : 0);
   key_press_callback(cp, ev->x, ev->y, ev->state, keysym);
 }
 

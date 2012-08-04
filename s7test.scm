@@ -15298,6 +15298,18 @@ in s7:
 (test (let () (and #f (define (hi a) a)) (hi 1)) 'error)
 (test (+ 1 (and (define (hi a) a) (hi 2))) 3)
 
+;;; from some net site 
+(let ()
+  (define (fold fn accum list)
+    (if (null? list)
+	accum
+	(fold fn
+	      (fn accum
+		  (car list))
+	      (cdr list))))
+
+  (test (fold and #t '(#t #f #t #t)) #f))
+
 
 
 

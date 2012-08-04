@@ -20775,6 +20775,121 @@ EDITS: 2
 	); end do loop
       ); end let
     
+    
+    (let ()
+      ;; someday this should be expanded
+      (if (not (null? (sounds)))
+	  (for-each close-sound (sounds)))
+
+      (with-sound (:output "flat.snd") 
+	(do ((i 0 (+ i 1)))
+	    ((= i 1000))
+	  (outa i 1.0)))
+      
+      (with-sound (:output "mix.snd")
+	(let ((rd (vector (make-readin "flat.snd"))))
+	  (mus-mix-with-envs rd 0 1000 (mixer 0.5) #f #f #f #f)))
+
+      (let ((ind (find-sound "mix.snd")))
+	(if (sound? ind)
+	    (if (fneq (sample 100 ind) 0.5)
+		(snd-display #__line__ ";mus-mix-with-envs 1: ~A" (sample 100 ind)))
+	    (snd-display #__line__ ";mus-mix-with envs 1: no output? ~A" (map short-file-name (sounds)))))
+      
+      (with-sound (:output "mix.snd")
+	(let ((rd (vector (make-readin "flat.snd")))
+	      (es (vector (make-env '(0 0 1 1) :length 1000))))
+	  (mus-mix-with-envs rd 0 1000 (mixer 0.0) #f es #f #f)))
+      
+      (let ((ind (find-sound "mix.snd")))
+	(if (sound? ind)
+	    (if (fneq (sample 100 ind) 0.1)
+		(snd-display #__line__ ";mus-mix-with-envs 2: ~A" (sample 100 ind)))
+	    (snd-display #__line__ ";mus-mix-with envs 2: no output? ~A" (map short-file-name (sounds)))))
+      
+      (with-sound (:output "mix.snd" :channels 2 :clipped #f)
+	(let ((rd (vector (make-readin "flat.snd") 
+			  (make-readin "flat.snd")))
+	      (es (vector (make-env '(0 0 1 1) :length 1000 :scaler .1) 
+			  (make-env '(0 1 1 0) :length 1000 :scaler .1)
+			  (make-env '(0 1 1 1) :length 1000 :scaler .5)
+			  (make-env '(0 1 1 1) :length 1000 :scaler -.5))))
+	  (mus-mix-with-envs rd 0 1000 (mixer 0.0 0.0 0.0 0.0) #f es #f #f)))
+      
+      (let ((ind (find-sound "mix.snd")))
+	(if (sound? ind)
+	    (begin
+	      (if (fneq (sample 100 ind 0) 0.51)
+		  (snd-display #__line__ ";mus-mix-with-envs 3 chan 0: ~A" (sample 100 ind 0)))
+	      (if (fneq (sample 100 ind 1) -0.41)
+		  (snd-display #__line__ ";mus-mix-with-envs 3 chan 1: ~A" (sample 100 ind 1))))
+	    (snd-display #__line__ ";mus-mix-with envs 3: no output? ~A" (map short-file-name (sounds)))))
+      
+      (with-sound (:output "mix.snd" :channels 2 :clipped #f)
+	(let ((rd (vector (make-readin "flat.snd")))
+	      (es (vector (make-env '(0 0 1 1) :length 1000 :scaler .3) 
+			  (make-env '(0 1 1 0) :length 1000 :scaler .4))))
+	  (mus-mix-with-envs rd 0 1000 (mixer 0.0 0.0 0.0 0.0) #f es #f #f)))
+      
+      (let ((ind (find-sound "mix.snd")))
+	(if (sound? ind)
+	    (begin
+	      (if (fneq (sample 100 ind 0) 0.03)
+		  (snd-display #__line__ ";mus-mix-with-envs 4 chan 0: ~A" (sample 100 ind 0)))
+	      (if (fneq (sample 100 ind 1) 0.36)
+		  (snd-display #__line__ ";mus-mix-with-envs 4 chan 1: ~A" (sample 100 ind 1))))
+	    (snd-display #__line__ ";mus-mix-with envs 4: no output? ~A" (map short-file-name (sounds)))))
+      
+      (with-sound (:output "mix.snd" :channels 1 :clipped #f)
+	(let ((rd (vector (make-readin "flat.snd")
+			  (make-readin "flat.snd")))
+	      (es (vector (make-env '(0 0 1 1) :length 1000 :scaler .3) 
+			  (make-env '(0 1 1 0) :length 1000 :scaler .4))))
+	  (mus-mix-with-envs rd 0 1000 (mixer 0.0 0.0 0.0 0.0) #f es #f #f)))
+      
+      (let ((ind (find-sound "mix.snd")))
+	(if (sound? ind)
+	    (if (fneq (sample 100 ind) 0.39)
+		(snd-display #__line__ ";mus-mix-with-envs 5: ~A" (sample 100 ind)))
+	    (snd-display #__line__ ";mus-mix-with envs 5: no output? ~A" (map short-file-name (sounds)))))
+      
+      (with-sound (:output "flat.snd") 
+	(outa 99 0.5)
+	(outa 100 1.0)
+	(outa 101 0.5))
+      
+      (if (not (provided? 'snd-jcrev.scm))
+	  (load "jcrev.scm"))
+      
+      (with-sound (:output "mix.snd" :reverb jc-reverb)
+	(let ((rd (vector (make-readin "flat.snd"))))
+	  (mus-mix-with-envs rd 0 1000 (mixer 0.5) (mixer 0.1) #f #f #f)))
+      
+      (let ((ind (find-sound "mix.snd")))
+	(if (sound? ind)
+	    (if (fneq (sample 7525 ind) 0.025)
+		(snd-display #__line__ ";mus-mix-with-envs 6: ~A" (sample 7525 ind)))
+	    (snd-display #__line__ ";mus-mix-with envs 6: no output? ~A" (map short-file-name (sounds)))))
+
+      (with-sound (:output "mix.snd" :reverb jc-reverb)
+	(let* ((rd (vector (make-readin "flat.snd") 
+			   (make-readin "flat.snd"))) 
+	       (srcs (vector (make-src :input (vector-ref rd 0) :srate 2.0)
+			     (make-src :input (vector-ref rd 1) :srate 0.5))))
+	  (mus-mix-with-envs rd 0 1000 (mixer 1.0 1.0 0.5 0.5) (mixer 0.1) #f srcs #f)))
+      
+      (let ((ind (find-sound "mix.snd")))
+	(if (sound? ind)
+	    (if (fneq (sample 200 ind) 0.5)
+		(snd-display #__line__ ";mus-mix-with-envs 7: ~A" (sample 200 ind)))
+	    (snd-display #__line__ ";mus-mix-with envs 7: no output? ~A" (map short-file-name (sounds)))))
+
+      (for-each close-sound (sounds))
+      (delete-file "flat.snd")
+      (delete-file "mix.snd")
+      )
+
+
     (let* ((gen (make-phase-vocoder #f 512 4 256 1.0 #f #f #f))
 	   (val (catch #t (lambda () (phase-vocoder gen)) (lambda args (car args)))))
       (if (fneq val 0.0) (snd-display #__line__ ";simple no-in pv call: ~A" val))
