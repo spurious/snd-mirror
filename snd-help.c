@@ -3559,28 +3559,33 @@ and its value is returned."
 		(s7_procedure_environment(sym) != sym))
 	      {
 		const char *url = NULL;
-		s7_pointer x;
-		
-		/* (cdr (assoc '__func__ (environment->list (procedure-environment func)))) => (name file line) or name */
-		x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_environment_to_list(s7, s7_procedure_environment(sym))));
-		
-		if (s7_is_pair(x))
+		s7_pointer x, e;
+		e = s7_procedure_environment(sym);
+		if (s7_is_null(s7, e))
+		  mus_snprintf(str, 256, "this function appears to come from eval or eval-string?");
+		else
 		  {
-		    subject = (char *)s7_symbol_name(s7_car(x));
-		    url = snd_url(subject);
-		    /* unavoidable memleak I guess */
-		    str = (char *)calloc(256, sizeof(char));
-		    if (url)
-		      mus_snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
-				   subject, 
-				   (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
-				   s7_string(s7_car(s7_cdr(x))),
-				   url);
-		    else 
-		      mus_snprintf(str, 256, "%s is defined at line %lld of %s",
-				   subject, 
-				   (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
-				   s7_string(s7_car(s7_cdr(x))));
+		    /* (cdr (assoc '__func__ (environment->list (procedure-environment func)))) => (name file line) or name */
+		    x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_environment_to_list(s7, e)));
+		
+		    if (s7_is_pair(x))
+		      {
+			subject = (char *)s7_symbol_name(s7_car(x));
+			url = snd_url(subject);
+			/* unavoidable memleak I guess */
+			str = (char *)calloc(256, sizeof(char));
+			if (url)
+			  mus_snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
+				       subject, 
+				       (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
+				       s7_string(s7_car(s7_cdr(x))),
+				       url);
+			else 
+			  mus_snprintf(str, 256, "%s is defined at line %lld of %s",
+				       subject, 
+				       (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
+				       s7_string(s7_car(s7_cdr(x))));
+		      }
 		  }
 	      }
 	  }

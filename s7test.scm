@@ -23829,6 +23829,7 @@ func
 ;;; 	  (procedure-environment return)))))
 ;;; 
 ;;; (procedure-environment values) -> global env! (like catch/dynamic-wind it's a procedure)
+;;; this is also true of (procedure-environment (lambda () 1)) 
 ;;; 
 ;;; :(procedure-environment (vct 1 2))
 ;;; #<environment>
@@ -69118,6 +69119,9 @@ etc
 (test (let () (define (hi) (letrec ((null? (lambda (car cdr) (+ car cdr)))) (null? 1 2))) (hi)) 3)
 (test (let () (define (hi) (letrec ((append (lambda (car list) (car list)))) (append cadr '(1 2 3)))) (hi)) 2)
 
+(let ()
+  (test ((lambda 'a (eval-string "1")) (current-environment) 1) 1)
+  (test ((lambda 'a (eval-string "a")) (current-environment) 1) 1))
 
 ;;; check optimizer 
 (let ((lst (list 1 2 3)) 

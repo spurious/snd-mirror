@@ -4835,7 +4835,7 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
   x_oscs = XEN_VECTOR_ELEMENTS(oscs);
 #endif
 
-  oscils = (mus_any **)calloc(size, sizeof(mus_any *));
+  oscils = (mus_any **)malloc(size * sizeof(mus_any *));
   for (i = 0; i < size; i++)
     {
       oscils[i] = XEN_TO_MUS_ANY(xen_vector_ref(oscs, i));
@@ -4868,7 +4868,7 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
 	  return(C_TO_XEN_DOUBLE(sum));
 	}
 
-      ampls = (double *)calloc(size, sizeof(double));
+      ampls = (double *)malloc(size * sizeof(double));
       for (i = 0; i < size; i++)
 	ampls[i] = XEN_TO_C_DOUBLE(xen_vector_ref(amps, i));
     }
@@ -4893,7 +4893,7 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
       x_freqs = XEN_VECTOR_ELEMENTS(freqs);
 #endif
 
-      fms = (double *)calloc(size, sizeof(double));
+      fms = (double *)malloc(size * sizeof(double));
       for (i = 0; i < size; i++)
 	fms[i] = XEN_TO_C_DOUBLE(xen_vector_ref(freqs, i));
     }

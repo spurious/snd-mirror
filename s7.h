@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.10"
-#define S7_DATE "25-July-12"
+#define S7_VERSION "2.11"
+#define S7_DATE "6-Aug-12"
 
 
 typedef long long int s7_Int;
@@ -855,6 +855,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 6-Aug:     removed WITH_OPTIMIZATION.
  * 25-July:   environment (in scheme). s7_vector_ref_n and s7_vector_set_n. s7_copy.
  *              added s7_scheme arg to s7_number_to_real|integer.
  * 16-July:   s7_function_returns_temp (an experiment).
