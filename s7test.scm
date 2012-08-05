@@ -20752,6 +20752,7 @@ who says the continuation has to restart the map from the top?
   (test (make-keyword "3") :3)
   (test (keyword? :3) #t)
   (test (keyword? ':3) #t)
+  (test (eq? (keyword->symbol :hi) (keyword->symbol hi:)) #t)
   (test (equal? :3 3) #f)
   (test (equal? (keyword->symbol :3) 3) #f)
   (test (equal? (symbol->value (keyword->symbol :3)) 3) #f) ; 3 as a symbol has value #<undefined>

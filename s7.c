@@ -979,7 +979,10 @@ typedef struct s7_cell {
     struct {               /* symbols */
       s7_pointer name, global_slot, local_slot;
       long long int id;
-      int accessor;
+      union {
+	int accessor;
+	s7_pointer ksym;
+      } ext;
     } sym;
 
     struct {               /* slots (bindings) */
@@ -1669,12 +1672,13 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #define symbol_name(p)                string_value(symbol_name_cell(p))
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
 #define symbol_hash(p)                (symbol_name_cell(p))->object.string.hash
-#define symbol_accessor(p)            (p)->object.sym.accessor
+#define symbol_accessor(p)            (p)->object.sym.ext.accessor
 #define symbol_has_accessor(p)        (symbol_accessor(p) != -1)
 
 #define global_slot(p)                (p)->object.sym.global_slot
 #define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
 #define local_slot(p)                 (p)->object.sym.local_slot
+#define keyword_symbol(p)             (p)->object.sym.ext.ksym
 
 #define is_slot(p)                    (type(p) == T_SLOT)
 #define slot_value(p)                 (p)->object.slt.val
@@ -3778,6 +3782,8 @@ static int symbol_table_hash(const char *key)
 } 
 
 
+static s7_pointer make_symbol(s7_scheme *sc, const char *name);
+
 static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location) 
 { 
   s7_pointer x, str; 
@@ -3793,10 +3799,29 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   symbol_id(x) = 0;
   symbol_accessor(x) = -1;
 
-  if ((symbol_name_length(x) > 1) &&                           /* not 0, otherwise : is a keyword */
-      ((name[0] == ':') ||
-       (name[symbol_name_length(x) - 1] == ':')))
-    typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
+  if (symbol_name_length(x) > 1)                           /* not 0, otherwise : is a keyword */
+    {
+      if (name[0] == ':')
+	{
+	  typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
+	  keyword_symbol(x) = make_symbol(sc, (char *)(name + 1));
+	}
+      else
+	{
+	  char c;
+	  c = name[symbol_name_length(x) - 1];
+	  if (c == ':')
+	    {
+	      char *str;
+	      str = (char *)malloc(symbol_name_length(x) * sizeof(char));
+	      str[symbol_name_length(x) - 1] = 0;
+	      memcpy((void *)str, (void *)name, symbol_name_length(x) - 1);
+	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
+	      keyword_symbol(x) = make_symbol(sc, str);
+	      free(str);
+	    }
+	}
+    }
 
   vector_element(sc->symbol_table, location) = permanent_cons(x, vector_element(sc->symbol_table, location), 
 							      T_PAIR | T_IMMUTABLE);
@@ -5376,6 +5401,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   sym = make_symbol(sc, name);
   typeflag(sym) |= (T_IMMUTABLE); 
   free(name);
+  keyword_symbol(sym) = make_symbol(sc, key);
   
   s7_make_slot(sc, sc->NIL, sym, sym); /* make it global, not in the local env! */
 
@@ -5398,27 +5424,15 @@ static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
-  const char *name;
+  s7_pointer sym;
 
-  if (!is_keyword(car(args)))
+  sym = car(args);
+  if (!is_keyword(sym))
     {
-      CHECK_METHOD(sc, car(args), sc->KEYWORD_TO_SYMBOL, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->KEYWORD_TO_SYMBOL, car(args), make_protected_string(sc, "a keyword")));
+      CHECK_METHOD(sc, sym, sc->KEYWORD_TO_SYMBOL, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->KEYWORD_TO_SYMBOL, sym, make_protected_string(sc, "a keyword")));
     }
-  name = symbol_name(car(args));
-  if (name[0] == ':')
-    return(make_symbol(sc, (const char *)(name + 1)));
-
-  /* else it ends in ":", (keyword->symbol foo:) */
-  {
-    char *temp;
-    s7_pointer res;
-    temp = copy_string(name);
-    temp[strlen(temp) - 1] = '\0';
-    res = make_symbol(sc, (const char *)temp);
-    free(temp);
-    return(res);
-  }
+  return(keyword_symbol(sym));
 }
 
 
@@ -28109,14 +28123,15 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 
 	  for (; is_pair(tmp); tmp = cdr(tmp))
 	    {
-	      if ((car(tmp) == sc->KEY_KEY) ||
-		  (car(tmp) == sc->KEY_OPTIONAL) ||
-		  (car(tmp) == sc->KEY_ALLOW_OTHER_KEYS))
+	      if (car(tmp) == sc->KEY_ALLOW_OTHER_KEYS)
 		opts++;
-	      if (car(tmp) == sc->KEY_REST)
+	      else
 		{
-		  opts += 2;     /* both :rest and the arg name are not counted as optional args */
-		  if (len > 0) len = -len;
+		  if (car(tmp) == sc->KEY_REST)
+		    {
+		      opts += 2;     /* both :rest and the arg name are not counted as optional args */
+		      if (len > 0) len = -len;
+		    }
 		}
 	    }
 	  return(list_3(sc, small_int(0), make_integer(sc, abs(len) - opts), make_boolean(sc, len < 0)));
@@ -28193,14 +28208,10 @@ static s7_pointer closure_star_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_poi
 	{
 	  s7_pointer arg;
 	  arg = car(p);
-	  if ((arg != sc->KEY_KEY) &&
-	      (arg != sc->KEY_OPTIONAL))
-	    {
-	      if ((arg == sc->KEY_REST) ||
-		  (arg == sc->KEY_ALLOW_OTHER_KEYS))
-		break;
-	      i++;
-	    }
+	  if ((arg == sc->KEY_REST) ||
+	      (arg == sc->KEY_ALLOW_OTHER_KEYS))
+	    break;
+	  i++;
 	}
       if (is_null(p))
 	closure_arity(x) = i;
@@ -28351,14 +28362,10 @@ static bool closure_star_is_aritable(s7_scheme *sc, s7_pointer x, s7_pointer x_a
 	{
 	  s7_pointer arg;
 	  arg = car(p);
-	  if ((arg != sc->KEY_KEY) &&
-	      (arg != sc->KEY_OPTIONAL))
-	    {
-	      if ((arg == sc->KEY_REST) ||
-		  (arg == sc->KEY_ALLOW_OTHER_KEYS))
-		break;
-	      i++;
-	    }
+	  if ((arg == sc->KEY_REST) ||
+	      (arg == sc->KEY_ALLOW_OTHER_KEYS))
+	    break;
+	  i++;
 	}
       if (is_null(p))
 	closure_arity(x) = i;
@@ -33327,9 +33334,14 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
    *
    * I later decided to add two warnings: if a parameter is set twice and if
    *   an unknown keyword is seen in a keyword position and there is no rest arg.
+   *
+   * :key and :optional are just noise words, so there have already been spliced out of the arg list
    */
 
   bool allow_other_keys = false;
+
+  /* TODO: if we have all the args and no keys in the list, just fill and go
+   */
   
   /* get the current args, re-setting args that have explicit values */
   sc->x = closure_args(sc->code);
@@ -33338,105 +33350,85 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
   while ((is_pair(sc->x)) &&
 	 (is_pair(sc->y)))
     {
-      if ((car(sc->x) == sc->KEY_KEY) ||
-	  (car(sc->x) == sc->KEY_OPTIONAL))
-	sc->x = cdr(sc->x);                         /* everything is :key and :optional, so these are ignored */
+      /* PERHAPS: when defined, mark :rest args (T_REST_ARG?) and if :allow-other-keys, mark the 1st 
+       */
+
+      if (car(sc->x) == sc->KEY_ALLOW_OTHER_KEYS)
+	{
+	  allow_other_keys = true;
+	  sc->x = cdr(sc->x);
+	}
       else
 	{
-	  if (car(sc->x) == sc->KEY_ALLOW_OTHER_KEYS)
+	  if (car(sc->x) == sc->KEY_REST)           /* the rest arg */
 	    {
-	      allow_other_keys = true;
+	      /* next arg is bound to trailing args from this point as a list */
+	      sc->z = sc->KEY_REST;
 	      sc->x = cdr(sc->x);
+	      
+	      if (is_pair(car(sc->x)))
+		lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
+	      else lambda_star_argument_set_value(sc, car(sc->x), sc->y);
+	      
+	      sc->y = cdr(sc->y);
+	      sc->x = cdr(sc->x);
+	      if (car(sc->x) == sc->KEY_ALLOW_OTHER_KEYS)
+		break;
 	    }
 	  else
 	    {
-	      if (car(sc->x) == sc->KEY_REST)           /* the rest arg */
+	      if (is_keyword(car(sc->y)))
 		{
-		  /* next arg is bound to trailing args from this point as a list */
-		  sc->z = sc->KEY_REST;
-		  sc->x = cdr(sc->x);
+		  /* char *name; */                      /* found a keyword, check the lambda args via the corresponding symbol */
+		  s7_pointer sym;
+		  sym = keyword_symbol(car(sc->y));
 		  
-		  if (is_pair(car(sc->x)))
-		    lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
-		  else lambda_star_argument_set_value(sc, car(sc->x), sc->y);
 		  
-		  sc->y = cdr(sc->y);
-		  sc->x = cdr(sc->x);
-		  if (car(sc->x) == sc->KEY_ALLOW_OTHER_KEYS)
-		    break;
-		}
-	      else
-		{
-		  if (is_keyword(car(sc->y)))
+		  if ((is_null(cdr(sc->y))) ||
+		      (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))) == sc->NO_VALUE))
 		    {
-		      char *name;                       /* found a keyword, need to remove the ':' before checking the lambda args */
-		      s7_pointer sym;
+		      /* if default value is a key, go ahead and use this value.
+		       *    (define* (f (a :b)) a) (f :c) 
+		       * this has become much trickier than I anticipated...
+		       */
 		      
-		      name = symbol_name(car(sc->y));
-		      if (name[0] == ':')
-			sym = make_symbol(sc, (const char *)(name + 1));
-		      else
+		      if ((allow_other_keys) ||
+			  (direct_memq(sc->KEY_ALLOW_OTHER_KEYS, sc->x)))
 			{
-			  /* must be a trailing ':' here, else not is_keyword */
-			  name[symbol_name_length(car(sc->y)) - 1] = '\0';
-			  sym = make_symbol(sc, name);
-			  name[symbol_name_length(car(sc->y)) - 1] = ':';
-			}
-		      
-		      if ((is_null(cdr(sc->y))) ||
-			  (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))) == sc->NO_VALUE))
-			{
-			  /* if default value is a key, go ahead and use this value.
-			   *    (define* (f (a :b)) a) (f :c) 
-			   * this has become much trickier than I anticipated...
+			  allow_other_keys = true;
+			  /* in CL: (defun hi (&key (a 1) &allow-other-keys) a) (hi :b :a :a 3) -> 3 
+			   * in s7: (define* (hi (a 1) :allow-other-keys) a)    (hi :b :a :a 3) -> 3
 			   */
 			  
-			  if ((allow_other_keys) ||
-			      (direct_memq(sc->KEY_ALLOW_OTHER_KEYS, sc->x)))
+			  /* fprintf(stderr, "%s %s\n", DISPLAY(sc->y), DISPLAY(sc->x)); */
+			  sc->y = cddr(sc->y);
+			  continue;
+			}
+		      else
+			{
+			  if ((is_pair(car(sc->x))) &&
+			      (is_keyword(cadar(sc->x))))
 			    {
-			      allow_other_keys = true;
-			      /* in CL: (defun hi (&key (a 1) &allow-other-keys) a) (hi :b :a :a 3) -> 3 
-			       * in s7: (define* (hi (a 1) :allow-other-keys) a)    (hi :b :a :a 3) -> 3
-			       */
-
-			      /* fprintf(stderr, "%s %s\n", DISPLAY(sc->y), DISPLAY(sc->x)); */
-			      sc->y = cddr(sc->y);
-			      continue;
-			    }
-			  else
-			    {
-			      if ((is_pair(car(sc->x))) &&
-				  (is_keyword(cadar(sc->x))))
+			      /* sc->x is the closure args list, not the copy of it in the current environment */
+			      s7_pointer x;
+			      
+			      x = find_symbol(sc, caar(sc->x));
+			      if (is_slot(x))
 				{
-				  /* sc->x is the closure args list, not the copy of it in the current environment */
-				  s7_pointer x;
-				  
-				  x = find_symbol(sc, caar(sc->x));
-				  if (is_slot(x))
+				  if (is_not_checked(x))
 				    {
-				      if (is_not_checked(x))
-					{
-					  set_checked(x);
-					  slot_set_value(x, car(sc->y));
-					}
-				      else 
-					{
-					  /* this case is not caught yet: ((lambda* (a :optional b :allow-other-keys ) a) :b 1 :c :a :a ) */
-
-					  return(s7_error(sc, sc->WRONG_TYPE_ARG,
-							  list_4(sc,
-								 make_protected_string(sc, "~A: parameter set twice, ~S in ~S"),
-								 closure_name(sc, sc->code), sc->y, sc->args)));
-					}
+				      set_checked(x);
+				      slot_set_value(x, car(sc->y));
 				    }
-				  else
+				  else 
 				    {
+				      /* this case is not caught yet: ((lambda* (a :optional b :allow-other-keys ) a) :b 1 :c :a :a ) */
+				      
 				      return(s7_error(sc, sc->WRONG_TYPE_ARG,
 						      list_4(sc,
-							     make_protected_string(sc, "~A: unknown key: ~S in ~S"),
+							     make_protected_string(sc, "~A: parameter set twice, ~S in ~S"),
 							     closure_name(sc, sc->code), sc->y, sc->args)));
 				    }
-				  /* (define* (f a (b :c)) b) (f :b 1 :d) */
 				}
 			      else
 				{
@@ -33445,20 +33437,31 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 							 make_protected_string(sc, "~A: unknown key: ~S in ~S"),
 							 closure_name(sc, sc->code), sc->y, sc->args)));
 				}
+			      /* (define* (f a (b :c)) b) (f :b 1 :d) */
+			    }
+			  else
+			    {
+			      return(s7_error(sc, sc->WRONG_TYPE_ARG,
+					      list_4(sc,
+						     make_protected_string(sc, "~A: unknown key: ~S in ~S"),
+						     closure_name(sc, sc->code), sc->y, sc->args)));
 			    }
 			}
-		      sc->y = cdr(sc->y);
-		      if (is_pair(sc->y)) sc->y = cdr(sc->y);
 		    }
-		  else                                  /* not a key/value pair */
-		    {
-		      if (is_pair(car(sc->x)))
-			lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
-		      else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
-		      sc->y = cdr(sc->y);
-		    }
-		  sc->x = cdr(sc->x);
+		  sc->y = cdr(sc->y);
+		  if (is_pair(sc->y)) sc->y = cdr(sc->y);
 		}
+	      else                                  /* not a key/value pair */
+		{
+		  /* PERHAPS: isn't this always a positional (i.e. direct) change?
+		   *   for the initial such settings, why not maintain the env pointer and do it directly?
+		   */
+		  if (is_pair(car(sc->x)))
+		    lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
+		  else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
+		  sc->y = cdr(sc->y);
+		}
+	      sc->x = cdr(sc->x);
 	    }
 	}
     }
@@ -35640,6 +35643,8 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	      (c_function_call(func) == g_member) || /* the unsafe case has a third arg */
 	      (c_function_call(func) == g_assoc))
 	    {
+	      /* another case here: set-car! and set-cdr! are safe if symbols==1 and cadar_x is the symbol (i.e. caddar_x is a constant) */
+
 	      if (symbols == 0)
 		set_optimize_data(car_x, hop + OP_SAFE_C_C);
 	      else
@@ -36686,6 +36691,8 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		       * returns 1 if hop is 1, but -2 outside the function body.
 		       *
 		       * SOMEDAY: figure out how to make this with-env decision at run time
+		       *  perhaps assume it's safe here, then check the bit in WITH_ENV,
+		       *  if on, cancel the hop bits -- will this fix merge C_C cases?
 		       */
 		    }
 		}
@@ -37884,6 +37891,8 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer top;
+  top = args;
   if (!s7_is_list(sc, args))
     {
       if (s7_is_constant(args))                                  /* (lambda* :a ...) */
@@ -37893,8 +37902,9 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
     }
   else
     { 
-      s7_pointer w;
-      for (w = args; is_pair(w); w = cdr(w))
+      s7_pointer v, w;
+      v = top;
+      for (w = args; is_pair(w); v = w, w = cdr(w))
 	{
 	  if (is_pair(car(w)))
 	    {
@@ -37927,6 +37937,9 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
 			  if ((!is_pair(cdr(w))) ||                   /* (lambda* (:key) 1) or (lambda* (:key . b) 1) */
 			      (is_immutable(cadr(w))))                /* (lambda* (:key :optional) 1) */
 			    return(eval_error(sc, "lambda* :key or :optional parameter must be a normal symbol: ~A", w));
+			  if (w == top) 
+			    top = cdr(w);
+			  else cdr(v) = cdr(w);
 			}
 		      else
 			{
@@ -37972,7 +37985,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
 	    set_local(w);
 	}
     }
-  return(sc->F);
+  return(top);
 }
 
 
@@ -39245,7 +39258,7 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
       
       if (sc->op == OP_DEFINE_STAR)
-	check_lambda_star_args(sc, cdar(sc->code));
+	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code));
       else check_lambda_args(sc, cdar(sc->code));
 
       len = s7_list_length(sc, cdr(sc->code));
@@ -47935,9 +47948,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_pair(z))
 	      {
 		/* bind all the args to something (default value or #f or maybe #undefined) */
-		if (!((car(z) == sc->KEY_KEY) ||
-		      (car(z) == sc->KEY_OPTIONAL) ||
-		      (car(z) == sc->KEY_ALLOW_OTHER_KEYS)))
+		if (car(z) != sc->KEY_ALLOW_OTHER_KEYS)
 		  {
 		    if (car(z) == sc->KEY_REST)
 		      {
@@ -52168,7 +52179,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
 	eval_error(sc, "lambda*: no args or no body? ~A", sc->code);
-      check_lambda_star_args(sc, car(sc->code));
+      car(sc->code) = check_lambda_star_args(sc, car(sc->code));
 
       if ((is_pair(cdr(sc->code))) &&
 	  (is_pair(cadr(sc->code))) &&
@@ -58743,12 +58754,11 @@ s7_scheme *s7_init(void)
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
  * TODO: error in s7_call should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
  *
+ * bench    42736                                    8752
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1266
- * bench    52019 -> 7875 [8268] 8037 8592 8402
- *   (new)                [8764]           9370 8937 8963
- * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3332
+ * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3327
  * s7test            1721             1456 1430 1375 1358
- * t455                           265  256  218   86
- * t502                                 90   72   42   42
+ * t455                           265  256  218   86   89
+ * t502                                 90   72   42   43
  */
 

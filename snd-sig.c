@@ -1448,7 +1448,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
       j = 0;
       for (k = 0; k < dur; k++)
 	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample(sf), 0.0));
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE(mus_apply(gen, read_sample(sf), 0.0));
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1460,12 +1460,12 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   else
     {
       for (k = 0; k < dur; k++)
-	idata[k] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample(sf), 0.0));
+	idata[k] = MUS_FLOAT_TO_SAMPLE(mus_apply(gen, read_sample(sf), 0.0));
       j = (int)dur;
     }
   for (k = 0; k < overlap; k++)
     {
-      idata[j++] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, 0.0, 0.0) + read_sample(sf));
+      idata[j++] = MUS_FLOAT_TO_SAMPLE(mus_apply(gen, 0.0, 0.0) + read_sample(sf));
       if ((temp_file) && (j == MAX_BUFFER_SIZE))
 	{
 	  err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1747,7 +1747,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       if (gen)
 	{
 	  for (j = 0; j < dur; j++)
-	    idata[j] = MUS_FLOAT_TO_SAMPLE(MUS_RUN(gen, read_sample(sf), 0.0));
+	    idata[j] = MUS_FLOAT_TO_SAMPLE(mus_apply(gen, read_sample(sf), 0.0));
 	}
       else
 	{
@@ -1778,7 +1778,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       for (offk = 0; offk < dur; offk++)
 	{
 	  if (gen)
-	    x = MUS_RUN(gen, read_sample(sf), 0.0);
+	    x = mus_apply(gen, read_sample(sf), 0.0);
 	  else
 	    {
 	      mus_float_t *ap, *dp, *dprev;
@@ -1824,7 +1824,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
       for (offk = 0; offk < order; offk++)
 	{
 	  if (gen)
-	    x = MUS_RUN(gen, read_sample(sf), 0.0);
+	    x = mus_apply(gen, read_sample(sf), 0.0);
 	  else
 	    {
 	      mus_float_t *ap, *dp, *dprev;
@@ -1970,7 +1970,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e,
   if ((!e) && (!ur_a) && (!gen)) 
     return(NULL);
 
-  if ((gen) && (!(MUS_RUN_P(gen))))
+  if ((gen) && (!(mus_run_exists(gen))))
     {
       (*clm_error) = true;
       return(mus_format("%s: can't handle %s generators",

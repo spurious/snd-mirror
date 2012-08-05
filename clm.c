@@ -12748,7 +12748,6 @@ void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_
 
 bool mus_run_exists(mus_any *gen)
 {
-  /* this is used via MUS_RUN_P in snd-sig.c */
   return(gen->core->run != NULL);
 }
 

@@ -7778,7 +7778,7 @@ static mus_float_t as_needed_input_generator(void *ptr, int direction) /* intend
   mus_xen *x = (mus_xen *)ptr;
   XEN v;
   v = x->vcts[MUS_INPUT_FUNCTION];
-  return(MUS_RUN(XEN_TO_MUS_ANY(v), 0.0, 0.0));
+  return(mus_apply(XEN_TO_MUS_ANY(v), 0.0, 0.0));
 }
 
 
