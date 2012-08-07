@@ -46112,7 +46112,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	     (vector-set! diffs i diff)
 	     (if (> diff err)
 		 (begin
-		   (format #t "|~A - ~A| = ~A > ~A (2^~A)?" val rat diff err (log err 2))
+		   (format #t "|~A - ~A| = ~A > ~A (2^~A -> 2^~A)?~%" val rat diff err (log diff 2) (log err 2))
 		   (return #f)))))
 	 (and (apply >= (vector->list diffs))
 	      (apply <= (map denominator ratios)))))))

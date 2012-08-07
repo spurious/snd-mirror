@@ -26,6 +26,6 @@ removed gamin support (ancient libfam replacement).
 
 removed the s7 WITH_OPTIMIZATION switch
 
-checked: gtk 3.5.6|8, mpc 1.0
+checked: gtk 3.5.6|8|10, mpc 1.0, sbcl 1.0.58
 
 Thanks!:  Matti Koskinen, Mike Scholz

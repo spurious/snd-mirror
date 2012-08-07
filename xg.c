@@ -2201,27 +2201,6 @@ static XEN gxg_gdk_rectangle_union(XEN src1, XEN src2, XEN dest)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gdk_threads_enter(void)
-{
-  #define H_gdk_threads_enter "void gdk_threads_enter( void)"
-  gdk_threads_enter();
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_threads_leave(void)
-{
-  #define H_gdk_threads_leave "void gdk_threads_leave( void)"
-  gdk_threads_leave();
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_threads_init(void)
-{
-  #define H_gdk_threads_init "void gdk_threads_init( void)"
-  gdk_threads_init();
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gdk_keymap_get_default(void)
 {
   #define H_gdk_keymap_get_default "GdkKeymap* gdk_keymap_get_default( void)"
@@ -35440,9 +35419,6 @@ XEN_NARGIFY_0(gxg_gdk_beep_w, gxg_gdk_beep)
 XEN_NARGIFY_1(gxg_gdk_set_double_click_time_w, gxg_gdk_set_double_click_time)
 XEN_NARGIFY_3(gxg_gdk_rectangle_intersect_w, gxg_gdk_rectangle_intersect)
 XEN_NARGIFY_3(gxg_gdk_rectangle_union_w, gxg_gdk_rectangle_union)
-XEN_NARGIFY_0(gxg_gdk_threads_enter_w, gxg_gdk_threads_enter)
-XEN_NARGIFY_0(gxg_gdk_threads_leave_w, gxg_gdk_threads_leave)
-XEN_NARGIFY_0(gxg_gdk_threads_init_w, gxg_gdk_threads_init)
 XEN_NARGIFY_0(gxg_gdk_keymap_get_default_w, gxg_gdk_keymap_get_default)
 XEN_NARGIFY_2(gxg_gdk_keymap_lookup_key_w, gxg_gdk_keymap_lookup_key)
 XEN_ARGIFY_4(gxg_gdk_keymap_get_entries_for_keyval_w, gxg_gdk_keymap_get_entries_for_keyval)
@@ -39520,9 +39496,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gdk_set_double_click_time_w gxg_gdk_set_double_click_time
 #define gxg_gdk_rectangle_intersect_w gxg_gdk_rectangle_intersect
 #define gxg_gdk_rectangle_union_w gxg_gdk_rectangle_union
-#define gxg_gdk_threads_enter_w gxg_gdk_threads_enter
-#define gxg_gdk_threads_leave_w gxg_gdk_threads_leave
-#define gxg_gdk_threads_init_w gxg_gdk_threads_init
 #define gxg_gdk_keymap_get_default_w gxg_gdk_keymap_get_default
 #define gxg_gdk_keymap_lookup_key_w gxg_gdk_keymap_lookup_key
 #define gxg_gdk_keymap_get_entries_for_keyval_w gxg_gdk_keymap_get_entries_for_keyval
@@ -43607,9 +43580,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_set_double_click_time, gxg_gdk_set_double_click_time_w, 1, 0, 0, H_gdk_set_double_click_time);
   XG_DEFINE_PROCEDURE(gdk_rectangle_intersect, gxg_gdk_rectangle_intersect_w, 3, 0, 0, H_gdk_rectangle_intersect);
   XG_DEFINE_PROCEDURE(gdk_rectangle_union, gxg_gdk_rectangle_union_w, 3, 0, 0, H_gdk_rectangle_union);
-  XG_DEFINE_PROCEDURE(gdk_threads_enter, gxg_gdk_threads_enter_w, 0, 0, 0, H_gdk_threads_enter);
-  XG_DEFINE_PROCEDURE(gdk_threads_leave, gxg_gdk_threads_leave_w, 0, 0, 0, H_gdk_threads_leave);
-  XG_DEFINE_PROCEDURE(gdk_threads_init, gxg_gdk_threads_init_w, 0, 0, 0, H_gdk_threads_init);
   XG_DEFINE_PROCEDURE(gdk_keymap_get_default, gxg_gdk_keymap_get_default_w, 0, 0, 0, H_gdk_keymap_get_default);
   XG_DEFINE_PROCEDURE(gdk_keymap_lookup_key, gxg_gdk_keymap_lookup_key_w, 2, 0, 0, H_gdk_keymap_lookup_key);
   XG_DEFINE_PROCEDURE(gdk_keymap_get_entries_for_keyval, gxg_gdk_keymap_get_entries_for_keyval_w, 2, 2, 0, H_gdk_keymap_get_entries_for_keyval);
@@ -49413,7 +49383,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("04-Aug-12"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Aug-12"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 1
-#define MUS_DATE "15-July-12"
+#define MUS_REVISION 2
+#define MUS_DATE "8-Aug-12"
 
 /* isn't mus_env_interp backwards? */
 
@@ -58,6 +58,7 @@ MUS_EXPORT void mus_initialize(void);
 
 MUS_EXPORT int mus_make_generator_type(void);
 
+MUS_EXPORT mus_any_class *mus_generator_class(mus_any *ptr);
 MUS_EXPORT mus_any_class *mus_make_generator(int type, char *name, 
 					     int (*release)(mus_any *ptr), 
 					     char *(*describe)(mus_any *ptr), 

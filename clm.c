@@ -126,6 +126,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT,
       MUS_INITIAL_GEN_TAG};
 
+mus_any_class *mus_generator_class(mus_any *ptr) {return(ptr->core);}
 
 void mus_generator_set_release(mus_any_class *p, int (*release)(mus_any *ptr)) {p->release = release;}
 void mus_generator_set_describe(mus_any_class *p, char *(*describe)(mus_any *ptr)) {p->describe = describe;}
