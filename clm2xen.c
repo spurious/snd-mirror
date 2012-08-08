@@ -8776,7 +8776,7 @@ static XEN g_pulsed_env_p(XEN g)
 
 static XEN g_pulsed_env(XEN g, XEN fm)
 {
-  #define H_pulsed_env "(" S_pulsed_env " gen) runs a pulsed-env generator."
+  #define H_pulsed_env "(" S_pulsed_env " gen fm) runs a pulsed-env generator."
   mus_float_t pt_val;
   pt_val = XEN_TO_C_DOUBLE(g_pulse_train(XEN_VECTOR_REF(g, 0), fm));
   if (pt_val > 0.1)
@@ -10523,6 +10523,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
   if ((args == 2) &&
       (s7_is_pair(caddr(expr))) &&
+      (s7_is_procedure(car(caddr(expr)))) && /* these can be quoted exprs: (+ '1.0 '2.0) */
       (s7_function_choice_is_direct(sc, caddr(expr))) &&
       (s7_function_returns_temp(caddr(expr))))
     {

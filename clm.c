@@ -3358,7 +3358,7 @@ typedef struct {
   unsigned int loc, size;
   bool zdly, line_allocated, filt_allocated;
   mus_float_t *line;
-  int zloc, zsize;
+  unsigned int zloc, zsize;
   mus_float_t xscl, yscl, yn1;
   mus_interp_t type;
   mus_any *filt;

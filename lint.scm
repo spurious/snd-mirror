@@ -622,23 +622,23 @@
       
       
       (define (check-for-repeated-args name line-number head form env)
-	(if (repeated-member? (cdr form) env)
-	    (if (or (memq head '(eq? eqv? equal?))
-		    (and (= (length form) 3)
-			 (memq head '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
-					string=? string<=? string>=? string<? string>?
-					char=? char<=? char>=? char<? char>?))))
-		(lint-format "this looks odd:~A"
-			     name line-number 
-			     ;; sigh (= a a) could be used to check for non-finite numbers, I suppose,
-			     ;;   and (/ 0 0) might be deliberate (as in gmp)
-			     (truncated-list->string form))
-		(if (memq head '(= max min < > <= >= and or
-				   string=? string<=? string>=? string<? string>?
-				   char=? char<=? char>=? char<? char>?))
-		    (lint-format "it looks odd to have repeated arguments in~A"
-				 name line-number (truncated-list->string form))))))
-      
+	(if (and (or (memq head '(eq? eqv? equal?))
+		     (and (= (length form) 3)
+			  (memq head '(= / max min < > <= >= - quotient remainder modulo lcm gcd and or
+					 string=? string<=? string>=? string<? string>?
+					 char=? char<=? char>=? char<? char>?))))
+		 (repeated-member? (cdr form) env))
+	    (lint-format "this looks odd:~A"
+			 name line-number 
+			 ;; sigh (= a a) could be used to check for non-finite numbers, I suppose,
+			 ;;   and (/ 0 0) might be deliberate (as in gmp)
+			 (truncated-list->string form))
+	    (if (and (memq head '(= max min < > <= >= and or
+				    string=? string<=? string>=? string<? string>?
+				    char=? char<=? char>=? char<? char>?))
+		     (repeated-member? (cdr form) env))
+		(lint-format "it looks odd to have repeated arguments in~A"
+			     name line-number (truncated-list->string form)))))
       
       (define (check-for-repeated-args-with-not name line-number form env)
 	
@@ -1648,24 +1648,29 @@
 	  ((member)
 	   (if (= (length form) 4)
 	       (let ((func (list-ref form 3)))
-		 (if (or (eq? func 'eq?)
-			 (and (pair? func)
+		 (if (eq? func 'eq?)
+		     (lint-format "member might perhaps be assq" name line-number)
+		     (if (and (pair? func)
 			      (= (length func) 3)
 			      (eq? (car func) 'lambda)
 			      (pair? (cadr func))
-			      (pair? (caddr func))
-			      (let ((eq (caddr func))
-				    (args (cadr func)))
-				(and (memq (car eq) '(eq? eqv? equal?))
-				     (eq? (car args) (cadr eq))
-				     (pair? (caddr eq))
-				     (eq? (car (caddr eq)) 'car)
-				     (pair? (cdr (caddr eq)))
-				     (eq? (cadr args) (cadr (caddr eq)))))))
-		     (lint-format "member might perhaps be ~A"
-				  name line-number
-				  (if (eq? (car (caddr func)) 'eq?) 'assq
-				      (if (eq? (car (caddr func)) 'eqv?) 'assv 'assoc)))))))
+			      (pair? (caddr func)))
+			 (if (not (member (length (cadr func)) '(2 -1)))
+			     (lint-format "member equality function (optional 3rd arg) should take two arguments" name line-number)
+			     (let ((eq (caddr func))
+				   (args (cadr func)))
+			       (if (and (memq (car eq) '(eq? eqv? equal?))
+					(eq? (car args) (cadr eq))
+					(pair? (caddr eq))
+					(eq? (car (caddr eq)) 'car)
+					(pair? (cdr (caddr eq)))
+					(pair? (cdr args))
+					(eq? (cadr args) (cadr (caddr eq))))
+				   (lint-format "member might perhaps be ~A"
+						name line-number
+						(if (eq? func 'eq?) 'assq
+						    (if (eq? (car (caddr func)) 'eq?) 'assq
+							(if (eq? (car (caddr func)) 'eqv?) 'assv 'assoc))))))))))))
 	  
 	  ((if)
 	   (let ((len (length form)))
@@ -2036,32 +2041,12 @@
 	(let ((name (if (pair? (cadr form))
 			(car (cadr form))
 			(cadr form))))
-	  ;; auto-define make-name, name?, name-field for each field (also set! case?)
+	  ;; auto-define make-name, name?
 	  (let ((make-name (string->symbol (string-append "make-" (symbol->string name))))
-		(name? (string->symbol (string-append (symbol->string name) "?")))
-		(methods (string->symbol (string-append (symbol->string name) "-methods"))))
+		(name? (string->symbol (string-append (symbol->string name) "?"))))
 	    
 	    (hash-table-set! globals make-name (list make-name #f #f))
-	    (hash-table-set! globals name? (list name? #f #f))
-	    (hash-table-set! globals methods (list methods #f #f))
-	    (set! generators (cons name generators))
-	    
-	    (for-each
-	     (lambda (field)
-	       (if (and (pair? field) (> (length field) 2))
-		   (lint-format "~A has an obsolete type indication: ~A"
-				name line-number head
-				(truncated-list->string field)))
-	       (let ((fname (string->symbol 
-			     (string-append 
-			      (symbol->string name) "-" (symbol->string (if (pair? field)
-									    (car field)
-									    field))))))
-		 (hash-table-set! globals fname (list fname #f #f (list 'lambda (list 'gen))))))
-	     (cddr form))
-	    (if (and env
-		     (pair? (cadr form)))
-		(lint-walk name (cdadr form) env)))
+	    (hash-table-set! globals name? (list name? #f #f)))
 	  env))
       
       
@@ -3033,37 +3018,7 @@
 		     vars))
 
 		(if *report-unused-top-level-functions* 
-		    (begin
-		      (report-usage file 0 'top-level-object #f vars)
-		      (if (not (null? generators))
-			  (let ((descr `(lambda (gen)))
-				(set '())
-				(unused '()))
-			    (for-each
-			     (lambda (gen)
-			       ;; look for unused fields
-			       (let* ((giter (make-hash-table-iterator globals))
-				      (field-prefix (string-append (symbol->string gen) "-"))
-				      (prefix-len (string-length field-prefix)))
-				 (do ((gfield (giter) (giter)))
-				     ((null? gfield))
-				   (if (not (memq (car gfield) other-identifiers)) 
-				       (begin
-					 (set! gfield (cdr gfield))
-					 (if (and (= (length gfield) 4)
-						  (not (cadr gfield))
-						  (equal? (cadddr gfield) descr)
-						  (let ((symstr (symbol->string (car gfield))))
-						    (and (> (string-length symstr) prefix-len)
-							 (string=? (substring symstr 0 prefix-len) field-prefix))))
-					     (if (caddr gfield)
-						 (set! set (cons (car gfield) set))
-						 (set! unused (cons (car gfield) unused)))))))))
-			     generators)
-			    (if (not (null? set))
-				(format #t "  generator fields set, but not used: ~{~A~^, ~}~%" set))
-			    (if (not (null? unused))
-				(format #t "  unused generator fields: ~{~A~^, ~}~%" unused))))))
+		    (report-usage file 0 'top-level-object #f vars))
 		
 		(if *report-undefined-variables*
 		    (for-each

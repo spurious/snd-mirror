@@ -412,6 +412,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+8-Aug:   Snd 13.0.\n\
 3-July:  removed ptree-channel and max-virtual-ptrees, optimization, run.c.\n\
 26-Jun:  Snd 12.12.\n\
 4-Jun:   removed the --with-static-* configuration switches.\n\
@@ -3567,8 +3568,8 @@ and its value is returned."
 		  {
 		    /* (cdr (assoc '__func__ (environment->list (procedure-environment func)))) => (name file line) or name */
 		    x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_environment_to_list(s7, e)));
-		
-		    if (s7_is_pair(x))
+
+		    if ((x) && (s7_is_pair(x)))
 		      {
 			subject = (char *)s7_symbol_name(s7_car(x));
 			url = snd_url(subject);
