@@ -4400,7 +4400,7 @@ dalliance with symbol-macros!
 <div class="indented">
 <p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
-lint.scm in the Snd tarball checks for infelicities in s7 code (I think the C equivalent is now called splint).
+lint.scm (included in the s7 tarball) checks for infelicities in s7 code (I think the C equivalent is now called splint).
 </p>
 </div>
 </blockquote>
@@ -7218,7 +7218,22 @@ int main(int argc, char **argv)
  */
 </pre></div>
 
+<p>All of this is just boring boilerplate, so with a little support from s7,
+we can write a script to do the entire linkage.  The s7 side is an extension
+to "load" that loads a shared object file if its extension is "so", and
+runs an initialization function whose name is defined in the load
+environment (the optional second argument to load).  An example of the scheme side is cload.scm,
+included in the s7 tarball.  It defines a function that can be
+called:
+</p>
 
+<pre class="indented">
+(define-c-function 'double 'j0 '(double) "m" "math.h")
+</pre>
+
+<p>This links the s7 function m:j0 to the math library
+function j0.  See cload.scm for more details.
+</p>
 
 
 

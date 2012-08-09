@@ -188,6 +188,8 @@
  */
 
 
+#define WITH_GCC defined(__GNUC__) || defined(__clang__)
+
 
 
 /* ---------------- scheme choices ---------------- */
@@ -224,6 +226,14 @@
    */
 #endif
 
+#ifndef WITH_C_LOADER
+#define WITH_C_LOADER WITH_GCC
+  /* an experiment -- (load file.so e) looks for (e 'init) and if found, calls it
+   *   as the shared object init function.  If WITH_SYSTEM_EXTRAS is 0, the caller
+   *   needs to supply system and delete-file so that cload.scm works.
+   */
+#endif
+
 
 #ifndef WITH_IMMUTABLE_UNQUOTE
   #define WITH_IMMUTABLE_UNQUOTE 0
@@ -249,7 +259,6 @@
 #define PRINTING 0
 
 
-#define WITH_GCC defined(__GNUC__) || defined(__clang__)
 
 
 
@@ -19692,6 +19701,10 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 }
 
 
+#if WITH_C_LOADER
+#include <dlfcn.h>
+#endif
+
 static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
   #define H_load "(load file (env (global-environment))) loads the scheme file 'file'. The 'env' argument \
@@ -19715,7 +19728,7 @@ defaults to the global environment.  To load into the current environment instea
 	return(wrong_type_argument_with_type(sc, sc->LOAD, small_int(2), e, AN_ENVIRONMENT));
       if (e == sc->global_env)
 	sc->envir = sc->NIL;
-      else sc->envir = e;
+      else sc->envir = e; 
     }
   else sc->envir = sc->NIL;
   
@@ -19729,6 +19742,50 @@ defaults to the global environment.  To load into the current environment instea
   if (is_directory(fname))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    list_2(sc, make_protected_string(sc, "load argument, ~S, is a directory"), name)));
+
+#if WITH_C_LOADER
+  /* if fname ends in .so, try loading it as a c shared object
+   *   (load "/home/bil/cl/m_j0.so" (environment (cons 'init_func 'init_m_j0)))
+   */
+  {
+    int fname_len;
+    fname_len = safe_strlen(fname);
+    if ((fname_len > 3) &&
+	(is_pair(cdr(args))) &&
+	(strcmp((const char *)(fname + (fname_len - 3)), ".so") == 0))
+      {
+	s7_pointer init;
+	const char *init_name = NULL;
+	void *library;
+
+	init = s7_environment_ref(sc, sc->envir, s7_make_symbol(sc, "init_func"));
+	if (is_symbol(init))
+	  {
+	    init_name = symbol_name(init);
+	    library = dlopen(fname, RTLD_LAZY);
+	    if (library)
+	      {
+		void *init_func;
+		init_func = dlsym(library, init_name);
+		if (init_func)
+		  {
+		    typedef void *(*dl_func)(s7_scheme *sc);
+		    ((dl_func)init_func)(sc); 
+		    return(sc->T);
+		  }
+		else 
+		  {
+		    fprintf(stderr, "loaded %s, but can't find %s (%s)?\n", fname, init_name, dlerror());
+		    dlclose(library);
+		  }
+	      }
+	    else fprintf(stderr, "load %s failed: %s\n", fname, dlerror());
+	  }
+	else fprintf(stderr, "can't load %s: no init function\n", fname);
+	return(sc->F);
+      }
+  }
+#endif
 
   fp = fopen(fname, "r");
 
