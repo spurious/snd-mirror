@@ -2192,7 +2192,7 @@
 		 (set! undefined-identifiers (remove (car arg) undefined-identifiers)))
 	     
 	     (if (and (not (cadr arg))
-		      (not (member (car arg) other-identifiers)))
+		      (not (hash-table-ref other-identifiers (car arg))))
 		 (if (caddr arg)
 		     (set! set (cons (car arg) set))
 		     (set! unused (cons (car arg) unused)))))
@@ -2926,11 +2926,10 @@
 			   ;;   can get confused, so other-identifiers is trying to track those.
 			   
 			   (if (and (symbol? head)
-				    (not (member head other-identifiers))
-				    start-up-environment ; not s7?
+				    (not (hash-table-ref other-identifiers head))
 				    (not (defined? head start-up-environment)))
-			       (set! other-identifiers (cons head other-identifiers)))
-			   
+			       (hash-table-set! other-identifiers head #t))
+
 			   (let ((vars env))
 			     (for-each
 			      (lambda (f)
@@ -2961,8 +2960,8 @@
 	(set! *current-file* file)
 	(set! undefined-identifiers '())
 	(set! globals (make-hash-table))
+	(set! other-identifiers (make-hash-table))
 	(set! loaded-files '())
-	(set! other-identifiers '())
 	
 	(if *load-file-first* ; this can improve the error checks
 	    (load file))

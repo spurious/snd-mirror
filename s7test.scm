@@ -8478,6 +8478,15 @@ zzy" (lambda (p) (eval (read p))))) 32)
       #t)
 
 
+(test (let ((hi 3))
+	(let ((e (current-environment)))
+	  (set! hi (current-environment)) 
+	  (object->string e)))
+      "#1=#<environment
+  #<slot: hi #<environment
+  #<slot: e #1#>>>>")
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -25836,11 +25845,25 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (let ((a 1) (b 2) (c 3)) (map (lambda (a b) (+ a (cdr b))) (list 1 2 3) (current-environment))) '(2 4 6))
 
 (test (let () (format #f "~A" (current-environment))) "#<environment>") 
-(test (let ((a 32) (b '(1 2 3))) (format #f "~A" (current-environment))) "#<environment>")
-(test (let ((a 1)) (object->string (current-environment))) "#<environment>")
-(test (let ((a 1)) (object->string (global-environment))) "#<environment>")
-(test (format #f "~A" (global-environment)) "#<environment>")
+;(test (let ((a 32) (b '(1 2 3))) (format #f "~A" (current-environment))) "#<environment>")
+;(test (let ((a 1)) (object->string (current-environment))) "#<environment>")
+(test (let ((a 1)) (object->string (global-environment))) "#<global-environment>")
+(test (format #f "~A" (global-environment)) "#<global-environment>")
 (test (let ((a 32) (b #(1 2 3))) (format #f "~{~A~^ ~}" (current-environment))) "(a . 32) (b . #(1 2 3))")
+
+(test (object->string (global-environment)) "#<global-environment>")
+(test (let () (object->string (current-environment))) "#<environment>")
+(test (let ((a 3)) (object->string (current-environment))) "#<environment
+  #<slot: a 3>>")
+(test (let ((a 3) (b "hi")) (object->string (current-environment))) "#<environment
+  #<slot: b \"hi\">
+  #<slot: a 3>>")
+(test (let ()
+	(define (hi a b) (current-environment))
+	(object->string (hi 3 4))) "#<environment
+  #<slot: b 4>
+  #<slot: a 3>>")
+
 
 (test (let () (augment-environment! (initial-environment) (cons 'a 32)) (symbol->value 'a (initial-environment))) #<undefined>)
 (test (let ((caar 123)) (+ caar (with-environment (initial-environment) (caar '((2) 3))))) 125)
@@ -26222,6 +26245,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
   (let ((a 1)) (set! e2 (current-environment))) 
   (test (equal? e1 e2) #f))
 
+(test (let ((a #(1 2 3))) ((current-environment) 'a 1)) 2)
+(test (let ((a #(1 2 3))) (let ((e (current-environment))) ((current-environment) 'e 'a 1))) 2)
+
 
 ;;; make-type
 (let ()
@@ -26377,7 +26403,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (test (equal? hi ho) #f))
     (test (equal? (copy hi) hi) #t)
     (test (fill! hi 1) 'error)
-    (test (object->string hi) "#<environment>")
+    ;(test (object->string hi) "#<environment>")
     (test (length hi) 2)
     (test (reverse hi) 'error)
     (test (for-each abs hi) 'error)

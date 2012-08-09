@@ -193,7 +193,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Emacs Lisp, javascript,
-Fortran, and postscript (altogether about 740,000 lines).
+Fortran, and postscript (altogether about 700k lines).
 
 
 ----------------------------------------------------------------
@@ -220,78 +220,9 @@ that's all I need to fix the bug immediately.  If Snd
 appears to be hung, you can 
 
 gdb snd
-break exit
 run
 <now get it to hang, then type control-C to exit>
 where
-
-
-
-----------------------------------------------------------------
-
-URLS
-
-CCRMA:
-  http://ccrma.stanford.edu/
-  http://ccrma.stanford.edu/~jos/
-  http://ccrma.stanford.edu/planetccrma/software/
-  http://ccrma.stanford.edu/planetccrma/software/soundapps.html#snd
-  http://ccrma-mail.stanford.edu/pipermail/cmdist/
-  http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma
-
-Snd:
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-12.tar.gz
-  http://ccrma.stanford.edu/software/snd/
-  http://sourceforge.net/projects/snd/
-  http://www.notam02.no/arkiv/doc/snd-rt/
-  http://linux.oreillynet.com/pub/a/linux/2001/10/05/snd_partone.html
-  http://linux.oreillynet.com/pub/a/linux/2001/10/18/snd_parttwo.html
-  http://www.saunalahti.fi/~mjkoskin/
-  http://www.notam02.no/9
-  http://www.linuxjournal.com/article.php?sid=7274
-  http://www.blastwave.org/packages/snd (Solaris package)
-  http://www.notam02.no/arkiv/src/snd/ (snd-ls)
-  http://www.notam02.no/~kjetism/sandysth/
-
-Scheme:
-  http://www.cs.utexas.edu/~novak/schemevscl.html
-  http://www.cs.indiana.edu/scheme-repository
-  http://www.schemers.org/
-  http://www.ccs.neu.edu/home/dorai/t-y-scheme/t-y-scheme.html
-  http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
-  http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
-  http://mitpress.mit.edu/sicp/full-text/book/book.html
-
-Forth:
-  http://sourceforge.net/projects/fth
-
-Motif:
-  http://www.motifzone.net
-
-Gtk+:
-  http://www.gtk.org
-
-OpenGL:
-  http://www.mesa3d.org/
-  http://mesa3d.sourceforge.net/
-  http://www.geuz.org/gl2ps/
-
-GSL:
-  ftp://ftp.gnu.org/gnu/gsl
-
-Ruby:
-  comp.lang.ruby
-  http://www.ruby-lang.org
-
-fftw:  
-  http://www.fftw.org
-
-
-On LADSPA, Dave Phillips adds: "I have used the LADSPA plugins as standalone 
-effects processing modules. The Help texts for the LADSPA effects are courtesy 
-Steve Harris, with edits and emendations from yours truly. You will need the 
-latest plugin sets from www.ladspa.org and plugin.org.uk to make full use of 
-the LADSPA effects in Snd."
 
 
 
@@ -635,3 +566,11 @@ After running configure, add
 
 and also change HAVE_VSNPRINTF to 0 -- Ruby's version of vsnprintf segfaults
 when passed %lld and 64-bit ints.
+
+
+
+On LADSPA, Dave Phillips adds: "I have used the LADSPA plugins as standalone 
+effects processing modules. The Help texts for the LADSPA effects are courtesy 
+Steve Harris, with edits and emendations from yours truly. You will need the 
+latest plugin sets from www.ladspa.org and plugin.org.uk to make full use of 
+the LADSPA effects in Snd."

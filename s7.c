@@ -1305,6 +1305,8 @@ static void init_types(void)
   t_structure_p[T_PAIR] = true;
   t_structure_p[T_VECTOR] = true;
   t_structure_p[T_HASH_TABLE] = true;
+  t_structure_p[T_SLOT] = true;
+  t_structure_p[T_ENVIRONMENT] = true;
 
   t_simple_p[T_NIL] = true;
   t_simple_p[T_UNIQUE] = true;
@@ -20251,6 +20253,22 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
 }
 
 
+static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top);
+
+static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
+{
+  int i, plen;
+
+  plen = s7_vector_print_length(sc); /* all stringification follows the print length */
+  if (plen > vector_length(top))
+    plen = vector_length(top);
+  
+  for (i = 0; i < plen; i++)
+    if (has_structure(vector_element(top, i)))
+      collect_shared_info(sc, ci, vector_element(top, i));
+}
+
+
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 {
   /* this only pertains to printing */
@@ -20291,17 +20309,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	  break;
 	  
 	case T_VECTOR:
-	  {
-	    int i, plen;
-
-	    plen = s7_vector_print_length(sc); /* all stringification follows the print length */
-	    if (plen > vector_length(top))
-	      plen = vector_length(top);
-
-	    for (i = 0; i < plen; i++)
-	      if (has_structure(vector_element(top, i)))
-		collect_shared_info(sc, ci, vector_element(top, i));
-	  }
+	  collect_vector_info(sc, ci, top);
 	  break;
 	  
 	case T_HASH_TABLE:
@@ -20323,7 +20331,24 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	    s7_gc_unprotect_at(sc, gc_iter);
 	  }
 	  break;
-	}
+
+	case T_SLOT:
+	  if (has_structure(slot_value(top)))
+	    collect_shared_info(sc, ci, slot_value(top));
+	  break;
+
+	case T_ENVIRONMENT:
+	  if (top == sc->global_env)
+	    collect_vector_info(sc, ci, top);
+	  else
+	    {
+	      s7_pointer p;
+	      for (p = environment_slots(top); is_slot(p); p = next_slot(p))
+		if (has_structure(slot_value(p)))
+		  collect_shared_info(sc, ci, slot_value(p));
+	    }
+	  break;
+	}	  
     }
   return(ci);
 }
@@ -20772,26 +20797,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       port_write_string(port)(sc, buf, nlen, port);
       break;
 
-    case T_SLOT:
-      port_write_string(port)(sc, "#<slot: ", 8, port);
-      /* TODO: this can get caught in a loop -- need to add current slot/value to ci I think */
-      port_write_string(port)(sc, symbol_name(slot_symbol(obj)), symbol_name_length(slot_symbol(obj)), port);
-      port_write_character(port)(sc, ' ', port);
-      if (has_structure(obj))
-	{
-	  if (s7_is_vector(obj))
-	    port_write_string(port)(sc, "#<vector>", 9, port);
-	  else
-	    {
-	      if (is_pair(obj))
-		port_write_string(port)(sc, "#<pair>", 7, port);
-	      else port_write_string(port)(sc, "#<hash-table>", 13, port);
-	    }
-	}
-      else object_to_port(sc, slot_value(obj), port, use_write, to_file, ci);
-      port_write_character(port)(sc, '>', port);
-      break;
-
     case T_INTEGER:
       nlen = 0;
       if ((is_small_int(obj)) &&
@@ -20951,38 +20956,15 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       free(str);
       break;
 
+    case T_SLOT:
+      port_write_string(port)(sc, "#<slot: ", 8, port);
+      port_write_string(port)(sc, symbol_name(slot_symbol(obj)), symbol_name_length(slot_symbol(obj)), port);
+      port_write_character(port)(sc, ' ', port);
+      object_to_port_with_circle_check(sc, slot_value(obj), port, use_write, to_file, ci);
+      port_write_character(port)(sc, '>', port);
+      break;
+
     case T_ENVIRONMENT:
-      /* it might be nice to print environments here as slots, but circle checks become a nightmare:
-       *   (let ((lst (list 1 2 3))) (list-set! lst 1 (current-environment)) lst) 
-       *   if we add T_ENVIRONMENT to has_structure, we need to extend all the circle check code.
-       */
-#if 0 
-      /* this can get caught in a loop (s7test) */
-      {
-	int i, spaces = 0;
-	if (obj != sc->global_env)
-	  {
-	    s7_pointer p, x;
-	    port_write_string(port)(sc, "\n", 1, port);
-	    for (p = obj; is_environment(p); spaces++, p = next_environment(p))
-	      {
-		for (x = environment_slots(p); is_slot(x); x = next_slot(x))
-		  {
-		    s7_pointer sym, val;
-		    sym = slot_symbol(x);
-		    val = slot_value(x);
-		    for (i = 0; i <= spaces; i++) port_write_string(port)(sc, "    ", 4, port);
-		    port_write_string(port)(sc, symbol_name(sym), symbol_name_length(sym), port);
-		    port_write_string(port)(sc, ": ", 2, port);
-		    if (is_environment(val))
-		      port_write_string(port)(sc, "#<environment>", 14, port);
-		    else object_to_port(sc, val, port, use_write, to_file, ci);
-		    port_write_string(port)(sc, "\n", 1, port);
-		  }
-	      }
-	  }
-      }
-#endif
       if (has_methods(obj))
 	{
 	  s7_pointer print_func;
@@ -20995,7 +20977,19 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	      break;
 	    }
 	}
-      port_write_string(port)(sc, "#<environment>", 14, port);
+      if (obj == sc->global_env)
+	port_write_string(port)(sc, "#<global-environment>", 21, port);
+      else
+	{
+	  s7_pointer x;
+	  port_write_string(port)(sc, "#<environment", 13, port);
+	  for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
+	    {
+	      port_write_string(port)(sc, "\n  ", 3, port);
+	      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+	    }
+	  port_write_character(port)(sc, '>', port);
+	}
       break;
 
     default:
@@ -40615,24 +40609,27 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 		      list_3(sc, sc->TOO_MANY_ARGUMENTS, obj, indices)));
       
     case T_PAIR:                         /* (#((1 2) (3 4)) 1 0) -> 3, (#((1 (2 3))) 0 1 0) -> 2 */
-      if (is_null(cdr(indices)))
-	return(list_ref_1(sc, obj, car(indices)));
-      car(sc->temp_cell_4) = obj;
-      cdr(sc->temp_cell_4) = indices;
-      return(g_list_ref(sc, sc->temp_cell_4));
-      
+      obj = list_ref_1(sc, obj, car(indices));
+      if (is_pair(cdr(indices)))
+	return(implicit_index(sc, obj, cdr(indices)));
+      return(obj);
+
     case T_HASH_TABLE:                   /* ((vector (hash-table '(a . 1) '(b . 2))) 0 'a) -> 1 */
-      car(sc->temp_cell_4) = obj;
-      cdr(sc->temp_cell_4) = indices;
-      return(g_hash_table_ref(sc, sc->temp_cell_4));
-      
+      obj = s7_hash_table_ref(sc, obj, car(indices));
+      if (is_pair(cdr(indices)))
+	return(implicit_index(sc, obj, cdr(indices)));
+      return(obj);
+
     case T_C_OBJECT:                     /* ((vector (vct 1 2 3)) 0 2) -> 3.0 */
       return((*(c_object_ref(obj)))(sc, obj, indices));
 
     case T_ENVIRONMENT:
       if (is_symbol(car(indices)))
-	return(s7_environment_ref(sc, obj, car(indices)));
-      return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
+	obj = s7_environment_ref(sc, obj, car(indices));
+      else return(s7_wrong_type_arg_error(sc, "environment application", 1, car(indices), "a symbol"));
+      if (is_pair(cdr(indices)))
+	return(implicit_index(sc, obj, cdr(indices)));
+      return(obj);
 
     default:                             /* (#(a b c) 0 1) -> error, but ((list (lambda (x) x)) 0 "hi") -> "hi" */
       return(g_apply(sc, list_2(sc, obj, indices)));
@@ -47876,7 +47873,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of indices 
 	   */
-	  if ((is_null(cdr(sc->args))) &&       /* cdr(nil) -> #<unspecified> internally */
+	  if (is_null(sc->args))                            /* (#2d((1 2) (3 4))) */
+	    return(s7_wrong_number_of_args_error(sc, "not enough args for vector-ref: ~A", sc->args));
+
+	  if ((is_null(cdr(sc->args))) &&       
 	      (s7_is_integer(car(sc->args))) &&
 	      (!vector_is_multidimensional(sc->code)))
 	    {
@@ -47890,10 +47890,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      else out_of_range(sc, sc->VECTOR_REF, small_int(2), car(sc->args), "should be between 0 and the vector length");
 	    }
-	  
-	  if (is_null(sc->args))                            /* (#2d((1 2) (3 4))) */
-	    return(s7_wrong_number_of_args_error(sc, "not enough args for vector-ref: ~A", sc->args));
-	  
 	  sc->value = vector_ref_1(sc, sc->code, sc->args);
 	  goto START;
 	  
@@ -47930,40 +47926,34 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->x = sc->NIL;
 	      goto APPLY;
 	    }
-	  if (is_null(cdr(sc->args)))
-	    sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
-	  else
-	    {
-	      if (is_null(sc->args))
-		return(s7_wrong_number_of_args_error(sc, "not enough args for list-ref (via list as applicable object): ~A", sc->args));
-	      sc->value = g_list_ref(sc, cons(sc, sc->code, sc->args)); /* (L 1 2) */
-	    }
+	  if (is_null(sc->args))
+	    return(s7_wrong_number_of_args_error(sc, "not enough args for list-ref (via list as applicable object): ~A", sc->args));
+	  sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
+	  if (!is_null(cdr(sc->args)))
+	    sc->value = implicit_index(sc, sc->value, cdr(sc->args));     /* (L 1 2) */
 	  goto START;
 	  
 	  
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
-	  if (is_null(cdr(sc->args)))
-	    sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
-	  else
-	    {
-	      if (is_null(sc->args))
-		return(s7_wrong_number_of_args_error(sc, "not enough args for hash-table-ref (via hash table as applicable object): ~A", sc->args));
-	      sc->value = g_hash_table_ref(sc, cons(sc, sc->code, sc->args));
-	    }
+	  if (is_null(sc->args))
+	    return(s7_wrong_number_of_args_error(sc, "not enough args for hash-table-ref (via hash table as applicable object): ~A", sc->args));
+	  sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
+	  if (!is_null(cdr(sc->args)))
+	    sc->value = implicit_index(sc, sc->value, cdr(sc->args));
 	  goto START;
 	  
 	  
 	case T_ENVIRONMENT:                       /* -------- environment as applicable object -------- */
-	  if (is_null(cdr(sc->args)))
-	    {
-	      if (is_symbol(car(sc->args)))
-		sc->value = s7_environment_ref(sc, sc->code, car(sc->args));
-	      else return(s7_wrong_type_arg_error(sc, "environment application", 1, car(sc->args), "a symbol"));
-	    }
-	  else return(s7_wrong_number_of_args_error(sc, "environment as applicable object takes one argument: ~A", sc->args));
-	  /* PERHAPS: this error means (env a b) is an error not ((env a) b) which might be expected
-	   *  g_list_ref does this if extra index: return(implicit_index(sc, lst, inds));
-	   */
+	  if (is_null(sc->args))
+	    return(s7_wrong_number_of_args_error(sc, "environment as applicable object takes one argument: ~A", sc->args));
+	  if (is_symbol(car(sc->args)))
+	    sc->value = s7_environment_ref(sc, sc->code, car(sc->args));
+	  else return(s7_wrong_type_arg_error(sc, "environment application", 1, car(sc->args), "a symbol"));
+	  if (is_pair(cdr(sc->args)))
+	    sc->value = implicit_index(sc, sc->value, cdr(sc->args));
+	  /*    (let ((v #(1 2 3))) (let ((e (current-environment))) ((e 'v) 1))) -> 2
+	   * so (let ((v #(1 2 3))) (let ((e (current-environment))) (e 'v 1))) -> 2
+	   */ 
 	  goto START;
 	  
 	  
@@ -58432,6 +58422,7 @@ s7_scheme *s7_init(void)
 
 /* PERHAPS: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
  * SOMEDAY: fix do envs (unopt case -- saved-args)
+ *            would it work to simply replace the old slot (not remake the entire env)?
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
  *
  * we need integer_length everywhere!  Can this number be included with any integer/ratio?
@@ -58444,11 +58435,11 @@ s7_scheme *s7_init(void)
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
- * TODO: error in s7_call should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
+ * TODO: error in s7_call (and everywhere) should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
  *
  * bench    42736                                    8752
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1254 
- *                                                        9786
+ * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1244
+ *                                              9711 8745
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3291
  * s7test            1721             1456 1430 1375 1358
  * t455                           265  256  218   86   89

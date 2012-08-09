@@ -2736,7 +2736,7 @@ v1
        (cons 'add (lambda (obj) 
                     (with-environment obj
                       (+ 1 a (* 2 b))))))
-#&lt;environment&gt;
+#&lt;class-1: (a 1) (b 2) (add #&lt;closure&gt;)&gt;
 &gt; (add v1)
 6
 &gt; (add v)                       ; other class-1 instances are not affected
@@ -5483,8 +5483,8 @@ the current environment, so defines happen in the enclosing environment.
 
   (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 
-  (define-macro (when test . forms) `(if ,test (begin ,@forms)))
-  (define-macro (unless test . forms) `(if (not ,test) (begin ,@forms)))
+  (define-macro (when test . forms) `(if ,test (begin ,@forms)))         ; or `(cond (,test ,@forms))) 
+  (define-macro (unless test . forms) `(if (not ,test) (begin ,@forms))) ;    `(or ,test (begin ,@forms))
 
   (define-macro (define-values vars . body)
     `(apply begin (map (lambda (var val) `(define ,var ,val)) ',vars (list (begin ,@body)))))
