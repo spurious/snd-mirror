@@ -1,21 +1,30 @@
 (provide 'cload.scm)
 
+;;; automatically link a C function into s7 (there are a bunch of examples below)
+;;;     (define-c-function 'double 'j0 '(double) "m" "math.h")
+;;; means link the name m:j0 to the math library function j0 passing a double arg and getting a double result (reals in s7)
+
+
 ;;; to place the new function in the caller's current environment, we need to pass it in explicitly:
 (define-macro (define-c-function . args) 
   `(define-c-function-1 (current-environment) ,@args))
 
 
-(define* (define-c-function-1 cur-env return-type name arg-types (prefix "g") (headers ()) cflags ldflags)
+(define* (define-c-function-1 cur-env return-type name arg-types (prefix "g") (headers ()) (cflags "") (ldflags ""))
   ;; write a C shared library module that links in "name" (or eventually a list thereof)
   ;; the new functions are placed in cur-env
-  ;;     (define-c-function 'double 'j0 '(double) "m" "math.h")
 
 
   (define handlers (list '(integer s7_is_integer s7_integer s7_make_integer s7_Int)
 			 '(boolean s7_is_boolean s7_boolean s7_make_boolean bool)
 			 '(real s7_is_real s7_real s7_make_real s7_Double)
+
+			 ;; '(complex s7_is_complex #f s7_make_complex s7_Complex)
+			 ;; the typedef is around line 6116 in s7.c, but we also need s7_complex in the gmp case, I think
+
 			 '(string s7_is_string s7_string s7_make_string char*)
 			 (list 'character 's7_is_character 's7_character 's7_make_character (symbol "unsigned char"))
+			 '(c_pointer s7_is_c_pointer s7_c_pointer s7_make_c_pointer void*)
 			 ))
 
   (define (find-handler handle choice)
@@ -43,17 +52,23 @@
 		    i
 		    (loop (+ i 1))))))))
 
-    (if (pair? type)                                ; '(gpointer c_pointer), (XtPointer|void* -> c_pointer) ?
+    (if (pair? type)
 	(symbol->string (cadr type))
 	(let ((type-name (symbol->string type)))
 	  (cond ((substring? "char*" type-name) 
 		 'string)
+
+		((substring? "*" type-name) ; any C pointer is uninterpreted
+		 'c_pointer)
 
 		((substring? "char" type-name)
 		 'character)
 
 		((substring? "bool" type-name) 
 		 'boolean)
+		
+;		((substring? "complex")
+;		 'complex)
 
 		((or (substring? "float" type-name) 
 		     (substring? "double" type-name)) 
@@ -62,8 +77,12 @@
 		((or (substring? "int" type-name) 
 		     (substring? "long" type-name) ; assuming not "long double" here so we need to look for it first (above)
 		     (substring? "short" type-name) 
+		     (substring? "size" type-name)
 		     (substring? "byte" type-name)) 
 		 'integer)
+
+		((substring? "pointer" type-name)
+		 'c_pointer)
 
 		(#t #t)))))
 
@@ -82,8 +101,8 @@
 
   (let* ((func-name (symbol->string name))
 	 (num-args (length arg-types))
-	 (base-name (string-append prefix "_" func-name))
-	 (scheme-name (string-append prefix ":" func-name))
+	 (base-name (string-append (if (> (length prefix) 0) prefix "g") "_" func-name))
+	 (scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") func-name))
 	 (c-name (string-append base-name ".c"))
 	 (o-name (string-append base-name ".o"))
 	 (so-name (string-append base-name ".so")))
@@ -133,21 +152,23 @@
 	
 	;; return C value to Scheme
 	(let ((return-translator (C->s7 return-type)))
+	  (format p "  ")
 	  (if (not (eq? return-translator #t))
-	      (format p "  return("))
+	      (format p "return("))
 	  (if (symbol? return-translator)
 	      (format p "~A(sc, (~A)" return-translator (C->s7-cast return-type)))
 	  (format p "~A(" func-name)
-	  (do ((i 0 (+ i 0)))
-	      ((= i (- num-args 1)))
+	  (do ((i 0 (+ i 1)))
+	      ((>= i (- num-args 1)))
 	    (format p "~A_~D, " base-name i))
 	  (if (positive? num-args)
-	      (format p "~A_~D)" base-name (- num-args 1)))
+	      (format p "~A_~D" base-name (- num-args 1)))
+	  (format p ")")
 	  (if (symbol? return-translator)
 	      (format p ")"))
 	  (if (not (eq? return-translator #t))
 	      (format p ");~%")
-	      (format p "return(s7_unspecified(sc));~%"))
+	      (format p ";~%  return(s7_unspecified(sc));~%"))
 	  (format p "}~%~%"))
 	
 	;; now the init function
@@ -170,23 +191,29 @@
 
     ;; now we have name.c -- make it into a shared object, load it, delete the temp files
 
-    ;; TODO: use cflags/ldflags
-    ;; TODO: check the system stuff below, maybe use better temp file names
+    ;; TODO: use better temp file names
     ;; TODO: expand the types so gtk/xm might be done this way (via autoload)
-    ;;    structs -> environments, double*->vectors? va-args? c-null? 
-    ;;    c-complex->complex 
+    ;;    structs -> environments, va-args? c-null=0?
+    ;;    c-complex->complex
+    ;;    can't we handle float* (etc) as c_pointer, then have a way to decode->vector?
+    ;;    (vct->vector (xen_make_vct_wrapper len c_ptr)) but why no vct_length?
     ;; TODO: add a way to collect many functions in one module, loading an entire library at once
     ;; (define-c-functions ...)
-    ;; TODO: add cload.scm to the Snd tarballs/doc/test
     ;; SOMEDAY: take a set of these functions (possibly in the current program via a C header like s7 and NULL as lib name)
-    ;;   and run the torture tester on the current program (going below the scheme level in a sense)
+    ;;   and run the tester on the current program (going below the scheme level in a sense)
     ;; PERHAPS: xgdata->a long (define-c-functions ...) call and see if xg.c can be dispensed with!
+    ;; if we reload (recall define-c-function) is there some way to warn if the load did not actually occur?
+    ;;   do we need a new file name?
+    ;; if some symbol actually can't be found, why no error? rtld_now?
 
     ;; we also need in general the header (math.h) and the library (-lm) --
     ;;   ideally perhaps from pkg-config?
 
-    (system (format #f "gcc -c -fPIC ~A" c-name))
-    (system (format #f "gcc ~A -shared -o ~A" o-name so-name))
+    ;; TODO: make an OSX case -- do we need a *feature* for the current OS?
+    ;;    there's OSTYPE="linux" or "darwin", HOST="fatty"
+
+    (system (format #f "gcc -c -fPIC ~A ~A" c-name cflags))
+    (system (format #f "gcc ~A -shared -o ~A ~A" o-name so-name ldflags))
     (let ((new-env (augment-environment
 		       cur-env
 		       (cons 'init_func (string->symbol (string-append "init_" base-name))))))
@@ -204,3 +231,38 @@
 
 
 
+;;;  (define-c-function 'double 'j0 '(double) "m" "math.h")
+;;; 
+;;;  (define-c-function 'char* 'getcwd '(char* size_t) "" "unistd.h")
+;;;    here we need to pass the char* by ref? how to get the actual result back?
+;;;    :(let ((str (make-string 32))) (getcwd str 32) str)
+;;;    "/home/bil/cl\x00                   "
+;;;    so it works in a sense -- there is a memory leak here
+;;; 
+;;; DIR *opendir (__const char *__name)
+;;; extern int closedir (DIR *__dirp)
+;;; struct dirent *readdir (DIR *__dirp) dirp->d_name is the filename if dirp not null -- we need NULL
+;;;
+;;; for localtime curtime we need to take an address, and maybe allocate some struct
+;;; 
+;;; (define-c-function 'char* 'getenv '(char*) "")
+;;; (define-c-function 'int 'setenv '(char* char* int) "")
+
+;;; (define get-environment-variable (let () (define-c-function 'char* 'getenv '(char*) "") getenv))
+;;; environ returns a char** of all env-vars 
+;;;
+;;; F_OK=0, R_OK=4, W_OK=2, X_OK=1 (/usr/include/unistd.h)
+;;; (define file-exists? (let ((F_OK 0)) (define-c-function 'int 'access '(char* int) "" "unistd.h") (lambda (arg) (= (access arg F_OK) 0))))
+;;;
+;;; (define delete-file (let () (define-c-function 'int 'unlink '(char*) "" "unistd.h") (lambda (file) (= (unlink file) 0)))) ; 0=success, -1=failure
+;;;
+;;; to allocate/free C memory, can we link in malloc and free? -- how to get sizeof? 
+;;;
+;;; this picks up a Snd function:
+;;; (define-c-function 'char* 'version_info () "" "snd.h" "-I.")
+;;; (define-c-function 'mus_float_t 'mus_degrees_to_radians '(mus_float_t) "" "snd.h" "-I.")
+;;;
+;;; (define-c-function 'snd_info* 'any_selected_sound () "" "snd.h" "-I.")
+;;; (define-c-function 'void 'select_channel '(snd_info* int) "" "snd.h" "-I.")
+;;;   -> (select_channel (any_selected_sound) 1)
+;;; if no sound: (any_selected_sound) -> #<c_pointer (nil)>!

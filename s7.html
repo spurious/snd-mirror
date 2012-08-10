@@ -5507,6 +5507,14 @@ the current environment, so defines happen in the enclosing environment.
 
   ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
   ;;   in any name should raise a red flag.
+  ;;   if cload.scm is loaded:
+  (define get-environment-variable (let () (define-c-function 'char* 'getenv '(char*) "") getenv))
+
+  ;; similarly:
+  (define file-exists? (let ((F_OK 0)) 
+                         (define-c-function 'int 'access '(char* int) "" "unistd.h") 
+                         (lambda (arg) 
+                           (= (access arg F_OK) 0))))
 
   ;; command-line is problematic: s7 has no access to the caller's "main" function, and
   ;;   outside Windows, there's no reasonable way to get these arguments.

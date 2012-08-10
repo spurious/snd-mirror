@@ -7013,7 +7013,7 @@ s7_Double s7_real(s7_pointer p)
 
 
 #if (!WITH_GMP)
-static s7_Complex s7_complex(s7_pointer p)
+s7_Complex s7_complex(s7_pointer p)
 {
   return(s7_real_part(p) + s7_imag_part(p) * _Complex_I);
 }
