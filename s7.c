@@ -5021,6 +5021,12 @@ s7_pointer s7_current_environment(s7_scheme *sc)
 }
 
 
+s7_pointer s7_outer_environment(s7_pointer e)
+{
+  return(next_environment(e));
+}
+
+
 static s7_pointer g_outer_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_outer_environment "(outer-environment env) returns the environment that contains env."

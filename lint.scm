@@ -1,4 +1,7 @@
 ;;; lint for s7 scheme
+;;;
+;;; (lint "file.scm") checks file.scm for infelicities
+;;; to control the kinds of checks, set the variables below.
 
 (provide 'lint.scm)
 
@@ -8,6 +11,7 @@
 (define *report-undefined-variables* #f)
 (define *report-shadowed-variables* #f)
 (define *report-minor-stuff* #t)          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
+
 
 (define *load-file-first* #f)
 (define start-up-environment (global-environment))

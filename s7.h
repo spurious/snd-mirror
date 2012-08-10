@@ -486,6 +486,7 @@ bool s7_slot_value_is_integer(s7_pointer slot);
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
+s7_pointer s7_outer_environment(s7_pointer e);                              /* (outer-environment e) */
 s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
 s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env);           /* (environment->list env) */
 bool s7_is_environment(s7_pointer e);
@@ -836,7 +837,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  *    hook inexact->exact infinite? initial-environment integer->char integer-decode-float 
  *    integer-length keyword->symbol lcm length list->string list->vector list-tail log logand 
  *    logior lognot logxor logbit? magnitude make-hash-table-iterator make-list make-polar
- *    make-rectangular map max memv min modulo nan? negative? not odd? outer-environment port-closed? 
+ *    make-rectangular map max memv min modulo nan? negative? not odd? port-closed? 
  *    port-line-number positive? provided? quotient read-byte read-line remainder round s7-version 
  *    sin sinh sort! sqrt string string->list string->number string-append string-ci<=? string-ci<? 
  *    string-ci=? string-ci>=? string-ci>? string-copy string-fill! string-ref 
@@ -855,6 +856,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 10-Aug:    exported s7_outer_environment.
  * 6-Aug:     removed WITH_OPTIMIZATION.
  * 25-July:   environment (in scheme). s7_vector_ref_n and s7_vector_set_n. s7_copy.
  *              added s7_scheme arg to s7_number_to_real|integer.
