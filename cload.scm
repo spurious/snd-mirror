@@ -1,18 +1,20 @@
 (provide 'cload.scm)
 
 ;;; automatically link a C function into s7 (there are a bunch of examples below)
-;;;     (define-c-function 'double 'j0 '(double) "m" "math.h")
+;;;     (define-c-function '(double j0 (double)) "m" "math.h")
 ;;; means link the name m:j0 to the math library function j0 passing a double arg and getting a double result (reals in s7)
 
+(define define-c-function-output-file-counter 0)
 
-;;; to place the new function in the caller's current environment, we need to pass it in explicitly:
+;;; to place the new function(s) in the caller's current environment, we need to pass it in explicitly:
 (define-macro (define-c-function . args) 
   `(define-c-function-1 (current-environment) ,@args))
 
 
-(define* (define-c-function-1 cur-env return-type name arg-types (prefix "g") (headers ()) (cflags "") (ldflags ""))
-  ;; write a C shared library module that links in "name" (or eventually a list thereof)
-  ;; the new functions are placed in cur-env
+(define* (define-c-function-1 cur-env function-info (prefix "g") (headers ()) (cflags "") (ldflags ""))
+  ;; write a C shared library module that links in the functions in function-info
+  ;;    function info is either a list: (return-type c-name arg-type) or a list thereof
+  ;;    the new functions are placed in cur-env
 
 
   (define handlers (list '(integer s7_is_integer s7_integer s7_make_integer s7_Int)
@@ -55,10 +57,13 @@
     (if (pair? type)
 	(symbol->string (cadr type))
 	(let ((type-name (symbol->string type)))
-	  (cond ((substring? "char*" type-name) 
+	  (cond ((substring? "**" type-name)     ; any C pointer is uninterpreted
+		 'c_pointer)
+		
+		((substring? "char*" type-name)  ; but not char** (caught above)
 		 'string)
 
-		((substring? "*" type-name) ; any C pointer is uninterpreted
+		((substring? "*" type-name)      ; float* etc
 		 'c_pointer)
 
 		((substring? "char" type-name)
@@ -98,30 +103,35 @@
   (define (checker type)
     (find-handler (C-type->s7-type type) cadr))
 
+  (set! define-c-function-output-file-counter (+ define-c-function-output-file-counter 1))
 
-  (let* ((func-name (symbol->string name))
-	 (num-args (length arg-types))
-	 (base-name (string-append (if (> (length prefix) 0) prefix "g") "_" func-name))
-	 (scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") func-name))
-	 (c-name (string-append base-name ".c"))
-	 (o-name (string-append base-name ".o"))
-	 (so-name (string-append base-name ".so")))
-    (call-with-output-file
-	c-name
-      (lambda (p)
+  (let* ((file-name (format "temp-s7-output-~D" define-c-function-output-file-counter))
+	 (c-file-name (string-append file-name ".c"))
+	 (scheme-data ())
+	 (p #f))
 
-	;; C header stuff
-	(format p "#include <stdlib.h>~%")
-	(format p "#include <stdio.h>~%")
-	(format p "#include <string.h>~%")
-	(if (string? headers)
-	    (format p "#include <~A>~%" headers)
-	    (for-each
-	     (lambda (header)
-	       (format p "#include <~A>~%" header))
-	     headers))
-	(format p "#include \"s7.h\"~%~%")
+    (define (initialize-c-file)
+      ;; C header stuff
+      (set! p (open-output-file c-file-name))
+      (format p "#include <stdlib.h>~%")
+      (format p "#include <stdio.h>~%")
+      (format p "#include <string.h>~%")
+      (if (string? headers)
+	  (format p "#include <~A>~%" headers)
+	  (for-each
+	   (lambda (header)
+	     (format p "#include <~A>~%" header))
+	   headers))
+      (format p "#include \"s7.h\"~%~%"))
+  
 
+    (define (add-one-function return-type name arg-types)
+      ;; (format *stderr* "add ~A ~A ~A~%" return-type name arg-types)
+      (let* ((func-name (symbol->string name))
+	     (num-args (length arg-types))
+	     (base-name (string-append (if (> (length prefix) 0) prefix "g") "_" func-name))
+	     (scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") func-name)))
+	
 	;; our C->scheme function
 	(format p "static s7_pointer ~A(s7_scheme *sc, s7_pointer args)~%" base-name)
 	(format p "{~%")
@@ -170,70 +180,93 @@
 	      (format p ");~%")
 	      (format p ";~%  return(s7_unspecified(sc));~%"))
 	  (format p "}~%~%"))
-	
+	(set! scheme-data (cons (list scheme-name base-name func-name num-args) scheme-data))))
+
+  
+    (define (end-functions)
+      (let ((o-file-name (string-append file-name ".o"))
+	    (so-file-name (string-append file-name ".so"))
+	    (base-name (string-append "_" (number->string define-c-function-output-file-counter) "_init")))
+
 	;; now the init function
 	;;   the new function is placed in the current (not necessarily global) environment
-
+	
 	(format p "void init_~A(s7_scheme *sc);~%" base-name)
 	(format p "void init_~A(s7_scheme *sc)~%" base-name)
 	(format p "{~%")
 	(format p "  s7_pointer cur_env;~%")
 	(format p "  cur_env = s7_outer_environment(s7_current_environment(sc));~%") ; this must exist because we pass load the env ourselves
-	(format p "  s7_define(sc, cur_env,~%")
-	(format p "            s7_make_symbol(sc, ~S),~%" scheme-name)
-	(format p "            s7_make_function(sc, ~S, ~A, ~D, 0, false, \"lib~A ~A\"));~%"
-		scheme-name
-		base-name
-		num-args
-		prefix
-		func-name)
-	(format p "}~%")))
+	(for-each
+	 (lambda (sfunc)
+	   (let ((scheme-name (sfunc 0))
+		 (base-name   (sfunc 1))
+		 (func-name   (sfunc 2))
+		 (num-args    (sfunc 3)))
+	     (format p "~%  s7_define(sc, cur_env,~%")
+	     (format p "            s7_make_symbol(sc, ~S),~%" scheme-name)
+	     (format p "            s7_make_function(sc, ~S, ~A, ~D, 0, false, \"lib~A ~A\"));~%"
+		     scheme-name
+		     base-name
+		     num-args
+		     prefix
+		     func-name)))
+	 scheme-data)
+	(format p "}~%")
+	(close-output-port p)
+  
+	;; now we have name.c -- make it into a shared object, load it, delete the temp files
+	
+	;; TODO: expand the types so gtk/xm might be done this way (via autoload)
+	;;    structs -> environments, va-args? c-null=0?
+	;;    c-complex->complex
+	;;    can't we handle float* (etc) as c_pointer, then have a way to decode->vector?
+	;;    (vct->vector (xen_make_vct_wrapper len c_ptr)) but why no vct_length?
+	;; SOMEDAY: take a set of these functions (possibly in the current program via a C header like s7 and NULL as lib name)
+	;;   and run the tester on the current program (going below the scheme level in a sense)
+	;; PERHAPS: xgdata->a long (define-c-functions ...) call and see if xg.c can be dispensed with!
+	
+	;; we also need in general the header (math.h) and the library (-lm) --
+	;;   ideally perhaps from pkg-config?
+	
+	;; TODO: make an OSX case -- do we need a *feature* for the current OS?
+	;;    there's OSTYPE="linux" or "darwin", HOST="fatty"
+	
+	(system (format #f "gcc -c -fPIC ~A ~A" c-file-name cflags))
+	(system (format #f "gcc ~A -shared -o ~A ~A" o-file-name so-file-name ldflags))
 
-    ;; now we have name.c -- make it into a shared object, load it, delete the temp files
+	(let ((new-env (augment-environment
+			   cur-env
+			 (cons 'init_func (string->symbol (string-append "init_" base-name))))))
+	  (load so-file-name new-env))
 
-    ;; TODO: use better temp file names
-    ;; TODO: expand the types so gtk/xm might be done this way (via autoload)
-    ;;    structs -> environments, va-args? c-null=0?
-    ;;    c-complex->complex
-    ;;    can't we handle float* (etc) as c_pointer, then have a way to decode->vector?
-    ;;    (vct->vector (xen_make_vct_wrapper len c_ptr)) but why no vct_length?
-    ;; TODO: add a way to collect many functions in one module, loading an entire library at once
-    ;; (define-c-functions ...)
-    ;; SOMEDAY: take a set of these functions (possibly in the current program via a C header like s7 and NULL as lib name)
-    ;;   and run the tester on the current program (going below the scheme level in a sense)
-    ;; PERHAPS: xgdata->a long (define-c-functions ...) call and see if xg.c can be dispensed with!
-    ;; if we reload (recall define-c-function) is there some way to warn if the load did not actually occur?
-    ;;   do we need a new file name?
-    ;; if some symbol actually can't be found, why no error? rtld_now?
+	;;(delete-file c-file-name)
+	(delete-file o-file-name)
+	(= (delete-file so-file-name) 0)
+	))
 
-    ;; we also need in general the header (math.h) and the library (-lm) --
-    ;;   ideally perhaps from pkg-config?
 
-    ;; TODO: make an OSX case -- do we need a *feature* for the current OS?
-    ;;    there's OSTYPE="linux" or "darwin", HOST="fatty"
+    (initialize-c-file)
 
-    (system (format #f "gcc -c -fPIC ~A ~A" c-name cflags))
-    (system (format #f "gcc ~A -shared -o ~A ~A" o-name so-name ldflags))
-    (let ((new-env (augment-environment
-		       cur-env
-		       (cons 'init_func (string->symbol (string-append "init_" base-name))))))
-      (load so-name new-env))
+    (if (and (list? (car function-info))
+	     (= (length (car function-info)) 3))
+	(for-each
+	 (lambda (func)
+	   (apply add-one-function func))
+	 function-info)
+	(apply add-one-function function-info))
 
-    ;;(delete-file c-name)
-    (delete-file o-name)
-    (delete-file so-name)
+    (end-functions)))
 
-    name
-    ))
+
+
+
 
 	    
 	
-
-
-
-;;;  (define-c-function 'double 'j0 '(double) "m" "math.h")
+;;;  (define-c-function '(double j0 (double)) "m" "math.h")
+;;;  (define-c-function '((double j0 (double)) (double j1 (double)) (double erf (double)) (double erfc (double)) (double lgamma (double))) "m" "math.h")
 ;;; 
-;;;  (define-c-function 'char* 'getcwd '(char* size_t) "" "unistd.h")
+;;;  (define-c-function '(char* getcwd (char* size_t)) "" "unistd.h")
 ;;;    here we need to pass the char* by ref? how to get the actual result back?
 ;;;    :(let ((str (make-string 32))) (getcwd str 32) str)
 ;;;    "/home/bil/cl\x00                   "
@@ -245,24 +278,24 @@
 ;;;
 ;;; for localtime curtime we need to take an address, and maybe allocate some struct
 ;;; 
-;;; (define-c-function 'char* 'getenv '(char*) "")
-;;; (define-c-function 'int 'setenv '(char* char* int) "")
+;;; (define-c-function '(char* getenv (char*)) "")
+;;; (define-c-function '(int setenv (char* char* int)) "")
 
-;;; (define get-environment-variable (let () (define-c-function 'char* 'getenv '(char*) "") getenv))
+;;; (define get-environment-variable (let () (define-c-function '(char* getenv (char*)) "") getenv))
 ;;; environ returns a char** of all env-vars 
 ;;;
 ;;; F_OK=0, R_OK=4, W_OK=2, X_OK=1 (/usr/include/unistd.h)
-;;; (define file-exists? (let ((F_OK 0)) (define-c-function 'int 'access '(char* int) "" "unistd.h") (lambda (arg) (= (access arg F_OK) 0))))
+;;; (define file-exists? (let ((F_OK 0)) (define-c-function '(int access (char* int)) "" "unistd.h") (lambda (arg) (= (access arg F_OK) 0))))
 ;;;
-;;; (define delete-file (let () (define-c-function 'int 'unlink '(char*) "" "unistd.h") (lambda (file) (= (unlink file) 0)))) ; 0=success, -1=failure
+;;; (define delete-file (let () (define-c-function '(int unlink (char*)) "" "unistd.h") (lambda (file) (= (unlink file) 0)))) ; 0=success, -1=failure
 ;;;
 ;;; to allocate/free C memory, can we link in malloc and free? -- how to get sizeof? 
 ;;;
 ;;; this picks up a Snd function:
-;;; (define-c-function 'char* 'version_info () "" "snd.h" "-I.")
-;;; (define-c-function 'mus_float_t 'mus_degrees_to_radians '(mus_float_t) "" "snd.h" "-I.")
+;;; (define-c-function '(char* version_info ()) "" "snd.h" "-I.")
+;;; (define-c-function '(mus_float_t mus_degrees_to_radians (mus_float_t)) "" "snd.h" "-I.")
 ;;;
-;;; (define-c-function 'snd_info* 'any_selected_sound () "" "snd.h" "-I.")
-;;; (define-c-function 'void 'select_channel '(snd_info* int) "" "snd.h" "-I.")
+;;; (define-c-function '(snd_info* any_selected_sound ()) "" "snd.h" "-I.")
+;;; (define-c-function '(void select_channel (snd_info* int)) "" "snd.h" "-I.")
 ;;;   -> (select_channel (any_selected_sound) 1)
 ;;; if no sound: (any_selected_sound) -> #<c_pointer (nil)>!

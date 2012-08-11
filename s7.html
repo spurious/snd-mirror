@@ -5508,11 +5508,11 @@ the current environment, so defines happen in the enclosing environment.
   ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
   ;;   in any name should raise a red flag.
   ;;   if cload.scm is loaded:
-  (define get-environment-variable (let () (define-c-function 'char* 'getenv '(char*) "") getenv))
+  (define get-environment-variable (let () (define-c-function '(char* getenv (char*)) "") getenv))
 
   ;; similarly:
   (define file-exists? (let ((F_OK 0)) 
-                         (define-c-function 'int 'access '(char* int) "" "unistd.h") 
+                         (define-c-function '(int access (char* int)) "" "unistd.h") 
                          (lambda (arg) 
                            (= (access arg F_OK) 0))))
 
@@ -7239,7 +7239,7 @@ called:
 </p>
 
 <pre class="indented">
-(define-c-function 'double 'j0 '(double) "m" "math.h")
+(define-c-function '(double j0 (double)) "m" "math.h")
 </pre>
 
 <p>This links the s7 function m:j0 to the math library

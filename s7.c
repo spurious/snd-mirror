@@ -7013,7 +7013,7 @@ s7_Double s7_real(s7_pointer p)
 
 
 #if (!WITH_GMP)
-s7_Complex s7_complex(s7_pointer p)
+static s7_Complex s7_complex(s7_pointer p)
 {
   return(s7_real_part(p) + s7_imag_part(p) * _Complex_I);
 }
@@ -19768,7 +19768,7 @@ defaults to the global environment.  To load into the current environment instea
 	if (is_symbol(init))
 	  {
 	    init_name = symbol_name(init);
-	    library = dlopen(fname, RTLD_LAZY);
+	    library = dlopen(fname, RTLD_NOW);
 	    if (library)
 	      {
 		void *init_func;
