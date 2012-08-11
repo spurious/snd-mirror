@@ -2309,6 +2309,13 @@ It is very close to let: <code>(let env . body)</code>, but named let usurps tha
 and eval: <code>(eval form env)</code>.
 defined? returns #t if the symbol is defined in the environment, and
 symbol-&gt;value returns the value associated with it.
+</p>
+
+<pre class="indented">
+(define-macro (defvar name value) `(if (not (defined? ',name)) (define ,name ,value)))
+</pre>
+
+<p>
 To add or change a symbol's value, use augment-environment:
 </p>
 
@@ -5511,8 +5518,8 @@ the current environment, so defines happen in the enclosing environment.
   (define get-environment-variable (let () (define-c-function '(char* getenv (char*)) "") getenv))
 
   ;; similarly:
-  (define file-exists? (let ((F_OK 0)) 
-                         (define-c-function '(int access (char* int)) "" "unistd.h") 
+  (define file-exists? (let ()
+                         (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
                          (lambda (arg) 
                            (= (access arg F_OK) 0))))
 
