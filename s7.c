@@ -19709,7 +19709,28 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 
 #if WITH_C_LOADER
 #include <dlfcn.h>
+
+/* besides the dynamix loader, we also need to fully specify the shared object file name.
+ */
+
+static char *full_filename(const char *filename)
+{
+  int len;
+  char *pwd, *rtn;
+  pwd = getcwd(NULL, 0); /* docs say this means it will return a new string of the right size */
+  len = safe_strlen(pwd) + safe_strlen(filename) + 8;
+  rtn = (char *)calloc(len, sizeof(char));
+  if (pwd)
+    {
+      strcpy(rtn, pwd);
+      free(pwd);
+      strcat(rtn, "/");
+    }
+  strcat(rtn, filename);
+  return(rtn);
+}
 #endif
+
 
 static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
@@ -19767,8 +19788,10 @@ defaults to the global environment.  To load into the current environment instea
 	init = s7_environment_ref(sc, sc->envir, s7_make_symbol(sc, "init_func"));
 	if (is_symbol(init))
 	  {
+	    char *pwd_name;
+	    pwd_name = full_filename(fname);
 	    init_name = symbol_name(init);
-	    library = dlopen(fname, RTLD_NOW);
+	    library = dlopen(pwd_name, RTLD_NOW);
 	    if (library)
 	      {
 		void *init_func;
@@ -19781,11 +19804,12 @@ defaults to the global environment.  To load into the current environment instea
 		  }
 		else 
 		  {
-		    fprintf(stderr, "loaded %s, but can't find %s (%s)?\n", fname, init_name, dlerror());
+		    fprintf(stderr, "loaded %s, but can't find %s (%s)?\n", pwd_name, init_name, dlerror());
 		    dlclose(library);
 		  }
 	      }
-	    else fprintf(stderr, "load %s failed: %s\n", fname, dlerror());
+	    else fprintf(stderr, "load %s failed: %s\n", pwd_name, dlerror());
+	    free(pwd_name);
 	  }
 	else fprintf(stderr, "can't load %s: no init function\n", fname);
 	return(sc->F);

@@ -8942,6 +8942,11 @@ to construct the corresponding symbol.
 
 <p>The entity is placed in the current s7 environment under the name <code>(string-append prefix ":" name)</code>
 where the ":" is omitted if the prefix is null.  So in the j0 example, we get in s7 the function m:j0.
+define-c-function returns #t if it thinks the load worked, and #f otherwise.
+</p>
+
+<p>There are times when the only straightforward approach is to write the desired
+C code directly.  To insert C code on the fly, use (in-C "code..."). 
 Here are some examples:
 </p>
 
@@ -8990,7 +8995,7 @@ Here are some examples:
 (define-c-function (list '(void* calloc (size_t size_t))
 	                 '(void* malloc (size_t))
 	                 '(void free (void*))
-	                 '(void* realloc(void* size_t))
+	                 '(void* realloc (void* size_t))
 	                 '(void time (time_t*)) ; ignore returned value
 	                 (list (symbol "struct tm*") 'localtime '(time_t*))
                          (list 'size_t 'strftime (list 'char* 'size_t 'char* (symbol "struct tm*"))))
@@ -9003,6 +9008,43 @@ Here are some examples:
     (free p) 
     str)
 "Sat 11-Aug-2012 08:55 PDT\x00      "
+
+
+(define-c-function '((int closedir (DIR*))
+		     (DIR* opendir (char*))
+		     (in-C "static char *read_dir(DIR *p)  \
+                            {                              \
+                             struct dirent *dirp;          \
+                             dirp = readdir(p);            \
+                             if (!dirp) return(NULL);      \
+                             return(dirp->d_name);         \
+                            }")
+		     (char* read_dir (DIR*)))
+  "" '("sys/types.h" "dirent.h"))
+
+(let ((dir (opendir "/home/bil/gtk-snd")))
+  (do ((p (read_dir dir) (read_dir dir)))
+      ((= (length p) 0))
+    (format *stderr* "~A " p))
+  (closedir dir))
+
+</pre>
+
+
+<p>For the simple cases above, include "-ldl -Wl,-export-dynamic" in the gcc command.  So the first
+FFI example is built (this is in Linux):
+</p>
+
+<pre class="indented">
+gcc -c s7.c -I.
+gcc -o ex1 ex1.c s7.o -lm -I. -ldl -Wl,-export-dynamic
+ex1
+&gt; (load "cload.scm")
+define-c-function-1
+&gt; (define-c-function '(double j0 (double)) "m" "math.h")
+#t
+&gt; (m:j0 0.5)
+0.93846980724081
 </pre>
 
 </body>

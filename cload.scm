@@ -78,7 +78,6 @@
 ;;;                    "" "time.h")
 ;;;   > (let ((p (calloc 1 8)) (str (make-string 32))) (time p) (strftime str 32 "%a %d-%b-%Y %H:%M %Z" (localtime p)) (free p) str)
 ;;;   "Sat 11-Aug-2012 08:55 PDT\x00      "
-;;;
 
 
 (define-macro (defvar name value) 
@@ -268,6 +267,7 @@
 	      (format p ");~%")
 	      (format p ";~%  return(s7_unspecified(sc));~%"))
 	  (format p "}~%~%"))
+
 	(set! functions (cons (list scheme-name base-name func-name num-args) functions))))
 
     
@@ -287,7 +287,7 @@
 	
       (let ((o-file-name (string-append file-name ".o"))
 	    (so-file-name (string-append file-name ".so"))
-	    (base-name (string-append "_" (number->string define-c-function-output-file-counter) "_init")))
+	    (base-name (string-append (number->string define-c-function-output-file-counter) "_init")))
 	(format p "void init_~A(s7_scheme *sc);~%" base-name)
 	(format p "void init_~A(s7_scheme *sc)~%" base-name)
 	(format p "{~%")
@@ -319,11 +319,10 @@
 		 (num-args    (f 3)))
 	     (format p "~%  s7_define(sc, cur_env,~%")
 	     (format p "            s7_make_symbol(sc, ~S),~%" scheme-name)
-	     (format p "            s7_make_function(sc, ~S, ~A, ~D, 0, false, \"lib~A ~A\"));~%"
+	     (format p "            s7_make_function(sc, ~S, ~A, ~D, 0, false, \"dloaded ~A\"));~%"
 		     scheme-name
 		     base-name
 		     num-args
-		     prefix
 		     func-name)))
 	 functions)
 
@@ -337,12 +336,13 @@
 	(let ((new-env (augment-environment
 			   cur-env
 			 (cons 'init_func (string->symbol (string-append "init_" base-name))))))
-	  (load so-file-name new-env))
+	  (let ((result (load so-file-name new-env)))
 
-	;;(delete-file c-file-name)
-	(delete-file o-file-name)
-	(zero? (delete-file so-file-name))
-	))
+	    ;;(delete-file c-file-name)
+	    (delete-file o-file-name)
+	    (delete-file so-file-name)
+
+	    result))))
 
 
     (initialize-c-file)
@@ -350,12 +350,16 @@
     (if (symbol? (cadr function-info))
 	(if (= (length function-info) 3)
 	    (apply add-one-function function-info)
-	    (apply add-one-constant function-info))
+	    (if (eq? (car function-info) 'in-C)
+		(format p "~A~%" (cadr function-info))
+		(apply add-one-constant function-info)))
 	(for-each
 	 (lambda (func)
 	   (if (= (length func) 3)
 	       (apply add-one-function func)
-	       (apply add-one-constant func)))
+	       (if (eq? (car func) 'in-C)
+		   (format p "~A~%" (cadr func))
+		   (apply add-one-constant func))))
 	 function-info))
 
     (end-c-file)))
@@ -365,17 +369,25 @@
 
 
 	    
-	
-;;;
-;;;
-;;; DIR *opendir (__const char *__name)
-;;; extern int closedir (DIR *__dirp)
-;;; struct dirent *readdir (DIR *__dirp) dirp->d_name is the filename if dirp not null -- we need NULL
-;;; (-> dirp d_name) -> dirp->d_name
-;;; (. dirp d_name) for dirp.d_name
-;;; (define-macro (-> (symbol "struct dirent*") (d_name char*)) -> write c file with this access?
-;;; similar to define-c-function, but code generated is return(s7_make_string(sc, ((struct dirent*)p)->d_name));
-;;; but we don't want to do this on every (de)reference!?
+#|
+(define-c-function '((int closedir (DIR*))
+		     (DIR* opendir (char*))
+		     (in-C "static char *read_dir(DIR *p) \
+                            {                             \
+                             struct dirent *dirp;         \
+                             dirp = readdir(p);           \
+                             if (!dirp) return(NULL);     \
+                             else return(dirp->d_name);   \
+                            }")
+		     (char* read_dir (DIR*)))
+  "" '("sys/types.h" "dirent.h"))
+
+(let ((dir (opendir "/home/bil/gtk-snd")))
+  (do ((p (read_dir dir) (read_dir dir)))
+      ((= (length p) 0))
+    (format *stderr* "~A " p))
+  (closedir dir))
+|#
 
 
 ;;; TODO: expand the types so gtk/xm might be done this way (via autoload)
@@ -390,9 +402,18 @@
 ;;;   seems pointless -- we can build in the cast in g_signal_etc
 ;;;   var args here also: gtk_text_buffer_create_tag for example
 ;;;   (even better: turn a C header into a define-c-function call -- for simple cases this is not out of the question)
-;;; it would also be possible to insert arbitrary C code -- maybe that's the way to handle dirp->d_name?
-;;;    too ugly...
 ;;; TODO: make an OSX case -- do we need a *feature* for the current OS?
 ;;;    there's OSTYPE="linux" or "darwin", but can we depend on these?
-;;; PERHAPS: let name (cadr) be a list too for enums: ((sync_style_t int) (SYNC_NONE SYNC_ALL SYNC_BY_SOUND))
-;;; TODO: doc (sndscm? perhaps lint and cload in s7.html?) and s7test for cload
+;;; TODO: s7test for cload
+;;; TODO: check null, var-args (... in arg list, no type checks in actual args)
+;;; TODO: try to get the gtk-repl example to work from a bare s7 repl with casts=identity (this might work -- ex1 is happy!!)
+;;;
+;;; (define-c-function '(GtkWidget* gtk_frame_new (gchar*)) "" '("gtk/gtk.h") "-I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12" "-lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgio-2.0 -lpangoft2-1.0 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lcairo -lpango-1.0 -lfreetype -lfontconfig -lgobject-2.0 -lgmodule-2.0 -lgthread-2.0 -lrt -lglib-2.0")
+
+
+;;; we need to get (GtkTextIter *)calloc(1, sizeof(GtkTextIter) -- in-C as above
+;;; (GtkTextIter* make_GtkTextIter m|calloc)
+;;; another problem -- we need to tie a scheme closure into C as a callback
+;;; g_signal_connect GCallback func -- gxg_func3 in xg.c for example
+;;; this requires direct C code I think.
+;;; (in-C p "str") -- if encountered in the define list, it is placed directly in the output file
