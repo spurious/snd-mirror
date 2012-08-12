@@ -4,7 +4,32 @@
 ;;; automatically link a C function into s7 (there are a bunch of examples below)
 ;;;     (define-c-function '(double j0 (double)) "m" "math.h")
 ;;; means link the name m:j0 to the math library function j0 passing a double arg and getting a double result (reals in s7)
-;;; it really ought to be named something like define-c-stuff
+;;;
+;;; (define-c-function c-info prefix headers cflags ldflags)
+;;;    prefix is some arbitrary prefix (it can be "") that you want prepended to various names.
+;;;    headers is a list of headers (as strings) that the c-info relies on, (("math.h") for example).
+;;;    cflags are any special C compiler flags that are needed ("-I." in particular).
+;;;    ldflags is the similar case for the loader.
+;;;    c-info is a list that describes the C entities that you want to tie into s7.
+;;;       it can be either one list describing one entity, or a list of such lists.
+;;;       Each description has the form: (return-type entity-name-in-C (argument-type...))
+;;;       where each entry is a symbol, and C names are used throughout.  So, in the j0
+;;;       example above, (double j0 (double)) says we want access to j0, it returns
+;;;       a C double, and takes one argument, also a C double.  s7 tries to figure out 
+;;;       what the corresponding s7 type is, but in tricky cases, you should tell it
+;;;       by replacing the bare type name with a list: (C-type underlying-C-type).  For example,
+;;;       the Snd function set_graph_style takes an (enum) argument of type graph_style_t.
+;;;       This is actually an int, so we use (graph_style_t int) as the type:
+;;;         (void set_graph_style ((graph_style_t int)))
+;;;       If the C entity is a constant, then the descriptor list has just two entries,
+;;;       the C-type and the entity name: (int F_OK) for example. The entity name can also be a list 
+;;;       (an enum listing for example).
+;;;       If the C type has a space ("struct tm*" for example), use (symbol "struct tm*") 
+;;;       to construct the corresponding symbol.
+;;;    The entity is placed in the current s7 environment under the name (string-append prefix ":" name)
+;;;    where the ":" is omitted if the prefix is null.  So in the j0 example, we get in s7 the function m:j0.
+;;;
+;;; this function really ought to be named something like define-c-stuff
 ;;;
 ;;; more examples:
 ;;;
@@ -16,9 +41,9 @@
 ;;;                      "m" "math.h")
 ;;; 
 ;;;
-;;; (define-c-function '(char* getenv (char*)) "")
-;;; (define-c-function '(int setenv (char* char* int)) "")
-;;; (define get-environment-variable (let () (define-c-function '(char* getenv (char*)) "") getenv))
+;;; (define-c-function '(char* getenv (char*)))
+;;; (define-c-function '(int setenv (char* char* int)))
+;;; (define get-environment-variable (let () (define-c-function '(char* getenv (char*))) getenv))
 ;;;
 ;;; (define file-exists? (let () (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") (lambda (arg) (= (access arg F_OK) 0))))
 ;;; (define delete-file (let () (define-c-function '(int unlink (char*)) "" "unistd.h") (lambda (file) (= (unlink file) 0)))) ; 0=success, -1=failure
@@ -32,8 +57,10 @@
 ;;;   (define-c-function '(void select_channel (snd_info* int)) "" "snd.h" "-I.")
 ;;;   -> (select_channel (any_selected_sound) 1)
 ;;;
-;;;   (define-c-function '(((graph_style_t int) GRAPH_LOLLIPOPS) (void set_graph_style ((graph_style_t int)))) "" "snd.h" "-I.")
-;;;
+;;;   (define-c-function '(((graph_style_t int) (GRAPH_LINES GRAPH_DOTS GRAPH_FILLED GRAPH_DOTS_AND_LINES GRAPH_LOLLIPOPS)) 
+;;;                        (void set_graph_style ((graph_style_t int)))) 
+;;;                      "" "snd.h" "-I.")
+;;;   
 ;;;
 ;;;  (define-c-function '(char* getcwd (char* size_t)) "" "unistd.h")
 ;;;    :(let ((str (make-string 32))) (getcwd str 32) str)
@@ -66,7 +93,7 @@
   `(define-c-function-1 (current-environment) ,@args))
 
 
-(define* (define-c-function-1 cur-env function-info (prefix "g") (headers ()) (cflags "") (ldflags ""))
+(define* (define-c-function-1 cur-env function-info (prefix "") (headers ()) (cflags "") (ldflags ""))
   ;; write a C shared library module that links in the functions in function-info
   ;;    function info is either a list: (return-type c-name arg-type) or a list thereof
   ;;    the new functions are placed in cur-env
@@ -112,7 +139,7 @@
     (if (pair? type)                             ; in case the type name does not make its C type obvious: (graph_style_t int)
 	(symbol->string (cadr type))
 	(let ((type-name (symbol->string type)))
-	  (cond ((substring? "**" type-name)     ; any C pointer is uninterpreted
+	  (cond ((substring? "**" type-name)     ; any complicated C pointer is uninterpreted
 		 'c_pointer)
 		
 		((substring? "char*" type-name)  ; but not char** (caught above)
@@ -182,7 +209,6 @@
   
 
     (define (add-one-function return-type name arg-types)
-      ;; (format *stderr* "add ~A ~A ~A~%" return-type name arg-types)
       (let* ((func-name (symbol->string name))
 	     (num-args (length arg-types))
 	     (base-name (string-append (if (> (length prefix) 0) prefix "g") "_" func-name))
@@ -246,10 +272,13 @@
 
     
     (define (add-one-constant type name)
-      (let ((c-name (symbol->string name)))
-	(set! constants (cons (list (if (pair? type) (cadr type) type)
-				    c-name 
-				    (string-append prefix (if (> (length prefix) 0) ":" "") c-name)) constants))))
+      (let ((c-type (if (pair? type) (cadr type) type)))
+	(if (symbol? name)
+	    (set! constants (cons (list c-type (symbol->string name)) constants))
+	    (for-each 
+	     (lambda (c)
+	       (set! constants (cons (list c-type (symbol->string c)) constants)))
+	     name))))
 
   
     (define (end-c-file)
@@ -271,9 +300,9 @@
 	      (format p "~%")
 	      (for-each
 	       (lambda (c)
-		 (let ((type (c 0))
-		       (c-name (c 1))
-		       (scheme-name (c 2)))
+		 (let* ((type (c 0))
+			(c-name (c 1))
+			(scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name)))
 		   (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
 			   scheme-name
 			   (C->s7 type)
@@ -319,7 +348,9 @@
     (initialize-c-file)
 
     (if (symbol? (cadr function-info))
-	(apply add-one-function function-info)
+	(if (= (length function-info) 3)
+	    (apply add-one-function function-info)
+	    (apply add-one-constant function-info))
 	(for-each
 	 (lambda (func)
 	   (if (= (length func) 3)
@@ -359,13 +390,9 @@
 ;;;   seems pointless -- we can build in the cast in g_signal_etc
 ;;;   var args here also: gtk_text_buffer_create_tag for example
 ;;;   (even better: turn a C header into a define-c-function call -- for simple cases this is not out of the question)
-;;; TODO: define-c-function is not a good name -- define-c-stuff?
 ;;; it would also be possible to insert arbitrary C code -- maybe that's the way to handle dirp->d_name?
 ;;;    too ugly...
-;;; we also need in general the header (math.h) and the library (-lm) --
-;;;   ideally perhaps from pkg-config?
 ;;; TODO: make an OSX case -- do we need a *feature* for the current OS?
 ;;;    there's OSTYPE="linux" or "darwin", but can we depend on these?
-
-
-
+;;; PERHAPS: let name (cadr) be a list too for enums: ((sync_style_t int) (SYNC_NONE SYNC_ALL SYNC_BY_SOUND))
+;;; TODO: doc (sndscm? perhaps lint and cload in s7.html?) and s7test for cload

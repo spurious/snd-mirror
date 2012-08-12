@@ -229,13 +229,18 @@ indented and on a sort of brownish background.
       <li><a href="#Cerrors">Error handling in C</a>
       <li><a href="#closure">Closure defined in C</a>
       <li><a href="#testhook">Hooks in C and Scheme</a>
-      <li><a href="#cload">Load a C module dynamically</a>
+      <li><a href="#dload">Load a C module dynamically</a>
       <li><a href="#gmpex">gmp and friends</a>
       <li><a href="#gtkrepl">Gtk-based REPL</a>
       <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
       <li><a href="#s7inathread">s7 running in a separate thread</a>
       <li><a href="#replrescue">begin_hook to the rescue!</a>
       <li><a href="#gsl">GSL</a>
+  </ul>
+  <li><a href="#s7examples">s7 examples</a>
+  <ul>
+      <li><a href="#lint">lint.scm</a>
+      <li><a href="#cload">cload.scm</a>
   </ul>
 </ul>
 
@@ -4410,7 +4415,6 @@ dalliance with symbol-macros!
 <div class="indented">
 <p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
-lint.scm (included in the s7 tarball) checks for infelicities in s7 code (I think the C equivalent is now called splint).
 </p>
 </div>
 </blockquote>
@@ -5493,7 +5497,7 @@ the current environment, so defines happen in the enclosing environment.
 
   (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
 
-  (define-macro (when test . forms) `(if ,test (begin ,@forms)))         ; or `(cond (,test ,@forms))) 
+  (define-macro (when test . forms) `(if ,test (begin ,@forms)))         ; or `(cond (,test ,@forms))
   (define-macro (unless test . forms) `(if (not ,test) (begin ,@forms))) ;    `(or ,test (begin ,@forms))
 
   (define-macro (define-values vars . body)
@@ -5514,8 +5518,8 @@ the current environment, so defines happen in the enclosing environment.
 
   ;; get-environment-variable is a bad name: "environment" is already in use, and "get-"
   ;;   in any name should raise a red flag.
-  ;;   if cload.scm is loaded:
-  (define get-environment-variable (let () (define-c-function '(char* getenv (char*)) "") getenv))
+  ;;   if <a href="#cload">cload.scm</a> is loaded:
+  (define get-environment-variable (let () (define-c-function '(char* getenv (char*))) getenv))
 
   ;; similarly:
   (define file-exists? (let ()
@@ -5564,11 +5568,11 @@ waste a lot of time fixing this, I chose to flush multithreading.
 </pre>
 </div>
 </blockquote>
+<br><br>
 
 
 
-
-<div class="header" id="FFIexamples"><h4>FFI examples</h4></div>
+<div class="topheader" id="FFIexamples">FFI examples</div>
 
 <p>s7 exists only to serve as an extension of some other application, so
 it is primarily a foreign function interface.  s7.h has lots of comments about the individual
@@ -5617,7 +5621,7 @@ The examples that follow show:
 <li><a href="#Cerrors">Error handling in C</a>
 <li><a href="#closure">Closure defined in C</a>
 <li><a href="#testhook">Hooks in C and Scheme</a>
-<li><a href="#cload">Load a C module dynamically</a>
+<li><a href="#dload">Load a C module dynamically</a>
 <li><a href="#gmpex">gmp and friends</a>
 <li><a href="#gtkrepl">Gtk-based REPL</a>
 <li><a href="#gtkschemerepl">Gtk/Scheme-based REPL</a>
@@ -7088,7 +7092,7 @@ int main(int argc, char **argv)
 
 
 
-<div class="header" id="cload"><h4>Load a shared library</h4></div>
+<div class="header" id="dload"><h4>Load a shared library</h4></div>
 
 <p>We can use dlopen to load a shared library, and dlsym to initialize
 that library in our main program.  The tricky part is to conjure up the right
@@ -7250,7 +7254,7 @@ called:
 </pre>
 
 <p>This links the s7 function m:j0 to the math library
-function j0.  See cload.scm for more details.
+function j0.  See <a href="#cload">cload.scm</a> for more details.
 </p>
 
 
@@ -8830,6 +8834,176 @@ work out better in this regard because they don't expose internal structs
 and types unnecessarily.
 </p>
 
+<br><br>
+
+
+<div class="topheader" id="s7examples">s7 examples</div>
+
+<p>Currently, three scheme files are included in the s7 tarball: s7test.scm,
+lint.scm, and cload.scm.  s7test.scm is a regression test for s7, lint.scm
+is the s7 equivalent of the ancient C program named lint, and cload.scm
+is a wrapper for the FFI stuff described above.
+</p>
+
+
+<div class="header" id="lint"><h4>lint.scm</h4></div>
+
+<p>lint tries to find errors or infelicities in your scheme code.
+To try  it:
+</p>
+
+<pre class="indented">
+(load "lint.scm")
+(lint "some-code.scm")
+</pre>
+
+
+<p>lint tries to reduce false positives, so its default behavior is somewhat laconic.  There are several
+variables at the start of lint.scm to control additional output:
+</p>
+
+
+<pre class="indented">
+*report-unused-parameters*           ; if #t, report unused function/macro parameters
+*report-unused-top-level-functions*  ; if #t, report unused functions
+*report-undefined-variables*         ; if #t, report undefined identifiers
+*report-shadowed-variables*          ; if #t, report function parameters that are shadowed
+*report-minor-stuff*                 ; if #t, report all sorts of other stuff
+</pre>
+
+
+<p>lint is not smart about functions defined outside the current file, so *report-undefined-variables*
+sometimes gets confused.  *report-minor-stuff* adds output about overly complicated boolean and numerical
+expressions, dangerous floating point operations, bad docstrings (this check can get confused), and
+whatever else it thinks is odd.
+</p>
+
+
+
+<div class="header" id="cload"><h4>cload.scm</h4></div>
+
+<p>cload.scm defines the macro define-c-function that reduces the overhead
+involved in (dynamically) linking C entities into s7.
+</p>
+
+<pre class="indented">
+(<em class=def id="definecfunction">define-c-function</em> c-info (prefix "") (headers ()) (cflags "") (ldflags ""))
+</pre>
+
+<p>For example, <code>(define-c-function '(double j0 (double)) "m" "math.h")</code>
+links the C math library function j0 into s7 under the name m:j0, 
+passing it a double argument and getting a double result (a real in s7).
+</p>
+
+<p><em>prefix</em> is some arbitrary prefix that you want prepended to various names.
+</p>
+
+<p><em>headers</em> is a list of headers (as strings) that the c-info relies on, (("math.h") for example).
+</p>
+
+<p><em>cflags</em> are any special C compiler flags that are needed ("-I." in particular), and
+<em>ldflags</em> is the similar case for the loader.
+</p>
+
+<p><em>c-info</em> is a list that describes the C entities that you want to load into s7.
+It can be either one list describing one entity, or a list of such lists.
+Each description has the form:
+</p>
+
+<pre class="indented">
+(return-type entity-name-in-C (argument-type...))
+</pre>
+
+<p>where each entry is a symbol, and C names are used throughout.  So, in the j0
+example above, <code>(double j0 (double))</code> says we want access to j0, it returns
+a C double, and it takes one argument, also a C double.  s7 tries to figure out 
+what the corresponding s7 type is, but in tricky cases, you should tell it
+by replacing the bare type name with a list: <code>(C-type underlying-C-type)</code>.  For example,
+the Snd function set_graph_style takes an (enum) argument of type graph_style_t.
+This is actually an int, so we use <code>(graph_style_t int)</code> as the type:
+</p>
+
+<pre class="indented">
+(void set_graph_style ((graph_style_t int)))
+</pre>
+
+<p>If the C entity is a constant, then the descriptor list has just two entries,
+the C-type and the entity name: <code>(int F_OK)</code> for example. The entity name can also be a list:
+</p>
+
+<pre class="indented">
+((graph_style_t int) (GRAPH_LINES GRAPH_DOTS GRAPH_FILLED GRAPH_DOTS_AND_LINES GRAPH_LOLLIPOPS))
+</pre>
+
+<p>This defines all the names in the list as integers.
+If the C type has a space ("struct tm*"), use (symbol "struct tm*") 
+to construct the corresponding symbol.
+</p>
+
+<p>The entity is placed in the current s7 environment under the name <code>(string-append prefix ":" name)</code>
+where the ":" is omitted if the prefix is null.  So in the j0 example, we get in s7 the function m:j0.
+Here are some examples:
+</p>
+
+<pre class="indented">
+(define-c-function '((double j0 (double)) 
+                     (double j1 (double)) 
+                     (double erf (double)) 
+                     (double erfc (double))
+                     (double lgamma (double)))
+                    "m" "math.h")
+
+(define-c-function '(char* getenv (char*)))
+(define-c-function '(int setenv (char* char* int)))
+
+(define get-environment-variable (let () 
+                                   (define-c-function '(char* getenv (char*))) 
+                                   getenv))
+
+(define file-exists? (let () 
+                       (define-c-function '((int F_OK) 
+                                            (int access (char* int))) 
+                                          "" "unistd.h") 
+                       (lambda (arg) 
+                         (= (access arg F_OK) 0))))
+
+(define delete-file (let () 
+                      (define-c-function '(int unlink (char*)) "" "unistd.h") 
+                      (lambda (file) 
+                        (= (unlink file) 0)))) ; 0=success, -1=failure
+
+;;; from Snd:
+(define-c-function '(char* version_info ()) "" "snd.h" "-I.")
+
+(define-c-function '(mus_float_t mus_degrees_to_radians (mus_float_t)) "" "snd.h" "-I.")
+
+(define-c-function '(snd_info* any_selected_sound ()) "" "snd.h" "-I.")
+(define-c-function '(void select_channel (snd_info* int)) "" "snd.h" "-I.")
+
+(define-c-function '(((graph_style_t int) (GRAPH_LINES GRAPH_DOTS GRAPH_FILLED GRAPH_DOTS_AND_LINES GRAPH_LOLLIPOPS)) 
+                      (void set_graph_style ((graph_style_t int)))) 
+                   "" "snd.h" "-I.")
+   
+
+(define-c-function '(char* getcwd (char* size_t)) "" "unistd.h")
+
+(define-c-function (list '(void* calloc (size_t size_t))
+	                 '(void* malloc (size_t))
+	                 '(void free (void*))
+	                 '(void* realloc(void* size_t))
+	                 '(void time (time_t*)) ; ignore returned value
+	                 (list (symbol "struct tm*") 'localtime '(time_t*))
+                         (list 'size_t 'strftime (list 'char* 'size_t 'char* (symbol "struct tm*"))))
+                   "" "time.h")
+
+&gt; (let ((p (calloc 1 8)) 
+        (str (make-string 32)))
+    (time p) 
+    (strftime str 32 "%a %d-%b-%Y %H:%M %Z" (localtime p))
+    (free p) 
+    str)
+"Sat 11-Aug-2012 08:55 PDT\x00      "
+</pre>
 
 </body>
 </html>
