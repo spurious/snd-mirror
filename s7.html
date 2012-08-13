@@ -8961,21 +8961,13 @@ Here are some examples:
 (define-c-function '(char* getenv (char*)))
 (define-c-function '(int setenv (char* char* int)))
 
-(define get-environment-variable (let () 
-                                   (define-c-function '(char* getenv (char*))) 
-                                   getenv))
-
 (define file-exists? (let () 
-                       (define-c-function '((int F_OK) 
-                                            (int access (char* int))) 
-                                          "" "unistd.h") 
-                       (lambda (arg) 
-                         (= (access arg F_OK) 0))))
+                       (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
+                       (lambda (arg) (= (access arg F_OK) 0))))
 
 (define delete-file (let () 
                       (define-c-function '(int unlink (char*)) "" "unistd.h") 
-                      (lambda (file) 
-                        (= (unlink file) 0)))) ; 0=success, -1=failure
+                      (lambda (file) (= (unlink file) 0)))) ; 0=success
 
 ;;; from Snd:
 (define-c-function '(char* version_info ()) "" "snd.h" "-I.")
@@ -8993,9 +8985,7 @@ Here are some examples:
 (define-c-function '(char* getcwd (char* size_t)) "" "unistd.h")
 
 (define-c-function (list '(void* calloc (size_t size_t))
-	                 '(void* malloc (size_t))
 	                 '(void free (void*))
-	                 '(void* realloc (void* size_t))
 	                 '(void time (time_t*)) ; ignore returned value
 	                 (list (symbol "struct tm*") 'localtime '(time_t*))
                          (list 'size_t 'strftime (list 'char* 'size_t 'char* (symbol "struct tm*"))))
@@ -9045,6 +9035,184 @@ define-c-function-1
 #t
 &gt; (m:j0 0.5)
 0.93846980724081
+</pre>
+
+
+<div class="indented">
+<p>We can take the initial bare REPL given above, change the s7 declaration to be
+<code>extern s7_scheme *s7;</code> and move it to the top level, then compile
+and load the repl using the export-dynamic flag mentioned above, and now, with
+a little bit of messing around, we can load the gtk example without anything
+but the gtk libraries (no libxm):
+</p>
+<pre>
+;; first get scheme access to the gtk library functions we need
+(define-c-function 
+  '(((GdkEventMask int) GDK_ALL_EVENTS_MASK)
+    ;(int GDK_KEY_Return) ; gtk3
+    (int GDK_Return)      ; gtk2
+    ((GtkPolicyType int) GTK_POLICY_AUTOMATIC)
+    ((GtkWindowType int) GTK_WINDOW_TOPLEVEL)
+    ((GtkWrapMode int) GTK_WRAP_NONE)
+    ((PangoWeight int) PANGO_WEIGHT_BOLD)
+
+    (void* NULL)
+    (void free (void*))
+    
+    (void gdk_window_resize (GdkWindow* gint gint))
+    (void gtk_container_add (GtkContainer* GtkWidget*))
+    (void gtk_main ())
+    (void gtk_main_quit ())
+    (GtkWidget* gtk_scrolled_window_new (GtkAdjustment* GtkAdjustment*))
+    (void gtk_scrolled_window_set_policy (GtkScrolledWindow* (GtkPolicyType int) (GtkPolicyType int)))
+    (void gtk_text_buffer_get_end_iter (GtkTextBuffer* GtkTextIter*))
+    (GtkTextMark* gtk_text_buffer_get_insert (GtkTextBuffer*))
+    (void gtk_text_buffer_get_iter_at_mark (GtkTextBuffer* GtkTextIter* GtkTextMark*))
+    (void gtk_text_buffer_insert (GtkTextBuffer* GtkTextIter* gchar* gint))
+    (GtkTextBuffer* gtk_text_buffer_new (GtkTextTagTable*))
+    (void gtk_text_buffer_place_cursor (GtkTextBuffer* GtkTextIter*))
+    (gboolean gtk_text_iter_backward_search (GtkTextIter* gchar* (GtkTextSearchFlags int) GtkTextIter* GtkTextIter* GtkTextIter*))
+    (gboolean gtk_text_iter_forward_search (GtkTextIter* gchar* (GtkTextSearchFlags int) GtkTextIter* GtkTextIter* GtkTextIter*))
+    (GtkWidget* gtk_text_view_new ())
+    (void gtk_text_view_scroll_mark_onscreen (GtkTextView* GtkTextMark*))
+    (GtkTextBuffer* gtk_text_view_get_buffer (GtkTextView*))
+    (void gtk_text_view_set_buffer (GtkTextView* GtkTextBuffer*))
+    (void gtk_text_view_set_cursor_visible (GtkTextView* gboolean))
+    (void gtk_text_view_set_editable (GtkTextView* gboolean))
+    (void gtk_text_view_set_left_margin (GtkTextView* gint))
+    (void gtk_text_view_set_wrap_mode (GtkTextView* (GtkWrapMode int)))
+    (GdkWindow* gtk_widget_get_window (GtkWidget*))
+    (void gtk_widget_set_events (GtkWidget* gint))
+    (void gtk_widget_show (GtkWidget*))
+    (GtkWidget* gtk_window_new ((GtkWindowType int)))
+    (void gtk_window_set_title (GtkWindow* gchar*))
+    (gchar* gtk_text_buffer_get_text (GtkTextBuffer* GtkTextIter* GtkTextIter* gboolean)) ; free result
+    
+    (in-C "static GtkTextIter *make_text_iter(void) {return((GtkTextIter *)calloc(1, sizeof(GtkTextIter)));}")
+    (GtkTextIter* make_text_iter ())
+    
+    (in-C "static int gtk_event_keyval(GdkEventKey *e) {return((int)(e-&gt;keyval));}")
+    (int gtk_event_keyval (GdkEventKey*))
+
+    (void gtk_init (int* char***)) ; just pass 0 0 I think
+
+    (guint g_signal_lookup (gchar* (GType int)))
+    (void g_signal_stop_emission (gpointer guint (GQuark int)))
+
+    (in-C "static GtkTextTag *create_tag(GtkTextBuffer *buf, gchar *s1, gchar *s2, int i2, gchar *s3, int i3) \
+                               {return(gtk_text_buffer_create_tag(buf, s1, s2, i2, s3, i3, NULL));}")
+    (GtkTextTag* create_tag (GtkTextBuffer* gchar* char* int char* int))
+
+    (in-C "static void insert_with_tags(GtkTextBuffer *buf, GtkTextIter *iter, gchar *text, gint len, GtkTextTag *tag) \
+            {return(gtk_text_buffer_insert_with_tags(buf, iter, text, len, tag, NULL));}")
+    (void insert_with_tags (GtkTextBuffer* GtkTextIter* gchar* gint GtkTextTag*))
+
+    (in-C "static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_main_quit(); exit(0);}\
+           static void connect_exit_signal(GtkWidget *w) {g_signal_connect(G_OBJECT(w), \"delete_event\", G_CALLBACK(quit_repl), NULL);}")
+    (void connect_exit_signal (GtkWidget*))
+
+    (in-C "s7_scheme *s7;\
+           static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer func) \
+             {s7_call(s7, (s7_pointer)func, s7_list(s7, 3, s7_make_c_pointer(s7, w), s7_make_c_pointer(s7, event), s7_f(s7))); return(false);} \
+           static void connect_repl(GtkWidget *w, s7_pointer func)\
+             {g_signal_connect(G_OBJECT(w), \"key_press_event\", G_CALLBACK(repl_key_press), (gpointer)func);}")
+    (void connect_repl (GtkWidget* s7_pointer))
+    
+    (in-C "static GType object_type(GtkWidget *w) {return(G_OBJECT_TYPE((gpointer)w));}")
+    ((Gtype int) object_type (GtkWidget*))
+    )
+  "" 
+  '("gtk/gtk.h" "gdk/gdkkeysyms.h") ; or "gdk/gdk.h" if gtk3
+  "-I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12" 
+  "-lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgio-2.0 -lpangoft2-1.0 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lcairo -lpango-1.0 -lfreetype -lfontconfig -lgobject-2.0 -lgmodule-2.0 -lgthread-2.0 -lrt -lglib-2.0")
+
+;; these are pkg-config gtk+-2.0 --cflags and pkg-config gtk+-2.0 --libs
+
+;; now we have everything we need to run the original scheme/gtk example
+
+(gtk_init NULL NULL)
+
+(let ((shell (gtk_window_new GTK_WINDOW_TOPLEVEL))
+      (s7-prompt "s7&gt; ")
+      (return-key GDK_Return))
+
+  (connect_exit_signal shell)
+  (gtk_window_set_title shell "s7")
+
+  (let ((scrolled_window (gtk_scrolled_window_new NULL NULL)))
+    
+    (gtk_scrolled_window_set_policy scrolled_window GTK_POLICY_AUTOMATIC GTK_POLICY_AUTOMATIC)
+    (gtk_container_add shell scrolled_window)
+    
+    (let* ((repl (gtk_text_view_new))
+	   (repl_buf (gtk_text_buffer_new NULL))
+	   (prompt_not_editable #f))
+
+      (define (evaluate-expression expr)
+	(let ((pos (make_text_iter))
+	      (result (catch #t
+			     (lambda ()
+			       (object-&gt;string (eval-string expr)))
+			     (lambda args
+			       (format #f "~A: ~S" (car args) (apply format #f (cadr args)))))))
+	  (gtk_text_buffer_get_end_iter repl_buf pos)
+	  (gtk_text_buffer_insert repl_buf pos "\n" 1)
+	  (gtk_text_buffer_insert repl_buf pos result (length result))))
+
+      (define (get-current-expression)
+	(let ((m (gtk_text_buffer_get_insert repl_buf))
+	      (pos (make_text_iter))
+	      (previous (make_text_iter))
+	      (next (make_text_iter))
+	      (temp (make_text_iter)))
+	  (gtk_text_buffer_get_iter_at_mark repl_buf pos m)
+	  (if (gtk_text_iter_backward_search pos s7-prompt 0 temp previous NULL)
+	      (if (not (gtk_text_iter_forward_search pos s7-prompt 0 next temp NULL))
+		  (begin
+		    (gtk_text_buffer_get_end_iter repl_buf next)
+		    (gtk_text_buffer_get_text repl_buf previous next #t))
+		  (begin
+		    (gtk_text_iter_backward_search next "\n" 0 pos temp NULL)
+		    (gtk_text_iter_backward_search pos "\n" 0 next temp NULL)
+		    (gtk_text_buffer_get_text repl_buf previous next #t)))
+	      "")))
+
+      (define (repl-key-press w event data)
+	(let ((key (gtk_event_keyval event)))
+	  (if (equal? key return-key)
+	      (let ((pos (make_text_iter)))
+
+		(evaluate-expression (get-current-expression))
+		
+		(gtk_text_buffer_get_end_iter repl_buf pos)
+		(insert_with_tags repl_buf pos
+				  (string-append (string #\newline) s7-prompt) 
+				  (+ 1  (length s7-prompt))
+				  prompt_not_editable)
+		(gtk_text_buffer_place_cursor repl_buf pos)
+		(gtk_text_view_scroll_mark_onscreen repl (gtk_text_buffer_get_insert repl_buf))
+		(g_signal_stop_emission w (g_signal_lookup "key_press_event" (object_type w)) 0)))))
+      
+      (gtk_container_add scrolled_window repl)
+      (gtk_text_view_set_buffer repl repl_buf)
+      (gtk_text_view_set_editable repl #t)
+      (gtk_text_view_set_wrap_mode repl GTK_WRAP_NONE)
+      (gtk_text_view_set_cursor_visible repl #t)
+      (gtk_text_view_set_left_margin repl 4)
+      
+      (gtk_widget_set_events repl GDK_ALL_EVENTS_MASK)
+      (connect_repl repl repl-key-press)
+
+      (gtk_widget_show repl)
+      (gtk_widget_show scrolled_window)
+      (gtk_widget_show shell)
+      
+      (set! prompt_not_editable (create_tag repl_buf "prompt_not_editable" "editable" 0 "weight" PANGO_WEIGHT_BOLD))
+      (let ((pos (make_text_iter)))
+	(gtk_text_buffer_get_end_iter repl_buf pos)
+	(insert_with_tags repl_buf pos s7-prompt (length s7-prompt) prompt_not_editable)
+	(gdk_window_resize (gtk_widget_get_window shell) 400 200)
+	(gtk_main)))))
 </pre>
 
 </body>

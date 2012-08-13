@@ -108,6 +108,7 @@
 			 '(string s7_is_string s7_string s7_make_string char*)
 			 (list 'character 's7_is_character 's7_character 's7_make_character (symbol "unsigned char"))
 			 '(c_pointer s7_is_c_pointer s7_c_pointer s7_make_c_pointer void*)
+			 '(s7_pointer #f #f #f s7_pointer)
 			 ))
 
   (define (find-handler handle choice)
@@ -140,11 +141,15 @@
 	(let ((type-name (symbol->string type)))
 	  (cond ((substring? "**" type-name)     ; any complicated C pointer is uninterpreted
 		 'c_pointer)
+
+		((string=? "s7_pointer" type-name)
+		 's7_pointer)
 		
 		((substring? "char*" type-name)  ; but not char** (caught above)
 		 'string)
 
-		((substring? "*" type-name)      ; float* etc
+		((or (substring? "*" type-name)  ; float* etc
+		     (substring? "pointer" type-name))
 		 'c_pointer)
 
 		((substring? "char" type-name)
@@ -166,9 +171,6 @@
 		     (substring? "size" type-name)
 		     (substring? "byte" type-name)) 
 		 'integer)
-
-		((substring? "pointer" type-name)
-		 'c_pointer)
 
 		(#t #t)))))
 
@@ -210,9 +212,13 @@
     (define (add-one-function return-type name arg-types)
       (let* ((func-name (symbol->string name))
 	     (num-args (length arg-types))
-	     (base-name (string-append (if (> (length prefix) 0) prefix "g") "_" func-name))
+	     (base-name (string-append (if (> (length prefix) 0) prefix "s7_dl") "_" func-name)) ; not "g" -- collides with glib
 	     (scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") func-name)))
-	
+
+	(if (and (= num-args 1) 
+		 (eq? (car arg-types) 'void))
+	    (set! num-args 0))
+
 	;; scheme->C->scheme function
 	(format p "static s7_pointer ~A(s7_scheme *sc, s7_pointer args)~%" base-name)
 	(format p "{~%")
@@ -229,19 +235,24 @@
 	      (do ((i 0 (+ i 1))
 		   (type arg-types (cdr type)))
 		  ((= i num-args))
-		(let ((nominal-type (if (pair? (car type)) (caar type) (car type)))
-		      (true-type (if (pair? (car type)) (cadar type) (car type))))
-		  (format p "  if (~A(s7_car(arg)))~%" (checker true-type))
-		  (format p "    ~A_~D = (~A)~A(~As7_car(arg));~%"
-			  base-name i
-			  nominal-type
-			  (s7->C true-type)
-			  (if (eq? (C-type->s7-type true-type) 'real)
-			      "sc, " ""))
-		  (format p "  else return(s7_wrong_type_arg_error(sc, ~S, ~D, s7_car(arg), ~S));~%"
-			  func-name 
-			  (if (= num-args 1) 0 (+ i 1))
-			  (symbol->string (C-type->s7-type true-type)))
+
+		(let* ((nominal-type (if (pair? (car type)) (caar type) (car type)))
+		       (true-type (if (pair? (car type)) (cadar type) (car type)))
+		       (s7-type (C-type->s7-type true-type)))
+		  (if (eq? true-type 's7_pointer)
+		      (format p "    ~A_~D = s7_car(arg);~%" base-name i)
+		      (begin
+			(format p "  if (~A(s7_car(arg)))~%" (checker true-type))
+			(format p "    ~A_~D = (~A)~A(~As7_car(arg));~%"
+				base-name i
+				nominal-type
+				(s7->C true-type)
+				(if (memq s7-type '(boolean real))
+				    "sc, " ""))
+			(format p "  else return(s7_wrong_type_arg_error(sc, ~S, ~D, s7_car(arg), ~S));~%"
+				func-name 
+				(if (= num-args 1) 0 (+ i 1))
+				(symbol->string s7-type))))
 		  (if (< i (- num-args 1))
 		      (format p "  arg = s7_cdr(arg);~%"))))))
 	
@@ -339,8 +350,8 @@
 	  (let ((result (load so-file-name new-env)))
 
 	    ;;(delete-file c-file-name)
-	    (delete-file o-file-name)
-	    (delete-file so-file-name)
+	    ;(delete-file o-file-name)
+	    ;(delete-file so-file-name)
 
 	    result))))
 
@@ -390,30 +401,17 @@
 |#
 
 
-;;; TODO: expand the types so gtk/xm might be done this way (via autoload)
-;;;    structs -> environments, va-args? c-null=0?
-;;;    c-complex->complex
+;;; TODO: structs -> environments c-complex->complex
 ;;;    can't we handle float* (etc) as c_pointer, then have a way to decode->vector?
 ;;;    (vct->vector (xen_make_vct_wrapper len c_ptr)) but why no vct_length?
 ;;; SOMEDAY: take a set of these functions (possibly in the current program via a C header like s7 and NULL as lib name)
 ;;;   and run the tester on the current program (going below the scheme level in a sense)
-;;; PERHAPS: xgdata->a long (define-c-functions ...) call and see if xg.c can be dispensed with!
-;;;   (cast var) i.e. (G_OBJECT shell) in current code is (GObject*)val = GObject* f(arg) return(G_OBJECT(arg)) I guess
-;;;   seems pointless -- we can build in the cast in g_signal_etc
-;;;   var args here also: gtk_text_buffer_create_tag for example
-;;;   (even better: turn a C header into a define-c-function call -- for simple cases this is not out of the question)
+;;; SOMEDAY: turn a C header into a define-c-function call
 ;;; TODO: make an OSX case -- do we need a *feature* for the current OS?
 ;;;    there's OSTYPE="linux" or "darwin", but can we depend on these?
 ;;; TODO: s7test for cload
-;;; TODO: check null, var-args (... in arg list, no type checks in actual args)
 ;;; TODO: try to get the gtk-repl example to work from a bare s7 repl with casts=identity (this might work -- ex1 is happy!!)
 ;;;
 ;;; (define-c-function '(GtkWidget* gtk_frame_new (gchar*)) "" '("gtk/gtk.h") "-I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12" "-lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgio-2.0 -lpangoft2-1.0 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lcairo -lpango-1.0 -lfreetype -lfontconfig -lgobject-2.0 -lgmodule-2.0 -lgthread-2.0 -lrt -lglib-2.0")
 
-
-;;; we need to get (GtkTextIter *)calloc(1, sizeof(GtkTextIter) -- in-C as above
-;;; (GtkTextIter* make_GtkTextIter m|calloc)
-;;; another problem -- we need to tie a scheme closure into C as a callback
-;;; g_signal_connect GCallback func -- gxg_func3 in xg.c for example
-;;; this requires direct C code I think.
-;;; (in-C p "str") -- if encountered in the define list, it is placed directly in the output file
+;;; PERHAPS: *feature* entry if c-load works, 'dynamic-loader?
