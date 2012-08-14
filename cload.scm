@@ -1,6 +1,6 @@
 (provide 'cload.scm)
 
-
+;;; --------------------------------------------------------------------------------
 ;;; automatically link a C function into s7 (there are a bunch of examples below)
 ;;;     (define-c-function '(double j0 (double)) "m" "math.h")
 ;;; means link the name m:j0 to the math library function j0 passing a double arg and getting a double result (reals in s7)
@@ -29,9 +29,8 @@
 ;;;    The entity is placed in the current s7 environment under the name (string-append prefix ":" name)
 ;;;    where the ":" is omitted if the prefix is null.  So in the j0 example, we get in s7 the function m:j0.
 ;;;
-;;; this function really ought to be named something like define-c-stuff
-;;;
-;;; more examples:
+;;; this function really ought to be named something like define-c-stuff.
+;;; some examples:
 ;;;
 ;;;  (define-c-function '((double j0 (double)) 
 ;;;                       (double j1 (double)) 
@@ -55,8 +54,6 @@
 ;;;
 ;;;   (define-c-function '(snd_info* any_selected_sound ()) "" "snd.h" "-I.")
 ;;;   (define-c-function '(void select_channel (snd_info* int)) "" "snd.h" "-I.")
-;;;   -> (select_channel (any_selected_sound) 1)
-;;;
 ;;;   (define-c-function '(((graph_style_t int) (GRAPH_LINES GRAPH_DOTS GRAPH_FILLED GRAPH_DOTS_AND_LINES GRAPH_LOLLIPOPS)) 
 ;;;                        (void set_graph_style ((graph_style_t int)))) 
 ;;;                      "" "snd.h" "-I.")
@@ -78,6 +75,27 @@
 ;;;                    "" "time.h")
 ;;;   > (let ((p (calloc 1 8)) (str (make-string 32))) (time p) (strftime str 32 "%a %d-%b-%Y %H:%M %Z" (localtime p)) (free p) str)
 ;;;   "Sat 11-Aug-2012 08:55 PDT\x00      "
+;;;
+;;;
+;;; (define-c-function '((int closedir (DIR*))
+;;; 		         (DIR* opendir (char*))
+;;; 		         (in-C "static char *read_dir(DIR *p) \
+;;;                             {                             \
+;;;                              struct dirent *dirp;         \
+;;;                              dirp = readdir(p);           \
+;;;                              if (!dirp) return(NULL);     \
+;;;                              else return(dirp->d_name);   \
+;;;                             }")
+;;; 		         (char* read_dir (DIR*)))
+;;;   "" '("sys/types.h" "dirent.h"))
+;;; 
+;;; (let ((dir (opendir "/home/bil/gtk-snd")))
+;;;   (do ((p (read_dir dir) (read_dir dir)))
+;;;       ((= (length p) 0))
+;;;     (format *stderr* "~A " p))
+;;;   (closedir dir))
+;;; --------------------------------------------------------------------------------
+
 
 
 (define-macro (defvar name value) 
@@ -188,6 +206,7 @@
 
   (set! define-c-function-output-file-counter (+ define-c-function-output-file-counter 1))
 
+
   (let* ((file-name (format "temp-s7-output-~D" define-c-function-output-file-counter))
 	 (c-file-name (string-append file-name ".c"))
 	 (functions ())
@@ -210,6 +229,7 @@
   
 
     (define (add-one-function return-type name arg-types)
+      ;; C function -> scheme
       (let* ((func-name (symbol->string name))
 	     (num-args (length arg-types))
 	     (base-name (string-append (if (> (length prefix) 0) prefix "s7_dl") "_" func-name)) ; not "g" -- collides with glib
@@ -218,8 +238,6 @@
 	(if (and (= num-args 1) 
 		 (eq? (car arg-types) 'void))
 	    (set! num-args 0))
-
-	;; scheme->C->scheme function
 	(format p "static s7_pointer ~A(s7_scheme *sc, s7_pointer args)~%" base-name)
 	(format p "{~%")
 	
@@ -283,6 +301,7 @@
 
     
     (define (add-one-constant type name)
+      ;; C constant -> scheme
       (let ((c-type (if (pair? type) (cadr type) type)))
 	(if (symbol? name)
 	    (set! constants (cons (list c-type (symbol->string name)) constants))
@@ -293,8 +312,8 @@
 
   
     (define (end-c-file)
-	;; now the init function
-	;;   the new function is placed in the current (not necessarily global) environment
+      ;; now the init function
+      ;;   the new scheme variables and functions are placed in the current environment
 	
       (let ((o-file-name (string-append file-name ".o"))
 	    (so-file-name (string-append file-name ".so"))
@@ -341,8 +360,15 @@
 	(close-output-port p)
   
 	;; now we have the module .c file -- make it into a shared object, load it, delete the temp files
-	(system (format #f "gcc -c -fPIC ~A ~A" c-file-name cflags))
-	(system (format #f "gcc ~A -shared -o ~A ~A" o-file-name so-file-name ldflags))
+	
+	(if (provided? 'osx)
+	    (begin
+	      ;; I assume the caller is also compiled with these flags?
+	      (system (format #f "gcc -c ~A ~A" c-file-name cflags))
+	      (system (format #f "gcc ~A -o ~A -dynamic -bundle -undefined suppress -flat_namespace ~A" o-file-name so-file-name ldflags)))
+	    (begin
+	      (system (format #f "gcc -c -fPIC ~A ~A" c-file-name cflags))
+	      (system (format #f "gcc ~A -shared -o ~A ~A" o-file-name so-file-name ldflags))))
 
 	(let ((new-env (augment-environment
 			   cur-env
@@ -350,12 +376,13 @@
 	  (let ((result (load so-file-name new-env)))
 
 	    ;;(delete-file c-file-name)
-	    ;(delete-file o-file-name)
-	    ;(delete-file so-file-name)
+	    (delete-file o-file-name)
+	    (delete-file so-file-name)
 
 	    result))))
 
 
+    ;; this is the body of define-c-function
     (initialize-c-file)
 
     (if (symbol? (cadr function-info))
@@ -378,40 +405,9 @@
 
 
 
-
-	    
-#|
-(define-c-function '((int closedir (DIR*))
-		     (DIR* opendir (char*))
-		     (in-C "static char *read_dir(DIR *p) \
-                            {                             \
-                             struct dirent *dirp;         \
-                             dirp = readdir(p);           \
-                             if (!dirp) return(NULL);     \
-                             else return(dirp->d_name);   \
-                            }")
-		     (char* read_dir (DIR*)))
-  "" '("sys/types.h" "dirent.h"))
-
-(let ((dir (opendir "/home/bil/gtk-snd")))
-  (do ((p (read_dir dir) (read_dir dir)))
-      ((= (length p) 0))
-    (format *stderr* "~A " p))
-  (closedir dir))
-|#
-
-
-;;; TODO: structs -> environments c-complex->complex
+;;; TODO: c-complex->complex
 ;;;    can't we handle float* (etc) as c_pointer, then have a way to decode->vector?
 ;;;    (vct->vector (xen_make_vct_wrapper len c_ptr)) but why no vct_length?
 ;;; SOMEDAY: take a set of these functions (possibly in the current program via a C header like s7 and NULL as lib name)
 ;;;   and run the tester on the current program (going below the scheme level in a sense)
 ;;; SOMEDAY: turn a C header into a define-c-function call
-;;; TODO: make an OSX case -- do we need a *feature* for the current OS?
-;;;    there's OSTYPE="linux" or "darwin", but can we depend on these?
-;;; TODO: s7test for cload
-;;; TODO: try to get the gtk-repl example to work from a bare s7 repl with casts=identity (this might work -- ex1 is happy!!)
-;;;
-;;; (define-c-function '(GtkWidget* gtk_frame_new (gchar*)) "" '("gtk/gtk.h") "-I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12" "-lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgio-2.0 -lpangoft2-1.0 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lcairo -lpango-1.0 -lfreetype -lfontconfig -lgobject-2.0 -lgmodule-2.0 -lgthread-2.0 -lrt -lglib-2.0")
-
-;;; PERHAPS: *feature* entry if c-load works, 'dynamic-loader?

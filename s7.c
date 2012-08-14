@@ -7015,6 +7015,9 @@ s7_Double s7_real(s7_pointer p)
 #if (!WITH_GMP)
 static s7_Complex s7_complex(s7_pointer p)
 {
+  /* TODO: with-gmp case for big_complex
+   *   and do we need to export the s7_Complex type?  This is all for cload.
+   */
   return(s7_real_part(p) + s7_imag_part(p) * _Complex_I);
 }
 
@@ -58240,6 +58243,12 @@ s7_scheme *s7_init(void)
 #endif
 #if WITH_COMPLEX
   s7_provide(sc, "complex-numbers");
+#endif
+#if WITH_C_LOADER
+  s7_provide(sc, "dlopen");
+#endif
+#ifdef __APPLE__
+  s7_provide(sc, "osx");
 #endif
 
   sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);

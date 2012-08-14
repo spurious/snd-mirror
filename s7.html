@@ -4609,7 +4609,8 @@ at startup *features* is:
 
 <pre class="indented">
 &gt; *features*
-(snd12 snd snd-s7 snd-motif gsl alsa xm clm4 clm sndlib gmp s7)
+(snd-13.1 snd13 snd audio snd-s7 snd-motif gsl alsa xm snd-ladspa clm5 clm 
+ sndlib dlopen complex-numbers system-extras @-exponent dfls-exponents s7)
 &gt; (provided? 'gmp)
 #t
 </pre>
@@ -8936,7 +8937,7 @@ the C-type and the entity name: <code>(int F_OK)</code> for example. The entity 
 </pre>
 
 <p>This defines all the names in the list as integers.
-If the C type has a space ("struct tm*"), use (symbol "struct tm*") 
+If the C type has a space ("struct tm*"), use <code>(symbol "struct tm*")</code>
 to construct the corresponding symbol.
 </p>
 
@@ -8961,7 +8962,7 @@ Here are some examples:
 (define-c-function '(char* getenv (char*)))
 (define-c-function '(int setenv (char* char* int)))
 
-(define file-exists? (let () 
+(define file-exists? (let () ; define F_OK and access only within this let
                        (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
                        (lambda (arg) (= (access arg F_OK) 0))))
 
@@ -9041,7 +9042,7 @@ define-c-function-1
 <div class="indented">
 <p>We can take the initial bare REPL given above, change the s7 declaration to be
 <code>extern s7_scheme *s7;</code> and move it to the top level, then compile
-and load the repl using the export-dynamic flag mentioned above, and now, with
+and load the repl using the export-dynamic flag, and now, with
 a little bit of messing around, we can load the gtk example without anything
 but the gtk libraries (no libxm):
 </p>
@@ -9064,15 +9065,18 @@ but the gtk libraries (no libxm):
     (void gtk_main ())
     (void gtk_main_quit ())
     (GtkWidget* gtk_scrolled_window_new (GtkAdjustment* GtkAdjustment*))
-    (void gtk_scrolled_window_set_policy (GtkScrolledWindow* (GtkPolicyType int) (GtkPolicyType int)))
+    (void gtk_scrolled_window_set_policy 
+          (GtkScrolledWindow* (GtkPolicyType int) (GtkPolicyType int)))
     (void gtk_text_buffer_get_end_iter (GtkTextBuffer* GtkTextIter*))
     (GtkTextMark* gtk_text_buffer_get_insert (GtkTextBuffer*))
     (void gtk_text_buffer_get_iter_at_mark (GtkTextBuffer* GtkTextIter* GtkTextMark*))
     (void gtk_text_buffer_insert (GtkTextBuffer* GtkTextIter* gchar* gint))
     (GtkTextBuffer* gtk_text_buffer_new (GtkTextTagTable*))
     (void gtk_text_buffer_place_cursor (GtkTextBuffer* GtkTextIter*))
-    (gboolean gtk_text_iter_backward_search (GtkTextIter* gchar* (GtkTextSearchFlags int) GtkTextIter* GtkTextIter* GtkTextIter*))
-    (gboolean gtk_text_iter_forward_search (GtkTextIter* gchar* (GtkTextSearchFlags int) GtkTextIter* GtkTextIter* GtkTextIter*))
+    (gboolean gtk_text_iter_backward_search 
+              (GtkTextIter* gchar* (GtkTextSearchFlags int) GtkTextIter* GtkTextIter* GtkTextIter*))
+    (gboolean gtk_text_iter_forward_search 
+              (GtkTextIter* gchar* (GtkTextSearchFlags int) GtkTextIter* GtkTextIter* GtkTextIter*))
     (GtkWidget* gtk_text_view_new ())
     (void gtk_text_view_scroll_mark_onscreen (GtkTextView* GtkTextMark*))
     (GtkTextBuffer* gtk_text_view_get_buffer (GtkTextView*))
@@ -9086,48 +9090,72 @@ but the gtk libraries (no libxm):
     (void gtk_widget_show (GtkWidget*))
     (GtkWidget* gtk_window_new ((GtkWindowType int)))
     (void gtk_window_set_title (GtkWindow* gchar*))
-    (gchar* gtk_text_buffer_get_text (GtkTextBuffer* GtkTextIter* GtkTextIter* gboolean)) ; free result
+    (gchar* gtk_text_buffer_get_text 
+            (GtkTextBuffer* GtkTextIter* GtkTextIter* gboolean)) ; free result
     
-    (in-C "static GtkTextIter *make_text_iter(void) {return((GtkTextIter *)calloc(1, sizeof(GtkTextIter)));}")
+    (in-C "static GtkTextIter *make_text_iter(void)   \
+            {return((GtkTextIter *)calloc(1, sizeof(GtkTextIter)));}")
     (GtkTextIter* make_text_iter ())
     
-    (in-C "static int gtk_event_keyval(GdkEventKey *e) {return((int)(e-&gt;keyval));}")
+    (in-C "static int gtk_event_keyval(GdkEventKey *e) \
+            {return((int)(e-&gt;keyval));}")
     (int gtk_event_keyval (GdkEventKey*))
 
-    (void gtk_init (int* char***)) ; just pass 0 0 I think
+    (void gtk_init (int* char***))
 
     (guint g_signal_lookup (gchar* (GType int)))
     (void g_signal_stop_emission (gpointer guint (GQuark int)))
 
-    (in-C "static GtkTextTag *create_tag(GtkTextBuffer *buf, gchar *s1, gchar *s2, int i2, gchar *s3, int i3) \
+    (in-C "static GtkTextTag *create_tag(GtkTextBuffer *buf,                              \
+                                         gchar *s1, gchar *s2, int i2, gchar *s3, int i3) \
                                {return(gtk_text_buffer_create_tag(buf, s1, s2, i2, s3, i3, NULL));}")
     (GtkTextTag* create_tag (GtkTextBuffer* gchar* char* int char* int))
 
-    (in-C "static void insert_with_tags(GtkTextBuffer *buf, GtkTextIter *iter, gchar *text, gint len, GtkTextTag *tag) \
+    (in-C "static void insert_with_tags(GtkTextBuffer *buf, GtkTextIter *iter,  \
+                                        gchar *text, gint len, GtkTextTag *tag) \
             {return(gtk_text_buffer_insert_with_tags(buf, iter, text, len, tag, NULL));}")
     (void insert_with_tags (GtkTextBuffer* GtkTextIter* gchar* gint GtkTextTag*))
 
-    (in-C "static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) {gtk_main_quit(); exit(0);}\
-           static void connect_exit_signal(GtkWidget *w) {g_signal_connect(G_OBJECT(w), \"delete_event\", G_CALLBACK(quit_repl), NULL);}")
+    (in-C "static gint quit_repl(GtkWidget *w, GdkEvent *event, gpointer context) \
+             {gtk_main_quit(); exit(0);}                                          \
+           static void connect_exit_signal(GtkWidget *w)                          \
+             {g_signal_connect(G_OBJECT(w), \"delete_event\", G_CALLBACK(quit_repl), NULL);}")
     (void connect_exit_signal (GtkWidget*))
 
-    (in-C "s7_scheme *s7;\
+    (in-C "s7_scheme *s7;                                                                  \
            static gboolean repl_key_press(GtkWidget *w, GdkEventKey *event, gpointer func) \
-             {s7_call(s7, (s7_pointer)func, s7_list(s7, 3, s7_make_c_pointer(s7, w), s7_make_c_pointer(s7, event), s7_f(s7))); return(false);} \
-           static void connect_repl(GtkWidget *w, s7_pointer func)\
-             {g_signal_connect(G_OBJECT(w), \"key_press_event\", G_CALLBACK(repl_key_press), (gpointer)func);}")
+             {s7_call(s7, (s7_pointer)func,                                                \
+                      s7_list(s7, 3, s7_make_c_pointer(s7, w),                             \
+                                     s7_make_c_pointer(s7, event),                         \
+                                     s7_f(s7))); return(false);}                           \
+           static void connect_repl(GtkWidget *w, s7_pointer func)                         \
+             {g_signal_connect(G_OBJECT(w), \"key_press_event\",                           \
+                               G_CALLBACK(repl_key_press), (gpointer)func);}")
     (void connect_repl (GtkWidget* s7_pointer))
     
-    (in-C "static GType object_type(GtkWidget *w) {return(G_OBJECT_TYPE((gpointer)w));}")
+    (in-C "static GType object_type(GtkWidget *w) \
+             {return(G_OBJECT_TYPE((gpointer)w));}")
     ((Gtype int) object_type (GtkWidget*))
     )
   "" 
   '("gtk/gtk.h" "gdk/gdkkeysyms.h") ; or "gdk/gdk.h" if gtk3
-  "-I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12" 
-  "-lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgio-2.0 -lpangoft2-1.0 -lgdk_pixbuf-2.0 -lpangocairo-1.0 -lcairo -lpango-1.0 -lfreetype -lfontconfig -lgobject-2.0 -lgmodule-2.0 -lgthread-2.0 -lrt -lglib-2.0")
+  "-I/usr/include/gtk-2.0 -I/usr/lib64/gtk-2.0/include -I/usr/include/atk-1.0 -I/usr/include/cairo        \
+   -I/usr/include/pango-1.0 -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/pixman-1 \
+    -I/usr/include/freetype2 -I/usr/include/libpng12" 
+  "-lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgio-2.0 -lpangoft2-1.0 -lgdk_pixbuf-2.0 -lpangocairo-1.0       \
+   -lcairo -lpango-1.0 -lfreetype -lfontconfig -lgobject-2.0 -lgmodule-2.0 -lgthread-2.0 -lrt -lglib-2.0")
 
 ;; these are pkg-config gtk+-2.0 --cflags and pkg-config gtk+-2.0 --libs
-
+;; we could automate this:
+;;   (define-c-function '((int pclose (FILE*))
+;;                        (FILE* popen (char* char*))
+;;                        (char* fgets (char* int FILE*))))
+;;   (let ((str (make-string 1024)) 
+;;         (p (popen "pkg-config gtk+-2.0 --cflags" "r"))) 
+;;     (let ((res (fgets str 1024 p))) 
+;;       (pclose p) 
+;;       res))
+;;
 ;; now we have everything we need to run the original scheme/gtk example
 
 (gtk_init NULL NULL)
