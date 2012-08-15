@@ -105,7 +105,7 @@
 (defvar define-c-function-output-file-counter 0)   ; ugly, but I can't find a way around this (dlopen/dlsym stupidity)
 
 
-;;; to place the new function in the caller's current environment, we need to pass it in explicitly:
+;;; to place the new function in the caller's current environment, we need to pass the environment in explicitly:
 (define-macro (define-c-function . args) 
   `(define-c-function-1 (current-environment) ,@args))
 
@@ -408,6 +408,3 @@
 ;;; TODO: c-complex->complex
 ;;;    can't we handle float* (etc) as c_pointer, then have a way to decode->vector?
 ;;;    (vct->vector (xen_make_vct_wrapper len c_ptr)) but why no vct_length?
-;;; SOMEDAY: take a set of these functions (possibly in the current program via a C header like s7 and NULL as lib name)
-;;;   and run the tester on the current program (going below the scheme level in a sense)
-;;; SOMEDAY: turn a C header into a define-c-function call

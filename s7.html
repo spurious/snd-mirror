@@ -138,7 +138,7 @@ s7 is the default extension language of Snd and sndlib (http://ccrma.stanford.ed
 and Rick Taube's Common Music (commonmusic at sourceforge).  There are X, Motif, Gtk, and openGL bindings
 in libxm in the Snd tarball, or at ftp://ccrma-ftp.stanford.edu/pub/Lisp/libxm.tar.gz.
 If you're running s7 in a context
-that has getenv, file-exists?, and system (Snd for example, or s7 with WITH_SYSTEM_EXTRAS set), you can use s7-slib-init.scm
+that has getenv, file-exists?, and system, you can use s7-slib-init.scm
 to gain easy access to slib.  This init file is named "s7.init" in the slib distribution.
 </p>
 
@@ -2846,9 +2846,7 @@ Here's an idle thought:
 
 
 <div class="indented">
-<p>open-environment replaces make-type.  s7test.scm has a nearly backwards-compatible implementation of make-type.
-open-environment is still under development, but
-as an example, here is an implementation of float-vectors:
+<p>open-environment alerts the rest of s7 that the environment has methods.
 </p>
 
 <pre>
@@ -4113,6 +4111,10 @@ adds:
 (system command)         ; execute command
 </pre>
 
+<p>But maybe this is not needed; see <a href="#cload">cload.scm</a> below for
+a more direct approach.
+</p>
+
 
 
 
@@ -5175,7 +5177,8 @@ it is GC'd.  Here is an example:
 
 <p>Put this is a file, load it into the interpreter, then call <code>(bad-idea)</code> a
 few times.  You can turn off the optimization in question by setting the variable <b>*safety*</b>
-to 1.  *safety* defaults to 0.  (Also, if *safety* is not 0, sort! is safe from infinite loops).
+to 1.  *safety* defaults to 0.  (Also, if *safety* is not 0, sort! is safe from infinite loops,
+and some exceedingly rare local method cases are handled more carefully).
 </p>
 </div>
 
@@ -9008,7 +9011,7 @@ Here are some examples:
                              struct dirent *dirp;          \
                              dirp = readdir(p);            \
                              if (!dirp) return(NULL);      \
-                             return(dirp->d_name);         \
+                             return(dirp-&gt;d_name);         \
                             }")
 		     (char* read_dir (DIR*)))
   "" '("sys/types.h" "dirent.h"))
@@ -9242,6 +9245,7 @@ but the gtk libraries (no libxm):
 	(gdk_window_resize (gtk_widget_get_window shell) 400 200)
 	(gtk_main)))))
 </pre>
+</div>
 
 </body>
 </html>

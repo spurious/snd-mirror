@@ -222,7 +222,7 @@
 #ifndef WITH_SYSTEM_EXTRAS
   #define WITH_SYSTEM_EXTRAS 0
   /* this adds several functions that access file info, directories, times, etc
-   *    (work in progress)
+   *    this may be replaced by the cload business below
    */
 #endif
 
@@ -7031,7 +7031,7 @@ static s7_pointer s7_from_c_complex(s7_scheme *sc, s7_Complex z)
 
 static int integer_length(s7_Int a)
 {
-  static int bits[256] =
+  static const int bits[256] =
     {0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 
      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 
      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 
@@ -7273,7 +7273,7 @@ static double ipow(int x, int y)
 
 static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
 {
-  static char dignum[] = "0123456789abcdef";
+  static const char dignum[] = "0123456789abcdef";
   int i = 2, len, start = 0, end = 0;
   s7_Int pown = (s7_Int)1;
   bool sign;
@@ -10062,12 +10062,12 @@ static s7_Int int_to_int(s7_Int x, s7_Int n)
 }
 
 
-static long long int nth_roots[63] = {
+static const long long int nth_roots[63] = {
   S7_LLONG_MAX, S7_LLONG_MAX, 3037000499LL, 2097151, 55108, 6208, 1448, 511, 234, 127, 78, 52, 38, 28, 22, 
   18, 15, 13, 11, 9, 8, 7, 7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
-static long int_nth_roots[31] = {
+static const long int_nth_roots[31] = {
   S7_LONG_MAX, S7_LONG_MAX, 46340, 1290, 215, 73, 35, 21, 14, 10, 8, 7, 5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
 static bool int_pow_ok(s7_Int x, s7_Int y)
@@ -19713,7 +19713,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 #if WITH_C_LOADER
 #include <dlfcn.h>
 
-/* besides the dynamix loader, we also need to fully specify the shared object file name.
+/* besides the dynamic loader, we also need to fully specify the shared object file name.
  */
 
 static char *full_filename(const char *filename)
@@ -20031,7 +20031,8 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
     }
   if (!is_procedure(cadr(args)))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, small_int(2), cadr(args), A_PROCEDURE));
-  if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
+  if ((is_continuation(cadr(args))) || 
+      (is_goto(cadr(args))))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, small_int(2), cadr(args), 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
   
@@ -20050,7 +20051,8 @@ static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
     }
   if (!is_procedure(cadr(args)))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, small_int(2), cadr(args), A_PROCEDURE));
-  if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
+  if ((is_continuation(cadr(args))) || 
+      (is_goto(cadr(args))))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, small_int(2), cadr(args), 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
   
@@ -36660,9 +36662,9 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		    sc->w = collect_collisions(sc, cadr(p), sc->w);
 		  else
 		    {
-		      if (op == OP_WITH_ENV)
+		      if ((op == OP_WITH_ENV) && (sc->safety != 0))
 			hop = 0;
-		      /* we can't trust anything here, so hop has to be off.  For example,
+		      /* we can't trust anything here, so hop ought to be off.  For example,
 		       *
 		       *    (define (hi)
 		       *      (let ((e (augment-environment (current-environment)
@@ -36670,14 +36672,6 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		       *        (with-environment e (abs -1))))
 		       *
 		       * returns 1 if hop is 1, but -2 outside the function body.
-		       *
-		       * SOMEDAY: figure out how to make this with-env decision at run time
-		       *  perhaps assume it's safe here, then check the bit in WITH_ENV,
-		       *  if on, cancel the hop bits -- will this fix merge C_C cases?
-		       *  or: during optimize pass, if hop==0, keep track of what we've
-		       *      checked, removing if set or let (of same) or any unknown call, 
-		       *      and set hop bit if we see it again.  Could we do this with locals?
-		       *      a bit for use last slot and set last slot? [there is room for this]
 		       */
 		    }
 		}
@@ -52657,7 +52651,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *      (eq? (f2) (f2)))
        *   #f
        *
-       * The tricky part in s7 is that we might have quasiquoted multidimensional vectors:
+       * The tricky part in s7 is that we might have quasiquoted multidimensional vectors
        */
       if (sc->args == small_int(1))
 	sc->code = list_3(sc, sc->Apply, sc->Vector, g_quasiquote_1(sc, sc->value)); /* qq result will be evaluated (might include {list} etc) */
@@ -58535,10 +58529,10 @@ s7_scheme *s7_init(void)
  *
  * bench    42736                                    8752
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1244
- *                                              9711 8745
+ *                                              9711 8642
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3291
  * s7test            1721             1456 1430 1375 1358
  * t455                           265  256  218   86   89
- * t502                                 90   72   42   43
+ * t502                                 90   72   42   42
  */
 

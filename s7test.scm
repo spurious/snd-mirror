@@ -25995,7 +25995,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (with-environment (augment-environment (current-environment) (cons '+ (lambda args (apply * args)))) (+ 1 2 3 4)) 24)
 (test (with-environment (current-environment) (let ((x 1)) x)) 1)
 
-(let ()
+(let ((old-safety *safety*))
+  (set! *safety* 1)
   (define (hi)
     (let ((e (augment-environment (current-environment)
 	       (cons 'abs (lambda (a) (- a 1))))))
@@ -26007,7 +26008,8 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 		   (cons 'abs (lambda (a) (- a 1))))))
 	  (with-environment e
 	    (abs -1)))
-	-2))
+	-2)
+  (set! *safety* old-safety))
 
 (test (let ((x 12))
 	(let ((e (current-environment)))

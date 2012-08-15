@@ -5140,7 +5140,8 @@ static mus_float_t *list_to_partials(XEN harms, int *npartials, int *error_code)
     }
 
   partials = (mus_float_t *)calloc(maxpartial + 1, sizeof(mus_float_t));
-  /* TODO: here and elsewhere? this won't be null until we touch it in linux
+  /* here and elsewhere? this won't be null until we touch it in linux, but that gloms up all our
+   *   code with once-in-a-billion-years error checks.
    */
   if (partials == NULL)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
@@ -10504,7 +10505,7 @@ static s7_pointer *make_choices(s7_pointer mul_c, s7_pointer mul_s, s7_pointer e
 
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, comb_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol;
-static s7_pointer multiply_symbol, vector_ref_symbol;
+static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol;
 
 static s7_pointer (*initial_add_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
@@ -10523,7 +10524,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
   if ((args == 2) &&
       (s7_is_pair(caddr(expr))) &&
-      (s7_is_procedure(car(caddr(expr)))) && /* these can be quoted exprs: (+ '1.0 '2.0) */
+      (car(caddr(expr)) != quote_symbol) &&
       (s7_function_choice_is_direct(sc, caddr(expr))) &&
       (s7_function_returns_temp(caddr(expr))))
     {
@@ -12088,6 +12089,7 @@ static void init_choosers(s7_scheme *sc)
   multiply_symbol = s7_make_symbol(sc, "*");
   reverb_symbol = s7_make_symbol(sc, "*reverb*");
   output_symbol = s7_make_symbol(sc, "*output*");
+  quote_symbol = s7_make_symbol(sc, "quote");
 
   f = s7_name_to_value(sc, "*");
   initial_multiply_chooser = s7_function_chooser(sc, f);
