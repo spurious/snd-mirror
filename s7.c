@@ -16,6 +16,18 @@
  * (MINISCM)	current version is 0.85k4 (15 May 1994)
  */
 
+/* apparently tinyScheme is under the BSD license, so I guess s7 is too. 
+ * Here is Snd's verbiage which can apply here:
+ *
+ *     The authors hereby grant permission to use, copy, modify, distribute,
+ *     and license this software and its documentation for any purpose.  No
+ *     written agreement, license, or royalty fee is required.  Modifications
+ *     to this software may be copyrighted by their authors and need not
+ *     follow the licensing terms described here.
+ *
+ * followed by the usual all-caps shouting about liability.
+ */
+
 
 /* s7, Bill Schottstaedt, Aug-08
  *
@@ -1243,7 +1255,31 @@ struct s7_scheme {
 #define T_BIG_RATIO           12
 #define T_BIG_REAL            13
 #define T_BIG_COMPLEX         14
-/* only used in WITH_GMP case -- order matters */
+
+/* only used in WITH_GMP case -- order matters.
+ *
+ * We could manipulate these types so that (type(x) | (type(y) << 1)) is unique and retains x&y type info:
+ *   (1 2 9 10 (from 2 to 30) -> (2 3 5 6 10 11 13 14 18 19 21 22 26 27 29 30))
+ *   (1 2 8 11 (from 2 to 31) -> (2 3 5 6 10 11 12 15 17 18 22 23 24 27 30 31))
+ * and move the other types out beyond 30 so that wrong type args are easy to catch.
+ * Then procedures that, for example, add 2 things need only one switch statement.
+ * But timing tests indicate it's actually just as fast to trap the most common cases
+ * by hand, leaving these type numbers alone.
+ *
+ * other cases: ((1 4 5) ((top 15) (3 6 7 9 11 12 13 14 15)))
+ *              ((1 2 8 11) (top 31) (2 3 5 6 10 11 12 15 17 18 22 23 24 27 30 31))
+ *              ((1 4 5 16 17) ((top 51) (3 6 7 9 11 12 13 14 15 18 19 24 25 26 27 33 35 36 37 38 39 48 49 50 51)))
+ *              ((1 4 5 16 17 20) (top 60) 3 9 11 33 35 41 6 12 14 36 38 44 7 13 15 37 39 45 18 24 26 48 50 56 19 25 27 49 51 57 22 28 30 52 54 60)
+ *              ((1 4 5 16 17 20 21) (top 63) 3 9 11 33 35 41 43 6 12 14 36 38 44 46 7 13 15 37 39 45 
+ *                                            47 18 24 26 48 50 56 58 19 25 27 49 51 57 59 22 28 30 52 54 60 62 23 29 31 53 55 61 63)
+ *              ((1 4 8 13 36 37 40 41) (top 123) 3 9 17 27 73 75 81 83 6 12 20 30 76 78 84 86 10 8 24 
+ *                                            26 72 74 88 90 15 13 29 31 77 79 93 95 38 44 52 62 108 110 116 118 39 45 53 63 109 111 
+ *                                            117 119 42 40 56 58 104 106 120 122 43 41 57 59 105 107 121 123
+ *              the 1 2 8 11 32 35 41 42 case tops out at 126
+ * 
+ * so we actually could do the same thing with 8 types in the bignum case, 
+ * even though we have only a byte for all the types! (top=n|n<<1 where n=top choice, normally close to n*3)
+ */
 
 #define T_STRING              15
 #define T_PAIR                16
@@ -3190,21 +3226,6 @@ static int gc(s7_scheme *sc)
 
     tmps = sc->free_heap_top;
     tmps_top = tmps + GC_TEMPS_SIZE;
-#if 0
-    if ((sc->heap_size > INITIAL_HEAP_SIZE) && 
-	(tmps_top > (sc->free_heap + INITIAL_HEAP_SIZE))) /* this was the old (buggy, pre-23-Sep-11) choice */
-      fprintf(stderr, "%ld of %d: protect (min %ld %ld), not %ld\n", 
-	      sc->previous_free_heap_top - sc->free_heap, 
-	      sc->heap_size, 
-	      sc->previous_free_heap_top - tmps,
-	      tmps_top - tmps,
-	      sc->free_heap + INITIAL_HEAP_SIZE - tmps_top);
-
-    /* snd-test.scm: 297114 of 512000: protect (min 155818 256), not -13552
-     *   which once in a blue-moon (1/1000 tries or less) would manifest itself as confusion in 
-     *   one of the tinyCL functions in s7test when run at the end of snd-test!
-     */
-#endif
     if (tmps_top > sc->previous_free_heap_top)
       tmps_top = sc->previous_free_heap_top;
 
@@ -11495,6 +11516,30 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
   x = car(args);
   y = cadr(args);
 
+  if (type(x) == type(y))
+    {
+      if (type(x) == T_REAL)
+	return(make_real(sc, real(x) + real(y)));
+      else
+	{
+	  switch (type(x))
+	    {
+	    case T_INTEGER: return(make_integer(sc, integer(x) + integer(y)));
+	    case T_RATIO:   return(add_ratios(sc, x, y));
+	    case T_REAL:    return(make_real(sc, real(x) + real(y)));
+	    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + real_part(y), imag_part(x) + imag_part(y)));
+	    default: 
+	      if (!is_number(x))
+		{
+		  CHECK_METHOD(sc, x, sc->ADD, args);
+		  return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
+		}
+	      CHECK_METHOD(sc, y, sc->ADD, args);	  
+	      return(wrong_type_argument_with_type(sc, sc->ADD, small_int(2), y, A_NUMBER));
+	    }
+	}
+    }
+
   switch (type(x))
     {
     case T_INTEGER: 
@@ -11557,6 +11602,9 @@ static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
+  if (type(x) == T_INTEGER)
+    return(make_integer(sc, integer(x) + 1));
+
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) + 1));
@@ -12005,6 +12053,31 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 
   x = car(args);
   y = cadr(args);
+
+  if (type(x) == type(y))
+    {
+      if (type(x) == T_REAL)
+	return(make_real(sc, real(x) - real(y)));
+      else
+	{
+	  switch (type(x))
+	    {
+	    case T_INTEGER: return(make_integer(sc, integer(x) - integer(y)));
+	    case T_RATIO:   return(g_subtract(sc, args));
+	    case T_REAL:    return(make_real(sc, real(x) - real(y)));
+	    case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - real_part(y), imag_part(x) - imag_part(y)));
+	    default: 
+	      if (!is_number(x))
+		{
+		  CHECK_METHOD(sc, x, sc->MINUS, args);
+		  return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(1), x, A_NUMBER));
+		}
+	      CHECK_METHOD(sc, y, sc->MINUS, args);	  
+	      return(wrong_type_argument_with_type(sc, sc->MINUS, small_int(2), y, A_NUMBER));
+	    }
+	}
+    }
+
   switch (type(x))
     {
     case T_INTEGER: 
@@ -12405,6 +12478,39 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 
   x = car(args);
   y = cadr(args);
+
+  if (type(x) == type(y))
+    {
+      if (type(x) == T_REAL)
+	return(make_real(sc, real(x) * real(y)));
+      else
+	{
+	  switch (type(x))
+	    {
+	    case T_INTEGER: return(make_integer(sc, integer(x) * integer(y)));
+	    case T_RATIO:   return(g_multiply(sc, args));
+	    case T_REAL:    return(make_real(sc, real(x) * real(y)));
+	    case T_COMPLEX: 
+	      {
+		s7_Double r1, r2, i1, i2;
+		r1 = real_part(x);
+		r2 = real_part(y);
+		i1 = imag_part(x);
+		i2 = imag_part(y);
+		return(s7_make_complex(sc, r1 * r2 - i1 * i2, r1 * i2 + r2 * i1));
+	      }
+	    default: 
+	      if (!is_number(x))
+		{
+		  CHECK_METHOD(sc, x, sc->MULTIPLY, args);
+		  return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));
+		}
+	      CHECK_METHOD(sc, y, sc->MULTIPLY, args);	  
+	      return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(2), y, A_NUMBER));
+	    }
+	}
+    }
+
   switch (type(x))
     {
     case T_INTEGER: 
@@ -34200,6 +34306,32 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(sqr_ss);
 	}
+
+#if 0
+      if ((is_symbol(cadr(expr))) &&
+	  (is_optimized(caddr(expr))) &&
+	  (optimize_data(caddr(expr)) == HOP_SAFE_C_SS) &&
+	  (car(caddr(expr)) == sc->MINUS))
+	{
+	  fprintf(stderr, "%s\n", DISPLAY(expr)); 
+	  /*
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(multiply_s_ss);
+	  */
+	}
+      
+      if ((is_symbol(cadr(expr))) &&
+	  (is_optimized(caddr(expr))) &&
+	  (optimize_data(caddr(expr)) == HOP_SAFE_C_S))
+	{
+	  /* fprintf(stderr, "%s\n", DISPLAY(expr)); */
+	  /*
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(sqr_ss);
+	  */
+	}
+#endif
+      
 
       /* multiply_add: where add is callable via c_call (call ourselves hop_safe_c_c?)
        *   save free_heap top
@@ -58532,7 +58664,7 @@ s7_scheme *s7_init(void)
  *                                              9711 8642
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3291
  * s7test            1721             1456 1430 1375 1358
- * t455                           265  256  218   86   89
+ * t455                           265  256  218   86   87
  * t502                                 90   72   42   42
  */
 
