@@ -18,7 +18,6 @@
 (defgenerator one-pole-allpass-bank coeff input x1 y1 x2 y2 x3 y3 x4 y4 x5 y5 x6 y6 x7 y7 x8 y8) 
 
 (define (one-pole-allpass-bank gen input)
-  ;; someday I need to collapse this into one expression!
   (set! (gen 'input) input)
   (with-environment gen
     (set! y1 (+ (* coeff (- input y1)) x1))
@@ -46,6 +45,44 @@
     (set! x8 y7)
     y8))
 
+
+#|
+;;; since that is most of the actual computation in the piano, move it to C
+;;;   this is about 50% faster overall, but is restricted to Linux/OSX
+
+(if (not (provided? 'cload.scm)) (load "cload.scm"))
+
+(define-c-function '((in-C "static double *make_apb(double coeff) {double *data; data = (double *)calloc(20, sizeof(double)); data[0] = coeff; return(data);}")
+		     (in-C "enum {coeff, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, x7, y7, x8, y8};  \
+                            static double apb(double *data, double input) \
+                            { \
+                              data[y1] = data[x1] + data[coeff] * (input - data[y1]); \
+                              data[x1] = input; \
+                              data[y2] = data[x2] + data[coeff] * (data[y1] - data[y2]); \
+                              data[x2] = data[y1]; \
+                              data[y3] = data[x3] + data[coeff] * (data[y2] - data[y3]); \
+                              data[x3] = data[y2]; \
+                              data[y4] = data[x4] + data[coeff] * (data[y3] - data[y4]); \
+                              data[x4] = data[y3]; \
+                              data[y5] = data[x5] + data[coeff] * (data[y4] - data[y5]); \
+                              data[x5] = data[y4]; \
+                              data[y6] = data[x6] + data[coeff] * (data[y5] - data[y6]); \
+                              data[x6] = data[y5]; \
+                              data[y7] = data[x7] + data[coeff] * (data[y6] - data[y7]); \
+                              data[x7] = data[y6]; \
+                              data[y8] = data[x8] + data[coeff] * (data[y7] - data[y8]); \
+                              data[x8] = data[y7]; \
+                              return(data[y8]); \
+                            }")
+		     (void free (void*))
+		     (double* make_apb (double))
+		     (double apb (double* double)))
+  "")
+
+(define one-pole-allpass-bank apb)
+(define make-one-pole-allpass-bank make_apb)
+|#
+                              
 
 (defgenerator expseg currentValue targetValue r)
 
@@ -487,8 +524,13 @@
 		      (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
 		      (set! couplingFilter-output (one-pole-one-zero cou0 cou1 couplingFilter-input))
 		      
-		      (outa i couplingFilter-input))))
-		))))))))
+		      (outa i couplingFilter-input))
+#|
+		    (free string1-stiffness-ap)
+		    (free string2-stiffness-ap)
+		    (free string3-stiffness-ap)
+|#
+		    ))))))))))
 
 #|
 

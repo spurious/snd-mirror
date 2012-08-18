@@ -842,8 +842,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		   ,(if methods
 		       `(augment-environment 
 			   (apply environment ,methods)
-			 (environment ,@(list->bindings fields) (cons 'mus-generator-type gen-type)))
-		       `(environment ,@(list->bindings fields) (cons 'mus-generator-type gen-type)))))))))))
+			 (environment (cons 'mus-generator-type gen-type) ,@(list->bindings (reverse fields))))
+		       `(environment (cons 'mus-generator-type gen-type) ,@(list->bindings (reverse fields))))))))))))
 
 
 ;;; -------- clm-display-globals --------

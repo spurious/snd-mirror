@@ -105,7 +105,6 @@
 
 	(let ((shape-data (make-real-vector (* (length shps) tractlength+8)))
 	      
-	      (noseposition 3)
 	      (noselength-1 (- noselength 1))
 	      (noselength-2 (- noselength 2))
 	      (nose-ring-time 1000)	; naso pharynx response decay time
@@ -116,6 +115,9 @@
 	      (tong-hump-gain (- 1.0 tong-hump-pole))
 	      (tong-tip-gain (- 1.0 tong-tip-pole))
 	      
+	      (last-sfd -1)
+	      (last-gfd -1)
+
 	      (glot-table (make-real-vector (+ 1 table-size)))
 	      (glot-table2 (make-real-vector (+ 1 table-size)))
 	      (gn-table (make-real-vector (+ 1 table-size)))
@@ -126,7 +128,6 @@
 	      (sines (make-real-vector 200))
 	      (cosines (make-real-vector 200))
 	      (table-increment 0.0)
-	      (table-location 0.0)
 	      (glot-refl-gain 0.7)
 	      (pitch 400.0)
 	      (vibr-amt 0.0)
@@ -148,9 +149,6 @@
 	      (nose1 (make-real-vector noselength))
 	      (nose2 (make-real-vector noselength))
 	      (velum-pos 0.0)
-	      (alpha1 0.0)
-	      (alpha2 0.0)
-	      (alpha3 0.0)
 	      (nose-last-minus-refl 0.0)
 	      (nose-last-plus-refl 0.0)
 	      (nose-last-output 0.0)
@@ -159,15 +157,6 @@
 	      (time-nose-closed 1000)	; this is a hack used to determine if we need to calculate the nasal acoustics
 	      ;; vocal tract acoustic tube structure
 	      
-	      (radii (make-real-vector tractlength+8))
-					; the radii array contains the vocal tract section radii
-					; (tractlength-1 of them), then glottal reflection gain
-					; then lip reflection gain, then noise position, then noise gain,
-					; then noise pole angle, then noise pole radius, 
-					; then noise pole angle2, then noise pole radius2, then velum opening radius
-	      (coeffs (make-real-vector tractlength))
-	      (dline1 (make-real-vector tractlength))
-	      (dline2 (make-real-vector tractlength))
 	      ;; throat radiation low-pass filter
 	      (lt0 0.0)
 	      (lt1 0.0)
@@ -177,16 +166,10 @@
 	      (s-glot 0.0)
 	      (s-glot-mix 0.0)
 	      (s-noise 0.0)
-	      (last-tract-plus 0.0)
 	      (initial-noise-position 0.0)
 	      (formant-shift 1.0)
-	      (target-radii (make-real-vector tractlength+8))
-	      (radii-poles (make-real-vector tractlength+8))
-	      (radii-pole-gains (make-real-vector tractlength+8))
 	      (change-radii 0) 
-	      (glotsamp 0.0)
 	      (delta 0.0) 
-	      (temp-arr (make-real-vector tractlength+1))
 	      (new-glot 1)
 	      (first-glot 1)
 	      (new-tract 1)
@@ -194,8 +177,28 @@
 	      (offset -1)
 	      (nd (floor (change-times (- (length change-times) 1))))
 	      (next-offset bg)
-	      (last-sfd -1)
-	      (last-gfd -1))
+
+	      (table-location 0.0)
+	      (glotsamp 0.0)
+	      (last-tract-plus 0.0)
+	      (alpha1 0.0)
+	      (alpha2 0.0)
+	      (alpha3 0.0)
+	      (noseposition 3)
+
+	      (target-radii (make-real-vector tractlength+8))
+	      (radii-poles (make-real-vector tractlength+8))
+	      (radii-pole-gains (make-real-vector tractlength+8))
+	      (temp-arr (make-real-vector tractlength+1))
+	      (radii (make-real-vector tractlength+8))
+					; the radii array contains the vocal tract section radii
+					; (tractlength-1 of them), then glottal reflection gain
+					; then lip reflection gain, then noise position, then noise gain,
+					; then noise pole angle, then noise pole radius, 
+					; then noise pole angle2, then noise pole radius2, then velum opening radius
+	      (coeffs (make-real-vector tractlength))
+	      (dline1 (make-real-vector tractlength))
+	      (dline2 (make-real-vector tractlength)))
       
 	  (do ((k 0 (+ k 1))
 	       (i 0 (+ i tractlength+8)))
@@ -421,19 +424,15 @@
 	    (set! last-lip-refl (* (+ last-lip-in last-tract-plus) lip-refl-gain))
 	    (set! last-lip-in last-tract-plus)
 	    ;; next glot tick
-	    (let ((table1 0.0)
-		  (table2 0.0)
-		  (int-loc 0))
-	      (set! glotsamp (* (dline2 1) glot-refl-gain))
-	      (if (not (= table-increment 0.0))
-		  (begin
-		    (set! table-location (+ table-location table-increment))
-		    (if (>= table-location table-size)
-			(set! table-location (- table-location table-size)))
-		    (set! int-loc (floor table-location))
-		    (set! table1 (glot-table int-loc))
-		    (set! table2 (glot-table2 int-loc))
-		    (set! glotsamp (+ glotsamp (* s-glot (+ table1 (* s-glot-mix (- table2 table1))))))
+	    (set! glotsamp (* (dline2 1) glot-refl-gain))
+	    (if (not (= table-increment 0.0))
+		(begin
+		  (set! table-location (+ table-location table-increment))
+		  (if (>= table-location table-size)
+		      (set! table-location (- table-location table-size)))
+		  (let ((int-loc (floor table-location)))
+		    (let ((table1 (glot-table int-loc)))
+		      (set! glotsamp (+ glotsamp (* s-glot (+ table1 (* s-glot-mix (- (glot-table2 int-loc) table1)))))))
 		    ;; glot noise tick
 		    (if (and (not (= (gn-table int-loc) 0.0))
 			     (not (= gn-gain 0.0)))

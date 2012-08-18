@@ -54,9 +54,7 @@
 				rmx)
 			      #f)))
 	      
-	      (let ((inframe (make-frame in-chans))
-		    (outframe (make-frame out-chans))
-		    (mx (if matrix
+	      (let ((mx (if matrix
 			    (make-mixer (max in-chans out-chans))
 			    (make-scalar-mixer (max in-chans out-chans) 1.0)))
 		    
@@ -87,9 +85,8 @@
 		    (max-len (ceiling (* (mus-srate)
 					 (+ (max max-out-hop max-in-hop)
 					    max-seg-len))))
-		    (ex-samp -1.0)
-		    ;; these vars used for resampling
-		    (next-samp 0.0))
+		    (inframe (make-frame in-chans))
+		    (outframe (make-frame out-chans)))
 		
 		(if (or minramp-bug maxramp-bug)
 		    (error 'out-of-range (list expand 
@@ -122,7 +119,11 @@
 		(if (= in-chans 1)
 		    (let ((ingen (vector-ref ex-array 0))
 			  (sample-0 0.0)
-			  (sample-1 0.0))
+			  (sample-1 0.0)
+			  (ex-samp -1.0)
+			  ;; these vars used for resampling
+			  (next-samp 0.0))
+			  
 		      (do ((i beg (+ i 1)))
 			  ((= i end))
 			
@@ -179,7 +180,10 @@
 			      (sample-0-1 0.0)
 			      (sample-1-1 0.0)
 			      (ingen0 (vector-ref ex-array 0))
-			      (ingen1 (vector-ref ex-array 1)))
+			      (ingen1 (vector-ref ex-array 1))
+			      (ex-samp -1.0)
+			      ;; these vars used for resampling
+			      (next-samp 0.0))
 			  (do ((i beg (+ i 1)))
 			      ((= i end))
 			    

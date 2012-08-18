@@ -1,9 +1,9 @@
 /* s7, a Scheme interpreter
  *
  *    derived from:
- */
-
-/* T I N Y S C H E M E    1 . 3 9
+ *
+ * --------------------------------------------------------------------------------
+ * T I N Y S C H E M E    1 . 3 9
  *   Dimitrios Souflis (dsouflis@acm.org)
  *   Based on MiniScheme (original credits follow)
  * (MINISCM)               coded by Atsushi Moriwaki (11/5/1989)
@@ -14,9 +14,9 @@
  * (MINISCM)
  * (MINISCM) This is a revised and modified version by Akira KIDA.
  * (MINISCM)	current version is 0.85k4 (15 May 1994)
- */
-
-/* apparently tinyScheme is under the BSD license, so I guess s7 is too. 
+ *
+ *
+ * apparently tinyScheme is under the BSD license, so I guess s7 is too. 
  * Here is Snd's verbiage which can apply here:
  *
  *     The authors hereby grant permission to use, copy, modify, distribute,
@@ -26,10 +26,11 @@
  *     follow the licensing terms described here.
  *
  * followed by the usual all-caps shouting about liability.
- */
-
-
-/* s7, Bill Schottstaedt, Aug-08
+ * --------------------------------------------------------------------------------
+ *
+ *
+ *
+ * s7, Bill Schottstaedt, Aug-08
  *
  *   changes from tinyScheme:
  *        just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
@@ -626,7 +627,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_G, HOP_SAFE_C_ALL_G, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X,
 
       OP_SAFE_CAR_Q, HOP_SAFE_CAR_Q, OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CAR_OPT, HOP_SAFE_CAR_OPT, OP_SAFE_CAR_P, HOP_SAFE_CAR_P, 
-      OP_SAFE_WRITE_CHAR_SS, HOP_SAFE_WRITE_CHAR_SS,
+      OP_SAFE_WRITE_CHAR_SS, HOP_SAFE_WRITE_CHAR_SS, OP_SAFE_CDR_S, HOP_SAFE_CDR_S, OP_SAFE_NULL_S, HOP_SAFE_NULL_S, 
       
       OP_SAFE_C_opCq, HOP_SAFE_C_opCq, OP_SAFE_C_opQq, HOP_SAFE_C_opQq, OP_SAFE_C_opSq, HOP_SAFE_C_opSq, 
       OP_SAFE_C_opSSq, HOP_SAFE_C_opSSq, OP_SAFE_C_opSCq, HOP_SAFE_C_opSCq, OP_SAFE_C_opSQq, HOP_SAFE_C_opSQq, 
@@ -726,7 +727,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_g", "h_safe_c_all_g", "safe_c_all_x", "h_safe_c_all_x",
 
      "safe_car_q", "h_safe_car_q", "safe_car_s", "h_safe_car_s", "safe_car_opt", "h_safe_car_opt", "safe_car_p", "h_safe_car_p", 
-     "op_safe_write_char_ss", "h_safe_write_char_ss",
+     "op_safe_write_char_ss", "h_safe_write_char_ss", "safe_cdr_s", "h_safe_cdr_s", "safe_null_s", "h_safe_null_s", 
 
      "safe_c_opcq", "h_safe_c_opcq", "safe_c_opqq", "h_safe_c_opqq", "safe_c_opsq", "h_safe_c_opsq", 
      "safe_c_opssq", "h_safe_c_opssq", "safe_c_opscq", "h_safe_c_opscq", "safe_c_opsqq", "h_safe_c_opsqq", 
@@ -2099,21 +2100,40 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-static int counts[9][8];
-static void clear_counts(void) {int i, j; for (i = 0; i < 9; i++) for (j = 0; j < 8; j++) counts[i][j]=0;}
-static void tick(int i, int j) {if (j > 7) j = 7; counts[i][j]++;}
+#if 0
+static int counts[OP_MAX_DEFINED];
+static void clear_counts(void) {int i; for (i = 0; i < OP_MAX_DEFINED; i++) counts[i]=0;}
+static void tick(opcode_t i) {counts[(int)i]++;}
 static void report_counts(s7_scheme *sc)
 {
-  int i, j; 
-  for (i = 0; i < 9; i++)
+  int i, mx, mxloc, total = 0;
+  bool happy = true;
+
+  for (i = 0; i < OP_MAX_DEFINED; i++)
+    total += counts[i];
+  fprintf(stderr, "total: %d\n", total);
+
+  while (happy)
     {
-      fprintf(stderr, "i: %d: ", i);
-      for (j = 0; j < 8; j++)
-	fprintf(stderr, "%d ", counts[i][j]);
-      fprintf(stderr, "\n");
+      mx = 0;
+      for (i = 0; i < OP_MAX_DEFINED; i++)
+	{
+	  if (counts[i] > mx)
+	    {
+	      mx = counts[i];
+	      mxloc = i;
+	    }
+	}
+      if (mx > 0)
+	{
+	  fprintf(stderr, "%s: %d (%.3f)\n", real_op_names[mxloc], mx, (double)(100 * mx) / (double)total);
+	  counts[mxloc] = 0;
+	}
+      else happy = false;
     }
 }
-#if 0
+#else
+void clear_counts(void) {}
 static s7_pointer hashes;
 static void add_expr(s7_scheme *sc, s7_pointer expr)
 {
@@ -4727,7 +4747,19 @@ environment."
 	  s7_pointer p;
 	  p = car(x);
 	  if (is_pair(p))
-	    s7_make_slot(sc, e, car(p), cdr(p));
+	    {
+	      s7_pointer x;
+	      bool found_it = false;
+	      for (x = environment_slots(e); is_slot(x); x = next_slot(x))
+		if (slot_symbol(x) == car(p))
+		  {
+		    slot_set_value(x, cdr(p));
+		    found_it = true;
+		    break;
+		  }
+	      if (!found_it)
+		s7_make_slot(sc, e, car(p), cdr(p));
+	    }
 	  else append_environment(sc, e, p);
 	}
     }
@@ -20104,6 +20136,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   port = s7_open_input_string(sc, s7_string(car(args)));
   push_input_port(sc, port);
   
+  sc->temp4 = sc->args;
   push_stack(sc, OP_EVAL_STRING_1, args, sc->code); /* was sc->args */
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
   
@@ -21217,11 +21250,12 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	str = (char *)calloc(len, sizeof(char));
 	
 	nlen = snprintf(str, len, 
-			"<%s %s, current: %s[%d] %s, previous: %s[%d] %s>", 
+			"\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d>", 
 			excl_name, current_bits, 
 			obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
-			obj->previous_alloc_func, obj->previous_alloc_line, previous_bits);
-	
+			obj->previous_alloc_func, obj->previous_alloc_line, previous_bits,
+			obj->hloc);
+
 	free(current_bits);
 	free(allocated_bits);
 	free(previous_bits);
@@ -33602,6 +33636,9 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl) 
 {
   s7_pointer x;
+#if WITH_COUNTS
+  add_expr(sc, hdl);
+#endif
 
   if (frame_id(sc->envir) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));
@@ -33743,6 +33780,21 @@ static s7_pointer is_null_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(is_null_cdr);
 	}
+    }
+  if (is_optimized(expr))
+    {
+      if (is_symbol(cadr(expr)))
+	set_optimize_op(expr, HOP_SAFE_NULL_S);
+    }
+  return(f);
+}
+
+static s7_pointer cdr_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (is_optimized(expr))
+    {
+      if (is_symbol(cadr(expr)))
+	set_optimize_op(expr, HOP_SAFE_CDR_S);
     }
   return(f);
 }
@@ -34308,6 +34360,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	}
 
 #if 0
+      /* (* direct ...) here saved a little, but I think not worth the extra code */
       if ((is_symbol(cadr(expr))) &&
 	  (is_optimized(caddr(expr))) &&
 	  (optimize_data(caddr(expr)) == HOP_SAFE_C_SS) &&
@@ -35243,6 +35296,10 @@ static void init_choosers(s7_scheme *sc)
   /* car */
   f = slot_value(global_slot(sc->CAR));
   c_function_chooser(f) = car_chooser;
+
+  /* cdr */
+  f = slot_value(global_slot(sc->CDR));
+  c_function_chooser(f) = cdr_chooser;
 
 
   /* write-char */
@@ -39234,9 +39291,7 @@ static bool is_safe_arg_list(s7_scheme *sc, s7_pointer lst)
 static s7_pointer check_define(s7_scheme *sc)
 {
   s7_pointer x;
-#if PRINTING
-  fprintf(stderr, "check define: %s\n", DISPLAY(sc->code));
-#endif
+
   if (!is_pair(sc->code))
     return(eval_error_with_name(sc, "~A: nothing to define? ~A", sc->code));   /* (define) */
   
@@ -39246,6 +39301,7 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A: no value? ~A", sc->code));        /* (define var) */
       return(eval_error_with_name(sc, "~A: bad form? ~A", sc->code));          /* (define var . 1) */
     }
+
   if (!is_pair(car(sc->code)))
     {
       if (is_not_null(cddr(sc->code)))                                           /* (define var 1 . 2) */
@@ -39323,9 +39379,19 @@ static s7_pointer check_define(s7_scheme *sc)
 		      if (has_simple_args(cdr(sc->code)))
 			set_safe_closure(cdr(sc->code));
 		    }
+		  /* fprintf(stderr, "safe: %s\n\n", DISPLAY_80(sc->code)); */
 		}
+#if 0
+	      else
+	      fprintf(stderr, "not safe! %s\n    define: %d, proper: %d, argsok: %d, bodyok: %d\n\n", 
+		      DISPLAY_80(cdr(sc->code)),
+		      (sc->op == OP_DEFINE),
+		      (is_proper_list(sc, cdar(sc->code))),
+		      (is_safe_arg_list(sc, cdar(sc->code))),
+		      (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set)));
+#endif
 	    }
-#if PRINTING
+#if 0
 	  else
 	    {
 	      fprintf(stderr, "%s: not safe! define: %d, proper: %d, argsok: %d, bodyok: %d\n", 
@@ -40885,6 +40951,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    *   setting throughout this switch statement.  Lots of branches fall through to the next and there
    *   are many internal goto's to branches, so the code becomes a mess.  sc->op is even worse because
    *   we use it in several cases for error information or choice of next op, etc.
+   */
+
+  /* if one op were dominant here, we could skip the switch, but it appears that they are well mixed:
+   *   lg:     OP_IF_PP: 6%, OP_SAFER_OR: 4%, OP_AND_P: 4%
+   *   t502:   OP_SET_SYMBOL_P: 8%, OP_SET_SAFE: 8%, OP_LET1: 5%
+   *   index:  OP_SAFE_IF_CEQ_P_P: 21%, OP_DOTIMES_SET_P: 15%
+   *   s7test: OP_EVAL_ARGS4: 8%, OP_EVAL_ARGS2: 7%, OP_SET_PAIR: 4%
+   *   bench:  OP_LET_READ_CHAR_P: 14%, OP_INCREMENT_1: 10%
    */
 
  START_WITHOUT_POP_STACK:
@@ -45087,6 +45161,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cadr(sc->code);
 	      goto EVAL; 
 	      
+
+	    case OP_SAFE_CDR_S:
+	    case HOP_SAFE_CDR_S:
+	      {
+		s7_pointer arg;
+		arg = finder(sc, cadr(code));
+		if (is_pair(arg))
+		  sc->value = cdr(arg);
+		else sc->value = g_cdr(sc, list_1(sc, arg));
+	      }
+	      goto START;
+	      
+	    case OP_SAFE_NULL_S:
+	    case HOP_SAFE_NULL_S:
+	      {
+		s7_pointer arg;
+		arg = finder(sc, cadr(code));
+		if (is_null(arg))
+		  sc->value = sc->T;
+		else sc->value = sc->F;
+	      }
+	      goto START;
+	      
+
 	      /* -------------------------------- */
 	      
 #if 0
@@ -48849,6 +48947,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL; 
+      /* possible optimization: if types match, and "P" part is direct, we could
+       *   just set the current slot, and free the direct value.
+       */
       
     case OP_SET_SYMBOL_S:
       {
@@ -52426,7 +52527,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_WITH_ENV_S:
       {
 	s7_pointer e;
-	frame_number++;
 	e = finder(sc, car(sc->code));
 	if (e == sc->global_env)
 	  {
@@ -52434,9 +52534,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	else 
 	  {
+	    s7_pointer p;
 	    if (!is_environment(e))
 	      eval_error(sc, "with-environment takes an environment argument: ~A", e);
+	    frame_id(e) = ++frame_number;
 	    sc->envir = e;
+	    for (p = environment_slots(e); is_slot(p); p = next_slot(p))
+	      symbol_set_local(slot_symbol(p), frame_number, p);
 	  }
 	if (is_one_liner(sc->code))
 	  {
@@ -52482,12 +52586,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_WITH_ENV1:
       if (!is_environment(sc->value))                    /* (with-environment . "hi") */
 	eval_error(sc, "with-environment takes an environment argument: ~A", sc->value);
-      frame_number++;
       if (sc->value == sc->global_env)
 	{
 	  NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
 	}
-      else sc->envir = sc->value;
+      else 
+	{
+	  s7_pointer p;
+	  frame_id(sc->value) = ++frame_number;
+	  sc->envir = sc->value;
+	  for (p = environment_slots(sc->value); is_slot(p); p = next_slot(p))
+	    symbol_set_local(slot_symbol(p), frame_number, p);
+	}
 
       /* body is implicit in stack -- sc->code is ready to go */
       goto BEGIN;
@@ -57628,7 +57738,7 @@ s7_scheme *s7_init(void)
   }
 
 #if WITH_COUNTS
-  /* init_hashes(sc); */
+  init_hashes(sc); 
 #endif
 
   make_standard_ports(sc);
@@ -58655,16 +58765,20 @@ s7_scheme *s7_init(void)
  *   so that env not incremented (line 49920)
  *
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
+ *   also g_multiply_3 + check for same type?
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
- * TODO: error in s7_call (and everywhere) should somehow show outer call sequence in stacktrace, and the line numbers/cur_codes are off
  *
- * bench    42736                                    8752
+ * I think define-immaculo could use with-environment to block all local name collisions except
+ *   those caused by names in the arg list (i.e. no need for #_), and the arg list names can
+ *   be handled via the same with-env call (make a local env with the results etc)
+ *
+ * bench    42736                                    8694
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1244
  *                                              9711 8642
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3291
  * s7test            1721             1456 1430 1375 1358
  * t455                           265  256  218   86   87
- * t502                                 90   72   42   42
+ * t502                                 90   72   42   40
  */
 

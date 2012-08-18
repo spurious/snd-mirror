@@ -704,6 +704,18 @@ hiho
 <blockquote>
 
 <div class="indented">
+<p>The combination of optional and keyword arguments is viewed with disfavor in the Lisp
+community, but the problem is in CL's implementation of the idea, not the idea itself.
+I've used the s7 style since around 1976, and have never found it confusing.  The mistake 
+in CL is to require the optional arguments if a keyword argument occurs, and to consider them as distinct from the
+keyword arguments.  So everyone forgets and puts a keyword where CL expects a required-optional
+argument.  CL then does something ridiculous, and the programmer stomps around shouting about keywords, but the fault lies with CL.
+If s7's way is considered too loose, one way to tighten it might be to insist that once a keyword
+is used, only keyword argument pairs can follow.  
+</p>
+</div>
+
+<div class="indented">
 
 <p>If you want a version of define* that insists
 that any arguments before the keyword :optional are required:
@@ -2893,7 +2905,7 @@ fv
 </p>
 
 <pre class="indented">
-(cons 'vector? (lambda (p) #t))
+(cons 'vector? (lambda (p) #t)) 
 (cons 'vector-length (lambda (p) ((procedure-environment p) 'len)))
 (cons 'vector-dimensions (lambda (p) (list ((procedure-environment p) 'len))))
 (cons 'vector-ref (lambda (p ind) (#_vector-ref ((procedure-environment p) 'obj) ind)))
