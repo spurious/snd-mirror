@@ -478,7 +478,8 @@ static XEN g_mus_set_file_buffer_size(XEN val)
   len = XEN_TO_C_LONG_LONG(val);
   if (len <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_file_buffer_size, XEN_ONLY_ARG, val, "must be > 0");
-  return(C_TO_XEN_LONG_LONG(mus_set_file_buffer_size(len)));
+  mus_set_file_buffer_size(len);
+  return(val);
 }
 
 
@@ -569,7 +570,8 @@ static XEN g_mus_set_srate(XEN val)
   sr = XEN_TO_C_DOUBLE(val);
   if (sr <= 0.0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_srate, XEN_ONLY_ARG, val, "must be > 0.0");
-  return(C_TO_XEN_DOUBLE(mus_set_srate(sr)));
+  mus_set_srate(sr);
+  return(val);
 }
 
 
@@ -583,7 +585,8 @@ static XEN g_mus_float_equal_fudge_factor(void)
 static XEN g_mus_set_float_equal_fudge_factor(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_float_equal_fudge_factor, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_float_equal_fudge_factor(XEN_TO_C_DOUBLE(val))));
+  mus_set_float_equal_fudge_factor(XEN_TO_C_DOUBLE(val));
+  return(val);
 }
 
 
@@ -602,7 +605,8 @@ static XEN g_mus_set_array_print_length(XEN val)
   len = XEN_TO_C_INT(val);
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_array_print_length, XEN_ONLY_ARG, val, "must be >= 0");
-  return(C_TO_XEN_INT(mus_set_array_print_length(len)));
+  mus_set_array_print_length(len);
+  return(val);
 }
 
 
@@ -1550,7 +1554,7 @@ static XEN g_mus_describe(XEN gen)
   mus_xen *gn;                                                             \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(val), val, XEN_ARG_2, S_setB Caller, "a float");   \
-  if (gn) return(C_TO_XEN_DOUBLE(CLM_case(gn->gen, XEN_TO_C_DOUBLE(val)))); \
+  if (gn) {CLM_case(gn->gen, XEN_TO_C_DOUBLE(val)); return(val);}	\
   if (s7_is_open_environment(gen)) \
     { \
       s7_pointer func; \
@@ -1578,7 +1582,7 @@ static XEN g_mus_describe(XEN gen)
   mus_xen *gn;                                                             \
   gn = (mus_xen *)XEN_OBJECT_REF_CHECKED(gen, mus_xen_tag);		\
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, Caller, "an integer"); \
-  if (gn) return(C_TO_XEN_LONG_LONG(CLM_case(gn->gen, XEN_TO_C_LONG_LONG(val)))); \
+  if (gn) {CLM_case(gn->gen, XEN_TO_C_LONG_LONG(val)); return(val);}	\
   if (s7_is_open_environment(gen)) \
     { \
       s7_pointer func; \
@@ -2055,7 +2059,8 @@ static XEN g_mus_set_xcoeff(XEN gen, XEN index, XEN val)
       XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_setB S_mus_xcoeff, XEN_ARG_3);
       if (ind < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_xcoeff, XEN_ARG_2, index, "index must be non-negative");
-      return(C_TO_XEN_DOUBLE(mus_set_xcoeff(MUS_XEN_TO_MUS_ANY(ms), ind, x)));
+      mus_set_xcoeff(MUS_XEN_TO_MUS_ANY(ms), ind, x);
+      return(val);
     }
 #if HAVE_SCHEME
   if (s7_is_open_environment(gen)) 
@@ -2111,7 +2116,8 @@ static XEN g_mus_set_ycoeff(XEN gen, XEN index, XEN val)
       XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_setB S_mus_ycoeff, XEN_ARG_3);
       if (ind < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_ycoeff, XEN_ARG_2, index, "index must be non-negative");
-      return(C_TO_XEN_DOUBLE(mus_set_ycoeff(MUS_XEN_TO_MUS_ANY(ms), ind, x)));
+      mus_set_ycoeff(MUS_XEN_TO_MUS_ANY(ms), ind, x);
+      return(val);
     }
 #if HAVE_SCHEME
   if (s7_is_open_environment(gen)) 
@@ -2212,7 +2218,8 @@ static XEN g_mus_set_length(XEN gen, XEN val)
 	      /* filters are protected by keeping allocated_size and not allowing arrays to be set */
 	    }
 	}
-      return(C_TO_XEN_LONG_LONG(mus_set_length(ptr, len)));
+      mus_set_length(ptr, len);
+      return(val);
     }
 #if HAVE_SCHEME
   if (s7_is_open_environment(gen)) 
@@ -4287,7 +4294,8 @@ static XEN g_frame_set(XEN uf1, XEN uchan, XEN val)
   XEN_TO_C_INTEGER_OR_ERROR(uchan, chan, S_frame_set, XEN_ARG_2);
   XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_frame_set, XEN_ARG_3);
 
-  return(C_TO_XEN_DOUBLE(mus_frame_set(g, chan, x)));
+  mus_frame_set(g, chan, x);
+  return(val);
 }
 
 
@@ -4331,7 +4339,8 @@ static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val)
   XEN_TO_C_INTEGER_OR_ERROR(out, o_chan, S_mixer_set, XEN_ARG_3);
   XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_mixer_set, XEN_ARG_4);
 
-  return(C_TO_XEN_DOUBLE(mus_mixer_set(g, i_chan, o_chan, x)));
+  mus_mixer_set(g, i_chan, o_chan, x);
+  return(val);
 }
 
 
@@ -8756,6 +8765,48 @@ static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(
 #define S_pulsed_env_p "pulsed-env?"
 #define S_make_pulsed_env "make-pulsed-env"
 
+#if HAVE_SCHEME
+static XEN g_make_pulsed_env(XEN e, XEN dur, XEN frq)
+{
+  #define H_make_pulsed_env "(" S_make_pulsed_env " envelope duration frequency) returns a pulsed-env generator."
+  XEN v, gp, ge;
+  v = XEN_MAKE_VECTOR(4, XEN_FALSE);
+  gp = g_make_pulse_train(frq, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED);
+  ge = g_make_env(XEN_LIST_3(e, C_TO_XEN_DOUBLE(1.0), dur));
+  XEN_VECTOR_SET(v, 0, gp);
+  XEN_VECTOR_SET(v, 1, ge);
+  XEN_VECTOR_SET(v, 2, s7_make_c_pointer(s7, (void *)(XEN_TO_MUS_ANY(gp))));
+  XEN_VECTOR_SET(v, 3, s7_make_c_pointer(s7, (void *)(XEN_TO_MUS_ANY(ge))));
+  return(v);
+}
+
+static XEN g_pulsed_env_p(XEN g)
+{
+  #define H_pulsed_env_p "(" S_pulsed_env_p " gen) returns " PROC_TRUE " if gen is a pulsed-env generator."
+  return(C_TO_XEN_BOOLEAN((XEN_VECTOR_P(g)) &&
+			  (XEN_VECTOR_LENGTH(g) == 4) &&
+			  (mus_pulse_train_p((mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2)))) &&
+			  (mus_env_p((mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3))))));
+}
+
+static XEN g_pulsed_env(XEN g, XEN fm)
+{
+  #define H_pulsed_env "(" S_pulsed_env " gen fm) runs a pulsed-env generator."
+  mus_float_t pt_val, fm1 = 0.0;
+  mus_any *p, *e;
+
+  p = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2));
+  e = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3));
+  XEN_TO_C_DOUBLE_IF_BOUND(fm, fm1, S_pulsed_env, XEN_ARG_2);
+
+  pt_val = mus_pulse_train(p, fm1);
+  if (pt_val > 0.1)
+    mus_reset(e);
+  return(C_TO_XEN_DOUBLE(mus_env(e)));
+}
+
+#else
+
 static XEN g_make_pulsed_env(XEN e, XEN dur, XEN frq)
 {
   #define H_make_pulsed_env "(" S_make_pulsed_env " envelope duration frequency) returns a pulsed-env generator."
@@ -8784,7 +8835,7 @@ static XEN g_pulsed_env(XEN g, XEN fm)
     g_mus_reset(XEN_VECTOR_REF(g, 1));
   return(g_env(XEN_VECTOR_REF(g, 1)));
 }
-
+#endif
 
 
 #if HAVE_SCHEME
@@ -10265,13 +10316,6 @@ static s7_pointer g_frame_to_file_ff(s7_scheme *sc, s7_pointer args)
   return(XEN_FALSE);
 }
 
-
-
-
-/* s7: 495, run: 479, C: 370
- * the sin numbers callgrind reports are completely bogus, but they're the same here,
- *    the real factor is 1.2 (576 to 479 in callgrind numbers)
- */
 
 
 

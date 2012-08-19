@@ -58769,10 +58769,6 @@ s7_scheme *s7_init(void)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
  *
- * I think define-immaculo could use with-environment to block all local name collisions except
- *   those caused by names in the arg list (i.e. no need for #_), and the arg list names can
- *   be handled via the same with-env call (make a local env with the results etc)
- *
  * bench    42736                                    8694
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1244
  *                                              9711 8642

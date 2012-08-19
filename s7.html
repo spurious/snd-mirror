@@ -1294,6 +1294,7 @@ mac
        (let ((a 1))     ; here is the original macro body
          (+ a (with-environment e b))))))
 </pre>
+
 <p>Apply let is very similar to eval:
 </p>
 <pre>
@@ -1316,6 +1317,40 @@ use a trailing null instead (mimicking apply* in some ancient lisps):
 <pre>
 &gt; (apply let '((a 2) (b 3)) '(list + a b) ())
 (+ 2 3)
+</pre>
+
+<br><br>
+
+<p>But why insist on writing macros the old way?
+We can use
+with-environment from the start, writing an immaculo directly:
+</p>
+<pre>
+(define-macro (mac b)
+  `(with-environment
+       (environment (cons 'b ,b)) 
+     (let ((a 12))
+       (+ a b))))
+
+&gt; (let ((a 1) (+ *)) (mac a))
+13
+</pre>
+
+<p>If the syntax strikes you as baroque, perhaps:
+</p>
+<pre>
+(define-macro (glet bindings . body)
+  `(with-environment
+       (environment 
+	 ,@(map (lambda (b) 
+                  `(cons ',(car b) ,(cadr b))) 
+                bindings))
+     ,@body))
+
+(define-macro (mac b)
+  `(glet ((b ,b))
+     (let ((a 12))
+       (+ a b))))
 </pre>
 </div>
 
