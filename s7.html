@@ -1352,7 +1352,63 @@ with-environment from the start, writing an immaculo directly:
      (let ((a 12))
        (+ a b))))
 </pre>
+
+<p>If you want the macro's expanded result
+to be evaluated in its definition environment:
+</p>
+<pre>
+(let ((a 3))
+  (define-macro (mac b)
+    `(with-environment 
+	 (environment (cons 'b ,b)
+		      (procedure-environment mac))
+       (+ a b)))       ; definition-time "a", call-time "b"
+  (define-macro (mac-1 b)
+    `(+ a ,b))         ; call-time "a" and "b"
+  (let ((a 32))
+    (list (mac 1) 
+	  (mac-1 1))))
+</pre>
 </div>
+
+
+<!--
+(define-macro (begin-1 . body)
+  `(with-environment 
+       (current-environment) 
+     ,@body))
+
+(define-macro (let-1 bindings . body)
+  `(with-environment 
+       (environment 
+	(current-environment) 
+	,@(map (lambda (b) 
+		 `(cons ',(car b) ,(cadr b))) 
+	       bindings)) 
+     ,@body))
+
+(define-macro (let*-1 bindings . body)
+  `(with-environment
+       (environment 
+	(current-environment))
+     ,@(map (lambda (b)
+	      `(define ,(car b) ,(cadr b)))
+	    bindings)
+     ,@body))
+
+(define-macro (letrec*-1 bindings . body)
+  `(with-environment
+       (environment 
+	(current-environment)
+	,@(map (lambda (b) 
+		 `(cons ',(car b) #<undefined>))
+	       bindings)) 
+     ,@(map (lambda (b)
+	      `(set! ,(car b) ,(cadr b)))
+	    bindings)
+     ,@body))
+-->
+
 
 
 <div class="indented">

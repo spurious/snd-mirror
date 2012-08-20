@@ -802,15 +802,10 @@ typedef struct s7_port_t {
   port_type_t type;
   bool needs_free;
   FILE *file;
-  unsigned int line_number;
-  unsigned int file_number;
   char *filename;
   int filename_length;
-  char *value;
-  unsigned int size, point;        /* these limit the in-core portion of a string-port to 2^31 bytes */
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
   void (*output_function)(s7_scheme *sc, unsigned char c, s7_pointer port);
-  unsigned char *data;
   /* a version of string ports using a pointer to the current location and a pointer to the end
    *   (rather than an integer for both, indexing from the base string) was not faster.
    */
@@ -827,14 +822,9 @@ typedef struct s7_port_t {
 
 
 typedef struct c_proc_t {
-  s7_function ff;
   const char *name;
   int name_length;
   char *doc;
-  unsigned int required_args, optional_args, all_args;
-  bool rest_arg;
-  s7_pointer setter;
-
   unsigned int id;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   void *chooser_data;
@@ -842,8 +832,6 @@ typedef struct c_proc_t {
 
 
 typedef struct {               /* call/cc */
-  s7_pointer stack;
-  s7_pointer *stack_start, *stack_end, *op_stack;
   unsigned int stack_size, op_stack_loc, op_stack_size;
   int local_key;
 } s7_continuation_t;
@@ -922,7 +910,13 @@ typedef struct s7_cell {
 #endif
     } number;
 
-    s7_port_t *port;
+    struct {
+      s7_port_t *port;
+      char *value;
+      unsigned char *data;
+      unsigned int size, point;        /* these limit the in-core portion of a string-port to 2^31 bytes */
+      unsigned int line_number, file_number;
+    } prt;
     
     struct{
       unsigned char c;
@@ -947,8 +941,14 @@ typedef struct s7_cell {
       unsigned int fill_ptr;
     } vector;
     
-    c_proc_t *c_proc;     /* C functions, macros */
-    
+    struct {
+      c_proc_t *c_proc;     /* C functions, macros */
+      s7_function ff;
+      s7_pointer setter;
+      unsigned int required_args, optional_args, all_args;
+      bool rest_arg;
+    } fnc;
+      
     struct {               /* pairs */ 
       s7_pointer car, cdr, ecdr, fcdr;
       unsigned int line;
@@ -1014,8 +1014,12 @@ typedef struct s7_cell {
       s7_pointer e;        /*   the method list, if any (open environment) */
     } c_obj;
     
-    s7_continuation_t *continuation;
-    
+    struct {
+      s7_continuation_t *continuation;
+      s7_pointer stack;
+      s7_pointer *stack_start, *stack_end, *op_stack;
+    } cwcc;
+
     struct {               /* call-with-exit */
       unsigned int goto_loc, op_stack_loc;
       bool active;
@@ -1658,7 +1662,6 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
 #define list_4(Sc, A, B, C, D)        cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons_unchecked(Sc, C, cons(Sc, D, sc->NIL))))
 
 #define pair_line_number(p)           (p)->object.cons.line
-#define port_file_number(p)           (p)->object.port->file_number
 
 #define string_value(p)               (p)->object.string.svalue
 #define string_length(p)              (p)->object.string.length
@@ -1748,48 +1751,49 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {car(ecdr(p)) = op; lifte
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
-#define port_type(p)                  (p)->object.port->type
+#define port_port(p)                  (p)->object.prt.port
+#define port_type(p)                  port_port(p)->type
 #define is_string_port(p)             (port_type(p) == STRING_PORT)
 #define is_file_port(p)               (port_type(p) == FILE_PORT)
 #define is_function_port(p)           (port_type(p) == FUNCTION_PORT)
-#define port_line_number(p)           (p)->object.port->line_number
-#define port_filename(p)              (p)->object.port->filename
-#define port_filename_length(p)       (p)->object.port->filename_length
-#define port_file(p)                  (p)->object.port->file
-#define port_is_closed(p)             (p)->object.port->is_closed
-#define port_string(p)                (p)->object.port->value
-#define port_string_length(p)         (p)->object.port->size
-#define port_string_point(p)          (p)->object.port->point
-#define port_needs_free(p)            (p)->object.port->needs_free
-#define port_output_function(p)       (p)->object.port->output_function
-#define port_input_function(p)        (p)->object.port->input_function
-#define port_data(p)                  (p)->object.port->data
-#define port_position(p)              (p)->object.port->point
-#define port_original_input_string(p) (p)->object.port->orig_str
-#define port_read_character(p)        (p)->object.port->read_character
-#define port_read_line(p)             (p)->object.port->read_line
-#define port_display(p)               (p)->object.port->display
-#define port_write_character(p)       (p)->object.port->write_character
-#define port_write_string(p)          (p)->object.port->write_string
-#define port_read_semicolon(p)        (p)->object.port->read_semicolon
-#define port_read_white_space(p)      (p)->object.port->read_white_space
-#define port_read_name(p)             (p)->object.port->read_name
+#define port_line_number(p)           (p)->object.prt.line_number
+#define port_file_number(p)           (p)->object.prt.file_number
+#define port_filename(p)              port_port(p)->filename
+#define port_filename_length(p)       port_port(p)->filename_length
+#define port_file(p)                  port_port(p)->file
+#define port_is_closed(p)             port_port(p)->is_closed
+#define port_string(p)                (p)->object.prt.value
+#define port_string_length(p)         (p)->object.prt.size
+#define port_string_point(p)          (p)->object.prt.point
+#define port_needs_free(p)            port_port(p)->needs_free
+#define port_output_function(p)       port_port(p)->output_function
+#define port_input_function(p)        port_port(p)->input_function
+#define port_data(p)                  (p)->object.prt.data
+#define port_position(p)              (p)->object.prt.point
+#define port_original_input_string(p) port_port(p)->orig_str
+#define port_read_character(p)        port_port(p)->read_character
+#define port_read_line(p)             port_port(p)->read_line
+#define port_display(p)               port_port(p)->display
+#define port_write_character(p)       port_port(p)->write_character
+#define port_write_string(p)          port_port(p)->write_string
+#define port_read_semicolon(p)        port_port(p)->read_semicolon
+#define port_read_white_space(p)      port_port(p)->read_white_space
+#define port_read_name(p)             port_port(p)->read_name
 
 #define is_c_function(f)              (type(f) >= T_C_FUNCTION)
-#define c_function(f)                 (f)->object.c_proc
-#define c_function_call(f)            (f)->object.c_proc->ff
-#define c_function_name(f)            (f)->object.c_proc->name
-#define c_function_name_length(f)     (f)->object.c_proc->name_length
-#define c_function_documentation(f)   (f)->object.c_proc->doc
-#define c_function_required_args(f)   (f)->object.c_proc->required_args
-#define c_function_optional_args(f)   (f)->object.c_proc->optional_args
-#define c_function_has_rest_arg(f)    (f)->object.c_proc->rest_arg
-#define c_function_all_args(f)        (f)->object.c_proc->all_args
-#define c_function_setter(f)          (f)->object.c_proc->setter
-
-#define c_function_class(f)           (f)->object.c_proc->id
-#define c_function_chooser(f)         (f)->object.c_proc->chooser
-#define c_function_chooser_data(f)    (f)->object.c_proc->chooser_data
+#define c_function_data(f)            (f)->object.fnc.c_proc
+#define c_function_call(f)            (f)->object.fnc.ff
+#define c_function_name(f)            c_function_data(f)->name
+#define c_function_name_length(f)     c_function_data(f)->name_length
+#define c_function_documentation(f)   c_function_data(f)->doc
+#define c_function_required_args(f)   (f)->object.fnc.required_args
+#define c_function_optional_args(f)   (f)->object.fnc.optional_args
+#define c_function_has_rest_arg(f)    (f)->object.fnc.rest_arg
+#define c_function_all_args(f)        (f)->object.fnc.all_args
+#define c_function_setter(f)          (f)->object.fnc.setter
+#define c_function_class(f)           c_function_data(f)->id
+#define c_function_chooser(f)         c_function_data(f)->chooser
+#define c_function_chooser_data(f)    c_function_data(f)->chooser_data
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_pointer f) {return((is_pair(f)) && (is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -1798,23 +1802,24 @@ bool s7_function_returns_temp(s7_pointer f) {return((is_pair(f)) && (is_optimize
 #define set_c_function(f, X)          do {ecdr(f) = X; fcdr(f) = (s7_pointer)(c_function_call(ecdr(f)));} while (0)
 
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
-#define c_macro_call(f)               (f)->object.c_proc->ff
-#define c_macro_name(f)               (f)->object.c_proc->name
-#define c_macro_name_length(f)        (f)->object.c_proc->name_length
-#define c_macro_required_args(f)      (f)->object.c_proc->required_args
-#define c_macro_all_args(f)           (f)->object.c_proc->all_args
-#define c_macro_setter(f)             (f)->object.c_proc->setter
+#define c_macro_data(f)               (f)->object.fnc.c_proc
+#define c_macro_call(f)               (f)->object.fnc.ff
+#define c_macro_name(f)               c_macro_data(f)->name
+#define c_macro_name_length(f)        c_macro_data(f)->name_length
+#define c_macro_required_args(f)      (f)->object.fnc.required_args
+#define c_macro_all_args(f)           (f)->object.fnc.all_args
+#define c_macro_setter(f)             (f)->object.fnc.setter
 
-#define continuation(p)               (p)->object.continuation
-#define continuation_stack(p)         (p)->object.continuation->stack
-#define continuation_stack_end(p)     (p)->object.continuation->stack_end
-#define continuation_stack_start(p)   (p)->object.continuation->stack_start
-#define continuation_stack_size(p)    (p)->object.continuation->stack_size
+#define continuation_data(p)          (p)->object.cwcc.continuation
+#define continuation_stack(p)         (p)->object.cwcc.stack
+#define continuation_stack_end(p)     (p)->object.cwcc.stack_end
+#define continuation_stack_start(p)   (p)->object.cwcc.stack_start
+#define continuation_stack_size(p)    (p)->object.cwcc.continuation->stack_size
 #define continuation_stack_top(p)     (continuation_stack_end(p) - continuation_stack_start(p))
-#define continuation_op_stack(p)      (p)->object.continuation->op_stack
-#define continuation_op_loc(p)        (p)->object.continuation->op_stack_loc
-#define continuation_op_size(p)       (p)->object.continuation->op_stack_size
-#define continuation_key(p)           (p)->object.continuation->local_key
+#define continuation_op_stack(p)      (p)->object.cwcc.op_stack
+#define continuation_op_loc(p)        (p)->object.cwcc.continuation->op_stack_loc
+#define continuation_op_size(p)       (p)->object.cwcc.continuation->op_stack_size
+#define continuation_key(p)           (p)->object.cwcc.continuation->local_key
 
 #define call_exit_goto_loc(p)         (p)->object.rexit.goto_loc
 #define call_exit_op_loc(p)           (p)->object.rexit.op_stack_loc
@@ -2582,7 +2587,7 @@ static void sweep(s7_scheme *sc)
 		  port_filename(a) = NULL;
 		}
 	      
-	      free(a->object.port);
+	      free(port_port(a));
 	      
 	    }
 	  else sc->input_ports[j++] = sc->input_ports[i];
@@ -2597,7 +2602,7 @@ static void sweep(s7_scheme *sc)
 	  if (type(sc->output_ports[i]) == 0)
 	    {
 	      s7_close_output_port(sc, sc->output_ports[i]);
-	      free(sc->output_ports[i]->object.port);
+	      free(port_port(sc->output_ports[i]));
 	    }
 	  else sc->output_ports[j++] = sc->output_ports[i];
 	}
@@ -2617,7 +2622,7 @@ static void sweep(s7_scheme *sc)
 		  free(continuation_op_stack(c));
 		  continuation_op_stack(c) = NULL;
 		}
-	      free(continuation(c));
+	      free(continuation_data(c));
 	    }
 	  else sc->continuations[j++] = sc->continuations[i];
 	}
@@ -5101,13 +5106,9 @@ static s7_pointer g_outer_environment(s7_scheme *sc, s7_pointer args)
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
 { 
   s7_pointer x;	
-#if DEBUGGING
-  if (!is_symbol(hdl))
-    {
-      fprintf(stderr, "find_symbol %s??\n", DISPLAY(hdl));
-      abort();
-    }
-#endif
+
+  if (frame_id(sc->envir) == symbol_id(hdl))
+    return(local_slot(hdl));	
 
   for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
 
@@ -5763,7 +5764,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   loc = s7_stack_top(sc);
 
   NEW_CELL(sc, x);
-  continuation(x) = (s7_continuation_t *)calloc(1, sizeof(s7_continuation_t));
+  continuation_data(x) = (s7_continuation_t *)calloc(1, sizeof(s7_continuation_t));
   continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
   continuation_stack_size(x) = vector_length(continuation_stack(x));   /* copy_stack can return a smaller stack than the current one */
   continuation_stack_start(x) = vector_elements(continuation_stack(x));
@@ -19027,7 +19028,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   NEW_CELL(sc, port);
   port_loc = s7_gc_protect(sc, port);
   set_type(port, T_INPUT_PORT);
-  port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(port) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
   port_original_input_string(port) = sc->NIL;
   port_write_character(port) = input_write_char;
@@ -19184,7 +19185,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
   set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
-  x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename_length(x) = 8;
@@ -19204,7 +19205,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
   set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
-  x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename_length(x) = 8;
@@ -19224,7 +19225,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
   set_type(x, T_INPUT_PORT | T_IMMUTABLE);
-  x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -19276,7 +19277,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename_length(x) = safe_strlen(name);
@@ -19326,7 +19327,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   NEW_CELL(sc, x);
   set_type(x, T_INPUT_PORT);
   
-  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -19372,7 +19373,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
@@ -19426,7 +19427,7 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
   NEW_CELL(sc, x);
   set_type(x, T_INPUT_PORT);
   
-  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -19448,7 +19449,7 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_needs_free(x) = false;
@@ -27213,7 +27214,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   
   set_type(x, ftype | T_PROCEDURE);
 
-  c_function(x) = ptr;
+  c_function_data(x) = ptr;
   c_function_call(x) = f;
   c_function_setter(x) = sc->F;
   c_function_name(x) = name;   /* (procedure-name proc) => (format #f "~A" proc) */
@@ -43052,31 +43053,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_CLOSURE_ALL_S:
 	      {
-		s7_pointer args, new_args, p;
-		int gc_loc = -1, num_args;
+		s7_pointer args, p;
+		int num_args;
 
 		num_args = integer(fcdr(cdr(code)));
 		if ((num_args != 0) &&
 		    (num_args < NUM_SAFE_LISTS) &&
 		    (!list_is_in_use(sc->safe_lists[num_args])))
 		  {
-		    new_args = sc->safe_lists[num_args];
-		    set_list_in_use(new_args);
+		    sc->args = sc->safe_lists[num_args];
+		    set_list_in_use(sc->args);
 		  }
-		else 
-		  {
-		    new_args = make_list(sc, num_args);
-		    gc_loc = s7_gc_protect(sc, new_args);
-		  }
+		else sc->args = make_list(sc, num_args);
 
-		for (args = cdr(code), p = new_args; is_pair(args); args = cdr(args), p = cdr(p))
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  car(p) = finder(sc, car(args));
-		sc->args = new_args;
 
-		if (gc_loc != -1)
-		  s7_gc_unprotect_at(sc, gc_loc);
-		else clear_list_in_use(new_args);
-
+		clear_list_in_use(sc->args);
 		sc->code = ecdr(code);
 		goto SAFE_CLOSURE;
 	      }
@@ -43098,24 +43091,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_CLOSURE_ALL_G:
 	      {
-		s7_pointer args, new_args, p;
-		int gc_loc = -1, num_args;
+		s7_pointer args, p;
+		int num_args;
 
 		num_args = integer(fcdr(cdr(code)));
 		if ((num_args != 0) &&
 		    (num_args < NUM_SAFE_LISTS) &&
 		    (!list_is_in_use(sc->safe_lists[num_args])))
 		  {
-		    new_args = sc->safe_lists[num_args];
-		    set_list_in_use(new_args);
+		    sc->args = sc->safe_lists[num_args];
+		    set_list_in_use(sc->args);
 		  }
-		else 
-		  {
-		    new_args = make_list(sc, num_args);
-		    gc_loc = s7_gc_protect(sc, new_args);
-		  }
+		else sc->args = make_list(sc, num_args);
 
-		for (args = cdr(code), p = new_args; is_pair(args); args = cdr(args), p = cdr(p))
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
@@ -43135,12 +43124,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			else car(p) = arg;
 		      }
 		  }
-		sc->args = new_args;
 
-		if (gc_loc != -1)
-		  s7_gc_unprotect_at(sc, gc_loc);
-		else clear_list_in_use(new_args);
-
+		clear_list_in_use(sc->args);
 		sc->code = ecdr(code);
 		goto SAFE_CLOSURE;
 	      }
@@ -43709,17 +43694,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_CLOSURE_ALL_S:
 	      {
-		int gc_loc;
-		s7_pointer args, new_args, p;
-
-		new_args = make_list(sc, integer(fcdr(cdr(code))));
-		gc_loc = s7_gc_protect(sc, new_args);
-
-		for (args = cdr(code), p = new_args; is_pair(args); args = cdr(args), p = cdr(p))
+		s7_pointer args, p;
+		sc->args = make_list(sc, integer(fcdr(cdr(code))));
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  car(p) = find_symbol_or_bust(sc, car(args));
-		sc->args = new_args;
-		s7_gc_unprotect_at(sc, gc_loc);
-
 		sc->code = ecdr(code);
 		goto UNSAFE_CLOSURE;
 	      }
@@ -43741,15 +43719,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_CLOSURE_ALL_G:
 	      {
-		s7_pointer args, new_args, p;
-		int gc_loc;
-
+		s7_pointer args, p;
 		if (sc->free_heap_top <= sc->free_heap_trigger) try_to_call_gc(sc);
-		
-		new_args = make_list(sc, integer(fcdr(cdr(code))));
-		gc_loc = s7_gc_protect(sc, new_args);
-
-		for (args = cdr(code), p = new_args; is_pair(args); args = cdr(args), p = cdr(p))
+		sc->args = make_list(sc, integer(fcdr(cdr(code))));
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
@@ -43769,10 +43742,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			else car(p) = arg;
 		      }
 		  }
-		
-		sc->args = new_args;
-		s7_gc_unprotect_at(sc, gc_loc);
-
 		sc->code = ecdr(code);
 		goto UNSAFE_CLOSURE;
 	      }
@@ -45265,30 +45234,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_C_ALL_S:
 	      {
-		int gc_loc = -1, num_args;
-		s7_pointer args, new_args, p;
+		int num_args;
+		s7_pointer args, p;
 
 		num_args = integer(fcdr(cdr(code)));
 		if ((num_args != 0) &&
 		    (num_args < NUM_SAFE_LISTS) &&
 		    (!list_is_in_use(sc->safe_lists[num_args])))
 		  {
-		    new_args = sc->safe_lists[num_args];
-		    set_list_in_use(new_args);
+		    sc->args = sc->safe_lists[num_args];
+		    set_list_in_use(sc->args);
 		  }
-		else 
-		  {
-		    new_args = make_list(sc, num_args);
-		    gc_loc = s7_gc_protect(sc, new_args);
-		  }
+		else sc->args = make_list(sc, num_args);
 		
-		for (args = cdr(code), p = new_args; is_pair(args); args = cdr(args), p = cdr(p))
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  car(p) = finder(sc, car(args));
-		sc->value = c_call(code)(sc, new_args);
-
-		if (gc_loc != -1)
-		  s7_gc_unprotect_at(sc, gc_loc);
-		else clear_list_in_use(new_args);
+		sc->value = c_call(code)(sc, sc->args);
+		clear_list_in_use(sc->args);
 		goto START;
 	      }
 
@@ -45832,24 +45794,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    case HOP_SAFE_C_ALL_G:
 	      {
-		int gc_loc = -1, num_args;
-		s7_pointer args, new_args, p;
+		int num_args;
+		s7_pointer args, p;
 
 		num_args = integer(fcdr(cdr(code)));
 		if ((num_args != 0) &&
 		    (num_args < NUM_SAFE_LISTS) &&
 		    (!list_is_in_use(sc->safe_lists[num_args])))
 		  {
-		    new_args = sc->safe_lists[num_args];
-		    set_list_in_use(new_args);
+		    sc->args = sc->safe_lists[num_args];
+		    set_list_in_use(sc->args);
 		  }
-		else 
-		  {
-		    new_args = make_list(sc, num_args);
-		    gc_loc = s7_gc_protect(sc, new_args);
-		  }
+		else sc->args = make_list(sc, num_args);
 
-		for (args = cdr(code), p = new_args; is_pair(args); args = cdr(args), p = cdr(p))
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
@@ -45870,11 +45828,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		  }
 		
-		sc->value = c_call(code)(sc, new_args);
-		if (gc_loc != -1)
-		  s7_gc_unprotect_at(sc, gc_loc);
-		else clear_list_in_use(new_args);
-
+		sc->value = c_call(code)(sc, sc->args);
+		clear_list_in_use(sc->args);
 		goto START;
 	      }
 	      
@@ -45885,24 +45840,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_C_ALL_X:
 	      {
-		int gc_loc = -1, num_args;
-		s7_pointer args, new_args, p;
+		int num_args;
+		s7_pointer args, p;
 		
 		num_args = integer(fcdr(cdr(code)));
 		if ((num_args != 0) &&
 		    (num_args < NUM_SAFE_LISTS) &&
 		    (!list_is_in_use(sc->safe_lists[num_args])))
 		  {
-		    new_args = sc->safe_lists[num_args];
-		    set_list_in_use(new_args);
+		    sc->args = sc->safe_lists[num_args];
+		    set_list_in_use(sc->args);
 		  }
-		else 
-		  {
-		    new_args = make_list(sc, num_args);
-		    gc_loc = s7_gc_protect(sc, new_args);
-		  }
+		else sc->args = make_list(sc, num_args);
 
-		for (args = cdr(code), p = new_args; is_pair(args); args = cdr(args), p = cdr(p))
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
@@ -45983,10 +45934,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		  }
 		
-		sc->value = c_call(code)(sc, new_args);
-		if (gc_loc != -1)
-		  s7_gc_unprotect_at(sc, gc_loc);
-		else clear_list_in_use(new_args);
+		sc->value = c_call(code)(sc, sc->args);
+		clear_list_in_use(sc->args);
 		
 		/* we can't release a temp here:
 		 *   (define (hi) (vector 14800 14020 (oscil os) (* 1/3 14800) 14800 (* 1/2 14800))) (hi) where os returns non-zero:
@@ -46175,17 +46124,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_C_ALL_G:
 	      {
-		s7_pointer args, new_args, p;
-		int gc_loc;
+		s7_pointer args, p;
 		
 		if (sc->free_heap_top <= sc->free_heap_trigger) try_to_call_gc(sc);
-		/* we can't safely use sc->w or other such temps for easy GC protection here
-		 *   because evaluations (especially *unbound-variable-hook*) can clobber it.
-		 */
-		new_args = make_list(sc, integer(fcdr(cdr(code))));
-		gc_loc = s7_gc_protect(sc, new_args);
+		sc->args = make_list(sc, integer(fcdr(cdr(code))));
 		
-		for (args = cdr(code), p = new_args; is_pair(args); args = cdr(args), p = cdr(p))
+		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
@@ -46206,8 +46150,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		  }
 		
-		sc->value = c_call(code)(sc, new_args);
-		s7_gc_unprotect_at(sc, gc_loc);
+		sc->value = c_call(code)(sc, sc->args);
 		goto START;
 	      }
 	      
@@ -52529,9 +52472,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer e;
 	e = finder(sc, car(sc->code));
 	if (e == sc->global_env)
-	  {
-	    NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
-	  }
+	  sc->envir = sc->NIL;
 	else 
 	  {
 	    s7_pointer p;
@@ -52587,9 +52528,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_environment(sc->value))                    /* (with-environment . "hi") */
 	eval_error(sc, "with-environment takes an environment argument: ~A", sc->value);
       if (sc->value == sc->global_env)
-	{
-	  NEW_FRAME(sc, sc->NIL, sc->envir);             /* otherwise, find_symbol_or_bust can die because it assumes sc->envir is ok */	
-	}
+	sc->envir = sc->NIL;                             /* (with-environment (global-environment) ...) */
       else 
 	{
 	  s7_pointer p;
@@ -58769,9 +58708,9 @@ s7_scheme *s7_init(void)
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
  *
- * bench    42736                                    8694
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1244
- *                                              9711 8642
+ * bench    42736                                    8672
+ * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1232
+ *                                              9811 8676
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3291
  * s7test            1721             1456 1430 1375 1358
  * t455                           265  256  218   86   87

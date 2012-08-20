@@ -4,6 +4,8 @@
 	 (not (provided? 'sndlib-ws.scm)))
     (load "ws.scm"))
 
+(define default-index-env '(0 1  25 .4  75 .6  100 0))
+
 (definstrument (fm-violin startime dur frequency amplitude
 	    (fm-index 1.0)
 	    (amp-env '(0 0  25 1  75 1  100 0))
@@ -19,9 +21,9 @@
 	    (amp-noise-amount 0.0)
 	    (gliss-env '(0 0  100 0)) 
 	    (glissando-amount 0.0) 
-	    (fm1-env '(0 1  25 .4  75 .6  100 0))  
-	    (fm2-env '(0 1  25 .4  75 .6  100 0)) 
-	    (fm3-env '(0 1  25 .4  75 .6  100 0))
+	    (fm1-env default-index-env)
+	    (fm2-env default-index-env)
+	    (fm3-env default-index-env)
 	    (fm1-rat 1.0) 
 	    (fm2-rat 3.0)	 
 	    (fm3-rat 4.0)                    

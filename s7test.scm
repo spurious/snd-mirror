@@ -19474,6 +19474,8 @@ who says the continuation has to restart the map from the top?
 	  sum)
 	348))
 
+;;; (define-macro (while test . body) `(do () ((not ,test)) ,@body)) ?
+
 
 ;;; with-baffle
 
@@ -25717,6 +25719,20 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  (define! (current-environment) (hiho x) (+ x 1))
 	  (hiho 2))
 	3))
+
+
+(let ()
+  (with-environment (global-environment)
+    (define (this-is-global a) (+ a 1))))
+
+(test (this-is-global 2) 3)
+
+(let ()
+  (with-environment (environment)
+    (define (this-is-not-global a) (+ a 1))))
+
+(test (this-is-not-global 2) 'error)
+
 
 (let ()
   (apply augment-environment! (current-environment)
