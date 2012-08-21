@@ -8426,8 +8426,8 @@
 (CCAST-358 "GTK_MENU_BUTTON" "GtkMenuButton*")
 (CCHK-358 "GTK_IS_MENU_BUTTON" "GtkMenuButton*")
 (CFNC-358 "GtkWidget* gtk_menu_button_new void")
-(CFNC-358 "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
-(CFNC-358 "GtkMenu* gtk_menu_button_get_menu GtkMenuButton* menu_button")
+;;; 3.5.12 (CFNC-358 "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
+;;; 3.5.12 (CFNC-358 "GtkMenu* gtk_menu_button_get_menu GtkMenuButton* menu_button")
 (CFNC-358 "void gtk_menu_button_set_direction GtkMenuButton* menu_button GtkArrowType direction")
 (CFNC-358 "GtkArrowType gtk_menu_button_get_direction GtkMenuButton* menu_button")
 (CFNC-358 "void gtk_menu_button_set_menu_model GtkMenuButton* menu_button GMenuModel* menu_model")
@@ -8460,6 +8460,55 @@
 (CFNC-358 "gboolean gtk_level_bar_get_offset_value GtkLevelBar* self gchar* name gdouble* [value]" 'const)
 
 
+#|
+;;; 3.5.12
+GtkWindow *      gtk_application_get_active_window  (GtkApplication             *application);
+void            gtk_entry_set_input_purpose                  (GtkEntry             *entry,
++                                                               GtkInputPurpose       purpose);
++ GtkInputPurpose gtk_entry_get_input_purpose                  (GtkEntry             *entry);
++ 
++ void            gtk_entry_set_input_hints                    (GtkEntry             *entry,
++                                                               GtkInputHints         hints);
++ GtkInputHints   gtk_entry_get_input_hints                    (GtkEntry             *entry);
++ typedef enum
++ {
++   GTK_INPUT_PURPOSE_FREE_FORM,
++   GTK_INPUT_PURPOSE_ALPHA,
++   GTK_INPUT_PURPOSE_DIGITS,
++   GTK_INPUT_PURPOSE_NUMBER,
++   GTK_INPUT_PURPOSE_PHONE,
++   GTK_INPUT_PURPOSE_URL,
++   GTK_INPUT_PURPOSE_EMAIL,
++   GTK_INPUT_PURPOSE_NAME,
++   GTK_INPUT_PURPOSE_PASSWORD,
++   GTK_INPUT_PURPOSE_PIN
++ } GtkInputPurpose;
++ typedef enum
++ {
++   GTK_INPUT_HINT_NONE                = 0,
++   GTK_INPUT_HINT_SPELLCHECK          = 1 << 0,
++   GTK_INPUT_HINT_NO_SPELLCHECK       = 1 << 1,
++   GTK_INPUT_HINT_WORD_COMPLETION     = 1 << 2,
++   GTK_INPUT_HINT_LOWERCASE           = 1 << 3,
++   GTK_INPUT_HINT_UPPERCASE_CHARS     = 1 << 4,
++   GTK_INPUT_HINT_UPPERCASE_WORDS     = 1 << 5,
++   GTK_INPUT_HINT_UPPERCASE_SENTENCES = 1 << 6
++ } GtkInputHints;
+void         gtk_menu_button_set_menu       (GtkMenuButton *menu_button,
+                                               GtkWidget     *menu);
++ GtkMenu     *gtk_menu_button_get_popup      (GtkMenuButton *menu_button);
++ void             gtk_text_view_set_input_purpose      (GtkTextView      *text_view,
++                                                        GtkInputPurpose   purpose);
++ GtkInputPurpose  gtk_text_view_get_input_purpose      (GtkTextView      *text_view);
++ 
++ void             gtk_text_view_set_input_hints        (GtkTextView      *text_view,
++                                                        GtkInputHints     hints);
++ GtkInputHints    gtk_text_view_get_input_hints        (GtkTextView      *text_view);
++ void                    gtk_widget_insert_action_group                  (GtkWidget    *widget,
++                                                                          const gchar  *name,
++                                                                          GActionGroup *group);
+
+|#
 
  
 

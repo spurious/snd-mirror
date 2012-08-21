@@ -170,12 +170,7 @@
 
 #define INITIAL_HEAP_SIZE 128000
 /* the heap grows as needed, this is its initial size. 
- *
- *    this size is not very important (it can be 32 or maybe smaller, but it needs to be bigger than GC_TEMPS_SIZE below):
- *      8k: 2432, 32k: 2419, 128k: 2401, 512k: 2394, 8192k: 2417
- *    (valgrind timings from 23-Feb-10 running s7test.scm)
- *
- * If the initial heap is small, s7 can run in less than 2 Mbytes of memory.
+ * If the initial heap is small, s7 can run in less than 2 Mbytes of memory. There are cases where a bigger heap is faster.
  * As of 5-May-2011, the heap size must be a multiple of 32.
  */
 
@@ -1125,7 +1120,7 @@ struct s7_scheme {
   char *read_line_buf;
   unsigned int read_line_buf_size;
 
-  s7_pointer w, x, y, z;         /* evaluator local vars */
+  s7_pointer v, w, x, y, z;         /* evaluator local vars */
   s7_pointer temp1, temp2, temp3, temp4;
   s7_pointer temp_cell, temp_cell_1, temp_cell_2, temp_cell_3, temp_cell_4;
   s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3;
@@ -3198,6 +3193,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
   mark_stack_1(sc->stack, s7_stack_top(sc));
+  S7_MARK(sc->v);
   S7_MARK(sc->w);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
@@ -3398,7 +3394,7 @@ static void try_to_call_gc(s7_scheme *sc)
   if (!(sc->gc_off))
     freed_heap = gc(sc);
   
-  if (freed_heap < sc->heap_size / 4) /* was 1000, setting it to 2 made no difference in run time */
+  if (freed_heap < sc->heap_size / 2) /* PERHAPS: make this max out at say 1M? heap might be enormous */
     {
       /* alloc more heap */
       unsigned int old_size;
@@ -23260,9 +23256,20 @@ static s7_pointer make_list(s7_scheme *sc, int len)
 {
   int i;
   s7_pointer p;
-  p = sc->NIL;
-  for (i = 0; i < len; i++)
-    p = cons(sc, sc->NIL, p);
+  /* sc->v used only here */
+
+  sc->v = sc->NIL;
+  if (len < (sc->free_heap_top - sc->free_heap))
+    {
+      for (i = 0; i < len; i++)
+	sc->v = cons_unchecked(sc, sc->NIL, sc->v);
+    }
+  else
+    {
+      for (i = 0; i < len; i++)
+	sc->v = cons(sc, sc->NIL, sc->v);
+    }
+  p = sc->v;
   return(p);
 }
 
@@ -23298,8 +23305,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 
   if (len < (sc->free_heap_top - sc->free_heap))
     {
-      sc->w = cons(sc, init, sc->NIL);
-      for (i = 1; i < ilen; i++)
+      for (i = 0; i < ilen; i++)
 	sc->w = cons_unchecked(sc, init, sc->w);
     }
   else
@@ -30019,7 +30025,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	if (len == 0)
 	  return(sc->NIL);
 
-	result = g_make_list(sc, list_1(sc, make_integer(sc, len)));
+	result = make_list(sc, len);
 	gc_res = s7_gc_protect(sc, result);
 	z = list_1(sc, sc->F);
 	gc_z = s7_gc_protect(sc, z);
@@ -43720,7 +43726,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_CLOSURE_ALL_G:
 	      {
 		s7_pointer args, p;
-		if (sc->free_heap_top <= sc->free_heap_trigger) try_to_call_gc(sc);
 		sc->args = make_list(sc, integer(fcdr(cdr(code))));
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
@@ -46125,10 +46130,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_C_ALL_G:
 	      {
 		s7_pointer args, p;
-		
-		if (sc->free_heap_top <= sc->free_heap_trigger) try_to_call_gc(sc);
 		sc->args = make_list(sc, integer(fcdr(cdr(code))));
-		
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
@@ -46149,7 +46151,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			else car(p) = arg;
 		      }
 		  }
-		
 		sc->value = c_call(code)(sc, sc->args);
 		goto START;
 	      }
@@ -57489,6 +57490,7 @@ s7_scheme *s7_init(void)
   sc->cur_code = sc->F;
   sc->args = sc->NIL;
   sc->value = sc->NIL;
+  sc->v = sc->NIL;
   sc->w = sc->NIL;
   sc->x = sc->NIL;
   sc->y = sc->NIL;
@@ -58705,12 +58707,23 @@ s7_scheme *s7_init(void)
  *
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
  *   also g_multiply_3 + check for same type?
- * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases)
+ * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases) [why vector?]
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
+ *   or use cload -- put the actual data in C, had transparent overlay of get/set implicitly
+ *   plus length, map access etc (all through c_pointer) -- T_C_OVERLAY?|DATA?|VARIABLE?
+ *
+ *  add s7_pointer c_pointer_ref(s7_scheme *sc, s7_pointer args) (these could use names rather than offsets like hash-table)
+ *      s7_pointer c_pointer_set(s7_scheme *sc, s7_pointer args)
+ *      s7_pointer c_pointer_length(s7_scheme *sc, s7_pointer args)
+ *      s7_pointer c_pointer_object_to_string(s7_scheme *sc, s7_pointer args)
+ *   to the (added) c_pointer s7_cell struct and a way to set these fields in C [s7_make_c_pointer_x(...)]
+ *   would these need gc protection? -- need new type if so
+ *  add T_C_POINTER to map/for_each/obj->str/length tables, and set/apply in eval
+ *  how is this different from T_C_OBJECT?
  *
  * bench    42736                                    8672
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1232
- *                                              9811 8676
+ *                                              9811 8561
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3291
  * s7test            1721             1456 1430 1375 1358
  * t455                           265  256  218   86   87

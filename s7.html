@@ -682,24 +682,6 @@ above as an example:
 <p>See s7test.scm for many examples.
 </p>
 
-<pre class="indented">
-(<em class=red>define*</em> (make-parameter initial-value converter)
-  (let ((value (if (procedure? converter) (converter initial-value) initial-value)))
-    (<em class=red>lambda*</em> ((val #&lt;unspecified&gt;))
-      (if (not (eq? val #&lt;unspecified&gt;))
-	  (set! value (if (procedure? converter) (converter val) val)))
-      value)))
-
-&gt; (define hiho (make-parameter 12))
-hiho
-&gt; (hiho)
-12
-&gt; (hiho 32)
-32
-&gt; (hiho)
-32
-</pre>
-
 
 <blockquote>
 

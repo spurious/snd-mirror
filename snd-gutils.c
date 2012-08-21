@@ -1522,6 +1522,7 @@ void init_gtk(void)
     "  background-image: -gtk-gradient (linear, left top, right bottom, from(rgb(255, 255, 240)), to(rgb(255, 255, 255)));\n"
     "}\n",
     -1, NULL);
+  /* the 8px here refers to the whole bar, not each entry */
 
   mu_provider = gtk_css_provider_new();
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(mu_provider),

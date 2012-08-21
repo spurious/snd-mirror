@@ -30672,22 +30672,6 @@ static XEN gxg_gtk_menu_button_new(void)
   return(C_TO_XEN_GtkWidget_(gtk_menu_button_new()));
 }
 
-static XEN gxg_gtk_menu_button_set_menu(XEN menu_button, XEN menu)
-{
-  #define H_gtk_menu_button_set_menu "void gtk_menu_button_set_menu(GtkMenuButton* menu_button, GtkWidget* menu)"
-  XEN_ASSERT_TYPE(XEN_GtkMenuButton__P(menu_button), menu_button, 1, "gtk_menu_button_set_menu", "GtkMenuButton*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(menu), menu, 2, "gtk_menu_button_set_menu", "GtkWidget*");
-  gtk_menu_button_set_menu(XEN_TO_C_GtkMenuButton_(menu_button), XEN_TO_C_GtkWidget_(menu));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_menu_button_get_menu(XEN menu_button)
-{
-  #define H_gtk_menu_button_get_menu "GtkMenu* gtk_menu_button_get_menu(GtkMenuButton* menu_button)"
-  XEN_ASSERT_TYPE(XEN_GtkMenuButton__P(menu_button), menu_button, 1, "gtk_menu_button_get_menu", "GtkMenuButton*");
-  return(C_TO_XEN_GtkMenu_(gtk_menu_button_get_menu(XEN_TO_C_GtkMenuButton_(menu_button))));
-}
-
 static XEN gxg_gtk_menu_button_set_direction(XEN menu_button, XEN direction)
 {
   #define H_gtk_menu_button_set_direction "void gtk_menu_button_set_direction(GtkMenuButton* menu_button, \
@@ -38558,8 +38542,6 @@ XEN_NARGIFY_5(gxg_gtk_color_chooser_add_palette_w, gxg_gtk_color_chooser_add_pal
 XEN_NARGIFY_2(gxg_gtk_button_set_always_show_image_w, gxg_gtk_button_set_always_show_image)
 XEN_NARGIFY_1(gxg_gtk_button_get_always_show_image_w, gxg_gtk_button_get_always_show_image)
 XEN_NARGIFY_0(gxg_gtk_menu_button_new_w, gxg_gtk_menu_button_new)
-XEN_NARGIFY_2(gxg_gtk_menu_button_set_menu_w, gxg_gtk_menu_button_set_menu)
-XEN_NARGIFY_1(gxg_gtk_menu_button_get_menu_w, gxg_gtk_menu_button_get_menu)
 XEN_NARGIFY_2(gxg_gtk_menu_button_set_direction_w, gxg_gtk_menu_button_set_direction)
 XEN_NARGIFY_1(gxg_gtk_menu_button_get_direction_w, gxg_gtk_menu_button_get_direction)
 XEN_NARGIFY_2(gxg_gtk_menu_button_set_menu_model_w, gxg_gtk_menu_button_set_menu_model)
@@ -42635,8 +42617,6 @@ XEN_NARGIFY_0(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)
 #define gxg_gtk_button_set_always_show_image_w gxg_gtk_button_set_always_show_image
 #define gxg_gtk_button_get_always_show_image_w gxg_gtk_button_get_always_show_image
 #define gxg_gtk_menu_button_new_w gxg_gtk_menu_button_new
-#define gxg_gtk_menu_button_set_menu_w gxg_gtk_menu_button_set_menu
-#define gxg_gtk_menu_button_get_menu_w gxg_gtk_menu_button_get_menu
 #define gxg_gtk_menu_button_set_direction_w gxg_gtk_menu_button_set_direction
 #define gxg_gtk_menu_button_get_direction_w gxg_gtk_menu_button_get_direction
 #define gxg_gtk_menu_button_set_menu_model_w gxg_gtk_menu_button_set_menu_model
@@ -46719,8 +46699,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_button_set_always_show_image, gxg_gtk_button_set_always_show_image_w, 2, 0, 0, H_gtk_button_set_always_show_image);
   XG_DEFINE_PROCEDURE(gtk_button_get_always_show_image, gxg_gtk_button_get_always_show_image_w, 1, 0, 0, H_gtk_button_get_always_show_image);
   XG_DEFINE_PROCEDURE(gtk_menu_button_new, gxg_gtk_menu_button_new_w, 0, 0, 0, H_gtk_menu_button_new);
-  XG_DEFINE_PROCEDURE(gtk_menu_button_set_menu, gxg_gtk_menu_button_set_menu_w, 2, 0, 0, H_gtk_menu_button_set_menu);
-  XG_DEFINE_PROCEDURE(gtk_menu_button_get_menu, gxg_gtk_menu_button_get_menu_w, 1, 0, 0, H_gtk_menu_button_get_menu);
   XG_DEFINE_PROCEDURE(gtk_menu_button_set_direction, gxg_gtk_menu_button_set_direction_w, 2, 0, 0, H_gtk_menu_button_set_direction);
   XG_DEFINE_PROCEDURE(gtk_menu_button_get_direction, gxg_gtk_menu_button_get_direction_w, 1, 0, 0, H_gtk_menu_button_get_direction);
   XG_DEFINE_PROCEDURE(gtk_menu_button_set_menu_model, gxg_gtk_menu_button_set_menu_model_w, 2, 0, 0, H_gtk_menu_button_set_menu_model);
@@ -49383,7 +49361,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Aug-12"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Aug-12"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
