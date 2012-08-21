@@ -69022,40 +69022,42 @@ etc
 ;;;
 ;;; cload define-c-function tests
 
-(load "cload.scm")
-
-(define-c-function '((double j0 (double)) 
-                     (double j1 (double)) 
-                     (double erf (double)) 
-                     (double erfc (double))
-                     (double lgamma (double)))
-                    "m" "math.h")
-(num-test (m:j0 1.0) 0.76519768655797)
-(num-test (m:j1 1.0) 0.44005058574493)
-(num-test (m:j0 1/2) 0.93846980724081)
-(num-test (m:erf 1.0) 0.84270079294971)
-(num-test (m:erf 2) 0.99532226501895)
-(num-test (m:erfc 1.0) 0.15729920705029)
-(num-test (m:lgamma 2/3) 0.30315027514752)
-
-(let ()
-  (define-c-function '(char* getenv (char*)))
-  (define-c-function '(int setenv (char* char* int)))
-  (test (string? (getenv "HOST")) #t))
-
-(test (defined? 'setenv) #f)
-
-(let ()
-  (define local-file-exists? (let () ; define F_OK and access only within this let
-			       (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
-			       (lambda (arg) (= (access arg F_OK) 0))))
-
-  (define delete-file (let () 
-			(define-c-function '(int unlink (char*)) "" "unistd.h") 
-			(lambda (file) (= (unlink file) 0)))) ; 0=success
-  
-  (test (local-file-exists? "s7test.scm") #t))
-
+(if (provided? 'snd)
+    (begin
+      (load "cload.scm")
+      
+      (define-c-function '((double j0 (double)) 
+			   (double j1 (double)) 
+			   (double erf (double)) 
+			   (double erfc (double))
+			   (double lgamma (double)))
+	"m" "math.h")
+      (num-test (m:j0 1.0) 0.76519768655797)
+      (num-test (m:j1 1.0) 0.44005058574493)
+      (num-test (m:j0 1/2) 0.93846980724081)
+      (num-test (m:erf 1.0) 0.84270079294971)
+      (num-test (m:erf 2) 0.99532226501895)
+      (num-test (m:erfc 1.0) 0.15729920705029)
+      (num-test (m:lgamma 2/3) 0.30315027514752)
+      
+      (let ()
+	(define-c-function '(char* getenv (char*)))
+	(define-c-function '(int setenv (char* char* int)))
+	(test (string? (getenv "HOST")) #t))
+      
+      (test (defined? 'setenv) #f)
+      
+      (let ()
+	(define local-file-exists? (let () ; define F_OK and access only within this let
+				     (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
+				     (lambda (arg) (= (access arg F_OK) 0))))
+	
+	(define delete-file (let () 
+			      (define-c-function '(int unlink (char*)) "" "unistd.h") 
+			      (lambda (file) (= (unlink file) 0)))) ; 0=success
+	
+	(test (local-file-exists? "s7test.scm") #t))
+      ))
 
 
 

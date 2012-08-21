@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.11"
-#define S7_DATE "6-Aug-12"
+#define S7_VERSION "2.12"
+#define S7_DATE "22-Aug-12"
 
 
 typedef long long int s7_Int;
@@ -856,6 +856,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 22-Aug:    symbol->dynamic-value.
  * 10-Aug:    exported s7_outer_environment.
  * 6-Aug:     removed WITH_OPTIMIZATION.
  * 25-July:   environment (in scheme). s7_vector_ref_n and s7_vector_set_n. s7_copy.

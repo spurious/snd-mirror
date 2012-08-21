@@ -8462,51 +8462,38 @@
 
 #|
 ;;; 3.5.12
-GtkWindow *      gtk_application_get_active_window  (GtkApplication             *application);
-void            gtk_entry_set_input_purpose                  (GtkEntry             *entry,
-+                                                               GtkInputPurpose       purpose);
-+ GtkInputPurpose gtk_entry_get_input_purpose                  (GtkEntry             *entry);
-+ 
-+ void            gtk_entry_set_input_hints                    (GtkEntry             *entry,
-+                                                               GtkInputHints         hints);
-+ GtkInputHints   gtk_entry_get_input_hints                    (GtkEntry             *entry);
-+ typedef enum
-+ {
-+   GTK_INPUT_PURPOSE_FREE_FORM,
-+   GTK_INPUT_PURPOSE_ALPHA,
-+   GTK_INPUT_PURPOSE_DIGITS,
-+   GTK_INPUT_PURPOSE_NUMBER,
-+   GTK_INPUT_PURPOSE_PHONE,
-+   GTK_INPUT_PURPOSE_URL,
-+   GTK_INPUT_PURPOSE_EMAIL,
-+   GTK_INPUT_PURPOSE_NAME,
-+   GTK_INPUT_PURPOSE_PASSWORD,
-+   GTK_INPUT_PURPOSE_PIN
-+ } GtkInputPurpose;
-+ typedef enum
-+ {
-+   GTK_INPUT_HINT_NONE                = 0,
-+   GTK_INPUT_HINT_SPELLCHECK          = 1 << 0,
-+   GTK_INPUT_HINT_NO_SPELLCHECK       = 1 << 1,
-+   GTK_INPUT_HINT_WORD_COMPLETION     = 1 << 2,
-+   GTK_INPUT_HINT_LOWERCASE           = 1 << 3,
-+   GTK_INPUT_HINT_UPPERCASE_CHARS     = 1 << 4,
-+   GTK_INPUT_HINT_UPPERCASE_WORDS     = 1 << 5,
-+   GTK_INPUT_HINT_UPPERCASE_SENTENCES = 1 << 6
-+ } GtkInputHints;
-void         gtk_menu_button_set_menu       (GtkMenuButton *menu_button,
-                                               GtkWidget     *menu);
-+ GtkMenu     *gtk_menu_button_get_popup      (GtkMenuButton *menu_button);
-+ void             gtk_text_view_set_input_purpose      (GtkTextView      *text_view,
-+                                                        GtkInputPurpose   purpose);
-+ GtkInputPurpose  gtk_text_view_get_input_purpose      (GtkTextView      *text_view);
-+ 
-+ void             gtk_text_view_set_input_hints        (GtkTextView      *text_view,
-+                                                        GtkInputHints     hints);
-+ GtkInputHints    gtk_text_view_get_input_hints        (GtkTextView      *text_view);
-+ void                    gtk_widget_insert_action_group                  (GtkWidget    *widget,
-+                                                                          const gchar  *name,
-+                                                                          GActionGroup *group);
+(CFNC "GtkWindow* gtk_application_get_active_window GtkApplication* application")
+(CFNC "void gtk_entry_set_input_purpose GtkEntry* entry GtkInputPurpose purpose")
+(CFNC "GtkInputPurpose gtk_entry_get_input_purpose GtkEntry* entry")
+(CFNC "void gtk_entry_set_input_hints GtkEntry* entry GtkInputHints hints")
+(CFNC "GtkInputHints gtk_entry_get_input_hints GtkEntry* entry")
+(CFNC "void gtk_menu_button_set_menu GtkMenuButton* menu_button GtkWidget* menu")
+(CFNC "GtkMenu* gtk_menu_button_get_popup GtkMenuButton* menu_button")
+(CFNC "void gtk_text_view_set_input_purpose GtkTextView* text_view GtkInputPurpose purpose")
+(CFNC "GtkInputPurpose gtk_text_view_get_input_purpose GtkTextView* text_view")
+(CFNC "void gtk_text_view_set_input_hints GtkTextView* text_view GtkInputHints hints")
+(CFNC "GtkInputHints gtk_text_view_get_input_hints GtkTextView* text_view")
+(CFNC "void gtk_widget_insert_action_group GtkWidget* widget gchar* name GActionGroup* group" 'const)
+
+(CINT "GTK_INPUT_PURPOSE_FREE_FORM" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_ALPHA" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_DIGITS" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_NUMBER" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_PHONE" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_URL" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_EMAIL" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_NAME" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_PASSWORD" "GtkInputPurpose")
+(CINT "GTK_INPUT_PURPOSE_PIN" "GtkInputPurpose")
+
+(CINT "GTK_INPUT_HINT_NONE" "GtkInputHints")
+(CINT "GTK_INPUT_HINT_SPELLCHECK" "GtkInputHints")
+(CINT "GTK_INPUT_HINT_NO_SPELLCHECK" "GtkInputHints")
+(CINT "GTK_INPUT_HINT_WORD_COMPLETION" "GtkInputHints")
+(CINT "GTK_INPUT_HINT_LOWERCASE" "GtkInputHints")
+(CINT "GTK_INPUT_HINT_UPPERCASE_CHARS" "GtkInputHints")
+(CINT "GTK_INPUT_HINT_UPPERCASE_WORDS" "GtkInputHints")
+(CINT "GTK_INPUT_HINT_UPPERCASE_SENTENCES" "GtkInputHints")
 
 |#
 

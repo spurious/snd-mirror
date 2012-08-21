@@ -1175,7 +1175,8 @@ struct s7_scheme {
   s7_pointer REAL_PART, REMAINDER, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STRING, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, STRINGP, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
-  s7_pointer SYMBOL_ACCESS, SYMBOLP, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_VALUE, TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR;
+  s7_pointer SYMBOL_ACCESS, SYMBOLP, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
+  s7_pointer TAN, TANH, THROW, TRUNCATE, UNOPTIMIZE, VALUES, VECTOR;
   s7_pointer VECTORP, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, ZEROP;
   s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH;
@@ -3391,18 +3392,23 @@ static void try_to_call_gc(s7_scheme *sc)
   /* called only from NEW_CELL and cons */
   unsigned int freed_heap = 0;
   
-  if (!(sc->gc_off))
-    freed_heap = gc(sc);
-  
+  if (sc->gc_off) return;
+
+  freed_heap = gc(sc);
   if (freed_heap < sc->heap_size / 2) /* PERHAPS: make this max out at say 1M? heap might be enormous */
     {
       /* alloc more heap */
-      unsigned int old_size;
+      unsigned int old_size, old_free;
       old_size = sc->heap_size;
+
+      old_free = sc->free_heap_top - sc->free_heap;
+      /* fprintf(stderr, "gc: %d size: %d, %d\n", freed_heap, sc->heap_size, old_free); */
       
       if (sc->heap_size < 512000)
 	sc->heap_size *= 2;
       else sc->heap_size += 512000;
+
+      /* fprintf(stderr, "new heap size: %d\n", sc->heap_size); */
       
       sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
       if (!(sc->heap))
@@ -3413,7 +3419,7 @@ static void try_to_call_gc(s7_scheme *sc)
 	fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
       
       sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
-      sc->free_heap_top = sc->free_heap;
+      sc->free_heap_top = sc->free_heap + old_free; /* incremented below, added old_free 21-Aug-12?!? */
       
       { 
 	/* optimization suggested by K Matheussen */
@@ -5271,6 +5277,72 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
   x = find_symbol(sc, sym);
   if (is_slot(x))
     slot_set_value(x, val);
+  return(val);
+}
+
+
+/* an experiment */
+static s7_pointer find_dynamic_value(s7_scheme *sc, s7_pointer x, s7_pointer sym, long long int *id)
+{ 
+  for (; symbol_id(sym) < frame_id(x); x = next_environment(x));
+
+  if (frame_id(x) == symbol_id(sym))
+    {
+      (*id) = frame_id(x);
+      return(slot_value(local_slot(sym)));
+    }
+  for (; (is_environment(x)) && (frame_id(x) > (*id)); x = next_environment(x))
+    {
+      s7_pointer y; 
+      for (y = environment_slots(x); is_slot(y); y = next_slot(y))	
+	if (slot_symbol(y) == sym)
+	  {
+	    (*id) = frame_id(x);
+	    return(slot_value(y));
+	  }
+    }
+  return(sc->GC_NIL);
+} 
+
+
+static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbol_to_dynamic_value "(symbol->dynamic-value sym) returns the dynamic binding of the symbol sym"
+
+  s7_pointer sym, val;
+  long long int top_id;
+  int i;
+
+  sym = car(args);
+
+  if (!is_symbol(sym))
+    return(wrong_type_argument(sc, sc->SYMBOL_TO_DYNAMIC_VALUE, small_int(1), sym, T_SYMBOL));
+  
+  if (is_global(sym))
+    return(slot_value(global_slot(sym)));
+
+  if (frame_id(sc->envir) == symbol_id(sym))
+    return(slot_value(local_slot(sym)));	
+
+  top_id = -1;
+  val = find_dynamic_value(sc, sc->envir, sym, &top_id);
+  /* fprintf(stderr, "envir: %lld (%lld) %s\n", top_id, symbol_id(sym), DISPLAY(val)); */
+  if (top_id == symbol_id(sym))
+    return(val);
+
+  for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
+    {
+      s7_pointer cur_val;
+      cur_val = find_dynamic_value(sc, stack_environment(sc->stack, i), sym, &top_id);
+      if (cur_val != sc->GC_NIL)
+	val = cur_val;
+      /* fprintf(stderr, "stack(%s): %lld (%lld) %s\n", real_op_names[stack_op(sc->stack, i)], top_id, symbol_id(sym), DISPLAY(val)); */
+      if (top_id == symbol_id(sym))
+	return(val);
+    }
+  
+  if (val == sc->GC_NIL)
+    return(sc->UNDEFINED);
   return(val);
 }
 
@@ -57942,6 +58014,7 @@ s7_scheme *s7_init(void)
   sc->STRING_TO_SYMBOL = s7_define_safe_function(sc,  "string->symbol",            g_string_to_symbol,         1, 0, false, H_string_to_symbol);
   sc->SYMBOL = s7_define_safe_function(sc,            "symbol",                    g_symbol,                   1, 0, false, H_symbol);
   sc->SYMBOL_TO_VALUE = s7_define_safe_function(sc,   "symbol->value",             g_symbol_to_value,          1, 1, false, H_symbol_to_value);
+  sc->SYMBOL_TO_DYNAMIC_VALUE = s7_define_safe_function(sc, "symbol->dynamic-value", g_symbol_to_dynamic_value, 1, 0, false, H_symbol_to_dynamic_value);
   s7_define_function_with_setter(sc,                  "symbol-access",             g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
   sc->SYMBOL_ACCESS = make_symbol(sc, "symbol-access");
   
@@ -58698,8 +58771,7 @@ s7_scheme *s7_init(void)
  *            would it work to simply replace the old slot (not remake the entire env)?
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
  *
- * we need integer_length everywhere!  Can this number be included with any integer/ratio?
- *   what is free?  Perhaps leave it until it's needed?
+ * we need integer_length everywhere! 
  *   TODO: these fixups are ignored by the optimized cases
  *
  * optimizer could mark the non-capture lambdas (for-each/map/catch/dynamic-wind/run/with-output...)
@@ -58719,7 +58791,7 @@ s7_scheme *s7_init(void)
  *   to the (added) c_pointer s7_cell struct and a way to set these fields in C [s7_make_c_pointer_x(...)]
  *   would these need gc protection? -- need new type if so
  *  add T_C_POINTER to map/for_each/obj->str/length tables, and set/apply in eval
- *  how is this different from T_C_OBJECT?
+ *  how is this different from T_C_OBJECT? -- no special handling in gc, no table for type (anonymous type I guess), no methods
  *
  * bench    42736                                    8672
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1232
