@@ -1462,6 +1462,7 @@ case "$host" in
 	AUDIO_SYSTEM=OpenBSD
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
+          CFLAGS="-ftrampolines $CFLAGS"
         fi
         ;;
     *-*-netbsd*) 

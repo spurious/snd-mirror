@@ -163,6 +163,8 @@
  *
  * The __bfin__ switch refers to the Blackfin processor where int accesses must be 4-byte aligned.
  *   I can't find any built-in compiler switch to detect this case.
+ *
+ * in openBSD I think you need to include -ftrampolines in CFLAGS.
  */
 
 
@@ -58793,11 +58795,15 @@ s7_scheme *s7_init(void)
  *  add T_C_POINTER to map/for_each/obj->str/length tables, and set/apply in eval
  *  how is this different from T_C_OBJECT? -- no special handling in gc, no table for type (anonymous type I guess), no methods
  *
- * bench    42736                                    8672
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1232
- *                                              9811 8561
- * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3291
- * s7test            1721             1456 1430 1375 1358
+ * TODO: add fft to s7test and try to confuse the old_free business in the gc.
+ * TODO: try all number types in the fft [and sequence types]
+ * TODO: make sure all the s7.html examples are tested in s7test
+ *
+ * bench    42736                                    8580
+ * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1230
+ *                                              9811 8388
+ * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3273
+ * s7test            1721             1456 1430 1375 1350
  * t455                           265  256  218   86   87
  * t502                                 90   72   42   40
  */

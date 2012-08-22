@@ -9870,6 +9870,7 @@ $as_echo "$alsa_ok" >&6; }
 	AUDIO_SYSTEM=OpenBSD
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
+          CFLAGS="-ftrampolines $CFLAGS"
         fi
         ;;
     *-*-netbsd*)

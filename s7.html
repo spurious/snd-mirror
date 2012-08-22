@@ -2387,57 +2387,20 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="openenvironment">open-environment</em> env)        mark env as open (see below)
 (<em class=def id="openenvironmentp">open-environment?</em> env)
 (<em class=def id="objectenvironment">object-environment</em> env)
-
-(<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
-(<em class=def id="symboltodynamicvalue">symbol-&gt;dynamic-value</em> sym)
-(<em class=def id="definedp">defined?</em> sym (env (current-environment)))
 </pre>
 
 
-<p><code>(with-environment env . body)</code> evaluates its body in the environment env.
-There are several examples of its use in the <a href="#macros">macro</a> section.
-</p>
-
-<p>
-<code>defined?</code> returns #t if the symbol is defined in the environment:
-</p>
-
-<pre class="indented">
-(define-macro (defvar name value) 
-  `(if (not (defined? ',name)) 
-       (define ,name ,value)))
-</pre>
-
-
-
-<p>
-<code>symbol-&gt;value</code> returns the value (lexically) bound to the symbol, whereas <code>symbol-&gt;dynamic-value</code>
-returns the value dynamically bound to it.  A variable can access both of its values:
-</p>
-<pre class="indented">
-(let ((x 32)
-      (y 0))
-  (define (gx) ; return both bindings of 'x
-    (list x (<em class=red>symbol-&gt;value</em> 'x) (<em class=red>symbol-&gt;dynamic-value</em> 'x)))
-  (let ((x 100))
-    (let ((x 12))
-      (set! y (gx))))
-  (format *stderr* "y: ~A~%" y))
-
-&gt; "y: (32 32 12)"
-</pre>
-
-
-<p>
-To add or change a symbol's value, use augment-environment:
+<p>with-environment evaluates its body in the given environment,
+and augment-environment adds a binding (a symbol and its value) to an environment:
 </p>
 
 <pre class="indented">
 &gt; (let ((a 1)) 
-    (eval '(+ a b) 
-           (<em class=red>augment-environment</em>
-             (current-environment) 
-             (cons 'b 32)))) ; add 'b with the value 32 to this environment
+    (with-environment
+        (<em class=red>augment-environment</em>
+          (current-environment) ; this has 'a with the value 1 
+          (cons 'b 32))         ; add 'b with the value 32
+      (+ a b)))
 33
 </pre>
 
@@ -4854,8 +4817,40 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 
 <div class="separator"></div>
 
+<pre class="indented">
+(<em class=def id="symboltable">symbol-table</em>)
+(<em class=def id="symboltovalue">symbol-&gt;value</em> sym (env (current-environment)))
+(<em class=def id="symboltodynamicvalue">symbol-&gt;dynamic-value</em> sym)
+(<em class=def id="definedp">defined?</em> sym (env (current-environment)))
+</pre>
+
 <p>
-<code>(<em class=def id="symboltable">symbol-table</em>)</code> returns the symbol table, a vector of lists of symbols.
+<code>defined?</code> returns #t if the symbol is defined in the environment:
+</p>
+
+<pre class="indented">
+(define-macro (defvar name value) 
+  `(if (not (defined? ',name)) 
+       (define ,name ,value)))
+</pre>
+
+<p>
+<code>symbol-&gt;value</code> returns the value (lexically) bound to the symbol, whereas <code>symbol-&gt;dynamic-value</code>
+returns the value dynamically bound to it.  A variable can access both of its values:
+</p>
+<pre class="indented">
+(let ((x 32))
+  (define (gx) ; return both bindings of 'x
+    (list x (<em class=red>symbol-&gt;value</em> 'x) (<em class=red>symbol-&gt;dynamic-value</em> 'x)))
+  (let ((x 100))
+    (let ((x 12))
+      (values (gx))))) ; this 'values' looks dumb, it is dumb, but see my unconvincing explanantion <a href="#weaselwords">below</a>.
+                       ;   briefly: "dynamic binding" in s7 is not "lexically apparent dynamic binding"
+&gt; (32 32 12)
+</pre>
+
+<p>
+<code>symbol-table</code> returns the symbol table, a vector of lists of symbols.
 Here we scan the symbol table looking for any function that doesn't have documentation:
 </p>
 
@@ -4963,6 +4958,34 @@ The function takes one argument, the environment in which loads and evals should
 </pre>
 </div>
 
+<div class="indented" id="weaselwords">
+<p>So why, you are asking, the useless 'values' in our dynamic binding example?  The short answer: tail calls.
+The long winded one goes something like this.  symbol-&gt;dynamic-value searches the stack to find
+the latest binding of its argument.  But because we want to support tail calls, "let" does not
+push anything on the stack.  If we call a function as the last thing that happens in that let's body,
+and it tries (internally) to access a dynamic binding, the let that launched the function no longer exists; it might already
+be garbage collected, and it certainly isn't on the stack. Take our earlier example without the
+'values':
+</p>
+
+<pre class="indented">
+(let ((x 32))
+  (define (gx) 
+    (symbol-&gt;dynamic-value 'x))
+  (let ((x 100))
+    (gx)))
+</pre>
+
+<p>
+This returns 32 because the <code>(x 100)</code> binding no longer exists anywhere when the gx body is evaluated.
+So, in s7, the "dynamic binding" of x is the last binding of x that is accessible
+to s7.  This may not be the last binding that we can see in the code text, but I don't see that as
+an inconsistency. It's not lexical after all. 
+Leaving aside this special case, so to speak,
+dynamic binding does what you'd expect, even in the context of call/cc.  See s7test.scm for
+the MIT-Scheme test of that interaction.
+</p>
+</div>
 
 
 <div class="separator"></div>
