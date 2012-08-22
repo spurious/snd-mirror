@@ -1921,6 +1921,11 @@
 	(+ 11-1 2012-4-19 1+the-road -1+2 1e. 0+i' 0..))
       59)
 
+(test (let ((name "hiho"))
+	(string-set! name 2 #\null)
+	(symbol? (string->symbol name)))
+      #t)
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4236,59 +4241,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
   (test (eval (symbol "(#)")) 3))
 
 
-
-;;; --------------------------------------------------------------------------------
-;;; symbol->value
-
-(let ((sym 0))
-  (test (symbol->value 'sym) 0)
-  (for-each
-   (lambda (arg)
-     (set! sym arg)
-     (test (symbol->value 'sym) arg))
-   (list #\a 1 () (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
-	 3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1)))))
-
-(for-each
- (lambda (arg)
-   (test (symbol->value arg) 'error)
-   (test (symbol->value 'abs arg) 'error))
- (list #\a 1 () (list 1) "hi" '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
-       3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1))))
-  
-(test (symbol->value) 'error)
-(test (symbol->value 'hi 'ho) 'error)
-
-(test (symbol->value 'abs (initial-environment)) abs)
-(test (symbol->value 'abs (global-environment)) abs)
-(test (symbol->value 'lambda) lambda)
-(test (symbol->value 'do) do)
-(test (symbol->value do) 'error)
-(test (symbol->value 'macroexpand) macroexpand)
-(test (symbol->value 'quasiquote) quasiquote)
-(test (symbol->value 'else) else)
-(test (symbol->value :hi) :hi)
-(test (symbol->value hi:) hi:)
-(test (symbol->value '#<eof>) 'error) ; ??
-(test (symbol? '#<eof>) #f)
-(test (let ((a1 32)) (let () (symbol->value 'a1 (current-environment)))) 32)
-(test (let ((a1 32)) (let ((a1 0)) (symbol->value 'a1 (current-environment)))) 0)
-(test (let ((a1 32)) (let ((a1 0)) (symbol->value 'b1 (current-environment)))) #<undefined>)
-(test (symbol->value 'abs '()) 'error)
-(test (let ((a1 (let ((b1 32)) (lambda () b1)))) (symbol->value 'b1 (procedure-environment a1))) 32)
-(test (let ((x #f)) (set! x (let ((a1 (let ((b1 32)) (lambda () b1)))) a1)) (symbol->value 'b1 (procedure-environment x))) 32)
-(test (symbol->value 'if) if)
-(test (symbol->value if) 'error)
-(test ((symbol->value (define (hi a) (+ a 1))) 2) 3)
-(test ((symbol->value (define-macro (hi a) `(+ ,a 1))) 2) 3)
-(test (let ((mac (symbol->value (define-macro (hi a) `(+ ,a 1))))) (mac 3)) 4)
-
-(test (let ((name "hiho"))
-	(string-set! name 2 #\null)
-	(symbol? (string->symbol name)))
-      #t)
-
-
 #|
 (let ((str "(let ((X 3)) X)"))
   (do ((i 0 (+ i 1)))
@@ -4328,6 +4280,148 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	     (lambda args
 	       (format #t "bad: ~C~%" (integer->char i)))))))  ; # ( ) ' " . ` nul 9 10 13 space 0..9 ;
 |#
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; symbol->value
+;;; symbol->dynamic-value
+
+(let ((sym 0))
+  (test (symbol->value 'sym) 0)
+  (test (symbol->dynamic-value 'sym) 0)
+  (for-each
+   (lambda (arg)
+     (set! sym arg)
+     (test (symbol->value 'sym) arg)
+     (test (symbol->dynamic-value 'sym) arg))
+   (list #\a 1 () (list 1) '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand (log 0) 
+	 3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1)))))
+
+(for-each
+ (lambda (arg)
+   (test (symbol->value arg) 'error)
+   (test (symbol->value 'abs arg) 'error)
+   (test (symbol->dynamic-value arg) 'error)
+   (test (symbol->dynamic-value 'abs arg) 'error))
+ (list #\a 1 () (list 1) "hi" '(1 . 2) #f (make-vector 3) abs _ht_ quasiquote macroexpand 1/0 (log 0) 
+       3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1))))
+  
+(test (symbol->value) 'error)
+(test (symbol->value 'hi 'ho) 'error)
+(test (symbol->dynamic-value) 'error)
+(test (symbol->dynamic-value 'hi 'ho) 'error)
+
+(test (symbol->value 'abs (initial-environment)) abs)
+(test (symbol->value 'abs (global-environment)) abs)
+(test (symbol->value 'lambda) lambda)
+(test (symbol->value 'do) do)
+(test (symbol->value do) 'error)
+(test (symbol->value 'macroexpand) macroexpand)
+(test (symbol->value 'quasiquote) quasiquote)
+(test (symbol->value 'else) else)
+(test (symbol->value :hi) :hi)
+(test (symbol->value hi:) hi:)
+
+(test (symbol->dynamic-value 'lambda) lambda)
+(test (symbol->dynamic-value 'do) do)
+(test (symbol->dynamic-value do) 'error)
+(test (symbol->dynamic-value 'macroexpand) macroexpand)
+(test (symbol->dynamic-value 'quasiquote) quasiquote)
+(test (symbol->dynamic-value 'else) else)
+(test (symbol->dynamic-value :hi) :hi)
+(test (symbol->dynamic-value hi:) hi:)
+
+(test (symbol->value '#<eof>) 'error) ; because it's not a symbol:
+(test (symbol? '#<eof>) #f)
+(test (let ((a1 32)) (let () (symbol->value 'a1 (current-environment)))) 32)
+(test (let ((a1 32)) (let ((a1 0)) (symbol->value 'a1 (current-environment)))) 0)
+(test (let ((a1 32)) (let ((a1 0)) (symbol->value 'b1 (current-environment)))) #<undefined>)
+(test (symbol->value 'abs '()) 'error)
+(test (let ((a1 (let ((b1 32)) (lambda () b1)))) (symbol->value 'b1 (procedure-environment a1))) 32)
+(test (let ((x #f)) (set! x (let ((a1 (let ((b1 32)) (lambda () b1)))) a1)) (symbol->value 'b1 (procedure-environment x))) 32)
+(test (symbol->value 'if) if)
+(test (symbol->value if) 'error)
+(test ((symbol->value (define (hi a) (+ a 1))) 2) 3)
+(test ((symbol->value (define-macro (hi a) `(+ ,a 1))) 2) 3)
+(test (let ((mac (symbol->value (define-macro (hi a) `(+ ,a 1))))) (mac 3)) 4)
+
+(let ()
+  (define *ds* 0)
+  (define (get-ds) (list *ds* (symbol->dynamic-value '*ds*)))
+  (test (get-ds) '(0 0))
+  (let ((*ds* 32))
+    (test (values (get-ds)) '(0 32)))
+  (let ((*ds* 3))
+    (define (gds) (list *ds* (symbol->dynamic-value '*ds*)))
+    (test (list (get-ds) (gds)) '((0 3) (3 3)))
+    (let ((*ds* 123)) 
+      (test (list (get-ds) (gds)) '((0 123) (3 123)))))
+  (let ((*ds* 3))
+    (define (gds) (list *ds* (symbol->dynamic-value '*ds*)))
+    (let ((*ds* 123)) 
+      (set! *ds* 321)
+      (test (list (get-ds) (gds)) '((0 321) (3 321))))))
+
+(test (symbol->dynamic-value 'asdasfasdasfg) #<undefined>)
+
+(let ((x 32))
+  (define (gx) (symbol->dynamic-value 'x))
+  (let ((x 12))
+    (test (values (gx)) 12)))
+
+(let ((x "hi")
+      (y 0)
+      (z '(1 2 3)))
+  (define (gx) (+ (symbol->dynamic-value 'x) (symbol->dynamic-value 'z)))
+  (let ((x 32) 
+	(z (+ 123 (car z))))
+    (test (values (gx)) 156)))
+
+(let ((x 32))
+  (define (gx) (symbol->dynamic-value 'x))
+  (let ((x 100))
+    (let ((x 12))
+      (test (values (gx)) 12))))
+
+(let ((x 32))
+  (define (gx) ; return both bindings of 'x
+    (list x (symbol->value 'x) (symbol->dynamic-value 'x)))
+  (let ((x 100))
+    (let ((x 12))
+      (test (values (gx)) '(32 32 12)))))
+
+(let ((bindings ()))
+  ;; taken from the MIT_Scheme documentation (changing fluid-let to let)
+
+  (define (write-line v) 
+    (set! bindings (cons v bindings)))
+
+  (define (complicated-dynamic-binding)
+    (let ((variable 1)
+	  (inside-continuation #f))
+      (write-line variable)
+      (call-with-current-continuation
+       (lambda (outside-continuation)
+	 (let ((variable 2))
+	   (write-line variable)
+	   (set! variable 3)
+	   (call-with-current-continuation
+	    (lambda (k)
+	      (set! inside-continuation k)
+	      (outside-continuation #t)))
+	   (write-line variable)
+	   (set! inside-continuation #f))))
+      (write-line variable)
+      (if inside-continuation
+	  (begin
+	    (set! variable 4)
+	    (inside-continuation #f)))))
+
+  (complicated-dynamic-binding)
+  (test (reverse bindings) '(1 2 1 3 4)))
+
 
 
 

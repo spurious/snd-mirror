@@ -5344,7 +5344,7 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
     }
   
   if (val == sc->GC_NIL)
-    return(sc->UNDEFINED);
+    return(s7_symbol_value(sc, sym));
   return(val);
 }
 
@@ -58789,14 +58789,11 @@ s7_scheme *s7_init(void)
  *  add s7_pointer c_pointer_ref(s7_scheme *sc, s7_pointer args) (these could use names rather than offsets like hash-table)
  *      s7_pointer c_pointer_set(s7_scheme *sc, s7_pointer args)
  *      s7_pointer c_pointer_length(s7_scheme *sc, s7_pointer args)
- *      s7_pointer c_pointer_object_to_string(s7_scheme *sc, s7_pointer args)
+ *      s7_pointer e (open envir for all the rest) -- but these pointers are not marked, so caller has to gc-protect them
  *   to the (added) c_pointer s7_cell struct and a way to set these fields in C [s7_make_c_pointer_x(...)]
- *   would these need gc protection? -- need new type if so
- *  add T_C_POINTER to map/for_each/obj->str/length tables, and set/apply in eval
- *  how is this different from T_C_OBJECT? -- no special handling in gc, no table for type (anonymous type I guess), no methods
+ *  add T_C_POINTER to map/for_each/length tables, and set/apply in eval
  *
  * TODO: add fft to s7test and try to confuse the old_free business in the gc.
- * TODO: try all number types in the fft [and sequence types]
  * TODO: make sure all the s7.html examples are tested in s7test
  *
  * bench    42736                                    8580
