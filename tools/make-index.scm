@@ -82,8 +82,6 @@
       (set! (str i) (char-downcase (str i))))))
 
 
-(define array-length 4096)
-
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
 
@@ -696,6 +694,8 @@
 	  (set! (str i) #\_)))))
 
 (define ids (make-hash-table))
+(define n-array-length 2048)
+(define g-array-length 128)
 
 (define* (make-index-1 file-names (output "test.html") (cols 3) (capitalized #f) no-bold with-scm with-clm-locals)
   ;; read html file, gather all names, create index (in lower-case, *=space in sort)
@@ -705,12 +705,12 @@
 	(current-general 0)
 	(got-tr #f)
 	(topic #f)
-	(xrefs (make-vector array-length #f))
-	(generals (make-vector array-length #f))
-	(topics (make-vector array-length #f))
-	(gfiles (make-vector array-length #f))
-	(files (make-vector array-length #f))
-	(names (make-vector array-length #f))
+	(xrefs (make-vector g-array-length #f))
+	(generals (make-vector g-array-length #f))
+	(topics (make-vector n-array-length #f))
+	(gfiles (make-vector g-array-length #f))
+	(files (make-vector n-array-length #f))
+	(names (make-vector n-array-length #f))
 	(local-ids '())
 	)
     (fill! ids ())
@@ -1088,9 +1088,6 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;; html-check
-
-(define array-size (* 4 8192))
-
 ;;; (html-check '("sndlib.html" "snd.html" "sndclm.html" "extsnd.html" "grfsnd.html" "sndscm.html" "fm.html" "balance.html" "snd-contents.html" "s7.html"))
 
 (define (html-check files)

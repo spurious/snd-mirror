@@ -924,6 +924,15 @@ typedef struct s7_cell {
     } chr;
 
     void *c_pointer;
+#if 0
+    struct {
+      void *c_pointer;
+      s7_pointer e;
+      s7_pointer (*getter)(s7_scheme *sc, s7_pointer args);
+      s7_pointer (*setter)(s7_scheme *sc, s7_pointer args);
+      s7_pointer (*length)(s7_scheme *sc, s7_pointer args);
+    } cptr;
+#endif
 
     int baffle_key;
     
@@ -1236,8 +1245,7 @@ struct s7_scheme {
 
 
 
-/* is_c_function can be array lookup, as can T_PROCEDURE(?), T_ANY_MACRO(?)
- *  what about T_EXPANSION? T_KEYWORD? T_COPY_ARGS? or checks like typeflag against T_PROCEDURE|T_ANY_MACRO
+/* is_c_function can be array lookup
  *  the array lookup has exactly the same computational cost as the bit check
  */
 
@@ -1321,6 +1329,7 @@ static bool t_number_p[NUM_TYPES], t_real_p[NUM_TYPES], t_rational_p[NUM_TYPES];
 static bool t_simple_p[NUM_TYPES];
 static bool t_big_number_p[NUM_TYPES];
 static bool t_structure_p[NUM_TYPES];
+static bool t_any_macro_p[NUM_TYPES];
 
 static void init_types(void)
 {
@@ -1332,6 +1341,7 @@ static void init_types(void)
       t_rational_p[i] = false;
       t_simple_p[i] = false;
       t_structure_p[i] = false;
+      t_any_macro_p[i] = false;
     }
   t_number_p[T_INTEGER] = true;
   t_number_p[T_RATIO] = true;
@@ -1355,6 +1365,10 @@ static void init_types(void)
   t_structure_p[T_HASH_TABLE] = true;
   t_structure_p[T_SLOT] = true;
   t_structure_p[T_ENVIRONMENT] = true;
+
+  t_any_macro_p[T_C_MACRO] = true;
+  t_any_macro_p[T_MACRO] = true;
+  t_any_macro_p[T_BACRO] = true;
 
   t_simple_p[T_NIL] = true;
   t_simple_p[T_UNIQUE] = true;
@@ -1391,7 +1405,13 @@ static void init_types(void)
 #define is_simple(P)                  t_simple_p[type(P)]
 #define has_structure(P)              t_structure_p[type(P)]
 
-/* the layout of these bits does matter in several cases
+#define is_any_macro(P)               t_any_macro_p[type(P)]
+#define is_procedure_or_macro(P)      ((t_any_macro_p[type(P)]) || ((typeflag(P) & T_PROCEDURE) != 0))
+
+
+/* the layout of these bits does matter in several cases -- in particular, don't use the 2nd byte for anything
+ *   that might shadow SYNTACTIC_PAIR and OPTIMIZED_PAIR.  Also, none of these bits can easily be turned into
+ *   array lookups.
  */
 #define NOT_IN_HEAP -1
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 0))
@@ -1411,7 +1431,7 @@ static void init_types(void)
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 2))
 #define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
-/* closure, c_function, settable object, goto or continuation 
+/* closure, c_function, applicable object, goto or continuation 
  *   perhaps this should be T_APPLICABLE?
  */
 
@@ -1424,10 +1444,9 @@ static int t_optimized = T_OPTIMIZED;
 /* optimizer flag for an expression that has optimization info
  */
 
-#define T_ANY_MACRO                   (1 << (TYPE_BITS + 4))
-#define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
-#define is_procedure_or_macro(p)      ((typeflag(p) & (T_ANY_MACRO | T_PROCEDURE)) != 0)
-/* this marks scheme and C-defined macros 
+#define T_KEYWORD                     (1 << (TYPE_BITS + 4))
+#define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
+/* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
 #define T_DONT_EVAL_ARGS              (1 << (TYPE_BITS + 5))
@@ -1447,6 +1466,7 @@ static int t_optimized = T_OPTIMIZED;
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
 #define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
 
+
 #define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 8))
 #define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
@@ -1464,9 +1484,10 @@ static int t_optimized = T_OPTIMIZED;
  *   constant like real_zero.
  */
 
-#define T_KEYWORD                     (1 << (TYPE_BITS + 10))
-#define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
-/* this bit distinguishes a symbol from a symbol that is also a keyword
+#define T_LINE_NUMBER                 (1 << (TYPE_BITS + 10))
+#define has_line_number(p)            ((typeflag(p) & T_LINE_NUMBER) != 0)
+#define set_has_line_number(p)         typeflag(p) |= T_LINE_NUMBER
+/* pair in question has line/file info added during read
  */
 
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
@@ -3397,7 +3418,8 @@ static void try_to_call_gc(s7_scheme *sc)
   if (sc->gc_off) return;
 
   freed_heap = gc(sc);
-  if (freed_heap < sc->heap_size / 2) /* PERHAPS: make this max out at say 1M? heap might be enormous */
+  if ((freed_heap < sc->heap_size / 2) &&
+      (freed_heap < 1000000)) /* an experiment, if huge heap */
     {
       /* alloc more heap */
       unsigned int old_size, old_free;
@@ -20453,7 +20475,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   is_marked(obj) ?             " gc-marked" : "",
 	   is_immutable(obj) ?          " immutable" : "",
 	   is_global(obj) ?             " global" : "",
-	   is_any_macro(obj) ?          " anymac" : "",
+	   has_line_number(obj) ?       " line number" : "",
 	   is_expansion(obj) ?          " expansion" : "",
 	   is_multiple_value(obj) ?     " values" : "",
 	   is_keyword(obj) ?            " keyword" : "",
@@ -24580,6 +24602,7 @@ static s7_pointer memq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
       int len;
 
       if ((is_pair(cadr(expr))) &&
+	  (is_optimized(cadr(expr))) &&
 	  (optimize_data(cadr(expr)) == HOP_SAFE_C_S) &&
 	  (c_call(cadr(expr)) == g_car))
 	{
@@ -27519,7 +27542,7 @@ s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int
 {
   s7_pointer func, sym;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_MACRO | T_ANY_MACRO | T_DONT_EVAL_ARGS); /* this used to include T_PROCEDURE */
+  set_type(func, T_C_MACRO | T_DONT_EVAL_ARGS); /* this used to include T_PROCEDURE */
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, func);
   return(sym);
@@ -30822,7 +30845,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   sc->no_values = 0; 
   format_depth = -1;
 
-  set_safe_do_level(sc, 0); 
+  if (sc->safe_do_level != 0)
+    set_safe_do_level(sc, 0); 
 
   if (sc->s7_call_name)
     {
@@ -30844,7 +30868,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
-  if (is_pair(sc->cur_code))
+  if ((is_pair(sc->cur_code)) &&
+      (has_line_number(sc->cur_code)))
     {
       int line;
       line = pair_line_number(sc->cur_code);
@@ -33314,6 +33339,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	   */
 	  cur_code = cons(sc, sym, sc->NIL);     /* the error will say "(sym)" which is not too misleading */
 	  pair_line_number(cur_code) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+	  set_has_line_number(cur_code);
 	}
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
@@ -38022,7 +38048,7 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool a
  * #t
  *
  * PERHAPS: a better solution -- eq? and friends should be smarter about T_SYNTAX
- *   it's ok the optimized functions: 
+ *   it's ok with the optimized functions: 
  * (define (hi a b) (* a b))
  * (eq? (car (caddr (procedure-source hi))) '*)
  *
@@ -52160,15 +52186,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if ((sc->op == OP_DEFINE_BACRO) ||
 	  (sc->op == OP_DEFINE_BACRO_STAR))
-	set_type(sc->value, T_BACRO | T_ANY_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
+	set_type(sc->value, T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
       else
 	{
 	  if (sc->op == OP_DEFINE_EXPANSION)
 	    {
-	      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
+	      set_type(sc->value, T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
 	      set_type(sc->code, EXPANSION_TYPE);
 	    }
-	  else set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
+	  else set_type(sc->value, T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
 	}
 
       sc->value = sc->code;
@@ -52720,6 +52746,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  sc->value = safe_reverse_in_place(sc, sc->args);
 	  pair_line_number(sc->value) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+	  set_has_line_number(sc->value);
 	  /* I think sc->input_port can't be nil -- it falls back on stdin now */
 
 	  /* read-time macro expansion
@@ -58783,7 +58810,7 @@ s7_scheme *s7_init(void)
  *   also g_multiply_3 + check for same type?
  * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases) [why vector?]
  *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
- *   or use cload -- put the actual data in C, had transparent overlay of get/set implicitly
+ *   or use cload -- put the actual data in C, transparent overlay of get/set implicitly
  *   plus length, map access etc (all through c_pointer) -- T_C_OVERLAY?|DATA?|VARIABLE?
  *
  *  add s7_pointer c_pointer_ref(s7_scheme *sc, s7_pointer args) (these could use names rather than offsets like hash-table)
@@ -58792,15 +58819,15 @@ s7_scheme *s7_init(void)
  *      s7_pointer e (open envir for all the rest) -- but these pointers are not marked, so caller has to gc-protect them
  *   to the (added) c_pointer s7_cell struct and a way to set these fields in C [s7_make_c_pointer_x(...)]
  *  add T_C_POINTER to map/for_each/length tables, and set/apply in eval
+ *  but how to tell the values are not leftovers? -- need a new type! -- there are no free bits.
  *
- * TODO: add fft to s7test and try to confuse the old_free business in the gc.
- * TODO: make sure all the s7.html examples are tested in s7test
+ * TODO: update all the tunes
  *
  * bench    42736                                    8580
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1230
  *                                              9811 8388
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3273
- * s7test            1721             1456 1430 1375 1350
+ * s7test            1721             1456 1430 1375 1344
  * t455                           265  256  218   86   87
  * t502                                 90   72   42   40
  */

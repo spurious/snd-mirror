@@ -117,6 +117,8 @@ static int find_prompt(Widget w, XmTextPosition start)
   Boolean found_prompt;
   XmTextPosition loc = 0;
 
+  if (start == 0) /* try to avoid strlen null in motif */
+    return(0);
   found_prompt = XmTextFindString(w, start, listener_prompt(ss), XmTEXT_BACKWARD, &loc);
   if (!found_prompt) 
     return(0);

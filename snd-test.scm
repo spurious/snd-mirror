@@ -33,7 +33,7 @@
 ;;;  test the end                               [47978]
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 					;(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "load ~S~%" name))))

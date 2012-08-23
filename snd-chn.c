@@ -1223,7 +1223,8 @@ void zx_incremented(chan_info *cp, double amount)
       ap->zx *= amount;
       if (ap->zx > 1.0) ap->zx = 1.0;
       focus_x_axis_change(cp, zoom_focus_style(ss));
-      resize_sx(cp);
+      /* resize_sx(cp); */
+      resize_sx_and_zx(cp); /* need zx also -- this changes its position, not its size. 22-Aug-12 */
     }
 }
 
