@@ -665,7 +665,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_UNKNOWN_opSq, HOP_UNKNOWN_opSq, OP_UNKNOWN_opSq_S, HOP_UNKNOWN_opSq_S, OP_UNKNOWN_opSq_opSq, HOP_UNKNOWN_opSq_opSq,      
       OP_UNKNOWN_S_opSq, HOP_UNKNOWN_S_opSq, OP_UNKNOWN_S_opSSq, HOP_UNKNOWN_S_opSSq, OP_UNKNOWN_opSSq_S, HOP_UNKNOWN_opSSq_S, 
       OP_UNKNOWN_opCq, HOP_UNKNOWN_opCq, 
-      
+
       OP_SAFE_C_P, HOP_SAFE_C_P, OP_SAFE_C_PP, HOP_SAFE_C_PP,
       OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, 
       OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, 
@@ -924,15 +924,6 @@ typedef struct s7_cell {
     } chr;
 
     void *c_pointer;
-#if 0
-    struct {
-      void *c_pointer;
-      s7_pointer e;
-      s7_pointer (*getter)(s7_scheme *sc, s7_pointer args);
-      s7_pointer (*setter)(s7_scheme *sc, s7_pointer args);
-      s7_pointer (*length)(s7_scheme *sc, s7_pointer args);
-    } cptr;
-#endif
 
     int baffle_key;
     
@@ -1574,6 +1565,10 @@ static int t_optimized = T_OPTIMIZED;
 #define set_list_in_use(p)            typeflag(p) |= T_LIST_IN_USE
 #define clear_list_in_use(p)          typeflag(p) = (typeflag(p) & (~T_LIST_IN_USE))
 
+#define T_NO_VALUE                    T_GENSYM
+#define has_no_value(p)               (typeflag(p) == (T_UNIQUE | T_IMMUTABLE | T_GC_MARK | T_NO_VALUE))
+/* to catch (eq? #<unspecified> #<unspecified>) where one of the two is the internal "no value" value 
+ */
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
@@ -16628,8 +16623,7 @@ static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
 	    }
 	}
     }
-    return((result) ? sc->T : sc->F);
-
+  return((result) ? sc->T : sc->F);
 }	
 
 
@@ -21305,6 +21299,13 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	port_write_string(port)(sc, "#<global-environment>", 21, port);
       else
 	{
+	  /* here circles are not uncommon: 
+	   *    (let ()
+	   *      (let ((b (current-environment)))
+	   *        (current-environment)))
+	   *    #<environment
+	   *      #<slot: b #<environment>>>
+	   */
 	  s7_pointer x;
 	  port_write_string(port)(sc, "#<environment", 13, port);
 	  for (x = environment_slots(obj); is_slot(x); x = next_slot(x))
@@ -29022,6 +29023,9 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
   if (s7_is_number(a))
     return(numbers_are_eqv(a, b));
   
+  if ((has_no_value(a)) && (has_no_value(b)))
+    return(true);
+
   return(false);
 }
 
@@ -29305,7 +29309,10 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_is_eq(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_eq "(eq? obj1 obj2) returns #t if obj1 is eq to (the same object as) obj2"
-  return(make_boolean(sc, car(args) == cadr(args)));
+  return(make_boolean(sc, ((car(args) == cadr(args)) ||
+			   ((has_no_value(car(args))) && (has_no_value(cadr(args)))))));
+  /* (eq? (apply apply apply values '(())) #<unspecified>) should return #t
+   */
 }
 
 
@@ -31584,6 +31591,7 @@ pass (global-environment):\n\
   if (s7_stack_top(sc) < 12)
     push_stack(sc, OP_BARRIER, sc->NIL, sc->NIL);
   push_stack(sc, OP_EVAL, sc->args, sc->code);
+
   return(sc->NIL);
 }
 
@@ -32468,9 +32476,20 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  pop_stack(sc);
 	  return(splice_in_values(sc, args));
 
+	case OP_BEGIN1:
+	case OP_CATCH_1:
+	  /* here we have a values call with nothing to splice into.  So flush it...
+	   *   otherwise the multiple-values bit gets set in some innocent list and never unset:
+	   *   :(let ((x '((1 2)))) (eval `(apply apply values x)) x)
+           *   ((values 1 2))
+	   * the catch case is much more obscure.
+	   */
+	  return(args);
+
 	default:
 	  break;
 	}
+      /* fprintf(stderr, "op: %s\n", real_op_names[stack_op(sc->stack, top)]); */
     }
 
   /* let it meander back up the call chain until someone knows where to splice it */
@@ -41197,7 +41216,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (is_multiple_value(sc->value))
 	sc->value = splice_in_values(sc, multiple_value(sc->value));
-
       goto START;
 
       
@@ -57494,9 +57512,9 @@ s7_scheme *s7_init(void)
   sc->T =           make_unique_object("#t",             T_BOOLEAN);
   sc->F =           make_unique_object("#f",             T_BOOLEAN);
   sc->EOF_OBJECT =  make_unique_object("#<eof>",         T_UNIQUE);
-  sc->UNSPECIFIED = make_unique_object("#<unspecified>", T_UNIQUE);
+  sc->UNSPECIFIED = make_unique_object("#<unspecified>", T_UNIQUE | T_NO_VALUE);
   sc->UNDEFINED =   make_unique_object("#<undefined>",   T_UNIQUE);
-  sc->NO_VALUE =    make_unique_object("#<unspecified>", T_UNIQUE);
+  sc->NO_VALUE =    make_unique_object("#<unspecified>", T_UNIQUE | T_NO_VALUE);
   sc->ELSE =        make_unique_object("else",           T_UNIQUE);
   /* "else" is added to the global environment below -- can't do it here
    *    because the symbol table and environment don't exist yet.
@@ -58382,6 +58400,12 @@ s7_scheme *s7_init(void)
   sc->EVAL_STRING = s7_define_function(sc,            "eval-string",               g_eval_string,              1, 1, false, H_eval_string);
   sc->APPLY = s7_define_function(sc,                  "apply",                     g_apply,                    1, 0, true,  H_apply);
   sc->Apply = s7_symbol_value(sc, sc->APPLY);
+  set_type(sc->Apply, type(sc->Apply) | T_COPY_ARGS);
+  /* (let ((x '((1 2) 3 4))) 
+   *   (catch #t (lambda () (apply apply apply x)) (lambda args 'error)) 
+   *   x)
+   * should not mess up x!
+   */
 
   sc->FOR_EACH = s7_define_function(sc,               "for-each",                  g_for_each,                 2, 0, true,  H_for_each);
   sc->MAP = s7_define_function(sc,                    "map",                       g_map,                      2, 0, true,  H_map);
@@ -58803,23 +58827,10 @@ s7_scheme *s7_init(void)
  * we need integer_length everywhere! 
  *   TODO: these fixups are ignored by the optimized cases
  *
- * optimizer could mark the non-capture lambdas (for-each/map/catch/dynamic-wind/run/with-output...)
- *   so that env not incremented (line 49920)
- *
  * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
- *   also g_multiply_3 + check for same type?
- * TODO: get rid of vcts! and sound_data! mus_fft should accept vectors (and all other such cases) [why vector?]
- *   as a first step, vct -> float-vector, sound-data -> sample-vector, and make s7.html example?
- *   or use cload -- put the actual data in C, transparent overlay of get/set implicitly
- *   plus length, map access etc (all through c_pointer) -- T_C_OVERLAY?|DATA?|VARIABLE?
- *
- *  add s7_pointer c_pointer_ref(s7_scheme *sc, s7_pointer args) (these could use names rather than offsets like hash-table)
- *      s7_pointer c_pointer_set(s7_scheme *sc, s7_pointer args)
- *      s7_pointer c_pointer_length(s7_scheme *sc, s7_pointer args)
- *      s7_pointer e (open envir for all the rest) -- but these pointers are not marked, so caller has to gc-protect them
- *   to the (added) c_pointer s7_cell struct and a way to set these fields in C [s7_make_c_pointer_x(...)]
- *  add T_C_POINTER to map/for_each/length tables, and set/apply in eval
- *  but how to tell the values are not leftovers? -- need a new type! -- there are no free bits.
+ * PERHAPS: instead of the overlay, make an example of in-C and s7_new_type
+ *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
+ *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * TODO: update all the tunes
  *

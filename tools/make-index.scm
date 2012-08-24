@@ -1,6 +1,7 @@
 ;;; make-index.scm translated from index.cl
 ;;;   run this -noinit so that loads in ~/.snd_s7 don't confuse matters
 
+;(set! *gc-stats* #t)
 ;(set! (hook-functions *load-hook*) (list (lambda (filename) (format #t "loading ~S~%" filename))))
 (set! (hook-functions *unbound-variable-hook*) '())
 
@@ -287,6 +288,7 @@
 				    (if (not (= j strlen))
 					(substring rb-name 0 j)
 					rb-name)))))))))))
+
 
 (define (clean-up-xref xref file)
   (let* ((len (length xref))

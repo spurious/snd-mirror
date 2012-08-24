@@ -160,6 +160,7 @@ The main difference: if it's in s7, it's a first-class citizen of s7, and that i
 macros, environments, and syntactic forms.
 </p>
 
+<br>
 <blockquote>
 <div class="indented">
 <p>I originally used a small font for scholia, but now I have to squint
@@ -168,7 +169,7 @@ indented and on a sort of brownish background.
 </p>
 </div>
 </blockquote>
-
+<br>
 
 
 <div class="orange">
@@ -9386,3 +9387,14 @@ Scheme and C at will.
 </html>
 
 
+<!--
+circular env without set!: 
+(let ()
+   (let ((b (current-environment)))
+      (current-environment)))
+
+circular func:
+(letrec* ((b (lambda () (a)))
+	  (a (lambda () (b))))
+  (a))
+-->

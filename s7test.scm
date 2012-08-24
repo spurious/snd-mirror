@@ -14131,6 +14131,7 @@ this prints:
 (test (map values '((1 2)) '((3 4))) '((1 2) (3 4)))
 (test (map map (list map) (list (list values)) '(((1 2))) '(((3 4)))) '(((1 3 2 4))))
 (test (map apply (list values) '(((1 2))) '(((3 4)))) (apply map values '(((1 2))) '(((3 4))))) ; !
+(test (let ((x '((1 2)))) (eval `(apply apply values x)) (object->string x)) "((1 2))") ; not "((values 1 2))" -- 24-Aug-12
 
 (let ()
   (define (shuffle . args) 
