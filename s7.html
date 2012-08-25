@@ -208,7 +208,9 @@ indented and on a sort of brownish background.
     <a href="#s7help">help</a>,
     <a href="#s7gc">gc</a>,
     <a href="#morallyequalp">morally-equal?</a>,
-    <a href="#s7vsr5rs">etc</a>
+    <a href="#s7vsr5rs">r5rs</a>,
+    <a href="#circle">circular lists</a>,
+    etc
 
   <li><a href="#FFIexamples">FFI examples</a>
   <ul>
@@ -5319,7 +5321,7 @@ and some exceedingly rare local method cases are handled more carefully).
 
 <div class="indented">
 
-<p>s7 handles circular lists and vectors and dotted lists with its customary aplomb.  
+<p id="circle">s7 handles circular lists and vectors and dotted lists with its customary aplomb.  
 You can pass them to memq, or print them, for example; you can even evaluate them.  
 The print syntax is borrowed from CL:
 </p>
@@ -5338,13 +5340,79 @@ The print syntax is borrowed from CL:
 
 <p>But should this syntax be readable as well?  I'm inclined to say no because
 then it is part of the language, and it doesn't look like the rest of the language.
-(I think it's kind of ugly).  Perhaps we could implement it via *#readers*.
+(I think it's kind of ugly).  Perhaps we could implement it via *#readers*:
 </p>
+
+<pre>
+(define circular-list-reader
+  (let ((known-vals ()))
+    (lambda (str)
+
+      (define (replace-syms lst)
+	;; walk through the new list, replacing the special keywords 
+        ;;   with the associated locations
+
+	(define (replace-sym tree getter)
+	  (if (keyword? (getter tree))
+	      (let ((name (symbol-&gt;string (keyword-&gt;symbol (getter tree)))))
+		(set! (getter tree) (cdr (assoc (string-&gt;number name) known-vals))))))
+
+	(define (walk-tree tree)
+	  (if (pair? tree)
+	      (begin
+		(if (pair? (car tree)) (walk-tree (car tree)) (replace-sym tree car))
+		(if (pair? (cdr tree)) (walk-tree (cdr tree)) (replace-sym tree cdr))))
+	  tree)
+
+	(walk-tree (cdr lst)))
+
+      ;; str is whatever followed the #, first char is a digit
+      (let* ((len (length str))
+	     (last-char (str (- len 1))))
+	(if (memq last-char '(#\= #\#)) ; is it #nnn= or #nnn#?
+	    (let ((n (string-&gt;number (substring str 0 (- len 1)))))
+	      (if (integer? n)
+		  (let ((cur-val (assoc n known-vals)))
+		    (if (char=? last-char #\=)
+			;; #nnn= so next char must be open-paren
+			(if (char=? (peek-char) #\()
+			    (begin
+			      ;; associate the number and the list it points to
+			      (if (not cur-val)
+				  (set! known-vals 
+                                    (cons (set! cur-val (cons n (read))) known-vals))
+				  (set! (cdr cur-val) (read)))
+			      ;; now replace the keys we know so far
+			      (replace-syms cur-val))
+			    #f) ; #nnn=&lt;not a list&gt;?
+			;; else it's #nnn# &mdash; set a marker for now since we may not 
+			;;   have its associated value yet.  We want a symbol name that 
+                        ;;   string-&gt;number accepts.
+			(symbol-&gt;keyword 
+                          (symbol (string-append (number-&gt;string n) (string #\null) " ")))))
+		  #f))          ; #n&lt;not an integer&gt;?
+	    #f)))))             ; #n&lt;some other thing than #\= or #\#&gt;?
+
+(do ((i 0 (+ i 1)))
+    ((= i 10))
+  ;; load up all the #n cases
+  (set! *#readers* 
+    (cons (cons (integer-&gt;char (+ i (char-&gt;integer #\0))) circular-list-reader)
+          *#readers*)))
+
+&gt; '#1=(1 2 #1#)
+#1=(1 2 #1#)
+&gt; '#1=(1 2 #2=(3 4) #2#)
+(1 2 #1=(3 4) #1#)
+</pre>
+<br>
+
 
 <p>Length returns +inf.0 if passed a circular list, and returns a negative
 number if passed a dotted list.  In the dotted case, the absolute value of the length is the list length not counting
 the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 </p>
+<br>
 
 <p>Here's an amusing use of circular lists:
 </p>
@@ -9393,7 +9461,7 @@ circular env without set!:
    (let ((b (current-environment)))
       (current-environment)))
 
-circular func:
+circular func (implicit set!):
 (letrec* ((b (lambda () (a)))
 	  (a (lambda () (b))))
   (a))
