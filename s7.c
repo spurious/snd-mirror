@@ -1040,7 +1040,9 @@ typedef struct {
   s7_pointer *objs;
   int size, top, ref;
   int *refs;
+  /*
   void *tree;
+  */
   bool has_hits;
 } shared_info;
 
@@ -1110,7 +1112,7 @@ struct s7_scheme {
   s7_pointer direct_str;
 
   bool gc_off, gc_stats;              /* gc_off: if true, the GC won't run, gc_stats: if true, print stats during GC */
-  unsigned int gensym_counter;
+  unsigned int gensym_counter, cycle_counter;
   long long int capture_env_counter;
   bool symbol_table_is_locked;  
 
@@ -2932,7 +2934,7 @@ static void mark_environment(s7_pointer env)
 	    set_mark(y);
 	    S7_MARK(slot_value(y));
 	  }
-      set_mark(x); /* we handle car above, and cdr in the loop */
+      set_mark(x);
     }
 }
 
@@ -37656,7 +37658,9 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 #if PRINTING
   fprintf(stderr, "    f: %s %s %d %d %d\n", DISPLAY(func), DISPLAY_80(x), at_end, is_syntactic(car(x)), is_optimized(car(x)));
 #endif
-  if (!is_proper_list(sc, x))
+  sc->cycle_counter++;
+  if ((!is_proper_list(sc, x)) ||
+      (sc->cycle_counter > 5000))
     {
 #if PRINTING
       fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
@@ -38038,6 +38042,9 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool a
 #if PRINTING
   fprintf(stderr, "b: %s %s %d\n", DISPLAY(func), DISPLAY_80(body), at_end); 
 #endif
+  sc->cycle_counter++;
+  if (sc->cycle_counter > 5000)
+    return(false);
   for (p = body; is_pair(p); p = cdr(p))
     {
       if ((is_pair(car(p))) &&
@@ -39467,6 +39474,7 @@ static s7_pointer check_define(s7_scheme *sc)
       if (len > 0)  /* i.e. not circular */
 	{
 	  bool bad_set = false;
+
 	  /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(x), DISPLAY(sc->code)); */
 	  optimize(sc, cdr(sc->code), 1, collect_collisions(sc, cdar(sc->code), list_1(sc, x)));
 
@@ -39492,6 +39500,14 @@ static s7_pointer check_define(s7_scheme *sc)
 		    set_simple_args(cdr(sc->code));
 		}
 
+	      sc->cycle_counter = 0;
+	      /* it is extremely expensive to check for cycles with collect_shared_info, but the
+	       *   body_is_safe process can get hung if the cycle is hidden from the simple
+	       *   checks above. 
+	       *       (define (hi) (let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (< ctr 4) #1# (newline)))))
+	       *   tickles this bug.  In all my current test cases, we never get over 350 (lint), so checking
+	       *   for 5000 seems safe.
+	       */
 	      if (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set))
 		{
 		  /* (define (hi a) (+ a 1) (hi (- a 1))) */
@@ -39507,27 +39523,7 @@ static s7_pointer check_define(s7_scheme *sc)
 		    }
 		  /* fprintf(stderr, "safe: %s\n\n", DISPLAY_80(sc->code)); */
 		}
-#if 0
-	      else
-	      fprintf(stderr, "not safe! %s\n    define: %d, proper: %d, argsok: %d, bodyok: %d\n\n", 
-		      DISPLAY_80(cdr(sc->code)),
-		      (sc->op == OP_DEFINE),
-		      (is_proper_list(sc, cdar(sc->code))),
-		      (is_safe_arg_list(sc, cdar(sc->code))),
-		      (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set)));
-#endif
 	    }
-#if 0
-	  else
-	    {
-	      fprintf(stderr, "%s: not safe! define: %d, proper: %d, argsok: %d, bodyok: %d\n", 
-		      DISPLAY(cdr(sc->code)),
-		      (sc->op == OP_DEFINE),
-		      (is_proper_list(sc, cdar(sc->code))),
-		      (is_safe_arg_list(sc, cdar(sc->code))),
-		      (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set)));
-	    }
-#endif
 	}
     }
 

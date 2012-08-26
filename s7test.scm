@@ -16408,6 +16408,17 @@ in s7:
 (test (apply apply apply map values '(((1 2) (3 4))) '()) '(1 3 2 4))
 (test (apply apply apply apply + '(1) '((()))) 1)
 
+(test (apply apply apply append (reverse '(((1)) ((2))))) '((2) . 1))
+(test (apply apply map append (reverse '(((1)) ((2))))) '((2 . 1)))
+(test (apply (apply apply lambda (quote '(1)))) 1)
+(test (apply quote (map reverse (reverse '((1 2))))) '(2 1))
+(test (map quote (apply map + '((1 2) (3 4)))) '(4 6))
+(test (map car (apply map quote '(((1 2) (3 4))))) '(1 3))
+(test (apply length (apply map append '(((1)) ((2))) '((1)))) -1)
+(test (apply append (apply map list-tail '(((1 2) (3 4))) '((1)))) '((3 4)))
+(test (apply append (apply map values '(((1)) ((2))) '(((1 2) (3 4))))) '((1) 1 2 (2) 3 4))
+(test (apply append (apply map values '((1 2) (3 4)) '(((1 2) (3 4))))) '(1 2 1 2 3 4 3 4))
+
 (test (apply +) 0)
 (test (apply + #f) 'error)
 (test (apply #f '(2 3)) 'error)

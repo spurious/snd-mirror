@@ -5133,7 +5133,6 @@ bind it to something else, which is asking for confusion).
 <li>remove the exact/inexact distinction including #i and #e
 <li>remove #d and #o (who uses octal anymore?)
 <li>remove `#(...) support (quasiquoted vector constants)
-<li>remove *-ci functions
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>remove call-with-values and its friends
 <li>remove char-ready?
@@ -5147,6 +5146,7 @@ bind it to something else, which is asking for confusion).
 </p>
 
 <ul>
+<li>remove *-ci functions
 <li>remove even? and odd?
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
@@ -5345,17 +5345,22 @@ then it is part of the language, and it doesn't look like the rest of the langua
 
 <pre>
 (define circular-list-reader
-  (let ((known-vals ()))
+  (let ((known-vals #f)
+	(top-n -1))
     (lambda (str)
 
       (define (replace-syms lst)
-	;; walk through the new list, replacing the special keywords 
+	;; walk through the new list, replacing our special keywords 
         ;;   with the associated locations
 
 	(define (replace-sym tree getter)
 	  (if (keyword? (getter tree))
-	      (let ((name (symbol-&gt;string (keyword-&gt;symbol (getter tree)))))
-		(set! (getter tree) (cdr (assoc (string-&gt;number name) known-vals))))))
+	      (let ((n (string-&gt;number (symbol-&gt;string (keyword-&gt;symbol (getter tree))))))
+		(if (integer? n)
+		    (let ((lst (assoc n known-vals)))
+		      (if lst
+			  (set! (getter tree) (cdr lst))
+			  (format *stderr* "#~D# is not defined~%" n)))))))
 
 	(define (walk-tree tree)
 	  (if (pair? tree)
@@ -5369,29 +5374,45 @@ then it is part of the language, and it doesn't look like the rest of the langua
       ;; str is whatever followed the #, first char is a digit
       (let* ((len (length str))
 	     (last-char (str (- len 1))))
-	(if (memq last-char '(#\= #\#)) ; is it #nnn= or #nnn#?
+	(if (memq last-char '(#\= #\#))             ; is it #n= or #n#?
 	    (let ((n (string-&gt;number (substring str 0 (- len 1)))))
 	      (if (integer? n)
-		  (let ((cur-val (assoc n known-vals)))
-		    (if (char=? last-char #\=)
-			;; #nnn= so next char must be open-paren
+		  (begin
+		    (if (not known-vals)            ; save n so we know when we're done
+			(begin
+			  (set! known-vals ())
+			  (set! top-n n))) 
+
+		    (if (char=? last-char #\=)      ; #n=
 			(if (char=? (peek-char) #\()
-			    (begin
+			    (let ((cur-val (assoc n known-vals)))
 			      ;; associate the number and the list it points to
-			      (if (not cur-val)
-				  (set! known-vals 
-                                    (cons (set! cur-val (cons n (read))) known-vals))
-				  (set! (cdr cur-val) (read)))
-			      ;; now replace the keys we know so far
-			      (replace-syms cur-val))
-			    #f) ; #nnn=&lt;not a list&gt;?
-			;; else it's #nnn# &mdash; set a marker for now since we may not 
-			;;   have its associated value yet.  We want a symbol name that 
+			      ;;    if cur-val, perhaps complain? (#n# redefined)
+			      (let ((lst (catch #t 
+					   (lambda () 
+					     (read))
+					   (lambda args             ; a read error
+					     (set! known-vals #f)   ;   so clear our state
+					     (apply throw args))))) ;   and pass the error on up
+				(if (not cur-val)
+				    (set! known-vals 
+					  (cons (set! cur-val (cons n lst)) known-vals))
+				    (set! (cdr cur-val) lst)))
+			      
+			      (if (= n top-n)       ; replace our special keywords
+				  (let ((result (replace-syms cur-val)))
+				    (set! known-vals #f)
+				    result)
+				  (cdr cur-val)))
+			    #f)                     ; #n=&lt;not a list&gt;?
+
+			;; else it's #n# &mdash; set a marker for now since we may not 
+			;;   have its associated value yet.  We use a symbol name that 
                         ;;   string-&gt;number accepts.
 			(symbol-&gt;keyword 
                           (symbol (string-append (number-&gt;string n) (string #\null) " ")))))
-		  #f))          ; #n&lt;not an integer&gt;?
-	    #f)))))             ; #n&lt;some other thing than #\= or #\#&gt;?
+		  #f))                             ; #n&lt;not an integer&gt;?
+	    #f)))))                                ; #n&lt;something else&gt;?
 
 (do ((i 0 (+ i 1)))
     ((= i 10))
@@ -5400,11 +5421,23 @@ then it is part of the language, and it doesn't look like the rest of the langua
     (cons (cons (integer-&gt;char (+ i (char-&gt;integer #\0))) circular-list-reader)
           *#readers*)))
 
-&gt; '#1=(1 2 #1#)
-#1=(1 2 #1#)
-&gt; '#1=(1 2 #2=(3 4) #2#)
-(1 2 #1=(3 4) #1#)
+&gt; '#1=(1 2 . #1#)
+#1=(1 2 . #1#)
+&gt; '#1=(1 #2=(2 . #2#) . #1#)
+#2=(1 #1=(2 . #1#) . #2#)
 </pre>
+
+<!-- this needs a way to set known-vals to #f in case of error (replace-sym is the main case)
+-->
+
+<p>And of course, we can treat these as labels:
+</p>
+<pre class="indented">
+(let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (< ctr 4) #1# (newline))))
+</pre>
+<p>which prints "0 1 2 3" and a newline.
+</p>
+
 <br>
 
 
