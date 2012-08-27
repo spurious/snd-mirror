@@ -25147,11 +25147,11 @@ func
   (test (hi (1 2 3)) 6))
 
 
+;;; --------------------------------------------------------------------------------
+;;; # readers 
+;;; *#readers*
+;;;
 ;;; #\; reader: 
-;;; (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
-;;; :(eval-string "(+ #; 1 2 3 4)") -> 9
-;;; but (eval-string "(+ #; #; 1 2 3 4)") is also 9?
-
 
 (let ((old-readers *#readers*))
   
@@ -25252,6 +25252,175 @@ func
   (num-test (string->number "#x17") 23)
   )
 
+(let ((old-readers *#readers*)
+      (reader-file "tmp1.r5rs"))
+  ;; to test readers in a file, we need to write the file and load it, so here we go...
+  (set! *#readers* '())
+
+  (define circular-list-reader
+    (let ((known-vals #f)
+	  (top-n -1))
+      (lambda (str)
+	
+	(define (replace-syms lst)
+	  ;; walk through the new list, replacing our special keywords 
+	  ;;   with the associated locations
+	  
+	  (define (replace-sym tree getter)
+	    (if (keyword? (getter tree))
+		(let ((n (string->number (symbol->string (keyword->symbol (getter tree))))))
+		  (if (integer? n)
+		      (let ((lst (assoc n known-vals)))
+			(if lst
+			    (set! (getter tree) (cdr lst))
+			    (format *stderr* "#~D# is not defined~%" n)))))))
+	  
+	  (define (walk-tree tree)
+	    (if (pair? tree)
+		(begin
+		  (if (pair? (car tree)) (walk-tree (car tree)) (replace-sym tree car))
+		  (if (pair? (cdr tree)) (walk-tree (cdr tree)) (replace-sym tree cdr))))
+	    tree)
+	  
+	  (walk-tree (cdr lst)))
+	
+	;; str is whatever followed the #, first char is a digit
+	(let* ((len (length str))
+	       (last-char (str (- len 1))))
+	  (if (memq last-char '(#\= #\#))             ; is it #n= or #n#?
+	      (let ((n (string->number (substring str 0 (- len 1)))))
+		(if (integer? n)
+		    (begin
+		      (if (not known-vals)
+			  (begin
+			    (set! known-vals ())
+			    (set! top-n n))) 
+		      
+		      (if (char=? last-char #\=)      ; #n=
+			  (if (char=? (peek-char) #\()
+			      (let ((cur-val (assoc n known-vals)))
+				;; associate the number and the list it points to
+				;;    if cur-val, perhaps complain? (#n# redefined)
+				(let ((lst (catch #t 
+					     (lambda () 
+					       (read))
+					     (lambda args             ; a read error
+					       (set! known-vals #f)   ;   so clear our state
+					       (apply throw args))))) ;   and pass the error on up
+				  (if (not cur-val)
+				      (set! known-vals 
+					    (cons (set! cur-val (cons n lst)) known-vals))
+				      (set! (cdr cur-val) lst)))
+				
+				(if (= n top-n)       ; replace our special keywords
+				    (let ((result (replace-syms cur-val)))
+				      (set! known-vals #f)
+				      result)
+				    (cdr cur-val)))
+			      #f)                     ; #n=<not a list>?
+			  
+			  ;; else it's #n# -- set a marker for now since we may not 
+			  ;;   have its associated value yet.  We use a symbol name that 
+			  ;;   string->number accepts.
+			  (symbol->keyword 
+			   (symbol (string-append (number->string n) (string #\null) " ")))))
+		    #f))                             ; #n<not an integer>?
+	      #f)))))                                ; #n<something else>?
+  
+  (define (sharp-plus str)
+    ;; str here is "+", we assume either a symbol or a expression involving symbols follows
+    (let* ((e (if (string=? str "+")
+		  (read)                                ; must be #+(...)
+		  (string->symbol (substring str 1))))  ; #+feature
+	   (expr (read)))
+      (if (symbol? e)
+	  (if (provided? e)
+	      expr
+	      #<unspecified>)
+	  (if (pair? e)
+	      (begin
+		(define (traverse tree)
+		  (if (pair? tree)                                             
+		      (cons (traverse (car tree))                             
+			    (if (null? (cdr tree)) () (traverse (cdr tree))))
+		      (if (memq tree '(and or not)) 
+			  tree                 
+			  (and (symbol? tree) 
+			       (provided? tree)))))
+		(if (eval (traverse e))
+		    expr
+		    #<unspecified>))
+	      (error "strange #+ chooser: ~S~%" e)))))
+  
+  (set! *#readers* 
+	(cons (cons #\+ sharp-plus)
+	      (cons (cons #\. (lambda (str) (if (string=? str ".") (eval (read)) #f)))
+		    (cons (cons #\; (lambda (str) (if (string=? str ";") (read)) (values)))
+			  *#readers*))))
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    (set! *#readers* 
+	  (cons (cons (integer->char (+ i (char->integer #\0))) circular-list-reader)
+		*#readers*)))
+
+  (call-with-output-file reader-file
+    (lambda (port)
+      (format port "(define x #.(+ 1 2 3))~%")
+      (format port "(define xlst '(1 2 3 #.(* 2 2)))~%")
+
+      (format port "(define y '#1=(2 . #1#))~%")
+      (format port "(define y1 '#1=(2 #2=(3 #3=(#1#) . #3#) . #2#))~%")
+      (format port "(define y2 #2D((1 2) (3 4)))~%")
+
+      (format port "#+gsl (define z 32)~%#+asdf (define z 123)~%")
+      (format port "#+(and gsl (or snd s7)) (define z1 1)~%#+(and (not gsl) asdf) (define z1 123)~%")
+
+      (format port "(define x2 (+ 1 #;(* 2 3) 4))~%")
+      (format port "(define x3 (+ #;32 1 2))~%") 
+      (format port "(define x4 (+ #; 32 1 2))~%")
+
+      (format port "(define y3 (+ 1 (car '#1=(2 . #1#))))~%")
+      (format port "(define y4 #.(+ 1 (car '#1=(2 . #1#))))~%")
+      (format port "(define y5 (+ 1 #.(* 2 3) #.(* 4 #.(+ 5 6))))~%")
+
+      ))
+
+  (let ()
+    (load reader-file (current-environment))
+    (if (not (= x 6))
+	(format #t ";#.(+ 1 2 3) -> ~A~%" x))
+    (if (not (equal? xlst '(1 2 3 4)))
+	(format #t ";#.(* 2 2) -> ~A~%" xlst))
+    (if (not (equal? (object->string y) "#1=(2 . #1#)"))
+	(format #t ";'#1=(2 . #1#) -> ~S~%" (object->string y)))
+    (if (not (equal? (object->string y1) "#1=(2 #3=(3 #2=(#1#) . #2#) . #3#)"))
+	(format #t ";'#1=(2 #2=(3 #3=(#1#) . #3#) . #2#) -> ~S~%" (object->string y1)))
+    (if (not (equal? y2 #2d((1 2) (3 4))))
+	(format #t ";#2d((1 2) (3 4)) -> ~A~%" y2))
+    (if (not (= z 32))
+	(format #t ";#+asdf? -> ~A~%" z))
+    (if (not (= z1 1))
+	(format #t ";#(or ... +asdf)? -> ~A~%" z1))
+    (if (not (= x2 5))
+	(format #t ";(+ 1 #;(* 2 3) 4) -> ~A~%" x2))
+    (if (not (= x3 3))
+	(format #t ";(+ #;32 1 2) -> ~A~%" x3))
+    (if (not (= x4 3))
+	(format #t ";(+ #; 32 1 2) -> ~A~%" x4))
+    (if (not (= y3 3))
+	(format #t ";(+ 1 (car '#1=(2 . #1#))) -> ~A~%" y3))
+    (if (not (= y4 3))
+	(format #t ";#.(+ 1 (car '#1=(2 . #1#))) -> ~A~%" y4))
+    (if (not (= y5 51))
+	(format #t ";(+ 1 #.(* 2 3) #.(* 4 #.(+ 5 6))) -> ~A~%" y5))
+    )
+
+  (set! *#readers* old-readers)
+  )
+
+
+
+;;; --------------------------------------------------------------------------------
 ;;; (call-with-exit (lambda (exit) (set! *#readers* (cons (cons #\p (lambda (str) (exit 23))) *#readers*)) #p123))
 
 (begin

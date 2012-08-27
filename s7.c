@@ -1042,7 +1042,7 @@ typedef struct s7_cell {
 
 typedef struct {
   s7_pointer *objs;
-  int size, top, ref, mn, mx;
+  int size, top, ref;
   int *refs;
   bool has_hits;
 } shared_info;

@@ -4763,7 +4763,7 @@ I need to know where something unexpected happened.  So:
 <p>To return no value from a reader, use <code>(values)</code>.
 </p>
 <pre class="indented">
-&gt; (set! *#readers* (cons (cons #\; (lambda (s) (read) (values))) *#readers*))
+&gt; (set! *#readers* (cons (cons #\; (lambda (str) (if (string=? str ";") (read)) (values))) *#readers*))
 ((#\; . #&lt;closure&gt;))
 &gt; (+ 1 #;(* 2 3) 4)
 5
@@ -4777,16 +4777,17 @@ I need to know where something unexpected happened.  So:
 		(read)                                ; must be #+(...)
 		(string-&gt;symbol (substring str 1))))  ; #+feature
 	 (expr (read)))  ; this is the expression following #+
-    (if (and (symbol? e)
-	     (provided? e))
-	expr
+    (if (symbol? e)
+        (if (provided? e)
+	    expr
+	    #&lt;unspecified&gt;)
 	(if (pair? e)
 	    (begin      ; evaluate the #+(...) expression as in cond-expand
 	      (define (traverse tree)
 		(if (pair? tree)                                             
 		    (cons (traverse (car tree))                             
 			  (if (null? (cdr tree)) () (traverse (cdr tree))))
-		    (if (memq tree '(and or not else)) tree                 
+		    (if (memq tree '(and or not)) tree                 
 			(and (symbol? tree) (provided? tree)))))
 	      (if (eval (traverse e))
 		  expr
@@ -5166,6 +5167,7 @@ bind it to something else, which is asking for confusion).
 <li>remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
 <li>change make-rectangular to make-complex, and remove make-polar.
 <li>remove unquote (the name, not the functionality).
+<li>remove cond-expand and letrec*.
 </ul>
 
 <p>and perhaps:
@@ -5184,7 +5186,8 @@ same kind of name.  All the environment function names are bad &mdash; "environm
 is annoying.  At least we can say s7 is environmentally sound!
 get-output-string should be current-output-string.
 "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
-operate with the *features* list; perhaps "cond-provided"?  
+operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
+idea is clumsy: use #+ and #-.
 write-char behaves like display, not write.  symbol-access is not ideal.
 Better ideas are always welcome!
 </p>
