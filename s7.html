@@ -4768,6 +4768,32 @@ I need to know where something unexpected happened.  So:
 &gt; (+ 1 #;(* 2 3) 4)
 5
 </pre>
+<p>Here is CL's #+ reader:
+</p>
+<pre class="indented">
+(define (sharp-plus str)
+  ;; str here is "+", we assume either a symbol or an expression involving symbols follows
+  (let* ((e (if (string=? str "+")
+		(read)                                ; must be #+(...)
+		(string-&gt;symbol (substring str 1))))  ; #+feature
+	 (expr (read)))  ; this is the expression following #+
+    (if (and (symbol? e)
+	     (provided? e))
+	expr
+	(if (pair? e)
+	    (begin      ; evaluate the #+(...) expression as in cond-expand
+	      (define (traverse tree)
+		(if (pair? tree)                                             
+		    (cons (traverse (car tree))                             
+			  (if (null? (cdr tree)) () (traverse (cdr tree))))
+		    (if (memq tree '(and or not else)) tree                 
+			(and (symbol? tree) (provided? tree)))))
+	      (if (eval (traverse e))
+		  expr
+		  #&lt;unspecified&gt;))
+	    (error "strange #+ chooser: ~S~%" e)))))
+</pre>
+<p>See also the <a href="#circularlistreader">#n=</a> reader below.</p>
 </div>
 
 
@@ -5338,7 +5364,8 @@ The print syntax is borrowed from CL:
 (#1=(1 . 2) (3 . #1#)) ; shared lists use the same syntax: '((1 . 2) (3 1 . 2)) spelled out
 </pre>
 
-<p>But should this syntax be readable as well?  I'm inclined to say no because
+<p id="circularlistreader">
+But should this syntax be readable as well?  I'm inclined to say no because
 then it is part of the language, and it doesn't look like the rest of the language.
 (I think it's kind of ugly).  Perhaps we could implement it via *#readers*:
 </p>
@@ -5426,9 +5453,6 @@ then it is part of the language, and it doesn't look like the rest of the langua
 &gt; '#1=(1 #2=(2 . #2#) . #1#)
 #2=(1 #1=(2 . #1#) . #2#)
 </pre>
-
-<!-- this needs a way to set known-vals to #f in case of error (replace-sym is the main case)
--->
 
 <p>And of course, we can treat these as labels:
 </p>

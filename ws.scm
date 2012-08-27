@@ -806,7 +806,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		   (car struct-name) 
 		   struct-name))
 	 (sname (if (string? name) 
-		    name (symbol->string name)))
+		    name 
+		    (symbol->string name)))
 	 (wrapper (or (and (list? struct-name)
 			   (or (and (> (length struct-name) 2)
 				    (equal? (struct-name 1) :make-wrapper)

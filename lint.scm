@@ -592,11 +592,9 @@
 		       ))))) ; it is a local function
       
       (define (lint-constant? arg)
-	(or (number? arg)
-	    (string? arg)
-	    (null? arg)
-	    (boolean? arg)
-	    (char? arg)))
+	(and (constant? arg)
+	     (not (pair? arg))
+	     (not (vector? arg))))
       
       (define (just-constants? form env)
 	;; can we probably evaluate form given just built-in stuff?
