@@ -7959,10 +7959,8 @@ static void init_ctables(void)
 static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 {
   s7_pointer reader, value, args;
-  int args_loc = -1;
-
   value = sc->F;
-  args = sc->F; /* make g++ happy */
+  args = sc->F; 
 
   /* *#reader* is assumed to be an alist of (char . proc)
    *    where each proc takes one argument, the string from just beyond the "#" to the next delimiter.
@@ -7975,22 +7973,14 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
     {
       if (name[0] == s7_character(caar(reader)))
 	{
-	  /* we need to sequester "name" right away, before restoring the original port string 
-	   */
-	  if (args_loc == -1)
-	    {
-	      args = list_1(sc, s7_make_string(sc, name));
-	      args_loc = s7_gc_protect(sc, args);
-	    }
-
+	  if (args == sc->F) 
+	    args = list_1(sc, s7_make_string(sc, name));
+	  /* args is GC protected by s7_apply_function (placed on the stack */
 	  value = s7_apply_function(sc, cdar(reader), args);
 	  if (value != sc->F)
 	    break;
 	}
     }
-  if (args_loc != -1)
-    s7_gc_unprotect_at(sc, args_loc);
-
   return(value);
 }
 
@@ -27033,11 +27023,13 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 }
 
 
+#if 0
 /* experiment */
 static s7_pointer g_hash_table_entries(s7_scheme *sc, s7_pointer table)
 {
   return(make_integer(sc, hash_table_entries(table)));
 }
+#endif
 
 
 
@@ -41105,6 +41097,8 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
+  /* fprintf(stderr, "eval: %s %s\n", DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
+
   sc->cur_code = sc->F;
   sc->op = first_op;
   
@@ -58437,7 +58431,7 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_SET = s7_define_safe_function(sc,    "hash-table-set!",           g_hash_table_set,           3, 0, false, H_hash_table_set);
   sc->HASH_TABLE_SIZE = s7_define_safe_function(sc,   "hash-table-size",           g_hash_table_size,          1, 0, false, H_hash_table_size);
   
-  s7_define_safe_function(sc, "hash-table-entries", g_hash_table_entries, 1, 0, false, "an experiment");
+  /* s7_define_safe_function(sc, "hash-table-entries", g_hash_table_entries, 1, 0, false, "an experiment"); */
 
   ht_iter_tag = s7_new_type_x("hash-table-iterator", print_ht_iter, free_ht_iter, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
@@ -58886,6 +58880,7 @@ s7_scheme *s7_init(void)
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
+ * name[i] -> (name i) as a reader macro? [symbol-macro => run if given char occurs, as in reader macros]
  * TODO: update all the tunes
  *
  * bench    42736                                    8580

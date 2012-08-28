@@ -4780,7 +4780,7 @@ I need to know where something unexpected happened.  So:
     (if (symbol? e)
         (if (provided? e)
 	    expr
-	    #&lt;unspecified&gt;)
+	    (values))
 	(if (pair? e)
 	    (begin      ; evaluate the #+(...) expression as in cond-expand
 	      (define (traverse tree)
@@ -4791,7 +4791,7 @@ I need to know where something unexpected happened.  So:
 			(and (symbol? tree) (provided? tree)))))
 	      (if (eval (traverse e))
 		  expr
-		  #&lt;unspecified&gt;))
+		  (values)))
 	    (error "strange #+ chooser: ~S~%" e)))))
 </pre>
 <p>See also the <a href="#circularlistreader">#n=</a> reader below.</p>
@@ -5429,9 +5429,9 @@ then it is part of the language, and it doesn't look like the rest of the langua
 					  (cons (set! cur-val (cons n lst)) known-vals))
 				    (set! (cdr cur-val) lst)))
 			      
-			      (if (= n top-n)       ; replace our special keywords
+			      (if (= n top-n)            ; replace our special keywords
 				  (let ((result (replace-syms cur-val)))
-				    (set! known-vals #f)
+				    (set! known-vals #f) ; '#1=(#+gsl #1#) -&gt; '(:1)!
 				    result)
 				  (cdr cur-val)))
 			    #f)                     ; #n=&lt;not a list&gt;?
@@ -5459,9 +5459,11 @@ then it is part of the language, and it doesn't look like the rest of the langua
 
 <p>And of course, we can treat these as labels:
 </p>
+
 <pre class="indented">
-(let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (< ctr 4) #1# (newline))))
+(let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (&lt; ctr 4) #1# (newline))))
 </pre>
+
 <p>which prints "0 1 2 3" and a newline.
 </p>
 
