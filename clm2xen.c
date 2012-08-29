@@ -8879,6 +8879,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cadddr(E) s7_cadddr(E)
 #define cddr(E)   s7_cddr(E)
 #define cadar(E)  s7_cadar(E)
+#define cdar(E)   s7_cdar(E)
 #define cdaddr(E) s7_cdaddr(E)
 #define cdadr(E)  s7_cdadr(E)
 
@@ -8915,6 +8916,45 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
 
 #if 0
 #define GET_GENERATOR(Obj, Type, Val) Val = get_generator(s7, Obj)
+#endif
+#if 0
+/* this saves lookups, but not enough to make up for the env check and so on
+ * here's a tricky case:
+(define (hi)
+  (let ((o1 (make-oscil 440.0))
+	(o2 (make-oscil 100.0))
+	(o #f))
+    (set! o o1)
+    (do ((i 0 (+ i 1)))
+	((= i 44100))
+      (outa i (* .1 (oscil o)))
+      (if (= i 22050) (set! o o2)))))
+ */
+#define GET_GENERATOR(O_Obj, Type, Val) \
+  do { \
+    static s7_pointer saved_g = NULL, saved_o = NULL, saved_e = NULL, saved_slot = NULL; \
+  static mus_any *gg = NULL; \
+  s7_pointer gp, ep, Obj;	     \
+  mus_xen *gn; Obj = O_Obj;						\
+  if (((ep = s7_current_environment(s7)) != saved_e) || (Obj != saved_o)) \
+    { \
+      saved_o = Obj; \
+      saved_e = ep; \
+      saved_slot = s7_slot(s7, s7_car(Obj));		\
+    } \
+  gp = s7_slot_value(s7, saved_slot);		\
+      if (gp != saved_g) \
+        { \
+          gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag); \
+          if (gn) \
+            { \
+              saved_g = gp; \
+              gg = gn->gen; \
+            } \
+          else XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator"); \
+        } \
+      Val = gg; \
+  } while (0)
 #else
 #define GET_GENERATOR(Obj, Type, Val) \
   do { \
@@ -8922,7 +8962,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   static mus_any *gg = NULL; \
   s7_pointer gp; \
   mus_xen *gn; \
-  gp = s7_value(sc, Obj); \
+  gp = s7_car_value(s7, Obj); \
   if (gp != g) \
     { \
       gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag); \
@@ -8931,22 +8971,22 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
           g = gp; \
           gg = gn->gen; \
         } \
-      else XEN_ASSERT_TYPE(false, s7_value(s7, Obj), XEN_ARG_1, "gen-lookup", "a generator"); \
+      else XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator"); \
     } \
     Val = gg; \
   } while (0)
 #endif
 
-#define GET_NUMBER(Obj, Caller, Val) Val = s7_value(s7, Obj)
-#define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_value(s7, Obj))
-#define GET_INTEGER(Obj, Caller, Val) Val = s7_integer(s7_value(s7, Obj))
+#define GET_NUMBER(Obj, Caller, Val) Val = s7_car_value(s7, Obj)
+#define GET_REAL(Obj, Caller, Val) Val = s7_number_to_real(sc, s7_car_value(s7, Obj))
+#define GET_INTEGER(Obj, Caller, Val) Val = s7_integer(s7_car_value(s7, Obj))
 
 #define GEN_1(Type, Func) \
   static s7_pointer Type ## _1; \
   static s7_pointer g_ ## Type ## _1(s7_scheme *sc, s7_pointer args) \
   { \
     mus_any *_o_;	  \
-    GET_GENERATOR(car(args), Type, _o_); \
+    GET_GENERATOR(args, Type, _o_); \
     return(s7_make_real(sc, Func(_o_))); \
   } \
   static s7_pointer mul_c_ ## Type ## _1; \
@@ -8956,7 +8996,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     double _mul_;    \
    \
     _mul_ = s7_number_to_real(sc, car(args)); /* we checked that it's not complex in the chooser */	\
-    GET_GENERATOR(s7_cadadr(args), Type, _o_);	\
+    GET_GENERATOR(s7_cdadr(args), Type, _o_);	\
     return(s7_make_real(sc, _mul_ * Func(_o_))); \
   } \
   static s7_pointer mul_s_ ## Type ## _1; \
@@ -8966,8 +9006,8 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     s7_pointer _mul_;    \
     double _f_; \
    \
-    GET_NUMBER(car(args), "*", _mul_); \
-    GET_GENERATOR(s7_cadadr(args), Type, _o_);	\
+    GET_NUMBER(args, "*", _mul_); \
+    GET_GENERATOR(s7_cdadr(args), Type, _o_);	\
     _f_ = Func(_o_); \
     if (s7_is_real(_mul_))				      \
       return(s7_make_real(sc, s7_number_to_real(sc, _mul_) * _f_)); \
@@ -8978,8 +9018,8 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   { \
     mus_any *_o_, *_e_;  \
    \
-    GET_GENERATOR(s7_cadr(car(args)), env, _e_);		\
-    GET_GENERATOR(s7_cadadr(args), Type, _o_);	\
+    GET_GENERATOR(s7_cdr(car(args)), env, _e_);		\
+    GET_GENERATOR(s7_cdadr(args), Type, _o_);	\
     return(s7_make_real(sc, mus_env(_e_) * Func(_o_)));		\
   }
 
@@ -8998,8 +9038,8 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     mus_any *_o_; \
     double _fm_; \
    \
-    GET_GENERATOR(car(args), Type, _o_); \
-    GET_REAL(cadr(args), Type, _fm_); \
+    GET_GENERATOR(args, Type, _o_); \
+    GET_REAL(cdr(args), Type, _fm_); \
     return(s7_make_real(sc, Func(_o_, _fm_))); \
   } \
   static s7_pointer mul_c_ ## Type ## _2; \
@@ -9010,8 +9050,8 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
    \
     _mul_ = s7_number_to_real(sc, car(args)); \
     args = cdr(args); \
-    GET_GENERATOR(s7_cadar(args), Type, _o_);	\
-    GET_REAL(s7_caddar(args), Type, _fm_);		\
+    GET_GENERATOR(s7_cdar(args), Type, _o_);	\
+    GET_REAL(s7_cddar(args), Type, _fm_);		\
     return(s7_make_real(sc, _mul_ * Func(_o_, _fm_))); \
   } \
   static s7_pointer mul_s_ ## Type ## _2; \
@@ -9021,10 +9061,10 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     double _fm_, _f_;     \
     s7_pointer _mul_; \
    \
-    GET_NUMBER(car(args), "*", _mul_); \
+    GET_NUMBER(args, "*", _mul_); \
     args = cdr(args); \
-    GET_GENERATOR(s7_cadar(args), Type, _o_);	\
-    GET_REAL(s7_caddar(args), Type, _fm_);		\
+    GET_GENERATOR(s7_cdar(args), Type, _o_);	\
+    GET_REAL(s7_cddar(args), Type, _fm_);		\
     _f_ = Func(_o_, _fm_);							\
     if (s7_is_real(_mul_)) \
       return(s7_make_real(sc, s7_number_to_real(sc, _mul_) * _f_)); \
@@ -9036,10 +9076,10 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     mus_any *_o_, *_e_;  \
     double _fm_;    \
    \
-    GET_GENERATOR(s7_cadar(args), env, _e_);		\
+    GET_GENERATOR(s7_cdar(args), env, _e_);		\
     args = cdr(args); \
-    GET_GENERATOR(s7_cadar(args), Type, _o_);	\
-    GET_REAL(s7_caddar(args), Type, _fm_);		\
+    GET_GENERATOR(s7_cdar(args), Type, _o_);	\
+    GET_REAL(s7_cddar(args), Type, _fm_);		\
     return(s7_make_real(sc, mus_env(_e_) * Func(_o_, _fm_)));		\
   } \
   static s7_pointer direct_ ## Type ## _2; \
@@ -9049,7 +9089,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     double _fm_; \
     s7_pointer rl; \
     _fm_ = s7_real(rl = s7_call_direct(sc, cadr(args)));	\
-    GET_GENERATOR(car(args), Type, _o_); \
+    GET_GENERATOR(args, Type, _o_); \
     return(s7_remake_real(sc, rl, Func(_o_, _fm_)));		    \
   } \
   static s7_pointer indirect_ ## Type ## _2; \
@@ -9058,7 +9098,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     mus_any *_o_;	  \
     double _fm_; \
     _fm_ = s7_number_to_real(sc, s7_call_direct(sc, cadr(args)));	\
-    GET_GENERATOR(car(args), Type, _o_); \
+    GET_GENERATOR(args, Type, _o_); \
     return(s7_make_real(sc, Func(_o_, _fm_)));		    \
   }
 
@@ -9153,6 +9193,30 @@ MUS_PHASE_VOCODER,
  * perhaps size must be > 0?  -- make this choice at init time (how?)
  */
 
+static s7_pointer env_1_1;
+static s7_pointer g_env_1_1(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *_o_;
+  GET_GENERATOR(args, env, _o_);
+  return(s7_make_real(sc, mus_env(_o_))); 
+}
+
+static s7_pointer env_1_2;
+static s7_pointer g_env_1_2(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *_o_;
+  GET_GENERATOR(args, env, _o_);
+  return(s7_make_real(sc, mus_env(_o_))); 
+}
+
+static s7_pointer env_1_3;
+static s7_pointer g_env_1_3(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *_o_;
+  GET_GENERATOR(args, env, _o_);
+  return(s7_make_real(sc, mus_env(_o_))); 
+}
+
 
 
 
@@ -9171,7 +9235,7 @@ static s7_pointer g_oscil_pm_direct(s7_scheme *sc, s7_pointer args)
   mus_any *o;
   s7_pointer x;
 
-  GET_GENERATOR(car(args), oscil, o);
+  GET_GENERATOR(args, oscil, o);
   x = s7_call_direct(sc, caddr(args));
   return(s7_remake_real(sc, x, mus_oscil_pm(o, s7_real(x))));
 }
@@ -9184,9 +9248,9 @@ static s7_pointer g_oscil_mul_c_s(s7_scheme *sc, s7_pointer args)
   double x;
   s7_pointer vargs;
 
-  GET_GENERATOR(car(args), oscil, o);
+  GET_GENERATOR(args, oscil, o);
   vargs = s7_cdadr(args);
-  GET_REAL(cadr(vargs), oscil, x);
+  GET_REAL(cdr(vargs), oscil, x);
   return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(sc, car(vargs)) * x)));
 }
 
@@ -9198,9 +9262,9 @@ static s7_pointer g_oscil_mul_s_c(s7_scheme *sc, s7_pointer args)
   double x;
   s7_pointer vargs;
 
-  GET_GENERATOR(car(args), oscil, o);
+  GET_GENERATOR(args, oscil, o);
   vargs = s7_cdadr(args);
-  GET_REAL(car(vargs), oscil, x);
+  GET_REAL(vargs, oscil, x);
   return(s7_make_real(sc, mus_oscil_fm(o, s7_number_to_real(sc, cadr(vargs)) * x)));
 }
 
@@ -9212,9 +9276,9 @@ static s7_pointer g_polywave_mul_c_s(s7_scheme *sc, s7_pointer args)
   double x;
   s7_pointer vargs;
 
-  GET_GENERATOR(car(args), polywave, o);
+  GET_GENERATOR(args, polywave, o);
   vargs = s7_cdadr(args);
-  GET_REAL(cadr(vargs), polywave, x);
+  GET_REAL(cdr(vargs), polywave, x);
   return(s7_make_real(sc, mus_polywave(o, s7_number_to_real(sc, car(vargs)) * x)));
 }
 
@@ -9223,11 +9287,11 @@ static s7_pointer fm_violin_vibrato_fallback(s7_scheme *sc, s7_pointer args)
 {
   mus_any *e = NULL, *t = NULL, *r = NULL;
   
-  GET_GENERATOR(cadar(args), env, e);
+  GET_GENERATOR(cdar(args), env, e);
   args = cdr(args);
-  GET_GENERATOR(cadar(args), triangle_wave, t);
+  GET_GENERATOR(cdar(args), triangle_wave, t);
   args = cdr(args);
-  GET_GENERATOR(cadar(args), rand_interp, r);
+  GET_GENERATOR(cdar(args), rand_interp, r);
   
   return(s7_make_real(sc, mus_env(e) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r)));			
 }
@@ -9236,7 +9300,7 @@ static s7_pointer abs_rand_interp;
 static s7_pointer g_abs_rand_interp(s7_scheme *sc, s7_pointer args)
 {
   mus_any *o;
-  GET_GENERATOR(cadar(args), rand_interp, o);
+  GET_GENERATOR(cdar(args), rand_interp, o);
   return(s7_make_real(sc, fabs(mus_rand_interp_unmodulated(o))));
 }
 
@@ -9244,7 +9308,7 @@ static s7_pointer abs_oscil;
 static s7_pointer g_abs_oscil(s7_scheme *sc, s7_pointer args)
 {
   mus_any *o;
-  GET_GENERATOR(cadar(args), oscil, o);
+  GET_GENERATOR(cdar(args), oscil, o);
   return(s7_make_real(sc, fabs(mus_oscil_unmodulated(o))));
 }
 
@@ -9252,7 +9316,7 @@ static s7_pointer abs_triangle_wave;
 static s7_pointer g_abs_triangle_wave(s7_scheme *sc, s7_pointer args)
 {
   mus_any *o;
-  GET_GENERATOR(cadar(args), triangle_wave, o);
+  GET_GENERATOR(cdar(args), triangle_wave, o);
   return(s7_make_real(sc, fabs(mus_triangle_wave_unmodulated(o))));
 }
 
@@ -9323,10 +9387,10 @@ static s7_pointer g_env_polywave(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL;
   double fm;
 
-  GET_GENERATOR(cadar(args), env, e);
+  GET_GENERATOR(cdar(args), env, e);
   args = cadr(args);
-  GET_GENERATOR(cadr(args), polywave, t);
-  GET_REAL(caddr(args), polywave, fm);
+  GET_GENERATOR(cdr(args), polywave, t);
+  GET_REAL(cddr(args), polywave, fm);
 
   return(s7_make_real(sc, mus_env(e) * mus_polywave(t, fm)));
 }
@@ -9339,9 +9403,9 @@ static s7_pointer g_fm_violin_modulation(s7_scheme *sc, s7_pointer args)
   double vibrato;
 
   vargs = s7_cdadr(args); /* (* ... ) */
-  GET_GENERATOR(s7_cadar(vargs), env, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, t);
-  GET_REAL(car(args), polywave, vibrato);
+  GET_GENERATOR(s7_cdar(vargs), env, e);
+  GET_GENERATOR(s7_cdadr(vargs), polywave, t);
+  GET_REAL(args, polywave, vibrato);
 
   return(s7_make_real(sc, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
 }
@@ -9353,11 +9417,11 @@ static s7_pointer g_fm_violin_with_modulation(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL, *o = NULL;
   double vibrato;
 
-  GET_GENERATOR(car(args), oscil, o);
+  GET_GENERATOR(args, oscil, o);
   vargs = s7_cdaddr(cadr(args)); /* (* ... ) */
-  GET_GENERATOR(s7_cadar(vargs), env, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, t);
-  GET_REAL(s7_cadadr(args), polywave, vibrato);
+  GET_GENERATOR(s7_cdar(vargs), env, e);
+  GET_GENERATOR(s7_cdadr(vargs), polywave, t);
+  GET_REAL(s7_cdadr(args), polywave, vibrato);
 
   return(s7_make_real(sc, mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
 }
@@ -9369,13 +9433,13 @@ static s7_pointer g_fm_violin_1(s7_scheme *sc, s7_pointer args)
   mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL;
   double vibrato;
 
-  GET_GENERATOR(s7_cadar(args), env, a);
+  GET_GENERATOR(s7_cdar(args), env, a);
   vargs = cadr(args);
-  GET_GENERATOR(cadr(vargs), oscil, o);
+  GET_GENERATOR(cdr(vargs), oscil, o);
   vargs = s7_cdaddr(caddr(vargs));
-  GET_GENERATOR(s7_cadar(vargs), env, e);
-  GET_GENERATOR(s7_cadadr(vargs), polywave, t);
-  GET_REAL(cadr(caddr(cadr(args))), polywave, vibrato);
+  GET_GENERATOR(s7_cdar(vargs), env, e);
+  GET_GENERATOR(s7_cdadr(vargs), polywave, t);
+  GET_REAL(cdaddr(cadr(args)), polywave, vibrato);
 
   return(s7_make_real(sc, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
 }
@@ -9388,17 +9452,17 @@ static s7_pointer fm_violin_2_fallback(s7_scheme *sc, s7_pointer args)
   mus_long_t pos;
   mus_any *e = NULL, *t = NULL, *o = NULL, *a = NULL, *lc = NULL;
 
-  GET_GENERATOR(car(args), locsig, lc);
-  GET_INTEGER(cadr(args), locsig, pos);
+  GET_GENERATOR(args, locsig, lc);
+  GET_INTEGER(cdr(args), locsig, pos);
   vargs = s7_cdaddr(args);
-  GET_GENERATOR(s7_cadar(vargs), env, a);
+  GET_GENERATOR(s7_cdar(vargs), env, a);
   vargs = s7_cadr(vargs);
-  GET_GENERATOR(s7_cadr(vargs), oscil, o);
+  GET_GENERATOR(s7_cdr(vargs), oscil, o);
   vargs = s7_cdaddr(s7_caddr(vargs));
-  GET_GENERATOR(s7_cadar(vargs), env, e);
+  GET_GENERATOR(s7_cdar(vargs), env, e);
   vargs = s7_cdadr(vargs);
-  GET_GENERATOR(car(vargs), polywave, t);
-  GET_REAL(cadr(vargs), polywave, vibrato);
+  GET_GENERATOR(vargs, polywave, t);
+  GET_REAL(cdr(vargs), polywave, vibrato);
   
   mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
   return(XEN_ZERO); /* just return something! */
@@ -9517,11 +9581,11 @@ static s7_pointer env_polywave_env_fallback(s7_scheme *sc, s7_pointer args)
 {
   mus_any *e1 = NULL, *t = NULL, *e2 = NULL;
 
-  GET_GENERATOR(cadar(args), env, e1);
+  GET_GENERATOR(cdar(args), env, e1);
   args = cadr(args);
-  GET_GENERATOR(cadr(args), polywave, t);
+  GET_GENERATOR(cdr(args), polywave, t);
   args = caddr(args);
-  GET_GENERATOR(cadr(args), env, e2);
+  GET_GENERATOR(cdr(args), env, e2);
 
   return(s7_make_real(sc, mus_env(e1) * mus_polywave(t, mus_env(e2))));
 }
@@ -9573,13 +9637,13 @@ static s7_pointer jc_reverb_combs_fallback(s7_scheme *sc, s7_pointer args)
   mus_any *c1 = NULL, *c2, *c3, *c4;
   double fm;
 
-  GET_GENERATOR(s7_cadar(args), comb, c1);
+  GET_GENERATOR(s7_cdar(args), comb, c1);
   vargs = cdr(args);
-  GET_GENERATOR(s7_cadar(vargs), comb, c2);
+  GET_GENERATOR(s7_cdar(vargs), comb, c2);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, c3);
+  GET_GENERATOR(s7_cdar(vargs), comb, c3);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, c4);
+  GET_GENERATOR(s7_cdar(vargs), comb, c4);
   
   fm = s7_number_to_real(sc, s7_value(sc, s7_caddar(args)));
 
@@ -9691,13 +9755,13 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	{
-	  GET_GENERATOR(car(args), all_pass, a1);
+	  GET_GENERATOR(args, all_pass, a1);
 	  vargs = s7_cdr(args);
-	  GET_GENERATOR(cadar(vargs), all_pass, a2);
+	  GET_GENERATOR(cdar(vargs), all_pass, a2);
 	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR(cadar(vargs), all_pass, a3);
+	  GET_GENERATOR(cdar(vargs), all_pass, a3);
 	  vargs = s7_caddar(vargs);
-	  GET_INTEGER(cadr(vargs), ina, pos);
+	  GET_INTEGER(cdr(vargs), ina, pos);
 
 	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))))));
 	}
@@ -9777,15 +9841,15 @@ static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	{
-	  GET_GENERATOR(car(args), all-pass, a1);
+	  GET_GENERATOR(args, all-pass, a1);
 	  vargs = s7_cdr(args);
-	  GET_GENERATOR(cadar(vargs), one-pole, lp);
+	  GET_GENERATOR(cdar(vargs), one-pole, lp);
 	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR(cadar(vargs), all_pass, a2);
+	  GET_GENERATOR(cdar(vargs), all_pass, a2);
 	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR(cadar(vargs), all_pass, a3);
+	  GET_GENERATOR(cdar(vargs), all_pass, a3);
 	  vargs = s7_cddar(vargs);
-	  GET_GENERATOR(cadar(vargs), all_pass, a4);
+	  GET_GENERATOR(cdar(vargs), all_pass, a4);
 	  vargs = s7_caddar(vargs);
 
 	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, 
@@ -9851,17 +9915,17 @@ static s7_pointer nrev_combs_fallback(s7_scheme *sc, s7_pointer args)
   mus_any *c1 = NULL, *c2, *c3, *c4, *c5, *c6;
   double fm;
 
-  GET_GENERATOR(s7_cadar(args), comb, c1);
+  GET_GENERATOR(s7_cdar(args), comb, c1);
   vargs = cdr(args);
-  GET_GENERATOR(s7_cadar(vargs), comb, c2);
+  GET_GENERATOR(s7_cdar(vargs), comb, c2);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, c3);
+  GET_GENERATOR(s7_cdar(vargs), comb, c3);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, c4);
+  GET_GENERATOR(s7_cdar(vargs), comb, c4);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, c5);
+  GET_GENERATOR(s7_cdar(vargs), comb, c5);
   vargs = cdr(vargs);
-  GET_GENERATOR(s7_cadar(vargs), comb, c6);
+  GET_GENERATOR(s7_cdar(vargs), comb, c6);
   
   fm = s7_number_to_real(sc, s7_value(sc, s7_caddar(args)));
 
@@ -9965,7 +10029,7 @@ static s7_pointer ina_reverb_2;
 static s7_pointer g_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
-  GET_INTEGER(car(args), ina, pos);
+  GET_INTEGER(args, ina, pos);
   return(s7_make_real(sc, in_any_2(pos, 0)));
 }
 
@@ -9974,14 +10038,11 @@ static s7_pointer mul_s_ina_reverb_2;
 static s7_pointer g_mul_s_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
-  s7_pointer sym;
   double scl;
   
-  sym = car(args);
-  GET_REAL(sym, "ina", scl);
-
+  GET_REAL(args, "ina", scl);
   args = s7_cdadr(args);
-  GET_INTEGER(car(args), ina, pos);
+  GET_INTEGER(args, ina, pos);
 
   return(s7_make_real(sc, scl * in_any_2(pos, 0)));
 }
@@ -9994,8 +10055,8 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   mus_any *locs;
 
-  GET_GENERATOR(car(args), locsig, locs);
-  GET_INTEGER(cadr(args), outa, pos);
+  GET_GENERATOR(args, locsig, locs);
+  GET_INTEGER(cdr(args), outa, pos);
   x = s7_call_direct(sc, caddr(args));
   mus_locsig(locs, pos, s7_number_to_real(sc, x));
   return(XEN_ZERO);
@@ -10007,7 +10068,7 @@ static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
 {
   s7_Int pos;
   s7_pointer x;
-  GET_INTEGER(car(args), outa, pos);
+  GET_INTEGER(args, outa, pos);
   x = s7_call_direct(sc, cadr(args));
   return(out_any_2(pos, s7_number_to_real(sc, x), 0, "outa", x));
 }
@@ -10018,9 +10079,9 @@ static s7_pointer g_indirect_outa_sub_2(s7_scheme *sc, s7_pointer args)
   s7_Int pos;
   double x, y;
   
-  GET_INTEGER(car(args), outa, pos);
-  GET_REAL(cadr(cadr(args)), outa, x);
-  GET_REAL(caddr(cadr(args)), outa, y);
+  GET_INTEGER(args, outa, pos);
+  GET_REAL(cdr(cadr(args)), outa, x);
+  GET_REAL(cddr(cadr(args)), outa, y);
   return(out_any_2(pos, x - y, 0, "outa", xen_zero));
 }
 
@@ -10030,8 +10091,8 @@ static s7_pointer g_indirect_outa_ss(s7_scheme *sc, s7_pointer args)
   s7_Int pos;
   double x;
   
-  GET_INTEGER(car(args), outa, pos);
-  GET_REAL(cadr(args), outa, x);
+  GET_INTEGER(args, outa, pos);
+  GET_REAL(cdr(args), outa, x);
   return(out_any_2(pos, x, 0, "outa", xen_zero));
 }
 
@@ -10041,8 +10102,8 @@ static s7_pointer g_indirect_outa_add_2(s7_scheme *sc, s7_pointer args)
   s7_Int pos1, pos2;
   s7_pointer x;
 
-  GET_INTEGER(cadr(car(args)), outa, pos1);
-  GET_INTEGER(caddr(car(args)), outa, pos2);
+  GET_INTEGER(cdr(car(args)), outa, pos1);
+  GET_INTEGER(cddr(car(args)), outa, pos2);
   x = s7_call_direct(sc, cadr(args));
   return(out_any_2(pos1 + pos2, s7_number_to_real(sc, x), 0, "outa", x));
 }
@@ -10056,10 +10117,10 @@ static s7_pointer g_outa_mul_s_env(s7_scheme *sc, s7_pointer args)
   double x;
   mus_any *e;
 
-  GET_INTEGER(car(args), outa, pos);
+  GET_INTEGER(args, outa, pos);
   args = cdadr(args);
-  GET_REAL(car(args), outa, x);
-  GET_GENERATOR(cadr(cadr(args)), env, e);
+  GET_REAL(args, outa, x);
+  GET_GENERATOR(cdadr(args), env, e);
   return(out_any_2(pos, x * mus_env(e), 0, "outa", xen_zero));
 }
 
@@ -10093,15 +10154,15 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
 	  double val, scl;
 	  mus_any *d;
 	  if (chan == 0)
-	    GET_INTEGER(car(args), outa, pos);
-	  else GET_INTEGER(car(args), outb, pos);
+	    GET_INTEGER(args, outa, pos);
+	  else GET_INTEGER(args, outb, pos);
 	  args = cadr(args);
 	  if (chan == 0)
-	    GET_REAL(cadr(args), outa, scl);
-	  else GET_REAL(cadr(args), outb, scl);
+	    GET_REAL(cdr(args), outa, scl);
+	  else GET_REAL(cdr(args), outb, scl);
 	  args = caddr(args);
-	  GET_GENERATOR(cadr(args), delay, d);
-	  GET_REAL(caddr(args), delay, val);
+	  GET_GENERATOR(cdr(args), delay, d);
+	  GET_REAL(cddr(args), delay, val);
 	  return(out_any_2(pos, scl * mus_delay_unmodulated_noz(d, val), chan, caller, xen_zero));
 	}
       syms = s7_expression_make_data(sc, args, 7);
@@ -10226,13 +10287,13 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
 	{
 	  s7_Int pos;
 	  mus_any *e1, *e2, *t;
-	  GET_INTEGER(car(args), outa, pos);
+	  GET_INTEGER(args, outa, pos);
 	  args = cdr(cadr(args));
-	  GET_GENERATOR(cadar(args), env, e1);
+	  GET_GENERATOR(cdar(args), env, e1);
 	  args = cadr(args);
-	  GET_GENERATOR(cadr(args), polywave, t);
+	  GET_GENERATOR(cdr(args), polywave, t);
 	  args = caddr(args);
-	  GET_GENERATOR(cadr(args), env, e2);
+	  GET_GENERATOR(cdr(args), env, e2);
 	  return(out_any_2(pos, mus_env(e1) * mus_polywave(t, mus_env(e2)), 0, "outa", xen_zero));
 	}
 
@@ -10292,7 +10353,7 @@ static s7_pointer g_indirect_frame_to_file_3(s7_scheme *sc, s7_pointer args)
   s7_Int pos;
   s7_pointer data;
 
-  GET_INTEGER(cadr(args), frame_to_file, pos);
+  GET_INTEGER(cdr(args), frame_to_file, pos);
   data = s7_call_direct(sc, caddr(args));
   mus_frame_to_file(XEN_TO_MUS_ANY(CLM_OUTPUT), pos, (mus_any *)(((mus_xen *)s7_object_value(data))->gen));
   return(data);
@@ -10305,12 +10366,12 @@ static s7_pointer g_frame_to_file_ff(s7_scheme *sc, s7_pointer args)
   s7_Int pos;
   mus_any *ogen, *ff, *fmx, *fout;
 
-  GET_GENERATOR(car(args), frame_to_file, ogen);
-  GET_INTEGER(cadr(args), frame_to_file, pos);
+  GET_GENERATOR(args, frame_to_file, ogen);
+  GET_INTEGER(cdr(args), frame_to_file, pos);
   ff_expr = cdaddr(args);
-  GET_GENERATOR(car(ff_expr), frame_to_frame, ff);
-  GET_GENERATOR(cadr(ff_expr), frame_to_frame, fmx);
-  GET_GENERATOR(caddr(ff_expr), frame_to_frame, fout);
+  GET_GENERATOR(ff_expr, frame_to_frame, ff);
+  GET_GENERATOR(cdr(ff_expr), frame_to_frame, fmx);
+  GET_GENERATOR(cddr(ff_expr), frame_to_frame, fout);
 
   mus_frame_to_file(ogen, pos, mus_frame_to_frame(ff, fmx, fout));
   return(XEN_FALSE);
@@ -10348,7 +10409,7 @@ static s7_pointer g_add_direct_s2(s7_scheme *sc, s7_pointer args)
   s7_pointer yp, s;
   double x, y;
 
-  GET_NUMBER(car(args), "+", s);
+  GET_NUMBER(args, "+", s);
 
   x = s7_call_direct_to_real_and_free(sc, cadr(args));
   yp = s7_call_direct(sc, caddr(args));
@@ -10365,7 +10426,7 @@ static s7_pointer g_mul_direct_s2(s7_scheme *sc, s7_pointer args)
   s7_pointer yp, s;
   double x, y;
 
-  GET_NUMBER(car(args), "*", s);
+  GET_NUMBER(args, "*", s);
 
   x = s7_call_direct_to_real_and_free(sc, cadr(args));
   yp = s7_call_direct(sc, caddr(args));
@@ -10411,7 +10472,7 @@ static s7_pointer g_mul_env_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   mus_any *e = NULL;
 
-  GET_GENERATOR(s7_cadar(args), env, e);
+  GET_GENERATOR(s7_cdar(args), env, e);
   x = s7_call_direct(sc, cadr(args));
   return(s7_remake_real(sc, x, mus_env(e) * s7_real(x)));
 }
@@ -10441,7 +10502,7 @@ static s7_pointer g_mul_s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(car(args), "*", mul);
+  GET_NUMBER(args, "*", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10458,7 +10519,7 @@ static s7_pointer g_mul_1s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(caddr(car(args)), "*", mul);
+  GET_NUMBER(cddr(car(args)), "*", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10475,7 +10536,7 @@ static s7_pointer g_add_s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(car(args), "*", mul);
+  GET_NUMBER(args, "*", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10492,7 +10553,7 @@ static s7_pointer g_add_1s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(caddr(car(args)), "+", mul);
+  GET_NUMBER(cddr(car(args)), "+", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10509,7 +10570,7 @@ static s7_pointer g_add_cs_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval, cval;
 
-  GET_NUMBER(caddr(car(args)), "+", mul);
+  GET_NUMBER(cddr(car(args)), "+", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);
@@ -10959,7 +11020,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
     }
 
   /* PERHAPS: (* c dir dir)? (* c dir c*) (c* s dir) (c* s opssq)
-   *   if first arg is (env ...) then we can use multiply but returna temp (often 2 args here)
+   *   if first arg is (env ...) then we can use multiply but return a temp (often 2 args here)
    *   multiply_2_e -- like multiply_2 but we know 1st is real, and temp
    *   can't this be in s7?
    *
@@ -11324,13 +11385,23 @@ static s7_pointer nrxycos_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
   return(f);
 }
 
+
+static int env_choice = -1;
 static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 1) &&
       (s7_is_symbol(cadr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      return(env_1);
+      env_choice++;
+      if (env_choice == 0)
+	return(env_1);
+      if (env_choice == 1)
+	return(env_1_1);
+      if (env_choice == 2)
+	return(env_1_2);
+      env_choice = -1;
+      return(env_1_3);
     }
   return(f);
 }
@@ -12480,9 +12551,10 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "env");
   s7_function_set_chooser(sc, f, env_chooser);
   gen_class = s7_function_class(sc, f);
-
-  env_1 = clm_make_function(sc, "env", g_env_1, 1, 0, false, "env optimization", gen_class,
-			    NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
+  env_1 = clm_make_function(sc, "env", g_env_1, 1, 0, false, "env optimization", gen_class, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
+  env_1_1 = clm_make_function(sc, "env", g_env_1_1, 1, 0, false, "env optimization", gen_class, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
+  env_1_2 = clm_make_function(sc, "env", g_env_1_2, 1, 0, false, "env optimization", gen_class, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
+  env_1_3 = clm_make_function(sc, "env", g_env_1_3, 1, 0, false, "env optimization", gen_class, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
 
 
   f = s7_name_to_value(sc, "readin");

@@ -162,7 +162,7 @@
  *   the default is to assume that we're running on a 64-bit machine.
  *
  * The __bfin__ switch refers to the Blackfin processor where int accesses must be 4-byte aligned.
- *   I can't find any built-in compiler switch to detect this case.
+ *   I can't find any built-in compiler switch to detect this case. (gcc has __alignof__(int) I think).
  *
  * in openBSD I think you need to include -ftrampolines in CFLAGS.
  */
@@ -974,6 +974,10 @@ typedef struct s7_cell {
       bool needs_free;
 
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
+      /* unsigned int aux_type; 
+       *   actually we could make needs_free a bit, and we'have 63 other bits available on every symbol
+       *   or better use a union, so we have room for another s7_pointer/symbol
+       */
       s7_pointer initial_slot;
     } string;
     
@@ -2127,23 +2131,23 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
-static int counts[OP_MAX_DEFINED];
-static void clear_counts(void) {int i; for (i = 0; i < OP_MAX_DEFINED; i++) counts[i]=0;}
-static void tick(opcode_t i) {counts[(int)i]++;}
+#if 1
+static int counts[100];
+static void clear_counts(void) {int i; for (i = 0; i < 100; i++) counts[i]=0;}
+static void tick(int i) {counts[i]++;}
 static void report_counts(s7_scheme *sc)
 {
   int i, mx, mxloc, total = 0;
   bool happy = true;
 
-  for (i = 0; i < OP_MAX_DEFINED; i++)
+  for (i = 0; i < 100; i++)
     total += counts[i];
   fprintf(stderr, "total: %d\n", total);
 
   while (happy)
     {
       mx = 0;
-      for (i = 0; i < OP_MAX_DEFINED; i++)
+      for (i = 0; i < 100; i++)
 	{
 	  if (counts[i] > mx)
 	    {
@@ -2153,12 +2157,13 @@ static void report_counts(s7_scheme *sc)
 	}
       if (mx > 0)
 	{
-	  fprintf(stderr, "%s: %d (%.3f)\n", real_op_names[mxloc], mx, (double)(100 * mx) / (double)total);
+	  fprintf(stderr, "%d: %d (%.3f)\n", mxloc, mx, (double)(100 * mx) / (double)total);
 	  counts[mxloc] = 0;
 	}
       else happy = false;
     }
 }
+static void init_hashes(s7_scheme *sc) {}
 #else
 void clear_counts(void) {}
 static s7_pointer hashes;
@@ -5135,9 +5140,6 @@ static s7_pointer g_outer_environment(s7_scheme *sc, s7_pointer args)
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer hdl)
 { 
   s7_pointer x;	
-#if WITH_COUNTS
-  add_expr(sc, hdl);
-#endif
 
   if (frame_id(sc->envir) == symbol_id(hdl))
     return(local_slot(hdl));	
@@ -5209,9 +5211,6 @@ s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value)
 static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer y;
-#if WITH_COUNTS
-  add_expr(sc, hdl);
-#endif
 
   if (!is_environment(env))
     return(global_slot(hdl));
@@ -5245,12 +5244,15 @@ s7_pointer s7_value(s7_scheme *sc, s7_pointer sym)
 }
 
 
+s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst)
+{
+  return(finder(sc, car(lst)));
+}
+
+
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
-#if WITH_COUNTS
-  add_expr(sc, sym);
-#endif
   if (is_environment(local_env))
     {
       for (x = local_env; is_environment(x); x = next_environment(x))
@@ -5320,9 +5322,6 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 /* an experiment */
 static s7_pointer find_dynamic_value(s7_scheme *sc, s7_pointer x, s7_pointer sym, long long int *id)
 { 
-#if WITH_COUNTS
-  add_expr(sc, sym);
-#endif
   for (; symbol_id(sym) < frame_id(x); x = next_environment(x));
 
   if (frame_id(x) == symbol_id(sym))
@@ -18655,7 +18654,7 @@ static s7_pointer file_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol)
 {
   unsigned int i, port_len, port_start;
-  char *port_str, *cur, *end;
+  char *port_str, *cur, *end, *start;
 
   /* this string can be left uncopied if port_needs_free(port), then the sc->strings
    *   array checked when the port is closed, and any held strings copied.  But 
@@ -18669,21 +18668,22 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
   port_start = port_string_point(port);
   port_str = port_string(port);
   end = (char *)(port_str + port_len);
+  start = (char *)(port_str + port_start);
 
-  for (cur = (char *)(port_str + port_start); cur < end; cur++)
+  for (cur = start; cur < end; cur++)
     if (*cur == '\n')
       {
 	port_line_number(port)++;
 	i = cur - port_str;
 	port_string_point(port) = i + 1;
-	return(s7_make_terminated_string_with_length(sc, (char *)(port_str + port_start), ((with_eol) ? i + 1 : i) - port_start));
+	return(s7_make_terminated_string_with_length(sc, start, ((with_eol) ? i + 1 : i) - port_start));
       }
   i = cur - port_str;
   port_string_point(port) = port_len;
   if (i == port_start)
     return(sc->EOF_OBJECT);
 
-  return(s7_make_terminated_string_with_length(sc, (char *)(port_str + port_start), i - port_start));
+  return(s7_make_terminated_string_with_length(sc, start, i - port_start));
 }
 
 
@@ -18897,8 +18897,11 @@ static int string_read_white_space(s7_scheme *sc, s7_pointer pt)
   char *orig_str, *str;
   unsigned char c1;
 
+  if (port_string_length(pt) <= port_string_point(pt))
+    return(EOF);
+
   str = (char *)(port_string(pt) + port_string_point(pt));
-  if (!(*str)) return(EOF);
+  /* if (!(*str)) return(EOF); */
 
   /* we can't depend on the extra 0 of padding at the end of an input string port --
    *   eval_string and others take the given string without copying or padding.
@@ -23393,25 +23396,38 @@ static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer make_list(s7_scheme *sc, int len)
+static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init)
 {
-  int i;
-  s7_pointer p;
   /* sc->v used only here */
-
-  sc->v = sc->NIL;
-  if (len < (sc->free_heap_top - sc->free_heap))
+  switch (len)
     {
-      for (i = 0; i < len; i++)
-	sc->v = cons_unchecked(sc, sc->NIL, sc->v);
+    case 0: return(sc->NIL);
+    case 1: return(cons(sc, init, sc->NIL));
+    case 2: return(cons_unchecked(sc, init, cons(sc, init, sc->NIL)));
+    case 3: return(cons_unchecked(sc, init, cons_unchecked(sc, init, cons(sc, init, sc->NIL))));
+    case 4: return(cons_unchecked(sc, init, cons_unchecked(sc, init, cons_unchecked(sc, init, cons(sc, init, sc->NIL)))));
+    case 5: return(cons_unchecked(sc, init, cons_unchecked(sc, init, cons_unchecked(sc, init, 
+		    cons_unchecked(sc, init, cons(sc, init, sc->NIL))))));
+    case 6: return(cons_unchecked(sc, init, cons_unchecked(sc, init, cons_unchecked(sc, init,
+		    cons_unchecked(sc, init, cons_unchecked(sc, init, cons(sc, init, sc->NIL)))))));
+    case 7: return(cons_unchecked(sc, init, cons_unchecked(sc, init, cons_unchecked(sc, init,
+		    cons_unchecked(sc, init, cons_unchecked(sc, init, cons_unchecked(sc, init, cons(sc, init, sc->NIL))))))));
+    default:
+      sc->v = sc->NIL;
+      if (len < (sc->free_heap_top - sc->free_heap))
+	{
+	  int i;
+	  for (i = 0; i < len; i++)
+	    sc->v = cons_unchecked(sc, init, sc->v);
+	}
+      else
+	{
+	  int i;
+	  for (i = 0; i < len; i++)
+	    sc->v = cons(sc, init, sc->v);
+	}
     }
-  else
-    {
-      for (i = 0; i < len; i++)
-	sc->v = cons(sc, sc->NIL, sc->v);
-    }
-  p = sc->v;
-  return(p);
+  return(sc->v);
 }
 
 
@@ -23421,8 +23437,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_list "(make-list length (initial-element #f)) returns a list of 'length' elements whose value is 'initial-element'."
 
-  s7_pointer init, p;
-  int i, ilen;
+  s7_pointer init;
   s7_Int len;
 
   if (!s7_is_integer(car(args)))
@@ -23440,24 +23455,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     init = cadr(args);
   else init = sc->F;
-
-  sc->w = sc->NIL;
-  ilen = (int)len;
-
-  if (len < (sc->free_heap_top - sc->free_heap))
-    {
-      for (i = 0; i < ilen; i++)
-	sc->w = cons_unchecked(sc, init, sc->w);
-    }
-  else
-    {
-      for (i = 0; i < ilen; i++)
-	sc->w = cons(sc, init, sc->w);
-    }
-  p = sc->w;
-  sc->w = sc->NIL;
-
-  return(p);
+  return(make_list(sc, (int)len, init));
 }
 
 
@@ -26123,7 +26121,7 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_Int dims, s7_pointer data)
 
   sc->w = sc->NIL;
   if (is_null(data))  /* dims are already 0 (calloc above) */
-    return(g_make_vector(sc, list_1(sc, g_make_list(sc, list_2(sc, make_integer(sc, dims), small_int(0))))));
+    return(g_make_vector(sc, list_1(sc, make_list(sc, dims, small_int(0)))));
 
   sizes = (int *)calloc(dims, sizeof(int));
   for (x = data, i = 0; i < dims; i++)
@@ -30173,7 +30171,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	if (len == 0)
 	  return(sc->NIL);
 
-	result = make_list(sc, len);
+	result = make_list(sc, len, sc->NIL);
 	gc_res = s7_gc_protect(sc, result);
 	z = list_1(sc, sc->F);
 	gc_z = s7_gc_protect(sc, z);
@@ -33808,10 +33806,6 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl) 
 {
   s7_pointer x;
-#if WITH_COUNTS
-  add_expr(sc, hdl);
-#endif
-
   if (frame_id(sc->envir) == symbol_id(hdl))
     return(slot_value(local_slot(hdl)));
 
@@ -37055,9 +37049,6 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer hdl, s7_po
 { 
   s7_pointer x;
   long long int id;
-#if WITH_COUNTS
-  add_expr(sc, hdl);
-#endif
 
   if (direct_memq(hdl, e))
     return(sc->NIL);
@@ -40949,9 +40940,6 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 {
   /* like finder, but no unbound-variable error */
   s7_pointer x;	
-#if WITH_COUNTS
-  add_expr(sc, hdl);
-#endif
 
   for (x = sc->envir; symbol_id(hdl) < frame_id(x); x = next_environment(x));
 
@@ -43236,7 +43224,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->args = sc->safe_lists[num_args];
 		    set_list_in_use(sc->args);
 		  }
-		else sc->args = make_list(sc, num_args);
+		else sc->args = make_list(sc, num_args, sc->NIL);
 
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  car(p) = finder(sc, car(args));
@@ -43274,7 +43262,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->args = sc->safe_lists[num_args];
 		    set_list_in_use(sc->args);
 		  }
-		else sc->args = make_list(sc, num_args);
+		else sc->args = make_list(sc, num_args, sc->NIL);
 
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
@@ -43867,7 +43855,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_CLOSURE_ALL_S:
 	      {
 		s7_pointer args, p;
-		sc->args = make_list(sc, integer(fcdr(cdr(code))));
+		sc->args = make_list(sc, integer(fcdr(cdr(code))), sc->NIL);
+#if WITH_COUNTS
+		tick(integer(fcdr(cdr(code))));
+#endif
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  car(p) = find_symbol_or_bust(sc, car(args));
 		sc->code = ecdr(code);
@@ -43892,7 +43883,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_CLOSURE_ALL_G:
 	      {
 		s7_pointer args, p;
-		sc->args = make_list(sc, integer(fcdr(cdr(code))));
+		sc->args = make_list(sc, integer(fcdr(cdr(code))), sc->NIL);
+#if WITH_COUNTS
+		tick(integer(fcdr(cdr(code))));
+#endif
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
@@ -45416,7 +45410,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->args = sc->safe_lists[num_args];
 		    set_list_in_use(sc->args);
 		  }
-		else sc->args = make_list(sc, num_args);
+		else sc->args = make_list(sc, num_args, sc->NIL);
 		
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  car(p) = finder(sc, car(args));
@@ -45976,7 +45970,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->args = sc->safe_lists[num_args];
 		    set_list_in_use(sc->args);
 		  }
-		else sc->args = make_list(sc, num_args);
+		else sc->args = make_list(sc, num_args, sc->NIL);
 
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
@@ -46022,7 +46016,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->args = sc->safe_lists[num_args];
 		    set_list_in_use(sc->args);
 		  }
-		else sc->args = make_list(sc, num_args);
+		else sc->args = make_list(sc, num_args, sc->NIL);
 
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
@@ -46296,7 +46290,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_C_ALL_G:
 	      {
 		s7_pointer args, p;
-		sc->args = make_list(sc, integer(fcdr(cdr(code))));
+		sc->args = make_list(sc, integer(fcdr(cdr(code))), sc->NIL);
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
@@ -47334,9 +47328,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code));  */
 	  /* trailers */
-#if WITH_COUNTS
-	  /* add_expr(sc, sc->code); */
-#endif
 	  sc->cur_code = sc->code;
 	  
 	  {
@@ -58881,11 +58872,10 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * name[i] -> (name i) as a reader macro? [symbol-macro => run if given char occurs, as in reader macros]
- * TODO: update all the tunes
  *
  * bench    42736                                    8580
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1230
- *                                              9811 8382
+ * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1218
+ *                                              9811 8354
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3273
  * s7test            1721             1456 1430 1375 1344
  * t455                           265  256  218   86   87

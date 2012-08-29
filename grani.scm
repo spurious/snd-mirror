@@ -241,8 +241,7 @@
 ;;;-----------------------------------------------------------------------------
 ;;; Grain envelopes
 
-(define* (raised-cosine 
-			(duty-cycle 100)
+(define* (raised-cosine	(duty-cycle 100)
 			(length 128))
   (let* ((v (make-vct length))
 	 (active (* length duty-cycle 0.01))
