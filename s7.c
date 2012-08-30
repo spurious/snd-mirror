@@ -788,13 +788,17 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
 #define NUM_CHARS 256
 
+
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
 
-/*
-static const char *token_names[12] = {"token_eof", "token_left_paren", "token_right_paren", "token_dot", "token_atom", "token_quote", "token_double_quote", 
-				      "token_back_quote", "token_comma", "token_at_mark", "token_sharp_const", "token_vector"};
-*/
+#if 0
+#define NUM_TOKENS 12
+static const char *token_names[NUM_TOKENS] = {
+  "token_eof", "token_left_paren", "token_right_paren", "token_dot", "token_atom", "token_quote", "token_double_quote", 
+  "token_back_quote", "token_comma", "token_at_mark", "token_sharp_const", "token_vector"};
+#endif
+
 
 typedef enum {FILE_PORT, STRING_PORT, FUNCTION_PORT} port_type_t;
 
@@ -971,13 +975,18 @@ typedef struct s7_cell {
       unsigned int length;
       unsigned int hash;  
       char *svalue;
+#if 0
+      union {
+	bool needs_free;
+	s7_pointer (*finder)(s7_scheme *sc, s7_pointer sym);
+	/* if these bits are used, remember the gensym maker sets string_needs_free to false currently --
+	 *    perhaps in that case, make sure no add_string?
+	 */
+      } sf;
+#else
       bool needs_free;
-
+#endif
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
-      /* unsigned int aux_type; 
-       *   actually we could make needs_free a bit, and we'have 63 other bits available on every symbol
-       *   or better use a union, so we have room for another s7_pointer/symbol
-       */
       s7_pointer initial_slot;
     } string;
     
@@ -1001,8 +1010,8 @@ typedef struct s7_cell {
 
     struct {
       /* these 3 are just place-holders */
-      s7_pointer slots, nxt;
-      long long int id;
+      s7_pointer unused_slots, unused_nxt;
+      long long int unused_id;
       /* these two fields are for some special case objects like #<unspecified> */
       const char *name;
       int len;
@@ -1204,7 +1213,7 @@ struct s7_scheme {
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Environment_Set, Cons; 
 
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE;
-  s7_pointer SET, QQ_VALUES, QQ_LIST, QQ_APPLY_VALUES, QQ_APPEND, MULTIVECTOR;
+  s7_pointer SET, QQ_List, QQ_Apply_Values, QQ_Append, Multivector;
   s7_pointer Apply, Vector;
   s7_pointer WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer SIMPLE_WRONG_TYPE_ARG_INFO, SIMPLE_OUT_OF_RANGE_INFO, DIVISION_BY_ZERO, DIVISION_BY_ZERO_ERROR;
@@ -2132,33 +2141,36 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 #define WITH_COUNTS 0
 #if WITH_COUNTS
 #if 1
-static int counts[100];
-static void clear_counts(void) {int i; for (i = 0; i < 100; i++) counts[i]=0;}
-static void tick(int i) {counts[i]++;}
+
+#define NUM_COUNTS 64000
+static int counts[2][NUM_COUNTS];
+static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) {counts[0][i] = 0; counts[1][i] = 0;}}
+static void tick(int this, bool that) {counts[0][this]++; if (that) counts[1][this]++;}
 static void report_counts(s7_scheme *sc)
 {
-  int i, mx, mxloc, total = 0;
+  int i, mx, mxi, total = 0;
   bool happy = true;
 
-  for (i = 0; i < 100; i++)
-    total += counts[i];
-  fprintf(stderr, "total: %d\n", total);
+  for (i = 0; i < NUM_COUNTS; i++)
+    total += counts[0][i];
+  fprintf(stderr, "total: %d \n", total);
 
   while (happy)
     {
       mx = 0;
-      for (i = 0; i < 100; i++)
+      for (i = 0; i < NUM_COUNTS; i++)
 	{
-	  if (counts[i] > mx)
+	  if (counts[0][i] > mx)
 	    {
-	      mx = counts[i];
-	      mxloc = i;
+	      mx = counts[0][i];
+	      mxi = i;
 	    }
 	}
       if (mx > 0)
 	{
-	  fprintf(stderr, "%d: %d (%.3f)\n", mxloc, mx, (double)(100 * mx) / (double)total);
-	  counts[mxloc] = 0;
+	  fprintf(stderr, "%d: %d of %d (%.3f)\n", mxi, counts[1][mxi], counts[0][mxi], (double)counts[1][mxi] / (double)counts[0][mxi]);
+	  counts[0][mxi] = 0;
+	  counts[1][mxi] = 0;
 	}
       else happy = false;
     }
@@ -18901,10 +18913,12 @@ static int string_read_white_space(s7_scheme *sc, s7_pointer pt)
     return(EOF);
 
   str = (char *)(port_string(pt) + port_string_point(pt));
-  /* if (!(*str)) return(EOF); */
 
   /* we can't depend on the extra 0 of padding at the end of an input string port --
    *   eval_string and others take the given string without copying or padding.
+   */
+  /* half the time this is called, the initial character is not white space, but splitting that out
+   *   is slower.
    */
   orig_str = str;
   while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
@@ -32788,7 +32802,7 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
     for (i = 0; i <= len; i++)
       sc->w = cons(sc, sc->NIL, sc->w);
 
-    car(sc->w) = sc->QQ_LIST;
+    car(sc->w) = sc->QQ_List;
     
     if (!dotted)
       {
@@ -32806,7 +32820,7 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 		 */
 		car(bq) = g_quasiquote_1(sc, car(orig));
 		cdr(bq) = sc->NIL;
-		sc->w = list_3(sc, sc->QQ_APPEND, sc->w, caddr(orig));
+		sc->w = list_3(sc, sc->QQ_Append, sc->w, caddr(orig));
 		break;
 	      }
 	    else car(bq) = g_quasiquote_1(sc, car(orig));
@@ -32820,7 +32834,7 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 	  car(bq) = g_quasiquote_1(sc, car(orig));
 	car(bq) = g_quasiquote_1(sc, car(orig));
 
-	sc->w = list_3(sc, sc->QQ_APPEND, sc->w, g_quasiquote_1(sc, cdr(orig)));
+	sc->w = list_3(sc, sc->QQ_Append, sc->w, g_quasiquote_1(sc, cdr(orig)));
 	/* quasiquote might quote a symbol in cdr(orig), so it's not completely pointless */
       }
 
@@ -33242,16 +33256,11 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 }
 
 
-/* static const char *tokens[12] = {"eof", "left_paren", "right_paren", "dot", "atom", "quote", 
-                                    "double_quote", "back_quote", "comma", "at_mark", "sharp_const", "vector"}; 
-*/
-
 static s7_pointer read_expression(s7_scheme *sc)
 { 
   while (true) 
     {
       int c;
-      /* fprintf(stderr, "top read_expr: %s\n", token_names[sc->tok]); */
       switch (sc->tok) 
 	{
 	case TOKEN_EOF:
@@ -33263,7 +33272,6 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  
 	case TOKEN_LEFT_PAREN:
 	  sc->tok = token(sc);
-	  /* fprintf(stderr, "read_expr: %s\n", token_names[sc->tok]); */
 
 	  if (sc->tok == TOKEN_RIGHT_PAREN)
 	    return(sc->NIL);
@@ -43856,9 +43864,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer args, p;
 		sc->args = make_list(sc, integer(fcdr(cdr(code))), sc->NIL);
-#if WITH_COUNTS
-		tick(integer(fcdr(cdr(code))));
-#endif
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  car(p) = find_symbol_or_bust(sc, car(args));
 		sc->code = ecdr(code);
@@ -43884,9 +43889,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer args, p;
 		sc->args = make_list(sc, integer(fcdr(cdr(code))), sc->NIL);
-#if WITH_COUNTS
-		tick(integer(fcdr(cdr(code))));
-#endif
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
@@ -51600,7 +51602,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (!is_pair(p))
 	  {
 	    if (is_symbol(p))
-	      sc->value = SYMBOL_TO_VALUE(sc, p);
+	      sc->value = SYMBOL_TO_VALUE(sc, p); /* a toss-up over finder: better in some cases, worse in others */
 	    else sc->value = p;
 
 	    if ((is_false(sc, sc->value)) ||
@@ -52735,11 +52737,43 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	switch (c) 
 	  {
 	  case '(':
-	    sc->tok = TOKEN_LEFT_PAREN;
+	    sc->tok = token(sc);
+
+	    if (sc->tok == TOKEN_ATOM)
+	      {
+		push_stack_no_code(sc, OP_READ_LIST, sc->args);
+		if (sc->stack_end >= sc->stack_resize_trigger)
+		  increase_stack_size(sc);
+		sc->value = port_read_name(sc->input_port)(sc, sc->input_port, NO_SHARP);
+		sc->args = sc->NIL;
+		goto READ_LIST;
+	      }
+
+	    /* after atom, nearly all remaining cases are left paren; can we do it directly?
+	     */
+
+	    if (sc->tok == TOKEN_RIGHT_PAREN)
+	      {
+		sc->value = sc->NIL;
+		goto READ_LIST;
+	      }
+	    
+	    if (sc->tok == TOKEN_DOT) 
+	      {
+		do {c = inchar(sc->input_port);} while ((c != ')') && (c != EOF));
+		return(read_error(sc, "stray dot after '('?"));         /* (car '( . )) */
+	      }
+	    
+	    if (sc->tok == TOKEN_EOF)
+	      return(missing_close_paren_error(sc));
+	    
 	    push_stack_no_code(sc, OP_READ_LIST, sc->args);
+	    if (sc->stack_end >= sc->stack_resize_trigger)
+	      increase_stack_size(sc);
+	    push_stack_no_code(sc, OP_READ_LIST, sc->NIL);
 	    sc->value = read_expression(sc);
 	    goto START;
-	    /* this is almost always OP_READ_LIST, but handling that explicitly is slower */
+
       
 	  case ')':
 	    sc->tok = TOKEN_RIGHT_PAREN;
@@ -52789,7 +52823,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	  default: 
 	    sc->strbuf[0] = c; 
-	    /* sc->tok = TOKEN_ATOM; */
 	    sc->value = port_read_name(pt)(sc, pt, NO_SHARP);
 	    goto READ_LIST;
 	  }
@@ -52995,7 +53028,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       if (sc->args == small_int(1))
 	sc->code = list_3(sc, sc->Apply, sc->Vector, g_quasiquote_1(sc, sc->value)); /* qq result will be evaluated (might include {list} etc) */
-      else sc->code = list_4(sc, sc->Apply, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
+      else sc->code = list_4(sc, sc->Apply, sc->Multivector, sc->args, g_quasiquote_1(sc, sc->value));
       goto EVAL; 
 
       
@@ -53008,7 +53041,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_APPLY_VALUES:
-      sc->value = list_2(sc, sc->UNQUOTE, list_2(sc, sc->QQ_APPLY_VALUES, sc->value));
+      sc->value = list_2(sc, sc->UNQUOTE, list_2(sc, sc->QQ_Apply_Values, sc->value));
       goto START;
       
       
@@ -58456,12 +58489,12 @@ s7_scheme *s7_init(void)
   sc->ERROR = s7_define_function(sc,                  "error",                     g_error,                    0, 0, true,  H_error);
 
   /* these are internal for quasiquote's use -- they are values, not symbols */
-  sc->QQ_VALUES =       s7_define_constant_function(sc, "{values}",                g_qq_values,                0, 0, true,  H_qq_values);
-  sc->QQ_APPLY_VALUES = s7_define_constant_function(sc, "{apply} {values}",        g_apply_values,             0, 0, true,  H_apply_values);
-  sc->QQ_APPEND =       s7_define_constant_function(sc, "{append}",                g_append,                   0, 0, true,  H_append);
-  sc->MULTIVECTOR =     s7_define_constant_function(sc, "{multivector}",           g_qq_multivector,           1, 0, true,  H_qq_multivector);
-  sc->QQ_LIST =         s7_define_constant_function(sc, "{list}",                  g_qq_list,                  0, 0, true,  H_qq_list);
-  set_type(sc->QQ_LIST, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
+                        s7_define_constant_function(sc, "{values}",                g_qq_values,                0, 0, true,  H_qq_values);
+  sc->QQ_Apply_Values = s7_define_constant_function(sc, "{apply} {values}",        g_apply_values,             0, 0, true,  H_apply_values);
+  sc->QQ_Append =       s7_define_constant_function(sc, "{append}",                g_append,                   0, 0, true,  H_append);
+  sc->Multivector =     s7_define_constant_function(sc, "{multivector}",           g_qq_multivector,           1, 0, true,  H_qq_multivector);
+  sc->QQ_List =         s7_define_constant_function(sc, "{list}",                  g_qq_list,                  0, 0, true,  H_qq_list);
+  set_type(sc->QQ_List, (T_C_LST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS));
 
   sc->GC = s7_define_safe_function(sc,                "gc",                        g_gc,                       0, 1, false, H_gc);
 
@@ -58871,12 +58904,10 @@ s7_scheme *s7_init(void)
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
- * name[i] -> (name i) as a reader macro? [symbol-macro => run if given char occurs, as in reader macros]
- *
  * bench    42736                                    8580
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1218
- *                                              9811 8354
- * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3273
+ * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1215
+ *                                              9811 8323
+ * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3108
  * s7test            1721             1456 1430 1375 1344
  * t455                           265  256  218   86   87
  * t502                                 90   72   42   40

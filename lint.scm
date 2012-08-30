@@ -46,6 +46,9 @@
     (define +unspecified+ #<unspecified>)
     (define +symbol+ 'symbol)
     (define +character+ #\a)
+    (define +environment+ (environment))
+    (define +hash-table+ (hash-table))
+    (define +port+ *stdout*)
 
     (define (integer-between-2-and-16? radix) 
       (and (integer? radix) 
@@ -78,6 +81,10 @@
     (define (non-null-vector? x)
       (and (vector? x)
 	   (not (equal? x #()))))
+
+    (define (port? p)
+      (or (input-port? p)
+	  (output-port? p)))
     
     (define (thunk? p)
       (and (procedure? p)
@@ -112,7 +119,7 @@
 		   (lambda (op) 
 		     (cons op #t)) 
 		   '(* + - / < <= = > >= 
-		       abs acos acosh and angle append ash asin asinh assoc assq assv atan atanh 
+		       abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
 		       begin boolean? 
 		       caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr 
 		       call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr 
@@ -121,26 +128,26 @@
 		       char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
 		       cons constant? continuation? copy cos cosh current-environment current-error-port current-input-port current-output-port 
 		       defined? denominator do dynamic-wind 
-		       eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt 
+		       environment environment? eof-object? eq? equal? eqv? error-environment even? exact->inexact exact? exp expt 
 		       floor for-each 
 		       gcd gensym global-environment 
-		       hash-table hash-table-ref hash-table-size hash-table? hook-functions 
-		       if imag-part inexact->exact inexact? infinite? initial-environment input-port?  integer->char integer-decode-float 
+		       hash-table hash-table-ref hash-table-size hash-table? hash-table-iterator? hook-functions 
+		       if imag-part inexact->exact inexact? infinite? initial-environment input-port? integer->char integer-decode-float 
 		       integer-length integer? 
 		       keyword->symbol keyword? 
 		       lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
-		       list? log logand logior lognot logxor 
-		       macro? magnitude make-hash-table make-hook make-keyword make-list make-polar make-procedure-with-setter 
-		       make-random-state make-rectangular make-string make-vector map max member memq memv min modulo 
+		       list? log logand logbit? logior lognot logxor 
+		       macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-list make-polar make-procedure-with-setter 
+		       make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
 		       nan? negative? not null? number->string number? numerator 
-		       object->string odd? or output-port? 
-		       pair? port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 
-		       procedure-source procedure-with-setter? procedure? provided? 
+		       object-environment object->string odd? open-environment? or outer-environment output-port? 
+		       pair? pair-line-number port-closed? port-filename port-line-number positive? procedure-arity procedure-documentation procedure-environment 
+		       procedure-name procedure-setter procedure-source procedure-with-setter? procedure? provided? 
 		       quasiquote quote quotient 
-		       random rational? rationalize real-part real? remainder reverse round 
+		       random random-state? rational? rationalize real-part real? remainder reverse round 
 		       s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
 		       string-ci=? string-ci>=? string-ci>? string-copy string-length string-ref string<=? string<? string=? string>=? 
-		       string>? string? substring symbol symbol->keyword symbol->string symbol->value symbol? 
+		       string>? string? substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? 
 		       tan tanh truncate 
 		       vector vector->list vector-dimensions vector-length vector-ref vector? 
 		       zero?))))
@@ -159,6 +166,8 @@
 			   (cons 'acos +not-integer+)
 			   (cons 'acosh +not-integer+)
 			   (cons 'angle +number+)
+			   (cons 'aritable? +boolean+)
+			   (cons 'arity +list+)
 			   (cons 'ash +integer+)
 			   (cons 'asin +not-integer+)
 			   (cons 'asinh +not-integer+)
@@ -167,6 +176,8 @@
 			   (cons 'assv 'list-or-f)
 			   (cons 'atan +not-integer+)
 			   (cons 'atanh +not-integer+)
+			   (cons 'augment-environment +environment+)
+			   (cons 'augment-environment! +environment+)
 			   (cons 'boolean? +boolean+)
 			   (cons 'ceiling +integer+)
 			   (cons 'char->integer +integer+)
@@ -197,14 +208,21 @@
 			   (cons 'continuation? +boolean+)
 			   (cons 'cos +number+)
 			   (cons 'cosh +not-integer+)
+			   (cons 'current-environment +environment+)
+			   (cons 'current-error-port +port+)
+			   (cons 'current-input-port +port+)
+			   (cons 'current-output-port +port+)
 			   (cons 'defined? +boolean+)
 			   (cons 'denominator +integer+)
 			   (cons 'display +unspecified+)
+			   (cons 'environment +environment+)
 			   (cons 'environment? +boolean+)
+			   (cons 'environment->list +list+)
 			   (cons 'eof-object? +boolean+)
 			   (cons 'eq? +boolean+)
 			   (cons 'equal? +boolean+)
 			   (cons 'eqv? +boolean+)
+			   (cons 'error-environment +environment+)
 			   (cons 'even? +boolean+)
 			   (cons 'exact->inexact +not-integer+)
 			   (cons 'exact? +boolean+)
@@ -214,6 +232,11 @@
 			   (cons 'for-each +unspecified+)
 			   (cons 'gcd +number+)
 			   (cons 'gensym +symbol+)
+			   (cons 'global-environment +environment+)
+			   (cons 'hash-table +hash-table+)
+			   (cons 'hash-table? +boolean+)
+			   (cons 'hash-table-iterator? +boolean+)
+			   (cons 'hash-table-size +integer+)
 			   (cons 'imag-part +number+)
 			   (cons 'inexact->exact +number+)
 			   (cons 'inexact? +boolean+)
@@ -233,11 +256,14 @@
 			   (cons 'list? +boolean+)
 			   (cons 'log +number+)
 			   (cons 'logand +integer+)
+			   (cons 'logbit? +boolean+)
 			   (cons 'logior +integer+)
 			   (cons 'lognot +integer+)
 			   (cons 'logxor +integer+)
 			   (cons 'macro? +boolean+)
 			   (cons 'magnitude +number+)
+			   (cons 'make-hash-table +hash-table+)
+			   (cons 'make-keyword +symbol+)
 			   (cons 'make-list +list+)
 			   (cons 'make-polar +number+) 
 			   (cons 'make-rectangular +number+)
@@ -250,6 +276,7 @@
 			   (cons 'memv 'list-or-f)
 			   (cons 'min +number+)
 			   (cons 'modulo +number+)
+			   (cons 'morally-equal? +boolean+)
 			   (cons 'nan? +boolean+)
 			   (cons 'negative? +boolean+)
 			   (cons 'newline +unspecified+)
@@ -258,17 +285,27 @@
 			   (cons 'number->string +string+)
 			   (cons 'number? +boolean+)
 			   (cons 'numerator +integer+)
+			   (cons 'object-environment +environment+)
 			   (cons 'object->string +string+)
 			   (cons 'odd? +boolean+)
+			   (cons 'open-environment +environment+)
+			   (cons 'open-environment? +boolean+)
+			   (cons 'outer-environment +environment+)
 			   (cons 'output-port? +boolean+)
 			   (cons 'pair? +boolean+)
+			   (cons 'pair-line-number +integer+)
 			   (cons 'peek-char 'char-or-eof)
 			   (cons 'port-closed? +boolean+)
+			   (cons 'port-file-name +string+)
+			   (cons 'port-line-number +integer+)
 			   (cons 'positive? +boolean+)
 			   (cons 'procedure? +boolean+)
 			   (cons 'procedure-arity 'list-or-f)
+			   (cons 'procedure-environment +environment+)
+			   (cons 'procedure-name +string+)
 			   (cons 'provided? +boolean+)
 			   (cons 'quotient +number+)
+			   (cons 'random-state? +boolean+)
 			   (cons 'random-state->list +list+)
 			   (cons 'rational? +boolean+)
 			   (cons 'rationalize +number+)
@@ -382,6 +419,7 @@
 			  (cons 'char-downcase char?)
 			  (cons 'char-lower-case? char?)
 			  (cons 'char-numeric? char?)
+			  (cons 'char-ready? port?)
 			  (cons 'char-upcase char?)
 			  (cons 'char-upper-case? char?)
 			  (cons 'char-whitespace? char?)
@@ -411,6 +449,7 @@
 			  (cons 'inexact->exact real?)
 			  (cons 'inexact? number?)
 			  (cons 'infinite? number?)
+			  (cons 'input-port? port?)
 			  (cons 'integer->char integer-between-0-and-255?)
 			  (cons 'integer-decode-float real-but-not-rational?)
 			  (cons 'integer-length integer?)
@@ -425,6 +464,7 @@
 			  (cons 'load non-null-string?)
 			  (cons 'log (list number? non-zero-number?))
 			  (cons 'logand (list integer? integer?))
+			  (cons 'logbit? (list integer? integer?))
 			  (cons 'logior (list integer? integer?))
 			  (cons 'lognot (list integer? integer?))
 			  (cons 'logxor (list integer? integer?))
@@ -447,9 +487,12 @@
 			  (cons 'open-input-file (list string? string?))
 			  (cons 'open-input-string string?)
 			  (cons 'open-output-file (list string? string?))
+			  (cons 'output-port? port?)
 			  (cons 'positive? real?)
 			  (cons 'provide symbol?)
 			  (cons 'quotient (list real? real?))
+			  (cons 'pair-line-number pair?)
+			  (cons 'port-closed? port?)
 			  (cons 'random number?)
 			  (cons 'rationalize (list real? real?))
 			  (cons 'real-part number?)
@@ -482,6 +525,7 @@
 			  (cons 'string>=? string?)
 			  (cons 'string>? string?)
 			  (cons 'substring (list string? non-negative-integer? non-negative-integer?))
+			  (cons 'symbol->dynamic-value symbol?)
 			  (cons 'symbol->keyword symbol?)
 			  (cons 'symbol->string symbol?)
 			  (cons 'symbol->value (list symbol?)) ; opt arg is env
@@ -503,7 +547,6 @@
 	  
 	  (loaded-files #f)
 	  (globals #f)
-	  (generators '())
 	  (undefined-identifiers #f)
 	  (other-identifiers #f)
 	  (last-simplify-boolean-line-number -1)
@@ -519,6 +562,9 @@
 	      ((eq? c #<unspecified>) +unspecified+)
 	      ((boolean? c) +boolean+)
 	      ((symbol? c) +symbol+)
+	      ((environment? c) +environment+)
+	      ((hash-table? c) +hash-table+)
+	      ((or (input-port? c) (output-port? c)) +port+)
 	      ((pair? c)
 	       (if (symbol? (car c))
 		   (hash-table-ref function-types (car c))

@@ -841,7 +841,18 @@
 (test (equal? (current-input-port) (current-input-port)) #t)
 (test (equal? (current-input-port) (current-output-port)) #f)
 (test (equal? *stdin* *stderr*) #f)
-
+(test (let ((l1 (list 'a 'b)) 
+	    (l2 (list 'a 'b 'a 'b))) 
+	(set! (cdr (cdr l1)) l1) 
+	(set! (cdr (cdr (cdr (cdr l2)))) l2)
+	(equal? l1 l2))
+      #t)
+(test (let ((l1 (list 'a 'b)) 
+	    (l2 (list 'a 'b 'a))) 
+	(set! (cdr (cdr l1)) l1) 
+	(set! (cdr (cdr (cdr l2))) l2)
+	(equal? l1 l2))
+      #f)
 
 (if with-bignums
     (begin
