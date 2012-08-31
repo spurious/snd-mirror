@@ -14745,7 +14745,10 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   x = car(args);
-  y = s7_integer(cadr(args));
+  y = integer(cadr(args));
+  if (is_integer(x))
+    return(make_boolean(sc, integer(x) < y));
+
   switch (type(x))
     {
     case T_INTEGER:
@@ -20629,6 +20632,7 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
 
 
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top);
+static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key);
 
 static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 {
@@ -20692,23 +20696,30 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	  break;
 	  
 	case T_HASH_TABLE:
-	  {
-	    s7_pointer iterator;
-	    int gc_iter;
-
-	    iterator = g_make_hash_table_iterator(sc, list_1(sc, top));
-	    gc_iter = s7_gc_protect(sc, iterator);
-
-	    while (true)
-	      {
-		s7_pointer x;
-		x = hash_table_iterate(sc, iterator);
-		if (is_null(x)) break;
-		if (has_structure(x))
-		  collect_shared_info(sc, ci, x);
-	      }
-	    s7_gc_unprotect_at(sc, gc_iter);
-	  }
+	  if (hash_table_entries(top) > 0)
+	    {
+	      s7_pointer iterator;
+	      int gc_iter;
+	      bool keys_safe;
+	      
+	      keys_safe = (hash_table_function(top) == hash_equal);
+	      iterator = g_make_hash_table_iterator(sc, list_1(sc, top));
+	      gc_iter = s7_gc_protect(sc, iterator);
+	      
+	      while (true)
+		{
+		  s7_pointer x;
+		  x = hash_table_iterate(sc, iterator);
+		  if (is_null(x)) break;
+		  /* x is a cons, if hash_table_function(top) != hash_equal, we know car is ok */
+		  if ((!keys_safe) &&
+		      (has_structure(car(x))))
+		    collect_shared_info(sc, ci, car(x));
+		  if (has_structure(cdr(x)))
+		    collect_shared_info(sc, ci, cdr(x));
+		}
+	      s7_gc_unprotect_at(sc, gc_iter);
+	    }
 	  break;
 
 	case T_SLOT:
@@ -20773,6 +20784,9 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 	  for (x = top; is_pair(x); x = cdr(x))
 	    if (has_structure(car(x)))
 	      {
+		/* it can help a little in some cases to scan vectors here (and slots):
+		 *   if no element has structure, it's ok (maybe also hash_table_entries == 0)
+		 */
 		no_problem = false;
 		break;
 	      }
@@ -30143,27 +30157,29 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(s7_string_to_list(sc, string_value(obj), string_length(obj)));
 
     case T_HASH_TABLE:
-      {
-	s7_pointer x, iterator;
-	int gc_iter;
-	/* (format #f "~{~A ~}" (hash-table '(a . 1) '(b . 2))) */
-
-	iterator = g_make_hash_table_iterator(sc, list_1(sc, obj));
-	gc_iter = s7_gc_protect(sc, iterator);
-
-	sc->w = sc->NIL;
-	while (true)
-	  {
-	    x = hash_table_iterate(sc, iterator);
-	    if (is_null(x)) break;
-	    sc->w = cons(sc, x, sc->w);
-	  }
-
-	x = sc->w;
-	sc->w = sc->NIL;
-	s7_gc_unprotect_at(sc, gc_iter);
-	return(x);
-      }
+      if (hash_table_entries(obj) > 0)
+	{
+	  s7_pointer x, iterator;
+	  int gc_iter;
+	  /* (format #f "~{~A ~}" (hash-table '(a . 1) '(b . 2))) */
+	  
+	  iterator = g_make_hash_table_iterator(sc, list_1(sc, obj));
+	  gc_iter = s7_gc_protect(sc, iterator);
+	  
+	  sc->w = sc->NIL;
+	  while (true)
+	    {
+	      x = hash_table_iterate(sc, iterator);
+	      if (is_null(x)) break;
+	      sc->w = cons(sc, x, sc->w);
+	    }
+	  
+	  x = sc->w;
+	  sc->w = sc->NIL;
+	  s7_gc_unprotect_at(sc, gc_iter);
+	  return(x);
+	}
+      return(sc->NIL);
       
     case T_ENVIRONMENT:
       return(s7_environment_to_list(sc, obj));
@@ -43568,13 +43584,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto OPT_EVAL;
 		}
 	      
+	      /* say we know this has recursive calls, and is a one-liner,
+	       *   can we mark the call to jump here, not to eval or opt_eval?
+	       *   (+ (f 1) (f 2)) in the obvious case -- safe_c_pp right now
+	       *   safe_c_opclos_sq? goto OPT_EVAL, but ideally that would be
+	       *   goto OP_CLOSURE etc.  
+	       */
 	    case HOP_CLOSURE_S:
 	      sc->value = find_symbol_or_bust(sc, fcdr(code));
 	      /* goto UNSAFE_CLOSURE_ONE; */
 	      
 	    UNSAFE_CLOSURE_ONE:
 	      {
-		s7_pointer args, sym, rest;
+		s7_pointer args, sym;
 		
 		if (sc->stack_end >= sc->stack_resize_trigger)
 		  increase_stack_size(sc);
@@ -43583,24 +43605,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		args = closure_args(sc->code);
 		if (is_pair(args))
 		  {
-		    if (is_pair(car(args)))
+		    s7_pointer rest;
+		    if (is_pair(car(args))) 
 		      sym = caar(args);
 		    else sym = car(args);
 		    rest = cdr(args);
+
+		    NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(sc->code), sc->envir, sym, sc->value);
+		    if (!is_null(rest))
+		      add_slot(sc, rest, sc->NIL);
+		    /* here we have a closure with a required arg and a rest arg, and we're called
+		     *   with one arg, so the rest arg is nil.
+		     */
 		  }
 		else
 		  {
-		    sym = args;
-		    sc->value = list_1(sc, sc->value);
-		    rest = sc->NIL;
+		    NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(sc->code), sc->envir, args, cons(sc, sc->value, sc->NIL));
 		  }
-		
-		NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(sc->code), sc->envir, sym, sc->value);
-		if (!is_null(rest))
-		  add_slot(sc, rest, sc->NIL);
-		/* here we have a closure with a required arg and a rest arg, and we're called
-		 *   with one arg, so the rest arg is nil.
-		 */
 		
 		sc->code = closure_body(sc->code);
 		if (is_one_liner(sc->code))
@@ -43627,7 +43648,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    UNSAFE_CLOSURE_TWO:
 	      {
-		s7_pointer args, sym, val, rest;
+		s7_pointer args, sym, val;
 		if (sc->stack_end >= sc->stack_resize_trigger)
 		  increase_stack_size(sc);
 		sc->code = ecdr(sc->code);
@@ -43651,25 +43672,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    args = cdr(args);
 		    if (is_pair(args))
 		      {
+			s7_pointer rest;
 			if (is_pair(car(args)))
 			  sym = caar(args);
 			else sym = car(args);
 			val = car(sc->T2_2);
 			rest = cdr(args);
+			ADD_CHECKED_SLOT(sc->envir, sym, val);
+			if (!is_null(rest))
+			  add_slot(sc, rest, sc->NIL);
+			/* here we have a closure with two required args and a rest arg, and we're called
+			 *   with two args, so the rest arg is nil.
+			 */
 		      }
 		    else
 		      {
-			sym = args;
-			val = list_1(sc, car(sc->T2_2));
-			rest = sc->NIL;
+			ADD_CHECKED_SLOT(sc->envir, args, list_1(sc, car(sc->T2_2)));
 		      }
 		    
-		    ADD_CHECKED_SLOT(sc->envir, sym, val);
-		    if (!is_null(rest))
-		      add_slot(sc, rest, sc->NIL);
-		    /* here we have a closure with two required args and a rest arg, and we're called
-		     *   with two args, so the rest arg is nil.
-		     */
 		  }
 		sc->code = closure_body(sc->code);
 		if (is_one_liner(sc->code))
@@ -43828,7 +43848,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer sym, args, val;
 		    
-		    if (is_pair(car(x)))
+		    if (is_pair(car(x))) /* this is possible because we can get here from HOP_CLOSURE_STAR_S */
 		      sym = caar(x);
 		    else sym = car(x);
 		    val = car(z);
@@ -58909,7 +58929,7 @@ s7_scheme *s7_init(void)
  *                                              9811 8323
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3108
  * s7test            1721             1456 1430 1375 1344
- * t455                           265  256  218   86   87
+ * t455                           265  256  218   86   85
  * t502                                 90   72   42   40
  */
 

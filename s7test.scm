@@ -853,6 +853,18 @@
 	(set! (cdr (cdr (cdr l2))) l2)
 	(equal? l1 l2))
       #f)
+(test (let ((v1 (vector 1 2 3))
+	    (v2 (vector 1 2 3)))
+	(set! (v1 1) v1)
+	(set! (v2 1) v2)
+	(equal? v1 v2))
+      #t)
+(test (let ((v1 (vector 1 2 3))
+	    (v2 (vector 1 2 4)))
+	(set! (v1 1) v1)
+	(set! (v2 1) v2)
+	(equal? v1 v2))
+      #f)
 
 (if with-bignums
     (begin
