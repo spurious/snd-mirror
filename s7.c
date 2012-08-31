@@ -11147,7 +11147,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  if (integer(y) == 0) 
 	    return(x);
 	  if ((integer(y) == 1) || (integer(y) == -1))
-	    return(make_integer(sc, 0));
+	    return(small_int(0));
 	  /* (modulo most-negative-fixnum -1) will segfault with arithmetic exception */
 	  return(make_integer(sc, c_mod(integer(x), integer(y))));
 
@@ -11285,6 +11285,36 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
       CHECK_METHOD(sc, x, sc->MODULO, args);
       return(wrong_type_argument(sc, sc->MODULO, small_int(1), x, T_REAL));
     }
+}
+
+
+static s7_pointer mod_si;
+static s7_pointer g_mod_si(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  s7_Int y;
+
+  x = finder(sc, car(args));
+  y = integer(cadr(args));
+
+  if (is_integer(x))
+    return(make_integer(sc, c_mod(integer(x), y)));
+  
+  if (is_real(x))
+    {
+      s7_Double a, b;
+      a = real(x);
+      if (is_NaN(a)) return(x);
+      if (isinf(a)) return(real_NaN);
+      b = (s7_Double)y;
+      return(make_real(sc, a - b * (s7_Int)floor(a / b)));	  
+    }
+
+  if (s7_is_ratio(x))
+    return(g_modulo(sc, list_2(sc, x, cadr(args))));
+
+  CHECK_METHOD(sc, x, sc->MODULO, args);
+  return(wrong_type_argument(sc, sc->MODULO, small_int(1), x, T_REAL));
 }
 #endif
 /* !WITH_GMP */
@@ -34446,6 +34476,20 @@ static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int args, 
 }
 
 
+static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (is_symbol(cadr(expr))) &&
+      (is_integer(caddr(expr))) &&
+      (integer(caddr(expr)) > 1))
+    {
+      set_optimize_data(expr, HOP_SAFE_C_C);
+      return(mod_si);
+    }
+  return(f);
+}
+
+
 static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   /* fprintf(stderr, "s7 add:  %d %s\n", args, DISPLAY(expr)); */
@@ -35124,6 +35168,15 @@ static void init_choosers(s7_scheme *sc)
   sqr_ss = s7_make_function(sc, "*", g_sqr_ss, 2, 0, false, "* optimization");
   c_function_class(sqr_ss) = c_function_class(f);
 #endif
+
+
+  /* modulo */
+  f = slot_value(global_slot(sc->MODULO));
+  c_function_chooser(f) = modulo_chooser;
+
+  mod_si = s7_make_function(sc, "modulo", g_mod_si, 2, 0, false, "modulo optimization");
+  c_function_class(mod_si) = c_function_class(f);
+
 
   /* = */
   f = slot_value(global_slot(sc->EQ));

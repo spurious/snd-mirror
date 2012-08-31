@@ -5705,6 +5705,33 @@ Currently, you can't set! a built-in syntactic keyword to some new value:
 I hope this kind of thing is not actually very useful, but let me
 know if you need it.  The issue is purely one of speed.
 </p>
+
+<p>Speaking of speed... It is a universally believed (and is therefore obviously false)
+that a Scheme with first class everything can't hope to compete with any
+"real" Scheme.  Humph I say.  Take this little example (which is not 
+completely misleading):
+</p>
+<pre class="indented">
+(define (do-loop n)
+  (do ((i 0 (+ i 1)))
+      ((= i n))
+    (if (zero? (modulo i 1000))
+	(display ".")))
+  (newline))
+
+(for-each
+ (lambda (n) (do-loop n))
+ (list 1000 1000000 10000000))
+</pre>
+
+<p>In s7, that takes 0.52 seconds on my home machine.  In tinyScheme, from
+whence we sprang, it takes 85 seconds.  In the chicken interpreter, 5.3
+seconds, and after compilation (using -O2) of the chicken compiler output,
+0.75 seconds.  So, s7 is comparable to chicken in speed, even though chicken
+is compiling to C.  If I could get the new Guile to build on my machine,
+I'd try it too (Guile 1.8 takes 2.6 seconds).  The equivalent in CL:
+clisp interpreted 9.3 seconds, compiled 0.85 seconds; sbcl 0.21 seconds.
+</pre>
 </div>
 
 
