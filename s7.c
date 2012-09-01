@@ -1596,7 +1596,6 @@ static int t_optimized = T_OPTIMIZED;
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
-/* #define is_marked(p)               (typeflag(p) >= T_GC_MARK) */ /* exactly the same speed? */ 
 #define set_mark(p)                   typeflag(p) |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
 /* using bit 23 for this makes a big difference in the GC
@@ -11298,7 +11297,14 @@ static s7_pointer g_mod_si(s7_scheme *sc, s7_pointer args)
   y = integer(cadr(args));
 
   if (is_integer(x))
-    return(make_integer(sc, c_mod(integer(x), y)));
+    {
+      s7_Int z;
+      /* here we know y is positive */
+      z = integer(x) % y;
+      if (z < 0)
+	return(make_integer(sc, z + y));
+      return(make_integer(sc, z));
+    }
   
   if (is_real(x))
     {
@@ -58977,11 +58983,15 @@ s7_scheme *s7_init(void)
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
+ * there are cases like floor/ash/log* where the optimizer could take advantage of the int return
+ *   (zero? (floor ...)) for example, (zero? (modulo s i)) is slightly trickier
+ *   (sero? (imag-part...) is real arg
+ *
  * bench    42736                                    8580
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1215
  *                                              9811 8323
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3108
- * s7test            1721             1456 1430 1375 1344
+ * s7test            1721             1456 1430 1375 1340
  * t455                           265  256  218   86   85
  * t502                                 90   72   42   40
  */
