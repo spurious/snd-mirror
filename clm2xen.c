@@ -12132,7 +12132,6 @@ static s7_pointer ina_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 
 static s7_pointer frame_to_file_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  /* fprintf(stderr, "f->file %s\n", DISPLAY(expr)); */
   if (args == 3)
     {
       s7_pointer ff_expr;

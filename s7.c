@@ -20254,11 +20254,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   /* this can be called recursively via s7_call */
 
   old_envir = sc->envir;
-  sc->envir = sc->NIL; /* C call assumes top level, I think.  This is needed in any case
-			       *   by dlinit -- the init function will be called in some local environment,
-			       *   but the library entities it defines should obviously be top level,
-			       *   as if via load.
-			       */
+  sc->envir = sc->NIL; 
   if (sc->longjmp_ok)
     {
       s7_pointer result;
@@ -20598,10 +20594,6 @@ static int shared_ref(shared_info *ci, s7_pointer p)
   int i;
   s7_pointer *objs;
   objs = ci->objs;
-  /*
-  if ((p > ci->mx) || (p < ci->mn) 
-      return(0);
-  */
   for (i = 0; i < ci->top; i++)
     if (objs[i] == p)
       {
@@ -20694,7 +20686,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 
   /* look for top in current list.
    *
-   * this looks dumb, but everything I've tried (hash tables, binary trees, min/max checks) has been
+   * this looks dumb, but everything I've tried (hash tables, binary trees, min/max/bit checks) has been
    *   a lot slower.
    */
   for (p = ci->objs; p < objs_end; p++)
@@ -20738,7 +20730,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	      int gc_iter;
 	      bool keys_safe;
 	      
-	      keys_safe = (hash_table_function(top) == hash_equal);
+	      keys_safe = (hash_table_function(top) != hash_equal);
 	      iterator = g_make_hash_table_iterator(sc, list_1(sc, top));
 	      gc_iter = s7_gc_protect(sc, iterator);
 	      
@@ -23364,6 +23356,18 @@ static int safe_list_length(s7_scheme *sc, s7_pointer a)
   s7_pointer b;
   for (b = a; is_pair(b); i++, b = cdr(b)) {};
   return(i);
+}
+
+
+static int unsafe_list_length(s7_scheme *sc, s7_pointer a)
+{
+  /* assume that "a" is not a circular list */
+  int i = 0;
+  s7_pointer b;
+  for (b = a; is_pair(b); i++, b = cdr(b)) {};
+  if (is_null(b))
+    return(i);
+  return(-i);
 }
 
 
@@ -28574,6 +28578,39 @@ static s7_pointer closure_star_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_poi
 }
 
 
+static int closure_arity_to_int(s7_scheme *sc, s7_pointer x)
+{
+  /* not lambda* here */
+  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+    closure_arity(x) = unsafe_list_length(sc, closure_args(x));
+  return(closure_arity(x));
+}
+
+
+static int closure_star_arity_to_int(s7_scheme *sc, s7_pointer x)
+{
+  /* not lambda here */
+  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+    {
+      s7_pointer p;
+      int i;
+      for (i = 0, p = closure_args(x); is_pair(p); p = cdr(p))
+	{
+	  s7_pointer arg;
+	  arg = car(p);
+	  if ((arg == sc->KEY_REST) ||
+	      (arg == sc->KEY_ALLOW_OTHER_KEYS))
+	    break;
+	  i++;
+	}
+      if (is_null(p))
+	closure_arity(x) = i;
+      else closure_arity(x) = -1;
+    }
+  return(closure_arity(x));
+}
+
+
 static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_arity "(arity obj) the min and max acceptable args for obj if it is applicable, otherwise #f."
@@ -32020,10 +32057,9 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       if (len > 0)                                                    /* a proper list arg */
 	{
 	  if ((type(sc->code) == T_CLOSURE) &&                        /* not lambda* that might get confused about arg names */
-	      (is_proper_list(sc, closure_args(sc->code))) &&         /* not a rest arg: not is_pair: (lambda (x . args) arg) */
+	      (closure_arity_to_int(sc, sc->code) == 1) &&            /* not a rest arg: not is_pair: (lambda (x . args) arg) */
 	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! */
-	      (!symbol_has_accessor(car(closure_args(sc->code)))) &&  /* not wrapped in an accessor */
-	      (safe_list_length(sc, closure_args(sc->code)) == 1))    /* closure takes just one arg */
+	      (!symbol_has_accessor(car(closure_args(sc->code)))))    /* not wrapped in an accessor */
 	    {
 	      /* one list arg -- special, but very common case
 	       *
@@ -32380,10 +32416,9 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       if (len > 0)                                                    /* a proper list arg */
 	{
 	  if ((type(sc->code) == T_CLOSURE) &&                        /* not lambda* that might get confused about arg names */
-	      (is_proper_list(sc, closure_args(sc->code))) &&         /* not a rest arg, not is_pair here: (lambda (x . args) args) */
+	      (closure_arity_to_int(sc, sc->code) == 1) &&            /* not a rest arg, not is_pair here: (lambda (x . args) args) */
 	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! */
-	      (!symbol_has_accessor(car(closure_args(sc->code)))) &&  /* not wrapped in an accessor */
-	      (safe_list_length(sc, closure_args(sc->code)) == 1))    /* closure takes just one arg */
+	      (!symbol_has_accessor(car(closure_args(sc->code)))))    /* not wrapped in an accessor */
 	    {
 	      push_stack(sc, OP_MAP_SIMPLE, make_counter(sc, sc->NIL, obj, sc->NIL, len, 0), sc->code);
 	      return(sc->NO_VALUE);
@@ -36089,7 +36124,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
       else
 	{
 	  if ((func_is_closure) &&
-	      (s7_list_length(sc, closure_args(func)) == 2))
+	      (closure_arity_to_int(sc, func) == 2))
 	    {
 	      set_unsafely_optimized(car_x);
 	      if (symbols == 2)
@@ -36115,7 +36150,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  (symbols == 2) &&
 		  (!is_keyword(cadar_x)) &&
 		  (!is_keyword(caddar_x)) &&
-		  (safe_list_length(sc, closure_args(func)) >= 2) &&
+		  (closure_star_arity_to_int(sc, func) >= 2) &&
 		  (has_simple_args(closure_body(func))))
 		{
 		  set_unsafely_optimized(car_x);
@@ -36273,7 +36308,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	      else
 		{
 		  if ((func_is_closure) &&
-		      (s7_list_length(sc, closure_args(func)) == 2))
+		      (closure_arity_to_int(sc, func) == 2))
 		    {
 		      if (is_symbol(cadar_x))
 			{
@@ -36560,7 +36595,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       else
 	{
 	  if ((func_is_closure) &&
-	      (s7_list_length(sc, closure_args(func)) == 3) &&
+	      (closure_arity_to_int(sc, func) == 3) &&
 	      (symbols == 3))
 	    {
 	      set_unsafely_optimized(car_x);
@@ -36724,7 +36759,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       (is_optimized(caddar_x)) &&
       (optimize_data(caddar_x) == HOP_SAFE_C_C) &&
       (!is_keyword(cadddar_x)) &&
-      (safe_list_length(sc, closure_args(func)) == 3) &&
+      (closure_arity_to_int(sc, func) == 3) &&
       (has_simple_args(closure_body(func))) &&
       (closure_body_is_safe(func)))
     {
@@ -36766,7 +36801,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       else
 	{
 	  if ((func_is_closure) &&
-	      (s7_list_length(sc, closure_args(func)) == 3))
+	      (closure_arity_to_int(sc, func) == 3))
 	    {
 	      set_unsafely_optimized(car_x);
 	      set_optimize_data(car_x, hop + ((closure_body_is_safe(func) ? OP_SAFE_CLOSURE_ALL_G : OP_CLOSURE_ALL_G)));
@@ -36884,7 +36919,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	   *    unless they are globally defined.
 	   */
 	  if ((func_is_closure) &&
-	      (s7_list_length(sc, closure_args(func)) == args))
+	      (closure_arity_to_int(sc, func) == args))
 	    {
 	      bool safe_case;
 	      safe_case = closure_body_is_safe(func);
@@ -41052,8 +41087,7 @@ static bool function_is_ok_1(s7_scheme *sc, s7_pointer p, s7_pointer val)
 	  return(true);
 	}
       if ((is_pair(closure_args(val))) && 
-	  (is_pair(closure_args(ecdr(p)))) &&
-	  (safe_list_length(sc, closure_args(val)) == safe_list_length(sc, closure_args(ecdr(p)))))
+	  (closure_arity_to_int(sc, val) == closure_arity_to_int(sc, ecdr(p))))
 	{
 	  if ((optimize_data(p) < OP_SAFE_THUNK) ||
 	      (!is_safe_closure(closure_body(ecdr(p)))))
@@ -44186,7 +44220,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    
 		  case T_CLOSURE:
 		    if ((is_symbol(closure_args(f))) ||
-			(safe_list_length(sc, closure_args(f)) == 1))
+			(closure_arity_to_int(sc, f) == 1))
 		      {
 			fcdr(code) = cadr(code);
 			if (closure_body_is_safe(f))
@@ -44286,7 +44320,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			
 		      case T_CLOSURE:
 			if ((is_symbol(closure_args(f))) ||
-			    (safe_list_length(sc, closure_args(f)) == 1))
+			    (closure_arity_to_int(sc, f) == 1))
 			  {
 			    if (closure_body_is_safe(f))
 			      set_optimize_data(code, OP_SAFE_CLOSURE_C);
@@ -44581,7 +44615,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			
 		      case T_CLOSURE:
 			if ((is_symbol(closure_args(f))) ||
-			    (safe_list_length(sc, closure_args(f)) == 1))
+			    (closure_arity_to_int(sc, f) == 1))
 			  {
 			    if (closure_body_is_safe(f))
 			      set_optimize_data(code, OP_SAFE_CLOSURE_opCq);
@@ -58985,11 +59019,11 @@ s7_scheme *s7_init(void)
  *
  * there are cases like floor/ash/log* where the optimizer could take advantage of the int return
  *   (zero? (floor ...)) for example, (zero? (modulo s i)) is slightly trickier
- *   (sero? (imag-part...) is real arg
+ *   (sero? (imag-part...) is real arg but pointless!
  *
- * bench    42736                                    8580
+ * bench    42736                                    8560
  * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1215
- *                                              9811 8323
+ *                                              9811 8322
  * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3108
  * s7test            1721             1456 1430 1375 1340
  * t455                           265  256  218   86   85
