@@ -16457,6 +16457,7 @@ in s7:
 (test (apply list '(1 . 2) '()) '((1 . 2)))
 (test (apply (lambda (x) x) _ht_) 'error)
 (test (apply + '#(1 2 3)) 'error)
+(test (apply (lambda (a b) (+ a b)) '(1 . 2)) 'error)
 
 (test (apply "hi" '(1 2)) 'error)
 (test ("hi" 1 2) 'error)

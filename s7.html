@@ -2357,7 +2357,7 @@ fib
      (if (&lt; n 2) n (+ (memo-fib (- n 1)) (memo-fib (- n 2)))))
 memo-fib
 &gt; (time (fib 34))         ; un-memoized time
-1.492518
+1.413172
 &gt; (time (memo-fib 34))    ; memoized time
 3.200000000092e-05
 
