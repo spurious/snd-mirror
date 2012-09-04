@@ -2315,10 +2315,9 @@
 			  (do ((i 1 (+ i 1)))
 			      ((or (= p 0)
 				   (= i doclen)))
-			    (if (char=? (string-ref doc i) #\()
-				(set! p (+ p 1))
-				(if (char=? (string-ref doc i) #\))
-				    (set! p (- p 1))))
+			    (case (string-ref doc i)
+			      ((#\() (set! p (+ p 1)))
+			      ((#\)) (set! p (- p 1))))
 			    (if (= p 0) 
 				(set! end i)))
 			  
@@ -2884,10 +2883,9 @@
 								    name line-number dir str form))
 						   (set! dirs (+ dirs 1)))))
 					 (set! tilde-time #f)
-					 (if (char=? c #\{)
-					     (set! curlys (+ curlys 1))
-					     (if (char=? c #\})
-						 (set! curlys (- curlys 1)))))
+					 (case c 
+					   ((#\{) (set! curlys (+ curlys 1)))
+					   ((#\}) (set! curlys (- curlys 1)))))
 				       (if (char=? c #\~)
 					   (set! tilde-time #t)))))
 			       

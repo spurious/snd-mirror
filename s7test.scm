@@ -17290,6 +17290,7 @@ in s7:
   (num-test (cfib 8) 21.0)
   (num-test (cfib 3+4i) -5248.5113072837-14195.962288353i))
 
+(num-test (let ((f- -) (f+ +)) (define (fb n) (if (< n 2.0) n (f+ (fb (f- n 1.0)) (fb (f- n 2.0))))) (fb 12.0)) 144.0)
 
 (let ()
   (define (flatten lst) ; flatten via values and map

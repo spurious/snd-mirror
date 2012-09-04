@@ -2357,7 +2357,7 @@ fib
      (if (&lt; n 2) n (+ (memo-fib (- n 1)) (memo-fib (- n 2)))))
 memo-fib
 &gt; (time (fib 34))         ; un-memoized time
-1.413172
+1.387919
 &gt; (time (memo-fib 34))    ; memoized time
 3.200000000092e-05
 
@@ -5731,7 +5731,7 @@ seconds, and after compilation (using -O2) of the chicken compiler output,
 is compiling to C.  If I could get the new Guile to build on my machine,
 I'd try it too (Guile 1.8 takes 2.6 seconds).  The equivalent in CL:
 clisp interpreted 9.3 seconds, compiled 0.85 seconds; sbcl 0.21 seconds.
-</pre>
+</p>
 </div>
 
 

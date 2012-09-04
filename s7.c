@@ -378,7 +378,7 @@ enum {OP_NO_OP,
       OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
       OP_READ_VECTOR, OP_READ_DONE, 
       OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
-      OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
+      OP_CATCH, OP_CATCH_DONE, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
       OP_ERROR_HOOK_QUIT, 
@@ -413,7 +413,7 @@ enum {OP_NO_OP,
       OP_SAFE_AND_S, OP_SAFE_CASE_S, OP_SAFER_OR_X, OP_SAFER_AND_X, OP_COND_SIMPLER,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DOTIMES_C_C,
       OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP, OP_SIMPLE_DO_FOREVER, OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_S,
-      OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, OP_SAFE_IF_CEQ_P_P, 
+      OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, 
       OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_CS_Q_P,
       OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_P_A,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
@@ -460,7 +460,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "read-quasiquote", "read-quasiquote-vector", "read-unquote", "read-apply-values",
    "read-vector", "read-done", 
    "load-return-if-eof", "load-close-and-pop-if-eof", "eval-string", "eval-done",
-   "catch", "dynamic-wind", "define-constant", "define-constant", 
+   "catch", "catch", "dynamic-wind", "define-constant", "define-constant", 
    "do", "do", "do", "do", "do", "do",
    "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
    "error-hook-quit", "with-environment", "with-environment", "with-environment", "with-environment", 
@@ -493,7 +493,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe_and_s", "safe_case_s", "safer_or_x", "safer_and_x", "cond_simpler",
    "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_dotimes_c_c",
    "simple_do_p", "simple_do_step_p", "safe_simple_do", "dox", "dox_step", "simple_do_forever", "dotimes_p", "dotimes_step_p", "safe_dotimes_c_s",
-   "safe_if1_1", "safe_if2_1", "safe_if_cc_x_p", "safe_if_cc_p_p", "safe_if_ceq_p_p", 
+   "safe_if1_1", "safe_if2_1", "safe_if_cc_x_p", "safe_if_cc_p_p", 
    "safe_if_cs_p_p", "safe_if_cs_x_p", "safe_if_cc_p", "safe_if_cs_p", "safe_if_cs_p_x", "safe_if_cs_q_p",
    "safe_if_css_x_p", "safe_if_csc_x_p", "safe_if_csc_x_p_a",
    "safe_if_csq_p", "safe_if_csq_p_p", "safe_if_css_p", "safe_if_css_p_p", "safe_if_csc_p", "safe_if_csc_p_p", 
@@ -530,7 +530,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_READ_QUASIQUOTE", "OP_READ_QUASIQUOTE_VECTOR", "OP_READ_UNQUOTE", "OP_READ_APPLY_VALUES",
   "OP_READ_VECTOR", "OP_READ_DONE", 
   "OP_LOAD_RETURN_IF_EOF", "OP_LOAD_CLOSE_AND_POP_IF_EOF", "OP_EVAL_STRING", "OP_EVAL_DONE",
-  "OP_CATCH", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
+  "OP_CATCH", "OP_CATCH_DONE", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
   "OP_DO", "OP_DO_END", "OP_DO_END1", "OP_DO_STEP", "OP_DO_STEP2", "OP_DO_INIT",
   "OP_DEFINE_STAR", "OP_LAMBDA_STAR", "OP_LAMBDA_STAR_DEFAULT", "OP_ERROR_QUIT", "OP_UNWIND_INPUT", "OP_UNWIND_OUTPUT", 
   "OP_ERROR_HOOK_QUIT", 
@@ -565,7 +565,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_AND_S", "OP_SAFE_CASE_S", "OP_SAFER_OR_X", "OP_SAFER_AND_X", "OP_COND_SIMPLER",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DOTIMES_C_C",
   "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP", "OP_SIMPLE_DO_FOREVER", "OP_DOTIMES_P", "OP_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_C_S",
-  "OP_SAFE_IF1_1", "OP_SAFE_IF2_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", "OP_SAFE_IF_CEQ_P_P", 
+  "OP_SAFE_IF1_1", "OP_SAFE_IF2_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", 
   "OP_SAFE_IF_CS_P_P", "OP_SAFE_IF_CS_X_P", "OP_SAFE_IF_CC_P", "OP_SAFE_IF_CS_P", "OP_SAFE_IF_CS_P_X", "OP_SAFE_IF_CS_Q_P",
   "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_P_A",
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
@@ -1238,7 +1238,7 @@ struct s7_scheme {
   s7_pointer IF_O_P, IF_O_P_P, SAFE_IF_ANDX_P, SAFE_IF_ORX_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P;
 
   s7_pointer SAFE_OR_S, SAFER_OR_S, SAFER_OR_C, SAFER_OR_CEQ, SAFE_AND_S, SAFE_CASE_S, SAFER_OR_X, SAFER_AND_X, COND_SIMPLER;
-  s7_pointer SAFE_IF1, SAFE_IF2, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P, SAFE_IF_CEQ_P_P;
+  s7_pointer SAFE_IF1, SAFE_IF2, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P;
   s7_pointer SAFE_IF_CS_P_P, SAFE_IF_CS_X_P, SAFE_IF_CC_P, SAFE_IF_CS_P, SAFE_IF_CS_P_X, SAFE_IF_CS_Q_P;
   s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_P_A;
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
@@ -5936,10 +5936,13 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	    if (dynamic_wind_state(x) == DWIND_BODY)
 	      {
 		dynamic_wind_state(x) = DWIND_FINISH;
-		push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-		sc->args = sc->NIL;
-		sc->code = dynamic_wind_out(x);
-		eval(sc, OP_APPLY);
+		if (dynamic_wind_out(x) != sc->F)
+		  {
+		    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+		    sc->args = sc->NIL;
+		    sc->code = dynamic_wind_out(x);
+		    eval(sc, OP_APPLY);
+		  }
 	      }
 	  }
 	  break;
@@ -5967,10 +5970,13 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	{
 	  s7_pointer x;
 	  x = stack_code(continuation_stack(c), i);
-	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-	  sc->args = sc->NIL;
-	  sc->code = dynamic_wind_in(x);
-	  eval(sc, OP_APPLY);
+	  if (dynamic_wind_in(x) != sc->F)
+	    {
+	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+	      sc->args = sc->NIL;
+	      sc->code = dynamic_wind_in(x);
+	      eval(sc, OP_APPLY);
+	    }
 	  dynamic_wind_state(x) = DWIND_BODY;
 	}
       else
@@ -6058,11 +6064,15 @@ static void call_with_exit(s7_scheme *sc)
 	    if (dynamic_wind_state(sc->z) == DWIND_BODY)
 	      {
 		dynamic_wind_state(sc->z) = DWIND_FINISH;
-		push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-		sc->args = sc->NIL;
-		sc->code = dynamic_wind_out(sc->z);
-		sc->z = sc->NIL;
-		eval(sc, OP_APPLY);
+		if (dynamic_wind_out(sc->z) != sc->F)
+		  {
+		    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+		    sc->args = sc->NIL;
+		    sc->code = dynamic_wind_out(sc->z);
+		    sc->z = sc->NIL;
+		    eval(sc, OP_APPLY);
+		  }
+		else sc->z = sc->NIL;
 	      }
 	  }
 	  break;
@@ -11809,6 +11819,8 @@ static s7_pointer g_add_cs1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   x = finder(sc, car(args));
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) + 1));
 
   switch (type(x))
     {
@@ -11828,6 +11840,9 @@ static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = cadr(args);
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) + 1));
+
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) + 1));
@@ -11848,6 +11863,9 @@ static s7_pointer g_add_si(s7_scheme *sc, s7_pointer args)
 
   x = finder(sc, car(args));
   n = integer(cadr(args));
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) + n));
+
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) + n));
@@ -12327,6 +12345,9 @@ static s7_pointer g_subtract_cs1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   x = finder(sc, car(args));
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) - 1));
+
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) - 1));
@@ -12344,6 +12365,7 @@ static s7_pointer g_subtract_s1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   x = car(args);
+  /* this one seems to hit reals as often as integers */
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) - 1));
@@ -12364,6 +12386,9 @@ static s7_pointer g_subtract_csn(s7_scheme *sc, s7_pointer args)
 
   x = finder(sc, car(args));
   n = s7_integer(cadr(args));
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) - n));
+
   switch (type(x))
     {
     case T_INTEGER: return(make_integer(sc, integer(x) - n));
@@ -30595,6 +30620,18 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void))
 }
 
 
+static s7_pointer closure_or_f(s7_scheme *sc, s7_pointer p)
+{
+  s7_pointer body;
+  if (!is_closure(p)) return(p);
+  body = closure_body(p);
+  if (is_pair(cdr(body))) return(p);
+  if (!is_pair(car(body))) return(sc->F);
+  if (caar(body) == sc->QUOTE) return(sc->F);
+  return(p);
+}
+
+
 static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
 {
   #define H_dynamic_wind "(dynamic-wind init body finish) calls init, then body, then finish, \
@@ -30629,14 +30666,26 @@ each a function of no arguments, guaranteeing that finish is called even if body
    */
   
   NEW_CELL(sc, p);
-  dynamic_wind_in(p) = car(args);
+  dynamic_wind_in(p) = closure_or_f(sc, car(args));
   dynamic_wind_body(p) = cadr(args);
-  dynamic_wind_out(p) = caddr(args);
-  dynamic_wind_state(p) = DWIND_INIT;
-  set_type(p, T_DYNAMIC_WIND);            /* atom -> don't mark car/cdr, don't copy */
+  dynamic_wind_out(p) = closure_or_f(sc, caddr(args));
+  set_type(p, T_DYNAMIC_WIND);                          /* atom -> don't mark car/cdr, don't copy */
+  
+  /* since we don't care about the in and out results, and they are thunks, if the body is not a pair,
+   *   or is a quoted thing, we just ignore that function.
+   */
 
   push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
-  push_stack(sc, OP_APPLY, sc->NIL, car(args));
+  if (dynamic_wind_in(p) != sc->F)
+    {
+      dynamic_wind_state(p) = DWIND_INIT;
+      push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_in(p));
+    }
+  else
+    {
+      dynamic_wind_state(p) = DWIND_BODY;
+      push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_body(p));
+    }
   return(sc->F);
 }
 
@@ -30849,10 +30898,13 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	  if (dynamic_wind_state(x) == DWIND_BODY)
 	    {
 	      dynamic_wind_state(x) = DWIND_FINISH;   /* make sure an uncaught error in the exit thunk doesn't cause us to loop */
-	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-	      sc->args = sc->NIL;
-	      sc->code = dynamic_wind_out(x);
-	      eval(sc, OP_APPLY);                     /* I guess this means no call/cc out of the exit thunk in an error-catching context */
+	      if (dynamic_wind_out(x) != sc->F)
+		{
+		  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+		  sc->args = sc->NIL;
+		  sc->code = dynamic_wind_out(x);
+		  eval(sc, OP_APPLY);                     /* I guess this means no call/cc out of the exit thunk in an error-catching context */
+		}
 	    }
 	  break;
 
@@ -30864,26 +30916,68 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	      (type == sc->T))
 	    {
 	      int loc;
-	      bool arity_checked = false;
-	      s7_pointer catcher;
+	      s7_pointer catcher, error_func;
 	      catcher = x;
-
-	      /* if OP_CATCH_1, we deferred making the error handler until it is actually needed
-	       *    (let () (define (hi a) (catch #t (lambda () (+ 1 "asdf")) (lambda args (+ a 1)))) (hi 2))
-	       */
-	      if (op == OP_CATCH_1)
-		{
-		  s7_pointer y, z;
-		  z = catch_handler(catcher);
-		  if (is_symbol(car(z)))
-		    arity_checked = true;
-		  MAKE_CLOSURE_NO_CAPTURE(sc, y, car(z), cdr(z), stack_environment(sc->stack, i));
-		  sc->code = y;
-		}
-	      else sc->code = catch_handler(catcher);
 	      loc = catch_goto_loc(catcher);
 	      sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(catcher));
 	      sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
+	      error_func = catch_handler(catcher);
+
+	      /* very often the error handler just returns either a constant ('error or #f), or
+	       *   the args passed to it, so there's no need to laboriously make a closure,
+	       *   and apply it -- just set sc->value to the closure body (or the args) and
+	       *   return.
+	       *
+	       * so first examine closure_body(error_func)
+	       *   if it is a constant, or quoted symbol, return that,
+	       *   if it the args symbol, set it to (list type info)
+	       */
+
+	      /* if OP_CATCH_1, we deferred making the error handler until it is actually needed
+	       */
+	      {
+		s7_pointer body, y = NULL;
+		if (op == OP_CATCH_1)
+		  body = cdr(error_func);
+		else body = closure_body(error_func);
+
+		if (is_null(cdr(body)))
+		  {
+		    body = car(body);
+		    if (is_symbol(body))
+		      {
+			if (body == car(error_func))
+			  y = list_2(sc, type, info);
+		      }
+		    else
+		      {
+			if (!is_pair(body))
+			  y = body;
+			else
+			  {
+			    if (car(body) == sc->QUOTE)
+			      y = cadr(body);
+			  }
+		      }
+		    if (y)
+		      {
+			sc->op = OP_CATCH_DONE; 
+			/* why does this work??
+			 *   I think we normally jump, so this becomes the arg to the jumped-to eval call.
+			 */
+			sc->code = y;
+			if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
+			return(true);
+		      }
+		  }
+	      }
+	      if (op == OP_CATCH_1)
+		{
+		  s7_pointer y;
+		  MAKE_CLOSURE_NO_CAPTURE(sc, y, car(error_func), cdr(error_func), stack_environment(sc->stack, i));
+		  sc->code = y;
+		}
+	      else sc->code = error_func;
 	      
 	      /* if user (i.e. yers truly!) copies/pastes the preceding lambda () into the
 	       *   error handler portion of the catch, he gets the inexplicable message:
@@ -30892,7 +30986,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	       *   error check here!
 	       */
 	      
-	      if ((!arity_checked) &&
+	      if ((is_pair(closure_args(sc->code))) &&
 		  (!is_aritable(sc, sc->code, 2)))
 		{
 		  s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~S", sc->args);
@@ -30902,12 +30996,9 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	      /* since MAKE_CLOSURE sets needs_copied_args and we're going to OP_APPLY,
 	       *   we don't need a new list here.
 	       */
-	      car(sc->temp_cell_1) = type;
-	      cdr(sc->temp_cell_1) = sc->temp_cell_2;
-	      car(sc->temp_cell_2) = info;
-	      cdr(sc->temp_cell_2) = sc->NIL;
-	      sc->args = sc->temp_cell_1;
-
+	      car(sc->T2_1) = type;
+	      car(sc->T2_2) = info;
+	      sc->args = sc->T2_1;
 	      sc->op = OP_APPLY;
 	      
 	      /* explicit eval needed if s7_call called into scheme where a caught error occurred (ex6 in exs7.c)
@@ -36606,17 +36697,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  set_optimize_data(car_x, hop + OP_SAFE_C_PP); /* unP case? */
 		  set_c_function(car_x, c_function_chooser(func)(sc, func, 2, car_x)); 
 		  return(false);
-
-		  /* if both args are unsafe closure calls, we know each is creating an env,
-		   *   if after the first (c_pp_1 time) capture_env_counter has not moved, the 1st call's env is reusable
-		   *   if they're the same arity, it is directly usable
-		   * so in c_pp: save capture_env_counter, goto special unsafe_closure block that saves the new env somewhere
-		   * in c_pp_1: check counter, if same, goto another such that uses the current, else goto normal case
-		   * also need to check that gc hasn't clobbered it, and perhaps that the env that is saved is the one we think it is (frame_id?)
-		   *
-		   * in cqp: look for sc->saved_env, saved_env_cap, [clear cap at gc, protect saved_env]
-		   *   if =, reuse, else set to new values
-		   */
 		}
 	    }
 	}
@@ -39321,14 +39401,7 @@ static s7_pointer check_if(s7_scheme *sc)
  		  if (is_optimized(test))
 		    {
 		      if (optimize_data(test) == HOP_SAFE_C_C)
-			{
-			  if (c_call(test) == g_char_equal_s_ic)
-			    {
-			      set_syntax_op(sc->code, sc->SAFE_IF_CEQ_P_P);
-			      fcdr(sc->code) = f;
-			    }
-			  else set_syntax_op(sc->code, sc->SAFE_IF_CC_P_P);
-			}
+			set_syntax_op(sc->code, sc->SAFE_IF_CC_P_P);
 		      else 
 			{
 			  if (is_h_safe_c_s(test))
@@ -41343,7 +41416,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
   /* if one op were dominant here, we could skip the switch, but it appears that they are well mixed:
    *   lg:     OP_IF_PP: 6%, OP_SAFER_OR: 4%, OP_AND_P: 4%
    *   t502:   OP_SET_SYMBOL_P: 8%, OP_SET_SAFE: 8%, OP_LET1: 5%
-   *   index:  OP_SAFE_IF_CEQ_P_P: 21%, OP_DOTIMES_SET_P: 15%
+   *   index:  OP_DOTIMES_SET_P: 15%
    *   s7test: OP_EVAL_ARGS4: 8%, OP_EVAL_ARGS2: 7%, OP_SET_PAIR: 4%
    *   bench:  OP_LET_READ_CHAR_P: 14%, OP_INCREMENT_1: 10%
    */
@@ -43858,8 +43931,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (sc->stack_end >= sc->stack_resize_trigger)
 		  increase_stack_size(sc);
 		
-		sc->code = ecdr(sc->code);
-		args = closure_args(sc->code);
+		code = ecdr(sc->code);
+		args = closure_args(code);
 		if (is_pair(args))
 		  {
 		    s7_pointer rest;
@@ -43868,7 +43941,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    else sym = car(args);
 		    rest = cdr(args);
 
-		    NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(sc->code), sc->envir, sym, sc->value);
+		    NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(code), sc->envir, sym, sc->value);
 		    if (!is_null(rest))
 		      add_slot(sc, rest, sc->NIL);
 		    /* here we have a closure with a required arg and a rest arg, and we're called
@@ -43877,10 +43950,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		else
 		  {
-		    NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(sc->code), sc->envir, args, cons(sc, sc->value, sc->NIL));
+		    NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(code), sc->envir, args, cons(sc, sc->value, sc->NIL));
 		  }
 		
-		sc->code = closure_body(sc->code);
+		sc->code = closure_body(code);
 		if (is_one_liner(sc->code))
 		  {
 		    sc->code = car(sc->code);
@@ -43902,10 +43975,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (sc->stack_end >= sc->stack_resize_trigger)
 		increase_stack_size(sc);
 	      sc->value = c_call(fcdr(code))(sc, cdr(fcdr(code)));
-	      sc->code = ecdr(sc->code);
-	      NEW_FRAME_WITH_SLOT(sc, closure_environment(sc->code), sc->envir, car(closure_args(sc->code)), sc->value);
+	      code = ecdr(code);
+	      NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value);
 		
-	      sc->cur_code = car(closure_body(sc->code));
+	      sc->cur_code = car(closure_body(code));
 	      sc->op = (opcode_t)lifted_op(sc->cur_code);
 	      sc->code = cdr(sc->cur_code);
 	      goto START_WITHOUT_POP_STACK;
@@ -43924,10 +43997,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = find_symbol_or_bust(sc, cadr(code));
 	      car(sc->T1_1) = find_symbol_or_bust(sc, fcdr(code));
 
-	      sc->code = ecdr(sc->code);
-	      NEW_FRAME_WITH_SLOT(sc, closure_environment(sc->code), sc->envir, car(closure_args(sc->code)), sc->value);
-	      ADD_SLOT(sc->envir, cadr(closure_args(sc->code)), car(sc->T1_1));
-	      sc->code = car(closure_body(sc->code));
+	      code = ecdr(code);
+	      NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value);
+	      ADD_SLOT(sc->envir, cadr(closure_args(code)), car(sc->T1_1));
+	      sc->code = car(closure_body(code));
 	      goto EVAL;  
 
 
@@ -43949,8 +44022,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer args, sym, val;
 		if (sc->stack_end >= sc->stack_resize_trigger)
 		  increase_stack_size(sc);
-		sc->code = ecdr(sc->code);
-		args = closure_args(sc->code);
+		code = ecdr(sc->code);
+		args = closure_args(code);
 		if (is_pair(args))
 		  {
 		    if (is_pair(car(args)))
@@ -43964,7 +44037,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    val = list_2(sc, car(sc->T2_1), car(sc->T2_2));
 		  }
 
-		NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(sc->code), sc->envir, sym, val);
+		NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_environment(code), sc->envir, sym, val);
 		if (is_pair(args))
 		  {
 		    args = cdr(args);
@@ -43989,7 +44062,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		    
 		  }
-		sc->code = closure_body(sc->code);
+		sc->code = closure_body(code);
 		if (is_one_liner(sc->code))
 		  {
 		    sc->code = car(sc->code);
@@ -50817,33 +50890,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
-    case OP_SAFE_IF_CEQ_P_P:
-      {
-	s7_pointer c, code;
-	code = cdar(sc->code);
-	c = finder(sc, car(code));
-	if (c == cadr(code))           /* we know cadr(code) is a char, so if c equals it, c must be a char */
-	  sc->code = cadr(sc->code);
-	else 
-	  {
-	    if (!s7_is_character(c))
-	      {
-		s7_pointer char_func;
-		if ((has_methods(c)) &&
-		    (char_func = find_method(sc, find_environment(sc, c), sc->CHAR_EQ)))
-		  {
-		    if (is_true(sc, s7_apply_function(sc, char_func, list_2(sc, c, cadr(code)))))
-		      sc->code = cadr(sc->code);
-		    else sc->code = fcdr(sc->code);
-		  }
-		else return(wrong_type_argument(sc, sc->CHAR_EQ, small_int(1), c, T_CHARACTER));
-	      }
-	    sc->code = fcdr(sc->code); /* caddr */
-	  }
-	goto EVAL; 
-      }
-      
-      
     case OP_SAFE_IF_CS_X_P:
       {
 	s7_pointer code;
@@ -50898,7 +50944,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer code;
 	code = sc->code;
-	sc->value = finder(sc, cadar(code));
+	sc->value = finder(sc, cadar(code)); /* tricky -- the same symbol is used twice, and if expr true, it is the returned value */
 	car(sc->T2_1) = sc->value;
 	car(sc->T2_2) = fcdr(code);
 	if (is_true(sc, c_call(car(code))(sc, sc->T2_1)))
@@ -53009,6 +53055,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
+    case OP_CATCH_DONE:
+      sc->value = sc->code;
+      goto START;
+
+
     case OP_DEACTIVATE_GOTO:
       call_exit_active(sc->args) = false;      /* as we leave the call-with-exit body, deactivate the exiter */
       goto START;
@@ -53087,19 +53138,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (dynamic_wind_state(sc->code) == DWIND_BODY)
 	    {
 	      dynamic_wind_state(sc->code) = DWIND_FINISH;
-	      push_stack(sc, OP_DYNAMIC_WIND, sc->value, sc->code);
-	      sc->args = sc->NIL;
-	      sc->code = dynamic_wind_out(sc->code);
-	      goto APPLY;
+	      if (dynamic_wind_out(sc->code) != sc->F)
+		{
+		  push_stack(sc, OP_DYNAMIC_WIND, sc->value, sc->code);
+		  sc->args = sc->NIL;
+		  sc->code = dynamic_wind_out(sc->code);
+		  goto APPLY;
+		}
+	      else
+		{
+		  if (is_multiple_value(sc->value))
+		    sc->value = splice_in_values(sc, multiple_value(sc->value));
+		  goto START;
+		}
 	    }
-	  else
-	    {
-	      /* (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) */
-	      if (is_multiple_value(sc->args))
-		sc->value = splice_in_values(sc, multiple_value(sc->args));
-	      else sc->value = sc->args;                         /* value saved above */ 
-	      goto START;
-	    }
+	  /* (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) */
+	  if (is_multiple_value(sc->args))
+	    sc->value = splice_in_values(sc, multiple_value(sc->args));
+	  else sc->value = sc->args;                         /* value saved above */ 
+	  goto START;
 	}
       break;
 
@@ -58473,7 +58530,6 @@ s7_scheme *s7_init(void)
   sc->IF_ORCEQ_P =            assign_internal_syntax(sc, "if",      OP_IF_ORCEQ_P);
   sc->IF_ORCEQ_P_P =          assign_internal_syntax(sc, "if",      OP_IF_ORCEQ_P_P);
   sc->SAFE_IF_CC_P_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_P_P);  
-  sc->SAFE_IF_CEQ_P_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CEQ_P_P);  
   sc->SAFE_IF_CS_P =          assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P);  
   sc->SAFE_IF_CS_P_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P_P);  
   sc->SAFE_IF_CS_Q_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_Q_P);  
@@ -59387,12 +59443,12 @@ s7_scheme *s7_init(void)
  *   (zero? (floor ...)) for example, (zero? (modulo s i)) is slightly trickier
  *   (zero? (imag-part...) is real arg but pointless!
  *
- * bench    42736                                    8422
- * lint     13424 -> 1231 [1237] 1286 1326 1320 1270 1215
- *                                              9811 8263
- * index    44300 -> 4988 [4992] 4235 4725 3935 3477 3103
- * s7test            1721             1456 1430 1375 1317
- * t455                           265  256  218   86   79
- * t502                                 90   72   42   40
+ * bench    42736                             8383
+ * lint     13424 -> 1231 1286 1326 1320 1270 1207
+ *                                       9811 8264
+ * index    44300 -> 4988 4235 4725 3935 3477 3103
+ * s7test            1721      1456 1430 1375 1311
+ * t455                    265  256  218   86   73
+ * t502                          90   72   42   40
  */
 
