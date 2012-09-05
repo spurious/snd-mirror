@@ -16890,6 +16890,9 @@ in s7:
 	  (set! c-1 vector-ref)))
       (test (c-1 v 1) 'error)))
   (c-2))
+(let ()
+  (define (f4 a b c d e) (list a b c d e))
+  (test (f4 1 2 3 4 5) '(1 2 3 4 5)))
 
 
 
@@ -69592,6 +69595,7 @@ etc
 (test (if (let ((if 3)) (> 2 if)) 4 5) 5)
 (test (let ('1 ) quote) 1)
 (test (let ((quote 1)) (+ quote 1)) 2)
+(test (let ((quote -)) '32) -32)
 (test (do ((do 1)) (#t do)) 1)
 (test (do ((do 1 (+ do do))) ((> do 3) do)) 4)
 (test (do ((do 1 do) (j do do)) (do do)) 1)

@@ -8495,6 +8495,13 @@
 (CINT "GTK_INPUT_HINT_UPPERCASE_WORDS" "GtkInputHints")
 (CINT "GTK_INPUT_HINT_UPPERCASE_SENTENCES" "GtkInputHints")
 
+
+;;; 3.5.14
+GTK_INPUT_HINT_INHIBIT_OSK    
+
+void            gtk_entry_set_attributes                     (GtkEntry             *entry,   PangoAttrList        *attrs);
+PangoAttrList  *gtk_entry_get_attributes                     (GtkEntry             *entry);
+ 
 |#
 
  

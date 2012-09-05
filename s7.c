@@ -600,7 +600,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_opSSq_S, HOP_CLOSURE_opSSq_S, 
       OP_CLOSURE_SSS, HOP_CLOSURE_SSS,
       OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, OP_CLOSURE_ALL_C, HOP_CLOSURE_ALL_C, OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, 
-      OP_CLOSURE_CDR_S, HOP_CLOSURE_CDR_S, 
+      OP_CLOSURE_CDR_S, HOP_CLOSURE_CDR_S, OP_CLOSURE_ALL_Sp, HOP_CLOSURE_ALL_Sp, 
 
       OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SS, HOP_CLOSURE_STAR_SS, 
 
@@ -702,7 +702,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_opssq_s", "h_closure_opssq_s", 
      "closure_sss", "h_closure_sss",
      "closure_all_s", "h_closure_all_s", "closure_all_c", "h_closure_all_c", "closure_all_x", "h_closure_all_x",
-     "closure_cdr_s", "h_closure_cdr_s",
+     "closure_cdr_s", "h_closure_cdr_s", "closure_all_sp", "h_closure_all_sp", 
 
      "closure*_s", "h_closure*_s", "closure*_ss", "h_closure*_ss", 
 
@@ -1582,6 +1582,7 @@ static int t_optimized = T_OPTIMIZED;
 #define T_SIMPLE_ARGS                 T_GENSYM
 #define has_simple_args(p)            ((typeflag(p) & T_SIMPLE_ARGS) != 0)
 #define set_simple_args(p)            typeflag(p) |= T_SIMPLE_ARGS
+/* are all lambda* default values simple? */
 
 #define T_LIST_IN_USE                 T_GENSYM
 #define list_is_in_use(p)             ((typeflag(p) & T_LIST_IN_USE) != 0)
@@ -2143,7 +2144,7 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 
 #define NUM_COUNTS 64000
 static int counts[2][NUM_COUNTS];
@@ -4273,14 +4274,17 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
 }
 
 
+/* in all these macros, symbol_set_local should follow slot_set_value so that we can evaluate the
+ *    slot's value in its old state.
+ */
 #define ADD_SLOT(Frame, Symbol, Value) \
   do { \
     s7_pointer _slot_, _sym_;			\
     _sym_ = Symbol; \
     NEW_CELL_NO_CHECK(sc, _slot_);\
     slot_symbol(_slot_) = _sym_;\
-    symbol_set_local(_sym_, frame_id(Frame), _slot_); \
     slot_set_value(_slot_, Value);	\
+    symbol_set_local(_sym_, frame_id(Frame), _slot_); \
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
     environment_slots(Frame) = _slot_;\
@@ -4301,8 +4305,8 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym_;\
-      symbol_set_local(_sym_, frame_number, _slot_); \
       slot_set_value(_slot_, Value);	\
+      symbol_set_local(_sym_, frame_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
       environment_slots(_x_) = _slot_;\
@@ -4320,10 +4324,10 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym_;\
-      symbol_set_local(_sym_, frame_number, _slot_); \
       if (symbol_has_accessor(_sym_)) \
         slot_set_value(_slot_, call_symbol_bind(Sc, _sym_, Value)); \
       else slot_set_value(_slot_, Value);		\
+      symbol_set_local(_sym_, frame_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
       environment_slots(_x_) = _slot_;\
@@ -4336,10 +4340,10 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
     _sym_ = Symbol; \
     NEW_CELL_NO_CHECK(sc, _slot_);\
     slot_symbol(_slot_) = _sym_;\
-    symbol_set_local(_sym_, frame_id(Frame), _slot_); \
     if (symbol_has_accessor(_sym_)) \
       slot_set_value(_slot_, call_symbol_bind(sc, _sym_, Value)); \
     else slot_set_value(_slot_, Value);		\
+    symbol_set_local(_sym_, frame_id(Frame), _slot_); \
     set_type(_slot_, T_SLOT | T_IMMUTABLE);\
     next_slot(_slot_) = environment_slots(Frame);\
     environment_slots(Frame) = _slot_;\
@@ -35898,6 +35902,18 @@ static int orx_count(s7_pointer x)
 }
 
 
+static bool arglist_has_accessed_symbol(s7_pointer args)
+{
+  /* rest arg if any not checked */
+  s7_pointer p;
+  for (p = args; is_pair(p); p = cdr(p))
+    if (((is_symbol(car(p))) && (symbol_has_accessor(car(p)))) ||
+	((is_pair(car(p))) && (symbol_has_accessor(caar(p)))))
+      return(true);
+  return(false);
+}
+
+
 static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int hop)
 {
   if (is_c_function(func))
@@ -36258,25 +36274,12 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	      if (symbols == 2)
 		{
 		  bool safe_case;
-		  /*
-		  fprintf(stderr, "%s, %d %d %d, %d %d, %d %d, %d %s\n", DISPLAY(car_x),
-			  closure_body_is_safe(func),
-			  closure_arity_to_int(sc, func) == 2,
-			  is_one_liner(closure_body(func)),
-			  typesflag(car(closure_body(func))) == SYNTACTIC_PAIR,
-			  typesflag(car(closure_body(func))) == OPTIMIZED_PAIR,
-			  symbol_has_accessor(car(closure_args(func))),
-			  symbol_has_accessor(cadr(closure_args(func))),
-			  is_optimized(car(closure_body(func))),
-			  is_optimized(car(closure_body(func))) ? opt_names[optimize_data(car(closure_body(func)))] : "unopt");
-		  */
 		  safe_case = closure_body_is_safe(func);
 		  set_optimize_data(car_x, hop + ((safe_case) ? OP_SAFE_CLOSURE_SS : OP_CLOSURE_SS));
 		  if ((!safe_case) &&
 		      (closure_arity_to_int(sc, func) == 2) &&
 		      (is_one_liner(closure_body(func))) &&
-		      (!symbol_has_accessor(car(closure_args(func)))) &&
-		      (!symbol_has_accessor(cadr(closure_args(func)))))
+		      (!arglist_has_accessed_symbol(closure_args(func))))
 		    set_optimize_data(car_x, hop + OP_CLOSURE_SSp);
 		}
 	      else
@@ -36701,6 +36704,35 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	    }
 	}
     }
+
+  if ((!is_optimized(car_x)) &&
+      (pairs == (quotes + orx_count(car_x))))
+    {
+      if ((func_is_c_function) &&
+	  (func_is_safe))
+	{
+	  /* fprintf(stderr, "all_x: %s\n", DISPLAY(car_x)); */
+	  set_optimized(car_x);
+	  set_optimize_data(car_x, hop + OP_SAFE_C_ALL_X);
+	  fcdr(cdr(car_x)) = small_int(2);
+	  set_c_function(car_x, c_function_chooser(func)(sc, func, 2, car_x));
+	}
+      else 
+	{
+	  if ((func_is_closure) &&
+	      (closure_arity_to_int(sc, func) == 2) &&
+	      (!arglist_has_accessed_symbol(closure_args(func))))
+	    {
+	      /* fprintf(stderr, "all_x: %s\n", DISPLAY(car_x)); */
+	      set_unsafely_optimized(car_x);
+	      set_optimize_data(car_x, hop + ((closure_body_is_safe(func) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X)));
+	      ecdr(car_x) = func;
+	      fcdr(cdr(car_x)) = small_int(2);
+	      return(false);
+	    }
+	}
+    }
+
   return(is_optimized(car_x));  
 }
 
@@ -36965,7 +36997,8 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
       else 
 	{
 	  if ((func_is_closure) &&
-	      (closure_arity_to_int(sc, func) == 3))
+	      (closure_arity_to_int(sc, func) == 3) &&
+	      (!arglist_has_accessed_symbol(closure_args(func))))
 	    {
 	      set_unsafely_optimized(car_x);
 	      set_optimize_data(car_x, hop + ((closure_body_is_safe(func) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X)));
@@ -37036,6 +37069,13 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	    fcdr(cdr(car_x)) = small_int(args);
 	  else fcdr(cdr(car_x)) = make_permanent_integer(args);
 	  ecdr(car_x) = func;
+
+	  if ((!safe_case) &&
+	      (symbols == args) &&
+	      (closure_arity_to_int(sc, func) == args) &&
+	      (!arglist_has_accessed_symbol(closure_args(func))))
+	    set_optimize_data(car_x, hop + OP_CLOSURE_ALL_Sp);
+
 	  return(false);
 	}
     }
@@ -37086,12 +37126,11 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
       else
 	{
 	  if ((func_is_closure) &&
-	      (closure_arity_to_int(sc, func) == args))
+	      (closure_arity_to_int(sc, func) == args) &&
+	      (!arglist_has_accessed_symbol(closure_args(func))))
 	    {
-	      bool safe_case;
-	      safe_case = closure_body_is_safe(func);
 	      set_unsafely_optimized(car_x);
-	      set_optimize_data(car_x, hop + ((safe_case) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X));
+	      set_optimize_data(car_x, hop + ((closure_body_is_safe(func)) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X));
 	      if (args < NUM_SMALL_INTS)
 		fcdr(cdr(car_x)) = small_int(args);
 	      else fcdr(cdr(car_x)) = make_permanent_integer(args);
@@ -39745,14 +39784,73 @@ static s7_pointer check_if(s7_scheme *sc)
 }
 
 
-static bool is_safe_arg_list(s7_scheme *sc, s7_pointer lst)
+static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body)
 {
-  s7_pointer p;
-  for (p = lst; is_pair(p); p = cdr(p))
-    if ((is_symbol(car(p))) &&
-	(symbol_has_accessor(car(p)))) /* this checks the extended portion, so it better be a symbol */
-      return(false);
-  return(true);
+  int len;
+  len = s7_list_length(sc, body);
+  if (len < 0)                                                               /* (define (hi) 1 . 2) */
+    return(eval_error_with_name(sc, "~A: function body messed up, ~A", sc->code));
+  
+  if ((len == 1) &&
+      (is_pair(car(body))))
+    set_one_liner(body);
+  
+  if (len > 0)  /* i.e. not circular */
+    {
+      bool bad_set = false;
+      
+      /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(x), DISPLAY(sc->code)); */
+      optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, x)));
+      
+      /* if the body is safe, we can optimize the calling sequence */
+      if ((is_proper_list(sc, args)) &&
+	  (!arglist_has_accessed_symbol(args)))
+	{
+	  if (!unstarred_lambda)
+	    {
+	      s7_pointer p;
+	      bool happy = true;
+	      /* check default vals -- if none is an expression or symbol, set simple args */
+	      for (p = args; is_pair(p); p = cdr(p))
+		if ((is_pair(car(p))) &&
+		    ((is_pair(cadr(car(p)))) ||
+		     (is_symbol(cadr(car(p))))))
+		  {
+		    happy = false;
+		    break;
+		  }
+	      if (happy)
+		set_simple_args(body);
+	    }
+	  
+	  sc->cycle_counter = 0;
+	  /* it is extremely expensive to check for cycles with collect_shared_info, but the
+	   *   body_is_safe process can get hung if the cycle is hidden from the simple
+	   *   checks above. 
+	   *       (define (hi) (let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (< ctr 4) #1# (newline)))))
+	   *   tickles this bug.  In all my current test cases, we never get over 350 (lint), so checking
+	   *   for 5000 seems safe.
+	   */
+	  if (body_is_safe(sc, x, body, true, &bad_set))
+	    {
+	      /* (define (hi a) (+ a 1) (hi (- a 1))) */
+	      /* there is one problem with closure* here -- we can't trust anything that
+	       *   has fancy (non-constant) default argument values.
+	       */
+	      /* fprintf(stderr, "%s is safe\n", DISPLAY(sc->code)); */
+	      
+	      if (unstarred_lambda)
+		set_safe_closure(body);
+	      else
+		{
+		  if (has_simple_args(body))
+		    set_safe_closure(body);
+		}
+	      /* fprintf(stderr, "safe: %s\n\n", DISPLAY_80(sc->code)); */
+	    }
+	}
+    }
+  return(x);
 }
 
 
@@ -39784,84 +39882,31 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
       if (is_syntactic(x))                                                      /* (define and a) */
 	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
+      /*
+      fprintf(stderr, "%s %d, %d %d, %d %d\n", DISPLAY(cadr(sc->code)),
+	      is_pair(cadr(sc->code)),
+	      symbol_id(sc->LAMBDA) == 0, caadr(sc->code) == sc->LAMBDA,
+	      symbol_id(sc->LAMBDA_STAR) == 0, caadr(sc->code) == sc->LAMBDA_STAR);
+      */
+      if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
+	  (((symbol_id(sc->LAMBDA) == 0) && (caadr(sc->code) == sc->LAMBDA)) ||
+	   ((symbol_id(sc->LAMBDA_STAR) == 0) && (caadr(sc->code) == sc->LAMBDA_STAR))))
+	/* not is_global here because that bit might not be set for initial symbols (why not??) */
+	optimize_lambda(sc, caadr(sc->code) == sc->LAMBDA, x, cadr(cadr(sc->code)), cddr(cadr(sc->code)));
     }
   else
     {
-      int len;
       x = caar(sc->code);
       if (!is_symbol(x))                                                        /* (define (3 a) a) */
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
       if (is_syntactic(x))                                                      /* (define (and a) a) */
 	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
-      
+
       if (sc->op == OP_DEFINE_STAR)
 	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code));
       else check_lambda_args(sc, cdar(sc->code));
 
-      len = s7_list_length(sc, cdr(sc->code));
-      if (len < 0)                                                               /* (define (hi) 1 . 2) */
-	return(eval_error_with_name(sc, "~A: function body messed up, ~A", sc->code));
-
-      if ((len == 1) &&
-	  (is_pair(cadr(sc->code))))
-	set_one_liner(cdr(sc->code));
-
-      if (len > 0)  /* i.e. not circular */
-	{
-	  bool bad_set = false;
-
-	  /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(x), DISPLAY(sc->code)); */
-	  optimize(sc, cdr(sc->code), 1, collect_collisions(sc, cdar(sc->code), list_1(sc, x)));
-
-	  /* if the body is safe, we can optimize the calling sequence */
-	  if (/* (sc->op == OP_DEFINE) && */
-	      (is_proper_list(sc, cdar(sc->code))) &&
-	      (is_safe_arg_list(sc, cdar(sc->code))))
-	    {
-	      if (sc->op == OP_DEFINE_STAR)
-		{
-		  s7_pointer p;
-		  bool happy = true;
-		  /* check default vals -- if none is an expression or symbol, set simple args */
-		  for (p = cdar(sc->code); is_pair(p); p = cdr(p))
-		    if ((is_pair(car(p))) &&
-			((is_pair(cadr(car(p)))) ||
-			 (is_symbol(cadr(car(p))))))
-		      {
-			happy = false;
-			break;
-		      }
-		  if (happy)
-		    set_simple_args(cdr(sc->code));
-		}
-
-	      sc->cycle_counter = 0;
-	      /* it is extremely expensive to check for cycles with collect_shared_info, but the
-	       *   body_is_safe process can get hung if the cycle is hidden from the simple
-	       *   checks above. 
-	       *       (define (hi) (let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (< ctr 4) #1# (newline)))))
-	       *   tickles this bug.  In all my current test cases, we never get over 350 (lint), so checking
-	       *   for 5000 seems safe.
-	       */
-	      if (body_is_safe(sc, caar(sc->code), cdr(sc->code), true, &bad_set))
-		{
-		  /* (define (hi a) (+ a 1) (hi (- a 1))) */
-		  /* there is one problem with closure* here -- we can't trust anything that
-		   *   has fancy (non-constant) default argument values.
-		   */
-		  /* fprintf(stderr, "%s is safe\n", DISPLAY(sc->code)); */
-
-		  if (sc->op == OP_DEFINE)
-		    set_safe_closure(cdr(sc->code));
-		  else
-		    {
-		      if (has_simple_args(cdr(sc->code)))
-			set_safe_closure(cdr(sc->code));
-		    }
-		  /* fprintf(stderr, "safe: %s\n\n", DISPLAY_80(sc->code)); */
-		}
-	    }
-	}
+      optimize_lambda(sc, sc->op == OP_DEFINE, x, cdar(sc->code), cdr(sc->code));
     }
 
   if ((is_overlaid(sc->code)) &&
@@ -44247,6 +44292,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto BEGIN;
 	      
 	      
+	    case OP_CLOSURE_ALL_C:
+	      if (!function_is_ok(code))
+		break;
+	      
+	    case HOP_CLOSURE_ALL_C:
+	      sc->args = copy_list(sc, cdr(code));
+	      sc->code = ecdr(code);
+	      goto UNSAFE_CLOSURE;
+	      
+	      
 	    case OP_CLOSURE_ALL_S:
 	      if (!function_is_ok(code))
 		{
@@ -44263,17 +44318,42 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->code = ecdr(code);
 		goto UNSAFE_CLOSURE;
 	      }
-	      
-	      
-	    case OP_CLOSURE_ALL_C:
+
+
+	    case OP_CLOSURE_ALL_Sp:
 	      if (!function_is_ok(code))
-		break;
+		{
+		  set_optimize_data(code, OP_UNKNOWN_ALL_S);
+		  goto OPT_EVAL;
+		}
 	      
-	    case HOP_CLOSURE_ALL_C:
-	      sc->args = copy_list(sc, cdr(code));
-	      sc->code = ecdr(code);
-	      goto UNSAFE_CLOSURE;
-	      
+	    case HOP_CLOSURE_ALL_Sp:
+	      {
+		s7_pointer args, p, func, e;
+		/* in this case, we have just lambda (not lambda*), and no dotted arglist,
+		 *   and no accessed symbols in the arglist, and we know the arglist matches the parameter list.
+		 */
+		if (sc->stack_end >= sc->stack_resize_trigger)
+		  increase_stack_size(sc);
+
+		func = ecdr(code);
+		/* we need to get the slot names from the current function, but the values from the calling environment
+		 */
+		NEW_FRAME(sc, closure_environment(func), e);
+		sc->z = e;
+		for (p = closure_args(func), args = cdr(code); is_pair(p); p = cdr(p), args = cdr(args))
+		  ADD_SLOT(e, car(p), find_symbol_or_bust(sc, car(args)));
+		sc->envir = e;
+
+		sc->code = closure_body(func);
+		if (is_one_liner(sc->code))
+		  {
+		    sc->code = car(sc->code);
+		    goto EVAL; 
+		  }
+		goto BEGIN;
+	      }
+
 	      
 	    case OP_CLOSURE_ALL_X:
 	      if (!function_is_ok(code))
@@ -44281,12 +44361,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_CLOSURE_ALL_X:
 	      {
-		s7_pointer args, p;
-		/* fprintf(stderr, "unsafe %s\n", DISPLAY(code)); */
-		sc->args = make_list(sc, integer(fcdr(cdr(code))), sc->NIL);
-		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
+		/* here also, all the args are simple */
+		s7_pointer args, p, func, e;
+
+		if (sc->stack_end >= sc->stack_resize_trigger)
+		  increase_stack_size(sc);
+
+		func = ecdr(code);
+		NEW_FRAME(sc, closure_environment(func), e);
+		sc->z = e;
+		for (p = closure_args(func), args = cdr(code); is_pair(p); p = cdr(p), args = cdr(args))
 		  {
-		    s7_pointer arg;
+		    s7_pointer arg, val;
 		    arg = car(args);
 		    if (is_pair(arg))
 		      {
@@ -44296,36 +44382,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    switch (optimize_data(arg)) /* is_orx_safe */
 			      {
 			      case HOP_SAFE_C_C:
-				car(p) = c_call(arg)(sc, cdr(arg));
+				val = c_call(arg)(sc, cdr(arg));
 				break;
 				
 			      case HOP_SAFE_C_S:
 				car(sc->T1_1) = finder(sc, cadr(arg));
-				car(p) = c_call(arg)(sc, sc->T1_1);
+				val = c_call(arg)(sc, sc->T1_1);
 				break;
 				
 			      case HOP_SAFE_C_SC:
 				largs = cdr(arg);
 				car(sc->T2_1) = finder(sc, car(largs));
 				car(sc->T2_2) = cadr(largs);
-				car(p) = c_call(arg)(sc, sc->T2_1);
+				val = c_call(arg)(sc, sc->T2_1);
 				break;
 				
 			      case HOP_SAFE_C_CS:
 				largs = cdr(arg);
 				car(sc->T2_2) = finder(sc, cadr(largs));
 				car(sc->T2_1) = car(largs);
-				car(p) = c_call(arg)(sc, sc->T2_1);
+				val = c_call(arg)(sc, sc->T2_1);
 				break;
 				
 			      case HOP_SAFE_C_SS:
 				{
-				  s7_pointer val;
+				  s7_pointer in_val;
 				  largs = cdr(arg);
-				  val = finder(sc, car(largs));
+				  in_val = finder(sc, car(largs));
 				  car(sc->T2_2) = finder(sc, cadr(largs));
-				  car(sc->T2_1) = val;
-				  car(p) = c_call(arg)(sc, sc->T2_1);
+				  car(sc->T2_1) = in_val;
+				  val = c_call(arg)(sc, sc->T2_1);
 				  break;
 				}
 				
@@ -44333,14 +44419,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				largs = cdr(arg);
 				car(sc->T2_1) = finder(sc, car(largs));
 				car(sc->T2_2) = cadr(cadr(largs));
-				car(p) = c_call(arg)(sc, sc->T2_1);
+				val = c_call(arg)(sc, sc->T2_1);
 				break;
 				
 			      case HOP_SAFE_C_opSq:
 				largs = cadr(arg);
 				car(sc->T1_1) = finder(sc, cadr(largs));
 				car(sc->T1_1) = c_call(largs)(sc, sc->T1_1);
-				car(p) = c_call(arg)(sc, sc->T1_1);
+				val = c_call(arg)(sc, sc->T1_1);
 				break;
 				
 			      case HOP_SAFE_C_opSq_opSq:
@@ -44351,21 +44437,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				car(sc->T1_1) = finder(sc, cadr(largs));
 				car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
 				car(sc->T2_1) = sc->temp4;
-				car(p) = c_call(arg)(sc, sc->T2_1);
+				val = c_call(arg)(sc, sc->T2_1);
 				break;
 			      }
 			  }
-			else car(p) = cadr(arg);
+			else val = cadr(arg);
 		      }
 		    else
 		      {
 			if (is_symbol(arg))
-			  car(p) = find_symbol_or_bust(sc, arg);
-			else car(p) = arg;
+			  val = find_symbol_or_bust(sc, arg);
+			else val = arg;
 		      }
+		    ADD_SLOT(e, car(p), val);
 		  }
-		sc->code = ecdr(code);
-		goto UNSAFE_CLOSURE;
+		sc->envir = e;
+
+		sc->code = closure_body(func);
+		if (is_one_liner(sc->code))
+		  {
+		    sc->code = car(sc->code);
+		    goto EVAL; 
+		  }
+		goto BEGIN;
 	      }
 	      
 	      
@@ -44718,8 +44812,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    set_optimize_data(code, OP_CLOSURE_SS);
 			    if ((closure_arity_to_int(sc, f) == 2) &&
 				(is_one_liner(closure_body(f))) &&
-				(!symbol_has_accessor(car(closure_args(f)))) &&
-				(!symbol_has_accessor(cadr(closure_args(f)))))
+				(!arglist_has_accessed_symbol(closure_args(f))))
 			      set_optimize_data(code, OP_CLOSURE_SSp);
 			  }
 			if (is_global(car(code)))
@@ -44934,7 +45027,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_CLOSURE:
 			if (closure_body_is_safe(f))
 			  set_optimize_data(code, OP_SAFE_CLOSURE_ALL_S);
-			else set_optimize_data(code, OP_CLOSURE_ALL_S);
+			else 
+			  {
+			    set_optimize_data(code, OP_CLOSURE_ALL_S);
+			    if ((closure_arity_to_int(sc, f) == num_args) &&
+				(!arglist_has_accessed_symbol(closure_args(f))))
+			      set_optimize_data(code, OP_CLOSURE_ALL_Sp);
+			  }
 			
 			if (is_global(car(code)))
 			  set_hopping(code);
@@ -44976,10 +45075,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    switch (type(f))
 		      {
 		      case T_CLOSURE:
-			if (closure_body_is_safe(f))
-			  set_optimize_data(code, OP_SAFE_CLOSURE_ALL_X);
-			else set_optimize_data(code, OP_CLOSURE_ALL_X);
-			
+			if ((closure_arity_to_int(sc, f) == num_args) &&
+			    (!arglist_has_accessed_symbol(closure_args(f))))
+			  {
+			    if (closure_body_is_safe(f))
+			      set_optimize_data(code, OP_SAFE_CLOSURE_ALL_X);
+			    else set_optimize_data(code, OP_CLOSURE_ALL_X);
+			  }
 			if (is_global(car(code)))
 			  set_hopping(code);
 			ecdr(code) = f;
@@ -47881,6 +47983,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------------------------------------------------------- */
 	  
 	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code));  */
+#if WITH_COUNTS
+	  add_expr(sc, sc->code);
+#endif
 	  /* trailers */
 	  sc->cur_code = sc->code;
 	  
@@ -52802,6 +52907,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    (is_null(cddr(code))))
 	  set_one_liner(cdr(code));
 	
+	/* in many cases, this is a no-op -- we already checked at define */
 	optimize(sc, cdr(code), 0, sc->NIL);
 
 	if ((is_overlaid(code)) &&
@@ -59443,12 +59549,12 @@ s7_scheme *s7_init(void)
  *   (zero? (floor ...)) for example, (zero? (modulo s i)) is slightly trickier
  *   (zero? (imag-part...) is real arg but pointless!
  *
- * bench    42736                             8383
- * lint     13424 -> 1231 1286 1326 1320 1270 1207
- *                                       9811 8264
- * index    44300 -> 4988 4235 4725 3935 3477 3103
- * s7test            1721      1456 1430 1375 1311
- * t455                    265  256  218   86   73
+ * bench    42736                             8309
+ * lint     13424 -> 1231 1286 1326 1320 1270 1195
+ *                                       9811 8177
+ * index    44300 -> 4988 4235 4725 3935 3477 3101
+ * s7test            1721      1456 1430 1375 1310
+ * t455                    265  256  218   86   70
  * t502                          90   72   42   40
  */
 
