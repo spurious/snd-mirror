@@ -14500,7 +14500,43 @@ this prints:
   (test (truncate-if negative? (truncate-if even? #(1 3 5 -1 4 6 7 8))) '(1 3 5))
   )
 
-
+;;; this is testing the one-liner unsafe closure optimizations
+(test (let ()
+	(define (fib n)
+	  (if (< n 2)
+	      n
+	      (+ (fib (- n 1))
+		 (fib (- n 2)))))
+	(let ((x 0)
+	      (ctr -1))
+	  (map
+	   (lambda (f)
+	     (let ((z 1))
+	       (set! ctr (+ ctr 1))
+	       (case ctr
+		 ((0 1 2 3) (f z))
+		 ((4 5) (f z z))
+		 ((6 7) (values (f (+ 1)) (f (+ 2)))))))
+	   (list
+	    (lambda (i)
+	      (set! x (list i)))
+	    (lambda (i)
+	      (set! x (list i))
+	      (set! x (list (+ i 1))))
+	    (vector 1 2 3)
+	    (list 3 2 1)
+	    (lambda (a b)
+	      (+ a b))
+	    (lambda (a b)
+	      (+ a b)
+	      (+ a b a))
+	    (lambda (a)
+	      (if (< a 2) a (+ (fib (- a 1)) (fib (- a 2)))))
+	    (lambda (a)
+	      (if (zero? a) a (list a))
+	      (list (+ a 10)))
+	    ))))
+      '((1) (2) 2 2 2 3 1 1 (11) (12)))
 
 #|
 ;;; this is from the r6rs comment site
