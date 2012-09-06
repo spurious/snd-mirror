@@ -32,8 +32,6 @@ foreach file (*)
     find /home/bil/cl/$file -newer /home/bil/cl/tools/$file -exec echo ' updating ' cl/tools/$file \;
     find /home/bil/cl/$file -newer /home/bil/cl/tools/$file -exec cp /home/bil/cl/tools/$file /home/bil/mov \;
     find /home/bil/cl/$file -newer /home/bil/cl/tools/$file -exec cp /home/bil/cl/$file /home/bil/cl/tools \;
-  else
-    echo $file '(tools) does not exist in /home/bil/cl'
   endif
 end
 

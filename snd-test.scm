@@ -32366,8 +32366,6 @@ EDITS: 1
 
 (if (not (provided? 'snd-fade.scm)) (load "fade.scm"))
 
-(define after-save-state-hook-var 0) ; global for load save-state stuff
-
 (define* (clm-channel-test snd chn) ; edit-list->function wants this to be global??
   (clm-channel (make-two-zero 1 -1) 0 #f snd chn #f #f "clm-channel-test"))
 
@@ -32513,8 +32511,6 @@ EDITS: 1
 		      (fneq (channel-property :ha ind 0) 3.14))
 		  (snd-display #__line__ ";channel-property saved: 3.14 -> ~A" (channel-property :ha ind 0)))
 	      (close-sound ind)))
-	(if (not (= after-save-state-hook-var 1234))
-	    (snd-display #__line__ ";after-save-state-hook: ~A" after-save-state-hook-var))
 	(set! (hook-functions after-save-state-hook) '())
 	(set! (hook-functions before-save-state-hook) '())
 	

@@ -38099,7 +38099,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	  if (!body_is_safe(sc, func, cdr(x), at_end, bad_set))
 	    {
 #if PRINTING
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	      return(false);
 	    }
@@ -38117,7 +38117,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  (!is_pair(cdddr(x)))) /* (let asdf) or possibly (let asdf ()) */
 		{
 #if PRINTING
-		  fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		  fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		  return(false);
 		}
@@ -38127,7 +38127,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		      (caar(vars) == cadr(x)))
 		    {
 #if PRINTING
-		      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		      return(false); /* it's shadowed -- all bets are off! */
 		    }
@@ -38141,7 +38141,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		    form_is_safe(sc, func, car(p), true, bad_set);
 		}
 #if PRINTING
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	      return(false);
 	    }
@@ -38160,7 +38160,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 			(!is_pair(cdar(vars))))
 		      {
 #if PRINTING
-			fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+			fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 			return(false);
 		      }
@@ -38172,7 +38172,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		    if (caar(vars) == func)
 		      {
 #if PRINTING
-			fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+			fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 			return(false); /* it's shadowed */
 		      }
@@ -38182,7 +38182,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		(!happy))
 	      {
 #if PRINTING
-		fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		return(false);
 	      }
@@ -38197,7 +38197,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	    e2 = ((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, cadddr(x), at_end, bad_set)));
 #if PRINTING
 	    if ((!t) || (!e1) || (!e2))
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	    return((t) && (e1) && (e2));
 	  }
@@ -38222,7 +38222,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	    if ((!happy) || (is_not_null(p)))
 	      {
 #if PRINTING
-		fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		return(false);
 	      }
@@ -38241,7 +38241,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	      }
 #if PRINTING
 	    if (!happy)
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	    return(happy);
 	  }
@@ -38252,14 +38252,14 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	  if (!is_pair(cddr(x)))
 	    {
 #if PRINTING
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	      return(false);
 	    }
 	  if (!body_is_safe(sc, func, cdddr(x), false, bad_set))
 	    {
 #if PRINTING
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	      return(false);
 	    }
@@ -38271,7 +38271,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  if (!is_pair(car(vars)))
 		    {
 #if PRINTING
-		      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		      return(false);
 		    }
@@ -38279,7 +38279,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  if (caar(vars) == func)
 		    {
 #if PRINTING
-		      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		      return(false);
 		    }
@@ -38289,7 +38289,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		      (!form_is_safe(sc, func, cadar(vars), false, bad_set)))
 		    {
 #if PRINTING
-		      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		      return(false);
 		    }
@@ -38298,7 +38298,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		      (!form_is_safe(sc, func, caddar(vars), false, bad_set)))
 		    {
 #if PRINTING
-		      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		      return(false);
 		    }
@@ -38308,7 +38308,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	      (!body_is_safe(sc, func, caddr(x), at_end, bad_set)))
 	    {
 #if PRINTING
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	      return(false);
 	    }
@@ -38332,7 +38332,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	  if (is_symbol(caddr(x)))
 	    {
 #if PRINTING
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	      return(false);
 	    }
@@ -38359,7 +38359,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	       ((is_pair(cadr(x))) && (caadr(x) == func))))
 	    (*bad_set) = true;
 #if PRINTING
-	  fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	  fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	  return(false);
 	}
@@ -38371,7 +38371,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	   (!is_hop_safe_closure(x))))
 	{
 #if PRINTING
-	  fprintf(stderr, "check %s\n", DISPLAY(x));
+	  fprintf(stderr, "check %s %d %d\n", DISPLAY(x), is_symbol(car(x)), is_global(car(x)));
 #endif
 	  
 	  if (car(x) == func) /* try to catch tail call */
@@ -38384,7 +38384,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		     (caar(p) == func)))  /* TODO: ?? not sure about this */
 		  {
 #if PRINTING
-		    fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+		    fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		    return(false);
 		  }
@@ -38397,7 +38397,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  return(true);
 		}
 #if PRINTING
-	      fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	      return(false);
 	    }
@@ -38429,14 +38429,14 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 				(!is_null(cdr(p))))
 			      {
 #if PRINTING
-				fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+				fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 				return(false);
 			      }
 			  }
 		      if (!is_null(p))
 #if PRINTING
-			fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+			fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 		      return(is_null(p));
 		    }
@@ -38445,13 +38445,21 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		{
 		  s7_pointer f;
 		  f = find_symbol(sc, car(x));
-		  if ((is_slot(f)) &&
-		      ((is_syntax(slot_value(f))) || (is_any_macro(slot_value(f)))))
-		    (*bad_set) = true;
+		  if (is_slot(f))
+		    {
+		      if ((is_syntax(slot_value(f))) || (is_any_macro(slot_value(f))))
+			(*bad_set) = true;
+		      else
+			{
+			  if ((is_closure(slot_value(f))) &&
+			      (closure_body_is_safe(slot_value(f))))
+			    return(true);
+			}
+		    }
 		}
 	    }
 #if PRINTING
-	  fprintf(stderr, "    %s%d%s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
+	  fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY(x), UNBOLD_TEXT);
 #endif
 	  return(false);
 	}
@@ -39851,7 +39859,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
     {
       bool bad_set = false;
       
-      /* fprintf(stderr, "optimize: %s %s\n", DISPLAY(x), DISPLAY(sc->code)); */
+      /* fprintf(stderr, "optimize: %s %s\n", DISPLAY_80(x), DISPLAY_80(sc->code)); */
       optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, x)));
       
       /* if the body is safe, we can optimize the calling sequence */
@@ -39889,7 +39897,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	      /* there is one problem with closure* here -- we can't trust anything that
 	       *   has fancy (non-constant) default argument values.
 	       */
-	      /* fprintf(stderr, "%s is safe\n", DISPLAY(sc->code)); */
+	      /* fprintf(stderr, "%s is safe\n", DISPLAY_80(sc->code)); */
 	      
 	      if (unstarred_lambda)
 		set_safe_closure(body);
@@ -39900,6 +39908,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 		}
 	      /* fprintf(stderr, "safe: %s\n\n", DISPLAY_80(sc->code)); */
 	    }
+	  /* else fprintf(stderr, "%s is not safe\n", DISPLAY_80(sc->code)); */
 	}
     }
   return(x);
@@ -41747,7 +41756,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    push_stack(sc, OP_SORT1, sc->args, sc->code);
 	    sc->x = SORT_LESSP; /* cadr of sc->args */
-	    sc->args = list_2(sc, SORT_DATA(j), SORT_DATA(j + 1)); 
+	    if (needs_copied_args(sc->x))
+	      sc->args = list_2(sc, SORT_DATA(j), SORT_DATA(j + 1)); 
+	    else 
+	      {
+		car(sc->T2_1) = SORT_DATA(j);
+		car(sc->T2_2) = SORT_DATA(j + 1);
+		sc->args = sc->T2_1;
+	      }
 	    sc->code = sc->x;
 	    goto APPLY;
 	  }
@@ -41766,7 +41782,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_SORT2, sc->args, sc->code);
 	sc->x = SORT_LESSP;
-	sc->args = list_2(sc, SORT_DATA(k), SORT_DATA(j)); 
+	if (needs_copied_args(sc->x))
+	  sc->args = list_2(sc, SORT_DATA(k), SORT_DATA(j)); 
+	else 
+	  {
+	    car(sc->T2_1) = SORT_DATA(k);
+	    car(sc->T2_2) = SORT_DATA(j);
+	    sc->args = sc->T2_1;
+	  }
 	sc->code = sc->x;
 	goto APPLY;
       }
@@ -59759,7 +59782,7 @@ s7_scheme *s7_init(void)
  *   (zero? (floor ...)) for example, (zero? (modulo s i)) is slightly trickier
  *   (zero? (imag-part...) is real arg but pointless!
  *
- * bench    42736                             8197
+ * bench    42736                             8192
  * lint     13424 -> 1231 1286 1326 1320 1270 1180
  *                                       9811 8102
  * index    44300 -> 4988 4235 4725 3935 3477 3101
