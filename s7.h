@@ -586,6 +586,7 @@ bool s7_is_do_local_or_global(s7_scheme *sc, s7_pointer symbol);
 void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level));
 s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
+s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
   /* these are for experimental optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
