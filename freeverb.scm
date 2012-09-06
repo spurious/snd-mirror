@@ -150,7 +150,7 @@
 		 ((= j numcombs))
 	       (let ((ctr (+ (* c numcombs) j)))
 		 (frame-set! f-out c (+ (f-out c)
-					(filtered-comb (vector-ref fcombs ctr) (f-in 0)))))))
+					(filtered-comb (vector-ref fcombs ctr) (f-in c)))))))
 	   (begin
 	     (frame-set! f-in 0 (delay (vector-ref predelays 0) (f-in 0)))
 	     (do ((c 0 (+ 1 c)))

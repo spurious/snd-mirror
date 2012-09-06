@@ -8497,11 +8497,11 @@
 
 
 ;;; 3.5.14
-GTK_INPUT_HINT_INHIBIT_OSK    
-
-void            gtk_entry_set_attributes                     (GtkEntry             *entry,   PangoAttrList        *attrs);
-PangoAttrList  *gtk_entry_get_attributes                     (GtkEntry             *entry);
+(CINT "GTK_INPUT_HINT_INHIBIT_OSK" "GtkInputHints")
+(CFNC "void gtk_entry_set_attributes GtkEntry* entry PangoAttrList* attrs")
+(CFNC "PangoAttrList* gtk_entry_get_attributes GtkEntry* entry")
  
+;;; nothing new in 3.5.16
 |#
 
  

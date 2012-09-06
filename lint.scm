@@ -1003,7 +1003,7 @@
 					(let ((bit (logbit? ctr pos)))
 					  (if (not bit)
 					      (if (not (equal? (vector-ref v ctr) (vector-ref v (logior ctr (ash 1 pos)))))
-						  (return))))))))
+						  (return #f))))))))
 				 vars)
 				
 				(if (not (null? none-vars))
