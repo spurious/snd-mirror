@@ -198,7 +198,7 @@
  */
 
 
-#define WITH_GCC defined(__GNUC__) || defined(__clang__)
+#define WITH_GCC (defined(__GNUC__) || defined(__clang__))
 
 
 
@@ -41339,7 +41339,7 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
 }
 
 #define function_is_ok(Code)       (fs(sc, car(Code)) == ecdr(Code))
-#define one_line_function_is_ok(f) (fs(sc, car(Code)) == ecdr(Code))
+#define one_line_function_is_ok(f) (fs(sc, car(f)) == ecdr(f))
 
 #define check_tfunction(Code) \
   if ((frame_id(sc->envir) != symbol_id(car(Code))) || \
@@ -59784,7 +59784,7 @@ s7_scheme *s7_init(void)
  *
  * bench    42736                             8192
  * lint     13424 -> 1231 1286 1326 1320 1270 1180
- *                                       9811 8102
+ *                                       9811 8060
  * index    44300 -> 4988 4235 4725 3935 3477 3101
  * s7test            1721      1456 1430 1375 1305
  * t455                    265  256  218   86   70
