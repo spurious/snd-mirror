@@ -405,7 +405,7 @@ enum {OP_NO_OP,
       OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X, OP_IF_P_X_X, 
       OP_IF_B_P, OP_IF_B_P_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
       OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PX, OP_IF_PXX, 
-      OP_IF_X_P_P, OP_IF_X_P, OP_IF_X_P_X, OP_IF_X_X_P, OP_IF_X_X, OP_IF_X_X_X,
+      OP_IF_S_P_P, OP_IF_S_P, OP_IF_S_P_X, OP_IF_S_X_P, OP_IF_S_X, OP_IF_S_X_X,
       OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
       
       OP_SAFE_IF1, OP_SAFE_IF2, OP_CATCH_1, OP_SAFE_IF3, 
@@ -557,7 +557,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_IF_P_P_P", "OP_IF_P_P", "OP_IF_P_P_X", "OP_IF_P_X_P", "OP_IF_P_X", "OP_IF_P_X_X", 
   "OP_IF_B_P", "OP_IF_B_P_P", "OP_IF_ANDP_P", "OP_IF_ANDP_P_P", "OP_IF_ORP_P", "OP_IF_ORP_P_P", 
   "OP_IF_PPP", "OP_IF_PP", "OP_IF_PPX", "OP_IF_PXP", "OP_IF_PX", "OP_IF_PXX", 
-  "OP_IF_X_P_P", "OP_IF_X_P", "OP_IF_X_P_X", "OP_IF_X_X_P", "OP_IF_X_X", "OP_IF_X_X_X",
+  "OP_IF_S_P_P", "OP_IF_S_P", "OP_IF_S_P_X", "OP_IF_S_X_P", "OP_IF_S_X", "OP_IF_S_X_X",
   "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
   
   "OP_SAFE_IF1", "OP_SAFE_IF2", "OP_SAFE_IF3", "OP_CATCH_1",
@@ -1241,7 +1241,7 @@ struct s7_scheme {
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLEST, CASE_INT;
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_Q, LET_ALL_G, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
-  s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_B_P_P, IF_P_P_X, IF_P_X_P, IF_P_X, IF_P_X_X, IF_X_P_P, IF_X_P, IF_X_P_X, IF_X_X_P, IF_X_X, IF_X_X_X;
+  s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_B_P_P, IF_P_P_X, IF_P_X_P, IF_P_X, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_S_X, IF_S_X_X;
   s7_pointer IF_O_P, IF_O_P_P, SAFE_IF_ANDX_P, SAFE_IF_ORX_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P;
 
   s7_pointer SAFE_OR_S, SAFER_OR_S, SAFER_OR_C, SAFER_OR_CEQ, SAFE_AND_S, SAFE_CASE_S, SAFER_OR_X, SAFER_AND_X, COND_SIMPLER;
@@ -39813,28 +39813,31 @@ static s7_pointer check_if(s7_scheme *sc)
 		}
 	    }
 	}
-      else /* test is symbol or constant */
+      else /* test is symbol or constant, but constant here is nutty */
 	{
-	  if (is_pair(t))
+	  if (is_symbol(test))
 	    {
-	      if (is_pair(f))
-		set_syntax_op(sc->code, sc->IF_X_P_P);
-	      else 
+	      if (is_pair(t))
 		{
-		  if (is_null(cdr(cdr_code)))
-		    set_syntax_op(sc->code, sc->IF_X_P);
-		  else set_syntax_op(sc->code, sc->IF_X_P_X);
+		  if (is_pair(f))
+		    set_syntax_op(sc->code, sc->IF_S_P_P);
+		  else 
+		    {
+		      if (is_null(cdr(cdr_code)))
+			set_syntax_op(sc->code, sc->IF_S_P);
+		      else set_syntax_op(sc->code, sc->IF_S_P_X);
+		    }
 		}
-	    }
-	  else 
-	    {
-	      if (is_pair(f))
-		set_syntax_op(sc->code, sc->IF_X_X_P);
 	      else 
 		{
-		  if (is_null(cdr(cdr_code)))
-		    set_syntax_op(sc->code, sc->IF_X_X);
-		  else set_syntax_op(sc->code, sc->IF_X_X_X);
+		  if (is_pair(f))
+		    set_syntax_op(sc->code, sc->IF_S_X_P);
+		  else 
+		    {
+		      if (is_null(cdr(cdr_code)))
+			set_syntax_op(sc->code, sc->IF_S_X);
+		      else set_syntax_op(sc->code, sc->IF_S_X_X);
+		    }
 		}
 	    }
 	}
@@ -41338,8 +41341,8 @@ static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
   return(sc->UNDEFINED);
 }
 
-#define function_is_ok(Code)       (fs(sc, car(Code)) == ecdr(Code))
-#define one_line_function_is_ok(f) (fs(sc, car(f)) == ecdr(f))
+#define function_is_ok(Code)          (fs(sc, car(Code)) == ecdr(Code))
+#define one_line_function_is_ok(Code) (fs(sc, car(Code)) == ecdr(Code))
 
 #define check_tfunction(Code) \
   if ((frame_id(sc->envir) != symbol_id(car(Code))) || \
@@ -41573,6 +41576,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
  START_WITHOUT_POP_STACK:
   switch (sc->op) 
     {
+      /* --------------- */
     case OP_READ_INTERNAL:
       /* if we're loading a file, and in the file we evaluate something like:
        *
@@ -41614,6 +41618,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       
+      /* --------------- */
       /* (read p) from scheme
        *    "p" becomes current input port for eval's duration, then pops back before returning value into calling expr
        */
@@ -41625,7 +41630,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->current_file = NULL; /* this is for error handling */
       goto START;
       
-      
+
+      /* --------------- */      
       /* load("file"); from C (g_load) -- assume caller will clean up
        *   read and evaluate exprs until EOF that matches (stack reflects nesting)
        */
@@ -41641,6 +41647,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       return(sc->F);
       
       
+      /* --------------- */
       /* (load "file") in scheme 
        *    read and evaluate all exprs, then upon EOF, close current and pop input port stack
        */
@@ -41661,6 +41668,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
 
+      /* --------------- */
       /* read and evaluate string expression(s?)
        *    assume caller (C via g_eval_c_string) is dealing with the string port
        */
@@ -41693,6 +41701,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
 
       
+      /* --------------- */
     case OP_EVAL_STRING_2:
       s7_close_input_port(sc, sc->input_port);
       pop_input_port(sc);
@@ -41702,6 +41711,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
       
+      /* --------------- */
     case OP_EVAL_STRING_1:
       if ((sc->tok != TOKEN_EOF) && 
 	  (port_string_point(sc->input_port) < port_string_length(sc->input_port))) /* ran past end somehow? */
@@ -41885,6 +41895,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
 
+      /* --------------- */
     case OP_MAP_SIMPLE:
       /* func = sc->code, func takes one arg, args = '(nil arglist) at the start with symbol_id = len
        *   the func is prechecked, as is the list.
@@ -41934,6 +41945,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_MAP:
       if (sc->value != sc->NO_VALUE)                   /* (map (lambda (x) (values)) (list 1)) */
 	{
@@ -42006,6 +42018,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START;
       }
 
+
+      /* --------------- */
     FOR_EACH_SIMPLER:
     case OP_FOR_EACH_SIMPLER:
       {
@@ -42038,6 +42052,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_FOR_EACH:
       if (counter_count(sc->args) < counter_length(sc->args))
 	{
@@ -42077,6 +42092,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto APPLY;
 
 
+      /* --------------- */
     case OP_MEMBER_IF1:
       if (sc->value != sc->F)            /* previous comparison was not #f -- return list */
 	{
@@ -42163,7 +42179,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) 
        * (with-sound () (nrev 0 .1))
        */
-
     SIMPLE_SAFE_DOTIMES:
     case OP_SIMPLE_SAFE_DOTIMES:
       /* set up as in SAFE_DOTIMES, pull in all the let vars
@@ -42268,9 +42283,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
       /* ---------------- */
-
-
-
     SAFE_DOTIMES_C_C:
     case OP_SAFE_DOTIMES_C_C:
       {
@@ -42330,9 +42342,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
       /* ---------------- */
-
-
-
     SAFE_DOTIMES_C_S:
     case OP_SAFE_DOTIMES_C_S:
       {
@@ -42391,7 +42400,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
-
+      /* --------------- */
     SAFE_DOTIMES:
     case OP_SAFE_DOTIMES:
       {
@@ -42436,6 +42445,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SIMPLE_DO;
       }
 
+
+      /* --------------- */
     case OP_SAFE_DOTIMES_STEP:
       numerator(slot_value(sc->args))++;
       if (numerator(slot_value(sc->args)) == denominator(slot_value(sc->args)))
@@ -42449,6 +42460,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
 
 
+      /* --------------- */
     SAFE_DO:
     case OP_SAFE_DO:
       {
@@ -42494,6 +42506,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto BEGIN;
       }
 
+
+      /* --------------- */
     case OP_SAFE_DO_STEP:
       {
 	s7_Int step;
@@ -42520,6 +42534,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     SIMPLE_DO:
     case OP_SIMPLE_DO:
       {
@@ -42551,6 +42566,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SIMPLE_DO_END;
       }
 
+
+      /* --------------- */
     case OP_SIMPLE_DO_STEP:
       {
 	s7_pointer step, car_args;
@@ -42589,6 +42606,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
+      /* --------------- */
     SAFE_SIMPLE_DO:
     case OP_SAFE_SIMPLE_DO:
       {
@@ -42710,6 +42728,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     SIMPLE_DO_FOREVER:
     case OP_SIMPLE_DO_FOREVER:
       {
@@ -42738,6 +42757,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     SIMPLE_DO_P:
     case OP_SIMPLE_DO_P:
       {
@@ -42769,6 +42789,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SIMPLE_DO_END_P;
       }
 
+
+      /* --------------- */
     case OP_SIMPLE_DO_STEP_P:
       {
 	s7_pointer step, car_args;
@@ -42809,6 +42831,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     DOTIMES_P:
     case OP_DOTIMES_P:
       {
@@ -42840,6 +42863,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto DOTIMES_END_P;
       }
 
+
+      /* --------------- */
     case OP_DOTIMES_STEP_P:
       {
 	s7_pointer car_args;
@@ -42897,6 +42922,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
+      /* --------------- */
       /* DOX cases */
     DOX:
     case OP_DOX:
@@ -42925,6 +42951,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto DOX_END;
 	
 
+      /* --------------- */
       case OP_DOX_STEP:
 	{
 	  s7_pointer slot;
@@ -42958,6 +42985,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     #define DO_VAR_NEW_VALUE(P) cdr(P)
     #define DO_VAR_STEP_EXPR(P) car(P)
 
+
+      /* --------------- */
     case OP_DO_STEP:
       /* increment all vars, return to endtest 
        *   these are also updated in parallel at the end, so we gather all the incremented values first
@@ -43037,12 +43066,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
 
+      /* --------------- */
     case OP_DO_STEP2:
       DO_VAR_NEW_VALUE(car(sc->args)) = sc->value;            /* save current value */
       sc->args = cdr(sc->args);                               /* go to next step var */
       goto DO_STEP1;
 
 
+      /* --------------- */
     case OP_DO: 
       /* setup is very similar to let */
       /* sc->code is the stuff after "do" */
@@ -43072,6 +43103,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
 
+      /* --------------- */
     case OP_DO_UNCHECKED:
       if (is_null(car(sc->code)))                           /* (do () ...) -- (let ((i 0)) (do () ((= i 1)) (set! i 1))) */
 	{
@@ -43087,6 +43119,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = car(sc->code);                       /* the vars */
       
 
+      /* --------------- */
     DO_INIT:
     case OP_DO_INIT:
       sc->args = cons(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
@@ -43190,6 +43223,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     DO_END:
     case OP_DO_END:
       /* here vars have been init'd or incr'd
@@ -43219,6 +43253,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
 
+      /* --------------- */
     case OP_DO_END1:
       /* sc->value is the result of end-test evaluation */
       if (is_true(sc, sc->value))
@@ -43257,7 +43292,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
       /* -------------------------------- BEGIN -------------------------------- */
-
     BEGIN:
     case OP_BEGIN:
       /* sc->args is not used here */
@@ -43299,6 +43333,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
 
+
+      /* --------------- */
     case OP_BEGIN1:
       /* sc->code is a pair here! */
       {
@@ -43318,6 +43354,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = car(code);
       }
 
+
+      /* --------------- */
     EVAL:
     case OP_EVAL: 
       /* main part of evaluation 
@@ -44005,7 +44043,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* -------------------------------------------------------------------------------- */
 
 	    case OP_GOTO_C:
-	      if (!function_is_ok(code))
+	      /* call-with-exit repeat use internally is very rare, so let's just look it up 
+	       */
+	      ecdr(code) = finder(sc, car(code));
+	      if (!is_goto(ecdr(code)))
 		{
 		  set_optimize_data(code, OP_UNKNOWN_C);
 		  goto OPT_EVAL;
@@ -48267,6 +48308,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       
       
+      /* --------------- */
     case OP_EVAL_ARGS:
       if (dont_eval_args(sc->value))
 	{
@@ -48313,6 +48355,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       
       
+      /* --------------- */
     case OP_EVAL_ARGS5:
       /* sc->value is the last arg, sc->code is the previous
        */
@@ -48343,6 +48386,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_EVAL_ARGS2:
       /* sc->value is the last arg, [so if is_null(cdr(sc->code) and current is pair, push args2]
        */
@@ -48365,6 +48409,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto APPLY;
       }
       
+
+      /* --------------- */
       /* tricky cases here all involve values (i.e. multiple-values) */
       
     case OP_EVAL_ARGS_P_1:
@@ -48385,6 +48431,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_EVAL_ARGS_P_2:
       if (is_not_null(cdr(sc->args)))
 	{
@@ -48409,6 +48456,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_EVAL_ARGS_P_3:
       sc->w = sc->value;
       if (is_not_null(sc->args))
@@ -48431,6 +48479,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_EVAL_ARGS_P_4:
       if (is_not_null(sc->args))
 	{
@@ -48447,35 +48496,47 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_CAR_1:
       if (is_pair(sc->value))
 	sc->value = car(sc->value);
       else sc->value = g_car(sc, list_1(sc, sc->value));
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZS_1:
       car(sc->T2_1) = sc->value;
       car(sc->T2_2) = sc->args;
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_SZ_1:
       car(sc->T2_1) = sc->args;
       car(sc->T2_2) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZZ_1:
       push_stack(sc, OP_SAFE_C_ZZ_2, sc->value, sc->code);
       sc->code = caddr(sc->code);
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZZ_2:
       car(sc->T2_1) = sc->args;
       car(sc->T2_2) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZXX_1:
       car(sc->T3_3) = (is_symbol(cadddr(sc->code))) ? finder(sc, cadddr(sc->code)) : cadddr(sc->code);
       car(sc->T3_1) = sc->value;
@@ -48483,6 +48544,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_XZX_1:
       car(sc->T3_3) = (is_symbol(cadddr(sc->code))) ? finder(sc, cadddr(sc->code)) : cadddr(sc->code);
       car(sc->T3_2) = sc->value;
@@ -48490,6 +48553,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_XXZ_1:
       car(sc->T3_2) = (is_symbol(caddr(sc->code))) ? finder(sc, caddr(sc->code)) : caddr(sc->code);
       car(sc->T3_3) = sc->value;
@@ -48497,12 +48562,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZZX_1:
       push_op_stack(sc, sc->value);
       push_stack(sc, OP_SAFE_C_ZZX_2, sc->args, sc->code);
       sc->code = caddr(sc->code);
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZZX_2:
       car(sc->T3_1) = pop_op_stack(sc);
       car(sc->T3_2) = sc->value;
@@ -48510,12 +48579,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZXZ_1:
       push_op_stack(sc, sc->value);
       push_stack(sc, OP_SAFE_C_ZXZ_2, sc->args, sc->code);
       sc->code = cadddr(sc->code);
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZXZ_2:
       car(sc->T3_1) = pop_op_stack(sc);
       car(sc->T3_2) = sc->args;
@@ -48523,12 +48596,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_XZZ_1:
       push_op_stack(sc, sc->value);
       push_stack(sc, OP_SAFE_C_XZZ_2, sc->args, sc->code);
       sc->code = cadddr(sc->code);
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_SAFE_C_XZZ_2:
       car(sc->T3_1) = sc->args;
       car(sc->T3_2) = pop_op_stack(sc);
@@ -48536,17 +48613,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZZZ_1:
       push_stack(sc, OP_SAFE_C_ZZZ_2, sc->value, sc->code);
       sc->code = caddr(sc->code);
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZZZ_2:
       push_op_stack(sc, sc->value);
       push_stack(sc, OP_SAFE_C_ZZZ_3, sc->args, sc->code);
       sc->code = cadddr(sc->code);
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_SAFE_C_ZZZ_3:
       car(sc->T3_1) = sc->args;
       car(sc->T3_2) = pop_op_stack(sc);
@@ -48554,6 +48637,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_C_opSq_P_1:
       if (is_null(cdr(sc->args))) /* values not called */
 	{
@@ -48596,6 +48681,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto START;
       
+
+      /* --------------- */
     case OP_EVAL_ARGS3:
       /* sc->value is the next-to-last arg, and we know the last arg is not a list (so values can't mess us up!)
        */
@@ -48629,6 +48716,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_EVAL_ARGS4:
       /* sc->code is a pair, and either cdr(sc->code) is not null or car(sc->code) is a pair 
        */
@@ -48647,6 +48735,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_EVAL_ARGS1:
       {
         s7_pointer x;
@@ -49246,6 +49335,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* ---------------- end APPLY/EVAL ---------------- */
       
       
+      /* --------------- */
     case OP_LAMBDA_STAR_DEFAULT:
       /* sc->args is the current closure arg list position, sc->value is the default expression's value
        */
@@ -49254,17 +49344,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto LAMBDA_STAR_DEFAULT;
       
       
+      /* --------------- */
     case OP_QUOTE:
       check_quote(sc);
       
+      /* --------------- */
     case OP_QUOTE_UNCHECKED:
       sc->value = car(sc->code);
       goto START;
       
       
+      /* --------------- */
     case OP_DEFINE_STAR:
       check_define(sc);
       
+      /* --------------- */
     case OP_DEFINE_STAR_UNCHECKED:
       {
 	s7_pointer x;
@@ -49282,6 +49376,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_DEFINE_FUNCHECKED:
       {
 	s7_pointer val;
@@ -49309,6 +49404,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
       
+      /* --------------- */
     case OP_DEFINE_CONSTANT1:
       /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here */
       /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
@@ -49331,13 +49427,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_DEFINE_CONSTANT:
       push_stack(sc, OP_DEFINE_CONSTANT1, sc->NIL, sc->code);
       
       
+      /* --------------- */
     case OP_DEFINE:
       check_define(sc);
       
+      /* --------------- */
     case OP_DEFINE_UNCHECKED:
       if (!is_pair(car(sc->code)))
 	{
@@ -49370,6 +49469,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* fall through */
 	}
       
+
+      /* --------------- */
     DEFINE1:
     case OP_DEFINE1:
       /* sc->code is the symbol being defined, sc->value is its value
@@ -49475,6 +49576,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_DEFINE_WITH_ACCESSOR:
       if (sc->value == sc->ERROR) /* backwards compatibility... */
 	return(s7_error(sc, sc->ERROR,
@@ -49496,6 +49598,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cadr(sc->code);
       goto EVAL;
 
+
+      /* --------------- */
     case OP_SET_PAIR_C_P:
       push_stack_no_args(sc, OP_SET_PAIR_C_P_1, sc->code);
       sc->code = cadr(sc->code);
@@ -49504,6 +49608,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer obj, arg, value;
 
+	/* --------------- */
       case OP_SET_PAIR_C_P_1:
 	/* code: ((name (+ i 1)) ...) for example, so cadar is the c_c expr 
 	 *   and its args are cdr(cadar)
@@ -49512,29 +49617,35 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	value = sc->value;
 	arg = c_call(cadar(sc->code))(sc, cdadar(sc->code));
 	goto SET_PAIR_P_2;
-
-    case OP_SET_PAIR_C:
-      /* fprintf(stderr, "c code: %s\n", DISPLAY(sc->code)); */
-      value = cadr(sc->code);
-      if (is_symbol(value))
-	value = finder(sc, value);
-      arg = c_call(cadar(sc->code))(sc, cdadar(sc->code));
-      goto SET_PAIR_P_2;
-
-    case OP_SET_PAIR:
-      sc->value = cadr(sc->code);
-      if (is_symbol(sc->value))
-	sc->value = finder(sc, sc->value);
-      /* fall through */
-      
-    case OP_SET_PAIR_P_1:
-      /* car(sc->code) is a pair, caar(code) is the object with a setter, it has one (safe) argument, and one safe value to set
-       *   (set! (str i) #\a) in a function (both inner things need to be symbols (or the 2nd can be a quoted symbol) to get here)
-       *   the inner list is a proper list, with no embedded list at car.
-       */
+	
+	
+	/* --------------- */
+      case OP_SET_PAIR_C:
+	/* fprintf(stderr, "c code: %s\n", DISPLAY(sc->code)); */
+	value = cadr(sc->code);
+	if (is_symbol(value))
+	  value = finder(sc, value);
+	arg = c_call(cadar(sc->code))(sc, cdadar(sc->code));
+	goto SET_PAIR_P_2;
+	
+	
+	/* --------------- */
+      case OP_SET_PAIR:
+	sc->value = cadr(sc->code);
+	if (is_symbol(sc->value))
+	  sc->value = finder(sc, sc->value);
+	/* fall through */
+	
+	
+	/* --------------- */
+      case OP_SET_PAIR_P_1:
+	/* car(sc->code) is a pair, caar(code) is the object with a setter, it has one (safe) argument, and one safe value to set
+	 *   (set! (str i) #\a) in a function (both inner things need to be symbols (or the 2nd can be a quoted symbol) to get here)
+	 *   the inner list is a proper list, with no embedded list at car.
+	 */
 	/* fprintf(stderr, "p1: %s %s\n", DISPLAY(sc->code), DISPLAY(sc->value));  */
 	value = sc->value;
-
+	
 	arg = cadar(sc->code);
 	if (is_symbol(arg))
 	  arg = finder(sc, arg);
@@ -49695,6 +49806,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
 
+      /* --------------- */
       /* this is (set! (getter) val) where getter is a global c_function (a built-in pws) and val is not a pair
        */
     case OP_SET_PWS:
@@ -49729,6 +49841,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_INCREMENT_1:
       if (indirect_c_function_is_ok(sc, cadr(sc->code)))
 	{
@@ -49782,6 +49895,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_DECREMENT_1:
       if ((optimize_data(cadr(sc->code)) != OP_SAFE_C_SC) ||
 	  (indirect_c_function_is_ok(sc, cadr(sc->code))))
@@ -49815,6 +49929,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_SET_CDR:
       if ((optimize_data(cadr(sc->code)) != OP_SAFE_C_S) ||
 	  (indirect_c_function_is_ok(sc, cadr(sc->code))))
@@ -49841,6 +49956,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_SET_CONS:
       /* it's safe if hop_safe_c_ss, so if op_safe_c_ss we check? */
       if ((optimize_data(cadr(sc->code)) != OP_SAFE_C_SS) ||
@@ -49861,12 +49977,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
 
+      /* --------------- */
     case OP_SET_SYMBOL_SAFE_C:
       sc->value = c_call(cadr(sc->code))(sc, fcdr(sc->code));
       sc->code = car(sc->code);
       goto SET_SAFE;
 
       
+      /* --------------- */
     case OP_SET_SYMBOL_SAFE_opSSq_S:
       {
 	s7_pointer val, arg, inner, sym;
@@ -49884,6 +50002,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SET_SAFE;
       }
 
+
+      /* --------------- */
     case OP_SET_SYMBOL_SAFE_SS:
       {
 	s7_pointer sym;
@@ -49896,6 +50016,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_SET_SYMBOL_SAFE_S:
       {
 	s7_pointer sym;
@@ -49918,16 +50039,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
       
+      /* --------------- */
     case OP_SET_SYMBOL_C:
       sc->value = cadr(sc->code);
       sc->code = car(sc->code);
       goto SET_SAFE;
       
+
+      /* --------------- */
     case OP_SET_SYMBOL_Q:
       sc->value = cadr(cadr(sc->code));
       sc->code = car(sc->code);
       goto SET_SAFE;
       
+
+      /* --------------- */
     case OP_SET_SYMBOL_P:
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
@@ -49936,6 +50062,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   just set the current slot, and free the direct value.
        */
       
+
+      /* --------------- */
     case OP_SET_SYMBOL_S:
       {
 	s7_pointer settee;
@@ -49945,6 +50073,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	/* goto SET_SAFE; */
       }
       
+
+      /* --------------- */
     SET_SAFE:
     case OP_SET_SAFE:  
       sc->y = find_symbol(sc, sc->code);
@@ -49959,6 +50089,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       eval_error(sc, "set! ~A: unbound variable", sc->code);
 
 
+      /* --------------- */
     case OP_SET2:
       if (is_pair(sc->value))
 	{
@@ -50018,9 +50149,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* fall through */
       
       
+      /* --------------- */
     case OP_SET:                                                             /* entry for set! */
       check_set(sc);
       
+      /* --------------- */
     case OP_SET_UNCHECKED:
       if (is_pair(car(sc->code)))                                            /* has accessor */
 	{
@@ -50513,6 +50646,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	}
       
+
+      /* --------------- */
     case OP_SET_NORMAL:
       {
 	s7_pointer x;
@@ -50530,6 +50665,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = car(sc->code);
       }
       
+
+      /* --------------- */
     case OP_SET1:  
       /* if unbound variable hook here, we need the binding, not the current value */
 #if 0
@@ -50578,6 +50715,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       eval_error(sc, "set! ~A: unbound variable", sc->code);
 
 
+      /* --------------- */
     case OP_SET_WITH_ACCESSOR:
       if (sc->value == sc->ERROR) /* backwards compatibility... */
 	return(s7_error(sc, sc->ERROR,
@@ -50588,13 +50726,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
       /* -------------------------------- IF -------------------------------- */
-      
     case OP_IF:
       check_if(sc);
       push_stack_no_args(sc, OP_IF1, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
+
+      /* --------------- */
     case OP_IF1:
       if (is_true(sc, sc->value))
 	sc->code = car(sc->code);
@@ -50609,11 +50748,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_IF_P_P_P:
       push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_IF_O_P_P:
       push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = car(sc->code);
@@ -50621,6 +50763,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL; 
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_IF_B_P_P:
       {
 	s7_pointer code;
@@ -50633,18 +50777,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_IF_ANDP_P_P:
       push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = cdar(sc->code);
       goto AND_P;
       
       
+      /* --------------- */
     case OP_IF_ORP_P_P:
       push_stack_no_args(sc, OP_IF_PPP, cdr(sc->code));
       sc->code = cdar(sc->code);
       goto OR_P;
       
       
+      /* --------------- */
     case OP_IF_ORCEQ_P_P:
       {
 	s7_pointer sym, code;
@@ -50685,6 +50832,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_IF_PPP:
       if (is_true(sc, sc->value))
 	sc->code = car(sc->code);
@@ -50692,11 +50840,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;  /* all: syn */
       
       
+      /* --------------- */
     case OP_IF_P_P:
       push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = car(sc->code);
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_IF_O_P:
       push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = car(sc->code);
@@ -50705,6 +50856,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto OPT_EVAL;
       
       
+      /* --------------- */
     case OP_SAFE_IF_ANDX_P:
       {
 	s7_pointer p;
@@ -50794,6 +50946,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_SAFE_IF_ORX_P:
       {
 	s7_pointer p;
@@ -50880,6 +51033,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_IF_B_P:
       {
 	s7_pointer code;
@@ -50892,18 +51046,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_IF_ANDP_P:
       push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = cdar(sc->code);
       goto AND_P;
       
       
+      /* --------------- */
     case OP_IF_ORP_P:
       push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
       sc->code = cdar(sc->code);
       goto OR_P;
       
       
+      /* --------------- */
     case OP_IF_ORCEQ_P:
       {
 	s7_pointer code, sym;
@@ -50941,6 +51098,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_IF_PP:
       if (is_true(sc, sc->value))
 	goto EVAL;  /* almost never happens */
@@ -50950,11 +51108,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
       goto START;  
       
+
+      /* --------------- */
     case OP_IF_P_P_X:
       push_stack_no_args(sc, OP_IF_PPX, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_IF_PPX:
       if (is_true(sc, sc->value))
 	{
@@ -50967,11 +51129,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_IF_P_X_P:
       push_stack_no_args(sc, OP_IF_PXP, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;  /* all: opt */
       
+
+      /* --------------- */
     case OP_IF_PXP:
       if (is_true(sc, sc->value))
 	{
@@ -50984,11 +51149,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_IF_P_X:
       push_stack_no_args(sc, OP_IF_PX, cadr(sc->code));
       sc->code = car(sc->code);
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_IF_PX:
       if (is_true(sc, sc->value))
 	{
@@ -51000,11 +51168,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_IF_P_X_X:
       push_stack_no_args(sc, OP_IF_PXX, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_IF_PXX:
       if (is_true(sc, sc->value))
 	sc->value = car(sc->code);
@@ -51015,59 +51186,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
-    case OP_IF_X_P_P:
-      if (is_symbol(car(sc->code)))
-	{
-	  if (is_true(sc, finder(sc, car(sc->code))))
-	    sc->code = cadr(sc->code);
-	  else sc->code = caddr(sc->code);
-	}
-      else
-	{
-	  if (is_true(sc, car(sc->code)))
-	    sc->code = cadr(sc->code);
-	  else sc->code = caddr(sc->code);
-	}
+      /* --------------- */
+    case OP_IF_S_P_P:
+      if (is_true(sc, finder(sc, car(sc->code))))
+	sc->code = cadr(sc->code);
+      else sc->code = caddr(sc->code);
       goto EVAL; 
       
       
-    case OP_IF_X_P:
-      if (is_symbol(car(sc->code)))
+      /* --------------- */
+    case OP_IF_S_P:
+      if (is_true(sc, finder(sc, car(sc->code))))
 	{
-	  if (is_true(sc, finder(sc, car(sc->code))))
-	    {
-	      sc->code = cadr(sc->code);
-	      goto EVAL; 
-	    }
-	}
-      else
-	{
-	  if (is_true(sc, car(sc->code)))
-	    {
-	      sc->code = cadr(sc->code);
-	      goto EVAL; 
-	    }
+	  sc->code = cadr(sc->code);
+	  goto EVAL; 
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
       
       
-    case OP_IF_X_P_X:
-      if (is_symbol(car(sc->code)))
+      /* --------------- */
+    case OP_IF_S_P_X:
+      if (is_true(sc, finder(sc, car(sc->code))))
 	{
-	  if (is_true(sc, finder(sc, car(sc->code))))
-	    {
-	      sc->code = cadr(sc->code);
-	      goto EVAL; 
-	    }
-	}
-      else
-	{
-	  if (is_true(sc, car(sc->code)))
-	    {
-	      sc->code = cadr(sc->code);
-	      goto EVAL; 
-	    }
+	  sc->code = cadr(sc->code);
+	  goto EVAL; 
 	}
       if (is_symbol(caddr(sc->code)))
 	sc->value = finder(sc, caddr(sc->code));
@@ -51075,73 +51218,44 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
-    case OP_IF_X_X_P:
-      if (is_symbol(car(sc->code)))
+      /* --------------- */
+    case OP_IF_S_X_P:
+      if (is_true(sc, finder(sc, car(sc->code))))
 	{
-	  if (is_true(sc, finder(sc, car(sc->code))))
-	    {
-	      sc->value = cadr(sc->code);
-	      if (is_symbol(sc->value))
-		sc->value = finder(sc, sc->value);
-	      goto START;
-	    }
-	}
-      else
-	{
-	  if (is_true(sc, car(sc->code)))
-	    {
-	      sc->value = cadr(sc->code);
-	      if (is_symbol(sc->value))
-		sc->value = finder(sc, sc->value);
-	      goto START;
-	    }
+	  sc->value = cadr(sc->code);
+	  if (is_symbol(sc->value))
+	    sc->value = finder(sc, sc->value);
+	  goto START;
 	}
       sc->code = caddr(sc->code);
       goto EVAL; 
       
       
-    case OP_IF_X_X:
-      sc->value = sc->UNSPECIFIED;
-      if (is_symbol(car(sc->code)))
+      /* --------------- */
+    case OP_IF_S_X:
+      if (is_true(sc, finder(sc, car(sc->code))))
 	{
-	  if (is_true(sc, finder(sc, car(sc->code))))
-	    {
-	      sc->value = cadr(sc->code);
-	      if (is_symbol(sc->value))
-		sc->value = finder(sc, sc->value);
-	    }
+	  sc->value = cadr(sc->code);
+	  if (is_symbol(sc->value))
+	    sc->value = finder(sc, sc->value);
 	}
-      else
-	{
-	  if (is_true(sc, car(sc->code)))
-	    {
-	      sc->value = cadr(sc->code);
-	      if (is_symbol(sc->value))
-		sc->value = finder(sc, sc->value);
-	    }
-	}
+      else sc->value = sc->UNSPECIFIED;
       /* this this amost always going to OP_EVAL_ARGS4 (once in a while it's OP_MAP_SIMPLE) */
       goto START;
       
       
-    case OP_IF_X_X_X:
-      sc->value = sc->UNSPECIFIED;
-      if (is_symbol(car(sc->code)))
-	{
-	  if (is_true(sc, finder(sc, car(sc->code))))
-	    sc->value = cadr(sc->code);
-	  else sc->value = caddr(sc->code);
-	}
-      else
-	{
-	  if (is_true(sc, car(sc->code)))
-	    sc->value = cadr(sc->code);
-	  else sc->value = caddr(sc->code);
-	}
+      /* --------------- */
+    case OP_IF_S_X_X:
+      if (is_true(sc, finder(sc, car(sc->code))))
+	sc->value = cadr(sc->code);
+      else sc->value = caddr(sc->code);
+
       if (is_symbol(sc->value))
 	sc->value = SYMBOL_TO_VALUE(sc, sc->value);
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_IF2:
       push_stack_no_args(sc, OP_SAFE_IF2_1, cdr(sc->code));
       sc->code = car(sc->code);
@@ -51149,6 +51263,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL; 
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_SAFE_IF2_1:
       if (is_true(sc, sc->value))
 	sc->code = car(sc->code);
@@ -51158,11 +51274,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto OPT_EVAL;
       
       
+      /* --------------- */
     case OP_SAFE_IF1:
       push_stack_no_args(sc, OP_SAFE_IF1_1, cadr(sc->code));
       sc->code = car(sc->code); 
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_SAFE_IF1_1:
       if (is_true(sc, sc->value))
 	goto EVAL; 
@@ -51170,11 +51289,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_IF3:
       push_stack_no_args(sc, OP_SAFE_IF3_1, cadr(sc->code));
       sc->code = car(sc->code); 
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_SAFE_IF3_1:
       if (is_true(sc, sc->value))
 	goto OPT_EVAL;
@@ -51182,6 +51304,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_IF_CC_X_P:
       {
 	s7_pointer code;
@@ -51198,6 +51321,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_SAFE_IF_CC_P:
       {
 	s7_pointer code;
@@ -51215,6 +51339,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_SAFE_IF_CC_P_P:
       {
 	s7_pointer code;
@@ -51226,6 +51351,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_SAFE_IF_CS_X_P:
       {
 	s7_pointer code;
@@ -51242,6 +51368,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL;  /* all: syn */
       }
       
+
+      /* --------------- */
     case OP_SAFE_IF_CSS_X_P:
       {
 	s7_pointer code;
@@ -51259,6 +51387,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL; 
       }
       
+
+      /* --------------- */
     case OP_SAFE_IF_CSC_X_P:
       {
 	s7_pointer code;
@@ -51276,6 +51406,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL; 
       }
       
+
+      /* --------------- */
     case OP_SAFE_IF_CSC_X_P_A:
       {
 	s7_pointer code;
@@ -51290,6 +51422,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_SAFE_IF_CS_P_X:
       {
 	s7_pointer code;
@@ -51307,6 +51440,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_SAFE_IF_IS_PAIR_P_X:
       if (is_pair(finder(sc, fcdr(sc->code))))
 	{
@@ -51319,6 +51453,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_IF_IS_SYMBOL_P_X:
       if (is_symbol(finder(sc, cadar(sc->code))))
 	{
@@ -51331,6 +51466,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_IF_CS_P_P:
       car(sc->T1_1) = finder(sc, fcdr(sc->code));
       if (is_true(sc, c_call(car(sc->code))(sc, sc->T1_1)))
@@ -51339,18 +51475,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_SAFE_IF_IS_PAIR_P_P:
       if (is_pair(finder(sc, fcdr(sc->code))))
 	sc->code = cadr(sc->code);
       else sc->code = caddr(sc->code);
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_SAFE_IF_IS_SYMBOL_P_P:
       if (is_symbol(finder(sc, fcdr(sc->code))))
 	sc->code = cadr(sc->code);
       else sc->code = caddr(sc->code);
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_SAFE_IF_IS_EOF_P_P:
       {
 	s7_pointer code;
@@ -51366,6 +51507,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START_WITHOUT_POP_STACK;
       }
       
+
+      /* --------------- */
     case OP_SAFE_IF_CS_Q_P:
       car(sc->T1_1) = finder(sc, fcdr(sc->code));
       if (is_true(sc, c_call(car(sc->code))(sc, sc->T1_1)))
@@ -51377,6 +51520,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_SAFE_IF_CS_P:
       car(sc->T1_1) = finder(sc, fcdr(sc->code));
       if (is_true(sc, c_call(car(sc->code))(sc, sc->T1_1)))
@@ -51391,6 +51535,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_IF_CSQ_P:
       car(sc->T2_1) = finder(sc, cadr(car(sc->code)));
       car(sc->T2_2) = fcdr(sc->code);
@@ -51403,6 +51548,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_IF_CSQ_P_P:
       car(sc->T2_1) = finder(sc, cadr(car(sc->code)));
       car(sc->T2_2) = fcdr(sc->code);
@@ -51412,6 +51558,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_SAFE_IF_CSS_P:
       car(sc->T2_1) = finder(sc, cadr(car(sc->code)));
       car(sc->T2_2) = finder(sc, fcdr(sc->code));
@@ -51427,6 +51574,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_IF_CSS_P_P:
       car(sc->T2_1) = finder(sc, cadr(car(sc->code)));
       car(sc->T2_2) = finder(sc, fcdr(sc->code));
@@ -51436,6 +51584,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_SAFE_IF_CSC_P:
       car(sc->T2_1) = finder(sc, cadr(car(sc->code)));
       car(sc->T2_2) = fcdr(sc->code);
@@ -51447,6 +51596,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->UNSPECIFIED;
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_IF_CSC_P_P:
       car(sc->T2_1) = finder(sc, cadr(car(sc->code)));
       car(sc->T2_2) = fcdr(sc->code);
@@ -51456,6 +51607,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_SAFE_IF_IS_PAIR_P:
       if (is_pair(finder(sc, fcdr(sc->code))))
 	{
@@ -51468,6 +51620,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
       goto START;
       
+
+      /* --------------- */
     case OP_SAFE_IF_IS_SYMBOL_P:
       if (is_symbol(finder(sc, fcdr(sc->code))))
 	{
@@ -51478,6 +51632,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_IF_C_SS_P:
       {
 	s7_pointer args, val1;
@@ -51496,12 +51651,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_SAFE_C_P_1:
       car(sc->T1_1) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T1_1);
       goto START;
       
       
+      /* --------------- */
     case OP_SAFE_C_PP_1:
       /* fprintf(stderr, "c_pp_1: args: %s, code: %s\n", DISPLAY(sc->args), DISPLAY(sc->code)); */
 
@@ -51511,6 +51668,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto OPT_EVAL;
       goto EVAL; 
       
+
+      /* --------------- */
     case OP_SAFE_C_PP_2:
       {
 	s7_pointer p;
@@ -51555,6 +51714,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_C_P_1:
       if (is_null(sc->args))
 	sc->value = c_call(sc->code)(sc, list_1(sc, sc->value));
@@ -51572,6 +51732,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
       
       
+      /* --------------- */
     case OP_NAMED_LET_NO_VARS:
       NEW_FRAME(sc, sc->envir, sc->envir); 
       sc->args = sc->NIL;                  /* the let args */
@@ -51582,6 +51743,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
       
       
+      /* --------------- */
     case OP_LET_C:
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        */
@@ -51590,6 +51752,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
       
       
+      /* --------------- */
     case OP_LET_C_P:
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        *   body is one statement
@@ -51599,6 +51762,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_LET_C_D:
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        *   body is one optimized statement
@@ -51623,6 +51787,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       
       
+      /* --------------- */
     case OP_LET_S:
       /* one var, init is symbol, incoming sc->code is '(((var sym))...)
        */
@@ -51635,6 +51800,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_LET_S_P:
       /* one var, init is symbol, incoming sc->code is '(((var sym))...)
        */
@@ -51648,6 +51814,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_LET_Q:
       /* one var, init is quoted, incoming sc->code is '(((var 'val))...)
        */
@@ -51659,6 +51826,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto BEGIN;
       }
       
+      /* --------------- */
     case OP_LET_R:
       /* one var, init is safe (op sym), incoming sc->code is '(((var (op sym)))...)
        */
@@ -51672,6 +51840,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto BEGIN;
       }
       
+
+      /* --------------- */
     case OP_LET_R_P:
       {
 	s7_pointer binding;
@@ -51683,6 +51853,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL; 
       }
       
+
+      /* --------------- */
     case OP_LET_CAR_P:
       {
 	s7_pointer val, code;
@@ -51721,6 +51893,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START_WITHOUT_POP_STACK;
       }
       
+
+      /* --------------- */
     case OP_LET_READ_CHAR_P:
       {
 	s7_pointer port, code, fc, c;
@@ -51760,6 +51934,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_LET_O:
       push_stack(sc, OP_LET_O1, caaar(sc->code), cdr(sc->code));
       sc->code = fcdr(sc->code);
@@ -51767,11 +51942,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL; 
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_LET_O1:
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, sc->args, sc->value);
       goto BEGIN;
       
       
+      /* --------------- */
     case OP_LET_O_P:
       push_stack(sc, OP_LET_O2, caaar(sc->code), cadr(sc->code));
       sc->code = fcdr(sc->code);
@@ -51779,11 +51957,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL; 
       goto OPT_EVAL;
       
+
+      /* --------------- */
     case OP_LET_O2:
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, sc->args, sc->value);
       goto EVAL; 
       
       
+      /* --------------- */
     case OP_LET_OX_P:
       {
 	s7_pointer val, args, code, sc_code;
@@ -51835,6 +52016,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_LET_UNKNOWN_S_P:
       {
 	s7_pointer val, ind, binding, expr;
@@ -51886,6 +52068,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto LET_UNCHECKED;
       }
       
+
+      /* --------------- */
     case OP_LET_ALL_C:
       {
 	s7_pointer p;
@@ -51897,6 +52081,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_LET_ALL_Q:
       {
 	s7_pointer p;
@@ -51908,6 +52093,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_LET_ALL_S:
       /* n vars, all inits are symbols.  We need to GC-protect the new frame-list as it is being
        *    created without tying the new frame into sc->envir until the end.
@@ -51924,6 +52110,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto BEGIN;
       }
       
+
+      /* --------------- */
     case OP_LET_ALL_R:
       {
 	s7_pointer p, frame;
@@ -51942,6 +52130,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto BEGIN;
       }
       
+
+      /* --------------- */
     case OP_LET_ALL_G:
       {
 	s7_pointer p, frame;
@@ -51977,12 +52167,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_NAMED_LET:
       sc->args = sc->NIL;
       sc->value = sc->code;
       sc->code = cadr(sc->code);
       goto LET1;
       
+
+      /* --------------- */
     LET_UNCHECKED:
     case OP_LET_UNCHECKED:
       /* not named, but has vars */
@@ -51998,6 +52191,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_LET:
       /* sc->code is everything after the let: (let ((a 1)) a) so sc->code is (((a 1)) a) */
       /*   car can be either a list or a symbol ("named let") */
@@ -52032,6 +52226,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     LET1:
     case OP_LET1:       /* let -- calculate parameters */
       /* sc->args = cons(sc, sc->value, sc->args); */
@@ -52157,11 +52352,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
-      /* -------------------------------- LET* -------------------------------- */
-      
+      /* -------------------------------- LET* -------------------------------- */      
+
     case OP_LET_STAR:
       check_let_star(sc);
       
+      /* --------------- */
     case OP_LET_STAR_UNCHECKED:
       if (is_null(car(sc->code)))
 	{
@@ -52176,6 +52372,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
+      /* --------------- */
     LET_STAR1:
     case OP_LET_STAR1:    /* let* -- calculate parameters */
       /* we can't skip (or reuse) this new frame -- we have to imitate a nested let, otherwise
@@ -52216,6 +52413,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LETREC:
       check_letrec(sc);
       
+      /* --------------- */
     case OP_LETREC_UNCHECKED:
       /* get all local vars and set to #<undefined>
        * get parallel list of values
@@ -52244,6 +52442,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cdr(sc->code);
       goto BEGIN;
       
+
+      /* --------------- */
     case OP_LETREC1:
       slot_pending_value(sc->args) = sc->value;
       sc->args = next_slot(sc->args);
@@ -52272,12 +52472,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_COND:
       check_cond(sc);
 
+      /* --------------- */
     case OP_COND_UNCHECKED:
       push_stack(sc, OP_COND1, sc->NIL, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
       
       
+      /* --------------- */
     case OP_COND1:
       if (is_true(sc, sc->value))     /* got a hit (is_true -> not false, so else is true even though it has no value) */
 	{
@@ -52316,12 +52518,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
+      /* --------------- */
     case OP_COND_SIMPLE:
       push_stack_no_args(sc, OP_COND1_SIMPLE, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
       
       
+      /* --------------- */
     COND1_SIMPLE:
     case OP_COND1_SIMPLE:
       if (is_true(sc, sc->value))
@@ -52354,6 +52558,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto COND1_SIMPLE;
 
 
+      /* --------------- */
     case OP_COND_SIMPLER:
       {
 	s7_pointer p, code;
@@ -52450,11 +52655,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto AND1;
 
+
+      /* --------------- */
     case OP_AND1:
       if ((is_false(sc, sc->value)) ||
 	  (is_null(sc->code)))
 	goto START;
 
+
+      /* --------------- */
     AND1:
     case OP_AND_UNCHECKED:
       {
@@ -52481,6 +52690,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     AND_P1:
     case OP_AND_P1:
       if ((is_false(sc, sc->value)) ||
@@ -52489,6 +52699,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* fall through */
 
 
+      /* --------------- */
     AND_P:
     case OP_AND_P:
       {
@@ -52582,6 +52793,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_SAFE_AND_S:
       if (sequence_is_safe_for_opteval(sc, sc->code))
 	{
@@ -52604,6 +52816,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_SAFER_AND_X:
       {
 	s7_pointer p;
@@ -52691,11 +52904,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto OR1;
       
+
+      /* --------------- */
     case OP_OR1:
       if ((is_true(sc, sc->value)) ||
 	  (is_null(sc->code)))
 	goto START;
 
+
+      /* --------------- */
     OR1:
     case OP_OR_UNCHECKED:
       if (!is_pair(car(sc->code)))
@@ -52718,6 +52935,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
 
 
+      /* --------------- */
     OR_P1:
     case OP_OR_P1:
       if ((is_true(sc, sc->value)) ||
@@ -52725,6 +52943,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START;
       /* fall through */
 
+
+      /* --------------- */
     OR_P:
     case OP_OR_P:
       {
@@ -52811,6 +53031,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_SAFE_OR_S:
       if (!sequence_is_safe_for_opteval(sc, sc->code))
 	{
@@ -52819,6 +53040,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       /* fall through */
       
+
+      /* --------------- */
     case OP_SAFER_OR_S:
       {
 	s7_pointer code;
@@ -52833,6 +53056,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
 
+      /* --------------- */
     case OP_SAFER_OR_CEQ:
     case OP_SAFER_OR_C:
       {
@@ -52847,6 +53071,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
       
+      /* --------------- */
     case OP_SAFER_OR_X:
       {
 	s7_pointer p;
@@ -52979,6 +53204,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
 
 
+      /* --------------- */
     case OP_EXPANSION:
       /* after the expander has finished, we need to add some annotations
        */
@@ -52986,6 +53212,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
+      /* --------------- */
     case OP_DEFMACRO:
     case OP_DEFMACRO_STAR:
       /* defmacro(*) could be defined in terms of define-macro(*), but I guess this gives us better error messages */
@@ -53031,6 +53258,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto MACRO;
 
 
+      /* --------------- */
     case OP_DEFMACRO_WITH_ACCESSOR:
       if (sc->value == sc->ERROR) /* backwards compatibility... */
 	return(s7_error(sc, sc->ERROR,
@@ -53039,6 +53267,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto DEFMACRO2;
 
 
+      /* --------------- */
     case OP_DEFINE_MACRO_WITH_ACCESSOR:
       if (sc->value == sc->ERROR) /* backwards compatibility... */
 	return(s7_error(sc, sc->ERROR,
@@ -53047,6 +53276,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto DEFINE_MACRO2;
 
 
+      /* --------------- */
     case OP_DEFINE_BACRO:
     case OP_DEFINE_BACRO_STAR:
     case OP_DEFINE_EXPANSION:
@@ -53121,6 +53351,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_LAMBDA: 
       /* code is a lambda form minus the "lambda": ((a b) (+ a b)) */
       /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
@@ -53146,11 +53377,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  set_syntax_op(code, sc->LAMBDA_UNCHECKED);
       }
 
+      /* --------------- */
     case OP_LAMBDA_UNCHECKED:
       MAKE_CLOSURE(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir);
       goto START;
 
 
+      /* --------------- */
     case OP_LAMBDA_STAR:
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
@@ -53170,6 +53403,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  set_syntax_op(sc->code, sc->LAMBDA_STAR_UNCHECKED);
 	}
 
+      /* --------------- */
     case OP_LAMBDA_STAR_UNCHECKED:
       sc->value = make_closure(sc, car(sc->code), cdr(sc->code), T_CLOSURE_STAR);
       goto START;
@@ -53186,10 +53420,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto CASE1;
 
 
+      /* --------------- */
     case OP_CASE:      /* case, car(sc->code) is the selector */
       check_case(sc);
 
 
+      /* --------------- */
     case OP_CASE_UNCHECKED:
       {
 	s7_pointer carc;
@@ -53211,6 +53447,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
 
+      /* --------------- */
     CASE1:
     case OP_CASE1: 
       {
@@ -53263,6 +53500,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_CASE_SIMPLE: 
       /* assume symbol as selector, all keys are simple, and no =>
        */
@@ -53291,6 +53529,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_CASE_INT: 
       /* assume symbol as selector, all keys are single and int, and no =>
        * ideally we'd just jump to the code we want indexed via the selector,
@@ -53335,6 +53574,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_CASE_SIMPLER: 
       /* assume symbol as selector, all keys are simple, and no => and no else
        */
@@ -53361,6 +53601,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_CASE_SIMPLEST: 
       /* assume symbol as selector, all keys are simple and singletons, and no => and no else
        */
@@ -53379,6 +53620,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
+      /* --------------- */
     case OP_ERROR_QUIT: 
     case OP_EVAL_DONE:
       /* this is the "time to quit" operator */
@@ -53386,22 +53628,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       break;
       
 
+      /* --------------- */
     case OP_BARRIER:
     case OP_CATCH:
     case OP_CATCH_1:
       goto START;
 
 
+      /* --------------- */
     case OP_CATCH_DONE:
       sc->value = sc->code;
       goto START;
 
 
+      /* --------------- */
     case OP_DEACTIVATE_GOTO:
       call_exit_active(sc->args) = false;      /* as we leave the call-with-exit body, deactivate the exiter */
       goto START;
 
 
+      /* --------------- */
     case OP_ERROR_HOOK_QUIT:
       sc->error_hook = sc->code;  /* restore old value */
 
@@ -53420,11 +53666,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       return(sc->value); /* not executed I hope */
 
       
+      /* --------------- */
     case OP_GET_OUTPUT_STRING:          /* from call-with-output-string and with-output-to-string -- return the string */
       sc->value = s7_make_string(sc, s7_get_output_string(sc, sc->code));
       goto START;
 
 
+      /* --------------- */
     case OP_UNWIND_OUTPUT:
       {
 	bool is_file;
@@ -53447,6 +53695,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+      /* --------------- */
     case OP_UNWIND_INPUT:
       if ((is_input_port(sc->code)) &&
 	  (!port_is_closed(sc->code)))
@@ -53461,6 +53710,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
+      /* --------------- */
     case OP_DYNAMIC_WIND:
       if (dynamic_wind_state(sc->code) == DWIND_INIT)
 	{
@@ -53526,10 +53776,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
 
+      /* --------------- */
     case OP_WITH_ENV:
       check_with_env(sc);
 
 
+      /* --------------- */
     case OP_WITH_ENV_UNCHECKED:
       sc->value = car(sc->code);
       if (!is_pair(sc->value))
@@ -53557,6 +53809,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       
+      /* --------------- */
     case OP_WITH_ENV1:
       if (!is_environment(sc->value))                    /* (with-environment . "hi") */
 	eval_error(sc, "with-environment takes an environment argument: ~A", sc->value);
@@ -53575,6 +53828,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
 
 
+      /* --------------- */
     case OP_WITH_BAFFLE:
       NEW_FRAME(sc, sc->envir, sc->envir);
       add_slot(sc, sc->BAFFLE, make_baffle(sc));
@@ -53823,6 +54077,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
       
+      /* --------------- */
     case OP_READ_DOT:
       if (token(sc) != TOKEN_RIGHT_PAREN)
 	{
@@ -53847,6 +54102,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_READ_QUOTE:
       /* can't check for sc->value = sc->NIL here because we want ''() to be different from '() */
       sc->value = list_2(sc, sc->QUOTE, sc->value);
@@ -53855,6 +54111,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;      
       
       
+      /* --------------- */
     case OP_READ_QUASIQUOTE:
       /* this was pushed when the backquote was seen, then eventually we popped back to it */
       sc->value = g_quasiquote_1(sc, sc->value);
@@ -53866,6 +54123,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_READ_VECTOR:
       if (!is_proper_list(sc, sc->value))       /* #(1 . 2) */
 	return(read_error(sc, "vector constant data is not a proper list"));
@@ -53876,6 +54134,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
       
+      /* --------------- */
     case OP_READ_QUASIQUOTE_VECTOR:
       /* this works only if the quasiquoted list elements can be evaluated in the read-time environment.
        *
@@ -53905,6 +54164,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL; 
 
       
+      /* --------------- */
     case OP_READ_UNQUOTE:
       /* here if sc->value is a constant, the unquote is pointless */
       if ((is_pair(sc->value)) ||
@@ -53913,11 +54173,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* --------------- */
     case OP_READ_APPLY_VALUES:
       sc->value = list_2(sc, sc->UNQUOTE, list_2(sc, sc->QQ_Apply_Values, sc->value));
       goto START;
       
       
+      /* --------------- */
     default:
       fprintf(stderr, "unknown operator: %d, %s\n", 
 	      (int)(sc->op), 
@@ -58841,12 +59103,12 @@ s7_scheme *s7_init(void)
   sc->IF_P_X_P =              assign_internal_syntax(sc, "if",      OP_IF_P_X_P);
   sc->IF_P_X =                assign_internal_syntax(sc, "if",      OP_IF_P_X);
   sc->IF_P_X_X =              assign_internal_syntax(sc, "if",      OP_IF_P_X_X);
-  sc->IF_X_P_P =              assign_internal_syntax(sc, "if",      OP_IF_X_P_P);
-  sc->IF_X_P =                assign_internal_syntax(sc, "if",      OP_IF_X_P);
-  sc->IF_X_P_X =              assign_internal_syntax(sc, "if",      OP_IF_X_P_X);
-  sc->IF_X_X_P =              assign_internal_syntax(sc, "if",      OP_IF_X_X_P);
-  sc->IF_X_X =                assign_internal_syntax(sc, "if",      OP_IF_X_X);
-  sc->IF_X_X_X =              assign_internal_syntax(sc, "if",      OP_IF_X_X_X);
+  sc->IF_S_P_P =              assign_internal_syntax(sc, "if",      OP_IF_S_P_P);
+  sc->IF_S_P =                assign_internal_syntax(sc, "if",      OP_IF_S_P);
+  sc->IF_S_P_X =              assign_internal_syntax(sc, "if",      OP_IF_S_P_X);
+  sc->IF_S_X_P =              assign_internal_syntax(sc, "if",      OP_IF_S_X_P);
+  sc->IF_S_X =                assign_internal_syntax(sc, "if",      OP_IF_S_X);
+  sc->IF_S_X_X =              assign_internal_syntax(sc, "if",      OP_IF_S_X_X);
 
   sc->COND_SIMPLER =          assign_internal_syntax(sc, "cond",    OP_COND_SIMPLER);  
   sc->SAFER_AND_X =           assign_internal_syntax(sc, "and",     OP_SAFER_AND_X);  
@@ -59782,12 +60044,12 @@ s7_scheme *s7_init(void)
  *   (zero? (floor ...)) for example, (zero? (modulo s i)) is slightly trickier
  *   (zero? (imag-part...) is real arg but pointless!
  *
- * bench    42736                             8192
- * lint     13424 -> 1231 1286 1326 1320 1270 1180
- *                                       9811 8060
+ * bench    42736                             8183
+ * lint     13424 -> 1231 1286 1326 1320 1270 1170
+ *                                       9811 8053
  * index    44300 -> 4988 4235 4725 3935 3477 3101
  * s7test            1721      1456 1430 1375 1305
- * t455                    265  256  218   86   70
- * t502                          90   72   42   40
+ * t455                    265  256  218   86   60
+ * t502                          90   72   42   39
  */
 

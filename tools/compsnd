@@ -104,6 +104,20 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 --enable-snd-debug clang                                ----  '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --enable-snd-debug CC=/home/bil/test/llvm-3.1.src/build/Release+Asserts/bin/clang CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
+make
+./snd --version
+./snd -noinit --features "'clm"
+
+make allclean
+rm -f snd
+rm -f config.cache
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-no-gui                                         ----  '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui

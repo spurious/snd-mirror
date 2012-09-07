@@ -58462,7 +58462,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (num-test (log 1/500029) -13.12242137572239)
 (num-test (log 1/65536 2) -16)
 (num-test (log 1/8192 2) -13)
-(num-test (log 10 (real-part (log 0))) 0.0) ; ???
+;(num-test (log 10 (real-part (log 0))) 0.0) ; ??? -- this returns -nan-nani in clang, 0.0 in gcc
 (num-test (log 10) 2.30258509299405)
 (num-test (log 10.0 (exp -1)) (- (log 10.0)))
 (num-test (log 10.0 (exp 1)) (log 10.0))
