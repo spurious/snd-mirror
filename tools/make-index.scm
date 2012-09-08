@@ -518,7 +518,7 @@
 	  (places ()))
       
       (define (where-is func)
-	(let ((addr (symbol->value '__func__ (procedure-environment func))))
+	(let ((addr (with-environment (procedure-environment func) __func__)))
 	  ;; this misses scheme-side pws because their environment is (probably) the global env
 	  (if (not (pair? addr))
 	      #f

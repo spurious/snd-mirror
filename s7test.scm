@@ -8745,7 +8745,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (let ((h (make-hook)))
   (test (procedure? h) #t)
   (test (procedure-arity h) '(0 0 #f))
-  (test (procedure-name h) "#<closure>")
   (test (procedure-documentation h) "")
   (test (hook-functions h) ())
   (test (h) #<unspecified>)
@@ -23902,7 +23901,7 @@ func
 
 (test (let ()
 	(define (hi a)
-	  (let ((func (symbol->value '__func__ (procedure-environment hi))))
+	  (let ((func __func__))
 	    (list (if (symbol? func) func (car func))
 		  a)))
 	(hi 1))
@@ -23927,8 +23926,7 @@ func
 
 (let ()
   (define (where-is func)
-    (let* ((env (procedure-environment func))
-	   (addr (symbol->value '__func__ env)))
+    (let ((addr (with-environment (procedure-environment func) __func__)))
       (if (not (pair? addr))
 	  ""
 	  (list (format #f "~A[~D]" (cadr addr) (caddr addr))

@@ -3854,27 +3854,7 @@ add-2
 </pre>
 
 
-
 <blockquote>
-
-<div class="indented">
-
-<p>We can use procedure-environment and __func__ to 
-write a function that tells us where the source is for a function:
-</p>
-
-<pre class="indented">
-(define (where-is func)
-  (let ((addr (symbol-&gt;value <em class=red>'__func__</em> (<em class=red>procedure-environment</em> func))))
-    (if (not (pair? addr))
-	"not found"
-	(format #f "~A is at line ~D of ~A" (car addr) (caddr addr) (cadr addr)))))
-
-&gt; (where-is enveloped-mix)
-"enveloped-mix is at line 68 of extensions.scm"
-</pre>
-</div>
-
 
 <div class="indented">
 
@@ -4061,7 +4041,7 @@ following code in ex.scm:
 <pre>
 (define-macro (break)
   `(let ((break-env (<em class=red>current-environment</em>))
-	 (prompt (format #f "~%~A &gt; " (if (defined? '__func__) __func__ "break"))))
+	 (prompt (format #f "~%~A &gt; " (if (defined? __func__) __func__ "break"))))
      (call-with-exit
       (lambda (return)
 	(do () ()                       ; our debugger's own REPL
