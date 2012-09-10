@@ -2357,9 +2357,9 @@ fib
      (if (&lt; n 2) n (+ (memo-fib (- n 1)) (memo-fib (- n 2)))))
 memo-fib
 &gt; (time (fib 34))         ; un-memoized time
-1.387919
+1.259
 &gt; (time (memo-fib 34))    ; memoized time
-3.200000000092e-05
+3.200e-05
 
 &gt; (environment-&gt;list (outer-environment (procedure-environment memo-fib)))
 (({memo}-18 . #&lt;hash-table 

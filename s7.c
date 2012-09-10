@@ -418,7 +418,7 @@ enum {OP_NO_OP,
       OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP, OP_SIMPLE_DO_FOREVER, OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_S,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF3_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, 
       OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_CS_Q_P,
-      OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_P_A,
+      OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_O_A,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P, OP_SAFE_IF_C_C_P,
       OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_X, OP_SAFE_IF_IS_SYMBOL_P_P, 
@@ -499,7 +499,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "simple_do_p", "simple_do_step_p", "safe_simple_do", "dox", "dox_step", "simple_do_forever", "dotimes_p", "dotimes_step_p", "safe_dotimes_c_s",
    "safe_if1_1", "safe_if2_1", "safe_if3_1", "safe_if_cc_x_p", "safe_if_cc_p_p", 
    "safe_if_cs_p_p", "safe_if_cs_x_p", "safe_if_cc_p", "safe_if_cs_p", "safe_if_cs_p_x", "safe_if_cs_q_p",
-   "safe_if_css_x_p", "safe_if_csc_x_p", "safe_if_csc_x_p_a",
+   "safe_if_css_x_p", "safe_if_csc_x_p", "safe_if_csc_x_o_a",
    "safe_if_csq_p", "safe_if_csq_p_p", "safe_if_css_p", "safe_if_css_p_p", "safe_if_csc_p", "safe_if_csc_p_p", 
    "safe_if_is_pair_p", "safe_if_is_pair_p_x", "safe_if_is_pair_p_p", "safe_if_c_ss_p", "safe_if_c_c_p",
    "safe_if_is_symbol_p", "safe_if_is_symbol_p_x", "safe_if_is_symbol_p_p", 
@@ -572,7 +572,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP", "OP_SIMPLE_DO_FOREVER", "OP_DOTIMES_P", "OP_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_C_S",
   "OP_SAFE_IF1_1", "OP_SAFE_IF2_1", "OP_SAFE_IF3_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", 
   "OP_SAFE_IF_CS_P_P", "OP_SAFE_IF_CS_X_P", "OP_SAFE_IF_CC_P", "OP_SAFE_IF_CS_P", "OP_SAFE_IF_CS_P_X", "OP_SAFE_IF_CS_Q_P",
-  "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_P_A",
+  "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_O_A",
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", "OP_SAFE_IF_C_C_P",
   "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_X", "OP_SAFE_IF_IS_SYMBOL_P_P", 
@@ -1254,7 +1254,7 @@ struct s7_scheme {
   s7_pointer SAFE_OR_S, SAFER_OR_S, SAFER_OR_C, SAFER_OR_CEQ, SAFE_AND_S, SAFE_CASE_S, SAFER_OR_X, SAFER_AND_X, COND_SIMPLER;
   s7_pointer SAFE_IF1, SAFE_IF2, SAFE_IF3, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P;
   s7_pointer SAFE_IF_CS_P_P, SAFE_IF_CS_X_P, SAFE_IF_CC_P, SAFE_IF_CS_P, SAFE_IF_CS_P_X, SAFE_IF_CS_Q_P;
-  s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_P_A;
+  s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_O_A;
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P, SAFE_IF_C_C_P;
   s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_X, SAFE_IF_IS_SYMBOL_P_P, SAFE_IF_IS_EOF_P_P;
@@ -1466,11 +1466,14 @@ static void init_types(void)
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
 #define set_optimized(p)              typeflag(p) |= T_OPTIMIZED
 static int t_optimized = T_OPTIMIZED;
-#define is_optimized(p)               ((typeflag(p) & t_optimized) != 0)
+/* #define is_optimized(p)               ((typeflag(p) & t_optimized) != 0) */
 #define clear_optimized(p)            typeflag(p) &= ~(T_OPTIMIZED)
 #define OPTIMIZED_PAIR                (unsigned short)(T_PAIR | T_OPTIMIZED)
+#define is_optimized(p)               (typesflag(p) == OPTIMIZED_PAIR)
+/*   this is faster than the bit extraction above */
 /* optimizer flag for an expression that has optimization info
  */
+
 
 #define T_KEYWORD                     (1 << (TYPE_BITS + 4))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
@@ -39806,6 +39809,7 @@ static s7_pointer check_if(s7_scheme *sc)
 			      if (optimize_op(test) == HOP_SAFE_IS_SYMBOL_S)
 				set_syntax_op(sc->code, sc->SAFE_IF_IS_SYMBOL_P_X);
 			      else set_syntax_op(sc->code, sc->SAFE_IF_CS_P_X);
+			      fcdr(sc->code) = cadr(test);
 			    }
 			}
 		      else set_syntax_op(sc->code, sc->IF_P_P_X);
@@ -39839,8 +39843,9 @@ static s7_pointer check_if(s7_scheme *sc)
 				{
 				  if (optimize_data(test) == HOP_SAFE_C_SC)
 				    {
-				      if (t == cadr(test))
-					set_syntax_op(sc->code, sc->SAFE_IF_CSC_X_P_A);
+				      if ((t == cadr(test)) &&
+					  (is_optimized(f)))
+					set_syntax_op(sc->code, sc->SAFE_IF_CSC_X_O_A);
 				      else set_syntax_op(sc->code, sc->SAFE_IF_CSC_X_P);
 				      fcdr(sc->code) = caddr(test);
 				    }
@@ -49561,32 +49566,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
 	sc->capture_env_counter++; 
 
-	/* This frame just holds the func info in the unsafe case, slowing us down here both by alloc
-	 *   and later symbol lookups (through the empty frame).  But the alternative is to set up
-	 *   the needed env_func data at call time, so we trade number of calls with setup time.
-	 *   We can't reuse this env at call-time because recursive calls need new envs.
-	 *
-	 * there's room for an int in the closure cell, but we may have line/file info as well as a symbol
-	 *   but the info needs to be available as a dynamic value (i.e. via the environment), so ... 
-	 *   we need an environment!  In an extreme case where we making millions of these functions,
-	 *   this extra env costs about 1-2% total time.
-	 */
-
-	NEW_CELL_NO_CHECK(sc, new_env);
-	frame_id(new_env) = ++frame_number;
-	environment_slots(new_env) = sc->NIL;
-	next_environment(new_env) = sc->envir;
-	set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
-	closure_environment(new_func) = new_env;
-	environment_function(new_env) = sc->value;
-
 	if (closure_body_is_safe(new_func))
 	  {
 	    s7_pointer arg;
+
+	    NEW_CELL_NO_CHECK(sc, new_env);
+	    frame_id(new_env) = ++frame_number;
+	    environment_slots(new_env) = sc->NIL;
+	    next_environment(new_env) = sc->envir;
+	    set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
+	    closure_environment(new_func) = new_env;
+	    environment_function(new_env) = sc->value;
+
 	    for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
 	      s7_make_slot(sc, new_env, car(arg), sc->NIL);
 	    environment_slots(new_env) = reverse_slots(sc, environment_slots(new_env));
 	  }
+	else closure_environment(new_func) = sc->envir;
+	/* unsafe closures created by other functions do not support __func__ */
 
 	ADD_SLOT(sc->envir, sc->value, new_func);
 	set_local(sc->value);
@@ -51607,7 +51604,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_IF_CSC_X_P_A:
+    case OP_SAFE_IF_CSC_X_O_A:
       {
 	s7_pointer code;
 	code = sc->code;
@@ -51617,7 +51614,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_true(sc, c_call(car(code))(sc, sc->T2_1)))
 	  goto START;
 	sc->code = caddr(code);
-	goto EVAL; 
+	goto OPT_EVAL; 
       }
       
       
@@ -51626,7 +51623,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer code;
 	code = sc->code;
-	car(sc->T1_1) = finder(sc, cadar(code));
+	car(sc->T1_1) = finder(sc, fcdr(code));
 	if (is_true(sc, c_call(car(code))(sc, sc->T1_1)))
 	  {
 	    sc->code = cadr(code);
@@ -51654,7 +51651,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_SAFE_IF_IS_SYMBOL_P_X:
-      if (is_symbol(finder(sc, cadar(sc->code))))
+      if (is_symbol(finder(sc, fcdr(sc->code))))
 	{
 	  sc->code = cadr(sc->code);
 	  goto EVAL; 
@@ -59352,7 +59349,7 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_CS_P_X =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P_X);  
   sc->SAFE_IF_CS_X_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_X_P);
   sc->SAFE_IF_CSS_X_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSS_X_P);
-  sc->SAFE_IF_CSC_X_P_A =     assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSC_X_P_A);
+  sc->SAFE_IF_CSC_X_O_A =     assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSC_X_O_A);
   sc->SAFE_IF_CSC_X_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSC_X_P);
   sc->SAFE_IF_CSQ_P =         assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSQ_P);    
   sc->SAFE_IF_CSQ_P_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSQ_P_P);    
@@ -60257,14 +60254,14 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * timing info
- * bench    42736                             8177
- * lint     13424 -> 1231 1286 1326 1320 1270 1170
- *                                       9811 8036
- * index    44300 -> 4988 4235 4725 3935 3477 3090
- * s7test            1721      1456 1430 1375 1305
- * t455                    265  256  218   86   60
- * t502                          90   72   42   39
- * lat                     229        63        53
+ * bench    42736                     8133
+ * lint     13424 1231 1326 1320 1270 1158
+ *                               9811 8002
+ * index    44300 4988 4725 3935 3477 3083
+ * s7test         1721 1456 1430 1375 1305
+ * t455            265  256  218   86   60
+ * t502                  90   72   42   39
+ * lat             229        63        52
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.
