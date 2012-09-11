@@ -8748,7 +8748,7 @@ static s7_pointer g_J0(s7_scheme *sc, s7_pointer args)
   x = s7_car(args);
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "J0", 0, x, "a real number"));
-  return(s7_make_real(sc, gsl_sf_bessel_J0(s7_number_to_real(x))));
+  return(s7_make_real(sc, gsl_sf_bessel_J0(s7_number_to_real(sc, x))));
 }
 
 static s7_pointer g_J0_e(s7_scheme *sc, s7_pointer args)
@@ -8763,7 +8763,7 @@ static s7_pointer g_J0_e(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "J0", 0, x, "a real number"));
 
-  err = gsl_sf_bessel_J0_e(s7_number_to_real(x), &amp;r);
+  err = gsl_sf_bessel_J0_e(s7_number_to_real(sc, x), &amp;r);
   if (err != GSL_SUCCESS)
     return(s7_error(sc, s7_make_symbol(sc, "gsl-error"),
 		    s7_list(sc, 2,
@@ -8901,7 +8901,7 @@ static s7_pointer g_to_block(s7_scheme *sc, s7_pointer args)
   b = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, len), s7_nil(sc)));
   gb = (g_block *)s7_object_value(b);
   for (i = 0, p = args; i &lt; len; i++, p = s7_cdr(p))
-    gb-&gt;data[i] = s7_number_to_real(s7_car(p));
+    gb-&gt;data[i] = s7_number_to_real(sc, s7_car(p));
   return(b);
 }
 
@@ -8944,7 +8944,7 @@ static s7_pointer g_block_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   index = s7_integer(s7_car(args));
   if ((index &gt;= 0) &amp;&amp; (index &lt; g-&gt;size))
     {
-      g-&gt;data[index] = s7_number_to_real(s7_cadr(args));
+      g-&gt;data[index] = s7_number_to_real(sc, s7_cadr(args));
       return(s7_cadr(args));
     }
   return(s7_out_of_range_error(sc, "block-set", 2, s7_car(args), "should be less than block length"));
@@ -8985,7 +8985,7 @@ static s7_pointer g_block_fill(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   size_t i;
   double fill_val;
   g_block *g = (g_block *)s7_object_value(obj);
-  fill_val = s7_number_to_real(s7_car(args));
+  fill_val = s7_number_to_real(sc, s7_car(args));
   for (i = 0; i &lt; g-&gt;size; i++)
     g-&gt;data[i] = fill_val;
   return(obj);

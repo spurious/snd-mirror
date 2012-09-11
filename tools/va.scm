@@ -206,8 +206,9 @@
 					(not (char-numeric? chr)))
 				   (set! start i))))))
 		     (loop (read-line file #t)))))))))
-   (if (string=? (substring filename (- (length filename) 3)) "scm")
-       (lint filename)))
+;   (if (string=? (substring filename (- (length filename) 3)) "scm")
+;       (lint filename))
+   )
  (list 
   "analog-filter.scm"
   "animals.scm"

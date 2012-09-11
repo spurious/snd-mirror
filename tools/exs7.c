@@ -546,12 +546,12 @@ int main(int argc, char **argv)
   call_with_error = s7_name_to_value(s7, "callback-with-error");
 
   fprintf(stderr, "%f %f\n",
-	  s7_number_to_real(s7_call(s7, 
+	  s7_number_to_real(s7, s7_call(s7, 
 				    call_no_error,
 				    s7_cons(s7, 
 					    s7_make_real(s7, 1.0),
 					    s7_NIL(s7)))),
-	  s7_number_to_real(s7_call(s7, 
+	  s7_number_to_real(s7, s7_call(s7, 
 				    call_with_error,
 				    s7_cons(s7, 
 					    s7_make_real(s7, 1.0),

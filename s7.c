@@ -1602,7 +1602,7 @@ static int t_optimized = T_OPTIMIZED;
 #define clear_list_in_use(p)          typeflag(p) = (typeflag(p) & (~T_LIST_IN_USE))
 
 #define T_NO_VALUE                    T_GENSYM
-#define has_no_value(p)               (typeflag(p) == (T_UNIQUE | T_IMMUTABLE | T_GC_MARK | T_NO_VALUE))
+#define has_no_value(p)               (typeflag(p) == (unsigned int)(T_UNIQUE | T_IMMUTABLE | T_GC_MARK | T_NO_VALUE))
 /* to catch (eq? #<unspecified> #<unspecified>) where one of the two is the internal "no value" value 
  */
 
@@ -14047,6 +14047,7 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_less "(< x1 ...) returns #t if its arguments are in increasing order"
@@ -14858,7 +14859,6 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if (!WITH_GMP)
 static s7_pointer less_s_ic;
 static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -34686,6 +34686,7 @@ static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int args, 
 }
 
 
+#if (!WITH_GMP)
 static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 2) &&
@@ -34698,6 +34699,7 @@ static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
     }
   return(f);
 }
+#endif
 
 
 static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -35379,13 +35381,14 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(sqr_ss) = c_function_class(f);
 #endif
 
-
+#if (!WITH_GMP)
   /* modulo */
   f = slot_value(global_slot(sc->MODULO));
   c_function_chooser(f) = modulo_chooser;
 
   mod_si = s7_make_function(sc, "modulo", g_mod_si, 2, 0, false, "modulo optimization");
   c_function_class(mod_si) = c_function_class(f);
+#endif
 
 
   /* = */
@@ -44732,7 +44735,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->z = e;
 		for (p = closure_args(func), args = cdr(code); is_pair(p); p = cdr(p), args = cdr(args))
 		  {
-		    s7_pointer arg, val;
+		    s7_pointer arg, val = NULL;
 		    arg = car(args);
 		    if (is_pair(arg))
 		      {
