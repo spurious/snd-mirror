@@ -2357,7 +2357,7 @@ fib
      (if (&lt; n 2) n (+ (memo-fib (- n 1)) (memo-fib (- n 2)))))
 memo-fib
 &gt; (time (fib 34))         ; un-memoized time
-1.259
+1.259                        ;   0.76 on ccrma's i7-3930 machines
 &gt; (time (memo-fib 34))    ; memoized time
 3.200e-05
 
@@ -3964,7 +3964,7 @@ rather than a boolean.  I haven't run into a case where it matters.  Another odd
 this in procedure-arity?
 </p>
 
-<p>Speaking of define*, an argument's default value can be a function, so we can store
+<p>In define*, an argument's default value can be a function, so we can store
 argument-specific documentation in the documentation string:
 </p>
 <pre class="indented">
@@ -6030,17 +6030,6 @@ g_io_channel_unref(channel);
 <p>If we accidentally get into an infinite loop in our REPL, we have to exit the program.
 See <a href="#signal">signal handling</a> and <a href="#replrescue">begin_hook to the rescue!</a> below for two ways to fix this.
 </p>
-
-<p>Speaking of emacs, I have these lines in my ~/.emacs file:
-</p>
-
-<pre class="indented">
-(put 'with-environment 'scheme-indent-function 1)
-(put 'with-baffle 'scheme-indent-function 0)
-(put 'catch 'scheme-indent-function 1)
-(put 'augment-environment 'scheme-indent-function 1)
-</pre>
-
 
 
 
