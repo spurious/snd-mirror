@@ -1073,7 +1073,8 @@ typedef struct {
 
 
 typedef struct {
-  int loc, col, gc_loc;
+  int loc, col, gc_loc, curly_len;
+  char *curly_str;
   s7_pointer args;
 } format_data;
 
@@ -3606,6 +3607,21 @@ static s7_pointer g_safety_bind(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_cell *alloc_pointer(void)
+{
+  #define ALLOC_SIZE 256
+  static unsigned int alloc_k = ALLOC_SIZE;
+  static s7_cell *alloc_cells = NULL;
+
+  if (alloc_k == ALLOC_SIZE)
+    {
+      alloc_cells = (s7_cell *)calloc(ALLOC_SIZE, sizeof(s7_cell));
+      alloc_k = 0;
+    }
+  return(&alloc_cells[alloc_k++]);
+}
+
+
 void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 {
   int loc;
@@ -3642,7 +3658,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     {
     case T_PAIR:
       heap_location(x) = NOT_IN_HEAP;
-      p = (s7_cell *)malloc(sizeof(s7_cell));
+      p = alloc_pointer();
       typeflag(p) = 0;
       sc->heap[loc] = p;
       (*sc->free_heap_top++) = p;
@@ -3660,7 +3676,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	 *    array forever -- also in the gensym case below).
 	 */
 	heap_location(x) = NOT_IN_HEAP;
-	sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
+	sc->heap[loc] = alloc_pointer();
 	(*sc->free_heap_top++) = sc->heap[loc];
 	heap_location(sc->heap[loc]) = loc;
 
@@ -3680,7 +3696,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_SYMBOL:
       if (is_gensym(x))
 	{
-	  sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
+	  sc->heap[loc] = alloc_pointer();
 	  (*sc->free_heap_top++) = sc->heap[loc];
 	  heap_location(sc->heap[loc]) = loc;
 	  clear_gensym(x);
@@ -3698,7 +3714,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_MACRO:
     case T_BACRO:
       heap_location(x) = NOT_IN_HEAP;
-      p = (s7_cell *)malloc(sizeof(s7_cell));
+      p = alloc_pointer();
       typeflag(p) = 0;
       sc->heap[loc] = p;
       (*sc->free_heap_top++) = p;
@@ -3713,7 +3729,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     }
 
   heap_location(x) = NOT_IN_HEAP;
-  p = (s7_cell *)malloc(sizeof(s7_cell));
+  p = alloc_pointer();
   typeflag(p) = 0;
   sc->heap[loc] = p;
   (*sc->free_heap_top++) = p;
@@ -3724,7 +3740,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 /* permanent memory for objects that we know will not (normally) be deallocated 
  *
  *   this does not work as is if run on a system that requires aligned accesses
- *   so we need a compilt-time switch.
+ *   so we need a compile-time switch.
  *
  * timing tests here if we force 4-byte boundaries found no difference on x86
  */
@@ -3953,7 +3969,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, int location)
   s7_pointer x, str; 
 
   str = s7_make_permanent_string(name);
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
@@ -4429,7 +4445,7 @@ static s7_pointer old_frame_with_slot(s7_scheme *sc, s7_pointer env, s7_pointer 
 static s7_pointer permanent_slot(s7_pointer symbol, s7_pointer value)
 {
   s7_pointer x;
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   slot_symbol(x) = symbol;
   slot_set_value(x, value);
@@ -7625,14 +7641,16 @@ static char *pad_number(const char *p, int len, int width)
 }
 
 
-static char *integer_to_string_base_10_no_width(s7_pointer obj, bool *free_it, int *nlen)
+static char *integer_to_string_base_10_no_width(s7_pointer obj, int *nlen) /* do not free the returned string */
 {
-  char *p;
+  #define INT_TO_STR_SIZE 64
+  static char int_to_str[INT_TO_STR_SIZE];
 
   if (is_small_int(obj))
     {
       if (!small_int_name(obj))
 	{
+	  char *p;
 	  /* this works for small ints because they are permanent and immutable.  Other numbers
 	   *   might be changed, and do loops use integers as ratios (denominator=end etc).
 	   */
@@ -7641,63 +7659,45 @@ static char *integer_to_string_base_10_no_width(s7_pointer obj, bool *free_it, i
 	  small_int_name(obj) = p;
 	  small_int_name_length(obj) = (*nlen);
 	}
-      (*free_it) = false;
       (*nlen) = small_int_name_length(obj);
       return((char *)small_int_name(obj));
     }
 
-  p = (char *)malloc(64 * sizeof(char));
-  (*nlen) = snprintf(p, 64, "%lld", (long long int)integer(obj));
-
-  return(p);
+  (*nlen) = snprintf(int_to_str, INT_TO_STR_SIZE, "%lld", (long long int)integer(obj));
+  return(int_to_str);
 }
 
 
 #define BASE_10 10
+static int num_to_str_size = 0;
+static char *num_to_str = NULL;
 
-static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen)
+static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen) /* don't free result */
 {
-  char *p;
   int len;
-
-#if WITH_GMP
-  if (s7_is_bignum(obj))
-    return(big_number_to_string_with_radix(obj, BASE_10, width, nlen));
-  /* this ignores precision because it's way too hard to get the mpfr string to look like
-   *   C's output -- we either have to call mpfr_get_str twice (the first time just to 
-   *   find out what the exponent is and how long the string actually is), or we have
-   *   to do messy string manipulations.  So (format #f "",3F" pi) ignores the "3" and
-   *   prints the full string.
-   */
-#endif
-
+  len = 256 + width;
+  if (len > num_to_str_size)
+    {
+      if (num_to_str) free(num_to_str);
+      num_to_str_size = len;
+      num_to_str = (char *)malloc(len);
+    }
+  /* bignums can't happen here */
   switch (type(obj))
     {
     case T_INTEGER:
       if (width == 0)
 	{
 	  int nlen = 0;
-	  bool free_it = true;
-	  p = integer_to_string_base_10_no_width(obj, &free_it, &nlen);
-	  if (!free_it)
-	    return(copy_string(p));
-	  return(p);
+	  return(integer_to_string_base_10_no_width(obj, &nlen));
 	}
-      len = 64 + width;
-      p = (char *)malloc(len * sizeof(char));
-      (*nlen) = snprintf(p, len, "%*lld", width, (long long int)integer(obj));
+      (*nlen) = snprintf(num_to_str, num_to_str_size, "%*lld", width, (long long int)integer(obj));
       break;
       
     case T_RATIO:
-      p = (char *)malloc(128 * sizeof(char));
-      len = snprintf(p, 128, "%lld/%lld", (long long int)numerator(obj), (long long int)denominator(obj));
+      len = snprintf(num_to_str, num_to_str_size, "%lld/%lld", (long long int)numerator(obj), (long long int)denominator(obj));
       if (width > len)
-	{
-	  char *p1;
-	  p1 = pad_number(p, len, width);
-	  free(p);
-	  return(p1);
-	}
+	return(pad_number(num_to_str, len, width));
       else (*nlen) = len;
       break;
       
@@ -7705,15 +7705,14 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
       {
 	int i, loc = -1;
 	const char *frmt;
-	p = (char *)malloc((256 + width) * sizeof(char));
 
 	if (sizeof(double) >= sizeof(s7_Double))
 	  frmt = (float_choice == 'g') ? "%*.*g" : ((float_choice == 'f') ? "%*.*f" : "%*.*e");
 	else frmt = (float_choice == 'g') ? "%*.*Lg" : ((float_choice == 'f') ? "%*.*Lf" : "%*.*Le");
 
-	len = snprintf(p, 256 + width, frmt, width, precision, s7_real(obj));
+	len = snprintf(num_to_str, num_to_str_size, frmt, width, precision, s7_real(obj));
 	for (i = 0; i < len; i++) /* does it have an exponent (if so, it's already a float) */
-	  if (p[i] == 'e')
+	  if (num_to_str[i] == 'e')
 	    {
 	      loc = i;
 	      break;
@@ -7721,12 +7720,12 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 	if (loc == -1)            /* no, so make it explicitly a float! */
 	  {
 	    for (i = 0; i < len; i++)  
-	      if (p[i] == '.') break;
+	      if (num_to_str[i] == '.') break;
 	    if (i == len)
 	      {
-		p[i]='.';
-		p[i+1]='0';
-		p[i+2]='\0';
+		num_to_str[i]='.';
+		num_to_str[i + 1]='0';
+		num_to_str[i + 2]='\0';
 	      }
 	  }
       }
@@ -7735,8 +7734,6 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
     default:
       {
 	const char *frmt;
-	p = (char *)malloc(256 * sizeof(char));
-
 	if (sizeof(double) >= sizeof(s7_Double))
 	  {
 	    if (imag_part(obj) >= 0.0)
@@ -7750,18 +7747,13 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 	    else frmt = (float_choice == 'g') ? "%.*Lg%.*Lgi" : ((float_choice == 'f') ? "%.*Lf-%.*Lfi" : "%.*Le-%.*Lei");
 	  }
 
-	len = snprintf(p, 256, frmt, precision, real_part(obj), precision, imag_part(obj));
+	len = snprintf(num_to_str, num_to_str_size, frmt, precision, real_part(obj), precision, imag_part(obj));
 	if (width > len)
-	  {                             /* (format #f "~20g" 1+i) */
-	    char *p1;
-	    p1 = pad_number(p, len, width);
-	    free(p);
-	    return(p1);
-	  }
+	  return(pad_number(num_to_str, len, width));  /* (format #f "~20g" 1+i) */
       }
       break;
     }
-  return(p);
+  return(num_to_str);
 }
 
 
@@ -7773,23 +7765,23 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 #if WITH_GMP
   if (s7_is_bignum(obj))
     return(big_number_to_string_with_radix(obj, radix, width, nlen));
+  /* this ignores precision because it's way too hard to get the mpfr string to look like
+   *   C's output -- we either have to call mpfr_get_str twice (the first time just to 
+   *   find out what the exponent is and how long the string actually is), or we have
+   *   to do messy string manipulations.  So (format #f "",3F" pi) ignores the "3" and
+   *   prints the full string.
+   */
 #endif
 
   if (radix == 10)
-    return(number_to_string_base_10(obj, width, precision, float_choice, nlen));
+    return(copy_string(number_to_string_base_10(obj, width, precision, float_choice, nlen)));
 
   switch (type(obj))
     {
     case T_INTEGER:
       if ((width == 0) &&
 	  (radix == 10))
-	{
-	  bool free_it = true;
-	  p = integer_to_string_base_10_no_width(obj, &free_it, nlen);
-	  if (!free_it)
-	    return(copy_string(p));
-	  return(p);
-	}
+	return(copy_string(integer_to_string_base_10_no_width(obj, nlen)));
       p = (char *)malloc((128 + width) * sizeof(char));
       s7_Int_to_string(p, s7_integer(obj), radix, width);
       return(p);
@@ -7945,7 +7937,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
   if (radix != 10)
     res = number_to_string_with_radix(sc, x, radix, 0, (radix == 10) ? size : 20, 'g', &nlen);
-  else res = number_to_string_base_10(x, 0, size, 'g', &nlen);
+  else res = copy_string(number_to_string_base_10(x, 0, size, 'g', &nlen));
   
   return(make_string_uncopied(sc, res));
 }
@@ -17273,7 +17265,7 @@ s7_pointer s7_make_permanent_string(const char *str)
 {
   /* for the symbol table which is never GC'd */
   s7_pointer x;
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_STRING | T_IMMUTABLE);
   if (str)
@@ -19442,7 +19434,7 @@ static void make_standard_ports(s7_scheme *sc)
   s7_pointer x;
 
   /* standard output */
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
   port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
@@ -19462,7 +19454,7 @@ static void make_standard_ports(s7_scheme *sc)
   sc->standard_output = x;
 
   /* standard error */
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
   port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
@@ -19482,7 +19474,7 @@ static void make_standard_ports(s7_scheme *sc)
   sc->standard_error = x;
 
   /* standard input */
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_INPUT_PORT | T_IMMUTABLE);
   port_port(x) = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
@@ -20525,18 +20517,26 @@ static bool needs_slashification(const char *str, int len)
 #define IN_QUOTES true
 #define NOT_IN_QUOTES false
 
-static char *slashify_string(const char *p, int len, bool quoted, int *nlen)
+static int slash_str_size = 0;
+static char *slash_str = NULL;
+
+static char *slashify_string(const char *p, int len, bool quoted, int *nlen) /* do not free result */
 {
-  int j = 0, cur_size;
+  int j = 0, cur_size, size;
   char *s;
   unsigned char *pcur, *pend;
 
   pend = (unsigned char *)(p + len);
   cur_size = len + 256;
-  s = (char *)calloc(cur_size + 2, sizeof(char));
-
-  /* this can be non-null even if there's not enough memory, but I think I'll check in the caller 
-   */
+  size = cur_size + 2;
+  if (size > slash_str_size)
+    {
+      if (slash_str) free(slash_str);
+      slash_str_size = size;
+      slash_str = (char *)malloc(size);
+    }
+  memset((void *)slash_str, 0, size);
+  s = slash_str;
 
   if (quoted) s[j++] = '"';
 
@@ -20588,8 +20588,10 @@ static char *slashify_string(const char *p, int len, bool quoted, int *nlen)
 	{
 	  int k;
 	  cur_size *= 2;
-	  s = (char *)realloc(s, (cur_size + 2) * sizeof(char));
-	  for (k = j; k < cur_size + 2; k++) s[k] = 0;
+	  size = cur_size + 2;
+	  slash_str = (char *)realloc(slash_str, size * sizeof(char));
+	  s = slash_str;
+	  for (k = j; k < size; k++) s[k] = 0;
 	}
     }
   if (quoted) s[j++] = '"';
@@ -21243,7 +21245,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 {
   int nlen = 0;
   char *str;
-  bool free_it = true;
   char buf[64];
 
   switch (type(obj))
@@ -21307,11 +21308,10 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	port_write_string(port)(sc, small_int_name(obj), small_int_name_length(obj), port);
       else
 	{
-	  str = integer_to_string_base_10_no_width(obj, &free_it, &nlen);
+	  str = integer_to_string_base_10_no_width(obj, &nlen);
 	  if (nlen > 0)
 	    port_write_string(port)(sc, str, nlen, port);
 	  else port_display(port)(sc, str, port);
-	  if (free_it) free(str);
 	}
       break;
 
@@ -21323,7 +21323,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
       if (nlen > 0)
 	port_write_string(port)(sc, str, nlen, port);
       else port_display(port)(sc, str, port);
-      free(str);
       break;
 
 #if WITH_GMP
@@ -21349,7 +21348,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	  nlen += 16;
 	  symstr = (char *)calloc(nlen, sizeof(char));
 	  nlen = snprintf(symstr, nlen, "(symbol \"%s\")", str);
-	  free(str);
 	  port_write_string(port)(sc, symstr, nlen, port);
 	  free(symstr);
 	}
@@ -21379,7 +21377,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 		{
 		  str = slashify_string(string_value(obj), string_length(obj), IN_QUOTES, &nlen);
 		  port_write_string(port)(sc, str, nlen, port);
-		  free(str);
 		}
 	    }
 	}
@@ -22034,6 +22031,8 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
     {
       fdat = (format_data *)malloc(sizeof(format_data));
       sc->fdats[format_depth] = fdat;
+      fdat->curly_len = 0;
+      fdat->curly_str = NULL;
     }
   else
     {
@@ -22044,6 +22043,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   fdat->loc = 0;
   fdat->col = 0;
   fdat->args = args;
+
 
   /* choose whether to write to a temporary string port, or simply use the in-coming port
    *   if with_result, returned string is wanted.
@@ -22178,8 +22178,14 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			  return(format_error(sc, "'{' directive argument should be a proper list or something we can turn into a list", 
 					      str, args, fdat));
 			curly_gc = s7_gc_protect(sc, curly_arg);
-			
-			curly_str = (char *)malloc(curly_len * sizeof(char));
+
+			if (curly_len > fdat->curly_len)
+			  {
+			    if (fdat->curly_str) free (fdat->curly_str);
+			    fdat->curly_len = curly_len;
+			    fdat->curly_str = (char *)malloc(curly_len * sizeof(char));
+			  }
+			curly_str = fdat->curly_str;
 			for (k = 0; k < curly_len - 1; k++)
 			  curly_str[k] = str[i + 2 + k];
 			curly_str[curly_len - 1] = '\0';
@@ -22191,14 +22197,11 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			    format_to_port_1(sc, port, curly_str, curly_arg, &new_arg, false, columnized);
 			    if (curly_arg == new_arg)
 			      {
-				if (curly_str) free(curly_str);
 				s7_gc_unprotect_at(sc, curly_gc);
 				return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
 			      }
 			    curly_arg = new_arg;
 			  }
-			
-			free(curly_str);
 			s7_gc_unprotect_at(sc, curly_gc);
 		      }
 		  }
@@ -22725,7 +22728,7 @@ static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type)
 {
   /* for the symbol table which is never GC'd (and its contents aren't marked) */
   s7_pointer x;
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   car(x) = a;
   cdr(x) = b;
@@ -27487,7 +27490,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   int ftype = T_C_FUNCTION;
   s7_pointer x;
 
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
 
   ptr = (c_proc_t *)permanent_calloc(sizeof(c_proc_t));
@@ -33749,7 +33752,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   x = new_symbol(sc, name, loc);
   symbol_hash(x) = loc;
 
-  syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  syn = alloc_pointer();
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = op;
   cdr(syn) = syn; /* this saves us an error check in the main eval section */
@@ -33771,7 +33774,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 
   str = s7_make_permanent_string(name);
 
-  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
@@ -33783,7 +33786,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   symbol_set_local(x, 0, sc->NIL);
   symbol_accessor(x) = -1;
 
-  syn = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  syn = alloc_pointer();
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = op;
   cdr(syn) = syn; 
@@ -42121,7 +42124,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    push_stack(sc, OP_FOR_EACH_SIMPLER, sc->args, code);
 
 	    sc->code = car(closure_body(code));
-	    goto EVAL; /* t 17087382 17087382 */
+	    if (is_optimized(sc->code))
+	      goto OPT_EVAL;
+	    goto EVAL; 
 	  }
 	sc->value = sc->UNSPECIFIED;
 	goto START;
@@ -43927,80 +43932,81 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
-		    if (is_pair(arg))
+		    if (is_optimized(arg))
 		      {
-			if (is_optimized(arg))
+			s7_pointer largs;
+			switch (optimize_data(arg)) /* is_orx_safe */
 			  {
-			    s7_pointer largs;
-			    switch (optimize_data(arg)) /* is_orx_safe */
-			      {
-			      case HOP_SAFE_C_C:
-				car(p) = c_call(arg)(sc, cdr(arg));
-				break;
-				
-			      case HOP_SAFE_C_S:
-				car(sc->T1_1) = finder(sc, cadr(arg));
-				car(p) = c_call(arg)(sc, sc->T1_1);
-				break;
-				
-			      case HOP_SAFE_C_SC:
-				largs = cdr(arg);
-				car(sc->T2_1) = finder(sc, car(largs));
-				car(sc->T2_2) = cadr(largs);
-				car(p) = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_CS:
-				largs = cdr(arg);
-				car(sc->T2_2) = finder(sc, cadr(largs));
-				car(sc->T2_1) = car(largs);
-				car(p) = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_SS:
-				{
-				  s7_pointer val;
-				  largs = cdr(arg);
-				  val = finder(sc, car(largs));
-				  car(sc->T2_2) = finder(sc, cadr(largs));
-				  car(sc->T2_1) = val;
-				  car(p) = c_call(arg)(sc, sc->T2_1);
-				  break;
-				}
-				
-			      case HOP_SAFE_C_SQ:
-				largs = cdr(arg);
-				car(sc->T2_1) = finder(sc, car(largs));
-				car(sc->T2_2) = cadr(cadr(largs));
-				car(p) = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_opSq:
-				largs = cadr(arg);
-				car(sc->T1_1) = finder(sc, cadr(largs));
-				car(sc->T1_1) = c_call(largs)(sc, sc->T1_1);
-				car(p) = c_call(arg)(sc, sc->T1_1);
-				break;
-				
-			      case HOP_SAFE_C_opSq_opSq:
-				largs = cdr(arg);
-				car(sc->T1_1) = finder(sc, cadr(car(largs)));
-				sc->temp4 = c_call(car(largs))(sc, sc->T1_1);
-				largs = cadr(largs);
-				car(sc->T1_1) = finder(sc, cadr(largs));
-				car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
-				car(sc->T2_1) = sc->temp4;
-				car(p) = c_call(arg)(sc, sc->T2_1);
-				break;
-			      }
+			  case HOP_SAFE_C_C:
+			    car(p) = c_call(arg)(sc, cdr(arg));
+			    break;
+			    
+			  case HOP_SAFE_C_S:
+			    car(sc->T1_1) = finder(sc, cadr(arg));
+			    car(p) = c_call(arg)(sc, sc->T1_1);
+			    break;
+			    
+			  case HOP_SAFE_C_SC:
+			    largs = cdr(arg);
+			    car(sc->T2_1) = finder(sc, car(largs));
+			    car(sc->T2_2) = cadr(largs);
+			    car(p) = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_CS:
+			    largs = cdr(arg);
+			    car(sc->T2_2) = finder(sc, cadr(largs));
+			    car(sc->T2_1) = car(largs);
+			    car(p) = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_SS:
+			    {
+			      s7_pointer val;
+			      largs = cdr(arg);
+			      val = finder(sc, car(largs));
+			      car(sc->T2_2) = finder(sc, cadr(largs));
+			      car(sc->T2_1) = val;
+			      car(p) = c_call(arg)(sc, sc->T2_1);
+			      break;
+			    }
+			    
+			  case HOP_SAFE_C_SQ:
+			    largs = cdr(arg);
+			    car(sc->T2_1) = finder(sc, car(largs));
+			    car(sc->T2_2) = cadr(cadr(largs));
+			    car(p) = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_opSq:
+			    largs = cadr(arg);
+			    car(sc->T1_1) = finder(sc, cadr(largs));
+			    car(sc->T1_1) = c_call(largs)(sc, sc->T1_1);
+			    car(p) = c_call(arg)(sc, sc->T1_1);
+			    break;
+			    
+			  case HOP_SAFE_C_opSq_opSq:
+			    largs = cdr(arg);
+			    car(sc->T1_1) = finder(sc, cadr(car(largs)));
+			    sc->temp4 = c_call(car(largs))(sc, sc->T1_1);
+			    largs = cadr(largs);
+			    car(sc->T1_1) = finder(sc, cadr(largs));
+			    car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
+			    car(sc->T2_1) = sc->temp4;
+			    car(p) = c_call(arg)(sc, sc->T2_1);
+			    break;
 			  }
-			else car(p) = cadr(arg);
 		      }
 		    else
 		      {
 			if (is_symbol(arg))
 			  car(p) = finder(sc, arg);
-			else car(p) = arg;
+			else 
+			  {
+			    if (is_pair(arg))
+			      car(p) = cadr(arg); /* (quote ...) */
+			    else car(p) = arg;
+			  }
 		      }
 		  }
 		clear_list_in_use(sc->args);
@@ -44737,80 +44743,81 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer arg, val = NULL;
 		    arg = car(args);
-		    if (is_pair(arg))
+		    if (is_optimized(arg))
 		      {
-			if (is_optimized(arg))
+			s7_pointer largs;
+			switch (optimize_data(arg)) /* is_orx_safe */
 			  {
-			    s7_pointer largs;
-			    switch (optimize_data(arg)) /* is_orx_safe */
-			      {
-			      case HOP_SAFE_C_C:
-				val = c_call(arg)(sc, cdr(arg));
-				break;
-				
-			      case HOP_SAFE_C_S:
-				car(sc->T1_1) = finder(sc, cadr(arg));
-				val = c_call(arg)(sc, sc->T1_1);
-				break;
-				
-			      case HOP_SAFE_C_SC:
-				largs = cdr(arg);
-				car(sc->T2_1) = finder(sc, car(largs));
-				car(sc->T2_2) = cadr(largs);
-				val = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_CS:
-				largs = cdr(arg);
-				car(sc->T2_2) = finder(sc, cadr(largs));
-				car(sc->T2_1) = car(largs);
-				val = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_SS:
-				{
-				  s7_pointer in_val;
-				  largs = cdr(arg);
-				  in_val = finder(sc, car(largs));
-				  car(sc->T2_2) = finder(sc, cadr(largs));
-				  car(sc->T2_1) = in_val;
-				  val = c_call(arg)(sc, sc->T2_1);
-				  break;
-				}
-				
-			      case HOP_SAFE_C_SQ:
-				largs = cdr(arg);
-				car(sc->T2_1) = finder(sc, car(largs));
-				car(sc->T2_2) = cadr(cadr(largs));
-				val = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_opSq:
-				largs = cadr(arg);
-				car(sc->T1_1) = finder(sc, cadr(largs));
-				car(sc->T1_1) = c_call(largs)(sc, sc->T1_1);
-				val = c_call(arg)(sc, sc->T1_1);
-				break;
-				
-			      case HOP_SAFE_C_opSq_opSq:
-				largs = cdr(arg);
-				car(sc->T1_1) = finder(sc, cadr(car(largs)));
-				sc->temp4 = c_call(car(largs))(sc, sc->T1_1);
-				largs = cadr(largs);
-				car(sc->T1_1) = finder(sc, cadr(largs));
-				car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
-				car(sc->T2_1) = sc->temp4;
-				val = c_call(arg)(sc, sc->T2_1);
-				break;
-			      }
+			  case HOP_SAFE_C_C:
+			    val = c_call(arg)(sc, cdr(arg));
+			    break;
+			    
+			  case HOP_SAFE_C_S:
+			    car(sc->T1_1) = finder(sc, cadr(arg));
+			    val = c_call(arg)(sc, sc->T1_1);
+			    break;
+			    
+			  case HOP_SAFE_C_SC:
+			    largs = cdr(arg);
+			    car(sc->T2_1) = finder(sc, car(largs));
+			    car(sc->T2_2) = cadr(largs);
+			    val = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_CS:
+			    largs = cdr(arg);
+			    car(sc->T2_2) = finder(sc, cadr(largs));
+			    car(sc->T2_1) = car(largs);
+			    val = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_SS:
+			    {
+			      s7_pointer in_val;
+			      largs = cdr(arg);
+			      in_val = finder(sc, car(largs));
+			      car(sc->T2_2) = finder(sc, cadr(largs));
+			      car(sc->T2_1) = in_val;
+			      val = c_call(arg)(sc, sc->T2_1);
+			      break;
+			    }
+			    
+			  case HOP_SAFE_C_SQ:
+			    largs = cdr(arg);
+			    car(sc->T2_1) = finder(sc, car(largs));
+			    car(sc->T2_2) = cadr(cadr(largs));
+			    val = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_opSq:
+			    largs = cadr(arg);
+			    car(sc->T1_1) = finder(sc, cadr(largs));
+			    car(sc->T1_1) = c_call(largs)(sc, sc->T1_1);
+			    val = c_call(arg)(sc, sc->T1_1);
+			    break;
+			    
+			  case HOP_SAFE_C_opSq_opSq:
+			    largs = cdr(arg);
+			    car(sc->T1_1) = finder(sc, cadr(car(largs)));
+			    sc->temp4 = c_call(car(largs))(sc, sc->T1_1);
+			    largs = cadr(largs);
+			    car(sc->T1_1) = finder(sc, cadr(largs));
+			    car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
+			    car(sc->T2_1) = sc->temp4;
+			    val = c_call(arg)(sc, sc->T2_1);
+			    break;
 			  }
-			else val = cadr(arg);
 		      }
 		    else
 		      {
 			if (is_symbol(arg))
 			  val = find_symbol_or_bust(sc, arg);
-			else val = arg;
+			else 
+			  {
+			    if (is_pair(arg))
+			      val = cadr(arg);
+			    else val = arg;
+			  }
 		      }
 		    ADD_SLOT(e, car(p), val);
 		  }
@@ -46998,20 +47005,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
-		    if (is_pair(arg))
+		    if (is_optimized(arg))
 		      {
-			if (is_optimized(arg))
-			  {
-			    car(sc->T1_1) = finder(sc, cadr(arg));
-			    car(p) = c_call(arg)(sc, sc->T1_1);
-			  }
-			else car(p) = cadr(arg);
+			car(sc->T1_1) = finder(sc, cadr(arg));
+			car(p) = c_call(arg)(sc, sc->T1_1);
 		      }
 		    else
 		      {
 			if (is_symbol(arg))
 			  car(p) = finder(sc, arg);
-			else car(p) = arg;
+			else 
+			  {
+			    if (is_pair(arg))
+			      car(p) = cadr(arg);
+			    else car(p) = arg;
+			  }
 		      }
 		  }
 		
@@ -47044,80 +47052,81 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
-		    if (is_pair(arg))
+		    if (is_optimized(arg))
 		      {
-			if (is_optimized(arg))
+			s7_pointer largs;
+			switch (optimize_data(arg)) /* is_orx_safe */
 			  {
-			    s7_pointer largs;
-			    switch (optimize_data(arg)) /* is_orx_safe */
-			      {
-			      case HOP_SAFE_C_C:
-				car(p) = c_call(arg)(sc, cdr(arg));
-				break;
-				
-			      case HOP_SAFE_C_S:
-				car(sc->T1_1) = finder(sc, cadr(arg));
-				car(p) = c_call(arg)(sc, sc->T1_1);
-				break;
-				
-			      case HOP_SAFE_C_SC:
-				largs = cdr(arg);
-				car(sc->T2_1) = finder(sc, car(largs));
-				car(sc->T2_2) = cadr(largs);
-				car(p) = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_CS:
-				largs = cdr(arg);
-				car(sc->T2_2) = finder(sc, cadr(largs));
-				car(sc->T2_1) = car(largs);
-				car(p) = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_SS:
-				{
-				  s7_pointer val;
-				  largs = cdr(arg);
-				  val = finder(sc, car(largs));
-				  car(sc->T2_2) = finder(sc, cadr(largs));
-				  car(sc->T2_1) = val;
-				  car(p) = c_call(arg)(sc, sc->T2_1);
-				  break;
-				}
-				
-			      case HOP_SAFE_C_SQ:
-				largs = cdr(arg);
-				car(sc->T2_1) = finder(sc, car(largs));
-				car(sc->T2_2) = cadr(cadr(largs));
-				car(p) = c_call(arg)(sc, sc->T2_1);
-				break;
-				
-			      case HOP_SAFE_C_opSq:
-				largs = cadr(arg);
-				car(sc->T1_1) = finder(sc, cadr(largs));
-				car(sc->T1_1) = c_call(largs)(sc, sc->T1_1);
-				car(p) = c_call(arg)(sc, sc->T1_1);
-				break;
-				
-			      case HOP_SAFE_C_opSq_opSq:
-				largs = cdr(arg);
-				car(sc->T1_1) = finder(sc, cadr(car(largs)));
-				sc->temp4 = c_call(car(largs))(sc, sc->T1_1);
-				largs = cadr(largs);
-				car(sc->T1_1) = finder(sc, cadr(largs));
-				car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
-				car(sc->T2_1) = sc->temp4;
-				car(p) = c_call(arg)(sc, sc->T2_1);
-				break;
-			      }
+			  case HOP_SAFE_C_C:
+			    car(p) = c_call(arg)(sc, cdr(arg));
+			    break;
+			    
+			  case HOP_SAFE_C_S:
+			    car(sc->T1_1) = finder(sc, cadr(arg));
+			    car(p) = c_call(arg)(sc, sc->T1_1);
+			    break;
+			    
+			  case HOP_SAFE_C_SC:
+			    largs = cdr(arg);
+			    car(sc->T2_1) = finder(sc, car(largs));
+			    car(sc->T2_2) = cadr(largs);
+			    car(p) = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_CS:
+			    largs = cdr(arg);
+			    car(sc->T2_2) = finder(sc, cadr(largs));
+			    car(sc->T2_1) = car(largs);
+			    car(p) = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_SS:
+			    {
+			      s7_pointer val;
+			      largs = cdr(arg);
+			      val = finder(sc, car(largs));
+			      car(sc->T2_2) = finder(sc, cadr(largs));
+			      car(sc->T2_1) = val;
+			      car(p) = c_call(arg)(sc, sc->T2_1);
+			      break;
+			    }
+			    
+			  case HOP_SAFE_C_SQ:
+			    largs = cdr(arg);
+			    car(sc->T2_1) = finder(sc, car(largs));
+			    car(sc->T2_2) = cadr(cadr(largs));
+			    car(p) = c_call(arg)(sc, sc->T2_1);
+			    break;
+			    
+			  case HOP_SAFE_C_opSq:
+			    largs = cadr(arg);
+			    car(sc->T1_1) = finder(sc, cadr(largs));
+			    car(sc->T1_1) = c_call(largs)(sc, sc->T1_1);
+			    car(p) = c_call(arg)(sc, sc->T1_1);
+			    break;
+			    
+			  case HOP_SAFE_C_opSq_opSq:
+			    largs = cdr(arg);
+			    car(sc->T1_1) = finder(sc, cadr(car(largs)));
+			    sc->temp4 = c_call(car(largs))(sc, sc->T1_1);
+			    largs = cadr(largs);
+			    car(sc->T1_1) = finder(sc, cadr(largs));
+			    car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
+			    car(sc->T2_1) = sc->temp4;
+			    car(p) = c_call(arg)(sc, sc->T2_1);
+			    break;
 			  }
-			else car(p) = cadr(arg);
 		      }
 		    else
 		      {
 			if (is_symbol(arg))
 			  car(p) = finder(sc, arg);
-			else car(p) = arg;
+			else 
+			  {
+			    if (is_pair(arg))
+			      car(p) = cadr(arg);
+			    else car(p) = arg;
+			  }
 		      }
 		  }
 		
@@ -47317,20 +47326,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer arg;
 		    arg = car(args);
-		    if (is_pair(arg))
+		    if (is_optimized(arg))
 		      {
-			if (is_optimized(arg))
-			  {
-			    car(sc->T1_1) = find_symbol_or_bust(sc, cadr(arg));
-			    car(p) = c_call(arg)(sc, sc->T1_1);
-			  }
-			else car(p) = cadr(arg);
+			car(sc->T1_1) = find_symbol_or_bust(sc, cadr(arg));
+			car(p) = c_call(arg)(sc, sc->T1_1);
 		      }
 		    else
 		      {
 			if (is_symbol(arg))
 			  car(p) = find_symbol_or_bust(sc, arg);
-			else car(p) = arg;
+			else 
+			  {
+			    if (is_pair(arg))
+			      car(p) = cadr(arg);
+			    else car(p) = arg;
+			  }
 		      }
 		  }
 		sc->value = c_call(code)(sc, sc->args);
@@ -58896,7 +58906,7 @@ static void s7_gmp_init(s7_scheme *sc)
 static s7_pointer make_unique_object(const char* name, int typ)
 {
   s7_pointer p;
-  p = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  p = alloc_pointer();
   set_type(p, typ | T_GC_MARK | T_IMMUTABLE);
   unique_name_length(p) = safe_strlen(name);
   unique_name(p) = copy_string_with_len(name, unique_name_length(p));
@@ -58957,41 +58967,41 @@ s7_scheme *s7_init(void)
   frame_id(sc->NIL) = -1;
 
 
-  sc->temp_cell = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  sc->temp_cell = alloc_pointer();
   set_type(sc->temp_cell, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   cdr(sc->temp_cell) = sc->NIL;
   heap_location(sc->temp_cell) = NOT_IN_HEAP;
 
-  sc->temp_cell_1 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  sc->temp_cell_1 = alloc_pointer();
   set_type(sc->temp_cell_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->temp_cell_1) = cdr(sc->temp_cell_1) = sc->NIL;
   car(sc->temp_cell) = sc->temp_cell_1;
   heap_location(sc->temp_cell_1) = NOT_IN_HEAP;
 
-  sc->temp_cell_2 = (s7_cell *)permanent_calloc(sizeof(s7_cell));  
+  sc->temp_cell_2 = alloc_pointer();  
   set_type(sc->temp_cell_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->temp_cell_2) = cdr(sc->temp_cell_2) = sc->NIL;
   heap_location(sc->temp_cell_2) = NOT_IN_HEAP;
 
-  sc->temp_cell_3 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  sc->temp_cell_3 = alloc_pointer();
   set_type(sc->temp_cell_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->temp_cell_3) = cdr(sc->temp_cell_3) = sc->NIL;
   heap_location(sc->temp_cell_3) = NOT_IN_HEAP;
 
-  sc->temp_cell_4 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  sc->temp_cell_4 = alloc_pointer();
   set_type(sc->temp_cell_4, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->temp_cell_4) = cdr(sc->temp_cell_4) = sc->NIL;
   heap_location(sc->temp_cell_4) = NOT_IN_HEAP;
 
 
-  sc->T1_1 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  sc->T1_1 = alloc_pointer();
   set_type(sc->T1_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T1_1) = sc->NIL;
   cdr(sc->T1_1) = sc->NIL;
   heap_location(sc->T1_1) = NOT_IN_HEAP;
 
-  sc->T2_1 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  sc->T2_2 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  sc->T2_1 = alloc_pointer();
+  sc->T2_2 = alloc_pointer();
 
   set_type(sc->T2_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T2_1) = sc->NIL;
@@ -59002,9 +59012,9 @@ s7_scheme *s7_init(void)
   cdr(sc->T2_2) = sc->NIL;
   heap_location(sc->T2_2) = NOT_IN_HEAP;
 
-  sc->T3_1 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  sc->T3_2 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
-  sc->T3_3 = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  sc->T3_1 = alloc_pointer();
+  sc->T3_2 = alloc_pointer();
+  sc->T3_3 = alloc_pointer();
 
   set_type(sc->T3_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
   car(sc->T3_1) = sc->NIL;
@@ -60263,12 +60273,12 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * timing info
- * bench    42736                     8752 8130
- * lint     13424 1231 1326 1320 1270 1245 1154
- *                               9811 9786 7966
- * index    44300 4988 4725 3935 3477 3291 3070
+ * bench    42736                     8752 8119
+ * lint     13424 1231 1326 1320 1270 1245 1152
+ *                               9811 9786 7961
+ * index    44300 4988 4725 3935 3477 3291 3005
  * s7test         1721 1456 1430 1375 1358 1305
- * t455            265  256  218        89   59
+ * t455            265  256  218        89   57
  * t502                  90   72        43   39
  * lat             229        63             52
  *
