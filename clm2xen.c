@@ -4816,6 +4816,9 @@ output, dur is the number of samples to write. mx is a mixer, revmx is either #f
 
 
 #define S_oscil_bank "oscil-bank"
+static int oscil_bank_size = 0;
+static mus_any **oscil_bank_gens = NULL;
+static double *oscil_bank_amps = NULL, *oscil_bank_fms = NULL;
 
 static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN sweeps)
 {
@@ -4844,7 +4847,17 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
   x_oscs = XEN_VECTOR_ELEMENTS(oscs);
 #endif
 
-  oscils = (mus_any **)malloc(size * sizeof(mus_any *));
+  if (size > oscil_bank_size)
+    {
+      if (oscil_bank_gens) free(oscil_bank_gens);
+      if (oscil_bank_amps) free(oscil_bank_amps);
+      if (oscil_bank_fms) free(oscil_bank_fms);
+      oscil_bank_size = size;
+      oscil_bank_gens = (mus_any **)malloc(size * sizeof(mus_any *));
+      oscil_bank_amps = (double *)malloc(size * sizeof(double));
+      oscil_bank_fms = (double *)malloc(size * sizeof(double));
+    }
+  oscils = oscil_bank_gens;
   for (i = 0; i < size; i++)
     {
       oscils[i] = XEN_TO_MUS_ANY(xen_vector_ref(oscs, i));
@@ -4855,7 +4868,6 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
     {
       for (i = 0; i < size; i++)
 	sum += mus_oscil_unmodulated(oscils[i]);
-      free(oscils);
       return(C_TO_XEN_DOUBLE(sum));
     }
 
@@ -4873,11 +4885,10 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
 	{
 	  for (i = 0; i < size; i++)
 	    sum += XEN_TO_C_DOUBLE(xen_vector_ref(amps, i)) * mus_oscil_unmodulated(oscils[i]);
-	  free(oscils);
 	  return(C_TO_XEN_DOUBLE(sum));
 	}
 
-      ampls = (double *)malloc(size * sizeof(double));
+      ampls = oscil_bank_amps;
       for (i = 0; i < size; i++)
 	ampls[i] = XEN_TO_C_DOUBLE(xen_vector_ref(amps, i));
     }
@@ -4887,7 +4898,6 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
 	{
 	  for (i = 0; i < size; i++)
 	    sum += mus_oscil_unmodulated(oscils[i]);
-	  free(oscils);
 	  return(C_TO_XEN_DOUBLE(sum));
 	}
     }
@@ -4902,7 +4912,7 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
       x_freqs = XEN_VECTOR_ELEMENTS(freqs);
 #endif
 
-      fms = (double *)malloc(size * sizeof(double));
+      fms = oscil_bank_fms;
       for (i = 0; i < size; i++)
 	fms[i] = XEN_TO_C_DOUBLE(xen_vector_ref(freqs, i));
     }
@@ -4915,14 +4925,12 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
 	    {
 	      for (i = 0; i < size; i++)
 		sum += ampls[i] * mus_oscil_fm(oscils[i], fms[i]);
-	      free(fms);
 	    }
 	  else
 	    {
 	      for (i = 0; i < size; i++)
 		sum += ampls[i] * mus_oscil_unmodulated(oscils[i]);
 	    }
-	  free(ampls);
 	}
       else
 	{
@@ -4930,7 +4938,6 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
 	    {
 	      for (i = 0; i < size; i++)
 		sum += mus_oscil_fm(oscils[i], fms[i]);
-	      free(fms);
 	    }
 	  else
 	    {
@@ -4938,7 +4945,6 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
 		sum += mus_oscil_unmodulated(oscils[i]);
 	    }
 	}
-      free(oscils);
       return(C_TO_XEN_DOUBLE(sum));
     }
 
@@ -4965,9 +4971,6 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
       xen_vector_set(freqs, i, C_TO_XEN_DOUBLE(fms[i] + XEN_TO_C_DOUBLE(xen_vector_ref(sweeps, i))));
     }
   
-  free(oscils);
-  free(ampls);
-  free(fms);
   return(C_TO_XEN_DOUBLE(sum));
 }
 

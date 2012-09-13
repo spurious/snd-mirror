@@ -984,17 +984,8 @@ typedef struct s7_cell {
       unsigned int length;
       unsigned int hash;  
       char *svalue;
-#if 0
-      union {
-	bool needs_free;
-	s7_pointer (*finder)(s7_scheme *sc, s7_pointer sym);
-	/* if these bits are used, remember the gensym maker sets string_needs_free to false currently --
-	 *    perhaps in that case, make sure no add_string?
-	 */
-      } sf;
-#else
       bool needs_free;
-#endif
+
       /* extra data for symbols which always have a string name field (hash field is also used specially by symbols) */
       s7_pointer initial_slot;
     } string;
@@ -1227,7 +1218,7 @@ struct s7_scheme {
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE;
   s7_pointer SET, QQ_List, QQ_Apply_Values, QQ_Append, Multivector;
   s7_pointer Apply, Vector;
-  s7_pointer WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
+  s7_pointer WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO, WTA1, WTA2, WTA3, WTA4, WTA5;
   s7_pointer SIMPLE_WRONG_TYPE_ARG_INFO, SIMPLE_OUT_OF_RANGE_INFO, DIVISION_BY_ZERO, DIVISION_BY_ZERO_ERROR;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS;
@@ -2166,19 +2157,15 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 #define WITH_COUNTS 0
 #if WITH_COUNTS
 #if 1
-#if 0
-#define NUM_COUNTS 512
+#if 1
+#define NUM_COUNTS 8192
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
-static void tick(int this) {counts[this]++;}
+static void tick(int this) {if (this < 8192) counts[this]++; else counts[8191]++;}
 static void report_counts(s7_scheme *sc)
 {
-  int i, mx, mxi, total = 0;
+  int i, mx, mxi;
   bool happy = true;
-
-  for (i = 0; i < NUM_COUNTS; i++)
-    total += counts[i];
-  fprintf(stderr, "total: %d \n", total);
 
   while (happy)
     {
@@ -2193,7 +2180,7 @@ static void report_counts(s7_scheme *sc)
 	}
       if (mx > 0)
 	{
-	  fprintf(stderr, "%s: %d\n", opt_names[mxi], mx);
+	  fprintf(stderr, "%d: %d\n", mxi, mx);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -2562,6 +2549,38 @@ static void mark_symbol(s7_pointer p)
 }
 
 
+/* ports can be alloc'd and freed at a frightening pace, so I think I'll make a special free_heap for them.
+ */
+static unsigned int port_heap_size = 0, port_heap_loc = 0;
+static s7_port_t **port_heap = NULL;
+
+static s7_port_t *alloc_port(void)
+{
+  if (port_heap_loc > 0)
+    return(port_heap[--port_heap_loc]);
+  return((s7_port_t *)calloc(1, sizeof(s7_port_t)));
+}
+
+
+static void free_port(s7_port_t *p)
+{
+  if (port_heap_loc == port_heap_size)
+    {
+      if (port_heap_size == 0)
+	{
+	  port_heap_size = 8;
+	  port_heap = (s7_port_t **)malloc(port_heap_size * sizeof(s7_port_t *));
+	}
+      else
+	{
+	  port_heap_size *= 2;
+	  port_heap = (s7_port_t **)realloc(port_heap, port_heap_size * sizeof(s7_port_t *));
+	}
+    }
+  port_heap[port_heap_loc++] = p;
+}
+
+
 static void sweep(s7_scheme *sc)
 {
   int i, j;
@@ -2683,9 +2702,7 @@ static void sweep(s7_scheme *sc)
 		  free(port_filename(a));
 		  port_filename(a) = NULL;
 		}
-	      
-	      free(port_port(a));
-	      
+	      free_port(port_port(a));
 	    }
 	  else sc->input_ports[j++] = sc->input_ports[i];
 	}
@@ -2699,7 +2716,7 @@ static void sweep(s7_scheme *sc)
 	  if (type(sc->output_ports[i]) == 0)
 	    {
 	      s7_close_output_port(sc, sc->output_ports[i]);
-	      free(port_port(sc->output_ports[i]));
+	      free_port(port_port(sc->output_ports[i]));
 	    }
 	  else sc->output_ports[j++] = sc->output_ports[i];
 	}
@@ -7628,19 +7645,6 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
 }
 
 
-static char *pad_number(const char *p, int len, int width)
-{
-  char *p1;
-  int spaces;
-  spaces = width - len;
-  p1 = (char *)malloc((width + 1) * sizeof(char));
-  p1[width] = '\0';
-  memset((void *)p1, (int)' ', spaces);
-  memcpy((void *)(p1 + spaces), (void *)p, len);
-  return(p1);
-}
-
-
 static char *integer_to_string_base_10_no_width(s7_pointer obj, int *nlen) /* do not free the returned string */
 {
   #define INT_TO_STR_SIZE 64
@@ -7697,7 +7701,19 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
     case T_RATIO:
       len = snprintf(num_to_str, num_to_str_size, "%lld/%lld", (long long int)numerator(obj), (long long int)denominator(obj));
       if (width > len)
-	return(pad_number(num_to_str, len, width));
+	{
+	  int spaces;
+	  if (width >= num_to_str_size)
+	    {
+	      num_to_str_size = width + 1;
+	      num_to_str = (char *)realloc(num_to_str, num_to_str_size * sizeof(char));
+	    }
+	  spaces = width - len;
+	  num_to_str[width] = '\0';
+	  memmove((void *)(num_to_str + spaces), (void *)num_to_str, len);    
+	  memset((void *)num_to_str, (int)' ', spaces);	    
+	  (*nlen) = width;
+	}
       else (*nlen) = len;
       break;
       
@@ -7711,6 +7727,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 	else frmt = (float_choice == 'g') ? "%*.*Lg" : ((float_choice == 'f') ? "%*.*Lf" : "%*.*Le");
 
 	len = snprintf(num_to_str, num_to_str_size, frmt, width, precision, s7_real(obj));
+	(*nlen) = len;
 	for (i = 0; i < len; i++) /* does it have an exponent (if so, it's already a float) */
 	  if (num_to_str[i] == 'e')
 	    {
@@ -7726,6 +7743,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 		num_to_str[i]='.';
 		num_to_str[i + 1]='0';
 		num_to_str[i + 2]='\0';
+		(*nlen) = i + 2;
 	      }
 	  }
       }
@@ -7748,8 +7766,21 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 	  }
 
 	len = snprintf(num_to_str, num_to_str_size, frmt, precision, real_part(obj), precision, imag_part(obj));
-	if (width > len)
-	  return(pad_number(num_to_str, len, width));  /* (format #f "~20g" 1+i) */
+	if (width > len)  /* (format #f "~20g" 1+i) */
+	  {
+	    int spaces;
+	    if (width >= num_to_str_size)
+	      {
+		num_to_str_size = width + 1;
+		num_to_str = (char *)realloc(num_to_str, num_to_str_size * sizeof(char));
+	      }
+	    spaces = width - len;
+	    num_to_str[width] = '\0';
+	    memmove((void *)(num_to_str + spaces), (void *)num_to_str, len);    
+	    memset((void *)num_to_str, (int)' ', spaces);	    
+	    (*nlen) = width;
+	  }
+	else (*nlen) = len;
       }
       break;
     }
@@ -7760,7 +7791,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice, int *nlen)
 {
   char *p, *n, *d;
-  int len;
+  int len, str_len;
 
 #if WITH_GMP
   if (s7_is_bignum(obj))
@@ -7794,6 +7825,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	s7_Int_to_string(d, denominator(obj), radix, 0);
 	p = (char *)malloc(256 * sizeof(char));
 	len = snprintf(p, 256, "%s/%s", n, d);
+	str_len = 256;
       }
       break;
       
@@ -7843,6 +7875,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	d[i] = '\0';
 	p = (char *)malloc(256 * sizeof(char));
 	len = snprintf(p, 256, "%s%s.%s", (sign) ? "-" : "", n, d);
+	str_len = 256;
       }
       break;
 
@@ -7851,6 +7884,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
       n = number_to_string_with_radix(sc, make_real(sc, real_part(obj)), radix, 0, precision, float_choice, &len);
       d = number_to_string_with_radix(sc, make_real(sc, imag_part(obj)), radix, 0, precision, float_choice, &len);
       len = snprintf(p, 512, "%s%s%si", n, (imag_part(obj) < 0.0) ? "" : "+", d);
+      str_len = 512;
       free(n);
       free(d);
       break;
@@ -7858,12 +7892,19 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 
   if (width > len)
     {
-      char *p1;
-      p1 = pad_number(p, len, width);
-      free(p);
-      return(p1);
+      int spaces;
+      if (width >= str_len)
+	{
+	  str_len = width + 1;
+	  p = (char *)realloc(p, str_len * sizeof(char));
+	}
+      spaces = width - len;
+      p[width] = '\0';
+      memmove((void *)(p + spaces), (void *)p, len);    
+      memset((void *)p, (int)' ', spaces);	    
+      (*nlen) = width;
     }
-  (*nlen) = len;
+  else (*nlen) = len;
   return(p);
 }
 
@@ -17196,7 +17237,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
   string_value(x) = str;
   string_length(x) = len;
   string_hash(x) = 0;
-  string_needs_free(x) = true; /*assume caller has passed us a copy */
+  string_needs_free(x) = true;
   add_string(sc, x);
   return(x);
 }
@@ -18639,8 +18680,12 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
     }
   else
     {
-      if ((is_string_port(p)) && (port_string(p)))
+      if ((is_string_port(p)) && 
+	  (port_string(p)))
 	{
+#if WITH_COUNTS
+	  tick(port_string_point(p));
+#endif
 	  free(port_string(p));
 	  port_string(p) = NULL;
 	  port_needs_free(p) = false;
@@ -18908,7 +18953,7 @@ static void stderr_write_string(s7_scheme *sc, const char *str, int len, s7_poin
 static void string_write_string(s7_scheme *sc, const char *str, int len, s7_pointer pt)
 {
   int new_len;
-  if (len == 0) return;
+  /* len is known to be non-zero */
 
   new_len = port_string_point(pt) + len;
   if (new_len >= (int)port_string_length(pt))
@@ -19269,7 +19314,6 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt, bool atom_case)
 }
 
 
-
 static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_size, const char *caller)
 {
   s7_pointer port;
@@ -19280,7 +19324,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   NEW_CELL(sc, port);
   port_loc = s7_gc_protect(sc, port);
   set_type(port, T_INPUT_PORT);
-  port_port(port) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(port) = alloc_port();
   port_is_closed(port) = false;
   port_original_input_string(port) = sc->NIL;
   port_write_character(port) = input_write_char;
@@ -19529,7 +19573,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = alloc_port();
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename_length(x) = safe_strlen(name);
@@ -19579,7 +19623,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   NEW_CELL(sc, x);
   set_type(x, T_INPUT_PORT);
   
-  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = alloc_port();
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -19618,6 +19662,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 
 
 #define STRING_PORT_INITIAL_LENGTH 128
+/* the large majority (> 99% in my tests) of the output strings have less than 128 chars when the port is finally closed */
 
 s7_pointer s7_open_output_string(s7_scheme *sc)
 {
@@ -19625,7 +19670,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = alloc_port();
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
@@ -19679,7 +19724,7 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
   NEW_CELL(sc, x);
   set_type(x, T_INPUT_PORT);
   
-  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = alloc_port();
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -19701,7 +19746,7 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT);
   
-  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = alloc_port();
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_needs_free(x) = false;
@@ -20001,10 +20046,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
   if ((is_string_port(port)) &&
       (port_string_length(port) <= port_string_point(port)))
     return(sc->EOF_OBJECT);
-  /*
-  fprintf(stderr, "read %p %d %c %s\n", port, port_string_point(port), port_string(port)[port_string_point(port)],
-	  (char *)(port_string(port) + port_string_point(port)));
-  */
+
   push_input_port(sc, port);
   push_stack(sc, OP_READ_DONE, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
@@ -21414,14 +21456,16 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	    {
 	      s7_pointer p;
 	      p = s7_apply_function(sc, print_func, list_1(sc, obj));
-	      port_write_string(port)(sc, string_value(p), string_length(p), port);
+	      if (string_length(p) > 0)
+		port_write_string(port)(sc, string_value(p), string_length(p), port);
 	      break;
 	    }
 	}
       {
 	const char *p;
 	p = c_closure_name(sc, obj, &nlen);
-	port_write_string(port)(sc, p, nlen, port);
+	if (nlen > 0)
+	  port_write_string(port)(sc, p, nlen, port);
       }
       break;
   
@@ -21473,7 +21517,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 	    {
 	      s7_pointer p;
 	      p = s7_apply_function(sc, print_func, list_1(sc, obj));
-	      port_write_string(port)(sc, string_value(p), string_length(p), port);
+	      if (string_length(p) > 0)
+		port_write_string(port)(sc, string_value(p), string_length(p), port);
 	      break;
 	    }
 	}
@@ -21617,6 +21662,9 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_wri
 
   str = port_string(strport);
   if (nlen) (*nlen) = port_string_point(strport);
+#if WITH_COUNTS
+  tick(port_string_point(strport));
+#endif
   port_string(strport) = NULL;
   port_needs_free(strport) = false;
   s7_close_output_port(sc, strport);
@@ -22259,7 +22307,8 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    char *s;
 		    int nlen = 0;
 		    s = s7_object_to_c_string_1(sc, obj, (str[i] == 'S') || (str[i] == 's'), &nlen);
-		    format_append_string(sc, fdat, s, nlen, port);
+		    if (nlen > 0)
+		      format_append_string(sc, fdat, s, nlen, port);
 		    free(s);
 		  }
 
@@ -22445,10 +22494,14 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
     {
       s7_pointer result;
 
-      if (is_output_port(deferred_port))
+      if ((is_output_port(deferred_port)) &&
+	  (port_string_point(port) > 0))
 	port_write_string(deferred_port)(sc, port_string(port), port_string_point(port), deferred_port);
 
       result = make_string_uncopied_with_length(sc, port_string(port), port_string_point(port));
+#if WITH_COUNTS
+      tick(port_string_point(port));
+#endif
       port_string(port) = NULL;
       port_needs_free(port) = false;
       s7_close_output_port(sc, port);
@@ -30560,11 +30613,11 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
 static s7_pointer wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, s7_pointer typnam, s7_pointer descr)
 {
   /* info list is '(format_string caller arg_n arg type_name descr) */
-  list_set(sc, sc->WRONG_TYPE_ARG_INFO, 1, caller);
-  list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, arg_n);
-  list_set(sc, sc->WRONG_TYPE_ARG_INFO, 3, arg);
-  list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, typnam);
-  list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, descr);
+  car(sc->WTA1) = caller;
+  car(sc->WTA2) = arg_n;
+  car(sc->WTA3) = arg;
+  car(sc->WTA4) = typnam;
+  car(sc->WTA5) = descr;
   return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->WRONG_TYPE_ARG_INFO));
 }
 
@@ -31148,8 +31201,7 @@ It looks for an existing catch with a matching tag, and jumps to it if found.  O
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
   bool reset_error_hook = false;
-  const char *call_name = NULL, *call_file = NULL;
-  int call_line = 0;
+  const char *call_name = NULL;
 
   /* fprintf(stderr, "error: %s %s\n", DISPLAY(type), DISPLAY(info)); */
 
@@ -31165,24 +31217,14 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   if (sc->safe_do_level != 0)
     set_safe_do_level(sc, 0); 
 
-  if (sc->s7_call_name)
-    {
-      call_name = sc->s7_call_name;
-      call_file = sc->s7_call_file;
-      call_line = sc->s7_call_line;
-      sc->s7_call_name = NULL;
-      sc->s7_call_file = NULL;
-      sc->s7_call_line = -1;
-    }
-
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
   slot_set_value(sc->error_code, sc->cur_code);
-  slot_set_value(sc->error_line, sc->F);
-  slot_set_value(sc->error_file, sc->F);
   next_environment(sc->error_env) = sc->envir;
 
   s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
+  call_name = sc->s7_call_name;
+  sc->s7_call_name = NULL;
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
   if ((is_pair(sc->cur_code)) &&
@@ -31190,14 +31232,21 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     {
       int line;
       line = pair_line_number(sc->cur_code);
-
-      if ((line > 0) &&
-	  (remembered_line_number(line) != 0) &&
-	  (remembered_file_name(line) != sc->F))
+      if (line > 0)
 	{
 	  slot_set_value(sc->error_line, make_integer(sc, remembered_line_number(line))); 
 	  slot_set_value(sc->error_file, remembered_file_name(line));	  
 	}
+      else
+	{
+	  slot_set_value(sc->error_line, sc->F);
+	  slot_set_value(sc->error_file, sc->F);
+	}
+    }
+  else
+    {
+      slot_set_value(sc->error_line, sc->F);
+      slot_set_value(sc->error_file, sc->F);
     }
 
   sc->cur_code = sc->F;
@@ -31292,16 +31341,18 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	}
       else
 	{
-	  if ((call_file != NULL) &&
-	      (call_name != NULL) &&
-	      (call_line >= 0))
+	  if (call_name)
 	    {
-	      format_to_port(sc, error_port, "\n;  ~A ~A[~D]",
-			     list_3(sc, 
-				    make_protected_string(sc, call_name), 
-				    make_protected_string(sc, call_file), 
-				    make_integer(sc, call_line)), 
-			     NULL, false);
+	      if ((sc->s7_call_file != NULL) &&
+		  (sc->s7_call_line >= 0))
+		{
+		  format_to_port(sc, error_port, "\n;  ~A ~A[~D]",
+				 list_3(sc, 
+					make_protected_string(sc, call_name), 
+					make_protected_string(sc, sc->s7_call_file), 
+					make_integer(sc, sc->s7_call_line)), 
+				 NULL, false);
+		}
 	    }
 	}
       s7_newline(sc, error_port);
@@ -33150,146 +33201,148 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
   int c;
   /* inchar can return EOF, so it can't be used directly as an index into the digits array */
   c = inchar(pt);
-  if (c == EOF)
-    s7_error(sc, sc->READ_ERROR,
-	     list_1(sc, make_protected_string(sc, "unexpected '#' at end of input")));
-
-  sc->w = small_int(1);
-  if (c == '(') 
-    return(TOKEN_VECTOR);
-
-  if (isdigit(c)) /* #2D(...) */
+  switch (c)
     {
-      /* here we can get an overflow: #1231231231231232131D() 
-       *   and we can't shrug it off:
-       *   :#2147483649123D()
-       *   ;#nD(...) dimensions argument 1, -2147483647, is out of range (must be 1 or more)
-       * but
-       *   :#2147483649123D()
-       *   creates a vector with 512 dimensions!
-       * ndims in the vector struct is an unsigned int, so we'll complain if it goes over short max for now
-       */
-      s7_Int dims;
-      int dig, d, loc = 0;
-      sc->strbuf[loc++] = c;
-      dims = digits[c];
-
-      while (true)
-	{
-	  d = inchar(pt);
-	  if (d == EOF)
-	    s7_error(sc, sc->READ_ERROR,
-		     list_1(sc, make_protected_string(sc, "unexpected end of input while reading #n...")));
-
-	  dig = digits[d];
-	  if (dig >= 10) break;
-	  dims = dig + (dims * 10);
-	  if ((dims <= 0) ||
-	      (dims > S7_SHORT_MAX))
-	    s7_error(sc, sc->READ_ERROR,
-		     list_2(sc, make_protected_string(sc, "overflow while reading #nD: ~A"), make_integer(sc, dims)));
-	  sc->strbuf[loc++] = d;
-	}
-      sc->strbuf[loc++] = d;
-      if ((d == 'D') || (d == 'd'))
-	{
-	  d = inchar(pt);
-	  if (d == EOF)
-	    s7_error(sc, sc->READ_ERROR,
-		     list_1(sc, make_protected_string(sc, "unexpected end of input while reading #nD...")));
-	  sc->strbuf[loc++] = d;
-	  if (d == '(')
-	    {
-	      sc->w = make_integer(sc, dims);
-	      return(TOKEN_VECTOR);
-	    }
-	}
-
-      /* try to back out */
-      for (d = loc - 1; d > 0; d--)
-	backchar(sc->strbuf[d], pt);
-    }
-
+    case EOF:
+      s7_error(sc, sc->READ_ERROR,
+	       list_1(sc, make_protected_string(sc, "unexpected '#' at end of input")));
+      break;
+      
+    case '(':
+      sc->w = small_int(1);
+      return(TOKEN_VECTOR);
+      
+    case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+      {
+	/* here we can get an overflow: #1231231231231232131D() 
+	 *   and we can't shrug it off:
+	 *   :#2147483649123D()
+	 *   ;#nD(...) dimensions argument 1, -2147483647, is out of range (must be 1 or more)
+	 * but
+	 *   :#2147483649123D()
+	 *   creates a vector with 512 dimensions!
+	 * ndims in the vector struct is an unsigned int, so we'll complain if it goes over short max for now
+	 */
+	s7_Int dims;
+	int dig, d, loc = 0;
+	sc->strbuf[loc++] = c;
+	dims = digits[c];
+	
+	while (true)
+	  {
+	    d = inchar(pt);
+	    if (d == EOF)
+	      s7_error(sc, sc->READ_ERROR,
+		       list_1(sc, make_protected_string(sc, "unexpected end of input while reading #n...")));
+	    
+	    dig = digits[d];
+	    if (dig >= 10) break;
+	    dims = dig + (dims * 10);
+	    if ((dims <= 0) ||
+		(dims > S7_SHORT_MAX))
+	      s7_error(sc, sc->READ_ERROR,
+		       list_2(sc, make_protected_string(sc, "overflow while reading #nD: ~A"), make_integer(sc, dims)));
+	    sc->strbuf[loc++] = d;
+	  }
+	sc->strbuf[loc++] = d;
+	if ((d == 'D') || (d == 'd'))
+	  {
+	    d = inchar(pt);
+	    if (d == EOF)
+	      s7_error(sc, sc->READ_ERROR,
+		       list_1(sc, make_protected_string(sc, "unexpected end of input while reading #nD...")));
+	    sc->strbuf[loc++] = d;
+	    if (d == '(')
+	      {
+		sc->w = make_integer(sc, dims);
+		return(TOKEN_VECTOR);
+	      }
+	  }
+	
+	/* try to back out */
+	for (d = loc - 1; d > 0; d--)
+	  backchar(sc->strbuf[d], pt);
+      }
+      break;
+      
 #if (!S7_DISABLE_DEPRECATED)
-  if (c == ':')  /* turn #: into : -- this is for compatiblity with Guile, #:optional in particular */
-    {
+    case ':':  /* turn #: into : -- this is for compatibility with Guile, #:optional in particular */
       sc->strbuf[0] = ':';
       return(TOKEN_ATOM);
-    }
-
-  /* block comments in either #! ... !# */
-  if (c == '!') 
-    {
-      char last_char;
-      last_char = ' ';
-      while ((c = inchar(pt)) != EOF)
-	{
-	  if ((c == '#') &&
-	      (last_char == '!'))
-	    break;
-	  last_char = c;
-	}
-      if (c == EOF)
-	s7_error(sc, sc->READ_ERROR,
-		 list_1(sc, make_protected_string(sc, "unexpected end of input while reading #!")));
-      return(token(sc));
-    }
+      
+      /* block comments in either #! ... !# */
+    case '!':
+      {
+	char last_char;
+	last_char = ' ';
+	while ((c = inchar(pt)) != EOF)
+	  {
+	    if ((c == '#') &&
+		(last_char == '!'))
+	      break;
+	    last_char = c;
+	  }
+	if (c == EOF)
+	  s7_error(sc, sc->READ_ERROR,
+		   list_1(sc, make_protected_string(sc, "unexpected end of input while reading #!")));
+	return(token(sc));
+      }
 #endif
       
-  /* block comments in #| ... |# 
-   *   since we ignore everything until the |#, internal semicolon comments are ignored,
-   *   meaning that ;|# is as effective as |#
-   */
-  if (c == '|') 
-    {
-      char last_char;
-      last_char = ' ';
-
-      if (is_file_port(pt))
-	{
-	  while ((c = fgetc(port_file(pt))) != EOF)
-	    {
-	      if ((c == '#') &&
-		  (last_char == '|'))
-		break;
-	      last_char = c;
-	      if (c == '\n')
-		port_line_number(pt)++;
-	    }
-	}
-      else 
-	{
-	  if ((!(port_string(pt))) ||
-	      (port_string_length(pt) <= port_string_point(pt)))
-	    c = EOF;
-	  else
-	    {
-	      while ((c = (unsigned char)port_string(pt)[port_string_point(pt)++]) != EOF)
-		{
-		  if ((c == '#') &&
-		      (last_char == '|'))
-		    break;
-		  last_char = c;
-		  if (c == '\n')
-		    port_line_number(pt)++;
-		  if (port_string_length(pt) <= port_string_point(pt))
-		    {
-		      c = EOF;
+      /* block comments in #| ... |# 
+       *   since we ignore everything until the |#, internal semicolon comments are ignored,
+       *   meaning that ;|# is as effective as |#
+       */
+    case '|':
+      {
+	char last_char;
+	last_char = ' ';
+	
+	if (is_file_port(pt))
+	  {
+	    while ((c = fgetc(port_file(pt))) != EOF)
+	      {
+		if ((c == '#') &&
+		    (last_char == '|'))
+		  break;
+		last_char = c;
+		if (c == '\n')
+		  port_line_number(pt)++;
+	      }
+	  }
+	else 
+	  {
+	    if ((!(port_string(pt))) ||
+		(port_string_length(pt) <= port_string_point(pt)))
+	      c = EOF;
+	    else
+	      {
+		while ((c = (unsigned char)port_string(pt)[port_string_point(pt)++]) != EOF)
+		  {
+		    if ((c == '#') &&
+			(last_char == '|'))
 		      break;
-		    }
-		}
-	    }
-	}
-      if (c == EOF)
-	s7_error(sc, sc->READ_ERROR,
-		 list_1(sc, make_protected_string(sc, "unexpected end of input while reading #|")));
-      return(token(sc));
+		    last_char = c;
+		    if (c == '\n')
+		      port_line_number(pt)++;
+		    if (port_string_length(pt) <= port_string_point(pt))
+		      {
+			c = EOF;
+			break;
+		      }
+		  }
+	      }
+	  }
+	if (c == EOF)
+	  s7_error(sc, sc->READ_ERROR,
+		   list_1(sc, make_protected_string(sc, "unexpected end of input while reading #|")));
+	return(token(sc));
+      }
     }
-      
+  
   sc->strbuf[0] = c; 
   return(TOKEN_SHARP_CONST); /* next stage notices any errors */
 }    
-
 
 
 static token_t read_comma(s7_scheme *sc, s7_pointer pt)
@@ -34321,6 +34374,7 @@ static s7_pointer g_format_allg(s7_scheme *sc, s7_pointer args)
 {
   return(g_format_1(sc, args, (main_stack_op(sc) != OP_BEGIN1)));
 }
+
 static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer pt;
@@ -41614,8 +41668,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
-  /* fprintf(stderr, "eval: %s %s\n", DISPLAY_80(sc->code), DISPLAY_80(sc->args)); */
-
   sc->cur_code = sc->F;
   sc->op = first_op;
   
@@ -54572,10 +54624,13 @@ static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width,
       len = safe_strlen(str);
       if (width > len)
 	{
-	  char *p1;
-	  p1 = pad_number(str, len, width);
-	  free(str);
-	  return(p1);
+	  int spaces;
+	  str = (char *)realloc(p, (width + 1) * sizeof(char));
+	  spaces = width - len;
+	  str[width] = '\0';
+	  memmove((void *)(str + spaces), (void *)str, len);    
+	  memset((void *)str, (int)' ', spaces);
+	  (*nlen) = width;
 	}
       else (*nlen) = len;
     }
@@ -59459,8 +59514,19 @@ s7_scheme *s7_init(void)
 
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
   for (i = 0; i < 6; i++)
-    sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR);
+    {
+      sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR);
+      switch (5 - i)
+	{
+	case 1: sc->WTA1 = sc->WRONG_TYPE_ARG_INFO; break;
+	case 2: sc->WTA2 = sc->WRONG_TYPE_ARG_INFO; break;
+	case 3: sc->WTA3 = sc->WRONG_TYPE_ARG_INFO; break;
+	case 4: sc->WTA4 = sc->WRONG_TYPE_ARG_INFO; break;
+	case 5: sc->WTA5 = sc->WRONG_TYPE_ARG_INFO; break;
+	}
+    }
   car(sc->WRONG_TYPE_ARG_INFO) = s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A");
+
 
   sc->SIMPLE_WRONG_TYPE_ARG_INFO = sc->NIL;
   for (i = 0; i < 5; i++)
@@ -60275,10 +60341,10 @@ s7_scheme *s7_init(void)
  * timing info
  * bench    42736                     8752 8119
  * lint     13424 1231 1326 1320 1270 1245 1152
- *                               9811 9786 7961
+ *                               9811 9786 7940
  * index    44300 4988 4725 3935 3477 3291 3005
  * s7test         1721 1456 1430 1375 1358 1305
- * t455            265  256  218        89   57
+ * t455            265  256  218        89   55
  * t502                  90   72        43   39
  * lat             229        63             52
  *
