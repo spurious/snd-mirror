@@ -48055,25 +48055,23 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-30-Jul:
-276,304,433,884  PROGRAM TOTALS
-80,404,319,549  s7.c:eval [/home/bil/snd-13/snd]
-19,841,123,296  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-15,086,226,626  ???:sin [/lib64/libm-2.12.so]
-14,006,022,537  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
-11,011,964,098  s7.c:gc [/home/bil/snd-13/snd]
- 8,912,322,193  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 8,862,453,220  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 7,528,599,890  s7.c:eval'2 [/home/bil/snd-13/snd]
- 6,494,693,271  io.c:mus_write_1 [/home/bil/snd-13/snd]
- 4,746,771,406  s7.c:make_real_1 [/home/bil/snd-13/snd]
- 4,371,202,120  s7.c:g_add [/home/bil/snd-13/snd]
- 4,349,585,922  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 4,005,108,335  s7.c:g_multiply_2 [/home/bil/snd-13/snd]
- 3,040,691,972  clm.c:mus_src [/home/bil/snd-13/snd]
+13-Sep-12:
+270,003,465,492
+78,738,553,232  s7.c:eval [/home/bil/snd-13/snd]
+21,765,693,733  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+15,080,039,576  ???:sin [/lib64/libm-2.12.so]
+14,765,561,228  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 9,738,496,167  s7.c:gc [/home/bil/snd-13/snd]
+ 9,189,127,295  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 8,903,881,488  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
+ 7,469,742,860  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 6,502,241,821  io.c:mus_write_1 [/home/bil/snd-13/snd]
+ 4,762,536,132  s7.c:make_real_1 [/home/bil/snd-13/snd]
+ 4,365,520,143  s7.c:g_add [/home/bil/snd-13/snd]
+ 4,180,583,530  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 3,447,278,886  s7.c:g_multiply_2 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,448,212,416  s7.c:g_add_2 [/home/bil/snd-13/snd]
- 2,042,493,770  s7.c:g_subtract_2 [/home/bil/snd-13/snd]
- 2,000,294,016  ???:cos [/lib64/libm-2.12.so]
-
+ 2,655,574,255  clm.c:mus_src [/home/bil/snd-13/snd]
+ 2,034,654,197  s7.c:g_add_2 [/home/bil/snd-13/snd]
+ 1,999,836,403  ???:cos [/lib64/libm-2.12.so]
 |#
