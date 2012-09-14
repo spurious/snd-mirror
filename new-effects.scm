@@ -8,7 +8,7 @@
 (if (not (provided? 'snd-rubber.scm)) (load "rubber.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
 
-(define effects-list '()) ; menu labels are updated to show current settings
+(define effects-list ()) ; menu labels are updated to show current settings
 
 (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
 
@@ -177,7 +177,7 @@
 		 (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
 
 
-(let* ((amp-menu-list '())
+(let* ((amp-menu-list ())
        (amp-menu (XmCreatePulldownMenu (main-menu effects-menu) "Amplitude Effects"
 				       (list XmNbackground (basic-color))))
        (amp-cascade (XtCreateManagedWidget "Amplitude Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
@@ -196,7 +196,7 @@
     
     (define (scale-envelope e scl)
       (if (null? e)
-	  '()
+	  ()
 	  (append (list (car e) (* scl (cadr e)))
 		  (scale-envelope (cddr e) scl))))
     
@@ -204,7 +204,7 @@
       (if (not (Widget? gain-dialog))
 	  ;; if gain-dialog doesn't exist, create it
 	  (let ((initial-gain-amount 1.0)
-		(sliders '())
+		(sliders ())
 		(fr #f))
 	    (set! gain-dialog
 		  (make-effect-dialog 
@@ -299,7 +299,7 @@
       (if (not (Widget? normalize-dialog))
 	  ;; if normalize-dialog doesn't exist, create it
 	  (let ((initial-normalize-amount 1.0)
-		(sliders '()))
+		(sliders ()))
 	    (set! normalize-dialog 
 		  (make-effect-dialog 
 		   normalize-label
@@ -365,7 +365,7 @@
       (if (not (Widget? gate-dialog))
 	  ;; if gate-dialog doesn't exist, create it
 	  (let ((initial-gate-amount 0.01)
-		(sliders '()))
+		(sliders ()))
 	    (set! gate-dialog
 		  (make-effect-dialog 
 		   gate-label
@@ -472,7 +472,7 @@
     		 (format #f "effects-zecho-1 ~A ~A ~A ~A ~A ~A ~A" scaler secs frq amp input-samps-1 beg dur))))
 
 
-(let* ((delay-menu-list '())
+(let* ((delay-menu-list ())
        (delay-menu (XmCreatePulldownMenu (main-menu effects-menu) "Delay Effects"
 					 (list XmNbackground (basic-color))))
        (delay-cascade (XtCreateManagedWidget "Delay Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
@@ -494,7 +494,7 @@
 	  ;; if echo-dialog doesn't exist, create it
 	  (let ((initial-delay-time 0.5)
 		(initial-echo-amount 0.2)
-		(sliders '()))
+		(sliders ()))
 	    (set! echo-dialog 
 		  (make-effect-dialog 
 		   echo-label
@@ -586,7 +586,7 @@
 	  ;; if flecho-dialog doesn't exist, create it
 	  (let ((initial-flecho-scaler 0.5)
 		(initial-flecho-delay 0.9)
-		(sliders '()))
+		(sliders ()))
 	    (set! flecho-dialog 
 		  (make-effect-dialog 
 		   flecho-label
@@ -679,7 +679,7 @@
 		(initial-zecho-delay 0.75)
 		(initial-zecho-freq 6)
 		(initial-zecho-amp 10.0)
-		(sliders '()))
+		(sliders ()))
 	    (set! zecho-dialog 
 		  (make-effect-dialog 
 		   zecho-label
@@ -810,7 +810,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		 (format #f "effects-blp ~A ~A ~A" freq beg dur))))
 
 
-(let* ((filter-menu-list '())
+(let* ((filter-menu-list ())
        (filter-menu (XmCreatePulldownMenu (main-menu effects-menu) "Filter Effects"
 					  (list XmNbackground (basic-color))))
        (filter-cascade (XtCreateManagedWidget "Filter Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
@@ -832,7 +832,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	  ;; if band-pass-dialog doesn't exist, create it
 	  (let ((initial-band-pass-freq 1000)
 		(initial-band-pass-bw 100)
-		(sliders '()))
+		(sliders ()))
 	    (set! band-pass-dialog 
 		  (make-effect-dialog 
 		   band-pass-label
@@ -903,7 +903,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	  ;; if notch-dialog doesn't exist, create it
 	  (let ((initial-notch-freq 100)
 		(initial-notch-bw 100)
-		(sliders '()))
+		(sliders ()))
 	    (set! notch-dialog 
 		  (make-effect-dialog 
 		   notch-label
@@ -972,7 +972,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
       (if (not (Widget? high-pass-dialog))
 	  ;; if high-pass-dialog doesn't exist, create it
 	  (let ((initial-high-pass-freq 100)
-		(sliders '()))
+		(sliders ()))
 	    (set! high-pass-dialog 
 		  (make-effect-dialog 
 		   high-pass-label
@@ -1037,7 +1037,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
       (if (not (Widget? low-pass-dialog))
 	  ;; if low-pass-dialog doesn't exist, create it
 	  (let ((initial-low-pass-freq 1000)
-		(sliders '()))
+		(sliders ()))
 	    (set! low-pass-dialog 
 		  (make-effect-dialog 
 		   low-pass-label
@@ -1107,7 +1107,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	  ;; if comb-dialog doesn't exist, create it
 	  (let ((initial-comb-scaler 0.1)
 		(initial-comb-size 50)
-		(sliders '()))
+		(sliders ()))
 	    (set! comb-dialog 
 		  (make-effect-dialog 
 		   comb-label
@@ -1194,7 +1194,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		(initial-new-comb-chord-amp 0.3)
 		(initial-new-comb-chord-interval-one 0.75)
 		(initial-new-comb-chord-interval-two 1.20)
-		(sliders '()))
+		(sliders ()))
 	    (set! new-comb-chord-dialog
 		  (make-effect-dialog 
 		   new-comb-chord-label
@@ -1292,7 +1292,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	  ;; if moog-dialog doesn't exist, create it
 	  (let ((initial-moog-cutoff-frequency 10000)
 		(initial-moog-resonance 0.5)
-		(sliders '()))
+		(sliders ()))
 	    (set! moog-dialog 
 		  (make-effect-dialog 
 		   moog-label
@@ -1353,7 +1353,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 ;;;
 
 
-(let* ((freq-menu-list '())
+(let* ((freq-menu-list ())
        (freq-menu (XmCreatePulldownMenu (main-menu effects-menu) "Frequency Effects"
                                         (list XmNbackground (basic-color))))
        (freq-cascade (XtCreateManagedWidget "Frequency Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
@@ -1405,7 +1405,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
       (if (not (Widget? adsat-dialog))
 	  ;; if adsat-dialog doesn't exist, create it
 	  (let ((initial-adsat-size 4)
-		(sliders '()))
+		(sliders ()))
 	    (set! adsat-dialog
 		  (make-effect-dialog 
 		   adsat-label
@@ -1460,7 +1460,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
       (if (not (Widget? src-dialog))
 	  ;; if src-dialog doesn't exist, create it
 	  (let ((initial-src-amount 0.0)
-		(sliders '()))
+		(sliders ()))
 	    (set! src-dialog
 		  (make-effect-dialog 
 		   src-label
@@ -1530,7 +1530,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		(initial-segment-length 0.15)
 		(initial-ramp-scale 0.5)
 		(initial-pitch-scale 1.0)
-		(sliders '()))
+		(sliders ()))
 	    (set! expsrc-dialog 
 		  (make-effect-dialog 
 		   expsrc-label
@@ -1626,7 +1626,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
     
     (define (scale-envelope e scl)
       (if (null? e)
-	  '()
+	  ()
 	  (append (list (car e) (* scl (cadr e)))
 		  (scale-envelope (cddr e) scl))))
     
@@ -1634,7 +1634,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (if (not (Widget? src-timevar-dialog))
 	  ;; if src-timevar-dialog doesn't exist, create it
 	  (let ((initial-src-timevar-scale 1.0)
-		(sliders '())
+		(sliders ())
 		(fr #f))
 	    (set! src-timevar-dialog
 		  (make-effect-dialog 
@@ -1743,7 +1743,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		 (format #f "effects-rm ~A ~A ~A ~A" freq (if gliss-env (format #f "'~A" gliss-env) #f) beg dur))))
 
 
-(let* ((mod-menu-list '())
+(let* ((mod-menu-list ())
        (mod-menu (XmCreatePulldownMenu (main-menu effects-menu) "Modulation Effects"
 				       (list XmNbackground (basic-color))))
        (mod-cascade (XtCreateManagedWidget "Modulation Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
@@ -1776,7 +1776,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (if (not (Widget? am-effect-dialog))
 	  ;; if am-effect-dialog doesn't exist, create it
 	  (let ((initial-am-effect-amount 100.0)
-		(sliders '())
+		(sliders ())
 		(fr #f))
 	    (set! am-effect-dialog
 		  (make-effect-dialog 
@@ -1874,7 +1874,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	  ;; if rm-dialog doesn't exist, create it
 	  (let ((initial-rm-frequency 100)
 		(initial-rm-radians 100)
-		(sliders '())
+		(sliders ())
 		(fr #f))
 	    (set! rm-dialog
 		  (make-effect-dialog 
@@ -2009,7 +2009,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	       (format #f "effects-jc-reverb-1 ~A ~A ~A" volume beg dur)))
 
 
-(let* ((reverb-menu-list '())
+(let* ((reverb-menu-list ())
        (reverb-menu (XmCreatePulldownMenu (main-menu effects-menu) "Reverbs"
 					  (list XmNbackground (basic-color))))
        (reverb-cascade (XtCreateManagedWidget "Reverbs" xmCascadeButtonWidgetClass (main-menu effects-menu)
@@ -2039,7 +2039,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	  (let ((initial-reverb-amount 0.1)
 		(initial-reverb-filter 0.5)
 		(initial-reverb-feedback 1.09)
-		(sliders '()))
+		(sliders ()))
 	    (set! reverb-dialog 
 		  (make-effect-dialog 
 		   reverb-label
@@ -2124,7 +2124,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	  ;; if jc-reverb-dialog doesn't exist, create it
 	  (let ((initial-jc-reverb-decay 2.0)
 		(initial-jc-reverb-volume 0.1)
-		(sliders '()))
+		(sliders ()))
 	    (set! jc-reverb-dialog
 		  (make-effect-dialog 
 		   jc-reverb-label
@@ -2196,7 +2196,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	  (let ((initial-convolve-sound-one 0)
 		(initial-convolve-sound-two 1)
 		(initial-convolve-amp 0.01)
-		(sliders '()))
+		(sliders ()))
 	    (set! convolve-dialog
 		  (make-effect-dialog 
 		   convolve-label
@@ -2360,7 +2360,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	       beg dur snd chn #f
 	       (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur)))
 
-(let* ((misc-menu-list '())
+(let* ((misc-menu-list ())
        (misc-menu (XmCreatePulldownMenu (main-menu effects-menu) "Various"
                                         (list XmNbackground (basic-color))))
        (misc-cascade (XtCreateManagedWidget "Various" xmCascadeButtonWidgetClass (main-menu effects-menu)
@@ -2398,7 +2398,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 	  (let ((initial-mono-snd 0)
 		(initial-stereo-snd 1)
 		(initial-pan-pos 45)
-		(sliders '())
+		(sliders ())
 		(fr #f))
 	    (set! place-sound-dialog 
 		  (make-effect-dialog 
@@ -2484,7 +2484,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
       (if (not (Widget? silence-dialog))
 	  ;; if silence-dialog doesn't exist, create it
 	  (let ((initial-silence-amount 1.0)
-		(sliders '()))
+		(sliders ()))
 	    (set! silence-dialog
 		  (make-effect-dialog 
 		   silence-label
@@ -2536,7 +2536,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
       (if (not (Widget? contrast-dialog))
 	  ;; if contrast-dialog doesn't exist, create it
 	  (let ((initial-contrast-amount 1.0)
-		(sliders '()))
+		(sliders ()))
 	    (set! contrast-dialog
 		  (make-effect-dialog 
 		   contrast-label
@@ -2611,7 +2611,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		(initial-cross-synth-amp .5)
 		(initial-cross-synth-fft-size 128)
 		(initial-cross-synth-radius 6.0)
-		(sliders '()))
+		(sliders ()))
 	    (set! cross-synth-dialog
 		  (make-effect-dialog 
 		   cross-synth-label
@@ -2787,7 +2787,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	  (let ((initial-flange-speed 2.0)
 		(initial-flange-amount 5.0)
 		(initial-flange-time 0.001)
-		(sliders '()))
+		(sliders ()))
 	    (set! flange-dialog
 		  (make-effect-dialog 
 		   flange-label
@@ -2871,7 +2871,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
       (if (not (Widget? random-phase-dialog))
 	  ;; if random-phase-dialog doesn't exist, create it
 	  (let ((initial-random-phase-amp-scaler 3.14)
-		(sliders '()))
+		(sliders ()))
 	    (set! random-phase-dialog
 		  (make-effect-dialog 
 		   random-phase-label
@@ -2926,7 +2926,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	  (let ((initial-samp-rate 1.0)
 		(initial-osc-amp 0.3)
 		(initial-osc-freq 20)
-		(sliders '()))
+		(sliders ()))
 	    (set! robotize-dialog
 		  (make-effect-dialog 
 		   robotize-label
@@ -3006,7 +3006,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
       (if (not (Widget? rubber-dialog))
 	  ;; if rubber-dialog doesn't exist, create it
 	  (let ((initial-rubber-factor 1.0)
-		(sliders '()))
+		(sliders ()))
 	    (set! rubber-dialog
 		  (make-effect-dialog 
 		   rubber-label
@@ -3065,7 +3065,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	  ;; if wobble-dialog doesn't exist, create it
 	  (let ((initial-wobble-frequency 50)
 		(initial-wobble-amplitude 0.5)
-		(sliders '()))
+		(sliders ()))
 	    (set! wobble-dialog
 		  (make-effect-dialog 
 		   wobble-label

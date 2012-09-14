@@ -45,7 +45,7 @@
   ;; range(n) -> (0, 1, ..., n-1)
   (define (range n)
     (let rec ((i n) 
-	      (res '()))
+	      (res ()))
       (if (positive? i)
 	  (rec (- i 1) (cons (- i 1) res))
 	  res)))
@@ -66,7 +66,7 @@
     (gtk_menu_item_get_submenu (GTK_MENU_ITEM menu-item)))
   
   (define (mnemonizer)
-    (define used-chars '())
+    (define used-chars ())
     (define (test-char x) 
       (let ((c (char-upcase x)))
 	(if (member c used-chars) 

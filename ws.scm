@@ -14,7 +14,7 @@
 (define *clm-statistics*        #f)
 (define *clm-reverb*            #f)
 (define *clm-reverb-channels*   1)
-(define *clm-reverb-data*       '())
+(define *clm-reverb-data*       ())
 (define *clm-table-size*        512)
 (define *clm-file-buffer-size*  65536)
 (define *clm-locsig-type*       mus-interp-linear)
@@ -47,27 +47,20 @@
 (defmacro definstrument (args . body)
   (let* ((name (car args))
 	 (targs (cdr args))
-	 (utargs (let ((arg-names '()))
+	 (utargs (let ((arg-names ()))
 		   (for-each
 		    (lambda (a)
-		      (if (not (keyword? a))
+		      (if (not (keyword? a)) ; redundant :optional or something
 			  (if (symbol? a)
 			      (set! arg-names (cons a arg-names))
 			      (set! arg-names (cons (car a) arg-names)))))
 		    targs)
-		   (reverse arg-names)))
-	 (doc (if (string? (car body))
-		  (let ((val (car body)))
-		    (set! body (cdr body))
-		    val)
-		  "no help")))
+		   (reverse arg-names))))
   `(begin 
      (define* (,name ,@targs)
-       ,doc
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
-       (let ()           ; for inner defines, if any
-	 ,@body))
+       ,@body)
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))
@@ -408,13 +401,13 @@
 	  (outsnd (find-sound output)))
 
      (if (sound? outsnd)
-	 (let ((mix-info '())
+	 (let ((mix-info ())
 	       (old-sync (sync outsnd)))
 
 	   ;; if multichannel output, make sure cross-chan mixes move together 
 	   (if (> (channels outsnd) 1)
 	       (begin
-		 (set! (hook-functions mix-release-hook) '())
+		 (set! (hook-functions mix-release-hook) ())
 		 (hook-push mix-release-hook
 			    (lambda (hook)
 			      (let ((id (hook 'id))
@@ -428,7 +421,7 @@
 				  (set! (hook 'result) #t)))))))
 
 	   ;; click shows the original note list entry
-	   (set! (hook-functions mix-click-hook) '())
+	   (set! (hook-functions mix-click-hook) ())
 	   (hook-push mix-click-hook
 		      (lambda (hook)
 			(let ((info (with-mixed-sound-mix-info (hook 'id) outsnd)))
@@ -516,7 +509,7 @@
 
 (defmacro with-marked-sound (args . body)
   `(let ((old-notehook *clm-notehook*)
-	 (mark-list '()))
+	 (mark-list ()))
      (dynamic-wind
 	 (lambda ()
 	   (set! *clm-notehook* (lambda (name . args)
@@ -551,7 +544,7 @@
 ;;; (with-sound () (sound-let ((a () (fm-violin 0 .1 440 .1))) (mus-mix "test.snd" a)))
 
 (defmacro sound-let (snds . body) 
-  `(let ((temp-files '())
+  `(let ((temp-files ())
 	 (old-hook-list (hook-functions new-sound-hook))) ; save old new-sound-hook (nested sound-lets etc)
      (set! (hook-functions new-sound-hook)
 	   (list (lambda (hook)       ; save current sound-let temp file list

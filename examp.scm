@@ -287,7 +287,7 @@
 	       (pow2 (ceiling (/ (log (max 1 (- rs ls))) (log 2))))
 	       (fftlen (floor (expt 2 pow2))))
 	  (if (> pow2 2)
-	      (let ((ffts '()))
+	      (let ((ffts ()))
 		(for-each
 		 (lambda (n)
 		   (if (and (= (sync n) (sync snd))
@@ -560,8 +560,8 @@ read an ASCII sound file"
 (define (all-chans)
   "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have 
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((#<sound 0> #<sound 1> #<sound 1>) (0 0 1))"
-  (let ((sndlist '())
-	(chnlist '()))
+  (let ((sndlist ())
+	(chnlist ()))
     (for-each (lambda (snd)
 		(do ((i (- (channels snd) 1) (- i 1)))
 		    ((< i 0))
@@ -2087,7 +2087,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
   ;; (scramble-channel .01)
   (let ((buffer (make-moving-average 128))
 	(silence (/ silence-1 128))
-	(edges '())
+	(edges ())
 	(samp 0)
 	(in-silence #t)
 	(old-max (max-regions))
@@ -2217,7 +2217,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
     (let ((dport (opendir dir)) 
 	  (ctr 0)) ; try to avoid infinite loop in the broken cases
       (let loop ((entry (readdir dport))
-		 (files '()))
+		 (files ()))
 	(set! ctr (+ 1 ctr))
 	(if (and (< ctr 2000)
 		 (not (eof-object? entry)))

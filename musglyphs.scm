@@ -63,7 +63,7 @@
 ;; now make a little Postscript interpreter...
 (define curx 0)  ; the Postscript "path" handlers
 (define cury 0)
-(define pathlist '())
+(define pathlist ())
 (define ps-size 50)
 (define bezier-segments 50)
 (define (->x x) 
@@ -119,7 +119,7 @@
 	  (reverse pathlist))
 	 ps-snd ps-chn ps-ax cr)
 	(free-cairo cr)))
-  (set! pathlist '())
+  (set! pathlist ())
   #f)
 
 (define (draw score arg)
@@ -130,7 +130,7 @@
 	  (reverse pathlist))
 	 ps-snd ps-chn ps-ax cr)
 	(free-cairo cr)))
-  (set! pathlist '())
+  (set! pathlist ())
   #f)
 
 (define (circle score x0 y0 rad . rest)

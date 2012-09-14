@@ -72,7 +72,7 @@
         (let* ((snd (car mark-setting))
                (chn (cadr mark-setting))
                (max-edits (apply + (edits snd chn)))
-               (descr '())
+               (descr ())
                (header (list id sound: snd (short-file-name snd) 'channel: chn)))
           (do ((i max-edits (- i 1)))
               ((< i 0) descr)

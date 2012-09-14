@@ -24,8 +24,8 @@
     (define (all-chans)
       "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((#<sound 0> #<sound 1> #<sound 1>) (0 0 1))"
-      (let ((sndlist '())
-	    (chnlist '()))
+      (let ((sndlist ())
+	    (chnlist ()))
 	(for-each (lambda (snd)
 		    (do ((i (- (channels snd) 1) (- i 1)))
 			((< i 0))
@@ -115,7 +115,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define* (match-sound-files func dir)
   "(match-sound-files func dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
-  (let ((matches '()))
+  (let ((matches ()))
     (for-each
      (lambda (file)
        (if (func file)

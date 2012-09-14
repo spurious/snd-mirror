@@ -256,7 +256,7 @@
 
 (define* (rt-motif :rest args)
   (let* ((shell-app (XtVaOpenApplication 
-		     "FM" 0 '() applicationShellWidgetClass
+		     "FM" 0 () applicationShellWidgetClass
 		     (list XmNallowShellResize #t)))
 	 (app (cadr shell-app))
 	 (shell (car shell-app))
@@ -523,8 +523,8 @@
 			   (begin
 			     (set-defaults)
 			     (if (= which-play 0)
-				 (set! func (apply make-agn (or args '())))
-				 (set! func (apply make-vct-test (or args '()))))
+				 (set! func (apply make-agn (or args ())))
+				 (set! func (apply make-vct-test (or args ()))))
 			     (set! proc (XtAppAddWorkProc app (lambda (c) (rt-send->dac func)))))
 			   (if proc (XtRemoveWorkProc proc)))))
       (XmToggleButtonSetState play-button cplay #f)

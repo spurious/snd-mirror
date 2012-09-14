@@ -110,7 +110,7 @@
 (define (x-norm e xmax)
   "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"
   (let ((scl (/ xmax (e (- (length e) 2))))
-	(val '())
+	(val ())
 	(len (length e)))
     (do ((i 0 (+ i 2)))
 	((>= i len))
@@ -213,7 +213,7 @@
       #f
       (if (not n)
 	  (list (a (- (length a) 1)))
-	  (let ((res '()))
+	  (let ((res ()))
 	    (do ((i 0 (+ i 1)))
 		((= i n))
 	      (set! res (cons (a (- (length a) (+ i 1))) res)))
@@ -224,18 +224,18 @@
   (and (list? a) (not (null? a))))
 
 (define (make-list-1 n val)
-  (let ((lst '()))
+  (let ((lst ()))
     (do ((i 0 (+ i 1)))
 	((= i n))
       (set! lst (cons val lst)))
     lst))
 
 
-(define* (arrange-speakers (speakers '())
-			   (groups '())
-			   (delays '())
-			   (distances '())
-			   (channel-map '()))
+(define* (arrange-speakers (speakers ())
+			   (groups ())
+			   (delays ())
+			   (distances ())
+			   (channel-map ()))
   ;; sanity checking of configuration
   
   (define (has-duplicates? lst)
@@ -356,7 +356,7 @@
   
   ;; collect unit vectors describing the speaker positions
   (let* ((coords
-	  (let ((val '()))
+	  (let ((val ()))
 	    (for-each
 	     (lambda (s) ; speakers
 	       (let* ((a (if (list? s) (car s) s))
@@ -395,7 +395,7 @@
 		  v))
 	 
 	 ;; create the group structures
-	 (groups (let ((vals '())
+	 (groups (let ((vals ())
 		       (id 0))
 		   (for-each 
 		    (lambda (group)
@@ -557,7 +557,7 @@
 
 ;;; global dlocsig parameters
 
-(define dlocsig-path '())
+(define dlocsig-path ())
 (define dlocsig-scaler 1.0)
 (define dlocsig-direct-power 1.5)
 (define dlocsig-inside-direct-power 1.5)
@@ -636,7 +636,7 @@
 (define path-tz (make-procedure-with-setter (lambda (p) (p 8)) (lambda (p val) (set! (p 8) val))))
 (define path-tt (make-procedure-with-setter (lambda (p) (p 9)) (lambda (p val) (set! (p 9) val))))
 
-					;(define (make-path) (list 'path '() '() '() '() '() '() '() '() '()))
+					;(define (make-path) (list 'path () () () () () () () () ()))
 
 (define (describe path)
   (cond ((or (eq? (car path) 'bezier-path)
@@ -661,20 +661,20 @@
 ;;; Reset any transformations on the originally rendered path
 
 (define (reset-transformation path)
-  (set! (path-tt path) '())
-  (set! (path-tx path) '())
-  (set! (path-ty path) '())
-  (set! (path-tz path) '())
+  (set! (path-tt path) ())
+  (set! (path-tx path) ())
+  (set! (path-ty path) ())
+  (set! (path-tz path) ())
   path)
 
 ;;; Reset the rendered path (and any transformations)
 
 (define (reset-rendering path)
-  (set! (path-rt path) '())
-  (set! (path-rv path) '())
-  (set! (path-rx path) '())
-  (set! (path-ry path) '())
-  (set! (path-rz path) '())
+  (set! (path-rt path) ())
+  (set! (path-rv path) ())
+  (set! (path-rx path) ())
+  (set! (path-ry path) ())
+  (set! (path-rz path) ())
   (reset-transformation path))
 
 ;;; Return the best possible set of coordinates
@@ -730,8 +730,8 @@
 (define bezier-error     (make-procedure-with-setter (lambda (p) (p 20)) (lambda (p val) (set! (p 20) val))))
 (define bezier-curvature (make-procedure-with-setter (lambda (p) (p 21)) (lambda (p val) (set! (p 21) val))))
 
-(define* (make-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f))
-  (list 'bezier-path '() '() '() '() '() '() '() '() '() path 3d polar '() '() '() '() '() '() '() error curvature))
+(define* (make-bezier-path (path ()) (3d #t) (polar #f) (error 0.01) (curvature #f))
+  (list 'bezier-path () () () () () () () () () path 3d polar () () () () () () () error curvature))
 
 
 ;;; Path class for open bezier paths
@@ -739,9 +739,9 @@
 (define initial-direction (make-procedure-with-setter (lambda (p) (p 22)) (lambda (p val) (set! (p 22) val))))
 (define final-direction   (make-procedure-with-setter (lambda (p) (p 23)) (lambda (p val) (set! (p 23) val))))
 
-(define* (make-open-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
+(define* (make-open-bezier-path (path ()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
 				(initial-direction '(0.0 0.0 0.0)) (final-direction '(0.0 0.0 0.0)))
-  (list 'open-bezier-path '() '() '() '() '() '() '() '() '() path 3d polar '() '() '() '() '() '() '() error curvature initial-direction final-direction))
+  (list 'open-bezier-path () () () () () () () () () path 3d polar () () () () () () () error curvature initial-direction final-direction))
 
 
 
@@ -864,10 +864,10 @@
       ;;   '((x0 y0) (x1 y1)...(xn yn))
       ;;      v: relative velocity
       ;;      x, y, z: coordinates of source [missing z's assumed 0.0]
-      (let ((v '())
-	     (x '())
-	     (y '())
-	     (z '()))
+      (let ((v ())
+	     (x ())
+	     (y ())
+	     (z ()))
 	(for-each
 	 (lambda (p)
 	   (set! x (cons (car p) x))
@@ -885,9 +885,9 @@
 	  ;; it's a three dimensional list
 	  ;; '(x0 y0 z0 x1 y1 z1 ... xn yn zn)
 	  ;;     x, y, z: coordinates of source
-	  (let ((px '())
-		(py '())
-		(pz '())
+	  (let ((px ())
+		(py ())
+		(pz ())
 		(len (length points)))
 	    (do ((i 0 (+ i 3)))
 		((>= i len))
@@ -899,8 +899,8 @@
 	  ;; it's a two dimensional list
 	  ;; '(x0 y0 x1 y1 ... xn yn)
 	  ;;     x, y, z: coordinates of source [missing z's assumed 0.0]
-	  (let ((px '())
-		(py '())
+	  (let ((px ())
+		(py ())
 		(len (length points)))
 	    (do ((i 0 (+ i 2)))
 		((>= i len))
@@ -925,10 +925,10 @@
       ;;      d: distance
       ;;      a: azimut angle
       ;;      e: elevarion angle [missing elevations assumed 0.0]
-      (let ((x '())
-	    (y '())
-	    (z '())
-	    (v '()))
+      (let ((x ())
+	    (y ())
+	    (z ())
+	    (v ()))
 	(for-each
 	 (lambda (p)
 	   (let* ((d (car p))
@@ -951,9 +951,9 @@
 	  ;;      d: distance
 	  ;;      a: azimut angle
 	  ;;      e: elevarion angle [missing elevations assumed 0.0]
-	  (let ((x '())
-		(y '())
-		(z '())
+	  (let ((x ())
+		(y ())
+		(z ())
 		(len (length points)))
 	    (do ((i 0 (+ i 3)))
 		((>= i len))
@@ -973,8 +973,8 @@
 	  ;;      d: distance
 	  ;;      a: azimut angle
 	  ;;      e: elevarion angle [missing elevations assumed 0.0]
-	  (let ((x '())
-		(y '())
+	  (let ((x ())
+		(y ())
 		(len (length points)))
 	    (do ((i 0 (+ i 2)))
 		((>= i len))
@@ -1238,9 +1238,9 @@
   (null? (bezier-bx path)))
 
 (define (reset-fit path)
-  (set! (bezier-bx path) '())
-  (set! (bezier-by path) '())
-  (set! (bezier-bz path) '())
+  (set! (bezier-bx path) ())
+  (set! (bezier-by path) ())
+  (set! (bezier-bz path) ())
   (reset-rendering path))
 
 (define (fit-path path)
@@ -1279,9 +1279,9 @@
 			       (error 'mus-error "ERROR: bad curvature argument ~A to path, need ~A elements~%" c n))))
 		   
 		   ;; calculate control points
-		   (let ((xc '())
-			 (yc '())
-			 (zc '()))
+		   (let ((xc ())
+			 (yc ())
+			 (zc ()))
 		     (do ((i 0 (+ i 1)))
 			 ((= i n))
 		       
@@ -1315,9 +1315,9 @@
 		   (if (= points 1)
 		       ;; just one point, bezier won't do much here
 		       (begin
-			 (set! (bezier-bx path) '())
-			 (set! (bezier-by path) '())
-			 (set! (bezier-bz path) '())))))
+			 (set! (bezier-bx path) ())
+			 (set! (bezier-by path) ())
+			 (set! (bezier-bz path) ())))))
 	   (reset-rendering path)))
 	
 	(else
@@ -1330,9 +1330,9 @@
 		    (p (cadr vals))
 		    (d (caddr vals)))
 	       ;; enough points, fit path
-	       (let ((xc '())
-		     (yc '())
-		     (zc '()))
+	       (let ((xc ())
+		     (yc ())
+		     (zc ()))
 		 (do ((i 0 (+ i 1)))
 		     ((= i n))
 		   (set! xc (cons (list ((p 0) i)
@@ -1361,9 +1361,9 @@
 									 ((p 2) 0)))))))
 	     
 	     ;; not enough points to fit a closed path
-	     (let ((xc '())
-		   (yc '())
-		   (zc '())
+	     (let ((xc ())
+		   (yc ())
+		   (zc ())
 		   (len (min (length (bezier-x path)) (length (bezier-y path)) (length (bezier-z path)))))
 	       (do ((i 0 (+ i 1)))
 		   ((>= i len))
@@ -1394,11 +1394,11 @@
 (define literal-polar  (make-procedure-with-setter (lambda (p) (p 12)) (lambda (p val) (set! (p 12) val))))
 
 ;;; Generic literal path creation function
-(define* (make-literal-path (points '()) (3d path-3d) polar)
-  (list 'literal-path '() '() '() '() '() '() '() '() '() points 3d polar))
+(define* (make-literal-path (points ()) (3d path-3d) polar)
+  (list 'literal-path () () () () () () () () () points 3d polar))
 
 ;;; Specific polar literal path creation function
-(define* (make-literal-polar-path (points '()) (3d path-3d))
+(define* (make-literal-polar-path (points ()) (3d path-3d))
   (make-literal-path points 3d #t))
 
 
@@ -1417,14 +1417,14 @@
 (define* (make-spiral-path (start-angle 0.0)
 			   total-angle
 			   step-angle
-			   (turns '())
+			   (turns ())
 			   (distance '(0 10 1 10))
 			   (height '(0 0 1 0))
 			   (velocity '(0 1 1 1)))
   (if (and total-angle (not (null? turns)))
       (error 'mus-error "ERROR: can't specify total-angle [~A] and turns [~A] at the same time for the spiral path~%" total-angle turns))
   
-  (list 'spiral-path '() '() '() '() '() '() '() '() '() '() path-3d #f 
+  (list 'spiral-path () () () () () () () () () () path-3d #f 
 	start-angle total-angle 
 	(or step-angle (/ dlocsig-one-turn 100))
 	turns distance height velocity))
@@ -1436,7 +1436,7 @@
 (define (bezier-render path)
   (if (not-fitted path)
       (fit-path path))
-  (let ((xrx '()) (xry '()) (xrz '()) (xrv '()))
+  (let ((xrx ()) (xry ()) (xrz ()) (xrv ()))
     
     (define (bezier-point u c)
       ;; Evaluate a point at parameter u in bezier segment
@@ -1482,7 +1482,7 @@
 		  (list (append xi (list x) xj)
 			(append yi (list y) yj)
 			(append zi (list z) zj))))
-	      (list '() '() '())))))
+	      (list () () ())))))
     
     ;; Create linear segment approximations of the bezier segments
     ;; make sure there are initial and final velocity values
@@ -1581,7 +1581,7 @@
 		      
 		      (let ((df (car dseg)))
 			(set! dseg (reverse dseg))
-			(let* ((tseg '())
+			(let* ((tseg ())
 			       (vf v)
 			       (a (/ (* (- vf vi) (+ vf vi)) df 4)))
 			  (if (= vi 0.0) (set! vi 1))
@@ -1608,7 +1608,7 @@
 	    (set! (path-rz path) xrz)
 	    (set! (path-rt path) 
 		  (let ((tf (times (- (length times) 1)))
-			 (val '()))
+			 (val ()))
 		    (for-each
 		     (lambda (ti)
 		       (set! val (cons (/ ti tf) val)))
@@ -1671,7 +1671,7 @@
 	      
 	      (if (number? v) ; when v
 		  (let ((sofar 0.0)
-			(dseg '())
+			(dseg ())
 			(len (- (length xseg) 1)))
 		    (do ((i 0 (+ i 1)))
 			((= i len))
@@ -1685,7 +1685,7 @@
 			(set! dseg (cons sofar dseg))))
 		    (let ((df (car dseg)))
 		      (set! dseg (reverse dseg))
-		      (let* ((tseg '())
+		      (let* ((tseg ())
 			     (vf v)
 			     (a (/ (* (- vf vi) (+ vf vi)) df 4)))
 			(for-each
@@ -1704,7 +1704,7 @@
 			(set! vseg (list v))
 			(set! vi v)))))))
 	  
-	  (set! (path-rt path) (let ((val '())
+	  (set! (path-rt path) (let ((val ())
 				     (tf (times (- (length times) 1))))
 				 (for-each
 				  (lambda (ti)
@@ -1727,9 +1727,9 @@
 		  (if (< (spiral-step-angle path) 0) -1 1)))
 	 (xdistance (x-norm (spiral-distance path) total))
 	 (height (x-norm (spiral-height path) total)))
-    (let* ((x '())
-	   (y '())
-	   (z '())
+    (let* ((x ())
+	   (y ())
+	   (z ())
 	   (segments (round (abs (/ total step))))
 	   (len (+ 1 segments)))
       (do ((i 0 (+ i 1))
@@ -1745,7 +1745,7 @@
       (set! y (reverse y))
       (set! z (reverse z))
       
-      (let ((dp '())
+      (let ((dp ())
 	    (len (- (length x) 1))
 	    (sofar 0.0))
 	(do ((i 0 (+ i 1)))
@@ -1760,7 +1760,7 @@
 	    (set! dp (cons sofar dp))))
 	(let ()
 	  (set! dp (reverse dp))
-	  (let ((tp '())
+	  (let ((tp ())
 		(td 0)
 		(len (- (length dp) 1)))
 	    (do ((i 0 (+ i 1)))
@@ -1777,7 +1777,7 @@
 	      (set! (path-rx path) x)
 	      (set! (path-ry path) y)
 	      (set! (path-rz path) z)
-	      (let ((val '()))
+	      (let ((val ()))
 		(for-each
 		 (lambda (ti)
 		   (set! val (cons (/ ti tf) val)))
@@ -1876,9 +1876,9 @@
 	(if (and rotation-axis (not (= (length rotation-axis) 3)))
 	    (error 'mus-error "ERROR: rotation axis has to have all three coordinates~%"))
 	(let ((len (length xc))
-	      (xtr '())
-	      (ytr '())
-	      (ztr '()))
+	      (xtr ())
+	      (ytr ())
+	      (ztr ()))
 	  (do ((i 0 (+ i 1)))
 	      ((= i len))
 	    (let* ((x (xc i))
@@ -1973,13 +1973,13 @@
   (if (not-transformed path)
       (transform-path path))
   (if (equal? axis 'y)
-      (let ((val '()))
+      (let ((val ()))
 	(for-each
 	 (lambda (x)
 	   (set! val (cons (- around x) val)))
 	 (path-tx path))
 	(set! (path-tx path) (reverse val)))
-      (let ((val '()))
+      (let ((val ()))
 	(for-each
 	 (lambda (y)
 	   (set! val (cons (- around y) val)))
@@ -2016,7 +2016,7 @@
 	 (total-time (- end-time start-time))
 	 (velocity (/ total-distance total-time)))
     (let ((len (length xcoords))
-	  (now '())
+	  (now ())
 	  (dist 0.0))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
@@ -2089,8 +2089,8 @@
 		       (get-speaker-configuration out-channels)))
 	 
 	 ;; array of gains -- envelopes
-	 (channel-gains (make-vector out-channels '()))
-	 (channel-rev-gains (make-vector out-channels '()))
+	 (channel-gains (make-vector out-channels ()))
+	 (channel-rev-gains (make-vector out-channels ()))
 	 
 	 ;; speaker output delays
 	 (max-out-delay 0.0)
@@ -2108,8 +2108,8 @@
 			 duration))
 	 (start 0)
 					;(end 0)
-	 (delay '())
-	 (doppler '())
+	 (delay ())
+	 (doppler ())
 	 (real-dur 0)
 	 (prev-time #f)
 	 (prev-dist #f)
@@ -2169,7 +2169,7 @@
       (if (null? l2) 
 	  l2
 	  (let loop1 ((l1 l1) 
-		      (result '()))
+		      (result ()))
 	    (cond ((null? l1) 
 		   (reverse! result))
 		  ((member (car l1) l2) 

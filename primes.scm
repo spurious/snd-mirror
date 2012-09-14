@@ -4623,7 +4623,7 @@
 ;;; length = 41544
 
 (define (factorize num)
-  (let ((factors '()))
+  (let ((factors ()))
     (call-with-exit
      (lambda (return)
        (for-each 
@@ -4657,7 +4657,7 @@
 #|
 (define (factorize-1 num)
   ;; much slower in Scheme!
-  (let ((factors '()))
+  (let ((factors ()))
     (call-with-exit
      (lambda (return)
        (for-each 

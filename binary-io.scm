@@ -10,7 +10,7 @@
 ;;; -------- strings (0-terminated)
 
 (define (read-string)
-  (let ((chars '()))
+  (let ((chars ()))
     (do ((c (read-byte) (read-byte)))
 	((or (eof-object? c)
 	     (= c 0))

@@ -23,15 +23,15 @@
   "(reset-all-hooks) removes all Snd hook functions"
   (for-each 
    (lambda (n)
-     (set! (hook-functions n) '()))
+     (set! (hook-functions n) ()))
    (snd-hooks))
   (for-each 
    (lambda (snd)
      (do ((chn 0 (+ chn 1)))
 	 ((= chn (channels snd)))
-       (set! (hook-functions (edit-hook snd chn)) '())
-       (set! (hook-functions (after-edit-hook snd chn)) '())
-       (set! (hook-functions (undo-hook snd chn)) '())))
+       (set! (hook-functions (edit-hook snd chn)) ())
+       (set! (hook-functions (after-edit-hook snd chn)) ())
+       (set! (hook-functions (undo-hook snd chn)) ())))
    (sounds)))
 
 

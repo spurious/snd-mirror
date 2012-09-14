@@ -368,7 +368,7 @@
   (define (nth-roots a b deg) ; ax^n + b
     (let ((n (expt (/ (- b) a) (/ 1.0 deg)))
 	  (incr (/ (* 2 pi 0+i) deg))
-	  (roots '()))
+	  (roots ()))
       (do ((i 0 (+ i 1)))
 	  ((= i deg))
 	(set! roots (cons (simplify-complex (* n (exp (* i incr)))) roots)))
@@ -377,7 +377,7 @@
   (let ((deg (- (length p1) 1)))
 
     (if (= deg 0)                                     ; just constant
-	'()
+	()
 
 	(if (= (p1 0) 0.0)                 ; constant=0.0, divide through by x, recurse on new
 	    (if (= deg 1)
@@ -414,7 +414,7 @@
 				  (if (and (= ones 2)
 					   (even? deg)
 					   (not (= (p1 (/ deg 2)) 0.0)))
-				      (let ((roots '())       ; quadratic in x^(n/2)
+				      (let ((roots ())       ; quadratic in x^(n/2)
 					    (n (/ deg 2)))
 					(for-each
 					 (lambda (r)
@@ -429,7 +429,7 @@
 					       (= (modulo deg 3) 0)
 					       (not (= (p1 (/ deg 3)) 0.0))
 					       (not (= (p1 (/ (* 2 deg) 3)) 0.0)))
-					  (let ((roots '())   ; cubic in x^(n/3)
+					  (let ((roots ())   ; cubic in x^(n/3)
 						(n (/ deg 3)))
 					    (for-each
 					     (lambda (r)
@@ -442,7 +442,7 @@
 
 					  ;; perhaps get derivative roots, plug in main -- need to get nth derivative to be safe in this
 					  ;; from Cohen, "Computational Algebraic Number Theory"
-					  (let* ((roots '())
+					  (let* ((roots ())
 						 (q (vector-copy p1))
 						 (pp (poly-as-vector-derivative p1))
 						 (qp (vector-copy pp))

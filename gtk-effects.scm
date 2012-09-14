@@ -140,7 +140,7 @@
 ;;; AMPLITUDE EFFECTS
 ;;;
 
-(define effects-list '()) ; menu labels are updated to show current settings
+(define effects-list ()) ; menu labels are updated to show current settings
 
 (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
 
@@ -152,7 +152,7 @@
 		 0 #f snd chn #f
 		 (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
 
-(let ((amp-menu-list '())
+(let ((amp-menu-list ())
       (amp-menu (gtk_menu_item_new_with_label "Amplitude Effects"))
       (amp-cascade (gtk_menu_new)))
   (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) amp-menu)
@@ -170,7 +170,7 @@
     
     (define (scale-envelope e scl)
       (if (null? e)
-	  '()
+	  ()
 	  (append (list (car e) (* scl (cadr e)))
 		  (scale-envelope (cddr e) scl))))
     
@@ -180,7 +180,7 @@
 		      (lambda (w d) 
 			(if (not gain-dialog)
 			    (let ((initial-gain-amount 1.0)
-				  (sliders '()))
+				  (sliders ()))
 			      (set! gain-dialog
 				    (make-effect-dialog
 				     "Gain"
@@ -259,7 +259,7 @@
 		      (lambda (w d) 
 			(if (not normalize-dialog)
 			    (let ((initial-normalize-amount 1.0)
-				  (sliders '()))
+				  (sliders ()))
 			      (set! normalize-dialog 
 				    (make-effect-dialog 
 				     "Normalize"
@@ -324,7 +324,7 @@
 			  (if (not gate-dialog)
 			      ;; if gate-dialog doesn't exist, create it
 			      (let ((initial-gate-amount 0.01)
-				    (sliders '()))
+				    (sliders ()))
 				(set! gate-dialog
 				      (make-effect-dialog 
 				       "Gate"
@@ -412,7 +412,7 @@
     		 (format #f "effects-zecho-1 ~A ~A ~A ~A ~A ~A ~A" scaler secs frq amp input-samps-1 beg dur))))
 
 
-(let ((delay-menu-list '())
+(let ((delay-menu-list ())
       (delay-menu (gtk_menu_item_new_with_label "Delay Effects"))
       (delay-cascade (gtk_menu_new)))
   (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) delay-menu)
@@ -436,7 +436,7 @@
 	(if (not echo-dialog)
 	    (let ((initial-delay-time 0.5)
 		  (initial-echo-amount 0.2)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! echo-dialog 
 		    (make-effect-dialog 
 		     "Echo"
@@ -528,7 +528,7 @@
 	(if (not flecho-dialog)
 	    (let ((initial-flecho-scaler 0.5)
 		  (initial-flecho-delay 0.9)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! flecho-dialog 
 		    (make-effect-dialog 
 		     "Filtered echo"
@@ -620,7 +620,7 @@
 		  (initial-zecho-delay 0.75)
 		  (initial-zecho-freq 6)
 		  (initial-zecho-amp 10.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! zecho-dialog 
 		    (make-effect-dialog 
 		     "Modulated echo"
@@ -746,7 +746,7 @@ the modulation frequency, and the echo amplitude."))
     (clm-channel flt beg dur snd chn #f #f
 		 (format #f "effects-blp ~A ~A ~A" freq beg dur))))
 
-(let ((filter-menu-list '())
+(let ((filter-menu-list ())
       (filter-menu (gtk_menu_item_new_with_label "Filter Effects"))
       (filter-cascade (gtk_menu_new)))
   (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) filter-menu)
@@ -768,7 +768,7 @@ the modulation frequency, and the echo amplitude."))
 	(if (not band-pass-dialog)
 	    (let ((initial-band-pass-freq 1000)
 		  (initial-band-pass-bw 100)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! band-pass-dialog 
 		    (make-effect-dialog 
 		     "Band-pass filter"
@@ -840,7 +840,7 @@ the modulation frequency, and the echo amplitude."))
 	(if (not notch-dialog)
 	    (let ((initial-notch-freq 100)
 		  (initial-notch-bw 100)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! notch-dialog 
 		    (make-effect-dialog 
 		     "Band-reject filter"
@@ -909,7 +909,7 @@ the modulation frequency, and the echo amplitude."))
       (lambda (w d) 
 	(if (not high-pass-dialog)
 	    (let ((initial-high-pass-freq 100)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! high-pass-dialog 
 		    (make-effect-dialog 
 		     "High-pass filter"
@@ -971,7 +971,7 @@ the modulation frequency, and the echo amplitude."))
       (lambda (w d) 
 	(if (not low-pass-dialog)
 	    (let ((initial-low-pass-freq 1000)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! low-pass-dialog 
 		    (make-effect-dialog 
 		     "Low-pass filter"
@@ -1035,7 +1035,7 @@ the modulation frequency, and the echo amplitude."))
 	(if (not comb-dialog)
 	    (let ((initial-comb-scaler 0.1)
 		  (initial-comb-size 50)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! comb-dialog 
 		    (make-effect-dialog 
 		     "Comb filter"
@@ -1119,7 +1119,7 @@ the modulation frequency, and the echo amplitude."))
 		  (initial-new-comb-chord-amp 0.3)
 		  (initial-new-comb-chord-interval-one 0.75)
 		  (initial-new-comb-chord-interval-two 1.20)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! new-comb-chord-dialog
 		    (make-effect-dialog 
 		     "Comb chord filter"
@@ -1220,7 +1220,7 @@ Move the sliders to set the comb chord parameters."))
 	(if (not moog-dialog)
 	    (let ((initial-moog-cutoff-frequency 10000)
 		  (initial-moog-resonance 0.5)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! moog-dialog 
 		    (make-effect-dialog
 		     "Moog filter"
@@ -1278,7 +1278,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 
 ;;; FREQUENCY EFFECTS
 
-(let ((freq-menu-list '())
+(let ((freq-menu-list ())
       (freq-menu (gtk_menu_item_new_with_label "Frequency Effects"))
       (freq-cascade (gtk_menu_new)))
   (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) freq-menu)
@@ -1330,7 +1330,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
       (lambda (w d) 
 	(if (not adsat-dialog)
 	    (let ((initial-adsat-size 4)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! adsat-dialog
 		    (make-effect-dialog
 		     "Adaptive saturation"
@@ -1383,7 +1383,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
       (lambda (w d) 
 	(if (not src-dialog)
 	    (let ((initial-src-amount 0.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! src-dialog
 		    (make-effect-dialog
 		     "Sample rate conversion"
@@ -1451,7 +1451,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		  (initial-segment-length 0.15)
 		  (initial-ramp-scale 0.5)
 		  (initial-pitch-scale 1.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! expsrc-dialog 
 		    (make-effect-dialog
 		     "Time/pitch scaling"
@@ -1547,7 +1547,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
     (define (scale-envelope e scl)
       (if (null? e)
-	  '()
+	  ()
 	  (append (list (car e) (* scl (cadr e)))
 		  (scale-envelope (cddr e) scl))))
 
@@ -1557,7 +1557,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (lambda (w d) 
 	(if (not src-timevar-dialog)
 	    (let ((initial-src-timevar-scale 1.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! src-timevar-dialog
 		    (make-effect-dialog 
 		     "Src-Timevar"
@@ -1644,7 +1644,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		 beg dur snd chn #f
 		 (format #f "effects-rm ~A ~A ~A ~A" freq (if gliss-env (format #f "'~A" gliss-env) #f) beg dur))))
 
-(let ((mod-menu-list '())
+(let ((mod-menu-list ())
       (mod-menu (gtk_menu_item_new_with_label "Modulation Effects"))
       (mod-cascade (gtk_menu_new)))
   (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) mod-menu)
@@ -1677,7 +1677,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (lambda (w d) 
 	(if (not am-effect-dialog)
 	    (let ((initial-am-effect-amount 100.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! am-effect-dialog
 		    (make-effect-dialog
 		     "Amplitude modulation"
@@ -1764,7 +1764,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(if (not rm-dialog)
 	    (let ((initial-rm-frequency 100)
 		  (initial-rm-radians 100)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! rm-dialog
 		    (make-effect-dialog
 		     "Ring modulation"
@@ -1882,7 +1882,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	       beg dur snd chn #f
 	       (format #f "effects-jc-reverb-1 ~A ~A ~A" volume beg dur)))
 
-(let ((reverb-menu-list '())
+(let ((reverb-menu-list ())
       (reverb-menu (gtk_menu_item_new_with_label "Reverberation"))
       (reverb-cascade (gtk_menu_new)))
   (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) reverb-menu)
@@ -1907,7 +1907,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	    (let ((initial-reverb-amount 0.1)
 		  (initial-reverb-filter 0.5)
 		  (initial-reverb-feedback 1.09)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! reverb-dialog 
 		    (make-effect-dialog 
 		     "McNabb reverb"
@@ -1990,7 +1990,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(if (not jc-reverb-dialog)
 	    (let ((initial-jc-reverb-decay 2.0)
 		  (initial-jc-reverb-volume 0.1)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! jc-reverb-dialog
 		    (make-effect-dialog
 		     "Chowning reverb"
@@ -2059,7 +2059,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	    (let ((initial-convolve-sound-one 0)
 		  (initial-convolve-sound-two 1)
 		  (initial-convolve-amp 0.01)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! convolve-dialog
 		    (make-effect-dialog
 		     "Convolution"
@@ -2215,7 +2215,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	       beg dur snd chn #f
 	       (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur)))
 
-(let ((misc-menu-list '())
+(let ((misc-menu-list ())
       (misc-menu (gtk_menu_item_new_with_label "Various"))
       (misc-cascade (gtk_menu_new)))
   (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) misc-menu)
@@ -2253,7 +2253,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 	    (let ((initial-mono-snd 0)
 		  (initial-stereo-snd 1)
 		  (initial-pan-pos 45)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! place-sound-dialog 
 		    (make-effect-dialog
 		     "Place sound"
@@ -2321,7 +2321,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
       (lambda (w d) 
 	(if (not silence-dialog)
 	    (let ((initial-silence-amount 1.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! silence-dialog
 		    (make-effect-dialog
 		     "Add silence"
@@ -2365,7 +2365,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
       (lambda (w d) 
 	(if (not contrast-dialog)
 	    (let ((initial-contrast-amount 1.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! contrast-dialog
 		    (make-effect-dialog
 		     "Contrast enhancement"
@@ -2437,7 +2437,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		  (initial-cross-synth-amp .5)
 		  (initial-cross-synth-fft-size 128)
 		  (initial-cross-synth-radius 6.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! cross-synth-dialog
 		    (make-effect-dialog
 		     "Cross synthesis"
@@ -2518,7 +2518,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	    (let ((initial-flange-speed 2.0)
 		  (initial-flange-amount 5.0)
 		  (initial-flange-time 0.001)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! flange-dialog
 		    (make-effect-dialog
 		     "Flange"
@@ -2598,7 +2598,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
       (lambda (w d) 
 	(if (not random-phase-dialog)
 	    (let ((initial-random-phase-amp-scaler 3.14)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! random-phase-dialog
 		    (make-effect-dialog
 		     "Randomize phase"
@@ -2645,7 +2645,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	    (let ((initial-samp-rate 1.0)
 		  (initial-osc-amp 0.3)
 		  (initial-osc-freq 20)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! robotize-dialog
 		    (make-effect-dialog
 		     "Robotize"
@@ -2724,7 +2724,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
       (lambda (w d) 
 	(if (not rubber-dialog)
 	    (let ((initial-rubber-factor 1.0)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! rubber-dialog
 		    (make-effect-dialog
 		     "Rubber sound"
@@ -2780,7 +2780,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	(if (not wobble-dialog)
 	    (let ((initial-wobble-frequency 50)
 		  (initial-wobble-amplitude 0.5)
-		  (sliders '()))
+		  (sliders ()))
 	      (set! wobble-dialog
 		    (make-effect-dialog
 		     "Wobble"

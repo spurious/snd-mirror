@@ -48,7 +48,7 @@
 	  (prune-file ptr (cdr files)))))
   (let ((ptr (gdbm-open nb-database 'read)))
     (if (gdbm? ptr)
-	(let ((files (collect-files ptr (gdbm-first-key ptr) '())))
+	(let ((files (collect-files ptr (gdbm-first-key ptr) ())))
 	  (gdbm-close! ptr)
 	  (if (not (null? files))
 	      (let ((ptr (gdbm-open nb-database 'write)))

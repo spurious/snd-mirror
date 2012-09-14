@@ -3897,7 +3897,7 @@
 
   (let ((temp-phases (copy peak-phases))
 	(n (length peak-phases))
-	(results '()))
+	(results ()))
 
     ;; flip evens
     (do ((i 1 (+ i 2)))

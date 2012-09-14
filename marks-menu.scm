@@ -19,7 +19,7 @@
 (if (not (defined? 'loop-between-marks)) (load "play.scm"))
 
 
-(define marks-list '()) ; menu labels are updated to show current default settings
+(define marks-list ()) ; menu labels are updated to show current default settings
 
 (define marks-menu (add-to-main-menu "Marks" (lambda ()
 					       (update-label marks-list))))
@@ -75,7 +75,7 @@
         (if (not play-between-marks-dialog)
             (let ((inits (find-two-marks))
 		  (max-mark-id (max-mark))
-		  (sliders '()))
+		  (sliders ()))
 
 	      (if (null? inits)
 		  (snd-display ";no marks")
@@ -212,7 +212,7 @@
             ;; if loop-between-marks-dialog doesn't exist, create it
             (let ((initial-loop-between-marks-m1 0)
                   (initial-loop-between-marks-m2 1)
-                  (sliders '())
+                  (sliders ())
 		  (max-mark-id (overall-max-mark-id 25)))
               (set! loop-between-marks-dialog
                     (make-effect-dialog 
@@ -424,7 +424,7 @@
         (if (not fit-to-mark-dialog)
             (let ((initial-fit-to-mark-one 0)
                   (initial-fit-to-mark-two 1)
-                  (sliders '()))
+                  (sliders ()))
 
               (set! fit-to-mark-dialog 
 		    (make-effect-dialog 
@@ -517,7 +517,7 @@ using the granulate generator to fix up the selection duration (this still is no
         (if (not define-by-mark-dialog)
             (let ((initial-define-by-mark-one 0)
                   (initial-define-by-mark-two 1)
-                  (sliders '()))
+                  (sliders ()))
 
               (set! define-by-mark-dialog 
 		    (make-effect-dialog 
@@ -724,13 +724,13 @@ using the granulate generator to fix up the selection duration (this still is no
 								   XmNbottomAttachment    XmATTACH_FORM
 								   XmNshadowThickness     6
 								   XmNshadowType          XmSHADOW_ETCHED_OUT)))
-			  (frame-form (XtCreateManagedWidget "fform" xmFormWidgetClass main-frame '()))
+			  (frame-form (XtCreateManagedWidget "fform" xmFormWidgetClass main-frame ()))
 			  (top-frame (XtCreateManagedWidget "topf" xmFrameWidgetClass frame-form
 							    (list XmNleftAttachment      XmATTACH_FORM
 								  XmNrightAttachment     XmATTACH_FORM
 								  XmNtopAttachment       XmATTACH_FORM
 								  XmNbottomAttachment    XmATTACH_NONE)))
-			  (top-form (XtCreateManagedWidget "tform" xmFormWidgetClass top-frame '()))
+			  (top-form (XtCreateManagedWidget "tform" xmFormWidgetClass top-frame ()))
 			  (left-column (XtCreateManagedWidget "lcol" xmRowColumnWidgetClass top-form
 							      (list XmNorientation         XmVERTICAL
 								    XmNbackground          (position-color)
@@ -758,7 +758,7 @@ using the granulate generator to fix up the selection duration (this still is no
 							     (list XmNorientation         XmHORIZONTAL
 								   XmNbackground          (position-color)
 								   XmNspacing             0)))
-			  (leftrange (XtCreateManagedWidget "range" xmPushButtonWidgetClass left-column '()))
+			  (leftrange (XtCreateManagedWidget "range" xmPushButtonWidgetClass left-column ()))
 			  (rowleftbottom (XtCreateManagedWidget "r1" xmRowColumnWidgetClass left-column
 								(list XmNorientation         XmHORIZONTAL
 								      XmNbackground          (position-color)
@@ -775,7 +775,7 @@ using the granulate generator to fix up the selection duration (this still is no
 								 XmNorientation         XmVERTICAL
 								 XmNbackground          (position-color)
 								 XmNwidth               20)))
-			  (rightlock (XtCreateManagedWidget "lock" xmToggleButtonWidgetClass rowrightmid '()))
+			  (rightlock (XtCreateManagedWidget "lock" xmToggleButtonWidgetClass rowrightmid ()))
 			  
 			  (rowrightbottom (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 								 (list XmNorientation         XmHORIZONTAL
@@ -843,10 +843,10 @@ using the granulate generator to fix up the selection duration (this still is no
 				      (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))
 		     (for-each
 		      (lambda (rparent loc)
-			(let ((farleft (XtCreateManagedWidget "<<" xmPushButtonWidgetClass rparent '()))
-			      (stopleft (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent '()))
-			      (lotsleft (XtCreateManagedWidget "<< " xmPushButtonWidgetClass rparent '()))
-			      (someleft (XtCreateManagedWidget " < " xmPushButtonWidgetClass rparent '()))
+			(let ((farleft (XtCreateManagedWidget "<<" xmPushButtonWidgetClass rparent ()))
+			      (stopleft (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent ()))
+			      (lotsleft (XtCreateManagedWidget "<< " xmPushButtonWidgetClass rparent ()))
+			      (someleft (XtCreateManagedWidget " < " xmPushButtonWidgetClass rparent ()))
 			      (sus-rel-start (* offset 2)))
 			  
 			  (XtAddCallback farleft XmNactivateCallback
@@ -873,10 +873,10 @@ using the granulate generator to fix up the selection duration (this still is no
 		      (list 0 1))
 		     (for-each
 		      (lambda (rparent loc)
-			(let ((someright (XtCreateManagedWidget " > " xmPushButtonWidgetClass rparent '()))
-			      (lotsright (XtCreateManagedWidget " >>" xmPushButtonWidgetClass rparent '()))
-			      (stopright (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent '()))
-			      (farright (XtCreateManagedWidget ">>" xmPushButtonWidgetClass rparent '()))
+			(let ((someright (XtCreateManagedWidget " > " xmPushButtonWidgetClass rparent ()))
+			      (lotsright (XtCreateManagedWidget " >>" xmPushButtonWidgetClass rparent ()))
+			      (stopright (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent ()))
+			      (farright (XtCreateManagedWidget ">>" xmPushButtonWidgetClass rparent ()))
 			      (sus-rel-start (* offset 2)))
 			  
 			  (XtAddCallback farright XmNactivateCallback

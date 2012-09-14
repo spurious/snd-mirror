@@ -168,7 +168,7 @@ whenever they're in the current view."
 	 (snd (or usnd (selected-sound) (car (sounds))))
 	 (chn (or uchn (selected-channel snd) 0))
 	 (dur (or udur (- (frames snd chn) beg)))
-	 (old-colors (or (channel-property 'colored-samples snd chn) '())))
+	 (old-colors (or (channel-property 'colored-samples snd chn) ())))
     (set! (channel-property 'colored-samples snd chn) (cons (list color beg dur) old-colors))
     (update-time-graph snd chn)))
 
@@ -177,7 +177,7 @@ whenever they're in the current view."
   "(uncolor-samples snd chn) cancels sample coloring in the given channel"
   (let*	((snd (or usnd (selected-sound) (car (sounds))))
 	 (chn (or uchn (selected-channel snd) 0)))
-    (set! (channel-property 'colored-samples snd chn) '())
+    (set! (channel-property 'colored-samples snd chn) ())
     (update-time-graph snd chn)))
 
 

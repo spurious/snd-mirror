@@ -182,9 +182,9 @@
 		  
 		  ;;slider controls
 		  (detuningFactor 1.0)
-		  (detuningFactor-table '())
+		  (detuningFactor-table ())
 		  (stiffnessFactor 1.0)
-		  (stiffnessFactor-table '())
+		  (stiffnessFactor-table ())
 		  (pedalPresenceFactor .3)
 		  (longitudinalMode 10.5)
 		  (StrikePositionInvFac -0.9)

@@ -43,7 +43,7 @@
 	 (offset (exact->inexact offset))
 	 (out-scaler (exact->inexact out-scaler))
 	 (ycutoff (and cutoff (expt base (+ offset (* cutoff scaler)))))
-	 (result '()))
+	 (result ()))
     ;; linear interpolation
     (letrec ((interpolate (lambda (xl yl xh yh xi) (+ yl (* (- xi xl) (/ (- yh yl) (- xh xl))))))
 	     ;;
@@ -73,7 +73,7 @@
 				      (values (append xi (list xint) xj)
 					      (append yi (list yexp) yj))))))
 			      ;; yes --> don't need to add nu'ting to the envelope
-			      (values '() '()))))))
+			      (values () ()))))))
       ;; loop for each segment in the envelope
       (let segs ((en env1))
 	(let* ((x (car en))

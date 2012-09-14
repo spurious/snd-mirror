@@ -9,7 +9,7 @@
 (define i3fun2 #f)
 
 (define (flipxy data)			; SEG functions expected data in (y x) pairs.
-  (let ((unseg '())
+  (let ((unseg ())
 	(len (length data)))
     (do ((i 0 (+ i 2)))
 	((>= i len))
@@ -40,10 +40,10 @@
 (define (fillfnc)
   (if (not fnc)
       (begin
-	(set! fnc (make-vector (* 3 6 4 4) '()))
-	(set! vibfreqfun (make-vector 3 '()))
-	(set! i3fun1 (make-vector 3 '()))
-	(set! i3fun2 (make-vector 3 '()))
+	(set! fnc (make-vector (* 3 6 4 4) ()))
+	(set! vibfreqfun (make-vector 3 ()))
+	(set! i3fun1 (make-vector 3 ()))
+	(set! i3fun2 (make-vector 3 ()))
 
 	(setf-aref fnc 1 1 1 1 (flipxy '(350  130.8 524  261.6 392  392 523 523.2 784 784 1046 1064 1568 1568)))
 	(setf-aref fnc 1 1 1 2 (flipxy '(.3   130.8   .8 261.6   .9 392  .9 523.2  .7 784   .86 1064 .86  1568)))

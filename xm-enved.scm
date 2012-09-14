@@ -28,7 +28,7 @@
 (define (xe-create-enved name parent args axis-bounds)
 
   (define (xe-add-envelope-point x y cur-env)
-    (let ((new-env '()))
+    (let ((new-env ()))
       (define (search-point e)
 	(if (null? e)
 	    (append new-env (list x y))
@@ -42,7 +42,7 @@
       (search-point cur-env)))
 
   (define (xe-edit-envelope-point pos x y cur-env)
-    (let ((new-env '()))
+    (let ((new-env ()))
       (define (search-point e npos)
 	(if (= npos pos)
 	    (append new-env (list x y) (cddr e))
@@ -52,7 +52,7 @@
       (search-point cur-env 0)))
 
   (define (xe-remove-envelope-point pos cur-env)
-    (let ((new-env '()))
+    (let ((new-env ()))
       (define (search-point e npos)
 	(if (null? e)
 	    new-env
@@ -216,7 +216,7 @@
 			   name))
 	     (dragging #f))
 
-	;; (xe-create-enved "hi" ((sound-widgets 0) 9) '() '(0.0 1.0 0.0 1.0))
+	;; (xe-create-enved "hi" ((sound-widgets 0) 9) () '(0.0 1.0 0.0 1.0))
 
 	(define (local-draw-axes wid gc label x0 x1 y0 y1)
 	  (let ((cr (make-cairo wid)))
@@ -397,7 +397,7 @@
 		      (cairo_destroy cr)))))))))
   
 #|
-(define outer (add-main-pane "hiho" xmFormWidgetClass '()))
+(define outer (add-main-pane "hiho" xmFormWidgetClass ()))
 
 (define editor (xe-create-enved "a name" outer 
 			     (list XmNleftAttachment   XmATTACH_FORM

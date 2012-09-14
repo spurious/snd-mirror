@@ -607,7 +607,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, OP_CLOSURE_ALL_C, HOP_CLOSURE_ALL_C, OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, 
       OP_CLOSURE_CDR_S, HOP_CLOSURE_CDR_S, OP_CLOSURE_ALL_Sp, HOP_CLOSURE_ALL_Sp, 
 
-      OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SS, HOP_CLOSURE_STAR_SS, 
+      OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SS, HOP_CLOSURE_STAR_SS, OP_CLOSURE_STAR_SC, HOP_CLOSURE_STAR_SC, 
 
       OP_SAFE_THUNK, HOP_SAFE_THUNK,
       OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_Q, HOP_SAFE_CLOSURE_Q, 
@@ -623,7 +623,8 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_S_one, HOP_SAFE_CLOSURE_S_one,
       OP_SAFE_CLOSURE_S_vref, HOP_SAFE_CLOSURE_S_vref, 
 
-      OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, OP_SAFE_CLOSURE_STAR_SoS, HOP_SAFE_CLOSURE_STAR_SoS, 
+      OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
+      OP_SAFE_CLOSURE_STAR_SoS, HOP_SAFE_CLOSURE_STAR_SoS, OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, 
       
       OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_CONS_SS, HOP_SAFE_CONS_SS,
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
@@ -710,7 +711,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "closure_all_s", "h_closure_all_s", "closure_all_c", "h_closure_all_c", "closure_all_x", "h_closure_all_x",
      "closure_cdr_s", "h_closure_cdr_s", "closure_all_sp", "h_closure_all_sp", 
 
-     "closure*_s", "h_closure*_s", "closure*_ss", "h_closure*_ss", 
+     "closure*_s", "h_closure*_s", "closure*_ss", "h_closure*_ss", "closure*_sc", "h_closure*_sc", 
 
      "safe_thunk", "h_safe_thunk",
      "safe_closure_s", "h_safe_closure_s", "safe_closure_c", "h_safe_closure_c", "safe_closure_q", "h_safe_closure_q", 
@@ -726,7 +727,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_closure_s_one", "h_safe_closure_s_one", 
      "safe_closure_s_vref", "h_safe_closure_s_vref", 
 
-     "safe_closure*_s", "h_safe_closure*_s", "safe_closure*_ss", "h_safe_closure*_ss", "safe_closure*_sos", "h_safe_closure*_sos", 
+     "safe_closure*_s", "h_safe_closure*_s", "safe_closure*_ss", "h_safe_closure*_ss", 
+     "safe_closure*_sos", "h_safe_closure*_sos", "safe_closure*_sc", "h_safe_closure*_sc", 
 
      "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", "safe_cons_ss", "h_safe_cons_ss",
      "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
@@ -36437,16 +36439,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  (closure_star_arity_to_int(sc, func) >= 2) &&
 		  (has_simple_args(closure_body(func))))
 		{
-		  /* stopgap... */
-		  if (symbols == 2)
-		    {
-		  set_unsafely_optimized(car_x);
-		  set_optimize_data(car_x, hop + ((closure_body_is_safe(func)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SS));
-		  ecdr(car_x) = func;
-		  fcdr(car_x) = caddar_x;
-		  return(false); 
-		    }
-#if 0
 		  set_unsafely_optimized(car_x);
 		  if (symbols == 2)
 		    set_optimize_data(car_x, hop + ((closure_body_is_safe(func)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SS));
@@ -36454,8 +36446,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		  ecdr(car_x) = func;
 		  fcdr(car_x) = caddar_x;
 		  return(false); 
-#endif
-
 		}
 	    }
 	}
@@ -44274,11 +44264,33 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer x, val1, val2;
 		/* the finders have to operate in the current environment, so we can't change sc->envir until later */
 		val1 = finder(sc, cadr(code));
-		val2 = finder(sc, caddr(code));
+		val2 = finder(sc, fcdr(code)); /* caddr */
 		sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), val1);
 
 		x = next_slot(environment_slots(closure_environment(ecdr(code))));
 		slot_set_value(x, val2); 
+		symbol_set_local(slot_symbol(x), frame_id(sc->envir), x);
+
+		car(sc->T2_1) = next_slot(x);
+		car(sc->T2_2) = cddr(closure_args(ecdr(code)));
+		goto FILL_SAFE_CLOSURE_STAR;
+	      }
+	      
+	      
+	    case OP_SAFE_CLOSURE_STAR_SC:
+	      if (!function_is_ok(code))
+		{
+		  set_optimize_data(code, OP_UNKNOWN_SC);
+		  goto OPT_EVAL;
+		}
+	      
+	    case HOP_SAFE_CLOSURE_STAR_SC:
+	      {
+		s7_pointer x;
+		sc->envir = old_frame_with_slot(sc, closure_environment(ecdr(code)), finder(sc, cadr(code)));
+
+		x = next_slot(environment_slots(closure_environment(ecdr(code))));
+		slot_set_value(x, caddr(code));
 		symbol_set_local(slot_symbol(x), frame_id(sc->envir), x);
 
 		car(sc->T2_1) = next_slot(x);
@@ -45072,7 +45084,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer val1, val2, args;
 		args = cddr(closure_args(ecdr(code)));
 		val1 = find_symbol_or_bust(sc, cadr(code));
-		val2 = find_symbol_or_bust(sc, caddr(code));
+		val2 = find_symbol_or_bust(sc, fcdr(code)); /* caddr */
 		if (is_null(args))
 		  {
 		    car(sc->T2_1) = val1;
@@ -45084,6 +45096,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = args;
 		goto FILL_CLOSURE_STAR;
 	      }
+
+
+	    case OP_CLOSURE_STAR_SC:
+	      if (!function_is_ok(code))
+		{
+		  set_optimize_data(code, OP_UNKNOWN_SC);
+		  goto OPT_EVAL;
+		}
+	      
+	    case HOP_CLOSURE_STAR_SC:
+	      {
+		s7_pointer val1, val2, args;
+		args = cddr(closure_args(ecdr(code)));
+		val1 = find_symbol_or_bust(sc, cadr(code));
+		val2 = caddr(code);
+		if (is_null(args))
+		  {
+		    car(sc->T2_1) = val1;
+		    car(sc->T2_2) = val2;
+		    goto UNSAFE_CLOSURE_TWO;
+		  }
+		sc->args = list_2(sc, val2, val1);
+		sc->value = args;
+		goto FILL_CLOSURE_STAR;
+	      }
+
 
 	    case OP_CLOSURE_STAR_S:
 	      if (!function_is_ok(code))
@@ -45266,6 +45304,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 		      }
 		    break;
+
+		  case T_CLOSURE_STAR:
+		    if ((!is_keyword(cadr(code))) &&
+			(has_simple_args(closure_body(f))))
+		      {
+			set_optimize_data(code, (closure_body_is_safe(f)) ? OP_SAFE_CLOSURE_STAR_S : OP_CLOSURE_STAR_S);
+			if (is_global(car(code)))
+			  set_hopping(code);
+			ecdr(code) = f;
+			fcdr(code) = cadr(code);
+			goto OPT_EVAL;
+		      }
+		    break;
 		    
 		  case T_C_OBJECT:
 		    /* fprintf(stderr, "is aritable: %d\n", is_aritable(sc, f, 1)); */
@@ -45419,7 +45470,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			fcdr(code) = caddr(code);
 			goto OPT_EVAL;
 
-			/* the closure* opts assume args are not keywords so it's too late here */
+		      case T_CLOSURE_STAR:
+			/* the closure* opts assume args are not keywords, but we can check that! */
+			if ((!is_keyword(cadr(code))) &&
+			    (!is_keyword(caddr(code))) &&
+			    (has_simple_args(closure_body(f))))
+			  {
+			    set_optimize_data(code, (closure_body_is_safe(f)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SS);
+			    if (is_global(car(code)))
+			      set_hopping(code);
+			    ecdr(code) = f;
+			    fcdr(code) = caddr(code);
+			    goto OPT_EVAL;
+			  }
+			break;
 
 		      case T_C_FUNCTION:
 		      case T_C_ANY_ARGS_FUNCTION:
@@ -45470,6 +45534,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 			break;
 			
+		      case T_CLOSURE_STAR:
+			if ((!is_keyword(cadr(code))) &&
+			    (has_simple_args(closure_body(f))))
+			  {
+			    set_optimize_data(code, (closure_body_is_safe(f)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SC);
+			    if (is_global(car(code)))
+			      set_hopping(code);
+			    ecdr(code) = f;
+			    goto OPT_EVAL;
+			  }
+			break;
+
 		      case T_C_FUNCTION:
 		      case T_C_ANY_ARGS_FUNCTION:
 		      case T_C_OPT_ARGS_FUNCTION:

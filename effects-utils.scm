@@ -35,8 +35,8 @@
 (if (not (defined? 'all-chans))
     (define (all-chans)
       "(all-chans) returns a list of all current sound objects and channel numbers"
-      (let ((sndlist '())
-	    (chnlist '()))
+      (let ((sndlist ())
+	    (chnlist ()))
 	(for-each (lambda (snd)
 		    (do ((i (- (channels snd) 1) (- i 1)))
 			((< i 0))

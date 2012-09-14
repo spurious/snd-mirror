@@ -299,7 +299,7 @@
        (out-any i (* amp (firmant oz (oscil os) (env frqf))) 0))))
 
 ;(define w1 (make-polyshape :frequency 100.0 
-;			   :partials (let ((frqs '()))
+;			   :partials (let ((frqs ()))
 ;				       (do ((i 1 (+ i 1)))
 ;					   ((= i 10) (begin (format #t frqs) (reverse frqs)))
 ;					 (set! frqs (cons (/ 1.0 (* i i)) (cons i frqs)))))))
@@ -2163,7 +2163,7 @@
 		  (if (= order 2) 1.3       ;   actual limit is supposed to be pi/2 (G&R 1.441)
 		      (if (< order 9) 1.7   ;   but Gibbs phenomenon pushes it to 1.851
 			  1.9))))           ;   if order>25, numerical troubles -- use table-lookup
-	(freqs '()))
+	(freqs ()))
     (do ((i 1 (+ i 1)))
 	((> i order))
       (set! freqs (cons (/ 1.0 (* norm i)) (cons i freqs))))

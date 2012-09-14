@@ -808,7 +808,7 @@
 		  (if (pair? (cdr lst)) 
 		      (proper-list (cdr lst)) 
 		      (if (null? (cdr lst)) 
-			  '() 
+			  () 
 			  (list (cdr lst)))))
 	    lst))
       
@@ -870,14 +870,14 @@
       
       
       (define (remove x lst)
-	(cond ((null? lst) '()) 
+	(cond ((null? lst) ()) 
 	      ((eqv? (car lst) x) (cdr lst)) ; x might be a number so eq? is not safe
 	      (else (cons (car lst) 
 			  (remove x (cdr lst))))))
       
       
       (define (remove-all x lst) 
-	(cond ((null? lst) '()) 
+	(cond ((null? lst) ()) 
 	      ((equal? (car lst) x) (remove-all x (cdr lst)))
 	      (else (cons (car lst) (remove-all x (cdr lst))))))
       
@@ -901,12 +901,12 @@
 		  (not eval))
 	      uform
 	      
-	      (let ((vars '())
-		    (associated-exprs '())
+	      (let ((vars ())
+		    (associated-exprs ())
 		    (ctr 0))
 		
 		(define (tree-remove-all x lst) 
-		  (cond ((null? lst) '()) 
+		  (cond ((null? lst) ()) 
 			((equal? (car lst) x) (tree-remove-all x (cdr lst)))
 			((pair? (car lst)) (cons (tree-remove-all x (car lst)) (tree-remove-all x (cdr lst))))
 			(else (cons (car lst) (tree-remove-all x (cdr lst))))))
@@ -961,7 +961,7 @@
 		    (let ((len (length vars)))
 		      (let ((vsize (expt 2 len))) ; 2^n possible cases
 			(let ((v (make-vector vsize))
-			      (vals '())
+			      (vals ())
 			      (nonf (make-vector len))
 			      (cur 0)
 			      (ctr 0)
@@ -990,7 +990,7 @@
 		      
 			  (if (= (length vals) 1)
 			      (car vals)
-			      (let ((none-vars '())
+			      (let ((none-vars ())
 				    (pos -1))
 				(for-each
 				 (lambda (var)
@@ -1107,7 +1107,7 @@
 	
 	
 	(define (contradictory? ands)
-	  (let ((vars '()))
+	  (let ((vars ()))
 	    (call-with-exit
 	     (lambda (return)
 	       (do ((b ands (cdr b)))
@@ -1212,7 +1212,7 @@
 		       #f
 		       (if (= len 2)
 			   (classify (cadr form))
-			   (let ((new-form '()))
+			   (let ((new-form ()))
 			     (do ((exprs (cdr form) (cdr exprs)))
 				 ((null? exprs) 
 				  (if (null? new-form)
@@ -1253,7 +1253,7 @@
 			   (classify (cadr form))
 			   (if (contradictory? (cdr form))
 			       #f
-			       (let ((new-form '()))
+			       (let ((new-form ()))
 				 (do ((exprs (cdr form) (cdr exprs)))
 				     ((null? exprs) 
 				      (if (null? new-form)
@@ -1318,7 +1318,7 @@
 		     floor round truncate ceiling ash)))
       
       (define (splice-if f lst)
-	(cond ((null? lst) '())
+	(cond ((null? lst) ())
 	      ((pair? lst)
 	       (if (and (pair? (car lst))
 			(f (caar lst)))
@@ -1354,7 +1354,7 @@
 			(cond ((null? lst) nlst)
 			      ((member (car lst) nlst) (rem-dup (cdr lst) nlst))
 			      (else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
-	      (reverse (rem-dup lst '()))))
+	      (reverse (rem-dup lst ()))))
 	  
 	  (define (just-rationals? form)
 	    (or (null? form)
@@ -1730,7 +1730,7 @@
 				  name line-number form)
 		     
 		     (if *report-minor-stuff*
-			 (let ((expr (simplify-boolean (cadr form) '() '() env)))
+			 (let ((expr (simplify-boolean (cadr form) () () env)))
 			   (if (equal? expr #t)
 			       (lint-format "possible simplification:~A"
 					    name line-number
@@ -1773,7 +1773,7 @@
 	  ((and or not)
 	   (if (and *report-minor-stuff*
 		    (not (= line-number last-simplify-boolean-line-number)))
-	       (let ((val (simplify-boolean form '() '() env)))
+	       (let ((val (simplify-boolean form () () env)))
 		 (set! last-simplify-boolean-line-number line-number)
 		 (if (not (equal? form val))
 		     (lint-format "possible simplification:~A"
@@ -1909,7 +1909,7 @@
 		      (let ((rst (or (not (pair? args))
 				     (negative? (length args))
 				     (member ':rest args)))
-			    (pargs (if (pair? args) (proper-list args) '())))
+			    (pargs (if (pair? args) (proper-list args) ())))
 			
 			(let ((call-args (length (cdr form)))
 			      (decl-args (max 0 (- (length pargs) (keywords pargs) (if rst 1 0)))))
@@ -2224,8 +2224,8 @@
 		(if repeat
 		    (lint-format "~A ~A ~A is declared twice" name line-number head type (caar cur))))))
 	
-	(let ((set '())
-	      (unused '()))
+	(let ((set ())
+	      (unused ()))
 	  (for-each 
 	   (lambda (arg)
 	     (if (memq (car arg) '(quote if begin let let* letrec cond case or and do set! 
@@ -2355,7 +2355,7 @@
 		  (lint-format "~A could be ~A" 
 			       name line-number head
 			       (symbol (substring (symbol->string head) 0 (- (length (symbol->string head)) 1)))))
-	      (lint-walk-function-body name line-number head args '() val env)
+	      (lint-walk-function-body name line-number head args () val env)
 	      (append (list (list name #f #f (list head args))) env))
 	    
 	    (if (or (symbol? args) 
@@ -2563,7 +2563,7 @@
 				  (lint-format "cond clause is messed up: ~A"
 					       name line-number
 					       (truncated-list->string clause))
-				  (let ((expr (simplify-boolean (car clause) '() '() env)))
+				  (let ((expr (simplify-boolean (car clause) () () env)))
 				    (if (boolean? expr)
 					(if (not expr)
 					    (lint-format "cond clause will never be evaluated:~A"
@@ -2609,7 +2609,7 @@
 					    name line-number
 					    (truncated-list->string form)))
 			   (lint-walk name (cadr form) env) ; the selector
-			   (let ((all-keys '())
+			   (let ((all-keys ())
 				 (ctr 0)
 				 (len (length (cddr form))))
 			     (for-each
@@ -2656,7 +2656,7 @@
 		    
 		    ;; ---------------- do ----------------		  
 		    ((do)
-		     (let ((vars '()))
+		     (let ((vars ()))
 		       (if (or (< (length form) 3)
 			       (not (list? (cadr form)))
 			       (not (list? (caddr form))))
@@ -2693,7 +2693,7 @@
 				      name line-number 
 				      (truncated-list->string form))
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
-			   (let ((vars (if named-let (list (list named-let #f #f)) '())))
+			   (let ((vars (if named-let (list (list named-let #f #f)) ())))
 			     (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
 				 ((or (not (list? bindings))
 				      (null? bindings)))
@@ -2721,7 +2721,7 @@
 			     (let* ((cur-env (append vars env))
 				    (e (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) cur-env))
 				    (nvars (and (not (eq? e cur-env))
-						(env-difference name e cur-env '()))))
+						(env-difference name e cur-env ()))))
 			       (if (pair? nvars)
 				   (set! vars (append nvars vars))))
 			     (report-usage name line-number 'variable head vars))))
@@ -2733,7 +2733,7 @@
 			 (lint-format "let* is messed up: ~A" 
 				      name line-number 
 				      (truncated-list->string form))
-			 (let ((vars '()))
+			 (let ((vars ()))
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((or (not (list? bindings))
 				    (null? bindings)))
@@ -2758,7 +2758,7 @@
 			   (let* ((cur-env (append vars env))
 				  (e (lint-walk-body name line-number head (cddr form) cur-env))
 				  (nvars (and (not (eq? e cur-env))
-					      (env-difference name e cur-env '()))))
+					      (env-difference name e cur-env ()))))
 			     (if (pair? nvars)
 				 (set! vars (append nvars vars))))
 			   
@@ -2771,7 +2771,7 @@
 			 (lint-format "~A is messed up: ~A" 
 				      name line-number head
 				      (truncated-list->string form))
-			 (let ((vars '()))
+			 (let ((vars ()))
 			   (if (null? (cadr form))
 			       (lint-format "~A could be let:~A"
 					    name line-number head 
@@ -2791,7 +2791,7 @@
 			     (let* ((cur-env (append vars env))
 				    (e (lint-walk-body name line-number head (cddr form) cur-env))
 				    (nvars (and (not (eq? e cur-env))
-						(env-difference name e cur-env '()))))
+						(env-difference name e cur-env ()))))
 			       (if (pair? nvars)
 				   (set! vars (append nvars vars)))))
 			   
@@ -2834,7 +2834,7 @@
 			    body)
 			   (if (not (eq? head 'begin))
 			       (if (not (eq? vars env))
-				   (let ((nvars '()))
+				   (let ((nvars ()))
 				     (do ((v vars (cdr v)))
 					 ((or (null? v)
 					      (eq? v env)))
@@ -2934,8 +2934,8 @@
 				      (truncated-list->string form))
 			 (let* ((e (lint-walk-body name line-number head (cddr form) env))
 				(vars (if (not (eq? e env))
-					  (env-difference name e env '())
-					  '())))
+					  (env-difference name e env ())
+					  ())))
 			   (report-usage name line-number 'variable head vars)))
 		     env)
 		    
@@ -3004,10 +3004,10 @@
       (lambda (file . args)
 	"(lint file) looks for infelicities in file's scheme code"
 	(set! *current-file* file)
-	(set! undefined-identifiers '())
+	(set! undefined-identifiers ())
 	(set! globals (make-hash-table))
 	(set! other-identifiers (make-hash-table))
-	(set! loaded-files '())
+	(set! loaded-files ())
 	
 	(if *load-file-first* ; this can improve the error checks
 	    (load file))
@@ -3019,7 +3019,7 @@
 			   #f))))
 	  
 	  (if (input-port? fp)
-	      (let ((vars '())
+	      (let ((vars ())
 		    (line 0)
 		    (last-form #f)
 		    (last-line-number -1))

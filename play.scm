@@ -41,7 +41,7 @@
 				(mus-audio-open-output 0 cur-srate outchans frm outbytes))
 			      (lambda args -1)))) ; -1 returned in case of error
 	      (if no-error 
-		  (set! (hook-functions mus-error-hook) '()))
+		  (set! (hook-functions mus-error-hook) ()))
 	      val))))
     (if (not (= audio-fd -1))
 	(set! (dac-size) outbytes))

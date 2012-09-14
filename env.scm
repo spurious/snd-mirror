@@ -52,7 +52,7 @@
 (define (window-envelope beg end e)
   "(window-envelope beg end e) -> portion of e lying between x axis values beg and 
 end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
-  (let ((nenv '())
+  (let ((nenv ())
 	(lasty (if e (cadr e) 0.0))
 	(len (length e)))
     (call-with-exit
@@ -84,7 +84,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 
 (define (map-envelopes op e1 e2)
   "(map-envelopes func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope"
-  (let ((xs '()))
+  (let ((xs ()))
     (letrec ((at0 
 	      (lambda (e)
 		(let* ((diff (car e))
@@ -103,7 +103,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 			    (cond ((null? lst) nlst)
 				  ((member (car lst) nlst) (rem-dup (cdr lst) nlst))
 				  (else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
-		  (rem-dup lst '())))))
+		  (rem-dup lst ())))))
 
       (if (null? e1)
 	  (at0 e2)
@@ -111,7 +111,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 	      (at0 e1)
 	      (let ((ee1 (at0 e1))
 		    (ee2 (at0 e2))
-		    (newe '()))
+		    (newe ()))
 		(set! xs (sort! (remove-duplicates xs) <))
 		(let ((len (length xs)))
 		  (do ((i 0 (+ i 1)))
@@ -256,7 +256,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 (define* (scale-envelope e scl (offset 0))
   "(scale-envelope env scaler (offset 0)) scales y axis values by 'scaler' and optionally adds 'offset'"
   (if (null? e)
-      '()
+      ()
       (append (list (car e) (+ offset (* scl (cadr e))))
 	      (scale-envelope (cddr e) scl offset))))
 
@@ -277,7 +277,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
     (if (or (= len 0) (= len 2))
 	e
 	(let ((xmax (e (- len 2))))
-	  (reverse-env-1 e '() xmax)))))
+	  (reverse-env-1 e () xmax)))))
 
 
 ;;; -------- concatenate-envelopes
@@ -293,7 +293,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 			   newe))
 	       xoff
 	       x0)))
-  (let ((ne '())
+  (let ((ne ())
 	(xoff 0.0))
     (for-each 
      (lambda (e)
@@ -468,7 +468,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	 (len (length e))
 	 (x-max (e (- len 2)))
 	 (x-incr (* 1.0 (/ (- x-max x-min) xgrid)))
-	 (new-e '()))
+	 (new-e ()))
     (do ((x x-min (+ x x-incr)))
 	((>= x x-max))
       (let ((y (envelope-interp x e)))
@@ -487,7 +487,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 (define* (rms-envelope file (beg 0.0) (dur #f) (rfreq 30.0) (db #f))
   "(rms-envelope file (beg 0.0) (dur #f) (rfreq 30.0) (db #f)) returns an envelope of RMS values in 'file'"
   ;; based on rmsenv.ins by Bret Battey
-  (let* ((e '())
+  (let* ((e ())
 	 (incr (/ 1.0 rfreq))
 	 (fsr (srate file))
 	 (incrsamps (round (* incr fsr)))

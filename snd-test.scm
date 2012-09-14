@@ -227,7 +227,7 @@
 ;; try to get a different random number sequence on each run
 (set! (mus-rand-seed) (current-time))
 
-(set! (hook-functions bad-header-hook) '())
+(set! (hook-functions bad-header-hook) ())
 (hook-push bad-header-hook (lambda (hook) (set! (hook 'result) #t)))
 
 (define with-gui (or (provided? 'snd-gtk)
@@ -245,7 +245,7 @@
 
 (define (real-time) (exact->inexact (/ (get-internal-real-time) internal-time-units-per-second)))
 (define (hundred n) (round (* 100 n)))
-(define times '())
+(define times ())
 (defmacro time (a) 
   `(let ((start (real-time))) 
      ,a 
@@ -428,7 +428,7 @@
 (snd-display #__line__ ";;~A" (snd-version))
 (if (not (defined? 'before-test-hook)) (define before-test-hook (make-hook 'n)))
 (if (not (defined? 'after-test-hook)) (define after-test-hook (make-hook 'n)))
-(set! (hook-functions before-test-hook) '())
+(set! (hook-functions before-test-hook) ())
 (hook-push before-test-hook (lambda (hook)
 			      (let ((n (hook 'n)))
 				(set! (mus-srate) default-srate)
@@ -456,7 +456,7 @@
       (system (format #f "rm -f /tmp/snd_save_*")))
   (mus-sound-prune))
 
-(set! (hook-functions after-test-hook) '())
+(set! (hook-functions after-test-hook) ())
 (hook-push after-test-hook
 	   (lambda (hook)
 	     (let ((n (hook 'n)))
@@ -855,7 +855,7 @@
     (if with-gui
 	(begin
 	  (set! (enved-envelope) (enved-envelope))
-	  (if (not (equal? (enved-envelope)  '())) 
+	  (if (not (equal? (enved-envelope)  ())) 
 	      (snd-display #__line__ ";enved-envelope set def: ~A" (enved-envelope)))))
     (set! (eps-file) (eps-file))
     (if (not (equal? (eps-file)  "snd.eps" )) 
@@ -1095,7 +1095,7 @@
     (set! (zero-pad) -123)
     (if (not (equal? (zero-pad)  0)) 
 	(snd-display #__line__ ";zero-pad set -123: ~A" (zero-pad)))
-    (if (not (equal? (zero-pad #t #t) '()))
+    (if (not (equal? (zero-pad #t #t) ()))
 	(snd-display #__line__ ";zero-pad #t: ~A" (zero-pad #t #t)))
     (set! (zoom-focus-style) (zoom-focus-style))
     (if (not (equal? (zoom-focus-style)  2 )) 
@@ -1232,7 +1232,7 @@
       'dot-size (dot-size) 1 
       'enved-base (enved-base) 1.0 
       'enved-clip? (enved-clip?) #t
-      'enved-envelope (enved-envelope) '()
+      'enved-envelope (enved-envelope) ()
       'enved-filter (enved-filter) #t
       'enved-filter-order (enved-filter-order) 40
       'enved-in-dB (enved-in-dB) #f 
@@ -2016,7 +2016,7 @@
     (close-sound ind) 
     (dismiss-all-dialogs)
     
-    (let ((undef '())
+    (let ((undef ())
 	  (names (list '*snd-opened-sound* 'abort 'add-colormap 
 		       'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
 		       'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
@@ -2489,7 +2489,7 @@
 	    (save-sound-as "fmv.snd" index mus-aifc)
 	    (close-sound index))
 	  (let ((index (open-sound "fmv.snd")))
-	    (if (not (equal? (sound-loop-info index) '()))
+	    (if (not (equal? (sound-loop-info index) ()))
 		(snd-display #__line__ ";null loop-info: ~A" (sound-loop-info index)))
 	    (set! (sound-loop-info index) (list 1200 1400 4 3 2 1))
 	    (if (not (equal? (sound-loop-info index) (list 1200 1400 4 3 2 1 1 1)))
@@ -2835,12 +2835,12 @@
 		(snd-display #__line__ ";saved-as int -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";nist[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
-	  (set! (hook-functions output-comment-hook) '())
+	  (set! (hook-functions output-comment-hook) ())
 	  (hook-push output-comment-hook
 		     (lambda (hook) 
 		       (set! (hook 'result) (string-append (hook 'comment) " [written by me]"))))
 	  (save-sound-as :file "test.snd" :sound ob :header-type mus-riff :data-format mus-lfloat)
-	  (set! (hook-functions output-comment-hook) '())
+	  (set! (hook-functions output-comment-hook) ())
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-riff)) 
 		(snd-display #__line__ ";save-as riff -> ~A?" (mus-header-type-name (header-type ab))))
@@ -2913,7 +2913,7 @@
 	    (if (not (= (mus-sound-data-format "test.snd") mus-bshort)) 
 		(snd-display #__line__ ";saved-as short -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (short)[1000] = ~A?" (sample 1000 ab)))
-	    (set! (hook-functions update-hook) '())
+	    (set! (hook-functions update-hook) ())
 	    (set! (y-bounds ab 0) (list -3.0 3.0))
 	    (set! (data-format ab) mus-lshort)
 	    (if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd"))) ; these set!'s can change the index via update-sound
@@ -3298,7 +3298,7 @@
 		  (not (= (data-location ind) 0))
 		  (not (= (frames ind) 0)))
 	      (snd-display #__line__ ";open raw: ~A ~A ~A ~A ~A" (data-format ind) (chans ind) (srate ind) (data-location ind) (frames ind)))
-	  (set! (hook-functions open-raw-sound-hook) '())
+	  (set! (hook-functions open-raw-sound-hook) ())
 	  (close-sound ind))
 	
 	(let ((sd1 (make-sound-data 1 32))
@@ -3440,12 +3440,12 @@
 	(let ((fd (mus-sound-open-output "fmv.snd" 22050 1 mus-bshort mus-next "no comment"))
 	      (sdata (make-sound-data 1 10)))
 	  (define (sound-data-channel->list sd chan)
-	    (let ((ls '()))
+	    (let ((ls ()))
 	      (do ((i (- (sound-data-length sd) 1) (- i 1)))
 		  ((< i 0) ls)
 		(set! ls (cons (sd chan i) ls)))))
 	  (define (sound-data->list sd)
-	    (let ((lst '()))
+	    (let ((lst ()))
 	      (do ((i (- (sound-data-chans sd) 1) (- i 1)))
 		  ((< i 0) lst)
 		(set! lst (cons (sound-data-channel->list sd i) lst)))))
@@ -4004,9 +4004,9 @@
 	  (close-sound ind))
 	))
     
-    (set! (hook-functions open-raw-sound-hook) '())
+    (set! (hook-functions open-raw-sound-hook) ())
     (hook-push open-raw-sound-hook (lambda (hook) (set! (hook 'result) #t)))
-    (set! (hook-functions bad-header-hook) '())
+    (set! (hook-functions bad-header-hook) ())
     (hook-push bad-header-hook (lambda (hook) (set! (hook 'result) #t)))
     (if (null? (hook-functions open-raw-sound-hook)) (snd-display #__line__ ";add hook open-raw-sound-hook failed??"))
     (if (null? (hook-functions bad-header-hook)) (snd-display #__line__ ";add hook bad-header-hook failed??"))
@@ -4595,8 +4595,8 @@
 		  (not (equal? files files2)))
 	      (snd-display #__line__ ";sound-files-in-directory dot: ~A but ~A" files2 files)))))
     
-    (set! (hook-functions bad-header-hook) '())
-    (set! (hook-functions open-raw-sound-hook) '())
+    (set! (hook-functions bad-header-hook) ())
+    (set! (hook-functions open-raw-sound-hook) ())
     (if (not (null? (sounds))) (for-each close-sound (sounds)))
     
     (let ((ind (new-sound :size 0)))
@@ -7083,11 +7083,11 @@ EDITS: 5
 	  (if (ffneq (amp-control ind 2) .25) (snd-display #__line__ ";amp-control 2 (.25): ~A?" (amp-control ind 2)))
 	  (if (ffneq (amp-control ind 1) .5) (snd-display #__line__ ";amp-control 1 after local set (.5): ~A?" (amp-control ind 1)))
 	  (let ((after-ran #f))
-	    (set! (hook-functions after-apply-controls-hook) '())
+	    (set! (hook-functions after-apply-controls-hook) ())
 	    (hook-push after-apply-controls-hook (lambda (hook) (set! after-ran (hook 'snd))))
 	    (apply-controls ind)
 	    (if (not (equal? ind after-ran)) (snd-display #__line__ ";after-apply-controls-hook: ~A?" after-ran))
-	    (set! (hook-functions after-apply-controls-hook) '()))
+	    (set! (hook-functions after-apply-controls-hook) ()))
 	  (revert-sound ind)
 	  (set! (sync ind) 1)
 	  (scale-to (vct .1 .2))
@@ -7296,9 +7296,9 @@ EDITS: 5
 	      (snd-display #__line__ ";convolve-files stereo: ~A" (mus-sound-maxamp "fmv5.snd")))
 	  (delete-file "fmv5.snd")
 	  (scale-to .25 ind1)
-	  (set! (y-bounds ind1) '())
+	  (set! (y-bounds ind1) ())
 	  (if (not (equal? (y-bounds ind1) (list -.25 .25)))
-	      (snd-display #__line__ ";y-bounds '(): ~A?" (y-bounds ind1)))
+	      (snd-display #__line__ ";y-bounds (): ~A?" (y-bounds ind1)))
 	  (revert-sound ind1)
 	  
 	  (scale-to 1.0 ind1)
@@ -7996,7 +7996,7 @@ EDITS: 5
 		;; (old-pos0 (edit-position index 0))
 		;; (old-pos1 (edit-position index 1))
 		(old-reglen (map region-frames (regions)))
-		(s61-files '()))
+		(s61-files ()))
 	    (hook-push save-state-hook
 		       (lambda (hook)
 			 (set! s61-files (cons (hook 'name) s61-files))))
@@ -8038,7 +8038,7 @@ EDITS: 5
 		   (delete-file file)))
 	     s61-files)
 	    (delete-file "s61.scm")
-	    (set! (hook-functions save-state-hook) '())
+	    (set! (hook-functions save-state-hook) ())
 	    ))
 	
 	(let ((index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "channel tests"))
@@ -8258,7 +8258,7 @@ EDITS: 5
 	      (old-dur (initial-dur))
 	      (old-show (show-full-duration))
 	      (old-hook (hook-functions initial-graph-hook)))
-	  (set! (hook-functions initial-graph-hook) '())
+	  (set! (hook-functions initial-graph-hook) ())
 	  (set! (show-full-duration) #t)
 	  (let ((ns (open-sound "1.snd")))
 	    (let ((ls (left-sample ns 0))
@@ -9569,7 +9569,7 @@ EDITS: 2
 	  (if (fneq (v3 0) 1.0) (snd-display #__line__ ";set! vct-ref: ~A" (v3 0))))
 	(set! (vlst 1) .1)
 	(if (not (feql (vct->list vlst) (list 0.0 0.1 0.0))) (snd-display #__line__ ";vct->list: ~A?" (vct->list vlst)))
-	(let* ((vect '#(0.0 1.0 2.0 3.0))
+	(let* ((vect #(0.0 1.0 2.0 3.0))
 	       (v123 (vct 0.0 1.0 2.0 3.0))
 	       (v2 (vector->vct vect))
 	       (v3 v2)
@@ -9758,7 +9758,7 @@ EDITS: 2
 	  (set! (speed-control) 1.5)
 	  (apply-controls)
 					;		(if (fneq (sample 28245) 0.0) (snd-display #__line__ ";dac-hook stop apply-controls? ~A" (sample 28245)))
-	  (set! (hook-functions dac-hook) '())
+	  (set! (hook-functions dac-hook) ())
 	  (revert-sound)
 	  (set! (speed-control) 1.5)
 	  (set! ctr 0)
@@ -9768,7 +9768,7 @@ EDITS: 2
 	  (play :wait #t)
 	  (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";apply-controls from hook: ~A ~A" (edits ind) (edit-tree ind)))
 	  (revert-sound)
-	  (set! (hook-functions dac-hook) '())
+	  (set! (hook-functions dac-hook) ())
 	  (set! (speed-control) 1.5)
 	  (stop-playing)
 	  (hook-push after-apply-controls-hook (lambda (hook) 
@@ -10373,7 +10373,7 @@ EDITS: 2
 	   (list 1024 256 2 512))
 	  (set! (colormap-size) 512))
 	
-	(set! (hook-functions graph-hook) '())
+	(set! (hook-functions graph-hook) ())
 	(clear-sincs)
 	
 	)))
@@ -16777,7 +16777,7 @@ EDITS: 2
     (test-gen-equal (make-env '(0 0 1 1 2 0) :scaler 0.5 :length 10) (make-env '(0 0 1 1 2 0) :scaler 0.5 :length 10) (make-env '(0 0 1 1 3 0) :scaler 0.5 :length 10))
     (test-gen-equal (make-env '((0 0) (1 1) (2 0)) :scaler 0.5 :length 10) (make-env '(0 0 1 1 2 0) :scaler 0.5 :length 10) (make-env '((0 0) (1 1) (3 0)) :scaler 0.5 :length 10))
     
-    (let ((var (catch #t (lambda () (make-env :envelope '())) (lambda args args))))
+    (let ((var (catch #t (lambda () (make-env :envelope ())) (lambda args args))))
       (if (not (eq? (car var) 'no-data))
 	  (snd-display #__line__ ";make-env null env: ~A" var)))
     (let ((var (catch #t (lambda () (make-env :length 1)) (lambda args args))))
@@ -18769,24 +18769,25 @@ EDITS: 2
     
     (do ((chans 1 (+ chans 1)))
 	((> chans 8))
-      (let ((loc (make-locsig :channels chans))
-	    (last (make-vct chans 0.0)))
+      (let* ((loc (make-locsig :channels chans))
+	     (last (make-vct chans 0.0))
+	     (data (mus-data loc)))
 	;; do a full circle looking for jumps
 	(move-locsig loc -400.0 1.0)
 	(do ((chan 0 (+ chan 1)))
 	    ((= chan chans))
-	  (set! (last chan) ((mus-data loc) chan)))
+	  (set! (last chan) (data chan)))
 	 (do ((x -400.0 (+ x .01)))
 	     ((> x 400.0))
 	   (move-locsig loc x 1.0)
 	   (do ((chan 0 (+ chan 1)))
 	       ((= chan chans))
-	     (if (or (< ((mus-data loc) chan) 0.0)
-		     (> ((mus-data loc) chan) 1.0))
-		 (format #t ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan ((mus-data loc) chan) (mus-data loc)))
+	     (if (or (< (data chan) 0.0)
+		     (> (data chan) 1.0))
+		 (format #t ";locsig, chans: ~D, degree: ~F, chan ~D is ~F, ~A~%" chans x chan (data chan) data))
 	     ;; not snd-display here -- we're in run
-	     (let ((diff (abs (- ((mus-data loc) chan) (last chan)))))
-	       (set! (last chan) ((mus-data loc) chan))
+	     (let ((diff (abs (- (data chan) (last chan)))))
+	       (set! (last chan) (data chan))
 	       (if (> diff .002)
 		   (format #t ";locsig, increment ~F in chan ~D with deg ~F~%" diff chan x)))))))
     
@@ -20102,7 +20103,7 @@ EDITS: 2
 	(undo))
       
       (let ((max-list (lambda ()
-			(let ((pts '()) 
+			(let ((pts ()) 
 			      (samp 0)
 			      (lasty 0.0))
 			  (scan-channel (lambda (y) 
@@ -20158,7 +20159,7 @@ EDITS: 2
 	(delete-file fname)
 	(if (view-files-dialog #f)
 	    (begin
-	      (set! (view-files-files (view-files-dialog #f)) '())
+	      (set! (view-files-files (view-files-dialog #f)) ())
 	      (if (not (null? (view-files-files (view-files-dialog #f))))
 		  (snd-display #__line__ ";set vf files list null: ~A" (view-files-files (view-files-dialog #f)))))))
       )
@@ -21335,13 +21336,13 @@ EDITS: 2
 		    (for-each
 		     (lambda (arg2)
 		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error 0+i (make-delay 32)
+		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
 			   (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			   () '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			   )))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error 0+i (make-delay 32)
+		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
 			(lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			))
 		 ;; generic args
 		 (for-each
@@ -21357,9 +21358,9 @@ EDITS: 2
 					     (func gen)
 					     (set! (func gen) arg1)))
 					 (lambda args #f)))
-				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 3/4 'mus-error 0+i
+				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 3/4 'mus-error 0+i
 				      (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-				      '() '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+				      () '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 				      (lambda (a) a)))
 			       (if (not (equal? (func gen) default-value))
 				   (catch #t
@@ -21403,8 +21404,8 @@ EDITS: 2
 	    
 	    (let ((random-args (list 
 				(expt 2.0 21.5) (expt 2.0 -18.0)
-				1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .1 .2 .3)  '#(0 1) 3/4 0+i (make-delay 32)
-				(lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 '() 32 '(1 . 2)
+				1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .1 .2 .3)  #(0 1) 3/4 0+i (make-delay 32)
+				(lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2)
 				))
 		  (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-table-lookup make-triangle-wave
 					make-comb ;make-convolve
@@ -21432,7 +21433,7 @@ EDITS: 2
 			    random-args)))))
 		 gen-make-procs))
 	      
-	      (random-gen '())
+	      (random-gen ())
 	      (for-each
 	       (lambda (arg1)
 		 (random-gen (list arg1))
@@ -21560,7 +21561,7 @@ EDITS: 2
       (harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
       (close-sound ind))
     
-    (let ((arglist '()))
+    (let ((arglist ()))
       (do ((i 0 (+ i 1)))
 	  ((= i 16))
 	(set! arglist (cons 440.0 (cons :frequency arglist))))
@@ -21829,7 +21830,7 @@ EDITS: 2
     ;; Columbia, Gem of the Ocean
     
     (define (seg data)			; SEG functions expected data in (y x) pairs.
-      (let ((unseg '())
+      (let ((unseg ())
 	    (len (length data)))
 	(do ((i 0 (+ i 2)))
 	    ((>= i len))
@@ -21843,10 +21844,10 @@ EDITS: 2
       (if (sound? oldie)
 	  (close-sound oldie)))
     
-    (let* ((soprano '())
-	   (alto '())
-	   (tenor '())
-	   (bass '())
+    (let* ((soprano ())
+	   (alto ())
+	   (tenor ())
+	   (bass ())
 	   
 	   (ind (new-sound "test.snd" :channels 1))
 	   
@@ -22050,11 +22051,11 @@ EDITS: 2
 		(if (fneq (mix-amp id) 1.0) (snd-display #__line__ ";mix v at 0 amp: ~A" (mix-amp id)))
 		(if (fneq (mix-speed id) 1.0) (snd-display #__line__ ";mix v at 0 speed: ~A" (mix-speed id)))
 		(if (not (= (mix-sync id) 0)) (snd-display #__line__ ";mix v at 0 sync: ~A" (mix-sync id)))
-		(if (not (equal? (mix-amp-env id) '())) (snd-display #__line__ ";mix v at 0 amp-env: ~A" (mix-amp-env id)))
+		(if (not (equal? (mix-amp-env id) ())) (snd-display #__line__ ";mix v at 0 amp-env: ~A" (mix-amp-env id)))
 		(if (not (= (mix-position id) 0)) (snd-display #__line__ ";mix v at 0 beg: ~A" (mix-position id)))
 		(if (not (= (mix-length id) 3)) (snd-display #__line__ ";mix v at 0 length: ~A" (mix-length id)))
 		(if (not (equal? (mix-name id) #f)) (snd-display #__line__ ";mix v at 0 name: ~A" (mix-name id)))
-		(if (not (equal? (mix-properties id) '())) (snd-display #__line__ ";mix v at 0 properties: ~A" (mix-properties id)))
+		(if (not (equal? (mix-properties id) ())) (snd-display #__line__ ";mix v at 0 properties: ~A" (mix-properties id)))
 		(if (not (equal? (mix-color id) (mix-color))) (snd-display #__line__ ";mix v at 0 color: ~A" (mix-color id)))
 		(if (not (= (mix-tag-y id) 0)) (snd-display #__line__ ";mix v at 0 tag-y: ~A" (mix-tag-y id)))
 		(let ((sf (make-mix-sampler id))
@@ -22093,11 +22094,11 @@ EDITS: 2
 	      (if (fneq (mix-amp id) 1.0) (snd-display #__line__ ";mix oboe at 0 amp: ~A" (mix-amp id)))
 	      (if (fneq (mix-speed id) 1.0) (snd-display #__line__ ";mix oboe at 0 speed: ~A" (mix-speed id)))
 	      (if (not (= (mix-sync id) 0)) (snd-display #__line__ ";mix oboe at 0 sync: ~A" (mix-sync id)))
-	      (if (not (equal? (mix-amp-env id) '())) (snd-display #__line__ ";mix oboe at 0 amp-env: ~A" (mix-amp-env id)))
+	      (if (not (equal? (mix-amp-env id) ())) (snd-display #__line__ ";mix oboe at 0 amp-env: ~A" (mix-amp-env id)))
 	      (if (not (= (mix-position id) 0)) (snd-display #__line__ ";mix oboe at 0 beg: ~A" (mix-position id)))
 	      (if (not (= (mix-length id) 50828)) (snd-display #__line__ ";mix oboe at 0 length: ~A" (mix-length id)))
 	      (if (not (equal? (mix-name id) #f)) (snd-display #__line__ ";mix oboe at 0 name: ~A" (mix-name id)))
-	      (if (not (equal? (mix-properties id) '())) (snd-display #__line__ ";mix oboe at 0 properties: ~A" (mix-properties id)))
+	      (if (not (equal? (mix-properties id) ())) (snd-display #__line__ ";mix oboe at 0 properties: ~A" (mix-properties id)))
 	      (if (not (equal? (mix-color id) (mix-color))) (snd-display #__line__ ";mix oboe at 0 color: ~A" (mix-color id)))
 	      (if (not (= (mix-tag-y id) 0)) (snd-display #__line__ ";mix oboe at 0 tag-y: ~A" (mix-tag-y id)))
 	      
@@ -22269,7 +22270,7 @@ EDITS: 2
 		      (fneq (maxamp ind 1) (* 2 m1)))
 		  (snd-display #__line__ ";mix twice syncd: 0: ~A -> ~A, m1: ~A -> ~A, len: ~A -> ~A"
 			       m0 (maxamp ind 0) m1 (maxamp ind 1) len (frames ind 0)))
-	      (set! (hook-functions mix-release-hook) '())
+	      (set! (hook-functions mix-release-hook) ())
 	      (close-sound ind)))
 	  
 	  (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "mix tests")))
@@ -22764,7 +22765,7 @@ EDITS: 2
 		  (snd-display #__line__ ";vct 1 at 11 scale 0: ~A" (channel->vct 10 10)))
 	      (undo 2)
 	      
-	      (let ((ids '()))
+	      (let ((ids ()))
 		(do ((i 0 (+ i 1)))
 		    ((= i 5))
 		  (set! ids (cons (mix-vct (make-vct 5 .1) (+ i 10)) ids)))
@@ -24288,7 +24289,7 @@ EDITS: 2
 		(snd-display #__line__ ";pad-marks m0 pos: ~A" (mark-sample m0)))
 	    (if (fneq (sample 1235) 0.0) (snd-display #__line__ ";pad-marks 1235: ~A" (sample 1235))))
 	  (close-sound ind))
-	(set! (hook-functions draw-mark-hook) '())
+	(set! (hook-functions draw-mark-hook) ())
 	(let ((ind (open-sound "oboe.snd")))
 	  (if (find-mark 12345) (snd-display #__line__ ";find-mark when no marks: ~A" (find-mark 12345)))
 	  (add-mark 123 ind 0)
@@ -24454,7 +24455,7 @@ EDITS: 2
 	(close-sound ind)
 	(if (file-exists? new-file-name) (delete-file new-file-name)))
       (set! ind (open-sound "tst.snd"))
-      (set! (hook-functions output-comment-hook) '())
+      (set! (hook-functions output-comment-hook) ())
       
       (eval-header ind)
       (let ((ms (marks ind 0)))
@@ -24682,7 +24683,7 @@ EDITS: 2
 			   (not (member (string-append home-dir "/snd-13/pistol.snd") vf-files)))
 		      (not (= (length vf-files) 4)))
 		  (snd-display #__line__ ";vf files set: ~A (~A, ~A)" vf-files (string-append home-dir "/cl/1a.snd") (length vf-files))))
-	    (set! (hook-functions view-files-select-hook) '())
+	    (set! (hook-functions view-files-select-hook) ())
 	    (hook-push view-files-select-hook (lambda (hook)
 						(if (not (string? (hook 'name)))
 						    (snd-display #__line__ ";vf select hook arg: ~A" (hook 'name)))
@@ -24736,7 +24737,7 @@ EDITS: 2
   
   
   (define (remove-if p l)
-    (cond ((null? l) '())
+    (cond ((null? l) ())
 	  ((p (car l)) (remove-if p (cdr l)))
 	  (else (cons (car l) (remove-if p (cdr l))))))
   
@@ -24746,7 +24747,7 @@ EDITS: 2
   
   (let* ((sf-dir-files
 	  (if (string? sf-dir) 
-	      (let ((good-files '()))
+	      (let ((good-files ()))
 		(for-each ; omit bad headers (test cases) 
 		 (lambda (file)
 		   (catch 'mus-error
@@ -24767,7 +24768,7 @@ EDITS: 2
     
     (if with-gui
 	(if (> sf-dir-len 0)
-	    (let ((open-files '())
+	    (let ((open-files ())
 		  (open-ctr 0))
 	      
 	      (add-sound-file-extension "wave")
@@ -24776,7 +24777,7 @@ EDITS: 2
 		    (snd-display #__line__ ";sound-file-extensions: ~A" exts))
 		(set! (sound-file-extensions) (list))
 		(if (not (null? (sound-file-extensions)))
-		    (snd-display #__line__ ";sound-file-extesions set to '(): ~A" (sound-file-extensions)))
+		    (snd-display #__line__ ";sound-file-extesions set to (): ~A" (sound-file-extensions)))
 		(set! (sound-file-extensions) exts)
 		(if (not (member "wave" exts))
 		    (snd-display #__line__ ";sound-file-extensions reset: ~A" (sound-file-extensions))))
@@ -24812,14 +24813,14 @@ EDITS: 2
 			      (close-sound fd)
 			      (set! open-files (remove-if (lambda (a) (equal? a fd)) open-files)))))))
 		(if open-files (for-each close-sound open-files))
-		(set! open-files '())
+		(set! open-files ())
 		
 		(if (not (= (length (sounds)) 0)) (snd-display #__line__ ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
 		(let ((fd (open-raw-sound :file (string-append sf-dir "addf8.nh") :channels 1 :srate 8012 :data-format mus-mulaw)))
 		  (if (not (= (data-format fd) mus-mulaw)) (snd-display #__line__ ";open-raw-sound: ~A?" (mus-data-format-name (data-format fd))))
 		  (close-sound fd))
 		
-		(set! (hook-functions bad-header-hook) '())
+		(set! (hook-functions bad-header-hook) ())
 		(time (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0))
 		(test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
 		(test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g721") 6.0)
@@ -24943,11 +24944,11 @@ EDITS: 2
 		      (let ((str (format #f "~A" rd)))
 			(if (not (string=? str "#<mix-sampler: inactive>")) (snd-display #__line__ ";mix-sampler released: ~A" str))
 			(free-sampler rd)))))
-		(set! (hook-functions mix-click-hook) '())
-		(set! (hook-functions close-hook) '())
+		(set! (hook-functions mix-click-hook) ())
+		(set! (hook-functions close-hook) ())
 		
-		(let ((sfiles '())
-		      (ffiles '()))
+		(let ((sfiles ())
+		      (ffiles ()))
 		  (for-each-sound-file 
 		   (lambda (file) 
 		     (if (> (mus-sound-chans file) 16)
@@ -24978,7 +24979,7 @@ EDITS: 2
 (if (provided? 'snd-ladspa)
     (define (analyze-ladspa library label)
       (let* ((descriptor (ladspa-descriptor library label))
-	     (data '())
+	     (data ())
 	     (names (.PortNames descriptor))
 	     (hints (.PortRangeHints descriptor))
 	     (descriptors (.PortDescriptors descriptor))
@@ -24989,7 +24990,7 @@ EDITS: 2
 	 (lambda (port ranges port-name)
 	   (if (and (not (= (logand port LADSPA_PORT_CONTROL) 0))
 		    (not (= (logand port LADSPA_PORT_INPUT) 0)))
-	       (let ((ldata '())
+	       (let ((ldata ())
 		     (hint (car ranges))
 		     (lo (cadr ranges))
 		     (hi (caddr ranges)))
@@ -25156,7 +25157,7 @@ EDITS: 2
 	  
 	  (set! clm_buffer_added #t)))
     
-    (set! (hook-functions help-hook) '())
+    (set! (hook-functions help-hook) ())
     (let ((hi (snd-help 'cursor-position)))
       (hook-push help-hook (lambda (hook)
 			     (let ((a (hook (list-ref (hook 'args) 0)))
@@ -25169,12 +25170,12 @@ EDITS: 2
       (let ((ho (snd-help 'cursor-position)))
 	(if (not (= (string-length ho) (+ 5 (string-length hi))))
 	    (snd-display #__line__ ";help-hook ~A -> ~A" hi ho))
-	(set! (hook-functions help-hook) '())
+	(set! (hook-functions help-hook) ())
 	(hook-push help-hook (lambda (hook) (set! (hook 'result) #f)))
 	(set! ho (snd-help 'cursor-position))
 	(if (not (string=? hi ho))
 	    (snd-display #__line__ ";help-hook #f: ~A ~A" hi ho))
-	(set! (hook-functions help-hook) '())))
+	(set! (hook-functions help-hook) ())))
     (set! (transform-size fd 0) 256)
     (for-each
      (lambda (dpy-type fft-type)
@@ -25228,8 +25229,8 @@ EDITS: 2
 			      (max-val (amp-vals (+ (* chn 2) 1))))
 			 (set! (hook 'result) (list 0.0 dur (- max-val) max-val)))
 		       (set! (hook 'result) (list 0.0 dur -1.0 1.0)))))) 
-    (set! (hook-functions after-open-hook) '())
-    (set! (hook-functions initial-graph-hook) '())
+    (set! (hook-functions after-open-hook) ())
+    (set! (hook-functions initial-graph-hook) ())
     
     (hook-push initial-graph-hook
 	       (lambda (hook)
@@ -25246,7 +25247,7 @@ EDITS: 2
 		   (fneq (ax 8) (mus-sound-duration "2.snd"))
 		   (fneq (ax 9) 4.0)))
 	  (snd-display #__line__ ";initial-graph-hook with ymin/max: ~A" ax))
-      (set! (hook-functions initial-graph-hook) '()))
+      (set! (hook-functions initial-graph-hook) ()))
     (set! (selection-position fd 1) 1000)
     (set! (selection-frames fd 1) 10)
     (set! (selection-member? fd 1) #t)
@@ -25265,7 +25266,7 @@ EDITS: 2
     
     (let ()
       (let ((added 0))
-	(set! (hook-functions close-hook) '())
+	(set! (hook-functions close-hook) ())
 	(set! (with-background-processes) #t)
 	(hook-push new-widget-hook
 		   (lambda (hook)
@@ -25274,7 +25275,7 @@ EDITS: 2
 	    (without-errors
 	     (test-menus)))
 	(dismiss-all-dialogs)
-	(set! (hook-functions close-hook) '())
+	(set! (hook-functions close-hook) ())
 	(for-each close-sound (sounds))
 	(if (sound? fd) 
 	    (begin 
@@ -25282,7 +25283,7 @@ EDITS: 2
 	      (close-sound fd)))
 	(set! fd (open-sound "obtest.snd"))	  
 	(set! (with-background-processes) #f)
-	(set! (hook-functions new-widget-hook) '()))
+	(set! (hook-functions new-widget-hook) ()))
       
       (if (and (not ladspa_inited)
 	       (provided? 'snd-ladspa))
@@ -25470,24 +25471,24 @@ EDITS: 2
 	(if (not (string=? str "(lambda (n) (> n 0.2))"))
 	    (snd-display #__line__ ";search-procedure (1): ~A?" str)))
       
-      (set! (hook-functions (edit-hook ind 0)) '())
+      (set! (hook-functions (edit-hook ind 0)) ())
       (hook-push (edit-hook ind 0) (lambda (hook) (set! (hook 'result) #f)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (edit-hook ind 0))))))))
 	(if (not (string=? str "((lambda (hook) (set! (hook 'result) #f)))"))
 	    (snd-display #__line__ ";edit-hook: ~A?" str)))
-      (set! (hook-functions (edit-hook ind 0)) '())
-      (set! (hook-functions (after-edit-hook ind 0)) '())
+      (set! (hook-functions (edit-hook ind 0)) ())
+      (set! (hook-functions (after-edit-hook ind 0)) ())
       (hook-push (after-edit-hook ind 0) (lambda (hook) (set! (hook 'result) #f)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (after-edit-hook ind 0))))))))
 	(if (not (string=? str "((lambda (hook) (set! (hook 'result) #f)))"))
 	    (snd-display #__line__ ";after-edit-hook: ~A?" str)))
-      (set! (hook-functions (after-edit-hook ind 0)) '())
-      (set! (hook-functions (undo-hook ind 0)) '())
+      (set! (hook-functions (after-edit-hook ind 0)) ())
+      (set! (hook-functions (undo-hook ind 0)) ())
       (hook-push (undo-hook ind 0) (lambda (hook) (set! (hook 'result) #f)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (undo-hook ind 0))))))))
 	(if (not (string=? str "((lambda (hook) (set! (hook 'result) #f)))"))
 	    (snd-display #__line__ ";undo-hook: ~A?" str)))
-      (set! (hook-functions (undo-hook ind 0)) '())
+      (set! (hook-functions (undo-hook ind 0)) ())
       (let ((calls 0))
 	(hook-push (undo-hook ind 0) (lambda (hook) (set! calls (+ 1 calls))))
 	(delete-sample 0 ind 0)
@@ -25495,15 +25496,15 @@ EDITS: 2
 	(redo 1)
 	(revert-sound ind)
 	(if (not (= calls 3)) (snd-display #__line__ ";undo-hook called ~A times" calls)))
-      (set! (hook-functions (undo-hook ind 0)) '())
+      (set! (hook-functions (undo-hook ind 0)) ())
       (set! (search-procedure) #f)
       (close-sound ind)
       )
-    (if (not (null? (hook-functions open-raw-sound-hook))) (set! (hook-functions open-raw-sound-hook) '()))
+    (if (not (null? (hook-functions open-raw-sound-hook))) (set! (hook-functions open-raw-sound-hook) ()))
     (hook-push open-raw-sound-hook (lambda (hook) (set! (hook 'result) (list 1 22050 mus-bshort))))
     (let ((ind (open-sound "~/sf1/addf8.nh")))
       (play ind :wait #t)
-      (set! (hook-functions open-raw-sound-hook) '())
+      (set! (hook-functions open-raw-sound-hook) ())
       (if (or (not (= (chans ind) 1))
 	      (not (= (srate ind) 22050))
 	      (not (= (data-format ind) mus-bshort))
@@ -25516,7 +25517,7 @@ EDITS: 2
     (let ((save-as-dialog #t)
 	  (save-as-name "hiho")
 	  (save-as-index #f))
-      (set! (hook-functions after-save-as-hook) '())
+      (set! (hook-functions after-save-as-hook) ())
       (hook-push after-save-as-hook 
 		 (lambda (hook)
 		   (let ((ind (hook 'snd))
@@ -25528,8 +25529,8 @@ EDITS: 2
       (let ((ind (open-sound "oboe.snd")))
 	(save-sound-as "test.snd" ind mus-raw)
 	(close-sound ind)
-	(set! (hook-functions open-raw-sound-hook) '())
-	(set! (hook-functions after-save-as-hook) '())
+	(set! (hook-functions open-raw-sound-hook) ())
+	(set! (hook-functions after-save-as-hook) ())
 	(if save-as-dialog (snd-display #__line__ ";after-save-as-hook dialog: ~A" save-as-dialog))
 	(if (not (equal? ind save-as-index)) (snd-display #__line__ ";after-save-as-hook index: ~A ~A" ind save-as-index))
 	(if (and (not (string=? (string-append home-dir "/cl/test.snd") save-as-name)) 
@@ -25568,7 +25569,7 @@ EDITS: 2
 	    (snd-display #__line__ ";open-raw-sound-hook 3: ~A ~A ~A ~A ~A" 
 			 (header-type ind) (data-format ind) (chans ind) (srate ind) (frames ind)))
 	(close-sound ind)
-	(set! (hook-functions open-raw-sound-hook) '())
+	(set! (hook-functions open-raw-sound-hook) ())
 	(hook-push open-raw-sound-hook 
 		   (lambda (hook)
 		     (set! (hook 'result) (list 2))))
@@ -25580,7 +25581,7 @@ EDITS: 2
 	    (snd-display #__line__ ";open-raw-sound-hook 4: ~A ~A ~A ~A"
 			 (header-type ind) (data-format ind) (chans ind) (srate ind)))
 	(close-sound ind)
-	(set! (hook-functions open-raw-sound-hook) '())
+	(set! (hook-functions open-raw-sound-hook) ())
 	(hook-push open-raw-sound-hook 
 		   (lambda (hook)
 		     (set! (hook 'result) (list 1 22050 mus-bshort 120 320))))
@@ -25596,8 +25597,8 @@ EDITS: 2
 			 (header-type ind) (data-format ind) (chans ind) (srate ind)
 			 (data-location ind) (data-size ind) (/ (frames ind) 2)))
 	(close-sound ind)
-	(set! (hook-functions open-raw-sound-hook) '())))
-    (set! (hook-functions during-open-hook) '())
+	(set! (hook-functions open-raw-sound-hook) ())))
+    (set! (hook-functions during-open-hook) ())
     
     (let ((ind #f)
 	  (op #f)
@@ -25645,10 +25646,10 @@ EDITS: 2
       (if (not (sound? aop)) (snd-display #__line__ ";after-open-hook not called?"))
       (if (not (equal? aop ind)) (snd-display #__line__ ";after-open-hook ~A but ind: ~A?" aop ind))
       (select-all)
-      (set! (hook-functions open-hook) '())
-      (set! (hook-functions during-open-hook) '())
-      (set! (hook-functions after-open-hook) '())
-      (set! (hook-functions initial-graph-hook) '())
+      (set! (hook-functions open-hook) ())
+      (set! (hook-functions during-open-hook) ())
+      (set! (hook-functions after-open-hook) ())
+      (set! (hook-functions initial-graph-hook) ())
       
       (hook-push open-hook (lambda (hook) (set! (hook 'result) #t)))
       (let ((pistol (open-sound "pistol.snd")))
@@ -25656,16 +25657,16 @@ EDITS: 2
 	    (begin
 	      (snd-display #__line__ ";open-hook #t, but open-sound -> ~A" pistol)
 	      (if (sound? pistol) (close-sound pistol)))))
-      (set! (hook-functions open-hook) '())
+      (set! (hook-functions open-hook) ())
       
       (let ((gr #f)
 	    (agr #f)
 	    (gbf #f)
 	    (abf #f))
-	(set! (hook-functions before-transform-hook) '())
-	(set! (hook-functions after-transform-hook) '())
-	(set! (hook-functions after-graph-hook) '())
-	(set! (hook-functions graph-hook) '())
+	(set! (hook-functions before-transform-hook) ())
+	(set! (hook-functions after-transform-hook) ())
+	(set! (hook-functions after-graph-hook) ())
+	(set! (hook-functions graph-hook) ())
 	(hook-push graph-hook
 		   (lambda (hook)
 		     (let ((snd (hook 'snd))
@@ -25721,10 +25722,10 @@ EDITS: 2
 	(if (not agr) (snd-display #__line__ ";after-graph-hook not called?"))
 	(if (not gbf) (snd-display #__line__ ";before-transform-hook not called?"))
 	(if (not abf) (snd-display #__line__ ";after-transform-hook not called?"))
-	(set! (hook-functions before-transform-hook) '())
+	(set! (hook-functions before-transform-hook) ())
 	(set! (transform-graph? ind 0) #f)
-	(set! (hook-functions graph-hook) '())
-	(set! (hook-functions after-graph-hook) '()))
+	(set! (hook-functions graph-hook) ())
+	(set! (hook-functions after-graph-hook) ()))
       
       (set! other (open-sound "pistol.snd"))
       
@@ -25746,8 +25747,8 @@ EDITS: 2
       (select-sound ind)
       (if (not sl) (snd-display #__line__ ";select-sound-hook not called?"))
       (if (not scl) (snd-display #__line__ ";select-channel-hook not called?"))
-      (set! (hook-functions select-sound-hook) '())
-      (set! (hook-functions select-channel-hook) '())
+      (set! (hook-functions select-sound-hook) ())
+      (set! (hook-functions select-channel-hook) ())
       
       (let ((spl #f)
 	    (stl #f)
@@ -25795,11 +25796,11 @@ EDITS: 2
 	(if (not stl) (snd-display #__line__ ";stop-playing-hook not called?"))
 	(if (not ph) (snd-display #__line__ ";play-hook not called?"))
 	(if (not ph1) (snd-display #__line__ ";dac-hook not called?"))
-	(set! (hook-functions start-playing-hook) '())
-	(set! (hook-functions start-playing-selection-hook) '())
-	(set! (hook-functions stop-playing-hook) '())
-	(set! (hook-functions play-hook) '())
-	(set! (hook-functions dac-hook) '())
+	(set! (hook-functions start-playing-hook) ())
+	(set! (hook-functions start-playing-selection-hook) ())
+	(set! (hook-functions stop-playing-hook) ())
+	(set! (hook-functions play-hook) ())
+	(set! (hook-functions dac-hook) ())
 	
 	(hook-push play-hook
 		   (lambda (hook)
@@ -25811,11 +25812,11 @@ EDITS: 2
 		     (set! (reverb-control-feedback) .02)))
 	
 	;(play ind :wait #t)
-	(set! (hook-functions play-hook) '())
+	(set! (hook-functions play-hook) ())
 	
 	(hook-push start-playing-hook (lambda (hook) (set! (hook 'result) #t)))
 	(play "4.aiff")
-	(set! (hook-functions start-playing-hook) '())
+	(set! (hook-functions start-playing-hook) ())
 	
 	(let ((ss #f)
 	      (old-reg (selection-creates-region)))
@@ -25825,7 +25826,7 @@ EDITS: 2
 	    (play (selection) :wait #t)
 	    (if (region? reg) (play reg :wait #t))
 	    (if (not ss) (snd-display #__line__ ";stop-playing-selection-hook: ~A" ss)))
-	  (set! (hook-functions stop-playing-selection-hook) '())
+	  (set! (hook-functions stop-playing-selection-hook) ())
 	  (set! (selection-creates-region) old-reg))
 	
 	(let ((ctr 0))
@@ -25835,7 +25836,7 @@ EDITS: 2
 		       (stop-playing)))
 	  (play ind :wait #t)
 	  (if (> ctr 2) (snd-display #__line__ ";stop-playing: ~A" ctr))
-	  (set! (hook-functions dac-hook) '()))
+	  (set! (hook-functions dac-hook) ()))
 	
 	(let ((pl (make-player ind 0))
 	      (ctr 0))
@@ -25851,7 +25852,7 @@ EDITS: 2
 	  (add-player pl)
 	  (start-playing 1 22050 #f)
 	  (if (> ctr 2) (snd-display #__line__ ";stop-player: ~A" ctr))
-	  (set! (hook-functions dac-hook) '()))
+	  (set! (hook-functions dac-hook) ()))
 	
 	(let ((pl (make-player ind 0)))
 	  (free-player pl)
@@ -25902,12 +25903,12 @@ EDITS: 2
 	(undo 1 other 0)
 	(if (not u1) (snd-display #__line__ ";undo-hook not called?"))
 	
-	(set! (hook-functions (edit-hook ind 0)) '())
-	(set! (hook-functions (edit-hook other 0)) '())
-	(set! (hook-functions (after-edit-hook ind 0)) '())
-	(set! (hook-functions (after-edit-hook other 0)) '())
-	(set! (hook-functions (undo-hook ind 0)) '())
-	(set! (hook-functions (undo-hook other 0)) '()))
+	(set! (hook-functions (edit-hook ind 0)) ())
+	(set! (hook-functions (edit-hook other 0)) ())
+	(set! (hook-functions (after-edit-hook ind 0)) ())
+	(set! (hook-functions (after-edit-hook other 0)) ())
+	(set! (hook-functions (undo-hook ind 0)) ())
+	(set! (hook-functions (undo-hook other 0)) ()))
       
       (let ((se #f)
 	    (sw #f)
@@ -25932,9 +25933,9 @@ EDITS: 2
 	(if (not se) (snd-display #__line__ ";snd-error-hook not called?"))
 	(if (not sw) (snd-display #__line__ ";snd-warning-hook not called?"))
 	(if (not me) (snd-display #__line__ ";mus-error-hook not called?"))
-	(set! (hook-functions snd-error-hook) '())
-	(set! (hook-functions snd-warning-hook) '())
-	(set! (hook-functions mus-error-hook) '())
+	(set! (hook-functions snd-error-hook) ())
+	(set! (hook-functions snd-warning-hook) ())
+	(set! (hook-functions mus-error-hook) ())
 	(hook-push snd-error-hook
 		   (lambda (hook)
 		     (set! se (hook 'message))
@@ -25944,13 +25945,13 @@ EDITS: 2
 	(if (or (not (string? se)) 
 		(not (string=? se "not an error")))
 	    (snd-display #__line__ ";snd-error-hook saw: ~A" se))
-	(set! (hook-functions snd-error-hook) '()))
+	(set! (hook-functions snd-error-hook) ()))
       
       (hook-push before-exit-hook (lambda (hook) (set! (hook 'result) #t)))
       (hook-push exit-hook (lambda (hook) #f))
       (exit)
-      (set! (hook-functions exit-hook) '())
-      (set! (hook-functions before-exit-hook) '())
+      (set! (hook-functions exit-hook) ())
+      (set! (hook-functions before-exit-hook) ())
       
       (let ((sh #f))
 	(if (file-exists? "baddy.snd") (delete-file "baddy.snd"))
@@ -25971,7 +25972,7 @@ EDITS: 2
 	    (begin
 	      (snd-display #__line__ ";save-hook didn't cancel save?")
 	      (delete-file "baddy.snd")))
-	(set! (hook-functions save-hook) '()))
+	(set! (hook-functions save-hook) ()))
       
       ;; after-transform-hooks require some way to force the fft to run to completion
       ;; property-changed hook is similar (seems to happen whenever it's good and ready)
@@ -25983,7 +25984,7 @@ EDITS: 2
       
       (close-sound ind)
       (if (not cl) (snd-display #__line__ ";close-hook not called?"))
-      (set! (hook-functions close-hook) '())
+      (set! (hook-functions close-hook) ())
       (close-sound other))
     
     (if (not (provided? 'alsa))
@@ -26157,13 +26158,13 @@ EDITS: 2
 	   (if (not (= edit-hook-ctr 1)) (snd-display #__line__ ";~A: edit hook calls: ~A" name edit-hook-ctr))
 	   (if (not (= after-edit-hook-ctr 0)) (snd-display #__line__ ";~A: after edit hook calls: ~A" name after-edit-hook-ctr))
 	   (set! edit-hook-ctr 0)
-	   (if (not (equal? (mixes ind 0) '())) (snd-display #__line__ ";[27315] ~A: mixes: ~A" name (mixes ind 0)))))
+	   (if (not (equal? (mixes ind 0) ())) (snd-display #__line__ ";[27315] ~A: mixes: ~A" name (mixes ind 0)))))
        all-tests)
       
       (set! edit-hook-ctr 0)
       (set! after-edit-hook-ctr 0)
-      (set! (hook-functions (edit-hook ind 0)) '())
-      (set! (hook-functions (after-edit-hook ind 0)) '())
+      (set! (hook-functions (edit-hook ind 0)) ())
+      (set! (hook-functions (after-edit-hook ind 0)) ())
       (hook-push (edit-hook ind 0) 
 		 (lambda (hook) 
 		   (set! edit-hook-ctr (+ 1 edit-hook-ctr)) 
@@ -26209,11 +26210,11 @@ EDITS: 2
       (hook-push (edit-hook ind 0) (lambda (hook) (set! (hook 'result) #t)))
       (mix-vct (make-vct 10 .1) 0)
       (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";mix-vct: blocked edit: ~A" (edit-position ind 0)))
-      (if (not (equal? (mixes ind 0) '())) (snd-display #__line__ ";mix-vct edit-hook: mixes: ~A" (mixes ind 0)))
+      (if (not (equal? (mixes ind 0) ())) (snd-display #__line__ ";mix-vct edit-hook: mixes: ~A" (mixes ind 0)))
       (mix "pistol.snd" 1000)
       (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";mix: blocked edit: ~A" (edit-position ind 0)))
-      (if (not (equal? (mixes ind 0) '())) (snd-display #__line__ ";mix edit-hook: mixes: ~A" (mixes ind 0)))
-      (set! (hook-functions (edit-hook ind 0)) '())
+      (if (not (equal? (mixes ind 0) ())) (snd-display #__line__ ";mix edit-hook: mixes: ~A" (mixes ind 0)))
+      (set! (hook-functions (edit-hook ind 0)) ())
       (let ((mx (mix-vct (make-vct 10 .1) 1000)))
 	(if (mix? mx) ; might be no-gui case
 	    (begin
@@ -26275,7 +26276,7 @@ EDITS: 2
 	(set! ind (open-sound "test.snd"))
 	(if (not (= (srate ind) 44100)) (snd-display #__line__ ";before-save-as-hook src: ~A" (srate ind)))
 	(close-sound ind))
-      (set! (hook-functions before-save-as-hook) '()))
+      (set! (hook-functions before-save-as-hook) ()))
     
     (let ((need-save-as-undo #f))
       (hook-push before-save-as-hook
@@ -26302,14 +26303,14 @@ EDITS: 2
 	(set! ind (open-sound "test.snd"))
 	(if (not (= (srate ind) 44100)) (snd-display #__line__ ";before|after-save-as-hook src: ~A" (srate ind)))
 	(close-sound ind))
-      (set! (hook-functions before-save-as-hook) '())
-      (set! (hook-functions after-save-as-hook) '()))
+      (set! (hook-functions before-save-as-hook) ())
+      (set! (hook-functions after-save-as-hook) ()))
     
     (let ((old-clip (clipping))
 	  (old-mus-clip (mus-clipping)))
       (set! (clipping) #t)
       (set! (mus-clipping) #t)
-      (set! (hook-functions clip-hook) '())
+      (set! (hook-functions clip-hook) ())
       
       (let ((index (new-sound "test.snd" mus-next mus-bshort 22050 1 "clip-hook test" 10)))
 	(map-channel (lambda (y) (mus-random 0.999))) ; -amp to amp
@@ -26328,7 +26329,7 @@ EDITS: 2
 				   (set! hook-called (+ 1 hook-called))
 				   (set! (hook 'result) 0.0))))
 	  (save-sound index)
-	  (set! (hook-functions clip-hook) '())
+	  (set! (hook-functions clip-hook) ())
 	  (if (not (= hook-called 3)) (snd-display #__line__ ";clip-hook called ~A times" hook-called))
 	  (close-sound index)
 	  (set! index (open-sound "test.snd"))
@@ -26364,7 +26365,7 @@ EDITS: 2
     (set! (selection-creates-region) old-choice)))
 
 (define (flatten lst)
-  (cond ((null? lst) '())
+  (cond ((null? lst) ())
 	((pair? lst)
 	 (if (pair? (car lst))
 	     (append (flatten (car lst)) (flatten (cdr lst)))
@@ -26380,8 +26381,8 @@ EDITS: 2
 	(snd-display #__line__ ";test-panel ~A: ~A ~A?" name (func #t) (map func (sounds)))))
   
   (define (all-chans-reversed)
-    (let ((sndlist '())
-	  (chnlist '()))
+    (let ((sndlist ())
+	  (chnlist ()))
       (for-each (lambda (snd)
 		  (do ((i (- (channels snd) 1) (- i 1)))
 		      ((< i 0))
@@ -26412,11 +26413,11 @@ EDITS: 2
 					    0))
 			 (sound-files-in-directory ".")))
 	 (cur-dir-len (length cur-dir-files))
-	 (stereo-files '())
-	 (quad-files '())
-	 (mono-files '())
-	 (octo-files '())
-	 (open-files '())
+	 (stereo-files ())
+	 (quad-files ())
+	 (mono-files ())
+	 (octo-files ())
+	 (open-files ())
 	 (s8-snd (if (file-exists? "s8.snd") "s8.snd" "oboe.snd"))
 	 (open-ctr 0))
     
@@ -26460,7 +26461,7 @@ EDITS: 2
       (if (> (length open-files) 8)
 	  (begin
 	    (for-each close-sound open-files)
-	    (set! open-files '()))
+	    (set! open-files ()))
 	  (if (> test-ctr 0)
 	      (for-each
 	       (lambda (snd)
@@ -26675,8 +26676,8 @@ EDITS: 2
 		   (< (frames) 1000000))
 	      (convolve-with "fyow.snd" .25))
 	  (insert-sound "oboe.snd")
-	  (set! (hook-functions graph-hook) '())
-	  (set! (hook-functions after-transform-hook) '())
+	  (set! (hook-functions graph-hook) ())
+	  (set! (hook-functions after-transform-hook) ())
 	  (for-each revert-sound open-files)
 	  
 	  (let ((ind (choose-fd)))
@@ -26929,21 +26930,21 @@ EDITS: 2
 	  (undo 1)
 	  (as-one-edit (lambda () (set! (sample 2) .2) (as-one-edit (lambda () (set! (sample 3) .3)))))
 	  (undo 2)
-	  (set! (hook-functions (undo-hook)) '())
-	  (set! (hook-functions (edit-hook)) '())
+	  (set! (hook-functions (undo-hook)) ())
+	  (set! (hook-functions (edit-hook)) ())
 	  (hook-push snd-warning-hook 
 		     (lambda (hook)
 		       (let ((msg (hook 'message)))
 			 (if (not (string=? msg "hiho")) (snd-display #__line__ ";snd-warning-hook: ~A?" msg))
 			 (set! (hook 'result) #t))))
 	  (snd-warning "hiho")
-	  (set! (hook-functions snd-error-hook) '())
-	  (set! (hook-functions snd-warning-hook) '())
+	  (set! (hook-functions snd-error-hook) ())
+	  (set! (hook-functions snd-warning-hook) ())
 	  (hook-push name-click-hook 
 		     (lambda (hook) 
 		       (set! (hook 'result) #t)))
 	  (redo 1)
-	  (set! (hook-functions name-click-hook) '())
+	  (set! (hook-functions name-click-hook) ())
 	  (set! (transform-graph?) #t)
 	  (test-channel transform-graph? 'transform-graph?)
 	  (test-channel time-graph? 'time-graph?)
@@ -26985,7 +26986,7 @@ EDITS: 2
 	  (set! (transform-type) fourier-transform)
 	  (set! (x-bounds) '(.1 .2))
 	  (hook-push lisp-graph-hook display-energy)
-	  (set! (hook-functions graph-hook) '())
+	  (set! (hook-functions graph-hook) ())
 	  (if (= (channels) 2)
 	      (begin
 		(hook-push graph-hook display-correlation)
@@ -27029,8 +27030,8 @@ EDITS: 2
 		    (snd-display #__line__ ";~D: ~A ~A" i (maxamp #f 0 i) (edit-fragment i))))))
 	  
 	  (map-chan (echo .5 .75) 0 60000)
-	  (set! (hook-functions after-transform-hook) '())
-	  (set! (hook-functions lisp-graph-hook) '())
+	  (set! (hook-functions after-transform-hook) ())
+	  (set! (hook-functions lisp-graph-hook) ())
 	  
 	  (hook-push lisp-graph-hook 
 		     (lambda (hook)
@@ -27057,8 +27058,8 @@ EDITS: 2
 	       (update-lisp-graph snd)
 	       (update-transform-graph snd))
 	     (sounds)))
-	  (set! (hook-functions graph-hook) '())
-	  (set! (hook-functions lisp-graph-hook) '())
+	  (set! (hook-functions graph-hook) ())
+	  (set! (hook-functions lisp-graph-hook) ())
 	  
 	  ;; new variable settings 
 	  (letrec ((reset-vars
@@ -27206,7 +27207,7 @@ EDITS: 2
 	  )))
     (if open-files (for-each close-sound open-files))
     (set! (sync-style) sync-none)
-    (set! open-files '())
+    (set! open-files ())
     (set! (mus-rand-seed) 1234)
     (if (not (= (mus-rand-seed) 1234)) (snd-display #__line__ ";mus-rand-seed: ~A (1234)!" (mus-rand-seed)))
     (let ((val (mus-random 1.0))
@@ -27221,9 +27222,9 @@ EDITS: 2
       (if (or (fneq val -0.7828) 
 	      (fneq val1 -0.8804))
 	  (snd-display #__line__ ";mus-random repeated: ~A ~A?" val val1)))
-    (set! (hook-functions after-open-hook) '())
-    (set! (hook-functions close-hook) '())
-    (set! (hook-functions open-hook) '())
+    (set! (hook-functions after-open-hook) ())
+    (set! (hook-functions close-hook) ())
+    (set! (hook-functions open-hook) ())
     
     (set! (clipping) #f)
     (for-each close-sound (sounds))
@@ -27601,7 +27602,7 @@ EDITS: 2
 	      (set! obi (open-sound "oboe.snd"))
 	      (select-all)
 	      (for-each forget-region (regions))
-	      (if (not (equal? (regions) '())) (snd-display #__line__ ";no regions? ~A" (regions)))
+	      (if (not (equal? (regions) ())) (snd-display #__line__ ";no regions? ~A" (regions)))
 	      (let ((id (make-region 100 200 obi 0)))
 		(if (not (equal? (regions) (list id))) (snd-display #__line__ ";make-region regions: ~A?" (regions))))
 	      
@@ -27792,7 +27793,7 @@ EDITS: 2
 	      (close-sound id))
 	    
 	    (let ((ind (open-sound "oboe.snd")))
-	      (if (not (equal? (edit-properties ind 0 0) '()))
+	      (if (not (equal? (edit-properties ind 0 0) ()))
 		  (snd-display #__line__ ";initial edit-properties: ~A?" (edit-properties ind 0 0)))
 	      (let ((tag (catch #t
 				(lambda () (edit-properties ind 0 123))
@@ -28025,7 +28026,7 @@ EDITS: 2
 		     (samp 0))
 		(add-player player 0 -1 -1 
 			    (lambda (reason) 
-			      (set! (hook-functions play-hook) '())
+			      (set! (hook-functions play-hook) ())
 			      (close-sound ind)))
 		(hook-push play-hook 
 			   (lambda (hook)
@@ -28147,10 +28148,10 @@ EDITS: 2
 		  (snd-display #__line__ ";src-fit-envelope 0.5: ~A" (src-duration (src-fit-envelope '(0 1 1 2) 0.5))))
 	      
 	      
-	      (if (fneq (fm-parallel-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.69287)
-		  (snd-display #__line__ ";fm-parallel-component 100: ~A" (fm-parallel-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
-	      (if (fneq (fm-parallel-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t) 0.17047)
-		  (snd-display #__line__ ";fm-parallel-component 500: ~A" (fm-parallel-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) '() '() #t)))
+	      (if (fneq (fm-parallel-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) () () #t) 0.69287)
+		  (snd-display #__line__ ";fm-parallel-component 100: ~A" (fm-parallel-component 100 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) () () #t)))
+	      (if (fneq (fm-parallel-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) () () #t) 0.17047)
+		  (snd-display #__line__ ";fm-parallel-component 500: ~A" (fm-parallel-component 500 100.0 (list 100.0 300.0 400.0) (list 1.0 0.5 0.25) () () #t)))
 	      
 	      (if (fneq (cheby-hka 3 0.25 (vct 0 0 0 0 1.0 1.0)) -0.0732421875)
 		  (snd-display #__line__ ";cheby-hka 0: ~A" (cheby-hka 3 0.25 (vct 0 0 0 0 1.0 1.0))))
@@ -29199,7 +29200,7 @@ EDITS: 2
 	
 	((12) (let* ((pts (+ 1 (random 8)))
 		     (maxpt 0.0)
-		     (e (let ((e1 '())
+		     (e (let ((e1 ())
 			      (x 0.0)
 			      (y 0.0))
 			  (do ((i 0 (+ i 1)))
@@ -29237,7 +29238,7 @@ EDITS: 2
 	;; env-channel
 	((2) (let* ((pts (+ 1 (random 6)))
 		    (maxpt 0.0)
-		    (e (let ((e1 '())
+		    (e (let ((e1 ())
 			     (x 0.0)
 			     (y 0.0))
 			 (do ((i 0 (+ i 1)))
@@ -29288,7 +29289,7 @@ EDITS: 2
 	((3) (let* ((pts (+ 1 (random 6)))
 		    (maxpt 0.0)
 		    (recalc #f)
-		    (e (let ((e1 '())
+		    (e (let ((e1 ())
 			     (x 0.0)
 			     (y 0.0))
 			 (do ((i 0 (+ i 1)))
@@ -30945,9 +30946,9 @@ EDITS: 2
 	
 	(if (null? (hook-functions initial-graph-hook))
 	    (begin
-	      (set! (hook-functions update-hook) '())
-	      (set! (hook-functions close-hook) '())
-	      (set! (hook-functions exit-hook) '())))
+	      (set! (hook-functions update-hook) ())
+	      (set! (hook-functions close-hook) ())
+	      (set! (hook-functions exit-hook) ())))
 	
 	(let ((data (map
 		     (lambda (sound)
@@ -31041,8 +31042,8 @@ EDITS: 2
 					#f
 					(fieql (cdr a) (cdr b)))))))))
 	      
-	      (set! (hook-functions after-graph-hook) '())
-	      (set! (hook-functions mouse-click-hook) '())
+	      (set! (hook-functions after-graph-hook) ())
+	      (set! (hook-functions mouse-click-hook) ())
 	      
 	      (let ((ind (open-sound big-file-name))
 		    (vals (make-vct 100))
@@ -32304,17 +32305,17 @@ EDITS: 1
 	    (draw-line 100 100 200 200 ind 0 time-graph cr)
 	    (draw-dot 300 300 10 ind 0 time-graph cr)
 	    (draw-string "hiho" 20 20 ind 0 time-graph cr)
-	    (draw-dots '#(25 25 50 50 100 100) 10 ind 0 time-graph cr)
+	    (draw-dots #(25 25 50 50 100 100) 10 ind 0 time-graph cr)
 	    (-> 100 50 10 ind 0 cr)
 	    (fill-rectangle 20 20 100 100 ind 0 time-graph #f cr)
 	    (free-cairo cr))
 	  (make-bezier 0 0 20 20 40 30 60 10 10)
 	  (update-time-graph ind 0)
 	  ;(fill-rectangle 20 20 100 100 ind 0 time-graph #t)
-	  (set! (hook-functions after-graph-hook) '())
-	  (set! (hook-functions lisp-graph-hook) '())
+	  (set! (hook-functions after-graph-hook) ())
+	  (set! (hook-functions lisp-graph-hook) ())
 	  
-	  (set! (hook-functions lisp-graph-hook) '())
+	  (set! (hook-functions lisp-graph-hook) ())
 	  (let ((ind (open-sound "oboe.snd")))
 	    (set! (time-graph? ind 0) #f)
 	    (graph (list (vct 0 1 2) (vct 3 2 1) (vct 1 2 3) (vct 1 1 1) (vct 0 1 0) (vct 3 1 2)))
@@ -32323,7 +32324,7 @@ EDITS: 1
 					 (set! (hook 'result) (list (basic-color) (zoom-color) (data-color) (selected-data-color) (mix-color)))))
 	    (graph (list (vct 0 1 2) (vct 3 2 1) (vct 1 2 3) (vct 1 1 1) (vct 0 1 0) (vct 3 1 2)))
 	    (update-lisp-graph)
-	    (set! (hook-functions lisp-graph-hook) '())
+	    (set! (hook-functions lisp-graph-hook) ())
 	    (close-sound ind))
 	  
 	  (let* ((ind1 (open-sound "2.snd"))
@@ -32470,7 +32471,7 @@ EDITS: 1
       (set! (sound-property :hi nind) "hi")
       (set! (sound-property 'ho nind) 1234)
       (set! (channel-property :ha nind 0) 3.14)
-      (set! (hook-functions after-save-state-hook) '())
+      (set! (hook-functions after-save-state-hook) ())
       (hook-push before-save-state-hook 
 		 (lambda (hook) 
 		   (with-output-to-file (hook 'name)
@@ -32511,8 +32512,8 @@ EDITS: 1
 		      (fneq (channel-property :ha ind 0) 3.14))
 		  (snd-display #__line__ ";channel-property saved: 3.14 -> ~A" (channel-property :ha ind 0)))
 	      (close-sound ind)))
-	(set! (hook-functions after-save-state-hook) '())
-	(set! (hook-functions before-save-state-hook) '())
+	(set! (hook-functions after-save-state-hook) ())
+	(set! (hook-functions before-save-state-hook) ())
 	
 	(let ((err (catch 'cannot-save
 			  (lambda () 
@@ -33584,7 +33585,7 @@ EDITS: 1
 	(let ((ind (open-sound "2a.snd")))
 	  (hook-push graph-hook display-correlation)
 	  (update-time-graph)
-	  (set! (hook-functions graph-hook) '())
+	  (set! (hook-functions graph-hook) ())
 	  (stereo->mono ind "hi1.snd" "hi2.snd")
 	  (let ((hi1 (find-sound "hi1.snd"))
 		(hi2 (find-sound "hi2.snd")))
@@ -36207,13 +36208,13 @@ EDITS: 1
   (define* (add-comment sample comment snd1 chn1)
     (let* ((snd (or snd1 (selected-sound)))
 	   (chn (or chn1 (selected-channel)))
-	   (old-comments (or (channel-property 'comments snd chn) '())))
+	   (old-comments (or (channel-property 'comments snd chn) ())))
       (set! (channel-property 'comments snd chn)
 	    (cons (list sample comment)
 		  old-comments))))
   
   (define (show-comments snd chn)
-    (let ((comments (or (channel-property 'comments snd chn) '())))
+    (let ((comments (or (channel-property 'comments snd chn) ())))
       (for-each
        (lambda (comment)
 	 (let* ((samp (car comment))
@@ -36352,7 +36353,7 @@ EDITS: 1
 		(let ((ind3 (open-sound "pistol.snd")))
 		  (overlay-sounds ind2 ind1 ind3)
 		  (update-time-graph ind2 0)
-		  (set! (hook-functions after-graph-hook) '())
+		  (set! (hook-functions after-graph-hook) ())
 		  (close-sound ind3))
 		(samples-via-colormap ind1 0)))
 	  (close-sound ind1)
@@ -36711,7 +36712,7 @@ EDITS: 1
 	  (restore-controls #t)
 	  (reset-controls #t)
 	  (close-sound #t)
-	  (if (not (equal? (sounds) '())) (snd-display #__line__ ";sounds after close-sound #t: ~A" (sounds)))
+	  (if (not (equal? (sounds) ())) (snd-display #__line__ ";sounds after close-sound #t: ~A" (sounds)))
 	  
 	  ;; snd chn cases
 	  (letrec ((test-channel-func-1 
@@ -36824,7 +36825,7 @@ EDITS: 1
 	    
 	    (close-sound #f)
 	    (close-sound #f)
-	    (if (not (equal? (sounds) '())) (snd-display #__line__ ";sounds after close-sound #t: ~A" (sounds))))))
+	    (if (not (equal? (sounds) ())) (snd-display #__line__ ";sounds after close-sound #t: ~A" (sounds))))))
       
       (letrec ((test-sound-func-2
 		(lambda (func name ind-1 ind-2 new-val eq-func leq-func)
@@ -37550,7 +37551,7 @@ EDITS: 1
       
       (set! (sync-style) sync-none)
       (let ((total-chans 0)
-	    (previous-syncs '()))
+	    (previous-syncs ()))
 	(for-each
 	 (lambda (file)
 	   (let ((index (open-sound file)))
@@ -38356,7 +38357,7 @@ EDITS: 1
 	   (len (mus-sound-frames tempfile)))
       (set-samples 0 (- len 1) tempfile #f #f #t "step-src" 0 #f #t)))
   
-  (define* (clm-reverb-sound reverb-amount reverb (reverb-data '()) snd)
+  (define* (clm-reverb-sound reverb-amount reverb (reverb-data ()) snd)
     (let ((output (snd-tempnam))
 	  (revout (snd-tempnam))
 	  (len (+ (frames snd) (srate snd))))
@@ -38770,7 +38771,7 @@ EDITS: 1
     
     (hook-push open-raw-sound-hook (lambda (hook) (set! (hook 'result) (list 1 22050 mus-bshort))))
     (with-sound (:header-type mus-raw) (fm-violin 0 1 440 .1))
-    (set! (hook-functions open-raw-sound-hook) '())
+    (set! (hook-functions open-raw-sound-hook) ())
     (let ((ind (find-sound "test.snd")))
       (if (not ind) (snd-display #__line__ ";with-sound (raw out): ~A" (map file-name (sounds))))
       (if (not (= (header-type ind) mus-raw)) 
@@ -39233,30 +39234,30 @@ EDITS: 1
     (with-sound (:srate 44100 :play #f) (bigbird 0 2 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
     (let ((ind (or (find-sound "test.snd") (open-sound "oboe.snd"))))
       (let ((mx (maxamp)))
-	(notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
+	(notch-sound (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)))
 	(if (or (fneq mx .5)
 		(ffneq (maxamp) .027))
 	    (snd-display #__line__ ";notch 60 Hz: ~A to ~A" mx (maxamp)))
 	(undo)
-	(notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
+	(notch-sound (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
 	(if (ffneq (maxamp) .004)
 	    (snd-display #__line__ ";notch-sound 60 hz 2: ~A" (maxamp)))
 	(undo)
-	(notch-channel (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f #f #f ind 0 #f #f 10)
+	(notch-channel (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f #f #f ind 0 #f #f 10)
 	(if (ffneq (maxamp) .004)
 	    (snd-display #__line__ ";notch-channel 60 hz 2: ~A" (maxamp)))
 	(undo)
 	
 					;	  (select-all)
 	(make-selection 10000 11000)
-	(notch-selection (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f)
+	(notch-selection (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f)
 					;	  (if (ffneq (maxamp) .066)
 					;	      (snd-display #__line__ ";notch-selection 60 hz 2: ~A" (maxamp)))
 	(close-sound ind)))
     
     (with-sound (:srate 44100 :play #f) (bigbird 0 60 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
     (let ((ind (find-sound "test.snd")))
-      (notch-sound (let ((freqs '())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
+      (notch-sound (let ((freqs ())) (do ((i 60 (+ i 60))) ((= i 3000)) (set! freqs (cons i freqs))) (reverse freqs)) #f ind 0 10)
       (if (ffneq (maxamp) .036)
 	  (snd-display #__line__ ";notch-sound 60 hz 2 60: ~A" (maxamp)))
       (close-sound ind))
@@ -39454,7 +39455,7 @@ EDITS: 1
   (set! *clm-header-type* mus-next)
   (set! *clm-delete-reverb* #f)
   (set! *clm-reverb* #f)
-  (set! *clm-reverb-data* '())
+  (set! *clm-reverb-data* ())
   
   (with-sound (:reverb jl-reverb)
 	      (attract 0 1 0.1 2.0)
@@ -40769,9 +40770,9 @@ EDITS: 1
 	      (snd-display #__line__ ";with-marked-sound maxamp: ~A" (maxamp snd)))))
     (close-sound snd))
   
-  (set! (hook-functions mark-click-hook) '())
-  (set! (hook-functions mix-click-hook) '())
-  (set! (hook-functions mix-drag-hook) '())
+  (set! (hook-functions mark-click-hook) ())
+  (set! (hook-functions mix-click-hook) ())
+  (set! (hook-functions mix-drag-hook) ())
   
   
   ;; generators.scm
@@ -42814,7 +42815,7 @@ EDITS: 1
 	  (if (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 250))
 	      (snd-display #__line__ ";XtSetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
 	  (XtGetResourceList xmListWidgetClass)
-	  (let ((wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass (cadr (main-widgets)) '())))
+	  (let ((wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass (cadr (main-widgets)) ())))
 	    (XtDestroyWidget wid1))
 	  
 	  (let ((hook-id (XtAppAddActionHook 
@@ -42825,9 +42826,9 @@ EDITS: 1
 	    (XtRemoveActionHook hook-id))
 	  
 	  (let* ((shell (cadr (main-widgets)))
-		 (wid (XtCreateWidget "wid" xmFormWidgetClass shell '()))
-		 (wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass wid '()))
-		 (wid2 (XtVaCreateWidget "wid" xmFormWidgetClass shell '())))
+		 (wid (XtCreateWidget "wid" xmFormWidgetClass shell ()))
+		 (wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass wid ()))
+		 (wid2 (XtVaCreateWidget "wid" xmFormWidgetClass shell ())))
 	    (if (XtIsApplicationShell wid) (snd-display #__line__ ";XtIsApplicationShell"))
 	    (if (not (XtIsApplicationShell shell)) (snd-display #__line__ ";XtIsApplicationShell of appshell"))
 	    (if (not (XtIsComposite wid)) (snd-display #__line__ ";XtIsComposite"))
@@ -42936,7 +42937,7 @@ EDITS: 1
 	      (XtRemoveWorkProc id))
 	    (if (not (equal? (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
 		(snd-display #__line__ ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
-	    (XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) '())
+	    (XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) ())
 	    (XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
 	    (XtFindFile ".snd" #f 0 #f)
 	    
@@ -43020,7 +43021,7 @@ EDITS: 1
 		     (= (default-font-info 3) XmFONT_IS_FONT))
 		(let ((font (cadr default-font-info))
 		       (dpy (XtDisplay (cadr (main-widgets))))
-		       (data '()))
+		       (data ()))
 		  (for-each (lambda (name atom?)
 			      (let ((val (XGetFontProperty font name)))
 				(if (car val)
@@ -43134,7 +43135,7 @@ EDITS: 1
 											(append
 											 (if (= ctr 1)
 											     (list XmNtabList tablist)
-											     '())
+											     ())
 											 (list XmNrenditionForeground (pixels (- ctr 1))
 											       XmNfontName (fonts (- ctr 1))
 											       XmNfontType XmFONT_IS_FONT))))
@@ -43236,7 +43237,7 @@ EDITS: 1
 		  (snd-display #__line__ ";XmDropSiteQueryStackingOrder: ~A" (XmDropSiteQueryStackingOrder ((main-widgets) 4))))
 	      (let ((tab (XmStringComponentCreate XmSTRING_COMPONENT_TAB 0 #f))
 		    (row #f)
-		    (table '())
+		    (table ())
 		    (our-tags tags))
 		(for-each 
 		 (lambda (word)
@@ -43283,7 +43284,7 @@ EDITS: 1
 						(snd-display #__line__ ";try2: ~A~%" strs)))))
 	  (let ((tab (XtParseTranslationTable 
 		       (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
-		 (pane (add-main-pane "hiho" xmTextWidgetClass '())))
+		 (pane (add-main-pane "hiho" xmTextWidgetClass ())))
 	    (XtOverrideTranslations pane tab))
 	  
 	  (let ((XmNhiho (add-resource "hiho" 0)))
@@ -43436,7 +43437,7 @@ EDITS: 1
 		    
 		    (let* ((shell (cadr (main-widgets)))
 			   (dpy (XtDisplay shell))
-			   (button (XmCreatePushButton shell "button" '()))
+			   (button (XmCreatePushButton shell "button" ()))
 			   (status-and-whatnot (XpmReadFileToPixmap dpy (XRootWindowOfScreen (XtScreen shell)) "bullet.xpm" #f))
 			   (status (car status-and-whatnot))
 			   (pixmap (cadr status-and-whatnot))
@@ -43555,7 +43556,7 @@ EDITS: 1
 	  
 	  (close-sound)
 	  
-	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) '() 0))
+	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
 		(val1 0))
 	    (define (call1 w c i)
 	      (set! val1 (+ 1 val1)))
@@ -43571,7 +43572,7 @@ EDITS: 1
 					;(XtDestroyWidget button)
 	    )
 	  
-	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) '() 0))
+	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
 		(val1 0)
 		(val2 0))
 	    (define (call1 w c i)
@@ -43591,7 +43592,7 @@ EDITS: 1
 					;(XtDestroyWidget button)
 	    )
 	  
-	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) '() 0))
+	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
 		(val1 0)
 		(val2 0))
 	    (define (call1 w c i)
@@ -43838,7 +43839,7 @@ EDITS: 1
 		(if (not (string=? valf "0123456789")) (snd-display #__line__ ";XmTextFieldSetString: ~A" valf))
 		(if (not (string=? val1 "0123456789")) (snd-display #__line__ ";text value: ~A" val1))
 		(if (not (string=? val1f "0123456789")) (snd-display #__line__ ";text field value: ~A" val)))
-	      (let ((untext (XtCreateWidget "untext" xmTextWidgetClass frm '()))
+	      (let ((untext (XtCreateWidget "untext" xmTextWidgetClass frm ()))
 		    (source (XmTextGetSource txt)))
 		(XmTextSetSource untext source 0 3)
 		(if (not (XmTextSource? source))
@@ -44084,12 +44085,12 @@ EDITS: 1
 	    (let ((val (XmClipboardLock dpy win)))
 	      (if (not (= val ClipboardLocked))
 		  (XmClipboardUnlock dpy win #t)))
-	    (let ((selbox (XmCreateSelectionBox shell "selbox" '() 0)))
+	    (let ((selbox (XmCreateSelectionBox shell "selbox" () 0)))
 	      (XmSelectionBoxGetChild selbox XmDIALOG_APPLY_BUTTON)))
 	  
 	  (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
 		 (current-time (list 'Time CurrentTime))
-		 (box (XtCreateManagedWidget "box" xmContainerWidgetClass frm '()))
+		 (box (XtCreateManagedWidget "box" xmContainerWidgetClass frm ()))
 		 (tgl (XtCreateManagedWidget "tgl" xmToggleButtonWidgetClass frm
 					     (list XmNleftAttachment      XmATTACH_FORM
 						   XmNrightAttachment     XmATTACH_FORM
@@ -44133,8 +44134,8 @@ EDITS: 1
 						   XmNtopWidget           notes
 						   XmNbottomAttachment    XmATTACH_FORM)))
 		 (toggled 0))
-	    (XtCreateManagedWidget "one" xmPushButtonWidgetClass notes '())
-	    (XtCreateManagedWidget "two" xmPushButtonWidgetClass notes '())
+	    (XtCreateManagedWidget "one" xmPushButtonWidgetClass notes ())
+	    (XtCreateManagedWidget "two" xmPushButtonWidgetClass notes ())
 	    (let ((info (cadr (XmNotebookGetPageInfo notes 1))))
 	      (if (not (= (.page_number info) 1)) (snd-display #__line__ ";page_number: ~A" (.page_number info)))
 	      (if (.page_widget info) (snd-display #__line__ ";page_widget: ~A" (.page_widget info)))
@@ -44263,11 +44264,11 @@ EDITS: 1
 	      (if (not (= val 70)) (snd-display #__line__ ";XmConvertUnits cm->mm ~A" val)))
 	    (let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmPIXELS)))
 	      (if (and (not (= val 278)) (not (= val 273))) (snd-display #__line__ ";XmConvertUnits cm->pix ~A" val)))
-	    (XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
-	    (XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
-	    (XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
-	    (XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
-	    (XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" '())
+	    (XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
+	    (XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
+	    (XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
+	    (XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
+	    (XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" ())
 	    (zync)
 	    (make-pixmap (cadr (main-widgets)) arrow-strs)
 	    (display-scanned-synthesis)
@@ -44308,14 +44309,14 @@ EDITS: 1
 					     (snd-test-clean-string (mus-expand-filename file))
 					     chn))
 				   (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
-				   '())))
+				   ())))
 	      (XmContainerRelayout container)
 	      (let ((vals (XtVaGetValues container 
 					 (list XmNlargeCellHeight 0 XmNcollapsedStatePixmap 0 XmNdetailOrder 0 XmNdetailTabList 0
 					       XmNselectedObjects 0 XmNconvertCallback 0 XmNdestinationCallback 0 XmNselectionCallback 0))))
 		(if (not (= (vals 1) 0)) (snd-display #__line__ ";XmNlargeCellHeight: ~A" (vals 1)))
 		(if (not (Pixmap? (vals 3))) (snd-display #__line__ ";XmNcollapsedStatePixmap: ~A" (vals 3)))
-		(let ((children '()))
+		(let ((children ()))
 		  (for-each-child container
 				  (lambda (w)
 				    (if (XmIsIconGadget w)
@@ -44450,9 +44451,9 @@ EDITS: 1
 							  XmNbackground       (basic-color))))
 		   (fnts 
 		    (if (defined? 'XmIsColumn)
-			(let* ((w1 (XmCreateColumn mainform "column" '()))
-			       (w1-child (XtCreateManagedWidget "hihi" xmLabelWidgetClass w1 '() 0))
-			       (w2 (XtCreateManagedWidget "column1" xmColumnWidgetClass mainform '() 0)))
+			(let* ((w1 (XmCreateColumn mainform "column" ()))
+			       (w1-child (XtCreateManagedWidget "hihi" xmLabelWidgetClass w1 () 0))
+			       (w2 (XtCreateManagedWidget "column1" xmColumnWidgetClass mainform () 0)))
 			  (if (or (not (XmIsColumn w1))
 				  (not (XmIsColumn w2))
 				  (not (XmColumn? w1)))
@@ -44475,7 +44476,7 @@ EDITS: 1
 			#f))
 		   (fntd 
 		    (if (defined? 'XmIsDropDown)
-			(let ((w1 (XmCreateDropDown mainform "drop" '())))
+			(let ((w1 (XmCreateDropDown mainform "drop" ())))
 			  (if (or (not (XmIsDropDown w1))
 				  (not (XmDropDown? w1)))
 			      (snd-display #__line__ ";XmIsDropDown: ~A ~A ~A" w1 (XmIsDropDown w1) (XmDropDown? w1)))
@@ -44493,7 +44494,7 @@ EDITS: 1
 			#f))
 		   (fntda
 		    (if (defined? 'XmIsDataField)
-			(let ((w1 (XmCreateDataField mainform "data" '())))
+			(let ((w1 (XmCreateDataField mainform "data" ())))
 			  (if (or (not (XmIsDataField w1))
 				  (not (XmDataField? w1)))
 			      (snd-display #__line__ ";XmIsDataField: ~A ~A ~A" w1 (XmIsDataField w1) (XmDataField? w1)))
@@ -44513,7 +44514,7 @@ EDITS: 1
 			#f))
 		   (fnttab
 		    (if (defined? 'XmIsTabStack)
-			(let ((w1 (XmCreateTabStack mainform "hi" '())))
+			(let ((w1 (XmCreateTabStack mainform "hi" ())))
 			  (if (or (not (XmIsTabStack w1))
 				  (not (XmTabStack? w1)))
 			      (snd-display #__line__ ";XmIsTabStack: ~A ~A ~A" w1 (XmIsTabStack w1) (XmTabStack? w1)))
@@ -44567,8 +44568,8 @@ EDITS: 1
 	      (set! (.data e) "hiho")
 	      (XSendEvent dpy window #f 0 e))
 	    (XmRemoveProtocols shell prop (list proto1)))
-	  (XmCascadeButtonHighlight (XmCreateCascadeButton (cadr (main-widgets)) "cascade" '()) #f)
-					;(XmCascadeButtonGadgetHighlight (XmCreateCascadeButtonGadget (cadr (main-widgets)) "gadget" '()) #f)
+	  (XmCascadeButtonHighlight (XmCreateCascadeButton (cadr (main-widgets)) "cascade" ()) #f)
+					;(XmCascadeButtonGadgetHighlight (XmCreateCascadeButtonGadget (cadr (main-widgets)) "gadget" ()) #f)
 	  
 	  (let ((callbacks
 		 (list
@@ -44982,11 +44983,11 @@ EDITS: 1
 			     xmRowColumnWidgetClass xmScaleWidgetClass xmScrollBarWidgetClass xmScrolledWindowWidgetClass
 			     xmSelectionBoxWidgetClass xmSeparatorWidgetClass xmTextFieldWidgetClass xmTextWidgetClass 
 			     xmToggleButtonWidgetClass xmContainerWidgetClass xmComboBoxWidgetClass xmNotebookWidgetClass))
-	      (wids '()))
+	      (wids ()))
 	  (for-each
 	   (lambda (class)
 	     (let* ((shell (cadr (main-widgets)))
-		    (wid (XtCreateWidget "hiho" class shell '())))
+		    (wid (XtCreateWidget "hiho" class shell ())))
 	       (set! wids (cons wid wids))
 	       (XtAddCallback wid XmNhelpCallback (lambda (w c i) "help!"))))
 	   classes)
@@ -45271,8 +45272,8 @@ EDITS: 1
 		       (lambda () (n arg))
 		       (lambda args (car args))))
 	      xm-procs1))
-	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error 0+i (make-delay 32)
-		 (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t '() (make-vector 0)))
+	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
+		 (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 #f #t () (make-vector 0)))
 	  
 	  ;; ---------------- 2 Args
 	  (for-each 
@@ -45285,10 +45286,10 @@ EDITS: 1
 			  (lambda () (n arg1 arg2))
 			  (lambda args (car args))))
 		 xm-procs2))
-	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) '#(0 1) 3/4 
-		    0+i (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0))))
-	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) '#(0 1) 3/4 
-		 0+i (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0)))
+	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) #(0 1) 3/4 
+		    0+i (make-delay 32) :feedback -1 0 #f #t () (make-vector 0))))
+	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) #(0 1) 3/4 
+		 0+i (make-delay 32) :frequency -1 0 #f #t () (make-vector 0)))
 	  
 	  (if all-args
 	      (begin
@@ -45306,12 +45307,12 @@ EDITS: 1
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  xm-procs3))
-		       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 0+i (make-delay 32) 
-			     :start -1 0 #f #t '() (make-vector 0))))
-		    (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 0+i (make-delay 32) 
-			  :phase -1 0 #f #t '() (make-vector 0))))
-		 (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 0+i (make-delay 32) 
-		       :channels -1 0 #f #t '() (make-vector 0)))
+		       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 0+i (make-delay 32) 
+			     :start -1 0 #f #t () (make-vector 0))))
+		    (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 0+i (make-delay 32) 
+			  :phase -1 0 #f #t () (make-vector 0))))
+		 (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) #(0 1) 0+i (make-delay 32) 
+		       :channels -1 0 #f #t () (make-vector 0)))
 		))
 	  
 	  (let* ((struct-accessors-1 
@@ -45504,7 +45505,7 @@ EDITS: 1
 		    gluBuild2DMipmaps gluDeleteTess gluEndPolygon gluErrorString gluGetString gluGetTessProperty 
 		    gluOrtho2D gluPerspective gluPickMatrix gluProject gluScaleImage gluTessBeginContour gluTessBeginPolygon 
 		    gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject)
-		   '())))
+		   ())))
 	  
 	  ;; ---------------- 1 Arg
 	  (for-each 
@@ -45642,7 +45643,7 @@ EDITS: 1
   (define (randomize-list lst)
     (let* ((len (length lst))
 	   (vals (make-vector len #f))
-	   (nlst '()))
+	   (nlst ()))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(let ((loc (random len)))
@@ -46087,7 +46088,7 @@ EDITS: 1
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display #__line__ ";vct 0 wrong-type-arg ~A: ~A ~A" n tag arg))))
 				(list make-vct vct-copy vct-length vct->list vct-peak)))
-		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) '#(0 1) delay-32))
+		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32))
 	  
 	  (for-each (lambda (arg1)
 		      (for-each (lambda (arg2)
@@ -46102,8 +46103,8 @@ EDITS: 1
 							     (eq? tag 'mus-error)))
 						    (snd-display #__line__ ";vct 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2))))
 					    (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
-				(list vct-5 "hiho" 0+i 1.5 (list 1 0) '#(0 1) delay-32)))
-		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) '#(0 1) delay-32))
+				(list vct-5 "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32)))
+		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32))
 	  
 	  (for-each (lambda (arg)
 		      (for-each (lambda (n)
@@ -46115,7 +46116,7 @@ EDITS: 1
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display #__line__ ";vct 2 wrong-type-arg ~A: ~A" n tag))))
 				(list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
-		    (list (make-vector 1) "hiho" 0+i (list 1 0) '#(0 1) delay-32))
+		    (list (make-vector 1) "hiho" 0+i (list 1 0) #(0 1) delay-32))
 	  
 	  (let ((tag
 		 (catch #t
@@ -46150,7 +46151,7 @@ EDITS: 1
 				      square-wave? src? ncos? nsin? table-lookup? 
 				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? ssb-am?
 				      sampler? region-sampler? vct? )))
-		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) '#(0 1)))
+		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1)))
 	  
 	  
 	  (for-each (lambda (n)
@@ -46617,7 +46618,7 @@ EDITS: 1
 				  (list region-chans region-home region-frames 
 					region-position region-maxamp region-maxamp-position region-sample 
 					region->vct region-srate forget-region))))
-		    (list vct-5 '#(0 1) 0+i "hiho" (list 0 1)))
+		    (list vct-5 #(0 1) 0+i "hiho" (list 0 1)))
 	  
 	  (let ((ctr 0))
 	    (for-each (lambda (n)
@@ -46811,7 +46812,7 @@ EDITS: 1
 		  (check-error-tag 'no-such-file (lambda () (mix-sound "/baddy/hiho" 0)))
 		  (check-error-tag 'no-such-file (lambda () (insert-sound "/baddy/hiho.snd")))
 		  (check-error-tag 'no-such-file (lambda () (insert-samples 0 10 "/baddy/hiho.snd")))
-		  (check-error-tag 'no-data (lambda () (set! (filter-control-envelope ind) '())))
+		  (check-error-tag 'no-data (lambda () (set! (filter-control-envelope ind) ())))
 		  (check-error-tag 'out-of-range (lambda () (set! (data-format ind) 123)))
 		  (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 123)))
 		  (check-error-tag 'no-such-channel (lambda () (set! (selected-channel ind) 123)))
@@ -46870,8 +46871,8 @@ EDITS: 1
 		  (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 123)))
 		  (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 0)))
 		  (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 -2)))
-		  (check-error-tag 'no-data (lambda () (scale-by '())))
-		  (check-error-tag 'no-data (lambda () (scale-to '())))
+		  (check-error-tag 'no-data (lambda () (scale-by ())))
+		  (check-error-tag 'no-data (lambda () (scale-to ())))
 		  (check-error-tag 'no-such-sample (lambda () (set! (selection-position ind 0) -999)))
 		  (check-error-tag 'wrong-type-arg (lambda () (set! (selection-frames ind 0) -999)))
 		  (check-error-tag 'wrong-type-arg (lambda () (set! (selection-frames ind 0) 0)))
@@ -46980,7 +46981,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind -1)))
 		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind 3)))
 		(check-error-tag 'wrong-type-arg (lambda () (normalize-partials 32)))
-		(check-error-tag 'wrong-type-arg (lambda () (normalize-partials '())))
+		(check-error-tag 'wrong-type-arg (lambda () (normalize-partials ())))
 		(check-error-tag 'bad-type (lambda () (normalize-partials '(1 2 3))))
 		(check-error-tag 'bad-type (lambda () (normalize-partials (vct 3))))
 		
@@ -47032,7 +47033,7 @@ EDITS: 1
 			  (lambda () (n arg1 arg2))
 			  (lambda args (car args))))
 		 make-procs))
-	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32)))
+	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
 	   keyargs)
 	  
 	  (if (and all-args (= test-28 0))
@@ -47049,9 +47050,9 @@ EDITS: 1
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  make-procs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32))
 		
 		(for-each
 		 (lambda (arg1)
@@ -47068,9 +47069,9 @@ EDITS: 1
 				      (lambda args (car args))))
 			     make-procs))
 			  keyargs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32))))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t () vector-0 delay-32))))
 
 	  (if all-args (snd-display #__line__ ";args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
 	  
@@ -47086,9 +47087,9 @@ EDITS: 1
 	   procs0)
 	  (dismiss-all-dialogs)
 	  
-	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error 0+i delay-32
+	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  #(0 1) 3/4 'mus-error 0+i delay-32
 				  (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
-				  '() '3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+				  () '3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 				  (lambda (a) #f) abs
 				  1.0+1.0i (cons 1 2) '((1 2) (3 4)) '((1 (2)) (((3) 4)))
 				  (vector 1 #\a '(3)) (make-vector 0)
@@ -47096,9 +47097,9 @@ EDITS: 1
 				  "" (make-hash-table 256)
 				  #<undefined> #<unspecified> #<eof>
 				  (make-random-state 1234) (vct) (vector)))
-		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 -1.0 (vct) (vector) (list) (string)
+		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 #(0 1) 3/4 -1.0 (vct) (vector) (list) (string)
 				 0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))
-		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 0+i delay-32 -1 0 1 #f #t (vct) "" '()))
+		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 0+i delay-32 -1 0 1 #f #t (vct) "" ()))
 		 (less-args (if all-args main-args few-args)))
 	    
 	    ;; ---------------- 1 Arg
@@ -47332,7 +47333,7 @@ EDITS: 1
 					 (if (eq? err 'wrong-number-of-args)
 					     (snd-display #__line__ ";procs6: ~A ~A" err (procedure-documentation n)))))
 				     procs6))
-				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 delay-32)))
+				  (list 1.5 "/hiho" -1234 -1 0 #f #t () vct-3 delay-32)))
 			       (list 1.5 "/hiho" -1234 0 vct-5 #f #t delay-32)))
 			    (list 1.5 "/hiho" -1234 vct-3 #f #t delay-32)))
 			 (list 1.5 "/hiho" -1234 vct-3 -1 #f #t delay-32)))
@@ -47366,14 +47367,14 @@ EDITS: 1
 					       (if (eq? err 'wrong-number-of-args)
 						   (snd-display #__line__ ";procs8: ~A ~A" err (procedure-documentation n)))))
 					   procs8))
-					(list 1.5 -1 1234 #f '() delay-32)))
-				     (list "/hiho" -1 1234 '() vct-5 delay-32)))
-				  (list #t #f -1 1234 '() vct-3 delay-32)))
-			       (list 0+i 1234 0 -1 '() delay-32)))
-			    (list 1.5 -1 #f 1234 vct-3 '() delay-32)))
+					(list 1.5 -1 1234 #f () delay-32)))
+				     (list "/hiho" -1 1234 () vct-5 delay-32)))
+				  (list #t #f -1 1234 () vct-3 delay-32)))
+			       (list 0+i 1234 0 -1 () delay-32)))
+			    (list 1.5 -1 #f 1234 vct-3 () delay-32)))
 			 (list 2 #f #t 1234 vct-5 -1 delay-32)))
 		      (list #f #t -1 1234 vct-3 delay-32)))
-		   (list 1.5 -1 '() 1234 "/hiho" delay-32))
+		   (list 1.5 -1 () 1234 "/hiho" delay-32))
 		  
 		  (clear-sincs)
 		  (snd-display #__line__ ";10 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
@@ -47411,11 +47412,11 @@ EDITS: 1
 					   (list "/hiho" -1 1234 delay-32)))
 					(list #t #f vct-3 1234 delay-32)))
 				     (list 0+i #f -1 vct-5 delay-32)))
-				  (list 1.5 #f -1 1234 '() delay-32)))
+				  (list 1.5 #f -1 1234 () delay-32)))
 			       (list -2 #f 1234 vct-3 delay-32)))
-			    (list #f #t '() 1234 vct-5 delay-32)))
-			 (list 1.5 -1 "/hiho" '() delay-32)))
-		      (list 1.5 -1 '() delay-32)))
+			    (list #f #t () 1234 vct-5 delay-32)))
+			 (list 1.5 -1 "/hiho" () delay-32)))
+		      (list 1.5 -1 () delay-32)))
 		   (list #f -1 1234 delay-32))
 		  ))))
 
@@ -47923,10 +47924,10 @@ EDITS: 1
     (let ((vfs ((dialog-widgets) 8))) ; view-files (possible list)
       (if vfs
 	  (if (symbol? (car vfs))
-	      (set! (view-files-files vfs) '())
+	      (set! (view-files-files vfs) ())
 	      (for-each
 	       (lambda (d)
-		 (set! (view-files-files d) '()))
+		 (set! (view-files-files d) ()))
 	       vfs)))))
 
 

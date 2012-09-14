@@ -11,7 +11,7 @@
 (provide 'snd-fft-menu.scm)
 
 
-(define fft-list '()) ; menu labels are updated to show current default settings
+(define fft-list ()) ; menu labels are updated to show current default settings
 
 (define fft-menu (add-to-main-menu "FFT Edits" (lambda ()
 						 (define (update-label fft)
@@ -42,7 +42,7 @@
             ;; if fft-edit-dialog doesn't exist, create it
             (let ((initial-fft-edit-low-frequency 100)
                   (initial-fft-edit-high-frequency 1000)
-                  (sliders '()))
+                  (sliders ()))
 
               (set! fft-edit-dialog
                     (make-effect-dialog 
@@ -126,7 +126,7 @@ removes all energy below the low frequency and above the high frequency, then co
         (if (not fft-squelch-dialog)
             ;; if fft-squelch-dialog doesn't exist, create it
             (let ((initial-fft-squelch-amount 0.0)
-                  (sliders '()))
+                  (sliders ()))
 	      
               (set! fft-squelch-dialog
                     (make-effect-dialog 

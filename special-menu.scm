@@ -18,7 +18,7 @@
 (if (not (defined? 'start-enveloping)) (load "enved.scm"))
 (if (not (defined? 'explode-sf2)) (load "examp.scm"))
 
-(define special-list '()) ; menu labels are updated to show current default settings
+(define special-list ()) ; menu labels are updated to show current default settings
 
 (define special-menu (add-to-main-menu "Special" (lambda ()
 						   (update-label special-list))))
@@ -93,7 +93,7 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
       (define (post-play-panned-dialog)
         (if (not play-panned-dialog)
             (let ((initial-play-panned-file 1)
-                  (sliders '()))
+                  (sliders ()))
 
               (set! play-panned-dialog
                     (make-effect-dialog 
@@ -169,7 +169,7 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
         (if (not save-as-mp3-dialog)
 
             (let ((initial-save-as-mp3-wav-file-number 0)
-                  (sliders '()))
+                  (sliders ()))
               (set! save-as-mp3-dialog
                     (make-effect-dialog 
 		     save-as-mp3-label
@@ -244,7 +244,7 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
         (if (not save-as-ogg-dialog)
 
             (let ((initial-save-as-ogg-wav-file-number 0)
-                  (sliders '()))
+                  (sliders ()))
 
               (set! save-as-ogg-dialog
                     (make-effect-dialog 

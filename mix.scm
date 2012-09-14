@@ -14,7 +14,7 @@
 
 (define (tree-for-each func tree)
   "(tree-for-each func tree) applies func to every leaf of 'tree'"
-  (cond ((null? tree) '())
+  (cond ((null? tree) ())
 	((not (pair? tree)) (func tree))
 	(else (tree-for-each func (car tree))
 	      (tree-for-each func (cdr tree)))))
@@ -23,7 +23,7 @@
   "(tree-for-each-reversed func tree) applies func to every leaf of 'tree' moving in reverse through all the lists"
   (define (flatten lst)
     ;; there's probably a more elegant way to do this
-    (cond ((null? lst) '())
+    (cond ((null? lst) ())
 	  ((pair? lst)
 	   (if (pair? (car lst))
 	       (append (flatten (car lst)) (flatten (cdr lst)))
@@ -389,7 +389,7 @@ last end of the mixes in 'mix-list'"
   "(syncd-mixes val) returns a list (possibly null) of all mixes whose mix-sync field is set to 'val'"
   (if (<= val 0)
       (list)
-      (let ((mix-list '()))
+      (let ((mix-list ()))
 	(for-each
 	 (lambda (snd-m)
 	   (for-each
@@ -446,7 +446,7 @@ panning operation."
 
        (define (invert-envelope e)
 	 (if (null? e)
-	     '()
+	     ()
 	     (append (list (car e) (- 1.0 (cadr e)))
 		     (invert-envelope (cddr e)))))
 

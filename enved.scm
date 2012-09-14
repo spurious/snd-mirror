@@ -16,7 +16,7 @@
    (lambda (snd chn)
      "(channel-envelope snd chn) returns the current enved envelope associated with snd's channel chn"
      (or (channel-property 'enved-envelope snd chn)
-	 '()))
+	 ()))
 
    (lambda (snd chn new-env)
      (set! (channel-property 'enved-envelope snd chn) new-env)
@@ -49,7 +49,7 @@
 	(mouse-radius .03))
 
     (define (add-envelope-point x y cur-env)
-      (let ((new-env '()))
+      (let ((new-env ()))
 	(define (search-point e)
 	  (if (null? e)
 	      (append new-env (list x y))
@@ -97,7 +97,7 @@
   ;; point exists, needs to be edited with check for various bounds
 
     (define (edit-envelope-point pos x y cur-env)
-      (let ((new-env '()))
+      (let ((new-env ()))
 	(define (search-point e npos)
 	  (if (= npos pos)
 	      (append new-env (list x y) (cddr e))
@@ -125,7 +125,7 @@
 	(axis (hook 'axis)))
 
     (define (remove-envelope-point pos cur-env)
-      (let ((new-env '()))
+      (let ((new-env ()))
 	(define (search-point e npos)
 	  (if (null? e)
 	      new-env
@@ -197,7 +197,7 @@
       (let ((player (make-player sound chan))
 	    (e (make-env (channel-envelope sound chan) 
 			 :length (floor (/ (frames sound chan) (dac-size))))))
-	(add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) '())))
+	(add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) ())))
 	(hook-push play-hook (lambda (hook)
 			       ;; if dac buffer size in frames is not dac-size, we should do something debonair
 			       (set! (amp-control player) (env e))))))

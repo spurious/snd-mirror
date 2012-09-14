@@ -926,8 +926,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define (make-butter-lp M fc)
   "(make-butter-lp M fc) returns a butterworth low-pass filter; its order is 'M' * 2, 'fc' is the cutoff frequency in Hz"
-  (let* ((xcoeffs '())
-	 (ycoeffs '())
+  (let* ((xcoeffs ())
+	 (ycoeffs ())
 	 (theta (/ (* 2 pi fc) (mus-srate)))
 	 (st (sin theta))
 	 (ct (cos theta)))
@@ -946,8 +946,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 
 (define (make-butter-hp M fc)
   "(make-butter-hp M fc) returns a butterworth high-pass filter; its order is 'M' * 2, 'fc' is the cutoff frequency in Hz"
-  (let* ((xcoeffs '())
-	 (ycoeffs '())
+  (let* ((xcoeffs ())
+	 (ycoeffs ())
 	 (theta (/ (* 2 pi fc) (mus-srate)))
 	 (st (sin theta))
 	 (ct (cos theta)))
@@ -966,8 +966,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 
 (define (make-butter-bp M f1 f2)
   "(make-butter-bp M f1 f2) returns a butterworth band-pass filter; its order is 'M' * 2, 'f1' and 'f2' are the band edge frequencies in Hz"
-  (let* ((xcoeffs '())
-	 (ycoeffs '())
+  (let* ((xcoeffs ())
+	 (ycoeffs ())
 	 (f0 (sqrt (* f1 f2)))
 	 (Q (/ f0 (- f2 f1)))
 	 (theta0 (/ (* 2 pi f0) (mus-srate)))
@@ -1005,8 +1005,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 
 (define (make-butter-bs M f1 f2)
   "(make-butter-bs M f1 f2) returns a butterworth band-stop filter; its order is 'M' * 2, 'f1' and 'f2' are the band edge frequencies in Hz"
-  (let* ((xcoeffs '())
-	 (ycoeffs '())
+  (let* ((xcoeffs ())
+	 (ycoeffs ())
 	 (f0 (sqrt (* f1 f2)))
 	 (Q (/ f0 (- f2 f1)))
 	 (theta0 (/ (* 2 pi f0) (mus-srate)))
@@ -1211,7 +1211,7 @@ the era when computers were human beings"
 	    (next-random)))))
 
 (define (gaussian-distribution s)
-  (let ((e '())
+  (let ((e ())
 	(den (* 2.0 s s)))
     (do ((i 0 (+ i 1))
 	 (x 0.0 (+ x .05))
@@ -1222,7 +1222,7 @@ the era when computers were human beings"
     (reverse e)))
 
 (define (pareto-distribution a)
-  (let ((e '())
+  (let ((e ())
 	(scl (/ (expt 1.0 (+ a 1.0)) a)))
     (do ((i 0 (+ i 1))
 	 (x 0.0 (+ x .05))
@@ -1240,7 +1240,7 @@ the era when computers were human beings"
 ;;; this is the inverse integration function used by CLM to turn a distribution function into a weighting function
 
 (define* (inverse-integrate dist (data-size 512) (e-size 50))
-  (let* ((e '())
+  (let* ((e ())
 	 (sum (cadr dist))
 	 (first-sum sum)
 	 (data (make-vct data-size))
@@ -1262,7 +1262,7 @@ the era when computers were human beings"
       data)))
 
 (define (gaussian-envelope s)
-  (let ((e '())
+  (let ((e ())
 	(den (* 2.0 s s)))
     (do ((i 0 (+ i 1))
 	 (x -1.0 (+ x .1))
@@ -2374,10 +2374,10 @@ is assumed to be outside -1.0 to 1.0."
 
 ;;; -------- parallel FM spectrum calculator
 
-;(fm-parallel-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) '() '() #t)
+;(fm-parallel-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) () () #t)
 
 (define (fm-parallel-component freq-we-want wc wms inds ns bs using-sine)
-  "(fm-parallel-component freq carrier modfreqs indices '() '() with-sines) returns the amplitude of \"freq\" in \
+  "(fm-parallel-component freq carrier modfreqs indices () () with-sines) returns the amplitude of \"freq\" in \
 the multi-modulator FM case described by the list of modulator frequencies and indices"
   (if (not (null? wms))
       (let* ((sum 0.0)
