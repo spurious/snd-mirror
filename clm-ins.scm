@@ -151,7 +151,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	  (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
 	  (set! carrier (oscil car-os (hz->radians frq)))
 	  (set! sum 0.0)
-	  (do ((k 0 (+ k 1))) ((= k fs))
+	  (do ((k 0 (+ k 1))) 
+	      ((= k fs))
 	    (set! frm (env (frmfs k)))
 	    (set! frm0 (/ frm frq))
 	    (set! frm-int (floor frm0))
@@ -166,12 +167,11 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 		  (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
 		  (set! even-amp (- frm0 frm-int))
 		  (set! odd-amp (- 1.0 even-amp))))
-	    (set! sum (+ sum 
-			 (* (amps k) 
-			    (+ (* even-amp (oscil (evens k) 
-						  (+ even-freq (* (indices k) carrier))))
-			       (* odd-amp (oscil (odds k) 
-						 (+ odd-freq (* (indices k) carrier)))))))))
+	    (let ((car-mult (* (vct-ref indices k) carrier)))
+	      (set! sum (+ sum 
+			   (* (amps k) 
+			      (+ (* even-amp (oscil (vector-ref evens k) (+ even-freq car-mult)))
+				 (* odd-amp  (oscil (vector-ref odds k)  (+ odd-freq car-mult)))))))))
 	  (locsig loc i (* sum (env ampf))))))))
 
 ;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1)

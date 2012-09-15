@@ -9672,6 +9672,7 @@ $as_echo "$as_me: WARNING: can't find the samplerate library. JACK will not be u
 fi
 
             if test $with_jack = yes ; then
+               JACK_LIBS="-ljack -lsamplerate"
                AUDIO_SYSTEM=JACK
 	       $as_echo "#define MUS_JACK 1" >>confdefs.h
 
@@ -9683,6 +9684,8 @@ _ACEOF
 
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
+		   JACK_LIBS="$JACK_LIBS `$PKG_CONFIG samplerate --libs`"
+		   JACK_FLAGS="$JACK_FLAGS `$PKG_CONFIG samplerate --cflags`"
                fi
             fi
 fi

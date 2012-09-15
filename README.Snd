@@ -56,7 +56,7 @@ The configure script has a bunch of arguments:
      --with-oss                use OSS (not tested in a long time)
   
      --with-jack               use the Jack library (can be used in conjunction
-                                 with --with-alsa)
+                                 with --with-alsa, needs libsamplerate).
 
      --with-pulseaudio         use PulseAudio (untested)
 

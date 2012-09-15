@@ -1330,6 +1330,7 @@ if test "$with_jack" = yes ; then
               [with_jack=no
 	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
             if test $with_jack = yes ; then
+               JACK_LIBS="-ljack -lsamplerate"
                AUDIO_SYSTEM=JACK
 	       AC_DEFINE(MUS_JACK)
 	       if test x$PKG_CONFIG != xno ; then
@@ -1337,6 +1338,8 @@ if test "$with_jack" = yes ; then
                    AC_DEFINE_UNQUOTED(MUS_JACK_VERSION, "Jack: ${jack_version}")
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
+		   JACK_LIBS="$JACK_LIBS `$PKG_CONFIG samplerate --libs`"
+		   JACK_FLAGS="$JACK_FLAGS `$PKG_CONFIG samplerate --cflags`"
                fi
             fi
 fi

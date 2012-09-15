@@ -60644,7 +60644,7 @@ s7_scheme *s7_init(void)
  * t455            265  256  218        89   55
  * t502                  90   72        43   39
  * lat             229        63             52
- * calls                               314  269
+ * calls                               314  255
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

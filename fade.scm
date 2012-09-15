@@ -51,9 +51,9 @@
 		   (let ((inval (read-sample fil1))
 			 (outval 0.0))
 		     (set! bank1 (+ bank1 bank-incr))
-		     (do ((k 0 (+ k 1)))
-			 ((= k (- fs 1)))
-		       (set! outval (+ outval (formant (fs1 (+ k 1)) inval))))
+		     (do ((k 1 (+ k 1)))
+			 ((= k fs))
+		       (set! outval (+ outval (formant (vector-ref fs1 k) inval))))
 		     (set! val (+ (* bank1 outval) (* (- 1.0 bank1) inval))))
 		   
 		   (if (> i ramp-end)
@@ -61,9 +61,9 @@
 		       (let ((inval (read-sample fil2))
 			     (outval 0.0))
 			 (set! bank2 (- bank2 bank-incr))
-			 (do ((k 0 (+ k 1)))
-			     ((= k (- fs 1)))
-			   (set! outval (+ outval (formant (fs1 (+ k 1)) inval))))
+			 (do ((k 1 (+ k 1)))
+			     ((= k fs))
+			   (set! outval (+ outval (formant (vector-ref fs1 k) inval))))
 			 (set! val (+ (* bank2 outval) (* (- 1.0 bank2) inval))))
 		       
 		       ;; in the fade section
@@ -73,45 +73,47 @@
 			 ;; now the choice of spectral fade -- we should end with all bank1 0.0 and all bank2 1.0
 			 (set! ramp (+ ramp ramp-incr))
 			 
-			 (if (= ramp-type 0)
-			     (let ((r2 (* 2 ramp)))
-			       ;; sweep up so low freqs go first
-			       (do ((k 0 (+ k 1)))
-				   ((= k (- fs 1)))
-				 (let ((rfs (max 0.0 (min 1.0 (- r2 (* k ifs))))))
-				   (set! outval (+ outval (formant (fs1 (+ k 1)) 
-								   (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
-			       (set! val outval))
-			     
-			     (if (= ramp-type 1)
-				 (let ((r2 (* 2 ramp)))
-				   ;; sweep up so high freqs go first
-				   (do ((k 0 (+ k 1)))
-				       ((= k (- fs 1)))
-				     (let ((rfs (max 0.0 (min 1.0 (- r2 (* (- fs k) ifs))))))
-				       (set! outval (+ outval (formant (fs1 (+ k 1)) 
-								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
-				   (set! val outval))
-				 
-				 ;; sweep from midpoint out
-				 (let ((r2 (* 2 ramp)))
-				   (do ((k 0 (+ k 1)))
-				       ((= k half-fs))
-				     (let ((rfs (max 0.0 (min 1.0 (- (+ r2 0.5) (* (- fs k) ifs))))))
-				       (set! outval (+ outval (formant (fs1 (+ k 1)) 
-								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
-				   (do ((k 0 (+ k 1)))
-				       ((= k (- half-fs 1)))
-				     (let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
-				       (set! outval (+ outval (formant (fs1 (+ k 1 half-fs)) 
-								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
-				   (set! val outval)))))))))
+			 (case ramp-type
+			   ((0)
+			    (let ((r2 (* 2 ramp)))
+			      ;; sweep up so low freqs go first
+			      (do ((k 1 (+ k 1)))
+				  ((= k fs))
+				(let ((rfs (max 0.0 (min 1.0 (- r2 (* (- k 1) ifs))))))
+				  (set! outval (+ outval (formant (vector-ref fs1 k) 
+								  (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
+			      (set! val outval)))
+			   
+			   ((1)
+			    (let ((r2 (* 2 ramp)))
+			      ;; sweep up so high freqs go first
+			      (do ((k 1 (+ k 1)))
+				  ((= k fs))
+				(let ((rfs (max 0.0 (min 1.0 (- r2 (* (- fs k -1) ifs))))))
+				  (set! outval (+ outval (formant (vector-ref fs1 k)
+								  (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
+			      (set! val outval)))
+			   
+			   ;; sweep from midpoint out
+			   (else
+			    (let ((r2 (* 2 ramp)))
+			      (do ((k 0 (+ k 1)))
+				  ((= k half-fs))
+				(let ((rfs (max 0.0 (min 1.0 (- (+ r2 0.5) (* (- fs k) ifs))))))
+				  (set! outval (+ outval (formant (vector-ref fs1 (+ k 1)) 
+								  (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
+			      (do ((k 0 (+ k 1)))
+				  ((= k (- half-fs 1)))
+				(let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
+				  (set! outval (+ outval (formant (vector-ref fs1 (+ k 1 half-fs)) 
+								  (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
+			      (set! val outval)))))))))
        (outa i (* amp val)))))
 
 
 ;;; (vct->channel (with-sound (:output (make-vct 22050)) (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2)))
 ;;; (vct->channel (with-sound (:output (make-vct 44100)) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2)))
-;;;
+;;; (with-sound () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
 ;;; these fades seem more successful to me when done relatively quickly (the opposite of the dissolve below
 ;;; which is best if done as slowly as possible).  I like the sweep up best -- a sort of "evaporation" effect.
 
@@ -139,37 +141,44 @@
 	 ((= i end))
        (let ((outval 0.0)
 	     (inval1 (read-sample fil1))
-	     (inval2 (read-sample fil2)))
+	     (inval2 (read-sample fil2))
+	     (sp 0.0)
+	     (val 0.0)
+	     (f #f))
+
 	 ;; once a ramp is set in motion, it takes care of itself -- we need only choose which to trigger
 	 (set! ctr (+ 1 ctr))
 	 (if (> ctr trigger)
-	     (begin
+	     (let ((next (floor (random freq-inc))))
 	       ;; find next randomly chosen resonator to flip
-	       (let ((next (floor (random freq-inc))))
-		 (if (not (= (spectr next) 1.0))
-		     (call-with-exit
-		      (lambda (bbreak)
-			(do ((j next (+ 1 j))
-			     (k next (- k 1)))
-			    (#t)
-			  (if (and (< j freq-inc) 
-				   (= (spectr j) 1.0))
-			      (begin 
-				(set! next j)
-				(bbreak)))
-			  (if (and (>= k 0) 
-				   (= (spectr k) 1.0))
-			      (begin 
-				(set! next k)
-				(bbreak)))))))
-		 (set! (spectr next) (- (spectr next) ramp-inc))
-		 (set! ctr 0))))
+	       (if (not (= (spectr next) 1.0))
+		   (call-with-exit
+		    (lambda (bbreak)
+		      (do ((j next (+ 1 j))
+			   (k next (- k 1)))
+			  (#t)
+			(if (and (< j freq-inc) 
+				 (= (spectr j) 1.0))
+			    (begin 
+			      (set! next j)
+			      (bbreak)))
+			(if (and (>= k 0) 
+				 (= (spectr k) 1.0))
+			    (begin 
+			      (set! next k)
+			      (bbreak)))))))
+	       (set! (spectr next) (- (spectr next) ramp-inc))
+	       (set! ctr 0)))
+	 
 	 (do ((k lo (+ k 1)))
 	     ((= k hi))
-	   (let ((sp (spectr k)))
-	     (set! outval (+ outval (formant (fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))
-	     (if (> 1.0 sp 0.0)
-		 (set! (spectr k) (- (spectr k) ramp-inc)))))
+	   (set! sp (spectr k))
+	   (set! val (+ (* sp inval1) (* (- 1.0 sp) inval2)))
+	   (set! f (vector-ref fs k))
+	   (set! outval (+ outval (formant f val)))
+	   (if (> 1.0 sp 0.0)
+	       (set! (spectr k) (- sp ramp-inc))))
+
 	 (outa i (* amp outval))))))
 
 

@@ -4643,12 +4643,12 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
 	return MUS_ERROR;
       }
       if (src_data.input_frames!=len){
-	printf("Unsuccessfull resampling: Should have used %d bytes, used %d.",len,src_data.input_frames);
+	printf("Unsuccessfull resampling: Should have used %d bytes, used %ld.",len,(long int)(src_data.input_frames));
 	return MUS_ERROR;
       }
       if (ch>0 && src_data.output_frames_gen!=outlen){
-	printf("Error, src_process did not output the same number of frames as previous resampled channel (%d/%d).\n"
-	       "Please report this problem to k.s.matheussen@notam02.no. Thanks!\n",src_data.output_frames_gen,outlen);
+	printf("Error, src_process did not output the same number of frames as previous resampled channel (%ld/%d).\n"
+	       "Please report this problem to k.s.matheussen@notam02.no. Thanks!\n",(long int)(src_data.output_frames_gen),outlen);
 	return MUS_ERROR;
       }
       outlen=src_data.output_frames_gen;
@@ -4711,7 +4711,7 @@ int jack_mus_audio_read(int line, char *buf, int bytes){
 
 char *jack_mus_audio_moniker(void) 
 {
-  return(MUS_JACK_VERSION);
+  return((char *)MUS_JACK_VERSION);
 }
 #endif
  
