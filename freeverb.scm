@@ -31,6 +31,7 @@
 
 ;;; changed to accommodate run and mono output, bill 11-Jun-06
 ;;;            use the filtered-comb gen, bill 29-Jun-06
+;;; optimized slightly, bill 17-Sep-12
 
 ;;; Code:
 
@@ -144,29 +145,29 @@
        (if (> in-chans 1)
 	   (do ((c 0 (+ 1 c)))
 	       ((= c out-chans))
-	     (frame-set! f-in c (delay (vector-ref predelays c) (f-in c)))
+	     (frame-set! f-in c (delay (vector-ref predelays c) (frame-ref f-in c)))
 	     (frame-set! f-out c 0.0)
-	     (do ((j 0 (+ j 1)))
-		 ((= j numcombs))
-	       (let ((ctr (+ (* c numcombs) j)))
-		 (frame-set! f-out c (+ (f-out c)
-					(filtered-comb (vector-ref fcombs ctr) (f-in c)))))))
-	   (begin
-	     (frame-set! f-in 0 (delay (vector-ref predelays 0) (f-in 0)))
-	     (do ((c 0 (+ 1 c)))
-		 ((= c out-chans))
-	       (frame-set! f-out c 0.0)
+	     (let ((f-in-val (frame-ref f-in c)))
 	       (do ((j 0 (+ j 1)))
 		   ((= j numcombs))
-		 (let ((ctr (+ (* c numcombs) j)))
-		   (frame-set! f-out c (+ (f-out c)
-					  (filtered-comb (vector-ref fcombs ctr) (f-in 0)))))))))
+		 (let ((fcombs-ctr (vector-ref fcombs (+ (* c numcombs) j))))
+		   (frame-set! f-out c (+ (frame-ref f-out c) (filtered-comb fcombs-ctr f-in-val)))))))
+	   (begin
+	     (frame-set! f-in 0 (delay (vector-ref predelays 0) (frame-ref f-in 0)))
+	     (let ((f-in-val (frame-ref f-in 0)))
+	       (do ((c 0 (+ 1 c)))
+		   ((= c out-chans))
+		 (frame-set! f-out c 0.0)
+		 (do ((j 0 (+ j 1)))
+		     ((= j numcombs))
+		   (let ((fcombs-ctr (vector-ref fcombs (+ (* c numcombs) j))))
+		     (frame-set! f-out c (+ (frame-ref f-out c) (filtered-comb fcombs-ctr f-in-val)))))))))
        (do ((c 0 (+ 1 c)))
 	   ((= c out-chans))
 	 (do ((j 0 (+ j 1)))
 	     ((= j numallpasses))
-	   (frame-set! f-out c (all-pass (vector-ref allpasses (+ (* c numallpasses) j))
-					 (f-out c)))))
+	   (frame-set! f-out c (all-pass (vector-ref allpasses (+ (* c numallpasses) j)) (frame-ref f-out c)))))
+
        (frame->file *output* i (frame->frame f-out out-mix out-buf)))))
 
 ;; freeverb.scm ends here

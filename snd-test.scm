@@ -3397,10 +3397,10 @@
 				  ((= k chans))
 				(do ((i 0 (+ i 1)))
 				    ((= i samps))
-				  (if (fneq (sdata k i) (ndata k i))
+				  (if (fneq (sound-data-ref sdata k i) (sound-data-ref ndata k i))
 				      (begin
-					(set! v0 (sdata k i))
-					(set! v1 (ndata k i))
+					(set! v0 (sound-data-ref sdata k i))
+					(set! v1 (sound-data-ref ndata k i))
 					;(snd-display #__line__ ";v0: ~A, v1: ~A, diff: ~A, k: ~A, i: ~A" v0 v1 (- v1 v0) k i)
 					(throw 'read-write-error))))))
 			   (lambda args 
@@ -11521,53 +11521,53 @@ EDITS: 2
   
   (define (test-polyoid n)
     (let* ((res (with-sound (:channels 2 :clipped #f)
-			    (let ((angle 0.0)
-				  (incr (hz->radians 1.0))
-				  (cur-phases (make-vct (* 3 n))))
+			    (let ((cur-phases (make-vct (* 3 n))))
 			      (do ((i 0 (+ i 1))
 				   (j 0 (+ j 3)))
 				  ((= i n))
 				(set! (cur-phases j) (+ i 1))
 				(set! (cur-phases (+ j 1)) (/ 1.0 n))
 				(set! (cur-phases (+ j 2)) (random (* 2 pi))))
-			      (let ((gen (make-polyoid 1.0 cur-phases)))
-				(do ((i 0 (+ i 1)))
+			      (let ((gen (make-polyoid 1.0 cur-phases))
+				    (incr (hz->radians 1.0))
+				    (sin-sum 0.0))
+				(do ((i 0 (+ i 1))
+				     (angle 0.0 (+ angle incr)))
 				    ((= i 88200))
-				  (let ((poly-sum 0.0)
-					(sin-sum 0.0))
-				    (do ((k 0 (+ k 1)))
-					((= k n))
-				      (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (cur-phases (+ (* 3 k) 2)))))))
-				    (set! poly-sum (polyoid gen 0.0))
-				    (set! angle (+ angle incr))
-				    (outa i (/ sin-sum n))
-				    (outb i poly-sum)))))))
+				  (set! sin-sum 0.0)
+				  (do ((k 0 (+ k 1))
+				       (k3 2 (+ k3 3))
+				       (a angle (+ a angle)))
+				      ((= k n))
+				    (set! sin-sum (+ sin-sum (sin (+ a (vct-ref cur-phases k3))))))
+				  (outa i (/ sin-sum n))
+				  (outb i (polyoid gen 0.0)))))))
 	   (snd (find-sound res)))
       (channel-distance snd 0 snd 1)))
   
   (define (test-polyoid-run n)
     (let* ((res (with-sound (:channels 2 :clipped #f)
-			    (let ((angle 0.0)
-				  (incr (hz->radians 1.0))
-				  (cur-phases (make-vct (* 3 n))))
+			    (let ((cur-phases (make-vct (* 3 n))))
 			      (do ((i 0 (+ i 1))
 				   (j 0 (+ j 3)))
 				  ((= i n))
 				(set! (cur-phases j) (+ i 1))
 				(set! (cur-phases (+ j 1)) (/ 1.0 n))
 				(set! (cur-phases (+ j 2)) (random (* 2 pi))))
-			      (let ((gen (make-polyoid 1.0 cur-phases)))
-				 (do ((i 0 (+ i 1)))
+			      (let ((gen (make-polyoid 1.0 cur-phases))
+				    (sin-sum 0.0)
+				    (incr (hz->radians 1.0)))
+				 (do ((i 0 (+ i 1))
+				      (angle 0.0 (+ angle incr)))
 				     ((= i 88200))
-				   (let ((poly-sum 0.0)
-					 (sin-sum 0.0))
-				     (do ((k 0 (+ k 1)))
-					 ((= k n))
-				       (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (cur-phases (+ (* 3 k) 2)))))))
-				     (set! poly-sum (polyoid gen 0.0))
-				     (set! angle (+ angle incr))
-				     (outa i (/ sin-sum n))
-				     (outb i poly-sum)))))))
+				   (set! sin-sum 0.0)
+				   (do ((k 0 (+ k 1))
+					(k3 2 (+ k3 3))
+					(a angle (+ a angle)))
+				       ((= k n))
+				     (set! sin-sum (+ sin-sum (sin (+ a (vct-ref cur-phases k3))))))
+				   (outa i (/ sin-sum n))
+				   (outb i (polyoid gen 0.0)))))))
 	   (snd (find-sound res)))
       (channel-distance snd 0 snd 1)))
   
@@ -48056,23 +48056,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-15-Sep-12:
-254,718,629,362
-68,070,401,690  s7.c:eval [/home/bil/snd-13/snd]
-18,616,790,355  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-15,089,858,062  ???:sin [/lib64/libm-2.12.so]
-14,362,555,793  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 9,047,482,928  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 8,903,881,488  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 8,527,828,438  s7.c:gc [/home/bil/snd-13/snd]
- 7,271,016,306  s7.c:eval'2 [/home/bil/snd-13/snd]
- 6,503,217,266  io.c:mus_write_1 [/home/bil/snd-13/snd]
- 4,429,023,996  s7.c:make_real_1 [/home/bil/snd-13/snd]
- 4,183,099,148  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 3,452,216,831  s7.c:g_multiply_2 [/home/bil/snd-13/snd]
+16-Sep-12:
+252,359,869,416
+64,957,430,239  s7.c:eval [/home/bil/snd-13/snd]
+19,100,937,560  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+15,121,134,769  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+15,073,511,579  ???:sin [/lib64/libm-2.12.so]
+ 9,170,274,769  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 8,907,458,880  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
+ 8,366,275,253  s7.c:gc [/home/bil/snd-13/snd]
+ 7,291,319,452  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 6,499,010,001  io.c:mus_write_1 [/home/bil/snd-13/snd]
+ 4,427,071,186  s7.c:make_real_1 [/home/bil/snd-13/snd]
+ 4,180,547,238  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,996,771,630  s7.c:g_multiply_2 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,652,296,240  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,531,295,315  s7.c:g_add [/home/bil/snd-13/snd]
- 2,361,454,312  s7.c:g_add_2 [/home/bil/snd-13/snd]
- 2,007,780,495  ???:cos [/lib64/libm-2.12.so]
+ 2,927,953,689  s7.c:g_add_2 [/home/bil/snd-13/snd]
+ 2,799,762,778  clm.c:mus_src [/home/bil/snd-13/snd]
+ 1,999,401,531  ???:cos [/lib64/libm-2.12.so]
 |#

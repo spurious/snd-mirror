@@ -1361,11 +1361,12 @@ the era when computers were human beings"
   (let ((r1 (make-sampler 0 s1 c1))
 	(r2 (make-sampler 0 s2 c2))
 	(sum 0.0)
-	(N (min (frames s1 c1) (frames s2 c2))))
+	(N (min (frames s1 c1) (frames s2 c2)))
+	(diff 0.0))
      (do ((i 0 (+ i 1)))
 	 ((= i N))
-       (let ((diff (- (r1) (r2))))
-	 (set! sum (+ sum (* diff diff)))))
+       (set! diff (- (r1) (r2)))
+       (set! sum (+ sum (* diff diff))))
     (sqrt sum)))
 
 

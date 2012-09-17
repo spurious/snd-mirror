@@ -5,26 +5,26 @@
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
 
 
-;;; definstrument -> define (+ change open paren placement)
+;;; definstrument -> define* (+ change open paren placement)
 ;;; *srate* -> (mus-srate)
-;;; run loop ... -> run (do... + extra end close paren
-;;; aref -> 
+;;; run loop ... -> (do...)
+;;; aref -> [vct-ref or vector-ref use implicit indexing]
 ;;; setf -> set!
 ;;; remove declare
 ;;; double not needed
 ;;; array of gen -> vector (and setf aref to vector-set! in this case)
 ;;; nil -> #f, t -> #t
-;;; incf, decf 
+;;; incf, decf to explicit sets
 ;;; length sometimes length, vct-length etc
 ;;; make-filter in scm requires coeffs arrays
-;;; &optional ->, &key too (using define*)
+;;; &optional, &key -> define*
 ;;; two-pi -> (* 2 pi)
 ;;; make-empty-frame is make-frame essentially
 ;;; open-input and close-input -> make-readin or use name directly (in make-readin)
 ;;; make-locsig channel arg is in a different place
-;;; progn -> begin, when -> if+begin (prog1 prog2), dotimes
+;;; progn -> begin, when -> if+begin (prog1 prog2), dotimes -> do
 ;;; string= -> string=? (also string-equal)
-;;; integerp -> integer? and others like it (null -> null?)
+;;; integerp -> integer? and others like it (null -> null? is the tricky one)
 ;;; sound-duration -> mus-sound-duration and similarly for others
 ;;; various array info procs like array-dimension
 ;;; #'(lambda ...) to just (lambda...)
@@ -1969,13 +1969,10 @@
 		   (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
 		   (set! even-amp (- frm0 frm-int))
 		   (set! odd-amp (- 1.0 even-amp))))
-	     (set! sum (+ sum (* (amps k) 
-				 (+ (* even-amp 
-				       (oscil (evens k) 
-					      (+ even-freq (* (indices k) car))))
-				    (* odd-amp 
-				       (oscil (odds k) 
-					      (+ odd-freq (* (indices k) car))))))))))
+	     (let ((val (* (vct-ref indices k) car)))
+	       (set! sum (+ sum (* (amps k) 
+				   (+ (* even-amp (oscil (vector-ref evens k) (+ even-freq val)))
+				      (* odd-amp (oscil (vector-ref odds k) (+ odd-freq val))))))))))
 	 (outa i (* (env ampf) sum))))))
 
 ;;; --------------------------------------------------------------------------------

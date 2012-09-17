@@ -37287,22 +37287,24 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
     }
   
   if ((!is_optimized(car_x)) &&
-      (args < GC_TRIGGER_SIZE) &&
-      (pairs == (quotes + orx_count(car_x))))
+      (args < GC_TRIGGER_SIZE))
     {
       if ((func_is_c_function) &&
-	  (func_is_safe))
+	  (func_is_safe) &&
+	  (pairs == (quotes + orx_count(car_x))))
 	{
 	  set_optimized(car_x);
 	  set_optimize_data(car_x, hop + OP_SAFE_C_ALL_X);
 	  if (args < NUM_SMALL_INTS)
 	    fcdr(cdr(car_x)) = small_int(args);
 	  else fcdr(cdr(car_x)) = make_permanent_integer(args);
+	  /* is ecdr in use?? -- I think not */
 	  set_c_function(car_x, c_function_chooser(func)(sc, func, args, car_x));
 	}
       else
 	{
 	  if ((func_is_closure) &&
+	      (pairs == (quotes + orx_count(car_x))) &&
 	      (closure_arity_to_int(sc, func) == args) &&
 	      (!arglist_has_accessed_symbol(closure_args(func))))
 	    {
@@ -47396,6 +47398,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  {
 		    s7_pointer arg;
+		    
 		    arg = car(args);
 		    if (is_optimized(arg))
 		      {
@@ -47460,6 +47463,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    car(sc->T2_1) = sc->temp4;
 			    car(p) = c_call(arg)(sc, sc->T2_1);
 			    break;
+
+			    /* it is possible to embed the rest of the optimized evaluator here:
+			     *   push ALL_X_OPT, an outer switch branch that jumps to OPT below,
+			     *   save the sc-->args and code, and include the local p and args
+			     *   values as trailing data in the integer fcdr(cdr(code)), set
+			     *   sc->code to arg and goto OPT_EVAL; then OPT: (in this same branch),
+			     *   restores the loop as it was, sets car(p) to sc->value and continues.
+			     *   Unfortunately, this for some reason makes gcc paranoid, and it
+			     *   greatly slows down the OPT_EVAL code, so the overall effect is
+			     *   that we run slower.
+			     */
 			  }
 		      }
 		    else
@@ -49155,7 +49169,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       car(sc->T3_3) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T3_1);
       goto START;
-      
+
 
       /* --------------- */
     case OP_SAFE_C_opSq_P_1:
@@ -60597,7 +60611,7 @@ s7_scheme *s7_init(void)
 	                            #f))");
 
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
-  /* 64 bit machine: size: 48 72, max op: 263 */
+  /* 64 bit machine: size: 48 72, max op: 296 */
 
 #if DEBUGGING
   if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)
@@ -60636,7 +60650,7 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * timing info
- * bench    42736                     8752 8119
+ * bench    42736                     8752 8118
  * lint     13424 1231 1326 1320 1270 1245 1152
  *                               9811 9786 7940
  * index    44300 4988 4725 3935 3477 3291 3005
@@ -60644,7 +60658,7 @@ s7_scheme *s7_init(void)
  * t455            265  256  218        89   55
  * t502                  90   72        43   39
  * lat             229        63             52
- * calls                               314  255
+ * calls                               314  252
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.
