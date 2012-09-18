@@ -1861,6 +1861,12 @@
       x))
   (test (f25) 85.0)
   )
+(let ()
+  (test (let () (define (ho a) (+ a 2)) (define (hi) (+ (ho 1) (ho 2))) (hi)) 7)
+  (test (let () (define (ho a) (+ a 2)) (define (hi) (+ (ho 1) (values 3 4))) (hi)) 10)
+  (test (let () (define (ho a) (+ a 2)) (define (hi) (+ (values 3 4) (ho 1))) (hi)) 10)
+  (test (let () (define (hi) (+ (values 1 2) (values 3 4))) (hi)) 10)
+  (test (let () (define (ho a) (values a 1)) (define (hi) (- (ho 2))) (hi)) 1))
 	
 
 

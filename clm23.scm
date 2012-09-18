@@ -2250,9 +2250,8 @@
 	     (y (readin rd)))
 	 (do ((band 0 (+ 1 band)))
 	     ((= band pairs))
-	   (set! sum (+ sum (ssb-am (ssbs band) 
-				    (bandpass (bands band) y)))))
-	   (outa i (* amp sum))))))
+	   (set! sum (+ sum (ssb-am (vector-ref ssbs band) (bandpass (vector-ref bands band) y)))))
+	 (outa i (* amp sum))))))
 
 (definstrument (sndclmdoc-fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 ve ae)
   (let* ((start (seconds->samples beg))

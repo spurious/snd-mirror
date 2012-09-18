@@ -3138,6 +3138,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 				 size, dev, mus_audio_device_name(dev)));
 #if _MSC_VER
   win_in_err = waveInOpen(&record_fd, WAVE_MAPPER, &wf, (DWORD (*)(HWAVEIN,UINT,DWORD,DWORD,DWORD))next_input_buffer, 0, CALLBACK_FUNCTION);
+  /* why isn't the simple cast (DWORD) correct here as below? -- the docs say the 4th arg's type is DWORD */
 #else
   win_in_err = waveInOpen(&record_fd, WAVE_MAPPER, &wf, (DWORD)next_input_buffer, 0, CALLBACK_FUNCTION);
 #endif

@@ -757,11 +757,9 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
 
 static void draw_speed_arrow(snd_info *sp)
 {
-  gtk_widget_hide(SPEED_ARROW(sp));
   if (sp->speed_control_direction == 1)
     draw_picture(sp->speed_arrow_ax, speed_r, 0, 0, 0, 0, 16, 16);
   else draw_picture(sp->speed_arrow_ax, speed_l, 0, 0, 0, 0, 16, 16);
-  gtk_widget_show(SPEED_ARROW(sp));
 }
 
 
@@ -771,7 +769,9 @@ static gboolean speed_arrow_press(GtkWidget *w, GdkEventButton *ev, gpointer dat
   if (sp->speed_control_direction == 1)
     sp->speed_control_direction = -1;
   else sp->speed_control_direction = 1;
-  draw_speed_arrow(sp);
+  gtk_widget_hide(SPEED_ARROW(sp));
+  gtk_widget_show(SPEED_ARROW(sp));
+  /* draw_speed_arrow(sp); */
   return(false);
 }
 
@@ -1775,7 +1775,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(SPEED_SCROLLBAR(sp));
 
       SPEED_ARROW(sp) = gtk_drawing_area_new();
-      gtk_widget_set_events(SPEED_ARROW(sp), GDK_ALL_EVENTS_MASK);
+      gtk_widget_set_events(SPEED_ARROW(sp), GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
       gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_ARROW(sp), false, false, 2);
       gtk_widget_set_size_request(SPEED_ARROW(sp), 16, 16);
       gtk_widget_show(SPEED_ARROW(sp));
