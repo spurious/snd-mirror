@@ -31288,6 +31288,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       /* if we drop into the longjmp below, the hook functions are not called!
        *   OP_ERROR_HOOK_QUIT performs the longjmp, so it should be safe to go to eval.
        */
+      fprintf(stderr, "eval %s\n", DISPLAY_80(sc->code));
       eval(sc, OP_APPLY);
     }
   else
@@ -49025,6 +49026,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* tricky cases here all involve values (i.e. multiple-values) */
       
     case OP_EVAL_ARGS_P_1:
+      /* only from HOP_SAFE_C_P */
       if (is_not_null(sc->args))
 	{
 	  car(sc->temp_cell_2) = sc->value;
@@ -49044,6 +49046,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_EVAL_ARGS_P_2:
+      /* from HOP_SAFE_C_SP||CP|QP */
       if (is_not_null(cdr(sc->args)))
 	{
 	  /* P must have resulted in values being spliced into the arg list.
@@ -52421,8 +52424,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   (let () (define (hi) (+ (values 1 2) (values 3 4))) (hi)) -> 10
        */
       
+      /* do we need to copy the sc->args list?  it's calling a safe c function
+       */
       if (is_global(car(sc->code)))
-	sc->value = c_function_call(slot_value(global_slot(car(sc->code))))(sc, copy_list(sc, sc->args));
+	sc->value = c_function_call(slot_value(global_slot(car(sc->code))))(sc, sc->args);
       else
 	{
 	  s7_pointer f;
@@ -54391,6 +54396,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->op = OP_ERROR_QUIT;
       if (sc->longjmp_ok)
 	{
+	  fprintf(stderr, "jumping??\n");
 	  longjmp(sc->goto_start, 1);
 	}
       return(sc->value); /* not executed I hope */
@@ -60743,7 +60749,9 @@ s7_scheme *s7_init(void)
 		                          (set! (hook-functions *error-hook*) funcs)                            \n\
 		                          (if (procedure? funcs)                                                \n\
 		                              (set! (hook-functions *error-hook*)                               \n\
-			                            (list (lambda (hook) (funcs (hook 'type) (hook 'data))))))) \n\
+			                            (list (lambda (hook)                                        \n\
+                                                            (set! (hook 'result)                                \n\
+                                                                  (funcs (hook 'type) (hook 'data))))))))       \n\
 	                              *error-hook*)                                                             \n\
 	                            #f))");
 

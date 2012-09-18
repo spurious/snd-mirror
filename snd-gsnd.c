@@ -785,6 +785,7 @@ static gboolean speed_arrow_expose(GtkWidget *w, GdkEventExpose *ev, gpointer da
 
 void toggle_direction_arrow(snd_info *sp, bool state)
 {
+  /* this is part of the apply-controls junk */
   int dir = 1;
   if (state) dir = -1;
   sp->speed_control_direction = dir;

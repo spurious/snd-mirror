@@ -2,6 +2,8 @@
 #include "sndlib-strings.h"
 #include "clm2xen.h"
 
+/* TODO: move apply-controls out of C
+ */
 
 static snd_info *get_sp_1(int index)
 {
