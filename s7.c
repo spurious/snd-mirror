@@ -54365,7 +54365,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->op = OP_ERROR_QUIT;
       if (sc->longjmp_ok)
 	{
-	  fprintf(stderr, "jumping??\n");
 	  longjmp(sc->goto_start, 1);
 	}
       return(sc->value); /* not executed I hope */
