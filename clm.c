@@ -3556,9 +3556,9 @@ static mus_long_t delay_set_length(mus_any *ptr, mus_long_t val)
   dly *gen = (dly *)ptr;  
   if (val > 0) 
     {
-      int old_size;
+      unsigned int old_size;
       old_size = gen->size;
-      gen->size = (int)val; 
+      gen->size = (unsigned int)val; 
       if (gen->size < old_size)
 	{
 	  if (gen->loc > gen->size) gen->loc = 0;

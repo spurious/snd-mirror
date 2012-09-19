@@ -1491,7 +1491,6 @@ def test_00
    [:with_file_monitor, true],
    # FIXME (INFO)
    # Ruby doesn't optimize
-   [:optimization, 0],
    [:clm_table_size, 512],
    [:clm_default_frequency, 0.0],
    [:with_verbose_cursor, false],
@@ -1669,7 +1668,6 @@ def test_01
    ["mus_clipping", mus_clipping(), false],
    ["mus_float_equal_fudge_factor", mus_float_equal_fudge_factor(), 0.0000001],
    ["mus_prescaler", mus_prescaler(), 1.0],
-   ["optimization", optimization(), 0], # Ruby doesn't optimize
    ["play_arrow_size", play_arrow_size(), 10],
    ["print_length", print_length(), 12],
    ["read_only", without_errors do read_only() end, :no_such_sound],
@@ -2532,7 +2530,7 @@ def test_03
    :new_sound_hook, :new_widget_hook, :next_sample, :normalize_by_channel, :normalize_by_sound,
    :normalize_channel, :normalize_globally, :notch, :notch?, :one_pole, :one_pole?, :one_zero,
    :one_zero?, :open_file_dialog, :open_file_dialog_directory, :open_hook, :open_raw_sound,
-   :open_raw_sound_hook, :open_sound, :optimization, :optimization_hook, :orientation_hook,
+   :open_raw_sound_hook, :open_sound, :orientation_hook,
    :oscil, :oscil?, :out_any, :outa, :outb, :outc, :outd, :output_comment_hook,
    :output_name_hook, :override_samples_with_origin, :pad_channel, :partials2polynomial,
    :partials2wave, :parzen_window, :pausing, :peak_env_hook, :peaks, :peaks_font,

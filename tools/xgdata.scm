@@ -8502,6 +8502,12 @@
 (CFNC "PangoAttrList* gtk_entry_get_attributes GtkEntry* entry")
  
 ;;; nothing new in 3.5.16
+
+;;; 3.5.18
+(CFNC "void gtk_accel_label_set_accel GtkAccelLabel* accel_label guint accelerator_key GdkModifierType accelerator_mods")
+(CFNC "GtkAccelGroup* gtk_action_group_get_accel_group GtkActionGroup* action_group")
+(CFNC "void gtk_action_group_set_accel_group GtkActionGroup* action_group GtkAccelGroup* accel_group")
+(CFNC "void gtk_menu_shell_bind_model GtkMenuShell* menu_shell GMenuModel* model gchar* action_namespace gboolean with_separators" 'const)
 |#
 
  

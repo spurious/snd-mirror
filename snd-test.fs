@@ -914,7 +914,6 @@ SIGINT lambda: { sig -- }
      #( <'> with-file-monitor #t )
      \ FIXME
      \ Forth doesn't optimize
-     #( <'> optimization 0 )
      #( <'> clm-table-size 512 )
      #( <'> clm-default-frequency 0.0 )
      #( <'> with-verbose-cursor #f )
@@ -1083,7 +1082,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> mus-clipping #f )
      #( <'> mus-float-equal-fudge-factor 0.0000001 )
      #( <'> mus-prescaler 1.0 )
-     #( <'> optimization 0 ) \ Forth doesn't optimize
      #( <'> play-arrow-size 10 )
      #( <'> print-length 12 )
      #( <'> region-graph-style graph-lines )
@@ -1964,7 +1962,7 @@ black-and-white-colormap constant *better-colormap*
      'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally 'notch
      'notch? 'one-pole 'one-pole? 'one-zero 'one-zero? 'open-file-dialog
      'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
-     'open-sound 'optimization 'optimization-hook 
+     'open-sound 
      'orientation-hook 'oscil 'oscil? 'out-any 'outa
      'outb 'outc 'outd 'output-comment-hook 'output-name-hook 
      'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave
@@ -7412,7 +7410,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> stop-playing <'> swap-channels <'> syncd-marks <'> sync
    <'> sync-max <'> sound-properties <'> sound-property <'> temp-dir <'>  region-sampler?
    <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
-   <'> trap-segfault <'> with-file-monitor <'> optimization
+   <'> trap-segfault <'> with-file-monitor 
    <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
    <'> update-sound <'> clm-table-size <'> with-verbose-cursor <'> view-sound <'> wavelet-type
    <'> with-inset-graph <'> with-interrupts <'> with-pointer-focus <'> with-smpte-label
@@ -7560,7 +7558,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale
    <'> speed-control <'> speed-control-style <'> speed-control-tones <'> squelch-update
    <'> sync <'> sound-properties <'> sound-property <'> temp-dir <'> y-bounds
-   <'> transform-type <'> trap-segfault <'> with-file-monitor <'> optimization
+   <'> transform-type <'> trap-segfault <'> with-file-monitor 
    <'> with-verbose-cursor <'> with-inset-graph <'> with-interrupts <'> with-pointer-focus
    <'> wavelet-type <'> x-bounds <'> with-smpte-label <'> with-toolbar <'> with-tooltips
    <'> with-menu-icons <'> save-as-dialog-src <'> save-as-dialog-auto-comment <'> time-graph?
@@ -8242,7 +8240,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> save-state-file <'> selected-channel
      <'> selected-sound <'> selection-creates-region <'> show-controls
      <'> show-indices <'> show-selection-transform <'> sinc-width
-     <'> temp-dir <'> trap-segfault <'> with-file-monitor <'> optimization
+     <'> temp-dir <'> trap-segfault <'> with-file-monitor 
      <'> with-verbose-cursor <'> with-inset-graph <'> with-interrupts <'> with-pointer-focus
      <'> window-height <'> beats-per-measure
      <'> with-smpte-label <'> with-toolbar <'> with-tooltips <'> with-menu-icons

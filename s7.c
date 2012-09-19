@@ -49280,7 +49280,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * also this is consistent with the unoptimized version
        */
       
-      if (c_function_all_args(ecdr(sc->code)) < safe_list_length(sc, sc->args)) /* this could be omitted if rest arg func etc */
+      if ((int)c_function_all_args(ecdr(sc->code)) < safe_list_length(sc, sc->args)) /* this could be omitted if rest arg func etc */
 	return(s7_error(sc, 
 			sc->WRONG_NUMBER_OF_ARGS, 
 			list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
@@ -55046,7 +55046,7 @@ static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width,
       if (width > len)
 	{
 	  int spaces;
-	  str = (char *)realloc(p, (width + 1) * sizeof(char));
+	  str = (char *)realloc(str, (width + 1) * sizeof(char));
 	  spaces = width - len;
 	  str[width] = '\0';
 	  memmove((void *)(str + spaces), (void *)str, len);    
@@ -60708,6 +60708,8 @@ s7_scheme *s7_init(void)
   /* ideally that would also be define_constant, but for backwards compatibility we
    *   need to continue to support this: (set! *error-hook* (lambda (tag args) ...)) becomes
    *   (set! (hook-functions *error-hook*) (list (lambda (hook) ((lambda (tag args) ...) (hook 'type) (hook 'data)))))
+   *
+   * TODO: Rick has updated scm/s7.scm, so this change can happen whenever it seems convenient
    */
 
   s7_eval_c_string(sc, "(set! (symbol-access '*error-hook*)                                                     \n\
@@ -60757,10 +60759,11 @@ s7_scheme *s7_init(void)
  * we need integer_length everywhere! 
  *   TODO: these fixups are ignored by the optimized cases
  *
- * PERHAPS: safe_c_sp(etc) to safe_c_sc is doable if max arity of proc is 2 (and so on)
  * PERHAPS: instead of the overlay, make an example of in-C and s7_new_type
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
+ *
+ * patterns such as safe_c_all_p? -- do the mv shuffle
  *
  * timing info [starting from May-11 approximately]
  * bench    42736                     8752 8051

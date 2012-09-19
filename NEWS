@@ -1,31 +1,11 @@
-Snd 13.0:
+Snd 13.1:
 
-Mike Scholz fixed up the sndins directory.
+cload.scm to automatically link in a C function from a C shared library
+  this file and lint.scm are now also included in the s7 tarball.
+symbol->dynamic-value
 
-Matti Koskinen got s7 working in uclinux on the blackfin processor.
+checked: gtk 3.5.12|14|16|18, clang 3.1, mpc 1.0.1
 
-removed run.c and the run macro (34000 lines!). 
+Thanks!:  Fernando, Mike, Rick, Anders Vinjar.
 
-removed ptree-channel, max-virtual-ptrees, optimization, 
-  optimization-hook, add-clm-field, declare, and all the scheme
-  functions that depended on these.
 
-deprecated vct-map! and removed it from the Snd files.
-
-added Save icon to the toolbars
-
-moved the clm/clm2xen struct declarations out of the header files,
-  and added accessor functions.  (Bumped clm to 5.0, sndlib to 22.0).
-
-completely changed defgenerator (in s7 it is now based on environments).
-  removed def-clm-struct and ws-interrupt.
-
-added mus-mix-with-envs (for fullmix), and oscil-bank.
-
-removed gamin support (ancient libfam replacement).
-
-removed the s7 WITH_OPTIMIZATION switch
-
-checked: gtk 3.5.6|8|10, mpc 1.0, sbcl 1.0.58
-
-Thanks!:  Matti Koskinen, Mike Scholz
