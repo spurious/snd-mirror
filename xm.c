@@ -1596,7 +1596,7 @@ static void gxm_XmAllocColorProc(Display *dpy, Colormap color, XColor *bs)
 		   C_TO_XEN_Colormap(color),
 		   C_TO_XEN_XColor(bs),
 		   c__FUNCTION__);
-  bs = XEN_TO_C_XColor(val);
+  (*bs) = (*(XEN_TO_C_XColor(val)));
 }
 
 static XEN xm_XmColorCalculationProc;
@@ -1614,10 +1614,10 @@ static void gxm_XmColorCalculationProc(Screen *scr, XColor *bg, XColor *fg, XCol
   loc = xm_protect(lst);
   if (XEN_LIST_P(lst))
     {
-      fg = XEN_TO_C_XColor(XEN_LIST_REF(lst, 0)); 
-      sel = XEN_TO_C_XColor(XEN_LIST_REF(lst, 1));
-      ts = XEN_TO_C_XColor(XEN_LIST_REF(lst, 2));
-      bs = XEN_TO_C_XColor(XEN_LIST_REF(lst, 3));
+      (*fg) = (*(XEN_TO_C_XColor(XEN_LIST_REF(lst, 0)))); 
+      (*sel) = (*(XEN_TO_C_XColor(XEN_LIST_REF(lst, 1))));
+      (*ts) = (*(XEN_TO_C_XColor(XEN_LIST_REF(lst, 2))));
+      (*bs) = (*(XEN_TO_C_XColor(XEN_LIST_REF(lst, 3))));
    }
   xm_unprotect_at(loc);
 }
@@ -1634,10 +1634,10 @@ static void gxm_XmColorProc(XColor *bg, XColor *fg, XColor *sel, XColor *ts, XCo
   loc = xm_protect(lst);
   if (XEN_LIST_P(lst))
     {
-      fg = XEN_TO_C_XColor(XEN_LIST_REF(lst, 0)); 
-      sel = XEN_TO_C_XColor(XEN_LIST_REF(lst, 1));
-      ts = XEN_TO_C_XColor(XEN_LIST_REF(lst, 2));
-      bs = XEN_TO_C_XColor(XEN_LIST_REF(lst, 3));
+      (*fg) = (*(XEN_TO_C_XColor(XEN_LIST_REF(lst, 0)))); 
+      (*sel) = (*(XEN_TO_C_XColor(XEN_LIST_REF(lst, 1))));
+      (*ts) = (*(XEN_TO_C_XColor(XEN_LIST_REF(lst, 2))));
+      (*bs) = (*(XEN_TO_C_XColor(XEN_LIST_REF(lst, 3))));
    }
   xm_unprotect_at(loc);
 }

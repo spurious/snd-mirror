@@ -281,7 +281,6 @@ char *version_info(void)
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
                            snd_itoa(SNDLIB_REVISION), 
                            " (", SNDLIB_DATE,
-	  ", ", (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double", " samples",
 	  ")",
 	  "\n    CLM ", snd_itoa(MUS_VERSION), ".", 
 	                snd_itoa(MUS_REVISION), " (", 
@@ -412,12 +411,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+20-Sep:  Snd 13.1.\n\
 8-Aug:   Snd 13.0.\n\
 3-July:  removed ptree-channel and max-virtual-ptrees, optimization, run.c.\n\
 26-Jun:  Snd 12.12.\n\
 4-Jun:   removed the --with-static-* configuration switches.\n\
-21-May:  Snd 12.11\n\
-1-May:   removed mus-audio-describe, ESD audio support, audinfo.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
