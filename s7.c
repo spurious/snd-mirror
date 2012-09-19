@@ -426,7 +426,8 @@ enum {OP_NO_OP,
       OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_X, OP_SAFE_IF_IS_SYMBOL_P_P, 
       OP_SAFE_IF_IS_EOF_P_P, OP_IF_O_P, OP_IF_O_P_P, OP_SAFE_IF_ANDX_P, OP_SAFE_IF_ORX_P, OP_IF_ORCEQ_P, OP_IF_ORCEQ_P_P,
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
-      OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_5,
+      OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
+      OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CDR, OP_SET_CONS, 
       OP_LET_O, OP_LET_O1, OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_O_P, OP_LET_O2, OP_LET_R_P, OP_LET_OX_P, OP_LET_UNKNOWN_S_P, 
       OP_LET_READ_CHAR_P, OP_LET_CAR_P,
@@ -436,7 +437,7 @@ enum {OP_NO_OP,
       OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1,
       OP_SAFE_C_ZXX_1, OP_SAFE_C_XZX_1, OP_SAFE_C_XXZ_1, 
       OP_SAFE_C_ZZX_1, OP_SAFE_C_ZZX_2, OP_SAFE_C_ZXZ_1, OP_SAFE_C_ZXZ_2, OP_SAFE_C_XZZ_1, OP_SAFE_C_XZZ_2, 
-      OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, OP_SAFE_C_opSq_P_1, OP_C_P_1, OP_C_P_2,
+      OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2,
 
       OP_MAX_DEFINED_1};
 
@@ -510,7 +511,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe_if_is_symbol_p", "safe_if_is_symbol_p_x", "safe_if_is_symbol_p_p", 
    "safe_if_is_eof_p_p", "if_o_p", "if_o_p_p", "safe_if_andx_p", "safe_if_orx_p", "if_orceq_p", "if_orceq_p_p",
    "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "safe_c_pp_3", "safe_c_pp_4", "safe_c_pp_5", "safe_c_pp_6", 
-   "eval_args_p_1", "eval_args_p_2", "eval_args_p_3", "eval_args_p_4", "eval_args_p_5",
+   "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
+   "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
    "increment_1", "decrement_1", "set_cdr", "set_cons", 
    "let_o", "let_o1", "let_r", "let_all_r", "let_c_d", "let_o_p", "let_o2", "let_r_p", "let_ox_p", "let_unknown_s_p", 
    "let_read_char_p", "let_car_p",
@@ -520,7 +522,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe_c_zz_1", "safe_c_zz_2", "safe_c_sz_1", "safe_c_zs_1",
    "safe_c_zxx_1", "safe_c_xzx_1", "safe_c_xxz_1", 
    "safe_c_zzx_1", "safe_c_zzx_2", "safe_c_zxz_1", "safe_c_zxz_2", "safe_c_xzz_1", "safe_c_xzz_2", 
-   "safe_c_zzz_1", "safe_c_zzz_2", "safe_c_zzz_3", "safe_c_opsq_p_1", "c_p_1", "c_p_2",
+   "safe_c_zzz_1", "safe_c_zzz_2", "safe_c_zzz_3", "safe_c_opsq_p_1", "safe_c_opsq_p_mv", "c_p_1", "c_p_2",
    
    "op-max"
   };
@@ -586,7 +588,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_X", "OP_SAFE_IF_IS_SYMBOL_P_P", 
   "OP_SAFE_IF_IS_EOF_P_P", "OP_IF_O_P", "OP_IF_O_P_P", "SAFE_IF_ANDX_P", "SAFE_IF_ORX_P", "OP_IF_ORCEQ_P", "OP_IF_ORCEQ_P_P",
   "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_SAFE_C_PP_3", "OP_SAFE_C_PP_4", "OP_SAFE_C_PP_5", "OP_SAFE_C_PP_6", 
-  "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_5",
+  "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
+  "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
   "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CDR", "OP_SET_CONS", 
   "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_O_P", "OP_LET_O2", "OP_LET_R_P", "OP_LET_OX_P", "OP_LET_UNKNOWN_S_P", 
   "OP_LET_READ_CHAR_P", "OP_LET_CAR_P",
@@ -596,7 +599,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_C_ZZ_1", "OP_SAFE_C_ZZ_2", "OP_SAFE_C_SZ_1", "OP_SAFE_C_ZS_1",
   "OP_SAFE_C_ZXX_1", "OP_SAFE_C_XZX_1", "OP_SAFE_C_XXZ_1", 
   "OP_SAFE_C_ZZX_1", "OP_SAFE_C_ZZX_2", "OP_SAFE_C_ZXZ_1", "OP_SAFE_C_ZXZ_2", "OP_SAFE_C_XZZ_1", "OP_SAFE_C_XZZ_2", 
-  "OP_SAFE_C_ZZZ_1", "OP_SAFE_C_ZZZ_2", "OP_SAFE_C_ZZZ_3", "OP_SAFE_C_opSq_P_1", "OP_C_P_1", "OP_C_P_1",
+  "OP_SAFE_C_ZZZ_1", "OP_SAFE_C_ZZZ_2", "OP_SAFE_C_ZZZ_3", "OP_SAFE_C_opSq_P_1", "OP_SAFE_C_opSq_P_MV", "OP_C_P_1", "OP_C_P_1",
 
   "OP_MAX_DEFINED_1"};
 
@@ -32794,12 +32797,6 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	case OP_EVAL_ARGS2:
 	case OP_EVAL_ARGS3:
 	case OP_EVAL_ARGS4:
-	case OP_EVAL_ARGS_P_1:
-	case OP_EVAL_ARGS_P_2:
-	case OP_EVAL_ARGS_P_3:
-	case OP_EVAL_ARGS_P_4:
-	case OP_EVAL_ARGS_P_5:
-	case OP_SAFE_C_opSq_P_1:
 	  /* it's not safe to simply reverse args and tack the current stacked args onto its (new) end,
 	   *   setting stacked args to cdr of reversed-args and returning car because the list (args)
 	   *   can be some variable's value in a macro expansion via ,@ and reversing it in place
@@ -32809,23 +32806,39 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	    stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
 
+	case OP_SAFE_C_opSq_P_1:
+	  vector_element(sc->stack, top) = (s7_pointer)OP_SAFE_C_opSq_P_MV;
+	  return(args);
+
+	case OP_EVAL_ARGS_P_1:
+	  vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_ARGS_P_1_MV;
+	  return(args);
+
+	case OP_EVAL_ARGS_P_2:
+	  vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_ARGS_P_2_MV;
+	  return(args);
+
+	case OP_EVAL_ARGS_P_3:
+	  vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_ARGS_P_3_MV;
+	  return(args);
+
+	case OP_EVAL_ARGS_P_4:
+	  vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_ARGS_P_4_MV;
+	  return(args);
+
 	case OP_C_P_1:
 	  vector_element(sc->stack, top) = (s7_pointer)OP_C_P_2;
 	  return(args);
 
 	case OP_SAFE_C_PP_1:
-	  /* fprintf(stderr, "to pp_3: %s\n", DISPLAY(args)); */
-	  /* redirect to a different op */
 	  vector_element(sc->stack, top) = (s7_pointer)OP_SAFE_C_PP_3;
 	  return(args);
 
 	case OP_SAFE_C_PP_2:
-	  /* fprintf(stderr, "to pp_4: %s\n", DISPLAY(args)); */
 	  vector_element(sc->stack, top) = (s7_pointer)OP_SAFE_C_PP_4;
 	  return(args);
 
 	case OP_SAFE_C_PP_5:
-	  /* fprintf(stderr, "to pp_6: %s\n", DISPLAY(args)); */
 	  vector_element(sc->stack, top) = (s7_pointer)OP_SAFE_C_PP_6;
 	  return(args);
 
@@ -32888,7 +32901,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	   *   otherwise the multiple-values bit gets set in some innocent list and never unset:
 	   *   :(let ((x '((1 2)))) (eval `(apply apply values x)) x)
            *   ((values 1 2))
-	   * the catch case is much more obscure.
+	   * the catch case is much more obscure. I think the begin check handles others like for-each(?).
 	   */
 	  return(args);
 
@@ -33927,14 +33940,17 @@ static s7_pointer remq(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 static s7_pointer g_pair_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_pair_line_number "(pair-line-number pair) returns the line number at which it read 'pair'"
+  s7_pointer p;
+  p = car(args);
 
-  if (!is_pair(car(args)))
+  if (!is_pair(p))
     {
-      CHECK_METHOD(sc, car(args), sc->PAIR_LINE_NUMBER, args);
-      return(simple_wrong_type_argument(sc, sc->PAIR_LINE_NUMBER, car(args), T_PAIR));	
+      CHECK_METHOD(sc, p, sc->PAIR_LINE_NUMBER, args);
+      return(simple_wrong_type_argument(sc, sc->PAIR_LINE_NUMBER, p, T_PAIR));	
     }
-  /* TODO: T_LINE_NUMBER or something?? */
-  return(make_integer(sc, (s7_Int)(remembered_line_number(pair_line_number(car(args))))));
+  if (has_line_number(p))
+    return(make_integer(sc, (s7_Int)(remembered_line_number(pair_line_number(p)))));
+  return(small_int(0));
 }
 
 
@@ -36346,8 +36362,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		   *   (zero? (length dline)) -- why?
 		   *   (procedure? (procedure-setter obj))
 		   */
-
-		  /* fprintf(stderr, "c_p: %s\n", DISPLAY_80(car_x)); */
 		  set_unsafe(car_x);
 		  set_optimize_data(car_x, hop + OP_SAFE_C_P);
 		  set_c_function(car_x, func);
@@ -39865,15 +39879,13 @@ static s7_pointer check_if(s7_scheme *sc)
 						  {
 						    set_syntax_op(sc->code, sc->SAFE_IF_C_C_P);
 						    fcdr(sc->code) = cadar(sc->code);
-						    /* TODO: fcdr below too */
 						  }
 						else
 						  {
 						    /* test is optimized here, but that can include OP_UNKNOWN_*
 						     */
-						    /* fprintf(stderr, "if1: %s %s\n", opt_names[optimize_data(test)], (is_optimized(t) ? opt_names[optimize_data(t)] : "unopt")); */
-
-						    if (is_optimized(t))
+						    fcdr(sc->code) = cadr(sc->code);
+						    if (is_h_optimized(t))
 						      set_syntax_op(sc->code, sc->SAFE_IF1);
 						    else set_syntax_op(sc->code, sc->IF_O_P);
 						  }
@@ -42709,7 +42721,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, sc->code);
 	sc->code = fcdr(sc->code);
-	goto EVAL; /* TODO: try post syn eventually */
+	goto EVAL; /* TODO: try post syn eventually and check if others can share init code */
       }
 
 
@@ -47901,7 +47913,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_PS:
-	      push_stack(sc, OP_EVAL_ARGS_P_3, sc->NIL, code);
+	      push_stack(sc, OP_EVAL_ARGS_P_3, sc->NIL, code); /* gotta wait in this case */
 	      sc->code = cadr(code);
 	      if (is_optimized(sc->code))
 		goto OPT_EVAL;
@@ -47913,7 +47925,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_PC:
-	      push_stack(sc, OP_EVAL_ARGS_P_4, sc->NIL, code);
+	      push_stack(sc, OP_EVAL_ARGS_P_4, caddr(code), code);
 	      sc->code = cadr(code);
 	      if (is_optimized(sc->code))
 		goto OPT_EVAL;
@@ -47925,7 +47937,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_PQ:
-	      push_stack(sc, OP_EVAL_ARGS_P_5, sc->NIL, code);
+	      push_stack(sc, OP_EVAL_ARGS_P_4, cadr(caddr(code)), code); /* was P_5, but that's the same as P_4 */
 	      sc->code = cadr(code);
 	      goto EVAL;  
 	      
@@ -47935,7 +47947,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_SP:
-	      push_stack(sc, OP_EVAL_ARGS_P_2, list_1(sc, finder(sc, cadr(code))), code);
+	      push_stack(sc, OP_EVAL_ARGS_P_2, finder(sc, cadr(code)), code);
 	      sc->code = caddr(code);
 	      if (is_optimized(sc->code))
 		goto OPT_EVAL;
@@ -47947,7 +47959,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_CP:
-	      push_stack(sc, OP_EVAL_ARGS_P_2, list_1(sc, cadr(code)), code);
+	      push_stack(sc, OP_EVAL_ARGS_P_2, cadr(code), code);
 	      sc->code = caddr(code);
 	      goto EVAL; 
 	      
@@ -47957,7 +47969,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_QP:
-	      push_stack(sc, OP_EVAL_ARGS_P_2, list_1(sc, cadr(cadr(code))), code);
+	      push_stack(sc, OP_EVAL_ARGS_P_2, cadr(cadr(code)), code);
 	      sc->code = caddr(code);
 	      goto EVAL; 
 	      
@@ -48404,10 +48416,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer args;
 		args = cadr(code);
 		car(sc->T1_1) = finder(sc, cadr(args));
-		push_stack(sc, OP_SAFE_C_opSq_P_1, list_1(sc, c_call(args)(sc, sc->T1_1)), sc->code);
+		push_stack(sc, OP_SAFE_C_opSq_P_1, c_call(args)(sc, sc->T1_1), sc->code);
 		sc->code = caddr(code);
 		goto EVAL; 
 	      }
+
+	      /* TODO: add safe_c_op and safe_c_po? latter might be too tricky */
 	      
 	      
 	    case OP_SAFE_C_opCq_S:
@@ -49026,107 +49040,72 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* tricky cases here all involve values (i.e. multiple-values) */
       
     case OP_EVAL_ARGS_P_1:
-      /* only from HOP_SAFE_C_P */
-      if (is_not_null(sc->args))
-	{
-	  car(sc->temp_cell_2) = sc->value;
-	  cdr(sc->temp_cell_2) = sc->args;
-	  /* we can't just call the c function directly here because the values call that
-	   *   appended these new arguments might have added too many, so it's simpler
-	   *   to let OP_APPLY sort that out.
-	   */
-	  sc->code = ecdr(sc->code);
- 	  sc->args = safe_reverse_in_place(sc, sc->temp_cell_2);
- 	  goto APPLY;
-	}
+      /* only from HOP_SAFE_C_P
+       * if multiple values from func, splice_in_values revectors us to OP_EVAL_ARGS_P_1_MV.
+       */
       car(sc->T1_1) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T1_1);
       goto START;
       
+
+    case OP_EVAL_ARGS_P_1_MV:
+      /* we can't just call the c function directly here because the values call that
+       *   passed us these new arguments might have too many values, so it's simpler
+       *   to let OP_APPLY sort that out.
+       */
+      sc->args = sc->value;
+      sc->code = ecdr(sc->code);
+      goto APPLY;
+
+
       
       /* --------------- */
     case OP_EVAL_ARGS_P_2:
-      /* from HOP_SAFE_C_SP||CP|QP */
-      if (is_not_null(cdr(sc->args)))
-	{
-	  /* P must have resulted in values being spliced into the arg list.
-	   *   caller is being difficult, so we'll just mimic the code above.
-	   */
-	  car(sc->temp_cell_2) = sc->value;
-	  cdr(sc->temp_cell_2) = sc->args;
-	  sc->args = safe_reverse_in_place(sc, sc->temp_cell_2);
-	  /* see note above */
-	  sc->code = ecdr(sc->code);
-	  goto APPLY;
-	}
+      /* from HOP_SAFE_C_SP||CP|QP, handled like P_1 case above
+       */
+      car(sc->T2_1) = sc->args;
       car(sc->T2_2) = sc->value;
-      car(sc->T2_1) = car(sc->args);
       sc->value = c_call(sc->code)(sc, sc->T2_1);
-      
-      typeflag(sc->args) = 0;                          /* this was allocated above, so we can release it now */
-      (*(sc->free_heap_top++)) = sc->args;
-      sc->args = sc->NIL;
-      
       goto START;
+
+
+    case OP_EVAL_ARGS_P_2_MV:
+      sc->args = cons(sc, sc->args, sc->value);
+      sc->code = ecdr(sc->code);
+      goto APPLY;
       
       
       /* --------------- */
     case OP_EVAL_ARGS_P_3:
-      sc->w = sc->value;
-      if (is_not_null(sc->args))
-	{
-	  /* (define (hi a) (+ (values 1 2) a)) 
-	   * (define (hi a) (log (values 1 2) a))
-	   */
-	  sc->z = sc->args;
-	  car(sc->temp_cell_2) = finder(sc, caddr(sc->code));
-	  cdr(sc->temp_cell_2) = sc->temp_cell_3;
-	  car(sc->temp_cell_3) = sc->w;
-	  cdr(sc->temp_cell_3) = sc->z;
-	  sc->args = safe_reverse_in_place(sc, sc->temp_cell_2);
-	  sc->code = ecdr(sc->code);
-	  goto APPLY;
-	}
-      car(sc->T2_2) = finder(sc, caddr(sc->code));
-      car(sc->T2_1) = sc->w;
+      car(sc->T2_2) = finder(sc, caddr(sc->code)); 
+      /* we have to wait because we say the evaluation order is always left to right
+       *   and the first arg's evaluation might change the value of the second arg.
+       */
+      car(sc->T2_1) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
+
+    case OP_EVAL_ARGS_P_3_MV:
+      /* (define (hi a) (+ (values 1 2) a)) 
+       * (define (hi a) (log (values 1 2) a))
+       */
+      sc->w = sc->value;
+      sc->args = cons(sc, finder(sc, caddr(sc->code)), sc->w);
+      sc->code = ecdr(sc->code);
+      goto APPLY;
       
       
       /* --------------- */
     case OP_EVAL_ARGS_P_4:
-      if (is_not_null(sc->args))
-	{
-	  car(sc->temp_cell_2) = caddr(sc->code);
-	  cdr(sc->temp_cell_2) = sc->temp_cell_3;
-	  car(sc->temp_cell_3) = sc->value;
-	  cdr(sc->temp_cell_3) = sc->args;
-	  sc->args = safe_reverse_in_place(sc, sc->temp_cell_2);
-	  sc->code = ecdr(sc->code);
-	  goto APPLY;                    /* (define (hi) (log (values 1 2) 3)) ? */
-	}
       car(sc->T2_1) = sc->value;
-      car(sc->T2_2) = caddr(sc->code);
+      car(sc->T2_2) = sc->args;
       sc->value = c_call(sc->code)(sc, sc->T2_1);
       goto START;
-      
 
-      /* --------------- */
-    case OP_EVAL_ARGS_P_5:
-      if (is_not_null(sc->args))
-	{
-	  car(sc->temp_cell_2) = cadr(caddr(sc->code));
-	  cdr(sc->temp_cell_2) = sc->temp_cell_3;
-	  car(sc->temp_cell_3) = sc->value;
-	  cdr(sc->temp_cell_3) = sc->args;
-	  sc->args = safe_reverse_in_place(sc, sc->temp_cell_2);
-	  sc->code = ecdr(sc->code);
-	  goto APPLY; 
-	}
-      car(sc->T2_1) = sc->value;
-      car(sc->T2_2) = cadr(caddr(sc->code));
-      sc->value = c_call(sc->code)(sc, sc->T2_1);
-      goto START;
+    case OP_EVAL_ARGS_P_4_MV: /* same as P_2_MV) */
+      sc->args = cons(sc, sc->args, sc->value);
+      sc->code = ecdr(sc->code);
+      goto APPLY; /* (define (hi) (log (values 1 2) 3)) ? */
       
 
       /* --------------- */
@@ -49272,45 +49251,40 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_SAFE_C_opSq_P_1:
-      if (is_null(cdr(sc->args))) /* values not called */
-	{
-	  car(sc->T2_2) = sc->value;
-	  car(sc->T2_1) = car(sc->args);
-	  sc->value = c_call(sc->code)(sc, sc->T2_1);
-	}
-      else
-	{
-	  /* here we need an argnum check since values could have appended any number of args
-	   */
-	  unsigned int len;
-	  len = safe_list_length(sc, sc->args); 
-	  
-	  /* can values return an improper or circular list?  I don't think so:
-	   *   (values 1 . 2) -> improper arg list error (same with apply values)
-	   *
-	   * currently (values) does not simply erase itself:
-	   *
-	   *   :(let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
-	   *   ;expt power, argument 2, #<unspecified>, is an untyped but should be a number
-	   *  
-	   *   :(s7-version (values))
-	   *   ;s7-version: too many arguments: (#<unspecified>)
-	   *
-	   *   :(exp (values) 0.0)
-	   *   ;exp: too many arguments: (#<unspecified> 0.0)
-	   *
-	   * map is explicitly a special case, and surely it is more confusing to have (values) scattered at random.
-	   * also this is consistent with the unoptimized version
-	   */
-	  
-	  if (c_function_all_args(ecdr(sc->code)) < (len + 1)) /* + 1 because we have the last arg waiting */
-	    return(s7_error(sc, 
-			    sc->WRONG_NUMBER_OF_ARGS, 
-			    list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
-	  
-	  sc->args = safe_reverse_in_place(sc, cons(sc, sc->value, sc->args));
-	  sc->value = c_call(sc->code)(sc, sc->args);
-	}
+      /* this is the no-multiple-values case */
+      car(sc->T2_1) = sc->args;
+      car(sc->T2_2) = sc->value;
+      sc->value = c_call(sc->code)(sc, sc->T2_1);
+      goto START;
+
+    case OP_SAFE_C_opSq_P_MV:
+      /* here we need an argnum check since values could have appended any number of args
+       */
+      sc->args = cons(sc, sc->args, sc->value);
+      
+      /* can values return an improper or circular list?  I don't think so:
+       *   (values 1 . 2) -> improper arg list error (same with apply values)
+       *
+       * currently (values) does not simply erase itself:
+       *
+       *   :(let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
+       *   ;expt power, argument 2, #<unspecified>, is an untyped but should be a number
+       *  
+       *   :(s7-version (values))
+       *   ;s7-version: too many arguments: (#<unspecified>)
+       *
+       *   :(exp (values) 0.0)
+       *   ;exp: too many arguments: (#<unspecified> 0.0)
+       *
+       * map is explicitly a special case, and surely it is more confusing to have (values) scattered at random.
+       * also this is consistent with the unoptimized version
+       */
+      
+      if (c_function_all_args(ecdr(sc->code)) < safe_list_length(sc, sc->args)) /* this could be omitted if rest arg func etc */
+	return(s7_error(sc, 
+			sc->WRONG_NUMBER_OF_ARGS, 
+			list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+      sc->value = c_call(sc->code)(sc, sc->args);
       goto START;
       
 
@@ -49362,7 +49336,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(x) = sc->value;
 	cdr(x) = sc->args;
 	set_type(x, T_PAIR);
-	sc->args = x;
+	sc->args = x; /* all the others reverse -- why not this case? --reverse is at end? (below) */
 	goto EVAL_ARGS_PAIR;
       }
       
@@ -51527,7 +51501,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     case OP_IF_O_P:
-      push_stack_no_args(sc, OP_IF_PP, cadr(sc->code));
+      push_stack_no_args(sc, OP_IF_PP, fcdr(sc->code));
       sc->code = car(sc->code);
       if (!is_optimized(sc->code))
 	goto EVAL; 
@@ -51920,7 +51894,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = finder(sc, sc->value);
 	}
       else sc->value = sc->UNSPECIFIED;
-      /* this this amost always going to OP_EVAL_ARGS4 (once in a while it's OP_MAP_SIMPLE) */
+      /* this is amost always going to OP_EVAL_ARGS4 (once in a while it's OP_MAP_SIMPLE) */
       goto START;
       
       
@@ -51956,11 +51930,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_SAFE_IF1:
-      push_stack_no_args(sc, OP_SAFE_IF1_1, cadr(sc->code));
+      push_stack_no_args(sc, OP_SAFE_IF1_1, fcdr(sc->code));
       sc->code = car(sc->code); 
-      if (is_optimized(sc->code))
-	goto OPT_EVAL;
-      goto EVAL; 
+      goto OPT_EVAL;
       
 
       /* --------------- */
@@ -52436,9 +52408,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto START;
 
-      /* TODO: can't we do the op switch mv trick for eval_args cases? and OP_SAFE_C_opSq_P_1
-       */
-      
       
       /* --------------- */
     case OP_C_P_1:
@@ -60794,12 +60763,12 @@ s7_scheme *s7_init(void)
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
- * timing info
- * bench    42736                     8752 8059
+ * timing info [starting from May-11 approximately]
+ * bench    42736                     8752 8051
  * lint     13424 1231 1326 1320 1270 1245 1148
- *                               9811 9786 7904
+ *                               9811 9786 7881
  * index    44300 4988 4725 3935 3477 3291 3005
- * s7test         1721 1456 1430 1375 1358 1303
+ * s7test         1721 1456 1430 1375 1358 1297
  * t455            265  256  218        89   55
  * t502                  90   72        43   39
  * lat             229        63             52
