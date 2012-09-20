@@ -32785,7 +32785,6 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 {
   if (sc->stack_end > sc->stack_start)
     {
-      /* code = args yet to eval in order, args = evalled args reversed */
       int top;
       s7_pointer x;
       top = s7_stack_top(sc) - 1;
@@ -32797,7 +32796,9 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	case OP_EVAL_ARGS2:
 	case OP_EVAL_ARGS3:
 	case OP_EVAL_ARGS4:
-	  /* it's not safe to simply reverse args and tack the current stacked args onto its (new) end,
+	  /* code = args yet to eval in order, args = evalled args reversed 
+	   *
+	   * it's not safe to simply reverse args and tack the current stacked args onto its (new) end,
 	   *   setting stacked args to cdr of reversed-args and returning car because the list (args)
 	   *   can be some variable's value in a macro expansion via ,@ and reversing it in place
 	   *   (all this to avoid consing), clobbers the variable's value.
@@ -32806,6 +32807,9 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	    stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
 
+	  /* in the next set, the main evaluator branches blithly assume no multiple-values,
+	   *   and if it happens anyway, we vector to a different branch here 
+	   */
 	case OP_SAFE_C_opSq_P_1:
 	  vector_element(sc->stack, top) = (s7_pointer)OP_SAFE_C_opSq_P_MV;
 	  return(args);
@@ -36015,7 +36019,9 @@ static bool is_orx_safe(s7_pointer p)
 	 (op == HOP_SAFE_C_opSq) ||
 	 (op == HOP_SAFE_C_opSq_opSq));
 }
-/* qs, opssq
+/* qs is not used
+ * opssq:
+ * (currently 10 extra blocks for each)
  */
 
 
@@ -36880,6 +36886,9 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		{
 		  set_unsafely_optimized(car_x);
 		  set_optimize_data(car_x, hop + OP_SAFE_C_PP); /* unP case? */
+		  /* TODO: if bad_pairs is 1, ZP and PZ are possibilities 
+		   *   also the rest arg business could be set aside -- branch to error if known to have 2 args ( and the is_optimized?)
+		   */
 		  set_c_function(car_x, c_function_chooser(func)(sc, func, 2, car_x)); 
 		  return(false);
 		}
@@ -42721,7 +42730,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, sc->code);
 	sc->code = fcdr(sc->code);
-	goto EVAL; /* TODO: try post syn eventually and check if others can share init code */
+	goto EVAL; 
       }
 
 
@@ -42949,24 +42958,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     SIMPLE_DO_END_A:
       {
 	s7_pointer args, code, now, end;
-	bool all_done;
 	args = sc->args;
 	code = sc->code;
 	now = slot_value(car(args));
 	end = slot_value(cdr(args));
 	if ((is_integer(now)) &&
 	    (is_integer(end)))
-	  all_done = (s7_integer(now) == s7_integer(end));
+	  {
+	    if (s7_integer(now) == s7_integer(end))
+	      {
+		sc->code = cdr(cadr(code));
+		goto BEGIN;
+	      }
+	  }
 	else
 	  {
 	    car(sc->T2_1) = now;
 	    car(sc->T2_2) = end;
-	    all_done = (is_true(sc, g_equal_2(sc, sc->T2_1)));
-	  }
-	if (all_done)
-	  {
-	    sc->code = cdr(cadr(code));
-	    goto BEGIN;
+	    if (is_true(sc, g_equal_2(sc, sc->T2_1)))
+	      {
+		sc->code = cdr(cadr(code));
+		goto BEGIN;
+	      }
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP_A, args, code);
 	sc->code = fcdr(code);
@@ -52330,6 +52343,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * 4: done (1 normal, 2 mv)
        * 5: done (1 mv, 2 normal)
        * 6: done (both mv)
+       *
+       * I think safe_c_ppp would require 18 branches
        */
       /* fprintf(stderr, "c_pp_1: args: %s, code: %s, value: %s\n", DISPLAY(sc->args), DISPLAY(sc->code), DISPLAY(sc->value)); */
 
@@ -60703,28 +60718,8 @@ s7_scheme *s7_init(void)
   
   /* -------- *error-hook* -------- */
   sc->error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
-  s7_define_variable(sc, "*error-hook*", sc->error_hook);
+  s7_define_constant(sc, "*error-hook*", sc->error_hook);
   
-  /* ideally that would also be define_constant, but for backwards compatibility we
-   *   need to continue to support this: (set! *error-hook* (lambda (tag args) ...)) becomes
-   *   (set! (hook-functions *error-hook*) (list (lambda (hook) ((lambda (tag args) ...) (hook 'type) (hook 'data)))))
-   *
-   * TODO: Rick has updated scm/s7.scm, so this change can happen whenever it seems convenient
-   */
-
-  s7_eval_c_string(sc, "(set! (symbol-access '*error-hook*)                                                     \n\
-                              (list #f                                                                          \n\
-                                    (lambda (sym funcs)                                                         \n\
-	                              (if (list? funcs)                                                         \n\
-		                          (set! (hook-functions *error-hook*) funcs)                            \n\
-		                          (if (procedure? funcs)                                                \n\
-		                              (set! (hook-functions *error-hook*)                               \n\
-			                            (list (lambda (hook)                                        \n\
-                                                            (set! (hook 'result)                                \n\
-                                                                  (funcs (hook 'type) (hook 'data))))))))       \n\
-	                              *error-hook*)                                                             \n\
-	                            #f))");
-
   /* fprintf(stderr, "size: %d, max op: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED); */
   /* 64 bit machine: size: 48 72, max op: 296 */
 
@@ -60763,20 +60758,24 @@ s7_scheme *s7_init(void)
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
- * patterns such as safe_c_all_p? -- do the mv shuffle
- *
  * timing info [starting from May-11 approximately]
- * bench    42736                     8752 8051
- * lint     13424 1231 1326 1320 1270 1245 1148
- *                               9811 9786 7881
- * index    44300 4988 4725 3935 3477 3291 3005
- * s7test         1721 1456 1430 1375 1358 1297
- * t455            265  256  218        89   55
- * t502                  90   72        43   39
- * lat             229        63             52
- * calls                               314  246
+ * bench    42736                     8752 8051 8054
+ * lint     13424 1231 1326 1320 1270 1245 1148 1146
+ *                               9811 9786 7881 7888
+ * index    44300 4988 4725 3935 3477 3291 3005 2999
+ * s7test         1721 1456 1430 1375 1358 1297 1317
+ * t455            265  256  218        89   55   56
+ * t502                  90   72        43   39   39
+ * lat             229        63             52   52
+ * calls                               314  246  245
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.
+ *
+ * in a case like (define* (hi (a 1.0)) (sin a)) we could notice (hi) as a special
+ *   case -- the arg is 1.0, and the substitution can be direct? or save the body with the substitutions?
+ *   (sin 1.0) if no args etc
+ * in (define (hi a) (ho a)) -> (define hi ho) ? check that ho is define, not define* and cdrs (args) are equal
+ *   at least add this to lint
  */
 
