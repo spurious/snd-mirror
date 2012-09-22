@@ -1238,19 +1238,6 @@ static XEN g_dlinit(XEN handle, XEN func)
   ((snd_dl_func)proc)();
   return(XEN_TRUE);
 }
-
-#if 0
-#include <sys/time.h>
-#include <sys/resource.h>
-static XEN g_memsize(void)
-{
-  struct rusage usage;
-  int ret;
-  ret = getrusage(RUSAGE_SELF, &usage);
-  return(C_TO_XEN_INT(usage.ru_maxrss));
-}
-#endif
-
 #endif
 
 

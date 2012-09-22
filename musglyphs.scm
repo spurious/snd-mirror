@@ -226,10 +226,10 @@
   
   (pitch->note-octave-and-accidental (frequency->pitch freq)))
 
-(define (note-data->pclass val) (car val))
-(define (note-data->octave val) (cadr val))
-(define (note-data->accidental val) (caddr val))
-(define (note-data->cclass val) (cadddr val))
+(define note-data->pclass car)
+(define note-data->octave cadr)
+(define note-data->accidental caddr)
+(define note-data->cclass cadddr)
 (define (note-data->pitch val) (list-ref val 4))
 
 

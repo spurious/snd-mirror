@@ -415,7 +415,7 @@ enum {OP_NO_OP,
       OP_SAFE_AND_S, OP_SAFE_CASE_S, OP_SAFER_OR_X, OP_SAFER_AND_X, OP_COND_SIMPLER,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O,
       OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_P, OP_SAFE_DOTIMES_C_C,
-      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP, OP_SIMPLE_DO_FOREVER, 
+      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP, OP_DOX_NIL, OP_SIMPLE_DO_FOREVER, 
       OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_S,
       OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, 
@@ -500,7 +500,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "safe_and_s", "safe_case_s", "safer_or_x", "safer_and_x", "cond_simpler",
    "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "safe_dotimes_step_p", "safe_dotimes_step_o", 
    "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_do_step_p", "safe_dotimes_c_c",
-   "simple_do_p", "simple_do_step_p", "safe_simple_do", "dox", "dox_step", "simple_do_forever", 
+   "simple_do_p", "simple_do_step_p", "safe_simple_do", "dox", "dox_step", "dox_nil", "simple_do_forever", 
    "dotimes_p", "dotimes_step_p", "safe_dotimes_c_s",
    "simple_do_a", "simple_do_step_a",
    "safe_if1_1", "safe_if2_1", "safe_if_cc_x_p", "safe_if_cc_p_p", 
@@ -577,7 +577,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_AND_S", "OP_SAFE_CASE_S", "OP_SAFER_OR_X", "OP_SAFER_AND_X", "OP_COND_SIMPLER",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SAFE_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_STEP_O", 
   "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DO_STEP_P", "OP_SAFE_DOTIMES_C_C",
-  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP", "OP_SIMPLE_DO_FOREVER", 
+  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP", "OP_DOX_NIL", "OP_SIMPLE_DO_FOREVER", 
   "OP_DOTIMES_P", "OP_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_C_S",
   "OP_SIMPLE_DO_A", "OP_SIMPLE_DO_STEP_A",
   "OP_SAFE_IF1_1", "OP_SAFE_IF2_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", 
@@ -1265,7 +1265,7 @@ struct s7_scheme {
   s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_O_P, LET_R_P, LET_OX_P, LET_UNKNOWN_S_P, LET_READ_CHAR_P, LET_CAR_P;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_S, SAFE_DO;
   s7_pointer SIMPLE_DO_P, SAFE_SIMPLE_DO, SIMPLE_DO_FOREVER, DOTIMES_P, SIMPLE_DO_A;
-  s7_pointer DOX, IF_ORCEQ_P, IF_ORCEQ_P_P;
+  s7_pointer DOX, DOX_NIL, IF_ORCEQ_P, IF_ORCEQ_P_P;
   int safe_do_level, safe_do_ids_size;
   long long int *safe_do_ids;
   void (*safe_do_notifier)(int level);
@@ -36079,6 +36079,29 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
   if ((is_closure(func)) &&                         /* a closure* thunk seems pointless */
       (is_null(closure_args(func))))                /* no rest arg funny business */
     {
+      /* look for a case like (define (version) (s7-version)) 
+       *   this is an experiment for later expansion I hope
+       */
+      /* fprintf(stderr, "hop: %d, one-line: %d\n", hop, is_one_liner(closure_body(func))); */
+      if (/* (hop == 1) && */ /* I think if the body is hop_safe_c_c, the current hop setting is irrelevant (local func -> 1 etc) */
+	  (is_one_liner(closure_body(func))))
+	{
+	  s7_pointer body;
+	  body = car(closure_body(func));
+	  if ((is_optimized(body)) &&
+	      (!is_unsafe(body)) &&
+	      (is_null(cdr(body))) &&                /* else (define (hi) (vector 0.0)) (define (ho) (hi)) -- the "C"'s don't match */
+	      (optimize_data(body) == HOP_SAFE_C_C)) /* see above */
+	    {
+	      /* fprintf(stderr, "tranferring %s %s\n", DISPLAY(car_x), DISPLAY(body)); */
+	      set_optimized(car_x);
+	      set_optimize_data(car_x, HOP_SAFE_C_C);
+	      ecdr(car_x) = ecdr(body);
+	      fcdr(car_x) = fcdr(body);
+	      return(true);
+	    }
+	}
+
       set_unsafely_optimized(car_x);
       set_optimize_data(car_x, hop + ((closure_body_is_safe(func)) ? OP_SAFE_THUNK : OP_THUNK));
       ecdr(car_x) = func;
@@ -36141,7 +36164,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	{
 	  if (func_is_closure)
 	    {
-	      set_unsafely_optimized(car_x);
 	      if (is_symbol(cadar_x))
 		{
 		  bool safe_case;
@@ -36168,8 +36190,29 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      (is_proper_list(sc, closure_args(func))) &&
 		      (cadr(body) == car(closure_args(func))))
 		    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_vref); /* structs often use vectors + constant offsets */
-		  else set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_one);
+		  else 
+		    {
+		      set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_one);
+#if 0
+		      /* I think this works, but it happens very rarely */
+		      if ((is_optimized(body)) &&
+			  (!is_unsafe(body)) &&
+			  (optimize_data(body) == HOP_SAFE_C_S) &&
+			  (is_proper_list(sc, closure_args(func))) &&
+			  (cadr(body) == car(closure_args(func))))
+			{
+			  fprintf(stderr, "tranferring %s\n", DISPLAY(car_x)); 
+			  set_optimized(car_x);
+			  set_optimize_data(car_x, HOP_SAFE_C_S);
+			  ecdr(car_x) = ecdr(body);
+			  fcdr(car_x) = fcdr(body);
+			  return(true);
+			}
+#endif
+		    }
 		}
+
+	      set_unsafely_optimized(car_x);
 	      return(false); 
 	    }
 	  else
@@ -37397,7 +37440,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
   int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0, orig_hop;
   s7_pointer p;
 
-  /* fprintf(stderr, "opt func %s %s\n", DISPLAY(func), DISPLAY_80(x)); */
+  /* fprintf(stderr, "opt func %s %s %d %s\n", DISPLAY(func), DISPLAY_80(x), hop, DISPLAY(e)); */
 
   orig_hop = hop;
   if (is_closure(func)) /* can't depend on ecdr here because it might not be global, or might be redefined locally */
@@ -37620,7 +37663,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 {
   s7_pointer y, car_x;
 
-  /* fprintf(stderr, "opt expr %s\n", DISPLAY_80(car(x))); */
+  /* fprintf(stderr, "opt expr %s %d\n", DISPLAY_80(car(x)), hop); */
 
   car_x = car(x);
   set_checked(car_x);
@@ -41199,7 +41242,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			      set_syntax_op(sc->code, sc->DOTIMES_P);
 #endif
 			  }
-
+			
 			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
 			  {
 #if PRINTING
@@ -41332,7 +41375,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	  vars = car(sc->code);
 	  end = cadr(sc->code);
 	  body = cddr(sc->code);
-	  
+
 #if 0
 	  /* this happens very rarely */
 	  {
@@ -41390,7 +41433,9 @@ static s7_pointer check_do(s7_scheme *sc)
 	    }
 	  
 	  /* end and steps look ok! */
-	  set_syntax_op(sc->code, sc->DOX);
+	  if (!is_pair(body))
+	    set_syntax_op(sc->code, sc->DOX_NIL);
+	  else set_syntax_op(sc->code, sc->DOX);
 
 	  return(sc->NIL);
 	}
@@ -42685,6 +42730,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    else push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
 		    goto EVAL;
 		  }
+#if 0
+		if (is_null(sc->code)) /* ridiculous -- only a timing test would do this */
+		  {
+		    s7_pointer arg;
+		    arg = slot_value(sc->args);
+		    if (numerator(arg) < denominator(arg))
+		      {
+			numerator(arg) = denominator(arg);
+			sc->code = cdr(cadr(code));
+			finalize_safe_do(sc);
+			goto BEGIN;
+		      }
+		  }
+#endif
 		fcdr(code) = sc->code;
 		push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, code);		  
 		goto BEGIN;
@@ -43363,6 +43422,49 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto BEGIN;
 
       
+
+    DOX_NIL:
+    case OP_DOX_NIL:
+      /* any number of steppers using dox exprs, end also dox, body and end result arbitrary.
+       *    since all these exprs are local, body is empty (or not a pair anyway)
+       */
+      {
+	long long int id;
+	s7_pointer frame, vars, slot, end, slots;
+	NEW_FRAME(sc, sc->envir, frame); /* new frame is not tied into the symbol lookup process yet */
+	for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
+	  {
+	    NEW_CELL_NO_CHECK(sc, slot);	
+	    slot_symbol(slot) = caar(vars);
+	    slot_set_value(slot, init_dox_eval(sc, cadar(vars)));
+	    slot_expression(slot) = cddar(vars);
+	    set_type(slot, T_SLOT | T_IMMUTABLE);
+	    next_slot(slot) = environment_slots(frame);
+	    environment_slots(frame) = slot;
+	  }
+	sc->envir = frame;
+	id = frame_id(frame);
+	for (slot = environment_slots(frame); is_slot(slot); slot = next_slot(slot))
+	  symbol_set_local(slot_symbol(slot), id, slot);
+	end = caadr(sc->code);
+	slots = environment_slots(sc->envir);
+
+	while (end_dox_eval(sc, end) == sc->F)
+	  {
+	    for (slot = slots; is_slot(slot); slot = next_slot(slot))
+	      {
+		if (is_pair(slot_expression(slot)))
+		  slot_pending_value(slot) = step_dox_eval(sc, car(slot_expression(slot)));
+		else slot_pending_value(slot) = slot_value(slot);
+	      }
+	    for (slot = slots; is_slot(slot); slot = next_slot(slot))
+	      slot_set_value(slot, slot_pending_value(slot));
+	  }
+	sc->code = cdadr(sc->code);
+	goto BEGIN;
+      }
+
+
 	/* we could use slot_pending_value, slot_expression, not this extra list, but the list seems simpler.
 	 */
     #define DO_VAR_SLOT(P) ecdr(P)
@@ -43485,6 +43587,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto SAFE_DO;
 	  if (car(ecdr(sc->code)) == sc->DOX)
 	    goto DOX;
+	  if (car(ecdr(sc->code)) == sc->DOX_NIL)
+	    goto DOX_NIL;
 	  goto SAFE_DOTIMES;
 	}
 
@@ -59902,6 +60006,7 @@ s7_scheme *s7_init(void)
   sc->SIMPLE_SAFE_DOTIMES =   assign_internal_syntax(sc, "do",      OP_SIMPLE_SAFE_DOTIMES);
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);
   sc->DOX =                   assign_internal_syntax(sc, "do",      OP_DOX);
+  sc->DOX_NIL =               assign_internal_syntax(sc, "do",      OP_DOX_NIL);
   set_safe_do_level(sc, 0);
   sc->safe_do_notifier = NULL;
   sc->safe_do_ids_size = 8;
@@ -60761,9 +60866,9 @@ s7_scheme *s7_init(void)
  * timing info [starting from May-11 approximately]
  * bench    42736                     8752 8051 8054
  * lint     13424 1231 1326 1320 1270 1245 1148 1146
- *                               9811 9786 7881 7888
+ *                               9811 9786 7881 7900
  * index    44300 4988 4725 3935 3477 3291 3005 2999
- * s7test         1721 1456 1430 1375 1358 1297 1317
+ * s7test         1721 1456 1430 1375 1358 1297 1296
  * t455            265  256  218        89   55   56
  * t502                  90   72        43   39   39
  * lat             229        63             52   52
@@ -60776,6 +60881,10 @@ s7_scheme *s7_init(void)
  *   case -- the arg is 1.0, and the substitution can be direct? or save the body with the substitutions?
  *   (sin 1.0) if no args etc
  * in (define (hi a) (ho a)) -> (define hi ho) ? check that ho is define, not define* and cdrs (args) are equal
- *   at least add this to lint
+ *   this would be a direct safe closure -- check the vector-ref case
+ *   why not simply redefine the name?  time...
+ *
+ * TODO: in Linux/OSX load should accept ~/ filenames
+ * PERHAPS: opt (log x 2|10)
  */
 

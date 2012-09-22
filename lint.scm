@@ -2347,8 +2347,35 @@
       
       (define (lint-walk-function head name args val line-number env)
 	;; check out function arguments (adding them to the current env), then walk its body, (name == function name, val == body)
-	
-	;; (format #t "walk function ~A ~A ~A ~A~%" head name args (if (pair? env) (car env) ""))
+
+	;; (format #t "walk function ~A ~A ~A ~A ~A~%" head name args val (if (pair? env) (car env) ""))
+
+	;; first check for (define (hi...) (ho...)) where ho has no opt args
+	(if (and *report-minor-stuff*
+		 (eq? head 'define)
+		 (pair? val)          ; not (define (hi a) . 1)!
+		 (pair? (car val))
+		 (null? (cdr val))
+		 (symbol? (caar val)) ; not (define (hi) ((if #f + abs) 0))
+		 (equal? args (cdar val))
+		 (or (and (procedure? (symbol->value (caar val)))
+			  (zero? (cadr (procedure-arity (symbol->value (caar val)))))
+			  (not (caddr (procedure-arity (symbol->value (caar val)))))) ; might be deliberately limiting args
+		     (let ((e (env-member (caar val) env)))
+		       (and e
+			    (pair? e)
+			    (>= (length e) 4)
+			    (let ((def (list-ref e 3)))
+			      (and 
+			       (pair? def)
+			       (eq? (car def) 'define)
+			       (or (and (symbol? args)
+					(symbol? (cadr def)))
+				   (= (length args) (length (cadr def))))))))))
+	    (lint-format "~A could be (define ~A ~A)"
+			 name line-number name
+			 name (caar val)))
+    
 	(if (null? args)
 	    (begin
 	      (if (memq head '(define* lambda* defmacro* define-macro* define-bacro*))
@@ -2377,7 +2404,7 @@
 						 (values))
 					       (list (car arg) #f #f))))
 				     (proper-list args)))))
-		  
+
 		  (lint-walk-function-body name line-number head args arg-data val (append arg-data env))
 		  (if *report-unused-parameters* 
 		      (report-usage name line-number 'parameter head arg-data))

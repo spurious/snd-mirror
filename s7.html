@@ -882,13 +882,14 @@ abs
 1.5
 </pre>
 
-<p>macroexpand can help debug a macro:
+<p>macroexpand can help debug a macro.  I always forget that it
+wants an expression:
 </p>
 
 <pre class="indented">
 &gt; (define-macro (add-1 arg) `(+ 1 ,arg))
 add-1
-&gt; (macroexpand (add-1 32))
+&gt; (macroexpand (add-1 32)) ; (macroexpand add-1) will complain about "car argument, add-1"
 (+ 1 32)
 </pre>
 
@@ -9238,6 +9239,7 @@ Here are some examples:
 </p>
 
 <pre class="indented">
+;;; various math library functions
 (define-c-function '((double j0 (double)) 
                      (double j1 (double)) 
                      (double erf (double)) 
@@ -9245,9 +9247,13 @@ Here are some examples:
                      (double lgamma (double)))
                     "m" "math.h")
 
+
+;;; getenv and setenv
 (define-c-function '(char* getenv (char*)))
 (define-c-function '(int setenv (char* char* int)))
 
+
+;;; file-exists? and delete-file
 (define file-exists? (let () ; define F_OK and access only within this let
                        (define-c-function '((int F_OK) (int access (char* int))) "" "unistd.h") 
                        (lambda (arg) (= (access arg F_OK) 0))))
@@ -9256,7 +9262,8 @@ Here are some examples:
                       (define-c-function '(int unlink (char*)) "" "unistd.h") 
                       (lambda (file) (= (unlink file) 0)))) ; 0=success
 
-;;; from Snd:
+
+;;; examples from Snd:
 (define-c-function '(char* version_info ()) "" "snd.h" "-I.")
 
 (define-c-function '(mus_float_t mus_degrees_to_radians (mus_float_t)) "" "snd.h" "-I.")
@@ -9269,6 +9276,7 @@ Here are some examples:
                    "" "snd.h" "-I.")
    
 
+;;; getcwd, strftime
 (define-c-function '(char* getcwd (char* size_t)) "" "unistd.h")
 
 (define-c-function (list '(void* calloc (size_t size_t))
@@ -9287,6 +9295,7 @@ Here are some examples:
 "Sat 11-Aug-2012 08:55 PDT\x00      "
 
 
+;;; opendir, read_dir, closedir
 (define-c-function '((int closedir (DIR*))
 		     (DIR* opendir (char*))
 		     (in-C "static char *read_dir(DIR *p)  \
@@ -9305,6 +9314,28 @@ Here are some examples:
     (format *stderr* "~A " p))
   (closedir dir))
 
+
+;;; time
+(define-c-function 
+  '((in-C "static struct timeval overall_start_time;  \n\
+           static bool time_set_up = false;           \n\
+           static double get_internal_real_time(void) \n\
+           {                                          \n\
+            struct timezone z0;                       \n\
+            struct timeval t0;                        \n\
+            double secs;                              \n\
+            if (!time_set_up) {gettimeofday(&overall_start_time, &z0); time_set_up = true;} \n\
+            gettimeofday(&t0, &z0);                   \n\
+            secs = difftime(t0.tv_sec, overall_start_time.tv_sec);\n\
+            return(secs + 0.000001 * (t0.tv_usec - overall_start_time.tv_usec)); \n\
+           }")
+    (double get_internal_real_time (void)))
+  "" '("time.h" "sys/time.h"))
+
+(define-macro (time func) 
+  `(let ((start (get_internal_real_time)))
+     ,func
+     (- (get_internal_real_time) start)))
 </pre>
 
 

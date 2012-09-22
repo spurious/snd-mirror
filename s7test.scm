@@ -1866,7 +1866,9 @@
   (test (let () (define (ho a) (+ a 2)) (define (hi) (+ (ho 1) (values 3 4))) (hi)) 10)
   (test (let () (define (ho a) (+ a 2)) (define (hi) (+ (values 3 4) (ho 1))) (hi)) 10)
   (test (let () (define (hi) (+ (values 1 2) (values 3 4))) (hi)) 10)
-  (test (let () (define (ho a) (values a 1)) (define (hi) (- (ho 2))) (hi)) 1))
+  (test (let () (define (ho a) (values a 1)) (define (hi) (- (ho 2))) (hi)) 1)
+  (test (let () (define (ho1) (s7-version)) (define (ho2) (ho1)) (string? (ho2))) #t)
+  (test (let () (define (hi) (vector 0)) (define (ho) (hi)) (ho)) #(0)))
 	
 
 
@@ -10200,9 +10202,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 ;       (current-output-port)
 ;       (make-random-state 1234)
 ;       (symbol ":\"")
-
-;;; macroexpand 
-;;; (let () (define-macro (hi1 a) `(+ ,a 1)) hi1)
+; (let () (define-macro (hi1 a) `(+ ,a 1)) hi1)
 ;;; and how could a continuation work in general?        
        ))
 
@@ -25923,12 +25923,23 @@ func
 
 ;(test (quit 0) 'error)
 
+;;; macroexpand
+(let () 
+  (define-macro (hi a) `(+ ,a 1))
+  (test (macroexpand (hi 2)) '(+ 2 1))
+  (test (macroexpand (hi (abs 2))) '(+ (abs 2) 1))
+  (define-macro (ho a) `(+ ,@a 1))
+  (test (macroexpand (ho (2 3 4))) '(+ 2 3 4 1))
+  (define-macro* (hi1 a (b 2)) `(+ ,a ,b))
+  (test (macroexpand (hi1 3)) '(+ 3 2))
+  )
+
+
 
 ;;; define-expansion
 (define-expansion (_expansion_ a) `(+ ,a 1))
 (test (_expansion_ 3) 4)
 (test (macroexpand (_expansion_ 3)) `(+ 3 1))
-(let () (define-macro (hi a) `(+ ,a 1)) (test (macroexpand (hi 2)) '(+ 2 1)))
 (test '(_expansion_ 3) (quote (_expansion_ 3)))
 (test (_expansion_ (+ (_expansion_ 1) 2)) 5)
 
@@ -30131,9 +30142,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	  ;; cache size, position and mask.
 	  (list siz pos (ash (- (ash 1 siz) 1) pos)))
 
-	(define (byte-size bytespec) (car bytespec))
-	(define (byte-position bytespec) (cadr bytespec))
-	(define (byte-mask bytespec) (caddr bytespec))
+	(define byte-size car)
+	(define byte-position cadr)
+	(define byte-mask caddr)
 
 	(define (ldb bytespec integer)
 	  (ash (logand integer (byte-mask bytespec))
@@ -30185,9 +30196,9 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 	(define-constant single-float-negative-epsilon 2.9802326e-8)
 
 	(define (lisp-implementation-type) "s7")
-	(define (lisp-implementation-version) (s7-version))
+	(define lisp-implementation-version s7-version)
 	(define (software-type) "s7")
-	(define (software-version) (s7-version))
+	(define software-version s7-version)
 
 	(define (machine-version)
 	  (if (and (defined? 'file-exists?)
@@ -69635,6 +69646,29 @@ etc
 			      (lambda (file) (= (unlink file) 0)))) ; 0=success
 	
 	(test (local-file-exists? "s7test.scm") #t))
+
+      (define-c-function 
+	'((in-C "static struct timeval overall_start_time;  \n\
+           static bool time_set_up = false;           \n\
+           static double get_internal_real_time(void) \n\
+           {                                          \n\
+            struct timezone z0;                       \n\
+            struct timeval t0;                        \n\
+            double secs;                              \n\
+            if (!time_set_up) {gettimeofday(&overall_start_time, &z0); time_set_up = true;} \n\
+            gettimeofday(&t0, &z0);                   \n\
+            secs = difftime(t0.tv_sec, overall_start_time.tv_sec);\n\
+            return(secs + 0.000001 * (t0.tv_usec - overall_start_time.tv_usec)); \n\
+           }")
+	  (double get_internal_real_time (void)))
+	"" '("time.h" "sys/time.h"))
+
+      (define-macro (new-time func) 
+	`(let ((start (get_internal_real_time)))
+	   ,func
+	   (- (get_internal_real_time) start)))
+
+      (test (real? (new-time (do ((i 0 (+ i 1))) ((= i 30) i)))) #t)
       ))
 
 

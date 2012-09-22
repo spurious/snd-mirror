@@ -349,8 +349,7 @@
   (define (open-appending filename)
     (open-output-file filename "a"))
 
-  (define (close-appending fd)
-    (close-output-port fd))
+  (define close-appending close-output-port)
 
   (hook-push after-save-state-hook 
     (lambda (hook)

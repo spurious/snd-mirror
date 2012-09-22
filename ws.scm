@@ -714,8 +714,7 @@ finish-with-sound to complete the process."
     (define (open-appending filename)
       (open-output-file filename "a"))
     
-    (define (close-appending fd)
-      (close-output-port fd))
+    (define close-appending close-output-port)
     
     (let ((fd (open-appending filename)))
       ;; fd is a Scheme port at this point (not an integer), so we can use format etc
