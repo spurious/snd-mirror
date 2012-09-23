@@ -26,7 +26,7 @@
 
   (define* (derumble-sound snd chn)
     (let* ((old-length (frames snd chn))
-	   (pow2 (ceiling (/ (log (min old-length (srate snd))) (log 2))))
+	   (pow2 (ceiling (log (min old-length (srate snd)) 2)))
 	   (fftlen (floor (expt 2 pow2)))
 	   (flt-env (list 0.0 0.0 (/ (* 2 16.0) (srate snd)) 0.0 (/ (* 2 20.0) (srate snd)) 1.0 1.0 1.0)))
       (filter-sound flt-env fftlen snd chn)
@@ -116,7 +116,7 @@
 	  (let ((start (floor (cross-samples i)))
 		(autolen 0))
 	    (let* ((s0 start)
-		   (pow2 (ceiling (/ (log (* extension (/ (srate snd) 40.0))) (log 2))))
+		   (pow2 (ceiling (log (* extension (/ (srate snd) 40.0)) 2)))
 		   (fftlen (floor (expt 2 pow2)))
 		   (len4 (/ fftlen 4))
 		   (data (make-vct fftlen))

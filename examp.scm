@@ -134,9 +134,6 @@
 	 (chn (hook 'chn))
 	 (datal (make-graph-data snd chn)))
 
-      (define (log10 a) 
-	(/ (log a) (log 10)))
-
       (if datal
 	  (let* ((data (if (vct? datal) datal (cadr datal)))
 		 (len (length data))
@@ -144,7 +141,7 @@
 	    (define (dB val)
 	      (if (< val .001)
 		  -60.0
-		  (* 20.0 (log10 val))))
+		  (* 20.0 (log val 10))))
 	    (do ((i 0 (+ i 1)))
 		((= i len))
 	      (set! (data i) (+ 60.0 (dB (abs (data i))))))
@@ -206,7 +203,7 @@
 	(let* ((ls (left-sample snd 0))
 	       (rs (right-sample snd 0))
 	       (ilen (+ 1 (- rs ls)))
-	       (pow2 (ceiling (/ (log ilen) (log 2))))
+	       (pow2 (ceiling (log ilen 2)))
 	       (fftlen (floor (expt 2 pow2)))
 	       (fftscale (/ 1.0 fftlen))
 	       (rl1 (channel->vct ls fftlen snd 0))
@@ -256,9 +253,7 @@
 	     (= (transform-graph-type snd chn) graph-once))
 	(begin
 	  (set! (transform-size snd chn)
-		(expt 2 (ceiling 
-			 (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-			    (log 2.0)))))
+		(expt 2 (ceiling (log (- (right-sample snd chn) (left-sample snd chn)) 2.0))))
 	  (set! (spectrum-end snd chn) (y-zoom-slider snd chn))))))
 
 
@@ -284,7 +279,7 @@
 							 (sounds))))))
 	(let* ((ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
-	       (pow2 (ceiling (/ (log (max 1 (- rs ls))) (log 2))))
+	       (pow2 (ceiling (log (max 1 (- rs ls)) 2)))
 	       (fftlen (floor (expt 2 pow2))))
 	  (if (> pow2 2)
 	      (let ((ffts ()))
@@ -663,7 +658,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 then inverse ffts."
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (lo (round (/ bottom (/ sr fsize))))
@@ -696,7 +691,7 @@ then inverse ffts."
 (define* (fft-squelch squelch snd chn)
   "(fft-squelch squelch snd chn) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
   (let* ((len (frames snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
@@ -731,7 +726,7 @@ then inverse ffts."
   "(fft-cancel lo-freq hi-freq snd chn) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize)))
     (fft rdata idata 1)
@@ -812,7 +807,7 @@ then inverse ffts."
 (define* (fft-env-data fft-env snd chn)
   "(fft-env-data fft-env snd chn) applies fft-env as spectral env to current sound, returning vct of new data"
   (let* ((len (frames snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
@@ -861,7 +856,7 @@ applies the function 'flt' to it, then inverse ffts.  'flt' should take one argu
 current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is like fft-squelch."
   (let* ((len (frames snd chn))
 	 (mx (maxamp snd chn))
-	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
+	 (fsize (expt 2 (ceiling (log len 2))))
 	 (fsize2 (/ fsize 2))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
@@ -931,7 +926,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 (define* (fft-smoother cutoff start samps snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
-  (let* ((fftpts (floor (expt 2 (ceiling (/ (log (+ 1 samps)) (log 2.0))))))
+  (let* ((fftpts (floor (expt 2 (ceiling (log (+ 1 samps) 2)))))
 	 (rl (channel->vct start fftpts snd chn))
 	 (im (make-vct fftpts))
 	 (top (floor (* fftpts cutoff))))
@@ -1739,8 +1734,8 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 In most cases, this will be slightly offset from the true beginning of the note"
 
   (define (interpolated-peak-offset la pk ra)
-    (let ((logla (/ (log (/ (max la .0000001) pk)) (log 10)))
-	  (logra (/ (log (/ (max ra .0000001) pk)) (log 10))))
+    (let ((logla (log (/ (max la .0000001) pk) 10))
+	  (logra (log (/ (max ra .0000001) pk) 10)))
       (/ (* 0.5 (- logla logra))
 	 (+ logla logra))))
 

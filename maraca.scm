@@ -24,7 +24,7 @@
 	 (j 0)
 	 (sndamp (/ amp 16384.0))
 	 (srate4 (floor (/ (mus-srate) 4)))
-	 (gain (/ (* (/ (log num-beans) (log 4.0)) 40) num-beans)))
+	 (gain (/ (* (log num-beans 4.0) 40) num-beans)))
     ;; gourd resonance filter
     (set! (coeffs 0) (* -2.0 shell-reso (cos (hz->radians shell-freq))))
     (set! (coeffs 1) (* shell-reso shell-reso))
@@ -89,7 +89,7 @@
 	 (j 0)
 	 (sndamp (/ amp (* 16384.0 resn)))
 	 (srate4 (floor (/ (mus-srate) 4)))
-	 (gain (/ (* (/ (log num-beans) (log 4)) 40) num-beans)))
+	 (gain (/ (* (log num-beans 4) 40) num-beans)))
     ;; gourd resonance filters
     (do ((i 0 (+ i 1)))
 	((= i resn))

@@ -1490,13 +1490,21 @@
 			   (not (member 0 args))
 			   (not (member 0.0 args)))
 		      (apply / args)
-		      (let ((nargs 
-			     (if (> len 2) ; (/ x a (* b 1 c) d) -> (/ x a b c d) but not short cases
-				 (remove-all 1 (splice-if (lambda (x) (eq? x '*)) (cdr args)))
-				 (remove-all 1 (cdr args)))))
-			(if (null? nargs) ; (/ x 1 1) -> x
-			    (car args)
-			    `(/ ,@(cons (car args) nargs))))))))
+		      (if (and (= len 2)
+			       (pair? (car args))
+			       (= (length (car args)) 2)
+			       (pair? (cadr args))
+			       (= (length (cadr args)) 2)
+			       (eq? (caar args) 'log)
+			       (eq? (caadr args) 'log))
+			  `(log ,(cadar args) ,(cadadr args))
+			  (let ((nargs 
+				 (if (> len 2) ; (/ x a (* b 1 c) d) -> (/ x a b c d) but not short cases
+				     (remove-all 1 (splice-if (lambda (x) (eq? x '*)) (cdr args)))
+				     (remove-all 1 (cdr args)))))
+			    (if (null? nargs) ; (/ x 1 1) -> x
+				(car args)
+				`(/ ,@(cons (car args) nargs)))))))))
 	      
 	      ((sin cos asin acos sinh cosh tanh asinh acosh atanh exp)
 	       (if (and (= len 1)
@@ -1618,6 +1626,7 @@
 		       0
 		       (if (just-integers? args)
 			   (apply logand args)
+			   ;; perhaps: (logand p (ash 1 i)) -> (logbit? p i) ?
 			   `(logand ,@args)))))
 	      
 	      ((gcd)

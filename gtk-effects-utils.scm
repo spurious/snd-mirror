@@ -92,18 +92,17 @@
 
 (define (scale-log->linear lo val hi)
   ;; given user-relative low..val..hi return val as scale-relative (0..log-scale-ticks)
-  (let* ((log2 (log 2.0)) ; using log 2 here to get equally spaced octaves
-	 (log-lo (/ (log (max lo 1.0)) log2))
-	 (log-hi (/ (log hi) log2))
-	 (log-val (/ (log val) log2)))
+  (let* (;; using log 2 here to get equally spaced octaves
+	 (log-lo (log (max lo 1.0) 2))
+	 (log-hi (log hi 2))
+	 (log-val (log val 2)))
     (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo))))))
   
 (define (scale-linear->log lo val hi)
   ;; given user-relative lo..hi and scale-relative val, return user-relative val
   ;; since log-scale widget assumes 0..log-scale-ticks, val can be used as ratio (log-wise) between lo and hi
-  (let* ((log2 (log 2.0))
-	 (log-lo (/ (log (max lo 1.0)) log2))
-	 (log-hi (/ (log hi) log2))
+  (let* ((log-lo (log (max lo 1.0) 2))
+	 (log-hi (log hi 2))
 	 (log-val (+ log-lo (* (/ val log-scale-ticks) (- log-hi log-lo)))))
     (expt 2.0 log-val)))
 

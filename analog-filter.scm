@@ -167,7 +167,7 @@ are (1.0-based) edge freqs: (make-butterworth-bandstop 4 .1 .2)"
       (set! (den (+ j 1)) (* -2.0 u))
       (set! (den (+ j 2)) (+ (* u u) (* w w)))))
     (set! (num 2) (/ (expt 2.0 (- 2 n))
-		     (expt 3.2 (/ (log ripple) (log 10.0))))) ; whatever works...
+		     (expt 3.2 (log ripple 10.0)))) ; whatever works...
     (list num den)))
 
 (define* (make-chebyshev-lowpass n fc (ripple 1.0))

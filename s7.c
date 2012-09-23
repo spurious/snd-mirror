@@ -636,7 +636,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_S_vref, HOP_SAFE_CLOSURE_S_vref, 
 
       OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
-      OP_SAFE_CLOSURE_STAR_SoS, HOP_SAFE_CLOSURE_STAR_SoS, OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, 
+      OP_SAFE_CLOSURE_STAR_SoS, HOP_SAFE_CLOSURE_STAR_SoS, OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC,
       
       OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_CONS_SS, HOP_SAFE_CONS_SS,
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
@@ -9780,6 +9780,16 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	  return(wrong_type_argument_with_type(sc, sc->LOG, small_int(2), y, A_NUMBER));
 	}
 
+#if 0
+      /* TODO: check the usual cases first */
+      if (y == small_int(2))
+	{
+	}
+      if (y == small_int(10))
+	{
+	}
+#endif
+
       if ((x == small_int(1)) && (y == small_int(1)))  /* (log 1 1) -> 0 (this is NaN in the bignum case) */
 	return(small_int(0));                          
 
@@ -9861,7 +9871,7 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 
   /* sin is totally inaccurate over about 1e18.  There's a way to get true results,
    *   but it involves fancy "range reduction" techniques. 
-   *   This mean lots of things are inaccurate:
+   *   This means that lots of things are inaccurate:
    * (sin (remainder 1e22 (* 2 pi)))
    * -0.57876806033477
    * but it should be -8.522008497671888065747423101326159661908E-1
@@ -31291,7 +31301,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       /* if we drop into the longjmp below, the hook functions are not called!
        *   OP_ERROR_HOOK_QUIT performs the longjmp, so it should be safe to go to eval.
        */
-      fprintf(stderr, "eval %s\n", DISPLAY_80(sc->code));
+      /* fprintf(stderr, "eval %s\n", DISPLAY_80(sc->code)); */
       eval(sc, OP_APPLY);
     }
   else
@@ -36076,7 +36086,7 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
       return(false);
     }
 
-  if ((is_closure(func)) &&                         /* a closure* thunk seems pointless */
+  if ((is_closure(func)) &&
       (is_null(closure_args(func))))                /* no rest arg funny business */
     {
       /* look for a case like (define (version) (s7-version)) 
@@ -36107,7 +36117,19 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
       ecdr(car_x) = func;
       return(false);                                /* false because currently the C_PP stuff assumes safe procedure calls */
     }
-
+#if 0
+  if ((is_closure_star(func)) &&
+      (is_proper_list(sc, closure_args(func))) &&
+      (has_simple_args(closure_body(func))))
+    {
+      set_unsafely_optimized(car_x);
+      set_optimize_data(car_x, hop + ((closure_body_is_safe(func)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR));
+      ecdr(car_x) = func;
+      return(false); 
+    }
+  /* besides this case, we also need closure_star_c|_all_x
+   */
+#endif
   return(false);
 }
 
@@ -60885,6 +60907,6 @@ s7_scheme *s7_init(void)
  *   why not simply redefine the name?  time...
  *
  * TODO: in Linux/OSX load should accept ~/ filenames
- * PERHAPS: opt (log x 2|10)
+ * PERHAPS: opt (log x 2|10) and log-1arg
  */
 

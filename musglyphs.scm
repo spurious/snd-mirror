@@ -196,8 +196,7 @@
 
 (define (frequency->note-octave-and-accidental freq)
   (define (frequency->pitch freq)
-    (define (log2 x) (/ (log x) (log 2.0)))
-    (floor (* 12 (+ (log2 (/ freq 16.351)) (/ 1.0 24)))))
+    (floor (* 12 (+ (log (/ freq 16.351) 2) (/ 1.0 24)))))
 
   (define (pitch->note-octave-and-accidental pitch)
     (let* ((pclass (modulo pitch 12))

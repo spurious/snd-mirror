@@ -309,7 +309,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 (define* (spot-freq s0 snd chn)
   "(spot-freq samp snd chn) tries to determine the current pitch: (spot-freq (left-sample))"
-  (let* ((pow2 (ceiling (/ (log (/ (srate snd) 20.0)) (log 2))))
+  (let* ((pow2 (ceiling (log (/ (srate snd) 20.0) 2)))
 	 (fftlen (floor (expt 2 pow2)))
 	 (data (autocorrelate (channel->vct s0 fftlen snd chn)))
 	 (cor-peak (vct-peak data)))
@@ -557,7 +557,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (hilbert-transform-via-fft snd chn)
   ;; same as FIR version but use FFT and change phases by hand
   (let* ((size (frames snd chn))
-	 (len (expt 2 (ceiling (/ (log size) (log 2.0)))))
+	 (len (expt 2 (ceiling (log size 2.0))))
 	 (rl (make-vct len))
 	 (im (make-vct len))
 	 (rd (make-sampler 0 snd chn)))
@@ -1065,14 +1065,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (notch-channel freqs (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2))
   "(notch-channel freqs (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
   (filter-channel (make-notch-frequency-response (* 1.0 (srate snd)) freqs notch-width)
-		  (or filter-order (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0)))))
+		  (or filter-order (expt 2 (ceiling (log (/ (srate snd) notch-width) 2.0))))
 		  beg dur snd chn edpos truncate
 		  (format #f "notch-channel '~A ~A ~A ~A" freqs filter-order beg dur)))
 
 (define* (notch-sound freqs filter-order snd chn (notch-width 2))
   "(notch-sound freqs filter-order snd chn (notch-width 2)) -> notch filter removing freqs"
   (filter-sound (make-notch-frequency-response (* 1.0 (srate snd)) freqs notch-width)
-		(or filter-order (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0)))))
+		(or filter-order (expt 2 (ceiling (log (/ (srate snd) notch-width) 2.0))))
 		snd chn #f
 		(format #f "notch-channel '~A ~A 0 #f" freqs filter-order)))
 
@@ -1080,7 +1080,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(notch-selection freqs filter-order (notch-width 2)) -> notch filter removing freqs"
   (if (selection?)
       (filter-selection (make-notch-frequency-response (* 1.0 (selection-srate)) freqs notch-width)
-			(or filter-order (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0))))))))
+			(or filter-order (expt 2 (ceiling (log (/ (selection-srate) notch-width) 2.0)))))))
 
 
 ;;; -------- fractional Fourier Transform, z transform
@@ -1579,7 +1579,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	 (num-coeffs (length coeffs))
 	 (fft-len (if (< num-coeffs 2) 
 		      len 
-		      (expt 2 (ceiling (/ (log (* (- num-coeffs 1) len)) (log 2))))))
+		      (expt 2 (ceiling (log (* (- num-coeffs 1) len) 2)))))
 	 (rl1 (make-vct fft-len 0.0))
 	 (rl2 (make-vct fft-len 0.0))
 	 (new-sound (make-vct fft-len)))
@@ -1857,7 +1857,7 @@ and replaces it with the spectrum given in coeffs"
 	       (chn (hook 'chn))
 	       (ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
-	       (fftlen (floor (expt 2 (ceiling (/ (log (+ 1 (- rs ls))) (log 2)))))))
+	       (fftlen (floor (expt 2 (ceiling (log (+ 1 (- rs ls)) 2))))))
 	  (if (> fftlen 0)
 	      (let ((data (channel->vct ls fftlen snd chn))
 		    (normalized (not (= (transform-normalization snd chn) dont-normalize)))
@@ -2519,7 +2519,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 				      (set! (v (- hnum 1)) (partials (+ i 1))))))))
 	 (min-partials (vct-copy original-partials)))
 
-    (if (<= topk (/ (log tries) (log 2)))
+    (if (<= topk (log tries 2))
 	(set! tries (floor (expt 2 (- topk 1)))))
 
     (do ((try 0 (+ 1 try)))

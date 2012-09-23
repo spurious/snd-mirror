@@ -510,7 +510,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	(if db 
 	    (if (< rms-val .00001)
 		(set! e (cons -100.0 e))
-		(set! e (cons (* 20.0 (/ (log rms-val) (log 10.0))) e)))
+		(set! e (cons (* 20.0 (log rms-val 10.0)) e)))
 	    (set! e (cons rms-val e)))))))
 
 
