@@ -13920,8 +13920,8 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_locsig_p,     g_locsig_p_w,     1, 0, 0, H_locsig_p);
   XEN_DEFINE_SAFE_PROCEDURE(S_locsig,       g_locsig_w,       3, 0, 0, H_locsig);
-  XEN_DEFINE_PROCEDURE(S_make_locsig,       g_make_locsig_w,  0, 0, 1, H_make_locsig);
-  XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w,  3, 0, 0, H_move_locsig);
+  XEN_DEFINE_SAFE_PROCEDURE(S_make_locsig,  g_make_locsig_w,  0, 0, 1, H_make_locsig);
+  XEN_DEFINE_SAFE_PROCEDURE(S_move_locsig,  g_move_locsig_w,  3, 0, 0, H_move_locsig);
   XEN_DEFINE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0, H_mus_channels);
 
 #if HAVE_SCHEME || HAVE_FORTH

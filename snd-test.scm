@@ -32,6 +32,8 @@
 ;;;  test all done                              [47798]
 ;;;  test the end                               [47978]
 
+;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
+
 (define tests 1)
 (define keep-going #f)
 (define all-args #f)
@@ -3365,8 +3367,8 @@
 	 (lambda (chans)
 	   (for-each 
 	    (lambda (df-ht)
-	      (let ((samps (if (= chans 1) 100000
-			       (if (= chans 2) 50000
+	      (let ((samps (if (= chans 1) 10000
+			       (if (= chans 2) 5000
 				   1000))))
 		(if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
 		(let ((fd (mus-sound-open-output "fmv5.snd" 22050 chans (car df-ht) (cadr df-ht) "no comment"))

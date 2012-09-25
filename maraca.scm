@@ -130,9 +130,9 @@
 	   ((= i resn))
 	 (set! input temp1)
 	 (set! input (- input 
-			(* (output (+ (* i 2) 0)) (coeffs (+ (* i 2) 0)))
-			(* (output (+ (* i 2) 1)) (coeffs (+ (* i 2) 1)))))
-	 (set! (output (+ (* i 2) 1)) (output (+ (* i 2) 0)))
+			(* (vct-ref output (* i 2)) (vct-ref coeffs (* i 2)))
+			(* (vct-ref output (+ (* i 2) 1)) (vct-ref coeffs (+ (* i 2) 1)))))
+	 (set! (output (+ (* i 2) 1)) (vct-ref output (* i 2)))
 	 (set! (output    (* i 2)   ) input)
 	 (set! sum (+ sum input)))
        (if with-filters

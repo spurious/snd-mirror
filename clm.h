@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 2
-#define MUS_DATE "8-Aug-12"
+#define MUS_REVISION 3
+#define MUS_DATE "26-Sep-12"
 
 /* isn't mus_env_interp backwards? */
 
@@ -288,8 +288,6 @@ MUS_EXPORT void mus_set_rand_seed(unsigned long seed);
 MUS_EXPORT unsigned long mus_rand_seed(void);
 MUS_EXPORT mus_float_t mus_random(mus_float_t amp);
 MUS_EXPORT mus_float_t mus_frandom(mus_float_t amp);
-MUS_EXPORT mus_float_t mus_random_no_input(void);
-MUS_EXPORT mus_float_t mus_frandom_no_input(void);
 MUS_EXPORT int mus_irandom(int amp);
 
 MUS_EXPORT mus_float_t mus_rand(mus_any *gen, mus_float_t fm);
@@ -306,7 +304,6 @@ MUS_EXPORT mus_float_t mus_rand_unmodulated(mus_any *ptr);
 
 MUS_EXPORT mus_float_t mus_asymmetric_fm(mus_any *gen, mus_float_t index, mus_float_t fm);
 MUS_EXPORT mus_float_t mus_asymmetric_fm_unmodulated(mus_any *gen, mus_float_t index);
-MUS_EXPORT mus_float_t mus_asymmetric_fm_no_input(mus_any *gen);
 MUS_EXPORT mus_any *mus_make_asymmetric_fm(mus_float_t freq, mus_float_t phase, mus_float_t r, mus_float_t ratio);
 MUS_EXPORT bool mus_asymmetric_fm_p(mus_any *ptr);
 
@@ -372,7 +369,6 @@ MUS_EXPORT mus_float_t *mus_normalize_partials(int num_partials, mus_float_t *pa
 
 MUS_EXPORT mus_any *mus_make_polyshape(mus_float_t frequency, mus_float_t phase, mus_float_t *coeffs, int size, int cheby_choice);
 MUS_EXPORT mus_float_t mus_polyshape(mus_any *ptr, mus_float_t index, mus_float_t fm);
-#define mus_polyshape_fm(Obj, Fm) mus_polyshape(Obj, 1.0, Fm)
 MUS_EXPORT mus_float_t mus_polyshape_unmodulated(mus_any *ptr, mus_float_t index);
 #define mus_polyshape_no_input(Obj) mus_polyshape(Obj, 1.0, 0.0)
 MUS_EXPORT bool mus_polyshape_p(mus_any *ptr);
@@ -384,7 +380,6 @@ MUS_EXPORT mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn);
 MUS_EXPORT mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un);
 MUS_EXPORT mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_float_t *un);
-#define mus_polywave_type(Obj) mus_channel(Obj)
 
 MUS_EXPORT mus_float_t mus_env(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offset, double base, double duration, mus_long_t end, mus_float_t *odata);
@@ -590,11 +585,20 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 }
 #endif
 
+#ifndef CLM_DISABLE_DEPRECATED
+  #define mus_polyshape_fm(Obj, Fm) mus_polyshape(Obj, 1.0, Fm)
+  #define mus_polywave_type(Obj) mus_channel(Obj)
+  MUS_EXPORT mus_float_t mus_random_no_input(void);
+  MUS_EXPORT mus_float_t mus_frandom_no_input(void);
+  MUS_EXPORT mus_float_t mus_asymmetric_fm_no_input(mus_any *gen);
+#endif
+
 #endif
 
 
 /* Change log.
  *
+ * 26-Sep:     deprecated some stuff that was only used by the run macro.
  * 15-Jul:     more changes for clm2xen.
  * 4-July-12:  moved various struct definitions to clm.c
  *             added accessors for mus_any_class etc.

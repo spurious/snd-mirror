@@ -93,16 +93,18 @@
 (define (moog-filter m sig)
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
   (let ((A (* 0.25 (- sig (m 'y))))
-	(st 0.0))
+	(st 0.0)
+	(v (m 's))
+	(x (m 'fc)))
     (do ((cell 0 (+ 1 cell)))
 	((= cell 4))
-      (set! st (vct-ref (m 's) cell))
-      (set! A (min (max -0.95 (+ A (* (m 'fc) (- A st)))) 0.95))
-      (vct-set! (m 's) cell A)
+      (set! st (vct-ref v cell))
+      (set! A (min (max -0.95 (+ A (* x (- A st)))) 0.95))
+      (vct-set! v cell A)
       (set! A (min (max -0.95 (+ A st)) 0.95)))
     (set! (m 'y)
 	    (* A (m 'Q)
-	       (array-interp moog-gaintable (+ 99 (* (m 'fc) 99.0)))))
+	       (array-interp moog-gaintable (+ 99 (* x 99.0)))))
     A))
 
 

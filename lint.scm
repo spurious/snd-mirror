@@ -493,7 +493,7 @@
 			  (cons 'quotient (list real? real?))
 			  (cons 'pair-line-number pair?)
 			  (cons 'port-closed? port?)
-			  (cons 'random number?)
+			  (cons 'random (list number? random-state?))
 			  (cons 'rationalize (list real? real?))
 			  (cons 'real-part number?)
 			  (cons 'remainder (list real? real?))
@@ -663,7 +663,8 @@
       (define (repeated-member? lst env)
 	(and (pair? lst)
 	     (or (and (or (not (pair? (car lst)))
-			  (not (side-effect? (car lst) env)))
+			  (and (not (side-effect? (car lst) env))
+			       (not (eq? (caar lst) 'random))))
 		      (pair? (cdr lst))
 		      (member (car lst) (cdr lst)))
 		 (repeated-member? (cdr lst) env))))
@@ -680,6 +681,7 @@
 			 name line-number 
 			 ;; sigh (= a a) could be used to check for non-finite numbers, I suppose,
 			 ;;   and (/ 0 0) might be deliberate (as in gmp)
+			 ;;   also (min (random x) (random x)) is not pointless
 			 (truncated-list->string form))
 	    (if (and (memq head '(= max min < > <= >= and or
 				    string=? string<=? string>=? string<? string>?
@@ -1352,7 +1354,10 @@
 	    (letrec ((rem-dup
 		      (lambda (lst nlst)
 			(cond ((null? lst) nlst)
-			      ((member (car lst) nlst) (rem-dup (cdr lst) nlst))
+			      ((and (member (car lst) nlst)
+				    (or (not (pair? (car lst)))
+					(not (eq? (caar lst) 'random)))) ; this problem applies to anything that calls random, mus-random etc
+			       (rem-dup (cdr lst) nlst))
 			      (else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
 	      (reverse (rem-dup lst ()))))
 	  

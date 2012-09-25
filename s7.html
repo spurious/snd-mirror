@@ -9324,8 +9324,8 @@ Here are some examples:
             struct timezone z0;                       \n\
             struct timeval t0;                        \n\
             double secs;                              \n\
-            if (!time_set_up) {gettimeofday(&overall_start_time, &z0); time_set_up = true;} \n\
-            gettimeofday(&t0, &z0);                   \n\
+            if (!time_set_up) {gettimeofday(&amp;overall_start_time, &amp;z0); time_set_up = true;} \n\
+            gettimeofday(&amp;t0, &amp;z0);                   \n\
             secs = difftime(t0.tv_sec, overall_start_time.tv_sec);\n\
             return(secs + 0.000001 * (t0.tv_usec - overall_start_time.tv_usec)); \n\
            }")
