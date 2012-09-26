@@ -224,13 +224,13 @@
 				     (if (>= f (* -1 mus fb))
 					 (set! v vtemp)
 					 (begin
-					   (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
-					   (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
+					   (set! v1 (/ (+ (- bb1) (sqrt delta1)) (* 2 aa)))
+					   (set! v2 (/ (- (- bb1) (sqrt delta1)) (* 2 aa)))
 					   (set! v (min v1 v2))
 					   (set! stick 0))))
 				   (begin
-				     (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
-				     (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
+				     (set! v1 (/ (+ (- bb1) (sqrt delta1)) (* 2 aa)))
+				     (set! v2 (/ (- (- bb1) (sqrt delta1)) (* 2 aa)))
 				     (set! v (min v1 v2))
 				     (set! stick 0))))))
 		       (if lhs
@@ -248,8 +248,8 @@
 					     (begin
 					       (set! v vtemp))
 					     (begin
-					       (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
-					       (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
+					       (set! v1 (/ (- (- bb2) (sqrt delta2)) (* 2 aa)))
+					       (set! v2 (/ (+ (- bb2) (sqrt delta2)) (* 2 aa)))
 					       (set! vtemp (min v1 v2))
 					       (set! stick 0)
 					       (if (> vtemp vb)
@@ -260,8 +260,8 @@
 						     (set! v vtemp)
 						     (set! f (* zslope (- v vh) )))))))
 				       (begin
-					 (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
-					 (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
+					 (set! v1 (/ (- (- bb2) (sqrt delta2)) (* 2 aa)))
+					 (set! v2 (/ (+ (- bb2) (sqrt delta2)) (* 2 aa)))
 					 (set! v (min v1 v2))
 					 (set! stick 0)))))
 			     (if (> v vb)

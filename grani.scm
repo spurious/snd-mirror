@@ -528,13 +528,13 @@
 		      ;; set new sampling rate conversion factor
 		      (set! (mus-increment in-file-reader) gr-srate)
 		      ;; number of samples in input
-		      (set! in-samples (floor (/ gr-samples (/ 1 srate-ratio))))
+		      (set! in-samples (floor (* gr-samples srate-ratio)))
 		      ;; restart grain envelopes
 		      (set! (mus-phase gr-env) 0.0)
 		      (set! (mus-phase gr-env-end) 0.0)
 		      ;; reset grain envelope durations
-		      (set! (mus-frequency gr-env) (/ 1 gr-duration))
-		      (set! (mus-frequency gr-env-end) (/ 1 gr-duration))
+		      (set! (mus-frequency gr-env) (/ gr-duration))
+		      (set! (mus-frequency gr-env-end) (/ gr-duration))
 		      ;;
 		      ;; move position in output file for next grain
 		      ;;
@@ -639,5 +639,6 @@
 			(set! in-start 0)))
 		;; reset position of input file reader
 		(set! (mus-location rd) in-start))))))))
+
 ;; (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))
 ;; (with-sound (:channels 2) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))

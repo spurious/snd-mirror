@@ -578,6 +578,7 @@ s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
 
 void **s7_expression_data(s7_scheme *sc, s7_pointer expr);
 void **s7_expression_make_data(s7_scheme *sc, s7_pointer expr, int size);
+void s7_function_set_has_data(s7_pointer f);
 
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 void s7_function_set_returns_temp(s7_pointer f);

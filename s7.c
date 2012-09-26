@@ -13414,6 +13414,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 
 
 
+
 /* ---------------------------------------- max/min ---------------------------------------- */
 
 static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
@@ -21205,8 +21206,8 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, bool us
     }
 
   if (((car(lst) == sc->QUOTE) || 
-       (car(lst) == sc->QUOTE_UNCHECKED)) &&
-      (true_len == 2))                    
+       (car(lst) == sc->QUOTE_UNCHECKED)) && /* this can happen (see lint.scm) */
+      (true_len == 2))
     {
       /* len == 1 is important, otherwise (list 'quote 1 2) -> '1 2 which looks weird 
        *   or (object->string (apply . `''1)) -> "'quote 1"
@@ -27571,6 +27572,11 @@ void **s7_expression_data(s7_scheme *sc, s7_pointer expr)
   return(NULL);
 }
 
+
+void s7_function_set_has_data(s7_pointer f)
+{
+  set_has_table(f);
+}
 
 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
@@ -36049,7 +36055,8 @@ static bool is_orx_safe(s7_pointer p)
 }
 /* qs is not used
  * opssq:
- * (currently 10 extra blocks for each)
+ * (currently 13 or 14 extra blocks for each)
+ * could we combine this and is_dox_safe? qs and s_opcq added here?
  */
 
 
@@ -39258,8 +39265,7 @@ static s7_pointer check_let(s7_scheme *sc)
 		    {
 		      if (is_pair(cadr(binding)))
 			{
-			  if ((car(cadr(binding)) == sc->QUOTE) || 
-			      (car(cadr(binding)) == sc->QUOTE_UNCHECKED))
+			  if (car(cadr(binding)) == sc->QUOTE)
 			    set_syntax_op(sc->code, sc->LET_Q);
 			  else
 			    {
@@ -39344,8 +39350,7 @@ static s7_pointer check_let(s7_scheme *sc)
 			    }
 			  if (is_pair(cadr(x)))
 			    {
-			      if ((car(cadr(x)) == sc->QUOTE) || 
-				  (car(cadr(x)) == sc->QUOTE_UNCHECKED))
+			      if (car(cadr(x)) == sc->QUOTE)
 				{
 				  if ((op == sc->NIL) || (op == sc->LET_ALL_Q))
 				    op = sc->LET_ALL_Q;
@@ -39479,8 +39484,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 		{
 		  if (is_pair(cadr(binding)))
 		    {
-		      if ((car(cadr(binding)) == sc->QUOTE) || 
-			  (car(cadr(binding)) == sc->QUOTE_UNCHECKED))
+		      if (car(cadr(binding)) == sc->QUOTE)
 			set_syntax_op(sc->code, sc->LET_Q);
 		      else
 			{
@@ -39562,8 +39566,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 		  if (is_pair(cadr(x)))
 		    {
 		      if ((!is_orx_safe(cadr(x))) &&
-			  (car(cadr(x)) != sc->QUOTE) &&
-			  (car(cadr(x)) != sc->QUOTE_UNCHECKED)) /* TODO: can this happen? */
+			  (car(cadr(x)) != sc->QUOTE))
 			{
 			  op = sc->LET_STAR_UNCHECKED;
 			  break;
@@ -39839,8 +39842,7 @@ static s7_pointer check_if(s7_scheme *sc)
 			{
 			  if (is_h_safe_c_s(test))
 			    {
-			      if ((car(t) == sc->QUOTE) || 
-				  (car(t) == sc->QUOTE_UNCHECKED))
+			      if (car(t) == sc->QUOTE)
 				{
 				  set_syntax_op(sc->code, sc->SAFE_IF_CS_Q_P);
 				  fcdr(sc->code) = cadr(test);
@@ -40513,8 +40515,7 @@ static s7_pointer check_set(s7_scheme *sc)
 		    set_syntax_op(sc->code, sc->SET_SYMBOL_C);
 		  else
 		    {
-		      if ((car(cadr(sc->code)) == sc->QUOTE) || 
-			  (car(cadr(sc->code)) == sc->QUOTE_UNCHECKED))
+		      if (car(cadr(sc->code)) == sc->QUOTE)
 			set_syntax_op(sc->code, sc->SET_SYMBOL_Q);
 		      else
 			{
@@ -40645,20 +40646,19 @@ static s7_pointer check_set(s7_scheme *sc)
 
 static void initialize_safe_do_1(s7_scheme *sc, s7_pointer tree)
 {
-  if (is_pair(tree))
-    {
-      if (has_table(tree))
-	clear_table(tree);
+  if (has_table(tree))
+    clear_table(tree);
 
-      initialize_safe_do_1(sc, car(tree));
-      initialize_safe_do_1(sc, cdr(tree));
-    }
+  if (is_pair(car(tree))) initialize_safe_do_1(sc, car(tree));
+  if (is_pair(cdr(tree))) initialize_safe_do_1(sc, cdr(tree));
 }
 
 
 static void initialize_safe_do(s7_scheme *sc, s7_pointer tree)
 {
-  initialize_safe_do_1(sc, tree);
+  if ((tables_size > 0) &&
+      (has_methods(tree)))
+    initialize_safe_do_1(sc, tree);
   set_safe_do_level(sc, sc->safe_do_level + 1);
   safe_do_set_id(sc, frame_id(sc->envir));
 }
@@ -40714,7 +40714,7 @@ static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
  * (define (hi a) (do ((i 0 (+ i 1))) ((= i a)) (display i)))
  */
 
-static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_pointer var_list, bool *has_set)
+static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_pointer var_list, bool *has_set, bool *has_data)
 {
   /* here any (unsafe?) closure or jumping-op (call/cc) or shadowed variable is trouble
    */
@@ -40773,7 +40773,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			  var_list = cons(sc, var, var_list);
 			  sc->x = var_list;
 			  if ((is_pair(cdar(vars))) &&
-			      (!do_is_safe(sc, cdar(vars), steppers, var_list, has_set)))
+			      (!do_is_safe(sc, cdar(vars), steppers, var_list, has_set, has_data)))
 			    {
 #if PRINTING
 			      fprintf(stderr, "    bad body: %s\n", DISPLAY(cdar(vars)));
@@ -40782,7 +40782,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			    }
 			}
 
-		      if (!do_is_safe(sc, (op == OP_DO) ? cdddr(expr) : cddr(expr), steppers, var_list, has_set))
+		      if (!do_is_safe(sc, (op == OP_DO) ? cdddr(expr) : cddr(expr), steppers, var_list, has_set, has_data))
 			{
 #if PRINTING
 			  fprintf(stderr, "    bad body (2): %s\n", DISPLAY(expr));
@@ -40813,7 +40813,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 #endif
 			    (*has_set) = true;
 			}
-		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
+		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set, has_data))
 			{
 #if PRINTING
 			  fprintf(stderr, "    set shadow: %s\n", DISPLAY(expr));
@@ -40835,7 +40835,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		    case OP_AND:
 		    case OP_OR:
 		    case OP_BEGIN:
-		      if (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set))
+		      if (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set, has_data))
 			{
 #if PRINTING
 			  fprintf(stderr, "    bad body (3): %s\n", DISPLAY(expr));
@@ -40858,7 +40858,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		{
 		  if ((!is_optimized(expr)) ||
 		      (is_unsafe(expr)) ||
-		      (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set)))
+		      (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set, has_data)))
 		    /* this is unreasonably retrictive because optimize_expression returns "unsafe"
 		     *   even when everything is safe -- it's merely saying it could not find a
 		     *   special optimization case for the expression.  
@@ -40902,7 +40902,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 				  (is_pair(cadddr(expr))))
 				(*has_set) = true;
 			    }
-			  if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
+			  if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set, has_data))
 			    {
 #if PRINTING
 			      fprintf(stderr, "    bad body (4): %s\n", DISPLAY(expr));
@@ -40917,6 +40917,11 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			      return(false);
 			    }
 			}
+
+		      if ((optimize_data(expr) < OP_THUNK) &&
+			  (is_c_function(ecdr(expr))) &&
+			  (has_table(ecdr(expr))))
+			(*has_data) = true;
 		    }
 		}
 	    }
@@ -41278,7 +41283,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			/* end var is (op var const|symbol) using same var as step 
 			 *   so at least we can use SIMPLE_DO
 			 */
-			bool has_set = false;
+			bool has_set = false, has_data = false;
 
 			if (ecdr(step_expr) == add_cs1)
 			  {
@@ -41323,7 +41328,7 @@ static s7_pointer check_do(s7_scheme *sc)
 #endif
 			  }
 			
-			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
+			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set, &has_data))
 			  {
 #if PRINTING
 			    fprintf(stderr, "do is safe %d %d %d -> ",
@@ -41331,6 +41336,8 @@ static s7_pointer check_do(s7_scheme *sc)
 				    (is_pair(car(body))),
 				    (is_optimized(car(body))));
 #endif
+			    if (has_data) set_has_methods(sc->code);
+
 			    if ((safe_list_length(sc, body) == 1) &&
 				(is_pair(car(body))) &&
 				(is_optimized(car(body))))
@@ -41455,15 +41462,6 @@ static s7_pointer check_do(s7_scheme *sc)
 	  vars = car(sc->code);
 	  end = cadr(sc->code);
 	  body = cddr(sc->code);
-
-#if 0
-	  /* this happens very rarely */
-	  {
-	    bool has_set = false;
-	    if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
-	      fprintf(stderr, "safe: %s, set: %d\n", DISPLAY_80(sc->code), has_set);
-	  }
-#endif
 
 	  if ((is_null(vars)) && /* do () () one-line safe opt body */
 	      (is_null(end)) &&
@@ -45903,7 +45901,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		f = find_symbol_or_bust(sc, car(code));
 		
-		if (is_aritable(sc, f, 1)) /* TODO: can't this be expanded to any list of constants? */
+		if (is_aritable(sc, f, 1)) 
 		  {
 		    switch (type(f))
 		      {
@@ -46335,7 +46333,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    set_optimize_data(code, (closure_body_is_safe(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X);
 			    ecdr(code) = f;
-			    /* fcdr is already set -- TODO: really?? check all all_x cases -- we can get here via the function_is_ok shuffle */
+			    /* fcdr is already set -- we use it to get num_args above! */
 			    if (is_global(car(code)))
 			      set_hopping(code);
 			    ecdr(code) = f;
@@ -50229,8 +50227,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      {
 				if (is_pair(val))
 				  {
-				    if ((car(val) == sc->QUOTE) ||
-					(car(val) == sc->QUOTE_UNCHECKED))
+				    if (car(val) == sc->QUOTE)
 				      add_slot(sc, caar(z), cadr(val));
 				    else
 				      {
@@ -61364,13 +61361,13 @@ s7_scheme *s7_init(void)
  * timing info [starting from May-11 approximately]
  * bench    42736                     8752 8051 8028
  * lint     13424 1231 1326 1320 1270 1245 1148 1146
- *                               9811 9786 7881 7884
+ *                               9811 9786 7881 8111
  * index    44300 4988 4725 3935 3477 3291 3005 2979
  * s7test         1721 1456 1430 1375 1358 1297 1296
  * t455            265  256  218        89   55   56
  * t502                  90   72        43   39   38
  * lat             229        63             52   52
- * calls                               314  246  245
+ * calls                               310  242  240
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.
@@ -61378,11 +61375,9 @@ s7_scheme *s7_init(void)
  * in a case like (define* (hi (a 1.0)) (sin a)) we could notice (hi) as a special
  *   case -- the arg is 1.0, and the substitution can be direct? or save the body with the substitutions?
  *   (sin 1.0) if no args etc
- * in (define (hi a) (ho a)) -> (define hi ho) ? check that ho is define, not define* and cdrs (args) are equal
- *   this would be a direct safe closure -- check the vector-ref case
- *   why not simply redefine the name?  time...
  *
  * TODO: in Linux/OSX load should accept ~/ filenames
- * TODO: all the orx cases with val = assignments can be optimized I think
+ *
+ * could we use this business for a (global) safe function's prebuilt internal envs, or preset case labels?
  */
 

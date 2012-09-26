@@ -117,7 +117,7 @@
 	   (apply hash-table 
 		  (map 
 		   (lambda (op) 
-		     (cons op #t)) 
+		     (cons op #t))
 		   '(* + - / < <= = > >= 
 		       abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
 		       begin boolean? 
@@ -551,7 +551,7 @@
 	  (other-identifiers #f)
 	  (last-simplify-boolean-line-number -1)
 	  (last-simplify-numeric-line-number -1))
-      
+
       (define (->type c)
 	(cond ((integer? c) +integer+)
 	      ((number? c) +not-integer+)
@@ -739,8 +739,7 @@
 				    (and (just-constants? arg env)
 					 (catch #t 
 						(lambda ()
-						  (and eval
-						       (not (checker (eval arg)))))
+						  (not (checker (eval arg))))
 						(lambda ignore-catch-error-args
 						  #f))))
 				(lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
@@ -899,8 +898,7 @@
 	  ;; find and remove any expressions that have no effect on the outcome
 	  (if (or (not (pair? uform))
 		  (not (memq (car uform) '(and or not)))
-		  (side-effect? uform env)
-		  (not eval))
+		  (side-effect? uform env))
 	      uform
 	      
 	      (let ((vars ())
@@ -1152,8 +1150,7 @@
 	      (if (false? e)
 		  #f
 		  ;; eval of a constant expression here is tricky -- for example, (sqrt 2) should not be turned into 1.414...
-		  (if (and eval
-			   (just-constants? e env))
+		  (if (just-constants? e env)
 		      (catch #t
 			     (lambda ()
 			       (let ((val (eval e)))
@@ -1329,6 +1326,7 @@
 	      (#t lst)))
       
       (define (simplify-numerics form env)
+
 	;;   I first tried a table of rules, but the code was unreadable, so
 	;;   here I'll split out each case by hand.
 	;; This is not an agressive simplification.
@@ -1383,7 +1381,6 @@
 		x
 		(let ((f (simplify-numerics x env)))
 		  (if (and (pair? f)
-			   eval
 			   (just-rationals? f))
 		      (catch #t
 			     (lambda ()
@@ -1393,7 +1390,7 @@
 	  
 	  (let* ((args (map simplify-arg (cdr form)))
 		 (len (length args)))
-	    
+
 	    (case (car form)
 	      ((+)
 	       (case len
@@ -1490,26 +1487,37 @@
 			      (cadar args)
 			      `(/ ,@args))
 			  form)))
-		 (else ; one other verbose case is (/ 1 x) -> (/ x)
+		 ((2)
+		  (if (and (just-rationals? args)
+			   (not (member 0 (cdr args)))
+			   (not (member 0.0 (cdr args))))
+		      (apply / args)                      ; including (/ 0 12) -> 0
+		      (if (equal? (car args) 1)           ; (/ 1 x) -> (/ x)
+			  `(/ ,(cadr args))
+			  (if (and (pair? (car args))     ; (/ (log x) (log y)) -> (log x y)
+				   (= (length (car args)) 2)
+				   (pair? (cadr args))
+				   (= (length (cadr args)) 2)
+				   (eq? (caar args) 'log)
+				   (eq? (caadr args) 'log))
+			      `(log ,(cadar args) ,(cadadr args))
+			      (if (equal? (cadr args) 1)
+				  (car args)             ; (/ x 1) -> x
+				  (if (and (pair? (cadr args))
+					   (= (length (cadr args)) 2)
+					   (eq? '/ (caadr args)))
+				      `(* ,(car args) ,(cadadr args))  ; (/ x (/ y)) -> (* x y)
+				      `(/ ,@args)))))))
+		 (else 
 		  (if (and (just-rationals? args)
 			   (not (member 0 args))
 			   (not (member 0.0 args)))
 		      (apply / args)
-		      (if (and (= len 2)
-			       (pair? (car args))
-			       (= (length (car args)) 2)
-			       (pair? (cadr args))
-			       (= (length (cadr args)) 2)
-			       (eq? (caar args) 'log)
-			       (eq? (caadr args) 'log))
-			  `(log ,(cadar args) ,(cadadr args))
-			  (let ((nargs 
-				 (if (> len 2) ; (/ x a (* b 1 c) d) -> (/ x a b c d) but not short cases
-				     (remove-all 1 (splice-if (lambda (x) (eq? x '*)) (cdr args)))
-				     (remove-all 1 (cdr args)))))
-			    (if (null? nargs) ; (/ x 1 1) -> x
-				(car args)
-				`(/ ,@(cons (car args) nargs)))))))))
+		      (let ((nargs                      ; (/ x a (* b 1 c) d) -> (/ x a b c d) but not short cases
+			     (remove-all 1 (splice-if (lambda (x) (eq? x '*)) (cdr args)))))
+			(if (null? nargs) ; (/ x 1 1) -> x
+			    (car args)
+			    `(/ ,@(cons (car args) nargs))))))))
 	      
 	      ((sin cos asin acos sinh cosh tanh asinh acosh atanh exp)
 	       (if (and (= len 1)
@@ -3000,11 +3008,12 @@
 				    (numeric? head)
 				    (not (null? (cdr form))))
 			       (let ((val (simplify-numerics form env)))
-				 (set! last-simplify-numeric-line-number line-number)
 				 (if (not (equal? form val))
-				     (lint-format "possible simplification:~A"
-						  name line-number 
-						  (lists->string form val)))))
+				     (begin
+				       (set! last-simplify-numeric-line-number line-number)
+				       (lint-format "possible simplification:~A"
+						    name line-number 
+						    (lists->string form val))))))
 			   
 			   ;; walk everything looking for undefined vars (saved until we finish the file).
 			   ;;

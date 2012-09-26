@@ -952,7 +952,7 @@
 
 (definstrument (oboish beg dur freq amp aenv)
   (let* ((res1 (max 1 (round (/ 1400.0 (max 1.0 (min 1400.0 freq))))))
-	 (gen (make-nrssb (* freq res1) (/ 1 res1) :n res1 :r 0.75))
+	 (gen (make-nrssb (* freq res1) (/ res1) :n res1 :r 0.75))
 	 (mod (make-oscil 5.0))
 	 (res2 (max 1 (round (/ 2400.0 (max 1.0 (min 2400.0 freq))))))
 	 (gen2 (make-oscil (* freq res2)))
@@ -1437,7 +1437,7 @@
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 (n (floor (/ (mus-srate) (* 3 freq))))
-	 (r (expt .001 (/ 1 n)))
+	 (r (expt .001 (/ n)))
 	 (carrier (make-rcos freq (* .5 r)))
 	 (clang (make-rkoddssb (* freq 2) (/ 1.618 2) r))
 	 (ampf (make-env '(0 0 1 1 2 .5 4 .25 10 0) :scaler amp :duration dur))
@@ -1528,9 +1528,9 @@
 	 (res0 (round (/ f0 freq)))
 	 (res1 (round (/ f1 freq)))
 	 (res2 (round (/ f2 freq)))
-	 (gen1 (make-rssb (* res0 freq) (/ 1 res0) .4))
-	 (gen2 (make-rssb (* res1 freq) (/ 1 res1) .5))
-	 (gen3 (make-rssb (* res2 freq) (/ 1 res2) .6))
+	 (gen1 (make-rssb (* res0 freq) (/ res0) .4))
+	 (gen2 (make-rssb (* res1 freq) (/ res1) .5))
+	 (gen3 (make-rssb (* res2 freq) (/ res2) .6))
 	 (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 1 5 .4 6 .1 80 0) :scaler amp :base 32 :duration dur)) ; or 50 at end
 	 ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
 	 (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
@@ -1567,9 +1567,9 @@
 	   (res0 (round (/ f0 freq)))
 	   (res1 (round (/ f1 freq)))
 	   (res2 (round (/ f2 freq)))
-	   (gen1 (make-rssb (* res0 freq) (/ 1 res0) .4))
-	   (gen2 (make-rssb (* res1 freq) (/ 1 res1) .5))
-	   (gen3 (make-rssb (* res2 freq) (/ 1 res2) .6))
+	   (gen1 (make-rssb (* res0 freq) (/ res0) .4))
+	   (gen2 (make-rssb (* res1 freq) (/ res1) .5))
+	   (gen3 (make-rssb (* res2 freq) (/ res2) .6))
 	   (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 1 5 .4 6 .1 80 0) :scaler .5 :base 32 :length 60000)) ; or 50 at end
 	   ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
 	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
@@ -1595,9 +1595,9 @@
 	   (res0 (floor (/ f0 freq)))
 	   (res1 (floor (/ f1 freq)))
 	   (res2 (floor (/ f2 freq)))
-	   (gen1 (make-rk!ssb (* res0 freq) (/ 1 res0) 2.4))
-	   (gen2 (make-rssb (* res1 freq) (/ 1 res1) .5))
-	   (gen3 (make-rssb (* res2 freq) (/ 1 res2) .6))
+	   (gen1 (make-rk!ssb (* res0 freq) (/ res0) 2.4))
+	   (gen2 (make-rssb (* res1 freq) (/ res1) .5))
+	   (gen3 (make-rssb (* res2 freq) (/ res2) .6))
 	   (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 .3 5 .4 6 .1 40 0) :scaler .5 :base 32 :length 60000)) ; or 50 at end
 	   ;;           or '(0 0 .1 1 2 .5 3 .1 4 .3 5 .1 40 0)
 	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
@@ -1623,9 +1623,9 @@
 	   (res0 (floor (/ f0 freq)))
 	   (res1 (floor (/ f1 freq)))
 	   (res2 (floor (/ f2 freq)))
-	   (gen1 (make-rk!ssb (* res0 freq) (/ 1 res0) 2))
-	   (gen2 (make-rk!ssb (* res1 freq) (/ 1 res1) 3))
-	   (gen3 (make-rk!ssb (* res2 freq) (/ 1 res2) 3))
+	   (gen1 (make-rk!ssb (* res0 freq) (/ res0) 2))
+	   (gen2 (make-rk!ssb (* res1 freq) (/ res1) 3))
+	   (gen3 (make-rk!ssb (* res2 freq) (/ res2) 3))
 	   (ampf (make-env '(0 0 .1 1 2 .5 3 .1 4 .3 5 .4 6 .1 40 0) :scaler .5 :base 32 :length 30000))
 	   (pervib (make-triangle-wave 5.0 (hz->radians 3.0)))
 	   (ranvib (make-rand-interp 12.0 (hz->radians 2.0))))
@@ -2071,7 +2071,7 @@
       (if (zero? sinha)
 	  0.0 ; just a guess
 	  (/ (atan (/ (oscil osc fm) sinha))
-	     (atan (/ 1.0 sinha))))))) ; normalization
+	     (atan (/ sinha))))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2519,8 +2519,7 @@
 	     (harmonic (floor harmfrq))
 	     (dist (abs (- harmfrq harmonic)))
 	     (frq (* base-freq (moving-average slant harmonic))))
-	(set! (gen 'r) (* (/ 1.0 amp-time)
-			  2.0
+	(set! (gen 'r) (* (/ 2.0 amp-time)
 			  (if (< dist amp-time)
 			      dist
 			      (if (> dist (- 1.0 amp-time))
@@ -2850,7 +2849,7 @@
   (let* ((start (seconds->samples beg))
 	 (stop (+ start (seconds->samples dur)))
 	 (n (floor (/ (mus-srate) (* 3 freq))))
-	 (r (expt .001 (/ 1 n)))
+	 (r (expt .001 (/ n)))
 	 (clang (make-rkoddssb (* freq 2) (/ 1.618 2) r))
 	 (clangf (make-env (list 0 0 .01 1 .1 1 .2 .4 (max .3 dur) 0) :scaler amp :duration dur))
 	 (crf (make-env (list 0 1 1 0) :scaler r :duration dur)))
@@ -3124,7 +3123,7 @@
       (set! angle (+ x fm frequency))
       (/ (- (* pi (/ (cosh (* a (- pi x)))
 		     (sinh (* a pi))))
-	    (/ 1.0 a))
+	    (/ a))
 	 (* 2 a (r2k2cos-norm a))))))
 
 
@@ -3211,7 +3210,7 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((r1 (/ 1.0 r))
+    (let* ((r1 (/ r))
 	   (one (if (or (> r 1.0) 
 			(and (< r 0.0)
 			     (> r -1.0)))
@@ -3242,7 +3241,7 @@
     (do ((i -20 (+ i 1)))
 	((= i 21))
       (set! sum (+ sum (* (expt r i) (bes-jn i index)))))
-    (let ((norm (exp (* 0.5 index (- r (/ 1.0 r))))))
+    (let ((norm (exp (* 0.5 index (- r (/ r))))))
       (list sum norm))))
 
 (for-each
@@ -3266,7 +3265,7 @@
   
   (set! (gen 'fm) fm)
   (with-environment gen
-    (let* ((r1 (/ 1.0 r))
+    (let* ((r1 (/ r))
 	   (modphase (* ratio phase))
 	   (result (* (exp (* 0.5 index (+ r r1) (- (cos modphase) 1.0)))
 		      (cos (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
@@ -4294,7 +4293,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (g 'coeffs) (vector 0.0
 							 (/ (* pi pi) 6.0)
 							 (/ pi -4.0)
-							 (/ 1.0 12.0)))
+							 (/ 12.0)))
 			       g)
 	       :methods (list
 			 (cons 'mus-reset
@@ -4629,7 +4628,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (g 'gen) (make-oscil (g 'frequency)))
 				 (set! (g 'top) (- 1.0 df))
 				 (if (not (= df 0.0))
-				     (set! (g 'scl) (/ 1.0 df)))
+				     (set! (g 'scl) (/ df)))
 				 g))
 	       
 	       :methods (list
@@ -4648,7 +4647,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				  (set! (g 'duty-factor) val)
 				  (set! (g 'top) (- 1.0 val))
 				  (if (not (= val 0.0))
-				      (set! (g 'scl) (/ 1.0 val)))
+				      (set! (g 'scl) (/ val)))
 				  val)))))
   
   (frequency *clm-default-frequency*) (duty-factor 0.5)
@@ -5454,9 +5453,10 @@ index 10 (so 10/2 is the bes-jn arg):
 			((= i 88200))
 		      (let ((poly-sum 0.0)
 			    (sin-sum 0.0))
-			(do ((k 0 (+ k 1)))
+			(do ((k 0 (+ k 1))
+			     (k3 2 (+ k3 3))
 			    ((= k n))
-			  (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (cur-phases (+ (* 3 k) 2)))))))
+			  (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (vector-ref cur-phases k3))))))
 			(set! poly-sum (polyoid gen))
 			(set! angle (+ angle incr))
 			(outa i (/ sin-sum n))
