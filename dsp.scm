@@ -379,7 +379,12 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 		    chordalize-chord))
 	(scaler (/ 0.5 (length chordalize-chord)))) ; just a guess -- maybe this should rescale to old maxamp
     (lambda (x)
-      (* scaler (apply + (map (lambda (c) (comb c x)) combs))))))
+      (let ((sum 0.0))
+	(for-each 
+	 (lambda (c)
+	   (set! sum (+ sum (comb c x))))
+	 combs)
+	(* scaler sum)))))
 
 
 ;;; -------- zero-phase, rotate-phase

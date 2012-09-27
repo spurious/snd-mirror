@@ -1520,18 +1520,23 @@
 			    `(/ ,@(cons (car args) nargs))))))))
 	      
 	      ((sin cos asin acos sinh cosh tanh asinh acosh atanh exp)
-	       (if (and (= len 1)
-			(pair? (car args))
-			(= (length (car args)) 2)
-			(eq? (caar args) (inverse-op (car form))))
-		   (cadar args)
-		   (if (and (= len 1)
-			    (equal? (car args) 0))
-		       (case (car form)
-			 ((sin asin sinh asinh tanh atanh) 0)
-			 ((exp cos cosh) 1)
-			 (else `(,(car form) 0)))
-		       `(,(car form) ,@args))))
+	       (if (= len 1)
+		   (if (and (pair? (car args))
+			    (= (length (car args)) 2)
+			    (eq? (caar args) (inverse-op (car form))))
+		       (cadar args)
+		       (if (equal? (car args) 0)
+			   (case (car form)
+			     ((sin asin sinh asinh tanh atanh) 0)
+			     ((exp cos cosh) 1)
+			     (else `(,(car form) 0)))
+			   (if (and (eq? (car form) 'cos)
+				    (pair? (car args))
+				    (eq? (caar args) '-)
+				    (null? (cddar args)))
+			       `(cos ,(cadar args))
+			       `(,(car form) ,@args))))
+		   `(,(car form) ,@args)))
 	      
 	      ((log)
 	       (if (and (= len 1)
@@ -3051,7 +3056,7 @@
       
     ;;; --------------------------------------------------------------------------------
       
-      (lambda (file . args)
+      (lambda (file)
 	"(lint file) looks for infelicities in file's scheme code"
 	(set! *current-file* file)
 	(set! undefined-identifiers ())
@@ -3075,12 +3080,6 @@
 		    (last-line-number -1))
 		(format #t ";~A~%" file)
 		(set! loaded-files (cons file loaded-files))
-		
-		(if (not (null? args))
-		    (for-each
-		     (lambda (f)
-		       (hash-table-set! no-side-effect-functions f #t))
-		     (car args)))
 		
 		(do ((form (read fp) (read fp)))
 		    ((eof-object? form))

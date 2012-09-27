@@ -3399,10 +3399,10 @@
 				  ((= k chans))
 				(do ((i 0 (+ i 1)))
 				    ((= i samps))
-				  (if (fneq (sound-data-ref sdata k i) (sound-data-ref ndata k i))
+				  (set! v0 (sound-data-ref sdata k i))
+				  (set! v1 (sound-data-ref ndata k i))
+				  (if (fneq v0 v1)
 				      (begin
-					(set! v0 (sound-data-ref sdata k i))
-					(set! v1 (sound-data-ref ndata k i))
 					;(snd-display #__line__ ";v0: ~A, v1: ~A, diff: ~A, k: ~A, i: ~A" v0 v1 (- v1 v0) k i)
 					(throw 'read-write-error))))))
 			   (lambda args 
@@ -30681,7 +30681,7 @@ EDITS: 2
 	  (check-edit-tree '((0 1 0 9999 1.0 0.0 0.0 0) (10000 -2 0 0 0.0 0.0 0.0 0)) vals "envd set first samps to one")
 	  (env-sound '(0 0 1 1))
 	  (let ((e (make-env '(0 0 1 1) :length 10000)))
-	    (fill-vct vals (lambda () (e))))
+	    (fill-vct vals (lambda () (env e))))
 	  (check-edit-tree '((0 1 0 9999 1.0 0.0 1.00010001915507e-4 4) (10000 -2 0 0 0.0 0.0 0.0 0))
 			   vals "env frag '(0 0 1 1)")
 	  (delete-samples 1000 1000)
@@ -32390,7 +32390,7 @@ EDITS: 1
       (mus-fft rl im len)
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(let* ((c (make-rectangular (rl i) (im i)))
+	(let* ((c (make-rectangular (vct-ref rl i) (vct-ref im i)))
 	       (ph (angle c))
 	       (mag (magnitude c)))
 	  (if (< i (/ len 2))
@@ -48058,22 +48058,22 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-20-Sep-12:
-245,271,711,198
-60,918,412,675  s7.c:eval [/home/bil/snd-13/snd]
-19,015,614,646  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-15,077,516,711  ???:sin [/lib64/libm-2.12.so]
-14,758,198,850  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 9,077,169,227  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 8,910,766,548  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 8,158,771,467  s7.c:gc [/home/bil/snd-13/snd]
- 7,128,555,110  s7.c:eval'2 [/home/bil/snd-13/snd]
- 6,497,114,307  io.c:mus_write_1 [/home/bil/snd-13/snd]
- 4,437,347,844  s7.c:make_real_1 [/home/bil/snd-13/snd]
- 4,137,317,920  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 3,033,920,454  s7.c:g_add_2 [/home/bil/snd-13/snd]
- 3,006,534,932  s7.c:g_multiply_2 [/home/bil/snd-13/snd]
+26-Sep-12:
+235,740,087,885
+56,655,277,875  s7.c:eval [/home/bil/snd-13/snd]
+18,494,735,100  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+15,077,286,025  ???:sin [/lib64/libm-2.12.so]
+14,352,631,343  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 8,946,270,364  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 8,912,322,193  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
+ 7,668,654,609  s7.c:gc [/home/bil/snd-13/snd]
+ 6,828,580,328  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 6,462,969,859  io.c:mus_write_1 [/home/bil/snd-13/snd]
+ 4,274,378,196  s7.c:make_real_1 [/home/bil/snd-13/snd]
+ 4,023,768,030  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 3,053,923,536  s7.c:g_add_2 [/home/bil/snd-13/snd]
+ 3,041,328,614  clm.c:mus_src [/home/bil/snd-13/snd]
+ 3,008,929,047  s7.c:g_multiply_2 [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,934,623,500  clm.c:mus_src [/home/bil/snd-13/snd]
- 1,999,074,005  ???:cos [/lib64/libm-2.12.so]
+ 1,997,617,984  ???:cos [/lib64/libm-2.12.so]
 |#

@@ -17947,7 +17947,16 @@ in s7:
 	    x))
       0)
 (test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 1) (func (- a 1) (- b 1) (- c 1)) 0))) 6)
+(test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 1) (func (- a 1) (- b 1)) 0))) 6) ; these work only because we don't try to call func -- maybe they should anyway?
+(test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 1) (func (- a 1)) 0))) 6)
+(test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 1) (func) 0))) 6)
 (test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 0) (func (- a 1) (- b 1) (- c 1)) 0))) 9)
+
+(test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 0) (func (- a 1) (- b 1)) 0))) 'error)
+;;; what about a named let* where we treat the initial values as the defaults?
+;;; (let* func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 0) (func (- a 1) (- b 1)) 0)))
+;;; then uses 3 as the default "c" arg in the call
+
 (test (let func () 1) 1)
 (test (let ((a 1)) (let func () (if (> a 1) (begin (set! a (- a 1)) (func)) 0))) 0)
 (test (let func1 ((a 1)) (+ (let func2 ((a 2)) a) a)) 3)
