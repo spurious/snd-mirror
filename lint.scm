@@ -3132,3 +3132,4 @@
 ;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is,
 ;;;   but this slows us down too much.
 
+;;; TODO: does lint catch named let*/letrec? should it?  does it notice wrong arg num if named let?

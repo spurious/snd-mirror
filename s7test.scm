@@ -16576,6 +16576,8 @@ in s7:
 (test ((apply lambda* '(((n 1)) (+ n 1)))) 2)
 (test (apply let '(((x 1)) (+ x 2))) 3)
 (test (apply let* '(((x 1) (y (* 2 x))) (+ x y))) 3)
+(test (equal? (apply let* '((a 2) (b (+ a 3))) '(list + a b) ()) (list + 2 5)) #t)
+(test (apply let 'func '((i 1) (j 2)) '((+ i j (if (> i 0) (func (- i 1) j) 0)))) 5)
 (test (let () (apply define-macro `((hiho a) `(+ ,a 1))) (hiho 2)) 3)
 (test (let () (apply defmacro `(hiho (a) `(+ ,a 1))) (hiho 2)) 3)
 (test (let () (apply defmacro* `(hiho ((a 2)) `(+ ,a 1))) (hiho)) 3)
