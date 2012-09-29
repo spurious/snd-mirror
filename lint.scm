@@ -2787,36 +2787,38 @@
 			 (lint-format "let* is messed up: ~A" 
 				      name line-number 
 				      (truncated-list->string form))
-			 (let ((vars ()))
-			   (do ((bindings (cadr form) (cdr bindings)))
-			       ((or (not (list? bindings))
-				    (null? bindings)))
-			     (if (binding-ok? name line-number head (car bindings) env #f)
-				 (begin
-				   (lint-walk name (cadar bindings) (append vars env))
-				   (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars)))))
+
+			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
+			   (let ((vars (if named-let (list (list named-let #f #f)) ())))
+			     (do ((bindings (if named-let (caddr form) (cadr form)) (cdr bindings)))
+				 ((or (not (list? bindings))
+				      (null? bindings)))
+			       (if (binding-ok? name line-number head (car bindings) env #f)
+				   (begin
+				     (lint-walk name (cadar bindings) (append vars env))
+				     (set! vars (append (list (list (caar bindings) #f #f () (->type (cadar bindings)))) vars)))))
 			   
-			   (if (and *report-minor-stuff* ; maybe we need *report-very-minor-stuff* !
-				    (call-with-exit
-				     (lambda (return)
-				       (for-each
-					(lambda (v)
-					  (if (list-ref v 1) ; refd?
-					      (return #f)))
-					vars)
-				       #t)))
-			       (lint-format "let* could be let:~A" 
-					    name line-number 
-					    (truncated-list->string form)))
+			     (if (and *report-minor-stuff* ; maybe we need *report-very-minor-stuff* !
+				      (call-with-exit
+				       (lambda (return)
+					 (for-each
+					  (lambda (v)
+					    (if (list-ref v 1) ; refd?
+						(return #f)))
+					  vars)
+					 #t)))
+				 (lint-format "let* could be let:~A" 
+					      name line-number 
+					      (truncated-list->string form)))
 			   
-			   (let* ((cur-env (append vars env))
-				  (e (lint-walk-body name line-number head (cddr form) cur-env))
-				  (nvars (and (not (eq? e cur-env))
-					      (env-difference name e cur-env ()))))
-			     (if (pair? nvars)
-				 (set! vars (append nvars vars))))
+			     (let* ((cur-env (append vars env))
+				    (e (lint-walk-body name line-number head (if named-let (cdddr form) (cddr form)) cur-env))
+				    (nvars (and (not (eq? e cur-env))
+						(env-difference name e cur-env ()))))
+			       (if (pair? nvars)
+				   (set! vars (append nvars vars))))
 			   
-			   (report-usage name line-number 'variable head vars)))
+			     (report-usage name line-number 'variable head vars))))
 		     env)
 		    
 		    ;; ---------------- letrec ----------------		  
@@ -3132,4 +3134,4 @@
 ;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is,
 ;;;   but this slows us down too much.
 
-;;; TODO: does lint catch named let*/letrec? should it?  does it notice wrong arg num if named let?
+;;; TODO: does lint notice wrong arg num if named let? -- no, but it also doesn't check locally defined funcs etc

@@ -18067,6 +18067,13 @@ in s7:
 (test (let ((pi 3)) pi) 'error)
 (test (let* ((pi 3)) pi) 'error)
 (test (letrec ((pi 3)) pi) 'error)
+(test (let* hi #t) 'error)
+(test (let* "hi" () #f) 'error)
+(test (let* hi ()) 'error)
+(test (let* pi () #f) 'error)
+(test (let* hi x 1) 'error)
+(test (let* hi (c) 1) 'error)
+(test (let* hi ((x . 1)) #f) 'error)
 
 (test (let hiho ((a 3) (hiho 4)) a) 3)
 (test (let hiho ((hiho 4)) hiho) 4)                ; guile=4
@@ -18126,7 +18133,7 @@ in s7:
 ;;      (test (let ((#z1 2)) 1) 'error)
 (test (let ('a 3) 1) 'error)
 (test (let 'a 1) 'error)
-(test (let* func ((a 1)) a) 'error)
+(test (let* func ((a 1)) a) 1)
 (test (letrec func ((a 1)) a) 'error)
 (test (letrec* func ((a 1)) a) 'error)
 
@@ -18142,6 +18149,7 @@ in s7:
 (test (let "hi" ((i 0)) i) 'error)
 (test (let #\c ((i 0)) i) 'error)
 (test (let :hi ((i 0)) i) 'error)
+(test (let pi () #f) 'error)
 
 (test (let func ((a 1) . b) a) 'error)
 (test (let func a . b) 'error)
@@ -18167,11 +18175,16 @@ in s7:
 (test (let "hi" 1) 'error)
 (test (let #(1) 1) 'error)
 (test (let __hi__ #t) 'error)
-(test (let* hi () 1) 'error)
+(test (let* hi () 1) 1)
 (test (letrec (1 2) #t) 'error)
 (test (letrec* (1 2) #t) 'error)
 (test (let hi (()) 1) 'error)
 (test (let hi a 1) 'error)
+(test (let* func ((i 1) (j 2)) (+ i j (if (> i 0) (func (- i 1)) 0))) 5)
+(test (let* func ((i 1) (j 2) (k (+ j 1))) (+ i j k (if (> i 0) (func (- i 1)) 0))) 11)
+(test (let* func ((i 1) (j 2) (k (+ j 1))) (+ i j k (let () (set! j -123) (if (> i 0) (func (- i 1)) 0)))) 11)
+(test (let* func1 ((a 1) (b 2)) (+ a b (let* func2 ((a -1) (b (- a 1))) (if (< a 0) (func2 (+ a 1)) b)))) 1) ; 2nd b is -2
+(test (procedure? (let* func ((i 1) (j 2) (k (+ j 1))) func)) #t)
 
 ;;; these ought to work, but see s7.c under EVAL: (it's a speed issue)
 ;(test (let let ((i 0)) (if (< i 3) (let (+ i 1)) i)) 3)

@@ -182,7 +182,7 @@ indented and on a sort of brownish background.
 <ul>
   <li><a href="#multiprecision">multiprecision arithmetic</a>
   <li><a href="#math">math functions</a>
-  <li><a href="#define*">define*</a>
+  <li><a href="#define*">define*, named let*</a>
   <li><a href="#macros">define-macro</a>
   <li><a href="#pws">procedure-setter</a>
   <li><a href="#generalizedset">generalized set!</a>
@@ -848,9 +848,9 @@ f
 
 
 <div class="indented">
-<p>An obvious companion of lambda* is named let*.  In named let, the implicit function's
+<p>A natural companion of lambda* is named let*.  In named let, the implicit function's
 arguments have initial values, but thereafter, each call requires the full set of arguments.
-Why not treat the initial values as default values?  I think I'll implement this as an experiment.
+Why not treat the initial values as default values? 
 </p>
 
 <pre class="indented">
