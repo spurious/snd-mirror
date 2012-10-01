@@ -1869,7 +1869,10 @@
   (test (let () (define (ho a) (values a 1)) (define (hi) (- (ho 2))) (hi)) 1)
   (test (let () (define (ho1) (s7-version)) (define (ho2) (ho1)) (string? (ho2))) #t)
   (test (let () (define (hi) (vector 0)) (define (ho) (hi)) (ho)) #(0)))
-	
+(let ()
+  (define (make-it . names) (apply vector names))
+  (define (hi) (make-it pi pi pi pi))
+  (test (hi) (vector pi pi pi pi)))
 
 
 

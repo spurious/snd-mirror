@@ -3134,4 +3134,3 @@
 ;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is,
 ;;;   but this slows us down too much.
 
-;;; TODO: does lint notice wrong arg num if named let? -- no, but it also doesn't check locally defined funcs etc
