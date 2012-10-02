@@ -1000,7 +1000,7 @@ typedef struct s7_cell {
     struct {
       s7_pointer args, body, env, setter;
       int arity;
-      int match_type;
+      int match_type; /* currently unused */
     } func;
 
     struct { 
@@ -1568,15 +1568,11 @@ static int t_optimized = T_OPTIMIZED;
 
 #define T_SAFE_CLOSURE                (1 << (TYPE_BITS + 16))
 #define is_safe_closure(p)            ((typeflag(p) & T_SAFE_CLOSURE) != 0)
-#if 0
-#define set_safe_closure(p)           typeflag(p) = (T_SAFE_CLOSURE | (typeflag(p) & (~T_COPY_ARGS)))
-#define clear_safe_closure(p)         typeflag(p) = (T_COPY_ARGS | (typeflag(p) & (~T_SAFE_CLOSURE)))
-#else
 #define set_safe_closure(p)           typeflag(p) |= T_SAFE_CLOSURE
 #define clear_safe_closure(p)         typeflag(p) &= (~T_SAFE_CLOSURE)
-#endif
 /* optimizer flag for a closure body that is completely simple (every expression is safe)
  *   set_safe_closure happens only in optimize_lambda, clear only in procedure_source, bits only here
+ *   this has to be separate from T_SAFE_PROCEDURE
  */
 
 #define T_SETTER                      (1 << (TYPE_BITS + 17))
@@ -2186,7 +2182,7 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 0
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
@@ -4424,6 +4420,32 @@ static s7_pointer make_simple_frame(s7_scheme *sc)
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
       environment_slots(_x_) = _slot_;\
+     } while (0)
+
+
+#define NEW_FRAME_WITH_TWO_SLOTS(Sc, Old_Env, New_Env, Symbol1, Value1, Symbol2, Value2) \
+  do {                                   \
+      s7_pointer _x_, _slot_, _sym_;		   \
+      NEW_CELL(Sc, _x_);                   \
+      frame_id(_x_) = ++frame_number; \
+      next_environment(_x_) = Old_Env;		         \
+      set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
+      New_Env = _x_;		   \
+      NEW_CELL_NO_CHECK(Sc, _slot_);\
+      _sym_ = Symbol1; \
+      slot_symbol(_slot_) = _sym_;\
+      slot_set_value(_slot_, Value1);	\
+      symbol_set_local(_sym_, frame_number, _slot_); \
+      set_type(_slot_, T_SLOT | T_IMMUTABLE);\
+      environment_slots(_x_) = _slot_;\
+      NEW_CELL_NO_CHECK(Sc, _x_);\
+      _sym_ = Symbol2; \
+      slot_symbol(_x_) = _sym_;\
+      slot_set_value(_x_, Value2);	\
+      symbol_set_local(_sym_, frame_number, _x_); \
+      set_type(_x_, T_SLOT | T_IMMUTABLE);\
+      next_slot(_x_) = sc->NIL;\
+      next_slot(_slot_) = _x_;\
      } while (0)
 
 
@@ -23571,18 +23593,6 @@ static int safe_list_length(s7_scheme *sc, s7_pointer a)
 }
 
 
-static int unsafe_list_length(s7_scheme *sc, s7_pointer a)
-{
-  /* assume that "a" is not a circular list */
-  int i = 0;
-  s7_pointer b;
-  for (b = a; is_pair(b); i++, b = cdr(b)) {};
-  if (is_null(b))
-    return(i);
-  return(-i);
-}
-
-
 int s7_list_length(s7_scheme *sc, s7_pointer a) 
 {
   /* returns -len if list is dotted, 0 if it's (directly) circular */
@@ -28755,12 +28765,9 @@ static s7_pointer closure_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer 
   if (is_symbol(x_args))                    /* any number of args is ok */
     return(s7_cons(sc, small_int(0), s7_make_integer(sc, MAX_ARITY)));
 	
+  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+    closure_arity(x) = s7_list_length(sc, x_args);
   len = closure_arity(x);
-  if (len == CLOSURE_ARITY_NOT_SET)
-    {
-      len = s7_list_length(sc, x_args);
-      closure_arity(x) = len;
-    }
   if (len < 0)                               /* dotted list => rest arg, (length '(a b . c)) is -2 */
     return(s7_cons(sc, s7_make_integer(sc, -len), s7_make_integer(sc, MAX_ARITY)));
   return(s7_cons(sc, s7_make_integer(sc, len), s7_make_integer(sc, len)));
@@ -28787,7 +28794,7 @@ static s7_pointer closure_star_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_poi
 	}
       if (is_null(p))
 	closure_arity(x) = i;
-      else closure_arity(x) = -1;
+      else closure_arity(x) = -1; /* see below */
     }
 
   if (closure_arity(x) == -1)
@@ -28800,7 +28807,14 @@ static int closure_arity_to_int(s7_scheme *sc, s7_pointer x)
 {
   /* not lambda* here */
   if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
-    closure_arity(x) = unsafe_list_length(sc, closure_args(x));
+    {
+      int i;
+      s7_pointer b;
+      for (i = 0, b = closure_args(x); is_pair(b); i++, b = cdr(b)) {};
+      if (is_null(b))
+	closure_arity(x) = i;
+      else closure_arity(x) = -i - 1;
+    }
   return(closure_arity(x));
 }
 
@@ -36135,7 +36149,8 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
 {
   if ((is_c_function(func)) &&
       ((is_safe_procedure(func)) ||
-       (c_function_call(func) == g_list)))          /* (list) is safe */
+       (c_function_call(func) == g_list) ||          /* (list) is safe */
+       (c_function_call(func) == g_values)))         /* (values) is safe */
     {
       set_optimized(car_x);
       set_optimize_data(car_x, hop + OP_SAFE_C_C);
@@ -36591,13 +36606,17 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	      set_unsafely_optimized(car_x);
 	      if ((symbols == 2) &&
 		  (c_function_call(func) == g_apply))
-		set_optimize_data(car_x, hop + OP_APPLY_SS);
+		{
+		  set_optimize_data(car_x, hop + OP_APPLY_SS);
+		  ecdr(car_x) = func;
+		  fcdr(car_x) = caddar_x;
+		}
 	      else 
 		{
 		  set_optimize_data(car_x, hop + OP_C_ALL_X);
 		  fcdr(cdr(car_x)) = small_int(2);
+		  set_c_function(car_x, c_function_chooser(func)(sc, func, 2, car_x));
 		}
-	      set_c_function(car_x, c_function_chooser(func)(sc, func, 2, car_x));
 	      return(false); 
 	    }
 	}
@@ -38902,8 +38921,11 @@ static s7_pointer g_unoptimize(s7_scheme *sc, s7_pointer args)
 
 /* ---------------------------------------- error checks ---------------------------------------- */
 
-static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args)
+static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int *arity)
 {
+  s7_pointer x;
+  int i;
+
   if (!s7_is_list(sc, args))
     {
       if (s7_is_constant(args))                       /* (lambda :a ...) */
@@ -38914,123 +38936,132 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args)
        */
       if (is_symbol(args))
 	set_local(args);
-    }
-  else
-    {
-      s7_pointer x;
-      for (x = args; is_pair(x); x = cdr(x))
-	{
-	  if (s7_is_constant(car(x)))                      /* (lambda (pi) pi) */
-	    return(eval_error(sc, "lambda parameter '~S is a constant", car(x)));
 
-	  if (symbol_is_in_arg_list(car(x), cdr(x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
-	    return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(x)));
-	  set_local(car(x));
-	}
-      if ((is_not_null(x)) &&
-	  (s7_is_constant(x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
-	return(eval_error(sc, "lambda :rest parameter '~S is a constant", x));
+      if (arity) (*arity) = -1;
+      return(sc->F);
     }
+
+  for (i = 0, x = args; is_pair(x); i++, x = cdr(x))
+    {
+      if (s7_is_constant(car(x)))                      /* (lambda (pi) pi) */
+	return(eval_error(sc, "lambda parameter '~S is a constant", car(x)));
+      
+      if (symbol_is_in_arg_list(car(x), cdr(x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
+	return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(x)));
+      set_local(car(x));
+    }
+  if (is_not_null(x))
+    {
+      if (s7_is_constant(x))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
+	return(eval_error(sc, "lambda :rest parameter '~S is a constant", x));
+      i = -i - 1;
+    }
+
+  if (arity) (*arity) = i;
   return(sc->F);
 }
 
 
-static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args)
+static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *arity)
 {
-  s7_pointer top;
-  top = args;
+  s7_pointer top, v, w;
+  int i;
+
   if (!s7_is_list(sc, args))
     {
       if (s7_is_constant(args))                                  /* (lambda* :a ...) */
 	return(eval_error(sc, "lambda* parameter '~S is a constant", args));
       if (is_symbol(args))
 	set_local(args);
+      if (arity) (*arity) = -1;
+      return(args);
     }
-  else
-    { 
-      s7_pointer v, w;
-      v = top;
-      for (w = args; is_pair(w); v = w, w = cdr(w))
+
+  top = args;
+  v = args;
+  for (i = 0, w = args; is_pair(w); i++, v = w, w = cdr(w))
+    {
+      if (is_pair(car(w)))
 	{
-	  if (is_pair(car(w)))
+	  if (s7_is_constant(caar(w)))                            /* (lambda* ((:a 1)) ...) */
+	    return(eval_error(sc, "lambda* parameter '~A is a constant", caar(w)));
+	  if (symbol_is_in_arg_list(caar(w), cdr(w)))             /* (lambda* ((a 1) a) ...) */
+	    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(w)));
+	  
+	  if (!is_pair(cdar(w)))                                  /* (lambda* ((a . 0.0)) a) */
 	    {
-	      if (s7_is_constant(caar(w)))                            /* (lambda* ((:a 1)) ...) */
-		return(eval_error(sc, "lambda* parameter '~A is a constant", caar(w)));
-	      if (symbol_is_in_arg_list(caar(w), cdr(w)))             /* (lambda* ((a 1) a) ...) */
-		return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(w)));
-
-	      if (!is_pair(cdar(w)))                                  /* (lambda* ((a . 0.0)) a) */
-		{
-		  if (is_null(cdar(w)))                               /* (lambda* ((a)) ...) */
-		    return(eval_error(sc, "lambda* parameter default value missing? '~A", car(w)));
-		  return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(w)));
-		}
-	      
-	      if (is_not_null(cddar(w)))                              /* (lambda* ((a 0.0 'hi)) a) */
-		  return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(w)));
-
-	      set_local(caar(w));
+	      if (is_null(cdar(w)))                               /* (lambda* ((a)) ...) */
+		return(eval_error(sc, "lambda* parameter default value missing? '~A", car(w)));
+	      return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(w)));
 	    }
-	  else 
+	  
+	  if (is_not_null(cddar(w)))                              /* (lambda* ((a 0.0 'hi)) a) */
+	    return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(w)));
+	  
+	  set_local(caar(w));
+	}
+      else 
+	{
+	  if (car(w) != sc->KEY_REST)
 	    {
-	      if (car(w) != sc->KEY_REST)
+	      if (s7_is_constant(car(w)))
 		{
-		  if (s7_is_constant(car(w)))
+		  if ((car(w) == sc->KEY_KEY) || 
+		      (car(w) == sc->KEY_OPTIONAL))
 		    {
-		      if ((car(w) == sc->KEY_KEY) || 
-			  (car(w) == sc->KEY_OPTIONAL))
-			{
-			  if ((!is_pair(cdr(w))) ||                   /* (lambda* (:key) 1) or (lambda* (:key . b) 1) */
-			      (is_immutable(cadr(w))))                /* (lambda* (:key :optional) 1) */
-			    return(eval_error(sc, "lambda* :key or :optional parameter must be a normal symbol: ~A", w));
-			  if (w == top) 
-			    top = cdr(w);
-			  else cdr(v) = cdr(w);
-			}
-		      else
-			{
-			  if (car(w) == sc->KEY_ALLOW_OTHER_KEYS)
-			    {
-			      if (is_not_null(cdr(w)))                /* (lambda* (:allow-other-keys x) x) */
-				eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
-			    }
-			  else                                        /* (lambda* (pi) ...) */
-			    return(eval_error(sc, "lambda* parameter '~A is a constant", car(w)));
-			}
-		    }
-		  if (symbol_is_in_arg_list(car(w), cdr(w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
-		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(w)));
-
-		  if (!is_keyword(car(w))) set_local(car(w));
-		}
-	      else
-		{
-		  if (!is_pair(cdr(w)))                               /* (lambda* (:rest) ...) */
-		    return(eval_error(sc, "lambda* :rest parameter missing? ~A", w));
-		  if (!is_symbol(cadr(w)))                         /* (lambda* (:rest (a 1)) ...) */
-		    {
-		      if (!is_pair(cadr(w)))                          /* (lambda* (:rest 1) ...) */
-			return(eval_error(sc, "lambda* :rest parameter is not a symbol? ~A", w));
-		      return(eval_error(sc, "lambda* :rest parameter can't have a default value. ~A", w));
+		      if ((!is_pair(cdr(w))) ||                   /* (lambda* (:key) 1) or (lambda* (:key . b) 1) */
+			  (is_immutable(cadr(w))))                /* (lambda* (:key :optional) 1) */
+			return(eval_error(sc, "lambda* :key or :optional parameter must be a normal symbol: ~A", w));
+		      if (w == top) 
+			top = cdr(w);
+		      else cdr(v) = cdr(w);
 		    }
 		  else
 		    {
-		      if (is_immutable(cadr(w)))
-			return(s7_error(sc, sc->WRONG_TYPE_ARG,
-					list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), w)));
+		      if (car(w) == sc->KEY_ALLOW_OTHER_KEYS)
+			{
+			  if (is_not_null(cdr(w)))                /* (lambda* (:allow-other-keys x) x) */
+			    eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
+			}
+		      else                                        /* (lambda* (pi) ...) */
+			return(eval_error(sc, "lambda* parameter '~A is a constant", car(w)));
 		    }
-		  set_local(cadr(w));
 		}
+	      if (symbol_is_in_arg_list(car(w), cdr(w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
+		return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(w)));
+	      
+	      if (!is_keyword(car(w))) set_local(car(w));
+	    }
+	  else
+	    {
+	      if (!is_pair(cdr(w)))                               /* (lambda* (:rest) ...) */
+		return(eval_error(sc, "lambda* :rest parameter missing? ~A", w));
+	      if (!is_symbol(cadr(w)))                         /* (lambda* (:rest (a 1)) ...) */
+		{
+		  if (!is_pair(cadr(w)))                          /* (lambda* (:rest 1) ...) */
+		    return(eval_error(sc, "lambda* :rest parameter is not a symbol? ~A", w));
+		  return(eval_error(sc, "lambda* :rest parameter can't have a default value. ~A", w));
+		}
+	      else
+		{
+		  if (is_immutable(cadr(w)))
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG,
+				    list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), w)));
+		}
+	      set_local(cadr(w));
 	    }
 	}
-      if (is_not_null(w))
-	{
-	  if (s7_is_constant(w))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
-	    return(eval_error(sc, "lambda* :rest parameter '~A is a constant", w));
-	  if (is_symbol(w))
-	    set_local(w);
-	}
     }
+  if (is_not_null(w))
+    {
+      if (s7_is_constant(w))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
+	return(eval_error(sc, "lambda* :rest parameter '~A is a constant", w));
+      if (is_symbol(w))
+	set_local(w);
+      i = -1;
+    }
+
+  if (arity) (*arity) = i;
   return(top);
 }
 
@@ -40332,6 +40363,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 static s7_pointer check_define(s7_scheme *sc)
 {
   s7_pointer x;
+  int arity = CLOSURE_ARITY_NOT_SET;
 
   if (!is_pair(sc->code))
     return(eval_error_with_name(sc, "~A: nothing to define? ~A", sc->code));   /* (define) */
@@ -40378,8 +40410,8 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A ~A: syntactic keywords tend to behave badly if redefined", x));
 
       if (sc->op == OP_DEFINE_STAR)
-	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code));
-      else check_lambda_args(sc, cdar(sc->code));
+	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code), &arity);
+      else check_lambda_args(sc, cdar(sc->code), &arity);
 
       optimize_lambda(sc, sc->op == OP_DEFINE, x, cdar(sc->code), cdr(sc->code));
     }
@@ -40387,6 +40419,11 @@ static s7_pointer check_define(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
+      if ((arity >= 0) &&
+	  (arity < NUM_SMALL_INTS))
+	fcdr(sc->code) = small_int(arity);
+      else fcdr(sc->code) = make_permanent_integer(arity);
+      
       if (sc->op == OP_DEFINE)
 	{
 	  if ((is_pair(car(sc->code))) &&
@@ -40397,6 +40434,7 @@ static s7_pointer check_define(s7_scheme *sc)
 	}
       else set_syntax_op(sc->code, sc->DEFINE_STAR_UNCHECKED);
     }
+  else fcdr(sc->code) = sc->F;
 
   return(sc->code);
 }
@@ -44896,11 +44934,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (sc->stack_end >= sc->stack_resize_trigger)
 		increase_stack_size(sc);
 	      sc->value = find_symbol_or_bust(sc, cadr(code));
-	      car(sc->T1_1) = find_symbol_or_bust(sc, fcdr(code));
+	      sc->z = find_symbol_or_bust(sc, fcdr(code));
 
 	      code = ecdr(code);
-	      NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), sc->value);
-	      ADD_SLOT(sc->envir, cadr(closure_args(code)), car(sc->T1_1));
+	      sc->x = closure_args(code);
+	      NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(sc->x), sc->value, cadr(sc->x), sc->z);
 	      sc->code = car(closure_body(code));
 	      goto EVAL;  
 
@@ -44999,7 +45037,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_CLOSURE_CAR_CAR:
 	      {
-		s7_pointer p1, p2;
+		s7_pointer p1, p2, p3;
 		p1 = finder(sc, cadr(cadr(code)));
 		if (is_pair(p1))
 		  p1 = car(p1);
@@ -45011,8 +45049,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (sc->stack_end >= sc->stack_resize_trigger)
 		  increase_stack_size(sc);
 		code = ecdr(code);
-		NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), p1);
-		ADD_SLOT(sc->envir, cadr(closure_args(code)), p2);
+		p3 = closure_args(code);
+		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p3), p1, cadr(p3), p2);
 		sc->code = car(closure_body(code));
 		goto EVAL;  
 	      }
@@ -45029,7 +45067,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_CLOSURE_CDR_CDR:
 	      {
-		s7_pointer p1, p2;
+		s7_pointer p1, p2, p3;
 		p1 = finder(sc, cadr(cadr(code)));
 		if (is_pair(p1))
 		  p1 = cdr(p1);
@@ -45041,8 +45079,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (sc->stack_end >= sc->stack_resize_trigger)
 		  increase_stack_size(sc);
 		code = ecdr(code);
-		NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), p1);
-		ADD_SLOT(sc->envir, cadr(closure_args(code)), p2);
+		p3 = closure_args(code);
+		NEW_FRAME_WITH_TWO_SLOTS(sc, closure_environment(code), sc->envir, car(p3), p1, cadr(p3), p2);
 		sc->code = car(closure_body(code));
 		goto EVAL;  
 	      }
@@ -48031,21 +48069,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_APPLY_SS:
 	      sc->code = finder(sc, cadr(code)); /* global search here was slower */
-	      sc->args = finder(sc, caddr(code));
-	      if (!is_null(sc->args))
+	      sc->args = finder(sc, fcdr(code));
+	      if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
+		return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				list_2(sc, 
+				       make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
+				       sc->args)));
+	      if (needs_copied_args(sc->code))
 		{
-		  if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    list_2(sc, 
-					   make_protected_string(sc, "apply's last argument should be a proper list: ~S"),
-					   sc->args)));
-		  if (needs_copied_args(sc->code)) /* was (2-Sep-12): (!is_safe_procedure(sc->code)) */
+		  if (!is_null(sc->args))
 		    sc->args = copy_list(sc, sc->args);
-		}
-	      if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
-		{
-		  push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
-		  sc->args = list_1(sc, cons(sc, sc->code, sc->args));
+		  if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
+		    {                                           /* these always copy args (except c_macros, sigh) */
+		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
+		      sc->args = list_1(sc, cons(sc, sc->code, sc->args));
+		    }
 		}
 	      goto APPLY;
 	      
@@ -48925,7 +48963,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_CALL_WITH_EXIT:
 	      if (!c_function_is_ok(sc, code))
 		break;
-	      check_lambda_args(sc, cadr(cadr(code))); 
+	      check_lambda_args(sc, cadr(cadr(code)), NULL); 
 	      
 	    case HOP_CALL_WITH_EXIT:
 	      {
@@ -48949,7 +48987,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_C_FOR_EACH_LS:
 	      if (!c_function_is_ok(sc, code))
 		break;
-	      check_lambda_args(sc, cadr(cadr(code)));
+	      check_lambda_args(sc, cadr(cadr(code)), NULL);
 	      
 	    case HOP_C_FOR_EACH_LS:
 	      {
@@ -48977,7 +49015,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_C_FOR_EACH_LS_2:
 	      if (!c_function_is_ok(sc, code))
 		break;
-	      check_lambda_args(sc, cadr(cadr(code)));
+	      check_lambda_args(sc, cadr(cadr(code)), NULL);
 	      
 	    case HOP_C_FOR_EACH_LS_2:
 	      {
@@ -49017,7 +49055,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      if (!indirect_c_function_is_ok(sc, caddr(code)))
 		break;
-	      check_lambda_args(sc, cadr(cadr(code)));
+	      check_lambda_args(sc, cadr(cadr(code)), NULL);
 	      
 	    case HOP_C_FOR_EACH_L_opSq:
 	      {
@@ -49045,8 +49083,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case OP_C_CATCH:
 	      if (!c_function_is_ok(sc, code))
 		break;
-	      /* check_lambda_args(sc, cadr(caddr(code))); */
-	      check_lambda_args(sc, cadr(cadddr(code)));
+	      check_lambda_args(sc, cadr(cadddr(code)), NULL);
 	      
 	    case HOP_C_CATCH:
 	      {
@@ -49177,7 +49214,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* trailers */
 	  
 #if WITH_COUNTS
-	  /* add_expr(sc, sc->code); */
+	  add_expr(sc, sc->code);
 #endif
 	  sc->cur_code = sc->code;
 	  
@@ -50291,12 +50328,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE_STAR_UNCHECKED:
       {
 	s7_pointer x;
+	/* make_closure* */
 	NEW_CELL(sc, x);
 	closure_args(x) = cdar(sc->code);
 	closure_body(x) = cdr(sc->code);
 	closure_environment(x) = sc->envir;
+	if (is_integer(fcdr(sc->code)))
+	  closure_arity(x) = integer(fcdr(sc->code));
+	else closure_arity(x) = CLOSURE_ARITY_NOT_SET;
 	closure_setter(x) = sc->F;
-	closure_arity(x) = CLOSURE_ARITY_NOT_SET;
 	if (is_safe_closure(cdr(sc->code)))
 	  set_type(x, T_CLOSURE_STAR | T_PROCEDURE | T_SAFE_CLOSURE);
 	else set_type(x, T_CLOSURE_STAR | T_PROCEDURE);
@@ -50313,12 +50353,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer new_func, new_env;
 
 	sc->value = caar(sc->code);
+	/*
+ 	if (is_integer(fcdr(sc->code)))
+	  fprintf(stderr, "%s arity? %s\n", DISPLAY_80(sc->code), DISPLAY(fcdr(sc->code)));
+	*/
 
+	/* make_closure... */
 	NEW_CELL(sc, new_func);
 	closure_args(new_func) = cdar(sc->code);
 	closure_body(new_func) = cdr(sc->code);
 	closure_setter(new_func) = sc->F; 
-	closure_arity(new_func) = CLOSURE_ARITY_NOT_SET; /* this is surely already known -- how to preset? */
+	closure_arity(new_func) = integer(fcdr(sc->code));
 	set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
 	sc->capture_env_counter++; 
 
@@ -50412,6 +50457,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   us back to the previous case).
 	   */
 	  MAKE_CLOSURE(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
+	  if (is_integer(fcdr(sc->code)))
+	    closure_arity(x) = integer(fcdr(sc->code));
 	  sc->value = x;
 	  sc->code = caar(sc->code);
 	  /* fall through */
@@ -50511,6 +50558,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      ADD_SLOT(sc->envir, sc->code, new_func);
 	      set_local(sc->code);
+	      /* so funchecked is always local already -- perhaps reset below? */
 	    }
 	  else s7_make_slot(sc, sc->envir, sc->code, new_func);
 	}
@@ -54542,7 +54590,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if ((!is_pair(code)) ||
 	    (!is_pair(cdr(code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
 	  eval_error(sc, "lambda: no args or no body? ~A", code);
-	check_lambda_args(sc, car(code));
+	check_lambda_args(sc, car(code), NULL);
 	
 	if ((is_pair(cdr(code))) &&
 	    (is_pair(cadr(code))) &&
@@ -54568,7 +54616,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
 	eval_error(sc, "lambda*: no args or no body? ~A", sc->code);
-      car(sc->code) = check_lambda_star_args(sc, car(sc->code));
+      car(sc->code) = check_lambda_star_args(sc, car(sc->code), NULL);
 
       if ((is_pair(cdr(sc->code))) &&
 	  (is_pair(cadr(sc->code))) &&
@@ -55356,7 +55404,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_READ_APPLY_VALUES:
-      sc->value = list_2(sc, sc->UNQUOTE, list_2(sc, sc->QQ_Apply_Values, sc->value));
+      if (is_symbol(sc->value))
+	{
+	  s7_pointer lst;
+	  lst = list_2(sc, sc->QQ_Apply_Values, sc->value);
+	  set_unsafely_optimized(lst);
+	  set_optimize_data(lst, HOP_C_S);
+	  set_c_function(lst, sc->QQ_Apply_Values);
+	  sc->value = list_2(sc, sc->UNQUOTE, lst);
+	}
+      else sc->value = list_2(sc, sc->UNQUOTE, list_2(sc, sc->QQ_Apply_Values, sc->value));
       goto START;
       
       
@@ -61226,15 +61283,15 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * timing info [starting from May-11 approximately]
- * bench    42736                     8752 8051 8008
+ * bench    42736                     8752 8051 8004
  * lint     13424 1231 1326 1320 1270 1245 1148 1146
- *                               9811 9786 7881 8117
+ *                               9811 9786 7881 8107
  * index    44300 4988 4725 3935 3477 3291 3005 2975
- * s7test         1721 1456 1430 1375 1358 1297 1296
- * t455            265  256  218        89   55   55
+ * s7test         1721 1456 1430 1375 1358 1297 1267
+ * t455            265  256  218        89   55   54
  * t502                  90   72        43   39   38
- * lat             229        63             52   52
- * calls                               310  242  237
+ * lat             229        63             52   51
+ * calls                               310  242  236
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.
