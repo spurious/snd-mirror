@@ -421,7 +421,7 @@ enum {OP_NO_OP,
       OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_S,
       OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A,
       OP_SAFE_IF1_1, OP_SAFE_IF2_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, 
-      OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_CS_Q_P,
+      OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_IS_NULL_Q_P,
       OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_O_A,
       OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
       OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P, OP_SAFE_IF_C_C_P,
@@ -586,7 +586,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_DOTIMES_P", "OP_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_C_S",
   "OP_SIMPLE_DO_A", "OP_SIMPLE_DO_STEP_A",
   "OP_SAFE_IF1_1", "OP_SAFE_IF2_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", 
-  "OP_SAFE_IF_CS_P_P", "OP_SAFE_IF_CS_X_P", "OP_SAFE_IF_CC_P", "OP_SAFE_IF_CS_P", "OP_SAFE_IF_CS_P_X", "OP_SAFE_IF_CS_Q_P",
+  "OP_SAFE_IF_CS_P_P", "OP_SAFE_IF_CS_X_P", "OP_SAFE_IF_CC_P", "OP_SAFE_IF_CS_P", "OP_SAFE_IF_CS_P_X", "OP_SAFE_IF_IS_NULL_Q_P",
   "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_O_A",
   "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
   "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", "OP_SAFE_IF_C_C_P",
@@ -862,6 +862,7 @@ typedef struct c_proc_t {
   int name_length;
   char *doc;
   unsigned int id;
+  s7_function generic_ff;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   void *chooser_data;
 } c_proc_t;
@@ -1029,8 +1030,15 @@ typedef struct s7_cell {
     struct {                   /* environments (frames) */
       s7_pointer slots, nxt;
       long long int id;        /* id of global_env is -1 */
-      s7_pointer function;     /* __func__ (code) if this is a closure environment */
-      unsigned int line, file; /* __func__ location if it is known */
+      union {
+	struct {
+	  s7_pointer function;     /* __func__ (code) if this is a closure environment */
+	  unsigned int line, file; /* __func__ location if it is known */
+	} fnc;
+	struct {
+	  s7_pointer dox1, dox2;
+	} dox;
+      } edat;
     } envr;
 
     struct {
@@ -1263,7 +1271,7 @@ struct s7_scheme {
 
   s7_pointer SAFE_OR_S, SAFER_OR_S, SAFER_OR_C, SAFER_OR_CEQ, SAFE_AND_S, SAFE_CASE_S, SAFER_OR_X, SAFER_AND_X, COND_SIMPLER;
   s7_pointer SAFE_IF1, SAFE_IF2, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P;
-  s7_pointer SAFE_IF_CS_P_P, SAFE_IF_CS_X_P, SAFE_IF_CC_P, SAFE_IF_CS_P, SAFE_IF_CS_P_X, SAFE_IF_CS_Q_P;
+  s7_pointer SAFE_IF_CS_P_P, SAFE_IF_CS_X_P, SAFE_IF_CC_P, SAFE_IF_CS_P, SAFE_IF_CS_P_X, SAFE_IF_IS_NULL_Q_P;
   s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_O_A;
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P, SAFE_IF_C_C_P;
@@ -1558,6 +1566,12 @@ static int t_optimized = T_OPTIMIZED;
  *    (trying to avoid circular lists during the optimization scan)
  */
 
+#define T_NO_METHODS                  T_CHECKED_1
+#define ignores_methods(p)            ((typeflag(p) & T_NO_METHODS) != 0)
+#define set_ignores_methods(p)        typeflag(p) |= T_NO_METHODS
+#define dont_ignore_methods(p)        typeflag(p) &= (~T_NO_METHODS)
+
+
 #define T_UNSAFE                      (1 << (TYPE_BITS + 15))
 #define set_unsafe(p)                 typeflag(p) |= T_UNSAFE
 #define set_unsafely_optimized(p)     typeflag(p) |= (T_UNSAFE | T_OPTIMIZED)
@@ -1804,9 +1818,11 @@ static void set_syntax_op(s7_pointer p, s7_pointer op) {car(ecdr(p)) = op; lifte
 #define is_environment(p)             (type(p) == T_ENVIRONMENT)
 #define environment_slots(p)          (p)->object.envr.slots
 #define next_environment(p)           (p)->object.envr.nxt
-#define environment_function(p)       (p)->object.envr.function
-#define environment_line(p)           (p)->object.envr.line
-#define environment_file(p)           (p)->object.envr.file
+#define environment_function(p)       (p)->object.envr.edat.fnc.function
+#define environment_line(p)           (p)->object.envr.edat.fnc.line
+#define environment_file(p)           (p)->object.envr.edat.fnc.file
+#define environment_dox1(p)           (p)->object.envr.edat.dox.dox1
+#define environment_dox2(p)           (p)->object.envr.edat.dox.dox2
 
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
@@ -4878,6 +4894,19 @@ static void append_environment(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e
 }
 
 
+static void stop_ignoring_methods(s7_scheme *sc, s7_pointer p)
+{
+  dont_ignore_methods(p);
+  if (is_slot(global_slot(p)))
+    {
+      s7_pointer fnc;
+      fnc = slot_value(global_slot(p));
+      if ((is_c_function(fnc)) &&
+	  (c_function_data(fnc)->generic_ff))
+	c_function_call(fnc) = c_function_data(fnc)->generic_ff;
+    }
+}
+
 /* should these two augment-envs check for symbol accessors?
  */
 
@@ -4918,6 +4947,8 @@ environment."
 	      (!s7_is_equal(sc, val, s7_symbol_value(sc, sym))))
 	    return(wrong_type_argument_with_type(sc, sc->AUGMENT_ENVIRONMENTB, make_integer(sc, i), sym, 
 						 make_protected_string(sc, "a non-contant symbol")));
+	  if (ignores_methods(sym))
+	    stop_ignoring_methods(sc, sym);
 	}
     }
   
@@ -4990,6 +5021,9 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 	   * But chaining is not safe or even unambiguous, and this form will not work if obj's fields
 	   *  are being set -- we've made a new slot!  Not sure how to handle this.
 	   */
+
+	  if (ignores_methods(car(p)))
+	    stop_ignoring_methods(sc, car(p));
 	}
       s7_gc_unprotect_at(sc, gc_loc);
     }
@@ -23630,8 +23664,14 @@ int s7_list_length(s7_scheme *sc, s7_pointer a)
 static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_null "(null? obj) returns #t if obj is the empty list"
-  CHECK_BOOLEAN_METHOD(sc, car(args), is_null, sc->NULLP, args);
+  return(make_boolean(sc, is_null(car(args))));
+}
 
+
+static s7_pointer g_is_null_with_methods(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_null "(null? obj) returns #t if obj is the empty list"
+  CHECK_BOOLEAN_METHOD(sc, car(args), is_null, sc->NULLP, args);
   /* as a generic this could be: has_structure and length == 0 */
 }
 
@@ -37636,19 +37676,22 @@ static s7_pointer check_for_global_set(s7_scheme *sc, s7_pointer tree, s7_pointe
 {
   if (is_checked_1(tree))
     return(e);
-  set_checked_1(tree);
-  if ((is_pair(tree)) &&
-      (car(tree) != sc->QUOTE))
+  if (is_pair(tree))
     {
-      if ((car(tree) == sc->SET) &&
-	  (is_pair(cdr(tree))) &&
-	  (is_symbol(cadr(tree))) &&
-	  (is_global(cadr(tree))))
-	return(cons(sc, cadr(tree), e));
-
-      if (is_pair(car(tree)))
-	e = check_for_global_set(sc, car(tree), e);
-      return(check_for_global_set(sc, cdr(tree), e));
+      set_checked_1(tree);
+      if (car(tree) != sc->QUOTE)
+	{
+	  if ((car(tree) == sc->SET) &&
+	      (is_pair(cdr(tree))) &&
+	      (is_symbol(cadr(tree))) &&
+	      (is_global(cadr(tree))))
+	    return(cons(sc, cadr(tree), e));
+	  
+	  if (is_pair(car(tree)))
+	    e = check_for_global_set(sc, car(tree), e);
+	  if (is_pair(cdr(tree)))
+	    return(check_for_global_set(sc, cdr(tree), e));
+	}
     }
   return(e);
 }
@@ -37735,13 +37778,15 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 	}
     }
   
-  sc->w = check_for_global_set(sc, cdar(x), sc->w);
+  if (is_pair(cdar(x)))
+    {
+      sc->w = check_for_global_set(sc, cdar(x), sc->w);
 
-  for (p = cdar(x); is_pair(p); p = cdr(p))
-    if ((is_pair(car(p))) &&
-	(!is_checked(car(p))))
-      optimize_expression(sc, p, hop, sc->w);
-
+      for (p = cdar(x); is_pair(p); p = cdr(p))
+	if ((is_pair(car(p))) &&
+	    (!is_checked(car(p))))
+	  optimize_expression(sc, p, hop, sc->w);
+    }
   return(false);
 }
 
@@ -39933,9 +39978,10 @@ static s7_pointer check_if(s7_scheme *sc)
 			{
 			  if (is_h_safe_c_s(test))
 			    {
-			      if (car(t) == sc->QUOTE)
+			      if ((car(t) == sc->QUOTE) &&
+				  (car(test) == sc->NULLP))
 				{
-				  set_syntax_op(sc->code, sc->SAFE_IF_CS_Q_P);
+				  set_syntax_op(sc->code, sc->SAFE_IF_IS_NULL_Q_P);
 				  fcdr(sc->code) = cadr(test);
 				}
 			      else 
@@ -41078,6 +41124,7 @@ static bool is_step_dox_safe(s7_scheme *sc, s7_pointer p)
 	 (op == HOP_SAFE_C_S_opCq));
 }
 
+
 static bool is_end_dox_safe(s7_scheme *sc, s7_pointer p)
 {
   int op;
@@ -41097,6 +41144,7 @@ static bool is_end_dox_safe(s7_scheme *sc, s7_pointer p)
 	 (op == HOP_SAFE_C_opSq_S) ||
 	 (op == HOP_SAFE_C_S_opSq));
 }
+
 
 static s7_pointer init_dox_eval(s7_scheme *sc, s7_pointer code)
 {
@@ -41156,6 +41204,7 @@ static s7_pointer init_dox_eval(s7_scheme *sc, s7_pointer code)
   return(code);
 }
 
+
 static s7_pointer step_dox_eval(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer args, val;
@@ -41208,62 +41257,55 @@ static s7_pointer step_dox_eval(s7_scheme *sc, s7_pointer code)
 
 static s7_pointer end_dox_eval(s7_scheme *sc, s7_pointer code)
 {
-  s7_pointer args, val;
+  s7_pointer args;
   switch (optimize_data(code))
     {
     case HOP_SAFE_C_C:
       return(c_call(code)(sc, cdr(code)));
       
     case HOP_SAFE_C_S:
-      car(sc->T1_1) = finder(sc, cadr(code));
+      car(sc->T1_1) = slot_value(environment_dox1(sc->envir));
       return(c_call(code)(sc, sc->T1_1));
       
     case HOP_SAFE_C_SC:
       args = cdr(code);
-      car(sc->T2_1) = finder(sc, car(args));
+      car(sc->T2_1) = slot_value(environment_dox1(sc->envir));
       car(sc->T2_2) = cadr(args);
       return(c_call(code)(sc, sc->T2_1));
       
     case HOP_SAFE_C_CS:
       args = cdr(code);
-      car(sc->T2_2) = finder(sc, cadr(args));
+      car(sc->T2_2) = slot_value(environment_dox1(sc->envir));
       car(sc->T2_1) = car(args);
       return(c_call(code)(sc, sc->T2_1));
       
     case HOP_SAFE_C_SS:
-      args = cdr(code);
-      val = finder(sc, car(args));
-      car(sc->T2_2) = finder(sc, cadr(args));
-      car(sc->T2_1) = val;
+      car(sc->T2_1) = slot_value(environment_dox1(sc->envir));
+      car(sc->T2_2) = slot_value(environment_dox2(sc->envir));
       return(c_call(code)(sc, sc->T2_1));
       
     case HOP_SAFE_C_QS:
       args = cdr(code);
-      car(sc->T2_2) = finder(sc, cadr(args));
+      car(sc->T2_2) = slot_value(environment_dox1(sc->envir));
       car(sc->T2_1) = cadr(car(args));
       return(c_call(code)(sc, sc->T2_1));
       
     case HOP_SAFE_C_S_opCq:
       args = cdr(code);
-      val = finder(sc, car(args));
       car(sc->T2_2) = c_call(cadr(args))(sc, cdr(cadr(args))); /* any number of constants here */
-      car(sc->T2_1) = val;
+      car(sc->T2_1) = slot_value(environment_dox1(sc->envir));
       return(c_call(code)(sc, sc->T2_1));
       
     case HOP_SAFE_C_opSq_S:
-      args = cdr(code);
-      car(sc->T1_1) = finder(sc, cadr(car(args)));
-      sc->temp4 = c_call(car(args))(sc, sc->T1_1);
-      car(sc->T2_2) = finder(sc, cadr(args));
-      car(sc->T2_1) = sc->temp4;
+      car(sc->T1_1) = slot_value(environment_dox1(sc->envir));
+      car(sc->T2_1) = c_call(cadr(code))(sc, sc->T1_1);
+      car(sc->T2_2) = slot_value(environment_dox2(sc->envir));
       return(c_call(code)(sc, sc->T2_1));
 
     case HOP_SAFE_C_S_opSq:
-      args = caddr(code);
-      car(sc->T1_1) = finder(sc, cadr(args));
-      sc->temp4 = c_call(args)(sc, sc->T1_1);
-      car(sc->T2_1) = finder(sc, cadr(code));
-      car(sc->T2_2) = sc->temp4;
+      car(sc->T1_1) = slot_value(environment_dox2(sc->envir));
+      car(sc->T2_2) = c_call(caddr(code))(sc, sc->T1_1);
+      car(sc->T2_1) = slot_value(environment_dox1(sc->envir));
       return(c_call(code)(sc, sc->T2_1));
 
     default:
@@ -43510,7 +43552,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
 	long long int id;
-	s7_pointer frame, vars, slot;
+	s7_pointer frame, vars, slot, end;
 	NEW_FRAME(sc, sc->envir, frame); /* new frame is not tied into the symbol lookup process yet */
 	for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
 	  {
@@ -43526,7 +43568,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	id = frame_id(frame);
 	for (slot = environment_slots(frame); is_slot(slot); slot = next_slot(slot))
 	  symbol_set_local(slot_symbol(slot), id, slot);
+      
+	end = caadr(sc->code);
+	switch (optimize_data(end))
+	  {
+	  case HOP_SAFE_C_C:
+	    break;
+	  
+	  case HOP_SAFE_C_S:
+	  case HOP_SAFE_C_SC:
+	  case HOP_SAFE_C_S_opCq:
+	    environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
+	    break;
+
+	  case HOP_SAFE_C_CS:
+	  case HOP_SAFE_C_QS:
+	    environment_dox1(sc->envir) = find_symbol(sc, caddr(end));
+	    break;
+
+	  case HOP_SAFE_C_SS:
+	    environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
+	    environment_dox2(sc->envir) = find_symbol(sc, caddr(end));
+	    break;
+
+	  case HOP_SAFE_C_opSq_S:
+	    environment_dox1(sc->envir) = find_symbol(sc, cadr(cadr(end)));
+	    environment_dox2(sc->envir) = find_symbol(sc, caddr(end));
+	    break;
+
+	  case HOP_SAFE_C_S_opSq:
+	    environment_dox1(sc->envir) = find_symbol(sc, cadr(end));
+	    environment_dox2(sc->envir) = find_symbol(sc, cadr(caddr(end)));
+	    break;
+	  }
       }
+
       goto DOX_END;
 	
 
@@ -52520,9 +52596,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
       /* --------------- */
-    case OP_SAFE_IF_CS_Q_P:
-      car(sc->T1_1) = finder(sc, fcdr(sc->code));
-      if (is_true(sc, c_call(car(sc->code))(sc, sc->T1_1)))
+    case OP_SAFE_IF_IS_NULL_Q_P:
+      if (is_null(finder(sc, fcdr(sc->code))))
 	{
 	  sc->value = cadr(cadr(sc->code));
 	  goto START;
@@ -60377,7 +60452,6 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_CC_P_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CC_P_P);  
   sc->SAFE_IF_CS_P =          assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P);  
   sc->SAFE_IF_CS_P_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P_P);  
-  sc->SAFE_IF_CS_Q_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_Q_P);  
   sc->SAFE_IF_CS_P_X =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_P_X);  
   sc->SAFE_IF_CS_X_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_CS_X_P);
   sc->SAFE_IF_CSS_X_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSS_X_P);
@@ -60391,6 +60465,7 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_CSC_P_P =       assign_internal_syntax(sc, "if",      OP_SAFE_IF_CSC_P_P);    
   sc->SAFE_IF_C_SS_P =        assign_internal_syntax(sc, "if",      OP_SAFE_IF_C_SS_P);    
   sc->SAFE_IF_C_C_P =         assign_internal_syntax(sc, "if",      OP_SAFE_IF_C_C_P);    
+  sc->SAFE_IF_IS_NULL_Q_P =   assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_NULL_Q_P);  
   sc->SAFE_IF_IS_PAIR_P =     assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_PAIR_P);  
   sc->SAFE_IF_IS_PAIR_P_X =   assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_PAIR_P_X);  
   sc->SAFE_IF_IS_PAIR_P_P =   assign_internal_syntax(sc, "if",      OP_SAFE_IF_IS_PAIR_P_P);  
@@ -60760,6 +60835,13 @@ s7_scheme *s7_init(void)
    */
 
   sc->NULLP = s7_define_safe_function(sc,             "null?",                     g_is_null,                  1, 0, false, H_is_null);
+  set_ignores_methods(sc->NULLP);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, sc->NULLP);
+    c_function_data(p)->generic_ff = g_is_null_with_methods;
+  }
+
   sc->LISTP = s7_define_safe_function(sc,             "list?",                     g_is_list,                  1, 0, false, H_is_list);
   sc->PAIRP = s7_define_safe_function(sc,             "pair?",                     g_is_pair,                  1, 0, false, H_is_pair);
   sc->CONS = s7_define_safe_function(sc,              "cons",                      g_cons,                     2, 0, false, H_cons);
@@ -61274,6 +61356,11 @@ s7_scheme *s7_init(void)
  * SOMEDAY: fix do envs (unopt case -- saved-args)
  *            would it work to simply replace the old slot (not remake the entire env)?
  * TODO: opt calls (is_eof for example) are ignoring the method possibility
+ *       we use c_call(func) which points to c_function_call(orig_func)
+ *       c_function_call is the ff field.  We could start with ff set to the no-methods case, then
+ *       if any is added, set ff to the method one. (this would be open-env with a built-in func as a member --
+ *       how fast can that be checked?, or could be see the built-in used as a slot symbol? -- augment-env!)
+ *   see g_is_null -- an experiment
  *
  * we need integer_length everywhere! 
  *   TODO: these fixups are ignored by the optimized cases
@@ -61283,14 +61370,14 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * timing info [starting from May-11 approximately]
- * bench    42736                     8752 8051 8004
+ * bench    42736                     8752 8051 8008
  * lint     13424 1231 1326 1320 1270 1245 1148 1146
- *                               9811 9786 7881 8107
- * index    44300 4988 4725 3935 3477 3291 3005 2975
+ *                               9811 9786 7881 8105
+ * index    44300 4988 4725 3935 3477 3291 3005 2971
  * s7test         1721 1456 1430 1375 1358 1297 1267
  * t455            265  256  218        89   55   54
  * t502                  90   72        43   39   38
- * lat             229        63             52   51
+ * lat             229        63             52   50
  * calls                               310  242  236
  *
  * we can't assume things like floor return an integer because there might be methods in play,
