@@ -1873,6 +1873,9 @@
   (define (make-it . names) (apply vector names))
   (define (hi) (make-it pi pi pi pi))
   (test (hi) (vector pi pi pi pi)))
+(test (let () (define (hi a b c d) (+ a (* (- b c) d))) (define (ho) (hi 1 2 3 4)) (ho)) -3)
+(test (let () (define (hi a b c d) (+ a (* d (- b c)))) (define (ho) (hi 1 2 3 4)) (ho)) -3)
+
 
 
 

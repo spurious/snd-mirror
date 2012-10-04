@@ -635,6 +635,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_opSCq_opSCq, HOP_SAFE_C_opSCq_opSCq, OP_SAFE_C_opSSq_opSSq, HOP_SAFE_C_opSSq_opSSq,
       OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
       OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opXXXq, HOP_SAFE_C_opXXXq, 
+      OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
       
       OP_THUNK, HOP_THUNK, 
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_Sp, HOP_CLOSURE_Sp, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
@@ -742,6 +743,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_c_opscq_opscq", "h_safe_c_opscq_opscq", "safe_c_opssq_opssq", "h_safe_c_opssq_opssq",
      "safe_c_opssq_s", "h_safe_c_opssq_s", "safe_c_opscq_s", "h_safe_c_opscq_s", "safe_c_opcsq_s", "h_safe_c_opcsq_s",
      "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opxxxq", "h_safe_c_opxxxq", 
+     "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
 
      "thunk", "h_thunk", 
      "closure_s", "h_closure_s", "closure_sp", "h_closure_sp", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
@@ -1438,7 +1440,6 @@ static void init_types(void)
 /* T_STACK, T_SLOT, T_BAFFLE, and T_COUNTER are internal (stacks, bindings, call/cc barriers, map circular list checks)
  */
 
-#define TYPE_BITS                     8
 #define typeflag(p)                   ((p)->tf.flag)
 #define typesflag(p)                  ((p)->tf.sflag)
 #define type(p)                       ((p)->tf.type_field)
@@ -1461,6 +1462,8 @@ static void init_types(void)
  *   array lookups.
  */
 #define NOT_IN_HEAP -1
+#define TYPE_BITS                     8
+
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 0))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
@@ -1486,7 +1489,7 @@ static void init_types(void)
 #define set_optimized(p)              typeflag(p) |= T_OPTIMIZED
 static int t_optimized = T_OPTIMIZED;
 /* #define is_optimized(p)               ((typeflag(p) & t_optimized) != 0) */
-#define clear_optimized(p)            typeflag(p) &= ~(T_OPTIMIZED)
+#define clear_optimized(p)            typeflag(p) &= (~T_OPTIMIZED)
 #define OPTIMIZED_PAIR                (unsigned short)(T_PAIR | T_OPTIMIZED)
 #define is_optimized(p)               (typesflag(p) == OPTIMIZED_PAIR)
 /*   this is faster than the bit extraction above */
@@ -1532,6 +1535,15 @@ static int t_optimized = T_OPTIMIZED;
 /* this marks functions that guarantee their returned value is either a newly minted temporary cell
  *   (not one of the function args and not stored anywhere outside-accessible), or an immutable 
  *   constant like real_zero.
+ */
+
+#define T_COLLECTED                   (1 << (TYPE_BITS + 9))
+#define is_collected(p)               ((typeflag(p) & T_COLLECTED) != 0)
+#define set_collected(p)              typeflag(p) |= T_COLLECTED
+#define clear_collected(p)            typeflag(p) &= (~T_COLLECTED)
+/* this is a transient flag used by the printer to catch cycles.  It affects only objects
+ *   that have structure, whereas T_RETURNS_TEMP only affects functions.  We can use a
+ *   low bit (bit 7 for example), because collect_shared_info inspects the object's type.
  */
 
 #define T_LINE_NUMBER                 (1 << (TYPE_BITS + 10))
@@ -2198,8 +2210,8 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
-#if 0
+#if 1
+#if 1
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -5013,7 +5025,11 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 	  s7_pointer p;
 	  p = car(x);
 	  if (is_pair(p))
-	    s7_make_slot(sc, new_e, car(p), cdr(p));
+	    {
+	      s7_make_slot(sc, new_e, car(p), cdr(p));
+	      if (ignores_methods(car(p)))
+		stop_ignoring_methods(sc, car(p));
+	    }
 	  else append_environment(sc, new_e, p);
 	  /* env as arg for common case: 
 	   *   (with-environment (augment-environment (current-environment) (object-environment obj)) ...)
@@ -5021,9 +5037,6 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindin
 	   * But chaining is not safe or even unambiguous, and this form will not work if obj's fields
 	   *  are being set -- we've made a new slot!  Not sure how to handle this.
 	   */
-
-	  if (ignores_methods(car(p)))
-	    stop_ignoring_methods(sc, car(p));
 	}
       s7_gc_unprotect_at(sc, gc_loc);
     }
@@ -20943,31 +20956,39 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 {
   /* this only pertains to printing */
   int i, ref = -1;
-  s7_pointer *p, *objs_end;
-  
-  objs_end = (s7_pointer *)(ci->objs + ci->top);
-
   /* look for top in current list.
+   * 
+   * As we collect objects (guaranteed to have structure) we set the collected bit.  If we ever
+   *   encounter an object with that bit on, we've seen it before so we have a possible cycle.
+   *   Once the collection pass is done, we run through our list, and clear all these bits.
    *
-   * this looks dumb, but everything I've tried (hash tables, binary trees, min/max/bit checks) has been
-   *   a lot slower.
+   * TODO: perhaps use this now in place of the cycle counter below
    */
-  for (p = ci->objs; p < objs_end; p++)
-    if ((*p) == top)
-      {
-	i = (int)(p - ci->objs);
-	if (ci->refs[i] == 0)
-	  {
-	    ci->has_hits = true;
-	    ci->refs[i] = ++ci->ref;  /* if found, set the ref number */
-	  }
-	ref = ci->refs[i];
-	break;
-      }
 
-  if (ref == -1)
+  if (is_collected(top))
     {
-      /* top not found -- add it to the list */
+      s7_pointer *p, *objs_end;
+      objs_end = (s7_pointer *)(ci->objs + ci->top);
+
+      for (p = ci->objs; p < objs_end; p++)
+	if ((*p) == top)
+	  {
+	    i = (int)(p - ci->objs);
+	    if (ci->refs[i] == 0)
+	      {
+		ci->has_hits = true;
+		ci->refs[i] = ++ci->ref;  /* if found, set the ref number */
+	      }
+	    ref = ci->refs[i];
+	    break;
+	  }
+    }
+  else
+    {
+      /* top not seen before -- add it to the list */
+      
+      set_collected(top);
+
       if (ci->top == ci->size)
 	enlarge_shared_info(ci);
       ci->objs[ci->top++] = top;
@@ -21109,6 +21130,16 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 
   /* collect all pointers associated with top */
   collect_shared_info(sc, ci, top);
+
+  {
+    int i;
+    for (i = 0; i < ci->top; i++)
+      {
+	s7_pointer p;
+	p = ci->objs[i];
+	clear_collected(p);
+      }
+  }
 
   if (!(ci->has_hits))
     return(NULL);
@@ -38179,6 +38210,12 @@ static int combine_ops(s7_scheme *sc, int op1, s7_pointer e1, s7_pointer e2)
 	case OP_SAFE_C_SS:
 	  return(OP_SAFE_C_S_opSSq);
 
+	case OP_SAFE_C_opSSq_S:
+	  return(OP_SAFE_C_S_op_opSSq_Sq);
+
+	case OP_SAFE_C_S_opSSq:
+	  return(OP_SAFE_C_S_op_S_opSSqq);
+
 	default:
 	  return(OP_SAFE_C_SZ);
 	  break;
@@ -38430,6 +38467,8 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 	    case OP_SAFE_C_C_opSCq:
 	    case OP_SAFE_C_S_opSSq:
 	    case OP_SAFE_C_S_opCSq:
+	    case OP_SAFE_C_S_op_opSSq_Sq:
+	    case OP_SAFE_C_S_op_S_opSSqq:
 	    case OP_SAFE_C_SZ:
 	    case OP_SAFE_C_CZ:
 	    case OP_SAFE_C_QZ:
@@ -40380,6 +40419,8 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	   *       (define (hi) (let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (< ctr 4) #1# (newline)))))
 	   *   tickles this bug.  In all my current test cases, we never get over 350 (lint), so checking
 	   *   for 5000 seems safe.
+	   *
+	   * (added later: this comment may now be out-of-date)
 	   */
 	  if (body_is_safe(sc, x, body, true, &bad_set))
 	    {
@@ -44377,7 +44418,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer args, p;
 		int num_args;
-		/* fprintf(stderr, "safe %s\n", DISPLAY(code)); */
 
 		num_args = integer(fcdr(cdr(code)));
 		if ((num_args != 0) &&
@@ -44660,7 +44700,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* (let () (define* (hi (a 1)) (+ a 1)) (define (ho) (hi (* 2 3))) (ho)) 
 		 * (do ((i 0 (+ i 1))) ((= i 11)) (envelope-interp (/ i 21) '(0 0 100 1)))
 		 */
-		/* fprintf(stderr, "safe closure* all_x: %s\n", DISPLAY(code)); */
 
 		e = closure_environment(ecdr(code));
 		for (args = cdr(code), p = environment_slots(e), orig_args = closure_args(ecdr(code)); 
@@ -45475,7 +45514,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* (let () (define* (hi (a 1)) (list a)) (define (ho) (hi (* 2 3))) (ho)) 
 		 */
 		s7_pointer args, p, func, new_args;
-		/* fprintf(stderr, "unsafe closure* %s %s\n", DISPLAY(code), DISPLAY(closure_args(ecdr(code)))); */
 
 		func = ecdr(code);
 		sc->args = make_list(sc, closure_star_arity_to_int(sc, func), sc->NIL);
@@ -48671,6 +48709,56 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
+	    case OP_SAFE_C_S_op_opSSq_Sq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_S_op_opSSq_Sq:
+	      {
+		/* (let () (define (hi a b c d) (+ a (* (- b c) d))) (define (ho) (hi 1 2 3 4)) (ho)) */
+		s7_pointer args, val, val1;
+		args = caddr(code);                            /* (* (- b c) d) */
+		val1 = cadr(args);
+		val = finder(sc, cadr(val1));                  /* b */
+		car(sc->T2_2) = finder(sc, caddr(val1));       /* c */
+		car(sc->T2_1) = val;
+		val = finder(sc, caddr(args));                 /* d */
+		car(sc->T2_1) = c_call(val1)(sc, sc->T2_1);    /* (- b c) */
+		car(sc->T2_2) = val;
+		car(sc->T2_2) = c_call(args)(sc, sc->T2_1);    /* (* ...) */
+		car(sc->T2_1) = finder(sc, cadr(code));        /* a */
+		sc->value = c_call(code)(sc, sc->T2_1);        /* (+ ...) */
+		goto START;
+	      }
+
+	      
+	    case OP_SAFE_C_S_op_S_opSSqq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_S_op_S_opSSqq:
+	      {
+		/* (let () (define (hi a b c d) (+ a (* d (- b c)))) (define (ho) (hi 1 2 3 4)) (ho)) */
+		s7_pointer args, val, val1;
+		args = caddr(code);                            /* (* d (- b c)) */
+		val1 = caddr(args);
+		val = finder(sc, cadr(val1));                  /* b */
+		car(sc->T2_2) = finder(sc, caddr(val1));       /* c */
+		car(sc->T2_1) = val;
+		val = finder(sc, cadr(args));                  /* d */
+		car(sc->T2_2) = c_call(val1)(sc, sc->T2_1);    /* (- b c) */
+		car(sc->T2_1) = val;
+		car(sc->T2_2) = c_call(args)(sc, sc->T2_1);    /* (* ...) */
+		car(sc->T2_1) = finder(sc, cadr(code));        /* a */
+		sc->value = c_call(code)(sc, sc->T2_1);        /* (+ ...) */
+		goto START;
+	      }
+	      
+	      
 	    case OP_SAFE_C_opSCq_S:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -49290,7 +49378,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* trailers */
 	  
 #if WITH_COUNTS
-	  add_expr(sc, sc->code);
+	  /* add_expr(sc, sc->code); */
 #endif
 	  sc->cur_code = sc->code;
 	  
@@ -51964,7 +52052,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer val, code, args;
 	    code = car(p);
-	    switch (optimize_data(code))
+	    switch (optimize_data(code)) /* is_orx_safe */
 	      {
 	      case HOP_SAFE_C_C:
 		sc->value = c_call(code)(sc, cdr(code));
@@ -52054,7 +52142,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer val, code, args;
 	    code = car(p);
-	    switch (optimize_data(code))
+	    switch (optimize_data(code)) /* is_orx_safe */
 	      {
 	      case HOP_SAFE_C_C:
 		sc->value = c_call(code)(sc, cdr(code));
@@ -53869,7 +53957,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_pair(code))
 	      {
 		s7_pointer args, val;
-		switch (optimize_data(code))
+		switch (optimize_data(code)) /* is_orx_safe */
 		  {
 		  case HOP_SAFE_C_C:
 		    sc->value = c_call(code)(sc, cdr(code));
@@ -54011,7 +54099,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_optimized(code))
 	  {
 	    s7_pointer args, val;
-	    switch (optimize_data(code))
+	    switch (optimize_data(code)) /* not is_orx_safe although we're mimicking that case, the default branch handles the rest */
 	      {
 	      case HOP_SAFE_C_C:
 		sc->value = c_call(code)(sc, cdr(code));
@@ -54028,7 +54116,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_2) = cadr(args);
 		sc->value = c_call(code)(sc, sc->T2_1);
 		break;
-		
+
+		/* this branch is never hit */
 	      case HOP_SAFE_C_CS:
 		args = cdr(code);
 		car(sc->T2_2) = finder(sc, cadr(args));
@@ -54050,7 +54139,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_2) = cadr(cadr(args));
 		sc->value = c_call(code)(sc, sc->T2_1);
 		break;
-		
+
 	      case HOP_SAFE_C_opSq:
 		args = cadr(code);
 		car(sc->T1_1) = finder(sc, cadr(args));
@@ -54127,7 +54216,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer val, code, args;
 	    code = car(p);
-	    switch (optimize_data(code))
+	    switch (optimize_data(code)) /* is_orx_safe */
 	      {
 	      case HOP_SAFE_C_C:
 		sc->value = c_call(code)(sc, cdr(code));
@@ -54256,7 +54345,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_optimized(code))
 	  {
 	    s7_pointer args, val;
-	    switch (optimize_data(code))
+	    switch (optimize_data(code)) /* not is_orx_safe although we're mimicking that case, the default branch handles the rest */
 	      {
 	      case HOP_SAFE_C_C:
 		sc->value = c_call(code)(sc, cdr(code));
@@ -54273,14 +54362,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_2) = cadr(args);
 		sc->value = c_call(code)(sc, sc->T2_1);
 		break;
-		
+#if 0		
 	      case HOP_SAFE_C_CS:
 		args = cdr(code);
 		car(sc->T2_2) = finder(sc, cadr(args));
 		car(sc->T2_1) = car(args);
 		sc->value = c_call(code)(sc, sc->T2_1);
 		break;
-		
+#endif		
 	      case HOP_SAFE_C_SS:
 		args = cdr(code);
 		val = finder(sc, car(args));
@@ -54382,7 +54471,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer val, code, args;
 	    code = car(p);
-	    switch (optimize_data(code))
+	    switch (optimize_data(code)) /* is_orx_safe */
 	      {
 	      case HOP_SAFE_C_C:
 		sc->value = c_call(code)(sc, cdr(code));
@@ -61370,9 +61459,9 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * timing info [starting from May-11 approximately]
- * bench    42736                     8752 8051 8008
- * lint     13424 1231 1326 1320 1270 1245 1148 1146
- *                               9811 9786 7881 8105
+ * bench    42736                     8752 8051 8006
+ * lint     13424 1231 1326 1320 1270 1245 1148 1151
+ *                                    9328      8049
  * index    44300 4988 4725 3935 3477 3291 3005 2971
  * s7test         1721 1456 1430 1375 1358 1297 1267
  * t455            265  256  218        89   55   54

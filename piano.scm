@@ -20,28 +20,28 @@
 (define (one-pole-allpass-bank gen input)
   (set! (gen 'input) input)
   (with-environment gen
-    (set! y1 (+ (* coeff (- input y1)) x1))
+    (set! y1 (+ x1 (* coeff (- input y1))))
     (set! x1 input)
 
-    (set! y2 (+ (* coeff (- y1 y2)) x2))
+    (set! y2 (+ x2 (* coeff (- y1 y2))))
     (set! x2 y1)
 
-    (set! y3 (+ (* coeff (- y2 y3)) x3))
+    (set! y3 (+ x3 (* coeff (- y2 y3))))
     (set! x3 y2)
 
-    (set! y4 (+ (* coeff (- y3 y4)) x4))
+    (set! y4 (+ x4 (* coeff (- y3 y4))))
     (set! x4 y3)
 
-    (set! y5 (+ (* coeff (- y4 y5)) x5))
+    (set! y5 (+ x5 (* coeff (- y4 y5))))
     (set! x5 y4)
 
-    (set! y6 (+ (* coeff (- y5 y6)) x6))
+    (set! y6 (+ x6 (* coeff (- y5 y6))))
     (set! x6 y5)
 
-    (set! y7 (+ (* coeff (- y6 y7)) x7))
+    (set! y7 (+ x7 (* coeff (- y6 y7))))
     (set! x7 y6)
 
-    (set! y8 (+ (* coeff (- y7 y8)) x8))
+    (set! y8 (+ x8 (* coeff (- y7 y8))))
     (set! x8 y7)
     y8))
 
