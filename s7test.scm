@@ -1875,7 +1875,7 @@
   (test (hi) (vector pi pi pi pi)))
 (test (let () (define (hi a b c d) (+ a (* (- b c) d))) (define (ho) (hi 1 2 3 4)) (ho)) -3)
 (test (let () (define (hi a b c d) (+ a (* d (- b c)))) (define (ho) (hi 1 2 3 4)) (ho)) -3)
-
+(test (let () (define (hi) (let ((x (values 1 2))) (if x (list x)))) (define (ho) (hi)) (catch #t (lambda () (ho)) (lambda args #f)) (ho)) 'error)
 
 
 
@@ -17961,10 +17961,6 @@ in s7:
 (test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 0) (func (- a 1) (- b 1) (- c 1)) 0))) 9)
 
 (test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 0) (func (- a 1) (- b 1)) 0))) 'error)
-;;; what about a named let* where we treat the initial values as the defaults?
-;;; (let* func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 0) (func (- a 1) (- b 1)) 0)))
-;;; then uses 3 as the default "c" arg in the call
-
 (test (let func () 1) 1)
 (test (let ((a 1)) (let func () (if (> a 1) (begin (set! a (- a 1)) (func)) 0))) 0)
 (test (let func1 ((a 1)) (+ (let func2 ((a 2)) a) a)) 3)
@@ -18191,6 +18187,12 @@ in s7:
 (test (let* func ((i 1) (j 2) (k (+ j 1))) (+ i j k (let () (set! j -123) (if (> i 0) (func (- i 1)) 0)))) 11)
 (test (let* func1 ((a 1) (b 2)) (+ a b (let* func2 ((a -1) (b (- a 1))) (if (< a 0) (func2 (+ a 1)) b)))) 1) ; 2nd b is -2
 (test (procedure? (let* func ((i 1) (j 2) (k (+ j 1))) func)) #t)
+
+(test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func (- a 1) (- b 1)) 0))) 4)
+(test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func (- a 1) :b (- b 1)) 0))) 4)
+(test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func :a (- a 1) :b (- b 1)) 0))) 4)
+(test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func :b (- b 1) :a (- a 1)) 0))) 4)
+(test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func :a (- a 1)) 0))) 5)
 
 ;;; these ought to work, but see s7.c under EVAL: (it's a speed issue)
 ;(test (let let ((i 0)) (if (< i 3) (let (+ i 1)) i)) 3)
