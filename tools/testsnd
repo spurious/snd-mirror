@@ -312,3 +312,37 @@ echo ' '
 echo ' '
 date
 make allclean
+
+
+echo ' -------------------------------- s7 gc tests -------------------------------- '
+make allclean
+rm -f snd
+echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --with-no-gui '
+./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --with-no-gui
+make
+./snd s7test.scm
+echo ' '
+echo ' '
+date
+rm s7.o
+
+echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --with-no-gui '
+./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --with-no-gui
+make
+./snd s7test.scm
+echo ' '
+echo ' '
+date
+rm s7.o
+
+echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --with-no-gui '
+./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --with-no-gui
+make
+./snd s7test.scm
+echo ' '
+echo ' '
+date
+make allclean
+
+
+
