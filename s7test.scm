@@ -14725,6 +14725,7 @@ in s7:
 (let () (define (jtest8) (let ((j #f)) (do ((i 0 (+ i 1))) ((= i 10) (car j)) (if (= i 3) (set! j (list i)))))) (test (jtest8) 3))
 (let () (define (jtest9) (let ((j #f)) (do ((i 0 (+ i 1))) ((= i 10) (j 0)) (if (= i 3) (set! j (vector i)))))) (test (jtest9) 3))
 (let () (define (jtest10) (let ((j (cons 1 2))) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (set-car! j i))))) (test (jtest10) '(3 . 2)))
+(let () (define (jtest10a) (let ((j (cons 1 2))) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (list-set! j 0 i))))) (test (jtest10a) '(3 . 2)))
 (let () (define (jtest11) (let ((j (cons 1 2))) (do ((i 0 (+ i 1))) ((= i 10) j) (if (= i 3) (set! j (cons 0 i)))))) (test (jtest11) '(0 . 3)))
 ;; (let ((f #f)) (define (jtest12) (do ((i 0 (+ i 1))) ((= i 10) (f)) (if (= i 3) (set! f (lambda () i))))) (test (jtest12) 3))
 ;; this lambda business is a separate issue (s7 returns 10 here)

@@ -339,7 +339,7 @@
        (set! (mus-srate) old-srate)))))
 
 
-(defmacro with-sound (args . body)
+(define-macro (with-sound args . body)
   `(with-sound-helper (lambda () ,@body) ,@args))
 
 
