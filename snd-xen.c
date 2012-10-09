@@ -2643,15 +2643,15 @@ void g_xen_initialize(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_bes_k1, g_k1_w,     1, 0, 0, H_k1);
   XEN_DEFINE_SAFE_PROCEDURE(S_bes_kn, g_kn_w,     2, 0, 0, H_kn);
 
-  XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
-  XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
-  XEN_DEFINE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
+  XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
+  XEN_DEFINE_SAFE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
+  XEN_DEFINE_SAFE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-  XEN_DEFINE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
+  XEN_DEFINE_SAFE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
 #endif
 
 #if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
-  XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
+  XEN_DEFINE_SAFE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 
 #endif

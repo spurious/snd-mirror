@@ -764,7 +764,7 @@
 				     (not (list-ref var-data 1)) ; a stop-gap -- refd?
 				     (not (list-ref var-data 2)) ;               set?
 				     (>= (length var-data) 5)
-				     (not (member (list-ref var-data 4) (list +any+ +symbol+)))
+				     (not (memq (list-ref var-data 4) (list +any+ +symbol+)))
 				     (not (checker (list-ref var-data 4))))
 				(lint-format "~A's argument ~D might not be a~A ~A: ~S:~A" 
 					     name line-number head arg-number 
@@ -1935,7 +1935,7 @@
 		      
 		      (let ((rst (or (not (pair? args))
 				     (negative? (length args))
-				     (member ':rest args)))
+				     (memq :rest args)))
 			    (pargs (if (pair? args) (proper-list args) ())))
 			
 			(let ((call-args (length (cdr form)))
@@ -1954,11 +1954,11 @@
 						 name line-number head 
 						 (truncated-list->string form))))
 			    (if (memq type '(define* lambda*))
-				(if (not (member ':allow-other-keys pargs))
+				(if (not (memq :allow-other-keys pargs))
 				    (for-each
 				     (lambda (arg)
 				       (if (and (keyword? arg)
-						(not (member arg '(:rest :key :optional))))
+						(not (memq arg '(:rest :key :optional))))
 					   (if (not (member (keyword->symbol arg) pargs 
 								 (lambda (a b)
 								   (if (pair? b) 
@@ -1997,11 +1997,11 @@
 			    (if (and (pair? source)
 				     (eq? (car source) 'lambda*))
 				(let ((decls (cadr source)))
-				  (if (not (member ':allow-other-keys decls))
+				  (if (not (memq :allow-other-keys decls))
 				      (for-each
 				       (lambda (arg)
 					 (if (and (keyword? arg)
-						  (not (member arg '(:rest :key :optional))))
+						  (not (memq arg '(:rest :key :optional))))
 					     (if (not (member arg decls 
 								   (lambda (a b) 
 								     (if (pair? b) 
@@ -2079,7 +2079,7 @@
 						   (set! arity (list arglen 0 #f)))
 					       (if (negative? arglen)
 						   (set! arity (list 0 (abs arglen) #t))
-						   (set! arity (list 0 arglen (member ':rest (cadr (cadr form))))))))))
+						   (set! arity (list 0 arglen (memq :rest (cadr (cadr form))))))))))
 				 
 				 (if (pair? arity)
 				     (if (< args (car arity))
@@ -2419,7 +2419,7 @@
 				    (map
 				     (lambda (arg)
 				       (if (symbol? arg)
-					   (if (member arg '(:optional :key :rest :allow-other-keys))
+					   (if (memq arg '(:optional :key :rest :allow-other-keys))
 					       (values)                  ; map omits this entry 
 					       (list arg #f #f))
 					   (if (or (not (pair? arg))

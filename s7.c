@@ -1050,7 +1050,7 @@ typedef struct s7_cell {
 	  unsigned int line, file; /* __func__ location if it is known */
 	} fnc;
 	struct {
-	  s7_pointer dox1, dox2;
+	  s7_pointer dox1, dox2;   /* do loop variables */
 	} dox;
       } edat;
     } envr;
@@ -1525,14 +1525,7 @@ static int t_optimized = T_OPTIMIZED;
 /* this marks the symbol associated with a run-time macro and distinguishes the value from an ordinary macro
  */
 
-#define T_GLOBAL                      (1 << (TYPE_BITS + 7))
-#define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
-/* this marks something defined (bound) at the top-level, and never defined locally */
-#define set_global(p)                 typeflag(p) |= T_GLOBAL
-#define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
-
-
-#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 8))
+#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 7))
 #define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
 #define multiple_value(p)             p
@@ -1540,6 +1533,13 @@ static int t_optimized = T_OPTIMIZED;
  *    chance to be spliced into its caller's argument list.  It is normally
  *    on only for a very short time.
  */
+
+#define T_GLOBAL                      (1 << (TYPE_BITS + 8))
+#define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
+/* this marks something defined (bound) at the top-level, and never defined locally */
+#define set_global(p)                 typeflag(p) |= T_GLOBAL
+#define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
+/* swapped T_GLOBAL and T_MULTIPLE_VALUE 9-Oct-12 so I can use the T_GLOBAL bit on pairs */
 
 #define T_RETURNS_TEMP                (1 << (TYPE_BITS + 9))
 #define returns_temp(p)               ((typeflag(p) & T_RETURNS_TEMP) != 0)
@@ -5112,6 +5112,7 @@ new environment."
 
   s7_pointer x;
   int i;
+  static s7_pointer errstr = NULL;
 
   if (!is_null(args))
     for (i = 1, x = args; is_not_null(x); x = cdr(x), i++)
@@ -5123,8 +5124,11 @@ new environment."
 	    if (!is_pair(p))
 	      return(wrong_type_argument(sc, sc->ENVIRONMENT, make_integer(sc, i), p, T_PAIR));
 	    if (!is_symbol(car(p)))
-	      return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT, make_integer(sc, i), p, 
-						   make_protected_string(sc, "a pair whose car is a symbol: '(symbol . value)")));
+	      {
+		if (!errstr)
+		  errstr = s7_make_permanent_string("a pair whose car is a symbol: '(symbol . value)");
+		return(wrong_type_argument_with_type(sc, sc->ENVIRONMENT, make_integer(sc, i), p, errstr));
+	      }
 	    sym = car(p);
 	    val = cdr(p);
 	    if ((is_immutable(sym)) &&                            /* check for (eval 'pi (augment-environment () '(pi . 1))) */
@@ -5483,7 +5487,7 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 }
 
 
-#define SYMBOL_TO_VALUE(Sc, Sym) ((is_global(Sym)) ? slot_value(global_slot(Sym)) : finder(Sc, Sym))
+#define SYMBOL_TO_VALUE(Sc, Sym) ((symbol_id(Sym) == 0) ? slot_value(global_slot(Sym)) : finder(Sc, Sym))
 
 static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
@@ -31171,6 +31175,7 @@ It has the additional local variables: error-type, error-data, error-code, error
 static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *reset_hook)
 {
   int i;
+  /* fprintf(stderr, "find catch\n"); */
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
   for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
     {
@@ -31186,6 +31191,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	    s7_pointer catcher;
 	    catcher = stack_code(sc->stack, i);
 	    loc = catch_goto_loc(catcher);
+	    /* fprintf(stderr, "%s goto %d from %d\n", DISPLAY(catcher), loc, i); */
 	    sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(catcher));
 	    sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
 	    sc->op = OP_CATCH_DONE; 
@@ -31615,12 +31621,13 @@ static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   /* the operator type is needed here else the error message is confusing:
    *    (apply '+ (list 1 2))) -> ;attempt to apply + to (1 2)?
    */
+  static s7_pointer errstr = NULL;
   if (is_null(obj))
     return(s7_error(sc, sc->SYNTAX_ERROR, list_2(sc, make_protected_string(sc, "attempt to apply nil to ~S?"), args)));
+  if (!errstr)
+    errstr = s7_make_permanent_string("attempt to apply ~A ~S to ~S?");
   return(s7_error(sc, sc->SYNTAX_ERROR, 
-		  list_4(sc, 
-			 make_protected_string(sc, "attempt to apply ~A ~S to ~S?"), 
-			 make_protected_string(sc, type_name(sc, obj, DEFINITE_ARTICLE)), obj, args)));
+		  list_4(sc, errstr, make_protected_string(sc, type_name(sc, obj, DEFINITE_ARTICLE)), obj, args)));
 }
 
 
@@ -31632,10 +31639,17 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 
 static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
+  static s7_pointer *op_names_saved = NULL;
+  int ind;
+  ind = (int)(sc->op);
+  if (!op_names_saved)
+    op_names_saved = (s7_pointer *)calloc(OP_MAX_DEFINED + 1, sizeof(s7_pointer));
+  if (!op_names_saved[ind])
+    op_names_saved[ind] = s7_make_permanent_string(op_names[ind]);
   return(s7_error(sc, sc->SYNTAX_ERROR, 
 		  list_3(sc, 
 			 make_protected_string(sc, errmsg),
-			 make_protected_string(sc, op_names[(int)(sc->op)]),
+			 op_names_saved[ind],
 			 obj)));
 }
 
@@ -32433,6 +32447,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    *    string_length is an int.
    */
   s7_pointer obj, x;
+  static s7_pointer errstr1 = NULL, errstr2 = NULL;
   sc->code = car(args); /* the function */
 
   /* macro application requires the entire call as the argument to apply, but apply itself fixes this up.
@@ -32521,20 +32536,29 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	{
 	  s7_Int nlen;
 	  if (!is_sequence(sc, car(x)))
-	    return(wrong_type_argument_n_with_type(sc, sc->FOR_EACH, position_of(x, args), car(x), 
-						   make_protected_string(sc, "a sequence")));
+	    {
+	      if (!errstr1)
+		errstr1 = s7_make_permanent_string("a sequence");
+	      return(wrong_type_argument_n_with_type(sc, sc->FOR_EACH, position_of(x, args), car(x), errstr1));
+	    }
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
-	    return(wrong_type_argument_n_with_type(sc, sc->FOR_EACH, position_of(x, args), car(x), 
-						   make_protected_string(sc, "a vector, list, string, hash-table, or applicable object")));
+	    {
+	      if (!errstr2)
+		errstr2 = s7_make_permanent_string("a vector, list, string, hash-table, or applicable object");
+	      return(wrong_type_argument_n_with_type(sc, sc->FOR_EACH, position_of(x, args), car(x), errstr2));
+	    }
 	  if ((x == cdr(args)) || (nlen < len))
 	    len = nlen;
 	  if (len == 0) 
 	    {
 	      for (x = cdr(x); is_not_null(x); x = cdr(x))
 		if (!is_sequence(sc, car(x)))
-		  return(wrong_type_argument_n_with_type(sc, sc->FOR_EACH, position_of(x, args), car(x), 
-							 make_protected_string(sc, "a sequence")));
+		  {
+		    if (!errstr1)
+		      errstr1 = s7_make_permanent_string("a sequence");
+		    return(wrong_type_argument_n_with_type(sc, sc->FOR_EACH, position_of(x, args), car(x), errstr1));
+		  }
 	      break;   /* need error check below */
 	    }
 	}
@@ -32815,6 +32839,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   s7_Int len;
   s7_pointer obj, x;
+  static s7_pointer errstr1 = NULL, errstr2 = NULL;
   sc->code = car(args);
 
   sc->y = args;                     /* gc protect */
@@ -32869,12 +32894,19 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   else len = applicable_length(sc, obj);
 
   if (len < 0)
-    return(wrong_type_argument_with_type(sc, sc->MAP, small_int(2), obj, 
-					 make_protected_string(sc, "a vector, list, string, hash-table, or applicable object")));
+    {
+      if (!errstr1)
+	errstr1 = s7_make_permanent_string("a vector, list, string, hash-table, or applicable object");
+      return(wrong_type_argument_with_type(sc, sc->MAP, small_int(2), obj, errstr1));
+    }
 
   for (x = cddr(args); is_not_null(x); x = cdr(x))
     if (!is_sequence(sc, car(x)))
-      return(wrong_type_argument_n_with_type(sc, sc->MAP, position_of(x, args), car(x), make_protected_string(sc, "a sequence")));
+      {
+	if (!errstr2)
+	  errstr2 = s7_make_permanent_string("a sequence");
+	return(wrong_type_argument_n_with_type(sc, sc->MAP, position_of(x, args), car(x), errstr2));
+      }
 
   if (len != 0)
     {
@@ -36474,7 +36506,13 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      set_unsafely_optimized(car_x);
 		      if (is_safe_closure(func))
 			set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_opSq);
-		      else set_optimize_data(car_x, hop + ((c_call(cadar_x) == g_cdr) ? OP_CLOSURE_CDR_S : OP_CLOSURE_opSq));
+		      else
+			{
+			  if ((c_call(cadar_x) == g_cdr) &&
+			      (symbol_id(sc->CDR) == 0))
+			    set_optimize_data(car_x, hop + OP_CLOSURE_CDR_S);
+			  else set_optimize_data(car_x, hop + OP_CLOSURE_opSq);
+			}
 		      fcdr(car_x) = cadr(cadar_x);
 		      ecdr(car_x) = func;
 		      return(false); 
@@ -36823,12 +36861,14 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			      (!arglist_has_accessed_symbol(closure_args(func))))
 			    {
 			      if ((c_call(cadar_x) == g_car) &&
-				  (c_call(caddar_x) == g_car))
+				  (c_call(caddar_x) == g_car) &&
+				  (symbol_id(sc->CAR) == 0))
 				set_optimize_data(car_x, hop + OP_CLOSURE_CAR_CAR);
 			      else
 				{
 				  if ((c_call(cadar_x) == g_cdr) &&
-				      (c_call(caddar_x) == g_cdr))
+				      (c_call(caddar_x) == g_cdr) &&
+				      (symbol_id(sc->CDR) == 0))
 				    set_optimize_data(car_x, hop + OP_CLOSURE_CDR_CDR);
 				}
 			    }
@@ -37759,10 +37799,14 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
 static s7_pointer check_for_global_set(s7_scheme *sc, s7_pointer tree, s7_pointer e)
 {
-  if (is_checked_1(tree))
-    return(e);
+  /* I think the main use of this is to check for set! of a built-in function that might
+   *   otherwise be optimized as h_safe, but if that set happens in a loop, or perhaps call/cc,
+   *   the second time through we should get the new value.  See gset-test in s7test.scm.
+   */
   if (is_pair(tree))
     {
+      if (is_checked_1(tree))
+	return(e);
       set_checked_1(tree);
       if (car(tree) != sc->QUOTE)
 	{
@@ -37789,7 +37833,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 
   p = car(x);
 
-  /* fprintf(stderr, "optimize syntax %s\n     hop: %d, e: %s\n", DISPLAY(p), hop, DISPLAY(e)); */
+  /* fprintf(stderr, "opt syntax %s\n     hop: %d, e: %s\n", DISPLAY(p), hop, DISPLAY(e)); */
 
   if (!is_pair(cdr(p))) /* cddr(p) might be null if, for example, (begin (let ...)) */
     return(false);
@@ -37821,7 +37865,8 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 	      (op == OP_LAMBDA) ||
 	      (op == OP_LAMBDA_STAR))
 	    {
-	      if (is_symbol(cadr(p)))
+	      /* fprintf(stderr, "%s    %s%s\n", BOLD_TEXT, DISPLAY_80(p), NORMAL_TEXT); */
+	      if (is_symbol(cadr(p))) /* (lambda args ...) */
 		{
 		  if (global_slot(cadr(p)) != sc->NIL)
 		    sc->w = cons(sc, cadr(p), sc->w);
@@ -38194,8 +38239,10 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
     {
       set_checked(x);
       if (is_pair(car(x)))
-	if (!optimize_expression(sc, x, hop, e))
-	  happy = false;
+	{
+	  if (!optimize_expression(sc, x, hop, e))
+	    happy = false;
+	}
     }
   return(happy);
 }
@@ -38205,7 +38252,10 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 {
   int op2;
   op2 = op_no_hop(e2);
-
+  /*
+  if (!is_hopping(e2))
+    fprintf(stderr, "%s %s\n", opt_names[optimize_data(e2)], DISPLAY_80(e2));
+  */
   switch (op1)
     {
     case E_C_P:
@@ -45155,8 +45205,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_optimize_data(code, OP_UNKNOWN_opSq);
 		  goto OPT_EVAL;
 		}
-	      if (symbol_id(sc->CDR) != 0)
-		break;
 	      
 	    case HOP_CLOSURE_CDR_S:
 	      {
@@ -45343,9 +45391,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_optimize_data(code, OP_UNKNOWN_opSq_opSq);
 		  goto OPT_EVAL;
 		}
-	      if (symbol_id(sc->CAR) != 0)
-		break;
-	      
+
 	    case HOP_CLOSURE_CAR_CAR:
 	      {
 		s7_pointer p1, p2, p3;
@@ -45373,9 +45419,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_optimize_data(code, OP_UNKNOWN_opSq_opSq);
 		  goto OPT_EVAL;
 		}
-	      if (symbol_id(sc->CDR) != 0)
-		break;
-	      
+
 	    case HOP_CLOSURE_CDR_CDR:
 	      {
 		s7_pointer p1, p2, p3;
@@ -46600,9 +46644,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    switch (type(f))
 		      {
 		      case T_VECTOR:
-			set_optimize_data(code, OP_VECTOR_opCq);
-			ecdr(code) = f;
-			goto OPT_EVAL;
+			if (is_hopping(cadr(code)))
+			  {
+			    set_optimize_data(code, OP_VECTOR_opCq);
+			    ecdr(code) = f;
+			    goto OPT_EVAL;
+			  }
+			break;
 			
 		      case T_C_FUNCTION:
 		      case T_C_ANY_ARGS_FUNCTION:
@@ -46705,7 +46753,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      set_optimize_data(code, OP_SAFE_CLOSURE_opSq);
 			    else 
 			      {
-				if (c_call(cadr(code)) == g_cdr)
+				if ((c_call(cadr(code)) == g_cdr) &&
+				    (symbol_id(sc->CDR)) == 0)
 				  set_optimize_data(code, OP_CLOSURE_CDR_S);
 				else set_optimize_data(code, OP_CLOSURE_opSq);
 			      }
@@ -46961,17 +47010,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    (!arglist_has_accessed_symbol(closure_args(f))))
 				  {
 				    if ((c_call(cadr(code)) == g_car) &&
-					(c_call(caddr(code)) == g_car))
+					(c_call(caddr(code)) == g_car) &&
+					(symbol_id(sc->CAR) == 0))
 				      set_optimize_data(code, OP_CLOSURE_CAR_CAR);
 				    else
 				      {
 					if ((c_call(cadr(code)) == g_cdr) &&
-					    (c_call(caddr(code)) == g_cdr))
+					    (c_call(caddr(code)) == g_cdr) &&
+					    (symbol_id(sc->CDR) == 0))
 					  set_optimize_data(code, OP_CLOSURE_CDR_CDR);
 				      }
 				  }
 			      }
-			    
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))) &&
 				(is_hopping(caddr(code))))
@@ -47042,8 +47092,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_VECTOR_opCq:
+	      /*
 	      if (!indirect_c_function_is_ok(sc, cadr(code)))
 		break;
+	      */
 	    case HOP_VECTOR_opCq:
 	      {
 		s7_pointer v, x; 
@@ -48466,7 +48518,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_C_SCS:
 	      {
-		/* (define (hi) (let ((x 32) (lst '(0 1))) (list-set! lst 0 x) v)) */
+		/* (define (hi) (let ((x 32) (lst '(0 1))) (list-set! lst 0 x) x)) */
 		s7_pointer val1, args;
 		args = cdr(code);
 		
@@ -48475,6 +48527,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T3_2) = cadr(args);
 		car(sc->T3_1) = val1;
 		sc->value = c_call(code)(sc, sc->T3_1);
+#if 0
+#if TRY_STACK
+		IF_BEGIN_POP_STACK(sc);
+#endif
+#endif
 		goto START;
 	      }
 	      
@@ -54944,21 +55001,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* code is a lambda form minus the "lambda": ((a b) (+ a b)) */
       /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
       {
-	s7_pointer code;
+	s7_pointer code, body;
 	code = sc->code;
+	body = cdr(code);
 
 	if ((!is_pair(code)) ||
-	    (!is_pair(cdr(code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
+	    (!is_pair(body)))                               /* (lambda) or (lambda #f) or (lambda . 1) */
 	  eval_error(sc, "lambda: no args or no body? ~A", code);
 	check_lambda_args(sc, car(code), NULL);
 	
-	if ((is_pair(cdr(code))) &&
-	    (is_pair(cadr(code))) &&
-	    (is_null(cddr(code))))
-	  set_one_liner(cdr(code));
+	if ((is_pair(body)) &&
+	    (is_pair(car(body))) &&
+	    (is_null(cdr(body))))
+	  set_one_liner(body);
 	
 	/* in many cases, this is a no-op -- we already checked at define */
-	optimize(sc, cdr(code), 0, sc->NIL);
+	/* optimize_lambda(sc, true, sc->F, car(code), cdr(sc->code)); */
+	/*   why can't we optimize hop=1 here? */
+	optimize(sc, body, 0, sc->NIL); 
 
 	if ((is_overlaid(code)) &&
 	    (cdr(ecdr(code)) == code))
@@ -61662,9 +61722,6 @@ s7_scheme *s7_init(void)
  *
  * 2 hard ones: how to replace constants like pi so no lookups (if not gmp), and
  *              how to get the doc string out of the closure body
- * TODO: if indirect function is h_optimized at opt, no need to check it [can this happen?]
- * PERHAPS: in catch, why can't we preallocate the 1st thunk's frame (used in op_catch_all),
- *           then just clear its slots before each use?  Need assurance of no recursion here.
  *
  * we need integer_length everywhere! 
  *   TODO: these fixups are ignored by the optimized cases
@@ -61674,11 +61731,11 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  *
  * timing info [starting from May-11 approximately]
- * bench    42736                     8752 8051 7842
+ * bench    42736                     8752 8051 7824
  * lint     13424 1231 1326 1320 1270 1245 1148
- *                                    9328      8003
+ *                                    9328      7983
  * index    44300 4988 4725 3935 3477 3291 3005 2934
- * s7test         1721 1456 1430 1375 1358 1297 1267
+ * s7test         1721 1456 1430 1375 1358 1297 1257
  * t455            265  256  218        89   55   33
  * t502                  90   72        43   39   38
  * lat             229        63             52   49
@@ -61692,4 +61749,10 @@ s7_scheme *s7_init(void)
  *   (sin 1.0) if no args etc
  *
  * could we use the expression data handlers for a (global) safe function's prebuilt internal envs, or preset case labels?
+ *
+ * if car(p) is a symbol in an arglist, fcdr and ecdr(p) are not currently used.
+ *    if we're in a loop of some sort, we could save the current slot in fcdr, symbol_id in ecdr
+ *    this wins if the symbol is global to the loop, so the optimizer could recognize that,
+ *    but the choice slows down the normal case.  If we did the find in the safe do initialization,
+ *    we'd need a bit or a new op.
  */

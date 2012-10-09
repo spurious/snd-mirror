@@ -69900,6 +69900,23 @@ etc
 (test (let ((i 1)) (define (func x) (if (* i '((x 1) (y) . 2) ) (atan (procedure? 2(sin ))))) (func '(values #\c 3 1.2))) 'error)
 (test (let ((i 1)) (define (func x) (* 1- '(values #\c 3 1.2) )) (func set!))  'error)
 
+(test (let ()
+	(define (gset-test)
+	  (let ((old-gcd gcd)
+		(sum 0)
+		(x 12)
+		(y 4))
+	    (do ((i 0 (+ i 1)))
+		((= i 3))
+	      (set! sum (+ sum (gcd x y)))
+	      (set! gcd +))
+	    (set! gcd old-gcd)
+	    sum))
+	(define (gset-test-1) (gset-test))
+	(gset-test-1))
+      36)
+
+
 ;;; for some reason these confuse the optimizer
 
 (define-class quaternion () 

@@ -12226,6 +12226,7 @@ static void init_choosers(s7_scheme *sc)
   mul_env_direct = clm_make_function(sc, "*", g_mul_env_direct, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_direct_s2 = clm_make_function(sc, "*", g_mul_direct_s2, 3, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   env_polywave_env = clm_make_function(sc, "*", g_env_polywave_env, 2, 0, false, "animals optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_has_data(env_polywave_env);
   mul_c_oscil_2 = clm_make_function(sc, "*", g_mul_c_oscil_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_oscil_1 = clm_make_function(sc, "*", g_mul_c_oscil_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_env_1 = clm_make_function(sc, "*", g_mul_c_env_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -12381,12 +12382,15 @@ static void init_choosers(s7_scheme *sc)
 
   fm_violin_vibrato = clm_make_function(sc, "+", g_fm_violin_vibrato, 3, 0, false, "fm-violin optimization", gen_class,
 					NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_has_data(fm_violin_vibrato);
   fm_violin_modulation = clm_make_function(sc, "+", g_fm_violin_modulation, 2, 0, false, "fm-violin optimization", gen_class,
 					   NULL, NULL, NULL, NULL, NULL, NULL);
   jc_reverb_combs = clm_make_function(sc, "+", g_jc_reverb_combs, 2, 0, false, "jc-reverb optimization", gen_class,
 				      NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_has_data(jc_reverb_combs);
   nrev_combs = clm_make_function(sc, "+", g_nrev_combs, 2, 0, false, "nrev optimization", gen_class,
 				 NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_has_data(nrev_combs);
   add_direct_2 = clm_make_function(sc, "+", g_add_direct_2, 2, 0, false, "+ optimization", gen_class,
 				   NULL, NULL, NULL, NULL, NULL, NULL);
   add_direct_s2 = clm_make_function(sc, "+", g_add_direct_s2, 3, 0, false, "+ optimization", gen_class,
@@ -12796,8 +12800,10 @@ static void init_choosers(s7_scheme *sc)
 					NULL, NULL, NULL, NULL, NULL, NULL);
   jc_reverb_all_passes = clm_make_function(sc, "all-pass", g_jc_reverb_all_passes, 2, 0, false, "all-pass optimization", gen_class,
 					   NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_has_data(jc_reverb_all_passes);
   nrev_all_passes = clm_make_function(sc, "all-pass", g_nrev_all_passes, 2, 0, false, "all-pass optimization", gen_class,
 					   NULL, NULL, NULL, NULL, NULL, NULL);
+  s7_function_set_has_data(nrev_all_passes);
 
 
   f = s7_name_to_value(sc, "delay");
@@ -12867,6 +12873,7 @@ static void init_choosers(s7_scheme *sc)
   gen_class = s7_function_class(sc, f);
 
   fm_violin_2 = clm_make_function_no_choice(sc, "locsig", g_fm_violin_2, 3, 0, false, "fm-violin optimization", gen_class);
+  s7_function_set_has_data(fm_violin_2);
   indirect_locsig_3 = clm_make_function_no_choice(sc, "locsig", g_indirect_locsig_3, 2, 0, false, "locsig optimization", gen_class);
 
 
@@ -12875,8 +12882,10 @@ static void init_choosers(s7_scheme *sc)
   gen_class = s7_function_class(sc, f);
 
   outa_mul_s_delay = clm_make_function_no_choice(sc, "outa", g_outa_mul_s_delay, 2, 0, false, "outa optimization", gen_class);
+  s7_function_set_has_data(outa_mul_s_delay);
   outa_mul_s_env = clm_make_function_no_choice(sc, "outa", g_outa_mul_s_env, 2, 0, false, "outa optimization", gen_class);
   outa_env_polywave_env = clm_make_function_no_choice(sc, "outa", g_outa_env_polywave_env, 2, 0, false, "outa optimization", gen_class);
+  s7_function_set_has_data(outa_env_polywave_env);
   indirect_outa_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2, 2, 0, false, "outa optimization", gen_class);
   indirect_outa_add_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_add_2, 2, 0, false, "outa optimization", gen_class);
   indirect_outa_sub_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_sub_2, 2, 0, false, "outa optimization", gen_class);
@@ -12888,6 +12897,7 @@ static void init_choosers(s7_scheme *sc)
   gen_class = s7_function_class(sc, f);
 
   outb_mul_s_delay = clm_make_function_no_choice(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization", gen_class);
+  s7_function_set_has_data(outb_mul_s_delay);
 
 
   f = s7_name_to_value(sc, "ina");
@@ -14012,11 +14022,11 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_p,             g_phase_vocoder_p_w,                1, 0, 0, H_phase_vocoder_p);
   XEN_DEFINE_PROCEDURE(S_phase_vocoder,                    g_phase_vocoder_w,                  1, 4, 0, H_phase_vocoder);
   XEN_DEFINE_PROCEDURE(S_make_phase_vocoder,               g_make_phase_vocoder_w,             0, 0, 1, H_make_phase_vocoder);
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder_amp_increments,     g_phase_vocoder_amp_increments_w,   1, 0, 0, H_phase_vocoder_amp_increments);
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder_amps,               g_phase_vocoder_amps_w,             1, 0, 0, H_phase_vocoder_amps);
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder_freqs,              g_phase_vocoder_freqs_w,            1, 0, 0, H_phase_vocoder_freqs);
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder_phases,             g_phase_vocoder_phases_w,           1, 0, 0, H_phase_vocoder_phases);
-  XEN_DEFINE_PROCEDURE(S_phase_vocoder_phase_increments,   g_phase_vocoder_phase_increments_w, 1, 0, 0, H_phase_vocoder_phase_increments);
+  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_amp_increments,     g_phase_vocoder_amp_increments_w,   1, 0, 0, H_phase_vocoder_amp_increments);
+  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_amps,               g_phase_vocoder_amps_w,             1, 0, 0, H_phase_vocoder_amps);
+  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_freqs,              g_phase_vocoder_freqs_w,            1, 0, 0, H_phase_vocoder_freqs);
+  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_phases,             g_phase_vocoder_phases_w,           1, 0, 0, H_phase_vocoder_phases);
+  XEN_DEFINE_SAFE_PROCEDURE(S_phase_vocoder_phase_increments,   g_phase_vocoder_phase_increments_w, 1, 0, 0, H_phase_vocoder_phase_increments);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_hop, g_mus_hop_w, H_mus_hop, S_setB S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0);
 
