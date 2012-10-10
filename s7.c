@@ -624,7 +624,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_CONS_SS, HOP_SAFE_CONS_SS,
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
-      OP_SAFE_C_XXX, HOP_SAFE_C_XXX, OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS,
+      OP_SAFE_C_XXX, HOP_SAFE_C_XXX, OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, S_C_scs_1, S_C_acs_1, S_C_aca, S_C_acs, S_C_sca, S_C_scs,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X,
 
       OP_SAFE_CAR_Q, HOP_SAFE_CAR_Q, OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CAR_OPT, HOP_SAFE_CAR_OPT, OP_SAFE_CAR_P, HOP_SAFE_CAR_P, 
@@ -678,7 +678,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_CLOSURE_STAR, HOP_SAFE_CLOSURE_STAR, OP_SAFE_CLOSURE_STAR_ALL_X, HOP_SAFE_CLOSURE_STAR_ALL_X, 
       
       /* these can't be embedded, and have to be the last thing called */
-      OP_APPLY_SS, HOP_APPLY_SS,
+      OP_APPLY_SS, HOP_APPLY_SS, APPLY_ss_1, APPLY_ss_2, APPLY_aa, APPLY_as, APPLY_sa, APPLY_ss,
       OP_C_ALL_X, HOP_C_ALL_X, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH, OP_C_CATCH_ALL, HOP_C_CATCH_ALL,
       OP_C_S_opSq, HOP_C_S_opSq, OP_C_opSq_CC, HOP_C_opSq_CC, OP_C_S_opCq, HOP_C_S_opCq,
       OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
@@ -734,7 +734,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", "safe_cons_ss", "h_safe_cons_ss",
      "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
      "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq", 
-     "safe_c_xxx", "h_safe_c_xxx", "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs",
+     "safe_c_xxx", "h_safe_c_xxx", "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "s_c_scs_1", "s_c_acs_1", "s_c_aca", "s_c_acs", "s_c_sca", "s_c_scs",
      "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x",
 
      "safe_car_q", "h_safe_car_q", "safe_car_s", "h_safe_car_s", "safe_car_opt", "h_safe_car_opt", "safe_car_p", "h_safe_car_p", 
@@ -787,7 +787,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
      "safe_closure*_sos", "h_safe_closure*_sos", "safe_closure*_sc", "h_safe_closure*_sc", 
      "safe_closure*", "h_safe_closure*", "safe_closure*_all_x", "h_safe_closure*_all_x", 
 
-     "apply_ss", "h_apply_ss",
+     "apply_ss", "h_apply_ss", "apply_ss_1", "apply_ss_2", "apply_aa", "apply_as", "apply_sa", "apply_ss",
      "c_all_x", "h_c_all_x", "call-with-exit", "h-call-with-exit", "c_catch", "h_c_catch", "c_catch_all", "h_c_catch_all",
      "c_s_opsq", "h_c_s_opsq", "c_opsq_cc", "h_c_opsq_cc", "c_s_opcq", "h_c_s_opcq",
      "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
@@ -1540,6 +1540,14 @@ static int t_optimized = T_OPTIMIZED;
 #define set_global(p)                 typeflag(p) |= T_GLOBAL
 #define set_local(p)                  typeflag(p) = (typeflag(p) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
 /* swapped T_GLOBAL and T_MULTIPLE_VALUE 9-Oct-12 so I can use the T_GLOBAL bit on pairs */
+
+#if 0
+#define T_NO_RESULT                   T_GLOBAL
+#define has_no_result(p)              ((typeflag(p) & T_NO_RESULT) != 0)
+#define set_no_result(p)              typeflag(p) |= T_NO_RESULT
+/* an experiment -- this marks expressions in a block whose value is ignored */
+#endif
+
 
 #define T_RETURNS_TEMP                (1 << (TYPE_BITS + 9))
 #define returns_temp(p)               ((typeflag(p) & T_RETURNS_TEMP) != 0)
@@ -3957,6 +3965,7 @@ static void resize_op_stack(s7_scheme *sc)
 /* this macro should only occur just before goto START.  And even then, only in the OPT_EVAL section --
  *    we're depending on a very restricted context!
  */
+#if TRY_STACK
 #define IF_BEGIN_POP_STACK(Sc) \
   do { \
       if (main_stack_op(Sc) == OP_BEGIN1)	\
@@ -3970,7 +3979,24 @@ static void resize_op_stack(s7_scheme *sc)
           else main_stack_code(Sc) = cdr(code); \
           goto EVAL; \
         } \
+      goto START; \
       } while(0)
+
+#define POP_BEGIN(Sc) \
+  do { \
+      s7_pointer code; \
+      Sc->envir = main_stack_environment(Sc); \
+      code = main_stack_code(Sc);  \
+      Sc->code =  car(code); \
+      if (is_null(cdr(code))) \
+        pop_main_stack(Sc);                 \
+      else main_stack_code(Sc) = cdr(code); \
+      goto EVAL; \
+     } while(0)
+#else
+#define IF_BEGIN_POP_STACK(Sc) goto START
+#define POP_BEGIN(Sc) goto START
+#endif
 
 
 static void stack_reset(s7_scheme *sc) 
@@ -42003,6 +42029,16 @@ static s7_pointer check_cond(s7_scheme *sc)
 }
 
 
+static s7_pointer SAVED_SYMBOL_TO_VALUE(s7_scheme *sc, s7_pointer p)
+{
+  if (symbol_id(car(p)) != (long long int)ecdr(p))
+    {
+      ecdr(p) = (s7_pointer)symbol_id(car(p));
+      fcdr(p) = local_slot(car(p));
+    }
+  return(slot_value(fcdr(p)));
+}	     
+
 #if (!WITH_GCC)
 
 static s7_pointer fs(s7_scheme *sc, s7_pointer hdl)
@@ -47490,11 +47526,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  wrong_type_argument_with_type(sc, sc->WRITE_CHAR, small_int(2), port, AN_OUTPUT_PORT);
 
 		s7_write_char(sc, s7_character(chr), port);
-#if TRY_STACK
 		IF_BEGIN_POP_STACK(sc);
-#endif
-		sc->value = sc->UNSPECIFIED; /* why not return the character? */
-		goto START; 
 	      }
 
 	      
@@ -47754,10 +47786,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T3_2) = val2;
 		car(sc->T3_3) = val3;
 		sc->value = c_call(code)(sc, sc->T3_1);
-#if TRY_STACK
 		IF_BEGIN_POP_STACK(sc);
-#endif
-		goto START;
 	      }
 	      
 	      
@@ -48393,13 +48422,63 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL; 
 	      
 	      
+	      /* -------- apply_ss --------
+	       */
+	    case APPLY_aa:
+	      sc->code = SAVED_SYMBOL_TO_VALUE(sc, cdr(code));
+	      sc->args = SAVED_SYMBOL_TO_VALUE(sc, cddr(code));
+	      /* fprintf(stderr, "apply_aa: %s %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
+	      goto APPLY_SS;
+	      
+	    case APPLY_as:
+	      sc->code = SAVED_SYMBOL_TO_VALUE(sc, cdr(code));
+	      sc->args = finder(sc, fcdr(code));
+	      /* fprintf(stderr, "apply_as: %s (%s) %s\n", DISPLAY(sc->code), DISPLAY(finder(sc, cadr(code))), DISPLAY(sc->args)); */
+	      goto APPLY_SS;
+	      
+	    case APPLY_sa:
+	      sc->code = finder(sc, cadr(code));
+	      sc->args = SAVED_SYMBOL_TO_VALUE(sc, cddr(code));
+	      /* fprintf(stderr, "apply_sa: %s %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
+	      goto APPLY_SS;
+
+	    case APPLY_ss_1:
+	      optimize_data_index(code) = APPLY_aa; 
+	      if (symbol_id(cadr(code)) != (long long int)(ecdr(cdr(code)))) optimize_data_index(code) += 2;
+	      if (symbol_id(fcdr(code)) != (long long int)(ecdr(cddr(code)))) optimize_data_index(code) += 1;
+	      sc->code = finder(sc, cadr(code));
+	      sc->args = finder(sc, fcdr(code));
+	      goto APPLY_SS;
+
+	    case HOP_APPLY_SS:
+	      {
+		s7_pointer loc;
+		optimize_data_index(code) = APPLY_ss;
+		loc = find_symbol(sc, cadr(code));
+		if (loc == local_slot(cadr(code)))
+		  {
+		    fcdr(cdr(code)) = loc;
+		    loc = find_symbol(sc, fcdr(code));
+		    if (loc == local_slot(fcdr(code)))
+		      {
+			fcdr(cddr(code)) = loc;
+			optimize_data_index(code) = APPLY_ss_1;
+			ecdr(cdr(code)) = (s7_pointer)symbol_id(cadr(code));
+			ecdr(cddr(code)) = (s7_pointer)symbol_id(fcdr(code));
+		      }
+		  }
+	      }
+
 	    case OP_APPLY_SS:
 	      if (!c_function_is_ok(sc, code))
 		break;
 	      
-	    case HOP_APPLY_SS:
-	      sc->code = finder(sc, cadr(code)); /* global search here was slower */
+	    case APPLY_ss:
+	      sc->code = finder(sc, cadr(code));
 	      sc->args = finder(sc, fcdr(code));
+	      /* fprintf(stderr, "apply_ss: %s %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
+
+	    APPLY_SS:
 	      if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
 		return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 				list_2(sc, 
@@ -48512,29 +48591,79 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
+	      /* -------- safe_c_scs --------
+	       * (define (hi) (let ((x 32) (lst '(0 1))) (list-set! lst 0 x) x))
+	       */
+	    case S_C_aca:
+	      car(sc->T3_1) = SAVED_SYMBOL_TO_VALUE(sc, cdr(code));
+	      car(sc->T3_3) = SAVED_SYMBOL_TO_VALUE(sc, cdddr(code));
+	      car(sc->T3_2) = caddr(code);
+	      sc->value = c_call(code)(sc, sc->T3_1);
+	      goto START;
+	      
+	    case S_C_acs:
+	      car(sc->T3_1) = SAVED_SYMBOL_TO_VALUE(sc, cdr(code));
+	      car(sc->T3_3) = finder(sc, cadddr(code));
+	      car(sc->T3_2) = caddr(code);
+	      sc->value = c_call(code)(sc, sc->T3_1);
+	      goto START;
+	      
+	    case S_C_acs_1:
+	      car(sc->T3_1) = SAVED_SYMBOL_TO_VALUE(sc, cdr(code));
+	      car(sc->T3_3) = finder(sc, cadddr(code));
+	      car(sc->T3_2) = caddr(code);
+	      sc->value = c_call(code)(sc, sc->T3_1);
+	      POP_BEGIN(sc);
+	      
+	    case S_C_sca:
+	      car(sc->T3_1) = finder(sc, cadr(code));
+	      car(sc->T3_3) = SAVED_SYMBOL_TO_VALUE(sc, cdddr(code));
+	      car(sc->T3_2) = caddr(code);
+	      sc->value = c_call(code)(sc, sc->T3_1);
+	      goto START;
+
+	    case S_C_scs_1:
+	      optimize_data_index(code) = S_C_aca;
+	      /* if the symbol_id is the same, we're in some sort of loop */
+	      if (symbol_id(cadr(code)) != (long long int)(ecdr(cdr(code)))) optimize_data_index(code) += 2;
+	      if (symbol_id(cadddr(code)) != (long long int)(ecdr(cdddr(code)))) optimize_data_index(code) += 1;
+	      if ((optimize_data_index(code) == S_C_acs) &&
+		  (main_stack_op(sc) == OP_BEGIN1))
+		optimize_data_index(code) = S_C_acs_1;
+	      goto SCS;
+
+	    case HOP_SAFE_C_SCS:
+	      {
+		s7_pointer loc;
+		optimize_data_index(code) = S_C_scs;
+		loc = find_symbol(sc, cadr(code));
+		if (loc == local_slot(cadr(code)))
+		  {
+		    fcdr(cdr(code)) = loc;
+		    loc = find_symbol(sc, cadddr(code));
+		    if (loc == local_slot(cadddr(code)))
+		      {
+			fcdr(cdddr(code)) = loc;
+			optimize_data_index(code) = S_C_scs_1;
+			ecdr(cdr(code)) = (s7_pointer)symbol_id(cadr(code));
+			ecdr(cddr(code)) = (s7_pointer)symbol_id(cadddr(code));
+		      }
+		  }
+	      }
+	      
 	    case OP_SAFE_C_SCS:
 	      if (!c_function_is_ok(sc, code))
 		break;
-	      
-	    case HOP_SAFE_C_SCS:
-	      {
-		/* (define (hi) (let ((x 32) (lst '(0 1))) (list-set! lst 0 x) x)) */
-		s7_pointer val1, args;
-		args = cdr(code);
-		
-		val1 = find_symbol_or_bust(sc, car(args));
-		car(sc->T3_3) = find_symbol_or_bust(sc, caddr(args));
-		car(sc->T3_2) = cadr(args);
-		car(sc->T3_1) = val1;
-		sc->value = c_call(code)(sc, sc->T3_1);
-#if 0
-#if TRY_STACK
-		IF_BEGIN_POP_STACK(sc);
-#endif
-#endif
-		goto START;
-	      }
-	      
+
+	    SCS:
+	    case S_C_scs:
+	      car(sc->T3_1) = finder(sc, cadr(code));
+	      car(sc->T3_3) = finder(sc, cadddr(code));
+	      car(sc->T3_2) = caddr(code);
+	      sc->value = c_call(code)(sc, sc->T3_1);
+	      goto START;
+	      /* -------- */
+
 
 	    case OP_SAFE_C_SSS:
 	      if (!c_function_is_ok(sc, code))
@@ -50803,10 +50932,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	ADD_SLOT(sc->envir, sc->value, new_func);
 	set_local(sc->value);
 
-#if TRY_STACK
 	IF_BEGIN_POP_STACK(sc);
-#endif
-	goto START;
       }
 
       
@@ -50985,10 +51111,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else s7_make_slot(sc, sc->envir, sc->code, sc->value);
 	}
       sc->value = sc->code;
-#if TRY_STACK
       IF_BEGIN_POP_STACK(sc);
-#endif
-      goto START;
       
       
       /* --------------- */
@@ -51216,10 +51339,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  default:                                         /* (set! (1 2) 3) */
 	    eval_error(sc, "no generalized set for ~A", obj);
 	  }
-#if TRY_STACK
 	IF_BEGIN_POP_STACK(sc);
-#endif
-	goto START;
       }
       
 
@@ -51251,10 +51371,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = c_function_call(c_function_setter(obj))(sc, sc->T1_1);
 	  }
 	else eval_error(sc, "no generalized set for ~A", obj); 
-#if TRY_STACK
 	IF_BEGIN_POP_STACK(sc);
-#endif
-	goto START;
       }
       
       
@@ -51289,10 +51406,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* this can't be optimized to treat y's value as a mutable integer 
 		   * also, we have to set sc->value, since s7.html says set! returns the value.
 		   */
-#if TRY_STACK
 		  IF_BEGIN_POP_STACK(sc);
-#endif
-		  goto START; 
 		}
 		
 	      case T_REAL:
@@ -51357,10 +51471,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = g_cdr(sc, list_1(sc, val));   /* possible method? */
 	    else sc->value = cdr(val);                  /* set! returns the value */
 	    slot_set_value(y, sc->value);
-#if TRY_STACK
 	    IF_BEGIN_POP_STACK(sc);
-#endif
-	    goto START;
 	  }
 
 	push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
@@ -51513,10 +51624,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_slot(sc->y)) 
 	{
 	  slot_set_value(sc->y, sc->value); 
-#if TRY_STACK
 	  IF_BEGIN_POP_STACK(sc);
-#endif
-	  goto START;
 	}
       eval_error(sc, "set! ~A: unbound variable", sc->code);
 
@@ -52139,10 +52247,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		eval_error(sc, "can't set! ~A", sc->code);
 	    }
 	  slot_set_value(sc->y, sc->value); 
-#if TRY_STACK
 	  IF_BEGIN_POP_STACK(sc);
-#endif
-	  goto START;
 	}
       eval_error(sc, "set! ~A: unbound variable", sc->code);
 
@@ -52362,10 +52467,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_false(sc, sc->value))
 	      {
 		sc->value = sc->UNSPECIFIED;
-#if TRY_STACK
 		IF_BEGIN_POP_STACK(sc);
-#endif
-		goto START;
 	      }
 	  }
 	if (is_true(sc, sc->value))
@@ -52535,10 +52637,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_true(sc, sc->value))
 	goto EVAL;  /* almost never happens */
       sc->value = sc->UNSPECIFIED;  
-#if TRY_STACK
       IF_BEGIN_POP_STACK(sc);
-#endif
-      goto START;  
       
 
       /* --------------- */
@@ -52732,10 +52831,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto EVAL; 
 	  }
 	else sc->value = sc->UNSPECIFIED;
-#if TRY_STACK
 	IF_BEGIN_POP_STACK(sc);
-#endif
-	goto START;
       }
       
       
@@ -52929,10 +53025,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL; 
 	}
       sc->value = sc->UNSPECIFIED;
-#if TRY_STACK
       IF_BEGIN_POP_STACK(sc);
-#endif
-      goto START;
       
       
       /* --------------- */
@@ -52970,10 +53063,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL; 
 	}
       sc->value = sc->UNSPECIFIED;
-#if TRY_STACK
       IF_BEGIN_POP_STACK(sc);
-#endif
-      goto START;
       
       
       /* --------------- */
@@ -53017,10 +53107,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL; 
 	}
       sc->value = sc->UNSPECIFIED;
-#if TRY_STACK
       IF_BEGIN_POP_STACK(sc);
-#endif
-      goto START;
       
 
       /* --------------- */
@@ -55242,10 +55329,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    } while (is_pair(y));
 	  }
 	sc->value = sc->UNSPECIFIED;
-#if TRY_STACK
 	IF_BEGIN_POP_STACK(sc);
-#endif
-	goto START;
       }
 
 
@@ -61736,7 +61820,7 @@ s7_scheme *s7_init(void)
  *                                    9328      7983
  * index    44300 4988 4725 3935 3477 3291 3005 2934
  * s7test         1721 1456 1430 1375 1358 1297 1257
- * t455            265  256  218        89   55   33
+ * t455            265  256  218        89   55   31
  * t502                  90   72        43   39   38
  * lat             229        63             52   49
  * calls                               310  242  233
@@ -61750,9 +61834,6 @@ s7_scheme *s7_init(void)
  *
  * could we use the expression data handlers for a (global) safe function's prebuilt internal envs, or preset case labels?
  *
- * if car(p) is a symbol in an arglist, fcdr and ecdr(p) are not currently used.
- *    if we're in a loop of some sort, we could save the current slot in fcdr, symbol_id in ecdr
- *    this wins if the symbol is global to the loop, so the optimizer could recognize that,
- *    but the choice slows down the normal case.  If we did the find in the safe do initialization,
- *    we'd need a bit or a new op.
+ * TODO: a/s closure_s, set the no_result bit in scs setup, and check that bit later
+ *           or use the scs_2 case for this special case -- no check at all!
  */
