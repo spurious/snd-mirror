@@ -104,19 +104,19 @@
 (define (make-pnoise)
   (vector 16383))
 
-(define (pnoise gen amp)
+(define (pnoise gen x)
   ;; very special noise generator
   (set! (gen 0) (logand (floor (+ (* (gen 0) 1103515245) 12345)) #xffffffff))
   ;; (bil) added the logand -- otherwise we get an overflow somewhere
-  (* amp (- (* (modulo (floor (/ (gen 0) 65536.0)) 65536) 0.0000305185) 1.0)))
+  (* x (- (* (modulo (floor (/ (gen 0) 65536.0)) 65536) 0.0000305185) 1.0)))
   ;; this looks nutty to me -- was it originally running in 32 bits?
 |#
 (define pn-gen 16383)
-(define (pnoise amp)
+(define (pnoise x)
   ;; very special noise generator
   (set! pn-gen (logand (floor (+ (* pn-gen 1103515245) 12345)) #xffffffff))
   ;; (bil) added the logand -- otherwise we get an overflow somewhere
-  (* amp (- (* pn-gen 4.6566128730774e-10) 1.0)))
+  (* x (- (* pn-gen 4.6566128730774e-10) 1.0)))
 
 
 
@@ -467,6 +467,7 @@
 			(noi 0.0)
 			(temp1 0.0)
 			(temp2 0.0)
+			(amp-1 amp)
 			)
 			;(noi (make-pnoise))
 		    (set! pn-gen 16383)
@@ -482,13 +483,13 @@
 				(set! dryamprate sb-cutoff-rate)
 				(set! wetamprate sb-cutoff-rate))))
 		      
-		      (set! noi (pnoise amp))
+		      (set! noi (pnoise amp-1))
 		      (set! temp1 (one-pole-one-zero dryTap0 dryTap1 noi))
 		      (set! temp2 (expseg dryTap-coef-expseg drycoefrate))
 		      (set! dryTap (* (expseg dryTap-amp-expseg dryamprate)
 				      (one-pole-swept dryTap-one-pole-swept temp1 temp2)))
 						      
-		      (set! noi (pnoise amp))
+		      (set! noi (pnoise amp-1))
 		      (set! temp1 (one-pole-one-zero wetTap0 wetTap1 noi))
 		      (set! temp2 (expseg wetTap-coef-expseg wetcoefrate))
 		      (set! openStrings (* (expseg wetTap-amp-expseg wetamprate)
