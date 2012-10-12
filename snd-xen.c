@@ -2253,16 +2253,18 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
 
   if (!ci)
     {
-      for (p2 = (const char *)(s2 + start); (*p2); p2++)
-	{
-	  const char *ptemp;
-	  for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && ((*p1) == (*ptemp)); p1++, ptemp++);
-	  if (!(*p1))
-	    return(s7_make_integer(sc, p2 - s2));
-	}
+      p2 = strstr((const char *)(s2 + start), s1);
+      if (!p2) return(s7_f(sc));
+      return(s7_make_integer(sc, p2 - s2));
     }
   else
     {
+#if 0
+      /* this exists in gcc, I think */
+      p2 = strcasestr((const char *)(s2 + start), s1);
+      if (!p2) return(s7_f(sc));
+      return(s7_make_integer(sc, p2 - s2));
+#else
       for (p2 = (const char *)(s2 + start); (*p2); p2++)
 	{
 	  const char *ptemp;
@@ -2270,6 +2272,7 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
 	  if (!(*p1))
 	    return(s7_make_integer(sc, p2 - s2));
 	}
+#endif
     }
 
   return(s7_f(sc));

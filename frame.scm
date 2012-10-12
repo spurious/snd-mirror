@@ -23,6 +23,7 @@
 ;;; simultaneous-zero-crossing
 
 (provide 'snd-frame.scm)
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm")) ; for defgenerator
 
 
 (define (frame-reverse! fr)
@@ -116,7 +117,7 @@
 			      (channels sd))))
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
-		  (sound-data-set! sd i pos (fr i)))
+		  (sound-data-set! sd i pos (frame-ref fr i)))
 		sd)))))
 
 (define (sound-data->frame sd pos fr)
@@ -195,6 +196,8 @@
 		(vct->channel (sound-data->vct sd i) beg ndur index i)))))))
 
 
+
+;;; TODO: frame-reader should be an environment, not a vector
 
 (define +frame-reader-tag+ 0)
 (define +frame-reader-snd+ 1)

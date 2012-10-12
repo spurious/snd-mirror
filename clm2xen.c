@@ -8893,10 +8893,11 @@ static mus_float_t mus_nrxycos_unmodulated(mus_any *p) {return(mus_nrxycos(p, 0.
 static mus_float_t mus_square_wave_unmodulated(mus_any *p) {return(mus_square_wave(p, 0.0));}
 static mus_float_t mus_sawtooth_wave_unmodulated(mus_any *p) {return(mus_sawtooth_wave(p, 0.0));}
 
-/*
+
 static mus_float_t mus_src_simple(mus_any *p) {return(mus_src(p, 0.0, NULL));}
 static mus_float_t mus_granulate_simple(mus_any *p) {return(mus_granulate_with_editor(p, NULL, NULL));}
-*/
+static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL));}
+static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocoder(p, NULL));}
 
 static bool in_safe_do = false;
 static void clm_safe_do_notifier(int level)
@@ -9164,10 +9165,12 @@ GEN_2(asymmetric_fm, mus_asymmetric_fm_unmodulated)
 GEN_2(polyshape, mus_polyshape_unmodulated)
 GEN_2(filtered_comb, mus_filtered_comb_unmodulated)
 
-/*
+
 GEN_1(granulate, mus_granulate_simple)
 GEN_1(src, mus_src_simple)
-*/
+GEN_1(convolve, mus_convolve_simple)
+GEN_1(phase_vocoder, mus_phase_vocoder_simple)
+
 
 /*
 GEN3(ssb_am)         ;(ssb-am gen (insig 0.0) (fm 0.0)), mus_ssb_am_unmodulated
@@ -11277,6 +11280,136 @@ static s7_pointer wave_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
   return(f);
 }
 
+static s7_pointer src_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(src_1);
+    }
+#if 0
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(wave_train_2);
+	}
+      if (s7_is_pair(caddr(expr)))
+	{
+	  if (s7_function_choice_is_direct(sc, caddr(expr)))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      if (s7_function_returns_temp(caddr(expr))) 
+		return(direct_wave_train_2);
+	      return(indirect_wave_train_2);
+	    }
+	}
+    }
+#endif
+  return(f);
+}
+
+static s7_pointer granulate_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(granulate_1);
+    }
+#if 0
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(wave_train_2);
+	}
+      if (s7_is_pair(caddr(expr)))
+	{
+	  if (s7_function_choice_is_direct(sc, caddr(expr)))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      if (s7_function_returns_temp(caddr(expr))) 
+		return(direct_wave_train_2);
+	      return(indirect_wave_train_2);
+	    }
+	}
+    }
+#endif
+  return(f);
+}
+
+static s7_pointer convolve_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(convolve_1);
+    }
+#if 0
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(wave_train_2);
+	}
+      if (s7_is_pair(caddr(expr)))
+	{
+	  if (s7_function_choice_is_direct(sc, caddr(expr)))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      if (s7_function_returns_temp(caddr(expr))) 
+		return(direct_wave_train_2);
+	      return(indirect_wave_train_2);
+	    }
+	}
+    }
+#endif
+  return(f);
+}
+
+
+static s7_pointer phase_vocoder_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(phase_vocoder_1);
+    }
+#if 0
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(wave_train_2);
+	}
+      if (s7_is_pair(caddr(expr)))
+	{
+	  if (s7_function_choice_is_direct(sc, caddr(expr)))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      if (s7_function_returns_temp(caddr(expr))) 
+		return(direct_wave_train_2);
+	      return(indirect_wave_train_2);
+	    }
+	}
+    }
+#endif
+  return(f);
+}
+
+
 static s7_pointer nsin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 1) &&
@@ -12237,6 +12370,10 @@ static void init_choosers(s7_scheme *sc)
   mul_c_table_lookup_1 = clm_make_function(sc, "*", g_mul_c_table_lookup_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_wave_train_2 = clm_make_function(sc, "*", g_mul_c_wave_train_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_wave_train_1 = clm_make_function(sc, "*", g_mul_c_wave_train_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_src_1 = clm_make_function(sc, "*", g_mul_c_src_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_phase_vocoder_1 = clm_make_function(sc, "*", g_mul_c_phase_vocoder_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_convolve_1 = clm_make_function(sc, "*", g_mul_c_convolve_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  mul_c_granulate_1 = clm_make_function(sc, "*", g_mul_c_granulate_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_comb_2 = clm_make_function(sc, "*", g_mul_c_comb_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_notch_2 = clm_make_function(sc, "*", g_mul_c_notch_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_all_pass_2 = clm_make_function(sc, "*", g_mul_c_all_pass_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -12286,6 +12423,10 @@ static void init_choosers(s7_scheme *sc)
   mul_s_table_lookup_1 = clm_make_function_no_choice(sc, "*", g_mul_s_table_lookup_1, 1, 0, false, "* optimization", gen_class);
   mul_s_wave_train_2 = clm_make_function_no_choice(sc, "*", g_mul_s_wave_train_2, 2, 0, false, "* optimization", gen_class);
   mul_s_wave_train_1 = clm_make_function_no_choice(sc, "*", g_mul_s_wave_train_1, 1, 0, false, "* optimization", gen_class);
+  mul_s_src_1 = clm_make_function_no_choice(sc, "*", g_mul_s_src_1, 1, 0, false, "* optimization", gen_class);
+  mul_s_phase_vocoder_1 = clm_make_function_no_choice(sc, "*", g_mul_s_phase_vocoder_1, 1, 0, false, "* optimization", gen_class);
+  mul_s_convolve_1 = clm_make_function_no_choice(sc, "*", g_mul_s_convolve_1, 1, 0, false, "* optimization", gen_class);
+  mul_s_granulate_1 = clm_make_function_no_choice(sc, "*", g_mul_s_granulate_1, 1, 0, false, "* optimization", gen_class);
   mul_s_comb_2 = clm_make_function_no_choice(sc, "*", g_mul_s_comb_2, 2, 0, false, "* optimization", gen_class);
   mul_s_notch_2 = clm_make_function_no_choice(sc, "*", g_mul_s_notch_2, 2, 0, false, "* optimization", gen_class);
   mul_s_all_pass_2 = clm_make_function_no_choice(sc, "*", g_mul_s_all_pass_2, 2, 0, false, "* optimization", gen_class);
@@ -12335,6 +12476,10 @@ static void init_choosers(s7_scheme *sc)
   env_table_lookup_1 = clm_make_function(sc, "*", g_env_table_lookup_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   env_wave_train_2 = clm_make_function(sc, "*", g_env_wave_train_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   env_wave_train_1 = clm_make_function(sc, "*", g_env_wave_train_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_src_1 = clm_make_function(sc, "*", g_env_src_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_phase_vocoder_1 = clm_make_function(sc, "*", g_env_phase_vocoder_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_convolve_1 = clm_make_function(sc, "*", g_env_convolve_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
+  env_granulate_1 = clm_make_function(sc, "*", g_env_granulate_1, 1, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   env_comb_2 = clm_make_function(sc, "*", g_env_comb_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   env_notch_2 = clm_make_function(sc, "*", g_env_notch_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
   env_all_pass_2 = clm_make_function(sc, "*", g_env_all_pass_2, 2, 0, false, "* optimization", gen_class, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -12496,6 +12641,42 @@ static void init_choosers(s7_scheme *sc)
 					  NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_wave_train_2 = clm_make_function(sc, "wave-train", g_indirect_wave_train_2, 2, 0, false, "wave-train optimization", gen_class,
 					  NULL, NULL, NULL, NULL, NULL, NULL);
+
+
+  /* src */
+  f = s7_name_to_value(sc, "src");
+  s7_function_set_chooser(sc, f, src_chooser);
+  gen_class = s7_function_class(sc, f);
+
+  src_1 = clm_make_function(sc, "src", g_src_1, 1, 0, false, "src optimization", gen_class,
+				   NULL, NULL, NULL, mul_c_src_1, mul_s_src_1, env_src_1);
+
+
+  /* phase_vocoder */
+  f = s7_name_to_value(sc, "phase-vocoder");
+  s7_function_set_chooser(sc, f, phase_vocoder_chooser);
+  gen_class = s7_function_class(sc, f);
+
+  phase_vocoder_1 = clm_make_function(sc, "phase-vocoder", g_phase_vocoder_1, 1, 0, false, "phase-vocoder optimization", gen_class,
+				   NULL, NULL, NULL, mul_c_phase_vocoder_1, mul_s_phase_vocoder_1, env_phase_vocoder_1);
+
+
+  /* convolve */
+  f = s7_name_to_value(sc, "convolve");
+  s7_function_set_chooser(sc, f, convolve_chooser);
+  gen_class = s7_function_class(sc, f);
+
+  convolve_1 = clm_make_function(sc, "convolve", g_convolve_1, 1, 0, false, "convolve optimization", gen_class,
+				   NULL, NULL, NULL, mul_c_convolve_1, mul_s_convolve_1, env_convolve_1);
+
+
+  /* granulate */
+  f = s7_name_to_value(sc, "granulate");
+  s7_function_set_chooser(sc, f, granulate_chooser);
+  gen_class = s7_function_class(sc, f);
+
+  granulate_1 = clm_make_function(sc, "granulate", g_granulate_1, 1, 0, false, "granulate optimization", gen_class,
+				   NULL, NULL, NULL, mul_c_granulate_1, mul_s_granulate_1, env_granulate_1);
 
 
   f = s7_name_to_value(sc, "nsin");

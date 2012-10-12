@@ -17636,6 +17636,8 @@ in s7:
 (test (let ((3: 1)) 1) 'error)
 (test (let ((optional: 1)) 1) 'error)
 (test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
+(test (let ((x 1)) (+ (let ((a (begin (define x 2) x))) a) x)) 4)
+(test (let ((x 1)) (+ (letrec ((a (begin (define x 2) x))) a) x)) 3)
 
 (test ((let ((x 2))
 	 (let ((x 3))
@@ -66231,6 +66233,15 @@ but it's the printout that is at fault:
   (num-test (random 0) 0)
   (num-test (random 0.0) 0.0)
   
+(let ()
+  (define (rtest) (- (random 2.0) 1.0))
+  (do ((i 0 (+ i 1)))
+      ((= i 100))
+    (let ((val (rtest)))
+      (if (or (> val 1.0)
+	      (< val -1.0))
+	  (format #t "(- (random 2.0) 1.0): ~A~%" i val)))))
+
   (let ((vr (v 1000 
 	       1.0
 	       (lambda (val)

@@ -1818,7 +1818,7 @@
 	(ampf (make-env '(0.0 0.0    0.1 0.03   0.2 0.2   0.3 0.6   0.34 0.8  0.44 1.0 
 			      0.5 0.83   0.55 0.92  0.6 0.86  0.66 1.0  0.7 0.7   0.88 0.25  
 			      0.91 0.24  0.93 0.02  1.0 0.0)
-			:duration dur :scaler amp))
+			:duration dur :scaler (* 0.5 amp)))
 	(gen1 (make-oscil 7500))
 	(gen2 (make-oscil 200))
 	(rnd (make-rand-interp 200))
@@ -1827,12 +1827,11 @@
 	(rx (make-rxyk!cos 4000 (/ 600 4000) 8.0)))
     (do ((i start (+ i 1)))
 	((= i stop))
-      (let ((frq (env frqf)))
-	(outa i (* (env ampf)
-		   .5 (+ (oscil gen1 (+ frq
-					(* (env rndf) (rand-interp rnd))
-					(* .15 (oscil gen2))))
-			 (rxyk!cos rx))))))))
+      (outa i (* (env ampf)
+		 (+ (oscil gen1 (+ (env frqf)
+				   (* (env rndf) (rand-interp rnd))
+				   (* .15 (oscil gen2))))
+		    (rxyk!cos rx)))))))
 
 ;; (with-sound () (dog-day-cicada 0 2 .5))
 
