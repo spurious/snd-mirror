@@ -29,7 +29,7 @@
 (define (frame-reverse! fr)
   "(frame-reverse fr) reverses the contents of frame fr"
   (if (not (frame? fr))
-      (error 'wrong-type-arg (list "frame-reverse" fr))
+      (error 'wrong-type-arg "frame-reverse: ~A" fr)
       (let ((len (channels fr)))
 	(do ((i 0 (+ i 1))
 	     (j (- len 1) (- j 1)))
@@ -42,7 +42,7 @@
 (define (frame-copy fr)
   "(frame-copy fr) returns a copy of frame fr"
   (if (not (frame? fr))
-      (error 'wrong-type-arg (list "frame-copy" fr))
+      (error 'wrong-type-arg "frame-copy: ~A" fr)
       (let* ((len (channels fr))
 	     (nfr (make-frame len)))
 	(do ((i 0 (+ i 1)))
@@ -81,7 +81,7 @@
 (define* (frame->vct fr v)
   "(frame->vct fr v) copies frame fr into either vct v or a new vct, returning the vct"
   (if (not (frame? fr))
-      (error 'wrong-type-arg (list "frame->vct" fr))
+      (error 'wrong-type-arg "frame->vct: ~A" fr)
       (let* ((flen (channels fr))
 	     (nv (or (and (vct? v) v)
 		     (make-vct flen)))
@@ -94,7 +94,7 @@
 (define* (vct->frame v fr)
   "(vct->frame v fr) copies vct v into either frame fr or a new frame, returning the frame"
   (if (not (vct? v))
-      (error 'wrong-type-arg (list "vct->frame" v))
+      (error 'wrong-type-arg "vct->frame: ~A" v)
       (let* ((vlen (length v))
 	     (nfr (or (and (frame? fr) fr)
 		      (make-frame vlen)))
@@ -108,11 +108,11 @@
 (define* (frame->sound-data fr sd (pos 0))
   "(frame->sound-data fr sd pos) copies the contents of frame fr into the sound-data sd at position pos"
   (if (not (frame? fr))
-      (error 'wrong-type-arg (list "frame->sound-data" fr))
+      (error 'wrong-type-arg "frame->sound-data: ~A" fr)
       (if (not (sound-data? sd))
-	  (error 'wrong-type-arg (list "frame->sound-data" sd))
+	  (error 'wrong-type-arg "frame->sound-data: ~A" sd)
 	  (if (>= pos (length sd))
-	      (error 'out-of-range (list "frame->sound-data" pos))
+	      (error 'out-of-range "frame->sound-data: ~A" pos)
 	      (let ((len (min (channels fr) 
 			      (channels sd))))
 		(do ((i 0 (+ i 1)))
@@ -123,11 +123,11 @@
 (define (sound-data->frame sd pos fr)
   "(sound-data->frame sd pos fr) copies sound-data sd's contents at position pos into frame fr"
   (if (not (frame? fr))
-      (error 'wrong-type-arg (list "sound-data->frame" fr))
+      (error 'wrong-type-arg "sound-data->frame: ~A" fr)
       (if (not (sound-data? sd))
-	  (error 'wrong-type-arg (list "sound-data->frame" sd))
+	  (error 'wrong-type-arg "sound-data->frame: ~A" sd)
 	  (if (>= pos (length sd))
-	      (error 'out-of-range (list "sound-data->frame" pos))
+	      (error 'out-of-range "sound-data->frame: ~A" pos)
 	      (let ((len (min (channels fr) 
 			      (channels sd))))
 		(do ((i 0 (+ i 1)))
@@ -140,7 +140,7 @@
   "(sound->frame pos snd) returns a frame containing the contents of the sound snd at position pos"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
-	(error 'no-such-sound (list "sound->frame" snd))
+	(error 'no-such-sound "sound->frame: ~A" snd)
 	(let ((fr (make-frame (channels index))))
 	  (do ((i 0 (+ i 1)))
 	      ((= i (channels index))
@@ -151,7 +151,7 @@
   "(frame->sound fr pos snd) places the contents of frame fr into sound snd at position pos"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
-	(error 'no-such-sound (list "frame->sound" snd))
+	(error 'no-such-sound "frame->sound: ~A" snd)
 	(do ((i 0 (+ i 1)))
 	    ((= i (channels index))
 	     fr)
@@ -161,7 +161,7 @@
 (define (region->frame reg pos)
   "(region->frame pos reg) returns a frame with the contents of region reg at position pos"
   (if (not (region? reg))
-      (error 'no-such-region (list "region->frame" reg))
+      (error 'no-such-region "region->frame: ~A" reg)
       (let ((fr (make-frame (channels reg))))
 	(do ((i 0 (+ i 1)))
 	    ((= i (channels reg))
@@ -173,7 +173,7 @@
   "(sound->sound-data beg dur snd) returns a sound-data object containing the samples in sound snd starting at position beg for dur frames"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
-	(error 'no-such-sound (list "sound->sound-data" snd))
+	(error 'no-such-sound "sound->sound-data: ~A" snd)
 	(let* ((chns (channels index))
 	       (len (or dur (max 1 (- (frames index) beg))))
 	       (sd (make-sound-data chns len)))
@@ -185,10 +185,10 @@
 (define* (sound-data->sound sd (beg 0) dur snd)
   "(sound-data->sound sd beg dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
   (if (not (sound-data? sd))
-      (error 'wrong-type-arg (list "sound-data->sound" sd))
+      (error 'wrong-type-arg "sound-data->sound: ~A" sd)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
-	    (error 'no-such-sound (list "sound->sound-data" snd))
+	    (error 'no-such-sound "sound->sound-data: ~A" snd)
 	    (let ((ndur (or dur (length sd))))
 	      (do ((i 0 (+ i 1)))
 		  ((= i (channels index)) 
@@ -197,179 +197,157 @@
 
 
 
-;;; TODO: frame-reader should be an environment, not a vector
+;;; --------------------------------------------------------------------------------
+;;; frame-readers
+;;;
 
-(define +frame-reader-tag+ 0)
-(define +frame-reader-snd+ 1)
-(define +frame-reader-channels+ 2)
-(define +frame-reader-frame+ 3)
-(define +frame-reader0+ 4)
+(defgenerator (frame-sampler 
+	       :methods (list
+			 (cons 'object->string
+			       (lambda (g)
+				 (string-append "#<frame-reader "
+						(object->string (g 'snd)) " "
+						(object->string (g 'frm)) " "
+						(object->string (g 'samplers)) ">")))))
+  snd chns frm samplers)
 
 (define* (make-frame-reader (beg 0) snd dir edpos)
   "(make-frame-reader beg snd dir edpos) returns a frame reader, basically a sampler that reads all channels on each call"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (and (not (sound? index))
 	     (not (string? index))) ; filename is a possibility here
-	(error 'no-such-sound (list "make-frame-reader" snd))
-	(let* ((chns (channels index)) ; this works in both cases
-	       (fr (make-vector (+ chns +frame-reader0+))))
-	  (set! (fr +frame-reader-tag+) 'frame-reader)
-	  (set! (fr +frame-reader-snd+) index)
-	  (set! (fr +frame-reader-channels+) chns)
-	  (set! (fr +frame-reader-frame+) (make-frame chns))
-	  (do ((i 0 (+ i 1)))
-	      ((= i chns))
-	    (set! (fr (+ i +frame-reader0+)) (make-sampler beg index i dir edpos)))
-	  fr))))
+	(error 'no-such-sound "make-frame-reader: ~A" snd)
+	(let ((chns (channels index))) ; this works in both cases
+	  (make-frame-sampler index chns 
+			      (make-frame chns)
+			      (let ((v (make-vector chns)))
+				(do ((i 0 (+ i 1)))
+				    ((= i chns) v)
+				  (set! (v i) (make-sampler beg index i dir edpos)))))))))
 
-(define (frame-reader? obj)
-  "(frame-reader? obj) -> #t if obj is a frame-reader"
-  (and (vector? obj)
-       (eq? (obj +frame-reader-tag+) 'frame-reader)))
+(define frame-reader? frame-sampler?)
 
 (define (frame-reader-at-end? fr)
   "(frame-reader-at-end? fr) -> #t if the samplers in frame-reader fr have reached the end of their respective channels"
-  (if (frame-reader? fr)
-      (let ((at-end #t))
-	(do ((i 0 (+ i 1)))
-	    ((or (not at-end) 
-		 (= i (fr +frame-reader-channels+)))
-	     at-end)
-	  (set! at-end (sampler-at-end? (fr (+ i +frame-reader0+))))))
-      (error 'wrong-type-arg (list "frame-reader-at-end" fr))))
+  (with-environment fr
+    (call-with-exit
+     (lambda (return)
+       (do ((i 0 (+ i 1)))
+	   ((= i chns) #t)
+	 (if (not (sampler-at-end? (samplers i)))
+	     (return #f)))))))
 
 (define (frame-reader-position fr)
   "(frame-reader-position fr) -> current read position of frame-reader fr"
-  (if (frame-reader? fr)
-      (sampler-position (fr +frame-reader0+))
-      (error 'wrong-type-arg (list "frame-reader-position" fr))))
+  (with-environment fr (sampler-position (samplers 0))))
 
 (define (frame-reader-home fr)
   "(frame-reader-home fr) -> sound object associated with frame-reader fr"
-  (if (frame-reader? fr)
-      (fr +frame-reader-snd+)
-      (error 'wrong-type-arg (list "frame-reader-home" fr))))
+  (with-environment fr snd))
 
 (define (frame-reader-chans fr)
   "(frame-reader-chans fr) -> number of channels read by frame-reader fr"
-  (if (frame-reader? fr)
-      (fr +frame-reader-channels+)
-      (error 'wrong-type-arg (list "frame-reader-chans" fr))))
+  (with-environment fr chns))
 
 (define (free-frame-reader fr)
-  "(free-frame-reader fr) frees all readers associated with frame-reader fr"
-  (if (frame-reader? fr)
-      (do ((i 0 (+ i 1)))
-	  ((= i (fr +frame-reader-channels+)))
-	(free-sampler (fr (+ i +frame-reader0+))))
-      (error 'wrong-type-arg (list "free-frame-reader" fr))))
+  "(free-frame-reader fr) frees all samplers associated with frame-reader fr"
+  (with-environment fr
+    (do ((i 0 (+ i 1)))
+	((= i chns))
+      (free-sampler (samplers i)))))
 
 (define (copy-frame-reader fr)
   "(copy-frame-reader fr) returns a copy of frame-reader fr"
-  (if (frame-reader? fr)
-      (let* ((chns (fr +frame-reader-channels+))
-	     (nfr (make-vector (+ chns +frame-reader0+))))
-	(set! (nfr +frame-reader-tag+) 'frame-reader)
-	(set! (nfr +frame-reader-snd+) (fr 1))
-	(set! (nfr +frame-reader-channels+) chns)
-	(do ((i 0 (+ i 1)))
-	    ((= i chns))
-	  (set! (nfr (+ i +frame-reader0+)) (copy-sampler (fr (+ i +frame-reader0+)))))
-	nfr)
-      (error 'wrong-type-arg (list "copy-frame-reader" fr))))
+  (with-environment fr
+    (make-frame-sampler snd chns
+			(make-frame chns)
+			(let ((v (make-vector chns)))
+			  (do ((i 0 (+ i 1)))
+			      ((= i chns) v)
+			    (set! (v i) (copy-sampler (samplers i))))))))
 
 (define (next-frame fr)
   "(next-frame fr) returns the next frame as read by frame-reader fr"
-  (let ((vals (fr +frame-reader-frame+)))
+  (with-environment fr
     (do ((i 0 (+ i 1)))
-	((= i (fr +frame-reader-channels+)))
-      (set! (vals i) (next-sample (fr (+ i +frame-reader0+)))))
-    vals))
+	((= i chns) frm)
+      (set! (frm i) (next-sample (samplers i))))))
 
 (define (previous-frame fr)
   "(previous-frame fr) returns the previous frame as read by frame-reader fr"
-  (let ((vals (fr +frame-reader-frame+)))
+  (with-environment fr
     (do ((i 0 (+ i 1)))
-	((= i (fr +frame-reader-channels+)))
-      (set! (vals i) (previous-sample (fr (+ i +frame-reader0+)))))
-    vals))
+	((= i chns) frm)
+      (set! (frm i) (previous-sample (samplers i))))))
 
 (define (read-frame fr)
   "(read-frame fr) returns the next frame read by frame-reader fr taking its current read direction into account"
-  (let ((vals (fr +frame-reader-frame+)))
+  (with-environment fr
     (do ((i 0 (+ i 1)))
-	((= i (fr +frame-reader-channels+)))
-      (set! (vals i) (read-sample (fr (+ i +frame-reader0+)))))
-    vals))
+	((= i chns) frm)
+      (set! (frm i) (read-sample (samplers i))))))
 
 
 (define* (make-region-frame-reader reg beg dir)
   "(make-region-frame-reader reg beg dir) returns a frame-reader reading the contents of region reg"
   (if (not (region? reg))
-      (error 'no-such-region (list "make-region-frame-reader" reg))
-      (let* ((chns (channels reg))
-	     (fr (make-vector (+ chns +frame-reader0+))))
-	(set! (fr +frame-reader-tag+) 'frame-reader)
-	(set! (fr +frame-reader-snd+) reg)
-	(set! (fr +frame-reader-channels+) chns)
-	(set! (fr +frame-reader-frame+) (make-frame chns))
-	(do ((i 0 (+ i 1)))
-	    ((= i chns))
-	  (set! (fr (+ i +frame-reader0+)) (make-region-sampler reg beg i dir)))
-	fr)))
+      (error 'no-such-region "make-region-frame-reader: ~A" reg)
+      (let ((chns (channels reg)))
+	(make-frame-sampler reg chns 
+			    (make-frame chns)
+			    (let ((v (make-vector chns)))
+			      (do ((i 0 (+ i 1)))
+				  ((= i chns) v)
+				(set! (v i) (make-region-sampler reg beg i dir))))))))
 
 (define* (make-sync-frame-reader (beg 0) snd dir edpos)
-  "(make-sync-frame-reader beg snd dir edpos) returns a frame reader that reads all channels sync'd to 'snd'"
+  "(make-sync-frame-reader beg snd dir edpos) returns a frame-reader that reads all channels sync'd to 'snd'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
-	(error 'no-such-sound (list "make-sync-frame-reader" snd))
+	(error 'no-such-sound "make-sync-frame-reader: ~A" snd)
 	(let ((snc (sync index)))
 	  (if (= snc 0)
-	      (make-frame-reader beg snd dir edpos)
+	      (make-frame-reader beg index dir edpos)
 	      (let ((chns 0))
 		(for-each
 		 (lambda (s)
 		   (if (= (sync s) snc) ; sync field is always an int (0 = none)
 		       (set! chns (+ chns (channels s)))))
 		 (sounds))
-		(let ((fr (make-vector (+ chns +frame-reader0+))))
-		  (set! (fr +frame-reader-tag+) 'frame-reader)
-		  (set! (fr +frame-reader-snd+) index)
-		  (set! (fr +frame-reader-channels+) chns)
-		  (set! (fr +frame-reader-frame+) (make-frame chns))
-		  (let ((ctr 0))
-		    (for-each 
-		     (lambda (s)
-		       (if (= (sync s) snc)
-			   (begin
-			     (do ((i 0 (+ i 1)))
-				 ((= i (channels s)))
-			       (set! (fr (+ i ctr +frame-reader0+)) (make-sampler beg s i dir edpos)))
-			     (set! ctr (+ ctr (channels s))))))
-		     (sounds)))
-		  fr)))))))
+		(make-frame-sampler index chns
+				    (make-frame chns)
+				    (let ((v (make-vector chns))
+					  (ctr 0))
+				      (for-each 
+				       (lambda (s)
+					 (if (= (sync s) snc)
+					     (begin
+					       (do ((i 0 (+ i 1)))
+						   ((= i (channels s)))
+						 (set! (v (+ i ctr)) (make-sampler beg s i dir edpos)))
+					       (set! ctr (+ ctr (channels s))))))
+				       (sounds))
+				      v))))))))
 
 (define* (make-selection-frame-reader (beg 0))
   "(make-selection-frame-reader (beg 0)) returns a frame reader that reads all channels of the current selection"
   (if (not (selection?))
-      (error 'no-active-selection (list "make-selection-frame-reader" beg))
-      (let* ((chns (selection-chans))
-	     (fr (make-vector (+ chns +frame-reader0+))))
-	(set! (fr +frame-reader-tag+) 'frame-reader)
-	(set! (fr +frame-reader-snd+) -1)
-	(set! (fr +frame-reader-channels+) chns)
-	(set! (fr +frame-reader-frame+) (make-frame chns))
-	(let ((ctr 0))
-	  (for-each
-	   (lambda (snd)
-	     (do ((chn 0 (+ 1 chn)))
-		 ((= chn (channels snd)))
-	       (if (selection-member? snd chn)
-		   (begin
-		     (set! (fr (+ ctr +frame-reader0+)) (make-sampler (+ beg (selection-position snd chn)) snd chn))
-		     (set! ctr (+ 1 ctr))))))
-	   (sounds)))
-	fr)))
+      (error 'no-active-selection "make-selection-frame-reader: ~A" beg)
+      (let ((chns (selection-chans)))
+	(make-frame-sampler -1 chns
+			    (make-frame chns)
+			    (let ((ctr 0)
+				  (v (make-vector chns)))
+			      (for-each
+			       (lambda (snd)
+				 (do ((chn 0 (+ 1 chn)))
+				     ((= chn (channels snd)))
+				   (if (selection-member? snd chn)
+				       (begin
+					 (set! (v ctr) (make-sampler (+ beg (selection-position snd chn)) snd chn))
+					 (set! ctr (+ 1 ctr))))))
+			       (sounds))
+			      v)))))
 
 
 (define (file->vct file)
@@ -390,7 +368,7 @@
 	(mus-sound-write fd 0 (- (length v) 1) 1 (vct->sound-data v))
 	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
 	file)
-      (error 'wrong-type-arg (list "file->vct" v))))
+      (error 'wrong-type-arg "file->vct: ~A" v)))
 
 
 (define (file->sound-data file)
@@ -412,7 +390,7 @@
 	(mus-sound-write fd 0 (- (length sd) 1) (channels sd) sd)
 	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length sd) (channels sd)))
 	file)
-      (error 'wrong-type-arg (list "sound-data->file" sd))))
+      (error 'wrong-type-arg "sound-data->file: ~A" sd)))
 
 
 (define (region->sound-data reg)
@@ -427,7 +405,7 @@
 	  (frame->sound-data (read-frame reader) data i))
 	(free-frame-reader reader)
 	data)
-      (error 'no-such-region (list "region->sound-data" reg))))
+      (error 'no-such-region "region->sound-data: ~A" reg)))
 
 (define* (selection->sound-data (beg 0))
   "(selection->sound-data beg) returns a sound-data object with the contents of current selection"
@@ -441,23 +419,25 @@
 	  (frame->sound-data (read-frame reader) sd i))
 	(free-frame-reader reader)
 	sd)
-      (error 'no-active-selection (list "selection->sound-data"))))
+      (error 'no-active-selection "selection->sound-data: ~A")))
+
+
 
 
 (define* (insert-vct v (beg 0) dur snd chn edpos)
   "(insert-vct v beg dur snd chn edpos) inserts vct v's data into sound snd at beg"
   (if (not (vct? v))
-      (error 'wrong-type-arg (list "insert-vct" v))
+      (error 'wrong-type-arg "insert-vct: ~A" v)
       (let ((len (or dur (length v))))
 	(insert-samples beg len v snd chn edpos #f (format #f "insert-vct ~A ~A ~A" (vct->string v) beg dur)))))
 
 (define* (insert-frame fr (beg 0) snd edpos)
   "(insert-frame fr beg snd edpos) inserts frame fr's data into sound snd (one sample in each channel) at beg"
   (if (not (frame? fr))
-      (error 'wrong-type-arg (list "insert-frame" fr))
+      (error 'wrong-type-arg "insert-frame: ~A" fr)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
-	    (error 'no-such-sound (list "insert-frame" snd))
+	    (error 'no-such-sound "insert-frame: ~A" snd)
 	    (let ((chns (min (channels fr) (channels index))))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
@@ -467,10 +447,10 @@
   "(insert-sound-data sd beg dur snd edpos) inserts sound-data sd's contents into sound snd at beg"
   ;; this should be built-into insert-samples
   (if (not (sound-data? sd))
-      (error 'wrong-type-arg (list "insert-sound-data" sd))
+      (error 'wrong-type-arg "insert-sound-data: ~A" sd)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
-	    (error 'no-such-sound (list "insert-sound-data" snd))
+	    (error 'no-such-sound "insert-sound-data: ~A" snd)
 	    (let* ((chns (min (channels sd) (channels index)))
 		   (len (or dur (length sd)))
 		   (v (make-vct len)))
@@ -482,10 +462,10 @@
 (define* (mix-frame fr (beg 0) snd)
   "(mix-frame fr beg snd) mixes frame fr's data into sound snd (one sample in each channel) at beg"
   (if (not (frame? fr))
-      (error 'wrong-type-arg (list "mix-frame" fr))
+      (error 'wrong-type-arg "mix-frame: ~A" fr)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
-	    (error 'no-such-sound (list "mix-frame" snd))
+	    (error 'no-such-sound "mix-frame: ~A" snd)
 	    (let ((chns (min (channels fr) (channels index))))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
@@ -494,10 +474,10 @@
 (define* (mix-sound-data sd (beg 0) dur snd tagged)
   "(mix-sound-data sd beg dur snd tagged) mixes the contents of sound-data sd into sound snd at beg"
   (if (not (sound-data? sd))
-      (error 'wrong-type-arg (list "mix-sound-data" sd))
+      (error 'wrong-type-arg "mix-sound-data: ~A" sd)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
-	    (error 'no-such-sound (list "mix-sound-data" snd))
+	    (error 'no-such-sound "mix-sound-data: ~A" snd)
 	    (let* ((chns (min (channels sd) (channels index)))
 		   (len (or dur (length sd)))
 		   (v (make-vct len))
@@ -524,7 +504,7 @@
 	       (and result
 		    (list result (- i 1))))
 	    (set! result (func (read-frame reader)))))
-	(error 'no-such-sound (list "scan-sound" snd)))))
+	(error 'no-such-sound "scan-sound: ~A" snd))))
 
 (define +read-forward+ 1)
 
@@ -552,7 +532,7 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i (channels index)))
 	    (set! (samples beg loc index i #f "map-sound" i #f (= i 0)) filename))) ; edpos = #f, auto-delete = chan=0
-	(error 'no-such-sound (list "map-sound" snd)))))
+	(error 'no-such-sound "map-sound: ~A" snd))))
 
 
 (define* (simultaneous-zero-crossing (beg 0) dur snd)

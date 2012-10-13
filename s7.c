@@ -36731,16 +36731,10 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	    }
 	  else
 	    {
-#if 0
-	      if ((is_optimized(cadar_x)) &&
-		  (c_function_has_rest_arg(func)))
-#endif
-		{
-		  set_unsafely_optimized(car_x);
-		  set_optimize_data(car_x, hop + OP_C_P);
-		  set_c_function(car_x, func);
-		  return(false);
-		}
+	      set_unsafely_optimized(car_x);
+	      set_optimize_data(car_x, hop + OP_C_P);
+	      set_c_function(car_x, func);
+	      return(false);
 	    }
 	}
     }
@@ -36988,8 +36982,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			  set_optimized(car_x);
 			  set_optimize_data(car_x, hop + op);
 			  set_c_function(car_x, c_function_chooser(func)(sc, func, 2, car_x));
-
-			  /* TODO: how to set up e/fcdr here in a clean way? -- perhaps do it in combine_ops? */
 			}
 		    }
 		  else
@@ -37197,10 +37189,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	      set_optimized(car_x);
 	      if (bad_pairs == 0)
 		{
-		  /* TODO: this checks bad_pairs rather than is_optimized(caddar_x) (which can be true even if bad_pair=1)
-		   *   because SAFE_C_SZ_1 assumes the "Z" did not create multiple values, but we now have a simple way
-		   *   around that assumption.
-		   */
 		  set_optimize_data(car_x, hop + ((is_symbol(cadar_x)) ? OP_SAFE_C_SZ : OP_SAFE_C_ZS));
 		  set_c_function(car_x, c_function_chooser(func)(sc, func, 2, car_x));
 		  return(true);
@@ -37255,18 +37243,10 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	    }
 	  else
 	    {
-#if 0
-	      if ((is_optimized(cadar_x)) &&
-		  (is_optimized(caddar_x)))
-#else
-		if (quotes == 0) 
-#endif
+	      if (quotes == 0) 
 		{
 		  set_unsafely_optimized(car_x);
 		  set_optimize_data(car_x, hop + OP_SAFE_C_PP); /* unP case? */
-		  /* TODO: if bad_pairs is 1, ZP and PZ are possibilities 
-		   */
-
 		  set_c_function(car_x, c_function_chooser(func)(sc, func, 2, car_x)); 
 		  return(false);
 		}
@@ -38413,6 +38393,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  return(OP_SAFE_C_S_opCq);
 
 	case OP_SAFE_C_SC:
+	  ecdr(cdr(e1)) = cadr(e2);
+	  fcdr(cdr(e1)) = caddr(e2);
 	  return(OP_SAFE_C_S_opSCq);
 	  
 	case OP_SAFE_C_CS:
@@ -41061,15 +41043,6 @@ static s7_pointer check_set(s7_scheme *sc)
 			      (!is_unsafe(cadr(sc->code))) &&
 			      (is_not_null(cdr(cadr(sc->code)))))               /* (set! x (y)) */
 			    {
-			      /* TODO: fix this comment == we're using h_opt now */
-			      /* the "!is_unsafe" check is needed in case OP_UNKNOWN_SC gets here --
-			       *   it (formerly) did not clear or set the e|fcdr fields, so they may contain
-			       *   garbage which can confuse the check below.  I now 
-			       *   clear ecdr.  (We can get here with an unknown op if previously
-			       *   + was redefined locally, for example, so the optimizer wants to
-			       *   delay the decision until runtime).
-			       */
-			      
 			      if (is_not_null(cddr(cadr(sc->code))))
 				{
 				  if ((caddr(cadr(sc->code)) == small_int(1)) &&
@@ -49245,8 +49218,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer val1, args;
 		args = cdr(code);
 		val1 = finder(sc, car(args));
-		car(sc->T2_1) = finder(sc, cadr(cadr(args)));
-		car(sc->T2_2) = caddr(cadr(args));
+		car(sc->T2_1) = finder(sc, ecdr(args));
+		car(sc->T2_2) = fcdr(args);
 		car(sc->T2_2) = c_call(cadr(args))(sc, sc->T2_1);
 		car(sc->T2_1) = val1;
 		sc->value = c_call(code)(sc, sc->T2_1);
@@ -49352,8 +49325,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto EVAL; 
 	      }
 
-	      /* TODO: add safe_c_op and safe_c_po? latter might be too tricky */
-	      
 	      
 	    case OP_SAFE_C_opCq_S:
 	      if (!c_function_is_ok(sc, code))
@@ -51601,7 +51572,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer sym;
 	sym = car(sc->code);
 	car(sc->T3_1) = finder(sc, car(fcdr(sc->code)));
-	car(sc->T3_2) = finder(sc, ecdr(fcdr(sc->code))); /* TODO: ecdr/fcdr here from hop_safe_c_sss? */
+	car(sc->T3_2) = finder(sc, ecdr(fcdr(sc->code))); 
 	car(sc->T3_3) = finder(sc, fcdr(fcdr(sc->code)));
 	sc->value = c_call(cadr(sc->code))(sc, sc->T3_1);
 	sc->code = sym;
@@ -61904,6 +61875,7 @@ s7_scheme *s7_init(void)
  * PERHAPS: instead of the overlay, make an example of in-C and s7_new_type
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
+ * PERHAPS: substring? cload example
  *
  * timing info [starting from May-11 approximately]
  * bench    42736                     8752 8051 7791
