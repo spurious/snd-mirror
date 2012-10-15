@@ -9234,6 +9234,19 @@ static s7_pointer g_env_1_3(s7_scheme *sc, s7_pointer args)
  *    (define (hi) (let ((o (make-oscil 440.0))) (do ((i 0 (+ i 1))) ((= i 100)) (outa i (oscil o (+ 0.1)))))) (with-sound () (hi))
  */
 
+static s7_pointer oscil_two;
+static s7_pointer g_oscil_two(s7_scheme *sc, s7_pointer args)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)s7_object_value_checked(car(args), mus_xen_tag);
+  if (gn)
+    return(s7_make_real(sc, mus_oscil_fm(gn->gen, s7_number_to_real(sc, cadr(args)))));
+  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "oscil", "a generator");
+  return(s7_f(sc));
+}
+/* other biggies if this is faster: oscil_one|three, outa_two, polyshape_three, comb_two|three, outb_two, src_one|two, all_pass_two, formant_two
+ */
+
 static s7_pointer oscil_pm_direct;
 static s7_pointer g_oscil_pm_direct(s7_scheme *sc, s7_pointer args)
 {
@@ -11119,49 +11132,52 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       return(oscil_1);
     }
 
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))))
+  if (args == 2)
     {
-      if (s7_is_symbol(caddr(expr)))
+      if (s7_is_symbol(cadr(expr)))
 	{
-	  /* fprintf(stderr, "oscil_2\n"); */
-	  s7_function_choice_set_direct(sc, expr);
-	  return(oscil_2);
+	  if (s7_is_symbol(caddr(expr)))
+	    {
+	      /* fprintf(stderr, "oscil_2\n"); */
+	      s7_function_choice_set_direct(sc, expr);
+	      return(oscil_2);
+	    }
+	  if (s7_is_pair(caddr(expr)))
+	    {
+	      if (s7_function_choice(sc, caddr(expr)) == g_fm_violin_modulation)
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  return(fm_violin_with_modulation);
+		}
+	      
+	      if ((s7_list_length(sc, caddr(expr)) == 3) &&
+		  (s7_caaddr(expr) == s7_make_symbol(sc, "*")) &&
+		  (s7_is_real(cadr(caddr(expr)))) &&
+		  (s7_is_symbol(caddr(caddr(expr)))))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  return(oscil_mul_c_s);
+		}
+	      
+	      if ((s7_list_length(sc, caddr(expr)) == 3) &&
+		  (s7_caaddr(expr) == s7_make_symbol(sc, "*")) &&
+		  (s7_is_real(caddr(caddr(expr)))) &&
+		  (s7_is_symbol(cadr(caddr(expr)))))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  return(oscil_mul_s_c);
+		}
+	      
+	      if (s7_function_choice_is_direct(sc, caddr(expr)))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  if (s7_function_returns_temp(caddr(expr))) 
+		    return(direct_oscil_2);
+		  return(indirect_oscil_2);
+		}
+	    }
 	}
-      if (s7_is_pair(caddr(expr)))
-	{
-	  if (s7_function_choice(sc, caddr(expr)) == g_fm_violin_modulation)
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(fm_violin_with_modulation);
-	    }
-
-	  if ((s7_list_length(sc, caddr(expr)) == 3) &&
-	      (s7_caaddr(expr) == s7_make_symbol(sc, "*")) &&
-	      (s7_is_real(cadr(caddr(expr)))) &&
-	      (s7_is_symbol(caddr(caddr(expr)))))
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(oscil_mul_c_s);
-	    }
-
-	  if ((s7_list_length(sc, caddr(expr)) == 3) &&
-	      (s7_caaddr(expr) == s7_make_symbol(sc, "*")) &&
-	      (s7_is_real(caddr(caddr(expr)))) &&
-	      (s7_is_symbol(cadr(caddr(expr)))))
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(oscil_mul_s_c);
-	    }
-
-	  if (s7_function_choice_is_direct(sc, caddr(expr)))
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(caddr(expr))) 
-		return(direct_oscil_2);
-	      return(indirect_oscil_2);
-	    }
-	}
+      return(oscil_two);
     }
   if ((args == 3) &&
       (s7_is_real(caddr(expr))) &&
@@ -12586,6 +12602,8 @@ static void init_choosers(s7_scheme *sc)
   indirect_oscil_2 = clm_make_function(sc, "oscil", g_indirect_oscil_2, 2, 0, false, "oscil optimization", gen_class, 
 				     NULL, NULL, NULL, NULL, NULL, NULL);
   oscil_pm_direct = clm_make_function(sc, "oscil", g_oscil_pm_direct, 3, 0, false, "oscil optimization", gen_class, 
+				     NULL, NULL, NULL, NULL, NULL, NULL);
+  oscil_two = clm_make_function(sc, "oscil", g_oscil_two, 2, 0, false, "oscil optimization", gen_class, 
 				     NULL, NULL, NULL, NULL, NULL, NULL);
   fm_violin_with_modulation = clm_make_function(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "fm-violin optimization", gen_class, 
 						NULL, NULL, NULL, NULL, NULL, NULL);

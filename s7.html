@@ -9346,6 +9346,23 @@ Here are some examples:
   (closedir dir))
 
 
+;;; substring? (strstr in C)
+(define-c-function
+  '((in-C "static int g_strstr(const char *s1, const char *s2)\n\
+           {                       \n\
+             char *res;            \n\
+             res = strstr(s1, s2); \n\
+             if (!res) return(-1); \n\
+             return(res - s1);     \n\
+           }")
+    (int g_strstr (char* char*))))
+
+(define (substring? sub s)
+  (let ((pos (g_strstr s sub)))
+    (and (not (negative? pos))
+	 pos)))
+
+
 ;;; time
 (define-c-function 
   '((in-C "static struct timeval overall_start_time;  \n\
