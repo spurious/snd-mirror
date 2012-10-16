@@ -642,6 +642,58 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 }
 
 
+#if HAVE_SCHEME
+static s7_pointer vct_ref_two;
+static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  v = (vct *)s7_object_value_checked(s7_car(args), vct_tag);
+  if (v)
+    {
+      mus_long_t loc;
+      loc = s7_number_to_integer(sc, s7_cadr(args));
+      if ((loc < 0) || (loc>= v->length))
+	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index ~A out of range");
+      return(s7_make_real(sc, v->data[loc]));
+    }
+  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-ref", "a vct");
+  return(s7_f(sc));
+}
+static s7_pointer vct_ref_ss;
+static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
+{
+  vct *v;
+  v = (vct *)s7_object_value_checked(s7_car_value(sc, args), vct_tag);
+  if (v)
+    {
+      mus_long_t loc;
+      loc = s7_number_to_integer(sc, s7_car_value(sc, s7_cdr(args)));
+      if ((loc < 0) || (loc>= v->length))
+	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index ~A out of range");
+      return(s7_make_real(sc, v->data[loc]));
+    }
+  XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-ref", "a vct");
+  return(s7_f(sc));
+}
+
+
+static s7_pointer vct_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 2)
+    {
+      if ((s7_is_symbol(s7_cadr(expr))) &&
+	  (s7_is_symbol(s7_caddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(vct_ref_ss);
+	}
+      return(vct_ref_two);
+    }
+  return(f);
+}
+#endif
+
+
 static XEN g_vct_set(XEN obj, XEN pos, XEN val)
 {
   #define H_vct_setB "(" S_vct_setB " v n val): sets element of vct v to val, v[n] = val"
@@ -1549,5 +1601,25 @@ void mus_vct_init(void)
                                           (cons 'vector-fill! vct-fill!)                               \n\
                                           (cons 'vector->list vct->list))");
   s7_gc_protect(s7, g_vct_methods);
+#endif
+
+
+#if HAVE_SCHEME
+  {
+    s7_pointer f;
+    unsigned int gclass;
+    /* vct-ref */
+    f = s7_name_to_value(s7, "vct-ref");
+    s7_function_set_chooser(s7, f, vct_ref_chooser);
+    gclass = s7_function_class(s7, f);
+
+    vct_ref_two = s7_make_function(s7, "vct-ref", g_vct_ref_two, 2, 0, false, "vct-ref optimization");
+    s7_function_set_class(s7, vct_ref_two, gclass);
+    s7_function_set_returns_temp(vct_ref_two);
+
+    vct_ref_ss = s7_make_function(s7, "vct-ref", g_vct_ref_ss, 2, 0, false, "vct-ref optimization");
+    s7_function_set_class(s7, vct_ref_ss, gclass);
+    s7_function_set_returns_temp(vct_ref_ss);
+  }
 #endif
 }

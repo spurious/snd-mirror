@@ -9234,6 +9234,17 @@ static s7_pointer g_env_1_3(s7_scheme *sc, s7_pointer args)
  *    (define (hi) (let ((o (make-oscil 440.0))) (do ((i 0 (+ i 1))) ((= i 100)) (outa i (oscil o (+ 0.1)))))) (with-sound () (hi))
  */
 
+static s7_pointer oscil_one;
+static s7_pointer g_oscil_one(s7_scheme *sc, s7_pointer args)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)s7_object_value_checked(car(args), mus_xen_tag);
+  if (gn)
+    return(s7_make_real(sc, mus_oscil_unmodulated(gn->gen)));
+  XEN_ASSERT_TYPE(false, car(args), XEN_ONLY_ARG, "oscil", "a generator");
+  return(s7_f(sc));
+}
+
 static s7_pointer oscil_two;
 static s7_pointer g_oscil_two(s7_scheme *sc, s7_pointer args)
 {
@@ -9244,7 +9255,79 @@ static s7_pointer g_oscil_two(s7_scheme *sc, s7_pointer args)
   XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "oscil", "a generator");
   return(s7_f(sc));
 }
-/* other biggies if this is faster: oscil_one|three, outa_two, polyshape_three, comb_two|three, outb_two, src_one|two, all_pass_two, formant_two
+
+static s7_pointer oscil_three;
+static s7_pointer g_oscil_three(s7_scheme *sc, s7_pointer args)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)s7_object_value_checked(car(args), mus_xen_tag);
+  if (gn)
+    return(s7_make_real(sc, mus_oscil(gn->gen, s7_number_to_real(sc, cadr(args)), s7_number_to_real(sc, caddr(args)))));
+  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "oscil", "a generator");
+  return(s7_f(sc));
+}
+
+static s7_pointer formant_two;
+static s7_pointer g_formant_two(s7_scheme *sc, s7_pointer args)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)s7_object_value_checked(car(args), mus_xen_tag);
+  if (gn)
+    return(s7_make_real(sc, mus_formant(gn->gen, s7_number_to_real(sc, cadr(args)))));
+  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "formant", "a generator");
+  return(s7_f(sc));
+}
+
+static s7_pointer outa_two;
+static s7_pointer g_outa_two(s7_scheme *sc, s7_pointer args)
+{
+  mus_long_t pos;
+  s7_pointer x;
+  pos = (mus_long_t)s7_number_to_integer(sc, car(args));
+  if (pos < 0) 
+    XEN_OUT_OF_RANGE_ERROR("outa", XEN_ARG_1, car(args), "must be >= 0");    
+  x = cadr(args);
+  return(out_any_2(pos, s7_number_to_real(sc, x), 0, "outa", x));
+}
+
+static s7_pointer outb_two;
+static s7_pointer g_outb_two(s7_scheme *sc, s7_pointer args)
+{
+  mus_long_t pos;
+  s7_pointer x;
+  pos = (mus_long_t)s7_number_to_integer(sc, car(args));
+  if (pos < 0) 
+    XEN_OUT_OF_RANGE_ERROR("outa", XEN_ARG_1, car(args), "must be >= 0");    
+  x = cadr(args);
+  return(out_any_2(pos, s7_number_to_real(sc, x), 1, "outb", x));
+}
+
+static s7_pointer rand_one;
+static s7_pointer g_rand_one(s7_scheme *sc, s7_pointer args)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)s7_object_value_checked(car(args), mus_xen_tag);
+  if (gn)
+    return(s7_make_real(sc, mus_rand_unmodulated(gn->gen)));
+  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "rand", "a generator");
+  return(s7_f(sc));
+}
+
+static s7_pointer src_one;
+static s7_pointer g_src_one(s7_scheme *sc, s7_pointer args)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)s7_object_value_checked(car(args), mus_xen_tag);
+  if (gn)
+    return(s7_make_real(sc, mus_src_simple(gn->gen)));
+  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "src", "a generator");
+  return(s7_f(sc));
+}
+
+
+/* other biggies: polyshape_three, comb_two|three, src_three, all_pass_two, file_to_sample_two
+ *                frame_set_3, sound_data_ref_three, rand_one -> rand_two (misread data) and src_one->src_two(??) src_chooser was never called?
+ * can other vct_ref (_2i) cases be direct/temp?
  */
 
 static s7_pointer oscil_pm_direct;
@@ -11125,11 +11208,14 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 {
   /* fprintf(stderr, "oscil: %s\n", DISPLAY(expr)); */
 
-  if ((args == 1) &&
-      (s7_is_symbol(cadr(expr))))
+  if (args == 1)
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(oscil_1);
+      if (s7_is_symbol(cadr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(oscil_1);
+	}
+      return(oscil_one);
     }
 
   if (args == 2)
@@ -11138,7 +11224,6 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	{
 	  if (s7_is_symbol(caddr(expr)))
 	    {
-	      /* fprintf(stderr, "oscil_2\n"); */
 	      s7_function_choice_set_direct(sc, expr);
 	      return(oscil_2);
 	    }
@@ -11179,17 +11264,19 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	}
       return(oscil_two);
     }
-  if ((args == 3) &&
-      (s7_is_real(caddr(expr))) &&
-      (s7_number_to_real(sc, caddr(expr)) == 0.0) &&
-      (s7_is_pair(cadddr(expr))) &&
-      (s7_function_choice_is_direct(sc, cadddr(expr))) &&
-      (s7_function_returns_temp(cadddr(expr))))
+  if (args == 3)
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(oscil_pm_direct);
+      if ((s7_is_real(caddr(expr))) &&
+	  (s7_number_to_real(sc, caddr(expr)) == 0.0) &&
+	  (s7_is_pair(cadddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, cadddr(expr))) &&
+	  (s7_function_returns_temp(cadddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(oscil_pm_direct);
+	}
+      return(oscil_three);
     }
-
   return(f);
 }
 
@@ -11298,11 +11385,14 @@ static s7_pointer wave_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 
 static s7_pointer src_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 1) &&
-      (s7_is_symbol(cadr(expr))))
+  if (args == 1)
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(src_1);
+      if (s7_is_symbol(cadr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(src_1);
+	}
+      return(src_one);
     }
 #if 0
   if ((args == 2) &&
@@ -11803,21 +11893,23 @@ static s7_pointer moving_average_chooser(s7_scheme *sc, s7_pointer f, int args, 
 
 static s7_pointer formant_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))))
+  if (args == 2)
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(formant_2);
-    }
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_pair(caddr(expr))) &&
-      (s7_function_choice_is_direct(sc, caddr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_formant_2);
-      return(indirect_formant_2);
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_symbol(caddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(formant_2);
+	}
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_pair(caddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, caddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  if (s7_function_returns_temp(caddr(expr))) return(direct_formant_2);
+	  return(indirect_formant_2);
+	}
+      return(formant_two);
     }
   return(f);
 }
@@ -12017,11 +12109,14 @@ static s7_pointer pulse_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 
 static s7_pointer rand_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 1) &&
-      (s7_is_symbol(cadr(expr))))
+  if (args == 1)
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(rand_1);
+      if (s7_is_symbol(cadr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(rand_1);
+	}
+      return(rand_one);
     }
   if ((args == 2) &&
       (s7_is_symbol(cadr(expr))) &&
@@ -12244,6 +12339,7 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	  s7_function_choice_set_direct(sc, expr);
 	  return(indirect_outa_add_2);
 	}
+      return(outa_two);
     }
   /* fprintf(stderr, "\nouta nope: %s\n", DISPLAY(expr)); */
   return(f);
@@ -12262,6 +12358,7 @@ static s7_pointer outb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	      return(outb_mul_s_delay);
 	    }
 	}
+      return(outb_two);
     }
   return(f);
 }
@@ -12603,7 +12700,11 @@ static void init_choosers(s7_scheme *sc)
 				     NULL, NULL, NULL, NULL, NULL, NULL);
   oscil_pm_direct = clm_make_function(sc, "oscil", g_oscil_pm_direct, 3, 0, false, "oscil optimization", gen_class, 
 				     NULL, NULL, NULL, NULL, NULL, NULL);
+  oscil_one = clm_make_function(sc, "oscil", g_oscil_one, 1, 0, false, "oscil optimization", gen_class, 
+				     NULL, NULL, NULL, NULL, NULL, NULL);
   oscil_two = clm_make_function(sc, "oscil", g_oscil_two, 2, 0, false, "oscil optimization", gen_class, 
+				     NULL, NULL, NULL, NULL, NULL, NULL);
+  oscil_three = clm_make_function(sc, "oscil", g_oscil_three, 3, 0, false, "oscil optimization", gen_class, 
 				     NULL, NULL, NULL, NULL, NULL, NULL);
   fm_violin_with_modulation = clm_make_function(sc, "oscil", g_fm_violin_with_modulation, 2, 0, false, "fm-violin optimization", gen_class, 
 						NULL, NULL, NULL, NULL, NULL, NULL);
@@ -12668,6 +12769,8 @@ static void init_choosers(s7_scheme *sc)
 
   src_1 = clm_make_function(sc, "src", g_src_1, 1, 0, false, "src optimization", gen_class,
 				   NULL, NULL, NULL, mul_c_src_1, mul_s_src_1, env_src_1);
+  src_one = clm_make_function(sc, "src", g_src_one, 1, 0, false, "src optimization", gen_class,
+			      NULL, NULL, NULL, NULL, NULL, NULL);
 
 
   /* phase_vocoder */
@@ -12943,6 +13046,8 @@ static void init_choosers(s7_scheme *sc)
 
   rand_1 = clm_make_function(sc, "rand", g_rand_1, 1, 0, false, "rand optimization", gen_class,
 			     NULL, NULL, NULL, mul_c_rand_1, mul_s_rand_1, env_rand_1);
+  rand_one = clm_make_function(sc, "rand", g_rand_one, 1, 0, false, "rand optimization", gen_class,
+			       NULL, NULL, NULL, NULL, NULL, NULL);
   rand_2 = clm_make_function(sc, "rand", g_rand_2, 2, 0, false, "rand optimization", gen_class,
 			     mul_c_rand_2, mul_s_rand_2, env_rand_2, NULL, NULL, NULL);
   direct_rand_2 = clm_make_function(sc, "rand", g_direct_rand_2, 2, 0, false, "rand optimization", gen_class,
@@ -12970,6 +13075,8 @@ static void init_choosers(s7_scheme *sc)
 
   formant_2 = clm_make_function(sc, "formant", g_formant_2, 2, 0, false, "formant optimization", gen_class,
 				mul_c_formant_2, mul_s_formant_2, env_formant_2, NULL, NULL, NULL);
+  formant_two = clm_make_function(sc, "formant", g_formant_two, 2, 0, false, "formant optimization", gen_class,
+				       NULL, NULL, NULL, NULL, NULL, NULL);
   direct_formant_2 = clm_make_function(sc, "formant", g_direct_formant_2, 2, 0, false, "formant optimization", gen_class,
 				       NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_formant_2 = clm_make_function(sc, "formant", g_indirect_formant_2, 2, 0, false, "formant optimization", gen_class,
@@ -13086,6 +13193,7 @@ static void init_choosers(s7_scheme *sc)
   outa_env_polywave_env = clm_make_function_no_choice(sc, "outa", g_outa_env_polywave_env, 2, 0, false, "outa optimization", gen_class);
   s7_function_set_has_data(outa_env_polywave_env);
   indirect_outa_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_2, 2, 0, false, "outa optimization", gen_class);
+  outa_two = clm_make_function_no_choice(sc, "outa", g_outa_two, 2, 0, false, "outa optimization", gen_class);
   indirect_outa_add_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_add_2, 2, 0, false, "outa optimization", gen_class);
   indirect_outa_sub_2 = clm_make_function_no_choice(sc, "outa", g_indirect_outa_sub_2, 2, 0, false, "outa optimization", gen_class);
   indirect_outa_ss = clm_make_function_no_choice(sc, "outa", g_indirect_outa_ss, 2, 0, false, "outa optimization", gen_class);
@@ -13097,6 +13205,7 @@ static void init_choosers(s7_scheme *sc)
 
   outb_mul_s_delay = clm_make_function_no_choice(sc, "outb", g_outb_mul_s_delay, 2, 0, false, "outb optimization", gen_class);
   s7_function_set_has_data(outb_mul_s_delay);
+  outb_two = clm_make_function_no_choice(sc, "outb", g_outb_two, 2, 0, false, "outb optimization", gen_class);
 
 
   f = s7_name_to_value(sc, "ina");
