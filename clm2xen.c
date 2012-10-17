@@ -9267,6 +9267,17 @@ static s7_pointer g_oscil_three(s7_scheme *sc, s7_pointer args)
   return(s7_f(sc));
 }
 
+static s7_pointer polyshape_three;
+static s7_pointer g_polyshape_three(s7_scheme *sc, s7_pointer args)
+{
+  mus_xen *gn;
+  gn = (mus_xen *)s7_object_value_checked(car(args), mus_xen_tag);
+  if (gn)
+    return(s7_make_real(sc, mus_polyshape(gn->gen, s7_number_to_real(sc, cadr(args)), s7_number_to_real(sc, caddr(args)))));
+  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "polyshape", "a generator");
+  return(s7_f(sc));
+}
+
 static s7_pointer formant_two;
 static s7_pointer g_formant_two(s7_scheme *sc, s7_pointer args)
 {
@@ -9302,17 +9313,6 @@ static s7_pointer g_outb_two(s7_scheme *sc, s7_pointer args)
   return(out_any_2(pos, s7_number_to_real(sc, x), 1, "outb", x));
 }
 
-static s7_pointer rand_one;
-static s7_pointer g_rand_one(s7_scheme *sc, s7_pointer args)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)s7_object_value_checked(car(args), mus_xen_tag);
-  if (gn)
-    return(s7_make_real(sc, mus_rand_unmodulated(gn->gen)));
-  XEN_ASSERT_TYPE(false, car(args), XEN_ARG_1, "rand", "a generator");
-  return(s7_f(sc));
-}
-
 static s7_pointer src_one;
 static s7_pointer g_src_one(s7_scheme *sc, s7_pointer args)
 {
@@ -9325,9 +9325,8 @@ static s7_pointer g_src_one(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* other biggies: polyshape_three, comb_two|three, src_three, all_pass_two, file_to_sample_two
- *                frame_set_3, sound_data_ref_three, rand_one -> rand_two (misread data) and src_one->src_two(??) src_chooser was never called?
- * can other vct_ref (_2i) cases be direct/temp?
+/* other biggies: ->ssb_am_two, comb_two|three, src_three, all_pass_two, file_to_sample_two
+ *                frame_set_3, sound_data_ref_three, src_one->src_two(??) src_chooser was never called?
  */
 
 static s7_pointer oscil_pm_direct;
@@ -10928,77 +10927,77 @@ static s7_pointer (*initial_multiply_chooser)(s7_scheme *sc, s7_pointer f, int a
 static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   /* fprintf(stderr, "* expr: %s\n", DISPLAY(expr)); */
-
-  if ((args == 2) &&
-      (s7_is_pair(cadr(expr))) &&
-      (car(cadr(expr)) == env_symbol) &&
-      (s7_is_symbol(cadr(cadr(expr)))) &&
-      (s7_is_pair(caddr(expr))))
+  if (args == 2)
     {
-      if (s7_function_choice(sc, caddr(expr)) == g_fm_violin_with_modulation)
+      if ((s7_is_pair(cadr(expr))) &&
+	  (car(cadr(expr)) == env_symbol) &&
+	  (s7_is_symbol(cadr(cadr(expr)))) &&
+	  (s7_is_pair(caddr(expr))))
 	{
-	  /* fprintf(stderr, "fm-violin-1\n"); */
-	  s7_function_choice_set_direct(sc, expr);
-	  return(fm_violin_1);
-	}
-
-      /* fprintf(stderr, "env * %s %p %p\n", DISPLAY_80(caddr(expr)), g_direct_polywave_2, s7_function_choice(sc, caddr(expr))); */
-
-      if ((car(caddr(expr)) == polywave_symbol) &&
-	  (s7_is_pair(cdr(caddr(expr)))) &&
-	  (s7_is_symbol(cadr(caddr(expr)))) &&
-	  (s7_is_pair(cddr(caddr(expr)))))
-	{
-	  if (s7_is_symbol(caddr(caddr(expr))))
+	  if (s7_function_choice(sc, caddr(expr)) == g_fm_violin_with_modulation)
 	    {
-	      /* fprintf(stderr, "env_polywave\n"); */
 	      s7_function_choice_set_direct(sc, expr);
-	      return(env_polywave);
+	      /* fprintf(stderr, "fm_violin_1\n"); */
+	      return(fm_violin_1);
 	    }
-	  if ((s7_is_pair(caddr(caddr(expr)))) &&
-	      (car(caddr(caddr(expr))) == env_symbol) &&
-	      (s7_is_symbol(cadr(caddr(caddr(expr))))))
+	  
+	  if ((car(caddr(expr)) == polywave_symbol) &&
+	      (s7_is_pair(cdr(caddr(expr)))) &&
+	      (s7_is_symbol(cadr(caddr(expr)))) &&
+	      (s7_is_pair(cddr(caddr(expr)))))
 	    {
-	      /* fprintf(stderr, "env-polywave-env\n"); */
-	      s7_function_choice_set_direct(sc, expr);
-	      return(env_polywave_env);
+	      if (s7_is_symbol(caddr(caddr(expr))))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  /* fprintf(stderr, "env_polywave\n"); */
+		  return(env_polywave);
+		}
+	      if ((s7_is_pair(caddr(caddr(expr)))) &&
+		  (car(caddr(caddr(expr))) == env_symbol) &&
+		  (s7_is_symbol(cadr(caddr(caddr(expr))))))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  /* fprintf(stderr, "env_polywave_env\n"); */
+		  return(env_polywave_env);
+		}
 	    }
 	}
-    }
 
-  if ((args == 2) &&
-      (s7_is_pair(caddr(expr))))
-    {
-      if (s7_is_real(cadr(expr)))
+      if (s7_is_pair(caddr(expr)))
 	{
-	  /* (* num (gen...))
-	   */
-	  s7_pointer *choices;
-	  choices = (s7_pointer *)s7_function_chooser_data(sc, caddr(expr));
-	  if (choices)
+	  if (s7_is_real(cadr(expr)))
 	    {
-	      if (choices[MUL_C_GEN])
+	      /* (* num (gen...))
+	       */
+	      s7_pointer *choices;
+	      choices = (s7_pointer *)s7_function_chooser_data(sc, caddr(expr));
+	      if (choices)
 		{
-		  /* fprintf(stderr, "mul c gen2\n"); */
-		  s7_function_choice_set_direct(sc, expr);
-		  return(choices[MUL_C_GEN]);
-		}
-
-	      if (choices[MUL_C_GEN_1])
-		{
-		  /* fprintf(stderr, "mul c gen1\n"); */
-		  s7_function_choice_set_direct(sc, expr);
-		  return(choices[MUL_C_GEN_1]);
-		}
-
-	      if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
-		  (s7_function_returns_temp(caddr(expr))))
-		{
-		  s7_function_choice_set_direct(sc, expr);
-		  return(mul_c_direct);
+		  if (choices[MUL_C_GEN])
+		    {
+		      s7_function_choice_set_direct(sc, expr);
+		      /* fprintf(stderr, "mul_c_gen\n"); */
+		      return(choices[MUL_C_GEN]);
+		    }
+		  
+		  if (choices[MUL_C_GEN_1])
+		    {
+		      s7_function_choice_set_direct(sc, expr);
+		      /* fprintf(stderr, "mul_c_gen_1\n"); */
+		      return(choices[MUL_C_GEN_1]);
+		    }
+		  
+		  if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
+		      (s7_function_returns_temp(caddr(expr))))
+		    {
+		      s7_function_choice_set_direct(sc, expr);
+		      /* fprintf(stderr, "mul_c_direct\n"); */
+		      return(mul_c_direct);
+		    }
 		}
 	    }
 	}
+	  
       if ((s7_is_symbol(cadr(expr))) &&
 	  (s7_is_pair(cddr(expr))) &&          /* (* + '(vector?)) -- this is the optimizer's fault */
 	  (s7_is_pair(caddr(expr))))
@@ -11009,83 +11008,81 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	    {
 	      if (choices[MUL_S_GEN])
 		{
-		  /* fprintf(stderr, "mul s gen2\n"); */
 		  s7_function_choice_set_direct(sc, expr);
+		  /* fprintf(stderr, "mul_s_gen\n"); */
 		  return(choices[MUL_S_GEN]);
 		}
 	      if (choices[MUL_S_GEN_1])
 		{
-		  /* fprintf(stderr, "mul s gen1\n"); */
 		  s7_function_choice_set_direct(sc, expr);
+		  /* fprintf(stderr, "mul_s_gen_1\n"); */
 		  return(choices[MUL_S_GEN_1]);
 		}
-
+	      
 	      if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
 		  (s7_function_returns_temp(caddr(expr))))
 		{
-		  /* fprintf(stderr, "\nmul s direct: %s\n\n", DISPLAY_80(expr)); */
 		  s7_function_choice_set_direct(sc, expr);
+		  /* fprintf(stderr, "mul_s_direct\n"); */
 		  return(mul_s_direct);
 		}
 	    }
 	}
-      
-      if ((s7_is_pair(cadr(expr))) &&
-	  (car(cadr(expr)) == env_symbol))
+	  
+      if (s7_is_pair(cadr(expr)))
 	{
-	  s7_pointer *choices;
-	  choices = (s7_pointer *)s7_function_chooser_data(sc, caddr(expr));
-	  /* fprintf(stderr, "mul direct: %s: %p (%d)\n", DISPLAY(expr), choices, s7_function_choice_is_direct(sc, caddr(expr))); */
-	  if (choices)
+	  if (car(cadr(expr)) == env_symbol)
 	    {
-	      if (choices[ENV_GEN])
+	      s7_pointer *choices;
+	      choices = (s7_pointer *)s7_function_chooser_data(sc, caddr(expr));
+	      if (choices)
 		{
-		  /* fprintf(stderr, "env2\n"); */
-		  s7_function_choice_set_direct(sc, expr);
-		  return(choices[ENV_GEN]);
+		  if (choices[ENV_GEN])
+		    {
+		      /* fprintf(stderr, "env_gen\n"); */
+		      s7_function_choice_set_direct(sc, expr);
+		      return(choices[ENV_GEN]);
+		    }
+		  if (choices[ENV_GEN_1])
+		    {
+		      /* fprintf(stderr, "env_gen_1\n"); */
+		      s7_function_choice_set_direct(sc, expr);
+		      return(choices[ENV_GEN_1]);
+		    }
 		}
-	      if (choices[ENV_GEN_1])
+	      if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
+		  (s7_function_returns_temp(caddr(expr))))
 		{
-		  /* fprintf(stderr, "env1\n"); */
+		  /* fprintf(stderr, "mul_env_direct\n"); */
 		  s7_function_choice_set_direct(sc, expr);
-		  return(choices[ENV_GEN_1]);
+		  return(mul_env_direct);
 		}
 	    }
-	  if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
+	  
+	  if ((car(cadr(expr)) == subtract_symbol) &&
+	      (s7_list_length(sc, cadr(expr)) == 3) &&
+	      (s7_is_real(cadr(cadr(expr)))) &&
+	      (s7_is_symbol(caddr(cadr(expr)))) &&
+	      (s7_number_to_real(sc, cadr(cadr(expr))) == 1.0) &&
+	      (s7_function_choice_is_direct(sc, caddr(expr))) &&
 	      (s7_function_returns_temp(caddr(expr))))
 	    {
-	      /* fprintf(stderr, "\nmul env direct: %s\n\n", DISPLAY_80(expr)); */
 	      s7_function_choice_set_direct(sc, expr);
-	      return(mul_env_direct);
+	      /* fprintf(stderr, "mul_1s_direct\n"); */
+	      return(mul_1s_direct);
+	    }
+	  
+	  if ((s7_is_pair(caddr(expr))) &&
+	      (s7_function_choice_is_direct(sc, cadr(expr))) &&
+	      (s7_function_returns_temp(cadr(expr))) &&
+	      (s7_function_choice_is_direct(sc, caddr(expr))) &&
+	      (s7_function_returns_temp(caddr(expr))))
+	    {
+	      s7_function_choice_set_direct(sc, expr);
+	      /* fprintf(stderr, "mul_direct_2\n"); */
+	      return(mul_direct_2);
 	    }
 	}
-
-      if ((s7_is_pair(cadr(expr))) &&
-	  (car(cadr(expr)) == subtract_symbol) &&
-	  (s7_list_length(sc, cadr(expr)) == 3) &&
-	  (s7_is_real(cadr(cadr(expr)))) &&
-	  (s7_is_symbol(caddr(cadr(expr)))) &&
-	  (s7_number_to_real(sc, cadr(cadr(expr))) == 1.0) &&
-	  (s7_function_choice_is_direct(sc, caddr(expr))) &&
-	  (s7_function_returns_temp(caddr(expr))))
-	{
-	  /* fprintf(stderr, "\nmul (- 1 s) direct: %s\n\n", DISPLAY_80(expr)); */
-	  s7_function_choice_set_direct(sc, expr);
-	  return(mul_1s_direct);
-	}
-    }
-
-  if ((args == 2) &&
-      (s7_is_pair(cadr(expr))) &&
-      (s7_is_pair(caddr(expr))) &&
-      (s7_function_choice_is_direct(sc, cadr(expr))) &&
-      (s7_function_returns_temp(cadr(expr))) &&
-      (s7_function_choice_is_direct(sc, caddr(expr))) &&
-      (s7_function_returns_temp(caddr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      /* fprintf(stderr, "mul 2 direct\n"); */
-      return(mul_direct_2);
     }
 
   if ((args == 3) &&
@@ -12116,7 +12113,6 @@ static s7_pointer rand_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	  s7_function_choice_set_direct(sc, expr);
 	  return(rand_1);
 	}
-      return(rand_one);
     }
   if ((args == 2) &&
       (s7_is_symbol(cadr(expr))) &&
@@ -12166,22 +12162,25 @@ static s7_pointer rand_interp_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 
 static s7_pointer polyshape_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))))
+  if (args == 2)
     {
-      s7_function_choice_set_direct(sc, expr);
-      return(polyshape_2);
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_symbol(caddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(polyshape_2);
+	}
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_pair(caddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, caddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  if (s7_function_returns_temp(caddr(expr))) return(direct_polyshape_2);
+	  return(indirect_polyshape_2);
+	}
     }
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_pair(caddr(expr))) &&
-      (s7_function_choice_is_direct(sc, caddr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_polyshape_2);
-      return(indirect_polyshape_2);
-    }
+  if (args == 3)
+    return(polyshape_three);
   return(f);
 }
 
@@ -13046,8 +13045,6 @@ static void init_choosers(s7_scheme *sc)
 
   rand_1 = clm_make_function(sc, "rand", g_rand_1, 1, 0, false, "rand optimization", gen_class,
 			     NULL, NULL, NULL, mul_c_rand_1, mul_s_rand_1, env_rand_1);
-  rand_one = clm_make_function(sc, "rand", g_rand_one, 1, 0, false, "rand optimization", gen_class,
-			       NULL, NULL, NULL, NULL, NULL, NULL);
   rand_2 = clm_make_function(sc, "rand", g_rand_2, 2, 0, false, "rand optimization", gen_class,
 			     mul_c_rand_2, mul_s_rand_2, env_rand_2, NULL, NULL, NULL);
   direct_rand_2 = clm_make_function(sc, "rand", g_direct_rand_2, 2, 0, false, "rand optimization", gen_class,
@@ -13134,6 +13131,9 @@ static void init_choosers(s7_scheme *sc)
 				       NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_polyshape_2 = clm_make_function(sc, "polyshape", g_indirect_polyshape_2, 2, 0, false, "polyshape optimization", gen_class,
 				       NULL, NULL, NULL, NULL, NULL, NULL);
+  polyshape_three = clm_make_function(sc, "polyshape", g_polyshape_three, 3, 0, false, "polyshape optimization", gen_class, 
+				     NULL, NULL, NULL, NULL, NULL, NULL);
+
 
   f = s7_name_to_value(sc, "ssb-am");
   s7_function_set_chooser(sc, f, ssb_am_chooser);

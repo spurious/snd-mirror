@@ -5413,7 +5413,7 @@ s7_pointer s7_slot_value(s7_scheme *sc, s7_pointer slot)
 
 bool s7_slot_value_is_real(s7_pointer slot)
 {
-  return(is_real(slot_value(slot)));
+  return(type(slot_value(slot)) == T_REAL);
 }
 
 
@@ -5427,7 +5427,7 @@ s7_Double s7_slot_value_to_real(s7_scheme *sc, s7_pointer slot)
 {
   s7_pointer val;
   val = slot_value(slot);
-  if (is_real(val))
+  if (type(val) == T_REAL)
     return(real(val));
   return((s7_Double)(integer(val)));
 }
@@ -12201,10 +12201,49 @@ static s7_pointer g_add_fs(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+
+static s7_pointer add_ss_1ss;
+static s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
+{
+  /* (+ (* s1 s2) (* (- 1.0 s1) s3)) */
+  s7_pointer s1, s2, s3;
+  s1 = finder(sc, cadr(car(args)));
+  s2 = finder(sc, caddr(car(args)));
+  s3 = finder(sc, caddr(cadr(args))); /* PERHAPS: e/fcdr? */
+
+  if ((type(s1) == T_REAL) &&
+      (type(s2) == T_REAL) &&
+      (type(s3) == T_REAL))
+    return(make_real(sc, (real(s1) * real(s2))  + ((1.0 - real(s1)) * real(s3))));
+
+  if ((is_real(s1)) &&
+      (is_real(s2)) &&
+      (is_real(s3)))
+    return(make_real(sc, (s7_number_to_real(sc, s1) * s7_number_to_real(sc, s2))  + ((1.0 - s7_number_to_real(sc, s1)) * s7_number_to_real(sc, s3))));
+
+  {
+    s7_Double r1, r2, r3, rs1, i1, i2, i3, is1;
+    r1 = s7_real_part(s1);
+    rs1 = 1.0 - r1;
+    r2 = s7_real_part(s2);
+    r3 = s7_real_part(s3);
+    i1 = s7_imag_part(s1);
+    is1 = -i1;
+    i2 = s7_imag_part(s2);
+    i3 = s7_imag_part(s3);
+    return(s7_make_complex(sc, 
+			   (r1 * r2 - i1 * i2) + (rs1 * r3 - is1 * i3),
+			   (r1 * i2 + r2 * i1) + (rs1 * i3 + r3 * is1)));
+  }
+  /* (let () (define (hi a b c) (+ (* a b) (* (- 1.0 a) c))) (define (hi1 a b c) (+ (* b a) (* c (- 1 a)))) (define (ho a b c) (list (hi a b c) (hi1 a b c))) (ho 1.4 2.5+i 3.1)) */
+}
+
 /* (let () (define (hi a) (+ a 1)) ((apply let '((x 32)) (list (procedure-source hi))) 12))
  */
 /* other standard cases (fft-related): (+|- (vector-ref ...) s) -- actually (vector-set! v i (+|- (vector-ref v i) s))
  *                                     (+|- (* s (vector-ref ...)) (* s (vector-ref ...)))
+ *
+ * (+ (+ ...) ...) in particular TODO: (+ (+ s s) 1)
  */
 
 
@@ -13157,7 +13196,6 @@ static s7_pointer g_multiply_sf(s7_scheme *sc, s7_pointer args)
 
 #if (!WITH_GMP)
 static s7_pointer sqr_ss;
-
 static s7_pointer g_sqr_ss(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
@@ -13174,6 +13212,33 @@ static s7_pointer g_sqr_ss(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), x, A_NUMBER));
     }
   return(x);
+}
+
+static s7_pointer mul_1ss;
+static s7_pointer g_mul_1ss(s7_scheme *sc, s7_pointer args)
+{
+  /* (* (- 1.0 x) y) */
+  s7_pointer x, y;
+
+  x = finder(sc, caddr(car(args)));
+  y = finder(sc, cadr(args));
+
+  if ((type(x) == T_REAL) &&
+      (type(y) == T_REAL))
+    return(make_real(sc, real(y) * (1.0 - real(x))));
+
+  if ((is_real(x)) &&
+      (is_real(y)))
+    return(make_real(sc, s7_number_to_real(sc, y) * (1.0 - s7_number_to_real(sc, x))));
+  else
+    {
+      s7_Double r1, r2, i1, i2;
+      r1 = 1.0 - s7_real_part(x);
+      r2 = s7_real_part(y);
+      i1 = -s7_imag_part(x);
+      i2 = s7_imag_part(y);
+      return(s7_make_complex(sc, r1 * r2 - i1 * i2, r1 * i2 + r2 * i1));
+    }
 }
 #endif
 
@@ -21008,7 +21073,7 @@ static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
 {
   /* this only pertains to printing */
-  int i, ref = -1;
+  int i;
   /* look for top in current list.
    * 
    * As we collect objects (guaranteed to have structure) we set the collected bit.  If we ever
@@ -21030,7 +21095,6 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 		ci->has_hits = true;
 		ci->refs[i] = ++ci->ref;  /* if found, set the ref number */
 	      }
-	    ref = ci->refs[i];
 	    break;
 	  }
     }
@@ -35083,11 +35147,15 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 #if (!WITH_GMP)
   if (args == 2)
     {
-      if (cadr(expr) == small_int(1))
+      s7_pointer arg1, arg2;
+      arg1 = cadr(expr);
+      if (arg1 == small_int(1))
 	return(add_1s);
-      if (caddr(expr) == small_int(1))
+
+      arg2 = caddr(expr);
+      if (arg2 == small_int(1))
 	{
-	  if (is_symbol(cadr(expr)))
+	  if (is_symbol(arg1))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
 	      return(add_cs1);
@@ -35095,32 +35163,46 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  return(add_s1);
 	}
 
-      if ((s7_is_integer(caddr(expr))) &&
-	  (is_symbol(cadr(expr))))
+      if ((s7_is_integer(arg2)) &&
+	  (is_symbol(arg1)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(add_si);
 	}
 
-      if ((s7_is_integer(cadr(expr))) &&
-	  (is_symbol(caddr(expr))))
+      if ((s7_is_integer(arg1)) &&
+	  (is_symbol(arg2)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(add_is);
 	}
 
-      if ((type(caddr(expr)) == T_REAL) &&
-	  (is_symbol(cadr(expr))))
+      if ((type(arg2) == T_REAL) &&
+	  (is_symbol(arg1)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(add_sf);
 	}
 
-      if ((type(cadr(expr)) == T_REAL) &&
-	  (is_symbol(caddr(expr))))
+      if ((type(arg1) == T_REAL) &&
+	  (is_symbol(arg2)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(add_fs);
+	}
+
+      if ((is_pair(arg1)) &&
+	  (is_pair(arg2)) &&
+	  (is_optimized(arg1)) &&
+	  (is_optimized(arg2)) &&
+	  (optimize_data(arg1) == HOP_SAFE_C_SS) &&
+	  (optimize_data(arg2) == HOP_SAFE_C_C) &&
+	  (fcdr(arg1) == (s7_pointer)g_multiply_2) &&
+	  (fcdr(arg2) == (s7_pointer)g_mul_1ss) &&
+	  (cadr(arg1) == caddr(cadr(arg2))))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(add_ss_1ss);
 	}
 
       return(add_2);
@@ -35141,34 +35223,38 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 #if (!WITH_GMP)
   if (args == 2)
     {
-      if ((is_symbol(cadr(expr))) &&
-	  (s7_is_integer(caddr(expr))))
+      s7_pointer arg1, arg2;
+      arg1 = cadr(expr);
+      arg2 = caddr(expr);
+
+      if ((is_symbol(arg1)) &&
+	  (s7_is_integer(arg2)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(multiply_si);
 	}
 
-      if ((is_symbol(caddr(expr))) &&
-	  (s7_is_integer(cadr(expr))))
+      if ((is_symbol(arg2)) &&
+	  (s7_is_integer(arg1)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(multiply_is);
 	}
 
-      if ((type(cadr(expr)) == T_REAL) &&
-	  (is_symbol(caddr(expr))))
+      if ((type(arg1) == T_REAL) &&
+	  (is_symbol(arg2)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(multiply_fs);
 	}
-      if ((type(caddr(expr)) == T_REAL) &&
-	  (is_symbol(cadr(expr))))
+      if ((type(arg2) == T_REAL) &&
+	  (is_symbol(arg1)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(multiply_sf);
 	}
-      if ((is_symbol(cadr(expr))) &&
-	  (cadr(expr) == caddr(expr)))
+      if ((is_symbol(arg1)) &&
+	  (arg1 == arg2))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(sqr_ss);
@@ -35176,10 +35262,10 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 
 #if 0
       /* (* direct ...) here saved a little, but I think not worth the extra code */
-      if ((is_symbol(cadr(expr))) &&
-	  (is_optimized(caddr(expr))) &&
-	  (optimize_data(caddr(expr)) == HOP_SAFE_C_SS) &&
-	  (car(caddr(expr)) == sc->MINUS))
+      if ((is_symbol(arg1)) &&
+	  (is_optimized(arg2)) &&
+	  (optimize_data(arg2) == HOP_SAFE_C_SS) &&
+	  (car(arg2) == sc->MINUS))
 	{
 	  fprintf(stderr, "%s\n", DISPLAY(expr)); 
 	  /*
@@ -35188,9 +35274,9 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  */
 	}
       
-      if ((is_symbol(cadr(expr))) &&
-	  (is_optimized(caddr(expr))) &&
-	  (optimize_data(caddr(expr)) == HOP_SAFE_C_S))
+      if ((is_symbol(arg1)) &&
+	  (is_optimized(arg2)) &&
+	  (optimize_data(arg2) == HOP_SAFE_C_S))
 	{
 	  /* fprintf(stderr, "%s\n", DISPLAY(expr)); */
 	  /*
@@ -35200,6 +35286,17 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	}
 #endif
       
+      if ((is_pair(arg1)) &&
+	  (is_symbol(arg2)) &&
+	  (car(arg1) == sc->MINUS) &&
+	  (type(cadr(arg1)) == T_REAL) &&
+	  (real(cadr(arg1)) == 1.0) &&
+	  (is_symbol(caddr(arg1))) &&
+	  (is_null(cdddr(arg1))))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(mul_1ss);
+	}
 
       /* multiply_add: where add is callable via c_call (call ourselves hop_safe_c_c?)
        *   save free_heap top
@@ -35213,8 +35310,6 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
        *   mult would need to clear before add to be safe
        */
       
-      /* fprintf(stderr, "mul2: %s\n", DISPLAY(expr)); */
-
       /* lots of fi ff if cases here, also ss -> cc [already]? (* s (sin s)) also cos
        * if both args constant, why not hop_safe_c_c?
        *
@@ -35222,13 +35317,6 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
        *  but given complex/int/ratio possibilities, it becomes a tangle to try to optimize these
        */
 
-      /* in clm, gen * gen of any sort is real * real: (* (env ampf) (polywave gen1 (+ (env frqf) ...)))
-       *       or even (* mx (polynomial pcoeffs (* amp sig)))
-       *       how to handle constants? (* 0.25 3030)
-       *       (* r (sin mx)) (* 0.5 (+ x0 x1)) (* x2 (+ 38.027264 x2))
-       *     !!  (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-       *       and here one is known to be int: (* ak (floor (/ r ak))) (* 1.25 (frames))
-       */
       return(multiply_2);
     }
 #endif
@@ -35725,6 +35813,8 @@ static void init_choosers(s7_scheme *sc)
   c_function_class(add_sf) = c_function_class(f);
   add_fs = s7_make_function(sc, "+", g_add_fs, 2, 0, false, "+ optimization");
   c_function_class(add_fs) = c_function_class(f);
+  add_ss_1ss = s7_make_function(sc, "+", g_add_ss_1ss, 2, 0, false, "+ optimization");
+  c_function_class(add_ss_1ss) = c_function_class(f);
   
 
   /* - */
@@ -35762,6 +35852,8 @@ static void init_choosers(s7_scheme *sc)
 #if (!WITH_GMP)
   sqr_ss = s7_make_function(sc, "*", g_sqr_ss, 2, 0, false, "* optimization");
   c_function_class(sqr_ss) = c_function_class(f);
+  mul_1ss = s7_make_function(sc, "*", g_mul_1ss, 2, 0, false, "* optimization");
+  c_function_class(mul_1ss) = c_function_class(f);
 #endif
 
 #if (!WITH_GMP)
@@ -48030,6 +48122,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		break;
 	      
 	    case HOP_SAFE_C_SZ:
+	      /* 13671000: (+ sin-sum (sin (+ a (vct-ref cur-phases k3)))) from (set! sin-sum ...)
+	       * 11245755: (- r2 (* (- k 1) ifs))
+	       * 11245755: (+ outval (formant (vector-ref fs1 k) (+ (* rfs inval2) (* (- 1.0 rfs) inval1))))
+	       * 3110565: (outa i (* (env amp-env) (polyshape os 1.0 (env gls-env))))
+	       *
+	       * PERHAPS: can we catch the first as a kind of increment?
+	       */
 	      push_stack(sc, OP_SAFE_C_SZ_1, finder(sc, cadr(code)), code);
 	      sc->code = caddr(code);
 	      goto OPT_EVAL;
@@ -48427,6 +48526,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		sc->value = c_call(code)(sc, sc->args);
 		clear_list_in_use(sc->args);
+
+#if WITH_COUNTS
+		/* add_expr(sc, code); */
+#endif
 		
 		/* we can't release a temp here:
 		 *   (define (hi) (vector 14800 14020 (oscil os) (* 1/3 14800) 14800 (* 1/2 14800))) (hi) where os returns non-zero:
@@ -49791,7 +49894,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* trailers */
 	  
 #if WITH_COUNTS
-	  add_expr(sc, sc->code);
+	  /* add_expr(sc, sc->code); */
 #endif
 	  sc->cur_code = sc->code;
 	  
@@ -61987,7 +62090,7 @@ s7_scheme *s7_init(void)
  * t455            265  256  218   89   55   32
  * t502                  90   72   43   39   37
  * lat             229             63   52   47
- * calls                          310  242  230
+ * calls                          310  242  220
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.
