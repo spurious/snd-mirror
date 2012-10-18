@@ -1850,6 +1850,8 @@
   (define (f22) (begin (display ":") (display (object->string 2)) (display ":"))) (test (with-output-to-string (lambda () (f22))) ":2:")
   (define (f23 a b) (list a b)) (define (f24 x y) (f23 (car x) (car y))) (define (f25 x y) (f23 (cdr x) (cdr y)))
   (test (f24 '(1 2) '(3 4)) '(1 3)) (test (f25 '(1 2) '(3 4)) '((2) (4)))
+  (define (f24a s1 s2 s3) (+ (* s1 s2) (* (- 1.0 s1) s3))) (test (f24a 2.0 3.0 4.0) 2.0)
+  (let () (define (a b) (define c 1) (+ b c)) (define (tst) (a 2)) (tst) (test (tst) 3))
   (define (f25) 
     (let ((x 0.0) (y 1.0)) 
       (call-with-exit 

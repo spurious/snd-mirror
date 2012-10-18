@@ -1,3 +1,8 @@
+#if (defined(__GNUC__))
+#define _GNU_SOURCE
+#include <string.h>
+#endif
+
 #include "snd.h"
 #include "clm2xen.h"
 
@@ -2222,7 +2227,7 @@ static void init_uppers(void)
 
 static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, const char *name)
 {
-  const char *s1, *s2, *p1, *p2;
+  const char *s1, *s2, *p2;
   int start = 0;
   s7_pointer s1p, s2p;
 
@@ -2259,15 +2264,14 @@ static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, c
     }
   else
     {
-#if 0
-      /* this exists in gcc, I think */
+#if (defined(__GNUC__))
       p2 = strcasestr((const char *)(s2 + start), s1);
       if (!p2) return(s7_f(sc));
       return(s7_make_integer(sc, p2 - s2));
 #else
       for (p2 = (const char *)(s2 + start); (*p2); p2++)
 	{
-	  const char *ptemp;
+	  const char *p1, *ptemp;
 	  for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && (uppers[(int)(*p1)] == uppers[(int)(*ptemp)]); p1++, ptemp++);
 	  if (!(*p1))
 	    return(s7_make_integer(sc, p2 - s2));
@@ -2841,9 +2845,11 @@ void g_xen_initialize(void)
                       end");
 #endif
 
+#if (!CLM_DISABLE_DEPRECATED)
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define (clm-print . args) \"(clm-print . args) applies format to args and prints the result via snd-print\" \
                        (snd-print (apply format #f args)))");
+#endif
 #endif
 
 #if HAVE_GL

@@ -8509,7 +8509,7 @@
 (CFNC "void gtk_action_group_set_accel_group GtkActionGroup* action_group GtkAccelGroup* accel_group")
 (CFNC "void gtk_menu_shell_bind_model GtkMenuShell* menu_shell GMenuModel* model gchar* action_namespace gboolean with_separators" 'const)
 
-;;; nothing new in 3.6.0
+;;; nothing new in 3.6.0|1
 |#
 
  

@@ -5173,7 +5173,7 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
     {
       unsigned int i;
       for (i = 0; i < vector_fill_pointer(env); i++)
-	if (is_slot(vector_element(env, i)))
+	/* if (is_slot(vector_element(env, i))) */ /* isn't this guaranteed? */
 	  sc->w = cons(sc, cons(sc, slot_symbol(vector_element(env, i)), slot_value(vector_element(env, i))), sc->w);
     }
   else
@@ -12208,8 +12208,8 @@ static s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
   /* (+ (* s1 s2) (* (- 1.0 s1) s3)) */
   s7_pointer s1, s2, s3;
   s1 = finder(sc, cadr(car(args)));
-  s2 = finder(sc, caddr(car(args)));
-  s3 = finder(sc, caddr(cadr(args))); /* PERHAPS: e/fcdr? */
+  s2 = finder(sc, ecdr(args)); /* caddr(car(args))) */
+  s3 = finder(sc, fcdr(args)); /* caddr(cadr(args))) */
 
   if ((type(s1) == T_REAL) &&
       (type(s2) == T_REAL) &&
@@ -15413,7 +15413,7 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
   return(sc->T);
 }
 
-static s7_pointer greater_s_ic;
+static s7_pointer greater_s_ic, greater_s_fc;
 static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
 {
   s7_Int y;
@@ -15428,10 +15428,44 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_RATIO:  
-      if ((y >= 0) && (numerator(x) < 0))
-	return(sc->F);
-      if ((y <= 0) && (numerator(x) > 0))
-	return(sc->T);
+      if ((y < S7_LONG_MAX) && 
+	  (y > S7_LONG_MIN) && 
+	  (denominator(x) < S7_LONG_MAX) && 
+	  (denominator(x) > S7_LONG_MIN))
+	return(make_boolean(sc, (numerator(x) > (y * denominator(x)))));
+      return(make_boolean(sc, fraction(x) > y));
+      break;
+      
+    case T_REAL:    
+      return(make_boolean(sc, real(x) > y));
+      break;
+
+    default:
+      CHECK_METHOD(sc, x, sc->GT, args);
+      return(wrong_type_argument_with_type(sc, sc->GT, small_int(1), x, A_NUMBER));  
+    }
+  return(sc->T);
+}
+
+static s7_pointer g_greater_s_fc(s7_scheme *sc, s7_pointer args)
+{
+  s7_Double y;
+  s7_pointer x;
+
+  x = car(args);
+  y = s7_real(cadr(args));
+
+  if (type(x) == T_REAL)
+    return(make_boolean(sc, real(x) > y));
+
+  switch (type(x))
+    {
+    case T_INTEGER:
+      return(make_boolean(sc, integer(x) > y));
+      break;
+      
+    case T_RATIO:  
+      /* (> 9223372036854775807/9223372036854775806 1.0) */
       if ((y < S7_LONG_MAX) && 
 	  (y > S7_LONG_MIN) && 
 	  (denominator(x) < S7_LONG_MAX) && 
@@ -35202,6 +35236,8 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  (cadr(arg1) == caddr(cadr(arg2))))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  ecdr(cdr(expr)) = caddr(arg1);
+	  fcdr(cdr(expr)) = caddr(arg2);
 	  return(add_ss_1ss);
 	}
 
@@ -35449,6 +35485,8 @@ static s7_pointer greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
     {
       if (s7_is_integer(caddr(expr)))
 	return(greater_s_ic);
+      if (type(caddr(expr)) == T_REAL)
+	return(greater_s_fc);
       return(greater_2);
     }
   return(f);
@@ -35908,6 +35946,8 @@ static void init_choosers(s7_scheme *sc)
 
   greater_s_ic = s7_make_function(sc, ">", g_greater_s_ic, 2, 0, false, "> optimization");
   c_function_class(greater_s_ic) = c_function_class(f);
+  greater_s_fc = s7_make_function(sc, ">", g_greater_s_fc, 2, 0, false, "> optimization");
+  c_function_class(greater_s_fc) = c_function_class(f);
   greater_2 = s7_make_function(sc, ">", g_greater_2, 2, 0, false, "> optimization");
   c_function_class(greater_2) = c_function_class(f);
 
@@ -37807,7 +37847,6 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	      (symbols == args) &&
 	      (!arglist_has_accessed_symbol(closure_args(func))))
 	    set_optimize_data(car_x, hop + OP_CLOSURE_ALL_Sp);
-
 	  return(false);
 	}
     }
@@ -38897,6 +38936,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	case OP_OR:
 	case OP_AND:
 	case OP_BEGIN:
+	case OP_WITH_BAFFLE:
 	  if (!body_is_safe(sc, func, args, cdr(x), at_end, bad_set))
 	    {
 #if PRINTING
@@ -39148,7 +39188,31 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY_80(x), UNBOLD_TEXT);
 #endif
 	  return(false);
-	  
+
+
+	case OP_WITH_ENV:
+	  if (is_pair(cadr(x)))
+	    {
+#if PRINTING
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY_80(x), UNBOLD_TEXT);
+#endif
+	      return(false);
+	    }
+	  /* here args aren't imported, nor is func -- with-environment sets up a sealed evaluation!
+	   */
+	  if (!body_is_safe(sc, sc->F, sc->NIL, cddr(x), at_end, bad_set))
+	    {
+#if PRINTING
+	      fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY_80(x), UNBOLD_TEXT);
+#endif
+	      return(false);
+	    }
+	  break;
+
+
+	  /* op_define and friends are not safe: (define (a) (define b 3)...) tries to put b in the current env,
+	   *   but in a safe func, that's a constant.  See s7test L 1865 for an example.
+	   */
 	default:
 	  /* try to catch weird cases like: 
 	   * (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
@@ -39160,7 +39224,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	       ((is_pair(cadr(x))) && (caadr(x) == func))))
 	    (*bad_set) = true;
 #if PRINTING
-	  fprintf(stderr, "    %s%d %s%s\n", BOLD_TEXT, __LINE__, DISPLAY_80(x), UNBOLD_TEXT);
+	  fprintf(stderr, "    %s%d %s %s%s\n", BOLD_TEXT, __LINE__, real_op_names[syntax_opcode(car(x))], DISPLAY_80(x), UNBOLD_TEXT);
 #endif
 	  return(false);
 	}
@@ -49457,7 +49521,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_C_opCq_S:
 	      {
+		/* 330750: (* (+ frm-int 1) frq)
+		 * 203312: (* (+ i 1) frq)
+		 * 197314: (- (* 0.999 lasty) lastx)
+		 * 178966: (* (- n 1) x)
+		 * 132300: (* (vct-ref indices k) carrier)
+		 * 132300: (* (vct-ref indices k) car)
+		 */
 		s7_pointer args, val;
+#if WITH_COUNTS
+		/* add_expr(sc, code); */
+#endif
 		args = cdr(code);
 		val = finder(sc, cadr(args));
 		car(sc->T2_1) = c_call(car(args))(sc, cdr(car(args)));
@@ -53238,6 +53312,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* --------------- */
     case OP_SAFE_IF_CSC_P:
+      /* 174104*2: ((> pulse 0.1) ...)
+       * greater_sf|si=s_ic currently, so s_fc?
+       * 2880035: ((> diff 0.002) 
+       * 508279: ((> amp 0.0) * many
+       */
       car(sc->T2_1) = finder(sc, cadr(car(sc->code)));
       car(sc->T2_2) = fcdr(sc->code);
       if (is_true(sc, c_call(car(sc->code))(sc, sc->T2_1)))
@@ -62047,7 +62126,7 @@ s7_scheme *s7_init(void)
  *       we use c_call(func) which points to c_function_call(orig_func)
  *       c_function_call is the ff field.  We could start with ff set to the no-methods case, then
  *       if any is added, set ff to the method one. (this would be open-env with a built-in func as a member --
- *       how fast can that be checked?, or could be see the built-in used as a slot symbol? -- augment-env!)
+ *       how fast can that be checked?, or could we see the built-in used as a slot symbol? -- augment-env!)
  *   see g_is_null -- an experiment
  *
  * TODO: NS_EVAL and TRAILER cases throughout [but this is tricky!]
@@ -62070,7 +62149,7 @@ s7_scheme *s7_init(void)
  * let(*) in safe closure need not make a new frame each time -- it's guaranteed to be unexported and non-recursive
  *   would need to mark them when we set_safe_closure or when first called, 
  *   would need some place to store the local frame+slots -- like the case int case
- *   t_safe_syntax?
+ *   t_safe_syntax?  one-liner=let -- does it happen often?  perhaps store as second level?
  *
  * how to replace constants like pi so no lookups (if not gmp), and
  * how to get the doc string out of the closure body
@@ -62081,16 +62160,18 @@ s7_scheme *s7_init(void)
  * PERHAPS: instead of the overlay, make an example of in-C and s7_new_type
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
+ * 
+ * (memq|assq s '(...)) if the list constant is short (< 3?) we could use e|fcdr 
  *
  * timing info [starting from May-11 approximately]
  * bench    42736                8752 8051 7791
- * lint                          9328 8140 7983
- * index    44300 4988 4725 3935 3291 3005 2758
+ * lint                          9328 8140 7907
+ * index    44300 4988 4725 3935 3291 3005 2744
  * s7test         1721 1456 1430 1358 1297 1244
  * t455            265  256  218   89   55   32
  * t502                  90   72   43   39   37
  * lat             229             63   52   47
- * calls                          310  242  220
+ * calls                          310  242  217
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

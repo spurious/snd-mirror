@@ -2037,7 +2037,7 @@
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
 		       'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
-		       'clear-sincs 'clip-hook 'clipping 'clm-channel 'clm-print
+		       'clear-sincs 'clip-hook 'clipping 'clm-channel 
 		       'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
 		       'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale
 		       'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
@@ -17161,9 +17161,10 @@ EDITS: 2
 	  (tbl-size 1024))
       
       (define (test-tbl beg end freq amp mc-ratio index)
-	(let* ((sine (let ((v (make-vct tbl-size)))
+	(let* ((sine (let ((v (make-vct tbl-size))
+			   (xp (/ (* 2 pi) tbl-size)))
 		       (do ((i 0 (+ i 1))
-			    (x 0.0 (+ x (/ (* 2 pi) tbl-size))))
+			    (x 0.0 (+ x xp)))
 			   ((= i tbl-size) v)
 			 (set! (v i) (sin x)))))
 	       (fm (make-table-lookup (* mc-ratio freq) :wave sine))
