@@ -450,6 +450,10 @@
 	    (dist 0.0)
 	    (dist-scl 0.0)
 	    (dist-rscl 0.0)
+	    (pos 0)
+	    (val 0.0)
+	    (val1 0.0)
+	    (val2 0.0)
 	    (where-bins-len (if (vct? where-bins) (length where-bins) 0)))
 	
 	(if reverse (set! (mus-increment in-file-reader) -1.0))
@@ -460,13 +464,15 @@
 	      ;;
 	      (begin
 		(if interp-gr-envs (set! gr-where (env gr-int-env)))
-		(locsig loc (+ gr-start-sample gr-offset)
-			(* (if interp-gr-envs
-			       (+ (* (- 1 gr-where) (table-lookup gr-env))
-				  (* gr-where (table-lookup gr-env-end)))
-			       (table-lookup gr-env))
-			   (env amp-env)
-			   (src in-file-reader)))
+		(set! pos (+ gr-start-sample gr-offset))
+		(set! val1 (table-lookup gr-env))
+		(if interp-gr-envs
+		    (begin
+		      (set! val2 (table-lookup gr-env-end))
+		      (set! val (+ (* gr-where val2) (* (- 1.0 gr-where) val1)))
+		      (set! val (* val (env amp-env) (src in-file-reader))))
+		    (set! val (* val1 (env amp-env) (src in-file-reader))))
+		(locsig loc pos val)
 		;; increment pointer in grain
 		(set! gr-offset (+ 1 gr-offset)))
 	      (begin

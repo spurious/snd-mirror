@@ -10,7 +10,7 @@
 (define (one-pole-allpass gen input)
   (set! (gen 'input) input)
   (with-environment gen
-    (set! y1 (+ (* coeff (- input y1)) x1))
+    (set! y1 (+ x1 (* coeff (- input y1))))
     (set! x1 input)
     y1))
 

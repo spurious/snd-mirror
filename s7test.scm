@@ -3472,6 +3472,13 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (string-length (string #\null #\newline)) 2) ; ??
 (test (string-length ``"hi") 2) ; ?? and in s7 ,"hi" is "hi" as with numbers
 
+(test (string-length ";~S ~S") 6)
+(test (string-length "\n;~S ~S") 7)
+(test (string-length "\n\t") 2)
+(test (string-length "#\newline") 8)
+(test (string-length "#\tab") 4)
+(test (string-length "a\x00b") 3)
+
 (for-each
  (lambda (arg)
    (test (string-length arg) 'error))
@@ -10781,7 +10788,7 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (format #f "") "")
 (test (format #f "" 1) 'error)
 (test (format #f "a") "a")
-(test (format #f "a\x00b") "a")
+;(test (format #f "a\x00b") "a")
 
 (test (format #f "~~") "~") ; guile returns this, but clisp thinks it's an error
 (test (format #f "~~~~") "~~")
@@ -12683,6 +12690,7 @@ a2" 3) "132")
 (test (map .(values "0'1")) '(#\0 #\' #\1))
 (test (map /""'(123)) '())
 (num-test (+ 1 .()) 1)
+(test (let () (define (x .()) (list .())) (x)) ())
 
 ;; how is ...#(... parsed?
 (test (eval-string "'(# (1))") 'error)
@@ -13470,6 +13478,8 @@ this prints:
 (test (quote 1 . 2) 'error)
 (test (symbol? '1'1) #t) 
 (test (apply '+ (list 1 2)) 'error)
+(test ((quote . #\h) (2 . #\i)) 'error)
+(test ((quote "hi") 1) #\i)
 
 (test (equal? '(1 2 '(3 4)) '(1 2 (3 4))) #f)
 (test (equal? '(1 2 '(3 4)) (quote (list 1 2 (quote (list 3 4))))) #f)
@@ -16704,6 +16714,8 @@ in s7:
 (test (define x x . x) 'error)
 (test (let ((x 0)) (define x (x . x))) 'error)
 (test (define (x x) . x) 'error)
+(test (eval-string "(define (x .) 1)") 'error) ; need eval-string else a read error that halts our tests
+(test (eval-string "(define (x) (+ 1 .))") 'error)
 (test (define (x x) x . x) 'error)
 (test (let () (define (x x) x) (x 0)) 0)
 (test (define (x 1)) 'error)
