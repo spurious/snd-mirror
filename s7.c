@@ -1577,8 +1577,8 @@ static int t_optimized = T_OPTIMIZED;
 
 #define T_LINE_NUMBER                 (1 << (TYPE_BITS + 10))
 #define has_line_number(p)            ((typeflag(p) & T_LINE_NUMBER) != 0)
-#define set_has_line_number(p)         typeflag(p) |= T_LINE_NUMBER
-/* pair in question has line/file info added during read, or environment has function placement info
+#define set_has_line_number(p)        typeflag(p) |= T_LINE_NUMBER
+/* pair in question has line/file info added during read, or the environment has function placement info
  */
 
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
@@ -21542,8 +21542,9 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, bool us
   
   if (is_not_null(x))
     {
-      if (true_len == 0) port_write_character(port)(sc, ' ', port);
-      port_write_string(port)(sc, ". ", 2, port);
+      if (true_len == 0) 
+	port_write_string(port)(sc, " . ", 3, port);
+      else port_write_string(port)(sc, ". ", 2, port);
       object_to_port_with_circle_check(sc, x, port, USE_WRITE, to_file, ci);
     }
   port_write_character(port)(sc, ')', port);
@@ -22555,8 +22556,12 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			    fdat->curly_str = (char *)malloc(curly_len * sizeof(char));
 			  }
 			curly_str = fdat->curly_str;
+#if 0
 			for (k = 0; k < curly_len - 1; k++)
 			  curly_str[k] = str[i + 2 + k];
+#else
+			memcpy((void *)curly_str, (void *)(str + i + 2), curly_len - 1);
+#endif
 			curly_str[curly_len - 1] = '\0';
 			
 			while (is_not_null(curly_arg))
@@ -31272,6 +31277,10 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 {
   int i, old_size = 0;
 
+  for (i = 0; i <= file_names_top; i++)
+    if (safe_strcmp(file, s7_string(file_names[i])) == 0)
+      return(i);
+
   file_names_top++;
   if (file_names_top >= file_names_size)
     {
@@ -31469,13 +31478,13 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	  x = stack_code(sc->stack, i);
 	  if (dynamic_wind_state(x) == DWIND_BODY)
 	    {
-	      dynamic_wind_state(x) = DWIND_FINISH;   /* make sure an uncaught error in the exit thunk doesn't cause us to loop */
+	      dynamic_wind_state(x) = DWIND_FINISH;    /* make sure an uncaught error in the exit thunk doesn't cause us to loop */
 	      if (dynamic_wind_out(x) != sc->F)
 		{
 		  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
 		  sc->args = sc->NIL;
 		  sc->code = dynamic_wind_out(x);
-		  eval(sc, OP_APPLY);                     /* I guess this means no call/cc out of the exit thunk in an error-catching context */
+		  eval(sc, OP_APPLY);                  /* I guess this means no call/cc out of the exit thunk in an error-catching context */
 		}
 	    }
 	  break;
@@ -31545,8 +31554,10 @@ It looks for an existing catch with a matching tag, and jumps to it if found.  O
 
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
+  static int last_line = -1;
   bool reset_error_hook = false;
-  const char *call_name = NULL;
+  const char *call_name;
+  s7_pointer cur_code;
 
   /* fprintf(stderr, "error: %s %s\n", DISPLAY(type), DISPLAY(info)); */
 
@@ -31556,36 +31567,40 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    *   call its error-handler, else if *error-hook* is bound, call it,
    *   else send out the error info ourselves.
    */
+  call_name = sc->s7_call_name;
+  sc->s7_call_name = NULL;
   sc->no_values = 0; 
   format_depth = -1;
-
   if (sc->safe_do_level != 0)
     set_safe_do_level(sc, 0); 
+  s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
 
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
-  slot_set_value(sc->error_code, sc->cur_code);
   next_environment(sc->error_env) = sc->envir;
-
-  s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
-  call_name = sc->s7_call_name;
-  sc->s7_call_name = NULL;
+  cur_code = sc->cur_code;
+  slot_set_value(sc->error_code, cur_code);
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
-  if ((is_pair(sc->cur_code)) &&
-      (has_line_number(sc->cur_code)))
+
+  if (has_line_number(cur_code)) /* could it ever be a function-env-with-line-info?  is it worth checking is_pair? */
     {
       int line;
-      line = pair_line_number(sc->cur_code);
-      if (line > 0)
+      line = pair_line_number(cur_code);
+      if (line != last_line)
 	{
-	  slot_set_value(sc->error_line, make_integer(sc, remembered_line_number(line))); 
-	  slot_set_value(sc->error_file, remembered_file_name(line));	  
-	}
-      else
-	{
-	  slot_set_value(sc->error_line, sc->F);
-	  slot_set_value(sc->error_file, sc->F);
+	  last_line = line;
+	  if ((line > 0) &&
+	      (is_pair(cur_code))) /* see above */
+	    {
+	      slot_set_value(sc->error_line, make_integer(sc, remembered_line_number(line))); 
+	      slot_set_value(sc->error_file, remembered_file_name(line));	  
+	    }
+	  else
+	    {
+	      slot_set_value(sc->error_line, sc->F);
+	      slot_set_value(sc->error_file, sc->F);
+	    }
 	}
     }
   else
@@ -42994,29 +43009,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* we could get set up here */
     case OP_FOR_EACH_SIMPLER:
       {
-	s7_pointer args;
-	/* args = sc->args; */
-	args = counter_list(sc->args);
-
-	/* list->args, int->dox1, env->dox2? 
-	 */
+	s7_pointer args, counter;
+	counter = sc->args;
+	args = counter_list(counter);
 
 	if (is_pair(args))
 	  {
 	    s7_pointer code;
 	    code = sc->code;
-	    if (counter_length(sc->args) != sc->capture_env_counter)
+	    if (counter_length(counter) != sc->capture_env_counter)
 	      {
 		NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), car(args));  /* set function arg value */
-		counter_environment(sc->args) = sc->envir;
-		counter_length(sc->args) = sc->capture_env_counter;
+		counter_environment(counter) = sc->envir;
+		counter_length(counter) = sc->capture_env_counter;
 	      }
 	    else
 	      {
-		sc->envir = old_frame_with_slot(sc, counter_environment(sc->args), car(args));
+		sc->envir = old_frame_with_slot(sc, counter_environment(counter), car(args));
 	      }
-	    counter_list(sc->args) = cdr(args);
-	    push_stack(sc, OP_FOR_EACH_SIMPLER, sc->args, code);
+	    counter_list(counter) = cdr(args);
+	    push_stack(sc, OP_FOR_EACH_SIMPLER, counter, code);
 
 	    sc->code = car(closure_body(code));
 	    if (is_optimized(sc->code))
@@ -62247,14 +62259,14 @@ s7_scheme *s7_init(void)
  * (memq|assq s '(...)) if the list constant is short (< 3?) we could use e|fcdr 
  *
  * timing info [starting from May-11 approximately]
- * bench    42736                8752 8051 7791
- * lint                          9328 8140 7893
- * index    44300 4988 4725 3935 3291 3005 2744
- * s7test         1721 1456 1430 1358 1297 1244
- * t455            265  256  218   89   55   32
- * t502                  90   72   43   39   37
- * lat             229             63   52   47
- * calls                          310  242  217
+ * bench    42736           8752 8051 7791
+ * lint                     9328 8140 7893
+ * index    44300 4988 3935 3291 3005 2744
+ * s7test         1721 1430 1358 1297 1244
+ * t455            265  218   89   55   31
+ * t502             90   72   43   39   37
+ * lat             229        63   52   47
+ * calls                     310  242  217
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

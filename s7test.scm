@@ -7782,18 +7782,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (length (cons 1 2)) -1)
 (test (length '(1 2 3)) 3)
 
-(test (let ((lst (list))) (fill! lst 0) lst) '())
-(test (let ((lst (list 1))) (fill! lst 0) lst) '(0))
-(test (let ((lst (list 1 2))) (fill! lst 0) lst) '(0 0))
-(test (let ((lst (list 1 (list 2 3)))) (fill! lst 0) lst) '(0 0))
-(test (let ((lst (cons 1 2))) (fill! lst 0) lst) '(0 . 0))
-(test (let ((lst (cons 1 (cons 2 3)))) (fill! lst 0) lst) '(0 0 . 0))
-(let ((lst (make-list 3)))
-  (fill! lst lst)
-  (test lst (lst 0))
-  (set! (lst 1) 32)
-  (test ((lst 0) 1) 32))
-
 (let ((lst1 (list 1 2))) 
   (test (length lst1) 2)
   (list-set! lst1 0 lst1)
@@ -7877,11 +7865,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 	(set! (cdr (cddr lst)) lst)
 	(map cons lst '(0 1 2 3 4 5)))
       '((a . 0) (b . 1) (c . 2) (a . 3) (b . 4) (c . 5)))
-
-(test (copy (list 1 2 (list 3 4))) '(1 2 (3 4)))
-(test (copy (cons 1 2)) '(1 . 2))
-(test (copy '(1 2 (3 4) . 5)) '(1 2 (3 4) . 5))
-(test (copy '()) '())
 
 (test (object->string (let ((l1 (list 0 1))) (set! (l1 1) l1) (copy l1))) "(0 #1=(0 #1#))")
 (test (object->string (let ((lst (list 1 2))) (set! (cdr lst) lst) (copy lst))) "(1 . #1=(1 . #1#))")
@@ -8094,10 +8077,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
     (test (equal? lst l1) #t)
     (test (eq? lst l1) #f)
     (test (eqv? lst l1) #f)))
-
-(test (let ((lst (list "hi" "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi"))) #t)
-(test (let ((lst (list "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi"))) #t)
-(test (let ((lst (list 1 2 3 4))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi" "hi"))) #t)
 
 
 (let ((lst '(#\( #\) #\* #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@ #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z #\[ #\\ #\] #\^ #\_ #\` #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z #\{ #\| #\} #\~)))
@@ -8499,10 +8478,6 @@ zzy" (lambda (p) (eval (read p))))) 32)
 
 (test (let ((lst (list 1))) (set! (cdr lst) (car lst)) (object->string lst)) "(1 . 1)")
 (test (let ((lst (list 1))) (set! (car lst) (cdr lst)) (object->string lst)) "(())")
-
-(test (let ((lst (list 1 2 3))) (fill! lst lst) (object->string lst)) "#1=(#1# #1# #1#)")
-(test (let ((lst (vector 1 2 3))) (fill! lst lst) (object->string lst)) "#1=#(#1# #1# #1#)")
-(test (let ((lst #2d((1) (1)))) (fill! lst lst) (object->string lst)) "#1=#2D((#1#) (#1#))")
 
 (let ((ctr 0) (lst `(let ((x 3)) (set! ctr (+ ctr 1)) (set! (cdr (cddr lst)) `((+ x ctr))) (+ x 1))))
   (test (eval lst) 4)
@@ -25602,6 +25577,7 @@ func
   )
 
 
+
 ;;; --------------------------------------------------------------------------------
 
 (begin
@@ -27681,17 +27657,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 
 
 ;;; --------------------------------------------------------------------------------
-;;; generic length/reverse/copy/fill!
 ;;; copy
-;;; fill!
-
-(test (length (list 1 2)) 2)
-(test (length "hiho") 4)
-(test (length (vector 1 2)) 2)
-(test (>= (length (make-hash-table 7)) 7) #t)
-(test (length '()) 0)
-(test (length (#(#() #()) 1)) 0)
-(test (length abs) 'error)
 
 (test (copy 3) 3)
 (test (copy 3/4) 3/4)
@@ -27742,6 +27708,13 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
 (test (copy (procedure-environment quasiquote)) (global-environment))
 (test (eval '(+ a 1) (copy (augment-environment (current-environment) '(a . 2)))) 3)
 
+(test (copy (list 1 2 (list 3 4))) '(1 2 (3 4)))
+(test (copy (cons 1 2)) '(1 . 2))
+(test (copy '(1 2 (3 4) . 5)) '(1 2 (3 4) . 5))
+(test (copy '()) '())
+
+(test (copy) 'error)
+
 (if with-bignums
     (begin
       (test (let ((x (bignum "1"))) (eq? x (copy x))) #f)
@@ -27750,18 +27723,6 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (test (let ((x (bignum "1+i"))) (eq? x (copy x))) #f)))
 (test (let ((x 1)) (eq? x (copy x))) #t) ; not sure this should be tested
 (test (let ((x "str")) (eq? x (copy x))) #f)
-
-(test (reverse "hi") "ih")
-(test (reverse "") "")
-(test (reverse "123") "321")
-(test (reverse "1234") "4321")
-(test (reverse "a\x00b") "b\x00a")
-(test (reverse #()) #())
-(test (reverse #(1 2 3)) #(3 2 1))
-(test (reverse #(1 2 3 4)) #(4 3 2 1))
-(test (reverse #2D((1 2) (3 4))) #2D((4 3) (2 1)))
-(test (reverse (string #\a #\null #\b)) "b\x00a")
-(test (reverse abs) 'error)
 
 (if (not (provided? 'gmp))
     (let ((r1 (make-random-state 1234)))
@@ -27786,38 +27747,7 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
       (test (= f (bignum "1.5")) #t)
       (test (= c (bignum "1.0+1.0i")) #t)))
 
-(let ((str (string #\1 #\2 #\3)))
-  (fill! str #\x)
-  (test str "xxx"))
-(let ((v (vector 1 2 3)))
-  (fill! v 0.0)
-  (test v (vector 0.0 0.0 0.0)))
-(let ((lst (list 1 2 (list (list 3) 4))))
-  (fill! lst 100)
-  (test lst '(100 100 100)))
-(let ((cn (cons 1 2)))
-  (fill! cn 100)
-  (test cn (cons 100 100)))
-(test (fill! 1 0) 'error)
-(test (fill! 'hi 0) 'error)
 
-(test (fill!) 'error)
-(test (copy) 'error)
-(test (fill! '"hi") 'error)
-(test (fill! (begin) if) if)
-
-(for-each
- (lambda (arg)
-   (test (fill! arg 1) 'error))
- (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
-       3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (let ((str (string #\a #\b)))
-     (test (fill! str arg) 'error)))
- (list "hi" '(1 2 3) #() #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
-       3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
 
 (let ((c1 #f))
   (call/cc
@@ -27843,7 +27773,97 @@ then (let* ((a (load "t423.scm")) (b (t423-1 a 1))) b) -> t424 ; but t423-* are 
      (set! c1 c)))
   (test (procedure? c1) #t))
 
+
+;;; length
+(test (length (list 1 2)) 2)
+(test (length "hiho") 4)
+(test (length (vector 1 2)) 2)
+(test (>= (length (make-hash-table 7)) 7) #t)
+(test (length '()) 0)
+(test (length (#(#() #()) 1)) 0)
+(test (length abs) 'error)
+
+
+;;; reverse
+(test (reverse "hi") "ih")
+(test (reverse "") "")
+(test (reverse "123") "321")
+(test (reverse "1234") "4321")
+(test (reverse "a\x00b") "b\x00a")
+(test (reverse #()) #())
+(test (reverse #(1 2 3)) #(3 2 1))
+(test (reverse #(1 2 3 4)) #(4 3 2 1))
+(test (reverse #2D((1 2) (3 4))) #2D((4 3) (2 1)))
+(test (reverse (string #\a #\null #\b)) "b\x00a")
+(test (reverse abs) 'error)
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; fill!
+
+(let ((str (string #\1 #\2 #\3)))
+  (fill! str #\x)
+  (test str "xxx"))
+(let ((v (vector 1 2 3)))
+  (fill! v 0.0)
+  (test v (vector 0.0 0.0 0.0)))
+(let ((lst (list 1 2 (list (list 3) 4))))
+  (fill! lst 100)
+  (test lst '(100 100 100)))
+(let ((cn (cons 1 2)))
+  (fill! cn 100)
+  (test cn (cons 100 100)))
+(test (fill! 1 0) 'error)
+(test (fill! 'hi 0) 'error)
+(test (let ((x (cons 1 2))) (fill! x 3) x) '(3 . 3))
+(test (let ((x "")) (fill! x #\c) x) "") 
+(test (let ((x ())) (fill! x #\c) x) ()) 
+(test (let ((x #())) (fill! x #\c) x) #()) 
+(test (let ((x #(0 1))) (fill! x -1) (set! (x 0) -2) x) #(-2 -1))
+(test (let ((x #(0 0))) (fill! x #(1)) (object->string x)) "#(#1=#(1) #1#)")
+(test (let ((lst (list "hi" "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi"))) #t)
+(test (let ((lst (list "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi"))) #t)
+(test (let ((lst (list 1 2 3 4))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi" "hi"))) #t)
+(test (let ((lst (list 1 2 3))) (fill! lst lst) (object->string lst)) "#1=(#1# #1# #1#)")
+(test (let ((lst (vector 1 2 3))) (fill! lst lst) (object->string lst)) "#1=#(#1# #1# #1#)")
+(test (let ((lst #2d((1) (1)))) (fill! lst lst) (object->string lst)) "#1=#2D((#1#) (#1#))")
 (test (let ((lst '(1 2 3))) (fill! lst (cons 1 2)) (set! (car (car lst)) 3) (caadr lst)) 3)
+
+(test (let ((lst (list))) (fill! lst 0) lst) '())
+(test (let ((lst (list 1))) (fill! lst 0) lst) '(0))
+(test (let ((lst (list 1 2))) (fill! lst 0) lst) '(0 0))
+(test (let ((lst (list 1 (list 2 3)))) (fill! lst 0) lst) '(0 0))
+(test (let ((lst (cons 1 2))) (fill! lst 0) lst) '(0 . 0))
+(test (let ((lst (cons 1 (cons 2 3)))) (fill! lst 0) lst) '(0 0 . 0))
+(let ((lst (make-list 3)))
+  (fill! lst lst)
+  (test lst (lst 0))
+  (set! (lst 1) 32)
+  (test ((lst 0) 1) 32))
+
+(test (fill!) 'error)
+(test (fill! '"hi") 'error)
+(test (fill! (begin) if) if)
+(test (fill! (global-environment) 3) 'error)
+(test (fill! (current-environment) 3) 'error)
+(test (fill! "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" #f) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (fill! arg 1) 'error))
+ (list (integer->char 65) #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) #<eof> #<unspecified> #<undefined> (lambda (a) (+ a 1))
+       3.14 3/4 1.0+1.0i #\f #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (let ((str (string #\a #\b)))
+     (test (fill! str arg) 'error)))
+ (list "hi" '(1 2 3) #() #f 'a-symbol abs _ht_ quasiquote macroexpand 1/0 (log 0) 
+       3.14 3/4 1.0+1.0i #t :hi (if #f #f) (lambda (a) (+ a 1))))
+
+
+
 
 
 ;; generic for-each/map
