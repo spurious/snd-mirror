@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.12"
-#define S7_DATE "22-Aug-12"
+#define S7_VERSION "2.13"
+#define S7_DATE "22-Oct-12"
 
 
 typedef long long int s7_Int;
@@ -568,8 +568,8 @@ s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, 
 void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
 void *s7_function_chooser_data(s7_scheme *sc, s7_pointer f);
 void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data);
-unsigned int s7_function_class(s7_scheme *sc, s7_pointer f);
-void s7_function_set_class(s7_scheme *sc, s7_pointer f, unsigned int c);
+unsigned int s7_function_class(s7_pointer f);
+void s7_function_set_class(s7_pointer f, s7_pointer base_f);
 s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr);
 
 bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
@@ -858,6 +858,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 22-Oct:    changed args to s7_function_class and s7_function_set_class.
  * 22-Aug:    symbol->dynamic-value.
  * 10-Aug:    exported s7_outer_environment.
  * 6-Aug:     removed WITH_OPTIMIZATION.

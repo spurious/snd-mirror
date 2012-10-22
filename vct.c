@@ -1607,18 +1607,17 @@ void mus_vct_init(void)
 #if HAVE_SCHEME
   {
     s7_pointer f;
-    unsigned int gclass;
+
     /* vct-ref */
     f = s7_name_to_value(s7, "vct-ref");
     s7_function_set_chooser(s7, f, vct_ref_chooser);
-    gclass = s7_function_class(s7, f);
 
     vct_ref_two = s7_make_function(s7, "vct-ref", g_vct_ref_two, 2, 0, false, "vct-ref optimization");
-    s7_function_set_class(s7, vct_ref_two, gclass);
+    s7_function_set_class(vct_ref_two, f);
     s7_function_set_returns_temp(vct_ref_two);
 
     vct_ref_ss = s7_make_function(s7, "vct-ref", g_vct_ref_ss, 2, 0, false, "vct-ref optimization");
-    s7_function_set_class(s7, vct_ref_ss, gclass);
+    s7_function_set_class(vct_ref_ss, f);
     s7_function_set_returns_temp(vct_ref_ss);
   }
 #endif
