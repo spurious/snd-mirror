@@ -502,20 +502,20 @@
 		      (set! noi (delay agraffe-delay1 adelIn))
 		      (set! adelOut (one-pole-allpass agraffe-tuning-ap1 noi))
 		      
-		      (set! string1-junction-input (+ couplingFilter-output string1-junction-input))
+		      (set! string1-junction-input (+ string1-junction-input couplingFilter-output))
 		      (set! string1-junction-input (one-pole-allpass-bank string1-stiffness-ap string1-junction-input))
 		      (set! string1-junction-input (+ (* unaCordaGain combedExcitationSignal)
 						      (* loop-gain
 							 (delay string1-delay
 								(one-pole-allpass string1-tuning-ap string1-junction-input)))))
 		      
-		      (set! string2-junction-input (+ couplingFilter-output string2-junction-input))
+		      (set! string2-junction-input (+ string2-junction-input couplingFilter-output))
 		      (set! string2-junction-input (one-pole-allpass-bank string2-stiffness-ap string2-junction-input))
 		      (set! string2-junction-input (+ combedExcitationSignal
 						      (* loop-gain (delay string2-delay
 									  (one-pole-allpass string2-tuning-ap string2-junction-input)))))
 		      
-		      (set! string3-junction-input (+ couplingFilter-output string3-junction-input))
+		      (set! string3-junction-input (+ string3-junction-input couplingFilter-output))
 		      (set! string3-junction-input (one-pole-allpass-bank string3-stiffness-ap string3-junction-input))
 		      (set! string3-junction-input (+ combedExcitationSignal
 						      (* loop-gain

@@ -13918,7 +13918,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_edot_product,         g_edot_product_w,         2, 0, 0, H_edot_product);
 #endif
   XEN_DEFINE_SAFE_PROCEDURE(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
-  XEN_DEFINE_SAFE_PROCEDURE(S_polynomial,           g_polynomial_w,           2, 0, 0, H_polynomial);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_polynomial,           g_polynomial_w,           2, 0, 0, H_polynomial);
   XEN_DEFINE_SAFE_PROCEDURE(S_multiply_arrays,      g_multiply_arrays_w,      2, 1, 0, H_multiply_arrays);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_fft_window,      g_make_fft_window_w,      2, 2, 0, H_make_fft_window);
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_fft,              g_mus_fft_w,              2, 2, 0, H_mus_fft);
@@ -13929,9 +13929,9 @@ static void mus_xen_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_rectangular_to_polar, g_rectangular_to_polar_w, 2, 0, 0, H_rectangular_to_polar);
   XEN_DEFINE_SAFE_PROCEDURE(S_rectangular_to_magnitudes, g_rectangular_to_magnitudes_w, 2, 0, 0, H_rectangular_to_magnitudes);
   XEN_DEFINE_SAFE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
-  XEN_DEFINE_SAFE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_interpolate,      g_mus_interpolate_w,      3, 2, 0, H_mus_interpolate);
-  XEN_DEFINE_SAFE_PROCEDURE(S_mus_frandom,          g_mus_frandom_w,          1, 0, 0, "random reals");
+  XEN_DEFINE_DIRECT_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_mus_interpolate,      g_mus_interpolate_w,      3, 2, 0, H_mus_interpolate);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_mus_frandom,          g_mus_frandom_w,          1, 0, 0, "random reals");
   XEN_DEFINE_SAFE_PROCEDURE(S_mus_irandom,          g_mus_irandom_w,          1, 0, 0, "random integers");
 
   XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     "The un-window, so to speak");
