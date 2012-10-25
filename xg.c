@@ -47575,7 +47575,9 @@ static void define_integers(void)
   #define DEFINE_ULONG(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
 #endif
 
+#if !GLIB_CHECK_VERSION(2,35,0)
   g_type_init();
+#endif
   DEFINE_INTEGER(G_SIGNAL_RUN_FIRST);
   DEFINE_INTEGER(G_SIGNAL_RUN_LAST);
   DEFINE_INTEGER(G_SIGNAL_RUN_CLEANUP);
@@ -49361,7 +49363,7 @@ void Init_libxg(void)
       #else
         XEN_PROVIDE("gtk2");
       #endif
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Aug-12"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("24-Oct-12"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

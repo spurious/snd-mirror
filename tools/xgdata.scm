@@ -8510,6 +8510,11 @@
 (CFNC "void gtk_menu_shell_bind_model GtkMenuShell* menu_shell GMenuModel* model gchar* action_namespace gboolean with_separators" 'const)
 
 ;;; nothing new in 3.6.0|1
+
+;;; 3.7.0
+(CFNC "void gtk_level_bar_set_inverted GtkLevelBar* self gboolean inverted")
+(CFNC "gboolean gtk_level_bar_get_inverted GtkLevelBar* self")
+
 |#
 
  

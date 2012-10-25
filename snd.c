@@ -377,7 +377,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->startup_errors = NULL;
 
 #if HAVE_GTK_3
+#if !GLIB_CHECK_VERSION(2,35,0)
   g_type_init();
+#endif
 #endif
 
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */

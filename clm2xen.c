@@ -1463,7 +1463,7 @@ static XEN g_mus_run(XEN gen, XEN arg1, XEN arg2)
     }
 #endif
   XEN_ASSERT_TYPE(false, gen, XEN_ARG_1, S_mus_run, "a generator");
-  return(XEN_ZERO);
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
 
@@ -1504,7 +1504,7 @@ static XEN g_mus_apply(XEN arglist)
     }
 #endif
   XEN_ASSERT_TYPE(false, XEN_CAR(arglist), XEN_ARG_1, S_mus_apply, "a generator");
-  return(XEN_ZERO);
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
 
@@ -3976,7 +3976,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, XEN_ARG_3, S_formant_bank, "a number");
 
   size = XEN_VECTOR_LENGTH(gens);
-  if (size == 0) return(XEN_ZERO);
+  if (size == 0) return(C_TO_XEN_DOUBLE(0.0));
   scl = XEN_TO_VCT(amps);
   inval = XEN_TO_C_DOUBLE(inp);
 #if HAVE_SCHEME
@@ -4838,7 +4838,7 @@ static XEN g_oscil_bank(XEN n, XEN oscs, XEN amps, XEN freqs, XEN rates, XEN swe
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_oscil_bank, "an integer");
   size = XEN_TO_C_INT(n);
 
-  if (XEN_FALSE_P(oscs)) return(XEN_ZERO);
+  if (XEN_FALSE_P(oscs)) return(C_TO_XEN_DOUBLE(0.0));
   XEN_ASSERT_TYPE(XEN_VECTOR_P(oscs), oscs, XEN_ARG_2, S_oscil_bank, "a vector of oscil generators");
   if (size > XEN_VECTOR_LENGTH(oscs))
     size = XEN_VECTOR_LENGTH(oscs);
@@ -9566,7 +9566,7 @@ static s7_pointer fm_violin_2_fallback(s7_scheme *sc, s7_pointer args)
   GET_REAL(cdr(vargs), polywave, vibrato);
   
   mus_locsig(lc, pos, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
-  return(XEN_ZERO); /* just return something! */
+  return(C_TO_XEN_DOUBLE(0.0)); /* just return something! */
 }
 
 static s7_pointer fm_violin_2;
@@ -10637,7 +10637,7 @@ static s7_pointer g_add_s_direct(s7_scheme *sc, s7_pointer args)
   s7_pointer x, mul;
   double xval;
 
-  GET_NUMBER(args, "*", mul);
+  GET_NUMBER(args, "+", mul);
 
   x = s7_call_direct(sc, cadr(args));
   xval = s7_real(x);

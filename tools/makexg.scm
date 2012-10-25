@@ -3610,7 +3610,9 @@
 (hey "  #define DEFINE_ULONG(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#endif~%")
 (hey "~%")
+(hey "#if !GLIB_CHECK_VERSION(2,35,0)~%")
 (hey "  g_type_init();~%")
+(hey "#endif~%")
 
 (for-each 
  (lambda (val) 
