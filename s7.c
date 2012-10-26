@@ -3979,21 +3979,7 @@ static void resize_op_stack(s7_scheme *sc)
 /* this macro depends on a very restricted context!
  */
 #if TRY_STACK
-#define IF_BEGIN_POP_STACK(Sc) \
-  do { \
-      if (main_stack_op(Sc) == OP_BEGIN1)	\
-        { \
-          s7_pointer code; \
-          Sc->envir = main_stack_environment(Sc); \
-          code = main_stack_code(Sc);  \
-          Sc->code =  car(code); \
-          if (is_null(cdr(code))) \
-            pop_main_stack(Sc);                 \
-          else main_stack_code(Sc) = cdr(code); \
-          goto EVAL; \
-        } \
-    goto START; \
-      } while(0)
+#define IF_BEGIN_POP_STACK(Sc) if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; goto START;
 #else
 #define IF_BEGIN_POP_STACK(Sc) goto START
 #endif
@@ -11894,7 +11880,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
 
 
-static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_si, add_is, add_sf, add_fs, add_2_temp, add_s_temp, add_temp_s;
+static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_si, add_is, add_sf, add_fs, add_2_temp, add_s_temp, add_temp_s, add_s_direct;
 
 static s7_pointer add_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
@@ -12234,6 +12220,19 @@ static s7_pointer g_add_s_temp(s7_scheme *sc, s7_pointer args)
 
   arg1 = car(args);
   arg2 = cadr(args);
+  if (is_simple_real(arg1))
+    return(s7_remake_real(sc, arg2, real(arg1) + real(arg2)));
+  
+  return(g_a_s_t(sc, arg1, arg2, args));
+}
+
+
+static s7_pointer g_add_s_direct(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer arg1, arg2;
+
+  arg1 = finder(sc, car(args));
+  arg2 = c_call(cadr(args))(sc, cdadr(args));
   if (is_simple_real(arg1))
     return(s7_remake_real(sc, arg2, real(arg1) + real(arg2)));
   
@@ -13010,7 +13009,8 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer multiply_2, multiply_fs, multiply_sf, multiply_is, multiply_si, multiply_2_temp, multiply_3_temp, multiply_s_temp, multiply_temp_s;
+static s7_pointer multiply_2, multiply_fs, multiply_sf, multiply_is, multiply_si;
+static s7_pointer multiply_2_temp, multiply_3_temp, multiply_s_temp, multiply_temp_s, multiply_s_direct;
 static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
@@ -13243,6 +13243,19 @@ static s7_pointer g_m_s_t(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, s7_po
       CHECK_METHOD(sc, arg1, sc->MULTIPLY, args); 
       return(wrong_type_argument_with_type(sc, sc->MULTIPLY, small_int(1), arg1, A_NUMBER));
     }
+}
+
+
+static s7_pointer g_multiply_s_direct(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer arg1, arg2;
+
+  arg1 = finder(sc, car(args));
+  arg2 = c_call(cadr(args))(sc, cdadr(args));
+  if (is_simple_real(arg1))
+    return(s7_remake_real(sc, arg2, real(arg1) * real(arg2)));
+  
+  return(g_m_s_t(sc, arg1, arg2, args));
 }
 
 
@@ -13911,6 +13924,18 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer max_f2;
+static s7_pointer g_max_f2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, y;
+  x = car(args);
+  y = cadr(args);
+  if (is_simple_real(y))
+    return((real(x) >= real(y)) ? x : y);
+  return((real(x) >= s7_number_to_real(sc, y)) ? x : y);
+}
+
+
 static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 {
   #define H_min "(min ...) returns the minimum of its arguments"
@@ -14096,6 +14121,19 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->MIN, small_int(1), x, T_REAL));
     }
 }
+
+
+static s7_pointer min_f2;
+static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, y;
+  x = car(args);
+  y = cadr(args);
+  if (is_simple_real(y))
+    return((real(x) <= real(y)) ? x : y);
+  return((real(x) <= s7_number_to_real(sc, y)) ? x : y);
+}
+
 
 
 
@@ -25452,12 +25490,13 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	    }
 	}
 
-      /* sc->value = sc->F; */
       y = cons(sc, args, sc->NIL); /* this could probably be handled with a counter cell (cdr here is unused) */
       ecdr(y) = x;
       fcdr(y) = x;
       push_stack(sc, OP_MEMBER_IF, y, eq_func);
-      push_stack(sc, OP_APPLY, list_2(sc, car(args), car(x)), eq_func); /* TODO: unnecessary cons? */
+      car(sc->T2_1) = car(args);
+      car(sc->T2_2) = car(x);
+      push_stack(sc, OP_APPLY, sc->T2_1, eq_func); 
       return(sc->UNSPECIFIED);
     }
 
@@ -35323,6 +35362,16 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  return(add_fs);
 	}
 
+      if ((is_symbol(arg1)) &&
+	  (is_pair(arg2)) &&
+	  (is_optimized(arg2)) &&
+	  (optimize_data(arg2) == HOP_SAFE_C_C) &&
+	  (s7_function_returns_temp(arg2)))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(add_s_direct);
+	}
+
       if ((is_pair(arg1)) &&
 	  (is_pair(arg2)) &&
 	  (is_optimized(arg1)) &&
@@ -35457,6 +35506,16 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  (s7_function_returns_temp(arg2)))
 	return(multiply_2_temp);
 
+      if ((is_symbol(arg1)) &&
+	  (is_pair(arg2)) &&
+	  (is_optimized(arg2)) &&
+	  (optimize_data(arg2) == HOP_SAFE_C_C) &&
+	  (s7_function_returns_temp(arg2)))
+	{
+	  set_optimize_data(expr, HOP_SAFE_C_C);
+	  return(multiply_s_direct);
+	}
+
       if ((is_pair(arg2)) &&
 	  (is_optimized(arg2)) &&
 	  (s7_function_returns_temp(arg2)))
@@ -35562,6 +35621,24 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
     }
 #endif
   /* fprintf(stderr, "s%d: %s\n", args, DISPLAY_80(expr)); */
+  return(f);
+}
+
+
+static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (type(cadr(expr)) == T_REAL))
+    return(max_f2);
+  return(f);
+}
+
+
+static s7_pointer min_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (type(cadr(expr)) == T_REAL))
+    return(min_f2);
   return(f);
 }
 
@@ -36002,6 +36079,9 @@ static void init_choosers(s7_scheme *sc)
   add_s_temp = s7_make_function(sc, "+", g_add_s_temp, 2, 0, false, "+ optimization");
   s7_function_set_class(add_s_temp, f);
   s7_function_set_returns_temp(add_s_temp);
+  add_s_direct = s7_make_function(sc, "+", g_add_s_direct, 2, 0, false, "+ optimization");
+  s7_function_set_class(add_s_direct, f);
+  s7_function_set_returns_temp(add_s_direct);
   add_temp_s = s7_make_function(sc, "+", g_add_temp_s, 2, 0, false, "+ optimization");
   s7_function_set_class(add_temp_s, f);
   s7_function_set_returns_temp(add_temp_s);
@@ -36060,6 +36140,9 @@ static void init_choosers(s7_scheme *sc)
   multiply_temp_s = s7_make_function(sc, "*", g_multiply_temp_s, 2, 0, false, "* optimization");
   s7_function_set_class(multiply_temp_s, f);
   s7_function_set_returns_temp(multiply_temp_s);
+  multiply_s_direct = s7_make_function(sc, "*", g_multiply_s_direct, 2, 0, false, "* optimization");
+  s7_function_set_class(multiply_s_direct, f);
+  s7_function_set_returns_temp(multiply_s_direct);
   multiply_is = s7_make_function(sc, "*", g_multiply_is, 2, 0, false, "* optimization");
   s7_function_set_class(multiply_is, f);
   multiply_si = s7_make_function(sc, "*", g_multiply_si, 2, 0, false, "* optimization");
@@ -36083,6 +36166,22 @@ static void init_choosers(s7_scheme *sc)
   mod_si = s7_make_function(sc, "modulo", g_mod_si, 2, 0, false, "modulo optimization");
   s7_function_set_class(mod_si, f);
 #endif
+
+
+  /* max */
+  f = slot_value(global_slot(sc->MAX));
+  c_function_chooser(f) = max_chooser;
+
+  max_f2 = s7_make_function(sc, "max", g_max_f2, 2, 0, false, "max optimization");
+  s7_function_set_class(max_f2, f);
+
+
+  /* min */
+  f = slot_value(global_slot(sc->MIN));
+  c_function_chooser(f) = min_chooser;
+
+  min_f2 = s7_make_function(sc, "min", g_min_f2, 2, 0, false, "min optimization");
+  s7_function_set_class(min_f2, f);
 
 
   /* = */
@@ -41387,25 +41486,12 @@ static s7_pointer check_set(s7_scheme *sc)
 
 				  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_C)
 				    {
-				      /* TODO: here look at the cadr for increment_c choices */
-#if 0
-				      if (car(sc->code) == cadr(cadr(sc->code)))
-					{
-					  fprintf(stderr, "check %s, add: %d, 2 args: %d, temp: %d\n", 
-						  DISPLAY_80(sc->code),
-						  (caadr(sc->code) == sc->ADD),
-						  (is_null(cdddr(cadr(sc->code)))),
-						  (s7_function_returns_temp(caddr(cadr(sc->code)))));
-					}
-#endif
 				      if ((car(sc->code) == cadr(cadr(sc->code))) &&
 					  (caadr(sc->code) == sc->ADD) &&
 					  (is_null(cdddr(cadr(sc->code)))) &&
+					  (optimize_data(caddr(cadr(sc->code))) == HOP_SAFE_C_C) && /* paranoia... */
 					  (s7_function_returns_temp(caddr(cadr(sc->code)))))
 					{
-					  if (optimize_data(caddr(cadr(sc->code))) != HOP_SAFE_C_C) /* TODO: add this to the checks above */
-					    fprintf(stderr, "opt: %s for %s\n", opt_names[optimize_data(caddr(cadr(sc->code)))], DISPLAY(sc->code));
-
 					  set_syntax_op(sc->code, sc->INCREMENT_C_TEMP);
 					  fcdr(sc->code) = caddr(cadr(sc->code));
 					}
@@ -41429,7 +41515,6 @@ static s7_pointer check_set(s7_scheme *sc)
 					{
 					  if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_SSS)
 					    {
-					      /* TODO: check this also for increments */
 					      set_syntax_op(sc->code, sc->SET_SYMBOL_SAFE_SSS);
 					      fcdr(sc->code) = cdr(cadr(sc->code));
 					    }
@@ -41446,7 +41531,8 @@ static s7_pointer check_set(s7_scheme *sc)
 						    {
 						      if (optimize_data(cadr(sc->code)) == HOP_SAFE_C_S_opCq)
 							{
-							  set_syntax_op(sc->code, sc->INCREMENT_S_opCq); /* (define (hi) (let ((x 0)) (set! x (+ x (abs -1))) x)) */
+							  /* (define (hi) (let ((x 0)) (set! x (+ x (abs -1))) x)) */
+							  set_syntax_op(sc->code, sc->INCREMENT_S_opCq); 
 							  fcdr(sc->code) = cdadr(sc->code);
 							}
 						      else 
@@ -44806,13 +44892,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else push_stack(sc, OP_DO_STEP, sc->args, sc->code);
 	  /* sc->code is ready to go */
 	}
-      /* fall through
-       *
-       *    the other most common goto BEGIN's are OP_LET and the closure branch of OP_APPLY,
-       *    but moving OP_LET here was slightly slower even in lg which has few do-loops.
-       *    goto BEGIN2 in these cases (to avoid the error checks below) was much slower, apparently
-       *    because there was one extra goto (to EVAL or EVAL_PAIR).
-       */
+      /* fall through */
+
+#if TRY_STACK
+      goto BEGIN;
+
+
+    POP_BEGIN:
+      {
+	s7_pointer code;
+	sc->envir = main_stack_environment(sc);
+	code = main_stack_code(sc); 
+	sc->code =  car(code); 
+	if (is_null(cdr(code))) 
+	  pop_main_stack(sc);                 
+	else main_stack_code(sc) = cdr(code); 
+	goto EVAL;
+      }
+#endif      
 
 
 
@@ -52023,10 +52120,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  IF_BEGIN_POP_STACK(sc);
 	}
       eval_error(sc, "set! ~A: unbound variable", sc->code);
-      /* TODO: in this case, we almost certainly have an increment if cadr is add_s_direct -- check somewhere
-       * also worth checking add_ss_1ss mul_s_direct -- perhaps omit these from clm2xen? or check for incs in clm2xen?
-       * or move them from clm2xen -> s7
-       */
 
 
     case OP_INCREMENT_C_TEMP:
@@ -52072,14 +52165,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_SET_SYMBOL_SAFE_SS:
       {
-	s7_pointer sym;
-	sym = car(sc->code);
-	car(sc->T2_1) = finder(sc, car(fcdr(sc->code)));
-	car(sc->T2_2) = finder(sc, cadr(fcdr(sc->code)));
-	sc->value = c_call(cadr(sc->code))(sc, sc->T2_1);
-	sc->code = sym;
-	goto SET_SAFE;
+	s7_pointer sym, code;
+	code = sc->code;
+	sym = find_symbol(sc, car(code));
+	if (is_slot(sym))
+	  {
+	    car(sc->T2_1) = finder(sc, car(fcdr(code)));
+	    car(sc->T2_2) = finder(sc, cadr(fcdr(code)));
+	    sc->value = c_call(cadr(code))(sc, sc->T2_1);
+	    slot_set_value(sym, sc->value);
+	    IF_BEGIN_POP_STACK(sc); /* or goto START; */
+	  }
       }
+      eval_error(sc, "set! ~A: unbound variable", sc->code);
 
 
     case OP_INCREMENT_SS:
@@ -52098,15 +52196,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* --------------- */
     case OP_SET_SYMBOL_SAFE_SSS:
       {
-	s7_pointer sym;
-	sym = car(sc->code);
-	car(sc->T3_1) = finder(sc, car(fcdr(sc->code)));
-	car(sc->T3_2) = finder(sc, ecdr(fcdr(sc->code))); 
-	car(sc->T3_3) = finder(sc, fcdr(fcdr(sc->code)));
-	sc->value = c_call(cadr(sc->code))(sc, sc->T3_1);
-	sc->code = sym;
-	goto SET_SAFE;
+	s7_pointer sym, code;
+	code = sc->code;
+	sym = find_symbol(sc, car(code));
+	if (is_slot(sym))
+	  {
+	    car(sc->T3_1) = finder(sc, car(fcdr(code))); /* checking car=car(fcdr) here is slightly slower */
+	    car(sc->T3_2) = finder(sc, ecdr(fcdr(code))); 
+	    car(sc->T3_3) = finder(sc, fcdr(fcdr(code)));
+	    sc->value = c_call(cadr(code))(sc, sc->T3_1);
+	    slot_set_value(sym, sc->value); 
+	    IF_BEGIN_POP_STACK(sc); /* or goto START; */
+	  }
       }
+      eval_error(sc, "set! ~A: unbound variable", sc->code);
 
 
       /* --------------- */
@@ -62509,6 +62612,11 @@ s7_scheme *s7_init(void)
  *   in the code, goto OPT_EVAL, but what if the unknown->macro or something not optimizable?
  *   do all goto OPT_EVALS need is_h_optimized protection? -- how many of these are there?
  *
+ * TODO: move all the clm2xen direct choices to s7 (like add_s_direct)
+ *   mul_1s_direct mul_direct_s2 mul_direct_2 mul_direct_any
+ *   add_c_direct add_direct_2 add_cs_direct add_1s_direct add_direct_s2 add_direct_any
+ *   mul_direct_2 calls the two safe_c_c exprs, frees one, remakes the other
+ *
  * in (char=? (s1 a) (s2 b)) is it worth a 2nd level unknown check that s1 and s2 are strings?
  *   op_safe_c_opunsq_opunsq -> op_safe_c_opsq_opsq or op_safe_c_pp 
  *   currently we just go to safe_c_pp, but if it were checked in simple cases (opsq_opsq) 
@@ -62531,6 +62639,9 @@ s7_scheme *s7_init(void)
  *
  * how to get the doc string out of the closure body
  *
+ * there must be some reasonable way to collapse the mus_xen->mus_oscil_p checks to one type check.
+ *   see FORMANT_TAG -- this could be extended to other cases -- mus_frame_p in particular
+ *
  * we need integer_length everywhere! 
  *   TODO: these fixups are ignored by the optimized cases
  *
@@ -62546,7 +62657,7 @@ s7_scheme *s7_init(void)
  * t455            265  218   89   55   31
  * t502             90   72   43   39   36
  * lat             229        63   52   47
- * calls                     310  242  211
+ * calls                     310  242  209
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

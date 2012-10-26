@@ -448,6 +448,7 @@ unsigned int mus_char_to_ulint(const unsigned char *inp)
 
   #define big_endian_float(n)                    (mus_char_to_bfloat(n))
   #define big_endian_double(n)                   (mus_char_to_bdouble(n))
+  /* why doesn't bswap work in this case? */
 
   #define little_endian_short(n)                 (*((short *)n))
   #define little_endian_int(n)                   (*((int *)n))
@@ -964,11 +965,11 @@ static const mus_sample_t mus_ubyte[256] = {
 #define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
 /* see note in _sndlib.h" values are "unscaled" from the DAC's point of view */
 
-static float *swapped_shorts = NULL;
+static mus_sample_t *swapped_shorts = NULL;
 static void initialize_swapped_shorts(void)
 {
   int i;
-  swapped_shorts = (float *)malloc(65536 * sizeof(float));
+  swapped_shorts = (mus_sample_t *)malloc(65536 * sizeof(mus_sample_t));
   for (i = 0; i < 65536; i++)
     {
       signed short x;

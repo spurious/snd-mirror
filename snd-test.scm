@@ -1369,9 +1369,7 @@
     ))
 
 
-(if (and (not (= (default-output-data-format) mus-bfloat))
-	 (not (= (default-output-data-format) mus-lfloat)))
-    (set! (default-output-data-format) mus-lfloat))
+(set! (default-output-data-format) mus-ldouble)
 
 
 ;;; ---------------- test 2: headers ----------------
@@ -38561,11 +38559,11 @@ EDITS: 1
     (for-each
      (lambda (type)
        (let ((ind (find-sound 
-		   (with-sound (:data-format type)
+		   (with-sound (:data-format type :srate 22050)
 			       (fm-violin 0 .1 440 .1)
 			       (fm-violin 10 .1 440 .1)
 			       (fm-violin 100 .1 440 .1)
-			       (fm-violin 1000 .1 440 .1)))))
+			       (fm-violin 250 .1 440 .1)))))
 	 (let ((mx (maxamp ind)))
 	   (if (ffneq mx .1) ; mus-byte -> 0.093
 	       (snd-display #__line__ ";max: ~A, format: ~A" mx (mus-data-format->string type))))))
@@ -47434,19 +47432,20 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-22-Oct-12:
-211,360,437,989
-43,944,092,790  s7.c:eval [/home/bil/snd-13/snd]
-15,547,768,510  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
-15,083,803,345  ???:sin [/lib64/libm-2.12.so]
-13,908,097,417  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 8,951,760,923  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+26-Oct-12:
+208,580,317,198
+42,865,881,292  s7.c:eval [/home/bil/snd-13/snd]
+15,846,566,739  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+15,081,547,224  ???:sin [/lib64/libm-2.12.so]
+14,351,094,937  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 9,019,467,204  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
  8,912,322,193  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 6,472,671,750  io.c:mus_write_1 [/home/bil/snd-13/snd]
- 6,417,288,765  s7.c:gc [/home/bil/snd-13/snd]
- 6,254,471,740  s7.c:eval'2 [/home/bil/snd-13/snd]
- 3,992,234,302  s7.c:s7_make_real [/home/bil/snd-13/snd]
- 2,998,494,880  clm.c:mus_src [/home/bil/snd-13/snd]
+ 6,462,747,399  io.c:mus_write_1 [/home/bil/snd-13/snd]
+ 6,398,952,951  s7.c:gc [/home/bil/snd-13/snd]
+ 6,302,862,933  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 3,973,770,928  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 3,040,856,054  clm.c:mus_src [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,157,950,857  s7.c:g_add_2 [/home/bil/snd-13/snd]
+ 2,154,200,998  s7.c:g_add_2 [/home/bil/snd-13/snd]
+ 2,001,527,997  ???:cos [/lib64/libm-2.12.so]
 |#

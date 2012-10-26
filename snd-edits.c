@@ -6629,7 +6629,7 @@ static XEN g_next_sample(XEN obj)
     return(C_TO_XEN_DOUBLE(protected_next_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_next_sample, "a sampler");
-  return(XEN_ZERO);
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
 
@@ -6642,7 +6642,7 @@ static XEN g_read_sample(XEN obj)
     return(C_TO_XEN_DOUBLE(read_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_read_sample, "a sampler");
-  return(XEN_ZERO);
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
 
@@ -6664,7 +6664,7 @@ static XEN g_previous_sample(XEN obj)
     return(C_TO_XEN_DOUBLE(protected_previous_sample(xen_mix_to_snd_fd(obj))));
 
   XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_previous_sample, "a sampler");
-  return(XEN_ZERO);
+  return(C_TO_XEN_DOUBLE(0.0));
 }
 
 
@@ -7128,29 +7128,56 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
       int jnum;
       jnum = (int)num;
 
-      if ((sf->runf == next_sample_value_unscaled) && /* not also next_sample_value because next_sound embeds the scaler multiply */
+      if (((sf->runf == next_sample_value_unscaled) ||
+	   (sf->runf == next_sample_value)) &&
 	  (ED_LOCAL_POSITION(sf->cb) == 0) &&
-	  (ED_LOCAL_END(sf->cb) >= (num - 1)))
+	  (ED_LOCAL_END(sf->cb) >= (num - 1)))              /* so accessor won't change? */
 	{
 	  mus_sample_t *dat;
 	  mus_long_t loc, last;
 	  loc = sf->loc;
 	  last = sf->last;
 	  dat = sf->data;
-	  for (j = 0; j < jnum; j++)
+
+	  if (sf->runf == next_sample_value_unscaled)
 	    {
-	      if (loc > last) 
+	      for (j = 0; j < jnum; j++)
 		{
-		  mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
-		  loc = sf->loc;
-		  last = sf->last;
-		  dat = sf->data;
+		  if (loc > last) 
+		    {
+		      mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
+		      loc = sf->loc;
+		      last = sf->last;
+		      dat = sf->data;
+		    }
+		  else mval = fabs(dat[loc++]);
+		  if (mval > ymax) 
+		    {
+		      ymax = mval;
+		      jpos = j;
+		    }
 		}
-	      else mval = fabs(dat[loc++]);
-	      if (mval > ymax) 
+	    }
+	  else
+	    {
+	      mus_float_t fscaler;
+	      fscaler = sf->fscaler;
+	      for (j = 0; j < jnum; j++)
 		{
-		  ymax = mval;
-		  jpos = j;
+		  if (loc > last) 
+		    {
+		      mval = fabs(next_sound(sf));          /* sets sf->loc and most other fields */
+		      fscaler = sf->fscaler;                /* why is this needed? */
+		      loc = sf->loc;
+		      last = sf->last;
+		      dat = sf->data;
+		    }
+		  else mval = fabs(dat[loc++] * fscaler);
+		  if (mval > ymax) 
+		    {
+		      ymax = mval;
+		      jpos = j;
+		    }
 		}
 	    }
 	}
@@ -8312,6 +8339,19 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 #endif
 
 
+#if HAVE_SCHEME
+#define XEN_DEFINE_DIRECT_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  do { \
+  s7_pointer sym, f;							\
+  sym = s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc); \
+  f = s7_value(s7, sym); \
+  s7_function_set_returns_temp(f);\
+  } while (0)
+#else
+#define XEN_DEFINE_DIRECT_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_SAFE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#endif
+
+
 void g_init_edits(void)
 {
 #if HAVE_SCHEME
@@ -8335,10 +8375,10 @@ void g_init_edits(void)
 
   XEN_DEFINE_SAFE_PROCEDURE(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
   XEN_DEFINE_SAFE_PROCEDURE(S_make_region_sampler,    g_make_region_sampler_w,    1, 3, 0, H_make_region_sampler);
-  XEN_DEFINE_SAFE_PROCEDURE(S_read_sample,            g_read_sample_w,            1, 0, 0, H_read_sample);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_read_sample,            g_read_sample_w,            1, 0, 0, H_read_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_read_region_sample,     g_read_sample_w,            1, 0, 0, H_read_sample);
-  XEN_DEFINE_SAFE_PROCEDURE(S_next_sample,            g_next_sample_w,            1, 0, 0, H_next_sample);
-  XEN_DEFINE_SAFE_PROCEDURE(S_previous_sample,        g_previous_sample_w,        1, 0, 0, H_previous_sample);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_next_sample,            g_next_sample_w,            1, 0, 0, H_next_sample);
+  XEN_DEFINE_DIRECT_PROCEDURE(S_previous_sample,        g_previous_sample_w,        1, 0, 0, H_previous_sample);
   XEN_DEFINE_SAFE_PROCEDURE(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
   XEN_DEFINE_SAFE_PROCEDURE(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
   XEN_DEFINE_SAFE_PROCEDURE(S_sampler_p,              g_sampler_p_w,              1, 0, 0, H_sampler_p);

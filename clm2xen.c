@@ -74,10 +74,12 @@
 
 struct mus_xen {
   mus_any *gen;
-  int type;
+  int type; /* currently only oscil/formant type checks */
   XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
   int nvcts;
 };
+
+#define FORMANT_TAG 1
 
 mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define MUS_XEN_TO_MUS_ANY(Gn) (((mus_xen *)Gn)->gen)
@@ -3937,9 +3939,22 @@ static XEN g_make_frm(bool formant_case, const char *caller, XEN arg1, XEN arg2,
     }
 
   if (formant_case)
-    ge = mus_make_formant(freq, radius);
-  else ge = mus_make_firmant(freq, radius);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+    {
+      ge = mus_make_formant(freq, radius);
+      if (ge)
+	{
+	  mus_xen *gn;
+	  gn = mus_any_to_mus_xen(ge);
+	  gn->type = FORMANT_TAG;
+	  return(mus_xen_to_object(gn));
+	}
+    }
+  else 
+    {
+      ge = mus_make_firmant(freq, radius);
+      if (ge) 
+	return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+    }
   return(XEN_FALSE);
 }
 
@@ -3985,12 +4000,16 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 
   for (i = 0; i < size; i++)
     {
-      XEN g;
 #if HAVE_SCHEME
-      g = elements[i];
+      mus_xen *gn;
+      gn = (mus_xen *)s7_object_value_checked(elements[i], mus_xen_tag);
+      if ((gn) &&
+	  (gn->type == FORMANT_TAG))
+	outval += (scl->data[i] * mus_formant(gn->gen, inval));
+      else XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, elements[i], "a formant generator");
 #else
+      XEN g;
       g = XEN_VECTOR_REF(gens, i);
-#endif
       if (MUS_XEN_P(g))
 	{
 	  mus_any *fg;
@@ -4000,6 +4019,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 	  else XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, g, "a formant generator");
 	}
       else XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, g, "a formant generator");
+#endif
     }
   return(C_TO_XEN_DOUBLE(outval));
 }
@@ -10596,23 +10616,6 @@ static s7_pointer g_add_c_direct(s7_scheme *sc, s7_pointer args)
   return(s7_remake_real(sc, x, s7_number_to_real(sc, car(args)) + s7_real(x)));
 }
 
-static s7_pointer mul_s_direct;
-static s7_pointer g_mul_s_direct(s7_scheme *sc, s7_pointer args)
-{
-  /* (* s ...) */
-  s7_pointer x, mul;
-  double xval;
-
-  GET_NUMBER(args, "*", mul);
-
-  x = s7_call_direct(sc, cadr(args));
-  xval = s7_real(x);
-
-  if (s7_is_real(mul))
-    return(s7_remake_real(sc, x, s7_number_to_real(sc, mul) * xval));
-  return(s7_make_complex(sc, s7_real_part(mul) * xval, s7_imag_part(mul) * xval));
-}
-
 static s7_pointer mul_1s_direct;
 static s7_pointer g_mul_1s_direct(s7_scheme *sc, s7_pointer args)
 {
@@ -10628,23 +10631,6 @@ static s7_pointer g_mul_1s_direct(s7_scheme *sc, s7_pointer args)
   if (s7_is_real(mul))
     return(s7_remake_real(sc, x, (1.0 - s7_number_to_real(sc, mul)) * xval));
   return(s7_make_complex(sc, (1.0 - s7_real_part(mul)) * xval, -s7_imag_part(mul) * xval));
-}
-
-static s7_pointer add_s_direct;
-static s7_pointer g_add_s_direct(s7_scheme *sc, s7_pointer args)
-{
-  /* (+ s ...) */
-  s7_pointer x, mul;
-  double xval;
-
-  GET_NUMBER(args, "+", mul);
-
-  x = s7_call_direct(sc, cadr(args));
-  xval = s7_real(x);
-
-  if (s7_is_real(mul))
-    return(s7_remake_real(sc, x, s7_number_to_real(sc, mul) + xval));
-  return(s7_make_complex(sc, s7_real_part(mul) + xval, s7_imag_part(mul)));
 }
 
 static s7_pointer add_1s_direct;
@@ -10739,13 +10725,6 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	  /* fprintf(stderr, "\nadd c direct: %s\n\n", DISPLAY_80(expr)); */
 	  s7_function_choice_set_direct(sc, expr);
 	  return(add_c_direct);
-	}
-
-      if (s7_is_symbol(cadr(expr)))
-	{
-	  /* fprintf(stderr, "\nadd s direct: %s\n\n", DISPLAY_80(expr)); */
-	  s7_function_choice_set_direct(sc, expr);
-	  return(add_s_direct);
 	}
 
       if ((s7_is_pair(cadr(expr))) &&
@@ -11017,14 +10996,6 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 		  s7_function_choice_set_direct(sc, expr);
 		  /* fprintf(stderr, "mul_s_gen_1\n"); */
 		  return(choices[MUL_S_GEN_1]);
-		}
-	      
-	      if ((s7_function_choice_is_direct(sc, caddr(expr))) &&
-		  (s7_function_returns_temp(caddr(expr))))
-		{
-		  s7_function_choice_set_direct(sc, expr);
-		  /* fprintf(stderr, "mul_s_direct\n"); */
-		  return(mul_s_direct);
 		}
 	    }
 	}
@@ -12464,7 +12435,6 @@ static void init_choosers(s7_scheme *sc)
   mul_direct_2 = clm_make_function(sc, "*", g_mul_direct_2, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_direct_any = clm_make_function(sc, "*", g_mul_direct_any, 3, 0, true, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_c_direct = clm_make_function(sc, "*", g_mul_c_direct, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
-  mul_s_direct = clm_make_function_no_choice(sc, "*", g_mul_s_direct, 2, 0, false, "* optimization", f);
   mul_1s_direct = clm_make_function_no_choice(sc, "*", g_mul_1s_direct, 2, 0, false, "* optimization", f);
   mul_env_direct = clm_make_function(sc, "*", g_mul_env_direct, 2, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
   mul_direct_s2 = clm_make_function(sc, "*", g_mul_direct_s2, 3, 0, false, "* optimization", f, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -12653,7 +12623,6 @@ static void init_choosers(s7_scheme *sc)
 				   NULL, NULL, NULL, NULL, NULL, NULL);
   add_c_direct = clm_make_function(sc, "+", g_add_c_direct, 2, 0, false, "+ optimization", f,
 				   NULL, NULL, NULL, NULL, NULL, NULL);
-  add_s_direct = clm_make_function_no_choice(sc, "+", g_add_s_direct, 2, 0, false, "+ optimization", f);
   add_1s_direct = clm_make_function_no_choice(sc, "+", g_add_1s_direct, 2, 0, false, "+ optimization", f);
   add_cs_direct = clm_make_function_no_choice(sc, "+", g_add_cs_direct, 2, 0, false, "+ optimization", f);
 
