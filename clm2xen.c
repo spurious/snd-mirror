@@ -8982,22 +8982,13 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
 #else
 #define GET_GENERATOR(Obj, Type, Val) \
   do { \
-  static s7_pointer g = NULL; \
-  static mus_any *gg = NULL; \
   s7_pointer gp; \
   mus_xen *gn; \
   gp = s7_car_value(s7, Obj); \
-  if (gp != g) \
-    { \
-      gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag); \
-      if (gn) \
-        { \
-          g = gp; \
-          gg = gn->gen; \
-        } \
-      else XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator"); \
-    } \
-    Val = gg; \
+  gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag); \
+  if (gn) \
+    Val = gn->gen;							\
+  else XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator"); \
   } while (0)
 #endif
 
@@ -9962,9 +9953,9 @@ static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	{
-	  GET_GENERATOR(args, all-pass, a1);
+	  GET_GENERATOR(args, all_pass, a1);
 	  vargs = s7_cdr(args);
-	  GET_GENERATOR(cdar(vargs), one-pole, lp);
+	  GET_GENERATOR(cdar(vargs), one_pole, lp);
 	  vargs = s7_cddar(vargs);
 	  GET_GENERATOR(cdar(vargs), all_pass, a2);
 	  vargs = s7_cddar(vargs);
@@ -10490,9 +10481,9 @@ static s7_pointer g_frame_to_file_ff(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, frame_to_file, ogen);
   GET_INTEGER(cdr(args), frame_to_file, pos);
   ff_expr = cdaddr(args);
-  GET_GENERATOR(ff_expr, frame_to_frame, ff);
-  GET_GENERATOR(cdr(ff_expr), frame_to_frame, fmx);
-  GET_GENERATOR(cddr(ff_expr), frame_to_frame, fout);
+  GET_GENERATOR(ff_expr, frame_or_mixer, ff);
+  GET_GENERATOR(cdr(ff_expr), frame_or_mixer, fmx);
+  GET_GENERATOR(cddr(ff_expr), frame, fout);
 
   mus_frame_to_file(ogen, pos, mus_frame_to_frame(ff, fmx, fout));
   return(XEN_FALSE);

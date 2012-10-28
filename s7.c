@@ -3979,7 +3979,7 @@ static void resize_op_stack(s7_scheme *sc)
 /* this macro depends on a very restricted context!
  */
 #if TRY_STACK
-#define IF_BEGIN_POP_STACK(Sc) if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; goto START;
+#define IF_BEGIN_POP_STACK(Sc) do {if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; goto START;} while (0)
 #else
 #define IF_BEGIN_POP_STACK(Sc) goto START
 #endif
@@ -22073,7 +22073,8 @@ static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer por
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, (use_write) ? "write" : "display", 2, port, "an open input port"));
 
-  if (has_structure(obj))
+  if ((has_structure(obj)) &&
+      (obj != sc->global_env))
     ci = make_shared_info(sc, obj);
   object_to_port_with_circle_check(sc, obj, port, use_write, is_file_port(port), ci);
 
@@ -22091,7 +22092,8 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_wri
   strport = s7_open_output_string(sc);
   gc_loc = s7_gc_protect(sc, strport);
 
-  if (has_structure(obj))
+  if ((has_structure(obj)) && 
+      (obj != sc->global_env))
     ci = make_shared_info(sc, obj);
   object_to_port_with_circle_check(sc, obj, strport, use_write, WITH_ELLIPSES, ci);
 
@@ -22739,7 +22741,8 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 
 		if (!columnized)
 		  {
-		    if (has_structure(obj))
+		    if ((has_structure(obj)) &&
+			(obj != sc->global_env))
 		      object_to_port_with_circle_check(sc, obj, port, (str[i] == 'S') || (str[i] == 's'), is_file_port(port), make_shared_info(sc, obj));
 		    else object_to_port(sc, obj, port, (str[i] == 'S') || (str[i] == 's'), is_file_port(port), NULL);
 		  }
@@ -40368,10 +40371,13 @@ static s7_pointer check_let_star(s7_scheme *sc)
     {
       if (named_let)
 	{
-	  fcdr(sc->code) = cadaar(sc->code);
 	  if (is_null(cadr(sc->code)))
 	    set_syntax_op(sc->code, sc->NAMED_LET_NO_VARS);
-	  else set_syntax_op(sc->code, sc->NAMED_LET_STAR);
+	  else 
+	    {
+	      set_syntax_op(sc->code, sc->NAMED_LET_STAR);
+	      fcdr(sc->code) = cadr(car(cadr(sc->code)));
+	    }
 	  return(sc->code);
 	}
 
@@ -62657,7 +62663,7 @@ s7_scheme *s7_init(void)
  * t455            265  218   89   55   31
  * t502             90   72   43   39   36
  * lat             229        63   52   47
- * calls                     310  242  209
+ * calls                     290  222  190
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

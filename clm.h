@@ -399,6 +399,7 @@ MUS_EXPORT mus_float_t mus_env_step(mus_any *ptr);
 MUS_EXPORT mus_env_t mus_env_type(mus_any *ptr);
 
 MUS_EXPORT bool mus_frame_p(mus_any *ptr);
+MUS_EXPORT bool mus_frame_or_mixer_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_empty_frame(int chans);
 MUS_EXPORT mus_any *mus_make_frame(int chans, ...);
 MUS_EXPORT mus_any *mus_frame_add(mus_any *f1, mus_any *f2, mus_any *res);

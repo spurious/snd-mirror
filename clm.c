@@ -6799,6 +6799,14 @@ bool mus_frame_p(mus_any *ptr)
 }
 
 
+bool mus_frame_or_mixer_p(mus_any *ptr) 
+{
+  return((ptr) && 
+	 ((ptr->core->type == MUS_FRAME) ||
+	  (ptr->core->type == MUS_MIXER)));
+}
+
+
 static bool equalp_frame(mus_any *p1, mus_any *p2)
 {
   mus_frame *g1, *g2;
@@ -8388,6 +8396,7 @@ static mus_float_t mus_outa_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
   if (!ptr) return(val);
   
   if ((!(gen->obuf0)) || 
+      (!(gen->obufs)) ||
       (samp < 0))
     return(val);
 
@@ -8426,6 +8435,7 @@ static mus_float_t mus_outb_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
   if (!ptr) return(val);
   
   if ((!(gen->obuf1)) ||
+      (!(gen->obufs)) ||
       (samp < 0))
     return(val);
 
@@ -8473,6 +8483,8 @@ static int sample_to_file_end(mus_any *ptr)
 	}
       free(gen->obufs);
       gen->obufs = NULL;
+      gen->obuf0 = NULL;
+      gen->obuf1 = NULL;
     }
   return(0);
 }

@@ -18180,7 +18180,10 @@ in s7:
 (test (let* func1 ((a 1) (b 2)) (+ a b (let* func2 ((a -1) (b (- a 1))) (if (< a 0) (func2 (+ a 1)) b)))) 1) ; 2nd b is -2
 (test (procedure? (let* func ((i 1) (j 2) (k (+ j 1))) func)) #t)
 
+; named let*
 (test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func (- a 1) (- b 1)) 0))) 4)
+(test (let* func ((a 1) (b 2)) (+ a b)) 3)
+(test (let* func ((a (+ 1 2)) (b (+ a 2))) (+ a b)) 8)
 (test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func (- a 1) :b (- b 1)) 0))) 4)
 (test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func :a (- a 1) :b (- b 1)) 0))) 4)
 (test (let* func ((a 1) (b 2)) (+ a b (if (> a 0) (func :b (- b 1) :a (- a 1)) 0))) 4)
