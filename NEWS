@@ -1,11 +1,11 @@
-Snd 13.1:
+Snd 13.2
 
-cload.scm to automatically link in a C function from a C shared library
-  this file and lint.scm are now also included in the s7 tarball.
-symbol->dynamic-value
+named let*.
 
-checked: gtk 3.5.12|14|16|18, clang 3.1, mpc 1.0.1
+deprecated clm-print (snd13.scm has a replacement).
 
-Thanks!:  Fernando, Mike, Rick, Anders Vinjar.
+checked: fftw 3.3.2, gtk 3.6.0|1 3.7.0, sbcl 1.1.0
+
+Thanks!: Rick, Mike.
 
 

@@ -8988,7 +8988,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
   gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag); \
   if (gn) \
     Val = gn->gen;							\
-  else XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator"); \
+  else {Val = NULL; XEN_ASSERT_TYPE(false, gp, XEN_ARG_1, "gen-lookup", "a generator");} \
   } while (0)
 #endif
 

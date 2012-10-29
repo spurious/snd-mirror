@@ -8339,7 +8339,7 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 #endif
 
 
-#if 1
+#if HAVE_SCHEME
 #define XEN_DEFINE_DIRECT_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
   s7_pointer sym, f;							\

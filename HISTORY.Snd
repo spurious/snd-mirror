@@ -1,5 +1,6 @@
 Snd change log
 
+ 30-Oct:    Snd 13.2.
  20-Sep:    Snd 13.1.
  8-Aug:     Snd 13.0.
  3-July:    removed ptree-channel and max-virtual-ptrees, optimization, run.c.
