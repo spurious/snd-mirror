@@ -75,25 +75,6 @@ make
 ./snd -l snd-test 9
 
 echo ' '
-date
-echo ' -------------------------------- configure without optimization -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-rm -f makefile
-rm -f mus-config.h
-rm -f sndinfo
-echo ' CFLAGS="-Wall -I/usr/X11R6/include -DWITH_OPTIMIZATION=0" '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include -DWITH_OPTIMIZATION=0"  LDFLAGS="-L/usr/X11R6/lib"
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -l snd-test
-echo ' -------------------------------- that was no-opt snd-test -------------------------------- '
-
-echo ' '
-echo ' '
 echo ' -------------------------------- configure --with-gtk test -------------------------------- '
 make allclean
 rm -f snd
@@ -320,7 +301,7 @@ rm -f snd
 echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --with-no-gui '
 ./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1024" --with-no-gui
 make
-./snd s7test.scm
+./snd -l snd-test 29
 echo ' '
 echo ' '
 date
@@ -329,7 +310,7 @@ rm s7.o
 echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --with-no-gui '
 ./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=1824" --with-no-gui
 make
-./snd s7test.scm
+./snd -l snd-test 29
 echo ' '
 echo ' '
 date
@@ -338,7 +319,7 @@ rm s7.o
 echo ' CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --with-no-gui '
 ./configure --quiet CFLAGS="-Wall -DINITIAL_HEAP_SIZE=736" --with-no-gui
 make
-./snd s7test.scm
+./snd -l snd-test 29
 echo ' '
 echo ' '
 date

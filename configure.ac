@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 13.2, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-13.tar.gz)
+AC_INIT(snd, 13.3, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-13.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=13.2
+VERSION=13.3
 AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
 AC_SUBST(SND_PACKAGE)
