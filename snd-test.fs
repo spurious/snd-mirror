@@ -2,13 +2,16 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed Sep 26 00:54:06 CEST 2012
+\ Changed: Mon Oct 29 16:44:48 CET 2012
 
 \ Commentary:
 \
+\ Tags:  FIXME - something is wrong
+\        XXX   - info marker
+\
 \ Tested with:
-\   Snd version 13.2 of 26-Sep-12
-\   FTH 1.3.4 (25-Sep-2012)
+\   Snd version 13.2 of 30-Oct-12
+\   FTH 1.3.5 (29-Oct-2012)
 \
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
 \ hooks, etc.
@@ -71,7 +74,7 @@
 [else]
   \ Prints to Snd's listener and stdout/stderr.
 
-  \ The original CLM-PRINT utilizes SND-PRINT only but we want output
+  \ The original CLM-PRINT uses only SND-PRINT but we want output
   \ to stdout/stderr too.
   : clm-print ( fmt :optional args -- )
     fth-format ( str ) snd-print ( str ) .stdout
@@ -86,8 +89,8 @@
   make-soft-port set-*stderr* value stderr-io
 [then]
 
-\ Output words: not clm-print here if we want xterm output.  That's
-\ why no clm-message which uses clm-print.
+\ Output words: We can't use clm-print here if we want xterm output
+\ (clm-message uses clm-print).
 
 \ SND-TEST-MESSAGE: Puts a comment sign before output
 \                   and terminates with a carriage return.
@@ -668,7 +671,7 @@ SIGINT lambda: { sig -- }
   [then]
 [then] constant tiny-font-set-string
 
-\ FIXME
+\ XXX
 \
 \ temp-dir
 \ save-dir
@@ -2001,7 +2004,7 @@ black-and-white-colormap constant *better-colormap*
     5 set-enved-filter-order drop
     enved-filter-order 6 "set-enved-filter-order 5" #() snd-test-neq
     old-val set-enved-filter-order drop
-    \ FIXME
+    \ XXX
     \ This works with global variables. [ms]
     'zero-to-one <'> set-enved-envelope #t nil fth-catch stack-reset
     enved-envelope zero-to-one "set-enved-envelope (symbol)" #() snd-test-neq
@@ -2011,7 +2014,7 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   dismiss-all-dialogs
   #() { undefined }
-  \ FIXME
+  \ XXX
   \ changes from original snd-test.scm list [ms]:
   \
   \ removed (Scheme specific):
@@ -2022,7 +2025,7 @@ black-and-white-colormap constant *better-colormap*
   \ added:
   \   'snd-exit      (xen.c; in Forth exit is already in use)
   \
-  \ FIXME
+  \ XXX
   \ Splitted in two arrays because we have a 1024 stack limit. [ms]
   #( '*snd-opened-sound* 'abort 'add-colormap 'add-directory-to-view-files-list
      'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
@@ -2048,7 +2051,7 @@ black-and-white-colormap constant *better-colormap*
      'channel-property 'channel-style 'channel-widgets 'channels
      'channels-combined 'channels-separate 'channels-superimposed 
      'chans 'clear-array 'clear-listener 'clear-sincs 'clip-hook
-     'clipping 'clm-channel 'clm-print 'clm-table-size 
+     'clipping 'clm-channel 'clm-table-size 
      'clm-default-frequency 'close-hook 'close-sound 'color->list
      'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted
      'color-scale 'color?  'colormap 'colormap-name 'colormap-ref
@@ -3231,7 +3234,7 @@ black-and-white-colormap constant *better-colormap*
   fd 0 99 1 sdata mus-sound-read drop
   sdata 0 10 sound-data-ref 0.1 "mus-sound-write" #() snd-test-neq
   fd 20 mus-sound-seek-frame { pos }
-  \ FIXME
+  \ XXX
   \ fd io-fdopen io-tell pos "1 mus-sound-seek-frame" #() snd-test-neq
   "fmv5.snd" 20 frame->byte pos "2 mus-sound-seek-frame(2)" #() snd-test-neq
   fd 0 10 1 sdata mus-sound-read drop
@@ -3415,7 +3418,7 @@ black-and-white-colormap constant *better-colormap*
       "fmv5.snd" mus-sound-open-input to fd
       fd 0 samps 1- chns ndata mus-sound-read drop
       fd 100 mus-sound-seek-frame to pos
-      \ FIXME
+      \ XXX
       \ fd io-fdopen io-tell pos "mus-sound-seek-frame[%d]: chans %d"
       \   #( pos chns ) snd-test-neq
       "fmv5.snd" 100 frame->byte pos "mus-sound-seek-frame(100)" #()
@@ -4725,7 +4728,7 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   "test space.snd" file-delete
   "test space.marks" file-delete
-  \ FIXME
+  \ XXX
   \ S7 specific tests skipped
 ;
 
@@ -6539,24 +6542,17 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
 
 *with-test-motif* [if]
   : snd-motif-error-checks ( -- )
-    #( 'Widget 0 ) 	      <'> widget-position
-      'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> widget-size
-      'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> widget-text 
-      'no-such-widget check-error-tag
-    #( 'Widget 0 ) #( 0 0 )   <'> set-widget-position
-      'no-such-widget check-error-tag
-    #( 'Widget 0 ) #( 10 10 ) <'> set-widget-size
-      'no-such-widget check-error-tag
-    #( 'Widget 0 ) "text"     <'> set-widget-text
-      'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> hide-widget
-      'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> show-widget
-      'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> focus-widget
-      'no-such-widget check-error-tag
+    #( 'Widget 0 ) <'> widget-position 'no-such-widget check-error-tag
+    #( 'Widget 0 ) <'> widget-size 'no-such-widget check-error-tag
+    #( 'Widget 0 ) <'> widget-text 'no-such-widget check-error-tag
+    #( 'Widget 0 ) #( 0 0 ) <'> set-widget-position 'no-such-widget
+      check-error-tag
+    #( 'Widget 0 ) #( 10 10 ) <'> set-widget-size 'no-such-widget
+      check-error-tag
+    #( 'Widget 0 ) "text" <'> set-widget-text 'no-such-widget check-error-tag
+    #( 'Widget 0 ) <'> hide-widget 'no-such-widget check-error-tag
+    #( 'Widget 0 ) <'> show-widget 'no-such-widget check-error-tag
+    #( 'Widget 0 ) <'> focus-widget 'no-such-widget check-error-tag
   ;
 [else]
   <'> noop alias snd-motif-error-checks
@@ -7062,7 +7058,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "obtest.snd" open-sound { ind }
   args-1 each to arg
     prcs-1 each to prc
-      \ FIXME
+      \ XXX
       \ snd/chn before value
       \ g_set_channels(snd, val)           arg 0
       \ snd/chn after value
@@ -7240,7 +7236,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> readin <'> sawtooth-wave <'> nrxysin <'> nrxycos <'> square-wave
      <'> src <'> ncos <'> nsin <'> table-lookup <'> tap <'> triangle-wave
      <'> two-pole <'> two-zero <'> wave-train <'> ssb-am ) { clm-prcs-1 }
-  \ FIXME
+  \ XXX
   \ 'bad-type added for      #( 1 1 1 ) partials->wave
   \ 'out-of-range added for  0+i make-frame
   \                          0+i make-moving-average
@@ -7277,7 +7273,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> mus-length <'> mus-location <'> mus-mix <'> mus-name <'> mus-order
      <'> mus-phase <'> mus-ramp <'> mus-random <'> mus-run <'> mus-scaler
      <'> mus-xcoeffs <'> mus-ycoeffs ) each to prc
-    \ FIXME
+    \ XXX
     \ 'out-of-range added
     make-oscil vector-0 prc #t nil fth-catch to tag
     stack-reset
@@ -7620,7 +7616,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     hook <'> noop 0 make-proc <'> add-hook! #t nil fth-catch to tag
     stack-reset
     tag if
-      \ FIXME
+      \ XXX
       \ FTH special 'bad-arity (add-hook!) [ms]
       tag car 'bad-arity      =
       tag car 'wrong-type-arg = || unless
@@ -7635,7 +7631,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     hook <'> noop 3 make-proc <'> add-hook! #t nil fth-catch to tag
     stack-reset
     tag if
-      \ FIXME
+      \ XXX
       \ FTH special 'bad-arity (add-hook!) [ms]
       tag car 'bad-arity      =
       tag car 'wrong-type-arg = || unless
@@ -8108,7 +8104,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind revert-sound drop
   \ 
   100 0.5 ind 0 set-sample drop
-  \ FIXME
+  \ XXX
   \ Doesn't work like expected with FTH.  If more values on stack
   \ than needed, no exception can be raised.  No one knows who will
   \ take and need them.  So we have 'no-such-channel as first
@@ -8559,6 +8555,7 @@ let: ( -- )
   start-snd-test
   <'> 00-constants       run-fth-test
   <'> 01-defaults        run-fth-test
+  mus-ldouble set-default-output-data-format drop
   <'> 02-headers         run-fth-test
   <'> 03-variables       run-fth-test
   <'> 04-sndlib          run-fth-test

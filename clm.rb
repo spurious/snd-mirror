@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Sat Feb 19 17:17:01 CET 2011
+# Changed: Mon Oct 29 16:17:11 CET 2012
 
 # Commentary:
 #
@@ -588,6 +588,11 @@ if provided? :snd
   end
   alias sine_summation  nrxysin
   alias sine_summation? nrxysin?
+
+  # snd13.scm
+  def clm_print(fmt, *args)
+    snd_print(format(fmt, *args))
+  end unless defined? clm_print
 end
 
 # enum("foo", :bar, "FOO_BAR")

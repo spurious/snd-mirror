@@ -1278,6 +1278,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
       cp->sounds[cp->sound_ctr] = make_snd_data_file(temp_file, 
 						     make_file_state(fd, hdr, 0, 0, FILE_BUFFER_SIZE),
 						     hdr, DELETE_ME, cp->edit_ctr, 0);
+      free(temp_file);
       free(new_buffer);
       free(data);
     }

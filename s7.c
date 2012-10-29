@@ -62655,15 +62655,15 @@ s7_scheme *s7_init(void)
  *   for simplest case: tag = s7_new_type("float*", NULL, NULL, NULL, NULL, getter, setter)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  * 
- * timing info [starting from May-11 approximately]
- * bench    42736           8752 8051 7725
- * lint                     9328 8140 7887
- * index    44300 4988 3935 3291 3005 2742
- * s7test         1721 1430 1358 1297 1244
- * t455            265  218   89   55   31
- * t502             90   72   43   39   36
- * lat             229        63   52   47
- * calls                     290  222  190
+ * timing    12.0           13.0 13.1 13.2 13.3
+ * bench    42736           8752 8051 7725 7745
+ * lint                     9328 8140 7887 7896
+ * index    44300 4988 3935 3291 3005 2742 2743
+ * s7test         1721 1430 1358 1297 1244 1267
+ * t455            265  218   89   55   31   31
+ * t502             90   72   43   39   36   36
+ * lat             229        63   52   47   47
+ * calls                     290  222  190  189
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

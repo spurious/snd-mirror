@@ -2,16 +2,16 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Feb 18 10:18:34 CET 2005
-# Changed: Wed Sep 26 00:54:47 CEST 2012
+# Changed: Mon Oct 29 17:05:18 CET 2012
 
 # Commentary:
 #
 # Tested with:
-#   Snd version 13.2 of 26-Sep-12
+#   Snd version 13.2 of 30-Oct-12
 #   (ruby 1.8.0 (2003-08-04))
 #   (ruby 1.8.7 (2012-02-08 patchlevel 358))
 #   ruby 1.9.3p194 (2012-04-20 revision 35410)
-#   ruby 2.0.0dev (2012-09-25 trunk 37032)
+#   ruby 2.0.0dev (2012-10-29 trunk 37383)
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
 # hooks, etc.
@@ -2476,7 +2476,7 @@ def test_03
    :channel_property, :channel_style, :channel_widgets, :channels,
    :channels_combined, :channels_separate, :channels_superimposed,
    :chans, :clear_array, :clear_listener, :clear_sincs, :clip_hook,
-   :clipping, :clm_channel, :clm_print, :clm_table_size,
+   :clipping, :clm_channel, :clm_table_size,
    :clm_default_frequency, :close_hook, :close_sound, :color2list,
    :color_cutoff, :color_orientation_dialog, :color_hook, :color_inverted,
    :color_scale, :color?, :colormap, :colormap_name, :colormap_ref,
@@ -35059,13 +35059,14 @@ def test_23_02
    Mus_bfloat,
    Mus_bdouble,
    Mus_ldouble].each do |type|
-    ind = find_sound(with_sound(:data_format, type) do
+    ind = find_sound(with_sound(:data_format, type, :srate, 22050) do
                        fm_violin(0, 0.1, 440, 0.1)
                        fm_violin(10, 0.1, 440, 0.1)
                        fm_violin(100, 0.1, 440, 0.1)
-                       fm_violin(1000, 0.1, 440, 0.1)
+                       fm_violin(250, 0.1, 440, 0.1)
                      end.output)
-    snd_test_any_neq(maxamp(ind), 0.1, :ffequal?, "format %s", mus_data_format2string(type)) # okay
+    snd_test_any_neq(maxamp(ind), 0.1, :ffequal?,
+	"format %s", mus_data_format2string(type)) # okay
   end
   3.times do |i|
     with_sound(:srate, 22050) do
