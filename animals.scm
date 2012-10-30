@@ -4034,7 +4034,7 @@
 				  0.794 0.510 0.831 0.510 0.909 0.494 1.000 0.499)
 			  :duration bump-dur :offset -0.5)))
       (do ((i start (+ i 1)))
-	  ((>= i stop))
+	  ((= i stop))
 	(let ((vol (env ampf)))
 	  (if (> (pulse-train pulser (env frqf)) .1)
 	      (let ((bump-stop (+ i bump-samps)))

@@ -659,6 +659,7 @@ static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
   XEN_ASSERT_TYPE(false, s7_car(args), XEN_ARG_1, "vct-ref", "a vct");
   return(s7_f(sc));
 }
+
 static s7_pointer vct_ref_ss;
 static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
 {
@@ -667,7 +668,7 @@ static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
   if (v)
     {
       mus_long_t loc;
-      loc = s7_number_to_integer(sc, s7_car_value(sc, s7_cdr(args)));
+      loc = s7_number_to_integer(sc, s7_cadr_value(sc, args));
       if ((loc < 0) || (loc>= v->length))
 	XEN_OUT_OF_RANGE_ERROR(S_vct_ref, 2, s7_cadr(args), "index ~A out of range");
       return(s7_make_real(sc, v->data[loc]));

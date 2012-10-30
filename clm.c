@@ -7673,7 +7673,6 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
    * return mus_float_t at samp (frame) 
    */
   rdin *gen = (rdin *)ptr;
-  mus_float_t result = 0.0;
 
   if ((chan >= gen->chans) ||
       (samp < 0))
@@ -7681,66 +7680,62 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
+    return((mus_float_t)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]));
+
+  if ((samp >= 0) &&
+      (samp < gen->file_end))
     {
-      result = (mus_float_t)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]);
-    }
-  else
-    {
-      if ((samp >= 0) &&
-	  (samp < gen->file_end))
-	{
-	  /* got to read it from the file */
-	  int fd;
-	  mus_long_t newloc;
-	  /* read in first buffer start either at samp (dir > 0) or samp-bufsize (dir < 0) */
-	  
-	  if (gen->dir >= 0) 
-	    newloc = samp; 
-	  else newloc = (mus_long_t)(samp - (gen->file_buffer_size * .75));
-	  /* The .75 in the backwards read is trying to avoid reading the full buffer on 
-	   * nearly every sample when we're oscillating around the
-	   * nominal buffer start/end (in src driven by an oscil for example)
-	   */
-	  if (newloc < 0) newloc = 0;
-	  gen->data_start = newloc;
-	  gen->data_end = newloc + gen->file_buffer_size - 1;
-	  fd = mus_sound_open_input(gen->file_name);
-	  if (fd == -1)
-	    return((mus_float_t)mus_error(MUS_CANT_OPEN_FILE, 
-				    "open(%s) -> %s", 
-				    gen->file_name, STRERROR(errno)));
-	  else
-	    { 
-	      int i;
-	      if (gen->ibufs == NULL) 
-		{
-		  gen->ibufs = (mus_sample_t **)malloc(gen->chans * sizeof(mus_sample_t *));
-		  for (i = 0; i < gen->chans; i++)
-		    gen->ibufs[i] = (mus_sample_t *)calloc(gen->file_buffer_size, sizeof(mus_sample_t));
-		}
-	      mus_file_seek_frame(fd, gen->data_start);
-	      
-	      if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
-		mus_file_read_chans(fd, 0, gen->file_end - gen->data_start - 1, gen->chans, gen->ibufs, gen->ibufs);
-	      else mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);
-	      
-	      /* we have to check file_end here because chunked files can have trailing chunks containing
-	       *   comments or whatever.  io.c (mus_file_read_*) merely calls read, and translates bytes --
-	       *   if it gets fewer than requested, it zeros from the point where the incoming file data stopped,
-	       *   but that can be far beyond the actual end of the sample data!  It is at this level that
-	       *   we know how much data is actually supposed to be in the file. 
-	       *
-	       * Also, file_end is the number of frames, so we should not read samp # file_end (see above).
-	       */
-	      
-	      mus_sound_close_input(fd);
-	      if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
+      /* got to read it from the file */
+      int fd;
+      mus_long_t newloc;
+      /* read in first buffer start either at samp (dir > 0) or samp-bufsize (dir < 0) */
+      
+      if (gen->dir >= 0) 
+	newloc = samp; 
+      else newloc = (mus_long_t)(samp - (gen->file_buffer_size * .75));
+      /* The .75 in the backwards read is trying to avoid reading the full buffer on 
+       * nearly every sample when we're oscillating around the
+       * nominal buffer start/end (in src driven by an oscil for example)
+       */
+      if (newloc < 0) newloc = 0;
+      gen->data_start = newloc;
+      gen->data_end = newloc + gen->file_buffer_size - 1;
+      fd = mus_sound_open_input(gen->file_name);
+      if (fd == -1)
+	return((mus_float_t)mus_error(MUS_CANT_OPEN_FILE, 
+				      "open(%s) -> %s", 
+				      gen->file_name, STRERROR(errno)));
+      else
+	{ 
+	  int i;
+	  if (gen->ibufs == NULL) 
+	    {
+	      gen->ibufs = (mus_sample_t **)malloc(gen->chans * sizeof(mus_sample_t *));
+	      for (i = 0; i < gen->chans; i++)
+		gen->ibufs[i] = (mus_sample_t *)calloc(gen->file_buffer_size, sizeof(mus_sample_t));
 	    }
+	  mus_file_seek_frame(fd, gen->data_start);
 	  
-	  result = (mus_float_t)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]);
+	  if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
+	    mus_file_read_chans(fd, 0, gen->file_end - gen->data_start - 1, gen->chans, gen->ibufs, gen->ibufs);
+	  else mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);
+	  
+	  /* we have to check file_end here because chunked files can have trailing chunks containing
+	   *   comments or whatever.  io.c (mus_file_read_*) merely calls read, and translates bytes --
+	   *   if it gets fewer than requested, it zeros from the point where the incoming file data stopped,
+	   *   but that can be far beyond the actual end of the sample data!  It is at this level that
+	   *   we know how much data is actually supposed to be in the file. 
+	   *
+	   * Also, file_end is the number of frames, so we should not read samp # file_end (see above).
+	   */
+	  
+	  mus_sound_close_input(fd);
+	  if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
 	}
+      
+      return((mus_float_t)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]));
     }
-  return(result);
+  return(0.0);
 }
 
 
@@ -7941,7 +7936,7 @@ mus_float_t mus_in_any(mus_long_t samp, int chan, mus_any *IO)
 
 mus_float_t mus_safe_in_any(mus_long_t samp, int chan, mus_any *IO)
 {
-  /* assume IO is ok and IO->core->read_sample is mus_i_any_from_file */
+  /* assume IO is ok and IO->core->read_sample is mus_in_any_from_file */
   /* return(((*(IO->core)->read_sample))(IO, samp, chan)); */
   return(mus_in_any_from_file(IO, samp, chan));
 }

@@ -18113,9 +18113,7 @@ EDITS: 2
       (let ((tag (catch #t (lambda () (outa 0 .1 gen)) (lambda args (car args)))))
 	(if (and (not (eq? tag 'wrong-type-arg)) 
 		 (not (eq? tag 'mus-error)))
-	    (snd-display #__line__ ";outa -> oscil: ~A" tag)))
-      (let ((val (catch #t (lambda () (outa 0 .1 #f)) (lambda args (car args)))))
-	(if (or (not (number? val)) (fneq val .1)) (snd-display #__line__ ";outa -> #f: ~A" val))))
+	    (snd-display #__line__ ";outa -> oscil: ~A" tag))))
     
     (let ((gen (make-sample->file "fmv.snd" 4 mus-lshort mus-riff)))
       (print-and-check gen 
@@ -43678,7 +43676,7 @@ EDITS: 1
 				       (call-with-exit
 					(lambda (return)
 					  (do ((i (- (string-length filename) 1) (- i 1)))
-					      ((= 0 i) filename)
+					      ((= i 0) filename)
 					    (if (char=? (filename i) #\/)
 						(return (my-substring filename (+ i 1))))))))
 				     (format #f "~~/peaks/~A-peaks-~D" 

@@ -5463,6 +5463,12 @@ s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst)
 }
 
 
+s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst)
+{
+  return(finder(sc, cadr(lst)));
+}
+
+
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
@@ -42357,6 +42363,7 @@ static s7_pointer check_do(s7_scheme *sc)
 				fprintf(stderr, "%d safe do\n", __LINE__);
 #endif
 				set_syntax_op(sc->code, sc->SAFE_DO);
+
 				if ((!has_set) &&
 				    (c_function_class(ecdr(end)) == equal_class))
 				{
@@ -42874,7 +42881,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    *   calls:  OP_SET_SYMBOL_SAFE_C: 7%, OP_SAFE_C_ZZ*: 11%, OP_SET_SAFE: 5%
    *              OP_SAFE_C_ZZ_1 -> OP_SAFE_C_ZZ_2: 78930734 (5) OP_IF_S_P -> OP_BEGIN1: 49027182 (3) and right back again?
    *                the z's here are mostly embedded z's, top non-z c_ss->c_opssq (5)[502]
-   *                h_safe_c_c -> h_safe_c_s_op_opssq_sq: 69915552 (84.060451)!
    *              OP_SET_SYMBOL_Z -> OP_SAFE_C_SZ_1: 27585831 (2) OP_SAFE_DO_STEP -> OP_SET_SYMBOL_SAFE_C: 25174540 (2)
    *              OP_SET_SYMBOL_SAFE_C -> OP_SET_SYMBOL_SAFE_C: 24770911 (2), also OP_SAFE_DO_STEP -> OP_IF_O_P: 23405592 (1)
    * todo: check the set_symbol_z cases and let_z_p/let_o_*

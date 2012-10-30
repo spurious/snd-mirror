@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.13"
-#define S7_DATE "22-Oct-12"
+#define S7_VERSION "2.14"
+#define S7_DATE "30-Oct-12"
 
 
 typedef long long int s7_Int;
@@ -588,6 +588,7 @@ void s7_safe_do_set_notifier(s7_scheme *sc, void (*notifier)(int level));
 s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
+s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
   /* these are for experimental optimization choices */
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);

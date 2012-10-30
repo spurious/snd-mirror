@@ -15139,6 +15139,10 @@ in s7:
   (define (do-test-17) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j i)) (set! lst (cons j lst)))) lst) 
   (test (do-test-17) '(9 8 7 6 5 4 3 2 1 0)))
 
+(let ((lst '())) 
+  (define (do-test-17a) (do ((i 0 (+ i 1))) ((= i 10)) (let ((j (min i 100))) (set! lst (cons j lst)))) lst) 
+  (test (do-test-17a) '(9 8 7 6 5 4 3 2 1 0)))
+
 (let () 
   (define (do-test-18) (do ((i 0 (+ i 1)) (j 0)) ((= i 10) j) (if (= i 3) (set! j i))))
   (test (do-test-18) 3))
