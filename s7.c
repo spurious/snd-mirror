@@ -420,7 +420,7 @@ enum {OP_NO_OP,
       OP_SAFE_AND_S, OP_SAFE_CASE_S, OP_SAFE_OR_ALL_X, OP_SAFE_AND_ALL_X, OP_COND_ALL_X,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O,
       OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_P, OP_SAFE_DO_STEP_A, OP_SAFE_DOTIMES_C_C,
-      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP, OP_SIMPLE_DO_FOREVER, 
+      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_SAFE_SIMPLE_DO, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER, 
       OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_S,
       OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A,
       OP_SAFE_IF_Z_P_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, 
@@ -510,7 +510,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "and", "case", "or", "and", "cond",
    "do", "do", "do", "do", "do", "do", 
    "do", "do", "do", "do", "do",
-   "do", "do", "do", "do", "do", "do", 
+   "do", "do", "do", "do", "do", "do", "do",
    "do", "do", "do",
    "do", "do", "do",
    "if", "if", "if", 
@@ -593,7 +593,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_SAFE_AND_S", "OP_SAFE_CASE_S", "OP_SAFE_OR_ALL_X", "OP_SAFE_AND_ALL_X", "OP_COND_ALL_X",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SAFE_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_STEP_O", 
   "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DO_STEP_P", "OP_SAFE_DO_STEP_A", "OP_SAFE_DOTIMES_C_C",
-  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP", "OP_SIMPLE_DO_FOREVER", 
+  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_SAFE_SIMPLE_DO", "OP_DOX", "OP_DOX_STEP", "OP_DOX_STEP_P", "OP_SIMPLE_DO_FOREVER", 
   "OP_DOTIMES_P", "OP_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_C_S",
   "OP_SIMPLE_DO_A", "OP_SIMPLE_DO_STEP_A",
   "OP_SAFE_IF_Z_P_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", 
@@ -35413,7 +35413,6 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  (s7_function_returns_temp(arg1)))
 	return(add_temp_s);
 
-      /* fprintf(stderr, "a%d: %s\n", args, DISPLAY_80(expr)); */
       return(add_2);
     }
 #endif
@@ -35537,25 +35536,6 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 
 
       /* m4 case all temp? or 2 s+temp or maybe m3_ss_temp and m3_temp_ss where s is anything (similarly m4)
-       */
-
-      /* multiply_add: where add is callable via c_call (call ourselves hop_safe_c_c?)
-       *   save free_heap top
-       *   val = c_call(add)(its_args)
-       *   is heap top different and val == old free heap top [(*(sc->free_heap_top+1)))?]
-       *   if so, val is a temp directly from add and we can use remake real in the subsequent multiply, or
-       *     we can use it normally, then release it by hand after multiply returns
-       *
-       * or have sc->temp_value, clear in add if not temp, else set
-       *   mult then checks rtn==temp, if so it's resusable (and clear?)
-       *   mult would need to clear before add to be safe
-       */
-      
-      /* lots of fi ff if cases here, also ss -> cc [already]? (* s (sin s)) also cos
-       * if both args constant, why not hop_safe_c_c?
-       *
-       * main cases here: (* s (- s s)) (+ (* c s) (* s s)) (* r (cos|sin s)) (+ (* x x) (* y y))
-       *  but given complex/int/ratio possibilities, it becomes a tangle to try to optimize these
        */
 
       /* fprintf(stderr, "m2: %s\n", DISPLAY_80(expr)); */
@@ -42498,6 +42478,9 @@ static s7_pointer check_do(s7_scheme *sc)
 #if PRINTING
 	  fprintf(stderr, "dox: %s\n", DISPLAY_80(sc->code));
 #endif
+	  if ((is_pair(car(body))) && (safe_list_length(sc, body) == 1))
+	    set_one_liner(body);
+
 	  set_syntax_op(sc->code, sc->DOX);
 	  fcdr(sc->code) = caadr(sc->code);
 	  return(sc->NIL);
@@ -44512,6 +44495,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	long long int id;
 	s7_pointer frame, vars, slot, end;
+
 	NEW_FRAME(sc, sc->envir, frame); /* new frame is not tied into the symbol lookup process yet */
 	for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
 	  {
@@ -44569,7 +44553,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = cdadr(sc->code);
 	    goto BEGIN;
 	  }
-	push_stack(sc, OP_DOX_STEP, sc->NIL, sc->code);
+
+	{
+	  s7_pointer code;
+	  code = cddr(sc->code);
+
+	  if (is_one_liner(code))
+	    {
+	      code = car(code);
+	      if (typesflag(code) == SYNTACTIC_PAIR)
+		{
+		  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
+		  sc->op = (opcode_t)lifted_op(code);
+		  sc->code = cdr(code);
+		  goto START_WITHOUT_POP_STACK;
+		}
+	      else
+		{
+		  if (typeflag(car(code)) == SYNTACTIC_TYPE)
+		    {
+		      push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
+		      set_type(code, SYNTACTIC_PAIR);
+		      sc->op = (opcode_t)syntax_opcode(car(code));
+		      lifted_op(code) = sc->op;
+		      sc->code = cdr(code);
+		      goto START_WITHOUT_POP_STACK;
+		    }
+		}
+	    }
+	}
+	push_stack_no_args(sc, OP_DOX_STEP, sc->code);
 	sc->code = cddr(sc->code);
 	goto BEGIN;
       }
@@ -44593,9 +44606,33 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cdadr(sc->code);
 	      goto BEGIN;
 	    }
-	  push_stack(sc, OP_DOX_STEP, sc->NIL, sc->code);
+	  push_stack_no_args(sc, OP_DOX_STEP, sc->code);
 	  sc->code = cddr(sc->code);
 	  goto BEGIN;
+	}
+
+      case OP_DOX_STEP_P:
+	{
+	  s7_pointer slot;
+	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
+	    {
+	      if (is_pair(slot_expression(slot)))
+		slot_pending_value(slot) = step_dox_eval(sc, car(slot_expression(slot)));
+	      else slot_pending_value(slot) = slot_value(slot);
+	    }
+	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
+	    slot_set_value(slot, slot_pending_value(slot));
+
+	  if (is_true(sc, end_dox_eval(sc, fcdr(sc->code))))
+	    {
+	      sc->code = cdadr(sc->code);
+	      goto BEGIN;
+	    }
+	  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
+	  sc->code = caddr(sc->code);
+	  sc->op = (opcode_t)lifted_op(sc->code);
+	  sc->code = cdr(sc->code);
+	  goto START_WITHOUT_POP_STACK;
 	}
 
       
@@ -62665,11 +62702,11 @@ s7_scheme *s7_init(void)
  * bench    42736           8752 8051 7725 7745
  * lint                     9328 8140 7887 7896
  * index    44300 4988 3935 3291 3005 2742 2743
- * s7test         1721 1430 1358 1297 1244 1267
+ * s7test         1721 1430 1358 1297 1244 1233
  * t455            265  218   89   55   31   31
  * t502             90   72   43   39   36   36
  * lat             229        63   52   47   47
- * calls                     290  222  190  189
+ * calls                     278  210  178  171
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

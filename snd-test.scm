@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [9543]
 ;;;  test 7: colors                             [9863]
 ;;;  test 8: clm                                [10383]
-;;;  test 9: mix                                [21761]
-;;;  test 10: marks                             [23548]
-;;;  test 11: dialogs                           [24515]
-;;;  test 12: extensions                        [24708]
-;;;  test 13: menus, edit lists, hooks, etc     [24974]
-;;;  test 14: all together now                  [26351]
-;;;  test 15: chan-local vars                   [27238]
-;;;  test 16: regularized funcs                 [29024]
-;;;  test 17: dialogs and graphics              [32249]
-;;;  test 18: enved                             [32348]
-;;;  test 19: save and restore                  [32367]
-;;;  test 20: transforms                        [33989]
-;;;  test 21: new stuff                         [36141]
-;;;  test 22: (run)                             [38163]
-;;;  test 23: with-sound                        [38169]
-;;;  test 25: X/Xt/Xm                           [41142]
-;;;  test 26:                                   [44824]
-;;;  test 27: GL                                [44830]
-;;;  test 28: errors                            [44954]
-;;;  test 29: s7                                [47076]
-;;;  test all done                              [47148]
-;;;  test the end                               [47328]
+;;;  test 9: mix                                [21726]
+;;;  test 10: marks                             [23513]
+;;;  test 11: dialogs                           [24480]
+;;;  test 12: extensions                        [24673]
+;;;  test 13: menus, edit lists, hooks, etc     [24939]
+;;;  test 14: all together now                  [26316]
+;;;  test 15: chan-local vars                   [27203]
+;;;  test 16: regularized funcs                 [28989]
+;;;  test 17: dialogs and graphics              [32214]
+;;;  test 18: enved                             [32313]
+;;;  test 19: save and restore                  [32332]
+;;;  test 20: transforms                        [33954]
+;;;  test 21: new stuff                         [36106]
+;;;  test 22: (run)                             [38128]
+;;;  test 23: with-sound                        [38134]
+;;;  test 25: X/Xt/Xm                           [41107]
+;;;  test 26:                                   [44789]
+;;;  test 27: GL                                [44795]
+;;;  test 28: errors                            [44919]
+;;;  test 29: s7                                [47041]
+;;;  test all done                              [47113]
+;;;  test the end                               [47293]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
 
@@ -11532,42 +11532,16 @@ EDITS: 2
 				    (incr (hz->radians 1.0))
 				    (sin-sum 0.0))
 				(do ((i 0 (+ i 1))
-				     (angle 0.0 (+ angle incr)))
+				     (phase 0.0 (+ phase incr)))
 				    ((= i 88200))
 				  (set! sin-sum 0.0)
 				  (do ((k 0 (+ k 1))
 				       (k3 2 (+ k3 3))
-				       (a angle (+ a angle)))
+				       (a phase (+ a phase)))
 				      ((= k n))
 				    (set! sin-sum (+ sin-sum (sin (+ a (vct-ref cur-phases k3))))))
 				  (outa i (/ sin-sum n))
 				  (outb i (polyoid gen 0.0)))))))
-	   (snd (find-sound res)))
-      (channel-distance snd 0 snd 1)))
-  
-  (define (test-polyoid-run n)
-    (let* ((res (with-sound (:channels 2 :clipped #f)
-			    (let ((cur-phases (make-vct (* 3 n))))
-			      (do ((i 0 (+ i 1))
-				   (j 0 (+ j 3)))
-				  ((= i n))
-				(set! (cur-phases j) (+ i 1))
-				(set! (cur-phases (+ j 1)) (/ 1.0 n))
-				(set! (cur-phases (+ j 2)) (random (* 2 pi))))
-			      (let ((gen (make-polyoid 1.0 cur-phases))
-				    (sin-sum 0.0)
-				    (incr (hz->radians 1.0)))
-				 (do ((i 0 (+ i 1))
-				      (angle 0.0 (+ angle incr)))
-				     ((= i 88200))
-				   (set! sin-sum 0.0)
-				   (do ((k 0 (+ k 1))
-					(k3 2 (+ k3 3))
-					(a angle (+ a angle)))
-				       ((= k n))
-				     (set! sin-sum (+ sin-sum (sin (+ a (vct-ref cur-phases k3))))))
-				   (outa i (/ sin-sum n))
-				   (outb i (polyoid gen 0.0)))))))
 	   (snd (find-sound res)))
       (channel-distance snd 0 snd 1)))
   
@@ -13593,9 +13567,9 @@ EDITS: 2
 	  (v0 (make-vct 20))
 	  (in1 1.0))
       (do ((i 0 (+ i 1))
-	   (angle 0.0 (+ angle .2)))
+	   (phase 0.0 (+ phase .2)))
 	  ((= i 20))
-	(set! (v0 i) (comb gen in1 angle))
+	(set! (v0 i) (comb gen in1 phase))
 	(set! in1 0.0))
       (if (not (vequal v0 (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.800 0.400 0.000 0.000 0.000 0.000 0.000 0.160 0.360 0.200 0.040 0.000 0.000 0.000)))
 	  (snd-display #__line__ ";2comb (5 .5): ~A" v0)))
@@ -17391,13 +17365,6 @@ EDITS: 2
 	 (if (fneq distance 0.0)
 	     (snd-display #__line__ ";test polyoid ~A ~A" n distance))))
      (list 1 3 10))
-    
-    (for-each
-     (lambda (n)
-       (let ((distance (test-polyoid-run n)))
-	 (if (fneq distance 0.0)
-	     (snd-display #__line__ ";test polyoid run ~A ~A" n distance))))
-     (list 1 8 32 100))
     
     ;; polywave
     (let ((gen0 (make-polywave 440.0 '(1 1)))

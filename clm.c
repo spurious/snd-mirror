@@ -12109,8 +12109,8 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 {
   pv_info *pv = (pv_info *)ptr;
   int N2, i;
-  mus_float_t (*pv_synthesize)(void *arg) = synthesize;
   mus_float_t sum = 0.0;
+  mus_float_t (*pv_synthesize)(void *arg) = synthesize;
 
   if (pv_synthesize == NULL) pv_synthesize = pv->synthesize;
   N2 = pv->N / 2;
@@ -12192,10 +12192,11 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 
   for (i = 0; i < N2; i++)
     {
-      pv->amps[i] += pv->ampinc[i];
       pv->phaseinc[i] += pv->freqs[i];
       pv->phases[i] += pv->phaseinc[i];
-      sum += (pv->amps[i] * sin(pv->phases[i])); 
+      pv->amps[i] += pv->ampinc[i];
+      if (pv->amps[i] != 0.0)
+	sum += (pv->amps[i] * sin(pv->phases[i])); 
     }
   return(sum);
 }
