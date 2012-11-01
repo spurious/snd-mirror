@@ -230,19 +230,19 @@ static void nrev(rev_info *r, mus_float_t *rins, mus_float_t *routs, int chans)
   mus_float_t rout, rin = 0.0;
   int i;
   for (i = 0; i < chans; i++) rin += rins[i];
-  rout = mus_all_pass(r->allpasses[3],
+  rout = mus_all_pass_unmodulated_noz(r->allpasses[3],
 	   mus_one_pole(r->onep,
-	     mus_all_pass(r->allpasses[2],
-	       mus_all_pass(r->allpasses[1],
-		 mus_all_pass(r->allpasses[0],
-	           mus_comb(r->combs[0], rin, 0.0) + 
-	           mus_comb(r->combs[1], rin, 0.0) + 
-	           mus_comb(r->combs[2], rin, 0.0) + 
-	           mus_comb(r->combs[3], rin, 0.0) + 
-	           mus_comb(r->combs[4], rin, 0.0) + 
-	           mus_comb(r->combs[5], rin, 0.0), 0.0), 0.0), 0.0)), 0.0);
+	     mus_all_pass_unmodulated_noz(r->allpasses[2],
+	       mus_all_pass_unmodulated_noz(r->allpasses[1],
+		 mus_all_pass_unmodulated_noz(r->allpasses[0],
+	           mus_comb_unmodulated_noz(r->combs[0], rin) + 
+	           mus_comb_unmodulated_noz(r->combs[1], rin) + 
+	           mus_comb_unmodulated_noz(r->combs[2], rin) + 
+	           mus_comb_unmodulated_noz(r->combs[3], rin) + 
+	           mus_comb_unmodulated_noz(r->combs[4], rin) + 
+	           mus_comb_unmodulated_noz(r->combs[5], rin))))));
   for (i = 0; i < chans; i++)
-    routs[i] = mus_all_pass(r->allpasses[i + 4], rout, 0.0);
+    routs[i] = mus_all_pass_unmodulated_noz(r->allpasses[i + 4], rout);
 }
 
 

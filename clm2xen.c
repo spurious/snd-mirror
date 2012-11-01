@@ -5464,7 +5464,7 @@ Chebyshev polynomials Tn (a vct)."
   mus_float_t *data;
   XEN result;
   
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
+  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_t_sum, "a float");
   if (XEN_VECTOR_P(tn))
     {
       len = XEN_VECTOR_LENGTH(tn);
@@ -5474,7 +5474,7 @@ Chebyshev polynomials Tn (a vct)."
   else
     {
       vct *Tn;
-      XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+      XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_t_sum, "a vct");
       Tn = XEN_TO_VCT(tn);
       data = Tn->data;
       len = Tn->length;
@@ -5498,7 +5498,7 @@ Chebyshev polynomials Un (a vct)."
   mus_float_t *data;
   XEN result;
 
-  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
+  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_u_sum, "a float");
 
   if (XEN_VECTOR_P(un))
     {
@@ -5509,7 +5509,7 @@ Chebyshev polynomials Un (a vct)."
   else
     {
       vct *Un;
-      XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+      XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_2, S_mus_chebyshev_u_sum, "a vct");
       Un = XEN_TO_VCT(un);
       len = Un->length;
       data = Un->data;
@@ -8867,6 +8867,21 @@ static XEN g_pulsed_env(XEN g, XEN fm)
   return(C_TO_XEN_DOUBLE(mus_env(e)));
 }
 
+static s7_pointer pulsed_env_1;
+static s7_pointer g_pulsed_env_1(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *p, *e;
+  s7_pointer g;
+
+  g = s7_car_value(sc, args);
+  p = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2));
+  e = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3));
+
+  if (mus_pulse_train_unmodulated(p) > 0.1)
+    mus_reset(e);
+  return(C_TO_XEN_DOUBLE(mus_env(e)));
+}
+
 #else
 
 static XEN g_make_pulsed_env(XEN e, XEN dur, XEN frq)
@@ -10737,6 +10752,8 @@ static s7_pointer g_add_cs_direct(s7_scheme *sc, s7_pointer args)
   return(s7_make_complex(sc, (cval * s7_real_part(mul)) + xval, -s7_imag_part(mul) * cval));
 }
 
+
+
 /* ---------------- */
 
 
@@ -11148,6 +11165,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	    (!(s7_function_choice_is_direct(sc, car(p)))) ||
 	    (!s7_function_returns_temp(car(p))))
 	  {
+	    /* fprintf(stderr, "not happy: %s\n", DISPLAY(car(p))); */
 	    happy = false;
 	    break;
 	  }
@@ -12139,6 +12157,25 @@ static s7_pointer pulse_train_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
       s7_function_choice_set_direct(sc, expr);
       if (s7_function_returns_temp(caddr(expr))) return(direct_pulse_train_2);
       return(indirect_pulse_train_2);
+    }
+  return(f);
+}
+
+static s7_pointer pulsed_env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(pulsed_env_1);
+    }
+  if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))) &&
+      (s7_is_real(caddr(expr))) &&
+      (s7_real(caddr(expr)) == 0.0))
+    {
+      s7_function_choice_set_direct(sc, expr);
+      return(pulsed_env_1);
     }
   return(f);
 }
@@ -13151,6 +13188,10 @@ static void init_choosers(s7_scheme *sc)
   polyshape_three = clm_make_function(sc, "polyshape", g_polyshape_three, 3, 0, false, "polyshape optimization", f, 
 				     NULL, NULL, NULL, NULL, NULL, NULL);
 
+  f = s7_name_to_value(sc, "pulsed-env");
+  s7_function_set_chooser(sc, f, pulsed_env_chooser);
+  pulsed_env_1 = clm_make_function_no_choice(sc, "pulsed-env", g_pulsed_env_1, 1, 0, false, "pulsed-env optimization", f);
+  /* this includes the returns_temp bit */
 
   f = s7_name_to_value(sc, "ssb-am");
   s7_function_set_chooser(sc, f, ssb_am_chooser);

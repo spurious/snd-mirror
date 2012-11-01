@@ -5352,8 +5352,8 @@ index 10 (so 10/2 is the bes-jn arg):
 						  ((>= i len))
 						(set! n (max n (floor (lst i)))))
 					      n))
-				      (sin-amps (make-vector (+ topk 1) 0.0))
-				      (cos-amps (make-vector (+ topk 1) 0.0)))
+				      (sin-amps (make-vct (+ topk 1) 0.0))
+				      (cos-amps (make-vct (+ topk 1) 0.0)))
 				 (do ((j 0 (+ j 3)))
 				     ((>= j len))
 				   (let ((n (floor (lst j)))
@@ -5377,11 +5377,11 @@ index 10 (so 10/2 is the bes-jn arg):
 			 (cons 'mus-xcoeff
 			       (make-procedure-with-setter
 				(lambda (g ind) ((g 'tn) ind))
-				(lambda (g ind val) (vector-set! (g 'tn) ind val))))
+				(lambda (g ind val) (vct-set! (g 'tn) ind val))))
 			 (cons 'mus-ycoeff
 			       (make-procedure-with-setter
 				(lambda (g ind) ((g 'un) ind))
-				(lambda (g ind val) (vector-set! (g 'un) ind val))))))
+				(lambda (g ind val) (vct-set! (g 'un) ind val))))))
   
   (frequency *clm-default-frequency*) (partial-amps-and-phases #f) (angle 0.0)
   (tn #f) (un #f) fm)

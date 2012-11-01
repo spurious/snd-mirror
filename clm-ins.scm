@@ -2042,6 +2042,8 @@ is a physical model of a flute:
 		(set! sum (+ sum (oscil-bank cur-oscils resynth-oscils amps freqs rates sweeps)))
 		(outa i (* amp sum)))))))))
 
+;;(with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))
+
 
 (definstrument (zc time dur freq amp length1 length2 feedback)
   (let* ((beg (seconds->samples time))

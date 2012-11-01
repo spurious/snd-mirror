@@ -1657,7 +1657,7 @@ static int t_optimized = T_OPTIMIZED;
 #define is_gensym(p)                  ((typeflag(p) & T_GENSYM) != 0)
 #define clear_gensym(p)               typeflag(p) = (typeflag(p) & (~T_GENSYM))
 /* symbol is from gensym (GC-able etc)
- *   since this onlt relevant to symbols, this bit is used below in several other non-intersecting ways
+ *   since this is only relevant to symbols, this bit is used below in several other non-intersecting ways
  */
 
 #define T_SMALL_INT                   T_GENSYM
@@ -1682,7 +1682,6 @@ static int t_optimized = T_OPTIMIZED;
 #define is_function_env(p)            ((typeflag(p) & T_FUNCTION_ENV) != 0)
 #define set_function_env(p)           typeflag(p) |= T_FUNCTION_ENV
 /* this marks a closure environment */
-
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
@@ -14384,6 +14383,21 @@ static s7_pointer g_equal_2(s7_scheme *sc, s7_pointer args)
   x = car(args);
   y = cadr(args);
 
+#ifndef _MSC_VER
+  if (type(x) == type(y))
+    {
+      if (is_integer(x))
+	return(make_boolean(sc, integer(x) == integer(y)));
+      switch (type(x))
+	{
+	case T_INTEGER: return(make_boolean(sc, integer(x) == integer(y)));
+	case T_RATIO:   return(make_boolean(sc, (numerator(x) == numerator(y)) && (denominator(x) == denominator(y))));
+	case T_REAL:    return(make_boolean(sc, real(x) == real(y)));
+	case T_COMPLEX: return(make_boolean(sc, (real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))));
+	}
+    }
+#endif
+
   switch (type(x))
     {
     case T_INTEGER:
@@ -26177,7 +26191,7 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR);
+  set_type(x, T_VECTOR | T_SAFE_PROCEDURE);
 
   v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
  
@@ -44617,7 +44631,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	    {
 	      if (is_pair(slot_expression(slot)))
-		slot_pending_value(slot) = step_dox_eval(sc, car(slot_expression(slot)));
+		{
+		  s7_pointer expr;
+		  expr = car(slot_expression(slot));
+		  if (optimize_data(expr) == HOP_SAFE_C_C)
+		    slot_pending_value(slot) = c_call(expr)(sc, cdr(expr));
+		  else slot_pending_value(slot) = step_dox_eval(sc, expr);
+		}
 	      else slot_pending_value(slot) = slot_value(slot);
 	    }
 	  for (slot = environment_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
@@ -62700,8 +62720,8 @@ s7_scheme *s7_init(void)
  * 
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7745
- * lint                     9328 8140 7887 7896
- * index    44300 4988 3935 3291 3005 2742 2743
+ * lint                     9328 8140 7887 7887
+ * index    44300 4988 3935 3291 3005 2742 2742
  * s7test         1721 1430 1358 1297 1244 1233
  * t455            265  218   89   55   31   31
  * t502             90   72   43   39   36   36
