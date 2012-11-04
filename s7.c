@@ -1,4 +1,5 @@
 /* s7, a Scheme interpreter
+
  *
  *    derived from:
  *
@@ -2276,7 +2277,7 @@ static void report_counts(s7_scheme *sc)
       if (mx > 0)
 	{
 	  if (mx > total/100)
-	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
+	    fprintf(stderr, "%s: %d (%f)\n", real_op_names[mxi], mx, 100.0*mx/(float)total);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -11894,7 +11895,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
 
 
-static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_si, add_is, add_sf, add_fs, add_2_temp, add_s_temp, add_temp_s, add_s_direct;
+static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_t1, add_si, add_is, add_sf, add_fs, add_2_temp, add_s_temp, add_temp_s, add_s_direct;
 
 static s7_pointer add_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
@@ -12041,10 +12042,8 @@ static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
-static s7_pointer g_add_cs1(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_add_t1(s7_scheme *sc, s7_pointer x)
 {
-  s7_pointer x;
-  x = finder(sc, car(args));
   if (is_integer(x))
     return(make_integer(sc, integer(x) + 1));
 
@@ -12059,6 +12058,11 @@ static s7_pointer g_add_cs1(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
     }
   return(x);
+}
+
+static s7_pointer g_add_cs1(s7_scheme *sc, s7_pointer args)
+{
+  return(g_add_t1(sc, finder(sc, car(args))));
 }
 
 static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
@@ -33173,6 +33177,9 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      (!is_immutable(car(closure_args(sc->code)))) &&         /* not a bad arg name! */
 	      (!symbol_has_accessor(car(closure_args(sc->code)))))    /* not wrapped in an accessor */
 	    {
+	      if ((is_pair(car(closure_body(sc->code)))) &&
+		  (is_null(cdr(closure_body(sc->code)))))
+		set_one_liner(closure_body(sc->code));
 	      push_stack(sc, OP_MAP_SIMPLE, make_counter(sc, sc->NIL, obj, len, 0), sc->code);
 	      return(sc->NO_VALUE);
 	    }
@@ -36104,6 +36111,8 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(add_s1, f);
   add_cs1 = s7_make_function(sc, "+", g_add_cs1, 2, 0, false, "+ optimization");
   s7_function_set_class(add_cs1, f);
+  add_t1 = s7_make_function(sc, "+", g_add_t1, 2, 0, false, "+ optimization");
+  s7_function_set_class(add_t1, f);
   add_si = s7_make_function(sc, "+", g_add_si, 2, 0, false, "+ optimization");
   s7_function_set_class(add_si, f);
   add_is = s7_make_function(sc, "+", g_add_is, 2, 0, false, "+ optimization");
@@ -40608,6 +40617,10 @@ static s7_pointer check_letrec(s7_scheme *sc)
       (cdr(ecdr(sc->code)) == sc->code))
     {
       set_syntax_op(sc->code, sc->LETREC_UNCHECKED);
+
+      if ((is_pair(cdr(sc->code))) &&
+	  (is_null(cddr(sc->code))))
+	set_one_liner(cdr(sc->code));
     }
 
   return(sc->code);
@@ -42269,168 +42282,166 @@ static s7_pointer check_do(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
+      s7_pointer vars, end, body;
+      bool one_line;
+
+      vars = car(sc->code);
+      end = cadr(sc->code);
+      body = cddr(sc->code);
+      one_line = ((is_pair(car(body))) && (safe_list_length(sc, body) == 1));
+      if (one_line) set_one_liner(body);
+
       set_syntax_op(sc->code, sc->DO_UNCHECKED);
 
-      {
-	/* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
-	s7_pointer vars, end, body;
-
-	vars = car(sc->code);
-	end = cadr(sc->code);
-	body = cddr(sc->code);
-
-	/* fprintf(stderr, "do %s\n", DISPLAY(body)); */
-
-	/* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
-	 *   in OP_SAFE_DOTIMES, for example, if init value is not an integer, it goes to OP_SIMPLE_DO
- 	 * remaining optimizable cases: we can step by 1 and use = for end, and yet simple_do(_p) calls the functions
- 	 * geq happens as often as =, and -1 as step
- 	 * also cdr as step to is_null as end
-	 * also what about no do-var cases? (do () ...)
-	 *
-	 * also do body is optimized expr: vector_set_3 via hop_safe_c_sss for example or (vset v i (vref w i))
-	 */
-	if ((is_pair(end)) && (is_pair(car(end))) &&
-	    (is_pair(vars)) &&
-	    (is_null(cdr(vars))))
-	  {
-	    /* loop has one step variable, and normal-looking end test
-	     */
-	    vars = car(vars);
-
-	    if ((safe_list_length(sc, vars) == 3) &&
-		((!is_pair(cadr(vars))) ||
-		 ((is_optimized(cadr(vars))) &&
-		  (optimize_data(cadr(vars)) == HOP_SAFE_C_C))))
-	      {
-		s7_pointer step_expr;
-		step_expr = caddr(vars);
-
-		if ((is_optimized(step_expr)) &&
-		    (((optimize_data(step_expr) == HOP_SAFE_C_SC) && (car(vars) == cadr(step_expr))) ||
-		     ((optimize_data(step_expr) == HOP_SAFE_C_C) && (car(vars) == cadr(step_expr)) && 
-		      ((ecdr(step_expr) == add_cs1) || (ecdr(step_expr) == subtract_cs1))) ||
-		     ((optimize_data(step_expr) == HOP_SAFE_C_CS) && (car(vars) == caddr(step_expr)))))
-		  {
-		    /* step var is (var const|symbol (op var const)|(op const var)) 
-		     */
-		    end = car(end);
-
-		    if ((is_optimized(end)) &&
-			(car(vars) == cadr(end)) &&
-			(cadr(end) != caddr(end)) &&
-			((ecdr(end) == equal_s_ic) ||
-			 (optimize_data(end) == HOP_SAFE_C_SS) || 
-			 (optimize_data(end) == HOP_SAFE_C_SC)))
-		      {
-			/* end var is (op var const|symbol) using same var as step 
-			 *   so at least we can use SIMPLE_DO
-			 */
-			bool has_set = false, has_data = false;
-
-			if (ecdr(step_expr) == add_cs1)
-			  {
-			    set_c_function(step_expr, add_s1);
-			    set_optimize_data(step_expr, HOP_SAFE_C_SC);
-			  }
-			if (ecdr(step_expr) == subtract_cs1)
-			  {
-			    set_c_function(step_expr, subtract_s1);
-			    set_optimize_data(step_expr, HOP_SAFE_C_SC);
-			  }
-			if (ecdr(end) == equal_s_ic)
-			  {
-			    set_c_function(end, equal_2);
-			    set_optimize_data(end, HOP_SAFE_C_SC);
-			  }
-
-			if ((ecdr(step_expr) == add_s1) &&
-			    (ecdr(end) == equal_2) &&
-			    (s7_is_integer(caddr(step_expr))) &&
-			    (s7_integer(caddr(step_expr)) == 1))
-			  set_syntax_op(sc->code, sc->SIMPLE_DO_A);
-			else set_syntax_op(sc->code, sc->SIMPLE_DO);
-
-			if ((safe_list_length(sc, body) == 1) &&
-			    (is_pair(car(body))) &&
-			    (is_syntactic(caar(body))))
-			  {
-			    lifted_op(car(body)) = syntax_opcode(caar(body));
-			    /* fprintf(stderr, "choose simple_do_p\n"); */
-			    set_syntax_op(sc->code, sc->SIMPLE_DO_P);
-			    fcdr(sc->code) = caddr(caar(sc->code));
+      /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
+      
+      /* fprintf(stderr, "do %s\n", DISPLAY(body)); */
+      
+      /* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
+       *   in OP_SAFE_DOTIMES, for example, if init value is not an integer, it goes to OP_SIMPLE_DO
+       * remaining optimizable cases: we can step by 1 and use = for end, and yet simple_do(_p) calls the functions
+       * geq happens as often as =, and -1 as step
+       * also cdr as step to is_null as end
+       * also what about no do-var cases? (do () ...)
+       *
+       * also do body is optimized expr: vector_set_3 via hop_safe_c_sss for example or (vset v i (vref w i))
+       */
+      if ((is_pair(end)) && (is_pair(car(end))) &&
+	  (is_pair(vars)) &&
+	  (is_null(cdr(vars))))
+	{
+	  /* loop has one step variable, and normal-looking end test
+	   */
+	  vars = car(vars);
+	  
+	  if ((safe_list_length(sc, vars) == 3) &&
+	      ((!is_pair(cadr(vars))) ||
+	       ((is_optimized(cadr(vars))) &&
+		(optimize_data(cadr(vars)) == HOP_SAFE_C_C))))
+	    {
+	      s7_pointer step_expr;
+	      step_expr = caddr(vars);
+	      
+	      if ((is_optimized(step_expr)) &&
+		  (((optimize_data(step_expr) == HOP_SAFE_C_SC) && (car(vars) == cadr(step_expr))) ||
+		   ((optimize_data(step_expr) == HOP_SAFE_C_C) && (car(vars) == cadr(step_expr)) && 
+		    ((ecdr(step_expr) == add_cs1) || (ecdr(step_expr) == subtract_cs1))) ||
+		   ((optimize_data(step_expr) == HOP_SAFE_C_CS) && (car(vars) == caddr(step_expr)))))
+		{
+		  /* step var is (var const|symbol (op var const)|(op const var)) 
+		   */
+		  end = car(end);
+		  
+		  if ((is_optimized(end)) &&
+		      (car(vars) == cadr(end)) &&
+		      (cadr(end) != caddr(end)) &&
+		      ((ecdr(end) == equal_s_ic) ||
+		       (optimize_data(end) == HOP_SAFE_C_SS) || 
+		       (optimize_data(end) == HOP_SAFE_C_SC)))
+		    {
+		      /* end var is (op var const|symbol) using same var as step 
+		       *   so at least we can use SIMPLE_DO
+		       */
+		      bool has_set = false, has_data = false;
+		      
+		      if (ecdr(step_expr) == add_cs1)
+			{
+			  set_c_function(step_expr, add_s1);
+			  set_optimize_data(step_expr, HOP_SAFE_C_SC);
+			}
+		      if (ecdr(step_expr) == subtract_cs1)
+			{
+			  set_c_function(step_expr, subtract_s1);
+			  set_optimize_data(step_expr, HOP_SAFE_C_SC);
+			}
+		      if (ecdr(end) == equal_s_ic)
+			{
+			  set_c_function(end, equal_2);
+			  set_optimize_data(end, HOP_SAFE_C_SC);
+			}
+		      
+		      if ((ecdr(step_expr) == add_s1) &&
+			  (ecdr(end) == equal_2) &&
+			  (s7_is_integer(caddr(step_expr))) &&
+			  (s7_integer(caddr(step_expr)) == 1))
+			set_syntax_op(sc->code, sc->SIMPLE_DO_A);
+		      else set_syntax_op(sc->code, sc->SIMPLE_DO);
+		      
+		      if ((one_line) &&
+			  (is_syntactic(caar(body))))
+			{
+			  lifted_op(car(body)) = syntax_opcode(caar(body));
+			  /* fprintf(stderr, "choose simple_do_p\n"); */
+			  set_syntax_op(sc->code, sc->SIMPLE_DO_P);
+			  fcdr(sc->code) = caddr(caar(sc->code));
 #if (!WITH_GMP)
-			    if ((s7_is_integer(caddr(step_expr))) &&
-				(s7_integer(caddr(step_expr)) == 1) &&
-				(c_function_class(ecdr(step_expr)) == add_class) &&
-				/* we check above that (car(vars) == cadr(step_expr))
-				 *    and that         (car(vars) == cadr(end))
-				 */
-				((c_function_class(ecdr(end)) == equal_class) ||
-				 (ecdr(end) == geq_2)))
-			      set_syntax_op(sc->code, sc->DOTIMES_P);
+			  if ((s7_is_integer(caddr(step_expr))) &&
+			      (s7_integer(caddr(step_expr)) == 1) &&
+			      (c_function_class(ecdr(step_expr)) == add_class) &&
+			      /* we check above that (car(vars) == cadr(step_expr))
+			       *    and that         (car(vars) == cadr(end))
+			       */
+			      ((c_function_class(ecdr(end)) == equal_class) ||
+			       (ecdr(end) == geq_2)))
+			    set_syntax_op(sc->code, sc->DOTIMES_P);
 #endif
-			  }
-			
-			if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set, &has_data))
-			  {
+			}
+		      
+		      if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set, &has_data))
+			{
 #if PRINTING
-			    fprintf(stderr, "do is safe %d %d %d -> ",
-				    (safe_list_length(sc, body)),
-				    (is_pair(car(body))),
-				    (is_optimized(car(body))));
+			  fprintf(stderr, "do is safe %d %d %d -> ",
+				  (safe_list_length(sc, body)),
+				  (is_pair(car(body))),
+				  (is_optimized(car(body))));
 #endif
-			    if (has_data) set_has_methods(sc->code);
-
-			    if ((safe_list_length(sc, body) == 1) &&
-				(is_pair(car(body))) &&
-				(is_optimized(car(body))))
-			      {
-				opcode_t op;
-				op = optimize_data(car(body));
-				if ((op == HOP_SAFE_C_C) ||
-				    (op == HOP_SAFE_C_S) ||
-				    (op == HOP_SAFE_C_SS) ||
-				    (op == HOP_SAFE_C_SSS) ||
-				    (op == HOP_SAFE_C_opSq_S))
-				  {
-				    /* fprintf(stderr, "choose safe_simple_do\n"); */
-				    set_syntax_op(sc->code, sc->SAFE_SIMPLE_DO);
-				  }
-			      }
-
-			    /* now look for the very common dotimes case
-			     */
-			    if ((((s7_is_integer(caddr(step_expr))) &&
-				  (s7_integer(caddr(step_expr)) == 1)) ||
-				 ((s7_is_integer(cadr(step_expr))) &&
-				  (s7_integer(cadr(step_expr)) == 1))) &&
-				(c_function_class(ecdr(step_expr)) == add_class) &&
+			  if (has_data) set_has_methods(sc->code);
+			  
+			  if ((one_line) &&
+			      (is_optimized(car(body))))
+			    {
+			      opcode_t op;
+			      op = optimize_data(car(body));
+			      if ((op == HOP_SAFE_C_C) ||
+				  (op == HOP_SAFE_C_S) ||
+				  (op == HOP_SAFE_C_SS) ||
+				  (op == HOP_SAFE_C_SSS) ||
+				  (op == HOP_SAFE_C_opSq_S))
+				{
+				  /* fprintf(stderr, "choose safe_simple_do\n"); */
+				  set_syntax_op(sc->code, sc->SAFE_SIMPLE_DO);
+				}
+			    }
+			  
+			  /* now look for the very common dotimes case
+			   */
+			  if ((((s7_is_integer(caddr(step_expr))) &&
+				(s7_integer(caddr(step_expr)) == 1)) ||
+			       ((s7_is_integer(cadr(step_expr))) &&
+				(s7_integer(cadr(step_expr)) == 1))) &&
+			      (c_function_class(ecdr(step_expr)) == add_class) &&
 #if WITH_GMP
-				(c_function_class(ecdr(end)) == equal_class)
+			      (c_function_class(ecdr(end)) == equal_class)
 #else
-				((c_function_class(ecdr(end)) == equal_class) ||
-				 (ecdr(end) == geq_2))
+			      ((c_function_class(ecdr(end)) == equal_class) ||
+			       (ecdr(end) == geq_2))
 #endif
-				)
-			      {
-				/* we're stepping by +1 and going to =
-				 *   the final integer check has to wait until run time (symbol value dependent)
-				 */
-				bool one_line;
-				one_line = ((is_pair(car(body))) && (safe_list_length(sc, body) == 1));
-				if (one_line) set_one_liner(body);
+			      )
+			    {
+			      /* we're stepping by +1 and going to =
+			       *   the final integer check has to wait until run time (symbol value dependent)
+			       */
 #if PRINTING
-				fprintf(stderr, "%d safe do\n", __LINE__);
+			      fprintf(stderr, "%d safe do\n", __LINE__);
 #endif
-				set_syntax_op(sc->code, sc->SAFE_DO);
-
-				if ((!has_set) &&
-				    (c_function_class(ecdr(end)) == equal_class))
+			      set_syntax_op(sc->code, sc->SAFE_DO);
+			      
+			      if ((!has_set) &&
+				  (c_function_class(ecdr(end)) == equal_class))
 				{
 				  /* fprintf(stderr, "dotimes\n"); */
 				  set_syntax_op(sc->code, sc->SAFE_DOTIMES);
-
+				  
 				  /* what are the most common cases here?
 				   */
 				  
@@ -42465,7 +42476,7 @@ static s7_pointer check_do(s7_scheme *sc)
 						{
 						  s7_pointer x;
 						  x = cddar(body);
-
+						  
 						  /* fprintf(stderr, "let safe: %s from %s\n", DISPLAY_80(x), DISPLAY(body)); */
 						  /* HOP_SAFE_C_S here also */
 						  
@@ -42486,87 +42497,82 @@ static s7_pointer check_do(s7_scheme *sc)
 					}
 				    }
 				  /*
-				  if (car(ecdr(sc->code)) == sc->DOTIMES_P)
+				    if (car(ecdr(sc->code)) == sc->DOTIMES_P)
 				    fprintf(stderr, "oops\n");
 				  */
 				}
-				/* else fprintf(stderr, "unsafe: %s\n", DISPLAY_80(sc->code)); */
-			      }
-			  }
-			return(sc->NIL); /* tell OP_DO that this is a special case */
-		      }
-		  }
-	      }
-	  }
-	/* we get here if there is more than one local var or anything "non-simple" about the rest 
-	 */
-	/* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) 
-	 * (define (hi) (do ((i 0 (+ i 1)) (j 1 (+ j 1))) ((= i 3)) (display j))(newline))
-	 */
-	{
-	  vars = car(sc->code);
-	  end = cadr(sc->code);
-	  body = cddr(sc->code);
-
-	  if ((is_null(vars)) && /* do () () one-line safe opt body */
-	      (is_null(end)) &&
-	      (safe_list_length(sc, body) == 1) &&
-	      (is_pair(car(body))) &&
-	      (is_optimized(car(body))) &&
-	      (optimize_data(car(body)) == HOP_SAFE_C_opSq_S))
-	    {
-	      set_syntax_op(sc->code, sc->SIMPLE_DO_FOREVER);
-	      return(sc->NIL);
-	    }
-
-	  /* check end expression first */
-	  if (!is_end_dox_safe(sc, car(end)))
-	    {
-#if PRINTING
-	      fprintf(stderr, "end %s bad: %s\n", (is_optimized(car(end))) ? opt_names[optimize_data(car(end))] : "unopt", DISPLAY_80(sc->code));
-#endif
-	      return(sc->code);
-	    }
-
-	  /* vars can be nil (no steppers) */
-	  if (is_pair(vars))
-	    {
-	      s7_pointer p;
-	      for (p = vars; is_pair(p); p = cdr(p))
-		{
-		  s7_pointer var;
-		  var = car(p);
-		  if (!is_init_dox_safe(sc, cadr(var)))
-		    {
-#if PRINTING
-		      fprintf(stderr, "init %s bad: %s\n", (is_optimized(cadr(var))) ? opt_names[optimize_data(cadr(var))] : "unopt", DISPLAY_80(sc->code));
-#endif
-		      return(sc->code);
-		    }
-
-		  if ((is_pair(cddr(var))) &&
-		      (!is_step_dox_safe(sc, caddr(var))))
-		    {
-#if PRINTING
-		      fprintf(stderr, "step %s bad: %s\n", (is_optimized(caddr(var))) ? opt_names[optimize_data(cadr(var))] : "unopt", DISPLAY_80(sc->code));
-#endif
-		      return(sc->code);
+			      /* else fprintf(stderr, "unsafe: %s\n", DISPLAY_80(sc->code)); */
+			    }
+			}
+		      return(sc->NIL); /* tell OP_DO that this is a special case */
 		    }
 		}
 	    }
-	  
-	  /* end and steps look ok! */
-#if PRINTING
-	  fprintf(stderr, "dox: %s\n", DISPLAY_80(sc->code));
-#endif
-	  if ((is_pair(car(body))) && (safe_list_length(sc, body) == 1))
-	    set_one_liner(body);
+	}
 
-	  set_syntax_op(sc->code, sc->DOX);
-	  fcdr(sc->code) = caadr(sc->code);
+      /* we get here if there is more than one local var or anything "non-simple" about the rest 
+       */
+      /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) 
+       * (define (hi) (do ((i 0 (+ i 1)) (j 1 (+ j 1))) ((= i 3)) (display j))(newline))
+       */
+      
+      vars = car(sc->code);
+      end = cadr(sc->code);
+      body = cddr(sc->code);
+      
+      if ((is_null(vars)) && /* do () () one-line safe opt body */
+	  (is_null(end)) &&
+	  (one_line) &&
+	  (is_optimized(car(body))) &&
+	  (optimize_data(car(body)) == HOP_SAFE_C_opSq_S))
+	{
+	  set_syntax_op(sc->code, sc->SIMPLE_DO_FOREVER);
 	  return(sc->NIL);
 	}
-      }
+      
+      /* check end expression first */
+      if (!is_end_dox_safe(sc, car(end)))
+	{
+#if PRINTING
+	  fprintf(stderr, "end %s bad: %s\n", (is_optimized(car(end))) ? opt_names[optimize_data(car(end))] : "unopt", DISPLAY_80(sc->code));
+#endif
+	  return(sc->code);
+	}
+      
+      /* vars can be nil (no steppers) */
+      if (is_pair(vars))
+	{
+	  s7_pointer p;
+	  for (p = vars; is_pair(p); p = cdr(p))
+	    {
+	      s7_pointer var;
+	      var = car(p);
+	      if (!is_init_dox_safe(sc, cadr(var)))
+		{
+#if PRINTING
+		  fprintf(stderr, "init %s bad: %s\n", (is_optimized(cadr(var))) ? opt_names[optimize_data(cadr(var))] : "unopt", DISPLAY_80(sc->code));
+#endif
+		  return(sc->code);
+		}
+	      
+	      if ((is_pair(cddr(var))) &&
+		  (!is_step_dox_safe(sc, caddr(var))))
+		{
+#if PRINTING
+		  fprintf(stderr, "step %s bad: %s\n", (is_optimized(caddr(var))) ? opt_names[optimize_data(cadr(var))] : "unopt", DISPLAY_80(sc->code));
+#endif
+		  return(sc->code);
+		}
+	    }
+	}
+      
+      /* end and steps look ok! */
+#if PRINTING
+      fprintf(stderr, "dox: %s\n", DISPLAY_80(sc->code));
+#endif
+      set_syntax_op(sc->code, sc->DOX);
+      fcdr(sc->code) = caadr(sc->code);
+      return(sc->NIL);
     }
   return(sc->code);
 }
@@ -43311,6 +43317,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->envir = old_frame_with_slot(sc, counter_environment(args), sc->x);
 		  }
 		sc->code = closure_body(code);
+		if (is_one_liner(sc->code)) 
+		  {
+		    sc->code = car(sc->code);
+		    goto EVAL;
+		  }
 		goto BEGIN;
 	      }
 	  }
@@ -43557,9 +43568,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* -------------------------------- DO -------------------------------- */
 
-      /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) 
-       * (with-sound () (nrev 0 .1))
-       */
+      /* this is the fm-violin optimization */
     SIMPLE_SAFE_DOTIMES:
     case OP_SIMPLE_SAFE_DOTIMES:
       /* set up as in SAFE_DOTIMES, pull in all the let vars
@@ -43569,6 +43578,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
 	s7_pointer vars, init_val, func, body, stepper, lets;
+
 	vars = car(sc->code);
 	init_val = cadr(car(vars));
 	if (is_symbol(init_val))
@@ -43583,13 +43593,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (s7_is_integer(end_val))
 	      {
 		int num_vars = 0;
+		sc->envir = new_frame_in_env(sc, sc->envir); 
+		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
 		    goto BEGIN;
 		  }
-		sc->envir = new_frame_in_env(sc, sc->envir); 
-		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
 		initialize_safe_do(sc, sc->code);
 
@@ -43687,14 +43697,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      end_val = finder(sc, end_val);
 	    if (s7_is_integer(end_val))
 	      {
+		/* (let () (define (hi a) (do ((i a (+ i 1))) ((= i a) i) (+ a 1))) (hi 1)) */
+		sc->envir = new_frame_in_env(sc, sc->envir); 
+		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
+
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
 		    goto BEGIN;
 		  }
-
-		sc->envir = new_frame_in_env(sc, sc->envir); 
-		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
 
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
 		initialize_safe_do(sc, sc->code);
@@ -43746,14 +43757,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      end_val = finder(sc, end_val);
 	    if (s7_is_integer(end_val))
 	      {
+		/* (let () (define (hi) (do ((i 10 (+ i 1))) ((= i 10) i) (display i))) (hi))
+		 */
+		sc->envir = new_frame_in_env(sc, sc->envir); 
+		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
+
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(sc->code));
 		    goto BEGIN;
 		  }
-
-		sc->envir = new_frame_in_env(sc, sc->envir); 
-		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
 
 		denominator(slot_value(sc->args)) = s7_integer(end_val);
 		initialize_safe_do(sc, sc->code);
@@ -43805,55 +43818,55 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      end_val = finder(sc, end_val);
 	    if (s7_is_integer(end_val))
 	      {
+		sc->code = cddr(code);
+		sc->envir = new_frame_in_env(sc, sc->envir); 
+		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
+
+		denominator(slot_value(sc->args)) = s7_integer(end_val);
+		/* (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) -- we need the frame even if the loop is not evaluated
+		 */
 		if (s7_integer(init_val) == s7_integer(end_val))
 		  {
 		    sc->code = cdr(cadr(code));
 		    goto BEGIN;
 		  }
-		sc->envir = new_frame_in_env(sc, sc->envir); 
-		sc->args = add_slot(sc, caar(vars), make_mutable_integer(sc, s7_integer(init_val)));
 
-		denominator(slot_value(sc->args)) = s7_integer(end_val);
 		initialize_safe_do(sc, code);
 
-		sc->code = cddr(code);
 		if (is_one_liner(sc->code))
 		  {
 		    sc->code = car(sc->code);
 		    fcdr(code) = sc->code;
 
-		    if (typesflag(sc->code) == SYNTACTIC_PAIR)
+		    if ((typesflag(sc->code) == SYNTACTIC_PAIR) || 
+			(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
 		      {
 			push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, code);
-			sc->op = (opcode_t)lifted_op(sc->code);
+
+			if (typesflag(sc->code) == SYNTACTIC_PAIR)
+			  sc->op = (opcode_t)lifted_op(sc->code);
+			else
+			  {
+			    sc->op = (opcode_t)syntax_opcode(car(sc->code));
+			    lifted_op(sc->code) = sc->op;
+			    set_type(sc->code, SYNTACTIC_PAIR);
+			  }
 			sc->code = cdr(sc->code);
 			goto START_WITHOUT_POP_STACK;
 		      }
 		    else
 		      {
-			if (typeflag(car(sc->code)) == SYNTACTIC_TYPE)
+			if ((is_optimized(sc->code)) &&
+			    (optimize_data(sc->code) == HOP_SAFE_C_SZ) &&
+			    (cadr(sc->code) == slot_symbol(sc->args)))
 			  {
-			    push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, code);
-			    set_type(sc->code, SYNTACTIC_PAIR);
-			    sc->op = (opcode_t)syntax_opcode(car(sc->code));
-			    lifted_op(sc->code) = sc->op;
-			    sc->code = cdr(sc->code);
-			    goto START_WITHOUT_POP_STACK;
+			    /* fprintf(stderr, "A: %s %s\n", DISPLAY(code), DISPLAY(sc->code)); */
+			    push_stack(sc, OP_SAFE_DOTIMES_STEP_A, sc->args, code);
+			    sc->code = caddr(sc->code);
+			    goto OPT_EVAL;
 			  }
-			else
-			  {
-			    if ((is_optimized(sc->code)) &&
-				(optimize_data(sc->code) == HOP_SAFE_C_SZ) &&
-				(cadr(sc->code) == slot_symbol(sc->args)))
-			      {
-				/* fprintf(stderr, "A: %s %s\n", DISPLAY(code), DISPLAY(sc->code)); */
-				push_stack(sc, OP_SAFE_DOTIMES_STEP_A, sc->args, code);
-				sc->code = caddr(sc->code);
-				goto OPT_EVAL;
-			      }
-			    push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
-			    goto NS_EVAL;
-			  }
+			push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
+			goto NS_EVAL;
 		      }
 		  }
 		fcdr(code) = sc->code;
@@ -43967,6 +43980,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (is_symbol(end))
 	  end_val = finder(sc, end);
 	else end_val = end;
+	
+	/* (let ((sum 0)) (define (hi) (do ((i 10 (+ i 1))) ((= i 10) i) (set! sum (+ sum i)))) (hi))
+	 */
+	sc->envir = new_frame_in_env(sc, sc->envir);
+	environment_dox1(sc->envir) = add_slot(sc, caaar(code), init_val);
 
 #if WITH_GMP
 	if (s7_integer(init_val) == s7_integer(end_val))
@@ -43979,9 +43997,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = cdr(cadr(code));
 	    goto BEGIN;
 	  }
-	sc->envir = new_frame_in_env(sc, sc->envir);
-
-	environment_dox1(sc->envir) = add_slot(sc, caaar(code), init_val);
 	if (is_symbol(end))
 	  sc->args = find_symbol(sc, end);
 	else sc->args = make_slot(sc, end, end); /* here and elsewhere sc->args is used for GC protection */
@@ -43995,30 +44010,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = car(sc->code);
 	    fcdr(code) = sc->code;
 
-	    if (typesflag(sc->code) == SYNTACTIC_PAIR)
+	    if ((typesflag(sc->code) == SYNTACTIC_PAIR) ||
+		(typeflag(car(sc->code)) == SYNTACTIC_TYPE))
 	      {
 		push_stack(sc, OP_SAFE_DO_STEP_P, sc->args, code);
-		sc->op = (opcode_t)lifted_op(sc->code);
+		if (typesflag(sc->code) == SYNTACTIC_PAIR)
+		  sc->op = (opcode_t)lifted_op(sc->code);
+		else
+		  {
+		    sc->op = (opcode_t)syntax_opcode(car(sc->code));
+		    lifted_op(sc->code) = sc->op;
+		    set_type(sc->code, SYNTACTIC_PAIR);
+		  }
 		sc->code = cdr(sc->code);
 		goto START_WITHOUT_POP_STACK;
 	      }
 	    else
 	      {
-		/* TODO: this is the case elsewhere -- see LET_O_O cases and opcqp in particular [at least each such case needs check] */
-		if (typeflag(car(sc->code)) == SYNTACTIC_TYPE)
-		  {
-		    push_stack(sc, OP_SAFE_DO_STEP_P, sc->args, code);
-		    set_type(sc->code, SYNTACTIC_PAIR);
-		    sc->op = (opcode_t)syntax_opcode(car(sc->code));
-		    lifted_op(sc->code) = sc->op;
-		    sc->code = cdr(sc->code);
-		    goto START_WITHOUT_POP_STACK;
-		  }
-		else
-		  {
-		    push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, code);
-		    goto NS_EVAL;
-		  }
+		push_stack(sc, OP_SAFE_DO_STEP_A, sc->args, code);
+		goto NS_EVAL;
 	      }
 	  }
 	fcdr(code) = sc->code;
@@ -44089,26 +44099,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SAFE_DO_STEP:
       {
 	s7_Int step, end;
-	s7_pointer args;
-	args = sc->envir;
+	s7_pointer args, code, slot;
 
-	step = s7_integer(slot_value(environment_dox1(args))) + 1;
-	slot_set_value(environment_dox1(args), make_integer(sc, step));
+	args = sc->envir;
+	code = sc->code;
+	slot = environment_dox1(args);
+
+	step = s7_integer(slot_value(slot)) + 1;
+	slot_set_value(slot, make_integer(sc, step));
 	end = s7_integer(slot_value(environment_dox2(args)));
 #if WITH_GMP
 	if (step == end)
 #else
         if ((step == end) ||
 	    ((step > end) &&
-	     (ecdr(car(cadr(sc->code))) == geq_2)))
+	     (ecdr(caadr(code)) == geq_2)))
 #endif	      
 	  {
 	    finalize_safe_do(sc);
-	    sc->code = cdr(cadr(sc->code));
+	    sc->code = cdadr(code);
 	    goto BEGIN;
 	  }
-	push_stack(sc, OP_SAFE_DO_STEP, sc->args, sc->code);
-	sc->code = fcdr(sc->code);
+	push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
+	sc->code = fcdr(code);
 	goto BEGIN;
       }
 
@@ -44197,6 +44210,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
 	sc->code = fcdr(code);
+	if (is_one_liner(sc->code))
+	  {
+	    sc->code = car(sc->code);
+	    goto EVAL; 
+	  }
 	goto BEGIN;
       }
 
@@ -44250,6 +44268,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_SIMPLE_DO_STEP_A, sc->args, code);
 	sc->code = fcdr(code);
+	if (is_one_liner(sc->code))
+	  {
+	    sc->code = car(sc->code);
+	    goto EVAL; 
+	  }
 	goto BEGIN;
       }
 
@@ -44673,24 +44696,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_one_liner(code))
 	    {
 	      code = car(code);
-	      if (typesflag(code) == SYNTACTIC_PAIR)
+
+	      if ((typesflag(code) == SYNTACTIC_PAIR) ||
+		  (typeflag(car(code)) == SYNTACTIC_TYPE))
 		{
 		  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
-		  sc->op = (opcode_t)lifted_op(code);
-		  sc->code = cdr(code);
-		  goto START_WITHOUT_POP_STACK;
-		}
-	      else
-		{
-		  if (typeflag(car(code)) == SYNTACTIC_TYPE)
+
+		  for (slot = environment_slots(frame); is_slot(slot); slot = next_slot(slot))
 		    {
-		      push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
-		      set_type(code, SYNTACTIC_PAIR);
+		      s7_pointer expr;
+		      expr = car(slot_expression(slot));
+		      if ((is_pair(expr)) &&
+			  (c_call(expr) == g_add_cs1))
+			fcdr(expr) = (s7_pointer)g_add_t1;
+		    }
+
+		  if (typesflag(code) == SYNTACTIC_PAIR)
+		    sc->op = (opcode_t)lifted_op(code);
+		  else
+		    {
 		      sc->op = (opcode_t)syntax_opcode(car(code));
 		      lifted_op(code) = sc->op;
-		      sc->code = cdr(code);
-		      goto START_WITHOUT_POP_STACK;
+		      set_type(code, SYNTACTIC_PAIR);
 		    }
+		  sc->code = cdr(code);
+		  goto START_WITHOUT_POP_STACK;
 		}
 	    }
 	}
@@ -44732,8 +44762,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  s7_pointer expr;
 		  expr = car(slot_expression(slot));
-		  if (optimize_data(expr) == HOP_SAFE_C_C)
-		    slot_pending_value(slot) = c_call(expr)(sc, cdr(expr));
+		  if (c_call(expr) == g_add_t1)
+		    slot_pending_value(slot) = g_add_t1(sc, slot_value(slot));
 		  else slot_pending_value(slot) = step_dox_eval(sc, expr);
 		}
 	      else slot_pending_value(slot) = slot_value(slot);
@@ -45084,6 +45114,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     BEGIN:
     case OP_BEGIN:
       /* sc->args is not used here */
+#if WITH_COUNTS
+      if (is_null(cdr(sc->code)))
+	tick(sc->op);
+#endif
+
       if (sc->begin_hook)
 	{
 	  opcode_t op;
@@ -50506,7 +50541,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* fprintf(stderr, "clear %s %s\n", opt_names[optimize_data(code)], DISPLAY(code)); */
 	  /* there is a problem with this -- if the caller still insists on goto OPT_EVAL, for example,
 	   *   we get here over and over.  (let ((x (list (car y))))...) where list is redefined away.
-	   *   TODO: Perhaps current cases should use NS_EVAL? and OPT_EVAL only is is_h_optimized?
+	   *   TODO: Perhaps current cases should use NS_EVAL? and OPT_EVAL only if is_h_optimized?
 	   */
 	  clear_optimized(code);
 	  clear_optimize_data(code);
@@ -54953,6 +54988,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 
 	sc->code = cdr(sc->code);
+	if (is_one_liner(sc->code))
+	  {
+	    sc->code = car(sc->code);
+	    goto EVAL; 
+	  }
 	goto BEGIN;
       }
 
@@ -55123,6 +55163,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else slot_set_value(slot, slot_pending_value(slot));
 	    }
 	  sc->code = cdr(sc->code);
+	  if (is_one_liner(sc->code))
+	    {
+	      sc->code = car(sc->code);
+	      goto EVAL; 
+	    }
 	  goto BEGIN;
 	}
 
@@ -62829,7 +62874,7 @@ s7_scheme *s7_init(void)
  *            would it work to simply replace the old slot (not remake the entire env)?
  *
  * TODO: NS_EVAL and TRAILER cases throughout [but this is tricky!]
- * TODO: split IF_O_P like the let case, also SAFE_C_SP [a multiple-values question]
+ * TODO: split IF_O_P like the let case, also split? SAFE_C_SP [a multiple-values question]
  * also things like LET_C_D look dangerous -- we check is_optimized (can be op_unknown...), then
  *   in the code, goto OPT_EVAL, but what if the unknown->macro or something not optimizable?
  *   do all goto OPT_EVALS need is_h_optimized protection? -- how many of these are there?
@@ -62874,12 +62919,12 @@ s7_scheme *s7_init(void)
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7727
  * lint                     9328 8140 7887 7887
- * index    44300 4988 3935 3291 3005 2742 2742
+ * index    44300 4988 3935 3291 3005 2742 2739
  * s7test         1721 1430 1358 1297 1244 1233
  * t455            265  218   89   55   31   31
  * t502             90   72   43   39   36   36
  * lat             229        63   52   47   45
- * calls                     278  210  178  171
+ * calls                     278  210  178  169
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.
@@ -62887,4 +62932,6 @@ s7_scheme *s7_init(void)
  * in a case like (define* (hi (a 1.0)) (sin a)) we could notice (hi) as a special
  *   case -- the arg is 1.0, and the substitution can be direct? or save the body with the substitutions?
  *   (sin 1.0) if no args etc
+ *
+ * can the do env+slot stuff be prebuilt and reused if safe? how to gc-protect it?
  */

@@ -15003,6 +15003,10 @@ in s7:
 (num-test (do ((i 10 (- i 1))) ((= i 0) i)) 0)
 (num-test (do ((i 10 (- 1 i))) ((< i 0) i)) -9)
 (num-test (do ((i 10 (- i 3))) ((< i 0) i)) -2)
+(let () (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) (hi) (test (hi) 1))
+(let () (define (hi) (do ((i 10 (+ i 1))) ((= i 10) i) (abs i))) (hi) (test (hi) 10))
+(let ((sum 0)) (define (hi) (do ((i 10 (+ i 1))) ((= i 10) i) (set! sum (+ sum i)))) (hi) (test (hi) 10))
+(let () (define (hi a) (do ((i a (+ i 1))) ((= i a) i) (+ a 1))) (hi 1) (test (hi 1) 1))
 
 ;;; check an optimizer bug
 (define _do_call_cc_end_ 1)
