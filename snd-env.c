@@ -1238,7 +1238,7 @@ env *xen_to_env(XEN res)
 		{
 		  XEN el;
 		  el = XEN_CAR(lst);
-		  data[i] = XEN_TO_C_DOUBLE_OR_ELSE(el, 0.0);
+		  data[i] = XEN_TO_C_DOUBLE(el);
 		}
 	    }
 	  else

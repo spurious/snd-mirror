@@ -391,13 +391,14 @@
 					(- stiffnessCoefficient
 					   (* (+ 1 stiffnessCoefficient)
 					      (- stiffnessFactor 1)))
-					(* stiffnessCoefficient stiffnessFactor)))
-	      (stiffnessCoefficientL (if (<= keyNum longitudinal-mode-cutoff-keynum)
-					 longitudinal-mode-stiffness-coefficient
-					 stiffnessCoefficient)))
+					(* stiffnessCoefficient stiffnessFactor))))
 	  
 	  (let ((ctemp (+ 1 (- b) g (- (* a g))
-			  (* nstrings (+ 1 (- b) (- g) (* a g))))))
+			  (* nstrings (+ 1 (- b) (- g) (* a g)))))
+		(stiffnessCoefficientL (if (<= keyNum longitudinal-mode-cutoff-keynum)
+					   longitudinal-mode-stiffness-coefficient
+					   stiffnessCoefficient)))
+		
 	    (let ((cfb0 (/ (* 2 (+ -1 b g (- (* a g)))) ctemp))
 		  (cfb1 (/ (* 2 (+ a (- (* a b)) (- (* b g)) (* a b g))) ctemp))
 		  (cfa1 (/ (+ (- a) (* a b) (- (* b g)) (* a b g)

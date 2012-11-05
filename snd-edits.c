@@ -7216,7 +7216,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	num = (*size);
       vals = (mus_sample_t *)malloc(num * sizeof(mus_sample_t));
       for (i = 0, lst = XEN_COPY_ARG(obj); i < num; i++, lst = XEN_CDR(lst)) 
-	vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0));
+	vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CAR(lst)));
     }
   else
     {
@@ -7228,7 +7228,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	    num = (*size);
 	  vals = (mus_sample_t *)malloc(num * sizeof(mus_sample_t));
 	  for (i = 0; i < num; i++) 
-	    vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE_OR_ELSE(XEN_VECTOR_REF(obj, i), 0.0));
+	    vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(obj, i)));
 	}
       else
 	{

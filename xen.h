@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 15
-#define XEN_VERSION "3.15"
+#define XEN_MINOR_VERSION 16
+#define XEN_VERSION "3.16"
 
 /* HISTORY:
  *
+ *  5-Nov:     minor s7-related changes.
  *  9-July:    XEN_VECTOR_ELEMENTS and XEN_VECTOR_COPY.
  *  4-June:    XEN_PROVIDE as synonym for XEN_YES_WE_HAVE.
  *  8-May:     added description arg to XEN_DEFINE_SIMPLE_HOOK and XEN_DEFINE_HOOK, only used in scheme.
@@ -1083,7 +1084,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 #define XEN_ZERO                                   xen_zero
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
 #define C_TO_XEN_INT(Arg)                          s7_make_integer(s7, Arg)
-#define XEN_TO_C_INT(Arg)                          xen_to_c_int(Arg)
+#define XEN_TO_C_INT(Arg)                          ((int)s7_number_to_integer(s7, Arg))
 #define XEN_TO_C_INT_OR_ELSE(Arg, Def)             ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT(Arg) : Def)
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
@@ -1111,7 +1112,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
 #define XEN_TO_C_DOUBLE(Arg)                       ((double)s7_number_to_real(s7, Arg))
-#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((Def == 0.0) ? s7_number_to_real(s7, Arg) : xen_to_c_double_or_else(Arg, Def))
+#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((double)s7_number_to_real(s7, Arg))
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
 #if WITH_COMPLEX
@@ -1278,9 +1279,6 @@ XEN xen_define_variable(const char *name, XEN value);
 XEN xen_s7_define_hook(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
-int xen_to_c_int(XEN a);
-int64_t xen_to_c_int64_t(XEN a);
-double xen_to_c_double_or_else(XEN a, double b);
 s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
 void xen_s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value, const char *help);

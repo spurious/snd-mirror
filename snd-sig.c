@@ -4489,7 +4489,7 @@ static XEN g_apply_env_1(XEN edata, mus_long_t beg, mus_long_t dur, XEN ebase, c
 	  if (XEN_NUMBER_P(ebase))
 	    {
 	      /* env 'e' is a temp here, so we can clobber its base, etc */
-	      e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
+	      e->base = XEN_TO_C_DOUBLE(ebase);
 	      if (e->base < 0.0)
 		{
 		  free_env(e);
@@ -5165,7 +5165,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 	  /* env 'e' is a temp here, so we can clobber its base, etc */
 	  e = get_env(ratio_or_env, caller);
 	  if (XEN_NUMBER_P(ebase))
-	    e->base = XEN_TO_C_DOUBLE_OR_ELSE(ebase, 1.0);
+	    e->base = XEN_TO_C_DOUBLE(ebase);
 
 	  e_ratio = check_src_envelope(e->pts, e->data, &error);
 	  if (error != SRC_ENV_NO_ERROR)

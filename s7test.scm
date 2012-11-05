@@ -21548,13 +21548,14 @@ who says the continuation has to restart the map from the top?
 		   (return #f)))))))
       #t)
 
-(test (let ((v '()))
-	(do ((i 0 (+ i 1)))
-	    ((= i 1000))
-	  (set! v (cons (random 100.0) v)))
-	(set! v (sort! v >))
-	(apply > v))
-      #t)
+(let ((v ()))
+  (do ((i 0 (+ i 1)))
+      ((= i 1000))
+    (set! v (cons (random 100.0) v)))
+  (set! v (sort! v >))
+  (if (not (apply >= v))
+      (format #t ";~D: v not sorted by >: ~A~%" #__line__ v)))
+
 
 (test (sort! (list 3 2 1) (lambda (m n) (let ((vals (sort! (list m n) <))) (< m n)))) '(1 2 3))
 

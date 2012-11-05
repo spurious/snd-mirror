@@ -1,5 +1,4 @@
 /* s7, a Scheme interpreter
-
  *
  *    derived from:
  *
@@ -2277,7 +2276,7 @@ static void report_counts(s7_scheme *sc)
       if (mx > 0)
 	{
 	  if (mx > total/100)
-	    fprintf(stderr, "%s: %d (%f)\n", real_op_names[mxi], mx, 100.0*mx/(float)total);
+	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -45114,11 +45113,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     BEGIN:
     case OP_BEGIN:
       /* sc->args is not used here */
-#if WITH_COUNTS
-      if (is_null(cdr(sc->code)))
-	tick(sc->op);
-#endif
-
       if (sc->begin_hook)
 	{
 	  opcode_t op;
@@ -49194,10 +49188,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = c_call(code)(sc, sc->args);
 		clear_list_in_use(sc->args);
 
-#if WITH_COUNTS
-		/* add_expr(sc, code); */
-#endif
-		
 		/* we can't release a temp here:
 		 *   (define (hi) (vector 14800 14020 (oscil os) (* 1/3 14800) 14800 (* 1/2 14800))) (hi) where os returns non-zero:
 		 *   #(14800 14020 <output-string-port> 14800/3 14800 7400)
@@ -50133,9 +50123,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 * 132300: (* (vct-ref indices k) car)
 		 */
 		s7_pointer args, val;
-#if WITH_COUNTS
-		/* add_expr(sc, code); */
-#endif
 		args = cdr(code);
 		val = finder(sc, cadr(args));
 		car(sc->T2_1) = c_call(car(args))(sc, cdr(car(args)));

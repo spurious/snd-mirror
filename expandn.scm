@@ -134,17 +134,12 @@
 			      (begin
 				(set! update-ctr (+ update-ctr 1))
 				(if (>= update-ctr update-rate)
-				    (let ((expa (env expenv))                ;current expansion amount
-					  (segl (env lenenv))                ;current segment length
-					  (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					  (hp (env hopenv)))                  ;current hop size
-				      (let ((sl (floor (* segl (mus-srate))))
-					    (rl (floor (* rmpl sl))))
-					(set! update-ctr 0)
-					(set! (mus-length ingen) sl)
-					(set! (mus-ramp ingen) rl)
-					(set! (mus-frequency ingen) hp)
-					(set! (mus-increment ingen) expa))))))
+				    (let ((sl (floor (* (env lenenv) (mus-srate)))))
+				      (set! update-ctr 0)
+				      (set! (mus-length ingen) sl)
+				      (set! (mus-ramp ingen) (floor (* sl (env rampenv))))
+				      (set! (mus-frequency ingen) (env hopenv))
+				      (set! (mus-increment ingen) (env expenv))))))
 			  
 			  (if (negative? ex-samp)
 			      (begin
@@ -198,8 +193,8 @@
 					      (segl (env lenenv))                ;current segment length
 					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
 					      (hp (env hopenv)))                 ;current hop size
-					  (let ((sl (floor (* segl (mus-srate))))
-						(rl (floor (* rmpl sl))))
+					  (let* ((sl (floor (* segl (mus-srate))))
+						 (rl (floor (* rmpl sl))))
 					    (set! update-ctr 0)
 					    (set! (mus-length ingen0) sl)
 					    (set! (mus-ramp ingen0) rl)
@@ -262,8 +257,8 @@
 					      (segl (env lenenv))                ;current segment length
 					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
 					      (hp (env hopenv)))                 ;current hop size
-					  (let ((sl (floor (* segl (mus-srate))))
-						(rl (floor (* rmpl sl))))
+					  (let* ((sl (floor (* segl (mus-srate))))
+						 (rl (floor (* rmpl sl))))
 					    (set! update-ctr 0)
 					    (do ((ix 0 (+ ix 1)))
 						((= ix in-chans))

@@ -1443,34 +1443,6 @@ char *xen_version(void)
 }
 
 
-int xen_to_c_int(XEN a) /* xen_to_c_int is expected to return an int (not an int64_t) */
-{
-  s7_Int val;
-  val = s7_number_to_integer(s7, a);
-  if (val > INT_MAX)
-    return(INT_MAX);
-  if (val < INT_MIN)
-    return(INT_MIN);
-  return(val);
-}
-
-
-int64_t xen_to_c_int64_t(XEN a)
-{
-  if (XEN_NUMBER_P(a))
-    return(s7_number_to_integer(s7, a));
-  return(0); /* ?? in xm.c, XtSetValues of XmUserData with a pointer falls back on this -- probably can't work */
-}
-
-
-double xen_to_c_double_or_else(XEN a, double b) 
-{
-  if (XEN_NUMBER_P(a))
-    return(s7_number_to_real(s7, a));
-  return(b);
-}
-
-
 static char *xen_s7_repl_prompt = NULL;
 
 void xen_s7_set_repl_prompt(const char *new_prompt)

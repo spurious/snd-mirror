@@ -1010,7 +1010,7 @@ XEN xen_list_to_vct(XEN lst)
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
     {
       if (XEN_NUMBER_P(XEN_CAR(lst1)))
-	v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst1), 0.0);
+	v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_CAR(lst1));
       else XEN_WRONG_TYPE_ARG_ERROR(S_list_to_vct, i, XEN_CAR(lst1), "a number");
     }
 

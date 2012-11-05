@@ -42,21 +42,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-#if HAVE_SCHEME
-#define DISPLAY_80(Expr) s7_object_to_c_string(s7, Expr)
-#define XEN_OBJECT_REF_CHECKED(Obj, Type) s7_object_value_checked(Obj, Type)
-#define XEN_NULL NULL
-#else
-#if (HAVE_FORTH) || (HAVE_RUBY)
-#define XEN_OBJECT_REF_CHECKED(Obj, Type) (XEN_OBJECT_TYPE_P(Obj, Type) ? XEN_OBJECT_REF(Obj) : NULL)
-#define XEN_NULL 0
-#else
-#define XEN_OBJECT_REF_CHECKED(Obj, Type) NULL
-#define XEN_NULL 0
-#endif
-#endif
-
-
 #ifndef TWO_PI
   #define TWO_PI (2.0 * M_PI)
 #endif
@@ -96,7 +81,17 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) \
   if (XEN_INTEGER_P(Xen_Arg)) C_Val = XEN_TO_C_INT(Xen_Arg); else XEN_ASSERT_TYPE(false, Xen_Arg, ArgNum, Caller, "an integer")
 
+#define XEN_NULL 0
+
+#if (HAVE_FORTH) || (HAVE_RUBY)
+  #define XEN_OBJECT_REF_CHECKED(Obj, Type) (XEN_OBJECT_TYPE_P(Obj, Type) ? XEN_OBJECT_REF(Obj) : NULL)
 #else
+  #define XEN_OBJECT_REF_CHECKED(Obj, Type) NULL
+#endif
+#endif
+
+
+#if HAVE_SCHEME
 
 #define S7_DEBUGGING 0
 #if (!S7_DEBUGGING)
@@ -136,11 +131,13 @@ static void *imported_s7_object_value_checked(s7_pointer ur_obj, int type)
 #define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
 #endif
 
+#define DISPLAY_80(Expr) s7_object_to_c_string(s7, Expr)
+#define XEN_OBJECT_REF_CHECKED(Obj, Type) imported_s7_object_value_checked(Obj, Type)
+#define XEN_NULL NULL
 
 #define XEN_TO_C_DOUBLE_IF_BOUND(Xen_Arg, C_Val, Caller, ArgNum) if (XEN_BOUND_P(Xen_Arg)) C_Val = XEN_TO_C_DOUBLE(Xen_Arg)
 #define XEN_TO_C_DOUBLE_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) C_Val = XEN_TO_C_DOUBLE(Xen_Arg)
 #define XEN_TO_C_INTEGER_OR_ERROR(Xen_Arg, C_Val, Caller, ArgNum) C_Val = XEN_TO_C_INT(Xen_Arg)
-
 #endif
 
 
@@ -7833,10 +7830,10 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
 #if HAVE_SCHEME
     {
       s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
-      return(XEN_TO_C_DOUBLE_OR_ELSE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__), 0.0));
+      return(XEN_TO_C_DOUBLE(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, c__FUNCTION__, __FILE__, __LINE__)));
     }
 #else
-    return(XEN_TO_C_DOUBLE_OR_ELSE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one), 0.0));
+    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one)));
 #endif
   /* the "or else" is crucial here -- this can be called unprotected in clm.c make_src during setup, and
    *   an uncaught error there clobbers our local error chain.
