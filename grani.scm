@@ -466,12 +466,12 @@
 		(if interp-gr-envs (set! gr-where (env gr-int-env)))
 		(set! pos (+ gr-start-sample gr-offset))
 		(set! val1 (table-lookup gr-env))
+		(set! val (* (env amp-env) (src in-file-reader)))
 		(if interp-gr-envs
 		    (begin
 		      (set! val2 (table-lookup gr-env-end))
-		      (set! val (+ (* gr-where val2) (* (- 1.0 gr-where) val1)))
-		      (set! val (* val (env amp-env) (src in-file-reader))))
-		    (set! val (* val1 (env amp-env) (src in-file-reader))))
+		      (set! val1 (+ (* gr-where val2) (* (- 1.0 gr-where) val1)))))
+		(set! val (* val val1))
 		(locsig loc pos val)
 		;; increment pointer in grain
 		(set! gr-offset (+ 1 gr-offset)))

@@ -65,6 +65,7 @@ struct mus_xen {
 };
 
 #define FORMANT_TAG 1
+#define FRAME_TAG 2
 
 mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define MUS_XEN_TO_MUS_ANY(Gn) (((mus_xen *)Gn)->gen)
@@ -4165,8 +4166,11 @@ static XEN g_make_frame_2(int len, XEN args)
       return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)))));
 #else
       {
+	mus_xen *gn;
 	s7_pointer nv;
-	nv = mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge))));
+	gn = mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)));
+	gn->type = FRAME_TAG;
+	nv = mus_xen_to_object(gn);
 #if 0
 	s7_object_set_environment(nv, g_frame_methods);
 	s7_open_environment(nv);
@@ -4327,10 +4331,18 @@ static XEN g_frame_ref(XEN uf1, XEN uchan)
 {
   #define H_frame_ref "(" S_frame_ref " f chan): f[chan] (the chan-th sample in frame f"
   mus_any *g = NULL;
-  int chan = 0;
-  mus_xen *gn;
+  int chan = 0
+;  mus_xen *gn;
 
+#if HAVE_SCHEME
+  gn = (mus_xen *)imported_s7_object_value_checked(uf1, mus_xen_tag);
+  if ((!gn) ||
+      (gn->type != FRAME_TAG))
+    XEN_WRONG_TYPE_ARG_ERROR(S_frame_ref, XEN_ARG_1, uf1, "a frame");
+  g = gn->gen;
+#else
   XEN_TO_C_GENERATOR(uf1, gn, g, mus_frame_p, S_frame_ref, "a frame");
+#endif
 
   XEN_TO_C_INTEGER_OR_ERROR(uchan, chan, S_frame_ref, XEN_ARG_2);
   return(C_TO_XEN_DOUBLE(mus_frame_ref(g, chan)));
@@ -4345,7 +4357,15 @@ static XEN g_frame_set(XEN uf1, XEN uchan, XEN val)
   int chan = 0;
   mus_xen *gn;
 
+#if HAVE_SCHEME
+  gn = (mus_xen *)imported_s7_object_value_checked(uf1, mus_xen_tag);
+  if ((!gn) ||
+      (gn->type != FRAME_TAG))
+    XEN_WRONG_TYPE_ARG_ERROR(S_frame_set, XEN_ARG_1, uf1, "a frame");
+  g = gn->gen;
+#else
   XEN_TO_C_GENERATOR(uf1, gn, g, mus_frame_p, S_frame_set, "a frame");
+#endif
 
   XEN_TO_C_INTEGER_OR_ERROR(uchan, chan, S_frame_set, XEN_ARG_2);
   XEN_TO_C_DOUBLE_OR_ERROR(val, x, S_frame_set, XEN_ARG_3);
@@ -9499,24 +9519,12 @@ static s7_pointer g_abs_triangle_wave(s7_scheme *sc, s7_pointer args)
 }
 
 
-
-static void *get_env_func(void *ptr)
-{
-  switch (mus_env_type((mus_any *)ptr))
-    {
-    case MUS_ENV_LINEAR: return((void *)mus_env_linear);
-    case MUS_ENV_STEP:   return((void *)mus_env_step);
-    default:             return((void *)mus_env_exponential);
-    }
-}
-
 static s7_pointer fm_violin_vibrato;
 static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
 {
   static s7_pointer last_args = NULL;
   static void **last_syms = NULL;
   void **syms;
-  mus_float_t (*env_func)(mus_any *g);
 
   if (args == last_args)
     syms = last_syms;
@@ -9531,7 +9539,7 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	return(fm_violin_vibrato_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 4); 
+      syms = s7_expression_make_data(sc, args, 3); 
       last_args = args;
       last_syms = syms;
     }
@@ -9541,22 +9549,18 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
     {
       syms[0] = get_generator(sc, cadar(args));
       XEN_ASSERT_TYPE((syms[0]) && (mus_env_p((mus_any *)syms[0])), cadar(args), XEN_ONLY_ARG, "env", "env generator");
-      syms[1] = get_env_func(syms[0]);
+
+      args = cdr(args);
+      syms[1] = get_generator(sc, cadar(args));
+      XEN_ASSERT_TYPE((syms[1]) && (mus_triangle_wave_p((mus_any *)syms[1])), cadar(args), XEN_ARG_1, "triangle-wave", "triangle-wave generator");
 
       args = cdr(args);
       syms[2] = get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((syms[2]) && (mus_triangle_wave_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "triangle-wave", "triangle-wave generator");
-
-      args = cdr(args);
-      syms[3] = get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((syms[3]) && (mus_rand_interp_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "rand-interp", "rand-interp generator");
+      XEN_ASSERT_TYPE((syms[2]) && (mus_rand_interp_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "rand-interp", "rand-interp generator");
     }
-
-  env_func = (mus_float_t (*)(mus_any *))syms[1];
-
-  return(s7_make_real(sc, env_func((mus_any *)syms[0]) + 
-		          mus_triangle_wave_unmodulated((mus_any *)syms[2]) + 
-		          mus_rand_interp_unmodulated((mus_any *)syms[3])));			
+  return(s7_make_real(sc, mus_env((mus_any *)(syms[0])) + 
+		          mus_triangle_wave_unmodulated((mus_any *)syms[1]) + 
+		          mus_rand_interp_unmodulated((mus_any *)syms[2])));			
 }
 
 static s7_pointer env_polywave;

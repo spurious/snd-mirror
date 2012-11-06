@@ -3192,6 +3192,11 @@ of 'or' and 'and'.
 (define-macro (every? function . args)
   `(and ,@(map (lambda (arg) `(,function ,arg)) args)))
 
+(define (map-and proc lst) 
+  (or (null? lst) 
+      (and (proc (car lst)) 
+           (map-and proc (cdr lst)))))
+
 (define-macro (and-let* vars . body)
   `(let () ;; bind vars, if any is #f stop, else evaluate body with those bindings
      (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) 

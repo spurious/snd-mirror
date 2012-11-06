@@ -5,10 +5,12 @@
     (load "ws.scm"))
 
 (define default-index-env '(0 1  25 .4  75 .6  100 0))
+(define default-amp-env '(0 0  25 1  75 1  100 0))
+(define default-gliss-env '(0 0  100 0))
 
 (definstrument (fm-violin startime dur frequency amplitude
 	    (fm-index 1.0)
-	    (amp-env '(0 0  25 1  75 1  100 0))
+	    amp-env 
 	    (periodic-vibrato-rate 5.0) 
 	    (random-vibrato-rate 16.0)
 	    (periodic-vibrato-amplitude 0.0025) 
@@ -19,18 +21,18 @@
 	    (ind-noise-amount 0.0)
 	    (amp-noise-freq 20.0) 
 	    (amp-noise-amount 0.0)
-	    (gliss-env '(0 0  100 0)) 
+	    gliss-env 
 	    (glissando-amount 0.0) 
-	    (fm1-env default-index-env)
-	    (fm2-env default-index-env)
-	    (fm3-env default-index-env)
+	    fm1-env 
+	    fm2-env
+	    fm3-env
 	    (fm1-rat 1.0) 
 	    (fm2-rat 3.0)	 
 	    (fm3-rat 4.0)                    
-	    (fm1-index #f) 
-	    (fm2-index #f) 
-	    (fm3-index #f)
-	    (degree #f)
+	    fm1-index
+	    fm2-index
+	    fm3-index
+	    degree
 	    (distance 1.0)
 	    (reverb-amount 0.01)
 	    (base 1.0))
@@ -81,10 +83,10 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 						  mus-chebyshev-second-kind)
 				   (make-oscil (* fm1-rat frequency)))
 			       #f))
-		  (indf1 (and modulate (make-env fm1-env norm :duration dur)))
-		  (indf2 (and modulate (or easy-case (make-env fm2-env index2 :duration dur))))
-		  (indf3 (and modulate (or easy-case (make-env fm3-env index3 :duration dur))))
-		  (frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
+		  (indf1 (and modulate (make-env (or fm1-env default-index-env) norm :duration dur)))
+		  (indf2 (and modulate (or easy-case (make-env (or fm2-env default-index-env) index2 :duration dur))))
+		  (indf3 (and modulate (or easy-case (make-env (or fm3-env default-index-env) index3 :duration dur))))
+		  (frqf (make-env (or gliss-env default-gliss-env) (* glissando-amount frq-scl) :duration dur))
 		  (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
 		  (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
 		  (fm-noi (if (not (= 0.0 noise-amount))
@@ -99,7 +101,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 		  (carrier (make-oscil frequency))
 		  (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
 		  (fmosc3  (and modulate (or easy-case (make-oscil (* fm3-rat frequency)))))
-		  (ampf  (make-env amp-env :scaler amplitude :base base :duration dur))
+		  (ampf  (make-env (or amp-env default-amp-env) :scaler amplitude :base base :duration dur))
 		  (locs (make-locsig (or degree (random 90.0)) distance reverb-amount)))
 	      
 	      (if (or (not easy-case) 

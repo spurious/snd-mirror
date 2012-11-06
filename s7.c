@@ -406,7 +406,7 @@ enum {OP_NO_OP,
       OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
       OP_DEFINE_WITH_ACCESSOR, OP_DEFMACRO_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
-      OP_CASE_SIMPLE, OP_CASE_SIMPLE_1, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1,
+      OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1,
       OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_1, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C, OP_CASE_INT,
       OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_Q, OP_LET_ALL_X, OP_LET_STAR_ALL_X, 
       OP_LET_C_P, OP_LET_S_P, 
@@ -495,7 +495,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "lambda*", "do", "define", "define*", "define",
    "define", "defmacro", "define-macro",
    "let", "let", "let", "let*",
-   "case", "case", "case", "case", 
+   "case", "case", "case", 
    "case", "case", "case", "case", "case",
    "let", "let", "let", "let", "let", "let", "let", "let*",
    "let", "let",
@@ -581,7 +581,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", "OP_DEFINE_FUNCHECKED",
   "OP_DEFINE_WITH_ACCESSOR", "OP_DEFMACRO_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
   "OP_LET_NO_VARS", "OP_NAMED_LET", "OP_NAMED_LET_NO_VARS", "OP_NAMED_LET_STAR",
-  "OP_CASE_SIMPLE", "OP_CASE_SIMPLE_1", "OP_CASE_SIMPLER", "OP_CASE_SIMPLER_1", 
+  "OP_CASE_SIMPLE", "OP_CASE_SIMPLER", "OP_CASE_SIMPLER_1", 
   "OP_CASE_SIMPLEST", "OP_CASE_SIMPLEST_1", "OP_CASE_SIMPLEST_ELSE", "OP_CASE_SIMPLEST_ELSE_C", "OP_CASE_INT",
   "OP_LET_C", "OP_LET_S", "OP_LET_Q", "OP_LET_ALL_C", "OP_LET_ALL_S", "OP_LET_ALL_Q", "OP_LET_ALL_X", "OP_LET_STAR_ALL_X", 
   "OP_LET_C_P", "OP_LET_S_P", 
@@ -1299,7 +1299,7 @@ struct s7_scheme {
   s7_pointer SET_SYMBOL_SAFE_C;
   s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_P, SET_PWS, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
-  s7_pointer CASE_SIMPLE, CASE_SIMPLE_1, CASE_SIMPLER, CASE_SIMPLER_1;
+  s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_1, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C, CASE_INT;
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_Q, LET_ALL_X, LET_STAR_ALL_X, LET_C_P, LET_S_P;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
@@ -1413,6 +1413,8 @@ static bool t_simple_p[NUM_TYPES];
 static bool t_big_number_p[NUM_TYPES];
 static bool t_structure_p[NUM_TYPES];
 static bool t_any_macro_p[NUM_TYPES];
+static bool t_sequence_p[NUM_TYPES];
+static bool t_applicable_p[NUM_TYPES];
 
 static void init_types(void)
 {
@@ -1425,6 +1427,8 @@ static void init_types(void)
       t_simple_p[i] = false;
       t_structure_p[i] = false;
       t_any_macro_p[i] = false;
+      t_sequence_p[i] = false;
+      t_applicable_p[i] = false;
     }
   t_number_p[T_INTEGER] = true;
   t_number_p[T_RATIO] = true;
@@ -1448,6 +1452,34 @@ static void init_types(void)
   t_structure_p[T_HASH_TABLE] = true;
   t_structure_p[T_SLOT] = true;
   t_structure_p[T_ENVIRONMENT] = true;
+
+  t_sequence_p[T_NIL] = true;
+  t_sequence_p[T_PAIR] = true;
+  t_sequence_p[T_STRING] = true;
+  t_sequence_p[T_VECTOR] = true;
+  t_sequence_p[T_HASH_TABLE] = true;
+  t_sequence_p[T_ENVIRONMENT] = true;
+  t_sequence_p[T_C_OBJECT] = true;
+
+  t_applicable_p[T_PAIR] = true;
+  t_applicable_p[T_STRING] = true;
+  t_applicable_p[T_VECTOR] = true;
+  t_applicable_p[T_HASH_TABLE] = true;
+  t_applicable_p[T_ENVIRONMENT] = true;
+  t_applicable_p[T_C_OBJECT] = true;
+  t_applicable_p[T_C_MACRO] = true;
+  t_applicable_p[T_MACRO] = true;
+  t_applicable_p[T_BACRO] = true;
+  t_applicable_p[T_SYNTAX] = true;
+  t_applicable_p[T_C_FUNCTION] = true;
+  t_applicable_p[T_C_ANY_ARGS_FUNCTION] = true;
+  t_applicable_p[T_C_OPT_ARGS_FUNCTION] = true;
+  t_applicable_p[T_C_RST_ARGS_FUNCTION] = true;
+  t_applicable_p[T_C_LST_ARGS_FUNCTION] = true;
+  t_applicable_p[T_CLOSURE] = true;
+  t_applicable_p[T_CLOSURE_STAR] = true;
+  t_applicable_p[T_GOTO] = true;
+  t_applicable_p[T_CONTINUATION] = true;
 
   t_any_macro_p[T_C_MACRO] = true;
   t_any_macro_p[T_MACRO] = true;
@@ -1490,6 +1522,9 @@ static void init_types(void)
 
 #define is_any_macro(P)               t_any_macro_p[type(P)]
 #define is_procedure_or_macro(P)      ((t_any_macro_p[type(P)]) || ((typeflag(P) & T_PROCEDURE) != 0))
+
+#define is_sequence(P)                ((t_sequence_p[type(P)]) || (has_methods(P)))
+#define is_applicable(P)              (t_applicable_p[type(P)])
 
 
 /* the layout of these bits does matter in several cases -- in particular, don't use the 2nd byte for anything
@@ -2248,7 +2283,7 @@ static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
@@ -3162,6 +3197,11 @@ static void mark_slot(s7_pointer p)
     {
       set_mark(p);
       S7_MARK(slot_value(p));
+      /* should this also mark any pending_value? -- currently we don't initialize it.
+       *   perhaps a bit if pending_value is in use checked here.  This procedure is not
+       *   called very often, but the pending value set happens a lot.
+       *   slot_set_pending_value and slot_transfer_pending_value.
+       */
     }
 }
 
@@ -4558,14 +4598,15 @@ static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer n
 
 static s7_pointer old_frame_with_slot(s7_scheme *sc, s7_pointer env, s7_pointer val)
 {
-  s7_pointer x;
+  s7_pointer x, sym;
   unsigned long long int id;
 
   id = ++frame_number;
   frame_id(env) = id;
   x = environment_slots(env);
   slot_set_value(x, val);
-  symbol_set_local(slot_symbol(x), id, x);
+  sym = slot_symbol(x);
+  symbol_set_local(sym, id, x);
 
   return(env);
 }
@@ -5156,8 +5197,7 @@ s7_pointer s7_environment_to_list(s7_scheme *sc, s7_pointer env)
     {
       unsigned int i;
       for (i = 0; i < vector_fill_pointer(env); i++)
-	/* if (is_slot(vector_element(env, i))) */ /* isn't this guaranteed? */
-	  sc->w = cons(sc, cons(sc, slot_symbol(vector_element(env, i)), slot_value(vector_element(env, i))), sc->w);
+	sc->w = cons(sc, cons(sc, slot_symbol(vector_element(env, i)), slot_value(vector_element(env, i))), sc->w);
     }
   else
     {
@@ -9442,6 +9482,20 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
 
 
 #if (!WITH_GMP)
+static s7_pointer abs_direct;
+static s7_pointer g_abs_direct(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x;
+  x = c_call(car(args))(sc, cdar(args));
+  if (real(x) < 0)
+    {
+      if (is_simple_real(x))
+	return(s7_remake_real(sc, x, -real(x)));
+      return(make_real(sc, -real(x)));
+    }
+  return(x);
+}
+
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of the real number x"
@@ -12272,11 +12326,6 @@ static s7_pointer g_add_temp_s(s7_scheme *sc, s7_pointer args)
 
 
 /* (let () (define (hi a) (+ a 1)) ((apply let '((x 32)) (list (procedure-source hi))) 12))
- */
-/* other standard cases (fft-related): (+|- (vector-ref ...) s) -- actually (vector-set! v i (+|- (vector-ref v i) s))
- *                                     (+|- (* s (vector-ref ...)) (* s (vector-ref ...)))
- *
- * (+ (+ ...) ...) in particular TODO: (+ (+ s s) 1)
  */
 
 
@@ -17789,19 +17838,22 @@ static s7_pointer g_is_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_string "(make-string len (val #\\space)) makes a string of length len filled with the character val (default: space)"
+  s7_pointer n;
   s7_Int len;
   char fill = ' ';
   
-  if (!s7_is_integer(car(args)))
+  n = car(args);
+  if (!s7_is_integer(n))
     {
-      CHECK_METHOD(sc, car(args), sc->MAKE_STRING, args);
-      return(wrong_type_argument(sc, sc->MAKE_STRING, small_int(1), car(args), T_INTEGER));
+      CHECK_METHOD(sc, n, sc->MAKE_STRING, args);
+      return(wrong_type_argument(sc, sc->MAKE_STRING, small_int(1), n, T_INTEGER));
     }
-  len = s7_integer(car(args));
+
+  len = s7_integer(n);
   if (len < 0)
-    return(out_of_range(sc, sc->MAKE_STRING, small_int(1), car(args), "a non-negative integer"));
+    return(out_of_range(sc, sc->MAKE_STRING, small_int(1), n, "a non-negative integer"));
   if (len > MAX_STRING_LENGTH)
-    return(out_of_range(sc, sc->MAKE_STRING, small_int(1), car(args), "a reasonable integer!"));
+    return(out_of_range(sc, sc->MAKE_STRING, small_int(1), n, "a reasonable integer!"));
 
   if (is_not_null(cdr(args))) 
     {
@@ -17873,35 +17925,36 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_set "(string-set! str index chr) sets the index-th element of the string str to the character chr"
   
-  s7_pointer x, index;
+  s7_pointer x, c, index;
   char *str;
   s7_Int ind;
 
   x = car(args);
-  index = cadr(args);
-  
   if (!s7_is_string(x))
     {
       CHECK_METHOD(sc, x, sc->STRING_SET, args);
       return(wrong_type_argument(sc, sc->STRING_SET, small_int(1), x, T_STRING));
     }
-  if (!s7_is_character(caddr(args)))
-    {
-      CHECK_METHOD(sc, caddr(args), sc->STRING_SET, args);
-      return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), caddr(args), T_CHARACTER));
-    }
+
+  index = cadr(args);
   if (!s7_is_integer(index))
     return(wrong_type_argument(sc, sc->STRING_SET, small_int(2), index, T_INTEGER));
   
-  ind = s7_integer(index);
+  c = caddr(args);
+  if (!s7_is_character(c))
+    {
+      CHECK_METHOD(sc, c, sc->STRING_SET, args);
+      return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), c, T_CHARACTER));
+    }
 
+  ind = s7_integer(index);
   if (ind < 0)
     return(wrong_type_argument_with_type(sc, sc->STRING_SET, small_int(2), index, make_protected_string(sc, "a non-negative integer")));
   if (ind >= string_length(x))
     return(out_of_range(sc, sc->STRING_SET, small_int(2), index, "should be less than string length"));
 
   str = string_value(x);
-  str[ind] = (char)s7_character(caddr(args));
+  str[ind] = (char)s7_character(c);
   return(caddr(args));
 }
 
@@ -17964,13 +18017,13 @@ end: (substring \"01234\" 1 2) -> \"1\""
   char *s;
   
   str = car(args);
-  start = cadr(args);
-  
   if (!s7_is_string(str))
     {
       CHECK_METHOD(sc, str, sc->SUBSTRING, args);
       return(wrong_type_argument(sc, sc->SUBSTRING, small_int(1), str, T_STRING));
     }
+
+  start = cadr(args);
   if (!s7_is_integer(start))
     return(wrong_type_argument(sc, sc->SUBSTRING, small_int(2), start, T_INTEGER));
   i0 = s7_integer(start);
@@ -31488,8 +31541,8 @@ It has the additional local variables: error-type, error-data, error-code, error
 static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *reset_hook)
 {
   int i;
-  /* fprintf(stderr, "find catch\n"); */
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
+
   for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
     {
       opcode_t op;
@@ -31500,12 +31553,10 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	{
 	case OP_CATCH_ALL:
 	  {
-	    int loc;
 	    s7_pointer catcher;
 	    catcher = stack_code(sc->stack, i);
-	    loc = catch_goto_loc(catcher);
 	    sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(catcher));
-	    sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
+	    sc->stack_end = (s7_pointer *)(sc->stack_start + catch_goto_loc(catcher));
 	    pop_stack(sc);
 	    sc->value = catch_handler(catcher);
 	    if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
@@ -31710,7 +31761,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    *   else send out the error info ourselves.
    */
   call_name = sc->s7_call_name;
-  sc->s7_call_name = NULL;
+  /* sc->s7_call_name = NULL; */
   sc->no_values = 0; 
   format_depth = -1;
   if (sc->safe_do_level != 0)
@@ -31720,8 +31771,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
   next_environment(sc->error_env) = sc->envir;
+
   cur_code = sc->cur_code;
   slot_set_value(sc->error_code, cur_code);
+  /* sc->cur_code = sc->F; */
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
 
@@ -31750,8 +31803,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       slot_set_value(sc->error_line, sc->F);
       slot_set_value(sc->error_file, sc->F);
     }
-
-  sc->cur_code = sc->F;
 
   if (found_catch(sc, type, info, &reset_error_hook))
     return(type);
@@ -31847,6 +31898,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	{
 	  if (call_name)
 	    {
+	      sc->s7_call_name = NULL;
 	      if ((sc->s7_call_file != NULL) &&
 		  (sc->s7_call_line >= 0))
 		{
@@ -32710,18 +32762,6 @@ static bool next_for_each(s7_scheme *sc)
 }
 
 
-static bool is_sequence(s7_scheme *sc, s7_pointer p)
-{
-  return((s7_is_list(sc, p)) ||
-	 (s7_is_vector(p)) ||
-	 (s7_is_string(p)) ||
-	 (s7_is_hash_table(p)) ||
-	 (is_environment(p)) ||
-	 (is_c_object(p)) ||
-	 (has_methods(p)));
-}
-
-
 static s7_pointer make_counter(s7_scheme *sc, s7_pointer result, s7_pointer lst, long long int count, long long int length)
 {
   s7_pointer x;
@@ -32764,7 +32804,11 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    */
   s7_pointer obj, x;
   static s7_pointer errstr1 = NULL, errstr2 = NULL;
+
   sc->code = car(args); /* the function */
+  if (!is_applicable(sc->code))
+    return(wrong_type_argument_with_type(sc, sc->FOR_EACH, small_int(1), sc->code, 
+					 make_protected_string(sc, "a procedure or something applicable")));
 
   /* macro application requires the entire call as the argument to apply, but apply itself fixes this up.
    *  that is, g_apply checks, then goes to OP_EVAL_MACRO after OP_APPLY with the fixed up list,
@@ -32851,7 +32895,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       for (x = cdr(args); is_not_null(x); x = cdr(x))
 	{
 	  s7_Int nlen;
-	  if (!is_sequence(sc, car(x)))
+	  if (!is_sequence(car(x)))
 	    {
 	      if (!errstr1)
 		errstr1 = s7_make_permanent_string("a sequence");
@@ -32869,7 +32913,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  if (len == 0) 
 	    {
 	      for (x = cdr(x); is_not_null(x); x = cdr(x))
-		if (!is_sequence(sc, car(x)))
+		if (!is_sequence(car(x)))
 		  {
 		    if (!errstr1)
 		      errstr1 = s7_make_permanent_string("a sequence");
@@ -32915,20 +32959,8 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	    }
 	}
     }
-  else /* len == 0 */
-    {
-      /* here we can't depend on OP_APPLY to do the error check on the first arg:
-       *   (map 0 '()) -> '()
-       * so we check by hand before returning #<unspecified>
-       */
-      if ((!is_null(sc->code)) &&
-	  ((is_procedure_or_macro(sc->code)) ||
-	   (is_sequence(sc, sc->code)) ||
-	   (is_syntax(sc->code))))
-	return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
-      return(wrong_type_argument_with_type(sc, sc->FOR_EACH, small_int(1), sc->code, 
-					   make_protected_string(sc, "a procedure or something applicable")));
-    }
+  else /* len == 0 and  we checked for non-applicable first arg above */
+    return(sc->UNSPECIFIED);    /* circular -> S7_LONG_MAX in this case, so 0 -> nil */
 
   if (len == S7_LONG_MAX)
     {
@@ -33156,7 +33188,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   s7_Int len;
   s7_pointer obj, x;
   static s7_pointer errstr1 = NULL, errstr2 = NULL;
+
   sc->code = car(args);
+  if (!is_applicable(sc->code))
+    return(wrong_type_argument_with_type(sc, sc->MAP, small_int(1), sc->code, make_protected_string(sc, "a procedure or something applicable")));
 
   sc->y = args;                     /* gc protect */
   obj = cadr(args); 
@@ -33220,7 +33255,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     }
 
   for (x = cddr(args); is_not_null(x); x = cdr(x))
-    if (!is_sequence(sc, car(x)))
+    if (!is_sequence(car(x)))
       {
 	if (!errstr2)
 	  errstr2 = s7_make_permanent_string("a sequence");
@@ -33268,14 +33303,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     }
 
   if (len == 0)   /* (map 1 "hi" '()) */
-    {
-      if ((!is_null(sc->code)) &&
-	  ((is_procedure_or_macro(sc->code)) ||
-	   (is_sequence(sc, sc->code)) ||
-	   (is_syntax(sc->code))))
-	return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
-      return(wrong_type_argument_with_type(sc, sc->MAP, small_int(1), sc->code, make_protected_string(sc, "a procedure or something applicable")));
-    }
+    return(sc->NIL);    /* obj has no elements (the circular list case will return S7_LONG_MAX here) */
 
   if (len == S7_LONG_MAX)
     {
@@ -35341,6 +35369,21 @@ static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
     }
   return(f);
 }
+
+static s7_pointer abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  s7_pointer arg;
+  arg = cadr(expr);
+  if ((is_pair(arg)) &&
+      (is_optimized(arg)) &&
+      (optimize_data(arg) == HOP_SAFE_C_C) &&
+      (s7_function_returns_temp(arg)))
+    {
+      set_optimize_data(expr, HOP_SAFE_C_C);
+      return(abs_direct);
+    }
+  return(f);
+}
 #endif
 
 
@@ -36185,6 +36228,14 @@ static void init_choosers(s7_scheme *sc)
 
   mod_si = s7_make_function(sc, "modulo", g_mod_si, 2, 0, false, "modulo optimization");
   s7_function_set_class(mod_si, f);
+
+  /* abs */
+  f = slot_value(global_slot(sc->ABS));
+  c_function_chooser(f) = abs_chooser;
+
+  abs_direct = s7_make_function(sc, "abs", g_abs_direct, 1, 0, false, "abs optimization");
+  s7_function_set_class(abs_direct, f);
+  s7_function_set_returns_temp(abs_direct);
 #endif
 
 
@@ -38102,7 +38153,11 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
   func_is_safe = is_safe_procedure(func);
   func_is_c_function = is_c_function(func);
   func_is_closure = is_closure(func);
-
+  /*
+  fprintf(stderr, "check %s: closure: %d, closure*: %d, bad: %d, q: %d, safe: %d\n", 
+	  DISPLAY(car_x), func_is_closure, is_closure_star(func),
+	  bad_pairs, quotes, func_is_safe);
+  */
   if ((func_is_closure) &&
       (closure_arity_to_int(sc, func) != args))
     return(false);
@@ -38111,7 +38166,15 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
       ((!has_simple_args(closure_body(func))) ||
        (closure_star_arity_to_int(sc, func) < args) ||
        (arglist_has_keyword(cdr(car_x)))))
-    return(false);
+    {
+      /*
+      fprintf(stderr, "    not simple: %d, %d < %d, key: %d\n", 
+	      has_simple_args(closure_body(func)), 
+	      closure_star_arity_to_int(sc, func), args,
+	      arglist_has_keyword(cdr(car_x)));
+      */
+      return(false);
+    }
 
   if (bad_pairs > quotes) return(false);
 
@@ -38201,6 +38264,12 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	}
       else
 	{
+	  /* 
+	  fprintf(stderr, "    args: %d, p: %d, count: %d\n",
+		  arglist_has_accessed_symbol(closure_args(func)),
+		  pairs,
+		  quotes + all_x_count(car_x));
+	  */
 	  if (((func_is_closure) ||
 	       (is_closure_star(func))) && 
 	      (!arglist_has_accessed_symbol(closure_args(func))) &&
@@ -38210,6 +38279,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 	      if (func_is_closure)
 		set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X));
 	      else set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
+
 	      if (args < NUM_SMALL_INTS)
 		fcdr(cdr(car_x)) = small_int(args);
 	      else fcdr(cdr(car_x)) = make_permanent_integer(args);
@@ -40016,7 +40086,7 @@ static s7_pointer check_case(s7_scheme *sc)
 				}
 			    }
 			}
-		      else set_syntax_op(sc->code, sc->CASE_SIMPLE_1);
+		      else set_syntax_op(sc->code, sc->CASE_SIMPLE);
 		    }
 		  else set_syntax_op(sc->code, sc->CASE_SIMPLE);
 		}
@@ -41244,6 +41314,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	      if (happy)
 		set_simple_args(body);
 	    }
+	  /* SOMEDAY: include quoted args as simple */
 	  
 	  sc->cycle_counter = 0;
 	  /* it is extremely expensive to check for cycles with collect_shared_info, but the
@@ -42943,7 +43014,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    *              OP_DOTIMES_STEP_P -> OP_LET_UNKNOWN_S_P: 4483377 (18) then -> OP_CASE_SIMPLEST[_R_1] 9
    *   bench:  OP_LET_READ_CHAR_P: 14%, OP_INCREMENT_1: 10%
    *              OP_INCREMENT_1 -> OP_SAFE_IF_CC_P: 4460055 (7) also OP_SIMPLE_DO_STEP -> OP_SIMPLE_DO_STEP: 2006543 (3) OP_SAFE_DO_STEP_P -> OP_INCREMENT_1: 999999 (1)
-   *   lat:    OP_CASE_SIMPLE_1: 15%, OP_LET_Z_P: 24%
+   *   lat:    cases 15%, OP_LET_Z_P: 24%
    *              OP_SAFE_IF_IS_NULL_Q_P -> OP_LET_Z_P: 39355761 (8) -> case
    *   t455:   OP_LET_Z_P: 40%, OP_FOR_EACH_SIMPLER: 40%
    *              OP_FOR_EACH_SIMPLER -> OP_LET_Z_P: 16652251 (42) and back another 40
@@ -50505,12 +50576,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		push_stack(sc, OP_CATCH_ALL, code, p);        /* code ignored here, except by GC */
 		sc->code = ecdr(cdr(code));                   /* the body of the first lambda */
- 		if (is_one_liner(sc->code))
- 		  {
- 		    sc->code = car(sc->code);
- 		    goto EVAL; 
- 		  }
-		goto BEGIN;
+		goto BEGIN;                                   /* removed one_liner check here -- rare */
 	      }
 	      
 	      
@@ -50559,7 +50625,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* trailers */
 	  
 #if WITH_COUNTS
-	  /* add_expr(sc, sc->code); */
+	  add_expr(sc, sc->code);
 #endif
 	  sc->cur_code = sc->code;
 	  
@@ -56228,35 +56294,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
       /* --------------- */
-    case OP_CASE_SIMPLE_1: 
-      /* assume symbol as selector, all keys are simple, and no =>, all bodies are 1 liners
-       */
-      {
-	s7_pointer x, y, selector;
-	selector = finder(sc, car(sc->code));
-	for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	  {
-	    y = fcdr(x);
-	    if (!is_pair(y)) /* else? */
-	      {
-		sc->code = cadar(x);
-		goto EVAL;
-	      }
-	    do {
-	      if (car(y) == selector)
-		{
-		  sc->code = ecdr(x); /* cadar(x); */
-		  goto EVAL;
-		}
-	      y = cdr(y);
-	    } while (is_pair(y));
-	  }
-	sc->value = sc->UNSPECIFIED;
-	goto START;
-      }
-
-
-      /* --------------- */
     case OP_CASE_INT: 
       /* assume symbol as selector, all keys are single and int, and no =>
        * ideally we'd just jump to the code we want indexed via the selector,
@@ -56564,7 +56601,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    frame_id(e) = ++frame_number;
 	    sc->envir = e;
 	    for (p = environment_slots(e); is_slot(p); p = next_slot(p))
-	      symbol_set_local(slot_symbol(p), frame_number, p);
+	      {
+		s7_pointer sym;
+		sym = slot_symbol(p);
+		symbol_set_local(sym, frame_number, p);
+	      }
 	  }
 	if (is_one_liner(sc->code))
 	  {
@@ -61886,7 +61927,6 @@ s7_scheme *s7_init(void)
   sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",    OP_CASE_UNCHECKED);  
   sc->CASE_INT =              assign_internal_syntax(sc, "case",    OP_CASE_INT);  
   sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",    OP_CASE_SIMPLE);  
-  sc->CASE_SIMPLE_1 =         assign_internal_syntax(sc, "case",    OP_CASE_SIMPLE_1);  
   sc->CASE_SIMPLER =          assign_internal_syntax(sc, "case",    OP_CASE_SIMPLER);  
   sc->CASE_SIMPLER_1 =        assign_internal_syntax(sc, "case",    OP_CASE_SIMPLER_1);  
   sc->CASE_SIMPLEST =         assign_internal_syntax(sc, "case",    OP_CASE_SIMPLEST);  
@@ -62857,9 +62897,6 @@ s7_scheme *s7_init(void)
 
 
 /* PERHAPS: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
- * SOMEDAY: fix do envs (unopt case -- saved-args)
- *            would it work to simply replace the old slot (not remake the entire env)?
- *
  * TODO: NS_EVAL and TRAILER cases throughout [but this is tricky!]
  * TODO: split IF_O_P like the let case, also split? SAFE_C_SP [a multiple-values question]
  * also things like LET_C_D look dangerous -- we check is_optimized (can be op_unknown...), then
@@ -62894,7 +62931,7 @@ s7_scheme *s7_init(void)
  * how to get the doc string out of the closure body
  *
  * there must be some reasonable way to collapse the mus_xen->mus_oscil_p checks to one type check.
- *   see FORMANT_TAG -- this could be extended to other cases -- mus_frame_p in particular
+ *   see FORMANT_TAG -- this could be extended to other cases
  *
  * we need integer_length everywhere! 
  *   TODO: these fixups are ignored by the optimized cases
@@ -62904,13 +62941,13 @@ s7_scheme *s7_init(void)
  *   then s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
  * 
  * timing    12.0           13.0 13.1 13.2 13.3
- * bench    42736           8752 8051 7725 7727
+ * bench    42736           8752 8051 7725 7722
  * lint                     9328 8140 7887 7887
- * index    44300 4988 3935 3291 3005 2742 2739
+ * index    44300 4988 3935 3291 3005 2742 2737
  * s7test         1721 1430 1358 1297 1244 1233
- * t455            265  218   89   55   31   31
+ * t455            265  218   89   55   31   30
  * t502             90   72   43   39   36   36
- * lat             229        63   52   47   45
+ * lat             229        63   52   47   42
  * calls                     278  210  178  169
  *
  * we can't assume things like floor return an integer because there might be methods in play,
@@ -62919,6 +62956,5 @@ s7_scheme *s7_init(void)
  * in a case like (define* (hi (a 1.0)) (sin a)) we could notice (hi) as a special
  *   case -- the arg is 1.0, and the substitution can be direct? or save the body with the substitutions?
  *   (sin 1.0) if no args etc
- *
- * can the do env+slot stuff be prebuilt and reused if safe? how to gc-protect it?
  */
+

@@ -21554,7 +21554,7 @@ who says the continuation has to restart the map from the top?
     (set! v (cons (random 100.0) v)))
   (set! v (sort! v >))
   (if (not (apply >= v))
-      (format #t ";~D: v not sorted by >: ~A~%" #__line__ v)))
+      (format #t ";sort!: v not sorted by >: ~A~%" )))
 
 
 (test (sort! (list 3 2 1) (lambda (m n) (let ((vals (sort! (list m n) <))) (< m n)))) '(1 2 3))
@@ -66138,6 +66138,9 @@ but it's the printout that is at fault:
    (test (/ arg) 'error))
  (list "hi" '() (integer->char 65) 0 0.0 0+0i -0.0 -0 0-0i #f #t '(1 2) _ht_ 'a-symbol (cons 1 2) (make-vector 3) abs 
        #<eof> '(1 2 3) #\newline (lambda (a) (+ a 1)) #<unspecified> #<undefined>))
+
+;;; from guile irc
+(test (boolean? (let ((x (/ 1e-300 1e8))) x)) #f)
 
 (if with-bignums
     (let ((old-prec (bignum-precision)))

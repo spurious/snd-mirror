@@ -845,16 +845,6 @@
 		      (tree-member sym (car tree)))
 		 (tree-member sym (cdr tree)))))
       
-#|      
-      (define (tree-member-unquoted sym tree)
-	(and (pair? tree)
-	     (not (eq? (car tree) 'quote))
-	     (or (eq? (car tree) sym)
-		 (and (pair? (car tree))
-		      (tree-member-unquoted sym (car tree)))
-		 (tree-member-unquoted sym (cdr tree)))))
-|#      
-      
       (define (tree-car-member sym tree)
 	(and (pair? tree)
 	     (or (eq? (car tree) sym)
@@ -2784,16 +2774,6 @@
 					 (lint-format "let variable ~A is called in its binding?  Perhaps let should be letrec:~A"
 						      name (caar bindings) 
 						      (truncated-list->string bindings)))
-#|
-				     (if (not named-let) ; slib often uses the same names here! Actually, this test is wrong most of the time
-					 (for-each 
-					  (lambda (previous-var)
-					    (if (tree-member-unquoted (car previous-var) (cadar bindings))
-						(lint-format "let variable ~A is used in ~A's binding?  Perhaps let should be let*:~A"
-							     name (car previous-var) (caar bindings)
-							     (truncated-list->string bindings))))
-					  vars))
-|#
 				     (lint-walk name (cadar bindings) env)
 
 				     ;; can we tell its type and (as long as not set) check for type errors?
