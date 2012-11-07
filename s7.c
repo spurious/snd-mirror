@@ -41300,31 +41300,34 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	{
 	  if (!unstarred_lambda)
 	    {
-	      s7_pointer p;
+	      s7_pointer p, arg;
 	      bool happy = true;
 	      /* check default vals -- if none is an expression or symbol, set simple args */
 	      for (p = args; is_pair(p); p = cdr(p))
-		if ((is_pair(car(p))) &&
-		    ((is_pair(cadr(car(p)))) ||
-		     (is_symbol(cadr(car(p))))))
-		  {
-		    happy = false;
-		    break;
-		  }
+		{
+		  arg = car(p);
+		  if ((is_pair(arg)) &&                /* has default value */
+		      ((is_symbol(cadr(arg))) ||       /*    if default value might involve eval in any way, it isn't simple */
+		       ((is_pair(cadr(arg))) &&        /*    pair as default only ok if it is (quote ...) */
+			(car(cadr(arg)) != sc->QUOTE))))
+		    {
+		      happy = false;
+		      break;
+		    }
+		}
 	      if (happy)
 		set_simple_args(body);
 	    }
-	  /* SOMEDAY: include quoted args as simple */
 	  
 	  sc->cycle_counter = 0;
-	  /* it is extremely expensive to check for cycles with collect_shared_info, but the
+	  /* it is expensive to check for cycles with collect_shared_info, but the
 	   *   body_is_safe process can get hung if the cycle is hidden from the simple
 	   *   checks above. 
 	   *       (define (hi) (let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (< ctr 4) #1# (newline)))))
 	   *   tickles this bug.  In all my current test cases, we never get over 350 (lint), so checking
 	   *   for 5000 seems safe.
 	   *
-	   * (added later: this comment may now be out-of-date)
+	   * (added later: this comment may now be out-of-date -- cycles are now easy to detect)
 	   */
 	  if (body_is_safe(sc, x, args, body, true, &bad_set))
 	    {
@@ -45994,8 +45997,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* we're out of caller's args, so fill rest of environment slots from the defaults */
 		for (; is_slot(p); p = next_slot(p), orig_args = cdr(orig_args))
 		  {
+		    s7_pointer defval;
 		    if (is_pair(car(orig_args)))
-		      slot_pending_value(p) = cadar(orig_args);
+		      {
+			defval = cadar(orig_args);
+			if (is_pair(defval))
+			  slot_pending_value(p) = cadr(defval);
+			else slot_pending_value(p) = defval;
+		      }
 		    else slot_pending_value(p) = sc->F;
 		  }
 
@@ -46056,8 +46065,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  p = car(sc->T2_2);
 		  for (; is_pair(p); p = cdr(p), x = next_slot(x))
 		    {
+		      s7_pointer defval;
 		      if (is_pair(car(p)))
-			slot_set_value(x, cadar(p));
+			{
+			  defval = cadar(p);
+			  if (is_pair(defval))
+			    slot_set_value(x, cadr(defval));
+			  else slot_set_value(x, defval);
+			}
 		      else slot_set_value(x, sc->F);
 		      symbol_set_local(slot_symbol(x), frame_id(sc->envir), x);
 		    }
@@ -46809,12 +46824,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		for (; is_pair(p); p = cdr(p), new_args = cdr(new_args))
-		  if (is_pair(car(p)))
-		    car(new_args) = cadar(p);
-		  else car(new_args) = sc->F;
-
+		  {
+		    s7_pointer defval;
+		    if (is_pair(car(p)))
+		      {
+			defval = cadar(p);
+			if (is_pair(defval))
+			  car(new_args) = cadr(defval);
+			else car(new_args) = defval;
+		      }
+		    else car(new_args) = sc->F;
+		  }
 		sc->code = ecdr(code);
-		/* fprintf(stderr, "args: %s\n", DISPLAY(sc->args)); */
 		goto UNSAFE_CLOSURE_STAR;
 	      }
 
@@ -46924,9 +46945,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer p;
 		p = sc->value;
 		for (; is_pair(p); p = cdr(p))
-		  if (is_pair(car(p)))
-		    sc->args = cons(sc, cadar(p), sc->args);
-		  else sc->args = cons(sc, sc->F, sc->args);
+		  {
+		    s7_pointer defval;
+		    if (is_pair(car(p)))
+		      {
+			defval = cadar(p);
+			if (is_pair(defval))
+			  sc->args = cons(sc, cadr(defval), sc->args);
+			else sc->args = cons(sc, defval, sc->args);
+		      }
+		    else sc->args = cons(sc, sc->F, sc->args);
+		  }
 		sc->args = safe_reverse_in_place(sc, sc->args);
 		sc->code = ecdr(code);
 		/* fprintf(stderr, "    args: %s\n", DISPLAY(sc->args)); */

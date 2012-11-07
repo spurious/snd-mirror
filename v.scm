@@ -6,7 +6,6 @@
 
 (define default-index-env '(0 1  25 .4  75 .6  100 0))
 (define default-amp-env '(0 0  25 1  75 1  100 0))
-(define default-gliss-env '(0 0  100 0))
 
 (definstrument (fm-violin startime dur frequency amplitude
 	    (fm-index 1.0)
@@ -21,7 +20,7 @@
 	    (ind-noise-amount 0.0)
 	    (amp-noise-freq 20.0) 
 	    (amp-noise-amount 0.0)
-	    gliss-env 
+	    (gliss-env '(0 0  100 0))
 	    (glissando-amount 0.0) 
 	    fm1-env 
 	    fm2-env
@@ -86,7 +85,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 		  (indf1 (and modulate (make-env (or fm1-env default-index-env) norm :duration dur)))
 		  (indf2 (and modulate (or easy-case (make-env (or fm2-env default-index-env) index2 :duration dur))))
 		  (indf3 (and modulate (or easy-case (make-env (or fm3-env default-index-env) index3 :duration dur))))
-		  (frqf (make-env (or gliss-env default-gliss-env) (* glissando-amount frq-scl) :duration dur))
+		  (frqf (make-env gliss-env (* glissando-amount frq-scl) :duration dur))
 		  (pervib (make-triangle-wave periodic-vibrato-rate (* periodic-vibrato-amplitude frq-scl)))
 		  (ranvib (make-rand-interp random-vibrato-rate (* random-vibrato-amplitude frq-scl)))
 		  (fm-noi (if (not (= 0.0 noise-amount))
