@@ -14540,6 +14540,10 @@ this prints:
 (test (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a 1)) (define (f2 a b) (- a b)) (f1 12)) 11)
 (test (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12)) 11)
 
+(test (let () (define* (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define* (f2 a) (- a)) (f1 12)) -12)
+(test (let () (define* (f2 a) (+ a 1)) (define (f1 a) (f2 a 1)) (define* (f2 a b) (- a b)) (f1 12)) 11)
+(test (let () (define* (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define* (f2 a) (- a 1)) (f1 12)) 11)
+
 
 
 #|

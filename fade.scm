@@ -75,9 +75,9 @@
 			 (let ((r2 (* 2 ramp)))
 			   ;; sweep up so low freqs go first
 			   (do ((k 1 (+ k 1))
-				(ks 0.0 (+ ks ifs)))
+				(ks r2 (- ks ifs)))
 			       ((= k fs))
-			     (let ((rfs (max 0.0 (min 1.0 (- r2 ks)))))
+			     (let ((rfs (max 0.0 (min 1.0 ks))))
 			       (set! outval (+ outval (formant (vector-ref fs1 k) 
 							       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 			   (set! val outval)))

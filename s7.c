@@ -35485,6 +35485,7 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	  (s7_function_returns_temp(arg1)))
 	return(add_temp_s);
 
+      /* fprintf(stderr, "a2: %s\n", DISPLAY_80(expr)); */
       return(add_2);
     }
 #endif
@@ -38320,9 +38321,13 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
   orig_hop = hop;
 
-  /* TODO: is_closure, but not closure*? */
-  if (is_closure(func)) /* can't depend on ecdr here because it might not be global, or might be redefined locally */
+  if ((is_closure(func)) || /* can't depend on ecdr here because it might not be global, or might be redefined locally */
+      (is_closure_star(func)))
     {
+      /* (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
+       * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
+       * and similar define* cases
+       */
       if ((!is_global(caar(x))) ||
 	  (direct_memq(caar(x), e)))
 	hop = 0;
@@ -38332,6 +38337,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
        *   thing is actually a safe global.
        */
     }
+
   /* but if we make a recursive call on a func, we've obviously already looked up that function, and
    *   if it has not been shadowed, then we don't need to check it -- so the hop but should be on
    *   for that one case.
@@ -42184,6 +42190,9 @@ static s7_pointer init_dox_eval(s7_scheme *sc, s7_pointer code)
 static s7_pointer step_dox_eval(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer args, val;
+#if WITH_COUNTS
+  if (c_call(code) == g_add_2) add_expr(sc, code);
+#endif
   switch (optimize_data(code))
     {
     case HOP_SAFE_C_C:
@@ -47005,6 +47014,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      /* -------------------------------------------------------------------------------- */
 
+	      /* all of this code could be boiled down to a few tables
+	       */
 	    case OP_UNKNOWN:
 	    case HOP_UNKNOWN:
 	      {
@@ -48567,26 +48578,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* -------------------------------- */
 	      
 #if 0
-	      /* lazy case:
-		 case OP_MAKE_VECTOR_S:
-		 get len and other args (S SS SP etc)
-		 because arg eval might have side effect,
-		 then 
-		 IF_BEGIN_POP_STACK(sc);
-		 if we get here, we aren't in begin -- try this!
-		 
-		 OP_MAKE_VECTOR_1:
-		 if len not int or list, method check
-		 if len<0 or too big range error
-		 make vector
-		 
+	      /*
 		 no overhead write-char? 
 		 *  -- needs 4 base points (8 case labels), (or + 2 if both symbols case)
 		 *           2 return points for eval
 		 *           2 eval labels
 		 * 1st arg can be C S X, 2nd X S N G [ignoring CG and SG that leaves 10 = 20 ops]
 		 *
-		 
 		 case OP_SAFE_WRITE_CHAR_X: also C S -- C case can be prechecked
 		   port = sc->current_output_port;
 		   goto SAFE_WRITE_CHAR;
@@ -48598,7 +48596,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   similarly SS case here -- it's just for the op combiner
 		 case OP_SAFE_WRITE_CHAR_XS:
 		   port = finder(sc, cadr(args));
-		 
 		 case OP_SAFE_WRITE_CHAR_2:
 		 SAFE_WRITE_CHAR_2:
 		   check port type 
@@ -48872,8 +48869,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       * 11245755: (- r2 (* (- k 1) ifs))
 	       * 11245755: (+ outval (formant (vector-ref fs1 k) (+ (* rfs inval2) (* (- 1.0 rfs) inval1))))
 	       * 3110565: (outa i (* (env amp-env) (polyshape os 1.0 (env gls-env))))
-	       *
-	       * PERHAPS: can we catch the first as a kind of increment?
 	       */
 	      push_stack(sc, OP_SAFE_C_SZ_1, finder(sc, cadr(code)), code);
 	      sc->code = caddr(code);
@@ -50166,7 +50161,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_2) = c_call(cadr(args))(sc, sc->T2_1); /* (- 1 b) */
 		car(sc->T2_1) = val1;
 		sc->value = c_call(code)(sc, sc->T2_1);
-		/* fprintf(stderr, "%s -> %s\n", DISPLAY(code), DISPLAY(sc->value)); */
 		goto START;
 	      }
 	      
@@ -50653,9 +50647,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* fprintf(stderr, "unopt: %s\n", DISPLAY_80(sc->code)); */
 	  /* trailers */
 	  
-#if WITH_COUNTS
-	  add_expr(sc, sc->code);
-#endif
 	  sc->cur_code = sc->code;
 	  
 	  {
@@ -50665,11 +50656,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		/* car is a symbol, sc->code a list */
 		sc->value = SYMBOL_TO_VALUE(sc, carc); /* not finder here -- nearly 2/3's of these are globals */
-		/*
-		  if ((is_c_function(sc->value)) &&
-		  (is_safe_procedure(sc->value)))
-		  fprintf(stderr, "unopt safe: %s\n", DISPLAY(sc->code));
-		*/
 		sc->code = cdr(sc->code);
 		sc->args = sc->NIL;
 		/* drop into eval args
@@ -50777,9 +50763,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL_ARGS;
       /* moving eval_args up here (to avoid this goto) was slightly slower, probably by chance.
        */
-      /* this code can almost certainly be simplified -- "it just growed..." 
-       */
-      
       
       /* --------------- */
     case OP_EVAL_ARGS5:
@@ -56443,7 +56426,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 	  if (fcdr(x) == selector)
 	    {
-	      sc->code = ecdr(x); /* cadar(x); */ /* TODO: here and else use ecdr */
+	      sc->code = ecdr(x); /* cadar(x); */ 
 	      goto EVAL;
 	    }
 	sc->value = sc->UNSPECIFIED;
@@ -56467,7 +56450,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = gcdr(sc->code);
 	goto EVAL;
       }
-      /* TODO: in else above, don't check for it! and combine? */
 
 
       /* --------------- */
@@ -62958,9 +62940,6 @@ s7_scheme *s7_init(void)
  * (chars=? (s i) #\i) get unknown_s for (s i), so safe_c_pc for expr
  *
  * how to get the doc string out of the closure body
- *
- * there must be some reasonable way to collapse the mus_xen->mus_oscil_p checks to one type check.
- *   see FORMANT_TAG -- this could be extended to other cases
  *
  * we need integer_length everywhere! 
  *   TODO: these fixups are ignored by the optimized cases

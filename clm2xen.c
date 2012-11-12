@@ -11177,15 +11177,6 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	}
     }
 
-  /* PERHAPS: (* c dir dir)? (* c dir c*) (c* s dir) (c* s opssq)
-   *   if first arg is (env ...) then we can use multiply but return a temp (often 2 args here)
-   *   multiply_2_e -- like multiply_2 but we know 1st is real, and temp
-   *   can't this be in s7?
-   *
-   * index: (c* s opsc) (c* s s opsc) -- might be add->c? (c* s opsc s) is main case
-   * 
-   */
-
 #if 0
   {
     s7_pointer p;
