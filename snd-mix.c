@@ -3314,9 +3314,10 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   bool with_mixer;
   mus_long_t beg = 0, len = 0;
 
-  /* TODO: make mix generic: vct=mix-vct, region=mix-region, sound-data=mix-sound-data, frame=mix-frame,
+  /* it might be nice to make mix generic: vct=mix-vct, region=mix-region, sound-data=mix-sound-data, frame=mix-frame,
    *        also mix-sound|mix-channel (sound object/int), but arg order is confusing (file-chn...)
    *        and mix-vct has "origin", also file_chn might be env: pan-mix-* [vector list?]
+   *   but someday I'd like to combine vct/sound-data/frame etc.
    *
    * mix-vct origin arg is not used (externally) except as a comment
    *
