@@ -1422,7 +1422,6 @@ void xen_initialize(void)
   #include <limits.h>
 #else
   #define INT_MAX 2147483647
-  #define INT_MIN (-INT_MAX - 1)
 #endif
 
 #include "s7.h"

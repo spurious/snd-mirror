@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 5
-#define MUS_REVISION 3
-#define MUS_DATE "26-Sep-12"
+#define MUS_REVISION 4
+#define MUS_DATE "15-Nov-12"
 
 /* isn't mus_env_interp backwards? */
 
@@ -32,7 +32,6 @@ typedef struct {
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
 	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE, MUS_NUM_INTERPS} mus_interp_t;
-typedef enum {MUS_ENV_LINEAR, MUS_ENV_EXPONENTIAL, MUS_ENV_STEP} mus_env_t;
 
 typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
@@ -396,7 +395,6 @@ MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus
 MUS_EXPORT mus_float_t mus_env_linear(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_env_exponential(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_env_step(mus_any *ptr);
-MUS_EXPORT mus_env_t mus_env_type(mus_any *ptr);
 
 MUS_EXPORT bool mus_frame_p(mus_any *ptr);
 MUS_EXPORT bool mus_frame_or_mixer_p(mus_any *ptr);
@@ -599,6 +597,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 15-Nov:     removed mus_env_t and mus_env_type.
  * 26-Sep:     deprecated some stuff that was only used by the run macro.
  * 15-Jul:     more changes for clm2xen.
  * 4-July-12:  moved various struct definitions to clm.c

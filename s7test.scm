@@ -17644,6 +17644,8 @@ in s7:
 (test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
 (test (let ((x 1)) (+ (let ((a (begin (define x 2) x))) a) x)) 4)
 (test (let ((x 1)) (+ (letrec ((a (begin (define x 2) x))) a) x)) 3)
+(test (let ((a #<eof>)) (eof-object? a)) #t)
+(test (let ((a #<unspecified>)) (eq? a #<unspecified>)) #t)
 
 (test ((let ((x 2))
 	 (let ((x 3))

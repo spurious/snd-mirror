@@ -6110,6 +6110,8 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
 
 /* ---------------- env ---------------- */
 
+typedef enum {MUS_ENV_LINEAR, MUS_ENV_EXPONENTIAL, MUS_ENV_STEP} mus_env_t;
+
 typedef struct {
   mus_any_class *core;
   double rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
@@ -6160,12 +6162,6 @@ bool mus_env_p(mus_any *ptr)
 {
   return((ptr) && 
 	 (ptr->core->type == MUS_ENV));
-}
-
-
-mus_env_t mus_env_type(mus_any *ptr)
-{
-  return(((seg *)ptr)->style);
 }
 
 
@@ -7938,6 +7934,7 @@ mus_float_t mus_safe_in_any(mus_long_t samp, int chan, mus_any *IO)
 {
   /* assume IO is ok and IO->core->read_sample is mus_in_any_from_file */
   /* return(((*(IO->core)->read_sample))(IO, samp, chan)); */
+  /* this is currently unused */
   return(mus_in_any_from_file(IO, samp, chan));
 }
 

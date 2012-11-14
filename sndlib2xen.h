@@ -25,15 +25,7 @@ MUS_EXPORT sound_data *c_make_sound_data(int chans, mus_long_t frames);
 MUS_EXPORT XEN make_sound_data(int chans, mus_long_t frames);
 MUS_EXPORT void mus_sndlib_xen_initialize (void);
 MUS_EXPORT XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data);
-MUS_EXPORT sound_data *sound_data_scale(sound_data *sd, mus_float_t scaler);
 MUS_EXPORT sound_data *sound_data_fill(sound_data *sd, mus_float_t scaler);
-MUS_EXPORT mus_float_t sound_data_peak(sound_data *sd);
-MUS_EXPORT sound_data *sound_data_copy(sound_data *sd);
-MUS_EXPORT sound_data *sound_data_reverse(sound_data *sd);
-MUS_EXPORT sound_data *sound_data_add(sound_data *sd1, sound_data *sd2);
-MUS_EXPORT sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2);
-MUS_EXPORT sound_data *sound_data_offset(sound_data *sd, mus_float_t off);
-
 MUS_EXPORT mus_float_t mus_sound_data_ref(sound_data *sd, int chan, mus_long_t pos);
 MUS_EXPORT mus_float_t mus_sound_data_set(sound_data *sd, int chan, mus_long_t pos, mus_float_t val);
 MUS_EXPORT int mus_sound_data_chans(sound_data *sd);

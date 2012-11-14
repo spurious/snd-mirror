@@ -1120,8 +1120,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		{
 		case MUS_BSHORT:      
 #if MUS_LITTLE_ENDIAN
-		  for (; bufnow <= bufend; jchar += 2) 
-		    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
+		  for (; bufnow <= bufend; jchar += 2)                          /* unsigned short here as charbuf loc is slower */
+		    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))]; /* bswap16 is much slower here because of the subsequent short->double conversion */
 #else       
 		  for (; bufnow <= bufend; jchar += 2) 
 		    (*bufnow++) = MUS_SHORT_TO_SAMPLE(big_endian_short(jchar)); 

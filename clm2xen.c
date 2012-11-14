@@ -8967,6 +8967,7 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 
 #if HAVE_SCHEME
 #define car(E)    s7_car(E)
+#define caar(E)   s7_caar(E)
 #define cdr(E)    s7_cdr(E)
 #define cadr(E)   s7_cadr(E)
 #define caddr(E)  s7_caddr(E)
@@ -9097,7 +9098,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     double _mul_;    \
    \
     _mul_ = s7_number_to_real(sc, car(args)); /* we checked that it's not complex in the chooser */	\
-    GET_GENERATOR_CADR(s7_cadr(args), Type, _o_);	\
+    GET_GENERATOR_CADR(cadr(args), Type, _o_);	\
     return(s7_make_real(sc, _mul_ * Func(_o_))); \
   } \
   static s7_pointer mul_s_ ## Type ## _1; \
@@ -9108,7 +9109,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     double _f_; \
    \
     GET_NUMBER(args, "*", _mul_); \
-    GET_GENERATOR_CADR(s7_cadr(args), Type, _o_);	\
+    GET_GENERATOR_CADR(cadr(args), Type, _o_);	\
     _f_ = Func(_o_); \
     if (s7_is_real(_mul_))				      \
       return(s7_make_real(sc, s7_number_to_real(sc, _mul_) * _f_)); \
@@ -9120,7 +9121,7 @@ static mus_any *get_generator(s7_scheme *sc, s7_pointer sym)
     mus_any *_o_, *_e_;  \
    \
     GET_GENERATOR_CADR(car(args), env, _e_);		\
-    GET_GENERATOR_CADR(s7_cadr(args), Type, _o_);	\
+    GET_GENERATOR_CADR(cadr(args), Type, _o_);	\
     return(s7_make_real(sc, mus_env(_e_) * Func(_o_)));		\
   }
 
@@ -9586,7 +9587,7 @@ static s7_pointer g_fm_violin_modulation(s7_scheme *sc, s7_pointer args)
 
   vargs = cdadr(args); /* (* ... ) */
   GET_GENERATOR_CADR(s7_car(vargs), env, e);
-  GET_GENERATOR_CADR(s7_cadr(vargs), polywave, t);
+  GET_GENERATOR_CADR(cadr(vargs), polywave, t);
   GET_REAL(args, polywave, vibrato);
 
   return(s7_make_real(sc, vibrato + (mus_env(e) * mus_polywave(t, vibrato))));
@@ -9602,8 +9603,8 @@ static s7_pointer g_fm_violin_with_modulation(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR(args, oscil, o);
   vargs = s7_cdaddr(cadr(args)); /* (* ... ) */
   GET_GENERATOR_CADR(s7_car(vargs), env, e);
-  GET_GENERATOR_CADR(s7_cadr(vargs), polywave, t);
-  GET_REAL_CADR(s7_cadr(args), polywave, vibrato);
+  GET_GENERATOR_CADR(cadr(vargs), polywave, t);
+  GET_REAL_CADR(cadr(args), polywave, vibrato);
 
   return(s7_make_real(sc, mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
 }
@@ -9620,7 +9621,7 @@ static s7_pointer g_fm_violin_1(s7_scheme *sc, s7_pointer args)
   GET_GENERATOR_CADR(vargs, oscil, o);
   vargs = s7_cdaddr(caddr(vargs));
   GET_GENERATOR_CADR(s7_car(vargs), env, e);
-  GET_GENERATOR_CADR(s7_cadr(vargs), polywave, t);
+  GET_GENERATOR_CADR(cadr(vargs), polywave, t);
   GET_REAL_CADR(caddr(cadr(args)), polywave, vibrato);
 
   return(s7_make_real(sc, mus_env(a) * mus_oscil_fm(o, vibrato + (mus_env(e) * mus_polywave(t, vibrato)))));
@@ -9638,7 +9639,7 @@ static s7_pointer fm_violin_2_fallback(s7_scheme *sc, s7_pointer args)
   GET_INTEGER_CADR(args, locsig, pos);
   vargs = s7_cdaddr(args);
   GET_GENERATOR_CADR(s7_car(vargs), env, a);
-  vargs = s7_cadr(vargs);
+  vargs = cadr(vargs);
   GET_GENERATOR_CADR(vargs, oscil, o);
   vargs = s7_cdaddr(s7_caddr(vargs));
   GET_GENERATOR_CADR(s7_car(vargs), env, e);
@@ -9703,9 +9704,9 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
       syms[3] = get_generator(sc, s7_cadar(vargs));
       XEN_ASSERT_TYPE((syms[3]) && (mus_env_p((mus_any *)syms[3])), s7_cadar(vargs), XEN_ONLY_ARG, "env", "env generator");
       
-      vargs = s7_cadr(vargs);
-      syms[4] = get_generator(sc, s7_cadr(vargs));
-      XEN_ASSERT_TYPE((syms[4]) && (mus_oscil_p((mus_any *)syms[4])), s7_cadr(vargs), XEN_ARG_1, "oscil", "oscil generator");
+      vargs = cadr(vargs);
+      syms[4] = get_generator(sc, cadr(vargs));
+      XEN_ASSERT_TYPE((syms[4]) && (mus_oscil_p((mus_any *)syms[4])), cadr(vargs), XEN_ARG_1, "oscil", "oscil generator");
       
       vargs = s7_cdaddr(s7_caddr(vargs));
       syms[5] = get_generator(sc, s7_cadar(vargs));
@@ -10881,7 +10882,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	if ((!s7_is_pair(car(p))) ||
 	    (!s7_is_symbol(cadar(p))) ||
 	    (!s7_is_symbol(s7_caddar(p))) ||
-	    (car(car(p)) != comb_symbol))
+	    (caar(p) != comb_symbol))
 	  {
 	    happy = false;
 	    break;
@@ -10915,7 +10916,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	if ((!s7_is_pair(car(p))) ||
 	    (!s7_is_symbol(cadar(p))) ||
 	    (!s7_is_symbol(s7_caddar(p))) ||
-	    (car(car(p)) != comb_symbol))
+	    (caar(p) != comb_symbol))
 	  {
 	    happy = false;
 	    break;
@@ -12462,7 +12463,7 @@ static s7_pointer frame_to_file_chooser(s7_scheme *sc, s7_pointer f, int args, s
     {
       s7_pointer ff_expr;
       ff_expr = cadddr(expr);
-      if ((s7_cadr(expr) == output_symbol) &&
+      if ((cadr(expr) == output_symbol) &&
 	  (s7_is_symbol(s7_caddr(expr))) &&
 	  (s7_is_pair(ff_expr)))
 	{

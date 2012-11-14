@@ -1727,7 +1727,7 @@ XEN g_sound_data_maxamp(XEN obj)
 }
 
 
-mus_float_t sound_data_peak(sound_data *sd)
+static mus_float_t sound_data_peak(sound_data *sd)
 {
   int chn;
   mus_long_t i;
@@ -1892,7 +1892,7 @@ static XEN s7_sound_data_fill(s7_scheme *sc, XEN obj, XEN val)
 #endif
 
 
-sound_data *sound_data_scale(sound_data *sd, mus_float_t scaler)
+static void sound_data_scale(sound_data *sd, mus_float_t scaler)
 {
   int chn;
   mus_long_t i;
@@ -1908,7 +1908,6 @@ sound_data *sound_data_scale(sound_data *sd, mus_float_t scaler)
 	  for (i = 0; i < sd->length; i++) 
 	    sd->data[chn][i] *= scaler;
     }
-  return(sd);
 }
 
 
@@ -1955,7 +1954,7 @@ static XEN g_sound_data_fillB(XEN sdobj, XEN scl)
 }
 
 
-sound_data *sound_data_copy(sound_data *sd)
+static sound_data *sound_data_copy(sound_data *sd)
 {
   int i;
   sound_data *sdnew;
@@ -1990,7 +1989,7 @@ static XEN g_sound_data_copy(XEN obj)
 }
 
 
-sound_data *sound_data_reverse(sound_data *sd)
+static void sound_data_reverse(sound_data *sd)
 {
   int chn;
   mus_long_t i, j;
@@ -2003,7 +2002,6 @@ sound_data *sound_data_reverse(sound_data *sd)
 	sd->data[chn][i] = sd->data[chn][j];
 	sd->data[chn][j] = tmp;
       }
-  return(sd);
 }
 
 
@@ -2018,7 +2016,7 @@ static XEN g_sound_data_reverseB(XEN obj)
 }
 
 
-sound_data *sound_data_add(sound_data *sd1, sound_data *sd2)
+static void sound_data_add(sound_data *sd1, sound_data *sd2)
 {
   int i, chns;
   mus_long_t j, len;
@@ -2031,8 +2029,6 @@ sound_data *sound_data_add(sound_data *sd1, sound_data *sd2)
   for (i = 0; i < chns; i++)
     for (j = 0; j < len; j++)
       sd1->data[i][j] += sd2->data[i][j];
-
-  return(sd1);
 }
 
 
@@ -2048,7 +2044,7 @@ static XEN g_sound_data_addB(XEN obj1, XEN obj2)
 }
 
 
-sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2)
+static void sound_data_multiply(sound_data *sd1, sound_data *sd2)
 {
   int i, chns;
   mus_long_t j, len;
@@ -2061,8 +2057,6 @@ sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2)
   for (i = 0; i < chns; i++)
     for (j = 0; j < len; j++)
       sd1->data[i][j] *= sd2->data[i][j];
-
-  return(sd1);
 }
 
 
@@ -2078,7 +2072,7 @@ static XEN g_sound_data_multiplyB(XEN obj1, XEN obj2)
 }
 
 
-sound_data *sound_data_offset(sound_data *sd, mus_float_t off)
+static void sound_data_offset(sound_data *sd, mus_float_t off)
 {
   if (off != 0.0)
     {
@@ -2088,7 +2082,6 @@ sound_data *sound_data_offset(sound_data *sd, mus_float_t off)
 	for (j = 0; j < sd->length; j++)
 	  sd->data[i][j] += off;
     }
-  return(sd);
 }
 
 
