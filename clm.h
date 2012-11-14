@@ -440,7 +440,6 @@ MUS_EXPORT bool mus_readin_p(mus_any *ptr);
 MUS_EXPORT bool mus_output_p(mus_any *ptr);
 MUS_EXPORT bool mus_input_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_in_any(mus_long_t frame, int chan, mus_any *IO);
-MUS_EXPORT mus_float_t mus_safe_in_any(mus_long_t samp, int chan, mus_any *IO);
 MUS_EXPORT bool mus_in_any_is_safe(mus_any *IO);
 
 MUS_EXPORT mus_any *mus_make_file_to_frame(const char *filename);

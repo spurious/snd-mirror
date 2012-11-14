@@ -8977,6 +8977,8 @@ XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
 #define cdar(E)   s7_cdar(E)
 #define cdaddr(E) s7_cdaddr(E)
 #define cdadr(E)  s7_cdadr(E)
+#define caddar(E) s7_caddar(E)
+#define caadr(E)  s7_caadr(E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
@@ -9828,7 +9830,7 @@ static s7_pointer jc_reverb_combs_fallback(s7_scheme *sc, s7_pointer args)
   vargs = cdr(vargs);
   GET_GENERATOR_CADR(s7_car(vargs), comb, c4);
   
-  fm = s7_number_to_real(sc, s7_value(sc, s7_caddar(args)));
+  fm = s7_number_to_real(sc, s7_value(sc, caddar(args)));
 
   return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
 		          mus_comb_unmodulated_noz(c2, fm) + 
@@ -9882,7 +9884,7 @@ static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
       syms[3] = get_generator(sc, s7_cadar(vargs));
       XEN_ASSERT_TYPE((syms[3]) && (mus_comb_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "comb", "comb generator");
 
-      sym = s7_caddar(args);
+      sym = caddar(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[4] = s7_slot(sc, sym);
@@ -9943,7 +9945,7 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 	  GET_GENERATOR_CADR(car(vargs), all_pass, a2);
 	  vargs = s7_cddar(vargs);
 	  GET_GENERATOR_CADR(car(vargs), all_pass, a3);
-	  vargs = s7_caddar(vargs);
+	  vargs = caddar(vargs);
 	  GET_INTEGER_CADR(vargs, ina, pos);
 
 	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))))));
@@ -9967,7 +9969,7 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
       syms[2] = get_generator(sc, cadar(vargs));
       XEN_ASSERT_TYPE((syms[2]) && (mus_all_pass_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
 
-      vargs = s7_caddar(vargs);
+      vargs = caddar(vargs);
       sym = cadr(vargs);
       if (s7_is_do_local_or_global(sc, sym))
 	{
@@ -10033,7 +10035,7 @@ static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
 	  GET_GENERATOR_CADR(car(vargs), all_pass, a3);
 	  vargs = s7_cddar(vargs);
 	  GET_GENERATOR_CADR(car(vargs), all_pass, a4);
-	  vargs = s7_caddar(vargs);
+	  vargs = caddar(vargs);
 
 	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, 
  			            mus_one_pole(lp,							       
@@ -10069,7 +10071,7 @@ static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
       syms[4] = get_generator(sc, cadar(vargs));
       XEN_ASSERT_TYPE((syms[4]) && (mus_all_pass_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
 
-      syms[5] = s7_caddar(vargs);
+      syms[5] = caddar(vargs);
     }
 
   a1 = (mus_any *)syms[0];
@@ -10110,7 +10112,7 @@ static s7_pointer nrev_combs_fallback(s7_scheme *sc, s7_pointer args)
   vargs = cdr(vargs);
   GET_GENERATOR_CADR(s7_car(vargs), comb, c6);
   
-  fm = s7_number_to_real(sc, s7_value(sc, s7_caddar(args)));
+  fm = s7_number_to_real(sc, s7_value(sc, caddar(args)));
 
   return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
 		          mus_comb_unmodulated_noz(c2, fm) + 
@@ -10174,7 +10176,7 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
       syms[7] = get_generator(sc, s7_cadar(vargs));
       XEN_ASSERT_TYPE((syms[7]) && (mus_comb_p((mus_any *)syms[7])), cadar(args), XEN_ARG_1, "comb", "comb generator");
 
-      sym = s7_caddar(args);
+      sym = caddar(args);
       if (s7_is_do_local_or_global(sc, sym))
 	{
 	  syms[4] = s7_slot(sc, sym);
@@ -10829,12 +10831,12 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	  (s7_is_real(cadr(cadr(expr)))) &&
 	  (s7_is_symbol(caddr(cadr(expr)))))
 	{
-	  if (car(cadr(expr)) == multiply_symbol)
+	  if (caadr(expr) == multiply_symbol)
 	    {
 	      s7_function_choice_set_direct(sc, expr);
 	      return(add_cs_direct);
 	    }
-	  if ((car(cadr(expr)) == subtract_symbol) &&
+	  if ((caadr(expr) == subtract_symbol) &&
 	      (s7_number_to_real(sc, cadr(cadr(expr))) == 1.0))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
@@ -10845,7 +10847,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
   if ((args == 3) &&
       (s7_is_pair(cadr(expr))) &&
-      (car(cadr(expr)) == env_symbol) &&
+      (caadr(expr) == env_symbol) &&
       (s7_is_symbol(cadr(cadr(expr)))) &&
       (s7_is_pair(caddr(expr))) &&
       (cddr(caddr(expr)) == s7_nil(sc)) &&
@@ -10881,7 +10883,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       for (p = cdr(expr); s7_is_pair(p); p = cdr(p))
 	if ((!s7_is_pair(car(p))) ||
 	    (!s7_is_symbol(cadar(p))) ||
-	    (!s7_is_symbol(s7_caddar(p))) ||
+	    (!s7_is_symbol(caddar(p))) ||
 	    (caar(p) != comb_symbol))
 	  {
 	    happy = false;
@@ -10890,10 +10892,10 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	else
 	  {
 	    if (!fm) 
-	      fm = s7_caddar(p);
+	      fm = caddar(p);
 	    else
 	      {
-		if (fm != s7_caddar(p))
+		if (fm != caddar(p))
 		  {
 		    happy = false;
 		    break;
@@ -10915,7 +10917,7 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       for (p = cdr(expr); s7_is_pair(p); p = cdr(p))
 	if ((!s7_is_pair(car(p))) ||
 	    (!s7_is_symbol(cadar(p))) ||
-	    (!s7_is_symbol(s7_caddar(p))) ||
+	    (!s7_is_symbol(caddar(p))) ||
 	    (caar(p) != comb_symbol))
 	  {
 	    happy = false;
@@ -10924,10 +10926,10 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	else
 	  {
 	    if (!fm) 
-	      fm = s7_caddar(p);
+	      fm = caddar(p);
 	    else
 	      {
-		if (fm != s7_caddar(p))
+		if (fm != caddar(p))
 		  {
 		    happy = false;
 		    break;
@@ -10997,7 +10999,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
   if (args == 2)
     {
       if ((s7_is_pair(cadr(expr))) &&
-	  (car(cadr(expr)) == env_symbol) &&
+	  (caadr(expr) == env_symbol) &&
 	  (s7_is_symbol(cadr(cadr(expr)))) &&
 	  (s7_is_pair(caddr(expr))))
 	{
@@ -11090,7 +11092,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	  
       if (s7_is_pair(cadr(expr)))
 	{
-	  if (car(cadr(expr)) == env_symbol)
+	  if (caadr(expr) == env_symbol)
 	    {
 	      s7_pointer *choices;
 	      choices = (s7_pointer *)s7_function_chooser_data(sc, caddr(expr));
@@ -11118,7 +11120,7 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 		}
 	    }
 	  
-	  if ((car(cadr(expr)) == subtract_symbol) &&
+	  if ((caadr(expr) == subtract_symbol) &&
 	      (s7_list_length(sc, cadr(expr)) == 3) &&
 	      (s7_is_real(cadr(cadr(expr)))) &&
 	      (s7_is_symbol(caddr(cadr(expr)))) &&
@@ -11231,17 +11233,17 @@ static s7_pointer clm_abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       (s7_list_length(sc, cadr(expr)) == 2) &&
       (s7_is_symbol(s7_cadadr(expr))))
     {
-      if (s7_caadr(expr) == rand_interp_symbol)
+      if (caadr(expr) == rand_interp_symbol)
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(abs_rand_interp);
 	}
-      if (s7_caadr(expr) == oscil_symbol)
+      if (caadr(expr) == oscil_symbol)
 	{
 	  s7_function_choice_set_direct(sc, expr);
 	  return(abs_oscil);
 	}
-      if (s7_caadr(expr) == triangle_wave_symbol)
+      if (caadr(expr) == triangle_wave_symbol)
 	{
 	  /* fprintf(stderr, "abs triangle-wave: %s\n", DISPLAY(expr)); */
 	  s7_function_choice_set_direct(sc, expr);
@@ -12403,7 +12405,7 @@ static s7_pointer outa_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 	}
 
       if ((s7_is_pair(cadr(expr))) &&
-	  (car(cadr(expr)) == add_symbol) &&
+	  (caadr(expr) == add_symbol) &&
 	  (s7_list_length(sc, cadr(expr)) == 3) &&
 	  (s7_is_symbol(cadr(cadr(expr)))) &&
 	  (s7_is_symbol(caddr(cadr(expr)))) &&

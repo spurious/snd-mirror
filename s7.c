@@ -738,7 +738,6 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
 
 #define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C))
 #define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_P))
-#define is_closure_op(op) ((op < OP_SAFE_THUNK) && (op >= OP_THUNK))
 
 
 /* also for debugging */
@@ -34790,7 +34789,6 @@ static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl)
 
 #define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_data(P) == HOP_SAFE_C_S))
 #define is_safe_c_s(P)   ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_S))
-#define is_safe_c_ss(P)  ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_SS))
 
 static bool is_h_optimized(s7_pointer p)
 {
@@ -46613,7 +46611,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_optimize_data(code, OP_GOTO);
 		    ecdr(code) = f;
 		    goto OPT_EVAL;
-		    break;
 
 		  case T_CLOSURE:
 		    if (has_methods(f)) break;
@@ -46688,11 +46685,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    ecdr(code) = f;
 		    goto OPT_EVAL;
 		    
-		  case T_C_FUNCTION:
-		  case T_C_ANY_ARGS_FUNCTION:
-		  case T_C_OPT_ARGS_FUNCTION:
-		  case T_C_RST_ARGS_FUNCTION:
-		  case T_C_LST_ARGS_FUNCTION:
+		  case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 		    if ((c_function_required_args(f) <= 1) &&
 			(c_function_all_args(f) >= 1))
 		      {
@@ -46774,7 +46767,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    ecdr(code) = f;
 		    goto OPT_EVAL;
 		    
-		    
 		    /* another possibility: goto, also continuation, macro
 		     * case T_GOTO:
 		     *  sc->args = list_1(sc, finder(sc, cadr(code))); ??
@@ -46804,11 +46796,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			ecdr(code) = f;
 			goto OPT_EVAL;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			/* if we switch to op_c_all_x here, we need to set fcdr */
 			if (is_safe_procedure(f))
 			  {
@@ -46830,7 +46818,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			set_optimize_data(code, OP_PAIR_C);
 			ecdr(code) = f;
 			goto OPT_EVAL;
-			break;
 			
 		      case T_CLOSURE:
 			if (has_methods(f)) break;
@@ -46851,18 +46838,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			set_optimize_data(code, OP_HASH_TABLE_C);
 			ecdr(code) = f;
 			goto OPT_EVAL;
-			break;
 
 		      case T_GOTO:
 			set_optimize_data(code, OP_GOTO_C);
 			ecdr(code) = f;
 			goto OPT_EVAL;
-			break;
-			
 			
 			/* no need for t_environment here because its argument can't be a constant ?? (e +) can happen though it's an error
 			 */
-			
 		      default:
 			/* fprintf(stderr, "un_c: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
 			break;
@@ -46920,11 +46903,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
  			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_SS : OP_C_ALL_X);
  			fcdr(cdr(code)) = small_int(2);
   			set_c_function(code, f);
@@ -46977,11 +46956,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
  			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_SC : OP_C_ALL_X);
  			fcdr(cdr(code)) = small_int(2);
 			set_c_function(code, f);
@@ -47017,11 +46992,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
  			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_CS : OP_C_ALL_X);
  			fcdr(cdr(code)) = small_int(2);
 			set_c_function(code, f);
@@ -47090,11 +47061,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_SSS);
@@ -47108,7 +47075,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			set_c_function(code, f);
 			goto OPT_EVAL;
-			break;
 			
 		      default:
 			/* fprintf(stderr, "un_sss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
@@ -47142,15 +47108,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_ALL_S : OP_C_ALL_X);
 			set_c_function(code, f);
 			goto OPT_EVAL;
-			break;
 			
 		      default:
 			/* fprintf(stderr, "un_all_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); */
@@ -47199,11 +47160,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_ALL_X : OP_C_ALL_X);
 			set_c_function(code, f);
 			goto OPT_EVAL;
@@ -47239,11 +47196,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opCq);
@@ -47268,7 +47221,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			set_optimize_data(code, OP_PAIR_opCq);
 			ecdr(code) = f;
 			goto OPT_EVAL;
-			break;
 			
 		      case T_CLOSURE:
 			if (has_methods(f)) break;
@@ -47317,11 +47269,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    switch (type(f))
 		      {
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq);
@@ -47378,11 +47326,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    switch (type(f))
 		      {
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq_S);
@@ -47451,11 +47395,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_S_opSq : OP_C_S_opSq);
 			ecdr(cdr(code)) = cadr(caddr(code));
 			set_c_function(code, f);
@@ -47496,11 +47436,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    /* code: (+ a (* b c)) */
@@ -47553,11 +47489,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSSq_S);
@@ -47629,11 +47561,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 			
-		      case T_C_FUNCTION:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
-		      case T_C_LST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
 			  {
 			    set_optimize_data(code, OP_SAFE_C_opSq_opSq);
@@ -62482,7 +62410,7 @@ s7_scheme *s7_init(void)
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7722
  * lint                     9328 8140 7887 7875
- * index    44300 4988 3935 3291 3005 2742 2737
+ * index    44300 4988 3935 3291 3005 2742 2726
  * s7test         1721 1430 1358 1297 1244 1233
  * t455            265  218   89   55   31   30
  * t502             90   72   43   39   36   36

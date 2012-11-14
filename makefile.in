@@ -47,7 +47,7 @@ top_srcdir = @top_srcdir@
 
 datarootdir = ${prefix}/share
 pkgdatadir = ${datarootdir}/snd
-# snd-help.c looks for the documentation in /usr/local/share/doc/snd-12 -- perhaps it should be pkgdatadir? or passed at compile time
+# index.scm looks for the documentation in /usr/local/share/doc/snd-13 -- perhaps it should be pkgdatadir? or passed at compile time
 DEFS = -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
 
 GX_FILES = $(@GX_FILES@)
@@ -166,27 +166,27 @@ sndinfo: $(SNDLIB_HEADERS) $(S7_HEADERS)
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
 
 install: snd
-	${SHELL} ${top_srcdir}/mkinstalldirs ${bindir}
-	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}
-	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}/man1
-	${SHELL} ${top_srcdir}/mkinstalldirs ${pkgdatadir}
-	$(INSTALL) snd ${bindir}/snd
-	$(INSTALL_DATA) ${top_srcdir}/snd.1 ${mandir}/man1
-	(cd ${top_srcdir} && for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} ${top_srcdir}/$${f} ${pkgdatadir}/$${f}; done)
+	${SHELL} ${top_srcdir}/mkinstalldirs $(DESTDIR)${bindir}
+	${SHELL} ${top_srcdir}/mkinstalldirs $(DESTDIR)${mandir}
+	${SHELL} ${top_srcdir}/mkinstalldirs $(DESTDIR)${mandir}/man1
+	${SHELL} ${top_srcdir}/mkinstalldirs $(DESTDIR)${pkgdatadir}
+	$(INSTALL) snd $(DESTDIR)${bindir}/snd
+	$(INSTALL_DATA) ${top_srcdir}/snd.1 $(DESTDIR)${mandir}/man1
+	(cd ${top_srcdir} && for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} $${f} $(DESTDIR)${pkgdatadir}/$${f}; done)
 
 uninstall:
-	rm -f ${bindir}/snd
-	rm -f ${mandir}/man1/snd.1
-	for f in ${SND_SCRIPTS};  do rm -f ${pkgdatadir}/$${f}; done
+	rm -f $(DESTDIR)${bindir}/snd
+	rm -f $(DESTDIR)${mandir}/man1/snd.1
+	for f in ${SND_SCRIPTS};  do rm -f $(DESTDIR)${pkgdatadir}/$${f}; done
 
 install-strip: snd
-	${SHELL} ${top_srcdir}/mkinstalldirs ${bindir}
-	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}
-	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}/man1
-	${SHELL} ${top_srcdir}/mkinstalldirs ${pkgdatadir}
-	$(INSTALL) -s snd ${bindir}/snd
-	$(INSTALL_DATA) ${top_srcdir}/snd.1 ${mandir}/man1
-	(cd ${top_srcdir} && for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} ${top_srcdir}/$${f} ${pkgdatadir}/$${f}; done) 
+	${SHELL} ${top_srcdir}/mkinstalldirs $(DESTDIR)${bindir}
+	${SHELL} ${top_srcdir}/mkinstalldirs $(DESTDIR)${mandir}
+	${SHELL} ${top_srcdir}/mkinstalldirs $(DESTDIR)${mandir}/man1
+	${SHELL} ${top_srcdir}/mkinstalldirs $(DESTDIR)${pkgdatadir}
+	$(INSTALL) -s snd $(DESTDIR)${bindir}/snd
+	$(INSTALL_DATA) ${top_srcdir}/snd.1 $(DESTDIR)${mandir}/man1
+	(cd ${top_srcdir} && for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} $${f} $(DESTDIR)${pkgdatadir}/$${f}; done) 
 
 Makefile: Makefile.in config.status
 	./config.status

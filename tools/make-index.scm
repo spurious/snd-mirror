@@ -130,8 +130,8 @@
   (and (not (= (length b) 0))
        (or (= (length a) 0)
 	   (string=? a b)
-	   (string<? (if (char=? (a 0) #\*) (substring a 1) a)
-		     (if (char=? (b 0) #\*) (substring b 1) b)))))
+	   (string<? (if (char=? (string-ref a 0) #\*) (substring a 1) a)
+		     (if (char=? (string-ref b 0) #\*) (substring b 1) b)))))
 
 
 (define (clean-and-downcase-first-char str caps topic file)
@@ -1273,7 +1273,7 @@
 										  (if (not (= p-parens 0))
 										      (format #t "~A[~D]: parens: ~D~%" file linectr p-parens))))
 									  (set! p-parens 0)))
-								    (set! commands (remove closer commands :count 1))
+								    (set! commands (remove closer commands 1))
 								    (if (not warned)
 									(begin
 									  (if (and (string-ci=? closer "table")
@@ -1360,14 +1360,14 @@
 										       (< (count "table" commands) 2))
 										  (begin
 										    (set! warned #t)
-										    (set! commands (remove "tr" commands :count 1))
+										    (set! commands (remove "tr" commands 1))
 										    (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
 									      (if (and (string-ci=? opener "td")
 										       (string-ci-list-position "td" commands)
 										       (< (count "table" commands) 2))
 										  (begin
 										    (set! warned #t)
-										    (set! commands (remove "td" commands :count 1))
+										    (set! commands (remove "td" commands 1))
 										    (format #t "~A[~D]: unclosed td at table~%" file linectr)))))
 									(if (string-ci=? opener "--")
 									    (format #t "~A[~D]: <-- missing !?~%" file linectr))

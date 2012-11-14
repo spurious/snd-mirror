@@ -440,7 +440,6 @@
 
 ;;; these are defined at user-level in s7 -- why are other schemes so coy about them?
 (test (eq? (if #f #f) #<unspecified>) #t)
-(test (eof-object? #<eof>) #t)
 (test (eq? (symbol->value '_?__undefined__?_) #<undefined>) #t)
 (test (eq? #<eof> #<eof>) #t)
 (test (eq? #<undefined> #<undefined>) #t)
@@ -9963,6 +9962,8 @@ zzy" (lambda (p) (eval (read p))))) 32)
 (test (load "empty-file") #<unspecified>)
 (test (call-with-input-file "empty-file" (lambda (p) (port-closed? p))) #f)
 (test (eof-object? (call-with-input-string "" (lambda (p) (read p)))) #t)
+(test (eof-object? #<eof>) #t)
+(test (let () (define (hi a) (eof-object? a)) (hi #<eof>)) #t)
 
 (let ()
   (define (io-func) (lambda (p) (eof-object? (read-line p))))

@@ -7930,15 +7930,6 @@ mus_float_t mus_in_any(mus_long_t samp, int chan, mus_any *IO)
 }
 
 
-mus_float_t mus_safe_in_any(mus_long_t samp, int chan, mus_any *IO)
-{
-  /* assume IO is ok and IO->core->read_sample is mus_in_any_from_file */
-  /* return(((*(IO->core)->read_sample))(IO, samp, chan)); */
-  /* this is currently unused */
-  return(mus_in_any_from_file(IO, samp, chan));
-}
-
-
 bool mus_in_any_is_safe(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
