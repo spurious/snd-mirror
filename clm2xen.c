@@ -10756,6 +10756,18 @@ static s7_pointer g_add_cs_direct(s7_scheme *sc, s7_pointer args)
   return(s7_make_complex(sc, (cval * s7_real_part(mul)) + xval, -s7_imag_part(mul) * cval));
 }
 
+static s7_pointer ssb_am_3;
+static s7_pointer g_ssb_am_3(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *_o_;
+  double _insig_, _fm_;
+  GET_GENERATOR(args, "ssb-am", _o_); 
+  GET_REAL_CADR(args, "ssb-am", _insig_);
+  GET_REAL_CADR(cdr(args), "ssb-am", _fm_);
+  return(s7_make_real(sc, mus_ssb_am(_o_, _insig_, _fm_)));
+}
+
+
 
 
 /* ---------------- */
@@ -12259,21 +12271,30 @@ static s7_pointer polyshape_chooser(s7_scheme *sc, s7_pointer f, int args, s7_po
 static s7_pointer ssb_am_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 2) &&
+      (s7_is_symbol(cadr(expr))))
+    {
+      if (s7_is_symbol(caddr(expr)))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(ssb_am_2);
+	}
+      if ((s7_is_pair(caddr(expr))) &&
+	  (s7_function_choice_is_direct(sc, caddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  if (s7_function_returns_temp(caddr(expr))) return(direct_ssb_am_2);
+	  return(indirect_ssb_am_2);
+	}
+    }
+  if ((args == 3) &&
       (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))))
+      (s7_is_symbol(caddr(expr))) &&
+      (s7_is_symbol(cadddr(expr))))
     {
       s7_function_choice_set_direct(sc, expr);
-      return(ssb_am_2);
+      return(ssb_am_3);
     }
-  if ((args == 2) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_pair(caddr(expr))) &&
-      (s7_function_choice_is_direct(sc, caddr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      if (s7_function_returns_temp(caddr(expr))) return(direct_ssb_am_2);
-      return(indirect_ssb_am_2);
-    }
+
   return(f);
 }
 
@@ -13194,9 +13215,11 @@ static void init_choosers(s7_scheme *sc)
   ssb_am_2 = clm_make_function(sc, "ssb-am", g_ssb_am_2, 2, 0, false, "ssb-am optimization", f,
 				mul_c_ssb_am_2, mul_s_ssb_am_2, env_ssb_am_2, NULL, NULL, NULL);
   direct_ssb_am_2 = clm_make_function(sc, "ssb-am", g_direct_ssb_am_2, 2, 0, false, "ssb-am optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
+				      NULL, NULL, NULL, NULL, NULL, NULL);
   indirect_ssb_am_2 = clm_make_function(sc, "ssb-am", g_indirect_ssb_am_2, 2, 0, false, "ssb-am optimization", f,
-				       NULL, NULL, NULL, NULL, NULL, NULL);
+					NULL, NULL, NULL, NULL, NULL, NULL);
+  ssb_am_3 = clm_make_function(sc, "ssb-am", g_ssb_am_3, 3, 0, false, "ssb-am optimization", f,
+			       NULL, NULL, NULL, NULL, NULL, NULL);
 
   f = s7_name_to_value(sc, "asymmetric-fm");
   s7_function_set_chooser(sc, f, asymmetric_fm_chooser);

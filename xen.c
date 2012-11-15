@@ -1417,13 +1417,6 @@ void xen_initialize(void)
 /* ------------------------------ S7 ------------------------------ */
 
 #if HAVE_SCHEME
-
-#if HAVE_LIMITS_H
-  #include <limits.h>
-#else
-  #define INT_MAX 2147483647
-#endif
-
 #include "s7.h"
 
 s7_scheme *s7;
