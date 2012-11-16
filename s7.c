@@ -2089,7 +2089,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 #define NUM_SMALL_INTS 2048
 #define small_int(Val)                small_ints[Val]
-#define small_int_n(p)                p->object.number.small_value.n
 #define small_int_name(p)             p->object.number.small_value.name
 #define small_int_name_length(p)      p->object.number.small_value.length
 #define is_small(n)                   ((n & ~(NUM_SMALL_INTS - 1)) == 0)
@@ -2281,12 +2280,13 @@ static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
-static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK;
+static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE;
+static s7_pointer REST_PAR_ERROR, BAD_BINDING;
 
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 0
+#if 1
 #if 1
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
@@ -24446,6 +24446,9 @@ static void init_car_a_list(void)
   AN_INPUT_PORT = s7_make_permanent_string("an input port");
   AN_OUTPUT_PORT = s7_make_permanent_string("an output port");
   A_THUNK = s7_make_permanent_string("a thunk");
+  SOMETHING_APPLICABLE = s7_make_permanent_string("a procedure or something applicable");
+  REST_PAR_ERROR = s7_make_permanent_string("lambda* :rest parameter '~A is a constant");
+  BAD_BINDING = s7_make_permanent_string("~A: can't bind some variable to ~S");
 }
 
 
@@ -24970,6 +24973,9 @@ s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
     {
       /* we can blithely take the car of anything, since we're not treating it as an object,
        *   then if we get a bogus match, the following check that caar made sense ought to catch it.
+       *
+       * I thought I could speed this up by having econs/essq using the ecdr field for the key, but
+       *   the difference is only 10%.
        */
       if ((obj == caar(x)) && (is_pair(car(x)))) return(car(x));
       x = cdr(x);
@@ -31988,7 +31994,13 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 }
 
 
-static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_pointer obj)
+static s7_pointer eval_error_with_string(s7_scheme *sc, s7_pointer errmsg, s7_pointer obj)
+{
+  return(s7_error(sc, sc->SYNTAX_ERROR, list_2(sc, errmsg, obj)));
+}
+
+
+static s7_pointer eval_error_with_name_and_string(s7_scheme *sc, s7_pointer errmsg, s7_pointer obj)
 {
   static s7_pointer *op_names_saved = NULL;
   int ind;
@@ -31997,11 +32009,13 @@ static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_poi
     op_names_saved = (s7_pointer *)calloc(OP_MAX_DEFINED + 1, sizeof(s7_pointer));
   if (!op_names_saved[ind])
     op_names_saved[ind] = s7_make_permanent_string(op_names[ind]);
-  return(s7_error(sc, sc->SYNTAX_ERROR, 
-		  list_3(sc, 
-			 make_protected_string(sc, errmsg),
-			 op_names_saved[ind],
-			 obj)));
+  return(s7_error(sc, sc->SYNTAX_ERROR, list_3(sc, errmsg, op_names_saved[ind], obj)));
+}
+
+
+static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_pointer obj)
+{
+  return(eval_error_with_name_and_string(sc, make_protected_string(sc, errmsg), obj));
 }
 
 
@@ -32790,8 +32804,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
   sc->code = car(args); /* the function */
   if (!is_applicable(sc->code))
-    return(wrong_type_argument_with_type(sc, sc->FOR_EACH, small_int(1), sc->code, 
-					 make_protected_string(sc, "a procedure or something applicable")));
+    return(wrong_type_argument_with_type(sc, sc->FOR_EACH, small_int(1), sc->code, SOMETHING_APPLICABLE));
 
   /* macro application requires the entire call as the argument to apply, but apply itself fixes this up.
    *  that is, g_apply checks, then goes to OP_EVAL_MACRO after OP_APPLY with the fixed up list,
@@ -33174,7 +33187,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   sc->code = car(args);
   if (!is_applicable(sc->code))
-    return(wrong_type_argument_with_type(sc, sc->MAP, small_int(1), sc->code, make_protected_string(sc, "a procedure or something applicable")));
+    return(wrong_type_argument_with_type(sc, sc->MAP, small_int(1), sc->code, SOMETHING_APPLICABLE));
 
   sc->y = args;                     /* gc protect */
   obj = cadr(args); 
@@ -33420,7 +33433,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	case OP_LET_O2:
 	case OP_LET_O3:
 	  set_multiple_value(args);
-	  return(eval_error_with_name(sc, "~A: can't bind some variable to ~S", args));
+	  return(eval_error_with_name_and_string(sc, BAD_BINDING, args)); /* "~A: can't bind some variable to ~S" */
 
 	  /* handle 'and' and 'or' specially */
 	case OP_AND1:
@@ -39676,7 +39689,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
   if (is_not_null(w))
     {
       if (s7_is_constant(w))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
-	return(eval_error(sc, "lambda* :rest parameter '~A is a constant", w));
+	return(eval_error_with_string(sc, REST_PAR_ERROR, w)); /* "lambda* :rest parameter '~A is a constant" */
       if (is_symbol(w))
 	set_local(w);
       i = -1;
@@ -39968,11 +39981,12 @@ static s7_pointer check_let(s7_scheme *sc)
     {
       if (named_let)
 	{
+	  s7_pointer x;
+
 	  if (is_null(cadr(sc->code)))
 	    set_syntax_op(sc->code, sc->NAMED_LET_NO_VARS);
 	  else set_syntax_op(sc->code, sc->NAMED_LET);
-#if 1
-	  s7_pointer x;
+
 	  /* this is (let name ...) so  the initial values need to be removed from the closure arg list */
 	  sc->args = sc->NIL; /* sc->args is set to nil in named_let below */
 	  for (x = cadr(sc->code); is_pair(x); x = cdr(x)) 
@@ -39980,7 +39994,6 @@ static s7_pointer check_let(s7_scheme *sc)
 	  optimize_lambda(sc, true, car(sc->code), safe_reverse_in_place(sc, sc->args), cddr(sc->code));
 
 	  /* apparently these guys are almost never safe */
-#endif
 	  return(sc->code);
 	}
 
@@ -40048,14 +40061,14 @@ static s7_pointer check_let(s7_scheme *sc)
 					  if (is_syntactic(caadr(sc->code)))
 					    {
 					      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
-					      if (is_optimized(cadr(binding)))
+					      if (is_h_optimized(cadr(binding)))
 						set_syntax_op(sc->code, sc->LET_Z_P); 
 					      else set_syntax_op(sc->code, sc->LET_O_P); 
 					      /* syntax_op uses ecdr */
 					    }
 					  else
 					    {
-					      if (is_optimized(cadr(binding)))
+					      if (is_h_optimized(cadr(binding)))
 						set_syntax_op(sc->code, sc->LET_Z_O); 
 					      else set_syntax_op(sc->code, sc->LET_O_O); 
 					    }
@@ -40079,8 +40092,7 @@ static s7_pointer check_let(s7_scheme *sc)
 			{
 			  if (is_one_liner(cdr(sc->code)))
 			    {
-			      if ((!is_syntactic(caadr(sc->code))) && /* aren't these two mutually exclusive? */
-				  (is_optimized(cadr(sc->code))))
+			      if (is_h_optimized(cadr(sc->code)))
 				set_syntax_op(sc->code, sc->LET_C_D);
 			      else set_syntax_op(sc->code, sc->LET_C_P); /* does not check syntax_opcode */
 			    }
@@ -40313,13 +40325,13 @@ static s7_pointer check_let_star(s7_scheme *sc)
 					  if (is_syntactic(caadr(sc->code)))
 					    {
 					      lifted_op(cadr(sc->code)) = syntax_opcode(caadr(sc->code));
-					      if (is_optimized(cadr(binding)))
+					      if (is_h_optimized(cadr(binding)))
 						set_syntax_op(sc->code, sc->LET_Z_P); 
 					      else set_syntax_op(sc->code, sc->LET_O_P); 
 					    }
 					  else
 					    {
-					      if (is_optimized(cadr(binding)))
+					      if (is_h_optimized(cadr(binding)))
 						set_syntax_op(sc->code, sc->LET_Z_O); 
 					      else set_syntax_op(sc->code, sc->LET_O_O); 
 					    }
@@ -40343,8 +40355,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 			{
 			  if (is_one_liner(cdr(sc->code)))
 			    {
-			      if ((!is_syntactic(car(cadr(sc->code)))) &&
-				  (is_optimized(cadr(sc->code))))
+			      if (is_h_optimized(cadr(sc->code)))
 				set_syntax_op(sc->code, sc->LET_C_D);
 			      else set_syntax_op(sc->code, sc->LET_C_P);
 			    }
@@ -40918,7 +40929,7 @@ static s7_pointer check_if(s7_scheme *sc)
 
 	      if (is_pair(f))
 		{
-		  if (is_optimized(test))
+		  if (is_h_optimized(test))
 		    {
 		      if (optimize_data(test) == HOP_SAFE_C_C)
 			set_syntax_op(sc->code, sc->SAFE_IF_CC_X_P);
@@ -40948,7 +40959,7 @@ static s7_pointer check_if(s7_scheme *sc)
 				  if (optimize_data(test) == HOP_SAFE_C_SC)
 				    {
 				      if ((t == cadr(test)) &&
-					  (is_optimized(f)))
+					  (is_h_optimized(f)))
 					set_syntax_op(sc->code, sc->SAFE_IF_CSC_X_O_A);
 				      else set_syntax_op(sc->code, sc->SAFE_IF_CSC_X_P);
 				      fcdr(sc->code) = caddr(test);
@@ -40965,7 +40976,7 @@ static s7_pointer check_if(s7_scheme *sc)
 
 		  if (is_null(cdr(cdr_code)))
 		    {
-		      if (is_optimized(test))
+		      if (is_h_optimized(test))
 			set_syntax_op(sc->code, sc->IF_P_X);
 		      else set_syntax_op(sc->code, sc->IF_P_X);
 		    }
@@ -42628,7 +42639,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    *                the z's here are mostly embedded z's, top non-z c_ss->c_opssq (5)[502]
    *              OP_SET_SYMBOL_Z -> OP_SAFE_C_SZ_1: 27585831 (2) OP_SAFE_DO_STEP -> OP_SET_SYMBOL_SAFE_C: 25174540 (2)
    *              OP_SET_SYMBOL_SAFE_C -> OP_SET_SYMBOL_SAFE_C: 24770911 (2), also OP_SAFE_DO_STEP -> OP_IF_Z_P: 23405592 (1)
-   * todo: check the set_symbol_z cases and let_z_p/let_o_*
    */
 
  START_WITHOUT_POP_STACK:
@@ -50062,10 +50072,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------------------------------------------------------- */
 	  
 	  /* trailers */
-#if WITH_COUNTS
-	  add_expr(sc, sc->code);
-#endif
-
 	  sc->cur_code = sc->code;
 	  
 	  {
@@ -51956,6 +51962,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SET_SYMBOL_Z:
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
+      /* t502: 
+	     h_safe_c_s_op_s_opssqq: 4839964 (41.237077)
+	     vector_s: 1350906 (11.509882)
+	     h_safe_c_s_op_opssq_sq: 694573 (5.917846)
+             h_safe_c_all_x: 449817 (3.832495)
+	     -- are these increments?
+         snd-test:
+	     h_safe_c_zzz: 23373530 (48.576542)
+             h_safe_c_sp: 8509746 (17.685563)
+      */
       goto OPT_EVAL;
 
 
@@ -53720,21 +53736,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_C_D:
       /* one var, init is constant, incoming sc->code is '(((var val))...)!
        *   body is one optimized statement
-       *
-       * if this were known to be safe, it could be preallocated, I think.
        */
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), fcdr(sc->code));
       sc->code = cadr(sc->code);
       goto OPT_EVAL;
-      
-      /* if the body here is hop_safe_c_s and the s matches the let var we could use:
-       *
-       *  car(sc->T1_1) = cadr(caar(sc->code));
-       *  sc->value = c_call(cadr(sc->code))(sc, sc->T1_1);
-       *  goto START;
-       *
-       * but this kind of code doesn't seem to happen very often
-       */
       
       
       /* --------------- */
@@ -54210,12 +54215,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (named_let)
 	      {    
 		sc->x = make_closure(sc, sc->NIL, cddr(sc->code), T_CLOSURE); /* args = () in new closure, see NAMED_LET_NO_VARS above */
-#if 1
 		/* if this is a safe closure, we can build its env in advance and name it (a thunk in this case)
 		 */
 		set_function_env(closure_environment(sc->x));
 		environment_function(closure_environment(sc->x)) = car(sc->code);
-#endif
+
 		add_slot(sc, car(sc->code), sc->x); 
 		sc->code = cddr(sc->code);
 		sc->x = sc->NIL;
@@ -54291,7 +54295,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->w = cons(sc, caar(x), sc->w);
 	      
 	      sc->x = make_closure(sc, safe_reverse_in_place(sc, sc->w), cddr(sc->code), T_CLOSURE);
-#if 1
 	      if (is_safe_closure(sc->x))
 		{
 		  s7_pointer arg, new_env;
@@ -54301,7 +54304,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_make_slot(sc, new_env, car(arg), sc->NIL);
 		  environment_slots(new_env) = reverse_slots(sc, environment_slots(new_env));
 		}
-#endif
 	      add_slot(sc, let_name, sc->x); 
 	      sc->x = sc->NIL;
 	      
@@ -62310,16 +62312,10 @@ s7_scheme *s7_init(void)
 
 
 /* PERHAPS: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
- * TODO: NS_EVAL and TRAILER cases throughout [but this is tricky!]
- * TODO: things like LET_C_D look dangerous -- we check is_optimized (can be op_unknown...), then
- *   in the code, goto OPT_EVAL, but what if the unknown->macro or something not optimizable?
- *   do all goto OPT_EVALS need is_h_optimized protection? -- how many of these are there?
- *
  * TODO: move all the clm2xen direct choices to s7 (like add_s_direct)
  *   mul_1s_direct mul_direct_s2 mul_direct_2 mul_direct_any
  *   add_c_direct add_direct_2 add_cs_direct add_1s_direct add_direct_s2 add_direct_any
  *   mul_direct_2 calls the two safe_c_c exprs, frees one, remakes the other
- *
  * TODO: use new generic_ff in methods opt case 
  * SOMEDAY: get the doc string out of the closure body
  * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.

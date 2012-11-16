@@ -16,7 +16,6 @@ MUS_EXPORT bool mus_vct_p(XEN obj);
 MUS_EXPORT int mus_vct_print_length(void);
 MUS_EXPORT void mus_vct_set_print_length(int len);
 MUS_EXPORT XEN mus_array_to_list(mus_float_t *arr, mus_long_t i, mus_long_t len);
-MUS_EXPORT char *mus_vct_to_string(vct *v);
 MUS_EXPORT bool mus_vct_equalp(vct *v1, vct *v2);
 MUS_EXPORT char *mus_vct_to_readable_string(vct *v);
 MUS_EXPORT vct *mus_vct_make(mus_long_t len);

@@ -2383,7 +2383,8 @@
 	      ;; in any case, skip the docstring during the walk
 	      (set! body (cdr body))))
 	
-	(lint-walk-body name head body env))
+	(lint-walk-body name head body env)
+	env)
       
       
       (define (lint-walk-function head name args val env)
@@ -3126,7 +3127,7 @@
 		     vars))
 
 		(if *report-unused-top-level-functions* 
-		    (report-usage file 0 'top-level-object #f vars))
+		    (report-usage file 'top-level-var "" vars))
 		
 		(if *report-undefined-variables*
 		    (for-each

@@ -18,14 +18,8 @@ extern "C" {
 #endif
 
 MUS_EXPORT bool sound_data_p(XEN obj);
-MUS_EXPORT char *sound_data_to_string(sound_data *v);
-MUS_EXPORT void sound_data_free(sound_data *v);
-MUS_EXPORT bool sound_data_equalp(sound_data *v1, sound_data *v2);
-MUS_EXPORT sound_data *c_make_sound_data(int chans, mus_long_t frames);
-MUS_EXPORT XEN make_sound_data(int chans, mus_long_t frames);
 MUS_EXPORT void mus_sndlib_xen_initialize (void);
 MUS_EXPORT XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data);
-MUS_EXPORT sound_data *sound_data_fill(sound_data *sd, mus_float_t scaler);
 MUS_EXPORT mus_float_t mus_sound_data_ref(sound_data *sd, int chan, mus_long_t pos);
 MUS_EXPORT mus_float_t mus_sound_data_set(sound_data *sd, int chan, mus_long_t pos, mus_float_t val);
 MUS_EXPORT int mus_sound_data_chans(sound_data *sd);

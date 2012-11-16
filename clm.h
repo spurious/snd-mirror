@@ -31,7 +31,7 @@ typedef struct {
 
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
-	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE, MUS_NUM_INTERPS} mus_interp_t;
+	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE} mus_interp_t;
 
 typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
@@ -392,9 +392,6 @@ MUS_EXPORT double mus_env_initial_power(mus_any *gen); /* for Snd */
 MUS_EXPORT int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t val));
 #define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
-MUS_EXPORT mus_float_t mus_env_linear(mus_any *ptr);
-MUS_EXPORT mus_float_t mus_env_exponential(mus_any *ptr);
-MUS_EXPORT mus_float_t mus_env_step(mus_any *ptr);
 
 MUS_EXPORT bool mus_frame_p(mus_any *ptr);
 MUS_EXPORT bool mus_frame_or_mixer_p(mus_any *ptr);
@@ -583,21 +580,12 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 }
 #endif
 
-#ifndef CLM_DISABLE_DEPRECATED
-  #define mus_polyshape_fm(Obj, Fm) mus_polyshape(Obj, 1.0, Fm)
-  #define mus_polywave_type(Obj) mus_channel(Obj)
-  MUS_EXPORT mus_float_t mus_random_no_input(void);
-  MUS_EXPORT mus_float_t mus_frandom_no_input(void);
-  MUS_EXPORT mus_float_t mus_asymmetric_fm_no_input(mus_any *gen);
-#endif
-
 #endif
 
 
 /* Change log.
  *
- * 15-Nov:     removed mus_env_t and mus_env_type.
- * 26-Sep:     deprecated some stuff that was only used by the run macro.
+ * 15-Nov:     removed mus_env_t, mus_env_type, and other recently deprecated stuff.
  * 15-Jul:     more changes for clm2xen.
  * 4-July-12:  moved various struct definitions to clm.c
  *             added accessors for mus_any_class etc.

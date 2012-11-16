@@ -164,7 +164,7 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(vct, free_vct, vct_free)
 
 #define VCT_PRINT_BUFFER_SIZE 64
 
-char *mus_vct_to_string(vct *v)
+static char *mus_vct_to_string(vct *v)
 {
   int len;
   char *buf;

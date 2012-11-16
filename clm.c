@@ -1952,17 +1952,6 @@ mus_float_t mus_asymmetric_fm_unmodulated(mus_any *ptr, mus_float_t index)
   return(result);
 }
 
-#ifndef CLM_DISABLE_DEPRECATED
-mus_float_t mus_asymmetric_fm_no_input(mus_any *ptr)
-{
-  asyfm *gen = (asyfm *)ptr;
-  mus_float_t result;
-  result = sin(gen->phase);
-  gen->phase += gen->freq;
-  return(result);
-}
-#endif
-
 static mus_any_class ASYMMETRIC_FM_CLASS = {
   MUS_ASYMMETRIC_FM,
   (char *)S_asymmetric_fm,
@@ -4650,19 +4639,6 @@ mus_float_t mus_frandom(mus_float_t amp) /* 0.0 to amp as mus_float_t */
 }
 
 
-#ifndef CLM_DISABLE_DEPRECATED
-mus_float_t mus_random_no_input(void) /* -1.0 to 1.0 as mus_float_t */
-{
-  return(next_random() * INVERSE_MAX_RAND - 1.0);
-}
-
-mus_float_t mus_frandom_no_input(void) /* 0.0 to 1.0 as mus_float_t */
-{
-  return(next_random() * INVERSE_MAX_RAND2);
-}
-#endif
-
-
 int mus_irandom(int amp)
 {
   return((int)(amp * next_random() * INVERSE_MAX_RAND2));
@@ -6172,7 +6148,7 @@ mus_float_t mus_env(mus_any *ptr)
 }
 
 
-mus_float_t mus_env_step(mus_any *ptr)
+static mus_float_t mus_env_step(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   mus_float_t val;
@@ -6196,7 +6172,7 @@ static mus_float_t mus_env_line(mus_any *ptr)
 }
 
 
-mus_float_t mus_env_linear(mus_any *ptr)
+static mus_float_t mus_env_linear(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   mus_float_t val;
@@ -6213,7 +6189,7 @@ mus_float_t mus_env_linear(mus_any *ptr)
 }
 
 
-mus_float_t mus_env_exponential(mus_any *ptr)
+static mus_float_t mus_env_exponential(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   mus_float_t val;
@@ -9408,9 +9384,6 @@ void mus_move_locsig(mus_any *ptr, mus_float_t degree, mus_float_t distance)
 
 
 /* ---------------- move-sound ---------------- */
-
-/* TODO: move-sound rb: update dlocsig.rb (787, l788)
- */
 
 typedef struct {
   mus_any_class *core;

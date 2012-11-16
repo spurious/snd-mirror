@@ -1453,7 +1453,7 @@ static XEN g_sound_data_p(XEN obj)
 }
 
 
-void sound_data_free(sound_data *sd)
+static void sound_data_free(sound_data *sd)
 {
   if (sd)
     {
@@ -1473,7 +1473,7 @@ void sound_data_free(sound_data *sd)
 XEN_MAKE_OBJECT_FREE_PROCEDURE(sound_data, free_sound_data, sound_data_free)
 
 
-char *sound_data_to_string(sound_data *sd)
+static char *sound_data_to_string(sound_data *sd)
 {
   char *buf;
   int len, chans; /* len=print length */
@@ -1513,7 +1513,7 @@ char *sound_data_to_string(sound_data *sd)
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(sound_data, print_sound_data, sound_data_to_string)
 
 
-bool sound_data_equalp(sound_data *v1, sound_data *v2)
+static bool sound_data_equalp(sound_data *v1, sound_data *v2)
 {
   if (v1 == v2) return(true);
   if ((v1) && (v2) &&
@@ -1923,7 +1923,7 @@ static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
 }
 
 
-sound_data *sound_data_fill(sound_data *sd, mus_float_t scaler)
+static sound_data *sound_data_fill(sound_data *sd, mus_float_t scaler)
 {
   int chn;
   mus_long_t i;
