@@ -8230,20 +8230,6 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 }
 
 
-#if (!SND_DISABLE_DEPRECATED)
-#define S_max_virtual_ptrees "max-virtual-ptrees"
-static XEN g_max_virtual_ptrees(void) {return(XEN_FALSE);}
-static XEN g_set_max_virtual_ptrees(XEN num) {return(num);}
-
-#define S_ptree_channel "ptree-channel"
-static XEN g_ptree_channel(XEN proc_and_list, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN edpos, XEN env_too, XEN init_func, XEN origin)
-{
-  fprintf(stderr, "ptree-channel is obsolete; please use map-channel instead");
-  return(XEN_FALSE);
-}
-#endif
-
-
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sampler_w, g_make_sampler)
 XEN_ARGIFY_4(g_make_region_sampler_w, g_make_region_sampler)
@@ -8285,11 +8271,6 @@ XEN_ARGIFY_3(g_snd_to_sample_w, g_snd_to_sample)
 XEN_ARGIFY_1(g_make_snd_to_sample_w, g_make_snd_to_sample)
 XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
 XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_NARGIFY_0(g_max_virtual_ptrees_w, g_max_virtual_ptrees)
-  XEN_NARGIFY_1(g_set_max_virtual_ptrees_w, g_set_max_virtual_ptrees)
-  XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
-#endif
 #else
 #define g_make_sampler_w g_make_sampler
 #define g_make_region_sampler_w g_make_region_sampler
@@ -8331,11 +8312,6 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 #define g_snd_to_sample_w g_snd_to_sample
 #define g_edit_list_to_function_w g_edit_list_to_function
 #define g_edit_fragment_type_name_w g_edit_fragment_type_name
-#if (!SND_DISABLE_DEPRECATED)
-  #define g_max_virtual_ptrees_w g_max_virtual_ptrees
-  #define g_set_max_virtual_ptrees_w g_set_max_virtual_ptrees
-  #define g_ptree_channel_w g_ptree_channel
-#endif
 #endif
 
 
@@ -8427,12 +8403,6 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_make_snd_to_sample,           g_make_snd_to_sample_w,           0, 1, 0, H_make_snd_to_sample);
   XEN_DEFINE_PROCEDURE(S_snd_to_sample,                g_snd_to_sample_w,                2, 1, 0, H_snd_to_sample);
   XEN_DEFINE_PROCEDURE(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);
-
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_virtual_ptrees, g_max_virtual_ptrees_w, "obsolete function",
-				   S_setB S_max_virtual_ptrees, g_set_max_virtual_ptrees_w, 0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE(S_ptree_channel,                g_ptree_channel_w,               1, 8, 0, "obsolete");
-#endif
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \
 If it returns " PROC_TRUE ", the file is not saved.  'name' is " PROC_FALSE " unless the file is being saved under a new name (as in sound-save-as)."

@@ -2433,15 +2433,6 @@ If more than one such sound exists, 'nth' chooses which one to return."
 }
 
 
-#if (!SND_DISABLE_DEPRECATED)
-static XEN g_bomb(XEN snd, XEN on)
-{
-  #define H_bomb "(" S_bomb " :optional snd (on " PROC_TRUE ")): obsolete"
-  return(on);
-}
-#endif
-
-
 typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
 	      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
 	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SHOW_CONTROLS,
@@ -5474,6 +5465,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	  if (cp->edits[0]->peak_env)
 	    {
 	      if (fullname) free(fullname);
+	      /* here len can be 0 */
 	      return(g_peak_env_info_to_vcts(cp->edits[0]->peak_env, len));
 	    }
 	}
@@ -5556,6 +5548,10 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 		{
 		  int id;
 		  env_tick *et;
+
+		  if (len <= 0)
+		    XEN_OUT_OF_RANGE_ERROR(S_channel_amp_envs, XEN_ARG_3, pts, "must be > 0");
+
 		  et = (env_tick *)calloc(1, sizeof(env_tick));
 		  et->cp = cp;
 		  et->es = es;
@@ -5654,9 +5650,6 @@ static XEN g_sounds(void)
 #ifdef XEN_ARGIFY_1
 
 XEN_NARGIFY_1(g_sound_p_w, g_sound_p)
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_ARGIFY_2(g_bomb_w, g_bomb)
-#endif
 XEN_ARGIFY_2(g_find_sound_w, g_find_sound)
 XEN_ARGIFY_1(g_channels_w, g_channels)
 XEN_ARGIFY_2(g_set_channels_w, g_set_channels)
@@ -5778,9 +5771,6 @@ XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
 #else
 
 #define g_sound_p_w g_sound_p
-#if (!SND_DISABLE_DEPRECATED)
-  #define g_bomb_w g_bomb
-#endif
 #define g_find_sound_w g_find_sound
 #define g_channels_w g_channels
 #define g_set_channels_w g_set_channels
@@ -5936,9 +5926,6 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_comment,       g_comment_w,       H_comment,       S_setB S_comment,       g_set_comment_w,        0, 1, 1, 1);
 
   XEN_DEFINE_SAFE_PROCEDURE(S_sound_p,               g_sound_p_w,          1, 0, 0, H_sound_p);
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_DEFINE_SAFE_PROCEDURE(S_bomb,                  g_bomb_w,             0, 2, 0, H_bomb);
-#endif
   XEN_DEFINE_SAFE_PROCEDURE(S_find_sound,            g_find_sound_w,       1, 1, 0, H_find_sound);
   XEN_DEFINE_SAFE_PROCEDURE(S_file_name,             g_file_name_w,        0, 1, 0, H_file_name);
   XEN_DEFINE_SAFE_PROCEDURE(S_short_file_name,       g_short_file_name_w,  0, 1, 0, H_short_file_name);

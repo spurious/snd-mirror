@@ -1735,26 +1735,6 @@ If there is no sound or listener, it is sent to stderr."
 }
 
 
-#if (!SND_DISABLE_DEPRECATED)
-static XEN g_save_macros(XEN file)
-{
-  fprintf(stderr, "save-macros no longer does anything\n");
-  return(XEN_FALSE);
-}
-
-static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd, XEN raw)
-{
-  fprintf(stderr, "prompt-in-minibuffer no longer does anything\n");
-  return(XEN_FALSE);
-}
-
-static XEN g_clear_status_area(XEN snd)
-{
-  return(g_status_report(C_TO_XEN_STRING(""), snd));
-}
-#endif
-
-
 #ifdef XEN_ARGIFY_1
 
 XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
@@ -1763,12 +1743,6 @@ XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
 XEN_ARGIFY_2(g_status_report_w, g_status_report)
 
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_NARGIFY_1(g_save_macros_w, g_save_macros)
-  XEN_ARGIFY_1(g_clear_status_area_w, g_clear_status_area)
-  XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
-#endif
-
 #else
 
 #define g_key_binding_w g_key_binding
@@ -1776,12 +1750,6 @@ XEN_ARGIFY_2(g_status_report_w, g_status_report)
 #define g_unbind_key_w g_unbind_key
 #define g_key_w g_key
 #define g_status_report_w g_status_report
-
-#if (!SND_DISABLE_DEPRECATED)
-  #define g_save_macros_w g_save_macros
-  #define g_clear_status_area_w g_clear_status_area
-  #define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
-#endif
 
 #endif
 
@@ -1805,13 +1773,6 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
 
   XEN_DEFINE_PROCEDURE(S_status_report,          g_status_report_w,          1, 1, 0, H_status_report);
-
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_DEFINE_PROCEDURE("save-macros",            g_save_macros_w,            1, 0, 0, "obsolete");
-  XEN_DEFINE_PROCEDURE("clear-minibuffer",       g_clear_status_area_w,      0, 1, 0, "obsolete");
-  XEN_DEFINE_PROCEDURE("report-in-minibuffer",   g_status_report_w,          1, 1, 0, "obsolete");
-  XEN_DEFINE_PROCEDURE("prompt-in-minibuffer",   g_prompt_in_minibuffer_w,   1, 3, 0, "obsolete");
-#endif
 
 #if HAVE_SCHEME
   {

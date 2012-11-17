@@ -3559,6 +3559,8 @@ and its value is returned."
 		const char *url = NULL;
 		s7_pointer x, e;
 		e = s7_procedure_environment(sym);
+		str = (char *)calloc(256, sizeof(char));
+		/* unavoidable memleak I guess -- we could use a backup statically allocated buffer here */
 		if (s7_is_null(s7, e))
 		  mus_snprintf(str, 256, "this function appears to come from eval or eval-string?");
 		else
@@ -3570,8 +3572,6 @@ and its value is returned."
 		      {
 			subject = (char *)s7_symbol_name(s7_car(x));
 			url = snd_url(subject);
-			/* unavoidable memleak I guess */
-			str = (char *)calloc(256, sizeof(char));
 			if (url)
 			  mus_snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
 				       subject, 

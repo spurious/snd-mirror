@@ -1124,7 +1124,10 @@ static XEN g_mus_audio_close(XEN line)
   int res;
   #define H_mus_audio_close "(" S_mus_audio_close " line): close the audio hardware line"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ONLY_ARG, S_mus_audio_close, "an integer");
-  res = mus_audio_close(XEN_TO_C_INT(line));
+  res = (int)XEN_TO_C_INT(line);
+  if (res < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_close, 1, line, "line ~A < 0?");
+  res = mus_audio_close(res);
   return(C_TO_XEN_INT(res));
 }
 

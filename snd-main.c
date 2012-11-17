@@ -2033,17 +2033,6 @@ static XEN g_set_audio_input_device(XEN val)
 }
 
 
-#if (!SND_DISABLE_DEPRECATED)
-static XEN g_minibuffer_history_length(void) {return(C_TO_XEN_INT(0));}
-
-static XEN g_set_minibuffer_history_length(XEN val) 
-{
-  #define H_minibuffer_history_length "(minibuffer-history-length): this is a no-op."
-  return(C_TO_XEN_INT(0));
-}
-#endif
-
-
 static XEN g_auto_resize(void) {return(C_TO_XEN_BOOLEAN(auto_resize(ss)));}
 
 static XEN g_set_auto_resize(XEN val) 
@@ -2294,10 +2283,6 @@ XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
 XEN_NARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
 XEN_NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
 XEN_NARGIFY_1(g_set_audio_input_device_w, g_set_audio_input_device)
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_NARGIFY_0(g_minibuffer_history_length_w, g_minibuffer_history_length)
-  XEN_NARGIFY_1(g_set_minibuffer_history_length_w, g_set_minibuffer_history_length)
-#endif
 XEN_NARGIFY_0(g_auto_resize_w, g_auto_resize)
 XEN_NARGIFY_1(g_set_auto_resize_w, g_set_auto_resize)
 XEN_NARGIFY_0(g_color_cutoff_w, g_color_cutoff)
@@ -2383,10 +2368,6 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_audio_output_device_w g_set_audio_output_device
 #define g_audio_input_device_w g_audio_input_device
 #define g_set_audio_input_device_w g_set_audio_input_device
-#if (!SND_DISABLE_DEPRECATED)
-  #define g_minibuffer_history_length_w g_minibuffer_history_length
-  #define g_set_minibuffer_history_length_w g_set_minibuffer_history_length
-#endif
 #define g_auto_resize_w g_auto_resize
 #define g_set_auto_resize_w g_set_auto_resize
 #define g_color_cutoff_w g_color_cutoff
@@ -2577,10 +2558,5 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   XEN_DEFINE_PROCEDURE(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
 #if (!HAVE_SCHEME)
   XEN_DEFINE_PROCEDURE(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);
-#endif
-
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_DEFINE_PROCEDURE_WITH_SETTER("minibuffer-history-length", g_minibuffer_history_length_w, H_minibuffer_history_length,
-				   "set-minibuffer-history-length", g_set_minibuffer_history_length_w,  0, 0, 1, 0);
 #endif
 }

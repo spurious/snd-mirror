@@ -5442,6 +5442,7 @@ Chebyshev polynomials Tn and Un (vectors or vcts), with phase x."
   if (XEN_VECTOR_P(tn))
     {
       len = XEN_VECTOR_LENGTH(tn);
+      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       tdata = vector_to_float_array(tn);
       udata = vector_to_float_array(un);
       need_free = true;
@@ -5457,6 +5458,7 @@ Chebyshev polynomials Tn and Un (vectors or vcts), with phase x."
       Un = XEN_TO_VCT(un);
       udata = Un->data;
       len = Tn->length;
+      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       need_free = false;
     }
 
@@ -5485,6 +5487,7 @@ Chebyshev polynomials Tn (a vct)."
   if (XEN_VECTOR_P(tn))
     {
       len = XEN_VECTOR_LENGTH(tn);
+      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       data = vector_to_float_array(tn);
       need_free = true;
     }
@@ -5495,6 +5498,7 @@ Chebyshev polynomials Tn (a vct)."
       Tn = XEN_TO_VCT(tn);
       data = Tn->data;
       len = Tn->length;
+      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       need_free = false;
     }
 
@@ -5520,6 +5524,7 @@ Chebyshev polynomials Un (a vct)."
   if (XEN_VECTOR_P(un))
     {
       len = XEN_VECTOR_LENGTH(un);
+      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       data = vector_to_float_array(un);
       need_free = true;
     }
@@ -5529,6 +5534,7 @@ Chebyshev polynomials Un (a vct)."
       XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_2, S_mus_chebyshev_u_sum, "a vct");
       Un = XEN_TO_VCT(un);
       len = Un->length;
+      if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       data = Un->data;
       need_free = false;
     }
@@ -6505,6 +6511,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
 {
   mus_long_t pos;
 
+  if (inp == xen_false) return(C_TO_XEN_DOUBLE(0.0));
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frame), frame, XEN_ARG_1, caller, "an integer");
 
   pos = XEN_TO_C_LONG_LONG(frame);
@@ -8873,6 +8880,7 @@ static XEN g_pulsed_env(XEN g, XEN fm)
   #define H_pulsed_env "(" S_pulsed_env " gen fm) runs a pulsed-env generator."
   mus_float_t pt_val, fm1 = 0.0;
   mus_any *p, *e;
+  XEN_ASSERT_TYPE((XEN_VECTOR_P(g)) && (XEN_VECTOR_LENGTH(g) == 4), g, XEN_ARG_1, S_pulsed_env, "a vector from make-pulsed-env");
 
   p = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2));
   e = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3));
@@ -8891,6 +8899,8 @@ static s7_pointer g_pulsed_env_1(s7_scheme *sc, s7_pointer args)
   s7_pointer g;
 
   g = s7_car_value(sc, args);
+  XEN_ASSERT_TYPE((XEN_VECTOR_P(g)) && (XEN_VECTOR_LENGTH(g) == 4), g, XEN_ARG_1, S_pulsed_env, "a vector from make-pulsed-env");
+
   p = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 2));
   e = (mus_any *)s7_c_pointer(XEN_VECTOR_REF(g, 3));
 
@@ -8924,6 +8934,7 @@ static XEN g_pulsed_env(XEN g, XEN fm)
 {
   #define H_pulsed_env "(" S_pulsed_env " gen fm) runs a pulsed-env generator."
   mus_float_t pt_val;
+  XEN_ASSERT_TYPE((XEN_VECTOR_P(g)) && (XEN_VECTOR_LENGTH(g) == 2), g, XEN_ARG_1, S_pulsed_env, "a vector from make-pulsed-env");
   pt_val = XEN_TO_C_DOUBLE(g_pulse_train(XEN_VECTOR_REF(g, 0), fm));
   if (pt_val > 0.1)
     g_mus_reset(XEN_VECTOR_REF(g, 1));

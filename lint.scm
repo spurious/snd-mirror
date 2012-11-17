@@ -3134,10 +3134,9 @@
 		     (lambda (var)
 		       (if (not (env-member (car var) vars))
 			   (lint-format "undefined identifier ~A in:~A"
-					(list-ref var 1)
-					(list-ref var 2)
 					(list-ref var 0)
-					(list-ref var 3))))
+					(list-ref var 2)
+					(list-ref var 1))))
 		     undefined-identifiers))
 		
 		(close-input-port fp))))))))
@@ -3147,3 +3146,5 @@
 ;;; nonce words that look like misspellings should be reported no matter what the undefined-variables switch is,
 ;;;   but this slows us down too much.
 
+;;; currently *report-undefined-variables* is confused by with-environment -- the field names
+;;;   are wrongly reported as undefined.

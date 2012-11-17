@@ -861,40 +861,6 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
 }
 
 
-#if (!SND_DISABLE_DEPRECATED)
-static XEN g_vct_mapB(XEN obj, XEN proc)
-{
-  #if HAVE_SCHEME
-    #define vct_map_example "(vct-map! v (lambda () 3.0))"
-    #define vct_fill_example  "(vct-fill! v 3.0)"
-  #endif
-  #if HAVE_RUBY
-    #define vct_map_example "vct_map!(v, lambda do | | 3.0 end)"
-    #define vct_fill_example "vct_fill!(v, 3.0)"
-  #endif
-  #if HAVE_FORTH
-    #define vct_map_example "v lambda: <{ -- val }> 3.0 ; vct-map!"
-    #define vct_fill_example "v 3.0 vct-fill!"
-  #endif
-
-  #define H_vct_mapB "(" S_vct_mapB " v proc): set each element of v to value of proc (a thunk): v[i] = (proc), returns \
-v. " vct_map_example " is the same as " vct_fill_example
-
-  mus_long_t i;
-  vct *v;
-
-  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
-
-  v = XEN_TO_VCT(obj);
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
-  for (i = 0; i < v->length; i++) 
-    v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc));
-
-  return(obj);
-}
-#endif
-
-
 double mus_vct_peak(vct *v)
 {
   mus_float_t val = 0.0, absv;
@@ -1191,9 +1157,6 @@ XEN_NARGIFY_2(g_vct_fill_w, g_vct_fill)
 XEN_ARGIFY_3(g_vct_add_w, g_vct_add)
 XEN_NARGIFY_2(g_vct_subtract_w, g_vct_subtract)
 XEN_NARGIFY_2(g_vct_offset_w, g_vct_offset)
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_NARGIFY_2(g_vct_mapB_w, g_vct_mapB)
-#endif
 XEN_NARGIFY_1(g_vct_peak_w, g_vct_peak)
 XEN_NARGIFY_1(g_vct_peak_and_location_w, g_vct_peak_and_location)
 XEN_ARGIFY_4(g_vct_move_w, g_vct_move)
@@ -1220,9 +1183,6 @@ XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
 #define g_vct_add_w g_vct_add
 #define g_vct_subtract_w g_vct_subtract
 #define g_vct_offset_w g_vct_offset
-#if (!SND_DISABLE_DEPRECATED)
-  #define g_vct_mapB_w g_vct_mapB
-#endif
 #define g_vct_peak_w g_vct_peak
 #define g_vct_peak_and_location_w g_vct_peak_and_location
 #define g_vct_move_w g_vct_move
@@ -1577,9 +1537,6 @@ void mus_vct_init(void)
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
   XEN_DEFINE_SAFE_PROCEDURE(S_vct_reverse,       g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
-#if (!SND_DISABLE_DEPRECATED)
-  XEN_DEFINE_PROCEDURE(S_vct_mapB,               g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
-#endif
 
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref,    g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);

@@ -22103,7 +22103,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool 
 
 static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, bool use_write, bool to_file, shared_info *ci)
 {
-  if (ci)
+  if ((ci) &&
+      (has_structure(vr)))
     {
       int ref;
       ref = shared_ref(ci, vr);
@@ -22136,11 +22137,13 @@ static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer por
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, (use_write) ? "write" : "display", 2, port, "an open input port"));
 
-  if ((has_structure(obj)) &&
-      (obj != sc->global_env))
-    ci = make_shared_info(sc, obj);
-  object_to_port_with_circle_check(sc, obj, port, use_write, is_file_port(port), ci);
-
+  if (has_structure(obj))
+    {
+      if (obj != sc->global_env)
+	ci = make_shared_info(sc, obj);
+      object_to_port_with_circle_check(sc, obj, port, use_write, is_file_port(port), ci);
+    }
+  else object_to_port(sc, obj, port, use_write, is_file_port(port), ci);
   return(obj);
 }
 
@@ -22155,11 +22158,13 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_wri
   strport = s7_open_output_string(sc);
   gc_loc = s7_gc_protect(sc, strport);
 
-  if ((has_structure(obj)) && 
-      (obj != sc->global_env))
-    ci = make_shared_info(sc, obj);
-  object_to_port_with_circle_check(sc, obj, strport, use_write, WITH_ELLIPSES, ci);
-
+  if (has_structure(obj))
+    {
+      if (obj != sc->global_env)
+	ci = make_shared_info(sc, obj);
+      object_to_port_with_circle_check(sc, obj, strport, use_write, WITH_ELLIPSES, ci);
+    }
+  else object_to_port(sc, obj, strport, use_write, WITH_ELLIPSES, ci);
   str = port_string(strport);
   if (nlen) (*nlen) = port_string_point(strport);
   port_string(strport) = NULL;
@@ -22305,7 +22310,6 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
   if (is_thunk(sc, car(args)))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(2), car(args), 
 					 make_protected_string(sc, "a procedure of one argument (the port)")));
-  
   port = s7_open_output_string(sc);
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
   push_stack(sc, OP_GET_OUTPUT_STRING, sc->F, port);
@@ -62311,12 +62315,7 @@ s7_scheme *s7_init(void)
 
 
 
-/* PERHAPS: check_methods in all the exported funcs also so e.g. vector-ref works in any context -- or is this a bad idea??
- * TODO: move all the clm2xen direct choices to s7 (like add_s_direct)
- *   mul_1s_direct mul_direct_s2 mul_direct_2 mul_direct_any
- *   add_c_direct add_direct_2 add_cs_direct add_1s_direct add_direct_s2 add_direct_any
- *   mul_direct_2 calls the two safe_c_c exprs, frees one, remakes the other
- * TODO: use new generic_ff in methods opt case 
+/* TODO: use new generic_ff in methods opt case 
  * SOMEDAY: get the doc string out of the closure body
  * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * 
