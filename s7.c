@@ -2232,14 +2232,12 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static void pop_input_port(s7_scheme *sc);
-static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
 static bool is_aritable(s7_scheme *sc, s7_pointer x, int args);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
-static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst);
 static s7_pointer find_symbol_or_bust(s7_scheme *sc, s7_pointer hdl);
 static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol);
 static s7_pointer find_environment(s7_scheme *sc, s7_pointer obj);
@@ -32415,7 +32413,6 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
   while (is_not_null(cdr(cdr(p))))
     {
       d = cons(sc, car(p), cdr(p));
-      /* if (is_not_null(cdr(cdr(p)))) */
       p = cdr(p);
     }
   cdr(p) = car(cdr(p));

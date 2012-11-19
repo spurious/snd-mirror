@@ -6511,7 +6511,6 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
 {
   mus_long_t pos;
 
-  if (inp == xen_false) return(C_TO_XEN_DOUBLE(0.0));
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frame), frame, XEN_ARG_1, caller, "an integer");
 
   pos = XEN_TO_C_LONG_LONG(frame);
@@ -6522,6 +6521,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, C_TO_XEN_INT(in_chan), "must be >= 0");    
 
 #if HAVE_SCHEME
+  if (XEN_FALSE_P(inp)) return(C_TO_XEN_DOUBLE(0.0)); /* ws.scm default for *clm-reverb* is #f */
   if (inp == CLM_REVERB)
     return(s7_make_real(s7, in_any_2(pos, in_chan)));
 #endif

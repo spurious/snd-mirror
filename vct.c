@@ -643,11 +643,53 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 
 
 #if HAVE_SCHEME
+
+
+/* ---------------- #if HAVE_SCHEME */
+#define S7_DEBUGGING 0
+#if (!S7_DEBUGGING)
+/* an experiment -- dangerous! */
+typedef struct imported_s7_cell {
+  union {
+    unsigned int flag;
+    unsigned char type_field;
+    unsigned short sflag;
+  } tf;
+  int hloc;
+  union {
+    struct {               /* additional object types (C) */
+      int type;
+      void *value;         /*  the value the caller associates with the object */
+      s7_pointer e;        /*   the method list, if any (open environment) */
+    } c_obj;
+  } object;
+} imported_s7_cell;
+
+#define imported_T_C_OBJECT            23
+#define imported_type(p)               ((p)->tf.type_field)
+
+#define imported_is_c_object(p)        (imported_type(p) == imported_T_C_OBJECT)
+#define imported_c_object_value(p)     (p)->object.c_obj.value
+#define imported_c_object_type(p)      (p)->object.c_obj.type
+
+static void *imported_s7_object_value_checked(s7_pointer ur_obj, int type)
+{
+  imported_s7_cell *obj = (imported_s7_cell *)ur_obj;
+  if ((imported_is_c_object(obj)) &&
+      (imported_c_object_type(obj) == type))
+    return(imported_c_object_value(obj));
+  return(NULL);
+}
+#else
+#define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
+#endif
+/* ---------------- #endif */
+
 static s7_pointer vct_ref_two;
 static s7_pointer g_vct_ref_two(s7_scheme *sc, s7_pointer args)
 {
   vct *v;
-  v = (vct *)s7_object_value_checked(s7_car(args), vct_tag);
+  v = (vct *)imported_s7_object_value_checked(s7_car(args), vct_tag);
   if (v)
     {
       mus_long_t loc;
@@ -664,7 +706,7 @@ static s7_pointer vct_ref_ss;
 static s7_pointer g_vct_ref_ss(s7_scheme *sc, s7_pointer args)
 {
   vct *v;
-  v = (vct *)s7_object_value_checked(s7_car_value(sc, args), vct_tag);
+  v = (vct *)imported_s7_object_value_checked(s7_car_value(sc, args), vct_tag);
   if (v)
     {
       mus_long_t loc;

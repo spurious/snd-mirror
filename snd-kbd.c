@@ -102,7 +102,7 @@ int in_keymap(int key, int state, bool cx_extended)
 }
 
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_FORTH
   #define kbd_false 0
 #else
   #define kbd_false XEN_FALSE
@@ -1755,6 +1755,8 @@ XEN_ARGIFY_2(g_status_report_w, g_status_report)
 
 void g_init_kbd(void)
 {
+  int i;
+
   #define H_cursor_in_view     "The value for a " S_bind_key " function that moves the window so that the cursor is in the view"
   #define H_cursor_on_left     "The value for a " S_bind_key " function that moves the window so that the cursor is at the left edge"
   #define H_cursor_on_right    "The value for a " S_bind_key " function that moves the window so that the cursor is at the right edge"
@@ -1774,11 +1776,6 @@ void g_init_kbd(void)
 
   XEN_DEFINE_PROCEDURE(S_status_report,          g_status_report_w,          1, 1, 0, H_status_report);
 
-#if HAVE_SCHEME
-  {
-    int i;
-    for (i = 0; i < NUM_BUILT_IN_KEYS; i++)
-      built_in_keys[i].func = XEN_FALSE;
-  }
-#endif
+  for (i = 0; i < NUM_BUILT_IN_KEYS; i++)
+    built_in_keys[i].func = XEN_FALSE;
 }

@@ -1120,8 +1120,8 @@
 			 ;; open/close html entities
 			 (do ((i 0 (+ i 1)))
 			     ((>= i len))
-			   (let ((c (line i)))
-			     (case c
+			   ;(let ((c (line i)))
+			     (case (string-ref line i)
 			       ((#\<)
 				(if (and (not (zero? openctr))
 					 (not (positive? p-quotes)))
@@ -1203,7 +1203,7 @@
 			       ((#\")
 				(if (or (= i 0)
 					(not (char=? (line (- i 1)) #\\)))
-				    (incf p-quotes))))))
+				    (incf p-quotes)))))
 
 			 ;; end line scan
 			 (if (not in-comment)
@@ -1211,9 +1211,9 @@
 				   (closing #f))
 			       (do ((i 0 (+ i 1)))
 				   ((>= i len))
-				 (let ((c (line i)))
+				 ;(let ((c (line i)))
 
-				   (case c 
+				   (case (string-ref line i)
 				     ((#\<)
 				      (if start
 					  (if (and (not scripting)
@@ -1373,7 +1373,7 @@
 									    (format #t "~A[~D]: <-- missing !?~%" file linectr))
 									(set! commands (push opener commands))))))))))
 					    ;; end if closing
-					    (set! start #f))))))))
+					    (set! start #f)))))));)
 			     ) ; if not in-comment...
 					  
 			 ;; search for name
