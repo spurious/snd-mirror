@@ -9540,6 +9540,8 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
   static void **last_syms = NULL;
   void **syms;
 
+  static mus_any *vibe = NULL, *trig = NULL, *rang = NULL;
+
   if (args == last_args)
     syms = last_syms;
   else
@@ -9553,7 +9555,7 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	return(fm_violin_vibrato_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 3); 
+      syms = s7_expression_make_data(sc, args, 1); 
       last_args = args;
       last_syms = syms;
     }
@@ -9561,20 +9563,19 @@ static s7_pointer g_fm_violin_vibrato(s7_scheme *sc, s7_pointer args)
   /* now check for start of a new note */
   if (!syms[0])
     {
-      syms[0] = get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((syms[0]) && (mus_env_p((mus_any *)syms[0])), cadar(args), XEN_ONLY_ARG, "env", "env generator");
+      vibe = (mus_any *)get_generator(sc, cadar(args));
+      XEN_ASSERT_TYPE((vibe) && (mus_env_p(vibe)), cadar(args), XEN_ONLY_ARG, "env", "env generator");
+      syms[0] = (void *)vibe;
 
       args = cdr(args);
-      syms[1] = get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((syms[1]) && (mus_triangle_wave_p((mus_any *)syms[1])), cadar(args), XEN_ARG_1, "triangle-wave", "triangle-wave generator");
+      trig = (mus_any *)get_generator(sc, cadar(args));
+      XEN_ASSERT_TYPE((trig) && (mus_triangle_wave_p(trig)), cadar(args), XEN_ARG_1, "triangle-wave", "triangle-wave generator");
 
       args = cdr(args);
-      syms[2] = get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((syms[2]) && (mus_rand_interp_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "rand-interp", "rand-interp generator");
+      rang = (mus_any *)get_generator(sc, cadar(args));
+      XEN_ASSERT_TYPE((rang) && (mus_rand_interp_p(rang)), cadar(args), XEN_ARG_1, "rand-interp", "rand-interp generator");
     }
-  return(s7_make_real(sc, mus_env((mus_any *)(syms[0])) + 
-		          mus_triangle_wave_unmodulated((mus_any *)syms[1]) + 
-		          mus_rand_interp_unmodulated((mus_any *)syms[2])));			
+  return(s7_make_real(sc, mus_env(vibe) + mus_triangle_wave_unmodulated(trig) + mus_rand_interp_unmodulated(rang)));
 }
 
 static s7_pointer env_polywave;
@@ -9672,7 +9673,10 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
   double vibrato, val;
   mus_long_t pos;
   void **syms;
-  s7_pointer sym;
+
+  static mus_any *ampe = NULL, *carg = NULL, *mode = NULL, *modg = NULL, *locg = NULL;
+  static s7_pointer posp = NULL, vibp = NULL;
+  static bool pos_is_slot = false, vib_is_slot = false;
 
   if (args == last_args)
     syms = last_syms;
@@ -9686,7 +9690,7 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	return(fm_violin_2_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 9); 
+      syms = s7_expression_make_data(sc, args, 1); 
       last_args = args;
       last_syms = syms;
     }
@@ -9698,77 +9702,65 @@ static s7_pointer g_fm_violin_2(s7_scheme *sc, s7_pointer args)
       s7_pointer vargs;
       syms[0] = get_generator(sc, car(args));
       XEN_ASSERT_TYPE((syms[0]) && (mus_locsig_p((mus_any *)syms[0])), car(args), XEN_ARG_1, "locsig", "locsig generator");
+      locg = (mus_any *)(syms[0]);
       
-      sym = cadr(args);
-      if (s7_is_do_local_or_global(sc, sym))
+      posp = cadr(args);
+      if (s7_is_do_local_or_global(sc, posp))
 	{
-	  syms[1] = s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_integer((s7_pointer)syms[1]), sym, XEN_ARG_2, "locsig", "an integer");
-	  /* pos = s7_slot_value_to_integer(s7, (s7_pointer)syms[1]); */
-	  syms[2] = NULL;
+	  posp = s7_slot(sc, posp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_integer(posp), cadr(args), XEN_ARG_2, "locsig", "an integer");
+	  pos_is_slot = true;
 	}
-      else
-	{
-	  syms[1] = (void *)sym;
-	  syms[2] = (void *)sym;
-	}
+      else pos_is_slot = false;
       
       vargs = s7_cdaddr(args);
-      syms[3] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[3]) && (mus_env_p((mus_any *)syms[3])), s7_cadar(vargs), XEN_ONLY_ARG, "env", "env generator");
+      ampe = (mus_any *)get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((ampe) && (mus_env_p(ampe)), cadar(vargs), XEN_ONLY_ARG, "env", "env generator");
       
       vargs = cadr(vargs);
-      syms[4] = get_generator(sc, cadr(vargs));
-      XEN_ASSERT_TYPE((syms[4]) && (mus_oscil_p((mus_any *)syms[4])), cadr(vargs), XEN_ARG_1, "oscil", "oscil generator");
+      carg = (mus_any *)get_generator(sc, cadr(vargs));
+      XEN_ASSERT_TYPE((carg) && (mus_oscil_p(carg)), cadr(vargs), XEN_ARG_1, "oscil", "oscil generator");
       
       vargs = s7_cdaddr(s7_caddr(vargs));
-      syms[5] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[5]) && (mus_env_p((mus_any *)syms[5])), s7_cadar(vargs), XEN_ONLY_ARG, "env", "env generator");
+      mode = (mus_any *)get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((mode) && (mus_env_p(mode)), cadar(vargs), XEN_ONLY_ARG, "env", "env generator");
       
       vargs = cdadr(vargs);
-      syms[6] = get_generator(sc, car(vargs));
-      XEN_ASSERT_TYPE((syms[6]) && (mus_polywave_p((mus_any *)syms[6])), s7_car(vargs), XEN_ARG_1, "polywave", "polywave generator");
+      modg = (mus_any *)get_generator(sc, car(vargs));
+      XEN_ASSERT_TYPE((modg) && (mus_polywave_p(modg)), car(vargs), XEN_ARG_1, "polywave", "polywave generator");
       
-      sym = cadr(vargs);
-      if (s7_is_do_local_or_global(sc, sym))
+      vibp = cadr(vargs);
+      if (s7_is_do_local_or_global(sc, vibp))
 	{
-	  syms[7] = s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real((s7_pointer)syms[7]), sym, XEN_ARG_2, "polywave", "a real");
-	  syms[8] = NULL;
+	  vibp = s7_slot(sc, vibp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_real(vibp), cadr(vargs), XEN_ARG_2, "polywave", "a real");
+	  vib_is_slot = true;
 	}
-      else
-	{
-	  syms[7] = (void *)sym;
-	  syms[8] = (void *)sym;
-	}
-      
+      else vib_is_slot = false;
       /* choosing the env/locsig/real funcs ahead of time just breaks even??
        */
     }
 
-  if (syms[2])
+  if (!pos_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[1];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_2, "locsig", "an integer");
+      x = s7_value(sc, posp);
+      XEN_ASSERT_TYPE(s7_is_integer(x), posp, XEN_ARG_2, "locsig", "an integer");
       pos = s7_integer(x);
     }
-  else pos = s7_slot_value_to_integer(s7, (s7_pointer)syms[1]);
+  else pos = s7_slot_value_to_integer(s7, posp);
 
-  if (syms[8])
+  if (!vib_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[7];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "polywave", "a real");
+      x = s7_value(sc, vibp);
+      XEN_ASSERT_TYPE(s7_is_real(x), vibp, XEN_ARG_2, "polywave", "a real");
       vibrato = s7_number_to_real(sc, x);
     }
-  else vibrato = s7_slot_value_to_real(s7, (s7_pointer)syms[7]);
+  else vibrato = s7_slot_value_to_real(s7, vibp);
 
-  val = mus_env((mus_any *)syms[3]) * mus_oscil_fm((mus_any *)syms[4], 
-						   vibrato + (mus_env((mus_any *)syms[5]) * mus_polywave((mus_any *)syms[6], vibrato)));
-  mus_locsig((mus_any *)syms[0], pos, val);
+  val = mus_env(ampe) * mus_oscil_fm(carg, vibrato + (mus_env(mode) * mus_polywave(modg, vibrato)));
+  mus_locsig(locg, pos, val);
   return(XEN_ZERO);
 }
 
@@ -9794,6 +9786,8 @@ static s7_pointer g_env_polywave_env(s7_scheme *sc, s7_pointer args)
   static void **last_syms = NULL;
   void **syms;
 
+  static mus_any *ampe = NULL, *carg = NULL, *mode = NULL;
+
   if (args == last_args)
     syms = last_syms;
   else
@@ -9807,22 +9801,23 @@ static s7_pointer g_env_polywave_env(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	return(env_polywave_env_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 3);
+      syms = s7_expression_make_data(sc, args, 1);
       last_args = args;
       last_syms = syms;
     }
 
   if (!syms[0])
     {
-      syms[0] = get_generator(sc, cadar(args));
-      XEN_ASSERT_TYPE((syms[0]) && (mus_env_p((mus_any *)syms[0])), car(args), XEN_ONLY_ARG, "env", "env generator");
+      ampe = (mus_any *)get_generator(sc, cadar(args));
+      syms[0] = (void *)ampe;
+      XEN_ASSERT_TYPE((ampe) && (mus_env_p(ampe)), car(args), XEN_ONLY_ARG, "env", "env generator");
       args = cadr(args);
-      syms[1] = get_generator(sc, cadr(args));
+      carg = (mus_any *)get_generator(sc, cadr(args));
       args = caddr(args);
-      syms[2] = get_generator(sc, cadr(args));
+      mode = (mus_any *)get_generator(sc, cadr(args));
     }
 
-  return(s7_make_real(sc, mus_env((mus_any *)syms[0]) * mus_polywave((mus_any *)syms[1], mus_env((mus_any *)syms[2]))));
+  return(s7_make_real(sc, mus_env(ampe) * mus_polywave(carg, mus_env(mode))));
 }
 
 
@@ -9856,8 +9851,11 @@ static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
   static s7_pointer last_args = NULL;
   static void **last_syms = NULL;
   double fm;
-  s7_pointer sym;
   void **syms;
+
+  static s7_pointer fmp = NULL;
+  static mus_any *c1 = NULL, *c2 = NULL, *c3 = NULL, *c4 = NULL;
+  static bool fm_is_slot = false;
 
   if (args == last_args)
     syms = last_syms;
@@ -9872,7 +9870,7 @@ static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	return(jc_reverb_combs_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 6);
+      syms = s7_expression_make_data(sc, args, 1);
       last_args = args;
       last_syms = syms;
     }
@@ -9880,49 +9878,45 @@ static s7_pointer g_jc_reverb_combs(s7_scheme *sc, s7_pointer args)
   if (!syms[0])
     {
       s7_pointer vargs;
-      syms[0] = get_generator(sc, s7_cadar(args));
-      XEN_ASSERT_TYPE((syms[0]) && (mus_comb_p((mus_any *)syms[0])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c1 = (mus_any *)get_generator(sc, s7_cadar(args));
+      syms[0] = (void *)c1;
+      XEN_ASSERT_TYPE((c1) && (mus_comb_p(c1)), cadar(args), XEN_ARG_1, "comb", "comb generator");
 
       vargs = cdr(args);
-      syms[1] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[1]) && (mus_comb_p((mus_any *)syms[1])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c2 = (mus_any *)get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((c2) && (mus_comb_p(c2)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
 
       vargs = cdr(vargs);
-      syms[2] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[2]) && (mus_comb_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c3 = (mus_any *)get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((c3) && (mus_comb_p(c3)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
 
       vargs = cdr(vargs);
-      syms[3] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[3]) && (mus_comb_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c4 = (mus_any *)get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((c4) && (mus_comb_p(c4)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
 
-      sym = caddar(args);
-      if (s7_is_do_local_or_global(sc, sym))
+      fmp = caddar(args);
+      if (s7_is_do_local_or_global(sc, fmp))
 	{
-	  syms[4] = s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real((s7_pointer)syms[4]), sym, XEN_ARG_2, "comb", "a real");
-	  syms[5] = NULL;
+	  fmp = s7_slot(sc, fmp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_real(fmp), caddar(args), XEN_ARG_2, "comb", "a real");
+	  fm_is_slot = true;
 	}
-      else
-	{
-	  syms[4] = (void *)sym;
-	  syms[5] = (void *)sym;
-	}
+      else fm_is_slot = false;
     }
   
-  if (syms[5])
+  if (!fm_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[4];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "comb", "a real");
+      x = s7_value(sc, fmp);
+      XEN_ASSERT_TYPE(s7_is_real(x), fmp, XEN_ARG_2, "comb", "a real");
       fm = s7_number_to_real(sc, x);
     }
-  else fm = s7_slot_value_to_real(s7, (s7_pointer)syms[4]);
+  else fm = s7_slot_value_to_real(s7, fmp);
 
-  return(s7_make_real(sc, mus_comb_unmodulated_noz((mus_any *)syms[0], fm) + 
-		          mus_comb_unmodulated_noz((mus_any *)syms[1], fm) + 
-		          mus_comb_unmodulated_noz((mus_any *)syms[2], fm) + 
-		          mus_comb_unmodulated_noz((mus_any *)syms[3], fm)));
+  return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
+		          mus_comb_unmodulated_noz(c2, fm) + 
+		          mus_comb_unmodulated_noz(c3, fm) + 
+		          mus_comb_unmodulated_noz(c4, fm)));
 }
 
 
@@ -9933,10 +9927,13 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 
   static s7_pointer last_args = NULL;
   static void **last_syms = NULL;
-  s7_pointer vargs, sym;
-  mus_any *a1 = NULL, *a2, *a3;
+  s7_pointer vargs;
   void **syms;
   s7_Int pos;
+
+  static mus_any *a1 = NULL, *a2 = NULL, *a3 = NULL;
+  static s7_pointer locp = NULL;
+  static bool locp_is_slot = false;
 
   if (args == last_args)
     syms = last_syms;
@@ -9962,52 +9959,44 @@ static s7_pointer g_jc_reverb_all_passes(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))))));
 	}
 	
-      syms = s7_expression_make_data(sc, args, 5);
+      syms = s7_expression_make_data(sc, args, 1);
       last_args = args;
       last_syms = syms;
     }
 
   if (!(syms[0])) 
     {
-      syms[0] = get_generator(sc, car(args));
-      XEN_ASSERT_TYPE((syms[0]) && (mus_all_pass_p((mus_any *)syms[0])), car(args), XEN_ARG_1, "all-pass", "all-pass generator");
+      a1 = (mus_any *)get_generator(sc, car(args));
+      syms[0] = (void *)a1;
+      XEN_ASSERT_TYPE((a1) && (mus_all_pass_p(a1)), car(args), XEN_ARG_1, "all-pass", "all-pass generator");
 
       vargs = s7_cdr(args);
-      syms[1] = get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((syms[1]) && (mus_all_pass_p((mus_any *)syms[1])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
+      a2 = (mus_any *)get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((a2) && (mus_all_pass_p(a2)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
       
       vargs = s7_cddar(vargs);
-      syms[2] = get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((syms[2]) && (mus_all_pass_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
+      a3 = (mus_any *)get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((a3) && (mus_all_pass_p(a3)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
 
       vargs = caddar(vargs);
-      sym = cadr(vargs);
-      if (s7_is_do_local_or_global(sc, sym))
+      locp = cadr(vargs);
+      if (s7_is_do_local_or_global(sc, locp))
 	{
-	  syms[3] = s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_integer((s7_pointer)syms[3]), sym, XEN_ARG_1, "ina", "an integer");
-	  syms[4] = NULL;
+	  locp = s7_slot(sc, locp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_integer(locp), cadr(vargs), XEN_ARG_1, "ina", "an integer");
+	  locp_is_slot = true;
 	}
-      else
-	{
-	  syms[3] = (void *)sym;
-	  syms[4] = (void *)sym;
-	}
+      else locp_is_slot = false;
     }
 
-  a1 = (mus_any *)syms[0];
-  a2 = (mus_any *)syms[1];
-  a3 = (mus_any *)syms[2];
-  
-  if (syms[4])
+  if (!locp_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[3];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, "ina", "an integer");
+      x = s7_value(sc, locp);
+      XEN_ASSERT_TYPE(s7_is_integer(x), locp, XEN_ARG_1, "ina", "an integer");
       pos = s7_integer(x);
     }
-  else pos = s7_slot_value_to_integer(s7, (s7_pointer)syms[3]);
+  else pos = s7_slot_value_to_integer(s7, locp);
 
   return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, mus_all_pass_unmodulated_noz(a2, mus_all_pass_unmodulated_noz(a3, in_any_2(pos, 0))))));
 }
@@ -10020,9 +10009,11 @@ static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
 {
   static s7_pointer last_args = NULL;
   static void **last_syms = NULL;
-  s7_pointer vargs, combs;
-  mus_any *a1 = NULL, *a2, *a3, *a4, *lp;
+  s7_pointer vargs;
   void **syms;
+
+  static mus_any *a1 = NULL, *a2 = NULL, *a3 = NULL, *a4 = NULL, *lp = NULL;
+  static s7_pointer combs = NULL;
 
   if (args == last_args)
     syms = last_syms;
@@ -10056,42 +10047,35 @@ static s7_pointer g_nrev_all_passes(s7_scheme *sc, s7_pointer args)
 					    s7_real(s7_call_direct(sc, vargs)))))))));
 	}
 	
-      syms = s7_expression_make_data(sc, args, 6);
+      syms = s7_expression_make_data(sc, args, 1);
       last_args = args;
       last_syms = syms;
     }
 
   if (!(syms[0])) 
     {
-      syms[0] = get_generator(sc, car(args));
-      XEN_ASSERT_TYPE((syms[0]) && (mus_all_pass_p((mus_any *)syms[0])), car(args), XEN_ARG_1, "all-pass", "all-pass generator");
+      a1 = (mus_any *)get_generator(sc, car(args));
+      syms[0] = (void *)a1;
+      XEN_ASSERT_TYPE((a1) && (mus_all_pass_p(a1)), car(args), XEN_ARG_1, "all-pass", "all-pass generator");
 
       vargs = s7_cdr(args);
-      syms[1] = get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((syms[1]) && (mus_one_pole_p((mus_any *)syms[1])), cadar(args), XEN_ARG_1, "one-pole", "one-pole generator");
+      lp = (mus_any *)get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((lp) && (mus_one_pole_p(lp)), cadar(vargs), XEN_ARG_1, "one-pole", "one-pole generator");
       
       vargs = s7_cddar(vargs);
-      syms[2] = get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((syms[2]) && (mus_all_pass_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
+      a2 = (mus_any *)get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((a2) && (mus_all_pass_p(a2)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
 
       vargs = s7_cddar(vargs);
-      syms[3] = get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((syms[3]) && (mus_all_pass_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
+      a3 = (mus_any *)get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((a3) && (mus_all_pass_p(a3)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
 
       vargs = s7_cddar(vargs);
-      syms[4] = get_generator(sc, cadar(vargs));
-      XEN_ASSERT_TYPE((syms[4]) && (mus_all_pass_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "all-pass", "all-pass generator");
+      a4 = (mus_any *)get_generator(sc, cadar(vargs));
+      XEN_ASSERT_TYPE((a4) && (mus_all_pass_p(a4)), cadar(vargs), XEN_ARG_1, "all-pass", "all-pass generator");
 
-      syms[5] = caddar(vargs);
+      combs = caddar(vargs);
     }
-
-  a1 = (mus_any *)syms[0];
-  lp = (mus_any *)syms[1];
-  a2 = (mus_any *)syms[2];
-  a3 = (mus_any *)syms[3];
-  a4 = (mus_any *)syms[4];
-  combs = (s7_pointer)syms[5];
-  
   return(s7_make_real(sc, mus_all_pass_unmodulated_noz(a1, 
 			    mus_one_pole(lp,							       
 			      mus_all_pass_unmodulated_noz(a2, 
@@ -10139,10 +10123,13 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
 {
   static s7_pointer last_args = NULL;
   static void **last_syms = NULL;
-  double fm;
-  s7_pointer sym;
   void **syms;
-  
+  double fm;
+
+  static mus_any *c1 = NULL, *c2 = NULL, *c3 = NULL, *c4 = NULL, *c5 = NULL, *c6 = NULL;
+  static bool fmp_is_slot = false;
+  static s7_pointer fmp = NULL;
+
   if (args == last_args)
     syms = last_syms;
   else
@@ -10156,7 +10143,7 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	return(nrev_combs_fallback(sc, args));
-      syms = s7_expression_make_data(sc, args, 8);
+      syms = s7_expression_make_data(sc, args, 1);
       last_args = args;
       last_syms = syms;
     }
@@ -10164,59 +10151,55 @@ static s7_pointer g_nrev_combs(s7_scheme *sc, s7_pointer args)
   if (!syms[0])
     {
       s7_pointer vargs;
-      syms[0] = get_generator(sc, s7_cadar(args));
-      XEN_ASSERT_TYPE((syms[0]) && (mus_comb_p((mus_any *)syms[0])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c1 = (mus_any *)get_generator(sc, s7_cadar(args));
+      syms[0] = (void *)c1;
+      XEN_ASSERT_TYPE((c1) && (mus_comb_p(c1)), cadar(args), XEN_ARG_1, "comb", "comb generator");
 
       vargs = cdr(args);
-      syms[1] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[1]) && (mus_comb_p((mus_any *)syms[1])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c2 = (mus_any *)get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((c2) && (mus_comb_p(c2)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
 
       vargs = cdr(vargs);
-      syms[2] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[2]) && (mus_comb_p((mus_any *)syms[2])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c3 = (mus_any *)get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((c3) && (mus_comb_p(c3)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
 
       vargs = cdr(vargs);
-      syms[3] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[3]) && (mus_comb_p((mus_any *)syms[3])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c4 = (mus_any *)get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((c4) && (mus_comb_p(c4)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
 
       vargs = cdr(vargs);
-      syms[6] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[6]) && (mus_comb_p((mus_any *)syms[6])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c5 = (mus_any *)get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((c5) && (mus_comb_p(c5)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
 
       vargs = cdr(vargs);
-      syms[7] = get_generator(sc, s7_cadar(vargs));
-      XEN_ASSERT_TYPE((syms[7]) && (mus_comb_p((mus_any *)syms[7])), cadar(args), XEN_ARG_1, "comb", "comb generator");
+      c6 = (mus_any *)get_generator(sc, s7_cadar(vargs));
+      XEN_ASSERT_TYPE((c6) && (mus_comb_p(c6)), cadar(vargs), XEN_ARG_1, "comb", "comb generator");
 
-      sym = caddar(args);
-      if (s7_is_do_local_or_global(sc, sym))
+      fmp = caddar(args);
+      if (s7_is_do_local_or_global(sc, fmp))
 	{
-	  syms[4] = s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real((s7_pointer)syms[4]), sym, XEN_ARG_2, "comb", "a real");
-	  syms[5] = NULL;
+	  fmp = s7_slot(sc, fmp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_real(fmp), caddar(args), XEN_ARG_2, "comb", "a real");
+	  fmp_is_slot = true;
 	}
-      else
-	{
-	  syms[4] = (void *)sym;
-	  syms[5] = (void *)sym;
-	}
+      else fmp_is_slot = false;
     }
   
-  if (syms[5])
+  if (!fmp_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[4];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "comb", "a real");
+      x = s7_value(sc, fmp);
+      XEN_ASSERT_TYPE(s7_is_real(x), fmp, XEN_ARG_2, "comb", "a real");
       fm = s7_number_to_real(sc, x);
     }
-  else fm = s7_slot_value_to_real(s7, (s7_pointer)syms[4]);
+  else fm = s7_slot_value_to_real(s7, fmp);
 
-  return(s7_make_real(sc, mus_comb_unmodulated_noz((mus_any *)syms[0], fm) + 
-		          mus_comb_unmodulated_noz((mus_any *)syms[1], fm) + 
-		          mus_comb_unmodulated_noz((mus_any *)syms[2], fm) + 
-		          mus_comb_unmodulated_noz((mus_any *)syms[3], fm) +
-		          mus_comb_unmodulated_noz((mus_any *)syms[6], fm) +
-		          mus_comb_unmodulated_noz((mus_any *)syms[7], fm)));
+  return(s7_make_real(sc, mus_comb_unmodulated_noz(c1, fm) + 
+		          mus_comb_unmodulated_noz(c2, fm) + 
+		          mus_comb_unmodulated_noz(c3, fm) + 
+		          mus_comb_unmodulated_noz(c4, fm) +
+		          mus_comb_unmodulated_noz(c5, fm) +
+		          mus_comb_unmodulated_noz(c6, fm)));
 }
 
 
@@ -10353,9 +10336,12 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
   static s7_pointer last_args = NULL;
   static void **last_syms = NULL;
   void **syms;
-  s7_pointer sym;
   double scl, inval;
   s7_Int pos;
+
+  static mus_any *d = NULL;
+  static s7_pointer posp = NULL, sclp = NULL, invalp = NULL;
+  static bool posp_is_slot = false, sclp_is_slot = false, invalp_is_slot = false;
 
   if (args == last_args)
     syms = last_syms;
@@ -10370,9 +10356,6 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
     {
       if (!in_safe_do) 
 	{
-	  s7_Int pos;
-	  double val, scl;
-	  mus_any *d;
 	  if (chan == 0)
 	    GET_INTEGER(args, outa, pos);
 	  else GET_INTEGER(args, outb, pos);
@@ -10382,92 +10365,78 @@ static s7_pointer g_outa_or_b_mul_s_delay(s7_scheme *sc, s7_pointer args, const 
 	  else GET_REAL_CADR(args, outb, scl);
 	  args = caddr(args);
 	  GET_GENERATOR_CADR(args, delay, d);
-	  GET_REAL_CADR(cdr(args), delay, val);
-	  return(out_any_2(pos, scl * mus_delay_unmodulated_noz(d, val), chan, caller));
+	  GET_REAL_CADR(cdr(args), delay, inval);
+	  return(out_any_2(pos, scl * mus_delay_unmodulated_noz(d, inval), chan, caller));
 	}
-      syms = s7_expression_make_data(sc, args, 7);
+      syms = s7_expression_make_data(sc, args, 1);
       last_args = args;
       last_syms = syms;
     }
 
   if (!syms[0])
     {
-      sym = car(args);
-      if (s7_is_do_local_or_global(sc, sym))
+      posp = car(args);
+      syms[0] = (void *)posp;
+      if (s7_is_do_local_or_global(sc, posp))
 	{
-	  syms[0] = (void *)s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_integer((s7_pointer)syms[0]), sym, XEN_ARG_1, caller, "an integer");
-	  syms[1] = NULL;
+	  posp = s7_slot(sc, posp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_integer(posp), car(args), XEN_ARG_1, caller, "an integer");
+	  posp_is_slot = true;
 	}
-      else
-	{
-	  syms[0] = (void *)sym;
-	  syms[1] = (void *)sym;
-	}
+      else posp_is_slot = false;
 
       args = cadr(args);
-      sym = cadr(args);
-      if (s7_is_do_local_or_global(sc, sym))
+      sclp = cadr(args);
+      if (s7_is_do_local_or_global(sc, sclp))
 	{
-	  syms[2] = (void *)s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real((s7_pointer)syms[2]), sym, XEN_ARG_1, "*", "a real");
-	  syms[3] = NULL;
+	  sclp = s7_slot(sc, sclp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_real(sclp), cadr(args), XEN_ARG_1, "*", "a real");
+	  sclp_is_slot = true;
 	}
-      else
-	{
-	  syms[2] = (void *)sym;
-	  syms[3] = (void *)sym;
-	}
+      else sclp_is_slot = false;
 
       args = caddr(args);
-      syms[4] = get_generator(sc, cadr(args));
-      XEN_ASSERT_TYPE((syms[4]) && (mus_delay_p((mus_any *)syms[4])), cadr(args), XEN_ARG_1, "delay", "delay generator");
+      d = (mus_any *)get_generator(sc, cadr(args));
+      XEN_ASSERT_TYPE((d) && (mus_delay_p(d)), cadr(args), XEN_ARG_1, "delay", "delay generator");
 
-      sym = caddr(args);
-      if (s7_is_do_local_or_global(sc, sym))
+      invalp = caddr(args);
+      if (s7_is_do_local_or_global(sc, invalp))
 	{
-	  syms[5] = s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_real((s7_pointer)syms[5]), sym, XEN_ARG_2, "delay", "a real");
-	  syms[6] = NULL;
+	  invalp = s7_slot(sc, invalp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_real(invalp), caddr(args), XEN_ARG_2, "delay", "a real");
+	  invalp_is_slot = true;
 	}
-      else
-	{
-	  syms[5] = (void *)sym;
-	  syms[6] = (void *)sym;
-	}
+      else invalp_is_slot = false;
     }
   
-  if (syms[1])
+  if (!posp_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[0];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, caller, "an integer");
+      x = s7_value(sc, posp);
+      XEN_ASSERT_TYPE(s7_is_integer(x), posp, XEN_ARG_1, caller, "an integer");
       pos = s7_integer(x);
     }
-  else pos = s7_slot_value_to_integer(s7, (s7_pointer)syms[0]);
+  else pos = s7_slot_value_to_integer(s7, posp);
 
-  if (syms[3])
+  if (!sclp_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[2];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "*", "a real");
+      x = s7_value(sc, sclp);
+      XEN_ASSERT_TYPE(s7_is_real(x), sclp, XEN_ARG_2, "*", "a real");
       scl = s7_number_to_real(sc, x);
     }
-  else scl = s7_slot_value_to_real(s7, (s7_pointer)syms[2]);
+  else scl = s7_slot_value_to_real(s7, sclp);
 
-  if (syms[6])
+  if (!invalp_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[5];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_real(x), sym, XEN_ARG_2, "delay", "a real");
+      x = s7_value(sc, invalp);
+      XEN_ASSERT_TYPE(s7_is_real(x), invalp, XEN_ARG_2, "delay", "a real");
       inval = s7_number_to_real(sc, x);
     }
-  else inval = s7_slot_value_to_real(s7, (s7_pointer)syms[5]);
+  else inval = s7_slot_value_to_real(s7, invalp);
 
-  return(out_any_2(pos, scl * mus_delay_unmodulated_noz((mus_any *)syms[4], inval), chan, caller));
+  return(out_any_2(pos, scl * mus_delay_unmodulated_noz(d, inval), chan, caller));
 }
 
 static s7_pointer g_outa_mul_s_delay(s7_scheme *sc, s7_pointer args)
@@ -10489,8 +10458,11 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
   static s7_pointer last_args = NULL;
   static void **last_syms = NULL;
   void **syms;
-  s7_pointer sym;
   s7_Int pos;
+
+  static mus_any *ampe = NULL, *carg = NULL, *mode = NULL;
+  static bool posp_is_slot = false;
+  static s7_pointer posp = NULL;
 
   if (args == last_args)
     syms = last_syms;
@@ -10505,65 +10477,61 @@ static s7_pointer g_outa_env_polywave_env(s7_scheme *sc, s7_pointer args)
     {
       if (!in_safe_do) 
 	{
-	  s7_Int pos;
-	  mus_any *e1, *e2, *t;
 	  GET_INTEGER(args, outa, pos);
 	  args = cdr(cadr(args));
-	  GET_GENERATOR_CADR(car(args), env, e1);
+	  GET_GENERATOR_CADR(car(args), env, ampe);
 	  args = cadr(args);
-	  GET_GENERATOR_CADR(args, polywave, t);
+	  GET_GENERATOR_CADR(args, polywave, carg);
 	  args = caddr(args);
-	  GET_GENERATOR_CADR(args, env, e2);
-	  return(out_any_2(pos, mus_env(e1) * mus_polywave(t, mus_env(e2)), 0, "outa"));
+	  GET_GENERATOR_CADR(args, env, mode);
+	  return(out_any_2(pos, mus_env(ampe) * mus_polywave(carg, mus_env(mode)), 0, "outa"));
 	}
 
-      syms = s7_expression_make_data(sc, args, 5);
+      syms = s7_expression_make_data(sc, args, 1);
       last_args = args;
       last_syms = syms;
     }
 
   if (!syms[0])
     {
-      sym = car(args);
-      if (s7_is_do_local_or_global(sc, sym))
+      s7_pointer sym;
+
+      posp = car(args);
+      syms[0] = (void *)posp;
+      if (s7_is_do_local_or_global(sc, posp))
 	{
-	  syms[0] = (void *)s7_slot(sc, sym);
-	  XEN_ASSERT_TYPE(s7_slot_value_is_integer((s7_pointer)syms[0]), sym, XEN_ARG_1, "outa", "an integer");
-	  syms[1] = NULL;
+	  posp = s7_slot(sc, posp);
+	  XEN_ASSERT_TYPE(s7_slot_value_is_integer(posp), car(args), XEN_ARG_1, "outa", "an integer");
+	  posp_is_slot = true;
 	}
-      else
-	{
-	  syms[0] = (void *)sym;
-	  syms[1] = (void *)sym;
-	}
+      else posp_is_slot = false;
 
       args = cdr(cadr(args));
       sym = cadar(args);
-      syms[2] = get_generator(sc, sym);
-      XEN_ASSERT_TYPE((syms[2]) && (mus_env_p((mus_any *)syms[2])), sym, XEN_ARG_1, "env", "env generator");
+      ampe = (mus_any *)get_generator(sc, sym);
+      XEN_ASSERT_TYPE((ampe) && (mus_env_p(ampe)), sym, XEN_ARG_1, "env", "env generator");
 
       args = cadr(args);
       sym = cadr(args);
-      syms[3] = get_generator(sc, sym);
-      XEN_ASSERT_TYPE((syms[3]) && (mus_polywave_p((mus_any *)syms[3])), sym, XEN_ARG_1, "polywave", "polywave generator");
+      carg = (mus_any *)get_generator(sc, sym);
+      XEN_ASSERT_TYPE((carg) && (mus_polywave_p(carg)), sym, XEN_ARG_1, "polywave", "polywave generator");
 
       args = caddr(args);
       sym = cadr(args);
-      syms[4] = get_generator(sc, sym);
-      XEN_ASSERT_TYPE((syms[4]) && (mus_env_p((mus_any *)syms[4])), sym, XEN_ARG_1, "env", "env generator");
+      mode = (mus_any *)get_generator(sc, sym);
+      XEN_ASSERT_TYPE((mode) && (mus_env_p(mode)), sym, XEN_ARG_1, "env", "env generator");
     }
   
-  if (syms[1])
+  if (!posp_is_slot)
     {
       s7_pointer x;
-      sym = (s7_pointer)syms[0];
-      x = s7_value(sc, sym);
-      XEN_ASSERT_TYPE(s7_is_integer(x), sym, XEN_ARG_1, "outa", "an integer");
+      x = s7_value(sc, posp);
+      XEN_ASSERT_TYPE(s7_is_integer(x), posp, XEN_ARG_1, "outa", "an integer");
       pos = s7_integer(x);
     }
-  else pos = s7_slot_value_to_integer(s7, (s7_pointer)syms[0]);
+  else pos = s7_slot_value_to_integer(s7, posp);
 
-  return(out_any_2(pos, mus_env((mus_any *)syms[2]) * mus_polywave((mus_any *)syms[3], mus_env((mus_any *)syms[4])), 0, "outa"));
+  return(out_any_2(pos, mus_env(ampe) * mus_polywave(carg, mus_env(mode)), 0, "outa"));
 }
 
 static s7_pointer indirect_frame_to_file_3;

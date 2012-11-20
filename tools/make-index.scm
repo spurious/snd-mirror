@@ -1120,260 +1120,257 @@
 			 ;; open/close html entities
 			 (do ((i 0 (+ i 1)))
 			     ((>= i len))
-			   ;(let ((c (line i)))
-			     (case (string-ref line i)
-			       ((#\<)
-				(if (and (not (zero? openctr))
-					 (not (positive? p-quotes)))
-				    (if (not in-comment) 
-					(format #t "~A[~D]: ~A has unclosed <?~%" file linectr line)))
-				(incf openctr)
-				(if (and (< i (- len 3))
-					 (char=? (line (+ i 1)) #\!)
-					 (char=? (line (+ i 2)) #\-)
-					 (char=? (line (+ i 3)) #\-))
-				    (begin
-				      (incf comments)
-				      (if (> comments 1)
-					  (begin 
-					    (format #t "~A[~D]: nested <!--?~%" file linectr)
-					    (decf comments)))
-				      (set! in-comment #t)))
-				(if (and (not in-comment)
-					 (< i (- len 1))
-					 (char=? (line (+ i 1)) #\space))
-				    (format #t "~A[~D]: '< ' in ~A?~%" file linectr line)))
-			       
-			       ;; else c != <
-			       
-			       ((#\>)
-				
-				(decf openctr)
-				(if (and (>= i 2)
-					 (char=? (line (- i 1)) #\-)
-					 (char=? (line (- i 2)) #\-))
-				    (begin
-				      (set! in-comment #f)
-				      (decf comments)
-				      (if (< comments 0)
-					  (begin
-					    (format #t "~A[~D]: extra -->?~%" file linectr)
-					    (set! comments 0))))
-				    (if (and (not (zero? openctr))
-					     (not (positive? p-quotes)))
-					(if (not in-comment) 
-					    (format #t "~A[~D]: ~A has unmatched >?~%" file linectr line))))
-				(set! openctr 0)
-				(if (and (not in-comment)
-					 (>= i 2)
-					 (char=? (line (- i 1)) #\-)
-					 (not (char=? (line (- i 2)) #\-))
-					 (< i (- len 1))
-					 (alphanumeric? (line (+ i 1))))
-				    (format #t "~A[~D]: untranslated '>': ~A~%" file linectr line)))
-			       
-			       ;; else c != < or >
-			       
-			       ((#\&)
-				(if (and (not in-comment)
-					 (not (string-ci=? "&gt;" (checked-substring line i (+ i 4))))
-					 (not (string-ci=? "&lt;" (checked-substring line i (+ i 4))))
-					 (not (string-ci=? "&amp;" (checked-substring line i (+ i 5))))
-					 (not (string-ci=? "&micro;" (checked-substring line i (+ i 7))))
-					 (not (string-ci=? "&quot;" (checked-substring line i (+ i 6))))
-					 (not (string-ci=? "&ouml;" (checked-substring line i (+ i 6))))
-					 (not (string-ci=? "&mdash;" (checked-substring line i (+ i 7))))
-					 (not (string-ci=? "&nbsp;" (checked-substring line i (+ i 6))))
-					 (not (string-ci=? "&&" (checked-substring line i (+ i 2))))
-					 (not (string-ci=? "& " (checked-substring line i (+ i 2))))) ; following char -- should skip this
-				    (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
-			       
-			       ((#\()
-				(incf p-parens))
-			       
-			       ((#\)) 
-				(decf p-parens))
-			       
-			       ((#\{) 
-				(incf p-curlys))
-			       
-			       ((#\})
-				(decf p-curlys))
-			       
-			       ((#\")
-				(if (or (= i 0)
-					(not (char=? (line (- i 1)) #\\)))
-				    (incf p-quotes)))))
-
+			   (case (string-ref line i)
+			     ((#\<)
+			      (if (and (not (zero? openctr))
+				       (not (positive? p-quotes)))
+				  (if (not in-comment) 
+				      (format #t "~A[~D]: ~A has unclosed <?~%" file linectr line)))
+			      (incf openctr)
+			      (if (and (< i (- len 3))
+				       (char=? (line (+ i 1)) #\!)
+				       (char=? (line (+ i 2)) #\-)
+				       (char=? (line (+ i 3)) #\-))
+				  (begin
+				    (incf comments)
+				    (if (> comments 1)
+					(begin 
+					  (format #t "~A[~D]: nested <!--?~%" file linectr)
+					  (decf comments)))
+				    (set! in-comment #t)))
+			      (if (and (not in-comment)
+				       (< i (- len 1))
+				       (char=? (line (+ i 1)) #\space))
+				  (format #t "~A[~D]: '< ' in ~A?~%" file linectr line)))
+			     
+			     ;; else c != <
+			     
+			     ((#\>)
+			      
+			      (decf openctr)
+			      (if (and (>= i 2)
+				       (char=? (line (- i 1)) #\-)
+				       (char=? (line (- i 2)) #\-))
+				  (begin
+				    (set! in-comment #f)
+				    (decf comments)
+				    (if (< comments 0)
+					(begin
+					  (format #t "~A[~D]: extra -->?~%" file linectr)
+					  (set! comments 0))))
+				  (if (and (not (zero? openctr))
+					   (not (positive? p-quotes)))
+				      (if (not in-comment) 
+					  (format #t "~A[~D]: ~A has unmatched >?~%" file linectr line))))
+			      (set! openctr 0)
+			      (if (and (not in-comment)
+				       (>= i 2)
+				       (char=? (line (- i 1)) #\-)
+				       (not (char=? (line (- i 2)) #\-))
+				       (< i (- len 1))
+				       (alphanumeric? (line (+ i 1))))
+				  (format #t "~A[~D]: untranslated '>': ~A~%" file linectr line)))
+			     
+			     ;; else c != < or >
+			     
+			     ((#\&)
+			      (if (and (not in-comment)
+				       (not (string-ci=? "&gt;" (checked-substring line i (+ i 4))))
+				       (not (string-ci=? "&lt;" (checked-substring line i (+ i 4))))
+				       (not (string-ci=? "&amp;" (checked-substring line i (+ i 5))))
+				       (not (string-ci=? "&micro;" (checked-substring line i (+ i 7))))
+				       (not (string-ci=? "&quot;" (checked-substring line i (+ i 6))))
+				       (not (string-ci=? "&ouml;" (checked-substring line i (+ i 6))))
+				       (not (string-ci=? "&mdash;" (checked-substring line i (+ i 7))))
+				       (not (string-ci=? "&nbsp;" (checked-substring line i (+ i 6))))
+				       (not (string-ci=? "&&" (checked-substring line i (+ i 2))))
+				       (not (string-ci=? "& " (checked-substring line i (+ i 2))))) ; following char -- should skip this
+				  (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
+			     
+			     ((#\()
+			      (incf p-parens))
+			     
+			     ((#\)) 
+			      (decf p-parens))
+			     
+			     ((#\{) 
+			      (incf p-curlys))
+			     
+			     ((#\})
+			      (decf p-curlys))
+			     
+			     ((#\")
+			      (if (or (= i 0)
+				      (not (char=? (line (- i 1)) #\\)))
+				  (incf p-quotes)))))
+			 
 			 ;; end line scan
 			 (if (not in-comment)
 			     (let ((start #f)
 				   (closing #f))
 			       (do ((i 0 (+ i 1)))
 				   ((>= i len))
-				 ;(let ((c (line i)))
-
-				   (case (string-ref line i)
-				     ((#\<)
-				      (if start
-					  (if (and (not scripting)
-						   (not (positive? p-quotes)))
-					      (format #t "~A[~D]: nested < ~A~%" file linectr line))
-					  (set! start i)))
-				     ((#\/)
-				      (if (and start (= start (- i 1)))
-					  (set! closing #t)))
-
-				     ((#\!)
-				      (if (and start (= start (- i 1)))
-					  (set! start #f)))
-
-				     ((#\space #\>)
-				      (if start
-					  (begin
-					    (if closing
-						(let ((closer (checked-substring line (+ start 2) i)))
-						  (if (or (string-ci=? closer "center")
-							  (string-ci=? closer "big")
-							  (string-ci=? closer "font"))
-						      (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
-						  (if (string-ci=? closer "script")
-						      (set! scripting #f)
-						      (if (not scripting)
-							  (if (not (string-ci-list-position closer commands))
-							      (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
-								      file linectr closer line (+ start 2) i commands)
-							      
-							      (if (string-ci-list-position closer
-											   (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
-												 "a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
-												 "em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th" "tbody" "div"))
-								  (begin
-								    (if (not (string-ci=? (car commands) closer))
-									(format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
-								    
-								    (if (or (string-ci=? closer "p")
-									    (string-ci=? closer "td")
-									    (string-ci=? closer "pre"))
-									(begin
-									  (if (not (even? p-quotes))
-									      (format #t "~A[~D]: unmatched quote~%" file linectr))
-									  (set! p-quotes 0)
-									  (if (= p-curlys 1)
-									      (format #t "~A[~D]: extra '{'~%" file linectr)
-									      (if (= p-curlys -1)
-										  (format #t "~A[~D]: extra '}'~%" file linectr)
-										  (if (not (= p-curlys 0))
-										      (format #t "~A[~D]: curlys: ~D~%" file linectr p-curlys))))
-									  (set! p-curlys 0)
-									  (if (= p-parens 1)
-									      (format #t "~A[~D]: extra '('~%" file linectr)
-									      (if (= p-parens -1)
-										  (format #t "~A[~D]: extra ')'~%" file linectr)
-										  (if (not (= p-parens 0))
-										      (format #t "~A[~D]: parens: ~D~%" file linectr p-parens))))
-									  (set! p-parens 0)))
-								    (set! commands (remove closer commands 1))
-								    (if (not warned)
-									(begin
-									  (if (and (string-ci=? closer "table")
-										   (not (string-ci-list-position "table" commands)))
-									      (begin
-										(if (string-ci-list-position "tr" commands)
-										    (begin
-										      (set! warned #t)
-										      (set! commands (remove "tr" commands))
-										      (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
-										(if (string-ci-list-position "td" commands)
-										    (begin
-										      (set! warned #t)
-										      (set! commands (remove "td" commands))
-										      (format #t "~A[~D]: unclosed td at table~%" file linectr))))))))
-								  (set! commands (remove closer commands))))))
-						  (set! closing #f))
-						
-						;; not closing
-						(if (not scripting)
-						    (let ((opener (checked-substring line (+ start 1) i)))
-						      (if (or (string-ci=? opener "center")
-							      (string-ci=? opener "big")
-							      (string-ci=? opener "font"))
-							  (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
-						      
-						      (if (string-ci=? opener "script")
-							  (set! scripting #t)
-							  
-							  (if (string-ci=? opener "img")
-							      (let* ((rest-line (checked-substring line (+ start 4)))
-								     (alt-pos (string-position "alt=" rest-line))
-								     (src-pos (string-position "src=" rest-line)))
-								(if (not alt-pos)
-								    (format #t "~A[~D]: img but no alt: ~A~%" file linectr line))
-								(if src-pos
-								    (let ((png-pos (string-position ".png" rest-line)))
-								      (if png-pos
-									  (let ((file (checked-substring rest-line (+ src-pos 5) (+ png-pos 4))))
-									    (if (not (file-exists? file))
-										(format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
-							      
-							      (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
-								  (if (and (string-ci-list-position opener commands)
-									   (= p-quotes 0)
-									   (not (string-ci-list-position opener (list "ul" "tr" "td" "table" 
-														      "small" "big" "sub" "blockquote"))))
-								      (format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands)
+				 (case (string-ref line i)
+				   ((#\<)
+				    (if start
+					(if (and (not scripting)
+						 (not (positive? p-quotes)))
+					    (format #t "~A[~D]: nested < ~A~%" file linectr line))
+					(set! start i)))
+				   ((#\/)
+				    (if (and start (= start (- i 1)))
+					(set! closing #t)))
+				   
+				   ((#\!)
+				    (if (and start (= start (- i 1)))
+					(set! start #f)))
+				   
+				   ((#\space #\>)
+				    (if start
+					(begin
+					  (if closing
+					      (let ((closer (checked-substring line (+ start 2) i)))
+						(if (or (string-ci=? closer "center")
+							(string-ci=? closer "big")
+							(string-ci=? closer "font"))
+						    (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
+						(if (string-ci=? closer "script")
+						    (set! scripting #f)
+						    (if (not scripting)
+							(if (not (string-ci-list-position closer commands))
+							    (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
+								    file linectr closer line (+ start 2) i commands)
+							    
+							    (if (string-ci-list-position closer
+											 (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
+											       "a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
+											       "em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th" "tbody" "div"))
+								(begin
+								  (if (not (string-ci=? (car commands) closer))
+								      (format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
+								  
+								  (if (or (string-ci=? closer "p")
+									  (string-ci=? closer "td")
+									  (string-ci=? closer "pre"))
 								      (begin
-									(if (and (string-ci=? opener "td")
-										 (not (string-ci-list-position "tr" commands)))
-									    (format #t "~A[~D]: td without tr?~%" file linectr))
-									
-									(if (and (string-ci=? opener "td")
-										 (not (string-ci=? "tr" (car commands))))
-									    (format #t "~A[~D]: td without tr?~%" file linectr))
-									(if (and (string-ci=? opener "tr")
-										 (not (string-ci=? "table" (car commands)))
-										 (not (string-ci=? "table" (cadr commands))))
-									    (format #t "~A[~D]: tr without table?~%" file linectr))
-									(if (and (string-ci=? opener "p")
-										 (string-ci=? "table" (car commands)))
-									    (format #t "~A[~D]: unclosed table?~%" file linectr))
-									
-									(if (and (string-ci=? opener "tr")
+									(if (not (even? p-quotes))
+									    (format #t "~A[~D]: unmatched quote~%" file linectr))
+									(set! p-quotes 0)
+									(if (= p-curlys 1)
+									    (format #t "~A[~D]: extra '{'~%" file linectr)
+									    (if (= p-curlys -1)
+										(format #t "~A[~D]: extra '}'~%" file linectr)
+										(if (not (= p-curlys 0))
+										    (format #t "~A[~D]: curlys: ~D~%" file linectr p-curlys))))
+									(set! p-curlys 0)
+									(if (= p-parens 1)
+									    (format #t "~A[~D]: extra '('~%" file linectr)
+									    (if (= p-parens -1)
+										(format #t "~A[~D]: extra ')'~%" file linectr)
+										(if (not (= p-parens 0))
+										    (format #t "~A[~D]: parens: ~D~%" file linectr p-parens))))
+									(set! p-parens 0)))
+								  (set! commands (remove closer commands 1))
+								  (if (not warned)
+								      (begin
+									(if (and (string-ci=? closer "table")
 										 (not (string-ci-list-position "table" commands)))
-									    (format #t "~A[~D]: tr without table~%" file linectr))
-									(if (and (string-ci-list-position opener (list "pre" "br" "table" "hr" "img" "ul"))
-										 (string-ci-list-position "p" commands))
-									    (format #t "~A[~D]: ~A within <p>?~%" file linectr opener))
-									(if (and (string-ci=? opener "li")
-										 (not (string-ci-list-position "ul" commands)))
-									    (format #t "~A[~D]: li without ul~%" file linectr))
-									
-									(if (and (string-ci=? opener "small")
-										 (or (string-ci=? "pre" (car commands))
-										     (string-ci=? "code" (car commands))))
-									    (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands)))
-									
-									(if (not warned)
 									    (begin
-									      (if (and (string-ci=? opener "tr")
-										       (string-ci-list-position "tr" commands)
-										       (< (count "table" commands) 2))
+									      (if (string-ci-list-position "tr" commands)
 										  (begin
 										    (set! warned #t)
-										    (set! commands (remove "tr" commands 1))
+										    (set! commands (remove "tr" commands))
 										    (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
-									      (if (and (string-ci=? opener "td")
-										       (string-ci-list-position "td" commands)
-										       (< (count "table" commands) 2))
+									      (if (string-ci-list-position "td" commands)
 										  (begin
 										    (set! warned #t)
-										    (set! commands (remove "td" commands 1))
-										    (format #t "~A[~D]: unclosed td at table~%" file linectr)))))
-									(if (string-ci=? opener "--")
-									    (format #t "~A[~D]: <-- missing !?~%" file linectr))
-									(set! commands (push opener commands))))))))))
-					    ;; end if closing
-					    (set! start #f)))))));)
+										    (set! commands (remove "td" commands))
+										    (format #t "~A[~D]: unclosed td at table~%" file linectr))))))))
+								(set! commands (remove closer commands))))))
+						(set! closing #f))
+						
+					      ;; not closing
+					      (if (not scripting)
+						  (let ((opener (checked-substring line (+ start 1) i)))
+						    (if (or (string-ci=? opener "center")
+							    (string-ci=? opener "big")
+							    (string-ci=? opener "font"))
+							(format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
+						    
+						    (if (string-ci=? opener "script")
+							(set! scripting #t)
+							
+							(if (string-ci=? opener "img")
+							    (let* ((rest-line (checked-substring line (+ start 4)))
+								   (alt-pos (string-position "alt=" rest-line))
+								   (src-pos (string-position "src=" rest-line)))
+							      (if (not alt-pos)
+								  (format #t "~A[~D]: img but no alt: ~A~%" file linectr line))
+							      (if src-pos
+								  (let ((png-pos (string-position ".png" rest-line)))
+								    (if png-pos
+									(let ((file (checked-substring rest-line (+ src-pos 5) (+ png-pos 4))))
+									  (if (not (file-exists? file))
+									      (format #t "~A[~D]: src not found: ~S~%" file linectr file)))))))
+							    
+							    (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
+								(if (and (string-ci-list-position opener commands)
+									 (= p-quotes 0)
+									 (not (string-ci-list-position opener (list "ul" "tr" "td" "table" 
+														    "small" "big" "sub" "blockquote"))))
+								    (format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands)
+								    (begin
+								      (if (and (string-ci=? opener "td")
+									       (not (string-ci-list-position "tr" commands)))
+									  (format #t "~A[~D]: td without tr?~%" file linectr))
+								      
+								      (if (and (string-ci=? opener "td")
+									       (not (string-ci=? "tr" (car commands))))
+									  (format #t "~A[~D]: td without tr?~%" file linectr))
+								      (if (and (string-ci=? opener "tr")
+									       (not (string-ci=? "table" (car commands)))
+									       (not (string-ci=? "table" (cadr commands))))
+									  (format #t "~A[~D]: tr without table?~%" file linectr))
+								      (if (and (string-ci=? opener "p")
+									       (string-ci=? "table" (car commands)))
+									  (format #t "~A[~D]: unclosed table?~%" file linectr))
+								      
+								      (if (and (string-ci=? opener "tr")
+									       (not (string-ci-list-position "table" commands)))
+									  (format #t "~A[~D]: tr without table~%" file linectr))
+								      (if (and (string-ci-list-position opener (list "pre" "br" "table" "hr" "img" "ul"))
+									       (string-ci-list-position "p" commands))
+									  (format #t "~A[~D]: ~A within <p>?~%" file linectr opener))
+								      (if (and (string-ci=? opener "li")
+									       (not (string-ci-list-position "ul" commands)))
+									  (format #t "~A[~D]: li without ul~%" file linectr))
+								      
+								      (if (and (string-ci=? opener "small")
+									       (or (string-ci=? "pre" (car commands))
+										   (string-ci=? "code" (car commands))))
+									  (format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands)))
+								      
+								      (if (not warned)
+									  (begin
+									    (if (and (string-ci=? opener "tr")
+										     (string-ci-list-position "tr" commands)
+										     (< (count "table" commands) 2))
+										(begin
+										  (set! warned #t)
+										  (set! commands (remove "tr" commands 1))
+										  (format #t "~A[~D]: unclosed tr at table~%" file linectr)))
+									    (if (and (string-ci=? opener "td")
+										     (string-ci-list-position "td" commands)
+										     (< (count "table" commands) 2))
+										(begin
+										  (set! warned #t)
+										  (set! commands (remove "td" commands 1))
+										  (format #t "~A[~D]: unclosed td at table~%" file linectr)))))
+								      (if (string-ci=? opener "--")
+									  (format #t "~A[~D]: <-- missing !?~%" file linectr))
+								      (set! commands (push opener commands))))))))))
+					  ;; end if closing
+					  (set! start #f)))))))
 			     ) ; if not in-comment...
 					  
 			 ;; search for name
