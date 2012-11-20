@@ -13737,6 +13737,22 @@ this prints:
 (test (for-each 0 #() '()) 'error)
 (test (for-each #\a #(1 2) '(3 4) "") 'error)
 
+(let ()
+  (define (hi)
+    (let ((lst '(1 2 3)))
+      (for-each
+       (lambda (x)
+	 (catch #t
+	   (lambda ()
+	     (if (defined? 'local-x)
+		 (format #t ";for-each catch local env not cleared: ~A~%" local-x))
+	     (define local-x x)
+	     local-x)
+	   (lambda args #f)))
+       lst)))
+  (hi)
+  (hi))
+
 (let ((x 0))
   (let ((p1 (make-procedure-with-setter (lambda (a) (set! x (+ x a))) (lambda (a b) (+ a b)))))
     (for-each p1 '(1 2 3))

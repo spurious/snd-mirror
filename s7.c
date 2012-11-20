@@ -393,7 +393,8 @@ enum {OP_NO_OP,
       OP_ERROR_HOOK_QUIT, 
       OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV_UNCHECKED, OP_WITH_ENV_S, 
       OP_WITH_BAFFLE, OP_EXPANSION,
-      OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
+      OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_FOR_EACH_SIMPLEST,
+      OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
       OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO, 
@@ -485,7 +486,8 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
    "error-hook-quit", "with-environment", "with-environment", "with-environment", "with-environment", 
    "with-baffle", "define-expansion",
-   "for-each", "for-each", "for-each", "map", "map", "barrier", "deactivate-goto",
+   "for-each", "for-each", "for-each", "for-each",
+   "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
    "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", 
    "eval-string", "eval-string", 
@@ -566,7 +568,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_ERROR_HOOK_QUIT", 
   "OP_WITH_ENV", "OP_WITH_ENV1", "OP_WITH_ENV_UNCHECKED", "OP_WITH_ENV_S", 
   "OP_WITH_BAFFLE", "OP_EXPANSION",
-  "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
+  "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_FOR_EACH_SIMPLEST",
+  "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
   
   "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
   "OP_GET_OUTPUT_STRING", "OP_SORT", "OP_SORT1", "OP_SORT2", "OP_SORT3", "OP_SORT4", "OP_SORT_TWO", 
@@ -1221,7 +1224,6 @@ struct s7_scheme {
 
   jmp_buf goto_start;
   bool longjmp_ok;
-  void (*error_exiter)(void);
   bool (*begin_hook)(s7_scheme *sc);
   
   int no_values, current_line, s7_call_line, safety, class_name_location;
@@ -1419,6 +1421,7 @@ static bool t_structure_p[NUM_TYPES];
 static bool t_any_macro_p[NUM_TYPES];
 static bool t_sequence_p[NUM_TYPES];
 static bool t_applicable_p[NUM_TYPES];
+static bool t_catchable_p[OP_MAX_DEFINED];
 
 static void init_types(void)
 {
@@ -1505,6 +1508,20 @@ static void init_types(void)
   t_simple_p[T_ENVIRONMENT] = true;
   t_simple_p[T_INPUT_PORT] = true;
   t_simple_p[T_OUTPUT_PORT] = true;
+
+  for (i = 0; i < OP_MAX_DEFINED; i++) t_catchable_p[i] = false;
+  t_catchable_p[OP_CATCH_ALL] = true;
+  t_catchable_p[OP_CATCH_1] = true;
+  t_catchable_p[OP_CATCH] = true;
+  t_catchable_p[OP_DYNAMIC_WIND] = true;
+  t_catchable_p[OP_UNWIND_OUTPUT] = true;
+  t_catchable_p[OP_UNWIND_INPUT] = true;
+  t_catchable_p[OP_READ_DONE] = true;
+  t_catchable_p[OP_EVAL_STRING_1] = true;
+  t_catchable_p[OP_EVAL_STRING_2] = true;
+  t_catchable_p[OP_BARRIER] = true;
+  t_catchable_p[OP_DEACTIVATE_GOTO] = true;
+  t_catchable_p[OP_ERROR_HOOK_QUIT] = true;
 }
 
 /* T_STACK, T_SLOT, T_BAFFLE, and T_COUNTER are internal (stacks, bindings, call/cc barriers, map circular list checks)
@@ -31284,12 +31301,6 @@ static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *desc
 }
 
 
-void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void))
-{
-  sc->error_exiter = error_exiter;
-}
-
-
 static s7_pointer closure_or_f(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer body;
@@ -31563,185 +31574,186 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
       s7_pointer x;
 
       op = stack_op(sc->stack, i);
-      switch (op)
-	{
-	case OP_CATCH_ALL:
+      if (t_catchable_p[op])
+	switch (op)
 	  {
-	    s7_pointer catcher;
-	    catcher = stack_environment(sc->stack, i);
-	    sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_all_op_loc(catcher));
-	    sc->stack_end = (s7_pointer *)(sc->stack_start + catch_all_goto_loc(catcher));
-	    pop_stack(sc);
-	    sc->value = catch_all_result(catcher);
-	    if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
-	    return(true);
-	  }
-	  break;
-	  
-
-	case OP_CATCH_1:
-	case OP_CATCH:
-	  x = stack_code(sc->stack, i);
-	  if ((catch_tag(x) == sc->T) ||
-	      (catch_tag(x) == type) ||
-	      (type == sc->T))
+	  case OP_CATCH_ALL:
 	    {
-	      int loc;
-	      s7_pointer catcher, error_func;
-	      catcher = x;
-	      loc = catch_goto_loc(catcher);
-	      sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(catcher));
-	      sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
-	      error_func = catch_handler(catcher);
-
-	      /* very often the error handler just returns either a constant ('error or #f), or
-	       *   the args passed to it, so there's no need to laboriously make a closure,
-	       *   and apply it -- just set sc->value to the closure body (or the args) and
-	       *   return.
-	       *
-	       * so first examine closure_body(error_func)
-	       *   if it is a constant, or quoted symbol, return that,
-	       *   if it the args symbol, set it to (list type info)
-	       */
-
-	      /* if OP_CATCH_1, we deferred making the error handler until it is actually needed
-	       */
-	      {
-		s7_pointer body, y = NULL;
-		if (op == OP_CATCH_1)
-		  body = cdr(error_func);
-		else body = closure_body(error_func);
-
-		if (is_null(cdr(body)))
-		  {
-		    body = car(body);
-		    if (is_pair(body))
-		      {
-			if (car(body) == sc->QUOTE)
-			  y = cadr(body);
-		      }
-		    else
-		      {
-			if (is_symbol(body))
-			  {
-			    if (body == car(error_func))
-			      y = list_2(sc, type, info);
-			  }
-			else y = body;
-		      }
-		    if (y)
-		      {
-			pop_stack(sc);
-			sc->value = y;
-			if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
-			return(true);
-		      }
-		  }
-	      }
-	      if (op == OP_CATCH_1)
-		{
-		  s7_pointer y;
-		  MAKE_CLOSURE_NO_CAPTURE(sc, y, car(error_func), cdr(error_func), stack_environment(sc->stack, i));
-		  sc->code = y;
-		}
-	      else sc->code = error_func;
-	      
-	      /* if user (i.e. yers truly!) copies/pastes the preceding lambda () into the
-	       *   error handler portion of the catch, he gets the inexplicable message:
-	       *       ;(): too many arguments: (a1 ())
-	       *   when this apply tries to call the handler.  So, we need a special case
-	       *   error check here!
-	       */
-	      
-	      if ((is_pair(closure_args(sc->code))) &&
-		  (!is_aritable(sc, sc->code, 2)))
-		{
-		  s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~S", sc->args);
-		  return(false);
-		}
-
-	      /* since MAKE_CLOSURE sets needs_copied_args and we're going to OP_APPLY,
-	       *   we don't need a new list here.
-	       */
-	      car(sc->T2_1) = type;
-	      car(sc->T2_2) = info;
-	      sc->args = sc->T2_1;
-	      sc->op = OP_APPLY;
-	      
-	      /* explicit eval needed if s7_call called into scheme where a caught error occurred (ex6 in exs7.c)
-	       *  but putting it here (via eval(sc, OP_APPLY)) means the C stack is not cleared correctly in non-s7-call cases, 
-	       *  so defer it until s7_call 
-	       */
-	      if (sc->longjmp_ok)
-		{
-		  longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
-		}
-	      
+	      s7_pointer catcher;
+	      catcher = stack_environment(sc->stack, i);
+	      sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_all_op_loc(catcher));
+	      sc->stack_end = (s7_pointer *)(sc->stack_start + catch_all_goto_loc(catcher));
+	      pop_stack(sc);
+	      sc->value = catch_all_result(catcher);
+	      if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
 	      return(true);
 	    }
-	  break;
-
-	case OP_DYNAMIC_WIND:
-	  x = stack_code(sc->stack, i);
-	  if (dynamic_wind_state(x) == DWIND_BODY)
-	    {
-	      dynamic_wind_state(x) = DWIND_FINISH;    /* make sure an uncaught error in the exit thunk doesn't cause us to loop */
-	      if (dynamic_wind_out(x) != sc->F)
+	    break;
+	    
+	    
+	  case OP_CATCH_1:
+	  case OP_CATCH:
+	    x = stack_code(sc->stack, i);
+	    if ((catch_tag(x) == sc->T) ||
+		(catch_tag(x) == type) ||
+		(type == sc->T))
+	      {
+		int loc;
+		s7_pointer catcher, error_func;
+		catcher = x;
+		loc = catch_goto_loc(catcher);
+		sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(catcher));
+		sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
+		error_func = catch_handler(catcher);
+		
+		/* very often the error handler just returns either a constant ('error or #f), or
+		 *   the args passed to it, so there's no need to laboriously make a closure,
+		 *   and apply it -- just set sc->value to the closure body (or the args) and
+		 *   return.
+		 *
+		 * so first examine closure_body(error_func)
+		 *   if it is a constant, or quoted symbol, return that,
+		 *   if it the args symbol, set it to (list type info)
+		 */
+		
+		/* if OP_CATCH_1, we deferred making the error handler until it is actually needed
+		 */
 		{
-		  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-		  sc->args = sc->NIL;
-		  sc->code = dynamic_wind_out(x);
-		  eval(sc, OP_APPLY);                  /* I guess this means no call/cc out of the exit thunk in an error-catching context */
+		  s7_pointer body, y = NULL;
+		  if (op == OP_CATCH_1)
+		    body = cdr(error_func);
+		  else body = closure_body(error_func);
+		  
+		  if (is_null(cdr(body)))
+		    {
+		      body = car(body);
+		      if (is_pair(body))
+			{
+			  if (car(body) == sc->QUOTE)
+			    y = cadr(body);
+			}
+		      else
+			{
+			  if (is_symbol(body))
+			    {
+			      if (body == car(error_func))
+				y = list_2(sc, type, info);
+			    }
+			  else y = body;
+			}
+		      if (y)
+			{
+			  pop_stack(sc);
+			  sc->value = y;
+			  if (sc->longjmp_ok) {longjmp(sc->goto_start, 1);}
+			  return(true);
+			}
+		    }
 		}
-	    }
-	  break;
-
-	case OP_UNWIND_OUTPUT:
-	  x = stack_code(sc->stack, i);                /* "code" = port that we opened */
-	  s7_close_output_port(sc, x);
-	  x = stack_args(sc->stack, i);                /* "args" = port that we shadowed, if not #f */
-	  if (x != sc->F)
-	    sc->output_port = x;
-	  break;
-
-	case OP_UNWIND_INPUT:
-	  s7_close_input_port(sc, stack_code(sc->stack, i)); /* "code" = port that we opened */
-	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
-	  break;
-
-	case OP_READ_DONE:        /* perhaps an error during (read) */
-	  pop_input_port(sc);
-	  break;
-
-	case OP_EVAL_STRING_1:    /* perhaps an error happened before we could push the OP_EVAL_STRING_2 */
-	case OP_EVAL_STRING_2:
-	  s7_close_input_port(sc, sc->input_port);
-	  pop_input_port(sc);
-	  break;
-
-	case OP_BARRIER:
-	  if (is_input_port(stack_args(sc->stack, i)))      /* (eval-string "'(1 .)") */
-	    {
-	      if (sc->input_port == stack_args(sc->stack, i))
-		pop_input_port(sc);
-	      s7_close_input_port(sc, stack_args(sc->stack, i));
-	    }
-	  break;
-
-	case OP_DEACTIVATE_GOTO:
-	  call_exit_active(stack_args(sc->stack, i)) = false;
-	  break;
-
-	case OP_ERROR_HOOK_QUIT:
-	  sc->error_hook = stack_code(sc->stack, i);
-	  /* apparently there was an error during *error-hook* evaluation, but Rick wants the hook re-established anyway */
-	  (*reset_hook) = true;
-	  /* avoid infinite loop -- don't try to (re-)evaluate (buggy) *error-hook*! */
-	  break;
-
-	default:
-	  break;
-	}
+		if (op == OP_CATCH_1)
+		  {
+		    s7_pointer y;
+		    MAKE_CLOSURE_NO_CAPTURE(sc, y, car(error_func), cdr(error_func), stack_environment(sc->stack, i));
+		    sc->code = y;
+		  }
+		else sc->code = error_func;
+		
+		/* if user (i.e. yers truly!) copies/pastes the preceding lambda () into the
+		 *   error handler portion of the catch, he gets the inexplicable message:
+		 *       ;(): too many arguments: (a1 ())
+		 *   when this apply tries to call the handler.  So, we need a special case
+		 *   error check here!
+		 */
+		
+		if ((is_pair(closure_args(sc->code))) &&
+		    (!is_aritable(sc, sc->code, 2)))
+		  {
+		    s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~S", sc->args);
+		    return(false);
+		  }
+		
+		/* since MAKE_CLOSURE sets needs_copied_args and we're going to OP_APPLY,
+		 *   we don't need a new list here.
+		 */
+		car(sc->T2_1) = type;
+		car(sc->T2_2) = info;
+		sc->args = sc->T2_1;
+		sc->op = OP_APPLY;
+		
+		/* explicit eval needed if s7_call called into scheme where a caught error occurred (ex6 in exs7.c)
+		 *  but putting it here (via eval(sc, OP_APPLY)) means the C stack is not cleared correctly in non-s7-call cases, 
+		 *  so defer it until s7_call 
+		 */
+		if (sc->longjmp_ok)
+		  {
+		    longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
+		  }
+		
+		return(true);
+	      }
+	    break;
+	    
+	  case OP_DYNAMIC_WIND:
+	    x = stack_code(sc->stack, i);
+	    if (dynamic_wind_state(x) == DWIND_BODY)
+	      {
+		dynamic_wind_state(x) = DWIND_FINISH;    /* make sure an uncaught error in the exit thunk doesn't cause us to loop */
+		if (dynamic_wind_out(x) != sc->F)
+		  {
+		    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+		    sc->args = sc->NIL;
+		    sc->code = dynamic_wind_out(x);
+		    eval(sc, OP_APPLY);                  /* I guess this means no call/cc out of the exit thunk in an error-catching context */
+		  }
+	      }
+	    break;
+	    
+	  case OP_UNWIND_OUTPUT:
+	    x = stack_code(sc->stack, i);                /* "code" = port that we opened */
+	    s7_close_output_port(sc, x);
+	    x = stack_args(sc->stack, i);                /* "args" = port that we shadowed, if not #f */
+	    if (x != sc->F)
+	      sc->output_port = x;
+	    break;
+	    
+	  case OP_UNWIND_INPUT:
+	    s7_close_input_port(sc, stack_code(sc->stack, i)); /* "code" = port that we opened */
+	    sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
+	    break;
+	    
+	  case OP_READ_DONE:        /* perhaps an error during (read) */
+	    pop_input_port(sc);
+	    break;
+	    
+	  case OP_EVAL_STRING_1:    /* perhaps an error happened before we could push the OP_EVAL_STRING_2 */
+	  case OP_EVAL_STRING_2:
+	    s7_close_input_port(sc, sc->input_port);
+	    pop_input_port(sc);
+	    break;
+	    
+	  case OP_BARRIER:
+	    if (is_input_port(stack_args(sc->stack, i)))      /* (eval-string "'(1 .)") */
+	      {
+		if (sc->input_port == stack_args(sc->stack, i))
+		  pop_input_port(sc);
+		s7_close_input_port(sc, stack_args(sc->stack, i));
+	      }
+	    break;
+	    
+	  case OP_DEACTIVATE_GOTO:
+	    call_exit_active(stack_args(sc->stack, i)) = false;
+	    break;
+	    
+	  case OP_ERROR_HOOK_QUIT:
+	    sc->error_hook = stack_code(sc->stack, i);
+	    /* apparently there was an error during *error-hook* evaluation, but Rick wants the hook re-established anyway */
+	    (*reset_hook) = true;
+	    /* avoid infinite loop -- don't try to (re-)evaluate (buggy) *error-hook*! */
+	    break;
+	    
+	  default:
+	    break;
+	  }
     }
   return(false);
 }
@@ -31759,7 +31771,7 @@ It looks for an existing catch with a matching tag, and jumps to it if found.  O
 }
 
 
-static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
+s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 {
   static int last_line = -1;
   bool reset_error_hook = false;
@@ -31961,10 +31973,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	    }
 	}
       
-      if ((exit_eval) &&
-	  (sc->error_exiter))
-	(*(sc->error_exiter))();
-      
       /* if (s7_is_continuation(type))
        *   go into repl here with access to continuation?  Or expect *error-handler* to deal with it?
        */
@@ -31979,18 +31987,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     }
   
   return(type);
-}
-
-
-s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
-{
-  return(s7_error_1(sc, type, info, false));
-}
-
-
-s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
-{
-  return(s7_error_1(sc, type, info, true));
 }
 
 
@@ -43114,13 +43110,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* --------------- */
     FOR_EACH_SIMPLER:
-      /* we could get set up here */
     case OP_FOR_EACH_SIMPLER:
       {
 	s7_pointer args, counter;
 	counter = sc->args;
 	args = counter_list(counter);
-
 	if (is_pair(args))
 	  {
 	    s7_pointer code;
@@ -43137,11 +43131,61 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    counter_list(counter) = cdr(args);
 	    push_stack(sc, OP_FOR_EACH_SIMPLER, counter, code);
-
 	    sc->code = car(closure_body(code));
-	    if (is_optimized(sc->code))
-	      goto OPT_EVAL;
 	    goto EVAL; 
+	  }
+	sc->value = sc->UNSPECIFIED;
+	goto START;
+      }
+
+
+      /* --------------- */
+    FOR_EACH_SIMPLEST:
+      NEW_FRAME(sc, counter_environment(sc->args), counter_result(sc->args));
+      /* counter_result is GC protected.  This is the catch thunk's frame */
+
+    case OP_FOR_EACH_SIMPLEST:
+      {
+	s7_pointer args, counter;
+	counter = sc->args;
+	args = counter_list(counter);
+	if (is_pair(args))
+	  {
+	    s7_pointer code, p;
+	    code = sc->code;
+	    if (counter_length(counter) != sc->capture_env_counter)
+	      {
+		NEW_FRAME_WITH_SLOT(sc, closure_environment(code), sc->envir, car(closure_args(code)), car(args));  /* set function arg value */
+		counter_environment(counter) = sc->envir;
+		counter_length(counter) = sc->capture_env_counter;
+	      }
+	    else
+	      {
+		sc->envir = old_frame_with_slot(sc, counter_environment(counter), car(args));
+	      }
+	    counter_list(counter) = cdr(args);
+	    push_stack(sc, OP_FOR_EACH_SIMPLEST, counter, code);
+	    code = car(closure_body(code));
+
+	    if (counter_count(counter) == 0)
+	      {
+		counter_count(counter) = 1;
+		p = old_frame_in_env(sc, counter_result(counter), sc->envir);
+		catch_all_goto_loc(p) = s7_stack_top(sc);
+		catch_all_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
+		catch_all_result(p) = fcdr(code);
+	      }
+	    else
+	      {
+		p = counter_result(counter);
+		environment_slots(p) = sc->NIL;                  
+		frame_id(p) = ++frame_number; 
+		next_environment(p) = sc->envir;
+	      }
+	    sc->envir = p;
+	    push_stack_no_args(sc, OP_CATCH_ALL, code);
+	    sc->code = ecdr(cdr(code));                   /* the body of the first lambda */
+	    goto BEGIN;                                   /* removed one_liner check here -- rare */
 	  }
 	sc->value = sc->UNSPECIFIED;
 	goto START;
@@ -49928,6 +49972,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 *   I think, although a GC does happen close by.  push|pop_stack do not see it,
 		 *   nor does the outer START switch. 
 		 */
+		if ((is_optimized(car(closure_body(x)))) &&
+		    (optimize_data(car(closure_body(x))) == HOP_C_CATCH_ALL))
+		  goto FOR_EACH_SIMPLEST;
 		goto FOR_EACH_SIMPLER;
 	      }
 	      
@@ -49958,6 +50005,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		sc->code = x;
 		sc->args = make_simple_counter(sc, z);
+		if ((is_optimized(car(closure_body(x)))) &&
+		    (optimize_data(car(closure_body(x))) == HOP_C_CATCH_ALL))
+		  goto FOR_EACH_SIMPLEST;
 		goto FOR_EACH_SIMPLER;
 	      }
 	      
@@ -61080,7 +61130,6 @@ s7_scheme *s7_init(void)
   sc->temp3 = sc->NIL;
   sc->temp4 = sc->NIL;
 
-  sc->error_exiter = NULL;
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
   
@@ -62307,7 +62356,7 @@ s7_scheme *s7_init(void)
  * lint                     9328 8140 7887 7890
  * index    44300 4988 3935 3291 3005 2742 2362
  * s7test         1721 1430 1358 1297 1244 1233
- * t455            265  218   89   55   31   30
+ * t455            265  218   89   55   31   28
  * t502             90   72   43   39   36   35
  * lat             229        63   52   47   42
  * calls                     278  210  178  167

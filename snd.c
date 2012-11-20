@@ -330,14 +330,6 @@ void snd_set_global_defaults(bool need_cleanup)
 }
 
 
-#if HAVE_SETJMP_H && HAVE_SCHEME
-static void jump_to_top_level(void)
-{
-  top_level_catch(1);
-}
-#endif
-
-
 #if HAVE_GSL
 #include <gsl/gsl_ieee_utils.h>
 #include <gsl/gsl_errno.h>
@@ -384,10 +376,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
   xen_initialize();
-
-#if HAVE_SCHEME && HAVE_SETJMP_H
-  s7_set_error_exiter(s7, jump_to_top_level);
-#endif
 
   for (i = 1; i < argc; i++)
     {

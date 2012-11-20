@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "2.14"
-#define S7_DATE "30-Oct-12"
+#define S7_VERSION "2.15"
+#define S7_DATE "20-Nov-12"
 
 
 typedef long long int s7_Int;
@@ -168,12 +168,10 @@ void s7_provide(s7_scheme *sc, const char *feature);                 /* add feat
 
 
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
-s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info);
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
   /* set arg_n to 0 to indicate that caller takes only one argument (so the argument number need not be reported */
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args);
-void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
 s7_pointer s7_stacktrace(s7_scheme *sc);
 
   /* these are equivalent to (error ...) in Scheme
@@ -184,7 +182,6 @@ s7_pointer s7_stacktrace(s7_scheme *sc);
    *   a format control string, and passes it to format with the rest of the
    *   info list as the format function arguments.
    *
-   *   s7_error_and_exit jumps to some arbitrary place provided by s7_set_error_exiter
    *   s7_wrong_type_arg_error is equivalent to s7_error with a type of 'wrong-type-arg
    *   and similarly s7_out_of_range_error with type 'out-of-range.
    *
@@ -859,6 +856,7 @@ s7_pointer s7_apply_n_10(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *		
+ * 20-Nov:    removed s7_set_error_exiter and s7_error_and_exit which I think have never been used.
  * 22-Oct:    changed args to s7_function_class and s7_function_set_class.
  * 22-Aug:    symbol->dynamic-value.
  * 10-Aug:    exported s7_outer_environment.
