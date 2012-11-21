@@ -7612,8 +7612,8 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos
   mus_long_t len, beg;
   int pos;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0) || XEN_FALSE_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps) || XEN_FALSE_P(samps), samps, XEN_ARG_2, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_0) || XEN_FALSE_P(samp_0), samp_0, XEN_ARG_1, caller, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samps) || XEN_FALSE_P(samps), samps, XEN_ARG_2, caller, "an integer");
   ASSERT_CHANNEL(caller, snd, chn_n, 3);
 
   cp = get_cp(snd, chn_n, caller);
@@ -7621,9 +7621,8 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos
 
   pos = to_c_edit_position(cp, edpos, caller, 6);
   beg = beg_to_sample(samp_0, caller);
-  len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, cp->edits[pos]->samples - beg);
-  if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
-  if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
+  len = dur_to_samples(samps, beg, cp, pos, 2, caller);
+  if (len == 0) return(XEN_FALSE); /* empty file (channel) possibility */
 
   return(vct_to_xen(run_samples_to_vct(beg, len, cp, pos)));
 }
@@ -8211,8 +8210,10 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(start), start, XEN_ARG_3, S_edit_list_to_function, "an integer");  
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_4, S_edit_list_to_function, "an integer");  
 
-  start_pos = XEN_TO_C_INT_OR_ELSE(start, 1);
-  end_pos = XEN_TO_C_INT_OR_ELSE(end, -1);
+  if (XEN_INTEGER_P(start)) start_pos = XEN_TO_C_INT(start);
+  if (start_pos < 0) /* is 0 legal here? */
+    XEN_OUT_OF_RANGE_ERROR(S_edit_list_to_function, 3, start, "a non-negative integer");
+  if (XEN_INTEGER_P(end)) end_pos = XEN_TO_C_INT(end);
 
   funcstr = edit_list_to_function(cp, start_pos, end_pos);
   func = XEN_EVAL_C_STRING(funcstr);

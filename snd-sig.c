@@ -90,13 +90,21 @@ mus_long_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int a
 
 mus_long_t beg_to_sample(XEN beg, const char *caller)
 {
-  mus_long_t start;
-  start = XEN_TO_C_LONG_LONG_OR_ELSE(beg, 0);
+  mus_long_t start = 0;
+  if (XEN_INTEGER_P(beg))
+    start = XEN_TO_C_LONG_LONG(beg);
+  else
+    {
+      if (XEN_NUMBER_P(beg))
+	start = (mus_long_t)floor(XEN_TO_C_DOUBLE(beg)); /* TODO: make this just int */
+    }
   if (start < 0) 
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"),
 			 C_TO_XEN_STRING(caller),
 			 beg));
+  if (start > (1LL << 34))
+    XEN_OUT_OF_RANGE_ERROR(caller, 1, beg, "too large");
   return(start);
 }
 
@@ -104,9 +112,18 @@ mus_long_t beg_to_sample(XEN beg, const char *caller)
 mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller)
 {
   mus_long_t samps;
-  samps = XEN_TO_C_LONG_LONG_OR_ELSE(dur, cp->edits[edpos]->samples - beg);
+  if (XEN_INTEGER_P(dur))
+    samps = XEN_TO_C_LONG_LONG(dur);
+  else
+    {
+      if (XEN_NUMBER_P(dur))
+	samps = (mus_long_t)floor(XEN_TO_C_DOUBLE(dur));
+      else samps = cp->edits[edpos]->samples - beg;
+    }
   if (samps < 0)
     XEN_WRONG_TYPE_ARG_ERROR(caller, argn, dur, "a positive integer");
+  if (samps > (1LL << 34))
+    XEN_OUT_OF_RANGE_ERROR(caller, argn, dur, "too large");
   return(samps);
 }
 
@@ -114,12 +131,21 @@ mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int
 static mus_long_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
 {
   mus_long_t last;
-  last = XEN_TO_C_LONG_LONG_OR_ELSE(end, cp->edits[edpos]->samples - 1);
+  if (XEN_INTEGER_P(end))
+    last = XEN_TO_C_LONG_LONG(end);
+  else
+    {
+      if (XEN_NUMBER_P(end))
+	last = (mus_long_t)floor(XEN_TO_C_DOUBLE(end));
+      else last = cp->edits[edpos]->samples - 1;
+    }
   if (last < 0) 
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"),
 			 C_TO_XEN_STRING(caller),
 			 end));
+  if (last > (1LL << 34))
+    XEN_OUT_OF_RANGE_ERROR(caller, 2, end, "too large");
   return(last);
 }
 
@@ -4053,8 +4079,8 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
   int pos;
   mus_long_t samp, len;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_samples_and_smooth, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_delete_samples_and_smooth, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, XEN_ARG_1, S_delete_samples_and_smooth, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(samps), samps, XEN_ARG_2, S_delete_samples_and_smooth, "an integer");
 
   ASSERT_CHANNEL(S_delete_samples_and_smooth, snd, chn_n, 3);
   cp = get_cp(snd, chn_n, S_delete_samples_and_smooth);
@@ -4062,6 +4088,9 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp', then try
 
   pos = to_c_edit_position(cp, edpos, S_delete_samples_and_smooth, 5);
   samp = beg_to_sample(samp_n, S_delete_samples_and_smooth);
+  if (samp > CURRENT_SAMPLES(cp))
+    XEN_OUT_OF_RANGE_ERROR(S_delete_samples_and_smooth, 1, samp_n, "beyond end of sound");
+
   len = XEN_TO_C_LONG_LONG_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
 
@@ -4150,18 +4179,18 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
   chan_info *cp; /* follows sync */
   mus_long_t start = 0, len = 0;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_insert_silence, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_insert_silence, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, XEN_ARG_1, S_insert_silence, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_2, S_insert_silence, "an integer");
   ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_insert_silence);
   if (!cp) return(XEN_FALSE);
-  start = XEN_TO_C_LONG_LONG(beg);
-  if (start < 0) XEN_ERROR(NO_SUCH_SAMPLE,
-			   XEN_LIST_2(C_TO_XEN_STRING(S_insert_silence ": no such sample: ~A"),
-				      beg));
+
+  start = beg_to_sample(beg, S_insert_silence);
   len = XEN_TO_C_LONG_LONG(num);
   if (len <= 0) return(XEN_FALSE);
+  if (len > (1LL << 34))
+    XEN_OUT_OF_RANGE_ERROR(S_insert_silence, 2, num, "too large");
 
   cursor_insert(cp, start, len);
 
@@ -4176,15 +4205,21 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   mus_long_t bg, len;
   int pos;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_pad_channel, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_pad_channel, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, XEN_ARG_1, S_pad_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_2, S_pad_channel, "an integer");
   ASSERT_CHANNEL(S_pad_channel, snd, chn, 3);
 
   cp = get_cp(snd, chn, S_pad_channel);
   if (!cp) return(XEN_FALSE);
+
   bg = beg_to_sample(beg, S_pad_channel);
+
+  len = XEN_TO_C_LONG_LONG(num);
+  if (len <= 0) return(XEN_FALSE); /* to parallel insert-silence above -- maybe better would be an out of range error in both cases */
+  if (len > (1LL << 34))
+    XEN_OUT_OF_RANGE_ERROR(S_pad_channel, 2, num, "too large");
+
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
-  len = XEN_TO_C_LONG_LONG_OR_ELSE(num, cp->edits[pos]->samples - bg);
 
   if ((len > 0) &&
       (extend_with_zeros(cp, bg, len, pos, S_pad_channel)))
@@ -4234,7 +4269,7 @@ swap the indicated channels"
       int pos0, pos1;
       mus_long_t dur0, dur1, beg0 = 0, num;
 
-      if (XEN_NUMBER_P(beg)) 
+      if (XEN_INTEGER_P(beg)) 
 	beg0 = XEN_TO_C_LONG_LONG(beg);
 
       pos0 = to_c_edit_position(cp0, edpos0, S_swap_channels, 7);
@@ -4243,7 +4278,7 @@ swap the indicated channels"
       dur0 = cp0->edits[pos0]->samples;
       dur1 = cp1->edits[pos1]->samples;
 
-      if (XEN_NUMBER_P(dur)) 
+      if (XEN_INTEGER_P(dur)) 
 	num = XEN_TO_C_LONG_LONG(dur);
       else
 	{
@@ -4448,7 +4483,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
 
   ASSERT_SAMPLE_TYPE(S_clm_channel, samp_n, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_clm_channel, samps, XEN_ARG_3);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(overlap) || XEN_FALSE_P(overlap) || XEN_NOT_BOUND_P(overlap), overlap, XEN_ARG_7, S_clm_channel, "a number or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(overlap) || XEN_FALSE_P(overlap) || XEN_NOT_BOUND_P(overlap), overlap, XEN_ARG_7, S_clm_channel, "an integer or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_8, S_clm_channel, "a string");
   ASSERT_CHANNEL(S_clm_channel, snd, chn_n, 4);
 
@@ -4708,7 +4743,9 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 
   ebase = XEN_TO_C_DOUBLE(base);
   if (ebase < 0.0) 
-    XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base ~A < 0.0?");
+    XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base < 0.0?");
+  if (ebase > 1.0e10)
+    XEN_OUT_OF_RANGE_ERROR(S_xramp_channel, 3, base, "base too large");
 
   if (unrampable(cp, samp, samps, pos, (ebase != 1.0)))
     {
@@ -5083,6 +5120,9 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
       if ((pos == cp->edit_ctr) &&
 	  ((ratio == 0.0) || (ratio == 1.0)))
 	return(XEN_FALSE);
+      if ((isnan(ratio)) ||
+	  (fabs(ratio) < 1.0e-10)) /* dur > 0 here */
+	XEN_OUT_OF_RANGE_ERROR(S_src_channel, 1, ratio_or_env, "too small (resultant sound will be too large)");
     }
   else 
     {
@@ -6399,3 +6439,8 @@ void g_init_sig(void)
 #endif
 }
 
+
+/* TODO: all the beg_to_sample cases need to be XEN_INTEGER_P not XEN_NUMBER_P -- dur case also
+ *  and the type indication should be "integer" not "number"
+ *  this file, region/mix/edits/dac beg_to_sample. check docs.
+ */

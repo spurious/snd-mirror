@@ -43013,10 +43013,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    counter_environment(args) = sc->envir;
 		    counter_length(args) = sc->capture_env_counter;
 		  }
-		else
-		  {
-		    sc->envir = old_frame_with_slot(sc, counter_environment(args), sc->x);
-		  }
+		else sc->envir = old_frame_with_slot(sc, counter_environment(args), sc->x);
 		sc->code = closure_body(code);
 		if (is_one_liner(sc->code)) 
 		  {
@@ -43093,12 +43090,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		counter_environment(sc->args) = sc->envir;
 		counter_length(sc->args) = sc->capture_env_counter;
 	      }
-	    else
-	      {
-		sc->envir = old_frame_with_slot(sc, counter_environment(sc->args), car(args));
-	      }
+	    else sc->envir = old_frame_with_slot(sc, counter_environment(sc->args), car(args));
 	    counter_list(sc->args) = cdr(args);
-
 	    push_stack(sc, OP_FOR_EACH_SIMPLE, sc->args, code);
 	    sc->code = closure_body(code);
 	    goto BEGIN;
@@ -43125,10 +43118,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		counter_environment(counter) = sc->envir;
 		counter_length(counter) = sc->capture_env_counter;
 	      }
-	    else
-	      {
-		sc->envir = old_frame_with_slot(sc, counter_environment(counter), car(args));
-	      }
+	    else sc->envir = old_frame_with_slot(sc, counter_environment(counter), car(args));
 	    counter_list(counter) = cdr(args);
 	    push_stack(sc, OP_FOR_EACH_SIMPLER, counter, code);
 	    sc->code = car(closure_body(code));
@@ -43159,10 +43149,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		counter_environment(counter) = sc->envir;
 		counter_length(counter) = sc->capture_env_counter;
 	      }
-	    else
-	      {
-		sc->envir = old_frame_with_slot(sc, counter_environment(counter), car(args));
-	      }
+	    else sc->envir = old_frame_with_slot(sc, counter_environment(counter), car(args));
 	    counter_list(counter) = cdr(args);
 	    push_stack(sc, OP_FOR_EACH_SIMPLEST, counter, code);
 	    code = car(closure_body(code));
@@ -53918,8 +53905,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	port = finder(sc, fcdr(code));
 	if (!is_input_port(port))              /* (read-char 123)? */
 	  c = g_read_char(sc, list_1(sc, port));
-	
-	c = chars[port_read_character(port)(sc, port)];
+	else c = chars[port_read_character(port)(sc, port)];
 	NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, fc = caaar(code), c);
 	code = cadr(code);
 	

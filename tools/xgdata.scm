@@ -8515,6 +8515,16 @@
 (CFNC "void gtk_level_bar_set_inverted GtkLevelBar* self gboolean inverted")
 (CFNC "gboolean gtk_level_bar_get_inverted GtkLevelBar* self")
 
+
+;;; 3.7.2
++ typedef enum {
++   GTK_SIZE_GROUP_NONE,
++   GTK_SIZE_GROUP_HORIZONTAL,
++   GTK_SIZE_GROUP_VERTICAL,
++   GTK_SIZE_GROUP_BOTH
++ } GtkSizeGroupMode;
++ gboolean              gtk_widget_is_visible             (GtkWidget    *widget);
+
 |#
 
  

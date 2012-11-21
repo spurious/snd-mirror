@@ -23,6 +23,9 @@ snd_info *get_sp(XEN snd)
   if (XEN_INTEGER_P(snd))
     return(get_sp_1(XEN_TO_C_INT(snd)));
 
+  if (XEN_NUMBER_P(snd)) /* actually we only want to accept boolean and #<undefined> here */
+    return(NULL);
+
   /* use default sound, if any */
   return(any_selected_sound());
 }
