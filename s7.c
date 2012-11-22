@@ -653,7 +653,7 @@ enum {OP_NOT_AN_OP, HOP_NOT_AN_OP,
       OP_SAFE_C_S_opCq, HOP_SAFE_C_S_opCq, OP_SAFE_C_opSSq_C, HOP_SAFE_C_opSSq_C, OP_SAFE_C_C_opSSq, HOP_SAFE_C_C_opSSq, 
       OP_SAFE_C_C_opCq, HOP_SAFE_C_C_opCq, OP_SAFE_C_opCq_S, HOP_SAFE_C_opCq_S, 
       OP_SAFE_C_opCq_opCq, HOP_SAFE_C_opCq_opCq, OP_SAFE_C_opCq_C, HOP_SAFE_C_opCq_C, 
-      OP_SAFE_C_opSCq_opSCq, HOP_SAFE_C_opSCq_opSCq, OP_SAFE_C_opSSq_opSSq, HOP_SAFE_C_opSSq_opSSq,
+      OP_SAFE_C_opSCq_opSCq, HOP_SAFE_C_opSCq_opSCq, OP_SAFE_C_opSSq_opSSq, HOP_SAFE_C_opSSq_opSSq, OP_SAFE_C_opSSq_opCq, HOP_SAFE_C_opSSq_opCq,
       OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
       OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opXXXq, HOP_SAFE_C_opXXXq, 
       OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
@@ -764,7 +764,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_s_opcq", "h_safe_c_s_opcq", "safe_c_opssq_c", "h_safe_c_opssq_c", "safe_c_c_opssq", "h_safe_c_c_opssq", 
       "safe_c_c_opcq", "h_safe_c_c_opcq", "safe_c_opcq_s", "h_safe_c_opcq_s", 
       "safe_c_opcq_opcq", "h_safe_c_opcq_opcq", "safe_c_opcq_c", "h_safe_c_opcq_c", 
-      "safe_c_opscq_opscq", "h_safe_c_opscq_opscq", "safe_c_opssq_opssq", "h_safe_c_opssq_opssq",
+      "safe_c_opscq_opscq", "h_safe_c_opscq_opscq", "safe_c_opssq_opssq", "h_safe_c_opssq_opssq", "safe_c_opssq_opcq", "h_safe_c_opssq_opcq",
       "safe_c_opssq_s", "h_safe_c_opssq_s", "safe_c_opscq_s", "h_safe_c_opscq_s", "safe_c_opcsq_s", "h_safe_c_opcsq_s",
       "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opxxxq", "h_safe_c_opxxxq", 
       "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
@@ -2306,7 +2306,7 @@ static s7_pointer REST_PAR_ERROR, BAD_BINDING;
 
 #define WITH_COUNTS 0
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 1024
 static int counts[NUM_COUNTS];
@@ -2436,9 +2436,9 @@ static void report_counts(s7_scheme *sc)
 	data[loc++] = new_datum(s7_integer(cdar(x)), caar(x));
     }
   qsort((void *)data, loc, sizeof(datum *), sort_data);
+  if (loc > 200) loc = 200;
   for (i = 0; i < loc; i++)
-    if (data[i]->count > 1000)
-      fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY(data[i]->expr));
+    fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY(data[i]->expr));
 }
 #endif
 #endif
@@ -37472,6 +37472,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 				{
 				  set_unsafely_optimized(car_x);
 				  set_optimize_data(car_x, hop + OP_C_S_opSq);
+				  ecdr(cdr(car_x)) = cadr(caddar_x);
 				  choose_c_function(sc, car_x, func, 2);
 				  return(false);
 				}
@@ -37479,6 +37480,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 				{
 				  set_unsafely_optimized(car_x);
 				  set_optimize_data(car_x, hop + OP_C_S_opCq);
+				  ecdr(cdr(car_x)) = cdr(caddar_x);
 				  choose_c_function(sc, car_x, func, 2);
 				  return(false);
 				}
@@ -38742,6 +38744,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		if ((len < GC_TRIGGER_SIZE) &&
 		    (pairs == (quotes + all_x_count(car_x))))
 		  {
+		    /* fprintf(stderr, "all_x: %s\n", DISPLAY(car_x)); */
 		    set_unsafely_optimized(car_x);
 		    set_optimize_data(car_x, hop + OP_UNKNOWN_ALL_X);
 		    ecdr(car_x) = NULL;
@@ -38979,6 +38982,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_C:
 	  if (optimize_data_match(e1, OP_SAFE_C_C))
 	    return(OP_SAFE_C_opCq_opCq);
+	  if (optimize_data_match(e1, OP_SAFE_C_SS))
+	    return(OP_SAFE_C_opSSq_opCq);
 	  break;
 
 	case OP_SAFE_C_SC:
@@ -39143,6 +39148,7 @@ static bool sequence_is_safe_for_opteval(s7_scheme *sc, s7_pointer body)
 	    case OP_SAFE_C_opSq_opSq:
 	    case OP_SAFE_C_opSCq_opSCq:
 	    case OP_SAFE_C_opSSq_opSSq:
+	    case OP_SAFE_C_opSSq_opCq:
 	    case OP_SAFE_C_opCq_Z:
 	    case OP_SAFE_C_ZZ:
 	    case OP_SAFE_C_ZZX:
@@ -47154,7 +47160,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			break;
 
 		      case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_LST_ARGS_FUNCTION:
-			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_ALL_X : OP_C_ALL_X);
+			if ((num_args == 2) &&
+			    (is_symbol(cadr(code))) &&
+			    (is_pair(caddr(code))) &&
+			    (is_optimized(caddr(code))))
+			  {
+			    if (optimize_data_match(caddr(code), OP_SAFE_C_S))
+			      {
+				set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_S_opSq : OP_C_S_opSq);
+				ecdr(cdr(code)) = cadr(caddr(code));
+			      }
+			    else
+			      {
+				if (optimize_data_match(caddr(code), OP_SAFE_C_C))
+				  {
+				    set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_S_opCq : OP_C_S_opCq);
+				    ecdr(cdr(code)) = cdr(caddr(code));
+				  }
+				else set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_ALL_X : OP_C_ALL_X);
+			      }
+			  }
+			else set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_ALL_X : OP_C_ALL_X);
+			/* fprintf(stderr, "use %s for %s\n", opt_names[optimize_data(code)], DISPLAY(code)); */
 			set_c_function(code, f);
 			goto OPT_EVAL;
 
@@ -47895,6 +47922,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		c = find_symbol_or_bust(sc, car(code));
 		if (!is_c_object(c))
 		  break;
+
+#if WITH_COUNTS
+		add_expr(sc, code);
+#endif
 
 		ind = find_symbol_or_bust(sc, cadr(code));
 		if ((c_object_ref_2i(c)) &&
@@ -48736,7 +48767,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 			    /* it is possible to embed the rest of the optimized evaluator here:
 			     *   push ALL_X_OPT, an outer switch branch that jumps to OPT below,
-			     *   save the sc-->args and code, and include the local p and args
+			     *   save the sc->args and code, and include the local p and args
 			     *   values as trailing data in the integer fcdr(cdr(code)), set
 			     *   sc->code to arg and goto OPT_EVAL; then OPT: (in this same branch),
 			     *   restores the loop as it was, sets car(p) to sc->value and continues.
@@ -48781,7 +48812,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer args, val;
 		args = cdr(code);
 		val = find_symbol_or_bust(sc, car(args));
-		car(sc->T1_1) = find_symbol_or_bust(sc, cadr(cadr(args)));
+		car(sc->T1_1) = find_symbol_or_bust(sc, ecdr(args));
 		sc->args = list_2(sc, val, c_call(cadr(args))(sc, sc->T1_1));
 		sc->value = c_call(code)(sc, sc->args);
 		goto START;
@@ -48799,7 +48830,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer args, val;
 		args = cdr(code);
 		sc->temp4 = find_symbol_or_bust(sc, car(args));
-		val = c_call(cadr(args))(sc, cdadr(args));
+		val = c_call(cadr(args))(sc, ecdr(args));
 		sc->args = list_2(sc, sc->temp4, val);
 		sc->value = c_call(code)(sc, sc->args);
 		goto START;
@@ -49830,6 +49861,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T2_2) = val4;
 		car(sc->T2_2) = c_call(cadr(args))(sc, sc->T2_1);
 		car(sc->T2_1) = sc->temp4;
+		sc->value = c_call(code)(sc, sc->T2_1);
+		goto START;
+	      }
+	      
+	      
+	    case OP_SAFE_C_opSSq_opCq:
+	      if (!c_function_is_ok(sc, code))
+		break;
+	      if (!c_function_is_ok(sc, cadr(code)))
+		break;
+	      if (!c_function_is_ok(sc, caddr(code)))
+		break;
+	      
+	    case HOP_SAFE_C_opSSq_opCq:
+	      {
+		s7_pointer arg1, arg2, val3;
+		arg1 = cadr(code);
+		arg2 = caddr(code);
+		val3 = finder(sc, caddr(arg1));
+		car(sc->T2_1) = finder(sc, cadr(arg1));
+		car(sc->T2_2) = val3;
+		car(sc->T2_1) = c_call(arg1)(sc, sc->T2_1);
+		car(sc->T2_2) = c_call(arg2)(sc, cdr(arg2));
 		sc->value = c_call(code)(sc, sc->T2_1);
 		goto START;
 	      }
@@ -62336,6 +62390,9 @@ s7_scheme *s7_init(void)
  * SOMEDAY: get the doc string out of the closure body
  * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * PERHAPS: extend op_case_simple[]_ss to safe_c_s
+ * TODO: change non-fft vct uses to vector (clm-ins.scm especially: (scales ctr)
+ * TODO: in mus_fft we load c_in_data -- this is just as easy with vectors if local, and if imag=0, loop can be simpler
+ * TODO: use a vector for data in move-locsig test
  *
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7741
@@ -62345,7 +62402,7 @@ s7_scheme *s7_init(void)
  * t455            265  218   89   55   31   28
  * t502             90   72   43   39   36   35
  * lat             229        63   52   47   42
- * calls                     278  210  178  167
+ * calls                     278  210  178  164
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

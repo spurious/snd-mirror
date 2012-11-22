@@ -3109,8 +3109,8 @@ channel number in the sound that contains the channel being played."
   int i, ochan = -1;
 
   XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ARG_1, S_add_player, "a player");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "an integer");
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 

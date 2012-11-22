@@ -1280,7 +1280,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       sync_info *si_out;
 
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
-      XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "an integer");
 
       cp = get_cp(snd, chn, S_insert_selection);
       if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
@@ -1316,7 +1316,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       XEN result = XEN_EMPTY_LIST;
 
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
-      XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "an integer");
       XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(sel_chan), sel_chan, XEN_ARG_4, S_mix_selection, "an integer or " PROC_TRUE);
 
       cp = get_cp(snd, chn, S_mix_selection);
@@ -1449,7 +1449,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   mus_long_t beg;
 
   ASSERT_CHANNEL(S_setB S_selection_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, XEN_ARG_1, S_selection_position, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_1, S_selection_position, "an integer");
 
   beg = beg_to_sample(pos, S_setB S_selection_position);
   if (XEN_NOT_BOUND_P(snd))

@@ -90,63 +90,49 @@ mus_long_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int a
 
 mus_long_t beg_to_sample(XEN beg, const char *caller)
 {
-  mus_long_t start = 0;
   if (XEN_INTEGER_P(beg))
-    start = XEN_TO_C_LONG_LONG(beg);
-  else
     {
-      if (XEN_NUMBER_P(beg))
-	start = (mus_long_t)floor(XEN_TO_C_DOUBLE(beg)); /* TODO: make this just int */
+      mus_long_t start;
+      start = XEN_TO_C_LONG_LONG(beg);
+      if (start < 0) 
+	XEN_ERROR(NO_SUCH_SAMPLE, XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"), C_TO_XEN_STRING(caller), beg));
+      if (start > (1LL << 34))
+	XEN_OUT_OF_RANGE_ERROR(caller, 1, beg, "too large");
+      return(start);
     }
-  if (start < 0) 
-    XEN_ERROR(NO_SUCH_SAMPLE,
-	      XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"),
-			 C_TO_XEN_STRING(caller),
-			 beg));
-  if (start > (1LL << 34))
-    XEN_OUT_OF_RANGE_ERROR(caller, 1, beg, "too large");
-  return(start);
+  return(0);
 }
 
 
 mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller)
 {
-  mus_long_t samps;
   if (XEN_INTEGER_P(dur))
-    samps = XEN_TO_C_LONG_LONG(dur);
-  else
     {
-      if (XEN_NUMBER_P(dur))
-	samps = (mus_long_t)floor(XEN_TO_C_DOUBLE(dur));
-      else samps = cp->edits[edpos]->samples - beg;
+      mus_long_t samps;
+      samps = XEN_TO_C_LONG_LONG(dur);
+      if (samps < 0)
+	XEN_WRONG_TYPE_ARG_ERROR(caller, argn, dur, "a positive integer");
+      if (samps > (1LL << 34))
+	XEN_OUT_OF_RANGE_ERROR(caller, argn, dur, "too large");
+      return(samps);
     }
-  if (samps < 0)
-    XEN_WRONG_TYPE_ARG_ERROR(caller, argn, dur, "a positive integer");
-  if (samps > (1LL << 34))
-    XEN_OUT_OF_RANGE_ERROR(caller, argn, dur, "too large");
-  return(samps);
+  return(cp->edits[edpos]->samples - beg);
 }
 
 
 static mus_long_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller)
 {
-  mus_long_t last;
   if (XEN_INTEGER_P(end))
-    last = XEN_TO_C_LONG_LONG(end);
-  else
     {
-      if (XEN_NUMBER_P(end))
-	last = (mus_long_t)floor(XEN_TO_C_DOUBLE(end));
-      else last = cp->edits[edpos]->samples - 1;
+      mus_long_t last;
+      last = XEN_TO_C_LONG_LONG(end);
+      if (last < 0) 
+	XEN_ERROR(NO_SUCH_SAMPLE, XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"), C_TO_XEN_STRING(caller), end));
+      if (last > (1LL << 34))
+	XEN_OUT_OF_RANGE_ERROR(caller, 2, end, "too large");
+      return(last);
     }
-  if (last < 0) 
-    XEN_ERROR(NO_SUCH_SAMPLE,
-	      XEN_LIST_3(C_TO_XEN_STRING("~A: no such sample: ~A"),
-			 C_TO_XEN_STRING(caller),
-			 end));
-  if (last > (1LL << 34))
-    XEN_OUT_OF_RANGE_ERROR(caller, 2, end, "too large");
-  return(last);
+  return(cp->edits[edpos]->samples - 1);
 }
 
 
@@ -3280,6 +3266,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	  /* changed here to remove catch 24-Mar-02 */
 #if HAVE_SCHEME
 
+	  /* TODO: if use_apply can't we remake the arg? */
 	  if (use_apply)
 	    {
 	      s7_set_car(arg_list, s7_make_real(s7, read_sample(sf)));
@@ -3289,6 +3276,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	    }
 	  else
 	    {
+	      /* TODO: if body is safe, can't we remake the arg? */
 	      s7_slot_set_value(s7, slot, s7_make_real(s7, read_sample(sf)));
 	      res = eval(s7, body, e);
 	    }
@@ -6438,9 +6426,3 @@ void g_init_sig(void)
 #endif
 #endif
 }
-
-
-/* TODO: all the beg_to_sample cases need to be XEN_INTEGER_P not XEN_NUMBER_P -- dur case also
- *  and the type indication should be "integer" not "number"
- *  this file, region/mix/edits/dac beg_to_sample. check docs.
- */

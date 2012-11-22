@@ -58,7 +58,7 @@
 #endif
 
 #define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(Beg) || XEN_FALSE_P(Beg) || XEN_NOT_BOUND_P(Beg), Beg, Offset, Origin, "a number or " PROC_FALSE)
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(Beg) || XEN_FALSE_P(Beg) || XEN_NOT_BOUND_P(Beg), Beg, Offset, Origin, "an integer or " PROC_FALSE)
 
 typedef struct {
   char **values;

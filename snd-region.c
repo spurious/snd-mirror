@@ -931,32 +931,63 @@ static void deferred_region_to_temp_file(region *r)
 	      sfs[i] = init_sample_read_any(r->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);
 	      data[i] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
 	    }
-	  for (j = 0, k = 0; j < len; j++, k++) 
+
+	  if ((r->chans == 1) &&
+	      (r->lens[0] == (len - 1)))
 	    {
-	      if (k == MAX_BUFFER_SIZE)
+	      snd_fd *sf;
+	      mus_sample_t *d;
+
+	      sf = sfs[0];
+	      d = data[0];
+	      for (j = 0, k = 0; j < len; j++, k++) 
 		{
-		  err = mus_file_write(ofd, 0, k - 1, r->chans, data);
-		  k = 0;
-		  if (err != MUS_NO_ERROR) break;
-		}
-	      for (i = 0; i < r->chans; i++)
-		{
-		  if (j <= r->lens[i])
+		  mus_sample_t curval;
+		  if (k == MAX_BUFFER_SIZE)
 		    {
-		      mus_sample_t curval;
-		      data[i][k] = read_sample_to_mus_sample(sfs[i]);
-		      curval = mus_sample_abs(data[i][k]);
-		      if (curval > val) 
-			{
-			  val = curval;
-			  max_position = j;
-			}
+		      err = mus_file_write(ofd, 0, k - 1, 1, data);
+		      k = 0;
+		      if (err != MUS_NO_ERROR) break;
 		    }
-		  else data[i][k] = MUS_SAMPLE_0;
+		  d[k] = read_sample_to_mus_sample(sf);
+		  curval = mus_sample_abs(d[k]);
+		  if (curval > val) 
+		    {
+		      val = curval;
+		      max_position = j;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (j = 0, k = 0; j < len; j++, k++) 
+		{
+		  if (k == MAX_BUFFER_SIZE)
+		    {
+		      err = mus_file_write(ofd, 0, k - 1, r->chans, data);
+		      k = 0;
+		      if (err != MUS_NO_ERROR) break;
+		    }
+		  for (i = 0; i < r->chans; i++)
+		    {
+		      if (j <= r->lens[i])
+			{
+			  mus_sample_t curval;
+			  data[i][k] = read_sample_to_mus_sample(sfs[i]);
+			  curval = mus_sample_abs(data[i][k]);
+			  if (curval > val) 
+			    {
+			      val = curval;
+			      max_position = j;
+			    }
+			}
+		      else data[i][k] = MUS_SAMPLE_0;
+		    }
 		}
 	    }
 	  if (k > 0) 
 	    mus_file_write(ofd, 0, k - 1, r->chans, data);
+
 	  close_temp_file(r->filename, ofd, hdr->type, len * r->chans * datumb);
 	  r->maxamp = MUS_SAMPLE_TO_FLOAT(val);
 	  r->maxamp_position = max_position;
@@ -1541,7 +1572,7 @@ insert region data into snd's channel chn starting at start-samp"
   io_error_t err = IO_NO_ERROR;
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_insert_region, "a region id");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_insert_region, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_insert_region, "an integer");
 
   ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
@@ -1765,8 +1796,8 @@ selection is used."
       mus_long_t ibeg, iend;
       mus_long_t *ends = NULL;
 
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_make_region, "a number");
-      XEN_ASSERT_TYPE(XEN_NUMBER_P(end), end, XEN_ARG_2, S_make_region, "a number");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(beg), beg, XEN_ARG_1, S_make_region, "an integer");
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(end), end, XEN_ARG_2, S_make_region, "an integer");
 
       ibeg = beg_to_sample(beg, S_make_region);
       iend = beg_to_sample(end, S_make_region);
@@ -1917,7 +1948,7 @@ it returns a list of the new mixes"
   XEN result = XEN_EMPTY_LIST;
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_mix_region, "a region");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix_region, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix_region, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(reg_chn), reg_chn, XEN_ARG_5, S_mix_region, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
 
@@ -1959,7 +1990,7 @@ static XEN g_region_sample(XEN reg_n, XEN samp_n, XEN chn_n)
   mus_long_t samp;
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_region_sample, "a region");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_2, S_region_sample, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, XEN_ARG_2, S_region_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_3, S_region_sample, "an integer");
 
   chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
@@ -1980,26 +2011,31 @@ static XEN g_region_to_vct(XEN reg_n, XEN beg_n, XEN num, XEN chn_n, XEN v)
 write region's samples starting at beg for samps in channel chan to vct v; return v (or create a new one)"
 
   mus_float_t *data;
-  int reg, chn;
-  mus_long_t len;
+  int reg, chn = 0;
+  mus_long_t len = 0;
   vct *v1 = xen_to_vct(v);
 
   XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_region_to_vct, "a region");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_2, S_region_to_vct, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_region_to_vct, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_2, S_region_to_vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(num), num, XEN_ARG_3, S_region_to_vct, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_4, S_region_to_vct, "an integer");
 
   reg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(reg)))
     return(snd_no_such_region_error(S_region_to_vct, reg_n));
 
-  chn = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
-  if ((chn < 0) || (chn >= region_chans(reg)))
-    return(snd_no_such_channel_error(S_region_to_vct, XEN_LIST_1(reg_n), chn_n));
-
-  len = XEN_TO_C_LONG_LONG_OR_ELSE(num, 0);
-  if (len < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_region_to_vct, 2, num, "length ~A < 0?");
+  if (XEN_INTEGER_P(chn_n)) 
+    {
+      chn = XEN_TO_C_INT(chn_n);
+      if ((chn < 0) || (chn >= region_chans(reg)))
+	return(snd_no_such_channel_error(S_region_to_vct, XEN_LIST_1(reg_n), chn_n));
+    }
+  if (XEN_INTEGER_P(num)) 
+    {
+      len = XEN_TO_C_LONG_LONG(num);
+      if (len < 0)
+	XEN_OUT_OF_RANGE_ERROR(S_region_to_vct, 2, num, "length ~A < 0?");
+    }
   if ((len == 0) || (len > region_len(reg)))
     len = region_len(reg);
 

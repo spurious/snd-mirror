@@ -6713,11 +6713,13 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       break;
 
     case CP_AP_LOSAMP:
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_left_sample, "an integer");
       set_x_axis_x0(cp, beg_to_sample(on, caller));
       return(on);
       break;
 
     case CP_AP_HISAMP:
+      XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_right_sample, "an integer");
       set_x_axis_x1(cp, beg_to_sample(on, caller));
       return(on);
       break;
