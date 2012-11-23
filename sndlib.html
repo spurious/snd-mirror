@@ -227,11 +227,11 @@ sound file data:</p>
   int mus_sound_reopen_output (const char *arg, int type, int format, mus_long_t data_loc)
   int mus_sound_close_input (int fd) 
   int mus_sound_close_output (int fd, mus_long_t bytes_of_data) 
-  int mus_sound_read (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
-  int mus_sound_write (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
+  int mus_sound_read (int fd, int beg, int end, int chans, mus_float_t **bufs) 
+  int mus_sound_write (int fd, int beg, int end, int chans, mus_float_t **bufs) 
   mus_long_t mus_sound_seek_frame (int fd, mus_long_t frame)
 </pre>
-<p>mus_sample_t defaults to float, but can also be int.  It is set when
+<p>mus_float_t defaults to float, but can also be int.  It is set when
 sndlib is built, and refers to Sndlib's internal representation of sample values.  
 There are corresponding macros to convert from the
 sample type to C types (MUS_SAMPLE_TO_FLOAT, etc), and the reverse
@@ -263,7 +263,7 @@ the file.  The argument fd is the integer returned by
 mus_sound_open_output.</p>
 
 <p>mus_sound_read reads data from the file indicated by fd,
-placing data in the array obufs as mus_sample_t values (floats normally).
+placing data in the array obufs as mus_float_t values (floats normally).
 chans determines how many arrays of
 samples are in obufs, which is filled by mus_sound_read from its
 index beg to end with zero padding if necessary.
@@ -500,7 +500,7 @@ int main(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate, outbytes;
   mus_long_t frames;
-  mus_sample_t **bufs;
+  mus_float_t **bufs;
   short *obuf;
   mus_sound_initialize();	
   fd = mus_sound_open_input(argv[1]);
@@ -510,9 +510,9 @@ int main(int argc, char *argv[])
       srate = mus_sound_srate(argv[1]);
       frames = mus_sound_frames(argv[1]);
       outbytes = BUFFER_SIZE * chans * 2;
-      bufs = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
+      bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
       for (i=0;i&lt;chans;i++) 
-        bufs[i] = (mus_sample_t *)calloc(BUFFER_SIZE, sizeof(mus_sample_t));
+        bufs[i] = (mus_float_t *)calloc(BUFFER_SIZE, sizeof(mus_float_t));
       obuf = (short *)calloc(BUFFER_SIZE * chans, sizeof(short));
       afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_AUDIO_COMPATIBLE_FORMAT, outbytes);
       if (afd != -1)
@@ -549,7 +549,7 @@ int main(int argc, char *argv[])
 {
   int fd, i, k, frames;
   float phase, incr;
-  mus_sample_t *obuf[1];
+  mus_float_t *obuf[1];
   mus_sound_initialize();	
   fd = mus_sound_open_output(argv[1], 22050, 1, MUS_BSHORT, MUS_NEXT, "created by sndsine");
   if (fd != -1)
@@ -557,7 +557,7 @@ int main(int argc, char *argv[])
       frames = 22050;
       phase = 0.0;
       incr = 2 * M_PI * 440.0 / 22050.0;
-      obuf[0] = (mus_sample_t *)calloc(BUFFER_SIZE, sizeof(mus_sample_t));
+      obuf[0] = (mus_float_t *)calloc(BUFFER_SIZE, sizeof(mus_float_t));
       k = 0;
       for (i = 0; i &lt; frames; i++)
 	{
@@ -758,7 +758,7 @@ void src_file(const char *file, double ratio)
   int k, chan, chans, width = 32, out_fd, data_format, header_type, buffer_size;
   mus_long_t samp, old_samps, new_samps;
   mus_float_t old_srate, new_srate;
-  mus_sample_t **obufs;
+  mus_float_t **obufs;
 
   old_srate = mus_srate();
   new_srate = mus_sound_srate(file); /* need have no connection with previous CLM srate setting */
@@ -777,13 +777,13 @@ void src_file(const char *file, double ratio)
 
   srcs = (mus_any **)malloc(chans * sizeof(mus_any *));
   rds = (mus_any **)malloc(chans * sizeof(mus_any *));
-  obufs = (mus_sample_t **)malloc(chans * sizeof(mus_sample_t));
+  obufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t));
 
   for (chan = 0; chan < chans; chan++)
     {
       rds[chan] = mus_make_readin(file, chan, 0, 1);
       srcs[chan] = mus_make_src(NULL, ratio, width, (void *)rds[chan]);
-      obufs[chan] = (mus_sample_t *)malloc(buffer_size * sizeof(mus_sample_t));
+      obufs[chan] = (mus_float_t *)malloc(buffer_size * sizeof(mus_float_t));
     }
 
   for (k = 0, samp = 0; samp < new_samps; samp++)

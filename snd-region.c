@@ -258,12 +258,12 @@ static mus_long_t region_maxamp_position(int n)
       if ((r->maxamp_position == -1) && (r->filename)) /* not picked up elsewhere */
 	{
 	  /* it exists as r->filename, so just use sndlib... */
-	  mus_sample_t *vals;
+	  mus_float_t *vals;
 	  mus_long_t *times;
 	  int i;
 	  mus_long_t maxpos;
-	  mus_sample_t maxsamp;
-	  vals = (mus_sample_t *)calloc(r->chans, sizeof(mus_sample_t));
+	  mus_float_t maxsamp;
+	  vals = (mus_float_t *)calloc(r->chans, sizeof(mus_float_t));
 	  times = (mus_long_t *)calloc(r->chans, sizeof(mus_long_t));
 	  mus_sound_maxamps(r->filename, r->chans, vals, times);
 	  maxpos = times[0];
@@ -809,12 +809,12 @@ static void deferred_region_to_temp_file(region *r)
   int i, k, ofd = 0, datumb = 0, err = 0;
   bool copy_ok;
   mus_long_t j, len = 0;
-  mus_sample_t val;
+  mus_float_t val;
   snd_fd **sfs = NULL;
   snd_info *sp0;
   file_info *hdr = NULL;
   deferred_region *drp = NULL;
-  mus_sample_t **data = NULL;
+  mus_float_t **data = NULL;
 
   ss->deferred_regions--;
   drp = r->dr;
@@ -923,26 +923,26 @@ static void deferred_region_to_temp_file(region *r)
       else
 	{
 	  sfs = (snd_fd **)calloc(r->chans, sizeof(snd_fd *));
-	  data = (mus_sample_t **)calloc(r->chans, sizeof(mus_sample_t *));
+	  data = (mus_float_t **)calloc(r->chans, sizeof(mus_float_t *));
 	  datumb = mus_bytes_per_sample(hdr->format);
 	  /* here if peak_envs, maxamp exists */
 	  for (i = 0; i < r->chans; i++)
 	    {
 	      sfs[i] = init_sample_read_any(r->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);
-	      data[i] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
+	      data[i] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t));
 	    }
 
 	  if ((r->chans == 1) &&
 	      (r->lens[0] == (len - 1)))
 	    {
 	      snd_fd *sf;
-	      mus_sample_t *d;
+	      mus_float_t *d;
 
 	      sf = sfs[0];
 	      d = data[0];
 	      for (j = 0, k = 0; j < len; j++, k++) 
 		{
-		  mus_sample_t curval;
+		  mus_float_t curval;
 		  if (k == MAX_BUFFER_SIZE)
 		    {
 		      err = mus_file_write(ofd, 0, k - 1, 1, data);
@@ -972,7 +972,7 @@ static void deferred_region_to_temp_file(region *r)
 		    {
 		      if (j <= r->lens[i])
 			{
-			  mus_sample_t curval;
+			  mus_float_t curval;
 			  data[i][k] = read_sample_to_mus_sample(sfs[i]);
 			  curval = mus_sample_abs(data[i][k]);
 			  if (curval > val) 
@@ -1290,7 +1290,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	    {
 	      mus_long_t iloc, frames, cursamples;
 	      int chans, i, err = 0;
-	      mus_sample_t **bufs;
+	      mus_float_t **bufs;
 
 	      chans = mus_sound_chans(r->filename);
 	      frames = mus_sound_samples(r->filename) / chans;
@@ -1304,8 +1304,8 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 					mus_sound_header_type(r->filename));
 	      lseek(ifd, iloc, SEEK_SET);
 
-	      bufs = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
-	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+	      bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
+	      for (i = 0; i < chans; i++) bufs[i] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t));
 
 	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
 		snd_warning("not enough space to save region? -- need %lld bytes",

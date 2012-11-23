@@ -2271,8 +2271,8 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 	   *   but that means (fill! <sound>) fails if optimization is off.
 	   */
 	  mus_long_t len = -1, j;
-	  mus_sample_t *data = NULL;
-	  mus_sample_t value;
+	  mus_float_t *data = NULL;
+	  mus_float_t value;
 	  value = MUS_FLOAT_TO_SAMPLE(valf);	  
 	  
 	  for (i = 0; i < sp->nchans; i++)
@@ -2282,7 +2282,7 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 		{
 		  len = CURRENT_SAMPLES(cp);
 		  if (data) free(data);
-		  data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
+		  data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 		  for (j = 0; j < len; j++)
 		    data[j] = value;
 		}

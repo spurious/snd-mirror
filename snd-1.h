@@ -90,7 +90,7 @@ typedef struct {
 
 typedef struct {
   snd_data_file_t type;
-  mus_sample_t *buffered_data;    
+  mus_float_t *buffered_data;    
   snd_io *io;      
   char *filename;
   file_info *hdr;
@@ -139,7 +139,7 @@ typedef struct snd_fd {
   int cbi;
   read_direction_t direction;
   bool at_eof, freed;
-  mus_sample_t *data;
+  mus_float_t *data;
   snd_data *current_sound;
   mus_long_t initial_samp;
   struct chan_info *cp;
@@ -691,7 +691,7 @@ void forget_temps(void);
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan);
 snd_data *copy_snd_data(snd_data *sd, mus_long_t beg, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
-snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
+snd_data *make_snd_data_buffer(mus_float_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
 int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err);
 io_error_t close_temp_file(const char *filename, int ofd, int type, mus_long_t bytes);
@@ -961,13 +961,13 @@ void as_one_edit(chan_info *cp, int one_edit);
 void free_sound_list(chan_info *cp);
 void after_edit(chan_info *cp);
 bool extend_with_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, const char *origin);
-bool insert_samples(mus_long_t beg, mus_long_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
+bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos);
 bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, const char *origin, int edpos);
 bool insert_complete_file_at_cursor(snd_info *sp, const char *filename);
 bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, file_delete_t auto_delete);
 bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos);
-bool change_samples(mus_long_t beg, mus_long_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
+bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos);
 bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
 bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin);
 mus_float_t chn_sample(mus_long_t samp, chan_info *cp, int pos);
@@ -1022,7 +1022,7 @@ void reflect_file_change_in_title(void);
 
 bool snd_to_sample_p(mus_any *ptr);
 mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan);
-int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, mus_long_t beg, mus_long_t num, const char *origin);
+int mix_buffer_with_tag(chan_info *cp, mus_float_t *data, mus_long_t beg, mus_long_t num, const char *origin);
 
 int mix_file_with_tag(chan_info *cp, const char *filename, int chan, mus_long_t beg, file_delete_t auto_delete, const char *origin);
 void unmix(chan_info *cp, mix_state *ms);

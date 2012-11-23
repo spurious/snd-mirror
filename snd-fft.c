@@ -1774,7 +1774,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
   else
     {
       mus_float_t *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;
-      mus_sample_t **pbuffer = NULL, **fbuffer = NULL;
+      mus_float_t **pbuffer = NULL, **fbuffer = NULL;
       mus_long_t oloc;
       oloc = mus_header_data_location();
 
@@ -1784,10 +1784,10 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 
       rl0 = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
       if (rl0) rl1 = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
-      if (rl1) pbuffer = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
-      if (pbuffer) pbuffer[0] = (mus_sample_t *)calloc(data_size, sizeof(mus_sample_t));
-      fbuffer = (mus_sample_t **)calloc(filter_chans, sizeof(mus_sample_t *));
-      if (fbuffer) fbuffer[filter_chan] = (mus_sample_t *)calloc(filtersize, sizeof(mus_sample_t));
+      if (rl1) pbuffer = (mus_float_t **)calloc(1, sizeof(mus_float_t *));
+      if (pbuffer) pbuffer[0] = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
+      fbuffer = (mus_float_t **)calloc(filter_chans, sizeof(mus_float_t *));
+      if (fbuffer) fbuffer[filter_chan] = (mus_float_t *)calloc(filtersize, sizeof(mus_float_t));
 
       if ((rl0 == NULL) || (rl1 == NULL) || 
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) ||
@@ -1798,7 +1798,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	}
       else
 	{
-	  mus_sample_t *pbuf = NULL;
+	  mus_float_t *pbuf = NULL;
 	  mus_long_t i;
 	  mus_float_t scl;
 	  int tempfile;
@@ -1846,7 +1846,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	  else 
 	    {
 	      /* amp == 0.0 means un-normalized output */
-	      memcpy((void *)pbuf, (void *)rl0, data_size * sizeof(mus_sample_t));
+	      memcpy((void *)pbuf, (void *)rl0, data_size * sizeof(mus_float_t));
 	    }
 	  progress_report(gcp, .9);
 

@@ -23,12 +23,12 @@ static char *display_maxamps(const char *filename, int chans)
   char *ampstr;
   char fstr[16];
   int i, len;
-  mus_sample_t *vals;
+  mus_float_t *vals;
   mus_long_t *times;
 
   len = chans * 32;
   ampstr = (char *)calloc(len, sizeof(char));
-  vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+  vals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
   times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
 
   snprintf(ampstr, len, "\n  max amp%s: ", (chans > 1) ? "s" : "");

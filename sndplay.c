@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate;
   mus_long_t frames, m;
-  mus_sample_t **bufs;
+  mus_float_t **bufs;
   OutSample *obuf;
   int buffer_size = BUFFER_SIZE, curframes, sample_size, out_chans, outbytes;
   char *name = NULL;
@@ -165,8 +165,8 @@ int main(int argc, char *argv[])
       if ((end - start) < frames)
 	frames = end - start;
 
-      bufs = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
-      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)calloc(buffer_size, sizeof(mus_sample_t));
+      bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
+      for (i = 0; i < chans; i++) bufs[i] = (mus_float_t *)calloc(buffer_size, sizeof(mus_float_t));
       obuf = (OutSample *)calloc(buffer_size * out_chans, sizeof(OutSample));
       outbytes = buffer_size * out_chans * sample_size;
 

@@ -834,7 +834,7 @@ static unsigned char to_alaw(int pcm_val)
 }
 
 #define A_(a) MUS_SHORT_TO_SAMPLE(a)
-static const mus_sample_t mus_alaw[256] = {
+static const mus_float_t mus_alaw[256] = {
   A_(-5504), A_(-5248), A_(-6016), A_(-5760), A_(-4480), A_(-4224), A_(-4992), A_(-4736), A_(-7552), A_(-7296), 
   A_(-8064), A_(-7808), A_(-6528), A_(-6272), A_(-7040), A_(-6784), A_(-2752), A_(-2624), A_(-3008), A_(-2880), 
   A_(-2240), A_(-2112), A_(-2496), A_(-2368), A_(-3776), A_(-3648), A_(-4032), A_(-3904), A_(-3264), A_(-3136), 
@@ -880,7 +880,7 @@ static unsigned char to_mulaw(int pcm_val)
 }
 
 #define MU_(a) MUS_SHORT_TO_SAMPLE(a)
-static const mus_sample_t mus_mulaw[256] = {
+static const mus_float_t mus_mulaw[256] = {
   MU_(-32124), MU_(-31100), MU_(-30076), MU_(-29052), MU_(-28028), MU_(-27004), MU_(-25980), MU_(-24956), MU_(-23932), MU_(-22908), 
   MU_(-21884), MU_(-20860), MU_(-19836), MU_(-18812), MU_(-17788), MU_(-16764), MU_(-15996), MU_(-15484), MU_(-14972), MU_(-14460), 
   MU_(-13948), MU_(-13436), MU_(-12924), MU_(-12412), MU_(-11900), MU_(-11388), MU_(-10876), MU_(-10364), MU_(-9852), MU_(-9340), 
@@ -908,7 +908,7 @@ static const mus_sample_t mus_mulaw[256] = {
 
 
 #define B_(a) MUS_BYTE_TO_SAMPLE(a)
-static const mus_sample_t mus_byte[256] = {
+static const mus_float_t mus_byte[256] = {
   B_(0), B_(1), B_(2), B_(3), B_(4), B_(5), B_(6), B_(7), B_(8), B_(9), B_(10), B_(11), B_(12), B_(13), B_(14), B_(15), B_(16), 
   B_(17), B_(18), B_(19), B_(20), B_(21), B_(22), B_(23), B_(24), B_(25), B_(26), B_(27), B_(28), B_(29), B_(30), B_(31), B_(32), 
   B_(33), B_(34), B_(35), B_(36), B_(37), B_(38), B_(39), B_(40), B_(41), B_(42), B_(43), B_(44), B_(45), B_(46), B_(47), B_(48), 
@@ -931,7 +931,7 @@ static const mus_sample_t mus_byte[256] = {
 
 
 #define UB_(a) MUS_BYTE_TO_SAMPLE(a)
-static const mus_sample_t mus_ubyte[256] = {
+static const mus_float_t mus_ubyte[256] = {
   UB_(-128), UB_(-127), UB_(-126), UB_(-125), UB_(-124), UB_(-123), UB_(-122), UB_(-121), UB_(-120), UB_(-119), UB_(-118), UB_(-117), 
   UB_(-116), UB_(-115), UB_(-114), UB_(-113), UB_(-112), UB_(-111), UB_(-110), UB_(-109), UB_(-108), UB_(-107), UB_(-106), UB_(-105), 
   UB_(-104), UB_(-103), UB_(-102), UB_(-101), UB_(-100), UB_(-99), UB_(-98), UB_(-97), UB_(-96), UB_(-95), UB_(-94), UB_(-93), UB_(-92), 
@@ -965,11 +965,11 @@ static const mus_sample_t mus_ubyte[256] = {
 #define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
 /* see note in _sndlib.h" values are "unscaled" from the DAC's point of view */
 
-static mus_sample_t *swapped_shorts = NULL;
+static mus_float_t *swapped_shorts = NULL;
 static void initialize_swapped_shorts(void)
 {
   int i;
-  swapped_shorts = (mus_sample_t *)malloc(65536 * sizeof(mus_sample_t));
+  swapped_shorts = (mus_float_t *)malloc(65536 * sizeof(mus_float_t));
   for (i = 0; i < 65536; i++)
     {
       signed short x;
@@ -979,14 +979,14 @@ static void initialize_swapped_shorts(void)
 }
 
 
-static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
+static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, mus_float_t **cm, char *inbuf)
 {
   int format, siz, siz_chans;
   mus_long_t bytes, j, lim, leftover, total_read, k, loc, oldloc, buflim;
   unsigned char *jchar;
   static char *ur_charbuf = NULL;
   char *charbuf = NULL;
-  mus_sample_t *buffer;
+  mus_float_t *buffer;
   float prescaling;
 
   if (nints <= 0) return(0);
@@ -1084,7 +1084,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  if ((cm == NULL) || (cm[k]))
 		    {
 		      if (loc == 0)
-			memset((void *)(bufs[k]), 0, lim * sizeof(mus_sample_t));
+			memset((void *)(bufs[k]), 0, lim * sizeof(mus_float_t));
 		      else
 			for (j = loc; j < lim; j++) 
 			  bufs[k][j] = MUS_SAMPLE_0;
@@ -1104,16 +1104,16 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
       if ((chans == 1) &&
 	  ((!cm) || (cm[0])))
 	{
-	  buffer = (mus_sample_t *)(bufs[0]);
+	  buffer = (mus_float_t *)(bufs[0]);
 	  if (buffer)
 	    {
 	      mus_long_t loclim;
-	      mus_sample_t *bufnow, *bufend;
+	      mus_float_t *bufnow, *bufend;
 	      
 	      loc = oldloc;
 	      loclim = loc + lim;
-	      bufnow = (mus_sample_t *)(buffer + loc);
-	      bufend = (mus_sample_t *)(buffer + loclim - 1);
+	      bufnow = (mus_float_t *)(buffer + loc);
+	      bufend = (mus_float_t *)(buffer + loclim - 1);
 	      
 	      jchar = (unsigned char *)charbuf;
 	      switch (format)
@@ -1182,72 +1182,72 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  if (prescaling == 1.0)
 		    {
 		      for (; bufnow <= bufend; jchar += 4) 
-			(*bufnow++) = (mus_sample_t)(big_endian_float(jchar));
+			(*bufnow++) = (mus_float_t)(big_endian_float(jchar));
 		    }
 		  else
 		    {
 		      for (; bufnow <= bufend; jchar += 4) 
-			(*bufnow++) = (mus_sample_t)(prescaling * (big_endian_float(jchar)));
+			(*bufnow++) = (mus_float_t)(prescaling * (big_endian_float(jchar)));
 		    }
 		  break;
 		  
 		case MUS_BFLOAT_UNSCALED:
 		  for (; bufnow <= bufend; jchar += 4) 
-		    (*bufnow++) = (mus_sample_t)(MUS_SAMPLE_UNSCALED(big_endian_float(jchar)));
+		    (*bufnow++) = (mus_float_t)(MUS_SAMPLE_UNSCALED(big_endian_float(jchar)));
 		  break;
 		  
 		case MUS_BDOUBLE:   
 		  if (prescaling == 1.0)
 		    {
 		      for (; bufnow <= bufend; jchar += 8)
-			(*bufnow++) = (mus_sample_t)(big_endian_double(jchar));
+			(*bufnow++) = (mus_float_t)(big_endian_double(jchar));
 		    }
 		  else
 		    {
 		      for (; bufnow <= bufend; jchar += 8)
-			(*bufnow++) = (mus_sample_t)(prescaling * (big_endian_double(jchar)));
+			(*bufnow++) = (mus_float_t)(prescaling * (big_endian_double(jchar)));
 		    }
 		  break;
 		  
 		case MUS_BDOUBLE_UNSCALED:   
 		  for (; bufnow <= bufend; jchar += 8)
-		    (*bufnow++) = (mus_sample_t)(MUS_SAMPLE_UNSCALED(big_endian_double(jchar)));
+		    (*bufnow++) = (mus_float_t)(MUS_SAMPLE_UNSCALED(big_endian_double(jchar)));
 		  break;
 		  
 		case MUS_LFLOAT:
 		  if (prescaling == 1.0)
 		    {
 		      for (; bufnow <= bufend; jchar += 4) 
-			(*bufnow++) = (mus_sample_t)(little_endian_float(jchar));
+			(*bufnow++) = (mus_float_t)(little_endian_float(jchar));
 		    }
 		  else
 		    {
 		      for (; bufnow <= bufend; jchar += 4) 
-			(*bufnow++) = (mus_sample_t)(prescaling * (little_endian_float(jchar)));
+			(*bufnow++) = (mus_float_t)(prescaling * (little_endian_float(jchar)));
 		    }
 		  break;
 		  
 		case MUS_LFLOAT_UNSCALED:    
 		  for (; bufnow <= bufend; jchar += 4) 
-		    (*bufnow++) = (mus_sample_t)(MUS_SAMPLE_UNSCALED(little_endian_float(jchar)));
+		    (*bufnow++) = (mus_float_t)(MUS_SAMPLE_UNSCALED(little_endian_float(jchar)));
 		  break;
 		  
 		case MUS_LDOUBLE:   
 		  if (prescaling == 1.0)
 		    {
 		      for (; bufnow <= bufend; jchar += 8) 
-			(*bufnow++) = (mus_sample_t)(little_endian_double(jchar));
+			(*bufnow++) = (mus_float_t)(little_endian_double(jchar));
 		    }
 		  else
 		    {
 		      for (; bufnow <= bufend; jchar += 8) 
-			(*bufnow++) = (mus_sample_t)(prescaling * (little_endian_double(jchar)));
+			(*bufnow++) = (mus_float_t)(prescaling * (little_endian_double(jchar)));
 		    }
 		  break;
 		  
 		case MUS_LDOUBLE_UNSCALED:   
 		  for (; bufnow <= bufend; jchar += 8) 
-		    (*bufnow++) = (mus_sample_t)(MUS_SAMPLE_UNSCALED(little_endian_double(jchar)));
+		    (*bufnow++) = (mus_float_t)(MUS_SAMPLE_UNSCALED(little_endian_double(jchar)));
 		  break;
 		  
 		case MUS_UBSHORT:   
@@ -1279,16 +1279,16 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	    {
 	      if ((cm == NULL) || (cm[k]))
 		{
-		  buffer = (mus_sample_t *)(bufs[k]);
+		  buffer = (mus_float_t *)(bufs[k]);
 		  if (buffer)
 		    {
 		      mus_long_t loclim;
-		      mus_sample_t *bufnow, *bufend;
+		      mus_float_t *bufnow, *bufend;
 		      
 		      loc = oldloc;
 		      loclim = loc + lim;
-		      bufnow = (mus_sample_t *)(buffer + loc);
-		      bufend = (mus_sample_t *)(buffer + loclim - 1);
+		      bufnow = (mus_float_t *)(buffer + loc);
+		      bufend = (mus_float_t *)(buffer + loclim - 1);
 		      
 		      jchar = (unsigned char *)charbuf;
 		      jchar += (k * siz);
@@ -1358,72 +1358,72 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  if (prescaling == 1.0)
 			    {
 			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_sample_t)(big_endian_float(jchar));
+				(*bufnow++) = (mus_float_t)(big_endian_float(jchar));
 			    }
 			  else
 			    {
 			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_sample_t)(prescaling * (big_endian_float(jchar)));
+				(*bufnow++) = (mus_float_t)(prescaling * (big_endian_float(jchar)));
 			    }
 			  break;
 			  
 			case MUS_BFLOAT_UNSCALED:
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = (mus_sample_t)(MUS_SAMPLE_UNSCALED(big_endian_float(jchar)));
+			    (*bufnow++) = (mus_float_t)(MUS_SAMPLE_UNSCALED(big_endian_float(jchar)));
 			  break;
 			  
 			case MUS_BDOUBLE:   
 			  if (prescaling == 1.0)
 			    {
 			      for (; bufnow <= bufend; jchar += siz_chans)
-				(*bufnow++) = (mus_sample_t)(big_endian_double(jchar));
+				(*bufnow++) = (mus_float_t)(big_endian_double(jchar));
 			    }
 			  else
 			    {
 			      for (; bufnow <= bufend; jchar += siz_chans)
-				(*bufnow++) = (mus_sample_t)(prescaling * (big_endian_double(jchar)));
+				(*bufnow++) = (mus_float_t)(prescaling * (big_endian_double(jchar)));
 			    }
 			  break;
 			  
 			case MUS_BDOUBLE_UNSCALED:   
 			  for (; bufnow <= bufend; jchar += siz_chans)
-			    (*bufnow++) = (mus_sample_t)(MUS_SAMPLE_UNSCALED(big_endian_double(jchar)));
+			    (*bufnow++) = (mus_float_t)(MUS_SAMPLE_UNSCALED(big_endian_double(jchar)));
 			  break;
 			  
 			case MUS_LFLOAT:
 			  if (prescaling == 1.0)
 			    {
 			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_sample_t)(little_endian_float(jchar));
+				(*bufnow++) = (mus_float_t)(little_endian_float(jchar));
 			    }
 			  else
 			    {
 			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_sample_t)(prescaling * (little_endian_float(jchar)));
+				(*bufnow++) = (mus_float_t)(prescaling * (little_endian_float(jchar)));
 			    }
 			  break;
 			  
 			case MUS_LFLOAT_UNSCALED:    
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = (mus_sample_t)(MUS_SAMPLE_UNSCALED(little_endian_float(jchar)));
+			    (*bufnow++) = (mus_float_t)(MUS_SAMPLE_UNSCALED(little_endian_float(jchar)));
 			  break;
 			  
 			case MUS_LDOUBLE:   
 			  if (prescaling == 1.0)
 			    {
 			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_sample_t)(little_endian_double(jchar));
+				(*bufnow++) = (mus_float_t)(little_endian_double(jchar));
 			    }
 			  else
 			    {
 			      for (; bufnow <= bufend; jchar += siz_chans) 
-				(*bufnow++) = (mus_sample_t)(prescaling * (little_endian_double(jchar)));
+				(*bufnow++) = (mus_float_t)(prescaling * (little_endian_double(jchar)));
 			    }
 			  break;
 			  
 			case MUS_LDOUBLE_UNSCALED:   
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = (mus_sample_t)(MUS_SAMPLE_UNSCALED(little_endian_double(jchar)));
+			    (*bufnow++) = (mus_float_t)(MUS_SAMPLE_UNSCALED(little_endian_double(jchar)));
 			  break;
 			  
 			case MUS_UBSHORT:   
@@ -1456,25 +1456,25 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 }
 
 
-mus_long_t mus_file_read_any(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs, mus_sample_t **cm)
+mus_long_t mus_file_read_any(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, mus_float_t **cm)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, cm, NULL));
 }
 
 
-mus_long_t mus_file_read_file(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs)
+mus_long_t mus_file_read_file(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, NULL, NULL));
 }
 
 
-mus_long_t mus_file_read_buffer(int charbuf_data_format, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs, char *charbuf)
+mus_long_t mus_file_read_buffer(int charbuf_data_format, mus_long_t beg, int chans, mus_long_t nints, mus_float_t **bufs, char *charbuf)
 {
   return(mus_read_any_1(charbuf_data_format, beg, chans, nints, bufs, NULL, charbuf)); 
 }
 
 
-mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs)
+mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs)
 {
   mus_long_t num, rtn, k;
   num = (end - beg + 1);
@@ -1485,17 +1485,17 @@ mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t end, int chans, mus
     for (k = 0; k < chans; k++)
       {
 	mus_long_t i;
-	mus_sample_t *buffer;
+	mus_float_t *buffer;
 	buffer = bufs[k];
 	i = rtn + beg;
 	/* this happens routinely in mus_outa + initial write (reads ahead in effect) */
-	memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
+	memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_float_t));
       }
   return(num);
 }
 
 
-mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs, mus_sample_t **cm)
+mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, mus_float_t **cm)
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
   mus_long_t num, rtn, k;
@@ -1509,10 +1509,10 @@ mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chan
       if ((cm == NULL) || (cm[k]))
 	{
 	  mus_long_t i;
-	  mus_sample_t *buffer;
+	  mus_float_t *buffer;
 	  buffer = bufs[k];
 	  i = rtn + beg;
-	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
+	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_float_t));
 	}
 
   return(num);
@@ -1556,7 +1556,7 @@ mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler)
 }
 
 
-static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
+static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *inbuf, bool clipped)
 {
   int err, siz, siz_chans, data_format, val;
   mus_long_t bytes, k, lim, leftover, loc, oldloc, buflim;
@@ -1564,7 +1564,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
   unsigned char *jchar;
   static char *ur_charbuf = NULL;
   char *charbuf = NULL;
-  mus_sample_t *buffer;
+  mus_float_t *buffer;
 
   if (chans <= 0) return(MUS_NO_ERROR); /* ?? */
 
@@ -1628,20 +1628,20 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
       for (k = 0; k < chans; k++)
 	{
 	  mus_long_t loclim;
-	  mus_sample_t *bufnow, *bufend;
+	  mus_float_t *bufnow, *bufend;
 
 	  if (bufs[k] == NULL) continue;
 	  loc = oldloc;
-	  buffer = (mus_sample_t *)(bufs[k]);
+	  buffer = (mus_float_t *)(bufs[k]);
 
 	  if (clipping)
 	    {
 	      int clipend;
-	      mus_sample_t sample;
+	      mus_float_t sample;
 
 	      clipend = oldloc + lim;
-	      bufnow = (mus_sample_t *)(buffer + oldloc);
-	      bufend = (mus_sample_t *)(buffer + clipend - 1);
+	      bufnow = (mus_float_t *)(buffer + oldloc);
+	      bufend = (mus_float_t *)(buffer + clipend - 1);
 	      if (mus_clip_handler)
 		{
 		  for (; bufnow <= bufend; bufnow++)
@@ -1687,8 +1687,8 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
 	      charbuf = ur_charbuf;
 	    }
 
-	  bufnow = (mus_sample_t *)(buffer + loc);
-	  bufend = (mus_sample_t *)(buffer + loclim - 1);
+	  bufnow = (mus_float_t *)(buffer + loc);
+	  bufend = (mus_float_t *)(buffer + loclim - 1);
 
 	  jchar = (unsigned char *)charbuf; /* if to_buffer we should add the loop offset here, or never loop */
 	  jchar += (k * siz); 
@@ -1839,19 +1839,19 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
 }
 
 
-int mus_file_write(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs)
+int mus_file_write(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false)); /* if inbuf is NULL (as here), clipped is ignored, so the "false" could be anything */
 }
 
 
-int mus_file_write_file(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs)
+int mus_file_write_file(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
 
 
-int mus_file_write_buffer(int charbuf_data_format, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped)
+int mus_file_write_buffer(int charbuf_data_format, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *charbuf, bool clipped)
 {
   return(mus_write_1(charbuf_data_format, beg, end, chans, bufs, charbuf, clipped));
 }
@@ -2516,7 +2516,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 
 static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
-  mus_sample_t cur_min, cur_max;
+  mus_float_t cur_min, cur_max;
   int i;
 
   cur_min = mus_mulaw[(int)data[chan]];
@@ -2524,7 +2524,7 @@ static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, m
 
   for (i = (chans + chan); i < bytes; i += chans)
     {
-      mus_sample_t val;
+      mus_float_t val;
       val = mus_mulaw[(int)data[i]];
       if (val < cur_min) cur_min = val;
       else if (val > cur_max) cur_max = val;
@@ -2537,7 +2537,7 @@ static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, m
 
 static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
-  mus_sample_t cur_min, cur_max;
+  mus_float_t cur_min, cur_max;
   int i;
 
   cur_min = mus_alaw[(int)data[chan]];
@@ -2545,7 +2545,7 @@ static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, mu
 
   for (i = (chans + chan); i < bytes; i += chans)
     {
-      mus_sample_t val;
+      mus_float_t val;
       val = mus_alaw[(int)data[i]];
       if (val < cur_min) cur_min = val;
       else if (val > cur_max) cur_max = val;

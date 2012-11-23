@@ -1003,16 +1003,16 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
   if (si)
     {
       int i;
-      mus_sample_t value;
+      mus_float_t value;
       value = MUS_FLOAT_TO_SAMPLE(valf);
       for (i = 0; i < si->chans; i++)
 	{
 	  mus_long_t beg, end, len, j;
-	  mus_sample_t *data;
+	  mus_float_t *data;
 	  beg = selection_beg(si->cps[i]);
 	  end = selection_end(si->cps[i]);
 	  len = end - beg + 1;
-	  data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
+	  data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	  for (j = 0; j < len; j++)
 	    data[j] = value;
 	  if (change_samples(beg, len, data, si->cps[i], "fill! selection", si->cps[i]->edit_ctr))
@@ -1070,7 +1070,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   mus_long_t dur, num, ioff;
   snd_fd **sfs;
   snd_info *sp = NULL;
-  mus_sample_t **data;
+  mus_float_t **data;
 
   si = selection_sync();
   if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
@@ -1202,9 +1202,9 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   snd_file_open_descriptors(ofd, ofile, format, oloc, chans, type);
   mus_file_set_clipping(ofd, clipping(ss));
   lseek(ofd, oloc, SEEK_SET);
-  data = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
+  data = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
   for (i = 0; i < chans; i++) 
-    data[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
+    data[i] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t)); 
 
   j = 0;
   ss->stopped_explicitly = false;

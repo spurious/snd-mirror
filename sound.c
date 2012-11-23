@@ -255,7 +255,7 @@ typedef struct {
   mus_long_t comment_start, comment_end;
   int type_specifier, bits_per_sample, block_align, fact_samples;
   time_t write_date;
-  mus_sample_t *maxamps;
+  mus_float_t *maxamps;
   mus_long_t *maxtimes;
 } sound_file;
 
@@ -1154,7 +1154,7 @@ bool mus_sound_maxamp_exists(const char *ifile)
 }
 
 
-mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, mus_long_t *times)
+mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_long_t *times)
 {
   mus_long_t frames;
   int i, ichans, chn;
@@ -1181,9 +1181,9 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, m
   {
     int j, bufnum, ifd;
     mus_long_t n, curframes;
-    mus_sample_t *buffer, *samp;
+    mus_float_t *buffer, *samp;
     mus_long_t *time;
-    mus_sample_t **ibufs;
+    mus_float_t **ibufs;
 
     ifd = mus_sound_open_input(ifile);
     if (ifd == MUS_ERROR) return(MUS_ERROR);
@@ -1197,13 +1197,13 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, m
 
     mus_file_seek_frame(ifd, 0);
 
-    ibufs = (mus_sample_t **)calloc(ichans, sizeof(mus_sample_t *));
+    ibufs = (mus_float_t **)calloc(ichans, sizeof(mus_float_t *));
     bufnum = 8192;
     for (j = 0; j < ichans; j++) 
-      ibufs[j] = (mus_sample_t *)calloc(bufnum, sizeof(mus_sample_t));
+      ibufs[j] = (mus_float_t *)calloc(bufnum, sizeof(mus_float_t));
 
     time = (mus_long_t *)calloc(ichans, sizeof(mus_long_t));
-    samp = (mus_sample_t *)calloc(ichans, sizeof(mus_sample_t));
+    samp = (mus_float_t *)calloc(ichans, sizeof(mus_float_t));
 
     for (n = 0; n < frames; n += bufnum)
       {
@@ -1213,10 +1213,10 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, m
 	mus_file_read(ifd, 0, curframes - 1, ichans, ibufs);
 	for (chn = 0; chn < ichans; chn++)
 	  {
-	    buffer = (mus_sample_t *)(ibufs[chn]);
+	    buffer = (mus_float_t *)(ibufs[chn]);
 	    for (i = 0; i < curframes; i++) 
 	      {
-		mus_sample_t abs_samp;
+		mus_float_t abs_samp;
 		abs_samp = mus_sample_abs(buffer[i]);
 		if (abs_samp > samp[chn])
 		  {
@@ -1246,7 +1246,7 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, m
 }
 
 
-int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, mus_long_t *times)
+int mus_sound_set_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_long_t *times)
 {
   sound_file *sf; 
   int result = MUS_NO_ERROR;
@@ -1277,7 +1277,7 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, mus_
 	      if (max_chans < chans)
 		max_chans = chans;
 
-	      sf->maxamps = (mus_sample_t *)calloc(max_chans, sizeof(mus_sample_t));
+	      sf->maxamps = (mus_float_t *)calloc(max_chans, sizeof(mus_float_t));
 	      sf->maxtimes = (mus_long_t *)calloc(max_chans, sizeof(mus_long_t));
 	    }
 
@@ -1295,11 +1295,11 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, mus_
 }
 
 
-mus_long_t mus_file_to_array(const char *filename, int chan, mus_long_t start, mus_long_t samples, mus_sample_t *array)
+mus_long_t mus_file_to_array(const char *filename, int chan, mus_long_t start, mus_long_t samples, mus_float_t *array)
 {
   int ifd, chans;
   mus_long_t total_read;
-  mus_sample_t **bufs;
+  mus_float_t **bufs;
 
   ifd = mus_sound_open_input(filename);
   if (ifd == MUS_ERROR) return(MUS_ERROR);
@@ -1311,7 +1311,7 @@ mus_long_t mus_file_to_array(const char *filename, int chan, mus_long_t start, m
       return(mus_error(MUS_NO_SUCH_CHANNEL, "mus_file_to_array can't read %s channel %d (file has %d chans)", filename, chan, chans));
     }
 
-  bufs = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
+  bufs = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
   bufs[chan] = array;
 
   mus_file_seek_frame(ifd, start);
@@ -1324,13 +1324,13 @@ mus_long_t mus_file_to_array(const char *filename, int chan, mus_long_t start, m
 }
 
 
-const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, mus_long_t len, int srate, int channels)
+const char *mus_array_to_file_with_error(const char *filename, mus_float_t *ddata, mus_long_t len, int srate, int channels)
 {
   /* put ddata into a sound file, taking byte order into account */
   /* assume ddata is interleaved already if more than one channel */
   int fd, err = MUS_NO_ERROR;
   mus_long_t oloc;
-  mus_sample_t *bufs[1];
+  mus_float_t *bufs[1];
   mus_sound_forget(filename);
 
   err = mus_write_header(filename, MUS_NEXT, srate, channels, len * channels, MUS_OUT_FORMAT, "array->file");
@@ -1354,7 +1354,7 @@ const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *dda
   return(NULL);
 }
 
-int mus_array_to_file(const char *filename, mus_sample_t *ddata, mus_long_t len, int srate, int channels)
+int mus_array_to_file(const char *filename, mus_float_t *ddata, mus_long_t len, int srate, int channels)
 {
   const char *errmsg;
   errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);

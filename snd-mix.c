@@ -2,13 +2,13 @@
 
 static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *origin)
 {
-  mus_sample_t *data;
+  mus_float_t *data;
   int i, len;
   snd_fd *sf;
   bool result = false;
 
   len = v->length;
-  data = (mus_sample_t *)calloc(len, sizeof(mus_sample_t)); /* don't add into v->data! */
+  data = (mus_float_t *)calloc(len, sizeof(mus_float_t)); /* don't add into v->data! */
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
   for (i = 0; i < len; i++)
@@ -32,8 +32,8 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
   snd_fd *sf = NULL;
   mus_long_t i, j, size, in_chans;
   int err = 0;
-  mus_sample_t **data;
-  mus_sample_t *chandata;
+  mus_float_t **data;
+  mus_float_t *chandata;
 
   if ((num <= 0) || (!editable_p(cp)))
     return(false);
@@ -88,8 +88,8 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
   during_open(ifd, filename, SND_MIX_FILE);
   if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
 
-  data = (mus_sample_t **)calloc(in_chans, sizeof(mus_sample_t *));
-  data[in_chan] = (mus_sample_t *)calloc(size, sizeof(mus_sample_t));
+  data = (mus_float_t **)calloc(in_chans, sizeof(mus_float_t *));
+  data[in_chan] = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   chandata = data[in_chan];
   
   lseek(ofd, ohdr->data_location, SEEK_SET);
@@ -1180,8 +1180,8 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
   if (cp->sounds[md->original_index]->type == SND_DATA_BUFFER)
     {
       int i;
-      mus_sample_t *new_buffer;
-      new_buffer = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
+      mus_float_t *new_buffer;
+      new_buffer = (mus_float_t *)malloc(len * sizeof(mus_float_t));
       if (!src_gen)
 	{
 	  for (i = 0; i < len; i++)
@@ -1210,15 +1210,15 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
       int fd, err = 0;
       char *temp_file;
       io_error_t io_err = IO_NO_ERROR;
-      mus_sample_t **data;
-      mus_sample_t *new_buffer;
+      mus_float_t **data;
+      mus_float_t *new_buffer;
       int j = 0;
       
       temp_file = snd_tempnam();
       hdr = make_temp_header(temp_file, SND_SRATE(cp->sound), 1, len, S_setB S_mix_amp_env);
       fd = open_temp_file(temp_file, 1, hdr, &io_err);
-      data = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-      new_buffer = (mus_sample_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_sample_t));
+      data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+      new_buffer = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
       data[0] = new_buffer;
 
       if (!src_gen)
@@ -3224,7 +3224,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   mus_long_t bg;
   chan_info *cp;
   const char *edname = NULL;
-  mus_sample_t *data;
+  mus_float_t *data;
   int len, mix_id = NO_MIX_TAG;
   bool with_mixer;
 
@@ -3440,9 +3440,9 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 
 	if (len < FILE_BUFFER_SIZE)
 	  {
-	    mus_sample_t *data;
+	    mus_float_t *data;
 
-	    data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
+	    data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
 	    len = mus_file_to_array(name, file_channel, 0, len, data); 
 	    id = mix_buffer_with_tag(cp, data, beg, len, origin);
 	    free(data);
@@ -3695,8 +3695,8 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
       ofd = snd_reopen_write(name);
       if (ofd != -1)
 	{
-	  mus_sample_t **bufs;
-	  mus_sample_t *data;
+	  mus_float_t **bufs;
+	  mus_float_t *data;
 	  int err = 0;
 	  mus_long_t i;
 	  mix_fd *mf = NULL;
@@ -3710,8 +3710,8 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
 	  mf->sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler, READ_FORWARD);
 	  mf->sf->region = md->id;
 
-	  bufs = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
-	  bufs[0] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+	  bufs = (mus_float_t **)calloc(1, sizeof(mus_float_t *));
+	  bufs[0] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t));
 	  data = bufs[0];
 
 	  for (i = 0; i < frames; i += FILE_BUFFER_SIZE)

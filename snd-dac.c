@@ -249,7 +249,7 @@ static void nrev(rev_info *r, mus_float_t *rins, mus_float_t *routs, int chans)
 static mus_float_t *r_ins, *r_outs;
 static int reverb_chans = 0;
 
-static void reverb(rev_info *r, mus_float_t **rins, mus_sample_t **outs, int ind)
+static void reverb(rev_info *r, mus_float_t **rins, mus_float_t **outs, int ind)
 {
   int i, chans;
   chans = reverb_chans;
@@ -1511,7 +1511,7 @@ static unsigned char **audio_bytes = NULL;
 static int audio_bytes_size = 0;
 static int audio_bytes_devices = 0;
 
-static mus_sample_t **dac_buffers = NULL;
+static mus_float_t **dac_buffers = NULL;
 static int dac_buffer_size = 0;
 static int dac_buffer_chans = 0; /* chans allocated */
 static mus_float_t **rev_ins;
@@ -1549,15 +1549,15 @@ static int fill_dac_buffers(int write_ok)
   mus_float_t amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
   dac_info *dp;
   snd_info *sp;
-  mus_sample_t *buf;
+  mus_float_t *buf;
 #if (HAVE_OSS || HAVE_ALSA)
-  mus_sample_t **dev_bufs;
+  mus_float_t **dev_bufs;
 #endif
 
   frames = snd_dacp->frames;
   /* clear buffers */
   for (i = 0; i < snd_dacp->channels; i++) 
-    memset(dac_buffers[i], 0, frames * sizeof(mus_sample_t));
+    memset(dac_buffers[i], 0, frames * sizeof(mus_float_t));
   if (global_rev)
     for (i = 0; i < snd_dacp->channels; i++) 
       memset(rev_ins[i], 0, frames * sizeof(mus_float_t));
@@ -1630,7 +1630,7 @@ static int fill_dac_buffers(int write_ok)
 		case NO_CHANGE:
 		  /* simplest case -- no changes at all */
 		  for (j = 0; j < frames; j++)
-		    buf[j] += (mus_sample_t)((*(dp->dac_sample))(dp));
+		    buf[j] += (mus_float_t)((*(dp->dac_sample))(dp));
 		  break;
 
 		case JUST_AMP:
@@ -1638,7 +1638,7 @@ static int fill_dac_buffers(int write_ok)
 		  amp = dp->cur_amp;
 		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
-		    buf[j] += (mus_sample_t)(amp * (*(dp->dac_sample))(dp));
+		    buf[j] += (mus_float_t)(amp * (*(dp->dac_sample))(dp));
 		  dp->cur_amp = amp;
 		  break;
 
@@ -1962,11 +1962,11 @@ static void make_dac_buffers(void)
 	  for (i = 0; i < dac_buffer_chans; i++) free(rev_ins[i]);
 	  free(rev_ins);
 	}
-      dac_buffers = (mus_sample_t **)calloc(snd_dacp->channels, sizeof(mus_sample_t *));
+      dac_buffers = (mus_float_t **)calloc(snd_dacp->channels, sizeof(mus_float_t *));
       rev_ins = (mus_float_t **)calloc(snd_dacp->channels, sizeof(mus_float_t *));
       for (i = 0; i < snd_dacp->channels; i++) 
 	{
-	  dac_buffers[i] = (mus_sample_t *)calloc(snd_dacp->frames, sizeof(mus_sample_t));
+	  dac_buffers[i] = (mus_float_t *)calloc(snd_dacp->frames, sizeof(mus_float_t));
 	  rev_ins[i] = (mus_float_t *)calloc(snd_dacp->frames, sizeof(mus_float_t));
 	}
       dac_buffer_chans = snd_dacp->channels;

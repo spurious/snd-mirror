@@ -580,7 +580,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   snd_fd **sf = NULL;
   file_info *hdr;
   XEN errmsg;
-  mus_sample_t **data;
+  mus_float_t **data;
   LADSPA_Data **pfInputBuffer = NULL;
   LADSPA_Data **pfOutputBuffer = NULL;
   io_error_t io_err = IO_NO_ERROR;
@@ -765,9 +765,9 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   for (i = 0; i < outchans; i++)
     pfOutputBuffer[i] = (LADSPA_Data *)calloc(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
 
-  data = (mus_sample_t **)calloc(outchans, sizeof(mus_sample_t *));
+  data = (mus_float_t **)calloc(outchans, sizeof(mus_float_t *));
   for (i = 0; i < outchans; i++)
-    data[i] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
+    data[i] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t));
 
   /* Connect input and output control ports. */
   {

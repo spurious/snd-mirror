@@ -1468,7 +1468,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 		  fprintf(outp, " [file: %s[%d]]", sd->filename, sd->chan);
 		else 
 		  if (sd->type == SND_DATA_BUFFER)
-		    fprintf(outp, " [buf: %lld] ", sd->data_bytes / sizeof(mus_sample_t));
+		    fprintf(outp, " [buf: %lld] ", sd->data_bytes / sizeof(mus_float_t));
 		  else fprintf(outp, " [bogus!]");
 	    }
 	}
@@ -1541,7 +1541,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   bool reporting = false;
   mus_long_t len, total = 0;
   chan_info *cp = NULL;
-  mus_sample_t **obufs;
+  mus_float_t **obufs;
   io_error_t io_err = IO_NO_ERROR;
   int sl_err = MUS_NO_ERROR;
   bool need_clipping;
@@ -1588,9 +1588,9 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   datumb = mus_bytes_per_sample(hdr->format);
   ss->stopped_explicitly = false;
 
-  obufs = (mus_sample_t **)malloc(chans * sizeof(mus_sample_t *));
+  obufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
-    obufs[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+    obufs[i] = (mus_float_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_float_t));
   j = 0;
 
   reporting = ((report_ok) && (length > REPORTING_SIZE));
@@ -3377,7 +3377,7 @@ bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *inserted_fi
 }
 
 
-bool insert_samples(mus_long_t beg, mus_long_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
+bool insert_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos)
 {
   mus_long_t len;
   ed_fragment *cb;
@@ -3805,7 +3805,7 @@ bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, 
 }
 
 
-bool change_samples(mus_long_t beg, mus_long_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
+bool change_samples(mus_long_t beg, mus_long_t num, mus_float_t *vals, chan_info *cp, const char *origin, int edpos)
 {
   mus_long_t prev_len, new_len;
   ed_fragment *cb;
@@ -5606,7 +5606,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, mus_long_t 
 }
 
 
-int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, mus_long_t beg, mus_long_t buf_len, const char *origin)
+int mix_buffer_with_tag(chan_info *cp, mus_float_t *data, mus_long_t beg, mus_long_t buf_len, const char *origin)
 {
   int edpos, mix_loc;
   mus_long_t old_len, new_len;
@@ -7133,7 +7133,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	  (ED_LOCAL_POSITION(sf->cb) == 0) &&
 	  (ED_LOCAL_END(sf->cb) >= (num - 1)))              /* so accessor won't change? */
 	{
-	  mus_sample_t *dat;
+	  mus_float_t *dat;
 	  mus_long_t loc, last;
 	  loc = sf->loc;
 	  last = sf->last;
@@ -7203,9 +7203,9 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 }
 
 
-static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller, int position)
+static mus_float_t *g_floats_to_samples(XEN obj, int *size, const char *caller, int position)
 {
-  mus_sample_t *vals = NULL;
+  mus_float_t *vals = NULL;
   int i, num = 0;
 
   if (XEN_LIST_P_WITH_LENGTH(obj, num))
@@ -7214,7 +7214,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
       if (num == 0) return(NULL);
       if (((*size) > 0) && (num > (*size))) 
 	num = (*size);
-      vals = (mus_sample_t *)malloc(num * sizeof(mus_sample_t));
+      vals = (mus_float_t *)malloc(num * sizeof(mus_float_t));
       for (i = 0, lst = XEN_COPY_ARG(obj); i < num; i++, lst = XEN_CDR(lst)) 
 	vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CAR(lst)));
     }
@@ -7226,7 +7226,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	  if (num == 0) return(NULL);
 	  if (((*size) > 0) && (num > (*size)))
 	    num = (*size);
-	  vals = (mus_sample_t *)malloc(num * sizeof(mus_sample_t));
+	  vals = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 	  for (i = 0; i < num; i++) 
 	    vals[i] = MUS_FLOAT_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(obj, i)));
 	}
@@ -7240,7 +7240,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 	      num = v->length; 
 	      if (((*size) > 0) && (num > (*size)))
 		num = (*size);
-	      vals = (mus_sample_t *)malloc(num * sizeof(mus_sample_t));
+	      vals = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 	      for (i = 0; i < num; i++) 
 		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	    }
@@ -7308,7 +7308,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
   char *origin;
   mus_long_t beg;
   mus_float_t fval;
-  mus_sample_t ival[1];
+  mus_float_t ival[1];
 
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_setB S_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_sample, "a number");
@@ -7464,7 +7464,7 @@ the new data's end."
 	}
       else
 	{
-	  mus_sample_t *ivals;
+	  mus_float_t *ivals;
 	  int ilen;
 	  ilen = (int)len;
 	  ivals = g_floats_to_samples(vect, &ilen, caller, 3);
@@ -7830,7 +7830,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
   int pos;
   mus_long_t beg;
   mus_float_t fval;
-  mus_sample_t ival[1];
+  mus_float_t ival[1];
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp_n), samp_n, XEN_ARG_1, S_insert_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_insert_sample, "a number");
@@ -7912,7 +7912,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
       else
 	{
 	  int ilen;
-	  mus_sample_t *ivals;
+	  mus_float_t *ivals;
 	  ilen = (int)len;
 	  ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
 	  if (ivals)

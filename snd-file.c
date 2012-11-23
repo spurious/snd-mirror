@@ -4507,11 +4507,11 @@ static char *display_file_maxamps(const char *filename, int chans)
 {
   char *ampstr = NULL;
   int i, len;
-  mus_sample_t *vals;
+  mus_float_t *vals;
   mus_long_t *times;
   len = chans * 32;
   ampstr = (char *)calloc(len, sizeof(char));
-  vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+  vals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
   times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
   mus_snprintf(ampstr, len, "maxamp%s: ", (chans > 1) ? "s" : "");
   mus_sound_maxamps(filename, chans, vals, times);

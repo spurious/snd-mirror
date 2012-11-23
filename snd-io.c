@@ -7,7 +7,7 @@
 struct snd_io {
   int fd, chans, bufsize;
   mus_long_t frames, beg, end;
-  mus_sample_t **arrays;
+  mus_float_t **arrays;
 };
 
 mus_long_t io_beg(snd_io *io)
@@ -188,10 +188,10 @@ static void c_io_bufclr(snd_io *io, int beg)
   end = io->bufsize;
   for (k = 0; k < io->chans; k++)
     {
-      mus_sample_t *j;
+      mus_float_t *j;
       j = io->arrays[k];
       if (j)
-	memset((void *)(j + beg), 0, (end - beg) * sizeof(mus_sample_t));
+	memset((void *)(j + beg), 0, (end - beg) * sizeof(mus_float_t));
     }
 }
 
@@ -280,14 +280,14 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, mus_long_t beg, int su
     bufsize = chansize + 1;
 
   io = (snd_io *)calloc(1, sizeof(snd_io)); /* only creation point */
-  io->arrays = (mus_sample_t **)calloc(hdr->chans, sizeof(mus_sample_t *));
+  io->arrays = (mus_float_t **)calloc(hdr->chans, sizeof(mus_float_t *));
   io->fd = fd;
   io->chans = hdr->chans;
   io->frames = chansize;
   io->beg = 0;
   io->end = bufsize - 1;
   io->bufsize = bufsize;
-  io->arrays[chan] = (mus_sample_t *)calloc(bufsize, sizeof(mus_sample_t));
+  io->arrays[chan] = (mus_float_t *)calloc(bufsize, sizeof(mus_float_t));
   reposition_file_buffers_1(beg, io); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(io);
 }
@@ -653,22 +653,22 @@ snd_data *copy_snd_data(snd_data *sd, mus_long_t beg, int bufsize)
 }
 
 
-snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
+snd_data *make_snd_data_buffer(mus_float_t *data, int len, int ctr)
 {
   snd_data *sf;
   sf = (snd_data *)calloc(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
-  sf->buffered_data = (mus_sample_t *)malloc((len + 1) * sizeof(mus_sample_t));
+  sf->buffered_data = (mus_float_t *)malloc((len + 1) * sizeof(mus_float_t));
   /* sigh... using len + 1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end + 1) */
   /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
   /*   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value */
-  memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(mus_sample_t));
+  memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(mus_float_t));
   sf->buffered_data[len] = MUS_SAMPLE_0;
   sf->edit_ctr = ctr;
   sf->copy = false;
   sf->inuse = false;
-  sf->data_bytes = len * sizeof(mus_sample_t);
+  sf->data_bytes = len * sizeof(mus_float_t);
   return(sf);
 }
 
@@ -678,11 +678,11 @@ snd_data *make_snd_data_buffer_for_simple_channel(int len)
   snd_data *sf;
   sf = (snd_data *)calloc(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
-  sf->buffered_data = (mus_sample_t *)calloc(len, sizeof(mus_sample_t));
+  sf->buffered_data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
   sf->edit_ctr = 0;
   sf->copy = false;
   sf->inuse = false;
-  sf->data_bytes = len * sizeof(mus_sample_t);
+  sf->data_bytes = len * sizeof(mus_float_t);
   return(sf);
 }
 

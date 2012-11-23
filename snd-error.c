@@ -256,7 +256,7 @@ static XEN g_snd_warning(XEN msg)
 
 static XEN clip_hook;
 
-static mus_sample_t run_clip_hook(mus_sample_t val)
+static mus_float_t run_clip_hook(mus_float_t val)
 {
   if (XEN_HOOKED(clip_hook))
     {

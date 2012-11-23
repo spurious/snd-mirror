@@ -608,10 +608,10 @@ XEN g_mus_sound_maxamp(XEN file)
     {
       mus_long_t rtn;
       int i;
-      mus_sample_t *vals;
+      mus_float_t *vals;
       mus_long_t *times;
 
-      vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+      vals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
       times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
 
       rtn = mus_sound_maxamps(filename, chans, vals, times);
@@ -651,7 +651,7 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
     {
       XEN lst;
       int i, j, len;
-      mus_sample_t *mvals;
+      mus_float_t *mvals;
       mus_long_t *times;
 
       len = XEN_LIST_LENGTH(vals);
@@ -659,7 +659,7 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
 	XEN_WRONG_TYPE_ARG_ERROR(S_setB S_mus_sound_maxamp, 2, vals, "max amp list length must = 2 * chans");
       if (len > chans * 2) len = chans * 2;
 
-      mvals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+      mvals = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
       times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
 
       for (i = 0, j = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, j++, lst = XEN_CDDR(lst))

@@ -638,8 +638,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
   int j, ofd0 = 0, ofd1 = 0, datumb = 0;
   bool temp_file;
   mus_long_t k;
-  mus_sample_t **data0, **data1;
-  mus_sample_t *idata0, *idata1;
+  mus_float_t **data0, **data1;
+  mus_float_t *idata0, *idata1;
   bool reporting = false;
   char *ofile0 = NULL, *ofile1 = NULL;
   io_error_t io_err = IO_NO_ERROR;
@@ -684,10 +684,10 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
     }
   else temp_file = false;
 
-  data0 = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-  data0[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
-  data1 = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-  data1[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+  data0 = (mus_float_t **)malloc(sizeof(mus_float_t *));
+  data0[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+  data1 = (mus_float_t **)malloc(sizeof(mus_float_t *));
+  data1[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
   idata0 = data0[0];
   idata1 = data1[0];
   c0 = init_sample_read_any(beg, cp0, READ_FORWARD, pos0);
@@ -841,14 +841,14 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
   snd_info *sp = NULL;
   bool reporting = false;
   bool full_chan;
-  mus_sample_t **data;
+  mus_float_t **data;
   file_info *hdr = NULL;
   int j, ofd = 0, datumb = 0, err = 0;
   mus_long_t *old_marks = NULL, *new_marks = NULL;
   int cur_marks = 0, m;
   mus_long_t k;
   char *ofile = NULL;
-  mus_sample_t *idata;
+  mus_float_t *idata;
   io_error_t io_err = IO_NO_ERROR;
   src_state *sr;
 
@@ -890,8 +890,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 			snd_open_strerror()));
     }
 
-  data = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-  data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+  data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
   datumb = mus_bytes_per_sample(hdr->format);
   idata = data[0];
   j = 0;
@@ -1270,7 +1270,7 @@ void src_file(const char *file, double ratio)
   int k, chan, chans, width, out_fd, data_format, header_type, buffer_size;
   mus_long_t samp, old_samps, new_samps;
   mus_float_t old_srate, new_srate;
-  mus_sample_t **obufs;
+  mus_float_t **obufs;
 
   old_srate = mus_srate();
   new_srate = mus_sound_srate(file); /* need have no connection with previous CLM srate setting */
@@ -1292,13 +1292,13 @@ void src_file(const char *file, double ratio)
 
   srcs = (mus_any **)malloc(chans * sizeof(mus_any *));
   rds = (mus_any **)malloc(chans * sizeof(mus_any *));
-  obufs = (mus_sample_t **)malloc(chans * sizeof(mus_sample_t *));
+  obufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
 
   for (chan = 0; chan < chans; chan++)
     {
       rds[chan] = mus_make_readin(file, chan, 0, 1);
       srcs[chan] = mus_make_src(NULL, ratio, width, (void *)rds[chan]);
-      obufs[chan] = (mus_sample_t *)malloc(buffer_size * sizeof(mus_sample_t));
+      obufs[chan] = (mus_float_t *)malloc(buffer_size * sizeof(mus_float_t));
     }
 
   for (k = 0, samp = 0; samp < new_samps; samp++)
@@ -1421,8 +1421,8 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   int j, ofd = 0, datumb = 0, err = 0;
   bool temp_file;
   mus_long_t k;
-  mus_sample_t **data;
-  mus_sample_t *idata;
+  mus_float_t **data;
+  mus_float_t *idata;
   char *ofile = NULL;
   snd_fd *sf;
 
@@ -1452,8 +1452,8 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
       datumb = mus_bytes_per_sample(hdr->format);
     }
   else temp_file = false;
-  data = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-  data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+  data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
   idata = data[0];
   if (temp_file)
     {
@@ -1565,8 +1565,8 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
       /* set up convolution generator and run overlap-add in order-sized blocks */
       bool reporting;
       mus_any *gen;
-      mus_sample_t **data;
-      mus_sample_t *idata;
+      mus_float_t **data;
+      mus_float_t *idata;
       mus_long_t offk;
 
       reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
@@ -1581,8 +1581,8 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
       gen = mus_make_convolve(NULL, fltdat, fsize, order, (void *)sf);
 
       j = 0;
-      data = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-      data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+      data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+      data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
       idata = data[0];
       if (reporting) start_progress_report(cp);
       ss->stopped_explicitly = false;
@@ -1694,8 +1694,8 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   int j = 0, ofd = 0, datumb = 0, err = 0;
   bool temp_file;
   char *new_origin = NULL;
-  mus_sample_t **data;
-  mus_sample_t *idata;
+  mus_float_t **data;
+  mus_float_t *idata;
   char *ofile = NULL;
   io_error_t io_err = IO_NO_ERROR;
 
@@ -1724,8 +1724,8 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
     }
   else temp_file = false;
 
-  data = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-  data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+  data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
   idata = data[0];
   if (precalculated_coeffs)
     a = precalculated_coeffs;
@@ -2121,8 +2121,8 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
   bool section = false, temp_file;
   mus_long_t k;
   char *origin = NULL;
-  mus_sample_t **data;
-  mus_sample_t *idata;
+  mus_float_t **data;
+  mus_float_t *idata;
   char *ofile = NULL;
   io_error_t io_err = IO_NO_ERROR;
 
@@ -2181,8 +2181,8 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
       section = true; /* only for reverse_marks below */
     }
 
-  data = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
-  data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+  data = (mus_float_t **)malloc(sizeof(mus_float_t *));
+  data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
   idata = data[0];
 #if HAVE_FORTH
   if (dur == cp->edits[edpos]->samples)
@@ -2497,8 +2497,8 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
     {
       /* ---------------- not optimizable, so call mus_env on each sample ---------------- */
       mus_long_t ioff;
-      mus_sample_t **data;
-      mus_sample_t *idata;
+      mus_float_t **data;
+      mus_float_t *idata;
       bool reporting = false, temp_file = false;
       int ofd = 0, datumb = 0;
       file_info *hdr = NULL;
@@ -2538,12 +2538,12 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	  datumb = mus_bytes_per_sample(hdr->format);
 	}
       else temp_file = false;
-      data = (mus_sample_t **)malloc(si->chans * sizeof(mus_sample_t *));
+      data = (mus_float_t **)malloc(si->chans * sizeof(mus_float_t *));
       for (i = 0; i < si->chans; i++) 
 	{
 	  if (temp_file)
-	    data[i] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
-	  else data[i] = (mus_sample_t *)calloc(dur, sizeof(mus_sample_t)); 
+	    data[i] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
+	  else data[i] = (mus_float_t *)calloc(dur, sizeof(mus_float_t)); 
 	}
       j = 0;
       reporting = ((dur > REPORTING_SIZE) && (!(cp->squelch_update)));
@@ -2951,7 +2951,7 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 
 static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos)
 {
-  mus_sample_t *data = NULL;
+  mus_float_t *data = NULL;
   mus_long_t k;
   char *origin = NULL;
   mus_float_t y0, y1, angle, incr, off, scale;
@@ -2968,7 +2968,7 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
   incr = M_PI / (double)dur;
   off = 0.5 * (y1 + y0);
   scale = 0.5 * fabs(y0 - y1);
-  data = (mus_sample_t *)calloc(dur, sizeof(mus_sample_t));
+  data = (mus_float_t *)calloc(dur, sizeof(mus_float_t));
   for (k = 0; k < dur; k++, angle += incr) 
     data[k] = MUS_FLOAT_TO_SAMPLE(off + scale * cos(angle));
 #if HAVE_FORTH
@@ -3033,7 +3033,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
   snd_info **sps = NULL;
   int i, chan, chans = 0;
   mus_long_t k, new_dur = 0, dur = 0;
-  mus_sample_t **data;
+  mus_float_t **data;
   file_info *hdr = NULL;
   int j, ofd = 0, datumb = 0, err = 0, srate = 0;
   io_error_t io_err = IO_NO_ERROR;
@@ -3086,9 +3086,9 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
   /* now we have readers set up for all chans of all sounds about to be mixed/scaled/enveloped/resampled... */
 
   datumb = mus_bytes_per_sample(hdr->format);
-  data = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
+  data = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
-    data[i] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+    data[i] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t)); 
 
   if (!(snd_feq(speed, 1.0)))
     {
@@ -3221,7 +3221,7 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
   else
     {
       int err = MUS_NO_ERROR;
-      mus_sample_t **data;
+      mus_float_t **data;
       
 #if HAVE_SCHEME
 
@@ -3256,8 +3256,8 @@ static XEN map_channel_to_temp_file(chan_info *cp, snd_fd *sf, XEN proc, mus_lon
 	}
 #endif
       
-      data = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
-      data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
+      data = (mus_float_t **)calloc(1, sizeof(mus_float_t *));
+      data[0] = (mus_float_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_float_t));
       datumb = mus_bytes_per_sample(hdr->format);
       ss->stopped_explicitly = false;
       
@@ -3414,7 +3414,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
   /* not temp_file -- use resizable buffer */
   int i, data_pos = 0, kp;
   mus_long_t cur_size;
-  mus_sample_t *data = NULL;
+  mus_float_t *data = NULL;
   XEN res = XEN_FALSE;
 
 #if HAVE_SCHEME
@@ -3455,7 +3455,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 
 #endif
   
-  data = (mus_sample_t *)calloc(num, sizeof(mus_sample_t));
+  data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
   cur_size = num;
   
   for (kp = 0; kp < num; kp++)
@@ -3483,7 +3483,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 	  if (data_pos >= cur_size)
 	    {
 	      cur_size *= 2;
-	      data = (mus_sample_t *)realloc(data, cur_size * sizeof(mus_sample_t));
+	      data = (mus_float_t *)realloc(data, cur_size * sizeof(mus_float_t));
 	    }
 	  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(res));
 	}
@@ -3504,7 +3504,7 @@ static XEN map_channel_to_buffer(chan_info *cp, snd_fd *sf, XEN proc, mus_long_t
 			  if (data_pos >= cur_size)
 			    {
 			      cur_size *= 2;
-			      data = (mus_sample_t *)realloc(data, cur_size * sizeof(mus_sample_t));
+			      data = (mus_float_t *)realloc(data, cur_size * sizeof(mus_float_t));
 			    }
 			  data[data_pos++] = MUS_DOUBLE_TO_SAMPLE(v->data[i]);
 			}
@@ -4001,7 +4001,7 @@ static void cut_and_smooth_1(chan_info *cp, mus_long_t beg, mus_long_t end, bool
   #define SPLICE_LEN 32
   /* making this 128 is not a big improvement */
   mus_long_t start;
-  mus_sample_t splice[2 * SPLICE_LEN];
+  mus_float_t splice[2 * SPLICE_LEN];
   double ramp, incr;
   int i;
   snd_fd *sf, *sf_end;
