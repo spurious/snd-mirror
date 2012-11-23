@@ -93,9 +93,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 
 #if HAVE_SCHEME
-
-#define S7_DEBUGGING 0
-#if (!S7_DEBUGGING)
+#if 1
 /* an experiment -- dangerous! */
 typedef struct imported_s7_cell {
   union {
@@ -4013,24 +4011,31 @@ static XEN g_formant(XEN gen, XEN input, XEN freq)
 }
 
 
+/* TODO: here and in oscil-bank accept a vector (not vct) of amps, and a vector (not a real) of inputs
+ */
+
 static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 {
   #define H_formant_bank "(" S_formant_bank " scls gens inval): sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i], inval)"
   mus_float_t outval = 0.0, inval;
   int i, size;
-  vct *scl;
+  vct *scl, *invals = NULL;
 #if HAVE_SCHEME
   s7_pointer *elements;
 #endif
 
   XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_formant_bank, "a vector of formant generators");
   XEN_ASSERT_TYPE(MUS_VCT_P(amps), amps, XEN_ARG_1, S_formant_bank, "a vct");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(inp), inp, XEN_ARG_3, S_formant_bank, "a number");
+  XEN_ASSERT_TYPE((XEN_NUMBER_P(inp)) || (MUS_VCT_P(inp)), inp, XEN_ARG_3, S_formant_bank, "a number or a vct");
 
   size = XEN_VECTOR_LENGTH(gens);
   if (size == 0) return(C_TO_XEN_DOUBLE(0.0));
   scl = XEN_TO_VCT(amps);
-  inval = XEN_TO_C_DOUBLE(inp);
+
+  if (XEN_NUMBER_P(inp))
+    inval = XEN_TO_C_DOUBLE(inp);
+  else invals = XEN_TO_VCT(inp);
+
 #if HAVE_SCHEME
   elements = s7_vector_elements(gens);
 #endif
@@ -4042,8 +4047,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
       gn = (mus_xen *)imported_s7_object_value_checked(elements[i], mus_xen_tag);
       if ((gn) &&
 	  (gn->type == FORMANT_TAG))
-	outval += (scl->data[i] * mus_formant(gn->gen, inval));
-      else XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, elements[i], "a formant generator");
+	outval += (scl->data[i] * mus_formant(gn->gen, (invals) ? invals->data[i] : inval));
 #else
       XEN g;
       g = XEN_VECTOR_REF(gens, i);
@@ -4052,10 +4056,8 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 	  mus_any *fg;
 	  fg = XEN_TO_MUS_ANY(g);
 	  if (mus_formant_p(fg))
-	    outval += (scl->data[i] * mus_formant(fg, inval));
-	  else XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, g, "a formant generator");
+	    outval += (scl->data[i] * mus_formant(fg, (invals) ? invals->data[i] : inval));
 	}
-      else XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, g, "a formant generator");
 #endif
     }
   return(C_TO_XEN_DOUBLE(outval));

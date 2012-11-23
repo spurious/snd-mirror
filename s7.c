@@ -939,10 +939,6 @@ typedef struct s7_cell {
     unsigned short sflag;
   } tf;
   int hloc;
-#if DEBUGGING
-  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type;
-  const char *current_alloc_func, *previous_alloc_func;
-#endif
   union {
     
     union {
@@ -1120,6 +1116,12 @@ typedef struct s7_cell {
       unsigned int state;
     } winder;
   } object;
+
+#if DEBUGGING
+  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type;
+  const char *current_alloc_func, *previous_alloc_func;
+#endif
+
 } s7_cell;
 
 
@@ -62402,7 +62404,7 @@ s7_scheme *s7_init(void)
  * t455            265  218   89   55   31   28
  * t502             90   72   43   39   36   35
  * lat             229        63   52   47   42
- * calls                     278  210  178  164
+ * calls                     276  208  176  158
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

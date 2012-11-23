@@ -646,8 +646,7 @@ static XEN g_vct_ref(XEN obj, XEN pos)
 
 
 /* ---------------- #if HAVE_SCHEME */
-#define S7_DEBUGGING 0
-#if (!S7_DEBUGGING)
+#if 1
 /* an experiment -- dangerous! */
 typedef struct imported_s7_cell {
   union {
