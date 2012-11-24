@@ -273,7 +273,7 @@
   "primes.scm"
   "pvoc.scm"
   "rgb.scm"
-  "rtio.scm"
+;  "rtio.scm"
   "rubber.scm"
   "s7-slib-init.scm"
   "s7test.scm"

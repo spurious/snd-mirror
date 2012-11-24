@@ -62392,9 +62392,12 @@ s7_scheme *s7_init(void)
  * SOMEDAY: get the doc string out of the closure body
  * TODO: we need integer_length everywhere! These fixups are ignored by the optimized cases.
  * PERHAPS: extend op_case_simple[]_ss to safe_c_s
- * TODO: change non-fft vct uses to vector (clm-ins.scm especially: (scales ctr)
+ * check vct->vector and osc/frm-bank
  * TODO: in mus_fft we load c_in_data -- this is just as easy with vectors if local, and if imag=0, loop can be simpler
- * TODO: use a vector for data in move-locsig test
+ *   why not provide these here -- s7_vector_to_double_array|complex_array with no local allocation = vector->vct 
+ *   also will need the reverse s7_double|complex_array_to_vector
+ *   perhaps s7_vector_to_object_array? -- we're actually only saving the s7_real/s7_make_real calls
+ * get rid of sound-data: mus-audio* mus-sound* use vct for now
  *
  * timing    12.0           13.0 13.1 13.2 13.3
  * bench    42736           8752 8051 7725 7741
@@ -62404,7 +62407,7 @@ s7_scheme *s7_init(void)
  * t455            265  218   89   55   31   28
  * t502             90   72   43   39   36   35
  * lat             229        63   52   47   42
- * calls                     276  208  176  158
+ * calls                     276  208  176  157
  *
  * we can't assume things like floor return an integer because there might be methods in play,
  *   or C-side extensions like + for string-append.

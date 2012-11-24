@@ -20,7 +20,7 @@
   "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. 
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. 
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
-'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck 0 1 330 .3 .95 .95)"
+'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (pluck 0 1 330 .3 .995 .995)"
 
   (define (getOptimumC S o p)
     (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
@@ -56,7 +56,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	 (end (+ beg (seconds->samples dur)))
 	 (lf (if (= lossfact 0.0) 1.0 (min 1.0 lossfact)))
 	 (wt (if (= wt0 0.0) 0.5 (min 1.0 wt0)))
-	 (tab (make-vct dlen))
+	 (tab (make-vector dlen 0.0))
 	 ;; get initial waveform in "tab" -- here we can introduce 0's to simulate different pick
 	 ;; positions, and so on -- see the CMJ article for numerous extensions.  The normal case
 	 ;; is to load it with white noise (between -1 and 1).
@@ -1688,10 +1688,10 @@ is a physical model of a flute:
 	   (newdur (+ duration *piano-attack-duration* *piano-release-duration*))
 	   (end (+ beg (seconds->samples newdur)))
 	   (env1dur (- newdur *piano-release-duration*))
-	   (env1samples (seconds->samples env1dur))
+	   (env1samples (+ beg (seconds->samples env1dur)))
 	   (siz (floor (/ (length partials) 2)))
 	   (oscils (make-vector siz))
-	   (alist (make-vct siz))
+	   (alist (make-vector siz 0.0))
 	   (locs (make-locsig degree distance reverb-amount))
 	   (ampfun1 (make-piano-ampfun env1dur))
 	   (ampenv1 (make-env ampfun1
@@ -1702,9 +1702,7 @@ is a physical model of a flute:
 	   (ampenv2 (make-env '(0 1 100 0)
 			      :scaler (* amplitude releaseamp)
 			      :duration env1dur
-			      :base 1.0))
-	   (sktr 0))
-
+			      :base 1.0)))
       (do ((i 0 (+ i 2))
 	   (j 0 (+ j 1)))
 	  ((= i (length partials)))
@@ -1712,16 +1710,10 @@ is a physical model of a flute:
 	(set! (oscils j) (make-oscil (* (partials i) frequency))))
      (do ((i beg (+ i 1)))
 	 ((= i end))
-       (set! sktr (+ 1 sktr))
-       (let ((sum 0.0))
-	 (do ((k 0 (+ k 1)))
-	     ((= k siz))
-	   (set! sum (+ sum (* (alist k)
-			       (oscil (oscils k))))))
-	 (locsig locs i (* sum
-			   (if (> sktr env1samples) 
-			       (env ampenv2) 
-			       (env ampenv1)))))))))
+       (locsig locs i (* (oscil-bank siz oscils alist)
+			 (if (> i env1samples) 
+			     (env ampenv2) 
+			     (env ampenv1))))))))
 
 
 (definstrument (resflt start dur driver 
@@ -1857,7 +1849,6 @@ is a physical model of a flute:
 	    (fdr (make-vct fftsize-1))
 	    (fdi (make-vct fftsize-1))
 	    (window (make-fft-window blackman2-window fftsize-1))
-	    (fftamps (make-vector fftsize-1 0.0))
 	    (current-peak-freqs (make-vector max-oscils 0.0))
 	    (last-peak-freqs (make-vector max-oscils 0.0))
 	    (current-peak-amps (make-vector max-oscils 0.0))
@@ -1869,7 +1860,7 @@ is a physical model of a flute:
 	    (rates (make-vector max-oscils 0.0))
 	    (freqs (make-vector max-oscils 0.0))
 	    (sweeps (make-vector max-oscils 0.0))
-	    (lowest-magnitude .001)
+	    ;; (lowest-magnitude .001)
 	    
 	    (ihifreq (hz->radians ifreq))
 	    (fftscale (/ 1.0 (* fftsize-1 .42323))) ;integrate Blackman-Harris window = .42323*window width and shift by fftsize-1
@@ -1882,7 +1873,7 @@ is a physical model of a flute:
 	    (ramped (or attack 0))
 	    (splice-attack (number? attack))
 	    (ramp-ind 0)
-	    (ramped-attack (make-vct attack-size)))
+	    (ramped-attack (make-vector attack-size 0.0)))
 	
 	(do ((i 0 (+ i 1)))
 	    ((= i max-oscils))
@@ -1924,18 +1915,15 @@ is a physical model of a flute:
 		    ;; get the fft 
 		    (mus-fft fdr fdi fftsize-1 1)
 		    ;; change to polar coordinates (ignoring phases)
-		    (do ((k 0 (+ k 1)))
-			((= k highest-bin-1))	;no need to paw through the upper half (so (<= highest-bin-1 (floor fft-size 2)))
-		      (let ((x (fdr k))
-			    (y (fdi k)))
-			(set! (fftamps k) (* 2 (sqrt (+ (* x x) (* y y)))))))
+		    (rectangular->magnitudes fdr fdi)
+		    (vct-scale! fdr 2.0)
 		    (do ((k 0 (+ k 1)))
 			((= k max-oscils))
 		      (set! (last-peak-freqs k) (current-peak-freqs k))
 		      (set! (last-peak-amps k) (current-peak-amps k))
 		      (set! (current-peak-amps k) 0.0))
 		    (vector-fill! peak-amps 0.0)
-		    (let ((ra (fftamps 0))
+		    (let ((ra (fdr 0))
 			  (la 0.0)
 			  (ca 0.0))
 		      ;; search for current peaks following Xavier Serra's recommendations in
@@ -1945,10 +1933,12 @@ is a physical model of a flute:
 			  ((= k highest-bin-1))
 			(set! la ca)
 			(set! ca ra)
-			(set! ra (fftamps k))
-			(if (and (> ca lowest-magnitude)
+			(set! ra (fdr k))
+			(if (and (> ca .001) ; lowest-magnitude
 				 (> ca ra)
-				 (> ca la))
+				 (> ca la)
+				 (not (zero? ra))
+				 (not (zero? la)))
 			    ;; found a local maximum above the current threshold (its bin number is k-1)
 			    (let* ((logla (log la 10.0))
 				   (logca (log ca 10.0))
@@ -1956,6 +1946,7 @@ is a physical model of a flute:
 				   (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra))) ; isn't logca always 0?
 				   (amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
 				   (freq (* fft-mag (+ k offset -1))))
+			      ;; (if (not (real? amp)) (format *stderr* "~A ~A ~A -> ~A ~A~%" la ca ra offset amp))
 			      (if (= peaks max-peaks-1)
 				  ;; gotta either flush this peak, or find current lowest and flush him
 				  (let ((minp 0)
@@ -2399,7 +2390,6 @@ nil doesnt print anything, which will speed up a bit the process.
 	   (if if-list-in-gain
 	       (set! (gains k) (* (env (env-size k)) (- 1.0 a1)))))
 	 (set! outval (formant-bank gains frm-size inval))
-	 ;; (set! outval (+ outval (* (gains k) (formant (frm-size k) inval)))) ; this used to be in the loop
 	 (outa i (* outval (env ampenv)))))))
 
 
@@ -2454,17 +2444,6 @@ nil doesnt print anything, which will speed up a bit the process.
 	(do ((ctr 1 (+ ctr 1)))
 	    ((= ctr freq-inc))
 	  (set! (scales ctr) (+ (scales ctr) (diffs ctr))))))))
-
-#|
-	(let ((outval 0.0))
-	  (do ((ctr 1 (+ ctr 1)))
-	      ((= ctr freq-inc))
-	    (let ((cur-scale (scales ctr)))
-	      (set! outval (+ outval (* cur-scale (formant (fs ctr) inval))))
-	      (set! (scales ctr) (+ (scales ctr) (diffs ctr)))))
-	  (outa i (* amp outval)))))))
-|#
-
 
 #|
 Date: Fri, 25 Sep 1998 09:56:41 +0300

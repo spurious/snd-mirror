@@ -2,14 +2,16 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 22
-#define SNDLIB_REVISION 1
-#define SNDLIB_DATE "16-July-12"
+#define SNDLIB_REVISION 2
+#define SNDLIB_DATE "23-Nov-12"
 
 
 #ifndef mus_float_t
 #define mus_float_t double
 #define mus_long_t long long int
 #endif
+
+#define mus_sample_t mus_float_t /* backwards compatibility */
 
 #include <stdio.h>
 /* need FILE */

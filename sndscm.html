@@ -324,9 +324,6 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 <tr><td><a href="#rgbdoc">rgb</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(rgb_doc_tip)">color names</td></tr>
 
-<tr><td><a href="#rtiodoc">rtio</a></td>
-    <td onmouseout="UnTip()" onmouseover="Tip(rtio_doc_tip)">real-time stuff</td></tr>
-
 <tr><td><a href="#rubberdoc">rubber</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(rubber_doc_tip)">rubber-sound</td></tr>
 
@@ -10245,47 +10242,6 @@ There is one gotcha in this file &mdash; X11 defines a color named "tan"
 which is already used by Scheme, so (at the suggestion of Dave Phillips)
 this color is named "tawny" in rgb.scm.
 </p>
-
-
-
-
-<!--  FILE: rtio  -->
-
-<div class="header" id="rtiodoc">rtio</div>
-
-<p>rtio.scm has a collection of functions oriented loosely around
-"real-time" operations.  It is obsolete.
-</p>
-
-<pre class="indented">
-<em class=emdef>show-input</em> (in-sys 0)
-<em class=def id="showinputfft">show-input-fft</em> (in-sys 0)
-<em class=def id="showdraggableinputfft">show-draggable-input-fft</em> (in-sys 0)
-<em class=emdef>in-out</em> func in-sys out-sys
-</pre>
-
-<p>These functions show how to read incoming data (from the adc),
-write data (to the dac), and interpose a function while reading and
-writing data.  There are several example functions (for the 'func' argument) that filter the data or
-change its amplitude. show-input-fft displays the input data's
-spectrum.  show-draggable-input-fft is the same, but the X axis
-(the frequency axis in this case) is draggable, as in Snd's FFT display.
-See <a href="#oscopedoc">oscope</a> for a fancier version of the fft stuff.
-</p>
-<p>Here's some info from Michael Scholz about the Ruby version of rtio:
-</p>
-
-<pre class="indented">
-rt = make_rtio
-rt.show_input
-rt.show_input_fft
-rt.chans = 2
-rt.show_drag
-rt.amplify(1.5).in_out(1, 0)
-rt.lp.in_out
-rt.hp(1150).in_out
-rt.close
-</pre>
 
 
 

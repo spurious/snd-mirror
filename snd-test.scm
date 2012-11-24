@@ -2323,37 +2323,6 @@
 	  (mus-sound-datum-size file)
 	  frame)))
   
-  (define (show-input-1 . arg)
-    ;; from rtio.scm
-    (define (card+device card device)
-      (logior (ash card 16) device))
-    (let* ((our-short (if (little-endian?) mus-lshort mus-bshort))
-	   (our-srate 22050)
-	   (our-dac-buffer-size-in-bytes 512)
-	   (our-dac-buffer-size-in-shorts 256)
-	   (our-chans 1)
-	   (our-chan 0)
-	   (our-default-card-number 0)
-	   (in-sys (if (not (null? arg)) 
-		       (car arg) 
-		       our-default-card-number))
-	   (in-port (catch 'mus-error
-			   (lambda ()
-			     (mus-audio-open-input 
-			      (card+device in-sys 0) 
-			      our-srate our-chans our-short our-dac-buffer-size-in-bytes))
-			   (lambda args -1)))
-	   (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
-	   (vobj (make-vct our-dac-buffer-size-in-shorts)))
-      (if (= in-port -1)
-	  (snd-display #__line__ ";can't open audio input port!")
-	  (begin
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
-	      (graph (sound-data->vct data our-chan vobj)))
-	    (mus-audio-close in-port)))))
-  
   (begin
     
     (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
@@ -2440,10 +2409,10 @@
 	(set! (mus-header-raw-defaults) (list 44100 2 mus-bshort))
 	
 	(let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	  (if (not (string=? str "15-Oct 04:34 PDT"))
+	  (if (not (string=? str "23-Nov 06:56 PST"))
 	      (snd-display #__line__ ";mus-sound-write-date oboe.snd: ~A?" str)))
 	(let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
-	  (if (not (string-=? str "01-Jul 13:06 PDT"))
+	  (if (not (string-=? str "23-Nov 06:56 PST"))
 	      (snd-display #__line__ ";mus-sound-write-date pistol.snd: ~A?" str)))
 	
 	(let ((index (open-sound "oboe.snd"))
@@ -3432,10 +3401,6 @@
 		  (list mus-ubshort mus-next))))
 	 (list 1 2 4 8))
 	
-	
-	(let ((ind (open-sound (string-append "/usr//usr/include/" home-dir "/cl/oboe.snd"))))
-	  (show-input-1)
-	  (close-sound ind))
 	
 	(let ((fd (mus-sound-open-output "fmv.snd" 22050 1 mus-bshort mus-next "no comment"))
 	      (sdata (make-sound-data 1 10)))
@@ -47392,19 +47357,20 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,365,017,452  s7.c:g_add_1s [/home/bil/snd-13/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
-3-Nov-12:
-169,426,727,425
-38,670,281,212  s7.c:eval [/home/bil/snd-13/snd]
-14,822,152,833  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
- 8,903,749,161  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
- 8,535,542,013  ???:sin [/lib64/libm-2.12.so]
- 8,024,067,855  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
- 6,368,250,627  s7.c:eval'2 [/home/bil/snd-13/snd]
- 5,686,622,329  s7.c:gc [/home/bil/snd-13/snd]
- 3,755,753,362  s7.c:s7_make_real [/home/bil/snd-13/snd]
+23-Nov-12:
+157,838,345,260
+33,353,942,546  s7.c:eval [/home/bil/snd-13/snd]
+12,820,896,934  s7.c:find_symbol_or_bust [/home/bil/snd-13/snd]
+ 8,912,322,193  snd-sig.c:direct_filter [/home/bil/snd-13/snd]
+ 8,544,117,877  ???:sin [/lib64/libm-2.12.so]
+ 8,393,852,718  io.c:mus_read_any_1 [/home/bil/snd-13/snd]
+ 6,314,832,559  s7.c:eval'2 [/home/bil/snd-13/snd]
+ 4,850,008,566  s7.c:gc [/home/bil/snd-13/snd]
+ 3,043,146,925  clm.c:mus_src [/home/bil/snd-13/snd]
  2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-13/snd]
- 2,771,414,795  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
- 2,647,541,583  clm.c:mus_src [/home/bil/snd-13/snd]
- 2,001,371,666  ???:cos [/lib64/libm-2.12.so]
- 1,936,071,474  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
+ 2,881,361,802  snd-edits.c:channel_local_maxamp [/home/bil/snd-13/snd]
+ 2,634,015,124  s7.c:s7_make_real [/home/bil/snd-13/snd]
+ 2,587,279,053  clm2xen.c:g_formant_bank [/home/bil/snd-13/snd]
+ 2,003,532,132  ???:cos [/lib64/libm-2.12.so]
+ 1,934,319,940  s7.c:g_add_ss_1ss [/home/bil/snd-13/snd]
 |#
